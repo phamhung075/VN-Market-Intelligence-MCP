@@ -413,12 +413,12 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "FIX-CONVICTION-HISTORY-EOD-BACKFILL",
-    "next_agent": "developer",
-    "next_action": "BOUNDED-1 auto-pickup claim of FIX-CONVICTION-HISTORY-EOD-BACKFILL — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
-    "updated_at": "2026-07-29T03:46:42Z",
-    "updated_by": "dev-team (bounded-1 auto-pickup)"
+    "status": "idle",
+    "active_task_id": null,
+    "next_agent": "router",
+    "next_action": "FIX-CONVICTION-HISTORY-EOD-BACKFILL flipped in_progress->review by dev-mcp-server; awaiting qa pickup.",
+    "updated_at": "2026-07-29T04:32:00Z",
+    "updated_by": "dev-mcp-server (FIX-CONVICTION-HISTORY-EOD-BACKFILL closeout)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -2568,8 +2568,8 @@
     ]
   },
   "task_board": {
-    "_updated_at": "2026-07-29T00:02:56Z",
-    "_updated_by": "po (triage-20260729T0002 dev-team tick signals 1-3)",
+    "_updated_at": "2026-07-29T04:32:00Z",
+    "_updated_by": "dev-mcp-server",
     "active_sprints": [
       {
         "evidence": "Router raw-verified (get_bctc_full live, post-rebuild) after BEQ-9/10 refine. Core extraction incident RESOLVED, but populating real scalars exposed a SEPARATE pre-existing analytics/serving layer with 4 defect clusters: (a) RATIO-COMPUTE — VNM ROE=0/ROA=0/EPS=12VND/NetDebt-EBITDA=-7.5e13x; DHG ROA=7,891,932.0% (analyst falsely claimed fixed). Ratios emit 0 or astronomically wrong. (b) BANK-B02-TCTD-SERVING — SHB + EIB get_bctc_full returns 'balance sheet has no decomposition — forced-zero pass suspected'; banks UNSERVABLE despite DONE + committed scalars. (c) PERIOD-SEMANTICS — FPT 2025-Q4 rev=70112.8/NP=11225.5 are FULL-YEAR cumulative labeled 'Q4'; buildComparisonSection then compares cumulative-FY vs next-quarter -> false -82.2% mislabeled 'YoY'. (d) ENTITY-SCOPE — HPG 2025-Q4 is parent-only B01a (rev=0, conf44%) served as the canonical/headline HPG vs consolidated ~140k rev; misleading. PUBLISH-INTEGRITY GAP: NO semantic-sanity publish guard exists in orch-state (the triage-referenced 'Task #13' is NOT present). The BEQ-9/10 reports are now DONE -> flow into chef docs/agents/unified-agent/flow/market-analysis.md + market-analyst -> ROA 7.8M% / false YoY -82% / parent-only-headline CAN reach MARKET unattended. recurring-bug-escalation: BCTC area has >2 fix cycles -> architect root-cause SPIKE, not point-patch. | [dev-team 2026-06-03T11:44Z observation feeding BAL-0/BAL-1] After LF-SERVE-REFLOW recovered FPT Q1 absolute scalars (op_profit/ebitda/cash live-correct), get_bctc_full(FPT) STILL serves garbage DERIVED ratios: current_ratio=41527873060120x (denominator ~0), operating_margin_pct=0.0% (not recomputed from now-correct operating_profit). Confirms the analytics/serving derived-ratio layer is a distinct defect from scalar extraction. BAL-0 publish semantic-sanity gate MUST block current_ratio out-of-range before MARKET/FB; BAL-1 spike should pin the ratio recompute module. Repro: get_bctc_full(code=FPT).",
@@ -16614,6 +16614,23 @@
         "rebuild_required": true,
         "entered_review_at": "2026-07-29T02:54:52Z",
         "dev_mcp_server_review_note": "dev-mcp-server COMPLETE (session 64c7c677-0f0f-4cee-a3ce-dba79d70b7ae): RAW-verified LIVE (docker exec bun:sqlite against the named-volume market.db, not host/cached) BEFORE any code change — the ticket's own hypothesis (duplicate registerJob calls / re-entrant startScheduler) did NOT hold. Registration was already singular for every job (startScheduler()'s __vnMarketSchedulerStarted guard; vnIndexRefreshJob appears exactly once in buildJobTable()). Precisely traced the real defect through node_modules/node-cron@3.0.3's scheduler.js Scheduler.matchTime(): recoverMissedExecutions:true (Lever B / T2-ARCH-CRON-RECOVER-JITTER, the sibling ARCH-CRON-SCHEDULER-RELIABILITY missed-fire fix, DONE_VERIFIED — NOT reverted here) makes the `i===0 || autorecover` gate always true, and its \"already fired\" guard compares full-millisecond `.getTime()` instead of whole-second granularity — so under ORDINARY ~1s setTimeout-loop jitter (no stall required) the SAME scheduled second is independently re-detected (and re-executed) by the next poll. RAW-confirmed this is a SHARED scheduler-layer defect, not specific to the 2 jobs named in the ticket: vnIndexRefreshJob 13.04%/7d dup-minute rate, vpsServiceHealthJob 10.33%/7d, walCheckpointJob 3.74%/7d — all three showed the identical same-second duplicate-success-row pattern. pollNewsJob (the ticket's other named job) is NOT a cron registration at all — its 2x/30min pattern is newsHeadlinesRefreshJob's BY-DESIGN double push (Bloomberg then Reuters) to /api/push-news, each independently recording a pollNewsJob run; pollNews()'s own URL+title dedup makes this safe (distinct source content, zero duplicate writes) — left untouched (a same-name overlap guard there would silently drop one of the two legitimate news batches, a real regression).\n\nFIX: new dedupeCronTick() in apps/mcp-server/src/scheduler/startupHelpers.ts wraps every scheduleCron() callback — the single canonical funnel for all ~84 registrations (registerJobTable's 57 table-driven jobs, registerBespokeJobs' 22 bespoke jobs, summaryJobs.ts's 5 jobs; grep-confirmed zero direct cron.schedule() bypass) — with a per-registration whole-second last-fired guard. A second detection of an already-fired second is skipped (logged, not executed, not double-recorded); a genuinely new second still fires normally.\n\nEvidence: new apps/mcp-server/src/__tests__/FIX-SCHEDULER-DOUBLE-REGISTRATION.test.ts, TDD RED->GREEN, 8 tests (same-second dedup incl. the exact observed sub-second-offset scenario, cross-second no-suppression, manual/init passthrough never deduped, per-registration state isolation across jobs, real scheduleCron+node-cron wiring via task.now()). Discovered + fixed a pre-existing cross-file test-isolation leak while wiring the integration test: FACTORY-SCHEDULER-job-table-registry.test.ts's mock.module(\"../scheduler/startupHelpers.js\", ...) is process-global and never restored (same documented class as 034-telegram-notifier.test.ts/1298b-imf-infra.test.ts/084-tool-market.test.ts/FIX-BASE-RATE-COMPUTATION-CRON-DEAD.test.ts) — applied the SAME established `?isolate=` query-busted dynamic-import workaround inside my own test file (no other file touched). Targeted scheduler suites (ARCH-CRON-recover-jitter, FACTORY-SCHEDULER-job-table-registry, ARCH-CRON-watchdog, ARCH-CRON-idempotency, FIX-CRON-SUNDAY-STARTUP-CATCHUP, 1104-sprint055-cron-smoke, FIX-SCHEDULER-DOUBLE-REGISTRATION, FIX-BASE-RATE-COMPUTATION-CRON-DEAD, 034-telegram-notifier, EVIDENCE-ACCUM-SILENT-CRON, FIX-CRON-SSCCHECKERJOB-DEAD-87D-dataauditweekly-catchup, 1958a-alert-digest-summary-catchup) 160/160 pass. tsc --noEmit clean. gen-project-stats --dry-run: toolCount=184/cronJobCount=88 unchanged (no tool/cron registration file touched). Live boot (PORT=3099, default env matching prod DB path convention): /health toolCount=184, /api/bctc-inspect 200, /dashboards/news-fetch/ 200, zero scheduler-startup errors, no \"startScheduler called again\" duplicate-init log. Full repo-wide bun test re-run TWICE post-fix (1236 files each): run1 14865 pass/40 skip/55 fail (my own INT-2 test was the 1 file-order-dependent flake from the mock leak above, fixed before run2); run2 14864 pass/40 skip/56 fail/1 error, my file 0 fail — both within the standing FIX-MCP-SUITE-HEALTH-BASELINE order-dependent band (54-59 across recent dev-mcp-server cycles this sprint); diffed both fail-lists — zero reference to startupHelpers.ts/dedupeCronTick/scheduleCron in any failure, all are pre-existing 5000ms-timeout/db-lifecycle flakes under full-parallel load, same named tests as pre-fix baseline.\n\nDoc-review: docs/architecture/microservice/mcp-server/system.md § Scheduler Jobs — added FIX-SCHEDULER-DOUBLE-REGISTRATION subsection documenting the corrected root-cause mechanism (so the original ticket's hypothesis isn't re-litigated by a future reader).\n\nDOCKER MICROSERVICE CODE-CHANGE CLOSE GATE APPLIES: apps/mcp-server/src/ (incl. startupHelpers.ts and the new test file) is baked at build time via `COPY apps/mcp-server/src/ ./src/` in apps/mcp-server/Dockerfile — confirmed by direct read, not assumed. Held at REVIEW / next_agent=ops / rebuild_required=true per docs/protocols/docker-deployment-runbook.md — NOT self-flipped to DONE_VERIFIED. Chain: ops (rebuild+swap) -> qa (LIVE verification gate: cron_job_runs shows exactly one success row per job per scheduled minute across 2 full fetch cycles for vnIndexRefreshJob AND vpsServiceHealthJob — RAW query the named-volume DB post-rebuild the same way this note's investigation did; pollNewsJob's 2x/30min pattern is EXPECTED/by-design and must NOT be treated as a gate failure, see root-cause note above) -> po (Step 6 sign-off). Decision journal: docs/agent-memory/decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-dev-mcp-server.md STEP dev-mcp-server-S18. NOT pushed by this agent per PUSH-AUTONOMY-1 (chain-mutex-holding session pushes).\n"
+      },
+      {
+        "id": "FIX-CONVICTION-HISTORY-EOD-BACKFILL",
+        "title": "conviction_history is MISSING two trading days (06-22 Mon, 06-25 Thu) with NO backfill path = permanent data loss. Written ONLY by live scanMarket Step 5c (scanMarket.ts:571-574, vnNow-stamped); daily_ohlcv HAS all four days (06-22=764/06-23=708/06-24=877/06-25=897) so VPS price-ingestion is healthy — the gap is conviction-specific. Add an EOD reconciliation/backfill path + a zero-row observability signal.",
+        "type": "FIX",
+        "priority": "P2",
+        "status": "REVIEW",
+        "zone": "apps/mcp-server/",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-CONVICTION-HISTORY-EOD-BACKFILL",
+        "promoted_at": "2026-07-29T03:46:38Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
+        "updated_at": "2026-07-29T04:32:00Z",
+        "claimed_at": "2026-07-29T03:46:42Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "next_agent": "qa",
+        "dev_mcp_server_note": "Root-cause fix (scanMarket.ts Step 5c conviction persistence moved above the early no-signals return — was silently skipping conviction_history on any zero-signal scan cycle; RAW-verified via cron_job_runs.rows_written=0/0 on 06-22+06-25, generalized to 38/86 trading days chronic gap) + upsertConvictionHistory() void->boolean same-cycle zero-write agent_feedback signal + EOD reconciliation/backfill (checkConvictionHistoryGap D-NEW3, wired into dataAuditJob nightly 23:00 GMT+7; self-deriving confirmed-trading-day floor from live watchlist count; unfixable-day (no prior-day baseline) honesty guard avoids fabrication/feedback-spam). Commits 87150a8aa (code+docs) + 7ff43dd57 (memory). Evidence: new FIX-CONVICTION-HISTORY-EOD-BACKFILL.test.ts 10/10 pass; 10 targeted regression suites 122/122 pass; tsc clean; toolCount=184/cronJobCount=88 unchanged (no new cron.schedule call site). Full bun test 14876 pass/40 skip/54 fail/1237 files -- zero failures reference conviction_history/scanMarket/dataAuditJob/checkConvictionHistoryGap/IMarketPriceRepository; git-stash-verified (4 modified files reverted) that VPS Proxy Health + insider-transactions batches fail identically without this change -- confirmed PRE-EXISTING baseline, not a regression. Live boot (DB_PATH=:memory:) health 200, toolCount=184, zero import errors. Doc-review: usecases.md/infrastructure.md/testing.md updated. Decision journal: sprint-COWORK-GUARANTEED-SLOT-CATCHUP-dev-mcp-server.md STEP dev-mcp-server-S19."
       }
     ],
     "qa": [],
@@ -16635,23 +16652,7 @@
     },
     "last_triaged_at": "2026-07-29T03:46:38Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": [
-      {
-        "id": "FIX-CONVICTION-HISTORY-EOD-BACKFILL",
-        "title": "conviction_history is MISSING two trading days (06-22 Mon, 06-25 Thu) with NO backfill path = permanent data loss. Written ONLY by live scanMarket Step 5c (scanMarket.ts:571-574, vnNow-stamped); daily_ohlcv HAS all four days (06-22=764/06-23=708/06-24=877/06-25=897) so VPS price-ingestion is healthy — the gap is conviction-specific. Add an EOD reconciliation/backfill path + a zero-row observability signal.",
-        "type": "FIX",
-        "priority": "P2",
-        "status": "IN_PROGRESS",
-        "zone": "apps/mcp-server/",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-CONVICTION-HISTORY-EOD-BACKFILL",
-        "promoted_at": "2026-07-29T03:46:38Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
-        "updated_at": "2026-07-29T03:46:42Z",
-        "claimed_at": "2026-07-29T03:46:42Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)"
-      }
-    ]
+    "in_progress": []
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
