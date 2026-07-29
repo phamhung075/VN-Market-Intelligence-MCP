@@ -6,56 +6,6 @@ Zone: `apps/pdf-extractor/` | Stack: Python/FastAPI | DB: pdf_extractor.db (writ
 
 ---
 
-## Cycle 2026-07-24 — FACTORY-PDF-extract-tesseract-config
-
-**Sprint:** n/a (BOUNDED-1 auto-pickup) | **Zone:** apps/pdf-extractor/ | **Size:** M | P2
-
-### Refactor
-Extracted the Tesseract lang/psm/DPI config (copy-pasted across 5 named call
-sites, each with its own "DO NOT remove --psm 6" warning) into new
-`infrastructure/tesseract_config.py` (`TESSERACT_LANG="vie+eng"`,
-`TESSERACT_PSM6_CONFIG="--psm 6"`, `OCR_RASTER_DPI=200`). `generic_md_table_
-extractor.py`'s conceptual call site actually resolved to 2 real files behind
-its FACTORY-PDF-split-generic-md-table shim: `generic_md_table/extractor.py`
-+ `unit_ocr.py` — 6 real call sites total, all rewired incrementally
-(1 file → tests green → next file). Warning consolidated to 1 authoritative
-copy + 6 one-line pointers (verified via grep).
-
-### Equivalence
-`git show HEAD:<path> | grep` confirmed all 6 pre-refactor literals byte-
-identical (`lang="vie+eng"`, `config="--psm 6"`, `dpi=200`/`resolution=200`).
-Post-refactor: 0 literal matches remain in call-site files; constants
-assert-equal via standalone import. `test_ocr_adapter_psm6_guard.py` (the
-existing runtime regression guard) 3/3 pass.
-
-### Tests
-Full suite `-m "not slow"`: baseline 1022 pass/8 fail; post-change 1022-1023
-pass/7-8 fail — 7 failures identical A/B via `git stash` (PIL.Image test-
-pollution, page_rasterizer, ocr_unit_tesseract_retry order-dependence); 8th
-(`test_pek_engine_adapter.py` timeout) is a pre-existing flake in an
-untouched file (0 diff). mypy: repo-wide pre-existing "not a valid Python
-package name" env bug (reproduces on untouched files); workaround
-`--explicit-package-bases` shows 141 errors both before/after (0 new);
-`tesseract_config.py` alone: 0 errors.
-
-### G12 sandbox gate — N/A (repeat drift)
-`sandbox_runner.py` still does not exist in this repo — same stale-gate
-drift flagged in the 2026-07-09 FACTORY-PDF-split-generic-md-table cycle
-above (2 cycles now). pytest is the live DoD gate.
-
-### Commit
-`<pending>` — refactor(pdf-extractor): FACTORY-PDF-extract-tesseract-config shared OCR config
-
-Zone health: G12 pilot-gate doc drift flagged a 3rd time (2026-07-09 ×2,
-2026-07-24) — needs PO/architect to retire the stale flow-doc section.
-
-### Status
-REVIEW → next_agent=qa (rebuild_required: true — DEFERRED user-gated, no
-rebuild performed this cycle per explicit task scope bound; ops rebuild+swap
-+ qa live-verify batches onto a future rebuild)
-
----
-
 ## Cycle 2026-07-28 — FIX-PDFX-TESSERACT-CONCURRENCY-VIOLATES-SINGLE-WORKER-INVARIANT
 
 **Sprint:** n/a (router direct dispatch, supervised) | P0 | size M
@@ -141,3 +91,53 @@ still unresolved by PO/architect — unchanged this cycle, no new drift found.
 REVIEW → next_agent=ops (rebuild_required: true — Docker Microservice
 Code-Change Close Gate chain: ops rebuild+swap → qa live-verify → po Step 6,
 same precedent as sibling FACTORY-PDF-delete-deprecated-inspect)
+
+---
+
+## Cycle 2026-07-29 — FIX-PDF-EXTRACTOR-TEST-SYS-MODULES-LEAK
+
+**Sprint:** n/a (BOUNDED-1 auto-pickup) | **Zone:** apps/pdf-extractor/ | **Size:** S | P-medium
+
+### Root cause
+`test_low_text_density_ocr_rasterize.py` already had a correct conditional
+stub helper (`_ensure_stub()` — stubs only if the real package is absent)
+sitting right next to 4 unconditional overrides: lines 91/102/110/123-124
+called `_ensure_stub(name)` as a no-op decoy, then unconditionally did
+`sys.modules[name] = <custom stub>` for pdfplumber/fitz/paddleocr/PIL+
+PIL.Image regardless of whether the real package was already loaded. No
+conftest, single pytest process, no restore — leaked into every test file
+collected afterward in the same run.
+
+### Fix (AC option c — uniform conditional-check pattern)
+Added `try: import PIL` / `try: import PIL.Image` (mirrors the file's
+existing real-import-first attempts for pdf2image/pytesseract/pdfplumber/
+fitz/paddleocr), then wrapped all 4 raw `sys.modules[name] = stub`
+assignments in `if name not in sys.modules:` guards — same idea `_ensure_
+stub()` already uses next to them. Real packages win whenever present
+(confirmed genuinely installed both in container and host: PIL, fitz,
+pdfplumber, paddleocr); stub only used when truly absent — order-independent.
+
+### Verify
+Container has no bind mount for `apps/pdf-extractor` (baked into image) —
+`docker cp` used to push the fix in for authentic docker-exec verification
+without a full rebuild. BEFORE (matches recorded evidence exactly):
+file+ocr_backends 1 failed/46 passed; file+page_rasterizer 4 failed/28
+passed. AFTER (both orderings, docker-exec): file+ocr_backends 47 passed
+both orders; file+page_rasterizer 32 passed both orders; file+tesseract_
+retry 26 passed both orders. Full non-slow suite (docker-exec): 1033
+passed/5 skipped/7 deselected, 0 failed. mypy on changed file: same 4
+pre-existing "Module has no attribute" false positives before/after
+(git-stash A/B, 0 new) — dynamic `types.ModuleType` attr assignment, out
+of scope for this fix.
+
+### Commit
+`<pending>` — fix(pdf-extractor): FIX-PDF-EXTRACTOR-TEST-SYS-MODULES-LEAK
+guard sys.modules stub overrides
+
+Zone health: PDF-TEST-01-FIX (task_board.review, BLOCKED) named this row as
+its blocker — unblockable once QA re-verifies. Rebuild deferred to ops per
+standard gate (docker cp was for my verification only, not a substitute).
+
+### Status
+REVIEW → next_agent=qa (rebuild_required: true — ops rebuild+swap → qa
+live-verify, standard Microservice Code-Change Close Gate)
