@@ -505,3 +505,52 @@ trusted from the 2026-07-23 dry-run claim alone), both flow-doc (post-cycle.md S
 dev-standards.md CANONICAL pointer confirmed live and accurate against the actual script behavior,
 signal-dashboard SKILL.md § WRITE pointer resolves. Zero blocking issues found.
 **why-change:** No change from plan — verify-committed JUMP-TO, zero blocking issues, APPROVED.
+
+### STEP qa-S20 · qa · 2026-07-29T00:21:25Z
+**task-id:** UC-GCP-P7
+**what-done:** Direct-commit verify (`qa[]`, branch:null, stranded 6 days un-QA'd) of /commit skill
+rescope. Commits `a5202512c` (fix) + `2cd532595` (memory), both `git merge-base --is-ancestor main`
+confirmed, dates 2026-07-23 match `completed_at`. `git show --stat a5202512c` touches exactly
+`.claude/skills/commit/SKILL.md` + `.claude/commands/commit.md` — matches claim. Read CURRENT
+content of both files (not diff alone) + diffed the fix commit directly against all 5 RESCOPE
+acceptance items: (1) Step 4 merge-and-clean-branch — confirmed absent from current file, diff shows
+it deleted, grep for `Step 4`/`git branch -d`/`git checkout main` in current SKILL.md returns only
+the affirmative no-branches-invariant prose, zero residual procedure; (2) per-category commit-mutex
+critical section — Step 2 rewritten to one `commit-mutex:main` acquire/critical-section/release per
+category (not spanning the whole run), pointing at `commit-mutex/SKILL.md` Step 3d-PUSH as SSOT —
+grep-confirmed that skill file genuinely has a `3d-PUSH`/TTL=90s section, not a broken pointer;
+(3) stranded-peer-file age guard — Step 1 mtime<2h check against `commit-boundary/SKILL.md` § RULE 2
+— grep-confirmed RULE 2 + the cited agents-architect/agent-father zone rows genuinely exist there;
+(4) Co-Authored-By hardcode → pointer — diff shows the literal
+`Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>` line deleted, replaced with "Never
+hardcode a co-author or model-name trailer here" + pointer to `commit-convention.md` as trailer
+SSOT; verified that doc's own `## Trailers` section (Task/AC/Sprint/Claude-Session) contains no
+hardcoded model-name trailer, consistent with the pointer's intent; (5) `commit.md` one-line pointer
+— current file read is exactly 1 line, diff confirms the prior 3-line prose (which itself
+contradicted no-branches invariant: "merge branch finish to main... clean this branch") was replaced.
+Grep-confirmed exactly one file repo-wide carries `trigger: /commit` — the "ONE definition" claim
+holds structurally, not just by removal. Cross-checked developer's own DJ entry
+(`sprint-ULTRACODE-AUDIT-FIXALL-developer.md` STEP developer-S22, `task-id: UC-GCP-P7`) — present,
+matches status_note prose. Working tree confirmed clean for both target files (no peer mid-edit).
+Docs/skill-only change, zero production `.ts`/`.py` touched — `bun test`/`tsc`/mock-guard
+structurally N/A (Smart-Skip, same class as cycle-495 precedent).
+**what-considered:**
+- Found `docs/references/bundles/bundle-developer.md` § Commit Format still carries a hardcoded
+  `Co-Authored-By: Claude Opus 4.6` line + numeric `task(NNN)` format + branch-merge steps — but this
+  is a wholly separate, pre-existing developer-agent reference doc (their own direct-commit lazy-load
+  bundle, per the rescoped SKILL.md's own INV-GATEWAY-1 note: specialist sub-agents commit directly,
+  they don't invoke `/commit`), not a second definition of the `/commit` skill and not named anywhere
+  in this row's scope note. Out of scope for this task — flagged non-blocking, not folded into this
+  row's verdict, not silently ignored either.
+- Trust status_note's file-touch claim vs verify: ran `git show --stat` myself rather than accepting
+  the prose count.
+- Trust the pointer targets vs verify they resolve: grepped `commit-mutex/SKILL.md` and
+  `commit-boundary/SKILL.md` directly for the cited section anchors (3d-PUSH, RULE 2) rather than
+  assuming the pointer is live.
+**why-decision:** All 5 RESCOPE acceptance items independently confirmed against current file
+content + the actual diff (not the status_note prose alone), both commits real and on main ancestry
+with correct file-touch sets, all cross-referenced SSOT pointers resolve to live content, zero
+blocking issues found.
+**why-change:** No change from plan — verify-committed JUMP-TO, zero blocking issues, APPROVED.
+Non-blocking out-of-scope observation recorded (bundle-developer.md stale hardcode) for PO triage,
+not this row's problem.

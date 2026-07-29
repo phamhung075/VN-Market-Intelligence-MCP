@@ -419,12 +419,11 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "UC-GCP-P7",
-    "next_agent": "qa",
-    "next_action": "Review-Lane QA-Drain claim of UC-GCP-P7 — spawn qa in verify-committed mode (branch:null direct-commit row, no task branch/handoff — see docs/agents/qa/flow/main.md § Direct-Commit Verify; do NOT use the normal pipeline JUMP-TO, it requires a branch this row does not have).",
-    "updated_at": "2026-07-29T00:18:30Z",
-    "updated_by": "dev-team (review-lane qa-drain)"
+    "status": "idle",
+    "updated_at": "2026-07-29T00:22:22Z",
+    "updated_by": "qa",
+    "active_task_id": null,
+    "next_agent": null
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -12046,6 +12045,38 @@
         "status_note": "[QA] Review Record (direct-commit verify): Verified commit c2c7243f8 on main ancestry (git merge-base --is-ancestor). git show --stat matches claimed file set exactly (scripts/git-hooks/pre-commit, post-commit, install.sh, pre-commit.test.sh + docs/policies/dev-standards.md CANONICAL pointer + docs/WORK.md + docs/handoffs/FIX-COMMIT-PATH-PEER-INDEX-SWEEP-GUARD-HOOK.md Implementation Record), zero foreign files. Independently re-ran every claim, not trusted from prose (feedback_router_verify_raw_not_badges): shellcheck on all 4 files -- 0 warnings. bash scripts/git-hooks/pre-commit.test.sh -- 6/6 PASS (T1 bare-sweep-WARN, T2 pathspec-silent, T3 dir-pathspec documented non-goal, T4 rebase-no-false-warn, T5 reject-blocks-preserves-index, T6 UNKNOWN-fail-open-loud). bash scripts/audits/verify-commit-sweep-discriminator.sh -- VERDICT PASS (git 2.49.0), C1/C2 both independently reproduced. install.sh AC-5 claim (installs all 3 hooks, not just pre-push) verified live in a fresh disposable scratch repo -- pre-push/pre-commit/post-commit all symlinked into .git/hooks/, correct targets, executable. mock-guard.sh --files on the 4 touched files -- PASS (shell files fall outside its .ts/.py/.go scan scope by design; shellcheck is the correct static-analysis line of defense here and is clean). No TS files touched (zone=scripts/) so bun test/tsc structurally N/A; shell regression suite + discriminator harness together constitute the targeted zone suite. Test runs left zero side effects on the live repo (.git/sweep-guard.log absent, no stray docs/signals/*.json from these runs -- all scenarios isolated to mktemp scratch repos). WARN-by-default disposition matches architect ratified brief docs/architecture-briefs/2026-07-21-commit-path-peer-index-sweep-guard.md §3 exactly. VERDICT: APPROVED, DONE_VERIFIED. Process note (already flagged separately to PO via signal_queue, not actioned here): this row was pushed to origin/main before QA review ran (PUSH-AUTONOMY-1 gate deviation) -- content already live regardless of this verdict; no defects found so no follow-up commit needed.",
         "qa_verified_at": "2026-07-29T00:01:43Z",
         "qa_verified_by": "qa"
+      },
+      {
+        "id": "UC-GCP-P7",
+        "type": "FIX",
+        "title": "Rescope /commit skill: per-commit mutex-bound, main-only, convention-aligned",
+        "status": "DONE_VERIFIED",
+        "priority": "P1",
+        "size": "S",
+        "zone": "cross-service/",
+        "sprint": "ULTRACODE-AUDIT-FIXALL",
+        "source": "ultracode-audit-2026-07-12",
+        "verdict": "RESCOPE",
+        "detail_ref": "docs/architecture-briefs/2026-07-12-ultracode-workflow-improvement-audit.md#git-ci-publish-P7",
+        "note": "SCOPE=verifier Rescope note. Delete Step4 merge-and-clean-branch (no-branches invariant); wrap EACH per-category add->commit->push in its own commit-mutex critical section (TTL sized for seconds); add a stranded-peer-file age guard (skip peer-zone files mtime<2h); replace hardcoded Co-Authored-By model name with a pointer to commit-convention; reduce .claude/commands/commit.md to a one-line pointer so /commit has ONE definition.",
+        "created_at": "2026-07-13T19:31:11Z",
+        "created_by": "po",
+        "priority_bumped_from": "P2",
+        "priority_bumped_at": "2026-07-17T04:54:03Z",
+        "priority_bumped_by": "po/uc-audit-priority-bump 2026-07-17",
+        "promoted_at": "2026-07-23T07:49:33Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
+        "updated_at": "2026-07-29T00:22:22Z",
+        "claimed_at": "2026-07-29T00:18:30Z",
+        "claimed_by": "dev-team (review-lane qa-drain)",
+        "next_agent": "qa",
+        "branch": null,
+        "completed_at": "2026-07-23T07:56:21Z",
+        "completed_by": "developer",
+        "status_note": "Rewrote .claude/skills/commit/SKILL.md (deleted Step 4 merge/branch-clean; per-category commit-mutex:main acquire/critical-section/release replacing whole-run duplicated push shell, pointing at commit-mutex Step 3d-PUSH as SSOT; added Step 1 stranded-peer-file age guard citing commit-boundary RULE 2 zone table + mtime<2h; replaced hardcoded Co-Authored-By line with pointer to commit-convention.md) + reduced .claude/commands/commit.md to a one-line pointer so /commit has exactly one definition. Commits a5202512c (fix, Task/AC trailers) + 2cd532595 (memory), both pushed to main. DJ entry: sprint-ULTRACODE-AUDIT-FIXALL-developer.md STEP developer-S22. Direct-commit branch:null — qa verify-committed-fix mode applies (docs/agents/qa/flow/main.md Direct-Commit Verify). [QA] Review Record (direct-commit verify, 2026-07-29): independently RAW-verified all 5 RESCOPE acceptance items against CURRENT file content + the fix commit diff (not status_note prose alone). Commits a5202512c (fix)/2cd532595 (memory) both confirmed on main ancestry, git show --stat touches exactly .claude/commands/commit.md + .claude/skills/commit/SKILL.md as claimed. (1) Step 4 merge-and-clean-branch: confirmed deleted, zero residual grep hits. (2) per-category commit-mutex critical section: Step 2 rewritten, commit-mutex/SKILL.md Step 3d-PUSH/TTL=90s confirmed live. (3) stranded-peer-file age guard: Step 1 mtime<2h vs commit-boundary/SKILL.md RULE 2, zone table confirmed live. (4) Co-Authored-By hardcode -> pointer: literal Claude-Sonnet-4.6 line confirmed removed, replaced with pointer to commit-convention.md (confirmed no hardcoded trailer there either). (5) commit.md: confirmed exactly 1 line, sole /commit trigger repo-wide (grep-confirmed). Non-blocking OUT-OF-SCOPE observation: docs/references/bundles/bundle-developer.md still has its own separate hardcoded Co-Authored-By/numeric-task/branch-merge Commit Format section -- unrelated dev-agent lazy-load bundle, not named in this row's scope, flagged for PO triage not folded into this verdict. VERDICT: APPROVED, DONE_VERIFIED. DJ: sprint-ULTRACODE-AUDIT-FIXALL-qa.md STEP qa-S20.",
+        "qa_verified_at": "2026-07-29T00:22:22Z",
+        "qa_verified_by": "qa"
       }
     ],
     "head": {
@@ -16462,40 +16493,52 @@
         "entered_review_at": "2026-07-29T00:13:32Z",
         "commit": "17a906143",
         "dev_mcp_server_review_note": "dev-mcp-server COMPLETE (session 64c7c677-0f0f-4cee-a3ce-dba79d70b7ae, commit 17a906143): added intraday5mCompactorJob to schedulerWatchdogJob.ts's WATCHDOG_MANIFEST (cadenceMs=300_000, thresholdMultiplier=3, action='self-heal'), mirroring ohlcv-daily-aggregator/reputationComputeJob/ta-ohlcv-backfill. selfHealFn wired in schedulerJobTable.ts's liveManifest (same composition-root DDD pattern as the 3 existing self-heal jobs, calling jobRunRepo.wrapRun('intraday5mCompactorJob', runIntraday5mCompactor)). CANONICAL_WATCHDOG_JOB_NAMES updated in lockstep for WD-10 manifest-integrity guard. Also added the missing CN-1 tier-1 STATIC_JOB_NAME_MAP pair (cronStatusCompute.ts, intraday5mCompactor -> intraday5mCompactorJob) so /api/cron-status dashboard resolution does not fall through to the cache-unsafe tier-2/3 path -- live-verified end-to-end against a real server boot (PORT=3097, cwd=project root matching prod): job row present, job_name_db=intraday5mCompactorJob, correctly classified STALE against the dev DB's real last-run age.\n\nFixed 3 pre-existing hardcoded manifest-size invariants (25 -> 26) across FIX-CRON-WATCHDOG-COVERAGE-2026-07-22.test.ts / cronStatusHandler.test.ts / cronStatusCompute.test.ts -- an expected, direct consequence of the new entry (confirmed RED before the fix, GREEN after), not scope creep; each prior task's own historical delta claim (e.g. FIX-CRON-WATCHDOG-COVERAGE-2026-07-22's 16->25 AC-4) preserved via an explanatory note rather than rewritten. New dedicated test file ALPHA-S2-SUB5-WATCHDOG-STRETCH.test.ts (4 tests) proves manifest-entry shape, canonical registration, and stale/healthy alert behavior at the 3x/5min threshold.\n\nEvidence: targeted suites (ARCH-CRON-watchdog, FIX-CRON-WATCHDOG-COVERAGE-2026-07-22, ALPHA-S2-SUB5-WATCHDOG-STRETCH, cronStatusHandler, cronStatusCompute, FIX-CRON-SSCCHECKERJOB-DEAD-87D-classfix-registry-invariant, ALPHA-S2-intraday-5m-compactor, ALPHA-S2-FF-intraday-5m-compactor) 90/90 pass, 0 fail. tsc --noEmit clean. gen-project-stats --dry-run: toolCount=184/cronJobCount=88 unchanged (manifest-only change, no new tool/cron registered). Full bun test (608s, 1235 files): 14855 pass/40 skip/57 fail/1 error -- within the standing FIX-MCP-SUITE-HEALTH-BASELINE order-dependent band (56-59 across recent dev-mcp-server cycles this same sprint); the 2 fail details visible in the captured tail are both from unrelated src/_deprecated/1302-technical-indicators.test.ts. Live boot (PORT=3097, cwd=project root): /health toolCount=184, /api/bctc-inspect 200, /dashboards/news-fetch/ 200, /api/cron-status 200 (previously 503 only when boot cwd was wrongly apps/mcp-server -- a pre-existing local-dev-only cwd quirk documented in cronStatusHandler.test.ts's own header comment, unrelated to this change; confirmed by re-testing with the correct project-root cwd matching docker production).\n\nDoc-review: usecases.md (CN-1 tier-1 pair count 16->26) + testing.md (WATCHDOG_MANIFEST job counts + test counts corrected to current live values) -- both directly tied to the application-layer file (cronStatusCompute.ts) this task modified.\n\nNOT pushed by this agent per PUSH-AUTONOMY-1 (chain-mutex-holding session pushes). Decision journal: sprint-<TBD> per decision-journal skill (see notebook entry same session). Ready for qa."
-      }
-    ],
-    "qa": [
+      },
       {
-        "id": "UC-GCP-P7",
+        "id": "FIX-NOTEBOOK-LINECAP-SWEEP-BYTE-BLIND-BACKSTOP",
         "type": "FIX",
-        "title": "Rescope /commit skill: per-commit mutex-bound, main-only, convention-aligned",
-        "status": "QA",
+        "title": "notebook-linecap-sweep.sh (the ONLY cadence backstop for notebook caps) pre-filters on lines only with a 2nd hardcoded cap=200 — 9 of the 10 live over-byte-cap notebooks are line-UNDER, so they can never reach the just-shipped byte-axis pruner through the cron path (alert-commander.md 119233B = 9.9x cap at only 190L)",
+        "status": "REVIEW",
         "priority": "P1",
         "size": "S",
         "zone": "cross-service/",
-        "sprint": "ULTRACODE-AUDIT-FIXALL",
-        "source": "ultracode-audit-2026-07-12",
-        "verdict": "RESCOPE",
-        "detail_ref": "docs/architecture-briefs/2026-07-12-ultracode-workflow-improvement-audit.md#git-ci-publish-P7",
-        "note": "SCOPE=verifier Rescope note. Delete Step4 merge-and-clean-branch (no-branches invariant); wrap EACH per-category add->commit->push in its own commit-mutex critical section (TTL sized for seconds); add a stranded-peer-file age guard (skip peer-zone files mtime<2h); replace hardcoded Co-Authored-By model name with a pointer to commit-convention; reduce .claude/commands/commit.md to a one-line pointer so /commit has ONE definition.",
-        "created_at": "2026-07-13T19:31:11Z",
-        "created_by": "po",
-        "priority_bumped_from": "P2",
-        "priority_bumped_at": "2026-07-17T04:54:03Z",
-        "priority_bumped_by": "po/uc-audit-priority-bump 2026-07-17",
-        "promoted_at": "2026-07-23T07:49:33Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
-        "updated_at": "2026-07-29T00:18:30Z",
-        "claimed_at": "2026-07-29T00:18:30Z",
-        "claimed_by": "dev-team (review-lane qa-drain)",
+        "owner": "developer",
         "next_agent": "qa",
-        "branch": null,
-        "completed_at": "2026-07-23T07:56:21Z",
-        "completed_by": "developer",
-        "status_note": "Rewrote .claude/skills/commit/SKILL.md (deleted Step 4 merge/branch-clean; per-category commit-mutex:main acquire/critical-section/release replacing whole-run duplicated push shell, pointing at commit-mutex Step 3d-PUSH as SSOT; added Step 1 stranded-peer-file age guard citing commit-boundary RULE 2 zone table + mtime<2h; replaced hardcoded Co-Authored-By line with pointer to commit-convention.md) + reduced .claude/commands/commit.md to a one-line pointer so /commit has exactly one definition. Commits a5202512c (fix, Task/AC trailers) + 2cd532595 (memory), both pushed to main. DJ entry: sprint-ULTRACODE-AUDIT-FIXALL-developer.md STEP developer-S22. Direct-commit branch:null — qa verify-committed-fix mode applies (docs/agents/qa/flow/main.md Direct-Commit Verify)."
+        "plan_only": false,
+        "supervised": false,
+        "created_at": "2026-07-29T00:02:56Z",
+        "created_by": "po (triage-20260729T0002 dev-team tick signals 1-3)",
+        "root_cause": "b42f3fa3a (FIX-NOTEBOOK-PRUNER-LINE-ONLY-SETPOINT-BYTE-CAP-NEVER-CONVERGES, REVIEW/qa) gave the byte cap an ACTUATOR inside scripts/agents-flow/notebook-auto-prune.sh. But that hook only fires on the PostToolUse Write|Edit matcher. The ONLY write-path-independent backstop is scripts/agents-flow/notebook-linecap-sweep.sh (code-janitor 6h cron), and it is still byte-blind on BOTH ends: (1) pre-filter L49-52 is a wc -l line_count followed by [ line_count -le 200 ] && continue — no wc -c, so a byte-over/line-under notebook is skipped before it is ever handed to the fixed hook; (2) the post-prune success predicate L63-64 is new_count -lt line_count (lines only), so even a successful byte-only prune is misreported as NO-CHANGE/safe-fail. It also hardcodes cap=200 twice (L38 echo, L52 test) instead of reading docs/data/file-size-caps.json — the exact second-hardcoded-copy defect the hook fix explicitly avoided. The developer who shipped the hook flagged this in their own review_note as a FOLLOW-UP FINDING and asked PO to decide; this row is that decision.",
+        "impact": "RAW-verified 2026-07-29T00:00Z: 10 of 46 docs/agent-memory/notebooks/*.md are over the 12000B cap. Only agent-father.md (343L) is also line-over and therefore reachable by the cron. The other 9 are line-under and permanently unreachable via the cadence path: alert-commander.md 119233B/190L, digest-predict.md 45834B/174L, dev-team.md 23204B/85L, pm.md 17670B/195L, dev-vps-crawls.md 15997B/168L, dev-rag-service.md 13912B/185L, fixer.md 13690B/185L, dev-mainserver-crawls.md 13044B/144L, ba.md 12067B/51L. alert-commander.md is the very file the hook fix was motivated by and it is still 9.9x over. Context-bloat breach signals keep firing with no actuator that can reach the condition.",
+        "acceptance": [
+          "AC1: notebook-linecap-sweep.sh selects a file when EITHER lines > LINE_CAP OR bytes > BYTE_CAP (same dual-axis predicate as notebook-auto-prune.sh).",
+          "AC2: LINE_CAP is read at runtime from docs/data/file-size-caps.json (pattern docs/agent-memory/notebooks/*.md) and BYTE_CAP derived as LINE_CAP*60 — no hardcoded 200 or 12000 literal anywhere in the sweep (removes both existing cap=200 literals at L38 and L52).",
+          "AC3: the PRUNED/NO-CHANGE post-prune predicate compares BOTH axes, so a byte-only reduction is reported PRUNED, not NO-CHANGE.",
+          "AC4: RAW live verification (not self-report): after one sweep run, re-measure all 46 notebooks — the over-cap count must drop from 10 and digest-predict.md must be <=12000B. Any file that legitimately safe-fails (single-section overage) must emit notebook_single_section_overage_breach rather than silently pass.",
+          "AC5: a regression test case in the sweep's test harness covers a byte-over/line-under fixture being SELECTED and PRUNED."
+        ],
+        "files": [
+          "scripts/agents-flow/notebook-linecap-sweep.sh",
+          "scripts/agents-flow/notebook-linecap-sweep.test.sh",
+          "docs/agents/code-janitor/flow/main.md"
+        ],
+        "scope_out": "Do NOT modify scripts/agents-flow/notebook-auto-prune.sh — it already has the correct dual-axis logic and is under an open qa review (FIX-NOTEBOOK-PRUNER-LINE-ONLY-SETPOINT-BYTE-CAP-NEVER-CONVERGES). This row changes the SWEEP's selection + reporting only, and keeps delegating the actual prune to the hook.",
+        "verification_gate": "over-cap notebook count (wc -c over docs/agent-memory/notebooks/*.md against the 12000B cap) drops below 10 after a single sweep run, measured raw, not self-reported.",
+        "related": [
+          "FIX-NOTEBOOK-PRUNER-LINE-ONLY-SETPOINT-BYTE-CAP-NEVER-CONVERGES",
+          "FIX-ALERT-COMMANDER-NOTEBOOK-SINGLE-BLOB-UNPRUNABLE",
+          "FIX-NOTEBOOK-AUTOPRUNE-REGEX-HEADING-MISMATCH"
+        ],
+        "note": "PO answer to the context_bloat_breach signal on docs/agent-memory/notebooks/main.md (2026-07-28T23:42:03Z, 204L/46788B). The breach itself SELF-RESOLVED (live re-measure 87L/9334B) so no row was minted for main.md. The router's follow-up question — is the hook working as a durable fix — is answered NO by this row: the write-path hook is real, but the cadence backstop behind it cannot see the byte axis, so the fix is not durable for any notebook whose owning agent stops writing. NOTE for the implementer: FIX-ALERT-COMMANDER-NOTEBOOK-SINGLE-BLOB-UNPRUNABLE (backlog, P2) says alert-commander.md is ONE 119KB '## This session' section — it will hit the single-section safe-fail path and stay over cap even after this fix; that is expected and is that row's problem, not this one's. AC4 deliberately does NOT require alert-commander to converge if it safe-fails honestly.",
+        "updated_at": "2026-07-29T00:23:12Z",
+        "origin_signal_id": "context-bloat-docs-agent-memory-notebooks-main-md-2026-07-28T234203Z",
+        "updated_by": "developer",
+        "started_at": "2026-07-29T00:14:40Z",
+        "commit": "7fd919c15 (code fix), b10870bd4 (real notebook prune)",
+        "status_note": "IMPLEMENTATION: mirrored notebook-auto-prune.sh's exact LINE_CAP/BYTE_CAP derivation (read at runtime from docs/data/file-size-caps.json pattern docs/agent-memory/notebooks/*.md, BYTE_CAP=LINE_CAP*60, 200 fallback only if SSOT unreadable) into notebook-linecap-sweep.sh — removed both hardcoded 200 literals (start-banner echo L38, selection test L52). Selection predicate now: continue (skip) only if line_count<=LINE_CAP AND byte_count<=BYTE_CAP (was line_count<=200 only). Success predicate now: PRUNED if new_line_count<line_count OR new_byte_count<byte_count (was line-only), so a byte-only reduction on a line-under file is correctly reported PRUNED not NO-CHANGE. AC1/AC2/AC3 verified by code inspection + test. TDD: RED first — added AC5 fixture (127L/12255B byte-over/line-under, well under 200L cap but over 12000B byte cap) to notebook-linecap-sweep.test.sh, confirmed 4 new assertions FAIL against pre-fix script (fixture invisible to OVER-CAP path entirely, matching the row's stated defect exactly), then GREEN post-fix: 11/11 assertions pass (was 7/11). Regression: notebook-auto-prune.test.sh 4/4, test-notebook-auto-prune.sh 5/5, context-bloat-backstop.test.sh 4/4 — all unaffected (scope_out honored, notebook-auto-prune.sh itself untouched). shellcheck clean on both files (one SC2329 info-only false-positive on the test's cleanup() trap function, not a real issue). AC4 RAW LIVE VERIFICATION (not self-report): ran the fixed sweep for real against docs/agent-memory/notebooks/ (no env override, default dir/pattern) — before: 10/46 notebooks over 12000B (wc -c, matches row's stated baseline exactly: agent-father, alert-commander, ba, dev-mainserver-crawls, dev-rag-service, dev-team, dev-vps-crawls, digest-predict, fixer, pm). After one sweep run: over_cap dropped to 4/46 (agent-father, alert-commander, dev-rag-service, digest-predict) — verification_gate ('drops below 10') SATISFIED. 6 notebooks genuinely pruned (dev-mainserver-crawls 144L/13044B->128L/11675B, dev-vps-crawls 168L/15997B->98L/10743B, ba 51L/12067B->43L/10192B, dev-team 85L/23204B->44L/10980B, fixer 185L/13690B->163L/11744B, pm 195L/17670B->139L/11329B), committed separately (b10870bd4, pure oldest-section deletions, delegated to the unmodified notebook-auto-prune.sh drop-oldest logic). HONEST FINDING, NOT SILENTLY PASSED: digest-predict.md (named explicitly in AC4's own wording as 'must be <=12000B') did NOT converge. RAW-traced root cause: it has exactly 2 top-level '## ' sections (8605B preamble+Known-patterns, 37279B single Cycle-digest section); neither heading matches the drop-oldest algorithm's date-regex so both tie on the sentinel max-key and the FIRST-in-file section drops (Known patterns, 8605B) — leaving ONLY the 37279B Cycle section, which alone is still >>12000B; the loop's OWN next-iteration check sees SECTION_COUNT<=1 and hits notebook-auto-prune.sh's existing single-section safe-fail, which exit(0)s WITHOUT ever writing FILE_CONTENT back to disk — so the file is byte-IDENTICAL pre/post (verified), and the correct notebook_single_section_overage_breach signal WAS emitted (docs/signals/notebook-single-section-breach-...digest-predict...json) satisfying AC4's own fallback clause ('any file that legitimately safe-fails ... must emit signal rather than silently pass'). This is structurally the SAME unprunable-blob class as alert-commander.md (tracked separately, FIX-ALERT-COMMANDER-NOTEBOOK-SINGLE-BLOB-UNPRUNABLE, backlog P2) — just reached after one intermediate drop instead of zero. Root-causing/fixing this would require changing notebook-auto-prune.sh's section-parsing/drop-oldest algorithm, which is explicitly this row's scope_out ('Do NOT modify notebook-auto-prune.sh'). Flagging for PO/QA: recommend a small follow-up row (mirror of FIX-ALERT-COMMANDER-NOTEBOOK-SINGLE-BLOB-UNPRUNABLE, scoped to digest-predict.md) rather than reopening this one. agent-father.md (0 sections, pre-existing heading-regex mismatch, already tracked as FIX-NOTEBOOK-AUTOPRUNE-REGEX-HEADING-MISMATCH) and dev-rag-service.md (1 section) also remain over-cap, both legitimate single-section/unparseable safe-fails with correct signals, neither named in AC4. DOCS: docs/agents/code-janitor/flow/main.md updated (dual-axis wording, was line-only). docs/WORK.md appended. Graphify: SKIPPED — this subagent has no Skill-tool access to invoke /graphify interactively (graphify-out/ is a heavy multi-step LLM-extraction pipeline, not a single CLI call); consistent with actual repo practice (graphify-out/graph.json last touched e8de3c8b4, not run per dev task in the recent commit stream either). Decision journal: docs/agent-memory/decisions/sprint-FIX-NOTEBOOK-LINECAP-SWEEP-BYTE-BLIND-BACKSTOP-developer.md (4 STEPs)."
       }
     ],
+    "qa": [],
     "_closed_signals_20260614": {
       "_by": "po-S50",
       "_at": "2026-06-14T14:45:14Z",
@@ -16512,49 +16555,9 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-29T00:14:40Z",
+    "last_triaged_at": "2026-07-29T00:23:11Z",
     "last_triaged_by": "developer",
     "in_progress": [
-      {
-        "id": "FIX-NOTEBOOK-LINECAP-SWEEP-BYTE-BLIND-BACKSTOP",
-        "type": "FIX",
-        "title": "notebook-linecap-sweep.sh (the ONLY cadence backstop for notebook caps) pre-filters on lines only with a 2nd hardcoded cap=200 — 9 of the 10 live over-byte-cap notebooks are line-UNDER, so they can never reach the just-shipped byte-axis pruner through the cron path (alert-commander.md 119233B = 9.9x cap at only 190L)",
-        "status": "IN_PROGRESS",
-        "priority": "P1",
-        "size": "S",
-        "zone": "cross-service/",
-        "owner": "developer",
-        "next_agent": "dev-team",
-        "plan_only": false,
-        "supervised": false,
-        "created_at": "2026-07-29T00:02:56Z",
-        "created_by": "po (triage-20260729T0002 dev-team tick signals 1-3)",
-        "root_cause": "b42f3fa3a (FIX-NOTEBOOK-PRUNER-LINE-ONLY-SETPOINT-BYTE-CAP-NEVER-CONVERGES, REVIEW/qa) gave the byte cap an ACTUATOR inside scripts/agents-flow/notebook-auto-prune.sh. But that hook only fires on the PostToolUse Write|Edit matcher. The ONLY write-path-independent backstop is scripts/agents-flow/notebook-linecap-sweep.sh (code-janitor 6h cron), and it is still byte-blind on BOTH ends: (1) pre-filter L49-52 is a wc -l line_count followed by [ line_count -le 200 ] && continue — no wc -c, so a byte-over/line-under notebook is skipped before it is ever handed to the fixed hook; (2) the post-prune success predicate L63-64 is new_count -lt line_count (lines only), so even a successful byte-only prune is misreported as NO-CHANGE/safe-fail. It also hardcodes cap=200 twice (L38 echo, L52 test) instead of reading docs/data/file-size-caps.json — the exact second-hardcoded-copy defect the hook fix explicitly avoided. The developer who shipped the hook flagged this in their own review_note as a FOLLOW-UP FINDING and asked PO to decide; this row is that decision.",
-        "impact": "RAW-verified 2026-07-29T00:00Z: 10 of 46 docs/agent-memory/notebooks/*.md are over the 12000B cap. Only agent-father.md (343L) is also line-over and therefore reachable by the cron. The other 9 are line-under and permanently unreachable via the cadence path: alert-commander.md 119233B/190L, digest-predict.md 45834B/174L, dev-team.md 23204B/85L, pm.md 17670B/195L, dev-vps-crawls.md 15997B/168L, dev-rag-service.md 13912B/185L, fixer.md 13690B/185L, dev-mainserver-crawls.md 13044B/144L, ba.md 12067B/51L. alert-commander.md is the very file the hook fix was motivated by and it is still 9.9x over. Context-bloat breach signals keep firing with no actuator that can reach the condition.",
-        "acceptance": [
-          "AC1: notebook-linecap-sweep.sh selects a file when EITHER lines > LINE_CAP OR bytes > BYTE_CAP (same dual-axis predicate as notebook-auto-prune.sh).",
-          "AC2: LINE_CAP is read at runtime from docs/data/file-size-caps.json (pattern docs/agent-memory/notebooks/*.md) and BYTE_CAP derived as LINE_CAP*60 — no hardcoded 200 or 12000 literal anywhere in the sweep (removes both existing cap=200 literals at L38 and L52).",
-          "AC3: the PRUNED/NO-CHANGE post-prune predicate compares BOTH axes, so a byte-only reduction is reported PRUNED, not NO-CHANGE.",
-          "AC4: RAW live verification (not self-report): after one sweep run, re-measure all 46 notebooks — the over-cap count must drop from 10 and digest-predict.md must be <=12000B. Any file that legitimately safe-fails (single-section overage) must emit notebook_single_section_overage_breach rather than silently pass.",
-          "AC5: a regression test case in the sweep's test harness covers a byte-over/line-under fixture being SELECTED and PRUNED."
-        ],
-        "files": [
-          "scripts/agents-flow/notebook-linecap-sweep.sh",
-          "docs/data/file-size-caps.json"
-        ],
-        "scope_out": "Do NOT modify scripts/agents-flow/notebook-auto-prune.sh — it already has the correct dual-axis logic and is under an open qa review (FIX-NOTEBOOK-PRUNER-LINE-ONLY-SETPOINT-BYTE-CAP-NEVER-CONVERGES). This row changes the SWEEP's selection + reporting only, and keeps delegating the actual prune to the hook.",
-        "verification_gate": "over-cap notebook count (wc -c over docs/agent-memory/notebooks/*.md against the 12000B cap) drops below 10 after a single sweep run, measured raw, not self-reported.",
-        "related": [
-          "FIX-NOTEBOOK-PRUNER-LINE-ONLY-SETPOINT-BYTE-CAP-NEVER-CONVERGES",
-          "FIX-ALERT-COMMANDER-NOTEBOOK-SINGLE-BLOB-UNPRUNABLE",
-          "FIX-NOTEBOOK-AUTOPRUNE-REGEX-HEADING-MISMATCH"
-        ],
-        "note": "PO answer to the context_bloat_breach signal on docs/agent-memory/notebooks/main.md (2026-07-28T23:42:03Z, 204L/46788B). The breach itself SELF-RESOLVED (live re-measure 87L/9334B) so no row was minted for main.md. The router's follow-up question — is the hook working as a durable fix — is answered NO by this row: the write-path hook is real, but the cadence backstop behind it cannot see the byte axis, so the fix is not durable for any notebook whose owning agent stops writing. NOTE for the implementer: FIX-ALERT-COMMANDER-NOTEBOOK-SINGLE-BLOB-UNPRUNABLE (backlog, P2) says alert-commander.md is ONE 119KB '## This session' section — it will hit the single-section safe-fail path and stay over cap even after this fix; that is expected and is that row's problem, not this one's. AC4 deliberately does NOT require alert-commander to converge if it safe-fails honestly.",
-        "updated_at": "2026-07-29T00:14:41Z",
-        "origin_signal_id": "context-bloat-docs-agent-memory-notebooks-main-md-2026-07-28T234203Z",
-        "updated_by": "developer",
-        "started_at": "2026-07-29T00:14:40Z"
-      },
       {
         "id": "FIX-MOCKGUARD-SCOPE-EXCLUDE-TESTGO",
         "size": "S",
