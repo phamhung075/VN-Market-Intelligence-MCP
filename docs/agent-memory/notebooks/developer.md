@@ -1,20 +1,6 @@
 # Developer — Notebook
 
-**Last updated:** 2026-07-29 | **Cycle:** FIX-ORCHSTATE-CONSERVATION-GUARD-QA-LANE-BLIND
-
-## Session 2026-07-29 — FIX-DEVTEAM-EPIC-WRAPPER-AUTOCLOSE-SWEEP — REVIEW
-
-**Task:** BOUNDED-1 auto-pickup, `docs/agents/dev-team/flow/` (shared SSOT flow-doc/tooling, no `apps/<service>/` zone match — generic developer). Router-diagnosed gap: once pm decomposes an epic-wrapper backlog row and `.head` resets to idle, nothing ever re-visits it once its children[] all finish — `BACKLOG-HYGIENE-VERIFY-PRUNE-SWEEP` sat open for hours post-2026-07-10 despite all 11 children reaching `DONE_VERIFIED`, caught only by chance during manual inspection.
-
-**Actions taken:** New `scripts/devteam-wrapper-autoclose.jq` (single-script sweep — candidates already live in `ready[]`/`in_progress[]`, no promote half needed, mirrors `devteam-backlog-claim-ready-lane-consumer.jq`'s own shape) + 4 new shared predicates in `scripts/lib/devteam-eligibility.jq` (`all_children_terminal`, `is_terminal_task_status`, `normalize_task_status`, `has_hold_reason`): sweeps both source lanes for `is_epic_wrapper` rows whose every child resolves (hot lane OR cold-archived `docs/data/orch/archive/YYYY-MM.json`, case/separator-normalized) to orchStateSchema.ts's TERMINAL_SET, not `hold_reason`-held, into `review[]` (status REVIEW, `next_agent` = resolved owner, `.head`(b)-conditional sync per CANONICAL:SSOT-STATUSFLIP-LANEMOVE). New Step 4.4 in `post-cycle.md` (after 4.3, before 4.5) invokes it then dispatcher-wraps a per-row `task:<id>` claim + `Agent()` spawn of the resolved next_agent (usually pm) — a real auto-dispatch, not just a lane move (signal_queue was considered and rejected — its `to` vocabulary is cross-team, not an intra-dev-team dispatch channel). 2 new bullets in `main.md` § Reusable Scripts; both files' size-justification headers updated.
-
-**Verification:** New `scripts/audits/devteam-wrapper-autoclose-verify.sh` — 10/10 synthetic ACs PASS (all-terminal hot+cold sweep, non-terminal-child block, case/separator-drift normalization, missing-child conservative-skip, hold_reason guard, non-wrapper no-op passthrough, `.head` sync positive+negative, `in_progress[]` source lane, idempotency). Caught + fixed a real jq `.`-rescoping bug (`$arr | index(.key)` evaluates `.key` against `$arr` itself, not the piped to_entries object) via a minimal `jq -n` repro before it reached the fixture layer. Scratch-copy end-to-end run against a live `orch-state.json` copy + `scripts/orch-state-validate.sh` (Zod) PASS; unmodified live-data dry run confirmed a true no-op today (zero wrapper rows currently in `ready[]`/`in_progress[]`). Re-ran the 3 pre-existing `devteam-eligibility.jq`-dependent regression suites (`devteam-dispatch-gate-satisfiability.sh`, `devteam-bounded1-detail-disposition-gate-verify.sh`, `devteam-bounded1-prose-sequencing-gate-verify.sh`) — all rc=0, zero regressions from the shared-lib append.
-
-**Board:** `task_board.in_progress[FIX-DEVTEAM-EPIC-WRAPPER-AUTOCLOSE-SWEEP]` → `review` (`next_agent: qa`), `.head` synced to idle, via `orch-apply.sh`.
-
-**Simplicity gate:** clean — 1 new jq script + 1 new verifier + 4 append-only predicates on the existing shared lib, no new abstraction layer, no speculative generality (Q1-Q4 all NO).
-
-Zone health: no drift detected.
+**Last updated:** 2026-07-29 | **Cycle:** FACTORY-GUARD-CI-SIZELINT-IMPL
 
 ## Session 2026-07-29 — ALPHA-S3-DIVERGENCE-SCREEN-V1 — BLOCKED (routed to architect)
 
@@ -37,5 +23,19 @@ Zone health: no drift detected.
 **Board:** `task_board.in_progress[FIX-ORCHSTATE-CONSERVATION-GUARD-QA-LANE-BLIND]` → `review` (`next_agent: qa`), stale `promoted_at/promoted_by/promotion_note/claimed_at/claimed_by` markers stripped, `.head` reset to idle (`next_agent: router`), all in the SAME `orch-apply.sh` write (conservation 701→701, exit 0).
 
 **Simplicity gate:** clean — 1 array-literal element + 1 header-comment sync + test extension, no refactor beyond the stated scope (Q1-Q4 all NO).
+
+Zone health: no drift detected.
+
+## Session 2026-07-29 — FACTORY-GUARD-CI-SIZELINT-IMPL — REVIEW
+
+**Task:** dev-team dispatch (`cross-service/`, epic FACTORY-MAINTAINABILITY-2026-06), build-vs-plan child of an architect brief already closed to review. Deliver the CI-time code-plane size-lint sibling to `context-bloat-backstop.sh` (docs-only, session-time hook) per brief §2/§3.
+
+**Actions taken:** New `scripts/audits/size-lint-justification.sh` (`--check` CI exit 0/1, `--update` regen), `docs/data/size-lint-baseline.json` (generated), `size-lint` job in `ci.yml` (checkout-only), CANONICAL pointer in `dev-standards.md`. Live-verify catch: many real headers declare `~NNNL` (approximate), not bare `NNNL` — widened the number-extraction regex to accept the optional `~` after a dry-run false-failed ~10 legitimately-justified files. Re-verified live offender count: 733 (brief, 2026-07-24) → 666 (today) — expected drift, pre-flagged in the board note.
+
+**Verification:** New `scripts/audits/size-lint-justification.test.sh` 6/6 PASS — all 4 DoD cases (live `--check` exit 0; synthetic new-offender fail; synthetic baseline-grown-past-tolerance fail; shrunk + justified files both dropped by `--update`) plus 2 bonus controls. Fixtures scoped to a disposable untracked dir via new `SIZE_LINT_INCLUDE_OVERRIDE`/`SIZE_LINT_BASELINE_OVERRIDE` env seam (mirrors `gen-tools-index.sh`'s own `*_OVERRIDE` idiom) — real repo/baseline never touched. `ci.yml` YAML-validated.
+
+**Board:** `task_board.in_progress[FACTORY-GUARD-CI-SIZELINT-IMPL]` → `review` (`next_agent: qa`), stale lane markers stripped, `.head` reset to idle, all in the SAME `orch-apply.sh` write.
+
+**Simplicity gate:** PASS — Q1 test-only override seam justified (no other way to fixture-test without polluting the real repo, matches established precedent), Q2 no single-use abstractions (both helper fns have 2 call sites), Q3 clean, Q4 comment density matches sibling CANONICAL scripts' own precedent.
 
 Zone health: no drift detected.
