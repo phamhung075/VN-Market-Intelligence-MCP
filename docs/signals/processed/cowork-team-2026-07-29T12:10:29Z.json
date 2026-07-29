@@ -1,0 +1,69 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-07-29T12:10:29Z",
+    "matched_slots": [
+      "news-scout-offhours",
+      "market-watcher-offhours",
+      "alert-commander-critical"
+    ],
+    "won_slots": [
+      "news-scout-offhours",
+      "market-watcher-offhours",
+      "alert-commander-critical"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/news-scout/flow/main.md",
+      "docs/agents/market-watcher/flow/main.md",
+      "docs/agents/alert-commander/flow/main.md"
+    ],
+    "silent": false,
+    "drift_min": 5,
+    "errors": [],
+    "pressure_mode": "adaptive",
+    "calendar_status": "unknown",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "chef_mutex_applied": false,
+    "due_reasons": {
+      "news-scout-offhours": "cadence",
+      "market-watcher-offhours": "cadence",
+      "alert-commander-critical": "cadence"
+    },
+    "cadence_minutes": {
+      "news-scout-offhours": "240",
+      "market-watcher-offhours": "240",
+      "alert-commander-critical": "240"
+    },
+    "last_fired_timestamp": "2026-07-29T12:10:17Z",
+    "last_fired_slots": [
+      "news-scout-offhours",
+      "market-watcher-offhours",
+      "alert-commander-critical"
+    ],
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "12:00",
+    "leader_lock": "acquired",
+    "dev_head": "unknown",
+    "devq": 5,
+    "signal_backlog": 14,
+    "max_parallel": 2,
+    "degraded": true,
+    "note": "3 offhours/critical cadence slots (240min) matched at 12:00Z tick, drift 5min. MAX_PARALLEL=2 (degraded, container_vm_headroom_mb still absent from pressure-state.json). Batch1 (news-scout-offhours, market-watcher-offhours) spawned first; both still mid-flow (real MCP calls confirmed, no off-flow markers) after the 120s combined inter-batch wait budget expired -- proceeded to batch2 (alert-commander-critical, already at degraded cap) per timeout fallback. All 3 last_fired stamped on spawn per AC-P1-7-1."
+  },
+  "priority": "low",
+  "createdAt": "2026-07-29T12:10:29Z",
+  "_processed": {
+    "fingerprint": "e29422e620d851abdd3345b3927e53c910e8266f2577ae628fd4d88b73bae572",
+    "processedAt": "2026-07-29T12:16:09Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
