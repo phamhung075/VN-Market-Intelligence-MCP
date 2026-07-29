@@ -1,0 +1,55 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-07-29T16:37:40Z",
+    "matched_slots": [
+      "refine-bctc-slot-4"
+    ],
+    "won_slots": [
+      "refine-bctc-slot-4"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/refine_bctc_md/flow/main.md"
+    ],
+    "silent": false,
+    "drift_min": 5,
+    "errors": [],
+    "pressure_mode": "adaptive",
+    "calendar_status": "unknown",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "chef_mutex_applied": false,
+    "due_reasons": {
+      "refine-bctc-slot-4": "cron"
+    },
+    "cadence_minutes": {
+      "refine-bctc-slot-4": null
+    },
+    "last_fired_timestamp": "2026-07-29T16:37:30Z",
+    "last_fired_slots": [
+      "refine-bctc-slot-4"
+    ],
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "16:30",
+    "leader_lock": "acquired",
+    "dev_head": "unknown",
+    "devq": 5,
+    "signal_backlog": 18,
+    "note": "Single-slot tick, no collision, no schedule anomalies this fire. pressure-state.json host_headroom_mb (still not renamed to container_vm_headroom_mb per FIX-PRESSURE-HOST-HEADROOM-WRONG-MACHINE-WRONG-QUANTITY) remains live-broken, already flagged in docs/signals/cowork-signal-2026-07-29T0813Z-pressure-headroom-field-stale-container.json."
+  },
+  "priority": "low",
+  "createdAt": "2026-07-29T16:37:40Z",
+  "_processed": {
+    "fingerprint": "27d32e06f1056b4ff5dcb5edd24873824bf0ac722094253b82bde23fe6657a9f",
+    "processedAt": "2026-07-29T16:45:30Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
