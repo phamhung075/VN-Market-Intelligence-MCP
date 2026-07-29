@@ -1,6 +1,15 @@
 # Dev Team — Sprint Boundary Notebook
 
-**Written:** 2026-07-29T09:47Z
+**Written:** 2026-07-29T10:10Z
+
+## cycle-20260729T1008Z-verify — RAW-verified dev-mcp-server's TASK_2006 completion; 7th CONSECUTIVE clean head-sync + 4th CONSECUTIVE clean row-level next_agent=qa
+
+- **BGFAN-1 RAW-verification, all claims confirmed real**: commit `7436f5256472` real, on HEAD. Diff to `schema-market-data.ts:120-152` + `ohlcvForeignFlowStore.ts:48-58` matches claim exactly — pure comment-only additions (JS block comment + inline SQL `--` comments + JSDoc paragraph), zero code/logic line touched. Exact AC wording present verbatim: "Frozen historical-only columns as of 2026-07-10 (ARCH-DAILY-FOREIGN-FLOW-TABLE). New foreign-flow data written to daily_foreign_flow table. Legacy columns retained for backward compatibility; do NOT write new data here."
+- **tsc clean independently re-run**: `bun tsc --noEmit` → exit 0, matches self-report.
+- **Targeted suite independently re-run**: found 4 `daily-foreign-flow-*.test.ts` files (self-report said "3 files owning this data plane" — minor descriptive miscount, not a correctness issue), ran all 4 → **33 pass / 0 fail** (exact match to claim). Full non-targeted suite claim (14904 pass/54 fail, pre-existing baseline band) not independently re-run this pass — diff is comment-only across 2 files with zero logic delta, ruling out regression risk from this change; stopped a redundant background full-suite run rather than burn ~9min re-confirming what the diff already implies.
+- **Board lane-move genuine**: row `status:REVIEW`, `branch:null`. **`next_agent:"qa"` held correctly on the row itself — 4th consecutive clean pass** ([[feedback_review_flip_next_agent_qa_check_missing_strands_row]] mitigation continues to hold). **Head-sync MUST clause held a 7th CONSECUTIVE time**: `.head={status:idle, active_task_id:null, next_agent:router}`.
+- **Commit-mutex note carried forward**: dev-mcp-server's sub-agent invocation lacked the `mcp__gateway__call_tool` grant (structural tool-gap, flagged explicitly not silently omitted) and committed directly per its zone's own RUN-SOLO/INV-GATEWAY-1 convention — pre-commit staged-diff check + post-commit residual-paths check both run, no sweep. Worth a PO/architect look at whether dev-* zone RUN-SOLO commits should be a documented standing exception to the commit-mutex protocol.
+- No discrepancies found — clean verify, nothing to patch. Review-lane QA-Drain remains starved (139+ rows), unchanged, still gated behind TASK-DEVTEAM-IDLE-CHAIN-2-MAIN-FLOW.
 
 ## cycle-20260729T0937Z — BOUNDED-1 claimed TASK_2006 (SUBTASK-DAILY-FF-7 follow-on), dispatched to dev-mcp-server (clean Tier-1 zone match)
 
@@ -15,10 +24,3 @@
 - **Test claim independently re-run, not just trusted**: container has no bind mount (code baked into image); agent's `docker cp` of the fixed file was still live in the running container, so I ran the exact repro commands myself. `file+ocr_backends` → **47 passed** (claimed 47, match). `file+page_rasterizer` → **32 passed** (claimed 32, match). Full non-slow suite → **1033 passed / 5 skipped / 7 deselected / 0 failed** (exact match to self-report).
 - **Board lane-move genuine**: row `status:REVIEW`, `branch:null`. **Head-sync MUST clause held a 6th CONSECUTIVE time**: `.head={status:idle, active_task_id:null, next_agent:router}`. **`next_agent:"qa"` held correctly on the row itself, 3rd consecutive clean pass** ([[feedback_review_flip_next_agent_qa_check_missing_strands_row]] mitigation continues to hold).
 - No discrepancies found — clean verify, nothing to patch. Review-lane QA-Drain remains starved (139+ rows), unchanged.
-
-## cycle-20260729T0907Z — BOUNDED-1 claimed FIX-PDF-EXTRACTOR-TEST-SYS-MODULES-LEAK, dispatched to dev-pdf-extractor (clean Tier-1 zone match)
-
-- **Preflight/gcc/CI clean**: RUN tick `2026-07-29T09:07Z`; CI GREEN unchanged (`39a4dac7c`); `.head` idle from prior tick's clean close-out (5th consecutive clean head-sync pass held).
-- **Drain: 4 routed-to-po** (1× `commit-sweep-guard-*` telemetry, 1× context-bloat signal on the COWORK-GUARANTEED-SLOT-CATCHUP-dev-mcp-server decision journal, 2× `cowork-team-*` envelopes). Committed as `043688833`.
-- **BOUNDED-1 fired (WIP=0)**: promoted+claimed `FIX-PDF-EXTRACTOR-TEST-SYS-MODULES-LEAK` (P2, size S, zone `pdf-extractor` — clean Tier-1 match confirmed against `system-map.json`, no ambiguity). Root cause per detail: `test_low_text_density_ocr_rasterize.py` unconditionally stomps `sys.modules[PIL/fitz/pdfplumber/paddleocr]` at import with no restore, order-dependently breaking 7 tests across 2 other files in full-suite runs. Dispatched background `a2d1cbc08919af7ac`.
-- BOUNDED-1 claim consumed the tick (JUMP TO execute) — did not fall through to SLS/RLC/QA-Drain/Step 1. Review-lane QA-Drain remains starved (139+ rows) — unchanged, still gated behind TASK-DEVTEAM-IDLE-CHAIN-2-MAIN-FLOW (BACKLOG, depends on T1/REVIEW-not-yet-DONE_VERIFIED).
