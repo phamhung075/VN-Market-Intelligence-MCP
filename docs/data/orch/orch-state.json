@@ -419,11 +419,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "updated_at": "2026-07-29T00:22:22Z",
-    "updated_by": "qa",
-    "active_task_id": null,
-    "next_agent": null
+    "status": "in_progress",
+    "active_task_id": "FIX-COWORK-SPAWNFANOUT-FLOWPATH-BYPASSES-DIGEST-DAILY-DEDUP-GATE",
+    "next_agent": "developer",
+    "next_action": "BOUNDED-1 auto-pickup claim of FIX-COWORK-SPAWNFANOUT-FLOWPATH-BYPASSES-DIGEST-DAILY-DEDUP-GATE — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
+    "updated_at": "2026-07-29T00:47:04Z",
+    "updated_by": "dev-team (bounded-1 auto-pickup)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -10916,24 +10917,6 @@
         "unblock_action": "LANE NOTE — this row has NO automated lane while BLOCKED, and that is deliberate (deps_satisfied=false by design; verified by EXECUTING scripts/lib/devteam-eligibility.jq against live data, not inferred). It will NOT self-dispatch when its blockers close.\n\nWHOEVER CLOSES THE LAST OF blocked_by (FIX-BDI-SHIPPING-STALE-404-GUARD, FIX-COWORK-BASH-GRANT-COVERAGE-STAMP-TRANSPORT) MUST, in one write:\n  1. clear .blocked_by\n  2. set status = \"READY\"\n  3. MOVE the row from backlog[] into ready[]\nThen the Ready-Lane Consumer (scripts/devteam-backlog-claim-ready-lane-consumer.jq) claims it and spawns next_agent=qa directly — RLC has no dev/non-dev gate, so a qa-owned row is a valid target there. Leaving it BLOCKED-in-backlog matches nothing: BOUNDED-1 gates out non-dev next_agent, and SLS needs plan_only AND supervised both true (this row is supervised:true, plan_only:false).\n\nTHIS IS NOT HYPOTHETICAL. The sibling precedent row VERIFY-FIX-VPS-SSH-TRIGGER-FAIL-LOUD-REALDATA was minted BLOCKED on 2026-07-22 under the identical PUSH-AUTONOMY-1 clause 5 obligation and has sat untouched ever since, because nothing sweeps a BLOCKED backlog row and no one owned the transition. Do not repeat that.\n\nAll orch-state writes via: jq '...' docs/data/orch/orch-state.json | bash scripts/orch-apply.sh — never raw mv/cp/redirect.\n"
       },
       {
-        "id": "FIX-COWORK-SPAWNFANOUT-FLOWPATH-BYPASSES-DIGEST-DAILY-DEDUP-GATE",
-        "title": "cowork spawn-fanout dispatches slot.flow_path, not slot.trigger_prompt — digest-daily is the one slot whose two fields disagree, so every dispatcher fire enters daily-predict.md directly and never evaluates the published:digest-daily:<UTC_DATE> duplicate-claim gate, which lives only in main.md",
-        "status": "BACKLOG",
-        "type": "FIX",
-        "priority": "P1",
-        "size": "S",
-        "zone": "cross-service/",
-        "owner": "developer",
-        "next_agent": "developer",
-        "created_at": "2026-07-28T13:28:25Z",
-        "created_by": "po/triage-20260728T13",
-        "root_cause": "Four facts, each verified at source by PO 2026-07-28T13:3xZ, not inferred from the report. (1) docs/agents/cowork-team/flow/spawn-fanout.md:192 builds the spawn prompt as `run <slot.flow_path>  slot=<slot.slot_id>` — the dispatched entry point is slot.flow_path; slot.trigger_prompt is never read by the spawn step. (2) docs/data/cowork-schedule.json digest-daily carries flow_path='docs/agents/digest-predict/flow/daily-predict.md' but trigger_prompt='run docs/agents/digest-predict/flow/main.md  slot=digest-daily' — the two fields name DIFFERENT files. Its sibling digest-sunday has both fields naming main.md, so digest-daily is the sole divergent slot on the schedule. (3) The daily dedup gate is 'Step pre-D: DAILY-PREDICT DEDUP GATE' at docs/agents/digest-predict/flow/main.md:15-45, claiming published:digest-daily:<UTC_DATE> with an 86400s TTL. It exists ONLY in main.md. (4) daily-predict.md contains exactly ONE task_claim (line 131) and it is the commit-mutex, not a published marker. THEREFORE every cowork-dispatched digest-daily fire enters daily-predict.md and skips the gate entirely. The gate's own comment states what is lost: it 'protects against cron re-fire, session restart, or dispatcher double-fire producing duplicate claims for the same UTC calendar day' — precisely the protection that is dead on the only path the dispatcher uses.",
-        "deliverable": "PREFERRED (general): make spawn-fanout Step 5.2 dispatch slot.trigger_prompt when present, falling back to the composed flow_path form — trigger_prompt is the field literally named for this and is the one a slot author edits to change the entry point. PLUS a consistency assertion so a future slot cannot silently re-introduce the divergence: fail loud (or refuse the slot) when trigger_prompt names a different file than flow_path. ACUTE MITIGATION if the general fix is deferred: point digest-daily's flow_path at main.md so both fields agree — one field, immediate, but it does not stop the next slot from diverging. Do NOT 'fix' this by copying the dedup gate into daily-predict.md: that creates a second copy of a claim gate that must stay byte-identical to the first, which is the duplicate-predicate class scripts/lib/devteam-eligibility.jq was consolidated to kill.",
-        "acceptance": "Two consecutive dispatcher fires of digest-daily inside the same UTC calendar day produce ONE set of prediction claims, and the second logs the gate's own already-claimed skip path — proven from the live claim/lock evidence, not from flow prose. Negative control: a first fire of the day still runs (do not turn the gate into a blanket suppressor). Static assertion: every slot in docs/data/cowork-schedule.json has trigger_prompt and flow_path naming the same file, asserted by a test that reads the live schedule (today digest-daily is the only violation — it must be the one that fails before the fix and passes after).",
-        "note": "SEQUENCING WITH THE CATCH-UP EPIC: BA-COWORK-GUARANTEED-SLOT-CATCHUP FR-6 makes the published: marker the SOLE fire-authorization arbiter and adds catch-up as a THIRD caller of the fire path. digest-daily is guaranteed:true, so catch-up will dispatch it too — through the same flow_path, through the same missing gate. Landing catch-up while this bypass stands means retro-fires can duplicate a day's prediction claims with no arbiter. This row does not depend_on the epic and should land BEFORE or ALONGSIDE it; recorded as a note, not a dep, so it stays independently dispatchable. Prior-art grep before minting (feedback_file_prior_art_check_before_minting_row): searched the whole board on flow_path / trigger_prompt / spawn-fanout 5.2 / published-marker bypass / dedup-gate bypass — only hit was FIX-COWORK-CHEF-MUTEX-ECHO-JQ-DEFEAT, a different mechanism (echo|jq mangling in the CHEF same-tick mutex). Router reported this 'filed 07-25'; no such row exists on the board, so the filing never became a row — the PO mint!=board lesson, live again.",
-        "updated_at": "2026-07-28T13:28:25Z"
-      },
-      {
         "id": "FIX-AUDITOR-EMIT-SEVERITY-LABEL-FLAT-ESCALATION-BYPASS-NEVER-FIRES",
         "type": "FIX",
         "status": "BACKLOG",
@@ -16558,9 +16541,33 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-29T00:34:58Z",
-    "last_triaged_by": "developer",
-    "in_progress": []
+    "last_triaged_at": "2026-07-29T00:47:00Z",
+    "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
+    "in_progress": [
+      {
+        "id": "FIX-COWORK-SPAWNFANOUT-FLOWPATH-BYPASSES-DIGEST-DAILY-DEDUP-GATE",
+        "title": "cowork spawn-fanout dispatches slot.flow_path, not slot.trigger_prompt — digest-daily is the one slot whose two fields disagree, so every dispatcher fire enters daily-predict.md directly and never evaluates the published:digest-daily:<UTC_DATE> duplicate-claim gate, which lives only in main.md",
+        "status": "IN_PROGRESS",
+        "type": "FIX",
+        "priority": "P1",
+        "size": "S",
+        "zone": "cross-service/",
+        "owner": "developer",
+        "next_agent": "developer",
+        "created_at": "2026-07-28T13:28:25Z",
+        "created_by": "po/triage-20260728T13",
+        "root_cause": "Four facts, each verified at source by PO 2026-07-28T13:3xZ, not inferred from the report. (1) docs/agents/cowork-team/flow/spawn-fanout.md:192 builds the spawn prompt as `run <slot.flow_path>  slot=<slot.slot_id>` — the dispatched entry point is slot.flow_path; slot.trigger_prompt is never read by the spawn step. (2) docs/data/cowork-schedule.json digest-daily carries flow_path='docs/agents/digest-predict/flow/daily-predict.md' but trigger_prompt='run docs/agents/digest-predict/flow/main.md  slot=digest-daily' — the two fields name DIFFERENT files. Its sibling digest-sunday has both fields naming main.md, so digest-daily is the sole divergent slot on the schedule. (3) The daily dedup gate is 'Step pre-D: DAILY-PREDICT DEDUP GATE' at docs/agents/digest-predict/flow/main.md:15-45, claiming published:digest-daily:<UTC_DATE> with an 86400s TTL. It exists ONLY in main.md. (4) daily-predict.md contains exactly ONE task_claim (line 131) and it is the commit-mutex, not a published marker. THEREFORE every cowork-dispatched digest-daily fire enters daily-predict.md and skips the gate entirely. The gate's own comment states what is lost: it 'protects against cron re-fire, session restart, or dispatcher double-fire producing duplicate claims for the same UTC calendar day' — precisely the protection that is dead on the only path the dispatcher uses.",
+        "deliverable": "PREFERRED (general): make spawn-fanout Step 5.2 dispatch slot.trigger_prompt when present, falling back to the composed flow_path form — trigger_prompt is the field literally named for this and is the one a slot author edits to change the entry point. PLUS a consistency assertion so a future slot cannot silently re-introduce the divergence: fail loud (or refuse the slot) when trigger_prompt names a different file than flow_path. ACUTE MITIGATION if the general fix is deferred: point digest-daily's flow_path at main.md so both fields agree — one field, immediate, but it does not stop the next slot from diverging. Do NOT 'fix' this by copying the dedup gate into daily-predict.md: that creates a second copy of a claim gate that must stay byte-identical to the first, which is the duplicate-predicate class scripts/lib/devteam-eligibility.jq was consolidated to kill.",
+        "acceptance": "Two consecutive dispatcher fires of digest-daily inside the same UTC calendar day produce ONE set of prediction claims, and the second logs the gate's own already-claimed skip path — proven from the live claim/lock evidence, not from flow prose. Negative control: a first fire of the day still runs (do not turn the gate into a blanket suppressor). Static assertion: every slot in docs/data/cowork-schedule.json has trigger_prompt and flow_path naming the same file, asserted by a test that reads the live schedule (today digest-daily is the only violation — it must be the one that fails before the fix and passes after).",
+        "note": "SEQUENCING WITH THE CATCH-UP EPIC: BA-COWORK-GUARANTEED-SLOT-CATCHUP FR-6 makes the published: marker the SOLE fire-authorization arbiter and adds catch-up as a THIRD caller of the fire path. digest-daily is guaranteed:true, so catch-up will dispatch it too — through the same flow_path, through the same missing gate. Landing catch-up while this bypass stands means retro-fires can duplicate a day's prediction claims with no arbiter. This row does not depend_on the epic and should land BEFORE or ALONGSIDE it; recorded as a note, not a dep, so it stays independently dispatchable. Prior-art grep before minting (feedback_file_prior_art_check_before_minting_row): searched the whole board on flow_path / trigger_prompt / spawn-fanout 5.2 / published-marker bypass / dedup-gate bypass — only hit was FIX-COWORK-CHEF-MUTEX-ECHO-JQ-DEFEAT, a different mechanism (echo|jq mangling in the CHEF same-tick mutex). Router reported this 'filed 07-25'; no such row exists on the board, so the filing never became a row — the PO mint!=board lesson, live again.",
+        "updated_at": "2026-07-29T00:47:05Z",
+        "promoted_at": "2026-07-29T00:47:00Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
+        "claimed_at": "2026-07-29T00:47:04Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)"
+      }
+    ]
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
