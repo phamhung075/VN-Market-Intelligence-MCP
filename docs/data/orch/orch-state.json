@@ -129,8 +129,8 @@
     "does_not_consume_wip": true
   },
   "signal_queue": {
-    "_updated_at": "2026-07-29T06:25:00Z",
-    "_updated_by": "po/triage-20260729T0625-auditor-cycle-defect-cluster",
+    "_updated_at": "2026-07-29T21:30:46Z",
+    "_updated_by": "architect",
     "archive": [],
     "rows": [
       {
@@ -2026,6 +2026,17 @@
         "severity": "WARN",
         "status": "triaged",
         "payload_ref": null
+      },
+      {
+        "id": "arc-20260729T213046",
+        "ts": "2026-07-29T21:30:46Z",
+        "from": "architect",
+        "to": "po",
+        "type": "brief_complete",
+        "summary": "DRS design for FIX-BOUNDED1-NONDEV-NEXTAGENT-RESIDUAL-NO-DISPATCH-LANE — allowlist ratification needed",
+        "severity": "MED",
+        "status": "NEW",
+        "payload_ref": "docs/architecture-briefs/2026-07-29-fix-bounded1-nondev-nextagent-residual-no-dispatch-lane.md"
       }
     ],
     "last_triaged_at": "2026-07-29T06:25:00Z",
