@@ -1,24 +1,6 @@
 # Developer — Notebook
 
-**Last updated:** 2026-07-29 | **Cycle:** FIX-VPS-SSC-INSIDER-502
-
-## Session 2026-07-29 — FIX-AUDITOR-HEARTBEAT-OUT-OF-CONTRACT-AGENT-WRITE-TIER1 — REVIEW
-
-**Task:** BOUNDED-1 auto-pickup, P2, cross-service/. A Tier-1 DEGRADED cycle (06:08:22Z) wrote `docs/data/auditor-tier1-last-healthy.json` despite `main.md:748-755` explicitly gating that write out of Tier-1 — no authorizing step anywhere in the flow produced it, collapsing the file from `{last_healthy_at, checks{6 keys}}` to bare `{last_healthy_at}` and falsely advancing a "healthy" marker on a non-healthy cycle. A prose prohibition alone had already been tried and failed (2nd violation).
-
-**Actions taken:** New `scripts/git-hooks/pre-commit` `_check_auditor_heartbeat_shapes` — runs unconditionally BEFORE the pre-existing sweep-guard mode dispatch, never `GIT_SWEEP_GUARD_MODE`-gated: rejects (commit BLOCKED, loud stderr) any staged tier-1 write that isn't the exact `{last_healthy_at, checks:{6 keys, all "PASS"}}` shape, and any staged tier-2/3 write carrying a `checks` key at all. New `CANONICAL:SSOT-AUDITOR-HEARTBEAT-SOLE-WRITER` in `docs/policies/dev-standards.md`, cited from both writers (`auditor-tier1-probe.sh` header, `main.md` § Tier-2/3 Heartbeat Write — which now also states the resolved semantic split explicitly). Live file repaired by actually running the authorized writer (`bash scripts/agents-flow/auditor-tier1-probe.sh`) — genuine ALL_GREEN, not hand-edited.
-
-**Semantic judgment call (AC4):** the family's one filename says "healthy" but tier-2/3 really means "an audit completed" (fires every cycle regardless of verdict — `auditor-signal-loop-P1`, load-bearing for the SKIP-SPAWN freshness gate). Re-gating tier-2/3 on green was rejected — would starve the heartbeat on a persistently-tracked DEGRADED cycle and recreate the exact spawn-storm that P1 fix closed. Renaming the files/field was rejected — would break `FIX-AUDITOR-TIER1-FRESHNESS-CHECK-RELOCATE-TO-SENTINEL`'s already-planned OH-3.5 reads of these exact paths (sibling row, sequenced with this one). Kept both filenames/fields; made shape (bare vs `checks{}`) the enforced structural signal distinguishing the two semantics. `suppress_heartbeat` NOT ported to Tier-1; `AUDIT_TIER` 2/3 gate at `main.md:750` NOT dropped (both explicitly rejected directions per the sibling row's `.why_the_obvious_fixes_are_wrong`).
-
-**Verification:** New `scripts/git-hooks/pre-commit-auditor-heartbeat.test.sh` — RED (3/6 fail pre-guard) → GREEN (6/6). No regressions: pre-existing `pre-commit.test.sh` 6/6, `auditor-tier1-probe.test.sh` 141/141, both scripts otherwise byte-identical to before. `bash -n` syntax-clean on the hook. Shell/JSON/MD only — no `apps/mcp-server/` TS touched, `bun tsc`/`bun test` not applicable. Graphify: no Skill-tool path available to this spawned agent (same structural constraint as 2 prior sessions today) — flagged in `docs/WORK.md`, not silently skipped.
-
-**Board:** `task_board.in_progress[FIX-AUDITOR-HEARTBEAT-OUT-OF-CONTRACT-AGENT-WRITE-TIER1]` → `review` (`next_agent:po`, `branch:null`), `.head` synced to idle, via `orch-apply.sh`.
-
-**Simplicity gate:** PASS — Q1 clean (every line traces to one of the 6 acceptance criteria), Q2 single-use `_check_auditor_heartbeat_shapes` justified by direct precedent (`write_signal`/sweep-guard dispatch already single-purpose in the same file), Q3 senior-test clean (flat jq predicates, no indirection), Q4 ratio <50% overhead.
-
-**Commits:** `612ee0954` (guard+docs+test), `06f15af0d` (live file repair, separate — data vs code convention).
-
-Zone health: no drift detected.
+**Last updated:** 2026-07-29 | **Cycle:** FIX-AUDITOR-DASHBOARD-APPEND-NO-ACTUATOR-CONTRACT-COUNT-NARRATED
 
 ## Session 2026-07-29 — FU-ORCH-HOT-SUB150-SPRINT-LIFECYCLE — REVIEW
 
@@ -51,5 +33,19 @@ Zone health: no drift detected.
 **Board:** `task_board.in_progress[FIX-VPS-SSC-INSIDER-502]` → `review` (`next_agent:qa`, `branch:null`), `.head` synced to idle, via `orch-apply.sh`.
 
 **Simplicity gate:** N/A-clean — comment/doc-only change, no logic/feature/abstraction added (Q1-Q4 all trivially NO).
+
+Zone health: no drift detected.
+
+## Session 2026-07-29 — FIX-AUDITOR-DASHBOARD-APPEND-NO-ACTUATOR-CONTRACT-COUNT-NARRATED — REVIEW
+
+**Task:** Router dispatch, P1, cross-service/. Every counter in the auditor's `[OUTPUT-CONTRACT]` line was narrated, not derived — failing BOTH directions same day (over-report ×2: narrated N, wrote 0; under-report: narrated 0, wrote 1 — a `SKIP-dedup` marker, which still carries `id=`, misread as "nothing emitted"). Row's own `root_cause`/acceptance(2) named a nonexistent path (`scripts/agents-flow/emit-audit-signal.sh`) — verified via `ls` before reading anything; real script is `scripts/emit-audit-signal.sh`.
+
+**Actions taken:** New `scripts/emit-dashboard-row.sh` — actuator for `docs/data/DASHBOARD.md` (the LIVE dashboard, confirmed vs the stale `docs/handoffs/DASHBOARD.md` phantom UC-ASL-P6 purges; also confirmed the `.claude/skills/signal-dashboard/` pointer main.md used was itself wrong — that skill governs `.signal_queue.rows[]`, not this file): tmp+mv atomic append, self-contained commit-mutex guard, MANDATORY POST-WRITE read-back (`grep -qF "signal <id>"`) failing loud to BUG on miss. New `scripts/audit-output-contract.sh` — mechanically parses `[emit-signal]`/`[emit-dashboard]`/`[post-agent-signal]` markers accumulated into a per-cycle `$MARKERS_FILE` (introduced at `flow/main.md` §Step 0d) instead of hand-composed counts; adds an independent `.signal_queue.rows[]` cross-check (the old check was vacuous — both operands narrated by the same agent from the same marker set) plus symmetric violations for `dashboard_rows==0` and RETURN-headline/`NEXT`-token consistency. Wired into all 4 WARN/CRITICAL emit sites + 2 bare `post_agent_signal` sites + `page-freshness.md`'s standard-line portion; D-BCTC-EVAL/D-IMPROVE stay `--e3-only` unchanged.
+
+**Backfill decision (acceptance 5):** did NOT backfill the "still-missing 06:08Z A-21" DASHBOARD row — its signal_queue row (`sys-20260729T060929-39de`) was subsequently RETRACTED by PO as an out-of-spec emission contradicting the auditor's own `crashRestarts>=2` threshold. Backfilling now would resurrect a withdrawn finding. Real crash owned by `OPS-MCP-RESTART-CHURN-UNCLEAN-SHUTDOWN`/`FIX-MCP-MEMORY-CODE-LEAK`; counting-window bug by `FIX-A21-CRASH-WINDOW-PREDECESSOR-BOUND-FALSE-NEGATIVE` (both untouched).
+
+**Verification:** `scripts/emit-dashboard-row.test.sh` 32/32, `scripts/audit-output-contract.test.sh` 35/35 (both prove a narrated-but-unwritten count cannot pass — AC-4). No regressions: `scripts/emit-audit-signal.test.sh` 49/49 (unchanged). `shellcheck -x` clean on both new scripts. No TS touched.
+
+**Board:** update via `orch-apply.sh` — `IN_PROGRESS` → `review` (`next_agent: qa`).
 
 Zone health: no drift detected.
