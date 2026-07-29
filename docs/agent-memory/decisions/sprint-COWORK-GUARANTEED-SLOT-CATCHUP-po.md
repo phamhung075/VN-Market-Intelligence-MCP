@@ -443,3 +443,12 @@
 - Check whether "all 7 routes" is satisfiable at all before blaming compliance.
 **why-decision:** `get_vps_proxy_health` returns 4 push-services; system-map `routes[]` has 8. The literal 7 has no referent — the instruction cannot be followed, so briefing harder cannot work. Also found the PASS was declared from the freshness plane while `get_vps_service_health` reported vn-sbv-fetch UNHEALTHY, likely the cause of the same cycle's B-12 WARN. NO-MINT: finding 5 is not a defect (main.md:828 documents the tier-2/3 marker as "cycle completed", not "healthy"); finding 6's premise is false (A-29 spec is executable, `get_cron_health` works); finding 4 is owned by FIX-NOTEBOOK-COMPOSE-REWRITES-RETAINED-PRIOR-SECTIONS (REVIEW/P1) + FIX-AUDITOR-COMMIT-NONEXPLICIT-PATHSPEC.
 **why-change:** Router expected 3 to be a recurring-compliance row; it is a doc/SSOT drift, so the remedy moves from the agent to the flow doc.
+
+### STEP po-S47 · po · 2026-07-29T10:58:00Z
+**task-id:** FIX-ORCHSTATE-SIGNALQUEUE-UNCOMMITTED-ROWS-LOST-TO-PEER-FULLDOC-WRITE
+**what-done:** Minted P1 after the two sbv_fx rows I was told not to touch disappeared mid-cycle; verified I did not cause it.
+**what-considered:**
+- Assume a legitimate drain consumed them and say nothing.
+- Prove provenance before blaming or absolving anyone, including myself.
+**why-decision:** They are absent from rows[] AND archive[], so no legitimate triage path explains it. `git show 3e257beba` and its parent have an IDENTICAL signal_queue id-set (comm both empty) at 131 rows — 131 committed + 2 uncommitted = the 133 I read, so a peer serialized a stale 131-row full doc over a 133-row tree. My own two writes touched only `.task_board.*` and orch-apply logged `signal_total live=132 candidate=132`, i.e. the loss preceded my first write. The write gate cannot catch it: `orch-conservation-check.mjs` FLOOR_RATIO=0.5, so 131/133 passes — it is a bulk-eviction breaker, and single-row loss is unowned.
+**why-change:** Not in the handed brief; found only because the constraint told me to leave those rows alone and I checked they were still there.

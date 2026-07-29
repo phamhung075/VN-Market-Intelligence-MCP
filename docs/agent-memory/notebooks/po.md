@@ -1,6 +1,6 @@
 # PO Notebook
 
-_Last: 2026-07-29T10:53Z (Tier-2 10:30Z audit triage — 6 handed findings) · 2 rows minted, 2 rows amended, 3 findings declined._
+_Last: 2026-07-29T10:58Z (Tier-2 10:30Z audit triage — 6 handed findings) · 3 rows minted, 2 rows amended, 3 findings declined._
 
 ## This cycle
 
@@ -15,6 +15,7 @@ _Last: 2026-07-29T10:53Z (Tier-2 10:30Z audit triage — 6 handed findings) · 2
 
 ## Carry-over
 
+- **The instruction "don't touch those two rows" is why I found the worst defect of the cycle.** Re-checking that they were still there showed they were **gone** — absent from `rows[]` *and* `archive[]`, so no legitimate triage path explains it. A peer serialized a stale 131-row full doc over a 133-row tree. `orch-conservation-check.mjs` has `FLOOR_RATIO=0.5`, so losing 2 of 133 is invisible: it is a bulk-eviction breaker, and **single-row loss on the SSOT is unowned**. Minted P1. Verifying a negative constraint is a real check, not a formality.
 - **Say which artifact is authoritative when two disagree, not just that they disagree.** Both new rows carry a fence naming the artifact that is *correct*, because in both cases the plausible-looking one was wrong. A row that says only "these conflict" invites the fixer to repair the honest one.
 - **`FIX-NOTEBOOK-COMPOSE-REWRITES-RETAINED-PRIOR-SECTIONS` must NOT pass QA on current evidence.** Its two fix commits landed 08:43:01Z and 09:23:52Z; the violating commit landed **10:35:52Z** — recurrence *after* the fix, with no cap pressure (146L against a 200L cap). AC-4, the mechanical retained-bytes check, is the load-bearing one and is unbuilt. Recurring **failed** fix, not recurring bug.
 - **That data loss has a downstream cost now on the record:** the deleted RAW-PROBE blocks were the evidence needed to pin the double-emit path, so the P1 emit row may need a reproduction run. Notebook data loss stopped being a hygiene issue this cycle.
