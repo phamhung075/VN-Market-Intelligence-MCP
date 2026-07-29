@@ -1,6 +1,16 @@
 # Dev Team — Sprint Boundary Notebook
 
-**Written:** 2026-07-29T17:06Z
+**Written:** 2026-07-29T17:18Z
+
+## cycle-20260729T1718Z — Tick 17:07Z: drained 2 signals (self-fired sweep-guard WARN, recurring context-bloat backstop), CI dedup, sanity-checked a status_note ambiguity before claiming, clean BOUNDED-1 dispatch to dev-frontend
+
+- **Preflight**: verdict RUN, tick `2026-07-29T17:07Z`. No HEAD.lock, worktree prune clean, no expired locks.
+- **Drain**: 2 routed to po — commit-sweep-guard WARN (fired against developer's own legit prior-cycle commit, already RAW-verified, pure noise) + context-bloat byte-cap breach (same `sprint-COWORK-GUARANTEED-SLOT-CATCHUP-developer.md` journal, now 2nd consecutive tick flagged, still growing +42864B over cap — worth PO routing to claude-manager-helper for a prune/split soon). 0 pruned. Committed `67325e14b`. CI probe deduped (same known `aa6c044b`).
+- **`.head` correctly idle** (developer's clean reset held) — WIP=0, fell through to BOUNDED-1.
+- **Candidate sanity-check before claiming**: `FE-PG-_INDEX-FRESH-FIX` backlog row carried an oddly-worded `status_note` field ("FE-PG-_INDEX-FRESH re-check returns PASS") that looked like it might mean the check already passes (stale-duplicate risk, same class as last cycle). Verified directly instead of trusting the field: `docs/data/quality-checklist.json`'s live entry says `status:WARN`; confirmed the phrase was just the AC text echoed into a stray field (template artifact), not an actual current-state claim. Cross-checked the actual gap: `FreshnessBadge`/`useFreshnessRevalidator` components exist (from TASK-FFT-L3A) and are already used on ~24 other dashboard sub-pages, but `dashboard._index.tsx` (this task's target) imports neither — genuinely unimplemented, not stale.
+- **Claimed cleanly**: `FE-PG-_INDEX-FRESH-FIX` (P2, zone `apps/frontend/`, size S). Committed `99d211925`, conservation OK (701→701 both writes). `.head.next_agent` correctly resolved to `dev-frontend`.
+- **Dispatched `dev-frontend`** — wire the existing `FreshnessBadge`+`useFreshnessRevalidator` pattern (already used on 24 other pages, canonical example `dashboard.macro.tsx`) onto `dashboard._index.tsx`; explicitly instructed to reuse, not fork, the components. Sprint-task lock `task:FE-PG-_INDEX-FRESH-FIX` held pending verified completion.
+- BOUNDED-1 dispatch consumed the tick — did not fall through to SLS/RLC/QA-Drain. Review-lane QA-Drain backlog unchanged from last note (152+ rows) — still gated behind idle-chain priority order.
 
 ## cycle-20260729T1706Z-verify — RAW-verified developer's FACTORY-GUARD-CI-SIZELINT-IMPL completion; CI size-lint guardrail confirmed live+tested, board lane-move clean (4th consecutive)
 
@@ -21,14 +31,4 @@
 - **Re-ran BOUNDED-1 promote fresh**, got a genuinely new candidate: `FACTORY-GUARD-CI-SIZELINT-IMPL` (P2, size M, zone `cross-service/`) — verified via git log (only the mint commit exists) + live filesystem check (none of its 5 target files exist) before claiming. Committed `f60682d2b`, conservation OK (701→701 both writes).
 - **Dispatched `developer`** on `FACTORY-GUARD-CI-SIZELINT-IMPL` — implement `scripts/audits/size-lint-justification.sh` (--check/--update), baseline JSON, CI workflow wiring, dev-standards.md pointer, per architect brief `2026-07-24-factory-guard-ci-size-lint-justification.md §3`. Instructed to route to qa, strip markers + head-sync in the same write. Sprint-task lock `task:FACTORY-GUARD-CI-SIZELINT-IMPL` held pending verified completion.
 - BOUNDED-1 dispatch consumed the tick — did not fall through to SLS/RLC/QA-Drain. **Review-lane QA-Drain remains starved: 152 rows in `review[]`, ~95+ with `next_agent:qa`**, growing — BOUNDED-1's WIP<1 priority over QA-Drain in the idle-fallthrough order means QA-Drain only fires on ticks where BOUNDED-1 finds nothing eligible, which is rare given backlog[]=385. Open structural gap, unescalated — worth an architect brief on re-ordering or budget-splitting the idle-fallthrough chain if this keeps growing.
-
-## cycle-20260729T1638Z-verify — RAW-verified developer's FIX-ORCHSTATE-CONSERVATION-GUARD-QA-LANE-BLIND completion; qa[] lane blind spot closed, negative-control test re-run GREEN, board lane-move clean (3rd consecutive)
-
-- **BGFAN-1 RAW-verification, all claims confirmed real**: 3 commits (`9b39ed5cc`, `22d325fb2`, `9fe27cdaa`) real, on HEAD, pathspec-scoped exactly as claimed (source+test+WORK.md / board / memory).
-- **Code fix independently re-read from source, not trusted**: `FLAT_TASK_LANES` (`orch-conservation-check.mjs:70`) now includes `'qa'`; the script's own header-comment formula (`:21-29`) synced to match. No stray doc drift found by grep.
-- **Test claim independently re-run, not just trusted**: `bash scripts/test/orch-apply-wrapper-tests.sh` → **48/48 PASS** (exact match), including `QA-COLLAPSE` (qa[] wipe rejected, exit 1) and `QA-APPEND-HAPPY` (normal append accepted, exit 0). Read the test source directly to confirm `QA-COLLAPSE` genuinely routes through the real `orch-apply.sh` wrapper (not a standalone `orch-conservation-check.mjs` bypass) — same gate every board write goes through.
-- **Board lane-move genuine, 3rd consecutive clean `.head` sync**: row `status:REVIEW`, `next_agent:qa`, `promoted_at/promoted_by/promotion_note/claimed_at/claimed_by` all correctly absent (stripped in the same write, not a 9th stale-marker instance), `.head` reset to `{status:idle, active_task_id:null, next_agent:router}`, no duplicate row in `ready[]/backlog[]/in_progress[]`.
-- Released sprint-task lock `task:FIX-ORCHSTATE-CONSERVATION-GUARD-QA-LANE-BLIND` cleanly after full verification.
-- **NEXT: qa** — row in `review[]`, `next_agent:qa`. Not yet dispatched — review-lane QA-Drain remains the mechanism, still gated behind idle-chain fallthrough (now 2 rows waiting: this one + SPIKE-BOOTSTRAP-BROADCAST-CATALYST-CONSUME from the prior cycle).
-- Self-caught error this window (not from this task): a prior notebook write accidentally trimmed a retained section, caught by the immutability guard's WARN and fixed same-tick (commit `a30875d5e`) — noted here as a reminder to diff retained-section content before landing a compose, not just line/section counts.
 
