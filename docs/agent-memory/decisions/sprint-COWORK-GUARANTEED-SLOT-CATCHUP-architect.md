@@ -159,3 +159,13 @@
 - Treating router's rag re-measurement as a finding to adopt outright (rejected — re-derived the DIPS/MINP arithmetic myself against verify-a30's own conjuncts before accepting it changed nothing).
 **why-decision:** Both claims were externally falsifiable and safety-relevant (one touches a live SIGKILL mechanism); verified against the actual script text and a repo-wide grep rather than accepted on assertion, per this row's own evidence-discipline standard.
 **why-change:** New verified fact not in my S14 design: the scope row's per-container loop, if shipped against the UNMODIFIED script, execs into every capped container including rag — my commit-2 (clause-4 removal) is now also a documented safety precondition for that row, not just a correctness one.
+
+### STEP architect-S16 · architect · 2026-07-29T14:30:00Z
+**task-id:** FIX-COWORK-DISPATCH-ROUTER-INTENT-MUTEX-BYPASS
+**what-done:** Ruled Candidate A (refined) over B; wrote design brief `docs/architecture-briefs/2026-07-29-fix-cowork-dispatch-router-intent-mutex-bypass-design.md`; resolved multi-slot ambiguity; updated board row + set `next_agent=pm`.
+**what-considered:**
+- Candidate B (shared namespace, atomic) — rejected: forces router to reproduce each cowork flow's date-basis key computation (4 bases + chef.md's own per-window/CYCLE_DATE_UTC quirks), which changed 3x in 2 weeks live; a DDD layering violation and a proven drift risk, not "cheapest."
+- BA's literal Candidate A (probe the exact `published:<slot>:<period>` string) — rejected as stated: read `coordinationStore.ts`/`coordinationTools.ts` live and found `task_list_held(kind="cowork-slot", expired=false)` returns ALL 3 cowork lock types in one call (they share one `task_kind`); client-side prefix match on `published:<slot_id>:` needs zero date/period computation at all.
+- Multi-slot resolution: infer slot from free text (rejected, unreliable) vs require-slot_id-else-ALL-SLOTS-fallback (chosen — mirrors existing `trigger_prompt` convention, fail-safe-conservative asymmetry matches sibling brief's Ruling 2 cost reasoning).
+**why-decision:** Cheapest-correct = smallest, most durable diff that closes all 3 confirmed occurrences without inventing new per-agent business logic at the router layer; verified via source read (not assumption) that the refinement is actually supported today, zero `apps/mcp-server` changes needed.
+**why-change:** Diverges from BA spec's literal Candidate A framing (probe exact key) — same candidate letter, cheaper mechanism, found only by reading the live tool schema before designing.
