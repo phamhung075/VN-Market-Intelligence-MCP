@@ -138,13 +138,29 @@ agent_signals (id INTEGER PK, from_agent, to_agent, signal_type, stock_code, pay
   -- payload, substr(created_at,1,16)) WHERE payload != '{}'. Data-layer backstop
   -- against genuine double-EMISSION (NOT retry) duplicates — paired with
   -- postSignal()'s INSERT OR IGNORE (agentSignalStore.ts), returns -1 on suppression.
-  -- WHERE payload != '{}' deliberately excludes alertStore.ts's verified_decision
-  -- correlation stubs (from_agent='alert-engine', payload always the literal '{}'
-  -- by design) — that pattern already has its own precise alert_id-scoped guard
-  -- (FIX-AGENT-SIGNALS-ORPHAN-ALERT-ID); this coarser key would risk dropping a
-  -- legitimate 2nd correlation stub for 2 genuinely-different alerts on the same
-  -- stock in the same minute.
+  -- WHERE payload != '{}' originally excluded alertStore.ts's verified_decision
+  -- correlation stubs (from_agent='alert-engine') back when their payload was
+  -- always the literal '{}'. FIX-ALERT-ENGINE-VERIFIED-DECISION-EMPTY-PAYLOAD-
+  -- NULL-STOCKCODE (2026-07-29) fixed alertStore.ts to populate real decision
+  -- content (alert_id/alert_type/title/severity/confidence/detected_at)
+  -- instead — alert_id is embedded so the JSON stays byte-unique per alert,
+  -- so these rows now safely fall inside this index's coverage too without
+  -- colliding for 2 genuinely-different alerts on the same stock/minute.
+  -- alertStore.ts's own precise alert_id-scoped guard (FIX-AGENT-SIGNALS-
+  -- ORPHAN-ALERT-ID) remains the primary dedup mechanism for this row class;
+  -- this index is a secondary, emitter-agnostic backstop.
 ```
+
+**agent_signals.payload for from_agent='alert-engine' (verified_decision correlation stubs)**
+Populated by `buildVerifiedDecisionPayload()` in `alertStore.ts` (called from both
+`storeAlerts()` and `storeAlertsFromCommander()`): `{alert_id, alert_type, title,
+severity, confidence, detected_at}` — built from the `Alert`/`Signal` object being
+written (never the caller-supplied literal). Emit-time guard: refuses (fail-loud
+`logger.warn`, no insert) to write a verified_decision row when the resulting
+payload would be empty or `alert.message` is falsy — the paired `alerts` row is
+never blocked by this guard, only the decorative correlation stub. `stock_code` is
+`NULL` only for `actionCode === "MACRO"` alerts (by design, unrelated tickers);
+otherwise always the real ticker.
 
 **Additional schema files:** macro, financial-reports, briefings, system, news, portfolio, backtesting (16 total)
 

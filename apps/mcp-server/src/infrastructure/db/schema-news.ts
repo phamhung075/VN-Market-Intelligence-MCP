@@ -159,16 +159,25 @@ export function initNewsTables(db: Database): void {
   // (project memory: feedback_sqlite_add_column_unique_silent_noop).
   //
   // Key: (from_agent, signal_type, stock_code (NULL-normalised), payload,
-  // minute-bucket of created_at). `WHERE payload != '{}'` deliberately
-  // EXCLUDES alertStore.ts's verified_decision correlation stubs
-  // (from_agent='alert-engine', payload ALWAYS the literal '{}' by design —
-  // RAW-confirmed the exclusive live user of payload='{}'): that constant
-  // payload carries zero differentiating content, so this coarse key would
-  // risk silently dropping the correlation stub for two genuinely-different
-  // alerts (e.g. one TA + one BB alert) firing on the same stock in the same
-  // minute. alertStore.ts already owns a precise, alert_id-scoped dedup guard
-  // for that pattern (FIX-AGENT-SIGNALS-ORPHAN-ALERT-ID, done-live-verified) —
-  // this index intentionally does not duplicate or override it.
+  // minute-bucket of created_at). `WHERE payload != '{}'` was originally added
+  // because alertStore.ts's verified_decision correlation stubs
+  // (from_agent='alert-engine') ALWAYS carried the literal '{}' payload — a
+  // constant that would have made this coarse content key silently drop the
+  // correlation stub for two genuinely-different alerts (e.g. one TA + one BB
+  // alert) firing on the same stock in the same minute.
+  // FIX-ALERT-ENGINE-VERIFIED-DECISION-EMPTY-PAYLOAD-NULL-STOCKCODE
+  // (2026-07-29) fixed alertStore.ts to populate real payload content
+  // (embedding alert_id, which is unique per alert) instead of '{}' — so this
+  // index now naturally starts covering alert-engine rows too, but the
+  // embedded alert_id keeps their payload byte-unique per genuine alert,
+  // so the collision this WHERE clause originally guarded against cannot
+  // recur. The clause is left in place (harmless — payload legitimately
+  // stays '{}' for any pre-migration row or a caller that bypasses
+  // alertStore.ts) rather than removed for a cosmetic-only index rebuild.
+  // alertStore.ts's own precise, alert_id-scoped dedup guard
+  // (FIX-AGENT-SIGNALS-ORPHAN-ALERT-ID, done-live-verified) remains the
+  // primary, authoritative dedup mechanism for this row class — this index
+  // is a secondary, emitter-agnostic backstop, not a duplicate/override.
   try {
     db.exec(`
       CREATE UNIQUE INDEX IF NOT EXISTS idx_agent_signals_dedup_identical

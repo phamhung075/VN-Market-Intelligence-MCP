@@ -22,6 +22,7 @@
 import type { Database } from "bun:sqlite";
 import type { Alert } from "../../domain/services/alertGenerator.js";
 import { getDb } from "./schema.js";
+import { logger } from "../logger.js";
 
 /**
  * Check whether a document identified by `ssc_doc_id` has already been
@@ -58,6 +59,45 @@ function severityToConfidence(severity: string): number {
     case "low":      return 40;
     default:         return 60; // defensive: treat unknown as medium
   }
+}
+
+// ── buildVerifiedDecisionPayload ──────────────────────────────────────────────
+// FIX-ALERT-ENGINE-VERIFIED-DECISION-EMPTY-PAYLOAD-NULL-STOCKCODE: the
+// agent_signals co-write below previously hardcoded payload='{}' as a bare SQL
+// literal (never populated from the Alert actually being written) — every
+// verified_decision row with from_agent='alert-engine' carried zero decision
+// content BY CONSTRUCTION, not by data drift (RAW-verified live: 52/52 current
+// rows payload='{}'; historical dbsweep 559/559 over 12+ days). This helper
+// builds the real payload from the Alert's own fields. `message`/`severity` on
+// Alert and `type`/`message`/`detectedAt` on Signal are all non-optional
+// (alertGenerator.ts / signalDetector.ts) so the result can never legitimately
+// be `{}` — the emit-time guard at the call site is a regression tripwire, not
+// expected runtime behaviour.
+//
+// `alert_id` is deliberately embedded so the JSON string is byte-unique per
+// alert even when two DIFFERENT alert types fire for the SAME ticker in the
+// SAME UTC-minute (e.g. one TA + one BB alert) — this keeps the payload out of
+// collision range of idx_agent_signals_dedup_identical's `WHERE payload != '{}'`
+// partial unique index (FIX-AGENT-SIGNALS-IDENTICAL-DUP-EMISSION, schema-news.ts),
+// which starts covering these rows for the first time now that payload is
+// non-'{}' — without this, two genuinely-different alerts on the same
+// ticker/minute could otherwise render identical payload text and have the
+// SECOND correlation-stub INSERT OR IGNORE silently no-op (reintroducing the
+// exact orphan-alert class FIX-ALERT-ORPHAN-CORRELATION/FIX-AGENT-SIGNALS-
+// ORPHAN-ALERT-ID already fixed).
+// NFR-C: no imports from domain/ or interface/ layers — Alert is a plain type
+// already imported at module scope; this stays a pure object-shaping helper.
+function buildVerifiedDecisionPayload(alert: Alert, confidenceScore: number): string {
+  const primarySignal = alert.signals[0];
+  const payload: Record<string, unknown> = {
+    alert_id: alert.id,
+    alert_type: primarySignal?.type ?? null,
+    title: alert.message,
+    severity: alert.severity,
+    confidence: confidenceScore,
+    detected_at: primarySignal?.detectedAt ?? alert.createdAt,
+  };
+  return JSON.stringify(payload);
 }
 
 // ── alert_id column probe (cached per DB connection) ─────────────────────────
@@ -179,7 +219,7 @@ export function storeAlerts(alerts: Alert[], db: Database): void {
           (from_agent, to_agent, signal_type, stock_code, payload, status,
            created_at, expires_at, alert_id, is_correlation_stub, confidence_score)
         VALUES
-          ('alert-engine', 'all', 'verified_decision', ?, '{}', 'unread',
+          ('alert-engine', 'all', 'verified_decision', ?, ?, 'unread',
            ?, datetime(?, '+2 hours'), ?, 1, ?)
       `)
     : null;
@@ -228,13 +268,29 @@ export function storeAlerts(alerts: Alert[], db: Database): void {
             alert.confidence_score <= 100
               ? Math.min(100, Math.max(0, Math.round(alert.confidence_score)))
               : severityToConfidence(alert.severity);
-          insertSignal.run(
-            stockCode,
-            alert.createdAt,
-            alert.createdAt,
-            alert.id,
-            confidenceScore,
-          );
+          // FIX-ALERT-ENGINE-VERIFIED-DECISION-EMPTY-PAYLOAD-NULL-STOCKCODE:
+          // populate real decision content instead of the previous hardcoded
+          // '{}' literal (see buildVerifiedDecisionPayload doc comment above).
+          const payloadJson = buildVerifiedDecisionPayload(alert, confidenceScore);
+          // Emit-time guard — REFUSE (fail-loud log, not silent-swallow) to
+          // persist an empty-content correlation row. alert.message is a
+          // required field on Alert so this branch should be unreachable in
+          // production; it exists as a regression tripwire.
+          if (payloadJson === "{}" || !alert.message) {
+            logger.warn(
+              "[alertStore] refusing to write verified_decision signal with empty payload",
+              { alertId: alert.id, stockCode, payloadJson },
+            );
+          } else {
+            insertSignal.run(
+              stockCode,
+              payloadJson,
+              alert.createdAt,
+              alert.createdAt,
+              alert.id,
+              confidenceScore,
+            );
+          }
         }
       }
     }
@@ -285,7 +341,7 @@ export function storeAlertsFromCommander(alerts: Alert[], db: Database): void {
           (from_agent, to_agent, signal_type, stock_code, payload, status,
            created_at, expires_at, alert_id, is_correlation_stub, confidence_score)
         VALUES
-          ('alert-engine', 'all', 'verified_decision', ?, '{}', 'unread',
+          ('alert-engine', 'all', 'verified_decision', ?, ?, 'unread',
            ?, datetime(?, '+2 hours'), ?, 1, ?)
       `)
     : null;
@@ -328,8 +384,23 @@ export function storeAlertsFromCommander(alerts: Alert[], db: Database): void {
             alert.confidence_score <= 100
               ? Math.min(100, Math.max(0, Math.round(alert.confidence_score)))
               : severityToConfidence(alert.severity);
+          // FIX-ALERT-ENGINE-VERIFIED-DECISION-EMPTY-PAYLOAD-NULL-STOCKCODE:
+          // populate real decision content instead of the previous hardcoded
+          // '{}' literal (see buildVerifiedDecisionPayload doc comment above
+          // storeAlerts()).
+          const payloadJson = buildVerifiedDecisionPayload(alert, confidenceScore);
+          // Emit-time guard — REFUSE (fail-loud log, not silent-swallow) to
+          // persist an empty-content correlation row.
+          if (payloadJson === "{}" || !alert.message) {
+            logger.warn(
+              "[alertStore] refusing to write verified_decision signal with empty payload",
+              { alertId: alert.id, stockCode, payloadJson },
+            );
+            continue;
+          }
           insertSignal.run(
             stockCode,
+            payloadJson,
             alert.createdAt,
             alert.createdAt,
             alert.id,

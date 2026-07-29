@@ -17,15 +17,24 @@ Bun.env["DB_PATH"] = ":memory:";
  * ALTER TABLE ADD COLUMN ... UNIQUE (silent no-op in SQLite).
  *
  * Dedup key: (from_agent, signal_type, COALESCE(stock_code,''), payload,
- * minute-bucket of created_at). WHERE payload != '{}' deliberately EXCLUDES
- * alertStore.ts's verified_decision correlation stubs (from_agent='alert-engine',
- * payload ALWAYS the literal '{}' by design, RAW-confirmed the exclusive user of
- * payload='{}' live): that payload carries zero differentiating content, so this
- * coarse key would risk silently dropping the correlation stub for two
+ * minute-bucket of created_at). WHERE payload != '{}' was added because, at
+ * the time, alertStore.ts's verified_decision correlation stubs
+ * (from_agent='alert-engine') ALWAYS carried the literal '{}' payload — that
+ * constant payload carried zero differentiating content, so this coarse key
+ * would have risked silently dropping the correlation stub for two
  * genuinely-different alerts (e.g. one TA + one BB alert) firing on the same
  * stock in the same minute. alertStore.ts already owns a precise, alert_id-scoped
  * guard for that pattern (FIX-AGENT-SIGNALS-ORPHAN-ALERT-ID, done-live-verified) —
  * this index does not duplicate or override that narrower, more accurate guard.
+ *
+ * FIX-ALERT-ENGINE-VERIFIED-DECISION-EMPTY-PAYLOAD-NULL-STOCKCODE (2026-07-29):
+ * alertStore.ts no longer writes the literal '{}' — payload now carries real
+ * decision content (with alert_id embedded, keeping it byte-unique per alert).
+ * AC-4 below still exercises the DB-level index directly against a
+ * hand-written literal-'{}' row (mirroring the PRE-fix write shape) — that
+ * remains a valid input this index must tolerate (e.g. a legacy row, or any
+ * future caller that bypasses alertStore.ts), it is no longer the live shape
+ * alertStore.ts itself emits.
  */
 
 import { describe, it, expect, beforeEach } from "bun:test";
