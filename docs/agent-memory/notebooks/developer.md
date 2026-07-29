@@ -1,30 +1,6 @@
 # Developer — Notebook
 
-**Last updated:** 2026-07-29 | **Cycle:** FACTORY-GUARD-CI-SIZELINT-IMPL
-
-## Session 2026-07-29 — ALPHA-S3-DIVERGENCE-SCREEN-V1 — BLOCKED (routed to architect)
-
-**Task:** BOUNDED-1 auto-picked this `zone: multi` row directly to developer (owner="developer"). Row note flags "Needs dev-team PM/architect decomposition when picked" — no `[Architect] Brownfield Findings` handoff exists for this task.
-
-**Recon (not a formal design pass):** All 4 required legs already have wired reuse points: `computeForeignAccumRank`/`computeRelativeStrength` (`infrastructure/microservices/clients.ts` — HTTP to stock-price:5000/technical-analysis:5003, both already return per-ticker z-score/rank/label); `rag_analyses` per-ticker sentiment (`affected_actions LIKE '%code%'`, `sentimentTrendTools.ts` precedent) + `mention_velocity` (`mentionVelocityStore.ts`) are local mcp-server tables. `alertDigestJob.ts`/`foreignFlowAlertJob.ts` is the correct existing scan→Telegram-digest reuse target. Single-zone `apps/mcp-server/` confirmed feasible — mirrors 5/5 sibling ALPHA-S* zone corrections architect already made this sprint for the identical reason.
-
-**Decision:** Did NOT implement. This is a NEW composite/divergence detector (ranking formula + per-leg honest-null thin-data threshold + digest format) feeding a live external Telegram digest — same class as `getMoneyRadarComposite.ts`, which needed a dedicated architect brief despite also reusing already-wired tools. Every ALPHA-S* task this sprint, including the "lean" ones, got an architect brief first — no exception found. Set `status:BLOCKED`, `next_agent:architect` via `orch-apply.sh`; `.head` reset idle. No code changed.
-
-Zone health: no drift detected.
-
-## Session 2026-07-29 — FIX-ORCHSTATE-CONSERVATION-GUARD-QA-LANE-BLIND — REVIEW
-
-**Task:** dev-team dispatch (BOUNDED-1 pickup), `scripts/` (owned by developer, no dev-* zone match), P2. `scripts/orch-conservation-check.mjs`'s `FLAT_TASK_LANES` omitted `'qa'`, so `taskTotal()` never summed `task_board.qa[]` into the whole-board magnitude the floor-ratio circuit-breaker (gates every `orch-apply.sh` write) compares — a catastrophic `qa[]` collapse was invisible to the guard, now live since `qa[]` is actively populated by the Review-Lane QA-Drain mechanism.
-
-**Actions taken:** Added `'qa'` to `FLAT_TASK_LANES` (`scripts/orch-conservation-check.mjs:70`) and synced the script's own literal-formula header comment (the only place the formula is enumerated — `dev-standards.md` only names the metric, never lists lanes, confirmed by grep, so it needed no edit). Left the historical `2026-07-10-auditor-orchstate-conservation-guard.md` design brief untouched (single-commit history, frozen point-in-time snapshot, `dev-standards.md` is the living SSOT that cites it).
-
-**Verification:** TDD RED→GREEN, extended (not duplicated) the existing `scripts/test/orch-apply-wrapper-tests.sh` conservation-guard section with QA-COLLAPSE (negative control — dedicated fixture 10 backlog + 50 qa rows, qa[] wiped, 60→10 crosses the 0.5 floor, must reject) + QA-APPEND-HAPPY (regression guard — normal qa[] append unaffected). Confirmed RED pre-fix: `QA-COLLAPSE — expected exit 1, got 0` (2 FAIL — exact class of the reported gap, live/candidate both silently excluded qa[] so no drop was ever detected). Post-fix: 48/48 PASS, real live board hash asserted unchanged on every case.
-
-**Board:** `task_board.in_progress[FIX-ORCHSTATE-CONSERVATION-GUARD-QA-LANE-BLIND]` → `review` (`next_agent: qa`), stale `promoted_at/promoted_by/promotion_note/claimed_at/claimed_by` markers stripped, `.head` reset to idle (`next_agent: router`), all in the SAME `orch-apply.sh` write (conservation 701→701, exit 0).
-
-**Simplicity gate:** clean — 1 array-literal element + 1 header-comment sync + test extension, no refactor beyond the stated scope (Q1-Q4 all NO).
-
-Zone health: no drift detected.
+**Last updated:** 2026-07-29 | **Cycle:** FACTORY-GUARD-CI-TSBOUNDARIES-IMPL
 
 ## Session 2026-07-29 — FACTORY-GUARD-CI-SIZELINT-IMPL — REVIEW
 
@@ -51,5 +27,19 @@ Zone health: no drift detected.
 **Board:** `task_board.in_progress[FACTORY-GUARD-CI-METRICMASK-IMPL]` → `review` (`next_agent: qa`), `.head` reset to idle, same `orch-apply.sh` write.
 
 **Simplicity gate:** PASS — no excess feature beyond the brief's 3 detected shapes, no single-use abstractions, structure mirrors size-lint sibling per instruction.
+
+Zone health: no drift detected.
+
+## Session 2026-07-29 — FACTORY-GUARD-CI-TSBOUNDARIES-IMPL — REVIEW
+
+**Task:** dev-team BOUNDED-1 auto-pickup (`cross-service/`, epic FACTORY-MAINTAINABILITY-2026-06), build-vs-plan child of architect brief `2026-07-24-factory-guard-ci-depguard-tier-boundaries.md`. Wire `eslint-plugin-boundaries` fences into CI for mcp-server/news-fetch/frontend + fix 4 live/previously-invisible violations first (zero-tolerance) + add the missing `news-fetch-go-lint` job.
+
+**Actions taken:** 3 new CI jobs (`mcp-server-eslint`/`news-fetch-eslint`/`frontend-eslint`) + `news-fetch-go-lint`. mcp-server: relocated `queryMarketWideForeignFlow` interface→infra (new `infrastructure/db/foreignFlowQueries.ts`) and the credit-flow computation interface→application (new `application/usecases/computeCreditFlowSignal.ts`, `creditFlowTools.ts` now a thin Vietnamese-text wrapper over it) — fixes 2 Fence-B hits in `getMoneyRadarComposite.ts`. Moved `recoverMissingOhlcvSession.ts` application→scheduler (its sole caller + core dependency are both scheduler-owned) — fixes the 3rd Fence-B hit. news-fetch: mapped the drifted `src/routes/**` directory into `boundaries/elements` (was invisible to the plugin, hiding a real Fence-C hit) + replaced `fetchArticle.ts`'s direct `PlaywrightBrowserFactory` import with an injectable `setPlaywrightLauncher` DI seam wired from `src/index.ts` (composition root). Bonus, unrelated to boundaries: removed 5 dead `react-hooks/exhaustive-deps` disable-comments in frontend (`eslint-plugin-react-hooks` was never installed) that were independently blocking the new `frontend-eslint` job.
+
+**Verification:** Every violation reproduced against a `git stash`-baseline BEFORE fixing (mcp-server 3/3, news-fetch's element-map-only intermediate state, frontend's 5 pre-existing errors) — proves each fix is real, not cosmetic. 2 scratchpad RAW-verify scripts exercised the actual post-relocation import graph (not test mocks): money-radar composite against a seeded real DB (`foreign_net_direction=0.2`, `credit_flow_direction=null` correctly HN-3-excluded) and news-fetch's DI wiring through a real Hono router (unconfigured→graceful error, configured→correct Contract B `ok` response). Zero regressions: mcp-server targeted 133/133 + full suite 14797/3-pre-existing-fail (stash-confirmed); news-fetch 241/241; frontend vitest 2183/2185 (2 pre-existing, stash-confirmed unrelated). `tsc`/`eslint`/`size-lint-justification.sh`/`metric-mask-lint.sh` all clean on all 3 services post-fix.
+
+**Board:** `task_board.in_progress[FACTORY-GUARD-CI-TSBOUNDARIES-IMPL]` → `review` (`next_agent: qa`), `.head` reset to idle, same `orch-apply.sh` write.
+
+**Simplicity gate:** PASS — every relocation is a verbatim body move (zero logic rewrite), DI seam is the minimal shape needed (no factory-function signature threading through composition-root.ts), no new dependency added (react-hooks fix was deletion, not addition).
 
 Zone health: no drift detected.
