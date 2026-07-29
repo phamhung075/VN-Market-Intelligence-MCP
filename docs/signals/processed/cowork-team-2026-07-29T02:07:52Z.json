@@ -3,7 +3,7 @@
   "to": "dev-team",
   "type": "cowork-fire",
   "payload": {
-    "fire_time": "20260722T021145Z",
+    "fire_time": "2026-07-29T02:07:52Z",
     "matched_slots": [
       "alert-commander-market"
     ],
@@ -16,7 +16,7 @@
       "docs/agents/alert-commander/flow/main.md"
     ],
     "silent": false,
-    "drift_min": 6,
+    "drift_min": 5,
     "errors": [],
     "pressure_mode": "adaptive",
     "calendar_status": "unknown",
@@ -30,7 +30,7 @@
     "cadence_minutes": {
       "alert-commander-market": 240
     },
-    "last_fired_timestamp": "2026-07-22T02:10:56Z",
+    "last_fired_timestamp": "2026-07-29T02:07:00Z",
     "last_fired_slots": [
       "alert-commander-market"
     ],
@@ -41,14 +41,14 @@
     "leader_lock": "acquired",
     "dev_head": "unknown",
     "devq": null,
-    "signal_backlog": 3,
-    "note": "alert-commander-market cadence-due fan-out (last_fired ~17.7h stale, market reopened 02:00Z VN). Step 4.7 tick-snapshot intentionally skipped (token economy; zero-blocker fallback -> agent uses get_cycle_bootstrap). Drain: no fresh A-30 this tick; api-gateway CRITICAL + 2 carryovers left NEW for owners."
+    "signal_backlog": null,
+    "note": "VN market now open (02:00Z window). alert-commander-market cadence-due (240min, last_fired 2026-07-24T08:51:44Z, well overdue). 1 dev-team->po NEW signal (QA-Drain starved, dev-20260729T014905Z-qadr) left untouched per standing practice."
   },
   "priority": "low",
-  "createdAt": "20260722T021145Z",
+  "createdAt": "2026-07-29T02:07:52Z",
   "_processed": {
-    "fingerprint": "3b8fad9672c4a42dda633586e9b29fcce64b3abb63e00aee08270531deaa3990",
-    "processedAt": "2026-07-22T02:14:47Z",
+    "fingerprint": "6b8de9f48a1c46d99e63f836e38d84fda45d5256f3a3a310040baf8673696a9b",
+    "processedAt": "2026-07-29T02:15:21Z",
     "processedBy": "dev-team",
     "result": "routed-to-po"
   }
