@@ -98,6 +98,12 @@
 #                         one ledger, two arrays, honouring the identical
 #                         mixed-case-never-suppresses + staleness-rule
 #                         guarantees for both launchd and memory signatures.
+#   ORCH_STATE_PATH     — docs/data/orch/orch-state.json path (default: repo
+#                         docs/data/orch/orch-state.json) — read by
+#                         _task_status_in_orch_state(), shared by both ack
+#                         arms above to make the ledger's own STALENESS RULE
+#                         load-bearing (FIX-AUDITOR-MEMACK-HEADROOM-FLOOR-AND-
+#                         DEAD-TRACKEDBY).
 #
 # HARD CONSTRAINT: every probe below is READ-ONLY (docker ps/stats, curl GET,
 # df, launchctl list, jq). This script NEVER runs docker restart/stop/rm/
@@ -159,9 +165,60 @@ SYSTEM_MAP="${SYSTEM_MAP_PATH:-$REPO_ROOT/docs/data/system-map.json}"
 HEARTBEAT_FILE="${HEARTBEAT_FILE_PATH:-$REPO_ROOT/docs/data/auditor-tier1-last-healthy.json}"
 LAUNCHD_DIR="${LAUNCHD_DIR_PATH:-$REPO_ROOT/launchd}"
 LAUNCHD_ACK="${LAUNCHD_ACK_PATH:-$REPO_ROOT/docs/data/auditor-launchd-ack.json}"
+ORCH_STATE="${ORCH_STATE_PATH:-$REPO_ROOT/docs/data/orch/orch-state.json}"
 WARN_PCT=85
+# FIX-AUDITOR-MEMACK-HEADROOM-FLOOR-AND-DEAD-TRACKEDBY (2026-07-29): absolute
+# headroom floor an acked_memory[] ACK may not swallow — see
+# _mem_container_acked's header comment for the full calibration (2x the
+# ~20 MiB measured rag-service optimize()-rewrite burst, NOT the cap size).
+MEM_FLOOR_MIB=40
 
 _now_iso() { date -u +"%Y-%m-%dT%H:%M:%SZ"; }
+
+# ── Shared: resolve a tracked_by task_id's CURRENT status against EVERY
+# docs/data/orch/orch-state.json task_board lane ─────────────────────────────
+# FIX-AUDITOR-MEMACK-HEADROOM-FLOOR-AND-DEAD-TRACKEDBY: makes the ack
+# ledger's own STALENESS RULE promise ("remove the entry once its tracked_by
+# row reaches DONE_VERIFIED") load-bearing — until this fix, tracked_by was
+# read by NOTHING in this script (both _check_mem_creep's acked_memory[] arm
+# and _check_launchd_agents's acked[] arm). Used by both.
+# Scans backlog/ready/in_progress/review/qa/done/done_verified/archive
+# (array lanes) plus active_sprints[].tasks[]/closed_sprints[].tasks[]
+# (nested) — the SAME lane set task_board rows can actually occupy.
+# Prints the raw status string on a match, or the literal "ABSENT" if the
+# id is present in NO lane — both are VALID resolutions (rc=0); the caller
+# decides which count as stale (this fix treats ABSENT and DONE_VERIFIED
+# as stale, everything else as live).
+# FAIL-LOUD (never `2>/dev/null || true`) on an unreadable/unparseable
+# orch-state.json — missing file OR a jq parse error both print
+# "ORCH_STATE_UNREADABLE: <detail>" and return 2, a THIRD, distinct code so
+# callers can tell "verified stale" (rc=0, ABSENT/DONE_VERIFIED) apart from
+# "could not verify" (rc=2) — both must refuse to suppress an ACK, but the
+# detail line differs so the operator knows which happened.
+# Env override (test seam): ORCH_STATE_PATH (default: repo
+# docs/data/orch/orch-state.json).
+_task_status_in_orch_state() {
+  local task_id="$1" out rc
+  if [ ! -f "$ORCH_STATE" ]; then
+    printf 'ORCH_STATE_UNREADABLE: file not found: %s' "$ORCH_STATE"
+    return 2
+  fi
+  out=$(jq -r --arg tid "$task_id" '
+    def lane($k): (.task_board[$k] // []);
+    def nested_tasks($k): [(.task_board[$k] // [])[] | (.tasks // [])[]];
+    (lane("backlog") + lane("ready") + lane("in_progress") + lane("review")
+     + lane("qa") + lane("done") + lane("done_verified") + lane("archive")
+     + nested_tasks("active_sprints") + nested_tasks("closed_sprints"))
+    | map(select(.id == $tid)) | (.[0].status // "ABSENT")
+  ' "$ORCH_STATE" 2>&1)
+  rc=$?
+  if [ "$rc" -ne 0 ]; then
+    printf 'ORCH_STATE_UNREADABLE: jq parse failed on %s: %s' "$ORCH_STATE" "$out"
+    return 2
+  fi
+  printf '%s' "$out"
+  return 0
+}
 
 # ── Check 1: docker ps health-state sweep (host_runtime_set) ─────────────────
 _check_docker_ps() {
@@ -262,9 +319,21 @@ _check_disk() {
 # suppresses — an unacknowledged breach alongside acked ones still FAILS,
 # and names the unacked container(s); (2) STALENESS RULE — remove the entry
 # once its tracked_by row reaches DONE_VERIFIED.
+#
+# FIX-AUDITOR-MEMACK-HEADROOM-FLOOR-AND-DEAD-TRACKEDBY (2026-07-29): the
+# above two guarantees were PROSE ONLY — tracked_by was read by nothing, so
+# an ACK could never expire, and the ACK predicate was pure pct>=WARN_PCT
+# with no absolute floor, so 85.01% and 99.99% suppressed identically. LIVE
+# CONSEQUENCE: rag-service sat ACK-suppressed at 97.11% of its 768 MiB cap
+# (22.2 MiB free, falling toward 11.4 MiB 15min later) while Tier-1 reported
+# ALL_GREEN. _mem_container_acked() below now enforces BOTH: an absolute
+# headroom floor (MEM_FLOOR_MIB) the ACK cannot swallow, and a LIVE
+# tracked_by resolved against orch-state.json — see its own header comment
+# for the full calibration + staleness detail.
 _check_mem_creep() {
   local ctr_ids inspect_out name mem_cap pct_raw pct
   local breach="" acked="" ack_list=""
+  local headroom_mib ack_reason ack_rc
 
   ctr_ids=$(docker ps -q 2>/dev/null)
   if [ -z "$ctr_ids" ]; then
@@ -272,7 +341,9 @@ _check_mem_creep() {
     return 1
   fi
 
-  [ -f "$LAUNCHD_ACK" ] && ack_list=$(jq -r '.acked_memory[]?.container // empty' "$LAUNCHD_ACK" 2>/dev/null)
+  # ack_list carries tracked_by too now (TSV container\ttracked_by) — see
+  # _mem_container_acked's tracked_by-liveness check below.
+  [ -f "$LAUNCHD_ACK" ] && ack_list=$(jq -r '.acked_memory[]? | [(.container // ""), (.tracked_by // "")] | @tsv' "$LAUNCHD_ACK" 2>/dev/null)
 
   # ctr_ids is a newline-separated id list from `docker ps -q`;
   # word-splitting is intended below (one positional arg per id).
@@ -300,8 +371,15 @@ _check_mem_creep() {
       continue
     fi
     if awk -v p="$pct" -v w="$WARN_PCT" 'BEGIN{exit !(p>=w)}'; then
-      if _mem_container_acked "$name" "$ack_list"; then
+      headroom_mib=$(_mem_headroom_mib "$mem_cap" "$pct")
+      ack_reason=$(_mem_container_acked "$name" "$headroom_mib" "$ack_list"); ack_rc=$?
+      if [ "$ack_rc" -eq 0 ]; then
         acked="${acked}${name}(${pct}%) "
+      elif [ -n "$ack_reason" ]; then
+        # Matched a ledger entry but the ACK was disqualified (below-floor
+        # or stale tracked_by) — surface pct AND MiB-free so the operator
+        # can tell this apart from an ordinary unacknowledged breach.
+        breach="${breach}${name}(${pct}%, ${headroom_mib}MiB-free, ${ack_reason}) "
       else
         breach="${breach}${name}(${pct}%) "
       fi
@@ -319,16 +397,87 @@ _check_mem_creep() {
   return 0
 }
 
+# Absolute free MiB for a memory-capped container — cap minus current usage,
+# both derived from values THIS check already pulls (mem_cap bytes from
+# docker inspect, pct from docker stats MemPerc), so no extra docker call is
+# needed. FIX-AUDITOR-MEMACK-HEADROOM-FLOOR-AND-DEAD-TRACKEDBY.
+# LOCALE PIN — MANDATORY, do not remove (same class already documented in
+# scripts/audits/verify-a30-mcp-memory-reclamation.sh): under a comma-decimal
+# locale (fr_FR etc) awk's `%.1f` prints "22,2" instead of "22.2", corrupting
+# the detail line and any downstream numeric re-parse. Pin before the float
+# math, scoped to this one command only (never a global `export` — this
+# script is SOURCED by the test harness and must not mutate its locale).
+_mem_headroom_mib() {
+  local mem_cap="$1" pct="$2"
+  LC_ALL=C LC_NUMERIC=C awk -v cap="$mem_cap" -v p="$pct" 'BEGIN{printf "%.1f", (cap * (100 - p) / 100) / 1048576}'
+}
+
 # Case-insensitive substring membership test for a container's full name
-# against the acked_memory[].container list (jq -r '.acked_memory[].container'
-# output, newline-separated). Portable (grep -qi, no bash4-only lowercasing —
-# this repo runs on macOS system bash 3.2).
+# against the acked_memory[] ledger (container\ttracked_by TSV lines, from
+# _check_mem_creep's ack_list) — PLUS the two load-bearing guarantees
+# FIX-AUDITOR-MEMACK-HEADROOM-FLOOR-AND-DEAD-TRACKEDBY adds on top of the
+# plain name match FIX-AUDITOR-TIER1-A30-MEM-SINGLE-CONTAINER-SCOPE shipped:
+#
+#   (a) HEADROOM FLOOR — even a matched, live-tracked ACK does NOT suppress
+#       once absolute headroom drops below MEM_FLOOR_MIB=40. Calibrated
+#       against the largest MEASURED single allocation on an in-scope capped
+#       container, NOT the cap size (po_floor_calibration_20260729T1135 on
+#       this task's board row explicitly forbids sizing off the cap).
+#       rag-service's compact() failure path re-fires a full-table
+#       optimize() rewrite that emits ~20 MiB fragments (measured,
+#       FIX-RAG-SERVICE-CLEAN-EXIT-RESTART-LOOP root_cause — 5 largest data
+#       files 19.4-20.0 MiB). A floor set AT the burst size would only fire
+#       once headroom already equals exactly one burst's worth of room
+#       (zero margin left post-warning); MEM_FLOOR_MIB=40 doubles that
+#       measured burst so the check goes red with a FULL burst of margin
+#       still in hand — "warn BEFORE the allocation that kills it, not
+#       after", per the calibration note. pdf-extractor's own burst profile
+#       (FIX-PDFX-PARENT-PROCESS-MEMORY-BURST-HEADROOM) is qualitatively
+#       LARGER ("100s of MiB to ~1 GiB" per OCR job) but that row is still
+#       BACKLOG/plan_only with the mechanism itself undiagnosed — no settled
+#       single-allocation number exists yet to fold into a global constant,
+#       and pdf-extractor carries no acked_memory entry today (this floor
+#       only binds containers that ARE ACK'd), so it does not constrain this
+#       value now. If that row lands a number that dwarfs this floor once
+#       pdf-extractor is ever ACK'd here, a per-container floor may need
+#       re-litigating — deliberately OUT of this row's scope (fix_spec (a):
+#       "single global constant — NOT per-container", the same PO ruling
+#       that already rejected per-container threshold overrides on the
+#       parent FIX-AUDITOR-TIER1-A30-MEM-SINGLE-CONTAINER-SCOPE task).
+#   (b) TRACKED_BY LIVENESS — resolves the matched entry's tracked_by
+#       against EVERY orch-state.json task_board lane
+#       (_task_status_in_orch_state). Absent from every lane, OR resolved to
+#       DONE_VERIFIED, means the ACK is STALE and must NOT suppress — this
+#       is the STALENESS RULE the ledger's own _comment_acked_memory has
+#       always promised and that nothing enforced until this fix.
+#
+# Returns 0 (silently, no stdout) ONLY when: name matches AND headroom >=
+# floor AND tracked_by resolves to a live, non-DONE_VERIFIED status — the
+# suppress path, unchanged from before. Otherwise returns 1 and PRINTS the
+# reason (BELOW-FLOOR / STALE-ACK / ORCH-STATE-UNREADABLE) so the caller
+# builds an honest breach message instead of silently dropping the
+# container. A name with NO ledger match at all returns 1 with NO output
+# (unchanged — distinguishes "never acked" from "acked but disqualified").
 _mem_container_acked() {
-  local name="$1" list="$2" entry
+  local name="$1" headroom_mib="$2" list="$3"
+  local ctr tb status rc
   [ -z "$list" ] && return 1
-  while IFS= read -r entry; do
-    [ -z "$entry" ] && continue
-    if printf '%s' "$name" | grep -qi -- "$entry"; then
+  while IFS=$'\t' read -r ctr tb; do
+    [ -z "$ctr" ] && continue
+    if printf '%s' "$name" | grep -qi -- "$ctr"; then
+      if LC_ALL=C LC_NUMERIC=C awk -v h="$headroom_mib" -v f="$MEM_FLOOR_MIB" 'BEGIN{exit !(h < f)}'; then
+        printf 'BELOW-FLOOR(floor=%sMiB)' "$MEM_FLOOR_MIB"
+        return 1
+      fi
+      status=$(_task_status_in_orch_state "$tb"); rc=$?
+      if [ "$rc" -eq 2 ]; then
+        printf 'ORCH-STATE-UNREADABLE:%s' "$status"
+        return 1
+      fi
+      if [ "$status" = "ABSENT" ] || [ "$status" = "DONE_VERIFIED" ]; then
+        printf 'STALE-ACK(tracked_by=%s,status=%s)' "${tb:-<none>}" "$status"
+        return 1
+      fi
       return 0
     fi
   done <<< "$list"
@@ -374,11 +523,21 @@ _mem_container_acked() {
 # fails the check even when acked labels are ALSO present (mixed case never
 # suppresses) — acknowledgment only ever silences a signature the ledger
 # explicitly names, never a fresh one.
+#
+# FIX-AUDITOR-MEMACK-HEADROOM-FLOOR-AND-DEAD-TRACKEDBY (2026-07-29), fix_spec
+# (c): applies the SAME tracked_by-liveness fix as the acked_memory[] arm
+# above — until now `.acked[].tracked_by` (3 live entries) was read by
+# nothing, so an ACK here could never expire either. _launchd_label_acked()
+# below now resolves tracked_by against orch-state.json exactly like
+# _mem_container_acked() does (no headroom-floor concept applies here —
+# that predicate is memory-specific).
 _check_launchd_agents() {
   local dir="$LAUNCHD_DIR" plist label lc_out bad="" acked="" match_line status
   local obsolete_labels="com.vn-market.socat-bridge"
-  local ack_labels=""
-  [ -f "$LAUNCHD_ACK" ] && ack_labels=$(jq -r '.acked[]?.label // empty' "$LAUNCHD_ACK" 2>/dev/null)
+  local ack_labels="" ack_reason ack_rc
+  # ack_labels carries tracked_by too now (TSV label\ttracked_by) — see
+  # _launchd_label_acked's tracked_by-liveness check below.
+  [ -f "$LAUNCHD_ACK" ] && ack_labels=$(jq -r '.acked[]? | [(.label // ""), (.tracked_by // "")] | @tsv' "$LAUNCHD_ACK" 2>/dev/null)
   if [ ! -d "$dir" ]; then
     echo "launchd source dir not found: $dir"
     return 1
@@ -398,8 +557,11 @@ _check_launchd_agents() {
     esac
     match_line=$(printf '%s\n' "$lc_out" | awk -F'\t' -v want="$label" '$3 == want {print; exit}')
     if [ -z "$match_line" ]; then
-      if _launchd_label_acked "$label" "$ack_labels"; then
+      ack_reason=$(_launchd_label_acked "$label" "$ack_labels"); ack_rc=$?
+      if [ "$ack_rc" -eq 0 ]; then
         acked="${acked}${label}(not-loaded) "
+      elif [ -n "$ack_reason" ]; then
+        bad="${bad}${label}(not-loaded, ${ack_reason}) "
       else
         bad="${bad}${label}(not-loaded) "
       fi
@@ -407,8 +569,11 @@ _check_launchd_agents() {
     fi
     status=$(printf '%s' "$match_line" | awk -F'\t' '{print $2}')
     if [ "$status" != "0" ]; then
-      if _launchd_label_acked "$label" "$ack_labels"; then
+      ack_reason=$(_launchd_label_acked "$label" "$ack_labels"); ack_rc=$?
+      if [ "$ack_rc" -eq 0 ]; then
         acked="${acked}${label}(exit-status:${status}) "
+      elif [ -n "$ack_reason" ]; then
+        bad="${bad}${label}(exit-status:${status}, ${ack_reason}) "
       else
         bad="${bad}${label}(exit-status:${status}) "
       fi
@@ -425,15 +590,33 @@ _check_launchd_agents() {
   return 0
 }
 
-# Exact-match membership test for a label against a newline-separated list
-# (jq -r '.acked[].label' output) — never substring, so a label like
-# "com.vn-market.fleet-push-v2" could not accidentally match an ack entry
-# for "com.vn-market.fleet-push".
+# Exact-match membership test for a label against the acked[] ledger
+# (label\ttracked_by TSV lines, from _check_launchd_agents's ack_labels) —
+# never substring, so a label like "com.vn-market.fleet-push-v2" could not
+# accidentally match an ack entry for "com.vn-market.fleet-push". PLUS the
+# TRACKED_BY LIVENESS guarantee FIX-AUDITOR-MEMACK-HEADROOM-FLOOR-AND-DEAD-
+# TRACKEDBY adds (fix_spec (c)) — see _mem_container_acked's header comment
+# for the full rationale, identical mechanism here, no headroom concept.
+# Returns 0 (silent) only when label matches AND tracked_by resolves live;
+# otherwise returns 1 and PRINTS the reason (STALE-ACK/ORCH-STATE-
+# UNREADABLE) on a match, or nothing on no match at all (unchanged).
 _launchd_label_acked() {
-  local label="$1" list="$2" l
+  local label="$1" list="$2" l tb status rc
   [ -z "$list" ] && return 1
-  while IFS= read -r l; do
-    [ "$l" = "$label" ] && return 0
+  while IFS=$'\t' read -r l tb; do
+    [ -z "$l" ] && continue
+    if [ "$l" = "$label" ]; then
+      status=$(_task_status_in_orch_state "$tb"); rc=$?
+      if [ "$rc" -eq 2 ]; then
+        printf 'ORCH-STATE-UNREADABLE:%s' "$status"
+        return 1
+      fi
+      if [ "$status" = "ABSENT" ] || [ "$status" = "DONE_VERIFIED" ]; then
+        printf 'STALE-ACK(tracked_by=%s,status=%s)' "${tb:-<none>}" "$status"
+        return 1
+      fi
+      return 0
+    fi
   done <<< "$list"
   return 1
 }

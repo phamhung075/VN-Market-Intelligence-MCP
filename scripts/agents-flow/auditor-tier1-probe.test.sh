@@ -83,9 +83,40 @@ export LAUNCHD_DIR_PATH="$LAUNCHD_EMPTY_DIR"
 # pattern as $LAUNCHD_DIR.
 export LAUNCHD_ACK_PATH="$TMPDIR_TEST/no-such-ack-ledger.json"
 
+# Default ORCH_STATE_PATH → a small fixture task_board carrying every
+# tracked_by id the pre-existing T36/T40 ack fixtures already reference
+# (FIX-LAUNCHD-DOCKER-EVENTS-EXIT1-CRASHLOOP, FIX-FLEET-PUSH-LAUNCHD-
+# EXCONFIG-SILENT-DEAD, RAG-FTS-BUILD-MEMORY-BOUND), each at a LIVE
+# (non-DONE_VERIFIED) status. FIX-AUDITOR-MEMACK-HEADROOM-FLOOR-AND-DEAD-
+# TRACKEDBY: without this override, _task_status_in_orch_state() would
+# silently fall through to the REAL repo docs/data/orch/orch-state.json —
+# proven to happen (T36/T40 passed against the LIVE board before this
+# fixture existed, purely because those 3 ids happen to be non-terminal
+# TODAY) and exactly the hermeticity gap this fixture closes: a real board
+# row later reaching DONE_VERIFIED would silently flip these pre-existing
+# assertions to FAILURE with zero change to this test file. The new
+# staleness-specific tests (T44+) override $ORCH_STATE per-case, same
+# pattern as $LAUNCHD_DIR/$LAUNCHD_ACK.
+FIXTURE_ORCH_STATE_DEFAULT="$TMPDIR_TEST/orch-state-default.json"
+jq -n '{task_board:{
+  backlog:[
+    {id:"FIX-LAUNCHD-DOCKER-EVENTS-EXIT1-CRASHLOOP", status:"BACKLOG"},
+    {id:"FIX-FLEET-PUSH-LAUNCHD-EXCONFIG-SILENT-DEAD", status:"BACKLOG"},
+    {id:"RAG-FTS-BUILD-MEMORY-BOUND", status:"BACKLOG"}
+  ],
+  ready:[], in_progress:[], review:[], qa:[], done:[], done_verified:[], archive:[],
+  active_sprints:[], closed_sprints:[]
+}}' > "$FIXTURE_ORCH_STATE_DEFAULT"
+export ORCH_STATE_PATH="$FIXTURE_ORCH_STATE_DEFAULT"
+
 # ── Source the script under test (guard prevents auto-exec: $0 != BASH_SOURCE) ──
 # shellcheck source=./auditor-tier1-probe.sh
 source "$PROBE_SH"
+
+# Save the script's resolved default (ORCH_STATE_PATH:-default fallback
+# applied) so per-case overrides below (T44+) can restore it afterward,
+# same pattern as LAUNCHD_DIR/LAUNCHD_ACK already established.
+DEFAULT_ORCH_STATE="$ORCH_STATE"
 
 # ── Stub docker/curl/df — override the real commands pulled in by the script ──
 # Dispatch controlled by $STUB_DOCKER_PS / $STUB_MEM_FLEET / $STUB_MEM_MCPSERVER
@@ -982,9 +1013,193 @@ check "T43 all-healthy + mem ack ledger present -> verdict ALL_GREEN" "$([ "$VER
 check "T43 all-healthy + mem ack ledger present -> exit=0" "$([ "$RC" -eq 0 ] && echo true || echo false)"
 check "T43 all-healthy + mem ack ledger present -> detail carries NO acknowledged-degraded noise" "$([[ "$DETAIL" != *"acknowledged-degraded"* ]] && echo true || echo false)"
 
+# ══════════════════════════════════════════════════════════════════════════════
+# FIX-AUDITOR-MEMACK-HEADROOM-FLOOR-AND-DEAD-TRACKEDBY — HEADROOM FLOOR
+# (fix_spec a) + TRACKED_BY LIVENESS (fix_spec b/c) coverage. Reuses the SAME
+# ACK_FIXTURE_MEM_RAG / launchd ack fixtures already defined above; adds
+# ORCH_STATE-specific fixtures for the staleness/unreadable cases.
+# ══════════════════════════════════════════════════════════════════════════════
+
+# STALE tracked_by fixture — RAG-FTS-BUILD-MEMORY-BOUND (the mem arm's
+# existing tracked_by) AND FIX-LAUNCHD-DOCKER-EVENTS-EXIT1-CRASHLOOP (the
+# launchd arm's) both DONE_VERIFIED; FIX-FLEET-PUSH-LAUNCHD-EXCONFIG-SILENT-
+# DEAD stays live (BACKLOG) so T51 can prove the mixed case — one sibling
+# ack disqualified by staleness, the OTHER still suppresses normally.
+FIXTURE_ORCH_STATE_STALE="$TMPDIR_TEST/orch-state-stale.json"
+jq -n '{task_board:{
+  backlog:[{id:"FIX-FLEET-PUSH-LAUNCHD-EXCONFIG-SILENT-DEAD", status:"BACKLOG"}],
+  ready:[], in_progress:[], review:[], qa:[],
+  done:[], done_verified:[
+    {id:"RAG-FTS-BUILD-MEMORY-BOUND", status:"DONE_VERIFIED"},
+    {id:"FIX-LAUNCHD-DOCKER-EVENTS-EXIT1-CRASHLOOP", status:"DONE_VERIFIED"}
+  ],
+  archive:[], active_sprints:[], closed_sprints:[]
+}}' > "$FIXTURE_ORCH_STATE_STALE"
+
+# Malformed (invalid JSON) orch-state fixture — distinct failure mode from
+# "file not found", proves the jq-parse-error branch of
+# _task_status_in_orch_state is ALSO fail-loud, not just the missing-file one.
+FIXTURE_ORCH_STATE_MALFORMED="$TMPDIR_TEST/orch-state-malformed.json"
+printf 'not valid json {' > "$FIXTURE_ORCH_STATE_MALFORMED"
+
+# tracked_by pointing at an id that exists in NO fixture anywhere — the
+# "absent from every lane" half of AC3, reused by both T48 (mem) and T52
+# (launchd) against the plain $DEFAULT_ORCH_STATE fixture (which legitimately
+# has no such row).
+ACK_FIXTURE_MEM_RAG_ABSENT_TRACKEDBY="$TMPDIR_TEST/ack-ledger-mem-rag-absent-trackedby.json"
+jq -n '{acked_memory:[
+  {container:"rag-service", tracked_by:"FIX-NONEXISTENT-TASK-ID-NOT-ON-BOARD", acked_at:"2026-07-29T11:32:08Z"}
+]}' > "$ACK_FIXTURE_MEM_RAG_ABSENT_TRACKEDBY"
+
+ACK_FIXTURE_DOCKEREVENTS_ABSENT_TRACKEDBY="$TMPDIR_TEST/ack-ledger-dockerevents-absent-trackedby.json"
+jq -n '{acked:[
+  {label:"com.vn-market.docker-events", tracked_by:"FIX-NONEXISTENT-TASK-ID-NOT-ON-BOARD", acked_at:"2026-07-23T18:51:09Z"}
+]}' > "$ACK_FIXTURE_DOCKEREVENTS_ABSENT_TRACKEDBY"
+
+# ── T44: AC2 — rag-service ACK'd, forced BELOW MEM_FLOOR_MIB absolute
+# headroom (97.11%/22.2MiB-free — the EXACT live-measured PO evidence
+# number, po_floor_calibration_20260729T1135) -> verdict FAILURE, detail
+# names the container with BOTH its percentage AND its MiB-free — the case
+# the pre-fix all-or-nothing predicate could not express ────────────────────
+run_case
+LAUNCHD_DIR="$LAUNCHD_EMPTY_DIR"
+LAUNCHD_ACK="$ACK_FIXTURE_MEM_RAG"
+ORCH_STATE="$DEFAULT_ORCH_STATE"
+STUB_MEM_RAG="97.11"
+OUT=$(run_probe); RC=$?
+VERDICT=$(printf '%s' "$OUT" | jq -r '.verdict')
+DETAIL=$(printf '%s' "$OUT" | jq -r '.detail')
+check "T44 below-floor rag-service breach -> verdict FAILURE" "$([ "$VERDICT" = "FAILURE" ] && echo true || echo false)"
+check "T44 exit=1" "$([ "$RC" -eq 1 ] && echo true || echo false)"
+check "T44 detail names rag-service with its percentage" "$([[ "$DETAIL" == *"rag-service"*"97.11%"* ]] && echo true || echo false)"
+check "T44 detail names the MiB-free figure (22.2MiB)" "$([[ "$DETAIL" == *"22.2MiB-free"* ]] && echo true || echo false)"
+check "T44 detail names BELOW-FLOOR" "$([[ "$DETAIL" == *"BELOW-FLOOR"* ]] && echo true || echo false)"
+check "T44 does NOT write heartbeat file" "$([ ! -f "$HEARTBEAT_FILE_PATH" ] && echo true || echo false)"
+
+# ── T45/T46: floor BOUNDARY — one MiB below vs one MiB above MEM_FLOOR_MIB,
+# same tracked_by (live), proving the predicate itself (not a coincidence of
+# the specific PO evidence number) drives the verdict flip ─────────────────
+run_case
+LAUNCHD_DIR="$LAUNCHD_EMPTY_DIR"
+LAUNCHD_ACK="$ACK_FIXTURE_MEM_RAG"
+ORCH_STATE="$DEFAULT_ORCH_STATE"
+STUB_MEM_RAG="94.92"  # 768 * (100-94.92)/100 = 39.0 MiB free — just BELOW floor=40
+OUT=$(run_probe); RC=$?
+VERDICT=$(printf '%s' "$OUT" | jq -r '.verdict')
+check "T45 headroom just BELOW floor (39.0MiB < 40MiB) -> verdict FAILURE" "$([ "$VERDICT" = "FAILURE" ] && echo true || echo false)"
+
+run_case
+LAUNCHD_DIR="$LAUNCHD_EMPTY_DIR"
+LAUNCHD_ACK="$ACK_FIXTURE_MEM_RAG"
+ORCH_STATE="$DEFAULT_ORCH_STATE"
+STUB_MEM_RAG="94.66"  # 768 * (100-94.66)/100 = 41.0 MiB free — just ABOVE floor=40
+OUT=$(run_probe); RC=$?
+VERDICT=$(printf '%s' "$OUT" | jq -r '.verdict')
+check "T46 headroom just ABOVE floor (41.0MiB >= 40MiB) -> verdict ALL_GREEN (AC1 preserved)" "$([ "$VERDICT" = "ALL_GREEN" ] && echo true || echo false)"
+
+# ── T47: AC3 — tracked_by resolves to DONE_VERIFIED -> STALE ACK, verdict
+# FAILURE, NOT silent suppression, even though headroom is comfortably above
+# the floor (93.67%/48.6MiB-free, same reading T40 proved ALL_GREEN when
+# tracked_by was live) — staleness alone must flip the verdict ────────────
+run_case
+LAUNCHD_DIR="$LAUNCHD_EMPTY_DIR"
+LAUNCHD_ACK="$ACK_FIXTURE_MEM_RAG"
+ORCH_STATE="$FIXTURE_ORCH_STATE_STALE"
+STUB_MEM_RAG="93.67"
+OUT=$(run_probe); RC=$?
+VERDICT=$(printf '%s' "$OUT" | jq -r '.verdict')
+DETAIL=$(printf '%s' "$OUT" | jq -r '.detail')
+check "T47 DONE_VERIFIED tracked_by -> verdict FAILURE (STALE ACK)" "$([ "$VERDICT" = "FAILURE" ] && echo true || echo false)"
+check "T47 exit=1" "$([ "$RC" -eq 1 ] && echo true || echo false)"
+check "T47 detail names rag-service with its percentage" "$([[ "$DETAIL" == *"rag-service"*"93.67%"* ]] && echo true || echo false)"
+check "T47 detail names STALE-ACK with the resolved DONE_VERIFIED status" "$([[ "$DETAIL" == *"STALE-ACK"* ]] && [[ "$DETAIL" == *"DONE_VERIFIED"* ]] && echo true || echo false)"
+check "T47 does NOT write heartbeat file" "$([ ! -f "$HEARTBEAT_FILE_PATH" ] && echo true || echo false)"
+
+# ── T48: AC3 — tracked_by absent from EVERY task_board lane -> STALE ACK,
+# verdict FAILURE, same as DONE_VERIFIED (a task_id that was never real, or
+# was hard-deleted, must never suppress forever either) ────────────────────
+run_case
+LAUNCHD_DIR="$LAUNCHD_EMPTY_DIR"
+LAUNCHD_ACK="$ACK_FIXTURE_MEM_RAG_ABSENT_TRACKEDBY"
+ORCH_STATE="$DEFAULT_ORCH_STATE"
+STUB_MEM_RAG="93.67"
+OUT=$(run_probe); RC=$?
+VERDICT=$(printf '%s' "$OUT" | jq -r '.verdict')
+DETAIL=$(printf '%s' "$OUT" | jq -r '.detail')
+check "T48 ABSENT tracked_by -> verdict FAILURE (STALE ACK)" "$([ "$VERDICT" = "FAILURE" ] && echo true || echo false)"
+check "T48 detail names STALE-ACK with status=ABSENT" "$([[ "$DETAIL" == *"STALE-ACK"* ]] && [[ "$DETAIL" == *"status=ABSENT"* ]] && echo true || echo false)"
+
+# ── T49/T50: FAIL-LOUD on an unreadable/unparseable orch-state.json — the
+# ACK must NOT silently suppress just because staleness could not be
+# verified; two distinct unreadable shapes (missing file, invalid JSON) ────
+run_case
+LAUNCHD_DIR="$LAUNCHD_EMPTY_DIR"
+LAUNCHD_ACK="$ACK_FIXTURE_MEM_RAG"
+ORCH_STATE="$TMPDIR_TEST/no-such-orch-state.json"
+STUB_MEM_RAG="93.67"
+OUT=$(run_probe); RC=$?
+VERDICT=$(printf '%s' "$OUT" | jq -r '.verdict')
+DETAIL=$(printf '%s' "$OUT" | jq -r '.detail')
+check "T49 orch-state file missing -> verdict FAILURE (fail-loud, never silent-suppress)" "$([ "$VERDICT" = "FAILURE" ] && echo true || echo false)"
+check "T49 detail names ORCH-STATE-UNREADABLE" "$([[ "$DETAIL" == *"ORCH-STATE-UNREADABLE"* ]] && echo true || echo false)"
+
+run_case
+LAUNCHD_DIR="$LAUNCHD_EMPTY_DIR"
+LAUNCHD_ACK="$ACK_FIXTURE_MEM_RAG"
+ORCH_STATE="$FIXTURE_ORCH_STATE_MALFORMED"
+STUB_MEM_RAG="93.67"
+OUT=$(run_probe); RC=$?
+VERDICT=$(printf '%s' "$OUT" | jq -r '.verdict')
+DETAIL=$(printf '%s' "$OUT" | jq -r '.detail')
+check "T50 orch-state malformed JSON -> verdict FAILURE (fail-loud, never silent-suppress)" "$([ "$VERDICT" = "FAILURE" ] && echo true || echo false)"
+check "T50 detail names ORCH-STATE-UNREADABLE" "$([[ "$DETAIL" == *"ORCH-STATE-UNREADABLE"* ]] && echo true || echo false)"
+
+# ── T51: fix_spec (c) — SAME tracked_by-liveness fix applied to the acked[]
+# launchd arm. docker-events' tracked_by is DONE_VERIFIED (stale, must NOT
+# suppress) while fleet-push's stays live (BACKLOG, must STILL suppress) —
+# proves the fix is per-entry, not an all-or-nothing ledger-wide flip ──────
+run_case
+LAUNCHD_DIR="$FIXTURE_LAUNCHD_DIR_ACK_BOTH"
+LAUNCHD_ACK="$ACK_FIXTURE_BOTH"
+ORCH_STATE="$FIXTURE_ORCH_STATE_STALE"
+STUB_LAUNCHCTL="ok"
+OUT=$(run_probe); RC=$?
+VERDICT=$(printf '%s' "$OUT" | jq -r '.verdict')
+DETAIL=$(printf '%s' "$OUT" | jq -r '.detail')
+check "T51 DONE_VERIFIED launchd tracked_by -> verdict FAILURE (STALE ACK)" "$([ "$VERDICT" = "FAILURE" ] && echo true || echo false)"
+check "T51 detail names docker-events STALE-ACK with DONE_VERIFIED status" "$([[ "$DETAIL" == *"com.vn-market.docker-events"* ]] && [[ "$DETAIL" == *"STALE-ACK"* ]] && [[ "$DETAIL" == *"DONE_VERIFIED"* ]] && echo true || echo false)"
+check "T51 fleet-push (live tracked_by) STILL suppressed (acknowledged-degraded)" "$([[ "$DETAIL" == *"acknowledged-degraded"* ]] && [[ "$DETAIL" == *"com.vn-market.fleet-push"* ]] && echo true || echo false)"
+
+# ── T52: fix_spec (c) — launchd tracked_by absent from every lane -> STALE
+# ACK, verdict FAILURE ──────────────────────────────────────────────────────
+run_case
+LAUNCHD_DIR="$FIXTURE_LAUNCHD_DIR_ACK_DOCKEREVENTS_ONLY"
+LAUNCHD_ACK="$ACK_FIXTURE_DOCKEREVENTS_ABSENT_TRACKEDBY"
+ORCH_STATE="$DEFAULT_ORCH_STATE"
+STUB_LAUNCHCTL="ok"
+OUT=$(run_probe); RC=$?
+VERDICT=$(printf '%s' "$OUT" | jq -r '.verdict')
+DETAIL=$(printf '%s' "$OUT" | jq -r '.detail')
+check "T52 ABSENT launchd tracked_by -> verdict FAILURE (STALE ACK)" "$([ "$VERDICT" = "FAILURE" ] && echo true || echo false)"
+check "T52 detail names docker-events STALE-ACK with status=ABSENT" "$([[ "$DETAIL" == *"com.vn-market.docker-events"* ]] && [[ "$DETAIL" == *"STALE-ACK"* ]] && [[ "$DETAIL" == *"status=ABSENT"* ]] && echo true || echo false)"
+
+# ── T53: launchd arm — orch-state unreadable -> fail-loud, never
+# silent-suppress (same guarantee as T49, proven at this arm's own call site) ─
+run_case
+LAUNCHD_DIR="$FIXTURE_LAUNCHD_DIR_ACK_DOCKEREVENTS_ONLY"
+LAUNCHD_ACK="$ACK_FIXTURE_DOCKEREVENTS_ABSENT_TRACKEDBY"
+ORCH_STATE="$TMPDIR_TEST/no-such-orch-state.json"
+STUB_LAUNCHCTL="ok"
+OUT=$(run_probe); RC=$?
+VERDICT=$(printf '%s' "$OUT" | jq -r '.verdict')
+DETAIL=$(printf '%s' "$OUT" | jq -r '.detail')
+check "T53 orch-state unreadable (launchd arm) -> verdict FAILURE (fail-loud)" "$([ "$VERDICT" = "FAILURE" ] && echo true || echo false)"
+check "T53 detail names ORCH-STATE-UNREADABLE" "$([[ "$DETAIL" == *"ORCH-STATE-UNREADABLE"* ]] && echo true || echo false)"
+
 # Restore defaults for any test appended after this section in the future.
 LAUNCHD_DIR="$LAUNCHD_EMPTY_DIR"
 LAUNCHD_ACK="$TMPDIR_TEST/no-such-ack-ledger.json"
+ORCH_STATE="$DEFAULT_ORCH_STATE"
 
 # ── Summary ────────────────────────────────────────────────────────────────────
 echo ""
