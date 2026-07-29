@@ -141,3 +141,12 @@
 - Close the SPIKE row DONE vs leave READY/supervised pending PO sign-off — DONE, matching the `SPIKE-COWORK-DRAIN-BODY-NOT-EXECUTING-ON-WORK-TICKS` precedent (SPIKE's own deliverable is the findings+split, not code merge).
 **why-decision:** The SPIKE's verification_gate only requires a findings doc + proportionate remediation spec, both delivered; the sharper root cause changes which fix is cheapest/safest and is load-bearing for Half B's design, so it had to be verified from source, not taken on trust.
 **why-change:** Refines (does not overturn) po's diagnosis — the 3000ms/3000ms collision, TTL-boundary stampede, and mislabel findings all stand; only the "necessary 9-way parallel work" framing is corrected to "≤8-way, currently 100% discarded work behind an unimplemented port contract".
+
+### STEP architect-S14 · architect · 2026-07-29T12:54:17Z
+**task-id:** FIX-AUDITOR-A30-VMHWM-VETO-TAUTOLOGY-FALSE-NEGATIVE
+**what-done:** Designed a 2-commit fix for tier1-probe.md's A-30 clause-4 (stopgap precedence-reorder ships alone first; WARN-branch veto REMOVED entirely in commit 2, not reparametrized); wrote full design to `architect_review_note` via `orch-apply.sh`; set `next_agent=agent-father` (docs/agents/*+scripts/audits/* zone, matches sibling row's qa-established precedent).
+**what-considered:**
+- Reparametrize VmHWM/VmRSS as a tolerance-band or cap-relative gap-magnitude (rejected — proved `verdict=="ESCALATE"` already requires `DIPS==0` in-window for both non-OOM branches, so the script's own `reclamation_dips`/`dip_detail` already is the valid timestamped signal; a doc-layer vm-veto built on a non-timestamped monotone high-water-mark can only ever suppress genuine escalations — corroborated live by router's 12:39Z occurrence-#4 log line).
+- Adding a CRITICAL-branch exception for router's fast-recovery specimen (12:37:33Z peak 99.37%→94.96% in 50s) (rejected — AC3 requires peak>97% unconditional; standing order treats under-paging as worse than over-paging, proven fatal 07-29 05:41–05:43Z).
+**why-decision:** Formal proof from script:94/96 (DIPS==0 conjunct) that any in-window reclaim already resolves FOLD without doc-layer help, independently corroborated by both router-relayed live messages this cycle.
+**why-change:** Corrected my own draft mid-session: production invokes verify-a30 with `6 13` (65s span), not the script's unused `12 25` default — flagged as a real, out-of-scope cadence residual (window shorter than the observed ~90s reclaim arc), not silently dropped.
