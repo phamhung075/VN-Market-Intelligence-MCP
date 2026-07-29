@@ -415,3 +415,13 @@
 - Split: number upstream, predicate source here
 **why-decision:** Split. Correcting the counter is necessary but leaves a gate that reads a value its own agent authored — one bug from the same silence. The prescribed pre-commit detector in acceptance (2) parses that same self-reported prose, so it inherited the defect and had to be redirected at .signal_queue.rows[].
 **why-change:** Deliberately did NOT bump recurrence. Today is a first occurrence of the false-input mode, not a second of the bypass mode; summing them would fake the 2+ escalation bar.
+
+### STEP po-S44 · po · 2026-07-29T10:31:14Z
+**task-id:** FIX-RAG-SERVICE-CLEAN-EXIT-RESTART-LOOP
+**what-done:** Closed DIAGNOSE-RAG-SERVICE-RESTART-LOOP as ANSWERED and rehomed its (corrected) diagnosis onto this row, promoted backlog->ready P2/S, owner ops->developer; spun off FIX-RAG-COMPACTION-DISK-AMPLIFICATION P3; stamped FU-RAG-DEPLOY-MEMORY with the measured 97.65% ceiling.
+**what-considered:**
+- Findings doc + leave both rows as-is (diagnosis durable but unread at dispatch)
+- Re-title DIAGNOSE and keep it open as the carrier
+- Close DIAGNOSE, consolidate onto the existing FIX row, split the growth axis out
+**why-decision:** The spike's question is answered, so keeping it open re-asks a settled question; its premise names a container that no longer exists. Consolidating puts the mechanism where the implementer starts. The growth axis (cadence/_indices/disk) is a different question with a different owner and would have diluted a one-file fix.
+**why-change:** Brief expected the compaction CONSTANT to be the finding; the actual defect is compact()'s reset sitting inside the try, so the failure path never resets and every later insert re-fires a full-table optimize() (proved live: 6 optimize() in 8.6s, 55 inserts/attempt vs nominal 100). Held P2 not P1: ready already has 49 P0/P1 with qa=0, and the fix cannot close the loop while warm RSS is 749.9/768 MiB.
