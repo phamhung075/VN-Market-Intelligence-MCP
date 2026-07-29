@@ -1,0 +1,25 @@
+{
+  "from": "context-bloat-backstop-hook",
+  "to": "claude-manager-helper",
+  "type": "context_bloat_breach",
+  "priority": "high",
+  "createdAt": "2026-07-29T00:21:51Z",
+  "payload": {
+    "file": "docs/agent-memory/decisions/sprint-ULTRACODE-AUDIT-FIXALL-qa.md",
+    "line_count": 556,
+    "cap": 600,
+    "byte_count": 45335,
+    "byte_cap": 36000,
+    "class": "sprint-decision-journal",
+    "reason": "byte-cap",
+    "overage": 0,
+    "byte_overage": 9335,
+    "action_required": "prune_or_split"
+  },
+  "_processed": {
+    "fingerprint": "239b11982464ebbbae4599ffa29fb24fd7e1c02886658a8a1da22fcbaf168671",
+    "processedAt": "2026-07-29T00:45:35Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

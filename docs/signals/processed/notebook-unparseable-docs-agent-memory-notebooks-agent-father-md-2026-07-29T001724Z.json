@@ -1,0 +1,22 @@
+{
+  "from": "notebook-auto-prune-hook",
+  "to": "claude-manager-helper",
+  "type": "notebook_unparseable_breach",
+  "priority": "high",
+  "createdAt": "2026-07-29T00:17:24Z",
+  "payload": {
+    "file": "docs/agent-memory/notebooks/agent-father.md",
+    "line_count": 343,
+    "cap": 200,
+    "byte_count": 30730,
+    "byte_cap": 12000,
+    "reason": "no ## section boundaries found; cannot safely prune",
+    "action_required": "manual_review"
+  },
+  "_processed": {
+    "fingerprint": "6d42445f67fbf4a27285ac7c5425130b07c39f0a90a51beb0eb3667f0c3a3261",
+    "processedAt": "2026-07-29T00:45:35Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

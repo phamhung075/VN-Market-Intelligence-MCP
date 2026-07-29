@@ -2337,7 +2337,7 @@
         "type": "db_integrity_breach",
         "summary": "market.db market_messages empty in last 3h (check C-06)",
         "severity": "WARN",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": null
       },
       {
@@ -2348,7 +2348,7 @@
         "type": "db_integrity_breach",
         "summary": "market.db orphaned alerts found (check C-08)",
         "severity": "WARN",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": null
       }
     ],

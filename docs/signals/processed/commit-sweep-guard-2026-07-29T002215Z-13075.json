@@ -1,0 +1,14 @@
+{
+  "from": "commit-sweep-guard",
+  "to": "po",
+  "type": "bug-escalation",
+  "priority": "high",
+  "createdAt": "2026-07-29T00:22:15Z",
+  "payload": "[sweep-guard] BARE commit about to absorb 4 staged file(s) not necessarily this actor's own: docs/WORK.md docs/agents/code-janitor/flow/main.md scripts/agents-flow/notebook-linecap-sweep.sh scripts/agents-flow/notebook-linecap-sweep.test.sh. actor=64c7c677-0f0f-4cee-a3ce-dba79d70b7ae mode=warn. Fix: git commit -m \"<msg>\" -- <own-files-only>.",
+  "_processed": {
+    "fingerprint": "9d4c89bdef1840434818b4782d770b9c2da22bd2188e17e525044aa2ece31c91",
+    "processedAt": "2026-07-29T00:45:35Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
