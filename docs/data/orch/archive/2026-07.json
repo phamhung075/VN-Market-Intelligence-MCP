@@ -15727,6 +15727,50 @@
       "severity": "HIGH",
       "status": "READ",
       "payload_ref": "docs/agent-memory/notebooks/agent-father.md"
+    },
+    {
+      "id": "sys-20260729T183438-0c12",
+      "ts": "2026-07-29T18:34:38Z",
+      "from": "system-auditor",
+      "to": "po",
+      "type": "data_freshness_check",
+      "summary": "market_messages table: 0 rows in last 3 hours (check C-06)",
+      "severity": "WARN",
+      "status": "READ",
+      "payload_ref": null
+    },
+    {
+      "id": "sys-20260729T183440-1d23",
+      "ts": "2026-07-29T18:34:40Z",
+      "from": "system-auditor",
+      "to": "po",
+      "type": "data_stale",
+      "summary": "VPS proxy bctc route: stale (34+ hours since last push)",
+      "severity": "WARN",
+      "status": "READ",
+      "payload_ref": null
+    },
+    {
+      "id": "dev-20260729T184636",
+      "ts": "2026-07-29T18:46:36Z",
+      "from": "dev-team",
+      "to": "po",
+      "type": "stale_signal_inbox_debt",
+      "summary": "docs/signals/ 62/70 files non-signal-shape (49 cowork-team + 12 price_anomaly), never drain — deprecated backstop, since 07-03",
+      "severity": "LOW",
+      "status": "RESOLVED",
+      "payload_ref": null
+    },
+    {
+      "id": "dev-20260729T191826",
+      "ts": "2026-07-29T19:18:26Z",
+      "from": "dev-team",
+      "to": "po",
+      "type": "devteam_flow_control_gap",
+      "summary": "QA-Drain review->qa lane gated behind head-idle fallthrough — unreachable whenever WIP>=1 despite own qa[]<1 budget",
+      "severity": "MED",
+      "status": "READ",
+      "payload_ref": null
     }
   ],
   "backlog_detail": [
