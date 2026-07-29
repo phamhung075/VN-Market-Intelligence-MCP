@@ -3,11 +3,12 @@
  *
  * Data source: GET /api/market-digest (frontend proxy → mcp-server :3000).
  * The proxy route is api.market-digest.tsx (already live — not created here).
+ * Same endpoint as dashboard._index.tsx (Market Overview).
  *
  * Response shape:
  *   { items: [ { id: number, text: string, ts: string, type: string,
  *                from_agent: string } ],
- *     count: number, fetchedAt: string }
+ *     count: number, fetchedAt: string, data_asof?: string|null }
  *
  * items[] are AI-synthesized Vietnamese market bulletins (CHEF dishes) —
  * full prose with newlines + emoji. Rendered with whitespace-pre-wrap.
@@ -18,6 +19,14 @@
  *   - Upstream 5xx / network failure → error banner, never throws.
  *   - Unexpected JSON shape → error banner, never throws.
  *
+ * Page-level freshness (FE-PG-INTEL-FRESH-FIX): `data_asof` is the same
+ * top-level recency field surfaced on dashboard._index.tsx (distinct from
+ * each dish's own per-item `ts`). It arrives as a bare SQLite
+ * "YYYY-MM-DD HH:MM:SS" string (no offset) — reuses the existing `parseDate`
+ * helper (app/lib/formatDate.ts) to normalize to a real ISO8601 UTC string
+ * before handing it to <FreshnessBadge>, matching the sibling task
+ * (FE-PG-_INDEX-FRESH-FIX) — never fork this normalization logic.
+ *
  * Labels: plain Vietnamese — non-technical user.
  */
 import type { LoaderFunctionArgs, MetaFunction } from "@remix-run/node";
@@ -25,7 +34,10 @@ import { json } from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
 import { ClientTimestamp } from "~/components/ClientTimestamp";
 import { PageHeader } from "~/components/PageHeader";
+import { FreshnessBadge } from "~/components/FreshnessBadge";
+import { useFreshnessRevalidator } from "~/lib/hooks/useFreshnessRevalidator";
 import { safeFetch } from "~/lib/api/fetchUtils";
+import { parseDate } from "~/lib/formatDate";
 
 export const meta: MetaFunction = () => [
   { title: "Bản Tin AI — VN Market Intelligence" },
@@ -47,6 +59,7 @@ interface MarketDigestDto {
   items: MarketDigestItem[];
   count: number;
   fetchedAt: string;
+  data_asof: string | null;
 }
 
 // ---------------------------------------------------------------------------
@@ -57,22 +70,30 @@ export interface LoaderData {
   items: MarketDigestItem[];
   count: number;
   fetchedAt: string;
+  data_asof: string | null;
   error: string | null;
 }
 
 function parseMarketDigest(raw: unknown): MarketDigestDto {
   if (raw === null) {
-    return { items: [], count: 0, fetchedAt: new Date().toISOString() };
+    return { items: [], count: 0, fetchedAt: new Date().toISOString(), data_asof: null };
   }
   if (typeof raw !== "object" || !("items" in raw)) {
     throw new Error("Unexpected response shape from /api/market-digest");
   }
   const dto = raw as MarketDigestDto;
   const items = Array.isArray(dto.items) ? dto.items : [];
+  // data_asof: mcp-server emits a bare SQLite "YYYY-MM-DD HH:MM:SS" string
+  // (no offset). Reuse parseDate (app/lib/formatDate.ts) — never fork the
+  // naive-UTC normalization logic — and hand FreshnessBadge a real ISO8601
+  // string. Absent/unparseable → null (honest-NULL, never fabricated).
+  const asofRaw = dto.data_asof;
+  const asofDate = typeof asofRaw === "string" && asofRaw ? parseDate(asofRaw) : null;
   return {
     items,
     count: typeof dto.count === "number" ? dto.count : items.length,
     fetchedAt: typeof dto.fetchedAt === "string" ? dto.fetchedAt : new Date().toISOString(),
+    data_asof: asofDate ? asofDate.toISOString() : null,
   };
 }
 
@@ -88,7 +109,13 @@ export async function fetchIntelData(
   const { data, error } = await safeFetch<MarketDigestDto>(url, parseMarketDigest, {
     label: "dashboard.intel",
   });
-  return { items: data.items, count: data.count, fetchedAt: data.fetchedAt, error };
+  return {
+    items: data.items,
+    count: data.count,
+    fetchedAt: data.fetchedAt,
+    data_asof: data.data_asof,
+    error,
+  };
 }
 
 export async function loader({ request: _request }: LoaderFunctionArgs) {
@@ -145,7 +172,8 @@ function DishCard({
 // ---------------------------------------------------------------------------
 
 export default function IntelPage() {
-  const { items, count, fetchedAt, error } = useLoaderData<typeof loader>();
+  const { items, count, fetchedAt, data_asof, error } = useLoaderData<typeof loader>();
+  useFreshnessRevalidator("daily");
 
   const latestItem = items.length > 0 ? items[0] : null;
   const olderItems = items.length > 1 ? items.slice(1) : [];
@@ -156,7 +184,8 @@ export default function IntelPage() {
         title="Bản Tin AI — CHEF Bulletin Hub"
         subtitle="Bản tin thị trường tổng hợp từ AI agent — phân tích, nhận định và cảnh báo"
         actions={
-          <span className="text-xs text-slate-500">
+          <span className="text-xs text-slate-500 flex items-center gap-2">
+            <FreshnessBadge dataAsof={data_asof} slaTierKey="daily" />
             {count > 0 && (
               <span className="mr-3">{count} bản tin</span>
             )}
