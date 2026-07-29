@@ -88,11 +88,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "active_task_id": null,
-    "next_agent": "router",
-    "updated_at": "2026-07-29T22:58:56Z",
-    "updated_by": "developer"
+    "status": "in_progress",
+    "active_task_id": "FACTORY-GUARD-CI-COMPROOT-LOGIC-IMPL",
+    "next_agent": "developer",
+    "next_action": "BOUNDED-1 auto-pickup claim of FACTORY-GUARD-CI-COMPROOT-LOGIC-IMPL — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
+    "updated_at": "2026-07-29T23:40:13Z",
+    "updated_by": "dev-team (bounded-1 auto-pickup)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -2069,6 +2070,17 @@
         "severity": "WARN",
         "status": "READ",
         "payload_ref": null
+      },
+      {
+        "id": "dev-20260729T234243",
+        "ts": "2026-07-29T23:42:43Z",
+        "from": "dev-team",
+        "to": "po",
+        "type": "system-issue",
+        "summary": "stranded-state sweep: unknown paths need owner (17) → docs/handoffs/STRANDED-STATE-SWEEP-20260729T2342Z.md",
+        "severity": "LOW",
+        "status": "NEW",
+        "payload_ref": "docs/handoffs/STRANDED-STATE-SWEEP-20260729T2342Z.md"
       }
     ],
     "last_triaged_at": "2026-07-29T06:25:00Z",
@@ -9658,26 +9670,6 @@
         "note": "ROOT: quality-checklist.json (_updated_by: system-auditor, generated_at frozen 2026-06-10) stamps check.status=PASS with a REUSED evidence string instead of running that check's own recheck_how and capturing per-check evidence. RAW-confirmed byte-identical duplicates in the LIVE file this tick: 'observability demonstrably working — WORK-channel msg IDs 2743-2766' x4 across unrelated checks; 'CI green commit fc28bf41...' x4; 'HTTP 200' x7. This copy-paste PASS masked BCT-OBS-02 (sscCheck nightly WORK post) and DS-OBS-01 (freshnessSlaMonitor WORK/BUG alert) — both marked PASS while the real breach->human-visible Telegram alert was broken. Recurring 2x -> recurring-bug policy (block+fix root cause). FIX: (1) generator MUST NOT reuse an evidence string across distinct check_ids — each PASS requires its OWN freshly-captured evidence from executing recheck_how; (2) a check that cannot capture distinct real evidence stays UNKNOWN/UNVERIFIED, never a copy-paste PASS (fail-loud, empty-read-is-not-evidence); (3) add a validator (generation-time and/or serve-time in qualityChecklistHandler) that REJECTS a checklist where any evidence string is byte-identical across >1 check_id. AC: (a) live quality-checklist.json regenerated with zero cross-check byte-identical evidence; (b) BCT-OBS-02 + DS-OBS-01 checks reflect TRUE post-fix status from real recheck_how execution; (c) validator fails loud on a seeded duplicate-evidence checklist. DISTINCT from SPIKE-EVIDENCE-SCORE-CACHE-FRAGMENT-DECOUPLE (get_evidence_summary evidence_scores cache) + FIX-CHEF-QUALITY-VERDICT-FALSE-FULL (chef dish self-cert). Do NOT reopen BCT-OBS-02-FIX / DS-OBS-01-FIX (consumers, correctly in review/qa).",
         "baseline_pass": true,
         "updated_at": "2026-07-23T18:08:33Z"
-      },
-      {
-        "id": "FACTORY-GUARD-CI-COMPROOT-LOGIC-IMPL",
-        "type": "SPRINT-S",
-        "title": "New composition-root-logic gate (go/ast) for cmd/server/ across 7 Go services + fix 2 live macro-indicators offenders",
-        "status": "BACKLOG",
-        "priority": "P2",
-        "size": "M",
-        "zone": "cross-service/",
-        "epic": "FACTORY-MAINTAINABILITY-2026-06",
-        "cluster": "ci-regression-prevention",
-        "source": "architect design brief 2026-07-24, parent FACTORY-GUARD-CI-depguard-tier-boundaries",
-        "detail_ref": "docs/architecture-briefs/2026-07-24-factory-guard-ci-depguard-tier-boundaries.md#4-build-vs-plan--decomposed-into-2-child-rows-different-toolchains-independently-testable-not-self-implemented",
-        "dev_agent": "developer",
-        "next_agent": "developer",
-        "parent_task": "FACTORY-GUARD-CI-depguard-tier-boundaries",
-        "note": "files: scripts/audits/composition-root-logic-gate.go (new, go/ast+go/parser stdlib only, --check mode, zero-tolerance), apps/macro-indicators/pkg/application/ (new/extended use-case or port absorbing FetchPolicyRates/FetchOMO fallback+IsEstimate-flag decision logic out of cmd/server/adapters.go; shims reduced to pure delegation), .github/workflows/ci.yml (add composition-root-logic-gate job across all 7 Go services: technical-analysis, macro-indicators, stock-price, alert-engine, api-gateway, kinh-dich-service, news-fetch), docs/policies/dev-standards.md (CANONICAL pointer), scripts/audits/composition-root-logic-gate.test.go (new smoke test). approach: depguard (existing Fence-A/B/C) is import-based only, cannot express this; new mechanism scoped to RECEIVER METHODS ONLY inside cmd/server/**/*.go (excludes func main() and free helper functions env*/getenv/splitCSV/parseWatchlist/readWatchlistFromDB — all legitimate startup/config-parsing, confirmed zero-false-positive against live repo). Threshold: if-count>=2 OR any for/range — grep-verified 2026-07-24 this cleanly separates the 2 real offenders (policyRatesAdapter.FetchPolicyRates 3 ifs, omoAdapter.FetchOMO 4 ifs+2 fors, both macro-indicators/cmd/server/adapters.go) from all 10 other checked receiver-method shims across the 7 services (zero false positives today). Escape hatch: inline `// composition-root-logic-allow: <reason>` comment (mirrors metric-mask-allow/size-justification convention). dod: --check exits 0 post-fix on all 7 services; synthetic new offending receiver method (2 ifs, no allow-comment) fails; an annotated method passes; main()/free-function branching never flags; macro-indicators /liquidity-state output byte-identical before/after refactor (RAW-verify live); smoke test covers all 4 cases; CI green.",
-        "created_at": "2026-07-24T18:29:15Z",
-        "created_by": "architect",
-        "updated_at": "2026-07-24T18:29:15Z"
       },
       {
         "id": "FACTORY-GUARD-CI-DEADCODE-IMPL",
@@ -17625,9 +17617,35 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-29T22:18:21Z",
+    "last_triaged_at": "2026-07-29T23:40:07Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": []
+    "in_progress": [
+      {
+        "id": "FACTORY-GUARD-CI-COMPROOT-LOGIC-IMPL",
+        "type": "SPRINT-S",
+        "title": "New composition-root-logic gate (go/ast) for cmd/server/ across 7 Go services + fix 2 live macro-indicators offenders",
+        "status": "IN_PROGRESS",
+        "priority": "P2",
+        "size": "M",
+        "zone": "cross-service/",
+        "epic": "FACTORY-MAINTAINABILITY-2026-06",
+        "cluster": "ci-regression-prevention",
+        "source": "architect design brief 2026-07-24, parent FACTORY-GUARD-CI-depguard-tier-boundaries",
+        "detail_ref": "docs/architecture-briefs/2026-07-24-factory-guard-ci-depguard-tier-boundaries.md#4-build-vs-plan--decomposed-into-2-child-rows-different-toolchains-independently-testable-not-self-implemented",
+        "dev_agent": "developer",
+        "next_agent": "developer",
+        "parent_task": "FACTORY-GUARD-CI-depguard-tier-boundaries",
+        "note": "files: scripts/audits/composition-root-logic-gate.go (new, go/ast+go/parser stdlib only, --check mode, zero-tolerance), apps/macro-indicators/pkg/application/ (new/extended use-case or port absorbing FetchPolicyRates/FetchOMO fallback+IsEstimate-flag decision logic out of cmd/server/adapters.go; shims reduced to pure delegation), .github/workflows/ci.yml (add composition-root-logic-gate job across all 7 Go services: technical-analysis, macro-indicators, stock-price, alert-engine, api-gateway, kinh-dich-service, news-fetch), docs/policies/dev-standards.md (CANONICAL pointer), scripts/audits/composition-root-logic-gate.test.go (new smoke test). approach: depguard (existing Fence-A/B/C) is import-based only, cannot express this; new mechanism scoped to RECEIVER METHODS ONLY inside cmd/server/**/*.go (excludes func main() and free helper functions env*/getenv/splitCSV/parseWatchlist/readWatchlistFromDB — all legitimate startup/config-parsing, confirmed zero-false-positive against live repo). Threshold: if-count>=2 OR any for/range — grep-verified 2026-07-24 this cleanly separates the 2 real offenders (policyRatesAdapter.FetchPolicyRates 3 ifs, omoAdapter.FetchOMO 4 ifs+2 fors, both macro-indicators/cmd/server/adapters.go) from all 10 other checked receiver-method shims across the 7 services (zero false positives today). Escape hatch: inline `// composition-root-logic-allow: <reason>` comment (mirrors metric-mask-allow/size-justification convention). dod: --check exits 0 post-fix on all 7 services; synthetic new offending receiver method (2 ifs, no allow-comment) fails; an annotated method passes; main()/free-function branching never flags; macro-indicators /liquidity-state output byte-identical before/after refactor (RAW-verify live); smoke test covers all 4 cases; CI green.",
+        "created_at": "2026-07-24T18:29:15Z",
+        "created_by": "architect",
+        "updated_at": "2026-07-29T23:40:13Z",
+        "promoted_at": "2026-07-29T23:40:07Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
+        "claimed_at": "2026-07-29T23:40:13Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)"
+      }
+    ]
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
