@@ -1,0 +1,38 @@
+{
+  "from": "cowork-team",
+  "to": "system",
+  "type": "cowork-tick-telemetry",
+  "payload": {
+    "tick": "2026-07-29T11:00Z",
+    "verdict": "WORK",
+    "drift_min": 5,
+    "pressure_mode": "adaptive",
+    "calendar_status": "unknown",
+    "matched_slots": [
+      "refine-bctc-slot-3"
+    ],
+    "won_slots": [
+      "refine-bctc-slot-3"
+    ],
+    "spawned": [
+      "docs/agents/refine_bctc_md/flow/main.md"
+    ],
+    "spawn_agent_ids": [
+      "acc746cce0081a91b"
+    ],
+    "errors": [],
+    "silent": false,
+    "classification": "FIRE",
+    "max_parallel": 2,
+    "degraded": true,
+    "note": "refine-bctc-slot-3, cron_fallback (bctc-offmarket, calendar_status=unknown). Slot trigger_prompt instructs oldest-pending-row pick + cover-letter-pattern skip. Step 5.3 off-flow check deferred to completion notification."
+  },
+  "priority": "INFO",
+  "createdAt": "2026-07-29T11:06:38Z",
+  "_processed": {
+    "fingerprint": "1a0e1f0b9b8fe50548ea198826448b935a0935cb87e1bddbc4423c4e137b7960",
+    "processedAt": "2026-07-29T11:16:25Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

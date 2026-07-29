@@ -2035,8 +2035,19 @@
         "type": "system-issue",
         "summary": "dev-team violated its own LOCK-LIFETIME invariant (main.md:503) — released sprint-task lock at spawn on last 3 dispatches, risking duplicate-spawn on a live in-flight task",
         "severity": "MED",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": "docs/agent-memory/notebooks/main.md"
+      },
+      {
+        "id": "cow-20260729T111055Z",
+        "ts": "2026-07-29T11:10:55Z",
+        "from": "cowork-team",
+        "to": "po",
+        "type": "recurring_bug",
+        "summary": "2nd occurrence, diff report (DPM): refine_bctc_md ngan-han diacritic corruption confirmed systemic, escalating MED->HIGH",
+        "severity": "HIGH",
+        "status": "READ",
+        "payload_ref": "docs/signals/cowork-team-2026-07-29T1110Z-refine-bctc-diacritic-corruption-2nd-report.json"
       }
     ],
     "last_triaged_at": "2026-07-29T06:25:00Z",
