@@ -1,6 +1,16 @@
 # Dev Team — Sprint Boundary Notebook
 
-**Written:** 2026-07-29T16:19Z
+**Written:** 2026-07-29T16:38Z
+
+## cycle-20260729T1638Z-verify — RAW-verified developer's FIX-ORCHSTATE-CONSERVATION-GUARD-QA-LANE-BLIND completion; qa[] lane blind spot closed, negative-control test re-run GREEN, board lane-move clean (3rd consecutive)
+
+- **BGFAN-1 RAW-verification, all claims confirmed real**: 3 commits (`9b39ed5cc`, `22d325fb2`, `9fe27cdaa`) real, on HEAD, pathspec-scoped exactly as claimed (source+test+WORK.md / board / memory).
+- **Code fix independently re-read from source, not trusted**: `FLAT_TASK_LANES` (`orch-conservation-check.mjs:70`) now includes `'qa'`; the script's own header-comment formula (`:21-29`) synced to match. No stray doc drift found by grep.
+- **Test claim independently re-run, not just trusted**: `bash scripts/test/orch-apply-wrapper-tests.sh` → **48/48 PASS** (exact match), including `QA-COLLAPSE` (qa[] wipe rejected, exit 1) and `QA-APPEND-HAPPY` (normal append accepted, exit 0). Read the test source directly to confirm `QA-COLLAPSE` genuinely routes through the real `orch-apply.sh` wrapper (not a standalone `orch-conservation-check.mjs` bypass) — same gate every board write goes through.
+- **Board lane-move genuine, 3rd consecutive clean `.head` sync**: row `status:REVIEW`, `next_agent:qa`, `promoted_at/promoted_by/promotion_note/claimed_at/claimed_by` all correctly absent (stripped in the same write, not a 9th stale-marker instance), `.head` reset to `{status:idle, active_task_id:null, next_agent:router}`, no duplicate row in `ready[]/backlog[]/in_progress[]`.
+- Released sprint-task lock `task:FIX-ORCHSTATE-CONSERVATION-GUARD-QA-LANE-BLIND` cleanly after full verification.
+- **NEXT: qa** — row in `review[]`, `next_agent:qa`. Not yet dispatched — review-lane QA-Drain remains the mechanism, still gated behind idle-chain fallthrough (now 2 rows waiting: this one + SPIKE-BOOTSTRAP-BROADCAST-CATALYST-CONSUME from the prior cycle).
+- Self-caught error this window (not from this task): a prior notebook write accidentally trimmed a retained section, caught by the immutability guard's WARN and fixed same-tick (commit `a30875d5e`) — noted here as a reminder to diff retained-section content before landing a compose, not just line/section counts.
 
 ## cycle-20260729T1619Z — Tick 16:07Z: drained 2 signals (incl. context-bloat backstop from prior tick's decision journal), CI dedup, clean BOUNDED-1 claim (correctly ruled out a false-alarm stale marker), dispatched developer on a script fix
 
@@ -21,14 +31,5 @@
 - Released sprint-task lock `task:SPIKE-BOOTSTRAP-BROADCAST-CATALYST-CONSUME` cleanly after full verification.
 - **NEXT: qa** — row in `review[]`, `next_agent:qa` (real code diff, not investigation-only). Not yet dispatched — review-lane QA-Drain remains the mechanism, still gated behind idle-chain fallthrough.
 - Open structural gap unchanged: 8 confirmed stale-marker instances this session, still hand-patched per-instance — the underlying claim/promote jq scripts and dev-* lane-move commits still don't uniformly strip markers. Candidate for an architect-level systemic fix given the recurrence count.
-
-## cycle-20260729T1547Z — Tick 15:37Z: cold-evicted 1 item, drained 1 signal, CI dedup, clean BOUNDED-1 claim (no collision this time), dispatched dev-mcp-server on a SPIKE->FIX
-
-- **Preflight**: cold-evict ran automatically (1 signal row → `archive/2026-07.json`, committed `2221bf87b` by the script itself). Verdict RUN, tick `2026-07-29T15:37Z`. No HEAD.lock, no stale worktree locks.
-- **Drain**: 1 routed to po (commit-sweep-guard, self-referencing artifact from the cold-evict commit's own sweep-guard warning). 0 pruned (2 candidates still referenced, correctly skipped). Committed `d3911ca02`. CI probe deduped (same known `aa6c044b`). 0a-D signal_queue: no NEW rows.
-- **`.head` was correctly idle** this tick (no desync, prior tick's cleanup held) — fell through to BOUNDED-1 (WIP=0).
-- **BOUNDED-1 promoted+claimed cleanly this time — no stale-marker collision**: checked `ready[]` for the promote marker BEFORE claiming (lesson applied proactively from the 6 prior instances this session) — only one row carried it, freshly stamped this exact tick. Claimed `SPIKE-BOOTSTRAP-BROADCAST-CATALYST-CONSUME` (P2, zone `apps/mcp-server/`, recurring 2+ confirmed bug: `get_cycle_bootstrap` under-returns shared/broadcast `chain_catalyst` vs `get_agent_signals`, both share `getSignals()`'s mark-read side effect — leading hypothesis is the first bootstrap-reader globally marks a broadcast signal read, starving later recipients).
-- **Dispatched `dev-mcp-server` directly** — this task is framed SPIKE->FIX (not investigation-only like the prior tick's SPIKE), so instructed it to investigate BOTH recurrences' timing (rule out a pure creation-after-bootstrap artifact), pick a fix direction (non-consuming shared-catalyst read window vs per-recipient read-state), implement, test, and route to **qa** (not po) on completion since this closes with a real code diff. Sprint-task lock `task:SPIKE-BOOTSTRAP-BROADCAST-CATALYST-CONSUME` held pending verified completion.
-- BOUNDED-1 dispatch consumed the tick — did not fall through to SLS/RLC/QA-Drain/Step 1.
 
 
