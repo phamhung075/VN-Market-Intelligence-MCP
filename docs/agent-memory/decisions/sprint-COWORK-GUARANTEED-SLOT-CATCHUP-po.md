@@ -517,3 +517,32 @@
 - Escalate as data loss — rejected: verified both rows present in archive/2026-07.json, and both were fully triaged before eviction with dispositions durable on board rows.
 **why-decision:** I did not identify the evicting process or read its predicate, so I cannot distinguish a missing age gate from a deliberate bypass for already-READ rows — and the latter would make the behaviour correct. Minting on an unestablished mechanism after a harmless instance is the churn I declined elsewhere this tick. Named the exact trigger for the next observer: a third occurrence on a NEW row.
 **why-change:** no change from plan.
+
+### STEP po-S55 · po · 2026-07-29T12:27:40Z
+**task-id:** FIX-AUDITOR-TIER1-A30-MEM-SINGLE-CONTAINER-SCOPE
+**what-done:** Escalated P1→P0, corrected zone cross-service/→docs/agents/, amended the remaining scope with MEM_FLOOR parity + the ~85% deep-probe blind spot + dedup-as-hard-gate.
+**what-considered:**
+- Mint a new row for the agent-plane gap (router's Decision 1) — REJECTED: qa already owned it since 07-28T15:20:59Z with an exact file:line spec; a new row would be the 4th copy of this predicate.
+- Extend FIX-AUDITOR-MEMACK-HEADROOM-FLOOR's scope to cover PLANE B — REJECTED: it committed at 3b096d4b2 12:15Z and sits in REVIEW/qa; widening a committed row post-hoc invalidates its own QA gate.
+- Suppress the churn (floor-exempt rag / raise MEM_FLOOR / re-widen ACK) — REJECTED: recreates the exact blindness the floor row was minted to close.
+**why-decision:** The 07-25 fix did not fail — it landed in the plane that does not emit the verdict. So the correction is routing + scope on the existing owner, not a new row and not a threshold. The churn is tolerable *because* it is mute; making each spawn emit is the fix, making it quieter is the recurrence.
+**why-change:** Router framed this as "scope of the MEMACK row vs a new row". Neither: the owning row already existed in review[], stranded 21h, and was invisible to me because PO Step-1 triage is the starved consumer (FIX-DEVTEAM-IDLE-CHAIN-STEP1-TRIAGE-STARVATION, P0).
+
+### STEP po-S56 · po · 2026-07-29T12:27:40Z
+**task-id:** FIX-AUDITOR-A30-VMHWM-VETO-TAUTOLOGY-FALSE-NEGATIVE
+**what-done:** Escalated P1→P0, set blocks[]=the scope row + blocked_by[] on that row, discharging the 8th-cycle carry-over.
+**what-considered:**
+- Leave at P1 and carry a 9th time — REJECTED: 8 carries with rbc=6 is a priority-mechanism defect, not a judgement.
+- Fold into the scope row — REJECTED: different clause, different predicate, different owner (architect vs agent-father); folding confounds the evidence for each.
+- Correct its stale zone=cross-service/ as I did on the scope row — DECLINED: no qa routing finding exists for this row; flagged in-row instead.
+**why-decision:** I read clauses 1/3/4/5 instead of assuming them. Clause 4 sits between the evidence and the severity map and pre-empts it, so the P0 scope widening would ship a detector that inspects 13 containers and still only returns PASS — occurrence #4, delivered by the fix minted to stop it. That makes it a gate, not an adjacent P1.
+**why-change:** Prior cycle committed to "escalate to user next tick"; I am that tick. Escalated (BUG 4396) AND converted it into a board-level dependency, because a telegram alone would have produced a 9th carry.
+
+### STEP po-S57 · po · 2026-07-29T12:27:40Z
+**task-id:** FIX-A21-PREDBOUND-2-TIER1-PROBE-DEDUPE-VIA-SHARED-ACTUATOR
+**what-done:** Recorded that its structural thesis is now corroborated on a second predicate; HELD priority at P1; added sequence_after the A-30 scope row.
+**what-considered:**
+- Raise to P0 on corroboration — REJECTED: corroboration raises confidence in the argument, not this row's live consequence, which is genuinely unchanged (returns crashRestarts:0 before and after, until a user-gated deploy).
+- Add depends[] — REJECTED: its own note deliberately keeps depends[] empty; these are independent in logic, only colliding on one file.
+**why-decision:** Its 07-29T08:12Z ruling said hand-porting, not re-breakage, is the multiplier. That has now happened to the memory predicate too — two hand-maintained copies, four days of fixes into one, false-pass #3 out of the other. Right thesis, wider than A-21. But promoting a row with no present-tense symptom ahead of a live mute spawn-loop would be inconsistent with S55.
+**why-change:** no change from plan.
