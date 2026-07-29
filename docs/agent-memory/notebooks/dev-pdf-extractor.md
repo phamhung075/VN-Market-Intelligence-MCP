@@ -6,61 +6,6 @@ Zone: `apps/pdf-extractor/` | Stack: Python/FastAPI | DB: pdf_extractor.db (writ
 
 ---
 
-## Cycle 2026-07-09 — FIX-BCTC-FPT-BT5-BALANCE-GATE
-
-**Sprint:** n/a (BOUNDED-1 auto-pickup) | **Zone:** apps/pdf-extractor/ | **Size:** M | P1
-
-### Bug
-FPT B01-DN corporate-form real-OCR extraction: `balance_sheet_equation` delta =
-43,707,714,826,297.41 VND (43T imbalance), BT-5 gate blocked push (`rows_stored=0`).
-
-### Root cause
-`domain/primitives/vn_number_normalize/primitive.py`: Tesseract OCR misread the
-LAST thousands-separator dot as a comma on FPT code 400 (Total Equity), producing
-raw OCR text `"43.751.466.292,590"` (should be `"43.751.466.292.590"`). The
-existing Pattern-B VN-decimal regex legitimately matched this as a genuine VN
-decimal (comma-suffix = fraction), normalizing to `43751466292.590` →
-43,751,466,292.59 — 1000x too small. Fully-scanned PDF (`pdfplumber.extract_text()`
-= "" every page), so 100% OCR-sourced, no embedded text layer to cross-check.
-
-### Fix
-New `_VN_OCR_MISREAD_LAST_SEP_RE` (`^\d{1,3}(?:\.\d{3})+,\d{3}$` — requires >=1
-existing thousands-dot group AND exactly 3 digits after comma), checked BEFORE
-Pattern B. On match, strips both separators (comma treated as mis-scanned dot,
-not decimal). Generic — no ticker/date special-case; applies to every VN-number
-string in the pipeline (all statement types, all form codes).
-
-### Verified
-Balance identity now EXACT: delta 43,707,714,826,297.41 → 0.0 (codes
-270/300/400 match golden anchors to the dong). Unit: `test_vn_number_normalize.py`
-22/22 pass (4 new). Full suite `-m "not slow"`: 1019 pass/7 fail(pre-existing
-PIL.Image test-pollution, A/B via git-stash identical)/7 deselected. Targeted
-corporate-form+balance+decimal suite (11 files incl. `test_b02_tctd_parser.py`
-bank-form non-regression): 213 pass/0 fail/1 deselected.
-
-### Known remaining gap (NOT fixed, out of scope, documented)
-Named test `test_extract_tables_bt3d_real_ocr.py::test_extract_tables_usecase_real_ocr_path`
-(`-m slow`) still fails — but now at a DIFFERENT assertion: `rows_stored=79 < 80`
-(not `balance_pass`, which is now True — gate no longer fires). Traced: page 8 of
-the auto-located BS OCR range contains income-statement EPS lines (codes 70/71,
-4-value-column layout) that spuriously yield a fake code `"868"`; FR-5 dedup
-(`0ae36a0eb`, 2026-06-28) correctly drops 1 exact duplicate, 80→79. Test's `>=80`
-threshold predates FR-5 (set 2026-05-28) and was never updated. Separate bug
-class (page-boundary detection + EPS multi-column false-positive) — did not
-touch dedup/threshold/rows to force a match. Follow-up ticket recommended.
-
-### Commit
-`<pending>` — fix(pdf-extractor): FIX-BCTC-FPT-BT5-BALANCE-GATE OCR-misread-last-separator
-
-Zone health: no drift detected.
-
-### Status
-REVIEW (not self-closed — named test still red on unrelated pre-existing
-assertion, see Decision Journal
-`docs/agent-memory/decisions/dev-pdf-extractor-2026-07-09T2300Z-FIX-BCTC-FPT-BT5-BALANCE-GATE.md`)
-
----
-
 ## Cycle 2026-07-24 — FACTORY-PDF-extract-tesseract-config
 
 **Sprint:** n/a (BOUNDED-1 auto-pickup) | **Zone:** apps/pdf-extractor/ | **Size:** M | P2
@@ -151,3 +96,48 @@ import-linter: 3/3 contracts kept. Rebuilt single service: image ID changed
 
 ### Status
 REVIEW → next_agent=qa (supervised:true — not self-certified)
+
+---
+
+## Cycle 2026-07-29 — FACTORY-PDF-split-handlers
+
+**Sprint:** n/a (BOUNDED-1 auto-pickup) | **Zone:** apps/pdf-extractor/ | **Size:** L | P2
+
+### Refactor
+`interface/handlers.py` (750L; `register_routes()` alone ~460L across 8 route
+closures — far past the audit's 2026-06-15 line estimate) split into
+`domain/constants.py` (`STATEMENT_SECTIONS` allow-set, replaces the
+`valid_sections` property), `interface/schemas.py` (5 request schemas), and
+8 `register_*_routes()` modules (health/extract/extract-tables/md-tables/
+layout-first/pek/rasterizer/page-text). `handlers.py` now 65L pure
+delegation. Every new/changed file ≤120L (max 103L, `schemas.py`).
+
+### Hidden coupling found before moving anything
+Grepped the test suite for string-path references into `interface.handlers`
+before splitting — found 2 beyond route paths/status/shapes:
+`scenarios/pek_single_doc_extraction.py` patches
+`"interface.handlers.is_vn_market_open_utc"` (4x — only works if the check
+resolves via that SAME module's globals at call time); `test_pek_engine_
+adapter.py` asserts on `logging.getLogger("interface.handlers")` (2x, tied
+to `_run_pek_extract`'s `__name__`). Moved `/pek-extract` + `_run_pek_extract`
+to their own files (`interface/routes_pek.py`, `interface/pek_run_helper.py`)
+and retargeted the 3 test files' import/patch/logger strings — mechanical
+only, verified via before/after full-suite diff.
+
+### Tests
+`python -m pytest -q`: 10 failed/1032 passed/3 skipped BEFORE and AFTER,
+identical test IDs both runs (pre-existing env-only: missing
+`/app/data/pdfs/*.pdf`, local tesseract gaps — `git stash`/pop A/B confirmed).
+mypy: same pre-existing "not a valid Python package name" env error as
+baseline. Live `register_routes()` smoke: same 8 routes pre/post.
+
+### Commit
+`b3853e817` (code split), `a6e59881b` (decision journal).
+
+Zone health: recurring G12 sandbox-gate doc-drift (flagged 2026-07-09/07-24)
+still unresolved by PO/architect — unchanged this cycle, no new drift found.
+
+### Status
+REVIEW → next_agent=ops (rebuild_required: true — Docker Microservice
+Code-Change Close Gate chain: ops rebuild+swap → qa live-verify → po Step 6,
+same precedent as sibling FACTORY-PDF-delete-deprecated-inspect)
