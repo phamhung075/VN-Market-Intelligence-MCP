@@ -61,6 +61,17 @@ changes — same package, same directory, all package-local identifiers stay vis
 verdicts confirmed byte-identical before/after (35/35 scenarios green, `dashboard/build.sh`
 render-check PASS).
 
+**Calculator dedup (FACTORY-TECHANALYSIS-dedup-calculator, 2026-07-29):** `service_adapters.go`'s
+`sandboxCalculator.Calculate` used to carry its own copy of the `module.Result ->
+domain.TechnicalIndicators` mapping, duplicated from `pkg/infrastructure.TACalculator.Calculate`
+and drifted from it — the sandbox copy omitted `MA5`/`MA20`/`MA50`. Both callers now delegate to
+a single `module.ToDomainIndicators(res)` (`pkg/module/mapper.go`); the sandbox oracle now
+populates MA5/20/50 like the real service does (behavior change, intended — see
+`docs/architecture/microservice/technical-analysis/infrastructure.md` § TACalculator). No existing
+scenario JSON asserts MA5/20/50 presence, so the 35/35 sandbox suite required no fixture changes.
+`TACalculator.Calculate` output confirmed byte-identical before/after via a temporary baseline-capture
+test (5 representative close-series inputs, JSON diff clean).
+
 ## Scenario Suite (P1-D1 + P1-D2)
 
 30 scenario JSON files under `docs/scenarios/technical-analysis/`:

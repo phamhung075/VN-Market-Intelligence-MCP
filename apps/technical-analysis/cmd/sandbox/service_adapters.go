@@ -16,8 +16,12 @@ import (
 
 // sandboxCalculator is a composition-root-local adapter that satisfies the
 // application.TACalculator port without importing pkg/infrastructure.
-// It delegates to pkg/module.Compute and maps the result to domain types,
-// mirroring infrastructure.TACalculator but living at the allowed layer.
+// It delegates to pkg/module.Compute and maps the result to domain types via
+// module.ToDomainIndicators — the same shared mapper infrastructure.TACalculator
+// uses (FACTORY-TECHANALYSIS-dedup-calculator). Previously this adapter carried
+// its own copy of the Result->domain mapping and it had drifted from the real
+// service: it omitted MA5/MA20/MA50. Sharing the mapper fixes that drift; the
+// sandbox now populates MA5/20/50 like the real service does.
 type sandboxCalculator struct{}
 
 func (s *sandboxCalculator) Calculate(closes []float64, period int) (*domain.TechnicalIndicators, error) {
@@ -29,25 +33,7 @@ func (s *sandboxCalculator) Calculate(closes []float64, period int) (*domain.Tec
 	if err != nil {
 		return nil, err
 	}
-	var crossSignals []domain.CrossSignal
-	for _, e := range res.CrossSignals {
-		crossSignals = append(crossSignals, domain.CrossSignal{
-			Index:     e.Index,
-			Direction: e.Direction,
-		})
-	}
-	return &domain.TechnicalIndicators{
-		RSI:             res.RSI,
-		MACDLine:        res.MACDLine,
-		SignalLine:      res.SignalLine,
-		Histogram:       res.Histogram,
-		BollingerUpper:  res.BBUpper,
-		BollingerMiddle: res.BBMiddle,
-		BollingerLower:  res.BBLower,
-		SMA:             res.SMA,
-		EMA:             res.EMA,
-		CrossSignals:    crossSignals,
-	}, nil
+	return module.ToDomainIndicators(res), nil
 }
 
 // noopPriceRepo satisfies the application.PriceRepo port for the sandbox.

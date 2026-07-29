@@ -6,6 +6,13 @@
 - **File:** `apps/technical-analysis/pkg/infrastructure/calculator.go`
 - Implements `TAIndicatorCalculator` port
 - Pure math, zero I/O
+- `Calculate` calls `module.Compute` then `module.ToDomainIndicators` (`pkg/module/mapper.go`) —
+  the `Result -> domain.TechnicalIndicators` mapping is shared with `cmd/sandbox`'s
+  `sandboxCalculator.Calculate`, which uses the identical mapper (composition-root-local, does
+  not import `pkg/infrastructure`, per Fence-C). Extracted 2026-07-29
+  (`FACTORY-TECHANALYSIS-dedup-calculator`) after the sandbox's own copy of this mapping had
+  drifted (it omitted MA5/MA20/MA50). `module -> domain` is an unrestricted import edge under
+  Fence-B (`.golangci.yml` only denies `module -> application` / `module -> interface`).
 
 ### Primitives (wired in calculator.go)
 
