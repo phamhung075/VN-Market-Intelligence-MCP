@@ -537,7 +537,8 @@
       },
       "expected_outputs": {
         "session_log_schema": {
-          "heading": "### Alert Cycle (HH:MM–HH:MM UTC)",
+          "heading": "## c<NNN> · <ISO-timestamp> (slot=<dispatched slot>, tick=<nominal tick>)",
+          "heading_note": "top-level ## section per cycle (FIX-ALERT-COMMANDER-NOTEBOOK-SINGLE-BLOB-UNPRUNABLE, 2026-07-29) — NOT the pre-fix '### Alert Cycle (HH:MM–HH:MM UTC)' sub-block nested under one perpetual '## This session' heading, which had exactly one '## ' section and was structurally immune to the drop-oldest-section notebook pruner. See docs/agents/alert-commander/flow/stage-dispatch-log.md § 5.",
           "required_fields": [
             "Signals:",
             "Fired:",
@@ -552,10 +553,11 @@
       },
       "assertions": [
         "notebook file path: docs/agent-memory/notebooks/alert-commander.md",
-        "heading must be '### Alert Cycle (HH:MM–HH:MM UTC)'",
+        "heading must be a top-level '## c<NNN> · <ISO-timestamp> (...)' section, one per cycle — NOT a '### Alert Cycle' sub-block",
         "all 8 required fields must be present",
         "ChainCatalyst line must list event_types",
-        "log_agent_work must also be called"
+        "log_agent_work must also be called",
+        "section body target <=700B/<=8L — full tool-call narration belongs in log_agent_work's context field, not the notebook"
       ]
     },
 

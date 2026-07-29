@@ -68,41 +68,29 @@ After: `mark_alert_read()` + `record_signal_outcome(..., "fired")`
 
 > Tier: ULTRA. ≤80 chars target. Silent cycles (no MARKET send): skip WORK entirely per `no_cycle_headers: true` constraint.
 
-**5. Notebook commit**
+**5. Notebook write** — APPEND class → skill: `.claude/skills/notebook-write/SKILL.md` (AC-2 retention: keep last 3 `## ` sections; AC-3 settled-write; AC-4 blank-state fallback)
 
-> Invariant: timestamp = current UTC, never future, never speculative.
+> Invariant: timestamp = current UTC via `date -u +"%Y-%m-%dT%H:%M:%SZ"`, used verbatim — never speculate, never a future minute, never an entry for a cycle that has not fired yet.
 
-### Notebook timestamp guard
-- Before writing `docs/agent-memory/notebooks/alert-commander.md`, ALWAYS get current UTC via:
-  ```
-  date -u +"%Y-%m-%dT%H:%M:%SZ"
-  ```
-- Use the returned value verbatim — NEVER speculate, NEVER round to a future minute
-- NEVER write entries for cycles that have not fired yet
+**One `## c<NNN> · <ISO-timestamp>` section per cycle** — NOT the old perpetual `## This session` + `### Alert Cycle` sub-block (FIX-ALERT-COMMANDER-NOTEBOOK-SINGLE-BLOB-UNPRUNABLE, 2026-07-29: that shape has exactly one `## `, so the drop-oldest-section pruner has nothing to drop and safe-fails forever). `<NNN>` = 1 + highest existing `c<NNN>` in file (blank-state → `c1`).
 
-### Header update (required every cycle)
-Before appending the `### Alert Cycle` block, update line 3 of the notebook:
-```bash
-SPRINT=$(jq -r '.head.active_task_id // "idle"' docs/data/orch/orch-state.json 2>/dev/null || echo "idle")
+Template (target ≤700B/≤8L — full tool-call narration goes in `log_agent_work`'s `context` field, NOT here; this notebook is a scannable ledger, not a transcript):
 ```
-```
-**Last updated:** $(date -u +"%Y-%m-%d %H:%M UTC") | **Sprint:** $SPRINT
-```
-Use `date -u` exclusively — same UTC source as the session log guard (1865a). Fallback: if `jq` fails or `currentSprint` is null, `$SPRINT` = `idle`.
-
-`log_agent_work(...)` + append `docs/agent-memory/notebooks/alert-commander.md`:
-```
-### Alert Cycle (HH:MM–HH:MM UTC)
-- Signals: [count by type]
-- Fired: N | Suppressed: M | MARKET: X
+## c<NNN> · <ISO-timestamp> (slot=<dispatched slot>, tick=<nominal tick>)
+- Signals: [count by type] | Fired: N | Suppressed: M | MARKET: X
 - ChainCatalyst: N fired | M suppressed | event_types: [list]
 - Regime: REGIME | Carry: CARRY_REGIME (CARRY_SPREAD%) | Pivot window: pivot_window_active
 ```
+Before composing, refresh the preamble line: `SPRINT=$(jq -r '.head.active_task_id // "idle"' docs/data/orch/orch-state.json 2>/dev/null || echo "idle")` → `**Last updated:** $(date -u +"%Y-%m-%d %H:%M UTC") | **Sprint:** $SPRINT` (same UTC source as 1865a; `jq` failure/null → `idle`).
+
+Compose per skill Step 1 — drop oldest `## c<NNN>` section(s) while >3 sections OR while the body would exceed 200L OR 12000B (this file ran 10x over the byte cap historically at 632B/line; check bytes explicitly, not lines alone) — then land ONE settled Edit/Write. AC-5 gate: `wc -l` ≤200 AND `wc -c` ≤12000, both BLOCKING.
+
+`log_agent_work(...)` first (narration goes here), then the settled notebook write above.
+
 **Commit (mutex-guarded)** → skill: `.claude/skills/commit-mutex/SKILL.md`
 ```bash
 # own_paths: [docs/agent-memory/notebooks/alert-commander.md]
 # intent: "chore(memory/alert-commander): notebook YYYY-MM-DD"
-# Protocol: task_claim commit-mutex:main (TTL=60s) → git add <own_paths> → verify → git commit → task_release
 git add docs/agent-memory/notebooks/alert-commander.md
 git commit -m "chore(memory/alert-commander): notebook YYYY-MM-DD"
 ```
