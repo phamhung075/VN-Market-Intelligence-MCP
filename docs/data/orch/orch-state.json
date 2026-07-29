@@ -419,12 +419,9 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "FIX-SCHEDULER-DOUBLE-REGISTRATION",
-    "next_agent": "developer",
-    "next_action": "BOUNDED-1 auto-pickup claim of FIX-SCHEDULER-DOUBLE-REGISTRATION — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
-    "updated_at": "2026-07-29T02:17:07Z",
-    "updated_by": "dev-team (bounded-1 auto-pickup)"
+    "status": "idle",
+    "active_task_id": null,
+    "next_agent": "router"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -16630,6 +16627,25 @@
         "rebuild_required": true,
         "review_note": "dev-technical-analysis self-closeout: sandboxCalculator.Calculate (cmd/sandbox/service_adapters.go, already split by FACTORY-TECHANALYSIS-split-sandbox) duplicated infrastructure.TACalculator.Calculate's module.Result->domain.TechnicalIndicators mapping but omitted MA5/MA20/MA50 (real drift, not just duplication). Extracted shared pkg/module/mapper.go::ToDomainIndicators; both callers delegate to it. Fence check verified live against .golangci.yml (not just audit prose): Fence-B denies only module->application/module->interface, module->domain unrestricted, pkg/domain has zero imports of pkg/module (no cycle) -- golangci-lint run ./... 0 issues. TDD RED (module.ToDomainIndicators undefined) -> GREEN. TACalculator.Calculate (real service, on cmd/server build graph) confirmed byte-identical before/after via temporary baseline-capture test (5 close-series inputs, JSON diff clean, temp file deleted before commit, never staged). sandbox now populates MA5/20/50 (intended fix) -- grep-verified zero existing scenario JSON or sandbox_test.go assertion references MA5/20/50, so no fixture/test-expectation update needed. go build/vet/test ./... (12 packages) green. G12 gate: dashboard/build.sh 35/35 scenarios green, headless render-check PASS. Verified live Dockerfile only COPYs+builds ./cmd/server (cmd/sandbox source copied but never compiled/shipped) -- matches split-sandbox precedent, only calculator.go triggers rebuild_required. docs/architecture/microservice/technical-analysis/{infrastructure,testing}.md updated (doc-review). Commits: a1bb99309 (code+docs), 31cbb7682 (decision journal), 7d247bbbe (notebook). Journal: docs/agent-memory/decisions/sprint-FACTORY-TECHANALYSIS-dedup-calculator-dev-technical-analysis.md. No MCP tool grant on this agent session (Read/Edit/Write/Glob/Grep/Bash only) -- commit-mutex/task_claim/task_release skipped per router dispatch instruction, committed directly with explicit pathspecs.",
         "updated_by": "dev-technical-analysis"
+      },
+      {
+        "id": "FIX-SCHEDULER-DOUBLE-REGISTRATION",
+        "title": "Scheduler DOUBLE-REGISTRATION: vnIndexRefreshJob fires 2x/min (08:55:00 + 08:55:01) and pollNewsJob 4-5x/min (2026-06-24 14:30 x5) per cron_job_runs — duplicate registerJob / re-entrant startScheduler. Wasted compute + duplicate writes (directly feeds R3 kinhdich dups).",
+        "type": "FIX",
+        "priority": "P2",
+        "status": "REVIEW",
+        "zone": "apps/mcp-server/",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-SCHEDULER-DOUBLE-REGISTRATION",
+        "promoted_at": "2026-07-29T02:17:01Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
+        "updated_at": "2026-07-29T02:56:05Z",
+        "claimed_at": "2026-07-29T02:17:07Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "next_agent": "ops",
+        "rebuild_required": true,
+        "entered_review_at": "2026-07-29T02:54:52Z",
+        "dev_mcp_server_review_note": "dev-mcp-server COMPLETE (session 64c7c677-0f0f-4cee-a3ce-dba79d70b7ae): RAW-verified LIVE (docker exec bun:sqlite against the named-volume market.db, not host/cached) BEFORE any code change — the ticket's own hypothesis (duplicate registerJob calls / re-entrant startScheduler) did NOT hold. Registration was already singular for every job (startScheduler()'s __vnMarketSchedulerStarted guard; vnIndexRefreshJob appears exactly once in buildJobTable()). Precisely traced the real defect through node_modules/node-cron@3.0.3's scheduler.js Scheduler.matchTime(): recoverMissedExecutions:true (Lever B / T2-ARCH-CRON-RECOVER-JITTER, the sibling ARCH-CRON-SCHEDULER-RELIABILITY missed-fire fix, DONE_VERIFIED — NOT reverted here) makes the `i===0 || autorecover` gate always true, and its \"already fired\" guard compares full-millisecond `.getTime()` instead of whole-second granularity — so under ORDINARY ~1s setTimeout-loop jitter (no stall required) the SAME scheduled second is independently re-detected (and re-executed) by the next poll. RAW-confirmed this is a SHARED scheduler-layer defect, not specific to the 2 jobs named in the ticket: vnIndexRefreshJob 13.04%/7d dup-minute rate, vpsServiceHealthJob 10.33%/7d, walCheckpointJob 3.74%/7d — all three showed the identical same-second duplicate-success-row pattern. pollNewsJob (the ticket's other named job) is NOT a cron registration at all — its 2x/30min pattern is newsHeadlinesRefreshJob's BY-DESIGN double push (Bloomberg then Reuters) to /api/push-news, each independently recording a pollNewsJob run; pollNews()'s own URL+title dedup makes this safe (distinct source content, zero duplicate writes) — left untouched (a same-name overlap guard there would silently drop one of the two legitimate news batches, a real regression).\n\nFIX: new dedupeCronTick() in apps/mcp-server/src/scheduler/startupHelpers.ts wraps every scheduleCron() callback — the single canonical funnel for all ~84 registrations (registerJobTable's 57 table-driven jobs, registerBespokeJobs' 22 bespoke jobs, summaryJobs.ts's 5 jobs; grep-confirmed zero direct cron.schedule() bypass) — with a per-registration whole-second last-fired guard. A second detection of an already-fired second is skipped (logged, not executed, not double-recorded); a genuinely new second still fires normally.\n\nEvidence: new apps/mcp-server/src/__tests__/FIX-SCHEDULER-DOUBLE-REGISTRATION.test.ts, TDD RED->GREEN, 8 tests (same-second dedup incl. the exact observed sub-second-offset scenario, cross-second no-suppression, manual/init passthrough never deduped, per-registration state isolation across jobs, real scheduleCron+node-cron wiring via task.now()). Discovered + fixed a pre-existing cross-file test-isolation leak while wiring the integration test: FACTORY-SCHEDULER-job-table-registry.test.ts's mock.module(\"../scheduler/startupHelpers.js\", ...) is process-global and never restored (same documented class as 034-telegram-notifier.test.ts/1298b-imf-infra.test.ts/084-tool-market.test.ts/FIX-BASE-RATE-COMPUTATION-CRON-DEAD.test.ts) — applied the SAME established `?isolate=` query-busted dynamic-import workaround inside my own test file (no other file touched). Targeted scheduler suites (ARCH-CRON-recover-jitter, FACTORY-SCHEDULER-job-table-registry, ARCH-CRON-watchdog, ARCH-CRON-idempotency, FIX-CRON-SUNDAY-STARTUP-CATCHUP, 1104-sprint055-cron-smoke, FIX-SCHEDULER-DOUBLE-REGISTRATION, FIX-BASE-RATE-COMPUTATION-CRON-DEAD, 034-telegram-notifier, EVIDENCE-ACCUM-SILENT-CRON, FIX-CRON-SSCCHECKERJOB-DEAD-87D-dataauditweekly-catchup, 1958a-alert-digest-summary-catchup) 160/160 pass. tsc --noEmit clean. gen-project-stats --dry-run: toolCount=184/cronJobCount=88 unchanged (no tool/cron registration file touched). Live boot (PORT=3099, default env matching prod DB path convention): /health toolCount=184, /api/bctc-inspect 200, /dashboards/news-fetch/ 200, zero scheduler-startup errors, no \"startScheduler called again\" duplicate-init log. Full repo-wide bun test re-run TWICE post-fix (1236 files each): run1 14865 pass/40 skip/55 fail (my own INT-2 test was the 1 file-order-dependent flake from the mock leak above, fixed before run2); run2 14864 pass/40 skip/56 fail/1 error, my file 0 fail — both within the standing FIX-MCP-SUITE-HEALTH-BASELINE order-dependent band (54-59 across recent dev-mcp-server cycles this sprint); diffed both fail-lists — zero reference to startupHelpers.ts/dedupeCronTick/scheduleCron in any failure, all are pre-existing 5000ms-timeout/db-lifecycle flakes under full-parallel load, same named tests as pre-fix baseline.\n\nDoc-review: docs/architecture/microservice/mcp-server/system.md § Scheduler Jobs — added FIX-SCHEDULER-DOUBLE-REGISTRATION subsection documenting the corrected root-cause mechanism (so the original ticket's hypothesis isn't re-litigated by a future reader).\n\nDOCKER MICROSERVICE CODE-CHANGE CLOSE GATE APPLIES: apps/mcp-server/src/ (incl. startupHelpers.ts and the new test file) is baked at build time via `COPY apps/mcp-server/src/ ./src/` in apps/mcp-server/Dockerfile — confirmed by direct read, not assumed. Held at REVIEW / next_agent=ops / rebuild_required=true per docs/protocols/docker-deployment-runbook.md — NOT self-flipped to DONE_VERIFIED. Chain: ops (rebuild+swap) -> qa (LIVE verification gate: cron_job_runs shows exactly one success row per job per scheduled minute across 2 full fetch cycles for vnIndexRefreshJob AND vpsServiceHealthJob — RAW query the named-volume DB post-rebuild the same way this note's investigation did; pollNewsJob's 2x/30min pattern is EXPECTED/by-design and must NOT be treated as a gate failure, see root-cause note above) -> po (Step 6 sign-off). Decision journal: docs/agent-memory/decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-dev-mcp-server.md STEP dev-mcp-server-S18. NOT pushed by this agent per PUSH-AUTONOMY-1 (chain-mutex-holding session pushes).\n"
       }
     ],
     "qa": [],
@@ -16651,23 +16667,7 @@
     },
     "last_triaged_at": "2026-07-29T02:17:01Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": [
-      {
-        "id": "FIX-SCHEDULER-DOUBLE-REGISTRATION",
-        "title": "Scheduler DOUBLE-REGISTRATION: vnIndexRefreshJob fires 2x/min (08:55:00 + 08:55:01) and pollNewsJob 4-5x/min (2026-06-24 14:30 x5) per cron_job_runs — duplicate registerJob / re-entrant startScheduler. Wasted compute + duplicate writes (directly feeds R3 kinhdich dups).",
-        "type": "FIX",
-        "priority": "P2",
-        "status": "IN_PROGRESS",
-        "zone": "apps/mcp-server/",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-SCHEDULER-DOUBLE-REGISTRATION",
-        "promoted_at": "2026-07-29T02:17:01Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
-        "updated_at": "2026-07-29T02:17:08Z",
-        "claimed_at": "2026-07-29T02:17:07Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)"
-      }
-    ]
+    "in_progress": []
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
