@@ -419,9 +419,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "active_task_id": null,
-    "next_agent": "router"
+    "status": "in_progress",
+    "active_task_id": "FIX-SCHEDULER-DOUBLE-REGISTRATION",
+    "next_agent": "developer",
+    "next_action": "BOUNDED-1 auto-pickup claim of FIX-SCHEDULER-DOUBLE-REGISTRATION — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
+    "updated_at": "2026-07-29T02:17:07Z",
+    "updated_by": "dev-team (bounded-1 auto-pickup)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -6859,15 +6862,6 @@
         "zone": "docs/agents/fb-market-poster/",
         "title": "fb-poster mislabels foreign-flow unit: get_market_foreign_flow net is SHARE VOLUME (M shares), post writes 'X tỷ'",
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#FU-FB-FOREIGN-FLOW-UNIT-LABEL"
-      },
-      {
-        "id": "FIX-SCHEDULER-DOUBLE-REGISTRATION",
-        "title": "Scheduler DOUBLE-REGISTRATION: vnIndexRefreshJob fires 2x/min (08:55:00 + 08:55:01) and pollNewsJob 4-5x/min (2026-06-24 14:30 x5) per cron_job_runs — duplicate registerJob / re-entrant startScheduler. Wasted compute + duplicate writes (directly feeds R3 kinhdich dups).",
-        "type": "FIX",
-        "priority": "P2",
-        "status": "BACKLOG",
-        "zone": "apps/mcp-server/",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-SCHEDULER-DOUBLE-REGISTRATION"
       },
       {
         "id": "FIX-KINHDICH-READINGS-DEDUP",
@@ -16583,9 +16577,25 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-29T01:46:26Z",
+    "last_triaged_at": "2026-07-29T02:17:01Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": []
+    "in_progress": [
+      {
+        "id": "FIX-SCHEDULER-DOUBLE-REGISTRATION",
+        "title": "Scheduler DOUBLE-REGISTRATION: vnIndexRefreshJob fires 2x/min (08:55:00 + 08:55:01) and pollNewsJob 4-5x/min (2026-06-24 14:30 x5) per cron_job_runs — duplicate registerJob / re-entrant startScheduler. Wasted compute + duplicate writes (directly feeds R3 kinhdich dups).",
+        "type": "FIX",
+        "priority": "P2",
+        "status": "IN_PROGRESS",
+        "zone": "apps/mcp-server/",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-SCHEDULER-DOUBLE-REGISTRATION",
+        "promoted_at": "2026-07-29T02:17:01Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
+        "updated_at": "2026-07-29T02:17:08Z",
+        "claimed_at": "2026-07-29T02:17:07Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)"
+      }
+    ]
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
