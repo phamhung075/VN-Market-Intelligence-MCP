@@ -1,3 +1,46 @@
+## 88ec89d6 · 2026-07-29T00:36:05Z
+### Audit Run Tier-3 (02:00 UTC 2026-07-29)
+- Tier: 3 | DB integrity deep scan: 16 checks (14 PASS, 2 WARN) | Tooling: 3/3 present | Connectivity: 4/4 UP | EPIPE: 0 | WAL sizes OK
+- Anomalies: 2 new (0 critical, 2 warn, 0 info) | 1 dedup-skipped
+- Status: DEGRADED
+
+Fire-election: tick=2026-07-29T02:00Z (daily 02:00 UTC) — `task_claim` returned `claimed:true`. Led this tick.
+
+**Tier-3 DB Checks (C-01 to C-16)**:
+- C-01 (daily_ohlcv tickers): PASS (927 distinct codes, ≥25)
+- C-02 (daily_ohlcv rows): PASS (927 rows, >0)
+- C-03 (financial_reports 2026-Q1): PASS (45 distinct action_codes, ≥26)
+- C-04 (low-conf BCTC): PASS (0 rows, ≤5)
+- C-05 (SSC URLs in queue): PASS (0 rows, =0)
+- C-06 (market_messages 3h): WARN (0 rows, expected >0) [dedup-skip: last 2026-07-22]
+- C-07 (agent_signals 24h): PASS (33 rows, >0)
+- C-08 (orphaned alerts): WARN (69 orphaned, expected 0) [NEW]
+- C-09 (macro_indicators Vietnam): PASS (3 fields, ≥3)
+- C-10 (failed PDFs 24h): PASS (0 rows, ≤2)
+- C-11 (successful PDFs 48h): 0 (off-season, not fatal)
+- C-12 (integrity_check): PASS (market.db ok, pdf_extractor.db ok, rag_service.db returned empty)
+- C-13 (WAL sizes): PASS (<50MB: market.db-wal 7.12MB, coordination.db-wal 1.88MB)
+- C-14 (ticker concentration): PASS (0.3%, <60%)
+- C-15 (schema sentinel): PASS (4/4 columns present)
+- C-16 (stale pending BCTC): PASS (0 rows, =0)
+
+**Service health (A-22 to A-28)**:
+- A-22 (pdftoppm): present
+- A-23 (tesseract): present
+- A-24 (vie language): present
+- A-25 (stock-price /health): UP
+- A-26 (technical-analysis /health): UP
+- A-27 (alert-engine /health): UP
+- A-28 (pdf-extractor /health): UP
+- A-31 (EPIPE 30min): 0 occurrences (PASS)
+- B-08 (BCTC PDFs): 278 present (PASS)
+
+**Signals emitted**:
+- C-06: SKIP-dedup (already reported 2026-07-22T15:00:37Z)
+- C-08: OK (new signal, posted to BUG)
+
+[OUTPUT-CONTRACT] signals_posted=1 | telegram_sent=1 | signal_queue_rows_written=2 | dashboard_rows=2
+
 ## a1f7k9x5 · 2026-07-28T23:39:27Z
 ### Audit Run Tier-1 (23:30–23:39 UTC 2026-07-28)
 - Tier: 1 | Services: 12/12 host_runtime_set Up(healthy) | Health: 5/5 OK | A-20 pdf-extractor 3/3 pass | A-21 crashRestarts=1 PASS | A-30 MemPerc=10.38% (process age 40m51s, 3rd trajectory point) | A-32 Disk 38% PASS
