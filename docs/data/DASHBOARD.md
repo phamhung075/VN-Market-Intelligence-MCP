@@ -166,3 +166,15 @@
 **Mitigation:** No immediate action beyond signal routing.
 
 ---
+
+## Anomaly: C-06 · market_messages table: 0 rows in last 3 hours
+**Severity:** WARN | **Date:** 2026-07-29 | **Status:** OPEN
+**Location:** mcp-server/market.db/market_messages
+**Details:** No rows in market_messages table for the last 3 hours
+**Impact:** Market messaging pipeline may be stalled or broken
+**Root cause:** Unknown — possible pipeline failure or data loss
+**Zone owner:** dev-mcp-server
+**Last reported:** 2026-07-29T18:34:53Z (signal sys-20260729T183438-0c12, system-auditor -> po, dedup_key=data_freshness:market_messages:C-06, WARN Telegram sent)
+**Mitigation:** No immediate action beyond signal routing.
+
+---
