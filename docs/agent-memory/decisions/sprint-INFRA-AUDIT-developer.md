@@ -47,3 +47,22 @@
 - silently claim full literal AC3 compliance (exit 0 on the live repo) — rejected: would be a false report, the live repo genuinely still has legitimate non-blocking CAUTION items unrelated to this fix.
 **why-decision:** honest-report obligation; the distinction between exit=1 (this row's actual target, blocking-adjacent) and exit=2 (pre-existing, explicitly non-blocking per the consuming flow doc) is load-bearing and must not be blurred.
 **why-change:** none — finding, not a plan change.
+
+### STEP developer-S6 · developer · 2026-07-29T12:00Z
+**task-id:** FIX-AUDITOR-MEMACK-HEADROOM-FLOOR-AND-DEAD-TRACKEDBY
+**what-done:** Chose headroom computation approach: derive MiB-free from `mem_cap*(100-pct)/100` (values `_check_mem_creep` already pulls) instead of a second `docker stats --format MemUsage` call, and chose `MEM_FLOOR_MIB=40` = 2x the ~20MiB measured rag-service `compact()` burst (`FIX-RAG-SERVICE-CLEAN-EXIT-RESTART-LOOP` root_cause), per PO's calibration note explicitly rejecting a cap-derived number.
+**what-considered:**
+- extra `docker stats {{.MemUsage}}` call, parse "745.8MiB / 768MiB" string (more direct but needs unit parsing MiB/GiB/KiB, extra docker exec per container)
+- derive from already-fetched pct+cap via awk (zero extra docker calls, exact same number PO's own live math used)
+- MEM_FLOOR_MIB=32 (PO's un-settled round-number default) vs 40 (2x measured burst, floor fires with a full burst of margin still in hand)
+**why-decision:** pct+cap derivation is cheaper and already numerically matches PO's own 22.2MiB live figure; 40 gives "warn BEFORE the killing allocation" margin per the calibration note's explicit requirement, 32 would only warn once headroom == exactly one burst.
+**why-change:** no change from plan; floor VALUE was the one open parameter the row deliberately left for me to justify.
+
+### STEP developer-S7 · developer · 2026-07-29T12:15Z
+**task-id:** FIX-AUDITOR-MEMACK-HEADROOM-FLOOR-AND-DEAD-TRACKEDBY
+**what-done:** Found + fixed a real bug my own new code introduced: `awk '%.1f'` prints comma-decimal ("22,2") under this box's `fr_FR.UTF-8` locale — same class already documented in `scripts/audits/verify-a30-mcp-memory-reclamation.sh`'s "LOCALE PIN" comment. Pinned `LC_ALL=C LC_NUMERIC=C` on both new awk calls, scoped to the single command (not a global `export`, since this script is SOURCED by the test harness). Also discovered T36/T40 were silently resolving `tracked_by` against the REAL live orch-state.json (no test seam existed yet) before I added `ORCH_STATE_PATH` — both passed only because those exact 3 ids happen non-terminal today; added a dedicated fixture to make them hermetic.
+**what-considered:**
+- global `export LC_ALL=C` at script top (matches some sibling audit scripts) — rejected, would mutate the SOURCING test process's locale for its own assertions too
+- command-scoped `LC_ALL=C LC_NUMERIC=C awk ...` (no export, no global mutation)
+**why-decision:** minimum blast radius; sibling scripts that DO export globally are always standalone-invoked, never sourced by a test harness — this one is.
+**why-change:** neither was in the original plan — both caught by actually running the new code against the live repo/real locale before calling it done, not by inspection alone.
