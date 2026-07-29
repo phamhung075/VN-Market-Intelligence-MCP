@@ -347,3 +347,115 @@ export function detectRoomEvent(
   if (utilPct < 95 && hadPriorFullEvent) return 'ROOM_REOPEN';
   return null;
 }
+
+// ---------------------------------------------------------------------------
+// FIX-GET-FOREIGN-ROOM-TOOL-RESULT-TOKEN-BUDGET: tool-result trimming
+// ---------------------------------------------------------------------------
+
+/** Aggregate counts computed over the FULL ticker universe (never truncated). */
+export interface ForeignRoomRollup {
+  total_tickers: number;
+  returned_tickers: number;
+  room_locked_count: number;
+  full_room_sell_count: number;
+  foreign_restricted_count: number;
+  avg_utilization_pct: number | null;
+}
+
+/** Result of summarizing a full TickerRoomAnalysis[] down to a token-bounded slice. */
+export interface ForeignRoomSummary {
+  tickers: TickerRoomAnalysis[];
+  rollup: ForeignRoomRollup;
+  omitted_codes: string[];
+}
+
+/**
+ * Trim a full-universe `TickerRoomAnalysis[]` to at most `topN` entries for
+ * MCP tool-result serialization, without discarding the aggregate signal.
+ *
+ * Root cause this closes (FIX-GET-FOREIGN-ROOM-TOOL-RESULT-TOKEN-BUDGET,
+ * recurring 3x): `getForeignRoom(db)` with no `code` filter serves EVERY
+ * code present in `vnstock_trading_stats` (the full traded universe the
+ * fundamentals job has touched — 100+ tickers live, not just the ~33-ticker
+ * watchlist), so the MCP tool-result payload grows unbounded and exceeded
+ * the caller's tool-result token budget. The effective limit here is ALWAYS
+ * derived from the real `analyses.length` — never a hardcoded universe-size
+ * assumption (`Math.min(topN, analyses.length)`).
+ *
+ * Ranking (highest alert-relevance first — never buries the two states this
+ * tool exists to surface behind an unremarkable ticker):
+ *   1. ROOM_LOCKED / FULL_ROOM_SELL flagged tickers
+ *   2. `|depletion_velocity_5d|` descending — "top-N by |net|" per the fix spec
+ *   3. `room_utilization_pct` descending (tie-break)
+ *   4. `market_cap_bn` descending, then `code` ascending (final determinism)
+ *
+ * Rollup counts (room_locked_count, full_room_sell_count,
+ * foreign_restricted_count, avg_utilization_pct) are computed over the FULL
+ * universe, never just the returned slice — a ticker dropped from
+ * `tickers[]` is still represented in the rollup, and its code is listed in
+ * `omitted_codes` so the caller can re-fetch it individually via
+ * `code=<ticker>` (fetch-more handle).
+ */
+export function summarizeForeignRoomTickers(
+  analyses: TickerRoomAnalysis[],
+  topN: number,
+): ForeignRoomSummary {
+  const total_tickers = analyses.length;
+
+  // ── Rollup over the FULL universe (never truncated) ──────────────────────
+  let room_locked_count = 0;
+  let full_room_sell_count = 0;
+  let foreign_restricted_count = 0;
+  let utilSum = 0;
+  let utilCount = 0;
+
+  for (const a of analyses) {
+    if (a.flags.room_locked === true) room_locked_count++;
+    if (a.flags.full_room_sell === true) full_room_sell_count++;
+    if (a.utilization.foreign_restricted) foreign_restricted_count++;
+    if (a.utilization.room_utilization_pct !== null) {
+      utilSum += a.utilization.room_utilization_pct;
+      utilCount++;
+    }
+  }
+  const avg_utilization_pct = utilCount > 0 ? utilSum / utilCount : null;
+
+  // ── Rank + trim ───────────────────────────────────────────────────────────
+  const isFlagged = (a: TickerRoomAnalysis): boolean =>
+    a.flags.room_locked === true || a.flags.full_room_sell === true;
+  const absVel = (a: TickerRoomAnalysis): number =>
+    a.velocity.depletion_velocity_5d !== null ? Math.abs(a.velocity.depletion_velocity_5d) : -Infinity;
+  const util = (a: TickerRoomAnalysis): number =>
+    a.utilization.room_utilization_pct !== null ? a.utilization.room_utilization_pct : -Infinity;
+  const cap = (a: TickerRoomAnalysis): number => a.market_cap_bn ?? -Infinity;
+
+  const ranked = [...analyses].sort((x, y) => {
+    const flagDelta = Number(isFlagged(y)) - Number(isFlagged(x));
+    if (flagDelta !== 0) return flagDelta;
+    if (absVel(y) !== absVel(x)) return absVel(y) - absVel(x);
+    if (util(y) !== util(x)) return util(y) - util(x);
+    if (cap(y) !== cap(x)) return cap(y) - cap(x);
+    return x.code.localeCompare(y.code);
+  });
+
+  const effectiveN = Math.min(Math.max(topN, 0), total_tickers);
+  const selected = ranked.slice(0, effectiveN);
+  const selectedCodes = new Set(selected.map((a) => a.code));
+  const omitted_codes = analyses
+    .filter((a) => !selectedCodes.has(a.code))
+    .map((a) => a.code)
+    .sort();
+
+  return {
+    tickers: selected,
+    rollup: {
+      total_tickers,
+      returned_tickers: selected.length,
+      room_locked_count,
+      full_room_sell_count,
+      foreign_restricted_count,
+      avg_utilization_pct,
+    },
+    omitted_codes,
+  };
+}

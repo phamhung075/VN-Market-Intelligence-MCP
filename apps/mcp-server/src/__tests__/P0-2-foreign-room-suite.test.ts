@@ -13,6 +13,8 @@
  *   AC-9:  detectAndPersistRoomEvents UNIQUE idempotency
  *   AC-10: store: getMarketWideDailyVelocities returns session series
  *   AC-11: get_foreign_room tool returns {error:...} on DB failure (NFR-P02-2)
+ *   AC-12: summarizeForeignRoomTickers / get_foreign_room top_n trim + rollup + fetch-more
+ *          (FIX-GET-FOREIGN-ROOM-TOOL-RESULT-TOKEN-BUDGET)
  *
  * Harness: _registeredTools direct-handler invocation (CI-safe; no InMemoryTransport).
  */
@@ -29,9 +31,11 @@ import {
   computeMarketSaturation,
   computeForeignOutflowZ5d,
   detectRoomEvent,
+  summarizeForeignRoomTickers,
   type TickerHistory,
   type RoomUtilization,
   type DepletionVelocity,
+  type TickerRoomAnalysis,
 } from "../domain/services/market-data/foreignRoomAnalyzer.js";
 
 // Infrastructure
@@ -712,5 +716,207 @@ describe("AC-11: get_foreign_room tool error contract", () => {
     const tickers = result["tickers"] as Array<{ code: string }>;
     expect(tickers).toHaveLength(1);
     expect(tickers[0]!.code).toBe("VCB");
+  });
+});
+
+// ===========================================================================
+// AC-12: summarizeForeignRoomTickers / get_foreign_room top_n trim + rollup
+// (FIX-GET-FOREIGN-ROOM-TOOL-RESULT-TOKEN-BUDGET)
+// ===========================================================================
+
+/** Build a minimal TickerRoomAnalysis fixture with sane defaults. */
+function makeAnalysis(overrides: {
+  code: string;
+  market_cap_bn?: number | null;
+  room_utilization_pct?: number | null;
+  depletion_velocity_5d?: number | null;
+  room_locked?: boolean | null;
+  full_room_sell?: boolean | null;
+  foreign_restricted?: boolean;
+}): TickerRoomAnalysis {
+  return {
+    code: overrides.code,
+    sector: "Banking",
+    market_cap_bn: overrides.market_cap_bn ?? 100_000,
+    utilization: {
+      room_utilization_pct: overrides.room_utilization_pct ?? null,
+      foreign_room_remaining: null,
+      max_holding_ratio: 0.49,
+      current_holding_ratio: null,
+      foreign_restricted: overrides.foreign_restricted ?? false,
+      asof: "2026-07-29",
+      source_tier: 2,
+    },
+    velocity: {
+      depletion_velocity_5d: overrides.depletion_velocity_5d ?? null,
+      confidence: overrides.depletion_velocity_5d !== undefined ? "full" : "insufficient",
+    },
+    flags: {
+      room_locked: overrides.room_locked ?? null,
+      full_room_sell: overrides.full_room_sell ?? null,
+    },
+    recent_events: [],
+  };
+}
+
+describe("AC-12: summarizeForeignRoomTickers — top_n trim + rollup + fetch-more", () => {
+  it("returns every ticker untouched when topN >= total (no trimming, no fetch_more)", () => {
+    const analyses = [
+      makeAnalysis({ code: "AAA", room_utilization_pct: 50 }),
+      makeAnalysis({ code: "BBB", room_utilization_pct: 80 }),
+    ];
+    const { tickers, rollup, omitted_codes } = summarizeForeignRoomTickers(analyses, 10);
+    expect(tickers).toHaveLength(2);
+    expect(rollup.total_tickers).toBe(2);
+    expect(rollup.returned_tickers).toBe(2);
+    expect(omitted_codes).toEqual([]);
+  });
+
+  it("never dumps the full universe — effective limit is min(topN, total), never a hardcoded ceiling", () => {
+    const analyses = Array.from({ length: 106 }, (_, i) =>
+      makeAnalysis({ code: `T${String(i).padStart(3, "0")}`, room_utilization_pct: i, market_cap_bn: 1000 + i }),
+    );
+    const { tickers, rollup, omitted_codes } = summarizeForeignRoomTickers(analyses, 10);
+    expect(tickers).toHaveLength(10);
+    expect(rollup.total_tickers).toBe(106);
+    expect(rollup.returned_tickers).toBe(10);
+    expect(omitted_codes).toHaveLength(96);
+  });
+
+  it("prioritizes ROOM_LOCKED/FULL_ROOM_SELL flagged tickers ahead of higher-cap unflagged ones", () => {
+    const analyses = [
+      makeAnalysis({ code: "BIGCAP", market_cap_bn: 500_000, room_utilization_pct: 90 }),
+      makeAnalysis({ code: "MIDCAP", market_cap_bn: 300_000, room_utilization_pct: 70 }),
+      makeAnalysis({ code: "LOCKED", market_cap_bn: 1_000, room_utilization_pct: 100, room_locked: true }),
+    ];
+    const { tickers } = summarizeForeignRoomTickers(analyses, 1);
+    // LOCKED has the smallest market_cap_bn and would rank last by cap alone —
+    // but it must be selected FIRST because it's flagged.
+    expect(tickers).toHaveLength(1);
+    expect(tickers[0]!.code).toBe("LOCKED");
+  });
+
+  it("ranks by |depletion_velocity_5d| descending among unflagged tickers ('top-N by |net|')", () => {
+    const analyses = [
+      makeAnalysis({ code: "SLOW", depletion_velocity_5d: 100 }),
+      makeAnalysis({ code: "FAST", depletion_velocity_5d: -5000 }),
+      makeAnalysis({ code: "MED", depletion_velocity_5d: 800 }),
+    ];
+    const { tickers } = summarizeForeignRoomTickers(analyses, 2);
+    expect(tickers.map((t) => t.code)).toEqual(["FAST", "MED"]);
+  });
+
+  it("computes rollup counts over the FULL universe, not just the returned slice", () => {
+    const analyses = [
+      makeAnalysis({ code: "A", room_locked: true, room_utilization_pct: 99 }),
+      makeAnalysis({ code: "B", full_room_sell: true, room_utilization_pct: 99 }),
+      makeAnalysis({ code: "C", foreign_restricted: true, room_utilization_pct: null }),
+      makeAnalysis({ code: "D", room_utilization_pct: 40 }),
+      makeAnalysis({ code: "E", room_utilization_pct: 20 }),
+    ];
+    const { rollup } = summarizeForeignRoomTickers(analyses, 1); // only 1 returned inline
+    expect(rollup.total_tickers).toBe(5);
+    expect(rollup.returned_tickers).toBe(1);
+    expect(rollup.room_locked_count).toBe(1);
+    expect(rollup.full_room_sell_count).toBe(1);
+    expect(rollup.foreign_restricted_count).toBe(1);
+    // avg over non-null utilization across ALL 5: (99+99+40+20)/4 = 64.5
+    expect(rollup.avg_utilization_pct).toBeCloseTo(64.5, 5);
+  });
+
+  it("omitted_codes lists exactly the tickers not returned, sorted", () => {
+    const analyses = [
+      makeAnalysis({ code: "ZZZ", room_utilization_pct: 10 }),
+      makeAnalysis({ code: "AAA", room_utilization_pct: 90 }),
+      makeAnalysis({ code: "MMM", room_utilization_pct: 50 }),
+    ];
+    const { tickers, omitted_codes } = summarizeForeignRoomTickers(analyses, 1);
+    expect(tickers.map((t) => t.code)).toEqual(["AAA"]);
+    expect(omitted_codes).toEqual(["MMM", "ZZZ"]);
+  });
+
+  it("clamps a topN larger than the universe to the actual count (no padding)", () => {
+    const analyses = [makeAnalysis({ code: "SOLO" })];
+    const { tickers, rollup } = summarizeForeignRoomTickers(analyses, 9999);
+    expect(tickers).toHaveLength(1);
+    expect(rollup.returned_tickers).toBe(1);
+  });
+});
+
+describe("AC-12b: get_foreign_room tool wires top_n trim + rollup + fetch_more end-to-end", () => {
+  /** Insert N synthetic tickers each with a single trading-stats row. */
+  function seedManyTickers(count: number): void {
+    for (let i = 0; i < count; i++) {
+      const code = `Z${String(i).padStart(3, "0")}`;
+      insertStats(db, code, "2026-07-29", {
+        current_holding_ratio: 0.1 + (i % 10) * 0.01,
+        max_holding_ratio: 0.49,
+        market_cap_bn: 1_000 + i,
+      });
+    }
+  }
+
+  it("defaults top_n to 10 when omitted — never the full universe inline", async () => {
+    seedManyTickers(15);
+    const server = new McpServer({ name: "test", version: "1.0" });
+    registerForeignRoomTools(server, db);
+
+    const result = await callTool(server, "get_foreign_room", {}) as Record<string, unknown>;
+    const tickers = result["tickers"] as unknown[];
+    expect(tickers.length).toBe(10);
+    expect(result).toHaveProperty("tickers_rollup");
+    const rollup = result["tickers_rollup"] as { total_tickers: number; returned_tickers: number };
+    expect(rollup.total_tickers).toBe(15);
+    expect(rollup.returned_tickers).toBe(10);
+    expect(result["more_available"]).toBe(true);
+    const fetchMore = result["fetch_more"] as { omitted_codes: string[]; hint: string };
+    expect(fetchMore.omitted_codes).toHaveLength(5);
+    expect(fetchMore.hint).toContain("top_n");
+  });
+
+  it("respects a caller-supplied top_n override", async () => {
+    seedManyTickers(15);
+    const server = new McpServer({ name: "test", version: "1.0" });
+    registerForeignRoomTools(server, db);
+
+    const result = await callTool(server, "get_foreign_room", { top_n: 3 }) as Record<string, unknown>;
+    const tickers = result["tickers"] as unknown[];
+    expect(tickers.length).toBe(3);
+  });
+
+  it("no fetch_more / more_available=false when top_n >= actual ticker count", async () => {
+    seedManyTickers(3);
+    const server = new McpServer({ name: "test", version: "1.0" });
+    registerForeignRoomTools(server, db);
+
+    const result = await callTool(server, "get_foreign_room", {}) as Record<string, unknown>;
+    expect(result["more_available"]).toBe(false);
+    expect(result).not.toHaveProperty("fetch_more");
+  });
+
+  it("single-ticker code lookup is never trimmed regardless of universe size", async () => {
+    seedManyTickers(15);
+    const server = new McpServer({ name: "test", version: "1.0" });
+    registerForeignRoomTools(server, db);
+
+    const result = await callTool(server, "get_foreign_room", { code: "Z000" }) as Record<string, unknown>;
+    const tickers = result["tickers"] as Array<{ code: string }>;
+    expect(tickers).toHaveLength(1);
+    expect(tickers[0]!.code).toBe("Z000");
+    expect(result["more_available"]).toBe(false);
+  });
+
+  it("the serialized JSON stays well under a 25k-token-equivalent budget for a large universe", async () => {
+    seedManyTickers(120);
+    const server = new McpServer({ name: "test", version: "1.0" });
+    registerForeignRoomTools(server, db);
+
+    const registry = (server as unknown as ToolServer)._registeredTools;
+    const raw = await registry["get_foreign_room"]!.handler({});
+    const text = raw.content[0]!.text;
+    // ~4 chars/token heuristic — 25k tokens ≈ 100k chars. A 120-ticker unbounded
+    // dump (pre-fix) would run ~700 chars/ticker ≈ 84k chars just for tickers[]
+    // BEFORE market/rollup overhead; trimmed to top_n=10 this must stay small.
+    expect(text.length).toBeLessThan(15_000);
   });
 });
