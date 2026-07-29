@@ -88,11 +88,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "active_task_id": null,
-    "next_agent": "router",
-    "updated_at": "2026-07-29T16:48:21Z",
-    "updated_by": "dev-team (head-sync fix after FIX-DRAIN-PAYLOADREF-DANGLE-ON-MOVE stale-row closeout)"
+    "status": "in_progress",
+    "active_task_id": "FACTORY-GUARD-CI-SIZELINT-IMPL",
+    "next_agent": "developer",
+    "next_action": "BOUNDED-1 auto-pickup claim of FACTORY-GUARD-CI-SIZELINT-IMPL — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
+    "updated_at": "2026-07-29T16:49:01Z",
+    "updated_by": "dev-team (bounded-1 auto-pickup)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -9638,26 +9639,6 @@
         "updated_at": "2026-07-23T18:08:33Z"
       },
       {
-        "id": "FACTORY-GUARD-CI-SIZELINT-IMPL",
-        "type": "SPRINT-S",
-        "title": "Implement size-lint-justification CI guardrail (script + baseline + workflow wiring)",
-        "status": "BACKLOG",
-        "priority": "P2",
-        "size": "M",
-        "zone": "cross-service/",
-        "epic": "FACTORY-MAINTAINABILITY-2026-06",
-        "cluster": "ci-regression-prevention",
-        "source": "architect design brief 2026-07-24, parent FACTORY-GUARD-CI-size-lint-justification",
-        "detail_ref": "docs/architecture-briefs/2026-07-24-factory-guard-ci-size-lint-justification.md#3-build-vs-plan--decomposed-not-self-implemented",
-        "dev_agent": "developer",
-        "next_agent": "developer",
-        "parent_task": "FACTORY-GUARD-CI-size-lint-justification",
-        "note": "files: scripts/audits/size-lint-justification.sh (new, --check/--update modes), docs/data/size-lint-baseline.json (new, generated), .github/workflows/ci.yml (edit — add size-lint job), docs/policies/dev-standards.md (edit — CANONICAL pointer), scripts/audits/size-lint-justification.test.sh (new). approach: implement --check (CI mode, exit 0/1, walks apps/**/*.ts|*.py|*.go + packages/**/*.ts excl test/vendor/.d.ts, 120L threshold, honors // (ts/go) and # (py) size-justification headers, baseline-file tolerance ±10%/min5L mirrors context-bloat-backstop.sh idiom) and --update (regen docs/data/size-lint-baseline.json from live repo state, prune-eligible entries that shrank/got justified); run --update once to generate initial baseline (grandfathers current ~733 unjustified over-cap files verified 2026-07-24); wire size-lint job into ci.yml (ubuntu-latest, checkout only, no toolchain setup needed); add CANONICAL pointer in dev-standards.md Script Persistence section. dod: --check exits 0 on current repo state (baseline covers all current offenders); synthetic new >120L file with no header fails --check; synthetic baseline file grown past tolerance fails; a justified/shrunk file is dropped by --update; smoke test (size-lint-justification.test.sh) covers all 4 cases; CI green on push.",
-        "created_at": "2026-07-24T16:55:43Z",
-        "created_by": "architect",
-        "updated_at": "2026-07-24T16:55:43Z"
-      },
-      {
         "id": "FE-PG-_INDEX-FRESH-FIX",
         "type": "FIX",
         "title": "Add page-level freshness/staleness indicator to /dashboard (Market Overview) — CHEF digest shows only per-dish timestamps, no page-level stale flag",
@@ -17398,9 +17379,35 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-29T16:16:40Z",
+    "last_triaged_at": "2026-07-29T16:49:01Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": []
+    "in_progress": [
+      {
+        "id": "FACTORY-GUARD-CI-SIZELINT-IMPL",
+        "type": "SPRINT-S",
+        "title": "Implement size-lint-justification CI guardrail (script + baseline + workflow wiring)",
+        "status": "IN_PROGRESS",
+        "priority": "P2",
+        "size": "M",
+        "zone": "cross-service/",
+        "epic": "FACTORY-MAINTAINABILITY-2026-06",
+        "cluster": "ci-regression-prevention",
+        "source": "architect design brief 2026-07-24, parent FACTORY-GUARD-CI-size-lint-justification",
+        "detail_ref": "docs/architecture-briefs/2026-07-24-factory-guard-ci-size-lint-justification.md#3-build-vs-plan--decomposed-not-self-implemented",
+        "dev_agent": "developer",
+        "next_agent": "developer",
+        "parent_task": "FACTORY-GUARD-CI-size-lint-justification",
+        "note": "files: scripts/audits/size-lint-justification.sh (new, --check/--update modes), docs/data/size-lint-baseline.json (new, generated), .github/workflows/ci.yml (edit — add size-lint job), docs/policies/dev-standards.md (edit — CANONICAL pointer), scripts/audits/size-lint-justification.test.sh (new). approach: implement --check (CI mode, exit 0/1, walks apps/**/*.ts|*.py|*.go + packages/**/*.ts excl test/vendor/.d.ts, 120L threshold, honors // (ts/go) and # (py) size-justification headers, baseline-file tolerance ±10%/min5L mirrors context-bloat-backstop.sh idiom) and --update (regen docs/data/size-lint-baseline.json from live repo state, prune-eligible entries that shrank/got justified); run --update once to generate initial baseline (grandfathers current ~733 unjustified over-cap files verified 2026-07-24); wire size-lint job into ci.yml (ubuntu-latest, checkout only, no toolchain setup needed); add CANONICAL pointer in dev-standards.md Script Persistence section. dod: --check exits 0 on current repo state (baseline covers all current offenders); synthetic new >120L file with no header fails --check; synthetic baseline file grown past tolerance fails; a justified/shrunk file is dropped by --update; smoke test (size-lint-justification.test.sh) covers all 4 cases; CI green on push.",
+        "created_at": "2026-07-24T16:55:43Z",
+        "created_by": "architect",
+        "updated_at": "2026-07-29T16:49:02Z",
+        "promoted_at": "2026-07-29T16:49:01Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
+        "claimed_at": "2026-07-29T16:49:01Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)"
+      }
+    ]
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
