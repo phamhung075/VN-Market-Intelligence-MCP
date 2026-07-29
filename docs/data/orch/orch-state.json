@@ -88,12 +88,12 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "FIX-PDF-EXTRACTOR-TEST-SYS-MODULES-LEAK",
-    "next_agent": "developer",
-    "next_action": "BOUNDED-1 auto-pickup claim of FIX-PDF-EXTRACTOR-TEST-SYS-MODULES-LEAK — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
-    "updated_at": "2026-07-29T09:16:54Z",
-    "updated_by": "dev-team (bounded-1 auto-pickup)"
+    "status": "idle",
+    "active_task_id": null,
+    "next_agent": "router",
+    "next_action": "FIX-PDF-EXTRACTOR-TEST-SYS-MODULES-LEAK moved to review, next_agent=qa; head reset to idle per STATUSFLIP-LANEMOVE.",
+    "updated_at": "2026-07-29T09:29:54Z",
+    "updated_by": "dev-pdf-extractor"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -16826,8 +16826,8 @@
         "acceptance": "(1) The skill states an explicit IMMUTABILITY INVARIANT: sections retained across a cycle are byte-identical before and after. The ONLY authorized mutations are dropping a whole oldest block, the AC-2b intra-prune of a named permanent accumulator, and trimming the CURRENT cycle's own section. (2) AC-2 and AC-3 Step 1c are reconciled into one rule and the doc states which is normative. (3) The cap-pressure ladder ordering is made explicit and mandatory: trim own section to <=60L FIRST, then drop oldest whole blocks, NEVER mutate a retained section to make room. (4) A MECHANICAL check - runnable by the agent or a hook - that compares retained-section bytes before and after the settled write and fails if any surviving section changed. This is the AC that makes the class detectable at all; do not drop it for being harder than the prose ACs. (5) SCOPE FENCE: do NOT fix this in scripts/agents-flow/notebook-auto-prune.sh. That is a DIFFERENT actuator (a PostToolUse hook running AFTER the write) and already carries its own 4-row REVIEW cluster: FIX-NOTEBOOK-AUTOPRUNE-REGEX-HEADING-MISMATCH, FIX-NOTEBOOK-PRUNER-LINE-ONLY-SETPOINT-BYTE-CAP-NEVER-CONVERGES, FIX-NOTEBOOK-LINECAP-SWEEP-BYTE-BLIND-BACKSTOP, FIX-ALERT-COMMANDER-NOTEBOOK-SINGLE-BLOB-UNPRUNABLE. This row is the agent's IN-MEMORY compose step, AC-3 Step 1, which runs BEFORE the hook ever sees the file. (6) The fix applies to the shared skill and therefore to all 37 APPEND-class agents in AC-6, not to system-auditor alone.",
         "blast_radius": ".claude/skills/notebook-write/SKILL.md is the shared end-of-cycle write path for the 37 agents listed in its AC-6 APPEND class. If the compose step can rewrite retained history for system-auditor it can do so for all of them, and durable audit history is the one artifact the fleet cannot reconstruct.",
         "related_memory": "feedback_agent_notebook, feedback_waterfall_lazy_load, feedback_edit_tool_hook_silently_strips_multiline.",
-        "updated_at": "2026-07-29T08:45:44Z",
-        "agent_father_impl_note": "IMPLEMENTED 2026-07-29 by agent-father (router-dispatched, session ad265f86). All 4 acceptance criteria landed: (1) AC-2a immutability invariant added to .claude/skills/notebook-write/SKILL.md; (2) AC-2/AC-3 Step 1c reconciled into a converging WHILE-loop (normative: AC-2 3-section steady state); (3) cap-pressure ladder reordered - trim own section FIRST, mirrored into docs/agents/system-auditor/flow/main.md local copy; (4) mechanical gate landed as scripts/git-hooks/pre-commit _check_notebook_immutability (hard reject, hash-diff per retained heading) - VALIDATED live: true-positive 4/4 replaying commit 9b27e97236d2 before/after content, true-negative on clean commit 01e50dbcbac6661b (after fixing a trailing-blank-line false-positive class), plus a real stage/reject/restore round-trip against the live system-auditor.md notebook (confirmed byte-identical post-revert via git status/diff). QA verify: re-run the same before/after replay (git show <sha>^:path vs git show <sha>:path piped through the hook own functions) or attempt a live retained-section edit and confirm the hook rejects it."
+        "updated_at": "2026-07-29T09:19:38Z",
+        "agent_father_impl_note": "IMPLEMENTED 2026-07-29 by agent-father (router-dispatched, session ad265f86). All 4 acceptance criteria landed: (1) AC-2a immutability invariant added to .claude/skills/notebook-write/SKILL.md; (2) AC-2/AC-3 Step 1c reconciled into a converging WHILE-loop (normative: AC-2 3-section steady state); (3) cap-pressure ladder reordered - trim own section FIRST, mirrored into docs/agents/system-auditor/flow/main.md local copy; (4) mechanical gate landed as scripts/git-hooks/pre-commit _check_notebook_immutability (hard reject, hash-diff per retained heading) - VALIDATED live: true-positive 4/4 replaying commit 9b27e97236d2 before/after content, true-negative on clean commit 01e50dbcbac6661b (after fixing a trailing-blank-line false-positive class), plus a real stage/reject/restore round-trip against the live system-auditor.md notebook (confirmed byte-identical post-revert via git status/diff). QA verify: re-run the same before/after replay (git show <sha>^:path vs git show <sha>:path piped through the hook own functions) or attempt a live retained-section edit and confirm the hook rejects it.\n\nFOLLOW-UP 2026-07-29 (P0 fleet-block regression + fix, session ad265f86): the \"VALIDATED live\" claim above was itself measured on n=2 commits, both system-auditor.md (dated append-only convention). Corpus replay against ALL docs/agent-memory/notebooks/*.md (48 non-OVERWRITE files, last 8 commits each, 282 commit-diffs -- scripts/audits/verify-notebook-immutability-gate.sh, persisted this session) showed the opt-out-3-file hard-reject blocked most of the fleet's next notebook commit: most agents use STABLE ROLLING headings (## Current state, ## Known patterns / preferences, ## Carry-over, ## Active Sources Under Watch, etc.) designed to be rewritten every cycle, never dated -- confirmed false-reject on qa-responder.md's most recent commit ('## Current state' HEAD hash 58d83af7b997... vs staged 3790c4cd679b...). FIX LANDED in scripts/git-hooks/pre-commit: (1) _is_dated_heading -- enforcement is now opt-IN, scoped to headings carrying a recognizable YYYY-MM-DD or compact YYYYMMDDThhmm cycle-unique token, not opt-out by file; (2) extended the existing trailing-blank-line trim to also strip trailing '---' divider lines (a second false-positive class: an inter-section '---' boilerplate divider was bleeding into the PRECEDING retained section's hash, e.g. dev-pdf-extractor.md); (3) fixed an O(n^2) subprocess cost (new-side hashes were recomputed per old heading, now computed once per file); (4) consolidated per-heading write_signal calls into one aggregated signal per commit (was flooding po on multi-section rejects). RESIDUAL (NOT closed): re-running the replay after (1)+(2) still shows 42 rejects across 18 files (down from 152 baseline) from at least two further, structurally different false-positive classes the heading classifier cannot fix: (a) some notebooks (dev-frontend.md) keep a rolling status footer with NO '## ' heading of its own, silently absorbed into whichever dated heading is currently last-in-file; (b) periodic BULK archival/maintenance restructuring commits (qa-responder.md @ d5c78d459451, a claude-manager-helper memory-prune-sweep, not a routine per-cycle notebook-write) are authorized to regenerate/condense old dated summaries and legitimately collide on heading text. Per this row's own required-outcome contingency, the gate is now DISARMED to WARN-by-default (GIT_NOTEBOOK_IMMUTABILITY_MODE=reject opts a caller back into hard-block) -- verified via a disposable scratch-repo round-trip: default mode commits a genuine retained-section mutation (exit 0, WARN on stderr + one docs/signals/ write), explicit reject mode still blocks the same mutation (exit 1). next_agent=qa: please verify (i) the fleet is genuinely unblocked (warn-mode never exits 1), (ii) reject-mode still catches a real violation, (iii) do NOT re-arm GIT_NOTEBOOK_IMMUTABILITY_MODE=reject fleet-wide until scripts/audits/verify-notebook-immutability-gate.sh reads 0 rejects (or every remaining reject is manually confirmed a true positive) across the full notebook corpus.\n"
       },
       {
         "id": "FIX-GET-FOREIGN-ROOM-TOOL-RESULT-TOKEN-BUDGET",
@@ -16847,6 +16847,27 @@
         "next_agent": "qa",
         "entered_review_at": "2026-07-29T09:09:15Z",
         "review_note": "dev-mcp-server: root-cause confirmed LIVE (mcp-call.sh probe: 74,245 chars/106 tickers pre-fix — getAllTickersHistory reads the FULL vnstock_trading_stats universe, not the watchlist). Fix: new domain summarizeForeignRoomTickers() (foreignRoomAnalyzer.ts) trims tickers[] to top_n (default 10, effective=min(top_n,actual count), never hardcoded) ranked ROOM_LOCKED/FULL_ROOM_SELL-flagged first then |depletion_velocity_5d| desc; tickers_rollup counts over FULL universe; fetch_more.omitted_codes for individual re-fetch. getForeignRoom usecase itself UNCHANGED (money-radar composite + indicator-gauges REST projection both verified non-regressed). Evidence: P0-2-foreign-room-suite.test.ts 43/43 pass (24 new AC-12/AC-12b tests), tsc clean, toolCount=184/cronJobCount=88 unchanged, neighbor-consumer suite 108/108 pass, live boot health 200. Full bun test 14903 pass/55 fail/1239 files — 55 fails keyword-scanned zero overlap with foreign_room/ForeignRoom/money-radar/indicator-gauges (standing FIX-MCP-SUITE-HEALTH-BASELINE red per dev-standards.md pinned ruling). CAVEAT for qa: ACs 3-consecutive-live-cycle clause is NOT closable solo — needs post-deploy live alert-commander cycle confirmation (this fix reduces payload from ~18.5k-token-equivalent unbounded to a few-KB bounded response; the mechanical size/behavior gate is what I verified, the live 3-cycle recurrence-free confirmation is a QA/post-deploy follow-up)."
+      },
+      {
+        "id": "FIX-PDF-EXTRACTOR-TEST-SYS-MODULES-LEAK",
+        "priority": "medium",
+        "size": "S",
+        "status": "REVIEW",
+        "title": "test_low_text_density_ocr_rasterize.py unconditionally stomps sys.modules[PIL/PIL.Image/fitz/pdfplumber/paddleocr] at import time, no restore — breaks OCR+rasterizer tests in full-suite runs (order-dependent, 7 confirmed failures)",
+        "type": "FIX",
+        "zone": "pdf-extractor",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-PDF-EXTRACTOR-TEST-SYS-MODULES-LEAK",
+        "promoted_at": "2026-07-29T09:16:48Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
+        "updated_at": "2026-07-29T09:29:55Z",
+        "claimed_at": "2026-07-29T09:16:54Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "branch": null,
+        "next_agent": "qa",
+        "completed_at": "2026-07-29T09:29:54Z",
+        "completed_by": "dev-pdf-extractor",
+        "status_note": "Root cause: _ensure_stub() conditional-check pattern already present in the file, but 4 raw unconditional sys.modules[name]=stub assignments (pdfplumber/fitz/paddleocr/PIL+PIL.Image, lines 91/102/110/123-124) bypassed it with no restore -- order-dependent leak into every test file collected afterward. Fix (AC option c): wrapped all 4 in if-name-not-in-sys.modules guards + added missing try:import PIL/PIL.Image real-import-first attempts. Verified via docker cp into vn-market-intelligence-mcp-pdf-extractor-1 (no bind mount -- baked image, docker exec alone was testing stale code until discovered). BEFORE matches recorded evidence exactly: file+ocr_backends 1 failed/46 passed; file+page_rasterizer 4 failed/28 passed. AFTER (docker-exec, BOTH orderings): file+ocr_backends 47 passed; file+page_rasterizer 32 passed; file+tesseract_retry 26 passed -- all order-independent. Full non-slow suite (docker-exec): 1033 passed/5 skipped/7 deselected/0 failed. mypy: 0 new errors vs baseline (git-stash A/B). Commits: 1d8b1374f (fix), 8ac350161 (notebook+journal). Rebuild deferred to ops per standard REBUILD_REQUIRED gate -- docker cp was verification-only, does not persist past container restart/rebuild."
       }
     ],
     "qa": [],
@@ -16868,24 +16889,7 @@
     },
     "last_triaged_at": "2026-07-29T09:16:48Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": [
-      {
-        "id": "FIX-PDF-EXTRACTOR-TEST-SYS-MODULES-LEAK",
-        "priority": "medium",
-        "size": "S",
-        "status": "IN_PROGRESS",
-        "title": "test_low_text_density_ocr_rasterize.py unconditionally stomps sys.modules[PIL/PIL.Image/fitz/pdfplumber/paddleocr] at import time, no restore — breaks OCR+rasterizer tests in full-suite runs (order-dependent, 7 confirmed failures)",
-        "type": "FIX",
-        "zone": "pdf-extractor",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-PDF-EXTRACTOR-TEST-SYS-MODULES-LEAK",
-        "promoted_at": "2026-07-29T09:16:48Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
-        "updated_at": "2026-07-29T09:16:54Z",
-        "claimed_at": "2026-07-29T09:16:54Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)"
-      }
-    ]
+    "in_progress": []
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
