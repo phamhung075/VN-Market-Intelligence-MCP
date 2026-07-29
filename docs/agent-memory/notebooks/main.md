@@ -1,6 +1,15 @@
 # Dev Team — Sprint Boundary Notebook
 
-**Written:** 2026-07-29T18:47Z
+**Written:** 2026-07-29T19:19Z
+
+## cycle-20260729T1907Z — Tick 19:07Z: WIP=1 (developer still in flight on FACTORY-GUARD-CI-METRICMASK-IMPL), 0 drainable signals, CI dedup, correctly skipped duplicate resume-spawn, discovered + escalated NEW structural finding (QA-Drain unreachable whenever head≠idle) to po, spawned po for daily triage
+
+- **Preflight**: verdict RUN, tick `2026-07-29T19:07Z`. GCC-preflight clean — dirty tree = (a) the STILL-RUNNING developer agent's own live uncommitted work on the exact FACTORY-GUARD-CI-METRICMASK-IMPL target files (cascadeEngine.ts, marketSentimentCalculator.ts, watchlist.ts, ci.yml, dev-standards.md, 2 test files — confirmed matches the dispatched task, not stray), (b) other cowork agents' own scope as usual. No HEAD.lock, single worktree.
+- **Resume check (Step 0b)**: `.head` = in_progress / FACTORY-GUARD-CI-METRICMASK-IMPL / developer. Task status not BLOCKED. S2 dispatcher-wrap `task_claim("task:FACTORY-GUARD-CI-METRICMASK-IMPL")` correctly returned `claimed:false` — held by MY OWN session (re-entrant, TTL valid to ~19:22Z), confirming the background agent (`a6a9a8bb5ee957b02`) is genuinely still alive, not stale-crashed. Correctly SKIPPED the resume-spawn (would have duplicated) — no Agent() call made. Per main.md's own control flow this means BOUNDED-1/SLS/RLC/QA-Drain are ALL structurally out of reach this tick (nested inside the head-idle-only fall-through) — fell through directly to Step 1.
+- **Drain**: 0 drainable (stale-inbox debt already flagged last tick). CI probe deduped (same `aa6c044b`).
+- **NEW finding, escalated (not just logged)**: re-reading main.md line ~674 confirmed Review-Lane QA-Drain is nested inside the SAME head-idle fall-through as BOUNDED-1/SLS/RLC, despite having its OWN independent `qa[]<1` budget separate from WIP≤2 — QA-Drain literally cannot run on any tick where `.head.status=="in_progress"`, regardless of qa[] capacity. Deeper/different cause than the past 5 ticks' "BOUNDED-1 wins same-tick priority" framing. Wrote signal `dev-20260729T191826` (MED, to:po, type `devteam_flow_control_gap`), read-back confirmed, recommending an agents-architect brief to decouple QA-Drain's gate from head-idle. `review[]` now 157 rows (was 152).
+- **Step 1 PO Triage**: `task:po-triage-20260729` claim succeeded (prior holder's TTL had lapsed) — spawned `po` (`a6abaaaf062fccd39`) in background with both new signals + the 2 existing system-auditor WARNs + a note that `read_telegram_reports(status=new)` shows 21 unresolved reports all dated 2026-07-27 (2+ days stale, repeated CRITICAL sla-monitor breaches + bctcExtractReconcile circuit-breaker/PEK-dormancy trips) — flagged as a possibly separate triage-queue gap, not yet actioned by dev-team. Triage-key released after spawn. Committed signal write `f9f743f66` under commit-mutex, residual-check clean.
+- **NEXT**: awaiting `po`'s triage RETURN and the still-in-flight `developer` (`a6a9a8bb5ee957b02`) completion — whichever lands first. `task:FACTORY-GUARD-CI-METRICMASK-IMPL` remains held, untouched.
 
 ## cycle-20260729T1847Z — Tick 18:37Z: drained 1 signal + flagged stale signal-inbox debt (89% legacy non-signal-shape) to po, CI dedup, clean BOUNDED-1 dispatch to developer (first non-FreshnessBadge pick in 4 ticks)
 
@@ -24,12 +33,3 @@
 - Released sprint-task lock `task:FE-PG-INTEL-FRESH-FIX` cleanly.
 - **NEXT: qa** — review-lane QA-Drain backlog unchanged (152+ rows), now starved 4 consecutive ticks by this same FreshnessBadge sibling-task streak (3 dispatches + this verify, all one family) — worth an architect brief on re-ordering if a 4th sibling appears.
 
-## cycle-20260729T1817Z — Tick 18:07Z: drained 14 signals (digest-predict notebook overage now 4th+5th consecutive flag), CI dedup, clean BOUNDED-1 dispatch to dev-frontend (3rd FreshnessBadge sibling)
-
-- **Preflight**: verdict RUN, tick `2026-07-29T18:07Z`. No HEAD.lock, worktree clean, dirty tree = other cowork agents' own scope.
-- **Drain**: 14 routed to po — 8 routine `bctc_signal` rows, `commit-sweep-guard` WARN, routine `cowork-team` fire, and 3x `notebook_single_section_overage_breach` + 1x `context_bloat_breach` (all `digest-predict.md`, now flagged in back-to-back ticks, still no dev-team action — routed to po/claude-manager-helper). 6 pruned (>7d unreferenced), 2 skipped (still referenced by live refs). Committed `2be148cae`. CI probe deduped (same known `aa6c044b`).
-- **`.head` correctly idle** — WIP=0, fell through to BOUNDED-1.
-- **Claimed cleanly**: `FE-PG-INTEL-FRESH-FIX` (P2, zone `apps/frontend/`, size S) — 3rd sibling in the FreshnessBadge-wiring family. Conservation OK (701→701 both writes). Checklist confirmed live `WARN` (not stale-duplicate); grep confirmed `dashboard.intel.tsx` has zero `FreshnessBadge`/`data_asof` wiring — genuinely unimplemented.
-- **Root-caused the gap before dispatch**: `dashboard.intel.tsx` hits the SAME `/api/market-digest` endpoint as `dashboard._index.tsx` but its DTO only reads `fetchedAt`, never `data_asof` — same naive-SQLite-string pattern already fixed on the sibling page.
-- **Dispatched `dev-frontend`** — explicit reuse instructions (`parseDate` normalization, `FreshnessBadge slaTierKey="daily"`, `useFreshnessRevalidator("daily")`, no forking), explicit precise-count reporting demand. Sprint-task lock `task:FE-PG-INTEL-FRESH-FIX` held pending verified completion.
-- BOUNDED-1 dispatch consumed the tick — did not fall through to SLS/RLC/QA-Drain. Review-lane QA-Drain backlog unchanged (152+ rows), still gated behind idle-chain priority order — 3rd tick in a row BOUNDED-1 has starved it via this same FreshnessBadge sibling-task streak; worth an architect brief on re-ordering if a 4th sibling appears next tick.
