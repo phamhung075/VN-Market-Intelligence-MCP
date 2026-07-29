@@ -88,12 +88,11 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "FIX-ORCHSTATE-CONSERVATION-GUARD-QA-LANE-BLIND",
-    "next_agent": "developer",
-    "next_action": "BOUNDED-1 auto-pickup claim of FIX-ORCHSTATE-CONSERVATION-GUARD-QA-LANE-BLIND — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
-    "updated_at": "2026-07-29T16:16:47Z",
-    "updated_by": "dev-team (bounded-1 auto-pickup)"
+    "status": "idle",
+    "active_task_id": null,
+    "next_agent": "router",
+    "updated_at": "2026-07-29T16:24:20Z",
+    "updated_by": "developer"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -17354,6 +17353,28 @@
         "updated_at": "2026-07-29T16:11:12Z",
         "next_agent": "qa",
         "review_note": "dev-mcp-server SPIKE->FIX complete. Root row id=8779 TTL-purged from live DB (no re-probeable trace) — instead RED-reproduced the exact defect via git-stash A/B (broadcast posted strictly before both bootstrap calls; 2nd recipient bootstrap still returned agent_signals=[] pre-fix), ruling out the pure-timing-artifact alternative. Root cause: agent_signals has ONE global status column (no per-recipient read-state); getSignals unread-only UPDATE flips a to_agent=all row read GLOBALLY on the FIRST recipient bootstrap, so every other recipient later misses it. Fix direction (a) chosen: new non-consuming getBroadcastSignals(db) (WHERE to_agent=all, bounded only by expires_at, ignores status) unioned into getCycleBootstrap via getInboxSignals(), dedup by id. Direction (b) per-recipient read-state table rejected as unnecessary schema migration. Evidence: new SPIKE-BOOTSTRAP-BROADCAST-CATALYST-CONSUME.test.ts 5/5 (RED confirmed via stash, GREEN after fix); targeted 12-file signal/bootstrap suite 87/87 pass; tsc clean; toolCount=184/cronJobCount=88 unchanged; live boot health 200 + dashboards 200; full bun test 14901 pass/64 fail/1240 files — the 17 unique failing files grepped clean of any reference to the 2 changed source files (agentSignalStore.ts, getCycleBootstrap.ts), pre-existing order/network flakiness. Files: apps/mcp-server/src/infrastructure/db/agentSignalStore.ts (+getBroadcastSignals), apps/mcp-server/src/application/usecases/getCycleBootstrap.ts (+getInboxSignals merge), apps/mcp-server/src/__tests__/SPIKE-BOOTSTRAP-BROADCAST-CATALYST-CONSUME.test.ts (new), docs/agents/tools/list/get_cycle_bootstrap.md (Notes bullet)."
+      },
+      {
+        "id": "FIX-ORCHSTATE-CONSERVATION-GUARD-QA-LANE-BLIND",
+        "title": "FIX: scripts/orch-conservation-check.mjs FLAT_TASK_LANES (~:67) omits 'qa' — the qa[] lane is excluded from task_total, so a catastrophic qa[] drop is invisible to the floor-ratio conservation circuit-breaker. qa[] is now live via QA-Drain. Add 'qa' to FLAT_TASK_LANES + align the documented conservation formula.",
+        "status": "REVIEW",
+        "type": "FIX",
+        "priority": "P2",
+        "size": "S",
+        "zone": "cross-service/",
+        "owner": "developer",
+        "next_agent": "qa",
+        "created_at": "2026-07-22T06:40:43Z",
+        "created_by": "po/triage-20260722T0640",
+        "origin_signal_id": "dev-team-20260722T054244Z-triage-batch-wip-deadlock",
+        "root_cause": "scripts/orch-conservation-check.mjs FLAT_TASK_LANES (~line 67) does not list 'qa', so qa[] task rows are not summed into task_total; the floor-ratio guard therefore cannot detect a qa[] collapse. qa[] is now actively populated by the Review-Lane QA-Drain.",
+        "deliverable": "Add 'qa' to FLAT_TASK_LANES; update the documented conservation formula (dev-standards / script header) to match the enumerated lane set.",
+        "acceptance": "A candidate that drops qa[] below FLOOR_RATIO is ABORTED by the orch-apply.sh conservation stage (negative control); a normal additive write is unaffected. Lane set in code == lane set in the documented formula.",
+        "related": [
+          "FIX-DRAIN-PERSIST-GUARD-COUNT-DRAINABLE-ONLY"
+        ],
+        "note": "Minted from dev-team WIP-deadlock triage-persist-request (dev-team-20260722T054244Z). Full spec = PO decision journal STEP po-S2 (same file, 2026-07-22T05:31:04Z). Latent blind-spot (no active harm yet: qa[] currently 0) -> P2. NOT dispatched at mint (WIP=2/2) — auto-promote via BOUNDED-1/RLC.",
+        "updated_at": "2026-07-29T16:24:26Z"
       }
     ],
     "qa": [],
@@ -17375,35 +17396,7 @@
     },
     "last_triaged_at": "2026-07-29T16:16:40Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": [
-      {
-        "id": "FIX-ORCHSTATE-CONSERVATION-GUARD-QA-LANE-BLIND",
-        "title": "FIX: scripts/orch-conservation-check.mjs FLAT_TASK_LANES (~:67) omits 'qa' — the qa[] lane is excluded from task_total, so a catastrophic qa[] drop is invisible to the floor-ratio conservation circuit-breaker. qa[] is now live via QA-Drain. Add 'qa' to FLAT_TASK_LANES + align the documented conservation formula.",
-        "status": "IN_PROGRESS",
-        "type": "FIX",
-        "priority": "P2",
-        "size": "S",
-        "zone": "cross-service/",
-        "owner": "developer",
-        "next_agent": "developer",
-        "created_at": "2026-07-22T06:40:43Z",
-        "created_by": "po/triage-20260722T0640",
-        "origin_signal_id": "dev-team-20260722T054244Z-triage-batch-wip-deadlock",
-        "root_cause": "scripts/orch-conservation-check.mjs FLAT_TASK_LANES (~line 67) does not list 'qa', so qa[] task rows are not summed into task_total; the floor-ratio guard therefore cannot detect a qa[] collapse. qa[] is now actively populated by the Review-Lane QA-Drain.",
-        "deliverable": "Add 'qa' to FLAT_TASK_LANES; update the documented conservation formula (dev-standards / script header) to match the enumerated lane set.",
-        "acceptance": "A candidate that drops qa[] below FLOOR_RATIO is ABORTED by the orch-apply.sh conservation stage (negative control); a normal additive write is unaffected. Lane set in code == lane set in the documented formula.",
-        "related": [
-          "FIX-DRAIN-PERSIST-GUARD-COUNT-DRAINABLE-ONLY"
-        ],
-        "note": "Minted from dev-team WIP-deadlock triage-persist-request (dev-team-20260722T054244Z). Full spec = PO decision journal STEP po-S2 (same file, 2026-07-22T05:31:04Z). Latent blind-spot (no active harm yet: qa[] currently 0) -> P2. NOT dispatched at mint (WIP=2/2) — auto-promote via BOUNDED-1/RLC.",
-        "updated_at": "2026-07-29T16:16:47Z",
-        "promoted_at": "2026-07-29T16:16:40Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
-        "claimed_at": "2026-07-29T16:16:47Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)"
-      }
-    ]
+    "in_progress": []
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
