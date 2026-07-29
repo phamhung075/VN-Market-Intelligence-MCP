@@ -88,11 +88,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "active_task_id": null,
-    "next_agent": "router",
-    "updated_at": "2026-07-29T19:39:36Z",
-    "updated_by": "developer"
+    "status": "in_progress",
+    "active_task_id": "FIX-BOUNDED1-NONDEV-NEXTAGENT-RESIDUAL-NO-DISPATCH-LANE",
+    "next_agent": "architect",
+    "next_action": "Supervised-Lane Sweep claim of FIX-BOUNDED1-NONDEV-NEXTAGENT-RESIDUAL-NO-DISPATCH-LANE — spawn architect DIRECTLY (no zone-detect indirection; lane already resolved at promote time). supervised/plan_only preserved — do not clear.",
+    "updated_at": "2026-07-29T21:18:51Z",
+    "updated_by": "dev-team (supervised-lane sweep)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -4424,31 +4425,6 @@
         "baseline_pass": "alert-commander completes a cycle with its notebook committed",
         "related": [
           "FIX-COWORK-BASH-GRANT-COVERAGE-STAMP-TRANSPORT"
-        ]
-      },
-      {
-        "id": "FIX-BOUNDED1-NONDEV-NEXTAGENT-RESIDUAL-NO-DISPATCH-LANE",
-        "type": "FIX",
-        "title": "61 backlog rows (1 P0, ~24 P1) have NO dispatch lane -- gated by NON-DEV-NEXT_AGENT, ineligible for SLS",
-        "status": "BACKLOG",
-        "priority": "P1",
-        "size": "M",
-        "zone": "cross-service/",
-        "owner": "po",
-        "next_agent": "architect",
-        "supervised": true,
-        "plan_only": true,
-        "created_at": "2026-07-29T12:32:22Z",
-        "created_by": "dev-team/po-batch-20260729T1207Z",
-        "updated_at": "2026-07-29T12:32:23Z",
-        "source": "po triage 2026-07-29T12:07Z tick",
-        "desc": "docs/agents/dev-team/flow/main.md:547 names this verbatim as 'a tracked residual gap (no dedicated sweep lane yet)'. It has no row and no owner until now. Distinct from FIX-BOUNDED1-SUPERVISED-LANE-NO-SWEEPER, which covers the supervised+plan_only set the Supervised-Lane Sweep already drains -- this row is the wider set: any backlog row whose next_agent does not match BOUNDED-1's ^dev(-|$)|^developer$ pattern, and that is NOT already caught by the supervised+plan_only pair, sits with no automated pickup path at all. Oldest affected rows have been idle since 2026-07-21.",
-        "files": [],
-        "MINT_WITH": "supervised:true, plan_only:true -- deliberate on THIS row per po's instruction, so it does not itself land in the exact gap it describes (a non-dev next_agent row with no supervised+plan_only pair is invisible to SLS).",
-        "deliverable": "Design + implement a sweep lane (or extend an existing one) that covers non-dev next_agent backlog rows not already caught by BOUNDED-1 (^dev(-|$)|^developer$) or SLS (supervised && plan_only). Architect scopes the lane first (this row is supervised+plan_only precisely so it routes to architect for design, not straight to a dev-* implementer).",
-        "baseline_pass": "scripts/audits/bounded1-supervised-lane-report.sh SECONDARY section reads 0",
-        "related": [
-          "FIX-BOUNDED1-SUPERVISED-LANE-NO-SWEEPER"
         ]
       },
       {
@@ -17431,8 +17407,8 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-29T18:47:49Z",
-    "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
+    "last_triaged_at": "2026-07-29T21:18:23Z",
+    "last_triaged_by": "dev-team (supervised-lane sweep)",
     "in_progress": [
       {
         "id": "SPIKE-DEVTEAM-QADRAIN-HEAD-SLOT-DECOUPLE",
@@ -17465,6 +17441,37 @@
         "updated_at": "2026-07-29T19:35:04Z",
         "claimed_at": "2026-07-29T19:35:03Z",
         "claimed_by": "dev-team (out-of-band dispatch, head busy on FACTORY-GUARD-CI-METRICMASK-IMPL — .head deliberately NOT touched, see po_refutation)"
+      },
+      {
+        "id": "FIX-BOUNDED1-NONDEV-NEXTAGENT-RESIDUAL-NO-DISPATCH-LANE",
+        "type": "FIX",
+        "title": "61 backlog rows (1 P0, ~24 P1) have NO dispatch lane -- gated by NON-DEV-NEXT_AGENT, ineligible for SLS",
+        "status": "IN_PROGRESS",
+        "priority": "P1",
+        "size": "M",
+        "zone": "cross-service/",
+        "owner": "po",
+        "next_agent": "architect",
+        "supervised": true,
+        "plan_only": true,
+        "created_at": "2026-07-29T12:32:22Z",
+        "created_by": "dev-team/po-batch-20260729T1207Z",
+        "updated_at": "2026-07-29T21:18:59Z",
+        "source": "po triage 2026-07-29T12:07Z tick",
+        "desc": "docs/agents/dev-team/flow/main.md:547 names this verbatim as 'a tracked residual gap (no dedicated sweep lane yet)'. It has no row and no owner until now. Distinct from FIX-BOUNDED1-SUPERVISED-LANE-NO-SWEEPER, which covers the supervised+plan_only set the Supervised-Lane Sweep already drains -- this row is the wider set: any backlog row whose next_agent does not match BOUNDED-1's ^dev(-|$)|^developer$ pattern, and that is NOT already caught by the supervised+plan_only pair, sits with no automated pickup path at all. Oldest affected rows have been idle since 2026-07-21.",
+        "files": [],
+        "MINT_WITH": "supervised:true, plan_only:true -- deliberate on THIS row per po's instruction, so it does not itself land in the exact gap it describes (a non-dev next_agent row with no supervised+plan_only pair is invisible to SLS).",
+        "deliverable": "Design + implement a sweep lane (or extend an existing one) that covers non-dev next_agent backlog rows not already caught by BOUNDED-1 (^dev(-|$)|^developer$) or SLS (supervised && plan_only). Architect scopes the lane first (this row is supervised+plan_only precisely so it routes to architect for design, not straight to a dev-* implementer).",
+        "baseline_pass": "scripts/audits/bounded1-supervised-lane-report.sh SECONDARY section reads 0",
+        "related": [
+          "FIX-BOUNDED1-SUPERVISED-LANE-NO-SWEEPER"
+        ],
+        "promoted_at": "2026-07-29T21:18:23Z",
+        "promoted_by": "dev-team (supervised-lane sweep)",
+        "promotion_note": "Supervised-Lane Sweep — assigned dispatch_lane='architect' (priority_rank=1); supervised/plan_only flags preserved, gate NOT disabled — see FIX-BOUNDED1-SUPERVISED-LANE-NO-SWEEPER",
+        "dispatch_lane": "architect",
+        "claimed_at": "2026-07-29T21:18:51Z",
+        "claimed_by": "dev-team (supervised-lane sweep)"
       }
     ]
   },
