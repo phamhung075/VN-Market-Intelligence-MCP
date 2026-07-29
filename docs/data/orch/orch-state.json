@@ -88,12 +88,11 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "ALPHA-S3-DIVERGENCE-SCREEN-V1",
-    "next_agent": "developer",
-    "next_action": "BOUNDED-1 auto-pickup claim of ALPHA-S3-DIVERGENCE-SCREEN-V1 — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
-    "updated_at": "2026-07-29T13:19:09Z",
-    "updated_by": "dev-team (bounded-1 auto-pickup)"
+    "status": "idle",
+    "updated_at": "2026-07-29T13:27:26Z",
+    "updated_by": "developer",
+    "active_task_id": null,
+    "next_agent": null
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -17200,7 +17199,7 @@
         "id": "ALPHA-S3-DIVERGENCE-SCREEN-V1",
         "title": "Divergence screen v1: foreign z-score (accum-rank) x news sentiment (rag_analyses) x relative strength (/ta/relative-strength), watchlist-scoped, daily Telegram digest via the existing alerts path",
         "owner": "developer",
-        "status": "IN_PROGRESS",
+        "status": "BLOCKED",
         "type": "SPRINT-M",
         "size": "M",
         "priority": "P2",
@@ -17214,15 +17213,16 @@
         ],
         "created_by": "po-option-a-flow-alpha-loop",
         "created_at": "2026-07-12T07:56:33Z",
-        "note": "THE core alpha deliverable (alpha lens #1 — 'nearly pure SQL'). Joins daily_ohlcv foreign columns + foreign_room_events (foreign z-score / foreignAccumZMarket via stock-price /price/foreign-accum-rank) x rag_analyses sentiment + mention_velocity x technical-analysis /ta/relative-strength, watchlist-scoped (33-34 tickers), emitting a small ranked set as a daily Telegram digest through the EXISTING alerts path (do not build a new delivery channel). DoD: a daily digest posts ranked divergence signals with honest nulls (no fabrication when a leg is thin). Depends on S1 (sane cross-section: candle present + backfill inserted-count) and S2 foreign-flow race fix (no dropped foreign rows). Needs dev-team PM/architect decomposition when picked. Brief roadmap step 3 + §3 Option A. zone=multi -> architect splits.  [PO 2026-07-14 coordination_session e417ef1f] USER GO — supervised:false AUTHORIZED (explicit user selection via router AskUserQuestion; NOT a gate-jump). flow-alpha FULL launch — user directed LAUNCH EVERYTHING (all remaining waves incl. wave 6). This row un-parked; BOUNDED-1/pipeline-resume may pick it. Wave ordering stays enforced by priority + depends (NOT reordered). Zone/depends/safety notes PRESERVED. Do NOT re-park.",
+        "note": "THE core alpha deliverable (alpha lens #1 — 'nearly pure SQL'). Joins daily_ohlcv foreign columns + foreign_room_events (foreign z-score / foreignAccumZMarket via stock-price /price/foreign-accum-rank) x rag_analyses sentiment + mention_velocity x technical-analysis /ta/relative-strength, watchlist-scoped (33-34 tickers), emitting a small ranked set as a daily Telegram digest through the EXISTING alerts path (do not build a new delivery channel). DoD: a daily digest posts ranked divergence signals with honest nulls (no fabrication when a leg is thin). Depends on S1 (sane cross-section: candle present + backfill inserted-count) and S2 foreign-flow race fix (no dropped foreign rows). Needs dev-team PM/architect decomposition when picked. Brief roadmap step 3 + §3 Option A. zone=multi -> architect splits.  [PO 2026-07-14 coordination_session e417ef1f] USER GO — supervised:false AUTHORIZED (explicit user selection via router AskUserQuestion; NOT a gate-jump). flow-alpha FULL launch — user directed LAUNCH EVERYTHING (all remaining waves incl. wave 6). This row un-parked; BOUNDED-1/pipeline-resume may pick it. Wave ordering stays enforced by priority + depends (NOT reordered). Zone/depends/safety notes PRESERVED. Do NOT re-park. [developer 2026-07-29T13:27Z BOUNDED-1 pickup, session 64c7c677] Brownfield recon (not formal architect design): confirmed single-zone apps/mcp-server/ IS feasible -- mirrors 5/5 sibling ALPHA-S* zone corrections this sprint (all cross-service touches are already-wired HTTP client calls: computeForeignAccumRank stock-price:5000 /price/foreign-accum-rank, computeRelativeStrength technical-analysis:5003 /ta/relative-strength; rag_analyses per-ticker sentiment (affected_actions LIKE pattern, sentimentTrendTools.ts precedent) + mention_velocity (mentionVelocityStore.ts) are local mcp-server tables with existing per-ticker read helpers; existing alertDigestJob.ts/foreignFlowAlertJob.ts scan-and-Telegram-digest pattern is the correct reuse target for delivery, per DoD \"existing alerts path\"). Declined to self-design the divergence/ranking rule + honest-null thresholds directly though: this is a NEW composite/divergence detector feeding a live external Telegram digest, same category as getMoneyRadarComposite.ts (which required a dedicated architect brief + PM breakdown, not a lean single-file trigger like the sibling OMO/RAG-FTS-cron tasks). Set BLOCKED, next_agent=architect -- needs a design pass (ranking formula, per-leg thin-data honest-null definition, message/digest format) before dev-mcp-server implements; matches this row's own note (\"Needs dev-team PM/architect decomposition when picked\"). No code changed. .head reset idle by developer.",
         "supervised": false,
-        "updated_at": "2026-07-29T13:19:10Z",
-        "updated_by": "po (DECISION-1 flow-alpha full GO — user selection e417ef1f)",
+        "updated_at": "2026-07-29T13:27:39Z",
+        "updated_by": "developer (BOUNDED-1 pickup — routed to architect for composite/divergence design)",
         "promoted_at": "2026-07-29T13:19:09Z",
         "promoted_by": "dev-team (bounded-1 auto-pickup)",
         "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
         "claimed_at": "2026-07-29T13:19:09Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)"
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "next_agent": "architect"
       }
     ]
   },
