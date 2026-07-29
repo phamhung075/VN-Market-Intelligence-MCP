@@ -10460,6 +10460,38 @@
       "status_note": "[QA] Review Record (direct-commit verify): Verified commits e77635933 (drain-signals.md + commit-boundary/SKILL.md) and 2d7aec151 (notebook + decision journal, DJ-GATE-1 present: sprint-ULTRACODE-AUDIT-FIXALL-developer.md STEP developer-S21, task-id stamped) both on main ancestry (git merge-base --is-ancestor). Diffed e77635933 content against dev_result claim verbatim match — `git add -u -- docs/signals/ && git add -- docs/signals/processed/` + post-commit `git status --porcelain -- docs/signals/ | grep -v ^?? | grep -v signals.db | wc -l` invariant + commit-boundary/SKILL.md RULE 1 cross-ref, all present in live file text unaltered since. Re-ran (not trusted on report alone): scripts/agents-flow/drain-signals.test.js 36/36 pass; bun tsc --noEmit (apps/mcp-server) 0 errors; docs-only diff, no production code, mock-guard N/A. Bonus sanity check (router ask): confirmed the -u pattern is actually LIVE, not just documented -- todays drain commits show tracked deletions correctly captured (bd2d6ec903 2026-07-29: 3 D / 0 A, exact -u semantics) and new processed/ files staged via the second git add (24703a07fa 2026-07-29: 1 A); this sessions own untracked docs/signals/*.json arrivals (context-bloat-*, cowork-team-*, price_anomaly_*) remain unswept across every recent drain commit -- confirms no directory-sweep regression, fix genuinely in production use. VERDICT: APPROVED, DONE_VERIFIED.",
       "qa_verified_at": "2026-07-28T23:57:14Z",
       "qa_verified_by": "qa"
+    },
+    {
+      "id": "UC-GCP-P7",
+      "type": "FIX",
+      "title": "Rescope /commit skill: per-commit mutex-bound, main-only, convention-aligned",
+      "status": "DONE_VERIFIED",
+      "priority": "P1",
+      "size": "S",
+      "zone": "cross-service/",
+      "sprint": "ULTRACODE-AUDIT-FIXALL",
+      "source": "ultracode-audit-2026-07-12",
+      "verdict": "RESCOPE",
+      "detail_ref": "docs/architecture-briefs/2026-07-12-ultracode-workflow-improvement-audit.md#git-ci-publish-P7",
+      "note": "SCOPE=verifier Rescope note. Delete Step4 merge-and-clean-branch (no-branches invariant); wrap EACH per-category add->commit->push in its own commit-mutex critical section (TTL sized for seconds); add a stranded-peer-file age guard (skip peer-zone files mtime<2h); replace hardcoded Co-Authored-By model name with a pointer to commit-convention; reduce .claude/commands/commit.md to a one-line pointer so /commit has ONE definition.",
+      "created_at": "2026-07-13T19:31:11Z",
+      "created_by": "po",
+      "priority_bumped_from": "P2",
+      "priority_bumped_at": "2026-07-17T04:54:03Z",
+      "priority_bumped_by": "po/uc-audit-priority-bump 2026-07-17",
+      "promoted_at": "2026-07-23T07:49:33Z",
+      "promoted_by": "dev-team (bounded-1 auto-pickup)",
+      "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
+      "updated_at": "2026-07-29T00:22:22Z",
+      "claimed_at": "2026-07-29T00:18:30Z",
+      "claimed_by": "dev-team (review-lane qa-drain)",
+      "next_agent": "qa",
+      "branch": null,
+      "completed_at": "2026-07-23T07:56:21Z",
+      "completed_by": "developer",
+      "status_note": "Rewrote .claude/skills/commit/SKILL.md (deleted Step 4 merge/branch-clean; per-category commit-mutex:main acquire/critical-section/release replacing whole-run duplicated push shell, pointing at commit-mutex Step 3d-PUSH as SSOT; added Step 1 stranded-peer-file age guard citing commit-boundary RULE 2 zone table + mtime<2h; replaced hardcoded Co-Authored-By line with pointer to commit-convention.md) + reduced .claude/commands/commit.md to a one-line pointer so /commit has exactly one definition. Commits a5202512c (fix, Task/AC trailers) + 2cd532595 (memory), both pushed to main. DJ entry: sprint-ULTRACODE-AUDIT-FIXALL-developer.md STEP developer-S22. Direct-commit branch:null — qa verify-committed-fix mode applies (docs/agents/qa/flow/main.md Direct-Commit Verify). [QA] Review Record (direct-commit verify, 2026-07-29): independently RAW-verified all 5 RESCOPE acceptance items against CURRENT file content + the fix commit diff (not status_note prose alone). Commits a5202512c (fix)/2cd532595 (memory) both confirmed on main ancestry, git show --stat touches exactly .claude/commands/commit.md + .claude/skills/commit/SKILL.md as claimed. (1) Step 4 merge-and-clean-branch: confirmed deleted, zero residual grep hits. (2) per-category commit-mutex critical section: Step 2 rewritten, commit-mutex/SKILL.md Step 3d-PUSH/TTL=90s confirmed live. (3) stranded-peer-file age guard: Step 1 mtime<2h vs commit-boundary/SKILL.md RULE 2, zone table confirmed live. (4) Co-Authored-By hardcode -> pointer: literal Claude-Sonnet-4.6 line confirmed removed, replaced with pointer to commit-convention.md (confirmed no hardcoded trailer there either). (5) commit.md: confirmed exactly 1 line, sole /commit trigger repo-wide (grep-confirmed). Non-blocking OUT-OF-SCOPE observation: docs/references/bundles/bundle-developer.md still has its own separate hardcoded Co-Authored-By/numeric-task/branch-merge Commit Format section -- unrelated dev-agent lazy-load bundle, not named in this row's scope, flagged for PO triage not folded into this verdict. VERDICT: APPROVED, DONE_VERIFIED. DJ: sprint-ULTRACODE-AUDIT-FIXALL-qa.md STEP qa-S20.",
+      "qa_verified_at": "2026-07-29T00:22:22Z",
+      "qa_verified_by": "qa"
     }
   ],
   "closed_sprints": [
@@ -15356,6 +15388,30 @@
       "status": "READ",
       "payload_ref": null,
       "detail": "scripts/agents-flow/stranded-state-sweep.sh --plan (Step 4.3) flagged 10 unknown_paths this tick. 3 are FALSE POSITIVES the script cannot see: apps/mcp-server/src/__tests__/emit-pressure-state.test.ts (dev-mcp-server, task CI-RED-cdd5fa5a-FIX, dispatched this same tick, still running) and docs/agents/cowork-team/flow/spawn-fanout.md + docs/agents/tran-ngoc-bau/flow/main.md (agent-father, task FIX-CADENCE-TNB-AUDIT-WEEKLY-MARKER-BLOCKS-DAILY-CRON, dispatched this same tick, still running) — these are live in-flight edits from background agents this router spawned seconds before the sweep ran, not orphaned state. The remaining 7 (docs/agents/tools/package/tran-ngoc-bau.md, docs/data/DASHBOARD.md, docs/data/auditor-dedup-ledger.json, docs/protocols/dwf-ops-runbook.md, docs/data/unified-agent-synthesis-2026-07-28-evening.json, docs/data/unified-agent-synthesis-2026-07-29-evening.json, docs/social/fb-post-2026-07-28.md) were ALREADY dirty at this session tick's start (confirmed via git status captured before any dispatch this tick) and genuinely need triage — likely cowork agents (unified-agent/fb-market-poster/tran-ngoc-bau) completing cycles without committing. Full script JSON: re-run bash scripts/agents-flow/stranded-state-sweep.sh --plan for current state (paths may have changed by the time this is read, e.g. the 3 live ones should be committed by their owning agents by then)."
+    },
+    {
+      "id": "dev-20260728T235747Z-push",
+      "ts": "2026-07-28T23:57:47Z",
+      "from": "dev-team",
+      "to": "po",
+      "type": "system-issue",
+      "summary": "developer pushed FIX-COMMIT-...-HOOK to origin/main before QA/PO gate — content low-risk, process deviation",
+      "severity": "MED",
+      "status": "READ",
+      "payload_ref": null,
+      "detail": "Task FIX-COMMIT-PATH-PEER-INDEX-SWEEP-GUARD-HOOK (P0 supervised, the Layer-0 pre-commit sweep-guard hook): developer agent committed (c2c7243f8, 084f7652e) AND ran git push origin main — verified HEAD==origin/main. Board row status is REVIEW/next_agent=qa — QA never ran, no PO sign-off exists. PUSH-AUTONOMY-1 gate (docs/policies/dev-standards.md:602-613) requires supervised cascade complete for the head task (dev commit + QA APPROVE + PO sign-off, each RAW-verified) BEFORE push — this was skipped. Compare: this same tick, dev-mcp-server correctly deferred push on CI-RED-cdd5fa5a-FIX pending QA/CI confirmation, so this is not a systemic misunderstanding of the policy, an isolated deviation by this one agent. Content itself is low-risk (WARN-by-default git hook, 6/6 regression suite pass, shellcheck clean, non-blocking default) — router is NOT reverting/force-pushing, just dispatching qa for a post-hoc verify-committed review now. Flagging for your awareness."
+    },
+    {
+      "id": "dev-20260729T000419-cired-close",
+      "ts": "2026-07-29T00:04:19Z",
+      "from": "dev-team",
+      "to": "po",
+      "type": "system-issue",
+      "summary": "CI-RED-cdd5fa5a-FIX ready for DONE_VERIFIED close; agent-father next_agent stranding bug found+fixed",
+      "severity": "MED",
+      "status": "READ",
+      "payload_ref": null,
+      "detail": "CI-RED-cdd5fa5a-FIX gate SATISFIED: QA (a62f9d579842151b5) independently confirmed CI green on subsequent push (gh run head_sha=82e200c57..., conclusion=success, ancestor of fix commit d19d6cdc5), fingerprint recorded in row status_note per feedback_ci_red_close_must_record_fingerprint_else_redrain. QA deliberately did not self-flip (router instructed reserve for po). Row still REVIEW, next_agent=po. Action: flip REVIEW->DONE_VERIFIED + review[]->done_verified[] in one orch-apply.sh write per CANONICAL:SSOT-STATUSFLIP-LANEMOVE. Separately: router found+fixed a next_agent stranding bug this tick (commit 0b0c229fb) -- agent-father flipped 3 rows (cadence+chef-evening x2) to REVIEW but left next_agent=agent-father instead of qa, which would have silently stranded them from QA-Drain forever. Corrected in-lane, no lane/status change needed. Worth a note to agent-father if this recurs (feedback_recurring_bug_escalation threshold=2)."
     }
   ],
   "backlog_detail": [
