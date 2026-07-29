@@ -17,7 +17,10 @@ Maintenance agents (agent-father, agents-architect, claude-manager-helper, code-
 
 Fires every 15 min via `*/15 * * * *` CronCreate. Reads `docs/data/cowork-schedule.json`, matches UTC ±2min, parallel fan-out matching subagents in one message block.
 
-<!-- decision: OQ-1 — agent_id maps 1:1 to subagent_type. Spawn prompt = "run <flow_path> slot=<slot_id>". -->
+<!-- decision: OQ-1 — agent_id maps 1:1 to subagent_type. Spawn prompt = slot.trigger_prompt
+     (falls back to composed "run <flow_path> slot=<slot_id>" only if trigger_prompt is
+     absent — corrected FIX-COWORK-SPAWNFANOUT-FLOWPATH-BYPASSES-DIGEST-DAILY-DEDUP-GATE
+     2026-07-29; see spawn-fanout.md Step 5.2 for the full consistency-check contract). -->
 <!-- decision: OQ-2 — Collision guard in match-slots.md Step 4b (WARNING only, R3 allows multi-slot). -->
 
 **SSOT:** `docs/data/cowork-schedule.json`  **Fail-loud:** `docs/protocols/fail-loud-protocol.md`

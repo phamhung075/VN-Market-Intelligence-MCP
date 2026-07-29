@@ -1,4 +1,4 @@
-<!-- size-justification: 255L — Step 5: blind guard, published-marker gate contract, and the
+<!-- size-justification: 309L — Step 5: blind guard, published-marker gate contract, and the
      UC-CDC-P4 headroom-gated bounded batcher (Step 5.1 MAX_PARALLEL computation + Step 5.2
      batch fan-out with inter-batch wait) are one tightly sequential dispatch unit, child of
      main.md. UC-CDC-P4 QA AC1 fix 2026-07-23 (+21L): replaced the inline `_fanout` shadow-copy
@@ -7,7 +7,12 @@
      wait gained a matching mode branch since FANOUT_POLICY does not exist in that mode.
      FIX-PRESSURE-HOST-HEADROOM-WRONG-MACHINE-WRONG-QUANTITY 2026-07-28 (+4L, count also
      corrected for pre-existing drift): field consumer rename host_headroom_mb ->
-     container_vm_headroom_mb. -->
+     container_vm_headroom_mb. FIX-COWORK-SPAWNFANOUT-FLOWPATH-BYPASSES-DIGEST-DAILY-DEDUP-GATE
+     2026-07-29 (+41L): Step 5.2 now dispatches slot.trigger_prompt (was: a prompt composed
+     from slot.flow_path alone, which silently bypassed digest-daily's dedup gate — flow_path
+     and trigger_prompt named different files for that one slot) plus a fail-loud consistency
+     check refusing any slot whose two entry-point fields diverge, one predicate shared with
+     scripts/agents-flow/cowork-match-slots.js's extractPromptFlowPath(). -->
 <!-- BGFAN-1: every Agent spawn in this file MUST use run_in_background=true; UC-CDC-P4 bounds
      CONCURRENCY ACROSS batches via Step 5.1/5.2, it does not relax background=true within a
      batch. Canonical rule + batcher carve-out → docs/protocols/agent-chaining-protocol.md
@@ -201,11 +206,52 @@ For each batch, in order:
 spawn in the batch still uses `run_in_background=true`; batching bounds concurrency ACROSS
 batches, not within one):
 
-For each slot in the current batch:
+For each slot in the current batch, resolve the entry prompt BEFORE spawning:
+
+<!-- FIX-COWORK-SPAWNFANOUT-FLOWPATH-BYPASSES-DIGEST-DAILY-DEDUP-GATE (2026-07-29): the
+     dispatched entry point MUST be slot.trigger_prompt, not a prompt composed from
+     slot.flow_path alone. trigger_prompt is the field a slot author edits to change where a
+     slot actually enters, and it may carry per-fire instructions beyond the bare
+     "run <path> slot=<id>" form (e.g. refine-bctc-slot-* embed extra routing guidance on
+     line 2+) — composing from flow_path silently drops both of those. Root cause of the
+     bug this closes: digest-daily's flow_path named daily-predict.md directly while
+     trigger_prompt correctly named main.md (which owns Step pre-D DAILY-PREDICT DEDUP GATE);
+     the old flow_path-only prompt entered daily-predict.md and skipped that gate on every
+     cowork-dispatched fire. flow_path stays in the schema for the pre-spawn file-existence
+     check below and MUST name the same file as trigger_prompt's first line — enforced here
+     (runtime, per-slot) AND by the static test
+     scripts/agents-flow/cowork-schedule-consistency.test.js (config-time, reads the live
+     schedule) so a future slot cannot silently reintroduce the divergence. -->
+
+**Consistency check (fail loud / refuse the slot on mismatch — same predicate as
+`extractPromptFlowPath()` in `scripts/agents-flow/cowork-match-slots.js`, one algorithm, not
+two divergent copies):**
+
+```
+if slot.trigger_prompt is present and non-empty:
+  PROMPT_FILE = match slot.trigger_prompt's FIRST LINE against /^run\s+(\S+)/, capture group 1
+
+  if PROMPT_FILE != null and PROMPT_FILE != slot.flow_path:
+    log "[cowork-team] SCHEDULE DEFECT: <slot.slot_id> trigger_prompt names '<PROMPT_FILE>' but flow_path names '<slot.flow_path>' — refusing spawn, fix docs/data/cowork-schedule.json"
+    send_telegram(channel="bug", message="[cowork-team] schedule defect: <slot.slot_id> trigger_prompt/flow_path file mismatch — spawn refused")
+    add to errors[]: { slot_id: slot.slot_id, error: "trigger_prompt_flow_path_mismatch" }
+    call_tool(server="vn-market", tool="task_release", arguments={
+      task_id: "cowork-slot:" + slot.slot_id, owner_client_session: $CLAUDE_CODE_SESSION_ID
+    })   # per-work-item token was already claimed in Step 4.6 — release it since no spawn occurs
+    continue to next slot in batch — do NOT spawn
+
+  ENTRY_PROMPT = slot.trigger_prompt
+else:
+  # No trigger_prompt on this slot — compose from flow_path (legacy fallback; every live
+  # slot as of this fix carries trigger_prompt, so this branch is defensive only)
+  ENTRY_PROMPT = "run " + slot.flow_path + "  slot=" + slot.slot_id
+```
+
+**Spawn:**
 
 ```
 subagent_type      : <slot.agent>
-prompt             : "run <slot.flow_path>  slot=<slot.slot_id>"
+prompt             : ENTRY_PROMPT
 description        : "<slot.slot_id> dispatch"
 run_in_background  : true   # (background) — BGFAN-1; cowork agents are independent → genuine parallel fan-out
 ```
@@ -217,7 +263,8 @@ Track spawn results: success (no error) vs failure (agent tool returns error).
 - `send_telegram(channel="work", message="[cowork-team] spawn failed: <slot.slot_id> — <one-line error>")`
 - Continue remaining spawns in this batch and subsequent batches. R4: one slot failure never blocks others.
 
-**On flow path missing** (slot.flow_path does not exist as a file — verify before spawn):
+**On flow path missing** (slot.flow_path does not exist as a file — verify before spawn; this
+is also the file `trigger_prompt` will enter, per the consistency check above):
 - `send_telegram(channel="work", message="[cowork-team] flow missing: <slot.slot_id> → <slot.flow_path>")`
 - Add to `errors[]`. Skip this slot's spawn.
 

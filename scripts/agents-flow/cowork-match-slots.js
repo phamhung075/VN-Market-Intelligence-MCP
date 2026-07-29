@@ -266,6 +266,35 @@ function matchSlots(schedule, ctx, options) {
   return results;
 }
 
+// extractPromptFlowPath: given a slot's trigger_prompt string of the form
+// "run <path>  slot=<slot_id>" (optionally followed by further per-fire instruction lines,
+// e.g. refine-bctc-slot-* embed extra routing guidance on line 2+), returns the file path
+// named on the FIRST line, or null if trigger_prompt is missing/empty/unparseable.
+//
+// FIX-COWORK-SPAWNFANOUT-FLOWPATH-BYPASSES-DIGEST-DAILY-DEDUP-GATE (2026-07-29): this is the
+// ONE implementation of "what file does trigger_prompt actually name" — both the schedule
+// static-assertion test (cowork-schedule-consistency.test.js) and the runtime fail-loud check
+// documented in docs/agents/cowork-team/flow/spawn-fanout.md Step 5.2 describe this exact
+// algorithm, so a schedule author only has one predicate to keep in sync with, not two.
+// exported for testing.
+function extractPromptFlowPath(triggerPrompt) {
+  if (!triggerPrompt || typeof triggerPrompt !== 'string') return null;
+  const firstLine = triggerPrompt.split('\n')[0];
+  const m = firstLine.match(/^run\s+(\S+)/);
+  return m ? m[1] : null;
+}
+
+// slotEntryPathsAgree: true when slot.trigger_prompt's named file equals slot.flow_path, OR
+// when trigger_prompt is absent/unparseable (nothing to compare against — not a violation).
+// false ONLY when both fields are present and name DIFFERENT files — the exact divergence
+// class this fix closes (digest-daily was the sole live violation before the fix).
+// exported for testing.
+function slotEntryPathsAgree(slot) {
+  const promptFile = extractPromptFlowPath(slot && slot.trigger_prompt);
+  if (promptFile == null) return true;
+  return promptFile === slot.flow_path;
+}
+
 // Run directly (not required as a module)
 if (require.main === module) {
   const now = new Date();
@@ -322,4 +351,4 @@ if (require.main === module) {
   process.stdout.write(JSON.stringify({ slots: hits, drift_min: driftMin, catchup_raw: catchupRaw }));
 }
 
-module.exports = { cronMatches, matchSlots, field, dowMatch, snapToCronBoundary, isSuppressedByBoundaryDedup };
+module.exports = { cronMatches, matchSlots, field, dowMatch, snapToCronBoundary, isSuppressedByBoundaryDedup, extractPromptFlowPath, slotEntryPathsAgree };
