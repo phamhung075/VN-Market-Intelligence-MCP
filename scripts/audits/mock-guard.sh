@@ -27,8 +27,15 @@ fi
 # ---------------------------------------------------------------------------
 # Exclude globs — applied to filter out legitimate test/scenario/spike paths
 # Never fire on these path fragments:
+# FIX-MOCKGUARD-SCOPE-EXCLUDE-TESTGO (2026-07-29): added `_test\.go` — the ONE
+# language-aware Go test-file FILENAME convention (mirrors the existing
+# `\.test\.`/`\.spec\.` TS/JS filename conventions already on this line), not a
+# per-directory literal. Closes the false-positive where Go test-double stubs
+# (e.g. stubBOPURLBuilder returning a stub.sbv.vn URL) HARD-FAILed every
+# dev-team post-cycle tick because only a `tests/` DIRECTORY was excluded, never
+# the `_test.go` filename suffix Go itself uses to mark a file as test-only.
 # ---------------------------------------------------------------------------
-EXCLUDE_PATHS="__tests__|__mocks__|\.test\.|\.spec\.|/sandbox/|/scenarios/|/spike/|/fixtures/|/_deprecated/|/node_modules/|testdata|/\.venv/|site-packages"
+EXCLUDE_PATHS="__tests__|__mocks__|\.test\.|\.spec\.|_test\.go|/sandbox/|/scenarios/|/spike/|/fixtures/|/_deprecated/|/node_modules/|testdata|/\.venv/|site-packages"
 
 # ---------------------------------------------------------------------------
 # Patterns (POSIX ERE for grep -E)
@@ -58,6 +65,8 @@ CAUTION_MARKERS='//\s*(TODO|FIXME|XXX|HACK|TEMP)\b'
 # ---------------------------------------------------------------------------
 # Build file list
 # ---------------------------------------------------------------------------
+SCAN_IS_FILELIST="false"
+
 if [ "${MODE}" = "--files" ]; then
   # Per-task: filter provided files to production source only
   file_list=""
@@ -75,14 +84,34 @@ if [ "${MODE}" = "--files" ]; then
     echo "[mock-guard] No production source files to scan. PASS."
     exit 0
   fi
-  SCAN_CMD_PREFIX="grep -nE"
   SCAN_TARGET="${file_list}"
+  SCAN_IS_FILELIST="true"
 else
-  # Full backstop: scan production source roots, exclude test paths
+  # Full backstop: scan production source roots, exclude test paths.
   # Scope: apps/*/src/ (TS), apps/pdf-extractor/ + apps/rag-service/ (Python), apps/*/pkg/ + apps/*/cmd/server/ (Go)
-  # Exclude node_modules, test dirs, sandbox, scenarios, spike, fixtures, _deprecated
-  SCAN_CMD_PREFIX="grep -rnE --include=*.ts --include=*.tsx --include=*.py --include=*.go"
-  SCAN_TARGET="apps/"
+  #
+  # FIX-MOCKGUARD-SCOPE-EXCLUDE-TESTGO (2026-07-29, AC2): file discovery now goes
+  # through `git ls-files` (tracked + untracked-but-not-ignored) instead of a raw
+  # `grep -r apps/` directory walk, so any GITIGNORED tree — e.g. the literal
+  # `apps/mcp-server/~/.bun/install/cache` vendored-cache directory (124MB, ~30
+  # false CAUTION hits/run, `.gitignore` line 5 `~/`) — is excluded BY
+  # CONSTRUCTION, not via a hand-maintained path literal that has to be kept in
+  # sync with whatever gets vendored next. `git ls-files` failure (not a repo /
+  # git missing) falls back to the prior recursive-grep behaviour rather than
+  # silently scanning nothing.
+  file_list=""
+  while IFS= read -r f; do
+    [ -z "${f}" ] && continue
+    file_list="${file_list} ${f}"
+  done < <(git ls-files --cached --others --exclude-standard -- 'apps/*.ts' 'apps/*.tsx' 'apps/*.py' 'apps/*.go' 2>/dev/null)
+
+  if [ -n "${file_list}" ]; then
+    SCAN_TARGET="${file_list}"
+    SCAN_IS_FILELIST="true"
+  else
+    # git unavailable / not inside a repo — fall back, never silently scan nothing.
+    SCAN_TARGET="apps/"
+  fi
 fi
 
 # ---------------------------------------------------------------------------
@@ -94,7 +123,7 @@ caution_hits=""
 run_grep() {
   local pattern="$1"
   local result=""
-  if [ "${MODE}" = "--files" ]; then
+  if [ "${SCAN_IS_FILELIST}" = "true" ]; then
     # shellcheck disable=SC2086
     result="$(grep -nE "${pattern}" ${SCAN_TARGET} 2>/dev/null || true)"
   else
