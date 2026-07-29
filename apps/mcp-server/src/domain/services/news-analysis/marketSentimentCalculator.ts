@@ -36,7 +36,7 @@ export interface RagAnalysisRow {
 export interface DailyScore {
   date: string;           // YYYY-MM-DD
   score: number | null;   // null when confidence sum = 0 (divide-by-zero guard)
-  article_count: number;  // articles with valid sentiment & confidence > 0
+  article_count: number;  // articles with valid sentiment, confidence > 0, and non-null impact_score
 }
 
 /** FR-2: Z-score results + history quality metadata. */
@@ -125,10 +125,13 @@ function computeZForWindow(series: number[]): number | null {
  *
  * Per day:
  *   daily_score = sum(sentiment_value × confidence × impact_score) / sum(confidence)
- *   where impact_score defaults to 1.0 when NULL.
  *
  * Guards:
  *   - Rows with confidence = null or confidence ≤ 0: excluded.
+ *   - Rows with impact_score = null: excluded (FACTORY-GUARD-CI-METRICMASK-IMPL —
+ *     an unassessed impact must not be silently fabricated into a plausible 1.0
+ *     "neutral" weight; honestly dropping the row from the weighted average is
+ *     the correct absence-propagation, matching the existing confidence-null guard).
  *   - Unexpected sentiment values (not bullish/bearish/neutral): excluded + WARN logged.
  *   - divide-by-zero (sum(confidence) = 0): score = null for that day.
  *
@@ -147,6 +150,10 @@ export function computeDailyScores(
     // Guard: skip rows with missing/invalid confidence or null sentiment
     if (row.confidence === null || row.confidence <= 0) continue;
     if (!row.sentiment) continue;
+    // FACTORY-GUARD-CI-METRICMASK-IMPL: skip rows with unknown impact_score —
+    // no honest weight can be assigned, so the row is excluded rather than
+    // guessing its contribution (see docstring above).
+    if (row.impact_score === null) continue;
 
     // Guard: skip unexpected sentiment values (log WARN, do not crash)
     if (!(row.sentiment in SENTIMENT_VALUES)) {
@@ -171,7 +178,9 @@ export function computeDailyScores(
     for (const row of dayRows) {
       const sentVal = SENTIMENT_VALUES[row.sentiment!]!;
       const conf = row.confidence!;
-      const impact = row.impact_score ?? 1.0; // default impact = 1.0 when NULL
+      // Non-null by construction — rows with impact_score === null were
+      // already excluded during grouping above (FACTORY-GUARD-CI-METRICMASK-IMPL).
+      const impact = row.impact_score!;
 
       weightedSum += sentVal * conf * impact;
       confidenceSum += conf;

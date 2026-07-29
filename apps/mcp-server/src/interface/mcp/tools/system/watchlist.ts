@@ -195,6 +195,7 @@ export function registerWatchlistTools(server: McpServer): void {
 
         const dropPct = thresholds?.dropPct ?? -3;
         const risePct = thresholds?.risePct ?? 5;
+        // metric-mask-allow: genuine user-configurable alert threshold default ("Custom alert thresholds — defaults used if omitted" per schema above), not a fabricated stand-in metric.
         const impactScore = thresholds?.impactScore ?? 7;
 
         db.prepare(

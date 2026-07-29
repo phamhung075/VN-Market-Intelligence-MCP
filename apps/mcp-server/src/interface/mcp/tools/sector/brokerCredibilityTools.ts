@@ -48,6 +48,8 @@ export function registerBrokerCredibilityTools(
         .optional()
         .describe("Evaluation date YYYY-MM-DD (default: today)"),
     },
+    // Redundant with the zod `.default(1)` above (belt-and-suspenders destructuring default).
+    // metric-mask-allow: caller-facing input default per the docstring above, not a fabricated metric.
     async ({ broker, baseConfidence = 1, asOf }) => {
       const db = _testDb ?? getDb();
       const evalDate = asOf ?? todayIso();

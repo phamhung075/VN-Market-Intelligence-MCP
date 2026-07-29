@@ -353,7 +353,11 @@ export function buildCausalChain(
   // Detect MSCI index inclusion keywords + create domain-level cascade entry.
   // MSCI inclusion is a cross-sector bullish catalyst affecting large-cap stocks.
   // Application layer (detectMsciCascadePeers) filters watchlist to large-cap only.
-  const msciResult = detectMsciInclusion(summaryLower, seedEntry.confidence ?? 0.6);
+  // FACTORY-GUARD-CI-METRICMASK-IMPL: an absent seedEntry.confidence must not be
+  // fabricated into a plausible mid-range 0.6 "measured" credibility — honest-zero
+  // propagation (?? 0) is below detectMsciInclusion's own 0.7 credibility floor,
+  // so an unknown credibility correctly fails to match rather than lying about it.
+  const msciResult = detectMsciInclusion(summaryLower, seedEntry.confidence ?? 0);
   if (msciResult.matched) {
     const msciDomainEntry: CausalChainEntry = {
       level: "domain",
@@ -372,7 +376,8 @@ export function buildCausalChain(
   // ── Step 2f: MSCI Watchlist Cascade (Task 1329) ────────────────────────
   // Detect MSCI watchlist keywords + create bullish cascade entry.
   // Watchlist = precursor to full inclusion, triggers passive allocation planning.
-  const msciWatchlistResult = detectMsciWatchlist(summaryLower, seedEntry.confidence ?? 0.6);
+  // FACTORY-GUARD-CI-METRICMASK-IMPL: same honest-zero fix as detectMsciInclusion above.
+  const msciWatchlistResult = detectMsciWatchlist(summaryLower, seedEntry.confidence ?? 0);
   if (msciWatchlistResult.matched) {
     const msciWatchlistEntry: CausalChainEntry = {
       level: "domain",
@@ -391,7 +396,8 @@ export function buildCausalChain(
   // ── Step 2g: MSCI Exclusion Cascade (Task 1329) ────────────────────────
   // Detect MSCI exclusion keywords + create bearish cascade entry.
   // Exclusion = forced selling, large passive fund outflows from Vietnam.
-  const msciExclusionResult = detectMsciExclusion(summaryLower, seedEntry.confidence ?? 0.6);
+  // FACTORY-GUARD-CI-METRICMASK-IMPL: same honest-zero fix as detectMsciInclusion above.
+  const msciExclusionResult = detectMsciExclusion(summaryLower, seedEntry.confidence ?? 0);
   if (msciExclusionResult.matched) {
     const msciExclusionEntry: CausalChainEntry = {
       level: "domain",

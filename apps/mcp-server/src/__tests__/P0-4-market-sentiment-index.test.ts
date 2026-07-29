@@ -127,13 +127,29 @@ describe("AC-1: computeDailyScores — confidence-weighted score", () => {
     expect(scores[0]!.article_count).toBe(2);
   });
 
-  it("uses impact_score=1.0 default when null", () => {
+  // FACTORY-GUARD-CI-METRICMASK-IMPL: `row.impact_score ?? 1.0` used to fabricate a
+  // plausible-looking "neutral" impact for a row with a genuinely unknown impact_score.
+  // The honest fix excludes such a row from the weighted average entirely (same
+  // treatment as the existing confidence=null guard) instead of guessing its weight.
+  it("excludes rows with impact_score=null (no fabricated 1.0 default) — no other valid rows that day", () => {
     const rows: RagAnalysisRow[] = [
       { sentiment: "bullish", confidence: 1.0, impact_score: null, created_at: "2026-06-01T00:00:00Z" },
     ];
     const scores = computeDailyScores(rows);
-    // score = (1*1.0*1.0) / 1.0 = 1.0
+    // The only row for 2026-06-01 has an unknown impact_score -> excluded -> no day entry at all.
+    expect(scores).toHaveLength(0);
+  });
+
+  it("excludes only the impact_score=null row, keeps a co-dated row with a real impact_score", () => {
+    const rows: RagAnalysisRow[] = [
+      { sentiment: "bullish", confidence: 1.0, impact_score: null, created_at: "2026-06-01T00:00:00Z" },
+      { sentiment: "bullish", confidence: 1.0, impact_score: 1.0, created_at: "2026-06-01T00:00:00Z" },
+    ];
+    const scores = computeDailyScores(rows);
+    expect(scores).toHaveLength(1);
+    // score = (1*1.0*1.0) / 1.0 = 1.0 — only the real-impact row contributes
     expect(scores[0]!.score).toBeCloseTo(1.0, 6);
+    expect(scores[0]!.article_count).toBe(1);
   });
 
   it("respects impact_score when provided", () => {

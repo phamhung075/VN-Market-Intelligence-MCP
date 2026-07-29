@@ -227,6 +227,24 @@ jobs:
       - name: Run size-lint-justification --check
         run: bash scripts/audits/size-lint-justification.sh --check
 
+  metric-mask-lint:
+    name: metric-mask-lint
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # Pure bash/awk — no bun/go/python toolchain needed, cheapest job in the pipeline.
+      # Zero-tolerance CI guardrail against silently fabricating a plausible-looking
+      # confidence/score/impact/magnitude/probability value via `?? <non-zero-literal>`
+      # (or `||` / Python `or` / destructuring-or-param default) instead of honestly
+      # propagating an absence. NOT baseline/ratchet like size-lint — live debt was 4
+      # lines fixed in the same task that shipped this gate, so it opens at zero.
+      # See docs/architecture-briefs/2026-07-24-factory-guard-ci-metric-mask-lint.md
+      - name: Run metric-mask-lint --check
+        run: bash scripts/audits/metric-mask-lint.sh --check
+
 # AC-8 (optional) — Branch protection setup:
 # To require CI jobs before merging to main, go to:
 #   GitHub repo > Settings > Branches > Add branch protection rule

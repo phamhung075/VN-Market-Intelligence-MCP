@@ -214,4 +214,38 @@ describe("FIX-1279: cascadeEngine — MSCI WatchList cascade to securities + ban
       expect(entry.impactScore).toBeGreaterThan(0);
     });
   });
+
+  // FACTORY-GUARD-CI-METRICMASK-IMPL: cascadeEngine.ts used to pass
+  // `seedEntry.confidence ?? 0.6` into detectMsciInclusion/Watchlist/Exclusion — a
+  // fabricated mid-range "measured" credibility for a genuinely absent value. The
+  // honest fix is `?? 0`; since detectMsci*'s own credibility floor is 0.7, both the
+  // old (0.6) and new (0) fallback are BELOW threshold, so behavior for this
+  // (unreachable-in-typed-production, defensive-only) absent case is unchanged: no
+  // MSCI cascade entry is fabricated either way. This test locks that down directly.
+  it("MSCI WatchList seed with an absent (undefined) confidence produces NO MSCI cascade entry — honest-absence, not a fabricated 0.6 credibility", () => {
+    const seed = makeSeed(
+      "Việt Nam vào WatchList MSCI tháng 6",
+      "Có khả năng chứng khoán Việt Nam vào watchlist msci trong tháng 6 năm nay.",
+      {
+        sentiment: "bullish",
+        impactScore: 9,
+        level: "country",
+        // Simulates a caller violating the AnalysisEntry type contract at runtime
+        // (e.g. a manually-constructed/partial fixture) — confidence genuinely absent.
+        confidence: undefined as unknown as number,
+      }
+    );
+
+    const chain = buildCausalChain(seed, SECURITIES_WATCHLIST);
+
+    // NOTE: chain.entries always includes a seed-echo entry whose title/summary
+    // are copied verbatim from the input (which itself mentions "MSCI" here) — so
+    // the assertion below targets the specific reasoning string cascadeEngine.ts
+    // only writes inside the `msciWatchlistResult.matched` branch, not a generic
+    // title/reasoning substring match (that would false-match the seed echo).
+    const msciEntry = chain.entries.find(e =>
+      e.reasoning?.includes("MSCI watchlist detected")
+    );
+    expect(msciEntry).toBeUndefined();
+  });
 });
