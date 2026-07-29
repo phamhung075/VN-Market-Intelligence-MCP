@@ -514,13 +514,21 @@ export interface PendingOutcomeAlert {
  *
  * @param windowDays - Only look back this many days (default: 30)
  * @param db         - SQLite Database connection (defaults to singleton)
+ * @param now        - Clock used to compute the lookback window (default: real
+ *                     wall clock `new Date()`, unchanged production behaviour).
+ *                     Callers with an injectable clock (e.g. `runAlertOutcomeJob`'s
+ *                     `deps.nowFn`) MUST thread it through here — otherwise the
+ *                     candidate-selection window silently ignores the injected
+ *                     clock even though downstream classification honours it
+ *                     (FIX-CI-RED-ALERTOUTCOME-CLOCK-SEAM).
  * @returns Array of alerts without outcomes, oldest-first
  */
 export function readPendingOutcomeAlerts(
   windowDays = 30,
   db: Database = getDb(),
+  now: Date = new Date(),
 ): PendingOutcomeAlert[] {
-  const since = new Date(Date.now() - windowDays * 86_400_000).toISOString();
+  const since = new Date(now.getTime() - windowDays * 86_400_000).toISOString();
   return db
     .prepare<PendingOutcomeAlert, [string]>(
       `SELECT id, triggered_at, severity, signals_json, affected_actions_json,

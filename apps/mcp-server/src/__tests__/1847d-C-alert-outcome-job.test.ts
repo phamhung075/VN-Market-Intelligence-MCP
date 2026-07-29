@@ -367,4 +367,44 @@ describe("Task 1847d-C — alertOutcomeJob", () => {
     expect(result.evaluated).toBe(1);
     expect(result.skipped).toBe(1);
   });
+
+  // TEST-10 (regression — FIX-CI-RED-ALERTOUTCOME-CLOCK-SEAM): the injected
+  // clock must govern candidate-selection (readPendingOutcomeAlerts' window),
+  // not just classification/elapsed-days. Anchored to the REAL wall clock
+  // shifted 200 days into the past (never the fixed 2026-05-06 NOW above) so
+  // this control can never itself age into false-green. Before the clock-seam
+  // fix, readPendingOutcomeAlerts computed `since` from raw Date.now()
+  // regardless of nowFn, so fixtures seeded 200+ days before the actual run
+  // date always fell outside the real-clock 90-day window and evaluated
+  // stayed 0 no matter what nowFn returned — this test would have FAILED
+  // on the pre-fix code.
+  it("TEST-10: nowFn governs the candidate-selection window, not just classification (regression)", async () => {
+    const shiftedNow = new Date(Date.now() - 200 * 86_400_000);
+    const shiftedNowFn = () => shiftedNow;
+    const shiftedDaysAgo = (n: number): string => {
+      const d = new Date(shiftedNow);
+      d.setDate(d.getDate() - n);
+      return d.toISOString();
+    };
+
+    const triggeredAt = shiftedDaysAgo(6); // 6 days before the shifted NOW
+
+    insertAlert(db, {
+      id: "alert-shifted-clock",
+      triggered_at: triggeredAt,
+      signals_json: positionDangerSignals,
+      affected_actions_json: vicActions,
+    });
+
+    insertPrice(db, "VIC", 100, triggeredAt);
+    insertPrice(db, "VIC", 99, shiftedDaysAgo(5));
+
+    const result = await runAlertOutcomeJob({
+      db,
+      nowFn: shiftedNowFn,
+      telegramSender: noopTelegram,
+    });
+
+    expect(result.evaluated).toBeGreaterThan(0);
+  });
 });

@@ -160,8 +160,12 @@ export async function runAlertOutcomeJob(
   };
 
   // 1. Read pending alerts (outcome IS NULL, last 90 days)
-  // readPendingOutcomeAlerts(windowDays, db) — use 90 days to match arch note on R-6
-  const pendingAlerts = readPendingOutcomeAlerts(90, db);
+  // readPendingOutcomeAlerts(windowDays, db, now) — use 90 days to match arch note on R-6.
+  // `now` is threaded through so the injected clock (deps.nowFn) governs
+  // candidate selection, not just classification/elapsed-days below
+  // (FIX-CI-RED-ALERTOUTCOME-CLOCK-SEAM — the window predicate was previously
+  // computed from raw wall-clock Date.now() regardless of deps.nowFn).
+  const pendingAlerts = readPendingOutcomeAlerts(90, db, now);
 
   // 2. Process each alert
   const batch: BatchWrite[] = [];
