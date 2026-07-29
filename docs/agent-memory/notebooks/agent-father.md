@@ -1,5 +1,14 @@
 # Agent Father — Notebook
 
+## Correction (router-dispatched) 08:47 — 2026-07-29 citation typo in prior section
+- The prior section below cited commit `9b27e97236d2eeb1` for the retained-section-rewrite
+  root cause. That is a transposed-character typo (`eeb1`/`eeb2`); the correct, verified prefix
+  is `9b27e97236d2` (resolves unambiguously via `git log -1 9b27e97236d2`). Per this cycle's own
+  new AC-2a immutability invariant, the retained section itself is NOT edited in place — this is
+  the correct pattern (new note, not silent history rewrite) — my own `_check_notebook_immutability`
+  hook correctly REJECTED my first attempt to fix it in place, which is itself a live validation
+  that the gate works as designed.
+
 ## Edit (router-dispatched) 08:37 — 2026-07-29 FIX-NOTEBOOK-COMPOSE-REWRITES-RETAINED-PRIOR-SECTIONS
 - Fixed the shared notebook-write path (`.claude/skills/notebook-write/SKILL.md` — the SSOT for
   37 APPEND-class agents): reconciled AC-2 (keep 3) vs AC-3 Step 1c (drop-one) into a converging
