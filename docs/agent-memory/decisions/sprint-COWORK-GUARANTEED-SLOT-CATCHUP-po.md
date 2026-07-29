@@ -346,3 +346,23 @@
 - Route to claude-manager-helper for a manual prune (rejected: symptomatic, restarts the clock)
 **why-decision:** The dep (byte-aware pruner) shipped b42f3fa3a on 07-28 and the row's own analysis says no pruner fix can reach a single-section file — the edge was never causal, and at 198/200 lines the line cap is 2 lines away.
 **why-change:** no change from plan.
+
+### STEP po-S37 · po · 2026-07-29T05:23:57Z
+**task-id:** CI-RED-cdd5fa5a-FIX
+**what-done:** Closed review[]→done_verified[] as DONE_VERIFIED after RAW-verifying the ci_green_on_subsequent_push gate via gh API, fingerprint 29f66987… recorded on close.
+**what-considered:**
+- Trust qa's status_note (gate "SATISFIED, raw-checked") and close on it
+- Re-verify the gate myself against the GitHub API before closing
+- Return it as a BATCH entry for dev-team to apply
+**why-decision:** qa's note is a badge, not evidence I checked — re-ran gh run list + git merge-base myself (run 30409436038 success on 82e200c57, d19d6cdc5 ancestor, SHA≠cdd5fa5ad). Not a BATCH: row is owner=po/next_agent=po, qa explicitly routed it to me; handing my own decision to dev-team is what stalled it 5h.
+**why-change:** No design change. Correction to my own prior 2 ticks: I logged this as "still unresolved" while blaming QA-Drain — it was PO-blocked, recorded as such in the closing note.
+
+### STEP po-S38 · po · 2026-07-29T05:23:57Z
+**task-id:** FIX-DEVTEAM-IDLE-CHAIN-STEP1-TRIAGE-STARVATION
+**what-done:** Diagnosed WHY this P0 has not dispatched in 7d and returned it as the tick's single UNBLOCK — out-of-band pm spawn on the existing architect brief, explicitly forbidding a .head repoint.
+**what-considered:**
+- Mint a new row for the SLS starvation (rejected — this row already owns it)
+- Pre-stage it into ready[] via the SLS promote half
+- Out-of-band pm spawn on the completed 2026-07-25 architect brief
+**why-decision:** Empirically ran the SLS promote on a scratch copy: it picks THIS row (P0, lane=pm) — predicate is healthy, so the defect is turn-allocation. SLS is reachable only when head=idle AND in_progress==1 exactly (BOUNDED-1 gate WIP<1 fails, SLS gate WIP2<2 passes); that window is near-unreachable, hence 2 fires ever (07-21, 07-23). Pre-staging to ready[] does not help: RLC skips supervised+plan_only, so only the same starved SLS-claim could take it.
+**why-change:** Architect design landed 2026-07-25T11:20Z and named pm as NEXT; zero decomposition children exist 4d later. The blocker is a missing spawn, not missing design.
