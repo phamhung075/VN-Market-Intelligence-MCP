@@ -15635,6 +15635,28 @@
       "severity": "MED",
       "status": "READ",
       "payload_ref": "docs/signals/cowork-team-2026-07-29T0912Z-refine-bctc-diacritic-corruption.json"
+    },
+    {
+      "id": "sys-20260729T103337-13e5",
+      "ts": "2026-07-29T10:33:37Z",
+      "from": "system-auditor",
+      "to": "po",
+      "type": "data_stale",
+      "summary": "sbv_fx stale 32min (check B-12)",
+      "severity": "WARN",
+      "status": "READ",
+      "payload_ref": null
+    },
+    {
+      "id": "sys-20260729T103338-7f95",
+      "ts": "2026-07-29T10:33:38Z",
+      "from": "system-auditor",
+      "to": "po",
+      "type": "data_stale",
+      "summary": "sbv_fx stale 32min (check B-12)",
+      "severity": "WARN",
+      "status": "READ",
+      "payload_ref": null
     }
   ],
   "backlog_detail": [

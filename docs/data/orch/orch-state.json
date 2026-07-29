@@ -88,11 +88,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "active_task_id": null,
-    "next_agent": "router",
-    "updated_at": "2026-07-29T10:02:34Z",
-    "updated_by": "dev-mcp-server"
+    "status": "in_progress",
+    "active_task_id": "FIX-BCTC-D3C-FOLLOW-UP-RESET-ATTEMPTS",
+    "next_agent": "developer",
+    "next_action": "BOUNDED-1 auto-pickup claim of FIX-BCTC-D3C-FOLLOW-UP-RESET-ATTEMPTS — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
+    "updated_at": "2026-07-29T10:16:26Z",
+    "updated_by": "dev-team (bounded-1 auto-pickup)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -2258,8 +2259,8 @@
     ]
   },
   "task_board": {
-    "_updated_at": "2026-07-29T07:21:00Z",
-    "_updated_by": "po/triage-20260729T0719-a21-crash-window-predecessor-bound",
+    "_updated_at": "2026-07-29T10:28:52Z",
+    "_updated_by": "po-triage-20260729T1028Z (rag restart-loop diagnosis rehome + disposition)",
     "active_sprints": [
       {
         "evidence": "Router raw-verified (get_bctc_full live, post-rebuild) after BEQ-9/10 refine. Core extraction incident RESOLVED, but populating real scalars exposed a SEPARATE pre-existing analytics/serving layer with 4 defect clusters: (a) RATIO-COMPUTE — VNM ROE=0/ROA=0/EPS=12VND/NetDebt-EBITDA=-7.5e13x; DHG ROA=7,891,932.0% (analyst falsely claimed fixed). Ratios emit 0 or astronomically wrong. (b) BANK-B02-TCTD-SERVING — SHB + EIB get_bctc_full returns 'balance sheet has no decomposition — forced-zero pass suspected'; banks UNSERVABLE despite DONE + committed scalars. (c) PERIOD-SEMANTICS — FPT 2025-Q4 rev=70112.8/NP=11225.5 are FULL-YEAR cumulative labeled 'Q4'; buildComparisonSection then compares cumulative-FY vs next-quarter -> false -82.2% mislabeled 'YoY'. (d) ENTITY-SCOPE — HPG 2025-Q4 is parent-only B01a (rev=0, conf44%) served as the canonical/headline HPG vs consolidated ~140k rev; misleading. PUBLISH-INTEGRITY GAP: NO semantic-sanity publish guard exists in orch-state (the triage-referenced 'Task #13' is NOT present). The BEQ-9/10 reports are now DONE -> flow into chef docs/agents/unified-agent/flow/market-analysis.md + market-analyst -> ROA 7.8M% / false YoY -82% / parent-only-headline CAN reach MARKET unattended. recurring-bug-escalation: BCTC area has >2 fix cycles -> architect root-cause SPIKE, not point-patch. | [dev-team 2026-06-03T11:44Z observation feeding BAL-0/BAL-1] After LF-SERVE-REFLOW recovered FPT Q1 absolute scalars (op_profit/ebitda/cash live-correct), get_bctc_full(FPT) STILL serves garbage DERIVED ratios: current_ratio=41527873060120x (denominator ~0), operating_margin_pct=0.0% (not recomputed from now-correct operating_profit). Confirms the analytics/serving derived-ratio layer is a distinct defect from scalar extraction. BAL-0 publish semantic-sanity gate MUST block current_ratio out-of-range before MARKET/FB; BAL-1 spike should pin the ratio recompute module. Repro: get_bctc_full(code=FPT).",
@@ -5528,7 +5529,10 @@
         "title": "rag-service deploy-gap + 16GB host memory tradeoff (RAG vs frontend) — codify deploy + decide resident set",
         "type": "INFRA",
         "zone": "ops/infra",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FU-RAG-DEPLOY-MEMORY"
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FU-RAG-DEPLOY-MEMORY",
+        "updated_at": "2026-07-29T10:31:14Z",
+        "updated_by": "po (decision input only — no status/priority change)",
+        "po_measured_input_20260729": "DECISION INPUT for the resident-set trade, measured 2026-07-29T10:25Z, no action requested. rag-service warm RSS is 749.9 MiB against a 768 MiB cap = 97.65%, leaving 18.1 MiB of headroom, and it reaches that after a SINGLE embed because the sentence-transformers model is a lazy singleton with NO release path (apps/rag-service/infrastructure/embedder.py:37/:51 — grep for unload|.release(|del self._model|gc.collect|empty_cache finds nothing). So 768m is not a budget the service lives inside; it is a budget the service fully consumes at idle-warm. The 768m came from 2dc1d8c4e (Wed Jun 10 2026, -memory:1.5g/+memory:768m) which was a legitimate response to the 16GB host panic — a blind revert is NOT available and that trade is exactly what this row owns. Note the coupling: RAG-FTS-BUILD-MEMORY-BOUND is time-gated until the corpus reaches ~56k rows (projected ~2026-08-16) and its AC1 requires an FTS rebuild to stay under this same cap; if the cap decision lands first it changes that AC's target."
       },
       {
         "id": "FU-RUNTIME-SET-TRUTH-RECONCILE",
@@ -7010,15 +7014,6 @@
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-BCTC-ANALYST-STAGELOG-NOTIFY-NO-BASH"
       },
       {
-        "id": "FIX-RAG-SERVICE-CLEAN-EXIT-RESTART-LOOP",
-        "title": "FIX — rag-service chronic clean-exit restart loop: RestartCount=226 (~10/day, 3-week container life); ExitCode=0 OOMKilled=false → process self-exits + restart-policy relaunches; passive health masks churn. RECURRING (prior watch signals @100/@A21)",
-        "status": "BACKLOG",
-        "zone": "apps/rag-service/",
-        "priority": "medium",
-        "type": "FIX",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-RAG-SERVICE-CLEAN-EXIT-RESTART-LOOP"
-      },
-      {
         "id": "FIX-ORCHSTATE-TASKBOARD-HEAD-REINFLATION-GUARD",
         "title": "FIX — enforce G-7 at the orch-apply WRITE GATE: .task_board.head was re-inflated with routing fields (3rd occurrence — dev-macro-indicators 2026-07-28T22:16Z re-inflated .task_board.head with routing fields again while trying to idle-reset .head; router re-collapsed. Escalated medium->high, recurring 2+.). DeprecatedHeadStubSchema uses .passthrough() so routing keys pass Zod silently — reject active_task_id/next_agent/routing-status on .task_board.head at write time.",
         "status": "BACKLOG",
@@ -7457,21 +7452,6 @@
         "updated_by": "po/triage-20260728T13"
       },
       {
-        "id": "FIX-BCTC-D3C-FOLLOW-UP-RESET-ATTEMPTS",
-        "type": "FIX",
-        "priority": "medium",
-        "status": "BACKLOG",
-        "zone": "apps/mcp-server/",
-        "size": "XS",
-        "title": "Reset reconcile_attempts+attempts when row recycles via Arm-2 grace-period retry",
-        "detail": "QA finding (D3C DONE_VERIFIED review, sprint-SYSTEMIC-REMAKE-P1-qa.md, point 2): bctcQueueEnricherJob.ts's pre-existing Arm-2 grace-period retry (after 7d in enrich_failed, if attempts<6) recycles the row back to pending without zeroing reconcile_attempts (nor the pre-existing attempts column). Result: a recycled row re-enters pek_triggered carrying its old ~8 counter and can re-exhaust to enrich_failed on the very next reconciliation pass instead of getting a fresh ~4h budget. This mirrors an identical pre-existing gap already accepted on the attempts column itself (both are fetch-failure counters, semantically orthogonal). Not a regression from FIX-BCTC-PDFPULL-WIRE-TABLE-EXTRACTION (pre-existing behavior); not silent/data-corrupting (worst case: earlier fail-loud re-terminalization). Must touch two already-approved prior-task files: bctcPdfPullJob.ts (when writing pek_triggered status on initial pull) and bctcQueueEnricherJob.ts (Arm-2 recycle path). Recommend this as a small separate backlog fix to prevent staleness on the recycle path.",
-        "owner": "dev-mcp-server",
-        "depends": [],
-        "created_at": "2026-07-10T14:55:00Z",
-        "created_by": "pm",
-        "note": "Non-blocking follow-up from D3C QA review. Low risk: mirrors pre-existing attempts-column gap already accepted. Candidate for next sprint if backlog has capacity."
-      },
-      {
         "id": "FIX-COLD-EVICT-EXCLUDE-IDS-VS-HARD-COHERENCE",
         "size": "S",
         "status": "BACKLOG",
@@ -7807,28 +7787,6 @@
         "created_at": "2026-07-13T16:12:44Z",
         "created_by": "po-reconcile-20260713T1612Z (recurring-bug escalation route)",
         "po_recurrence_triage_20260720": "3rd OCCURRENCE (PO signal-queue triage 2026-07-20): boardDetailsRefreshJob market.db 'database disk image malformed' 2026-07-19T10:41Z, escalated to CRITICAL persistent 0/5 at 11:11Z, then SELF-RESOLVED 2026-07-19T20:46:09Z (PRAGMA integrity_check=ok). Same Docker-virt SQLite corruption class as the 2026-04-25 + 2026-07-13 incidents. recurring_bug_count 2->3. Caution: an auditor self-resolved 'green' is not a durable fix (feedback_auditor_self_resolves_signal_false_green) — the durable hardening question in this SPIKE stands. PLAN-ONLY."
-      },
-      {
-        "id": "DIAGNOSE-RAG-SERVICE-RESTART-LOOP",
-        "status": "BACKLOG",
-        "type": "SPIKE",
-        "mode": "spike",
-        "plan_only": true,
-        "supervised": true,
-        "owner": "dev-rag-service",
-        "next_agent": "dev-rag-service",
-        "zone": "apps/rag-service/",
-        "size": "M",
-        "priority": "high",
-        "timebox": 120,
-        "title": "SPIKE (dev-rag-service, plan-only): diagnose rag-service-1 restart loop — RestartCount=135 (~1 restart/19min for 43h), passive health masks it, causes intermittent RAG news-embedding gaps",
-        "question": "rag-service-1 (Created 2026-07-11T21:30Z) shows RestartCount=135 = ~1 restart every 19 minutes for 43 hours, yet reports 'healthy' between cycles (passive-health masks it — known FP class). Last ExitCode=0 / OOMKilled=false are LAST-DEATH flags only and unreliable on macOS Docker, so they do not identify the per-cycle death cause. QUESTION: what actually kills rag-service-1 on each cycle — (a) memory-limit cycling (MemLimit 768MB), (b) healthcheck-kill, (c) LanceDB growth/compaction — and what is the durable fix? Need real per-cycle exit-cause + a memory-usage trend across cycles (not the last-death snapshot). Deliverable: a diagnosis/findings doc with the confirmed death cause + recommended remediation (raise MemLimit / fix healthcheck / bound LanceDB growth).",
-        "note": "NEW anomaly, router-probed 2026-07-13T16:06-16:09Z. Container Created 2026-07-11T21:30Z, RestartCount=135 -> ~1 restart/19min over 43h. Reports 'healthy' between cycles => passive health masks it (known FP class). Last ExitCode=0, OOMKilled=false — last-death flags only, unreliable on macOS Docker. MemLimit 768MB. OBSERVED IMPACT: mcp-server logs '[pollNews] ragInsert failed (non-fatal)' timeouts / connection-refused during restart windows -> intermittent news-embedding gaps in RAG. Likely suspects: memory-limit cycling, healthcheck-kill, LanceDB growth. Suggested owner dev-rag-service (or ops). FORENSIC CROSS-REF: this loop RETROACTIVELY EXPLAINS the 15:14Z rag restart earlier logged as a corruption-window suspect in the SQLite-corruption forensics (SPIKE-SQLITE-DOCKER-VIRT-CORRUPTION-HARDENING) — the 15:14Z restart was just a routine loop cycle, which WEAKENS that suspect link in the corruption forensics. PLAN-ONLY: diagnosis only — NO inline fix. supervised:true keeps BOUNDED-1 from idle-picking this board-inline (no backlog-detail entry) dev-owned row.",
-        "related": [
-          "SPIKE-SQLITE-DOCKER-VIRT-CORRUPTION-HARDENING"
-        ],
-        "created_at": "2026-07-13T16:12:44Z",
-        "created_by": "po-triage-20260713T1612Z (new-anomaly route)"
       },
       {
         "id": "DEBT-SCRIPTS-MIGRATIONS-TSC-COVERAGE",
@@ -11119,6 +11077,31 @@
         "cross_row_interaction": "docker-compose.yml's HEALTHCHECK target and probe.sh's A-12 target (FIX-AUDITOR-A12-PROBE-TIMEOUT-EXITCODE-DEBOUNCE, A1) should repoint from /health to /healthz only after B4 ships and is verified -- do not bundle that repoint into this PR; it is a separate, later, ops-owned docker-compose.yml edit requiring rebuild+deploy (OVERRIDE 2026-07-03, ops-executed, not authorized by this row).",
         "verification_gate": "New unit tests pass (zero probes with empty notDeployedSet; exactly len(notDeployedSet) probes when non-empty; single-flight collapses concurrent misses to 1 upstream call; HandleLiveness stays fast under a deliberately-slow capability-probe double); TestAggregateHealthService_DeployedDownNotRescuedByCapability and all existing capability_prober_test.go cases still pass; post-deploy RAW verify forces a cold-cache read (not just the warm-cache fast path) and times it.",
         "recurring_bug_count": 1
+      },
+      {
+        "id": "FIX-RAG-COMPACTION-DISK-AMPLIFICATION",
+        "type": "FIX",
+        "title": "rag-service LanceDB on-disk footprint is ~43x the live corpus (733 MB for ~11.2k rows / ~17 MB of vectors) — _COMPACT_EVERY=100 is sized for a '100 inserts/day' premise against ~3070/day live, and _indices/ is NOT pruned by cleanup_older_than while _versions/ demonstrably IS",
+        "status": "BACKLOG",
+        "priority": "P3",
+        "size": "S",
+        "zone": "apps/rag-service/",
+        "plan_only": true,
+        "supervised": true,
+        "created_at": "2026-07-29T10:28:52Z",
+        "created_by": "po (spinoff from DIAGNOSE-RAG-SERVICE-RESTART-LOOP close; growth-trajectory axis, separate from the correctness defect)",
+        "updated_at": "2026-07-29T10:31:14Z",
+        "evidence": "MEASURED 2026-07-29T10:22Z on the host bind-mount data/live/lancedb/rag_entries.lance (733 MB total). data/ = 555 MB across 2927 files, of which 38 are >1 MB (5 largest all 19.4-20.0 MB, mtimes 08:40/08:49/10:49/11:02/12:06 local = roughly hourly FULL-TABLE rewrites) and 2878 are <100 KB. _versions/ = 30 MB / 2878 manifests. _indices/ = 136 MB / 735 dirs, of which 540 are EMPTY husks and only 195 hold data. RETENTION ASYMMETRY (this is the finding, and it is measured not inferred — `find -mtime +2` against _COMPACT_RETENTION=timedelta(days=2)): _versions has ZERO files older than the window (oldest manifest 27 jul 13:03); data/ has 33 of 2927 older; _indices has 352 of 735 older, OLDEST 18 jul = 11 DAYS. Same cleanup_older_than parameter, opposite outcomes => optimize(cleanup_older_than=) prunes versions and data fragments but does NOT reclaim _indices.",
+        "corrects": "This CORRECTS a framing in the originating spike, which read 2927 data files as 'compaction is not achieving its documented guarantee'. It is achieving it: the 38 large files ARE real compacted outputs and version pruning demonstrably works inside its 2-day window. The 555 MB is not fragment sprawl — it is 2 days of near-hourly full-table rewrites retained by design. The actual problem is the GROWTH TRAJECTORY, which is why this is a separate row from the correctness defect.",
+        "question": "Disk cost is O(compaction_cadence x retention_window x corpus_size) and all three are moving the wrong way. repositories.py:43 comments '100 inserts ~= one daily intelligence cycle' and docs/architecture/microservice/rag-service/infrastructure.md:37 assumes 'a 100-insert/day workload'; MEASURED live is 770 POST /index in 6h = ~128/h = ~3070/day, i.e. ~31x the design premise (independently: 94 POST /index in the 30 min before the 10:12Z restart). Corpus is ~11.2k rows growing ~103 rows/h toward the ~56k-row scale RAG-FTS-BUILD-MEMORY-BOUND is time-gated on. At 56k rows each full-table rewrite is ~5x today's ~20 MiB, so 2 days of near-hourly rewrites projects to multiple GB. DECIDE: (1) retune _COMPACT_EVERY / _COMPACT_RETENTION for real traffic, (2) whether _indices orphans need an explicit reclaim path, (3) whether a disk-growth guard belongs in the auditor. READ LanceDB source for the actual _indices retention semantics — do not guess.",
+        "depends_on": "FIX-RAG-SERVICE-CLEAN-EXIT-RESTART-LOOP — retuning cadence on top of the unreset-counter defect would measure the defect, not the tuning. Land that first, re-measure, then size this.",
+        "constraint": "Read-only investigation. Do NOT docker exec into rag-service (shares the cgroup; killed it at 10:12:00Z today). Do NOT hand-delete files under data/live/lancedb — that is live corpus.",
+        "related": [
+          "FIX-RAG-SERVICE-CLEAN-EXIT-RESTART-LOOP",
+          "RAG-FTS-BUILD-MEMORY-BOUND",
+          "FU-RAG-DEPLOY-MEMORY",
+          "FIX-LANCEDB-INSERT-SEGFAULT"
+        ]
       }
     ],
     "closed_sprints": [
@@ -11893,6 +11876,43 @@
         ],
         "architect_review_note": "2026-07-29T09:20Z architect (plan-only brief, no code/container edit, no rebuild/restart). Brief: docs/architecture-briefs/2026-07-29-apigw-health-capability-probe-latency.md. CONFIRMS po_root_cause_20260729T0848's mechanism (two 3000ms constants colliding, TTL-boundary stampede, worsening latency trend, CURL_ERR mislabel) AND REFINES it: the 9-downstream deployed-service fan-out (services.go Aggregate) is already parallel via goroutines -- NOT the sequential bottleneck. The real sequential cost is CapabilityProber.ProbeAll (<=8 manifest entries, not 9), which runs unconditionally on every cache-miss and is 100% DISCARDED in the live deployment because NOT_DEPLOYED_SERVICES= is empty (docker-compose.yml) yet CapabilityProber is never given the not-deployed set (main.go:54) -- the port's own contract (domain/ports.go:22-24, \"probes...not-deployed services\") is documented but unimplemented. Q1 answer: BOTH halves needed, asymmetric -- product-side gate fix (Half B) removes ~100% of current wasted latency; detector-side fix (Half A) independently required for the mislabel defect (8/14 historical rows say \"unreachable\" for what is often a timeout) and for defense once NOT_DEPLOYED_SERVICES is ever populated. Q2: NO, /health should not capability-probe -- router.go already names /healthz a \"k8s liveness alias\" (AC-11) but wires it to the identical expensive handler; decouple it into a true liveness check, keep /health as the rich aggregate for the dashboard. Q3: capture curl exit code (28=timeout/7=refused/6=dns/52=empty-reply), never collapse to CURL_ERR; emitted summary must state the observed fact (\"client timeout after 3000ms\"), never \"unreachable\" for a timeout. Q4: YES structurally guaranteed cold -- Tier-1 cron */30min (1800s) vs probeTTL 60s = 30x, every Tier-1 tick is provably cold; docker's own 30s HEALTHCHECK interval is close to the TTL so it rarely sees more than 1 expired entry, which is why docker health never flapped while the auditor always paid full cost. Split into 2 children per router's explicit instruction this cycle (diverges from the S11/S12 self-mint-deferral precedent only because THIS dispatch explicitly asked for the split): FIX-AUDITOR-A12-PROBE-TIMEOUT-EXITCODE-DEBOUNCE (developer, cross-service/) and FIX-APIGW-HEALTH-CAPABILITY-PROBE-GATE-PARALLEL-SINGLEFLIGHT (dev-api-gateway, apps/api-gateway/). Full item-by-item spec (A1-A5, B1-B5), test strategy, and risk flags in the brief.",
         "architect_review_note_addendum_20260729T0915": "ADDENDUM (router re-measurement, 09:05-09:12Z, 23 samples): the /health latency cost is SUSTAINED/continuous, not an occasional transient -- no recovery window, 26% of samples (6/23) exceed the auditor's 3000ms budget, worst sample climbed 3483ms(08:35Z)->3780ms(09:10Z) same day. Direct (not inferred) evidence of the concurrent-miss stampede: two callers 260ms apart both paying full cost (1082ms/2047ms), and a cache-cold/cache-warm boundary visible 1ms apart (2657ms then 39ms). Upgrades Half B item B3 (single-flight) to co-equal priority with B1, not a lesser defense-in-depth item. Q4 corroborated in the field (26% over-budget in a 7-minute window), on top of the already-conclusive source-level 30x TTL/cadence mismatch. No design change -- Half A/Half B split and B1-B5/A1-A5 items unchanged. Full text: docs/architecture-briefs/2026-07-29-apigw-health-capability-probe-latency.md section 6a."
+      },
+      {
+        "id": "DIAGNOSE-RAG-SERVICE-RESTART-LOOP",
+        "status": "DONE",
+        "type": "SPIKE",
+        "mode": "spike",
+        "plan_only": true,
+        "supervised": true,
+        "owner": "dev-rag-service",
+        "zone": "apps/rag-service/",
+        "size": "M",
+        "priority": "high",
+        "timebox": 120,
+        "title": "SPIKE (dev-rag-service, plan-only): diagnose rag-service-1 restart loop — RestartCount=135 (~1 restart/19min for 43h), passive health masks it, causes intermittent RAG news-embedding gaps",
+        "question": "rag-service-1 (Created 2026-07-11T21:30Z) shows RestartCount=135 = ~1 restart every 19 minutes for 43 hours, yet reports 'healthy' between cycles (passive-health masks it — known FP class). Last ExitCode=0 / OOMKilled=false are LAST-DEATH flags only and unreliable on macOS Docker, so they do not identify the per-cycle death cause. QUESTION: what actually kills rag-service-1 on each cycle — (a) memory-limit cycling (MemLimit 768MB), (b) healthcheck-kill, (c) LanceDB growth/compaction — and what is the durable fix? Need real per-cycle exit-cause + a memory-usage trend across cycles (not the last-death snapshot). Deliverable: a diagnosis/findings doc with the confirmed death cause + recommended remediation (raise MemLimit / fix healthcheck / bound LanceDB growth).",
+        "note": "NEW anomaly, router-probed 2026-07-13T16:06-16:09Z. Container Created 2026-07-11T21:30Z, RestartCount=135 -> ~1 restart/19min over 43h. Reports 'healthy' between cycles => passive health masks it (known FP class). Last ExitCode=0, OOMKilled=false — last-death flags only, unreliable on macOS Docker. MemLimit 768MB. OBSERVED IMPACT: mcp-server logs '[pollNews] ragInsert failed (non-fatal)' timeouts / connection-refused during restart windows -> intermittent news-embedding gaps in RAG. Likely suspects: memory-limit cycling, healthcheck-kill, LanceDB growth. Suggested owner dev-rag-service (or ops). FORENSIC CROSS-REF: this loop RETROACTIVELY EXPLAINS the 15:14Z rag restart earlier logged as a corruption-window suspect in the SQLite-corruption forensics (SPIKE-SQLITE-DOCKER-VIRT-CORRUPTION-HARDENING) — the 15:14Z restart was just a routine loop cycle, which WEAKENS that suspect link in the corruption forensics. PLAN-ONLY: diagnosis only — NO inline fix. supervised:true keeps BOUNDED-1 from idle-picking this board-inline (no backlog-detail entry) dev-owned row.",
+        "related": [
+          "SPIKE-SQLITE-DOCKER-VIRT-CORRUPTION-HARDENING"
+        ],
+        "created_at": "2026-07-13T16:12:44Z",
+        "created_by": "po-triage-20260713T1612Z (new-anomaly route)",
+        "updated_at": "2026-07-29T10:31:14Z",
+        "updated_by": "po (spike answered + premise superseded; diagnosis rehomed to FIX-RAG-SERVICE-CLEAN-EXIT-RESTART-LOOP)",
+        "closed_at": "2026-07-29T10:28:52Z",
+        "spike_result": {
+          "verdict": "ANSWERED",
+          "answered_at": "2026-07-29T10:28:52Z",
+          "answered_by": "plan_only spike 2026-07-29T10:16Z + PO execution-verification 2026-07-29T10:20-10:28Z",
+          "answer": "(c) LanceDB compaction — but via a specific code defect, not growth alone. See diagnosis on the carrier row.",
+          "ruled_out": "healthcheck-kill (no healthcheck failures in logs; container reports healthy); application-level memory leak (all accumulation is per-request).",
+          "diagnosis": "MECHANISM (PO-verified by execution 2026-07-29T10:20-10:28Z; supersedes DIAGNOSE-RAG-SERVICE-RESTART-LOOP). TWO STACKED CAUSES. (1) FIXED BASELINE EATS THE CAP: embedder.py _model is a lazy singleton (:37 init None, :51 _ensure_model_loaded) with NO release path — grep of apps/rag-service/**/*.py for unload|.release(|del self._model|gc.collect|empty_cache returns ONLY the :37 initializer, so once loaded the model is resident for the container's life. MEASURED on the live container: cold RSS 50.7 MiB (6.6% of 768 MiB); model load logged 10:24:28.5Z->10:24:48.9Z on the FIRST embed; docker stats immediately after, having served exactly ONE POST /index: 749.9 MiB / 768 MiB = 97.65%. HEADROOM 18.1 MiB. (The embedder docstring's '~600-700 MiB warm' understates live by ~50-150 MiB.) Cap was halved in 2dc1d8c4e (Wed Jun 10 2026, 'reduce memory limits to 512m/768m', diff -memory:1.5g/+memory:768m; rag block docker-compose.yml L165-171) for host-budget reasons and never re-validated against the model's fixed cost. (2) COMPACTION FAILURE-PATH DOES NOT RESET ITS COUNTER — this is a real code defect, NOT tuning. repositories.py compact() :237-259 puts 'self._insert_count = 0' at :251 INSIDE the try, AFTER 'await table.optimize(cleanup_older_than=...)' at :250; the except at :257-259 logs a WARNING and returns NORMALLY without resetting. insert() :230-235 wraps 'await self.compact()' in its own try/except whose handler DOES reset (:235 'self._insert_count = 0  # reset to avoid tight retry loop') — but that handler is UNREACHABLE because compact() already swallowed the exception. NET: on ANY compaction failure the counter stays >= _COMPACT_EVERY, so EVERY SUBSEQUENT INSERT re-fires a full-table optimize() until one attempt happens to win. The code's own comment names the exact failure it fails to prevent. LIVE PROOF of the burst: 2026-07-29T09:02:36.139Z / 09:02:36.140Z / 09:02:40.06Z / 09:02:43.13Z all 'compaction failed (non-fatal)' -> 09:02:44.17Z 'compaction complete' -> 09:02:44.75Z failed again = SIX full-table optimize() calls in 8.6 s. Failure modes seen: 'Retryable commit conflict for version 12326/12331: This Rewrite transaction was preempted by concurrent transaction Rewrite' and 'Object at location .../_versions/18446744073709542049.manifest not found'. The retry the engine explicitly asks for is never performed. CADENCE PROOF: 6h window = 770 POST /index vs 14 compaction attempts (8 complete + 6 failed) = 55 inserts/attempt against a nominal _COMPACT_EVERY=100 — it is over-firing by ~1.8x. CAUSAL JOIN: each optimize() is a FULL-TABLE rewrite emitting a ~20 MiB fragment (5 largest data files all 19.4-20.0 MiB); firing bursts of those inside 18.1 MiB of headroom is the death event. Because the allocation is in the Rust lance extension and PID 1 unwinds, the container dies as ExitCode=0 / OOMKilled=false — so ANY triage keying on OOMKilled misses this class entirely. CORROBORATION (unplanned, disclosed by the spike): a 'docker exec python3 -c import lancedb' shares the cgroup and killed the container at 10:12:00.6Z; anon fell 726.4 -> 30.8 MiB across the restart, proving the memory is process-resident, not reclaimable page cache. NO APPLICATION LEAK: all non-test accumulation is per-request and dies with the coroutine.",
+          "not_established": "NOT ESTABLISHED — do not treat as measured: (a) which process dies and why PID 1 exits 0 is inferred from the cgroup/RSS evidence, not directly observed; (b) that fixing the counter reset alone stops the restarts is NOT proven — with a 749.9 MiB baseline the container has 18.1 MiB of headroom and remains killable by any transient, so the counter fix REDUCES the frequency of the killer event but does NOT by itself close the loop (the ceiling decision belongs to FU-RAG-DEPLOY-MEMORY); (c) LanceDB's internal semantics for _indices retention are not read from source — see the measured asymmetry on FIX-RAG-COMPACTION-DISK-AMPLIFICATION.",
+          "premise_correction": "PREMISE CORRECTION (applies to BOTH this row and the superseded DIAGNOSE row): both were minted against a container that NO LONGER EXISTS. The current container was Created 2026-07-15T15:16:47Z during the docker host-persistence recovery (commit 5ba622eca, recorded in RAG-FTS-BUILD-MEMORY-BOUND.docker_recovery). MEASURED NOW: RestartCount=22 over 13.8 days = 1.6 restarts/day — NOT this row's '226 (~10/day)' and NOT the DIAGNOSE row's '135 (~1 restart/19min)'. The drop is NOT a fix: the same 2026-07-15 recovery reset the corpus to 116 rows, and compaction cost is O(corpus). Corpus is now ~11243 rows growing ~103 rows/h (PO RAW re-check 2026-07-29T05:20Z on the RAG-FTS row), so the restart rate is expected to CLIMB BACK as the corpus grows. Do NOT read 1.6/day as 'the restart loop stopped'.",
+          "superseded_by": "FIX-RAG-SERVICE-CLEAN-EXIT-RESTART-LOOP",
+          "spinoff": "FIX-RAG-COMPACTION-DISK-AMPLIFICATION",
+          "no_findings_doc": "Deliberate. The diagnosis lives on the carrier FIX row where the fix is picked up, not in a separate findings doc nobody reads at dispatch time."
+        }
       }
     ],
     "done_verified": [
@@ -13232,6 +13252,44 @@
         "architect_review_note": "RULING: RETIRE (b), not restore-via-VPS (a). WebSearch confirms gamma-api.polymarket.com's *.anj.fr TLS-cert swap is France's Autorite Nationale des Jeux (ANJ, national gambling regulator) ordering French ISPs to block Polymarket outright (2026-07-16), after an investigation finding rigged/fraudulent markets (hacked weather-sensor bets) and zero KYC for French/EU users -- not a generic anti-scraper geoblock. mcp-server runs on France-hosted infra (corroborated by franceSummaryJob in schedulerJobTable.ts + repo memory \"MCP server in France should NEVER directly fetch VN domains\"). Routing through the Vinahost VN-egress VPS would likely technically bypass this France-only ISP block, but doing so means deliberately engineering evasion of a sovereign regulator's block against a source that same regulator found fraudulent -- categorically different from the VN-source geoblocks (SSC/HNX/SBV/CafeF) the VPS pattern was built for (mundane anti-foreign-IP defenses against legitimate providers). Also scope creep: system-map.json documents the VPS's purpose as \"geo-blocked VN source proxy\", pull direction VN->main-server, not general Western-service egress. CLOB's pre-existing 403 (reports #674-696, predates ANJ) is a separate, older Polymarket-side geofence -- doesn't change the call.\n\nDESIGN for dev-mcp-server (all apps/mcp-server/ unless noted):\n(1) KILL ACQUISITION: config.ts ~L613 flip predictionMarkets.enabled default true->false (PREDICTION_MARKETS_ENABLED env override unchanged, now the re-enable switch). schedulerJobTable.ts ~L235-242 predictionMarketPollJob: remove from JOB_TABLE (or leave, gated by enabled=false -- dev-mcp-server's call). predictionResolutionJob/predictionOutcomeJob (grep-verified: no prediction_markets reference, read prediction_signals only) NOT in scope -- self-limiting once signals stop growing, leave running.\n(2) ACCEPTANCE-4 FIX (REQUIRED EITHER WAY, independent of retire/restore): fetchPolymarkets() (polymarket.ts) swallows BOTH the CLOB catch (~L250) and the Gamma catch (~L286, the CB-protected real source of truth per Task-1337 comments) and always falls through to `return results` (possibly []) -- transport failure (TLS/403/DNS/JSON-parse) is indistinguishable from \"legitimately 0 matches today\". Add a gammaTransportFailed flag set ONLY inside the Gamma catch (never on the 0-matches-after-successful-parse path); after the Gamma-fallback block (~L398) if gammaTransportFailed && results.length===0, throw PolymarketTransportError instead of returning []. In predictionMarketJob.ts, Step 3's catch (~L474) must propagate this past the sibling row's staleness-guard early-return (still correct, keep it) so a failure reaches recordJobRun() as status=error even on the FIRST failing cycle (before 24h staleness accrues) -- currently the function's own outer try/catch (~L697) plus Step 3's inner catch both swallow unconditionally, which is the literal mechanical reason 28d of dead fetches read status=success in cron_job_runs (registerJobTable -> jobRunRepo.wrapRun -> recordJobRun in cronJobRunStore.ts:200 marks status purely by promise-reject). Narrow the outer catch to rethrow PolymarketTransportError before its normal swallow-and-log; keep finally{_isRunning=false} on every path. Update the function's stale \"NEVER throws\" doc comment. New tests: injected rejecting fetchFn -> fetchPolymarkets rejects (not []); runPredictionMarketPoll rejects/records error; negative control: 0-matches-but-successful-fetch must NOT throw (guards false-positive noise).\n(3) CONSUMER REMOVAL: market-analysis.md:6 drop \"| get_prediction_markets()\". qa-responder/cycle.md:41 drop \"+ get_prediction_markets()\". prediction.md's ENTIRE purpose is this tool (5x/wk 01:00 UTC self-accuracy review) -- partial edit leaves a flow that does nothing; RETIRE the whole thing: delete flow/prediction.md, drop its row from flow/main.md's Dispatch table (single hourly :29 cron per cron-unified-agent.md, no separate CronDelete needed -- 01:00 UTC just falls to \"Any other time -> EXIT\"), drop init.md:134's prediction entry.\n(4) TOOL SURFACE: deregister get_prediction_markets (predictionTools.ts + registry.ts:25,159) so no future ad-hoc caller reads the frozen table as live -- grep-verified computePredictionAccuracy/predictionOutcomeJob/calibrationTools do NOT import predictionTools.ts, safe to remove without touching calibration. predictionStore.ts's getRecentPredictionSignals (assembleBriefing/EveningSummary consumer, NOT in PO's 3-file list) already degrades to [] gracefully on empty prediction_signals -- leave as-is, flagged only for awareness.\n(5) SLA: retire quality-checklist.json DS-FRESH-01 (~L4280, polymarket 2h) and CI-FRESH-03 (~L2988, predictionMarketPoll 35min). VERIFIED: no \"retired\" status token exists in this file's status enum (only FAIL/INFO/NEEDS_REVIEW/PASS/WARN, jq-checked) and no schema validator found for it -- do NOT invent a new enum value unilaterally. dev-mcp-server should either reuse \"INFO\" + an explicit retired-reason note on the row, or coordinate with qa (this file's owner per system-auditor's own agent description) before editing it.\n(6) DB: leave prediction_markets/prediction_signals tables as-is, no migration -- harmless once nothing reads/writes.\nVERIFICATION GATE before REVIEW: grep proving zero remaining get_prediction_markets references across the 3 flow files + prediction.md/main.md/init.md; unit tests for (2) green (positive + negative control); quality-checklist.json 2 rows show a retired marker agreed with qa.",
         "updated_by": "architect",
         "decision": "RETIRE"
+      },
+      {
+        "id": "FIX-RAG-SERVICE-CLEAN-EXIT-RESTART-LOOP",
+        "title": "FIX — rag-service compaction failure-path never resets _insert_count (repositories.py:251 reset is inside the try, after optimize()) => any compaction failure makes EVERY subsequent insert re-fire a full-table optimize(); bursts of ~20MiB rewrites inside 18.1 MiB of headroom kill the container as ExitCode=0/OOMKilled=false",
+        "status": "READY",
+        "zone": "apps/rag-service/",
+        "priority": "P2",
+        "type": "FIX",
+        "size": "S",
+        "owner": "developer",
+        "next_agent": "dev-rag-service",
+        "plan_only": false,
+        "supervised": true,
+        "updated_at": "2026-07-29T10:31:14Z",
+        "updated_by": "po (DIAGNOSE spike consolidated here; owner ops->developer — this is Python code, not an infra action; premise refreshed against live state)",
+        "promoted_at": "2026-07-29T10:28:52Z",
+        "root_cause": "MECHANISM (PO-verified by execution 2026-07-29T10:20-10:28Z; supersedes DIAGNOSE-RAG-SERVICE-RESTART-LOOP). TWO STACKED CAUSES. (1) FIXED BASELINE EATS THE CAP: embedder.py _model is a lazy singleton (:37 init None, :51 _ensure_model_loaded) with NO release path — grep of apps/rag-service/**/*.py for unload|.release(|del self._model|gc.collect|empty_cache returns ONLY the :37 initializer, so once loaded the model is resident for the container's life. MEASURED on the live container: cold RSS 50.7 MiB (6.6% of 768 MiB); model load logged 10:24:28.5Z->10:24:48.9Z on the FIRST embed; docker stats immediately after, having served exactly ONE POST /index: 749.9 MiB / 768 MiB = 97.65%. HEADROOM 18.1 MiB. (The embedder docstring's '~600-700 MiB warm' understates live by ~50-150 MiB.) Cap was halved in 2dc1d8c4e (Wed Jun 10 2026, 'reduce memory limits to 512m/768m', diff -memory:1.5g/+memory:768m; rag block docker-compose.yml L165-171) for host-budget reasons and never re-validated against the model's fixed cost. (2) COMPACTION FAILURE-PATH DOES NOT RESET ITS COUNTER — this is a real code defect, NOT tuning. repositories.py compact() :237-259 puts 'self._insert_count = 0' at :251 INSIDE the try, AFTER 'await table.optimize(cleanup_older_than=...)' at :250; the except at :257-259 logs a WARNING and returns NORMALLY without resetting. insert() :230-235 wraps 'await self.compact()' in its own try/except whose handler DOES reset (:235 'self._insert_count = 0  # reset to avoid tight retry loop') — but that handler is UNREACHABLE because compact() already swallowed the exception. NET: on ANY compaction failure the counter stays >= _COMPACT_EVERY, so EVERY SUBSEQUENT INSERT re-fires a full-table optimize() until one attempt happens to win. The code's own comment names the exact failure it fails to prevent. LIVE PROOF of the burst: 2026-07-29T09:02:36.139Z / 09:02:36.140Z / 09:02:40.06Z / 09:02:43.13Z all 'compaction failed (non-fatal)' -> 09:02:44.17Z 'compaction complete' -> 09:02:44.75Z failed again = SIX full-table optimize() calls in 8.6 s. Failure modes seen: 'Retryable commit conflict for version 12326/12331: This Rewrite transaction was preempted by concurrent transaction Rewrite' and 'Object at location .../_versions/18446744073709542049.manifest not found'. The retry the engine explicitly asks for is never performed. CADENCE PROOF: 6h window = 770 POST /index vs 14 compaction attempts (8 complete + 6 failed) = 55 inserts/attempt against a nominal _COMPACT_EVERY=100 — it is over-firing by ~1.8x. CAUSAL JOIN: each optimize() is a FULL-TABLE rewrite emitting a ~20 MiB fragment (5 largest data files all 19.4-20.0 MiB); firing bursts of those inside 18.1 MiB of headroom is the death event. Because the allocation is in the Rust lance extension and PID 1 unwinds, the container dies as ExitCode=0 / OOMKilled=false — so ANY triage keying on OOMKilled misses this class entirely. CORROBORATION (unplanned, disclosed by the spike): a 'docker exec python3 -c import lancedb' shares the cgroup and killed the container at 10:12:00.6Z; anon fell 726.4 -> 30.8 MiB across the restart, proving the memory is process-resident, not reclaimable page cache. NO APPLICATION LEAK: all non-test accumulation is per-request and dies with the coroutine.",
+        "not_established": "NOT ESTABLISHED — do not treat as measured: (a) which process dies and why PID 1 exits 0 is inferred from the cgroup/RSS evidence, not directly observed; (b) that fixing the counter reset alone stops the restarts is NOT proven — with a 749.9 MiB baseline the container has 18.1 MiB of headroom and remains killable by any transient, so the counter fix REDUCES the frequency of the killer event but does NOT by itself close the loop (the ceiling decision belongs to FU-RAG-DEPLOY-MEMORY); (c) LanceDB's internal semantics for _indices retention are not read from source — see the measured asymmetry on FIX-RAG-COMPACTION-DISK-AMPLIFICATION.",
+        "premise_correction": "PREMISE CORRECTION (applies to BOTH this row and the superseded DIAGNOSE row): both were minted against a container that NO LONGER EXISTS. The current container was Created 2026-07-15T15:16:47Z during the docker host-persistence recovery (commit 5ba622eca, recorded in RAG-FTS-BUILD-MEMORY-BOUND.docker_recovery). MEASURED NOW: RestartCount=22 over 13.8 days = 1.6 restarts/day — NOT this row's '226 (~10/day)' and NOT the DIAGNOSE row's '135 (~1 restart/19min)'. The drop is NOT a fix: the same 2026-07-15 recovery reset the corpus to 116 rows, and compaction cost is O(corpus). Corpus is now ~11243 rows growing ~103 rows/h (PO RAW re-check 2026-07-29T05:20Z on the RAG-FTS row), so the restart rate is expected to CLIMB BACK as the corpus grows. Do NOT read 1.6/day as 'the restart loop stopped'.",
+        "owner_correction": "Owner moved ops -> developer/dev-rag-service. The archived detail record (docs/data/orch/archive/backlog-detail.json .items[] id=FIX-RAG-SERVICE-CLEAN-EXIT-RESTART-LOOP) carried owner=ops/next_agent=ops; the thin board row omitted both. The fix is now known to be a ~1-line placement change in apps/rag-service/infrastructure/repositories.py, so it is dev work in the rag-service zone, not an ops action. detail_ref dropped on promotion: its content (RestartCount=226, owner ops) is the stale premise this row now supersedes; the archived item is left in place untouched.",
+        "fix_spec": "PRIMARY (this row, size S, ONE file): apps/rag-service/infrastructure/repositories.py compact() — move the counter reset OUT of the success path so it also runs when optimize() raises. Either (a) wrap the reset in a finally:, or (b) set self._insert_count = 0 in the except at :257-259 as well. Prefer (a). Once compact() reliably resets, the unreachable guard at insert() :235 becomes genuinely defensive rather than dead. SECONDARY (same row, cheap, prevents the self-inflicted conflict): the two observed failure modes are BOTH concurrency artifacts ('preempted by concurrent transaction Rewrite', 'manifest not found') — serialize compaction behind an asyncio.Lock so two in-flight POST /index coroutines cannot each launch optimize() on the same table. OUT OF SCOPE for this row: raising the 768m cap (-> FU-RAG-DEPLOY-MEMORY, which owns the 16GB host trade; a blind revert to 1.5g is NOT available, the 06-10 cut solved a real host panic) and retuning _COMPACT_EVERY / reclaiming _indices (-> FIX-RAG-COMPACTION-DISK-AMPLIFICATION).",
+        "acceptance": [
+          "AC1: On a simulated optimize() failure (unit test — inject a raising table.optimize), self._insert_count is reset to 0 exactly once and the next insert does NOT immediately re-fire compact(). This is the whole defect; it MUST be covered by a test, not just observed.",
+          "AC2: Two concurrent insert() coroutines that both cross the _COMPACT_EVERY threshold produce exactly ONE optimize() call, not two.",
+          "AC3: Post-deploy, over a >=6h live window: compaction attempts (grep 'compaction complete|compaction failed' in docker logs) divided into POST /index count is >= _COMPACT_EVERY, i.e. >= 100 inserts per attempt. MEASURED PRE-FIX BASELINE TO BEAT: 770 inserts / 14 attempts = 55. Record the post-fix ratio in the task report.",
+          "AC4: Zero occurrences of 'Retryable commit conflict ... preempted by concurrent transaction Rewrite' in the same window. MEASURED PRE-FIX BASELINE: 3 in 6h.",
+          "AC5: insert() still succeeds when compaction fails — compaction failure stays non-fatal. No behaviour change to search()/hybrid_search()/_build_fts_index().",
+          "AC6: Does NOT claim to close the restart loop. Report RestartCount before/after as an observation only; with a 749.9 MiB baseline in a 768 MiB cap the container stays killable and the residual belongs to FU-RAG-DEPLOY-MEMORY."
+        ],
+        "files_hint": "apps/rag-service/infrastructure/repositories.py (compact() :237-259, insert() :230-235, constants :44/:46, _insert_count init :133). Doc already states the correct contract — docs/architecture/microservice/rag-service/infrastructure.md:24-26 'calls compact() automatically then resets the counter' and :32 'Resets _insert_count to 0'. The DOC IS RIGHT AND THE CODE IS WRONG on the failure path; no doc rewrite needed, but confirm the doc after the fix.",
+        "deploy_gate": "The code change is safe to land on main unattended. DEPLOYING it needs a rag-service container rebuild, which is USER-GATED. supervised:true is set deliberately so BOUNDED-1 does not idle-pick this and rebuild a container currently sitting at 97.65% of its cap. Do NOT docker exec into rag-service to verify — an exec shares the cgroup and is what killed it at 10:12:00Z today. Verify from the host via docker logs / docker stats only.",
+        "related": [
+          "FU-RAG-DEPLOY-MEMORY",
+          "RAG-FTS-BUILD-MEMORY-BOUND",
+          "FIX-RAG-COMPACTION-DISK-AMPLIFICATION",
+          "DIAGNOSE-RAG-SERVICE-RESTART-LOOP"
+        ],
+        "priority_rationale": "Held at P2 deliberately, not by neglect. FOR raising: measured 97.65% cap occupancy with 18.1 MiB headroom, an actively-firing self-amplifying failure burst, and a ~1-line fix. AGAINST: the ready lane already holds 49 rows at P0/P1 with qa=0, so a 50th P1 sits; and this fix is necessary-but-NOT-sufficient — it lowers the frequency of the killer event but cannot close the loop while the fixed model baseline leaves 18 MiB of headroom. A small, fully-specified P2 that moves is worth more than a P1 that queues. Escalate to P1 if RestartCount/day climbs back above ~5 as the corpus grows."
       }
     ],
     "review": [
@@ -16828,9 +16886,31 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-29T09:47:06Z",
+    "last_triaged_at": "2026-07-29T10:16:26Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": []
+    "in_progress": [
+      {
+        "id": "FIX-BCTC-D3C-FOLLOW-UP-RESET-ATTEMPTS",
+        "type": "FIX",
+        "priority": "medium",
+        "status": "IN_PROGRESS",
+        "zone": "apps/mcp-server/",
+        "size": "XS",
+        "title": "Reset reconcile_attempts+attempts when row recycles via Arm-2 grace-period retry",
+        "detail": "QA finding (D3C DONE_VERIFIED review, sprint-SYSTEMIC-REMAKE-P1-qa.md, point 2): bctcQueueEnricherJob.ts's pre-existing Arm-2 grace-period retry (after 7d in enrich_failed, if attempts<6) recycles the row back to pending without zeroing reconcile_attempts (nor the pre-existing attempts column). Result: a recycled row re-enters pek_triggered carrying its old ~8 counter and can re-exhaust to enrich_failed on the very next reconciliation pass instead of getting a fresh ~4h budget. This mirrors an identical pre-existing gap already accepted on the attempts column itself (both are fetch-failure counters, semantically orthogonal). Not a regression from FIX-BCTC-PDFPULL-WIRE-TABLE-EXTRACTION (pre-existing behavior); not silent/data-corrupting (worst case: earlier fail-loud re-terminalization). Must touch two already-approved prior-task files: bctcPdfPullJob.ts (when writing pek_triggered status on initial pull) and bctcQueueEnricherJob.ts (Arm-2 recycle path). Recommend this as a small separate backlog fix to prevent staleness on the recycle path.",
+        "owner": "dev-mcp-server",
+        "depends": [],
+        "created_at": "2026-07-10T14:55:00Z",
+        "created_by": "pm",
+        "note": "Non-blocking follow-up from D3C QA review. Low risk: mirrors pre-existing attempts-column gap already accepted. Candidate for next sprint if backlog has capacity.",
+        "promoted_at": "2026-07-29T10:16:26Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
+        "updated_at": "2026-07-29T10:16:27Z",
+        "claimed_at": "2026-07-29T10:16:26Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)"
+      }
+    ]
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
