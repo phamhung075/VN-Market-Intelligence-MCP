@@ -88,11 +88,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "active_task_id": null,
-    "next_agent": "router",
-    "updated_at": "2026-07-29T17:33:05Z",
-    "updated_by": "dev-frontend"
+    "status": "in_progress",
+    "active_task_id": "FE-PG-BCTC-FRESH-FIX",
+    "next_agent": "dev-frontend",
+    "next_action": "BOUNDED-1 auto-pickup claim of FE-PG-BCTC-FRESH-FIX — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
+    "updated_at": "2026-07-29T17:47:59Z",
+    "updated_by": "dev-team (bounded-1 auto-pickup)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -9638,25 +9639,6 @@
         "updated_at": "2026-07-23T18:08:33Z"
       },
       {
-        "id": "FE-PG-BCTC-FRESH-FIX",
-        "type": "FIX",
-        "title": "Flag stale reports on /dashboard/bctc (Financial Reports hub) — per-item updated_at shown but old reports not visually flagged as stale",
-        "status": "BACKLOG",
-        "priority": "P2",
-        "size": "S",
-        "zone": "apps/frontend/",
-        "sprint": "QUALITY-AUDIT-FRONTEND-COVERAGE",
-        "source": "quality-audit-frontend-page-coverage-20260724",
-        "owner": "dev-frontend",
-        "next_agent": "dev-frontend",
-        "check_id": "FE-PG-BCTC-FRESH",
-        "status_note": "FE-PG-BCTC-FRESH re-check returns PASS",
-        "note": "Quality-audit frontend page-coverage 2026-07-24 (FE-PG-BCTC-FRESH, WARN). GAP: dashboard.bctc renders generated_at + per-item updated_at (recency visible) but no <FreshnessBadge> / stale flag on the report list, so an old brief is not visually flagged. Ref: project_frontend_freshness_transparency. AC: FE-PG-BCTC-FRESH re-check returns PASS (stale reports visually flagged on the hub).",
-        "created_at": "2026-07-24T17:22:24Z",
-        "created_by": "po",
-        "updated_at": "2026-07-24T17:22:24Z"
-      },
-      {
         "id": "FE-PG-INTEL-FRESH-FIX",
         "type": "FIX",
         "title": "Add page-level freshness/staleness indicator to /dashboard/intel (AI Bulletin Hub) — only per-item timestamps, no page-level stale flag",
@@ -17399,9 +17381,34 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-29T17:17:11Z",
+    "last_triaged_at": "2026-07-29T17:47:51Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": []
+    "in_progress": [
+      {
+        "id": "FE-PG-BCTC-FRESH-FIX",
+        "type": "FIX",
+        "title": "Flag stale reports on /dashboard/bctc (Financial Reports hub) — per-item updated_at shown but old reports not visually flagged as stale",
+        "status": "IN_PROGRESS",
+        "priority": "P2",
+        "size": "S",
+        "zone": "apps/frontend/",
+        "sprint": "QUALITY-AUDIT-FRONTEND-COVERAGE",
+        "source": "quality-audit-frontend-page-coverage-20260724",
+        "owner": "dev-frontend",
+        "next_agent": "dev-frontend",
+        "check_id": "FE-PG-BCTC-FRESH",
+        "status_note": "FE-PG-BCTC-FRESH re-check returns PASS",
+        "note": "Quality-audit frontend page-coverage 2026-07-24 (FE-PG-BCTC-FRESH, WARN). GAP: dashboard.bctc renders generated_at + per-item updated_at (recency visible) but no <FreshnessBadge> / stale flag on the report list, so an old brief is not visually flagged. Ref: project_frontend_freshness_transparency. AC: FE-PG-BCTC-FRESH re-check returns PASS (stale reports visually flagged on the hub).",
+        "created_at": "2026-07-24T17:22:24Z",
+        "created_by": "po",
+        "updated_at": "2026-07-29T17:47:59Z",
+        "promoted_at": "2026-07-29T17:47:51Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
+        "claimed_at": "2026-07-29T17:47:59Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)"
+      }
+    ]
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
