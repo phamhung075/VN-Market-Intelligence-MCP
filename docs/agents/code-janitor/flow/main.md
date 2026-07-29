@@ -123,9 +123,11 @@ before this sweep existed — TE-T17). This sweep is write-path-agnostic: it re-
 ```bash
 bash "$PROJECT_ROOT/scripts/agents-flow/notebook-linecap-sweep.sh"
 ```
-Idempotent — safe every cycle. For each file >200L, delegates to
-`scripts/agents-flow/notebook-auto-prune.sh` (same drop-oldest section logic the PostToolUse
-hook uses — single source of truth, no duplicated pruning code) via synthetic PostToolUse JSON.
+Idempotent — safe every cycle. For each file over EITHER the line cap OR the byte cap
+(dual-axis, `docs/data/file-size-caps.json`-driven — FIX-NOTEBOOK-LINECAP-SWEEP-BYTE-BLIND-BACKSTOP,
+2026-07-29), delegates to `scripts/agents-flow/notebook-auto-prune.sh` (same drop-oldest section
+logic the PostToolUse hook uses — single source of truth, no duplicated pruning code) via
+synthetic PostToolUse JSON.
 Emits the same `notebook-unparseable-*`/`notebook-single-section-breach-*` safe-fail signals to
 `docs/signals/` on the rare cases the hook itself cannot safely auto-prune (no `## ` sections,
 or only 1 section left and still over cap) — those require manual review, not auto-action here.
