@@ -11206,6 +11206,105 @@
         "acceptance": "(1) Each of the 18 listed rows ends this epic in exactly one of two terminal states: next_agent set to a real agent that can act on it, or status CLOSED with a one-line reason (superseded-by-<id>, obsolete, or duplicate-of-<id>). No row may remain with next_agent unset. (2) Any row closed as duplicate/superseded names the surviving row id. (3) This epic mints NO new task rows - if triage uncovers genuinely new work, it is recorded in the epic note for PO to mint separately, never self-minted, so the epic cannot grow the lane it is draining. (4) A stale-check is run first per the known stale-backlog hazard: for each row, git log --since=<its created_at> over the file it names, to catch rows already fixed by later unrelated commits before spending any triage effort on them. (5) Final state reported as a count: N assigned, M closed, N+M=18.",
         "note": "Deliberately scoped to disposition-only. Do not fix any detector inside this epic - the point is to make the lane drainable, not to drain it in one pass.",
         "updated_at": "2026-07-29T02:22:16Z"
+      },
+      {
+        "id": "TASK-DEVTEAM-IDLE-CHAIN-1-SCHEMA-UTILITIES",
+        "title": "Schema + utility jq functions for aged round-robin: OrchStateSchema.dev_team_idle_chain, rotation_selected(), rotation-stamp writer",
+        "type": "TASK",
+        "status": "BACKLOG",
+        "priority": "high",
+        "size": "S",
+        "zone": "apps/mcp-server/src/infrastructure/",
+        "owner": "dev-mcp-server",
+        "depends": [],
+        "files": [
+          "apps/mcp-server/src/infrastructure/orchStateSchema.ts",
+          "scripts/lib/devteam-eligibility.jq",
+          "scripts/devteam-idle-chain-stamp.jq"
+        ],
+        "created_at": "2026-07-29T00:00:00Z",
+        "note": "AC-1 pre-requisite. (1) Add dev_team_idle_chain: z.record(z.unknown()).optional() to OrchStateSchema root (§2.1 of brief). (2) Add rotation_selected($doc) function to devteam-eligibility.jq following the 5-consumer selection algorithm (§2.2). (3) Create new devteam-idle-chain-stamp.jq for the per-tick stamp-update write (§2.3). All three are tightly coupled and must ship together. No changes to dev-team/flow docs (plan_only). Acceptance: tsc clean, schema loads without Zod errors, jq -n produces valid JSON outputs.",
+        "handoff": "docs/handoffs/TASK-DEVTEAM-IDLE-CHAIN-1-SCHEMA-UTILITIES.md",
+        "updated_at": "2026-07-29T05:34:15Z"
+      },
+      {
+        "id": "TASK-DEVTEAM-IDLE-CHAIN-2-MAIN-FLOW",
+        "title": "Replace fixed BOUNDED-1→SLS→RLC→QA-Drain→Step1 with aged round-robin rotation in docs/agents/dev-team/flow/main.md",
+        "type": "TASK",
+        "status": "BACKLOG",
+        "priority": "high",
+        "size": "L",
+        "zone": "docs/agents/dev-team/flow/",
+        "owner": "dev-team",
+        "depends": [
+          "TASK-DEVTEAM-IDLE-CHAIN-1-SCHEMA-UTILITIES"
+        ],
+        "files": [
+          "docs/agents/dev-team/flow/main.md"
+        ],
+        "created_at": "2026-07-29T00:00:00Z",
+        "note": "AC-1 core. (1) Replace §496-686 (fixed BOUNDED-1→SLS→RLC→QA-Drain fall-through) with rotation-select. (2) Dispatch only selected consumer's existing block verbatim (zero changes to per-lane gates). (3) After consumer block runs, stamp-update via scripts/devteam-idle-chain-stamp.jq. (4) Revised Session Gate (§2.5) — keep truly-idle predicate but evaluate it. (5) Step 1 gains durable-inbox read/clear. Acceptance: git diff shows §496-686 replaced, Step 1 reads .dev_team_idle_chain.pending_triage_inbox, BOUNDED-1/SLS/RLC/QA-Drain blocks byte-unchanged.",
+        "updated_at": "2026-07-29T05:34:15Z"
+      },
+      {
+        "id": "TASK-DEVTEAM-IDLE-CHAIN-3-DRAIN-DURABILITY",
+        "title": "Reorder §0a-1 and §0a-D signal drain for durability: durable-append-before-destructive-action in both file and dashboard channels",
+        "type": "TASK",
+        "status": "BACKLOG",
+        "priority": "high",
+        "size": "M",
+        "zone": "scripts/agents-flow/",
+        "owner": "dev-mcp-server",
+        "depends": [
+          "TASK-DEVTEAM-IDLE-CHAIN-2-MAIN-FLOW"
+        ],
+        "files": [
+          "docs/agents/dev-team/flow/drain-signals.md",
+          "scripts/agents-flow/drain-signals.js"
+        ],
+        "created_at": "2026-07-29T00:00:00Z",
+        "note": "AC-2 core. (1) Reorder both §0a-1 (file) and §0a-D (dashboard) per §3.1 logic: dedup-check → build envelope → ONE batched durable-inbox append, verified success → ONLY THEN destructive action. (2) Update drain-signals.md documentation. (3) Implement in drain-signals.js. Payload inlined, never a pointer. (4) Destructive action withheld on orch-apply.sh write failure. Acceptance: drain-signals.test.js all pass, AC-2 scenario leaves source files/rows untouched while inbox has all N entries.",
+        "updated_at": "2026-07-29T05:34:15Z"
+      },
+      {
+        "id": "TASK-DEVTEAM-IDLE-CHAIN-4-TESTS-AC1-AC2-AC4",
+        "title": "Test instruments for AC-1 (fairness), AC-2 (durability negative control), AC-4 (satisfiability extension): extend devteam-dispatch-gate-satisfiability.sh + new mkdtemp harness",
+        "type": "TASK",
+        "status": "BACKLOG",
+        "priority": "high",
+        "size": "M",
+        "zone": "scripts/audits/",
+        "owner": "qa-responder",
+        "depends": [
+          "TASK-DEVTEAM-IDLE-CHAIN-3-DRAIN-DURABILITY"
+        ],
+        "files": [
+          "scripts/audits/devteam-dispatch-gate-satisfiability.sh",
+          "scripts/agents-flow/drain-signals.test.js"
+        ],
+        "created_at": "2026-07-29T00:00:00Z",
+        "note": "AC-1/AC-2/AC-4 deliverable. (1) AC-1: extend devteam-dispatch-gate-satisfiability.sh to simulate N=6+ consecutive idle ticks, assert each of 5 consumers selected >=once within 5 ticks, no id selected twice before all 5 have each been selected once. (2) AC-2: NEW isolated mkdtemp harness (drain-signals.test.js pattern). Scenarios: (i) durable-append succeeds, files gone/fingerprinted, inbox has all N; (ii) Step1-selected reads inbox + clears; (iii) durable-append FAILS — no destructive action. (3) AC-4 is SAME devteam-dispatch-gate-satisfiability.sh extended. Acceptance: AC-1 assertions all PASS, AC-2 all 3 scenarios PASS, AC-4 fires lanes correctly per rotation.",
+        "updated_at": "2026-07-29T05:34:15Z"
+      },
+      {
+        "id": "TASK-DEVTEAM-IDLE-CHAIN-5-CONSERVATION-DOCS",
+        "title": "Extend orch-conservation-check for new pending_triage_inbox, add script pointers to dev-standards.md, AC-3 git-diff verification",
+        "type": "TASK",
+        "status": "BACKLOG",
+        "priority": "high",
+        "size": "S",
+        "zone": "scripts/",
+        "owner": "dev-mcp-server",
+        "depends": [
+          "TASK-DEVTEAM-IDLE-CHAIN-4-TESTS-AC1-AC2-AC4"
+        ],
+        "files": [
+          "scripts/orch-conservation-check.mjs",
+          "docs/policies/dev-standards.md"
+        ],
+        "created_at": "2026-07-29T00:00:00Z",
+        "note": "AC-3 + conservation gap closure. (1) Extend signal_total(doc) in orch-conservation-check.mjs to include length(dev_team_idle_chain.pending_triage_inbox // []). (2) Add Script Persistence pointer entries to dev-standards.md for new/changed scripts. (3) AC-3 verification: git diff on BOUNDED-1 scripts must be EMPTY, WIP gate line must be UNCHANGED. Acceptance: conservation-guard passes with new inbox length, dev-standards.md pointers added, git diff on BOUNDED-1 empty, WIP gate line unchanged.",
+        "updated_at": "2026-07-29T05:34:15Z"
       }
     ],
     "closed_sprints": [
