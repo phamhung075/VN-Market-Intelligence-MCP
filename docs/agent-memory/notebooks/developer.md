@@ -1,22 +1,6 @@
 # Developer — Notebook
 
-**Last updated:** 2026-07-29 | **Cycle:** ALPHA-S3-DIVERGENCE-SCREEN-V1
-
-## Session 2026-07-29 — FIX-AUDITOR-MEMACK-HEADROOM-FLOOR-AND-DEAD-TRACKEDBY — REVIEW
-
-**Task:** BOUNDED-1 auto-pickup, `cross-service/` (outside all dev-* zones), P1, sprint INFRA-AUDIT. `auditor-tier1-probe.sh`'s mem/launchd ACK ledgers had two stacked defects: (1) `tracked_by` read by nothing — an ACK could never expire past its tracked fix's DONE_VERIFIED; (2) the mem ACK predicate was pure `pct>=85`, no absolute-headroom floor, so 85.01% and 99.99% suppressed identically. PO measured live consequence: rag-service ACK-suppressed at 97.11% (22.2MiB free, falling) while Tier-1 reported ALL_GREEN.
-
-**Actions taken:** (a) `MEM_FLOOR_MIB=40` + `_mem_headroom_mib()` (cap*(100-pct)/100, `LC_ALL=C LC_NUMERIC=C` pinned — caught the SAME comma-decimal awk bug already documented in `verify-a30-mcp-memory-reclamation.sh`, live on this box's fr_FR locale). Calibrated 2x the ~20MiB measured rag-service `compact()` burst (`FIX-RAG-SERVICE-CLEAN-EXIT-RESTART-LOOP`), not the cap, per PO's calibration note — pdf-extractor's own (larger, undiagnosed, no ack entry yet) burst doesn't constrain it today. (b) New shared `_task_status_in_orch_state()` — resolves tracked_by against every task_board lane (8 array lanes + active/closed_sprints nested); ABSENT or DONE_VERIFIED = STALE ACK. Fail-loud (rc=2) on missing/unparseable orch-state.json, never `2>/dev/null || true`. (c) Wired into both `_mem_container_acked` and `_launchd_label_acked` (same dead-field defect, 3 live launchd entries), per-entry — one stale sibling ack doesn't kill a live one.
-
-**Verification:** New T44-T53 (26 assertions, 167/167 total, was 141/141) — floor boundary either side of 40MiB, DONE_VERIFIED + ABSENT staleness both arms, missing-file + malformed-JSON fail-loud both arms, mixed live+stale sibling. Added `ORCH_STATE_PATH` test seam — proved it was MISSING first: T36/T40 were silently resolving against the REAL live board pre-fix, passing only by coincidence (those 3 ids happen non-terminal today). RED via `git stash`: old script + new tests crash `unbound variable: ORCH_STATE`. `shellcheck` clean (2 pre-existing warnings, unchanged). AC6 raw evidence: real script vs live fleet (`date -u` 2026-07-29T12:09:09Z) — verdict FAILURE, `rag-service(99.22%, 6.0MiB-free, BELOW-FLOOR(floor=40MiB))`.
-
-**Operational consequence (flagged, not fixed):** shipping this flips the LIVE rag-service ACK from suppressed to FAILURE immediately — real headroom is ~6-11MiB now. INTENDED per AC2, not a regression. Updated `docs/data/auditor-launchd-ack.json` `_comment`/`_comment_acked_memory` (staleness now code-enforced) + a `floor_enforcement_20260729` field on the rag-service entry. Did not touch rag-service's memory (out of `does_not_cover` scope) or widen the floor to silence the new FAILURE.
-
-**Board:** `task_board.in_progress[FIX-AUDITOR-MEMACK-HEADROOM-FLOOR-AND-DEAD-TRACKEDBY]` → `review` (`next_agent: qa`), `.head` synced to idle, via `orch-apply.sh`.
-
-**Simplicity gate:** clean — 2 new helper functions + 1 constant, all directly load-bearing for AC1-3, no speculative abstraction (Q1-Q4 all NO).
-
-Zone health: no drift detected.
+**Last updated:** 2026-07-29 | **Cycle:** FIX-ORCHSTATE-CONSERVATION-GUARD-QA-LANE-BLIND
 
 ## Session 2026-07-29 — FIX-DEVTEAM-EPIC-WRAPPER-AUTOCLOSE-SWEEP — REVIEW
 
@@ -39,5 +23,19 @@ Zone health: no drift detected.
 **Recon (not a formal design pass):** All 4 required legs already have wired reuse points: `computeForeignAccumRank`/`computeRelativeStrength` (`infrastructure/microservices/clients.ts` — HTTP to stock-price:5000/technical-analysis:5003, both already return per-ticker z-score/rank/label); `rag_analyses` per-ticker sentiment (`affected_actions LIKE '%code%'`, `sentimentTrendTools.ts` precedent) + `mention_velocity` (`mentionVelocityStore.ts`) are local mcp-server tables. `alertDigestJob.ts`/`foreignFlowAlertJob.ts` is the correct existing scan→Telegram-digest reuse target. Single-zone `apps/mcp-server/` confirmed feasible — mirrors 5/5 sibling ALPHA-S* zone corrections architect already made this sprint for the identical reason.
 
 **Decision:** Did NOT implement. This is a NEW composite/divergence detector (ranking formula + per-leg honest-null thin-data threshold + digest format) feeding a live external Telegram digest — same class as `getMoneyRadarComposite.ts`, which needed a dedicated architect brief despite also reusing already-wired tools. Every ALPHA-S* task this sprint, including the "lean" ones, got an architect brief first — no exception found. Set `status:BLOCKED`, `next_agent:architect` via `orch-apply.sh`; `.head` reset idle. No code changed.
+
+Zone health: no drift detected.
+
+## Session 2026-07-29 — FIX-ORCHSTATE-CONSERVATION-GUARD-QA-LANE-BLIND — REVIEW
+
+**Task:** dev-team dispatch (BOUNDED-1 pickup), `scripts/` (owned by developer, no dev-* zone match), P2. `scripts/orch-conservation-check.mjs`'s `FLAT_TASK_LANES` omitted `'qa'`, so `taskTotal()` never summed `task_board.qa[]` into the whole-board magnitude the floor-ratio circuit-breaker (gates every `orch-apply.sh` write) compares — a catastrophic `qa[]` collapse was invisible to the guard, now live since `qa[]` is actively populated by the Review-Lane QA-Drain mechanism.
+
+**Actions taken:** Added `'qa'` to `FLAT_TASK_LANES` (`scripts/orch-conservation-check.mjs:70`) and synced the script's own literal-formula header comment (the only place the formula is enumerated — `dev-standards.md` only names the metric, never lists lanes, confirmed by grep, so it needed no edit). Left the historical `2026-07-10-auditor-orchstate-conservation-guard.md` design brief untouched (single-commit history, frozen point-in-time snapshot, `dev-standards.md` is the living SSOT that cites it).
+
+**Verification:** TDD RED→GREEN, extended (not duplicated) the existing `scripts/test/orch-apply-wrapper-tests.sh` conservation-guard section with QA-COLLAPSE (negative control — dedicated fixture 10 backlog + 50 qa rows, qa[] wiped, 60→10 crosses the 0.5 floor, must reject) + QA-APPEND-HAPPY (regression guard — normal qa[] append unaffected). Confirmed RED pre-fix: `QA-COLLAPSE — expected exit 1, got 0` (2 FAIL — exact class of the reported gap, live/candidate both silently excluded qa[] so no drop was ever detected). Post-fix: 48/48 PASS, real live board hash asserted unchanged on every case.
+
+**Board:** `task_board.in_progress[FIX-ORCHSTATE-CONSERVATION-GUARD-QA-LANE-BLIND]` → `review` (`next_agent: qa`), stale `promoted_at/promoted_by/promotion_note/claimed_at/claimed_by` markers stripped, `.head` reset to idle (`next_agent: router`), all in the SAME `orch-apply.sh` write (conservation 701→701, exit 0).
+
+**Simplicity gate:** clean — 1 array-literal element + 1 header-comment sync + test extension, no refactor beyond the stated scope (Q1-Q4 all NO).
 
 Zone health: no drift detected.
