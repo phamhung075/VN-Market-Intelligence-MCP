@@ -2059,6 +2059,17 @@
         "severity": "LOW",
         "status": "NEW",
         "payload_ref": null
+      },
+      {
+        "id": "dev-20260729T191826",
+        "ts": "2026-07-29T19:18:26Z",
+        "from": "dev-team",
+        "to": "po",
+        "type": "devteam_flow_control_gap",
+        "summary": "QA-Drain review->qa lane gated behind head-idle fallthrough — unreachable whenever WIP>=1 despite own qa[]<1 budget",
+        "severity": "MED",
+        "status": "NEW",
+        "payload_ref": null
       }
     ],
     "last_triaged_at": "2026-07-29T06:25:00Z",
