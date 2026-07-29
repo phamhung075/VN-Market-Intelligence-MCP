@@ -1,6 +1,16 @@
 # Dev Team — Sprint Boundary Notebook
 
-**Written:** 2026-07-29T14:20Z
+**Written:** 2026-07-29T14:31Z
+
+## cycle-20260729T1431Z-verify — RAW-verified architect's ruling on FIX-COWORK-DISPATCH-ROUTER-INTENT-MUTEX-BYPASS; clean, all claims confirmed, lock released
+
+- **BGFAN-1 RAW-verification, all claims confirmed real**: commit `89d4b4340` real, on HEAD; diff matches self-report exactly (ruled Candidate A refined over B and over BA's literal Candidate A; multi-slot resolution; board note + brief).
+- **Design brief exists**: `docs/architecture-briefs/2026-07-29-fix-cowork-dispatch-router-intent-mutex-bypass-design.md` (17636 bytes). Decision journal `STEP architect-S16` entry present, matches summary word-for-word.
+- **Source claims independently verified, not trusted on assertion**: read `coordinationStore.ts`/`coordinationTools.ts` myself — confirmed `cron:cowork:<TICK>`/`cowork-slot:<slot_id>`/`published:<slot_id>:<period>` all share one `task_kind: 'cowork-slot'` CHECK-constraint value, and `task_list_held` genuinely supports `kind`/`owner_agent`/`expired` filter args as claimed. Ruling's core mechanism (1 call + client-side prefix match, zero apps/mcp-server changes) is real, not aspirational.
+- **Board row correct**: `next_agent:"pm"`, `architect_completed_at`/`architect_brief` stamped, ruling appended verbatim to `.note`, `supervised:true`/`supervised_note` UNCHANGED (hold correctly preserved), siblings explicitly not touched per its own note.
+- **`.head` correctly untouched** by architect (still shows dev-team's own SLS-claim stamp from 14:21:37Z) — consistent with the SLS contract that only dev-team owns `.head`.
+- **Context-bloat FYI claim also checked**: signal file genuinely exists; journal genuinely 41291 bytes (over 36000 cap) — correctly routed to claude-manager-helper, correctly out of architect's own scope.
+- No discrepancies found. Released sprint-task lock `task:FIX-COWORK-DISPATCH-ROUTER-INTENT-MUTEX-BYPASS`. **NEXT: pm** — decompose per brief's file-level table (CLAUDE.md 1-line diff + SKILL.md Step 2.4 MUST land same commit per FR-6). Not yet dispatched — awaiting next tick or explicit trigger.
 
 ## cycle-20260729T1420Z — Tick 14:07Z: drained 3 signals to po, applied the documented epic-wrapper decomposition-closeout convention to FIX-DEVTEAM-IDLE-CHAIN-STEP1-TRIAGE-STARVATION (3rd gap found in the same dispatch chain), freed WIP 1->0
 
@@ -20,9 +30,3 @@
 - **Standing takeaway**: self-reported "reconciliation complete" / "conservation unchanged" claims are not evidence of correctness by themselves — a no-op diff trivially conserves totals. Diff the actual commit content against the specific claims made before trusting a fix-completion report.
 - Sprint-task lock `task:FIX-DEVTEAM-IDLE-CHAIN-STEP1-TRIAGE-STARVATION` released — decomposition genuinely reconciled now; the epic itself (P1A/P2A/MAIN-COMPLETION/tests) remains open in backlog for normal BOUNDED-1/RLC pickup.
 
-## cycle-20260729T1355Z-verify — RAW-verified pm's 7-task decomposition; caught a DUPLICATE-DECOMPOSITION bug (parent row dispatched to pm twice — ~05:46Z tick and 13:37Z tick — producing 2 overlapping child-task sets)
-
-- **BGFAN-1 RAW-verification**: commit `400a3761f` real, on HEAD. 7 handoff files + decision journal genuinely exist on disk, matching the self-report.
-- **Not a clean completion — found a genuine duplicate-dispatch bug**: `git log` shows an EARLIER commit `6617edbd4` (this session, ~05:46Z tick) already decomposed this SAME parent row into 5 tasks (`TASK-DEVTEAM-IDLE-CHAIN-1..5`). Task 1 (`SCHEMA-UTILITIES`) isn't just backlogged — it's already **REVIEW**, with real shipped code confirmed on disk: `dev_team_idle_chain` on `OrchStateSchema`, `rotation_selected()` in `scripts/lib/devteam-eligibility.jq`, `scripts/devteam-idle-chain-stamp.jq`. Exact same scope as pm's brand-new `FIX-DEVTEAM-IDLE-CHAIN-S1-SCHEMA-SELECTION` (fresh in backlog). The other 4 old tasks (`2-MAIN-FLOW`/`3-DRAIN-DURABILITY`/`4-TESTS`/`5-CONSERVATION-DOCS`) also substantially overlap the 6 remaining new tasks (`P1A/P2A/P1B/MAIN-COMPLETION/TEST-FAIRNESS/TEST-DURABLE`) — a live duplicate-work landmine if BOUNDED-1/RLC picks either set.
-- **Root cause**: parent row's `plan_only:true/supervised:true/next_agent:pm` were never flipped after the first pm decomposition completed, so SLS's eligibility check saw the row as fresh again this tick and re-claimed+re-dispatched pm blind to the earlier decomposition. Matches [[feedback_pipeline_resume_stale_placeholder_duplicate_spawn_risk]].
-- **Declined to release the lock or report clean**: 12 total child tasks now exist across 2 overlapping sets — reconciling which supersedes which needs pm's own judgment (it authored both sets), not a mechanical board fix. Re-spawned `pm` (background) with the full finding to merge into ONE canonical task set and stamp the parent row so a 3rd SLS pick can't recur. Sprint-task lock held pending verified reconciliation.
