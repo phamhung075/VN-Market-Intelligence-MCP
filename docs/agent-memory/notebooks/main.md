@@ -59,6 +59,19 @@
 
 
 
+## cycle-20260729T0007Z — QA-Drain claimed stale UC-GCP-P7 (review[]→qa[]→done_verified[], WIP2 gated closed); 17 signals routed to PO but Step 1 deferred (QA-Drain fired first, JUMP TO end); 2 bg agents in flight from prior tick
+
+- **Preflight RUN** (`dev-team-tick-preflight.sh`): SF-1 + fire-election locks held; Step 5.5 cold-evict side-effect ran automatically (terminal rows → archive), self-committed `30d6dacc7`.
+- **Drain (0a-A + 0a-D)**: 15 file-signals processed to `routed-to-po` (canonical `drain-signals.js`); 2 dashboard `.signal_queue.rows[]` addressed `to:"po"` marked READ (a 3rd row addressed `to:"agents-architect"` correctly left untouched for that agent's own inbox). Committed `bb6126444`.
+- **CI-health-probe**: GREEN on HEAD `084f7652e` (run 30409525475) — no signal.
+- **Pipeline-resume**: n/a, head was idle entering the tick.
+- **Head-idle chain**: BOUNDED-1/SLS/RLC all gate-closed (`in_progress|length`=2, both slots held by the still-in-flight prior-tick developer batch). Review-Lane QA-Drain's independent cap (`qa|length`=0<1) fired: claimed oldest eligible `review[]` row `UC-GCP-P7` (`/commit` skill rescope, `branch:null`, stale since 2026-07-23), moved review[]→qa[], updated `.head`, spawned **qa** in `mode=verify-committed`. Committed `82233859e`.
+- **QA-Drain is a terminal jump-to-end for the tick** — did NOT fall through to Step 1 PO triage despite 17 pendingSignals queued (15 file + 2 dashboard). Deferred to a future tick that reaches head-idle past BOUNDED-1/SLS/RLC/QA-Drain unclaimed.
+- **Session Exit**: SF-1 + fire-election both released `{"ok":true,"released":1}`.
+- **Post-tick (same session, next turn)**: qa returned APPROVED/DONE_VERIFIED for UC-GCP-P7 — independently RAW-verified (not trusted from self-report): both fix commits `a5202512c`/`2cd532595` confirmed on `main` ancestry, board row exists in exactly one lane (`done_verified`), top-level `.head` correctly idle (checked `.task_board.head` stayed the deprecated stub — no re-inflation of the recurring [[feedback_orchstate_dual_head_keys_toplevel_authoritative]] landmine), DJ-GATE-1 entry present, 2 of 5 acceptance items spot-checked directly (commit.md 1-line pointer, Co-Authored-By hardcode removed). No corrective action needed. Commit `e29aff111` (qa's own).
+- **2 bg agents still in flight, no notification yet**: `aee6dbd72a3d34b47` developer (notebook-linecap-sweep + mock-guard-scope batch, uncommitted WIP observed in tree, left untouched per commit-mutex discipline).
+- **Board**: WIP unchanged this tick (developer batch still holds both in_progress slots); `UC-GCP-P7` now done_verified.
+
 ## cycle-20260728T2307Z — CI RED cdd5fa5ad discovered via CI-health-probe (root-caused+dispatched); PO triage BATCH×2 dispatched; 3 stale ready[] FIX/UNBLOCK from prior tick dispatched (1 time-critical); mock-guard + stranded-state signals routed; 5 agents fanned out background
 
 - **CI-health-probe found genuine RED on main** (6 consecutive red runs, `bun test` job) → drained same-tick (2nd drain pass) → spawned **po** triage (bg, `task:po-triage-20260728`). PO root-caused+reproduced locally (not inferred): `emit-pressure-state.test.ts` asserts a macOS-only host property (no `free` binary → null) that fails on every ubuntu-latest CI runner; production code is correct, fix is test-only. PO minted `CI-RED-cdd5fa5a-FIX` (P0, ready) + self-caught-and-reverted an erroneous unblock of the `FIX-COMMIT-PATH-PEER-INDEX-SWEEP-GUARD` epic (null-triple blocked_reason ≠ stranded — parked state was in named fields). Router independently RAW-verified the test file lines + the `ci-per-file-isolation.sh` log-deletion claim before trusting the report; caught one inaccuracy (PO claimed an AC-3 fold into `CI-PERFILE-STRUCTURAL-MITIGATION` that did not actually land on that row — noted, not blocking).
