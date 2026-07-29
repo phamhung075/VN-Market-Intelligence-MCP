@@ -413,11 +413,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "active_task_id": null,
-    "next_agent": "router",
-    "updated_at": "2026-07-29T07:01:29Z",
-    "updated_by": "dev-mcp-server"
+    "status": "in_progress",
+    "active_task_id": "FIX-AUDITOR-HEARTBEAT-OUT-OF-CONTRACT-AGENT-WRITE-TIER1",
+    "next_agent": "developer",
+    "next_action": "BOUNDED-1 auto-pickup claim of FIX-AUDITOR-HEARTBEAT-OUT-OF-CONTRACT-AGENT-WRITE-TIER1 — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
+    "updated_at": "2026-07-29T07:16:15Z",
+    "updated_by": "dev-team (bounded-1 auto-pickup)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -4783,30 +4784,6 @@
         "acceptance": "(1) The skill states an explicit IMMUTABILITY INVARIANT: sections retained across a cycle are byte-identical before and after. The ONLY authorized mutations are dropping a whole oldest block, the AC-2b intra-prune of a named permanent accumulator, and trimming the CURRENT cycle's own section. (2) AC-2 and AC-3 Step 1c are reconciled into one rule and the doc states which is normative. (3) The cap-pressure ladder ordering is made explicit and mandatory: trim own section to <=60L FIRST, then drop oldest whole blocks, NEVER mutate a retained section to make room. (4) A MECHANICAL check - runnable by the agent or a hook - that compares retained-section bytes before and after the settled write and fails if any surviving section changed. This is the AC that makes the class detectable at all; do not drop it for being harder than the prose ACs. (5) SCOPE FENCE: do NOT fix this in scripts/agents-flow/notebook-auto-prune.sh. That is a DIFFERENT actuator (a PostToolUse hook running AFTER the write) and already carries its own 4-row REVIEW cluster: FIX-NOTEBOOK-AUTOPRUNE-REGEX-HEADING-MISMATCH, FIX-NOTEBOOK-PRUNER-LINE-ONLY-SETPOINT-BYTE-CAP-NEVER-CONVERGES, FIX-NOTEBOOK-LINECAP-SWEEP-BYTE-BLIND-BACKSTOP, FIX-ALERT-COMMANDER-NOTEBOOK-SINGLE-BLOB-UNPRUNABLE. This row is the agent's IN-MEMORY compose step, AC-3 Step 1, which runs BEFORE the hook ever sees the file. (6) The fix applies to the shared skill and therefore to all 37 APPEND-class agents in AC-6, not to system-auditor alone.",
         "blast_radius": ".claude/skills/notebook-write/SKILL.md is the shared end-of-cycle write path for the 37 agents listed in its AC-6 APPEND class. If the compose step can rewrite retained history for system-auditor it can do so for all of them, and durable audit history is the one artifact the fleet cannot reconstruct.",
         "related_memory": "feedback_agent_notebook, feedback_waterfall_lazy_load, feedback_edit_tool_hook_silently_strips_multiline.",
-        "updated_at": "2026-07-29T06:26:19Z"
-      },
-      {
-        "id": "FIX-AUDITOR-HEARTBEAT-OUT-OF-CONTRACT-AGENT-WRITE-TIER1",
-        "type": "FIX",
-        "status": "BACKLOG",
-        "priority": "P2",
-        "size": "S",
-        "zone": "cross-service/",
-        "owner": "developer",
-        "next_agent": "developer",
-        "supervised": false,
-        "depends": [],
-        "created_at": "2026-07-29T06:25:00Z",
-        "created_by": "po/triage-20260729T0625-auditor-cycle-defect-cluster",
-        "source": "system-auditor Tier-1 cycle 2026-07-29T06:08:22Z; live file read by PO at 06:16Z",
-        "title": "system-auditor wrote docs/data/auditor-tier1-last-healthy.json on a Tier-1 DEGRADED cycle - a write its own flow explicitly excludes from Tier-1 - collapsing the file's schema and advancing a last-HEALTHY marker on a non-healthy cycle",
-        "root_cause": "docs/agents/system-auditor/flow/main.md:748-755 gates the agent-side heartbeat write on AUDIT_TIER being 2 or 3 and says verbatim '(Tier-1 is untouched - it keeps its own _write_heartbeat inside scripts/agents-flow/auditor-tier1-probe.sh)'. The gated block builds HB_FILE=\"$PROJECT_ROOT/docs/data/auditor-tier${AUDIT_TIER}-last-healthy.json\", so it can only ever produce a tier2 or tier3 filename. The 06:08Z cycle ran AUDIT_TIER=1 and wrote the TIER-1 file anyway. There is no authorizing step for that write anywhere in the flow - this is not a mis-gated block, it is an action with no spec provenance at all. Same class as FIX-AUDITOR-CALLER-PROSE-OVERRIDES-DOCUMENTED-DETECTOR-THRESHOLD: the written contract did not bind behaviour.",
-        "consequence_a_schema_collapse": "The canonical Tier-1 writer scripts/agents-flow/auditor-tier1-probe.sh:436 emits jq -n '{last_healthy_at:$ts, checks:$checks}'. The committed HEAD version of the file carried checks{docker_ps, health_3000, health_3001, disk, mem_creep, launchd_agents} with last_healthy_at 2026-07-25T16:03:25Z. The live file is now {\"last_healthy_at\": \"2026-07-29T06:11:29Z\"} only - the agent applied the TIER-2/3 shape (main.md:753, '{last_healthy_at:$ts}') to a Tier-1 file. orch-sentinel OH-3.4 in docs/agents/orch-sentinel/flow/dim-oh3-auditor-blindspot.md does check exactly this shape, but at severity INFO with an explicit log-once instruction because bare-shape is recorded there as a KNOWN LIMITATION - so a genuine regression is absorbed as an already-known condition and never surfaces.",
-        "consequence_b_semantic_falsehood": "The Tier-1 writer advances the marker ONLY on its ALL_GREEN branch, which is what makes the name last_healthy true at Tier 1. The 06:08Z cycle's own reported Status was DEGRADED with 1 WARN anomaly, and it advanced the marker to 06:11:29Z.",
-        "scope_correction_do_not_skip": "The incoming report claimed orch-sentinel OH-3 will now mis-score auditor blind-spots off this timestamp. PO COULD NOT CONFIRM THAT and it should not be used to size the row. OH-3.4 reads SHAPE only and never computes an age - independently stated in FIX-AUDITOR-TIER1-FRESHNESS-CHECK-RELOCATE-TO-SENTINEL .why_the_obvious_fixes_are_wrong ('OH-3.4 reads the heartbeat files but checks SHAPE only, severity INFO, and never computes an age'). The live timestamp consumer is the Tier-1 cron pre-gate at .claude/skills/cron-detect-loop/register.md:84, whose age branch is already established by that same row to be inert on every path it can take (on ALL_GREEN the age is ~0 by construction; on FAILURE the verdict forces the spawn unaided). So there is NO confirmed live suppression today, and P2 rather than P1 reflects that.",
-        "real_exposure_is_forward": "FIX-AUDITOR-TIER1-FRESHNESS-CHECK-RELOCATE-TO-SENTINEL (status READY, next_agent developer) relocates cron-dormancy detection into a NEW orch-sentinel OH-3.5 that reads exactly these heartbeat files and computes their age. If any out-of-contract writer can stamp them, OH-3.5 is blind on the day it ships - and blind specifically when a cycle is degraded, which is when it matters. SEQUENCE THIS ROW BEFORE OR WITH THAT ONE. Coordinate; do not land OH-3.5 against an unprotected input.",
-        "acceptance": "(1) The sole-writer invariant for docs/data/auditor-tier{1,2,3}-last-healthy.json is written in ONE named place and cited from both writers (the probe script and system-auditor main.md), so neither can drift. (2) TIER-1: only scripts/agents-flow/auditor-tier1-probe.sh writes the tier-1 file. Add a guard that makes an agent-side tier-1 write fail LOUDLY rather than silently succeed - a prose prohibition already exists at main.md:748 and was not sufficient, so a repeat of the prose is not an acceptable fix. (3) SHAPE: a writer must emit the full documented shape for the tier it writes; a write that would reduce {last_healthy_at, checks} to {last_healthy_at} is rejected. Consider whether OH-3.4 should distinguish 'bare from birth' (known limitation, INFO) from 'was richer, now bare' (a regression) - the current log-once INFO framing cannot. (4) SEMANTIC: state and enforce that the marker advances ONLY on a green verdict. RESOLVE A REAL DIVERGENCE rather than papering over it - main.md:748 says the Tier-2/3 write 'Runs unconditionally every Tier-2/3 cycle', so at Tier 2/3 the file is a 'a real audit completed' marker while at Tier 1 it is a 'the system was healthy' marker, under one filename family that says healthy. Pick one semantic for the family and rename or re-gate accordingly. (5) Repair the live file - restore checks{} or state why a stub is tolerable until the next genuine ALL_GREEN probe run rewrites it. This is a data file, not infrastructure; the PLAN-ONLY infra fence does not block it. (6) DO NOT port suppress_heartbeat to Tier-1 and DO NOT drop the AUDIT_TIER 2/3 gate at main.md:750. FIX-AUDITOR-TIER1-FRESHNESS-CHECK-RELOCATE-TO-SENTINEL .why_the_obvious_fixes_are_wrong already rejects both directions with reasons - READ IT FIRST.",
-        "related_memory": "feedback_cron_armed_but_wrong_prompt_variant, feedback_passive_health_masks_dead_data, feedback_reader_writes_its_own_trigger_field_check_is_vacuous.",
         "updated_at": "2026-07-29T06:26:19Z"
       },
       {
@@ -16906,9 +16883,39 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-29T06:25:00Z",
-    "last_triaged_by": "po/triage-20260729T0625-auditor-cycle-defect-cluster",
-    "in_progress": []
+    "last_triaged_at": "2026-07-29T07:15:53Z",
+    "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
+    "in_progress": [
+      {
+        "id": "FIX-AUDITOR-HEARTBEAT-OUT-OF-CONTRACT-AGENT-WRITE-TIER1",
+        "type": "FIX",
+        "status": "IN_PROGRESS",
+        "priority": "P2",
+        "size": "S",
+        "zone": "cross-service/",
+        "owner": "developer",
+        "next_agent": "developer",
+        "supervised": false,
+        "depends": [],
+        "created_at": "2026-07-29T06:25:00Z",
+        "created_by": "po/triage-20260729T0625-auditor-cycle-defect-cluster",
+        "source": "system-auditor Tier-1 cycle 2026-07-29T06:08:22Z; live file read by PO at 06:16Z",
+        "title": "system-auditor wrote docs/data/auditor-tier1-last-healthy.json on a Tier-1 DEGRADED cycle - a write its own flow explicitly excludes from Tier-1 - collapsing the file's schema and advancing a last-HEALTHY marker on a non-healthy cycle",
+        "root_cause": "docs/agents/system-auditor/flow/main.md:748-755 gates the agent-side heartbeat write on AUDIT_TIER being 2 or 3 and says verbatim '(Tier-1 is untouched - it keeps its own _write_heartbeat inside scripts/agents-flow/auditor-tier1-probe.sh)'. The gated block builds HB_FILE=\"$PROJECT_ROOT/docs/data/auditor-tier${AUDIT_TIER}-last-healthy.json\", so it can only ever produce a tier2 or tier3 filename. The 06:08Z cycle ran AUDIT_TIER=1 and wrote the TIER-1 file anyway. There is no authorizing step for that write anywhere in the flow - this is not a mis-gated block, it is an action with no spec provenance at all. Same class as FIX-AUDITOR-CALLER-PROSE-OVERRIDES-DOCUMENTED-DETECTOR-THRESHOLD: the written contract did not bind behaviour.",
+        "consequence_a_schema_collapse": "The canonical Tier-1 writer scripts/agents-flow/auditor-tier1-probe.sh:436 emits jq -n '{last_healthy_at:$ts, checks:$checks}'. The committed HEAD version of the file carried checks{docker_ps, health_3000, health_3001, disk, mem_creep, launchd_agents} with last_healthy_at 2026-07-25T16:03:25Z. The live file is now {\"last_healthy_at\": \"2026-07-29T06:11:29Z\"} only - the agent applied the TIER-2/3 shape (main.md:753, '{last_healthy_at:$ts}') to a Tier-1 file. orch-sentinel OH-3.4 in docs/agents/orch-sentinel/flow/dim-oh3-auditor-blindspot.md does check exactly this shape, but at severity INFO with an explicit log-once instruction because bare-shape is recorded there as a KNOWN LIMITATION - so a genuine regression is absorbed as an already-known condition and never surfaces.",
+        "consequence_b_semantic_falsehood": "The Tier-1 writer advances the marker ONLY on its ALL_GREEN branch, which is what makes the name last_healthy true at Tier 1. The 06:08Z cycle's own reported Status was DEGRADED with 1 WARN anomaly, and it advanced the marker to 06:11:29Z.",
+        "scope_correction_do_not_skip": "The incoming report claimed orch-sentinel OH-3 will now mis-score auditor blind-spots off this timestamp. PO COULD NOT CONFIRM THAT and it should not be used to size the row. OH-3.4 reads SHAPE only and never computes an age - independently stated in FIX-AUDITOR-TIER1-FRESHNESS-CHECK-RELOCATE-TO-SENTINEL .why_the_obvious_fixes_are_wrong ('OH-3.4 reads the heartbeat files but checks SHAPE only, severity INFO, and never computes an age'). The live timestamp consumer is the Tier-1 cron pre-gate at .claude/skills/cron-detect-loop/register.md:84, whose age branch is already established by that same row to be inert on every path it can take (on ALL_GREEN the age is ~0 by construction; on FAILURE the verdict forces the spawn unaided). So there is NO confirmed live suppression today, and P2 rather than P1 reflects that.",
+        "real_exposure_is_forward": "FIX-AUDITOR-TIER1-FRESHNESS-CHECK-RELOCATE-TO-SENTINEL (status READY, next_agent developer) relocates cron-dormancy detection into a NEW orch-sentinel OH-3.5 that reads exactly these heartbeat files and computes their age. If any out-of-contract writer can stamp them, OH-3.5 is blind on the day it ships - and blind specifically when a cycle is degraded, which is when it matters. SEQUENCE THIS ROW BEFORE OR WITH THAT ONE. Coordinate; do not land OH-3.5 against an unprotected input.",
+        "acceptance": "(1) The sole-writer invariant for docs/data/auditor-tier{1,2,3}-last-healthy.json is written in ONE named place and cited from both writers (the probe script and system-auditor main.md), so neither can drift. (2) TIER-1: only scripts/agents-flow/auditor-tier1-probe.sh writes the tier-1 file. Add a guard that makes an agent-side tier-1 write fail LOUDLY rather than silently succeed - a prose prohibition already exists at main.md:748 and was not sufficient, so a repeat of the prose is not an acceptable fix. (3) SHAPE: a writer must emit the full documented shape for the tier it writes; a write that would reduce {last_healthy_at, checks} to {last_healthy_at} is rejected. Consider whether OH-3.4 should distinguish 'bare from birth' (known limitation, INFO) from 'was richer, now bare' (a regression) - the current log-once INFO framing cannot. (4) SEMANTIC: state and enforce that the marker advances ONLY on a green verdict. RESOLVE A REAL DIVERGENCE rather than papering over it - main.md:748 says the Tier-2/3 write 'Runs unconditionally every Tier-2/3 cycle', so at Tier 2/3 the file is a 'a real audit completed' marker while at Tier 1 it is a 'the system was healthy' marker, under one filename family that says healthy. Pick one semantic for the family and rename or re-gate accordingly. (5) Repair the live file - restore checks{} or state why a stub is tolerable until the next genuine ALL_GREEN probe run rewrites it. This is a data file, not infrastructure; the PLAN-ONLY infra fence does not block it. (6) DO NOT port suppress_heartbeat to Tier-1 and DO NOT drop the AUDIT_TIER 2/3 gate at main.md:750. FIX-AUDITOR-TIER1-FRESHNESS-CHECK-RELOCATE-TO-SENTINEL .why_the_obvious_fixes_are_wrong already rejects both directions with reasons - READ IT FIRST.",
+        "related_memory": "feedback_cron_armed_but_wrong_prompt_variant, feedback_passive_health_masks_dead_data, feedback_reader_writes_its_own_trigger_field_check_is_vacuous.",
+        "updated_at": "2026-07-29T07:16:16Z",
+        "promoted_at": "2026-07-29T07:15:53Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
+        "claimed_at": "2026-07-29T07:16:15Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)"
+      }
+    ]
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",

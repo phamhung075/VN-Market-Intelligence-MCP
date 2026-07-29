@@ -1,0 +1,14 @@
+{
+  "from": "commit-sweep-guard",
+  "to": "po",
+  "type": "bug-escalation",
+  "priority": "high",
+  "createdAt": "2026-07-29T07:00:36Z",
+  "payload": "[sweep-guard] BARE commit about to absorb 5 staged file(s) not necessarily this actor's own: apps/mcp-server/src/__tests__/FIX-AGENT-SIGNALS-IDENTICAL-DUP-EMISSION.test.ts apps/mcp-server/src/__tests__/FIX-ALERT-ENGINE-VERIFIED-DECISION-EMPTY-PAYLOAD-NULL-STOCKCODE.test.ts apps/mcp-server/src/infrastructure/db/alertStore.ts apps/mcp-server/src/infrastructure/db/schema-news.ts docs/architecture/microservice/mcp-server/infrastructure.md. actor=64c7c677-0f0f-4cee-a3ce-dba79d70b7ae mode=warn. Fix: git commit -m \"<msg>\" -- <own-files-only>.",
+  "_processed": {
+    "fingerprint": "a15d0bccf8779bd67295f37a0bff69006786d2fd561d4d116a98e43242c6d171",
+    "processedAt": "2026-07-29T07:15:28Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

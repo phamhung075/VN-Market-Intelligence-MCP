@@ -2,6 +2,13 @@
 
 **Written:** 2026-07-19T08:07Z
 
+## cycle-20260729T0707Z — BOUNDED-1 claimed FIX-AUDITOR-HEARTBEAT-OUT-OF-CONTRACT-AGENT-WRITE-TIER1, dispatched to developer (cross-service zone)
+
+- **Preflight/gcc/CI clean**: RUN tick `2026-07-29T07:07Z`; gcc clean (no lock, single worktree @`01e50dbcb`, ahead 24, no live git procs); CI GREEN unchanged (`39a4dac7c`); `.head` idle from prior tick's clean dev-mcp-server close-out.
+- **Drain: 2 routed-to-po** (both `commit-sweep-guard-*` near-miss telemetry, not dev-team's own commits).
+- **BOUNDED-1 fired (WIP=0)**: promoted+claimed `FIX-AUDITOR-HEARTBEAT-OUT-OF-CONTRACT-AGENT-WRITE-TIER1` (P2, zone `cross-service/`) — system-auditor's Tier-1 cycle (06:08:22Z) wrote `docs/data/auditor-tier1-last-healthy.json` despite main.md:748-755 explicitly excluding Tier-1 from that write path, collapsing the file's schema ({last_healthy_at,checks{}} → bare {last_healthy_at}) and falsely advancing a "healthy" marker on a DEGRADED cycle. `owner`/`next_agent` both already `developer` (generic — no `apps/<service>/` zone match, correctly not routed to a dev-* specialist). Dispatched with the full 6-point acceptance criteria from `backlog-detail.json`, background `a1bad8b57070683c0`, explicit reminder on the branch:null→REVIEW head-sync rule given today's 2-violations/1-clean-pass track record so far.
+- BOUNDED-1 claim consumed the tick (JUMP TO execute) — did not fall through to SLS/RLC/QA-Drain/Step 1.
+
 ## cycle-20260729T0637Z-verify — RAW-verified dev-mcp-server's FIX-ALERT-ENGINE-VERIFIED-DECISION-EMPTY-PAYLOAD-NULL-STOCKCODE completion; head-sync MUST clause held (3rd live test, 1st clean pass)
 
 - **BGFAN-1 RAW-verification, all claims held**: commits `0a7e91e5b`/`c1e21aae4`/`6f650fa17` real and on HEAD. `alertStore.ts` no longer hardcodes `payload='{}'` — `buildVerifiedDecisionPayload()` (new, L90) builds real content (alert_id/alert_type/title/severity/confidence/detected_at) from the `Alert`'s own fields, called at both call sites (`storeAlerts`/`storeAlertsFromCommander`). `stock_code` half of the original finding correctly downgraded, not fixed — only 1/52 live rows null and that one is a legitimate `MACRO`-scoped alert (VERIFY-DON'T-CLAIM). `bun tsc --noEmit` clean; targeted test file 6/6 pass (spot-checked directly, did not re-run the full 14891-test suite). Board row confirmed `status:REVIEW`, `next_agent:qa`, `zone:apps/mcp-server/` (agent verified the zone tag itself rather than trusting it blindly, as instructed).
