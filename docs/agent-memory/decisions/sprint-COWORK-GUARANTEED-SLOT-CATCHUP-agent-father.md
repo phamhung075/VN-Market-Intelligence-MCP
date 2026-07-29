@@ -76,3 +76,17 @@ as no token at all; fixing L5 alone would leave known_gaps[] structurally blind 
 own gap tokens.
 **why-change:** AC(3) needs a synthesis JSON produced during a real kinhdich error window
 (future) — READY→REVIEW, not DONE_VERIFIED.
+
+### STEP agent-father-S5 · agent-father · 2026-07-29T08:37:29Z
+**task-id:** FIX-NOTEBOOK-COMPOSE-REWRITES-RETAINED-PRIOR-SECTIONS
+**what-done:** Reconciled AC-2/AC-3 retention to a while-loop + added AC-2a immutability
+invariant + ladder-fix (trim own section first) in notebook-write/SKILL.md +
+system-auditor/main.md; added `_check_notebook_immutability` hard-reject pre-commit hook;
+fixed AC-1 c<NNN> rule (forbids session-UUID) for FIX-AGENT-NOTEBOOK-UUID-PROVENANCE part (a).
+**what-considered:** prose re-wording only (rejected, tried twice already, failed) vs
+mechanical hash-diff hook (chosen; precedent `_check_auditor_heartbeat_shapes`).
+**why-decision:** authorized drop vs unauthorized rewrite are diff-indistinguishable; only a
+retained-section hash comparison HEAD-vs-staged can tell them apart — validated 4/4 true-
+positive on 9b27e9723, 0 false-positive on 01e50dbc after trailing-blank normalization.
+**why-change:** Append-Gate-bypass (single occurrence, f26526d0e) left as a rowed BACKLOG
+item — prose-parsing narrative is fragile and not yet proven-recurring (repo's 2+ bar).

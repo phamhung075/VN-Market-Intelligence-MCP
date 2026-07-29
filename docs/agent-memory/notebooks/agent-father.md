@@ -1,5 +1,42 @@
 # Agent Father — Notebook
 
+## Edit (router-dispatched) 08:37 — 2026-07-29 FIX-NOTEBOOK-COMPOSE-REWRITES-RETAINED-PRIOR-SECTIONS
+- Fixed the shared notebook-write path (`.claude/skills/notebook-write/SKILL.md` — the SSOT for
+  37 APPEND-class agents): reconciled AC-2 (keep 3) vs AC-3 Step 1c (drop-one) into a converging
+  WHILE-loop; added AC-2a IMMUTABILITY INVARIANT (retained `## ` sections must be byte-identical
+  across a cycle — only drop-whole/AC-2b-subblock/trim-own-section are authorized mutations);
+  reordered the cap-pressure ladder so the agent trims its OWN new section FIRST, never a
+  retained one. Mirrored the same reconciliation into `system-auditor/flow/main.md`'s local copy
+  of the algorithm (the flow that actually produced the observed data loss).
+- Root-caused on RAW git archaeology, not the incoming premise: commit `9b27e97236d2eeb1` (2026-
+  07-29, `system-auditor.md`) rewrote 4 retained sections in place (e.g. 25L→10L, dropping the
+  "A-29 Cron Health Check"/"Freshness Sweep"/"Signals emitted" prose) on top of 2 whole-section
+  drops — measured recurrence ≥5/12 recent notebook commits per the PO board row.
+- Added a code-level gate, not more prose (prose already failed twice — same precedent as
+  `_check_auditor_heartbeat_shapes`): `_check_notebook_immutability` in
+  `scripts/git-hooks/pre-commit` hashes every `## `-delimited section in HEAD vs staged for every
+  APPEND-class notebook and REJECTS the commit if any heading present on both sides has a
+  different body hash. Zero new deps (git + shasum only). VALIDATED live: true-positive 4/4 on
+  the real bad commit's before/after blobs, true-negative on a real clean drop-commit (found +
+  fixed one false-positive class along the way — a section's trailing-blank-line inclusion
+  differs when it moves from non-last to last position; normalized by trimming trailing blanks
+  before hashing), plus a real staged-file REJECT/restore round-trip against the live
+  `system-auditor.md` (git status confirmed byte-identical after revert).
+- Also fixed AC-1's `c<NNN>` generation rule (root cause of the `## ad265f86 · ...` session-UUID
+  leak — confirmed: `ad265f86` is this dispatch's own `$CLAUDE_CODE_SESSION_ID` prefix, live in
+  the committed notebook before I touched anything): MUST be a real incrementing counter (see
+  `bctc-analyst.md`'s clean `c125`→`c126`) or a fixed source label, NEVER a session-id fragment.
+  This is part (a) — "agent instructions via agent-father" — of the sibling
+  `FIX-AGENT-NOTEBOOK-UUID-PROVENANCE` row (owner/next_agent `architect`, untouched); part (b),
+  the CI/pre-commit UUID-shape guard, is left to architect per that row's own disposition.
+- Deliberately NOT implemented this pass: a third, distinct defect (a genuine ALL_GREEN cycle,
+  commit `f26526d0e`, wrote the notebook anyway — bypassing the Notebook Append Gate at
+  `system-auditor/flow/main.md:684-690`). Single occurrence so far (not yet the repo's own 2+
+  recurrence bar), and a mechanical fix would require fragile regex-parsing of audit prose rather
+  than a clean byte-hash — rowed with full evidence + a ready-to-implement acceptance criterion
+  instead of rushing an unvalidated gate. Journal:
+  `docs/agent-memory/decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-agent-father.md` §agent-father-S5.
+
 ### Edit (cowork-team) 04:51 — 2026-07-29 FIX-COWORK-SPAWN-IDENTITY-PREAMBLE-OFFFLOW (dev-team-dispatched,
 PO recurring-bug escalation — 3rd occurrence of TASK_1967-04, PLAN_ONLY+SUPERVISED, executed direct out
 of BACKLOG per recurring-bug policy, no lane wait)

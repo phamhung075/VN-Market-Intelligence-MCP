@@ -689,13 +689,20 @@ Decide BEFORE Step 1 whether this cycle writes the notebook at all. Check the th
 (a) OR (b) OR (c) true → proceed to Step 1 below exactly as written (happy path, unchanged).
 All three false → genuine ALL_GREEN cycle: SKIP Step 1 and Step 2 below only — no `Write()` call, notebook file stays byte-identical to HEAD. Log `"[NOTEBOOK-GATE] SKIP no-new-finding/signal/state-change"`, then fall through unchanged to the **Commit** call below (still runs every cycle): with nothing written to disk, `git add` stages nothing for the notebook path, so the script's own no-staged-changes check (L196-197) is what performs the final no-op (`[auditor-commit] SKIP no-staged-changes`) — zero notebook diff, zero commit.
 
-**Notebook write** — AC-3 settled-write (ONE write) per skill: `.claude/skills/notebook-write/SKILL.md` (AC-1 through AC-5). Runs ONLY when the gate above passed.
+**Notebook write** — AC-3 settled-write (ONE write) per skill: `.claude/skills/notebook-write/SKILL.md` (AC-1, AC-2, AC-2a immutability invariant, AC-3, AC-5). Runs ONLY when the gate above passed.
 
-Step 1 — Compose in memory (NO file write yet):
+Step 1 — Compose in memory (NO file write yet). Ladder order below is
+MANDATORY and matches `.claude/skills/notebook-write/SKILL.md` AC-2/AC-2a/AC-3
+(reconciled 2026-07-29, `FIX-NOTEBOOK-COMPOSE-REWRITES-RETAINED-PRIOR-SECTIONS`)
+— trim-own-section-first, THEN drop whole oldest blocks in a loop until the
+3-section steady state is reached. NEVER edit, compact, or re-summarise a
+RETAINED prior section's content to pay for cap pressure (AC-2a immutability
+invariant) — every section that survives this cycle must be byte-identical
+before and after, or the pre-commit hook `_check_notebook_immutability` will
+reject the commit.
 a. Read `docs/agent-memory/notebooks/system-auditor.md` fully into memory.
 b. Identify preamble (before first `## `) and all `^## ` section boundaries.
-c. If ≥3 sections: drop the LAST `## ` block (bottom = oldest) in memory (heading + content to next `## ` or EOF). Ordering convention: sections are NEWEST-FIRST; the bottom section is always the oldest.
-d. Build new section (≤60L):
+c. Build the new section (≤60L, trimmed to this cap BEFORE anything else below runs):
    ```
    ## c<NNN> · <YYYY-MM-DDThh:mmZ>
    ### Audit Run Tier-N (HH:MM–HH:MM UTC YYYY-MM-DD)
@@ -703,10 +710,31 @@ d. Build new section (≤60L):
    - Anomalies: N new (C critical, W warn, I info) | M dedup-skipped
    - Status: HEALTHY | DEGRADED | CRITICAL
    ```
-   If Tier-2 cycle and snapshot ≠ nil: append `BCTC-EVAL-SNAPSHOT:` sub-block (compact JSON array, ≤10L) within this new section, counting toward the 60L section cap.
-e. Insert new section at TOP of in-memory body, immediately after preamble (before the first existing `## ` block). Sections are NEWEST-FIRST: newest entry goes to the top, oldest stays at the bottom.
-f. Count in-memory lines. If >200L: drop the LAST `## ` block (bottom = oldest), recount; repeat until ≤200L or only preamble+1 section remain. If current-cycle section >60L: trim to 60L first.
-g. In-memory body is now the final settled content (≤200L guaranteed).
+   `<NNN>` MUST be a literal incrementing counter continuing from the highest
+   existing `c<NNN>` in the file — NEVER `$CLAUDE_CODE_SESSION_ID` /
+   `owner_client_session` or any fragment of a session UUID (skill AC-1;
+   `FIX-AGENT-NOTEBOOK-UUID-PROVENANCE` — this exact substitution is the
+   confirmed root cause of the `## ad265f86 · ...`-style header leak observed
+   2026-07-29). If Tier-2 cycle and snapshot ≠ nil: append
+   `BCTC-EVAL-SNAPSHOT:` sub-block (compact JSON array, ≤10L) within this new
+   section, counting toward the 60L section cap.
+d. WHILE (section count, new section included) >3: drop the LAST `## ` block
+   (bottom = oldest) in memory (heading + content to next `## ` or EOF),
+   recounting after each drop. Repeat until ≤3 sections remain. Ordering
+   convention: sections are NEWEST-FIRST; the bottom section is always the
+   oldest. A single drop-and-stop is NOT sufficient if the file entered the
+   cycle already over 3 sections — loop until the steady state is reached.
+e. Insert the new section at TOP of in-memory body, immediately after preamble
+   (before the first existing `## ` block). Sections are NEWEST-FIRST: newest
+   entry goes to the top, oldest stays at the bottom. Every other retained
+   section keeps its position shifted only — its TEXT is untouched.
+f. Count in-memory lines. If still >200L after d–e (only possible when 3
+   sections at ≤60L each plus preamble still exceed 200L): drop the LAST
+   `## ` block (bottom = oldest), recount; repeat until ≤200L or only
+   preamble+1 section remain. This is a BACKSTOP — if c and d were followed
+   correctly it should almost never fire.
+g. In-memory body is now the final settled content (≤200L guaranteed, every
+   retained section byte-identical to its Step 1a pre-write form).
 
 Step 2 — Single settled write (ONE call, PostToolUse fires exactly once):
 ```

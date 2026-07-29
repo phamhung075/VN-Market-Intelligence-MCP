@@ -185,6 +185,153 @@ _check_auditor_heartbeat_shapes() {
 
 _check_auditor_heartbeat_shapes || exit 1
 
+# --- Agent-notebook retained-section immutability guard (AC-2a) ---------------
+# TASK: FIX-NOTEBOOK-COMPOSE-REWRITES-RETAINED-PRIOR-SECTIONS (docs/data/orch/
+#       orch-state.json .task_board.backlog, P1). SPEC: .claude/skills/
+#       notebook-write/SKILL.md § IMMUTABILITY INVARIANT (AC-2a).
+#
+# BUG THIS PREVENTS: the notebook-write compose step lands its result as ONE
+# whole-file Write/Edit, so authorized pruning (dropping a whole oldest '## '
+# section) and unauthorized rewriting (silently compacting a RETAINED prior
+# section's content to pay for an over-cap current section) are indistinguish-
+# able in the resulting diff to any human/agent reviewer. MEASURED: commit
+# 9b27e97236d2eeb26db5e18361b0f424d3b99c26 (docs/agent-memory/notebooks/
+# system-auditor.md, 2026-07-29) rewrote FOUR retained sections in place
+# (e.g. 25L -> 10L, dropping the "A-29 Cron Health Check" / "Freshness Sweep"
+# / "Signals emitted" prose) on top of two whole-section drops, in the SAME
+# settled write. Recurrence: >=5 of the last 12 system-auditor notebook
+# commits per PO board measurement. Prose alone (the skill's own AC-2/AC-3
+# wording) was already in place and did not hold — this is now a hard
+# code-level gate, mirroring the heartbeat-shape guard above (same precedent:
+# a mis-shaped/mis-content commit is an AUTHORIZATION violation, not a
+# "which actor's index got swept" question, so it runs unconditionally here,
+# independent of the sweep-guard mode dispatch below).
+#
+# MECHANISM: for every staged docs/agent-memory/notebooks/*.md file (add/
+# modify, APPEND-class only — the 3 OVERWRITE-class files intentionally
+# replace their single section every cycle and are exempt by design), hash
+# each '^## '-delimited section (heading line through the line before the
+# next '## ' or EOF) on the HEAD side and on the staged side. Any heading
+# text present on BOTH sides with a DIFFERENT body hash means a retained
+# section was mutated rather than dropped whole -> REJECT. A heading present
+# only on HEAD (dropped whole) or only on staged (the new cycle's section) is
+# always authorized and never flagged.
+#
+# Zero new dependencies: git + shasum only (shasum ships with macOS/Darwin
+# and virtually every Linux distro) — same "never a new commit-hot-path
+# failure mode" bar as the sweep-guard discriminator above. Fails OPEN + LOUD
+# (never blocks) on any file this mechanism cannot reason about: a brand-new
+# file (nothing retained yet), a file with zero '^## ' boundaries in the HEAD
+# content (a DIFFERENT, already-tracked defect —
+# FIX-NOTEBOOK-PRUNE-HEADING-LEVEL-MISMATCH — this gate cannot section a file
+# it cannot find headings in), or any git/shasum command failure.
+
+_notebook_section_hashes() {
+  # $1 = path to a plain-text file. Prints "heading<TAB>sha256hex" per
+  # '^## '-delimited section found in that file. Prints nothing if the file
+  # has zero '^## ' boundaries.
+  local file="$1" total heading_lines start end heading hash i n
+  local arr
+
+  [ -s "$file" ] || return 0
+  total="$(wc -l < "$file" 2>/dev/null | tr -d ' ')"
+  [ -z "$total" ] && return 0
+
+  heading_lines="$(grep -n '^## ' "$file" 2>/dev/null | cut -d: -f1)"
+  [ -z "$heading_lines" ] && return 0
+
+  arr=()
+  while IFS= read -r ln; do
+    [ -n "$ln" ] && arr+=("$ln")
+  done <<HEADINGLINES
+$heading_lines
+HEADINGLINES
+
+  n=${#arr[@]}
+  for ((i = 0; i < n; i++)); do
+    start="${arr[$i]}"
+    if [ $((i + 1)) -lt "$n" ]; then
+      end=$(( ${arr[$((i + 1))]} - 1 ))
+    else
+      end="$total"
+    fi
+    heading="$(sed -n "${start}p" "$file" 2>/dev/null)"
+    # Trim trailing blank lines before hashing: a section's position (last-in-
+    # file vs followed-by-another-heading) changes whether a trailing blank
+    # separator line is captured in its slice, which would otherwise produce a
+    # spurious hash mismatch for byte-identical content that only shifted
+    # position (verified false-positive case: commit 01e50dbcbac6661b -- only
+    # the file's true last section differed by this trailing-blank artifact).
+    hash="$(sed -n "${start},${end}p" "$file" 2>/dev/null | awk '{lines[NR]=$0; if ($0 != "") last=NR} END{for (i=1;i<=last;i++) print lines[i]}' | shasum -a 256 2>/dev/null | awk '{print $1}')"
+    [ -n "$heading" ] && [ -n "$hash" ] && printf '%s\t%s\n' "$heading" "$hash"
+  done
+}
+
+_check_notebook_immutability() {
+  local staged nb_files f old_tmp new_tmp old_hashes rc
+  local overwrite1="docs/agent-memory/notebooks/po.md"
+  local overwrite2="docs/agent-memory/notebooks/market-watcher.md"
+  local overwrite3="docs/agent-memory/notebooks/orch-sentinel.md"
+
+  command -v shasum >/dev/null 2>&1 || {
+    echo "[notebook-immutability-guard] INTERNAL: shasum unavailable — cannot verify retained-section immutability, failing open (never block on our own uncertainty)" >&2
+    return 0
+  }
+
+  staged="$(git diff --cached --name-status 2>/dev/null)" || return 0
+  [ -z "$staged" ] && return 0
+
+  nb_files="$(printf '%s\n' "$staged" | awk '$1 ~ /^[AM]$/ && $2 ~ /^docs\/agent-memory\/notebooks\/.*\.md$/ {print $2}')"
+  [ -z "$nb_files" ] && return 0
+
+  rc=0
+  while IFS= read -r f; do
+    [ -z "$f" ] && continue
+    [ "$f" = "$overwrite1" ] && continue
+    [ "$f" = "$overwrite2" ] && continue
+    [ "$f" = "$overwrite3" ] && continue
+
+    old_tmp="$(mktemp "${TMPDIR:-/tmp}/nb-immut-old.XXXXXX" 2>/dev/null)" || continue
+    new_tmp="$(mktemp "${TMPDIR:-/tmp}/nb-immut-new.XXXXXX" 2>/dev/null)" || { rm -f "$old_tmp"; continue; }
+
+    if ! git show "HEAD:$f" > "$old_tmp" 2>/dev/null; then
+      rm -f "$old_tmp" "$new_tmp"; continue   # new file this commit — nothing retained yet
+    fi
+    if ! git show ":$f" > "$new_tmp" 2>/dev/null; then
+      rm -f "$old_tmp" "$new_tmp"; continue
+    fi
+
+    old_hashes="$(_notebook_section_hashes "$old_tmp")"
+    if [ -z "$old_hashes" ]; then
+      rm -f "$old_tmp" "$new_tmp"; continue   # no '## ' boundaries on HEAD side — different defect, fail open
+    fi
+
+    while IFS=$'\t' read -r heading old_hash; do
+      [ -z "$heading" ] && continue
+      # Look up this exact heading in the NEW file's own hash table (not a
+      # plain grep line match — headings could in theory repeat) to get its
+      # staged-side content hash, if that heading still exists there at all.
+      new_hash="$(_notebook_section_hashes "$new_tmp" | awk -F'\t' -v h="$heading" '$1==h{print $2; exit}')"
+      if [ -n "$new_hash" ] && [ "$new_hash" != "$old_hash" ]; then
+        msg="[notebook-immutability-guard] REJECT: ${f} — retained section '${heading}' has different content staged than at HEAD. Per .claude/skills/notebook-write/SKILL.md AC-2a, a retained '## ' section must be byte-identical across a cycle; the only authorized mutations are dropping a whole oldest section, the AC-2b sub-block intra-prune, or trimming the CURRENT cycle's own new section. If cap pressure forced a shrink, DROP the whole section (archive verbatim if it must be kept) and add a NEW marker section instead — see docs/agent-memory/notebooks/architect.md for the reference-correct pattern. Commit BLOCKED — recompose per skill AC-3 Step 1 and re-stage."
+        echo "$msg" >&2
+        write_signal "$msg"
+        rc=1
+      fi
+    done <<OLDHASHES
+$old_hashes
+OLDHASHES
+
+    rm -f "$old_tmp" "$new_tmp"
+  done <<NBFILES
+$nb_files
+NBFILES
+
+  return $rc
+}
+
+_check_notebook_immutability || exit 1
+
 idx_base="$(basename -- "${GIT_INDEX_FILE:-}" 2>/dev/null || true)"
 
 case "$idx_base" in
