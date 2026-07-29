@@ -4,26 +4,6 @@
 
 ---
 
-## Session: 2026-07-25 (FIX-PREDCLAIM-DASHBOARD-HITRATE-HONESTY — BOUNDED-1 idle-pickup)
-
-**DONE-CODE (rebuild-verify pending, ops-gated) — calibration banner adds denominator/staleness/breakdown/exclusion context, zero hitRate recomputation**
-
-Zone health: 96 test files; 2150 pass / 2 fail (same pre-existing QUE-TOOLTIP, confirmed via git-stash A/B); tsc 0 errors | HEALTHY
-
-Task: bare `66,7%` hit-rate badge (4/6 over 17 total, frozen since 2026-06-21) read as live accuracy. 5 deliverables, all in `routes/dashboard.prediction-claims.tsx`: (a) inline denominator "4 đúng / 2 sai trên 6 dự báo đã chấm điểm", (b) data-driven staleness marker (`STALE_THRESHOLD_DAYS=14`), (c) exclusion explanation at point of use (tooltip on aggregate chip + note on excluded `ClaimCard`s), (d) full disposition breakdown line, (e) plain-VN wording (no jargon added, no decimals introduced).
-
-Key design decision: `fetchPredictionClaimsData` now does a DOUBLE FETCH when an `?outcome=` filter is active — an always-unfiltered "context" call (source of `calibration` + new `lastScoredAt`) plus the existing filtered call for the display list. Without this, the staleness marker (needs correct/wrong `resolvedAt`) would silently vanish on the "Đang chờ"/"Loại trừ" tabs — the CalibrationBanner renders on every filter tab, unfiltered. Zero-cost on the "Tất cả" default view (still exactly 1 fetch, confirmed by test).
-
-`claims[].exclusionReason` added as OPTIONAL type field (`resolveExclusionReason` consumes when present, `GENERIC_EXCLUSION_REASON` fallback otherwise) — producer (FIX-PREDCLAIM-BACKFILL-NULL-CREATIONPRICE deliverable c) NOT YET SHIPPED; live-probed zero rows carry it today, confirmed via `curl :3000/api/prediction-claims?outcome=excluded`.
-
-**PLAYWRIGHT_PORT gotcha hit again (see line below) — port 3001 is the live Docker container (stale image); re-ran G12 with `PLAYWRIGHT_PORT=3011` against a fresh `npm run dev` to get real evidence: 4/4 pass.** Also live-verified the ACTUAL rendered SSR HTML on a throwaway `PORT=3012 npm run dev` against the real (unmodified) mcp-server on :3000 — denominator/breakdown/staleness/exclusion-reason all confirmed rendering with live values (staleness: "21/6/2026 (33 ngày trước)", matching root_cause's 2026-06-21 freeze exactly, non-hardcoded).
-
-Files: `routes/dashboard.prediction-claims.tsx` (+9 exported pure helpers: `computeLastScoredAt`, `formatHitRateDenominator`, `formatDispositionBreakdown`, `describeStaleness`, `resolveExclusionReason`, `STALE_THRESHOLD_DAYS`, `GENERIC_EXCLUSION_REASON`), `__tests__/task17-prediction-claims-loader.test.ts` (+25 tests, Suites 16-21), `docs/architecture/microservice/frontend/api-reference.md` (new § Prediction Claims Trust-Surface Context — route wasn't in the table at all before).
-
-rebuild_required=true, NOT performed (ops-gated, not my zone). Board flipped `in_progress`→`review`, `next_agent=qa`, review_note flags PENDING-REBUILD for live-container re-verification — mirrors sibling FIX-PREDCLAIM-CREATIONPRICE-UNGATE-ZOD-CONTRACT precedent.
-
----
-
 ## Session: 2026-07-25 (FE-PG-QUALITY-AUDIT-LASTVERIFIED-RENDER-FIX — BOUNDED-1 idle-pickup)
 
 **DONE-CODE (rebuild-verify pending, user-gated) — per-check `last_verified` + 7d staleness badge on `/dashboard/quality-audit`**
@@ -66,6 +46,28 @@ rebuild_required=true, NOT performed (ops-gated, not my zone). Board flipped `in
 
 ---
 
-**Current state:** 98 test files; 2172 pass / 2 fail (pre-existing QUE-TOOLTIP schema); tsc 0 errors.
+## Session: 2026-07-29 (FE-PG-BCTC-FRESH-FIX — BOUNDED-1 idle-pickup)
+
+**DONE-CODE (rebuild-verify pending, ops-gated) — page-level FreshnessBadge wired onto /dashboard/bctc (Financial Reports hub)**
+
+Zone health: 99 test files; 2177 pass / 2 fail (same pre-existing QUE-TOOLTIP, confirmed via git-stash A/B); tsc 0 errors | HEALTHY
+
+Task: dashboard.bctc.tsx rendered `generated_at` (page-level) + per-item `updated_at` but no staleness *flag* (quality-audit FE-PG-BCTC-FRESH WARN). Wired the existing FreshnessBadge + useFreshnessRevalidator("event") — slaTierKey dictated by the quality-checklist's own SLA formula (`sla_tiers["event"].max_staleness_min=1560`), same pattern as ~24 sibling pages and the immediately-prior sibling task (FE-PG-_INDEX-FRESH-FIX).
+
+No naive-SQLite risk here (unlike that sibling's `data_asof`): confirmed live against the real, unmodified mcp-server that `generated_at` is already `new Date().toISOString()` server-side (analysisBriefIndexHandler) — no `parseDate` normalization needed.
+
+Found + fixed a related provenance bug: `fetchAnalysisBriefs` parsed the DTO's real `generated_at` but then discarded it (`Omit<LoaderData,"generated_at">`), and the loader substituted a second, independently-computed `new Date().toISOString()`. Both were "now" at request time in practice, but the DTO value is now also the FreshnessBadge input — fixed to thread the real upstream value through instead, avoiding provenance/clock-drift ambiguity between the two processes. Kept the existing always-a-string fallback semantics on absent/malformed `generated_at` (this DTO's type contract predates this task, unlike the sibling's honest-null `data_asof`) — did not invent new null semantics unprompted.
+
+5 new unit tests (valid passthrough / absent+null fallback / 502+network-error no-regression). Full vitest 2177/2179 pass (2 pre-existing QUE-TOOLTIP fails, confirmed via `git stash` A/B — identical 2 failures reproduce with this diff fully stashed out). tsc clean. Playwright full suite (not just render-check): `PLAYWRIGHT_PORT=3021 npx playwright test` → 7/7 pass across all 3 spec files (smoke.spec.ts 1/1, render-check.spec.ts 3/3, quality-audit-lastverified.spec.ts 3/3) — none related to this change. Manually confirmed live SSR HTML on a throwaway `PORT=3022 npm run dev` against the real mcp-server on :3000: green `bg-green-100`/`bg-green-500` FreshnessBadge + "Cập nhật lúc" renders next to the existing ClientTimestamp.
+
+Graphify: skipped — no Skill tool grant in this background subagent context, same disposition as FE-PG-_INDEX-FRESH-FIX/TOKEN-ECONOMY-TICK-PREFLIGHT-WU-1.
+
+Files: `routes/dashboard.bctc.tsx` (`fetchAnalysisBriefs` now returns full `LoaderData` incl. real `generated_at`, FreshnessBadge+useFreshnessRevalidator("event") wired), `__tests__/FE-PG-BCTC-FRESH-FIX-dashboard-bctc-loader.test.ts` (+5 tests, new), `docs/architecture/microservice/frontend/api-reference.md` (new row — dashboard.bctc.tsx was missing from the Remix Routes table entirely).
+
+rebuild_required=true, NOT performed (ops-gated, not my zone). Board flipped `in_progress`→`review`, `next_agent=qa`, review_note flags PENDING-REBUILD for live-container re-verification — mirrors sibling BOUNDED-1 precedent above.
+
+---
+
+**Current state:** 99 test files; 2177 pass / 2 fail (pre-existing QUE-TOOLTIP schema); tsc 0 errors.
 **Tech stack:** Remix 2 + TypeScript 5 strict + Tailwind 3 + shadcn/ui + Vitest + Playwright
-**Key patterns:** useFetcher self-fetching zones; FreshnessBadge(intraday/daily/weekly SLA); safeFetch bounded; honest-NULL (null_reason + gray badge, never fabricate); DDD layers enforced; route-colocated DTO/parser/formatter families kept textually distinct across merged pages (do-not-homogenize); Playwright G12 gate must run with an unused `PLAYWRIGHT_PORT` override if the live frontend Docker container occupies :3001 (reuseExistingServer piggybacks on it otherwise, false-greening against stale code) — reconfirmed 2026-07-29 (3rd+ time). quality-audit FRESH checks are LIVE-PROBED (not static); its per-check `last_verified` staleness (distinct field, 7d window) is classified via `check-verification.ts` — never conflate the two. `parseDate` (app/lib/formatDate.ts) is the SSOT naive-SQLite→UTC normalizer — reuse it, never re-derive the space→T+Z transform inline.
+**Key patterns:** useFetcher self-fetching zones; FreshnessBadge(intraday/daily/weekly/event SLA); safeFetch bounded; honest-NULL (null_reason + gray badge, never fabricate) EXCEPT where a DTO's own type contract predates the freshness work and already defines an always-a-string fallback (e.g. analysis-briefs `generated_at`) — don't invent null semantics unprompted onto a pre-existing parse function; DDD layers enforced; route-colocated DTO/parser/formatter families kept textually distinct across merged pages (do-not-homogenize); Playwright G12 gate must run with an unused `PLAYWRIGHT_PORT` override if the live frontend Docker container occupies :3001 (reuseExistingServer piggybacks on it otherwise, false-greening against stale code) — reconfirmed 2026-07-29 (4th+ time). quality-audit FRESH checks are LIVE-PROBED (not static); its per-check `last_verified` staleness (distinct field, 7d window) is classified via `check-verification.ts` — never conflate the two. `parseDate` (app/lib/formatDate.ts) is the SSOT naive-SQLite→UTC normalizer — reuse it, never re-derive the space→T+Z transform inline; NOT every timestamp field needs it — confirm the actual server-side emission code before assuming naive-SQLite risk. A loader that parses a real DTO field then discards it in favor of a second, independently-computed local timestamp is a provenance bug worth fixing when that field becomes a freshness-badge input.

@@ -25,3 +25,12 @@
 - Extract `fetchMarketDigestData(origin)` vs leave loader inline → extracted (matches fetchMacroData/fetchAlertsData precedent; Remix strips inline loader exports under jsdom, blocking unit-testability otherwise).
 **why-decision:** data_asof normalization is the one correctness-critical line (host TZ = Europe/Paris, +2h skew risk) — reusing the already-proven `parseDate` helper is strictly safer than re-deriving the regex/replace logic a third time in this codebase.
 **why-change:** no change from plan — dispatch prompt already named the exact reuse targets (FreshnessBadge, useFreshnessRevalidator, slaTierKey="daily"); the data_asof-wiring + naive-UTC-normalization mechanics were discovered during implementation, not pre-specified.
+
+### STEP dev-frontend-S3 · dev-frontend · 2026-07-29T19:56:00Z
+**task-id:** FE-PG-BCTC-FRESH-FIX
+**what-done:** Confirmed live against the real, unmodified mcp-server that `/api/analysis-briefs` `generated_at` is already real ISO8601 UTC (no parseDate needed); wired FreshnessBadge/useFreshnessRevalidator("event") onto dashboard.bctc.tsx.
+**what-considered:**
+- Leave `fetchAnalysisBriefs` returning `Omit<LoaderData,"generated_at">` and feed FreshnessBadge the loader's own separately-computed `new Date().toISOString()` vs thread the DTO's real `generated_at` through → chose threading the real DTO value (the loader was silently discarding the parsed field and substituting a second, independent clock read — dishonest provenance for a value now also driving a staleness badge).
+- Introduce null semantics for `generated_at` (mirroring sibling's honest-null `data_asof`) vs keep existing always-a-string fallback (`new Date().toISOString()` on absent/malformed) → kept existing fallback — this DTO's own type contract (`generated_at: string`, never optional) predates this task and is shared with `count`/`items`' fallback philosophy; inventing null here would diverge from the established parse function unprompted.
+**why-decision:** slaTierKey="event" is dictated by the quality-checklist's own SLA formula (not a free choice) — matching it is required for the audit re-check to agree with what the page renders.
+**why-change:** no change from plan — dispatch prompt named the exact reuse targets; the generated_at-discarded-then-reinvented provenance bug was found during implementation, not pre-specified.
