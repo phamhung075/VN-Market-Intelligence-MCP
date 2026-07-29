@@ -88,11 +88,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "updated_at": "2026-07-29T11:36:00Z",
-    "updated_by": "developer",
-    "active_task_id": null,
-    "next_agent": "router"
+    "status": "in_progress",
+    "active_task_id": "FIX-AUDITOR-MEMACK-HEADROOM-FLOOR-AND-DEAD-TRACKEDBY",
+    "next_agent": "developer",
+    "next_action": "BOUNDED-1 auto-pickup claim of FIX-AUDITOR-MEMACK-HEADROOM-FLOOR-AND-DEAD-TRACKEDBY — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
+    "updated_at": "2026-07-29T11:48:29Z",
+    "updated_by": "dev-team (bounded-1 auto-pickup)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -11181,40 +11182,6 @@
         "constraint": "The two lost rows were the live duplicate-emission evidence for FIX-AUDITOR-B12-DOUBLE-INVOKE-EMIT-MARKER-LOSS, and PO was under an explicit instruction NOT to triage or self-resolve them. They were destroyed by a peer before that instruction could be honoured either way. Their ids, timestamps, severity, status and summary are preserved verbatim in this row and in the B-12 row's evidence field; the agent_signals rows 9885/9886 remain the surviving independent copy."
       },
       {
-        "id": "FIX-AUDITOR-MEMACK-HEADROOM-FLOOR-AND-DEAD-TRACKEDBY",
-        "type": "FIX",
-        "status": "BACKLOG",
-        "priority": "P1",
-        "size": "S",
-        "zone": "cross-service/",
-        "owner": "developer",
-        "next_agent": "developer",
-        "supervised": false,
-        "plan_only": false,
-        "sprint": "INFRA-AUDIT",
-        "created_at": "2026-07-29T11:31:36Z",
-        "created_by": "po/triage-20260729T1126-rag-ack-scope-mismatch",
-        "title": "auditor-tier1-probe _check_mem_creep memory-ACK is all-or-nothing and its STALENESS RULE is enforced by nothing — acked_memory[].tracked_by is never read, so an ACK cannot expire and cannot be narrowed; add an absolute-headroom floor that the ACK may not swallow",
-        "root_cause": "TWO defects in the same 6-line ACK path, both MEASURED by PO 2026-07-29T11:20-11:26Z by reading scripts/agents-flow/auditor-tier1-probe.sh. (1) DEAD FIELD: :275 is the ONLY read of the ledger and it is `jq -r '.acked_memory[]?.container // empty'`. `tracked_by` is extracted by nothing, compared against nothing, and never resolved against task_board. The ledger _comment and the probe comment block :263-264 both assert a STALENESS RULE ('remove the entry once its tracked_by row reaches DONE_VERIFIED') that is pure prose — no code reads it, no cron checks it, no test covers it. The suppression therefore persists until a human/agent happens to hand-edit the JSON. This is the reader-writes-its-own-trigger / veto-in-a-comment class: the guarantee that makes the ACK safe to ship is documented and not executed. (2) ALL-OR-NOTHING PREDICATE: :302-307 is a single `pct >= WARN_PCT` test, so an ACK'd container is suppressed at 85.01% and at 99.99% identically. There is no expressible middle state — the operator's only two options are 'suppress everything' or 'remove the entry and re-churn the auditor ~48x/day', which is the exact churn FIX-AUDITOR-TIER1-PROBE-ACKED-LAUNCHD-DEATH-SUPPRESSION was minted to kill. LIVE CONSEQUENCE 2026-07-29T11:08-11:26Z: rag-service sat at 97.11% of its 768 MiB cap = 22.2 MiB absolute headroom, and Tier-1 at the 11:00Z tick returned HEALTHY / ALL_GREEN / 0 signals / 0 dashboard rows.",
-        "trigger_precondition_met": "NOT a new idea — this is the follow-on the parent row PRE-AUTHORIZED and deferred. FIX-AUDITOR-TIER1-A30-MEM-SINGLE-CONTAINER-SCOPE.note says verbatim: 'OUT OF SCOPE (do NOT fold in): an absolute-headroom secondary predicate. 11.9MiB free on a 768m cap is thin in absolute terms and a pure percentage genuinely is not comparable across a 512m and a 3g cap, but adding a second predicate in the same change would confound the FP evidence for the first; mint it separately later IF THE LOOP PROVES THE PERCENTAGE VIEW INSUFFICIENT.' The loop has now proven it insufficient: the percentage view cannot distinguish rag-service's acknowledged 94-98% set-point from a NEW excursion toward the ceiling, because both are 'one number >= 85'. Minting now satisfies the parent's own stated condition; it does not re-open the parent's rejected options (per-container threshold overrides and moving WARN_PCT globally stay REJECTED).",
-        "fix_spec": "(a) HEADROOM FLOOR — add a SECOND predicate computed from the values docker stats already returns: absolute free bytes = cap - usage. If a container is memory-ACK'd but its absolute headroom is below a floor (propose MEM_FLOOR_MIB, default 32, single global constant — NOT per-container), the ACK does NOT suppress: it is a NEW signature and the verdict FAILS naming the container, its percentage AND its absolute headroom. Above the floor the ACK suppresses exactly as today. This makes 'acked at 94-98% is fine, crossing into <32 MiB free is not' expressible, which is precisely what the ledger cannot say today. (b) TRACKED_BY MUST BE LIVE — the probe must READ acked_memory[].tracked_by and resolve it against docs/data/orch/orch-state.json. An entry whose tracked_by is absent from every task_board lane, or whose status is DONE_VERIFIED, MUST NOT suppress; it must be reported as a STALE ACK and fail the check so the ledger self-expires as its own comment already promises. Fail-loud on an unreadable orch-state (do NOT adopt `2>/dev/null || true` — same idiom UC-CRITIC-HOOKS-ENFORCEMENT flags). (c) Apply (b) to the `acked[]` launchd arm too — identical dead-field defect, identical prose promise, three entries currently riding on it.",
-        "acceptance": [
-          "AC1: rag-service ACK'd, forced to 97% with >= MEM_FLOOR_MIB absolute headroom -> ALL_GREEN, named on the acknowledged-degraded line (today's behaviour preserved; no new churn).",
-          "AC2: rag-service ACK'd, forced BELOW MEM_FLOOR_MIB absolute headroom -> verdict FAILURE, detail names the container with BOTH its percentage and its MiB-free. This is the case the current code cannot express and it is the whole point of the row.",
-          "AC3: an acked_memory entry whose tracked_by resolves to DONE_VERIFIED -> verdict FAILURE with a STALE-ACK detail, not silent suppression. Same for a tracked_by that matches no row in any lane.",
-          "AC4: the mixed-case invariant is UNCHANGED — an unacknowledged breach alongside acked ones still FAILS and names the unacked container (regression-guard the existing T41).",
-          "AC5: uncapped containers (HostConfig.Memory == 0, today mcp-gateway) still skipped — absolute headroom is undefined for them, do NOT compute it from host memory.",
-          "AC6: evidence is a RAW captured probe run (verdict line + detail line + the docker inspect/stats snapshot it was evaluated against, `date -u` timestamped), not prose. Same bar the parent row set."
-        ],
-        "files_hint": "scripts/agents-flow/auditor-tier1-probe.sh (_check_mem_creep :265-320, _mem_container_acked :326-336, ledger read :275, launchd arm :340-430); scripts/agents-flow/auditor-tier1-probe.test.sh (extend T40-T43 + the launchd ack tests); docs/data/auditor-launchd-ack.json (schema gains nothing new — tracked_by ALREADY exists on every entry, it is simply never read).",
-        "prior_art_checked": "PO full-text jq over all 12 task_board lanes 2026-07-29T11:22Z for headroom|acked_memory|auditor-launchd-ack|STALENESS RULE. 6 rows inspected, NONE covers this: FIX-AUDITOR-TIER1-A30-MEM-SINGLE-CONTAINER-SCOPE (REVIEW — shipped the multi-container loop + the ledger itself, and explicitly deferred THIS predicate), FIX-AUDITOR-TIER1-PROBE-ACKED-LAUNCHD-DEATH-SUPPRESSION (REVIEW — shipped the launchd arm, carries the same dead tracked_by), FIX-AUDITOR-T1-PREGATE-MEMCREEP-SINGLE-POINT-SAMPLE (BACKLOG P2 — sampling FREQUENCY, N>=2 samples; orthogonal, a second sample of the same all-or-nothing predicate still cannot see this), FIX-AUDITOR-A30-VMHWM-VETO-TAUTOLOGY-FALSE-NEGATIVE (BACKLOG P1 — mcp-server VmHWM veto, different check), FIX-PDFX-PARENT-PROCESS-MEMORY-BURST-HEADROOM (BACKLOG P1 — pdf-extractor's own memory, not the detector), FIX-PRESSURE-HOST-HEADROOM-WRONG-MACHINE-WRONG-QUANTITY (REVIEW P1 — pressure-state emit field, different plane entirely).",
-        "does_not_cover": "This row fixes the DETECTOR's blindness. It does NOT reduce rag-service's memory by one byte — that is FU-RAG-DEPLOY-MEMORY (resident set / cap trade, user-gated infra) and FIX-RAG-SERVICE-CLEAN-EXIT-RESTART-LOOP (the compaction counter defect). Do not fold either in.",
-        "sequencing_note": "Coordinate with FIX-AUDITOR-T1-PREGATE-MEMCREEP-SINGLE-POINT-SAMPLE — both edit _check_mem_creep. Land this one first (predicate shape) then the sampling change, or land them together; do not let two agents rewrite the same function in parallel.",
-        "updated_at": "2026-07-29T11:36:04Z",
-        "po_floor_calibration_20260729T1135": "FLOOR CALIBRATION INPUT — measured. Do NOT treat the 32 MiB default proposed in fix_spec as settled; it was a round number and this note is the evidence for choosing a real one. MEASUREMENT: rag-service traversed 22.2 MiB -> 11.4 MiB of absolute headroom inside 15 minutes on 2026-07-29 (745.8 MiB @11:19Z -> 756.6 MiB @11:34:46Z, re-read identical @11:35:02Z; cap 768 MiB), the entire time ACK-suppressed and the entire time reported ALL_GREEN by Tier-1. TWO CONSEQUENCES. (1) AC2 IS SATISFIABLE AGAINST THE LIVE FLEET — you do not need to synthesise the below-floor case with a forced stub to demonstrate it, because the real container already sits under any floor at or above ~16 MiB. Capture it live for the evidence bar in AC6, and stub only for CI determinism. (2) CHOOSE THE FLOOR AGAINST THE BURST SIZE, NOT AGAINST THE CAP. The killer event on this container is a full-table optimize() rewrite documented at ~20 MiB by FIX-RAG-SERVICE-CLEAN-EXIT-RESTART-LOOP. A floor set BELOW the largest single allocation the container can make cannot warn before the allocation that kills it — the predicate would fire only after the event it exists to anticipate, which is decorative. Justify the final value against the largest known single allocation across the capped containers in scope (rag-service ~20 MiB optimize; pdf-extractor has its own burst profile tracked at FIX-PDFX-PARENT-PROCESS-MEMORY-BURST-HEADROOM) and RECORD that reasoning in the task report. Picking a floor from the cap size instead of the burst size is the same category error as picking a percentage, and it is the error this row exists to correct.",
-        "updated_by": "po/triage-20260729T1135-addendum"
-      },
-      {
         "id": "FIX-BCTC-REFINE-DIACRITIC-COLLAPSE-A-BREVE-ACUTE",
         "type": "FIX",
         "status": "BACKLOG",
@@ -17094,9 +17061,49 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-29T11:31:36Z",
-    "last_triaged_by": "po/triage-20260729T1126-rag-ack-scope-mismatch",
-    "in_progress": []
+    "last_triaged_at": "2026-07-29T11:48:21Z",
+    "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
+    "in_progress": [
+      {
+        "id": "FIX-AUDITOR-MEMACK-HEADROOM-FLOOR-AND-DEAD-TRACKEDBY",
+        "type": "FIX",
+        "status": "IN_PROGRESS",
+        "priority": "P1",
+        "size": "S",
+        "zone": "cross-service/",
+        "owner": "developer",
+        "next_agent": "developer",
+        "supervised": false,
+        "plan_only": false,
+        "sprint": "INFRA-AUDIT",
+        "created_at": "2026-07-29T11:31:36Z",
+        "created_by": "po/triage-20260729T1126-rag-ack-scope-mismatch",
+        "title": "auditor-tier1-probe _check_mem_creep memory-ACK is all-or-nothing and its STALENESS RULE is enforced by nothing — acked_memory[].tracked_by is never read, so an ACK cannot expire and cannot be narrowed; add an absolute-headroom floor that the ACK may not swallow",
+        "root_cause": "TWO defects in the same 6-line ACK path, both MEASURED by PO 2026-07-29T11:20-11:26Z by reading scripts/agents-flow/auditor-tier1-probe.sh. (1) DEAD FIELD: :275 is the ONLY read of the ledger and it is `jq -r '.acked_memory[]?.container // empty'`. `tracked_by` is extracted by nothing, compared against nothing, and never resolved against task_board. The ledger _comment and the probe comment block :263-264 both assert a STALENESS RULE ('remove the entry once its tracked_by row reaches DONE_VERIFIED') that is pure prose — no code reads it, no cron checks it, no test covers it. The suppression therefore persists until a human/agent happens to hand-edit the JSON. This is the reader-writes-its-own-trigger / veto-in-a-comment class: the guarantee that makes the ACK safe to ship is documented and not executed. (2) ALL-OR-NOTHING PREDICATE: :302-307 is a single `pct >= WARN_PCT` test, so an ACK'd container is suppressed at 85.01% and at 99.99% identically. There is no expressible middle state — the operator's only two options are 'suppress everything' or 'remove the entry and re-churn the auditor ~48x/day', which is the exact churn FIX-AUDITOR-TIER1-PROBE-ACKED-LAUNCHD-DEATH-SUPPRESSION was minted to kill. LIVE CONSEQUENCE 2026-07-29T11:08-11:26Z: rag-service sat at 97.11% of its 768 MiB cap = 22.2 MiB absolute headroom, and Tier-1 at the 11:00Z tick returned HEALTHY / ALL_GREEN / 0 signals / 0 dashboard rows.",
+        "trigger_precondition_met": "NOT a new idea — this is the follow-on the parent row PRE-AUTHORIZED and deferred. FIX-AUDITOR-TIER1-A30-MEM-SINGLE-CONTAINER-SCOPE.note says verbatim: 'OUT OF SCOPE (do NOT fold in): an absolute-headroom secondary predicate. 11.9MiB free on a 768m cap is thin in absolute terms and a pure percentage genuinely is not comparable across a 512m and a 3g cap, but adding a second predicate in the same change would confound the FP evidence for the first; mint it separately later IF THE LOOP PROVES THE PERCENTAGE VIEW INSUFFICIENT.' The loop has now proven it insufficient: the percentage view cannot distinguish rag-service's acknowledged 94-98% set-point from a NEW excursion toward the ceiling, because both are 'one number >= 85'. Minting now satisfies the parent's own stated condition; it does not re-open the parent's rejected options (per-container threshold overrides and moving WARN_PCT globally stay REJECTED).",
+        "fix_spec": "(a) HEADROOM FLOOR — add a SECOND predicate computed from the values docker stats already returns: absolute free bytes = cap - usage. If a container is memory-ACK'd but its absolute headroom is below a floor (propose MEM_FLOOR_MIB, default 32, single global constant — NOT per-container), the ACK does NOT suppress: it is a NEW signature and the verdict FAILS naming the container, its percentage AND its absolute headroom. Above the floor the ACK suppresses exactly as today. This makes 'acked at 94-98% is fine, crossing into <32 MiB free is not' expressible, which is precisely what the ledger cannot say today. (b) TRACKED_BY MUST BE LIVE — the probe must READ acked_memory[].tracked_by and resolve it against docs/data/orch/orch-state.json. An entry whose tracked_by is absent from every task_board lane, or whose status is DONE_VERIFIED, MUST NOT suppress; it must be reported as a STALE ACK and fail the check so the ledger self-expires as its own comment already promises. Fail-loud on an unreadable orch-state (do NOT adopt `2>/dev/null || true` — same idiom UC-CRITIC-HOOKS-ENFORCEMENT flags). (c) Apply (b) to the `acked[]` launchd arm too — identical dead-field defect, identical prose promise, three entries currently riding on it.",
+        "acceptance": [
+          "AC1: rag-service ACK'd, forced to 97% with >= MEM_FLOOR_MIB absolute headroom -> ALL_GREEN, named on the acknowledged-degraded line (today's behaviour preserved; no new churn).",
+          "AC2: rag-service ACK'd, forced BELOW MEM_FLOOR_MIB absolute headroom -> verdict FAILURE, detail names the container with BOTH its percentage and its MiB-free. This is the case the current code cannot express and it is the whole point of the row.",
+          "AC3: an acked_memory entry whose tracked_by resolves to DONE_VERIFIED -> verdict FAILURE with a STALE-ACK detail, not silent suppression. Same for a tracked_by that matches no row in any lane.",
+          "AC4: the mixed-case invariant is UNCHANGED — an unacknowledged breach alongside acked ones still FAILS and names the unacked container (regression-guard the existing T41).",
+          "AC5: uncapped containers (HostConfig.Memory == 0, today mcp-gateway) still skipped — absolute headroom is undefined for them, do NOT compute it from host memory.",
+          "AC6: evidence is a RAW captured probe run (verdict line + detail line + the docker inspect/stats snapshot it was evaluated against, `date -u` timestamped), not prose. Same bar the parent row set."
+        ],
+        "files_hint": "scripts/agents-flow/auditor-tier1-probe.sh (_check_mem_creep :265-320, _mem_container_acked :326-336, ledger read :275, launchd arm :340-430); scripts/agents-flow/auditor-tier1-probe.test.sh (extend T40-T43 + the launchd ack tests); docs/data/auditor-launchd-ack.json (schema gains nothing new — tracked_by ALREADY exists on every entry, it is simply never read).",
+        "prior_art_checked": "PO full-text jq over all 12 task_board lanes 2026-07-29T11:22Z for headroom|acked_memory|auditor-launchd-ack|STALENESS RULE. 6 rows inspected, NONE covers this: FIX-AUDITOR-TIER1-A30-MEM-SINGLE-CONTAINER-SCOPE (REVIEW — shipped the multi-container loop + the ledger itself, and explicitly deferred THIS predicate), FIX-AUDITOR-TIER1-PROBE-ACKED-LAUNCHD-DEATH-SUPPRESSION (REVIEW — shipped the launchd arm, carries the same dead tracked_by), FIX-AUDITOR-T1-PREGATE-MEMCREEP-SINGLE-POINT-SAMPLE (BACKLOG P2 — sampling FREQUENCY, N>=2 samples; orthogonal, a second sample of the same all-or-nothing predicate still cannot see this), FIX-AUDITOR-A30-VMHWM-VETO-TAUTOLOGY-FALSE-NEGATIVE (BACKLOG P1 — mcp-server VmHWM veto, different check), FIX-PDFX-PARENT-PROCESS-MEMORY-BURST-HEADROOM (BACKLOG P1 — pdf-extractor's own memory, not the detector), FIX-PRESSURE-HOST-HEADROOM-WRONG-MACHINE-WRONG-QUANTITY (REVIEW P1 — pressure-state emit field, different plane entirely).",
+        "does_not_cover": "This row fixes the DETECTOR's blindness. It does NOT reduce rag-service's memory by one byte — that is FU-RAG-DEPLOY-MEMORY (resident set / cap trade, user-gated infra) and FIX-RAG-SERVICE-CLEAN-EXIT-RESTART-LOOP (the compaction counter defect). Do not fold either in.",
+        "sequencing_note": "Coordinate with FIX-AUDITOR-T1-PREGATE-MEMCREEP-SINGLE-POINT-SAMPLE — both edit _check_mem_creep. Land this one first (predicate shape) then the sampling change, or land them together; do not let two agents rewrite the same function in parallel.",
+        "updated_at": "2026-07-29T11:48:29Z",
+        "po_floor_calibration_20260729T1135": "FLOOR CALIBRATION INPUT — measured. Do NOT treat the 32 MiB default proposed in fix_spec as settled; it was a round number and this note is the evidence for choosing a real one. MEASUREMENT: rag-service traversed 22.2 MiB -> 11.4 MiB of absolute headroom inside 15 minutes on 2026-07-29 (745.8 MiB @11:19Z -> 756.6 MiB @11:34:46Z, re-read identical @11:35:02Z; cap 768 MiB), the entire time ACK-suppressed and the entire time reported ALL_GREEN by Tier-1. TWO CONSEQUENCES. (1) AC2 IS SATISFIABLE AGAINST THE LIVE FLEET — you do not need to synthesise the below-floor case with a forced stub to demonstrate it, because the real container already sits under any floor at or above ~16 MiB. Capture it live for the evidence bar in AC6, and stub only for CI determinism. (2) CHOOSE THE FLOOR AGAINST THE BURST SIZE, NOT AGAINST THE CAP. The killer event on this container is a full-table optimize() rewrite documented at ~20 MiB by FIX-RAG-SERVICE-CLEAN-EXIT-RESTART-LOOP. A floor set BELOW the largest single allocation the container can make cannot warn before the allocation that kills it — the predicate would fire only after the event it exists to anticipate, which is decorative. Justify the final value against the largest known single allocation across the capped containers in scope (rag-service ~20 MiB optimize; pdf-extractor has its own burst profile tracked at FIX-PDFX-PARENT-PROCESS-MEMORY-BURST-HEADROOM) and RECORD that reasoning in the task report. Picking a floor from the cap size instead of the burst size is the same category error as picking a percentage, and it is the error this row exists to correct.",
+        "updated_by": "po/triage-20260729T1135-addendum",
+        "promoted_at": "2026-07-29T11:48:21Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
+        "claimed_at": "2026-07-29T11:48:29Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)"
+      }
+    ]
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
