@@ -1,18 +1,6 @@
 # Developer — Notebook
 
-**Last updated:** 2026-07-28 | **Cycle:** FIX-COMMIT-PATH-PEER-INDEX-SWEEP-GUARD-HOOK (pre-commit sweep-guard hook shipped, explicit supervised P0)
-
-## Session 2026-07-28 — FIX-DEPSSATISFIED-COLD-ARCHIVED-DEP-RESOLVES-MISSING — REVIEW
-
-**Task:** BOUNDED-1 auto-pickup, P1 cross-service. `dep_status_map` (`scripts/lib/devteam-eligibility.jq`) scanned only the HOT board's 7 lanes — the instant `scripts/orch-cold-evict.sh` moved a DONE_VERIFIED row to `docs/data/orch/archive/YYYY-MM.json`, every live row still depending on it resolved MISSING forever in BOUNDED-1/SLS/RLC simultaneously. Measured: 34 live rows, 41 distinct missing dep-ids, ~35 of those genuinely DONE_VERIFIED in cold archive.
-
-**Actions taken:** `dep_status_map($archive)` (archive-seeded, hot-lane entries overwrite) + `archive_status_map($archive)`/`normalize_archive_status` (case/separator-insensitive `DONE_VERIFIED` match only, everything else passes through unnormalized). 0-arg `dep_status_map` kept as a literal `dep_status_map([])` proxy — zero behavior change for every pre-existing caller (jq arity overloading, not a forked copy). New `scripts/lib/archive-glob-cat.sh` (find|sort|for-loop concat of the monthly archive files — a naive `<(cat 2026-*.json)`/`$(ls ...)` glob silently produced an EMPTY archive under this session's actual shell with zero error, caught and fixed). Threaded `--slurpfile archive` into the 4 real call sites (BOUNDED-1/SLS promote, RLC claim — grep-verified exhaustively, not guessed) across main.md/dev-standards.md/the audit instrument. Eviction guard: `orch-cold-evict.sh` `compute_id_maps()` now computes `$referenced_dep_ids` (effective_depends_on union across TASK_LANES) and filters it out of every terminal-eviction candidate set — a still-referenced row is held in hot, not evicted, independent defense-in-depth alongside the dep_status_map fix.
-
-**Verification:** Extended `scripts/audits/devteam-dispatch-gate-satisfiability.sh` (not a new instrument, per the row's own instruction) with AC-DEP-1 (live, dynamic: 0 post-fix leaks, 34 pre-fix INFO baseline matches PO's own measurement), AC-DEP-MECH (same real BOUNDED-1 promote script, only archive content varied — proves the mechanism FIRES, not just predicate resolution, grounded in a real live archived id), AC-DEP-NEG-A/B (nowhere-dep and cold-archived-non-terminal both stay UNSATISFIED), AC-EVICT-1/2/3 (real `orch-cold-evict.sh` run against a scratch fixture — referenced row held, unreferenced sibling evicted, guard proven both directions end-to-end). All pre-existing assertions in this file + 4 sibling audit scripts re-run GREEN (2 needed their own `--slurpfile archive` added since bounded1 promote now requires it unconditionally). Incidental fix (verified pre-existing/unrelated via git-HEAD replay before touching it): `devteam-bounded1-detail-disposition-gate-verify.sh`'s `make_isolated_fixture()` never cleared `.task_board.ready`, silently leaking the live board's stale `ready[0]` into equality-checking assertions. Zero TypeScript touched — `bun tsc`/`bun test` not applicable.
-
-**Board:** `task_board.in_progress[FIX-DEPSSATISFIED-COLD-ARCHIVED-DEP-RESOLVES-MISSING]` → `review` (`next_agent:qa`, `branch:null`), `.head` synced to idle, via `orch-apply.sh`.
-
-Zone health: no drift detected
+**Last updated:** 2026-07-29 | **Cycle:** FIX-NOTEBOOK-LINECAP-SWEEP-BYTE-BLIND-BACKSTOP + FIX-MOCKGUARD-SCOPE-EXCLUDE-TESTGO (2-task batch, sequential, same session)
 
 ## Session 2026-07-28 — TASK-COWORK-CATCHUP-2 — REVIEW
 
@@ -43,3 +31,17 @@ Zone health: no drift detected
 **Simplicity gate:** PASS — Q1 clean (`post-commit`/`GIT_SWEEP_GUARD_MODE` both explicitly named in the handoff's own files-to-create/AC list), Q2 no single-use abstractions (`write_signal()` 2 call sites, `new_repo()` 6 call sites in the test), Q3 senior-test clean (flat, maps 1:1 to brief §4.1 pseudocode), Q4 ratio <50% overhead (comment density matches existing precedent `scripts/git-hooks/pre-push` and `scripts/agents-flow/context-bloat-backstop.sh` for a foundational safety hook).
 
 Zone health: no drift detected — dogfooded the fix itself: this live repo's `main` was dirty with substantial concurrent peer WIP throughout this cycle (exactly the scenario the hook guards against); every commit below used explicit pathspec scoping (`git add <exact paths>` then `git commit ... -- <same exact paths>`), never bare, never `-A`.
+
+## Session 2026-07-29 — FIX-NOTEBOOK-LINECAP-SWEEP-BYTE-BLIND-BACKSTOP + FIX-MOCKGUARD-SCOPE-EXCLUDE-TESTGO — REVIEW
+
+**Task 1 (P1, cross-service/):** `notebook-linecap-sweep.sh` — the only write-path-agnostic cadence backstop for notebook caps — pre-filtered on `wc -l` only (hardcoded `cap=200`), so 9/10 live over-byte-cap notebooks (line-under, e.g. alert-commander.md 119233B/190L) never reached the already byte-fixed `notebook-auto-prune.sh` hook via the cron path. Mirrored the hook's exact `LINE_CAP`/`BYTE_CAP` derivation (SSOT `file-size-caps.json`, `BYTE_CAP=LINE_CAP*60`) into both the pre-filter AND the PRUNED/NO-CHANGE predicate. New AC5 fixture (127L/12255B byte-over/line-under) — RED (4/11 fail pre-fix) → GREEN (11/11). AC4 RAW live run against real notebooks: over-cap 10→4 (gate `<10` met), 6 genuinely pruned (dev-mainserver-crawls/dev-vps-crawls/ba/dev-team/fixer/pm), committed separately. **Honest gap:** digest-predict.md (named in AC4) did NOT converge — 2-section file where the surviving section alone is ~37KB; drop-oldest hits `notebook-auto-prune.sh`'s own single-section safe-fail (exit 0, zero write, correct signal emitted) — same unprunable-blob class as alert-commander.md, flagged for a possible follow-up row, not fixed here (`scope_out` forbids touching the hook's algorithm).
+
+**Task 2 (P2, cross-service/):** `mock-guard.sh --full` HARD-FAILed every post-cycle tick on 2 Go test-double stubs (`*_test.go`, `stubBOPURLBuilder` — the `//` inside its `https://stub.sbv.vn` URL literal tripped the same-line comment-qualifier heuristic) — only a `tests/` DIRECTORY was excluded, never Go's `_test.go` filename convention. Added ONE `_test\.go` EXCLUDE_PATHS alternative (AC1/AC4). `--full` file discovery switched `grep -r apps/` → `git ls-files --exclude-standard` so the 124MB `apps/mcp-server/~/.bun` vendored cache is excluded BY CONSTRUCTION (AC2). New `mock-guard.test.sh` (zero prior coverage) — RED (3/7 fail via `git stash`) → GREEN (7/7): AC1, 2 independent AC3 negative controls (non-test `.go`/`.ts` fixtures still HARD-FAIL), AC2 (real gitignored-cache fixture invisible to `--full`), AC4 (structural), live-repo regression (exit 1→2). **Honest gap:** live repo now exits 2 not 0 (pre-existing unrelated legitimate TODO CAUTION markers) — AC3's literal "exit 0 on a clean tree" verified as a controlled test fixture, not the live tree.
+
+**Verification (both):** shellcheck clean. No `apps/mcp-server/` TS touched either task (`scripts/`/`docs/` only) — `bun tsc`/`bun test` not applicable.
+
+**Board:** both `task_board.in_progress[...]` → `review` (`next_agent:qa`, `branch:null`) via `orch-apply.sh`, sequential writes, `.head` untouched (was already idle, not either task's `active_task_id`).
+
+**Commits:** `7fd919c15` (task 1 code+test), `b10870bd4` (task 1 real notebook prune, separate), `1fcfa72da` (task 2 code+test).
+
+Zone health: no drift detected.
