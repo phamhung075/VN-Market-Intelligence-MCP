@@ -131,6 +131,8 @@ const STATIC_JOB_NAME_MAP: Readonly<Record<string, string>> = {
   signalOutcomeJob: "signalOutcomeJob",
   alertOutcomeJob: "alertOutcomeJob",
   signalOutcomeResolution: "signalOutcomeResolutionJob",
+  // ── ALPHA-S2-SUB5-WATCHDOG-STRETCH addition (2026-07-29) ──
+  intraday5mCompactor: "intraday5mCompactorJob",
 };
 
 /** Default threshold for Layer-A crons NOT in WATCHDOG_MANIFEST (FR-1.5). */

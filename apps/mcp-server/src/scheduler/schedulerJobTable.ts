@@ -1267,7 +1267,7 @@ export function registerBespokeJobs(ctx: SchedulerJobTableCtx): void {
   // Queries MAX(started_at) per job_name against WATCHDOG_MANIFEST (16 jobs). Sends
   // WORK-channel alert when last successful run exceeds cadence × thresholdMultiplier.
   // Self-heal jobs (ohlcvDailyAggregator, reputationComputeJob, evidenceAccumulatorJob,
-  // taOhlcvBackfill) are injected with selfHealFn here — DDD-clean: job modules are
+  // taOhlcvBackfill, intraday5mCompactorJob) are injected with selfHealFn here — DDD-clean: job modules are
   // imported at the composition root, not inside schedulerWatchdogJob.ts. In-process 2h
   // rate-limit prevents alert spam. No WAL writes from watchdog itself.
   // recoverMissedExecutions: true (via scheduleCron default) + recordJobRun routing
@@ -1317,6 +1317,21 @@ export function registerBespokeJobs(ctx: SchedulerJobTableCtx): void {
         // Writes cron_job_runs row as 'ta-ohlcv-backfill' — matches the JOB_TABLE entry
         await jobRunRepo.wrapRun('ta-ohlcv-backfill', async () => {
           await runTaOhlcvBackfill()
+        })
+      },
+    },
+    // ALPHA-S2-SUB5-WATCHDOG-STRETCH: 5-min cadence self-heal for the intraday
+    // 5-min OHLCV compactor (JOB_TABLE name: 'intraday5mCompactorJob', L605
+    // above) — see schedulerWatchdogJob.ts WATCHDOG_MANIFEST entry for the
+    // §2 retention-purge rationale.
+    intraday5mCompactorJob: {
+      cadenceMs: 300_000,
+      thresholdMultiplier: 3,
+      action: 'self-heal',
+      selfHealFn: async () => {
+        // Writes cron_job_runs row as 'intraday5mCompactorJob' — matches the JOB_TABLE entry
+        await jobRunRepo.wrapRun('intraday5mCompactorJob', async () => {
+          await runIntraday5mCompactor()
         })
       },
     },

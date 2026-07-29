@@ -51,6 +51,9 @@ beforeEach(() => {
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("resolveJobNameDb — CN-1 hybrid 3-tier", () => {
+  // NOTE: identifier retains "25" as a historical label (this task's own
+  // AC delta was 16 -> 25); ALPHA-S2-SUB5-WATCHDOG-STRETCH (2026-07-29) added
+  // a 26th pair (intraday5mCompactor) below without renaming the const.
   const STATIC_25_PAIRS: ReadonlyArray<[string, string]> = [
     ["ohlcvDailyAggregator", "ohlcv-daily-aggregator"],
     ["vnstockFundamentalsRefresh", "vnstockFundamentalsRefresh"],
@@ -81,16 +84,18 @@ describe("resolveJobNameDb — CN-1 hybrid 3-tier", () => {
     ["signalOutcomeJob", "signalOutcomeJob"],
     ["alertOutcomeJob", "alertOutcomeJob"],
     ["signalOutcomeResolution", "signalOutcomeResolutionJob"],
+    // ALPHA-S2-SUB5-WATCHDOG-STRETCH addition (2026-07-29):
+    ["intraday5mCompactor", "intraday5mCompactorJob"],
   ];
 
-  it("all 25 verified manifest pairs resolve via the tier-1 static map (no distinctDbJobNames needed)", () => {
-    expect(STATIC_25_PAIRS).toHaveLength(25);
+  it("all 26 verified manifest pairs resolve via the tier-1 static map (no distinctDbJobNames needed)", () => {
+    expect(STATIC_25_PAIRS).toHaveLength(26);
     for (const [cronsKey, expectedJobName] of STATIC_25_PAIRS) {
       expect(resolveJobNameDb(cronsKey, [])).toBe(expectedJobName);
     }
   });
 
-  it("tier-1 map values are exactly CANONICAL_WATCHDOG_JOB_NAMES (25 entries, 1:1)", () => {
+  it("tier-1 map values are exactly CANONICAL_WATCHDOG_JOB_NAMES (26 entries, 1:1)", () => {
     const resolved = STATIC_25_PAIRS.map(([key]) => resolveJobNameDb(key, []));
     expect(resolved.sort()).toEqual([...CANONICAL_WATCHDOG_JOB_NAMES].sort());
   });

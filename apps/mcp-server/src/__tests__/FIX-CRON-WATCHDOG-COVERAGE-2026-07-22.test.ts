@@ -128,8 +128,15 @@ describe('FIX-CRON-WATCHDOG-COVERAGE-2026-07-22 — AC-3: newly-telemetered besp
 })
 
 describe('FIX-CRON-WATCHDOG-COVERAGE-2026-07-22 — AC-4: manifest grew by exactly 9 (16 -> 25)', () => {
-  it('manifest + canonical list both have 25 entries', () => {
-    expect(Object.keys(WATCHDOG_MANIFEST).length).toBe(25)
-    expect(CANONICAL_WATCHDOG_JOB_NAMES.length).toBe(25)
+  // NOTE: this task's own AC-4 delta was 16 -> 25. The literal 26 below reflects
+  // one further legitimate addition by a later task (ALPHA-S2-SUB5-WATCHDOG-
+  // STRETCH, 2026-07-29: intraday5mCompactorJob, 5-min self-heal cadence) —
+  // not a regression of THIS task's +9 claim. Kept as a live count invariant
+  // (mirrors WD-10 in ARCH-CRON-watchdog.test.ts) rather than re-scoping to a
+  // frozen historical delta, so both intentionally stay in lockstep with the
+  // manifest going forward.
+  it('manifest + canonical list both have 26 entries', () => {
+    expect(Object.keys(WATCHDOG_MANIFEST).length).toBe(26)
+    expect(CANONICAL_WATCHDOG_JOB_NAMES.length).toBe(26)
   })
 })

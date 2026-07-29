@@ -147,6 +147,8 @@ export const CANONICAL_WATCHDOG_JOB_NAMES: readonly string[] = [
   'signalOutcomeJob',             // schedulerJobTable.ts wrapRun (FIX-CRON-WATCHDOG-COVERAGE-BESPOKE-TELEMETRY, new)
   'alertOutcomeJob',              // schedulerJobTable.ts wrapRun (FIX-CRON-WATCHDOG-COVERAGE-BESPOKE-TELEMETRY, new)
   'signalOutcomeResolutionJob',   // schedulerJobTable.ts wrapRun (FIX-CRON-WATCHDOG-COVERAGE-BESPOKE-TELEMETRY, new)
+  // ── ALPHA-S2-SUB5-WATCHDOG-STRETCH addition (2026-07-29) ─────────────────
+  'intraday5mCompactorJob',       // schedulerJobTable.ts JOB_TABLE name: field (buildJobTable) — L605
 ] as const
 
 export const WATCHDOG_MANIFEST: WatchdogManifest = {
@@ -309,6 +311,19 @@ export const WATCHDOG_MANIFEST: WatchdogManifest = {
     cadenceMs: 86_400_000,
     thresholdMultiplier: 1.5,
     action: 'alert-only',
+  },
+  // ALPHA-S2-SUB5-WATCHDOG-STRETCH (2026-07-29): defense-in-depth for the
+  // intraday5mCompactorJob (5-min JOB_TABLE entry, schedulerJobTable.ts L605) —
+  // if this compactor is down >=24h, underlying market_prices_history ticks are
+  // purged by pushPricesHandler.ts's rolling ~24h retention before any daily
+  // cron could rescue the gap (brief §2, ALPHA-S2 architecture brief). Mirrors
+  // the ohlcv-daily-aggregator/reputationComputeJob/ta-ohlcv-backfill self-heal
+  // pattern; selfHealFn injected in schedulerJobTable.ts's liveManifest (same
+  // DDD-clean composition-root reasoning as those three — see comment there).
+  intraday5mCompactorJob: {
+    cadenceMs: 300_000,
+    thresholdMultiplier: 3,
+    action: 'self-heal',
   },
 }
 

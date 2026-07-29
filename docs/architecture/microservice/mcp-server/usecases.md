@@ -330,7 +330,7 @@ Market valuation metric (1/PE ratio)
 
 ### apps/mcp-server/src/application/cron/cronStatusCompute.ts
 Orchestrates one Layer-A row (per `CRONS` map key) for `GET /api/cron-status`:
-- `resolveJobNameDb(cronsKey, distinctDbJobNames)` — CN-1 hybrid 3-tier: static 16-pair reverse-map (WATCHDOG_MANIFEST-covered jobs) → normalized-match against a runtime `DISTINCT job_name` scan → honest fallback (CRONS key itself).
+- `resolveJobNameDb(cronsKey, distinctDbJobNames)` — CN-1 hybrid 3-tier: static 26-pair reverse-map (WATCHDOG_MANIFEST-covered jobs; grew 16→25 via FIX-CRON-WATCHDOG-COVERAGE-2026-07-22, →26 via ALPHA-S2-SUB5-WATCHDOG-STRETCH 2026-07-29) → normalized-match against a runtime `DISTINCT job_name` scan → honest fallback (CRONS key itself).
 - `deriveCadenceMs(cronExpr, nowMs)` — CN-2 MIN-of-6-samples via `cron-parser`; one generic algorithm handles restricted-hour windows, weekday-only jobs, and comma-lists uniformly.
 - `buildLayerARow(...)` — resolve → `getLastRunForJob` → `classifyCronLiveness` (domain) → assemble; populates `reason` for non-ON_TIME rows.
 - **Memoization contract (load-bearing, risk R1):** `cadenceMs`/`thresholdMultiplier`/`human_schedule`/`job_name_db` computed once per CRONS key into a module-level `Map`, reused for process lifetime (test hooks: `_staticMetaComputeCountForTests`, `_resetStaticMetaCacheForTests`).

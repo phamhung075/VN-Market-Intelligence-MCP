@@ -2,7 +2,8 @@
  * cronStatusHandler.test.ts — TASK-DASH-CRON-1
  *
  * In-memory SQLite. AC-1/2/3/4/5/6/7 endpoint correctness, AC-8/AC-9 PARITY
- * gate against the live WATCHDOG_MANIFEST (all 25 jobs as of
+ * gate against the live WATCHDOG_MANIFEST (all 26 jobs as of
+ * ALPHA-S2-SUB5-WATCHDOG-STRETCH 2026-07-29, was 25 as of
  * FIX-CRON-WATCHDOG-COVERAGE-2026-07-22, was 16), AC-23/AC-25
  * no-shared-mutable-state, AC-26 no-fake-data, AC-27 server-side time,
  * AC-29 reason affordance, FR-3.4 503 error handling.
@@ -173,16 +174,18 @@ describe("buildCronStatusDto — endpoint correctness (Group A)", () => {
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
-// AC-8 / AC-9 PARITY gate — all 25 WATCHDOG_MANIFEST jobs (FIX-CRON-WATCHDOG-
+// AC-8 / AC-9 PARITY gate — all WATCHDOG_MANIFEST jobs (FIX-CRON-WATCHDOG-
 // COVERAGE-2026-07-22 widened coverage 16 -> 25; see cronStatusCompute.ts's
-// STATIC_JOB_NAME_MAP for how the 9 new entries resolve to a CRONS key)
+// STATIC_JOB_NAME_MAP for how the 9 new entries resolve to a CRONS key.
+// ALPHA-S2-SUB5-WATCHDOG-STRETCH (2026-07-29) widened it further, 25 -> 26,
+// adding intraday5mCompactorJob.)
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("buildCronStatusDto — PARITY gate (Group B)", () => {
   const manifestEntries = Object.entries(WATCHDOG_MANIFEST);
 
-  it("sanity — exactly 25 WATCHDOG_MANIFEST jobs", () => {
-    expect(manifestEntries).toHaveLength(25);
+  it("sanity — exactly 26 WATCHDOG_MANIFEST jobs", () => {
+    expect(manifestEntries).toHaveLength(26);
   });
 
   it("AC-8 — fresh row (age <= cadenceMs) for every manifest job → ON_TIME", () => {
