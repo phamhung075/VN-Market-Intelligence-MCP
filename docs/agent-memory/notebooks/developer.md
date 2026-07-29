@@ -1,20 +1,6 @@
 # Developer — Notebook
 
-**Last updated:** 2026-07-29 | **Cycle:** FIX-AUDITOR-HEARTBEAT-OUT-OF-CONTRACT-AGENT-WRITE-TIER1
-
-## Session 2026-07-29 — FIX-NOTEBOOK-LINECAP-SWEEP-BYTE-BLIND-BACKSTOP + FIX-MOCKGUARD-SCOPE-EXCLUDE-TESTGO — REVIEW
-
-**Task 1 (P1, cross-service/):** `notebook-linecap-sweep.sh` — the only write-path-agnostic cadence backstop for notebook caps — pre-filtered on `wc -l` only (hardcoded `cap=200`), so 9/10 live over-byte-cap notebooks (line-under, e.g. alert-commander.md 119233B/190L) never reached the already byte-fixed `notebook-auto-prune.sh` hook via the cron path. Mirrored the hook's exact `LINE_CAP`/`BYTE_CAP` derivation (SSOT `file-size-caps.json`, `BYTE_CAP=LINE_CAP*60`) into both the pre-filter AND the PRUNED/NO-CHANGE predicate. New AC5 fixture (127L/12255B byte-over/line-under) — RED (4/11 fail pre-fix) → GREEN (11/11). AC4 RAW live run against real notebooks: over-cap 10→4 (gate `<10` met), 6 genuinely pruned (dev-mainserver-crawls/dev-vps-crawls/ba/dev-team/fixer/pm), committed separately. **Honest gap:** digest-predict.md (named in AC4) did NOT converge — 2-section file where the surviving section alone is ~37KB; drop-oldest hits `notebook-auto-prune.sh`'s own single-section safe-fail (exit 0, zero write, correct signal emitted) — same unprunable-blob class as alert-commander.md, flagged for a possible follow-up row, not fixed here (`scope_out` forbids touching the hook's algorithm).
-
-**Task 2 (P2, cross-service/):** `mock-guard.sh --full` HARD-FAILed every post-cycle tick on 2 Go test-double stubs (`*_test.go`, `stubBOPURLBuilder` — the `//` inside its `https://stub.sbv.vn` URL literal tripped the same-line comment-qualifier heuristic) — only a `tests/` DIRECTORY was excluded, never Go's `_test.go` filename convention. Added ONE `_test\.go` EXCLUDE_PATHS alternative (AC1/AC4). `--full` file discovery switched `grep -r apps/` → `git ls-files --exclude-standard` so the 124MB `apps/mcp-server/~/.bun` vendored cache is excluded BY CONSTRUCTION (AC2). New `mock-guard.test.sh` (zero prior coverage) — RED (3/7 fail via `git stash`) → GREEN (7/7): AC1, 2 independent AC3 negative controls (non-test `.go`/`.ts` fixtures still HARD-FAIL), AC2 (real gitignored-cache fixture invisible to `--full`), AC4 (structural), live-repo regression (exit 1→2). **Honest gap:** live repo now exits 2 not 0 (pre-existing unrelated legitimate TODO CAUTION markers) — AC3's literal "exit 0 on a clean tree" verified as a controlled test fixture, not the live tree.
-
-**Verification (both):** shellcheck clean. No `apps/mcp-server/` TS touched either task (`scripts/`/`docs/` only) — `bun tsc`/`bun test` not applicable.
-
-**Board:** both `task_board.in_progress[...]` → `review` (`next_agent:qa`, `branch:null`) via `orch-apply.sh`, sequential writes, `.head` untouched (was already idle, not either task's `active_task_id`).
-
-**Commits:** `7fd919c15` (task 1 code+test), `b10870bd4` (task 1 real notebook prune, separate), `1fcfa72da` (task 2 code+test).
-
-Zone health: no drift detected.
+**Last updated:** 2026-07-29 | **Cycle:** FU-ORCH-HOT-SUB150-SPRINT-LIFECYCLE
 
 ## Session 2026-07-29 — FIX-COWORK-SPAWNFANOUT-FLOWPATH-BYPASSES-DIGEST-DAILY-DEDUP-GATE — REVIEW
 
@@ -45,5 +31,23 @@ Zone health: no drift detected.
 **Simplicity gate:** PASS — Q1 clean (every line traces to one of the 6 acceptance criteria), Q2 single-use `_check_auditor_heartbeat_shapes` justified by direct precedent (`write_signal`/sweep-guard dispatch already single-purpose in the same file), Q3 senior-test clean (flat jq predicates, no indirection), Q4 ratio <50% overhead.
 
 **Commits:** `612ee0954` (guard+docs+test), `06f15af0d` (live file repair, separate — data vs code convention).
+
+Zone health: no drift detected.
+
+## Session 2026-07-29 — FU-ORCH-HOT-SUB150-SPRINT-LIFECYCLE — REVIEW
+
+**Task:** BOUNDED-1 auto-pickup, docs/data/orch/. detail_ref didn't resolve (no `items[]` entry) — worked from board row's inline fields + own investigation.
+
+**Findings:** `sprint_goal.entries[]`/`task_board.active_sprints[]` eviction verified genuinely 0 — all 18/8 entries non-terminal (active/PLANNING/OPEN, no TERMINAL_SET alias drift), cross-checked against task_board lanes + cold `archive/*.json` closed_sprints/closed_sprint_goals for stale-active evidence — none found. No code change needed; existing predicate already correct.
+
+**Actions taken:** `decision_journal[]` had zero eviction story (architect finding state-data-files-P7). Extended `scripts/orch-cold-evict.sh` with an age-ranked pass (keep 10 newest by parsed `.ts` desc, evict rank≥10 if ts null or >14d old — mirrors `done[]`). Entries have no stable unique id (task_id repeats across decisions) so hot removal is INDEX-keyed and cold-append is content-deduped, not id-set-keyed like every other lane. Confirmed zero live readers of `.decision_journal` (2 write sites only) — safe to age-evict independent of parent-sprint liveness.
+
+**Verification:** new TEST 8 in `orch-cold-evict-tests.sh` (6 assertions: rank-gate, age-gate independent of rank, null-ts eviction, non-contiguous-index correctness, idempotent re-run). Full suite before/after: 27/35 both times (8 pre-existing unrelated failures, flagged not fixed) + 6/6 new T8 green. Live-applied under commit-mutex: `orch-state.json` 2,478,170→2,404,145 bytes (decision_journal 49→10). Conservation guard indifferent as expected (681/133 unchanged).
+
+**Honest gap:** <150KB target NOT reached by this task alone (flagged up front — task_board lanes dominate remaining ~2.4MB). Deferred: P7's optional `orch-validate.mjs` >50 WARNING, `task_board._closed_signals_20260614` legacy-key cleanup — both out of stated scope.
+
+**Board:** `task_board.in_progress[FU-ORCH-HOT-SUB150-SPRINT-LIFECYCLE]` → `review` (`next_agent:router`, `branch:null`), `.head` synced to idle, via `orch-apply.sh`.
+
+**Commit:** `b3d9a04eb` (script+test+orch-state.json+archive+decision-journal, single commit, explicit pathspec).
 
 Zone health: no drift detected.
