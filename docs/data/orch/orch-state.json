@@ -88,12 +88,11 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "FACTORY-GUARD-CI-TSBOUNDARIES-IMPL",
-    "next_agent": "developer",
-    "next_action": "BOUNDED-1 auto-pickup claim of FACTORY-GUARD-CI-TSBOUNDARIES-IMPL — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
-    "updated_at": "2026-07-29T22:18:31Z",
-    "updated_by": "dev-team (bounded-1 auto-pickup)"
+    "status": "idle",
+    "active_task_id": null,
+    "next_agent": "router",
+    "updated_at": "2026-07-29T22:58:56Z",
+    "updated_by": "developer"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -17586,6 +17585,27 @@
         "claimed_at": "2026-07-29T21:52:37Z",
         "claimed_by": "dev-team (bounded-1 auto-pickup)",
         "review_note": "AC-1 clock threaded through readPendingOutcomeAlerts (default new Date(), zero prod behaviour change); AC-2 fixture de-rotted (TEST-10 regression test, NOW shifted 200 REAL days into the past, RED-proved via git-stash A/B against pre-fix code). Target file 10/10 pass (was 3/9). Full per-file-isolation run (ci-per-file-isolation.sh 16, the actual CI runner): 14797/40/3 fail — the 3 (1324-push-news-all-sources, 1398/1793-pollnews-cooldown) do not import alertStore/alertOutcomeJob and re-ran GREEN individually (P16 resource-contention + local missing-chromium flakes) — pre-existing, unrelated. tsc clean, toolCount=184/cronJobCount=88 unchanged. AC-3 (ci_green_on_subsequent_push) is QA/dispatcher gate — NOT closed here, requires a fresh CI run on a new SHA."
+      },
+      {
+        "id": "FACTORY-GUARD-CI-TSBOUNDARIES-IMPL",
+        "type": "SPRINT-S",
+        "title": "Wire ESLint boundaries-plugin fences into CI (3 TS services) + fix 3 live fence violations + fix news-fetch routes/ element-map gap + add missing news-fetch-go-lint job",
+        "status": "REVIEW",
+        "priority": "P2",
+        "size": "M",
+        "zone": "cross-service/",
+        "epic": "FACTORY-MAINTAINABILITY-2026-06",
+        "cluster": "ci-regression-prevention",
+        "source": "architect design brief 2026-07-24, parent FACTORY-GUARD-CI-depguard-tier-boundaries",
+        "detail_ref": "docs/architecture-briefs/2026-07-24-factory-guard-ci-depguard-tier-boundaries.md#4-build-vs-plan--decomposed-into-2-child-rows-different-toolchains-independently-testable-not-self-implemented",
+        "dev_agent": "developer",
+        "next_agent": "qa",
+        "parent_task": "FACTORY-GUARD-CI-depguard-tier-boundaries",
+        "created_at": "2026-07-24T18:29:15Z",
+        "created_by": "architect",
+        "updated_at": "2026-07-29T22:59:15Z",
+        "entered_review_at": "2026-07-29T22:58:56Z",
+        "review_note": "3 new CI jobs (mcp-server-eslint/news-fetch-eslint/frontend-eslint) + news-fetch-go-lint wired into .github/workflows/ci.yml. Fixed all live/previously-invisible violations first (zero-tolerance): mcp-server getMoneyRadarComposite.ts 2x Fence-B (interface) fixed by relocating queryMarketWideForeignFlow -> new infrastructure/db/foreignFlowQueries.ts + credit-flow computation -> new application/usecases/computeCreditFlowSignal.ts (creditFlowTools.ts now a thin wrapper); recoverMissingOhlcvSession.ts 1x Fence-B (scheduler) fixed by moving the file application/usecases/ -> scheduler/market-data/ (sole caller + core dep both scheduler-owned). news-fetch: boundaries/elements src/routes/** was unclassified (drifted, invisible to the plugin) -> mapped to interface type, surfacing + then fixing the real Fence-C hit in routes/fetchArticle.ts via a setPlaywrightLauncher DI seam wired from src/index.ts (composition root). Bonus: removed 5 dead react-hooks/exhaustive-deps disable-comments in frontend (plugin never installed) that independently blocked the new frontend-eslint job. Every violation reproduced against a git-stash baseline before fixing (proves real, not cosmetic); 2 scratchpad RAW-verify scripts exercised the actual post-relocation import graph end-to-end (money-radar composite against a seeded real DB; news-fetch DI wiring through a real Hono router) per the task DoD. Zero test regressions: mcp-server 133/133 targeted + full-suite 14797 pass/3 pre-existing fail (chromium-binary-missing + network pollNews, stash-confirmed unrelated); news-fetch 241/241; frontend vitest 2183/2185 (2 pre-existing QUE_DESCRIPTIONS fails, stash-confirmed unrelated). tsc/eslint/size-lint-justification.sh/metric-mask-lint.sh all clean on all 3 services post-fix. Decision journal: docs/agent-memory/decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-developer.md STEP developer-S29. QA next."
       }
     ],
     "qa": [],
@@ -17607,33 +17627,7 @@
     },
     "last_triaged_at": "2026-07-29T22:18:21Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": [
-      {
-        "id": "FACTORY-GUARD-CI-TSBOUNDARIES-IMPL",
-        "type": "SPRINT-S",
-        "title": "Wire ESLint boundaries-plugin fences into CI (3 TS services) + fix 3 live fence violations + fix news-fetch routes/ element-map gap + add missing news-fetch-go-lint job",
-        "status": "IN_PROGRESS",
-        "priority": "P2",
-        "size": "M",
-        "zone": "cross-service/",
-        "epic": "FACTORY-MAINTAINABILITY-2026-06",
-        "cluster": "ci-regression-prevention",
-        "source": "architect design brief 2026-07-24, parent FACTORY-GUARD-CI-depguard-tier-boundaries",
-        "detail_ref": "docs/architecture-briefs/2026-07-24-factory-guard-ci-depguard-tier-boundaries.md#4-build-vs-plan--decomposed-into-2-child-rows-different-toolchains-independently-testable-not-self-implemented",
-        "dev_agent": "developer",
-        "next_agent": "developer",
-        "parent_task": "FACTORY-GUARD-CI-depguard-tier-boundaries",
-        "note": "files: .github/workflows/ci.yml (3 new eslint jobs mcp-server/news-fetch/frontend + 1 new news-fetch-go-lint job mirroring the 6 existing go-lint jobs), apps/mcp-server/src/application/usecases/getMoneyRadarComposite.ts + recoverMissingOhlcvSession.ts (fix 3 fence-violating imports: 2x interface/, 1x scheduler/), apps/news-fetch/eslint.config.mjs (add routes element mapping — src/routes/** currently unclassified/invisible to boundaries plugin), apps/news-fetch/src/routes/fetchArticle.ts + apps/news-fetch/src/index.ts (fix the resulting real Fence-C hit: PlaywrightBrowserFactory imported outside composition root), docs/policies/dev-standards.md (CANONICAL pointer). approach: rule content already correct in all 3 eslint.config.mjs (verified live 2026-07-24 — application->interface and domain->infrastructure already forbidden); the gap is purely that eslint never runs in CI. Add `npx eslint . --max-warnings=0` jobs scoped per-service config. Fix debt BEFORE wiring so gate opens clean (zero-tolerance, debt=4 lines/3 files). dod: eslint --max-warnings=0 green on all 3 TS services; news-fetch-go-lint job green; 3 pre-existing + 1 previously-invisible violation fixed with no behavior change (RAW-verify money-radar composite + news-fetch article-fetch path after rebuild); CI green.",
-        "created_at": "2026-07-24T18:29:15Z",
-        "created_by": "architect",
-        "updated_at": "2026-07-29T22:18:31Z",
-        "promoted_at": "2026-07-29T22:18:21Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
-        "claimed_at": "2026-07-29T22:18:31Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)"
-      }
-    ]
+    "in_progress": []
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
