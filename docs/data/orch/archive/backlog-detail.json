@@ -1,7 +1,7 @@
 {
   "_sentinel": "backlog-detail-v1",
   "created_at": "2026-06-26T19:51:45Z",
-  "updated_at": "2026-07-13T14:35:00Z",
+  "updated_at": "2026-07-29T04:41:57Z",
   "count": 437,
   "items": [
     {
@@ -3266,7 +3266,8 @@
       "verification_gate": "Existing frontend test suite green untouched (no API/route/behavior change); each extracted component used by >=2 pages with real props; QA spot-verifies migrated cells render live values not placeholders.",
       "created_at": "2026-06-15T20:17:53Z",
       "created_by": "po-s64",
-      "note": "UPDATED 2026-06-16: FR-4 redirected — FE-PAGE-REORG will REUSE fetchUtils.ts from FIX-ERRAUDIT-W2-FRONTEND-SAFEFETCH (Wave-2) instead of creating loader-utils.ts. Architect confirmed this scope absorption. BA must update FE-PAGE-REORG spec reference accordingly."
+      "note": "UPDATED 2026-06-16: FR-4 redirected — FE-PAGE-REORG will REUSE fetchUtils.ts from FIX-ERRAUDIT-W2-FRONTEND-SAFEFETCH (Wave-2) instead of creating loader-utils.ts. Architect confirmed this scope absorption. BA must update FE-PAGE-REORG spec reference accordingly.",
+      "next_agent": "ba"
     },
     {
       "id": "FIX-ERRAUDIT-W3-MCP-P2",
@@ -3356,7 +3357,8 @@
       "depends_on": [],
       "blocks": [],
       "created_at": "2026-06-15T23:28:41Z",
-      "created_by": "po-s68"
+      "created_by": "po-s68",
+      "next_agent": "dev-mcp-server"
     },
     {
       "id": "FIX-BCTC-BANK-SUMMARY-MAPPING",
@@ -3587,7 +3589,8 @@
       "depends_on": [],
       "created_at": "2026-06-16T07:00:00Z",
       "created_by": "pm",
-      "note": "Out-of-scope for Wave-2. Dashboard loaders that call client.ts typed functions (dashboard.db.tsx, dashboard.services.tsx, dashboard.fetch.tsx, dashboard.analysis.tsx client.ts calls) remain unbounded for this wave. Wave-3 task to scope design for bounding these via outer safeFetch or apiGet-internal deadline with signal-merge logic."
+      "note": "Out-of-scope for Wave-2. Dashboard loaders that call client.ts typed functions (dashboard.db.tsx, dashboard.services.tsx, dashboard.fetch.tsx, dashboard.analysis.tsx client.ts calls) remain unbounded for this wave. Wave-3 task to scope design for bounding these via outer safeFetch or apiGet-internal deadline with signal-merge logic.",
+      "next_agent": "ba"
     },
     {
       "id": "FIX-OHLCV-CLASS3-COLD-START-EXCHANGE-SEED-P2",
@@ -4355,7 +4358,8 @@
       "source": "router triage tick 20260621T0407Z; GENUINELY-UNTRACKED finding; reports 3249-3275 sentiment-trend cluster",
       "minted_by": "po-s111",
       "minted_at": "2026-06-21T04:07:00Z",
-      "note": "False-fix guard: report 3266 = PO previously claimed fixed 03:37Z but live flow file unchanged (notebook-only edit). VERIFY the real caller (main.md:118), not a notebook."
+      "note": "False-fix guard: report 3266 = PO previously claimed fixed 03:37Z but live flow file unchanged (notebook-only edit). VERIFY the real caller (main.md:118), not a notebook.",
+      "next_agent": "agent-father"
     },
     {
       "id": "FIX-BDI-SHIPPING-STALE-404-GUARD",
@@ -5998,7 +6002,9 @@
         "A (agent-father): unbypassable spawn-prompt preamble enforcing IDENTITY_CHECK + flow-entry BEFORE any router-protocol inheritance; suppress CLAUDE.md router dispatch behavior for cowork-spawned gatherers so overflow surfaces as loud IDENTITY_CHECK=FAIL not silent off-flow.",
         "B (agent-father/cowork-team flow): dispatcher gates FIRE telemetry + last_fired stamp on post-spawn liveness proof (notebook mtime advance), converting silent gap into loud failure + permitting re-fire instead of 4h blind window."
       ],
-      "verification_gate": "Architect/agent-father design decision FIRST (PLAN-ONLY). Done-when: a cowork gatherer spawn that suffers identity displacement produces a loud IDENTITY_CHECK=FAIL (BUG telegram) rather than a fabricated success block + last_fired stamp; OR dispatcher refuses to stamp FIRE without notebook-mtime liveness proof."
+      "verification_gate": "Architect/agent-father design decision FIRST (PLAN-ONLY). Done-when: a cowork gatherer spawn that suffers identity displacement produces a loud IDENTITY_CHECK=FAIL (BUG telegram) rather than a fabricated success block + last_fired stamp; OR dispatcher refuses to stamp FIRE without notebook-mtime liveness proof.",
+      "next_agent": "agent-father",
+      "plan_only": true
     },
     {
       "id": "TASK_1998",
