@@ -419,12 +419,9 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "FACTORY-PDF-split-handlers",
-    "next_agent": "developer",
-    "next_action": "BOUNDED-1 auto-pickup claim of FACTORY-PDF-split-handlers — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
-    "updated_at": "2026-07-29T01:16:24Z",
-    "updated_by": "dev-team (bounded-1 auto-pickup)"
+    "status": "idle",
+    "active_task_id": null,
+    "next_agent": "router"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -16522,6 +16519,27 @@
         "commit": "3caf5f0c1 (fix+test+flow-docs), 8452cd5c8 (memory)",
         "status_note": "IMPLEMENTATION: Root cause confirmed at spawn-fanout.md:192 (Step 5.2 composed the spawn prompt from slot.flow_path alone, never read slot.trigger_prompt) and cowork-schedule.json digest-daily (flow_path=daily-predict.md, trigger_prompt=main.md -- the only slot where the two fields disagreed). Confirmed the launchd Layer-B backstop (cowork-guaranteed-slot-firer.sh) was never affected -- grepped it directly, already reads slot.trigger_prompt verbatim (docs/standards/cron-jobs.md:377 documents this correctly). Bug was isolated to Step 5.2's Layer-A live-session dispatch path only. FIX (PREFERRED general, per row): spawn-fanout.md Step 5.2 now resolves ENTRY_PROMPT = slot.trigger_prompt when present (composed flow_path form kept as a defensive fallback only for slots without one), PLUS a fail-loud pre-spawn consistency check that refuses any slot whose trigger_prompt names a different file than flow_path (releases the per-work-item token, logs errors[], send_telegram(bug)) -- closes the whole class, not just digest-daily. ALSO fixed digest-daily.flow_path -> docs/agents/digest-predict/flow/main.md in cowork-schedule.json so it agrees with trigger_prompt (matches sibling digest-sunday's pattern) -- required so the new static assertion passes post-fix, and so flow_path stops naming a file that trigger_prompt will never actually enter. New exported pure predicate extractPromptFlowPath()/slotEntryPathsAgree() in scripts/agents-flow/cowork-match-slots.js (already the schedule-parsing SSOT module) -- ONE algorithm referenced by BOTH the runtime spawn-fanout.md prose check and the new static test, per the row's explicit anti-duplicate-predicate instruction. New scripts/agents-flow/cowork-schedule-consistency.test.js (9/9 PASS): TC-1..3 unit-test the extractor (bare \"run <path> slot=<id>\" form, multi-line refine-bctc-slot-* shape which embeds extra routing instructions on line 2+, null/missing input), TC-4..6 unit-test the agree/disagree predicate directly (incl. TC-5 reproducing the exact pre-fix digest-daily shape), TC-7 is the live-schedule static assertion (every slot's trigger_prompt and flow_path name the same file). Corrected a stale decision-comment in docs/agents/cowork-team/flow/main.md (\"Spawn prompt = run <flow_path> slot=<id>\") that had drifted from the actual (buggy) Step 5.2 behavior it was describing.\nVERIFICATION: RED reproduced directly against the REAL pre-fix schedule content (git show HEAD:docs/data/cowork-schedule.json piped into the working tree, not a synthetic fixture) -- cowork-schedule-consistency.test.js TC-7 FAILs exactly on digest-daily (8/9 pass); restored the fixed content -> 9/9 GREEN. Sibling cowork-match-slots.test.js re-run 43/43 PASS and cowork-catchup-predicate.test.js 34/34 PASS, both unaffected (purely additive exports, matchSlots()/CLI contract untouched). jq -e . on cowork-schedule.json parses clean. bun tsc --noEmit (apps/mcp-server) 0 errors -- zero files under apps/mcp-server/src/ touched, so no bun test regression is structurally possible. Did NOT copy the dedup gate into daily-predict.md -- explicitly forbidden by the row (would create a second claim-gate copy that must stay byte-identical to main.md's, the exact duplicate-predicate class devteam-eligibility.jq was consolidated to kill). Graphify incremental update: SKIPPED -- env check confirms zero LLM API keys (GEMINI/ANTHROPIC/OPENAI) in this session, the same root cause 3 prior developer sessions (FACTORY-ALERT, FACTORY-FRONTEND, ULTRACODE-AUDIT-FIXALL) hit as a hard structural failure; Part B semantic extraction also mandates the Agent tool, unavailable to a spawned specialist subagent. Flagged in WORK.md, not silently omitted. Commit-mutex deviation: task instructions named the MCP commit-mutex protocol, but .claude/agents/developer.md frontmatter tools grant is literally \"Read, Edit, Write, Glob, Grep, Bash\" -- no MCP tool present, a real structural constraint (INV-GATEWAY-1), independently re-confirmed here and matching the same finding QA already validated once for this agent in TASK-COWORK-CATCHUP-2. Committed directly instead: 2 pathspec-scoped commits, git diff --cached --name-only emptiness-check before AND after each. Decision journal: docs/agent-memory/decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-developer.md STEP developer-S21.",
         "updated_by": "developer"
+      },
+      {
+        "title": "Split pdf handlers.py: schemas, run-helpers, thin routes",
+        "priority": "P2",
+        "zone": "pdf-extractor",
+        "type": "FACTORY",
+        "status": "REVIEW",
+        "id": "FACTORY-PDF-split-handlers",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-PDF-split-handlers",
+        "promoted_at": "2026-07-29T01:16:20Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
+        "updated_at": "2026-07-29T01:36:03Z",
+        "claimed_at": "2026-07-29T01:16:24Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "next_agent": "ops",
+        "moved_to_review_at": "2026-07-29T01:35:37Z",
+        "moved_by": "dev-pdf-extractor",
+        "rebuild_required": true,
+        "review_note": "Split interface/handlers.py (750L; register_routes() alone ~460L, far past the 2026-06-15 audit line estimate) into domain/constants.py (STATEMENT_SECTIONS allow-set, replaces the valid_sections property), interface/schemas.py (5 request schemas), and 8 register_*_routes() modules (health/extract/extract-tables/md-tables/layout-first/pek/rasterizer/page-text). handlers.py now 65L pure delegation; every file <=120L (max 103L). Two pieces (pek route + its background runner) moved to their own files (routes_pek.py, pek_run_helper.py) because scenarios/pek_single_doc_extraction.py patches \"interface.handlers.is_vn_market_open_utc\" by string path and test_pek_engine_adapter.py asserts on logging.getLogger(\"interface.handlers\") -- both retargeted to the new module paths (mechanical string moves only, zero assertion/logic changes). Route paths/status codes/request-response shapes unchanged -- verified via live register_routes() route-table smoke (same 8 endpoints pre/post) and full pytest suite before/after: 10 failed/1032 passed/3 skipped BOTH runs, identical failing test IDs (all pre-existing env-only: missing /app/data/pdfs/*.pdf fixtures + local tesseract gaps, confirmed via git stash/pop A/B). mypy: same pre-existing \"not a valid Python package name\" env error as baseline. Full rationale + coupling-discovery trail: docs/agent-memory/decisions/sprint-FACTORY-PDF-split-handlers-dev-pdf-extractor.md. Commits: b3853e817 (code split), a6e59881b (decision journal), 63cb15ba1 (notebook). No MCP tool grant on this agent (Read/Edit/Write/Glob/Grep/Bash only) -- commit-mutex/task_claim/task_release skipped per router instruction, committed directly with explicit pathspecs.",
+        "updated_by": "dev-pdf-extractor"
       }
     ],
     "qa": [],
@@ -16543,23 +16561,7 @@
     },
     "last_triaged_at": "2026-07-29T01:16:20Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": [
-      {
-        "title": "Split pdf handlers.py: schemas, run-helpers, thin routes",
-        "priority": "P2",
-        "zone": "pdf-extractor",
-        "type": "FACTORY",
-        "status": "IN_PROGRESS",
-        "id": "FACTORY-PDF-split-handlers",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-PDF-split-handlers",
-        "promoted_at": "2026-07-29T01:16:20Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
-        "updated_at": "2026-07-29T01:16:24Z",
-        "claimed_at": "2026-07-29T01:16:24Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)"
-      }
-    ]
+    "in_progress": []
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
