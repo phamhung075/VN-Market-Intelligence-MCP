@@ -425,3 +425,21 @@
 - Close DIAGNOSE, consolidate onto the existing FIX row, split the growth axis out
 **why-decision:** The spike's question is answered, so keeping it open re-asks a settled question; its premise names a container that no longer exists. Consolidating puts the mechanism where the implementer starts. The growth axis (cadence/_indices/disk) is a different question with a different owner and would have diluted a one-file fix.
 **why-change:** Brief expected the compaction CONSTANT to be the finding; the actual defect is compact()'s reset sitting inside the try, so the failure path never resets and every later insert re-fires a full-table optimize() (proved live: 6 optimize() in 8.6s, 55 inserts/attempt vs nominal 100). Held P2 not P1: ready already has 49 P0/P1 with qa=0, and the fix cannot close the loop while warm RSS is 749.9/768 MiB.
+
+### STEP po-S45 · po · 2026-07-29T10:53:00Z
+**task-id:** FIX-AUDITOR-B12-DOUBLE-INVOKE-EMIT-MARKER-LOSS
+**what-done:** Minted P1 consolidating router findings 1+2 after refuting the mechanism both were premised on.
+**what-considered:**
+- Take the handed reading (ledger self-stamp defeats dedup; CAS retry double-wrote) and mint the emit-path fix.
+- Test it: two invocations vs one retry — distinguishable by row id, since `_gen_row_id` runs once per invocation.
+**why-decision:** `get_agent_signals` returned TWO E-1 rows (#9885/#9886, expiries 12:33:36/12:33:38). `_run_e1` fires once per `run_emit_signal`, so one invocation cannot produce two. The rows also carry DISTINCT ids, which a CAS retry (fixed `row_json`) cannot produce. Root cause is a double CALL, not the retry loop and not a dedup vacuity. Ledger-older-than-row is correct E-2-before-E-3 ordering (lines 462 vs 466), and the ledger is only ever stamped on branches that send first — so the WARN DID page, DASHBOARD is right, and `telegram_sent=0` is the wrong artifact.
+**why-change:** Router's "worst of the five, fails toward silence" inverted which artifact lies; row now carries an explicit do-not-fix fence on `_e3_write_row`.
+
+### STEP po-S46 · po · 2026-07-29T10:53:00Z
+**task-id:** FIX-AUDITOR-VPS-ROUTE-COUNT-HARDCODE-UNSATISFIABLE
+**what-done:** Minted P2 for the 7-route check; declined to mint on findings 4, 5, 6.
+**what-considered:**
+- Treat 3 consecutive partial sweeps as an agent-compliance defect (router's read).
+- Check whether "all 7 routes" is satisfiable at all before blaming compliance.
+**why-decision:** `get_vps_proxy_health` returns 4 push-services; system-map `routes[]` has 8. The literal 7 has no referent — the instruction cannot be followed, so briefing harder cannot work. Also found the PASS was declared from the freshness plane while `get_vps_service_health` reported vn-sbv-fetch UNHEALTHY, likely the cause of the same cycle's B-12 WARN. NO-MINT: finding 5 is not a defect (main.md:828 documents the tier-2/3 marker as "cycle completed", not "healthy"); finding 6's premise is false (A-29 spec is executable, `get_cron_health` works); finding 4 is owned by FIX-NOTEBOOK-COMPOSE-REWRITES-RETAINED-PRIOR-SECTIONS (REVIEW/P1) + FIX-AUDITOR-COMMIT-NONEXPLICIT-PATHSPEC.
+**why-change:** Router expected 3 to be a recurring-compliance row; it is a doc/SSOT drift, so the remedy moves from the agent to the flow doc.
