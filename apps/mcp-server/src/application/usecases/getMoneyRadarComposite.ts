@@ -8,13 +8,13 @@
  *
  *   | Component                    | Reuse source                                  | Mode          |
  *   |-------------------------------|-----------------------------------------------|---------------|
- *   | foreign_net_direction         | queryMarketWideForeignFlow (marketWideForeignFlowTool.ts) | in-process SQL |
+ *   | foreign_net_direction         | queryMarketWideForeignFlow (infrastructure/db/foreignFlowQueries.ts) | in-process SQL |
  *   | foreign_accum_z_market        | computeForeignAccumRank (clients.ts)          | cross-service HTTP (stock-price :5000) |
  *   | foreign_outflow_z_5d          | getForeignRoom (usecase)                      | in-process    |
  *   | obv_slope                     | LOCAL recompute (daily_ohlcv close+volume) — see rationale below | in-process SQL |
  *   | rel_vol_z_20 / up_down_vol_ratio / degraded_vwap_proxy_z | computeMoneyFlowOscillators (clients.ts, NEW) | cross-service HTTP (technical-analysis :5003) |
  *   | carry_regime                  | getMacroSnapshot (clients.ts)                 | cross-service HTTP (macro-indicators :5004) |
- *   | credit_flow_direction         | getCreditFlowSignalHandler (creditFlowTools.ts) | in-process |
+ *   | credit_flow_direction         | computeCreditFlowSignal (application/usecases/computeCreditFlowSignal.ts) | in-process |
  *   | volatility_regime             | computeVolatilityIndicators (clients.ts)      | cross-service HTTP (technical-analysis :5003) |
  *   | index axis (D1/D2)            | getVnIndexDailyCloses (moneyRadarStore.ts) — daily_ohlcv (code='VNINDEX') | in-process SQL |
  *   | breadth axis (D1)             | getBreadthThrust (usecase) adl_history        | in-process |
@@ -35,8 +35,11 @@
  *
  * HONEST-NULL (HN-1..HN-7) enforcement — see inline comments at each guard.
  *
- * DDD layer: application/usecases — orchestrates domain + infrastructure
- * (+ a small number of interface/mcp/tools exported query/handler functions).
+ * DDD layer: application/usecases — orchestrates domain + infrastructure only
+ * (FACTORY-GUARD-CI-TSBOUNDARIES-IMPL, 2026-07-29: the 2 prior imports reaching
+ * up into interface/mcp/tools were relocated — queryMarketWideForeignFlow to
+ * infrastructure/db/foreignFlowQueries.ts, credit-flow computation extracted
+ * into the sibling application/usecases/computeCreditFlowSignal.ts — Fence-B fix).
  *
  * @module application/usecases/getMoneyRadarComposite
  */
@@ -75,8 +78,8 @@ import {
   computeMoneyFlowOscillators,
   getMacroSnapshot,
 } from "../../infrastructure/microservices/clients.js";
-import { queryMarketWideForeignFlow } from "../../interface/mcp/tools/market-data/marketWideForeignFlowTool.js";
-import { getCreditFlowSignalHandler } from "../../interface/mcp/tools/sector/creditFlowTools.js";
+import { queryMarketWideForeignFlow } from "../../infrastructure/db/foreignFlowQueries.js";
+import { computeCreditFlowSignal } from "./computeCreditFlowSignal.js";
 import { getForeignRoom } from "./getForeignRoom.js";
 import { getBreadthThrust } from "./getBreadthThrust.js";
 import { VN_OFFSET_MS } from "../../domain/services/timeConstants.js";
@@ -290,7 +293,7 @@ export async function getMoneyRadarComposite(db: Database): Promise<MoneyRadarCo
   // handler still flags the whole signal is_estimate=true (yoyIsEstimate),
   // so the component is excluded until BLOCKER-6 (VIRA/VARA source) lands.
   try {
-    const credit = await getCreditFlowSignalHandler({});
+    const credit = await computeCreditFlowSignal({});
     const excluded = credit.is_estimate;
     components.push({
       key: "credit_flow_direction",

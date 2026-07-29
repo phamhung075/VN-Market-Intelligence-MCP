@@ -20,6 +20,12 @@
 //   2. import/resolver set to typescript so .js-suffixed ESM imports resolve
 //      to .ts files. Requires eslint-import-resolver-typescript devDependency.
 //   3. v6 object-based selectors used for disallow (from/disallow with to:{type}).
+//
+// FACTORY-GUARD-CI-TSBOUNDARIES-IMPL (2026-07-29): src/routes/** was drifted-unmapped
+// (real HTTP route handlers living outside src/interface/, invisible to the plugin —
+// a live blind spot: routes/fetchArticle.ts imported infrastructure/ directly with zero
+// Fence-C signal). Mapped to the "interface" type below — same DDD role as
+// src/interface/** (HTTP handler layer), just a different directory name.
 
 import boundaries from "eslint-plugin-boundaries";
 import tsParser from "@typescript-eslint/parser";
@@ -43,6 +49,11 @@ export default [
         { type: "infrastructure",    pattern: "src/infrastructure/**" },
         { type: "application",       pattern: "src/application/**" },
         { type: "interface",         pattern: "src/interface/**" },
+        // FACTORY-GUARD-CI-TSBOUNDARIES-IMPL (2026-07-29): src/routes/** is the
+        // fetch-article HTTP route handler pair — same "interface" DDD role as
+        // src/interface/**, just a drifted directory name that was previously
+        // unclassified (invisible to boundaries/dependencies below).
+        { type: "interface",         pattern: "src/routes/**" },
         { type: "domain",            pattern: "src/domain/**" },
         { type: "composition-root",  pattern: "src/index.ts" },
       ],

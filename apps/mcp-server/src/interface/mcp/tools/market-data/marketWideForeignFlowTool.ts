@@ -15,6 +15,11 @@
  * clearly in its output so callers can reason about coverage.
  *
  * DDD layer: interface/mcp/tools — may import infrastructure and domain.
+ * The query functions below were relocated to infrastructure/db/foreignFlowQueries.ts
+ * (FACTORY-GUARD-CI-TSBOUNDARIES-IMPL, 2026-07-29 — Fence-B fix: application must
+ * not import interface; getMoneyRadarComposite.ts now imports the query directly
+ * from infrastructure/). Re-exported here unchanged for this tool's own registration
+ * and for existing tests that import from this path.
  *
  * @module interface/mcp/tools/market-data/marketWideForeignFlowTool
  */
@@ -23,26 +28,15 @@ import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { Database } from "bun:sqlite";
 import { z } from "zod";
 import { getDb } from "../../../../infrastructure/db/schema.js";
+import {
+  queryMarketWideForeignFlow,
+  queryTopFlowTickers,
+  type DailyAggrRow,
+  type TickerFlowRow,
+} from "../../../../infrastructure/db/foreignFlowQueries.js";
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Internal types
-// ─────────────────────────────────────────────────────────────────────────────
-
-interface DailyAggrRow {
-  date: string;
-  total_buy: number;
-  total_sell: number;
-  total_net: number;
-  ticker_count: number;
-}
-
-interface TickerFlowRow {
-  code: string;
-  date: string;
-  foreign_buy_vol: number;
-  foreign_sell_vol: number;
-  foreign_net_vol: number;
-}
+export { queryMarketWideForeignFlow, queryTopFlowTickers };
+export type { DailyAggrRow, TickerFlowRow };
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Formatting helpers
@@ -63,86 +57,6 @@ function fmtVol(vol: number): string {
  */
 function fmtNet(vol: number): string {
   return `${vol >= 0 ? "+" : "-"}${fmtVol(Math.abs(vol))}`;
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Core query functions (exported for testability)
-// ─────────────────────────────────────────────────────────────────────────────
-
-/**
- * Query market-wide foreign flow aggregates for the last N trading dates
- * that have foreign flow data.
- *
- * @param db   - Database instance
- * @param days - Number of trading dates to return (default 1 = latest session only)
- * @returns    - Array of daily aggregate rows, most-recent first
- */
-export function queryMarketWideForeignFlow(
-  db: Database,
-  days = 1,
-): DailyAggrRow[] {
-  const rows = db
-    .prepare<DailyAggrRow, [number]>(
-      `SELECT
-         date,
-         COALESCE(SUM(foreign_buy_vol),  0) AS total_buy,
-         COALESCE(SUM(foreign_sell_vol), 0) AS total_sell,
-         COALESCE(SUM(foreign_net_vol),  0) AS total_net,
-         COUNT(*)                           AS ticker_count
-       FROM daily_ohlcv_with_flow
-       -- TASK_2003 (SUBTASK-DAILY-FF-4): reads foreign-flow via the daily_ohlcv_with_flow
-       -- compat view (COALESCE new daily_foreign_flow, then legacy daily_ohlcv.foreign_*).
-       WHERE foreign_net_vol IS NOT NULL
-       GROUP BY date
-       HAVING COUNT(*) > 0
-       ORDER BY date DESC
-       LIMIT ?`,
-    )
-    .all(days);
-
-  return rows;
-}
-
-/**
- * Query top-N net buyers and sellers for a given trading date.
- *
- * @param db      - Database instance
- * @param date    - Trading date string (YYYY-MM-DD)
- * @param topN    - How many tickers to return per side (default 5)
- * @returns       - { topBuyers, topSellers }
- */
-export function queryTopFlowTickers(
-  db: Database,
-  date: string,
-  topN = 5,
-): { topBuyers: TickerFlowRow[]; topSellers: TickerFlowRow[] } {
-  const topBuyers = db
-    .prepare<TickerFlowRow, [string, number]>(
-      `SELECT code, date,
-              COALESCE(foreign_buy_vol,  0) AS foreign_buy_vol,
-              COALESCE(foreign_sell_vol, 0) AS foreign_sell_vol,
-              COALESCE(foreign_net_vol,  0) AS foreign_net_vol
-       FROM daily_ohlcv_with_flow
-       WHERE date = ? AND foreign_net_vol IS NOT NULL
-       ORDER BY foreign_net_vol DESC
-       LIMIT ?`,
-    )
-    .all(date, topN);
-
-  const topSellers = db
-    .prepare<TickerFlowRow, [string, number]>(
-      `SELECT code, date,
-              COALESCE(foreign_buy_vol,  0) AS foreign_buy_vol,
-              COALESCE(foreign_sell_vol, 0) AS foreign_sell_vol,
-              COALESCE(foreign_net_vol,  0) AS foreign_net_vol
-       FROM daily_ohlcv_with_flow
-       WHERE date = ? AND foreign_net_vol IS NOT NULL
-       ORDER BY foreign_net_vol ASC
-       LIMIT ?`,
-    )
-    .all(date, topN);
-
-  return { topBuyers, topSellers };
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

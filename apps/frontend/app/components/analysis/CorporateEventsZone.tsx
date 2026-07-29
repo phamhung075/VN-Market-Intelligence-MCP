@@ -138,7 +138,6 @@ export function CorporateEventsZone({ stock }: CorporateEventsZoneProps) {
   // Load full universe once on mount. The filter is client-side on event.code.
   // Using deps [] intentionally: the full universe never changes per-stock;
   // filterStockEvents re-runs on each render when stock prop changes.
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     if (fetcher.state === "idle" && fetcher.data === undefined) {
       fetcher.load("/api/corporate-events?days=90");

@@ -311,7 +311,6 @@ export function TechnicalZone({
   // Initial load and reload whenever the stock ticker changes.
   useEffect(() => {
     fetcher.load(loadUrl);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loadUrl]);
 
   // Auto-refresh on intraday SLA cadence (5 min).
@@ -321,10 +320,8 @@ export function TechnicalZone({
       if (fetcher.state === "idle") {
         fetcher.load(loadUrl);
       }
-      // eslint-disable-next-line react-hooks/exhaustive-deps
     }, INTRADAY_REFRESH_MS);
     return () => clearInterval(id);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loadUrl]);
 
   // ── Derive display state ──────────────────────────────────────────────────

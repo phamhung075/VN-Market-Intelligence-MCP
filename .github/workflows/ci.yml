@@ -50,6 +50,110 @@ jobs:
       - name: Run tests (per-file isolation)
         run: bash ../../scripts/ci-per-file-isolation.sh 16
 
+  mcp-server-eslint:
+    name: mcp-server-eslint
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    defaults:
+      run:
+        working-directory: apps/mcp-server
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version-file: .tool-versions
+
+      - name: Cache bun install
+        uses: actions/cache@v4
+        with:
+          path: ~/.bun/install/cache
+          key: bun-${{ hashFiles('apps/mcp-server/bun.lock') }}
+          restore-keys: bun-
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      # Architecture fence — eslint-plugin-boundaries Fence-A/B (domain/application
+      # layer isolation, eslint.config.mjs). Scoped to src/ (matches the config's own
+      # `files: ["src/**/*.ts"]`) — `eslint .` from the app root also globs
+      # node_modules and trips on a vendored package's own unrelated eslint.config.js
+      # (fast-uri ships one referencing an uninstalled `neostandard` plugin) —
+      # verified 2026-07-29 (FACTORY-GUARD-CI-TSBOUNDARIES-IMPL); scoping to src/
+      # avoids it and matches this job's actual intent (lint our code, not vendor code).
+      - name: Run eslint (architecture fence)
+        run: ./node_modules/.bin/eslint src/ --max-warnings=0
+
+  news-fetch-eslint:
+    name: news-fetch-eslint
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    defaults:
+      run:
+        working-directory: apps/news-fetch
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version-file: .tool-versions
+
+      - name: Cache bun install
+        uses: actions/cache@v4
+        with:
+          path: ~/.bun/install/cache
+          key: bun-${{ hashFiles('apps/news-fetch/bun.lock') }}
+          restore-keys: bun-
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      # Architecture fence — eslint-plugin-boundaries Fence-A/B/C (primitive/module/
+      # infrastructure layer isolation, eslint.config.mjs). Uses the package's own
+      # lint:ci script (eslint src/ --max-warnings 0) — same src/-scoped pattern as
+      # mcp-server-eslint above.
+      - name: Run eslint (architecture fence)
+        run: bun run lint:ci
+
+  frontend-eslint:
+    name: frontend-eslint
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    defaults:
+      run:
+        working-directory: apps/frontend
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version-file: .tool-versions
+
+      - name: Cache bun install
+        uses: actions/cache@v4
+        with:
+          path: ~/.bun/install/cache
+          key: bun-${{ hashFiles('apps/frontend/bun.lock') }}
+          restore-keys: bun-
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      # Architecture fence — eslint-plugin-boundaries Fence-A/B/C (formatter/domain/
+      # view-model/api-client layer isolation, eslint.config.mjs). Uses the package's
+      # own lint:fence script — the general "lint" script is unrelated and already
+      # broken independently of this fence (--ignore-path is not a valid flag on the
+      # installed ESLint 8.57.1 flat-config CLI); lint:fence is the correct, working,
+      # boundaries-scoped entry point.
+      - name: Run eslint (architecture fence)
+        run: bun run lint:fence
+
   go-lint:
     name: go-lint
     runs-on: ubuntu-latest
@@ -186,6 +290,32 @@ jobs:
         with:
           version: v2.0
           working-directory: apps/kinh-dich-service
+          args: --config .golangci.yml
+
+  news-fetch-go-lint:
+    name: News Fetch Go Lint
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: apps/news-fetch/go.mod
+          cache-dependency-path: apps/news-fetch/go.sum
+
+      # apps/news-fetch carries its own go.mod/.golangci.yml (Fence-A/B depguard,
+      # GFD-9) alongside the TS/Bun HTTP service — previously zero CI job of any
+      # kind (FACTORY-GUARD-CI-TSBOUNDARIES-IMPL, 2026-07-24 architect brief §0),
+      # so its depguard fences were unenforced dead config. Mirrors the 6 existing
+      # go-lint jobs above.
+      # working-directory is equivalent to: cd apps/news-fetch && golangci-lint run --config .golangci.yml
+      - name: Run golangci-lint
+        uses: golangci/golangci-lint-action@v7.0.0
+        with:
+          version: v2.0
+          working-directory: apps/news-fetch
           args: --config .golangci.yml
 
   py-lint:

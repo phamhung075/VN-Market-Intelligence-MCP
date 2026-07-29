@@ -1,5 +1,10 @@
 /**
- * Application Use Case — Recover a Missing Daily OHLCV Session
+ * Recover a Missing Daily OHLCV Session
+ *
+ * size-justification: 132L — single cohesive 3-branch recovery function (already-present
+ * guard / tick-survival re-aggregate / VPS-relay-queue fallback) + its result/deps types;
+ * relocated verbatim from application/usecases/ (see below), splitting further would break
+ * the single-responsibility, one-job-per-file convention this directory already follows.
  *
  * ALPHA-S1-STARTUP-CANDLE-GUARD (2026-07-13): net-new. `ALPHA-S1-CANDLE-RECOVER` (the sibling
  * row this function was originally designed under) closed as a WEEKEND-BLIND FALSE-POSITIVE
@@ -10,15 +15,24 @@
  * Orchestrates: infra read (`market_prices_history` tick survival check) + the existing
  * `ohlcvDailyAggregatorJob` (re-aggregation, zero changes to that file — reuses its injectable
  * `nowMsFn` extension point) + the `ohlcv_backfill_queue` VPS-relay trigger (same INSERT idiom
- * already used by `ohlcvStartupProbe.ts`). "Orchestrating multiple services" → application/usecases
- * per docs/policies/dev-standards.md § DDD Layer Rules.
+ * already used by `ohlcvStartupProbe.ts`).
+ *
+ * DDD layer: scheduler/market-data — relocated from application/usecases/
+ * (FACTORY-GUARD-CI-TSBOUNDARIES-IMPL, 2026-07-29 — Fence-B fix: application must not import
+ * scheduler). This recovery helper's only production caller is the sibling
+ * scheduler/market-data/ohlcvCandleGuard.ts, and its core dependency is the scheduler's own
+ * ohlcvDailyAggregatorJob.ts re-aggregator — both scheduler-owned concerns, consistent with
+ * mcp-server's eslint.config.mjs note that scheduler is treated as the application-layer
+ * orchestrator for this brownfield service's cron/backfill flows. Pure relocation — zero
+ * logic change, only the module path + the (now same-directory) import of
+ * ohlcvDailyAggregatorJob.js changed.
  *
  * Idempotent by construction:
  *   - already-present guard (branch 1) — safe to call twice for the same date.
  *   - pending-queue dedup (branch 3b) — never inserts a second `done=0` queue row while one
  *     is still outstanding.
  *
- * @module application/usecases/recoverMissingOhlcvSession
+ * @module scheduler/market-data/recoverMissingOhlcvSession
  */
 
 import type { Database } from "bun:sqlite";
@@ -26,7 +40,7 @@ import { getDb } from "../../infrastructure/db/schema.js";
 import {
   runOhlcvDailyAggregator,
   type OhlcvAggregatorResult,
-} from "../../scheduler/market-data/ohlcvDailyAggregatorJob.js";
+} from "./ohlcvDailyAggregatorJob.js";
 
 export interface RecoverMissingOhlcvSessionDeps {
   db?: Database;

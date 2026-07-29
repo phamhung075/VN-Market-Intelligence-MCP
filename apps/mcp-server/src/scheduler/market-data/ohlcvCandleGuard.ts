@@ -10,8 +10,14 @@
  * consulted the trading calendar).
  *
  * Single-responsibility, one-job-per-file — mirrors ohlcvStartupProbe.ts's placement
- * exactly (interface/scheduler layer per docs/policies/dev-standards.md § DDD Layer Rules:
- * orchestrates domain calendar + infra DB read + application recovery function).
+ * exactly (scheduler layer per docs/policies/dev-standards.md § DDD Layer Rules:
+ * orchestrates domain calendar + infra DB read + the sibling recovery function
+ * recoverMissingOhlcvSession.ts — co-located in scheduler/market-data/ since
+ * FACTORY-GUARD-CI-TSBOUNDARIES-IMPL, 2026-07-29 relocated it out of
+ * application/usecases/, where it had been reaching back into this same
+ * scheduler/market-data/ directory for ohlcvDailyAggregatorJob.ts — a Fence-B
+ * violation; the recovery helper's sole caller and its core dependency were
+ * both already scheduler-owned).
  *
  * Two call sites (both additive, see docs/handoffs/ALPHA-S1-architect-design.md §2):
  *   1. startScheduler.ts — immediately after the existing runOhlcvStartupProbe() call.
@@ -46,7 +52,7 @@ import {
 import {
   recoverMissingOhlcvSession,
   type RecoverMissingOhlcvSessionResult,
-} from "../../application/usecases/recoverMissingOhlcvSession.js";
+} from "./recoverMissingOhlcvSession.js";
 
 export interface OhlcvCandleGuardDeps {
   db?: Database;

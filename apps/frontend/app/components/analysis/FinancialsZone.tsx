@@ -114,7 +114,6 @@ export function FinancialsZone({ stock }: FinancialsZoneProps) {
   // bootstrap; stock changes only affect the client-side filter below.
   useEffect(() => {
     fetcher.load("/api/financials");
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Show skeleton while the initial load is in flight or not yet started.

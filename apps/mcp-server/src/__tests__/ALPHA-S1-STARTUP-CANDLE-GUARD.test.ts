@@ -7,8 +7,10 @@ Bun.env["DB_PATH"] = ":memory:";
 //
 // Every test injects its own in-memory bun:sqlite Database — never touches the shared
 // getDb() singleton — so no createBunServer/HTTP server is needed (neither function under
-// test is an HTTP route; both are scheduler/application-layer functions taking an injected
-// `db`, mirroring the existing 1358-ohlcv-aggregator.test.ts pattern for this exact module).
+// test is an HTTP route; both are scheduler-layer functions taking an injected `db`
+// (recoverMissingOhlcvSession relocated from application/usecases/ to scheduler/market-data/
+// by FACTORY-GUARD-CI-TSBOUNDARIES-IMPL, 2026-07-29 — Fence-B fix), mirroring the existing
+// 1358-ohlcv-aggregator.test.ts pattern for this exact module).
 //
 // Test groups:
 //   CAL-1/CAL-2: domain helper sanity (mostRecentTradingDayOnOrBefore backward walk)
@@ -22,7 +24,7 @@ import {
   mostRecentTradingDayOnOrBefore,
   shiftDateDays,
 } from "../domain/services/vnTradingCalendar.js";
-import { recoverMissingOhlcvSession } from "../application/usecases/recoverMissingOhlcvSession.js";
+import { recoverMissingOhlcvSession } from "../scheduler/market-data/recoverMissingOhlcvSession.js";
 import { runOhlcvCandlePresenceGuard } from "../scheduler/market-data/ohlcvCandleGuard.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
