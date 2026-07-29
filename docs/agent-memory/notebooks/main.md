@@ -1,6 +1,16 @@
 # Dev Team — Sprint Boundary Notebook
 
-**Written:** 2026-07-29T15:19Z
+**Written:** 2026-07-29T15:38Z
+
+## cycle-20260729T1538Z-verify — RAW-verified dev-mcp-server's SPIKE-BCTC-REPARSE-CADENCE-GUARD-ROOTCAUSE-VERIFY completion; real double-wrap defect confirmed independently from source, FIX minted; found+fixed a 7th stale-marker instance (review-lane) plus a `.head` desync
+
+- **BGFAN-1 RAW-verification, all claims confirmed real**: commit `8c673c3d0` real, on HEAD, pathspec-scoped to exactly the 3 claimed files (`orch-state.json`, its own notebook, the findings doc — no peer files touched).
+- **Code claims independently re-derived from source, not trusted**: `runBctcReparseWithDb`'s default `fn` (`startupHelpers.ts:363`) is `async () => { await runBctcReparseJob() }` — no `return`, so `recordJobRun` (`cronJobRunStore.ts:200-224`) always sees `result===undefined` → `rows_written` ALWAYS NULL, confirmed by reading the computation directly. `startScheduler.ts:169-182`'s 30s startup catch-up is genuinely ungated (bare fire-and-forget `setTimeout`), unlike the explicitly-gated `runDailyAuditIfStale()` immediately above it in the same function — both claims hold up against the actual code, not just the self-report.
+- **AC-3 claim** (all 9 targets show 0 table rows) is consistent with and correctly cross-references 2 already-tracked open gaps (`SPIKE-BCTC-2025Q4-PDFPULL-OCR-0ROW`, `SPIKE-BCTC-TABLEROWS-FROZEN-HOLLOW-DONE`) rather than re-treading them.
+- **New FIX minted, not fixed inline** (correct per SPIKE discipline): `FIX-BCTC-REPARSE-DOUBLE-WRAP-DEDUP-GUARD` (backlog, owner dev-mcp-server), AC references the exact precedent pattern (`FIX-BASE-RATE-COMPUTATION-CRON-DEAD`) independently confirmed present in the same file's `runEvidenceAccumulatorWithDb` comment. `task_total` 700→701, conservation OK.
+- **Found a 7th instance of the stale-lane-marker class** (same shape as the 5th, on the row now in `review[]`): `promoted_at/promoted_by/promotion_note/claimed_at/claimed_by` never stripped when dev-mcp-server's own commit moved the row out of `in_progress[]`. **Also found `.head` desynced** — still `in_progress`/`dev-mcp-server`/SPIKE even though the row had already moved to `review[]` (same class as the 14:37Z 4th instance). Fixed both in one commit `d73df19c5`: stripped markers, reset `.head` idle, `next_agent:po`.
+- Released sprint-task lock `task:SPIKE-BCTC-REPARSE-CADENCE-GUARD-ROOTCAUSE-VERIFY` cleanly after full verification (dev-mcp-server correctly left it untouched per its own report).
+- **NEXT: po** — row in `review[]`, `next_agent:po` (investigation output + a new backlog mint to disposition, not a code diff for qa). Not yet dispatched.
 
 ## cycle-20260729T1519Z — Tick 15:07Z: cold-evicted 4 items, drained 10 signals, found+fixed a 6th stale-marker collision (BOUNDED-1 lane this time), correctly claimed a genuinely-new SPIKE candidate, dispatched dev-mcp-server
 
@@ -22,11 +32,3 @@
 - Released commit-mutex and sprint-task lock `task:FIX-AUDITOR-A30-VMHWM-VETO-TAUTOLOGY-FALSE-NEGATIVE` cleanly (agent-father itself has no gateway binding — structurally could not release it).
 - **NEXT: qa** — row in `review[]`, `supervised:true`/`plan_only:true` preserved (architect designed, agent-father implemented, QA verifies — no self-cert). Not yet dispatched; review-lane QA-drain is its own gated lane, awaiting next tick/trigger.
 
-## cycle-20260729T1449Z — Tick 14:37Z: drained 3 signals + 3 dashboard rows, found+fixed a 4th head-desync case (same class as 14:07Z's epic-wrapper gap) on the just-verified architect row, declined FIX-PUSH-DELIVERY stub 3rd tick running, SLS dispatched FIX-AUDITOR-A30-VMHWM-VETO-TAUTOLOGY-FALSE-NEGATIVE to agent-father
-
-- **Preflight/GCC clean**: RUN tick `2026-07-29T14:37Z`. No HEAD.lock, no worktree issues.
-- **Drain**: 3 routed to po (2 commit-sweep-guard, 1 context-bloat from architect's own decision-journal write last cycle). Committed `eaa07397b`. CI probe deduped (same known `aa6c044b`). 3 NEW dashboard rows (1 CRITICAL `sbv_fx stale`, 2 WARN) claimed/READ/released cleanly.
-- **Found a 4th instance of the head-desync pattern**: `FIX-COWORK-DISPATCH-ROUTER-INTENT-MUTEX-BYPASS` was still sitting in `in_progress[]` pinning WIP=1 even though architect's completion was independently RAW-verified and its sprint-task lock released last turn — same "phase done, hold still in effect, nobody reset `.head`" shape as the 14:07Z epic-wrapper gap. Moved `in_progress[]`→`ready[]`, `status:"READY"`, `.head` reset idle. **Applied the lesson from the 14:07Z collision proactively this time**: stripped the row's stale `promoted_at/promoted_by/promotion_note/claimed_at/claimed_by/dispatch_lane` SLS markers in the SAME commit, before running SLS again — no collision this cycle. Committed `8e9549587`.
-- **`FIX-PUSH-DELIVERY-ERROR-RATE-ALERT` declined a 3rd consecutive tick** — same unresolved own-prose "PO confirm priority" ask, nothing stamped across 3 ticks. Left a stall-note on the row itself rather than silently re-declining a 4th time; PO triage runs this tick anyway (pendingSignals non-empty) so this is the natural venue for it to actually get resolved.
-- **SLS promoted+claimed `FIX-AUDITOR-A30-VMHWM-VETO-TAUTOLOGY-FALSE-NEGATIVE`** (P0) — verified architect's own design (2-commit fix: stopgap re-sequence past OOMKilled/peak>97% first, then full clause-4 tautology-veto removal from `tier1-probe.md`) was genuinely complete by reading the full `architect_review_note` on the row, not just its title. Spawned `agent-father` directly (docs/agents/*+scripts/audits/* zone) with the full commit-order/acceptance/out-of-scope context. Sprint-task lock held pending verified completion.
-- SLS dispatch consumed the tick — did not fall through to RLC/QA-Drain/Step 1.
