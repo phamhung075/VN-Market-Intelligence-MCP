@@ -88,11 +88,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "active_task_id": null,
-    "next_agent": "router",
-    "updated_at": "2026-07-29T13:09:41Z",
-    "updated_by": "developer"
+    "status": "in_progress",
+    "active_task_id": "ALPHA-S3-DIVERGENCE-SCREEN-V1",
+    "next_agent": "developer",
+    "next_action": "BOUNDED-1 auto-pickup claim of ALPHA-S3-DIVERGENCE-SCREEN-V1 — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
+    "updated_at": "2026-07-29T13:19:09Z",
+    "updated_by": "dev-team (bounded-1 auto-pickup)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -7627,29 +7628,6 @@
         "source": "docs/signals/processed/developer-2026-07-12T073316Z-main-notebook-writepath-missing-ac3.json",
         "updated_at": "2026-07-29T00:05:50Z",
         "updated_by": "po (triage-20260729T0002 dev-team tick signals 1-3)"
-      },
-      {
-        "id": "ALPHA-S3-DIVERGENCE-SCREEN-V1",
-        "title": "Divergence screen v1: foreign z-score (accum-rank) x news sentiment (rag_analyses) x relative strength (/ta/relative-strength), watchlist-scoped, daily Telegram digest via the existing alerts path",
-        "owner": "developer",
-        "status": "BACKLOG",
-        "type": "SPRINT-M",
-        "size": "M",
-        "priority": "P2",
-        "wave": 3,
-        "zone": "multi",
-        "sprint": "FLOW-PRICE-ALPHA-LOOP",
-        "depends": [
-          "ALPHA-S1-CANDLE-RECOVER",
-          "ALPHA-S1-OHLCV-BACKFILL-DONE-BUG",
-          "ALPHA-S2-FOREIGN-FLOW-WRITE-RACE"
-        ],
-        "created_by": "po-option-a-flow-alpha-loop",
-        "created_at": "2026-07-12T07:56:33Z",
-        "note": "THE core alpha deliverable (alpha lens #1 — 'nearly pure SQL'). Joins daily_ohlcv foreign columns + foreign_room_events (foreign z-score / foreignAccumZMarket via stock-price /price/foreign-accum-rank) x rag_analyses sentiment + mention_velocity x technical-analysis /ta/relative-strength, watchlist-scoped (33-34 tickers), emitting a small ranked set as a daily Telegram digest through the EXISTING alerts path (do not build a new delivery channel). DoD: a daily digest posts ranked divergence signals with honest nulls (no fabrication when a leg is thin). Depends on S1 (sane cross-section: candle present + backfill inserted-count) and S2 foreign-flow race fix (no dropped foreign rows). Needs dev-team PM/architect decomposition when picked. Brief roadmap step 3 + §3 Option A. zone=multi -> architect splits.  [PO 2026-07-14 coordination_session e417ef1f] USER GO — supervised:false AUTHORIZED (explicit user selection via router AskUserQuestion; NOT a gate-jump). flow-alpha FULL launch — user directed LAUNCH EVERYTHING (all remaining waves incl. wave 6). This row un-parked; BOUNDED-1/pipeline-resume may pick it. Wave ordering stays enforced by priority + depends (NOT reordered). Zone/depends/safety notes PRESERVED. Do NOT re-park.",
-        "supervised": false,
-        "updated_at": "2026-07-14T20:29:05Z",
-        "updated_by": "po (DECISION-1 flow-alpha full GO — user selection e417ef1f)"
       },
       {
         "id": "ALPHA-S4-REGIME-GATE-V1",
@@ -17215,9 +17193,38 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-29T12:48:14Z",
+    "last_triaged_at": "2026-07-29T13:19:09Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": []
+    "in_progress": [
+      {
+        "id": "ALPHA-S3-DIVERGENCE-SCREEN-V1",
+        "title": "Divergence screen v1: foreign z-score (accum-rank) x news sentiment (rag_analyses) x relative strength (/ta/relative-strength), watchlist-scoped, daily Telegram digest via the existing alerts path",
+        "owner": "developer",
+        "status": "IN_PROGRESS",
+        "type": "SPRINT-M",
+        "size": "M",
+        "priority": "P2",
+        "wave": 3,
+        "zone": "multi",
+        "sprint": "FLOW-PRICE-ALPHA-LOOP",
+        "depends": [
+          "ALPHA-S1-CANDLE-RECOVER",
+          "ALPHA-S1-OHLCV-BACKFILL-DONE-BUG",
+          "ALPHA-S2-FOREIGN-FLOW-WRITE-RACE"
+        ],
+        "created_by": "po-option-a-flow-alpha-loop",
+        "created_at": "2026-07-12T07:56:33Z",
+        "note": "THE core alpha deliverable (alpha lens #1 — 'nearly pure SQL'). Joins daily_ohlcv foreign columns + foreign_room_events (foreign z-score / foreignAccumZMarket via stock-price /price/foreign-accum-rank) x rag_analyses sentiment + mention_velocity x technical-analysis /ta/relative-strength, watchlist-scoped (33-34 tickers), emitting a small ranked set as a daily Telegram digest through the EXISTING alerts path (do not build a new delivery channel). DoD: a daily digest posts ranked divergence signals with honest nulls (no fabrication when a leg is thin). Depends on S1 (sane cross-section: candle present + backfill inserted-count) and S2 foreign-flow race fix (no dropped foreign rows). Needs dev-team PM/architect decomposition when picked. Brief roadmap step 3 + §3 Option A. zone=multi -> architect splits.  [PO 2026-07-14 coordination_session e417ef1f] USER GO — supervised:false AUTHORIZED (explicit user selection via router AskUserQuestion; NOT a gate-jump). flow-alpha FULL launch — user directed LAUNCH EVERYTHING (all remaining waves incl. wave 6). This row un-parked; BOUNDED-1/pipeline-resume may pick it. Wave ordering stays enforced by priority + depends (NOT reordered). Zone/depends/safety notes PRESERVED. Do NOT re-park.",
+        "supervised": false,
+        "updated_at": "2026-07-29T13:19:10Z",
+        "updated_by": "po (DECISION-1 flow-alpha full GO — user selection e417ef1f)",
+        "promoted_at": "2026-07-29T13:19:09Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
+        "claimed_at": "2026-07-29T13:19:09Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)"
+      }
+    ]
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
