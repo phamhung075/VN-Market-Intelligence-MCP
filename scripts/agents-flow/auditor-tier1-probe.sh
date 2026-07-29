@@ -73,6 +73,15 @@
 # the passive-health-masking guard detect a silently-dead probe (stale
 # "green" is not green).
 #
+# SOLE-WRITER INVARIANT (FIX-AUDITOR-HEARTBEAT-OUT-OF-CONTRACT-AGENT-WRITE-TIER1):
+# _write_heartbeat() below is the ONLY authorized writer of
+# docs/data/auditor-tier1-last-healthy.json, and its shape ({last_healthy_at,
+# checks:{6 keys, all "PASS"}}) is the ONLY authorized shape for that file —
+# enforced in code (not just prose) by scripts/git-hooks/pre-commit's
+# _check_auditor_heartbeat_shapes, which rejects any staged commit that
+# deviates. Full spec, cited from both writers: docs/policies/dev-standards.md
+# CANONICAL:SSOT-AUDITOR-HEARTBEAT-SOLE-WRITER.
+#
 # Env overrides (test seams — auditor-tier1-probe.test.sh mocks docker/
 # curl/df/launchctl as functions after sourcing; these path vars point the
 # script at fixtures instead of the real repo files):

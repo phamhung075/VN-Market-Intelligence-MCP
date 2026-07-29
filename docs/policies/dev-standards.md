@@ -1,6 +1,6 @@
 # Developer Standards
 
-<!-- size-justification: 140L — unified developer reference: code search tools, test patterns, DDD rules, TypeScript conventions, naming. All read together at sprint start to set context; splitting into tool-guide + test-patterns + naming-rules fragments the unified "how we code" standard. SCRIPT-PERSIST 2026-06-07: Script Persistence section incl. maintenance clause (+15L, user directive). SYSREMAKE-P2-DEVTEAM-BACKLOG-PICKUP-BOUNDED1 2026-07-04: CANONICAL pointer for the dev-team idle-capacity backlog pickup scripts (+11L). PUSH-AUTONOMY-1 2026-07-14: Autonomous Push Gate section (+16L, user directive — push on 100% green, no user action, post-push real-data verify task). FIX-CMH-OBSOLETE-FILE-CLEANUP 2026-07-20: CANONICAL pointer for scripts/audits/clean-obsolete-files.sh (+8L). BLOCK-PUSH-CRON-AUDIT-BATCH-NO-QA 2026-07-22 (qa): pinned the "targeted/merge-gate suite" reading against the standing FIX-MCP-SUITE-HEALTH-BASELINE full-suite red so it stops being re-litigated per push (+3L). UC-MDH-P3 2026-07-23: CANONICAL pointer for scripts/agents-flow/memory-prune-sweep.sh (+14L). UC-MDH-P4 2026-07-23: CANONICAL pointer for scripts/agents-flow/decision-journal-archive.sh (+15L). UC-GCP-P8 2026-07-23: CANONICAL pointer for scripts/agents-flow/stranded-state-sweep.sh (+13L). TE-T17 2026-07-23: CANONICAL pointer for scripts/agents-flow/notebook-linecap-sweep.sh (+13L). TE-T28 2026-07-23: CANONICAL pointer for scripts/gen-tool-list-stubs.py (+15L). TE-T31 2026-07-23: CANONICAL pointer for scripts/gen-tools-index.sh (+14L). TE-T33 2026-07-23: CANONICAL pointer for scripts/agents-flow/cold-archive-sweep.sh (+18L). FFLOW-STALE-0723-B-RECHECK-HARNESS 2026-07-23: CANONICAL pointer for scripts/check-foreign-flow-freshness.sh (+16L). FIX-COMMIT-PATH-PEER-INDEX-SWEEP-GUARD-HOOK 2026-07-28: CANONICAL pointer for scripts/git-hooks/pre-commit (+15L). -->
+<!-- size-justification: 140L — unified developer reference: code search tools, test patterns, DDD rules, TypeScript conventions, naming. All read together at sprint start to set context; splitting into tool-guide + test-patterns + naming-rules fragments the unified "how we code" standard. SCRIPT-PERSIST 2026-06-07: Script Persistence section incl. maintenance clause (+15L, user directive). SYSREMAKE-P2-DEVTEAM-BACKLOG-PICKUP-BOUNDED1 2026-07-04: CANONICAL pointer for the dev-team idle-capacity backlog pickup scripts (+11L). PUSH-AUTONOMY-1 2026-07-14: Autonomous Push Gate section (+16L, user directive — push on 100% green, no user action, post-push real-data verify task). FIX-CMH-OBSOLETE-FILE-CLEANUP 2026-07-20: CANONICAL pointer for scripts/audits/clean-obsolete-files.sh (+8L). BLOCK-PUSH-CRON-AUDIT-BATCH-NO-QA 2026-07-22 (qa): pinned the "targeted/merge-gate suite" reading against the standing FIX-MCP-SUITE-HEALTH-BASELINE full-suite red so it stops being re-litigated per push (+3L). UC-MDH-P3 2026-07-23: CANONICAL pointer for scripts/agents-flow/memory-prune-sweep.sh (+14L). UC-MDH-P4 2026-07-23: CANONICAL pointer for scripts/agents-flow/decision-journal-archive.sh (+15L). UC-GCP-P8 2026-07-23: CANONICAL pointer for scripts/agents-flow/stranded-state-sweep.sh (+13L). TE-T17 2026-07-23: CANONICAL pointer for scripts/agents-flow/notebook-linecap-sweep.sh (+13L). TE-T28 2026-07-23: CANONICAL pointer for scripts/gen-tool-list-stubs.py (+15L). TE-T31 2026-07-23: CANONICAL pointer for scripts/gen-tools-index.sh (+14L). TE-T33 2026-07-23: CANONICAL pointer for scripts/agents-flow/cold-archive-sweep.sh (+18L). FFLOW-STALE-0723-B-RECHECK-HARNESS 2026-07-23: CANONICAL pointer for scripts/check-foreign-flow-freshness.sh (+16L). FIX-COMMIT-PATH-PEER-INDEX-SWEEP-GUARD-HOOK 2026-07-28: CANONICAL pointer for scripts/git-hooks/pre-commit (+15L). FIX-AUDITOR-HEARTBEAT-OUT-OF-CONTRACT-AGENT-WRITE-TIER1 2026-07-29: CANONICAL sole-writer + shape invariant for docs/data/auditor-tier{1,2,3}-last-healthy.json, cited from both writers (+21L). -->
 
 ## Script Persistence — scripts/, never /tmp
 
@@ -137,6 +137,33 @@ bash scripts/fb-data-integrity-gate.sh <post-file> [YYYY-MM-DD] [snapshot-json-f
 # Fetches live data from http://localhost:3000/mcp/api/prices/batch automatically.
 # Owning flow: docs/agents/fb-market-poster/flow/main.md STEP 4b
 ```
+
+**CANONICAL: Auditor heartbeat sole-writer + shape invariant (SSOT-AUDITOR-HEARTBEAT-SOLE-WRITER, FIX-AUDITOR-HEARTBEAT-OUT-OF-CONTRACT-AGENT-WRITE-TIER1)**
+`docs/data/auditor-tier{1,2,3}-last-healthy.json` — ONE authorized writer per file, enforced by
+`scripts/git-hooks/pre-commit`'s `_check_auditor_heartbeat_shapes` (always-reject, both directions,
+never gated by `GIT_SWEEP_GUARD_MODE`):
+- **Tier-1** (`auditor-tier1-last-healthy.json`): sole writer is `scripts/agents-flow/auditor-tier1-probe.sh`'s
+  `_write_heartbeat()`, reachable ONLY from `run_probe()`'s ALL_GREEN branch. Semantic: "system was
+  confirmed healthy". Required shape: `{last_healthy_at, checks:{docker_ps, health_3000, health_3001,
+  disk, mem_creep, launchd_agents}}`, ALL 6 values `"PASS"` — the only shape the authorized writer ever
+  emits, so any other shape (bare, wrong key set, a non-PASS value) is an out-of-contract write and is
+  rejected. `docs/agents/system-auditor/flow/main.md`'s own Tier-2/3 Heartbeat Write block is explicitly
+  gated OUT of Tier-1 and MUST stay that way — do NOT port `suppress_heartbeat` here (Tier-1 has no
+  separate "audit completed" writer the way Tier-2/3 does; suppressing this file's only writer starves
+  it permanently — see `FIX-AUDITOR-TIER1-FRESHNESS-CHECK-RELOCATE-TO-SENTINEL` `.why_the_obvious_fixes_are_wrong`).
+- **Tier-2/Tier-3** (`auditor-tier{2,3}-last-healthy.json`): sole writer is the system-auditor subagent's
+  own end-of-cycle write (`main.md` § Tier-2/3 Heartbeat Write, gated on `AUDIT_TIER` being `2`/`3` —
+  do not drop that gate). Semantic differs from Tier-1 BY DESIGN: "a real Tier-N audit cycle completed",
+  not "was healthy" — it fires every Tier-2/3 cycle regardless of HEALTHY/DEGRADED/CRITICAL
+  (`auditor-signal-loop-P1`, load-bearing for the SKIP-SPAWN freshness gate in `run_tiered_probe()`;
+  re-gating this write on a green verdict would starve the heartbeat on any persistently-tracked
+  DEGRADED cycle and recreate the exact spawn-storm that fix closed). Required shape: bare
+  `{last_healthy_at}` ONLY — a `checks` key means the Tier-1 shape/semantic bled in, and is rejected.
+  This bare-vs-`checks{}` shape difference is the resolved, enforced signal distinguishing "confirmed
+  healthy" from "an audit merely completed" within one filename family that otherwise implies healthy.
+- Cited from both writers: `scripts/agents-flow/auditor-tier1-probe.sh` header comment (Heartbeat
+  section) and `docs/agents/system-auditor/flow/main.md` § Tier-2/3 Heartbeat Write.
+- Test: `scripts/git-hooks/pre-commit-auditor-heartbeat.test.sh`.
 
 **CANONICAL: Orch-state gated write wrapper (SSOT-INTEGRITY-PERIMETER SSOT-W1-ORCH-APPLY-WRAPPER)**
 ```bash

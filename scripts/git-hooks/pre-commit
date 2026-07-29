@@ -93,6 +93,98 @@ write_signal() {
   return 0
 }
 
+# --- Auditor heartbeat sole-writer + shape guard (FIX-AUDITOR-HEARTBEAT-OUT-OF-
+# CONTRACT-AGENT-WRITE-TIER1) -------------------------------------------------
+# Independent of the sweep-guard mode dispatch below (runs first, on EVERY
+# commit — BARE, SCOPED, or UNKNOWN — and is NEVER controlled by
+# GIT_SWEEP_GUARD_MODE): a mis-shaped write to docs/data/auditor-tier{1,2,3}-
+# last-healthy.json is an AUTHORIZATION/CORRECTNESS violation, not a "which
+# actor's index got swept" question, so pathspec-scoping the commit does not
+# exempt it. Root cause fixed: docs/agents/system-auditor/flow/main.md:748-755
+# prose-gates the agent-side Tier-2/3 heartbeat write out of Tier-1
+# ("Tier-1 is untouched") but a 2026-07-29T06:08:22Z cycle wrote the tier-1
+# file anyway, collapsing it from {last_healthy_at, checks{6 keys}} to bare
+# {last_healthy_at} on a DEGRADED cycle — a prose prohibition alone was
+# insufficient (this was the SECOND observed violation of it), so this is now
+# a hard code-level gate, not narration the model can skip.
+#
+# Full sole-writer + shape spec (cited from both writers — probe script header
+# + system-auditor main.md): docs/policies/dev-standards.md
+# CANONICAL:SSOT-AUDITOR-HEARTBEAT-SOLE-WRITER
+#
+#   docs/data/auditor-tier1-last-healthy.json — SOLE authorized writer is
+#     scripts/agents-flow/auditor-tier1-probe.sh's _write_heartbeat() (only
+#     reachable from run_probe()'s ALL_GREEN branch). Semantic: "system was
+#     confirmed healthy". Shape MUST be {last_healthy_at, checks:{docker_ps,
+#     health_3000, health_3001, disk, mem_creep, launchd_agents}} with ALL 6
+#     values == "PASS" — that is the ONLY shape the authorized writer ever
+#     produces, so any other shape (bare, missing keys, a non-PASS value) is
+#     BY CONSTRUCTION an out-of-contract write and is rejected unconditionally.
+#   docs/data/auditor-tier{2,3}-last-healthy.json — SOLE authorized writer is
+#     the system-auditor subagent's own end-of-cycle write (main.md § Tier-2/3
+#     Heartbeat Write, gated on AUDIT_TIER being 2/3). Semantic differs from
+#     tier-1 BY DESIGN: "a real Tier-N audit cycle completed" (fires every
+#     Tier-2/3 cycle regardless of HEALTHY/DEGRADED/CRITICAL — auditor-signal-
+#     loop-P1, load-bearing for the SKIP-SPAWN freshness gate in
+#     run_tiered_probe(); re-gating this on a green verdict would starve the
+#     heartbeat on any persistently-tracked DEGRADED cycle and recreate the
+#     exact spawn-storm the P1 fix closed — the mirror failure mode). Shape
+#     MUST stay bare {last_healthy_at} — a "checks" key here means the tier-1
+#     shape/semantic bled into a tier-2/3 marker, rejected the same way.
+#
+# jq-unavailable is a fail-OPEN + LOUD path (never a new commit-hot-path
+# failure mode) — mirrors the sweep-guard's own UNKNOWN-shape precedent above.
+_check_auditor_heartbeat_shapes() {
+  local hb1="docs/data/auditor-tier1-last-healthy.json"
+  local hb2="docs/data/auditor-tier2-last-healthy.json"
+  local hb3="docs/data/auditor-tier3-last-healthy.json"
+  local staged content msg f
+
+  command -v jq >/dev/null 2>&1 || {
+    echo "[heartbeat-guard] INTERNAL: jq unavailable — cannot verify auditor heartbeat shape, failing open (never block on our own uncertainty)" >&2
+    return 0
+  }
+
+  staged="$(git diff --cached --name-status 2>/dev/null)" || return 0
+  [ -z "$staged" ] && return 0
+
+  # Tier-1 — skip on a staged DELETE ('D' status); only content-check add/modify.
+  if printf '%s\n' "$staged" | grep -qE $'^[AM][[:space:]]'"$hb1"'$'; then
+    content="$(git show ":$hb1" 2>/dev/null)"
+    if [ -z "$content" ] || ! printf '%s' "$content" | jq -e '
+        (.checks // empty) as $c
+        | ($c | type) == "object"
+        and (($c | keys | sort) == ["disk","docker_ps","health_3000","health_3001","launchd_agents","mem_creep"])
+        and ([$c[]] | all(. == "PASS"))
+        and ((.last_healthy_at // "") | length > 0)
+      ' >/dev/null 2>&1; then
+      msg="[heartbeat-guard] REJECT: ${hb1} staged content does not match the sole-writer shape (last_healthy_at + checks{6 keys, all PASS}). Only scripts/agents-flow/auditor-tier1-probe.sh's _write_heartbeat() on its ALL_GREEN branch is authorized to write this file — see docs/policies/dev-standards.md CANONICAL:SSOT-AUDITOR-HEARTBEAT-SOLE-WRITER. Commit BLOCKED — re-run the probe script for a genuine heartbeat instead of hand-writing this file."
+      echo "$msg" >&2
+      write_signal "$msg"
+      return 1
+    fi
+  fi
+
+  # Tier-2/3 — must stay bare; a "checks" key means the tier-1 shape bled in.
+  for f in "$hb2" "$hb3"; do
+    if printf '%s\n' "$staged" | grep -qE $'^[AM][[:space:]]'"$f"'$'; then
+      content="$(git show ":$f" 2>/dev/null)"
+      if [ -z "$content" ] || ! printf '%s' "$content" | jq -e '
+          (has("checks") | not) and ((.last_healthy_at // "") | length > 0)
+        ' >/dev/null 2>&1; then
+        msg="[heartbeat-guard] REJECT: ${f} staged content must stay bare {last_healthy_at} — a tier-2/3 'audit completed' marker, never the tier-1 'checks{}' shape. See docs/policies/dev-standards.md CANONICAL:SSOT-AUDITOR-HEARTBEAT-SOLE-WRITER. Commit BLOCKED."
+        echo "$msg" >&2
+        write_signal "$msg"
+        return 1
+      fi
+    fi
+  done
+
+  return 0
+}
+
+_check_auditor_heartbeat_shapes || exit 1
+
 idx_base="$(basename -- "${GIT_INDEX_FILE:-}" 2>/dev/null || true)"
 
 case "$idx_base" in
