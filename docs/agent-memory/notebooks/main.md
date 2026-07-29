@@ -1,6 +1,16 @@
 # Dev Team — Sprint Boundary Notebook
 
-**Written:** 2026-07-29T18:30Z
+**Written:** 2026-07-29T18:47Z
+
+## cycle-20260729T1847Z — Tick 18:37Z: drained 1 signal + flagged stale signal-inbox debt (89% legacy non-signal-shape) to po, CI dedup, clean BOUNDED-1 dispatch to developer (first non-FreshnessBadge pick in 4 ticks)
+
+- **Preflight**: verdict RUN, tick `2026-07-29T18:37Z`. No HEAD.lock, single worktree, dirty tree = other cowork agents' own scope (notebooks, analysis-briefs, auditor state, `orch-state.json` — all valid JSON, live in-progress writes).
+- **Drain**: 1 routed to po (`commit-sweep-guard` WARN). New finding: 62/70 files in `docs/signals/` (49 `cowork-team-*` + 12 `price_anomaly_*`) are non-signal-shape (no `from`/`type`), permanently un-drainable since 2026-07-03 — traced to a heartbeat mechanism explicitly marked `_superseded_by: cowork-dispatcher`/deprecated. Wrote a new LOW-severity signal to po flagging this as a debt-reduction candidate (`dev-20260729T184636`, read-back confirmed). CI probe deduped (same known `aa6c044b`).
+- **`.head` correctly idle** — WIP=0, fell through to BOUNDED-1.
+- **Claimed cleanly**: `FACTORY-GUARD-CI-METRICMASK-IMPL` (P2, zone `cross-service/`, size S) — first non-FreshnessBadge BOUNDED-1 pick in 4 consecutive ticks. Conservation OK (701→701 both writes).
+- **Pre-dispatch verification**: independently re-confirmed all 4 target masks (`cascadeEngine.ts:356/375/394`, `marketSentimentCalculator.ts:174`, `watchlist.ts:198`) still live at the exact lines the 2026-07-24 architect brief specifies; confirmed `scripts/audits/metric-mask-lint.sh` genuinely doesn't exist yet. Zone-detect confirmed `developer` (files span >1 zone: mcp-server domain code + CI workflow + docs + scripts) — matches the row's own pre-resolved `next_agent`, no override needed.
+- **Dispatched `developer`** — full brief summary, explicit instruction that `watchlist.ts:198` is a legitimate config default (annotate, don't fix) vs. the other 3+1 being real bugs (fix to honest-absence), exact-count DoD demand across all suites. Sprint-task lock `task:FACTORY-GUARD-CI-METRICMASK-IMPL` held pending verified completion.
+- BOUNDED-1 dispatch consumed the tick — did not fall through to SLS/RLC/QA-Drain. Review-lane QA-Drain backlog unchanged (152+ rows), now starved **5 consecutive ticks** — first tick where the streak wasn't a FreshnessBadge sibling but still the same idle-chain priority gap; worth an architect brief on re-ordering now.
 
 ## cycle-20260729T1830Z-verify — RAW-verified dev-frontend's FE-PG-INTEL-FRESH-FIX completion; all claims confirmed accurate, 3rd sibling in FreshnessBadge family, 7th consecutive clean head-sync
 
@@ -23,14 +33,3 @@
 - **Root-caused the gap before dispatch**: `dashboard.intel.tsx` hits the SAME `/api/market-digest` endpoint as `dashboard._index.tsx` but its DTO only reads `fetchedAt`, never `data_asof` — same naive-SQLite-string pattern already fixed on the sibling page.
 - **Dispatched `dev-frontend`** — explicit reuse instructions (`parseDate` normalization, `FreshnessBadge slaTierKey="daily"`, `useFreshnessRevalidator("daily")`, no forking), explicit precise-count reporting demand. Sprint-task lock `task:FE-PG-INTEL-FRESH-FIX` held pending verified completion.
 - BOUNDED-1 dispatch consumed the tick — did not fall through to SLS/RLC/QA-Drain. Review-lane QA-Drain backlog unchanged (152+ rows), still gated behind idle-chain priority order — 3rd tick in a row BOUNDED-1 has starved it via this same FreshnessBadge sibling-task streak; worth an architect brief on re-ordering if a 4th sibling appears next tick.
-
-## cycle-20260729T1804Z-verify — RAW-verified dev-frontend's FE-PG-BCTC-FRESH-FIX completion; all claims confirmed accurate (2nd dev-frontend report today, clean), 6th consecutive clean head-sync
-
-- **BGFAN-1, all commits real**: 4 commits (`545f2abf3`,`efddbccd9`,`137aa1d9b`,`4b988013d`) on HEAD.
-- **Code independently re-read, matches claim exactly**: `FreshnessBadge(slaTierKey="event")`+`useFreshnessRevalidator("event")` wired via existing (not forked) components. Also confirmed a real provenance bugfix: `fetchAnalysisBriefs` previously discarded the DTO's real `generated_at` for a second frontend-local `new Date().toISOString()`; now threads the DTO value through (return type widened `Omit<...,"generated_at">` → full `LoaderData`).
-- **All test claims independently re-run, exact match**: new loader test **5/5 PASS**. Full vitest **2177 pass/2 fail** (same pre-existing `QUE-TOOLTIP-DRY-1a`, unrelated). `tsc --noEmit` clean. Full Playwright **7/7 PASS** — including all 3 `quality-audit-lastverified.spec.ts` tests, the exact spec that was 2/3 FAIL in the immediately-prior verify cycle. Re-checked why: that spec hits REAL live `/api/quality-checklist` data (no fixture); `FR-FRESH-04`'s live `last_verified` is 107h old vs the 7-day/168h D-PAGE window — genuinely still fresh. No discrepancy found this cycle.
-- **Docs change confirmed**: single `api-reference.md` row added for `dashboard.bctc.tsx`, matches claim.
-- 2nd `dev-frontend` report today, both independently verified: 1st had one inflated metric ([[feedback_agent_selfreport_metalayer_confabulation]] 1st instance), this one clean end-to-end — useful counter-signal, not itself memory-worthy.
-- **Board lane-move genuine, 6th CONSECUTIVE clean `.head` sync**: row `REVIEW`, `next_agent:qa`; `.head` idle/router.
-- Released sprint-task lock `task:FE-PG-BCTC-FRESH-FIX` cleanly.
-- **NEXT: qa** — review-lane QA-Drain backlog unchanged (152+ rows), still gated behind idle-chain priority order. No new tick triggered this turn (task-notification only, not a cron fire).

@@ -88,11 +88,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "updated_at": "2026-07-29T18:26:35Z",
-    "updated_by": "dev-frontend",
-    "active_task_id": null,
-    "next_agent": "router"
+    "status": "in_progress",
+    "active_task_id": "FACTORY-GUARD-CI-METRICMASK-IMPL",
+    "next_agent": "developer",
+    "next_action": "BOUNDED-1 auto-pickup claim of FACTORY-GUARD-CI-METRICMASK-IMPL — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
+    "updated_at": "2026-07-29T18:47:54Z",
+    "updated_by": "dev-team (bounded-1 auto-pickup)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -9671,26 +9672,6 @@
         "updated_at": "2026-07-23T18:08:33Z"
       },
       {
-        "id": "FACTORY-GUARD-CI-METRICMASK-IMPL",
-        "type": "SPRINT-S",
-        "title": "Implement metric-mask-lint CI guardrail (script + fix live offenders + workflow wiring)",
-        "status": "BACKLOG",
-        "priority": "P2",
-        "size": "S",
-        "zone": "cross-service/",
-        "epic": "FACTORY-MAINTAINABILITY-2026-06",
-        "cluster": "ci-regression-prevention",
-        "source": "architect design brief 2026-07-24, parent FACTORY-GUARD-CI-metric-mask-lint",
-        "detail_ref": "docs/architecture-briefs/2026-07-24-factory-guard-ci-metric-mask-lint.md#3-build-vs-plan--decomposed-not-self-implemented",
-        "dev_agent": "developer",
-        "next_agent": "developer",
-        "parent_task": "FACTORY-GUARD-CI-metric-mask-lint",
-        "note": "files: scripts/audits/metric-mask-lint.sh (new, --check mode, zero-tolerance no baseline needed), apps/mcp-server/src/domain/services/cascadeEngine.ts (fix 3x seedEntry.confidence ?? 0.6 masks at L356/375/394 feeding stored MSCI cascade confidence), apps/mcp-server/src/domain/services/news-analysis/marketSentimentCalculator.ts (fix row.impact_score ?? 1.0 mask at L174), apps/mcp-server/src/interface/mcp/tools/system/watchlist.ts (annotate thresholds?.impactScore ?? 7 at L198 with metric-mask-allow: — genuine user config threshold, not fabricated metric), .github/workflows/ci.yml (add metric-mask-lint job), docs/policies/dev-standards.md (CANONICAL pointer), scripts/audits/metric-mask-lint.test.sh (new smoke test). approach: single cross-language regex script scanning *.ts/*.py/*.go (excl tests/vendor) for ?? / || / python or / destructuring-or-param default with a NON-ZERO numeric literal on identifiers matching /confidence|score|impact|magnitude|probability/i; 0/0.0/null always allowed (honest-absence idiom); inline metric-mask-allow: <reason> comment suppresses a match (mirrors size-justification: convention); fix the 4 real live masks + annotate the 1 legit config default FIRST so the gate opens at zero offenders and can be true zero-tolerance (no baseline manifest, unlike the size-lint sibling which had 733 debt). dod: --check exits 0 on post-fix repo state; synthetic new ?? 50-style mask fails; ?? 0 / ?? null pass; annotated line passes; the 3+1 live masks fixed with no scoring-behavior regression (RAW-verify MSCI cascade + daily sentiment score after rebuild); smoke test covers all cases; CI green on push.",
-        "created_at": "2026-07-24T17:26:06Z",
-        "created_by": "architect",
-        "updated_at": "2026-07-24T17:26:07Z"
-      },
-      {
         "id": "FACTORY-GUARD-CI-TSBOUNDARIES-IMPL",
         "type": "SPRINT-S",
         "title": "Wire ESLint boundaries-plugin fences into CI (3 TS services) + fix 3 live fence violations + fix news-fetch routes/ element-map gap + add missing news-fetch-go-lint job",
@@ -17434,9 +17415,35 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-29T18:17:02Z",
+    "last_triaged_at": "2026-07-29T18:47:49Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": []
+    "in_progress": [
+      {
+        "id": "FACTORY-GUARD-CI-METRICMASK-IMPL",
+        "type": "SPRINT-S",
+        "title": "Implement metric-mask-lint CI guardrail (script + fix live offenders + workflow wiring)",
+        "status": "IN_PROGRESS",
+        "priority": "P2",
+        "size": "S",
+        "zone": "cross-service/",
+        "epic": "FACTORY-MAINTAINABILITY-2026-06",
+        "cluster": "ci-regression-prevention",
+        "source": "architect design brief 2026-07-24, parent FACTORY-GUARD-CI-metric-mask-lint",
+        "detail_ref": "docs/architecture-briefs/2026-07-24-factory-guard-ci-metric-mask-lint.md#3-build-vs-plan--decomposed-not-self-implemented",
+        "dev_agent": "developer",
+        "next_agent": "developer",
+        "parent_task": "FACTORY-GUARD-CI-metric-mask-lint",
+        "note": "files: scripts/audits/metric-mask-lint.sh (new, --check mode, zero-tolerance no baseline needed), apps/mcp-server/src/domain/services/cascadeEngine.ts (fix 3x seedEntry.confidence ?? 0.6 masks at L356/375/394 feeding stored MSCI cascade confidence), apps/mcp-server/src/domain/services/news-analysis/marketSentimentCalculator.ts (fix row.impact_score ?? 1.0 mask at L174), apps/mcp-server/src/interface/mcp/tools/system/watchlist.ts (annotate thresholds?.impactScore ?? 7 at L198 with metric-mask-allow: — genuine user config threshold, not fabricated metric), .github/workflows/ci.yml (add metric-mask-lint job), docs/policies/dev-standards.md (CANONICAL pointer), scripts/audits/metric-mask-lint.test.sh (new smoke test). approach: single cross-language regex script scanning *.ts/*.py/*.go (excl tests/vendor) for ?? / || / python or / destructuring-or-param default with a NON-ZERO numeric literal on identifiers matching /confidence|score|impact|magnitude|probability/i; 0/0.0/null always allowed (honest-absence idiom); inline metric-mask-allow: <reason> comment suppresses a match (mirrors size-justification: convention); fix the 4 real live masks + annotate the 1 legit config default FIRST so the gate opens at zero offenders and can be true zero-tolerance (no baseline manifest, unlike the size-lint sibling which had 733 debt). dod: --check exits 0 on post-fix repo state; synthetic new ?? 50-style mask fails; ?? 0 / ?? null pass; annotated line passes; the 3+1 live masks fixed with no scoring-behavior regression (RAW-verify MSCI cascade + daily sentiment score after rebuild); smoke test covers all cases; CI green on push.",
+        "created_at": "2026-07-24T17:26:06Z",
+        "created_by": "architect",
+        "updated_at": "2026-07-29T18:47:54Z",
+        "promoted_at": "2026-07-29T18:47:49Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
+        "claimed_at": "2026-07-29T18:47:54Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)"
+      }
+    ]
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
