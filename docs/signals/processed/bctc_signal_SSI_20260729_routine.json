@@ -4,31 +4,40 @@
   "quarter": "Q1-2026",
   "mode": "routine",
   "beat_miss": null,
-  "product": "Securities brokerage, investment banking, margin lending",
-  "customer": "Retail + institutional equity investors, margin-lending clients",
-  "ops": "BCTC still blocked (pdf-extractor pool stuck); sector data: PE14.6x PREMIUM vs median 12.7x, ROE14.0% above median 10.0% — FAIR valuation, EY_SPREAD 1.85pp",
-  "mgmt": "KD reversed from TRUNG TÍNH 18-19% (1st touch) to THUẬN LỢI 100% (2nd touch) — direction flip, NOT durable, do not treat as confirmed bullish signal yet",
-  "valuation": {
+  "product": "Securities brokerage, proprietary trading, investment banking (SSI Securities)",
+  "customer": "Retail + institutional equity investors, corporate advisory clients",
+  "ops": "Sector-comparison only this cycle — BCTC extraction still blocked (pdf-extractor pool stuck)",
+  "mgmt": "No direct BCTC data; monitor via sector ratios until extraction unblocked",
+  "cycle_id": "20260729-1800",
+  "slot": "bctc-analyst-slot-2",
+  "data_source": "get_sector_comparison fallback (get_bctc_full returns 'Chưa có dữ liệu BCTC')",
+  "sector_ratios": {
     "pe": 14.6,
-    "sector_median_pe": 12.7,
-    "verdict_vs_sector": "PREMIUM +15%",
+    "pe_vs_median": "PREMIUM +15% (median 12.7)",
+    "pb": 1.9,
+    "pb_vs_median": "PREMIUM +36%",
     "roe_pct": 14,
-    "ey_spread_pp": 1.85,
-    "ey_verdict": "FAIR"
+    "roe_vs_median": "TREN MEDIAN (median 10.0%)"
   },
-  "data_gap": "Chưa có dữ liệu BCTC — no financial_reports row, sector-comparison-only signal",
-  "kd_reading": {
-    "quẻ": "Hoán(59)",
-    "xu_huong": "THUẬN LỢI",
-    "tin_hieu": "GIỮ",
+  "ey_spread_pp": 1.849,
+  "valuation_verdict": "FAIR",
+  "kinhdich": {
+    "hexagram": "Hoan(59)",
+    "trend": "THUAN_LOI",
+    "signal": "GIU",
     "confidence_pct": 100,
-    "note": "2nd touch — diverged from c126's Bí(22)/TRUNG TÍNH 18-19%, durability NOT confirmed (direction flip)"
+    "durability": "n=2 CONFIRMED (matches c127 exactly — retiring from 'needs touch' tracking)"
   },
-  "ts": "2026-07-29T15:20:00Z",
-  "source_agent": "bctc-analyst",
+  "evidence_fragment_ids": [
+    689
+  ],
+  "data_gaps": [
+    "get_bctc_full blocked — pdf-extractor pool stuck"
+  ],
+  "emitted_at": "2026-07-29T18:15:00Z",
   "_processed": {
-    "fingerprint": "1781e1d4cbbdb1ac886328753b13dd541d5aa047d9495776e1809bb4cd0d6f12",
-    "processedAt": "2026-07-29T15:15:48Z",
+    "fingerprint": "502c8c752195cdef026844f90b326019236278b91ce5ee67cf4149d39aacc46c",
+    "processedAt": "2026-07-29T18:15:34Z",
     "processedBy": "dev-team",
     "result": "routed-to-po"
   }

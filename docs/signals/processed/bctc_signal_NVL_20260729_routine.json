@@ -4,32 +4,41 @@
   "quarter": "Q1-2026",
   "mode": "routine",
   "beat_miss": null,
-  "product": "Real-estate developer (residential + resort/hospitality projects)",
-  "customer": "Homebuyers and investors in large-scale residential/resort developments",
-  "ops": "BCTC still blocked (pdf-extractor pool stuck); sector data: PE19.3x PREMIUM vs median 16.1x, ROE4.2% below median 7.3% — EXPENSIVE valuation, EY_SPREAD 0.18pp",
-  "mgmt": "5,000bn bond refinanced, maturity 2026-09-15 (SEED DATA, unverified via live 10Y yield source); KD reversed from THUẬN LỢI 100% (1st touch) to TRUNG TÍNH 38% (2nd touch) — NOT durable",
-  "valuation": {
+  "product": "Residential/mixed-use real estate developer (Novaland) — large leveraged project pipeline",
+  "customer": "Retail homebuyers, investors in condo/resort developments",
+  "ops": "Sector-comparison only this cycle — BCTC extraction still blocked (pdf-extractor pool stuck)",
+  "mgmt": "Bond maturity calendar shows ~5,000bn refinanced, maturity 2026-09-15 (SEED DATA, unverified) — do not cite as confirmed",
+  "cycle_id": "20260729-1800",
+  "slot": "bctc-analyst-slot-2",
+  "data_source": "get_sector_comparison fallback (get_bctc_full returns 'Chưa có dữ liệu BCTC')",
+  "sector_ratios": {
     "pe": 19.3,
-    "sector_median_pe": 16.1,
-    "verdict_vs_sector": "PREMIUM +20%",
+    "pe_vs_median": "PREMIUM +20% (median 16.1)",
+    "pb": 0.8,
+    "pb_vs_median": "DISCOUNT -36%",
     "roe_pct": 4.2,
-    "ey_spread_pp": 0.18,
-    "ey_verdict": "EXPENSIVE",
-    "do_not_post_bullish": true
+    "roe_vs_median": "DUOI MEDIAN (median 7.3%)"
   },
-  "data_gap": "Chưa có dữ liệu BCTC — no financial_reports row, sector-comparison-only signal",
-  "kd_reading": {
-    "quẻ": "Tinh(48)",
-    "xu_huong": "TRUNG TÍNH",
-    "tin_hieu": "GIỮ",
-    "confidence_pct": 38,
-    "note": "2nd touch — diverged from c126's Ly(30)/THUẬN LỢI 100%, durability NOT confirmed"
+  "ey_spread_pp": 0.181,
+  "valuation_verdict": "EXPENSIVE — do NOT post bullish signal",
+  "kinhdich": {
+    "hexagram": "Tinh(48)",
+    "trend": "TRUNG_TINH",
+    "signal": "GIU",
+    "confidence_pct": 37,
+    "durability": "n=2 CONFIRMED (matches c127 exactly — retiring from 'needs touch' tracking)"
   },
-  "ts": "2026-07-29T15:20:00Z",
-  "source_agent": "bctc-analyst",
+  "evidence_fragment_ids": [
+    688,
+    692
+  ],
+  "data_gaps": [
+    "get_bctc_full blocked — pdf-extractor pool stuck"
+  ],
+  "emitted_at": "2026-07-29T18:15:00Z",
   "_processed": {
-    "fingerprint": "73dc65ee291f2d4d724e11fac9cbc64724cf2edb5a58cbb7c95d0f2372760666",
-    "processedAt": "2026-07-29T15:15:48Z",
+    "fingerprint": "646ef84b63b37b01c8de0ec2eabc8617c9408967117e90f120e484a90646e929",
+    "processedAt": "2026-07-29T18:15:34Z",
     "processedBy": "dev-team",
     "result": "routed-to-po"
   }

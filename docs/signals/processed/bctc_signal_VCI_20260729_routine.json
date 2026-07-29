@@ -4,32 +4,41 @@
   "quarter": "Q1-2026",
   "mode": "routine",
   "beat_miss": null,
-  "product": "Securities brokerage, investment banking, wealth management",
-  "customer": "Retail + institutional investors, corporate advisory clients",
-  "ops": "BCTC still blocked (pdf-extractor pool stuck); sector data: PE21.3x PREMIUM+68% vs median 12.7x, ROE8.7% below median 11.3% — AVOID valuation (EY_SPREAD -0.31pp)",
-  "mgmt": "KD reversed from TRUNG TÍNH/THẬN TRỌNG 6% (1st touch) to THUẬN LỢI 75% (2nd touch) — direction flip, NOT durable; AVOID valuation verdict itself IS durable (n=2, PE unchanged) — do NOT post bullish signal",
-  "valuation": {
+  "product": "Securities brokerage, investment banking, asset management (VCSC / Vietcap Securities)",
+  "customer": "Retail + institutional equity investors, corporate advisory clients",
+  "ops": "Sector-comparison only this cycle — BCTC extraction still blocked (pdf-extractor pool stuck)",
+  "mgmt": "No direct BCTC data; monitor via sector ratios until extraction unblocked",
+  "cycle_id": "20260729-1800",
+  "slot": "bctc-analyst-slot-2",
+  "data_source": "get_sector_comparison fallback (get_bctc_full returns 'Chưa có dữ liệu BCTC')",
+  "sector_ratios": {
     "pe": 21.3,
-    "sector_median_pe": 12.7,
-    "verdict_vs_sector": "PREMIUM +68%",
+    "pe_vs_median": "PREMIUM +68% (median 12.7)",
+    "pb": 1.8,
+    "pb_vs_median": "PREMIUM +30%",
     "roe_pct": 8.7,
-    "ey_spread_pp": -0.31,
-    "ey_verdict": "AVOID",
-    "do_not_post_bullish": true
+    "roe_vs_median": "DUOI MEDIAN (median 11.3%)"
   },
-  "data_gap": "Chưa có dữ liệu BCTC — no financial_reports row, sector-comparison-only signal",
-  "kd_reading": {
-    "quẻ": "Hoán(59)",
-    "xu_huong": "THUẬN LỢI",
-    "tin_hieu": "GIỮ",
+  "ey_spread_pp": -0.305,
+  "valuation_verdict": "AVOID — do NOT post bullish signal",
+  "kinhdich": {
+    "hexagram": "Hoan(59)",
+    "trend": "THUAN_LOI",
+    "signal": "GIU",
     "confidence_pct": 75,
-    "note": "2nd touch — diverged from c126's Bí(22)/TRUNG TÍNH/THẬN TRỌNG 6%, durability NOT confirmed (direction flip); do not act on KD alone given AVOID fundamental verdict"
+    "durability": "n=2 CONFIRMED (matches c127 exactly — retiring from 'needs touch' tracking; note: KD signal is bullish-leaning while fundamentals say AVOID — conflicting signals, valuation verdict takes precedence per flow rule, do not post bullish)"
   },
-  "ts": "2026-07-29T15:20:00Z",
-  "source_agent": "bctc-analyst",
+  "evidence_fragment_ids": [
+    690,
+    693
+  ],
+  "data_gaps": [
+    "get_bctc_full blocked — pdf-extractor pool stuck"
+  ],
+  "emitted_at": "2026-07-29T18:15:00Z",
   "_processed": {
-    "fingerprint": "e33e61530f35cb3c68a092cf13f83255845ef6d04910f2ae05c471831c31b62c",
-    "processedAt": "2026-07-29T15:15:48Z",
+    "fingerprint": "f4d0f350ceed1bc6fdda09d8409db0f31ff7cec1c64343734f8502c866655d5f",
+    "processedAt": "2026-07-29T18:15:34Z",
     "processedBy": "dev-team",
     "result": "routed-to-po"
   }

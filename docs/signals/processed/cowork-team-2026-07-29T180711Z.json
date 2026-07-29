@@ -1,0 +1,55 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-07-29T18:07:11Z",
+    "matched_slots": [
+      "bctc-analyst-slot-2"
+    ],
+    "won_slots": [
+      "bctc-analyst-slot-2"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/bctc-analyst/flow/main.md"
+    ],
+    "silent": false,
+    "drift_min": 5,
+    "errors": [],
+    "pressure_mode": "adaptive",
+    "calendar_status": "unknown",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "chef_mutex_applied": false,
+    "due_reasons": {
+      "bctc-analyst-slot-2": "cron"
+    },
+    "cadence_minutes": {
+      "bctc-analyst-slot-2": null
+    },
+    "last_fired_timestamp": "2026-07-29T18:07:11Z",
+    "last_fired_slots": [
+      "bctc-analyst-slot-2"
+    ],
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "18:00",
+    "leader_lock": "acquired",
+    "dev_head": "unknown",
+    "devq": 5,
+    "signal_backlog": 20,
+    "note": "single-slot tick, MAX_PARALLEL moot. pressure-state.json still emits host_headroom_mb (not renamed container_vm_headroom_mb per FIX-PRESSURE-HOST-HEADROOM-WRONG-MACHINE-WRONG-QUANTITY 2026-07-28) -- schema drift already flagged, no new signal."
+  },
+  "priority": "low",
+  "createdAt": "2026-07-29T18:07:11Z",
+  "_processed": {
+    "fingerprint": "e99eb2831ae15a14ef986d6db6c19df48941cbb20d4bbccda987a513a1cac020",
+    "processedAt": "2026-07-29T18:15:34Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

@@ -4,46 +4,38 @@
   "quarter": "Q1-2026",
   "mode": "routine",
   "beat_miss": null,
-  "product": "IT services, software exports, telecom (FPT Telecom, equity-method since 2026), education (FPT Edu)",
-  "customer": "Enterprise IT buyers (VN + offshore export markets Japan/US/Europe), telecom subscribers, education students",
-  "ops": "Operating margin 22.0%, gross margin 34.0%; Q1 basis changed (FTEL deconsolidated to equity method) — reported YoY withheld (period-basis mismatch), adjusted revenue +8.7% YoY / NPAT +13.8% YoY",
-  "mgmt": "Consistent profitability track record; OCF negative this quarter (working-capital build, not an earnings-quality issue); ESC-5 footnote-confidence gap open 9th consecutive cycle, dev-team Opus deep-dive still pending",
-  "valuation": {
-    "pe": 13.8,
-    "sector_median_pe": 17.3,
-    "verdict_vs_sector": "DISCOUNT -20%",
-    "roe_pct": 6.2,
-    "ey_spread_pp": 2.25,
-    "ey_verdict": "FAIR"
+  "product": "IT services, software exports, telecom (FPT Telecom), education (FPT Edu)",
+  "customer": "Enterprise IT buyers (VN + offshore, esp. Europe/Japan), telecom subscribers, education students",
+  "ops": "Gross margin 34.0%, operating margin 22.0%; Net Debt/EBITDA 2.57x; OCF negative (-2,847.8bn) vs NI +2,476.8bn this quarter (working-capital timing, not accrual defect)",
+  "mgmt": "FY2025 guidance track record intact; consolidation-method change for FTEL (full→equity method from 2026-01-01) restates YoY comparisons — like-for-like revenue +8.7%, NPAT +13.8%",
+  "cycle_id": "20260729-1800",
+  "slot": "bctc-analyst-slot-2",
+  "roe_pct": 6.17,
+  "confidence_pct": 81,
+  "kinhdich": {
+    "hexagram": "Quan(20)",
+    "trend": "TRUNG_TINH",
+    "signal": "GIU",
+    "confidence_pct": 37,
+    "durability": "n=2 CONFIRMED (matches c127 exactly — reversal-of-a-reversal now durable, retire from urgent tracking)"
   },
-  "esc_gate": {
-    "esc1": "FALSE",
-    "esc2": "PASS (imbalance 0.00%)",
-    "esc3_status": "DATA-COVERAGE-LIMITED",
-    "esc3_quarters_returned": 2,
-    "coverage_guard_key": "esc-datacov:FPT:Q1-2026:ESC-3",
-    "coverage_guard_held": true,
-    "esc4": "FALSE (non_operating_share 2.0%)",
-    "esc5": "TRUE — 7/15 refine units (unit-0008..0014) confidence=0.45<0.50, refined_at unchanged 2026-05-31 — reconfirmed 9th cycle",
-    "escalation_status": "GUARD-HELD",
-    "guard_key": "esc-deepdive:FPT:Q1-2026:ESC-5"
+  "esc_status": {
+    "ESC-2_balance_sheet": "PASS (imbalance 0.00%)",
+    "ESC-3_ocf_ni_divergence": "DATA-COVERAGE-LIMITED (2/4 quarters) — guard HELD",
+    "ESC-4_non_operating_share": "FALSE (2.0%, below 15% threshold)",
+    "ESC-5_refine_confidence": "TRUE — 10th consecutive cycle: report_id e8ea3df5-3f32-413d-a3eb-c71634c0438d unchanged, unit-0008..0014 confidence=0.45<0.50 unchanged (refined_at 2026-05-31 11:19:09 unchanged) — guard HELD (holder=bctc-analyst-slot-2-20260728T1800Z, at/near expiry ~18:10Z), no re-emit"
   },
-  "e3_cache": {
-    "status": "HIT",
-    "note": "byte-identical vs prior cycle (Rev12,480/NI2,476.8) — 6 passes skipped"
-  },
-  "kd_reading": {
-    "quẻ": "Quan(20)",
-    "xu_huong": "TRUNG TÍNH",
-    "tin_hieu": "GIỮ",
-    "confidence_pct": 38,
-    "note": "reversed from Bác(23)/BẤT LỢI (confirmed durable n=2 through c126) — new n=1, unconfirmed, needs 2nd touch"
-  },
-  "ts": "2026-07-29T15:20:00Z",
-  "source_agent": "bctc-analyst",
+  "evidence_fragment_ids": [
+    684
+  ],
+  "data_gaps": [
+    "PE/PB null — cannot compute EY_SPREAD valuation verdict this cycle"
+  ],
+  "sentiment_30d": "TĂNG (+0.18 slope, 7 bullish/4 bearish of 20)",
+  "emitted_at": "2026-07-29T18:15:00Z",
   "_processed": {
-    "fingerprint": "2cf52b9d50b6f62554180f5c094f35b5041120ebf7f145e5fd86d2a4aad8f239",
-    "processedAt": "2026-07-29T15:15:48Z",
+    "fingerprint": "f1471121d36eb0369c643d881fe851e7ca4321a743ae288606e5876958e421ee",
+    "processedAt": "2026-07-29T18:15:34Z",
     "processedBy": "dev-team",
     "result": "routed-to-po"
   }

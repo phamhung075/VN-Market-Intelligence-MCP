@@ -4,32 +4,41 @@
   "quarter": "Q1-2026",
   "mode": "routine",
   "beat_miss": null,
-  "product": "Securities brokerage, investment banking, retail equity services",
-  "customer": "Retail + institutional equity investors",
-  "ops": "BCTC still blocked (pdf-extractor pool stuck); sector data: PE17.8x PREMIUM vs median 12.7x, ROE9.4% below median 11.3% — EXPENSIVE valuation, EY_SPREAD 0.62pp",
-  "mgmt": "KD reversed sharply from TRUNG TÍNH 38% (1st touch) to BÁN (sell)/BẤT LỢI 100% (2nd touch) — direction flip, NOT durable, needs 3rd touch before any action",
-  "valuation": {
+  "product": "Securities brokerage, investment banking (HSC / Ho Chi Minh City Securities)",
+  "customer": "Retail + institutional equity investors, corporate advisory clients",
+  "ops": "Sector-comparison only this cycle — BCTC extraction still blocked (pdf-extractor pool stuck)",
+  "mgmt": "No direct BCTC data; monitor via sector ratios until extraction unblocked",
+  "cycle_id": "20260729-1800",
+  "slot": "bctc-analyst-slot-2",
+  "data_source": "get_sector_comparison fallback (get_bctc_full returns 'Chưa có dữ liệu BCTC')",
+  "sector_ratios": {
     "pe": 17.8,
-    "sector_median_pe": 12.7,
-    "verdict_vs_sector": "PREMIUM +41%",
+    "pe_vs_median": "PREMIUM +41% (median 12.7)",
+    "pb": 1.9,
+    "pb_vs_median": "PREMIUM +41%",
     "roe_pct": 9.4,
-    "ey_spread_pp": 0.62,
-    "ey_verdict": "EXPENSIVE",
-    "do_not_post_bullish": true
+    "roe_vs_median": "DUOI MEDIAN (median 11.3%)"
   },
-  "data_gap": "Chưa có dữ liệu BCTC — no financial_reports row, sector-comparison-only signal",
-  "kd_reading": {
-    "quẻ": "Tập Khảm(29)",
-    "xu_huong": "BẤT LỢI",
-    "tin_hieu": "BÁN",
+  "ey_spread_pp": 0.618,
+  "valuation_verdict": "EXPENSIVE — do NOT post bullish signal",
+  "kinhdich": {
+    "hexagram": "Tap Kham(29)",
+    "trend": "BAT_LOI",
+    "signal": "BAN",
     "confidence_pct": 100,
-    "note": "2nd touch — diverged from c126's Cấn(52)/TRUNG TÍNH 37-38%, durability NOT confirmed (direction flip)"
+    "durability": "n=2 CONFIRMED (matches c127 exactly — retiring from 'needs touch' tracking; KD bearish AND fundamentals EXPENSIVE — converging signals, both bearish)"
   },
-  "ts": "2026-07-29T15:20:00Z",
-  "source_agent": "bctc-analyst",
+  "evidence_fragment_ids": [
+    691,
+    694
+  ],
+  "data_gaps": [
+    "get_bctc_full blocked — pdf-extractor pool stuck"
+  ],
+  "emitted_at": "2026-07-29T18:15:00Z",
   "_processed": {
-    "fingerprint": "7a08be82ff6a90b735a3291794dd7d0a0bb6ee9db7f4b61a02bf5e5c3a4aa4d8",
-    "processedAt": "2026-07-29T15:15:48Z",
+    "fingerprint": "96ce4d8ab49363c5d5e10fa6f7ee43bef5537f15d01d22e0497e8c4ed7a0c8a8",
+    "processedAt": "2026-07-29T18:15:34Z",
     "processedBy": "dev-team",
     "result": "routed-to-po"
   }

@@ -4,31 +4,40 @@
   "quarter": "Q1-2026",
   "mode": "routine",
   "beat_miss": null,
-  "product": "Industrial-zone real-estate developer/operator (land lease, infrastructure)",
-  "customer": "FDI manufacturers and industrial tenants seeking VN industrial-park space",
-  "ops": "BCTC PDF extraction still blocked (pdf-extractor pool stuck, per 2026-07-28 architecture brief); sector-comparison fallback only — PE13.8x DISCOUNT vs median 19.3x, ROE9.7% above sector median 6.3%",
-  "mgmt": "KD reading reversed from THUẬN LỢI 100% (1st touch, c126) to TRUNG TÍNH 38% (2nd touch, this cycle) — NOT durable; high day-to-day KD volatility observed across entire rotation cluster this cycle, sector-ratio verdict itself IS durable (PE/ROE unchanged)",
-  "valuation": {
+  "product": "Industrial-park real estate developer (Kinh Bắc) — land-lease and infrastructure for FDI manufacturers",
+  "customer": "FDI manufacturers seeking industrial-park land leases, primarily northern Vietnam",
+  "ops": "Sector-comparison only this cycle — BCTC extraction still blocked (pdf-extractor pool stuck, PDF on disk since 2026-06-08, see 2026-07-28 architecture brief)",
+  "mgmt": "No direct BCTC data; monitor via sector ratios until extraction unblocked",
+  "cycle_id": "20260729-1800",
+  "slot": "bctc-analyst-slot-2",
+  "data_source": "get_sector_comparison fallback (get_bctc_full returns 'Chưa có dữ liệu BCTC')",
+  "sector_ratios": {
     "pe": 13.8,
-    "sector_median_pe": 19.3,
-    "verdict_vs_sector": "DISCOUNT -29%",
+    "pe_vs_median": "DISCOUNT -29% (median 19.3)",
+    "pb": 1.3,
+    "pb_vs_median": "NGANG BANG",
     "roe_pct": 9.7,
-    "ey_spread_pp": 2.25,
-    "ey_verdict": "FAIR"
+    "roe_vs_median": "TREN MEDIAN (median 6.3%)"
   },
-  "data_gap": "Chưa có dữ liệu BCTC — no financial_reports row, sector-comparison-only signal",
-  "kd_reading": {
-    "quẻ": "Su(7)",
-    "xu_huong": "TRUNG TÍNH",
-    "tin_hieu": "GIỮ",
-    "confidence_pct": 38,
-    "note": "2nd touch — diverged from c126's Khiêm(15)/THUẬN LỢI 100%, durability NOT confirmed"
+  "ey_spread_pp": 2.246,
+  "valuation_verdict": "FAIR",
+  "kinhdich": {
+    "hexagram": "Su(7)",
+    "trend": "TRUNG_TINH",
+    "signal": "GIU",
+    "confidence_pct": 37,
+    "durability": "n=2 CONFIRMED (matches c127 exactly — retiring from 'needs touch' tracking, cluster now fully durable both fundamentals and KD)"
   },
-  "ts": "2026-07-29T15:20:00Z",
-  "source_agent": "bctc-analyst",
+  "evidence_fragment_ids": [
+    687
+  ],
+  "data_gaps": [
+    "get_bctc_full blocked — pdf-extractor pool stuck, no primary-source BCTC this cycle"
+  ],
+  "emitted_at": "2026-07-29T18:15:00Z",
   "_processed": {
-    "fingerprint": "30466d5b7e9aec9d70008da86716291b4bd275be44d33151fcf7f1f3709d9667",
-    "processedAt": "2026-07-29T15:15:48Z",
+    "fingerprint": "9417cec296a70b8b6b8ee12cc533199a67e13ca2ef27549bab33bca6e436b136",
+    "processedAt": "2026-07-29T18:15:34Z",
     "processedBy": "dev-team",
     "result": "routed-to-po"
   }
