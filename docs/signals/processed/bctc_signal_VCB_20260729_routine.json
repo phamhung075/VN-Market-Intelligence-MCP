@@ -1,0 +1,32 @@
+{
+  "ticker": "VCB",
+  "signal_type": "bctc_signal",
+  "quarter": "Q1-2026",
+  "mode": "routine",
+  "beat_miss": null,
+  "product": "Ngân hàng bán lẻ & doanh nghiệp, tín dụng, bancassurance, dịch vụ thanh toán quốc tế.",
+  "customer": "Khách hàng cá nhân đô thị, doanh nghiệp lớn/FDI, đối tác thương mại quốc tế.",
+  "ops": "Thu nhập lãi thuần chiếm biên hoạt động 80.9%; ROE 4.2%; OCF/NI = 1.37x lành mạnh.",
+  "mgmt": "Tin tức 30 ngày ổn định (2/2 tin tích cực); dữ liệu OCF 3/4 quý — vẫn dưới ngưỡng đầy đủ cho đánh giá ESC-3 đa kỳ.",
+  "roe_pct": 4.21,
+  "ey_spread": "N/A (PE null)",
+  "balance_sheet_check": "PASS — imbalance 0.37%",
+  "esc3_status": "DATA-COVERAGE-LIMITED",
+  "esc3_quarters_returned": 3,
+  "esc4_non_operating_share_pct": -21.4,
+  "esc4_result": false,
+  "esc5_result": false,
+  "esc5_note": "report_id null, existing_refine_status=PARTIAL",
+  "kd_reading": "Khôn (2) / TRUNG TÍNH / GIỮ 37-38% — unchanged",
+  "trick_summary": null,
+  "trick_confidence": "none",
+  "e3_cache_hit": true,
+  "cycle": "c126",
+  "asof_utc": "2026-07-29T00:08:45Z",
+  "_processed": {
+    "fingerprint": "8c10fb0e45987d45f8b9ee677872e89d9a88c52f89df1b61630b52b418454f39",
+    "processedAt": "2026-07-29T00:15:58Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

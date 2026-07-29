@@ -1,0 +1,27 @@
+{
+  "ticker": "SSI",
+  "signal_type": "bctc_signal",
+  "quarter": "Q1-2026",
+  "mode": "routine",
+  "beat_miss": null,
+  "product": "Môi giới chứng khoán, tự doanh, ngân hàng đầu tư, quản lý quỹ.",
+  "customer": "Nhà đầu tư cá nhân & tổ chức trong/ngoài nước.",
+  "ops": "PE 14.6x cao hơn median ngành +15%; ROE 14.0% trên median (10.0%) — hưởng lợi từ đà tăng thanh khoản nhóm chứng khoán phiên 28/7 (+4.55%).",
+  "mgmt": "Chưa có dữ liệu BCTC chi tiết (cụm OCR nghẽn); đánh giá dựa trên so sánh ngành.",
+  "roe_pct": 14,
+  "pe_x": 14.6,
+  "ey_spread_pct": 1.849,
+  "valuation_verdict": "FAIR",
+  "bctc_status": "Chưa có dữ liệu BCTC — sector-comparison only",
+  "data_source": "get_sector_comparison (fallback, get_bctc_full unavailable)",
+  "kd_reading": "Bí (22) / TRUNG TÍNH / GIỮ 18-19% — first touch",
+  "rotation_cluster": "KBC/NVL/SSI/VCI/HCM (replaces retired DIG/VIX/DPM/SAB — durability confirmed n=2, moved to passive monitoring)",
+  "cycle": "c126",
+  "asof_utc": "2026-07-29T00:09:00Z",
+  "_processed": {
+    "fingerprint": "e6a3e9926b97179cccce3a8fed79331e68e9df97b0fff6c5a836eaba7a0bbad7",
+    "processedAt": "2026-07-29T00:15:58Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

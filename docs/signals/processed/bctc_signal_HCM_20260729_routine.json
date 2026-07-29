@@ -1,0 +1,28 @@
+{
+  "ticker": "HCM",
+  "signal_type": "bctc_signal",
+  "quarter": "Q1-2026",
+  "mode": "routine",
+  "beat_miss": null,
+  "product": "Môi giới chứng khoán, tự doanh, tư vấn tài chính doanh nghiệp.",
+  "customer": "Nhà đầu tư cá nhân, doanh nghiệp niêm yết.",
+  "ops": "PE 17.8x cao hơn median ngành +41%; ROE 9.4% dưới median (11.3%).",
+  "mgmt": "Chưa có dữ liệu BCTC chi tiết (cụm OCR nghẽn); đánh giá dựa trên so sánh ngành.",
+  "roe_pct": 9.4,
+  "pe_x": 17.8,
+  "ey_spread_pct": 0.618,
+  "valuation_verdict": "EXPENSIVE",
+  "valuation_note": "EXPENSIVE — do NOT post bullish signal per Step 2 rule",
+  "bctc_status": "Chưa có dữ liệu BCTC — sector-comparison only",
+  "data_source": "get_sector_comparison (fallback, get_bctc_full unavailable)",
+  "kd_reading": "Cấn (52) / TRUNG TÍNH / GIỮ 37-38% — first touch",
+  "rotation_cluster": "KBC/NVL/SSI/VCI/HCM (replaces retired DIG/VIX/DPM/SAB — durability confirmed n=2, moved to passive monitoring)",
+  "cycle": "c126",
+  "asof_utc": "2026-07-29T00:09:00Z",
+  "_processed": {
+    "fingerprint": "54126d9f8f0492601581f4aedba92ff55532431cd97f65418f78c59f73df9134",
+    "processedAt": "2026-07-29T00:15:58Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

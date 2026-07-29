@@ -1,0 +1,28 @@
+{
+  "ticker": "VCI",
+  "signal_type": "bctc_signal",
+  "quarter": "Q1-2026",
+  "mode": "routine",
+  "beat_miss": null,
+  "product": "Môi giới chứng khoán, ngân hàng đầu tư, tư vấn IPO/M&A.",
+  "customer": "Nhà đầu tư tổ chức, doanh nghiệp phát hành.",
+  "ops": "PE 21.3x cao hơn median ngành +68% (đắt nhất nhóm chứng khoán); ROE 8.7% dưới median (11.3%); giá tăng mạnh +6.78% phiên gần nhất.",
+  "mgmt": "valuation_verdict=AVOID (EY_SPREAD âm) — không khuyến nghị tín hiệu bullish; chưa có dữ liệu BCTC chi tiết (cụm OCR nghẽn).",
+  "roe_pct": 8.7,
+  "pe_x": 21.3,
+  "ey_spread_pct": -0.305,
+  "valuation_verdict": "AVOID",
+  "valuation_note": "AVOID — do NOT post bullish signal per Step 2 rule",
+  "bctc_status": "Chưa có dữ liệu BCTC — sector-comparison only",
+  "data_source": "get_sector_comparison (fallback, get_bctc_full unavailable)",
+  "kd_reading": "Bí (22) / TRUNG TÍNH / THẬN TRỌNG 6% — first touch",
+  "rotation_cluster": "KBC/NVL/SSI/VCI/HCM (replaces retired DIG/VIX/DPM/SAB — durability confirmed n=2, moved to passive monitoring)",
+  "cycle": "c126",
+  "asof_utc": "2026-07-29T00:09:00Z",
+  "_processed": {
+    "fingerprint": "869377c8e101ad9e378b4a07dbe88b57bc52ac01ebf07868d09233df40d6be0f",
+    "processedAt": "2026-07-29T00:15:58Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

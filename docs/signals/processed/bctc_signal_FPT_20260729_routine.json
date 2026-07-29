@@ -1,0 +1,33 @@
+{
+  "ticker": "FPT",
+  "signal_type": "bctc_signal",
+  "quarter": "Q1-2026",
+  "mode": "routine",
+  "beat_miss": null,
+  "product": "Xuất khẩu phần mềm, tích hợp hệ thống CNTT, viễn thông (FPT Telecom), giáo dục (FPT Edu).",
+  "customer": "Doanh nghiệp nội địa & offshore (Nhật/Âu/Mỹ), thuê bao viễn thông bán lẻ, sinh viên.",
+  "ops": "Biên gộp 34.0%, biên hoạt động 22.0%; đổi phương pháp hợp nhất FTEL (toàn bộ→vốn chủ sở hữu) từ 01/2026 làm giảm quy mô tổng tài sản báo cáo.",
+  "mgmt": "LNST tăng 13.8% YoY (đã điều chỉnh phương pháp hợp nhất FTEL); ESC-5 vẫn ghi nhận 7/15 đơn vị thuyết minh có độ tin cậy trích xuất OCR <50% — lỗi trích xuất, không phải dấu hiệu gian lận kế toán.",
+  "roe_pct": 6.17,
+  "ey_spread": "N/A (PE null)",
+  "balance_sheet_check": "PASS — imbalance 0.00%",
+  "esc3_status": "DATA-COVERAGE-LIMITED",
+  "esc3_quarters_returned": 2,
+  "esc4_non_operating_share_pct": 2,
+  "esc4_result": false,
+  "esc5_result": true,
+  "escalation_status": "GUARD-HELD",
+  "guard_key": "esc-deepdive:FPT:Q1-2026:ESC-5",
+  "kd_reading": "Bác (23) / BẤT LỢI / GIỮ 25% — 2nd touch confirms c125 shift (n=2)",
+  "trick_summary": null,
+  "trick_confidence": "none",
+  "e3_cache_hit": true,
+  "cycle": "c126",
+  "asof_utc": "2026-07-29T00:08:45Z",
+  "_processed": {
+    "fingerprint": "897a14cfc47876b8446daa5be93e14b0f6b1ad2164102b6a30aaf7206ce7336f",
+    "processedAt": "2026-07-29T00:15:58Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

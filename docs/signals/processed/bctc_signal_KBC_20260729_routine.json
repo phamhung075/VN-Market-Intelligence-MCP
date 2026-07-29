@@ -1,0 +1,27 @@
+{
+  "ticker": "KBC",
+  "signal_type": "bctc_signal",
+  "quarter": "Q1-2026",
+  "mode": "routine",
+  "beat_miss": null,
+  "product": "Phát triển khu công nghiệp, hạ tầng KCN, cho thuê đất/nhà xưởng.",
+  "customer": "Doanh nghiệp FDI sản xuất, nhà đầu tư thứ cấp thuê lại đất KCN.",
+  "ops": "PE 13.8x chiết khấu -29% so với median ngành BĐS (19.3x); ROE 9.7% trên median (6.3%) — dữ liệu chỉ từ so sánh ngành, BCTC gốc vẫn 'Chưa có dữ liệu' (cụm OCR nghẽn).",
+  "mgmt": "Chưa thể đánh giá qua BCTC chi tiết do OCR chưa xử lý; PDF đã nộp 07/06/2026 vẫn chưa được trích xuất (rotation first-touch).",
+  "roe_pct": 9.7,
+  "pe_x": 13.8,
+  "ey_spread_pct": 2.246,
+  "valuation_verdict": "FAIR",
+  "bctc_status": "Chưa có dữ liệu BCTC — sector-comparison only",
+  "data_source": "get_sector_comparison (fallback, get_bctc_full unavailable)",
+  "kd_reading": "Khiêm (15) / THUẬN LỢI / GIỮ 100% — first touch",
+  "rotation_cluster": "KBC/NVL/SSI/VCI/HCM (replaces retired DIG/VIX/DPM/SAB — durability confirmed n=2, moved to passive monitoring)",
+  "cycle": "c126",
+  "asof_utc": "2026-07-29T00:09:00Z",
+  "_processed": {
+    "fingerprint": "4ba3ab81c2309829d8317c22fcc256532320d590486a54b7c5f34b24ff3aed71",
+    "processedAt": "2026-07-29T00:15:58Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

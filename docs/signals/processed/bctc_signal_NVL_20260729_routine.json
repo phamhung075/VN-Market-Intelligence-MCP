@@ -1,0 +1,28 @@
+{
+  "ticker": "NVL",
+  "signal_type": "bctc_signal",
+  "quarter": "Q1-2026",
+  "mode": "routine",
+  "beat_miss": null,
+  "product": "Phát triển bất động sản nhà ở & nghỉ dưỡng quy mô lớn (NovaWorld...).",
+  "customer": "Người mua nhà ở/nghỉ dưỡng trung-cao cấp, nhà đầu tư thứ cấp.",
+  "ops": "PE 19.3x cao hơn median ngành +20%; ROE 4.2% dưới median (7.3%); trái phiếu 5.000 tỷ VND đã gia hạn đáo hạn 15/09/2026, lãi suất 10.5%/năm (SEED DATA — chưa xác minh nguồn thị trường thực).",
+  "mgmt": "Áp lực tái cấu trúc nợ vẫn hiện hữu (gia hạn trái phiếu); chưa có dữ liệu BCTC chi tiết (cụm OCR nghẽn).",
+  "roe_pct": 4.2,
+  "pe_x": 19.3,
+  "ey_spread_pct": 0.181,
+  "valuation_verdict": "EXPENSIVE",
+  "valuation_note": "EXPENSIVE — do NOT post bullish signal per Step 2 rule",
+  "bctc_status": "Chưa có dữ liệu BCTC — sector-comparison only",
+  "data_source": "get_sector_comparison (fallback, get_bctc_full unavailable)",
+  "kd_reading": "Ly (30) / THUẬN LỢI / GIỮ 100% — first touch",
+  "rotation_cluster": "KBC/NVL/SSI/VCI/HCM (replaces retired DIG/VIX/DPM/SAB — durability confirmed n=2, moved to passive monitoring)",
+  "cycle": "c126",
+  "asof_utc": "2026-07-29T00:09:00Z",
+  "_processed": {
+    "fingerprint": "cb72365624b89cd205b71974258f0c1d29ef5df4b20220abb3cf42717a51f4b7",
+    "processedAt": "2026-07-29T00:15:58Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

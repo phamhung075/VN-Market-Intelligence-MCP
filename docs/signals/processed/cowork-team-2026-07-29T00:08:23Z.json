@@ -1,0 +1,73 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-07-29T00:08:23Z",
+    "matched_slots": [
+      "bctc-analyst-slot-4",
+      "news-scout-offhours",
+      "market-watcher-offhours",
+      "alert-commander-critical"
+    ],
+    "won_slots": [
+      "bctc-analyst-slot-4",
+      "news-scout-offhours",
+      "market-watcher-offhours",
+      "alert-commander-critical"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/bctc-analyst/flow/main.md",
+      "docs/agents/news-scout/flow/main.md",
+      "docs/agents/market-watcher/flow/main.md",
+      "docs/agents/alert-commander/flow/main.md"
+    ],
+    "silent": false,
+    "drift_min": 5,
+    "errors": [],
+    "pressure_mode": "adaptive",
+    "calendar_status": "unknown",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "chef_mutex_applied": false,
+    "due_reasons": {
+      "bctc-analyst-slot-4": "cron",
+      "news-scout-offhours": "cadence",
+      "market-watcher-offhours": "cadence",
+      "alert-commander-critical": "cadence"
+    },
+    "cadence_minutes": {
+      "bctc-analyst-slot-4": null,
+      "news-scout-offhours": 240,
+      "market-watcher-offhours": 240,
+      "alert-commander-critical": 240
+    },
+    "last_fired_timestamp": "2026-07-29T00:07:00Z",
+    "last_fired_slots": [
+      "bctc-analyst-slot-4",
+      "news-scout-offhours",
+      "market-watcher-offhours",
+      "alert-commander-critical"
+    ],
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "00:00",
+    "leader_lock": "acquired",
+    "dev_head": "unknown",
+    "devq": 5,
+    "signal_backlog": 12,
+    "note": "4-slot batch (bctc-analyst-slot-4 cron off-market + 3 gatherer-standard cadence-due slots), single batch MAX_PARALLEL=4 not degraded (headroom 5428MB, load 2.65/24). 2 po-addressed signal rows left NEW (push-before-QA-gate deviation + CI-RED-cdd5fa5a-FIX ready-to-close note) per standing practice — po's own drain handles disposition. 1 dev-team->agents-architect row out of cowork drain scope, untouched."
+  },
+  "priority": "low",
+  "createdAt": "2026-07-29T00:08:23Z",
+  "_processed": {
+    "fingerprint": "d811dc219d85e6e6a0790bb722739231ee5baaf4053269a4de63acb9280fa710",
+    "processedAt": "2026-07-29T00:15:58Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

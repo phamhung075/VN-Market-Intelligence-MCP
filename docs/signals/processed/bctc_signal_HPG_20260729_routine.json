@@ -1,0 +1,31 @@
+{
+  "ticker": "HPG",
+  "signal_type": "bctc_signal",
+  "quarter": "Q1-2026",
+  "mode": "routine",
+  "beat_miss": null,
+  "product": "Sản xuất thép xây dựng, thép cuộn cán nóng (HRC), ống thép, tôn mạ.",
+  "customer": "Nhà thầu xây dựng, nhà phân phối thép nội địa, khách hàng xuất khẩu (EU, ASEAN).",
+  "ops": "Biên gộp 15.8%; Lợi nhuận hoạt động ghi nhận 0 (defect dữ liệu OCR — LNST > Lợi nhuận gộp, cảnh báo validation passed_with_warnings), nguồn thu ngoài HĐKD chưa xác minh được.",
+  "mgmt": "ROE 6.5%; cảm biến tin tức tiêu cực 30 ngày (slope -0.39, khối ngoại bán ròng ~3.000 tỷ 28/7); dữ liệu OCF/CF bị giới hạn (2/4 quý) nên chưa đánh giá đầy đủ chất lượng lợi nhuận.",
+  "roe_pct": 6.48,
+  "ey_spread": "N/A (PE null)",
+  "balance_sheet_check": "PASS — imbalance 0.00%",
+  "esc3_status": "DATA-COVERAGE-LIMITED",
+  "esc3_quarters_returned": 2,
+  "esc4_result": "SKIPPED (op_profit=0 defect)",
+  "esc5_result": false,
+  "esc5_note": "report_id null, existing_refine_status=PARTIAL",
+  "kd_reading": "Di (27) / TRUNG TÍNH / GIỮ 37-38%",
+  "trick_summary": null,
+  "trick_confidence": "none",
+  "e3_cache_hit": true,
+  "cycle": "c126",
+  "asof_utc": "2026-07-29T00:08:45Z",
+  "_processed": {
+    "fingerprint": "331a6dac007273586926507d9d9ad64ea8d81f9deb9402691ab6491142847fb9",
+    "processedAt": "2026-07-29T00:15:58Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
