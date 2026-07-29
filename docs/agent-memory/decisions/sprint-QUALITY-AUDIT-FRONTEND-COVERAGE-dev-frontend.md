@@ -34,3 +34,12 @@
 - Introduce null semantics for `generated_at` (mirroring sibling's honest-null `data_asof`) vs keep existing always-a-string fallback (`new Date().toISOString()` on absent/malformed) → kept existing fallback — this DTO's own type contract (`generated_at: string`, never optional) predates this task and is shared with `count`/`items`' fallback philosophy; inventing null here would diverge from the established parse function unprompted.
 **why-decision:** slaTierKey="event" is dictated by the quality-checklist's own SLA formula (not a free choice) — matching it is required for the audit re-check to agree with what the page renders.
 **why-change:** no change from plan — dispatch prompt named the exact reuse targets; the generated_at-discarded-then-reinvented provenance bug was found during implementation, not pre-specified.
+
+### STEP dev-frontend-S4 · dev-frontend · 2026-07-29T20:24:00Z
+**task-id:** FE-PG-INTEL-FRESH-FIX
+**what-done:** Confirmed dashboard.intel.tsx hits the identical GET /api/market-digest endpoint (and identical naive-SQLite `data_asof` field) as sibling FE-PG-_INDEX-FRESH-FIX; wired FreshnessBadge/useFreshnessRevalidator("daily") onto dashboard.intel.tsx via the same `parseDate` normalization, no new logic invented.
+**what-considered:**
+- Fork a second naive-UTC normalizer local to dashboard.intel.tsx vs reuse `parseDate` (app/lib/formatDate.ts) → reused (this is now the 3rd route wiring the identical `data_asof` transform — forking would create a 2nd copy of a bug-prone regex/replace transform for zero benefit).
+- Add `data_asof` as a required vs optional field on the intel DTO → kept optional/nullable (`string | null`), matching the sibling's honest-NULL semantics exactly since both routes parse the exact same upstream payload shape.
+**why-decision:** Because this is the third sibling wiring the exact same endpoint+field+badge combination, the correct move was pure pattern replication (byte-identical parse/normalize logic to dashboard._index.tsx), not independent re-derivation — divergence here would only introduce inconsistency risk with zero functional upside.
+**why-change:** no change from plan — dispatch prompt named the exact reuse targets (parseDate, FreshnessBadge, useFreshnessRevalidator, slaTierKey="daily") and confirmed the field/endpoint identity up front; no new discovery during implementation.
