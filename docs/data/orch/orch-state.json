@@ -88,12 +88,12 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "FIX-BOUNDED1-NONDEV-NEXTAGENT-RESIDUAL-NO-DISPATCH-LANE",
-    "next_agent": "architect",
-    "next_action": "Supervised-Lane Sweep claim of FIX-BOUNDED1-NONDEV-NEXTAGENT-RESIDUAL-NO-DISPATCH-LANE — spawn architect DIRECTLY (no zone-detect indirection; lane already resolved at promote time). supervised/plan_only preserved — do not clear.",
-    "updated_at": "2026-07-29T21:18:51Z",
-    "updated_by": "dev-team (supervised-lane sweep)"
+    "status": "idle",
+    "active_task_id": null,
+    "next_agent": "router",
+    "next_action": null,
+    "updated_at": "2026-07-29T21:40:00Z",
+    "updated_by": "dev-team (architect brief RAW-verified, task complete)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -5854,11 +5854,12 @@
         "zone": "apps/mcp-server/",
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-MCP-SUITE-HEALTH-BASELINE",
         "verify_note": "prior_status=TODO",
-        "updated_at": "2026-07-22T17:23:09Z",
-        "updated_by": "po/cron-audit-push-deploy-sequencing-20260722",
+        "updated_at": "2026-07-29T21:35:05Z",
+        "updated_by": "po/triage-20260729T2107",
         "po_measurement_20260722": "RAW re-measure 2026-07-22T17:0xZ (PO, full `bun test` in apps/mcp-server, both ends of an isolated git worktree A/B): BASE 3509a3974 = 14600 pass / 40 skip / 42 fail / 1205 files; HEAD 752d76477 = 14651 pass / 40 skip / 42 fail / 1209 files. Baseline has drifted 40 -> 42 since this row was written. Fail sets are 41/42 identical across the pair; the single swap is bidirectional flake (1288-poll-news-shape passes 4/4 isolated on 2 consecutive runs). Sampled failures pass in ISOLATION but fail in full-suite order => order-dependent pollution, matching this row's hypothesis (a).",
         "blocks": "PUSH-AUTONOMY-1. This standing red makes any literal '0 fail on the FULL suite' reading of the push gate permanently unsatisfiable, so every push decision re-litigates it from scratch (it did again on 2026-07-22). Defining + documenting the green baseline is the unblock. Note the gate's actual wording is 'targeted/merge-gate suite: 0 fail', not full-suite — worth pinning that reading in dev-standards while fixing this.",
-        "priority": "P1"
+        "priority": "P1",
+        "po_plane_separation_20260729": "PO 2026-07-29T21:3xZ (triage-20260729T2107): this row's scope is the LOCAL full-suite plane ONLY. The CI gate does NOT measure that plane — .github/workflows/ci.yml has run `bash ../../scripts/ci-per-file-isolation.sh 16` since commit 3174de0ce (2026-06-09, 'switch bun test to per-file process isolation runner; drop duplicate full re-run'), which forks one bun process per test file and therefore structurally excludes the order-dependent pollution this row characterises. MEASURED CI green baseline = 0 fail (run 30425110302, HEAD 39a4dac7, 2026-07-29T05:30:19Z: 14762 pass / 40 skip / 0 fail). CONSEQUENCE for the `blocks: PUSH-AUTONOMY-1` claim: the stated blocker ('any literal 0-fail-on-the-FULL-suite reading of the push gate is permanently unsatisfiable') does NOT apply to the CI gate, whose 0-fail reading is both literal AND satisfiable and was satisfied 8h before this note. Future push decisions must stop re-litigating the local full-suite figure — cite this field instead. This row remains valid work in its own plane (the local 60-63-fail figure is real and still undocumented) but it is NOT a licence to amnesty a ci_red: see FIX-CI-RED-ALERTOUTCOME-CLOCK-SEAM (a real red misrouted into this row's premise) and FIX-CIRED-TRIAGE-WRONG-PLANE-DEDUP-AMNESTY (the routing gap that allowed it 8 times in 4 days). NOTE also that this row's own headline figure has now drifted three times: 40 fail (written) -> 42 (2026-07-22 A/B re-measure) -> 60-63 (2026-07-29 dev-team) — a +50% growth in 7 days that this row currently absorbs without classification. Re-measuring and classifying that delta is now the highest-value part of the row, because a growing standing red is exactly how a real regression hides."
       },
       {
         "id": "FIX-REE-BS-SECTION-REGEX",
@@ -9959,7 +9960,9 @@
         "related": [
           "FIX-DRAINESC-GATEA-ESC5-MED-UNREACHABLE"
         ],
-        "updated_at": "2026-07-25T15:28:08Z"
+        "updated_at": "2026-07-29T21:35:05Z",
+        "po_corroboration_20260729": "PO 2026-07-29T21:3xZ (triage-20260729T2107): bctc-analyst esc-deep-dive-request signal bca-20260729T211102Z (docs/signals/processed/bctc-analyst-20260729T211102Z.json, severity HIGH, guard_key esc-deepdive:FPT:Q1-2026:ESC-5) triaged as DUPLICATE of this row — no new row minted. It is the 11th CONSECUTIVE cycle (c119..c129) this exact finding has fired TRUE on byte-identical inputs: same report_id e8ea3df5-3f32-413d-a3eb-c71634c0438d, same 7/15 low-confidence units (unit-0008..unit-0014), same min_confidence=0.45, refined_at unchanged since 2026-05-31 11:19:09. Signal's own note attributes root cause to the OCR-confidence floor on that 05-31 refine pass, likely correlated with docs/architecture-briefs/2026-07-28-pdfx-tesseract-concurrency-invariant.md (design complete, NOT shipped — the brief is still an untracked working-tree file). CAUTION on that attribution: the board row FIX-PDFX-PARENT-PROCESS-MEMORY-BURST-HEADROOM asserts tesseract concurrency 'is already fixed and proven bounded', which directly contradicts the signal's premise. Resolve that contradiction BEFORE spending an Opus deep-dive. Priority evidence: 11 identical fires = recurring detection WITHOUT fix (feedback_recurring_detection_vs_recurring_failed_fix), which per the recurring-bug-escalation policy is itself escalation-worthy. SEPARATE GUARD DEFECT worth its own row if it recurs a 12th time: the ESC guard's designed 24h re-arm re-dispatches a full Opus deep-dive on provably byte-identical inputs — it should suppress re-dispatch while refined_at and the low-confidence unit set are unchanged, and instead escalate ONCE to the owning fix.",
+        "updated_by": "po/triage-20260729T2107"
       },
       {
         "id": "FIX-DRAINESC-GATEA-ESC5-MED-UNREACHABLE",
@@ -11133,6 +11136,137 @@
         "dedup_checked": "Distinct from FIX-VPS-NEWS-STALE-FALSEPOS (zone apps/news-fetch/, news route, threshold-vs-cadence miscalibration where the feed IS pushing) and from FIX-VPS-HEALTH-OFFHOURS-MASK-FALSE-GREEN (off-hours grace double-apply, opposite direction). Here the STALE flag is CORRECT and only the attributed cause is wrong.",
         "user_impact": "MED — a permanent recurring false incident: the queue stays drained until ALPHA-S6-OPTIONB-DECISION-GATE trips, so this WARN re-fires indefinitely and burns a system-auditor + PO triage slot each time.",
         "updated_at": "2026-07-29T19:30:16Z"
+      },
+      {
+        "id": "FIX-CI-RED-ALERTOUTCOME-CLOCK-SEAM",
+        "title": "CI RED (per-file isolation, 6/9 fail): 1847d-C-alert-outcome-job.test.ts — readPendingOutcomeAlerts() computes its 90d window from wall-clock Date.now(), so runAlertOutcomeJob's injected nowFn cannot control candidate selection; the test's absolute-date fixtures aged out of the window at ~2026-07-29T12:00Z [ci_red dedup anchors — layer-1 substring match: CI-RED-aa6c044b CI-RED-c99c72bd CI-RED-4381b08b]",
+        "type": "FIX",
+        "size": "S",
+        "priority": "P1",
+        "status": "BACKLOG",
+        "zone": "apps/mcp-server/",
+        "owner": "dev-mcp-server",
+        "next_agent": "dev-mcp-server",
+        "created_by": "po/triage-20260729T2107",
+        "created_at": "2026-07-29T21:31:41Z",
+        "updated_at": "2026-07-29T21:36:16Z",
+        "root_cause": "apps/mcp-server/src/infrastructure/db/alertStore.ts:523 — `const since = new Date(Date.now() - windowDays * 86_400_000).toISOString();`. readPendingOutcomeAlerts(windowDays, db) takes NO clock parameter, so the deps.nowFn seam that runAlertOutcomeJob exposes (alertOutcomeJob.ts:34 `nowFn?: () => Date`, consumed at :147) is only PARTIALLY effective: it governs classification/elapsed-days logic but NOT the candidate-selection predicate at alertOutcomeJob.ts:164 `readPendingOutcomeAlerts(90, db)`. The test pins NOW = 2026-05-06T12:00:00Z (test:95-96) and seeds every alert at daysAgo(N) relative to that SAME pinned base (test:89-90), so as real wall-clock time advances the seeded rows silently drift out of the real-clock 90-day window and the job returns evaluated=0 for every scenario. Arithmetic: real `since` on 2026-07-29T12:47Z = 2026-04-30T12:47Z; fixtures at daysAgo(6) = 2026-04-30T12:00:00Z and daysAgo(7) = 2026-04-29T12:00:00Z now fall BELOW it. The 3 surviving tests are exactly the ones seeded at daysAgo(2) = 2026-05-04T12:00Z, still inside the window.",
+        "evidence": "RAW, three independent planes. (1) CI plane: run 30452854795 (HEAD aa6c044b, 2026-07-29T12:47:22Z) = 14786 pass / 40 skip / 6 fail, FAILED FILES (1) = src/__tests__/1847d-C-alert-outcome-job.test.ts. run 30484792885 (HEAD c99c72bd, 19:34:15Z) = 14791 pass / 40 skip / 6 fail, same single file. run 30492102581 (HEAD 4381b08b = current origin/main, 21:22Z) = 14793 pass / 40 skip / 6 fail, same single file. (2) Local isolation plane: `STOCK_PRICE_DB_PATH=/tmp/… bun test src/__tests__/1847d-C-alert-outcome-job.test.ts` in apps/mcp-server = 3 pass / 6 fail, deterministic across 2 consecutive runs, byte-identical fail set to CI. Failing assertions are uniform `result.evaluated`/`result.hit` = 0 vs expected 1/10 (TEST-2,5,6,7,8,9). (3) Green-baseline plane: run 30425110302 (HEAD 39a4dac7, 2026-07-29T05:30:19Z) = 14762 pass / 40 skip / 0 FAIL. A 0-fail CI baseline is therefore REACHABLE and was reached 8h before this red.",
+        "po_refutation": "The routing premise handed to this triage — 'strongly suspected to be the SAME standing FIX-MCP-SUITE-HEALTH-BASELINE order-dependent full-suite pollution (14904-14907 pass / 60-63 fail of 15007)' — is REJECTED on two independent grounds. (a) WRONG MEASUREMENT PLANE: .github/workflows/ci.yml has run `bash ../../scripts/ci-per-file-isolation.sh 16` since commit 3174de0ce (2026-06-09, 'switch bun test to per-file process isolation runner'). That runner forks one bun process per test file (script:24 `bun test \"$f\"` with a per-file unique STOCK_PRICE_DB_PATH), so cross-file order-dependent pollution is structurally IMPOSSIBLE in the CI plane. (b) NUMBERS DO NOT MATCH: CI reports 6 fail concentrated in 1 file; the cited local figure is 60-63 fail spread across the full suite. Different plane, different magnitude, different file set. 'Commit touched no application code' is not evidence of pre-existing pollution here — the defect is time-triggered, not commit-triggered, which is precisely why it appeared on docs-only commits.",
+        "ac": "(AC-1) Thread the clock through the seam: readPendingOutcomeAlerts() accepts an explicit `now`/nowFn (or a precomputed `since`) supplied by runAlertOutcomeJob from deps.nowFn, so the injected clock governs candidate selection too. No production behaviour change (production passes real clock). (AC-2) De-rot the fixture: 1847d-C-alert-outcome-job.test.ts must derive its NOW/daysAgo base from a relative anchor, or pin it while ALSO controlling the window — the file must not be able to age into red again. Add a regression control that would have failed BEFORE this fix (e.g. run the suite with the pinned NOW shifted 200 days into the past and assert evaluated>0). (AC-3) VERIFICATION GATE = ci_green_on_subsequent_push: `gh run list --branch main --workflow CI --limit 3 --json headSha,conclusion` shows conclusion=success on a SHA different from 4381b08b1, AND that run's log line reads `0 fail`. Local-only green does not count.",
+        "files": [
+          "apps/mcp-server/src/infrastructure/db/alertStore.ts",
+          "apps/mcp-server/src/scheduler/alerts/alertOutcomeJob.ts",
+          "apps/mcp-server/src/__tests__/1847d-C-alert-outcome-job.test.ts"
+        ],
+        "baseline_pass": "CI per-file-isolation baseline = 0 fail (proven run 30425110302, 2026-07-29T05:30:19Z). Do NOT use the LOCAL full-suite 60-63-fail figure as this task's baseline — different plane, see po_refutation.",
+        "user_impact": "Blocks CI green on main indefinitely and worsens on a schedule: daysAgo(2) = 2026-05-04T12:00Z exits the real-clock 90d window on 2026-08-02T12:00Z, at which point TEST-3/TEST-4 also fail and the file goes 9/9 red. Every push decision from now until fixed re-litigates a red CI.",
+        "origin_signal_file": "docs/signals/ci-red-c99c72bd-20260729212000.json (check_id CI-RED-c99c72bd, dedup_key ci_red:c99c72bd882f83598962064c81cf502eed84eb5b:bun test, fingerprint 5ac1656171a790e5ca7e0ab5ed70ea1305b971bec480b3e2821f84b12ecc4063). Signal carries no `id` field and had not yet been drained into signals_processed at triage time, so origin_signal_id is unresolvable per triage-signals.md and is deliberately omitted rather than fabricated.",
+        "ci_red_dedup_anchor": "FILE-SCOPED, not SHA-scoped. Any subsequent ci_red whose FAILED-FILES list == [src/__tests__/1847d-C-alert-outcome-job.test.ts] dedups into THIS row regardless of check_id/head_sha. Already-superseded SHAs: aa6c044b (12:47Z), c99c72bd (19:34Z), 4381b08b (21:22Z). The stock two-layer dedup in po/flow/triage-signals.md §ci_red keys on check_id and head_sha — BOTH are SHA-derived, so it structurally cannot match across SHAs; that gap is tracked as FIX-CIRED-TRIAGE-WRONG-PLANE-DEDUP-AMNESTY.",
+        "dedup_checked": "2026-07-29T21:2xZ — grepped .task_board (all lanes) for 1847d|alert.outcome|ALERT-OUTCOME|ALERTOUTCOME|NOWFN|CLOCK.INJECT|TIME.BOMB|FIXTURE.ROT => 0 hits. Also confirmed ZERO CI-RED-* rows have ever existed on the board (jq test(\"CI-RED\") => []) despite 8 ci_red signals since 2026-07-25. Not a duplicate of FIX-MCP-SUITE-HEALTH-BASELINE (different measurement plane — see po_refutation).",
+        "status_note": "AC/verification gate: ci_green_on_subsequent_push — `gh run list --branch main --workflow CI --limit 3 --json headSha,conclusion` shows conclusion=success on a SHA different from 4381b08b1 AND that run log reads `0 fail`. Priority: P1. Failing jobs: bun test (per-file isolation runner). Failing FILE: src/__tests__/1847d-C-alert-outcome-job.test.ts (6/9). head_sha observed: aa6c044ba67890fad138d447a8795af2cdb764b8, c99c72bd882f83598962064c81cf502eed84eb5b, 4381b08b1 (current origin/main).",
+        "origin_signal_close": "PO 2026-07-29T21:36Z (triage-20260729T2107) — origin ci_red signal definitively marked processed at MINT time (not at close), per feedback_ci_red_close_must_record_fingerprint_else_redrain. The signal was emitted 21:20:00Z, AFTER the 21:19:55Z drain, so it was still un-drained and would have re-routed to PO on the next tick where layer-1/2 dedup (check_id / head_sha in an IN_PROGRESS|REVIEW status_note) structurally could not have matched this BACKLOG row -> guaranteed duplicate re-mint. Actions taken: (1) INSERT INTO signals_processed fingerprint=8eabba7659b22e07f1c54aa8a86ec89d87c6a25472ddc26cca758aec78f48c76 (drain formula sha256(from+type+JSON.stringify(payload)+createdAt), recomputed with scripts/agents-flow/drain-signals.js:173-174 -- NOT the payload.fingerprint field 5ac16561..., which is the probe s own dedup_key hash and is NOT what the drain matches on), processed_by=po/triage-20260729T2107, result=triaged-out-of-band-minted-FIX-CI-RED-ALERTOUTCOME-CLOCK-SEAM, followed by PRAGMA wal_checkpoint(TRUNCATE). (2) mv docs/signals/ci-red-c99c72bd-20260729212000.json -> docs/signals/processed/ (the drain glob is non-recursive, so this is the definitive re-drain prevention even if the DB record is later lost). RESIDUAL, deliberately accepted: CI is ALSO red on current origin/main 4381b08b1 with the same single failing file, so the probe will emit a fresh ci_red (check_id CI-RED-4381b08b) on its next tick. That check_id is pre-registered in this row title for layer-1 substring dedup. Any LATER SHA will still slip the stock dedup -- that structural gap is FIX-CIRED-TRIAGE-WRONG-PLANE-DEDUP-AMNESTY AC-2.",
+        "updated_by": "po/triage-20260729T2107"
+      },
+      {
+        "id": "FIX-CIRED-TRIAGE-WRONG-PLANE-DEDUP-AMNESTY",
+        "title": "ci_red triage has no mandatory failing-FILE read: 8 consecutive REAL per-file-isolation CI reds (2026-07-25 → 07-29, 3 distinct files) were amnestied as 'the standing full-suite baseline' and minted ZERO board rows — and the row's own dedup keys are both SHA-derived so they can never match across SHAs",
+        "type": "FIX",
+        "size": "S",
+        "priority": "P1",
+        "status": "BACKLOG",
+        "zone": "docs/agents/po/flow/",
+        "owner": "agents-architect",
+        "next_agent": "agents-architect",
+        "supervised": true,
+        "plan_only": true,
+        "created_by": "po/triage-20260729T2107",
+        "created_at": "2026-07-29T21:31:41Z",
+        "updated_at": "2026-07-29T21:35:05Z",
+        "root_cause": "Two compounding gaps in docs/agents/po/flow/triage-signals.md §ci_red. (a) NO FAILING-FILE READ: the row tells PO to extract check_id / failing_jobs[].name / head_sha and dedup on those. failing_jobs[].name is always the literal GitHub job name — 'bun test' — for EVERY red, so the signal as consumed carries zero discriminating information about WHAT failed. Nothing in the row instructs PO to open the run log and read the `=== FAILED FILES (N) ===` / `FAILEDFILE:` block that scripts/ci-per-file-isolation.sh emits, which is the only place the actual failure identity lives. Result: every red looks identical to every other red, and the cheapest disposition — 'same standing baseline, dedup' — wins by default. (b) SHA-SCOPED DEDUP KEYS: both dedup layers in that row key on check_id (= CI-RED-<sha8>) and head_sha. Both are SHA-derived, so on a repo where main advances every few minutes they NEVER match across SHAs — the dedup is structurally inert for a persistent defect, and simultaneously offers no defence against the wrong-plane amnesty it was reached through.",
+        "evidence": "RAW audit of every ci_red emitted since 2026-07-25, run log read for each: bda56d1c 07-25T13:12Z -> 1408-tool-diacritics.test.ts (1 fail); da90fee8 07-25T17:49Z -> 1408-tool-diacritics.test.ts (1); 289a9d8e 07-28T16:18Z -> 1408-tool-diacritics.test.ts (1); 6ba39d3c 07-28T17:21Z -> 1408-tool-diacritics.test.ts (1); 977a7195 07-28T21:16Z -> emit-pressure-state.test.ts (1); cdd5fa5a 07-28T23:16Z -> emit-pressure-state.test.ts (1); aa6c044b 07-29T12:47Z -> 1847d-C-alert-outcome-job.test.ts (6); c99c72bd 07-29T19:34Z -> 1847d-C-alert-outcome-job.test.ts (6). Three distinct real files, all reproducible in per-file ISOLATION (pollution structurally excluded). Board check: jq over every .task_board lane for test(\"CI-RED\") returns [] — not one row was ever minted. All 8 were recorded in signals_processed as result='routed-to-po' and archived to docs/signals/processed/, i.e. the pipeline believed they were handled. Missed-corroboration cost: 1408-tool-diacritics red 07-25→07-28 while cowork independently filed refine-bctc diacritic-corruption reports TWICE on 07-29 (09:12Z, 11:10Z); emit-pressure-state red 07-28 21:16Z+23:16Z while cowork filed 'pressure-headroom field rename not deployed' (07-29T16:11Z). CI was corroborating both live defects from the other plane and the signal was discarded each time.",
+        "ac": "(AC-1) triage-signals.md §ci_red gains a MANDATORY pre-dedup step: read the failing job's log and extract the `FAILEDFILE:` list (`gh run view <run_id> --log-failed | grep -E 'pass / |FAILEDFILE'`); record that list verbatim on whatever row is created OR in the skip-log line if skipping. Dedup MUST NOT be evaluated before the file list is in hand. (AC-2) Dedup becomes FILE-SCOPED: match on the sorted FAILEDFILE list (plus check_id/head_sha as secondary), so a persistent defect dedups across advancing SHAs while a genuinely new file always mints. (AC-3) Explicit anti-amnesty fence: forbid deduping a ci_red into FIX-MCP-SUITE-HEALTH-BASELINE or any other LOCAL-full-suite row, with the one-line reason (ci.yml runs scripts/ci-per-file-isolation.sh per commit 3174de0ce; the CI plane's green baseline is 0 fail, proven run 30425110302). (AC-4) Backstop: if the CI plane's last known-green baseline is 0 fail, a ci_red is ALWAYS actionable — state that as the row's operating assumption so 'pre-existing' is never a valid disposition without a named, file-scoped, already-open row. (AC-5) Retro-sweep: confirm 1408-tool-diacritics and emit-pressure-state are green on current main (they are — run 30492102581 lists only 1847d-C) and record which change fixed each, so the 4-day blind window is closed with evidence rather than assumed.",
+        "files": [
+          "docs/agents/po/flow/triage-signals.md",
+          "docs/agents/dev-team/flow/ci-health-probe.md"
+        ],
+        "related": "Adjacent but DISTINCT from FIX-SIGNAL-ROUTING-ROWS-COVERAGE-GAP-DEEPDIVE (ready) — that row is about the catch-all silently dropping unrecognised signal TYPES (206/322 in 7d). This row is about a RECOGNISED type with a real routing row producing a wrong-plane dedup. Cross-reference, do not merge.",
+        "dedup_checked": "2026-07-29T21:2xZ — grepped all .task_board lanes for CI-RED / CIRED / ci_red / AMNESTY / WRONG-PLANE => 0 hits; reviewed FIX-SIGNAL-ROUTING-ROWS-COVERAGE-GAP-DEEPDIVE AC text directly and confirmed different scope (see related)."
+      },
+      {
+        "id": "FIX-DEVTEAM-QADRAIN-HEAD-WRITE-CONDITIONAL",
+        "title": "Part 1 (script-only, ship first, no depends): make scripts/devteam-review-claim-qa-drain.jq .head write CONDITIONAL — line 123 currently does an unconditional whole-object replace that clobbers a live unrelated task's head slot",
+        "type": "FIX",
+        "size": "S",
+        "priority": "P1",
+        "status": "BACKLOG",
+        "zone": "cross-service/",
+        "owner": "agent-father",
+        "next_agent": "agent-father",
+        "created_by": "po/triage-20260729T2107",
+        "created_at": "2026-07-29T21:31:41Z",
+        "updated_at": "2026-07-29T21:35:05Z",
+        "root_cause": "Per architecture brief docs/architecture-briefs/2026-07-29-qadrain-head-slot-decouple.md §3. scripts/devteam-review-claim-qa-drain.jq:123 performs `.head = {status:in_progress, active_task_id:$picked_id, next_agent:qa, ...}` unconditionally. PO's own dry-run against the live board at 2026-07-29T19:2xZ replaced .head.active_task_id=FACTORY-GUARD-CI-METRICMASK-IMPL (developer genuinely running) with TE-T17. The head-idle gate at main.md:518 is therefore LOAD-BEARING, not over-broad — which is why the originally FILED remedy (run QA-Drain keyed only on qa[]<1) was rejected.",
+        "ac": "(AC-1) .head write mirrors the proven in-repo shape at scripts/devteam-wrapper-autoclose.jq:122-128 — sync .head ONLY when .head.active_task_id equals the row being claimed (or .head is idle/done/missing); never overwrite a different live task's slot. (AC-2) Decide and DOCUMENT where the spawned qa agent reads its instruction from, since .head.next_action can no longer be assumed free. (AC-3) The two regression controls in brief §6. Standalone — no depends_on, no main.md edit.",
+        "files": [
+          "scripts/devteam-review-claim-qa-drain.jq"
+        ],
+        "brief_ref": "docs/architecture-briefs/2026-07-29-qadrain-head-slot-decouple.md §3, §6, §8 step 1",
+        "parent_spike": "SPIKE-DEVTEAM-QADRAIN-HEAD-SLOT-DECOUPLE",
+        "dedup_checked": "2026-07-29T21:2xZ — brief §'Dedup check' clears this against FIX-DEVTEAM-IDLE-CHAIN-P1A-MAIN-ROTATION, TASK-DEVTEAM-IDLE-CHAIN-2-MAIN-FLOW, FIX-DEVTEAM-IDLE-CHAIN-STEP1-TRIAGE-STARVATION and FIX-DEVTEAM-REVIEW-LANE-QA-DRAIN by reading their AC text directly; PO re-grepped the board for QADRAIN|QA-DRAIN => no open implementation row."
+      },
+      {
+        "id": "FIX-DEVTEAM-QADRAIN-INVOCATION-HEAD-DECOUPLED",
+        "title": "Part 2 (flow-doc, ONLY after Part 1 is DONE_VERIFIED): add a head-decoupled QA-Drain invocation between the Session Gate and Step 1 so the lane is reachable on busy ticks — 119 REVIEW+next_agent=qa rows are currently unreachable, oldest 6 days",
+        "type": "FIX",
+        "size": "S",
+        "priority": "P1",
+        "status": "BACKLOG",
+        "zone": "docs/agents/dev-team/flow/",
+        "owner": "agent-father",
+        "next_agent": "agent-father",
+        "supervised": true,
+        "plan_only": true,
+        "depends": [
+          "FIX-DEVTEAM-QADRAIN-HEAD-WRITE-CONDITIONAL",
+          "FIX-DEVTEAM-IDLE-CHAIN-P1A-MAIN-ROTATION"
+        ],
+        "created_by": "po/triage-20260729T2107",
+        "created_at": "2026-07-29T21:31:41Z",
+        "updated_at": "2026-07-29T21:35:05Z",
+        "root_cause": "docs/agents/dev-team/flow/main.md:518 gates the whole BOUNDED-1 -> SLS -> RLC -> QA-Drain fall-through on head.status in {idle,done,missing}; :676 places QA-Drain inside that same fall-through. QA-Drain owns an INDEPENDENT budget (.task_board.qa|length < 1, main.md:685-686) that is consequently never evaluated on a busy tick.",
+        "ac": "(AC-1) Implement brief §4a/§4b placement — verified ZERO byte overlap with the concurrent P0 main.md:496-686 wholesale rewrite (FIX-DEVTEAM-IDLE-CHAIN-P1A-MAIN-ROTATION). (AC-2) Idle-tick priority ordering must be preserved unchanged so this does not aggravate FIX-DEVTEAM-IDLE-CHAIN-STEP1-TRIAGE-STARVATION. (AC-3) depends[] above is MACHINE-READABLE and load-bearing: prose sequencing alone gets blind-promoted (see FIX-DEVTEAM-BOUNDED1-PROSE-SEQUENCING-UNBACKED-GATE). Do not implement while either dependency is open.",
+        "files": [
+          "docs/agents/dev-team/flow/main.md"
+        ],
+        "brief_ref": "docs/architecture-briefs/2026-07-29-qadrain-head-slot-decouple.md §4a, §4b, §4c, §8 step 2",
+        "parent_spike": "SPIKE-DEVTEAM-QADRAIN-HEAD-SLOT-DECOUPLE",
+        "dedup_checked": "2026-07-29T21:2xZ — see brief §'Dedup check'; both depends targets verified present on the live board (FIX-DEVTEAM-IDLE-CHAIN-P1A-MAIN-ROTATION=backlog, FIX-DEVTEAM-BOUNDED1-PROSE-SEQUENCING-UNBACKED-GATE=review) so neither depends ref is dangling."
+      },
+      {
+        "id": "FIX-DEVTEAM-QADRAIN-THROUGHPUT-CAP",
+        "title": "Part 3 (independent of Parts 1/2): one-row-per-tick QA-Drain throughput is insufficient against a ~120-row review backlog — reachability is necessary but NOT sufficient",
+        "type": "FIX",
+        "size": "S",
+        "priority": "P2",
+        "status": "BACKLOG",
+        "zone": "docs/agents/dev-team/flow/",
+        "owner": "agents-architect",
+        "next_agent": "agents-architect",
+        "supervised": true,
+        "plan_only": true,
+        "created_by": "po/triage-20260729T2107",
+        "created_at": "2026-07-29T21:31:41Z",
+        "updated_at": "2026-07-29T21:35:05Z",
+        "root_cause": "Brief §5b. Even once Parts 1/2 land, QA-Drain claims at most one row per tick against 119 eligible REVIEW+next_agent=qa rows, so the backlog drains slower than review[] refills. PO's AC-3 framing ('reachability necessary but not sufficient') answered explicitly YES-needs-its-own-row by the SPIKE.",
+        "ac": "(AC-1) Quantify the drain-vs-refill rate from the live board and state whether a per-tick batch >1, a dedicated cadence, or a parallel qa[] budget >1 is the right lever. (AC-2) Fold in brief §7's flagged residual (pre-existing, NOT introduced here): no staleness/retry detector exists for a row stuck in .task_board.qa[] if its spawned qa session dies mid-verify — candidate remedy is extending scripts/audits/devteam-review-lane-drain-report.sh to surface qa[] rows stuck beyond N hours.",
+        "files": [
+          "docs/agents/dev-team/flow/main.md",
+          "scripts/audits/devteam-review-lane-drain-report.sh"
+        ],
+        "brief_ref": "docs/architecture-briefs/2026-07-29-qadrain-head-slot-decouple.md §5, §7, §8 step 3",
+        "parent_spike": "SPIKE-DEVTEAM-QADRAIN-HEAD-SLOT-DECOUPLE",
+        "dedup_checked": "2026-07-29T21:2xZ — no open board row for qa-lane throughput or qa[] staleness (grepped QADRAIN|THROUGHPUT|QA-STALE)."
       }
     ],
     "closed_sprints": [
@@ -11978,6 +12112,40 @@
         "status_note": "[QA] Review Record (direct-commit verify): Verified commit c2c7243f8 on main ancestry (git merge-base --is-ancestor). git show --stat matches claimed file set exactly (scripts/git-hooks/pre-commit, post-commit, install.sh, pre-commit.test.sh + docs/policies/dev-standards.md CANONICAL pointer + docs/WORK.md + docs/handoffs/FIX-COMMIT-PATH-PEER-INDEX-SWEEP-GUARD-HOOK.md Implementation Record), zero foreign files. Independently re-ran every claim, not trusted from prose (feedback_router_verify_raw_not_badges): shellcheck on all 4 files -- 0 warnings. bash scripts/git-hooks/pre-commit.test.sh -- 6/6 PASS (T1 bare-sweep-WARN, T2 pathspec-silent, T3 dir-pathspec documented non-goal, T4 rebase-no-false-warn, T5 reject-blocks-preserves-index, T6 UNKNOWN-fail-open-loud). bash scripts/audits/verify-commit-sweep-discriminator.sh -- VERDICT PASS (git 2.49.0), C1/C2 both independently reproduced. install.sh AC-5 claim (installs all 3 hooks, not just pre-push) verified live in a fresh disposable scratch repo -- pre-push/pre-commit/post-commit all symlinked into .git/hooks/, correct targets, executable. mock-guard.sh --files on the 4 touched files -- PASS (shell files fall outside its .ts/.py/.go scan scope by design; shellcheck is the correct static-analysis line of defense here and is clean). No TS files touched (zone=scripts/) so bun test/tsc structurally N/A; shell regression suite + discriminator harness together constitute the targeted zone suite. Test runs left zero side effects on the live repo (.git/sweep-guard.log absent, no stray docs/signals/*.json from these runs -- all scenarios isolated to mktemp scratch repos). WARN-by-default disposition matches architect ratified brief docs/architecture-briefs/2026-07-21-commit-path-peer-index-sweep-guard.md §3 exactly. VERDICT: APPROVED, DONE_VERIFIED. Process note (already flagged separately to PO via signal_queue, not actioned here): this row was pushed to origin/main before QA review ran (PUSH-AUTONOMY-1 gate deviation) -- content already live regardless of this verdict; no defects found so no follow-up commit needed.",
         "qa_verified_at": "2026-07-29T00:01:43Z",
         "qa_verified_by": "qa"
+      },
+      {
+        "id": "SPIKE-DEVTEAM-QADRAIN-HEAD-SLOT-DECOUPLE",
+        "type": "SPIKE",
+        "mode": "spike",
+        "title": "Review-Lane QA-Drain is unreachable on any non-idle tick (119 eligible rows, qa[]=0, oldest 6d) — but the head-idle gate is LOAD-BEARING: design the .head-write decoupling, do NOT just delete the gate",
+        "status": "DONE_VERIFIED",
+        "priority": "P1",
+        "size": "M",
+        "timebox": 180,
+        "zone": "docs/agents/dev-team/flow/",
+        "owner": "agents-architect",
+        "supervised": true,
+        "plan_only": true,
+        "files": [
+          "scripts/devteam-review-claim-qa-drain.jq",
+          "docs/agents/dev-team/flow/main.md"
+        ],
+        "created_at": "2026-07-29T19:30:16Z",
+        "created_by": "po/triage-20260729T1928",
+        "origin_signal_id": "dev-20260729T191826",
+        "question": "How can the Review-Lane QA-Drain be made reachable on ticks where .head.status==in_progress, WITHOUT its claim script clobbering the .head slot of an unrelated in-flight task?",
+        "root_cause": "docs/agents/dev-team/flow/main.md:518 gates the entire BOUNDED-1->SLS->RLC->QA-Drain fall-through on head.status in {idle,done,missing}; :676 places QA-Drain inside that same fall-through. QA-Drain owns an INDEPENDENT budget (.task_board.qa|length < 1, main.md:685-686) that is therefore never evaluated on a busy tick.",
+        "po_refutation": "The remedy as FILED by dev-team (run it keyed only on qa[]<1 regardless of .head.status) is REJECTED. PO dry-ran scripts/devteam-review-claim-qa-drain.jq against the LIVE board 2026-07-29T19:2xZ: it selects correctly (TE-T17, oldest) BUT line 123 performs an UNCONDITIONAL whole-object replace `.head = {status:in_progress, active_task_id:$picked_id, next_agent:qa, ...}`. The dry-run output had replaced live .head.active_task_id=FACTORY-GUARD-CI-METRICMASK-IMPL (developer genuinely running) with TE-T17. The head-idle gate is LOAD-BEARING, not over-broad. This is NOT the same class as UNBLOCK-DEVTEAM-DISPATCH-GATE-STAGING-DEADLOCK (a pure WIP-formula bug with no invariant behind it).",
+        "in_repo_precedent": "scripts/devteam-wrapper-autoclose.jq is NEVER gated on WIP and runs at Step 4.4 post-cycle precisely because its .head write is CONDITIONAL (lines 122-127: syncs only if .head.active_task_id equals a swept row own id). That is the shape QA-Drain needs.",
+        "ac": "(AC-1 PART 1, script-only, shippable immediately, ZERO file conflict) Make scripts/devteam-review-claim-qa-drain.jq .head write non-destructive: never overwrite a .head whose active_task_id belongs to a different, live task. Decide+state where the spawned qa agent then reads its instruction from, since .head.next_action can no longer be assumed free. (AC-2 PART 2, flow-doc) Only AFTER AC-1: relocate/duplicate the QA-Drain invocation so it is reached on non-idle ticks. MUST carry a machine-readable depends_on on FIX-DEVTEAM-IDLE-CHAIN-P1A-MAIN-ROTATION (that P0 rewrites main.md 496-686 wholesale) — prose sequencing only is blind-promoted, see FIX-DEVTEAM-BOUNDED1-PROSE-SEQUENCING-UNBACKED-GATE. (AC-3) State explicitly whether one-row-per-tick against 119 eligible rows is acceptable throughput or needs its own row — PO judges reachability necessary but NOT sufficient.",
+        "dedup_checked": "NOT a duplicate of FIX-DEVTEAM-IDLE-CHAIN-P1A-MAIN-ROTATION / TASK-DEVTEAM-IDLE-CHAIN-2-MAIN-FLOW (both rewrite 496-686 into round-robin, but their own ACs mandate BOUNDED-1/SLS/RLC/QA-Drain blocks byte-unchanged + zero changes to per-lane gates -> they change WHICH lane wins an IDLE tick, never whether any lane is reachable on a BUSY tick). NOT a duplicate of FIX-DEVTEAM-IDLE-CHAIN-STEP1-TRIAGE-STARVATION (opposite direction: QA-Drain firing too often on idle ticks starving Step 1). NOT a duplicate of FIX-DEVTEAM-REVIEW-LANE-QA-DRAIN (that row IS the shipped lane).",
+        "evidence": "Live 2026-07-29T19:2xZ: review[]=157, 119 rows status=REVIEW+next_agent=qa, qa[]=0, oldest updated_at 2026-07-23 (6d) plus 2 rows with NO timestamp. Corroborating: CLEAN-COWORK-DISPATCHER-TELEMETRY-DRAIN-DIR (P1, owner po) is itself stranded in review[] with next_agent=developer — the non-qa SECONDARY class this lane skips by design — so signal dev-20260729T184636 own fix is blocked by this same gap.",
+        "updated_at": "2026-07-29T21:35:05Z",
+        "claimed_at": "2026-07-29T19:35:03Z",
+        "claimed_by": "dev-team (out-of-band dispatch, head busy on FACTORY-GUARD-CI-METRICMASK-IMPL — .head deliberately NOT touched, see po_refutation)",
+        "review_note": "agents-architect brief complete: docs/architecture-briefs/2026-07-29-qadrain-head-slot-decouple.md (commit 4381b08b1, pushed). Confirmed the filed remedy wrong (dry-run proof), designed Part 1 (conditional .head-write guard on scripts/devteam-review-claim-qa-drain.jq, mirrors devteam-wrapper-autoclose.jq:122-128), Part 2 (new head-decoupled QA-Drain invocation site between Session Gate and Step 1, zero byte overlap with FIX-DEVTEAM-IDLE-CHAIN-P1A-MAIN-ROTATION verified via direct line-range read, depends_on mandated as coordination safeguard), Part 3 (both framings answered: Part 2 still needed after Part 1 ships; 1-row/tick throughput insufficient against 120-row backlog, recommends a separate FIX-DEVTEAM-QADRAIN-THROUGHPUT-CAP follow-up). signal brief_complete sent to po (cc agent-father, developer). RAW-verified by dev-team: single-caller claim grep-confirmed, byte-unchanged AC quote confirmed live in orch-state.json .note field + independently corroborated in pos own pre-existing notebook/journal entries. .head deliberately left untouched (currently points at a different genuinely in-flight task, FIX-BOUNDED1-NONDEV-NEXTAGENT-RESIDUAL-NO-DISPATCH-LANE) — only this lane moved.",
+        "updated_by": "po/triage-20260729T2107",
+        "po_signoff": "APPROVED 2026-07-29T21:3xZ (po/triage-20260729T2107). All three ACs answered against evidence, not assertion. AC-1: brief §3 designs the conditional .head guard on the proven in-repo shape (devteam-wrapper-autoclose.jq:122-128) and states where the spawned qa agent reads its instruction. AC-2: brief §4a proves ZERO byte overlap with the concurrent P0 main.md:496-686 rewrite by direct line-range read (not by assertion), and mandates a MACHINE-READABLE depends_on rather than prose sequencing. AC-3: answered explicitly and in the harder direction — one-row-per-tick against 119 eligible rows declared INSUFFICIENT and given its own follow-up, rather than quietly accepted. Also credited: the SPIKE correctly REFUTED the remedy as originally filed by dev-team via a live dry-run showing the unconditional .head replace clobbering FACTORY-GUARD-CI-METRICMASK-IMPL, establishing the head-idle gate as load-bearing; and it flagged a residual (§7, no qa[] staleness detector) as pre-existing instead of hiding it. Deliverable: docs/architecture-briefs/2026-07-29-qadrain-head-slot-decouple.md at commit 4381b08b1 (pushed). Implementation rows minted per brief §8: FIX-DEVTEAM-QADRAIN-HEAD-WRITE-CONDITIONAL (Part 1, no depends, ship first), FIX-DEVTEAM-QADRAIN-INVOCATION-HEAD-DECOUPLED (Part 2, depends on Part 1 + FIX-DEVTEAM-IDLE-CHAIN-P1A-MAIN-ROTATION), FIX-DEVTEAM-QADRAIN-THROUGHPUT-CAP (Part 3, independent). .head deliberately NOT touched by this sign-off — it points at FIX-BOUNDED1-NONDEV-NEXTAGENT-RESIDUAL-NO-DISPATCH-LANE, a different genuinely in-flight task."
       }
     ],
     "head": {
@@ -12673,8 +12841,8 @@
         "title": "Cold-evict auto-commit captures a live peer WIP inside the same hot file it legitimately stages — a within-file capture that pathspec discipline and the sweep-guard hook both structurally miss",
         "created_at": "2026-07-21T20:47:32Z",
         "created_by": "po/ruling-20260721T2052",
-        "updated_at": "2026-07-21T20:47:32Z",
-        "updated_by": "po/ruling-20260721T2052",
+        "updated_at": "2026-07-29T21:35:05Z",
+        "updated_by": "po/triage-20260729T2107",
         "origin": "Router observation router_coldevict_sweep_recurrence_20260721T2020 on CLEAN-COWORK-DISPATCHER-TELEMETRY-DRAIN-DIR, plus PO field verification of the incident at 2026-07-21T20:14:18Z where commit e3e5c9f92 absorbed PO live board work (4 rows + 20 annotation keys) under a cold-evict message. Harm that time was ATTRIBUTION-ONLY — PO verified all three transforms landed complete and a duplicate-ID scan returned none — but that outcome depended on PO noticing and on a mid-run warning, neither of which is a mechanism.",
         "po_correction_router_candidates": "PO RE-VERIFIED ROUTER THREE CANDIDATE FIXES AT SOURCE AND TWO OF THEM DO NOT SURVIVE. (a) Router proposed the evictor should TAKE commit-mutex:main. IT ALREADY DOES — dev-team-tick-preflight.sh:366-379 _step55_cold_evict_and_commit claims task_id commit-mutex:main, task_kind commit-mutex, ttl 120s, and returns early skipping the whole tick when the claim fails. This candidate is already implemented and is not the gap. (b) Router proposed the evictor should commit ONLY the paths it evicted. IT ALREADY DOES, and it would not have helped: git show --stat e3e5c9f92 reports exactly ONE file changed (docs/data/orch/orch-state.json), and line 415 stages exactly two explicit paths (ORCH_STATE_PATH and the archive file). orch-state.json IS the path it legitimately evicted — the peer work was INSIDE it. No pathspec discipline can separate the eviction transform from peer rows in the same file. (c) Only router third candidate — skip the auto-commit when the file is peer-dirty — engages the actual mechanism, and it is also the cheapest.",
         "actual_mechanism": "The mutex serialises COMMITTERS, but PO and every other board writer are not committers — they are WRITERS, and they go through scripts/orch-apply.sh, which PO verified contains NO task_claim and NO commit-mutex participation whatsoever (grep for commit-mutex/task_claim/git in that file returns nothing). So the write path and the commit path are on two different locks, which is to say on no shared lock at all. The evictor claims the mutex, reads a file a peer is actively editing outside that mutex, runs its transform, and then git add at line 415 stages the ENTIRE current file content — eviction delta and peer WIP indistinguishably fused — and commits it under a cold-evict message. The peer WIP is captured not because the commit was sloppy about paths but because it was correct about paths and the harm lives inside one of them.",
@@ -12682,7 +12850,8 @@
         "prior_art_do_not_duplicate": "PO RAN THE PRIOR-ART CHECK ROUTER DID NOT (standing memory feedback_file_prior_art_check_before_minting_row) AND FOUND AN EXISTING FAMILY: FIX-COMMIT-PATH-PEER-INDEX-SWEEP-GUARD (P0, currently BLOCKED — flagged separately, a stalled P0), FIX-COMMIT-PATH-PEER-INDEX-SWEEP-GUARD-HOOK (P0, ready), FIX-COMMIT-PATH-PEER-INDEX-SWEEP-GUARD-SKILLS (DONE), FIX-COMMIT-PATH-PEER-INDEX-SWEEP-GUARD-LAYER2 (P2, backlog). THIS ROW IS NOT A DUPLICATE OF THEM, and the distinction is the reason it exists: that family addresses INDEX SWEEP — a commit absorbing content the committing actor did not itself stage. Here the actor DID deliberately and correctly stage the path. A pre-commit hook that flags unstaged-by-me content will therefore return clean on this incident, and LAYER2 does not reach this file at all (its zone is .claude/skills/ and its named site list is four skill files, not scripts/agents-flow/dev-team-tick-preflight.sh). Cross-reference the family in the fix; do not re-solve it.",
         "scope": "In scripts/agents-flow/dev-team-tick-preflight.sh: (1) before claiming the mutex in _step55_cold_evict_and_commit, check whether docs/data/orch/orch-state.json is already dirty in the working tree (git status --porcelain on that path); if it is, SKIP the entire cold-evict for this tick, log a distinguishable reason line in the same style as the existing skip at line 377, and return 0. Cold-eviction is an unurgent backstop — deferring a tick costs nothing, and the existing code already treats skip-and-retry-next-tick as the normal contended outcome. (2) give the line-416 commit explicit pathspecs matching the line-415 add. Keep both side-effecting seams (_step55_git_commit_evict and the new check) overridable in the same style as the existing seams at lines 401-417 so the test harness never touches the live repo — that convention is documented in the file header and must be preserved.",
         "explicitly_not_in_scope": "Do NOT make scripts/orch-apply.sh claim commit-mutex:main. That is the deeper fix and it is a much larger blast radius — orch-apply is on the hot path of every agent board write, and adding an MCP claim to it changes latency and failure modes fleet-wide. If the developer concludes the peer-dirty skip is insufficient, STOP and report rather than escalating scope inside this row.",
-        "acceptance": "(1) A cold-evict tick that runs while orch-state.json is dirty in the working tree performs NO commit and NO eviction write, and logs a reason distinguishable from the existing mutex-contended skip. (2) Regression test in scripts/agents-flow/dev-team-tick-preflight.test.sh covering exactly that: seed a dirty orch-state.json, run the step, assert no commit occurred. (3) A NEGATIVE control in the same test — clean tree, eviction still happens and still commits — so the fix cannot pass by disabling cold-eviction outright. Without (3) this change is indistinguishable from breaking the feature. (4) The commit line carries explicit pathspecs. (5) The test harness never touches the live repo or the live orch-state.json (per memory feedback_negative_path_test_corrupts_live_ssot) — use the existing overridable-seam pattern. (6) Report whether the pre-existing dev-team-tick-preflight.test.sh suite passes unchanged."
+        "acceptance": "(1) A cold-evict tick that runs while orch-state.json is dirty in the working tree performs NO commit and NO eviction write, and logs a reason distinguishable from the existing mutex-contended skip. (2) Regression test in scripts/agents-flow/dev-team-tick-preflight.test.sh covering exactly that: seed a dirty orch-state.json, run the step, assert no commit occurred. (3) A NEGATIVE control in the same test — clean tree, eviction still happens and still commits — so the fix cannot pass by disabling cold-eviction outright. Without (3) this change is indistinguishable from breaking the feature. (4) The commit line carries explicit pathspecs. (5) The test harness never touches the live repo or the live orch-state.json (per memory feedback_negative_path_test_corrupts_live_ssot) — use the existing overridable-seam pattern. (6) Report whether the pre-existing dev-team-tick-preflight.test.sh suite passes unchanged.",
+        "po_corroboration_20260729": "PO 2026-07-29T21:3xZ (triage-20260729T2107): two commit-sweep-guard bug-escalation signals triaged this tick, BOTH verified BENIGN IN EFFECT (zero foreign paths absorbed) but BOTH structurally BARE commits — no new row minted, evidence attached here instead. (1) 2026-07-29T21:17:20Z, 2 staged files (docs/data/orch/archive/2026-07.json, docs/data/orch/orch-state.json) => commit 2f03bdb34 'chore(tasks): cold-evict terminal sprints/done lanes'; git show confirms exactly those 2 files, both cold-evict's own outputs. THIS IS THIS ROW'S EXACT SHAPE and is now empirically corroborated on live main. (2) 2026-07-29T19:37:56Z, 11 staged files => commit 7a758d90f 'feat(cross-service/factory-guard-ci-metricmask-impl)'; git show confirms all 11 are the developer's own FACTORY-GUARD-CI-METRICMASK-IMPL work (metric-mask-lint.sh + its test + the 4 sources it flagged + ci.yml wiring + WORK.md + dev-standards.md). Guard text 'not necessarily this actor's own' was correct-but-uninformative — victim-self-detect scope, see FIX-COMMIT-SWEEP-VICTIM-SELF-DETECT / FIX-COMMIT-PATH-PEER-INDEX-SWEEP-GUARD-LAYER2. INBOX-NOISE OBSERVATION (not yet a row): 10 commit-sweep-guard signals fired on 2026-07-29 alone (15:15, 15:45, 16:18 x2, 17:05, 17:31, 17:59, 18:25, 19:37, 21:17Z), all priority=high, all warn-mode, all benign so far. At ~1 per 30min a high-priority warn-only guard becomes the loudest thing in the po inbox and buries real signals — same failure shape as feedback_cowork_step0a_blanket_ack_buries_other_agents_signals. If LAYER2 does not reduce the fire rate, mint a dedicated signal-volume row."
       },
       {
         "id": "FIX-DRAIN-FILEPLANE-PEER-COLLISION-GUARD",
@@ -17401,38 +17570,37 @@
         "review_note": "Implemented per architect brief section 3 exactly. New scripts/audits/metric-mask-lint.sh (--check, zero-tolerance, no baseline) detects ??/||/python-or/destructuring-default with a non-zero literal on confidence|score|impact|magnitude|probability-matching identifiers; 0/0.0/null always allowed; comment-only mentions never scanned; metric-mask-allow: suppression. Fixed cascadeEngine.ts:356,375,394 (?? 0.6 -> ?? 0, behaviorally identical to old value for every real input since both sit below detectMsci*s 0.7 credibility floor) and marketSentimentCalculator.ts:174 (?? 1.0 -> exclude the row entirely, since impact_score is genuinely nullable unlike cascadeEngine confidence, and ?? 0 would have fabricated a zero-impact weight while still counting confidence in the denominator). Annotated watchlist.ts:198 (legit alert-threshold default). VERIFY-LIVE CATCH beyond the brief stated 4+1: a live dry-run of the built lint surfaced a 5th real hit, brokerCredibilityTools.ts:51 baseConfidence = 1 (zod .default(1)-backed documented input default the brief own manual sweep missed) -- annotated it too rather than narrowing the detector. metric-mask-lint --check exits 0 post-fix (423 files scanned). New metric-mask-lint.test.sh 10/10 PASS. Targeted suites 100 percent green: FIX-1279-msci-bullish 14/14, P0-4-market-sentiment-index 37/37, cascade files (1279a+247+FIX-1268+1224) 31/31, 915-broker-credibility 22/22, watchlist (082+220) 25/25. tsc clean, shellcheck clean. Full bun test: 14904-14907 pass/40 skip/60-63 fail/15007 total across 2 runs -- every failure pre-existing order-dependent full-suite pollution tracked by still-BACKLOG board row FIX-MCP-SUITE-HEALTH-BASELINE, none touching a file this task changed, confirmed by isolated re-run of 3 sampled failing files (32/32 pass standalone). Commits: 7a758d90f (feat), 33aee81e2 (memory)."
       },
       {
-        "id": "SPIKE-DEVTEAM-QADRAIN-HEAD-SLOT-DECOUPLE",
-        "type": "SPIKE",
-        "mode": "spike",
-        "title": "Review-Lane QA-Drain is unreachable on any non-idle tick (119 eligible rows, qa[]=0, oldest 6d) — but the head-idle gate is LOAD-BEARING: design the .head-write decoupling, do NOT just delete the gate",
+        "id": "FIX-BOUNDED1-NONDEV-NEXTAGENT-RESIDUAL-NO-DISPATCH-LANE",
+        "type": "FIX",
+        "title": "61 backlog rows (1 P0, ~24 P1) have NO dispatch lane -- gated by NON-DEV-NEXT_AGENT, ineligible for SLS",
         "status": "REVIEW",
         "priority": "P1",
         "size": "M",
-        "timebox": 180,
-        "zone": "docs/agents/dev-team/flow/",
-        "owner": "agents-architect",
+        "zone": "cross-service/",
+        "owner": "po",
         "next_agent": "po",
         "supervised": true,
         "plan_only": true,
-        "files": [
-          "scripts/devteam-review-claim-qa-drain.jq",
-          "docs/agents/dev-team/flow/main.md"
+        "created_at": "2026-07-29T12:32:22Z",
+        "created_by": "dev-team/po-batch-20260729T1207Z",
+        "updated_at": "2026-07-29T21:40:00Z",
+        "source": "po triage 2026-07-29T12:07Z tick",
+        "desc": "docs/agents/dev-team/flow/main.md:547 names this verbatim as 'a tracked residual gap (no dedicated sweep lane yet)'. It has no row and no owner until now. Distinct from FIX-BOUNDED1-SUPERVISED-LANE-NO-SWEEPER, which covers the supervised+plan_only set the Supervised-Lane Sweep already drains -- this row is the wider set: any backlog row whose next_agent does not match BOUNDED-1's ^dev(-|$)|^developer$ pattern, and that is NOT already caught by the supervised+plan_only pair, sits with no automated pickup path at all. Oldest affected rows have been idle since 2026-07-21.",
+        "files": [],
+        "MINT_WITH": "supervised:true, plan_only:true -- deliberate on THIS row per po's instruction, so it does not itself land in the exact gap it describes (a non-dev next_agent row with no supervised+plan_only pair is invisible to SLS).",
+        "deliverable": "Design + implement a sweep lane (or extend an existing one) that covers non-dev next_agent backlog rows not already caught by BOUNDED-1 (^dev(-|$)|^developer$) or SLS (supervised && plan_only). Architect scopes the lane first (this row is supervised+plan_only precisely so it routes to architect for design, not straight to a dev-* implementer).",
+        "baseline_pass": "scripts/audits/bounded1-supervised-lane-report.sh SECONDARY section reads 0",
+        "related": [
+          "FIX-BOUNDED1-SUPERVISED-LANE-NO-SWEEPER"
         ],
-        "created_at": "2026-07-29T19:30:16Z",
-        "created_by": "po/triage-20260729T1928",
-        "origin_signal_id": "dev-20260729T191826",
-        "question": "How can the Review-Lane QA-Drain be made reachable on ticks where .head.status==in_progress, WITHOUT its claim script clobbering the .head slot of an unrelated in-flight task?",
-        "root_cause": "docs/agents/dev-team/flow/main.md:518 gates the entire BOUNDED-1->SLS->RLC->QA-Drain fall-through on head.status in {idle,done,missing}; :676 places QA-Drain inside that same fall-through. QA-Drain owns an INDEPENDENT budget (.task_board.qa|length < 1, main.md:685-686) that is therefore never evaluated on a busy tick.",
-        "po_refutation": "The remedy as FILED by dev-team (run it keyed only on qa[]<1 regardless of .head.status) is REJECTED. PO dry-ran scripts/devteam-review-claim-qa-drain.jq against the LIVE board 2026-07-29T19:2xZ: it selects correctly (TE-T17, oldest) BUT line 123 performs an UNCONDITIONAL whole-object replace `.head = {status:in_progress, active_task_id:$picked_id, next_agent:qa, ...}`. The dry-run output had replaced live .head.active_task_id=FACTORY-GUARD-CI-METRICMASK-IMPL (developer genuinely running) with TE-T17. The head-idle gate is LOAD-BEARING, not over-broad. This is NOT the same class as UNBLOCK-DEVTEAM-DISPATCH-GATE-STAGING-DEADLOCK (a pure WIP-formula bug with no invariant behind it).",
-        "in_repo_precedent": "scripts/devteam-wrapper-autoclose.jq is NEVER gated on WIP and runs at Step 4.4 post-cycle precisely because its .head write is CONDITIONAL (lines 122-127: syncs only if .head.active_task_id equals a swept row own id). That is the shape QA-Drain needs.",
-        "ac": "(AC-1 PART 1, script-only, shippable immediately, ZERO file conflict) Make scripts/devteam-review-claim-qa-drain.jq .head write non-destructive: never overwrite a .head whose active_task_id belongs to a different, live task. Decide+state where the spawned qa agent then reads its instruction from, since .head.next_action can no longer be assumed free. (AC-2 PART 2, flow-doc) Only AFTER AC-1: relocate/duplicate the QA-Drain invocation so it is reached on non-idle ticks. MUST carry a machine-readable depends_on on FIX-DEVTEAM-IDLE-CHAIN-P1A-MAIN-ROTATION (that P0 rewrites main.md 496-686 wholesale) — prose sequencing only is blind-promoted, see FIX-DEVTEAM-BOUNDED1-PROSE-SEQUENCING-UNBACKED-GATE. (AC-3) State explicitly whether one-row-per-tick against 119 eligible rows is acceptable throughput or needs its own row — PO judges reachability necessary but NOT sufficient.",
-        "dedup_checked": "NOT a duplicate of FIX-DEVTEAM-IDLE-CHAIN-P1A-MAIN-ROTATION / TASK-DEVTEAM-IDLE-CHAIN-2-MAIN-FLOW (both rewrite 496-686 into round-robin, but their own ACs mandate BOUNDED-1/SLS/RLC/QA-Drain blocks byte-unchanged + zero changes to per-lane gates -> they change WHICH lane wins an IDLE tick, never whether any lane is reachable on a BUSY tick). NOT a duplicate of FIX-DEVTEAM-IDLE-CHAIN-STEP1-TRIAGE-STARVATION (opposite direction: QA-Drain firing too often on idle ticks starving Step 1). NOT a duplicate of FIX-DEVTEAM-REVIEW-LANE-QA-DRAIN (that row IS the shipped lane).",
-        "evidence": "Live 2026-07-29T19:2xZ: review[]=157, 119 rows status=REVIEW+next_agent=qa, qa[]=0, oldest updated_at 2026-07-23 (6d) plus 2 rows with NO timestamp. Corroborating: CLEAN-COWORK-DISPATCHER-TELEMETRY-DRAIN-DIR (P1, owner po) is itself stranded in review[] with next_agent=developer — the non-qa SECONDARY class this lane skips by design — so signal dev-20260729T184636 own fix is blocked by this same gap.",
-        "updated_at": "2026-07-29T21:25:11Z",
-        "claimed_at": "2026-07-29T19:35:03Z",
-        "claimed_by": "dev-team (out-of-band dispatch, head busy on FACTORY-GUARD-CI-METRICMASK-IMPL — .head deliberately NOT touched, see po_refutation)",
-        "review_note": "agents-architect brief complete: docs/architecture-briefs/2026-07-29-qadrain-head-slot-decouple.md (commit 4381b08b1, pushed). Confirmed the filed remedy wrong (dry-run proof), designed Part 1 (conditional .head-write guard on scripts/devteam-review-claim-qa-drain.jq, mirrors devteam-wrapper-autoclose.jq:122-128), Part 2 (new head-decoupled QA-Drain invocation site between Session Gate and Step 1, zero byte overlap with FIX-DEVTEAM-IDLE-CHAIN-P1A-MAIN-ROTATION verified via direct line-range read, depends_on mandated as coordination safeguard), Part 3 (both framings answered: Part 2 still needed after Part 1 ships; 1-row/tick throughput insufficient against 120-row backlog, recommends a separate FIX-DEVTEAM-QADRAIN-THROUGHPUT-CAP follow-up). signal brief_complete sent to po (cc agent-father, developer). RAW-verified by dev-team: single-caller claim grep-confirmed, byte-unchanged AC quote confirmed live in orch-state.json .note field + independently corroborated in pos own pre-existing notebook/journal entries. .head deliberately left untouched (currently points at a different genuinely in-flight task, FIX-BOUNDED1-NONDEV-NEXTAGENT-RESIDUAL-NO-DISPATCH-LANE) — only this lane moved.",
-        "updated_by": "dev-team (SPIKE completion RAW-verified)"
+        "promoted_at": "2026-07-29T21:18:23Z",
+        "promoted_by": "dev-team (supervised-lane sweep)",
+        "promotion_note": "Supervised-Lane Sweep — assigned dispatch_lane='architect' (priority_rank=1); supervised/plan_only flags preserved, gate NOT disabled — see FIX-BOUNDED1-SUPERVISED-LANE-NO-SWEEPER",
+        "dispatch_lane": "architect",
+        "claimed_at": "2026-07-29T21:18:51Z",
+        "claimed_by": "dev-team (supervised-lane sweep)",
+        "updated_by": "dev-team (RAW-verified architect brief)",
+        "review_note": "architect brief RAW-verified by dev-team: docs/architecture-briefs/2026-07-29-fix-bounded1-nondev-nextagent-residual-no-dispatch-lane.md, commit e22759fb6 (pushed origin/main). Design-Router Sweep (DRS) proposed: shares WIP<2 budget (4th writer), placed 4th in chain (BOUNDED1->SLS->RLC->DRS->QA-Drain->Step1), mandates conditional-guard .head write from day 1 (never unconditional, per qadrain-head-slot-decouple precedent). Independently re-verified 2 headline claims from source, not prose: (1) live row count 122 (BACKLOG/TODO, is_non_dev_next_agent_unrouted minus supervised+plan_only) reproduced exactly against orch-state.json at e22759fb6 via the actual scripts/lib/devteam-eligibility.jq predicates; (2) the systemic finding that devteam-backlog-claim-bounded1.jq:57, -supervised-lane-sweep.jq:66, and -ready-lane-consumer.jq:151 all perform an unconditional .head replace confirmed true at the cited lines. Also reproduced SECONDARY=83 via a live run of bounded1-supervised-lane-report.sh, matching the brief exactly. Routed to po (not pm, despite RETURN header) because row is supervised:true+plan_only:true and brief explicitly requests PO ratification of 3 open questions (allowlist scope re agent-father/system-auditor; whether to mint the out-of-scope unconditional-head-overwrite hardening row now). .head reset to idle -- this task, which occupied it, is now complete."
       }
     ],
     "qa": [],
@@ -17454,39 +17622,7 @@
     },
     "last_triaged_at": "2026-07-29T21:18:23Z",
     "last_triaged_by": "dev-team (supervised-lane sweep)",
-    "in_progress": [
-      {
-        "id": "FIX-BOUNDED1-NONDEV-NEXTAGENT-RESIDUAL-NO-DISPATCH-LANE",
-        "type": "FIX",
-        "title": "61 backlog rows (1 P0, ~24 P1) have NO dispatch lane -- gated by NON-DEV-NEXT_AGENT, ineligible for SLS",
-        "status": "IN_PROGRESS",
-        "priority": "P1",
-        "size": "M",
-        "zone": "cross-service/",
-        "owner": "po",
-        "next_agent": "architect",
-        "supervised": true,
-        "plan_only": true,
-        "created_at": "2026-07-29T12:32:22Z",
-        "created_by": "dev-team/po-batch-20260729T1207Z",
-        "updated_at": "2026-07-29T21:18:59Z",
-        "source": "po triage 2026-07-29T12:07Z tick",
-        "desc": "docs/agents/dev-team/flow/main.md:547 names this verbatim as 'a tracked residual gap (no dedicated sweep lane yet)'. It has no row and no owner until now. Distinct from FIX-BOUNDED1-SUPERVISED-LANE-NO-SWEEPER, which covers the supervised+plan_only set the Supervised-Lane Sweep already drains -- this row is the wider set: any backlog row whose next_agent does not match BOUNDED-1's ^dev(-|$)|^developer$ pattern, and that is NOT already caught by the supervised+plan_only pair, sits with no automated pickup path at all. Oldest affected rows have been idle since 2026-07-21.",
-        "files": [],
-        "MINT_WITH": "supervised:true, plan_only:true -- deliberate on THIS row per po's instruction, so it does not itself land in the exact gap it describes (a non-dev next_agent row with no supervised+plan_only pair is invisible to SLS).",
-        "deliverable": "Design + implement a sweep lane (or extend an existing one) that covers non-dev next_agent backlog rows not already caught by BOUNDED-1 (^dev(-|$)|^developer$) or SLS (supervised && plan_only). Architect scopes the lane first (this row is supervised+plan_only precisely so it routes to architect for design, not straight to a dev-* implementer).",
-        "baseline_pass": "scripts/audits/bounded1-supervised-lane-report.sh SECONDARY section reads 0",
-        "related": [
-          "FIX-BOUNDED1-SUPERVISED-LANE-NO-SWEEPER"
-        ],
-        "promoted_at": "2026-07-29T21:18:23Z",
-        "promoted_by": "dev-team (supervised-lane sweep)",
-        "promotion_note": "Supervised-Lane Sweep — assigned dispatch_lane='architect' (priority_rank=1); supervised/plan_only flags preserved, gate NOT disabled — see FIX-BOUNDED1-SUPERVISED-LANE-NO-SWEEPER",
-        "dispatch_lane": "architect",
-        "claimed_at": "2026-07-29T21:18:51Z",
-        "claimed_by": "dev-team (supervised-lane sweep)"
-      }
-    ]
+    "in_progress": []
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
