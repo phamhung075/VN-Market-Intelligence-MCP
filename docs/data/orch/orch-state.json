@@ -419,9 +419,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "active_task_id": null,
-    "next_agent": "router"
+    "status": "in_progress",
+    "active_task_id": "FIX-DEPTHTHIN-A-PRICE-HISTORY-RETENTION-10D",
+    "next_agent": "developer",
+    "next_action": "BOUNDED-1 auto-pickup claim of FIX-DEPTHTHIN-A-PRICE-HISTORY-RETENTION-10D — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
+    "updated_at": "2026-07-29T03:07Z",
+    "updated_by": "dev-team (bounded-1 auto-pickup)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -2326,6 +2329,18 @@
         "status": "NEW",
         "payload_ref": null,
         "detail": "Same finding as the po-addressed row this tick: scripts/audits/mock-guard.sh --full HARD-FAILs on 2 lines inside *_test.go files (test stub URL builders), even though its own doc comment claims a tests/ exclusion. Suspected root cause: exclusion list is directory-name based (tests/sandbox/scenarios/spike/.venv) and never checks for the *_test.go Go filename convention. Recurring every tick since at least this session's start. Worth a small architecture/design note on whether mock-guard's exclusion should be filename-suffix-aware across all languages (*_test.go, *.test.ts, *_test.py) rather than directory-only."
+      },
+      {
+        "id": "dev-20260729T031600Z-coldevict-gap",
+        "ts": "2026-07-29T03:16:00Z",
+        "from": "dev-team",
+        "to": "po",
+        "type": "system-issue",
+        "summary": "cold-evict has no age gate on signal_queue rows: READ status alone evicts, orphaning unread-by-po escalations to cold archive",
+        "severity": "MED",
+        "status": "NEW",
+        "payload_ref": null,
+        "detail": "Live-verified against scripts/orch-cold-evict.sh:358-362 (not the skill doc, which is stale): signal_queue.rows[] eviction predicate is ONLY `.status | IN(TERMINAL_SIGNAL_STATUSES)` where TERMINAL_SIGNAL_STATUSES=READ,RESOLVED,SUPERSEDED,ACUTE-RESOLVED-ROOT-TRACKED -- there is NO age/cutoff check (unlike done[]/sprint eviction, which DOES gate on a cutoff). signal-dashboard/SKILL.md PRUNE section documents a 24h-age condition that does not exist in the live script -- doc is stale, code is source of truth here. Concretely observed this tick (2026-07-29T03:07Z): dev-20260729T014905Z-qadr (the QA-Drain-starvation MED signal, created 2026-07-29T01:49:05Z, flipped NEW to READ by a prior dev-team drain tick per signal-dashboard ACK semantics) was cold-evicted to docs/data/orch/archive/2026-07.json only ~1.5h after creation, with no triaged_by/disposition ever stamped -- evicted before po triage (docs/agents/po/flow/triage-signals.md reads only the hot signal_queue.rows[], no archive reference) ever saw it as actionable. Net effect: dev-team own ACK (drain-signals.js flips routed rows NEW to READ) makes a signal effectively invisible to po within one cold-evict cycle, regardless of whether po has acted. Underlying QA-Drain-starvation problem itself is UNCHANGED and still open (review[] with next_agent:qa count still 94, flat, matching the archived signal own count -- not re-litigating that here, just flagging the process gap that ate its own escalation). Re-derived from archive: docs/data/orch/archive/2026-07.json signal_rows[] id dev-20260729T014905Z-qadr -- full original payload preserved there, status=READ, no triaged_by. Not unilaterally patching orch-cold-evict.sh (shared SSOT script, needs architect/po judgement on correct fix: add an age-gate matching done[]/sprint precedent, OR change dev-team drain semantics to not flip routed-to-po rows to READ until po actually resolves them, OR have po triage also scan the current-month cold archive for untriaged READ rows). Routing for triage/architect assignment."
       }
     ],
     "last_triaged_at": "2026-07-28T14:53:00Z",
@@ -6874,15 +6889,6 @@
         "status": "BACKLOG",
         "zone": "multi",
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#GAP-CHEF-SYNTHESIS-B-ENDPOINT-CARD"
-      },
-      {
-        "id": "FIX-DEPTHTHIN-A-PRICE-HISTORY-RETENTION-10D",
-        "title": "DEPTH_THIN (a): market_prices_history is only ~2 trading days deep -> /api/sector-rotation runs in only1dAvailable=true mode. Backfill/retain market_prices_history to >=10 trading days by fixing the retention WRITER.",
-        "type": "FIX",
-        "priority": "P2",
-        "status": "BACKLOG",
-        "zone": "apps/stock-price/",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-DEPTHTHIN-A-PRICE-HISTORY-RETENTION-10D"
       },
       {
         "id": "FIX-DEPTHTHIN-B-GATEWAY-TA-PATH-REWRITE",
@@ -16631,9 +16637,25 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-29T02:17:01Z",
+    "last_triaged_at": "2026-07-29T03:07Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": []
+    "in_progress": [
+      {
+        "id": "FIX-DEPTHTHIN-A-PRICE-HISTORY-RETENTION-10D",
+        "title": "DEPTH_THIN (a): market_prices_history is only ~2 trading days deep -> /api/sector-rotation runs in only1dAvailable=true mode. Backfill/retain market_prices_history to >=10 trading days by fixing the retention WRITER.",
+        "type": "FIX",
+        "priority": "P2",
+        "status": "IN_PROGRESS",
+        "zone": "apps/stock-price/",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-DEPTHTHIN-A-PRICE-HISTORY-RETENTION-10D",
+        "promoted_at": "2026-07-29T03:07Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
+        "updated_at": "2026-07-29T03:19:07Z",
+        "claimed_at": "2026-07-29T03:07Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)"
+      }
+    ]
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",

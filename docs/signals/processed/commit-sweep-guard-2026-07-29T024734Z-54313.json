@@ -1,0 +1,14 @@
+{
+  "from": "commit-sweep-guard",
+  "to": "po",
+  "type": "bug-escalation",
+  "priority": "high",
+  "createdAt": "2026-07-29T02:47:34Z",
+  "payload": "[sweep-guard] BARE commit about to absorb 5 staged file(s) not necessarily this actor's own: docs/data/orch/orch-state.json docs/signals/processed/commit-sweep-guard-2026-07-29T023423Z-50662.json docs/signals/processed/commit-sweep-guard-2026-07-29T024036Z-52481.json docs/signals/processed/context-bloat-docs-agent-memory-decisions-sprint-COWORK-GUARANTEED-SLOT-CATCHUP-dev-mcp-server-md-2026-07-29T023804Z.json docs/signals/processed/cowork-team-2026-07-29T02:23:10Z.json. actor=64c7c677-0f0f-4cee-a3ce-dba79d70b7ae mode=warn. Fix: git commit -m \"<msg>\" -- <own-files-only>.",
+  "_processed": {
+    "fingerprint": "937b6a7c3ede6be3f560577e933818bc92a3e9d5964d2ccae4787fe08d79437f",
+    "processedAt": "2026-07-29T03:16:01Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
