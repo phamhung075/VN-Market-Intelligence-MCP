@@ -2040,8 +2040,10 @@
         "type": "system-issue",
         "summary": "notebook-auto-prune.sh drop-oldest stable-sort ties on same-day headings (no HH:MM) -> drops NEWEST section for newest-first notebooks (developer.md)",
         "severity": "MED",
-        "status": "NEW",
-        "payload_ref": null
+        "status": "READ",
+        "payload_ref": null,
+        "read_at": "2026-07-30T09:10:44Z",
+        "read_by": "po/triage-20260730T0906"
       }
     ],
     "last_triaged_at": "2026-07-29T06:25:00Z",
