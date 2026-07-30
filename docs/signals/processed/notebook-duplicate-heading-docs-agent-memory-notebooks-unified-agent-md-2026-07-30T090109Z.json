@@ -1,0 +1,20 @@
+{
+  "from": "notebook-auto-prune-hook",
+  "to": "claude-manager-helper",
+  "type": "notebook_duplicate_heading_detected",
+  "priority": "normal",
+  "createdAt": "2026-07-30T09:01:09Z",
+  "payload": {
+    "file": "docs/agent-memory/notebooks/unified-agent.md",
+    "stage": "pre-cap-scan",
+    "duplicate_heading": "## Prior cycles",
+    "reason": "identical ## heading found twice back-to-back (no non-blank content between) — corruption signature; not auto-fixed by this hook (detection-only, avoids risking deletion of legitimately-repeated content)",
+    "action_required": "manual_review"
+  },
+  "_processed": {
+    "fingerprint": "7906a14e963a724846909ece1bc9256fb34d2e00f3bbb7fadc4bfa8d37948c71",
+    "processedAt": "2026-07-30T09:25:53Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

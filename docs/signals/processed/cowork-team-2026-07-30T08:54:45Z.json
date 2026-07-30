@@ -1,0 +1,55 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-07-30T08:54:45Z",
+    "matched_slots": [
+      "chef-eod"
+    ],
+    "won_slots": [
+      "chef-eod"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/unified-agent/flow/chef.md"
+    ],
+    "silent": false,
+    "drift_min": 5,
+    "errors": [],
+    "pressure_mode": "adaptive",
+    "calendar_status": "unknown",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "chef_mutex_applied": false,
+    "due_reasons": {
+      "chef-eod": "cron"
+    },
+    "cadence_minutes": {
+      "chef-eod": null
+    },
+    "last_fired_timestamp": "2026-07-30T08:54:21Z",
+    "last_fired_slots": [
+      "chef-eod"
+    ],
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "08:45",
+    "leader_lock": "acquired",
+    "dev_head": "in_progress",
+    "devq": 0,
+    "signal_backlog": 20,
+    "note": "guaranteed cron slot chef-eod fired on schedule; 1 signal_queue row (to:po) left unmutated"
+  },
+  "priority": "low",
+  "createdAt": "2026-07-30T08:54:45Z",
+  "_processed": {
+    "fingerprint": "3293ccc0707bb71d1f2e27995ceae035aed4b5078a8ae5c1eb1beee579b349fa",
+    "processedAt": "2026-07-30T09:25:53Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

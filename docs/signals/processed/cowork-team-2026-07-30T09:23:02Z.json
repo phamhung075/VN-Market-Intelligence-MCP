@@ -1,0 +1,55 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-07-30T09:23:02Z",
+    "matched_slots": [
+      "fb-daily"
+    ],
+    "won_slots": [
+      "fb-daily"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/fb-market-poster/flow/main.md"
+    ],
+    "silent": false,
+    "drift_min": 5,
+    "errors": [],
+    "pressure_mode": "adaptive",
+    "calendar_status": "unknown",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "chef_mutex_applied": false,
+    "due_reasons": {
+      "fb-daily": "cron"
+    },
+    "cadence_minutes": {
+      "fb-daily": null
+    },
+    "last_fired_timestamp": "2026-07-30T09:22:46Z",
+    "last_fired_slots": [
+      "fb-daily"
+    ],
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "09:15",
+    "leader_lock": "acquired",
+    "dev_head": "in_progress",
+    "devq": 0,
+    "signal_backlog": 19,
+    "note": "single guaranteed daily slot fb-daily fired on cron; no CHEF slots this tick, mutex no-op"
+  },
+  "priority": "low",
+  "createdAt": "2026-07-30T09:23:02Z",
+  "_processed": {
+    "fingerprint": "e94f9cc664401e11fcdb6ffa1c9214f6cca7a960ced7484a5eff1f32cc97f209",
+    "processedAt": "2026-07-30T09:25:53Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

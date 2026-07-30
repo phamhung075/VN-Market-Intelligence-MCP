@@ -1,0 +1,55 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-07-30T09:08:43Z",
+    "matched_slots": [
+      "refine-bctc-slot-1"
+    ],
+    "won_slots": [
+      "refine-bctc-slot-1"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/refine_bctc_md/flow/main.md"
+    ],
+    "silent": false,
+    "drift_min": 5,
+    "errors": [],
+    "pressure_mode": "adaptive",
+    "calendar_status": "unknown",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "chef_mutex_applied": false,
+    "due_reasons": {
+      "refine-bctc-slot-1": "cron"
+    },
+    "cadence_minutes": {
+      "refine-bctc-slot-1": null
+    },
+    "last_fired_timestamp": "2026-07-30T09:08:21Z",
+    "last_fired_slots": [
+      "refine-bctc-slot-1"
+    ],
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "09:00",
+    "leader_lock": "acquired",
+    "dev_head": "in_progress",
+    "devq": 0,
+    "signal_backlog": 19,
+    "note": "refine-bctc-slot-1 dispatched (oldest pending BCTC refine row per bctc-offmarket cadence, calendar_status=unknown -> cron_fallback governs)"
+  },
+  "priority": "low",
+  "createdAt": "2026-07-30T09:08:43Z",
+  "_processed": {
+    "fingerprint": "456e5f97bb485babe4b484cdda2801b499935c500b64b914a115da5540ccdc1b",
+    "processedAt": "2026-07-30T09:25:53Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
