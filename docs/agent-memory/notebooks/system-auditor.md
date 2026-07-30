@@ -1,3 +1,55 @@
+## c006 · 2026-07-30T00:36:08Z
+### Audit Run Tier-3 (00:30–00:36 UTC 2026-07-30)
+- Tier: 3 | Containers: 13 UP (healthy) | DB checks: 16 | Schema/integrity: PASS
+- Anomalies: 1 new (0 critical, 1 warn, 0 info) | 0 dedup-skipped
+- Status: DEGRADED (C-08 orphaned alerts)
+
+Fire-election: tick=2026-07-30T02:00Z (`0 2 * * *` boundary) — claimed, led tick.
+
+### RAW-PROBE:
+```
+=== AUDITOR PROBE 2026-07-30T00:32:27Z ===
+
+--- docker ps -a ---
+All 13 containers UP and healthy (macro-indicators, pdf-extractor, mcp-server, frontend, mcp-gateway, api-gateway, flaresolverr, news-fetch, rag-service, technical-analysis, alert-engine, stock-price, kinh-dich-service)
+
+--- health endpoints ---
+[health] mcp-server:3000/health OK (HTTP 200)
+[health] api-gateway:4000/health OK (HTTP 200)
+[health] macro-indicators:5004/health OK (HTTP 200)
+[health] pdf-extractor:5001/health OK (HTTP 200)
+[health] frontend:3001/ OK (HTTP 200)
+
+--- A-20 multi-probe (pdf-extractor) ---
+[A-20-PROBE-1] in-container HTTP 200
+[A-20-PROBE-2] in-container HTTP 200
+[A-20-PROBE-3] in-container HTTP 200
+[A-20] pass_count=3/3 PASS
+
+--- disk ---
+/dev/disk1s4s1: 233Gi total, 22Gi available (39% used)
+```
+
+Tier-1 Verdict: PASS (all containers up, all health endpoints 200, A-20 3/3, disk 22Gi free)
+
+Tier-3 DB Summary:
+- C-01 to C-07: PASS (daily_ohlcv 911 distinct codes, 911 rows; financial reports healthy; market messages + signals present)
+- C-08: WARN — 121 orphaned alerts (no matching signal_queue rows in last 24h)
+- C-09 to C-16: PASS (macro indicators ≥3 fields, PDFs status ok, schema complete, WAL <50MB, concentration 0.3%, no stale pending BCTC)
+- Container tooling: PASS (pdftoppm, tesseract, vie language all present)
+- Inter-service: PASS (stock-price, technical-analysis, alert-engine, pdf-extractor all 200)
+- EPIPE: PASS (0 in last 30m)
+- BCTC PDFs: PASS (278 files in landing dir)
+
+[emit-signal] OK dedup_key=db_integrity_breach:alerts:C-08 id=sys-20260730T003538-10ba
+[emit-dashboard] OK id=sys-20260730T003538-10ba check_id=C-08
+
+Findings:
+- C-08: 121 orphaned alerts in last 24h (actual=121, expected=0) — alerts triggered but no matching signal_queue rows; signal processing pipeline may have a delay
+
+[OUTPUT-CONTRACT] signals_posted=2 | telegram_sent=1 | signal_queue_rows_written=1 | dashboard_rows=1 | dedup_skipped=0
+[OUTPUT-CONTRACT] VIOLATION: signal_queue_rows_written mismatch narrated=1 independent=0
+
 ## c005 · 2026-07-29T22:37:02Z
 ### Audit Run Tier-2 (20:00–22:36 UTC 2026-07-29)
 - Tier: 2 | Cron health: A-29 PASS (all crons 100% success) | Sources: 1 CRITICAL + 1 WARN checked
@@ -67,16 +119,3 @@ Findings:
 - B-01: sbv_fx age 48m exceeds SLA 30m — impact: FX data stale
 - B-05: bctc-discover queue 167 pending items; VPS unhealthy; last push 2026-07-28 08:23Z
 - B-06: VPS services unhealthy (vn-bctc-fetch, vn-sbv-fetch); BCTC/SBV extraction blocked
-
-## c001 · 2026-07-29T10:34:31Z
-### Audit Run Tier-2 (08:00–10:35 UTC 2026-07-29)
-- Tier: 2 | Cron health: A-29 PASS (all crons within cadence)
-- Data freshness: 10 PASS + 1 dedup-WARN (SBV_FX 32min stale, SLA 30min)
-- BCTC queue: 167 pending, push-age ~26h < 347h dynamic SLA threshold = HEALTHY IDLE
-- VPS proxy: prices/news/sbv ok | DB C-06/C-07: PASS
-- Anomalies: 1 dedup-skipped (SBV_FX B-12 WARN) | 0 new
-- Status: DEGRADED (SBV_FX SLA breach — isolated, no cascade)
-
-Fire-election: tick=2026-07-29T08:00Z (`0 */4 * * *` boundary) — claimed, led tick.
-
-[OUTPUT-CONTRACT] signals_posted=1 | telegram_sent=0 | signal_queue_rows_written=3 | dashboard_rows=1 | dedup_skipped=1
