@@ -1,0 +1,61 @@
+{
+  "from": "cowork-team",
+  "to": "po",
+  "type": "market-signal",
+  "priority": "LOW",
+  "createdAt": "2026-07-30T16:10:02Z",
+  "payload": {
+    "tick": "2026-07-30T16:00Z",
+    "classification": "FIRE",
+    "reason": "spawned",
+    "won_slots": [
+      "news-scout-offhours",
+      "market-watcher-offhours",
+      "market-watcher-eod",
+      "alert-commander-critical"
+    ],
+    "spawned": [
+      "docs/agents/news-scout/flow/main.md",
+      "docs/agents/market-watcher/flow/main.md",
+      "docs/agents/market-watcher/flow/main.md",
+      "docs/agents/alert-commander/flow/main.md"
+    ],
+    "errors": [],
+    "collision_warning": {
+      "agent_id": "market-watcher",
+      "slots": [
+        "market-watcher-offhours",
+        "market-watcher-eod"
+      ]
+    },
+    "pressure_mode": "adaptive",
+    "calendar_status": "unknown",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "due_reasons": {
+      "news-scout-offhours": "cadence",
+      "market-watcher-offhours": "cadence",
+      "market-watcher-eod": "cadence",
+      "alert-commander-critical": "cadence"
+    },
+    "cadence_minutes": {
+      "news-scout-offhours": 240,
+      "market-watcher-offhours": 240,
+      "market-watcher-eod": 240,
+      "alert-commander-critical": 240
+    },
+    "chef_mutex_applied": false,
+    "max_parallel": 4,
+    "degraded": false,
+    "headroom_mb": 2658,
+    "load_1min": 4.57,
+    "cores": 12
+  },
+  "_processed": {
+    "fingerprint": "75639c9f949c411fc1eadc203b239abf40d9f0c6c9653d5a03a3d33c7ad3fdeb",
+    "processedAt": "2026-07-30T16:15:28Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

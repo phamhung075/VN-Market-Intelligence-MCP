@@ -1,0 +1,14 @@
+{
+  "from": "commit-sweep-guard",
+  "to": "po",
+  "type": "bug-escalation",
+  "priority": "high",
+  "createdAt": "2026-07-30T15:46:03Z",
+  "payload": "[sweep-guard] BARE commit about to absorb 33 staged file(s) not necessarily this actor's own: docs/signals/cowork-signal-2026-07-29T0722Z-chef-intraday-tokenbudget-marker-leak.json docs/signals/cowork-signal-2026-07-29T0813Z-pressure-headroom-field-stale-container.json docs/signals/cowork-team-2026-07-28T18:06:41Z.json docs/signals/cowork-team-2026-07-29T05:09:57Z.json docs/signals/cowork-team-2026-07-29T05:22:55Z.json docs/signals/cowork-team-2026-07-29T0858Z-chef-eod-router-race-nearmiss.json docs/signals/cowork-team-2026-07-29T0912Z-refine-bctc-diacritic-corruption.json docs/signals/cowork-team-2026-07-29T1110Z-refine-bctc-diacritic-corruption-2nd-report.json docs/signals/cowork-team-2026-07-29T1611Z-pressure-headroom-field-rename-not-deployed.json docs/signals/cowork-team-2026-07-29T1616Z-alert-commander-no-bash-tool-grant-4th-consecutive-commit-backlog.json docs/signals/cowork-team-2026-07-29T210700Z.json docs/signals/cowork-team-2026-07-30T000700Z.json docs/signals/cowork-team-2026-07-30T001827Z-alertcmd-session-id-gap.json docs/signals/cowork-team-2026-07-30T002605Z-step0a-po-row-unlocked-consume.json docs/signals/cowork-team-2026-07-30T08:23:22Z.json docs/signals/cowork-team-2026-07-30T12:10:21Z.json docs/signals/price_anomaly_20260728T1616.json docs/signals/price_anomaly_20260729T1600.json docs/signals/processed/bctc-analyst-20260723T151000Z-dgc-dataquality.json docs/signals/processed/bctc-analyst-20260730T151600Z.json docs/signals/processed/bctc_signal_BID_20260730_routine.json docs/signals/processed/bctc_signal_DGC_20260723_routine.json docs/signals/processed/bctc_signal_FPT_20260730_routine.json docs/signals/processed/bctc_signal_FRT_20260730_routine.json docs/signals/processed/bctc_signal_GEX_20260730_routine.json docs/signals/processed/bctc_signal_HPG_20260730_routine.json docs/signals/processed/bctc_signal_MWG_20260730_routine.json docs/signals/processed/bctc_signal_VCB_20260730_routine.json docs/signals/processed/bctc_signal_VIX_20260730_routine.json docs/signals/processed/cowork-team-20260723T110903Z.json docs/signals/processed/cowork-team-20260723T120715Z.json docs/signals/processed/cowork-team-20260723T140849Z.json docs/signals/processed/cowork-team-20260723T150745Z.json. actor=64c7c677-0f0f-4cee-a3ce-dba79d70b7ae mode=warn. Fix: git commit -m \"<msg>\" -- <own-files-only>.",
+  "_processed": {
+    "fingerprint": "ca54bd8c678295c95ee62c9ebe0cb52b1f9c403242390e1a5d731148e63adcd6",
+    "processedAt": "2026-07-30T16:15:28Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
