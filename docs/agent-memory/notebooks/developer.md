@@ -1,6 +1,24 @@
 # Developer — Notebook
 
-**Last updated:** 2026-07-30 | **Cycle:** FIX-STRANDED-SWEEP-CLASSIFY-AGENT-MODEL-SWITCH
+**Last updated:** 2026-07-30 | **Cycle:** FIX-AUDITOR-T1-PREGATE-MEMCREEP-SINGLE-POINT-SAMPLE
+
+## Session 2026-07-30 — FIX-AUDITOR-T1-PREGATE-MEMCREEP-SINGLE-POINT-SAMPLE — REVIEW
+
+**Task:** dev-team BOUNDED-1 auto-pickup (`cross-service/`, `scripts/agents-flow/` zone → developer). `_check_mem_creep()` in `auditor-tier1-probe.sh` took exactly ONE `docker stats` sample per container per invocation and gated ALL_GREEN/FAILURE off it — live-verified: a re-run ~5.5min after a cited ALL_GREEN flipped FAILURE (pdf-extractor 99.91% MemPerc), a transient peak the single sample missed.
+
+**Actions taken:** New `MEM_CREEP_SAMPLES` (>=2, default 2, clamped) / `MEM_CREEP_SAMPLE_INTERVAL_SEC` (default 2s) top-of-script knobs (test seams). Per-container check now loops N `docker stats` samples and gates off the WORST (max) parsed pct — a breach in ANY sample forces FAILURE even if another same-window sample reads GREEN; any single sample's stats-unavailable/unparseable still breaches (unchanged fail-loud). Zero change to `run_probe()` call site, ack-ledger arm, or `{verdict,detail,last_healthy_at}` output schema.
+
+**Verify-live catch (x2):** (1) a notebook-write byte-cap surprise — this section's own first landing pushed `developer.md` over the 60-bytes/line-derived BYTE_CAP even though LINE_CAP was fine; the `notebook-auto-prune.sh` PostToolUse hook fired and, because every heading here is date-only (`Session 2026-07-30`, no time-of-day) and its tie-break sorts stably on ORIGINAL physical order, silently dropped the physically-FIRST section (this one, freshly inserted at the NEWEST-FIRST top) instead of the true-oldest bottom section — caught by re-reading the file post-write rather than trusting the Edit result, recomposed manually below the byte budget instead of relying on the hook. (2) test-stub in-memory call-counter silently broken by `docker stats`'s `$(...)` subshell fork — see Actions.
+
+**Verification:** new regression T54-T58 in `auditor-tier1-probe.test.sh` — T54 reproduces the exact live incident (sample1=70.00% GREEN, sample2=99.91% FAIL → verdict FAILURE, names the WORST pct not the first); T55 proves worst-of-window not last-sample (reversed order, still FAILURE); T56/T57/T58 prove the loop actually samples N times (file-based call-count assertion, tmp-file not array — survives the subshell) and the N>=2 floor is enforced against an invalid override. Full suite 181/181 PASS (167 pre-existing byte-identical + 14 new checks), ~12s (interval knob exported =0 suite-wide). `shellcheck` clean (2 pre-existing unrelated warnings only).
+
+**Board:** `task_board.in_progress[FIX-AUDITOR-T1-PREGATE-MEMCREEP-SINGLE-POINT-SAMPLE]` → `review` (`next_agent: qa`), `.head` reset to idle, same `orch-apply.sh` write.
+
+**Simplicity gate:** PASS — 2 small env-var knobs + a loop around the existing single-sample read; worst-of-N reuses the SAME awk comparison idiom the script already used for the threshold check.
+
+**Zone note:** No MCP/gateway tool available this session (Read/Edit/Write/Bash only, confirmed at Step 0) — flipped the board row directly via `scripts/orch-apply.sh` (permitted, pure bash); could not release `task:FIX-AUDITOR-T1-PREGATE-MEMCREEP-SINGLE-POINT-SAMPLE` or send Telegram (structural gap, flagged for the coordinating dev-team session).
+
+Zone health: notebook-auto-prune.sh's date-only-heading tie-break misfire (above) is a real latent bug but OUT OF SCOPE for this task (scope = `auditor-tier1-probe.sh` only) — not filed as a new row here, flagged in RETURN for the coordinating session to triage. Distinct from `FIX-AUDITOR-TIER1-A30-MEM-SINGLE-CONTAINER-SCOPE` (loop scope) and `FIX-AUDITOR-A30-VMHWM-VETO-TAUTOLOGY-FALSE-NEGATIVE` (mcp-server veto) — neither touched; `docs/agents/system-auditor/probe.sh` (separate LLM-subagent evidence collector) also confirmed out of scope, untouched.
 
 ## Session 2026-07-30 — FIX-STRANDED-SWEEP-CLASSIFY-AGENT-MODEL-SWITCH — REVIEW
 
@@ -37,21 +55,3 @@ Zone health: no drift detected.
 **Zone note:** No MCP/gateway tool available this session (Read/Edit/Write/Bash only, confirmed at Step 0) — flipped the board row directly via `scripts/orch-apply.sh` (permitted, pure bash); could not release `task:FACTORY-GUARD-CI-SHAREDPKG-IMPL` or send Telegram (structural gap, flagged for the coordinating dev-team session).
 
 Zone health: no drift detected.
-
-## Session 2026-07-30 — FACTORY-GUARD-CI-RAWVERIFY-IMPL — REVIEW
-
-**Task:** dev-team BOUNDED-1 auto-pickup (`cross-service/`, epic FACTORY-MAINTAINABILITY-2026-06), 7th/LAST sibling (own brief `2026-07-24-factory-guard-ci-rebuild-raw-verify-hook.md`). Mechanizes the previously-unenforced `PUSH-AUTONOMY-1` §5 post-push REAL-DATA verify mandate at the immediately-checkable textual-attestation layer — closes the LAST `ci-regression-prevention` guardrail in the epic.
-
-**Actions taken:** New `scripts/audits/rebuild-raw-verify-check.sh <base-sha> <head-sha>` — zero-tolerance, forward-only diff-range check (no baseline). Trigger composes the two already-designed sibling primitives (brief §3): a `apps/*/src/infrastructure|interface/**` or `apps/*/pkg/interface/http|infrastructure/**` file gains an ADDED line matching `metric-mask-lint.sh`'s own field regex. Requires ONE of a commit-message RAW-verify/REALDATA token, a matching token in an added `docs/agent-memory/decisions/**`/`reports/TASK_REPORT_*.md` line, or an inline `raw-verify-allow:` annotation on the triggering line (or the line immediately before it). Wired PRIMARY/blocking into `scripts/git-hooks/pre-push`'s existing `CODE_TOUCHING_REGEX`-gated block; SECONDARY/backstop `rebuild-raw-verify-hook` CI job (`fetch-depth: 0`) against `github.event.before..github.sha`. CANONICAL pointer + `PUSH-AUTONOMY-1` §5 cross-reference added to `dev-standards.md`.
-
-**Verify-live deviation:** colocated test files under the trigger DDD layers (`apps/mcp-server/src/infrastructure/**/__tests__/*.test.ts`, `apps/*/pkg/infrastructure|interface/http/*_test.go`) confirmed live via `find` to exist directly inside those layers — excluded from the trigger corpus (mirrors `metric-mask-lint.sh`'s own test exclusion) so a routine test assertion like `expect(result.confidence).toBe(0.8)` doesn't fire on nearly every infra/interface test edit.
-
-**Verification:** manually ran 6 scenarios in disposable scratch git repos (fail-no-attestation, pass-commit-msg, pass-inline-annotation, pass-decisions-journal, pass-no-trigger, pass-zero-sha fail-open) BEFORE writing the permanent test, so the test encodes already-observed behavior. New `rebuild-raw-verify-check.test.sh` 9/9 PASS (all 4 named DoD cases + bonus coverage). `shellcheck` clean on all 3 touched shell files (new script, new test, `pre-push`). `.github/workflows/ci.yml` YAML validated (`python3 -c "import yaml; yaml.safe_load(...)"`). No `apps/` TS/Go source touched (zone=`cross-service/`, pure bash+yaml+md) — `bun test`/`tsc` structurally N/A. Graphify: no Skill-tool path available to this spawned agent (same structural constraint as every prior sibling this session) — doc content itself updated directly (CANONICAL pointer + `PUSH-AUTONOMY-1` §5 cross-ref in `dev-standards.md`), skip flagged not silent.
-
-**Board:** `task_board.in_progress[FACTORY-GUARD-CI-RAWVERIFY-IMPL]` → `review` (`next_agent: qa`), `.head` reset to idle, same `orch-apply.sh` write.
-
-**Simplicity gate:** PASS — reuses 2 existing sibling primitives (DDD-layer path set, field regex) rather than inventing a third detection pattern; escape hatches mirror the established `metric-mask-allow:`/`size-justification:` idiom exactly, no new abstraction.
-
-**Zone note:** No MCP/gateway tool available this session (Read/Edit/Write/Bash only, confirmed at Step 0) — flipped the board row directly via `scripts/orch-apply.sh` (permitted, pure bash); could not release `task:FACTORY-GUARD-CI-RAWVERIFY-IMPL` or send Telegram (structural gap, flagged for the coordinating dev-team session, per the dispatch prompt's own instruction).
-
-Zone health: no drift detected. This closes the 7th and last `ci-regression-prevention` guardrail — epic `FACTORY-MAINTAINABILITY-2026-06` cluster `ci-regression-prevention` now complete.
