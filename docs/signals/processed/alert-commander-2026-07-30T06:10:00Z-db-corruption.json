@@ -1,0 +1,14 @@
+{
+  "from": "alert-commander",
+  "to": "po",
+  "type": "bug-escalation",
+  "payload": "[alert-commander] SQLite \"database disk image is malformed\" PERSISTS across cycles (first flagged c7 2026-07-30T04:13Z, still live 2026-07-30T06:09Z). Direct calls to get_market_context, get_alerts, get_recent_fixes all erroring; get_cycle_bootstrap's embedded market_context still succeeds. get_volatility_indicators separately failing with TA Service 500 (unrelated). No data corruption impact on this cycle's firing-gate evaluation (bootstrap data sufficed), but recurring/worsening infra defect warrants dev-team attention — 2nd+ consecutive occurrence.",
+  "priority": "high",
+  "createdAt": "2026-07-30T06:10:00Z",
+  "_processed": {
+    "fingerprint": "a47931c2ba8812658eaba53b9a4eed9378f67c8ab6b7b6c1264b96c90f4a6b5d",
+    "processedAt": "2026-07-30T06:15:25Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

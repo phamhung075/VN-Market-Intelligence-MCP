@@ -1,0 +1,37 @@
+{
+  "from": "dev-team",
+  "to": "po",
+  "type": "system-issue",
+  "priority": "low",
+  "createdAt": "2026-07-30T05:52:00Z",
+  "payload": {
+    "summary": "stranded-state sweep: 18 unknown-owner dirty paths, considered=18 cap=20 (6th occurrence of this dedup_key — 4 prior instances already cycled through PO triage and cold-evicted to archive/2026-07.json)",
+    "paths": [
+      "docs/analysis-briefs/DBC.md",
+      "docs/analysis-briefs/FPT.md",
+      "docs/analysis-briefs/GEX.md",
+      "docs/analysis-briefs/HPG.md",
+      "docs/analysis-briefs/VHM.md",
+      "docs/analysis-briefs/VIC.md",
+      "docs/analysis-briefs/VRE.md",
+      "docs/data/auditor-dedup-ledger.json",
+      "docs/agent-memory/.auditor-cycle-markers-2026-07-29T08:00Z.tmp",
+      "docs/data/unified-agent-synthesis-2026-07-28-evening.json",
+      "docs/data/unified-agent-synthesis-2026-07-29-chef-evening.json",
+      "docs/data/unified-agent-synthesis-2026-07-29-eod.json",
+      "docs/data/unified-agent-synthesis-2026-07-29-evening.json",
+      "docs/data/unified-agent-synthesis-2026-07-29-intraday.json",
+      "docs/data/unified-agent-synthesis-2026-07-29-morning.json",
+      "docs/data/unified-agent-synthesis-2026-07-30-morning.json",
+      "docs/social/fb-post-2026-07-28.md",
+      "docs/social/fb-post-2026-07-29.md"
+    ],
+    "note": "Recurring class: analysis-briefs/*.md, unified-agent-synthesis-*.json, fb-post-*.md are all agent-generated deliverables with no auto-commit owner in stranded-state-sweep.sh's classifier — same shape every tick, previously scoped by PO 4x and archived rather than a durable classifier fix landing. Suggest routing to a classifier-pattern fix (report-analyzer owns analysis-briefs/, unified-agent owns synthesis json, fb-market-poster owns fb-post — all 3 already have notebook-write-style single-owner conventions) so this stops needing per-tick PO disposition."
+  },
+  "_processed": {
+    "fingerprint": "54ccb35c7a6e35223f3f50389b4e73f7f22e46aaaed1c474da369ef24031639b",
+    "processedAt": "2026-07-30T06:15:25Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
