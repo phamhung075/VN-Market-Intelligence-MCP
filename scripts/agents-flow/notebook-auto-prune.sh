@@ -62,6 +62,7 @@ PROJECT_ROOT="$(git rev-parse --show-toplevel 2>/dev/null || echo "${CLAUDE_PROJ
 
 SIGNALS_DIR="$PROJECT_ROOT/docs/signals"
 CAPS_FILE="$PROJECT_ROOT/docs/data/file-size-caps.json"
+ORDER_FILE="$PROJECT_ROOT/docs/data/notebook-section-order.json"
 
 # --- Duplicate-heading detector (FIX-NOTEBOOK-AUTOPRUNE-REGEX-HEADING-MISMATCH item 3) ---
 # Detection-only, never auto-fixes: code audit of the drop-oldest loop below (and git
@@ -107,6 +108,36 @@ emit_dup_signal() {
     "duplicate_heading": $dup_json,
     "reason": "identical ## heading found twice back-to-back (no non-blank content between) — corruption signature; not auto-fixed by this hook (detection-only, avoids risking deletion of legitimately-repeated content)",
     "action_required": "manual_review"
+  }
+}
+EOF
+}
+
+# --- Same-day tie-break direction-unresolved signal (FIX-NOTEBOOK-AUTOPRUNE-SAMEDAY-TIE-DROPS-NEWEST) ---
+# Emitted when 2+ "## " sections normalize to the IDENTICAL lossy ts_key (e.g. same-day
+# date-only headings) AND the file's own distinguishable timestamps give no direction signal
+# AND no override exists in $ORDER_FILE. Refuses to guess — see that file's _note for why.
+emit_tiebreak_unresolved_signal() {
+  local tie_group="$1"
+  local ts
+  ts="$(date -u +"%Y-%m-%dT%H:%M:%SZ" 2>/dev/null || true)"
+  [ -z "$ts" ] && return 0
+  local sig_file
+  sig_file="$SIGNALS_DIR/notebook-tiebreak-unresolved-$(echo "$REL_PATH" | tr '/.' '-')-$(echo "$ts" | tr -d ':').json"
+  local tie_json
+  tie_json="$(printf '%s' "$tie_group" | jq -Rs . 2>/dev/null || printf '"%s"' "$tie_group")"
+  cat > "$sig_file" <<EOF 2>/dev/null || true
+{
+  "from": "notebook-auto-prune-hook",
+  "to": "claude-manager-helper",
+  "type": "notebook_tiebreak_direction_unresolved_breach",
+  "priority": "high",
+  "createdAt": "$ts",
+  "payload": {
+    "file": "$REL_PATH",
+    "tied_sections": $tie_json,
+    "reason": "2+ ## sections share an identical normalized timestamp key (e.g. same-day date-only headings) and this file's OWN section timestamps give no newest-first/oldest-first direction signal; no declared override in docs/data/notebook-section-order.json either — refusing to guess which one is oldest (guessing wrong here is silent data loss of the newest content)",
+    "action_required": "declare_this_file_convention_in_notebook-section-order.json"
   }
 }
 EOF
@@ -269,12 +300,81 @@ EOF
     fi
   done)"
 
-  # Find the oldest timestamp (minimum key). -k2,2 restricts the sort strictly to the
-  # normalized numeric key (now pure digits, no embedded colons/dashes, so it can never bleed
-  # into the heading text the way the old unbounded -k2 did); -s forces a stable sort so ties
-  # (e.g. two "## Archive"-style sentinel entries) break on physical/original order instead of
-  # falling back to alphabetical heading-text comparison.
-  OLDEST_LINE="$(echo "$SECTIONS_WITH_TS" | sort -t: -k2,2 -s | head -1 | cut -d: -f1)"
+  # Find the oldest timestamp (minimum key), then resolve WHICH physical section that is.
+  #
+  # FIX-NOTEBOOK-AUTOPRUNE-SAMEDAY-TIE-DROPS-NEWEST: the 17-char normalized key above
+  # intentionally collapses distinct sub-day-precision-less headings (e.g. 3 same-day
+  # date-only "## Session 2026-07-30 ..." headings written in one day) to an IDENTICAL key.
+  # The OLD code broke this tie with a plain stable sort on that lossy key, which always
+  # picked the PHYSICALLY-FIRST tied section — correct only for an OLDEST-FIRST/APPEND
+  # notebook (new section written at the bottom). For a NEWEST-FIRST/PREPEND notebook (new
+  # section written at the TOP — confirmed e.g. for docs/agent-memory/notebooks/developer.md
+  # via git history), physically-first among a same-day tied group is the NEWEST entry, so
+  # the old code silently dropped the just-written section instead of the true oldest one.
+  MIN_KEY="$(echo "$SECTIONS_WITH_TS" | cut -d: -f2 | sort | head -1)"
+  TIE_GROUP="$(echo "$SECTIONS_WITH_TS" | awk -F: -v k="$MIN_KEY" '$2==k')"
+  TIE_COUNT="$(echo "$TIE_GROUP" | grep -c ":" 2>/dev/null || echo 0)"
+
+  if [ "$TIE_COUNT" -le 1 ]; then
+    # No ambiguity — exactly one section has the minimum key. Unchanged from before.
+    OLDEST_LINE="$(echo "$TIE_GROUP" | head -1 | cut -d: -f1)"
+  else
+    # 2+ sections tie for oldest. Resolve direction-aware: derive the file's OWN
+    # newest-first(prepend)/oldest-first(append) convention from ITS OWN distinguishable
+    # (non-tied) section timestamps first (self-describing, no maintenance for the common
+    # case) — walk physical top-to-bottom order, vote decreasing-key vs increasing-key on
+    # every adjacent pair that actually differs.
+    DIRECTION=""
+    prev_key=""
+    dec_votes=0
+    inc_votes=0
+    while IFS=: read -r _sec_line cur_key _sec_heading; do
+      if [ -n "$prev_key" ] && [ "$prev_key" != "$cur_key" ]; then
+        if [ "$prev_key" \> "$cur_key" ]; then
+          dec_votes=$((dec_votes + 1))
+        else
+          inc_votes=$((inc_votes + 1))
+        fi
+      fi
+      prev_key="$cur_key"
+    done <<SECEOF
+$SECTIONS_WITH_TS
+SECEOF
+
+    if [ "$dec_votes" -gt "$inc_votes" ]; then
+      DIRECTION="newest_first"
+    elif [ "$inc_votes" -gt "$dec_votes" ]; then
+      DIRECTION="oldest_first"
+    fi
+
+    # The file's own headings gave no distinguishing signal at all (every section in the
+    # WHOLE file normalizes to the same key — e.g. a notebook whose heading format never
+    # carries sub-day precision) — consult the declared-convention override instead of
+    # guessing (see docs/data/notebook-section-order.json for why there is no silent default).
+    if [ -z "$DIRECTION" ]; then
+      DIRECTION="$(jq -r --arg f "$(basename "$REL_PATH")" '.overrides[$f] // empty' "$ORDER_FILE" 2>/dev/null || true)"
+    fi
+
+    case "$DIRECTION" in
+      newest_first)
+        # Physically-first among the tied group is the NEWEST (prepend convention) — the
+        # true oldest is physically-LAST (bottom-most) within the tied group.
+        OLDEST_LINE="$(echo "$TIE_GROUP" | tail -1 | cut -d: -f1)"
+        ;;
+      oldest_first)
+        # Physically-first among the tied group IS the true oldest (append convention).
+        OLDEST_LINE="$(echo "$TIE_GROUP" | head -1 | cut -d: -f1)"
+        ;;
+      *)
+        # Direction cannot be determined from this file's own headings AND no declared
+        # override exists — refuse to guess. Guessing wrong here IS the silent-data-loss
+        # defect this fix closes. Emit signal, do NOT prune this cycle; the file stays at
+        # its pre-hook-invocation state (nothing written yet at this point in the script).
+        emit_tiebreak_unresolved_signal "$TIE_GROUP"
+        exit 0
+        ;;
+    esac
+  fi
 
   if [ -z "$OLDEST_LINE" ]; then
     # Fallback: if timestamp parsing failed, drop first section (legacy behavior)

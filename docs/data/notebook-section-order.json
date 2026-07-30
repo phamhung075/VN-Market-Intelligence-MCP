@@ -1,0 +1,10 @@
+{
+  "_ssot": "docs/data/notebook-section-order.json",
+  "_note": "Declared physical section-order convention for docs/agent-memory/notebooks/*.md, read by scripts/agents-flow/notebook-auto-prune.sh's same-day/tied-heading tie-break (FIX-NOTEBOOK-AUTOPRUNE-SAMEDAY-TIE-DROPS-NEWEST). The hook derives a notebook's convention AUTOMATICALLY from that file's OWN distinguishable (non-tied) section timestamps first — this table is consulted ONLY when a file's own headings give zero distinguishing signal (every retained '## ' section normalizes to the identical lossy 17-char key, e.g. 3+ same-day date-only headings written in one day). Do NOT add an entry for a notebook whose heading format normally carries sub-day precision (ISO timestamp, c<NNN> counter, cycle-N) — the auto-derivation already handles those correctly and a redundant override risks drifting stale. Add an entry ONLY after confirming the file's real physical convention via `git log -1 -p --unified=0 -- docs/agent-memory/notebooks/<file>.md` (does the newest cycle's own new section land at the TOP of the diff, i.e. prepended, or at the BOTTOM, i.e. appended) — see notebook-auto-prune.test.sh T5/T6 for the reference method. No 'default' key by design: an unresolved notebook with no entry here fails loud (notebook_tiebreak_direction_unresolved_breach signal, no truncation) rather than guessing a global direction — guessing wrong here IS the exact silent-data-loss defect this file exists to prevent.",
+  "_maintained_by": "developer (implementation) / architect (convention review)",
+  "overrides": {
+    "developer.md": "newest_first",
+    "dev-frontend.md": "oldest_first",
+    "dev-mcp-server.md": "oldest_first"
+  }
+}
