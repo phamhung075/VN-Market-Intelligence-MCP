@@ -1,6 +1,18 @@
 # Dev Team — Sprint Boundary Notebook
 
-**Written:** 2026-07-30T11:12Z
+**Written:** 2026-07-30T11:19Z
+
+## cycle-20260730T1117Z-tick — fresh preflight after RAW-verify closeout; head-idle fallthrough reached BOUNDED-1, claimed+dispatched P1 FIX-DEVTEAM-CLAIM-SCRIPTS-UNCONDITIONAL-HEAD-OVERWRITE
+
+- **Re-ran preflight fresh** (own tick locks had already been released mid-verify): verdict RUN, genuinely new tick `2026-07-30T11:07Z` (not a re-entry of the prior `10:37Z` minute). GCC-preflight clean (no HEAD.lock, no stale worktrees).
+- **Drain found 2 signals**, both routed-to-po per §0a-3 (a fresh context-bloat on the developer's own sprint-journal + a cowork-team informational file) — neither actionable by dev-team inline. 0 orphan-signal locks.
+- **CI probe deduped clean** against the same `ci-red-ae5b2501-...` fingerprint already recorded.
+- **`.head` was idle** → fell through to BOUNDED-1. WIP(`in_progress`)=0.
+- **BOUNDED-1 picked `FIX-DEVTEAM-CLAIM-SCRIPTS-UNCONDITIONAL-HEAD-OVERWRITE`** (P1) — the exact row PO ratified in STEP po-4 Q3 (`ruling-20260730T0906Z-po-triage-po.md`): 3 dev-team claim scripts (bounded1/SLS/RLC) do an unconditional `.head` replace instead of the `$head_free` conditional guard DRS's own claim script already uses. Confirmed live risk at mint time (`.head` was genuinely occupied by a different in-flight task while all 3 sat in the chain).
+- **Both writes validated**: `orch-validate` Stage 0+1 PASS, task_total 718→718, signal_total 131→131. Row → `in_progress`, `.head.next_agent=developer`.
+- **Dispatched developer** (background) with the exact DRS reference-pattern pointer (`scripts/devteam-backlog-claim-design-router-sweep.jq` lines ~90-113) so it mirrors the existing precedent rather than inventing a new shape. Sprint-task lock deliberately held open (LOCK-LIFETIME).
+- **Committed** `a76f69e3e` (promote+claim, pathspec-scoped). Released SF-1 + fire-election (`{"ok":true,"released":1}` both).
+- **NEXT**: await developer's return on the `.head`-overwrite-guard fix; RAW-verify before trusting.
 
 ## cycle-20260730T1112Z-verify — RAW-verified notebook-auto-prune same-day tie-break fix clean (7/7 tests, board+journal confirmed); released lock (corrected malformed key)
 
@@ -21,15 +33,3 @@
 - **Re-ran preflight** (fresh tick, same `10:37Z` minute) since `.head` was idle again post-verify: **BOUNDED-1 fired**, WIP=0. Promoted+claimed P1 `FIX-NOTEBOOK-AUTOPRUNE-SAMEDAY-TIE-DROPS-NEWEST` — a 3rd-recurrence root-cause fix (notebook-auto-prune.sh:261/277 same-day heading tie-break) that hit `developer.md` again in the very RAW-verified cycle's own `830d87242`. Dispatched developer (background, `a493397b8dd31e9d6`); sprint-task lock deliberately held open (LOCK-LIFETIME).
 - **Committed** `0b44a9cb9` (BOUNDED-1 promote+claim, pathspec-scoped). Released SF-1 + fire-election.
 - **NEXT**: await developer's return on the notebook-auto-prune fix; RAW-verify before trusting, per standing discipline.
-
-## cycle-20260730T1007Z-tick — Preflight RUN, drain empty, CI dedup clean; head-idle fallthrough reached BOUNDED-1: claimed+dispatched P0 FIX-DEVTEAM-READY-REVIEW-LANE-SUPERVISED-PLANONLY-NO-PICKER
-
-- **Preflight script RUN** (RC=1 is expected script behaviour for RUN/RUN-IDLE, not an error — verdict comes from the JSON `.verdict` field, not exit code; both locks confirmed held). `gcc-preflight`: no `.git/HEAD.lock`, `git worktree prune` clean, no stale worktree locks.
-- **Drain empty this tick**: `drain-signals.js --count-drainable` = 0, `.signal_queue.rows[]` has 0 `status=NEW` rows (131 total, 0 READ/RESOLVED — nothing to prune either). `task_list_held(kind=orphan-signal)` = 0 — no orphan adoption. `.task_board` non-empty (383 backlog/173 review/etc.) so did NOT fall to `session-gate`.
-- **CI health probe**: deduped clean against the same `ci-red-ae5b2501-...` fingerprint the prior tick already recorded — no new signal, non-fatal fall-through confirmed.
-- **`.head` was idle** (`active_task_id:null`, `updated_by:developer` from the AUD-CP-1 close-out) → fell through the full BOUNDED-1→SLS→RLC→DRS→QA-Drain chain starting at BOUNDED-1.
-- **BOUNDED-1 fired**: WIP(`in_progress`)=0. Promote picked `FIX-DEVTEAM-READY-REVIEW-LANE-SUPERVISED-PLANONLY-NO-PICKER` (P0, zone=cross-service/, next_agent=developer, priority_rank=0) — this is itself the fix for the SLS/RLC ready[]/review[] dead-lane gap PO ratified into DRS yesterday (`ruling-20260730T0906Z-po-triage-po.md` STEP po-4); NOT supervised/plan_only "on purpose" per its own `desc` (so it wouldn't queue behind the very backlog it unblocks). Claim moved it → `in_progress`, `.head.next_agent=developer`.
-- **Dispatched developer** (`task:FIX-DEVTEAM-READY-REVIEW-LANE-SUPERVISED-PLANONLY-NO-PICKER` claimed, `owner_client_session` = this session) with full AC-1..AC-6 text, the live blast-radius (3 P0 ready[] rows + 5 review[] rows), and an explicit reminder not to forge `promoted_by` (AC-2) or skip the branch:null head-idle sync on REVIEW flip (execute-tier.md MUST clause). **Deliberately did NOT release the sprint-task lock** post-spawn — LOCK-LIFETIME rule (background spawn returns before the agent finishes; releasing now would let next tick's `outer_claim` re-claim and double-spawn). TTL=3600s is the lifetime bound.
-- **Committed** `961f27dca` (BOUNDED-1 promote+claim writes), pathspec-scoped to `orch-state.json` only — tree was heavily concurrently dirty (cowork notebooks, analysis-briefs, other agents' JSON state), none of it touched.
-- **Released SF-1 + fire-election** (`dev-team-cron-singleton`, `cron:dev-team:2026-07-30T10:07Z`) — both `{"ok":true,"released":1}`.
-- **NEXT**: await developer's return on the ready/review-lane picker fix. Since BOUNDED-1 dispatched this tick, SLS/RLC/DRS/QA-Drain were never reached — still live for a future idle tick (review[]=173, ready[]=54 unexamined this cycle).
