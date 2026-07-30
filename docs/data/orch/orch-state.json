@@ -93,12 +93,11 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "FIX-WF2-SUPERVISED-HOLD-NO-PO-SIDE-GOAHEAD-PRODUCER",
-    "next_agent": "developer",
-    "next_action": "BOUNDED-1 auto-pickup claim of FIX-WF2-SUPERVISED-HOLD-NO-PO-SIDE-GOAHEAD-PRODUCER — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
-    "updated_at": "2026-07-30T16:16:32Z",
-    "updated_by": "dev-team (bounded-1 auto-pickup)"
+    "status": "idle",
+    "active_task_id": null,
+    "next_agent": "router",
+    "updated_at": "2026-07-30T16:28:02Z",
+    "updated_by": "developer"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -17918,6 +17917,29 @@
         "raw_verified_by": "dev-team",
         "raw_verified_at": "2026-07-30T15:58:51Z",
         "raw_verify_note": "Independently RAW-verified, not self-report: commits 6113890bb+0f8e8ee07 real/on-HEAD; diff matches claim exactly (DEMAND_QUEUE_SQL+getDemandQueueDepth in vpsPushLogStore.ts, formatHealth() idle-no-work branch in vpsProxyTools.ts, isStale() untouched); new test 7/7, sibling suite 22/22 (1113+VPT-1), tsc clean, tool/cron counts unchanged 184/88; live docker-exec probe against real market.db independently reproduces the claimed root cause exactly (bctc_vps_queue 328/128/85/39, 0 pending; news/sbv pushing within 30min); live undeployed get_vps_proxy_health tool call still reproduces the pre-fix bug verbatim, confirming REBUILD_REQUIRED=true is genuine and outstanding."
+      },
+      {
+        "id": "FIX-WF2-SUPERVISED-HOLD-NO-PO-SIDE-GOAHEAD-PRODUCER",
+        "type": "FIX",
+        "size": "S",
+        "priority": "P2",
+        "status": "REVIEW",
+        "zone": "cross-service/",
+        "title": "WF-2 SUPERVISED-HOLD gate (docs/agents/dev-team/flow/main.md:467-483) has no documented PO-side mechanism that ever produces the po_goahead_* stamp it requires to release",
+        "desc": "grep -rn 'po_goahead' docs/agents/po/ docs/protocols/ .claude/skills/ returns zero hits outside the gate's own consumer-side jq predicate and the rows it has been hand-stamped onto ad hoc (e.g. FIX-AUDITOR-CALLER-PROSE-OVERRIDES-DOCUMENTED-DETECTOR-THRESHOLD this cycle). The stamp exists only because a PO happened to hand-author the exact key pattern; nothing in po/flow/main.md instructs it to. Same structural class as FIX-BOUNDED1-SUPERVISED-LANE-NO-SWEEPER (2026-07-21, idled a P0 6+ days) — a documented consumer with no documented producer. AC: po/flow/main.md gains an explicit step/rule for stamping po_goahead_<ts> on a supervised row it ratifies, so the mechanism is reliable rather than incidental.",
+        "created_at": "2026-07-30T09:18:19Z",
+        "created_by": "po/triage-20260730T0853",
+        "source": "PO triage 2026-07-30T09:06Z BATCH item 5/6 — raised by dev-team (SendMessage to a84c0571776271792), confirmed by PO (ruling-20260730T0906Z-po-triage-po.md STEP po-5, po.md notebook), landed to orch-state by dev-team per the same mint-gap as item 1.",
+        "updated_at": "2026-07-30T16:28:03Z",
+        "promoted_at": "2026-07-30T16:16:28Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
+        "claimed_at": "2026-07-30T16:16:32Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "next_agent": "qa",
+        "reviewed_at": "2026-07-30T16:28:02Z",
+        "reviewed_by": "developer",
+        "review_note": "Added docs/agents/po/flow/supervised-goahead.md (new PO-side producer for the po_goahead_* stamp WF-2 should_hold gate requires, docs/agents/dev-team/flow/main.md:467-483) + MANDATORY-every-tick pointer step in po/flow/main.md Pre-check + regression verifier scripts/audits/po-goahead-producer-verify.sh (replays should_hold jq against synthetic fixtures: RED before doc existed, GREEN after -- 4/4 PASS). Step 1 of the new sub-flow is scoped to only the .head.active_task_id row (the one row WF-2 actually evaluates per tick), not a broad board scan -- live-tested the broad alternative and it returned ~10 unrelated mid-flight rows, none ready to ratify. Commit 5c1f19b7b. Decision journal: sprint-COWORK-GUARANTEED-SLOT-CATCHUP-developer.md STEP developer-S44 (commit dff618bde). No apps/ TS/Go touched (zone cross-service/, pure doc+bash) - bun test/tsc structurally N/A. No MCP/gateway tool grant this session (Read/Edit/Write/Bash only) - board flip performed directly via scripts/orch-apply.sh, no task_claim/task_release needed (lock already held by dev-team dispatcher per this task spec, owner_client_session=64c7c677-0f0f-4cee-a3ce-dba79d70b7ae)."
       }
     ],
     "qa": [],
@@ -17939,27 +17961,7 @@
     },
     "last_triaged_at": "2026-07-30T16:16:28Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": [
-      {
-        "id": "FIX-WF2-SUPERVISED-HOLD-NO-PO-SIDE-GOAHEAD-PRODUCER",
-        "type": "FIX",
-        "size": "S",
-        "priority": "P2",
-        "status": "IN_PROGRESS",
-        "zone": "cross-service/",
-        "title": "WF-2 SUPERVISED-HOLD gate (docs/agents/dev-team/flow/main.md:467-483) has no documented PO-side mechanism that ever produces the po_goahead_* stamp it requires to release",
-        "desc": "grep -rn 'po_goahead' docs/agents/po/ docs/protocols/ .claude/skills/ returns zero hits outside the gate's own consumer-side jq predicate and the rows it has been hand-stamped onto ad hoc (e.g. FIX-AUDITOR-CALLER-PROSE-OVERRIDES-DOCUMENTED-DETECTOR-THRESHOLD this cycle). The stamp exists only because a PO happened to hand-author the exact key pattern; nothing in po/flow/main.md instructs it to. Same structural class as FIX-BOUNDED1-SUPERVISED-LANE-NO-SWEEPER (2026-07-21, idled a P0 6+ days) — a documented consumer with no documented producer. AC: po/flow/main.md gains an explicit step/rule for stamping po_goahead_<ts> on a supervised row it ratifies, so the mechanism is reliable rather than incidental.",
-        "created_at": "2026-07-30T09:18:19Z",
-        "created_by": "po/triage-20260730T0853",
-        "source": "PO triage 2026-07-30T09:06Z BATCH item 5/6 — raised by dev-team (SendMessage to a84c0571776271792), confirmed by PO (ruling-20260730T0906Z-po-triage-po.md STEP po-5, po.md notebook), landed to orch-state by dev-team per the same mint-gap as item 1.",
-        "updated_at": "2026-07-30T16:16:32Z",
-        "promoted_at": "2026-07-30T16:16:28Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
-        "claimed_at": "2026-07-30T16:16:32Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)"
-      }
-    ]
+    "in_progress": []
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
