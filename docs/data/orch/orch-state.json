@@ -2027,15 +2027,15 @@
         "payload_ref": null
       },
       {
-        "id": "dev-20260729T234243",
-        "ts": "2026-07-29T23:42:43Z",
-        "from": "dev-team",
+        "id": "cow-20260730T000800",
+        "ts": "2026-07-30T00:08:00Z",
+        "from": "cowork-team",
         "to": "po",
         "type": "system-issue",
-        "summary": "stranded-state sweep: unknown paths need owner (17) → docs/handoffs/STRANDED-STATE-SWEEP-20260729T2342Z.md",
+        "summary": "pressure-state emits host_headroom_mb; spawn-fanout Step5.1 reads container_vm_headroom_mb -> fanout always degraded",
         "severity": "LOW",
-        "status": "READ",
-        "payload_ref": "docs/handoffs/STRANDED-STATE-SWEEP-20260729T2342Z.md"
+        "status": "NEW",
+        "payload_ref": "docs/signals/cowork-team-2026-07-30T000700Z.json"
       }
     ],
     "last_triaged_at": "2026-07-29T06:25:00Z",
