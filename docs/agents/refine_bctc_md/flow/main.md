@@ -20,6 +20,19 @@ You are `refine_bctc_md` — a leaf worker. Executing this flow IS your job.
 CLAUDE.md "router only" scopes the main terminal, not spawned subagents. Do NOT delegate.
 All MCP tools: `call_tool(server="vn-market", tool="<name>", arguments={...})`
 
+**Session id for lock calls:** every `task_claim`/`task_heartbeat`/`task_release` call below REQUIRES
+`owner_client_session` (no default — coordinationTools.ts:104-110, P1-FINAL/TASK_1980). This agent
+holds NO Bash (`.claude/agents/refine_bctc_md.md` tools: `Read, Write, mcp__gateway__call_tool`), so
+it cannot resolve `$CLAUDE_CODE_SESSION_ID` itself via a shell env read. The value MUST arrive as a
+literal string via the spawn-prompt coordination parameter (the cowork-team dispatcher's
+`trigger_prompt`/`IDENTITY_PREAMBLE` composition for this slot — see
+`docs/agents/cowork-team/flow/spawn-fanout.md` § Step 5.2). Use whatever literal value the spawn
+prompt handed you — NEVER write the literal text `$CLAUDE_CODE_SESSION_ID` into a `call_tool`
+argument (an LLM-issued call is a direct function call, not a shell command, so the variable is not
+expanded; session memory: `feedback_llm_issued_call_tool_does_not_expand_session_id_variable`). If no
+session id was supplied in the spawn prompt, log `[refine_bctc_md] no owner_client_session in spawn
+prompt — task_claim will fail schema validation` and EXIT before claiming (do not guess a value).
+
 ## OFF-HOSE Guard
 
 UTC Mon–Fri 02:00–08:59 → log `[refine-orchestrator] OFF-HOSE active` → EXIT.
@@ -34,8 +47,10 @@ UTC Mon–Fri 02:00–08:59 → log `[refine-orchestrator] OFF-HOSE active` → 
    `confirm_status == "CONFIRMED"` → log skip → EXIT (no claim).
 
 3. Claim lock:
-   `call_tool("task_claim", { task_id: "bctc-refine:"+report.id, task_kind: "sprint-task",
-     owner_agent: "refine-orchestrator", ttl_seconds: 1800 })`
+   `call_tool(server="vn-market", tool="task_claim", arguments={ task_id: "bctc-refine:"+report.id,
+     task_kind: "sprint-task", owner_agent: "refine-orchestrator",
+     owner_client_session: "<literal session id from spawn prompt — see SELF-IDENTITY GUARD above>",
+     ttl_seconds: 1800 })`
    `claim.claimed == false` → EXIT (another session owns it).
 
 4. `text_status != "COMPLETE"` → release → EXIT. `windows` empty → release → EXIT.
@@ -85,7 +100,8 @@ for window in chunk:
 end
 ```
 
-Heartbeat every 5 min: `call_tool("task_heartbeat", { task_id: "bctc-refine:"+report.id, owner_agent: "refine-orchestrator" })`
+Heartbeat every 5 min: `call_tool(server="vn-market", tool="task_heartbeat", arguments={
+  task_id: "bctc-refine:"+report.id, owner_client_session: "<same literal session id as Step 3 claim>" })`
 `ok=false` → lock stolen → EXIT (partial progress in DB; next fire resumes).
 
 ## Phase 3 — Finalize (only when ALL windows pushed)
@@ -100,11 +116,12 @@ if all_pushed >= windows.length:
 // else: leave refine_status=PARTIAL — next fire resumes remaining windows
 ```
 
-`call_tool("task_release", { task_id: "bctc-refine:"+report.id, owner_agent: "refine-orchestrator" })`
+`call_tool(server="vn-market", tool="task_release", arguments={ task_id: "bctc-refine:"+report.id,
+  owner_client_session: "<same literal session id as Step 3 claim>" })`
 
 ## Error Boundary
 
-Exception → `finalize_bctc_refine(report_status="FAILED")` → `task_release({ task_id: "bctc-refine:"+report.id, owner_agent: "refine-orchestrator" })` → EXIT with log.
+Exception → `finalize_bctc_refine(report_status="FAILED")` → `call_tool(server="vn-market", tool="task_release", arguments={ task_id: "bctc-refine:"+report.id, owner_client_session: "<same literal session id as Step 3 claim>" })` → EXIT with log.
 Never leave report in `IN_PROGRESS` without finalize.
 
 ## RETURN

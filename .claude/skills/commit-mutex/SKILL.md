@@ -31,13 +31,25 @@ All other agents back off (exponential + jitter) or skip and retry next cron tic
 
 ```
 result = call_tool(server="vn-market", tool="task_claim", arguments={
-  task_id:     "commit-mutex:main",
-  task_kind:   "commit-mutex",
-  owner_agent: "<your-agent-id>",
-  ttl_seconds: 90,
-  payload:     JSON({ paths: ["<path1>", "<path2>", ...], intent: "<one-line commit summary>" })
+  task_id:               "commit-mutex:main",
+  task_kind:             "commit-mutex",
+  owner_agent:           "<your-agent-id>",
+  owner_client_session:  "<resolved CLAUDE_CODE_SESSION_ID>",
+  ttl_seconds:           90,
+  payload:               JSON({ paths: ["<path1>", "<path2>", ...], intent: "<one-line commit summary>" })
 })
 ```
+
+**`owner_client_session` is REQUIRED — no default, call is rejected without it**
+(`apps/mcp-server/src/interface/mcp/tools/system/coordinationTools.ts:104-110`, `z.string()` with no
+`.optional()`, sole ownership discriminator, P1-FINAL/TASK_1980). Resolve the ACTUAL value before
+composing this call — via `Bash: echo $CLAUDE_CODE_SESSION_ID` if you hold a Bash grant, or from the
+literal value your dispatcher already substituted into your spawn prompt as a coordination parameter
+if you do not. **Never write the literal text `$CLAUDE_CODE_SESSION_ID` inside the `call_tool`
+arguments** — an LLM-issued `call_tool` is a direct function call, not a shell command; the variable
+is NOT expanded and the literal 24-character string gets sent as the session id, silently defeating
+the mutex for that agent every time (session memory:
+`feedback_llm_issued_call_tool_does_not_expand_session_id_variable`).
 
 **C-2 FAIL-CLOSED — MCP unavailable path (F3/F5 in task-lock-protocol.md):**
 If `task_claim` returns a tool-not-found error, db_unavailable, or any exception:
@@ -169,7 +181,8 @@ git diff --cached --name-only
 
 ```
 call_tool(server="vn-market", tool="task_release", arguments={
-  task_id: "commit-mutex:main"
+  task_id:               "commit-mutex:main",
+  owner_client_session:  "<same resolved value passed to task_claim in Step 1>"
 })
 # ok=false is acceptable (expired or already released) — log at DEBUG, not error.
 ```
@@ -225,7 +238,9 @@ TTL rationale: 90s / 20s worst-case critical section (commit + push + rebase-ret
   intent:    "<commit summary>"
 
 Protocol:
-1. task_claim("commit-mutex:main", kind="commit-mutex", ttl=90)
+1. task_claim(task_id="commit-mutex:main", task_kind="commit-mutex", owner_agent="<agent>",
+   owner_client_session="<resolved CLAUDE_CODE_SESSION_ID — substitute the real value, NEVER
+   the literal text "$CLAUDE_CODE_SESSION_ID">, ttl_seconds=90)
    - MCP error / db_unavailable → bug-telegram → SKIP commit → EXIT   [C-2]
    - claimed=false, NO current_holder, NO error → mechanism broken → bug-telegram → SKIP → EXIT   [C-2b]
    - claimed=false WITH current_holder → backoff (exp+jitter, 6 retries, ~125s max) → give-up → bug-telegram → SKIP
@@ -236,5 +251,5 @@ Protocol:
    - rebase conflict → git rebase --abort → bug-telegram → commit stays local-only
    - push2 fail → bug-telegram → commit stays local-only
 6. git diff --cached --name-only → must be empty  (Step 3e)
-7. task_release("commit-mutex:main")  ← always, even on abort
+7. task_release(task_id="commit-mutex:main", owner_client_session="<same resolved value as step 1>")  ← always, even on abort
 ```

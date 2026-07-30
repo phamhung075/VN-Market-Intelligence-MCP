@@ -128,10 +128,16 @@ fi
 
 **pm** (has MCP gateway binding): MUST claim commit-mutex before every commit:
 ```
-task_claim(task_kind="commit-mutex", task_id="pm-commit-<slug>",
-  owner_agent="pm", ttl_seconds=120)
+task_claim(task_id="pm-commit-<slug>", task_kind="commit-mutex", owner_agent="pm",
+  owner_client_session="<resolved CLAUDE_CODE_SESSION_ID — substitute the real value here,
+  NEVER the literal text "$CLAUDE_CODE_SESSION_ID"; schema: coordinationTools.ts:104-110,
+  REQUIRED, no default>, ttl_seconds=120)
 → apply RULE 1-3 (incl. 2.5)
-→ task_release_or_expire after git show --name-only self-verify passes
+→ task_release(task_id="pm-commit-<slug>", owner_client_session="<same resolved value as above>")
+  after git show --name-only self-verify passes
+  (NOTE: "task_release_or_expire" is not a real MCP tool — the only registered tool is
+  task_release; {ok:true, released:0} on an already-expired/foreign lock is a clean no-op,
+  not an error, so plain task_release already covers the "or_expire" case.)
 ```
 
 **agents-architect + agent-father** (no gateway binding — mutex physically unreachable):

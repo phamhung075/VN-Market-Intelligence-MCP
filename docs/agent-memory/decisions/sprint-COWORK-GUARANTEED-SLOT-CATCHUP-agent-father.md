@@ -103,3 +103,18 @@ pattern "Layer-2, not this row, PM-tracked pass").
 **why-decision:** re-scope = verified-live+in-zone+non-notebook-pattern bare sites — meets
 "floor not spec" without absorbing a separately-scoped 35-file deliverable unsupervised.
 **why-change:** extends beyond literal 4-site text per PO's own re-scope ruling on this row.
+
+### STEP agent-father-S7 · agent-father · 2026-07-30T19:57:35Z
+**task-id:** FIX-TASKCLAIM-OWNER-CLIENT-SESSION-MISSING-FLEET-FLOW-DOCS
+**what-done:** Re-derived schema from coordinationTools.ts:82-218 (not tool desc); fixed
+owner_client_session on 8 files (6 named+refine_bctc_md call_tool form+own edit-apply.md,
+found live). Shipped baseline-ratchet CI guard (task-claim-owner-session-lint.sh, 7/7 tests)
++ CI job; baseline grandfathers 23 sites/9 files found beyond scope (dev-team execute-tier
+etc — flagged for follow-up, not fixed unsupervised).
+**what-considered:** hand-fix all 31 sites found (rejected — size S, other agents' zones,
+unverified blast radius) vs fix-assigned+baseline-rest (chosen).
+**why-decision:** fleet-gate lesson (validate-on-1-file) says don't mask remaining debt —
+baseline makes it visible/auditable, ratchets on any future edit to those exact lines.
+**why-change:** re-verify (AC5) found alert-commander's doc already compliant (separate
+Bash-grant defect, not this class) and refine_bctc_md needs a spawn-prompt channel fix too
+(cowork-team zone, not mine) — both surfaced honestly, not silently claimed closed.

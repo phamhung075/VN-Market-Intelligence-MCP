@@ -65,10 +65,14 @@ TICKERS_COVERED = tickers analyzed this cycle (both event-driven AND sweep-force
 scripts/agents-flow/coverage-stamp.sh --agent news-scout --tickers <TICKERS_COVERED, comma-joined>
   → surgical jq patch: sets ONLY .tickers[T].last_covered_news_scout = now for T in
     TICKERS_COVERED; every other key/ticker/field — including market-watcher's own field on
-    the SAME ticker — is preserved byte-for-byte. Wrapped in a task_claim("coverage-state:main")
-    mutex, serializing against market-watcher's own write (co-ships
-    FIX-COVERAGE-STATE-CROSS-AGENT-LOST-UPDATE). Also repairs the top-level sweep_config key
-    if it is missing.
+    the SAME ticker — is preserved byte-for-byte. Internally wrapped in a
+    task_claim(task_id="coverage-state:main", task_kind="sprint-task", owner_agent="news-scout",
+    owner_client_session=$CLAUDE_CODE_SESSION_ID, ttl_seconds=30) mutex (see
+    scripts/agents-flow/coverage-stamp.sh `_acquire_mutex` — owner_client_session is REQUIRED,
+    coordinationTools.ts:104-110; the script reads it from the `CLAUDE_CODE_SESSION_ID` env var or
+    `--session`, never a literal `$CLAUDE_CODE_SESSION_ID` string), serializing against
+    market-watcher's own write (co-ships FIX-COVERAGE-STATE-CROSS-AGENT-LOST-UPDATE). Also repairs
+    the top-level sweep_config key if it is missing.
   FIX-COVERAGE-SWEEP-BLANKET-STAMP-DEAD-TRIGGER: this REPLACES "for each ticker analyzed, set
   X=now" prose executed by hand — that prose, re-run against a 57-entry blob every cycle,
   blanket-stamped ALL tickers (measured live), making the 48h staleness trigger permanently

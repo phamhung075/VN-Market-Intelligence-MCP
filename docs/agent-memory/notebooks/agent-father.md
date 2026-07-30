@@ -47,3 +47,27 @@
   the correct pattern (new note, not silent history rewrite) — my own `_check_notebook_immutability`
   hook correctly REJECTED my first attempt to fix it in place, which is itself a live validation
   that the gate works as designed.
+
+## Follow-up 19:57 — 2026-07-30 FIX-TASKCLAIM-OWNER-CLIENT-SESSION-MISSING-FLEET-FLOW-DOCS
+- Re-derived the live schema from `coordinationTools.ts:82-218` directly (owner_client_session
+  REQUIRED, no default, on task_claim/task_heartbeat/task_release). Fixed 8 files: the 6 named
+  + refine_bctc_md's call_tool form + my OWN `edit-apply.md` (found live during the fleet sweep,
+  fixed opportunistically — own zone, low risk).
+- Independent fleet-wide re-verification (not trusted the "6 files" count at face value) found
+  23 MORE non-compliant call sites across 9 other-agent files (dev-team execute-tier.md +
+  drain-esc-dispatch.md, po, ba, developer, pm init.md, qa, unified-agent/chef.md) — larger than
+  the dispatched scope. Did not hand-fix them (other agents' zones, unverified blast radius);
+  grandfathered them in a new baseline-ratchet CI guard instead
+  (`scripts/audits/task-claim-owner-session-lint.sh` + `docs/data/task-claim-owner-session-baseline.json`)
+  so the debt is visible/auditable and any further edit to those exact lines re-triggers.
+- AC-5 re-verify: alert-commander's own doc was ALREADY compliant — the live incident there is a
+  separate, already-tracked structural defect (no Bash grant, `FIX-ALERT-COMMANDER-NO-BASH-GRANT-NOTEBOOK-UNCOMMITTABLE`,
+  BACKLOG). refine_bctc_md's doc fix alone is not sufficient either — its spawn prompt
+  (`cowork-team/flow/spawn-fanout.md`, `docs/data/cowork-schedule.json`) carries no session-id
+  coordination parameter today; flagged as a required follow-up, not claimed as closed.
+- New files created (outside my declared commit_zone: docs/agents/, docs/agent-memory/,
+  .claude/skills/, .claude/agents/) — `scripts/audits/task-claim-owner-session-lint.{sh,test.sh}`,
+  `.github/workflows/ci.yml` edit, `docs/data/task-claim-owner-session-baseline.json`,
+  `docs/architecture-briefs/2026-07-30-fix-taskclaim-owner-session-ci-guard.md` — produced because
+  AC-3 explicitly required a CI guard; flagged to dev-team for review/commit rather than
+  self-committed, per this task's own dispatch note (no gateway/MCP grant this session).

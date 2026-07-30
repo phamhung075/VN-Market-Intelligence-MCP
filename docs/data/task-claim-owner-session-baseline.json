@@ -1,0 +1,123 @@
+{
+  "_generated_by": "scripts/audits/task-claim-owner-session-lint.sh --update",
+  "_note": "Per-call-site grandfather baseline for scripts/audits/task-claim-owner-session-lint.sh --check. Keyed on the EXACT (file, line, snippet) triple — any edit to a grandfathered line forces re-triage (ratchet, not silence). Entries drop automatically on the next --update once a call site gains owner_client_session.",
+  "_ssot": "docs/data/task-claim-owner-session-baseline.json",
+  "count": 23,
+  "entries": [
+    {
+      "file": "docs/agents/ba/init.md",
+      "line": 113,
+      "snippet": "outer_claim = call_tool(server=\"vn-market\", tool=\"task_claim\", arguments={"
+    },
+    {
+      "file": "docs/agents/ba/init.md",
+      "line": 127,
+      "snippet": "call_tool(server=\"vn-market\", tool=\"task_release\", arguments={ task_id: \"task:\" + req_id })"
+    },
+    {
+      "file": "docs/agents/dev-team/flow/drain-esc-dispatch.md",
+      "line": 46,
+      "snippet": "spawn_claim = call_tool(server=\"vn-market\", tool=\"task_claim\", arguments={"
+    },
+    {
+      "file": "docs/agents/dev-team/flow/drain-esc-dispatch.md",
+      "line": 116,
+      "snippet": "call_tool(server=\"vn-market\", tool=\"task_release\", arguments={ task_id: spawn_key })   # free now, not the 7200s TTL"
+    },
+    {
+      "file": "docs/agents/dev-team/flow/drain-esc-dispatch.md",
+      "line": 117,
+      "snippet": "call_tool(server=\"vn-market\", tool=\"task_release\", arguments={ task_id: guard_key })    # best-effort, graceful on failure"
+    },
+    {
+      "file": "docs/agents/dev-team/flow/drain-esc-dispatch.md",
+      "line": 136,
+      "snippet": "call_tool(server=\"vn-market\", tool=\"task_release\", arguments={ task_id: spawn_key })"
+    },
+    {
+      "file": "docs/agents/dev-team/flow/drain-esc-dispatch.md",
+      "line": 140,
+      "snippet": "call_tool(server=\"vn-market\", tool=\"task_release\", arguments={ task_id: guard_key })"
+    },
+    {
+      "file": "docs/agents/dev-team/flow/execute-tier.md",
+      "line": 42,
+      "snippet": "outer_claim = call_tool(server=\"vn-market\", tool=\"task_claim\", arguments={"
+    },
+    {
+      "file": "docs/agents/dev-team/flow/execute-tier.md",
+      "line": 64,
+      "snippet": "call_tool(server=\"vn-market\", tool=\"task_release\", arguments={ task_id: \"task:\" + task_id })"
+    },
+    {
+      "file": "docs/agents/dev-team/flow/post-cycle.md",
+      "line": 100,
+      "snippet": "# task_claim(task_kind=\"commit-mutex\", task_id=\"commit-mutex:main\", owner_agent=\"dev-team\", ttl_seconds=120)"
+    },
+    {
+      "file": "docs/agents/dev-team/flow/post-cycle.md",
+      "line": 109,
+      "snippet": "# task_release(task_id: \"commit-mutex:main\")"
+    },
+    {
+      "file": "docs/agents/dev-team/flow/post-cycle.md",
+      "line": 127,
+      "snippet": "# task_claim(task_kind=\"commit-mutex\", task_id=\"commit-mutex:main\", owner_agent=\"dev-team\", ttl_seconds=120)"
+    },
+    {
+      "file": "docs/agents/dev-team/flow/post-cycle.md",
+      "line": 133,
+      "snippet": "# task_release(task_id: \"commit-mutex:main\")"
+    },
+    {
+      "file": "docs/agents/developer/init.md",
+      "line": 32,
+      "snippet": "outer_claim = call_tool(server=\"vn-market\", tool=\"task_claim\", arguments={"
+    },
+    {
+      "file": "docs/agents/developer/init.md",
+      "line": 45,
+      "snippet": "call_tool(server=\"vn-market\", tool=\"task_release\", arguments={ task_id: \"task:\" + task_id })"
+    },
+    {
+      "file": "docs/agents/pm/init.md",
+      "line": 125,
+      "snippet": "outer_claim = call_tool(server=\"vn-market\", tool=\"task_claim\", arguments={"
+    },
+    {
+      "file": "docs/agents/pm/init.md",
+      "line": 139,
+      "snippet": "call_tool(server=\"vn-market\", tool=\"task_release\", arguments={ task_id: \"task:\" + task_id })"
+    },
+    {
+      "file": "docs/agents/po/flow/sprint-kickoff.md",
+      "line": 42,
+      "snippet": "result = call_tool(server=\"vn-market\", tool=\"task_claim\", arguments={"
+    },
+    {
+      "file": "docs/agents/po/flow/sprint-signoff.md",
+      "line": 28,
+      "snippet": "call_tool(server=\"vn-market\", tool=\"task_release\", arguments={ task_id: \"task:\" + sprint_id })"
+    },
+    {
+      "file": "docs/agents/po/flow/sprint-signoff.md",
+      "line": 42,
+      "snippet": "call_tool(server=\"vn-market\", tool=\"task_release\", arguments={ task_id: \"task:\" + sprint_id })"
+    },
+    {
+      "file": "docs/agents/qa/flow/main.md",
+      "line": 21,
+      "snippet": "> call_tool(server=\"vn-market\", tool=\"task_release\", arguments={ task_id: \"task:\" + task_id })"
+    },
+    {
+      "file": "docs/agents/qa/flow/main.md",
+      "line": 212,
+      "snippet": "call_tool(server=\"vn-market\", tool=\"task_release\", arguments={ task_id: \"task:\" + task_id })"
+    },
+    {
+      "file": "docs/agents/unified-agent/flow/chef.md",
+      "line": 102,
+      "snippet": "PUBLISH_CLAIM = call_tool(server=\"vn-market\", tool=\"task_claim\", arguments={"
+    }
+  ]
+}

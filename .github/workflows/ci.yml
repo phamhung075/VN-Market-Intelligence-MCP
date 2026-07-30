@@ -472,6 +472,29 @@ jobs:
       - name: Run shared-package-import-check --check
         run: bash scripts/audits/shared-package-import-check.sh --check
 
+  task-claim-owner-session-lint:
+    name: task-claim-owner-session-lint
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # Pure bash/git ls-files/grep/jq — no bun/go/python toolchain needed,
+      # cheapest job in the pipeline alongside size-lint/metric-mask-lint/
+      # dead-code-gate. Baseline/ratchet CI guardrail (like size-lint, NOT
+      # zero-tolerance) against a task_claim/task_release/task_heartbeat call
+      # site documented in a live flow/skill doc without the REQUIRED
+      # owner_client_session field (coordinationTools.ts:104-110, no
+      # `.optional()`, P1-FINAL/TASK_1980) — a doc-faithful agent following
+      # such a call gets silently rejected by the live server and the
+      # mutex/lock never engages. See
+      # docs/data/task-claim-owner-session-baseline.json (grandfathered
+      # pre-existing debt snapshot) and task
+      # FIX-TASKCLAIM-OWNER-CLIENT-SESSION-MISSING-FLEET-FLOW-DOCS.
+      - name: Run task-claim-owner-session-lint --check
+        run: bash scripts/audits/task-claim-owner-session-lint.sh --check
+
   rebuild-raw-verify-hook:
     name: rebuild-raw-verify-hook
     runs-on: ubuntu-latest

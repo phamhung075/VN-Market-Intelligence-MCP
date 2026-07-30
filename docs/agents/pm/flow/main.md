@@ -122,7 +122,11 @@ PIPELINE: continue
 
 **3d.** Heartbeat umbrella lock → load skill: `.claude/skills/task-lock/SKILL.md`
 ```
-call_tool(server="vn-market", tool="task_heartbeat", arguments={ task_id: "task:" + sprint_id })
+call_tool(server="vn-market", tool="task_heartbeat", arguments={
+  task_id: "task:" + sprint_id,
+  owner_client_session: "<resolved CLAUDE_CODE_SESSION_ID — REQUIRED, coordinationTools.ts:165-171;
+    substitute the real value, NEVER write the literal text "$CLAUDE_CODE_SESSION_ID">
+})
 // ok=false here = sprint umbrella expired or stolen; log only, do not abort planning
 ```
 
@@ -130,7 +134,10 @@ call_tool(server="vn-market", tool="task_heartbeat", arguments={ task_id: "task:
 
 **4b.** Heartbeat developer's task lock if pre-existing:
 ```
-call_tool(server="vn-market", tool="task_heartbeat", arguments={ task_id: "task:" + task_id })
+call_tool(server="vn-market", tool="task_heartbeat", arguments={
+  task_id: "task:" + task_id,
+  owner_client_session: "<resolved CLAUDE_CODE_SESSION_ID — same requirement as Step 3d above>"
+})
 // silent on ok=false — developer will (re)claim on entry
 ```
 
@@ -160,19 +167,30 @@ Before writing ANY signal row to `docs/data/orch/orch-state.json` `.signal_queue
 ## Pre-commit gate (mandatory before EVERY git commit)
 
 ```
-1. Claim commit-mutex:
-   task_claim(task_kind="commit-mutex", task_id="pm-commit-<slug>",
-     owner_agent="pm", ttl_seconds=120)
+1. Resolve owner_client_session — REQUIRED, no default (coordinationTools.ts:104-110,
+   P1-FINAL/TASK_1980). Substitute the ACTUAL resolved value of your session's
+   CLAUDE_CODE_SESSION_ID (Bash: `echo $CLAUDE_CODE_SESSION_ID` if you hold a Bash grant, or the
+   literal value your dispatcher already substituted into your spawn prompt as a coordination
+   parameter). NEVER write the literal text "$CLAUDE_CODE_SESSION_ID" inside the call_tool
+   arguments — an LLM-issued call_tool is a direct function call, not a shell command, so the
+   variable is NOT expanded; the literal string would be sent as the session id and silently
+   defeat the mutex (session memory: feedback_llm_issued_call_tool_does_not_expand_session_id_variable).
 
-2. Apply commit-boundary RULE 1-3 (.claude/skills/commit-boundary/SKILL.md):
+2. Claim commit-mutex:
+   task_claim(task_id="pm-commit-<slug>", task_kind="commit-mutex",
+     owner_agent="pm", owner_client_session="<resolved value from step 1>", ttl_seconds=120)
+
+3. Apply commit-boundary RULE 1-3 (.claude/skills/commit-boundary/SKILL.md):
    RULE 1: git add <named files only> — NEVER git add -A or git add .
    RULE 2: git diff --cached --name-only → verify all paths within pm zone
             (allowed: docs/data/orch/orch-state.json, docs/agent-memory/notebooks/pm.md)
             (if intruder: git restore --staged <file>)
    RULE 3: git show --name-only HEAD → verify after commit; reset --soft if intruder found
 
-3. Release after self-verify passes:
-   task_release_or_expire (task_id: "pm-commit-<slug>")
+4. Release after self-verify passes (task_release is the only registered release tool —
+   "task_release_or_expire" does not exist; {ok:true, released:0} on an expired/foreign lock
+   is already a clean no-op, not an error):
+   task_release(task_id="pm-commit-<slug>", owner_client_session="<same resolved value as step 1>")
 ```
 
 **End of cycle** → skill: `.claude/skills/cowork-end-cycle/SKILL.md`

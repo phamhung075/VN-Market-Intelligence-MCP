@@ -89,6 +89,15 @@ PRE_EVICT_ACTIVE_IDS=$(jq -r '.task_board.active_sprints[]?.id // empty' "$PROJE
 
 ## Steps
 
+0. **Resolve `owner_client_session`** — REQUIRED, no default (coordinationTools.ts:104-110,
+   P1-FINAL/TASK_1980). Substitute the ACTUAL resolved value of your session's
+   `CLAUDE_CODE_SESSION_ID` (Bash: `echo $CLAUDE_CODE_SESSION_ID`, or the literal value your
+   dispatcher already substituted into your spawn prompt as a coordination parameter). NEVER write
+   the literal text `$CLAUDE_CODE_SESSION_ID` inside a `task_claim`/`task_release` call — an
+   LLM-issued call is a direct function call, not a shell command, so the variable is NOT expanded
+   (session memory: `feedback_llm_issued_call_tool_does_not_expand_session_id_variable`). Reuse this
+   ONE resolved value for every claim/release below.
+
 1. **Verify bloat condition** — confirm trigger via jq slices:
    ```bash
    DONE_N=$(jq '.task_board.done | length' "$PROJECT_ROOT/docs/data/orch/orch-state.json")
@@ -102,8 +111,8 @@ PRE_EVICT_ACTIVE_IDS=$(jq -r '.task_board.active_sprints[]?.id // empty' "$PROJE
 
 2. **Claim commit-mutex** (required before running eviction script):
    ```
-   task_claim(task_kind="commit-mutex", task_id="pm-archive-<ISO8601slug>",
-     owner_agent="pm", ttl_seconds=180)
+   task_claim(task_id="pm-archive-<ISO8601slug>", task_kind="commit-mutex",
+     owner_agent="pm", owner_client_session="<resolved value from Step 0>", ttl_seconds=180)
    ```
 
 3. **Signal closure back-reference** (additive — runs BEFORE the eviction script moves `done_verified[]` off the hot file, while commit-mutex is still held; no-op if no task carries `origin_signal_id`):
@@ -146,7 +155,7 @@ PRE_EVICT_ACTIVE_IDS=$(jq -r '.task_board.active_sprints[]?.id // empty' "$PROJE
    DONE_POST=$(jq '.task_board.done | length' "$PROJECT_ROOT/docs/data/orch/orch-state.json")
    if [ "$DV_POST" -gt 0 ] || [ "$DONE_POST" -gt 10 ]; then
      echo "[pm/task-archive] ERROR: post-eviction counts unexpected (done=$DONE_POST, done_verified=$DV_POST)"
-     task_release(task_id: "pm-archive-<ISO8601slug>")
+     task_release(task_id: "pm-archive-<ISO8601slug>", owner_client_session: "<resolved value from Step 0>")
      exit 1
    fi
    echo "[pm/task-archive] Post-eviction OK — done=$DONE_POST, done_verified=$DV_POST"
@@ -175,7 +184,7 @@ PRE_EVICT_ACTIVE_IDS=$(jq -r '.task_board.active_sprints[]?.id // empty' "$PROJE
 
 7. **Release mutex**:
    ```
-   task_release(task_id: "pm-archive-<ISO8601slug>")
+   task_release(task_id: "pm-archive-<ISO8601slug>", owner_client_session: "<resolved value from Step 0>")
    ```
 
 ## RETURN

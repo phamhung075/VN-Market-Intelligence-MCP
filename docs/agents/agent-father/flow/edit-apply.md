@@ -3,12 +3,20 @@
 # Agent Father — Edit: Apply Phase (Steps 5–8)
 
 **5a. Claim cross-cutting task lock** → load skill: `.claude/skills/task-lock/SKILL.md`
+
+`owner_client_session` is REQUIRED (no default — coordinationTools.ts:104-110, P1-FINAL/TASK_1980).
+Resolve the ACTUAL value of your session's `CLAUDE_CODE_SESSION_ID` (Bash: `echo
+$CLAUDE_CODE_SESSION_ID`) and reuse that SAME resolved value for 5a/7b/8b below — NEVER write the
+literal text `$CLAUDE_CODE_SESSION_ID` inside a `call_tool` argument (an LLM-issued call is a direct
+function call, not a shell command, so the variable is not expanded; session memory:
+`feedback_llm_issued_call_tool_does_not_expand_session_id_variable`).
 ```
 result = call_tool(server="vn-market", tool="task_claim", arguments={
-  task_id:     "task:" + task_id,
-  task_kind:   "sprint-task",
-  owner_agent: "agent-father",
-  ttl_seconds: 3600,
+  task_id:               "task:" + task_id,
+  task_kind:              "sprint-task",
+  owner_agent:            "agent-father",
+  owner_client_session:   "<resolved CLAUDE_CODE_SESSION_ID>",
+  ttl_seconds:            3600,
   payload:     '{"task_title":"' + change_description + '","files":' + JSON.stringify(target_files) + '}'
 })
 if not result.claimed:
@@ -50,7 +58,7 @@ Re-read all edited files and run checks:
 - [ ] `inter_agent` routing is symmetric with partner agents
 - [ ] Version date updated to today
 
-**7b. Heartbeat lock** → `call_tool(server="vn-market", tool="task_heartbeat", arguments={task_id: "task:" + task_id})`
+**7b. Heartbeat lock** → `call_tool(server="vn-market", tool="task_heartbeat", arguments={task_id: "task:" + task_id, owner_client_session: "<same resolved value as Step 5a>"})`
 if hb.ok == false: → stolen-lock protocol per skill
 
 **8. Diff summary**
@@ -71,7 +79,7 @@ Produce human-readable summary:
 - (none) | Updated partner agent X routing
 ```
 
-**8b. Release lock** → `call_tool(server="vn-market", tool="task_release", arguments={task_id: "task:" + task_id})`
+**8b. Release lock** → `call_tool(server="vn-market", tool="task_release", arguments={task_id: "task:" + task_id, owner_client_session: "<same resolved value as Step 5a>"})`
 
 ---
 
