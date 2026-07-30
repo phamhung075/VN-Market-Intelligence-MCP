@@ -93,11 +93,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "active_task_id": null,
-    "next_agent": "router",
-    "updated_at": "2026-07-30T07:58:27Z",
-    "updated_by": "developer"
+    "status": "in_progress",
+    "active_task_id": "FIX-AUDITOR-A12-PROBE-TIMEOUT-EXITCODE-DEBOUNCE",
+    "next_agent": "developer",
+    "next_action": "BOUNDED-1 auto-pickup claim of FIX-AUDITOR-A12-PROBE-TIMEOUT-EXITCODE-DEBOUNCE — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
+    "updated_at": "2026-07-30T08:08:14Z",
+    "updated_by": "dev-team (bounded-1 auto-pickup)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -10428,32 +10429,6 @@
         "updated_by": "po/triage-20260729T0848-a12-curlerr-rootcause"
       },
       {
-        "id": "FIX-AUDITOR-A12-PROBE-TIMEOUT-EXITCODE-DEBOUNCE",
-        "type": "FIX",
-        "status": "BACKLOG",
-        "priority": "P2",
-        "size": "S",
-        "zone": "cross-service/",
-        "owner": "architect",
-        "next_agent": "developer",
-        "supervised": false,
-        "plan_only": false,
-        "created_at": "2026-07-29T09:10:55Z",
-        "updated_at": "2026-07-29T09:14:08Z",
-        "created_by": "architect/spike-20260729-apigw-health-split",
-        "source": "SPIKE-DASHBOARD-TIER-HEALTH-CURL-ERR-FLAP (Half A -- detection side)",
-        "parent": "SPIKE-DASHBOARD-TIER-HEALTH-CURL-ERR-FLAP",
-        "title": "system-auditor A-12 (and any live A-04/A-13 equivalent) health probe collapses every curl failure mode (timeout/refused/DNS) to one CURL_ERR token and glosses it as \"unreachable\" -- raise/repoint the client budget, capture curl exit code, wire the deferred N-consecutive debounce (scope item 2 of DONE FIX-AUDITOR-A12A20A30-FP-REEMIT-CONVERGE), fix the emitted summary wording",
-        "files": [
-          "docs/agents/system-auditor/probe.sh",
-          "scripts/emit-audit-signal.sh"
-        ],
-        "note": "A1: raise probe.sh:48 --max-time above the realistic cold-fanout cost now (cheap floor); repoint to api-gateway:4000/healthz once Half B's liveness route ships (soft-blocked on that, not hard-depends). A2: capture curl exit code, classify (28=CLIENT_TIMEOUT/7=CONN_REFUSED/6=DNS_FAIL/52=EMPTY_REPLY), stop collapsing to CURL_ERR. A3: wire the N-consecutive debounce from the DONE wrapper scope item 2 -- ONLY alongside A1/A2, never alone (would silence a real worsening latency regression). A4: fix \"unreachable\" gloss wherever templated -- audit all 8/14 historical A-12 rows' phrasing source. A5 (unresolved, confirm before touching): no live file defines check-id A-04 anywhere in docs/agents/system-auditor/ or scripts/ (repo-wide grep, live tree, zero hits outside one archived handoff doc) -- confirm whether A-04/A-13 are a live Tier-2/3 check on the same route or a stale label before assuming either. Design doc: docs/architecture-briefs/2026-07-29-apigw-health-capability-probe-latency.md section 5. ADDENDUM 09:15Z: fresh 23-sample re-measurement confirms the class is sustained/continuous (26% of a 7-minute sample exceed 3000ms), not a rare edge case -- do not close A1-A4 as 'debounce the occasional blip', the underlying cost must actually drop (Half B) for the debounce to be safe per A3's own caveat.",
-        "cross_row_interaction": "A1's repoint sub-item only lands after FIX-APIGW-HEALTH-CAPABILITY-PROBE-GATE-PARALLEL-SINGLEFLIGHT's /healthz decoupling (B4) ships and is verified -- everything else here (A2-A5) is independent.",
-        "verification_gate": "curl exit code captured and classified in probe.sh output (not bare CURL_ERR); emitted signal summary states the observed fact (e.g. \"client timeout after 3000ms\") never \"unreachable\" for a timeout; debounce ships together with, not instead of, the exit-code fix.",
-        "recurring_bug_count": 1
-      },
-      {
         "id": "FIX-APIGW-HEALTH-CAPABILITY-PROBE-GATE-PARALLEL-SINGLEFLIGHT",
         "type": "FIX",
         "status": "BACKLOG",
@@ -10938,25 +10913,6 @@
         "brief_ref": "docs/architecture-briefs/2026-07-29-qadrain-head-slot-decouple.md §5, §7, §8 step 3",
         "parent_spike": "SPIKE-DEVTEAM-QADRAIN-HEAD-SLOT-DECOUPLE",
         "dedup_checked": "2026-07-29T21:2xZ — no open board row for qa-lane throughput or qa[] staleness (grepped QADRAIN|THROUGHPUT|QA-STALE)."
-      },
-      {
-        "id": "FIX-SQLITE-DOCKER-VIRT-CORRUPTION-RECUR-20260730",
-        "title": "market.db SQLite corruption RECURRED live 2026-07-30 (3rd+ occurrence of the known FIX-SQLITE-DOCKER-VIRT-CORRUPTION class) — daily_ohlcv/cron_job_runs/system_logs/pdf_extracted_text corrupted, silently degrading OHLCV push, prediction-market-job, taAlertScan/bbAlertScan every cycle",
-        "type": "FIX",
-        "priority": "P0",
-        "status": "BACKLOG",
-        "zone": "cross-service/",
-        "owner": "ops",
-        "next_agent": "ops",
-        "created_by": "dev-mcp-server",
-        "created_at": "2026-07-30T04:10:09Z",
-        "updated_at": "2026-07-30T04:10:09Z",
-        "root_cause": "Same class as docs/incidents/2026-07-13-sqlite-db-corruption-restart-loop.md and the 2026-04-25 event (docker-virt-corruption memory): macOS com.apple.Virtualization.VirtualMachine process holds an fd on market.db-shm during container stop; torn SHM write -> SQLITE_CORRUPT (errno 11) surfaces on next open/read of the affected pages. Discovered live 2026-07-30T03:58Z during a routine single-service mcp-server restart (unrelated task FIX-VNINDEX-CACHE-STARTUP-PURGE). data/live/market.db.corrupt-20260719-1125Z + .pre-salvage-20260719-202912Z + .salvage-attempt-failed-20260719T203907Z artifacts on disk suggest this may trace to an incompletely-recovered 2026-07-19 event rather than a brand-new one.",
-        "evidence": "PRAGMA quick_check (host sqlite3 CLI AND independently confirmed via the live container's own bun:sqlite runtime, readonly connection, not just host CLI — ruling out a host-CLI/WAL false-positive) shows real corruption in tables: daily_ohlcv, cron_job_runs, system_logs, pdf_extracted_text + their indexes (idx_syslog_level, idx_syslog_source, idx_pdf_filename, idx_pet_filename, idx_system_logs_ts, idx_system_logs_level, idx_system_logs_resolved, idx_pet_action_code, idx_cron_job_runs_job_started) — 15 distinct corrupted trees total. 282 \"database disk image is malformed\" errors logged in the first 6 live minutes post-restart, hitting push-ohlcv-history, prediction-market-job, taAlertScan (dozens of tickers), bbAlertScan every cycle. Container itself is STABLE (not crash-looping, healthy, RestartCount=0) unlike the acute 2026-07-13 crash-loop pattern — this is a silent, ongoing degradation, not an outage, which is why health checks alone would not surface it (feedback_passive_health_masks_dead_data). vn_index_cache (this session's own touched table) independently confirmed healthy/unaffected.",
-        "recommended_action": "Follow the established recovery playbook from docs/incidents/2026-07-13-sqlite-db-corruption-restart-loop.md: STOP further restarts, BACKUP the current corrupt market.db first (timestamped), locate/verify a CLEAN backup (PRAGMA integrity_check=ok) — data/live/market.db.backup (2026-07-19T22:31Z) is present but is 11 days stale AND sits next to a same-day salvage-attempt-failed artifact, so its cleanliness must be re-verified, not assumed — swap in the clean backup, restart, verify via SERVING value (real tool calls + data plausibility, not just the health badge). Also worth root-causing why the named-volume/bind-mount mitigations from 2026-04-25/07-13 have not fully closed this class (3rd+ occurrence now) — may need synchronous=FULL or DELETE journal mode per the original mitigation's own deferred candidate list.",
-        "recurrence_policy": "recurring-bug-escalation — 3rd+ occurrence of the same class (2026-04-25, 2026-07-13, 2026-07-30 [+ possible unresolved 2026-07-19])",
-        "source": "dev-mcp-server live restart during FIX-VNINDEX-CACHE-STARTUP-PURGE verification, 2026-07-30T03:58-04:05Z",
-        "note": "NOT fixed by dev-mcp-server — outside zone (cross-service/infra) and role (Infrastructure/Docker operations is explicitly ops's job per dev-mcp-server init.md). Reported here per standing recurring-bug-escalation policy; no MCP/gateway tool grant this session so could not send_telegram(bug) — coordinating dev-team/router session must escalate immediately, this is live production data corruption happening on every cron cycle right now."
       },
       {
         "id": "FIX-MONTHLYSIGNALQUALITYAUDITJOB-MISSED-JULY-RECOVER-GUARD",
@@ -17746,9 +17702,62 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-30T07:43:55Z",
+    "last_triaged_at": "2026-07-30T08:07:31Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": []
+    "in_progress": [
+      {
+        "id": "FIX-AUDITOR-A12-PROBE-TIMEOUT-EXITCODE-DEBOUNCE",
+        "type": "FIX",
+        "status": "IN_PROGRESS",
+        "priority": "P2",
+        "size": "S",
+        "zone": "cross-service/",
+        "owner": "architect",
+        "next_agent": "developer",
+        "supervised": false,
+        "plan_only": false,
+        "created_at": "2026-07-29T09:10:55Z",
+        "updated_at": "2026-07-30T08:08:24Z",
+        "created_by": "architect/spike-20260729-apigw-health-split",
+        "source": "SPIKE-DASHBOARD-TIER-HEALTH-CURL-ERR-FLAP (Half A -- detection side)",
+        "parent": "SPIKE-DASHBOARD-TIER-HEALTH-CURL-ERR-FLAP",
+        "title": "system-auditor A-12 (and any live A-04/A-13 equivalent) health probe collapses every curl failure mode (timeout/refused/DNS) to one CURL_ERR token and glosses it as \"unreachable\" -- raise/repoint the client budget, capture curl exit code, wire the deferred N-consecutive debounce (scope item 2 of DONE FIX-AUDITOR-A12A20A30-FP-REEMIT-CONVERGE), fix the emitted summary wording",
+        "files": [
+          "docs/agents/system-auditor/probe.sh",
+          "scripts/emit-audit-signal.sh"
+        ],
+        "note": "A1: raise probe.sh:48 --max-time above the realistic cold-fanout cost now (cheap floor); repoint to api-gateway:4000/healthz once Half B's liveness route ships (soft-blocked on that, not hard-depends). A2: capture curl exit code, classify (28=CLIENT_TIMEOUT/7=CONN_REFUSED/6=DNS_FAIL/52=EMPTY_REPLY), stop collapsing to CURL_ERR. A3: wire the N-consecutive debounce from the DONE wrapper scope item 2 -- ONLY alongside A1/A2, never alone (would silence a real worsening latency regression). A4: fix \"unreachable\" gloss wherever templated -- audit all 8/14 historical A-12 rows' phrasing source. A5 (unresolved, confirm before touching): no live file defines check-id A-04 anywhere in docs/agents/system-auditor/ or scripts/ (repo-wide grep, live tree, zero hits outside one archived handoff doc) -- confirm whether A-04/A-13 are a live Tier-2/3 check on the same route or a stale label before assuming either. Design doc: docs/architecture-briefs/2026-07-29-apigw-health-capability-probe-latency.md section 5. ADDENDUM 09:15Z: fresh 23-sample re-measurement confirms the class is sustained/continuous (26% of a 7-minute sample exceed 3000ms), not a rare edge case -- do not close A1-A4 as 'debounce the occasional blip', the underlying cost must actually drop (Half B) for the debounce to be safe per A3's own caveat.",
+        "cross_row_interaction": "A1's repoint sub-item only lands after FIX-APIGW-HEALTH-CAPABILITY-PROBE-GATE-PARALLEL-SINGLEFLIGHT's /healthz decoupling (B4) ships and is verified -- everything else here (A2-A5) is independent.",
+        "verification_gate": "curl exit code captured and classified in probe.sh output (not bare CURL_ERR); emitted signal summary states the observed fact (e.g. \"client timeout after 3000ms\") never \"unreachable\" for a timeout; debounce ships together with, not instead of, the exit-code fix.",
+        "recurring_bug_count": 1,
+        "promoted_at": "2026-07-30T08:07:31Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
+        "claimed_at": "2026-07-30T08:08:14Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)"
+      },
+      {
+        "id": "FIX-SQLITE-DOCKER-VIRT-CORRUPTION-RECUR-20260730",
+        "title": "market.db SQLite corruption RECURRED live 2026-07-30 (3rd+ occurrence of the known FIX-SQLITE-DOCKER-VIRT-CORRUPTION class) — daily_ohlcv/cron_job_runs/system_logs/pdf_extracted_text corrupted, silently degrading OHLCV push, prediction-market-job, taAlertScan/bbAlertScan every cycle",
+        "type": "FIX",
+        "priority": "P0",
+        "status": "IN_PROGRESS",
+        "zone": "cross-service/",
+        "owner": "ops",
+        "next_agent": "ops",
+        "created_by": "dev-mcp-server",
+        "created_at": "2026-07-30T04:10:09Z",
+        "updated_at": "2026-07-30T08:18:57Z",
+        "root_cause": "Same class as docs/incidents/2026-07-13-sqlite-db-corruption-restart-loop.md and the 2026-04-25 event (docker-virt-corruption memory): macOS com.apple.Virtualization.VirtualMachine process holds an fd on market.db-shm during container stop; torn SHM write -> SQLITE_CORRUPT (errno 11) surfaces on next open/read of the affected pages. Discovered live 2026-07-30T03:58Z during a routine single-service mcp-server restart (unrelated task FIX-VNINDEX-CACHE-STARTUP-PURGE). data/live/market.db.corrupt-20260719-1125Z + .pre-salvage-20260719-202912Z + .salvage-attempt-failed-20260719T203907Z artifacts on disk suggest this may trace to an incompletely-recovered 2026-07-19 event rather than a brand-new one.",
+        "evidence": "PRAGMA quick_check (host sqlite3 CLI AND independently confirmed via the live container's own bun:sqlite runtime, readonly connection, not just host CLI — ruling out a host-CLI/WAL false-positive) shows real corruption in tables: daily_ohlcv, cron_job_runs, system_logs, pdf_extracted_text + their indexes (idx_syslog_level, idx_syslog_source, idx_pdf_filename, idx_pet_filename, idx_system_logs_ts, idx_system_logs_level, idx_system_logs_resolved, idx_pet_action_code, idx_cron_job_runs_job_started) — 15 distinct corrupted trees total. 282 \"database disk image is malformed\" errors logged in the first 6 live minutes post-restart, hitting push-ohlcv-history, prediction-market-job, taAlertScan (dozens of tickers), bbAlertScan every cycle. Container itself is STABLE (not crash-looping, healthy, RestartCount=0) unlike the acute 2026-07-13 crash-loop pattern — this is a silent, ongoing degradation, not an outage, which is why health checks alone would not surface it (feedback_passive_health_masks_dead_data). vn_index_cache (this session's own touched table) independently confirmed healthy/unaffected.",
+        "recommended_action": "Follow the established recovery playbook from docs/incidents/2026-07-13-sqlite-db-corruption-restart-loop.md: STOP further restarts, BACKUP the current corrupt market.db first (timestamped), locate/verify a CLEAN backup (PRAGMA integrity_check=ok) — data/live/market.db.backup (2026-07-19T22:31Z) is present but is 11 days stale AND sits next to a same-day salvage-attempt-failed artifact, so its cleanliness must be re-verified, not assumed — swap in the clean backup, restart, verify via SERVING value (real tool calls + data plausibility, not just the health badge). Also worth root-causing why the named-volume/bind-mount mitigations from 2026-04-25/07-13 have not fully closed this class (3rd+ occurrence now) — may need synchronous=FULL or DELETE journal mode per the original mitigation's own deferred candidate list.",
+        "recurrence_policy": "recurring-bug-escalation — 3rd+ occurrence of the same class (2026-04-25, 2026-07-13, 2026-07-30 [+ possible unresolved 2026-07-19])",
+        "source": "dev-mcp-server live restart during FIX-VNINDEX-CACHE-STARTUP-PURGE verification, 2026-07-30T03:58-04:05Z",
+        "note": "NOT fixed by dev-mcp-server — outside zone (cross-service/infra) and role (Infrastructure/Docker operations is explicitly ops's job per dev-mcp-server init.md). Reported here per standing recurring-bug-escalation policy; no MCP/gateway tool grant this session so could not send_telegram(bug) — coordinating dev-team/router session must escalate immediately, this is live production data corruption happening on every cron cycle right now.",
+        "claimed_at": "2026-07-30T08:18:57Z",
+        "claimed_by": "dev-team (manual P0 escalation, 4th recurrence confirmed by alert-commander)"
+      }
+    ]
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
