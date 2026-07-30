@@ -93,12 +93,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "active_task_id": null,
-    "next_agent": "router",
-    "next_action": "idle -- CCATO-MCP-T1-DOMAIN-ENGINE self-closeout (dev-mcp-server), branch:null direct-execute path, router should pick up next Ready-Lane/BOUNDED-1 candidate",
-    "updated_at": "2026-07-30T19:25:33Z",
-    "updated_by": "dev-mcp-server (CCATO-MCP-T1-DOMAIN-ENGINE self-closeout)"
+    "status": "in_progress",
+    "active_task_id": "FIX-BCTC-LAYOUT-PUSH-FAILURE-NETWORK-DEADLOCK",
+    "next_agent": "dev-pdf-extractor",
+    "next_action": "locate missing /extract-layout-first trigger per ops diagnostic",
+    "updated_at": "2026-07-30T19:46:41Z",
+    "updated_by": "dev-team (ops handoff, direct dispatch of P0)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -8986,27 +8986,6 @@
         "updated_by": "po/triage-20260728T13"
       },
       {
-        "id": "FIX-FLEET-PUSH-LAUNCHD-EXCONFIG-SILENT-DEAD",
-        "type": "FIX",
-        "title": "com.vn-market.fleet-push has not executed its script in ~19 days: launchd reports EX_CONFIG (78) across 522 runs and the script body never starts — the push backstop is 100% dark and 100% silent",
-        "status": "BACKLOG",
-        "priority": "high",
-        "zone": "cross-service/",
-        "owner": "ops",
-        "created_at": "2026-07-22T16:02:26Z",
-        "created_by": "po/cron-audit-sequencing-20260722",
-        "status_note": "PO SEQUENCE RANK 2. PO RULING: this is NOT the reconcile task the audit described. See po_ruling_no_reconcile_needed below BEFORE starting — chasing the log tails will burn a cycle on a premise that resolved weeks ago.",
-        "po_ruling_no_reconcile_needed": "NO MANUAL RECONCILE IS REQUIRED — the divergence does not exist today. Verified 2026-07-22T15:52Z: `git rev-list --left-right --count origin/main...HEAD` = 0 behind / 1 ahead, so the behind-set is EMPTY. `git cat-file -e` confirms apps/mcp-server/src/__tests__/CONTAM-7-ohlcv-unit-contam-integration.test.ts is present in BOTH HEAD and origin/main — the cited abort trigger is resolved, as is the later 8-file behind-set (alertStore.ts, orchStateSchema.ts, improvementSignalWriter.ts, 5 tests). The merge-conflict aborts (docs/agent-memory/notebooks/tran-ngoc-bau.md, docs/handoffs/tnb-audit-latest.md) require a merge, and with 0 behind there is no merge. Those log lines are HISTORY, not current behavior: fleet-push-error.log last write 2026-06-27, fleet-push.log last write 2026-07-03.",
-        "real_defect_verified_by_po": "`launchctl print gui/501/com.vn-market.fleet-push` -> state=not running, runs=522, last exit code = 78: EX_CONFIG, run interval 1800s. ZERO bytes written to either log since 2026-07-03. scripts/fleet-worktree-push.sh echoes '[fleet-push] ahead=N threshold=20' as its FIRST statement after setup, so an empty log proves the body never runs. PO ran the identical command by hand: `/bin/bash scripts/fleet-worktree-push.sh` -> printed both lines, RC=0 (below-threshold no-op path, line 187). The script is healthy; the failure is at the launchd spawn/exec layer.",
-        "ruled_out_by_po": "NOT TCC/Full-Disk-Access on ~/Documents — com.vn-market.cowork-guaranteed-slot-firer writes to the SAME docs/agent-memory/sessions/ directory with 815 runs and exit 0. NOT bash-3.2 incompatibility — `/bin/bash -n` is clean and the script uses zero bash-4 constructs despite its header claiming 'bash 4+ required'. NOT a malformed plist — `plutil -lint` returns OK. NOT any script exit path — the script's only exit codes are 0 and 1; it never returns 78.",
-        "why_this_matters": "The abort path was at least LOUD: it echoed to stderr, called send_tg bug, and called emit_abort_signal. The current failure emits NOTHING anywhere, because all three of those live INSIDE the script that never runs. A backstop that fails silently is worse than one that aborts loudly. Blast radius is currently bounded only because something else (the router/PO push path) has been keeping the repo at 1 commit ahead.",
-        "acceptance": "launchctl print shows last exit code 0 AND fleet-push.log receives a fresh dated '[fleet-push] ahead=N threshold=20' line from a launchd-initiated run (not a hand run). Plus: the failure mode must become detectable — see FIX-LAUNCHD-PROBE-PRESENCE-ONLY-FALSE-GREEN, which should land FIRST.",
-        "updated_at": "2026-07-23T18:08:33Z",
-        "next_agent": "ops",
-        "po_unblock_dispatch_at": "2026-07-23T18:03:58Z",
-        "po_unblock_dispatch_note": "PO 2026-07-23 signal-triage: set next_agent=ops (was null -> null-next_agent stall, could not be picked up). Prioritized per TIER1-PROBE-LAUNCHD-EXITSTATUS-CHURN escalation ask(2) + repeated auditor microservice_degraded signals. exit-78 EX_CONFIG launchd config repair is operational (ops)."
-      },
-      {
         "id": "ARCH-SESSION-CRON-PLANE-LIVENESS-WATCHDOG",
         "type": "SPRINT-S",
         "title": "Session-scoped CronCreate loops are invisible and unpersisted across 5 CLI sessions — build the launchd-hosted liveness watchdog that turns 'a session died and its whole loop vanished' from silent into a BUG-channel alert",
@@ -10920,30 +10899,6 @@
         "depends_on": [
           "FIX-SPRINT-REGISTRY-DANGLING-IDS-BREAK-SIGNOFF-AND-JOURNAL-ARCHIVE"
         ]
-      },
-      {
-        "id": "FIX-BCTC-LAYOUT-PUSH-FAILURE-NETWORK-DEADLOCK",
-        "type": "FIX",
-        "mode": "fix",
-        "status": "BACKLOG",
-        "priority": "P0",
-        "size": "M",
-        "zone": "multi",
-        "owner": "ops",
-        "next_agent": "ops",
-        "co_owner": "dev-pdf-extractor",
-        "title": "FIX (P0): BCTC PEK-layout extraction stalled — OCR gateway child process deadlock + network push failure prevents result recovery",
-        "question": "Why did PEK-layout extraction go dormant again on 2026-07-28 (55+ hours stale) despite weights being present?",
-        "detail": "Production probe 2026-07-30T17:47Z found bctc_layout_units stalled at 2026-07-28 11:06:59Z. Weights present. Root cause: OCR gateway child-process bookkeeping defect + LayoutFirstPushClient network failure.",
-        "ac": "Debug OCR gateway semaphore. Verify mcp-server reachability. Check port/firewall config.",
-        "related": [
-          "SPIKE-BCTC-EXTRACTION-DORMANT-MASS-ENRICHFAIL-FLOOD"
-        ],
-        "created_at": "2026-07-30T17:47:00Z",
-        "created_by": "ops-dispatch-supervised-lane-sweep",
-        "updated_at": "2026-07-30T19:27:33Z",
-        "po_zone_correction_20260730": "zone was \"data\" — not one of the three legal values (apps/<service>/ | multi | cross-service/) per docs/agents/po/flow/main.md. Corrected to multi: root cause per docs/spikes/SPIKE-BCTC-EXTRACTION-DORMANT-MASS-ENRICHFAIL-FLOOD.md spans pdf-extractor (missing /app/PDF-Extract-Kit/models/Layout/YOLO/doclayout_yolo_ft.pt -> _PekLayoutModel load FAILED on every /pek-extract) AND mcp-server (bctcExtractReconcileJob rows_written=0 in 166/167 runs).",
-        "po_dispatch_note_20260730": "NO PICKER EXISTS FOR THIS ROW — PO-dispatched via BATCH instead. RAW-verified against scripts/lib/devteam-eligibility.jq: BOUNDED-1 gated (is_non_dev_next_agent_unrouted, next_agent=ops is not ^dev(-|$)|^developer$); SLS gated (requires effective_supervised AND effective_plan_only BOTH true, this row has both null); DRS gated (is_design_router_allowed — ops is EXPLICITLY off the ratified 2026-07-30 default allowlist [architect,ba,pm,po,agents-architect], see devteam-eligibility.jq:436-440); RLC is ready[]-only; QA-Drain is review[]-only. Zero of five pickers. Structural class tracked by FIX-DEVTEAM-NONDEV-NEXTAGENT-RESIDUAL-NO-DISPATCH-DESTINATION."
       },
       {
         "id": "TASK-COWORK-MUTEX-001",
@@ -18040,6 +17995,27 @@
         "entered_review_at": "2026-07-30T19:25:33Z",
         "branch": null,
         "review_note": "T1 of 8 (SPRINT-CCATO-TRUTHGATE-MCP-NATIVE, architect brief docs/architecture-briefs/2026-07-17-ccato-truthgate-mcp-native.md). Ported pure scan/classify/quarter-resolve engine from scripts/narrative-truth-gate.sh into apps/mcp-server/src/domain/services/narrativeTruthGate/{claimCandidateScanner,verdictClassifier,quarterResolver}.ts (zero I/O, byte-faithful port of script L144-163+236-278+280-323). New CCATO-MCP-T1-DOMAIN-ENGINE.test.ts (28 tests) incl. the architecture brief S5.1 hard AC: side-by-side fixture parity vs. the REAL unmodified bash engine (Bun.serve stub gateway forces FAIL classification so claim_text is recoverable from stdout; NTG_SKIP_SIGNAL_EMIT=1, no orch-state write) against docs/social/fb-post-2026-06-30.md + docs/data/claim-tool-map.json -- byte-identical candidate sets, R-1 regex-divergence risk closed empirically. Evidence: bun tsc --noEmit clean; new test file 28/28 pass; full bun test 14946-14947 pass/40 skip/52-53 fail (within standing pre-existing-flake band 52-59, grep-confirmed zero named fails touch new code, zero existing files modified so regression is structurally impossible); tool/scheduler counts unchanged 184/88 (T1 registers no MCP tool -- thats T6); server boot log confirmed clean import + toolCount:184. Doc-review: domain-model.md + testing.md updated. Decision journal: docs/agent-memory/decisions/sprint-SPRINT-CCATO-TRUTHGATE-MCP-NATIVE-dev-mcp-server.md. QA: verify the 4 new files + re-run CCATO-MCP-T1-DOMAIN-ENGINE.test.ts; downstream tasks T2-T8 are separate not-yet-landed board rows of the same sprint."
+      },
+      {
+        "id": "FIX-FLEET-PUSH-LAUNCHD-EXCONFIG-SILENT-DEAD",
+        "type": "FIX",
+        "title": "com.vn-market.fleet-push has not executed its script in ~19 days: launchd reports EX_CONFIG (78) across 522 runs and the script body never starts — the push backstop is 100% dark and 100% silent",
+        "status": "REVIEW",
+        "priority": "high",
+        "zone": "cross-service/",
+        "owner": "ops",
+        "created_at": "2026-07-22T16:02:26Z",
+        "created_by": "po/cron-audit-sequencing-20260722",
+        "status_note": "ops root-caused + fixed 2026-07-30T21:5xZ, RAW-verified by dev-team: launchctl now last exit=0 (was 78), fleet-push.log shows a genuine fresh launchd-initiated push (4b2ae4446..bd6a27013, target SHA independently confirmed = dev-team own same-tick commit), git rev-list origin/main...HEAD = 0 behind after fetch. Fix: deleted stale docs/agent-memory/sessions/fleet-push.log + fleet-push-error.log -- launchd exec-layer open() on those files was failing before the script body could even start; fresh files let it spawn cleanly. Decision journal: docs/agent-memory/decisions/sprint-2026-07-30-ops.md. Companion detector FIX-LAUNCHD-PROBE-PRESENCE-ONLY-FALSE-GREEN still sits REVIEW/next_agent=qa (PO sequence rank 1, was meant to land first but did not block this) -- worth nudging QA on separately.",
+        "po_ruling_no_reconcile_needed": "NO MANUAL RECONCILE IS REQUIRED — the divergence does not exist today. Verified 2026-07-22T15:52Z: `git rev-list --left-right --count origin/main...HEAD` = 0 behind / 1 ahead, so the behind-set is EMPTY. `git cat-file -e` confirms apps/mcp-server/src/__tests__/CONTAM-7-ohlcv-unit-contam-integration.test.ts is present in BOTH HEAD and origin/main — the cited abort trigger is resolved, as is the later 8-file behind-set (alertStore.ts, orchStateSchema.ts, improvementSignalWriter.ts, 5 tests). The merge-conflict aborts (docs/agent-memory/notebooks/tran-ngoc-bau.md, docs/handoffs/tnb-audit-latest.md) require a merge, and with 0 behind there is no merge. Those log lines are HISTORY, not current behavior: fleet-push-error.log last write 2026-06-27, fleet-push.log last write 2026-07-03.",
+        "real_defect_verified_by_po": "`launchctl print gui/501/com.vn-market.fleet-push` -> state=not running, runs=522, last exit code = 78: EX_CONFIG, run interval 1800s. ZERO bytes written to either log since 2026-07-03. scripts/fleet-worktree-push.sh echoes '[fleet-push] ahead=N threshold=20' as its FIRST statement after setup, so an empty log proves the body never runs. PO ran the identical command by hand: `/bin/bash scripts/fleet-worktree-push.sh` -> printed both lines, RC=0 (below-threshold no-op path, line 187). The script is healthy; the failure is at the launchd spawn/exec layer.",
+        "ruled_out_by_po": "NOT TCC/Full-Disk-Access on ~/Documents — com.vn-market.cowork-guaranteed-slot-firer writes to the SAME docs/agent-memory/sessions/ directory with 815 runs and exit 0. NOT bash-3.2 incompatibility — `/bin/bash -n` is clean and the script uses zero bash-4 constructs despite its header claiming 'bash 4+ required'. NOT a malformed plist — `plutil -lint` returns OK. NOT any script exit path — the script's only exit codes are 0 and 1; it never returns 78.",
+        "why_this_matters": "The abort path was at least LOUD: it echoed to stderr, called send_tg bug, and called emit_abort_signal. The current failure emits NOTHING anywhere, because all three of those live INSIDE the script that never runs. A backstop that fails silently is worse than one that aborts loudly. Blast radius is currently bounded only because something else (the router/PO push path) has been keeping the repo at 1 commit ahead.",
+        "acceptance": "launchctl print shows last exit code 0 AND fleet-push.log receives a fresh dated '[fleet-push] ahead=N threshold=20' line from a launchd-initiated run (not a hand run). Plus: the failure mode must become detectable — see FIX-LAUNCHD-PROBE-PRESENCE-ONLY-FALSE-GREEN, which should land FIRST.",
+        "updated_at": "2026-07-30T19:54:50Z",
+        "next_agent": "po",
+        "po_unblock_dispatch_at": "2026-07-23T18:03:58Z",
+        "po_unblock_dispatch_note": "PO 2026-07-23 signal-triage: set next_agent=ops (was null -> null-next_agent stall, could not be picked up). Prioritized per TIER1-PROBE-LAUNCHD-EXITSTATUS-CHURN escalation ask(2) + repeated auditor microservice_degraded signals. exit-78 EX_CONFIG launchd config repair is operational (ops)."
       }
     ],
     "qa": [],
@@ -18061,7 +18037,33 @@
     },
     "last_triaged_at": "2026-07-30T19:27:33Z",
     "last_triaged_by": "po/triage-20260730T1907Z",
-    "in_progress": []
+    "in_progress": [
+      {
+        "id": "FIX-BCTC-LAYOUT-PUSH-FAILURE-NETWORK-DEADLOCK",
+        "type": "FIX",
+        "mode": "fix",
+        "status": "IN_PROGRESS",
+        "priority": "P0",
+        "size": "M",
+        "zone": "multi",
+        "owner": "ops",
+        "next_agent": "dev-pdf-extractor",
+        "co_owner": "dev-pdf-extractor",
+        "title": "FIX (P0): BCTC PEK-layout extraction stalled — OCR gateway child process deadlock + network push failure prevents result recovery",
+        "question": "Why did PEK-layout extraction go dormant again on 2026-07-28 (55+ hours stale) despite weights being present?",
+        "detail": "Production probe 2026-07-30T17:47Z found bctc_layout_units stalled at 2026-07-28 11:06:59Z. Weights present. Root cause: OCR gateway child-process bookkeeping defect + LayoutFirstPushClient network failure.",
+        "ac": "Debug OCR gateway semaphore. Verify mcp-server reachability. Check port/firewall config.",
+        "related": [
+          "SPIKE-BCTC-EXTRACTION-DORMANT-MASS-ENRICHFAIL-FLOOD"
+        ],
+        "created_at": "2026-07-30T17:47:00Z",
+        "created_by": "ops-dispatch-supervised-lane-sweep",
+        "updated_at": "2026-07-30T19:46:41Z",
+        "po_zone_correction_20260730": "zone was \"data\" — not one of the three legal values (apps/<service>/ | multi | cross-service/) per docs/agents/po/flow/main.md. Corrected to multi: root cause per docs/spikes/SPIKE-BCTC-EXTRACTION-DORMANT-MASS-ENRICHFAIL-FLOOD.md spans pdf-extractor (missing /app/PDF-Extract-Kit/models/Layout/YOLO/doclayout_yolo_ft.pt -> _PekLayoutModel load FAILED on every /pek-extract) AND mcp-server (bctcExtractReconcileJob rows_written=0 in 166/167 runs).",
+        "po_dispatch_note_20260730": "NO PICKER EXISTS FOR THIS ROW — PO-dispatched via BATCH instead. RAW-verified against scripts/lib/devteam-eligibility.jq: BOUNDED-1 gated (is_non_dev_next_agent_unrouted, next_agent=ops is not ^dev(-|$)|^developer$); SLS gated (requires effective_supervised AND effective_plan_only BOTH true, this row has both null); DRS gated (is_design_router_allowed — ops is EXPLICITLY off the ratified 2026-07-30 default allowlist [architect,ba,pm,po,agents-architect], see devteam-eligibility.jq:436-440); RLC is ready[]-only; QA-Drain is review[]-only. Zero of five pickers. Structural class tracked by FIX-DEVTEAM-NONDEV-NEXTAGENT-RESIDUAL-NO-DISPATCH-DESTINATION.",
+        "ops_diagnostic_20260730": "ops investigated 2026-07-30T21:50Z (journal: docs/agent-memory/decisions/sprint-OPS-FIX-BCTC-LAYOUT-DEADLOCK-2026-07-30.md, commit bdc0c7e62). OCR gateway deadlock hypothesis TRANSIENT/cleared by 07-28T18:04Z restart (healthy now). Network push failure INCONCLUSIVE (connectivity verified OK, zero push-bctc-layout calls seen). PRIMARY DEFECT: no caller of POST /extract-layout-first found anywhere in mcp-server codebase -- the extraction trigger mechanism itself is missing/undiscovered. No infra/network code change needed. dev-pdf-extractor must locate what is (or should be) invoking /extract-layout-first (cron/scheduler registration, webhook, or manual-only path) and restore it."
+      }
+    ]
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
