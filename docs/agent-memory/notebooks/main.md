@@ -1,6 +1,15 @@
 # Dev Team — Sprint Boundary Notebook
 
-**Written:** 2026-07-30T05:22Z
+**Written:** 2026-07-30T05:44Z
+
+## cycle-20260730T0544Z-verify — RAW-verified developer's FIX-ORCHSTATE-BLOCKS-FIELD-WRITE-ONLY-DECORATIVE completion; all 6 AC points independently confirmed, task lock released
+
+- **Guard code matches claim exactly**: diff of `5ee697852` — new `checkDecorativeSequencingFields()` (`orchStateSchema.ts` §12) wired as `orch-validate.mjs` Stage 1e (hard fail). `blocks` must be empty or backed by the target's own `depends_on`/`depends`/`blocked_by`, else REJECTED; `co_edit` rejected unconditionally (no forward-field equivalent exists) — matches AC-1/AC-6.
+- **Tests independently re-run, not trusted from self-report**: `FIX-ORCHSTATE-BLOCKS-FIELD-WRITE-ONLY-DECORATIVE.test.ts` 11/11 pass, including two explicitly-named AC-3 negative-control tests (a new reverse-only `blocks` edge caught, a new `co_edit` value caught unconditionally). `orch-backlog-stub.test.sh` 7/7 pass — T2 is a genuine regression control: it reproduces the OLD buggy `STUB_FIELDS` list actually silently re-opening the gate (`deps_satisfied()` wrongly returns `true`), while T1 proves the fixed default keeps it closed — AC-4 satisfied by execution, not by reading the field. `orchStateSchema.test.ts` 104/104 unaffected.
+- **Live migration verified at the data layer, not just the diff**: `bash scripts/orch-state-validate.sh` exits 0 clean on the live post-migration file — meaning every one of the 6 rows still carrying a non-empty `blocks` array is mechanically confirmed backed by the new Stage-1e rule itself, not self-reported. `FIX-MCP-SUITE-HEALTH-BASELINE`'s malformed prose value preserved under `migrated_blocks_prose` (not discarded). Both `co_edit` rows preserved under `migrated_co_edit_partner`, zero live `co_edit` values remain. Developer found 4 more `blocks`-carrying rows than PO's 2026-07-25 snapshot (5 days of drift) — disclosed, not hidden.
+- **AC-5 confirmed**: `git show --stat 5ee697852 -- docs/data/orch/archive/backlog-detail.json` is empty — file untouched, no hand-edit.
+- **Decision journal entry confirmed present** (`sprint-COWORK-GUARANTEED-SLOT-CATCHUP-developer.md`, STEP developer-S35). Board flip genuine: row `review[]`/`next_agent:qa`, `.head` reset to idle/router. `task:FIX-ORCHSTATE-BLOCKS-FIELD-WRITE-ONLY-DECORATIVE` released clean (developer had no gateway grant to release it itself).
+- **NEXT**: nothing further from this session on this row — queued for QA drain. WIP now 0 again; next idle-fallthrough tick should run RLC and pick up one of the 2 CI-RED FIX rows still staged in `ready[]`. P0 SQLite corruption still needs ops pickup (escalated CRITICAL by news-scout last tick).
 
 ## cycle-20260730T0507Z-tick — Tick 05:07Z: FIX-SLA-BCTC-THRESHOLD RAW-verified+released (all 5 AC confirmed independently); self-caught a lock-ordering bug mid-tick; BOUNDED-1 dispatched FIX-ORCHSTATE-BLOCKS-FIELD; P0 corruption escalated CRITICAL by news-scout
 
