@@ -21,7 +21,11 @@
  *   commodity_prices     — monitors commodity_prices.fetched_at (daily; 36h SLA)
  *   broker_sanctions     — monitors broker_sanctions.created_at (quarterly; 2160h SLA)
  *   backtest_runs        — monitors backtest_runs.run_at (daily; 36h SLA)
- *   signal_quality_audit — monitors signal_quality_audit.created_at (event-driven; 48h SLA)
+ *   signal_quality_audit — monitors signal_quality_audit.created_at (event-driven,
+ *     sparse cadence; 30d/43200min SLA — see FIX-SLA-SIGNALQUALITYAUDIT-MONTHLY-
+ *     CADENCE-MISCLASSIFIED-48H doc block below on DEFAULT_SLA_CONFIG for the
+ *     corrected root-cause: this table's writer is NOT the same-named
+ *     `monthlySignalQualityAuditJob` cron)
  *   prediction_claims    — monitors prediction_claims.created_at (event-driven; 168h SLA)
  */
 export type SignalType =
@@ -130,7 +134,8 @@ export interface SignalSlaConfig {
  * - commodity_prices: 2160 min = 36h (daily cadence + 1.5× window)
  * - broker_sanctions: 129600 min = 2160h = 90 days (quarterly; observability only)
  * - backtest_runs: 2160 min = 36h (daily job + 1.5× window)
- * - signal_quality_audit: 2880 min = 48h (event-driven; tolerate quiet periods)
+ * - signal_quality_audit: 43200 min = 30d (event-driven, sparse cadence — see
+ *   FIX-SLA-SIGNALQUALITYAUDIT-MONTHLY-CADENCE-MISCLASSIFIED-48H below)
  * - prediction_claims: 10080 min = 168h (weekly minimum cadence)
  */
 export const DEFAULT_SLA_CONFIG: SignalSlaConfig[] = [
@@ -183,7 +188,29 @@ export const DEFAULT_SLA_CONFIG: SignalSlaConfig[] = [
   },
   {
     signalType: "signal_quality_audit",
-    defaultThresholdMinutes: 48 * 60, // 2880 min = 48h (event-driven)
+    // FIX-SLA-SIGNALQUALITYAUDIT-MONTHLY-CADENCE-MISCLASSIFIED-48H (2026-07-30) —
+    // root-cause correction. This row's own title/hypothesis (and the prior
+    // 48h value) assumed signal_quality_audit.created_at tracks the
+    // same-named `monthlySignalQualityAuditJob` cron (`0 0 1 * *`, see
+    // schedulerJobTable.ts:227 / cronConfig.ts:129). Read at source, that is
+    // FALSE: monthlySignalQualityAuditJob only queries signal_rejections and
+    // sends a Telegram WORK report — it never writes signal_quality_audit.
+    // The table's ONLY writer is insertSignalQualityAudit() (infrastructure/
+    // db/signalQualityAuditStore.ts), called from ONE call site:
+    // interface/mcp/tools/news-analysis/agentSignalTools.ts's post_agent_signal
+    // handler, and only when signal_type is 'price_confirmation' or
+    // 'urgent_news' AND finding_data.confidence is a number. That really is
+    // event-driven, exactly as the pre-fix comment said — but production
+    // history shows the event is naturally SPARSE (6 rows total, real gaps of
+    // >2 weeks between them even in a healthy period; last row observed
+    // 2026-06-05T20:12Z), so the 48h constant was simply too tight for how
+    // rarely qualifying agents actually post these two signal types with a
+    // confidence field — it fired CRITICAL almost permanently regardless of
+    // whether anything was actually wrong. 30d/43200min tolerates that
+    // observed real-world quiet-period length while still catching genuine
+    // multi-week dead spots (a >45d CRITICAL escalation, e.g. the confirmed
+    // ~52.8d gap this fix was filed against, still fires under the new value).
+    defaultThresholdMinutes: 30 * 24 * 60, // 43200 min = 30d
   },
   {
     signalType: "prediction_claims",

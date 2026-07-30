@@ -321,10 +321,10 @@ describe("1920i — TC-6: New signal types in DEFAULT_SLA_CONFIG", () => {
     expect(cfg!.defaultThresholdMinutes).toBe(36 * 60); // 2160 minutes
   });
 
-  it("TC-6f: DEFAULT_SLA_CONFIG contains signal_quality_audit with 48h threshold", () => {
+  it("TC-6f: DEFAULT_SLA_CONFIG contains signal_quality_audit with 30d threshold (FIX-SLA-SIGNALQUALITYAUDIT-MONTHLY-CADENCE-MISCLASSIFIED-48H: was 48h, too tight for this table's actually-sparse event-driven writer — see FIX-SLA-SIGNALQUALITYAUDIT-MONTHLY-CADENCE-MISCLASSIFIED-48H.test.ts)", () => {
     const cfg = DEFAULT_SLA_CONFIG.find(c => c.signalType === "signal_quality_audit" as SignalType);
     expect(cfg).toBeDefined();
-    expect(cfg!.defaultThresholdMinutes).toBe(48 * 60); // 2880 minutes
+    expect(cfg!.defaultThresholdMinutes).toBe(30 * 24 * 60); // 43200 minutes
   });
 
   it("TC-6g: DEFAULT_SLA_CONFIG contains prediction_claims with 168h threshold", () => {

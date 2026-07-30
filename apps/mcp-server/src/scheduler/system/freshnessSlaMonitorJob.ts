@@ -94,7 +94,11 @@ export function querySignalAges(
   //   commodity_prices     — commodity_prices.fetched_at (daily 06:00 UTC; 36h SLA)
   //   broker_sanctions     — broker_sanctions.created_at (quarterly; 2160h SLA)
   //   backtest_runs        — backtest_runs.run_at (daily; 36h SLA)
-  //   signal_quality_audit — signal_quality_audit.created_at (event-driven; 48h SLA)
+  //   signal_quality_audit — signal_quality_audit.created_at (event-driven via
+  //       post_agent_signal's price_confirmation/urgent_news + confidence path
+  //       ONLY — NOT the same-named monthlySignalQualityAuditJob cron, which
+  //       writes nothing to this table; sparse real cadence, 30d/43200min SLA —
+  //       see FIX-SLA-SIGNALQUALITYAUDIT-MONTHLY-CADENCE-MISCLASSIFIED-48H)
   //   prediction_claims    — prediction_claims.created_at (event-driven; 168h SLA)
   const rows = db
     .query<AgeRow, [number, number, number, number, number, number, number, number, number, number, number, number]>(
