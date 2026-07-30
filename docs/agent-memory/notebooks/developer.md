@@ -1,6 +1,24 @@
 # Developer — Notebook
 
-**Last updated:** 2026-07-30 | **Cycle:** FIX-AUDITOR-T1-PREGATE-MEMCREEP-SINGLE-POINT-SAMPLE
+**Last updated:** 2026-07-30 | **Cycle:** FIX-AUDITOR-A12-PROBE-TIMEOUT-EXITCODE-DEBOUNCE
+
+## Session 2026-07-30 — FIX-AUDITOR-A12-PROBE-TIMEOUT-EXITCODE-DEBOUNCE — REVIEW
+
+**Task:** dev-team BOUNDED-1 auto-pickup (`cross-service/`). system-auditor A-12 health probe collapsed every curl failure mode (timeout/refused/DNS) to one `CURL_ERR` token and glossed it as "unreachable"; deferred N-consecutive debounce from DONE `FIX-AUDITOR-A12A20A30-FP-REEMIT-CONVERGE` scope item 2.
+
+**Actions taken:** A1 `probe.sh:48` `--max-time` 3s→5s (floor only, repoint half stays soft-blocked on `FIX-APIGW-HEALTH-CAPABILITY-PROBE-GATE-PARALLEL-SINGLEFLIGHT`, still BACKLOG). A2 new `_classify_curl_exit()` (28/7/6/52→named reasons, else `CURL_ERR_n`), applied only to the transport-failure branch (real non-200 HTTP unchanged). Wrapped `probe.sh`'s body in a standalone-execution guard (mirrors `emit-audit-signal.sh`) so the classifier is unit-testable via `source` — new `probe.test.sh`. A3 N=3-consecutive transport-error debounce wired in `tier1-probe.md` + new extracted `tier1-overrides.md` child (persisted counter, `docs/data/auditor-a12-transport-debounce.json`, tmp+mv, self-heals empty, NOT pre-seeded) — kept OUT of `probe.sh` itself (stateless, no wall-time growth; the emit-decision this gates has never lived in `probe.sh` for any check). A4 fixed the "unreachable" gloss at its real template source (`tier1-probe.md`'s Health-Endpoints + Emit-per-failure sections) — `emit-audit-signal.sh` needed zero change (pure passthrough, verified). A5 CONFIRMED STALE: no live A-04/A-13 check-id exists anywhere; archived 2026-05-19 brief shows they were an OLD numbering scheme since renumbered to today's A-12 — implemented nothing for them.
+
+**Verify-live catch:** genuine RED confirmed by sourcing the PRE-fix `probe.sh` against the new test — the old script's own unconditional `exit 0` aborted the whole test process before any assertion ran (no guard existed then). Live sanity runs on this session's real host caught TWO different real transient conditions on mcp-server (`CONN_REFUSED` then `CURL_ERR_56` seconds apart, mid-restart) — correctly classified as distinct reasons instead of one bare `CURL_ERR`, real-world corroboration beyond the synthetic test cases.
+
+**Verification:** `probe.test.sh` 7/7 PASS. Debounce bash+jq snippet hand-verified in a scratch dir (bump×3→3, reset→0, per-service isolation, self-heal on missing/malformed file). No `apps/` source touched — `bun test`/`tsc` structurally N/A.
+
+**Board:** `task_board.in_progress[FIX-AUDITOR-A12-PROBE-TIMEOUT-EXITCODE-DEBOUNCE]` → `review` (`next_agent: qa`), `.head` reset to idle, same `orch-apply.sh` write.
+
+**Simplicity gate:** PASS — every new primitive reuses an existing in-repo convention (A-20's 3-sample count, the ledger's tmp+mv self-heal, the file's own documented extraction fallback) rather than inventing new ones.
+
+**Zone note:** No MCP/gateway tool available this session (Read/Edit/Write/Bash only, confirmed at Step 0) — task lock is held by the coordinating dev-team session; could not `task_heartbeat`/`task_release` or send Telegram (structural gap, flagged for the coordinating session).
+
+Zone health: live observation — mcp-server was mid-restart-cycling on this host during this session's live sanity run (unrelated to this task, out of scope to fix here) — flagged in RETURN for the coordinating session, not filed as a new row by me.
 
 ## Session 2026-07-30 — FIX-AUDITOR-T1-PREGATE-MEMCREEP-SINGLE-POINT-SAMPLE — REVIEW
 
@@ -35,23 +53,5 @@ Zone health: notebook-auto-prune.sh's date-only-heading tie-break misfire (above
 **Simplicity gate:** PASS — `_is_model_switch_only()` is a single small helper reused at exactly 2 call sites (not single-use); fail-safe default (empty/mixed diff → UNKNOWN) chosen over any config knob, since AC1 requires the narrow behavior unconditionally.
 
 **Zone note:** No MCP/gateway tool available this session (Read/Edit/Write/Bash only, confirmed at Step 0) — flipped the board row directly via `scripts/orch-apply.sh` (permitted, pure bash); could not release `task:FIX-STRANDED-SWEEP-CLASSIFY-AGENT-MODEL-SWITCH` or send Telegram (structural gap, flagged for the coordinating dev-team session).
-
-Zone health: no drift detected.
-
-## Session 2026-07-30 — FACTORY-GUARD-CI-SHAREDPKG-IMPL — REVIEW
-
-**Task:** dev-team BOUNDED-1 auto-pickup (`cross-service/`, epic FACTORY-MAINTAINABILITY-2026-06), 4th/final sibling (own brief `2026-07-24-factory-guard-ci-shared-package-import-check.md`). Baseline/ratchet gate for `packages/*` orphan-importer detection — same axis as size-lint (fix is a domain keep-or-cut decision, not this task's).
-
-**Actions taken:** New `scripts/audits/shared-package-import-check.sh` (`--check`/`--update`): check-1 (blocking) — every `@vn-market/`-scoped `packages/*/package.json` needs a real import/dependency reference in `apps/**`+`packages/**` (own dir excluded) OR a baseline entry, else FAIL; check-2 (advisory-only, never fails) — exported-symbol-name collisions between `packages/shared-*/index.ts` and `apps/**/*.ts`. Seeded `docs/data/shared-package-import-baseline.json` via `--update` — 3 current orphans (shared-types/shared-config/shared-db), live-verified zero real hits. Wired `shared-package-import-check` CI job + CANONICAL pointer.
-
-**Verify-live catch:** first draft's per-file `grep` subprocess loop (check-1 + check-2) hung >2min on this repo's file count (~7K+~34K forks) — caught via a background-run timeout, not a passive read. Root-cause fixed: batched every candidate file array into ONE `grep -l ... -- "${files[@]}"` call per package/symbol (O(1) forks) — re-measured 7s standalone / 14s full smoke suite. Check-2 also surfaced MORE collisions than the brief's cited "e.g. Alert/Signal/McpConfig" (also `loadMcpConfig`/`ExtractPDFRequest`/etc) — kept the general scan since it's advisory-only.
-
-**Verification:** `shared-package-import-check.sh --check` exits 0 on live repo (3 BASELINE + 11 ADVISORY lines, no fail). New `.test.sh` 4/4 PASS (baseline-listed passes, new zero-importer+no-baseline fails, real-importer passes despite baseline listing, advisory lines emit without failing). No `apps/` source touched — `bun test`/`tsc` structurally N/A. `shellcheck` clean (1 benign SC2329 info, same as size-lint's own test file).
-
-**Board:** `task_board.in_progress[FACTORY-GUARD-CI-SHAREDPKG-IMPL]` → `review` (`next_agent: qa`), `.head` reset to idle, same `orch-apply.sh` write.
-
-**Simplicity gate:** PASS — 2 mechanical checks only (per-package granularity, per-symbol AST diffing explicitly deferred per brief §3), zero edits to `packages/shared-*/` contents (explicitly out of scope, reserved for `FACTORY-SHARED-wire-or-prune-shared-packages`).
-
-**Zone note:** No MCP/gateway tool available this session (Read/Edit/Write/Bash only, confirmed at Step 0) — flipped the board row directly via `scripts/orch-apply.sh` (permitted, pure bash); could not release `task:FACTORY-GUARD-CI-SHAREDPKG-IMPL` or send Telegram (structural gap, flagged for the coordinating dev-team session).
 
 Zone health: no drift detected.
