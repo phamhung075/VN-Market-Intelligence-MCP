@@ -1,6 +1,17 @@
 # Dev Team — Sprint Boundary Notebook
 
-**Written:** 2026-07-30T03:50Z
+**Written:** 2026-07-30T04:14Z
+
+## cycle-20260730T0414Z-verify — RAW-verified dev-mcp-server's FIX-VNINDEX-CACHE-STARTUP-PURGE completion; P0 corruption side-finding escalated via Telegram (agent had no gateway grant); stall-repeat watch-item closed clean
+
+- **Commits genuine, on HEAD**: `998ad9b44`/`442097832`/`d4eba9985`/`61942cc55`. Root cause claim independently confirmed by grep, NOT the board row's original "startup purge" hypothesis — actual fix is `PRAGMA table_info(vn_index_cache)` legacy-shape detection + `DROP TABLE`-before-`CREATE` in `schema-market-data.ts`, correcting a Sprint-1922b orphan-table name collision. Live RC-correction-over-prior-guess, matches [[feedback_recurring_detection_vs_recurring_failed_fix]] discipline.
+- **Test independently re-run, not trusted from claim**: `bun test FIX-VNINDEX-CACHE-STARTUP-PURGE.test.ts` → 4 pass / 0 fail (exact match).
+- **Board flip genuine**: row `review[]`, `next_agent:qa`, `branch:null`.
+- **Stall-repeat watch-item CLOSED clean**: unlike the 2026-07-25 near-miss (4h25m silent `.head` stall, zero evidence), this dispatch left 4 real incremental commits + notebook + decision journal + held lock throughout — no recurrence of the dispatch-failure pattern; no escalation needed.
+- **P0 side-finding verified genuine (SQLite Docker-virt corruption, 3rd+ recurrence)**: new board row `FIX-SQLITE-DOCKER-VIRT-CORRUPTION-RECUR-20260730` well-evidenced (15 corrupted trees: daily_ohlcv/cron_job_runs/system_logs/pdf_extracted_text+indexes; specific recovery playbook). Independently cross-corroborated by TWO unrelated cowork agents hitting the same corruption unprompted within minutes: alert-commander (04:13Z BUG telegram msg 4449, generic) + market-watcher (04:09Z signal, Step 0 blocked). dev-mcp-server has no gateway grant so could not alert — sent targeted BUG-channel follow-up (msg 4450) pointing ops at the board row's specific recovery playbook (backup-verify-before-restore — the one on-disk backup is 11d stale, sits next to a failed salvage attempt) since alert-commander's message lacked root cause/playbook.
+- **Lock release clean, first try**: `task:FIX-VNINDEX-CACHE-STARTUP-PURGE` → `released:1`.
+- **Push-backstop**: ahead=5, well under 20 — no action.
+- **NEXT**: P0 corruption row needs ops pickup NOW — live production degradation ongoing every cron cycle. PO triage starvation unchanged, still zero ticks all session (12+ ticks).
 
 ## cycle-20260730T0350Z-tick — Tick 03:37Z: BOUNDED-1 claimed FIX-VNINDEX-CACHE-STARTUP-PURGE (prior-stalled row, re-picked); fleet push fired (ahead=26>20)
 
@@ -24,14 +35,3 @@
 - **Minor housekeeping note (not a new signal)**: `FACTORY-GUARD-CI-REGRESSION-SPIKE` (P2, backlog, architect-owned) is a stale pre-decomposition scoping spike whose title already lists all 7 guardrails now shipped — orphaned artifact, left for PO/architect triage, not escalated.
 - **Epic dispatch phase now fully closed**: 0 `in_progress` FACTORY-GUARD-CI-* rows, 0 backlog IMPL siblings remaining (only the stale SPIKE row). All 7 ci-regression-prevention guardrails now in `review[]` awaiting QA, still fully untouched all session (starvation already tracked, not a new finding).
 - **NEXT**: qa to pick up all 15 FACTORY-GUARD-CI-* review rows (structural starvation, already tracked). PO triage carryover unchanged — zero live PO ticks all session (11+ ticks).
-
-## cycle-20260730T0322Z-tick — Tick 03:07Z: BOUNDED-1 claimed 5th/truly-final FACTORY-GUARD-CI sibling (RAWVERIFY-IMPL); live corroboration of already-tracked PO-triage starvation
-
-- **Preflight RUN** (tick=03:07Z); cold-evict auto-ran (4 signal rows → archive/2026-07.json, commit `c7a25ff0c`). gcc-preflight clean, no HEAD.lock.
-- **drain-signals**: 1 po-row read (stranded-state 5th re-emit, now READ) + 2 file signals routed-to-po: benign `commit-sweep-guard` self-trigger (cold-evict's own bare 2-file commit), `context_bloat_breach` 3rd re-emit (developer decision journal, byte_overage now 67170, still growing unpruned).
-- **ci-health-probe**: deduped (same HEAD `2bdd28fb1` fingerprint) — no new signal.
-- **Step 0b**: `.head` idle (developer's own reset post-SHAREDPKG-IMPL) → idle-capacity chain.
-- **BOUNDED-1**: WIP=0, claimed `FACTORY-GUARD-CI-RAWVERIFY-IMPL` (5th/truly-final epic sibling — rebuild-raw-verify-hook pre-push+CI guardrail), dispatched developer in background. `task:FACTORY-GUARD-CI-RAWVERIFY-IMPL` lock HELD per LOCK-LIFETIME convention.
-- **Post-cycle**: mock-guard unchanged (11 CAUTION). Stranded-state 6th re-emit: 17 unknown paths (down from 20 — 3 in-flight SHAREDPKG paths resolved on landing). Epic-wrapper autoclose: 0 eligible. Push-backstop: ahead=19≤20, silent no-op.
-- **STRUCTURAL FINDING (corroborating, already tracked, no new signal)**: live Telegram backlog now 265 unresolved (up from ~252), zero PO ticks all session confirmed. Root cause reproduced live THIS tick: `FIX-DEVTEAM-IDLE-CHAIN-STEP1-TRIAGE-STARVATION` (P0, `ready[]`, 8 days old) sat unclaimed AGAIN because BOUNDED-1 claimed a P2 backlog row first — exactly the defect that P0 row describes. 5+ existing `FIX-DEVTEAM-IDLE-CHAIN-*`/`TASK-DEVTEAM-IDLE-CHAIN-*` rows already cover this; no duplicate minted.
-- **NEXT**: await RAWVERIFY-IMPL completion (5th/truly-final sibling) for RAW-verify — epic will then have 0 BACKLOG remaining. PO triage carryover keeps growing, zero live PO ticks all session (11+ ticks now).
