@@ -93,12 +93,9 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "FIX-NOTEBOOK-AUTOPRUNE-SAMEDAY-TIE-DROPS-NEWEST",
-    "next_agent": "developer",
-    "next_action": "BOUNDED-1 auto-pickup claim of FIX-NOTEBOOK-AUTOPRUNE-SAMEDAY-TIE-DROPS-NEWEST — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
-    "updated_at": "2026-07-30T10:50:23Z",
-    "updated_by": "dev-team (bounded-1 auto-pickup)"
+    "status": "idle",
+    "active_task_id": null,
+    "next_agent": "router"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -17837,6 +17834,28 @@
         "claimed_by": "dev-team (bounded-1 auto-pickup)",
         "reviewed_at": "2026-07-30T10:45:58Z",
         "review_note": "Developer implementation complete — see docs/WORK.md 2026-07-30 entry + decision journal STEP developer-S39 (sprint-COWORK-GUARANTEED-SLOT-CATCHUP-developer.md). AC-1..AC-6 all addressed: SLS-claim FALLBACK closes the ready[] hole (scripts/devteam-backlog-claim-supervised-lane-sweep.jq), full lane-coverage matrix in main.md, review[]/epic-wrapper documented (no code change needed, verified empirically), bounded1-supervised-lane-report.sh + devteam-dispatch-gate-satisfiability.sh both extended (40/40 PASS). Commits 52baf3f31 (fix) + 830d87242 (memory). branch:null direct-execute — qa verify-committed mode applies."
+      },
+      {
+        "id": "FIX-NOTEBOOK-AUTOPRUNE-SAMEDAY-TIE-DROPS-NEWEST",
+        "type": "FIX",
+        "size": "S",
+        "priority": "P1",
+        "status": "REVIEW",
+        "zone": "cross-service/",
+        "title": "notebook-auto-prune.sh same-day heading tie drops the newest section instead of the oldest",
+        "desc": "scripts/agents-flow/notebook-auto-prune.sh:261 makes the time component of a heading optional, so date-only headings all normalise to one 17-char sort key; :277 sort -k2,2 -s | head -1 then picks the FIRST PHYSICAL section, not the oldest by time. developer.md is prepend/newest-first (confirmed via git log -1 -p --unified=0) and held 3 tied 2026-07-30 sections this cycle, so the hook deleted the just-written entry instead of the oldest one. Distinct from the existing heading-level-mismatch pruner row and the byte-cap-no-actuator row (item below) — this is a same-day tie-break direction bug.",
+        "created_at": "2026-07-30T09:18:19Z",
+        "created_by": "po/triage-20260730T0853",
+        "source": "PO triage 2026-07-30T09:06Z BATCH item 2/6 — consumed from dashboard signal dev-20260730T080653 (ACKed NEW->READ via commit ca2678a44), landed to orch-state by dev-team per the same mint-gap as item 1.",
+        "updated_at": "2026-07-30T11:10:34Z",
+        "promoted_at": "2026-07-30T10:49:53Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
+        "claimed_at": "2026-07-30T10:50:23Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "next_agent": "qa",
+        "reviewed_at": "2026-07-30T11:09:59Z",
+        "review_note": "Direction-aware same-day tie-break shipped. notebook-auto-prune.sh now resolves the minimum-ts_key GROUP direction-aware (drop physically-LAST for newest-first/prepend, physically-FIRST for oldest-first/append) instead of a plain stable sort that always dropped physically-first. Direction derives from the files own distinguishable timestamps first (43/46 live notebooks, zero config); new docs/data/notebook-section-order.json overrides the 3 confirmed-ambiguous files (developer.md=newest_first, dev-frontend.md/dev-mcp-server.md=oldest_first, each verified via git log -1 -p). Unresolved+no-override now fails loud (notebook_tiebreak_direction_unresolved_breach signal, no truncation) instead of guessing. Tests: scripts/agents-flow/notebook-auto-prune.test.sh 7/7 PASS (T1-T4 pre-existing unaffected + new T5 prepend/T6 append/T7 unresolved-safe-fail). RED-then-GREEN A/B against a REAL padded copy of docs/agent-memory/notebooks/developer.md: pre-fix wrongly dropped the newest section (reproduced the exact reported defect); post-fix correctly retains only the newest section. This fix already fired live and correctly (once, this cycle) on developer.md own PostToolUse write, dropping the true-oldest FIX-BOUNDED1-NONDEV-NEXTAGENT-RESIDUAL-NO-DISPATCH-LANE section. Decision journal: sprint-COWORK-GUARANTEED-SLOT-CATCHUP-developer.md STEP developer-S40. No apps/ touched (bash+JSON only, zone cross-service/) - bun test/tsc N/A. No MCP/gateway tool grant this session (Read/Edit/Write/Bash only) - could not task_release/send_telegram; coordinating dev-team session (owner_client_session=64c7c677-0f0f-4cee-a3ce-dba79d70b7ae) must release task:FIX-NOTEBOOK-AUTOPRUNE-SAMEDAY-TIE-DROPS-NEWEST on my behalf."
       }
     ],
     "qa": [],
@@ -17858,27 +17877,7 @@
     },
     "last_triaged_at": "2026-07-30T10:49:53Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": [
-      {
-        "id": "FIX-NOTEBOOK-AUTOPRUNE-SAMEDAY-TIE-DROPS-NEWEST",
-        "type": "FIX",
-        "size": "S",
-        "priority": "P1",
-        "status": "IN_PROGRESS",
-        "zone": "cross-service/",
-        "title": "notebook-auto-prune.sh same-day heading tie drops the newest section instead of the oldest",
-        "desc": "scripts/agents-flow/notebook-auto-prune.sh:261 makes the time component of a heading optional, so date-only headings all normalise to one 17-char sort key; :277 sort -k2,2 -s | head -1 then picks the FIRST PHYSICAL section, not the oldest by time. developer.md is prepend/newest-first (confirmed via git log -1 -p --unified=0) and held 3 tied 2026-07-30 sections this cycle, so the hook deleted the just-written entry instead of the oldest one. Distinct from the existing heading-level-mismatch pruner row and the byte-cap-no-actuator row (item below) — this is a same-day tie-break direction bug.",
-        "created_at": "2026-07-30T09:18:19Z",
-        "created_by": "po/triage-20260730T0853",
-        "source": "PO triage 2026-07-30T09:06Z BATCH item 2/6 — consumed from dashboard signal dev-20260730T080653 (ACKed NEW->READ via commit ca2678a44), landed to orch-state by dev-team per the same mint-gap as item 1.",
-        "updated_at": "2026-07-30T10:50:24Z",
-        "promoted_at": "2026-07-30T10:49:53Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
-        "claimed_at": "2026-07-30T10:50:23Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)"
-      }
-    ]
+    "in_progress": []
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
