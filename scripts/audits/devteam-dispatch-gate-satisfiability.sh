@@ -158,7 +158,86 @@ QA_QA_AFTER=$(jq '.task_board.qa|length' "$WORK/t4c.json")
 QA_FIRED=$([ "$QA_REVIEW_AFTER" -lt "$REVIEW_N" ] && [ "$QA_QA_AFTER" -gt 0 ] && echo true || echo false)
 assert "Review-Lane QA-Drain gate (qa[]<1, independent of the in_progress budget) is SATISFIABLE at review[]=$REVIEW_N — a row moves review[]->qa[]" "$QA_FIRED"
 
-for f in t1c t2c t3c t4c; do
+# ---- Design-Router Sweep (DRS) — FIX-BOUNDED1-NONDEV-NEXTAGENT-RESIDUAL-NO-DISPATCH-LANE (2026-07-30) ----
+DRS_ALLOWLIST='["architect","ba","pm","po","agents-architect"]'
+
+cp "$WORK/fixture.json" "$WORK/t5.json"
+jq --arg now "$NOW" --argjson allowlist "$DRS_ALLOWLIST" --slurpfile detail "$DETAIL" --slurpfile archive "$ARCHIVE" -f scripts/devteam-backlog-promote-design-router-sweep.jq "$WORK/t5.json" > "$WORK/t5b.json"
+jq --arg now "$NOW" -f scripts/devteam-backlog-claim-design-router-sweep.jq "$WORK/t5b.json" > "$WORK/t5c.json"
+DRS_INPROG_AFTER=$(jq '.task_board.in_progress|length' "$WORK/t5c.json")
+DRS_FIRED=$([ "$DRS_INPROG_AFTER" -gt "$INPROG_N" ] && echo true || echo false)
+assert "DRS gate (in_progress<2, shared 4th writer) is SATISFIABLE at in_progress=$INPROG_N — DRS claims an allowlisted non-dev-next_agent row not already in SLS's supervised+plan_only territory" "$DRS_FIRED"
+
+# AC: allowlist excludes agent-father/ops*/qa even when otherwise DRS-eligible
+# (single-row synthetic fixture, isolated from the live/padded board above).
+DRS_AGENTFATHER_FIXTURE=$(jq -n --arg now "$NOW" '
+  { task_board: {
+      backlog: [ { id: "GATESAT-DRS-AGENTFATHER", status: "BACKLOG", priority: "P1",
+                    type: "FIX", zone: "cross-service/", next_agent: "agent-father", created_at: $now } ],
+      ready: [], in_progress: [], qa: [], review: [], done: [], done_verified: []
+    } }')
+echo "$DRS_AGENTFATHER_FIXTURE" > "$WORK/drs-agentfather.json"
+DRS_AGENTFATHER_PICKED=$(jq --arg now "$NOW" --argjson allowlist "$DRS_ALLOWLIST" --slurpfile detail "$DETAIL" --slurpfile archive "$ARCHIVE" \
+  -f scripts/devteam-backlog-promote-design-router-sweep.jq "$WORK/drs-agentfather.json" | jq -r '.task_board.ready[0].id // empty')
+assert "AC-DRS-ALLOWLIST: a non-dev next_agent='agent-father' row (ratified-EXCLUDED, off-allowlist) is NEVER promoted by DRS even though it would otherwise be eligible (picked='${DRS_AGENTFATHER_PICKED:-<none>}')" \
+  "$([ "$DRS_AGENTFATHER_PICKED" != "GATESAT-DRS-AGENTFATHER" ] && echo true || echo false)"
+
+# AC: a row already in SLS's doubly-gated territory (supervised AND plan_only
+# both true) is NEVER picked up by DRS — no double-claim race with SLS.
+DRS_SLS_OVERLAP_FIXTURE=$(jq -n --arg now "$NOW" '
+  { task_board: {
+      backlog: [ { id: "GATESAT-DRS-SLS-OVERLAP", status: "BACKLOG", priority: "P0",
+                    type: "FIX", zone: "cross-service/", next_agent: "ba",
+                    supervised: true, plan_only: true, created_at: $now } ],
+      ready: [], in_progress: [], qa: [], review: [], done: [], done_verified: []
+    } }')
+echo "$DRS_SLS_OVERLAP_FIXTURE" > "$WORK/drs-sls-overlap.json"
+DRS_SLS_OVERLAP_PICKED=$(jq --arg now "$NOW" --argjson allowlist "$DRS_ALLOWLIST" --slurpfile detail "$DETAIL" --slurpfile archive "$ARCHIVE" \
+  -f scripts/devteam-backlog-promote-design-router-sweep.jq "$WORK/drs-sls-overlap.json" | jq -r '.task_board.ready[0].id // empty')
+assert "AC-DRS-NO-SLS-OVERLAP: a supervised:true AND plan_only:true row (SLS's own territory) is NEVER promoted by DRS (picked='${DRS_SLS_OVERLAP_PICKED:-<none>}')" \
+  "$([ "$DRS_SLS_OVERLAP_PICKED" != "GATESAT-DRS-SLS-OVERLAP" ] && echo true || echo false)"
+
+# AC: a row with EXACTLY ONE of supervised/plan_only true (SLS does NOT drain
+# this — SLS requires BOTH) IS DRS-eligible, per the ratified brief §2.1
+# (an AND exclusion, not OR) — this is the exact residual PO's ratification
+# flagged as "some already covered" (§ review_note).
+DRS_SUPERVISED_ONLY_FIXTURE=$(jq -n --arg now "$NOW" '
+  { task_board: {
+      backlog: [ { id: "GATESAT-DRS-SUPERVISED-ONLY", status: "BACKLOG", priority: "P0",
+                    type: "FIX", zone: "cross-service/", next_agent: "ba",
+                    supervised: true, created_at: $now } ],
+      ready: [], in_progress: [], qa: [], review: [], done: [], done_verified: []
+    } }')
+echo "$DRS_SUPERVISED_ONLY_FIXTURE" > "$WORK/drs-supervised-only.json"
+DRS_SUPERVISED_ONLY_PICKED=$(jq --arg now "$NOW" --argjson allowlist "$DRS_ALLOWLIST" --slurpfile detail "$DETAIL" --slurpfile archive "$ARCHIVE" \
+  -f scripts/devteam-backlog-promote-design-router-sweep.jq "$WORK/drs-supervised-only.json" | jq -r '.task_board.ready[0].id // empty')
+assert "AC-DRS-SUPERVISED-ONLY-ELIGIBLE: a supervised:true (plan_only NOT true) allowlisted non-dev row IS promoted by DRS (mirrors live UC-CCA-P3/FIX-CHEF-MARKER-KEY-WINDOW-ANCHOR shape; picked='${DRS_SUPERVISED_ONLY_PICKED:-<none>}')" \
+  "$([ "$DRS_SUPERVISED_ONLY_PICKED" = "GATESAT-DRS-SUPERVISED-ONLY" ] && echo true || echo false)"
+
+# AC-DRS-HEAD-GUARD (mandatory conditional-guard `.head` write, brief §2.5 /
+# PO ratification Q3 hard AC): pre-seed a genuinely busy `.head` (a DIFFERENT
+# task, unrelated to anything DRS just staged) BEFORE invoking the claim
+# script — `.head` must come out byte-identical, even though the row still
+# legitimately moves ready[]->in_progress[] underneath it. Mechanizes the
+# exact defect class the qadrain-head-slot-decouple sibling precedent found.
+DRS_BUSY_HEAD_FIXTURE="$WORK/drs-busy-head.json"
+jq --arg now "$NOW" '
+  .task_board.ready += [ { id: "GATESAT-DRS-HEADGUARD", status: "READY", priority: "P1",
+    type: "FIX", zone: "cross-service/", next_agent: "ba", dispatch_lane: "ba",
+    promoted_by: "dev-team (design-router sweep)", promoted_at: $now } ]
+  | .head = { status: "in_progress", active_task_id: "GATESAT-UNRELATED-BUSY-TASK",
+              next_agent: "developer", updated_at: $now, updated_by: "test" }
+' "$WORK/fixture.json" > "$DRS_BUSY_HEAD_FIXTURE"
+HEAD_BEFORE=$(jq -c '.head' "$DRS_BUSY_HEAD_FIXTURE")
+jq --arg now "$NOW" -f scripts/devteam-backlog-claim-design-router-sweep.jq "$DRS_BUSY_HEAD_FIXTURE" > "$WORK/drs-busy-head-after.json"
+HEAD_AFTER=$(jq -c '.head' "$WORK/drs-busy-head-after.json")
+assert "AC-DRS-HEAD-GUARD: .head is byte-identical after DRS claim when a DIFFERENT task is genuinely busy in .head (never clobbers a live resume pointer)" \
+  "$([ "$HEAD_BEFORE" = "$HEAD_AFTER" ] && echo true || echo false)"
+DRS_HEADGUARD_STILL_CLAIMED=$(jq -r '[.task_board.in_progress[] | select(.id=="GATESAT-DRS-HEADGUARD")] | length' "$WORK/drs-busy-head-after.json")
+assert "AC-DRS-HEAD-GUARD (positive half): the row itself still moves ready[]->in_progress[] even while .head stays untouched (only .head is guarded, not the lane move)" \
+  "$([ "$DRS_HEADGUARD_STILL_CLAIMED" -eq 1 ] && echo true || echo false)"
+
+for f in t1c t2c t3c t4c t5c; do
   jq -e . "$WORK/$f.json" >/dev/null 2>&1 || { echo "  [FAIL] $f.json is not even valid JSON"; FAIL=1; continue; }
   bun scripts/orch-validate.mjs "$WORK/$f.json" >/dev/null 2>&1 \
     && assert "$f.json (post-drain candidate) is Zod-schema-valid" true \
@@ -170,7 +249,7 @@ done
 
 # ---- Step 3: NEGATIVE control — cap reached, nothing fires ----
 echo ""
-echo "=== NEGATIVE CONTROL: in_progress padded to 2 — SLS/RLC (shared WIP<=2 budget) MUST NOT fire ==="
+echo "=== NEGATIVE CONTROL: in_progress padded to 2 — SLS/RLC/DRS (shared WIP<=2 budget) MUST NOT fire ==="
 jq '.task_board.in_progress += [{ id: "GATESAT-SYNTH-INPROGRESS-1", status: "IN_PROGRESS", priority: "P2", type: "FIX", zone: "cross-service/", next_agent: "developer" }]' \
   "$WORK/fixture.json" > "$WORK/capped.json"
 CAPPED_INPROG=$(jq '.task_board.in_progress|length' "$WORK/capped.json")
@@ -190,6 +269,12 @@ jq --arg now "$NOW" --slurpfile detail "$DETAIL" --slurpfile archive "$ARCHIVE" 
 jq --arg now "$NOW" -f scripts/devteam-backlog-claim-supervised-lane-sweep.jq "$WORK/capped-sls.json" > "$WORK/capped-sls2.json"
 CAPPED_SLS_CLAIMED_AT_MOST_ONE=$([ "$(jq '.task_board.in_progress|length' "$WORK/capped-sls2.json")" -le "$((CAPPED_INPROG + 1))" ] && echo true || echo false)
 assert "defense-in-depth: SLS claim script never claims more than ONE additional row per invocation even if called at/above the cap" "$CAPPED_SLS_CLAIMED_AT_MOST_ONE"
+
+assert "at in_progress=$CAPPED_INPROG (== cap), main.md's own WIP4<2 pre-check would skip invoking the DRS promote+claim pair entirely this tick (2<2 is false)" "$([ "$CAPPED_INPROG" -ge 2 ] && echo true || echo false)"
+jq --arg now "$NOW" --argjson allowlist "$DRS_ALLOWLIST" --slurpfile detail "$DETAIL" --slurpfile archive "$ARCHIVE" -f scripts/devteam-backlog-promote-design-router-sweep.jq "$WORK/capped.json" > "$WORK/capped-drs.json"
+jq --arg now "$NOW" -f scripts/devteam-backlog-claim-design-router-sweep.jq "$WORK/capped-drs.json" > "$WORK/capped-drs2.json"
+CAPPED_DRS_CLAIMED_AT_MOST_ONE=$([ "$(jq '.task_board.in_progress|length' "$WORK/capped-drs2.json")" -le "$((CAPPED_INPROG + 1))" ] && echo true || echo false)
+assert "defense-in-depth: DRS claim script never claims more than ONE additional row per invocation even if called at/above the shared WIP<=2 cap" "$CAPPED_DRS_CLAIMED_AT_MOST_ONE"
 
 # =============================================================================
 # ---- Step 4: FIX-DEPSSATISFIED-COLD-ARCHIVED-DEP-RESOLVES-MISSING ----

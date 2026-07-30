@@ -414,6 +414,69 @@ def has_hold_reason($detail_items):
   (((.hold_reason // "") | tostring) != "")
     or ( (.id != null) and ((($detail_items[.id].hold_reason) // "" | tostring) != "") );
 
+# ---- Design-Router Sweep (DRS) agent-identity allowlist
+# (FIX-BOUNDED1-NONDEV-NEXTAGENT-RESIDUAL-NO-DISPATCH-LANE, architect brief
+# 2026-07-29 §2.2, PO-ratified 2026-07-30 —
+# docs/agent-memory/decisions/ruling-20260730T0906Z-po-triage-po.md STEP
+# po-4) ----
+# DRS's compensating control for auto-dispatching non-dev `next_agent` rows
+# that carry NO deliberate-dispatch flag at all (unlike SLS, which only ever
+# fires on rows a human/PO already double-marked supervised+plan_only at
+# mint time — 86/122 of DRS's candidate rows carry neither flag). `.` = the
+# candidate row object (same convention as every def above). `$allowlist` =
+# the ratified fixed set, threaded by the CALLER via
+# `--argjson allowlist '["architect","ba","pm","po","agents-architect"]'` —
+# NEVER hardcoded inside this def, so a future PO ruling widening/narrowing
+# the set only touches the caller's `--argjson` literal, not this shared
+# library file.
+# RATIFIED 2026-07-30 default set: `architect`, `ba`, `pm`, `po`,
+# `agents-architect`. Explicitly NOT on the default allowlist:
+# `agent-father` (fleet-wide blast radius — edits the files that define
+# every OTHER agent; its most recent supervised dispatch made a unilateral
+# scope deferral whose follow-up was never minted), `ops` /
+# `ops-mainserver-fetch` / `ops-vps-fetch` (repeated live-infra-mutation
+# incidents, feedback_ops_readonly_diagnostic_wrote_to_live_index /
+# feedback_ops_specialist_pushes_backlog_directly /
+# feedback_ops_silently_switched_to_destructive_fallback_without_reauth),
+# `qa` (wrong mechanism — QA has its own dedicated Review-Lane QA-Drain
+# lane), `system-auditor` (0 live rows at ratification time — unfalsifiable
+# by construction, per feedback_gate_widening_recommendation_requires_
+# actuator_dry_run — add only once a real row appears). Case-sensitive
+# exact match against `effective_next_agent` — no normalization, since every
+# ratified allowlist entry is already a canonical lower-case agent id
+# (`docs/data/system-map.json` `.project.agents[].id`).
+def is_design_router_allowed($detail_items; $allowlist):
+  (effective_next_agent($detail_items)) as $na
+  | ($allowlist // []) as $al
+  | ($na | length) > 0 and (($al | index($na)) != null);
+
+# ---- Design-Router Sweep (DRS) full eligibility (composed)
+# (FIX-BOUNDED1-NONDEV-NEXTAGENT-RESIDUAL-NO-DISPATCH-LANE) ----
+# `.` = candidate row object. True iff the row is safe for DRS auto-dispatch:
+# names a non-dev-role `next_agent` that BOUNDED-1 would never route
+# (`is_non_dev_next_agent_unrouted`), is NOT already the Supervised-Lane
+# Sweep's own doubly-gated territory (`effective_supervised` AND
+# `effective_plan_only` BOTH true — an AND, matching the ratified brief §2.1
+# exactly, so a row carrying exactly ONE of the two flags is NOT excluded
+# here and remains DRS-eligible), resolves to an allowlisted agent
+# (`is_design_router_allowed`), is not an epic wrapper, has `depends_on`
+# satisfied, is not detail-deferred, and carries no unbacked prose
+# sequencing. Deliberately does NOT gate on `effective_supervised` or
+# `effective_plan_only` ALONE — see this task's own review_note for the
+# residual (out-of-scope, PO-adjudicated) class this leaves uncovered: a
+# `supervised:true` row whose `next_agent` names a DEV role (fails
+# `is_non_dev_next_agent_unrouted` regardless of the flags, since that
+# predicate excludes dev-role next_agent values by construction — BOUNDED-1's
+# own scope, but BOUNDED-1 itself excludes `supervised:true`).
+def is_design_router_eligible($detail_items; $status_map; $allowlist):
+  (is_non_dev_next_agent_unrouted($detail_items))
+    and ( (effective_supervised($detail_items) and effective_plan_only($detail_items)) | not )
+    and (is_design_router_allowed($detail_items; $allowlist))
+    and (is_epic_wrapper($detail_items) | not)
+    and (deps_satisfied($detail_items; $status_map))
+    and (is_detail_deferred($detail_items) | not)
+    and (has_unbacked_sequencing_prose($detail_items) | not);
+
 # ---- all-children-terminal (FIX-DEVTEAM-EPIC-WRAPPER-AUTOCLOSE-SWEEP,
 # 2026-07-29) ----
 # `.` = candidate wrapper row object. `$status_map` = dep_status_map($archive)
