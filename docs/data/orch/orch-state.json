@@ -2042,17 +2042,6 @@
         "severity": "MED",
         "status": "NEW",
         "payload_ref": null
-      },
-      {
-        "id": "dev-20260730T083328",
-        "ts": "2026-07-30T08:33:28Z",
-        "from": "dev-team",
-        "to": "po",
-        "type": "data-loss-incident",
-        "summary": "RESOLVED before po triage reached it: ops corrected pass independently RAW-verified by dev-team — 99%+ real recovery (770616 daily_ohlcv, 13493 pdf_extracted_text, all 4 dropped tables restored), integrity_check=ok, live serving ground truth confirmed",
-        "severity": "CRITICAL",
-        "status": "RESOLVED",
-        "payload_ref": null
       }
     ],
     "last_triaged_at": "2026-07-29T06:25:00Z",
@@ -11762,29 +11751,6 @@
         "status_note": "[QA] Review Record (direct-commit verify): Verified commit c2c7243f8 on main ancestry (git merge-base --is-ancestor). git show --stat matches claimed file set exactly (scripts/git-hooks/pre-commit, post-commit, install.sh, pre-commit.test.sh + docs/policies/dev-standards.md CANONICAL pointer + docs/WORK.md + docs/handoffs/FIX-COMMIT-PATH-PEER-INDEX-SWEEP-GUARD-HOOK.md Implementation Record), zero foreign files. Independently re-ran every claim, not trusted from prose (feedback_router_verify_raw_not_badges): shellcheck on all 4 files -- 0 warnings. bash scripts/git-hooks/pre-commit.test.sh -- 6/6 PASS (T1 bare-sweep-WARN, T2 pathspec-silent, T3 dir-pathspec documented non-goal, T4 rebase-no-false-warn, T5 reject-blocks-preserves-index, T6 UNKNOWN-fail-open-loud). bash scripts/audits/verify-commit-sweep-discriminator.sh -- VERDICT PASS (git 2.49.0), C1/C2 both independently reproduced. install.sh AC-5 claim (installs all 3 hooks, not just pre-push) verified live in a fresh disposable scratch repo -- pre-push/pre-commit/post-commit all symlinked into .git/hooks/, correct targets, executable. mock-guard.sh --files on the 4 touched files -- PASS (shell files fall outside its .ts/.py/.go scan scope by design; shellcheck is the correct static-analysis line of defense here and is clean). No TS files touched (zone=scripts/) so bun test/tsc structurally N/A; shell regression suite + discriminator harness together constitute the targeted zone suite. Test runs left zero side effects on the live repo (.git/sweep-guard.log absent, no stray docs/signals/*.json from these runs -- all scenarios isolated to mktemp scratch repos). WARN-by-default disposition matches architect ratified brief docs/architecture-briefs/2026-07-21-commit-path-peer-index-sweep-guard.md §3 exactly. VERDICT: APPROVED, DONE_VERIFIED. Process note (already flagged separately to PO via signal_queue, not actioned here): this row was pushed to origin/main before QA review ran (PUSH-AUTONOMY-1 gate deviation) -- content already live regardless of this verdict; no defects found so no follow-up commit needed.",
         "qa_verified_at": "2026-07-29T00:01:43Z",
         "qa_verified_by": "qa"
-      },
-      {
-        "id": "FIX-SQLITE-DOCKER-VIRT-CORRUPTION-RECUR-20260730",
-        "title": "market.db SQLite corruption RECURRED live 2026-07-30 (3rd+ occurrence of the known FIX-SQLITE-DOCKER-VIRT-CORRUPTION class) — daily_ohlcv/cron_job_runs/system_logs/pdf_extracted_text corrupted, silently degrading OHLCV push, prediction-market-job, taAlertScan/bbAlertScan every cycle",
-        "type": "FIX",
-        "priority": "P0",
-        "status": "DONE_VERIFIED",
-        "zone": "cross-service/",
-        "owner": "ops",
-        "next_agent": "router",
-        "created_by": "dev-mcp-server",
-        "created_at": "2026-07-30T04:10:09Z",
-        "updated_at": "2026-07-30T08:40:53Z",
-        "root_cause": "Same class as docs/incidents/2026-07-13-sqlite-db-corruption-restart-loop.md and the 2026-04-25 event (docker-virt-corruption memory): macOS com.apple.Virtualization.VirtualMachine process holds an fd on market.db-shm during container stop; torn SHM write -> SQLITE_CORRUPT (errno 11) surfaces on next open/read of the affected pages. Discovered live 2026-07-30T03:58Z during a routine single-service mcp-server restart (unrelated task FIX-VNINDEX-CACHE-STARTUP-PURGE). data/live/market.db.corrupt-20260719-1125Z + .pre-salvage-20260719-202912Z + .salvage-attempt-failed-20260719T203907Z artifacts on disk suggest this may trace to an incompletely-recovered 2026-07-19 event rather than a brand-new one.",
-        "evidence": "PRAGMA quick_check (host sqlite3 CLI AND independently confirmed via the live container's own bun:sqlite runtime, readonly connection, not just host CLI — ruling out a host-CLI/WAL false-positive) shows real corruption in tables: daily_ohlcv, cron_job_runs, system_logs, pdf_extracted_text + their indexes (idx_syslog_level, idx_syslog_source, idx_pdf_filename, idx_pet_filename, idx_system_logs_ts, idx_system_logs_level, idx_system_logs_resolved, idx_pet_action_code, idx_cron_job_runs_job_started) — 15 distinct corrupted trees total. 282 \"database disk image is malformed\" errors logged in the first 6 live minutes post-restart, hitting push-ohlcv-history, prediction-market-job, taAlertScan (dozens of tickers), bbAlertScan every cycle. Container itself is STABLE (not crash-looping, healthy, RestartCount=0) unlike the acute 2026-07-13 crash-loop pattern — this is a silent, ongoing degradation, not an outage, which is why health checks alone would not surface it (feedback_passive_health_masks_dead_data). vn_index_cache (this session's own touched table) independently confirmed healthy/unaffected.",
-        "recommended_action": "Follow the established recovery playbook from docs/incidents/2026-07-13-sqlite-db-corruption-restart-loop.md: STOP further restarts, BACKUP the current corrupt market.db first (timestamped), locate/verify a CLEAN backup (PRAGMA integrity_check=ok) — data/live/market.db.backup (2026-07-19T22:31Z) is present but is 11 days stale AND sits next to a same-day salvage-attempt-failed artifact, so its cleanliness must be re-verified, not assumed — swap in the clean backup, restart, verify via SERVING value (real tool calls + data plausibility, not just the health badge). Also worth root-causing why the named-volume/bind-mount mitigations from 2026-04-25/07-13 have not fully closed this class (3rd+ occurrence now) — may need synchronous=FULL or DELETE journal mode per the original mitigation's own deferred candidate list.",
-        "recurrence_policy": "recurring-bug-escalation — 3rd+ occurrence of the same class (2026-04-25, 2026-07-13, 2026-07-30 [+ possible unresolved 2026-07-19])",
-        "source": "dev-mcp-server live restart during FIX-VNINDEX-CACHE-STARTUP-PURGE verification, 2026-07-30T03:58-04:05Z",
-        "note": "NOT fixed by dev-mcp-server — outside zone (cross-service/infra) and role (Infrastructure/Docker operations is explicitly ops's job per dev-mcp-server init.md). Reported here per standing recurring-bug-escalation policy; no MCP/gateway tool grant this session so could not send_telegram(bug) — coordinating dev-team/router session must escalate immediately, this is live production data corruption happening on every cron cycle right now.",
-        "claimed_at": "2026-07-30T08:18:57Z",
-        "claimed_by": "dev-team (manual P0 escalation, 4th recurrence confirmed by alert-commander)",
-        "correction_note": "RAW-VERIFY 2026-07-30T08:33:21Z: ops first-pass \"fix\" (commit 157335892) itself caused a much larger secondary data-loss event — swapped serving DB for a schema-only 7.7M backup instead of attempting `.recover` on the preserved corrupted file, discarding daily_ohlcv 773818->20061 rows (99%+), pdf_extracted_text ~13467->56 rows, watchlist 33 vs 58, and dropping 4 tables (bctc_refined_units/bctc_table_rows/bctc_md_tables/financial_reports) entirely — while only ~15 B-tree structures were ever actually corrupted. Independently ran `.recover` on the preserved corrupt-2026-07-30T08:21:24Z file myself: reconstructed DB passes PRAGMA integrity_check=ok, recovers ~99% of the real data. Staged at scratchpad recovered.db, handed back to ops with corrective instructions (no further lossy shortcuts, independent re-verification required, proper backup discipline before swap). Task remains IN_PROGRESS pending corrected recovery + RAW-verify — NOT resolved. | CORRECTED PASS RAW-VERIFIED 2026-07-30T08:40:52Z by dev-team (independent, not the ops self-report): PRAGMA integrity_check=ok, journal_mode=delete, synchronous=2(FULL). Row counts at verify time: daily_ohlcv=770616 (>767876 recovered, growing via live backfill, matches/exceeds), pdf_extracted_text=13493 (>13467), watchlist=58, bctc_refined_units=533, bctc_table_rows=3206, bctc_md_tables=1, financial_reports=226 -- all 4 previously-dropped tables confirmed present with correct data. Table count=102 (matches corrupted-source total). Proper backup preserved this time (market.db.impoverished-backup-2026-07-30T08:33:51Z, distinct from the corrupted-source preservation) -- correct backup-before-swap discipline followed on the corrected pass. Container mcp-server healthy. Real serving ground truth confirmed via live get_price_history(FPT,5d) MCP call: continuous real data through 2026-07-30 (today), plausible values/volumes. Commits 157335892 (pragma fix, genuine on both passes) + 48a89fdd8 (corrected decision-journal, read in full, honest before/after comparison, no self-serving gloss). RESOLVED for real.",
-        "resolved_at": "2026-07-30T08:40:52Z"
       }
     ],
     "head": {
