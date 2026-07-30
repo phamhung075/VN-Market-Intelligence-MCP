@@ -27,3 +27,19 @@ Zone health: tsc clean, dedicated bidirectional regression suite green, root-cau
 **Evidence:** `bun tsc --noEmit` clean. Live guard: `verdict=PASS journal_mode=delete wal_present=false shm_present=false`. `--self-test`: `SELF_TEST verdict=PASS` (both branches correct). No pre-existing test exercised `bctcEvalBackfillRunner.ts` (zero importers, grep-confirmed). Full `bun test` run for regression-check.
 
 Zone health: tsc clean, AC-1 diff minimal (import swap + pragma removal only, git-diff confirmed), AC-3/4 guard proven bidirectionally via live self-test (not source-only), live prod DB confirmed healthy before+after, AC-2 sweep found 4 real defect instances the triage list missed with an explicit non-silent zone-boundary call on them | scope note: NOT fully closed system-wide — see RETURN.
+
+## 2026-07-30 — FIX-BCTC-REPARSE-DOUBLE-WRAP-DEDUP-GUARD (BOUNDED-1 auto-pickup, found by own prior SPIKE) → REVIEW, next_agent=qa
+
+**Session:** 64c7c677-0f0f-4cee-a3ce-dba79d70b7ae. Mirrored `FIX-BASE-RATE-COMPUTATION-CRON-DEAD` exactly (same defect class, precedent explicitly named in the row): `runBctcReparseWithDb` (`startupHelpers.ts`) double-wrapped `recordJobRun` — its default `fn` discarded `runBctcReparseJob()`'s real `ReparseRunResult` (`Promise<void>`, RAW-confirmed live 100% NULL `rows_written` across ~90 sampled rows) AND had no guard of its own, so a guard-skipped inner invocation still wrote a fresh `'success'` row, re-arming its own 21.6h window (best-supported explanation for the 2026-07-10 incident ops "fixed" by falsifying `cron_job_runs` timestamps).
+
+**AC-1/2:** added `shouldSkipRecoveryReplay(db,'bctcReparseJob',86400000)` BEFORE `recordJobRun`; default `fn` now calls `runBctcReparseJob({ db })` mapping `resolved+failed → rowsWritten`. Passing `{ db }` has a second effect: it makes `runBctcReparseJob`'s own trailing `if(!options.db)` self-record block a no-op — kills the 2nd `recordJobRun` call on real runs WITHOUT editing `bctcReparseJob.ts` at all (file-touch footprint identical to the base-rate precedent: 2 src files + 1 test file).
+
+**AC-3:** `startScheduler.ts`'s unconditional 30s-post-boot catch-up now gated by `shouldRunCatchup(db,'bctcReparseJob',2,30,now,false)` (02:30 UTC = 09:30 ICT, matches `CRONS.bctcReparseJob`'s `Asia/Ho_Chi_Minh` registration) — same pattern as the other 6 hardened catch-ups in that file.
+
+**AC-4:** new `FIX-BCTC-REPARSE-DOUBLE-WRAP-DEDUP-GUARD.test.ts`, 13 tests incl. explicit T4b (2 back-to-back invocations within cadence window → exactly 1 row). Deliberately kept the mapping-mechanism proof (T6b) to a controlled `fn` rather than exercising the real `reparseSingle`/`makeProductionDeps` pipeline — matches the precedent's own T6 scope (pure-SQL core, no dynamic app/infra imports), avoiding new flakiness the precedent didn't have either.
+
+**AC-5 (deferred, not silently dropped):** RAW-verify of post-fix production rows-per-day requires ≥1 real day of cron history AFTER this fix is deployed — does not exist yet (code not rebuilt/deployed). Documented as the standing follow-up for whoever verifies post-deploy.
+
+**Evidence:** `bun tsc --noEmit` clean. Targeted regression (9 files incl. 1019/1068/1196/1945d/1420/1915/FACTORY-SCHEDULER/FIX-BASE-RATE-COMPUTATION-CRON-DEAD + new file): 114/114 pass. tool/cron probes unchanged (184/88). Full `bun test`: 14906 pass/40 skip/58 fail/1 error (566.6s) — within the standing pre-existing-flake band (52-59 this sprint); grep-confirmed zero of the 58 named fails reference `bctcReparse`/`startupHelpers`/`startScheduler`/`cron_job_runs`, and the new test file's own section in the full-suite log shows all 13 passing inline.
+
+Zone health: tsc clean, file-touch footprint matches precedent exactly (no invented approach), full-suite fail-set keyword-scanned clean, AC-5 explicitly deferred (not fabricated) pending real deploy+monitor cycle | HEALTHY.
