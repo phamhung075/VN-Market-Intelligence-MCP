@@ -652,6 +652,33 @@ violation checks for `dashboard_rows==0` and RETURN-headline/`NEXT`-token consis
 own BUG-channel Telegram. Owning flow: `docs/agents/system-auditor/flow/main.md` §Anomaly Reporting →
 OUTPUT-CONTRACT. Test: `scripts/audit-output-contract.test.sh`.
 
+**CANONICAL: E-1 write confirmed by read-back, not by call success (FIX-AUDITOR-OUTPUT-CONTRACT-SIGNALSPOSTED-COUNTS-CALLS-NOT-CONFIRMED-ROWS)**
+Confirmed live (2026-07-30, empirical repro before any code change — not assumed): `mcp_call` returning
+rc=0 for `post_agent_signal` was NOT sufficient evidence a row landed in `agent_signals`. TWO distinct
+mechanisms produced a "successful" call with zero rows written: (a) `postSignalWithCriticGate`/`postSignal`
+return the sentinel `signalId=-1` for EVERY dedup-suppressed no-op (`INSERT OR IGNORE` identical-payload
+guard, or the Task-1862g same-direction time-window guard), and the interface layer
+(`apps/mcp-server/src/interface/mcp/tools/news-analysis/agentSignalTools.ts`) only special-cased
+`id===-1` for the narrow "critic rejected on first attempt" branch — every OTHER `id<=0` outcome fell
+through to `success:true` with the bare `-1` embedded as a fake row id; (b) the handler's generic
+catch-all (a genuine thrown DB error, e.g. mid-write during a corrupt-DB fault window) returned an
+`Error: <message>` TEXT body without setting `isError:true` — the only one of the handler's 3 non-success
+paths that omitted it — and `scripts/agents-flow/mcp-call.sh`'s `_mcp_call_parse()` inspected only
+`.result.isError`, never the text, treating it as success. Fix, 3 layers: (1) tool layer — any `id<=0`
+now returns `success:false` (not just the critic-reject case), and the catch-all sets `isError:true`;
+(2) shared caller layer — `_mcp_call_parse()` now also treats a literal `Error:`-prefix on the response
+text as a failure even when `isError` is unset (belt-and-suspenders, benefits every `mcp_call()` caller,
+not just this one tool); (3) `scripts/emit-audit-signal.sh`'s `_run_e1()` no longer trusts `mcp_call`'s
+rc alone — it parses the tool's own JSON body for `success===true` AND a positive-integer `signal_id`
+(new `ABORT e1-not-written`), then performs a MANDATORY read-back via `get_agent_signals` (sender-history
+mode) confirming that exact id is present in `agent_signals` before the call may count toward
+`signals_posted` (new `ABORT e1-readback-failed`, non-dedup-gated BUG telegram — mirrors the pre-existing
+E-3 signal_queue POST-WRITE read-back pattern, applied to the OTHER store this script writes to). Both
+new ABORT reasons fall under `scripts/audit-output-contract.sh`'s existing `'[emit-signal] ABORT'*`
+wildcard (counts nothing) — no parser change needed. Tests:
+`apps/mcp-server/src/__tests__/FIX-AUDITOR-OUTPUT-CONTRACT-SIGNALSPOSTED-COUNTS-CALLS-NOT-CONFIRMED-ROWS.test.ts`,
+`scripts/agents-flow/mcp-call.test.sh`, `scripts/emit-audit-signal.test.sh` (T16-T20).
+
 **CANONICAL: Source-code size-lint-justification CI guardrail (FACTORY-GUARD-CI-SIZELINT-IMPL)**
 ```bash
 bash scripts/audits/size-lint-justification.sh --check    # CI mode: exit 0 pass / 1 fail, no writes
