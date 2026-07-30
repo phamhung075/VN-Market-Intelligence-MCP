@@ -1,6 +1,16 @@
 # Dev Team — Sprint Boundary Notebook
 
-**Written:** 2026-07-30T21:40Z
+**Written:** 2026-07-30T21:47Z
+
+## cycle-20260730T2137Z-tick — new tick; drained 11 signals; BOUNDED-1 (WIP=0) picked FU-SBV-EFFECTIVE-DATE-COLUMN; caught+fixed own wrong PO-triage lock key; spawned PO 4th triage pass
+
+- Tick `2026-07-30T21:37Z`. Preflight `RUN` (script `RC=1` but `verdict:RUN` — verdict field is authoritative, not exit code). SF-1+fire-election held. HEAD.lock absent, worktree prune clean.
+- **Drain**: 11 file signals routed-to-po (8× `bctc_signal_*_20260730_routine` re-fires, `commit-sweep-guard`, a `context-bloat` flag on dev-mcp-server's decision journal, 1 `cowork-team` status report), 0 `signal_queue` NEW rows, 0 orphan-signals. 0 files pruned this cycle (4 candidates still-referenced, correctly skipped). Committed+pushed `072541471`.
+- CI probe: run `30584716107` still `queued` — non-fatal skip.
+- **Step 0b: `.head` idle, `in_progress=0`** (both dev-mcp-server + PO fully closed out last cycle). `WIP=0` → ran **BOUNDED-1**: promoted+claimed `FU-SBV-EFFECTIVE-DATE-COLUMN` (P3, `apps/macro-indicators`, "add `effective_date` column to `sbv_rates` — provenance completeness, not a rate-correctness fix"). Zone-detect Tier-1 explicit → `dev-macro-indicators`. Dispatcher-wrap clean, spawned (background).
+- **Self-caught mistake**: first attempt to claim the PO-triage dedup key used an ad-hoc `task:po-triage-20260730-2` (wrong — invented a suffix instead of checking the flow doc). Memory flagged this exact class (`feedback_po_triage_lock_key_format_mismatch_defeats_mutex`) before I acted on it wrongly; released the bad claim, re-read `main.md:850`, re-claimed the correct SSOT key `task:po-triage-20260730` (date-only, reused across all of today's ticks) — clean, no collision.
+- **Step 1 PO Triage**: 1 Telegram report (`sla-monitor` CRITICAL, `signal_quality_audit` stale 79277min) — same table dev-mcp-server's write-gate fix already landed for (in `review[]`, `next_agent:qa`); briefed PO this is likely pre-fix residual staleness, not new work, so PO can judge whether it needs a fresh row. Spawned `po` (background, 4th triage pass today) with the 11 drained signals + the report + explicit note that BOUNDED-1 already claimed+dispatched `FU-SBV-EFFECTIVE-DATE-COLUMN` this tick, so PO doesn't double-dispatch it.
+- Released SF-1 + fire-election (`cron:dev-team:2026-07-30T21:37Z`) cleanly at tick close. **NEXT**: await `dev-macro-indicators`'s (RAW-verify the new column + backfill against the live DB) and PO's returns; release respective outer locks on each.
 
 ## cycle-20260730T2140Z-verify — RAW-verified dev-mcp-server's signal_quality_audit fix; caught + corrected an inflated evidence claim; pushed dev-mcp-server+PO+own commits together
 
@@ -20,13 +30,5 @@
 - **Step 0b resume: `.head` still `in_progress` on `FIX-SIGNALQUALITYAUDIT-WRITE-GATE-UNREACHABLE-BY-EMITTER-CONTRACT` (dev-mcp-server), age ~17min.** WF-1 BLOCKED-check: `task_status=IN_PROGRESS`, not blocked. WF-2 supervised-hold check: `should_hold=false`. Attempted S2 dispatcher-wrap `task_claim` on `task:FIX-SIGNALQUALITYAUDIT-...` → `claimed:false`, `current_holder.owner_client_session` == **this session** (re-entrant — the agent dispatched last tick, `a9359a992e37f5bed`, is still running per explicit no-duplicate-spawn system guard). Per the flow's peer-collision branch (identical action whether holder is self or peer): heartbeated the lock (new `expires_at`), did **NOT** re-spawn, fell through to Step 1 — this correctly avoids the dup-spawn class in [[feedback_pipeline_resume_stale_placeholder_duplicate_spawn_risk]].
 - **Step 1 PO Triage**: claimed `task:po-triage-20260730` clean (no peer collision). 1 new Telegram report (`sla-monitor` CRITICAL breach on `signal_quality_audit`, 79217min stale) — same table PO already minted+dispatched last tick; briefed PO explicitly that this is expected re-fire, not new work, pending dev-mcp-server's in-flight fix. Spawned `po` (background, `ab88525824fdbe68c`) with full context (10 signals, 1 report, task_board summary backlog=374/ready=54/in_progress=1/review=189, git log/branch). Awaiting return before releasing `triage_key`.
 - Released SF-1 + fire-election (`cron:dev-team:2026-07-30T21:07Z`) cleanly at tick close. **NEXT**: await both dev-mcp-server's (RAW-verify per prior tick's checklist) and PO's returns; release respective outer locks on each return.
-
-## cycle-20260730T2051Z-tick — new tick; drained 3 signals; BOUNDED-1 (WIP=0) picked FIX-SIGNALQUALITYAUDIT-WRITE-GATE-UNREACHABLE-BY-EMITTER-CONTRACT (dead-table SLA, PO's largest report-queue cluster)
-
-- Tick `2026-07-30T20:37Z`. Preflight RUN, GCC clean, HEAD.lock absent, worktree prune clean.
-- **Drain**: 3 file signals routed-to-po (context-bloat, cowork-team×2), 0 `signal_queue` NEW rows, 0 orphan-signals. 6 aged-out `processed/` files pruned. Committed+pushed `d58606ff0`.
-- CI probe: run still `queued` — non-fatal skip.
-- **BOUNDED-1 (WIP=0) picked `FIX-SIGNALQUALITYAUDIT-WRITE-GATE-UNREACHABLE-BY-EMITTER-CONTRACT`** (P2, `apps/mcp-server/`, next_agent=`dev-mcp-server` — PO's own report-queue triage: `signal_quality_audit` table has 6 rows lifetime / zero writes in 55d, 3-way sanity-checked as real by PO last tick, was 22% of the 179-report backlog PO just cleared) → dispatched `dev-mcp-server` (background) with the full mechanism-first/wire-or-retire AC baked into the prompt (task carried complete inline detail, no lookup needed). Outer `task:` lock held for duration (LOCK-LIFETIME).
-- Released SF-1 + fire-election (`cron:dev-team:2026-07-30T20:37Z`) cleanly at tick close, mirroring SLS/RLC's dispatch-then-end pattern. **NEXT**: await dev-mcp-server's return; RAW-verify (esp. AC-1's decisive live-DB probe outcome) before touching board.
 
 
