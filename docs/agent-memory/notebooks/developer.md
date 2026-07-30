@@ -1,24 +1,6 @@
 # Developer — Notebook
 
-**Last updated:** 2026-07-30 | **Cycle:** FACTORY-GUARD-CI-SHAREDPKG-IMPL
-
-## Session 2026-07-30 — FACTORY-GUARD-CI-DEADCODE-IMPL — REVIEW
-
-**Task:** dev-team BOUNDED-1 auto-pickup (`cross-service/`, epic FACTORY-MAINTAINABILITY-2026-06), 4th sibling of TSBOUNDARIES/COMPROOT-LOGIC above (same architect brief lineage, own brief `2026-07-24-factory-guard-ci-dead-code-gate.md`). New dead-code CI gate + fix all confirmed-orphaned trees first (zero-tolerance).
-
-**Actions taken:** New `scripts/audits/dead-code-gate.sh` (`--check`, 4 checks on TRACKED files: `.bak`/`.backup`/`.patch`, `_deprecated/` segment, Go/TS twin scaffold, `//go:build ignore`). Deleted 2 stray root `docker-compose.yml.backup`/`.patch`, mcp-server's 2 `_deprecated/` trees + `1077-kinh-dich-wrapper.test.ts`, pdf-extractor's `_deprecated/mock_echo`, stock-price's `_deprecated/services_v1.go`+test (the only 2 `//go:build ignore` files repo-wide) — zero live importers independently grep-verified for each. Surgical edit to `1081-sprint-054-smoke.test.ts` (Scenario 5/5b/5c only, 17→14 tests). `technical-analysis/package.json` trimmed `bun-types`/`typescript` devDeps. Wired `dead-code-gate` CI job + CANONICAL pointer.
-
-**Board-note correction:** Check-3's literal phrasing ("any Go `cmd/server`+`package.json`+`src/` combo bans") would permanently false-positive on the LIVE `apps/news-fetch` (legit WIP parallel Go port, TS side is what its Dockerfile actually builds/deploys) — refined to a Dockerfile-content signal (zero `src` reference = orphaned, matching technical-analysis's confirmed dead shape) instead of bare directory shape. Also found `apps/technical-analysis/src/` + its tests were ALREADY deleted by an unrelated prior commit (`099afddd3`, 2026-07-28) before this row was even dispatched — only the devDep trim remained live-actionable.
-
-**Verification:** `dead-code-gate.sh --check` 0 on live repo; new `dead-code-gate.test.sh` 8/8 PASS (4 DoD synthetic-offender cases + tracked-vs-untracked control + twin-scaffold Dockerfile-blind/-referencing pair proving the news-fetch exemption is deliberate). mcp-server: `tsc --noEmit` clean, `eslint src/` clean, `1081-*.test.ts` 14/14. technical-analysis: `go build`/`go vet`/`go test ./...`/`golangci-lint run` clean, `dashboard/build.sh` green (35/35 + headless render, esbuild/playwright-core confirmed still load-bearing). pdf-extractor `lint-imports` 3/3 kept; stock-price `golangci-lint run` 0 issues. Full `bun test`: standing `FIX-MCP-SUITE-HEALTH-BASELINE` order-dependent red only — 3-run base-vs-head A/B (disposable `git worktree`) showed every failing file either pre-existing in base or a run-to-run flip on identical code (base 20/9files, head-run1 24/10files, head-run2 2/2files); zero deterministic net-new failures.
-
-**Board:** `task_board.in_progress[FACTORY-GUARD-CI-DEADCODE-IMPL]` → `review` (`next_agent: qa`), `.head` reset to idle, same `orch-apply.sh` write.
-
-**Simplicity gate:** PASS — every deletion is pure subtraction of independently zero-importer-verified code; check-3's Dockerfile-content refinement is the minimal signal that avoids the false positive (no new dependency, no broader per-symbol tooling).
-
-**Zone note:** No MCP/gateway tool available this session (Read/Edit/Write/Bash only, confirmed at Step 0) — flipped the board row directly via `scripts/orch-apply.sh` (permitted, pure bash); could not release `task:FACTORY-GUARD-CI-DEADCODE-IMPL` or send Telegram (structural gap, flagged for the coordinating dev-team session). Mid-task, ~12 staged `git rm` deletions were found unstaged between two background test runs (index reverted to HEAD, files still gone from disk) — re-staged immediately, verified residual-check 0 before AND after commit; root cause not conclusively isolated (2 concurrent single-file peer commits landed on `main` in the same window) but files were never lost, only re-staged.
-
-Zone health: no drift detected.
+**Last updated:** 2026-07-30 | **Cycle:** FACTORY-GUARD-CI-RAWVERIFY-IMPL
 
 ## Session 2026-07-30 — FACTORY-GUARD-CI-NOHARDCODE-IMPL — REVIEW
 
@@ -55,3 +37,21 @@ Zone health: no drift detected.
 **Zone note:** No MCP/gateway tool available this session (Read/Edit/Write/Bash only, confirmed at Step 0) — flipped the board row directly via `scripts/orch-apply.sh` (permitted, pure bash); could not release `task:FACTORY-GUARD-CI-SHAREDPKG-IMPL` or send Telegram (structural gap, flagged for the coordinating dev-team session).
 
 Zone health: no drift detected.
+
+## Session 2026-07-30 — FACTORY-GUARD-CI-RAWVERIFY-IMPL — REVIEW
+
+**Task:** dev-team BOUNDED-1 auto-pickup (`cross-service/`, epic FACTORY-MAINTAINABILITY-2026-06), 7th/LAST sibling (own brief `2026-07-24-factory-guard-ci-rebuild-raw-verify-hook.md`). Mechanizes the previously-unenforced `PUSH-AUTONOMY-1` §5 post-push REAL-DATA verify mandate at the immediately-checkable textual-attestation layer — closes the LAST `ci-regression-prevention` guardrail in the epic.
+
+**Actions taken:** New `scripts/audits/rebuild-raw-verify-check.sh <base-sha> <head-sha>` — zero-tolerance, forward-only diff-range check (no baseline). Trigger composes the two already-designed sibling primitives (brief §3): a `apps/*/src/infrastructure|interface/**` or `apps/*/pkg/interface/http|infrastructure/**` file gains an ADDED line matching `metric-mask-lint.sh`'s own field regex. Requires ONE of a commit-message RAW-verify/REALDATA token, a matching token in an added `docs/agent-memory/decisions/**`/`reports/TASK_REPORT_*.md` line, or an inline `raw-verify-allow:` annotation on the triggering line (or the line immediately before it). Wired PRIMARY/blocking into `scripts/git-hooks/pre-push`'s existing `CODE_TOUCHING_REGEX`-gated block; SECONDARY/backstop `rebuild-raw-verify-hook` CI job (`fetch-depth: 0`) against `github.event.before..github.sha`. CANONICAL pointer + `PUSH-AUTONOMY-1` §5 cross-reference added to `dev-standards.md`.
+
+**Verify-live deviation:** colocated test files under the trigger DDD layers (`apps/mcp-server/src/infrastructure/**/__tests__/*.test.ts`, `apps/*/pkg/infrastructure|interface/http/*_test.go`) confirmed live via `find` to exist directly inside those layers — excluded from the trigger corpus (mirrors `metric-mask-lint.sh`'s own test exclusion) so a routine test assertion like `expect(result.confidence).toBe(0.8)` doesn't fire on nearly every infra/interface test edit.
+
+**Verification:** manually ran 6 scenarios in disposable scratch git repos (fail-no-attestation, pass-commit-msg, pass-inline-annotation, pass-decisions-journal, pass-no-trigger, pass-zero-sha fail-open) BEFORE writing the permanent test, so the test encodes already-observed behavior. New `rebuild-raw-verify-check.test.sh` 9/9 PASS (all 4 named DoD cases + bonus coverage). `shellcheck` clean on all 3 touched shell files (new script, new test, `pre-push`). `.github/workflows/ci.yml` YAML validated (`python3 -c "import yaml; yaml.safe_load(...)"`). No `apps/` TS/Go source touched (zone=`cross-service/`, pure bash+yaml+md) — `bun test`/`tsc` structurally N/A.
+
+**Board:** `task_board.in_progress[FACTORY-GUARD-CI-RAWVERIFY-IMPL]` → `review` (`next_agent: qa`), `.head` reset to idle, same `orch-apply.sh` write.
+
+**Simplicity gate:** PASS — reuses 2 existing sibling primitives (DDD-layer path set, field regex) rather than inventing a third detection pattern; escape hatches mirror the established `metric-mask-allow:`/`size-justification:` idiom exactly, no new abstraction.
+
+**Zone note:** No MCP/gateway tool available this session (Read/Edit/Write/Bash only, confirmed at Step 0) — flipped the board row directly via `scripts/orch-apply.sh` (permitted, pure bash); could not release `task:FACTORY-GUARD-CI-RAWVERIFY-IMPL` or send Telegram (structural gap, flagged for the coordinating dev-team session, per the dispatch prompt's own instruction).
+
+Zone health: no drift detected. This closes the 7th and last `ci-regression-prevention` guardrail — epic `FACTORY-MAINTAINABILITY-2026-06` cluster `ci-regression-prevention` now complete.
