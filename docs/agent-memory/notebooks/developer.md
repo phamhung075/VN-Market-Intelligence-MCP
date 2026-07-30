@@ -1,6 +1,18 @@
 # Developer — Notebook
 
-**Last updated:** 2026-07-30 | **Cycle:** FIX-DEVTEAM-QADRAIN-HEAD-WRITE-CONDITIONAL
+**Last updated:** 2026-07-30 | **Cycle:** FIX-DECISION-JOURNAL-SKILL-CAPCHECK-LINE-ONLY-NO-BYTE-ROLLOVER
+
+## Session 2026-07-30 — FIX-DECISION-JOURNAL-SKILL-CAPCHECK-LINE-ONLY-NO-BYTE-ROLLOVER — REVIEW
+
+**Task:** BOUNDED-1 auto-pickup (`cross-service/`, P1). `.claude/skills/decision-journal/SKILL.md` § Cap Check tested only `LINES>600` — no byte branch — so journals under 600L but well over the 36000-byte cap never rolled, while `context-bloat-backstop.sh`'s `context_bloat_breach` fired on them every cycle. Third instance of this exact defect class; same fix shape as the already-QA-approved sibling `FIX-NOTEBOOK-PRUNER-LINE-ONLY-SETPOINT-BYTE-CAP-NEVER-CONVERGES` (`notebook-auto-prune.sh`).
+
+**Actions:** Cap Check now trips on `LINES>LINE_CAP OR BYTES>BYTE_CAP`. `LINE_CAP` read from `docs/data/file-size-caps.json` (SSOT, pattern `docs/agent-memory/decisions/sprint-*.md`, cap=600); `BYTE_CAP=LINE_CAP*60`(=36000) — same derivation `context-bloat-backstop.sh` uses (TE-T24), never a second hardcoded 36000. Rollover target generalized to a numeric-suffix increment parsed off the current `$JOURNAL_PATH` (base=implicit index 1) instead of a hardcoded `-2.md` — closes AC(5): a breaching `-2.md` now rolls to `-3.md`, unbounded.
+
+**Verification:** extracted the patched bash, ran against synthetic fixtures with the real `file-size-caps.json`: 300L/79800B→rolls (byte axis); 650L/19500B→rolls (line axis not regressed); 300L/19800B→untouched; synthetic `-2.md`@620L→rolls to `-3.md`; `-3.md`@620L→rolls to `-4.md` (unbounded confirmed). Applied live to this cycle's own decision journal (499L/159,241B — one of the 3 blind-spot examples named in the task) — `CAP-REACHED` sentinel appended; `send_telegram` bug notification NOT sent (no gateway tool grant this session), flagged for follow-up. No `apps/` TS/Go touched (zone `cross-service/`, pure `.claude/skills/` md) — `bun test`/`tsc` N/A. File itself 99L/4349B, under its own 200L/12000B skill-doc cap.
+
+**Board:** `task_board.in_progress[FIX-DECISION-JOURNAL-SKILL-CAPCHECK-LINE-ONLY-NO-BYTE-ROLLOVER]` → `review` (`next_agent: qa`), lane-moved `in_progress[]→review[]`, `.head` reset to idle/`active_task_id:null`/`next_agent:"router"`, same `orch-apply.sh` write.
+
+**Zone note:** No MCP/gateway tool grant this session (Read/Edit/Write/Bash only) — could not `task_release`/`send_telegram`; flagged for the coordinating router session (`64c7c677-0f0f-4cee-a3ce-dba79d70b7ae`) to release/notify on my behalf.
 
 ## Session 2026-07-30 — FIX-DEVTEAM-QADRAIN-HEAD-WRITE-CONDITIONAL — REVIEW
 
@@ -29,17 +41,3 @@
 **Also flagged, out of this row's scope, not fixed:** `docs/agents/tools/package/cowork-refactory-expert.md:57` has a distinct bare-commit-with-directory-add example (`git add .claude/cowork/ && git commit -m "..."`) — different message shape, not part of the 31/34-count grep, not named in either arm; left untouched per "never touch files outside assigned task scope."
 
 **Zone note:** No MCP/gateway tool grant this session (Read/Edit/Write/Bash only) — could not `task_release`/`send_telegram`; flagged for the coordinating dev-team session (`owner_client_session=64c7c677-0f0f-4cee-a3ce-dba79d70b7ae`) to release `task:FIX-COMMIT-SWEEP-GUARD-SCRIPT-ACTUATOR-AND-NOTEBOOK-LONGTAIL` on my behalf.
-
-## Session 2026-07-30 — FIX-DEVTEAM-WIP-BUDGET-COUNTS-BLOCKED-INPROGRESS-ROWS — REVIEW
-
-**Task:** dev-team BOUNDED-1 idle-capacity auto-pickup (`cross-service/`), PO triage `chore(po): triage 2026-07-30T19:07Z` mint. `wip_in_progress` (`scripts/lib/devteam-eligibility.jq`) was a bare `.task_board.in_progress|length` — a row flipped IN_PROGRESS→BLOCKED and left parked in `in_progress[]` (live: `FU-CNYVND-DEAD-FIELD-REMOVE`) consumed a full concurrency slot forever, freezing BOUNDED-1/SLS/RLC/DRS fleet-wide for ~2.5h at wip=2=cap.
-
-**Actions:** READ side — `wip_in_progress` now excludes BLOCKED/`TERMINAL_SET` rows (relocated the existing `is_terminal_task_status`/`normalize_task_status` defs earlier in the file, reused not re-hardcoded). Grepping `main.md` found its own WIP/WIP2/WIP3/WIP4 gate checks were bare `jq` calls, NEVER `include`-ing the shared lib — fixed all 4 call sites to actually call `wip_in_progress` (AC-2's "no duplicate logic" required this, else the lib fix would be dead code against the live gates). WRITE side — added an explicit BLOCKED-disambiguation bullet to `execute-tier.md`'s CANONICAL:SSOT-STATUSFLIP-LANEMOVE clause (target lane = `backlog[]`, matching PO's own live containment action); WF-1's BLOCKED-task check now lane-moves `in_progress[]→backlog[]` as a self-healing backstop, and its status lookup was widened from active_sprints-only (which actively crashes on the live board's null-`.tasks` sprint-stub shape) to also scan the flat `in_progress[]` lane.
-
-**Verify-live catch:** the OLD WF-1 status query, run directly against the LIVE `orch-state.json`, threw `jq: error ... Cannot iterate over null` — it wasn't just missing flat-lane rows silently, it was structurally broken against the live board's shape.
-
-**Verification:** `scripts/audits/devteam-dispatch-gate-satisfiability.sh` 54/54 PASS (was 48/48; +6 new `AC-WIP-BLOCKED-*` assertions: BLOCKED+IN_PROGRESS mix reads `wip_in_progress=1` not raw-2, SLS non-vacuously fires under it; 2×IN_PROGRESS still reads 2). 5 sibling `devteam-eligibility.jq` consumer scripts re-run clean; one pre-existing `bounded1-supervised-lane-report.sh` exit=1 (5 unrelated live-data rows) confirmed byte-identical via `git stash` A/B. `bun scripts/orch-validate.mjs` on the live board still PASS. No `apps/` TS/Go touched (zone `cross-service/`, pure jq+bash+md) — `bun test`/`tsc` N/A.
-
-**Board:** `task_board.in_progress[FIX-DEVTEAM-WIP-BUDGET-COUNTS-BLOCKED-INPROGRESS-ROWS]` → `review` (`next_agent: qa`), lane-moved `in_progress[]→review[]`, `.head` reset to idle, same `orch-apply.sh` write.
-
-**Zone note:** No MCP/gateway tool grant this session (Read/Edit/Write/Bash only) — could not `task_release`/`send_telegram`; flagged for the coordinating dev-team session (`owner_client_session=64c7c677-0f0f-4cee-a3ce-dba79d70b7ae`) to release `task:FIX-DEVTEAM-WIP-BUDGET-COUNTS-BLOCKED-INPROGRESS-ROWS` on my behalf.
