@@ -36,3 +36,43 @@
 - Set supervised+plan_only to guarantee a lane → rejected: the fix is a known one-line tools-grant edit; quarantining it to planning adds a hop for nothing.
 **why-decision:** Two reports corroborate on different planes — notebook commits dead 6 cycles (was 3), and a CRITICAL alert fired with NO published-marker tombstone because `task_claim` requires `owner_client_session`. That promotes it from memory hygiene to a live duplicate-publish exposure. RAW-verified structural, not self-reported: `.claude/agents/alert-commander.md:5` has no Bash.
 **why-change:** No change from plan; left the flags untouched on purpose and recorded the measured strand (BOUNDED1=false, SLS=false) in the row so the next tick sees why it needs deliberate dispatch.
+
+### STEP po-S63 · po · 2026-07-30T19:29:19Z
+**task-id:** FU-CNYVND-DEAD-FIELD-REMOVE
+**what-done:** Unparked the BLOCKED row from in_progress[] to backlog[] (disposition unchanged) after finding it was eating a WIP concurrency slot.
+**what-considered:**
+- Leave it — dev-team's own pickers will handle it (they will not: wip_in_progress is a bare lane length, no status filter).
+- Flip it back to IN_PROGRESS so it looks live (falsifies state).
+- Move to backlog[], keep BLOCKED + next_agent=architect — chosen.
+**why-decision:** `scripts/lib/devteam-eligibility.jq` def `wip_in_progress` = `(.task_board.in_progress // []) | length`, read at source. With this BLOCKED row + one genuinely live row, wip=2=cap, so BOUNDED-1/SLS/RLC/DRS all no-opped fleet-wide against backlog=374/ready=54/review=184. Containment now, structural fix minted as FIX-DEVTEAM-WIP-BUDGET-COUNTS-BLOCKED-INPROGRESS-ROWS.
+**why-change:** no change from plan.
+
+### STEP po-S64 · po · 2026-07-30T19:29:19Z
+**task-id:** FIX-DEVTEAM-NONDEV-NEXTAGENT-RESIDUAL-NO-DISPATCH-DESTINATION
+**what-done:** Minted P1 for 48 backlog rows (27 P0/P1) that no picker can reach, measured with the fleet's own include-ed predicates.
+**what-considered:**
+- Widen the DRS allowlist to ops/agent-father (rejected — the exclusions are ratified-deliberate, both cite real incident memory).
+- Hand-dispatch the affected rows each PO tick (rejected — 48 deep, incidental discovery is not a mechanism).
+- Mint the destination-half follow-up the library's own comment says was never minted — chosen.
+**why-decision:** devteam-eligibility.jq:433-440 states the deferral verbatim; this is occurrence #2 of the FIX-BOUNDED1-SUPERVISED-LANE-NO-SWEEPER class (documented gate, absent downstream path) which last time idled a P0 6+ days. The gate is right; only the destination is missing.
+**why-change:** no change from plan.
+
+### STEP po-S65 · po · 2026-07-30T19:29:19Z
+**task-id:** FIX-TASKCLAIM-OWNER-CLIENT-SESSION-MISSING-FLEET-FLOW-DOCS
+**what-done:** Minted P1 after confirming at source that owner_client_session is Zod-REQUIRED and 6 documented call sites omit it.
+**what-considered:**
+- Fold into FIX-COWORK-BASH-GRANT-COVERAGE-STAMP-TRANSPORT (rejected — that row owns the Bash grant, this is a schema-drift in the documented call).
+- Fix only refine_bctc_md, the loudest victim (rejected — commit-mutex has the widest blast radius).
+- One row covering every documented task_claim call site — chosen.
+**why-decision:** coordinationTools.ts:104 is `z.string()` with no `.optional()`, read at source not from the tool description. alert-commander published WITHOUT its marker claim on 2026-07-30T00:12Z — a silently-absent publish mutex, not a cosmetic doc bug.
+**why-change:** no change from plan.
+
+### STEP po-S66 · po · 2026-07-30T19:29:19Z
+**task-id:** FIX-BCTC-REPARSE-BATCH-CORRUPTION-NGAYNOP-FLIP
+**what-done:** Re-pointed next_agent router->qa, attached 07-28 live b1/b2 telemetry as an evidence pointer, and attached an explicit false-PASS warning on clause (a).
+**what-considered:**
+- Close it myself on the 07-28 evidence (rejected — PO must not self-verify a QA-owned gate on relayed log lines).
+- Leave next_agent=router (rejected — no picker consumes a review[] row addressed to router; 8 days idle proves it).
+- Re-point to qa with evidence + dormancy warning — chosen.
+**why-decision:** Clause (a) reads "no ticker acquires NGAY NOP == run date over 3 cycles"; the BCTC producer is dormant (bctc stale 2008min, B-05 1951m, B-06 41h) so that clause can go green vacuously. Handing QA the trap is worth more than handing it a verdict.
+**why-change:** no change from plan.

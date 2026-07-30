@@ -4337,6 +4337,73 @@
     ],
     "backlog": [
       {
+        "id": "FIX-DEVTEAM-NONDEV-NEXTAGENT-RESIDUAL-NO-DISPATCH-DESTINATION",
+        "type": "FIX",
+        "status": "BACKLOG",
+        "priority": "P1",
+        "size": "M",
+        "zone": "cross-service/",
+        "owner": "architect",
+        "next_agent": "architect",
+        "supervised": false,
+        "plan_only": true,
+        "title": "48 backlog rows (27 at P0/P1) have ZERO eligible pickers — the DRS allowlist deferral follow-up was never minted",
+        "detail": "MEASURED LIVE 2026-07-30T19:2xZ against docs/data/orch/orch-state.json using the fleets OWN predicates (scripts/lib/devteam-eligibility.jq, include-ed, not reimplemented): 48 rows with status IN (BACKLOG,TODO) resolve an effective_next_agent that is (a) non-dev-role so BOUNDED-1 skips them, (b) not the supervised AND plan_only pair so SLS skips them, and (c) not on the DRS ratified allowlist [architect,ba,pm,po,agents-architect] so DRS skips them. Breakdown by effective_next_agent: agent-father=37, ops=6, ops-mainserver-fetch=2, ops-vps-fetch=1, qa=2. 27 of the 48 are P0/P1, including the fleets NEWEST P0 (FIX-BCTC-LAYOUT-PUSH-FAILURE-NETWORK-DEADLOCK, minted 2026-07-30T17:47Z, next_agent=ops). devteam-eligibility.jq:433-440 documents the exclusions as DELIBERATE (agent-father = fleet-wide blast radius, and it says verbatim: a scope deferral whose follow-up was never minted; ops/* = repeated live-infra-mutation incidents). The exclusions are correct — the missing half is the DESTINATION. This is occurrence #2 of the exact class FIX-BOUNDED1-SUPERVISED-LANE-NO-SWEEPER closed on 2026-07-21 (a documented gate whose promised downstream path did not exist; it idled a P0 6+ days). Today the promised path is Step 1 PO triage BATCH, which is real but manual and only reaches rows a PO happens to notice in a given tick — 48 rows deep, that is not a mechanism.",
+        "ac": "1. A named, MECHANICAL destination exists for every backlog row that is currently zero-picker — either a new sweep lane with its own safety envelope (e.g. plan-only/spec-first dispatch for agent-father, gated ops-proposal-then-PO-ratify for ops/*) or an explicit ratified policy that these rows require PO BATCH, in which case PO triage gets a MECHANICAL zero-picker sweep step (priority-ordered, top-N per tick) instead of relying on incidental discovery. 2. A regression instrument reports the live zero-picker count and fails/warns above a ratified ceiling, so this cannot silently regrow. 3. The count is driven to 0 or to a ratified, justified residual — do not close this row while 27 P0/P1 rows remain unreachable. 4. Reuses scripts/lib/devteam-eligibility.jq predicates by include — never hand-copies them (that hole-by-hole pattern is what the library exists to stop).",
+        "related": [
+          "FIX-BOUNDED1-NONDEV-NEXTAGENT-RESIDUAL-NO-DISPATCH-LANE",
+          "FIX-BOUNDED1-SUPERVISED-LANE-NO-SWEEPER",
+          "FIX-BCTC-LAYOUT-PUSH-FAILURE-NETWORK-DEADLOCK"
+        ],
+        "created_at": "2026-07-30T19:27:33Z",
+        "created_by": "po/triage-20260730T1907Z",
+        "updated_at": "2026-07-30T19:27:33Z"
+      },
+      {
+        "id": "FIX-DEVTEAM-WIP-BUDGET-COUNTS-BLOCKED-INPROGRESS-ROWS",
+        "type": "FIX",
+        "status": "BACKLOG",
+        "priority": "P1",
+        "size": "S",
+        "zone": "cross-service/",
+        "owner": "developer",
+        "next_agent": "developer",
+        "supervised": false,
+        "plan_only": false,
+        "title": "wip_in_progress counts BLOCKED rows as live concurrency — one parked row halves fleet dispatch throughput, two halt it entirely",
+        "detail": "scripts/lib/devteam-eligibility.jq def wip_in_progress is (.task_board.in_progress // []) | length — a bare length with NO status filter. A row that goes IN_PROGRESS -> BLOCKED and is left in the in_progress[] lane therefore keeps consuming a full concurrency slot forever, even though nothing is running. OBSERVED LIVE THIS TICK: FU-CNYVND-DEAD-FIELD-REMOVE flipped to BLOCKED at 2026-07-30T16:53:28Z with .head correctly reset to idle, but stayed parked in in_progress[]. With CCATO-MCP-T1-DOMAIN-ENGINE genuinely live in the other slot, wip=2=cap, so BOUNDED-1 (own cap <1) and SLS/RLC/DRS (shared cap <2) ALL no-opped — the entire idle-chain was starved for ~2.5h while backlog=374 / ready=54 / review=184. Independently corroborated by scripts/audits/devteam-dispatch-gate-satisfiability.sh, whose own header line printed: Live-shaped baseline: ready=54 in_progress=2 review=184. PO hand-unparked the row this tick (backlog[], disposition otherwise unchanged) — that is acute containment, not the fix.",
+        "ac": "1. wip_in_progress counts only rows that represent REAL live concurrency — a status-based predicate, not lane membership alone (BLOCKED/DEFERRED/CANCELLED-class rows in in_progress[] must not consume budget). Derive the non-counting set from the SSOT status enum in apps/mcp-server/src/infrastructure/orchStateSchema.ts — do not hardcode a fresh literal list. 2. Fix lives ONLY in scripts/lib/devteam-eligibility.jq so BOUNDED-1/SLS/RLC/DRS/QA-Drain all inherit it — no per-caller copy. 3. Regression test: a fixture with one BLOCKED + one IN_PROGRESS row in in_progress[] must leave SLS/RLC/DRS SATISFIABLE (wip=1), and two genuinely IN_PROGRESS rows must still saturate them (wip=2). Add it to scripts/audits/devteam-dispatch-gate-satisfiability.sh. 4. SECOND HALF (do not skip): whatever writes IN_PROGRESS->BLOCKED must also move the row OUT of in_progress[], so this cannot re-park. Fixing only the counter leaves BLOCKED rows accumulating in a lane they do not belong in.",
+        "related": [
+          "FU-CNYVND-DEAD-FIELD-REMOVE",
+          "UNBLOCK-DEVTEAM-DISPATCH-GATE-STAGING-DEADLOCK"
+        ],
+        "created_at": "2026-07-30T19:27:33Z",
+        "created_by": "po/triage-20260730T1907Z",
+        "updated_at": "2026-07-30T19:27:33Z"
+      },
+      {
+        "id": "FIX-TASKCLAIM-OWNER-CLIENT-SESSION-MISSING-FLEET-FLOW-DOCS",
+        "type": "FIX",
+        "status": "BACKLOG",
+        "priority": "P1",
+        "size": "S",
+        "zone": "cross-service/",
+        "owner": "agent-father",
+        "next_agent": "agent-father",
+        "supervised": false,
+        "plan_only": false,
+        "title": "6 flow docs / skills document a task_claim call that omits the REQUIRED owner_client_session — every such mutex silently never engages",
+        "detail": "apps/mcp-server/src/interface/mcp/tools/system/coordinationTools.ts:104-110 declares owner_client_session: z.string() with NO .optional() — REQUIRED (P1-FINAL / TASK_1980, sole ownership discriminator), confirmed by reading the source, not the tool description. Six files still document a task_claim( call with no owner_client_session anywhere in the file: docs/agents/pm/flow/main.md, docs/agents/pm/flow/task-archive.md, docs/agents/market-watcher/flow/cycle.md, docs/agents/news-scout/flow/stage-log-notify.md, .claude/skills/commit-boundary/SKILL.md, .claude/skills/commit-mutex/SKILL.md. docs/agents/refine_bctc_md/flow/main.md:37-38 is the same defect in call_tool form. LIVE VICTIMS TODAY (list_unresolved_reports, both unresolved): 2026-07-30T16:43Z cowork-team — refine_bctc_md BLOCKED, claim fails schema validation on every fire; 2026-07-30T00:12Z alert-commander — published-marker task_claim REJECTED and the agent then PROCEEDED TO PUBLISH A CRITICAL SIGNAL WITHOUT THE MARKER CLAIM, i.e. the double-publish mutex was silently absent. .claude/skills/commit-mutex/SKILL.md:228 is the worst instance — it is the fleet-wide notebook/commit mutex EVERY agent is told to use, and its documented call is task_claim(commit-mutex:main, kind=..., ttl=90): THREE schema drifts at once (missing owner_client_session, kind= instead of task_kind=, ttl= instead of ttl_seconds=). Its own error branch C-2 says MCP error -> SKIP commit -> EXIT, so a doc-faithful agent can never commit; agents are visibly improvising past it, which means the serialization the mutex exists to provide is not actually in force — a plausible standing contributor to the recurring concurrent-commit / peer-index-sweep class.",
+        "ac": "1. Every documented task_claim / task_release / task_heartbeat call in docs/agents/** and .claude/skills/** passes owner_client_session (and the correct task_kind / ttl_seconds parameter NAMES) exactly as the live Zod schema declares them. 2. Parameter names are re-derived from apps/mcp-server/src/interface/mcp/tools/system/coordinationTools.ts — not copied from a sibling doc that may carry the same drift. 3. Every touched flow states where the session id comes from (spawn-prompt coordination parameter). Note the LLM-literal hazard already recorded in memory: a doc that writes $CLAUDE_CODE_SESSION_ID inside a call_tool argument gets sent LITERALLY — the doc must say to substitute the real value. 4. A grep-based guard fails CI when a task_claim call site in docs/.claude lacks owner_client_session, so the drift cannot silently return. 5. .claude/skills/commit-mutex/SKILL.md is fixed FIRST — it has the widest blast radius. 6. Re-verify the two live victims (refine_bctc_md, alert-commander published-marker) actually claim after the fix.",
+        "related": [
+          "FIX-COWORK-BASH-GRANT-COVERAGE-STAMP-TRANSPORT",
+          "FIX-ALERT-COMMANDER-NO-BASH-GRANT-NOTEBOOK-UNCOMMITTABLE"
+        ],
+        "created_at": "2026-07-30T19:27:33Z",
+        "created_by": "po/triage-20260730T1907Z",
+        "updated_at": "2026-07-30T19:27:33Z"
+      },
+      {
         "id": "FU-CNYVND-DEAD-FIELD-REMOVE",
         "priority": "P3",
         "size": "S",
@@ -10861,7 +10928,7 @@
         "status": "BACKLOG",
         "priority": "P0",
         "size": "M",
-        "zone": "data",
+        "zone": "multi",
         "owner": "ops",
         "next_agent": "ops",
         "co_owner": "dev-pdf-extractor",
@@ -10874,7 +10941,9 @@
         ],
         "created_at": "2026-07-30T17:47:00Z",
         "created_by": "ops-dispatch-supervised-lane-sweep",
-        "updated_at": "2026-07-30T17:52:55Z"
+        "updated_at": "2026-07-30T19:27:33Z",
+        "po_zone_correction_20260730": "zone was \"data\" — not one of the three legal values (apps/<service>/ | multi | cross-service/) per docs/agents/po/flow/main.md. Corrected to multi: root cause per docs/spikes/SPIKE-BCTC-EXTRACTION-DORMANT-MASS-ENRICHFAIL-FLOOD.md spans pdf-extractor (missing /app/PDF-Extract-Kit/models/Layout/YOLO/doclayout_yolo_ft.pt -> _PekLayoutModel load FAILED on every /pek-extract) AND mcp-server (bctcExtractReconcileJob rows_written=0 in 166/167 runs).",
+        "po_dispatch_note_20260730": "NO PICKER EXISTS FOR THIS ROW — PO-dispatched via BATCH instead. RAW-verified against scripts/lib/devteam-eligibility.jq: BOUNDED-1 gated (is_non_dev_next_agent_unrouted, next_agent=ops is not ^dev(-|$)|^developer$); SLS gated (requires effective_supervised AND effective_plan_only BOTH true, this row has both null); DRS gated (is_design_router_allowed — ops is EXPLICITLY off the ratified 2026-07-30 default allowlist [architect,ba,pm,po,agents-architect], see devteam-eligibility.jq:436-440); RLC is ready[]-only; QA-Drain is review[]-only. Zero of five pickers. Structural class tracked by FIX-DEVTEAM-NONDEV-NEXTAGENT-RESIDUAL-NO-DISPATCH-DESTINATION."
       },
       {
         "id": "TASK-COWORK-MUTEX-001",
@@ -13585,9 +13654,9 @@
           "project_data_serve_integrity"
         ],
         "note": "supervised:true blocks BOUNDED-1 idle auto-pickup. PO did NOT restart or touch any container/job this triage (detection only, and any halt of a live scheduled job is an ops/user-gated action). This is the highest-severity item in the 2026-07-21T14:37Z tick: it is the only finding that is ACTIVELY DESTROYING data on a recurring daily cadence rather than sitting static.",
-        "next_agent": "router",
-        "updated_at": "2026-07-22T16:02:26Z",
-        "updated_by": "po",
+        "next_agent": "qa",
+        "updated_at": "2026-07-30T19:28:08Z",
+        "updated_by": "po/triage-20260730T1907Z",
         "dispatch_note": "Router-adjudicated dispatch of a supervised:true row — the supervised gate is scoped to the unattended BOUNDED-1 idle-pickup lane only (docs/policies/dev-standards.md), not to this PO-BATCH path. Part (1) stop-the-bleed routed to ops (attempt through the front door; the ops/user-gated label on this row carries NO recorded classifier denial, and per feedback_container_swaps_user_gated a gate without denial evidence is a false gate). Part (2) durable write-back fix routed to dev-mcp-server.",
         "po_scope_adjudication_20260721T1537": "SCOPE HELD SHARP (PO signal-drain 2026-07-21T15:37Z, adjudicating dev-team escalation devteam-20260721T152332-bctcscope). This row stays bounded to the mode-1 reparse-corruption mechanism (total_assets=0 + ngay_nop->processing-date flip) + its durable write-back fix; the 16-ticker acceptance/verification_gate is UNCHANGED. Do NOT widen it to the broad servability problem. The cross-watchlist true-scope census is spun out to SPIKE-BCTC-Q1-2026-SERVABILITY-CENSUS; the epic-vs-fold remediation decision is DEFERRED to that census. WATCH-SPREAD: router found SSI/NVL — listed as 'correctly DA NOP' siblings on 07-15 in FIX-BCTC-Q1-2026-STORED-PDF-INGEST-STALL-15T — now return 'Chua co du lieu' through get_bctc_full at 15:2xZ; consistent with this row's 'still expanding' concern, i.e. the batch may have corrupted previously-servable tickers beyond the 16. Ops SERVABLE column is unreliable (self-contradictory 29+~40>58) — do not baseline on it.",
         "review_note": "po_acceptance_reconciliation_20260721T1649 gate arm (b2) fixed: storeReport() (parseBctcReport.ts) guard now evaluates report.balanceSheet.totalAssets<=0 UNCONDITIONALLY (was existingGoodRow.total_assets>0 && new<=0) -- refuses to overwrite a good row (b1, unchanged) AND refuses to create a fresh corrupt row where none existed (b2, new). RED-before proven via git-stash A/B on the 2 source files with test changes kept -- both new (b2) assertions failed against pre-fix code exactly as predicted (manufactured total_assets=0 row for a no-prior-row ticker), GREEN after (7/7 pass). Scope-drift caught and reverted: tryNewsChainFallback() (bctc/newsChainFallback.ts) was also tried for arm (b2) since it shares the identical guard pattern and always hardcodes total_assets=0, but that broke 6 pre-existing tests (1294b-bctc-fallback.test.ts x4, FIX-BCTC-NEWS-CHAIN-FALLBACK-ID-ORPHAN.test.ts x2) for a currently production-unreachable feature (enableBctcFallback defaults false everywhere, grep-verified) -- reverted cleanly, documented as an open gap in usecases.md rather than folded in. NOT scored on get_earnings_calendar QUA HAN per explicit router/PO instruction (corrupted discriminator). Verified: targeted BCTC suite (FIX-BCTC-REPARSE-BATCH-CORRUPTION-NGAYNOP-FLIP + FIX-BCTC-NEWS-CHAIN-FALLBACK-ID-ORPHAN + 1294b-bctc-fallback + FIX-BCTC-D1-STABILIZE-REPORT-ID) 20/20 pass; bun tsc --noEmit exit 0; full suite 14601 pass/41 fail/46300 expect, all 41 pre-existing unrelated (telegram/vps-push/insider-tx/foreign-flow/technical-indicators timeout flake), zero BCTC/financial_reports hits in fail list; tool count 183/cronJobCount 2 unaffected (zero scheduler/tool files touched). Commit 70202e9da (parseBctcReport.ts + test + usecases.md + notebook), explicit pathspecs, git show --name-status verified against intent. qa: RAW-verify arm (b2) via forced/simulated failed extraction against the live serving path per revised gate; do not re-require non-zero total_assets across the 16 (out of scope, PO adjudicated).",
@@ -13604,7 +13673,10 @@
         "router_confirmed_sibling_gap_is_arm_b2_only": "ROUTER READ THE SIBLING WRITER AT SOURCE AND CAN SHARPEN QA'S FINDING. newsChainFallback.ts is NOT missing the whole guard — it already has arm (b1). Lines 264-274 block the write when existingReportRow.total_assets > 0, preserving a previously-good row and logging BLOCKED. What it lacks is arm (b2): when NO prior row exists, it proceeds to INSERT a brand-new row whose totalAssets is the hardcoded 0 at line 307 (bound into the INSERT at line 535), alongside an entire all-zeros balance sheet at lines 304-313. So the defect shape is IDENTICAL to the one just fixed in parseBctcReport.ts storeReport(): refuses to overwrite a good row, but freely CREATES a fresh zero-total row that bctcIdentityGuard.ts then reads at serve time as the OCR-corruption fingerprint. The file's own comment at lines 254-263 already states it 'carried the same two defects' as storeReport and 'mirrors the identical guard' — the mirror was simply completed for only one of the two arms.",
         "router_containment_flag_default_false": "BLAST RADIUS IS BOUNDED — PRIORITISE ACCORDINGLY, THIS IS NOT LIVE-BLEEDING. Router grep-confirmed QA's flag claim independently: enableBctcFallback is declared optional at bctc/types.ts:59, DEFAULTS TO false at fetchParseAndStoreBctc.ts:50 (destructured `enableBctcFallback = false`), and resolvePdfText.ts:228 gates the fallback call behind `if (!enableBctcFallback)`. No non-test caller passes it true. So the hole is LATENT — reachable only by flipping one config flag, not by current production traffic. Recommend the follow-up row be filed HIGH rather than P0, and that it record the flag as the containment so nobody later 'discovers' the flag is safe and downgrades it further, and so nobody enables the flag without closing arm (b2) first.",
         "router_recommendation_to_po_new_row": "FOR PO — MINT, DO NOT FOLD. QA recommended a separate row and explicitly declined to mint it or expand this row; router agrees and also declines to mint (minting is PO's). Scope: apply arm (b2) to newsChainFallback.ts so a first-ever fallback write does not create an all-zeros financial_reports row. The unavoidable conflict, which is why this cannot be a quiet patch: SIX existing tests assert precisely that first-ever zero-total write SUCCEEDING (1294b-bctc-fallback RED 1 / RED 6 / RED 7 / RED 8-first-call, and both cases in FIX-BCTC-NEWS-CHAIN-FALLBACK-ID-ORPHAN). Those six encode the defect as intended behaviour, so the row must decide what a news-inference fallback is FOR — if its value is directional hints and never balance-sheet figures, then writing it into financial_reports (the table bctcIdentityGuard treats as authoritative) may be the actual design error, and a guard on arm (b2) alone would just move the problem. That product question is why this is a PO row and not a fixer ticket.",
-        "po_corroboration_20260722_cron_audit": "CORROBORATING TELEMETRY from the 2026-07-22 cron audit, added rather than minted as a new row (prior-art check: this row already owns the active reparse corruption and is ACTIVE + SPREADING): bctcReparseJob shows a 58.8% run-success rate in cron_job_runs. The audit flagged that number as a genuine standalone concern; PO judgement is that a ~41% failure rate on the very job this row says is corrupting reports is far more likely the SAME phenomenon than an independent one, and splitting it across two rows would split one root cause across two owners. Whoever works this row should check whether the failing ~41% and the corrupting runs are the same set — if they turn out to be disjoint, THEN mint the separate row with that disjointness as its evidence."
+        "po_corroboration_20260722_cron_audit": "CORROBORATING TELEMETRY from the 2026-07-22 cron audit, added rather than minted as a new row (prior-art check: this row already owns the active reparse corruption and is ACTIVE + SPREADING): bctcReparseJob shows a 58.8% run-success rate in cron_job_runs. The audit flagged that number as a genuine standalone concern; PO judgement is that a ~41% failure rate on the very job this row says is corrupting reports is far more likely the SAME phenomenon than an independent one, and splitting it across two rows would split one root cause across two owners. Whoever works this row should check whether the failing ~41% and the corrupting runs are the same set — if they turn out to be disjoint, THEN mint the separate row with that disjointness as its evidence.",
+        "po_unstrand_20260730": "next_agent was \"router\" — no picker consumes a review[] row addressed to router (QA-Drain matches next_agent==qa; RLC is ready[]-only), so this row sat untouched for 8 days (updated_at 2026-07-22T16:02:26Z) while its own note calls it the only finding ACTIVELY DESTROYING data. Re-pointed to qa: qa_verdict is already APPROVED and router_verified_20260721T1756 is recorded, so the only work left is running the live verification_gate clauses, which is QAs job.",
+        "po_live_evidence_20260730": "NEW EVIDENCE for the verification_gate, from list_unresolved_reports (all still status=new, so nobody has consumed them). Arm (b2) — the arm this row calls the primary acceptance target and says the shipped guard MISSES — appears to fire in production on 2026-07-28: [BCTC] Write BLOCKED for FRT 2025-Q1 / KDH 2025-Q1 / CTG 2026-Q1 / FRT 2024-Q1 / GEX 2025-Q3, each reading extraction total_assets=0 and no prior stored report exists for this ticker — refusing to CREATE a new corrupt row. Report stays ABSENT. Arm (b1) also appears to fire: [BCTC] Reparse write BLOCKED for VJC 2025-Q1 / DBC 2024-Q3 (total_assets=-5566521832) / DXG 2024-Q1 / GEX 2025-Q1, each reading would overwrite. QA must CONFIRM these at source (which commit shipped arm b2, and whether these log lines are the guard this row owns) — PO is handing over an evidence pointer, NOT a verdict.",
+        "po_false_pass_warning_20260730": "DO NOT PASS clause (a) ON SILENCE. Clause (a) requires get_earnings_calendar to show no ticker acquiring a NGAY NOP equal to the run date over 3 consecutive daily cycles. The BCTC producer is CURRENTLY DORMANT, so that clause can go green vacuously — a dead producer cannot flip ngay_nop. Live corroboration 2026-07-30: sla-monitor CRITICAL bctc stale 2008min (threshold 120); system-auditor B-05 bctc-discover data age 1951m exceeds SLA 120m; system-auditor B-06 VPS bctc proxy stale 41h+ (vn-bctc-fetch unhealthy); and there are ZERO [BCTC] messages on 07-29 and 07-30 after ~10 on 07-28. The dormancy has its own P0 row (FIX-BCTC-LAYOUT-PUSH-FAILURE-NETWORK-DEADLOCK, root cause: pdf-extractor missing doclayout_yolo_ft.pt). Clause (a) is only meaningful over 3 cycles in which the reparse job actually RAN — establish that from cron_job_runs first, or hold the clause and say so."
       },
       {
         "id": "FIX-DRAIN-TEST-HARNESS-ORCH-HELPER-COPY-LIST",
@@ -17987,8 +18059,8 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-30T18:46:49Z",
-    "last_triaged_by": "dev-team (supervised-lane sweep)",
+    "last_triaged_at": "2026-07-30T19:27:33Z",
+    "last_triaged_by": "po/triage-20260730T1907Z",
     "in_progress": []
   },
   "_meta": {
