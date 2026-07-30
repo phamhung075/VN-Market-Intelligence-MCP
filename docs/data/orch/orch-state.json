@@ -93,12 +93,11 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "FIX-COMMIT-SWEEP-GUARD-SCRIPT-ACTUATOR-AND-NOTEBOOK-LONGTAIL",
-    "next_agent": "developer",
-    "next_action": "BOUNDED-1 auto-pickup claim of FIX-COMMIT-SWEEP-GUARD-SCRIPT-ACTUATOR-AND-NOTEBOOK-LONGTAIL — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
-    "updated_at": "2026-07-30T22:17:40Z",
-    "updated_by": "dev-team (bounded-1 auto-pickup)"
+    "status": "idle",
+    "updated_at": "2026-07-30T22:30:47Z",
+    "updated_by": "developer",
+    "active_task_id": null,
+    "next_agent": "router"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -18153,6 +18152,36 @@
           "health_check_passed": true,
           "fleet_status": "12/12 healthy"
         }
+      },
+      {
+        "id": "FIX-COMMIT-SWEEP-GUARD-SCRIPT-ACTUATOR-AND-NOTEBOOK-LONGTAIL",
+        "type": "FIX",
+        "size": "M",
+        "priority": "P0",
+        "status": "REVIEW",
+        "zone": "cross-service/",
+        "title": "Bare-commit sweep-guard actuator gap: dev-team-tick-preflight.sh:454-455 (git add + bare commit, 2x/hour) never migrated to pathspec form, plus a 31-file chore(memory/<agent-id>) notebook long-tail whose promised PM-tracked cleanup row was never minted",
+        "desc": "Two arms. (1) scripts/agents-flow/dev-team-tick-preflight.sh:454-455 does git add <2 paths> then a BARE git commit (TOCTOU shape, feedback_git_add_then_bare_commit_is_toctou_race_use_pathspec_commit) and runs on every dev-team tick; its flow-doc twin docs/agents/dev-team/flow/post-cycle.md:107 WAS fixed but the actuator that actually executes was not (feedback_fix_landed_in_the_pregate_not_the_probe_the_agent_actually_runs). (2) agent-father completion note on FIX-COMMIT-PATH-PEER-INDEX-SWEEP-GUARD-LAYER2 deferred a 31-file chore(memory/<agent-id>) notebook-commit pattern to \"a separate PM-tracked cleanup pass\" that does not exist on the board (epic-tail loss, feedback_epic_wrapper_closeout_gap_no_auto_revisit). AC: fix both arms so scripts/git-hooks/pre-commit GIT_SWEEP_GUARD_MODE=reject can actually be enabled fleet-wide (currently blocked at warn-by-default because these are unmigrated bypass surface). Unblocks the 4x-recurring P0 FIX-COMMIT-PATH-PEER-INDEX-SWEEP-GUARD (parent).",
+        "depends": [
+          "FIX-COMMIT-PATH-PEER-INDEX-SWEEP-GUARD-LAYER2"
+        ],
+        "created_at": "2026-07-30T09:18:19Z",
+        "created_by": "po/triage-20260730T0853",
+        "source": "PO triage 2026-07-30T09:06Z BATCH item 1/6 — decided+described by PO (ruling-20260730T0906Z-po-triage-po.md STEP po-1, LAYER2 row po_rescope_20260730 field), landed to orch-state by dev-team because PO's own orch-apply.sh write for 5 of 6 BATCH items did not execute this cycle (3rd recorded instance of feedback_po_notebook_mint_never_reaches_orchstate_board.md class — verified via grep, 0 occurrences pre-mint).",
+        "updated_at": "2026-07-30T22:30:56Z",
+        "promoted_at": "2026-07-30T22:17:00Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=0)",
+        "claimed_at": "2026-07-30T22:17:40Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "branch": null,
+        "next_agent": "po",
+        "updated_by": "developer",
+        "reviewed_commits": [
+          "dc2152a10",
+          "2f16eea16"
+        ],
+        "review_note": "ARM 1 (dev-team-tick-preflight.sh:454-455): premise re-verified at source before implementing (feedback_known_failure_shape_pattern_matched_without_reading_call_order applied) — the bare-commit shape was ALREADY FIXED, pre-existing, by commit fc8a8d4f1 (2026-07-30T14:50:49+02:00, no Sprint/Task trailers, ad-hoc self-fix by a prior session), 6h AFTER POs 08:5xZ measurement that this task was minted from. `grep -n \"git commit\" scripts/agents-flow/dev-team-tick-preflight.sh` shows zero bare occurrences (only a comment at L117); `_step55_git_commit_evict` already carries `-- \"$ORCH_STATE_PATH\" \"$archive_path\"`. No code change made — re-doing an already-landed fix would be pure churn. ARM 2 (31-file chore(memory/<agent-id>) notebook long-tail): found the deferred note at orch-state.json agent_father_completion_20260729 field on FIX-COMMIT-PATH-PEER-INDEX-SWEEP-GUARD-LAYER2 (not po_closure_20260730, which only covers the 4 skill sites + 3 init.md refs) — it names the notebook-commit pattern out of agent-fathers commit_zone, citing architecture-briefs/2026-07-21-commit-path-peer-index-sweep-guard.md §3 step 3 (Layer-2, PM-tracked cleanup pass). Grepped docs/agents/+.claude/skills/ for `git commit -m \"chore(memory` : 34 total sites, 3 already pathspec-scoped (session-log-cowork, decision-journal, append-session-record from LAYER2), 31 genuinely bare — exact match to POs count. DECISION: implemented directly (small/well-scoped, single mechanical edit repeated 31x, same established pattern as the 3 reference fixes) rather than minting a new row. Each site now carries `-- <exact own path(s)>` mirroring the fixed skill-file convention; multi-path sites (ops-mainserver-fetch, ops-vps-fetch, agents-architect, unified-agent/chef) use the decision-journal backslash-continuation form. unified-agent/chef.md commit-line pathspec uses shell-glob `docs/signals/processed/*` (resolves to explicit filenames at bash-expansion time) rather than a literal directory pathspec, per architecture brief §2.3s explicit \"never a directory or . on the commit line\" mandate — the pre-existing `git add docs/signals/processed/` directory-stage itself was left untouched (outside this rows scope). Committed in 2 pathspec-scoped commits: dc2152a10 (30 files) + 2f16eea16 (bctc-analyst, split out). VERIFICATION: re-ran scripts/audits/verify-commit-sweep-discriminator.sh (VERDICT PASS, git 2.49.0) and scripts/git-hooks/pre-commit.test.sh (6/6 PASS) — design premise still holds, no regressions. Re-grepped post-fix: 0 bare sites remain among the 34. NEW FINDING FOR PO, LOAD-BEARING FOR THE reject-mode DECISION: docs/agents/bctc-analyst/flow/stage-log-notify.md carried a second, unrelated, unstaged hunk (bctc-analyst published-marker cycle_tick_ISO addendum) written concurrently by a peer session mid-task. I isolated my own hunk via `git apply --cached` on a hand-built single-hunk patch, verified `git diff --cached` showed ONLY my 1-line change and `git diff` (unstaged) showed ONLY the peers hunk — then ran the mandated `git commit -m \"...\" -- <path>` pattern. RESULT: BOTH hunks landed in commit 2f16eea16 anyway. Reproduced in a clean scratch repo (2 independent tests, adjacent and non-adjacent hunks): `git commit -- <path>` uses git-commits documented `--only` default-when-pathspec-given semantics — it takes the CURRENT WORKING TREE content of the named path, NOT the index/staged subset, disregarding any patch-level staging. This means pathspec-scoped single-file commits (the exact pattern this whole sweep-guard family treats as \"safe\" and mandates fleet-wide) do NOT protect against sweeping a DIFFERENT unstaged/differently-staged hunk within the SAME FILE — only against sweeping OTHER FILES a peer separately staged. Architecture brief §2.1/§2.3 only analyze cross-file sweep and directory-pathspec sweep; this same-file intra-file case is undocumented and untested by pre-commit.test.sh (T1-T6 are all cross-file). NOT DESTRUCTIVE — peers content is fully intact and recoverable (git show 2f16eea16), same \"attribution corruption not destruction\" class as po_disposition_20260728, just committed under my SHA/message instead of the bctc-analyst agents own eventual commit. Did NOT attempt git-history surgery to split it post-hoc (reset --soft on shared main mid-multi-agent-session is higher-risk than the misattribution itself per feedback_shared_main_peer_push_sweeps_held_data_commits). RECOMMEND PO evaluate whether this same-file-hunk gap blocks the fleet-wide GIT_SWEEP_GUARD_MODE=reject decision or warrants a documented non-goal + new detector (mirroring how T3s directory-pathspec non-goal is already documented) before flipping the global default. ALSO FLAGGED, OUT OF THIS ROWS SCOPE (unprompted, not fixed): docs/agents/tools/package/cowork-refactory-expert.md:57 has a distinct bare-commit-with-directory-add example (`git add .claude/cowork/ && git commit -m \"...\"`) — different message shape, not part of the 31/34-count grep, not named in either arm of this task; left untouched per NEVER touch files outside assigned task scope."
       }
     ],
     "qa": [],
@@ -18174,30 +18203,7 @@
     },
     "last_triaged_at": "2026-07-30T22:17:00Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": [
-      {
-        "id": "FIX-COMMIT-SWEEP-GUARD-SCRIPT-ACTUATOR-AND-NOTEBOOK-LONGTAIL",
-        "type": "FIX",
-        "size": "M",
-        "priority": "P0",
-        "status": "IN_PROGRESS",
-        "zone": "cross-service/",
-        "title": "Bare-commit sweep-guard actuator gap: dev-team-tick-preflight.sh:454-455 (git add + bare commit, 2x/hour) never migrated to pathspec form, plus a 31-file chore(memory/<agent-id>) notebook long-tail whose promised PM-tracked cleanup row was never minted",
-        "desc": "Two arms. (1) scripts/agents-flow/dev-team-tick-preflight.sh:454-455 does git add <2 paths> then a BARE git commit (TOCTOU shape, feedback_git_add_then_bare_commit_is_toctou_race_use_pathspec_commit) and runs on every dev-team tick; its flow-doc twin docs/agents/dev-team/flow/post-cycle.md:107 WAS fixed but the actuator that actually executes was not (feedback_fix_landed_in_the_pregate_not_the_probe_the_agent_actually_runs). (2) agent-father completion note on FIX-COMMIT-PATH-PEER-INDEX-SWEEP-GUARD-LAYER2 deferred a 31-file chore(memory/<agent-id>) notebook-commit pattern to \"a separate PM-tracked cleanup pass\" that does not exist on the board (epic-tail loss, feedback_epic_wrapper_closeout_gap_no_auto_revisit). AC: fix both arms so scripts/git-hooks/pre-commit GIT_SWEEP_GUARD_MODE=reject can actually be enabled fleet-wide (currently blocked at warn-by-default because these are unmigrated bypass surface). Unblocks the 4x-recurring P0 FIX-COMMIT-PATH-PEER-INDEX-SWEEP-GUARD (parent).",
-        "depends": [
-          "FIX-COMMIT-PATH-PEER-INDEX-SWEEP-GUARD-LAYER2"
-        ],
-        "created_at": "2026-07-30T09:18:19Z",
-        "created_by": "po/triage-20260730T0853",
-        "source": "PO triage 2026-07-30T09:06Z BATCH item 1/6 — decided+described by PO (ruling-20260730T0906Z-po-triage-po.md STEP po-1, LAYER2 row po_rescope_20260730 field), landed to orch-state by dev-team because PO's own orch-apply.sh write for 5 of 6 BATCH items did not execute this cycle (3rd recorded instance of feedback_po_notebook_mint_never_reaches_orchstate_board.md class — verified via grep, 0 occurrences pre-mint).",
-        "updated_at": "2026-07-30T22:17:40Z",
-        "promoted_at": "2026-07-30T22:17:00Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=0)",
-        "claimed_at": "2026-07-30T22:17:40Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)"
-      }
-    ]
+    "in_progress": []
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
