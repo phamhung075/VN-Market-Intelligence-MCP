@@ -60,6 +60,7 @@
 | `1394-alert-digest-diacritics.test.ts` | Vietnamese diacritics in alerts |
 | `1551-pipeline-watchdog-market-alert.test.ts` | Alert pipeline supervision |
 | `1875c-record-signal-outcome-routing.test.ts` | Dispatch regression guard: record_signal_outcome returns signal-outcome shape (not climate), handler distinct from get_climate_risk_signals, alert_commander skill resolves correctly |
+| `CCATO-MCP-T1-DOMAIN-ENGINE.test.ts` | 28 tests. Unit coverage of `claimCandidateScanner`/`verdictClassifier`/`quarterResolver` (dedup rule, requires_ticker fallback, marker classification, quarter-boundary rollover). Plus the architecture brief §5.1 hard AC: side-by-side fixture parity — spins up a local `Bun.serve` MCP-gateway stub (fixed non-null response, forces every candidate to FAIL so `claim_text` is recoverable from stdout), spawns the REAL unmodified `scripts/narrative-truth-gate.sh` against the REAL `docs/social/fb-post-2026-06-30.md` + `docs/data/claim-tool-map.json`, and asserts an IDENTICAL candidate set against the new TS scanner. `NTG_SKIP_SIGNAL_EMIT=1` — no orch-state.json write, no jq dependency. |
 
 ### BCTC & Financial Reports
 | Test File | Coverage |

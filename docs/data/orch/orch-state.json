@@ -93,12 +93,12 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "CCATO-MCP-T1-DOMAIN-ENGINE",
-    "next_agent": "dev-mcp-server",
-    "next_action": "Ready-Lane Consumer claim of CCATO-MCP-T1-DOMAIN-ENGINE — spawn dev-mcp-server DIRECTLY (no zone-detect indirection; row already carried a resolved next_agent/owner).",
-    "updated_at": "2026-07-30T18:48:28Z",
-    "updated_by": "dev-team (ready-lane consumer)"
+    "status": "idle",
+    "active_task_id": null,
+    "next_agent": "router",
+    "next_action": "idle -- CCATO-MCP-T1-DOMAIN-ENGINE self-closeout (dev-mcp-server), branch:null direct-execute path, router should pick up next Ready-Lane/BOUNDED-1 candidate",
+    "updated_at": "2026-07-30T19:25:33Z",
+    "updated_by": "dev-mcp-server (CCATO-MCP-T1-DOMAIN-ENGINE self-closeout)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -2215,8 +2215,8 @@
     ]
   },
   "task_board": {
-    "_updated_at": "2026-07-29T16:48:06Z",
-    "_updated_by": "developer (FIX-DRAIN-PAYLOADREF-DANGLE-ON-MOVE -> REVIEW)",
+    "_updated_at": "2026-07-30T19:25:33Z",
+    "_updated_by": "dev-mcp-server",
     "active_sprints": [
       {
         "evidence": "Router raw-verified (get_bctc_full live, post-rebuild) after BEQ-9/10 refine. Core extraction incident RESOLVED, but populating real scalars exposed a SEPARATE pre-existing analytics/serving layer with 4 defect clusters: (a) RATIO-COMPUTE — VNM ROE=0/ROA=0/EPS=12VND/NetDebt-EBITDA=-7.5e13x; DHG ROA=7,891,932.0% (analyst falsely claimed fixed). Ratios emit 0 or astronomically wrong. (b) BANK-B02-TCTD-SERVING — SHB + EIB get_bctc_full returns 'balance sheet has no decomposition — forced-zero pass suspected'; banks UNSERVABLE despite DONE + committed scalars. (c) PERIOD-SEMANTICS — FPT 2025-Q4 rev=70112.8/NP=11225.5 are FULL-YEAR cumulative labeled 'Q4'; buildComparisonSection then compares cumulative-FY vs next-quarter -> false -82.2% mislabeled 'YoY'. (d) ENTITY-SCOPE — HPG 2025-Q4 is parent-only B01a (rev=0, conf44%) served as the canonical/headline HPG vs consolidated ~140k rev; misleading. PUBLISH-INTEGRITY GAP: NO semantic-sanity publish guard exists in orch-state (the triage-referenced 'Task #13' is NOT present). The BEQ-9/10 reports are now DONE -> flow into chef docs/agents/unified-agent/flow/market-analysis.md + market-analyst -> ROA 7.8M% / false YoY -82% / parent-only-headline CAN reach MARKET unattended. recurring-bug-escalation: BCTC area has >2 fix cycles -> architect root-cause SPIKE, not point-patch. | [dev-team 2026-06-03T11:44Z observation feeding BAL-0/BAL-1] After LF-SERVE-REFLOW recovered FPT Q1 absolute scalars (op_profit/ebitda/cash live-correct), get_bctc_full(FPT) STILL serves garbage DERIVED ratios: current_ratio=41527873060120x (denominator ~0), operating_margin_pct=0.0% (not recomputed from now-correct operating_profit). Confirms the analytics/serving derived-ratio layer is a distinct defect from scalar extraction. BAL-0 publish semantic-sanity gate MUST block current_ratio out-of-range before MARKET/FB; BAL-1 spike should pin the ratio recompute module. Repro: get_bctc_full(code=FPT).",
@@ -4336,6 +4336,28 @@
       }
     ],
     "backlog": [
+      {
+        "id": "FU-CNYVND-DEAD-FIELD-REMOVE",
+        "priority": "P3",
+        "size": "S",
+        "sprint": "DATA-SERVE-INTEGRITY",
+        "status": "BLOCKED",
+        "title": "cny_vnd_rate is DEAD DATA — definitif cleanup (follow-up to DSI-S2-PRICE-TS-GAP type-honesty fix 54634eb2). CNHVND=X 404s permanently on Yahoo; dev-mcp-server confirmed ZERO live readers (MACRO_CODES excludes it, runImpactChain drops it, no get_* tool surfaces it). The 54634eb2 fix made the TS type null but the DB write still re-fabricates 0 via `?? 0` and the NOT NULL column + field remain wired through fetcher+usecase+8 test fixtures. Definitif fix = REMOVE the field + the cny_vnd_rate column (SQLite migration) + the `?? 0` re-fabrication entirely, OR repoint to a real CNY/VND source if a consumer is ever needed. Low consumer-break risk (zero readers) but needs a schema migration → P3.",
+        "type": "CLEAN",
+        "zone": "apps/mcp-server",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FU-CNYVND-DEAD-FIELD-REMOVE",
+        "promoted_at": "2026-07-30T16:46:10Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=3)",
+        "updated_at": "2026-07-30T19:25:20Z",
+        "claimed_at": "2026-07-30T16:46:13Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "next_agent": "architect",
+        "blocked_reason": "AC re-check found a live consumer the original finding missed: apps/macro-indicators (separate Go service, container healthy) SJCGoldFXAdapter.fetchSJCFXInputsFromDB queries commodity_prices.cny_vnd_rate directly from the SAME market.db, plumbed end-to-end into mcp-server own live get_vn_liquidity_state MCP tool (registry.ts:262, FXCouplingSchema requires cny_vnd_rate:z.number()). Dropping the column breaks that cross-service SELECT entirely (single multi-column Scan()), zeroing gold_usd_per_oz/usd_vnd_rate/dxy collaterally too. Needs an architect/PO call: repoint to a real CNY/VND source (both mcp-server table write AND the macro-indicators consumer), or formalize as a permanently-null/is_estimate cross-service field (DSI-INV-1 pattern) instead of removing a column a live SQL query depends on. Full detail: docs/agent-memory/notebooks/dev-mcp-server.md 2026-07-30 FU-CNYVND-DEAD-FIELD-REMOVE section; decision journal sprint-COWORK-GUARANTEED-SLOT-CATCHUP-dev-mcp-server.md S31.",
+        "blocked_at": "2026-07-30T16:53:28Z",
+        "updated_by": "po/triage-20260730T1907Z",
+        "po_wip_unpark_20260730": "MOVED in_progress[] -> backlog[] by PO triage. This row went IN_PROGRESS->BLOCKED at 2026-07-30T16:53:28Z (escalate architect: live consumer found in apps/macro-indicators SJCGoldFXAdapter) and .head was reset to idle — but the row was left PARKED in in_progress[]. scripts/lib/devteam-eligibility.jq def wip_in_progress is `(.task_board.in_progress // []) | length` with NO status filter, so a BLOCKED row consumes a full concurrency slot. With CCATO-MCP-T1-DOMAIN-ENGINE genuinely live in the other slot, wip=2=cap and BOUNDED-1 (cap<1) + SLS/RLC/DRS (shared cap<2) ALL no-opped fleet-wide. Confirmed live by scripts/audits/devteam-dispatch-gate-satisfiability.sh header: `Live-shaped baseline: ready=54 in_progress=2 review=184`. Unparking restores 3 of the 4 pickers this tick. Row disposition itself UNCHANGED: still BLOCKED, still next_agent=architect, still awaiting the architect adjudication on whether to remove the field or repoint cny_vnd_rate to a real source. Structural fix tracked by FIX-DEVTEAM-WIP-BUDGET-COUNTS-BLOCKED-INPROGRESS-ROWS."
+      },
       {
         "id": "FIX-ALERT-COMMANDER-NO-BASH-GRANT-NOTEBOOK-UNCOMMITTABLE",
         "type": "FIX",
@@ -17925,6 +17947,27 @@
         "claimed_at": "2026-07-30T17:46:45Z",
         "claimed_by": "dev-team (supervised-lane sweep)",
         "disposition_note": "Recurring dormancy diagnosed; new root cause identified. FIX minted. Close_predicate unverified. Flip REVIEW->DONE_VERIFIED once FIX resolves dormancy."
+      },
+      {
+        "id": "CCATO-MCP-T1-DOMAIN-ENGINE",
+        "type": "IMPL-XS",
+        "status": "REVIEW",
+        "size": "XS",
+        "zone": "mcp-server",
+        "priority": "P0",
+        "title": "Port pure scan/classify/quarter-resolver to domain/services/narrativeTruthGate/* + unit tests",
+        "depends": [],
+        "next_agent": "qa",
+        "supervised": false,
+        "updated_at": "2026-07-30T19:25:34Z",
+        "updated_by": "dev-mcp-server",
+        "claimed_at": "2026-07-30T18:48:28Z",
+        "claimed_by": "dev-team (ready-lane consumer)",
+        "dispatch_lane": "dev-mcp-server",
+        "owner": "dev-mcp-server",
+        "entered_review_at": "2026-07-30T19:25:33Z",
+        "branch": null,
+        "review_note": "T1 of 8 (SPRINT-CCATO-TRUTHGATE-MCP-NATIVE, architect brief docs/architecture-briefs/2026-07-17-ccato-truthgate-mcp-native.md). Ported pure scan/classify/quarter-resolve engine from scripts/narrative-truth-gate.sh into apps/mcp-server/src/domain/services/narrativeTruthGate/{claimCandidateScanner,verdictClassifier,quarterResolver}.ts (zero I/O, byte-faithful port of script L144-163+236-278+280-323). New CCATO-MCP-T1-DOMAIN-ENGINE.test.ts (28 tests) incl. the architecture brief S5.1 hard AC: side-by-side fixture parity vs. the REAL unmodified bash engine (Bun.serve stub gateway forces FAIL classification so claim_text is recoverable from stdout; NTG_SKIP_SIGNAL_EMIT=1, no orch-state write) against docs/social/fb-post-2026-06-30.md + docs/data/claim-tool-map.json -- byte-identical candidate sets, R-1 regex-divergence risk closed empirically. Evidence: bun tsc --noEmit clean; new test file 28/28 pass; full bun test 14946-14947 pass/40 skip/52-53 fail (within standing pre-existing-flake band 52-59, grep-confirmed zero named fails touch new code, zero existing files modified so regression is structurally impossible); tool/scheduler counts unchanged 184/88 (T1 registers no MCP tool -- thats T6); server boot log confirmed clean import + toolCount:184. Doc-review: domain-model.md + testing.md updated. Decision journal: docs/agent-memory/decisions/sprint-SPRINT-CCATO-TRUTHGATE-MCP-NATIVE-dev-mcp-server.md. QA: verify the 4 new files + re-run CCATO-MCP-T1-DOMAIN-ENGINE.test.ts; downstream tasks T2-T8 are separate not-yet-landed board rows of the same sprint."
       }
     ],
     "qa": [],
@@ -17946,45 +17989,7 @@
     },
     "last_triaged_at": "2026-07-30T18:46:49Z",
     "last_triaged_by": "dev-team (supervised-lane sweep)",
-    "in_progress": [
-      {
-        "id": "FU-CNYVND-DEAD-FIELD-REMOVE",
-        "priority": "P3",
-        "size": "S",
-        "sprint": "DATA-SERVE-INTEGRITY",
-        "status": "BLOCKED",
-        "title": "cny_vnd_rate is DEAD DATA — definitif cleanup (follow-up to DSI-S2-PRICE-TS-GAP type-honesty fix 54634eb2). CNHVND=X 404s permanently on Yahoo; dev-mcp-server confirmed ZERO live readers (MACRO_CODES excludes it, runImpactChain drops it, no get_* tool surfaces it). The 54634eb2 fix made the TS type null but the DB write still re-fabricates 0 via `?? 0` and the NOT NULL column + field remain wired through fetcher+usecase+8 test fixtures. Definitif fix = REMOVE the field + the cny_vnd_rate column (SQLite migration) + the `?? 0` re-fabrication entirely, OR repoint to a real CNY/VND source if a consumer is ever needed. Low consumer-break risk (zero readers) but needs a schema migration → P3.",
-        "type": "CLEAN",
-        "zone": "apps/mcp-server",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FU-CNYVND-DEAD-FIELD-REMOVE",
-        "promoted_at": "2026-07-30T16:46:10Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=3)",
-        "updated_at": "2026-07-30T16:53:28Z",
-        "claimed_at": "2026-07-30T16:46:13Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)",
-        "next_agent": "architect",
-        "blocked_reason": "AC re-check found a live consumer the original finding missed: apps/macro-indicators (separate Go service, container healthy) SJCGoldFXAdapter.fetchSJCFXInputsFromDB queries commodity_prices.cny_vnd_rate directly from the SAME market.db, plumbed end-to-end into mcp-server own live get_vn_liquidity_state MCP tool (registry.ts:262, FXCouplingSchema requires cny_vnd_rate:z.number()). Dropping the column breaks that cross-service SELECT entirely (single multi-column Scan()), zeroing gold_usd_per_oz/usd_vnd_rate/dxy collaterally too. Needs an architect/PO call: repoint to a real CNY/VND source (both mcp-server table write AND the macro-indicators consumer), or formalize as a permanently-null/is_estimate cross-service field (DSI-INV-1 pattern) instead of removing a column a live SQL query depends on. Full detail: docs/agent-memory/notebooks/dev-mcp-server.md 2026-07-30 FU-CNYVND-DEAD-FIELD-REMOVE section; decision journal sprint-COWORK-GUARANTEED-SLOT-CATCHUP-dev-mcp-server.md S31.",
-        "blocked_at": "2026-07-30T16:53:28Z"
-      },
-      {
-        "id": "CCATO-MCP-T1-DOMAIN-ENGINE",
-        "type": "IMPL-XS",
-        "status": "IN_PROGRESS",
-        "size": "XS",
-        "zone": "mcp-server",
-        "priority": "P0",
-        "title": "Port pure scan/classify/quarter-resolver to domain/services/narrativeTruthGate/* + unit tests",
-        "depends": [],
-        "next_agent": "dev-mcp-server",
-        "supervised": false,
-        "updated_at": "2026-07-30T18:48:29Z",
-        "updated_by": "pm (decompose SPRINT-CCATO-TRUTHGATE-MCP-NATIVE)",
-        "claimed_at": "2026-07-30T18:48:28Z",
-        "claimed_by": "dev-team (ready-lane consumer)",
-        "dispatch_lane": "dev-mcp-server"
-      }
-    ]
+    "in_progress": []
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",

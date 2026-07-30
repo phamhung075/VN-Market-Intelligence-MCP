@@ -1,19 +1,5 @@
 # dev-mcp-server -- Notebook
 
-## 2026-07-30 — FIX-SQLITE-JOURNALMODE-WAL-REARM-DEFEATS-DELETE-MITIGATION (BOUNDED-1 auto-pickup, P1) → REVIEW, next_agent=qa
-
-**Session:** 64c7c677-0f0f-4cee-a3ce-dba79d70b7ae. Live safety check FIRST (before any code change): `docker exec` into `vn-market-intelligence-mcp-mcp-server-1`, read-only PRAGMA against `/app/data/market.db` — `journal_mode=delete`, no live `-wal`/`-shm` pair (only historically-suffixed `.corrupt-*`/`.backup*` snapshots sit alongside it). Not an active-breach window today; the defect is a transient re-arm during any backfill/migration run.
-
-**AC-1:** `bctcEvalBackfillRunner.ts:44-49` opened its own `new Database(dbPath)` + `PRAGMA journal_mode=WAL` — replaced with the shared `getDb()`/`closeDb()` singleton from `schema.ts` (sole owner of `journal_mode`, DELETE since `157335892`). Dead `Database` import removed.
-
-**AC-2 sweep (fresh grep, not the stale triage list):** `coordinationStore.ts:78` — different file (`coordination.db`), out of scope (SPIKE-SQLITE-DOCKER-VIRT-CORRUPTION-HARDENING AC-B), untouched. ~90 test files + all 4 `smoke-task-lock*.ts` — `:memory:`/tmp fixtures only, zero prod-DB risk, untouched. `run-bt7-backfill.ts` — real `market.db` but only *reads* `journal_mode` (no `=` assignment), untouched. **Found the SAME real-market.db WAL-setter defect in 4 files** the triage list mislabeled: `scripts/migrations/{run-finalize-bctc-refine.ts:36, dedupe-mislabeled-bctc-period.ts:368, resync-watchlist-sysmap-2026-07-11.ts:266, carry-forward-bctc-orphaned-rows.ts:361}`. NOT fixed by me — outside my `zone_restricted: apps/mcp-server/`; flagged in RETURN for the coordinating session to route. Live vector still open after this task closes.
-
-**AC-3/4:** new `scripts/audits/verify-market-db-journal-mode.sh` — asserts through the RUNNING container: read-only `docker exec bun -e` PRAGMA + exact-filename `-wal`/`-shm` check (excludes suffixed backup copies). `--self-test` builds two in-container fixture DBs (forced WAL / forced DELETE) and proves the guard FAILs (exit 2) and PASSes (exit 0) respectively — both branches verified live. Exit contract 0=PASS/2=FAIL/3=ERROR, verdict always stdout line 1.
-
-**Evidence:** `bun tsc --noEmit` clean. Live guard: `verdict=PASS journal_mode=delete wal_present=false shm_present=false`. `--self-test`: `SELF_TEST verdict=PASS` (both branches correct). No pre-existing test exercised `bctcEvalBackfillRunner.ts` (zero importers, grep-confirmed). Full `bun test` run for regression-check.
-
-Zone health: tsc clean, AC-1 diff minimal (import swap + pragma removal only, git-diff confirmed), AC-3/4 guard proven bidirectionally via live self-test (not source-only), live prod DB confirmed healthy before+after, AC-2 sweep found 4 real defect instances the triage list missed with an explicit non-silent zone-boundary call on them | scope note: NOT fully closed system-wide — see RETURN.
-
 ## 2026-07-30 — FIX-BCTC-REPARSE-DOUBLE-WRAP-DEDUP-GUARD (BOUNDED-1 auto-pickup, found by own prior SPIKE) → REVIEW, next_agent=qa
 
 **Session:** 64c7c677-0f0f-4cee-a3ce-dba79d70b7ae. Mirrored `FIX-BASE-RATE-COMPUTATION-CRON-DEAD` exactly (same defect class, precedent explicitly named in the row): `runBctcReparseWithDb` (`startupHelpers.ts`) double-wrapped `recordJobRun` — its default `fn` discarded `runBctcReparseJob()`'s real `ReparseRunResult` (`Promise<void>`, RAW-confirmed live 100% NULL `rows_written` across ~90 sampled rows) AND had no guard of its own, so a guard-skipped inner invocation still wrote a fresh `'success'` row, re-arming its own 21.6h window (best-supported explanation for the 2026-07-10 incident ops "fixed" by falsifying `cron_job_runs` timestamps).
@@ -41,3 +27,15 @@ Zone health: tsc clean, file-touch footprint matches precedent exactly (no inven
 **Disposition:** stopped per the task's own escape-hatch AC ("do not remove if you find a live consumer... stop and report"). Zero code/schema changes made. No REVIEW flip — DJ-GATE-1 entry written (sprint-COWORK-GUARANTEED-SLOT-CATCHUP-dev-mcp-server.md S31) documenting the finding, but this is a report-back, not a completed fix. Needs an architect/PO call: repoint to a real CNY/VND source (both this table AND the macro-indicators consumer), OR formalize `cny_vnd_rate` as a permanently-`0`/`is_estimate` cross-service field with an explicit honesty annotation (matches the DSI-INV-1 pattern already used for the TS-layer `cnyVndRate: null`), rather than removing a column a live cross-service SQL query depends on.
 
 Zone health: no code touched this cycle (verification-only), tsc/tool/scheduler counts unaffected by construction | HEALTHY.
+
+## 2026-07-30 — CCATO-MCP-T1-DOMAIN-ENGINE (Ready-Lane Consumer, P0, epic SPRINT-CCATO-TRUTHGATE-MCP-NATIVE) → REVIEW, next_agent=qa
+
+**Session:** 64c7c677-0f0f-4cee-a3ce-dba79d70b7ae. Spec: `docs/architecture-briefs/2026-07-17-ccato-truthgate-mcp-native.md` §3.2/§5.1 (T1 of 8, depends: none). Port the pure scan/classify/quarter-resolve engine from `scripts/narrative-truth-gate.sh` (python) into `apps/mcp-server/src/domain/services/narrativeTruthGate/` (TS), zero I/O.
+
+**New files:** `claimCandidateScanner.ts` (scanClaimCandidates/findTickers/splitParagraphs/splitSentences — byte-faithful port of script L144-163+280-323, incl. the ≤1-candidate-per-(paragraph,dimension) dedup ordering quirk), `verdictClassifier.ts` (classifyVerdict/flattenText/summarizeVerdict — port of L251-278), `quarterResolver.ts` (resolveLatestElapsedYoyPeriods — port of L236-247, injectable `now: Date`, Jan-Mar rolls back to prior-year Q4).
+
+**§5.1 hard AC (side-by-side fixture parity):** new `CCATO-MCP-T1-DOMAIN-ENGINE.test.ts`, 28 tests. Spins up a local `Bun.serve` MCP-gateway stub (fixed non-null response forces every candidate to FAIL so `claim_text` is recoverable from stdout), spawns the REAL unmodified `scripts/narrative-truth-gate.sh` (`NTG_SKIP_SIGNAL_EMIT=1` — no orch-state write, no jq dep) against the REAL `docs/social/fb-post-2026-06-30.md` + `docs/data/claim-tool-map.json`, parses its `[FAIL]` lines, asserts IDENTICAL dimension/ticker_or_dim/claim_text triples vs. the new TS scanner on the same 2 files. Passed first run — no JS/python regex divergence on this fixture (R-1 closed empirically).
+
+**Evidence:** `bun tsc --noEmit` clean. New test file 28/28 pass. Full `bun test`: 14946-14947 pass/40 skip/52-53 fail (566s) — within the standing pre-existing-flake band (52-59); grep-confirmed zero named fails reference `narrativeTruthGate`/CCATO/scanner/classifier/resolver (zero existing files touched — pure addition, regression structurally impossible). Tool/scheduler probes unchanged (184/88 — T1 registers no MCP tool, that's T6). Server boot log: clean import, `toolCount:184`, before an unrelated pre-existing :3000 port conflict (environment artifact). `domain-model.md`+`testing.md` updated (doc-review).
+
+Zone health: tsc clean, new-file-only diff, full-suite fail-set keyword-scanned clean, §5.1 parity ran against the real bash engine not a hand-derived fixture | HEALTHY.

@@ -104,6 +104,24 @@
 
 `CronLivenessStatus = "ON_TIME" | "LATE" | "MISSED" | "STALE" | "NEVER_FIRED"`
 
+## Narrative Truth Gate Domain (CCATO-MCP-T1-DOMAIN-ENGINE)
+**Files:** `apps/mcp-server/src/domain/services/narrativeTruthGate/` — zero fs/network I/O, pure.
+TS port of `scripts/narrative-truth-gate.sh`'s python scan/classify/quarter-resolve engine
+(CCATO = Claim Contradicts Authorized Tool Output). Full design:
+`docs/architecture-briefs/2026-07-17-ccato-truthgate-mcp-native.md` §3.2.
+
+| Module | Export | Logic |
+|--------|--------|-------|
+| `claimCandidateScanner.ts` | `scanClaimCandidates(postBody, claimMap): ClaimCandidate[]`, `findTickers`, `splitParagraphs`, `splitSentences` | Sentence-split + negation-lexicon scan + dimension-keyword co-occurrence anchor + VN-ticker ([A-Z]{2,4}) extraction. Dedup: ≤1 candidate per (paragraph, dimension) — first matching sentence wins. `requires_ticker=false` dims still resolve a concrete probe ticker from the whole post. |
+| `verdictClassifier.ts` | `classifyVerdict(respObj, toolNullMarkers): "NON_NULL"\|"NULL"\|"ERROR"`, `flattenText`, `summarizeVerdict` | `null`/`{_probe_error}` → ERROR; blank/marker-matched flattened text → NULL (honest gap); else NON_NULL (CCATO contradiction). |
+| `quarterResolver.ts` | `resolveLatestElapsedYoyPeriods(now: Date): YoyPeriodPair` | Latest FULLY-ELAPSED fiscal quarter (Jan-Mar rolls back to prior year Q4) + its YoY comparison period, for `compare_financials`'s `ticker_actionCode_yoy` arg_style. Injectable clock. |
+
+Input SSOT (loaded by the caller, not this layer): `docs/data/claim-tool-map.json` (`negation_lexicon`,
+`dimensions[]`, `non_ticker_tokens`, `tool_null_markers`) — schema mirrored by `ClaimToolMap` in
+`claimCandidateScanner.ts`. Live re-probe adapters, SSOT loader, signal-emit writer, use-case
+orchestration, and MCP tool registration are separate, not-yet-landed sub-tasks
+(CCATO-MCP-T2..T8) of the same sprint (`SPRINT-CCATO-TRUTHGATE-MCP-NATIVE`).
+
 ## Repository Interfaces
 - `IWatchlistRepository`, `IMarketPriceRepository`
 - `IKinhDichScoreRepository`, `IHexagramRepository`
