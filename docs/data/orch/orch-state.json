@@ -93,12 +93,11 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "SPIKE-BCTC-EXTRACTION-DORMANT-MASS-ENRICHFAIL-FLOOD",
-    "next_agent": "ops",
-    "next_action": "Supervised-Lane Sweep claim of SPIKE-BCTC-EXTRACTION-DORMANT-MASS-ENRICHFAIL-FLOOD — spawn ops DIRECTLY (no zone-detect indirection; lane already resolved at promote time). supervised/plan_only preserved — do not clear.",
-    "updated_at": "2026-07-30T17:46:45Z",
-    "updated_by": "dev-team (supervised-lane sweep)"
+    "status": "idle",
+    "updated_at": "2026-07-30T18:17:20Z",
+    "updated_by": "dev-team (head-sync correction)",
+    "active_task_id": null,
+    "next_agent": null
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
