@@ -1,6 +1,6 @@
 # Developer Standards
 
-<!-- size-justification: 140L — unified developer reference: code search tools, test patterns, DDD rules, TypeScript conventions, naming. All read together at sprint start to set context; splitting into tool-guide + test-patterns + naming-rules fragments the unified "how we code" standard. SCRIPT-PERSIST 2026-06-07: Script Persistence section incl. maintenance clause (+15L, user directive). SYSREMAKE-P2-DEVTEAM-BACKLOG-PICKUP-BOUNDED1 2026-07-04: CANONICAL pointer for the dev-team idle-capacity backlog pickup scripts (+11L). PUSH-AUTONOMY-1 2026-07-14: Autonomous Push Gate section (+16L, user directive — push on 100% green, no user action, post-push real-data verify task). FIX-CMH-OBSOLETE-FILE-CLEANUP 2026-07-20: CANONICAL pointer for scripts/audits/clean-obsolete-files.sh (+8L). BLOCK-PUSH-CRON-AUDIT-BATCH-NO-QA 2026-07-22 (qa): pinned the "targeted/merge-gate suite" reading against the standing FIX-MCP-SUITE-HEALTH-BASELINE full-suite red so it stops being re-litigated per push (+3L). UC-MDH-P3 2026-07-23: CANONICAL pointer for scripts/agents-flow/memory-prune-sweep.sh (+14L). UC-MDH-P4 2026-07-23: CANONICAL pointer for scripts/agents-flow/decision-journal-archive.sh (+15L). UC-GCP-P8 2026-07-23: CANONICAL pointer for scripts/agents-flow/stranded-state-sweep.sh (+13L). TE-T17 2026-07-23: CANONICAL pointer for scripts/agents-flow/notebook-linecap-sweep.sh (+13L). TE-T28 2026-07-23: CANONICAL pointer for scripts/gen-tool-list-stubs.py (+15L). TE-T31 2026-07-23: CANONICAL pointer for scripts/gen-tools-index.sh (+14L). TE-T33 2026-07-23: CANONICAL pointer for scripts/agents-flow/cold-archive-sweep.sh (+18L). FFLOW-STALE-0723-B-RECHECK-HARNESS 2026-07-23: CANONICAL pointer for scripts/check-foreign-flow-freshness.sh (+16L). FIX-COMMIT-PATH-PEER-INDEX-SWEEP-GUARD-HOOK 2026-07-28: CANONICAL pointer for scripts/git-hooks/pre-commit (+15L). FIX-AUDITOR-HEARTBEAT-OUT-OF-CONTRACT-AGENT-WRITE-TIER1 2026-07-29: CANONICAL sole-writer + shape invariant for docs/data/auditor-tier{1,2,3}-last-healthy.json, cited from both writers (+21L). FIX-NOTEBOOK-COMPOSE-REWRITES-RETAINED-PRIOR-SECTIONS-followup 2026-07-29: CANONICAL pointer for scripts/audits/verify-notebook-immutability-gate.sh (+9L). FIX-AUDITOR-DASHBOARD-APPEND-NO-ACTUATOR-CONTRACT-COUNT-NARRATED 2026-07-29: CANONICAL pointers for scripts/emit-dashboard-row.sh + scripts/audit-output-contract.sh (+24L). FACTORY-GUARD-CI-SIZELINT-IMPL 2026-07-29: CANONICAL pointer for scripts/audits/size-lint-justification.sh (+16L). FACTORY-GUARD-CI-METRICMASK-IMPL 2026-07-29: CANONICAL pointer for scripts/audits/metric-mask-lint.sh (+18L). FACTORY-GUARD-CI-TSBOUNDARIES-IMPL 2026-07-29: CANONICAL pointer for the 3 new TS eslint CI jobs (mcp-server/news-fetch/frontend) + news-fetch-go-lint (+22L). FACTORY-GUARD-CI-COMPROOT-LOGIC-IMPL 2026-07-30: CANONICAL pointer for scripts/audits/composition-root-logic-gate.go + the composition-root-logic-gate CI job (+30L). -->
+<!-- size-justification: 140L — unified developer reference: code search tools, test patterns, DDD rules, TypeScript conventions, naming. All read together at sprint start to set context; splitting into tool-guide + test-patterns + naming-rules fragments the unified "how we code" standard. SCRIPT-PERSIST 2026-06-07: Script Persistence section incl. maintenance clause (+15L, user directive). SYSREMAKE-P2-DEVTEAM-BACKLOG-PICKUP-BOUNDED1 2026-07-04: CANONICAL pointer for the dev-team idle-capacity backlog pickup scripts (+11L). PUSH-AUTONOMY-1 2026-07-14: Autonomous Push Gate section (+16L, user directive — push on 100% green, no user action, post-push real-data verify task). FIX-CMH-OBSOLETE-FILE-CLEANUP 2026-07-20: CANONICAL pointer for scripts/audits/clean-obsolete-files.sh (+8L). BLOCK-PUSH-CRON-AUDIT-BATCH-NO-QA 2026-07-22 (qa): pinned the "targeted/merge-gate suite" reading against the standing FIX-MCP-SUITE-HEALTH-BASELINE full-suite red so it stops being re-litigated per push (+3L). UC-MDH-P3 2026-07-23: CANONICAL pointer for scripts/agents-flow/memory-prune-sweep.sh (+14L). UC-MDH-P4 2026-07-23: CANONICAL pointer for scripts/agents-flow/decision-journal-archive.sh (+15L). UC-GCP-P8 2026-07-23: CANONICAL pointer for scripts/agents-flow/stranded-state-sweep.sh (+13L). TE-T17 2026-07-23: CANONICAL pointer for scripts/agents-flow/notebook-linecap-sweep.sh (+13L). TE-T28 2026-07-23: CANONICAL pointer for scripts/gen-tool-list-stubs.py (+15L). TE-T31 2026-07-23: CANONICAL pointer for scripts/gen-tools-index.sh (+14L). TE-T33 2026-07-23: CANONICAL pointer for scripts/agents-flow/cold-archive-sweep.sh (+18L). FFLOW-STALE-0723-B-RECHECK-HARNESS 2026-07-23: CANONICAL pointer for scripts/check-foreign-flow-freshness.sh (+16L). FIX-COMMIT-PATH-PEER-INDEX-SWEEP-GUARD-HOOK 2026-07-28: CANONICAL pointer for scripts/git-hooks/pre-commit (+15L). FIX-AUDITOR-HEARTBEAT-OUT-OF-CONTRACT-AGENT-WRITE-TIER1 2026-07-29: CANONICAL sole-writer + shape invariant for docs/data/auditor-tier{1,2,3}-last-healthy.json, cited from both writers (+21L). FIX-NOTEBOOK-COMPOSE-REWRITES-RETAINED-PRIOR-SECTIONS-followup 2026-07-29: CANONICAL pointer for scripts/audits/verify-notebook-immutability-gate.sh (+9L). FIX-AUDITOR-DASHBOARD-APPEND-NO-ACTUATOR-CONTRACT-COUNT-NARRATED 2026-07-29: CANONICAL pointers for scripts/emit-dashboard-row.sh + scripts/audit-output-contract.sh (+24L). FACTORY-GUARD-CI-SIZELINT-IMPL 2026-07-29: CANONICAL pointer for scripts/audits/size-lint-justification.sh (+16L). FACTORY-GUARD-CI-METRICMASK-IMPL 2026-07-29: CANONICAL pointer for scripts/audits/metric-mask-lint.sh (+18L). FACTORY-GUARD-CI-TSBOUNDARIES-IMPL 2026-07-29: CANONICAL pointer for the 3 new TS eslint CI jobs (mcp-server/news-fetch/frontend) + news-fetch-go-lint (+22L). FACTORY-GUARD-CI-COMPROOT-LOGIC-IMPL 2026-07-30: CANONICAL pointer for scripts/audits/composition-root-logic-gate.go + the composition-root-logic-gate CI job (+30L). FACTORY-GUARD-CI-DEADCODE-IMPL 2026-07-30: CANONICAL pointer for scripts/audits/dead-code-gate.sh + the dead-code-gate CI job, incl. the check-3 twin-scaffold deviation from the board-row note's literal phrasing (news-fetch false-positive) (+35L). -->
 
 ## Script Persistence — scripts/, never /tmp
 
@@ -655,6 +655,52 @@ scripts/audits/composition-root-logic-gate.go scripts/audits/composition-root-lo
 NOT `.test.go` as the board-row note literally named it: Go's toolchain only discovers `_test.go`
 (underscore) as test files, `.test.go` is invisible to `go test` and would silently ship a dead smoke
 test.
+
+**CANONICAL: Dead-code CI guardrail (FACTORY-GUARD-CI-DEADCODE-IMPL)**
+```bash
+bash scripts/audits/dead-code-gate.sh --check    # CI mode: exit 0 pass / 1 fail, no writes
+```
+Zero-tolerance (same fix-now pattern as metric-mask-lint.sh, NOT baseline/ratchet like
+size-lint-justification.sh) `git ls-files`/grep guardrail against 4 recurring dead-artifact shapes,
+all scanned on TRACKED files only (`git ls-files --cached` — a merely-gitignored-but-uncommitted
+file is never flagged, only a staged/committed offender is): (1) tracked `*.bak`/`*.backup`/`*.patch`
+files, (2) any tracked path with a `_deprecated/` segment (git history is the rollback reference,
+same `FACTORY-INTERFACE-delete-bak-files` precedent — a graveyard folder adds zero safety over
+`git log`/`git show` while diluting every grep), (3) a Go/TS "twin scaffold" — see deviation note
+below, (4) `//go:build ignore` on any tracked `*.go` file. Live debt at design time (~1.4k LOC across
+mcp-server ×2 `_deprecated/` trees + a dedicated wrapper test file + a surgical smoke-suite edit,
+pdf-extractor's `_deprecated/mock_echo`, stock-price's `_deprecated/services_v1.go`+test, plus 2
+stray root `docker-compose.yml.backup`/`.patch` files) fixed in the same task that shipped the gate
+— `apps/technical-analysis/src/`'s independent ~697L share of the original ~2,070 LOC audit-brief
+estimate had already been deleted by a separate, unrelated task (`099afddd3`,
+`FACTORY-TECHANALYSIS-delete-orphaned-ts-service`) before this task was even dispatched; this task's
+only remaining `technical-analysis` action was trimming `bun-types`/`typescript` out of
+`package.json`'s `devDependencies` (the `module`/`start`/`test`/`check` script fields that commit
+already removed) — `esbuild`/`playwright-core` kept, RAW-verified still load-bearing for
+`dashboard/build.sh` (35/35 sandbox scenarios + headless render gate green post-trim, plus
+`go build`/`go vet`/`go test ./...`/`golangci-lint run` all green).
+
+**Check-3 deviation from the board-row note's literal phrasing** ("any `apps/<svc>/` with a Go
+`cmd/server/` at its root MUST NOT also carry a top-level `package.json` and `src/`" — claimed
+"0/7 Go services" after cleanup): that literal rule fails immediately and *permanently* against the
+LIVE `apps/news-fetch` service, which legitimately carries all 3 structural elements today — a WIP
+parallel Go port (own `news-fetch-go-lint` CI job + `composition-root-logic-gate` coverage per the
+`FACTORY-GUARD-CI-TSBOUNDARIES-IMPL` entry above, same design-brief day) sitting alongside the live
+TS/Bun service its `Dockerfile` actually builds and runs (`COPY --from=bun-builder /app/src ./src`,
+`CMD ["bun","run","src/index.ts"]`). The confirmed dead instance this check is purpose-built for
+(`apps/technical-analysis`, independently deleted per above) had the discriminating trait the
+board-row note's directory-shape-only phrasing dropped: its `Dockerfile` `COPY`d only `cmd/ pkg/
+api/` — zero `src/` reference of any kind. The shipped check generalizes that exact confirmed signal
+instead of bare directory shape: flag `apps/<svc>/` only when it has a tracked `cmd/server/` AND a
+tracked top-level `package.json` AND a tracked top-level `src/` **AND** its `Dockerfile` contains no
+`src` reference at all (no `Dockerfile` present also fails — conservative default). RAW-verified:
+`bash scripts/audits/dead-code-gate.sh --check` correctly reports 0 offenders on `apps/news-fetch`
+(check 3 silently exempts it) while still catching the confirmed-dead shape via 2 dedicated
+synthetic-fixture DoD cases (one Dockerfile-src-blind twin that fails, one Dockerfile-src-referencing
+twin mirroring `news-fetch`'s own shape that passes). Wired as the `dead-code-gate` job in
+`.github/workflows/ci.yml` (ubuntu-latest, checkout-only, no toolchain — cheapest job in the
+pipeline). Design brief: `docs/architecture-briefs/2026-07-24-factory-guard-ci-dead-code-gate.md`.
+Test: `scripts/audits/dead-code-gate.test.sh`.
 
 `/tmp` is allowed ONLY for throwaway run-scoped DATA (payload json, stderr capture, session-id cache) — never for executable logic.
 

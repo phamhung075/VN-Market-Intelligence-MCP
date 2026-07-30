@@ -20,12 +20,14 @@ import { z } from "zod";
 
 import { getDb, initDatabase } from "../../../../infrastructure/db/schema.js";
 // G5-INVERSE REMEDIATION (P1-F): appendKinhDich replaced with HTTP client call.
-// kinhDichWrapper.ts is DEPRECATED — callers must use kinh-dich-service:5005 via clients.ts.
+// kinhDichWrapper.ts DEPRECATED — callers must use kinh-dich-service:5005 via clients.ts.
+// Deleted 2026-07-30 (FACTORY-GUARD-CI-DEADCODE-IMPL); git history is the rollback reference.
 import { getKinhDichReading } from "../../../../infrastructure/microservices/clients.js";
 import { fetchCafeF } from "../../../../infrastructure/fetchers/cafef.js";
 import { fetchVnExpress } from "../../../../infrastructure/fetchers/vnexpress.js";
 // fetchReuters removed — rewired to news-fetch microservice HTTP (G5b, Phase 1)
-// See: apps/mcp-server/src/_deprecated/fetchers/reuters.ts for rollback reference
+// _deprecated/fetchers/reuters.ts deleted 2026-07-30 (FACTORY-GUARD-CI-DEADCODE-IMPL) —
+// git history (`git log --all --full-history -- '**/fetchers/reuters.ts'`) is the rollback reference.
 import type { RssItem } from "../../../../infrastructure/fetchers/rss.js";
 import { fetchVnEconomy } from "../../../../infrastructure/fetchers/vneconomy.js";
 import { normalizeNews } from "../../../../domain/services/newsNormalizer.js";

@@ -37,7 +37,8 @@ export { fetchVnExpress } from "./vnexpress.js";
 
 // ── Task 023: Reuters / AP News RSS fetcher — DEPRECATED (G5, Phase 1) ───────
 // fetchReuters removed — superseded by news-fetch microservice (port 5008).
-// See apps/mcp-server/src/_deprecated/fetchers/reuters.ts for rollback reference.
+// _deprecated/fetchers/reuters.ts deleted 2026-07-30 (FACTORY-GUARD-CI-DEADCODE-IMPL) —
+// git history (`git log --all --full-history -- '**/fetchers/reuters.ts'`) is the rollback reference.
 
 // ── VnEconomy RSS fetcher ───────────────────────────────────────────────────
 export { fetchVnEconomy } from "./vneconomy.js";

@@ -8,7 +8,6 @@ Bun.env["DB_PATH"] = ":memory:";
  *   Scenario 2: /check_position formatting                                    [1071]
  *   Scenario 3: /ask queue flow (enqueue → cron signal → MCP answer)         [1072+1073+1074+1078]
  *   Scenario 4: Alert policy evaluation (3-AND danger + 4-AND opportunity)   [1075]
- *   Scenario 5: Kinh Dich wrapper — appendKinhDich                           [1077]
  *   Scenario 6: get_user_positions_for_analysis MCP tool                     [1079]
  *
  * All in-memory: no real Telegram HTTP, no launchctl, no network.
@@ -34,9 +33,6 @@ import {
   checkPositionDanger,
   checkWatchlistOpportunity,
 } from "../domain/services/alertPolicyChecker.js";
-// DEPRECATED-TEST: testing the deprecated wrapper — import path updated post-G5a move
-import { appendKinhDich } from "../infrastructure/_deprecated/kinhDichWrapper.js";
-
 // Interface layer
 import { handleTelegramCommand, type TelegramUpdate } from "../infrastructure/notifiers/telegramCommands.js";
 import { registerAskQueueTools } from "../interface/mcp/tools/system/askQueueTools.js";
@@ -438,57 +434,6 @@ describe("Task 1081 — Sprint 054 Smoke Test", () => {
       thresholds: { kinhDichConfidenceMin: 70, newsSentimentMin: 0.3 },
     });
     expect(result.fire).toBe(false);
-  });
-
-  // ──────────────────────────────────────────────────────────────────────────
-  // Scenario 5: Kinh Dich wrapper  [1077]
-  // ──────────────────────────────────────────────────────────────────────────
-
-  it("Scenario 5: appendKinhDich appends hexagram block to base analysis", async () => {
-    // Seed kinhdich_readings with FPT data
-    db.prepare(`
-      INSERT INTO kinhdich_readings
-        (stock_code, hexagram_number, ho_que_number, bien_que_number,
-         hao_states, raw_scores, ngu_hanh_dynamic, trading_signal,
-         confidence, action_note, timestamp)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `).run(
-      "FPT", 11, 54, 26,
-      "[]", "[0.2,0.2,0.2,0.2,0.2,0.2]", "Tho",
-      "MUA (tich cuc)", 0.82,
-      "KHUYEN NGHI: MUA",
-      new Date().toISOString(),
-    );
-
-    const base = "Phân tích cơ bản FPT: kết quả tốt.";
-    const result = await appendKinhDich("FPT", base, db);
-
-    // Must preserve base
-    expect(result).toContain(base);
-    // Must contain Kinh Dich block markers
-    expect(result).toContain("Kinh Dịch:");
-    expect(result).toContain("Biến quẻ:");
-    expect(result).toContain("---");
-    // Confidence rendered as %
-    expect(result).toContain("82%");
-  });
-
-  it("Scenario 5b: appendKinhDich returns fallback when no data for ticker", async () => {
-    // kinhdich_readings is empty in this test
-    const result = await appendKinhDich("XYZ", "base output", db);
-    expect(result).toBe("base output\n---\nKinh Dịch: Chưa đủ dữ liệu để tính quẻ.");
-  });
-
-  it("Scenario 5c: appendKinhDich never throws", async () => {
-    let threw = false;
-    try {
-      // Empty db (no kinhdich_readings table at all in brokenDb)
-      const brokenDb = new Database(":memory:");
-      await appendKinhDich("FPT", "base", brokenDb);
-    } catch {
-      threw = true;
-    }
-    expect(threw).toBe(false);
   });
 
   // ──────────────────────────────────────────────────────────────────────────

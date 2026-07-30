@@ -409,6 +409,25 @@ jobs:
       - name: Run metric-mask-lint --check
         run: bash scripts/audits/metric-mask-lint.sh --check
 
+  dead-code-gate:
+    name: dead-code-gate
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # Pure bash/git ls-files/grep — no bun/go/python toolchain needed, cheapest job in
+      # the pipeline. Zero-tolerance CI guardrail against 4 recurring dead-artifact shapes
+      # found live in this repo (tracked *.bak/*.backup/*.patch, tracked _deprecated/
+      # path segments, an unbuilt Go/TS twin scaffold, //go:build ignore on a tracked
+      # *.go file). Live debt (~1.4k LOC across mcp-server/pdf-extractor/stock-price +
+      # 2 stray root files, technical-analysis's share independently pre-cleaned by a
+      # separate task) was fixed in the same task that shipped this gate, so it opens
+      # at zero offenders. See docs/architecture-briefs/2026-07-24-factory-guard-ci-dead-code-gate.md
+      - name: Run dead-code-gate --check
+        run: bash scripts/audits/dead-code-gate.sh --check
+
 # AC-8 (optional) — Branch protection setup:
 # To require CI jobs before merging to main, go to:
 #   GitHub repo > Settings > Branches > Add branch protection rule

@@ -68,4 +68,8 @@ docs/data/db-integrity-history.json
 docs/data/.trash/
 
 # never commit .bak dead-code/backup files (FACTORY-INTERFACE-delete-bak-files, 2026-07-24)
+# extended to .backup/.patch (FACTORY-GUARD-CI-DEADCODE-IMPL, 2026-07-30) — same debt shape,
+# different extension; scripts/audits/dead-code-gate.sh also bans all 3 as TRACKED files.
 *.bak
+*.backup
+*.patch
