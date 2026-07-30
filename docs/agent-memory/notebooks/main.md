@@ -1,6 +1,19 @@
 # Dev Team — Sprint Boundary Notebook
 
-**Written:** 2026-07-30T11:46Z
+**Written:** 2026-07-30T12:05Z
+
+## cycle-20260730T1200Z-verify — RAW-verified dev-mcp-server's WAL-rearm fix clean; AC-2 sweep found 4 real out-of-zone instances of the same defect, minted narrow follow-up; released lock
+
+- **RAW-verified all 4 commits real, on HEAD, correct order**: `a7e437e16` (fix), `a365b6455` (guard script), `43976e909` (journal+notebook), `a17faa03a` (board flip).
+- **AC-1 diff confirmed exact match**: `bctcEvalBackfillRunner.ts` no longer opens its own `Database`+`PRAGMA journal_mode=WAL`; now uses `schema.ts`'s `getDb()`/`closeDb()` singleton. Checked two things the RETURN didn't spell out: `schema.ts:116` already sets `foreign_keys=ON` (dropping the runner's own redundant pragma is not a regression), and the runner is a genuine standalone one-shot CLI (`docker exec ... bun run`, zero importers) — so calling `closeDb()` at the end can't yank a connection from a concurrent in-process user.
+- **AC-2 sweep independently re-verified, not trusted**: the 4 newly-flagged files (`scripts/migrations/{run-finalize-bctc-refine.ts:36, dedupe-mislabeled-bctc-period.ts:368, resync-watchlist-sysmap-2026-07-11.ts:266, carry-forward-bctc-orphaned-rows.ts:361}`) are real — exact line matches, all default `DB_PATH` to the real `apps/mcp-server/data/market.db`, all unconditionally set `journal_mode=WAL`. Confirmed the "outside my zone" refusal is grounded in dev-mcp-server's own real `init.md` (`zone_restricted: apps/mcp-server/`, "NEVER write code outside apps/mcp-server/"), not a fabricated excuse.
+- **AC-3/4 guard independently re-run**: `--self-test` → both WAL/DELETE fixture branches PASS as claimed; live run against the running container → `verdict=PASS journal_mode=delete wal_present=false shm_present=false`, exact match.
+- **`bun tsc --noEmit` independently re-run clean.** Decision journal (`STEP dev-mcp-server-S28`) and notebook entry both confirmed present, matching the RETURN block.
+- **Board disposition confirmed**: single write, `in_progress[]→review[]` lane-move + `next_agent:qa` + `.head` idle-reset all together (CANONICAL:SSOT-STATUSFLIP-LANEMOVE held); conservation `task_total 658→658, signal_total 131→131`.
+- **No prior-art row covered the 4 newly-found files** (checked board + backlog-detail). Minted `FIX-SCRIPTS-MIGRATIONS-MARKETDB-WAL-REARM-SAME-DEFECT` (P1, non-supervised, non-plan_only, `next_agent:developer` — scripts/ sits outside all dev-* zones), mirroring the closed row's own scope-completeness framing verbatim. Conservation `task_total 718→719, signal_total 131→131`. Committed `bb923be57`.
+- **Released `task:FIX-SQLITE-JOURNALMODE-WAL-REARM-DEFEATS-DELETE-MITIGATION` on dev-mcp-server's behalf** (it has no MCP/gateway tool grant) — `released:1`, genuine.
+- **No discrepancies — clean verify**, plus a genuinely thorough AC-2 sweep by the developer that surfaced a real still-open gap rather than papering over it.
+- **NEXT**: `.head` is idle again — a fresh tick's idle-fallthrough chain will reach BOUNDED-1; the new follow-up row is dev-routable and unsupervised, so it's a plausible next pick. Separately, `has_unbacked_sequencing_prose`'s `^po_sequencing`-only gate gap (from the prior cycle) is still unflagged to PO/architect — still not urgent enough to block a tick for, but growing stale.
 
 ## cycle-20260730T1145Z-tick — pipeline-resume path confirmed: dev-mcp-server still alive on SQLite fix, no re-dispatch; drain surfaced 2 self-generated false-alarm sweep-guard signals, both benign
 
@@ -24,13 +37,3 @@
 - **Dispatched `dev-mcp-server`** (background) — `next_agent` resolved directly from the row's own field, not the generic `developer` placeholder. Sprint-task lock deliberately held open (LOCK-LIFETIME).
 - **Committed** `b1dc01c45` (manual promote+claim, pathspec-scoped, reasoning in commit body). Released SF-1 + fire-election.
 - **NEXT**: await dev-mcp-server's return; RAW-verify per standing discipline. Separately, the `has_unbacked_sequencing_prose` gate's `^po_sequencing`-only key convention should be widened (or `status_note`-authored sequencing should be required to also carry a `po_sequencing_*` key) — surface to PO/architect when triage capacity allows, not urgent enough to interrupt this tick for.
-
-## cycle-20260730T1130Z-verify — RAW-verified .head-overwrite-guard fix clean (48/48 tests incl. 8 new head-guard ACs, all 3 scripts + SLS dual-branch confirmed); released lock
-
-- **Developer completed `FIX-DEVTEAM-CLAIM-SCRIPTS-UNCONDITIONAL-HEAD-OVERWRITE` — RAW-verified before trusting**: commits `3519a09e4` (fix), `3e1e89baa` (journal+notebook), `2169cf005` (board flip) all real, on HEAD.
-- **Diff confirmed the exact claimed mechanism on all 3 scripts**: `devteam-backlog-claim-bounded1.jq` and `devteam-backlog-claim-ready-lane-consumer.jq` each gained the identical `$head_free` guard mirroring DRS's own precedent byte-for-byte in shape. `devteam-backlog-claim-supervised-lane-sweep.jq` confirmed applying it to BOTH its PRIMARY and FALLBACK `.head`-write branches, `$head_free` computed ONCE before either branch (correct — `.head` is never mutated between computation and use).
-- **Test suite independently re-run, not trusted from the "48/48" claim**: `bash scripts/audits/devteam-dispatch-gate-satisfiability.sh` → **48 passed, 0 failed**, exact match, including all 8 new assertions (AC-BOUNDED1/SLS-PRIMARY/SLS-FALLBACK/RLC HEAD-GUARD, each with its negative-control + positive-half pair).
-- **Decision journal STEP developer-S41 confirmed present and accurate** — mechanism, the "compute once for SLS" rationale, and the honest structural-gap disclosure all match the RETURN block verbatim.
-- **Board disposition confirmed live**: row `REVIEW`/`next_agent:qa`/`branch:null`; `.head` idle-reset in the same write (`2169cf005`) — CANONICAL:SSOT-STATUSFLIP-LANEMOVE held.
-- **No discrepancies — clean verify.** Released `task:FIX-DEVTEAM-CLAIM-SCRIPTS-UNCONDITIONAL-HEAD-OVERWRITE` (correct `task:`-prefixed key used first try this time — `released:1`).
-- **NEXT**: `.head` is idle again — re-run preflight fresh, re-check idle-capacity chain (BOUNDED-1) for further dispatch this tick.
