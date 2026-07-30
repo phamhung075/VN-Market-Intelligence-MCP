@@ -1,6 +1,16 @@
 # Dev Team — Sprint Boundary Notebook
 
-**Written:** 2026-07-30T09:52Z
+**Written:** 2026-07-30T10:00Z
+
+## cycle-20260730T1000Z-verify — AUD-CP-1 developer RAW-verified genuine; released task lock; row → review/qa, .head idle
+
+- **Every claimed artifact independently checked, not trusted from RETURN text**: commits `1565b0d1d`/`0cea9ccdf`/`a27d824ca` real, on HEAD. `main.md` §CALLER-INSTRUCTION PRECEDENCE (AUD-CP-1) block + mandatory `CONTRACT-CONTRADICTION` RETURN line both present. `tier1-probe.md` diff confirmed the 4-line breadcrumb landed strictly between the A-21 query block's closing fence and `**Verdict:**` — the protected verdict-mapping text is untouched in the diff. `emit-audit-signal.sh`: `provenance:"detector"` hardcoded inside `_build_row_json()`, confirmed single def + single call site (grep count 2), no `--provenance` flag exists.
+- **Test suite independently re-run, not trusted from the 53/53 claim**: `bash scripts/emit-audit-signal.test.sh` → **53 passed, 0 failed**, exact match, including the 3 new T13/T14/T15 provenance assertions.
+- **Surprising claim verified rather than waved through**: developer said the `dev-standards.md` CANONICAL:AUD-CP-1 entry landed via an unrelated peer commit (`c919f69a1`, the DRS developer's commit) before it could commit its own — checked the actual diff of `c919f69a1` and the AUD-CP-1 block genuinely is in that commit's diff, byte-for-byte matching what the developer described. Live reproduction of `feedback_shared_main_peer_push_sweeps_held_data_commits` — correctly did not re-commit or duplicate the entry.
+- **Board disposition confirmed live**: row is `status:REVIEW`, `next_agent:qa`, `branch:null`. `.head` confirmed `status:idle`, `active_task_id:null`, `updated_by:developer` — correct idle-reset, nothing left in_progress.
+- **Structural gap acknowledged, not actionable by dev-team**: developer's session had no gateway/MCP grant so could not self-release its own lock or heartbeat — released `task:FIX-AUDITOR-CALLER-PROSE-OVERRIDES-DOCUMENTED-DETECTOR-THRESHOLD` on its behalf this cycle, per its own explicit flag.
+- **No discrepancies found** — clean verify. Both background dispatches from the 0930Z tick are now fully closed out (DRS earlier, this one now).
+- **NEXT**: row sits in `review[]` for QA pickup (review-lane QA-Drain, not dev-team's to force). Nothing else in flight from this session.
 
 ## cycle-20260730T0952Z-verify — PO triage RAW-verified genuine (4th+ occurrence of the mint-gap class checked, this time clean); released task lock
 
@@ -19,14 +29,3 @@
 - **Step 0b: correctly recognized both in-flight dispatches as still running, skipped re-spawn.** `.head` unchanged (in_progress, next_agent=developer, not blocked, should_hold=false — same task as last tick). Both `task:FIX-AUDITOR-CALLER-PROSE-…` and `task:po-triage-20260730` are still held by this session from last tick's spawns, well within TTL, with no task-notification yet — absence of a notification means still running, not dead (`[[feedback_background_subagent_transcript_silence_is_not_death]]`). Re-spawning either via the generic re-entrant lock path would have duplicated live work. Deliberately did NOT re-dispatch.
 - **Nothing else eligible**: `.head.status` is `in_progress` (not idle), so BOUNDED-1/SLS/RLC/DRS/QA-Drain never fire this tick regardless — head-idle fallthrough is a precondition for all four.
 - **NEXT**: await auditor-prose developer + PO triage returns (both still in flight). RAW-verify each per standard discipline as they land.
-
-## cycle-20260730T0940Z-verify — DRS implementation RAW-verified genuine; released task lock, left row for PO/router disposition (still supervised+plan_only)
-
-- **Developer's DRS RETURN RAW-verified, not trusted**: commits `c919f69a1`/`1aea437fb` real, on HEAD. `is_design_router_allowed`/`is_design_router_eligible` confirmed in `scripts/lib/devteam-eligibility.jq` — allowlist is caller-supplied (`--argjson`), not hardcoded inside the jq lib, matching PO's ratified `{architect,ba,pm,po,agents-architect}`. Claim script's `.head` write confirmed conditional (`$head_free` guard), never unconditional — matches the hard AC.
-- **Wiring position confirmed live**: `main.md` grep shows DRS correctly inserted between RLC and QA-Drain (QA-Drain's own entry text: "reached ONLY when DRS did NOT claim+dispatch"), 4th WIP≤2 writer, shared budget not a new one.
-- **Satisfiability instrument independently re-run, not trusted from the return text**: `devteam-dispatch-gate-satisfiability.sh` → 34 PASS / 0 FAIL / exit 0, all 6 claimed new DRS assertions present and green (allowlist-exclusion, SLS-overlap-exclusion, supervised-only-still-eligible, head-guard positive+negative).
-- **Reconciliation numbers cross-checked live**: `bounded1-supervised-lane-report.sh` DRS section shows 120 target / 76 eligible / 44 stranded-by-policy — exact match to developer's claim. The report's pre-existing PRIMARY-section FAIL (5 unrelated supervised+plan_only rows with no resolvable lane) matches known prior state — not introduced by this change.
-- **Row correctly left un-flipped**: `FIX-BOUNDED1-NONDEV-NEXTAGENT-RESIDUAL-NO-DISPATCH-LANE` still `status:REVIEW`, `supervised:true`, `plan_only:true`, `next_agent:developer` — developer did not self-authorize the REVIEW→DONE flip. No `apps/` code touched (confirmed via diff stat).
-- **7-row dev-role-next_agent residual left explicitly out of scope** by developer's own judgment (auto-dispatching a supervised row to `developer` with no PO gate would be a new risk decision) — noted for PO, not folded into DRS silently.
-- **Released `task:FIX-BOUNDED1-NONDEV-NEXTAGENT-RESIDUAL-NO-DISPATCH-LANE`** — implementation-side work is done and verified; row stays in `review[]` for PO/QA-Drain disposition (dev-team does not flip supervised+plan_only rows unilaterally).
-- **NEXT**: await auditor-prose developer + PO triage returns (both still in flight, this tick's own dispatch). `FIX-BOUNDED1-…-DISPATCH-LANE` awaits PO/QA-Drain review-lane disposition — not dev-team's to close.
