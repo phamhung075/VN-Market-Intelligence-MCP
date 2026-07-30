@@ -7,9 +7,14 @@
   "summary": "stranded-state sweep: 18 unknown-owner paths, 6th live emission (5 prior archived without disposition) — classifier-owner fix still not actioned",
   "payload": {
     "paths": [
-      "docs/analysis-briefs/DBC.md", "docs/analysis-briefs/FPT.md", "docs/analysis-briefs/GEX.md",
-      "docs/analysis-briefs/HPG.md", "docs/analysis-briefs/VHM.md", "docs/analysis-briefs/VIC.md",
-      "docs/analysis-briefs/VRE.md", "docs/data/auditor-dedup-ledger.json",
+      "docs/analysis-briefs/DBC.md",
+      "docs/analysis-briefs/FPT.md",
+      "docs/analysis-briefs/GEX.md",
+      "docs/analysis-briefs/HPG.md",
+      "docs/analysis-briefs/VHM.md",
+      "docs/analysis-briefs/VIC.md",
+      "docs/analysis-briefs/VRE.md",
+      "docs/data/auditor-dedup-ledger.json",
       "docs/agent-memory/.auditor-cycle-markers-2026-07-29T08:00Z.tmp",
       "docs/data/unified-agent-synthesis-2026-07-28-evening.json",
       "docs/data/unified-agent-synthesis-2026-07-29-chef-evening.json",
@@ -18,8 +23,15 @@
       "docs/data/unified-agent-synthesis-2026-07-29-intraday.json",
       "docs/data/unified-agent-synthesis-2026-07-29-morning.json",
       "docs/data/unified-agent-synthesis-2026-07-30-morning.json",
-      "docs/social/fb-post-2026-07-28.md", "docs/social/fb-post-2026-07-29.md"
+      "docs/social/fb-post-2026-07-28.md",
+      "docs/social/fb-post-2026-07-29.md"
     ],
     "note": "Same recurring shape every time: docs/analysis-briefs/*.md (report-analyzer-owned), docs/data/unified-agent-synthesis-*.json (unified-agent-owned), docs/social/fb-post-*.md (fb-market-poster-owned) — each path shape already has a real owning agent, this is a classifier gap in stranded-state-sweep.sh (no allowlist for known-legitimate cowork-output paths), not an actual ownerless-file problem. 5 prior occurrences archived via cold-evict (READ status ages out at 48h) without any disposition ever landing — the classifier-owner fix keeps getting deferred, not rejected. The most recent live instance (dev-20260730T055200, 05:52Z) was itself cold-evicted this same tick before your triage of it completed (PO-triage agent hit 5 consecutive transient API 529 errors this cycle, still recovering). Suggest: either action the classifier-owner-fix directly this time, or explicitly decide 'not worth fixing' so this stops re-emitting every ~30min tick with no resolution either way."
+  },
+  "_processed": {
+    "fingerprint": "0934e4d0d593470f12cbf97106253b34e87cc6ecd2c081442f7380a5993133a4",
+    "processedAt": "2026-07-30T07:20:23Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
   }
 }
