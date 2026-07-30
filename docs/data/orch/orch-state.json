@@ -93,9 +93,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "active_task_id": null,
-    "next_agent": "router"
+    "status": "in_progress",
+    "active_task_id": "FIX-SQLITE-JOURNALMODE-WAL-REARM-DEFEATS-DELETE-MITIGATION",
+    "next_agent": "dev-mcp-server",
+    "next_action": "BOUNDED-1 auto-pickup claim of FIX-SQLITE-JOURNALMODE-WAL-REARM-DEFEATS-DELETE-MITIGATION — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
+    "updated_at": "2026-07-30T11:37:41Z",
+    "updated_by": "dev-team (bounded-1 auto-pickup)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -11146,24 +11149,6 @@
         "po_unstrand2_20260730": "LANE CORRECTION by po 2026-07-30T09:18Z — moved ready[] -> backlog[]. WHY THE 2026-07-30 ONE-FIELD 'UNSTRAND' DID NOT LAND: the prior PO cycle read the SLS predicate (promote :108-109, the supervised AND plan_only pair) but not the LANE that predicate is applied to. SLS-promote iterates `.task_board.backlog[]` (:105; its own header :29 states 'candidate lane: .task_board.backlog[]'). This row is in `ready[]`, so setting plan_only=true could not make it visible to SLS. Full picker audit at that moment: BOUNDED-1 backlog-only -> blind; SLS-promote backlog-only -> blind; SLS-claim requires promoted_by == 'dev-team (supervised-lane sweep)' and this row's promoted_by is null -> blind; RLC rejects supervised/plan_only -> blind. Four pickers, zero coverage, priority P0. Known-failure-shape matched without reading which collection the predicate walks. Now in backlog[] with status TODO, no children, no depends_on, no backlog-detail entry, so SLS-promote can legitimately resolve its lane and stamp it. Flags left `true` — the point is to reach the supervised lane, not to bypass it. Class fix: FIX-DEVTEAM-READY-REVIEW-LANE-SUPERVISED-PLANONLY-NO-PICKER."
       },
       {
-        "id": "FIX-SQLITE-JOURNALMODE-WAL-REARM-DEFEATS-DELETE-MITIGATION",
-        "status": "BACKLOG",
-        "type": "FIX",
-        "priority": "P1",
-        "size": "S",
-        "zone": "apps/mcp-server/",
-        "next_agent": "dev-mcp-server",
-        "owner": "dev",
-        "title": "market.db mitigation is reversible by a peer code path: bctcEvalBackfillRunner sets PRAGMA journal_mode=WAL on data/market.db, silently re-arming the corruption vector the 2026-07-30 permanent fix removed",
-        "desc": "`apps/mcp-server/src/interface/mcp/routes/bctcEvalBackfillRunner.ts` opens `resolve(projectRoot,'data/market.db')` (:44, `new Database(dbPath)` :48) and then executes `db.exec(\"PRAGMA journal_mode=WAL\")` (:49). journal_mode is a PERSISTENT property of the database FILE, not of a connection: converting to WAL from any connection re-creates the `-wal`/`-shm` pair and the setting survives that connection and the process. The permanent mitigation shipped hours earlier (157335892, `apps/mcp-server/src/infrastructure/db/schema.ts:115` journal_mode=DELETE + synchronous=FULL) was adopted specifically to remove the macOS-Docker-virt SHM torn-write vector that has now corrupted this DB four times. So a single backfill invocation silently undoes the fix for the duration of that run, and re-introduces the `-shm` file the fix exists to eliminate, with no alert and no log line saying the mode changed. `schema.ts` re-asserting DELETE on the next `getDb()` does not help: the window is the backfill's own runtime, which is long by construction.\n\nAC-1 no code path may set journal_mode on market.db except the single owner in `schema.ts`; `bctcEvalBackfillRunner.ts:49` uses the shared accessor or drops the PRAGMA.\nAC-2 sweep every other market.db opener for the same shape and fix or justify each. Grep evidence at triage time — `journal_mode` is set outside `schema.ts` in `bctcEvalBackfillRunner.ts:49`, `coordinationStore.ts:78` (different DB, see AC-B on the hardening SPIKE) and 8 `scripts/` call sites (`smoke-task-lock*.ts`, `migrations/*.ts`) that also open project DBs.\nAC-3 a regression guard that FAILS if journal_mode on market.db is anything but `delete` at runtime — assert through the running container, not by reading source (the source-vs-container distinction is what separated 'fixed' from 'fixed and shipped' earlier today).\nAC-4 same guard must catch a `-wal`/`-shm` pair appearing next to market.db.\n\nNOT plan_only and NOT supervised on purpose: this is a scope-completeness bug in a fix that already landed, not a design question, so it belongs in the lane that actually dispatches (BOUNDED-1). The DELETE-vs-WAL policy question per DB stays on SPIKE-SQLITE-DOCKER-VIRT-CORRUPTION-HARDENING AC-B.",
-        "created_at": "2026-07-30T09:21:51Z",
-        "created_by": "po-triage-20260730T0918Z (sqlite-corruption-mechanism-20260730)",
-        "related": [
-          "SPIKE-SQLITE-DOCKER-VIRT-CORRUPTION-HARDENING"
-        ],
-        "updated_at": "2026-07-30T09:21:52Z"
-      },
-      {
         "id": "FIX-AUDITOR-OUTPUT-CONTRACT-SIGNALSPOSTED-COUNTS-CALLS-NOT-CONFIRMED-ROWS",
         "status": "BACKLOG",
         "type": "FIX",
@@ -17884,9 +17869,33 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-30T11:17:00Z",
+    "last_triaged_at": "2026-07-30T11:37:31Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": []
+    "in_progress": [
+      {
+        "id": "FIX-SQLITE-JOURNALMODE-WAL-REARM-DEFEATS-DELETE-MITIGATION",
+        "status": "IN_PROGRESS",
+        "type": "FIX",
+        "priority": "P1",
+        "size": "S",
+        "zone": "apps/mcp-server/",
+        "next_agent": "dev-mcp-server",
+        "owner": "dev",
+        "title": "market.db mitigation is reversible by a peer code path: bctcEvalBackfillRunner sets PRAGMA journal_mode=WAL on data/market.db, silently re-arming the corruption vector the 2026-07-30 permanent fix removed",
+        "desc": "`apps/mcp-server/src/interface/mcp/routes/bctcEvalBackfillRunner.ts` opens `resolve(projectRoot,'data/market.db')` (:44, `new Database(dbPath)` :48) and then executes `db.exec(\"PRAGMA journal_mode=WAL\")` (:49). journal_mode is a PERSISTENT property of the database FILE, not of a connection: converting to WAL from any connection re-creates the `-wal`/`-shm` pair and the setting survives that connection and the process. The permanent mitigation shipped hours earlier (157335892, `apps/mcp-server/src/infrastructure/db/schema.ts:115` journal_mode=DELETE + synchronous=FULL) was adopted specifically to remove the macOS-Docker-virt SHM torn-write vector that has now corrupted this DB four times. So a single backfill invocation silently undoes the fix for the duration of that run, and re-introduces the `-shm` file the fix exists to eliminate, with no alert and no log line saying the mode changed. `schema.ts` re-asserting DELETE on the next `getDb()` does not help: the window is the backfill's own runtime, which is long by construction.\n\nAC-1 no code path may set journal_mode on market.db except the single owner in `schema.ts`; `bctcEvalBackfillRunner.ts:49` uses the shared accessor or drops the PRAGMA.\nAC-2 sweep every other market.db opener for the same shape and fix or justify each. Grep evidence at triage time — `journal_mode` is set outside `schema.ts` in `bctcEvalBackfillRunner.ts:49`, `coordinationStore.ts:78` (different DB, see AC-B on the hardening SPIKE) and 8 `scripts/` call sites (`smoke-task-lock*.ts`, `migrations/*.ts`) that also open project DBs.\nAC-3 a regression guard that FAILS if journal_mode on market.db is anything but `delete` at runtime — assert through the running container, not by reading source (the source-vs-container distinction is what separated 'fixed' from 'fixed and shipped' earlier today).\nAC-4 same guard must catch a `-wal`/`-shm` pair appearing next to market.db.\n\nNOT plan_only and NOT supervised on purpose: this is a scope-completeness bug in a fix that already landed, not a design question, so it belongs in the lane that actually dispatches (BOUNDED-1). The DELETE-vs-WAL policy question per DB stays on SPIKE-SQLITE-DOCKER-VIRT-CORRUPTION-HARDENING AC-B.",
+        "created_at": "2026-07-30T09:21:51Z",
+        "created_by": "po-triage-20260730T0918Z (sqlite-corruption-mechanism-20260730)",
+        "related": [
+          "SPIKE-SQLITE-DOCKER-VIRT-CORRUPTION-HARDENING"
+        ],
+        "updated_at": "2026-07-30T11:37:41Z",
+        "promoted_at": "2026-07-30T11:37:31Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup - WIP (in_progress) was 0; top-ranked eligible candidate FIX-DECISION-JOURNAL-BYTECAP-NO-ACTUATOR (priority_rank=1) was deliberately SKIPPED this tick: its own status_note reads \"Sequence after that row's AC-1 reconcile\" (FIX-SPRINT-REGISTRY-DANGLING-IDS-BREAK-SIGNOFF-AND-JOURNAL-ARCHIVE, still BACKLOG/supervised+plan_only, AC-1 not yet done) - a real sequencing dependency the promote script's has_unbacked_sequencing_prose gate does not catch because it only keys on ^po_sequencing object keys, not a status_note field. Promoted the next-ranked eligible row instead (priority_rank=1, no hidden holds, PO explicitly noted it belongs in this lane).",
+        "claimed_at": "2026-07-30T11:37:41Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)"
+      }
+    ]
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
