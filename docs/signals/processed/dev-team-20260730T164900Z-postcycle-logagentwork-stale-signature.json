@@ -6,9 +6,17 @@
   "createdAt": "2026-07-30T16:49:00Z",
   "payload": {
     "summary": "post-cycle.md Step 4.5's documented call `log_agent_work(tag=\"sprint-boundary\", state=current_sprint_id)` does not match the live MCP tool schema for log_agent_work — the tool requires `agent_name` (string) + `status` (enum running|completed|error), and `completed`/`error` additionally require the `id` returned by a prior `status=\"running\"` call. There is no `tag` or `state` parameter on the live tool at all. A literal reading of the doc text would fail every call with an InputValidationError.",
-    "files": ["docs/agents/dev-team/flow/post-cycle.md"],
+    "files": [
+      "docs/agents/dev-team/flow/post-cycle.md"
+    ],
     "suggestedZone": "docs/agents/dev-team/flow/post-cycle.md",
     "found_during": "Step 4.5 Compact Checkpoint, tick 2026-07-30T16:37Z — attempted the documented call verbatim, got a Zod validation error naming agent_name/status as required; called mcp__gateway__list_server_tools(server=\"vn-market\") to confirm the real schema, then used the correct running->completed two-call lifecycle with the returned id instead",
     "suggested_fix": "Update post-cycle.md Step 4.5 line ~2 to: `log_agent_work(agent_name=\"dev-team\", status=\"running\", summary=\"...\")` at cycle start (capture returned id), then `log_agent_work(agent_name=\"dev-team\", status=\"completed\", id=<captured>, summary=\"...\")` at the point this step currently fires — or simplify to a single status=\"completed\"-only call if the tool is ever relaxed to make id optional. Same class as the execute-tier.md Phase-3.5 lock-release doc-drift flagged last tick (dev-team-20260730T161851Z-exectier-phase35-stale-release-pattern.json) — flow docs drifting from live tool/consumer contracts."
+  },
+  "_processed": {
+    "fingerprint": "376fce422ea38601316a7a6f5b314eab2abea0a3d977405c25575078d2ea8704",
+    "processedAt": "2026-07-30T17:15:57Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
   }
 }
