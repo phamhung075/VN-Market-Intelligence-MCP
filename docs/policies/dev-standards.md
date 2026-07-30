@@ -1,6 +1,6 @@
 # Developer Standards
 
-<!-- size-justification: 140L — unified developer reference: code search tools, test patterns, DDD rules, TypeScript conventions, naming. All read together at sprint start to set context; splitting into tool-guide + test-patterns + naming-rules fragments the unified "how we code" standard. SCRIPT-PERSIST 2026-06-07: Script Persistence section incl. maintenance clause (+15L, user directive). SYSREMAKE-P2-DEVTEAM-BACKLOG-PICKUP-BOUNDED1 2026-07-04: CANONICAL pointer for the dev-team idle-capacity backlog pickup scripts (+11L). PUSH-AUTONOMY-1 2026-07-14: Autonomous Push Gate section (+16L, user directive — push on 100% green, no user action, post-push real-data verify task). FIX-CMH-OBSOLETE-FILE-CLEANUP 2026-07-20: CANONICAL pointer for scripts/audits/clean-obsolete-files.sh (+8L). BLOCK-PUSH-CRON-AUDIT-BATCH-NO-QA 2026-07-22 (qa): pinned the "targeted/merge-gate suite" reading against the standing FIX-MCP-SUITE-HEALTH-BASELINE full-suite red so it stops being re-litigated per push (+3L). UC-MDH-P3 2026-07-23: CANONICAL pointer for scripts/agents-flow/memory-prune-sweep.sh (+14L). UC-MDH-P4 2026-07-23: CANONICAL pointer for scripts/agents-flow/decision-journal-archive.sh (+15L). UC-GCP-P8 2026-07-23: CANONICAL pointer for scripts/agents-flow/stranded-state-sweep.sh (+13L). TE-T17 2026-07-23: CANONICAL pointer for scripts/agents-flow/notebook-linecap-sweep.sh (+13L). TE-T28 2026-07-23: CANONICAL pointer for scripts/gen-tool-list-stubs.py (+15L). TE-T31 2026-07-23: CANONICAL pointer for scripts/gen-tools-index.sh (+14L). TE-T33 2026-07-23: CANONICAL pointer for scripts/agents-flow/cold-archive-sweep.sh (+18L). FFLOW-STALE-0723-B-RECHECK-HARNESS 2026-07-23: CANONICAL pointer for scripts/check-foreign-flow-freshness.sh (+16L). FIX-COMMIT-PATH-PEER-INDEX-SWEEP-GUARD-HOOK 2026-07-28: CANONICAL pointer for scripts/git-hooks/pre-commit (+15L). FIX-AUDITOR-HEARTBEAT-OUT-OF-CONTRACT-AGENT-WRITE-TIER1 2026-07-29: CANONICAL sole-writer + shape invariant for docs/data/auditor-tier{1,2,3}-last-healthy.json, cited from both writers (+21L). FIX-NOTEBOOK-COMPOSE-REWRITES-RETAINED-PRIOR-SECTIONS-followup 2026-07-29: CANONICAL pointer for scripts/audits/verify-notebook-immutability-gate.sh (+9L). FIX-AUDITOR-DASHBOARD-APPEND-NO-ACTUATOR-CONTRACT-COUNT-NARRATED 2026-07-29: CANONICAL pointers for scripts/emit-dashboard-row.sh + scripts/audit-output-contract.sh (+24L). FACTORY-GUARD-CI-SIZELINT-IMPL 2026-07-29: CANONICAL pointer for scripts/audits/size-lint-justification.sh (+16L). FACTORY-GUARD-CI-METRICMASK-IMPL 2026-07-29: CANONICAL pointer for scripts/audits/metric-mask-lint.sh (+18L). FACTORY-GUARD-CI-TSBOUNDARIES-IMPL 2026-07-29: CANONICAL pointer for the 3 new TS eslint CI jobs (mcp-server/news-fetch/frontend) + news-fetch-go-lint (+22L). -->
+<!-- size-justification: 140L — unified developer reference: code search tools, test patterns, DDD rules, TypeScript conventions, naming. All read together at sprint start to set context; splitting into tool-guide + test-patterns + naming-rules fragments the unified "how we code" standard. SCRIPT-PERSIST 2026-06-07: Script Persistence section incl. maintenance clause (+15L, user directive). SYSREMAKE-P2-DEVTEAM-BACKLOG-PICKUP-BOUNDED1 2026-07-04: CANONICAL pointer for the dev-team idle-capacity backlog pickup scripts (+11L). PUSH-AUTONOMY-1 2026-07-14: Autonomous Push Gate section (+16L, user directive — push on 100% green, no user action, post-push real-data verify task). FIX-CMH-OBSOLETE-FILE-CLEANUP 2026-07-20: CANONICAL pointer for scripts/audits/clean-obsolete-files.sh (+8L). BLOCK-PUSH-CRON-AUDIT-BATCH-NO-QA 2026-07-22 (qa): pinned the "targeted/merge-gate suite" reading against the standing FIX-MCP-SUITE-HEALTH-BASELINE full-suite red so it stops being re-litigated per push (+3L). UC-MDH-P3 2026-07-23: CANONICAL pointer for scripts/agents-flow/memory-prune-sweep.sh (+14L). UC-MDH-P4 2026-07-23: CANONICAL pointer for scripts/agents-flow/decision-journal-archive.sh (+15L). UC-GCP-P8 2026-07-23: CANONICAL pointer for scripts/agents-flow/stranded-state-sweep.sh (+13L). TE-T17 2026-07-23: CANONICAL pointer for scripts/agents-flow/notebook-linecap-sweep.sh (+13L). TE-T28 2026-07-23: CANONICAL pointer for scripts/gen-tool-list-stubs.py (+15L). TE-T31 2026-07-23: CANONICAL pointer for scripts/gen-tools-index.sh (+14L). TE-T33 2026-07-23: CANONICAL pointer for scripts/agents-flow/cold-archive-sweep.sh (+18L). FFLOW-STALE-0723-B-RECHECK-HARNESS 2026-07-23: CANONICAL pointer for scripts/check-foreign-flow-freshness.sh (+16L). FIX-COMMIT-PATH-PEER-INDEX-SWEEP-GUARD-HOOK 2026-07-28: CANONICAL pointer for scripts/git-hooks/pre-commit (+15L). FIX-AUDITOR-HEARTBEAT-OUT-OF-CONTRACT-AGENT-WRITE-TIER1 2026-07-29: CANONICAL sole-writer + shape invariant for docs/data/auditor-tier{1,2,3}-last-healthy.json, cited from both writers (+21L). FIX-NOTEBOOK-COMPOSE-REWRITES-RETAINED-PRIOR-SECTIONS-followup 2026-07-29: CANONICAL pointer for scripts/audits/verify-notebook-immutability-gate.sh (+9L). FIX-AUDITOR-DASHBOARD-APPEND-NO-ACTUATOR-CONTRACT-COUNT-NARRATED 2026-07-29: CANONICAL pointers for scripts/emit-dashboard-row.sh + scripts/audit-output-contract.sh (+24L). FACTORY-GUARD-CI-SIZELINT-IMPL 2026-07-29: CANONICAL pointer for scripts/audits/size-lint-justification.sh (+16L). FACTORY-GUARD-CI-METRICMASK-IMPL 2026-07-29: CANONICAL pointer for scripts/audits/metric-mask-lint.sh (+18L). FACTORY-GUARD-CI-TSBOUNDARIES-IMPL 2026-07-29: CANONICAL pointer for the 3 new TS eslint CI jobs (mcp-server/news-fetch/frontend) + news-fetch-go-lint (+22L). FACTORY-GUARD-CI-COMPROOT-LOGIC-IMPL 2026-07-30: CANONICAL pointer for scripts/audits/composition-root-logic-gate.go + the composition-root-logic-gate CI job (+30L). -->
 
 ## Script Persistence — scripts/, never /tmp
 
@@ -613,6 +613,48 @@ job scopes to the service's own source tree (`src/` or the package's existing li
 depguard) that had zero CI job of any kind — closed by a 7th `news-fetch-go-lint` job mirroring the 6
 existing per-service go-lint jobs. Design brief:
 `docs/architecture-briefs/2026-07-24-factory-guard-ci-depguard-tier-boundaries.md`.
+
+**CANONICAL: Go composition-root-logic CI guardrail (FACTORY-GUARD-CI-COMPROOT-LOGIC-IMPL)**
+```bash
+go run scripts/audits/composition-root-logic-gate.go --check apps/<service>/cmd/server [apps/<service2>/cmd/server ...]
+```
+Zero-tolerance `go/ast`+`go/parser` (Go stdlib only, no new go.mod dep) guardrail closing the gap
+`depguard` (existing Fence-A/B/C in every service's `.golangci.yml`) cannot express — depguard is
+import-based only, it cannot see that a composition-root adapter/shim type's RECEIVER METHOD embeds a
+business decision (a fallback selection, an `IsEstimate`/`ParseOK`-style confidence flag) that belongs
+in `pkg/application`, not `cmd/server/`. Scope: `ast.FuncDecl` nodes with a receiver, inside
+`cmd/server/**/*.go` (excl. `*_test.go`) — `func main()` and every free (non-receiver) helper function
+(`envStr`/`envInt`/`getenv`/`splitCSV`/`parseWatchlist`/`readWatchlistFromDB`) are structurally out of
+scope (no receiver), not a special-cased allowlist. Threshold: flag when `if`-count >= 2 OR any
+`for`/`range` appears anywhere in the method body (incl. nested func literals) — grep-verified
+2026-07-24 to cleanly separate the 2 real offenders from every other checked receiver-method shim
+across all 7 Go services (zero false positives; independently re-verified live 2026-07-30, same
+result). Escape hatch: `// composition-root-logic-allow: <reason>` on the line(s) immediately
+preceding the method (`go/ast`'s `FuncDecl.Doc` — a blank line breaks the association, same
+"immediately preceding" contract as `size-justification:`/`metric-mask-allow:`). Live debt at design
+time was 2 functions in 1 service (`apps/macro-indicators/cmd/server/adapters.go`:
+`policyRatesAdapter.FetchPolicyRates` HTML-vs-DB-fallback + `IsEstimate`, `omoAdapter.FetchOMO`
+`ParseOK`-fail-closed decision + a tenor-row DTO-mapping loop) — fixed in the same task that shipped
+the gate by moving the DECISION logic into two new `pkg/application` resolvers
+(`PolicyRatesResolver`, `omoResolver` — both still implement the pre-existing `PolicyRatesProvider`/
+`OMOProvider` ports consumed by `LiquidityStateUseCase`, so `/liquidity-state`'s behaviour is
+unchanged) while the composition-root adapters were split into pure-delegation pairs
+(`policyRatesHTMLAdapter`+`policyRatesDBAdapter`, `omoRawAdapter`). The OMO tenor-row struct-mapping
+loop (mechanical field copy between two distinct named struct types — Go disallows implicit slice
+conversion between them even with identical field shapes) stays in `cmd/server/adapters.go` as a free
+(non-receiver) function, `convertOMOTenorRows` — out of the gate's scope by construction, same
+free-helper carve-out as `envStr`/`splitCSV`. RAW-verified against the LIVE running container: hit
+`POST /liquidity-state` before and after rebuild (both calls landed on the exact 2 fallback/fail-closed
+branches the gate flagged, live in production at verify time) — response bodies + `slog` warn-log
+lines byte-identical modulo wall-clock `fetched_at` fields. Wired as a single `composition-root-logic-gate`
+job in `.github/workflows/ci.yml` (not 7 per-service jobs like `go-lint` — the tool is syntax-only,
+never type-checks/resolves imports, so one Go toolchain scans all 7 services' `cmd/server/` dirs in one
+job). Design brief: `docs/architecture-briefs/2026-07-24-factory-guard-ci-depguard-tier-boundaries.md`
+§3/§4. Test: `scripts/audits/composition-root-logic-gate_test.go` (`go test
+scripts/audits/composition-root-logic-gate.go scripts/audits/composition-root-logic-gate_test.go`) —
+NOT `.test.go` as the board-row note literally named it: Go's toolchain only discovers `_test.go`
+(underscore) as test files, `.test.go` is invisible to `go test` and would silently ship a dead smoke
+test.
 
 `/tmp` is allowed ONLY for throwaway run-scoped DATA (payload json, stderr capture, session-id cache) — never for executable logic.
 

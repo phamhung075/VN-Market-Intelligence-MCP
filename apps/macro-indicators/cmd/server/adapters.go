@@ -12,21 +12,25 @@
 // not a new package boundary. main.go's DI wiring (func main) constructs these adapters and
 // passes them to the use-case constructors; see main.go for the wiring order.
 //
-// size-justification: ~300L — 9 one-purpose composition-root shim types (bopParserAdapter,
+// size-justification: ~300L — 10 one-purpose composition-root shim types (bopParserAdapter,
 // bopURLBuilderAdapter, iipParserAdapter, cpiParserAdapter, tradeBalanceParserAdapter,
-// policyRatesAdapter, sjcFXAdapter, omoAdapter, omoDailyRepoAdapter), one per VMT feature
-// slice (VMT-1a/1b, VMT-2, VMT-3b, VMT-4, VMT-5a, VMT-5b, P0-3-OMO-CURVE). Each shim is a
-// handful of lines and none has any logic beyond delegating to the matching
+// policyRatesHTMLAdapter, policyRatesDBAdapter, sjcFXAdapter, omoRawAdapter,
+// omoDailyRepoAdapter), one per VMT feature slice (VMT-1a/1b, VMT-2, VMT-3b, VMT-4, VMT-5a,
+// VMT-5b, P0-3-OMO-CURVE), plus one free field-mapping helper (convertOMOTenorRows). Each
+// shim is a handful of lines and none has any logic beyond delegating to the matching
 // pkg/infrastructure function — they are grouped here (not split further, one file per
 // shim) because Fence-C already confines them to a single file's worth of DI wiring;
 // N one-line files would just fragment the same wiring story the DoD asked to consolidate
-// out of main.go.
+// out of main.go. FACTORY-GUARD-CI-COMPROOT-LOGIC-IMPL (2026-07-30) split the former
+// policyRatesAdapter/omoAdapter into raw pure-delegation pairs (HTML/DB fetch, OMO fetch) —
+// the fallback/ParseOK decision logic they used to embed moved to
+// pkg/application/usecases_vmt_liquidity_resolvers.go (PolicyRatesResolver, omoResolver);
+// see that file for the design rationale and scripts/audits/composition-root-logic-gate.go
+// for the CI mechanism that flags composition-root business-logic branching.
 package main
 
 import (
 	"context"
-	"fmt"
-	"log/slog"
 	"time"
 
 	"github.com/vn-market-intelligence/macro-indicators/pkg/application"
@@ -128,59 +132,38 @@ func (t *tradeBalanceParserAdapter) ParseTradeBalance(excelBytes []byte, period 
 // Lives here (composition root — Fence-C compliant).
 // ---------------------------------------------------------------------------
 
-// policyRatesAdapter implements application.PolicyRatesProvider.
-// Fetches SBV policy rates from HTML (direct, www.sbv.gov.vn — no VPS proxy needed).
-// Falls back to sbv_rates DB values when HTML parse fails.
-type policyRatesAdapter struct {
-	logger *slog.Logger
+// policyRatesHTMLAdapter implements application.PolicyRatesHTMLProvider.
+// Pure delegation to infrastructure.FetchSBVPolicyRatesFromHTML — zero branching.
+// FACTORY-GUARD-CI-COMPROOT-LOGIC-IMPL: the former policyRatesAdapter also decided
+// HTML-vs-DB fallback + is_estimate here; that decision now lives in
+// application.PolicyRatesResolver (usecases_vmt_liquidity_resolvers.go) — this
+// shim only fetches + field-maps the infrastructure result.
+type policyRatesHTMLAdapter struct{}
+
+// FetchHTML delegates to infrastructure.FetchSBVPolicyRatesFromHTML.
+func (a *policyRatesHTMLAdapter) FetchHTML(ctx context.Context) (application.PolicyRatesHTMLResult, error) {
+	result, err := infrastructure.FetchSBVPolicyRatesFromHTML(ctx)
+	return application.PolicyRatesHTMLResult{
+		RefiRatePct:     result.RefiRatePct,
+		DiscountRatePct: result.DiscountRatePct,
+		LombardRatePct:  result.LombardRatePct,
+		ParseOK:         result.ParseOK,
+	}, err
 }
 
-// FetchPolicyRates implements application.PolicyRatesProvider.
-// Primary: SBV HTML direct fetch → parse refi + discount + lombard rates.
-// Fallback: sbv_rates DB table (refi + discount only; lombard = 0 in fallback).
-// is_estimate=false on HTML success; is_estimate=true on fallback.
-func (a *policyRatesAdapter) FetchPolicyRates(ctx context.Context) (domain.PolicyRates, error) {
-	fetchedAt := time.Now().UTC().Format(time.RFC3339)
+// policyRatesDBAdapter implements application.PolicyRatesDBProvider.
+// Pure delegation to infrastructure.FetchSBVPolicyRatesFromDB — zero branching.
+type policyRatesDBAdapter struct{}
 
-	htmlResult, fetchErr := infrastructure.FetchSBVPolicyRatesFromHTML(ctx)
-	if fetchErr == nil && htmlResult.ParseOK {
-		// HTML fetch + parse succeeded.
-		return domain.PolicyRates{
-			RefiRatePct:     htmlResult.RefiRatePct,
-			DiscountRatePct: htmlResult.DiscountRatePct,
-			LombardRatePct:  htmlResult.LombardRatePct,
-			Source:          "www.sbv.gov.vn Liferay HTML (direct, no VPS proxy)",
-			FetchedAt:       fetchedAt,
-			IsEstimate:      false, // primary source confirmed
-		}, nil
+// FetchDB delegates to infrastructure.FetchSBVPolicyRatesFromDB.
+func (a *policyRatesDBAdapter) FetchDB(ctx context.Context) application.PolicyRatesDBResult {
+	result := infrastructure.FetchSBVPolicyRatesFromDB(ctx)
+	return application.PolicyRatesDBResult{
+		RefiRatePct:     result.RefiRatePct,
+		DiscountRatePct: result.DiscountRatePct,
+		FetchedAt:       result.FetchedAt,
+		OK:              result.OK,
 	}
-
-	// HTML fetch failed or parse returned ParseOK=false → fall back to DB.
-	if a.logger != nil {
-		a.logger.Warn("sbv_policy_rates: HTML fetch/parse failed, falling back to sbv_rates DB",
-			slog.Any("fetch_err", fetchErr),
-			slog.Bool("parse_ok", htmlResult.ParseOK),
-		)
-	}
-
-	dbResult := infrastructure.FetchSBVPolicyRatesFromDB(ctx)
-	if dbResult.OK {
-		return domain.PolicyRates{
-			RefiRatePct:     dbResult.RefiRatePct,
-			DiscountRatePct: dbResult.DiscountRatePct,
-			LombardRatePct:  0, // not in sbv_rates table
-			Source:          "sbv_rates DB fallback (HTML parse failed)",
-			FetchedAt:       dbResult.FetchedAt,
-			IsEstimate:      true, // fallback path = is_estimate=true
-		}, nil
-	}
-
-	// Both HTML and DB failed — return zero-value with is_estimate=true (fail-closed).
-	return domain.PolicyRates{
-		IsEstimate: true,
-		Source:     "no source available (HTML + DB both failed)",
-		FetchedAt:  fetchedAt,
-	}, fmt.Errorf("sbv_policy_rates: HTML fetch/parse failed and DB fallback empty")
 }
 
 // sjcFXAdapter implements application.SJCFXProvider.
@@ -216,40 +199,45 @@ func (a *sjcFXAdapter) FetchInputs(ctx context.Context) (application.SJCFXInputs
 // Lives here (composition root — Fence-C compliant).
 // ---------------------------------------------------------------------------
 
-// omoAdapter implements application.OMOProvider using infrastructure.FetchSBVOMOFromHTML.
-// Fetches the SBV nghiep-vu-thi-truong-mo Liferay HTML (direct, no VPS proxy).
-// Fail-closed: ParseOK=false → use case calls domain.BuildOMOFailed (is_estimate=true).
-type omoAdapter struct {
-	logger *slog.Logger
+// omoRawAdapter implements application.OMORawProvider using
+// infrastructure.FetchSBVOMOFromHTML. Fetches the SBV nghiep-vu-thi-truong-mo
+// Liferay HTML (direct, no VPS proxy) and field-maps the result — zero
+// branching, pure delegation.
+// FACTORY-GUARD-CI-COMPROOT-LOGIC-IMPL: the former omoAdapter also decided
+// the ParseOK/error fail-closed handling + logging here; that decision now
+// lives in application.omoResolver (usecases_vmt_liquidity_resolvers.go).
+type omoRawAdapter struct{}
+
+// FetchOMORaw delegates to infrastructure.FetchSBVOMOFromHTML and converts
+// OMOParseResult -> application.OMOInputs (raw/undecided — ParseError unset,
+// the resolver decides that). Returns err unchanged on fetch failure.
+func (a *omoRawAdapter) FetchOMORaw(ctx context.Context) (application.OMOInputs, error) {
+	result, err := infrastructure.FetchSBVOMOFromHTML(ctx)
+	return application.OMOInputs{
+		TotalAddBnVND:    result.TotalAddBnVND,
+		TotalAbsorbBnVND: result.TotalAbsorbBnVND,
+		AuctionDate:      result.AuctionDate,
+		ParseOK:          result.ParseOK,
+		TenorRows:        convertOMOTenorRows(result.Tenors),
+		ParseWarnings:    result.ParseWarnings,
+	}, err
 }
 
-// FetchOMO implements application.OMOProvider.
-// Delegates to infrastructure.FetchSBVOMOFromHTML and converts OMOParseResult → application.OMOInputs.
-// Returns ParseOK=false on any fetch or parse error (fail-closed).
-func (a *omoAdapter) FetchOMO(ctx context.Context) (application.OMOInputs, error) {
-	result, err := infrastructure.FetchSBVOMOFromHTML(ctx)
-	if err != nil {
-		if a.logger != nil {
-			a.logger.Warn("sbv_omo: fetch/parse failed", slog.Any("error", err))
-		}
-		return application.OMOInputs{
-			ParseOK:    false,
-			ParseError: err.Error(),
-		}, err
-	}
-	if !result.ParseOK {
-		if a.logger != nil {
-			a.logger.Warn("sbv_omo: parse returned ParseOK=false (no add/absorb rows found)")
-		}
-		return application.OMOInputs{
-			ParseOK:    false,
-			ParseError: "OMO HTML parse: no add/absorb rows found",
-		}, nil
-	}
-	// P0-3-OMO-CURVE: convert infrastructure.OMOTenorRow → application.OMOTenorRowInput.
-	tenorRows := make([]application.OMOTenorRowInput, 0, len(result.Tenors))
-	for _, r := range result.Tenors {
-		tenorRows = append(tenorRows, application.OMOTenorRowInput{
+// convertOMOTenorRows converts infrastructure.OMOTenorRow rows to
+// application.OMOTenorRowInput rows (P0-3-OMO-CURVE field subset).
+// Free function — NOT a receiver method: pure structural DTO field-mapping,
+// not a composition-root business decision. Go's type system requires an
+// explicit per-element loop to convert a slice between two distinct named
+// struct types even when the target fields are a subset with identical
+// names/types (no implicit slice conversion between named element types) —
+// this mirrors the repo's existing free-helper carve-out (envStr/splitCSV/
+// parseWatchlist-class functions) that the composition-root-logic-gate
+// (scripts/audits/composition-root-logic-gate.go) scopes to receiver
+// methods only.
+func convertOMOTenorRows(rows []infrastructure.OMOTenorRow) []application.OMOTenorRowInput {
+	out := make([]application.OMOTenorRowInput, 0, len(rows))
+	for _, r := range rows {
+		out = append(out, application.OMOTenorRowInput{
 			OperationType:  r.OperationType,
 			TenorDays:      r.ParsedTenorDays,
 			VolumeBnVND:    r.VolumeBnVND,
@@ -257,14 +245,7 @@ func (a *omoAdapter) FetchOMO(ctx context.Context) (application.OMOInputs, error
 			MemberWinRatio: r.MemberWinRatio,
 		})
 	}
-	return application.OMOInputs{
-		TotalAddBnVND:    result.TotalAddBnVND,
-		TotalAbsorbBnVND: result.TotalAbsorbBnVND,
-		AuctionDate:      result.AuctionDate,
-		ParseOK:          result.ParseOK,
-		TenorRows:        tenorRows,
-		ParseWarnings:    result.ParseWarnings,
-	}, nil
+	return out
 }
 
 // ---------------------------------------------------------------------------

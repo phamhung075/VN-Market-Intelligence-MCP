@@ -318,6 +318,40 @@ jobs:
           working-directory: apps/news-fetch
           args: --config .golangci.yml
 
+  composition-root-logic-gate:
+    name: composition-root-logic-gate
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: apps/macro-indicators/go.mod
+
+      # Zero-tolerance CI guardrail (go/ast + go/parser, Go stdlib only — depguard is
+      # import-based and cannot express this): no cmd/server/**/*.go RECEIVER METHOD
+      # (composition-root adapter/shim type) may embed business-logic branching
+      # (if-count>=2 OR any for/range). func main() and free helper functions (envStr/
+      # getenv/splitCSV/parseWatchlist/readWatchlistFromDB) are structurally out of scope
+      # (no receiver). Escape hatch: `// composition-root-logic-allow: <reason>` on the
+      # line(s) immediately preceding the method. The tool is syntax-only (never
+      # type-checks/resolves imports), so one Go toolchain scans all 7 services'
+      # cmd/server/ dirs in a single job — unlike go-lint above, which needs each
+      # service's own golangci-lint/module context and so runs as 7 separate jobs.
+      # See docs/architecture-briefs/2026-07-24-factory-guard-ci-depguard-tier-boundaries.md §3.
+      - name: Run composition-root-logic-gate --check
+        run: |
+          go run scripts/audits/composition-root-logic-gate.go --check \
+            apps/technical-analysis/cmd/server \
+            apps/macro-indicators/cmd/server \
+            apps/stock-price/cmd/server \
+            apps/alert-engine/cmd/server \
+            apps/api-gateway/cmd/server \
+            apps/kinh-dich-service/cmd/server \
+            apps/news-fetch/cmd/server
+
   py-lint:
     name: py-lint
     runs-on: ubuntu-latest

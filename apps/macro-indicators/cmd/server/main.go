@@ -22,15 +22,17 @@
 // trade totals + HS breakdown: is_estimate=false (VMT-1a, primary NSO source).
 // bloc_split FDI share: is_estimate=true PERMANENT (VMT-1b, ARCH Decision A).
 //
-// VMT-5a (liquidity-state): LiquidityStateUseCase wired with policyRatesAdapter
-// (SBV HTML direct + sbv_rates DB fallback) and SJCGoldFXAdapter (market.db reads only).
+// VMT-5a (liquidity-state): LiquidityStateUseCase wired with application.PolicyRatesResolver
+// (SBV HTML direct + sbv_rates DB fallback, FACTORY-GUARD-CI-COMPROOT-LOGIC-IMPL) and
+// SJCGoldFXAdapter (market.db reads only).
 // Route POST /liquidity-state added. No new excelize dep (HTML + SQLite only).
 // policy_rates: SBV HTML (direct, no VPS proxy); fallback = sbv_rates DB.
 // sjc_gold_gap + fx_coupling: EXISTING market.db reads (DD-7, no new crawl).
 // irs: is_estimate=true PERMANENT (DD-6, HNX OTC IRS not machine-readable).
 //
 // VMT-5b (interbank+OMO): extends POST /liquidity-state — no new route.
-// omo: SBV nghiep-vu-thi-truong-mo Liferay HTML (direct, no VPS proxy); omoAdapter.
+// omo: SBV nghiep-vu-thi-truong-mo Liferay HTML (direct, no VPS proxy);
+// application.omoResolver wraps omoRawAdapter (FACTORY-GUARD-CI-COMPROOT-LOGIC-IMPL).
 // interbank_1w: PERMANENTLY blocked (architect Decision B — dttktt.sbv.gov.vn 100% packet loss).
 // is_estimate=true + rate_1w_pct=null PERMANENT. No fetch attempted. go.mod UNCHANGED.
 //
@@ -130,18 +132,23 @@ func main() {
 	tradeBalanceUseCase := application.NewTradeBalanceUseCase(nsoExcelFetcher, tradeParser)
 
 	// VMT-5a + VMT-5b: liquidity-state use case wiring.
-	// policyRatesAdapter: SBV HTML direct fetch (www.sbv.gov.vn, no VPS proxy) + sbv_rates DB fallback.
+	// PolicyRatesResolver: SBV HTML direct fetch (www.sbv.gov.vn, no VPS proxy) + sbv_rates DB
+	// fallback + is_estimate decision (pkg/application — FACTORY-GUARD-CI-COMPROOT-LOGIC-IMPL
+	// moved this decision out of the composition root; policyRatesHTMLAdapter/policyRatesDBAdapter
+	// below are now pure delegation, see adapters.go).
 	// sjcGoldFXAdapter: reads EXISTING market.db commodity_prices + sbv_rates (DD-7, no new crawl).
-	// omoAdapter: SBV nghiep-vu-thi-truong-mo Liferay HTML (direct, no VPS proxy, VMT-5b).
+	// omoResolver: SBV nghiep-vu-thi-truong-mo Liferay HTML (direct, no VPS proxy, VMT-5b) +
+	// ParseOK/error fail-closed decision (pkg/application, same COMPROOT-LOGIC-IMPL move);
+	// omoRawAdapter below is now pure delegation, see adapters.go.
 	// interbank_1w: PERMANENTLY blocked (architect Decision B) — no adapter needed (domain builds it).
 	// No new excelize dep (HTML + SQLite only). go.mod UNCHANGED.
 	//
 	// P0-3-OMO-CURVE: omoDailyRepo opens macro_indicators.db (MACRO_DB_PATH env, default /app/data/macro_indicators.db).
 	// Safe-degrade: if repo init fails, omoDailyRepo=nil → LiquidityStateUseCase skips persistence
 	// and returns OMOCurve rates-only (no 5d net injection or stress score).
-	liquidityPolicyAdapter := &policyRatesAdapter{logger: logger}
+	liquidityPolicyAdapter := application.NewPolicyRatesResolver(&policyRatesHTMLAdapter{}, &policyRatesDBAdapter{}, logger)
 	liquiditySJCFXAdapter := &sjcFXAdapter{inner: infrastructure.NewSJCGoldFXAdapter()}
-	liquidityOMOAdapter := &omoAdapter{logger: logger}
+	liquidityOMOAdapter := application.NewOMOResolver(&omoRawAdapter{}, logger)
 
 	macroDBPath := envStr("MACRO_DB_PATH", "/app/data/macro_indicators.db")
 	omoDailyRepo, repoErr := infrastructure.NewSQLiteOMODailyRepository(macroDBPath)
@@ -215,7 +222,9 @@ func envStr(key, fallback string) string {
 }
 
 // Composition-root adapter shim types (bopParserAdapter, bopURLBuilderAdapter,
-// iipParserAdapter, cpiParserAdapter, tradeBalanceParserAdapter, policyRatesAdapter,
-// sjcFXAdapter, omoAdapter, omoDailyRepoAdapter) live in the sibling file adapters.go —
-// same package (main), Fence-C preserved, no import-graph change
-// (FACTORY-MACRO-split-or-justify-over-cap, 2026-07-24).
+// iipParserAdapter, cpiParserAdapter, tradeBalanceParserAdapter, policyRatesHTMLAdapter,
+// policyRatesDBAdapter, sjcFXAdapter, omoRawAdapter, omoDailyRepoAdapter, plus the free
+// helper convertOMOTenorRows) live in the sibling file adapters.go — same package (main),
+// Fence-C preserved, no import-graph change (FACTORY-MACRO-split-or-justify-over-cap,
+// 2026-07-24; split further into pure-delegation pairs by
+// FACTORY-GUARD-CI-COMPROOT-LOGIC-IMPL, 2026-07-30).
