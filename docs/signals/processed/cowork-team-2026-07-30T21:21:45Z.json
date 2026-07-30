@@ -1,0 +1,55 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-07-30T21:21:45Z",
+    "matched_slots": [
+      "bctc-analyst-slot-3"
+    ],
+    "won_slots": [
+      "bctc-analyst-slot-3"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/bctc-analyst/flow/main.md"
+    ],
+    "silent": false,
+    "drift_min": 7,
+    "errors": [],
+    "pressure_mode": "adaptive",
+    "calendar_status": "unknown",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "chef_mutex_applied": false,
+    "due_reasons": {
+      "bctc-analyst-slot-3": "cron"
+    },
+    "cadence_minutes": {
+      "bctc-analyst-slot-3": null
+    },
+    "last_fired_timestamp": "2026-07-30T21:21:45Z",
+    "last_fired_slots": [
+      "bctc-analyst-slot-3"
+    ],
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "21:00",
+    "leader_lock": "acquired",
+    "dev_head": "unknown",
+    "devq": 5,
+    "signal_backlog": 16,
+    "note": "bctc-analyst-slot-3 spawned (routine mode, cycle_id 20260730-2100); no off-flow markers in return text so slot counted as WON per AC-P1-7-4. Agent self-detected a peer collision (a second bctc-analyst-slot-3 session c133 ran the same 21:00Z cycle concurrently) mid-cycle, resolved it itself (dedup notebook merge, no data loss, ESC-5 guard-serialized correctly, bug-channel telegram already sent by the agent) and self-healed the ambiguous published-marker guard-key spec in stage-log-notify.md Sec5d-1 that allowed the collision. No dispatcher-level action needed beyond this telemetry note."
+  },
+  "priority": "low",
+  "createdAt": "2026-07-30T21:21:45Z",
+  "_processed": {
+    "fingerprint": "a0d6f4b810948d64543d0133af6f71a5bd4c058a5f17fc94121edec6b4cbb5c7",
+    "processedAt": "2026-07-30T21:45:36Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

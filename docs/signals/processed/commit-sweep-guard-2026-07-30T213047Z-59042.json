@@ -1,0 +1,14 @@
+{
+  "from": "commit-sweep-guard",
+  "to": "po",
+  "type": "bug-escalation",
+  "priority": "high",
+  "createdAt": "2026-07-30T21:30:47Z",
+  "payload": "[sweep-guard] BARE commit about to absorb 11 staged file(s) not necessarily this actor's own: apps/mcp-server/src/__tests__/FIX-SIGNALQUALITYAUDIT-WRITE-GATE-UNREACHABLE-BY-EMITTER-CONTRACT.test.ts apps/mcp-server/src/domain/services/freshnessSlaChecker.ts apps/mcp-server/src/domain/services/signalValidator.ts apps/mcp-server/src/domain/signals/signalTypes.ts apps/mcp-server/src/infrastructure/db/signalQualityAuditStore.ts apps/mcp-server/src/interface/mcp/tools/news-analysis/agentSignalTools.ts docs/agent-memory/decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-dev-mcp-server.md docs/agent-memory/notebooks/dev-mcp-server.md docs/agents/tools/list/post_agent_signal.md docs/agents/tools/package/news-scout.md docs/data/orch/orch-state.json. actor=64c7c677-0f0f-4cee-a3ce-dba79d70b7ae mode=warn. Fix: git commit -m \"<msg>\" -- <own-files-only>.",
+  "_processed": {
+    "fingerprint": "7791bd2860cb5a246c78245c7919ce33d28181195861ed2118727ea79ec2969f",
+    "processedAt": "2026-07-30T21:45:36Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
