@@ -1,6 +1,15 @@
 # Dev Team — Sprint Boundary Notebook
 
-**Written:** 2026-07-30T20:51Z
+**Written:** 2026-07-30T21:07Z
+
+## cycle-20260730T2107Z-tick — new tick; dev-mcp-server still in-flight on prior pick, re-entrant lock correctly held (no duplicate spawn); drained 10 signals; spawned PO 3rd triage pass
+
+- Tick `2026-07-30T21:07Z`. Preflight RUN, GCC dirty (normal concurrent cowork churn — notebooks/briefs/synthesis files from other live sessions, not dev-team-owned), HEAD.lock absent, worktree prune clean, no stale worktree locks.
+- **Drain**: 10 file signals routed-to-po (bctc-analyst + 7 bctc_signal_* routine + cowork-team), 0 `signal_queue` NEW rows, 0 orphan-signals. 6 aged-out `processed/` files pruned. Committed+pushed `23aeea6ed`, post-commit invariant confirmed 0.
+- CI probe: run `30582754299` still `in_progress` — non-fatal skip.
+- **Step 0b resume: `.head` still `in_progress` on `FIX-SIGNALQUALITYAUDIT-WRITE-GATE-UNREACHABLE-BY-EMITTER-CONTRACT` (dev-mcp-server), age ~17min.** WF-1 BLOCKED-check: `task_status=IN_PROGRESS`, not blocked. WF-2 supervised-hold check: `should_hold=false`. Attempted S2 dispatcher-wrap `task_claim` on `task:FIX-SIGNALQUALITYAUDIT-...` → `claimed:false`, `current_holder.owner_client_session` == **this session** (re-entrant — the agent dispatched last tick, `a9359a992e37f5bed`, is still running per explicit no-duplicate-spawn system guard). Per the flow's peer-collision branch (identical action whether holder is self or peer): heartbeated the lock (new `expires_at`), did **NOT** re-spawn, fell through to Step 1 — this correctly avoids the dup-spawn class in [[feedback_pipeline_resume_stale_placeholder_duplicate_spawn_risk]].
+- **Step 1 PO Triage**: claimed `task:po-triage-20260730` clean (no peer collision). 1 new Telegram report (`sla-monitor` CRITICAL breach on `signal_quality_audit`, 79217min stale) — same table PO already minted+dispatched last tick; briefed PO explicitly that this is expected re-fire, not new work, pending dev-mcp-server's in-flight fix. Spawned `po` (background, `ab88525824fdbe68c`) with full context (10 signals, 1 report, task_board summary backlog=374/ready=54/in_progress=1/review=189, git log/branch). Awaiting return before releasing `triage_key`.
+- Released SF-1 + fire-election (`cron:dev-team:2026-07-30T21:07Z`) cleanly at tick close. **NEXT**: await both dev-mcp-server's (RAW-verify per prior tick's checklist) and PO's returns; release respective outer locks on each return.
 
 ## cycle-20260730T2051Z-tick — new tick; drained 3 signals; BOUNDED-1 (WIP=0) picked FIX-SIGNALQUALITYAUDIT-WRITE-GATE-UNREACHABLE-BY-EMITTER-CONTRACT (dead-table SLA, PO's largest report-queue cluster)
 
@@ -20,11 +29,3 @@
 - Developer had no gateway grant (Read/Edit/Write/Bash only) — its 4 commits were local-only. Pushed under `commit-mutex:main` (push-only, nothing to add/commit), `0/0` vs origin post-fetch. Released outer `task:` lock + mutex on its behalf, sent WORK telegram.
 - **NEXT**: idle — no outstanding agents this tick. Awaiting next cron fire or signal.
 
-## cycle-20260730T2007Z-tick — RAW-verified dev-pdf-extractor's P0 BCTC diagnostic via live-DB cross-check; drained 8 signals; BOUNDED-1 picked FIX-DEVTEAM-WIP-BUDGET-COUNTS-BLOCKED-INPROGRESS-ROWS
-
-- Tick `2026-07-30T20:07Z` fired mid-flight of a push/lock-release subagent from the prior tick. Preflight RUN, GCC clean, HEAD.lock absent, worktree prune clean.
-- **dev-pdf-extractor returned on FIX-BCTC-LAYOUT-PUSH-FAILURE-NETWORK-DEADLOCK, RAW-verified against the LIVE production DB, not self-report**: `bctc_layout_units` COUNT=1245/MAX(extracted_at)=`2026-07-30 20:05:13` (claimed 1193→1245, exact match — newest report_id group has exactly 52 rows, matching "52/52 pages"). `bctc_vps_queue` status breakdown: 128 `enrich_failed` maxing at `2026-07-28 21:35:02`, zero `pending`/`pek_triggered` (exact match to dormancy-cause claim). Finding: ops's "missing `/extract-layout-first` caller" was a genuine-but-wrong-endpoint diagnosis — the real live trigger is `/pek-extract`, firing correctly on schedule; dormancy was queue-depletion (128 rows already exhausted retries) following the already-fixed `FIX-PDFX-TESSERACT-CONCURRENCY` (`4bac2b85d`). No code change needed. Commit `5387305d9` (3-file, correctly scoped) was LOCAL-ONLY (dev-pdf-extractor has no gateway grant) — dispatched a subagent to push under commit-mutex; RAW-verified `0/0` vs origin post-push. Released outer `task:FIX-BCTC-LAYOUT-PUSH-FAILURE-NETWORK-DEADLOCK` lock on its behalf. Row REVIEW/`next_agent:po` — PO to decide close disposition + `SPIKE-BCTC-EXTRACTION-DORMANT-MASS-ENRICHFAIL-FLOOD` follow-through (128-row backlog will NOT auto-recover on its own).
-- **Drain**: 8 file signals routed-to-po (commit-sweep-guard×2, context-bloat, notebook-tiebreak×2, cowork-team×3), 0 `signal_queue` NEW rows, 0 orphan-signals. Committed+pushed `3b8c076e6` (drain+prune, own commit-mutex claim, pathspec-scoped to `docs/signals/processed/`).
-- CI probe: run still `in_progress` — non-fatal skip, no signal emitted.
-- **BOUNDED-1 (WIP=0) picked `FIX-DEVTEAM-WIP-BUDGET-COUNTS-BLOCKED-INPROGRESS-ROWS`** (P1, zone `cross-service/` — `wip_in_progress` counts BLOCKED rows as live concurrency, starved the idle-dispatch chain ~2.5h earlier this session per the row's own detail) → dispatched `developer` (background), outer `task:` lock held for duration (LOCK-LIFETIME, no release on the success path).
-- Released SF-1 + fire-election (`cron:dev-team:2026-07-30T20:07Z`) cleanly at tick close. **NEXT**: await developer's return; RAW-verify before status-flip.
