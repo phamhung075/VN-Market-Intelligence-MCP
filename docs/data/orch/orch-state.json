@@ -2030,17 +2030,6 @@
         "severity": "WARN",
         "status": "triaged",
         "payload_ref": null
-      },
-      {
-        "id": "dev-20260730T055200",
-        "ts": "2026-07-30T05:52:00Z",
-        "from": "dev-team",
-        "to": "po",
-        "type": "system-issue",
-        "summary": "stranded-state sweep: 18 unknown-owner dirty paths need classifier/owner (6th occurrence)",
-        "severity": "LOW",
-        "status": "READ",
-        "payload_ref": "docs/signals/processed/stranded-state-sweep-unknown-20260730T0552Z.json"
       }
     ],
     "last_triaged_at": "2026-07-29T06:25:00Z",
