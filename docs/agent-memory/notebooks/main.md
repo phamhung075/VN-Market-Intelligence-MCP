@@ -1,6 +1,16 @@
 # Dev Team — Sprint Boundary Notebook
 
-**Written:** 2026-07-30T11:19Z
+**Written:** 2026-07-30T11:30Z
+
+## cycle-20260730T1130Z-verify — RAW-verified .head-overwrite-guard fix clean (48/48 tests incl. 8 new head-guard ACs, all 3 scripts + SLS dual-branch confirmed); released lock
+
+- **Developer completed `FIX-DEVTEAM-CLAIM-SCRIPTS-UNCONDITIONAL-HEAD-OVERWRITE` — RAW-verified before trusting**: commits `3519a09e4` (fix), `3e1e89baa` (journal+notebook), `2169cf005` (board flip) all real, on HEAD.
+- **Diff confirmed the exact claimed mechanism on all 3 scripts**: `devteam-backlog-claim-bounded1.jq` and `devteam-backlog-claim-ready-lane-consumer.jq` each gained the identical `$head_free` guard mirroring DRS's own precedent byte-for-byte in shape. `devteam-backlog-claim-supervised-lane-sweep.jq` confirmed applying it to BOTH its PRIMARY and FALLBACK `.head`-write branches, `$head_free` computed ONCE before either branch (correct — `.head` is never mutated between computation and use).
+- **Test suite independently re-run, not trusted from the "48/48" claim**: `bash scripts/audits/devteam-dispatch-gate-satisfiability.sh` → **48 passed, 0 failed**, exact match, including all 8 new assertions (AC-BOUNDED1/SLS-PRIMARY/SLS-FALLBACK/RLC HEAD-GUARD, each with its negative-control + positive-half pair).
+- **Decision journal STEP developer-S41 confirmed present and accurate** — mechanism, the "compute once for SLS" rationale, and the honest structural-gap disclosure all match the RETURN block verbatim.
+- **Board disposition confirmed live**: row `REVIEW`/`next_agent:qa`/`branch:null`; `.head` idle-reset in the same write (`2169cf005`) — CANONICAL:SSOT-STATUSFLIP-LANEMOVE held.
+- **No discrepancies — clean verify.** Released `task:FIX-DEVTEAM-CLAIM-SCRIPTS-UNCONDITIONAL-HEAD-OVERWRITE` (correct `task:`-prefixed key used first try this time — `released:1`).
+- **NEXT**: `.head` is idle again — re-run preflight fresh, re-check idle-capacity chain (BOUNDED-1) for further dispatch this tick.
 
 ## cycle-20260730T1117Z-tick — fresh preflight after RAW-verify closeout; head-idle fallthrough reached BOUNDED-1, claimed+dispatched P1 FIX-DEVTEAM-CLAIM-SCRIPTS-UNCONDITIONAL-HEAD-OVERWRITE
 
@@ -24,12 +34,3 @@
 - **Out-of-scope flag spot-checked**: `test-notebook-auto-prune.sh` IS a genuinely distinct legacy duplicate (different header/content, same target script) — correctly left untouched, flagged for code-janitor only.
 - **No discrepancies — clean verify.** Released `task:FIX-NOTEBOOK-AUTOPRUNE-SAMEDAY-TIE-DROPS-NEWEST` — first attempt omitted the `task:` prefix and silently no-opped (`released:0`, not an error per the tool's own semantics but NOT a real release either); corrected the key, confirmed genuine release (`released:1`).
 - **NEXT**: `.head` is idle again — re-run preflight fresh to reacquire tick-scoped locks, then re-check idle-capacity chain (BOUNDED-1) for further dispatch this tick.
-
-## cycle-20260730T1037Z-tick — RAW-verified ready/review-lane picker fix clean (all 6 ACs); released lock; BOUNDED-1 re-fired same tick, claimed+dispatched 3rd-recurrence FIX-NOTEBOOK-AUTOPRUNE-SAMEDAY-TIE-DROPS-NEWEST
-
-- **Resumed tick**: preflight RUN, drain found 1 signal (context-bloat on a developer sprint-journal, routed-to-po — not dev-team's to act on), CI probe deduped clean, 0 orphans/0 NEW `signal_queue` rows. `.head` was `in_progress` on the prior tick's dispatched row, not BLOCKED/supervised-held — but harness confirmed the developer (`abec0124d74f32100`) still genuinely running, so skipped S2 re-dispatch (would have double-spawned) and released tick locks.
-- **Developer then completed — RAW-verified before trusting, not accepted from RETURN text**: commits `52baf3f31`/`830d87242`/`bf8eca581` real, on HEAD. Diff of `devteam-backlog-claim-supervised-lane-sweep.jq` confirmed the claimed FALLBACK path exactly: `promoted_by` genuinely never forged (only `claimed_by`/`dispatch_lane` set), reuses `devteam-eligibility.jq` predicates verbatim. Independently re-ran `devteam-dispatch-gate-satisfiability.sh` myself (not trusted from "40/40" claim): **40/40 pass**, including all 6 new FALLBACK assertions (no-forge, epic-wrapper negative, deps negative, PRIMARY-vs-FALLBACK ordering). `main.md` diff confirmed the AC-1 lane×sup×po×wrapper matrix, AC-3 `review[]` disposition, AC-4 epic-wrapper cross-ref all genuinely landed (not just claimed). `bounded1-supervised-lane-report.sh` diff confirmed the `ready[]`/`review[]` scan extension. Board: row `REVIEW`/`next_agent:qa`/`branch:null`; `.head` correctly idle-reset by developer's own `bf8eca581`. Confirmed on a REAL live row (not just synthetic fixtures): `FIX-DEVTEAM-IDLE-CHAIN-STEP1-TRIAGE-STARVATION` (supervised+plan_only+`promoted_by:null`) is now genuinely reachable by the new FALLBACK path.
-- **No discrepancies found** — clean verify. Released `task:FIX-DEVTEAM-READY-REVIEW-LANE-SUPERVISED-PLANONLY-NO-PICKER` on the developer's behalf (confirmed structural, not laziness: `developer.md` `tools:` line has no `mcp__gateway__call_tool`).
-- **Re-ran preflight** (fresh tick, same `10:37Z` minute) since `.head` was idle again post-verify: **BOUNDED-1 fired**, WIP=0. Promoted+claimed P1 `FIX-NOTEBOOK-AUTOPRUNE-SAMEDAY-TIE-DROPS-NEWEST` — a 3rd-recurrence root-cause fix (notebook-auto-prune.sh:261/277 same-day heading tie-break) that hit `developer.md` again in the very RAW-verified cycle's own `830d87242`. Dispatched developer (background, `a493397b8dd31e9d6`); sprint-task lock deliberately held open (LOCK-LIFETIME).
-- **Committed** `0b44a9cb9` (BOUNDED-1 promote+claim, pathspec-scoped). Released SF-1 + fire-election.
-- **NEXT**: await developer's return on the notebook-auto-prune fix; RAW-verify before trusting, per standing discipline.
