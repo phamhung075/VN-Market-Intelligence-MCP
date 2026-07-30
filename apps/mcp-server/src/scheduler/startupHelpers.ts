@@ -357,11 +357,53 @@ export async function runWeeklyAuditWithDb(
   await recordJobRun(db, 'dataAuditJob:weekly', fn)
 }
 
-/** bctcReparseJob — task 1019 */
+/** bctcReparseJob — task 1019
+ *
+ * FIX-BCTC-REPARSE-DOUBLE-WRAP-DEDUP-GUARD (2026-07-30): default fn previously called
+ * runBctcReparseJob() with NO options — options.db stayed undefined, so
+ * runBctcReparseJob()'s own trailing fire-and-forget recordJobRun(...) block
+ * (bctcReparseJob.ts:892-896, guarded by `if (!options.db)`) ALSO fired on every real
+ * run, alongside THIS wrapper's own recordJobRun(db, 'bctcReparseJob', fn) call — the
+ * exact "double-wrap" class already fixed for runEvidenceAccumulatorWithDb and
+ * runBaseRateComputationWithDb above (SPIKE-BCTC-REPARSE-CADENCE-GUARD-ROOTCAUSE-VERIFY
+ * AC-2). RAW-verified live (docker exec, real market.db, 2026-07-29): 100% of ~90
+ * sampled cron_job_runs rows across 11 days had rows_written=NULL (fn discarded
+ * runBctcReparseJob()'s real ReparseRunResult, returning void) and 2-7 rows/day (vs.
+ * the intended 1x/day). Worse: a guard-skipped invocation still reached recordJobRun
+ * via THIS wrapper — it had no shouldSkipRecoveryReplay guard of its own, so even
+ * though runBctcReparseJob()'s internal guard (bctcReparseJob.ts:718) early-returned a
+ * no-op ReparseRunResult, that resolves WITHOUT throwing, so recordJobRun marked a
+ * fresh 'success' row anyway — silently re-arming its own 21.6h dedup window on every
+ * restart-timed guard-skip (the best-supported explanation for the 2026-07-10 incident
+ * ops "fixed" by falsifying cron_job_runs timestamps instead of using nowMsFn).
+ *
+ * Fixed the same way as runBaseRateComputationWithDb:
+ *   1. T4 shouldSkipRecoveryReplay guard replicated into THIS wrapper, checked BEFORE
+ *      recordJobRun, so a guard-skip never reaches recordJobRun at all (no fresh row).
+ *   2. Default fn now passes { db } into runBctcReparseJob so it (a) operates on the
+ *      SAME db this wrapper was given — correct test injection, matching the core-fn
+ *      pattern used by baseRateComputation/evidenceAccumulator — and (b) its own
+ *      `if (!options.db)` trailing self-record block is skipped (options.db is now
+ *      truthy), eliminating the second recordJobRun call on real runs WITHOUT touching
+ *      bctcReparseJob.ts (mirrors the base-rate fix's file-touch footprint exactly).
+ *   3. The real ReparseRunResult is now captured and mapped to rowsWritten
+ *      (resolved + failed = total feedback rows actually processed this run) instead
+ *      of being silently discarded.
+ *
+ * @idempotency T4 — cron_job_runs recency guard; replay skipped if last success < 90% of daily cadence (21.6h window)
+ */
 export async function runBctcReparseWithDb(
   db: Database,
-  fn: () => Promise<void> = async () => { await runBctcReparseJob() },
+  fn: () => Promise<{ rowsWritten?: number } | void> = async () => {
+    const result = await runBctcReparseJob({ db })
+    return { rowsWritten: result.resolved + result.failed }
+  },
 ): Promise<void> {
+  const DAILY_CADENCE_MS = 86_400_000
+  if (shouldSkipRecoveryReplay(db, 'bctcReparseJob', DAILY_CADENCE_MS)) {
+    log('[bctc-reparse] already ran within cadence window — dedup skip (recoverMissedExecutions guard)')
+    return
+  }
   await recordJobRun(db, 'bctcReparseJob', fn)
 }
 

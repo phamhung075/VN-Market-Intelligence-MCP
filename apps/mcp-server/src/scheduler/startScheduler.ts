@@ -172,10 +172,26 @@ export function startScheduler() {
   // Fix task 1915-fix-part1: call runBctcReparseWithDb(db) instead of
   // runBctcReparseJob() directly — the direct call bypassed db injection and
   // produced a misleading fire-and-forget recordJobRun no-op.
+  // FIX-BCTC-REPARSE-DOUBLE-WRAP-DEDUP-GUARD (2026-07-30): this catch-up was
+  // UNCONDITIONAL — it fired runBctcReparseWithDb(db) 30s after EVERY container
+  // boot/restart with no staleness gate, despite its own introducing commit
+  // (75b729183, 2026-04-12) claiming to mirror runDailyAuditIfStale's pattern
+  // (dataAuditJob.ts's runDailyAuditIfStale DOES check last-run age first — this
+  // catch-up never implemented the equivalent check). Gated the same way as the
+  // 6 other hardened startup-catchups in this file (shouldRunCatchup): only fires
+  // when the 02:30 UTC (09:30 ICT) window has passed AND no cron_job_runs row
+  // exists for bctcReparseJob yet today — a restart no longer unconditionally
+  // re-fires the job on every single boot.
   setTimeout(async () => {
     try {
-      await runBctcReparseWithDb(db)
-      log('[bctc-reparse] startup catch-up: complete')
+      // bctcReparseJob: daily 02:30 UTC (09:30 ICT), every day (weekdayOnly=false)
+      if (shouldRunCatchup(db, 'bctcReparseJob', 2, 30, new Date(), false)) {
+        log('[bctc-reparse] startup catch-up: running')
+        await runBctcReparseWithDb(db)
+        log('[bctc-reparse] startup catch-up: complete')
+      } else {
+        log('[bctc-reparse] startup catch-up: skipped (already ran today or window not reached)')
+      }
     } catch (err) {
       log(`[bctc-reparse] startup catch-up failed: ${err instanceof Error ? err.message : String(err)}`)
     }
