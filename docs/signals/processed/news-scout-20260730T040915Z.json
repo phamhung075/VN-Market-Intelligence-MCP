@@ -1,0 +1,14 @@
+{
+  "from": "news-scout",
+  "to": "po",
+  "type": "bug-escalation",
+  "payload": "Stage 1 fetch_and_analyze failed: database disk image is malformed — both domestic (cafef/vnexpress/vneconomy) and international (reuters) news fetch blocked. get_system_status confirmed database corruption. Cycle proceeding with bootstrap market_context data (24h alerts + recent analysis) as fallback; no fresh news articles fetched.",
+  "priority": "high",
+  "createdAt": "2026-07-30T04:09:15Z",
+  "_processed": {
+    "fingerprint": "1d5bf1edd3507100c72c3f8425136fe6960273e8d35d261b8d063f84c2edba32",
+    "processedAt": "2026-07-30T04:17:29Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

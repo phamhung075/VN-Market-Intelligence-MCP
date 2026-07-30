@@ -1,0 +1,14 @@
+{
+  "from": "market-watcher",
+  "to": "po",
+  "type": "bug-escalation",
+  "payload": "[market-watcher] Step 0 BLOCKED: database corruption — get_watchlist and get_system_status both fail with 'database disk image is malformed'. Cannot proceed with price analysis. Infrastructure issue requires ops intervention. slot=market-watcher-offhours cycle=2026-07-30T04:09Z",
+  "priority": "high",
+  "createdAt": "2026-07-30T04:09:24Z",
+  "_processed": {
+    "fingerprint": "65485e5685f18337015d6d02df13a2f0c2bc2245dc77bb9c053eb9f62b579fd4",
+    "processedAt": "2026-07-30T04:17:29Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

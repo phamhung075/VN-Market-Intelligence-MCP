@@ -1,0 +1,14 @@
+{
+  "from": "alert-commander",
+  "to": "po",
+  "type": "bug-escalation",
+  "payload": "[alert-commander] SQLite \"database disk image is malformed\" live and worsening since ~04:10 UTC 2026-07-30 -- confirmed hitting get_alerts, get_agent_signals, get_kinhdich_reading(FRT/VRE/VHM), get_recent_fixes, get_system_status(DB status+data freshness), get_market_context (2 consecutive calls), get_market_snapshot, push-ohlcv-history (repeated in RECENT ERRORS log). get_cycle_bootstrap/get_macro_snapshot/get_macro_calendar/get_legal_risk_signals/get_crisis_early_warning/get_vn_liquidity_state/get_foreign_room still returning OK at time of report -- corruption is NOT total-outage but is spreading (get_market_context flipped from OK in bootstrap to erroring twice within ~2 minutes). Impact: alert-commander cannot confirm position-danger (stopLossHit) or watchlist-opportunity (KinhDich) conditions this cycle -- failed safe (no MARKET fire, no fabricated data). get_recent_fixes itself broken so no dedup check was possible before BUG telegram was sent (message_id 4449). Needs ops/developer DB integrity check + repair (likely VACUUM/rebuild of the SQLite file) urgently -- actively degrading.",
+  "priority": "high",
+  "createdAt": "2026-07-30T04:13:00Z",
+  "_processed": {
+    "fingerprint": "0a23a5eb836c9a77394445810e994aa68d9db2d1089aff40e5032906addfbee1",
+    "processedAt": "2026-07-30T04:17:29Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

@@ -3,7 +3,7 @@
   "to": "dev-team",
   "type": "cowork-fire",
   "payload": {
-    "fire_time": "20260723T040838Z",
+    "fire_time": "2026-07-30T04:09:24Z",
     "matched_slots": [
       "news-scout-offhours",
       "market-watcher-offhours",
@@ -25,11 +25,9 @@
     "drift_min": 5,
     "errors": [],
     "pressure_mode": "adaptive",
-    "calendar_status": "unknown",
+    "calendar_status": "OPEN",
     "suppressed_calendar": [],
-    "suppressed_cadence": [
-      "alert-commander-market"
-    ],
+    "suppressed_cadence": [],
     "downgraded": [],
     "chef_mutex_applied": false,
     "due_reasons": {
@@ -38,11 +36,11 @@
       "alert-commander-critical": "cadence"
     },
     "cadence_minutes": {
-      "news-scout-offhours": "240",
-      "market-watcher-offhours": "240",
-      "alert-commander-critical": "240"
+      "news-scout-offhours": 240,
+      "market-watcher-offhours": 240,
+      "alert-commander-critical": 240
     },
-    "last_fired_timestamp": "2026-07-23T04:07:49Z",
+    "last_fired_timestamp": "2026-07-30T04:09:16Z",
     "last_fired_slots": [
       "news-scout-offhours",
       "market-watcher-offhours",
@@ -55,14 +53,14 @@
     "leader_lock": "acquired",
     "dev_head": "unknown",
     "devq": 5,
-    "signal_backlog": 8,
-    "note": "First fan-out after 6 consecutive silent ticks. MAX_PARALLEL=4 (headroom 3173MB > 1500 floor, load1m 2.64 << 24). alert-commander-market suppressed_cadence at 14400s vs its */15 cron (dangling policy_id -> AC-P1-1-3 240min default); next eligible 06:00Z. chef-intraday running 120min (calendar_status unknown) vs 60min (open) - no calendar_status producer exists in the codebase."
+    "signal_backlog": 15,
+    "note": "3-slot batch fire (0-shift offhours gatherers + alert-commander-critical), all cadence-due at 240min since last_fired 2026-07-30T00:07:43Z. Fan-out degraded to MAX_PARALLEL=2 (headroom_floor gate forced-degraded — container_vm_headroom_mb field still not populated server-side, known tracked gap cowork-team-2026-07-29T1611Z-pressure-headroom-field-rename-not-deployed.json; LOAD_1MIN=1 well within threshold so no real inter-batch delay occurred). All 3 slots claimed cleanly (no HELD_BY_OTHER), no schedule-consistency mismatches, no missing flow files. Step 0a: 1 to=po NEW row (dev-20260730T032218, dev-team stranded-state 6th re-emit) left untouched per standing decision cow-20260730T002605 pending po scoping ruling."
   },
   "priority": "low",
-  "createdAt": "20260723T040838Z",
+  "createdAt": "2026-07-30T04:09:24Z",
   "_processed": {
-    "fingerprint": "05dd100e69587bddff075ae7358e630c60fa38c6d99e5eb295e794c279a4100c",
-    "processedAt": "2026-07-23T04:14:54Z",
+    "fingerprint": "1be2e8c15f9a9532f633ca3fa603c797148d204ba39f5a0e64988069a81e6c01",
+    "processedAt": "2026-07-30T04:17:29Z",
     "processedBy": "dev-team",
     "result": "routed-to-po"
   }

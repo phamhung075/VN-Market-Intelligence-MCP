@@ -1,0 +1,25 @@
+{
+  "from": "context-bloat-backstop-hook",
+  "to": "claude-manager-helper",
+  "type": "context_bloat_breach",
+  "priority": "high",
+  "createdAt": "2026-07-30T04:07:13Z",
+  "payload": {
+    "file": "docs/agent-memory/decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-dev-mcp-server.md",
+    "line_count": 247,
+    "cap": 600,
+    "byte_count": 63281,
+    "byte_cap": 36000,
+    "class": "sprint-decision-journal",
+    "reason": "byte-cap",
+    "overage": 0,
+    "byte_overage": 27281,
+    "action_required": "prune_or_split"
+  },
+  "_processed": {
+    "fingerprint": "19ee45bb727f65da4804d9a2e0434e013df7b7a3486f03e1a665fac4fbc6a116",
+    "processedAt": "2026-07-30T04:17:29Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
