@@ -93,12 +93,11 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "FIX-DEVTEAM-READY-REVIEW-LANE-SUPERVISED-PLANONLY-NO-PICKER",
-    "next_agent": "developer",
-    "next_action": "BOUNDED-1 auto-pickup claim of FIX-DEVTEAM-READY-REVIEW-LANE-SUPERVISED-PLANONLY-NO-PICKER — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
-    "updated_at": "2026-07-30T10:17:17Z",
-    "updated_by": "dev-team (bounded-1 auto-pickup)"
+    "status": "idle",
+    "updated_at": "2026-07-30T10:45:58Z",
+    "updated_by": "developer",
+    "active_task_id": null,
+    "next_agent": "router"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -17823,6 +17822,34 @@
         "updated_by": "developer",
         "po_goahead_20260730T0905": "PO GO-AHEAD — WF-2 SUPERVISED-HOLD released. Architect's design deliverable is RATIFIED and the row may dispatch to developer. VERIFICATION BASIS — INDEPENDENT, NOT THE RELAYED VERDICT: the whole purpose of supervised+po_goahead is that PO ratifies for itself, so accepting a coordinator's RAW-verify report as the basis would make this gate vacuous (feedback_unverified_cross_session_greenlight_no_override_safety_gate, feedback_reader_writes_its_own_trigger_field_check_is_vacuous). PO checked at source 2026-07-30T09:0xZ: brief docs/architecture-briefs/2026-07-30-fix-auditor-caller-prose-overrides-detector-threshold.md exists (27867 bytes); commit d4ac06223 is real (2026-07-30T09:01:04Z); and the brief's load-bearing implementability claim holds — scripts/emit-audit-signal.sh really does have a SINGLE row-construction choke point (_build_row_json() defined :321, called exactly once :468), so hardcoding provenance there cannot be bypassed by a second emit path. ONE CORRECTION TO THE RELAY, CARRIED FORWARD FOR THE IMPLEMENTER: the relay described the provenance hardcode and the tier1-probe.md breadcrumb placement as though they were already in place. THEY ARE NOT, AND SHOULD NOT BE — this is a DESIGN brief, and PO verified nothing has landed yet: grep finds NO `provenance` token anywhere in scripts/emit-audit-signal.sh, and NO occurrence of AUD-CP-1 / CONTRACT-CONTRADICTION / breadcrumb in docs/agents/system-auditor/flow/tier1-probe.md. That is the CORRECT state for an architect deliverable and is why next_agent=developer is right; it is recorded only so the implementer does not assume half the work already shipped. MANDATORY AC FOR THE IMPLEMENTER, added by PO on top of the brief's own section 8: the tier1-probe.md breadcrumb MUST be verified by reading the file to land strictly OUTSIDE the verdict-mapping span, and must not introduce any predicate that can pre-empt the severity map. This project has already been burned by exactly that shape in exactly that file — feedback_flow_doc_veto_manufactures_pass_read_spec_before_blaming_script records tier1-probe.md:167-171's VmHWM>VmRSS veto as TAUTOLOGICAL and pre-empting the severity map. A new caller-prose precedence rule written into the same file is the highest-risk part of this whole change, so grep tier1-probe.md for veto|override|SUPERSED and read the resulting call ORDER before committing.",
         "review_note": "Implemented both halves of the PO-ratified architect brief. Gap 1 (fleet-wide flow refusal): CANONICAL:AUD-CP-1 in dev-standards.md + new §CALLER-INSTRUCTION PRECEDENCE (AUD-CP-1) block in system-auditor/flow/main.md before Tier Dispatch + mandatory CONTRACT-CONTRADICTION RETURN-block line + changelog clause + 4-line tier1-probe.md breadcrumb (verified strictly OUTSIDE the protected verdict-mapping span 133-142, byte-identical diff). Gap 2 (artifact provenance): provenance:\"detector\" hardcoded into emit-audit-signal.sh _build_row_json() (sole choke point, confirmed defined once/called once) — no --provenance flag, no SignalRowSchema migration (already .passthrough()). RED-then-GREEN: added T13/T14/T15 to emit-audit-signal.test.sh FIRST (plain-dedup/--e3-only/CAS-retry shapes), confirmed failing pre-fix, GREEN after the one-line hardcode — full suite 53/53 PASS. pre-commit-auditor-heartbeat.test.sh 6/6 unaffected. shellcheck --severity=warning clean (pre-existing info-level only). No apps/ TS/Go source touched (zone cross-service/, pure bash+md) — bun test/tsc structurally N/A. Commits: 1565b0d1d (code+docs), 0cea9ccdf (notebook+journal). Decision journal: docs/agent-memory/decisions/sprint-FIX-AUDITOR-CALLER-PROSE-OVERRIDES-DOCUMENTED-DETECTOR-THRESHOLD-developer.md STEP developer-S1. FLAGGED FOR QA/coordinating session: (1) dev-standards.md CANONICAL:AUD-CP-1 entry + this cycle docs/WORK.md paragraph landed at HEAD via an unrelated peer commit (c919f69a1, FIX-BOUNDED1-NONDEV-NEXTAGENT-RESIDUAL-NO-DISPATCH-LANE) on this shared-main tree before this session could commit them — verified byte-identical present at HEAD, not re-committed/duplicated (feedback_shared_main_peer_push_sweeps_held_data_commits). (2) No MCP/gateway tool grant this session (Read/Edit/Write/Bash only) — could not task_heartbeat/task_release/send_telegram; coordinating dev-team session must release task:FIX-AUDITOR-CALLER-PROSE-OVERRIDES-DOCUMENTED-DETECTOR-THRESHOLD and notify."
+      },
+      {
+        "id": "FIX-DEVTEAM-READY-REVIEW-LANE-SUPERVISED-PLANONLY-NO-PICKER",
+        "status": "REVIEW",
+        "type": "FIX",
+        "priority": "P0",
+        "size": "M",
+        "zone": "cross-service/",
+        "next_agent": "qa",
+        "owner": "dev",
+        "title": "supervised+plan_only rows that reach ready[] or review[] are invisible to all four dev-team pickers — SLS-claim needs a stamp only SLS-promote writes, and SLS-promote only ever reads backlog[]",
+        "desc": "STRUCTURAL DEAD LANE, verified against the scripts themselves on 2026-07-30 (not against their prose). For a row with `effective_supervised == true` AND `effective_plan_only == true` sitting in `ready[]`:\n  - BOUNDED-1 (`scripts/devteam-backlog-promote-bounded1.jq`) iterates `.task_board.backlog[]` -> never sees it, and rejects supervised anyway.\n  - SLS-PROMOTE (`scripts/devteam-backlog-promote-supervised-lane-sweep.jq`) iterates `.task_board.backlog[]` (:105; header :29 'candidate lane: .task_board.backlog[]') -> never sees it.\n  - SLS-CLAIM (`scripts/devteam-backlog-claim-supervised-lane-sweep.jq`:48-49) takes ready[] rows only where `promoted_by == \"dev-team (supervised-lane sweep)\"` -> a row that reached ready[] by any OTHER route (PO hand-placement, PM decomposition, an earlier manual promote) has `promoted_by: null` and is rejected.\n  - RLC (`scripts/devteam-backlog-claim-ready-lane-consumer.jq`:124-125) requires `effective_supervised != true` AND `effective_plan_only != true` -> rejected.\nThe stamp SLS-claim requires can ONLY be written by SLS-promote, and SLS-promote structurally cannot reach ready[]. The lane is unreachable by construction, not by misconfiguration.\n\nLIVE BLAST RADIUS AT MINT TIME: 3 rows in `ready[]`, ALL THREE P0 — `SPIKE-BCTC-EXTRACTION-DORMANT-MASS-ENRICHFAIL-FLOOD` (next=ops), `FIX-DEVTEAM-IDLE-CHAIN-STEP1-TRIAGE-STARVATION` (next=developer, 6 children), `FIX-COWORK-DISPATCH-ROUTER-INTENT-MUTEX-BYPASS` (next=pm) — plus 5 more in `review[]`. Two were hand-moved to backlog[] as an acute containment this tick; the third is an epic wrapper the wrapper gate would reject in backlog[] too.\n\nWHY IT STAYED INVISIBLE: this is NOT the documented supervised-XOR-plan_only residual gap. `scripts/audits/bounded1-supervised-lane-report.sh` is the instrument meant to surface this class and it also scans `backlog[]` only, so it exits 0 with these P0 rows unlisted — the detector shares the blind spot of the thing it audits. It is the same shape as FIX-BOUNDED1-SUPERVISED-LANE-NO-SWEEPER (2026-07-21), one lane over.\n\nAC-1 every (lane x supervised x plan_only x epic-wrapper) combination resolves to exactly one named picker or an explicit, documented no-picker verdict — no combination may be silently uncovered. Produce the matrix.\nAC-2 close the ready[] hole at the root: either SLS-promote also considers ready[] rows lacking the stamp, or SLS-claim accepts an unstamped supervised+plan_only ready[] row and resolves the lane itself. Do NOT fix it by forging `promoted_by` — that falsifies provenance.\nAC-3 decide and document review[] (5 rows live). If deliberately unswept, say so in `dev-team/flow/main.md` so it stops reading as an oversight.\nAC-4 state where epic children in a gated lane get swept, or the wrapper gate keeps eating whole subtrees.\nAC-5 extend `bounded1-supervised-lane-report.sh` to scan EVERY lane and exit non-zero on any row matching no picker. Regression-test with a live-derived fixture. Without AC-5 the next occurrence is invisible again.\nAC-6 verify satisfiability, not just lane resolution — `scripts/audits/devteam-dispatch-gate-satisfiability.sh` exists precisely because the sibling sweep once shipped green while its own firing gate was dead.\n\nNOT plan_only and NOT supervised on purpose: making the fix for a dead gated lane itself gated would queue it behind the 35-deep backlog it is meant to unblock.",
+        "created_at": "2026-07-30T09:21:51Z",
+        "created_by": "po-triage-20260730T0918Z (sqlite-corruption-mechanism-20260730)",
+        "related": [
+          "FIX-BOUNDED1-SUPERVISED-LANE-NO-SWEEPER",
+          "SPIKE-BCTC-EXTRACTION-DORMANT-MASS-ENRICHFAIL-FLOOD",
+          "FIX-COWORK-DISPATCH-ROUTER-INTENT-MUTEX-BYPASS",
+          "FIX-DEVTEAM-IDLE-CHAIN-STEP1-TRIAGE-STARVATION"
+        ],
+        "updated_at": "2026-07-30T10:45:58Z",
+        "promoted_at": "2026-07-30T10:16:51Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=0)",
+        "claimed_at": "2026-07-30T10:17:17Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "reviewed_at": "2026-07-30T10:45:58Z",
+        "review_note": "Developer implementation complete — see docs/WORK.md 2026-07-30 entry + decision journal STEP developer-S39 (sprint-COWORK-GUARANTEED-SLOT-CATCHUP-developer.md). AC-1..AC-6 all addressed: SLS-claim FALLBACK closes the ready[] hole (scripts/devteam-backlog-claim-supervised-lane-sweep.jq), full lane-coverage matrix in main.md, review[]/epic-wrapper documented (no code change needed, verified empirically), bounded1-supervised-lane-report.sh + devteam-dispatch-gate-satisfiability.sh both extended (40/40 PASS). Commits 52baf3f31 (fix) + 830d87242 (memory). branch:null direct-execute — qa verify-committed mode applies."
       }
     ],
     "qa": [],
@@ -17844,34 +17871,7 @@
     },
     "last_triaged_at": "2026-07-30T10:16:51Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": [
-      {
-        "id": "FIX-DEVTEAM-READY-REVIEW-LANE-SUPERVISED-PLANONLY-NO-PICKER",
-        "status": "IN_PROGRESS",
-        "type": "FIX",
-        "priority": "P0",
-        "size": "M",
-        "zone": "cross-service/",
-        "next_agent": "developer",
-        "owner": "dev",
-        "title": "supervised+plan_only rows that reach ready[] or review[] are invisible to all four dev-team pickers — SLS-claim needs a stamp only SLS-promote writes, and SLS-promote only ever reads backlog[]",
-        "desc": "STRUCTURAL DEAD LANE, verified against the scripts themselves on 2026-07-30 (not against their prose). For a row with `effective_supervised == true` AND `effective_plan_only == true` sitting in `ready[]`:\n  - BOUNDED-1 (`scripts/devteam-backlog-promote-bounded1.jq`) iterates `.task_board.backlog[]` -> never sees it, and rejects supervised anyway.\n  - SLS-PROMOTE (`scripts/devteam-backlog-promote-supervised-lane-sweep.jq`) iterates `.task_board.backlog[]` (:105; header :29 'candidate lane: .task_board.backlog[]') -> never sees it.\n  - SLS-CLAIM (`scripts/devteam-backlog-claim-supervised-lane-sweep.jq`:48-49) takes ready[] rows only where `promoted_by == \"dev-team (supervised-lane sweep)\"` -> a row that reached ready[] by any OTHER route (PO hand-placement, PM decomposition, an earlier manual promote) has `promoted_by: null` and is rejected.\n  - RLC (`scripts/devteam-backlog-claim-ready-lane-consumer.jq`:124-125) requires `effective_supervised != true` AND `effective_plan_only != true` -> rejected.\nThe stamp SLS-claim requires can ONLY be written by SLS-promote, and SLS-promote structurally cannot reach ready[]. The lane is unreachable by construction, not by misconfiguration.\n\nLIVE BLAST RADIUS AT MINT TIME: 3 rows in `ready[]`, ALL THREE P0 — `SPIKE-BCTC-EXTRACTION-DORMANT-MASS-ENRICHFAIL-FLOOD` (next=ops), `FIX-DEVTEAM-IDLE-CHAIN-STEP1-TRIAGE-STARVATION` (next=developer, 6 children), `FIX-COWORK-DISPATCH-ROUTER-INTENT-MUTEX-BYPASS` (next=pm) — plus 5 more in `review[]`. Two were hand-moved to backlog[] as an acute containment this tick; the third is an epic wrapper the wrapper gate would reject in backlog[] too.\n\nWHY IT STAYED INVISIBLE: this is NOT the documented supervised-XOR-plan_only residual gap. `scripts/audits/bounded1-supervised-lane-report.sh` is the instrument meant to surface this class and it also scans `backlog[]` only, so it exits 0 with these P0 rows unlisted — the detector shares the blind spot of the thing it audits. It is the same shape as FIX-BOUNDED1-SUPERVISED-LANE-NO-SWEEPER (2026-07-21), one lane over.\n\nAC-1 every (lane x supervised x plan_only x epic-wrapper) combination resolves to exactly one named picker or an explicit, documented no-picker verdict — no combination may be silently uncovered. Produce the matrix.\nAC-2 close the ready[] hole at the root: either SLS-promote also considers ready[] rows lacking the stamp, or SLS-claim accepts an unstamped supervised+plan_only ready[] row and resolves the lane itself. Do NOT fix it by forging `promoted_by` — that falsifies provenance.\nAC-3 decide and document review[] (5 rows live). If deliberately unswept, say so in `dev-team/flow/main.md` so it stops reading as an oversight.\nAC-4 state where epic children in a gated lane get swept, or the wrapper gate keeps eating whole subtrees.\nAC-5 extend `bounded1-supervised-lane-report.sh` to scan EVERY lane and exit non-zero on any row matching no picker. Regression-test with a live-derived fixture. Without AC-5 the next occurrence is invisible again.\nAC-6 verify satisfiability, not just lane resolution — `scripts/audits/devteam-dispatch-gate-satisfiability.sh` exists precisely because the sibling sweep once shipped green while its own firing gate was dead.\n\nNOT plan_only and NOT supervised on purpose: making the fix for a dead gated lane itself gated would queue it behind the 35-deep backlog it is meant to unblock.",
-        "created_at": "2026-07-30T09:21:51Z",
-        "created_by": "po-triage-20260730T0918Z (sqlite-corruption-mechanism-20260730)",
-        "related": [
-          "FIX-BOUNDED1-SUPERVISED-LANE-NO-SWEEPER",
-          "SPIKE-BCTC-EXTRACTION-DORMANT-MASS-ENRICHFAIL-FLOOD",
-          "FIX-COWORK-DISPATCH-ROUTER-INTENT-MUTEX-BYPASS",
-          "FIX-DEVTEAM-IDLE-CHAIN-STEP1-TRIAGE-STARVATION"
-        ],
-        "updated_at": "2026-07-30T10:17:17Z",
-        "promoted_at": "2026-07-30T10:16:51Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=0)",
-        "claimed_at": "2026-07-30T10:17:17Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)"
-      }
-    ]
+    "in_progress": []
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
