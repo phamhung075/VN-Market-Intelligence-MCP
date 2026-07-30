@@ -1,7 +1,7 @@
 {
   "_sentinel": "backlog-detail-v1",
   "created_at": "2026-06-26T19:51:45Z",
-  "updated_at": "2026-07-29T04:41:57Z",
+  "updated_at": "2026-07-30T21:52:04Z",
   "count": 437,
   "items": [
     {
@@ -172,7 +172,17 @@
       "status": "BACKLOG",
       "title": "Add effective_date TEXT column to sbv_rates + populate via SBV VPS fetcher with the known decree date; lets carry/yield upgrade administered SBV input from tier:2 to a date-stamped tier:2 (provenance completeness, not correctness).",
       "type": "FIX",
-      "zone": "apps/macro-indicators"
+      "zone": "apps/mcp-server/",
+      "owner": "developer",
+      "owner_agent": "dev-mcp-server",
+      "root_cause": "CONFIRMED LIVE 2026-07-30 by dev-macro-indicators (see docs/agent-memory/decisions/sprint-DATA-SERVE-INTEGRITY-dev-macro-indicators.md STEP dev-macro-indicators-S1). sbv_rates CREATE/ALTER schema lives in apps/mcp-server/src/infrastructure/db/schema-macro.ts; the sole writer storeSbvSnapshot() lives in apps/mcp-server/src/infrastructure/fetchers/sbv.ts; 4h cron wiring is apps/mcp-server/src/scheduler/macro/sbvRatesJob.ts; the VPS push script that would source/stamp the decree date is vps-scripts/fetch-sbv.sh (repo-root, ops-owned, POSTs to apps/mcp-server /api/push-sbv-rates handled by pushSbvRatesHandler.ts). apps/macro-indicators/ (Go pilot) has ZERO write path — pkg/infrastructure/repositories_sbv_rate.go SBVRateSQLiteAdapter.GetRate is read-only SELECT (safe-degrade).",
+      "generic_mandate": "Add effective_date TEXT column to sbv_rates via a proper migration in apps/mcp-server (schema-macro.ts ALTER-with-try/catch pattern already used for is_estimate/discount_rate_pct etc — see lines 168-176), populate it in storeSbvSnapshot()/fetchSbvRates() (apps/mcp-server/src/infrastructure/fetchers/sbv.ts) with the known SBV decree effective date, and stamp it on every new write going forward (sbvRatesJob.ts 4h cron + pushSbvRatesHandler.ts VPS-push path). Provenance-completeness only — do NOT touch rate computation/values.",
+      "zone_corrected_by": "dev-macro-indicators",
+      "zone_corrected_at": "2026-07-30T21:52:04Z",
+      "note": "SECOND occurrence of this exact SBV-zone-mislabel class — see FIX-SBV-FETCHER-ZERO-VALUE-EMIT (zone-corrected 2026-07-28 by dev-macro-indicators, same root cause: SBV write path is 100% apps/mcp-server/ + vps-scripts/, macro-indicators only reads sbv_rates read-only). Both originated from the 2026-06-04 data-serve-integrity brief which labeled zone by CONSUMER (macro-indicators reads SBV for carry/yield) not by write-path OWNER. Flagging for PO: audit remaining SBV-titled backlog rows tagged zone:apps/macro-indicators/ for the same mislabel before a 3rd BOUNDED-1 misroute.",
+      "related": [
+        "FIX-SBV-FETCHER-ZERO-VALUE-EMIT"
+      ]
     },
     {
       "depends_on": null,

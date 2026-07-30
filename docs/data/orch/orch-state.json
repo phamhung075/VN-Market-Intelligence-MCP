@@ -96,9 +96,9 @@
     "status": "idle",
     "active_task_id": null,
     "next_agent": "router",
-    "next_action": "idle — FIX-SIGNALQUALITYAUDIT-WRITE-GATE-UNREACHABLE-BY-EMITTER-CONTRACT flipped IN_PROGRESS->REVIEW (branch:null direct-execute, CANONICAL:SSOT-STATUSFLIP-LANEMOVE)",
-    "updated_at": "2026-07-30T21:29:56Z",
-    "updated_by": "dev-mcp-server (task complete, self-closeout)"
+    "next_action": "idle — FU-SBV-EFFECTIVE-DATE-COLUMN declined by dev-macro-indicators (wrong zone; sbv_rates write path is apps/mcp-server/ + vps-scripts/fetch-sbv.sh, not apps/macro-indicators/), returned to backlog re-zoned apps/mcp-server/ owner_agent=dev-mcp-server",
+    "updated_at": "2026-07-30T21:52:04Z",
+    "updated_by": "dev-macro-indicators"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -5561,17 +5561,6 @@
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#FU-RUNTIME-SET-TRUTH-RECONCILE"
       },
       {
-        "id": "FU-SBV-EFFECTIVE-DATE-COLUMN",
-        "priority": "P3",
-        "size": "S",
-        "sprint": "DATA-SERVE-INTEGRITY",
-        "status": "BACKLOG",
-        "title": "Add effective_date TEXT column to sbv_rates + populate via SBV VPS fetcher with the known decree date; lets carry/yield upgrade administered SBV input from tier:2 to a date-stamped tier:2 (provenance completeness, not correctness).",
-        "type": "FIX",
-        "zone": "apps/macro-indicators",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FU-SBV-EFFECTIVE-DATE-COLUMN"
-      },
-      {
         "id": "FU-MACRO-SNAPSHOT-TIER-WORSTOF",
         "priority": "P3",
         "size": "XS",
@@ -10935,6 +10924,32 @@
         "status_note": "AC — READ THE AMPLIFICATION CAUTION FIRST, IT INVERTS THE OBVIOUS FIX.\n\n(0) DO NOT 'FIX' THE GUARD RELEASE. drain-esc-dispatch.md TERMINAL-EXIT (:116-117) and Step 5 (:140) both call task_release(guard_key) on EVERY exit path, including the GATE-B known-root path. Observation says that release is currently a NO-OP: bctc-analyst c133 found the guard still held at 21:09Z with expiry 21:10:43Z, i.e. it survived its full 86400s TTL from the 07-29T21:10:43Z claim, across ~8 intervening dev-team drain ticks. Candidate mechanism (UNPROVEN, do not assume): the release passes only {task_id}, no owner_agent, while the claim was made by bctc-analyst — the known released:0-orphan class in feedback_task_release_owner_agent_mismatch_orphans_lock. THE POINT: if you 'repair' that release, the guard frees on the very next drain and the loop goes from 1 re-emit/day to 4 re-emits/day. The broken release is currently the ONLY thing bounding this loop. Any fix must make suppression correct BEFORE, or in the same change as, making the release work.\n\n(1) STATE WHICH PLANE YOU ARE FIXING. Two coherent designs, pick one explicitly and say why: (a) CONSUMER-EXTENDS — on a GATE-B Tier 1 known-root hit, re-claim/extend guard_key with a long TTL instead of releasing it, so the producer stays suppressed for as long as the owning board row is open. Cheap, needs no producer change, and works with bctc-analyst's no-Bash constraint. (b) PRODUCER-ASKS — give the producer an MCP-tool-shaped known-root query it CAN call without Bash. More correct, more surface. A third option — widening the producer's TTL — is NOT acceptable: it re-tunes a constant instead of owning the condition, the same anti-pattern called out in FIX-SIGNALQUALITYAUDIT-WRITE-GATE-UNREACHABLE-BY-EMITTER-CONTRACT.\n\n(2) DO NOT SUPPRESS GENUINE CHANGE. Whatever suppresses must re-open when the underlying finding actually changes. Negative control, mandatory: with a known-root row open, an escalation carrying a DIFFERENT refined_at or a DIFFERENT low-confidence unit set must still emit. Suppressing on ticker+trigger_id alone would silently swallow a real regression on the same ticker.\n\n(3) FIX THE FALSIFIED BOARD CLAIM. REFLOW-FPT-Q1-2026's title says minting it stops the 24h re-escalation. Correct it as part of this row, or the next PO re-derives this from scratch for the 6th time.\n\n(4) BIDIRECTIONAL PROOF, on the live signal path, not a fixture. Show (i) zero new docs/signals/bctc-analyst-*.json esc-deep-dive-request for esc-deepdive:FPT:Q1-2026:ESC-5 across at least 2 consecutive bctc-analyst cycles while REFLOW-FPT-Q1-2026 stays open, AND (ii) emission still occurs once that row reaches a TERMINAL_SET status or the finding's inputs change. 'The signal stopped' alone is not proof — it is also what a dead emitter looks like.\n\n(5) Regression test pinning the chosen design, so this cannot revert to board-blind re-emission.",
         "detail": "SCOPE NOTE — this is NOT the data fix and NOT the severity fix; both already exist and neither covers this. REFLOW-FPT-Q1-2026 (BACKLOG, priority high) is the terminal DATA action (re-refine FPT so ESC-5 evaluates FALSE at source). FIX-DRAINESC-GATEA-ESC5-MED-UNREACHABLE (BACKLOG, priority high) is the consumer-side GATE-A dead-severity-table fix. This row is the third, distinct plane: nothing stops a KNOWN-ROOT escalation from being re-emitted by a board-blind producer. Fixing either neighbour leaves this loop running.\n\nWHY NOT JUST DO REFLOW-FPT-Q1-2026 AND CLOSE ALL OF THIS — deliberately deferred this tick, with cause. That row's own status_note warns the root blocker on units 8-14 is image_unavailable during OCR, so a plain re-refine may no-op into a 6th no-op escalation. The OCR/PDF plane is degraded RIGHT NOW: bctc-analyst c133 records the VPS BCTC push stalled since 2026-07-28 08:23 (60.7h+, SLA=48h breached), and docs/architecture-briefs/2026-07-28-pdfx-tesseract-concurrency-invariant.md is designed but NOT shipped (still an untracked working-tree file). Re-refining FPT before that plane is healthy would most likely no-op and burn the attempt. Suppression is the correct immediate action; REFLOW waits on the OCR plane.\n\nDISPATCHABILITY, checked live so this row does not strand (feedback_po_notebook_mint_never_reaches_orchstate_board): evaluated against scripts/lib/devteam-eligibility.jq — next_agent=ba is non-dev and on the ratified DRS allowlist, supervised/plan_only both absent, deps empty, not an epic wrapper, no unbacked sequencing prose. So is_bounded1_eligible=false / is_design_router_eligible=true — same profile as its two neighbours, which is the Design-Router Sweep lane (shipped 2026-07-30).",
         "updated_at": "2026-07-30T21:28:41Z"
+      },
+      {
+        "id": "FU-SBV-EFFECTIVE-DATE-COLUMN",
+        "priority": "P3",
+        "size": "S",
+        "sprint": "DATA-SERVE-INTEGRITY",
+        "status": "BACKLOG",
+        "title": "Add effective_date TEXT column to sbv_rates + populate via SBV VPS fetcher with the known decree date; lets carry/yield upgrade administered SBV input from tier:2 to a date-stamped tier:2 (provenance completeness, not correctness).",
+        "type": "FIX",
+        "zone": "apps/mcp-server/",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FU-SBV-EFFECTIVE-DATE-COLUMN",
+        "promoted_at": "2026-07-30T21:47:10Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=3)",
+        "updated_at": "2026-07-30T21:52:26Z",
+        "claimed_at": "2026-07-30T21:47:14Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "owner": "developer",
+        "owner_agent": "dev-mcp-server",
+        "next_agent": "developer",
+        "updated_by": "dev-macro-indicators",
+        "root_cause": "CONFIRMED LIVE 2026-07-30 by dev-macro-indicators. sbv_rates table CREATE/ALTER lives in apps/mcp-server/src/infrastructure/db/schema-macro.ts; the sole writer storeSbvSnapshot() (which would need the new effective_date INSERT/UPSERT column) lives in apps/mcp-server/src/infrastructure/fetchers/sbv.ts; the 4h cron wiring is apps/mcp-server/src/scheduler/macro/sbvRatesJob.ts; the VPS-side fetch script that would need to source/stamp the decree date is vps-scripts/fetch-sbv.sh (repo-root, ops-owned, POSTs to apps/mcp-server /api/push-sbv-rates). apps/macro-indicators/ (Go pilot, dev-macro-indicators zone) has ZERO write path into sbv_rates — pkg/infrastructure/repositories_sbv_rate.go SBVRateSQLiteAdapter.GetRate is a read-only SELECT (safe-degrade). Original mint (2026-06-04, data-serve-integrity brief) labeled zone apps/macro-indicators — likely because macro-indicators CONSUMES the SBV rate for carry/yield, not because it owns the write path.",
+        "zone_corrected_by": "dev-macro-indicators",
+        "zone_corrected_at": "2026-07-30T21:52:04Z",
+        "note": "SECOND occurrence of this exact SBV-zone-mislabel class — see FIX-SBV-FETCHER-ZERO-VALUE-EMIT (zone-corrected 2026-07-28 by dev-macro-indicators, same root cause: SBV write path is 100% apps/mcp-server/ + vps-scripts/, macro-indicators only reads). Flagging for PO: consider auditing remaining SBV-titled backlog rows tagged zone:apps/macro-indicators/ for the same mislabel before a 3rd BOUNDED-1 misroute.",
+        "decision_journal": "docs/agent-memory/decisions/sprint-DATA-SERVE-INTEGRITY-dev-macro-indicators.md STEP dev-macro-indicators-S1"
       }
     ],
     "closed_sprints": [
@@ -18130,7 +18145,7 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-30T20:50:24Z",
+    "last_triaged_at": "2026-07-30T21:47:10Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
     "in_progress": []
   },
