@@ -96,8 +96,8 @@
     "status": "idle",
     "active_task_id": null,
     "next_agent": "router",
-    "updated_at": "2026-07-30T03:32:16Z",
-    "updated_by": "developer"
+    "updated_at": "2026-07-30T04:10:09Z",
+    "updated_by": "dev-mcp-server"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -2039,7 +2039,7 @@
         "type": "system-issue",
         "summary": "stranded-state sweep: 17 unknown-owner paths (6th re-emit) — same known set, 3 in-flight SHAREDPKG paths resolved since landing",
         "severity": "MED",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": "docs/handoffs/STRANDED-STATE-SWEEP-20260729T2342Z.md"
       }
     ],
@@ -9734,19 +9734,6 @@
         "updated_at": "2026-07-25T07:40:47Z"
       },
       {
-        "id": "FIX-VNINDEX-CACHE-STARTUP-PURGE",
-        "title": "vn_index_cache PURGED on mcp-server startup + refresh is market-hours-only -> any off-hours restart strands cache=0 until next Mon open. RECURRING: prior FIX-VNINDEX-CACHE-EMPTY-REFRESH-PATH (DONE, never done_verified) framed it as a refresh-path bug and did NOT close the root.",
-        "type": "FIX",
-        "priority": "P2",
-        "status": "BACKLOG",
-        "zone": "apps/mcp-server/",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-VNINDEX-CACHE-STARTUP-PURGE",
-        "updated_at": "2026-07-25T09:51:59Z",
-        "next_agent": "dev-mcp-server",
-        "updated_by": "po/signal-triage-20260725T0948",
-        "po_stall_note_20260725": "HEAD-UNPIN 2026-07-25T09:48Z. This row was BOUNDED-1-claimed 2026-07-25T05:18:14Z and pinned .head at status=in_progress for 4h25m with ZERO progress: no commit references the task id, no working-tree change under apps/mcp-server/, no dev-mcp-server notebook entry, and task_list_held shows NO lock on task:FIX-VNINDEX-CACHE-STARTUP-PURGE (so Pipeline Resume was never blocked by a peer holder — it was free to re-spawn every tick and produced nothing). Prior BOUNDED-1 cadence was one claim+closeout every ~30min (7 claims 02:17Z-05:18Z), so this is a silent spawn/agent failure, not slow work. Because docs/agents/dev-team/flow/main.md L491 only auto-resets a pinned head at >=24h, ALL FOUR dispatch lanes (BOUNDED-1/SLS/RLC/QA-Drain, all gated on head-idle at L492) were dead until 2026-07-26T05:18Z. Row returned to backlog[] UNMODIFIED in scope/priority — the defect it describes is still real and unfixed. If a future BOUNDED-1 pick of this row stalls the head a SECOND time, do NOT simply re-unpin: that makes it a reproducible per-row dispatch failure and it must be escalated as such. Systemic fix tracked at FIX-DEVTEAM-HEAD-PIN-STALE-THRESHOLD-24H-VS-TICK-CADENCE."
-      },
-      {
         "id": "FIX-DEVTEAM-HEAD-PIN-STALE-THRESHOLD-24H-VS-TICK-CADENCE",
         "type": "FIX",
         "title": "dev-team head-pin auto-reset is 24h while the tick cadence is ~30min — ONE silently-failed spawn takes all four dispatch lanes offline for up to 24h",
@@ -11116,6 +11103,25 @@
         "brief_ref": "docs/architecture-briefs/2026-07-29-qadrain-head-slot-decouple.md §5, §7, §8 step 3",
         "parent_spike": "SPIKE-DEVTEAM-QADRAIN-HEAD-SLOT-DECOUPLE",
         "dedup_checked": "2026-07-29T21:2xZ — no open board row for qa-lane throughput or qa[] staleness (grepped QADRAIN|THROUGHPUT|QA-STALE)."
+      },
+      {
+        "id": "FIX-SQLITE-DOCKER-VIRT-CORRUPTION-RECUR-20260730",
+        "title": "market.db SQLite corruption RECURRED live 2026-07-30 (3rd+ occurrence of the known FIX-SQLITE-DOCKER-VIRT-CORRUPTION class) — daily_ohlcv/cron_job_runs/system_logs/pdf_extracted_text corrupted, silently degrading OHLCV push, prediction-market-job, taAlertScan/bbAlertScan every cycle",
+        "type": "FIX",
+        "priority": "P0",
+        "status": "BACKLOG",
+        "zone": "cross-service/",
+        "owner": "ops",
+        "next_agent": "ops",
+        "created_by": "dev-mcp-server",
+        "created_at": "2026-07-30T04:10:09Z",
+        "updated_at": "2026-07-30T04:10:09Z",
+        "root_cause": "Same class as docs/incidents/2026-07-13-sqlite-db-corruption-restart-loop.md and the 2026-04-25 event (docker-virt-corruption memory): macOS com.apple.Virtualization.VirtualMachine process holds an fd on market.db-shm during container stop; torn SHM write -> SQLITE_CORRUPT (errno 11) surfaces on next open/read of the affected pages. Discovered live 2026-07-30T03:58Z during a routine single-service mcp-server restart (unrelated task FIX-VNINDEX-CACHE-STARTUP-PURGE). data/live/market.db.corrupt-20260719-1125Z + .pre-salvage-20260719-202912Z + .salvage-attempt-failed-20260719T203907Z artifacts on disk suggest this may trace to an incompletely-recovered 2026-07-19 event rather than a brand-new one.",
+        "evidence": "PRAGMA quick_check (host sqlite3 CLI AND independently confirmed via the live container's own bun:sqlite runtime, readonly connection, not just host CLI — ruling out a host-CLI/WAL false-positive) shows real corruption in tables: daily_ohlcv, cron_job_runs, system_logs, pdf_extracted_text + their indexes (idx_syslog_level, idx_syslog_source, idx_pdf_filename, idx_pet_filename, idx_system_logs_ts, idx_system_logs_level, idx_system_logs_resolved, idx_pet_action_code, idx_cron_job_runs_job_started) — 15 distinct corrupted trees total. 282 \"database disk image is malformed\" errors logged in the first 6 live minutes post-restart, hitting push-ohlcv-history, prediction-market-job, taAlertScan (dozens of tickers), bbAlertScan every cycle. Container itself is STABLE (not crash-looping, healthy, RestartCount=0) unlike the acute 2026-07-13 crash-loop pattern — this is a silent, ongoing degradation, not an outage, which is why health checks alone would not surface it (feedback_passive_health_masks_dead_data). vn_index_cache (this session's own touched table) independently confirmed healthy/unaffected.",
+        "recommended_action": "Follow the established recovery playbook from docs/incidents/2026-07-13-sqlite-db-corruption-restart-loop.md: STOP further restarts, BACKUP the current corrupt market.db first (timestamped), locate/verify a CLEAN backup (PRAGMA integrity_check=ok) — data/live/market.db.backup (2026-07-19T22:31Z) is present but is 11 days stale AND sits next to a same-day salvage-attempt-failed artifact, so its cleanliness must be re-verified, not assumed — swap in the clean backup, restart, verify via SERVING value (real tool calls + data plausibility, not just the health badge). Also worth root-causing why the named-volume/bind-mount mitigations from 2026-04-25/07-13 have not fully closed this class (3rd+ occurrence now) — may need synchronous=FULL or DELETE journal mode per the original mitigation's own deferred candidate list.",
+        "recurrence_policy": "recurring-bug-escalation — 3rd+ occurrence of the same class (2026-04-25, 2026-07-13, 2026-07-30 [+ possible unresolved 2026-07-19])",
+        "source": "dev-mcp-server live restart during FIX-VNINDEX-CACHE-STARTUP-PURGE verification, 2026-07-30T03:58-04:05Z",
+        "note": "NOT fixed by dev-mcp-server — outside zone (cross-service/infra) and role (Infrastructure/Docker operations is explicitly ops's job per dev-mcp-server init.md). Reported here per standing recurring-bug-escalation policy; no MCP/gateway tool grant this session so could not send_telegram(bug) — coordinating dev-team/router session must escalate immediately, this is live production data corruption happening on every cron cycle right now."
       }
     ],
     "closed_sprints": [
@@ -17602,6 +17608,23 @@
         "claimed_by": "dev-team (bounded-1 auto-pickup)",
         "entered_review_at": "2026-07-30T03:32:16Z",
         "review_note": "New scripts/audits/rebuild-raw-verify-check.sh <base-sha> <head-sha> (zero-tolerance, forward-only diff-range attestation check, no baseline -- mechanizes PUSH-AUTONOMY-1 §5 post-push REAL-DATA verify at the immediately-checkable textual-attestation layer; at design time exactly 2 VERIFY-*-REALDATA rows had ever existed across 54 serving-code commits since §5 was pinned, concrete miss e3386bdfa shipped zero attestation). Trigger composes the two already-designed sibling primitives: a file under a DB-write/route-serving DDD layer (apps/*/src/infrastructure/**, apps/*/src/interface/**, apps/*/pkg/interface/http/**, apps/*/pkg/infrastructure/**) gains an ADDED line matching metric-mask-lint.sh own field regex (confidence|score|impact|magnitude|probability), reused verbatim. Requires ONE of a commit-message RAW-verify/REALDATA token (global), the same token in an added docs/agent-memory/decisions/**|reports/TASK_REPORT_*.md line (global), or an inline raw-verify-allow: <reason> annotation on the triggering line or the line immediately preceding it (per-trigger-point, mirrors metric-mask-allow:/size-justification: idiom). Deviation (verify-live): colocated test files inside these trigger layers (confirmed live via find -- apps/mcp-server/src/infrastructure/**/__tests__/*.test.ts, apps/*/pkg/infrastructure|interface/http/*_test.go) are excluded from the trigger corpus, same exclusion idiom metric-mask-lint.sh already applies to its own scan -- a bare test assertion would otherwise fire on nearly every infra/interface test edit. Wired PRIMARY/blocking into scripts/git-hooks/pre-push existing CODE_TOUCHING_REGEX-gated block (same fail-open-on-diff-error posture as the tsc check); SECONDARY/backstop rebuild-raw-verify-hook job in .github/workflows/ci.yml (fetch-depth: 0, the only job needing full history) against github.event.before..github.sha. CANONICAL pointer + PUSH-AUTONOMY-1 §5 cross-reference added to dev-standards.md. New scripts/audits/rebuild-raw-verify-check.test.sh: 9/9 PASS (all 4 named DoD cases -- trigger+no-attestation FAILs, commit-msg/inline-annotation/non-trigger-path all PASS -- plus bonus coverage: decisions-journal attestation, trigger-path-no-field-match, colocated-test exclusion, usage-error exit 2, zero-SHA fail-open); manually verified against 6 disposable scratch-git-repo scenarios before writing the permanent test. No apps/ TS/Go source touched (zone=cross-service/, pure bash+yaml+md) -- bun test/tsc structurally N/A. shellcheck clean on all 3 touched shell files. YAML validated. EXPLICITLY OUT OF SCOPE (per board-row note): no change to PUSH-AUTONOMY-1 §5 PO-mint-task requirement itself; no board-state-aware check of whether a VERIFY-*-REALDATA task was actually minted (deferred, documented enhancement). Structural note: no MCP/gateway tool grant in this session (Read/Edit/Write/Bash only) -- flipped this board row via scripts/orch-apply.sh myself (permitted, pure bash); could not release task:FACTORY-GUARD-CI-RAWVERIFY-IMPL or send Telegram -- coordinating dev-team session must pick that up. Decision journal: docs/agent-memory/decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-developer.md STEP developer-S34. This closes the 7th and last ci-regression-prevention guardrail -- epic FACTORY-MAINTAINABILITY-2026-06 cluster ci-regression-prevention now complete. QA next."
+      },
+      {
+        "id": "FIX-VNINDEX-CACHE-STARTUP-PURGE",
+        "title": "vn_index_cache PURGED on mcp-server startup + refresh is market-hours-only -> any off-hours restart strands cache=0 until next Mon open. RECURRING: prior FIX-VNINDEX-CACHE-EMPTY-REFRESH-PATH (DONE, never done_verified) framed it as a refresh-path bug and did NOT close the root.",
+        "type": "FIX",
+        "priority": "P2",
+        "status": "REVIEW",
+        "zone": "apps/mcp-server/",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-VNINDEX-CACHE-STARTUP-PURGE",
+        "dev_agent": "dev-mcp-server",
+        "next_agent": "qa",
+        "claimed_at": "2026-07-30T03:37Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "entered_review_at": "2026-07-30T04:10:09Z",
+        "updated_at": "2026-07-30T04:10:09Z",
+        "updated_by": "dev-mcp-server",
+        "review_note": "RAW-verified live BEFORE coding: board hypothesis (\"purged on startup + market-hours-only refresh\") was WRONG — zero purge code anywhere (exhaustive grep + full git history). Real root cause: live market.db still carries the Sprint-1922b orphan vn_index_cache table (id/snapshot_json/source/fetched_at/expires_at/created_at, abandoned 1842a design, retired-not-dropped, commit b50ef1777). FIX-VNINDEX-CACHE-EMPTY-REFRESH-PATH (ac8ad6c78, 2026-06-20) reused the same table name via CREATE TABLE IF NOT EXISTS, which silently no-ops against it — every upsertVnIndexCache() write has failed with \"table vn_index_cache has no column named code\" on every tick since 2026-06-20 (docker-logs-confirmed; sqlite_sequence proves the orphan's AUTOINCREMENT was never used, 0 rows ever). Fix: initMarketDataTables() now detects the legacy/orphan shape (no code column) and DROPs it before the CREATE — safe (0 rows ever, 0 current readers/writers, already deprecated by its own retirement commit). Runs at DB-init (every startup) — the writer/startup path, refresh cron untouched. New FIX-VNINDEX-CACHE-STARTUP-PURGE.test.ts (4/4 pass, reproduces the live orphan shape). LIVE verification: single-service rebuild+restart of the real mcp-server-1 container against the real named-volume market.db — pre-fix 0 rows/legacy schema; immediately post-restart (before any cron tick) schema already migrated; next tick (04:00:03Z) wrote the first successful row in this table's ENTIRE history (VNINDEX 1726.38), zero upsert-failed warnings since. Commit 998ad9b44. tsc clean, targeted+neighbor suites green (schema-slices 78/78, freshness-SLA x5 64/64, EMPTY-REFRESH-PATH 5/5), toolCount=184/cronJobCount=88 unchanged, local :memory: boot health 200 + dashboards 200. Deliberately did NOT perform a 2nd live restart for the literal row-survives-restart leg: it surfaced an ACTIVE occurrence of the already-known-recurring FIX-SQLITE-DOCKER-VIRT-CORRUPTION class (docs/incidents/2026-07-13-sqlite-db-corruption-restart-loop.md) hitting daily_ohlcv/cron_job_runs/system_logs/pdf_extracted_text — a 2nd deliberate restart risked compounding a live corruption incident for a leg already covered by code-level proof (no purge path exists once migrated; DROP only fires on the now-permanently-absent legacy shape). Filed the corruption finding separately as FIX-SQLITE-DOCKER-VIRT-CORRUPTION-RECUR-20260730 (P0, owner=ops) — needs immediate ops action, NOT part of this row's scope. Structural note: no MCP/gateway tool grant this session — flipped this board row via scripts/orch-apply.sh directly (permitted, pure bash); could not release task:FIX-VNINDEX-CACHE-STARTUP-PURGE or send_telegram — coordinating dev-team session must pick both up. Decision journal: sprint-COWORK-GUARANTEED-SLOT-CATCHUP-dev-mcp-server.md STEP dev-mcp-server-S25."
       }
     ],
     "qa": [],
@@ -17621,7 +17644,7 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-30T03:17:20Z",
+    "last_triaged_at": "2026-07-30T03:37Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
     "in_progress": []
   },
