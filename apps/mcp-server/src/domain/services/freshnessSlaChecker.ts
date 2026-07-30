@@ -210,6 +210,25 @@ export const DEFAULT_SLA_CONFIG: SignalSlaConfig[] = [
     // observed real-world quiet-period length while still catching genuine
     // multi-week dead spots (a >45d CRITICAL escalation, e.g. the confirmed
     // ~52.8d gap this fix was filed against, still fires under the new value).
+    //
+    // FIX-SIGNALQUALITYAUDIT-WRITE-GATE-UNREACHABLE-BY-EMITTER-CONTRACT
+    // (2026-07-30) — root-cause correction #2, WIRE decision. The "AND
+    // finding_data.confidence is a number" precondition above was itself the
+    // actual blocker for urgent_news, the ONE signal type that flows in
+    // production (live-DB-verified: price_confirmation has 0 rows ALL TIME;
+    // urgent_news's live emitter — news-scout, docs/agents/news-scout/flow/
+    // stage-signals.md — populates `regime_adjusted_score`, never
+    // `confidence`; 0/9 urgent_news rows since 2026-06-05 carried it). The
+    // write gate (agentSignalTools.ts) now derives a confidence proxy from
+    // `regime_adjusted_score` when `confidence` is absent (see
+    // domain/services/signalValidator.ts#deriveAuditConfidence), so the prior
+    // "6 rows total, real gaps of >2 weeks" history is NOT a representative
+    // steady-state cadence for this row going forward — it was measuring an
+    // almost-entirely-unreachable write path, not genuine event sparsity.
+    // Per explicit scope of that fix: do NOT re-tune this threshold again off
+    // the same stale 6-row sample. Once the wired path has accumulated a real
+    // multi-week history of urgent_news-driven writes, re-derive this
+    // threshold from THAT data.
     defaultThresholdMinutes: 30 * 24 * 60, // 43200 min = 30d
   },
   {

@@ -35,8 +35,10 @@ import { logSignalRejection } from "../../../../infrastructure/db/signalRejectio
 import { insertSignalQualityAudit } from "../../../../infrastructure/db/signalQualityAuditStore.js";
 import {
   prepareSignalAuditRecord,
+  deriveAuditConfidence,
   type SignalAuditContext,
 } from "../../../../domain/services/signalValidator.js";
+import { logger } from "../../../../infrastructure/logger.js";
 import { checkRegimeConfidenceThreshold } from "../../../../domain/services/regimeConfidenceThreshold.js";
 import {
   ChainCatalystFindingDataSchema,
@@ -452,18 +454,30 @@ export function registerAgentSignalTools(server: McpServer): void {
         }
 
         // Task 1920f — conditional audit write for price_confirmation / urgent_news only.
-        // Fire-and-forget: any error is swallowed; MCP response is unaffected.
+        // FIX-SIGNALQUALITYAUDIT-WRITE-GATE-UNREACHABLE-BY-EMITTER-CONTRACT (2026-07-30):
+        // the gate used to require finding_data.confidence to be a number — a field
+        // price_confirmation's schema requires but urgent_news's schema (and its live
+        // emitter, news-scout) does not; live-DB-verified 0/9 urgent_news rows since
+        // 2026-06-05 carried it, so the write path was structurally unreachable for
+        // the signal type that actually flows (signal_quality_audit: 55d / 0 rows).
+        // deriveAuditConfidence() falls back to urgent_news's ACTUAL live quality
+        // field (regime_adjusted_score) so the write path is reachable for real
+        // traffic, instead of requiring a field the emitter contract never promises.
+        // Still returns null (skip, no fabricated data) when neither field is present.
+        // Fire-and-forget: any error is swallowed (logged via logger.warn below —
+        // queryable in system_logs — so a dead write path is detectable without
+        // waiting on an SLA alarm); MCP response is unaffected.
         const AUDIT_SIGNAL_TYPES = new Set(["price_confirmation", "urgent_news"]);
-        if (
-          AUDIT_SIGNAL_TYPES.has(args.signal_type) &&
-          typeof findingDataRecord["confidence"] === "number"
-        ) {
+        const auditConfidence = AUDIT_SIGNAL_TYPES.has(args.signal_type)
+          ? deriveAuditConfidence(findingDataRecord)
+          : null;
+        if (auditConfidence !== null) {
           try {
-            const confidence = (findingDataRecord["confidence"] as number) * 100;
+            const confidence = auditConfidence * 100;
 
             // FR-3: Build ValidationResult shape from finding_data
             const validationResult = {
-              valid: (findingDataRecord["confidence"] as number) > 0,
+              valid: confidence > 0,
               confidence_score: confidence,
               confidence_score_final: confidence,
               confidence_penalty: 1.0,
@@ -496,7 +510,16 @@ export function registerAgentSignalTools(server: McpServer): void {
             const auditRecord = prepareSignalAuditRecord(validationResult, auditContext);
             insertSignalQualityAudit(db, auditRecord);
           } catch (auditErr) {
-            console.warn("[post_agent_signal] audit write failed (non-fatal):", auditErr);
+            // FIX-SIGNALQUALITYAUDIT-WRITE-GATE-UNREACHABLE-BY-EMITTER-CONTRACT AC-3:
+            // logger.warn (not console.warn) persists warn-level entries to the
+            // system_logs table (infrastructure/logger.ts persistLog) — a future
+            // dead-write-path is now detectable by a probe querying
+            // system_logs WHERE source='post_agent_signal', without waiting on
+            // an SLA alarm to notice a silent multi-week gap.
+            logger.warn("[post_agent_signal] audit write failed (non-fatal)", {
+              error: auditErr instanceof Error ? auditErr.message : String(auditErr),
+              signal_type: args.signal_type,
+            });
           }
         }
 

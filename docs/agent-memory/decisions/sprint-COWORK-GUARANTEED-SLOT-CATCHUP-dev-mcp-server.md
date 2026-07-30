@@ -301,3 +301,12 @@
 - Stop and report per AC's explicit escape hatch ("do not remove if you find a live consumer... stop and report") — chosen.
 **why-decision:** AC is unambiguous: a live consumer not accounted for in the original finding blocks removal. `get_vn_liquidity_state` IS a `get_*` tool surfacing `cny_vnd_rate` — the exact condition the original finding claimed was absent.
 **why-change:** Task NOT completed as scoped — zero code/schema changes made. No REVIEW flip (DJ-GATE-1 is for a completed fix; flipping here would misrepresent status). Escalating via RETURN for architect/PO re-scope (repoint-vs-formalize-as-cross-service-DTO-with-null decision needed).
+
+### STEP dev-mcp-server-S32 · dev-mcp-server · 2026-07-30T21:28:47Z
+**task-id:** FIX-SIGNALQUALITYAUDIT-WRITE-GATE-UNREACHABLE-BY-EMITTER-CONTRACT
+**what-done:** Live docker-exec probe (readonly bun:sqlite, prod market.db) before any change: price_confirmation=0 rows all-time (dead emitter); urgent_news 9/9 rows since 2026-06-05 carry zero numeric `confidence` — live emitter (news-scout stage-signals.md) populates `regime_adjusted_score` instead. WIRED: `deriveAuditConfidence()` (signalValidator.ts) falls back to `regime_adjusted_score/10` when `confidence` absent; added the field to signalTypes.ts + docs; both swallow catches now `logger.warn` (system_logs-queryable, not console.warn).
+**what-considered:**
+- Wire (align gate to real emitter field) vs retire (drop signal_quality_audit from DEFAULT_SLA_CONFIG) — wired: urgent_news DOES flow in prod (unlike price_confirmation), the blocking field is a naming mismatch not a dead capability, and the fix stays inside apps/mcp-server/ zone (no cross-agent flow-doc edit needed).
+- Fabricate confidence_score=0 on skip vs return null and skip the write — skip: an audited "0 confidence" row would misrepresent signals that genuinely carry no quality data as confirmed-worst, which is worse than a legitimate absence.
+**why-decision:** table-wide SLA reads MAX(created_at) across all rows regardless of source — unblocking the ONE signal type that actually posts (urgent_news) fixes the alarm without needing price_confirmation to ever fire.
+**why-change:** none from task spec — mechanism, decision, and both ACs (observability, bidirectional test) implemented as specified; 233-e2e.test.ts:393 reconciled as a non-asserting placeholder comment, not a real dependency.

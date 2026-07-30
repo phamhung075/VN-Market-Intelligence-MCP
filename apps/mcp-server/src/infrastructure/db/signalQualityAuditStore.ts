@@ -12,11 +12,15 @@
 
 import type { Database } from "bun:sqlite";
 
+import { logger } from "../logger.js";
+
 /**
  * Insert an audit record into signal_quality_audit using INSERT OR IGNORE.
  *
  * The UNIQUE(signal_id) constraint deduplicates retries silently.
- * Any DB error is swallowed with a console.warn — write failure is non-fatal.
+ * Any DB error is swallowed with a logger.warn (persists to system_logs —
+ * FIX-SIGNALQUALITYAUDIT-WRITE-GATE-UNREACHABLE-BY-EMITTER-CONTRACT AC-3) —
+ * write failure is non-fatal.
  *
  * The `record` shape matches the object returned by prepareSignalAuditRecord()
  * in the domain layer (signalValidator.ts):
@@ -75,6 +79,14 @@ export function insertSignalQualityAudit(
       String(record["created_at"] ?? new Date().toISOString()),
     );
   } catch (err) {
-    console.warn("[signalQualityAuditStore] insertSignalQualityAudit failed (non-fatal):", err);
+    // FIX-SIGNALQUALITYAUDIT-WRITE-GATE-UNREACHABLE-BY-EMITTER-CONTRACT AC-3:
+    // logger.warn (not console.warn) persists warn-level entries to the
+    // system_logs table (infrastructure/logger.ts persistLog) — queryable by
+    // a future probe (source='signalQualityAuditStore') instead of vanishing
+    // silently into stdout.
+    logger.warn("[signalQualityAuditStore] insertSignalQualityAudit failed (non-fatal)", {
+      error: err instanceof Error ? err.message : String(err),
+      signal_id: record["signal_id"],
+    });
   }
 }

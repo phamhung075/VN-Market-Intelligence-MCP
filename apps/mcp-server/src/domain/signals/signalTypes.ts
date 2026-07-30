@@ -203,6 +203,20 @@ export interface UrgentNewsFindingData {
    * Absent or unknown values are treated as NEUTRAL (0.55 threshold).
    */
   regime?: "TIGHTENING" | "NEUTRAL" | "EASING";
+
+  /**
+   * Optional: regime-adjusted importance/quality score, 0-10 scale, computed
+   * by news-scout's regime-based scoring (docs/agents/news-scout/flow/
+   * stage-signals.md's urgent_news template). This is the field the LIVE
+   * urgent_news emitter actually populates in place of `confidence` —
+   * live-DB-verified 2026-07-30 (9/9 urgent_news rows since 2026-06-05 carry
+   * this field, zero carry `confidence`). Used as a confidence proxy
+   * (regime_adjusted_score / 10) by the signal_quality_audit write gate when
+   * `confidence` itself is absent — see
+   * domain/services/signalValidator.ts#deriveAuditConfidence
+   * (FIX-SIGNALQUALITYAUDIT-WRITE-GATE-UNREACHABLE-BY-EMITTER-CONTRACT, 2026-07-30).
+   */
+  regime_adjusted_score?: number;
 }
 
 // Strict schema: headline, source, severity are REQUIRED (original 1293a contract).
@@ -216,6 +230,7 @@ export const UrgentNewsFindingDataSchema = z.object({
   time_to_price_move: z.number().min(0).optional(),
   confidence: z.number().min(0).max(1).optional(),
   regime: z.enum(["TIGHTENING", "NEUTRAL", "EASING"]).optional(),
+  regime_adjusted_score: z.number().min(0).max(10).optional(),
 });
 
 /**
@@ -237,6 +252,7 @@ export const UrgentNewsLooseSchema = z.object({
   time_to_price_move: z.number().min(0).optional(),
   confidence: z.number().min(0).max(1).optional(),
   regime: z.enum(["TIGHTENING", "NEUTRAL", "EASING"]).optional(),
+  regime_adjusted_score: z.number().min(0).max(10).optional(),
   summary: z.string().optional(),
 }).passthrough();
 

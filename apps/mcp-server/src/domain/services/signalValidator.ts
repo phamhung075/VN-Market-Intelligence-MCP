@@ -213,3 +213,47 @@ export function prepareSignalAuditRecord(
     created_at: result.validated_at,
   };
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Signal Quality Audit — Confidence Derivation
+// FIX-SIGNALQUALITYAUDIT-WRITE-GATE-UNREACHABLE-BY-EMITTER-CONTRACT (2026-07-30)
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Derives a [0,1] confidence proxy from a signal's finding_data for the
+ * signal_quality_audit write gate in post_agent_signal.
+ *
+ * Root cause this fixes: `price_confirmation`'s schema REQUIRES `confidence`
+ * (PriceConfirmationFindingDataSchema — domain/signals/signalTypes.ts) so it
+ * always resolves directly whenever that signal type is posted. `urgent_news`'s
+ * schema makes `confidence` OPTIONAL (UrgentNewsFindingDataSchema /
+ * UrgentNewsLooseSchema) and the live, documented emitter (news-scout —
+ * docs/agents/news-scout/flow/stage-signals.md's actual urgent_news template)
+ * populates `regime_adjusted_score` (0-10 scale) instead, never `confidence`.
+ * Live-DB-verified 2026-07-30: 9/9 urgent_news rows posted since 2026-06-05
+ * (the exact epoch the signal_quality_audit SLA alarm anchors on) carried
+ * zero numeric `confidence` — the prior strict `typeof confidence === 'number'`
+ * gate made the write path structurally unreachable for the signal type that
+ * actually flows in production (55d / 0 rows). Falling back to
+ * `regime_adjusted_score / 10` (clamped to [0,1]) uses the real quality
+ * signal news-scout already computes rather than fabricating a constant.
+ *
+ * Returns null (caller must skip the audit write — no fabricated data) when
+ * NEITHER field is present, i.e. the signal genuinely carries no quality
+ * signal to audit.
+ *
+ * @param findingData - the signal's finding_data record
+ * @returns confidence in [0,1], or null when no usable field is present
+ */
+export function deriveAuditConfidence(
+  findingData: Record<string, unknown>,
+): number | null {
+  if (typeof findingData["confidence"] === "number") {
+    return findingData["confidence"] as number;
+  }
+  if (typeof findingData["regime_adjusted_score"] === "number") {
+    const normalized = (findingData["regime_adjusted_score"] as number) / 10;
+    return Math.min(1, Math.max(0, normalized));
+  }
+  return null;
+}

@@ -113,3 +113,22 @@ Every `post_agent_signal` call passes through a deterministic quality gate befor
 - Chain depth helps the synthesizer understand signal hierarchy (catalyst → validation → confirmation → synthesis)
 - Task 1293: strict schema validation prevents incomplete data in the enrichment pipeline
 - causal_ref links signals to build multi-step reasoning chains
+
+## Signal Quality Audit Write Gate (`signal_quality_audit` table)
+
+For `signal_type IN ('price_confirmation', 'urgent_news')`, a successful write also
+attempts a fire-and-forget insert into `signal_quality_audit` (source: `infrastructure/
+db/signalQualityAuditStore.ts`, via `domain/services/signalValidator.ts#deriveAuditConfidence`).
+
+**Confidence derivation (FIX-SIGNALQUALITYAUDIT-WRITE-GATE-UNREACHABLE-BY-EMITTER-CONTRACT, 2026-07-30):**
+1. `finding_data.confidence` (0-1) if present and numeric — used directly.
+2. Else, for `urgent_news`, `finding_data.regime_adjusted_score` (0-10) if present and
+   numeric — normalized to `[0,1]` via `/10`. This is what the LIVE news-scout emitter
+   actually populates (see `docs/agents/news-scout/flow/stage-signals.md`'s `urgent_news`
+   template); `confidence` itself is optional and, live-DB-verified, effectively unused.
+3. Else — the audit write is skipped (no fabricated data). This is a legitimate,
+   silent no-op, NOT an error.
+
+Both failure paths (the INSERT itself, and any unexpected error in the audit-record
+prep) are logged via `logger.warn` (persists to `system_logs`, queryable by source
+`post_agent_signal` / `signalQualityAuditStore`) — never a bare `console.warn`.

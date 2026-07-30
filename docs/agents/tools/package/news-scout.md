@@ -70,6 +70,8 @@ Lifecycle recipe (2 calls, id round-trip) → `docs/agents/tools/list/log_agent_
 
 **Important:** All required fields in `finding_data` must be present. Missing any required field will cause validation rejection with detailed error message.
 
+**`urgent_news` confidence field — read at source, not the "Confidence" column above (FIX-SIGNALQUALITYAUDIT-WRITE-GATE-UNREACHABLE-BY-EMITTER-CONTRACT, 2026-07-30):** `confidence` is OPTIONAL for `urgent_news` (`UrgentNewsFindingDataSchema`/`UrgentNewsLooseSchema` — domain/signals/signalTypes.ts) and the LIVE template (`docs/agents/news-scout/flow/stage-signals.md`) does not populate it — it populates `regime_adjusted_score` (0-10 scale) instead. Live-DB-verified 2026-07-30: 9/9 `urgent_news` rows posted since 2026-06-05 carried `regime_adjusted_score`, zero carried `confidence`. `post_agent_signal`'s `signal_quality_audit` write gate accepts EITHER field (`confidence` directly, or `regime_adjusted_score / 10` as a proxy when `confidence` is absent) — see `domain/services/signalValidator.ts#deriveAuditConfidence`.
+
 ---
 
 ## Channel Permissions
