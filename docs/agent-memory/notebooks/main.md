@@ -1,6 +1,14 @@
 # Dev Team — Sprint Boundary Notebook
 
-**Written:** 2026-07-30T19:36Z
+**Written:** 2026-07-30T19:58Z
+
+## cycle-20260730T1958Z-verify — RAW-verified ops's SPIKE-BCTC-EXTRACTION-DORMANT-MASS-ENRICHFAIL-FLOOD recurring-dormancy dispatch; board flip genuine, live DB cross-checked, ops's uncommitted write self-committed on its behalf
+
+- **BGFAN-1 RAW-verification, all claims confirmed real**: live DB probe independently reproduced the core factual claim exactly — `bctc_layout_units MAX(extracted_at)=2026-07-28 11:06:59` (not just internally-consistent prose). Root cause (OCR-gateway semaphore/os_children mismatch + `LayoutFirstPushClient` errno-111 push failure) is a genuinely NEW defect class, distinct from the 07-17 missing-weights fix — confirmed via the row's own `close_predicate` history (Part A proven 07-17T08:20Z then regressed, Part B never confirmed).
+- **Board disposition genuine, isolated diff confirmed clean**: `git diff -- orch-state.json` since the last commit (`e25c9d0e6`) showed exactly the SPIKE `IN_PROGRESS→REVIEW` flip + `FIX-BCTC-LAYOUT-PUSH-FAILURE-NETWORK-DEADLOCK` mint (P0, ops+dev-pdf-extractor co-owned) — no corruption, no unrelated content, single coherent `orch-apply.sh` write as claimed. `SPIKE.md` addendum real and substantive (86L). Decision journal exists, DJ-GATE-1 timing intact (journal mtime ≈ board `updated_at`, same cycle) though without the `STEP-Sxx` numbering convention other agents use — content-substantive, not a format violation worth blocking on.
+- **Task lock release independently verified**: claim-then-release probe returned `claimed:true` on first attempt (lock was genuinely free) — ops's `mcp__gateway__call_tool` grant (unlike architect, [[feedback_agent_reported_limitation_may_be_structural_check_the_tool_grant]]) held up as claimed.
+- **GAP found and self-remediated**: ops performed the write but never committed it to git — unlike architect/dev-mcp-server's self-commit pattern earlier this session. Dev-team pathspec-committed the 3 specific files (`d8f03702c`), explicitly avoiding a large pre-existing pile of ~25 unrelated uncommitted cowork-agent files (notebooks, analysis-briefs, 3 days of fb-posts) sitting in the same working tree — known standing issue, not remediated here (out of scope this cycle; sweeping it risks clobbering other agents' in-flight work per [[feedback_git_add_then_bare_commit_is_toctou_race_use_pathspec_commit]]).
+- **NEXT:** `FIX-BCTC-LAYOUT-PUSH-FAILURE-NETWORK-DEADLOCK` sits BACKLOG (P0, ops+dev-pdf-extractor) awaiting dispatch; SPIKE stays REVIEW until that FIX proves terminal-row recovery (PDR/BSR/DGC/GEX), then PO flips DONE_VERIFIED.
 
 ## cycle-20260730T1936Z-verify — RAW-verified architect's SPIKE-SQLITE-DOCKER-VIRT-CORRUPTION-HARDENING return; SLS dispatch closed, dev-team self-released lock (architect has no MCP gateway grant)
 
@@ -19,13 +27,3 @@
 - **Board disposition genuine**: row `status:BLOCKED` (stayed in `in_progress` lane — verified `BLOCKED` IS a valid `in_progress` sub-status per `orchStateSchema.ts:432`'s `LANE_ALLOWED_STATUSES` map; agent's prose called it `LANE_STATUS_MAP`, a naming slip only, not a substantive error), `next_agent:architect`, `.head` reset to idle. DJ-GATE-1 confirmed (`STEP dev-mcp-server-S31`). Notebook within cap (43L/3 sections).
 - **Disposition**: sprint-task lock released, WORK telegram sent. No re-verification of tests needed — zero source/test delta to check.
 - **NEXT:** `FU-CNYVND-DEAD-FIELD-REMOVE` awaits an architect/PO call on repoint-vs-formalize-as-permanently-null; not dev-team's to auto-pick-up again (P3, blocked, needs architect first).
-
-## cycle-20260730T1637Z-tick — drained 4 signals; BOUNDED-1 dispatched dev-mcp-server on FU-CNYVND-DEAD-FIELD-REMOVE (P3 dead-data cleanup); flagged log_agent_work stale call signature via signal; 9th consecutive PO-respawn skip
-
-- **Preflight RUN, tick `2026-07-30T16:37Z`.** GCC-preflight clean. `.head` idle at tick start (developer's `FIX-WF2-...` return already disposed in the prior standalone verify) — idle-fallthrough, not pipeline-resume.
-- **Step 0a drain:** 4 signals (commit-sweep-guard, sprint-COWORK-developer context-bloat, cowork-team fire, own `exectier-phase35` signal from the prior tick) — all routed-to-po + 5 stale `processed/` files pruned, committed `efaa2822f`.
-- **CI probe:** deduped clean against already-tracked `ci-red-c01f39b0-*` fingerprint.
-- **BOUNDED-1:** WIP=0 → promoted+claimed `FU-CNYVND-DEAD-FIELD-REMOVE` (P3, `zone:apps/mcp-server` — Tier-1 explicit zone, no ambiguity). Committed `7d3bf269b`. Dispatched `dev-mcp-server` (background, DJ-GATE-1 + CANONICAL:SSOT-STATUSFLIP-LANEMOVE instructed). Lock claimed and held (LOCK-LIFETIME) — awaiting return.
-- **Found + flagged, not fixed inline**: `post-cycle.md` Step 4.5's documented `log_agent_work(tag=..., state=...)` call doesn't match the live MCP tool schema (`agent_name`/`status` required; `completed` needs the `id` from a prior `status="running"` call) — a literal read fails every call. Worked around live with the correct running→completed lifecycle; emitted a `repair_task_request` signal (same doc-drift class as last tick's `execute-tier.md` finding). Committed `5f226a7ef`.
-- **Step 4.1:** 172 unresolved (+2 since last check, same known categories, no new category type) — **9th consecutive PO-respawn skip**. Post-cycle otherwise clean/no-op (4.0 no reports to expire, 4.0.5 CAUTION unchanged pre-existing TODOs, 4.2 0-byte no-op, 4.3 0 actionable — 19 owned-elsewhere/19 young-skip, 4.4 0 rows swept — identity write, no commit).
-- **NEXT:** await `dev-mcp-server`'s return on `FU-CNYVND-DEAD-FIELD-REMOVE`; RAW-verify the zero-live-readers re-check + migration diff + test re-run before trusting the board flip.
