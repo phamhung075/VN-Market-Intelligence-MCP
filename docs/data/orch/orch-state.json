@@ -96,7 +96,7 @@
     "status": "idle",
     "active_task_id": null,
     "next_agent": "router",
-    "updated_at": "2026-07-30T02:56:22Z",
+    "updated_at": "2026-07-30T03:32:16Z",
     "updated_by": "developer"
   },
   "narrative": {
@@ -2040,6 +2040,17 @@
         "summary": "stranded-state sweep: 20 unknown-owner paths (5th re-emit) — 17 same known set unchanged, 3 NEW are FACTORY-GUARD-CI-SHAREDPKG-IMPL dev in-flight uncommitted (transient, self-resolving)",
         "severity": "MED",
         "status": "READ",
+        "payload_ref": "docs/handoffs/STRANDED-STATE-SWEEP-20260729T2342Z.md"
+      },
+      {
+        "id": "dev-20260730T032218",
+        "ts": "2026-07-30T03:22:18Z",
+        "from": "dev-team",
+        "to": "po",
+        "type": "system-issue",
+        "summary": "stranded-state sweep: 17 unknown-owner paths (6th re-emit) — same known set, 3 in-flight SHAREDPKG paths resolved since landing",
+        "severity": "MED",
+        "status": "NEW",
         "payload_ref": "docs/handoffs/STRANDED-STATE-SWEEP-20260729T2342Z.md"
       }
     ],
@@ -9630,27 +9641,6 @@
         "note": "ROOT: quality-checklist.json (_updated_by: system-auditor, generated_at frozen 2026-06-10) stamps check.status=PASS with a REUSED evidence string instead of running that check's own recheck_how and capturing per-check evidence. RAW-confirmed byte-identical duplicates in the LIVE file this tick: 'observability demonstrably working — WORK-channel msg IDs 2743-2766' x4 across unrelated checks; 'CI green commit fc28bf41...' x4; 'HTTP 200' x7. This copy-paste PASS masked BCT-OBS-02 (sscCheck nightly WORK post) and DS-OBS-01 (freshnessSlaMonitor WORK/BUG alert) — both marked PASS while the real breach->human-visible Telegram alert was broken. Recurring 2x -> recurring-bug policy (block+fix root cause). FIX: (1) generator MUST NOT reuse an evidence string across distinct check_ids — each PASS requires its OWN freshly-captured evidence from executing recheck_how; (2) a check that cannot capture distinct real evidence stays UNKNOWN/UNVERIFIED, never a copy-paste PASS (fail-loud, empty-read-is-not-evidence); (3) add a validator (generation-time and/or serve-time in qualityChecklistHandler) that REJECTS a checklist where any evidence string is byte-identical across >1 check_id. AC: (a) live quality-checklist.json regenerated with zero cross-check byte-identical evidence; (b) BCT-OBS-02 + DS-OBS-01 checks reflect TRUE post-fix status from real recheck_how execution; (c) validator fails loud on a seeded duplicate-evidence checklist. DISTINCT from SPIKE-EVIDENCE-SCORE-CACHE-FRAGMENT-DECOUPLE (get_evidence_summary evidence_scores cache) + FIX-CHEF-QUALITY-VERDICT-FALSE-FULL (chef dish self-cert). Do NOT reopen BCT-OBS-02-FIX / DS-OBS-01-FIX (consumers, correctly in review/qa).",
         "baseline_pass": true,
         "updated_at": "2026-07-23T18:08:33Z"
-      },
-      {
-        "id": "FACTORY-GUARD-CI-RAWVERIFY-IMPL",
-        "type": "SPRINT-S",
-        "title": "Implement rebuild-raw-verify-hook CI guardrail (pre-push blocking check + CI backstop job)",
-        "status": "BACKLOG",
-        "priority": "P2",
-        "size": "S",
-        "zone": "cross-service/",
-        "epic": "FACTORY-MAINTAINABILITY-2026-06",
-        "cluster": "ci-regression-prevention",
-        "source": "architect design brief 2026-07-24, parent FACTORY-GUARD-CI-rebuild-raw-verify-hook",
-        "detail_ref": "docs/architecture-briefs/2026-07-24-factory-guard-ci-rebuild-raw-verify-hook.md#3-guardrail-design--zero-tolerance-going-forward-no-baseline-different-reasoning-than-size-lints-grandfather",
-        "dev_agent": "developer",
-        "next_agent": "developer",
-        "parent_task": "FACTORY-GUARD-CI-rebuild-raw-verify-hook",
-        "brief_ref": "docs/architecture-briefs/2026-07-24-factory-guard-ci-rebuild-raw-verify-hook.md",
-        "note": "files: scripts/audits/rebuild-raw-verify-check.sh (new, <base-sha> <head-sha> positional args, zero-tolerance, no baseline file), scripts/git-hooks/pre-push (extend: call the new script inside the existing CODE_TOUCHING_REGEX block, same fail-open-on-diff-error posture as the tsc check), .github/workflows/ci.yml (add rebuild-raw-verify-hook backstop job), docs/policies/dev-standards.md (CANONICAL pointer + cross-reference under PUSH-AUTONOMY-1 §5), scripts/audits/rebuild-raw-verify-check.test.sh (new smoke test: trigger-path+field-match with no attestation FAILs — reproduce e3386bdfa shape as a synthetic fixture; same diff with a RAW-verify token in the range commit message PASSes; same diff with a raw-verify-allow: inline annotation PASSes; a diff touching only non-trigger paths, or trigger paths with no metric-field-name line, PASSes trivially). EXPLICITLY OUT OF SCOPE: no change to PUSH-AUTONOMY-1 §5 PO-mint-task requirement; no board-state-aware check of whether a VERIFY-*-REALDATA task was actually minted (deferred, documented enhancement). approach: trigger fires when a file under a DB-write/route-serving DDD layer (apps/*/src/infrastructure/**, apps/*/src/interface/**, apps/*/pkg/interface/http/**, apps/*/pkg/infrastructure/**) has an added line matching the metric-mask-lint sibling field regex (confidence|score|impact|magnitude|probability, case-insensitive). On trigger, require ONE of: git log <base>..<head> --format=%B contains raw-verify|raw verified|realdata (case-insensitive); OR the range touches docs/agent-memory/decisions/** or reports/TASK_REPORT_*.md with an added line matching the same token; OR an inline raw-verify-allow: <reason> annotation on the triggering line. Wire primary check into scripts/git-hooks/pre-push (this repo has no PR/branch-protection to gate on — direct push to main is the real merge gate, confirmed live: gh pr list shows exactly 1 PR ever, closed unmerged, and branch protection is 404); wire secondary backstop into ci.yml running the same script against github.event.before..github.sha for visibility when the local hook is bypassed. dod: hook blocks a synthetic un-attested trigger-path push locally; CI job mirrors the same verdict on github.event.before..github.sha; existing doc-only-push fast-skip in pre-push unaffected; smoke test covers all 4 cases (fail/pass-commit-msg/pass-annotation/pass-no-trigger); CI green.",
-        "created_at": "2026-07-24T20:30:58Z",
-        "created_by": "architect",
-        "updated_at": "2026-07-24T20:31:12Z"
       },
       {
         "id": "FIX-AUDITOR-D4-WHITELIST-DATA-QUALITY-ANOMALY-PREFIX",
@@ -17595,6 +17585,34 @@
         "claimed_by": "dev-team (bounded-1 auto-pickup)",
         "entered_review_at": "2026-07-30T02:56:22Z",
         "review_note": "New scripts/audits/shared-package-import-check.sh (--check/--update, baseline/ratchet like size-lint-justification.sh): check-1 (blocking) -- every packages/*/package.json declaring a @vn-market/-scoped name needs a real import/dependency reference in apps/**+packages/** (own dir excluded) OR a docs/data/shared-package-import-baseline.json entry, else FAIL; check-2 (advisory-only, never fails) -- exported-symbol-name collisions between packages/shared-*/index.ts and apps/**/*.ts, printed as ADVISORY lines. Seeded the baseline via --update -- 3 current orphans (shared-types/shared-config/shared-db), live-verified zero real hits repo-wide. Deliberately scoped the importer search to apps/**+packages/** only, NOT docs/** -- this repo's own architecture briefs discuss these package names by name in prose, and scanning docs/ would let that discussion text itself be misread as a real importer, permanently masking the debt. Check-2 surfaced MORE collisions than the brief's cited e.g. Alert/Signal/McpConfig (also loadMcpConfig/ExtractPDFRequest/ComputeTARequest/etc) -- kept the general scan since it's advisory-only. Verify-live catch: first draft's per-file grep subprocess loop hung >2min on this repo's file count (~7K+~34K forks) -- root-cause fixed by batching every candidate file array into ONE grep -l call per package/symbol (O(1) forks), re-measured 7s standalone / 14s full smoke suite. Wired shared-package-import-check job in .github/workflows/ci.yml + CANONICAL pointer in dev-standards.md. New scripts/audits/shared-package-import-check.test.sh: 4/4 PASS (baseline-listed zero-importer package passes; synthetic new zero-importer package NOT in baseline fails; synthetic package with a real importer passes even though ALSO still baseline-listed; Alert/Signal/McpConfig advisory lines emit on the live repo without affecting the green exit code). No apps/ source touched (zone=cross-service/, pure bash+yaml+md+json) -- bun test/tsc structurally N/A. shellcheck clean. Zero edits to packages/shared-*/ contents, zero new consumer wiring, zero package deletion, zero field reconciliation -- all explicitly out of scope, reserved for FACTORY-SHARED-wire-or-prune-shared-packages (still BACKLOG). Structural note: no MCP/gateway tool grant in this session (Read/Edit/Write/Bash only) -- flipped this board row via scripts/orch-apply.sh myself (permitted, pure bash); could not release task:FACTORY-GUARD-CI-SHAREDPKG-IMPL or send Telegram -- coordinating dev-team session must pick that up. Decision journal: docs/agent-memory/decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-developer.md STEP developer-S33. QA next."
+      },
+      {
+        "id": "FACTORY-GUARD-CI-RAWVERIFY-IMPL",
+        "type": "SPRINT-S",
+        "title": "Implement rebuild-raw-verify-hook CI guardrail (pre-push blocking check + CI backstop job)",
+        "status": "REVIEW",
+        "priority": "P2",
+        "size": "S",
+        "zone": "cross-service/",
+        "epic": "FACTORY-MAINTAINABILITY-2026-06",
+        "cluster": "ci-regression-prevention",
+        "source": "architect design brief 2026-07-24, parent FACTORY-GUARD-CI-rebuild-raw-verify-hook",
+        "detail_ref": "docs/architecture-briefs/2026-07-24-factory-guard-ci-rebuild-raw-verify-hook.md#3-guardrail-design--zero-tolerance-going-forward-no-baseline-different-reasoning-than-size-lints-grandfather",
+        "dev_agent": "developer",
+        "next_agent": "qa",
+        "parent_task": "FACTORY-GUARD-CI-rebuild-raw-verify-hook",
+        "brief_ref": "docs/architecture-briefs/2026-07-24-factory-guard-ci-rebuild-raw-verify-hook.md",
+        "note": "files: scripts/audits/rebuild-raw-verify-check.sh (new, <base-sha> <head-sha> positional args, zero-tolerance, no baseline file), scripts/git-hooks/pre-push (extend: call the new script inside the existing CODE_TOUCHING_REGEX block, same fail-open-on-diff-error posture as the tsc check), .github/workflows/ci.yml (add rebuild-raw-verify-hook backstop job), docs/policies/dev-standards.md (CANONICAL pointer + cross-reference under PUSH-AUTONOMY-1 §5), scripts/audits/rebuild-raw-verify-check.test.sh (new smoke test: trigger-path+field-match with no attestation FAILs — reproduce e3386bdfa shape as a synthetic fixture; same diff with a RAW-verify token in the range commit message PASSes; same diff with a raw-verify-allow: inline annotation PASSes; a diff touching only non-trigger paths, or trigger paths with no metric-field-name line, PASSes trivially). EXPLICITLY OUT OF SCOPE: no change to PUSH-AUTONOMY-1 §5 PO-mint-task requirement; no board-state-aware check of whether a VERIFY-*-REALDATA task was actually minted (deferred, documented enhancement). approach: trigger fires when a file under a DB-write/route-serving DDD layer (apps/*/src/infrastructure/**, apps/*/src/interface/**, apps/*/pkg/interface/http/**, apps/*/pkg/infrastructure/**) has an added line matching the metric-mask-lint sibling field regex (confidence|score|impact|magnitude|probability, case-insensitive). On trigger, require ONE of: git log <base>..<head> --format=%B contains raw-verify|raw verified|realdata (case-insensitive); OR the range touches docs/agent-memory/decisions/** or reports/TASK_REPORT_*.md with an added line matching the same token; OR an inline raw-verify-allow: <reason> annotation on the triggering line. Wire primary check into scripts/git-hooks/pre-push (this repo has no PR/branch-protection to gate on — direct push to main is the real merge gate, confirmed live: gh pr list shows exactly 1 PR ever, closed unmerged, and branch protection is 404); wire secondary backstop into ci.yml running the same script against github.event.before..github.sha for visibility when the local hook is bypassed. dod: hook blocks a synthetic un-attested trigger-path push locally; CI job mirrors the same verdict on github.event.before..github.sha; existing doc-only-push fast-skip in pre-push unaffected; smoke test covers all 4 cases (fail/pass-commit-msg/pass-annotation/pass-no-trigger); CI green.",
+        "created_at": "2026-07-24T20:30:58Z",
+        "created_by": "architect",
+        "updated_at": "2026-07-30T03:32:17Z",
+        "promoted_at": "2026-07-30T03:17:20Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
+        "claimed_at": "2026-07-30T03:17:29Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "entered_review_at": "2026-07-30T03:32:16Z",
+        "review_note": "New scripts/audits/rebuild-raw-verify-check.sh <base-sha> <head-sha> (zero-tolerance, forward-only diff-range attestation check, no baseline -- mechanizes PUSH-AUTONOMY-1 §5 post-push REAL-DATA verify at the immediately-checkable textual-attestation layer; at design time exactly 2 VERIFY-*-REALDATA rows had ever existed across 54 serving-code commits since §5 was pinned, concrete miss e3386bdfa shipped zero attestation). Trigger composes the two already-designed sibling primitives: a file under a DB-write/route-serving DDD layer (apps/*/src/infrastructure/**, apps/*/src/interface/**, apps/*/pkg/interface/http/**, apps/*/pkg/infrastructure/**) gains an ADDED line matching metric-mask-lint.sh own field regex (confidence|score|impact|magnitude|probability), reused verbatim. Requires ONE of a commit-message RAW-verify/REALDATA token (global), the same token in an added docs/agent-memory/decisions/**|reports/TASK_REPORT_*.md line (global), or an inline raw-verify-allow: <reason> annotation on the triggering line or the line immediately preceding it (per-trigger-point, mirrors metric-mask-allow:/size-justification: idiom). Deviation (verify-live): colocated test files inside these trigger layers (confirmed live via find -- apps/mcp-server/src/infrastructure/**/__tests__/*.test.ts, apps/*/pkg/infrastructure|interface/http/*_test.go) are excluded from the trigger corpus, same exclusion idiom metric-mask-lint.sh already applies to its own scan -- a bare test assertion would otherwise fire on nearly every infra/interface test edit. Wired PRIMARY/blocking into scripts/git-hooks/pre-push existing CODE_TOUCHING_REGEX-gated block (same fail-open-on-diff-error posture as the tsc check); SECONDARY/backstop rebuild-raw-verify-hook job in .github/workflows/ci.yml (fetch-depth: 0, the only job needing full history) against github.event.before..github.sha. CANONICAL pointer + PUSH-AUTONOMY-1 §5 cross-reference added to dev-standards.md. New scripts/audits/rebuild-raw-verify-check.test.sh: 9/9 PASS (all 4 named DoD cases -- trigger+no-attestation FAILs, commit-msg/inline-annotation/non-trigger-path all PASS -- plus bonus coverage: decisions-journal attestation, trigger-path-no-field-match, colocated-test exclusion, usage-error exit 2, zero-SHA fail-open); manually verified against 6 disposable scratch-git-repo scenarios before writing the permanent test. No apps/ TS/Go source touched (zone=cross-service/, pure bash+yaml+md) -- bun test/tsc structurally N/A. shellcheck clean on all 3 touched shell files. YAML validated. EXPLICITLY OUT OF SCOPE (per board-row note): no change to PUSH-AUTONOMY-1 §5 PO-mint-task requirement itself; no board-state-aware check of whether a VERIFY-*-REALDATA task was actually minted (deferred, documented enhancement). Structural note: no MCP/gateway tool grant in this session (Read/Edit/Write/Bash only) -- flipped this board row via scripts/orch-apply.sh myself (permitted, pure bash); could not release task:FACTORY-GUARD-CI-RAWVERIFY-IMPL or send Telegram -- coordinating dev-team session must pick that up. Decision journal: docs/agent-memory/decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-developer.md STEP developer-S34. This closes the 7th and last ci-regression-prevention guardrail -- epic FACTORY-MAINTAINABILITY-2026-06 cluster ci-regression-prevention now complete. QA next."
       }
     ],
     "qa": [],
@@ -17614,7 +17632,7 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-30T02:34:10Z",
+    "last_triaged_at": "2026-07-30T03:17:20Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
     "in_progress": []
   },
