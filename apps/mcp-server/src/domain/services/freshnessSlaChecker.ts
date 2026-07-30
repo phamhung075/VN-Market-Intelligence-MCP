@@ -101,10 +101,14 @@ export interface FreshnessSlaCheckOutput {
 export interface SignalSlaConfig {
   signalType: SignalType;
   defaultThresholdMinutes: number;
-  /** Market hours threshold (9:00-15:00 VN time). Optional override. */
-  marketHoursThresholdMinutes?: number;
-  /** Off-hours threshold (16:00-8:59 next day VN time). Optional override. */
-  offHoursThresholdMinutes?: number;
+  /**
+   * FIXED threshold (minutes) used only while an earnings-filing window is
+   * active (see `isBctcEarningsWindowActive`). Currently consumed by the
+   * "bctc" signal type only — SSOT: system-map.json
+   * .project.data_sources["bctc-discover"].sla.earnings_window.stale_threshold_hours.
+   * When absent, `defaultThresholdMinutes` is used for both states.
+   */
+  earningsWindowThresholdMinutes?: number;
 }
 
 /**
@@ -112,7 +116,10 @@ export interface SignalSlaConfig {
  *
  * Original 5 types (Task 234):
  * - price: 10 min during market hours; off-hours uses dynamic window threshold (see getSlaThreshold)
- * - bctc: 120 min (market hours), 360 min (off-hours)
+ * - bctc: FIXED two-tier threshold (FIX-SLA-BCTC-THRESHOLD-TRACKS-STALENESS-NOT-CONSTANT,
+ *   2026-07-30) — 1440 min (24h) while an earnings-filing window is active,
+ *   10080 min (168h/7d) otherwise. SSOT: system-map.json
+ *   .project.data_sources["bctc-discover"].sla. No wall-clock-growing term.
  * - news: 30 min
  * - sbv_fx: 30 min
  * - foreign_flow: 10 min during market hours; off-hours uses dynamic window threshold
@@ -134,9 +141,11 @@ export const DEFAULT_SLA_CONFIG: SignalSlaConfig[] = [
   },
   {
     signalType: "bctc",
-    defaultThresholdMinutes: 120,
-    marketHoursThresholdMinutes: 120,
-    offHoursThresholdMinutes: 360,
+    // SSOT: system-map.json .project.data_sources["bctc-discover"].sla
+    // (mirrored on "bctc-push"). Both values are FIXED durations selected only
+    // by the isBctcEarningsWindowActive(now) boolean gate — see getSlaThreshold.
+    defaultThresholdMinutes: 168 * 60, // 10080 min = 7d — out-of-window (inter-quarter quiet period)
+    earningsWindowThresholdMinutes: 24 * 60, // 1440 min = 24h — earnings-window active (tight filing-season SLA)
   },
   {
     signalType: "news",
@@ -683,52 +692,42 @@ export function getSlaThreshold(
     return sinceSbvWindowEnd + OFF_HOURS_GRACE_MINUTES;
   }
 
-  // BCTC has time-based thresholds with a trading-day AND earnings-window exemption.
+  // BCTC: FIXED two-tier threshold, gated only by whether an earnings-filing
+  // window is currently active (isBctcEarningsWindowActive). SSOT:
+  // system-map.json .project.data_sources["bctc-discover"].sla.
   //
-  // FIX-BCTC-SLA-WEEKEND: BCTC filings are only submitted on VN trading days
-  // (Mon–Fri via HOSE/HNX).  On weekends the last filing was from the prior
-  // Friday session — the SLA window must be measured from the last expected
-  // trading-day close (lastExpectedWindowEnd, same as price), not from a
-  // fixed 360-min off-hours threshold.
+  // FIX-SLA-BCTC-THRESHOLD-TRACKS-STALENESS-NOT-CONSTANT (2026-07-30) —
+  // root-cause correction superseding FIX-BCTC-SLA-WEEKEND and
+  // FIX-BCTC-SLA-THRESHOLD-360 below. Both of those prior fixes computed the
+  // bctc threshold as `minutesSinceLast{WindowEnd,EarningsWindowEnd}(now) +
+  // grace` — i.e. `now - T_anchor` for some FIXED past anchor timestamp
+  // T_anchor. That is an AGE, not a duration. Meanwhile ageMinutes itself is
+  // `now - T_data` for the FIXED timestamp of the last real financial_reports
+  // row. Because both quantities grow at the identical 1-minute-per-minute
+  // rate as wall-clock `now` advances, their difference
+  // `(T_anchor - T_data - grace)` is a time-invariant constant for as long as
+  // no new data arrives and the day/hours regime doesn't flip — a breach
+  // recorded in that regime can NEVER self-clear by the passage of time
+  // alone. Mechanically proven: 12 consecutive sla-monitor CRITICAL alerts
+  // sampled over a 21h window all differed by the exact same 5439-minute
+  // constant (stale - threshold), confirming the "second clock" shape.
   //
-  // FIX-BCTC-SLA-THRESHOLD-360: On weekdays during the inter-quarter quiet period
-  // (out of earnings window), the fixed 360-min off-hours threshold fires false-CRITICAL
-  // because push-age is measured from the last BCTC PDF push (event-driven, up to weeks
-  // ago) rather than from an expected periodic push.  The correct threshold is:
-  //   minutesSinceLastEarningsWindowEnd + grace
-  // This mirrors the market-hours-only pattern: SLA measures "how long since the
-  // pipeline was EXPECTED to produce data", not raw wall-clock push-age.
-  //
-  // Non-trading day (Sat/Sun): threshold = minutesSinceLastWindowEnd + grace
-  //   → prevents false-alarm on Saturday when Friday data is 20+ h old.
-  // Trading day, market hours:  use marketHoursThresholdMinutes (120 min)
-  //   → tight real-time SLA during earnings season.
-  // Trading day, off-hours, in-window: use offHoursThresholdMinutes (360 min)
-  //   → normal overnight gap during active earnings season.
-  // Trading day, off-hours, out-of-window: use minutesSinceLastEarningsWindowEnd + grace
-  //   → the inter-quarter quiet period can last 10+ weeks; measure from last window end.
+  // The trading-day / market-hours / non-trading-day nuance those two fixes
+  // were chasing is superseded by the live queue-depth + service-state
+  // idle/crash gate already wired into checkSignalSla()
+  // (FIX-HEALTH-RECHECK-BCTC-IDLE-VS-CRASH) — that gate reads REAL pipeline
+  // state (is the service up, is anything actually queued) instead of
+  // approximating "is data expected right now" from calendar arithmetic, and
+  // already fully suppresses the false-CRITICAL-during-quiet-period case
+  // those two fixes were built to solve (queueDepth === 0 → verdict "idle",
+  // never a breach, regardless of raw age). What remains here only needs to
+  // answer "how stale is too stale once we know (or can't tell) that work is
+  // actually due" — a plain FIXED SLA, exactly like the other 4 reference
+  // metrics (bond_maturity, signal_quality_audit, news, sbv_fx).
   if (signalType === "bctc") {
-    if (!isVnSbvBusinessDay(now)) {
-      // Non-trading day: expand threshold to cover the expected stale window
-      const sinceWindowEnd = minutesSinceLastWindowEnd(now);
-      return sinceWindowEnd + OFF_HOURS_GRACE_MINUTES;
-    }
-    const marketHours = isVnMarketHours(now);
-    if (marketHours && cfg.marketHoursThresholdMinutes !== undefined) {
-      // Tight 120-min SLA during active market session
-      return cfg.marketHoursThresholdMinutes;
-    }
-    if (!marketHours) {
-      if (isBctcEarningsWindowActive(now)) {
-        // Off-hours during active earnings window: standard 360-min overnight gap
-        return cfg.offHoursThresholdMinutes ?? cfg.defaultThresholdMinutes;
-      }
-      // Off-hours, out of earnings window (inter-quarter quiet period):
-      // Measure from last earnings window end + grace.
-      // A push-age of e.g. 200h is fully expected when the window closed 10+ weeks ago.
-      const sinceEarningsWindowEnd = minutesSinceLastEarningsWindowEnd(now);
-      return sinceEarningsWindowEnd + OFF_HOURS_GRACE_MINUTES;
-    }
+    return isBctcEarningsWindowActive(now)
+      ? cfg.earningsWindowThresholdMinutes ?? cfg.defaultThresholdMinutes
+      : cfg.defaultThresholdMinutes;
   }
 
   return cfg.defaultThresholdMinutes;

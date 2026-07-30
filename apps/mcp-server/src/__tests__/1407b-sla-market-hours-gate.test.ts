@@ -57,10 +57,12 @@ const LABOUR_DAY_2026 = new Date("2026-05-01T04:00:00.000Z");
 const FIRST_DAY_AFTER_HOLIDAY = new Date("2026-05-04T04:00:00.000Z");
 
 // Monday 2026-04-06 00:30 UTC = off-hours, within BCTC April earnings window (days 1–14).
-// FIX-CI-RED-EAC0CC65-BUNTEST: OFF_HOURS_DATE (Apr 27) is OUTSIDE the earnings window
-// so the BCTC threshold expands to minutesSinceLastWindowEnd+30 ≈ 17341 min, making
-// 400 min stale a non-breach. Use a date inside the window so the 360-min overnight
-// threshold applies and 400 > 360 correctly fires a breach.
+// FIX-CI-RED-EAC0CC65-BUNTEST: OFF_HOURS_DATE (Apr 27) is OUTSIDE the earnings window,
+// so (pre-2026-07-30) the BCTC threshold used to expand to a wall-clock-growing value.
+// FIX-SLA-BCTC-THRESHOLD-TRACKS-STALENESS-NOT-CONSTANT (2026-07-30): the bctc threshold
+// is now FIXED — 1440 min (24h) in-window, 10080 min (168h/7d) out-of-window, selected
+// only by isBctcEarningsWindowActive(now). Use a date inside the window so the 1440-min
+// in-window threshold applies (MH-3 uses age=1441 to correctly fire a breach).
 const BCTC_EARNINGS_WINDOW_DATE = new Date("2026-04-06T00:30:00.000Z");
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -237,16 +239,17 @@ describe("1407b — SLA monitor market-hours gate", () => {
   // MH-3: Off-hours + bctc breach → escalation IS called (24/7 source)
   // ───────────────────────────────────────────────────────────────────────────
 
-  it("MH-3: off-hours + bctc stale 400 min → escalation IS called (24/7 source)", async () => {
+  it("MH-3: off-hours + bctc stale 1441 min → escalation IS called (24/7 source)", async () => {
     const { spy, calls } = makeEscalateSpy();
 
-    // bctc off-hours threshold inside earnings window = 360 min; 400 > 360 → breach.
-    // Uses BCTC_EARNINGS_WINDOW_DATE (Apr 6, inside Apr 1–14 window) so the fixed
-    // 360-min overnight threshold applies, not the inter-quarter expanded threshold.
+    // FIX-SLA-BCTC-THRESHOLD-TRACKS-STALENESS-NOT-CONSTANT (2026-07-30): the
+    // bctc threshold inside an earnings window is now the FIXED SSOT value
+    // 1440 min (24h) regardless of market-hours/off-hours; 1441 > 1440 → breach.
+    // Uses BCTC_EARNINGS_WINDOW_DATE (Apr 6, inside Apr 1–14 window).
     const result = await runFreshnessSlaMonitor(
       db,
       spy,
-      staleAges("bctc", 400),
+      staleAges("bctc", 1441),
       BCTC_EARNINGS_WINDOW_DATE,
       noopSendWork
     );
@@ -434,14 +437,17 @@ describe("1407b — SLA monitor market-hours gate", () => {
   // MH-11: WEEKEND + bctc breach → escalation IS called (24/7 signal)
   // ───────────────────────────────────────────────────────────────────────────
 
-  it("MH-11: weekend (Saturday) + bctc stale 400 min → NOT breached (trading-day-only source, FIX-BCTC-SLA-WEEKEND)", async () => {
+  it("MH-11: weekend (Saturday) + bctc stale 400 min → NOT breached (out-of-earnings-window, FIXED 10080-min threshold)", async () => {
     const { spy, calls } = makeEscalateSpy();
 
-    // FIX-BCTC-SLA-WEEKEND: BCTC is a trading-day-only source (filings only on Mon–Fri).
-    // WEEKEND_MARKET_WINDOW = Sat 2026-04-25 04:00Z.
-    // minutesSinceLastWindowEnd = Sat 04:00Z − Fri 08:59Z = 19h 1m = 1141 min.
-    // New threshold = 1141 + 30 = 1171 min. Age 400 < 1171 → NOT breached.
-    // (Old behavior: fixed 360-min off-hours threshold → 400 > 360 was a false-alarm.)
+    // FIX-SLA-BCTC-THRESHOLD-TRACKS-STALENESS-NOT-CONSTANT (2026-07-30):
+    // WEEKEND_MARKET_WINDOW = Sat 2026-04-25 04:00Z — day 25 > 14 → OUT of the
+    // April earnings window, so the FIXED SSOT out-of-window threshold applies
+    // (10080 min = 168h/7d) regardless of day-of-week. Age 400 < 10080 → NOT
+    // breached. (Assertions below are unchanged from the original
+    // FIX-BCTC-SLA-WEEKEND intent — day-of-week must not cause a false-alarm —
+    // only the underlying threshold mechanism changed from a wall-clock-growing
+    // formula to this fixed constant.)
     const result = await runFreshnessSlaMonitor(
       db,
       spy,

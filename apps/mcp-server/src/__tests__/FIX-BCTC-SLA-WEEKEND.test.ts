@@ -1,33 +1,36 @@
 /**
  * FIX-BCTC-SLA-WEEKEND — Unit tests for the BCTC trading-day SLA exemption.
  *
- * Root cause: getSlaThreshold("bctc") only checked isVnMarketHours, which is
- * false on weekends → fell to offHoursThresholdMinutes=360.  On Saturday,
- * Friday-session BCTC data is 1400–1600 min old → false-alarm MEDIUM breach.
+ * SUPERSEDED (2026-07-30) by FIX-SLA-BCTC-THRESHOLD-TRACKS-STALENESS-NOT-CONSTANT:
+ * this file originally asserted the "weekend-aware" behavior where the bctc
+ * off-hours threshold on a non-trading day was computed as
+ * `minutesSinceLastWindowEnd(now) + grace` — an AGE measured from a second
+ * fixed anchor, not a duration. That formula grows 1:1 with wall-clock `now`
+ * at the exact same rate as `ageMinutes` itself, so any breach recorded while
+ * in that regime could never self-clear — mechanically proven via 12
+ * consecutive production sla-monitor alerts whose (stale - threshold)
+ * difference was the exact same 5439-minute constant across a 21h window.
  *
- * Fix: on a non-trading day (Sat/Sun) the bctc threshold = minutesSinceLastWindowEnd
- * + OFF_HOURS_GRACE (30), mirroring the existing SBV FX calendar exemption.
+ * The bctc threshold is now a FIXED two-tier constant gated only by
+ * isBctcEarningsWindowActive(now) (see freshnessSlaChecker.ts
+ * getSlaThreshold): 1440 min (24h) while an earnings-filing window is
+ * active, 10080 min (168h/7d) otherwise. Day-of-week / market-hours no
+ * longer affect the bctc threshold at all — the tests below now assert
+ * exactly that (weekday market-hours, weekday off-hours, and weekend all
+ * produce the SAME threshold once they share the same earnings-window
+ * state), which is the mirror image of what this file asserted before.
  *
  * DoD cases (MUST ALL PASS):
- *   B-1: Weekend (Saturday 12:00Z) — bctc age=1440 min NOT breached (off-hours
- *        threshold = 1621+30=1651 > 1440, data expected stale from Friday session)
- *   B-2: Weekend (Saturday) — bctc age genuinely stale (1700 min > 1651) IS breached
- *        (true positive preserved — don't over-exempt)
- *   B-3: Weekday market hours (Wed 04:30Z) — bctc age=240 min IS breached
- *        (240 > 120 min threshold; true positive)
- *   B-4: Weekday market hours (Wed 04:30Z) — bctc age=60 min NOT breached
- *        (within 120 min threshold)
- *   B-5: Weekday off-hours (Wed 10:00Z, post-session) — bctc age=400 min IS breached
- *        (400 > 360 min off-hours threshold; true positive)
- *   B-6: Weekday off-hours (Wed 10:00Z) — bctc age=200 min NOT breached
- *        (within 360 min off-hours threshold)
- *   B-7: getSlaThreshold(bctc) on Saturday = minutesSinceLastWindowEnd+30 (dynamic)
- *   B-8: getSlaThreshold(bctc) on trading day market hours = 120 min
- *   B-9: getSlaThreshold(bctc) on trading day off-hours = 360 min
- *   B-10: BCTC_TRADING_DAY_ONLY_SOURCES exports correctly
- *
- * Regression guard (DO NOT BREAK):
- *   B-3, B-5: True positives for genuine weekday staleness must still fire.
+ *   B-1: Out-of-window (June) — threshold is IDENTICAL across weekday
+ *        market-hours / weekday off-hours / weekend (10080 min, fixed)
+ *   B-2: Out-of-window (June) — bctc age below 10080 NOT breached (any of
+ *        the three timestamps)
+ *   B-3: Out-of-window (June) — bctc age above 10080 IS breached (any of
+ *        the three timestamps) — true positive preserved
+ *   B-4: In-window (April, day ≤ 14) — threshold is 1440 min regardless of
+ *        market-hours/weekday
+ *   B-5: In-window — bctc age above 1440 IS breached; below is NOT
+ *   B-10: BCTC_TRADING_DAY_ONLY_SOURCES exports correctly (unchanged)
  *
  * @module __tests__/FIX-BCTC-SLA-WEEKEND
  */
@@ -37,26 +40,29 @@ import {
   getSlaThreshold,
   checkDataFreshnessSla,
   isVnMarketHours,
-  minutesSinceLastWindowEnd,
   BCTC_TRADING_DAY_ONLY_SOURCES,
   type SignalType,
 } from "../domain/services/freshnessSlaChecker.js";
 
 // ─── Time fixtures ────────────────────────────────────────────────────────────
 
-/** Saturday 2026-06-06 12:00 UTC — the Saturday of the false-alarm weekend.
- *  (The breach signal itself was filed on Sunday 2026-06-07, but Saturday is
- *   the first post-Friday non-trading day — same root cause applies to both.)
- *  minutesSinceLastWindowEnd: Sat 12:00Z − Fri 08:59Z = 27h 1m = 1621 min.
- *  Off-hours threshold for bctc = 1621 + 30 = 1651 min.
- */
+/** Saturday 2026-06-06 12:00 UTC — weekend, out-of-earnings-window (June). */
 const SAT_12Z = new Date("2026-06-06T12:00:00.000Z");
 
-/** Wednesday 2026-06-04 04:30 UTC — mid-session weekday (market hours). */
+/** Wednesday 2026-06-04 04:30 UTC — mid-session weekday (market hours), out-of-window. */
 const WED_04Z = new Date("2026-06-04T04:30:00.000Z");
 
-/** Wednesday 2026-06-04 10:00 UTC — post-session weekday (off-hours, not market hours). */
+/** Wednesday 2026-06-04 10:00 UTC — post-session weekday (off-hours), out-of-window. */
 const WED_10Z = new Date("2026-06-04T10:00:00.000Z");
+
+/** Wednesday 2026-04-08 04:30 UTC — mid-session weekday (market hours), IN earnings window. */
+const APR_08_MARKET = new Date("2026-04-08T04:30:00.000Z");
+
+/** Wednesday 2026-04-08 10:00 UTC — post-session weekday (off-hours), IN earnings window. */
+const APR_08_OFFHOURS = new Date("2026-04-08T10:00:00.000Z");
+
+/** Saturday 2026-04-11 12:00 UTC — weekend, IN earnings window (April, day 11 ≤ 14). */
+const SAT_APR_11 = new Date("2026-04-11T12:00:00.000Z");
 
 // ─── BASE_AGES helper ─────────────────────────────────────────────────────────
 
@@ -90,139 +96,69 @@ describe("FIX-BCTC-SLA-WEEKEND — BCTC_TRADING_DAY_ONLY_SOURCES export", () => 
   });
 });
 
-// ─── B-7 / B-8 / B-9: getSlaThreshold for bctc ───────────────────────────────
+// ─── B-1: getSlaThreshold is day/hour-invariant within a window state ───────
 
-describe("FIX-BCTC-SLA-WEEKEND — getSlaThreshold(bctc) calendar awareness", () => {
+describe("FIX-BCTC-SLA-WEEKEND — getSlaThreshold(bctc) is FIXED, not calendar-varying", () => {
 
-  it("B-7: getSlaThreshold(bctc) on Saturday = minutesSinceLastWindowEnd+30 (dynamic)", () => {
-    // SAT_12Z: minutesSinceLastWindowEnd = 1621, threshold = 1651
-    const expected = minutesSinceLastWindowEnd(SAT_12Z) + 30;
-    const threshold = getSlaThreshold("bctc", undefined, SAT_12Z);
-    expect(threshold).toBe(expected);
-    // Must be much larger than the fixed 360-min off-hours value
-    expect(threshold).toBeGreaterThan(360);
-  });
-
-  it("B-8: getSlaThreshold(bctc) on trading day market hours = 120 min", () => {
-    // WED_04Z is inside market hours (02:00–08:59 UTC)
+  it("B-1: out-of-window (June) — threshold is IDENTICAL across market-hours / off-hours / weekend (10080 min)", () => {
     expect(isVnMarketHours(WED_04Z)).toBe(true); // sanity
-    const threshold = getSlaThreshold("bctc", undefined, WED_04Z);
-    expect(threshold).toBe(120);
+    expect(isVnMarketHours(WED_10Z)).toBe(false); // sanity
+    const marketHoursThreshold = getSlaThreshold("bctc", undefined, WED_04Z);
+    const offHoursThreshold = getSlaThreshold("bctc", undefined, WED_10Z);
+    const weekendThreshold = getSlaThreshold("bctc", undefined, SAT_12Z);
+
+    expect(marketHoursThreshold).toBe(10080);
+    expect(offHoursThreshold).toBe(10080);
+    expect(weekendThreshold).toBe(10080);
   });
 
-  it("B-9: getSlaThreshold(bctc) on trading day off-hours, IN earnings window = 360 min", () => {
-    // WED_04_APR_10Z is a Wednesday April 8, inside earnings window (month=4, day=8 ≤ 14),
-    // outside market hours (10:00Z > 08:59Z) → off-hours, in-window → 360 min.
-    const WED_04_APR_10Z = new Date("2026-04-08T10:00:00.000Z");
-    expect(isVnMarketHours(WED_04_APR_10Z)).toBe(false); // sanity: off-hours
-    const threshold = getSlaThreshold("bctc", undefined, WED_04_APR_10Z);
-    expect(threshold).toBe(360);
-  });
+  it("B-4: in-window (April, day ≤ 14) — threshold is IDENTICAL across market-hours / off-hours / weekend (1440 min)", () => {
+    expect(isVnMarketHours(APR_08_MARKET)).toBe(true); // sanity
+    expect(isVnMarketHours(APR_08_OFFHOURS)).toBe(false); // sanity
+    const marketHoursThreshold = getSlaThreshold("bctc", undefined, APR_08_MARKET);
+    const offHoursThreshold = getSlaThreshold("bctc", undefined, APR_08_OFFHOURS);
+    const weekendThreshold = getSlaThreshold("bctc", undefined, SAT_APR_11);
 
-  it("B-9b: getSlaThreshold(bctc) on trading day off-hours, OUT of earnings window = dynamic (minutesSinceLastEarningsWindowEnd+30)", () => {
-    // WED_10Z is a Wednesday June 4, OUT of earnings window (month=6 ∉ [1,4,7,10]),
-    // outside market hours → threshold = minutesSinceLastEarningsWindowEnd + 30.
-    // This fixes the false-CRITICAL regression: push-age >> 360 min is normal off-season.
-    expect(isVnMarketHours(WED_10Z)).toBe(false); // sanity: off-hours
-    const threshold = getSlaThreshold("bctc", undefined, WED_10Z);
-    // Must be >> 360 min (last window end was April 14 → ~51 days ago)
-    expect(threshold).toBeGreaterThan(10000); // > 7d
-    expect(typeof threshold).toBe("number");
+    expect(marketHoursThreshold).toBe(1440);
+    expect(offHoursThreshold).toBe(1440);
+    expect(weekendThreshold).toBe(1440);
   });
 });
 
-// ─── B-1 / B-2: checkDataFreshnessSla weekend exemption ─────────────────────
+// ─── B-2 / B-3: checkDataFreshnessSla out-of-window bidirectional proof ─────
 
-describe("FIX-BCTC-SLA-WEEKEND — checkDataFreshnessSla weekend exemption", () => {
+describe("FIX-BCTC-SLA-WEEKEND — checkDataFreshnessSla out-of-window (10080 min fixed)", () => {
 
-  it("B-1: Weekend (Saturday) — bctc age=1440 min NOT breached (false-alarm repro)", () => {
-    // THE TRIGGER CASE: data from Friday session (1440 min = 24h old on Saturday).
-    // Old threshold = 360 min → would breach. New threshold = 1651 min → NOT breached.
-    const ages = { ...BASE_AGES, bctc: 1440 };
+  it("B-2: age below threshold (10079 min) NOT breached", () => {
+    const ages = { ...BASE_AGES, bctc: 10079 };
     const result = checkDataFreshnessSla(ages, undefined, [], SAT_12Z);
-
-    const bctcBreach = result.breaches.find((b) => b.signalType === "bctc");
-    expect(bctcBreach).toBeUndefined(); // no false-alarm on weekend
-  });
-
-  it("B-1b: Weekend — bctc age=1621 min (exactly at window end) NOT breached", () => {
-    // age = minutesSinceLastWindowEnd = 1621, threshold = 1651. 1621 ≤ 1651 → ok.
-    const ages = { ...BASE_AGES, bctc: 1621 };
-    const result = checkDataFreshnessSla(ages, undefined, [], SAT_12Z);
-
     expect(result.breaches.find((b) => b.signalType === "bctc")).toBeUndefined();
   });
 
-  it("B-2: Weekend — bctc age=1700 min (> 1651 threshold) IS breached (true positive)", () => {
-    // Genuinely stale even for weekend: 1700 > 1651 → breach must fire.
-    // This verifies we have NOT over-exempted (don't blank out ALL weekend breaches).
-    const ages = { ...BASE_AGES, bctc: 1700 };
+  it("B-3: age above threshold (10081 min) IS breached (true positive preserved)", () => {
+    const ages = { ...BASE_AGES, bctc: 10081 };
     const result = checkDataFreshnessSla(ages, undefined, [], SAT_12Z);
-
     const bctcBreach = result.breaches.find((b) => b.signalType === "bctc");
     expect(bctcBreach).toBeDefined();
-    expect(bctcBreach!.ageMinutes).toBe(1700);
+    expect(bctcBreach!.thresholdMinutes).toBe(10080);
   });
 });
 
-// ─── B-3 / B-4: Weekday market-hours true positives ─────────────────────────
+// ─── B-5: checkDataFreshnessSla in-window bidirectional proof ──────────────
 
-describe("FIX-BCTC-SLA-WEEKEND — weekday market-hours true positives (regression guard)", () => {
+describe("FIX-BCTC-SLA-WEEKEND — checkDataFreshnessSla in-window (1440 min fixed)", () => {
 
-  it("B-3: Weekday market hours — bctc age=240 min IS breached (240 > 120 min threshold)", () => {
-    // Wed 04:30Z, market open, bctc 4h stale → breach MUST fire.
-    expect(isVnMarketHours(WED_04Z)).toBe(true);
+  it("B-5a: age below threshold (1439 min) NOT breached", () => {
+    const ages = { ...BASE_AGES, bctc: 1439 };
+    const result = checkDataFreshnessSla(ages, undefined, [], APR_08_MARKET);
+    expect(result.breaches.find((b) => b.signalType === "bctc")).toBeUndefined();
+  });
 
-    const ages = { ...BASE_AGES, bctc: 240 };
-    const result = checkDataFreshnessSla(ages, undefined, [], WED_04Z);
-
+  it("B-5b: age above threshold (1441 min) IS breached (true positive preserved)", () => {
+    const ages = { ...BASE_AGES, bctc: 1441 };
+    const result = checkDataFreshnessSla(ages, undefined, [], APR_08_MARKET);
     const bctcBreach = result.breaches.find((b) => b.signalType === "bctc");
     expect(bctcBreach).toBeDefined();
-    expect(bctcBreach!.thresholdMinutes).toBe(120);
-  });
-
-  it("B-4: Weekday market hours — bctc age=60 min NOT breached (within 120 min SLA)", () => {
-    const ages = { ...BASE_AGES, bctc: 60 };
-    const result = checkDataFreshnessSla(ages, undefined, [], WED_04Z);
-
-    expect(result.breaches.find((b) => b.signalType === "bctc")).toBeUndefined();
-  });
-});
-
-// ─── B-5 / B-6: Weekday off-hours true positives ────────────────────────────
-
-describe("FIX-BCTC-SLA-WEEKEND — weekday off-hours true positives (regression guard)", () => {
-
-  it("B-5: Weekday off-hours, IN window — bctc age=400 min IS breached (400 > 360 min threshold)", () => {
-    // Wed Apr 8 10:00Z, post-session, IN earnings window (month=4, day=8 ≤ 14).
-    // 400 min stale → breach MUST fire (threshold = 360 min for off-hours in-window).
-    const WED_APR_10Z = new Date("2026-04-08T10:00:00.000Z");
-    expect(isVnMarketHours(WED_APR_10Z)).toBe(false);
-
-    const ages = { ...BASE_AGES, bctc: 400 };
-    const result = checkDataFreshnessSla(ages, undefined, [], WED_APR_10Z);
-
-    const bctcBreach = result.breaches.find((b) => b.signalType === "bctc");
-    expect(bctcBreach).toBeDefined();
-    expect(bctcBreach!.thresholdMinutes).toBe(360);
-  });
-
-  it("B-5b: Weekday off-hours, OUT of window — bctc age=400 min NOT breached (off-season idle)", () => {
-    // Wed Jun 4 10:00Z, post-session, OUT of earnings window (month=6).
-    // 400 min stale → NOT breached (threshold = minutesSinceLastEarningsWindowEnd + 30 >> 400).
-    // This is the FIX-BCTC-SLA-THRESHOLD-360 regression: off-season push-age must NOT fire.
-    expect(isVnMarketHours(WED_10Z)).toBe(false);
-
-    const ages = { ...BASE_AGES, bctc: 400 };
-    const result = checkDataFreshnessSla(ages, undefined, [], WED_10Z);
-
-    expect(result.breaches.find((b) => b.signalType === "bctc")).toBeUndefined();
-  });
-
-  it("B-6: Weekday off-hours — bctc age=200 min NOT breached (within any threshold)", () => {
-    const ages = { ...BASE_AGES, bctc: 200 };
-    const result = checkDataFreshnessSla(ages, undefined, [], WED_10Z);
-
-    expect(result.breaches.find((b) => b.signalType === "bctc")).toBeUndefined();
+    expect(bctcBreach!.thresholdMinutes).toBe(1440);
   });
 });

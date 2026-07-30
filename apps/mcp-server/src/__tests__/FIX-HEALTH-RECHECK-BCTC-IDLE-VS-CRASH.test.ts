@@ -46,11 +46,12 @@ import {
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("FIX-HEALTH-RECHECK-BCTC-IDLE-VS-CRASH — Group A: checkSignalSla runtime gate", () => {
-  // Off-hours weekday, outside earnings window (Jun 25) so the raw bctc
-  // threshold is a large dynamic value — but push-age=400 (>360) still
-  // exceeds even the FIX-BCTC-SLA-THRESHOLD-360 in-window 360-min threshold,
-  // so without this fix's runtime gate the pre-fix code WOULD have crashed.
-  const IN_WINDOW_OFF_HOURS = new Date("2026-04-06T00:30:00.000Z"); // April earnings window, off-hours -> raw threshold 360 min
+  // Off-hours weekday, INSIDE the April earnings window. FIX-SLA-BCTC-
+  // THRESHOLD-TRACKS-STALENESS-NOT-CONSTANT (2026-07-30): the raw bctc
+  // threshold is now the FIXED 1440-min (24h) earnings-window SLA (was
+  // 360 min pre-fix); push-age=1441 (>1440) still exceeds it, so without
+  // this fix's runtime gate the pre-fix code WOULD have crashed.
+  const IN_WINDOW_OFF_HOURS = new Date("2026-04-06T00:30:00.000Z"); // April earnings window, off-hours -> fixed threshold 1440 min
 
   it("A-1: idle-queue-0-running + push-age=400min (>360 SLA) => IDLE, NOT crash", () => {
     const runtimeState: PipelineRuntimeState = { serviceActive: true, queueDepth: 0 };
@@ -90,7 +91,7 @@ describe("FIX-HEALTH-RECHECK-BCTC-IDLE-VS-CRASH — Group A: checkSignalSla runt
 
   it("A-3: queue-depth>0 AND age>SLA => CRASH (true positive preserved)", () => {
     const runtimeState: PipelineRuntimeState = { serviceActive: true, queueDepth: 3 };
-    const result = checkSignalSla("bctc", 400, undefined, IN_WINDOW_OFF_HOURS, runtimeState);
+    const result = checkSignalSla("bctc", 1441, undefined, IN_WINDOW_OFF_HOURS, runtimeState);
 
     expect(result.status).toBe("breached");
     expect(result.verdict).toBe("crash");
@@ -105,9 +106,9 @@ describe("FIX-HEALTH-RECHECK-BCTC-IDLE-VS-CRASH — Group A: checkSignalSla runt
   });
 
   it("A-5: no runtimeState supplied => legacy age-only behavior unchanged, verdict undefined", () => {
-    const result = checkSignalSla("bctc", 400, undefined, IN_WINDOW_OFF_HOURS);
+    const result = checkSignalSla("bctc", 1441, undefined, IN_WINDOW_OFF_HOURS);
 
-    expect(result.status).toBe("breached"); // unchanged legacy behavior: 400 > 360
+    expect(result.status).toBe("breached"); // unchanged legacy behavior: 1441 > 1440 (fixed threshold, FIX-SLA-BCTC-THRESHOLD-TRACKS-STALENESS-NOT-CONSTANT)
     expect(result.verdict).toBeUndefined();
   });
 });
@@ -281,7 +282,8 @@ function makeEscalateSpy(): {
 
 const noopSendWork = async (_msg: string): Promise<void> => { /* no-op */ };
 
-// April earnings window, off-hours -> fixed 360-min bctc threshold applies.
+// April earnings window, off-hours -> fixed 1440-min (24h) bctc threshold applies
+// (FIX-SLA-BCTC-THRESHOLD-TRACKS-STALENESS-NOT-CONSTANT, 2026-07-30; was 360 min pre-fix).
 const IN_WINDOW_OFF_HOURS = new Date("2026-04-06T00:30:00.000Z");
 
 describe("FIX-HEALTH-RECHECK-BCTC-IDLE-VS-CRASH — Group C: queryBctcPipelineRuntimeState (live reader)", () => {
@@ -385,7 +387,7 @@ describe("FIX-HEALTH-RECHECK-BCTC-IDLE-VS-CRASH — Group C: runFreshnessSlaMoni
 
     const { spy, calls } = makeEscalateSpy();
     const result = await runFreshnessSlaMonitor(
-      db, spy, staleAges("bctc", 400), IN_WINDOW_OFF_HOURS, noopSendWork,
+      db, spy, staleAges("bctc", 1441), IN_WINDOW_OFF_HOURS, noopSendWork,
     );
 
     expect(result.breaches).toBe(1);
@@ -415,7 +417,7 @@ describe("FIX-HEALTH-RECHECK-BCTC-IDLE-VS-CRASH — Group C: runFreshnessSlaMoni
 
     const { spy, calls } = makeEscalateSpy();
     const result = await runFreshnessSlaMonitor(
-      bareDb, spy, staleAges("bctc", 400), IN_WINDOW_OFF_HOURS, noopSendWork,
+      bareDb, spy, staleAges("bctc", 1441), IN_WINDOW_OFF_HOURS, noopSendWork,
     );
 
     expect(result.breaches).toBe(1);

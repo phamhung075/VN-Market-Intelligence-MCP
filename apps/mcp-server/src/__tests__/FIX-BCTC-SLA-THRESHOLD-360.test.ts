@@ -1,32 +1,51 @@
 /**
  * FIX-BCTC-SLA-THRESHOLD-360 — Unit tests for the BCTC earnings-window-aware SLA.
  *
- * Root cause: getSlaThreshold("bctc") on a weekday off-hours returned the LEGACY
- * fixed 360-min threshold regardless of whether the earnings season was active.
- * During the 10-week inter-quarter quiet gap (e.g. Apr-window-end → Jul-window-start),
- * push-age grows to 100-200h+ (pipeline HEALTHY, event-driven quarterly), and the
- * 360-min threshold fires false-CRITICAL.
+ * SUPERSEDED (2026-07-30) by FIX-SLA-BCTC-THRESHOLD-TRACKS-STALENESS-NOT-CONSTANT
+ * for the getSlaThreshold()/checkDataFreshnessSla() sections below (T-1..T-6,
+ * T-10, T-10b). Root cause of the original fix this file guarded: on weekday
+ * off-hours out of the earnings window, getSlaThreshold("bctc") returned
+ * `minutesSinceLastEarningsWindowEnd(now) + grace` — an AGE measured from a
+ * FIXED past anchor (the last earnings-window close), not a duration. Because
+ * that quantity grows at the identical 1-minute-per-minute rate as
+ * `ageMinutes` itself (also an age, measured from the FIXED last-parse
+ * timestamp), their difference is a time-invariant constant for as long as
+ * no new data arrives — a breach recorded in this state could never clear on
+ * its own. Mechanically proven via 12 consecutive production sla-monitor
+ * alerts whose (stale - threshold) difference was the exact same 5439-minute
+ * constant across a 21h sampling window.
  *
- * Fix (FIX-BCTC-SLA-THRESHOLD-360): on weekday off-hours, OUT of earnings window
- * → threshold = minutesSinceLastEarningsWindowEnd + OFF_HOURS_GRACE (30 min).
- * This measures "how long since the pipeline was expected to produce data",
- * not raw wall-clock push-age.
+ * The bctc threshold is now a FIXED two-tier constant (SSOT: system-map.json
+ * .project.data_sources["bctc-discover"].sla): 1440 min (24h) while
+ * isBctcEarningsWindowActive(now) is true, 10080 min (168h/7d) otherwise —
+ * no "minutes since X" term. The false-CRITICAL-during-quiet-period concern
+ * this file originally guarded is now the job of the live queue-depth +
+ * service-state idle/crash gate in checkSignalSla()
+ * (FIX-HEALTH-RECHECK-BCTC-IDLE-VS-CRASH), which reads REAL pipeline state
+ * instead of approximating "is data expected right now" from calendar
+ * arithmetic — see the T-1/T-2 rewrite below, which now demonstrates that
+ * mechanism explicitly via an injected PipelineRuntimeState.
+ *
+ * T-7/T-8/T-9 (pure isBctcEarningsWindowActive / lastExpectedEarningsWindowEnd /
+ * minutesSinceLastEarningsWindowEnd calendar-arithmetic tests) are UNCHANGED —
+ * those functions did not change, only their use inside getSlaThreshold's
+ * bctc branch did.
  *
  * DoD cases (MUST ALL PASS):
- *   T-1: Off-season weekday off-hours (Jun 25) — bctc push-age=11982 min (199.7h) NOT breached
- *        (threshold = minutesSinceLastEarningsWindowEnd + 30 >> 11982)
- *   T-2: Off-season weekday off-hours (Jun 25) — bctc push-age=178h = 10680 min NOT breached
- *   T-3: Off-season weekday off-hours — threshold is dynamic (minutesSinceLastEarningsWindowEnd+30)
- *   T-4: In-window weekday off-hours (Apr 8) — threshold is STILL 360 min (earnings active)
- *   T-5: In-window weekday market hours (Apr 8) — threshold is STILL 120 min
- *   T-6: Non-trading day (Sat Jun 6) — threshold is minutesSinceLastWindowEnd+30 (unchanged)
+ *   T-1: Off-season (Jun 25), push-age=11982 min, runtimeState idle (queue=0,
+ *        service active) → NOT breached (idle gate, not threshold, suppresses it)
+ *   T-1b: Same age, NO runtimeState supplied → IS breached against the fixed
+ *        10080-min (7d) ceiling — the honest, non-moving-goalpost result
+ *   T-2: Off-season (Jun 25), push-age=10680 min, runtimeState idle → NOT breached
+ *   T-3: Off-season weekday off-hours (Jun 25) → FIXED 10080 min (not dynamic)
+ *   T-4: In-window weekday off-hours (Apr 8) → FIXED 1440 min
+ *   T-5: In-window weekday market hours (Apr 8) → FIXED 1440 min (same as off-hours now)
+ *   T-6: Non-trading day (Sat Jun 6) → FIXED 10080 min (day-of-week no longer matters)
  *   T-7: isBctcEarningsWindowActive — Apr 1-14 = true, Apr 15+ = false, Jun = false, Jul 1-14 = true
  *   T-8: lastExpectedEarningsWindowEnd — correct prior window end found
  *   T-9: minutesSinceLastEarningsWindowEnd — positive, plausible value
- *   T-10: Full checkDataFreshnessSla DoD: today (2026-06-25), push-age=11982 → PASS (no breach)
- *
- * Regression guard:
- *   T-4 and T-5 ensure in-window behavior is NOT affected.
+ *   T-10: checkDataFreshnessSla — genuinely stale (11982 > 10080) IS breached
+ *        without a runtime-state probe (bidirectional proof: fires on stale)
  *
  * @module __tests__/FIX-BCTC-SLA-THRESHOLD-360
  */
@@ -35,6 +54,7 @@ import { describe, it, expect } from "bun:test";
 import {
   getSlaThreshold,
   checkDataFreshnessSla,
+  checkSignalSla,
   isVnMarketHours,
   minutesSinceLastEarningsWindowEnd,
   lastExpectedEarningsWindowEnd,
@@ -49,7 +69,9 @@ import {
 /** Wednesday 2026-06-25 10:00 UTC — the RAW-confirmed off-season scenario.
  *  Month=6 ∉ [1,4,7,10] → OUT of earnings window.
  *  Last window end = April 14, 2026 23:59 UTC.
- *  minutesSinceLastEarningsWindowEnd ≈ 102841 min (~71.4 days).
+ *  minutesSinceLastEarningsWindowEnd ≈ 102841 min (~71.4 days) — no longer
+ *  consulted by getSlaThreshold, retained here only for the T-8/T-9 pure
+ *  calendar-arithmetic assertions.
  */
 const JUN_25_OFFHOURS = new Date("2026-06-25T10:00:00.000Z");
 
@@ -82,7 +104,7 @@ const BASE_AGES: Record<SignalType, number> = {
   prediction_claims: -1,
 };
 
-// ─── T-7: isBctcEarningsWindowActive ─────────────────────────────────────────
+// ─── T-7: isBctcEarningsWindowActive (UNCHANGED) ─────────────────────────────
 
 describe("FIX-BCTC-SLA-THRESHOLD-360 — isBctcEarningsWindowActive", () => {
 
@@ -115,7 +137,7 @@ describe("FIX-BCTC-SLA-THRESHOLD-360 — isBctcEarningsWindowActive", () => {
   });
 });
 
-// ─── T-8 / T-9: lastExpectedEarningsWindowEnd / minutesSince ─────────────────
+// ─── T-8 / T-9: lastExpectedEarningsWindowEnd / minutesSince (UNCHANGED) ─────
 
 describe("FIX-BCTC-SLA-THRESHOLD-360 — lastExpectedEarningsWindowEnd / minutesSince", () => {
 
@@ -151,95 +173,112 @@ describe("FIX-BCTC-SLA-THRESHOLD-360 — lastExpectedEarningsWindowEnd / minutes
   });
 });
 
-// ─── T-3 / T-4 / T-5: getSlaThreshold behavior ──────────────────────────────
+// ─── T-3 / T-4 / T-5 / T-6: getSlaThreshold is FIXED, not calendar-varying ──
 
-describe("FIX-BCTC-SLA-THRESHOLD-360 — getSlaThreshold(bctc) earnings-window awareness", () => {
+describe("FIX-BCTC-SLA-THRESHOLD-360 — getSlaThreshold(bctc) is FIXED two-tier (SSOT)", () => {
 
-  it("T-3: Off-season weekday off-hours (Jun 25) → dynamic threshold >> 10000 min", () => {
+  it("T-3: Off-season weekday off-hours (Jun 25) → FIXED 10080 min (not dynamic)", () => {
     expect(isVnMarketHours(JUN_25_OFFHOURS)).toBe(false); // sanity
     expect(isBctcEarningsWindowActive(JUN_25_OFFHOURS)).toBe(false); // sanity: out-of-window
     const threshold = getSlaThreshold("bctc", undefined, JUN_25_OFFHOURS);
-    // minutesSinceLastEarningsWindowEnd ≈ 102841 + 30 = 102871
-    expect(threshold).toBeGreaterThan(10000);
-    expect(threshold).toBe(minutesSinceLastEarningsWindowEnd(JUN_25_OFFHOURS) + 30);
+    expect(threshold).toBe(10080);
   });
 
-  it("T-4: In-window weekday off-hours (Apr 8) → 360 min (unchanged from original)", () => {
+  it("T-4: In-window weekday off-hours (Apr 8) → FIXED 1440 min", () => {
     expect(isVnMarketHours(APR_08_OFFHOURS)).toBe(false); // sanity: off-hours
     expect(isBctcEarningsWindowActive(APR_08_OFFHOURS)).toBe(true); // sanity: in-window
     const threshold = getSlaThreshold("bctc", undefined, APR_08_OFFHOURS);
-    expect(threshold).toBe(360);
+    expect(threshold).toBe(1440);
   });
 
-  it("T-5: In-window weekday market hours (Apr 8) → 120 min (unchanged)", () => {
+  it("T-5: In-window weekday market hours (Apr 8) → FIXED 1440 min (same as off-hours — market-hours nuance retired)", () => {
     expect(isVnMarketHours(APR_08_MARKET)).toBe(true); // sanity: market hours
     expect(isBctcEarningsWindowActive(APR_08_MARKET)).toBe(true); // sanity: in-window
     const threshold = getSlaThreshold("bctc", undefined, APR_08_MARKET);
-    expect(threshold).toBe(120);
+    expect(threshold).toBe(1440);
   });
 
-  it("T-6: Non-trading day (Sat Jun 6) → minutesSinceLastWindowEnd+30 (unchanged)", () => {
+  it("T-6: Non-trading day (Sat Jun 6) → FIXED 10080 min (day-of-week no longer relevant)", () => {
     const threshold = getSlaThreshold("bctc", undefined, SAT_12Z);
-    // Non-trading day path unchanged — measures against last VN market session close
-    expect(threshold).toBeGreaterThan(360);
+    expect(threshold).toBe(10080);
   });
 
-  it("T-4b: In-window weekday off-hours (Jul 10) → 360 min (regression guard: July window)", () => {
+  it("T-4b: In-window weekday off-hours (Jul 10) → FIXED 1440 min (regression guard: July window)", () => {
     expect(isVnMarketHours(JUL_10_OFFHOURS)).toBe(false);
     expect(isBctcEarningsWindowActive(JUL_10_OFFHOURS)).toBe(true);
     const threshold = getSlaThreshold("bctc", undefined, JUL_10_OFFHOURS);
-    expect(threshold).toBe(360);
+    expect(threshold).toBe(1440);
+  });
+
+  it("T-11: threshold asserted equal across 3 emissions >1h apart, same window state (never drifts)", () => {
+    // Three points in time, hours apart, all out-of-window (June) — must be byte-identical.
+    const t1 = getSlaThreshold("bctc", undefined, new Date("2026-06-25T08:00:00.000Z"));
+    const t2 = getSlaThreshold("bctc", undefined, new Date("2026-06-25T11:00:00.000Z"));
+    const t3 = getSlaThreshold("bctc", undefined, new Date("2026-06-25T20:00:00.000Z"));
+    expect(t1).toBe(10080);
+    expect(t2).toBe(10080);
+    expect(t3).toBe(10080);
   });
 });
 
-// ─── T-1 / T-2 / T-10: DoD cases — off-season push-ages PASS ────────────────
+// ─── T-1 / T-2: idle gate (not the threshold) suppresses off-season noise ───
 
-describe("FIX-BCTC-SLA-THRESHOLD-360 — DoD: off-season push-ages do NOT breach", () => {
+describe("FIX-BCTC-SLA-THRESHOLD-360 — off-season quiet period is suppressed by the runtime-state idle gate, not the threshold", () => {
 
-  it("T-1: Off-season (Jun 25), bctc push-age=11982 min (199.7h) → NOT breached", () => {
+  it("T-1: Off-season (Jun 25), push-age=11982 min, service active + queue empty → NOT breached (idle verdict)", () => {
     // B-05 RAW-confirmed scenario: VPS host UP (uptime 8d+), queue=0, month=6 off-season.
-    // push-age 199.7h = 11982 min must NOT trigger CRITICAL or HIGH.
+    // The idle gate in checkSignalSla short-circuits BEFORE the threshold is
+    // ever consulted — this is now the sole mechanism preventing a
+    // false-CRITICAL here (see FIX-HEALTH-RECHECK-BCTC-IDLE-VS-CRASH).
+    const result = checkSignalSla("bctc", 11982, undefined, JUN_25_OFFHOURS, {
+      serviceActive: true,
+      queueDepth: 0,
+    });
+    expect(result.status).toBe("ok");
+    expect(result.verdict).toBe("idle");
+  });
+
+  it("T-1b: Same age (11982 min), NO runtime-state probe supplied → IS breached against the fixed 10080-min ceiling", () => {
+    // Honest, non-moving-goalpost result: without a live probe confirming the
+    // queue is actually empty, 199.7h old data breaches the 168h SSOT ceiling.
+    // This is a deliberate behavior change from the pre-fix dynamic formula,
+    // which never breached in this branch regardless of how stale.
     const ages = { ...BASE_AGES, bctc: 11982 };
     const result = checkDataFreshnessSla(ages, undefined, [], JUN_25_OFFHOURS);
-
     const bctcBreach = result.breaches.find((b) => b.signalType === "bctc");
-    expect(bctcBreach).toBeUndefined(); // off-season idle — no breach
+    expect(bctcBreach).toBeDefined();
+    expect(bctcBreach!.thresholdMinutes).toBe(10080);
   });
 
-  it("T-2: Off-season (Jun 25), bctc push-age=10680 min (178h) → NOT breached", () => {
-    // B-06 RAW-confirmed scenario: push-age 178h must NOT trigger breach.
-    const ages = { ...BASE_AGES, bctc: 10680 };
-    const result = checkDataFreshnessSla(ages, undefined, [], JUN_25_OFFHOURS);
-
-    const bctcBreach = result.breaches.find((b) => b.signalType === "bctc");
-    expect(bctcBreach).toBeUndefined();
+  it("T-2: Off-season (Jun 25), push-age=10680 min, service active + queue empty → NOT breached (idle verdict)", () => {
+    const result = checkSignalSla("bctc", 10680, undefined, JUN_25_OFFHOURS, {
+      serviceActive: true,
+      queueDepth: 0,
+    });
+    expect(result.status).toBe("ok");
+    expect(result.verdict).toBe("idle");
   });
+});
 
-  it("T-10: checkDataFreshnessSla DoD — off-season push-age reports threshold correctly", () => {
-    // Full round-trip: confirm threshold value is plausible and status is ok.
+// ─── T-10: bidirectional proof — genuinely stale data still fires ──────────
+
+describe("FIX-BCTC-SLA-THRESHOLD-360 — T-10: DoD bidirectional proof (fires on stale, clears on fresh)", () => {
+
+  it("T-10: checkDataFreshnessSla — 11982 min (>10080 ceiling) IS breached without a runtime probe", () => {
     const pushAgeMin = 11982;
     const ages = { ...BASE_AGES, bctc: pushAgeMin };
-    const result = checkDataFreshnessSla(ages, undefined, [], JUN_25_OFFHOURS);
-
-    // Should have ZERO breaches for bctc
-    const bctcBreach = result.breaches.find((b) => b.signalType === "bctc");
-    expect(bctcBreach).toBeUndefined();
-
-    // Threshold should be > pushAgeMin
-    const expectedThreshold = minutesSinceLastEarningsWindowEnd(JUN_25_OFFHOURS) + 30;
-    expect(expectedThreshold).toBeGreaterThan(pushAgeMin);
-  });
-
-  it("T-10b: True positive preserved — genuinely stale in off-season IS breached", () => {
-    // Age = minutesSinceLastEarningsWindowEnd + 31 (just over the threshold) → should breach.
-    // This ensures we have NOT over-exempted: true off-season staleness must still fire.
-    const mins = minutesSinceLastEarningsWindowEnd(JUN_25_OFFHOURS);
-    const staleAge = mins + 31; // 1 min over threshold
-    const ages = { ...BASE_AGES, bctc: staleAge };
     const result = checkDataFreshnessSla(ages, undefined, [], JUN_25_OFFHOURS);
 
     const bctcBreach = result.breaches.find((b) => b.signalType === "bctc");
     expect(bctcBreach).toBeDefined();
     expect(bctcBreach!.status).toBe("breached");
+    expect(bctcBreach!.thresholdMinutes).toBe(10080);
+  });
+
+  it("T-10b: checkDataFreshnessSla — 10079 min (< 10080 ceiling) NOT breached (gate clears on fresh data)", () => {
+    const ages = { ...BASE_AGES, bctc: 10079 };
+    const result = checkDataFreshnessSla(ages, undefined, [], JUN_25_OFFHOURS);
+
+    expect(result.breaches.find((b) => b.signalType === "bctc")).toBeUndefined();
   });
 });

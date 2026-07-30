@@ -158,28 +158,33 @@ describe("Task 234 — VPS Health & SLA Monitoring", () => {
   // AC-4: BCTC market-hours threshold
   // ─────────────────────────────────────────────────────────────────────────────
 
-  it("AC-4: checkDataFreshnessSla applies market-hours BCTC threshold (120min during 9-15h VN time)", async () => {
-    // Given: clock set to market hours (9:00-15:00 VN time)
-    // And: financial_reports table with created_at 121 minutes ago
+  it("AC-4: checkDataFreshnessSla applies the FIXED earnings-window BCTC threshold (1440min, identical market-hours or off-hours) — updated 2026-07-30 by FIX-SLA-BCTC-THRESHOLD-TRACKS-STALENESS-NOT-CONSTANT", async () => {
+    // Given: clock set to market hours (9:00-15:00 VN time), INSIDE the
+    //   earnings-filing window (April 1-14)
+    // And: financial_reports table with created_at 1441 minutes ago
     // When: checkDataFreshnessSla() called
     // Then:
     //   - breaches array includes entry with signalType='bctc'
-    //   - thresholdMinutes = 120 (market hours)
-    //   - status = 'breached' (age 121 > 120)
+    //   - thresholdMinutes = 1440 (24h earnings-window SLA — FIXED, SSOT: system-map.json)
+    //   - status = 'breached' (age 1441 > 1440)
     //
-    // Given: clock set to overnight (16:00-8:59 next day VN time)
-    // And: financial_reports with created_at 361 minutes ago
+    // Given: clock set to off-hours, SAME calendar day (still inside the
+    //   earnings window)
+    // And: financial_reports with created_at 1441 minutes ago
     // When: checkDataFreshnessSla() called
     // Then:
-    //   - thresholdMinutes = 360 (overnight)
-    //   - status = 'breached' (age 361 > 360)
+    //   - thresholdMinutes = 1440 — IDENTICAL to the market-hours case (the
+    //     prior 120min-market/360min-off-hours split was itself part of the
+    //     defect this task fixed; the threshold no longer varies by time of day)
+    //   - status = 'breached' (age 1441 > 1440)
 
-    // Market hours: 09:00-15:00 VN = 02:00-08:00 UTC
-    const marketHourUTC = new Date("2026-04-21T03:00:00Z"); // 03:00 UTC = 10:00 VN
+    // Market hours: 09:00-15:00 VN = 02:00-08:00 UTC, inside the April 1-14
+    // earnings window.
+    const marketHourUTC = new Date("2026-04-08T03:00:00Z"); // 03:00 UTC = 10:00 VN, April 8 (in-window)
 
     const signalAges: Record<SignalType, number> = {
       price: 5,
-      bctc: 121,
+      bctc: 1441,
       news: 5,
       sbv_fx: 5,
       foreign_flow: 5,
@@ -190,24 +195,21 @@ describe("Task 234 — VPS Health & SLA Monitoring", () => {
     const resultMarketHours = checkDataFreshnessSla(signalAges, undefined, [], marketHourUTC);
     const bctcBreachMarket = resultMarketHours.breaches.find((b) => b.signalType === "bctc");
     expect(bctcBreachMarket).toBeDefined();
-    expect(bctcBreachMarket!.thresholdMinutes).toBe(120);
+    expect(bctcBreachMarket!.thresholdMinutes).toBe(1440);
     expect(bctcBreachMarket!.status).toBe("breached");
 
-    // Off-hours during ACTIVE earnings window (month=4, day=8 ≤ 14 → in-window):
-    // threshold = 360 min off-hours. Age=361 > 360 → breached.
-    // NOTE: April 21 (day=21 > 14) is OUT of window and would use the dynamic
-    // minutesSinceLastEarningsWindowEnd threshold instead (FIX-BCTC-SLA-THRESHOLD-360).
-    // Use April 8 (day=8 ≤ 14) to test the in-window off-hours path.
+    // Off-hours, same day, still IN the earnings window (month=4, day=8 ≤ 14):
+    // threshold must be the SAME fixed 1440 min — no market/off-hours split.
     const offHoursUTC = new Date("2026-04-08T10:00:00Z"); // April 8, in-window, 10:00 UTC = off-hours
     const resultOffHours = checkDataFreshnessSla(
-      { ...signalAges, bctc: 361 },
+      { ...signalAges, bctc: 1441 },
       undefined,
       [],
       offHoursUTC
     );
     const bctcBreachOffHours = resultOffHours.breaches.find((b) => b.signalType === "bctc");
     expect(bctcBreachOffHours).toBeDefined();
-    expect(bctcBreachOffHours!.thresholdMinutes).toBe(360);
+    expect(bctcBreachOffHours!.thresholdMinutes).toBe(1440);
     expect(bctcBreachOffHours!.status).toBe("breached");
   });
 
@@ -462,9 +464,9 @@ describe("Task 234 — VPS Health & SLA Monitoring", () => {
   // ─────────────────────────────────────────────────────────────────────────────
 
   it("AC-12: freshnessSlaMonitorJob escalates only breached signal types (not all on partial failure)", async () => {
-    // Given: multi-source scenario (in market hours)
+    // Given: multi-source scenario (in market hours, inside the April earnings window)
     //   - price: age=8min, threshold=10min → OK
-    //   - bctc: age=125min, threshold=120min → BREACHED
+    //   - bctc: age=1441min, threshold=1440min (FIXED, earnings-window active — FIX-SLA-BCTC-THRESHOLD-TRACKS-STALENESS-NOT-CONSTANT 2026-07-30) → BREACHED
     //   - news: age=25min, threshold=30min → OK
     //   - sbv_fx: age=28min, threshold=30min → OK
     //   - foreign_flow: age=8min, threshold=10min → OK
@@ -479,7 +481,7 @@ describe("Task 234 — VPS Health & SLA Monitoring", () => {
     // Test that checkDataFreshnessSla correctly identifies only BCTC as breached
     const signalAges: Record<SignalType, number> = {
       price: 8,
-      bctc: 125,
+      bctc: 1441,
       news: 25,
       sbv_fx: 28,
       foreign_flow: 8,
@@ -487,11 +489,12 @@ describe("Task 234 — VPS Health & SLA Monitoring", () => {
       broker_sanctions: -1, backtest_runs: -1, signal_quality_audit: -1, prediction_claims: -1,
     };
 
-    // Use a market hours timestamp (03:00 UTC = 10:00 VN)
-    const marketHoursUTC = new Date("2026-04-21T03:00:00Z");
+    // Use a market hours timestamp inside the April 1-14 earnings window
+    // (03:00 UTC = 10:00 VN, April 8) so the FIXED 1440-min threshold applies.
+    const marketHoursUTC = new Date("2026-04-08T03:00:00Z");
     const result = checkDataFreshnessSla(signalAges, undefined, [], marketHoursUTC);
 
-    // Only bctc should be in breaches (125 > 120 market hours threshold)
+    // Only bctc should be in breaches (1441 > 1440 fixed earnings-window threshold)
     expect(result.breaches.length).toBe(1);
     expect(result.breaches[0]?.signalType).toBe("bctc");
 

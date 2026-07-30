@@ -256,12 +256,15 @@ describe("1920i — TC-5: Existing 5 signal type SLA thresholds regression check
     expect(cfg!.defaultThresholdMinutes).toBe(10);
   });
 
-  it("TC-5b: bctc threshold remains 120 min default, 120 market-hours, 360 off-hours", () => {
+  it("TC-5b: bctc threshold is FIXED two-tier config (10080 default / 1440 earnings-window) — superseded by FIX-SLA-BCTC-THRESHOLD-TRACKS-STALENESS-NOT-CONSTANT (2026-07-30)", () => {
+    // Original 120/360 values were replaced: they were wall-clock-growing
+    // computed values in disguise (see freshnessSlaChecker.ts getSlaThreshold
+    // bctc branch), not policy constants. The new values are the SSOT
+    // (system-map.json .project.data_sources["bctc-discover"].sla) durations.
     const cfg = DEFAULT_SLA_CONFIG.find(c => c.signalType === "bctc");
     expect(cfg).toBeDefined();
-    expect(cfg!.defaultThresholdMinutes).toBe(120);
-    expect(cfg!.marketHoursThresholdMinutes).toBe(120);
-    expect(cfg!.offHoursThresholdMinutes).toBe(360);
+    expect(cfg!.defaultThresholdMinutes).toBe(10080); // 168h = 7d, out-of-earnings-window
+    expect(cfg!.earningsWindowThresholdMinutes).toBe(1440); // 24h, earnings-window active
   });
 
   it("TC-5c: news threshold remains 30 minutes", () => {
