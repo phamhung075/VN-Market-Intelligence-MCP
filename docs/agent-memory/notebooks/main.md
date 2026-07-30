@@ -1,6 +1,18 @@
 # Dev Team — Sprint Boundary Notebook
 
-**Written:** 2026-07-30T14:52Z
+**Written:** 2026-07-30T16:30Z
+
+## cycle-20260730T1607Z-tick — BOUNDED-1 dispatched developer on FIX-WF2-SUPERVISED-HOLD-NO-PO-SIDE-GOAHEAD-PRODUCER; flagged execute-tier.md Phase-3.5 stale lock-release pattern via signal; RAW-verified developer's return clean, board REVIEW/qa, 8th consecutive PO-respawn skip
+
+- **Preflight RUN, tick `2026-07-30T16:07Z`.** `.head` idle at tick start — idle-fallthrough, not pipeline-resume.
+- **Step 0a drain:** 3 signals (commit-sweep-guard, sprint-COWORK notebook context-bloat, cowork-team fire) — all routed-to-po, committed `beaf06f87`.
+- **CI probe:** deduped clean against already-tracked `ci-red-c01f39b0-*` fingerprint.
+- **BOUNDED-1:** WIP=0 → promoted+claimed `FIX-WF2-SUPERVISED-HOLD-NO-PO-SIDE-GOAHEAD-PRODUCER` (P2, `zone:cross-service/` — accepted Tier-3 zone-detect precedent, not a zone-missing bug). Committed `92cb68aaa`. Dispatched `developer` (background, DJ-GATE-1 instructed). Lock held (LOCK-LIFETIME).
+- **Found + flagged, not fixed inline**: `execute-tier.md` Phase-3.5 dispatcher-wrap text ("release all after batch returns") is stale vs the LOCK-LIFETIME convention documented at every other `main.md` dispatch site — literal reading would release `run_in_background` locks in ms, enabling double-spawn on the next pipeline-resume tick. Applied LOCK-LIFETIME-safe behavior manually; emitted a `repair_task_request` signal for PO/architect to reconcile. Committed `f64ad2bad`.
+- **Step 4.1:** 170 unresolved (DOWN from 276), same categories, 0 NEW `signal_queue` rows — **8th consecutive PO-respawn skip**. Post-cycle otherwise clean/no-op (4.0/4.0.5/4.2/4.3/4.4).
+- **Session Exit:** both tick locks released (`dev-team-cron-singleton`, fire-election) — `task:FIX-WF2-...` sprint lock deliberately held open pending developer's return.
+- **developer's return arrived post-tick** (`a760d993dc8bf4e9d`, 608s, 62 tool uses) — **RAW-verified, not trusted from self-report**: commits `5c1f19b7b`/`dff618bde`/`86a1bd3a4` real on HEAD; diff to `po/flow/main.md` + new `supervised-goahead.md` matches claim exactly (`should_hold` jq filter logic byte-identical to `main.md:469-478`). Independently re-ran `scripts/audits/po-goahead-producer-verify.sh` → **4/4 PASS**. DJ-GATE-1 confirmed at `STEP developer-S44`. Board disposition genuine: row in `review[]` (absent from `in_progress[]`), `next_agent:qa`, `.head` idle-reset, all one write. Sprint-task lock released. WORK telegram sent.
+- **NEXT:** QA-Drain backlog gains another review-lane row; PO's next tick should pick up the new `supervised-goahead.md` Pre-check + the `execute-tier.md` signal.
 
 ## cycle-20260730T1437Z-tick — RAW-verified dev-mcp-server's FIX-BCTC-REPARSE-DOUBLE-WRAP-DEDUP-GUARD clean after its 1st return falsely claimed a still-live background test wait; board-flipped, lock released; 5th consecutive skip of identical report backlog; fresh ci_red signal emitted (undrained)
 
@@ -23,15 +35,4 @@
 - **Step 4.1 report check:** 273 unresolved (+1 since last check, same `sla-monitor`/`signal_quality_audit` category, no new category). **Skipped PO re-spawn a 4th consecutive tick.** mock-guard RC=2 CAUTION (same pre-existing TODOs, unchanged). Cold-evict dry-run: 0 byte reduction, no-op. 4.3 stranded-sweep clean (37 owned-elsewhere, 15 young-skip, 0 actionable). 4.4 wrapper-autoclose: 0 rows.
 - **Push-backstop FIRED:** `ahead=21 > 20`, both guards clear (no rebase/merge/index.lock, 0 commit-mutex held) → `fleet-worktree-push.sh` ran, tsc clean, pushed 21 commits `ce3fa81e8..c01f39b0c` to `origin/main`.
 - **NEXT:** await `dev-mcp-server`'s return; RAW-verify all 5 ACs — (1) `shouldSkipRecoveryReplay` guard fires BEFORE `recordJobRun`, (2) `rows_written` populated from the real `ReparseRunResult`, (3) `startScheduler.ts` catch-up gains a staleness gate, (4) new unit test proving 2 back-to-back invocations → exactly 1 `cron_job_runs` row, (5) live re-run showing rows/day ≤1 on non-reparse days.
-
-## cycle-20260730T1356Z-verify — RAW-verified 2nd developer's WAL-rearm migration-scripts fix clean (arrived after this tick's own locks had already closed); board-flipped, lock released; both WAL-rearm siblings now REVIEW/qa
-
-- **Developer return** (`ab09b209581908c73`) arrived as a task-notification after tick `2026-07-30T13:37Z`'s own lock lifecycle had already fully closed (both tick-scoped locks released prior window) — handled as a standalone RAW-verify+disposition, not a tick resume.
-- **RAW-verified all claims, zero discrepancies**: commit `3bc8c9d55` real, on HEAD, single commit (6 files: 4 code + journal + notebook). All 4 `scripts/migrations/*.ts` diffs confirmed exact match — `db.exec("PRAGMA journal_mode = WAL")` deleted, replaced with explanatory comment only, no other PRAGMA touched; grep confirms zero remaining live `journal_mode` statements in any of the 4 files.
-- **Verify script independently re-run, not trusted from self-report**: `bash scripts/audits/verify-market-db-journal-mode.sh` → `PASS journal_mode=delete wal_present=false shm_present=false` — exact match to claim.
-- **Scope confirmed**: `coordination.db`/test fixtures absent from commit diff (grep on `git show --stat`). `docker-compose.yml` confirmed `./data/live:/app/data` bind-mount (not a named volume) across all services, backing the "live DB" claim.
-- **DJ-GATE-1 confirmed**: `**task-id:** FIX-SCRIPTS-MIGRATIONS-MARKETDB-WAL-REARM-SAME-DEFECT` present at `sprint-COWORK-GUARANTEED-SLOT-CATCHUP-developer.md:440`, correct format.
-- **Board disposition**: single write `IN_PROGRESS→REVIEW`, `next_agent:qa`, lane-moved, `.head` idle-reset together (CANONICAL:SSOT-STATUSFLIP-LANEMOVE held), conservation `719→719`. Committed `24fd16c84`. Sprint-task lock released on developer's behalf (`released:1`, genuine — no MCP grant). WORK telegram sent.
-- **Sibling closure**: both halves of the WAL-rearm defect class — `apps/mcp-server/` zone (`FIX-SQLITE-JOURNALMODE-WAL-REARM-DEFEATS-DELETE-MITIGATION`) and `scripts/migrations/` zone (this task) — now sit in `review[]`/`next_agent:qa` together, feeding the still-starved QA-Drain backlog.
-- **NEXT**: `.head` idle again — a fresh tick's idle-fallthrough chain will reach BOUNDED-1 next.
 
