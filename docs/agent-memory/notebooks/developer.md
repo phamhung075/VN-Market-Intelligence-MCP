@@ -1,6 +1,22 @@
 # Developer — Notebook
 
-**Last updated:** 2026-07-30 | **Cycle:** FIX-DEVTEAM-READY-REVIEW-LANE-SUPERVISED-PLANONLY-NO-PICKER
+**Last updated:** 2026-07-30 | **Cycle:** FIX-NOTEBOOK-AUTOPRUNE-SAMEDAY-TIE-DROPS-NEWEST
+
+## Session 2026-07-30 — FIX-NOTEBOOK-AUTOPRUNE-SAMEDAY-TIE-DROPS-NEWEST — REVIEW
+
+**Task:** dev-team BOUNDED-1 idle-capacity dispatch (`cross-service/`), PO-triaged P1 root-cause fix for the recurring (3x today, this notebook) same-day tie-break defect: `notebook-auto-prune.sh`'s lossy 17-char ts_key ties multiple date-only headings, and the old stable-sort-then-`head -1` always dropped the physically-first tied section — correct only for an oldest-first/append notebook, wrong (drops the newest) for a newest-first/prepend one like this file.
+
+**Actions:** Tie-break now resolves the minimum-key GROUP direction-aware: drop physically-LAST for newest_first (this file), physically-FIRST for oldest_first. Direction derives from the file's own distinguishable section timestamps first (43/46 live notebooks need zero config); new `docs/data/notebook-section-order.json` declares the 3 confirmed-ambiguous files (developer.md=newest_first, dev-frontend.md/dev-mcp-server.md=oldest_first, each verified via `git log -1 -p`). Unresolved+no-override now fails loud (`notebook_tiebreak_direction_unresolved_breach` signal, no truncation) instead of guessing.
+
+**Verify-live catch:** RED→GREEN A/B against a REAL padded copy of THIS file: pre-fix script wrongly kept only the oldest section (would have dropped this very entry once written); post-fix keeps only the newest (physically-first) section under identical multi-drop pressure.
+
+**Verification:** `notebook-auto-prune.test.sh` 7/7 PASS (T1-T4 pre-existing unaffected + new T5 prepend/T6 append/T7 unresolved-safe-fail). Sibling legacy `test-notebook-auto-prune.sh` 5/5 unaffected (untouched, flagged as a likely stale duplicate for code-janitor, out of scope). shellcheck: same 1 pre-existing unrelated info-only finding, none new. No `apps/` touched — `bun test`/`tsc` N/A.
+
+**Board:** `task_board.in_progress[FIX-NOTEBOOK-AUTOPRUNE-SAMEDAY-TIE-DROPS-NEWEST]` → `review` (`next_agent: qa`), `.head` reset to idle, same `orch-apply.sh` write.
+
+**Zone note:** No MCP/gateway tool grant this session (Read/Edit/Write/Bash only, confirmed at Step 0) — could not `task_release`/`send_telegram`; flagged for the coordinating dev-team session (`owner_client_session=64c7c677-0f0f-4cee-a3ce-dba79d70b7ae`) to release `task:FIX-NOTEBOOK-AUTOPRUNE-SAMEDAY-TIE-DROPS-NEWEST` on my behalf.
+
+Zone health: closes the recurring misfire flagged in this notebook's own prior 3 sections today ("3rd occurrence today, same file") — first cycle this class gets a root-cause fix instead of a same-cycle manual workaround.
 
 ## Session 2026-07-30 — FIX-DEVTEAM-READY-REVIEW-LANE-SUPERVISED-PLANONLY-NO-PICKER — REVIEW
 
@@ -35,23 +51,3 @@ Zone health: notebook-auto-prune.sh's documented date-only-heading tie-break mis
 **Zone note:** No MCP/gateway tool this session — flipped board row via `orch-apply.sh` directly; could not release `task:FIX-AUDITOR-CALLER-PROSE-OVERRIDES-DOCUMENTED-DETECTOR-THRESHOLD`/Telegram (structural gap, flagged for coordinating session).
 
 Zone health: this write hit the SAME notebook-auto-prune.sh tie-break misfire T1-PREGATE flagged (date-only headings, all-tied stable-sort drops physically-first not true-oldest) — recomposed manually within both caps rather than relying on the hook; not filed as a new row (still single-session, flagged for coordinating session).
-
-## Session 2026-07-30 — FIX-BOUNDED1-NONDEV-NEXTAGENT-RESIDUAL-NO-DISPATCH-LANE — REVIEW
-
-**Task:** router-adjudicated direct dispatch (`cross-service/`, supervised+plan_only — same pattern as LAYER2/FIX-AUDITOR-CALLER-PROSE this cycle). Implemented architect's PO-ratified Design-Router Sweep (DRS): a 4th WIP≤2 idle-fallthrough writer for backlog rows whose `next_agent` is non-dev and not already SLS's supervised+plan_only territory.
-
-**Actions taken:** `is_design_router_allowed`/`is_design_router_eligible` added to `scripts/lib/devteam-eligibility.jq`. New `scripts/devteam-backlog-promote-design-router-sweep.jq` + `scripts/devteam-backlog-claim-design-router-sweep.jq` — mandatory conditional-guard `.head` write from day one (never unconditional; hard AC, PO ratification Q3). Wired into `docs/agents/dev-team/flow/main.md` as BOUNDED-1→SLS→RLC→**DRS**→QA-Drain→Step1. Ratified narrow allowlist `{architect, ba, pm, po, agents-architect}` — `agent-father`/`ops*`/`qa`/`system-auditor` excluded per the ruling's own reasoning. Extended `scripts/audits/devteam-dispatch-gate-satisfiability.sh` (+6 DRS assertions) and `scripts/audits/bounded1-supervised-lane-report.sh` (new non-gating DRS section, ELIGIBLE vs STRANDED-OFF-ALLOWLIST). CANONICAL pointer added to `dev-standards.md`.
-
-**Reconciliation (PO's added input beyond the brief):** live-computed the 34-row `supervised:true`/`plan_only`-not-true set (down from PO's 41 — one row separately fixed this cycle). 10 already DRS-eligible as specified (DRS excludes only the supervised+plan_only-BOTH class, an AND not an OR — includes P0s `UC-CCA-P3`/`FIX-CHEF-MARKER-KEY-WINDOW-ANCHOR`). 5 non-dev but off-allowlist (policy, not a gap). 7 carry a DEV-role `next_agent` (P0 `FIX-SPRINT-TASK-HEARTBEAT-LOCK`) — genuinely uncovered by BOUNDED-1/SLS/DRS alike; left explicitly out of scope (auto-dispatching a `supervised:true` row to `developer` unattended would defeat the flag's own purpose — a new risk decision, not this implementation cycle's call) and documented with live counts, not silently dropped.
-
-**Verify-live catch:** dry-run against a scratch copy of the LIVE board (never the live file) proved the conditional `.head` guard is load-bearing RIGHT NOW, not just synthetically — this row's own `.head` is genuinely SLS-busy (`FIX-AUDITOR-CALLER-PROSE-OVERRIDES-DOCUMENTED-DETECTOR-THRESHOLD`) and the claim script correctly left it byte-identical while still moving the picked row `ready[]→in_progress[]`. DRS's broader query also surfaced a real live malformed `created_at` (`backlog-detail.json:3820`, missing colons) that crashed the WHOLE `bounded1-supervised-lane-report.sh` instrument — hardened `age_days()` with `try/catch` so one bad timestamp degrades to `null` for that row only.
-
-**Verification:** `scripts/audits/devteam-dispatch-gate-satisfiability.sh` 34/34 PASS (never writes to the live file). `bounded1-supervised-lane-report.sh` DRS section runs clean (120 live target rows, 76 eligible, 44 stranded-off-allowlist by policy); pre-existing unrelated PRIMARY `[FAIL]` (5 rows, dispatch-lane=none) reproduced BEFORE this change too via `git stash` A/B — confirmed not a regression, out of scope. No `apps/` source touched (pure jq+bash+md) — `bun test`/`tsc` structurally N/A. `/graphify docs --update --no-viz` skipped — incremental manifest is repo-wide stale (3853 changed files flagged, overwhelmingly unrelated to this task's 3-doc touch); running it would be a disproportionate token spend for a size-M task and reflects pre-existing graphify-maintenance debt, not something this task introduced — flagged, not silently run or silently skipped.
-
-**Board:** left this row's own status/lane/next_agent UNTOUCHED (plan_only:true+supervised:true, per instruction) — dev-team RAW-verify + PO/dev-team disposition next, same discipline as LAYER2/FIX-AUDITOR-CALLER-PROSE.
-
-**Simplicity gate:** PASS — DRS mirrors SLS/RLC's existing promote+claim shape exactly (no new architecture); only 2 new shared-lib predicates added, both composed entirely from predicates the file already had; allowlist is a caller-supplied `--argjson` (a policy input per the ratification's own design, not new hardcoded config).
-
-**Zone note:** No MCP/gateway tool grant in this session (Read/Edit/Write/Bash only) — committing directly via explicit pathspec per INV-GATEWAY-1; coordinating dev-team session handles `task_heartbeat`/release and RAW-verify.
-
-Zone health: unrelated concurrent-session churn observed in `git status` (`scripts/emit-audit-signal.sh`/`.test.sh` modified by a peer session) — NOT staged/touched by this commit, pathspec-scoped add used throughout.
