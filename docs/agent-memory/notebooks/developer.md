@@ -1,6 +1,20 @@
 # Developer — Notebook
 
-**Last updated:** 2026-07-30 | **Cycle:** FIX-AUDITOR-OUTPUT-CONTRACT-SIGNALSPOSTED-COUNTS-CALLS-NOT-CONFIRMED-ROWS
+**Last updated:** 2026-07-30 | **Cycle:** FIX-SCRIPTS-MIGRATIONS-MARKETDB-WAL-REARM-SAME-DEFECT
+
+## Session 2026-07-30 — FIX-SCRIPTS-MIGRATIONS-MARKETDB-WAL-REARM-SAME-DEFECT — REVIEW
+
+**Task:** dev-team BOUNDED-1 auto-pickup (`scripts/`). Sibling fix `FIX-SQLITE-JOURNALMODE-WAL-REARM-DEFEATS-DELETE-MITIGATION` (apps/mcp-server/schema.ts's DELETE-mode mitigation) found the IDENTICAL defect shape surviving in 4 `scripts/migrations/*.ts` files, each opening its own raw connection to `market.db` and unconditionally re-arming WAL for the duration of its run.
+
+**Actions:** Removed `db.exec("PRAGMA journal_mode = WAL")` from all 4 sites (run-finalize-bctc-refine.ts:36, dedupe-mislabeled-bctc-period.ts:368, resync-watchlist-sysmap-2026-07-11.ts:266, carry-forward-bctc-orphaned-rows.ts:361). Considered importing schema.ts's `getDb()`/`closeDb()` singleton, but 3/4 files' own header comments document `docker cp <file> .../app/` flat-invocation as their live-DB path — a relative up-tree import to apps/mcp-server/src breaks there (resync-watchlist's own comment says so explicitly); chose the simpler, uniform fix (delete the line) since journal_mode persists in the DB file itself, not per-connection.
+
+**Verify-live catch:** ran all 4 fixed scripts in their own read-only verify/dry-run mode (no `--apply`) against the LIVE bind-mounted `data/live/market.db` (host path, same inode the container serves) to prove empirically — not just trivially — that none re-arms WAL: journal_mode stayed `delete` and no fresh `-wal`/`-shm` pair appeared after each of the 4 runs.
+
+**Verification:** `bash scripts/audits/verify-market-db-journal-mode.sh` → PASS, exit 0, re-run 5x (baseline + once after each of the 4 scripts executed). Did not touch coordination.db or any test fixture (out of scope per task).
+
+**Board:** `task_board.in_progress[FIX-SCRIPTS-MIGRATIONS-MARKETDB-WAL-REARM-SAME-DEFECT]` → dev-team's job (board flip, lane move, `.head` reset, lock release) — no MCP/gateway tool grant this session (Read/Edit/Write/Bash only).
+
+**Zone note:** flagged for the coordinating dev-team session (`owner_client_session=64c7c677-0f0f-4cee-a3ce-dba79d70b7ae`) to release `task:FIX-SCRIPTS-MIGRATIONS-MARKETDB-WAL-REARM-SAME-DEFECT` and flip board status on my behalf.
 
 ## Session 2026-07-30 — FIX-AUDITOR-OUTPUT-CONTRACT-SIGNALSPOSTED-COUNTS-CALLS-NOT-CONFIRMED-ROWS — REVIEW
 

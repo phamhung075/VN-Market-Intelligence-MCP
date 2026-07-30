@@ -358,7 +358,11 @@ if (import.meta.main) {
   }
 
   const db = new Database(DB_PATH);
-  db.exec("PRAGMA journal_mode = WAL");
+  // NOTE: journal_mode is NOT set here (FIX-SCRIPTS-MIGRATIONS-MARKETDB-WAL-REARM-SAME-DEFECT,
+  // 2026-07-30) — market.db's journal_mode is DELETE (schema.ts's getDb(), FIX-SQLITE-
+  // JOURNALMODE-WAL-REARM-DEFEATS-DELETE-MITIGATION mitigation for recurring Docker-virt
+  // WAL/SHM corruption). This is a one-shot migration script — it must not re-arm WAL and
+  // silently undo that mitigation for the duration of its run.
   db.exec("PRAGMA foreign_keys = ON");
 
   try {
