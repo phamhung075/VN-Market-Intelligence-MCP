@@ -2031,17 +2031,6 @@
         "severity": "WARN",
         "status": "triaged",
         "payload_ref": null
-      },
-      {
-        "id": "dev-2026-07-30T12:25:58Z",
-        "ts": "2026-07-30T12:25:58Z",
-        "from": "dev-team",
-        "to": "po",
-        "type": "system-issue",
-        "summary": "stranded-state sweep: unknown path needs owner (docs/agent-memory/.auditor-cycle-markers-2026-07-29T08:00Z.tmp) — recurring, unresolved since 07-28",
-        "severity": "LOW",
-        "status": "NEW",
-        "payload_ref": null
       }
     ],
     "last_triaged_at": "2026-07-29T06:25:00Z",
