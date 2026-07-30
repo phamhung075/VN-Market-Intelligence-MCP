@@ -21,10 +21,10 @@
  */
 
 import { resolve } from "node:path";
-import { Database } from "bun:sqlite";
 import { computeBctcEval, loadBctcEvalThresholds } from "../../../application/usecases/computeBctcEval.js";
 import { upsertEvalRow, stageName } from "../../../infrastructure/db/bctcEvalStore.js";
 import { initFinancialReportsTables } from "../../../infrastructure/db/schema-financial-reports.js";
+import { getDb, closeDb } from "../../../infrastructure/db/schema.js";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -40,14 +40,20 @@ interface ReportRow {
 
 async function runBackfill(): Promise<void> {
   const projectRoot = resolve(process.cwd());
-  const dbPath = resolve(projectRoot, "data/market.db");
 
-  console.log(`[bctc-eval-backfill] DB: ${dbPath}`);
+  // FIX-SQLITE-JOURNALMODE-WAL-REARM-DEFEATS-DELETE-MITIGATION: journal_mode
+  // is a PERSISTENT property of the market.db FILE, not of a connection. This
+  // runner used to open its own `new Database(dbPath)` + `PRAGMA journal_mode
+  // =WAL`, which re-armed WAL (and the -wal/-shm SHM pair) on the shared
+  // market.db for the duration of the run — silently undoing the DELETE-mode
+  // corruption mitigation in schema.ts:115. getDb() is the SOLE owner of
+  // journal_mode for market.db; every other opener must reuse it, never set
+  // the pragma itself. See docs/agent-memory notebooks — 4 prior SHM torn-
+  // write corruptions on this exact DB.
+  const db = getDb();
+
+  console.log(`[bctc-eval-backfill] DB: shared getDb() singleton (schema.ts owns journal_mode)`);
   console.log(`[bctc-eval-backfill] Project root: ${projectRoot}`);
-
-  const db = new Database(dbPath);
-  db.exec("PRAGMA journal_mode=WAL");
-  db.exec("PRAGMA foreign_keys=ON");
 
   // Ensure bctc_eval_results table exists
   initFinancialReportsTables(db);
@@ -113,7 +119,9 @@ async function runBackfill(): Promise<void> {
     `[bctc-eval-backfill] Done. success=${success}, failed=${failed}, total=${reports.length}`,
   );
 
-  db.close();
+  // Use the shared singleton's own close path (schema.ts owns the connection
+  // lifecycle) rather than calling db.close() directly on the singleton.
+  closeDb();
 }
 
 // ─── Entry point ──────────────────────────────────────────────────────────────
