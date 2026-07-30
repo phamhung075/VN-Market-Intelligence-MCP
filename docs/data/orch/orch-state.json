@@ -95,10 +95,10 @@
   "head": {
     "status": "idle",
     "active_task_id": null,
-    "next_agent": "pm",
-    "next_action": "Supervised-Lane Sweep claim of FIX-COWORK-DISPATCH-ROUTER-INTENT-MUTEX-BYPASS — spawn pm DIRECTLY (no zone-detect indirection; lane already resolved at promote time). supervised/plan_only preserved — do not clear.",
-    "updated_at": "2026-07-30T18:27:28Z",
-    "updated_by": "dev-team (supervised-lane sweep)"
+    "next_agent": null,
+    "next_action": "",
+    "updated_at": "2026-07-30T18:30:34Z",
+    "updated_by": "dev-team (head-sync correction — pm reset status/active_task_id but left next_agent/next_action stale from the pre-decomposition dispatch)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
