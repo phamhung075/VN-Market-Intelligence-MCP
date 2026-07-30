@@ -1,6 +1,22 @@
 # Developer — Notebook
 
-**Last updated:** 2026-07-30 | **Cycle:** FIX-AUDITOR-CALLER-PROSE-OVERRIDES-DOCUMENTED-DETECTOR-THRESHOLD
+**Last updated:** 2026-07-30 | **Cycle:** FIX-DEVTEAM-READY-REVIEW-LANE-SUPERVISED-PLANONLY-NO-PICKER
+
+## Session 2026-07-30 — FIX-DEVTEAM-READY-REVIEW-LANE-SUPERVISED-PLANONLY-NO-PICKER — REVIEW
+
+**Task:** dev-team BOUNDED-1 auto-pickup (`cross-service/`). `ready[]`/`review[]` rows carrying `effective_supervised && effective_plan_only` were invisible to all four dispatch pickers when reached via a route OTHER than SLS's own promote script (the `promoted_by` stamp SLS-claim required is only ever written by that script, which only reads `backlog[]`).
+
+**Actions:** `devteam-backlog-claim-supervised-lane-sweep.jq` gained a FALLBACK candidate set (PRIMARY unchanged) claiming an unstamped `ready[]` row of the same class — reuses `devteam-eligibility.jq` predicates verbatim, never forges `promoted_by`. `main.md` caller threads `--slurpfile detail`/`archive`. Full lane×flag×wrapper matrix added to `main.md`. Extended `bounded1-supervised-lane-report.sh` (`ready[]`/`review[]` scan) and `devteam-dispatch-gate-satisfiability.sh` (+6 assertions, 40/40 PASS). CANONICAL entry in `dev-standards.md`.
+
+**Verify-live catch:** disproved the mint's `review[]` claim empirically before touching anything — QA-Drain's claim script has NO supervised/plan_only gate; an older non-supervised row already outranks all 5 cited rows in its age queue. `review[]` was never broken (document, not fix). Fixed 2 pre-existing satisfiability-script call sites that would have jq-errored once the claim script required `--slurpfile`.
+
+**Verification:** 40/40 satisfiability PASS (never live). READY-PRIMARY: 0 unresolved. Pre-existing unrelated backlog PRIMARY `[FAIL]` (5 rows) reproduced via `git stash` A/B, same IDs a prior session already flagged — not a regression. Live-board dry-run: Zod-valid + conservation-clean; the one live `ready[]` epic wrapper correctly untouched.
+
+**Board:** did not manually apply the fix live — 2 of 3 stuck P0 rows already hand-moved to `backlog[]` (now covered normally); the 3rd is the epic wrapper, correctly excluded, closed by the pre-existing Step 4.4 sweep once children finish.
+
+**Zone note:** flipped board row via `orch-apply.sh`; coordinating session releases the task lock.
+
+Zone health: notebook-auto-prune.sh's documented date-only-heading tie-break misfire hit AGAIN on this write (3rd occurrence today, same file) — worked around by pruning the true-oldest section myself in a prior edit (dropping to 2 sections) before adding this one, so the hook had nothing left to mis-prune. Recommend the coordinating/router session escalate this past "flag and move on" per the 2+-recurrence standing policy.
 
 ## Session 2026-07-30 — FIX-AUDITOR-CALLER-PROSE-OVERRIDES-DOCUMENTED-DETECTOR-THRESHOLD — REVIEW
 
@@ -39,21 +55,3 @@ Zone health: this write hit the SAME notebook-auto-prune.sh tie-break misfire T1
 **Zone note:** No MCP/gateway tool grant in this session (Read/Edit/Write/Bash only) — committing directly via explicit pathspec per INV-GATEWAY-1; coordinating dev-team session handles `task_heartbeat`/release and RAW-verify.
 
 Zone health: unrelated concurrent-session churn observed in `git status` (`scripts/emit-audit-signal.sh`/`.test.sh` modified by a peer session) — NOT staged/touched by this commit, pathspec-scoped add used throughout.
-
-## Session 2026-07-30 — FIX-AUDITOR-T1-PREGATE-MEMCREEP-SINGLE-POINT-SAMPLE — REVIEW
-
-**Task:** dev-team BOUNDED-1 auto-pickup (`cross-service/`, `scripts/agents-flow/` zone → developer). `_check_mem_creep()` in `auditor-tier1-probe.sh` took exactly ONE `docker stats` sample per container per invocation and gated ALL_GREEN/FAILURE off it — live-verified: a re-run ~5.5min after a cited ALL_GREEN flipped FAILURE (pdf-extractor 99.91% MemPerc), a transient peak the single sample missed.
-
-**Actions taken:** New `MEM_CREEP_SAMPLES` (>=2, default 2, clamped) / `MEM_CREEP_SAMPLE_INTERVAL_SEC` (default 2s) top-of-script knobs (test seams). Per-container check now loops N `docker stats` samples and gates off the WORST (max) parsed pct — a breach in ANY sample forces FAILURE even if another same-window sample reads GREEN; any single sample's stats-unavailable/unparseable still breaches (unchanged fail-loud). Zero change to `run_probe()` call site, ack-ledger arm, or `{verdict,detail,last_healthy_at}` output schema.
-
-**Verify-live catch (x2):** (1) a notebook-write byte-cap surprise — this section's own first landing pushed `developer.md` over the 60-bytes/line-derived BYTE_CAP even though LINE_CAP was fine; the `notebook-auto-prune.sh` PostToolUse hook fired and, because every heading here is date-only (`Session 2026-07-30`, no time-of-day) and its tie-break sorts stably on ORIGINAL physical order, silently dropped the physically-FIRST section (this one, freshly inserted at the NEWEST-FIRST top) instead of the true-oldest bottom section — caught by re-reading the file post-write rather than trusting the Edit result, recomposed manually below the byte budget instead of relying on the hook. (2) test-stub in-memory call-counter silently broken by `docker stats`'s `$(...)` subshell fork — see Actions.
-
-**Verification:** new regression T54-T58 in `auditor-tier1-probe.test.sh` — T54 reproduces the exact live incident (sample1=70.00% GREEN, sample2=99.91% FAIL → verdict FAILURE, names the WORST pct not the first); T55 proves worst-of-window not last-sample (reversed order, still FAILURE); T56/T57/T58 prove the loop actually samples N times (file-based call-count assertion, tmp-file not array — survives the subshell) and the N>=2 floor is enforced against an invalid override. Full suite 181/181 PASS (167 pre-existing byte-identical + 14 new checks), ~12s (interval knob exported =0 suite-wide). `shellcheck` clean (2 pre-existing unrelated warnings only).
-
-**Board:** `task_board.in_progress[FIX-AUDITOR-T1-PREGATE-MEMCREEP-SINGLE-POINT-SAMPLE]` → `review` (`next_agent: qa`), `.head` reset to idle, same `orch-apply.sh` write.
-
-**Simplicity gate:** PASS — 2 small env-var knobs + a loop around the existing single-sample read; worst-of-N reuses the SAME awk comparison idiom the script already used for the threshold check.
-
-**Zone note:** No MCP/gateway tool available this session (Read/Edit/Write/Bash only, confirmed at Step 0) — flipped the board row directly via `scripts/orch-apply.sh` (permitted, pure bash); could not release `task:FIX-AUDITOR-T1-PREGATE-MEMCREEP-SINGLE-POINT-SAMPLE` or send Telegram (structural gap, flagged for the coordinating dev-team session).
-
-Zone health: notebook-auto-prune.sh's date-only-heading tie-break misfire (above) is a real latent bug but OUT OF SCOPE for this task (scope = `auditor-tier1-probe.sh` only) — not filed as a new row here, flagged in RETURN for the coordinating session to triage. Distinct from `FIX-AUDITOR-TIER1-A30-MEM-SINGLE-CONTAINER-SCOPE` (loop scope) and `FIX-AUDITOR-A30-VMHWM-VETO-TAUTOLOGY-FALSE-NEGATIVE` (mcp-server veto) — neither touched; `docs/agents/system-auditor/probe.sh` (separate LLM-subagent evidence collector) also confirmed out of scope, untouched.
