@@ -1,6 +1,17 @@
 # Dev Team — Sprint Boundary Notebook
 
-**Written:** 2026-07-30T13:49Z
+**Written:** 2026-07-30T13:57Z
+
+## cycle-20260730T1356Z-verify — RAW-verified 2nd developer's WAL-rearm migration-scripts fix clean (arrived after this tick's own locks had already closed); board-flipped, lock released; both WAL-rearm siblings now REVIEW/qa
+
+- **Developer return** (`ab09b209581908c73`) arrived as a task-notification after tick `2026-07-30T13:37Z`'s own lock lifecycle had already fully closed (both tick-scoped locks released prior window) — handled as a standalone RAW-verify+disposition, not a tick resume.
+- **RAW-verified all claims, zero discrepancies**: commit `3bc8c9d55` real, on HEAD, single commit (6 files: 4 code + journal + notebook). All 4 `scripts/migrations/*.ts` diffs confirmed exact match — `db.exec("PRAGMA journal_mode = WAL")` deleted, replaced with explanatory comment only, no other PRAGMA touched; grep confirms zero remaining live `journal_mode` statements in any of the 4 files.
+- **Verify script independently re-run, not trusted from self-report**: `bash scripts/audits/verify-market-db-journal-mode.sh` → `PASS journal_mode=delete wal_present=false shm_present=false` — exact match to claim.
+- **Scope confirmed**: `coordination.db`/test fixtures absent from commit diff (grep on `git show --stat`). `docker-compose.yml` confirmed `./data/live:/app/data` bind-mount (not a named volume) across all services, backing the "live DB" claim.
+- **DJ-GATE-1 confirmed**: `**task-id:** FIX-SCRIPTS-MIGRATIONS-MARKETDB-WAL-REARM-SAME-DEFECT` present at `sprint-COWORK-GUARANTEED-SLOT-CATCHUP-developer.md:440`, correct format.
+- **Board disposition**: single write `IN_PROGRESS→REVIEW`, `next_agent:qa`, lane-moved, `.head` idle-reset together (CANONICAL:SSOT-STATUSFLIP-LANEMOVE held), conservation `719→719`. Committed `24fd16c84`. Sprint-task lock released on developer's behalf (`released:1`, genuine — no MCP grant). WORK telegram sent.
+- **Sibling closure**: both halves of the WAL-rearm defect class — `apps/mcp-server/` zone (`FIX-SQLITE-JOURNALMODE-WAL-REARM-DEFEATS-DELETE-MITIGATION`) and `scripts/migrations/` zone (this task) — now sit in `review[]`/`next_agent:qa` together, feeding the still-starved QA-Drain backlog.
+- **NEXT**: `.head` idle again — a fresh tick's idle-fallthrough chain will reach BOUNDED-1 next.
 
 ## cycle-20260730T1337Z-tick — RAW-verified duplicate-heading fix clean (board-flipped, lock released); BOUNDED-1 dispatched a fresh WAL-rearm fix on the sibling migration scripts; 3rd consecutive skip of the same already-owned report backlog
 
@@ -21,15 +32,3 @@
 - **Step 4.1 report check:** 272 unresolved (latest 13:00Z, 5 new since PO's own 09:44Z same-day triage) — all 5 in categories PO already mapped to owning tasks (sla-monitor/signal_quality_audit, POLYMARKET, signal-outcome-resolution → `FIX-SIGNAL-OUTCOMES-RESOLUTION-STALLED`, already REVIEW/qa). **Skipped PO re-spawn a 2nd consecutive tick** — no new category, would be pure redundant churn per `feedback_router_skip_po_respawn_identical_inputs`.
 - **4.3 stranded-sweep:** clean — 38 owned-elsewhere, 16 young-skip (<2h), 0 auto_commit/unknown. **4.4 wrapper-autoclose:** 0 rows eligible. **mock-guard:** RC=2 CAUTION, same pre-existing TODOs, no action. **Push-backstop:** ahead=10 ≤ 20, silent no-op.
 - **NEXT:** await developer's return; RAW-verify per standing discipline — AC-1 `grep -c '^## Prior cycles'`==1 proof, AC-2's double-fire-then-recur dedup test, AC-3's shape-scoped fixtures (auto-fixed shape + at least one NOT-auto-fixed shape), AC-6 (no cap-trim shortcut). Separately confirm the AC-4 agent-father flag actually landed in the RETURN/journal, not silently dropped — that carve-out was explicit in the dispatch prompt precisely so it isn't.
-
-## cycle-20260730T1307Z-verify — RAW-verified developer's auditor-signals-posted 3-layer fix clean; released lock on its behalf (no MCP grant); sibling task confirmed untouched
-
-- **RAW-verified all 4 commits real, on HEAD, correct order**: `a394e9edb` (fix+tests), `b069e10bb` (docs), `c60e9fb0f` (journal+notebook), `a42fb930e` (board flip).
-- **AC-1 diff confirmed exact match**: `agentSignalTools.ts`'s new `id<=0` branch returns `success:false`; verified it does NOT overlap the pre-existing critic-reject branch (that one already `return`s before reaching the new code — no dead/contradictory logic). Catch-all now sets `isError:true`.
-- **AC-4 `mcp-call.sh` verified correctly scoped**: `_mcp_call_parse()`'s new `Error:`-prefix check — re-ran its own test T4 confirming a mid-text "Error:" substring does NOT false-positive, only a literal prefix does.
-- **AC-2/AC-3 `emit-audit-signal.sh` verified**: `_run_e1()`'s new success/signal_id JSON-body check + mandatory `get_agent_signals` read-back — independently confirmed the read-back grep pattern `^\[id\] ` against the REAL formatter (`agentSignalTools.ts:205`), not just trusted.
-- **Independently re-ran every test claim, not trusted**: `mcp-call.test.sh` 9/9, `emit-audit-signal.test.sh` 67/67, new dedicated test 2/2, `audit-output-contract.test.sh` 35/35, `mcp-call-gateway-meta.test.sh` 20/20, a broad 457-test agent-signal-family sweep (43 files — wider net than the claimed 114) 0 fail, `tsc --noEmit` clean. Also verified the "no parser change needed" claim directly: `audit-output-contract.sh:149`'s `'[emit-signal] ABORT'*` wildcard genuinely catches both new ABORT markers.
-- **Board disposition confirmed**: single write, `in_progress[]→review[]` + `next_agent:qa` + `.head` idle-reset together (CANONICAL:SSOT-STATUSFLIP-LANEMOVE held); conservation `task_total 659→659`. Decision journal `task-id:` line matches DJ-GATE-1's required format exactly.
-- **Sibling `FIX-AUDITOR-DASHBOARD-APPEND-NO-ACTUATOR-CONTRACT-COUNT-NARRATED`** independently confirmed still `review[]`/`next_agent:qa`, untouched by this diff. Developer had no MCP/gateway grant — released `task:FIX-AUDITOR-OUTPUT-CONTRACT-...-ROWS` on its behalf (`released:1`, genuine). WORK telegram sent.
-- **No discrepancies — clean verify.**
-- **NEXT**: `.head` is idle again — a fresh tick's idle-fallthrough chain will reach BOUNDED-1 next.
