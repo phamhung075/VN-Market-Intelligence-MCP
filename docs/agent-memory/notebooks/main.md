@@ -1,6 +1,16 @@
 # Dev Team — Sprint Boundary Notebook
 
-**Written:** 2026-07-30T21:47Z
+**Written:** 2026-07-31T00:12Z
+
+## cycle-20260731T0010Z-verify — RAW-verified PO's 4th triage pass; pushed 456f7f59e; dispatched ops for stale-image UNBLOCK; deferred FIX-DONELANE to natural DRS pass
+
+- **PO returned**: minted `FIX-DONELANE-NO-DONEVERIFIED-PRODUCER-DEP-STARVATION` (P0, `done[]` lane has zero consumers, `DONE_VERIFIED` only hand-minted — 8 rows starved, 4 P0); flipped `FIX-COMMIT-PATH-PEER-INDEX-SWEEP-GUARD-LAYER2` `DONE→DONE_VERIFIED` on its own file:line-precise 09:05:59Z closure record; installed a 3-step deploy+behaviour+negative-control verification gate on `FIX-SIGNALQUALITYAUDIT-...` (review, `next_agent:qa`) because the fix is genuinely NOT in the running mcp-server image.
+- **Decisive-test re-run, not trusted**: called `is_bounded1_eligible` from the live `devteam-eligibility.jq` lib directly — confirmed `false→true` on the actuator P0, matching the pre-flip dep status `"DONE"` (commit `4b9b7cbec`) vs live `"DONE_VERIFIED"`. `grep`'d `task_board\.done\b` across every picker script — 0 hits, confirms dead-letter claim. Re-ran the UNBLOCK item's exact `docker exec` + `docker image inspect` commands myself — matched PO's numbers exactly (in-container grep=0, host=1, image Created 13h before the fix commit).
+- **One discrepancy, not board-integrity-affecting**: PO's "Conservation 727→728" figure matches neither my own full-lane sum (640→641) nor the repo's actual load-bearing conservation gate's basis (630→631) — `orch-validate.mjs` Stage 0+1 PASS and `376/376` unique ids both hold, so treating this as a self-reported miscount, not a real defect.
+- **Pushed** `456f7f59e` under `commit-mutex:main`, 0/0 ahead-behind confirmed, released `task:po-triage-20260730`.
+- **Dispatched `ops`** (background, `a0c1e307209a1ae06`, intent-locked) for the UNBLOCK: single-service mcp-server rebuild + 2-command deploy-proof, so QA-Drain doesn't verify the review row against a 13h-stale image.
+- **Deliberately did NOT direct-dispatch `architect`** on `FIX-DONELANE-...` despite P0 — this tick's fallback chain (SLS/RLC/DRS/QA-Drain) was never reached (BOUNDED-1 already claimed the idle slot), so a direct dispatch now would race a future DRS sweep on the same row. Left in `backlog[]`.
+- **NEXT**: await ops's rebuild-verification return; RAW-verify the two claimed commands before flipping `rebuild_required→false` is trusted as done.
 
 ## cycle-20260730T2137Z-tick — new tick; drained 11 signals; BOUNDED-1 (WIP=0) picked FU-SBV-EFFECTIVE-DATE-COLUMN; caught+fixed own wrong PO-triage lock key; spawned PO 4th triage pass
 
@@ -21,14 +31,4 @@
 - **Push**: dev-mcp-server had no gateway grant (commit `43e0d7ddc` local-only); PO's own commit (`ba6306e9a`) was ALSO blocked behind it by the `rebuild-raw-verify-check` pre-push gate (9 un-attested `confidence`-field trigger points in `agentSignalTools.ts`, needs a RAW-verify/REALDATA token). My own decision-journal commit message carried the token, satisfying the gate's global commit-message escape — pushed all 3 commits together (`223e3d4dd`), pre-push `tsc` also clean. Released both outer locks (`task:FIX-SIGNALQUALITYAUDIT-...`, `task:po-triage-20260730`) and sent WORK telegram.
 - **PO triage (3rd pass today) surfaced two live findings worth carrying forward**: minted `FIX-ESC-KNOWNROOT-SUPPRESSION-CONSUMER-SIDE-ONLY` (P2/ba, ESC guard only suppresses consumer-side, bctc-analyst's own 24h re-emit has no board lookup); corroborated a 3rd confirmed instance of `FIX-COWORK-DISPATCH-ROUTER-INTENT-MUTEX-BYPASS` (double-fire on the same tick) — cowork tick telemetry read all-green on the very tick that double-fired, a false-green blind spot worth flagging to whoever eventually verifies that fix's AC.
 - **NEXT**: idle — no outstanding agents this tick. Row `FIX-SIGNALQUALITYAUDIT-...` now in `review[]`/`next_agent:qa`, ready for QA pickup on its own cadence.
-
-## cycle-20260730T2107Z-tick — new tick; dev-mcp-server still in-flight on prior pick, re-entrant lock correctly held (no duplicate spawn); drained 10 signals; spawned PO 3rd triage pass
-
-- Tick `2026-07-30T21:07Z`. Preflight RUN, GCC dirty (normal concurrent cowork churn — notebooks/briefs/synthesis files from other live sessions, not dev-team-owned), HEAD.lock absent, worktree prune clean, no stale worktree locks.
-- **Drain**: 10 file signals routed-to-po (bctc-analyst + 7 bctc_signal_* routine + cowork-team), 0 `signal_queue` NEW rows, 0 orphan-signals. 6 aged-out `processed/` files pruned. Committed+pushed `23aeea6ed`, post-commit invariant confirmed 0.
-- CI probe: run `30582754299` still `in_progress` — non-fatal skip.
-- **Step 0b resume: `.head` still `in_progress` on `FIX-SIGNALQUALITYAUDIT-WRITE-GATE-UNREACHABLE-BY-EMITTER-CONTRACT` (dev-mcp-server), age ~17min.** WF-1 BLOCKED-check: `task_status=IN_PROGRESS`, not blocked. WF-2 supervised-hold check: `should_hold=false`. Attempted S2 dispatcher-wrap `task_claim` on `task:FIX-SIGNALQUALITYAUDIT-...` → `claimed:false`, `current_holder.owner_client_session` == **this session** (re-entrant — the agent dispatched last tick, `a9359a992e37f5bed`, is still running per explicit no-duplicate-spawn system guard). Per the flow's peer-collision branch (identical action whether holder is self or peer): heartbeated the lock (new `expires_at`), did **NOT** re-spawn, fell through to Step 1 — this correctly avoids the dup-spawn class in [[feedback_pipeline_resume_stale_placeholder_duplicate_spawn_risk]].
-- **Step 1 PO Triage**: claimed `task:po-triage-20260730` clean (no peer collision). 1 new Telegram report (`sla-monitor` CRITICAL breach on `signal_quality_audit`, 79217min stale) — same table PO already minted+dispatched last tick; briefed PO explicitly that this is expected re-fire, not new work, pending dev-mcp-server's in-flight fix. Spawned `po` (background, `ab88525824fdbe68c`) with full context (10 signals, 1 report, task_board summary backlog=374/ready=54/in_progress=1/review=189, git log/branch). Awaiting return before releasing `triage_key`.
-- Released SF-1 + fire-election (`cron:dev-team:2026-07-30T21:07Z`) cleanly at tick close. **NEXT**: await both dev-mcp-server's (RAW-verify per prior tick's checklist) and PO's returns; release respective outer locks on each return.
-
 
