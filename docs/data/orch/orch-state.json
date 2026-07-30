@@ -93,11 +93,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "active_task_id": null,
-    "next_agent": "router",
-    "updated_at": "2026-07-30T08:40:00Z",
-    "updated_by": "developer"
+    "status": "in_progress",
+    "active_task_id": "FIX-AUDITOR-CALLER-PROSE-OVERRIDES-DOCUMENTED-DETECTOR-THRESHOLD",
+    "next_agent": "architect",
+    "next_action": "Supervised-Lane Sweep claim of FIX-AUDITOR-CALLER-PROSE-OVERRIDES-DOCUMENTED-DETECTOR-THRESHOLD — spawn architect DIRECTLY (no zone-detect indirection; lane already resolved at promote time). supervised/plan_only preserved — do not clear.",
+    "updated_at": "2026-07-30T08:44:36Z",
+    "updated_by": "dev-team (supervised-lane sweep)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -4460,32 +4461,6 @@
           "FIX-PRESSURE-HOST-HEADROOM-WRONG-MACHINE-WRONG-QUANTITY"
         ],
         "note": "CI is GREEN on main (39a4dac7c, 2026-07-29T05:27Z), so the CI-RED-cdd5fa5a-FIX gate on FIX-PRESSURE-HOST-HEADROOM-WRONG-MACHINE-WRONG-QUANTITY (REVIEW, next_agent=qa) is discharged -- but qa must verify AFTER this rebuild, since the container it would probe today is the stale one."
-      },
-      {
-        "id": "FIX-AUDITOR-CALLER-PROSE-OVERRIDES-DOCUMENTED-DETECTOR-THRESHOLD",
-        "type": "FIX",
-        "status": "BACKLOG",
-        "priority": "P1",
-        "size": "M",
-        "zone": "cross-service/",
-        "owner": "architect",
-        "next_agent": "architect",
-        "supervised": true,
-        "plan_only": true,
-        "depends": [],
-        "created_at": "2026-07-29T06:25:00Z",
-        "created_by": "po/triage-20260729T0625-auditor-cycle-defect-cluster",
-        "source": "system-auditor Tier-1 cycle 2026-07-29T06:08:22Z (commit 9b27e9723); router self-reported the override in the triage input",
-        "title": "A spawn-prompt sentence can silently override a numeric threshold documented in the agent's own flow spec, and the resulting signal is indistinguishable from detector output",
-        "root_cause": "docs/agents/system-auditor/flow/tier1-probe.md:135-137 documents A-21 as: crashRestarts>=2 -> WARN; crashRestarts<2 -> PASS, no emit, regardless of cumulative RestartCount. The threshold is ported 1:1 from apps/mcp-server/src/scheduler/system/restartCadenceAlertJob.ts ALERT_THRESHOLD=2 and was introduced deliberately by commit 2f956f1c5 ('A-30 reclamation gate + A-21 windowed crash-only restart'). The 2026-07-29T06:08Z Tier-1 cycle measured crashRestarts=1 and emitted WARN anyway, because the router's spawn prompt said 'If A-21 now returns >=1, that is a TRUE POSITIVE - emit it'. The agent honoured caller prose over its own spec and annotated the notebook 'Router-driven override: A-21 emitted despite windowed threshold (>=2 crashes for WARN)'. PO VERIFIED the spec text at tier1-probe.md:135-137 and the emit at signal row sys-20260729T060929-39de.",
-        "defect": "TWO independent gaps, both required for the failure. (1) NO REFUSAL RULE: nothing in the system-auditor flow tells the agent what to do when a caller instruction contradicts a numeric threshold in its own spec. Honouring the caller is currently the path of least resistance and produces no artifact recording that a contradiction existed. (2) NO PROVENANCE ON THE ARTIFACT: the emitted row sys-20260729T060929-39de carries {id, ts, from, to, type, summary, severity, status, payload_ref} and nothing else. Read from .signal_queue.rows[] it is byte-shaped exactly like ordinary detector output. The override survives ONLY in the notebook prose of one cycle, which is itself subject to the retention pruning tracked by FIX-NOTEBOOK-COMPOSE-REWRITES-RETAINED-PRIOR-SECTIONS - so the evidence that this signal was not detector-produced is on a path that deletes itself. That is what makes it unreviewable rather than merely wrong.",
-        "why_this_matters": "The failure is not that one WARN was wrong. It is that the trustworthiness of EVERY signal this agent emits now rests on prose in a spawn prompt that no consumer of the signal can see. A fleet that treats .signal_queue.rows[] as machine-readable detector output cannot detect this class at all.",
-        "acceptance": "(1) The system-auditor flow states an explicit PRECEDENCE rule: where a spawn prompt contradicts a numeric threshold or predicate documented in the agent's own flow spec, the SPEC WINS. The agent MUST NOT emit on the caller's value. It logs the contradiction and reports it in the RETURN block as a CONTRACT-CONTRADICTION line naming check id, spec value with file:line, caller value, and the verbatim caller sentence. (2) The rule is placed where it binds ALL detector checks, not A-21 alone - a fix scoped to A-21 misses the class and must be rejected. (3) PROVENANCE: signal rows emitted by system-auditor carry a field recording that the emit was produced by the documented predicate. SignalRowSchema at apps/mcp-server/src/infrastructure/orchStateSchema.ts:175-189 is .passthrough() and its comment already says 'signal rows have many audit/triage fields', so this needs NO schema migration - confirm that before proposing one. (4) PREFERRED SHAPE, state a reasoned position for or against: after this fix 'emit anyway because the caller asked' should have NO reachable code path, so the provenance value set is {detector} only and an override emit is structurally impossible rather than merely labelled. If the architect concludes an override path must remain, the row must say who may authorise one and how a consumer detects it. (5) DO NOT change ALERT_THRESHOLD, the A-21 predicate, or tier1-probe.md:135-137. The detector was CORRECT and was overridden - any AC that edits the threshold is a misread of this row. (6) Decide and RECORD whether this precedence rule belongs fleet-wide in docs/standards/ rather than in one agent's flow. Do not silently scope it to system-auditor; other agents take numeric parameters from spawn prompts too.",
-        "scope_fence": "NOT a member of EPIC-AUDITOR-DETECTOR-CORRECTNESS-DRAIN and MUST NOT be folded into it. That epic covers 18 detectors whose PREDICATE is wrong. Here the predicate was right and was overridden from outside. Opposite direction, different fix, different owner.",
-        "related_memory": "feedback_dispatch_prompt_inherits_stale_fence_prose_verify_live_config (a live config must be verified, not inherited from prompt prose) and feedback_agent_selfreport_metalayer_confabulation.",
-        "po_note": "The router disclosed authorship of the override in the triage input rather than reporting the WARN as a clean finding. That disclosure is the only reason this was reviewable at all, and it is the behaviour the artifact-level fix in AC(3) is meant to make unnecessary.",
-        "updated_at": "2026-07-29T07:21:44Z",
-        "po_scope_amend_20260729T0721": "SCOPE AMENDMENT to acceptance clause (5) (PO 2026-07-29T07:21Z, triage-20260729T0719). READ THIS BEFORE ACTING ON CLAUSE (5). As written, clause (5) says 'DO NOT change ALERT_THRESHOLD, the A-21 predicate, or tier1-probe.md:135-137. The detector was CORRECT and was overridden - any AC that edits the threshold is a misread of this row.' Taken literally, 'the A-21 predicate' would block a fix that is now required. RULING: clause (5) is scoped to the VERDICT MAPPING at tier1-probe.md:133-142 - the crashRestarts>=2 -> WARN rule and its ALERT_THRESHOLD=2 parity with restartCadenceAlertJob.ts. That mapping is correct, is still protected, and this row's own fix must not touch it. Clause (5) does NOT extend to the COUNTING QUERY at tier1-probe.md:112-131, which this row never inspected and which PO measured wrong at 2026-07-29T07:16:51Z: it returned crashRestarts=0 for a startup that is a crash restart by the detector's own definition and that sits inside the 4h alert window. WHY THE ORIGINAL CLAUSE WAS REASONABLE AND STILL WRONG: 'the detector was CORRECT' was inferred from the 06:09Z reading of 1, which was accurate only because the predecessor startup had not yet aged out of the fixed 8h fetch window. The same query on the same ground truth returns 0 after 06:58:42Z. Internal consistency at one instant was mistaken for correctness. THE COUNT DEFECT IS OWNED ELSEWHERE - DO NOT ABSORB IT: FIX-A21-CRASH-WINDOW-PREDECESSOR-BOUND-FALSE-NEGATIVE (P1, architect, zone=multi). THIS row owns emit PRECEDENCE (spec beats caller prose) and stays a general fleet-wide rule; THAT row owns the COUNT. Neither fix may alter the other's surface. If an implementer perceives a conflict between the two, THIS amendment governs."
       },
       {
         "id": "FIX-DEPTHTHIN-A-PRICE-HISTORY-RETENTION-10D",
@@ -17767,9 +17742,42 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-30T08:40:52Z",
-    "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": []
+    "last_triaged_at": "2026-07-30T08:44:33Z",
+    "last_triaged_by": "dev-team (supervised-lane sweep)",
+    "in_progress": [
+      {
+        "id": "FIX-AUDITOR-CALLER-PROSE-OVERRIDES-DOCUMENTED-DETECTOR-THRESHOLD",
+        "type": "FIX",
+        "status": "IN_PROGRESS",
+        "priority": "P1",
+        "size": "M",
+        "zone": "cross-service/",
+        "owner": "architect",
+        "next_agent": "architect",
+        "supervised": true,
+        "plan_only": true,
+        "depends": [],
+        "created_at": "2026-07-29T06:25:00Z",
+        "created_by": "po/triage-20260729T0625-auditor-cycle-defect-cluster",
+        "source": "system-auditor Tier-1 cycle 2026-07-29T06:08:22Z (commit 9b27e9723); router self-reported the override in the triage input",
+        "title": "A spawn-prompt sentence can silently override a numeric threshold documented in the agent's own flow spec, and the resulting signal is indistinguishable from detector output",
+        "root_cause": "docs/agents/system-auditor/flow/tier1-probe.md:135-137 documents A-21 as: crashRestarts>=2 -> WARN; crashRestarts<2 -> PASS, no emit, regardless of cumulative RestartCount. The threshold is ported 1:1 from apps/mcp-server/src/scheduler/system/restartCadenceAlertJob.ts ALERT_THRESHOLD=2 and was introduced deliberately by commit 2f956f1c5 ('A-30 reclamation gate + A-21 windowed crash-only restart'). The 2026-07-29T06:08Z Tier-1 cycle measured crashRestarts=1 and emitted WARN anyway, because the router's spawn prompt said 'If A-21 now returns >=1, that is a TRUE POSITIVE - emit it'. The agent honoured caller prose over its own spec and annotated the notebook 'Router-driven override: A-21 emitted despite windowed threshold (>=2 crashes for WARN)'. PO VERIFIED the spec text at tier1-probe.md:135-137 and the emit at signal row sys-20260729T060929-39de.",
+        "defect": "TWO independent gaps, both required for the failure. (1) NO REFUSAL RULE: nothing in the system-auditor flow tells the agent what to do when a caller instruction contradicts a numeric threshold in its own spec. Honouring the caller is currently the path of least resistance and produces no artifact recording that a contradiction existed. (2) NO PROVENANCE ON THE ARTIFACT: the emitted row sys-20260729T060929-39de carries {id, ts, from, to, type, summary, severity, status, payload_ref} and nothing else. Read from .signal_queue.rows[] it is byte-shaped exactly like ordinary detector output. The override survives ONLY in the notebook prose of one cycle, which is itself subject to the retention pruning tracked by FIX-NOTEBOOK-COMPOSE-REWRITES-RETAINED-PRIOR-SECTIONS - so the evidence that this signal was not detector-produced is on a path that deletes itself. That is what makes it unreviewable rather than merely wrong.",
+        "why_this_matters": "The failure is not that one WARN was wrong. It is that the trustworthiness of EVERY signal this agent emits now rests on prose in a spawn prompt that no consumer of the signal can see. A fleet that treats .signal_queue.rows[] as machine-readable detector output cannot detect this class at all.",
+        "acceptance": "(1) The system-auditor flow states an explicit PRECEDENCE rule: where a spawn prompt contradicts a numeric threshold or predicate documented in the agent's own flow spec, the SPEC WINS. The agent MUST NOT emit on the caller's value. It logs the contradiction and reports it in the RETURN block as a CONTRACT-CONTRADICTION line naming check id, spec value with file:line, caller value, and the verbatim caller sentence. (2) The rule is placed where it binds ALL detector checks, not A-21 alone - a fix scoped to A-21 misses the class and must be rejected. (3) PROVENANCE: signal rows emitted by system-auditor carry a field recording that the emit was produced by the documented predicate. SignalRowSchema at apps/mcp-server/src/infrastructure/orchStateSchema.ts:175-189 is .passthrough() and its comment already says 'signal rows have many audit/triage fields', so this needs NO schema migration - confirm that before proposing one. (4) PREFERRED SHAPE, state a reasoned position for or against: after this fix 'emit anyway because the caller asked' should have NO reachable code path, so the provenance value set is {detector} only and an override emit is structurally impossible rather than merely labelled. If the architect concludes an override path must remain, the row must say who may authorise one and how a consumer detects it. (5) DO NOT change ALERT_THRESHOLD, the A-21 predicate, or tier1-probe.md:135-137. The detector was CORRECT and was overridden - any AC that edits the threshold is a misread of this row. (6) Decide and RECORD whether this precedence rule belongs fleet-wide in docs/standards/ rather than in one agent's flow. Do not silently scope it to system-auditor; other agents take numeric parameters from spawn prompts too.",
+        "scope_fence": "NOT a member of EPIC-AUDITOR-DETECTOR-CORRECTNESS-DRAIN and MUST NOT be folded into it. That epic covers 18 detectors whose PREDICATE is wrong. Here the predicate was right and was overridden from outside. Opposite direction, different fix, different owner.",
+        "related_memory": "feedback_dispatch_prompt_inherits_stale_fence_prose_verify_live_config (a live config must be verified, not inherited from prompt prose) and feedback_agent_selfreport_metalayer_confabulation.",
+        "po_note": "The router disclosed authorship of the override in the triage input rather than reporting the WARN as a clean finding. That disclosure is the only reason this was reviewable at all, and it is the behaviour the artifact-level fix in AC(3) is meant to make unnecessary.",
+        "updated_at": "2026-07-30T08:44:37Z",
+        "po_scope_amend_20260729T0721": "SCOPE AMENDMENT to acceptance clause (5) (PO 2026-07-29T07:21Z, triage-20260729T0719). READ THIS BEFORE ACTING ON CLAUSE (5). As written, clause (5) says 'DO NOT change ALERT_THRESHOLD, the A-21 predicate, or tier1-probe.md:135-137. The detector was CORRECT and was overridden - any AC that edits the threshold is a misread of this row.' Taken literally, 'the A-21 predicate' would block a fix that is now required. RULING: clause (5) is scoped to the VERDICT MAPPING at tier1-probe.md:133-142 - the crashRestarts>=2 -> WARN rule and its ALERT_THRESHOLD=2 parity with restartCadenceAlertJob.ts. That mapping is correct, is still protected, and this row's own fix must not touch it. Clause (5) does NOT extend to the COUNTING QUERY at tier1-probe.md:112-131, which this row never inspected and which PO measured wrong at 2026-07-29T07:16:51Z: it returned crashRestarts=0 for a startup that is a crash restart by the detector's own definition and that sits inside the 4h alert window. WHY THE ORIGINAL CLAUSE WAS REASONABLE AND STILL WRONG: 'the detector was CORRECT' was inferred from the 06:09Z reading of 1, which was accurate only because the predecessor startup had not yet aged out of the fixed 8h fetch window. The same query on the same ground truth returns 0 after 06:58:42Z. Internal consistency at one instant was mistaken for correctness. THE COUNT DEFECT IS OWNED ELSEWHERE - DO NOT ABSORB IT: FIX-A21-CRASH-WINDOW-PREDECESSOR-BOUND-FALSE-NEGATIVE (P1, architect, zone=multi). THIS row owns emit PRECEDENCE (spec beats caller prose) and stays a general fleet-wide rule; THAT row owns the COUNT. Neither fix may alter the other's surface. If an implementer perceives a conflict between the two, THIS amendment governs.",
+        "promoted_at": "2026-07-30T08:44:33Z",
+        "promoted_by": "dev-team (supervised-lane sweep)",
+        "promotion_note": "Supervised-Lane Sweep — assigned dispatch_lane='architect' (priority_rank=1); supervised/plan_only flags preserved, gate NOT disabled — see FIX-BOUNDED1-SUPERVISED-LANE-NO-SWEEPER",
+        "dispatch_lane": "architect",
+        "claimed_at": "2026-07-30T08:44:36Z",
+        "claimed_by": "dev-team (supervised-lane sweep)"
+      }
+    ]
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
