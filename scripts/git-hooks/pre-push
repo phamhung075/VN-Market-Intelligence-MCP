@@ -20,6 +20,20 @@
 # Fail-open: any `git diff` failure (remote sha absent locally) or a brand-new
 # branch (zero remote sha) always runs the FULL tsc — never skips.
 #
+# RAW-VERIFY GUARDRAIL (FACTORY-GUARD-CI-RAWVERIFY-IMPL, 2026-07-30): reuses
+# this same CODE_TOUCHING_REGEX-gated per-ref diff to also call
+# scripts/audits/rebuild-raw-verify-check.sh <remote_sha> <local_sha> — blocks
+# (BLOCKING, primary — this repo has no PR/branch-protection to gate on, see
+# docs/architecture-briefs/2026-07-24-factory-guard-ci-rebuild-raw-verify-hook.md
+# §0) a push that touches a DB-write/route-serving DDD layer with an
+# un-attested confidence/score/impact/magnitude/probability field addition —
+# see PUSH-AUTONOMY-1 §5 (docs/policies/dev-standards.md). Only invoked when
+# this ref's diff was successfully computed AND matched CODE_TOUCHING_REGEX
+# (same fail-open-on-diff-error posture as the tsc check above — a new-branch
+# or diff-error ref skips the call rather than blocking on an undiffable range;
+# the check script itself also fails open on zero-SHA/undiffable input as
+# defense-in-depth for its OTHER caller, the CI backstop job).
+#
 # Install: ./scripts/git-hooks/install.sh  (symlinks into .git/hooks/)
 # Bypass (NOT recommended, equivalent to --no-verify which is forbidden):
 #   PRE_PUSH_SKIP_TSC=1 git push
@@ -71,6 +85,15 @@ while read -r local_ref local_sha remote_ref remote_sha; do
 
   if printf '%s\n' "$changed_paths" | grep -qE "$CODE_TOUCHING_REGEX"; then
     needs_tsc=1
+
+    if ! bash "$REPO_ROOT/scripts/audits/rebuild-raw-verify-check.sh" "$remote_sha" "$local_sha"; then
+      echo ""
+      echo "[pre-push] BLOCKED: rebuild-raw-verify-check failed for ${remote_sha}..${local_sha} on $local_ref."
+      echo "[pre-push] See docs/policies/dev-standards.md PUSH-AUTONOMY-1 §5 — attest with a RAW-verify"
+      echo "[pre-push] commit-message token, a raw-verify-allow: <reason> inline annotation, or a"
+      echo "[pre-push] docs/agent-memory/decisions/**|reports/TASK_REPORT_*.md entry, then re-run 'git push'."
+      exit 1
+    fi
   fi
 done
 

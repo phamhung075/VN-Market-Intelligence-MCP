@@ -472,6 +472,35 @@ jobs:
       - name: Run shared-package-import-check --check
         run: bash scripts/audits/shared-package-import-check.sh --check
 
+  rebuild-raw-verify-hook:
+    name: rebuild-raw-verify-hook
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      # fetch-depth: 0 (full history) — unlike every other job above, this one
+      # needs `github.event.before` to actually be resolvable locally (a
+      # shallow/depth-1 checkout would make every git diff/log call below fail,
+      # and the script fails OPEN — not loud — on an unresolvable range).
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # Pure bash/git — no bun/go/python toolchain needed, cheapest job in the
+      # pipeline alongside size-lint/metric-mask-lint/dead-code-gate. SECONDARY/
+      # backstop layer (brief §3) — the PRIMARY, blocking check is
+      # scripts/git-hooks/pre-push (this repo has no PR/branch-protection to
+      # gate on, see docs/architecture-briefs/2026-07-24-factory-guard-ci-rebuild-raw-verify-hook.md
+      # §0); this job catches a push where the local hook was bypassed
+      # (PRE_PUSH_SKIP_TSC=1-class escape, or a non-hook-installed clone) — red
+      # CI on main is itself a monitored, actionable signal in this project's
+      # practice even with no PR to block. `github.event.before` is only
+      # populated on `push` events — on `pull_request` (or any event where it's
+      # empty/all-zero), the script's own fail-open guard PASSes rather than
+      # erroring on an unresolvable range.
+      - name: Run rebuild-raw-verify-check --check
+        run: bash scripts/audits/rebuild-raw-verify-check.sh "${{ github.event.before }}" "${{ github.sha }}"
+
 # AC-8 (optional) — Branch protection setup:
 # To require CI jobs before merging to main, go to:
 #   GitHub repo > Settings > Branches > Add branch protection rule
