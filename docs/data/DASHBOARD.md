@@ -238,3 +238,15 @@
 **Mitigation:** No immediate action beyond signal routing.
 
 ---
+
+## Anomaly: C-08 · alerts table check C-08 failed
+**Severity:** WARN | **Date:** 2026-07-30 | **Status:** OPEN
+**Location:** market.db/alerts
+**Details:** 121 alerts triggered in last 24h have no matching signal_queue rows — orphaned alerts may indicate broken feedback loop or delayed signal processing
+**Impact:** Missing signals may prevent proper alert routing and status tracking
+**Root cause:** Signal processing pipeline may be delayed or alert-signal mapping broken
+**Zone owner:** dev-mcp-server
+**Last reported:** 2026-07-30T00:35:44Z (signal sys-20260730T003538-10ba, system-auditor -> po, dedup_key=db_integrity_breach:alerts:C-08, WARN Telegram sent)
+**Mitigation:** No immediate action beyond signal routing.
+
+---
