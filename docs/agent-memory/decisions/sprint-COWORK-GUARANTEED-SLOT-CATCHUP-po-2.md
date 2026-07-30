@@ -97,3 +97,31 @@
 - Resolve 4220 as `fixed` → rejected: nothing is fixed in the runtime.
 **why-decision:** Both planes read, not one. `docker exec … grep -c deriveAuditConfidence /app/src/domain/services/signalValidator.ts` = **0** in-container vs **1** on host; image `sha256:1bba4e58c9d2` created `08:27:58Z` predates commit `43e0d7ddc` (`21:30:47Z`) by 13h; `docker inspect` Mounts confirms `apps/mcp-server/src` is baked in, not bind-mounted. So the fix cannot take effect and the alert is CORRECT, not residual. Container shows `Up 18 minutes` against `CreatedAt 08:28` — someone restarted the service at ~21:31Z believing that deployed it; a restart re-runs the same image.
 **why-change:** Also wrote the gate itself rather than leaving it to QA. A `review`/`next_agent=qa` row with both `acceptance` and `verification_gate` null forces QA to improvise, and here the two plausible improvisations fail in opposite directions — host source reads GREEN, live container reads RED, both wrong for the same reason. Gate ordered deploy-assert → live-DB behaviour → negative control, with an explicit instruction not to accept the SLA alert going quiet as evidence.
+
+### STEP po-S69 · po · 2026-07-30T23:02:00Z
+**task-id:** FIX-PO-NO-PRODUCER-FOR-MANUAL-DISPATCH-ESCAPE-HATCH
+**what-done:** Ratified architect's deliverable at source and stamped `po_ratified_at` + `po_blocking_gate=artifacts-uncommitted` on the review row.
+**what-considered:**
+- Accept the row as done on architect's own completion signal → rejected: `supervised`/ratification discipline says never sign off on a relayed verdict.
+- Ratify and mark done_verified → rejected: all 3 deliverables are still UNTRACKED.
+**why-decision:** Ran `scripts/audits/po-manual-dispatch-sweep-verify.sh` myself → PASS 13/13, incl. negative controls D/J proving supervised&&plan_only rows are excluded (the producer does not poach SLS's lane) and G proving the idempotency guard is real code, not prose. Then live-exercised Step 1 against the real board: 46 unflagged candidates (43 DRS, 3 XOR), and Step 2's stamp applied through orch-apply with conservation 730/730. The work is correct.
+**why-change:** Withheld done_verified. Artifacts are untracked while `main` is 4 ahead of origin and dev-mcp-server holds a large concurrent uncommitted edit set — the exact `feedback_dead_worker_uncommitted_live_file_revert` exposure. Gate = pathspec-scoped commit of exactly those 4 paths.
+
+### STEP po-S70 · po · 2026-07-30T23:02:00Z
+**task-id:** (ambient — 6th triage pass, tick 2026-07-30T22:37Z)
+**what-done:** Declined to mint on the `context_bloat_breach` signal's own terms; instead traced the recurrence to the journal WRITER's rollover and minted that.
+**what-considered:**
+- Force-split the live developer journal → rejected per `feedback_ctxbloat_breach_on_live_sprint_file_defer` (it grew 154,793→156,774 B mid-triage; it is actively written).
+- Mint against `FIX-DECISION-JOURNAL-BYTECAP-NO-ACTUATOR` → rejected: that row exists (P1) and correctly owns the ARCHIVER, blocked behind the dangling-ids row.
+- Do nothing and defer again → rejected: 2 signals fired 16 min apart, 4 journals breach in this sprint alone.
+**why-decision:** Natural experiment, not inference. `.claude/skills/decision-journal/SKILL.md` § Cap Check rolls to `-2.md` only on `LINES -gt 600`; there is no byte branch. In this sprint the ONLY journal that rolled is `po.md` — the ONLY one that crossed the LINE cap (625L). architect (211L/51,945B), dev-mcp-server (312L/79,545B) and developer (488L/156,774B) all sit under 600 lines, so their rollover never fires while the byte detector screams every cycle. Fleet-wide 10 journals sit in this blind spot, worst `sprint-SYSTEMIC-REMAKE-P1-qa.md` at 225,553 B / 504 L.
+**why-change:** This satisfies the DEFER precedent instead of contradicting it — fixing the rollover touches no existing file's content; it makes the NEXT write roll over.
+
+### STEP po-S71 · po · 2026-07-30T23:02:00Z
+**task-id:** (ambient — telegram report 4222)
+**what-done:** Classified report 4222 as a confirmed false positive of the liveness guard that `FIX-SIGNAL-OUTCOMES-RESOLUTION-STALLED` itself shipped; batched a narrow FIX.
+**what-considered:**
+- Treat as a fresh resolver stall and dispatch → rejected on live evidence.
+- Fold into the existing REVIEW row → rejected: that row's fix is correct and working; this is a defect in its new watchdog's predicate.
+**why-decision:** Read the live in-container DB, not the review_note's prose (`feedback_host_cli_integrity_check_false_ok_verify_through_runtime`): the 2 unresolved rows are id 49 `stock_code=MACRO` (1,306.9h) and id 74 `stock_code=MULTI` (850.9h), both `price_at_signal=null`, both `chain_catalyst` from news-scout. Non-ticker pseudo-codes have no price series, so `checked_at` can never advance — structurally unresolvable. 103/105 resolved. The resolver is healthy; `checkStalledResolutionLiveness()` counts these two forever and will emit a BUG alert every day in perpetuity, with text that misattributes it to "price lookup failing".
+**why-change:** No change from plan; the dispatcher's "not yet dispatched to anyone" read was right, but the disposition is FP-suppression, not stall-diagnosis.
