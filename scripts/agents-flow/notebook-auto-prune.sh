@@ -63,10 +63,14 @@ PROJECT_ROOT="$(git rev-parse --show-toplevel 2>/dev/null || echo "${CLAUDE_PROJ
 SIGNALS_DIR="$PROJECT_ROOT/docs/signals"
 CAPS_FILE="$PROJECT_ROOT/docs/data/file-size-caps.json"
 ORDER_FILE="$PROJECT_ROOT/docs/data/notebook-section-order.json"
+# FIX-NOTEBOOK-DUPHEADING-DETECTOR-NO-DEDUP-NO-ACTUATOR (2026-07-30): persistent marker
+# ledger, keyed by (file, heading), so a duplicate-heading signal fires AT MOST ONCE while
+# the corrupted condition persists, and re-arms (fires again) once cleared and later recurs.
+DEDUP_STATE_DIR="$PROJECT_ROOT/docs/data/notebook-dup-heading-signal-state"
 
 # --- Duplicate-heading detector (FIX-NOTEBOOK-AUTOPRUNE-REGEX-HEADING-MISMATCH item 3) ---
-# Detection-only, never auto-fixes: code audit of the drop-oldest loop below (and git
-# archaeology of a real duplicate-heading incident — see decision journal for task
+# ORIGINALLY detection-only, never auto-fixed: code audit of the drop-oldest loop below (and
+# git archaeology of a real duplicate-heading incident — see decision journal for task
 # FIX-NOTEBOOK-AUTOPRUNE-REGEX-HEADING-MISMATCH) confirmed this hook's mutation paths
 # (`head -n`, `awk 'NR<a||NR>b'`) can only REMOVE lines — there is no code path that can
 # duplicate one, and the observed duplicate pair survived inside a file that was UNDER the
@@ -75,6 +79,19 @@ ORDER_FILE="$PROJECT_ROOT/docs/data/notebook-section-order.json"
 # not by this script. This guard exists as a proactive early-warning tripwire regardless of
 # root cause, and runs on every invocation (not just >200L) since that is where duplicates
 # have actually been observed surviving.
+#
+# UPDATE (FIX-NOTEBOOK-DUPHEADING-DETECTOR-NO-DEDUP-NO-ACTUATOR, 2026-07-30): PO adjudication
+# OVERTURNS "detection-only" for this ONE signature only. The predicate below matches EXACTLY
+# "two identical '## ' headings back-to-back with nothing but blank lines between them" — by
+# construction there is ZERO non-blank content between the pair, so deleting the FIRST
+# occurrence is provably lossless. See repair_adjacent_dup_heading() below: this shape is now
+# auto-repaired (collapsed to one heading), still with exactly one deduped signal recording
+# the detected-and-repaired occurrence (see emit_dup_signal_deduped()). This function's own
+# matching logic is UNCHANGED — every OTHER duplicate-heading shape (real content between the
+# pair, non-adjacent duplicates separated by a different heading) does NOT match this
+# predicate and is therefore NEVER auto-repaired — it stays exactly as before (undetected by
+# this function; no new detector added for those shapes here — out of scope for this task,
+# see its decision journal entry).
 detect_dup_heading() {
   awk '
     /^## / {
@@ -106,11 +123,82 @@ emit_dup_signal() {
     "file": "$REL_PATH",
     "stage": "$stage",
     "duplicate_heading": $dup_json,
-    "reason": "identical ## heading found twice back-to-back (no non-blank content between) — corruption signature; not auto-fixed by this hook (detection-only, avoids risking deletion of legitimately-repeated content)",
-    "action_required": "manual_review"
+    "reason": "identical ## heading found twice back-to-back (no non-blank content between) — corruption signature; auto-repaired by this hook per PO adjudication FIX-NOTEBOOK-DUPHEADING-DETECTOR-NO-DEDUP-NO-ACTUATOR (this ONE signature is provably lossless to collapse, first occurrence deleted). Every OTHER duplicate-heading shape remains detection-only/unfixed.",
+    "auto_repaired": true,
+    "action_required": "informational_no_action_needed"
   }
 }
 EOF
+}
+
+# --- Duplicate-heading AUTO-REPAIR + signal dedup (FIX-NOTEBOOK-DUPHEADING-DETECTOR-NO-DEDUP-
+# NO-ACTUATOR, 2026-07-30) ---
+# detect_dup_heading_lines() mirrors detect_dup_heading()'s EXACT predicate (adjacent
+# identical "## " heading, nothing but blank lines between) but reports the two line numbers
+# instead of the heading text, so the caller can surgically delete the FIRST occurrence
+# (heading line + the blank-only lines up to the second occurrence) — provably lossless,
+# since by construction nothing but blanks separated them.
+detect_dup_heading_lines() {
+  awk '
+    /^## / {
+      if ($0 == prev && blank_only) { print prev_line ":" NR; exit }
+      prev = $0; prev_line = NR; blank_only = 1; next
+    }
+    NF == 0 { next }
+    { blank_only = 0 }
+  '
+}
+
+# Repairs ONLY the shape detect_dup_heading()/detect_dup_heading_lines() match. Loops to
+# convergence (handles 2+ such pairs in one file, though a single pair is the only signature
+# observed live). Never touches any OTHER duplicate-heading shape — those simply never match
+# the predicate above, so this function is never invoked for them.
+repair_adjacent_dup_heading() {
+  local content="$1"
+  local match l1 l2
+  while true; do
+    match="$(printf '%s\n' "$content" | detect_dup_heading_lines)"
+    [ -z "$match" ] && break
+    l1="${match%%:*}"
+    l2="${match##*:}"
+    { [ -z "$l1" ] || [ -z "$l2" ]; } && break
+    content="$(printf '%s\n' "$content" | awk -v l1="$l1" -v l2="$l2" 'NR < l1 || NR >= l2 { print }')"
+  done
+  printf '%s\n' "$content"
+}
+
+# Marker path keyed by (REL_PATH, heading text). REL_PATH is assigned later in the script;
+# these functions are only ever CALLED after that assignment (never at definition time).
+_dup_marker_path() {
+  local heading="$1" safe_file safe_heading
+  safe_file="$(echo "$REL_PATH" | tr '/.' '-')"
+  safe_heading="$(printf '%s' "$heading" | (shasum -a 256 2>/dev/null || sha256sum 2>/dev/null) | cut -c1-16)"
+  [ -z "$safe_heading" ] && safe_heading="nohash"
+  echo "$DEDUP_STATE_DIR/${safe_file}__${safe_heading}.marker"
+}
+
+# Emits AT MOST ONCE per (file, heading) while its marker exists — i.e. while the corrupted
+# condition has not yet been observed as cleared by _dup_clear_markers_for_file below. Guards
+# the known double-emit path (this hook fires the same detector at BOTH the pre-cap-scan and
+# post-prune-scan stages of a single run) as well as repeat invocations across separate hook
+# runs while the condition persists.
+emit_dup_signal_deduped() {
+  local dup="$1" stage="$2" marker
+  marker="$(_dup_marker_path "$dup")"
+  mkdir -p "$DEDUP_STATE_DIR" 2>/dev/null || true
+  [ -f "$marker" ] && return 0
+  emit_dup_signal "$dup" "$stage"
+  { date -u +"%Y-%m-%dT%H:%M:%SZ" > "$marker"; } 2>/dev/null || : > "$marker" 2>/dev/null || true
+}
+
+# Called whenever a fresh scan finds NO duplicate for this file — clears any stale marker(s)
+# so a LATER, genuinely-new recurrence for this file re-arms and signals again. A dedup that
+# never re-arms once the file is fixed would be a worse bug than the duplicate-signal churn
+# it replaces.
+_dup_clear_markers_for_file() {
+  local safe_file
+  safe_file="$(echo "$REL_PATH" | tr '/.' '-')"
+  rm -f "$DEDUP_STATE_DIR/${safe_file}__"*.marker 2>/dev/null || true
 }
 
 # --- Same-day tie-break direction-unresolved signal (FIX-NOTEBOOK-AUTOPRUNE-SAMEDAY-TIE-DROPS-NEWEST) ---
@@ -177,9 +265,26 @@ esac
 # --- Guard: file must exist and be readable ---
 [ -f "$FILE_PATH" ] || exit 0
 
-# --- Duplicate-heading tripwire (runs regardless of line-count cap — see detector def above) ---
-DUP_PRE="$(detect_dup_heading < "$FILE_PATH")"
-[ -n "$DUP_PRE" ] && emit_dup_signal "$DUP_PRE" "pre-cap-scan"
+# --- Duplicate-heading tripwire + auto-repair (runs regardless of line-count cap — see
+# detector def above; FIX-NOTEBOOK-DUPHEADING-DETECTOR-NO-DEDUP-NO-ACTUATOR) ---
+PRE_CONTENT="$(cat "$FILE_PATH" 2>/dev/null || true)"
+DUP_PRE="$(printf '%s\n' "$PRE_CONTENT" | detect_dup_heading)"
+if [ -n "$DUP_PRE" ]; then
+  emit_dup_signal_deduped "$DUP_PRE" "pre-cap-scan"
+  REPAIRED_PRE="$(repair_adjacent_dup_heading "$PRE_CONTENT")"
+  if [ "$REPAIRED_PRE" != "$PRE_CONTENT" ]; then
+    PRE_TEMP="$(mktemp 2>/dev/null || true)"
+    if [ -n "$PRE_TEMP" ]; then
+      if printf '%s\n' "$REPAIRED_PRE" > "$PRE_TEMP" 2>/dev/null && [ -s "$PRE_TEMP" ]; then
+        mv "$PRE_TEMP" "$FILE_PATH" 2>/dev/null || rm -f "$PRE_TEMP"
+      else
+        rm -f "$PRE_TEMP"
+      fi
+    fi
+  fi
+else
+  _dup_clear_markers_for_file
+fi
 
 # --- Derive LINE_CAP + BYTE_CAP from the SAME SSOT context-bloat-backstop.sh reads
 # (docs/data/file-size-caps.json) — see BYTE-CAP LOCKSTEP note above. BYTE_CAP is never
@@ -394,11 +499,16 @@ SECEOF
 
 done
 
-# --- Post-prune duplicate-heading tripwire (belt-and-suspenders re-check on the content
-# this hook is about to write; non-blocking — still writes the file, since blocking here
-# would leave a genuinely-oversized file stuck forever) ---
-DUP_POST="$(echo "$FILE_CONTENT" | detect_dup_heading)"
-[ -n "$DUP_POST" ] && emit_dup_signal "$DUP_POST" "post-prune-scan"
+# --- Post-prune duplicate-heading tripwire + auto-repair (belt-and-suspenders re-check on
+# the content this hook is about to write; non-blocking — still writes the file, since
+# blocking here would leave a genuinely-oversized file stuck forever) ---
+DUP_POST="$(printf '%s\n' "$FILE_CONTENT" | detect_dup_heading)"
+if [ -n "$DUP_POST" ]; then
+  emit_dup_signal_deduped "$DUP_POST" "post-prune-scan"
+  FILE_CONTENT="$(repair_adjacent_dup_heading "$FILE_CONTENT")"
+else
+  _dup_clear_markers_for_file
+fi
 
 # --- Atomic write: write to TEMP then mv to FILE_PATH ---
 TEMP="$(mktemp 2>/dev/null || true)"
