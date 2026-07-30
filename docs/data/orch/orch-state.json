@@ -18151,7 +18151,7 @@
         ],
         "created_by": "po/triage-20260730T1907Z-reportqueue",
         "created_at": "2026-07-30T19:58:04Z",
-        "updated_at": "2026-07-30T21:58:26Z",
+        "updated_at": "2026-07-30T22:07:56Z",
         "promoted_at": "2026-07-30T20:50:24Z",
         "promoted_by": "dev-team (bounded-1 auto-pickup)",
         "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
@@ -18160,8 +18160,16 @@
         "review_started_at": "2026-07-30T21:29:56Z",
         "review_started_by": "dev-mcp-server",
         "po_deploy_gate_20260730T2148": "NOT DEPLOYED - QA MUST NOT VERIFY THIS AGAINST THE RUNNING SERVER YET. RAW-verified 2026-07-30T21:48Z, both planes read: `docker exec vn-market-intelligence-mcp-mcp-server-1 grep -c deriveAuditConfidence /app/src/domain/services/signalValidator.ts` returns 0; the same grep on the host working tree returns 1. The running image (sha256:1bba4e58c9d2, created 2026-07-30T08:27:58Z) PREDATES commit 43e0d7ddc (21:30:47Z) by 13h, and apps/mcp-server/src is BAKED INTO THE IMAGE - docker inspect Mounts shows no src bind-mount (only docs/data, docs/agent-memory, docs/signals, reports, data/live, data/pdfs are bound). The container WAS restarted at ~21:31Z, immediately after the commit; a restart re-runs the SAME image and deploys nothing. ALSO: this row landed in review[] with verification_gate=null AND acceptance=null, so QA had no gate and would have improvised against whichever plane it happened to read - host source = false GREEN, live container = false RED, both wrong for the same reason. Gate now installed at po_verification_gate_20260730T2148. Telegram report 4220 ('[sla-monitor] CRITICAL breach: signal_quality_audit stale 79277min, threshold 43200min') is CORRECT and will keep firing: the table is 55d stale, the fix that would end it is not in the running binary, and the monthly producer cron (0 0 1 * *) does not fire until 2026-08-01 regardless.",
-        "rebuild_required": true,
-        "po_verification_gate_20260730T2148": "VERIFICATION GATE (was null - installed by PO 2026-07-30T21:48Z). Ordered, all three required, each RAW. (1) DEPLOY FIRST - single-service rebuild of mcp-server ONLY (never `down && up`), then assert the code is actually in the runtime: `docker exec vn-market-intelligence-mcp-mcp-server-1 grep -c deriveAuditConfidence /app/src/domain/services/signalValidator.ts` returns >=1 AND `docker image inspect` Created is LATER than 2026-07-30T21:30:47Z. A restart does NOT satisfy this. (2) BEHAVIOUR, not source - post a real urgent_news signal carrying regime_adjusted_score and NO confidence field via post_agent_signal, then read signal_quality_audit directly from the live DB and assert a NEW row exists whose created_at is AFTER the rebuild and whose confidence == regime_adjusted_score/10 clamped to [0,1]. Reading the TS source or the unit test is NOT this gate. (3) NEGATIVE CONTROL - post a signal carrying NEITHER confidence NOR regime_adjusted_score and assert NO row is written (the fix's own contract returns null there; a fabricated constant would be worse than the original bug). Do NOT accept the sla-monitor alert going quiet as evidence for any of the three: threshold 43200min vs 79277min measured staleness means it keeps firing until a write lands, regardless of whether the gate is wired."
+        "rebuild_required": false,
+        "po_verification_gate_20260730T2148": "VERIFICATION GATE (was null - installed by PO 2026-07-30T21:48Z). Ordered, all three required, each RAW. (1) DEPLOY FIRST - single-service rebuild of mcp-server ONLY (never `down && up`), then assert the code is actually in the runtime: `docker exec vn-market-intelligence-mcp-mcp-server-1 grep -c deriveAuditConfidence /app/src/domain/services/signalValidator.ts` returns >=1 AND `docker image inspect` Created is LATER than 2026-07-30T21:30:47Z. A restart does NOT satisfy this. (2) BEHAVIOUR, not source - post a real urgent_news signal carrying regime_adjusted_score and NO confidence field via post_agent_signal, then read signal_quality_audit directly from the live DB and assert a NEW row exists whose created_at is AFTER the rebuild and whose confidence == regime_adjusted_score/10 clamped to [0,1]. Reading the TS source or the unit test is NOT this gate. (3) NEGATIVE CONTROL - post a signal carrying NEITHER confidence NOR regime_adjusted_score and assert NO row is written (the fix's own contract returns null there; a fabricated constant would be worse than the original bug). Do NOT accept the sla-monitor alert going quiet as evidence for any of the three: threshold 43200min vs 79277min measured staleness means it keeps firing until a write lands, regardless of whether the gate is wired.",
+        "rebuild_verified_at": "2026-07-31T00:07:15Z",
+        "rebuild_verification": {
+          "image_sha": "sha256:95ad7ae7ef39ed903c83f37464212ede8b3cd63c71bcbfb71016ce20accce9d9",
+          "image_created": "2026-07-30T22:06:34.481869903Z",
+          "grep_count_deriveAuditConfidence": 1,
+          "health_check_passed": true,
+          "fleet_status": "12/12 healthy"
+        }
       }
     ],
     "qa": [],
