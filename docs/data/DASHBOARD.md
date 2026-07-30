@@ -262,3 +262,15 @@
 **Mitigation:** No immediate action beyond signal routing.
 
 ---
+
+## Anomaly: B-01 · sbv_fx FX data stale 204 minutes
+**Severity:** CRITICAL | **Date:** 2026-07-30 | **Status:** OPEN
+**Location:** sbv-vps/SBV
+**Details:** Last fetch approximately 3.4 hours ago; SLA threshold 30 minutes
+**Impact:** SBV FX and credit flow data unavailable; critical for macro risk assessment
+**Root cause:** VPS service may be experiencing network delays; known issue FIX-AUDITOR-SBVFX-SLA-POSTMARKET-TOLERANCE
+**Zone owner:** dev-mcp-server
+**Last reported:** 2026-07-30T07:11:39Z (signal sys-20260730T071120-1bf1, system-auditor -> po, dedup_key=data_stale:sbv_fx:B-01, CRITICAL Telegram sent)
+**Mitigation:** No immediate action beyond signal routing.
+
+---
