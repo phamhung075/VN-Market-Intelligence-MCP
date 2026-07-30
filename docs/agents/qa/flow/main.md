@@ -266,7 +266,7 @@ PIPELINE: continue
 # INV-GATEWAY-1: commit-mutex/task_claim/task_release MCP calls are the dispatcher session's sole
 # responsibility; inner specialist agents commit directly (explicit paths), no mutex skill call.
 git add docs/agent-memory/notebooks/qa.md
-git commit -m "chore(memory/qa): notebook YYYY-MM-DD"
+git commit -m "chore(memory/qa): notebook YYYY-MM-DD" -- docs/agent-memory/notebooks/qa.md
 ```
 Convention: `docs/policies/commit-convention.md` § Notebook Commits
 

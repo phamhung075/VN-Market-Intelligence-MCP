@@ -93,7 +93,7 @@ Then:
 # own_paths: [docs/agent-memory/notebooks/fixer.md]
 # Protocol: task_claim commit-mutex:main (TTL=60s) → git add <own_paths> → verify → git commit → task_release
 git add docs/agent-memory/notebooks/fixer.md
-git commit -m "chore(memory/fixer): notebook YYYY-MM-DD"
+git commit -m "chore(memory/fixer): notebook YYYY-MM-DD" -- docs/agent-memory/notebooks/fixer.md
 ```
 Convention: `docs/policies/commit-convention.md` § Notebook Commits
 

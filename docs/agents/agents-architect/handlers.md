@@ -43,7 +43,8 @@ git add docs/agent-memory/notebooks/agents-architect.md docs/architecture-briefs
 # RULE 2: zone self-check — verify every staged file is within docs/architecture-briefs/ or docs/agent-memory/notebooks/agents-architect.md
 git diff --cached --name-only
 # (if any intruder: git restore --staged <file> before proceeding)
-git commit -m "chore(memory/agents-architect): notebook YYYY-MM-DD + brief <slug>"
+git commit -m "chore(memory/agents-architect): notebook YYYY-MM-DD + brief <slug>" \
+  -- docs/agent-memory/notebooks/agents-architect.md docs/architecture-briefs/<file>.md
 # RULE 3: raw self-verify
 git show --name-only HEAD
 # (if unexpected files appear: git reset --soft HEAD~1, unstage intruders, re-commit)

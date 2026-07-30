@@ -92,7 +92,7 @@ Compose per skill Step 1 — drop oldest `## c<NNN>` section(s) while >3 section
 # own_paths: [docs/agent-memory/notebooks/alert-commander.md]
 # intent: "chore(memory/alert-commander): notebook YYYY-MM-DD"
 git add docs/agent-memory/notebooks/alert-commander.md
-git commit -m "chore(memory/alert-commander): notebook YYYY-MM-DD"
+git commit -m "chore(memory/alert-commander): notebook YYYY-MM-DD" -- docs/agent-memory/notebooks/alert-commander.md
 ```
 
 **End of cycle** → skill: `.claude/skills/cowork-end-cycle/SKILL.md`

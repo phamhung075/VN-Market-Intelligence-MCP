@@ -95,7 +95,7 @@ GATE_EXIT = skill `.claude/skills/claim-truth-gate/SKILL.md`
 # intent: "chore(memory/qa-responder): notebook YYYY-MM-DD"
 # Protocol: task_claim commit-mutex:main (TTL=60s) → git add <own_paths> → verify → git commit → task_release
 git add docs/agent-memory/notebooks/qa-responder.md
-git commit -m "chore(memory/qa-responder): notebook YYYY-MM-DD"
+git commit -m "chore(memory/qa-responder): notebook YYYY-MM-DD" -- docs/agent-memory/notebooks/qa-responder.md
 ```
 
 **7. WORK status** — run `date -u +"%H:%MZ"` → use result as `HH:MM UTC`. `send_telegram(channel="work", message=...)`:

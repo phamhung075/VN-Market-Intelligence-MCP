@@ -86,7 +86,7 @@ Write(path="docs/agent-memory/notebooks/digest-predict.md", content=<final settl
 # own_paths: [docs/agent-memory/notebooks/digest-predict.md]
 # Protocol: task_claim commit-mutex:main (TTL=60s) → git add <own_paths> → verify → git commit → task_release
 git add docs/agent-memory/notebooks/digest-predict.md
-git commit -m "chore(memory/digest-predict): notebook YYYY-MM-DD"
+git commit -m "chore(memory/digest-predict): notebook YYYY-MM-DD" -- docs/agent-memory/notebooks/digest-predict.md
 ```
 
 **P-7.** `log_agent_work(summary="Created {N} claims for {TICKERS}. Horizons: {5d:X,10d:Y,20d:Z}. Avg: {avg}. Dampening: {yes/no}.")`

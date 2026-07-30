@@ -90,7 +90,7 @@ Order recommendations by:
 # own_paths: [docs/agent-memory/notebooks/agent-father.md]
 # Protocol: task_claim commit-mutex:main (TTL=60s) → git add <own_paths> → verify → git commit → task_release
 git add docs/agent-memory/notebooks/agent-father.md
-git commit -m "chore(memory/agent-father): notebook YYYY-MM-DD"
+git commit -m "chore(memory/agent-father): notebook YYYY-MM-DD" -- docs/agent-memory/notebooks/agent-father.md
 ```
 
 **Notebook write** → skill: `.claude/skills/notebook-write/SKILL.md`

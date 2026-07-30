@@ -42,7 +42,7 @@ Proactively connect to:
 # own_paths: [docs/agent-memory/notebooks/idea-forge.md]
 # Protocol: task_claim commit-mutex:main (TTL=60s) → git add <own_paths> → verify → git commit → task_release
 git add docs/agent-memory/notebooks/idea-forge.md
-git commit -m "chore(memory/idea-forge): notebook YYYY-MM-DD"
+git commit -m "chore(memory/idea-forge): notebook YYYY-MM-DD" -- docs/agent-memory/notebooks/idea-forge.md
 ```
 Convention: `docs/policies/commit-convention.md` § Notebook Commits
 

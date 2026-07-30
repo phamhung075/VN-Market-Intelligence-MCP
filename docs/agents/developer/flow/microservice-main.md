@@ -136,7 +136,7 @@ Certify in handoff Implementation Record before proceeding to documentation revi
 # INV-GATEWAY-1: commit-mutex/task_claim/task_release MCP calls are the dispatcher session's sole
 # responsibility; inner specialist agents commit directly (explicit paths), no mutex skill call.
 git add docs/agent-memory/notebooks/developer.md
-git commit -m "chore(memory/developer): notebook YYYY-MM-DD"
+git commit -m "chore(memory/developer): notebook YYYY-MM-DD" -- docs/agent-memory/notebooks/developer.md
 ```
 Convention: `docs/policies/commit-convention.md` § Notebook Commits
 

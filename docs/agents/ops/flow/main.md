@@ -97,7 +97,7 @@ if [ "$NB_LINES" -gt 200 ]; then
   exit 1
 fi
 git add docs/agent-memory/notebooks/ops.md
-git commit -m "chore(memory/ops): notebook YYYY-MM-DD"
+git commit -m "chore(memory/ops): notebook YYYY-MM-DD" -- docs/agent-memory/notebooks/ops.md
 ```
 Convention: `docs/policies/commit-convention.md` § Notebook Commits
 

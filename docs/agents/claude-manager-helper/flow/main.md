@@ -174,7 +174,7 @@ Pass 9b Doc-Heal:  OK | N auto-fixes | K escalated
 # own_paths: [docs/agent-memory/notebooks/claude-manager-helper.md]
 # Protocol: task_claim commit-mutex:main (TTL=60s) → git add <own_paths> → verify → git commit → task_release
 git add docs/agent-memory/notebooks/claude-manager-helper.md
-git commit -m "chore(memory/claude-manager-helper): notebook YYYY-MM-DD"
+git commit -m "chore(memory/claude-manager-helper): notebook YYYY-MM-DD" -- docs/agent-memory/notebooks/claude-manager-helper.md
 ```
 Convention: `docs/policies/commit-convention.md` § Notebook Commits
 

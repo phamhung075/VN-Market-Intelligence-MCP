@@ -36,7 +36,7 @@ Verification log | escalation if digest missing
 # own_paths: [docs/agent-memory/notebooks/unified-agent.md]
 # Protocol: task_claim commit-mutex:main (TTL=60s) → git add <own_paths> → verify → git commit → task_release
 git add docs/agent-memory/notebooks/unified-agent.md
-git commit -m "chore(memory/unified-agent): notebook YYYY-MM-DD"
+git commit -m "chore(memory/unified-agent): notebook YYYY-MM-DD" -- docs/agent-memory/notebooks/unified-agent.md
 ```
 
 **End of cycle** → skill: `.claude/skills/cowork-end-cycle/SKILL.md`

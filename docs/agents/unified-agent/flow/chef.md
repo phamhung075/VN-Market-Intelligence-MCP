@@ -858,7 +858,8 @@ Section template (≤10L):
 ```bash
 # own_paths: [docs/agent-memory/notebooks/unified-agent.md, docs/signals/processed/*]
 git add docs/agent-memory/notebooks/unified-agent.md docs/signals/processed/
-git commit -m "chore(memory/unified-agent): chef <DISH_TYPE> <YYYY-MM-DD>"
+git commit -m "chore(memory/unified-agent): chef <DISH_TYPE> <YYYY-MM-DD>" \
+  -- docs/agent-memory/notebooks/unified-agent.md docs/signals/processed/*
 ```
 
 **End of cycle** → skill: `.claude/skills/cowork-end-cycle/SKILL.md`

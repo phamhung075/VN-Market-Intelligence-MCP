@@ -131,7 +131,8 @@ Signal: docs/signals/dev-vps-crawls-<ts>.json → dev-vps-crawls queued
 # own_paths: [docs/agent-memory/notebooks/ops-vps-fetch.md, docs/vps-sources/<source-name>/recon.md]
 # Protocol: task_claim commit-mutex:main (TTL=60s) → git add <own_paths> → verify → git commit → task_release
 git add docs/agent-memory/notebooks/ops-vps-fetch.md docs/vps-sources/<source-name>/recon.md
-git commit -m "chore(memory/ops-vps-fetch): recon <source-name> YYYY-MM-DD"
+git commit -m "chore(memory/ops-vps-fetch): recon <source-name> YYYY-MM-DD" \
+  -- docs/agent-memory/notebooks/ops-vps-fetch.md docs/vps-sources/<source-name>/recon.md
 ```
 Convention: `docs/policies/commit-convention.md` § Notebook Commits
 

@@ -159,7 +159,7 @@ Zone health: <e.g. "bun test 0 fail, 162 tools intact, scheduler 76 cron.schedul
 # responsibility; inner specialist agents commit directly (explicit paths), no mutex skill call.
 # Explicit-file staging ONLY — never -A or wildcard
 git add docs/agent-memory/notebooks/dev-mcp-server.md
-git commit -m "chore(memory/dev-mcp-server): notebook YYYY-MM-DD"
+git commit -m "chore(memory/dev-mcp-server): notebook YYYY-MM-DD" -- docs/agent-memory/notebooks/dev-mcp-server.md
 ```
 
 **Doc self-heal** → skill: `.claude/skills/doc-self-heal/SKILL.md`

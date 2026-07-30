@@ -62,7 +62,7 @@ Key patterns:
 # own_paths: [docs/agent-memory/notebooks/cowork-refactory-expert.md]
 # Protocol: task_claim commit-mutex:main (TTL=60s) → git add <own_paths> → verify → git commit → task_release
 git add docs/agent-memory/notebooks/cowork-refactory-expert.md
-git commit -m "chore(memory/cowork-refactory-expert): notebook YYYY-MM-DD"
+git commit -m "chore(memory/cowork-refactory-expert): notebook YYYY-MM-DD" -- docs/agent-memory/notebooks/cowork-refactory-expert.md
 ```
 Convention: `docs/policies/commit-convention.md` § Notebook Commits
 

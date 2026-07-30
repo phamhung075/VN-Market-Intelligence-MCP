@@ -182,7 +182,7 @@ Zone health: <e.g. "test coverage ~65%, Tier 3 api layer complete, Tier 4 routes
 # INV-GATEWAY-1: commit-mutex/task_claim/task_release MCP calls are the dispatcher session's sole
 # responsibility; inner specialist agents commit directly (explicit paths), no mutex skill call.
 git add docs/agent-memory/notebooks/dev-frontend.md
-git commit -m "chore(memory/dev-frontend): notebook YYYY-MM-DD"
+git commit -m "chore(memory/dev-frontend): notebook YYYY-MM-DD" -- docs/agent-memory/notebooks/dev-frontend.md
 ```
 
 **Doc self-heal** → skill: `.claude/skills/doc-self-heal/SKILL.md`
