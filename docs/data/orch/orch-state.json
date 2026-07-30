@@ -93,12 +93,9 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "FIX-DEVTEAM-CLAIM-SCRIPTS-UNCONDITIONAL-HEAD-OVERWRITE",
-    "next_agent": "developer",
-    "next_action": "BOUNDED-1 auto-pickup claim of FIX-DEVTEAM-CLAIM-SCRIPTS-UNCONDITIONAL-HEAD-OVERWRITE — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
-    "updated_at": "2026-07-30T11:17:29Z",
-    "updated_by": "dev-team (bounded-1 auto-pickup)"
+    "status": "idle",
+    "active_task_id": null,
+    "next_agent": "router"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -17845,6 +17842,29 @@
         "next_agent": "qa",
         "reviewed_at": "2026-07-30T11:09:59Z",
         "review_note": "Direction-aware same-day tie-break shipped. notebook-auto-prune.sh now resolves the minimum-ts_key GROUP direction-aware (drop physically-LAST for newest-first/prepend, physically-FIRST for oldest-first/append) instead of a plain stable sort that always dropped physically-first. Direction derives from the files own distinguishable timestamps first (43/46 live notebooks, zero config); new docs/data/notebook-section-order.json overrides the 3 confirmed-ambiguous files (developer.md=newest_first, dev-frontend.md/dev-mcp-server.md=oldest_first, each verified via git log -1 -p). Unresolved+no-override now fails loud (notebook_tiebreak_direction_unresolved_breach signal, no truncation) instead of guessing. Tests: scripts/agents-flow/notebook-auto-prune.test.sh 7/7 PASS (T1-T4 pre-existing unaffected + new T5 prepend/T6 append/T7 unresolved-safe-fail). RED-then-GREEN A/B against a REAL padded copy of docs/agent-memory/notebooks/developer.md: pre-fix wrongly dropped the newest section (reproduced the exact reported defect); post-fix correctly retains only the newest section. This fix already fired live and correctly (once, this cycle) on developer.md own PostToolUse write, dropping the true-oldest FIX-BOUNDED1-NONDEV-NEXTAGENT-RESIDUAL-NO-DISPATCH-LANE section. Decision journal: sprint-COWORK-GUARANTEED-SLOT-CATCHUP-developer.md STEP developer-S40. No apps/ touched (bash+JSON only, zone cross-service/) - bun test/tsc N/A. No MCP/gateway tool grant this session (Read/Edit/Write/Bash only) - could not task_release/send_telegram; coordinating dev-team session (owner_client_session=64c7c677-0f0f-4cee-a3ce-dba79d70b7ae) must release task:FIX-NOTEBOOK-AUTOPRUNE-SAMEDAY-TIE-DROPS-NEWEST on my behalf."
+      },
+      {
+        "id": "FIX-DEVTEAM-CLAIM-SCRIPTS-UNCONDITIONAL-HEAD-OVERWRITE",
+        "type": "FIX",
+        "size": "M",
+        "priority": "P1",
+        "status": "REVIEW",
+        "zone": "cross-service/",
+        "title": "3 dev-team claim scripts perform an unconditional .head replace, can silently clobber a live in-progress task's resume pointer",
+        "desc": "scripts/devteam-backlog-claim-bounded1.jq:57, scripts/devteam-supervised-lane-sweep.jq:66, and scripts/devteam-ready-lane-consumer.jq:151 all perform an unconditional .head replace rather than a conditional guard (mirrors the already-fixed qadrain-head-slot-decouple precedent, which correctly guards). Confirmed live-risk this exact tick: .head was genuinely occupied by an in-flight supervised task (FIX-AUDITOR-CALLER-PROSE-OVERRIDES-DOCUMENTED-DETECTOR-THRESHOLD) while all 3 scripts sat live in the dispatch chain. AC: each script gains a conditional guard — only write .head when it is idle or already targets the same task_id, mirroring qadrain's pattern.",
+        "created_at": "2026-07-30T09:18:19Z",
+        "created_by": "po/triage-20260730T0853",
+        "source": "PO triage 2026-07-30T09:06Z BATCH item 3/6 — PO ratification Q3 on docs/architecture-briefs/2026-07-29-fix-bounded1-nondev-nextagent-residual-no-dispatch-lane.md section 6 (ruling-20260730T0906Z-po-triage-po.md STEP po-4), landed to orch-state by dev-team per the same mint-gap as item 1.",
+        "updated_at": "2026-07-30T11:27:20Z",
+        "promoted_at": "2026-07-30T11:17:00Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
+        "claimed_at": "2026-07-30T11:17:29Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "next_agent": "qa",
+        "reviewed_at": "2026-07-30T11:27:20Z",
+        "reviewed_by": "developer",
+        "review_note": "Applied the identical $head_free conditional-guard shape from scripts/devteam-backlog-claim-design-router-sweep.jq (DRS) to all 3 claim scripts named in the mint: devteam-backlog-claim-bounded1.jq (line ~57), devteam-backlog-claim-supervised-lane-sweep.jq (BOTH its PRIMARY and FALLBACK .head write branches, ~153/~176), devteam-backlog-claim-ready-lane-consumer.jq (~151). Happy path (head idle/done/active_task_id-null) unchanged; when a DIFFERENT task is genuinely live in .head, the write is skipped (else .head end), never clobbered. Extended scripts/audits/devteam-dispatch-gate-satisfiability.sh with 8 new isolated-fixture assertions (AC-BOUNDED1-HEAD-GUARD, AC-SLS-HEAD-GUARD PRIMARY+FALLBACK, AC-RLC-HEAD-GUARD, each with a positive half proving the row still moves ready[]->in_progress[] while .head stays untouched) — full suite 48/48 PASS, never writes to the live orch-state.json. Commit 3519a09e4. Decision journal: sprint-COWORK-GUARANTEED-SLOT-CATCHUP-developer.md STEP developer-S41. No apps/ TS/Go source touched (zone cross-service/, pure jq+bash) - bun test/tsc structurally N/A. No MCP/gateway tool grant this session (Read/Edit/Write/Glob/Grep/Bash only, confirmed at Step 0) - could not task_release/send_telegram; coordinating dev-team session (owner_client_session=64c7c677-0f0f-4cee-a3ce-dba79d70b7ae) must release task:FIX-DEVTEAM-CLAIM-SCRIPTS-UNCONDITIONAL-HEAD-OVERWRITE on my behalf."
       }
     ],
     "qa": [],
@@ -17866,27 +17886,7 @@
     },
     "last_triaged_at": "2026-07-30T11:17:00Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": [
-      {
-        "id": "FIX-DEVTEAM-CLAIM-SCRIPTS-UNCONDITIONAL-HEAD-OVERWRITE",
-        "type": "FIX",
-        "size": "M",
-        "priority": "P1",
-        "status": "IN_PROGRESS",
-        "zone": "cross-service/",
-        "title": "3 dev-team claim scripts perform an unconditional .head replace, can silently clobber a live in-progress task's resume pointer",
-        "desc": "scripts/devteam-backlog-claim-bounded1.jq:57, scripts/devteam-supervised-lane-sweep.jq:66, and scripts/devteam-ready-lane-consumer.jq:151 all perform an unconditional .head replace rather than a conditional guard (mirrors the already-fixed qadrain-head-slot-decouple precedent, which correctly guards). Confirmed live-risk this exact tick: .head was genuinely occupied by an in-flight supervised task (FIX-AUDITOR-CALLER-PROSE-OVERRIDES-DOCUMENTED-DETECTOR-THRESHOLD) while all 3 scripts sat live in the dispatch chain. AC: each script gains a conditional guard — only write .head when it is idle or already targets the same task_id, mirroring qadrain's pattern.",
-        "created_at": "2026-07-30T09:18:19Z",
-        "created_by": "po/triage-20260730T0853",
-        "source": "PO triage 2026-07-30T09:06Z BATCH item 3/6 — PO ratification Q3 on docs/architecture-briefs/2026-07-29-fix-bounded1-nondev-nextagent-residual-no-dispatch-lane.md section 6 (ruling-20260730T0906Z-po-triage-po.md STEP po-4), landed to orch-state by dev-team per the same mint-gap as item 1.",
-        "updated_at": "2026-07-30T11:17:29Z",
-        "promoted_at": "2026-07-30T11:17:00Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
-        "claimed_at": "2026-07-30T11:17:29Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)"
-      }
-    ]
+    "in_progress": []
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
