@@ -93,12 +93,12 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "FIX-BCTC-LAYOUT-PUSH-FAILURE-NETWORK-DEADLOCK",
-    "next_agent": "dev-pdf-extractor",
-    "next_action": "locate missing /extract-layout-first trigger per ops diagnostic",
-    "updated_at": "2026-07-30T19:46:41Z",
-    "updated_by": "dev-team (ops handoff, direct dispatch of P0)"
+    "status": "idle",
+    "active_task_id": null,
+    "next_agent": "router",
+    "next_action": "FIX-BCTC-LAYOUT-PUSH-FAILURE-NETWORK-DEADLOCK flipped to REVIEW by dev-pdf-extractor -- po to decide close disposition + SPIKE-BCTC-EXTRACTION-DORMANT-MASS-ENRICHFAIL-FLOOD follow-through",
+    "updated_at": "2026-07-30T20:11:34Z",
+    "updated_by": "dev-pdf-extractor"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -18046,6 +18046,33 @@
         "created_by": "po/triage-20260730T1907Z",
         "updated_at": "2026-07-30T19:59:51Z",
         "status_note": "AC1-4 done: 8 files fixed (6 named+refine_bctc_md call_tool form+own edit-apply.md found live), CI guard shipped (task-claim-owner-session-lint.sh, 7/7 tests; baseline grandfathers 23 sites/9 files beyond scope, e.g. dev-team execute-tier.md). AC5 partial: no MCP grant to live-test; alert-commander doc was ALREADY compliant (separate Bash-grant defect, see related[]); refine_bctc_md needs a spawn-prompt session-id channel too (cowork-team zone) — flagged not silently closed. Brief: docs/architecture-briefs/2026-07-30-fix-taskclaim-owner-session-ci-guard.md"
+      },
+      {
+        "id": "FIX-BCTC-LAYOUT-PUSH-FAILURE-NETWORK-DEADLOCK",
+        "type": "FIX",
+        "mode": "fix",
+        "status": "REVIEW",
+        "priority": "P0",
+        "size": "M",
+        "zone": "multi",
+        "owner": "ops",
+        "next_agent": "po",
+        "co_owner": "dev-pdf-extractor",
+        "title": "FIX (P0): BCTC PEK-layout extraction stalled — OCR gateway child process deadlock + network push failure prevents result recovery",
+        "question": "Why did PEK-layout extraction go dormant again on 2026-07-28 (55+ hours stale) despite weights being present?",
+        "detail": "Production probe 2026-07-30T17:47Z found bctc_layout_units stalled at 2026-07-28 11:06:59Z. Weights present. Root cause: OCR gateway child-process bookkeeping defect + LayoutFirstPushClient network failure.",
+        "ac": "Debug OCR gateway semaphore. Verify mcp-server reachability. Check port/firewall config.",
+        "related": [
+          "SPIKE-BCTC-EXTRACTION-DORMANT-MASS-ENRICHFAIL-FLOOD"
+        ],
+        "created_at": "2026-07-30T17:47:00Z",
+        "created_by": "ops-dispatch-supervised-lane-sweep",
+        "updated_at": "2026-07-30T20:11:35Z",
+        "po_zone_correction_20260730": "zone was \"data\" — not one of the three legal values (apps/<service>/ | multi | cross-service/) per docs/agents/po/flow/main.md. Corrected to multi: root cause per docs/spikes/SPIKE-BCTC-EXTRACTION-DORMANT-MASS-ENRICHFAIL-FLOOD.md spans pdf-extractor (missing /app/PDF-Extract-Kit/models/Layout/YOLO/doclayout_yolo_ft.pt -> _PekLayoutModel load FAILED on every /pek-extract) AND mcp-server (bctcExtractReconcileJob rows_written=0 in 166/167 runs).",
+        "po_dispatch_note_20260730": "NO PICKER EXISTS FOR THIS ROW — PO-dispatched via BATCH instead. RAW-verified against scripts/lib/devteam-eligibility.jq: BOUNDED-1 gated (is_non_dev_next_agent_unrouted, next_agent=ops is not ^dev(-|$)|^developer$); SLS gated (requires effective_supervised AND effective_plan_only BOTH true, this row has both null); DRS gated (is_design_router_allowed — ops is EXPLICITLY off the ratified 2026-07-30 default allowlist [architect,ba,pm,po,agents-architect], see devteam-eligibility.jq:436-440); RLC is ready[]-only; QA-Drain is review[]-only. Zero of five pickers. Structural class tracked by FIX-DEVTEAM-NONDEV-NEXTAGENT-RESIDUAL-NO-DISPATCH-DESTINATION.",
+        "ops_diagnostic_20260730": "ops investigated 2026-07-30T21:50Z (journal: docs/agent-memory/decisions/sprint-OPS-FIX-BCTC-LAYOUT-DEADLOCK-2026-07-30.md, commit bdc0c7e62). OCR gateway deadlock hypothesis TRANSIENT/cleared by 07-28T18:04Z restart (healthy now). Network push failure INCONCLUSIVE (connectivity verified OK, zero push-bctc-layout calls seen). PRIMARY DEFECT: no caller of POST /extract-layout-first found anywhere in mcp-server codebase -- the extraction trigger mechanism itself is missing/undiscovered. No infra/network code change needed. dev-pdf-extractor must locate what is (or should be) invoking /extract-layout-first (cron/scheduler registration, webhook, or manual-only path) and restore it.",
+        "updated_by": "dev-pdf-extractor",
+        "dev_pdf_extractor_diagnostic_20260730": "opsprior finding (no caller of POST /extract-layout-first) is a RED HERRING: ExtractLayoutFirstUseCase/LF-EXTRACT is genuinely dead/unwired code, never the bctc_layout_units producer. The REAL live trigger is POST /pek-extract (PekEngineAdapter), fired by bctcPdfPullJob.ts + re-fired by bctcExtractReconcileJob.ts (5,35 * * * *) -- both correctly registered in schedulerJobTable.ts and RAW-confirmed firing on schedule via cron_job_runs (2026-07-28 through present, zero gaps). Dormancy cause: bctc_vps_queue held 0 pending rows (no new filings) AND 0 pek_triggered rows -- all 128 rows already exhausted MAX_RECONCILE_ATTEMPTS=8 into terminal enrich_failed by 2026-07-28 21:35Z (last_attempt range 07-26 20:15 - 07-28 21:35), during/after the OCR-concurrency stall that FIX-PDFX-TESSERACT-CONCURRENCY (commit 4bac2b85d) already root-caused and fixed -- that fix was already baked into the running pdf-extractor image BEFORE the 07-28T18:04:41Z restart. No code change landed under THIS task. LIVE END-TO-END VERIFICATION (2026-07-30 ~19:56-20:05Z): manually re-fired POST /pek-extract for DPM 2025-Q4 (a terminal enrich_failed row, valid pdf_path) directly against the running containers -- 202 Accepted, PekEngineAdapter processed 52/52 pages in 368s (OCR gateway semaphore/os_children matched throughout, zero deadlock), LayoutFirstPushClient push succeeded, and RAW DB COUNT confirms bctc_layout_units grew 1193->1245 rows (all DPM report_id, timestamp 2026-07-30 20:05:13). Pipe conclusively unclogged on the currently-deployed code. RESIDUAL/OPEN, flagged not resolved: (1) exact mechanism behind the errno-111/semaphore-mismatch symptoms during the 07-28 11:06-18:04 window could not be independently re-confirmed -- both containers logs from that exact window are gone (pdf-extractor access log for 18:00-22:00 shows zero /pek-extract traffic at all; mcp-server docker logs only retain back to 07-30T08:28 due to rotation) -- soft inference only, consistent with but not re-proven against the concurrency fix. (2) 128 bctc_vps_queue rows remain terminal enrich_failed and will NOT auto-recover from the pipe being unclogged -- each needs an explicit re-fire; bulk backlog recovery explicitly out of this tasks AC per handoff, my one test row (DPM) is now internally inconsistent (bctc_vps_queue.status=enrich_failed but bctc_layout_units has 52 fresh rows) as a direct side-effect of the verification call -- left as-is, mcp-server DB write is outside apps/pdf-extractor/ zone. PO ACTION NEEDED: (a) decide whether this evidence-only (no-diff) finding closes DONE_VERIFIED directly or routes through qa verify-live; (b) SPIKE-BCTC-EXTRACTION-DORMANT-MASS-ENRICHFAIL-FLOOD (REVIEW, blocked on this row) can likely now progress -- recovery confirmed for the pipe, but its own close_predicate Part B (terminal-row recovery) is still unmet for the other 127 rows, PO to decide on bulk re-fire ownership (ops or dev-mcp-server) separate from this row. Journal: docs/agent-memory/decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-dev-pdf-extractor.md."
       }
     ],
     "qa": [],
@@ -18067,33 +18094,7 @@
     },
     "last_triaged_at": "2026-07-30T19:27:33Z",
     "last_triaged_by": "po/triage-20260730T1907Z",
-    "in_progress": [
-      {
-        "id": "FIX-BCTC-LAYOUT-PUSH-FAILURE-NETWORK-DEADLOCK",
-        "type": "FIX",
-        "mode": "fix",
-        "status": "IN_PROGRESS",
-        "priority": "P0",
-        "size": "M",
-        "zone": "multi",
-        "owner": "ops",
-        "next_agent": "dev-pdf-extractor",
-        "co_owner": "dev-pdf-extractor",
-        "title": "FIX (P0): BCTC PEK-layout extraction stalled — OCR gateway child process deadlock + network push failure prevents result recovery",
-        "question": "Why did PEK-layout extraction go dormant again on 2026-07-28 (55+ hours stale) despite weights being present?",
-        "detail": "Production probe 2026-07-30T17:47Z found bctc_layout_units stalled at 2026-07-28 11:06:59Z. Weights present. Root cause: OCR gateway child-process bookkeeping defect + LayoutFirstPushClient network failure.",
-        "ac": "Debug OCR gateway semaphore. Verify mcp-server reachability. Check port/firewall config.",
-        "related": [
-          "SPIKE-BCTC-EXTRACTION-DORMANT-MASS-ENRICHFAIL-FLOOD"
-        ],
-        "created_at": "2026-07-30T17:47:00Z",
-        "created_by": "ops-dispatch-supervised-lane-sweep",
-        "updated_at": "2026-07-30T19:46:41Z",
-        "po_zone_correction_20260730": "zone was \"data\" — not one of the three legal values (apps/<service>/ | multi | cross-service/) per docs/agents/po/flow/main.md. Corrected to multi: root cause per docs/spikes/SPIKE-BCTC-EXTRACTION-DORMANT-MASS-ENRICHFAIL-FLOOD.md spans pdf-extractor (missing /app/PDF-Extract-Kit/models/Layout/YOLO/doclayout_yolo_ft.pt -> _PekLayoutModel load FAILED on every /pek-extract) AND mcp-server (bctcExtractReconcileJob rows_written=0 in 166/167 runs).",
-        "po_dispatch_note_20260730": "NO PICKER EXISTS FOR THIS ROW — PO-dispatched via BATCH instead. RAW-verified against scripts/lib/devteam-eligibility.jq: BOUNDED-1 gated (is_non_dev_next_agent_unrouted, next_agent=ops is not ^dev(-|$)|^developer$); SLS gated (requires effective_supervised AND effective_plan_only BOTH true, this row has both null); DRS gated (is_design_router_allowed — ops is EXPLICITLY off the ratified 2026-07-30 default allowlist [architect,ba,pm,po,agents-architect], see devteam-eligibility.jq:436-440); RLC is ready[]-only; QA-Drain is review[]-only. Zero of five pickers. Structural class tracked by FIX-DEVTEAM-NONDEV-NEXTAGENT-RESIDUAL-NO-DISPATCH-DESTINATION.",
-        "ops_diagnostic_20260730": "ops investigated 2026-07-30T21:50Z (journal: docs/agent-memory/decisions/sprint-OPS-FIX-BCTC-LAYOUT-DEADLOCK-2026-07-30.md, commit bdc0c7e62). OCR gateway deadlock hypothesis TRANSIENT/cleared by 07-28T18:04Z restart (healthy now). Network push failure INCONCLUSIVE (connectivity verified OK, zero push-bctc-layout calls seen). PRIMARY DEFECT: no caller of POST /extract-layout-first found anywhere in mcp-server codebase -- the extraction trigger mechanism itself is missing/undiscovered. No infra/network code change needed. dev-pdf-extractor must locate what is (or should be) invoking /extract-layout-first (cron/scheduler registration, webhook, or manual-only path) and restore it."
-      }
-    ]
+    "in_progress": []
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",

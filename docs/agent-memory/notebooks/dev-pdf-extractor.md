@@ -145,3 +145,40 @@ REVIEW → next_agent=qa
 Zone health: flow/main.md's G12 sandbox gate (`sandbox_runner.py`) still
 references a script absent from the repo — pilot-status shows the SCALE
 pilot closed DONE 2026-05-24; stale doc-drift, not a new finding this cycle.
+
+---
+
+## Cycle 2026-07-30 — FIX-BCTC-LAYOUT-PUSH-FAILURE-NETWORK-DEADLOCK (diagnostic, no code)
+
+**Sprint:** COWORK-GUARANTEED-SLOT-CATCHUP | **Zone:** multi (co_owner) | P0
+
+### Finding
+ops's "no caller of `/extract-layout-first`" was a red herring — that
+endpoint (`ExtractLayoutFirstUseCase`, LF-EXTRACT) is genuinely dead/unwired
+code, never the producer of `bctc_layout_units`. The real, live PEK-layout
+trigger is `POST /pek-extract`, fired by `bctcPdfPullJob.ts` (initial) and
+re-fired by `bctcExtractReconcileJob.ts` (retry, `5,35 * * * *`) — both
+registered in `schedulerJobTable.ts` and RAW-confirmed firing on schedule
+via `cron_job_runs`. Dormancy root cause: `bctc_vps_queue` held 0 `pending`
+rows (no new filings) AND 0 `pek_triggered` rows (all 128 already exhausted
+`MAX_RECONCILE_ATTEMPTS=8` into terminal `enrich_failed` by 2026-07-28
+21:35Z, during/just after the OCR-concurrency stall). `FIX-PDFX-TESSERACT-
+CONCURRENCY` (commit `4bac2b85d`) — the actual root-cause fix for the
+07-28 11:06-18:04 stall — was already deployed in the running image.
+
+### Live end-to-end verification (no code change)
+Manually re-fired `POST /pek-extract` for DPM 2025-Q4 (terminal
+`enrich_failed`, valid `pdf_path`) directly against the live containers:
+202 Accepted → PekEngineAdapter processed 52/52 pages (~368s, OCR gateway
+semaphore/os_children matched throughout) → push succeeded → raw DB COUNT
+confirms `bctc_layout_units` 1193→1245 (fresh rows, `2026-07-30 20:05:13`).
+Pipe conclusively unclogged. DPM's own `bctc_vps_queue` row still reads
+`enrich_failed` (my test bypassed that table — mcp-server-owned, out of
+zone) — flagged, not fixed; bulk 128-row backlog recovery explicitly out
+of this task's AC per handoff.
+
+### Status
+Journal: `docs/agent-memory/decisions/sprint-COWORK-GUARANTEED-SLOT-
+CATCHUP-dev-pdf-extractor.md`. Flipped board row to REVIEW (no diff to
+hand QA — evidence-only close). Flagged PO re: SPIKE-BCTC-EXTRACTION-
+DORMANT-MASS-ENRICHFAIL-FLOOD (did not flip that row myself, per handoff).
