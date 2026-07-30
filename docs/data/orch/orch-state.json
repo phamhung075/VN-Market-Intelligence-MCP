@@ -2039,7 +2039,7 @@
         "type": "system-issue",
         "summary": "stranded-state sweep: 20 unknown-owner paths (5th re-emit) — 17 same known set unchanged, 3 NEW are FACTORY-GUARD-CI-SHAREDPKG-IMPL dev in-flight uncommitted (transient, self-resolving)",
         "severity": "MED",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": "docs/handoffs/STRANDED-STATE-SWEEP-20260729T2342Z.md"
       }
     ],
