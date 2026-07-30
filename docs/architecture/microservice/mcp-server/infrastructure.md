@@ -102,6 +102,12 @@ vn_index_cache (code TEXT PK, price REAL NOT NULL, prev_price REAL DEFAULT 0,
   -- Single-row cache per index code; INSERT OR REPLACE upsert.
   -- Writer: vnIndexRefreshJob (every 5 min, 02:00-08:59 UTC Mon-Fri)
   -- Freshness SLA: <= 10 min stale during market hours
+  -- FIX-VNINDEX-CACHE-STARTUP-PURGE (2026-07-30): initMarketDataTables() now
+  -- runs a startup migration that drops+recreates this table IFF it still has
+  -- the pre-existing Sprint-1922b orphan shape (no `code` column) — the live
+  -- DB carried a same-named zombie table (id/snapshot_json/source/...) that
+  -- silently defeated CREATE TABLE IF NOT EXISTS above, so every write had
+  -- failed since 2026-06-20. See schema-market-data.ts inline comment.
   -- Store: apps/mcp-server/src/infrastructure/db/vnIndexCacheStore.ts
 ```
 
