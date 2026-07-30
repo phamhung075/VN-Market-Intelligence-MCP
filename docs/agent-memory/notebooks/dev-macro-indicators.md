@@ -83,3 +83,19 @@ Zone health: HEALTHY (build/vet/test/lint/sandbox all green; caught+fixed one by
 **Action:** No code change (either zone). Corrected `docs/data/orch/orch-state.json` task_board: moved row out of `in_progress` back to `backlog` with `zone: apps/mcp-server/`, `owner_agent: dev-mcp-server`, full trace embedded; `.head` reset to idle/router. Corrected `docs/data/orch/archive/backlog-detail.json`'s stale `apps/macro-indicators/` zone label. Decision journal: `sprint-COWORK-GUARANTEED-SLOT-CATCHUP-dev-macro-indicators.md` STEP dev-macro-indicators-S1.
 
 Zone health: HEALTHY (no code changed) | FIX-SBV-FETCHER-ZERO-VALUE-EMIT → returned to BACKLOG, re-zoned apps/mcp-server/ (not a dev-macro-indicators task)
+
+---
+
+## Session 2026-07-30 (FU-SBV-EFFECTIVE-DATE-COLUMN — BOUNDED-1 pickup, DECLINED: wrong zone, 2nd occurrence of same class)
+
+**Task:** BOUNDED-1 idle-capacity auto-pickup, labeled zone `apps/macro-indicators`. Same SBV-zone-mislabel class as 2026-07-28's FIX-SBV-FETCHER-ZERO-VALUE-EMIT (see above) — origin brief `docs/architecture-briefs/2026-06-04-data-serve-integrity.md` L86 explicitly named this as a follow-up but the backlog mint carried the same wrong zone forward.
+
+**Finding:** `sbv_rates` CREATE TABLE + all ALTER-column migrations (incl. the exact try/catch pattern this task needs to reuse) live in `apps/mcp-server/src/infrastructure/db/schema-macro.ts` L141-176. The sole writer `storeSbvSnapshot()`/`fetchSbvRates()` is `apps/mcp-server/src/infrastructure/fetchers/sbv.ts`; 4h cron wiring `apps/mcp-server/src/scheduler/macro/sbvRatesJob.ts`; VPS push script `vps-scripts/fetch-sbv.sh` (repo-root) → `pushSbvRatesHandler.ts`. `apps/macro-indicators/` (`pkg/infrastructure/repositories_sbv_rate.go` `SBVRateSQLiteAdapter.GetRate`) is read-only SELECT, zero write path. No code touched — implementing would violate `zone_restricted: apps/macro-indicators/` + `not_my_job`.
+
+**Action:** No code change. Corrected `docs/data/orch/orch-state.json` via `scripts/orch-apply.sh` (exit 0, conservation 727/727): moved row `in_progress`→`backlog` with `zone: apps/mcp-server/`, `owner_agent: dev-mcp-server`, full root_cause/generic_mandate trace embedded; `.head` reset to idle/router. Corrected `docs/data/orch/archive/backlog-detail.json`'s stale `apps/macro-indicators` zone label (direct atomic write, item-count-preserved 442/442). Decision journal: `sprint-DATA-SERVE-INTEGRITY-dev-macro-indicators.md` STEP dev-macro-indicators-S1 (path per dispatcher instruction).
+
+**Recurrence flag for PO:** this is the SECOND SBV-titled backlog row mislabeled `zone: apps/macro-indicators` for the same reason (macro-indicators is a CONSUMER of sbv_rates, not the write-path OWNER — both trace to the 2026-06-04 data-serve-integrity brief). Recommend a one-time audit of remaining SBV-titled rows in `backlog-detail.json` for the same mislabel before a 3rd BOUNDED-1 misroute burns another cycle.
+
+**Task lock:** `task:FU-SBV-EFFECTIVE-DATE-COLUMN` NOT released by this agent — INV-GATEWAY-1 reserves task_claim/task_release to the dev-team dispatcher session (owner_client_session=64c7c677-0f0f-4cee-a3ce-dba79d70b7ae) that holds it on my behalf. Flagging here for that session to release.
+
+Zone health: HEALTHY (no code changed, Go service unaffected) | FU-SBV-EFFECTIVE-DATE-COLUMN → returned to BACKLOG, re-zoned apps/mcp-server/ (not a dev-macro-indicators task)
