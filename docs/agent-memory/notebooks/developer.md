@@ -1,22 +1,6 @@
 # Developer — Notebook
 
-**Last updated:** 2026-07-30 | **Cycle:** FACTORY-GUARD-CI-NOHARDCODE-IMPL
-
-## Session 2026-07-30 — FACTORY-GUARD-CI-COMPROOT-LOGIC-IMPL — REVIEW
-
-**Task:** dev-team BOUNDED-1 auto-pickup (`cross-service/`, epic FACTORY-MAINTAINABILITY-2026-06), sibling of the TSBOUNDARIES task above (same architect brief §3/§4). New go/ast composition-root-logic CI gate + fix macro-indicators' 2 live offenders.
-
-**Actions taken:** New `scripts/audits/composition-root-logic-gate.go` (`--check`, zero-tolerance: flags any `cmd/server/**/*.go` receiver method with if-count>=2 OR any for/range; escape hatch `composition-root-logic-allow:`). Moved `policyRatesAdapter.FetchPolicyRates`/`omoAdapter.FetchOMO`'s fallback+`IsEstimate`/`ParseOK` decision logic into 2 new `pkg/application/usecases_vmt_liquidity_resolvers.go` types (`PolicyRatesResolver`, `omoResolver`) implementing the pre-existing `PolicyRatesProvider`/`OMOProvider` ports — `LiquidityStateUseCase` unchanged. `cmd/server/adapters.go` shims split into pure-delegation pairs (`policyRatesHTMLAdapter`+`policyRatesDBAdapter`, `omoRawAdapter` + free helper `convertOMOTenorRows`). Wired `composition-root-logic-gate` CI job (1 job, all 7 services — tool is syntax-only). CANONICAL pointer in `dev-standards.md`.
-
-**Verification:** Gate reproduces exactly the 2 documented offenders pre-fix (3 ifs / 4 ifs+1 for), 0 FP across all 6 other services (independently re-verified: zero receiver methods exist anywhere in their `cmd/server/`). Post-fix: `--check` exits 0 across all 7; `go build`/`go vet`/`golangci-lint run` clean; `go test ./...` unchanged pass set. New `composition-root-logic-gate_test.go` 7/7 PASS (offender/for-only/allow-comment/blank-line-breaks-allow/main-free-function/pure-delegation/live-7-service regression). RAW-verified against the LIVE running container: rebuilt+recreated `macro-indicators` (image id confirmed changed), `POST /liquidity-state` before/after byte-identical modulo `fetched_at` — both hits landed on the exact 2 fallback/fail-closed branches the gate flagged, live in prod (SBV HTML fetch failing → DB fallback; OMO `ParseOK=false`).
-
-**Board:** `task_board.in_progress[FACTORY-GUARD-CI-COMPROOT-LOGIC-IMPL]` → `review` (`next_agent: qa`), `.head` reset to idle, same `orch-apply.sh` write.
-
-**Simplicity gate:** PASS — resolvers implement the pre-existing ports (zero-touch `LiquidityStateUseCase`), tenor-row mapping loop stays a free function (mechanical, not a business decision) rather than inventing a duplicate raw DTO type.
-
-**Zone note:** No Agent/Task-spawn or MCP tool available this session (Read/Edit/Write/Bash only) — did the `apps/macro-indicators/` zone work directly instead of dispatching `dev-macro-indicators` (structural gap, not a process skip); filename corrected `composition-root-logic-gate.test.go`→`_test.go` per board note (Go only discovers `_test.go`).
-
-Zone health: no drift detected.
+**Last updated:** 2026-07-30 | **Cycle:** FACTORY-GUARD-CI-SHAREDPKG-IMPL
 
 ## Session 2026-07-30 — FACTORY-GUARD-CI-DEADCODE-IMPL — REVIEW
 
@@ -51,5 +35,23 @@ Zone health: no drift detected.
 **Simplicity gate:** PASS — 2 mechanical checks only (generic ticker-array-overlap detection explicitly deferred per brief §3), fixes are pure subtraction of a special-case branch, annotations cite ticket ids not blanket suppressions.
 
 **Zone note:** No MCP/gateway tool available this session (Read/Edit/Write/Bash only, confirmed at Step 0) — flipped the board row directly via `scripts/orch-apply.sh` (permitted, pure bash); could not release `task:FACTORY-GUARD-CI-NOHARDCODE-IMPL` or send Telegram (structural gap, flagged for the coordinating dev-team session).
+
+Zone health: no drift detected.
+
+## Session 2026-07-30 — FACTORY-GUARD-CI-SHAREDPKG-IMPL — REVIEW
+
+**Task:** dev-team BOUNDED-1 auto-pickup (`cross-service/`, epic FACTORY-MAINTAINABILITY-2026-06), 4th/final sibling (own brief `2026-07-24-factory-guard-ci-shared-package-import-check.md`). Baseline/ratchet gate for `packages/*` orphan-importer detection — same axis as size-lint (fix is a domain keep-or-cut decision, not this task's).
+
+**Actions taken:** New `scripts/audits/shared-package-import-check.sh` (`--check`/`--update`): check-1 (blocking) — every `@vn-market/`-scoped `packages/*/package.json` needs a real import/dependency reference in `apps/**`+`packages/**` (own dir excluded) OR a baseline entry, else FAIL; check-2 (advisory-only, never fails) — exported-symbol-name collisions between `packages/shared-*/index.ts` and `apps/**/*.ts`. Seeded `docs/data/shared-package-import-baseline.json` via `--update` — 3 current orphans (shared-types/shared-config/shared-db), live-verified zero real hits. Wired `shared-package-import-check` CI job + CANONICAL pointer.
+
+**Verify-live catch:** first draft's per-file `grep` subprocess loop (check-1 + check-2) hung >2min on this repo's file count (~7K+~34K forks) — caught via a background-run timeout, not a passive read. Root-cause fixed: batched every candidate file array into ONE `grep -l ... -- "${files[@]}"` call per package/symbol (O(1) forks) — re-measured 7s standalone / 14s full smoke suite. Check-2 also surfaced MORE collisions than the brief's cited "e.g. Alert/Signal/McpConfig" (also `loadMcpConfig`/`ExtractPDFRequest`/etc) — kept the general scan since it's advisory-only.
+
+**Verification:** `shared-package-import-check.sh --check` exits 0 on live repo (3 BASELINE + 11 ADVISORY lines, no fail). New `.test.sh` 4/4 PASS (baseline-listed passes, new zero-importer+no-baseline fails, real-importer passes despite baseline listing, advisory lines emit without failing). No `apps/` source touched — `bun test`/`tsc` structurally N/A. `shellcheck` clean (1 benign SC2329 info, same as size-lint's own test file).
+
+**Board:** `task_board.in_progress[FACTORY-GUARD-CI-SHAREDPKG-IMPL]` → `review` (`next_agent: qa`), `.head` reset to idle, same `orch-apply.sh` write.
+
+**Simplicity gate:** PASS — 2 mechanical checks only (per-package granularity, per-symbol AST diffing explicitly deferred per brief §3), zero edits to `packages/shared-*/` contents (explicitly out of scope, reserved for `FACTORY-SHARED-wire-or-prune-shared-packages`).
+
+**Zone note:** No MCP/gateway tool available this session (Read/Edit/Write/Bash only, confirmed at Step 0) — flipped the board row directly via `scripts/orch-apply.sh` (permitted, pure bash); could not release `task:FACTORY-GUARD-CI-SHAREDPKG-IMPL` or send Telegram (structural gap, flagged for the coordinating dev-team session).
 
 Zone health: no drift detected.
