@@ -16,7 +16,12 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
 
 from domain.services import ExtractPDFService
 from domain.models import PDFDocument, ExtractedTable, ExtractedContent
-from domain.errors import PDFProcessingError, PDFNotFoundError, PDFLowQualityError
+from domain.errors import (
+    PDFProcessingError,
+    PDFNotFoundError,
+    PDFLowQualityError,
+    OcrPageFailedError,
+)
 
 
 # ---------------------------------------------------------------------------
@@ -202,6 +207,50 @@ class TestExtractPDFServiceErrorCases:
         await p["service"].process_pdf("doc-001")
 
         assert statuses_at_fetch == ["processing"]
+
+    # -----------------------------------------------------------------
+    # FIX-PDFX-EXTRACTION-ENGINE-EMPTY-STRING-SWALLOW
+    # AC1: an OCR failure must be distinguishable "all the way to whatever
+    # stores or serves the page" — i.e. it must reach process_pdf(), mark
+    # the document failed, and NEVER reach store_extraction() as if it were
+    # a successful (if hollow) extraction.
+    # -----------------------------------------------------------------
+
+    async def test_ocr_page_failed_error_marks_document_failed_and_reraises(self, mocked_ports):
+        p = mocked_ports
+        p["doc_repo"].find_by_id.return_value = make_doc()
+        p["storage_repo"].fetch_pdf.return_value = b"bytes"
+        p["engine"].extract_tables.return_value = [make_table()]  # has a table
+        p["engine"].extract_text_ocr.side_effect = OcrPageFailedError(
+            "OCR failed for page (tesseract crash)"
+        )
+
+        with pytest.raises(OcrPageFailedError):
+            await p["service"].process_pdf("doc-001")
+
+        last_call_args = p["doc_repo"].save.call_args_list[-1]
+        assert last_call_args[0][0].status == "failed"
+
+    async def test_ocr_page_failed_error_never_reaches_store_extraction(self, mocked_ports):
+        """
+        The defect this row closes: previously a swallowed OCR failure
+        returned ("", 0.0), which — combined with a present table — PASSED
+        the quality gate at line 71 and was persisted via store_extraction()
+        as a successful extraction. With the fix, the error now short-
+        circuits before the quality gate is ever evaluated.
+        """
+        p = mocked_ports
+        p["doc_repo"].find_by_id.return_value = make_doc()
+        p["storage_repo"].fetch_pdf.return_value = b"bytes"
+        p["engine"].extract_tables.return_value = [make_table()]  # has a table
+        p["engine"].extract_text_ocr.side_effect = OcrPageFailedError(
+            "OCR failed for page (tesseract crash)"
+        )
+
+        with pytest.raises(OcrPageFailedError):
+            await p["service"].process_pdf("doc-001")
+
+        p["storage_repo"].store_extraction.assert_not_called()
 
     async def test_extraction_time_positive(self, mocked_ports):
         p = mocked_ports

@@ -12,7 +12,7 @@ import asyncio
 import io
 from typing import Optional
 
-from domain.errors import OcrCapacityExceededError, OcrDeadlineExceededError
+from domain.errors import OcrCapacityExceededError, OcrDeadlineExceededError, OcrPageFailedError
 from domain.models import ExtractedTable
 from domain.repositories import PDFExtractionEngine
 from infrastructure import ocr_gateway
@@ -128,10 +128,17 @@ class PdfplumberExtractionEngine(PDFExtractionEngine):
         are deliberately re-raised THROUGH this method's broad
         `except Exception` — they are backpressure/deadline signals that must
         reach the HTTP layer as 429/503, not the pre-existing "corrupt /
-        password-protected PDF -> return ('', 0.0)" fallback. That fallback,
-        and extraction_engine.py's separate empty-string-on-OCR-failure
-        behavior in _ocr_page, are UNCHANGED and NOT addressed by this fix
-        (flagged separately — see FIX-PDFX-TESSERACT-CONCURRENCY task close-out).
+        password-protected PDF -> return ('', 0.0)" fallback.
+
+        FIX-PDFX-EXTRACTION-ENGINE-EMPTY-STRING-SWALLOW: OcrPageFailedError
+        (also raised by _ocr_page, for genuine OCR failures — tesseract
+        crash, corrupt raster, any OCR exception that is NOT a capacity/
+        deadline signal) is re-raised for the same reason: it must reach
+        process_pdf()'s `except PDFProcessingError` branch and mark the
+        document failed, not be swallowed here into a hollow ('', 0.0)
+        "success". The pre-existing "corrupt / password-protected PDF ->
+        return ('', 0.0)" fallback below is otherwise UNCHANGED — it only
+        covers pdfplumber.open()/page iteration failures, never an OCR call.
         """
         try:
             import pdfplumber  # type: ignore[import]
@@ -160,9 +167,11 @@ class PdfplumberExtractionEngine(PDFExtractionEngine):
                         else:
                             confidence = min(confidence, 0.3)
 
-        except (OcrCapacityExceededError, OcrDeadlineExceededError):
-            # Must propagate — these are transport-layer signals (429/503),
-            # not extraction failures. See docstring note above.
+        except (OcrCapacityExceededError, OcrDeadlineExceededError, OcrPageFailedError):
+            # Must propagate — Capacity/Deadline are transport-layer signals
+            # (429/503); OcrPageFailedError is a genuine OCR failure that
+            # must mark the document failed rather than being swallowed into
+            # a hollow ('', 0.0) "success". See docstring note above.
             raise
         except Exception:
             return "", 0.0
@@ -183,10 +192,21 @@ class PdfplumberExtractionEngine(PDFExtractionEngine):
         through the same BoundedSemaphore + private ThreadPoolExecutor as the
         async entry point.
 
-        Returns empty string if pytesseract/Pillow is not installed, or if the
-        underlying OCR call fails for any OTHER reason (pre-existing behavior,
-        UNCHANGED — see docstring note on the caller). OcrCapacityExceededError
-        and OcrDeadlineExceededError are NOT swallowed here — they propagate.
+        Returns empty string if pytesseract/Pillow is not installed (no OCR
+        attempt is made — the environment simply lacks the OCR dependency,
+        pre-existing behavior, UNCHANGED), OR if the OCR call itself SUCCEEDS
+        but yields no/whitespace-only text (a genuinely blank/sparse scanned
+        page — also pre-existing behavior, UNCHANGED; see negative-control
+        test).
+
+        Raises OcrCapacityExceededError / OcrDeadlineExceededError (transport
+        signals — unchanged, see FIX-PDFX-TESSERACT-CONCURRENCY) or, as of
+        FIX-PDFX-EXTRACTION-ENGINE-EMPTY-STRING-SWALLOW, OcrPageFailedError
+        when the underlying OCR call raises for any OTHER reason (tesseract
+        crash, corrupt raster, etc.) — this is a genuine OCR FAILURE, and
+        prior behavior of silently returning "" here made it indistinguishable
+        from the legitimate-blank-page case above at every downstream read
+        site. None of these three are swallowed here — they propagate.
         """
         try:
             import pytesseract  # noqa: F401  (existence check only — real call goes through the gateway)
@@ -204,5 +224,14 @@ class PdfplumberExtractionEngine(PDFExtractionEngine):
             return text.strip()
         except (OcrCapacityExceededError, OcrDeadlineExceededError):
             raise
-        except Exception:
-            return ""
+        except Exception as exc:
+            # FIX-PDFX-EXTRACTION-ENGINE-EMPTY-STRING-SWALLOW: a genuine OCR
+            # failure (tesseract crash, corrupt raster, timeout NOT already
+            # covered by the gateway's own OcrDeadlineExceededError, etc.)
+            # must NOT be reported as "" — that is byte-indistinguishable
+            # from a legitimate blank page and lets a failed page pass the
+            # quality gate (services.py) as a hollow "success". Tag it and
+            # let it propagate; the caller's docstring explains the chain.
+            raise OcrPageFailedError(
+                f"OCR failed for page (tesseract/gateway raised {type(exc).__name__}: {exc})"
+            ) from exc

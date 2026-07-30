@@ -53,3 +53,35 @@ class OcrDeadlineExceededError(PDFProcessingError):
     opaque processing failure — this is the mechanism that breaks the
     "abandoned request permanently consumes a slot" ratchet.
     """
+
+
+class OcrPageFailedError(PDFProcessingError):
+    """
+    FIX-PDFX-EXTRACTION-ENGINE-EMPTY-STRING-SWALLOW.
+
+    Raised by PdfplumberExtractionEngine._ocr_page() (infrastructure/
+    extraction_engine.py) when a single page's Tesseract OCR call raises any
+    exception OTHER than OcrCapacityExceededError / OcrDeadlineExceededError
+    (those two are already distinguished — see FIX-PDFX-TESSERACT-CONCURRENCY
+    — and are re-raised as transport-layer backpressure/deadline signals, not
+    processing failures).
+
+    Prior behavior caught ALL OCR exceptions (tesseract crash, corrupt
+    raster, etc.) and returned "" as if extraction had succeeded. Combined
+    with the quality gate at domain/services.py (`ocr_conf < 0.5 AND not
+    tables` => reject), a document with any table and zero OCR text passed
+    the gate and was persisted as a successful extraction — a failed OCR
+    page was byte-indistinguishable, at every downstream read site, from a
+    genuinely blank/sparse scanned page.
+
+    This subclass makes a REAL OCR failure fail the pipeline loudly instead:
+    ExtractPDFService.process_pdf()'s existing `except PDFProcessingError`
+    branch marks the document `status="failed"` and re-raises (never reaching
+    the quality gate / store_extraction), so callers see an explicit
+    `status: "failed"` response instead of a silently hollow "success".
+
+    A genuinely blank/near-blank page — the OCR call SUCCEEDS and simply
+    returns "" or whitespace — never raises this error; it is not this
+    class's concern and must keep flowing through the pre-existing low-
+    confidence path unchanged (see negative-control test).
+    """
