@@ -70,8 +70,28 @@
 # read immediately before invoking this script.
 #
 # Mutation (single row only): review[] -> qa[] ; status REVIEW -> QA ;
-# stamp claimed_at/claimed_by ; set .head to "qa" directly. Never touches
-# backlog[]/ready[]/in_progress[] — orthogonal lane, orthogonal budget.
+# stamp claimed_at/claimed_by ; CONDITIONALLY set .head (see HEAD-SAFE CLAIM
+# below). Never touches backlog[]/ready[]/in_progress[] — orthogonal lane,
+# orthogonal budget.
+#
+# HEAD-SAFE CLAIM (FIX-DEVTEAM-QADRAIN-HEAD-WRITE-CONDITIONAL,
+# docs/architecture-briefs/2026-07-29-qadrain-head-slot-decouple.md §3):
+# the review[]->qa[] lane move above ALWAYS happens (selection/lane-move
+# logic is unchanged) but the `.head` write is now CONDITIONAL on
+# `.head` being free ($hs in {idle,done} or $ha == null). PO's live
+# dry-run 2026-07-29T19:2xZ against the real board proved the prior
+# unconditional `.head = {...}` clobbered a genuinely-running developer
+# task's resume pointer (FACTORY-GUARD-CI-METRICMASK-IMPL ->
+# overwritten). Mirrors the proven in-repo shape at
+# scripts/devteam-wrapper-autoclose.jq:122-128 (same conditional-guard
+# idiom, applied in the opposite direction — claiming INTO `.head`
+# instead of clearing FROM it). Caller-side impact: NONE for the one
+# existing call site (docs/agents/dev-team/flow/main.md §674-726) — that
+# site is only ever reached when `.head` is already idle, so
+# `$head_free` is always true there today; a future head-busy-safe call
+# site (Part 2, FIX-DEVTEAM-QADRAIN-INVOCATION-HEAD-DECOUPLED) instead
+# correlates its picked row via `claimed_at`/`claimed_by`, never via
+# `.head.next_action` (see brief §3 "Design decision").
 #
 # If review[] has no eligible row (nothing REVIEW+next_agent=='qa') this
 # script is a NO-OP (outputs the input document unchanged) — safe to
@@ -120,14 +140,28 @@ def age_epoch:
           })
       ])
     | .task_board.review = [ .task_board.review | to_entries[] | select(.key != $picked.idx) | .value ]
-    | .head = {
-        status: "in_progress",
-        active_task_id: $picked_id,
-        next_agent: "qa",
-        next_action: ("Review-Lane QA-Drain claim of " + $picked_id
-          + " — spawn qa in verify-committed mode (branch:null direct-commit row, no task branch/handoff — "
-          + "see docs/agents/qa/flow/main.md § Direct-Commit Verify; do NOT use the normal pipeline JUMP-TO, it requires a branch this row does not have)."),
-        updated_at: $now,
-        updated_by: "dev-team (review-lane qa-drain)"
-      }
+    | ((.head.status // "idle") as $hs
+       | (.head.active_task_id // null) as $ha
+       | ($hs == "idle" or $hs == "done" or $ha == null)) as $head_free
+    | .head = (
+        if $head_free then
+          {
+            status: "in_progress",
+            active_task_id: $picked_id,
+            next_agent: "qa",
+            next_action: ("Review-Lane QA-Drain claim of " + $picked_id
+              + " — spawn qa in verify-committed mode (branch:null direct-commit row, no task branch/handoff — "
+              + "see docs/agents/qa/flow/main.md § Direct-Commit Verify; do NOT use the normal pipeline JUMP-TO, it requires a branch this row does not have)."),
+            updated_at: $now,
+            updated_by: "dev-team (review-lane qa-drain)"
+          }
+        else
+          .head   # FIX-DEVTEAM-QADRAIN-HEAD-WRITE-CONDITIONAL: a DIFFERENT task is
+                  # genuinely live in .head (status in_progress, active_task_id set —
+                  # e.g. a developer session actively running) — never clobber it.
+                  # Mirrors scripts/devteam-wrapper-autoclose.jq:122-128's own
+                  # conditional guard, applied to the claim-INTO-head direction
+                  # instead of clear-FROM-head.
+        end
+      )
   end

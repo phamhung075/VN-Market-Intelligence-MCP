@@ -464,6 +464,54 @@ RLC_HEADGUARD_STILL_CLAIMED=$(jq -r '[.task_board.in_progress[] | select(.id=="G
 assert "AC-RLC-HEAD-GUARD (positive half): the row itself still moves ready[]->in_progress[] even while .head stays untouched" \
   "$([ "$RLC_HEADGUARD_STILL_CLAIMED" -eq 1 ] && echo true || echo false)"
 
+# ---- AC-QADRAIN-HEAD-GUARD ----
+# FIX-DEVTEAM-QADRAIN-HEAD-WRITE-CONDITIONAL (2026-07-30/31, brief
+# docs/architecture-briefs/2026-07-29-qadrain-head-slot-decouple.md §3/§6):
+# same negative-control discipline as the 4 HEAD-GUARD blocks above, applied
+# to scripts/devteam-review-claim-qa-drain.jq's own `.head` write, PLUS the
+# brief's explicitly-requested POSITIVE control (today's fixture above never
+# set `.head` at all, so it could not previously catch this defect class).
+# ISOLATED single-row fixtures (same discipline as every HEAD-GUARD block
+# above) — never the shared padded fixture.
+echo ""
+echo "=== HEAD-GUARD (FIX-DEVTEAM-QADRAIN-HEAD-WRITE-CONDITIONAL): Review-Lane QA-Drain ==="
+
+QADRAIN_HEADGUARD_FIXTURE=$(jq -n --arg now "$NOW" '
+  { task_board: {
+      backlog: [], ready: [], in_progress: [], qa: [],
+      review: [ { id: "GATESAT-QADRAIN-HEADGUARD", status: "REVIEW", priority: "P1",
+        type: "FIX", zone: "cross-service/", next_agent: "qa", created_at: $now } ],
+      done: [], done_verified: []
+    },
+    head: { status: "in_progress", active_task_id: "GATESAT-UNRELATED-BUSY-TASK-QADRAIN",
+            next_agent: "developer", updated_at: $now, updated_by: "test" }
+  }')
+echo "$QADRAIN_HEADGUARD_FIXTURE" > "$WORK/qadrain-headguard.json"
+HEAD_BEFORE_QADRAIN=$(jq -c '.head' "$WORK/qadrain-headguard.json")
+jq --arg now "$NOW" --slurpfile detail "$DETAIL" -f scripts/devteam-review-claim-qa-drain.jq "$WORK/qadrain-headguard.json" > "$WORK/qadrain-headguard-after.json"
+HEAD_AFTER_QADRAIN=$(jq -c '.head' "$WORK/qadrain-headguard-after.json")
+assert "AC-QADRAIN-HEAD-GUARD (negative): .head is byte-identical after QA-Drain claim when a DIFFERENT task is genuinely busy in .head (never clobbers a live resume pointer)" \
+  "$([ "$HEAD_BEFORE_QADRAIN" = "$HEAD_AFTER_QADRAIN" ] && echo true || echo false)"
+QADRAIN_HEADGUARD_STILL_CLAIMED=$(jq -r '[.task_board.qa[] | select(.id=="GATESAT-QADRAIN-HEADGUARD")] | length' "$WORK/qadrain-headguard-after.json")
+assert "AC-QADRAIN-HEAD-GUARD (negative, lane-move half): the row itself still moves review[]->qa[] even while .head stays untouched (only .head is guarded, not the lane move)" \
+  "$([ "$QADRAIN_HEADGUARD_STILL_CLAIMED" -eq 1 ] && echo true || echo false)"
+
+QADRAIN_HEADFREE_FIXTURE=$(jq -n --arg now "$NOW" '
+  { task_board: {
+      backlog: [], ready: [], in_progress: [], qa: [],
+      review: [ { id: "GATESAT-QADRAIN-HEADFREE", status: "REVIEW", priority: "P1",
+        type: "FIX", zone: "cross-service/", next_agent: "qa", created_at: $now } ],
+      done: [], done_verified: []
+    },
+    head: { status: "idle", active_task_id: null, next_agent: "router",
+            updated_at: $now, updated_by: "test" }
+  }')
+echo "$QADRAIN_HEADFREE_FIXTURE" > "$WORK/qadrain-headfree.json"
+jq --arg now "$NOW" --slurpfile detail "$DETAIL" -f scripts/devteam-review-claim-qa-drain.jq "$WORK/qadrain-headfree.json" > "$WORK/qadrain-headfree-after.json"
+QADRAIN_HEADFREE_HEAD_TASK=$(jq -r '.head.active_task_id // empty' "$WORK/qadrain-headfree-after.json")
+assert "AC-QADRAIN-HEAD-GUARD (positive): .head IS written with the picked row when .head was idle before invocation (regression-guards the original call site's existing behavior stays intact after the conditional guard landed; got active_task_id='${QADRAIN_HEADFREE_HEAD_TASK:-<none>}')" \
+  "$([ "$QADRAIN_HEADFREE_HEAD_TASK" = "GATESAT-QADRAIN-HEADFREE" ] && echo true || echo false)"
+
 for f in t1c t2c t3c t4c t5c; do
   jq -e . "$WORK/$f.json" >/dev/null 2>&1 || { echo "  [FAIL] $f.json is not even valid JSON"; FAIL=1; continue; }
   bun scripts/orch-validate.mjs "$WORK/$f.json" >/dev/null 2>&1 \
