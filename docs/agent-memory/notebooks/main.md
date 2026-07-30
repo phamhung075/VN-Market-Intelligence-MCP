@@ -1,6 +1,16 @@
 # Dev Team — Sprint Boundary Notebook
 
-**Written:** 2026-07-30T16:30Z
+**Written:** 2026-07-30T16:49Z
+
+## cycle-20260730T1637Z-tick — drained 4 signals; BOUNDED-1 dispatched dev-mcp-server on FU-CNYVND-DEAD-FIELD-REMOVE (P3 dead-data cleanup); flagged log_agent_work stale call signature via signal; 9th consecutive PO-respawn skip
+
+- **Preflight RUN, tick `2026-07-30T16:37Z`.** GCC-preflight clean. `.head` idle at tick start (developer's `FIX-WF2-...` return already disposed in the prior standalone verify) — idle-fallthrough, not pipeline-resume.
+- **Step 0a drain:** 4 signals (commit-sweep-guard, sprint-COWORK-developer context-bloat, cowork-team fire, own `exectier-phase35` signal from the prior tick) — all routed-to-po + 5 stale `processed/` files pruned, committed `efaa2822f`.
+- **CI probe:** deduped clean against already-tracked `ci-red-c01f39b0-*` fingerprint.
+- **BOUNDED-1:** WIP=0 → promoted+claimed `FU-CNYVND-DEAD-FIELD-REMOVE` (P3, `zone:apps/mcp-server` — Tier-1 explicit zone, no ambiguity). Committed `7d3bf269b`. Dispatched `dev-mcp-server` (background, DJ-GATE-1 + CANONICAL:SSOT-STATUSFLIP-LANEMOVE instructed). Lock claimed and held (LOCK-LIFETIME) — awaiting return.
+- **Found + flagged, not fixed inline**: `post-cycle.md` Step 4.5's documented `log_agent_work(tag=..., state=...)` call doesn't match the live MCP tool schema (`agent_name`/`status` required; `completed` needs the `id` from a prior `status="running"` call) — a literal read fails every call. Worked around live with the correct running→completed lifecycle; emitted a `repair_task_request` signal (same doc-drift class as last tick's `execute-tier.md` finding). Committed `5f226a7ef`.
+- **Step 4.1:** 172 unresolved (+2 since last check, same known categories, no new category type) — **9th consecutive PO-respawn skip**. Post-cycle otherwise clean/no-op (4.0 no reports to expire, 4.0.5 CAUTION unchanged pre-existing TODOs, 4.2 0-byte no-op, 4.3 0 actionable — 19 owned-elsewhere/19 young-skip, 4.4 0 rows swept — identity write, no commit).
+- **NEXT:** await `dev-mcp-server`'s return on `FU-CNYVND-DEAD-FIELD-REMOVE`; RAW-verify the zero-live-readers re-check + migration diff + test re-run before trusting the board flip.
 
 ## cycle-20260730T1607Z-tick — BOUNDED-1 dispatched developer on FIX-WF2-SUPERVISED-HOLD-NO-PO-SIDE-GOAHEAD-PRODUCER; flagged execute-tier.md Phase-3.5 stale lock-release pattern via signal; RAW-verified developer's return clean, board REVIEW/qa, 8th consecutive PO-respawn skip
 
@@ -25,14 +35,4 @@
 - **dev-mcp-server's genuine return arrived mid-cycle:** commits `cf862f920` (code+test) + `815752129` (journal+notebook). RAW-verified by direct diff read, not self-report: `startupHelpers.ts` gained `shouldSkipRecoveryReplay` BEFORE `recordJobRun`, default `fn` now calls `runBctcReparseJob({db})` mapping `resolved+failed→rowsWritten` AND neutralizing `bctcReparseJob.ts:892`'s `if(!options.db)` self-record block; `startScheduler.ts`'s catch-up gated by `shouldRunCatchup(...)`. Independently re-ran: new test 13/13, broader 22-file/216-test scheduler regression 0 fail (superset of claimed 9-file/114-test scope), `tsc` clean, tool/cron counts unchanged (184/88). Full-suite 58-fail corroborated against same-day precedent `78f945fb2` (60-fail) as one consistent flake band.
 - **Board flip:** `IN_PROGRESS→REVIEW`, `next_agent:qa`, lane-move+head-idle-reset single write (`7f1bbd4fa`), conservation `719→719`. Lock released (`released:1`). WORK telegram sent.
 - **NEXT:** this tick's fresh `ci_red` signal awaits drain; QA-Drain backlog gains a 3rd review-lane row.
-
-## cycle-20260730T1407Z-tick — drained 2 signals clean; BOUNDED-1 dispatched dev-mcp-server on a fresh P1 bctcReparseJob double-wrap fix; 4th consecutive skip of the same already-owned report backlog; push-backstop FIRED (21 commits pushed)
-
-- **Preflight RUN, tick `2026-07-30T14:07Z`.** GCC-preflight clean (no HEAD.lock, no worktree prune output). `.head` was idle (from the prior standalone verify) — not pipeline-resume.
-- **Step 0a drain:** 2 signals — `context_bloat_breach` (sprint-COWORK-GUARANTEED-SLOT-CATCHUP-developer.md, byte-cap overage 109673B) and `cowork-fire` (refine-bctc-slot-2 spawn) — both routed-to-po, DB-inserted (db_count=482), committed `5551ec945`. `.signal_queue.rows[]` had 0 NEW rows. Post-commit invariant clean (0 residual).
-- **Step 0a.5 CI probe:** deduped clean against the same `ce3fa81e` fingerprint (already tracked; resolved by this tick's own push, see below).
-- **BOUNDED-1:** WIP=0 → promoted+claimed `FIX-BCTC-REPARSE-DOUBLE-WRAP-DEDUP-GUARD` (P1, apps/mcp-server/, next_agent=dev-mcp-server already resolved — no zone-detect ambiguity). Same double-wrap `recordJobRun` defect class as the already-closed `FIX-BASE-RATE-COMPUTATION-CRON-DEAD` precedent, found by `SPIKE-BCTC-REPARSE-CADENCE-GUARD-ROOTCAUSE-VERIFY`. Committed `c01f39b0c`. Dispatched `dev-mcp-server` (background, task claimed, DJ-GATE-1 instruction + precedent pointer included). Lock held open (LOCK-LIFETIME) — awaiting return.
-- **Step 4.1 report check:** 273 unresolved (+1 since last check, same `sla-monitor`/`signal_quality_audit` category, no new category). **Skipped PO re-spawn a 4th consecutive tick.** mock-guard RC=2 CAUTION (same pre-existing TODOs, unchanged). Cold-evict dry-run: 0 byte reduction, no-op. 4.3 stranded-sweep clean (37 owned-elsewhere, 15 young-skip, 0 actionable). 4.4 wrapper-autoclose: 0 rows.
-- **Push-backstop FIRED:** `ahead=21 > 20`, both guards clear (no rebase/merge/index.lock, 0 commit-mutex held) → `fleet-worktree-push.sh` ran, tsc clean, pushed 21 commits `ce3fa81e8..c01f39b0c` to `origin/main`.
-- **NEXT:** await `dev-mcp-server`'s return; RAW-verify all 5 ACs — (1) `shouldSkipRecoveryReplay` guard fires BEFORE `recordJobRun`, (2) `rows_written` populated from the real `ReparseRunResult`, (3) `startScheduler.ts` catch-up gains a staleness gate, (4) new unit test proving 2 back-to-back invocations → exactly 1 `cron_job_runs` row, (5) live re-run showing rows/day ≤1 on non-reparse days.
 
