@@ -54,13 +54,29 @@
           })
       ])
     | .task_board.ready = [ (.task_board.ready // [])[] | select(.id != $picked_id) ]
-    | .head = {
-        status: "in_progress",
-        active_task_id: $picked_id,
-        next_agent: $next_agent,
-        next_action: ("BOUNDED-1 auto-pickup claim of " + $picked_id
-          + " — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files."),
-        updated_at: $now,
-        updated_by: "dev-team (bounded-1 auto-pickup)"
-      }
+    | ((.head.status // "idle") as $hs
+       | (.head.active_task_id // null) as $ha
+       | ($hs == "idle" or $hs == "done" or $ha == null)) as $head_free
+    | .head = (
+        if $head_free then
+          {
+            status: "in_progress",
+            active_task_id: $picked_id,
+            next_agent: $next_agent,
+            next_action: ("BOUNDED-1 auto-pickup claim of " + $picked_id
+              + " — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files."),
+            updated_at: $now,
+            updated_by: "dev-team (bounded-1 auto-pickup)"
+          }
+        else
+          .head   # FIX-DEVTEAM-CLAIM-SCRIPTS-UNCONDITIONAL-HEAD-OVERWRITE
+                  # (PO ratification, ruling-20260730T0906Z-po-triage-po.md
+                  # STEP po-4): a DIFFERENT task is genuinely live in .head
+                  # (status in_progress, active_task_id set) — never clobber
+                  # it. Mirrors scripts/devteam-wrapper-autoclose.jq:122-128
+                  # and scripts/devteam-backlog-claim-design-router-sweep.jq's
+                  # own conditional guard, applied to the claim-INTO-head
+                  # direction instead of clear-FROM-head.
+        end
+      )
   end

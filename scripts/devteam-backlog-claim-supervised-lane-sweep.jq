@@ -138,6 +138,9 @@ include "scripts/lib/devteam-eligibility";
           lane: (.value | resolved_dispatch_lane($detail_items)) }
     ] | sort_by([.rank, .idx])
   ) as $fallback
+| ((.head.status // "idle") as $hs
+   | (.head.active_task_id // null) as $ha
+   | ($hs == "idle" or $hs == "done" or $ha == null)) as $head_free
 | if ($primary | length) > 0 then
     ($primary[0]) as $picked
     | ($picked.id) as $picked_id
@@ -150,15 +153,28 @@ include "scripts/lib/devteam-eligibility";
           })
       ])
     | .task_board.ready = [ (.task_board.ready // [])[] | select(.id != $picked_id) ]
-    | .head = {
-        status: "in_progress",
-        active_task_id: $picked_id,
-        next_agent: $lane,
-        next_action: ("Supervised-Lane Sweep claim of " + $picked_id
-          + " — spawn " + $lane + " DIRECTLY (no zone-detect indirection; lane already resolved at promote time). supervised/plan_only preserved — do not clear."),
-        updated_at: $now,
-        updated_by: "dev-team (supervised-lane sweep)"
-      }
+    | .head = (
+        if $head_free then
+          {
+            status: "in_progress",
+            active_task_id: $picked_id,
+            next_agent: $lane,
+            next_action: ("Supervised-Lane Sweep claim of " + $picked_id
+              + " — spawn " + $lane + " DIRECTLY (no zone-detect indirection; lane already resolved at promote time). supervised/plan_only preserved — do not clear."),
+            updated_at: $now,
+            updated_by: "dev-team (supervised-lane sweep)"
+          }
+        else
+          .head   # FIX-DEVTEAM-CLAIM-SCRIPTS-UNCONDITIONAL-HEAD-OVERWRITE
+                  # (PO ratification, ruling-20260730T0906Z-po-triage-po.md
+                  # STEP po-4): a DIFFERENT task is genuinely live in .head
+                  # (status in_progress, active_task_id set) — never clobber
+                  # it. Mirrors scripts/devteam-wrapper-autoclose.jq:122-128
+                  # and scripts/devteam-backlog-claim-design-router-sweep.jq's
+                  # own conditional guard, applied to the claim-INTO-head
+                  # direction instead of clear-FROM-head.
+        end
+      )
   elif ($fallback | length) > 0 then
     ($fallback[0]) as $picked
     | ($picked.row.id) as $picked_id
@@ -173,18 +189,31 @@ include "scripts/lib/devteam-eligibility";
           })
       ])
     | .task_board.ready = [ (.task_board.ready // [])[] | select(.id != $picked_id) ]
-    | .head = {
-        status: "in_progress",
-        active_task_id: $picked_id,
-        next_agent: $lane,
-        next_action: ("Supervised-Lane Sweep FALLBACK claim of " + $picked_id
-          + " — row reached ready[] via a route other than this sweep's own promote script (promoted_by="
-          + (($picked.row.promoted_by // null) | tostring)
-          + "); dispatch_lane resolved here directly, provenance NOT overwritten. Spawn " + $lane
-          + " DIRECTLY (no zone-detect indirection). supervised/plan_only preserved — do not clear."),
-        updated_at: $now,
-        updated_by: "dev-team (supervised-lane sweep)"
-      }
+    | .head = (
+        if $head_free then
+          {
+            status: "in_progress",
+            active_task_id: $picked_id,
+            next_agent: $lane,
+            next_action: ("Supervised-Lane Sweep FALLBACK claim of " + $picked_id
+              + " — row reached ready[] via a route other than this sweep's own promote script (promoted_by="
+              + (($picked.row.promoted_by // null) | tostring)
+              + "); dispatch_lane resolved here directly, provenance NOT overwritten. Spawn " + $lane
+              + " DIRECTLY (no zone-detect indirection). supervised/plan_only preserved — do not clear."),
+            updated_at: $now,
+            updated_by: "dev-team (supervised-lane sweep)"
+          }
+        else
+          .head   # FIX-DEVTEAM-CLAIM-SCRIPTS-UNCONDITIONAL-HEAD-OVERWRITE
+                  # (PO ratification, ruling-20260730T0906Z-po-triage-po.md
+                  # STEP po-4): a DIFFERENT task is genuinely live in .head
+                  # (status in_progress, active_task_id set) — never clobber
+                  # it. Mirrors scripts/devteam-wrapper-autoclose.jq:122-128
+                  # and scripts/devteam-backlog-claim-design-router-sweep.jq's
+                  # own conditional guard, applied to the claim-INTO-head
+                  # direction instead of clear-FROM-head.
+        end
+      )
   else
     .   # nothing supervised-lane-sweep-promoted AND no unstamped supervised+plan_only ready[] row eligible — no-op
   end

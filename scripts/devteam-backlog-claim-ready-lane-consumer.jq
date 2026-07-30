@@ -148,13 +148,29 @@ include "scripts/lib/devteam-eligibility";
           })
       ])
     | .task_board.ready = [ .task_board.ready | to_entries[] | select(.key != $picked.idx) | .value ]
-    | .head = {
-        status: "in_progress",
-        active_task_id: $picked_id,
-        next_agent: $picked.lane,
-        next_action: ("Ready-Lane Consumer claim of " + $picked_id
-          + " — spawn " + $picked.lane + " DIRECTLY (no zone-detect indirection; row already carried a resolved next_agent/owner)."),
-        updated_at: $now,
-        updated_by: "dev-team (ready-lane consumer)"
-      }
+    | ((.head.status // "idle") as $hs
+       | (.head.active_task_id // null) as $ha
+       | ($hs == "idle" or $hs == "done" or $ha == null)) as $head_free
+    | .head = (
+        if $head_free then
+          {
+            status: "in_progress",
+            active_task_id: $picked_id,
+            next_agent: $picked.lane,
+            next_action: ("Ready-Lane Consumer claim of " + $picked_id
+              + " — spawn " + $picked.lane + " DIRECTLY (no zone-detect indirection; row already carried a resolved next_agent/owner)."),
+            updated_at: $now,
+            updated_by: "dev-team (ready-lane consumer)"
+          }
+        else
+          .head   # FIX-DEVTEAM-CLAIM-SCRIPTS-UNCONDITIONAL-HEAD-OVERWRITE
+                  # (PO ratification, ruling-20260730T0906Z-po-triage-po.md
+                  # STEP po-4): a DIFFERENT task is genuinely live in .head
+                  # (status in_progress, active_task_id set) — never clobber
+                  # it. Mirrors scripts/devteam-wrapper-autoclose.jq:122-128
+                  # and scripts/devteam-backlog-claim-design-router-sweep.jq's
+                  # own conditional guard, applied to the claim-INTO-head
+                  # direction instead of clear-FROM-head.
+        end
+      )
   end

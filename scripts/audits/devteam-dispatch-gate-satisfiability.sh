@@ -49,6 +49,26 @@
 # extended there too, AC-5) — it does not prove the claim script's jq logic
 # actually reaches and moves the row. This file does.
 #
+# EXTENDED 2026-07-30 (FIX-DEVTEAM-CLAIM-SCRIPTS-UNCONDITIONAL-HEAD-
+# OVERWRITE, PO ratification ruling-20260730T0906Z-po-triage-po.md STEP
+# po-4): AC-DRS-HEAD-GUARD below already proved the `$head_free` conditional
+# guard for scripts/devteam-backlog-claim-design-router-sweep.jq (which
+# shipped the guard from day one). This same defect class was ALSO found
+# live (unconditional `.head` replace) in devteam-backlog-claim-bounded1.jq,
+# devteam-backlog-claim-supervised-lane-sweep.jq (BOTH its PRIMARY and
+# FALLBACK claim branches), and devteam-backlog-claim-ready-lane-consumer.jq
+# — now hardened with the IDENTICAL guard shape. § AC-BOUNDED1-HEAD-GUARD /
+# AC-SLS-HEAD-GUARD (PRIMARY + FALLBACK) / AC-RLC-HEAD-GUARD mechanize the
+# same negative control (pre-seed a genuinely busy `.head` with an unrelated
+# task, assert byte-identical after + the row still moves ready[]->
+# in_progress[] underneath it) for these three scripts, using ISOLATED
+# single-row fixtures (same discipline as the SLS-FALLBACK/DRS-AC fixtures
+# above — NOT the shared padded fixture, which is unsuitable here: BOUNDED-
+# 1's own picker takes `$auto_promoted[0]` and RLC's own picker sorts ALL
+# eligible ready[] rows by priority_rank, so a lower-rank live/padded row
+# would win the pick non-deterministically and never exercise OUR row's
+# head-guard behavior at all).
+#
 # Usage: bash scripts/audits/devteam-dispatch-gate-satisfiability.sh
 # Exit 0 = every assertion below passes. Exit 1 = at least one fails
 # (details printed). Never writes to the live orch-state.json.
@@ -345,6 +365,94 @@ assert "AC-DRS-HEAD-GUARD: .head is byte-identical after DRS claim when a DIFFER
 DRS_HEADGUARD_STILL_CLAIMED=$(jq -r '[.task_board.in_progress[] | select(.id=="GATESAT-DRS-HEADGUARD")] | length' "$WORK/drs-busy-head-after.json")
 assert "AC-DRS-HEAD-GUARD (positive half): the row itself still moves ready[]->in_progress[] even while .head stays untouched (only .head is guarded, not the lane move)" \
   "$([ "$DRS_HEADGUARD_STILL_CLAIMED" -eq 1 ] && echo true || echo false)"
+
+# ---- AC-BOUNDED1-HEAD-GUARD / AC-SLS-HEAD-GUARD / AC-RLC-HEAD-GUARD ----
+# FIX-DEVTEAM-CLAIM-SCRIPTS-UNCONDITIONAL-HEAD-OVERWRITE (2026-07-30): same
+# negative control as AC-DRS-HEAD-GUARD above, applied to the 3 sibling
+# claim scripts PO ratified as carrying the identical pre-fix defect.
+# ISOLATED single-row fixtures throughout (see header note) — never the
+# shared padded fixture.
+echo ""
+echo "=== HEAD-GUARD (FIX-DEVTEAM-CLAIM-SCRIPTS-UNCONDITIONAL-HEAD-OVERWRITE): BOUNDED-1 / SLS (primary+fallback) / RLC ==="
+
+BOUNDED1_HEADGUARD_FIXTURE=$(jq -n --arg now "$NOW" '
+  { task_board: {
+      backlog: [], ready: [ { id: "GATESAT-BOUNDED1-HEADGUARD", status: "READY", priority: "P1",
+        type: "FIX", zone: "cross-service/", next_agent: "developer",
+        promoted_by: "dev-team (bounded-1 auto-pickup)", promoted_at: $now } ],
+      in_progress: [], qa: [], review: [], done: [], done_verified: []
+    },
+    head: { status: "in_progress", active_task_id: "GATESAT-UNRELATED-BUSY-TASK-B1",
+            next_agent: "developer", updated_at: $now, updated_by: "test" }
+  }')
+echo "$BOUNDED1_HEADGUARD_FIXTURE" > "$WORK/b1-headguard.json"
+HEAD_BEFORE_B1=$(jq -c '.head' "$WORK/b1-headguard.json")
+jq --arg now "$NOW" -f scripts/devteam-backlog-claim-bounded1.jq "$WORK/b1-headguard.json" > "$WORK/b1-headguard-after.json"
+HEAD_AFTER_B1=$(jq -c '.head' "$WORK/b1-headguard-after.json")
+assert "AC-BOUNDED1-HEAD-GUARD: .head is byte-identical after BOUNDED-1 claim when a DIFFERENT task is genuinely busy in .head (never clobbers a live resume pointer)" \
+  "$([ "$HEAD_BEFORE_B1" = "$HEAD_AFTER_B1" ] && echo true || echo false)"
+BOUNDED1_HEADGUARD_STILL_CLAIMED=$(jq -r '[.task_board.in_progress[] | select(.id=="GATESAT-BOUNDED1-HEADGUARD")] | length' "$WORK/b1-headguard-after.json")
+assert "AC-BOUNDED1-HEAD-GUARD (positive half): the row itself still moves ready[]->in_progress[] even while .head stays untouched (only .head is guarded, not the lane move)" \
+  "$([ "$BOUNDED1_HEADGUARD_STILL_CLAIMED" -eq 1 ] && echo true || echo false)"
+
+SLS_PRIMARY_HEADGUARD_FIXTURE=$(jq -n --arg now "$NOW" '
+  { task_board: {
+      backlog: [], ready: [ { id: "GATESAT-SLS-HEADGUARD-PRIMARY", status: "READY", priority: "P1",
+        type: "FIX", zone: "cross-service/", next_agent: "architect", dispatch_lane: "architect",
+        promoted_by: "dev-team (supervised-lane sweep)", promoted_at: $now } ],
+      in_progress: [], qa: [], review: [], done: [], done_verified: []
+    },
+    head: { status: "in_progress", active_task_id: "GATESAT-UNRELATED-BUSY-TASK-SLS",
+            next_agent: "developer", updated_at: $now, updated_by: "test" }
+  }')
+echo "$SLS_PRIMARY_HEADGUARD_FIXTURE" > "$WORK/sls-primary-headguard.json"
+HEAD_BEFORE_SLS_P=$(jq -c '.head' "$WORK/sls-primary-headguard.json")
+jq --arg now "$NOW" --slurpfile detail "$DETAIL" --slurpfile archive "$ARCHIVE" -f scripts/devteam-backlog-claim-supervised-lane-sweep.jq "$WORK/sls-primary-headguard.json" > "$WORK/sls-primary-headguard-after.json"
+HEAD_AFTER_SLS_P=$(jq -c '.head' "$WORK/sls-primary-headguard-after.json")
+assert "AC-SLS-HEAD-GUARD (PRIMARY path): .head is byte-identical after SLS claim when a DIFFERENT task is genuinely busy in .head" \
+  "$([ "$HEAD_BEFORE_SLS_P" = "$HEAD_AFTER_SLS_P" ] && echo true || echo false)"
+SLS_PRIMARY_HEADGUARD_STILL_CLAIMED=$(jq -r '[.task_board.in_progress[] | select(.id=="GATESAT-SLS-HEADGUARD-PRIMARY")] | length' "$WORK/sls-primary-headguard-after.json")
+assert "AC-SLS-HEAD-GUARD (PRIMARY positive half): the row itself still moves ready[]->in_progress[] even while .head stays untouched" \
+  "$([ "$SLS_PRIMARY_HEADGUARD_STILL_CLAIMED" -eq 1 ] && echo true || echo false)"
+
+SLS_FALLBACK_HEADGUARD_FIXTURE=$(jq -n --arg now "$NOW" '
+  { task_board: {
+      backlog: [], ready: [ { id: "GATESAT-SLS-HEADGUARD-FALLBACK", status: "READY", priority: "P0",
+        type: "FIX", zone: "cross-service/", next_agent: "pm",
+        supervised: true, plan_only: true, promoted_by: null, created_at: $now } ],
+      in_progress: [], qa: [], review: [], done: [], done_verified: []
+    },
+    head: { status: "in_progress", active_task_id: "GATESAT-UNRELATED-BUSY-TASK-SLS-FB",
+            next_agent: "developer", updated_at: $now, updated_by: "test" }
+  }')
+echo "$SLS_FALLBACK_HEADGUARD_FIXTURE" > "$WORK/sls-fallback-headguard.json"
+HEAD_BEFORE_SLS_F=$(jq -c '.head' "$WORK/sls-fallback-headguard.json")
+jq --arg now "$NOW" --slurpfile detail "$DETAIL" --slurpfile archive "$ARCHIVE" -f scripts/devteam-backlog-claim-supervised-lane-sweep.jq "$WORK/sls-fallback-headguard.json" > "$WORK/sls-fallback-headguard-after.json"
+HEAD_AFTER_SLS_F=$(jq -c '.head' "$WORK/sls-fallback-headguard-after.json")
+assert "AC-SLS-HEAD-GUARD (FALLBACK path): .head is byte-identical after SLS FALLBACK claim when a DIFFERENT task is genuinely busy in .head" \
+  "$([ "$HEAD_BEFORE_SLS_F" = "$HEAD_AFTER_SLS_F" ] && echo true || echo false)"
+SLS_FALLBACK_HEADGUARD_STILL_CLAIMED=$(jq -r '[.task_board.in_progress[] | select(.id=="GATESAT-SLS-HEADGUARD-FALLBACK")] | length' "$WORK/sls-fallback-headguard-after.json")
+assert "AC-SLS-HEAD-GUARD (FALLBACK positive half): the row itself still moves ready[]->in_progress[] even while .head stays untouched" \
+  "$([ "$SLS_FALLBACK_HEADGUARD_STILL_CLAIMED" -eq 1 ] && echo true || echo false)"
+
+RLC_HEADGUARD_FIXTURE=$(jq -n --arg now "$NOW" '
+  { task_board: {
+      backlog: [], ready: [ { id: "GATESAT-RLC-HEADGUARD", status: "READY", priority: "P0",
+        type: "FIX", zone: "cross-service/", next_agent: "ba", created_at: $now } ],
+      in_progress: [], qa: [], review: [], done: [], done_verified: []
+    },
+    head: { status: "in_progress", active_task_id: "GATESAT-UNRELATED-BUSY-TASK-RLC",
+            next_agent: "developer", updated_at: $now, updated_by: "test" }
+  }')
+echo "$RLC_HEADGUARD_FIXTURE" > "$WORK/rlc-headguard.json"
+HEAD_BEFORE_RLC=$(jq -c '.head' "$WORK/rlc-headguard.json")
+jq --arg now "$NOW" --slurpfile detail "$DETAIL" --slurpfile archive "$ARCHIVE" -f scripts/devteam-backlog-claim-ready-lane-consumer.jq "$WORK/rlc-headguard.json" > "$WORK/rlc-headguard-after.json"
+HEAD_AFTER_RLC=$(jq -c '.head' "$WORK/rlc-headguard-after.json")
+assert "AC-RLC-HEAD-GUARD: .head is byte-identical after Ready-Lane Consumer claim when a DIFFERENT task is genuinely busy in .head" \
+  "$([ "$HEAD_BEFORE_RLC" = "$HEAD_AFTER_RLC" ] && echo true || echo false)"
+RLC_HEADGUARD_STILL_CLAIMED=$(jq -r '[.task_board.in_progress[] | select(.id=="GATESAT-RLC-HEADGUARD")] | length' "$WORK/rlc-headguard-after.json")
+assert "AC-RLC-HEAD-GUARD (positive half): the row itself still moves ready[]->in_progress[] even while .head stays untouched" \
+  "$([ "$RLC_HEADGUARD_STILL_CLAIMED" -eq 1 ] && echo true || echo false)"
 
 for f in t1c t2c t3c t4c t5c; do
   jq -e . "$WORK/$f.json" >/dev/null 2>&1 || { echo "  [FAIL] $f.json is not even valid JSON"; FAIL=1; continue; }
