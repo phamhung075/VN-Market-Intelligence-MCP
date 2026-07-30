@@ -1,0 +1,55 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-07-30T14:09:10Z",
+    "matched_slots": [
+      "refine-bctc-slot-2"
+    ],
+    "won_slots": [
+      "refine-bctc-slot-2"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/refine_bctc_md/flow/main.md"
+    ],
+    "silent": false,
+    "drift_min": 5,
+    "errors": [],
+    "pressure_mode": "adaptive",
+    "calendar_status": "unknown",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "chef_mutex_applied": false,
+    "due_reasons": {
+      "refine-bctc-slot-2": "cron"
+    },
+    "cadence_minutes": {
+      "refine-bctc-slot-2": null
+    },
+    "last_fired_timestamp": "2026-07-30T14:08:54Z",
+    "last_fired_slots": [
+      "refine-bctc-slot-2"
+    ],
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "14:00",
+    "leader_lock": "acquired",
+    "dev_head": "unknown",
+    "devq": 5,
+    "signal_backlog": 15,
+    "note": "single-slot cron-due WORK tick; refine_bctc_md dispatched for refine-bctc-slot-2"
+  },
+  "priority": "low",
+  "createdAt": "2026-07-30T14:09:10Z",
+  "_processed": {
+    "fingerprint": "92b67013f727402baf47d720cd875fb17d5baddd7424c31dbf2c16a85a775c78",
+    "processedAt": "2026-07-30T14:16:18Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
