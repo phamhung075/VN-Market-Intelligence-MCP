@@ -1,6 +1,17 @@
 # Dev Team — Sprint Boundary Notebook
 
-**Written:** 2026-07-30T11:30Z
+**Written:** 2026-07-30T11:39Z
+
+## cycle-20260730T1137Z-tick — BOUNDED-1 top candidate blocked by unenforced status_note sequencing prose; skipped it, manually promoted+dispatched next-ranked clean row FIX-SQLITE-JOURNALMODE-WAL-REARM-DEFEATS-DELETE-MITIGATION
+
+- **Re-ran preflight fresh**: verdict RUN, tick `2026-07-30T11:07Z` re-entered. GCC-preflight clean. Drain found 1 signal (another context-bloat on the developer's own sprint-journal, routed-to-po) — not actionable inline. 0 orphans. CI probe deduped clean. `.head` idle, WIP=0 → BOUNDED-1.
+- **BOUNDED-1's mechanical top pick was `FIX-DECISION-JOURNAL-BYTECAP-NO-ACTUATOR`** (rank 1) — but its own `status_note` explicitly reads "Sequence after that row's AC-1 reconcile" (referring to `FIX-SPRINT-REGISTRY-DANGLING-IDS-BREAK-SIGNOFF-AND-JOURNAL-ARCHIVE`, confirmed still `BACKLOG`/`supervised+plan_only`, AC-1 not done). **Deliberately did NOT promote/dispatch this row** — dispatching it now would repeat the exact documented UC-CDC-P5 near-miss class (blind-promote-then-revert on an unbacked sequencing constraint). Root cause: `has_unbacked_sequencing_prose` only greps object keys matching `^po_sequencing`; this row's constraint lives in a plain `status_note` field, so the existing gate's own narrow key-name convention does not cover it — a real gate-coverage gap worth flagging to PO/architect later, not something to silently patch around this tick.
+- (Double-checked a false alarm on my own first pass: initially suspected `FIX-ALERT-OPEN-ZERO-PRICE-RACE`/detail-status `HELD` as a second near-miss, but that was my own ad-hoc jq query omitting the real script's `status ∈ {BACKLOG,TODO}` filter — the row's board status is `BLOCKED`, so the production script already excludes it correctly. No actual second gap.)
+- **Manually promoted the next-ranked eligible row** (`FIX-SQLITE-JOURNALMODE-WAL-REARM-DEFEATS-DELETE-MITIGATION`, rank 1, verified clean — no detail entry, no hidden holds, PO's own desc explicitly states "belongs in the lane that actually dispatches (BOUNDED-1)"), mirroring the real promote script's exact write shape by hand, then ran the real claim script unmodified. Both writes validated: `orch-validate` Stage 0+1 PASS, task_total 718→718, signal_total 131→131.
+- **Defect**: `bctcEvalBackfillRunner.ts:49` sets `PRAGMA journal_mode=WAL` on `market.db`, silently re-arming the exact corruption vector (4 prior corruptions) the same-day permanent fix (`157335892`, `schema.ts:115` DELETE+FULL) was meant to close — a persistent file-level property, not connection-scoped, so one backfill run undoes the fix for its whole runtime.
+- **Dispatched `dev-mcp-server`** (background) — `next_agent` resolved directly from the row's own field, not the generic `developer` placeholder. Sprint-task lock deliberately held open (LOCK-LIFETIME).
+- **Committed** `b1dc01c45` (manual promote+claim, pathspec-scoped, reasoning in commit body). Released SF-1 + fire-election.
+- **NEXT**: await dev-mcp-server's return; RAW-verify per standing discipline. Separately, the `has_unbacked_sequencing_prose` gate's `^po_sequencing`-only key convention should be widened (or `status_note`-authored sequencing should be required to also carry a `po_sequencing_*` key) — surface to PO/architect when triage capacity allows, not urgent enough to interrupt this tick for.
 
 ## cycle-20260730T1130Z-verify — RAW-verified .head-overwrite-guard fix clean (48/48 tests incl. 8 new head-guard ACs, all 3 scripts + SLS dual-branch confirmed); released lock
 
@@ -23,14 +34,3 @@
 - **Dispatched developer** (background) with the exact DRS reference-pattern pointer (`scripts/devteam-backlog-claim-design-router-sweep.jq` lines ~90-113) so it mirrors the existing precedent rather than inventing a new shape. Sprint-task lock deliberately held open (LOCK-LIFETIME).
 - **Committed** `a76f69e3e` (promote+claim, pathspec-scoped). Released SF-1 + fire-election (`{"ok":true,"released":1}` both).
 - **NEXT**: await developer's return on the `.head`-overwrite-guard fix; RAW-verify before trusting.
-
-## cycle-20260730T1112Z-verify — RAW-verified notebook-auto-prune same-day tie-break fix clean (7/7 tests, board+journal confirmed); released lock (corrected malformed key)
-
-- **Developer completed `FIX-NOTEBOOK-AUTOPRUNE-SAMEDAY-TIE-DROPS-NEWEST` — RAW-verified before trusting**: commits `c280e00cd` (fix), `5f364d66c` (board REVIEW flip + `.head` idle-reset, same write), `d5c0d3f01` (notebook+journal) all real, on HEAD.
-- **Diff confirmed the exact claimed mechanism**: minimum-ts_key GROUP now resolved direction-aware (drop physically-LAST for newest-first/prepend, physically-FIRST for oldest-first/append) instead of the old direction-blind `sort|head -1`. Direction derived from the file's OWN distinguishable timestamps first; falls back to new `docs/data/notebook-section-order.json` only for 3 confirmed-permanently-ambiguous files (`developer.md=newest_first`, `dev-frontend.md`/`dev-mcp-server.md=oldest_first`). Unresolved+no-override now fails loud (`notebook_tiebreak_direction_unresolved_breach`, no truncation) instead of guessing — matches claim, verified from the diff itself not the commit message.
-- **Test suite independently re-run, not trusted from the "7/7" claim**: `bash scripts/agents-flow/notebook-auto-prune.test.sh` → **7 passed, 0 failed**, exact match, including all 3 new assertions (T5 prepend, T6 append, T7 unresolved-safe-fail).
-- **Decision journal STEP developer-S40 confirmed present and accurate**: mechanism, rejected-alternatives, and the honest structural-gap disclosure (no gateway grant, could not self-release) all match the RETURN block verbatim.
-- **Board disposition confirmed live**: row `REVIEW`/`next_agent:qa`/`branch:null`; `.head` idle-reset in the SAME write (`5f364d66c`) — CANONICAL:SSOT-STATUSFLIP-LANEMOVE held.
-- **Out-of-scope flag spot-checked**: `test-notebook-auto-prune.sh` IS a genuinely distinct legacy duplicate (different header/content, same target script) — correctly left untouched, flagged for code-janitor only.
-- **No discrepancies — clean verify.** Released `task:FIX-NOTEBOOK-AUTOPRUNE-SAMEDAY-TIE-DROPS-NEWEST` — first attempt omitted the `task:` prefix and silently no-opped (`released:0`, not an error per the tool's own semantics but NOT a real release either); corrected the key, confirmed genuine release (`released:1`).
-- **NEXT**: `.head` is idle again — re-run preflight fresh to reacquire tick-scoped locks, then re-check idle-capacity chain (BOUNDED-1) for further dispatch this tick.
