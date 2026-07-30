@@ -1,6 +1,13 @@
 # Dev Team — Sprint Boundary Notebook
 
-**Written:** 2026-07-30T22:56Z
+**Written:** 2026-07-30T23:07Z
+
+## cycle-20260730T2307Z-verify — RAW-verified po's 6th triage pass (genuine, 5/5 claims confirmed); minted 2 new rows, dispatched 1 pre-existing stranded row
+
+- **po returned** BATCH of 3 + 2 direct board writes. RAW-verified all 5 material claims independently, not trusted: live DB query on the running container matches po's figures exactly (105 total, 103 resolved, exactly 2 stuck — id 49 MACRO, id 74 MULTI); read `signalOutcomeResolutionJob.ts:76-79` directly (no stock_code exclusion, confirmed); read `decision-journal/SKILL.md:58-68` directly (line-only Cap Check, no byte branch, confirmed); `alert-commander.md:5` confirmed still Bash-less + git log since flagged-date confirmed empty; `e27f6f0a5` gate-clear claim re-confirmed.
+- **BATCH entry 1 was not a new mint** — `FIX-ALERT-COMMANDER-NO-BASH-GRANT-NOTEBOOK-UNCOMMITTABLE` is a pre-existing 2026-07-29 row that po's own new `manual-dispatch-sweep.md` sub-flow (first live exercise, stamp fields confirm) surfaced as zero-picker-stranded and folded into the BATCH text — read correctly as "dispatch now," not "duplicate mint."
+- **Minted 2 genuinely-new rows** (SIGNAL-OUTCOMES-LIVENESS-GUARD → dev-mcp-server, DECISION-JOURNAL-CAPCHECK-BYTE-ROLLOVER → developer), conservation 730→732. **Dispatched the stranded row** via S4 UNBLOCK to `agent-father`, co-batched with `FIX-COWORK-BASH-GRANT-COVERAGE-STAMP-TRANSPORT` per its own "one edit pass" instruction — `.head` untouched (side dispatch). Released `task:po-triage-20260730`.
+- **NEXT**: await `agent-father` (Bash-grant co-dispatch, `a4f956623c5633cde`) and `dev-mcp-server` (Polymarket retire, `a55f8e843576ef5b5`) returns. No lock currently held by this session.
 
 ## cycle-20260730T2256Z-verify — RAW-verified architect's PO-manual-dispatch-sweep design (genuine, sound); `.head` now idle for next tick
 
@@ -16,12 +23,4 @@
 - **Spawned `po`** (6th pass today, `ad12c0db4daac313f`) with 1 drained signal, 3 telegram reports (2 Polymarket-stale — noted as likely already covered by the in-flight `dev-mcp-server` retire — + 1 signal-outcome-resolution liveness, genuinely new), full board/git context. Not yet returned.
 - **`developer` returned** (QADRAIN fix, before PO's spawn even completed) — RAW-verified before trusting: read `git show 9fe706fa2` diff directly, confirms the `.head` write now gated on `$head_free` exactly as described, mirrors `devteam-wrapper-autoclose.jq`'s shape; `.head` independently confirmed byte-unchanged (still points at architect's task); board row confirmed in `review[]`/`next_agent:qa`; conservation independently re-summed (730/730, matches); re-ran `devteam-dispatch-gate-satisfiability.sh` myself — full suite green including all 3 new `AC-QADRAIN-HEAD-GUARD` assertions, 0 FAIL. DJ-GATE-1 order confirmed correct (journal commit before terminal flip). Pushed (`04d7af846..293e9c5a9`).
 - **NEXT**: await `po` (6th pass), `dev-mcp-server` (Polymarket retire), `architect` (PO producer sub-flow) returns; RAW-verify each before further board writes. `task:po-triage-20260730` held, release after PO returns.
-
-## cycle-20260730T2246Z-verify — RAW-verified agent-father's decline (genuine, zone-correct); corrected board owner, re-dispatched developer; self-caught a live pathspec-commit sweep of architect's WIP
-
-- **agent-father returned** on `FIX-DEVTEAM-QADRAIN-HEAD-WRITE-CONDITIONAL`: declined, did not touch the target script or board row. RAW-verified every claim before acting, not trusted: `git show --stat c72b5ca34` = exactly journal+notebook, 0 code; `git log -- scripts/devteam-review-claim-qa-drain.jq` shows agent-father never touched it; `jq '.project.zones[11]'` on `system-map.json` confirms `path:"scripts/"`→`specialist:"developer"` exactly as claimed; `docs/agents/agent-father/init.md` `not_my_job`/`commit_zone` fields match verbatim. Decline is correct, not a dodge.
-- **Corrected + re-dispatched**: wrote `scripts/dev-team-correct-qadrain-owner-20260730-2244.jq` (owner/next_agent agent-father→developer only, AC/desc/zone untouched), applied via `orch-apply.sh` (conservation OK 730/730). Claimed `task:FIX-DEVTEAM-QADRAIN-HEAD-WRITE-CONDITIONAL`, spawned `developer` with full context (why re-routed, brief §3/§6/§8 pointer, DJ-GATE-1 + STATUSFLIP-LANEMOVE + pathspec-commit briefing), released lock.
-- **Caught my own instance of the pathspec-commit same-file-hunk bug** (documented as a NEW addendum to `feedback_git_add_then_bare_commit_is_toctou_race_use_pathspec_commit.md`, 2nd occurrence in ~1h): `.head` was busy with `architect`'s uncommitted live claim of a different task; my unrelated pathspec commit on `orch-state.json` (`a721df8a3`) swept it in anyway (working-tree re-stage, not index-scoped). No corruption (conservation held, content correct) — pure mis-attribution. Did NOT rewrite history; sent `architect` a direct heads-up instead, per standing "don't rewrite under live concurrent writers" guidance.
-- Also self-caught and fixed a hand-typed-timestamp drift in my own new script's comment/filename (`20260731-0043` guessed vs actual `date -u`=`20260730-2244`) before it landed — exact class flagged in `feedback_hand_typed_iso_timestamps_drift_into_the_future.md`.
-- **NEXT**: await `developer` (QADRAIN fix), `dev-mcp-server` (Polymarket retire), `architect` (PO producer sub-flow) returns; RAW-verify each before further board writes.
 
