@@ -1,5 +1,36 @@
 
 ---
+## [Developer] 2026-07-30 — FIX-DECISION-JOURNAL-SKILL-CAPCHECK-LINE-ONLY-NO-BYTE-ROLLOVER
+
+`.claude/skills/decision-journal/SKILL.md` § Cap Check tested only `LINES>600`, so a journal under
+600 lines but well over the 36000-byte cap (dense long lines) never rolled — root cause of a
+recurring `context_bloat_breach` signal (2 fired 16 min apart the triage tick that minted this
+row), all on journals well under 600L. Third instance of this defect class in the repo, same fix
+shape as the already-QA-approved sibling `FIX-NOTEBOOK-PRUNER-LINE-ONLY-SETPOINT-BYTE-CAP-NEVER-CONVERGES`
+(`scripts/agents-flow/notebook-auto-prune.sh`): Cap Check now trips on `LINES>LINE_CAP OR
+BYTES>BYTE_CAP`; `LINE_CAP` is read from `docs/data/file-size-caps.json` (SSOT, pattern
+`docs/agent-memory/decisions/sprint-*.md`, cap=600), `BYTE_CAP=LINE_CAP*60` (=36000) — the SAME
+derivation `context-bloat-backstop.sh` uses (TE-T24), never a second hardcoded `36000`. Rollover
+target is now a numeric-suffix increment parsed off the current `$JOURNAL_PATH` (base file =
+implicit index 1) instead of a hardcoded `-2.md`, so a breaching `-2.md` now rolls to `-3.md`,
+unbounded, closing AC(5) (no `-3.md` path existed before this fix). Verified by extracting the
+patched bash verbatim and running it against synthetic fixtures using the real
+`docs/data/file-size-caps.json`: 300L/79800B → rolls (byte axis); 650L/19500B → rolls (line axis
+not regressed); 300L/19800B → untouched (both caps clear); synthetic `-2.md` at 620L → rolls to
+`-3.md`; synthetic `-3.md` at 620L → rolls to `-4.md` (confirms unbounded, not a hardcoded pair).
+Applied live to this cycle's own `docs/agent-memory/decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-developer.md`
+journal (499L/159,241B — exactly the blind-spot shape cited in the task, one of the 3 named
+examples) — appended the `CAP-REACHED` sentinel per the fixed logic; the mandatory `send_telegram`
+bug-channel notification could NOT be sent this session (no MCP/gateway tool grant — Read/Edit/
+Write/Bash only), flagged for a human/PO to send or for the next gateway-capable cycle to catch up
+on. Not implemented (explicitly out of this row's scope, owned by a separate blocked P1 backlog
+row `FIX-DECISION-JOURNAL-BYTECAP-NO-ACTUATOR`): an automated sweep/actuator over the other ~10
+fleet-wide journals already sitting in this blind spot — this fix only corrects the prose/logic an
+agent follows on its OWN next journal write. No `apps/` TS/Go touched (zone `cross-service/`, pure
+`.claude/skills/` md+bash) — `bun test`/`tsc` N/A. File itself: 99L/4349B, well under its own
+governed `.claude/skills/**/*.md` cap (200L/12000B).
+
+---
 ## [Developer] 2026-07-30 — FIX-NOTEBOOK-DUPHEADING-DETECTOR-NO-DEDUP-NO-ACTUATOR
 
 `docs/agent-memory/notebooks/unified-agent.md` had two adjacent `## Prior cycles` headings with only a blank line between them (zero content by construction — PO adjudication: provably lossless to collapse), orphaning the `**Last updated:** 2026-07-29T05:23:00Z ...` footer under the second, and `scripts/agents-flow/notebook-auto-prune.sh`'s `emit_dup_signal()` had no dedup (no state file at all) and no actuator (`action_required: manual_review`, never consumed) — 6 near-identical signals fired for the same file+heading on 2026-07-30 alone, burning drain-cycle slots. Fix, scoped exactly to the PO's adjudicated exception (every OTHER duplicate-heading shape — real content between the pair, non-adjacent duplicates — stays detection-only/unchanged): (1) `repair_adjacent_dup_heading()`/`detect_dup_heading_lines()` now auto-collapse ONLY the shape `detect_dup_heading()` already matched (adjacent identical `## ` heading, nothing but blanks between) — deletes the first occurrence, wired into both the pre-cap-scan and post-prune-scan call sites; (2) new persistent marker ledger (`docs/data/notebook-dup-heading-signal-state/`, keyed by file+heading) via `emit_dup_signal_deduped()`/`_dup_clear_markers_for_file()` — emits at most once while the corrupted condition persists, clears the moment a scan finds the file clean, re-arming for a later genuinely-new recurrence. Live file manually repaired to match (`grep -c '^## Prior cycles'` == 1, footer reattached, lossless). Tests: `scripts/agents-flow/test-notebook-auto-prune.sh` Test 5 updated (was detection-only/byte-identical assertion — now asserts auto-repair, that's the behavior being overturned) + new Tests 6/7 (content-between and non-adjacent duplicates stay byte-identical/unfixed) + new Test 8 (unit-level dedup-ledger contract: 1 signal on fresh corruption, 0 on a same-still-uncleared re-check, 1 again after clear+recur) — 8/8 GREEN. No regressions: `scripts/agents-flow/notebook-auto-prune.test.sh` (byte/line-cap + sameday-tie suite) 7/7 still GREEN. OUT OF SCOPE (flagged for `agent-father` follow-up, not implemented here): an anchor-uniqueness invariant for permanent-accumulator headings in `.claude/skills/notebook-write/SKILL.md` (`.md` agent-contract edit — belongs to the agent-md-factory, not a code developer) and the root cause itself (`docs/agents/unified-agent/flow/chef.md:837`'s AC-2b intra-prune re-emitting the `## Prior cycles` anchor without an existence check — different task/zone). Forward gate (cannot be proven inside this single invocation): zero NEW `docs/signals/notebook-duplicate-heading-*unified-agent*` files across at least 2 subsequent chef cycles — dev-team/QA should check.
