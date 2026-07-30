@@ -34,6 +34,21 @@
 # NEGATIVE control (WIP capped at 2 -> the three in_progress-budget lanes
 # must NOT fire).
 #
+# EXTENDED 2026-07-30 (AC-6, FIX-DEVTEAM-READY-REVIEW-LANE-SUPERVISED-
+# PLANONLY-NO-PICKER): § SLS-claim FALLBACK adds isolated single-row
+# fixtures (same discipline as the DRS AC fixtures below — NOT mixed into
+# the shared padded fixture, so these assertions are deterministic
+# regardless of live-board drift) proving the NEW unstamped-ready[]-row
+# claim path (AC-2's fix) actually fires: positive claim + dispatch_lane
+# resolution + promoted_by-not-forged (AC-2's explicit constraint), plus
+# negative controls (epic-wrapper exclusion per AC-4, unmet-depends_on
+# exclusion) and a PRIMARY-vs-FALLBACK coexistence ordering check. This is
+# satisfiability for the SAME reason the rest of this file exists:
+# scripts/audits/bounded1-supervised-lane-report.sh proves the fixed claim
+# script's FALLBACK class resolves a dispatch lane (LANE RESOLUTION,
+# extended there too, AC-5) — it does not prove the claim script's jq logic
+# actually reaches and moves the row. This file does.
+#
 # Usage: bash scripts/audits/devteam-dispatch-gate-satisfiability.sh
 # Exit 0 = every assertion below passes. Exit 1 = at least one fails
 # (details printed). Never writes to the live orch-state.json.
@@ -138,11 +153,105 @@ fi
 
 cp "$WORK/fixture.json" "$WORK/t2.json"
 jq --arg now "$NOW" --slurpfile detail "$DETAIL" --slurpfile archive "$ARCHIVE" -f scripts/devteam-backlog-promote-supervised-lane-sweep.jq "$WORK/t2.json" > "$WORK/t2b.json"
-jq --arg now "$NOW" -f scripts/devteam-backlog-claim-supervised-lane-sweep.jq "$WORK/t2b.json" > "$WORK/t2c.json"
+# FIX-DEVTEAM-READY-REVIEW-LANE-SUPERVISED-PLANONLY-NO-PICKER (2026-07-30):
+# claim script now ALSO needs --slurpfile detail/--slurpfile archive (its new
+# FALLBACK path resolves effective_supervised/effective_plan_only/is_epic_wrapper/
+# deps_satisfied) — thread the same two files every other real-script call in
+# this instrument already uses.
+jq --arg now "$NOW" --slurpfile detail "$DETAIL" --slurpfile archive "$ARCHIVE" -f scripts/devteam-backlog-claim-supervised-lane-sweep.jq "$WORK/t2b.json" > "$WORK/t2c.json"
 SLS_READY_BEFORE=$(jq '.task_board.ready|length' "$WORK/t2.json")
 SLS_INPROG_AFTER=$(jq '.task_board.in_progress|length' "$WORK/t2c.json")
 SLS_FIRED=$([ "$SLS_INPROG_AFTER" -gt "$INPROG_N" ] && echo true || echo false)
 assert "SLS gate (in_progress<2) is SATISFIABLE at in_progress=$INPROG_N despite ready[]=$SLS_READY_BEFORE (the exact instance-9 saturated shape) — SLS claims a row" "$SLS_FIRED"
+
+# ---- SLS-claim FALLBACK (FIX-DEVTEAM-READY-REVIEW-LANE-SUPERVISED-PLANONLY-
+# NO-PICKER, 2026-07-30) — an unstamped supervised+plan_only ready[] row
+# (arrived via a route OTHER than this sweep's own promote script) must now
+# be reachable too. Isolated single-row fixtures (mirrors the DRS AC fixtures
+# below), never mixed into the shared padded fixture above, so this section's
+# assertions are deterministic regardless of live-board drift.
+echo ""
+echo "=== SLS-claim FALLBACK: unstamped supervised+plan_only ready[] row (AC-2 fix) ==="
+
+SLS_FALLBACK_FIXTURE=$(jq -n --arg now "$NOW" '
+  { task_board: {
+      backlog: [], ready: [ { id: "GATESAT-SLS-FALLBACK-UNSTAMPED", status: "READY", priority: "P0",
+        type: "FIX", zone: "cross-service/", next_agent: "pm",
+        supervised: true, plan_only: true, promoted_by: null, created_at: $now } ],
+      in_progress: [], qa: [], review: [], done: [], done_verified: []
+    } }')
+echo "$SLS_FALLBACK_FIXTURE" > "$WORK/sls-fallback.json"
+jq --arg now "$NOW" --slurpfile detail "$DETAIL" --slurpfile archive "$ARCHIVE" \
+  -f scripts/devteam-backlog-claim-supervised-lane-sweep.jq "$WORK/sls-fallback.json" > "$WORK/sls-fallback-out.json"
+SLS_FALLBACK_CLAIMED=$(jq -r '[.task_board.in_progress[] | select(.id=="GATESAT-SLS-FALLBACK-UNSTAMPED")] | length' "$WORK/sls-fallback-out.json")
+assert "AC-SLS-FALLBACK: unstamped (promoted_by=null) supervised+plan_only ready[] row IS claimed by SLS-claim's FALLBACK path" \
+  "$([ "$SLS_FALLBACK_CLAIMED" -eq 1 ] && echo true || echo false)"
+SLS_FALLBACK_LANE=$(jq -r '.task_board.in_progress[] | select(.id=="GATESAT-SLS-FALLBACK-UNSTAMPED") | .dispatch_lane // empty' "$WORK/sls-fallback-out.json")
+assert "AC-SLS-FALLBACK-LANE: dispatch_lane resolved to the row's own next_agent ('pm'), got '${SLS_FALLBACK_LANE:-<none>}'" \
+  "$([ "$SLS_FALLBACK_LANE" = "pm" ] && echo true || echo false)"
+SLS_FALLBACK_PROMOTED_BY=$(jq -r '.task_board.in_progress[] | select(.id=="GATESAT-SLS-FALLBACK-UNSTAMPED") | .promoted_by' "$WORK/sls-fallback-out.json")
+assert "AC-SLS-FALLBACK-NO-FORGE (AC-2 explicit constraint): promoted_by stays null — NEVER forged to fabricate provenance (got '${SLS_FALLBACK_PROMOTED_BY}')" \
+  "$([ "$SLS_FALLBACK_PROMOTED_BY" = "null" ] && echo true || echo false)"
+
+# Negative control 1: same shape, but an epic wrapper — must NOT be claimed
+# (AC-4 — decomposition containers are never directly dispatched; closed out
+# separately by post-cycle.md's Step 4.4 Epic-Wrapper Autoclose Sweep).
+SLS_FALLBACK_WRAPPER_FIXTURE=$(jq -n --arg now "$NOW" '
+  { task_board: {
+      backlog: [], ready: [ { id: "GATESAT-SLS-FALLBACK-WRAPPER", status: "READY", priority: "P0",
+        type: "FIX", zone: "cross-service/", next_agent: "developer",
+        supervised: true, plan_only: true, promoted_by: null,
+        children: ["GATESAT-SLS-FALLBACK-WRAPPER-CHILD-1"], created_at: $now } ],
+      in_progress: [], qa: [], review: [], done: [], done_verified: []
+    } }')
+echo "$SLS_FALLBACK_WRAPPER_FIXTURE" > "$WORK/sls-fallback-wrapper.json"
+jq --arg now "$NOW" --slurpfile detail "$DETAIL" --slurpfile archive "$ARCHIVE" \
+  -f scripts/devteam-backlog-claim-supervised-lane-sweep.jq "$WORK/sls-fallback-wrapper.json" > "$WORK/sls-fallback-wrapper-out.json"
+SLS_FALLBACK_WRAPPER_CLAIMED=$(jq -r '[.task_board.in_progress[] | select(.id=="GATESAT-SLS-FALLBACK-WRAPPER")] | length' "$WORK/sls-fallback-wrapper-out.json")
+assert "AC-SLS-FALLBACK-NEG-WRAPPER: an epic-wrapper row (children[] non-empty) is NEVER claimed by the FALLBACK path, even though supervised+plan_only+unstamped" \
+  "$([ "$SLS_FALLBACK_WRAPPER_CLAIMED" -eq 0 ] && echo true || echo false)"
+
+# Negative control 2: same shape, but an unmet depends_on — must NOT be claimed.
+SLS_FALLBACK_DEP_FIXTURE=$(jq -n --arg now "$NOW" '
+  { task_board: {
+      backlog: [], ready: [ { id: "GATESAT-SLS-FALLBACK-BLOCKED-DEP", status: "READY", priority: "P0",
+        type: "FIX", zone: "cross-service/", next_agent: "pm",
+        supervised: true, plan_only: true, promoted_by: null,
+        depends_on: ["GATESAT-SLS-FALLBACK-DEP-NOT-DONE"], created_at: $now } ],
+      in_progress: [], qa: [], review: [], done: [], done_verified: []
+    } }')
+echo "$SLS_FALLBACK_DEP_FIXTURE" > "$WORK/sls-fallback-dep.json"
+jq --arg now "$NOW" --slurpfile detail "$DETAIL" --slurpfile archive "$ARCHIVE" \
+  -f scripts/devteam-backlog-claim-supervised-lane-sweep.jq "$WORK/sls-fallback-dep.json" > "$WORK/sls-fallback-dep-out.json"
+SLS_FALLBACK_DEP_CLAIMED=$(jq -r '[.task_board.in_progress[] | select(.id=="GATESAT-SLS-FALLBACK-BLOCKED-DEP")] | length' "$WORK/sls-fallback-dep-out.json")
+assert "AC-SLS-FALLBACK-NEG-DEPS: a row with an unsatisfied depends_on is NEVER claimed by the FALLBACK path" \
+  "$([ "$SLS_FALLBACK_DEP_CLAIMED" -eq 0 ] && echo true || echo false)"
+
+# Ordering control: PRIMARY (SLS-stamped) row and an eligible FALLBACK row
+# coexist in ready[] — PRIMARY must win this invocation; FALLBACK stays
+# staged for a later tick (at most one claim per invocation, same discipline
+# as every other picker in this chain).
+SLS_COEXIST_FIXTURE=$(jq -n --arg now "$NOW" '
+  { task_board: {
+      backlog: [],
+      ready: [
+        { id: "GATESAT-SLS-COEXIST-PRIMARY", status: "READY", priority: "P1",
+          type: "FIX", zone: "cross-service/", next_agent: "architect",
+          supervised: true, plan_only: true, promoted_by: "dev-team (supervised-lane sweep)",
+          dispatch_lane: "architect", created_at: $now },
+        { id: "GATESAT-SLS-COEXIST-FALLBACK", status: "READY", priority: "P0",
+          type: "FIX", zone: "cross-service/", next_agent: "pm",
+          supervised: true, plan_only: true, promoted_by: null, created_at: $now }
+      ],
+      in_progress: [], qa: [], review: [], done: [], done_verified: []
+    } }')
+echo "$SLS_COEXIST_FIXTURE" > "$WORK/sls-coexist.json"
+jq --arg now "$NOW" --slurpfile detail "$DETAIL" --slurpfile archive "$ARCHIVE" \
+  -f scripts/devteam-backlog-claim-supervised-lane-sweep.jq "$WORK/sls-coexist.json" > "$WORK/sls-coexist-out.json"
+SLS_COEXIST_PRIMARY_CLAIMED=$(jq -r '[.task_board.in_progress[] | select(.id=="GATESAT-SLS-COEXIST-PRIMARY")] | length' "$WORK/sls-coexist-out.json")
+SLS_COEXIST_FALLBACK_STILL_READY=$(jq -r '[.task_board.ready[] | select(.id=="GATESAT-SLS-COEXIST-FALLBACK")] | length' "$WORK/sls-coexist-out.json")
+assert "AC-SLS-FALLBACK-ORDERING: when a PRIMARY (stamped) candidate exists, it is claimed and the FALLBACK candidate is left staged in ready[] for a later tick (at most one claim per invocation)" \
+  "$([ "$SLS_COEXIST_PRIMARY_CLAIMED" -eq 1 ] && [ "$SLS_COEXIST_FALLBACK_STILL_READY" -eq 1 ] && echo true || echo false)"
 
 cp "$WORK/fixture.json" "$WORK/t3.json"
 jq --arg now "$NOW" --slurpfile detail "$DETAIL" --slurpfile archive "$ARCHIVE" -f scripts/devteam-backlog-claim-ready-lane-consumer.jq "$WORK/t3.json" > "$WORK/t3c.json"
@@ -266,7 +375,7 @@ assert "at in_progress=$CAPPED_INPROG (== cap), main.md's own WIP2<2 pre-check w
 # underlying jq scripts do not themselves fabricate extra in_progress rows
 # beyond whatever promote legitimately staged into ready[] this call.
 jq --arg now "$NOW" --slurpfile detail "$DETAIL" --slurpfile archive "$ARCHIVE" -f scripts/devteam-backlog-promote-supervised-lane-sweep.jq "$WORK/capped.json" > "$WORK/capped-sls.json"
-jq --arg now "$NOW" -f scripts/devteam-backlog-claim-supervised-lane-sweep.jq "$WORK/capped-sls.json" > "$WORK/capped-sls2.json"
+jq --arg now "$NOW" --slurpfile detail "$DETAIL" --slurpfile archive "$ARCHIVE" -f scripts/devteam-backlog-claim-supervised-lane-sweep.jq "$WORK/capped-sls.json" > "$WORK/capped-sls2.json"
 CAPPED_SLS_CLAIMED_AT_MOST_ONE=$([ "$(jq '.task_board.in_progress|length' "$WORK/capped-sls2.json")" -le "$((CAPPED_INPROG + 1))" ] && echo true || echo false)
 assert "defense-in-depth: SLS claim script never claims more than ONE additional row per invocation even if called at/above the cap" "$CAPPED_SLS_CLAIMED_AT_MOST_ONE"
 

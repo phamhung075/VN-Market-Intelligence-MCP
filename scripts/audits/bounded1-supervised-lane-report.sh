@@ -77,10 +77,56 @@
 # SURFACED, not a row silently idling forever — nudges PO to install
 # `depends_on` the way UC-CDC-P5 was hand-fixed on 2026-07-22.
 #
+# READY / REVIEW EXTENSION (AC-5, FIX-DEVTEAM-READY-REVIEW-LANE-SUPERVISED-
+# PLANONLY-NO-PICKER, 2026-07-30): this script previously scanned
+# `task_board.backlog[]` ONLY — so a supervised+plan_only row that reached
+# `ready[]` via any route OTHER than SLS's own promote script (PO hand-
+# placement, PM/architect decomposition) was invisible to THIS instrument
+# too, the exact "detector shares the blind spot of the thing it audits"
+# defect class this fix task itself was minted to close (same shape as
+# FIX-BOUNDED1-SUPERVISED-LANE-NO-SWEEPER, one lane over). New sections,
+# same LANE-RESOLUTION-ONLY discipline as PRIMARY above (never re-implements
+# gate-firing/satisfiability — that instrument is
+# scripts/audits/devteam-dispatch-gate-satisfiability.sh, extended
+# separately per AC-6):
+#   READY-PRIMARY (GATES exit code, mirrors backlog PRIMARY exactly) —
+#     every `task_board.ready[]` row where `effective_supervised` AND
+#     `effective_plan_only` are BOTH true AND NOT `is_epic_wrapper` (wrapper
+#     rows are a documented no-picker-by-design class, see READY-WRAPPER
+#     below — they never belong in this gating set). FAILS (exit 1) if any
+#     such row's dispatch lane is unresolved ("none") — this is exactly the
+#     class `scripts/devteam-backlog-claim-supervised-lane-sweep.jq`'s new
+#     FALLBACK path (this task's AC-2 fix) now claims.
+#   READY-WRAPPER (informational only) — `ready[]` rows where
+#     `effective_supervised && effective_plan_only && is_epic_wrapper` is
+#     true: a documented NO-PICKER-BY-DESIGN class (AC-4) — never claimed by
+#     BOUNDED-1/SLS/RLC/DRS, closed out instead by
+#     `docs/agents/dev-team/flow/post-cycle.md` § Step 4.4 Epic-Wrapper
+#     Autoclose Sweep once `all_children_terminal`. Listed for visibility,
+#     never gates exit code.
+#   READY-XOR (informational only) — `ready[]` rows gated by EITHER flag
+#     alone (not both), non-wrapper: the ready[]-lane analog of SECONDARY
+#     above. RLC excludes these unconditionally and SLS-claim's FALLBACK
+#     requires BOTH flags true (deliberately not widened — out of this
+#     task's scope, see main.md's Lane × Gate Coverage Matrix). Surfaced,
+#     never silently assumed covered.
+#   REVIEW-SUP-PO (informational only, confirms AC-3) — every
+#     `task_board.review[]` row carrying `effective_supervised &&
+#     effective_plan_only`, split by whether `effective_next_agent=="qa"`
+#     (covered by the PRE-EXISTING Review-Lane QA-Drain PRIMARY selector,
+#     which has NO supervised/plan_only gate at all — see main.md § Review-
+#     Lane QA-Drain AC-3 note) vs not (falls into that lane's own
+#     pre-existing SECONDARY/PO-triage set, unchanged). Confirms review[] is
+#     NOT a silent gap for this class; never gates exit code (ownership
+#     belongs to devteam-review-lane-drain-report.sh, not duplicated here).
+#
 # Usage: bash scripts/audits/bounded1-supervised-lane-report.sh
-# Exit 0 = every supervised+plan_only row has a resolved dispatch lane.
-# Exit 1 = at least one supervised+plan_only row has dispatch-lane=none.
-# (TERTIARY findings never affect the exit code.)
+# Exit 0 = every supervised+plan_only, non-wrapper row — in EITHER
+#          `backlog[]` OR `ready[]` — has a resolved dispatch lane.
+# Exit 1 = at least one such row (backlog OR ready) has dispatch-lane=none.
+# (SECONDARY/TERTIARY/DRS/READY-WRAPPER/READY-XOR/REVIEW-SUP-PO findings
+# never affect the exit code — documented no-picker-by-design or
+# out-of-scope residual classes, per main.md's Lane × Gate Coverage Matrix.)
 
 set -euo pipefail
 PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
@@ -218,6 +264,67 @@ jq -c \
     ] | sort_by([.rank, (.age_days // -1) * -1])
   ' "$STATE" > "$WORK/drs.json"
 
+# READY-PRIMARY / READY-WRAPPER / READY-XOR / REVIEW-SUP-PO — AC-5,
+# FIX-DEVTEAM-READY-REVIEW-LANE-SUPERVISED-PLANONLY-NO-PICKER (2026-07-30).
+# Extends this instrument beyond backlog[]-only (see file header). Same
+# report_row()/dispatch_lane() reuse, no forked logic.
+jq -c \
+  --argjson now_epoch "$NOW_EPOCH" \
+  --slurpfile detail "$DETAIL" \
+  --slurpfile roster "$WORK/roster.json" \
+  "$JQ_DEFS"'
+  (detail_items_from($detail)) as $detail_items
+  | ($roster[0] | map({(.id): .type}) | add) as $roster_map
+  | [ .task_board.ready[]
+    | select((. | effective_supervised($detail_items)) and (. | effective_plan_only($detail_items)))
+    | select((. | is_epic_wrapper($detail_items)) | not)
+    | report_row($detail_items; $roster_map; $now_epoch)
+    ] | sort_by([.rank, (.age_days // -1) * -1])
+  ' "$STATE" > "$WORK/ready-primary.json"
+
+jq -c \
+  --argjson now_epoch "$NOW_EPOCH" \
+  --slurpfile detail "$DETAIL" \
+  --slurpfile roster "$WORK/roster.json" \
+  "$JQ_DEFS"'
+  (detail_items_from($detail)) as $detail_items
+  | ($roster[0] | map({(.id): .type}) | add) as $roster_map
+  | [ .task_board.ready[]
+    | select((. | effective_supervised($detail_items)) and (. | effective_plan_only($detail_items)))
+    | select(. | is_epic_wrapper($detail_items))
+    | report_row($detail_items; $roster_map; $now_epoch)
+    ] | sort_by([.rank, (.age_days // -1) * -1])
+  ' "$STATE" > "$WORK/ready-wrapper.json"
+
+jq -c \
+  --argjson now_epoch "$NOW_EPOCH" \
+  --slurpfile detail "$DETAIL" \
+  --slurpfile roster "$WORK/roster.json" \
+  "$JQ_DEFS"'
+  (detail_items_from($detail)) as $detail_items
+  | ($roster[0] | map({(.id): .type}) | add) as $roster_map
+  | [ .task_board.ready[]
+    | select((. | effective_supervised($detail_items)) or (. | effective_plan_only($detail_items)))
+    | select((. | effective_supervised($detail_items)) and (. | effective_plan_only($detail_items)) | not)
+    | select((. | is_epic_wrapper($detail_items)) | not)
+    | report_row($detail_items; $roster_map; $now_epoch)
+    ] | sort_by([.rank, (.age_days // -1) * -1])
+  ' "$STATE" > "$WORK/ready-xor.json"
+
+jq -c \
+  --argjson now_epoch "$NOW_EPOCH" \
+  --slurpfile detail "$DETAIL" \
+  --slurpfile roster "$WORK/roster.json" \
+  "$JQ_DEFS"'
+  (detail_items_from($detail)) as $detail_items
+  | ($roster[0] | map({(.id): .type}) | add) as $roster_map
+  | [ .task_board.review[]
+    | select((. | effective_supervised($detail_items)) and (. | effective_plan_only($detail_items)))
+    | report_row($detail_items; $roster_map; $now_epoch)
+    + { qa_routed: ((. | effective_next_agent($detail_items)) == "qa") }
+    ] | sort_by([.rank, (.age_days // -1) * -1])
+  ' "$STATE" > "$WORK/review-sup-po.json"
+
 print_table() {
   local file="$1"
   printf '%-46s %-9s %-9s %-28s\n' "ID" "PRIORITY" "AGE(d)" "DISPATCH-LANE"
@@ -279,11 +386,51 @@ echo ""
 echo "DRS-target rows: $DRS_TOTAL — eligible (auto-dispatched): $DRS_ELIGIBLE_TOTAL — stranded off-allowlist (policy): $DRS_OFFLIST_TOTAL"
 
 echo ""
-if [ "$PRIMARY_UNRESOLVED" -gt 0 ]; then
-  echo "[FAIL] $PRIMARY_UNRESOLVED supervised+plan_only row(s) have NO resolvable dispatch lane."
-  jq -r '.[] | select(.dispatch_lane == "none") | "  - " + .id' "$WORK/primary.json"
+echo "=== READY-PRIMARY (GATES exit code, same as PRIMARY above): task_board.ready[] supervised:true AND plan_only:true, NOT an epic wrapper ==="
+echo "  (FIX-DEVTEAM-READY-REVIEW-LANE-SUPERVISED-PLANONLY-NO-PICKER, 2026-07-30 — the class scripts/devteam-backlog-claim-supervised-lane-sweep.jq's new FALLBACK path now claims, whether or not the row carries this sweep's own promoted_by stamp.)"
+print_table "$WORK/ready-primary.json"
+READY_PRIMARY_TOTAL=$(jq 'length' "$WORK/ready-primary.json")
+READY_PRIMARY_UNRESOLVED=$(jq '[.[] | select(.dispatch_lane == "none")] | length' "$WORK/ready-primary.json")
+echo ""
+echo "Ready-primary (supervised AND plan_only, non-wrapper) rows: $READY_PRIMARY_TOTAL — dispatch-lane=none: $READY_PRIMARY_UNRESOLVED"
+
+echo ""
+echo "=== READY-WRAPPER (informational only, does not gate exit code): task_board.ready[] supervised:true AND plan_only:true AND epic wrapper ==="
+echo "  (AC-4 — documented NO-PICKER-BY-DESIGN class: never claimed by BOUNDED-1/SLS/RLC/DRS. Closed out instead by docs/agents/dev-team/flow/post-cycle.md § Step 4.4 Epic-Wrapper Autoclose Sweep once all_children_terminal — the row's own children[] are swept individually per their OWN effective_supervised/effective_plan_only, not this table.)"
+print_table "$WORK/ready-wrapper.json"
+READY_WRAPPER_TOTAL=$(jq 'length' "$WORK/ready-wrapper.json")
+echo ""
+echo "Ready-wrapper rows: $READY_WRAPPER_TOTAL"
+
+echo ""
+echo "=== READY-XOR (informational only, does not gate exit code): task_board.ready[] supervised XOR plan_only, non-wrapper ==="
+echo "  (Out-of-scope residual for this task, same class as SECONDARY above one lane over — RLC excludes any row carrying EITHER flag alone, and SLS-claim's FALLBACK deliberately requires BOTH true, mirroring SLS-promote's own gate. Not silently assumed covered — see main.md's Lane × Gate Coverage Matrix.)"
+print_table "$WORK/ready-xor.json"
+READY_XOR_TOTAL=$(jq 'length' "$WORK/ready-xor.json")
+echo ""
+echo "Ready-xor (supervised XOR plan_only, non-wrapper) rows: $READY_XOR_TOTAL"
+
+echo ""
+echo "=== REVIEW-SUP-PO (informational only, does not gate exit code — confirms AC-3): task_board.review[] supervised:true AND plan_only:true ==="
+echo "  (Review-Lane QA-Drain's PRIMARY selector has NO supervised/plan_only gate at all — every row below with qa_routed=true is ALREADY covered by that pre-existing lane, queued by age like any other REVIEW+next_agent==qa row. qa_routed=false falls into that lane's own pre-existing SECONDARY/PO-triage set — ownership stays with scripts/audits/devteam-review-lane-drain-report.sh, not duplicated here.)"
+printf '%-46s %-9s %-9s %-10s\n' "ID" "PRIORITY" "AGE(d)" "QA_ROUTED"
+printf '%-46s %-9s %-9s %-10s\n' "----------------------------------------------" "--------" "--------" "----------"
+jq -r '.[] | [.id, .priority, ((.age_days // "?") | tostring), (.qa_routed | tostring)] | @tsv' "$WORK/review-sup-po.json" \
+  | while IFS=$'\t' read -r id priority age qar; do
+      printf '%-46s %-9s %-9s %-10s\n' "$id" "$priority" "$age" "$qar"
+    done
+REVIEW_SUP_PO_TOTAL=$(jq 'length' "$WORK/review-sup-po.json")
+REVIEW_SUP_PO_QA=$(jq '[.[] | select(.qa_routed == true)] | length' "$WORK/review-sup-po.json")
+echo ""
+echo "Review-sup-po rows: $REVIEW_SUP_PO_TOTAL — qa_routed (covered by QA-Drain PRIMARY): $REVIEW_SUP_PO_QA — not qa_routed (SECONDARY/PO-triage): $((REVIEW_SUP_PO_TOTAL - REVIEW_SUP_PO_QA))"
+
+echo ""
+if [ "$PRIMARY_UNRESOLVED" -gt 0 ] || [ "$READY_PRIMARY_UNRESOLVED" -gt 0 ]; then
+  echo "[FAIL] $PRIMARY_UNRESOLVED backlog + $READY_PRIMARY_UNRESOLVED ready supervised+plan_only (non-wrapper) row(s) have NO resolvable dispatch lane."
+  jq -r '.[] | select(.dispatch_lane == "none") | "  - backlog: " + .id' "$WORK/primary.json"
+  jq -r '.[] | select(.dispatch_lane == "none") | "  - ready: " + .id' "$WORK/ready-primary.json"
   exit 1
 fi
 
-echo "[PASS] every supervised+plan_only (quarantine) row has an assigned dispatch lane. 0 rows with dispatch-lane=none."
+echo "[PASS] every supervised+plan_only (quarantine) row — in backlog[] OR ready[], non-wrapper — has an assigned dispatch lane. 0 rows with dispatch-lane=none."
 exit 0
