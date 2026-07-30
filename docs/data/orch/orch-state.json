@@ -94,6 +94,8 @@
   ],
   "head": {
     "status": "idle",
+    "updated_at": "2026-07-30T07:39:44Z",
+    "updated_by": "developer",
     "active_task_id": null,
     "next_agent": "router"
   },
@@ -10041,35 +10043,6 @@
         "updated_at": "2026-07-28T17:35:03Z"
       },
       {
-        "id": "FIX-STRANDED-SWEEP-CLASSIFY-AGENT-MODEL-SWITCH",
-        "type": "CLEAN",
-        "status": "BACKLOG",
-        "priority": "P2",
-        "size": "S",
-        "zone": "cross-service/",
-        "owner": "developer",
-        "next_agent": "dev-team",
-        "depends": [],
-        "created_at": "2026-07-28T17:33:25Z",
-        "created_by": "po/triage-20260728T1731-stranded-sweep-classifier",
-        "source": "signal_queue row dev-20260728T171505 (dev-team -> po, stranded-state sweep, 20 unknown paths, 2026-07-28T17:15:05Z) + po's own git diff read of the 20 flagged files",
-        "title": "stranded-state-sweep.sh mis-classifies ~40% of what it reports: the UNKNOWN bucket has NO mtime age gate (unlike AUTO-COMMIT), so LIVE in-flight agent edits are reported as stranded every tick; and _is_owned_elsewhere() has no pattern for routine agent-output artifacts (agent-model switch churn, chef synthesis JSON, fb posts, DASHBOARD.md, auditor-dedup-ledger.json)",
-        "root_cause": "po verified via git diff on the 20 flagged .claude/agents/*.md files + .claude/agent-models.json: every file's diff is exactly 2 lines (1 changed value) -- agent-models.json's current_mode: normal -> performance, and each agent .md's frontmatter model: <old> -> <new> matching the corresponding agent-models.json entry. This is routine, expected output of the agent-model-switching mechanism, not abandoned or orphaned work needing a commit/discard decision -- but stranded-state-sweep.sh's classifier has no pattern recognizing it, so it lands in the UNKNOWN bucket and fires a signal every time the mode is switched. || RESCOPED 2026-07-29T00:02Z after a 2nd and 3rd consecutive tick of the same signal. TWO distinct mechanisms live in one 60-line classifier. (M1 — NEW, now dominant) the AUTO-COMMIT bucket applies an SSS_AGE_HOURS=24 young-skip gate (script L122-128) but the UNKNOWN bucket at L143-148 applies NO age gate at all, so any file an agent is editing RIGHT NOW is reported as an unknown-owner stranded path. po RAW-verified at 2026-07-28T23:55:54Z: of 9 unknown paths, 4 were live in-flight edits by agents dispatched minutes earlier in the same tick — apps/mcp-server/src/scheduler/schedulerJobTable.ts, apps/mcp-server/src/scheduler/system/schedulerWatchdogJob.ts and apps/mcp-server/src/__tests__/FIX-CRON-WATCHDOG-COVERAGE-2026-07-22.test.ts (all ALPHA-S2-SUB5-WATCHDOG-STRETCH, in_progress), plus docs/agents/unified-agent/flow/chef.md. The prior tick reported 10 unknown paths of which 3 were the same false-positive class. (M2 — the original scope) _is_owned_elsewhere() is a hand-maintained literal case-list, so every new class of routine agent output lands in UNKNOWN forever: .claude/agents/*.md + .claude/agent-models.json model-switch churn (original finding), docs/data/auditor-dedup-ledger.json (a direct sibling of docs/data/auditor-*-last-healthy.json which IS already listed — a one-glob gap), docs/data/DASHBOARD.md, docs/data/unified-agent-synthesis-DATE-SLOT.json, docs/social/fb-post-DATE.md.",
-        "acceptance": [
-          "AC1 (original): _is_owned_elsewhere() (or a narrowly-scoped sibling check) recognizes .claude/agent-models.json + .claude/agents/*.md diffs that touch ONLY the current_mode/model value as owned-elsewhere, while a genuinely unrelated edit to those same files is still flagged unknown.",
-          "AC2 (original): the existing stranded-state-sweep.test.sh suite still passes; a new case covers a model-switch-shaped diff.",
-          "AC3 (NEW, M1): the UNKNOWN bucket applies the same SSS_AGE_HOURS young-skip gate the AUTO-COMMIT bucket already applies — a path whose mtime is younger than SSS_AGE_HOURS is never reported as stranded. Deletions stay exempt (no on-disk mtime), matching existing behaviour. Test: a file touched 1 minute ago is NOT in unknown_paths[]; the same file aged past the gate IS.",
-          "AC4 (NEW, M2): docs/data/unified-agent-synthesis-*.json, docs/social/fb-post-*.md, docs/data/DASHBOARD.md and docs/data/auditor-dedup-ledger.json are classified as a recognised routine-agent-output class rather than UNKNOWN. Design note for the implementer: git history shows these ARE committed, but only in periodic batch sweeps (7919ea7f6 synthesis snapshots 07-16..07-25, df48601da plain-VN FB posts 07-17..07-24), so they sit dirty for days by design. Their producing agents (unified-agent, fb-market-poster) hold no Bash/git tool and structurally CANNOT commit them, so OWNED-ELSEWHERE (silent skip) is the honest classification unless a deterministic sweeper is given the job.",
-          "AC5 (NEW): measured false-positive rate. Run the sweep during a tick with at least one agent actively dispatched; unknown_paths[] must contain zero paths belonging to a live in-flight task. Prose is not proof — attach the actual --plan JSON."
-        ],
-        "scope_out": "Do NOT stage, commit, or revert .claude/agent-models.json or any .claude/agents/*.md file as part of this fix -- those are live, currently-dirty files owned by a different mechanism (CLAUDE.md hard constraint: .claude/agent-models.json is owned by another agent). This row changes classifier CODE only.",
-        "related": [],
-        "note": "LOW severity, mechanical -- minted so the signal stops re-firing on every routine model-mode switch rather than left as a standing false-positive class. Prior-art checked: no existing board row references stranded-state-sweep.sh's classifier patterns or agent-model-switch churn. [po 2026-07-29T00:02Z] RESCOPED + P3->P2 rather than minting a competing row: signal dev-20260728T234103-sss and its predecessor both land on the SAME 60-line _is_owned_elsewhere()/UNKNOWN-bucket code path, and two agents editing one small function is exactly the collision the router is already avoiding elsewhere this tick. Kept in BACKLOG deliberately — ready[] already holds 51 rows of which 30 are P1, so promoting adds queue noise, not throughput — but this is the explicit next-promotion candidate for churn reduction: it costs one PO triage slot per tick at a ~40% false-positive rate. NOT IN SCOPE and NOT a defect of this script: docs/data/unified-agent-synthesis-2026-07-28-evening.json and -2026-07-29-evening.json being uncommitted is the confirmed double-publish artifact already tracked by FIX-CHEF-EVENING-DUP-DATE-MISLABEL-INVESTIGATE (READY/P1).",
-        "updated_at": "2026-07-29T00:06:04Z",
-        "updated_by": "po (triage-20260729T0002 dev-team tick signals 1-3)",
-        "origin_signal_id": "dev-20260728T234103-sss"
-      },
-      {
         "id": "FIX-AUDITOR-T1-PREGATE-MEMCREEP-SINGLE-POINT-SAMPLE",
         "type": "FIX",
         "status": "BACKLOG",
@@ -17747,6 +17720,41 @@
         "dev_commit": "200eabcf3",
         "dev_notebook_commit": "554f17c43",
         "status_note": "dev-pdf-extractor: added OcrPageFailedError(PDFProcessingError) (domain/errors.py); _ocr_page() generic except now raises it (from exc) instead of return \"\" — was the AC1 defect. _extract_text_ocr_sync propagation tuple extended alongside pre-existing OcrCapacityExceededError/OcrDeadlineExceededError. Zero services.py/usecases.py/HTTP-layer changes needed — process_pdf()'s existing except PDFProcessingError branch already marks doc failed + never reaches store_extraction(). AC2 negative control (legit blank page, OCR succeeds returning \"\") unaffected — dedicated test. AC3: new test_extraction_engine_ocr_failure_swallow.py (12 tests) + 2 new test_extract_pdf_service.py tests, full suite 1056 passed (was 1044) + same 3 pre-existing env-only failures (missing pandas, missing container-only PDF fixture) unchanged before/after; test_ocr_concurrency_invariant.py + test_extraction_engine_nonblocking.py pass unmodified. Falsification: reverting the 2 source files makes the new test module fail COLLECTION (ImportError: OcrPageFailedError undefined). import-linter 3/3 contracts kept. Prior-art FIX-ERRAUDIT-W3-PEK-P2 checked — zero overlap (different method, _extract_tables_sync untouched). No rebuild/deploy needed for a QA-scope code-review row (in-process Python service, no external contract change) — QA can verify-committed via pytest re-run."
+      },
+      {
+        "id": "FIX-STRANDED-SWEEP-CLASSIFY-AGENT-MODEL-SWITCH",
+        "type": "CLEAN",
+        "status": "REVIEW",
+        "priority": "P2",
+        "size": "S",
+        "zone": "cross-service/",
+        "owner": "developer",
+        "next_agent": "qa",
+        "depends": [],
+        "created_at": "2026-07-28T17:33:25Z",
+        "created_by": "po/triage-20260728T1731-stranded-sweep-classifier",
+        "source": "signal_queue row dev-20260728T171505 (dev-team -> po, stranded-state sweep, 20 unknown paths, 2026-07-28T17:15:05Z) + po's own git diff read of the 20 flagged files",
+        "title": "stranded-state-sweep.sh mis-classifies ~40% of what it reports: the UNKNOWN bucket has NO mtime age gate (unlike AUTO-COMMIT), so LIVE in-flight agent edits are reported as stranded every tick; and _is_owned_elsewhere() has no pattern for routine agent-output artifacts (agent-model switch churn, chef synthesis JSON, fb posts, DASHBOARD.md, auditor-dedup-ledger.json)",
+        "root_cause": "po verified via git diff on the 20 flagged .claude/agents/*.md files + .claude/agent-models.json: every file's diff is exactly 2 lines (1 changed value) -- agent-models.json's current_mode: normal -> performance, and each agent .md's frontmatter model: <old> -> <new> matching the corresponding agent-models.json entry. This is routine, expected output of the agent-model-switching mechanism, not abandoned or orphaned work needing a commit/discard decision -- but stranded-state-sweep.sh's classifier has no pattern recognizing it, so it lands in the UNKNOWN bucket and fires a signal every time the mode is switched. || RESCOPED 2026-07-29T00:02Z after a 2nd and 3rd consecutive tick of the same signal. TWO distinct mechanisms live in one 60-line classifier. (M1 — NEW, now dominant) the AUTO-COMMIT bucket applies an SSS_AGE_HOURS=24 young-skip gate (script L122-128) but the UNKNOWN bucket at L143-148 applies NO age gate at all, so any file an agent is editing RIGHT NOW is reported as an unknown-owner stranded path. po RAW-verified at 2026-07-28T23:55:54Z: of 9 unknown paths, 4 were live in-flight edits by agents dispatched minutes earlier in the same tick — apps/mcp-server/src/scheduler/schedulerJobTable.ts, apps/mcp-server/src/scheduler/system/schedulerWatchdogJob.ts and apps/mcp-server/src/__tests__/FIX-CRON-WATCHDOG-COVERAGE-2026-07-22.test.ts (all ALPHA-S2-SUB5-WATCHDOG-STRETCH, in_progress), plus docs/agents/unified-agent/flow/chef.md. The prior tick reported 10 unknown paths of which 3 were the same false-positive class. (M2 — the original scope) _is_owned_elsewhere() is a hand-maintained literal case-list, so every new class of routine agent output lands in UNKNOWN forever: .claude/agents/*.md + .claude/agent-models.json model-switch churn (original finding), docs/data/auditor-dedup-ledger.json (a direct sibling of docs/data/auditor-*-last-healthy.json which IS already listed — a one-glob gap), docs/data/DASHBOARD.md, docs/data/unified-agent-synthesis-DATE-SLOT.json, docs/social/fb-post-DATE.md.",
+        "acceptance": [
+          "AC1 (original): _is_owned_elsewhere() (or a narrowly-scoped sibling check) recognizes .claude/agent-models.json + .claude/agents/*.md diffs that touch ONLY the current_mode/model value as owned-elsewhere, while a genuinely unrelated edit to those same files is still flagged unknown.",
+          "AC2 (original): the existing stranded-state-sweep.test.sh suite still passes; a new case covers a model-switch-shaped diff.",
+          "AC3 (NEW, M1): the UNKNOWN bucket applies the same SSS_AGE_HOURS young-skip gate the AUTO-COMMIT bucket already applies — a path whose mtime is younger than SSS_AGE_HOURS is never reported as stranded. Deletions stay exempt (no on-disk mtime), matching existing behaviour. Test: a file touched 1 minute ago is NOT in unknown_paths[]; the same file aged past the gate IS.",
+          "AC4 (NEW, M2): docs/data/unified-agent-synthesis-*.json, docs/social/fb-post-*.md, docs/data/DASHBOARD.md and docs/data/auditor-dedup-ledger.json are classified as a recognised routine-agent-output class rather than UNKNOWN. Design note for the implementer: git history shows these ARE committed, but only in periodic batch sweeps (7919ea7f6 synthesis snapshots 07-16..07-25, df48601da plain-VN FB posts 07-17..07-24), so they sit dirty for days by design. Their producing agents (unified-agent, fb-market-poster) hold no Bash/git tool and structurally CANNOT commit them, so OWNED-ELSEWHERE (silent skip) is the honest classification unless a deterministic sweeper is given the job.",
+          "AC5 (NEW): measured false-positive rate. Run the sweep during a tick with at least one agent actively dispatched; unknown_paths[] must contain zero paths belonging to a live in-flight task. Prose is not proof — attach the actual --plan JSON."
+        ],
+        "scope_out": "Do NOT stage, commit, or revert .claude/agent-models.json or any .claude/agents/*.md file as part of this fix -- those are live, currently-dirty files owned by a different mechanism (CLAUDE.md hard constraint: .claude/agent-models.json is owned by another agent). This row changes classifier CODE only.",
+        "related": [],
+        "note": "LOW severity, mechanical -- minted so the signal stops re-firing on every routine model-mode switch rather than left as a standing false-positive class. Prior-art checked: no existing board row references stranded-state-sweep.sh's classifier patterns or agent-model-switch churn. [po 2026-07-29T00:02Z] RESCOPED + P3->P2 rather than minting a competing row: signal dev-20260728T234103-sss and its predecessor both land on the SAME 60-line _is_owned_elsewhere()/UNKNOWN-bucket code path, and two agents editing one small function is exactly the collision the router is already avoiding elsewhere this tick. Kept in BACKLOG deliberately — ready[] already holds 51 rows of which 30 are P1, so promoting adds queue noise, not throughput — but this is the explicit next-promotion candidate for churn reduction: it costs one PO triage slot per tick at a ~40% false-positive rate. NOT IN SCOPE and NOT a defect of this script: docs/data/unified-agent-synthesis-2026-07-28-evening.json and -2026-07-29-evening.json being uncommitted is the confirmed double-publish artifact already tracked by FIX-CHEF-EVENING-DUP-DATE-MISLABEL-INVESTIGATE (READY/P1).",
+        "updated_at": "2026-07-30T07:39:44Z",
+        "updated_by": "developer",
+        "origin_signal_id": "dev-20260728T234103-sss",
+        "promoted_at": "2026-07-30T07:22:36Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
+        "claimed_at": "2026-07-30T07:22:41Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "review_note": "Fixed AC1 (_is_model_switch_only() content-gates .claude/agent-models.json + .claude/agents/*.md as OWNED-ELSEWHERE only when the git diff HEAD touches exclusively the current_mode/model value line), AC3 (UNKNOWN bucket now shares the AUTO-COMMIT bucket's SSS_AGE_HOURS young-skip mtime gate — deletions exempt), AC4 (_is_owned_elsewhere() extended with auditor-dedup-ledger.json/DASHBOARD.md/unified-agent-synthesis-*.json/fb-post-*.md). stranded-state-sweep.test.sh 25/25 PASS (19 pre-existing + 6 new). AC5 live-repo evidence captured during this task's own in-flight .head: unknown_paths=[], stderr proves both this task's own edited script files (age_h=0) and 7 unrelated in-flight docs/analysis-briefs/*.md files (age_h=15) correctly withheld as young rather than reported stranded — scratchpad sss-ac5-plan-20260730T0731Z.json / sss-ac5-stderr-20260730T0731Z.log. scope_out honored: .claude/agent-models.json and .claude/agents/*.md themselves untouched/unstaged, classifier code only. Commits: 5737ac189 (code+docs), 2a8530c72 (notebook+journal). Decision journal: docs/agent-memory/decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-developer.md STEP developer-S36."
       }
     ],
     "qa": [],
@@ -17766,7 +17774,7 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-30T06:48:05Z",
+    "last_triaged_at": "2026-07-30T07:22:36Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
     "in_progress": []
   },
