@@ -1,6 +1,15 @@
 # Dev Team — Sprint Boundary Notebook
 
-**Written:** 2026-07-30T04:23Z
+**Written:** 2026-07-30T04:37Z
+
+## cycle-20260730T0437Z-tick — Tick 04:37Z: drain+CI-probe clean (dedup'd ci_red, no new signal); pipeline-resume correctly no-op (FIX-SLA-BCTC-THRESHOLD still in-flight); PO-triage spawned live — first pickup after 13+ starved ticks
+
+- **Preflight RUN** (tick=04:37Z); gcc-preflight clean, no HEAD.lock, no stray worktrees, worktree prune clean.
+- **drain-signals**: 1 file signal drained — CI-RED-79013523 formally routed-to-po (persisted to processed/ + DB INSERT this tick; same event narratively noted last tick, now actually drained). 2 legacy processed/ files correctly SKIPPED from prune (still referenced by live detail_ref/payload_ref). `signal_queue.rows[]`: 0 NEW.
+- **ci-health-probe**: dedup fired correctly — same fingerprint (HEAD 79013523…, jobs frontend-eslint+size-lint) already in processed/, no duplicate signal emitted.
+- **Step 0b pipeline-resume**: `head.status=in_progress`, task=FIX-SLA-BCTC-THRESHOLD-TRACKS-STALENESS-NOT-CONSTANT, board status=IN_PROGRESS (not BLOCKED, not supervised) → S2 dispatcher-wrap `task_claim` on `task:FIX-SLA-BCTC-THRESHOLD-TRACKS-STALENESS-NOT-CONSTANT` returned `claimed:false`, `current_holder.owner_client_session` == this session (re-entrant, ~35min TTL remaining) — correctly did NOT spawn a duplicate; dev-mcp-server (ae53952e299a32abd) confirmed still running. Fell through to Step 1 per spec.
+- **Step 1 PO-triage**: `task:po-triage-20260730` claimed cleanly (not held) — first successful claim+spawn this session after 13+ ticks of starvation. Spawned po in background with pendingSignals (1x ci_red), git log/branch, and a note that `read_telegram_reports`/`list_unresolved_reports` both hit the SAME live P0 SQLite corruption (4th+ independent corroboration — dev-mcp-server/alert-commander/market-watcher/news-scout/now Telegram-report path) already tracked+alerted on `FIX-SQLITE-DOCKER-VIRT-CORRUPTION-RECUR-20260730`; did not re-alert (noise, already ops-pending).
+- **NEXT**: await PO triage completion (release `task:po-triage-20260730` on notification, RAW-verify any BATCH mint — expect at minimum a ci_red FIX-task). Await FIX-SLA-BCTC-THRESHOLD completion for its own RAW-verify (5439-constant explanation, 4-metric confirmation, bidirectional clear/fire proof, pinning regression test, stated SLA duration). P0 corruption still awaiting ops pickup, now 4th+ corroborated.
 
 ## cycle-20260730T0423Z-tick — Tick 04:07Z: BOUNDED-1 dispatched FIX-SLA-BCTC-THRESHOLD (2026-07-25 dispatch-hold lifted after live CI verification); 3rd independent DB-corruption corroboration; new unrelated ci_red
 
@@ -22,14 +31,3 @@
 - **Lock release clean, first try**: `task:FIX-VNINDEX-CACHE-STARTUP-PURGE` → `released:1`.
 - **Push-backstop**: ahead=5, well under 20 — no action.
 - **NEXT**: P0 corruption row needs ops pickup NOW — live production degradation ongoing every cron cycle. PO triage starvation unchanged, still zero ticks all session (12+ ticks).
-
-## cycle-20260730T0350Z-tick — Tick 03:37Z: BOUNDED-1 claimed FIX-VNINDEX-CACHE-STARTUP-PURGE (prior-stalled row, re-picked); fleet push fired (ahead=26>20)
-
-- **Preflight RUN** (tick=03:37Z); cold-evict auto-ran (1 signal row → archive/2026-07.json, commit `790135236`). gcc-preflight clean, no HEAD.lock, no stray worktrees.
-- **drain-signals**: 1 po-row marked READ (stranded-state 6th re-emit) + 3 file signals routed-to-po: 2 benign `commit-sweep-guard` self-triggers (my own cold-evict bare commit + a `notebook-immutability-guard` WARN on developer.md), `context_bloat_breach` re-emit (byte_overage now 71993, still growing).
-- **Notebook-immutability-guard finding (verified, not escalated)**: developer.md's just-landed RAWVERIFY-IMPL section was extended by a 2nd commit (`ea2723851`) within the same task — diffed both commits, same line count (57→57), one sentence appended to an existing bullet, zero data lost. New edge-case for the guard's known noise (own-section growth across 2 same-task commits ≠ real cross-cycle mutation); general defect class already QA-owned, not re-escalated.
-- **ci-health-probe**: deduped (same HEAD `2bdd28fb1` fingerprint pre-push) — no new signal.
-- **Step 0b**: `.head` idle (developer's own reset post-RAWVERIFY-IMPL) → idle-capacity chain.
-- **BOUNDED-1**: WIP=0, promoted+claimed `FIX-VNINDEX-CACHE-STARTUP-PURGE` (P2, apps/mcp-server/) — vn_index_cache purged on startup + market-hours-only refresh strands cache off-hours. **Carries a documented near-miss**: prior BOUNDED-1 pick of this exact row (2026-07-25) silently stalled `.head` 4h25m with zero progress. Dispatched dev-mcp-server in background with explicit RAW-verify mandate + instruction to commit/notebook incrementally so a second stall leaves a trail; flagged to escalate (not silently re-unpin) if it stalls again. `task:FIX-VNINDEX-CACHE-STARTUP-PURGE` lock HELD per LOCK-LIFETIME convention.
-- **Post-cycle**: mock-guard unchanged (11 CAUTION). Stranded-state sweep: still 17 paths (unchanged set). Epic-wrapper autoclose: 0 eligible. **Push-backstop FIRED**: ahead=26>20, both guards clear (no push_blocker, no commit-mutex held) → `fleet-worktree-push.sh` succeeded, 26 commits pushed to `origin/main` (`2bdd28fb1..790135236`) — first live pre-push run of the just-shipped `rebuild-raw-verify-check` hook, PASS.
-- **NEXT**: watch `FIX-VNINDEX-CACHE-STARTUP-PURGE` dispatch closely for the documented stall-repeat risk — if `.head` pins with no commit/notebook/lock evidence again, escalate as a reproducible per-row dispatch failure per the row's own note, do not just re-unpin. PO triage carryover unchanged, zero live PO ticks all session (12+ ticks now).
