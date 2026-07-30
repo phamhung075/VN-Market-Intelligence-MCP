@@ -6,9 +6,17 @@
   "createdAt": "2026-07-30T17:19:00Z",
   "payload": {
     "summary": "Supervised-Lane Sweep's 'JUMP TO end' (main.md:614) routes straight to Session Exit (main.md:992-1012), which ONLY releases the two tick-scoped locks (dev-team-cron-singleton, fire-election) — it skips Step 4 Post-Cycle entirely (mock-guard, cold-evict, stranded-sweep, notebook write at Step 4.5, push-backstop at Step 4.8). This is inconsistent with BOUNDED-1's sibling jump ('JUMP TO execute', main.md:541) which flows through execute-tier.md into post-cycle normally after a successful auto-pickup dispatch.",
-    "files": ["docs/agents/dev-team/flow/main.md"],
+    "files": [
+      "docs/agents/dev-team/flow/main.md"
+    ],
     "suggestedZone": "docs/agents/dev-team/flow/main.md",
     "found_during": "tick 2026-07-30T17:07Z — SLS fired (WIP2=1<2), promoted+claimed SPIKE-SQLITE-DOCKER-VIRT-CORRUPTION-HARDENING, spawned architect directly per spec, then hit 'JUMP TO end' at line 614. Traced the jump:end anchor to confirm it really is bare Session Exit (line 992), not a post-cycle-then-exit path.",
     "suggested_fix": "Either (a) change SLS's terminal jump from 'end' to a new intermediate label that still runs Step 4 Post-Cycle before Session Exit (mirrors BOUNDED-1's execute->post-cycle->end chain), or (b) if skipping post-cycle after an SLS dispatch is deliberate (e.g. to keep supervised-lane dispatch ticks minimal/fast), state that rationale explicitly in the SLS section rather than relying on 'do not also fall through to PO triage' — that comment only justifies skipping Step 1, not skipping Steps 4.0-4.9 too. Practical impact this tick: 2 real commits (signal drain + SLS claim) sit unpushed until the next tick's normal post-cycle push-backstop fires (~30min later, non-urgent given the cron cadence), and this tick gets no notebook entry of its own. Same doc-drift class as the two prior findings this session (execute-tier.md Phase-3.5 stale lock-release; post-cycle.md Step 4.5 log_agent_work stale signature)."
+  },
+  "_processed": {
+    "fingerprint": "6a1b103769d893589b40356fecade55a60dbb4aad9632edd8d1461006b1e0962",
+    "processedAt": "2026-07-30T17:45:31Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
   }
 }

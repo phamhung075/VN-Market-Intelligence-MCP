@@ -1,0 +1,47 @@
+{
+  "from": "cowork-team",
+  "to": "system",
+  "type": "cowork-tick-telemetry",
+  "payload": {
+    "tick": "2026-07-30T17:30Z",
+    "classification": "FIRE",
+    "reason": "spawned",
+    "won_slots": [
+      "digest-daily"
+    ],
+    "spawned": [
+      {
+        "slot_id": "digest-daily",
+        "agent": "digest-predict",
+        "flow_path": "docs/agents/digest-predict/flow/main.md"
+      }
+    ],
+    "errors": [],
+    "collision_warning": null,
+    "pressure_mode": "adaptive",
+    "calendar_status": "unknown",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "due_reasons": {
+      "digest-daily": "cron"
+    },
+    "cadence_minutes": {
+      "digest-daily": null
+    },
+    "chef_mutex_applied": false,
+    "max_parallel": 4,
+    "degraded": false,
+    "headroom_mb": 2053,
+    "load_1min": 2.31,
+    "cores": 12
+  },
+  "priority": "INFO",
+  "createdAt": "2026-07-30T17:37:20Z",
+  "_processed": {
+    "fingerprint": "53aa9e71d5036b1707fc5ef5b0336ada388dcd9c5b4978b5d4ab4b4a9e31f9ff",
+    "processedAt": "2026-07-30T17:45:31Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

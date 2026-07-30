@@ -1,0 +1,19 @@
+{
+  "from": "notebook-auto-prune-hook",
+  "to": "claude-manager-helper",
+  "type": "notebook_tiebreak_direction_unresolved_breach",
+  "priority": "high",
+  "createdAt": "2026-07-30T17:42:20Z",
+  "payload": {
+    "file": "docs/agent-memory/notebooks/digest-predict.md",
+    "tied_sections": "5:99999999999999999:## Known patterns / preferences\n35:99999999999999999:## Cycle — 13:52 UTC (Weekly — Sunday digest)",
+    "reason": "2+ ## sections share an identical normalized timestamp key (e.g. same-day date-only headings) and this file's OWN section timestamps give no newest-first/oldest-first direction signal; no declared override in docs/data/notebook-section-order.json either — refusing to guess which one is oldest (guessing wrong here is silent data loss of the newest content)",
+    "action_required": "declare_this_file_convention_in_notebook-section-order.json"
+  },
+  "_processed": {
+    "fingerprint": "470cc45eacc0e6f25c3e0f0973c5ff001bd610ae9968a471543b0662d9dfb76f",
+    "processedAt": "2026-07-30T17:45:31Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
