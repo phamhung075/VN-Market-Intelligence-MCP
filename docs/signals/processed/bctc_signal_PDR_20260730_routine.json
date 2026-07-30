@@ -1,0 +1,24 @@
+{
+  "ticker": "PDR",
+  "signal_type": "bctc_signal",
+  "quarter": "Q1-2026",
+  "mode": "routine",
+  "beat_miss": null,
+  "product": "Residential & industrial real estate development, land-bank monetization",
+  "customer": "Homebuyers, industrial-park tenants/investors",
+  "ops": "Sector-comparison fallback (direct BCTC extraction blocked, same pool defect): ROE 4.4% (below sector median 7.3%), PE 31.0x PREMIUM +92%, EY spread -1.77pp AVOID.",
+  "mgmt": "KD durably 100% THUẬN LỢI/GIỮ (Quẻ Tỷ-8, n=2 exact match) sharply diverges from AVOID fundamentals — valuation verdict takes precedence, do NOT post bullish on KD alone.",
+  "emitted_at": "2026-07-30T00:15:00Z",
+  "source_agent": "bctc-analyst",
+  "cycle_slot": "bctc-analyst-slot-4",
+  "valuation_verdict": "AVOID",
+  "kd_touch": 2,
+  "kd_durable": true,
+  "divergence_flag": "KD 100% THUẬN LỢI vs fundamentals AVOID",
+  "_processed": {
+    "fingerprint": "5863f90d592c7b35423a00ae9f6ccbd6ab81262768deb1de3f69aa22731d8c6f",
+    "processedAt": "2026-07-30T00:15:40Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

@@ -1,0 +1,24 @@
+{
+  "ticker": "VHM",
+  "signal_type": "bctc_signal",
+  "quarter": "Q1-2026",
+  "mode": "routine",
+  "beat_miss": null,
+  "product": "Residential & township real estate development (Vinhomes projects nationwide)",
+  "customer": "Middle/upper-income homebuyers, institutional investors in large-scale township developments",
+  "ops": "Sector-comparison fallback (direct BCTC extraction still CORRUPT — total_assets=0, pdf-extractor pool stuck, see architecture-briefs/2026-07-28-pdfx-tesseract-concurrency-invariant.md): ROE 19.0% (top of rotation cluster), PE 12.6x DISCOUNT -35% vs sector median, EY spread +2.94pp FAIR (just under CHEAP).",
+  "mgmt": "Price +6.14% this week w/ HIGH volume-spike alert ('họ Vin' rally). KD durably BÁN (Quẻ Tung-6, 75% conf, n=2 exact match) — diverges sharply from bullish fundamentals+price momentum; flagged for human review.",
+  "emitted_at": "2026-07-30T00:15:00Z",
+  "source_agent": "bctc-analyst",
+  "cycle_slot": "bctc-analyst-slot-4",
+  "valuation_verdict": "FAIR",
+  "kd_touch": 2,
+  "kd_durable": true,
+  "divergence_flag": "fundamentals+price bullish vs KD durably BÁN",
+  "_processed": {
+    "fingerprint": "4f9bb97c89ab7c83b82c25b7c4086dead399cc9f1fb018b6c46136853a450450",
+    "processedAt": "2026-07-30T00:15:40Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "ticker": "FPT",
+  "signal_type": "bctc_signal",
+  "quarter": "Q1-2026",
+  "mode": "routine",
+  "beat_miss": null,
+  "product": "IT services, software exports (offshore development), telecom broadband (FPT Telecom), digital retail & education (FPT Edu)",
+  "customer": "Enterprise IT buyers (VN + offshore Japan/US/APAC), FPT Telecom broadband subscribers, FPT Edu students",
+  "ops": "Q1-2026 net margin 19.8%, operating margin 22.0%, ROE 6.2%, D/E 0.40x. OCF -2,847.8bn vs NPAT +2,476.8bn (ratio -1.15x) — large divergence but ESC-3 formally unevaluable (get_cash_flow returns only 2/4 quarters, DATA-COVERAGE-LIMITED, guard held).",
+  "mgmt": "FY guidance track record consistently met historically. KD durably TRUNG TÍNH/GIỮ (Quẻ Quan-20, ~38% conf) unchanged n=4 since 2026-05-31 refine — retired from urgent tracking, passive monitor.",
+  "emitted_at": "2026-07-30T00:15:00Z",
+  "source_agent": "bctc-analyst",
+  "cycle_slot": "bctc-analyst-slot-4",
+  "esc3_status": "DATA-COVERAGE-LIMITED",
+  "esc4_result": false,
+  "esc5_result": "SKIPPED_GUARD_FRESH — guard expires ~2026-07-30T21:11Z per c129 carry-over",
+  "_processed": {
+    "fingerprint": "4e9e63ebdd97658e668bd028abd79532fe64eaa1a52afe0dac38dc994bfb8cbb",
+    "processedAt": "2026-07-30T00:15:40Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

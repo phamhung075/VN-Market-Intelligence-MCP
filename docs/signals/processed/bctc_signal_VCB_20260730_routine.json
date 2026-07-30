@@ -1,0 +1,22 @@
+{
+  "ticker": "VCB",
+  "signal_type": "bctc_signal",
+  "quarter": "Q1-2026",
+  "mode": "routine",
+  "beat_miss": null,
+  "product": "Corporate & retail banking, trade finance, bancassurance, FX/treasury",
+  "customer": "Large corporates, SOEs, retail depositors, import/export trade-finance clients",
+  "ops": "Q1-2026 ROE 4.2% (bank-relative low), balance-sheet self-check imbalance 0.37% (PASS). OCF/NPAT ratio 1.37x (healthy) but ESC-3 formally unevaluable (only 3/4 quarters returned, DATA-COVERAGE-LIMITED). non_operating_share -21.4% (ESC-4 not fired, negative value below 0.15 threshold).",
+  "mgmt": "First sustained high-confidence KD SELL in tracked history: Quẻ Bác-23, BÁN 100% conf, unchanged n=4 since c126 flip — durable divergence from stable fundamentals; monitor passively, do not panic.",
+  "emitted_at": "2026-07-30T00:15:00Z",
+  "source_agent": "bctc-analyst",
+  "cycle_slot": "bctc-analyst-slot-4",
+  "esc3_status": "DATA-COVERAGE-LIMITED",
+  "esc4_result": false,
+  "_processed": {
+    "fingerprint": "1dcae5e992a74ce4cd1c5d0b64a9186c896878c91aa2819f99d21a50514041cb",
+    "processedAt": "2026-07-30T00:15:40Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

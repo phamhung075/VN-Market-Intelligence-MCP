@@ -1,0 +1,23 @@
+{
+  "ticker": "DXG",
+  "signal_type": "bctc_signal",
+  "quarter": "Q1-2026",
+  "mode": "routine",
+  "beat_miss": null,
+  "product": "Residential real estate development & brokerage services",
+  "customer": "Homebuyers, real-estate investors via DXG's brokerage network",
+  "ops": "Sector-comparison fallback (direct BCTC extraction blocked, same pool defect): ROE 1.9% (weakest in cluster, below median 7.3%), PE 66.5x PREMIUM +312%, EY spread -3.50pp AVOID.",
+  "mgmt": "KD durably BẤT LỢI/CHỜ (Quẻ Truân-3, 75% conf, n=2 exact match) — converges with AVOID fundamentals, consistent bearish read.",
+  "emitted_at": "2026-07-30T00:15:00Z",
+  "source_agent": "bctc-analyst",
+  "cycle_slot": "bctc-analyst-slot-4",
+  "valuation_verdict": "AVOID",
+  "kd_touch": 2,
+  "kd_durable": true,
+  "_processed": {
+    "fingerprint": "fe18f2ed676a054f88421f88810e742d4865931da8d0848cc2538411e1870317",
+    "processedAt": "2026-07-30T00:15:40Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "ticker": "VRE",
+  "signal_type": "bctc_signal",
+  "quarter": "Q1-2026",
+  "mode": "routine",
+  "beat_miss": null,
+  "product": "Retail mall / shopping-center leasing & operation (Vincom Retail malls)",
+  "customer": "Retail tenants (F&B, fashion, entertainment) across VN urban centers",
+  "ops": "Sector-comparison fallback (direct BCTC extraction blocked, same pool defect): ROE 14.3%, PE 9.8x DISCOUNT -49% vs sector median — cheapest EY spread in cluster (+5.20pp CHEAP).",
+  "mgmt": "New Chairman appointed (news 2026-07-29). Price +6.81% w/ HIGH volume-spike alert. KD weak-confidence TRUNG TÍNH (Quẻ Mông-4, ~19% conf, n=2 match) — no strong contrarian signal; best fundamentals+price combo in this rotation cluster.",
+  "emitted_at": "2026-07-30T00:15:00Z",
+  "source_agent": "bctc-analyst",
+  "cycle_slot": "bctc-analyst-slot-4",
+  "valuation_verdict": "CHEAP",
+  "kd_touch": 2,
+  "kd_durable": true,
+  "_processed": {
+    "fingerprint": "4a6947957f8a9b89c8928e167b762836bd45b51c1b92f95cf96c365505602f75",
+    "processedAt": "2026-07-30T00:15:40Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

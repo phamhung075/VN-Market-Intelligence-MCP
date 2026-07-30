@@ -1,0 +1,23 @@
+{
+  "ticker": "VIC",
+  "signal_type": "bctc_signal",
+  "quarter": "Q1-2026",
+  "mode": "routine",
+  "beat_miss": null,
+  "product": "Diversified conglomerate — real estate (Vinhomes), retail (Vincom Retail), EV/auto (VinFast), healthcare (Vinmec)",
+  "customer": "Broad base spanning property buyers, retail tenants, EV consumers, healthcare patients",
+  "ops": "Sector-comparison fallback (direct BCTC extraction blocked, same pool defect): ROE 8.0%, PE 112.8x PREMIUM +599% vs sector median — most expensive in cluster, EY spread -4.11pp AVOID. Do NOT post bullish signal (valuation_verdict=AVOID rule).",
+  "mgmt": "KD durably TRUNG TÍNH (Quẻ Mông-4, ~38% conf, n=2 exact match) — neutral, consistent with AVOID valuation caution despite 'họ Vin' rally price action.",
+  "emitted_at": "2026-07-30T00:15:00Z",
+  "source_agent": "bctc-analyst",
+  "cycle_slot": "bctc-analyst-slot-4",
+  "valuation_verdict": "AVOID",
+  "kd_touch": 2,
+  "kd_durable": true,
+  "_processed": {
+    "fingerprint": "71f090174cf76810673707ec00456c07d980703e2a0ee1a36d7f0add35d65917",
+    "processedAt": "2026-07-30T00:15:40Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
