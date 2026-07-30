@@ -93,11 +93,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "active_task_id": null,
-    "next_agent": "router",
-    "updated_at": "2026-07-30T16:28:02Z",
-    "updated_by": "developer"
+    "status": "in_progress",
+    "active_task_id": "FU-CNYVND-DEAD-FIELD-REMOVE",
+    "next_agent": "developer",
+    "next_action": "BOUNDED-1 auto-pickup claim of FU-CNYVND-DEAD-FIELD-REMOVE — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
+    "updated_at": "2026-07-30T16:46:13Z",
+    "updated_by": "dev-team (bounded-1 auto-pickup)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -5562,17 +5563,6 @@
         "type": "DOC",
         "zone": "docs/data/system-map.json + docs/architecture-briefs",
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#FU-RUNTIME-SET-TRUTH-RECONCILE"
-      },
-      {
-        "id": "FU-CNYVND-DEAD-FIELD-REMOVE",
-        "priority": "P3",
-        "size": "S",
-        "sprint": "DATA-SERVE-INTEGRITY",
-        "status": "BACKLOG",
-        "title": "cny_vnd_rate is DEAD DATA — definitif cleanup (follow-up to DSI-S2-PRICE-TS-GAP type-honesty fix 54634eb2). CNHVND=X 404s permanently on Yahoo; dev-mcp-server confirmed ZERO live readers (MACRO_CODES excludes it, runImpactChain drops it, no get_* tool surfaces it). The 54634eb2 fix made the TS type null but the DB write still re-fabricates 0 via `?? 0` and the NOT NULL column + field remain wired through fetcher+usecase+8 test fixtures. Definitif fix = REMOVE the field + the cny_vnd_rate column (SQLite migration) + the `?? 0` re-fabrication entirely, OR repoint to a real CNY/VND source if a consumer is ever needed. Low consumer-break risk (zero readers) but needs a schema migration → P3.",
-        "type": "CLEAN",
-        "zone": "apps/mcp-server",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FU-CNYVND-DEAD-FIELD-REMOVE"
       },
       {
         "id": "FU-SBV-EFFECTIVE-DATE-COLUMN",
@@ -17959,9 +17949,27 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-30T16:16:28Z",
+    "last_triaged_at": "2026-07-30T16:46:10Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": []
+    "in_progress": [
+      {
+        "id": "FU-CNYVND-DEAD-FIELD-REMOVE",
+        "priority": "P3",
+        "size": "S",
+        "sprint": "DATA-SERVE-INTEGRITY",
+        "status": "IN_PROGRESS",
+        "title": "cny_vnd_rate is DEAD DATA — definitif cleanup (follow-up to DSI-S2-PRICE-TS-GAP type-honesty fix 54634eb2). CNHVND=X 404s permanently on Yahoo; dev-mcp-server confirmed ZERO live readers (MACRO_CODES excludes it, runImpactChain drops it, no get_* tool surfaces it). The 54634eb2 fix made the TS type null but the DB write still re-fabricates 0 via `?? 0` and the NOT NULL column + field remain wired through fetcher+usecase+8 test fixtures. Definitif fix = REMOVE the field + the cny_vnd_rate column (SQLite migration) + the `?? 0` re-fabrication entirely, OR repoint to a real CNY/VND source if a consumer is ever needed. Low consumer-break risk (zero readers) but needs a schema migration → P3.",
+        "type": "CLEAN",
+        "zone": "apps/mcp-server",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FU-CNYVND-DEAD-FIELD-REMOVE",
+        "promoted_at": "2026-07-30T16:46:10Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=3)",
+        "updated_at": "2026-07-30T16:46:13Z",
+        "claimed_at": "2026-07-30T16:46:13Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)"
+      }
+    ]
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
