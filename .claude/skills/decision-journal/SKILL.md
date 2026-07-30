@@ -57,13 +57,34 @@ Write header once (if missing):
 
 ## § Cap Check
 
+Dual-axis (FIX-DECISION-JOURNAL-SKILL-CAPCHECK-LINE-ONLY-NO-BYTE-ROLLOVER): a
+line-only check lets a journal sit under 600L but well over the byte cap
+(dense/long lines) and never roll, while `context-bloat-backstop.sh` fires
+`context_bloat_breach` on that same file every cycle. `LINE_CAP` is read from
+`docs/data/file-size-caps.json` (SSOT, pattern
+`docs/agent-memory/decisions/sprint-*.md`) — `BYTE_CAP` is always
+`LINE_CAP * 60`, the SAME 60-bytes/line derivation `context-bloat-backstop.sh`
+uses for that detector (TE-T24), never a second hardcoded `36000`.
+
 ```bash
+LINE_CAP="$(jq -r '.caps[] | select(.pattern=="docs/agent-memory/decisions/sprint-*.md") | .cap' \
+  docs/data/file-size-caps.json 2>/dev/null | head -1)"
+case "$LINE_CAP" in ''|*[!0-9]*) LINE_CAP=600 ;; esac  # SSOT unreadable/malformed → long-standing default
+BYTE_CAP=$((LINE_CAP * 60))  # same derivation as context-bloat-backstop.sh (TE-T24) — never a 2nd hardcode
+
 LINES=$(wc -l < "$JOURNAL_PATH" | tr -d ' ')
-if [ "$LINES" -gt 600 ]; then
+BYTES=$(wc -c < "$JOURNAL_PATH" | tr -d ' ')
+if [ "$LINES" -gt "$LINE_CAP" ] || [ "$BYTES" -gt "$BYTE_CAP" ]; then
   echo "### CAP-REACHED · $(date -u +%Y-%m-%dT%H:%M:%SZ)" >> "$JOURNAL_PATH"
-  send_telegram(channel="bug", message="[decision-journal] sprint-${SPRINT_ID}-${AGENT_ID} CAP-REACHED — mandatory entries silently dropped; archive sprint journal")
-  # Roll to continuation file — new writes go here until this session ends
-  JOURNAL_PATH="docs/agent-memory/decisions/sprint-${SPRINT_ID}-${AGENT_ID}-2.md"
+  send_telegram(channel="bug", message="[decision-journal] sprint-${SPRINT_ID}-${AGENT_ID} CAP-REACHED (lines=$LINES/$LINE_CAP bytes=$BYTES/$BYTE_CAP) — mandatory entries silently dropped; archive sprint journal")
+  # Roll to next continuation file. Numeric suffix increments off whatever JOURNAL_PATH
+  # already is (base file = implicit index 1) — NOT a hardcoded -2/-3 pair, so a
+  # breaching -2.md rolls to -3.md, -3.md to -4.md, unbounded — new writes go here
+  # until this session ends.
+  BASE="docs/agent-memory/decisions/sprint-${SPRINT_ID}-${AGENT_ID}"
+  CUR_N=$(echo "$JOURNAL_PATH" | sed -nE "s#^${BASE}-([0-9]+)\.md\$#\1#p")
+  [ -z "$CUR_N" ] && CUR_N=1
+  JOURNAL_PATH="${BASE}-$((CUR_N + 1)).md"
 fi
 ```
 
