@@ -93,11 +93,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "updated_at": "2026-07-30T22:30:47Z",
-    "updated_by": "developer",
-    "active_task_id": null,
-    "next_agent": "router"
+    "status": "in_progress",
+    "active_task_id": "FIX-PO-NO-PRODUCER-FOR-MANUAL-DISPATCH-ESCAPE-HATCH",
+    "next_agent": "architect",
+    "next_action": "architect designing+implementing PO manual-dispatch-sweep producer",
+    "updated_at": "2026-07-30T22:44:02Z",
+    "updated_by": "architect"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -4359,36 +4360,6 @@
         "deliverable": "AC: (1) one sentence in AC-2a defining cycle boundary = git-commit boundary, matching the hook; (2) hook WARN text gains the continue-the-tick remedy branch (open a NEW dated section for a second same-tick commit, do not destroy the first).",
         "not_duplicate_of": "FIX-NOTEBOOK-COMPOSE-REWRITES-RETAINED-PRIOR-SECTIONS (review[], P1) -- that row owns 'compose rewrites OLDER sections to pay for an over-cap new section', a different failure.",
         "baseline_pass": "9408"
-      },
-      {
-        "id": "FIX-PO-NO-PRODUCER-FOR-MANUAL-DISPATCH-ESCAPE-HATCH",
-        "type": "FIX",
-        "title": "P0: 49 backlog rows (23 P1) + 3 ready[] rows are reachable ONLY by 'manual/PO dispatch' -- and no PO flow doc contains any step that produces it",
-        "status": "BACKLOG",
-        "priority": "P0",
-        "size": "S",
-        "zone": "cross-service/",
-        "owner": "po",
-        "next_agent": "architect",
-        "supervised": false,
-        "plan_only": false,
-        "created_at": "2026-07-30T22:37:30Z",
-        "created_by": "dev-team/po-batch-20260730T2227Z",
-        "updated_at": "2026-07-30T22:37:31Z",
-        "source": "po triage 2026-07-30T22:27Z tick (5th pass today)",
-        "desc": "dev-team/flow/main.md:645 and scripts/audits/bounded1-supervised-lane-report.sh:373 both state DRS-STRANDED-OFF-ALLOWLIST rows remain 'reachable only by manual/PO dispatch'. Grep-verified by po AND independently re-verified by dev-team this tick: every `.task_board.backlog|.task_board.ready` reference in docs/agents/po/flow/ is an APPEND site (mint a new row) or a one-off id-targeted script -- never a generic priority-ordered SWEEP of the existing backlog/ready lanes. The named destination does not exist. Measured live by po: 49 backlog rows zero-picker-by-policy (agent-father 37, ops 4, qa 3, bctc-analyst 2, ops-mainserver-fetch 2, ops-vps-fetch 1; 23 at P1) plus 3 ready[] rows in the sup-XOR-plan_only gap. FOURTH instance of documented-consumer-with-no-producer; the remedy shape is already proven and shipped for the WF-2 sibling: a MANDATORY per-tick PO pre-check sub-flow (docs/agents/po/flow/supervised-goahead.md + a lazy-load pointer in po/flow/main.md + a read-only regression verifier under scripts/audits/). Zero code, zero gate change, zero blast radius -- it only surfaces and dispatches rows the policy already assigns to PO.",
-        "files": [
-          "docs/agents/po/flow/main.md",
-          "docs/agents/po/flow/*.md",
-          "scripts/audits/"
-        ],
-        "deliverable": "AC: (1) new po/flow sub-flow that runs the two live predicates (49-backlog zero-picker set, 3-ready sup-XOR-plan_only gap) and emits a priority-ordered candidate list; (2) mandatory pointer in po/flow/main.md pre-check chain; (3) regression verifier that replays dev-team's OWN predicates (scripts/lib/devteam-eligibility.jq) byte-identical, never a reimplementation.",
-        "out_of_scope": "Widening the DRS allowlist to admit agent-father -- that exclusion is a ratified blast-radius control, not this row's fix.",
-        "baseline_pass": "9408",
-        "related": [
-          "FIX-DEVTEAM-QADRAIN-HEAD-WRITE-CONDITIONAL",
-          "FIX-BOUNDED1-NONDEV-NEXTAGENT-RESIDUAL-NO-DISPATCH-LANE"
-        ]
       },
       {
         "id": "FIX-DEVTEAM-NONDEV-NEXTAGENT-RESIDUAL-NO-DISPATCH-DESTINATION",
@@ -10763,11 +10734,11 @@
         "priority": "P1",
         "status": "BACKLOG",
         "zone": "cross-service/",
-        "owner": "agent-father",
-        "next_agent": "agent-father",
+        "owner": "developer",
+        "next_agent": "developer",
         "created_by": "po/triage-20260729T2107",
         "created_at": "2026-07-29T21:31:41Z",
-        "updated_at": "2026-07-29T21:35:05Z",
+        "updated_at": "2026-07-30T22:45:15Z",
         "root_cause": "Per architecture brief docs/architecture-briefs/2026-07-29-qadrain-head-slot-decouple.md §3. scripts/devteam-review-claim-qa-drain.jq:123 performs `.head = {status:in_progress, active_task_id:$picked_id, next_agent:qa, ...}` unconditionally. PO's own dry-run against the live board at 2026-07-29T19:2xZ replaced .head.active_task_id=FACTORY-GUARD-CI-METRICMASK-IMPL (developer genuinely running) with TE-T17. The head-idle gate at main.md:518 is therefore LOAD-BEARING, not over-broad — which is why the originally FILED remedy (run QA-Drain keyed only on qa[]<1) was rejected.",
         "ac": "(AC-1) .head write mirrors the proven in-repo shape at scripts/devteam-wrapper-autoclose.jq:122-128 — sync .head ONLY when .head.active_task_id equals the row being claimed (or .head is idle/done/missing); never overwrite a different live task's slot. (AC-2) Decide and DOCUMENT where the spawned qa agent reads its instruction from, since .head.next_action can no longer be assumed free. (AC-3) The two regression controls in brief §6. Standalone — no depends_on, no main.md edit.",
         "files": [
@@ -10775,7 +10746,8 @@
         ],
         "brief_ref": "docs/architecture-briefs/2026-07-29-qadrain-head-slot-decouple.md §3, §6, §8 step 1",
         "parent_spike": "SPIKE-DEVTEAM-QADRAIN-HEAD-SLOT-DECOUPLE",
-        "dedup_checked": "2026-07-29T21:2xZ — brief §'Dedup check' clears this against FIX-DEVTEAM-IDLE-CHAIN-P1A-MAIN-ROTATION, TASK-DEVTEAM-IDLE-CHAIN-2-MAIN-FLOW, FIX-DEVTEAM-IDLE-CHAIN-STEP1-TRIAGE-STARVATION and FIX-DEVTEAM-REVIEW-LANE-QA-DRAIN by reading their AC text directly; PO re-grepped the board for QADRAIN|QA-DRAIN => no open implementation row."
+        "dedup_checked": "2026-07-29T21:2xZ — brief §'Dedup check' clears this against FIX-DEVTEAM-IDLE-CHAIN-P1A-MAIN-ROTATION, TASK-DEVTEAM-IDLE-CHAIN-2-MAIN-FLOW, FIX-DEVTEAM-IDLE-CHAIN-STEP1-TRIAGE-STARVATION and FIX-DEVTEAM-REVIEW-LANE-QA-DRAIN by reading their AC text directly; PO re-grepped the board for QADRAIN|QA-DRAIN => no open implementation row.",
+        "source_correction": "dev-team 2026-07-30T22:44Z: reassigned agent-father -> developer per system-map.json zones[cross-service].specialist; agent-father declined (commit c72b5ca34), zero code/board touched by the decline"
       },
       {
         "id": "FIX-DEVTEAM-QADRAIN-INVOCATION-HEAD-DECOUPLED",
@@ -18258,7 +18230,38 @@
     },
     "last_triaged_at": "2026-07-30T22:37:30Z",
     "last_triaged_by": "dev-team/po-batch-20260730T2227Z",
-    "in_progress": []
+    "in_progress": [
+      {
+        "id": "FIX-PO-NO-PRODUCER-FOR-MANUAL-DISPATCH-ESCAPE-HATCH",
+        "type": "FIX",
+        "title": "P0: 49 backlog rows (23 P1) + 3 ready[] rows are reachable ONLY by 'manual/PO dispatch' -- and no PO flow doc contains any step that produces it",
+        "status": "IN_PROGRESS",
+        "priority": "P0",
+        "size": "S",
+        "zone": "cross-service/",
+        "owner": "po",
+        "next_agent": "architect",
+        "supervised": false,
+        "plan_only": false,
+        "created_at": "2026-07-30T22:37:30Z",
+        "created_by": "dev-team/po-batch-20260730T2227Z",
+        "updated_at": "2026-07-30T22:44:03Z",
+        "source": "po triage 2026-07-30T22:27Z tick (5th pass today)",
+        "desc": "dev-team/flow/main.md:645 and scripts/audits/bounded1-supervised-lane-report.sh:373 both state DRS-STRANDED-OFF-ALLOWLIST rows remain 'reachable only by manual/PO dispatch'. Grep-verified by po AND independently re-verified by dev-team this tick: every `.task_board.backlog|.task_board.ready` reference in docs/agents/po/flow/ is an APPEND site (mint a new row) or a one-off id-targeted script -- never a generic priority-ordered SWEEP of the existing backlog/ready lanes. The named destination does not exist. Measured live by po: 49 backlog rows zero-picker-by-policy (agent-father 37, ops 4, qa 3, bctc-analyst 2, ops-mainserver-fetch 2, ops-vps-fetch 1; 23 at P1) plus 3 ready[] rows in the sup-XOR-plan_only gap. FOURTH instance of documented-consumer-with-no-producer; the remedy shape is already proven and shipped for the WF-2 sibling: a MANDATORY per-tick PO pre-check sub-flow (docs/agents/po/flow/supervised-goahead.md + a lazy-load pointer in po/flow/main.md + a read-only regression verifier under scripts/audits/). Zero code, zero gate change, zero blast radius -- it only surfaces and dispatches rows the policy already assigns to PO.",
+        "files": [
+          "docs/agents/po/flow/main.md",
+          "docs/agents/po/flow/*.md",
+          "scripts/audits/"
+        ],
+        "deliverable": "AC: (1) new po/flow sub-flow that runs the two live predicates (49-backlog zero-picker set, 3-ready sup-XOR-plan_only gap) and emits a priority-ordered candidate list; (2) mandatory pointer in po/flow/main.md pre-check chain; (3) regression verifier that replays dev-team's OWN predicates (scripts/lib/devteam-eligibility.jq) byte-identical, never a reimplementation.",
+        "out_of_scope": "Widening the DRS allowlist to admit agent-father -- that exclusion is a ratified blast-radius control, not this row's fix.",
+        "baseline_pass": "9408",
+        "related": [
+          "FIX-DEVTEAM-QADRAIN-HEAD-WRITE-CONDITIONAL",
+          "FIX-BOUNDED1-NONDEV-NEXTAGENT-RESIDUAL-NO-DISPATCH-LANE"
+        ]
+      }
+    ]
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
