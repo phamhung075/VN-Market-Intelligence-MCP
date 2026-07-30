@@ -142,3 +142,28 @@ only, zero `.jq`/production-code precedent.
 §8 heading and the board row's owner/next_agent field both mis-name agent-father as
 implementer — cascaded from agents-architect's brief into PO's triage uncorrected;
 flagging so `developer` picks it up instead (see RETURN block).
+
+### STEP agent-father-S9 · agent-father · 2026-07-30T23:11:49Z
+**task-id:** FIX-COWORK-BASH-GRANT-COVERAGE-STAMP-TRANSPORT
+**what-done:** Added `Bash` to `tools:` line in news-scout.md and market-watcher.md
+frontmatter (exactly 2 lines changed, per row's own spec — no Glob/Grep added).
+**what-considered:**
+- Apply exact 2-line change dictated by po's `po_transport_ruling` on the row (chosen —
+  row states "do not re-litigate the choice here").
+- Broaden grant set / add Glob+Grep — rejected, row explicitly bounces broader sets to po.
+**why-decision:** Row is a pre-adjudicated UNBLOCKER with acceptance criteria pinned to
+exactly these 2 files/1 line each; no discretion left for agent-father.
+**why-change:** none — executed as specified.
+
+### STEP agent-father-S10 · agent-father · 2026-07-30T23:11:49Z
+**task-id:** FIX-ALERT-COMMANDER-NO-BASH-GRANT-NOTEBOOK-UNCOMMITTABLE
+**what-done:** Added `Bash` to `tools:` line in alert-commander.md frontmatter (1 line),
+co-dispatched with S9 in the same edit pass per the row's own deliverable instruction.
+**what-considered:**
+- Grant Bash (row's own primary fix, chosen) vs. router passing session-id at spawn
+  (fixes lock only, not notebook commit) vs. published-marker no-session fallback
+  (row: "prefer whichever also leaves the notebook committable" — Bash does both).
+**why-decision:** RAW re-verified this tick: `tools:` line still missing Bash pre-edit,
+`git log --since=2026-07-29T12:32:22Z` on the file was empty — matches row's own claim.
+**why-change:** none — executed as specified; no cascade needed (tool-package docs list
+MCP tools only, unaffected by a native Bash grant).
