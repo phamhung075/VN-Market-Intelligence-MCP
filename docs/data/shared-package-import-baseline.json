@@ -1,0 +1,21 @@
+{
+  "_generated_by": "scripts/audits/shared-package-import-check.sh --update",
+  "_note": "Package-level grandfather baseline for scripts/audits/shared-package-import-check.sh --check (Check 1, orphan-importer). Snapshots every currently-zero-real-importer @vn-market/-scoped packages/*/package.json at --update time. A package drops out automatically once it gains >=1 real importer (re-checked live every --check run, regardless of baseline membership) or is deleted/renamed. Regenerated wholesale each --update (not merged) — see docs/architecture-briefs/2026-07-24-factory-guard-ci-shared-package-import-check.md.",
+  "_ssot": "docs/data/shared-package-import-baseline.json",
+  "count": 3,
+  "entries": {
+    "shared-config": {
+      "npm_name": "@vn-market/shared-config",
+      "tracked_by": "FACTORY-SHARED-wire-or-prune-shared-packages"
+    },
+    "shared-db": {
+      "npm_name": "@vn-market/shared-db",
+      "tracked_by": "FACTORY-SHARED-wire-or-prune-shared-packages"
+    },
+    "shared-types": {
+      "npm_name": "@vn-market/shared-types",
+      "tracked_by": "FACTORY-SHARED-wire-or-prune-shared-packages"
+    }
+  },
+  "generated_at": "2026-07-30T02:54:48Z"
+}

@@ -447,6 +447,31 @@ jobs:
       - name: Run no-hardcode-allowlist-scan --check
         run: bash scripts/audits/no-hardcode-allowlist-scan.sh --check
 
+  shared-package-import-check:
+    name: shared-package-import-check
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # Pure bash/git ls-files/grep/jq — no bun/go/python toolchain needed,
+      # cheapest job in the pipeline. Check 1 (blocking, baseline/ratchet):
+      # every packages/*/package.json declaring a @vn-market/-scoped name
+      # must either have >=1 real importer anywhere in apps/**+packages/**,
+      # or be listed in docs/data/shared-package-import-baseline.json
+      # (currently: shared-types/shared-config/shared-db, all zero-importer
+      # "phantom" packages tracked by the separate, still-BACKLOG
+      # FACTORY-SHARED-wire-or-prune-shared-packages task). A brand-new
+      # zero-importer package with no baseline entry FAILS — the actual
+      # regression-prevention value. Check 2 (advisory only, non-blocking):
+      # same-exported-symbol-name collisions between packages/shared-*/index.ts
+      # and apps/**/*.ts (today: Alert/Signal/McpConfig/etc.) are printed as
+      # ADVISORY lines and never affect the exit code.
+      # See docs/architecture-briefs/2026-07-24-factory-guard-ci-shared-package-import-check.md
+      - name: Run shared-package-import-check --check
+        run: bash scripts/audits/shared-package-import-check.sh --check
+
 # AC-8 (optional) — Branch protection setup:
 # To require CI jobs before merging to main, go to:
 #   GitHub repo > Settings > Branches > Add branch protection rule
