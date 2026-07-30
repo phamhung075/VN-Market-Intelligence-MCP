@@ -2032,17 +2032,6 @@
         "payload_ref": null
       },
       {
-        "id": "dev-20260730T025154",
-        "ts": "2026-07-30T02:51:54Z",
-        "from": "dev-team",
-        "to": "po",
-        "type": "system-issue",
-        "summary": "stranded-state sweep: 20 unknown-owner paths (5th re-emit) — 17 same known set unchanged, 3 NEW are FACTORY-GUARD-CI-SHAREDPKG-IMPL dev in-flight uncommitted (transient, self-resolving)",
-        "severity": "MED",
-        "status": "READ",
-        "payload_ref": "docs/handoffs/STRANDED-STATE-SWEEP-20260729T2342Z.md"
-      },
-      {
         "id": "dev-20260730T032218",
         "ts": "2026-07-30T03:22:18Z",
         "from": "dev-team",
