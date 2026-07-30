@@ -28,12 +28,19 @@
  *       done_verified, etc. instead of DONE/DONE_VERIFIED/...). Closes the recurring-8x
  *       drift class from task FIX-SPRINT-GOAL-STATUS-DRIFT-EVICT that defeated
  *       scripts/orch-cold-evict.sh's TERMINAL_SET eviction predicate.
+ *     Stage 1e: checkDecorativeSequencingFields() — hard fail on a reverse-only
+ *       `blocks` edge (present but unbacked by a matching depends_on/blocked_by
+ *       on the named target, or malformed) or any non-empty `co_edit` value.
+ *       Closes task FIX-ORCHSTATE-BLOCKS-FIELD-WRITE-ONLY-DECORATIVE — both
+ *       fields read as sequencing/atomic-ship constraints but were read by
+ *       ZERO consumers anywhere in the repo.
  *
  * EXIT CODES:
  *   0  = Stage 0 + Stage 1 pass (zero coherence issues, zero dangling refs, canonical statuses)
  *   1  = Stage 0 failure (duplicate JSON keys detected in raw text)
  *   2  = Stage 1 failure (schema violation) OR Stage 1b (lane-coherence) OR
- *        Stage 1c (dangling refs) OR Stage 1d (sprint_goal status drift)
+ *        Stage 1c (dangling refs) OR Stage 1d (sprint_goal status drift) OR
+ *        Stage 1e (decorative blocks/co_edit field)
  *   3  = file not found / unreadable
  *
  * AUTO-FIX ERROR CONTRACT (per directive § "Auto-fix error contract"):
@@ -57,6 +64,7 @@ import {
   checkLaneCoherence,
   checkRefIntegrity,
   checkSprintGoalStatusCanonical,
+  checkDecorativeSequencingFields,
 } from '../apps/mcp-server/src/infrastructure/orchStateSchema.ts';
 
 // ─── Paths ────────────────────────────────────────────────────────────────────
@@ -444,6 +452,33 @@ if (sprintGoalIssues.length > 0) {
     );
     process.stderr.write(`    expected: ${si.canonical}\n`);
     process.stderr.write(`    fix: ${si.fix}\n`);
+  }
+  process.exit(2);
+}
+
+// ── Stage 1e: decorative blocks/co_edit field guard (hard fail) ────────────────
+//
+// Rejects a reverse-only `blocks` edge (present, non-empty, but the named
+// target does not carry the source id back in its own
+// depends_on/depends/blocked_by — i.e. the ONLY fields
+// scripts/lib/devteam-eligibility.jq's effective_depends_on() actually reads)
+// or a malformed `blocks` value (not an array of task-id strings), and any
+// non-empty `co_edit` value (no forward-field equivalent exists at all).
+// Task: FIX-ORCHSTATE-BLOCKS-FIELD-WRITE-ONLY-DECORATIVE.
+// Operates on `result.data` (schema-parsed, passthrough fields intact) —
+// same input as Stage 1b/1c.
+
+const decorativeFieldIssues = checkDecorativeSequencingFields(result.data);
+
+if (decorativeFieldIssues.length > 0) {
+  const c = decorativeFieldIssues.length;
+  process.stderr.write(
+    `\nORCH-STATE VALIDATION FAILED — Stage 1e (${c} decorative blocks/co_edit field issue${c !== 1 ? 's' : ''}) — fix and retry:\n`
+  );
+  for (let i = 0; i < c; i++) {
+    const di = decorativeFieldIssues[i];
+    process.stderr.write(`[${i + 1}] ${di.path} (id=${di.taskId}).${di.field}: ${di.message}\n`);
+    process.stderr.write(`    fix: ${di.fix}\n`);
   }
   process.exit(2);
 }

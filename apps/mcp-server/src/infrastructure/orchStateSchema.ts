@@ -662,3 +662,209 @@ export function checkSprintGoalStatusCanonical(
 
   return issues;
 }
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// § 12. DECORATIVE SEQUENCING FIELD GUARD (blocks / co_edit)
+//
+// Task: FIX-ORCHSTATE-BLOCKS-FIELD-WRITE-ONLY-DECORATIVE
+//
+// ROOT CAUSE: `blocks` and `co_edit` read as sequencing/atomic-ship constraints
+// on a task_board row but are WRITE-ONLY — grep-confirmed zero consumers across
+// scripts/lib/*.jq, scripts/devteam-*.jq, scripts/orch-*.mjs/.sh,
+// scripts/agents-flow/*.sh, and the whole repo tree for `co_edit`.
+// `effective_depends_on()` in scripts/lib/devteam-eligibility.jq only ever
+// reads a CANDIDATE row's own `depends_on`/`depends`/`blocked_by` — it never
+// traverses a reverse `blocks` edge from another row, and there is no
+// forward-field equivalent for `co_edit` at all. An author who writes
+// `blocks: ["X"]` intending "X must not start before this row" has created
+// zero enforcement and no way to tell the difference from a working gate by
+// inspecting the board (PO's own guard on FU-BACKFILL-REAL-FILENAMES,
+// written the same day, was silently non-binding — the live proof).
+//
+// GUARD SEMANTICS (write-time; wired as Stage 1e in scripts/orch-validate.mjs):
+//   blocks:
+//     - absent/null/empty array           → OK, no edge asserted.
+//     - present but not an array of non-empty strings (the malformed prose
+//       case, e.g. FIX-MCP-SUITE-HEALTH-BASELINE) → HARD-FAIL. Never silently
+//       swallowed.
+//     - non-empty array naming an id that does not resolve to any task_board
+//       row → HARD-FAIL (can't verify a binding to a row that doesn't exist).
+//     - non-empty array naming a REAL row that does NOT carry the source id
+//       back in its own depends_on/depends/blocked_by → HARD-FAIL. This is
+//       the reverse-only-edge trap itself: `blocks` alone can never bind
+//       anything, so the write is rejected until the author adds the real
+//       forward edge (`blocked_by`/`depends_on`) on the TARGET row — at
+//       which point `blocks` stays as pure, truthful, human-readable
+//       documentation of an edge that scripts/lib/devteam-eligibility.jq
+//       actually reads.
+//   co_edit:
+//     - absent/null/empty array           → OK.
+//     - any non-empty value               → HARD-FAIL, unconditionally.
+//       `co_edit` has NO forward-field equivalent anywhere in the schema
+//       (verified: repo-wide grep, zero consumers, unlike `blocks` which at
+//       least has `blocked_by`/`depends_on` to normalise into) — it can
+//       never be validated as bound, so it is never accepted. Encode the
+//       atomic-ship intent as prose plus a one-directional `depends_on` edge
+//       that at least serialises the two rows.
+//
+// One-time data migration for the rows already carrying these fields:
+//   scripts/fix-orchstate-blocks-coedit-decorative-normalize.jq
+//
+// Called by scripts/orch-validate.mjs (Stage 1e, after Stage 1d, hard fail —
+// mirrors checkSprintGoalStatusCanonical's wiring).
+// ═══════════════════════════════════════════════════════════════════════════════
+
+/** null → [], bare string → [string], array → as-is (mirrors scripts/lib/devteam-eligibility.jq's as_dep_array). */
+function toIdArray(v: unknown): string[] {
+  if (v == null) return [];
+  if (typeof v === "string") return v.length > 0 ? [v] : [];
+  if (Array.isArray(v)) return v.filter((x): x is string => typeof x === "string" && x.length > 0);
+  return [];
+}
+
+/** Union of a row's own depends_on/depends/blocked_by — the ONLY fields effective_depends_on() actually reads. */
+function forwardEdgeIds(row: Record<string, unknown>): string[] {
+  return [
+    ...toIdArray(row["depends_on"]),
+    ...toIdArray(row["depends"]),
+    ...toIdArray(row["blocked_by"]),
+  ];
+}
+
+/** id -> row object, across all 9 task-bearing lanes (flat + sprint-nested, active + closed). First occurrence wins on a duplicate id. */
+function collectTasksById(tb: z.infer<typeof TaskBoardSchema>): Map<string, Record<string, unknown>> {
+  const byId = new Map<string, Record<string, unknown>>();
+
+  const add = (tasks: TaskLane | undefined) => {
+    if (!tasks) return;
+    for (const t of tasks) {
+      const raw = t as Record<string, unknown>;
+      if (typeof raw["id"] === "string" && raw["id"] && !byId.has(raw["id"])) {
+        byId.set(raw["id"], raw);
+      }
+    }
+  };
+
+  add(tb.backlog);
+  add(tb.done);
+  add(tb.done_verified);
+  add(tb.in_progress);
+  add(tb.qa);
+  add(tb.ready);
+  add(tb.review);
+  add(tb.archive);
+  for (const sprint of tb.active_sprints) add(sprint.tasks);
+  for (const sprint of (tb.closed_sprints ?? [])) add(sprint.tasks);
+
+  return byId;
+}
+
+export interface DecorativeFieldIssue {
+  path: string;
+  taskId: string;
+  field: "blocks" | "co_edit";
+  message: string;
+  fix: string;
+}
+
+/**
+ * Check every task_board row (all 9 lane shapes) for a reverse-only `blocks`
+ * edge or any non-empty `co_edit` value — see § 12 header for full semantics.
+ * Returns an array of issues (empty = fully compliant).
+ */
+export function checkDecorativeSequencingFields(data: OrchState): DecorativeFieldIssue[] {
+  const issues: DecorativeFieldIssue[] = [];
+  const tb = data.task_board;
+  const byId = collectTasksById(tb);
+
+  const visitRow = (row: Record<string, unknown>, path: string) => {
+    const taskId = typeof row["id"] === "string" ? (row["id"] as string) : "(no-id)";
+
+    // ── blocks ──────────────────────────────────────────────────────────
+    if (Object.prototype.hasOwnProperty.call(row, "blocks") && row["blocks"] != null) {
+      const blocksVal = row["blocks"];
+      const isValidArray =
+        Array.isArray(blocksVal) && blocksVal.every((x) => typeof x === "string" && x.length > 0);
+
+      if (!isValidArray) {
+        issues.push({
+          path,
+          taskId,
+          field: "blocks",
+          message: `"blocks" is not an array of non-empty task-id strings (got ${JSON.stringify(blocksVal)}).`,
+          fix:
+            `"blocks" is read by nothing in this repo (grep-confirmed) — move free-form text to a ` +
+            `dated annotation key (e.g. "po_<topic>_<date>") and either remove "blocks" or replace it ` +
+            `with an array of real task ids.`,
+        });
+      } else if ((blocksVal as string[]).length > 0) {
+        for (const targetId of blocksVal as string[]) {
+          const target = byId.get(targetId);
+          if (!target) {
+            issues.push({
+              path,
+              taskId,
+              field: "blocks",
+              message: `"blocks" names target id "${targetId}" which does not resolve to any task_board row.`,
+              fix: `fix the id typo, or remove "${targetId}" from "blocks" — an unresolvable id can never be verified as bound.`,
+            });
+            continue;
+          }
+          if (!forwardEdgeIds(target).includes(taskId)) {
+            issues.push({
+              path,
+              taskId,
+              field: "blocks",
+              message:
+                `"blocks" names "${targetId}", but "${targetId}" does not carry "${taskId}" in its own ` +
+                `depends_on/depends/blocked_by — this is a REVERSE-ONLY edge and binds nothing ` +
+                `(scripts/lib/devteam-eligibility.jq's effective_depends_on never traverses "blocks").`,
+              fix: `add "${taskId}" to task "${targetId}"'s "depends_on" (or "blocked_by") array, or remove "blocks" from "${taskId}".`,
+            });
+          }
+        }
+      }
+    }
+
+    // ── co_edit ─────────────────────────────────────────────────────────
+    if (Object.prototype.hasOwnProperty.call(row, "co_edit") && row["co_edit"] != null) {
+      const coEditVal = row["co_edit"];
+      const isEmptyArray = Array.isArray(coEditVal) && coEditVal.length === 0;
+      if (!isEmptyArray) {
+        issues.push({
+          path,
+          taskId,
+          field: "co_edit",
+          message:
+            `"co_edit" is read by nothing anywhere in this repo (grep-confirmed, no path/extension ` +
+            `restriction) and has no forward-field equivalent, so it can never be validated as bound.`,
+          fix:
+            `remove "co_edit" and encode the atomic-ship intent as prose plus a one-directional ` +
+            `"depends_on" edge that at least serialises the two rows.`,
+        });
+      }
+    }
+  };
+
+  const visitLane = (tasks: TaskLane | undefined, laneLabel: string) => {
+    if (!tasks) return;
+    tasks.forEach((t, i) => visitRow(t as Record<string, unknown>, `task_board.${laneLabel}[${i}]`));
+  };
+
+  visitLane(tb.backlog, "backlog");
+  visitLane(tb.done, "done");
+  visitLane(tb.done_verified, "done_verified");
+  visitLane(tb.in_progress, "in_progress");
+  visitLane(tb.qa, "qa");
+  visitLane(tb.ready, "ready");
+  visitLane(tb.review, "review");
+  visitLane(tb.archive, "archive");
+  tb.active_sprints.forEach((sprint, si) =>
+    visitLane(sprint.tasks, `active_sprints[${si}].tasks`),
+  );
+  (tb.closed_sprints ?? []).forEach((sprint, si) =>
+    visitLane(sprint.tasks, `closed_sprints[${si}].tasks`),
+  );
+
+  return issues;
+}

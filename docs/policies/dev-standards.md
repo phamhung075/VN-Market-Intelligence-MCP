@@ -263,7 +263,7 @@ bun scripts/orch-validate.mjs
 # Validate a specific candidate file (e.g., before atomic rename):
 bun scripts/orch-validate.mjs path/to/candidate.json
 # Exit 0 = Stage 0 + Stage 1 PASS (0 coherence issues, 0 dangling refs). Exit 1 = dup-key.
-# Exit 2 = schema/lane-coherence/ref/sprint-goal-status fail. Exit 3 = file-not-found.
+# Exit 2 = schema/lane-coherence/ref/sprint-goal-status/decorative-blocks-co_edit-field fail. Exit 3 = file-not-found.
 # Owning task: SSOT-W1-ZOD-VALIDATOR-CLI; directive: docs/architecture-briefs/SSOT-zod-validation-directive-2026-06-27.md § Step 3
 # Acceptance fixture: bun scripts/test-orch-validate-ac.mjs (exercises AC-1..AC-4)
 ```
@@ -271,7 +271,13 @@ Imports schema from apps/mcp-server/src/infrastructure/orchStateSchema.ts (singl
 Stage 0: raw-byte duplicate-key scan (pre-parse). Stage 1: OrchStateSchema.safeParse. Stage 1b: lane coherence
 (HARD FAIL — flipped from warn-only by D5-BACKLOG-HYGIENE-VALIDATOR-HARDENING once SHG migration drove live
 coherence to 0; process.exit(2) on any violation). Stage 1c: ref integrity (hard fail on dangling detail_ref /
-payload_ref). Stage 1d: sprint_goal terminal-status canonicalization (hard fail).
+payload_ref). Stage 1d: sprint_goal terminal-status canonicalization (hard fail). Stage 1e
+(FIX-ORCHSTATE-BLOCKS-FIELD-WRITE-ONLY-DECORATIVE): `checkDecorativeSequencingFields()` — hard fail on a
+reverse-only `blocks` edge (present, non-empty, but the named target does not carry the source id back in
+its own `depends_on`/`depends`/`blocked_by` — the ONLY fields `scripts/lib/devteam-eligibility.jq`'s
+`effective_depends_on()` reads — or malformed, e.g. a prose string) or any non-empty `co_edit` value (no
+forward-field equivalent exists in the schema at all, so it can never be validated as bound). Closes the
+class where a field reads as a sequencing/atomic-ship constraint in every board dump while binding nothing.
 
 **CANONICAL: Orch-state write-gate validator (ORCH-STATE-SCHEMA-HARDENING SHG-1 / SSOT-W1-BASH-SHIM)**
 ```bash
@@ -339,8 +345,10 @@ the live `docs/data/orch/orch-state.json` file).
 bash scripts/orch-backlog-stub.sh --dry-run
 # Live migration (MUST hold commit-mutex:main before calling):
 bash scripts/orch-backlog-stub.sh
-# Override stub field set (comma-separated; default includes detail_ref):
-STUB_FIELDS="id,title,priority,size,type,zone,status,sprint,detail_ref" bash scripts/orch-backlog-stub.sh --dry-run
+# Override stub field set (comma-separated; default per FIX-ORCHSTATE-BLOCKS-FIELD-WRITE-ONLY-DECORATIVE
+# below — depends_on/depends/blocked_by MUST stay in any override, see that note):
+STUB_FIELDS="id,title,priority,size,type,zone,status,sprint,detail_ref,depends_on,depends,blocked_by" \
+  bash scripts/orch-backlog-stub.sh --dry-run
 # Owning brief: docs/architecture-briefs/2026-06-26-orch-state-hot-cold-split.md §HSC-4
 # Called from: HSC-4 one-time migration; pm/flow/main.md when adding new backlog items
 ```
@@ -352,6 +360,14 @@ Internal orch-apply.sh call propagates `ORCH_APPLY_LIVE_FILE_OVERRIDE="${ORCH_ST
 no-op-in-production safety propagation as orch-cold-evict.sh above). Does NOT set
 `ORCH_APPLY_ALLOW_SHRINK` — this script only strips fields, `task_board.backlog` length is
 unchanged, so it never trips the conservation guard.
+**FIX-ORCHSTATE-BLOCKS-FIELD-WRITE-ONLY-DECORATIVE (2026-07-30, AC-4):** default `STUB_FIELDS` now
+includes `depends_on,depends,blocked_by` (was: `id,title,priority,size,type,zone,status,sprint,
+detail_ref` only). Root cause closed: a re-run of this migration used to silently strip an inline
+dep from a hot row while the cold `backlog-detail.json` entry's own stale `depends_on: null`
+survived (this script's own "existing cold wins" merge, above) — a dependency set correctly could
+be silently unset, re-opening a gate `scripts/lib/devteam-eligibility.jq`'s `effective_depends_on()`
+had previously closed. NEVER override `STUB_FIELDS` without these 3 names. Regression proof (incl. a
+reproduction of the pre-fix silent-gate-reopen via the old field list): `bash scripts/orch-backlog-stub.test.sh`.
 
 **CANONICAL: Context-bloat backstop regression test (FIX-CTXBLOAT-ARCHIVE-CAP-OVERMATCH + TE-T24)**
 ```bash

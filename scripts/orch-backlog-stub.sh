@@ -54,7 +54,14 @@ DETAIL_FILE="${DETAIL_FILE:-${ARCHIVE_DIR}/backlog-detail.json}"
 
 # Hot-stub field set: comma-separated. Always includes 'detail_ref' (added by script).
 # These are the ONLY fields kept in the hot orch-state.json backlog[] items.
-STUB_FIELDS="${STUB_FIELDS:-id,title,priority,size,type,zone,status,sprint,detail_ref}"
+# depends_on/depends/blocked_by ADDED (task: FIX-ORCHSTATE-BLOCKS-FIELD-WRITE-ONLY-DECORATIVE,
+# AC-4, po_stubfields_scoping_20260725T1715): without them, a re-run of this
+# migration strips an inline dep from a hot row while a stale cold-file null
+# in backlog-detail.json survives (this script's own documented "existing
+# cold wins" merge above) — a dependency that was set correctly gets silently
+# unset. scripts/lib/devteam-eligibility.jq's effective_depends_on() reads
+# these 3 field names inline-first; they must never be strippable.
+STUB_FIELDS="${STUB_FIELDS:-id,title,priority,size,type,zone,status,sprint,detail_ref,depends_on,depends,blocked_by}"
 
 # CAS: abort after this many concurrent-writer detections
 MTIME_CAS_RETRIES="${MTIME_CAS_RETRIES:-3}"
