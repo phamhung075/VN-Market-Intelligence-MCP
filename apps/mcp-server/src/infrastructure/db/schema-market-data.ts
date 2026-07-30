@@ -10,7 +10,9 @@
  *                              SUBTASK-DAILY-FF-1); additive, PK (code,date), see
  *                              daily_ohlcv_with_flow view below for the read-compat join
  *   - ohlcv_backfill_queue   — VPS backfill request tracking
- *   - vn_index_cache         — latest VNINDEX snapshot; writer: vnIndexRefreshJob (every 5 min, market hours)
+ *   - vn_index_cache         — latest VNINDEX snapshot; writer: vnIndexRefreshJob (every 5 min, market hours);
+ *                              startup migration repairs a pre-existing Sprint-1922b orphan of the same
+ *                              name (FIX-VNINDEX-CACHE-STARTUP-PURGE, 2026-07-30) — see inline comment below
  *
  * Views:
  *   - daily_ohlcv_with_flow  — daily_ohlcv LEFT JOIN daily_foreign_flow, COALESCE-preferring the
@@ -333,6 +335,32 @@ export function initMarketDataTables(db: Database): void {
   // INSERT OR REPLACE acts as an upsert — only ever 1 row per index code.
   // Writer: vnIndexRefreshJob (*/5 during 02:00–08:59 UTC Mon–Fri).
   // Freshness SLA: <= 10 min during market hours.
+  //
+  // FIX-VNINDEX-CACHE-STARTUP-PURGE (2026-07-30): the LIVE named-volume DB
+  // still carries the Sprint 1922b orphan table of the SAME name (id/
+  // snapshot_json/source/fetched_at/expires_at/created_at — an abandoned
+  // 1842a cache design, retired-but-never-dropped by commit b50ef1777).
+  // `CREATE TABLE IF NOT EXISTS` silently no-ops against it (different
+  // columns entirely), so every upsertVnIndexCache() write has failed with
+  // "table vn_index_cache has no column named code" since this DDL first
+  // shipped (2026-06-20) — swallowed as a "non-fatal" warning in
+  // vnIndexRefreshJob.ts. This is NOT the "purged on startup +
+  // market-hours-only refresh" defect the board row hypothesized (there is
+  // no purge code anywhere in this repo, RAW-verified via full grep + git
+  // history) — it is a name collision with a dead orphan table. Repair: if
+  // the table already exists but lacks the `code` column (legacy/orphan
+  // shape), drop it before the CREATE — safe because it is provably dead
+  // (zero rows ever, per sqlite_sequence; zero readers/writers in any
+  // current code path; explicitly deprecated by its own retirement commit).
+  {
+    const vicCols = db
+      .prepare<{ name: string }, []>("PRAGMA table_info(vn_index_cache)")
+      .all()
+      .map((r) => r.name);
+    if (vicCols.length > 0 && !vicCols.includes("code")) {
+      db.exec("DROP TABLE vn_index_cache");
+    }
+  }
   db.exec(`
     CREATE TABLE IF NOT EXISTS vn_index_cache (
       code         TEXT PRIMARY KEY,
