@@ -1,6 +1,24 @@
 # Developer — Notebook
 
-**Last updated:** 2026-07-30 | **Cycle:** FIX-ORCHSTATE-BLOCKS-FIELD-WRITE-ONLY-DECORATIVE
+**Last updated:** 2026-07-30 | **Cycle:** FIX-STRANDED-SWEEP-CLASSIFY-AGENT-MODEL-SWITCH
+
+## Session 2026-07-30 — FIX-STRANDED-SWEEP-CLASSIFY-AGENT-MODEL-SWITCH — REVIEW
+
+**Task:** dev-team BOUNDED-1 auto-pickup (`cross-service/`, `scripts/` zone → developer). `stranded-state-sweep.sh` classifier mis-classified ~40% of what it reports: M1 (dominant, RESCOPED) — UNKNOWN bucket had no mtime age gate (unlike AUTO-COMMIT), so a file an agent is actively editing right now was reported stranded every tick; M2 (original) — `_is_owned_elsewhere()` hand-list missing several routine agent-output classes.
+
+**Actions taken:** (AC3/M1) mirrored the AUTO-COMMIT bucket's `SSS_AGE_HOURS` young-skip mtime gate onto the UNKNOWN bucket (deletions still exempt, no on-disk mtime). (AC4/M2) extended `_is_owned_elsewhere()`'s glob with `docs/data/auditor-dedup-ledger.json`, `docs/data/DASHBOARD.md`, `docs/data/unified-agent-synthesis-*.json`, `docs/social/fb-post-*.md`. (AC1) new `_is_model_switch_only()` — a `git diff HEAD` content check — gates `.claude/agent-models.json`/`.claude/agents/*.md` as OWNED-ELSEWHERE ONLY when every +/- diff line matches the narrow `current_mode`/`model` value-line regex; any other edit still falls through to UNKNOWN (fail-safe default on empty/mixed diff). `scope_out` honored: neither live file itself staged/committed/reverted — classifier code only.
+
+**Verify-live catch:** ran `--plan` live during this task's own in-flight `.head` (active_task_id=this task) as AC5 evidence — `unknown_paths=[]`; stderr confirmed this task's OWN dirty script/test files (`age_h=0`) and 7 unrelated in-flight `docs/analysis-briefs/*.md` files (`age_h=15`, <24h gate) both correctly withheld as young rather than reported — the exact false-positive class M1 described, now closed. Evidence saved to scratchpad (`sss-ac5-plan-20260730T0731Z.json`/`sss-ac5-stderr-20260730T0731Z.log`).
+
+**Verification:** `stranded-state-sweep.test.sh` 25/25 PASS (19 pre-existing + 6 new: AC1 positive×2/negative×1 model-switch fixtures, AC4 4 new OWNED-ELSEWHERE classes, AC3 young-excluded + `SSS_AGE_HOURS=0` re-probe of the SAME fixture now included). `bash -n` syntax-clean both files. No `apps/` TS source touched (`scripts/` zone) — `bun test`/`tsc` structurally N/A.
+
+**Board:** `task_board.in_progress[FIX-STRANDED-SWEEP-CLASSIFY-AGENT-MODEL-SWITCH]` → `review` (`next_agent: qa`), `.head` reset to idle, same `orch-apply.sh` write.
+
+**Simplicity gate:** PASS — `_is_model_switch_only()` is a single small helper reused at exactly 2 call sites (not single-use); fail-safe default (empty/mixed diff → UNKNOWN) chosen over any config knob, since AC1 requires the narrow behavior unconditionally.
+
+**Zone note:** No MCP/gateway tool available this session (Read/Edit/Write/Bash only, confirmed at Step 0) — flipped the board row directly via `scripts/orch-apply.sh` (permitted, pure bash); could not release `task:FIX-STRANDED-SWEEP-CLASSIFY-AGENT-MODEL-SWITCH` or send Telegram (structural gap, flagged for the coordinating dev-team session).
+
+Zone health: no drift detected.
 
 ## Session 2026-07-30 — FACTORY-GUARD-CI-SHAREDPKG-IMPL — REVIEW
 
@@ -37,21 +55,3 @@ Zone health: no drift detected.
 **Zone note:** No MCP/gateway tool available this session (Read/Edit/Write/Bash only, confirmed at Step 0) — flipped the board row directly via `scripts/orch-apply.sh` (permitted, pure bash); could not release `task:FACTORY-GUARD-CI-RAWVERIFY-IMPL` or send Telegram (structural gap, flagged for the coordinating dev-team session, per the dispatch prompt's own instruction).
 
 Zone health: no drift detected. This closes the 7th and last `ci-regression-prevention` guardrail — epic `FACTORY-MAINTAINABILITY-2026-06` cluster `ci-regression-prevention` now complete.
-
-## Session 2026-07-30 — FIX-ORCHSTATE-BLOCKS-FIELD-WRITE-ONLY-DECORATIVE — REVIEW
-
-**Task:** dev-team BOUNDED-1 auto-pickup (`cross-service/`, no single `apps/<service>/` owner). PO row: `blocks`/`co_edit` orch-state.json task fields read as sequencing/atomic-ship constraints but are write-only — zero consumers repo-wide. Independently re-verified PO's 07-25 grep and found MORE than the catalogued 7 rows (5 more days of drift added 4 new `blocks` writers).
-
-**Actions taken:** New `checkDecorativeSequencingFields()` in `orchStateSchema.ts` §12, wired as `orch-validate.mjs` Stage 1e (hard fail): a `blocks` edge must be empty or backed by the named target's own `depends_on`/`depends`/`blocked_by` (the fields the real gate reads) else REJECTED at write time; `co_edit` rejected unconditionally (no forward-field equivalent exists). One-time migration `scripts/fix-orchstate-blocks-coedit-decorative-normalize.jq` applied live via `orch-apply.sh`: 3 already-backed rows untouched, 8 dangling shorthand-id `blocks` deleted (historical VN-MACRO-TOOLING sprint rows, target ids like `"VMT-1"` never matched the real full ids), 1 malformed-prose row (`FIX-MCP-SUITE-HEALTH-BASELINE`) renamed to `migrated_blocks_prose`, 2 `co_edit` rows (already co-shipped in commit `adb426877`) renamed to `migrated_co_edit_partner`. `scripts/orch-backlog-stub.sh:57` `STUB_FIELDS` default gained `depends_on,depends,blocked_by` (AC-4, PO-endorsed) — closes a second independent route to the same silent-gate-reopen failure.
-
-**Verify-live catches:** (1) an early full-repo jq scan under-reported (jq `,`/`|` precedence bug — `a,b | c` parses as `(a,b)|c`, silently dropping `active_sprints` rows from the stream) — caught by re-checking a known id count before trusting the result. (2) 3 of PO's original 7 rows were ALREADY correctly backed by a reciprocal `depends_on`/`blocked_by` on the target (added independently by PO/architect for unrelated reasons) — verified at source rather than assumed decorative.
-
-**Verification:** New `FIX-ORCHSTATE-BLOCKS-FIELD-WRITE-ONLY-DECORATIVE.test.ts` 11/11 PASS (incl. AC-3 negative control: freshly-authored reverse-only `blocks`/`co_edit` fixtures both caught). New `scripts/orch-backlog-stub.test.sh` 7/7 PASS — T2 reproduces the pre-fix silent-gate-reopen (`deps_satisfied()` false→true) via the OLD field list on the identical fixture. `orchStateSchema.test.ts` 104/104 (live-data C3-a: 0 coherence issues post-migration). `orchStateStore-atomic-write.test.ts` + `TASK-FIX-SPRINT-GOAL-STATUS-DRIFT-EVICT.test.ts` 13/13. `test-orch-validate-ac.mjs` 29/29. `tsc --noEmit` clean. `orch-state-validate.sh` exits 0 on the migrated live file.
-
-**Board:** `task_board.in_progress[FIX-ORCHSTATE-BLOCKS-FIELD-WRITE-ONLY-DECORATIVE]` → `review` (`next_agent: qa`), `.head` reset to idle, same `orch-apply.sh` write.
-
-**Simplicity gate:** PASS — validate-and-reject (mirrors the existing Stage 1d pattern) instead of full unknown-key rejection (PO's own note flags an unmeasured 658-row migration cost) or auto-mirror-at-write (idempotency/fight-a-hand-written-field risk PO's own menu flags).
-
-**Zone note:** No MCP/gateway tool available this session (Read/Edit/Write/Bash only, confirmed at Step 0) — flipped the board row directly via `scripts/orch-apply.sh` (permitted, pure bash); could not release `task:FIX-ORCHSTATE-BLOCKS-FIELD-WRITE-ONLY-DECORATIVE` or send Telegram (structural gap, flagged for the coordinating dev-team session).
-
-Zone health: no drift detected.
