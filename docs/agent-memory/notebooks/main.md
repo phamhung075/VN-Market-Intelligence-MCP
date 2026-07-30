@@ -1,6 +1,17 @@
 # Dev Team — Sprint Boundary Notebook
 
-**Written:** 2026-07-30T03:02Z
+**Written:** 2026-07-30T03:22Z
+
+## cycle-20260730T0322Z-tick — Tick 03:07Z: BOUNDED-1 claimed 5th/truly-final FACTORY-GUARD-CI sibling (RAWVERIFY-IMPL); live corroboration of already-tracked PO-triage starvation
+
+- **Preflight RUN** (tick=03:07Z); cold-evict auto-ran (4 signal rows → archive/2026-07.json, commit `c7a25ff0c`). gcc-preflight clean, no HEAD.lock.
+- **drain-signals**: 1 po-row read (stranded-state 5th re-emit, now READ) + 2 file signals routed-to-po: benign `commit-sweep-guard` self-trigger (cold-evict's own bare 2-file commit), `context_bloat_breach` 3rd re-emit (developer decision journal, byte_overage now 67170, still growing unpruned).
+- **ci-health-probe**: deduped (same HEAD `2bdd28fb1` fingerprint) — no new signal.
+- **Step 0b**: `.head` idle (developer's own reset post-SHAREDPKG-IMPL) → idle-capacity chain.
+- **BOUNDED-1**: WIP=0, claimed `FACTORY-GUARD-CI-RAWVERIFY-IMPL` (5th/truly-final epic sibling — rebuild-raw-verify-hook pre-push+CI guardrail), dispatched developer in background. `task:FACTORY-GUARD-CI-RAWVERIFY-IMPL` lock HELD per LOCK-LIFETIME convention.
+- **Post-cycle**: mock-guard unchanged (11 CAUTION). Stranded-state 6th re-emit: 17 unknown paths (down from 20 — 3 in-flight SHAREDPKG paths resolved on landing). Epic-wrapper autoclose: 0 eligible. Push-backstop: ahead=19≤20, silent no-op.
+- **STRUCTURAL FINDING (corroborating, already tracked, no new signal)**: live Telegram backlog now 265 unresolved (up from ~252), zero PO ticks all session confirmed. Root cause reproduced live THIS tick: `FIX-DEVTEAM-IDLE-CHAIN-STEP1-TRIAGE-STARVATION` (P0, `ready[]`, 8 days old) sat unclaimed AGAIN because BOUNDED-1 claimed a P2 backlog row first — exactly the defect that P0 row describes. 5+ existing `FIX-DEVTEAM-IDLE-CHAIN-*`/`TASK-DEVTEAM-IDLE-CHAIN-*` rows already cover this; no duplicate minted.
+- **NEXT**: await RAWVERIFY-IMPL completion (5th/truly-final sibling) for RAW-verify — epic will then have 0 BACKLOG remaining. PO triage carryover keeps growing, zero live PO ticks all session (11+ ticks now).
 
 ## cycle-20260730T0302Z-verify — RAW-verified developer's FACTORY-GUARD-CI-SHAREDPKG-IMPL completion (4th/final epic sibling); released task lock; clean verify, zero net-new regressions (no apps/ touched)
 
@@ -12,15 +23,6 @@
 - **Lock release caught its own near-miss**: first `task_release` call with bare id `FACTORY-GUARD-CI-SHAREDPKG-IMPL` returned `released:0` — did NOT treat this as clean per [[feedback_task_release_owner_agent_mismatch_orphans_lock]] ("ok+released=wrong"); `task_list_held` showed the real id carries a `task:` prefix; re-released correctly, `released:1` confirmed.
 - **Epic dispatch phase now closed**: `.task_board.in_progress` has 0 FACTORY-GUARD-CI-* rows — all 4 IMPL siblings now in review. 2 backlog rows remain (`FACTORY-GUARD-CI-REGRESSION-SPIKE`, `FACTORY-GUARD-CI-RAWVERIFY-IMPL`) for next BOUNDED-1 idle pickup; deferred to the standing armed cron rather than dispatched inline here.
 - **NEXT**: qa to pick up all 14 FACTORY-GUARD-CI-* review rows, still fully untouched all session (structural starvation, already tracked, no new signal). PO triage carryover unchanged from last tick.
-
-## cycle-20260730T0253Z-tick — Tick 02:37Z: 2 CRITICAL bctc data_stale signals dedup'd against known-FP tickets; notebook-immutability new evidence (duplicate-heading bug, not a rewrite); SHAREDPKG-IMPL still in-flight
-
-- **Preflight RUN** (tick=02:37Z); cold-evict ran automatically (1 signal row → archive/2026-07.json, commit `a6ab617df`). gcc-preflight clean.
-- **drain-signals**: 4 po-rows read — own HIGH cowork-discovery-backlog signal (last tick) + own stranded-state 4th re-emit, plus 2 NEW CRITICAL `data_stale` (bctc-discover 1951m stale, VPS bctc proxy 41h+ unhealthy) — corroborated live (`get_vps_proxy_health`/`get_vps_service_health`: other 4 VPS services actively pushing fine) and dedup'd against 3 already-backlogged known-FP tickets (`FIX-AUDITOR-B05-BCTC-FRESHNESS-LAYER-SPLIT`, `FIX-VPSHEALTH-DEMANDROUTE-EMPTYQUEUE-MISREPORTS-PROXY-UNREACHABLE`, `FIX-AUDITOR-HEALTHCHECK-FALSE-UNHEALTHY-NONHTTP-SERVICES`) — not a new incident. 2 file signals routed-to-po: 1 benign bare-commit self-trigger (my own cold-evict commit), 1 genuine new evidence — notebook-immutability-guard fired on system-auditor's tier-2 commit `2ac402316`; RAW-diffed via `git show`: NOT a retained-section rewrite, a spurious EMPTY duplicate `## c006` heading insertion (real content below it untouched) — appended as new evidence directly onto the open `FIX-NOTEBOOK-COMPOSE-REWRITES-RETAINED-PRIOR-SECTIONS` review row instead of minting a parallel signal.
-- **ci-health-probe**: same HEAD `2bdd28fb1`, same known failing job — deduped, no new signal.
-- **Step 0b**: `.head`=in_progress (`FACTORY-GUARD-CI-SHAREDPKG-IMPL`), background developer confirmed alive (mid CI-wiring/CANONICAL-doc edit) — pipeline-resume branch, idle-capacity chain correctly skipped this tick.
-- **Post-cycle**: mock-guard unchanged (11 CAUTION TODOs). Stranded-state 5th re-emit: 20 unknown paths — same 17 known set + 3 new, confirmed (`git status`) to be SHAREDPKG-IMPL developer's own in-flight uncommitted edits (transient, annotated in the signal so PO isn't misled). Epic-wrapper autoclose: 0 eligible — epic now has 6 IMPL rows + 7 CI-GUARDRAIL design rows in `review[]`, all QA-untouched. Confirmed via `CronList`: QA has no independent cron (only dev-team's own `892d56fc` armed) — QA-Drain starvation is structural (BOUNDED-1 idle-chain priority always wins before QA-Drain's turn), already fully tracked (`TASK-DEVTEAM-IDLE-CHAIN-2-MAIN-FLOW`, `FIX-DEVTEAM-IDLE-CHAIN-P1A-MAIN-ROTATION`, `FIX-DEVTEAM-QADRAIN-*` 3-part series, `FIX-DEVTEAM-IDLE-CHAIN-STEP1-TRIAGE-STARVATION`) — no duplicate signal minted. Push-backstop: ahead=12 ≤20, silent no-op.
-- **NEXT**: await SHAREDPKG-IMPL completion (4th/last recently-dispatched sibling) for RAW-verify. Review-lane now 13 rows deep, all QA-untouched, structurally starved pending PO/architect scoping of the rotation fix. PO triage carryover keeps growing, zero live PO ticks all session (10+ ticks now).
 
 ## cycle-20260730T0320Z-verify — RAW-verified developer's FACTORY-GUARD-CI-DEADCODE-IMPL completion; released task lock (subagent had no MCP grant, "local subagents gateway blind"); clean verify, zero net-new regressions confirmed
 
