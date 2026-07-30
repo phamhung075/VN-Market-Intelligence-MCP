@@ -1,6 +1,15 @@
 # Dev Team — Sprint Boundary Notebook
 
-**Written:** 2026-07-30T18:55Z
+**Written:** 2026-07-30T19:36Z
+
+## cycle-20260730T1936Z-verify — RAW-verified architect's SPIKE-SQLITE-DOCKER-VIRT-CORRUPTION-HARDENING return; SLS dispatch closed, dev-team self-released lock (architect has no MCP gateway grant)
+
+- **BGFAN-1 RAW-verification, all claims confirmed real**: commit `9ecfdd300` real, on HEAD (top of unpushed queue). Brief `docs/architecture-briefs/2026-07-30-sqlite-docker-virt-corruption-hardening.md` (195L) is substantively grounded — git-verified mount-type timeline (`ffa045e81` 04-25 bind→named-volume fix, `5ba622eca` 07-15 named-volume→bind revert after VM-rebuild wipe) plus live `docker inspect`/`PRAGMA journal_mode` reads, not the row's own prose alone. Corrected the row's own "named-volume sync fault" framing as backwards: bind-mount/VirtioFS is the actual fault surface (3/4 occurrences), the one named-volume occurrence (07-13) rules out mount-type as sole cause.
+- **New P0 finding surfaced, not fabricated**: live dormant WAL re-armer in `apps/stock-price` Go repos (`foreign_flow_repository.go`, `room_event_repository.go`) — `_journal_mode=WAL` + no `mode=ro` — missed by the sibling TS-only `FIX-SQLITE-JOURNALMODE-WAL-REARM-DEFEATS-DELETE-MITIGATION` sweep.
+- **Board disposition genuine**: row `status:DONE`, out of `in_progress[]`, `next_agent:po`, `.head` idle-reset (`updated_at:17:36:14Z`) — all one write, checked live not from prose. DJ-GATE-1 confirmed (`STEP architect-S19`), notebook entry present at `docs/agent-memory/notebooks/architect.md`.
+- **Tool-grant gap claim verified TRUE, not an excuse** ([[feedback_agent_reported_limitation_may_be_structural_check_the_tool_grant]]): `architect` agent type carries no `mcp__gateway__call_tool` grant — dev-team released `task:SPIKE-SQLITE-DOCKER-VIRT-CORRUPTION-HARDENING` and sent the WORK telegram itself.
+- **6 commits now queued unpushed** (`671272bf4`..`9ecfdd300`) — push-backstop deferred to the next tick's post-cycle per the already-filed SLS-skips-post-cycle signal (`70bc45408`); non-urgent, no new tick has fired this session since `17:07Z`.
+- **NEXT:** po triage of the brief's prioritized follow-up list on its next drain (highest priority: live stock-price WAL re-armer, brief §3).
 
 ## cycle-20260730T1855Z-verify — RAW-verified dev-mcp-server's FU-CNYVND-DEAD-FIELD-REMOVE stop-and-report; correct escape-hatch use, board BLOCKED/next_agent=architect, lock released
 
@@ -20,15 +29,3 @@
 - **Found + flagged, not fixed inline**: `post-cycle.md` Step 4.5's documented `log_agent_work(tag=..., state=...)` call doesn't match the live MCP tool schema (`agent_name`/`status` required; `completed` needs the `id` from a prior `status="running"` call) — a literal read fails every call. Worked around live with the correct running→completed lifecycle; emitted a `repair_task_request` signal (same doc-drift class as last tick's `execute-tier.md` finding). Committed `5f226a7ef`.
 - **Step 4.1:** 172 unresolved (+2 since last check, same known categories, no new category type) — **9th consecutive PO-respawn skip**. Post-cycle otherwise clean/no-op (4.0 no reports to expire, 4.0.5 CAUTION unchanged pre-existing TODOs, 4.2 0-byte no-op, 4.3 0 actionable — 19 owned-elsewhere/19 young-skip, 4.4 0 rows swept — identity write, no commit).
 - **NEXT:** await `dev-mcp-server`'s return on `FU-CNYVND-DEAD-FIELD-REMOVE`; RAW-verify the zero-live-readers re-check + migration diff + test re-run before trusting the board flip.
-
-## cycle-20260730T1607Z-tick — BOUNDED-1 dispatched developer on FIX-WF2-SUPERVISED-HOLD-NO-PO-SIDE-GOAHEAD-PRODUCER; flagged execute-tier.md Phase-3.5 stale lock-release pattern via signal; RAW-verified developer's return clean, board REVIEW/qa, 8th consecutive PO-respawn skip
-
-- **Preflight RUN, tick `2026-07-30T16:07Z`.** `.head` idle at tick start — idle-fallthrough, not pipeline-resume.
-- **Step 0a drain:** 3 signals (commit-sweep-guard, sprint-COWORK notebook context-bloat, cowork-team fire) — all routed-to-po, committed `beaf06f87`.
-- **CI probe:** deduped clean against already-tracked `ci-red-c01f39b0-*` fingerprint.
-- **BOUNDED-1:** WIP=0 → promoted+claimed `FIX-WF2-SUPERVISED-HOLD-NO-PO-SIDE-GOAHEAD-PRODUCER` (P2, `zone:cross-service/` — accepted Tier-3 zone-detect precedent, not a zone-missing bug). Committed `92cb68aaa`. Dispatched `developer` (background, DJ-GATE-1 instructed). Lock held (LOCK-LIFETIME).
-- **Found + flagged, not fixed inline**: `execute-tier.md` Phase-3.5 dispatcher-wrap text ("release all after batch returns") is stale vs the LOCK-LIFETIME convention documented at every other `main.md` dispatch site — literal reading would release `run_in_background` locks in ms, enabling double-spawn on the next pipeline-resume tick. Applied LOCK-LIFETIME-safe behavior manually; emitted a `repair_task_request` signal for PO/architect to reconcile. Committed `f64ad2bad`.
-- **Step 4.1:** 170 unresolved (DOWN from 276), same categories, 0 NEW `signal_queue` rows — **8th consecutive PO-respawn skip**. Post-cycle otherwise clean/no-op (4.0/4.0.5/4.2/4.3/4.4).
-- **Session Exit:** both tick locks released (`dev-team-cron-singleton`, fire-election) — `task:FIX-WF2-...` sprint lock deliberately held open pending developer's return.
-- **developer's return arrived post-tick** (`a760d993dc8bf4e9d`, 608s, 62 tool uses) — **RAW-verified, not trusted from self-report**: commits `5c1f19b7b`/`dff618bde`/`86a1bd3a4` real on HEAD; diff to `po/flow/main.md` + new `supervised-goahead.md` matches claim exactly (`should_hold` jq filter logic byte-identical to `main.md:469-478`). Independently re-ran `scripts/audits/po-goahead-producer-verify.sh` → **4/4 PASS**. DJ-GATE-1 confirmed at `STEP developer-S44`. Board disposition genuine: row in `review[]` (absent from `in_progress[]`), `next_agent:qa`, `.head` idle-reset, all one write. Sprint-task lock released. WORK telegram sent.
-- **NEXT:** QA-Drain backlog gains another review-lane row; PO's next tick should pick up the new `supervised-goahead.md` Pre-check + the `execute-tier.md` signal.
