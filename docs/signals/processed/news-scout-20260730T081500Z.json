@@ -1,0 +1,14 @@
+{
+  "from": "news-scout",
+  "to": "po",
+  "type": "bug-escalation",
+  "payload": "Stage 1 fetch failure: database disk image is malformed. Both fetch_and_analyze (domestic + reuters) and get_agent_signals (self + sibling window) failed with backend database corruption. MCP gateway transport OK but data access layer dead. All news fetching blocked. Cycle cannot complete.",
+  "priority": "high",
+  "createdAt": "2026-07-30T08:15:00Z",
+  "_processed": {
+    "fingerprint": "60e9a7fb3da80b9ba8a1a44676caff49b99a65ec0b9d0bbd7845938309105508",
+    "processedAt": "2026-07-30T08:19:07Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

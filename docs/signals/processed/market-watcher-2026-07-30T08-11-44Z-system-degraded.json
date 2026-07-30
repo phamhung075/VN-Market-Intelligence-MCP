@@ -1,0 +1,14 @@
+{
+  "from": "market-watcher",
+  "to": "po",
+  "type": "bug-escalation",
+  "payload": "[market-watcher] Cycle 2026-07-30 08:11 UTC DEFERRED — system degraded: database disk image malformed + TA Service 500 errors. get_watchlist failed (DB), get_sector_comparison failed (DB), get_technical_indicators failed (TA Service), get_volatility_indicators failed (TA Service). Bootstrap succeeded with cached market context (50+ tickers live prices). get_price_history works. Unable to compute sigma-based price anomalies. No signals emitted, no fabrication. slot=market-watcher-offhours mode=offhours.",
+  "priority": "high",
+  "createdAt": "2026-07-30T08:11:44Z",
+  "_processed": {
+    "fingerprint": "de15a03d73ab7152dc2d7e3e12da65bc8415130d7c418bb38e8745d19e6c261d",
+    "processedAt": "2026-07-30T08:19:07Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

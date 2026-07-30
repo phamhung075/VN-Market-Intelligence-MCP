@@ -1,0 +1,14 @@
+{
+  "from": "commit-sweep-guard",
+  "to": "po",
+  "type": "bug-escalation",
+  "priority": "high",
+  "createdAt": "2026-07-30T08:28:27Z",
+  "payload": "[sweep-guard] BARE commit about to absorb 1 staged file(s) not necessarily this actor's own: apps/mcp-server/src/infrastructure/db/schema.ts. actor=64c7c677-0f0f-4cee-a3ce-dba79d70b7ae mode=warn. Fix: git commit -m \"<msg>\" -- <own-files-only>.",
+  "_processed": {
+    "fingerprint": "125c2d4bea1c11cebff24be6e0ad4e56e5156e870855bb433d3e1f2590566de1",
+    "processedAt": "2026-07-30T08:47:42Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

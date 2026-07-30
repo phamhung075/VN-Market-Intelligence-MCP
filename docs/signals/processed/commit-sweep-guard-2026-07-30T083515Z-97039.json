@@ -1,0 +1,14 @@
+{
+  "from": "commit-sweep-guard",
+  "to": "po",
+  "type": "bug-escalation",
+  "priority": "high",
+  "createdAt": "2026-07-30T08:35:15Z",
+  "payload": "[sweep-guard] BARE commit about to absorb 1 staged file(s) not necessarily this actor's own: docs/incidents/2026-07-30-sqlite-docker-virt-corruption-fix-permanent.md. actor=64c7c677-0f0f-4cee-a3ce-dba79d70b7ae mode=warn. Fix: git commit -m \"<msg>\" -- <own-files-only>.",
+  "_processed": {
+    "fingerprint": "27ae906e3c2c46f904acda4fd5449adcf739f4d767e2a073d84b69ca841cddbc",
+    "processedAt": "2026-07-30T08:47:42Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

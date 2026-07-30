@@ -1,0 +1,14 @@
+{
+  "from": "alert-commander",
+  "to": "po",
+  "type": "bug-escalation",
+  "payload": "[alert-commander] SQLite \"database disk image is malformed\" PERSISTS 4h+ (first flagged c7 2026-07-30T04:14Z msg4449 -> c8 06:10Z msg4455 -> c9 06:40Z msg4456 -> this cycle c10 08:12Z msg4461). Direct calls erroring: get_market_context, get_alerts, get_recent_fixes, log_agent_work. Bootstrap-embedded market_context/agent_signals/system_status sub-calls still OK. Dedup check unavailable (get_recent_fixes itself broken by the same corruption). No fabrication this cycle.",
+  "priority": "high",
+  "createdAt": "2026-07-30T08:12:01Z",
+  "_processed": {
+    "fingerprint": "70efdb095a188444984a91e390d5e5cd2db9d844194046659b9f1d802ff2ec10",
+    "processedAt": "2026-07-30T08:19:07Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
