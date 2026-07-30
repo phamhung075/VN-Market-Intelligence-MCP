@@ -91,7 +91,7 @@
     "status": "idle",
     "active_task_id": null,
     "next_agent": "router",
-    "updated_at": "2026-07-30T00:04:54Z",
+    "updated_at": "2026-07-30T00:54:09Z",
     "updated_by": "developer"
   },
   "narrative": {
@@ -2036,6 +2036,50 @@
         "severity": "LOW",
         "status": "NEW",
         "payload_ref": "docs/signals/cowork-team-2026-07-30T000700Z.json"
+      },
+      {
+        "id": "dev-20260730T001827",
+        "ts": "2026-07-30T00:18:27Z",
+        "from": "dev-team",
+        "to": "po",
+        "type": "system-issue",
+        "summary": "stranded-state sweep: 17 unknown-owner paths still unowned (re-emit, prior signal aged out unread)",
+        "severity": "MED",
+        "status": "NEW",
+        "payload_ref": "docs/handoffs/STRANDED-STATE-SWEEP-20260729T2342Z.md"
+      },
+      {
+        "id": "cow-20260730T001827",
+        "ts": "2026-07-30T00:18:27Z",
+        "from": "cowork-team",
+        "to": "po",
+        "type": "system-issue",
+        "summary": "alert-cmd-critical spawn: no session_id (no Bash) -> publish-marker dup-guard inert; Step5.3 PRE-CLAIM FP",
+        "severity": "MEDIUM",
+        "status": "NEW",
+        "payload_ref": "docs/signals/cowork-team-2026-07-30T001827Z-alertcmd-session-id-gap.json"
+      },
+      {
+        "id": "cow-20260730T002605",
+        "ts": "2026-07-30T00:26:05Z",
+        "from": "cowork-team",
+        "to": "po",
+        "type": "system-issue",
+        "summary": "cowork Step0a marks to==po rows READ w/o lock, racing dev-team's claim-guarded 0a-D drain -> signal-loss class bug",
+        "severity": "MEDIUM",
+        "status": "NEW",
+        "payload_ref": "docs/signals/cowork-team-2026-07-30T002605Z-step0a-po-row-unlocked-consume.json"
+      },
+      {
+        "id": "sys-20260730T003538-10ba",
+        "ts": "2026-07-30T00:35:38Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "db_integrity_breach",
+        "summary": "alerts table check C-08 failed (actual=121)",
+        "severity": "WARN",
+        "status": "NEW",
+        "payload_ref": null
       }
     ],
     "last_triaged_at": "2026-07-29T06:25:00Z",
@@ -9625,27 +9669,6 @@
         "note": "ROOT: quality-checklist.json (_updated_by: system-auditor, generated_at frozen 2026-06-10) stamps check.status=PASS with a REUSED evidence string instead of running that check's own recheck_how and capturing per-check evidence. RAW-confirmed byte-identical duplicates in the LIVE file this tick: 'observability demonstrably working — WORK-channel msg IDs 2743-2766' x4 across unrelated checks; 'CI green commit fc28bf41...' x4; 'HTTP 200' x7. This copy-paste PASS masked BCT-OBS-02 (sscCheck nightly WORK post) and DS-OBS-01 (freshnessSlaMonitor WORK/BUG alert) — both marked PASS while the real breach->human-visible Telegram alert was broken. Recurring 2x -> recurring-bug policy (block+fix root cause). FIX: (1) generator MUST NOT reuse an evidence string across distinct check_ids — each PASS requires its OWN freshly-captured evidence from executing recheck_how; (2) a check that cannot capture distinct real evidence stays UNKNOWN/UNVERIFIED, never a copy-paste PASS (fail-loud, empty-read-is-not-evidence); (3) add a validator (generation-time and/or serve-time in qualityChecklistHandler) that REJECTS a checklist where any evidence string is byte-identical across >1 check_id. AC: (a) live quality-checklist.json regenerated with zero cross-check byte-identical evidence; (b) BCT-OBS-02 + DS-OBS-01 checks reflect TRUE post-fix status from real recheck_how execution; (c) validator fails loud on a seeded duplicate-evidence checklist. DISTINCT from SPIKE-EVIDENCE-SCORE-CACHE-FRAGMENT-DECOUPLE (get_evidence_summary evidence_scores cache) + FIX-CHEF-QUALITY-VERDICT-FALSE-FULL (chef dish self-cert). Do NOT reopen BCT-OBS-02-FIX / DS-OBS-01-FIX (consumers, correctly in review/qa).",
         "baseline_pass": true,
         "updated_at": "2026-07-23T18:08:33Z"
-      },
-      {
-        "id": "FACTORY-GUARD-CI-DEADCODE-IMPL",
-        "type": "SPRINT-S",
-        "title": "Implement dead-code-gate CI guardrail (script + delete confirmed-orphaned trees + workflow wiring)",
-        "status": "BACKLOG",
-        "priority": "P2",
-        "size": "M",
-        "zone": "cross-service/",
-        "epic": "FACTORY-MAINTAINABILITY-2026-06",
-        "cluster": "ci-regression-prevention",
-        "source": "architect design brief 2026-07-24, parent FACTORY-GUARD-CI-dead-code-gate",
-        "detail_ref": "docs/architecture-briefs/2026-07-24-factory-guard-ci-dead-code-gate.md#3-build-vs-plan--decomposed-not-self-implemented",
-        "dev_agent": "developer",
-        "next_agent": "developer",
-        "parent_task": "FACTORY-GUARD-CI-dead-code-gate",
-        "note": "files: scripts/audits/dead-code-gate.sh (new, --check mode, zero-tolerance, 4 checks: tracked *.bak/*.backup/*.patch ban, _deprecated/-dir-name ban, Go-service-with-stray-package.json+src/-twin-scaffold ban, //go:build ignore ban), .gitignore (extend *.bak line to *.backup/*.patch), docker-compose.yml.backup + docker-compose.yml.patch (delete, 2 stray root artifacts), apps/mcp-server/src/_deprecated/ + apps/mcp-server/src/infrastructure/_deprecated/kinhDichWrapper.ts (delete whole trees, zero live importers verified), apps/mcp-server/src/__tests__/1077-kinh-dich-wrapper.test.ts (delete whole file — dedicated solely to the deleted wrapper), apps/mcp-server/src/__tests__/1081-sprint-054-smoke.test.ts (surgical edit only: remove appendKinhDich import + Scenario 5/5b/5c it() blocks ~L447-490, KEEP the rest of the 569L suite — it covers other still-live scenarios), apps/pdf-extractor/_deprecated/ (delete), apps/stock-price/pkg/domain/_deprecated/ (delete, includes the only 2 //go:build ignore files repo-wide), apps/technical-analysis/src/ (delete, 9 TS files/383L — PO-decided-FINAL 2026-05-22 language-pivot-to-Go dead scaffold, zero Dockerfile/CI/compose wiring verified) + its 3 apps/technical-analysis/__tests__/*.test.ts files (delete), apps/technical-analysis/package.json (TRIM ONLY: drop module/start/test/check script fields + bun-types/typescript devDeps — KEEP esbuild/playwright-core, still used live by dashboard/build.sh — do NOT delete the file), .github/workflows/ci.yml (add dead-code-gate job, ubuntu-latest + checkout only), docs/policies/dev-standards.md (CANONICAL pointer), scripts/audits/dead-code-gate.test.sh (new smoke test). approach: fix all confirmed-orphaned debt (~2,070 LOC across mcp-server/pdf-extractor/stock-price/technical-analysis + 2 stray root files) in this same child task BEFORE the gate activates, so it opens at zero offenders and can be true zero-tolerance (no baseline manifest) — same reasoning as metric-mask/depguard siblings, justified here by 100% pure-subtraction/already-zero-import-verified risk profile despite larger absolute LOC than those siblings. dod: --check exits 0 on post-cleanup repo state; synthetic new .bak/_deprecated//twin-scaffold//go:build-ignore file each independently fails --check; mcp-server tsc --noEmit + bun test green post-deletion (1081 surviving scenarios still pass); technical-analysis-go-lint + dashboard build (./dashboard/build.sh) still green post package.json trim; smoke test covers all 4 check cases; CI green on push.",
-        "created_at": "2026-07-24T19:01:20Z",
-        "created_by": "architect",
-        "updated_at": "2026-07-24T19:06:08Z",
-        "brief_ref": "docs/architecture-briefs/2026-07-24-factory-guard-ci-dead-code-gate.md"
       },
       {
         "id": "FACTORY-GUARD-CI-NOHARDCODE-IMPL",
@@ -17574,6 +17597,29 @@
         "updated_at": "2026-07-30T00:04:55Z",
         "entered_review_at": "2026-07-30T00:04:54Z",
         "review_note": "New scripts/audits/composition-root-logic-gate.go (go/ast+go/parser stdlib, --check, zero-tolerance: flags any cmd/server/**/*.go receiver method with if-count>=2 OR any for/range; escape hatch composition-root-logic-allow:). Live scan reproduced exactly the 2 predicted offenders (both apps/macro-indicators/cmd/server/adapters.go: policyRatesAdapter.FetchPolicyRates 3 ifs, omoAdapter.FetchOMO 4 ifs+1 for), zero FP across the other 6 services (independently re-verified: no receiver methods exist in their cmd/server/ at all). Fixed by moving the fallback/IsEstimate + ParseOK decision logic into 2 new pkg/application resolvers (PolicyRatesResolver, omoResolver) implementing the PRE-EXISTING PolicyRatesProvider/OMOProvider ports -- LiquidityStateUseCase itself untouched. adapters.go shims now pure delegation (policyRatesHTMLAdapter/policyRatesDBAdapter/omoRawAdapter, 0 branching) + a free non-receiver helper convertOMOTenorRows for the tenor-row struct mapping (out of gate scope by construction, mirrors envStr/splitCSV carve-out). Wired 1 composition-root-logic-gate CI job (all 7 services, tool is syntax-only) + CANONICAL pointer in dev-standards.md. New composition-root-logic-gate_test.go (renamed from the board note's literal .test.go -- Go only discovers _test.go) 7/7 PASS covering all 4 DoD cases + 2 extra guards + a live all-7-service regression. RAW-verified against the LIVE running container: rebuilt+recreated macro-indicators (image id confirmed changed), POST /liquidity-state before/after byte-identical modulo fetched_at -- both calls landed live on the exact 2 fallback/fail-closed branches the gate flagged (SBV HTML parse failing in prod right now -> DB fallback; OMO ParseOK=false). go build/go vet/golangci-lint run (Fence-A/B/C) clean; go test ./... unchanged pass set. Decision journal: docs/agent-memory/decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-developer.md STEP developer-S30. QA next."
+      },
+      {
+        "id": "FACTORY-GUARD-CI-DEADCODE-IMPL",
+        "type": "SPRINT-S",
+        "title": "Implement dead-code-gate CI guardrail (script + delete confirmed-orphaned trees + workflow wiring)",
+        "status": "REVIEW",
+        "priority": "P2",
+        "size": "M",
+        "zone": "cross-service/",
+        "epic": "FACTORY-MAINTAINABILITY-2026-06",
+        "cluster": "ci-regression-prevention",
+        "source": "architect design brief 2026-07-24, parent FACTORY-GUARD-CI-dead-code-gate",
+        "detail_ref": "docs/architecture-briefs/2026-07-24-factory-guard-ci-dead-code-gate.md#3-build-vs-plan--decomposed-not-self-implemented",
+        "dev_agent": "developer",
+        "next_agent": "qa",
+        "parent_task": "FACTORY-GUARD-CI-dead-code-gate",
+        "created_at": "2026-07-24T19:01:20Z",
+        "created_by": "architect",
+        "updated_at": "2026-07-30T00:54:10Z",
+        "brief_ref": "docs/architecture-briefs/2026-07-24-factory-guard-ci-dead-code-gate.md",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
+        "entered_review_at": "2026-07-30T00:54:09Z",
+        "review_note": "New scripts/audits/dead-code-gate.sh (--check, zero-tolerance, 4 checks on TRACKED files: tracked *.bak/*.backup/*.patch, tracked _deprecated/ path segment, Go/TS twin scaffold, //go:build ignore). Fixed all live confirmed-orphaned debt first: deleted 2 stray root docker-compose.yml.backup/.patch, mcp-server's 2 _deprecated/ trees + infrastructure/_deprecated/kinhDichWrapper.ts + the dedicated 1077-kinh-dich-wrapper.test.ts (zero live importers independently grep-verified), pdf-extractor's _deprecated/mock_echo (import-linter clean), stock-price's _deprecated/services_v1.go+test (the only 2 //go:build ignore files repo-wide, golangci-lint clean). Surgical edit to 1081-sprint-054-smoke.test.ts (removed appendKinhDich import + Scenario 5/5b/5c it() blocks only, 17->14 tests, rest of the 569L suite untouched). apps/technical-analysis/package.json trimmed bun-types/typescript devDeps -- its src/ + __tests__/ were ALREADY independently deleted 2026-07-28 (commit 099afddd3, FACTORY-TECHANALYSIS-delete-orphaned-ts-service) before this row was dispatched, explaining the gap vs the architect brief's ~2,070 LOC estimate. Check-3 (twin scaffold) DEVIATES from the board-row note's literal \"any Go cmd/server + package.json + src/ combo bans\" phrasing: that rule permanently false-positives on the LIVE apps/news-fetch (legitimate WIP parallel Go port -- own news-fetch-go-lint CI job + composition-root-logic-gate coverage -- sitting alongside the TS/Bun service its Dockerfile actually builds/deploys). Refined signal generalizes the confirmed technical-analysis dead shape instead: flag only when the service's Dockerfile has ZERO src reference (no Dockerfile also fails, conservative default). New scripts/audits/dead-code-gate.test.sh: 8/8 PASS -- all 4 DoD synthetic-offender cases, a tracked-vs-untracked negative control proving tracked-only semantics, and a twin-scaffold Dockerfile-blind-fails/Dockerfile-referencing-passes pair proving the news-fetch exemption is deliberate not accidental. Wired dead-code-gate job in .github/workflows/ci.yml + CANONICAL pointer in dev-standards.md. Verified: dead-code-gate.sh --check exits 0 on live repo; mcp-server tsc --noEmit clean, eslint src/ clean, 1081-*.test.ts 14/14 pass; technical-analysis go build/go vet/go test ./... clean, golangci-lint run 0 issues, dashboard/build.sh green (35/35 sandbox scenarios + headless render gate, esbuild/playwright-core confirmed still load-bearing post-trim); pdf-extractor lint-imports 3/3 contracts kept; stock-price golangci-lint run 0 issues. Full bun test: standing FIX-MCP-SUITE-HEALTH-BASELINE order-dependent full-suite red only -- ran a 3-pass base-vs-head A/B (disposable git worktree at pre-task HEAD, then HEAD twice): base 20fail/9files, head-run1 24fail/10files, head-run2 2fail/2files, every failing file either present in base's pre-existing set or a run-to-run flip on IDENTICAL code (sampled files pass 100% clean standalone) -- zero deterministic net-new failures from this task. Structural note: no MCP/gateway tool grant in this session (Read/Edit/Write/Bash only) -- did all zone work directly, flipped this board row via scripts/orch-apply.sh myself (permitted, pure bash); could not release task:FACTORY-GUARD-CI-DEADCODE-IMPL or send Telegram -- coordinating dev-team session must pick that up. Decision journal: docs/agent-memory/decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-developer.md STEP developer-S31. QA next."
       }
     ],
     "qa": [],
@@ -17593,7 +17639,7 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-29T23:40:07Z",
+    "last_triaged_at": "2026-07-30T00:16:26Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
     "in_progress": []
   },
