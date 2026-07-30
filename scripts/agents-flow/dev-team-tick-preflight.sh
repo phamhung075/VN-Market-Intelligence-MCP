@@ -452,7 +452,8 @@ _step55_git_commit_evict() {
   yyyymm=$(date -u +%Y-%m)
   archive_path="$ROOT/docs/data/orch/archive/${yyyymm}.json"
   git -C "$ROOT" add "$ORCH_STATE_PATH" "$archive_path"
-  git -C "$ROOT" commit -m "chore(tasks): cold-evict terminal sprints/done lanes → archive/${yyyymm}.json"
+  git -C "$ROOT" commit -m "chore(tasks): cold-evict terminal sprints/done lanes → archive/${yyyymm}.json" \
+    -- "$ORCH_STATE_PATH" "$archive_path"
 }
 
 run_preflight() {
