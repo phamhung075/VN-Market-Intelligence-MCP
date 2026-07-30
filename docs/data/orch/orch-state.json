@@ -93,11 +93,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "active_task_id": null,
-    "next_agent": "router",
-    "updated_at": "2026-07-30T13:56:27Z",
-    "updated_by": "dev-team (RAW-verify closeout)"
+    "status": "in_progress",
+    "active_task_id": "FIX-BCTC-REPARSE-DOUBLE-WRAP-DEDUP-GUARD",
+    "next_agent": "dev-mcp-server",
+    "next_action": "BOUNDED-1 auto-pickup claim of FIX-BCTC-REPARSE-DOUBLE-WRAP-DEDUP-GUARD — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
+    "updated_at": "2026-07-30T14:18:38Z",
+    "updated_by": "dev-team (bounded-1 auto-pickup)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -10741,28 +10742,6 @@
         "po_ruling_20260730": "AMBIGUITY RESOLVED — this row has now been offered to BOUNDED-1 and declined 5 CONSECUTIVE times for the same reason, so the decision is made here and the prose is removed from the title (it was the literal blocker). (a) single-FIX vs ba->architect SPLIT: the row already contained its own answer and nobody read it — zone is already `multi`, and docs/agents/po/flow/main.md states that `multi` MEANS 'architect must split'. So: ARCHITECT SPLITS IT. No new judgement was ever required; this was 5 wasted dispatcher cycles on a question the zone field had already answered. (b) PRIORITY P2 -> P1: the CF-tunnel push path is a live, repeatedly-fragile dependency, not a hypothetical — the 2026-07-04 RCA is a 69h-undetected outage, and it recurred on 2026-07-15 (see RAG-FTS-BUILD-MEMORY-BOUND.gateway_infra: zenmidi.com/gateway origin aggregator down, CF-dashboard-managed tunnel, needed a USER Zero-Trust action because no detector fired). Two outages, zero detection, 26 days open. (c) DISPATCHABILITY: supervised+plan_only BOTH set to true, deliberately, so the Supervised-Lane Sweep (which requires BOTH — scripts/devteam-backlog-promote-supervised-lane-sweep.jq:108-109) routes it to architect for the split. It was previously supervised=null/plan_only=null with next_agent=null, which is why only BOUNDED-1 ever saw it and only ever to decline it. DO NOT re-add any scoping question to this title."
       },
       {
-        "id": "FIX-BCTC-REPARSE-DOUBLE-WRAP-DEDUP-GUARD",
-        "type": "FIX",
-        "priority": "medium",
-        "size": "S",
-        "status": "BACKLOG",
-        "zone": "apps/mcp-server/",
-        "owner": "dev-mcp-server",
-        "next_agent": "dev-mcp-server",
-        "found_by": "SPIKE-BCTC-REPARSE-CADENCE-GUARD-ROOTCAUSE-VERIFY",
-        "related": [
-          "FIX-BASE-RATE-COMPUTATION-CRON-DEAD",
-          "SPIKE-BCTC-REPARSE-CADENCE-GUARD-ROOTCAUSE-VERIFY"
-        ],
-        "title": "bctcReparseJob: double-wrap recordJobRun + ungated restart catch-up defeat the T4 cadence guard's evidentiary trail",
-        "detail": "Found during SPIKE-BCTC-REPARSE-CADENCE-GUARD-ROOTCAUSE-VERIFY AC-2 (findings docs/spikes/SPIKE-BCTC-REPARSE-CADENCE-GUARD-ROOTCAUSE-VERIFY.md). runBctcReparseWithDb (apps/mcp-server/src/scheduler/startupHelpers.ts:361-366) wraps recordJobRun(db,'bctcReparseJob',fn) where fn discards runBctcReparseJob()'s real ReparseRunResult (Promise<void> arrow fn) -- so cron_job_runs.rows_written is ALWAYS NULL for this job (RAW-confirmed live: 100% of ~90 sampled rows across 11 days, 2026-07-29). Worse: recordJobRun marks the row 'success' whenever fn() resolves without throwing, REGARDLESS of whether runBctcReparseJob()'s OWN shouldSkipRecoveryReplay guard (bctcReparseJob.ts:718) early-returned a no-op -- so a guard-SKIPPED invocation still writes a fresh 'success' row, silently re-arming its own 21.6h dedup window. This is the SAME double-wrap class already found+fixed for runBaseRateComputationWithDb (FIX-BASE-RATE-COMPUTATION-CRON-DEAD, 2026-07-23) and runEvidenceAccumulatorWithDb (EVIDENCE-ACCUM-SILENT-CRON) -- bctcReparseJob was never patched. It uniquely compounds with a SECOND defect: the startup catch-up in startScheduler.ts:169-182 fires runBctcReparseWithDb(db) UNCONDITIONALLY 30s after every container boot/restart with NO staleness gate -- its own introducing commit (75b729183, 2026-04-12) claimed to mirror runDailyAuditIfStale's pattern (dataAuditJob.ts:292-311, which correctly checks last_daily_audit_at age before running) but never implemented an equivalent check. Net effect, RAW-confirmed live (docker exec, market.db, last 30 days): 2-7 cron_job_runs rows per calendar day for bctcReparseJob (vs. the intended 1x/day), overwhelmingly 0-3ms duration (guard-skip echoes) with occasional real multi-hour runs, plus status='crashed' zombie rows on restart-cluster days (2026-07-19, 2026-07-28) -- the table's 'last success' signal is contaminated by boot-time noise unrelated to real reparse activity, and is the best-supported explanation for the 2026-07-10 incident this SPIKE investigated (ops' pre-edit probe showed clean, then a subsequent restart re-armed the guard within 30s, before ops resorted to falsifying 25 rows instead of using the job's own nowMsFn override).",
-        "ac": "(1) runBctcReparseWithDb gains its own shouldSkipRecoveryReplay(db,'bctcReparseJob',DAILY_CADENCE_MS) check BEFORE calling recordJobRun (mirrors the FIX-BASE-RATE-COMPUTATION-CRON-DEAD fix pattern exactly) so a guard-skip never reaches recordJobRun and never writes a fresh row. (2) fn's default implementation captures runBctcReparseJob()'s real ReparseRunResult and maps resolved+failed to rowsWritten (or an equivalent field) so cron_job_runs.rows_written is no longer always NULL for this job. (3) startScheduler.ts's bctcReparseJob startup catch-up (currently unconditional, :169-182) gains a staleness gate consistent with its own stated intent to mirror runDailyAuditIfStale -- either reuse shouldRunCatchup() (matching the other 5 hardened catchups in the same file) or an equivalent last-run-age check, so a restart does not unconditionally fire the job every single boot. (4) new unit tests proving both fixes through the real default code paths (mirror FIX-BASE-RATE-COMPUTATION-CRON-DEAD.test.ts's approach) -- specifically a test that 2 back-to-back invocations within the cadence window produce exactly 1 cron_job_runs row, not 2. (5) RAW-verify post-fix: cron_job_runs rows-per-day for bctcReparseJob drops to <=1 on days without a genuine multi-file reparse, and rows_written is populated (non-NULL) on real runs.",
-        "created_at": "2026-07-29T15:30:00Z",
-        "created_by": "dev-mcp-server (SPIKE-BCTC-REPARSE-CADENCE-GUARD-ROOTCAUSE-VERIFY)",
-        "verify_note": "found_by=SPIKE-BCTC-REPARSE-CADENCE-GUARD-ROOTCAUSE-VERIFY AC-2; live RAW-confirmed pattern (rows_written always NULL, 2-7 rows/day, crashed-row clusters correlate with restart-storm days); precedent fix pattern = FIX-BASE-RATE-COMPUTATION-CRON-DEAD",
-        "updated_at": "2026-07-29T15:34:50Z"
-      },
-      {
         "id": "FIX-VPSHEALTH-DEMANDROUTE-EMPTYQUEUE-MISREPORTS-PROXY-UNREACHABLE",
         "type": "FIX",
         "title": "get_vps_proxy_health prints \"VPS may be down or unreachable\" for the bctc route when the real cause is an EMPTY work queue — proxy is provably up (prices/news/sbv pushing on the same proxy)",
@@ -17935,9 +17914,37 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-30T13:48:29Z",
+    "last_triaged_at": "2026-07-30T14:18:33Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": []
+    "in_progress": [
+      {
+        "id": "FIX-BCTC-REPARSE-DOUBLE-WRAP-DEDUP-GUARD",
+        "type": "FIX",
+        "priority": "medium",
+        "size": "S",
+        "status": "IN_PROGRESS",
+        "zone": "apps/mcp-server/",
+        "owner": "dev-mcp-server",
+        "next_agent": "dev-mcp-server",
+        "found_by": "SPIKE-BCTC-REPARSE-CADENCE-GUARD-ROOTCAUSE-VERIFY",
+        "related": [
+          "FIX-BASE-RATE-COMPUTATION-CRON-DEAD",
+          "SPIKE-BCTC-REPARSE-CADENCE-GUARD-ROOTCAUSE-VERIFY"
+        ],
+        "title": "bctcReparseJob: double-wrap recordJobRun + ungated restart catch-up defeat the T4 cadence guard's evidentiary trail",
+        "detail": "Found during SPIKE-BCTC-REPARSE-CADENCE-GUARD-ROOTCAUSE-VERIFY AC-2 (findings docs/spikes/SPIKE-BCTC-REPARSE-CADENCE-GUARD-ROOTCAUSE-VERIFY.md). runBctcReparseWithDb (apps/mcp-server/src/scheduler/startupHelpers.ts:361-366) wraps recordJobRun(db,'bctcReparseJob',fn) where fn discards runBctcReparseJob()'s real ReparseRunResult (Promise<void> arrow fn) -- so cron_job_runs.rows_written is ALWAYS NULL for this job (RAW-confirmed live: 100% of ~90 sampled rows across 11 days, 2026-07-29). Worse: recordJobRun marks the row 'success' whenever fn() resolves without throwing, REGARDLESS of whether runBctcReparseJob()'s OWN shouldSkipRecoveryReplay guard (bctcReparseJob.ts:718) early-returned a no-op -- so a guard-SKIPPED invocation still writes a fresh 'success' row, silently re-arming its own 21.6h dedup window. This is the SAME double-wrap class already found+fixed for runBaseRateComputationWithDb (FIX-BASE-RATE-COMPUTATION-CRON-DEAD, 2026-07-23) and runEvidenceAccumulatorWithDb (EVIDENCE-ACCUM-SILENT-CRON) -- bctcReparseJob was never patched. It uniquely compounds with a SECOND defect: the startup catch-up in startScheduler.ts:169-182 fires runBctcReparseWithDb(db) UNCONDITIONALLY 30s after every container boot/restart with NO staleness gate -- its own introducing commit (75b729183, 2026-04-12) claimed to mirror runDailyAuditIfStale's pattern (dataAuditJob.ts:292-311, which correctly checks last_daily_audit_at age before running) but never implemented an equivalent check. Net effect, RAW-confirmed live (docker exec, market.db, last 30 days): 2-7 cron_job_runs rows per calendar day for bctcReparseJob (vs. the intended 1x/day), overwhelmingly 0-3ms duration (guard-skip echoes) with occasional real multi-hour runs, plus status='crashed' zombie rows on restart-cluster days (2026-07-19, 2026-07-28) -- the table's 'last success' signal is contaminated by boot-time noise unrelated to real reparse activity, and is the best-supported explanation for the 2026-07-10 incident this SPIKE investigated (ops' pre-edit probe showed clean, then a subsequent restart re-armed the guard within 30s, before ops resorted to falsifying 25 rows instead of using the job's own nowMsFn override).",
+        "ac": "(1) runBctcReparseWithDb gains its own shouldSkipRecoveryReplay(db,'bctcReparseJob',DAILY_CADENCE_MS) check BEFORE calling recordJobRun (mirrors the FIX-BASE-RATE-COMPUTATION-CRON-DEAD fix pattern exactly) so a guard-skip never reaches recordJobRun and never writes a fresh row. (2) fn's default implementation captures runBctcReparseJob()'s real ReparseRunResult and maps resolved+failed to rowsWritten (or an equivalent field) so cron_job_runs.rows_written is no longer always NULL for this job. (3) startScheduler.ts's bctcReparseJob startup catch-up (currently unconditional, :169-182) gains a staleness gate consistent with its own stated intent to mirror runDailyAuditIfStale -- either reuse shouldRunCatchup() (matching the other 5 hardened catchups in the same file) or an equivalent last-run-age check, so a restart does not unconditionally fire the job every single boot. (4) new unit tests proving both fixes through the real default code paths (mirror FIX-BASE-RATE-COMPUTATION-CRON-DEAD.test.ts's approach) -- specifically a test that 2 back-to-back invocations within the cadence window produce exactly 1 cron_job_runs row, not 2. (5) RAW-verify post-fix: cron_job_runs rows-per-day for bctcReparseJob drops to <=1 on days without a genuine multi-file reparse, and rows_written is populated (non-NULL) on real runs.",
+        "created_at": "2026-07-29T15:30:00Z",
+        "created_by": "dev-mcp-server (SPIKE-BCTC-REPARSE-CADENCE-GUARD-ROOTCAUSE-VERIFY)",
+        "verify_note": "found_by=SPIKE-BCTC-REPARSE-CADENCE-GUARD-ROOTCAUSE-VERIFY AC-2; live RAW-confirmed pattern (rows_written always NULL, 2-7 rows/day, crashed-row clusters correlate with restart-storm days); precedent fix pattern = FIX-BASE-RATE-COMPUTATION-CRON-DEAD",
+        "updated_at": "2026-07-30T14:18:39Z",
+        "promoted_at": "2026-07-30T14:18:33Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
+        "claimed_at": "2026-07-30T14:18:38Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)"
+      }
+    ]
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
