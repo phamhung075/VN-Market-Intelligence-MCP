@@ -93,11 +93,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "active_task_id": null,
-    "next_agent": "router",
-    "updated_at": "2026-07-30T22:53:55Z",
-    "updated_by": "architect"
+    "status": "in_progress",
+    "active_task_id": "FIX-DECISION-JOURNAL-SKILL-CAPCHECK-LINE-ONLY-NO-BYTE-ROLLOVER",
+    "next_agent": "developer",
+    "next_action": "BOUNDED-1 auto-pickup claim of FIX-DECISION-JOURNAL-SKILL-CAPCHECK-LINE-ONLY-NO-BYTE-ROLLOVER — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
+    "updated_at": "2026-07-30T23:16:55Z",
+    "updated_by": "dev-team (bounded-1 auto-pickup)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -4336,30 +4337,30 @@
     ],
     "backlog": [
       {
-        "id": "FIX-DECISION-JOURNAL-SKILL-CAPCHECK-LINE-ONLY-NO-BYTE-ROLLOVER",
+        "id": "FIX-EXECUTETIER-PHASE35-RESUME-LOCK-RELEASED-AT-SPAWN-NOT-COMPLETION",
         "type": "FIX",
-        "title": "decision-journal SKILL § Cap Check rolls to -2.md on LINES>600 only -- no byte branch, so the 36000B cap has a detector and no writer-side actuator; 10 journals fleet-wide sit in the blind spot, worst 225,553 B / 504 L",
+        "title": "execute-tier.md Phase-3.5 dispatcher-wrap releases the resume lock immediately after a background spawn -- main.md's own S2/SLS/RLC/DRS/QA-Drain resume-dispatchers already carry the LOCK-LIFETIME fix for the identical task:<id> key; Phase-3.5 (BOUNDED-1's own documented JUMP-TO target) does not",
         "status": "BACKLOG",
         "priority": "P1",
         "size": "S",
         "zone": "cross-service/",
-        "owner": "po",
-        "next_agent": "developer",
+        "owner": "dev-team",
+        "next_agent": "architect",
         "supervised": false,
         "plan_only": false,
-        "created_at": "2026-07-30T23:08:20Z",
-        "created_by": "dev-team/po-batch-20260730T2307Z",
-        "updated_at": "2026-07-30T23:08:20Z",
-        "source": "po triage 2026-07-30T22:59Z tick (6th pass today)",
-        "desc": "Root cause of the recurring context_bloat_breach signal (2 fired 16 min apart this tick). .claude/skills/decision-journal/SKILL.md:62 Cap Check tests only `[ \"$LINES\" -gt 600 ]`, confirmed by direct read (not a grepped comment) -- no byte-based branch exists anywhere in the file. NATURAL EXPERIMENT, not inference (po's own observation, dev-team did not re-derive): in sprint COWORK-GUARANTEED-SLOT-CATCHUP the ONLY journal that rolled to -2.md is po.md -- the ONLY one that crossed the LINE cap (625L). architect 211L/51,945B, dev-mcp-server 312L/79,545B, developer 488L/156,774B all sit under 600 lines, so their rollover never fires while the byte detector fires every cycle. Fleet-wide 10 journals are over 36000B and under 600L. THIRD actuator in a known family, and the only unblocked one: FIX-NOTEBOOK-PRUNER-LINE-ONLY-SETPOINT-BYTE-CAP-NEVER-CONVERGES (review) owns notebook-auto-prune.sh; FIX-DECISION-JOURNAL-BYTECAP-NO-ACTUATOR (P1 backlog) owns decision-journal-archive.sh and is blocked behind FIX-SPRINT-REGISTRY-DANGLING-IDS (supervised+plan_only). Derive the byte cap from the same MATCHED_CAP*60 source context-bloat-backstop.sh uses -- do not hardcode 36000 twice. Also handle -2.md itself breaching (no -3 rollover exists today).",
+        "created_at": "2026-07-30T23:20:07Z",
+        "created_by": "dev-team/self-caught-20260730T2319Z",
+        "updated_at": "2026-07-30T23:20:07Z",
+        "source": "dev-team self-caught, 2nd occurrence, tick 2026-07-30T23:07Z",
+        "desc": "docs/agents/dev-team/flow/execute-tier.md:33-66 (Phase 3.5, the ONLY documented target of BOUNDED-1's own 'JUMP TO execute' comment at main.md:558) claims task:<id> then releases it in a `finally` bound to the same background Agent() call -- run_in_background=true returns in milliseconds while the spawned agent runs far longer, so the lock frees while the agent is still live. The IDENTICAL class was already fixed for main.md's own S2/SLS-resume/RLC-resume/DRS-resume/QA-Drain-resume dispatcher-wraps (FIX-DEVTEAM-BACKGROUND-SPAWN-LOCK-RELEASED-AT-SPAWN-NOT-COMPLETION -- grep 'LOCK-LIFETIME' in main.md, 5 occurrences, all fixed: no release on success, ttl_seconds:3600 IS the lock's lifetime bound, release only on the exception path). Phase-3.5 was never touched by that fix. 1st occurrence: self-caught manually 2026-07-30T22:37Z tick (decision-journal STEP dev-team-S8, notebook cycle-20260730T2237Z-tick) -- I had used the S4/Phase-3.5-style release-immediately convention for a Step-3 FIX dispatch that ALSO set .head, and the NEXT tick's S2 resume-path successfully re-claimed the freed lock, which would have re-spawned the same live agent a 2nd time had I not caught it by direct out-of-band session knowledge. 2nd occurrence (this tick): ran BOUNDED-1's own promote+claim scripts (which correctly set .head.active_task_id per main.md:555-561), then had to consciously deviate from execute-tier.md's own documented Phase-3.5 semantics and hand-apply main.md's S2 pattern instead to avoid reproducing the same bug within the same tick I was diagnosing it in.",
         "files": [
-          ".claude/skills/decision-journal/SKILL.md"
+          "docs/agents/dev-team/flow/execute-tier.md"
         ],
-        "deliverable": "AC: a journal at 300L/80000B rolls to -N.md on next write; a journal at 650L/20000B still rolls (line axis not regressed); one within both caps is untouched.",
-        "baseline_pass": "a journal at 300L/80000B rolls to -N.md on next write; a journal at 650L/20000B still rolls (line axis not regressed); one within both caps is untouched",
+        "deliverable": "AC: decide (architect call, not a blind copy-paste) whether the LOCK-LIFETIME fix applies to EVERY claim in Phase-3.5's spawned_batch, or only to the single-task case where the claimed id equals .head.active_task_id (multi-task PM-tier-batches may have a different correctness argument for prompt release -- each subtask's own claim key may not gate a SINGLE .head the way BOUNDED-1/SLS/RLC/DRS's single-task claims do). Whichever the design lands on, update Phase-3.5's finally-release block to match, and add a regression fixture (mirroring whatever verified the original S2 fix) proving a 2nd claim attempt on the same task:<id> fails while the spawned agent is still live.",
+        "out_of_scope": "Re-deriving whether the original S2/SLS/RLC/DRS/QA-Drain fix itself is correct -- that fix is accepted as-is; this row is scoped to Phase-3.5 catching up to it.",
+        "baseline_pass": "9408",
         "related": [
-          "FIX-NOTEBOOK-PRUNER-LINE-ONLY-SETPOINT-BYTE-CAP-NEVER-CONVERGES",
-          "FIX-DECISION-JOURNAL-BYTECAP-NO-ACTUATOR"
+          "FIX-DEVTEAM-BACKGROUND-SPAWN-LOCK-RELEASED-AT-SPAWN-NOT-COMPLETION"
         ]
       },
       {
@@ -4458,39 +4459,6 @@
         "blocked_at": "2026-07-30T16:53:28Z",
         "updated_by": "po/triage-20260730T1907Z",
         "po_wip_unpark_20260730": "MOVED in_progress[] -> backlog[] by PO triage. This row went IN_PROGRESS->BLOCKED at 2026-07-30T16:53:28Z (escalate architect: live consumer found in apps/macro-indicators SJCGoldFXAdapter) and .head was reset to idle — but the row was left PARKED in in_progress[]. scripts/lib/devteam-eligibility.jq def wip_in_progress is `(.task_board.in_progress // []) | length` with NO status filter, so a BLOCKED row consumes a full concurrency slot. With CCATO-MCP-T1-DOMAIN-ENGINE genuinely live in the other slot, wip=2=cap and BOUNDED-1 (cap<1) + SLS/RLC/DRS (shared cap<2) ALL no-opped fleet-wide. Confirmed live by scripts/audits/devteam-dispatch-gate-satisfiability.sh header: `Live-shaped baseline: ready=54 in_progress=2 review=184`. Unparking restores 3 of the 4 pickers this tick. Row disposition itself UNCHANGED: still BLOCKED, still next_agent=architect, still awaiting the architect adjudication on whether to remove the field or repoint cny_vnd_rate to a real source. Structural fix tracked by FIX-DEVTEAM-WIP-BUDGET-COUNTS-BLOCKED-INPROGRESS-ROWS."
-      },
-      {
-        "id": "FIX-ALERT-COMMANDER-NO-BASH-GRANT-NOTEBOOK-UNCOMMITTABLE",
-        "type": "FIX",
-        "title": "alert-commander holds no Bash tool, so commit-mutex cannot run -- notebook uncommittable across 3 consecutive cycles",
-        "status": "BACKLOG",
-        "priority": "P1",
-        "size": "S",
-        "zone": "cross-service/",
-        "owner": "po",
-        "next_agent": "agent-father",
-        "supervised": false,
-        "plan_only": false,
-        "created_at": "2026-07-29T12:32:22Z",
-        "created_by": "dev-team/po-batch-20260729T1207Z",
-        "updated_at": "2026-07-30T22:59:45Z",
-        "source": "po triage 2026-07-29T12:07Z tick",
-        "desc": "Frontmatter is 'tools: Read, Write, Edit, mcp__gateway__call_tool' -- a structural tool-grant gap, not agent laziness. Self-reported by alert-commander at 06:11Z, 08:13Z, 12:10Z. Notebook is dirty right now. Compounding: uncommitted content parked in the shared tree IS the commit-sweep-guard exposure surface this session has been tracking all day (FIX-COMMIT-PATH-PEER-INDEX-SWEEP-GUARD-LAYER2, dispatched this same tick).",
-        "files": [
-          ".claude/agents/alert-commander.md"
-        ],
-        "deliverable": "Grant Bash to alert-commander. CO-DISPATCH alongside the existing READY row FIX-COWORK-BASH-GRANT-COVERAGE-STAMP-TRANSPORT (also next_agent=agent-father, same actuator -- news-scout + market-watcher frontmatter Bash grants) so both land in one edit pass rather than two separate agent-father cycles.",
-        "baseline_pass": "alert-commander completes a cycle with its notebook committed",
-        "related": [
-          "FIX-ALERT-COMMANDER-NOTEBOOK-SINGLE-BLOB-UNPRUNABLE",
-          "FIX-COWORK-BASH-GRANT-COVERAGE-STAMP-TRANSPORT",
-          "FIX-DEVTEAM-READY-REVIEW-LANE-SUPERVISED-PLANONLY-NO-PICKER"
-        ],
-        "status_note": "PO 2026-07-30T09:43Z ESCALATED P2->P1 + scope widened, from two unresolved reports read this tick. (1) RECURRENCE DOUBLED: report 4189 (2026-07-30T02:12:57Z, addressed @po, MEDIUM) says notebook commits are now blocked SIX consecutive cycles; this row recorded three. (2) NEW AND MORE SEVERE CONSEQUENCE this row does not mention — report 4180 (2026-07-30T00:12:55Z): with no Bash, alert-commander cannot derive a session id, so `task_claim` for its published-marker was REJECTED (owner_client_session required by schema) and it fired that cycle's verified CRITICAL signal WITHOUT the tombstone lock. So the missing grant is not only a memory-hygiene issue, it removes the duplicate-publish mutex from the live alert path — the same double-publish family already at occurrence #4 on this board. (3) ROOT CAUSE RAW-VERIFIED, not taken from the self-report: `.claude/agents/alert-commander.md:5` reads `tools: Read, Write, Edit, mcp__gateway__call_tool` — Bash is absent. Structural tool-grant gap, not agent laziness (feedback_agent_reported_limitation_may_be_structural_check_the_tool_grant). (4) THREE CANDIDATE FIXES, the agent named the first two itself: grant Bash; OR router passes $CLAUDE_CODE_SESSION_ID at spawn (fixes the lock, not the notebook commit); OR the published-marker gate gets an explicit no-session fallback. Prefer whichever also leaves the notebook committable, and check it against the sibling row FIX-ALERT-COMMANDER-NOTEBOOK-SINGLE-BLOB-UNPRUNABLE (REVIEW) — a committable notebook that is one 119KB blob is only half a fix. (5) STRANDED, measured with the canonical predicates at 09:42Z, not inferred: eff_next_agent=agent-father, BOUNDED1=false (non-dev next_agent), SLS=false (supervised=false, plan_only=false) — no automated lane can pick this up, it moves only by deliberate router/PO dispatch. Deliberately NOT setting supervised=true alone (that pairing is strictly worse — it buys the BOUNDED-1 exclusion without buying the SLS lane) and NOT setting plan_only=true (the fix is a known one-line grant, quarantining it to planning adds a hop). Returned to dev-team as an UNBLOCK for direct agent-father dispatch instead. If that dispatch does not happen this tick, this row is a live instance of P0 FIX-DEVTEAM-READY-REVIEW-LANE-SUPERVISED-PLANONLY-NO-PICKER and should be counted as one in its blast radius.",
-        "po_manual_dispatch_flagged_at": "2026-07-30T22:59:44Z",
-        "po_manual_dispatch_flagged_by": "po (manual-dispatch-sweep)",
-        "po_manual_dispatch_class": "DRS-STRANDED-OFF-ALLOWLIST",
-        "po_manual_dispatch_note": "po (manual-dispatch-sweep) surfaced DRS-STRANDED-OFF-ALLOWLIST candidate — folding into this tick's BATCH"
       },
       {
         "id": "FIX-MCP-SERVER-DEPLOY-LANE-STALL-REBUILD-REQUIRED-INERT",
@@ -12804,36 +12772,6 @@
         "po_evidence_20260728": "PARTIAL VERIFY-LIVE ANSWER, appended by po 2026-07-28T19:5xZ — this row's open question is whether the monitor 'actually runs and emits SLA-breach signals', noting it was 'never ... observed raising a breach'. IT HAS NOW BEEN OBSERVED. RAW: Telegram report id 3838, created_at 2026-07-26T16:30:03Z, from_agent=analysis-agent, text '[sla-monitor] CRITICAL breach: signal_quality_audit stale 73217min (threshold 2880min)'. So the emit path (monitor -> breach detection -> Telegram) is LIVE and does fire with real numbers attached. SCOPE LIMIT — do not over-read this: it evidences the sla-monitor emit path generally, NOT specifically the coverage-map checker (coverageMapFreshnessChecker.ts) that this row is actually about. The remaining VERIFY-LIVE burden is unchanged: confirm coverageMapFreshnessChecker is wired into freshnessSlaMonitorJob's scheduler and observe a COVERAGE-MAP breach specifically. Useful secondary signal for whoever takes this row: report 3838 has sat status=new since 07-26 with resolution=none, so even a correctly-emitted CRITICAL currently reaches no owner — see FIX-TELEGRAM-REPORT-ACK-STATUS-STOP-RESURFACE (P3) and FIX-SIGNAL-ROUTING-ROWS-COVERAGE-GAP-DEEPDIVE (P1/ready, promoted this tick). Emitting is only half the capability; nobody is receiving."
       },
       {
-        "id": "FIX-COWORK-BASH-GRANT-COVERAGE-STAMP-TRANSPORT",
-        "type": "FIX",
-        "size": "S",
-        "priority": "P1",
-        "status": "READY",
-        "zone": ".claude/agents/",
-        "owner": "po",
-        "next_agent": "agent-father",
-        "plan_only": false,
-        "supervised": false,
-        "sprint": "COWORK-RELIABILITY",
-        "created_at": "2026-07-25T17:35:20Z",
-        "created_by": "po/triage-20260725T1735",
-        "source": "router triage handoff item 1 2026-07-25T17:2xZ; developer escalation on FIX-COVERAGE-SWEEP-BLANKET-STAMP-DEAD-TRIGGER. Grant enumeration, container mount surface and live saturation all RAW re-verified at source by po before minting.",
-        "title": "Grant Bash to news-scout + market-watcher so the shipped coverage-stamp.sh is invocable — the P1 coverage-sweep fix is COMPLETE BUT INERT because neither calling agent holds a tool that can run it",
-        "files": [
-          ".claude/agents/news-scout.md",
-          ".claude/agents/market-watcher.md"
-        ],
-        "unblocks": [
-          "FIX-COVERAGE-SWEEP-BLANKET-STAMP-DEAD-TRIGGER",
-          "FIX-COVERAGE-STATE-CROSS-AGENT-LOST-UPDATE"
-        ],
-        "baseline_pass": true,
-        "rebuild_required": false,
-        "note": "MINTED 2026-07-25T17:35Z by po as the ADJUDICATED UNBLOCKER for FIX-COVERAGE-SWEEP-BLANKET-STAMP-DEAD-TRIGGER (review/P1), which is COMPLETE-BUT-INERT: a 313-line deterministic script with 29/29 green tests that neither agent that must call it can invoke. Full reasoning, the three rejected options and the premise correction live on that row's `po_transport_ruling_20260725T1735` field — READ IT BEFORE EDITING ANYTHING. Do not re-litigate the choice here.\n\nTHE CHANGE — exactly two lines, no more:\n  .claude/agents/news-scout.md:5      tools: Read, Write, Edit, mcp__gateway__call_tool   ->   tools: Read, Write, Edit, Bash, mcp__gateway__call_tool\n  .claude/agents/market-watcher.md:5  tools: Read, Write, Edit, mcp__gateway__call_tool   ->   tools: Read, Write, Edit, Bash, mcp__gateway__call_tool\n\nDO NOT also add Glob or Grep. The resulting grant set is exactly `Read, Write, Edit, Bash, mcp__gateway__call_tool` — the same shape fb-market-poster already carries, plus Edit. Any broader set is out of scope and should be bounced back to po.\n\nWHY THIS IS NOT A POLICY BREAK (verified at source by po across all 43 .claude/agents/*.md frontmatter lines): fb-market-poster, a cowork PUBLISHER, already holds `Read, Write, Bash, mcp__gateway__call_tool`; system-auditor and orch-sentinel both hold Bash and both write shared state on cowork cadence. The originating report's claim that no-Bash is \"deliberate fleet-wide policy shared by every cowork gatherer/publisher agent\" is factually wrong — there are three standing exceptions in the same cadence tier.\n\nWHY NOT AN MCP TOOL (the option that needs no grant at all): verified — docker-compose.yml does NOT mount ./scripts into the mcp-server container (mounts are ./data/live, ./data/pdfs, ./mcp.config.json, ./reports, ./docs/agent-memory, ./docs/data, ./docs/data/orch, ./docs/signals, ./docs/analysis-briefs, ./.claude/commands/crons). A `coverage_stamp` tool therefore could not exec the script; it would be a full TypeScript reimplementation of surgical-merge + task_claim mutex + --list-stale, i.e. a second implementation of one contract held in drift-lock with the first. Rejected on duplicate-implementation debt, NOT on feasibility (./docs/data is mounted RW, so it would work).\n\nBLAST-RADIUS NOTE FOR THE IMPLEMENTER — do not skip this, and do not treat it as a reason to refuse. Both agents already hold repo-wide `Write` and `Edit`, so an injected agent can already reach code execution transitively by rewriting a script a Bash-capable peer runs. Bash makes that direct rather than transitive. What is genuinely NEW is process execution and network egress (git push, docker, curl) from an agent whose input includes untrusted scraped news text. That is accepted here as proportionate to a live P1 coverage loss on a proven artifact, and it is the reason for the tight scope above and the non-precedent clause below.\n\nNON-PRECEDENT CLAUSE (binding): this does NOT authorise Bash for the other 8 no-Bash agents (bctc-analyst, unified-agent, digest-predict, alert-commander, tran-ngoc-bau, market-analyst, refine_bctc_md, qa-responder). Each is a separate decision on its own merits. If a THIRD agent ever needs a scripted helper, stop granting per-agent and build the shared MCP transport at that point — the rewrite amortises across N agents instead of 2. That is the standing exit condition; no row is minted for it now because it is speculative.\n\nLANE NOTE (deliberate, per the residual-gap lesson): minted into `ready`/READY rather than `backlog`, because next_agent=agent-father is a non-dev agent and a backlog row with a non-dev next_agent and no plan_only+supervised pair matches NO automated sweep lane (BOUNDED-1 requires next_agent =~ ^dev(-|$)|^developer$; SLS requires effective_supervised AND effective_plan_only). Such a row survives only on someone noticing. `ready` is dispatched explicitly by the router, which is the intended path here.\n\nACCEPTANCE (all RAW, no prose):\n  1. `grep -m1 '^tools:' .claude/agents/news-scout.md` contains Bash; same for market-watcher.md. Both still contain Read, Write, Edit and mcp__gateway__call_tool. Neither contains Glob or Grep.\n  2. A REAL news-scout cycle invokes scripts/agents-flow/coverage-stamp.sh without a tool-permission error, and docs/data/coverage-state.json afterwards shows `[.tickers|to_entries[]|.value.last_covered_news_scout]|group_by(.)|length` > 1 (it is 1 today — one saturated group of 57). Same assertion for market-watcher's field. THIS, not the script's own unit tests, is the proof the transport works.\n  3. `jq 'has(\"sweep_config\")' docs/data/coverage-state.json` = true, self-healed by the script's documented auto-repair — NOT hand-edited in.\n  4. The interim `[coverage-write-skipped: no-transport]` fallback text in the 4 rewired flow-doc sections is removed or demoted to a genuine error path, so it cannot mask a future real transport failure as normal operation.\n  5. NEGATIVE CONTROL: no OTHER agent definition gained a tool in this change — `git diff --stat .claude/agents/` touches exactly 2 files, 1 line each.\n\nON COMPLETION: this row unblocks FIX-COVERAGE-SWEEP-BLANKET-STAMP-DEAD-TRIGGER gates G1/G2/G3 and its co-shipped sibling FIX-COVERAGE-STATE-CROSS-AGENT-LOST-UPDATE. Report back to po; do NOT close the coverage row yourself.\n",
-        "updated_at": "2026-07-25T17:35:20Z",
-        "updated_by": "po/triage-20260725T1735"
-      },
-      {
         "id": "TASK-COWORK-CATCHUP-10",
         "title": "FR-10 doc-only: cron runbook update (route to agent-father)",
         "type": "SPRINT-S",
@@ -18310,6 +18248,72 @@
         "updated_by": "architect",
         "decision": "RETIRE",
         "review_note": "[dev-mcp-server 2026-07-30T23:08:10Z] Implemented architects RETIRE design exactly (not restore-via-VPS). (1) Kill acquisition: predictionMarkets.enabled defaults false (config.ts + mcp.config.json, both flipped — file value wins). predictionMarketPollJob deliberately left registered (cronJobCount unchanged 88), early-returns while disabled, single-env-flip re-enable path preserved. (2) ACCEPTANCE-4 (required either way, DONE): new PolymarketTransportError; fetchPolymarkets() throws it when the Gamma call transport-fails AND combined CLOB+Gamma results are 0 (never on a legitimate 0-matches-successful-fetch, negative-control tested); predictionMarketJob.ts Step-3 + outer catch narrowly rethrow it past their swallow paths so jobRunRepo.wrapRun/recordJobRun marks status=error instead of success. (3) Consumer removal: get_prediction_markets() dropped from market-analysis.md + qa-responder/cycle.md; flow/prediction.md deleted whole file; main.md dispatch row + init.md catalog entry removed. grep-verified ZERO remaining references across all 5 gate files. (4) Tool surface: get_prediction_markets deregistered from predictionTools.ts (get_prediction_accuracy retained, unaffected); agentBootstrap.ts SKILL_MANIFEST + docs/SKILL_MANIFEST.md mirror cleaned; tool-registry.json/project-stats.json/tools/list/INDEX.md regenerated via canonical generators (toolCount 184->183, cronJobCount unchanged 88); orphaned tool-doc stub + 2 tool-specific test files deleted (168-prediction-mcp-tool, 1850f-fixture-contamination); 1194-agent08-tools.test.ts trimmed. Service docs (macro.md, infrastructure.md) updated. (5) SLA: quality-checklist.json DS-FRESH-01 + CI-FRESH-03 retired to status=INFO with explicit RETIRED-reason evidence (no new enum value invented, file enum jq-checked FAIL/INFO/NEEDS_REVIEW/PASS/WARN only) — flagged for qa ratification. (6) DB left as-is, no migration. EVIDENCE: bun tsc --noEmit clean; targeted suites 234 pass/0 fail across 20 files (164/167/169/1194/1337/1209/1345c/1219 + skill-manifest siblings) — decisive proof for this diff; live server boot /health toolCount:183 zero import errors; gen-project-stats --dry-run toolCount=183 cronJobCount=88; FULL bun test suite (completed post-commit): 14943 pass/40 skip/54 fail (580.77s), within this sprints own documented pre-existing-flake band (52-59, established by 2 prior same-session tasks) — per-test fail-list not re-grepped this run (tail-80 truncation), count-in-band + targeted 234/0 is the decisive evidence. Committed 8766bedc9 (33 files, explicit pathspec, RUN-SOLO). Full DJ: docs/agent-memory/decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-dev-mcp-server.md S33. VERIFICATION_GATE: path(b) grep-proof delivered (5/5 files clean) + transport-failure-must-throw delivered (unit-tested, positive+negative control) — routing to qa for the rows own live in-container probe / SLA-retirement ratification."
+      },
+      {
+        "id": "FIX-ALERT-COMMANDER-NO-BASH-GRANT-NOTEBOOK-UNCOMMITTABLE",
+        "type": "FIX",
+        "title": "alert-commander holds no Bash tool, so commit-mutex cannot run -- notebook uncommittable across 3 consecutive cycles",
+        "status": "REVIEW",
+        "priority": "P1",
+        "size": "S",
+        "zone": "cross-service/",
+        "owner": "po",
+        "next_agent": "qa",
+        "supervised": false,
+        "plan_only": false,
+        "created_at": "2026-07-29T12:32:22Z",
+        "created_by": "dev-team/po-batch-20260729T1207Z",
+        "updated_at": "2026-07-30T23:17:11Z",
+        "source": "po triage 2026-07-29T12:07Z tick",
+        "desc": "Frontmatter is 'tools: Read, Write, Edit, mcp__gateway__call_tool' -- a structural tool-grant gap, not agent laziness. Self-reported by alert-commander at 06:11Z, 08:13Z, 12:10Z. Notebook is dirty right now. Compounding: uncommitted content parked in the shared tree IS the commit-sweep-guard exposure surface this session has been tracking all day (FIX-COMMIT-PATH-PEER-INDEX-SWEEP-GUARD-LAYER2, dispatched this same tick).",
+        "files": [
+          ".claude/agents/alert-commander.md"
+        ],
+        "deliverable": "Grant Bash to alert-commander. CO-DISPATCH alongside the existing READY row FIX-COWORK-BASH-GRANT-COVERAGE-STAMP-TRANSPORT (also next_agent=agent-father, same actuator -- news-scout + market-watcher frontmatter Bash grants) so both land in one edit pass rather than two separate agent-father cycles.",
+        "baseline_pass": "alert-commander completes a cycle with its notebook committed",
+        "related": [
+          "FIX-ALERT-COMMANDER-NOTEBOOK-SINGLE-BLOB-UNPRUNABLE",
+          "FIX-COWORK-BASH-GRANT-COVERAGE-STAMP-TRANSPORT",
+          "FIX-DEVTEAM-READY-REVIEW-LANE-SUPERVISED-PLANONLY-NO-PICKER"
+        ],
+        "status_note": "PO 2026-07-30T09:43Z ESCALATED P2->P1 + scope widened, from two unresolved reports read this tick. (1) RECURRENCE DOUBLED: report 4189 (2026-07-30T02:12:57Z, addressed @po, MEDIUM) says notebook commits are now blocked SIX consecutive cycles; this row recorded three. (2) NEW AND MORE SEVERE CONSEQUENCE this row does not mention — report 4180 (2026-07-30T00:12:55Z): with no Bash, alert-commander cannot derive a session id, so `task_claim` for its published-marker was REJECTED (owner_client_session required by schema) and it fired that cycle's verified CRITICAL signal WITHOUT the tombstone lock. So the missing grant is not only a memory-hygiene issue, it removes the duplicate-publish mutex from the live alert path — the same double-publish family already at occurrence #4 on this board. (3) ROOT CAUSE RAW-VERIFIED, not taken from the self-report: `.claude/agents/alert-commander.md:5` reads `tools: Read, Write, Edit, mcp__gateway__call_tool` — Bash is absent. Structural tool-grant gap, not agent laziness (feedback_agent_reported_limitation_may_be_structural_check_the_tool_grant). (4) THREE CANDIDATE FIXES, the agent named the first two itself: grant Bash; OR router passes $CLAUDE_CODE_SESSION_ID at spawn (fixes the lock, not the notebook commit); OR the published-marker gate gets an explicit no-session fallback. Prefer whichever also leaves the notebook committable, and check it against the sibling row FIX-ALERT-COMMANDER-NOTEBOOK-SINGLE-BLOB-UNPRUNABLE (REVIEW) — a committable notebook that is one 119KB blob is only half a fix. (5) STRANDED, measured with the canonical predicates at 09:42Z, not inferred: eff_next_agent=agent-father, BOUNDED1=false (non-dev next_agent), SLS=false (supervised=false, plan_only=false) — no automated lane can pick this up, it moves only by deliberate router/PO dispatch. Deliberately NOT setting supervised=true alone (that pairing is strictly worse — it buys the BOUNDED-1 exclusion without buying the SLS lane) and NOT setting plan_only=true (the fix is a known one-line grant, quarantining it to planning adds a hop). Returned to dev-team as an UNBLOCK for direct agent-father dispatch instead. If that dispatch does not happen this tick, this row is a live instance of P0 FIX-DEVTEAM-READY-REVIEW-LANE-SUPERVISED-PLANONLY-NO-PICKER and should be counted as one in its blast radius.",
+        "po_manual_dispatch_flagged_at": "2026-07-30T22:59:44Z",
+        "po_manual_dispatch_flagged_by": "po (manual-dispatch-sweep)",
+        "po_manual_dispatch_class": "DRS-STRANDED-OFF-ALLOWLIST",
+        "po_manual_dispatch_note": "po (manual-dispatch-sweep) surfaced DRS-STRANDED-OFF-ALLOWLIST candidate — folding into this tick's BATCH",
+        "updated_by": "agent-father",
+        "review_note": "AGENT-FATHER IMPLEMENTATION 2026-07-30T23:16:56Z — added Bash to .claude/agents/alert-commander.md tools: line (1 line, matches deliverable). Co-dispatched in the same edit pass as FIX-COWORK-BASH-GRANT-COVERAGE-STAMP-TRANSPORT per that row's own CO-DISPATCH instruction. RAW pre-edit verify: tools: line still 'Read, Write, Edit, mcp__gateway__call_tool' (Bash absent); git log --since=2026-07-29T12:32:22Z -- .claude/agents/alert-commander.md was empty — matches row's own claim. RAW post-edit verify: tools: line now 'Read, Write, Edit, Bash, mcp__gateway__call_tool'. NOT self-certified DONE: baseline_pass ('alert-commander completes a cycle with its notebook committed') and the task_claim session-id-derivation fix both require alert-commander's NEXT live cowork cycle to run and be observed — agent-father cannot force or observe that from this dispatch. Routing to qa to confirm on the next live cycle: (1) notebook commits cleanly, (2) task_claim on the published-marker no longer rejects for missing owner_client_session — then flip DONE."
+      },
+      {
+        "id": "FIX-COWORK-BASH-GRANT-COVERAGE-STAMP-TRANSPORT",
+        "type": "FIX",
+        "size": "S",
+        "priority": "P1",
+        "status": "REVIEW",
+        "zone": ".claude/agents/",
+        "owner": "po",
+        "next_agent": "qa",
+        "plan_only": false,
+        "supervised": false,
+        "sprint": "COWORK-RELIABILITY",
+        "created_at": "2026-07-25T17:35:20Z",
+        "created_by": "po/triage-20260725T1735",
+        "source": "router triage handoff item 1 2026-07-25T17:2xZ; developer escalation on FIX-COVERAGE-SWEEP-BLANKET-STAMP-DEAD-TRIGGER. Grant enumeration, container mount surface and live saturation all RAW re-verified at source by po before minting.",
+        "title": "Grant Bash to news-scout + market-watcher so the shipped coverage-stamp.sh is invocable — the P1 coverage-sweep fix is COMPLETE BUT INERT because neither calling agent holds a tool that can run it",
+        "files": [
+          ".claude/agents/news-scout.md",
+          ".claude/agents/market-watcher.md"
+        ],
+        "unblocks": [
+          "FIX-COVERAGE-SWEEP-BLANKET-STAMP-DEAD-TRIGGER",
+          "FIX-COVERAGE-STATE-CROSS-AGENT-LOST-UPDATE"
+        ],
+        "baseline_pass": true,
+        "rebuild_required": false,
+        "note": "MINTED 2026-07-25T17:35Z by po as the ADJUDICATED UNBLOCKER for FIX-COVERAGE-SWEEP-BLANKET-STAMP-DEAD-TRIGGER (review/P1), which is COMPLETE-BUT-INERT: a 313-line deterministic script with 29/29 green tests that neither agent that must call it can invoke. Full reasoning, the three rejected options and the premise correction live on that row's `po_transport_ruling_20260725T1735` field — READ IT BEFORE EDITING ANYTHING. Do not re-litigate the choice here.\n\nTHE CHANGE — exactly two lines, no more:\n  .claude/agents/news-scout.md:5      tools: Read, Write, Edit, mcp__gateway__call_tool   ->   tools: Read, Write, Edit, Bash, mcp__gateway__call_tool\n  .claude/agents/market-watcher.md:5  tools: Read, Write, Edit, mcp__gateway__call_tool   ->   tools: Read, Write, Edit, Bash, mcp__gateway__call_tool\n\nDO NOT also add Glob or Grep. The resulting grant set is exactly `Read, Write, Edit, Bash, mcp__gateway__call_tool` — the same shape fb-market-poster already carries, plus Edit. Any broader set is out of scope and should be bounced back to po.\n\nWHY THIS IS NOT A POLICY BREAK (verified at source by po across all 43 .claude/agents/*.md frontmatter lines): fb-market-poster, a cowork PUBLISHER, already holds `Read, Write, Bash, mcp__gateway__call_tool`; system-auditor and orch-sentinel both hold Bash and both write shared state on cowork cadence. The originating report's claim that no-Bash is \"deliberate fleet-wide policy shared by every cowork gatherer/publisher agent\" is factually wrong — there are three standing exceptions in the same cadence tier.\n\nWHY NOT AN MCP TOOL (the option that needs no grant at all): verified — docker-compose.yml does NOT mount ./scripts into the mcp-server container (mounts are ./data/live, ./data/pdfs, ./mcp.config.json, ./reports, ./docs/agent-memory, ./docs/data, ./docs/data/orch, ./docs/signals, ./docs/analysis-briefs, ./.claude/commands/crons). A `coverage_stamp` tool therefore could not exec the script; it would be a full TypeScript reimplementation of surgical-merge + task_claim mutex + --list-stale, i.e. a second implementation of one contract held in drift-lock with the first. Rejected on duplicate-implementation debt, NOT on feasibility (./docs/data is mounted RW, so it would work).\n\nBLAST-RADIUS NOTE FOR THE IMPLEMENTER — do not skip this, and do not treat it as a reason to refuse. Both agents already hold repo-wide `Write` and `Edit`, so an injected agent can already reach code execution transitively by rewriting a script a Bash-capable peer runs. Bash makes that direct rather than transitive. What is genuinely NEW is process execution and network egress (git push, docker, curl) from an agent whose input includes untrusted scraped news text. That is accepted here as proportionate to a live P1 coverage loss on a proven artifact, and it is the reason for the tight scope above and the non-precedent clause below.\n\nNON-PRECEDENT CLAUSE (binding): this does NOT authorise Bash for the other 8 no-Bash agents (bctc-analyst, unified-agent, digest-predict, alert-commander, tran-ngoc-bau, market-analyst, refine_bctc_md, qa-responder). Each is a separate decision on its own merits. If a THIRD agent ever needs a scripted helper, stop granting per-agent and build the shared MCP transport at that point — the rewrite amortises across N agents instead of 2. That is the standing exit condition; no row is minted for it now because it is speculative.\n\nLANE NOTE (deliberate, per the residual-gap lesson): minted into `ready`/READY rather than `backlog`, because next_agent=agent-father is a non-dev agent and a backlog row with a non-dev next_agent and no plan_only+supervised pair matches NO automated sweep lane (BOUNDED-1 requires next_agent =~ ^dev(-|$)|^developer$; SLS requires effective_supervised AND effective_plan_only). Such a row survives only on someone noticing. `ready` is dispatched explicitly by the router, which is the intended path here.\n\nACCEPTANCE (all RAW, no prose):\n  1. `grep -m1 '^tools:' .claude/agents/news-scout.md` contains Bash; same for market-watcher.md. Both still contain Read, Write, Edit and mcp__gateway__call_tool. Neither contains Glob or Grep.\n  2. A REAL news-scout cycle invokes scripts/agents-flow/coverage-stamp.sh without a tool-permission error, and docs/data/coverage-state.json afterwards shows `[.tickers|to_entries[]|.value.last_covered_news_scout]|group_by(.)|length` > 1 (it is 1 today — one saturated group of 57). Same assertion for market-watcher's field. THIS, not the script's own unit tests, is the proof the transport works.\n  3. `jq 'has(\"sweep_config\")' docs/data/coverage-state.json` = true, self-healed by the script's documented auto-repair — NOT hand-edited in.\n  4. The interim `[coverage-write-skipped: no-transport]` fallback text in the 4 rewired flow-doc sections is removed or demoted to a genuine error path, so it cannot mask a future real transport failure as normal operation.\n  5. NEGATIVE CONTROL: no OTHER agent definition gained a tool in this change — `git diff --stat .claude/agents/` touches exactly 2 files, 1 line each.\n\nON COMPLETION: this row unblocks FIX-COVERAGE-SWEEP-BLANKET-STAMP-DEAD-TRIGGER gates G1/G2/G3 and its co-shipped sibling FIX-COVERAGE-STATE-CROSS-AGENT-LOST-UPDATE. Report back to po; do NOT close the coverage row yourself.\n",
+        "updated_at": "2026-07-30T23:17:11Z",
+        "updated_by": "agent-father",
+        "review_note": "AGENT-FATHER IMPLEMENTATION 2026-07-30T23:16:56Z — added Bash to news-scout.md + market-watcher.md tools: lines (exactly 2 lines, per po_transport_ruling on this row — not re-litigated). Co-dispatched with FIX-ALERT-COMMANDER-NO-BASH-GRANT-NOTEBOOK-UNCOMMITTABLE in the same edit pass. ACCEPTANCE 1 (RAW, self-verified): grep -m1 '^tools:' on both files contains Bash, still contains Read/Write/Edit/mcp__gateway__call_tool, neither contains Glob nor Grep — PASS. ACCEPTANCE 2 (a REAL news-scout/market-watcher cycle invokes coverage-stamp.sh and coverage-state.json shows more than 1 last_covered_news_scout group; currently still 1) and ACCEPTANCE 3 (jq has(sweep_config); currently false) and ACCEPTANCE 4 ('[coverage-write-skipped: no-transport]' fallback text removed/demoted; still present in docs/agents/market-watcher/flow/cycle.md and docs/agents/news-scout/flow/stage-log-notify.md) are all UNMET as of this dispatch — items 2/3 self-heal only after a live cycle runs the script; item 4 is a flow-doc edit not named in this row's own 'exactly two lines, no more' deliverable scope. NOT self-certified DONE. Routing to qa/next cowork cycle to confirm 2/3, and flagging item 4 to po as a possible separate follow-up row rather than silently claiming it in scope."
       }
     ],
     "qa": [],
@@ -18329,9 +18333,42 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-30T23:08:20Z",
-    "last_triaged_by": "dev-team/po-batch-20260730T2307Z",
-    "in_progress": []
+    "last_triaged_at": "2026-07-30T23:20:07Z",
+    "last_triaged_by": "dev-team/self-caught-20260730T2319Z",
+    "in_progress": [
+      {
+        "id": "FIX-DECISION-JOURNAL-SKILL-CAPCHECK-LINE-ONLY-NO-BYTE-ROLLOVER",
+        "type": "FIX",
+        "title": "decision-journal SKILL § Cap Check rolls to -2.md on LINES>600 only -- no byte branch, so the 36000B cap has a detector and no writer-side actuator; 10 journals fleet-wide sit in the blind spot, worst 225,553 B / 504 L",
+        "status": "IN_PROGRESS",
+        "priority": "P1",
+        "size": "S",
+        "zone": "cross-service/",
+        "owner": "po",
+        "next_agent": "developer",
+        "supervised": false,
+        "plan_only": false,
+        "created_at": "2026-07-30T23:08:20Z",
+        "created_by": "dev-team/po-batch-20260730T2307Z",
+        "updated_at": "2026-07-30T23:16:55Z",
+        "source": "po triage 2026-07-30T22:59Z tick (6th pass today)",
+        "desc": "Root cause of the recurring context_bloat_breach signal (2 fired 16 min apart this tick). .claude/skills/decision-journal/SKILL.md:62 Cap Check tests only `[ \"$LINES\" -gt 600 ]`, confirmed by direct read (not a grepped comment) -- no byte-based branch exists anywhere in the file. NATURAL EXPERIMENT, not inference (po's own observation, dev-team did not re-derive): in sprint COWORK-GUARANTEED-SLOT-CATCHUP the ONLY journal that rolled to -2.md is po.md -- the ONLY one that crossed the LINE cap (625L). architect 211L/51,945B, dev-mcp-server 312L/79,545B, developer 488L/156,774B all sit under 600 lines, so their rollover never fires while the byte detector fires every cycle. Fleet-wide 10 journals are over 36000B and under 600L. THIRD actuator in a known family, and the only unblocked one: FIX-NOTEBOOK-PRUNER-LINE-ONLY-SETPOINT-BYTE-CAP-NEVER-CONVERGES (review) owns notebook-auto-prune.sh; FIX-DECISION-JOURNAL-BYTECAP-NO-ACTUATOR (P1 backlog) owns decision-journal-archive.sh and is blocked behind FIX-SPRINT-REGISTRY-DANGLING-IDS (supervised+plan_only). Derive the byte cap from the same MATCHED_CAP*60 source context-bloat-backstop.sh uses -- do not hardcode 36000 twice. Also handle -2.md itself breaching (no -3 rollover exists today).",
+        "files": [
+          ".claude/skills/decision-journal/SKILL.md"
+        ],
+        "deliverable": "AC: a journal at 300L/80000B rolls to -N.md on next write; a journal at 650L/20000B still rolls (line axis not regressed); one within both caps is untouched.",
+        "baseline_pass": "a journal at 300L/80000B rolls to -N.md on next write; a journal at 650L/20000B still rolls (line axis not regressed); one within both caps is untouched",
+        "related": [
+          "FIX-NOTEBOOK-PRUNER-LINE-ONLY-SETPOINT-BYTE-CAP-NEVER-CONVERGES",
+          "FIX-DECISION-JOURNAL-BYTECAP-NO-ACTUATOR"
+        ],
+        "promoted_at": "2026-07-30T23:16:48Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
+        "claimed_at": "2026-07-30T23:16:55Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)"
+      }
+    ]
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
