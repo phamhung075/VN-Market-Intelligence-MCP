@@ -1,6 +1,16 @@
 # Dev Team — Sprint Boundary Notebook
 
-**Written:** 2026-07-30T09:47Z
+**Written:** 2026-07-30T09:52Z
+
+## cycle-20260730T0952Z-verify — PO triage RAW-verified genuine (4th+ occurrence of the mint-gap class checked, this time clean); released task lock
+
+- **PO's claimed BATCH RAW-verified against the live board, not trusted from RETURN text** (`feedback_po_notebook_mint_never_reaches_orchstate_board`, now 4-5x recurring — PO's own return explicitly flagged it hit STAGE 4 fifteen minutes before this tick, on a different PO cycle). Both claimed mints ARE on `.task_board.backlog[]`: `FIX-SPRINT-REGISTRY-DANGLING-IDS-BREAK-SIGNOFF-AND-JOURNAL-ARCHIVE` and `FIX-NOTEBOOK-DUPHEADING-DETECTOR-NO-DEDUP-NO-ACTUATOR`, full desc/AC bodies present, not stub rows.
+- **Eligibility predicates independently re-run, exact match to claim**: registry row → `BOUNDED1:false, SLS:true` (supervised+plan_only both true, non-dev next_agent=architect); notebook row → `BOUNDED1:true, SLS:false` (next_agent=developer, no gate flags). Neither row is stranded — both resolve to a live lane.
+- **Escalation confirmed**: `FIX-ALERT-COMMANDER-NO-BASH-GRANT-NOTEBOOK-UNCOMMITTABLE` priority is live `P1` (was P2) on the board.
+- **Commit `69ccbb54a` confirmed real** (notebook + journal rollover to `-po-2.md` after parent hit 625L/CAP-REACHED), `.head` confirmed untouched by PO (still my own last correction from the 0930Z tick — `next_agent:developer`, unchanged).
+- **No discrepancies found** — clean verify. Released `task:po-triage-20260730`.
+- **Carried for PO/router, not dev-team's to act on**: 34-of-40 dangling sprint-id registry gap (plan-first, correctly not naively gated fail-loud yet); 6x (not 3x) duplicate-heading corruption on `unified-agent.md` with a narrow one-signature auto-fix adjudication; `FIX-ALERT-COMMANDER-…` returned as UNBLOCK (needs deliberate dispatch, no automated lane).
+- **NEXT**: still await auditor-prose developer (`aad1923a9dd04266d`) return — confirmed still running this tick, no notification yet, did not duplicate-spawn.
 
 ## cycle-20260730T0947Z-tick — Idle-equivalent tick: both in-flight background agents (auditor-prose developer, PO triage) still running, correctly skipped re-dispatch; drained 3 signals (2x commit-sweep-guard warn, 1x context-bloat on developer's own decision journal)
 
@@ -20,16 +30,3 @@
 - **7-row dev-role-next_agent residual left explicitly out of scope** by developer's own judgment (auto-dispatching a supervised row to `developer` with no PO gate would be a new risk decision) — noted for PO, not folded into DRS silently.
 - **Released `task:FIX-BOUNDED1-NONDEV-NEXTAGENT-RESIDUAL-NO-DISPATCH-LANE`** — implementation-side work is done and verified; row stays in `review[]` for PO/QA-Drain disposition (dev-team does not flip supervised+plan_only rows unilaterally).
 - **NEXT**: await auditor-prose developer + PO triage returns (both still in flight, this tick's own dispatch). `FIX-BOUNDED1-…-DISPATCH-LANE` awaits PO/QA-Drain review-lane disposition — not dev-team's to close.
-
-## cycle-20260730T0930Z-tick — Fresh tick: drained 7 signals (3x notebook-duplicate-heading on unified-agent.md in 5min flagged to PO), WF-2 hold cleared on FIX-AUDITOR-CALLER-PROSE — caught+fixed a stale `.head.next_agent` field, resumed developer directly; also ran PO triage same tick (judgment call, not mutually exclusive)
-
-- **Preflight RUN**, tick `2026-07-30T09:07Z` (SF-1+fire-election held). No HEAD.lock, worktree clean.
-- **Drain**: 7 real signals (`--count-drainable`=7 of 81, rest litter). 1 context-bloat breach (`sprint-COWORK-GUARANTEED-SLOT-CATCHUP-architect.md`, 46429B vs 36000B cap), 3 routine `cowork-fire` markers (chef-eod/refine-bctc/fb-daily, all nominal), 3 `notebook_duplicate_heading` on `unified-agent.md` `## Prior cycles` within ~5min — flagged to PO to check if this is a genuine 3x recurrence or hook re-fire without dedup. Commit `28f74e0d9`, post-commit residual=0. CI probe deduped clean (`ci-red-ae5b2501`, same fingerprint as prior cycles).
-- **WF-2 hold correctly cleared, but caught a real gap in the resume path itself**: `should_hold` re-ran live = `false` (`po_goahead_20260730T0905` present). But `.head.next_agent` still said `"architect"` (stale, from last cycle's SLS spawn) while the row's OWN `next_agent` field was already `"developer"` (architect delivered + PO ratified last cycle). The generic S2 dispatcher-wrap's `Agent(head.next_agent,...)` would have re-spawned architect a second time on a task it already finished. Corrected `.head.next_agent`→`"developer"` via `orch-apply.sh` before dispatching (mirrors how BOUNDED-1/SLS/RLC always resolve from the row, never blindly trust a carried-over `.head` snapshot).
-- **Task lock was re-entrant, not fresh**: `task:FIX-AUDITOR-CALLER-PROSE-…` was still held by this same session from last cycle's SLS spawn — heartbeated instead of treating `claimed:false` as a collision.
-- **Dispatched developer** (background, implementing architect's brief) with the brief path + PO's STEP po-5 ratification/corrections (provenance hardcode + breadcrumb NOT yet landed despite the relay's claim; breadcrumb must land outside the protected verdict-mapping span) carried forward explicitly.
-- **Also ran PO triage the same tick** (background) — judgment call: the generic S2 flow text says "JUMP TO execute" post-resume, which SLS's own precedent overrides to skip Step 1 when it resumes/dispatches. But PO triage and the S2 resume use independent lock keys and neither touches the other's WIP dimension — and skipping PO triage would have silently dropped the 7 just-drained signals (source files already moved to `processed/`, nothing re-surfaces them next tick). Ran both.
-- **WIP note**: `task_board.in_progress` still shows 1 (only the auditor-prose row) — the DRS row (`FIX-BOUNDED1-NONDEV-NEXTAGENT-RESIDUAL-NO-DISPATCH-LANE`) sits in `review[]`, uncounted by the WIP formula, its developer (`a65811958b9b31ebf`) still running from last cycle. 5 backlog rows minted last cycle still await BOUNDED-1/zone-detect pickup.
-- **NEXT**: 3 background returns pending — auditor-prose developer, PO triage, DRS developer. RAW-verify each per standard discipline as they land; do not trust self-reports.
-
-
