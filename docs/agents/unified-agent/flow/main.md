@@ -12,10 +12,16 @@ Universal entry. Picks the right sub-flow based on current UTC time. Crons and a
 | Mon–Fri 02:13 / 03:13 / 04:13 / 05:13 / 06:13 / 07:13 / 08:13 UTC | Intraday convergence scan (conditional) | `docs/agents/unified-agent/flow/chef.md` |
 | Mon–Fri 08:37 UTC | EOD Dish (guaranteed) | `docs/agents/unified-agent/flow/chef.md` |
 | Daily 19:37 UTC | Evening Preview (guaranteed) | `docs/agents/unified-agent/flow/chef.md` |
-| Mon–Fri 01:00 UTC | Prediction review | `docs/agents/unified-agent/flow/prediction.md` |
 | Any other time | EXIT | — |
 
 **Dish type** is passed as `$DISH_TYPE` env to `chef.md`. Values: `morning` | `intraday` | `eod` | `evening`.
+
+> The former Mon–Fri 01:00 UTC "Prediction review" window (`flow/prediction.md`) was retired by
+> FIX-POLYMARKET-FETCH-DEAD-GEOBLOCK-ACTUATOR (2026-07-31, architect RULING: RETIRE —
+> gamma-api.polymarket.com blocked at the ISP level by France's ANJ gambling regulator, the
+> live Polymarket market-fetch MCP tool deregistered). That window now falls through to
+> "Any other time → EXIT" — no separate cron delete needed (the single hourly `:29`
+> dispatcher cron just no-ops at 01:00 UTC).
 
 ## Steps
 

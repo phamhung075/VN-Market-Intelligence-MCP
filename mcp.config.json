@@ -93,7 +93,7 @@
   },
 
   "predictionMarkets": {
-    "enabled": true,
+    "enabled": false,
     "pollingIntervalMinutes": 30,
     "clobApiUrl": "https://clob.polymarket.com",
     "gammaApiUrl": "https://gamma-api.polymarket.com",

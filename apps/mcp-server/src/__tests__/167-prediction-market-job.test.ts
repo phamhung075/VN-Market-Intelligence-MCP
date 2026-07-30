@@ -415,7 +415,7 @@ describe("Task 167 — Prediction Market Scheduler Job", () => {
 
   // ── 6. Error resilience ─────────────────────────────────────────────────────
   describe("runPredictionMarketPoll() — error resilience", () => {
-    it("never throws even when fetchFn rejects", async () => {
+    it("never throws for a generic (non-transport) fetchFn rejection", async () => {
       const { runPredictionMarketPoll } = await import(
         "../scheduler/macro/predictionMarketJob.js"
       );
@@ -430,6 +430,67 @@ describe("Task 167 — Prediction Market Scheduler Job", () => {
           fetchFn: failFetch,
         }),
       ).resolves.toBeUndefined();
+    });
+
+    // FIX-POLYMARKET-FETCH-DEAD-GEOBLOCK-ACTUATOR ACCEPTANCE-4 (2026-07-31):
+    // a PolymarketTransportError (the signal fetchPolymarkets() now raises on
+    // a Gamma transport failure with zero combined results) MUST propagate
+    // out of runPredictionMarketPoll() so jobRunRepo.wrapRun's recordJobRun()
+    // records status=error instead of status=success — this is the literal
+    // mechanical fix for the 28-day production bug where a dead upstream
+    // read as a healthy cron. The previous test (generic Error) is the
+    // negative control proving this is narrowly scoped to transport
+    // failures, not a blanket "throw on any fetchFn error" change.
+    it("rejects with PolymarketTransportError when fetchFn rejects with one (ACCEPTANCE-4)", async () => {
+      const { runPredictionMarketPoll } = await import(
+        "../scheduler/macro/predictionMarketJob.js"
+      );
+      const { PolymarketTransportError } = await import(
+        "../infrastructure/fetchers/polymarket.js"
+      );
+
+      const failFetch = async (): Promise<PredictionMarket[]> => {
+        throw new PolymarketTransportError(
+          "Polymarket Gamma API transport failure (test)",
+        );
+      };
+
+      await expect(
+        runPredictionMarketPoll({
+          enabled: true,
+          fetchFn: failFetch,
+        }),
+      ).rejects.toThrow(PolymarketTransportError);
+    });
+
+    it("allows a subsequent run after a PolymarketTransportError rejection (concurrency guard released via finally)", async () => {
+      const { runPredictionMarketPoll } = await import(
+        "../scheduler/macro/predictionMarketJob.js"
+      );
+      const { PolymarketTransportError } = await import(
+        "../infrastructure/fetchers/polymarket.js"
+      );
+
+      const failFetch = async (): Promise<PredictionMarket[]> => {
+        throw new PolymarketTransportError("transport failure (test)");
+      };
+
+      await expect(
+        runPredictionMarketPoll({ enabled: true, fetchFn: failFetch }),
+      ).rejects.toThrow(PolymarketTransportError);
+
+      // _isRunning must have been reset by the finally block — a second
+      // call must actually invoke fetchFn again, not be skipped by the
+      // concurrency guard.
+      let secondCallCount = 0;
+      await runPredictionMarketPoll({
+        enabled: true,
+        fetchFn: async () => {
+          secondCallCount++;
+          return [];
+        },
+      });
+      expect(secondCallCount).toBe(1);
     });
   });
 

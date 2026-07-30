@@ -29,10 +29,14 @@ describe("Task 169 — predictionMarkets config section", () => {
     expect(typeof cfg.predictionMarkets).toBe("object");
   });
 
-  it("predictionMarkets.enabled defaults to true", async () => {
+  it("predictionMarkets.enabled reads false from mcp.config.json (FIX-POLYMARKET-FETCH-DEAD-GEOBLOCK-ACTUATOR kill-switch)", async () => {
+    // 2026-07-31: flipped true->false. gamma-api.polymarket.com is blocked at
+    // the ISP level by France's ANJ gambling regulator (architect RULING:
+    // RETIRE, not restore-via-VPS) — mcp.config.json's predictionMarkets.enabled
+    // key (which always wins over the code-level fallback default) is now false.
     const { loadMcpConfig } = await import("../infrastructure/config.js");
     const cfg = loadMcpConfig();
-    expect(cfg.predictionMarkets.enabled).toBe(true);
+    expect(cfg.predictionMarkets.enabled).toBe(false);
   });
 
   it("predictionMarkets.pollingIntervalMinutes defaults to 30", async () => {

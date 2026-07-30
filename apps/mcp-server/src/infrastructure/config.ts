@@ -61,7 +61,16 @@ export interface MarketConfig {
 
 /** Flat prediction markets configuration block (TECH-020, Section 5). */
 export interface PredictionMarketsConfig {
-  /** Whether prediction market polling is active. Default: true */
+  /**
+   * Whether prediction market polling is active.
+   * Default: false (kill-switch — FIX-POLYMARKET-FETCH-DEAD-GEOBLOCK-ACTUATOR,
+   * architect RULING: RETIRE. gamma-api.polymarket.com is blocked at the ISP
+   * level by France's ANJ gambling regulator after finding rigged markets +
+   * zero KYC — a sovereign-regulator block, not a generic anti-scraper
+   * geoblock — so this plane is deliberately disabled, not proxied. Re-enable
+   * via PREDICTION_MARKETS_ENABLED=true env override if the upstream block
+   * is ever lifted.)
+   */
   enabled: boolean;
   /** How often (in minutes) to poll prediction markets. Default: 30 */
   pollingIntervalMinutes: number;
@@ -607,7 +616,10 @@ export function loadMcpConfig(): McpConfig {
       const enabled =
         envEnabled === "true" || envEnabled === "1" ? true
         : envEnabled === "false" || envEnabled === "0" ? false
-        : boolVal(pm, "enabled", true);
+        // FIX-POLYMARKET-FETCH-DEAD-GEOBLOCK-ACTUATOR: default flipped
+        // true->false (kill-switch). mcp.config.json's own predictionMarkets.enabled
+        // key must also be false — a file value always wins over this fallback.
+        : boolVal(pm, "enabled", false);
       return {
         enabled,
         pollingIntervalMinutes: numVal(pm, "pollingIntervalMinutes", 30),

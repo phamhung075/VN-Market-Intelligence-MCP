@@ -1,12 +1,21 @@
 /**
  * Task 168 — Prediction Markets MCP Tool
  *
- * Interface layer: registers one MCP tool on a McpServer instance.
+ * Interface layer: registers MCP tool(s) on a McpServer instance.
  *
  * Tools registered:
- *   1. get_prediction_markets — query prediction markets with optional filters,
- *      joined with recent signals (last 1 hour) and enriched with VN cascade
- *      mapping via mapPredictionToVn().
+ *   1. get_prediction_accuracy — retrospective accuracy metrics for
+ *      previously-detected Polymarket prediction signals.
+ *
+ * get_prediction_markets (live-fetch query tool) was deregistered here by
+ * FIX-POLYMARKET-FETCH-DEAD-GEOBLOCK-ACTUATOR (2026-07-31, architect RULING:
+ * RETIRE). gamma-api.polymarket.com is blocked at the ISP level by France's
+ * ANJ gambling regulator (rigged markets + zero KYC finding) — a
+ * sovereign-regulator block, not a generic anti-scraper geoblock — so the
+ * acquisition plane was deliberately killed (predictionMarkets.enabled now
+ * defaults to false), not proxied. get_prediction_accuracy is UNAFFECTED —
+ * it reads historical prediction_signals rows already on disk, not a live
+ * fetch, and stays useful even while acquisition is off.
  *
  * @module interface/mcp/tools/predictionTools
  */
@@ -15,88 +24,10 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 
 import { getDb, initDatabase } from "../../../../infrastructure/db/schema.js";
-import { mapPredictionToVn } from "../../../../domain/services/predictionCascadeMapper.js";
 import {
   computePredictionAccuracy,
   type PredictionAccuracyRow,
 } from "../../../../scheduler/macro/predictionOutcomeJob.js";
-
-// ─────────────────────────────────────────────────────────────────────────────
-// SQLite row types
-// ─────────────────────────────────────────────────────────────────────────────
-
-interface PredictionMarketRow {
-  id: string;
-  question: string;
-  end_date: string;
-  yes_price: number;
-  no_price: number;
-  volume_24h: number;
-  volume_total: number;
-  liquidity: number;
-  last_trade_price: number;
-  unique_wallets: number;
-  tags: string;        // JSON string[]
-  fetched_at: string;
-  updated_at: string;
-  active_signal_types: string | null;   // GROUP_CONCAT result
-  all_mapped_stocks: string | null;     // GROUP_CONCAT result
-  all_mapped_sectors: string | null;    // GROUP_CONCAT result
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Output shape helpers
-// ─────────────────────────────────────────────────────────────────────────────
-
-/** Deduplicated array from a comma-delimited GROUP_CONCAT string. */
-function splitConcat(raw: string | null): string[] {
-  if (!raw) return [];
-  return [...new Set(raw.split(",").map((s) => s.trim()).filter(Boolean))];
-}
-
-/** Parse tags JSON; return [] on error. */
-function parseTags(raw: string): string[] {
-  try {
-    const parsed: unknown = JSON.parse(raw);
-    if (!Array.isArray(parsed)) return [];
-    return parsed.filter((v): v is string => typeof v === "string");
-  } catch {
-    return [];
-  }
-}
-
-/**
- * Build the enriched output object for one market row.
- * Calls mapPredictionToVn() to derive VN sector/stock relevance if the
- * GROUP_CONCAT join fields are empty (market has no stored signals yet).
- */
-function buildMarketOutput(row: PredictionMarketRow): Record<string, unknown> {
-  const activeSignals = splitConcat(row.active_signal_types);
-  const tags = parseTags(row.tags);
-
-  // Derive sector/stock mapping from the cascade mapper
-  const mappings = mapPredictionToVn(row.question, tags);
-  const mappedSectors = [...new Set(mappings.flatMap((m) => m.sectors))];
-  const mappedStocks = [...new Set(mappings.flatMap((m) => m.stocks))];
-
-  return {
-    id: row.id,
-    question: row.question,
-    endDate: row.end_date,
-    yesPrice: row.yes_price,
-    noPrice: row.no_price,
-    volume24h: row.volume_24h,
-    volumeTotal: row.volume_total,
-    liquidity: row.liquidity,
-    lastTradePrice: row.last_trade_price,
-    uniqueWalletsCount: row.unique_wallets,
-    tags,
-    fetchedAt: row.fetched_at,
-    activeSignals,
-    mappedSectors,
-    mappedStocks,
-  };
-}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Tool registration
@@ -201,139 +132,6 @@ export function registerPredictionTools(server: McpServer): void {
             {
               type: "text" as const,
               text: `Lỗi khi tính độ chính xác: ${(err as Error).message}`,
-            },
-          ],
-        };
-      }
-    },
-  );
-
-  // ── get_prediction_markets ───────────────────────────────────────────────
-  server.tool(
-    "get_prediction_markets",
-    "Returns current Polymarket prediction markets relevant to Vietnamese stocks, " +
-      "with detected probability shift and volume spike signals. " +
-      "Use filter='signals_only' to focus on markets with active anomalies.",
-    {
-      filter: z
-        .enum(["all", "signals_only"])
-        .optional()
-        .default("all")
-        .describe(
-          "Filter mode: 'all' returns every stored market; " +
-            "'signals_only' returns only markets with signals detected in the last hour.",
-        ),
-      limit: z.coerce
-        .number()
-        .int()
-        .min(1)
-        .max(50)
-        .optional()
-        .default(20)
-        .describe("Maximum number of markets to return (default: 20, max: 50)"),
-    },
-    async ({ filter: filterRaw, limit: limitRaw }) => {
-      const filter = filterRaw ?? "all";
-      const limit = limitRaw ?? 20;
-
-      try {
-        await initDatabase();
-        const db = getDb();
-
-        // ── Query prediction_markets LEFT JOIN prediction_signals (last 1h) ──
-        const havingClause =
-          filter === "signals_only"
-            ? "HAVING active_signal_types IS NOT NULL"
-            : "";
-
-        // Report 984: filter out expired markets (NBA/NHL/old Fed from 2022-2023)
-        // that have end_date in the past. They have zero volume/liquidity, slow
-        // analysis, and incorrectly map sports markets to VN sectors.
-        const nowIso = new Date().toISOString();
-
-        // Use ISO 8601 cutoff (with T separator) to match JS Date.toISOString() format.
-        // SQLite datetime('now') uses a space separator; strftime with 'T' ensures
-        // consistent lexicographic ordering against stored ISO strings.
-        const cutoff = new Date(Date.now() - 60 * 60 * 1000).toISOString();
-
-        // Report 2768-2770: exclude stale markets (fetched_at > 7d old) and
-        // t___-mkt-* test fixture IDs (e.g. t163-mkt-001 from schema tests).
-        // Staleness tightened from 30d → 7d so fixtures with 2026-04-01 dates
-        // (36d old) are excluded even if the ID filter is somehow bypassed.
-        const staleCutoff = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
-
-        const rows = db
-          .prepare(
-            `SELECT pm.*,
-                    GROUP_CONCAT(ps.signal_type)   AS active_signal_types,
-                    GROUP_CONCAT(ps.mapped_stocks)  AS all_mapped_stocks,
-                    GROUP_CONCAT(ps.mapped_sectors) AS all_mapped_sectors
-             FROM prediction_markets pm
-             LEFT JOIN prediction_signals ps
-               ON ps.market_id = pm.id
-               AND ps.detected_at >= $cutoff
-             WHERE (pm.end_date IS NULL OR pm.end_date = '' OR pm.end_date >= $now)
-               AND pm.fetched_at >= $staleCutoff
-               AND pm.id NOT LIKE 't___-mkt-%'
-             GROUP BY pm.id
-             ${havingClause}
-             ORDER BY pm.fetched_at DESC
-             LIMIT $limit`,
-          )
-          .all({ $cutoff: cutoff, $now: nowIso, $staleCutoff: staleCutoff, $limit: limit }) as PredictionMarketRow[];
-
-        // Count total signal rows within the last hour (for the signalCount meta-field)
-        const signalCountRow = db
-          .prepare(
-            `SELECT COUNT(*) as cnt
-             FROM prediction_signals
-             WHERE detected_at >= $cutoff`,
-          )
-          .get({ $cutoff: cutoff }) as { cnt: number };
-
-        const signalCount = signalCountRow?.cnt ?? 0;
-
-        // Last poll timestamp from the most recent market row.
-        // When the row set is empty (e.g. signals_only filter with no fresh
-        // signals), still surface MAX(fetched_at) from prediction_markets so
-        // users can see the poller is alive — analysis-agent report #686
-        // mistook a quiet signal window for a regression because lastPollAt
-        // was null even though the fetcher was healthy.
-        let lastPollAt: string | null = null;
-        if (rows.length > 0) {
-          lastPollAt = rows.reduce((latest, r) =>
-            r.fetched_at > latest.fetched_at ? r : latest,
-          ).fetched_at;
-        } else {
-          try {
-            const fallback = db
-              .prepare("SELECT MAX(fetched_at) AS ts FROM prediction_markets")
-              .get() as { ts: string | null } | undefined;
-            lastPollAt = fallback?.ts ?? null;
-          } catch {
-            lastPollAt = null;
-          }
-        }
-
-        const markets = rows.map(buildMarketOutput);
-
-        const output = {
-          markets,
-          totalRelevantMarkets: markets.length,
-          lastPollAt,
-          signalCount,
-        };
-
-        return {
-          content: [{ type: "text" as const, text: JSON.stringify(output, null, 2) }],
-        };
-      } catch (err) {
-        console.error("[get_prediction_markets] Error:", err);
-        return {
-          content: [
-            {
-              type: "text" as const,
-              text: `Error retrieving prediction markets: ${(err as Error).message}`,
             },
           ],
         };

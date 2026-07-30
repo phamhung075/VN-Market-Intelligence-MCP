@@ -207,8 +207,38 @@ Injectable `fetchFn` option for testability: `runOhlcvBackfill(db, { fetchFn: mo
 | `tradingEconomics.ts` | TE macro calendars | - |
 | `shippingIndex.ts` | BDI, FBX, SCFI | - |
 | `weatherVn.ts` | Typhoon/flood forecasts | - |
-| `polymarket.ts` | Prediction market odds | - |
+| `polymarket.ts` | Prediction market odds — acquisition RETIRED 2026-07-31 (`predictionMarkets.enabled` defaults `false`; see below) | - |
 | `sbv.ts` | VCB XML FX rate (live) + SBV interest-rate env-var fallbacks (portal 404) | - |
+
+**`polymarket.ts` — acquisition retired, `PolymarketTransportError` fail-loud fix (FIX-POLYMARKET-FETCH-DEAD-GEOBLOCK-ACTUATOR, 2026-07-31, architect RULING: RETIRE).**
+`gamma-api.polymarket.com` is blocked at the ISP level by France's ANJ gambling
+regulator (rigged markets + zero-KYC finding, 2026-07-16) — a sovereign-regulator
+block, not a generic anti-scraper geoblock, so the VPS egress-proxy pattern used
+for VN-source geoblocks (SSC/HNX/SBV/CafeF) deliberately does NOT apply here (would
+mean engineering evasion of a regulator's block against a source it found
+fraudulent). `predictionMarkets.enabled` now defaults `false`
+(`infrastructure/config.ts` + `mcp.config.json`; `PREDICTION_MARKETS_ENABLED=true`
+env var remains the re-enable switch if the upstream block is ever lifted).
+Independent of retire-vs-restore, `fetchPolymarkets()` (`infrastructure/fetchers/
+polymarket.ts`) previously swallowed both the CLOB catch and the Gamma catch and
+always fell through to `return results` (possibly `[]`), making a transport
+failure indistinguishable from "legitimately 0 matches today" — the literal
+mechanical reason 28+ days of dead fetches logged `status=success` in
+`cron_job_runs`. Fixed: a `gammaTransportFailed` flag is set ONLY inside the
+Gamma catch; after the Gamma-primary fallback block, `if (gammaTransportFailed
+&& results.length === 0)` throws `PolymarketTransportError` instead of returning
+`[]` (a legitimately-empty-but-successful fetch never throws — negative control).
+`predictionMarketJob.ts`'s Step 3 catch and outer catch both narrowly rethrow
+`PolymarketTransportError` past their normal swallow/cached-fallback/log paths so
+it reaches `jobRunRepo.wrapRun`'s `recordJobRun()` as `status=error`.
+`predictionMarketPollJob` stays registered in `schedulerJobTable.ts`
+(`JOB_TABLE`, cronJobCount unchanged at 88) — with acquisition disabled it now
+early-returns at Step 1 every cycle (cheap no-op, honest `status=success` for a
+disabled row). `get_prediction_markets` MCP tool deregistered
+(`interface/mcp/tools/macro/predictionTools.ts`); `get_prediction_accuracy`
+(reads historical `prediction_signals`, not a live fetch) is unaffected.
+`prediction_markets`/`prediction_signals` tables left as-is — harmless once
+nothing reads/writes them.
 
 **`sbv.ts` — `storeSbvSnapshot()` zero-overwrite guard (FIX-SBV-FETCHER-ZERO-VALUE-EMIT).**
 `sbv_rates` holds one row per `source` (`INSERT OR REPLACE`, full-row upsert — no

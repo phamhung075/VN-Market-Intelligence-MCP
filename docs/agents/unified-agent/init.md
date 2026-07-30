@@ -131,7 +131,6 @@ agent:
     default: docs/agents/unified-agent/flow/main.md  # Thin dispatcher → chef.md for all dish windows
     catalog:
       - {name: chef, path: docs/agents/unified-agent/flow/chef.md, trigger: morning_dish|intraday_scan|eod_dish|evening_preview}
-      - {name: prediction, path: docs/agents/unified-agent/flow/prediction.md, trigger: prediction_review}
 
   tools_package: docs/agents/tools/package/unified-agent.md
 

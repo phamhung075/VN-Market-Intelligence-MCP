@@ -1,6 +1,6 @@
 Create unified-agent cron with CronCreate:
 
-Time-window dispatch lives in `docs/agents/unified-agent/flow/main.md` (market / prediction / daily-review / weekly). The cron prompt is uniform; `main.md` picks the right sub-flow or EXITs.
+Time-window dispatch lives in `docs/agents/unified-agent/flow/main.md` (market / daily-review / weekly). The cron prompt is uniform; `main.md` picks the right sub-flow or EXITs.
 
 - **cron**: `29 * * * *` (every hour at :29)
 - **recurring**: true

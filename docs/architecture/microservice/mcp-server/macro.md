@@ -23,9 +23,19 @@ Individual tool signatures: `docs/agents/tools/list/<tool>.md`
 | `macro_rateLimit` | Rate limit status for macro data sources | — | rateLimiter domain svc |
 | `update_thresholds` | Update alert thresholds dynamically | threshold_key, value | mcp.config.json (via config loader) |
 | `get_calibration_report` | Signal calibration accuracy report | — | market.db (prediction_*) |
-| `get_prediction_accuracy` | Prediction market accuracy stats | — | market.db (prediction_*) |
+| `get_prediction_accuracy` | Prediction market accuracy stats (historical prediction_signals — unaffected by the acquisition retirement below) | — | market.db (prediction_*) |
 | `create_prediction_claim` | Create a new prediction claim | claim, resolution_date | market.db |
-| `get_prediction_markets` | Polymarket + internal prediction data | — | market.db (prediction_*) |
+
+> `get_prediction_markets` (live Polymarket + internal prediction data query) was deregistered by
+> FIX-POLYMARKET-FETCH-DEAD-GEOBLOCK-ACTUATOR (2026-07-31, architect RULING: RETIRE).
+> gamma-api.polymarket.com is blocked at the ISP level by France's ANJ gambling regulator
+> (rigged markets + zero KYC finding) — a sovereign-regulator block, not a generic
+> anti-scraper geoblock, so the VPS-proxy pattern used for VN-source geoblocks does not
+> apply here. `predictionMarkets.enabled` now defaults to `false` (config.ts + mcp.config.json);
+> `predictionMarketPollJob` stays registered in the scheduler as a cheap no-op gated by that
+> flag, so re-enabling is a single `PREDICTION_MARKETS_ENABLED=true` env flip if the upstream
+> block is ever lifted. `market.db`'s `prediction_markets`/`prediction_signals` tables are left
+> as-is (harmless once nothing reads/writes them).
 
 ---
 

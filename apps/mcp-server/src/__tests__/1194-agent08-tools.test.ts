@@ -1,20 +1,24 @@
 /**
  * Task 1194 — Agent 08 Prediction Synthesizer MCP Tools Wiring Audit
  *
- * Verifies that all four MCP tools required by the 08-prediction-synthesizer
+ * Verifies that the MCP tools required by the 08-prediction-synthesizer
  * Cowork agent are properly registered and functional:
  *
  *   1. create_prediction_claim — insert a falsifiable prediction claim
  *   2. get_prediction_accuracy — retrospective accuracy metrics for signals
- *   3. get_prediction_markets — query current Polymarket prediction markets
- *   4. get_open_chain_findings — open findings from the agent signal bus
+ *   3. get_open_chain_findings — open findings from the agent signal bus
+ *
+ * get_prediction_markets was deregistered by
+ * FIX-POLYMARKET-FETCH-DEAD-GEOBLOCK-ACTUATOR (2026-07-31, architect RULING:
+ * RETIRE — gamma-api.polymarket.com blocked at the ISP level by France's ANJ
+ * gambling regulator); its two AC tests here (registration + empty-envelope)
+ * were removed with it.
  *
  * All tools already exist; this test suite provides an integration-level
  * smoke test from the perspective of Agent 08 to confirm the full wiring.
  *
  * Tests:
- *   AC-1: All four tools are registered on the server
- *   AC-2: get_prediction_markets returns valid JSON envelope (empty DB)
+ *   AC-1: All three tools are registered on the server
  *   AC-3: get_prediction_accuracy returns text response (empty DB — no data msg)
  *   AC-4: get_open_chain_findings returns valid JSON envelope (empty DB)
  *   AC-5: create_prediction_claim without price data returns descriptive error
@@ -81,7 +85,7 @@ describe("Task 1194 — Agent 08 Prediction Synthesizer tool wiring", () => {
     closeDb();
   });
 
-  // ── AC-1: All four tools are registered ──────────────────────────────────
+  // ── AC-1: All three tools are registered ─────────────────────────────────
 
   it("AC-1: create_prediction_claim is registered", () => {
     expect(registeredTools(server)["create_prediction_claim"]).toBeDefined();
@@ -91,38 +95,8 @@ describe("Task 1194 — Agent 08 Prediction Synthesizer tool wiring", () => {
     expect(registeredTools(server)["get_prediction_accuracy"]).toBeDefined();
   });
 
-  it("AC-1: get_prediction_markets is registered", () => {
-    expect(registeredTools(server)["get_prediction_markets"]).toBeDefined();
-  });
-
   it("AC-1: get_open_chain_findings is registered", () => {
     expect(registeredTools(server)["get_open_chain_findings"]).toBeDefined();
-  });
-
-  // ── AC-2: get_prediction_markets empty DB ────────────────────────────────
-
-  it("AC-2: get_prediction_markets returns valid envelope on empty DB", async () => {
-    const result = await callTool(server, "get_prediction_markets", {
-      filter: "all",
-      limit: 10,
-    });
-
-    expect(result.content).toHaveLength(1);
-    const item = result.content[0]!;
-    expect(item.type).toBe("text");
-
-    const data = JSON.parse(item.text) as {
-      markets: unknown[];
-      totalRelevantMarkets: number;
-      lastPollAt: null;
-      signalCount: number;
-    };
-
-    expect(Array.isArray(data.markets)).toBe(true);
-    expect(data.markets).toHaveLength(0);
-    expect(data.totalRelevantMarkets).toBe(0);
-    expect(data.signalCount).toBe(0);
-    expect(data.lastPollAt).toBeNull();
   });
 
   // ── AC-3: get_prediction_accuracy empty DB ───────────────────────────────

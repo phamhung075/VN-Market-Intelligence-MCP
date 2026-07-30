@@ -184,9 +184,19 @@ describe("Issue 3 — Polymarket CLOB fetch bypasses circuit breaker", () => {
 
     const clobFetchFn = async (_url: string): Promise<string> => JSON.stringify([]);
 
-    // Threshold is 5 — trip after 5 Gamma failures
+    // Threshold is 5 — trip after 5 Gamma failures.
+    // FIX-POLYMARKET-FETCH-DEAD-GEOBLOCK-ACTUATOR ACCEPTANCE-4 (2026-07-31):
+    // fetchPolymarkets now throws PolymarketTransportError on each of these
+    // calls (Gamma transport failure + zero combined results) — that is the
+    // intended new behavior, orthogonal to what this test actually verifies
+    // (the circuit breaker trips on the Gamma failures regardless of what
+    // fetchPolymarkets does with the result afterward). Catch and ignore.
     for (let i = 0; i < 5; i++) {
-      await fetchPolymarkets(config, gammaFetchFn, clobFetchFn);
+      try {
+        await fetchPolymarkets(config, gammaFetchFn, clobFetchFn);
+      } catch {
+        // expected — see comment above
+      }
     }
 
     expect(breakers.polymarket.stats.state).toBe("open");

@@ -232,6 +232,19 @@ export function buildJobTable(ctx: SchedulerJobTableCtx): JobTableEntry[] {
       },
     },
 
+    // FIX-POLYMARKET-FETCH-DEAD-GEOBLOCK-ACTUATOR (architect RULING: RETIRE,
+    // not restore-via-VPS — gamma-api.polymarket.com is blocked at the ISP
+    // level by France's ANJ gambling regulator, a sovereign-regulator block
+    // categorically different from the VN-source geoblocks the VPS proxy
+    // pattern exists for). predictionMarkets.enabled now defaults to false
+    // (config.ts + mcp.config.json). Deliberately LEFT in JOB_TABLE rather
+    // than removed: runPredictionMarketPoll()'s own Step 1 reads the
+    // disabled flag and returns immediately (cheap no-op, records
+    // status=success honestly — the row IS disabled by design), and this
+    // keeps the re-enable path a single PREDICTION_MARKETS_ENABLED=true env
+    // flip with no redeploy of the job table needed if the upstream block is
+    // ever lifted. Also avoids perturbing the Gate-2d cronJobCount baseline
+    // for no functional reason.
     {
       name: 'predictionMarketPollJob',
       cron: CRONS.predictionMarketPoll,

@@ -310,3 +310,12 @@
 - Fabricate confidence_score=0 on skip vs return null and skip the write — skip: an audited "0 confidence" row would misrepresent signals that genuinely carry no quality data as confirmed-worst, which is worse than a legitimate absence.
 **why-decision:** table-wide SLA reads MAX(created_at) across all rows regardless of source — unblocking the ONE signal type that actually posts (urgent_news) fixes the alarm without needing price_confirmation to ever fire.
 **why-change:** none from task spec — mechanism, decision, and both ACs (observability, bidirectional test) implemented as specified; 233-e2e.test.ts:393 reconciled as a non-asserting placeholder comment, not a real dependency.
+
+### STEP dev-mcp-server-S33 · dev-mcp-server · 2026-07-30T23:04:02Z
+**task-id:** FIX-POLYMARKET-FETCH-DEAD-GEOBLOCK-ACTUATOR
+**what-done:** Implemented architect's already-made RETIRE ruling verbatim (not restore-via-VPS, not re-litigated). Killed acquisition (`predictionMarkets.enabled` false, config.ts+mcp.config.json). ACCEPTANCE-4: `PolymarketTransportError` — `fetchPolymarkets()` throws it only when Gamma transport-fails AND combined results are 0 (negative control: legit 0-matches never throws); `predictionMarketJob.ts` narrowly rethrows past its own swallow/cached-fallback so `recordJobRun` marks `status=error`. Deregistered `get_prediction_markets` (kept `get_prediction_accuracy`); removed from 5 consumer/manifest docs (grep-verified 0 hits); regenerated tool-registry/project-stats/INDEX (184→183); retired 2 quality-checklist.json SLA rows to `INFO`.
+**what-considered:**
+- Remove `predictionMarketPollJob` from JOB_TABLE vs leave it gated by `enabled=false` — left it: cheap no-op, single env-flip re-enable path, avoids perturbing the Gate-2d cronJobCount=88 baseline for no functional reason.
+- Rethrow PolymarketTransportError broadly (any fetchFn error) vs narrowly (instanceof check only) — narrow: the existing "never throws even when fetchFn rejects" regression test (generic Error) must stay green as the negative control proving this isn't a blanket behavior change.
+**why-decision:** ANJ is a sovereign-regulator block (fraud finding), categorically different from the VN-source geoblocks the VPS proxy exists for — architect's reasoning, not re-derived here. ACCEPTANCE-4 is required either way per the row's own acceptance criteria.
+**why-change:** none from architect's design — followed the 6-part spec as written; only judgment call was leaving predictionMarketPollJob registered (design explicitly offered this as "dev-mcp-server's call").

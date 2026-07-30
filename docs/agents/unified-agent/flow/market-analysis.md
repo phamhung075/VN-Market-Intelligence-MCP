@@ -3,7 +3,8 @@
 # Unified Agent — Market: Intelligence + Portfolio + Domain (Steps 2-5)
 
 **2. Market intelligence**
-`get_market_context(hours_back=24)` | `get_prediction_markets()` | `get_legal_risk_signals()` | `get_crisis_early_warning()`
+`get_market_context(hours_back=24)` | `get_legal_risk_signals()` | `get_crisis_early_warning()`
+> The live Polymarket market-fetch call formerly here was retired by FIX-POLYMARKET-FETCH-DEAD-GEOBLOCK-ACTUATOR (2026-07-31, architect RULING: RETIRE — gamma-api.polymarket.com blocked at the ISP level by France's ANJ gambling regulator, MCP tool deregistered). `get_prediction_accuracy()` (historical Polymarket signal accuracy) is unaffected and still available if needed.
 > `get_sentiment_trend()` requires `stock_code` param — NOT portfolio-wide. Skip here; call per-ticker only on event trigger.
 > `get_insider_signals()` requires `code` + `outstandingShares` — NOT a portfolio sweep. Skip step 4 portfolio scan; call per-ticker on event trigger only.
 

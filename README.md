@@ -182,7 +182,7 @@ See `docs/data/project-stats.json#toolCount` for current count.
 | Reports | 6 | fetch_ssc_reports, get_financial_summary, get_earnings_calendar |
 | Alerts | 14 | get_alerts, set_price_alert, add_custom_alert, mute_stock_alerts |
 | Portfolio | 12 | get_positions, get_portfolio_risk, get_rebalancing_signals |
-| Prediction | 1 | get_prediction_markets |
+| Prediction | 1 | get_prediction_accuracy |
 | Summaries | 2 | get_market_summary, generate_market_summary |
 | Telegram | 4 | send_test_telegram, send_telegram_report |
 | Feedback | 2 | submit_feedback |

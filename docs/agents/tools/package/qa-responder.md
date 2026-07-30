@@ -39,7 +39,8 @@ Invoke via gateway: call_tool(server="vn-market", tool="<name>", arguments={...}
 | Tool | Purpose | Key Params |
 |------|---------|-----------|
 | `get_macro_snapshot` | Macro environment (rates, FX, credit, inflation) | — |
-| `get_prediction_markets` | Market-wide prediction accuracy by signal type | — |
+
+> `get_prediction_markets` retired FIX-POLYMARKET-FETCH-DEAD-GEOBLOCK-ACTUATOR (2026-07-31, architect RULING: RETIRE — gamma-api.polymarket.com blocked at the ISP level by France's ANJ gambling regulator, tool deregistered).
 
 ### Risk & Analysis
 | Tool | Purpose | Key Params |

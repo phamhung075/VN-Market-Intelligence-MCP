@@ -24,6 +24,7 @@
 import { logger } from "../../infrastructure/logger.js";
 import { getDb, initDatabase } from "../../infrastructure/db/schema.js";
 import { sqlInClause } from "../../infrastructure/db/sqlHelpers.js";
+import { PolymarketTransportError } from "../../infrastructure/fetchers/polymarket.js";
 import type { Database } from "bun:sqlite";
 import type {
   PredictionMarket,
@@ -400,7 +401,13 @@ export function buildTelegramMessage(signal: PredictionSignal): string {
  *   - `staleThresholdHours`— override staleness threshold (0 = always stale)
  *   - `_signalDetectorSpy` — spy on signal detection calls in tests
  *
- * The function NEVER throws. All errors are caught and logged.
+ * ACCEPTANCE-4 (FIX-POLYMARKET-FETCH-DEAD-GEOBLOCK-ACTUATOR): the function
+ * rejects with `PolymarketTransportError` when the fetch step surfaces one
+ * (a Gamma transport failure with zero combined results) — this is the ONE
+ * intentional exception to the previous "never throws" contract, so
+ * `jobRunRepo.wrapRun`'s `recordJobRun()` records `status=error` instead of
+ * `status=success` on a dead upstream. Every other error is still caught
+ * and logged here without rethrowing.
  */
 export async function runPredictionMarketPoll(
   opts: PredictionMarketPollOptions = {},
@@ -472,6 +479,20 @@ export async function runPredictionMarketPoll(
         );
       }
     } catch (err) {
+      // ACCEPTANCE-4 (FIX-POLYMARKET-FETCH-DEAD-GEOBLOCK-ACTUATOR): a
+      // PolymarketTransportError (Gamma TLS/403/DNS/parse failure with zero
+      // combined results) must propagate PAST this cached-snapshot fallback
+      // so it reaches the outer catch and, from there, recordJobRun() as
+      // status=error — even on the FIRST failing cycle, before 24h
+      // staleness accrues. Silently falling back to cached data here — as
+      // this branch used to do unconditionally — is exactly the swallow
+      // that let 28+ days of dead fetches read status=success in
+      // cron_job_runs. Any OTHER error (e.g. a shape thrown by an injected
+      // test fetchFn that is not a transport-failure signal) keeps the
+      // original graceful cached-snapshot fallback.
+      if (err instanceof PolymarketTransportError) {
+        throw err;
+      }
       logger.warn("[prediction-market-job] fetchPolymarkets failed — falling back to cached snapshot", {
         error: String(err),
       });
@@ -695,6 +716,16 @@ export async function runPredictionMarketPoll(
         `notified: ${notifySignals.length}`,
     );
   } catch (err) {
+    // ACCEPTANCE-4: rethrow PolymarketTransportError past this outer
+    // swallow-and-log so it reaches jobRunRepo.wrapRun's recordJobRun() as
+    // status=error (registerJobTable -> jobRunRepo.wrapRun(name, runner) ->
+    // recordJobRun in cronJobRunStore.ts marks status purely by
+    // promise-reject; recordJobRun itself never re-throws further, so this
+    // cannot crash the node-cron scheduler loop). Every other error keeps
+    // the original swallow-and-log behavior.
+    if (err instanceof PolymarketTransportError) {
+      throw err;
+    }
     logger.error("[prediction-market-job] unhandled error in poll cycle", {
       error: err instanceof Error ? err.message : String(err),
     });

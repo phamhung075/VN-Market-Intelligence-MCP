@@ -30,6 +30,30 @@ import { BROWSER_UA } from "./browserHeaders.js";
 // ---------------------------------------------------------------------------
 
 /**
+ * Raised when fetchPolymarkets() cannot reach the Gamma API at all — a
+ * TLS/403/DNS/JSON-parse transport failure — AND CLOB also produced zero
+ * usable results, so the caller has nothing (not even a legitimate "0
+ * matches today") to fall back on.
+ *
+ * FIX-POLYMARKET-FETCH-DEAD-GEOBLOCK-ACTUATOR (ACCEPTANCE-4): before this
+ * class existed, fetchPolymarkets() swallowed both the CLOB catch and the
+ * Gamma catch and always fell through to `return results` (possibly []),
+ * making a transport failure indistinguishable from "legitimately 0
+ * matches today". That is the literal mechanical reason 28+ days of dead
+ * Gamma fetches (gamma-api.polymarket.com serving an unrelated *.anj.fr TLS
+ * cert — France's ANJ gambling regulator blocking Polymarket outright) read
+ * `status=success` in cron_job_runs. A successful Gamma fetch that
+ * legitimately finds 0 relevant markets must NOT throw this (negative
+ * control — see 164-polymarket-fetcher.test.ts).
+ */
+export class PolymarketTransportError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "PolymarketTransportError";
+  }
+}
+
+/**
  * Injectable HTTP fetch function for dependency injection / testing.
  * Returns the raw response body as a string.
  */
@@ -209,7 +233,12 @@ function isRelevant(market: ClobMarket, config: PredictionMarketsConfig): boolea
  *                       When omitted, falls back to fetchFn so existing single-fetchFn
  *                       tests continue to work unchanged. In production this defaults to
  *                       defaultClobFetchFn (raw, no CB). Task 1337.
- * @returns            - Array of relevant, enriched prediction markets. Never throws.
+ * @returns            - Array of relevant, enriched prediction markets.
+ * @throws PolymarketTransportError - ONLY when the Gamma call itself failed
+ *   (TLS/403/DNS/JSON-parse) AND the combined CLOB+Gamma pass produced zero
+ *   results. A legitimately-empty-but-successful fetch never throws
+ *   (FIX-POLYMARKET-FETCH-DEAD-GEOBLOCK-ACTUATOR ACCEPTANCE-4). CLOB-only
+ *   failures never throw — CLOB is optional/best-effort by design (Task 1337).
  */
 export async function fetchPolymarkets(
   config: PredictionMarketsConfig,
@@ -267,6 +296,11 @@ export async function fetchPolymarkets(
   //   - CLOB 403 failures never count against the CB (clobFetchFn is raw)
   //   - Gamma is the real source of truth and is correctly CB-guarded
   let gammaMap = new Map<string, GammaMarket>();
+  // ACCEPTANCE-4: set ONLY inside the Gamma catch below — never on the
+  // legitimate 0-matches-after-successful-parse path. Read after the
+  // Gamma-primary fallback block to decide whether to throw
+  // PolymarketTransportError instead of silently returning [].
+  let gammaTransportFailed = false;
   try {
     const gammaUrl = `${config.gammaApiUrl}/markets?closed=false&active=true&limit=${config.maxMarketsPerPoll}`;
     const raw = await breakers.polymarket.execute(() => fetchFn(gammaUrl));
@@ -284,8 +318,12 @@ export async function fetchPolymarkets(
       }
     }
   } catch (err) {
-    // Gamma failure is non-fatal — proceed with default enrichment values
+    // Gamma failure is non-fatal at THIS step — proceed with default
+    // enrichment values (CLOB results, if any, still get returned below).
+    // gammaTransportFailed is checked at the very end: only throws when it's
+    // ALSO true that the combined pass produced zero results (ACCEPTANCE-4).
     logger.warn("[polymarket] Gamma fetch failed (continuing with defaults)", { error: String(err) });
+    gammaTransportFailed = true;
   }
 
   // Step 4 — merge and filter CLOB primary path
@@ -395,6 +433,21 @@ export async function fetchPolymarkets(
         gammaRelevant: gammaActive,
       });
     }
+  }
+
+  // ACCEPTANCE-4 (FIX-POLYMARKET-FETCH-DEAD-GEOBLOCK-ACTUATOR): a Gamma
+  // transport failure (TLS/403/DNS/parse) that leaves us with zero results
+  // must surface as an error, not a silent []. This is exactly the 28-day
+  // production bug: gamma-api.polymarket.com serving an unrelated *.anj.fr
+  // TLS cert (France's ANJ regulator blocking Polymarket) made every poll
+  // resolve [] and log status=success. A successful Gamma fetch that
+  // legitimately finds 0 matches (gammaTransportFailed stays false) never
+  // throws here — that's the negative control guarding against false-
+  // positive noise.
+  if (gammaTransportFailed && results.length === 0) {
+    throw new PolymarketTransportError(
+      "Polymarket Gamma API transport failure (TLS/403/DNS/parse) — no markets fetched",
+    );
   }
 
   return results;

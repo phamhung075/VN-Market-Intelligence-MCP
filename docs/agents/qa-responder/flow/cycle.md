@@ -38,7 +38,8 @@ Answers → MARKET channel (/ask answers ONLY) | Cycle status → WORK | Errors 
 
 **2. Context by question type**:
 - Stock: `get_market_context()` + `get_kinhdich_reading(code)` + `get_bctc_full(code)` + `get_insider_transactions(code)` + `run_qa_responder(question, code)`
-- Macro: `get_macro_snapshot()` + `get_prediction_markets()` + `get_crisis_early_warning()`
+- Macro: `get_macro_snapshot()` + `get_crisis_early_warning()`
+  > The live Polymarket market-fetch call formerly here was retired by FIX-POLYMARKET-FETCH-DEAD-GEOBLOCK-ACTUATOR (2026-07-31, architect RULING: RETIRE — gamma-api.polymarket.com blocked at the ISP level by France's ANJ gambling regulator, MCP tool deregistered).
 - Live data: WebSearch
 
 **3. Validate price claims** — divergence > 5% → re-fetch, max 2 attempts → "(giá có thể cũ)"

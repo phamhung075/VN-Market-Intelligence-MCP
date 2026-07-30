@@ -1,7 +1,7 @@
 {
   "_maintained_by": "generator (do not hand-edit)",
-  "lastUpdated": "2026-07-23T08:54:48.528Z",
-  "totalCount": 184,
+  "lastUpdated": "2026-07-30T22:53:11.373Z",
+  "totalCount": 183,
   "groups": [
     {
       "name": "alerts",
@@ -99,7 +99,7 @@
     },
     {
       "name": "macro",
-      "count": 23,
+      "count": 22,
       "tools": [
         "create_prediction_claim",
         "get_calibration_report",
@@ -115,7 +115,6 @@
         "get_macro_snapshot",
         "get_policy_signals",
         "get_prediction_accuracy",
-        "get_prediction_markets",
         "get_pyramid_tier",
         "get_rate_limit_status",
         "get_vn_bop",

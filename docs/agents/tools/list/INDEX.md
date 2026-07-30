@@ -1,9 +1,9 @@
 # MCP Tools Documentation Index
 
-Complete reference for all 184 MCP tools organized by category.
+Complete reference for all 183 MCP tools organized by category.
 
 GENERATED from `docs/data/tool-registry.json` — do not hand-edit; registry is the SSOT.
-**Registry last updated:** 2026-07-23T08:54:48.528Z
+**Registry last updated:** 2026-07-30T22:53:11.373Z
 **Per-tool docs:** Each tool has a `.md` file at `docs/agents/tools/list/<tool_name>.md`
 
 ---
@@ -18,7 +18,7 @@ GENERATED from `docs/data/tool-registry.json` — do not hand-edit; registry is 
 | BRIEFINGS | 14 | [See below](#briefings) |
 | FINANCIAL-REPORTS | 20 | [See below](#financial-reports) |
 | KINHDICH | 6 | [See below](#kinhdich) |
-| MACRO | 23 | [See below](#macro) |
+| MACRO | 22 | [See below](#macro) |
 | MARKET-DATA | 25 | [See below](#market-data) |
 | NEWS-ANALYSIS | 14 | [See below](#news-analysis) |
 | PORTFOLIO | 9 | [See below](#portfolio) |
@@ -110,7 +110,7 @@ GENERATED from `docs/data/tool-registry.json` — do not hand-edit; registry is 
 - **[`run_hexagram_backtest`](run_hexagram_backtest.md)**
 
 <a id="macro"></a>
-## MACRO (23 tools)
+## MACRO (22 tools)
 
 - **[`create_prediction_claim`](create_prediction_claim.md)**
 - **[`get_calibration_report`](get_calibration_report.md)**
@@ -126,7 +126,6 @@ GENERATED from `docs/data/tool-registry.json` — do not hand-edit; registry is 
 - **[`get_macro_snapshot`](get_macro_snapshot.md)**
 - **[`get_policy_signals`](get_policy_signals.md)**
 - **[`get_prediction_accuracy`](get_prediction_accuracy.md)**
-- **[`get_prediction_markets`](get_prediction_markets.md)**
 - **[`get_pyramid_tier`](get_pyramid_tier.md)**
 - **[`get_rate_limit_status`](get_rate_limit_status.md)**
 - **[`get_vn_bop`](get_vn_bop.md)**

@@ -3,7 +3,7 @@
 **SSOT mirror of `apps/mcp-server/src/interface/mcp/bootstrap/agentBootstrap.ts`.**
 Update both files together whenever a tool is added or a skill changes.
 
-Last updated: 2026-05-15 (Task 1918b — added `get_macro_snapshot` to `news_scout`; prior: 1910a added `get_ism_subcomponents` to `news_scout`, `financial_analyst`, `unified_coordinator`)
+Last updated: 2026-07-31 (FIX-POLYMARKET-FETCH-DEAD-GEOBLOCK-ACTUATOR — removed `get_prediction_markets` from `news_scout` and `unified_coordinator`; tool deregistered, architect RULING: RETIRE; prior: 1918b added `get_macro_snapshot` to `news_scout`; 1910a added `get_ism_subcomponents` to `news_scout`, `financial_analyst`, `unified_coordinator`)
 
 ---
 
@@ -17,7 +17,6 @@ Last updated: 2026-05-15 (Task 1918b — added `get_macro_snapshot` to `news_sco
     "fetch_and_analyze",
     "run_impact_chain",
     "search_similar_context",
-    "get_prediction_markets",
     "get_rate_limit_status",
     "post_agent_signal",
     "get_recent_fixes",
@@ -220,7 +219,6 @@ Last updated: 2026-05-15 (Task 1918b — added `get_macro_snapshot` to `news_sco
     "get_market_context",
     "get_macro_snapshot",
     "get_alerts",
-    "get_prediction_markets",
     "get_sentiment_trend",
     "get_positions",
     "get_portfolio_conviction",

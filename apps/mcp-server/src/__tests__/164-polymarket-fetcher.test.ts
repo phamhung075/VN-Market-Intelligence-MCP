@@ -14,6 +14,7 @@ import { describe, it, expect, beforeAll, afterAll } from "bun:test";
 import {
   fetchPolymarkets,
   storePolymarketSnapshot,
+  PolymarketTransportError,
   type PolyFetchFn,
 } from "../infrastructure/fetchers/polymarket.js";
 import { initDatabase, getDb, closeDb } from "../infrastructure/db/schema.js";
@@ -287,7 +288,10 @@ describe("Task 164 — fetchPolymarkets — relevance filtering", () => {
     expect(results).toHaveLength(1);
   });
 
-  it("returns empty array when CLOB returns empty list", async () => {
+  it("returns empty array (does NOT throw) when both CLOB and Gamma successfully parse to empty lists", async () => {
+    // ACCEPTANCE-4 negative control: both calls SUCCEED (valid JSON, no network/parse
+    // error) and legitimately find 0 markets — gammaTransportFailed stays false, so
+    // this must resolve to [], never throw. Guards against false-positive noise.
     const clob = JSON.stringify([]);
     const gamma = JSON.stringify([]);
 
@@ -301,14 +305,25 @@ describe("Task 164 — fetchPolymarkets — relevance filtering", () => {
 // ---------------------------------------------------------------------------
 
 describe("Task 164 — fetchPolymarkets — resilience", () => {
-  it("returns empty array (never throws) when CLOB call fails", async () => {
-    const results = await fetchPolymarkets(BASE_CONFIG, failingFetch());
-    expect(Array.isArray(results)).toBe(true);
-    expect(results).toHaveLength(0);
+  // FIX-POLYMARKET-FETCH-DEAD-GEOBLOCK-ACTUATOR ACCEPTANCE-4 (2026-07-31):
+  // failingFetch() is used as the single fetchFn param — since no clobFetchFn
+  // override is supplied, resolvedClobFetch falls back to fetchFn too, so
+  // BOTH CLOB and Gamma fail. This is the EXACT real-world scenario (Gamma
+  // TLS-blocked by France's ANJ regulator + CLOB's separate pre-existing
+  // 403) that used to silently resolve [] for 28+ days while cron_job_runs
+  // logged status=success. It must now throw PolymarketTransportError
+  // instead of returning [] — this test used to assert the old silent-swallow
+  // behavior; that was the bug.
+  it("throws PolymarketTransportError (not []) when BOTH CLOB and Gamma fail", async () => {
+    await expect(fetchPolymarkets(BASE_CONFIG, failingFetch())).rejects.toThrow(
+      PolymarketTransportError,
+    );
   });
 
-  it("continues with empty enrichment when Gamma call fails", async () => {
-    // fetchFn succeeds on CLOB but fails on Gamma
+  it("continues with empty enrichment when Gamma call fails but CLOB produced results (does NOT throw)", async () => {
+    // fetchFn succeeds on CLOB but fails on Gamma. ACCEPTANCE-4: gammaTransportFailed
+    // is true here too, but results.length > 0 (from CLOB), so fetchPolymarkets must
+    // NOT throw — a partial success still returns real data.
     const clobBody = buildClobResponse([
       {
         condition_id: "cond-005",
@@ -326,10 +341,14 @@ describe("Task 164 — fetchPolymarkets — resilience", () => {
     expect(results[0]!.uniqueWalletsCount).toBe(0);
   });
 
-  it("returns empty array when CLOB returns malformed JSON", async () => {
+  it("throws PolymarketTransportError when CLOB and Gamma both return malformed JSON", async () => {
+    // ACCEPTANCE-4: both CLOB and Gamma JSON.parse fail here (same fetchFn
+    // for both) — Gamma's parse failure sets gammaTransportFailed=true and
+    // results stays empty, so this must throw, not resolve to [].
     const badFetch: PolyFetchFn = async (_url: string): Promise<string> => "not json";
-    const results = await fetchPolymarkets(BASE_CONFIG, badFetch);
-    expect(results).toHaveLength(0);
+    await expect(fetchPolymarkets(BASE_CONFIG, badFetch)).rejects.toThrow(
+      PolymarketTransportError,
+    );
   });
 });
 
