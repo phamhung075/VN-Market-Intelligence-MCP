@@ -1,6 +1,14 @@
 # Dev Team — Sprint Boundary Notebook
 
-**Written:** 2026-07-30T19:58Z
+**Written:** 2026-07-30T20:20Z
+
+## cycle-20260730T1807Z-tick — drained 9 signals; head-sync self-corrected (ops's SPIKE flip never reset .head); SLS dispatched pm on FIX-COWORK-DISPATCH-ROUTER-INTENT-MUTEX-BYPASS (P0, 3rd-occurrence cross-path dispatch mutex bug, PO-authorized SLS reach)
+
+- **Preflight RUN, tick `2026-07-30T18:07Z`.** GCC-preflight clean, HEAD.lock/worktree clean. Step 0a drained 9 signals (8 bctc routine + 1 commit-sweep-guard), all routed-to-po, 1 legacy file pruned — committed `236310900`. CI probe deduped clean (same `ci-red-4b2ae444` fingerprint, 3rd consecutive tick).
+- **Found + fixed own-session gap before it recurred**: `.head` was still `in_progress`/`active_task_id:SPIKE-BCTC-...`/`next_agent:ops` from the PRIOR turn's ops dispatch — ops's board write flipped the row IN_PROGRESS→REVIEW but never reset `.head` (CANONICAL:SSOT-STATUSFLIP-LANEMOVE violation flagged but not yet corrected last turn). Left alone, Step 0b's WF-2 SUPERVISED-HOLD check would have found the row in `review[]` with `supervised:true`/no `po_goahead_*` and silently held every tick, masking true idle state indefinitely. Reset `.head` to idle directly, committed `c3d7eb6d6`.
+- **BOUNDED-1**: WIP=1 (still the same `BLOCKED` `FU-CNYVND-DEAD-FIELD-REMOVE` row, unchanged since last tick, correctly no-op).
+- **Supervised-Lane Sweep**: WIP2=1<2 → promoted+claimed `FIX-COWORK-DISPATCH-ROUTER-INTENT-MUTEX-BYPASS` (P0, ba spec + architect ruling both already complete, `next_agent:pm`). Verified this is a genuine PO-authorized SLS pickup, not a bypass of the architect's 07-29 "needs supervisor go-ahead" caution: PO's own 07-30T09:18 lane-correction note explicitly moved the row `ready[]→backlog[]` "the point is to reach the supervised lane, not to bypass it" — deliberate routing into SLS's reach this same morning. Committed `1fc42b096`. Dispatched `pm` (background, DJ-GATE-1 + CANONICAL:SSOT-STATUSFLIP-LANEMOVE + self-commit + lock/telegram-disposition all explicitly instructed in the spawn prompt, referencing both gaps found+fixed this session as concrete precedent). Lock held (LOCK-LIFETIME) — awaiting return.
+- **NEXT:** await `pm`'s return on `FIX-COWORK-DISPATCH-ROUTER-INTENT-MUTEX-BYPASS`; RAW-verify the child-task decomposition (CLAUDE.md 1-line diff + SKILL.md Step 2.4 addition same-commit per FR-6, FR-7 test harness) before trusting the board disposition.
 
 ## cycle-20260730T1958Z-verify — RAW-verified ops's SPIKE-BCTC-EXTRACTION-DORMANT-MASS-ENRICHFAIL-FLOOD recurring-dormancy dispatch; board flip genuine, live DB cross-checked, ops's uncommitted write self-committed on its behalf
 
@@ -18,12 +26,3 @@
 - **Tool-grant gap claim verified TRUE, not an excuse** ([[feedback_agent_reported_limitation_may_be_structural_check_the_tool_grant]]): `architect` agent type carries no `mcp__gateway__call_tool` grant — dev-team released `task:SPIKE-SQLITE-DOCKER-VIRT-CORRUPTION-HARDENING` and sent the WORK telegram itself.
 - **6 commits now queued unpushed** (`671272bf4`..`9ecfdd300`) — push-backstop deferred to the next tick's post-cycle per the already-filed SLS-skips-post-cycle signal (`70bc45408`); non-urgent, no new tick has fired this session since `17:07Z`.
 - **NEXT:** po triage of the brief's prioritized follow-up list on its next drain (highest priority: live stock-price WAL re-armer, brief §3).
-
-## cycle-20260730T1855Z-verify — RAW-verified dev-mcp-server's FU-CNYVND-DEAD-FIELD-REMOVE stop-and-report; correct escape-hatch use, board BLOCKED/next_agent=architect, lock released
-
-- **BGFAN-1 RAW-verification, all claims confirmed real, no fabrication**: commits `fc1b45c93`/`119dabb53` real, on HEAD, correctly scoped (only journal/notebook/orch-state — zero code/schema/test files touched, matching the "stopped, no removal" claim).
-- **Live cross-service consumer claim independently confirmed**: `apps/macro-indicators/pkg/infrastructure/adapters_vmt_sjc_fx.go:112` (`fetchSJCFXInputsFromDB`) queries `commodity_prices.cny_vnd_rate` directly from the shared `market.db` in the same multi-column `Scan()` as `gold_usd_per_oz`/`usd_vnd_rate`/`dxy`; plumbed through `usecases_vmt_liquidity.go`/`services_vmt_liquidity.go` into mcp-server's own live `get_vn_liquidity_state` tool (`registry.ts:262`, #168), whose `FXCouplingSchema` (`liquidityStateTools.ts:53`) requires `cny_vnd_rate: z.number()`. Container `vn-market-intelligence-mcp-macro-indicators-1` confirmed live/healthy (17h). Original zero-readers finding genuinely missed this — not a fabricated escalation.
-- **Fail-closed blast-radius claim verified**: the query's success gate (`err == nil && fetchedAt.Valid`) wraps all 4 field assignments in one block — dropping the column would error the whole `Scan()`, zeroing `gold_usd_per_oz`/`usd_vnd_rate`/`dxy` collaterally, not just `cny_vnd_rate`. Confirms the "not low consumer-break risk" reassessment.
-- **Board disposition genuine**: row `status:BLOCKED` (stayed in `in_progress` lane — verified `BLOCKED` IS a valid `in_progress` sub-status per `orchStateSchema.ts:432`'s `LANE_ALLOWED_STATUSES` map; agent's prose called it `LANE_STATUS_MAP`, a naming slip only, not a substantive error), `next_agent:architect`, `.head` reset to idle. DJ-GATE-1 confirmed (`STEP dev-mcp-server-S31`). Notebook within cap (43L/3 sections).
-- **Disposition**: sprint-task lock released, WORK telegram sent. No re-verification of tests needed — zero source/test delta to check.
-- **NEXT:** `FU-CNYVND-DEAD-FIELD-REMOVE` awaits an architect/PO call on repoint-vs-formalize-as-permanently-null; not dev-team's to auto-pick-up again (P3, blocked, needs architect first).
