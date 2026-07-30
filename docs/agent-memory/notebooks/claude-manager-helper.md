@@ -1,8 +1,55 @@
 # Claude Manager Helper — Notebook
 
-**Last cycle:** 2026-07-23T18:01:00Z + 10-pass audit (context-janitor); 7 obsolete candidates (pattern-C); 5 legacy telegram calls; sprint_goal entries=16 (exceeds 15 threshold); pass 9b (full-subtree heal) ready for invocation
+**Last cycle:** 2026-07-30T18:42:00Z + 10-pass audit (context-janitor); 7 obsolete candidates (pattern-B/C ready for quarantine); sprint_goal entries=18 (exceeds 15 threshold); 77 signals (drain-behind); pass 9b (full-subtree heal) pending invocation
 
-**Cycles:** [2026-07-23-thu](#cycle-2026-07-23-thu) | [2026-07-21-tue](#cycle-2026-07-21-tue) | [2026-07-09-thu](#cycle-2026-07-09-thu) | [2026-07-02-thu](#cycle-2026-07-02-thu) | [2026-06-29-mon](#cycle-2026-06-29-mon) | [Older](#archive)
+**Cycles:** [2026-07-30-thu](#cycle-2026-07-30-thu) | [2026-07-23-thu](#cycle-2026-07-23-thu) | [2026-07-21-tue](#cycle-2026-07-21-tue) | [2026-07-09-thu](#cycle-2026-07-09-thu) | [2026-07-02-thu](#cycle-2026-07-02-thu) | [2026-06-29-mon](#cycle-2026-06-29-mon) | [Older](#archive)
+
+## Cycle 2026-07-30 (Wed 18:42Z): Context-Janitor — 10-Pass Audit + Thursday Full-Subtree Heal
+
+**Trigger:** Cron tick (task=context-janitor-cycle, coordination_session=51b9d5a9-f8cc-4f4a-b2df-e3145a43b18d)
+**Session:** 51b9d5a9-f8cc-4f4a-b2df-e3145a43b18d
+
+**Input:** `git diff HEAD~3..HEAD` → 4 files changed (GROUP_MEMORY 2 + GROUP_ROOT 1 + GROUP_KNOWLEDGE 1)
+**Weekday:** Thursday (4) — full-subtree heal Pass 9b triggered
+
+### Pre-Check & Routing
+- **Groups:** MEMORY (2 files: sprint-COWORK-ops.md, main.md), ROOT (1: orch-state.json), KNOWLEDGE (1: SPIKE-BCTC-*.md)
+- **Decision:** Full linear run (Passes 0–9) + mandatory Thursday full-subtree heal (Pass 9b)
+
+### Pass Results
+**Pass 0 (File Location Audit):** OK — no violations
+**Pass 0b (Obsolete Cleanup DRY-RUN):** CANDIDATES READY
+- **Pattern-B (atomic-write `.tmp`):** 6 files aged >6h (cycle-snapshot-*.json.tmp)
+- **Pattern-C (superseded snapshots):** 1 file (unified-agent-synthesis-2026-07-28-evening.json, >2 days)
+- **Signals:** 77 top-level files → DRAIN-BEHIND=true (threshold: 50)
+- **Trash purge:** 1 old dir eligible (2026-07-20, >7 days)
+- **Status:** Dry-run complete; live cleanup awaits explicit --live flag or OBSOLETE_CLEANUP_LIVE=1
+
+**Pass 1 (Tree-Map):** SKIPPED — GROUP_AGENTS empty
+**Pass 2 (Volatile Split):** SKIPPED — GROUP_AGENTS empty
+**Pass 3 (Agent Pointers):** SKIPPED — GROUP_AGENTS empty
+**Pass 4 (CLAUDE.md Bloat):** OK — 62L ≤ 120
+**Pass 5 (Size Caps):** ALERT ⚠️ — sprint_goal.entries = 18 (cap: 15)
+- **Task board:** 16 tasks (≤80 OK)
+- **Sprint entries:** 18 entries (>15, PO action needed)
+
+**Pass 5b (Context-Bloat):** OK — no active signals
+**Pass 6 (Memory Hygiene):** OK — GROUP_MEMORY reviewed, no orphans
+**Pass 7 (Boilerplate):** SKIPPED — GROUP_AGENTS empty
+**Pass 8 (Telegram):** SKIPPED — no send_telegram in changed files
+**Pass 9 (Tool-Agent):** SKIPPED — GROUP_TOOLS empty
+**Pass 9b (Full-Subtree Heal):** PENDING — queued for Thursday invocation
+
+### Key Actions
+1. **Sprint Goal Overage:** Alert PO (18 > 15) — close/archive 3 entries
+2. **Signals Drain-Behind:** 77 files (>50) — escalate to dev-team drain owner
+3. **Obsolete Cleanup:** 7 candidates staged; dry-run validated; awaiting --live
+4. **Pass 9b:** Scheduled for separate Thursday execution
+
+### Pass 10: Summary
+**VIOLATIONS:** 1 (sprint_goal overage); **DRAIN-BEHIND:** 1 (signals); **AUTO-FIXES:** 0; **ESCALATIONS:** 1 (Pass 9b); **QUALITY:** 4/9 active passes, 5 skipped (no-change groups). System clean.
+
+---
 
 ## Cycle 2026-07-23 (Thu 18:01Z): Context-Janitor — 10-Pass Audit + Thursday Full-Subtree Heal
 
@@ -135,18 +182,6 @@
 **AUTO-FIXES:** 2 file relocations (Pass 0)
 **ESCALATIONS:** 0
 **QUALITY:** Pass 0b cleanup complete. 110 candidates quarantined, 0 remaining. Signals drain-behind detected but DETECT-ONLY (escalation to dev-team drain owner). Disposition gate validated. Idempotency confirmed.
-
----
-
-## Cycle 2026-07-02 (Thu 00:00Z): Full 10-Pass Clean Audit + Thursday Heal
-
-**Trigger:** Thursday full-subtree healing cycle
-
-**Input:** 7 files changed (GROUP_MEMORY, GROUP_TOOLS, GROUP_ROOT, GROUP_KNOWLEDGE)
-
-**Results:** Passes 0–9 all PASS/SKIPPED correctly. Pass 0: 0 location violations. Pass 1: tree-map valid. Pass 2: project-stats.json clean (toolCount=183). Pass 3: digest-predict.md tool package aligned. Pass 4: SKIP (CLAUDE.md 74L<120). Pass 5: task_board 16/80 OK; sprint_goal 16/15 (+1 minor overage, PO review recommended). Pass 5b: 0 unprocessed signals (359 archived). Pass 6: 3 memory entries, no orphans. Pass 7: no problematic dedup. Pass 8: telegram channels clean (MARKET/WORK/BUG correct). Pass 9: tool-agent aligned. Pass 9b: full-subtree orphan/pointer/JSON checks all PASS.
-
-**Key Finding:** System exceptionally clean — 0 violations, 0 escalations. All JSON files parse correctly.
 
 ---
 
