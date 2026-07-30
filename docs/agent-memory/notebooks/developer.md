@@ -1,6 +1,22 @@
 # Developer — Notebook
 
-**Last updated:** 2026-07-30 | **Cycle:** FIX-DEVTEAM-WIP-BUDGET-COUNTS-BLOCKED-INPROGRESS-ROWS
+**Last updated:** 2026-07-30 | **Cycle:** FIX-COMMIT-SWEEP-GUARD-SCRIPT-ACTUATOR-AND-NOTEBOOK-LONGTAIL
+
+## Session 2026-07-30 — FIX-COMMIT-SWEEP-GUARD-SCRIPT-ACTUATOR-AND-NOTEBOOK-LONGTAIL — REVIEW
+
+**Task:** dev-team BOUNDED-1 idle-capacity auto-pickup (`cross-service/`), two arms. Arm 1: `dev-team-tick-preflight.sh:454-455` bare `git commit` (2x/hourly actuator). Arm 2: 31-file `chore(memory/<agent-id>)` notebook-commit long-tail, deferred by an agent-father completion note to "a separate PM-tracked cleanup pass" that was never minted onto the board.
+
+**Actions:** Arm 1 — RAW-checked the live file BEFORE implementing (per `feedback_known_failure_shape_pattern_matched_without_reading_call_order`): already fixed pre-existing by commit `fc8a8d4f1` (6h after PO's own measurement this task was minted from). No code change — re-doing it would be pure churn. Arm 2 — found the deferred note (`agent_father_completion_20260729` field on the LAYER2 row, not `po_closure_20260730`), grepped `docs/agents/`+`.claude/skills/` for `chore(memory` sites: 34 total, 3 already pathspec-scoped, 31 genuinely bare — exact match to PO's count. Implemented directly (mechanical, identical pattern to the 3 already-fixed reference sites) rather than minting a new row: appended `-- <exact own path(s)>` to all 31, backslash-continuation form for the 4 multi-path sites, shell-glob `docs/signals/processed/*` for `unified-agent/chef.md` (architecture brief §2.3 forbids literal directory pathspecs on the commit line).
+
+**Decisive finding:** `docs/agents/bctc-analyst/flow/stage-log-notify.md` had an unrelated peer-written unstaged hunk mid-task. Isolated my hunk via `git apply --cached` (verified staged==mine, unstaged==peer's), then ran the mandated `git commit -- <path>` anyway swept BOTH hunks into one commit — reproduced cleanly in a scratch repo: `git commit -m ... -- <path>` uses git's own `--only`-when-pathspec-given semantics, reading the WORKING TREE (not the index) for the named path. Pathspec-scoped single-file commits — the exact pattern this whole sweep-guard family ships as "safe" — do NOT protect against same-file intra-file hunk sweep, only cross-file peer-staged sweep. Not destructive (content fully recoverable, `git show 2f16eea16`), but flagged to PO as load-bearing for the fleet-wide `GIT_SWEEP_GUARD_MODE=reject` decision.
+
+**Verification:** `scripts/audits/verify-commit-sweep-discriminator.sh` VERDICT PASS (git 2.49.0); `scripts/git-hooks/pre-commit.test.sh` 6/6 PASS; `bash -n` clean on the (unchanged) preflight script; post-fix re-grep of all 34 sites confirms 0 bare remain. No `apps/` TS/Go touched (zone `cross-service/`, pure md+bash+jq) — `bun test`/`tsc` N/A.
+
+**Board:** `task_board.in_progress[FIX-COMMIT-SWEEP-GUARD-SCRIPT-ACTUATOR-AND-NOTEBOOK-LONGTAIL]` → `review` (`next_agent: po` — parent-close + same-file-sweep-gap judgment call), lane-moved `in_progress[]→review[]`, `.head` reset to idle, same `orch-apply.sh` write.
+
+**Also flagged, out of this row's scope, not fixed:** `docs/agents/tools/package/cowork-refactory-expert.md:57` has a distinct bare-commit-with-directory-add example (`git add .claude/cowork/ && git commit -m "..."`) — different message shape, not part of the 31/34-count grep, not named in either arm; left untouched per "never touch files outside assigned task scope."
+
+**Zone note:** No MCP/gateway tool grant this session (Read/Edit/Write/Bash only) — could not `task_release`/`send_telegram`; flagged for the coordinating dev-team session (`owner_client_session=64c7c677-0f0f-4cee-a3ce-dba79d70b7ae`) to release `task:FIX-COMMIT-SWEEP-GUARD-SCRIPT-ACTUATOR-AND-NOTEBOOK-LONGTAIL` on my behalf.
 
 ## Session 2026-07-30 — FIX-DEVTEAM-WIP-BUDGET-COUNTS-BLOCKED-INPROGRESS-ROWS — REVIEW
 
@@ -29,21 +45,3 @@
 **Board:** `task_board.in_progress[FIX-SCRIPTS-MIGRATIONS-MARKETDB-WAL-REARM-SAME-DEFECT]` → dev-team's job (board flip, lane move, `.head` reset, lock release) — no MCP/gateway tool grant this session (Read/Edit/Write/Bash only).
 
 **Zone note:** flagged for the coordinating dev-team session (`owner_client_session=64c7c677-0f0f-4cee-a3ce-dba79d70b7ae`) to release `task:FIX-SCRIPTS-MIGRATIONS-MARKETDB-WAL-REARM-SAME-DEFECT` and flip board status on my behalf.
-
-## Session 2026-07-30 — FIX-AUDITOR-OUTPUT-CONTRACT-SIGNALSPOSTED-COUNTS-CALLS-NOT-CONFIRMED-ROWS — REVIEW
-
-**Task:** dev-team BOUNDED-1 auto-pickup (`cross-service/`). Auditor OUTPUT-CONTRACT reported `signals_posted=3` while `agent_signals` had a hard zero-row gap spanning the claimed post time. AC-1 mandated empirical determination (instrument/replay) BEFORE any code change — no assumption.
-
-**Actions:** 2 in-process repro scripts (run before any edit) confirmed BOTH candidate mechanisms named in the task's SCOPE, plus a 3rd sibling variant: (a) `postSignalWithCriticGate`/`postSignal` return sentinel `signalId=-1` for EVERY dedup-suppressed no-op (not just critic-first-reject), and `agentSignalTools.ts` only special-cased the critic branch — any other `id<=0` fell through to `success:true` with a fake `-1` id; (b) a forced INSERT throw (monkeypatched `db.prepare`) returns `Error:` text WITHOUT `isError:true` — the only one of the handler's 3 non-success paths that omitted it — and `mcp-call.sh`'s `_mcp_call_parse` checks only `.result.isError`, never text. Fixed all 3 layers: tool (`id<=0` → `success:false`; catch-all sets `isError:true`), shared caller (`mcp-call.sh` treats `Error:`-prefix text as failure even if `isError` unset), and `emit-audit-signal.sh`'s `_run_e1()` (parses JSON body success/signal_id, THEN mandatory `get_agent_signals` read-back before counting — mirrors the existing E-3 pattern for the OTHER store).
-
-**Verify-live catch:** repro scripts proved the dedup-fallthrough bug needs ZERO db corruption to reproduce — a routine identical-payload duplicate call was enough; likely the MORE common real-world trigger than the corruption scenario the task's SCOPE section led with.
-
-**Verification:** RED-then-GREEN on the new TS test (2/2). Agent-signal-family TS suite 114/114 unaffected. New `scripts/agents-flow/mcp-call.test.sh` 9/9. Extended `scripts/emit-audit-signal.test.sh` 67/67 (T16-T20 new, stub upgraded to realistic post_agent_signal/get_agent_signals shapes). `scripts/audit-output-contract.test.sh` 35/35 unaffected (new ABORT reasons fall under its existing wildcard). shellcheck: only pre-existing info-level SC1091. `tsc` clean. Full `bun test`: 14897 pass / 54 fail — all 54 confirmed PRE-EXISTING full-suite-only test-isolation artifacts unrelated to this change (spot-checked 3 in isolation, all pass; none touch agent-signal files).
-
-**Board:** `task_board.in_progress[FIX-AUDITOR-OUTPUT-CONTRACT-SIGNALSPOSTED-COUNTS-CALLS-NOT-CONFIRMED-ROWS]` → `review` (`next_agent: qa`), `.head` reset to idle, same `orch-apply.sh` write.
-
-**Simplicity gate:** PASS — every branch maps directly to AC-1..AC-4, no new abstractions, no flags/knobs.
-
-**Zone note:** No MCP/gateway tool grant this session (Read/Edit/Write/Bash only) — could not `task_release`/`send_telegram`; flagged for the coordinating dev-team session (`owner_client_session=64c7c677-0f0f-4cee-a3ce-dba79d70b7ae`) to release `task:FIX-AUDITOR-OUTPUT-CONTRACT-SIGNALSPOSTED-COUNTS-CALLS-NOT-CONFIRMED-ROWS` on my behalf.
-
-Zone health: SIBLING `FIX-AUDITOR-DASHBOARD-APPEND-NO-ACTUATOR-CONTRACT-COUNT-NARRATED` (review, next=qa) is the same narrated-count class on the dashboard-append surface — untouched here per instructions, batch not merge; QA reviews both together. ALSO: notebook-auto-prune.sh's PostToolUse hook dropped only 1 of 2 required sections on this write (5→4, not 5→3) — 4th occurrence today, same file, same misfire this notebook's own prior 3 entries already flagged; manually dropped the true-oldest remaining section myself to reach cap. Escalate past "flag and move on" per the 2+-recurrence standing policy.
