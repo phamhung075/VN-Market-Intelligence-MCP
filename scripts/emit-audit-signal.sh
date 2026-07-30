@@ -54,6 +54,11 @@
 #   success, --e3-only mode                -> "[emit-signal] OK e3-only id=<id> check_id=<check_id>"
 #   success, --no-telegram (E-1 fired)     -> "[emit-signal] OK no-telegram id=<id> check_id=<check_id>"
 #   E-1 transport failure (fail-loud)      -> "[emit-signal] ABORT e1-failed <detail>"
+#   E-1 not written (dedup no-op / thrown  -> "[emit-signal] ABORT e1-not-written <detail>"
+#     DB error surfaced as success:false —    (FIX-AUDITOR-OUTPUT-CONTRACT-SIGNALSPOSTED
+#     rc=0 from mcp_call is NOT sufficient)    AC-1/AC-2 — never trust rc alone)
+#   E-1 write claimed but read-back of      -> "[emit-signal] ABORT e1-readback-failed id=<id>"
+#     agent_signals found no matching row      (AC-2/AC-3 — mandatory read-back, mirrors E-3)
 #   E-3 write failure (rc=1|3, no retry)   -> "[emit-signal] ABORT e3-write-failed rc=<n>"
 #   E-3 CAS-retry exhausted (3x rc=2)      -> "[emit-signal] ABORT e3-cas-exhausted rc=2"
 #   E-3 POST-WRITE read-back failure       -> "[emit-signal] ABORT e3-readback-failed <id>"
@@ -218,8 +223,29 @@ _severity_rank() {
 
 # Step E-1: post_agent_signal. Fail-loud on transport failure — never
 # silently skips (FR-2, EC-2).
+#
+# FIX-AUDITOR-OUTPUT-CONTRACT-SIGNALSPOSTED-COUNTS-CALLS-NOT-CONFIRMED-ROWS
+# (AC-1/AC-2/AC-3): confirmed live (2026-07-30) that `mcp_call` returning
+# rc=0 is NOT sufficient evidence a row landed in `agent_signals` — two
+# distinct mechanisms can produce a "successful" call with zero rows
+# written: (a) the tool's own dedup-suppression sentinel (`signal_id<=0`)
+# surfacing as `success:false` (now, post tool-side fix; previously
+# `success:true` with a fake `signal_id:-1`), and (b) a genuine DB-write
+# throw during a fault window. Neither is reliably distinguishable from a
+# real write by inspecting the call's return code alone. This function now:
+#   1. parses the tool's own JSON body for `success===true` AND a positive
+#      integer `signal_id` — anything else ABORTs (e1-not-written), never
+#      counted;
+#   2. performs a MANDATORY read-back via `get_agent_signals` (sender-history
+#      mode, read-mark suppressed) confirming that exact id is present in
+#      `agent_signals` before this call is allowed to count toward
+#      `signals_posted` — mirrors the E-3 signal_queue POST-WRITE read-back
+#      pattern below, applied to the OTHER store this script writes to.
+# The confirmed agent_signals id is NOT threaded into the final marker's
+# `id=` field — that field is, and remains, the E-3 signal_queue row id (two
+# separate stores, two separate id namespaces; see header MARKERS section).
 _run_e1() {
-  local payload e1_args result rc
+  local payload e1_args result rc success_flag signal_id_val
   payload=$(jq -n \
     --arg check_id "$CHECK_ID" \
     --arg severity "$SEVERITY" \
@@ -239,6 +265,34 @@ _run_e1() {
     echo "[emit-signal] ABORT e1-failed $(printf '%s' "$result" | tr '\n' ' ' | cut -c1-200)"
     return 1
   fi
+
+  # AC-1/AC-2: never trust "the call didn't error" alone — the tool's own
+  # JSON body is the only place that distinguishes a real write from a
+  # dedup-suppressed no-op (signal_id<=0, success:false).
+  success_flag=$(printf '%s' "$result" | jq -r '.success // false' 2>/dev/null)
+  signal_id_val=$(printf '%s' "$result" | jq -r '.signal_id // empty' 2>/dev/null)
+  if [ "$success_flag" != "true" ] || [ -z "$signal_id_val" ] \
+     || ! [[ "$signal_id_val" =~ ^[0-9]+$ ]] || [ "$signal_id_val" -le 0 ]; then
+    echo "[emit-signal] ABORT e1-not-written $(printf '%s' "$result" | tr '\n' ' ' | cut -c1-200)"
+    return 1
+  fi
+
+  # AC-2/AC-3: mandatory read-back — confirm the id the tool claims to have
+  # written actually exists in agent_signals before this call is allowed to
+  # count toward signals_posted. A mismatch here fails loud (ABORT +
+  # anti-false-green BUG telegram, same treatment as an E-3 readback miss),
+  # never silently rounded up to "it probably worked".
+  local readback_args readback_result readback_rc
+  readback_args=$(jq -n --arg from "$FROM_AGENT" --argjson hb 0.25 \
+    '{from_agent:$from, status:"all", hours_back:$hb}')
+  readback_result=$(mcp_call "get_agent_signals" "$readback_args" 2>&1)
+  readback_rc=$?
+  if [ "$readback_rc" -ne 0 ] || ! printf '%s' "$readback_result" | grep -qE "^\[${signal_id_val}\] "; then
+    echo "[emit-signal] ABORT e1-readback-failed id=$signal_id_val"
+    _send_orphan_bug_telegram "e1-readback-failed id=$signal_id_val"
+    return 1
+  fi
+
   return 0
 }
 

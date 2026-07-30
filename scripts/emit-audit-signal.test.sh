@@ -62,13 +62,48 @@ source "$EMIT_SH"
 
 # ── Recording stub for mcp_call — overrides the real transport from
 # mcp-call.sh. ZERO real network calls anywhere in this suite. ─────────────
+# FIX-AUDITOR-OUTPUT-CONTRACT-SIGNALSPOSTED-COUNTS-CALLS-NOT-CONFIRMED-ROWS:
+# _run_e1() now parses the post_agent_signal JSON body (success/signal_id) AND
+# performs a mandatory get_agent_signals read-back — the stub below returns
+# REALISTIC response shapes for both (not the pre-fix bare `'{}'`), with
+# override hooks for the new negative-path tests (T16-T18).
 MCP_CALL_FAIL_TOOL=""   # tool name to force-fail (e.g. "post_agent_signal"); empty = never fail
+POST_SIGNAL_ID_COUNTER=0
+POST_SIGNAL_FORCE_TEXT=""          # if set, returned verbatim for post_agent_signal (overrides success/id below)
+POST_SIGNAL_FORCE_SUCCESS="true"   # the `.success` field on the realistic post_agent_signal stub response
+POST_SIGNAL_FORCE_ID=""            # if set, forces `.signal_id` instead of the auto-incrementing counter
+READBACK_FORCE_MISS=""             # "true" = get_agent_signals stub response does NOT contain the posted id
+LAST_POSTED_SIGNAL_ID=""
 mcp_call() {
   local tool="${1:-}" args="${2:-}"
   echo "CALL: $tool $args" >> "$CALL_LOG"
   if [ "$tool" = "$MCP_CALL_FAIL_TOOL" ]; then
     echo "simulated transport failure" >&2
     return 1
+  fi
+  if [ "$tool" = "post_agent_signal" ]; then
+    if [ -n "$POST_SIGNAL_FORCE_TEXT" ]; then
+      printf '%s' "$POST_SIGNAL_FORCE_TEXT"
+      return 0
+    fi
+    local sid
+    if [ -n "$POST_SIGNAL_FORCE_ID" ]; then
+      sid="$POST_SIGNAL_FORCE_ID"
+    else
+      POST_SIGNAL_ID_COUNTER=$((POST_SIGNAL_ID_COUNTER + 1))
+      sid="$POST_SIGNAL_ID_COUNTER"
+    fi
+    LAST_POSTED_SIGNAL_ID="$sid"
+    printf '{"success":%s,"signal_id":%s}' "$POST_SIGNAL_FORCE_SUCCESS" "$sid"
+    return 0
+  fi
+  if [ "$tool" = "get_agent_signals" ]; then
+    if [ "$READBACK_FORCE_MISS" = "true" ]; then
+      printf 'Không có tín hiệu mới.'
+      return 0
+    fi
+    printf '[%s] SIGNAL_FEEDBACK — từ: system-auditor' "${LAST_POSTED_SIGNAL_ID:-1}"
+    return 0
   fi
   echo '{}'
   return 0
@@ -91,6 +126,10 @@ e1_signal_type_is() {
 reset_case() {
   : > "$CALL_LOG"
   MCP_CALL_FAIL_TOOL=""
+  POST_SIGNAL_FORCE_TEXT=""
+  POST_SIGNAL_FORCE_SUCCESS="true"
+  POST_SIGNAL_FORCE_ID=""
+  READBACK_FORCE_MISS=""
   cp "$REPO_ROOT/docs/data/orch/orch-state.json" "$SCRATCH_ORCH"
   rm -f "$SCRATCH_LEDGER"
   # restore default (real) _orch_apply_invoke in case a prior case stubbed it
@@ -314,6 +353,80 @@ OUT15=$(run_emit_signal --check-id A-20 --category-type signal_feedback --severi
   --summary "provenance cas retry probe" --detail-json '{"dedup_key":"microservice_degraded:pdf-extractor:A-20-prov"}')
 ROW_ID15=$(printf '%s' "$OUT15" | grep -o 'id=[^ ]*$' | cut -d= -f2)
 check "T15 CAS-retry path row also carries provenance=detector" "$([ "$(row_provenance "$ROW_ID15")" = "detector" ] && echo true || echo false)"
+
+# ── T16-T18: FIX-AUDITOR-OUTPUT-CONTRACT-SIGNALSPOSTED-COUNTS-CALLS-NOT-
+# CONFIRMED-ROWS (AC-1/AC-2/AC-3) — mcp_call returning rc=0 is NOT sufficient
+# evidence a row landed in agent_signals; _run_e1() must ABORT (never count
+# toward signals_posted, never reach E-3) on any of: (a) tool reports
+# success:false (dedup no-op), (b) tool reports success:true with a
+# signal_id<=0 sentinel, (c) tool's response is an Error:-prefixed text body,
+# (d) the mandatory read-back cannot find the claimed id. ───────────────────
+
+# T16: tool reports success:false (e.g. dedup-suppressed, post-fix tool-side
+# contract) — must ABORT e1-not-written, never reach E-3.
+reset_case
+POST_SIGNAL_FORCE_SUCCESS="false"
+BEFORE_COUNT16=$(jq '.signal_queue.rows | length' "$SCRATCH_ORCH")
+OUT16=$(run_emit_signal --check-id B-07 --category-type data_stale --severity WARN \
+  --summary "e1 not-written probe (success:false)" --detail-json '{"dedup_key":"data_stale:T16:B-07"}')
+RC16=$?
+AFTER_COUNT16=$(jq '.signal_queue.rows | length' "$SCRATCH_ORCH")
+check "T16 success:false non-zero exit" "$([ "$RC16" -ne 0 ] && echo true || echo false)"
+check "T16 success:false marker ABORT e1-not-written" "$(printf '%s' "$OUT16" | grep -q '^\[emit-signal\] ABORT e1-not-written' && echo true || echo false)"
+check "T16 success:false never reached E-3 (signal_queue row count unchanged)" "$([ "$BEFORE_COUNT16" -eq "$AFTER_COUNT16" ] && echo true || echo false)"
+
+# T17: tool reports success:true but signal_id is the -1 sentinel (the exact
+# pre-fix tool-side defect this task also closes on the TypeScript side) —
+# _run_e1() must not trust `success:true` alone.
+reset_case
+POST_SIGNAL_FORCE_ID="-1"
+OUT17=$(run_emit_signal --check-id B-08 --category-type data_stale --severity WARN \
+  --summary "e1 not-written probe (signal_id=-1)" --detail-json '{"dedup_key":"data_stale:T17:B-08"}')
+RC17=$?
+check "T17 signal_id=-1 non-zero exit" "$([ "$RC17" -ne 0 ] && echo true || echo false)"
+check "T17 signal_id=-1 marker ABORT e1-not-written" "$(printf '%s' "$OUT17" | grep -q '^\[emit-signal\] ABORT e1-not-written' && echo true || echo false)"
+
+# T18: tool response is a non-JSON, Error:-prefixed text body. In production
+# the REAL mcp-call.sh now rejects this at the transport layer (AC-4, see
+# scripts/agents-flow/mcp-call.test.sh T3) and _run_e1 would see rc!=0
+# (e1-failed). This test's stub bypasses mcp-call.sh entirely (it overrides
+# mcp_call() directly), so it instead exercises _run_e1's OWN belt-and-
+# suspenders JSON-body check: unparseable/non-JSON text can never satisfy
+# `success===true`, so this still ABORTs (e1-not-written) rather than being
+# miscounted as a success — defense in depth, not reliant on only one layer.
+reset_case
+POST_SIGNAL_FORCE_TEXT="Error: database disk image is malformed (simulated corrupt btree)"
+OUT18=$(run_emit_signal --check-id B-09 --category-type data_stale --severity CRITICAL \
+  --summary "e1 error-text probe" --detail-json '{"dedup_key":"data_stale:T18:B-09"}')
+RC18=$?
+check "T18 error-text non-zero exit" "$([ "$RC18" -ne 0 ] && echo true || echo false)"
+check "T18 error-text marker ABORT e1-not-written (belt-and-suspenders JSON-body check)" "$(printf '%s' "$OUT18" | grep -q '^\[emit-signal\] ABORT e1-not-written' && echo true || echo false)"
+
+# T19: mandatory read-back cannot find the claimed id — write claimed but
+# never confirmed present in agent_signals. ABORT + non-dedup-gated BUG
+# telegram (mirrors the E-3 readback-failure treatment, T7 above).
+reset_case
+OUT19_BEFORE_TELEGRAM_COUNT=$(call_count_for send_telegram)
+READBACK_FORCE_MISS="true"
+OUT19=$(run_emit_signal --check-id B-10 --category-type data_stale --severity HIGH \
+  --summary "e1 readback-miss probe" --detail-json '{"dedup_key":"data_stale:T19:B-10"}')
+RC19=$?
+check "T19 readback-miss non-zero exit" "$([ "$RC19" -ne 0 ] && echo true || echo false)"
+check "T19 readback-miss marker ABORT e1-readback-failed" "$(printf '%s' "$OUT19" | grep -q '^\[emit-signal\] ABORT e1-readback-failed' && echo true || echo false)"
+check "T19 readback-miss triggers non-dedup BUG telegram" "$([ "$(call_count_for send_telegram)" -gt "$OUT19_BEFORE_TELEGRAM_COUNT" ] && echo true || echo false)"
+check "T19 readback-miss get_agent_signals WAS called (mandatory read-back ran)" "$([ "$(call_count_for get_agent_signals)" -ge 1 ] && echo true || echo false)"
+
+# T20: happy path — realistic post_agent_signal + confirming read-back, both
+# succeed. Locks in that the new mandatory read-back does not break the
+# normal, everything-works flow (T1's call shape, replayed against the now-
+# realistic stub instead of the pre-fix bare `'{}'`).
+reset_case
+OUT20=$(run_emit_signal --check-id B-11 --category-type data_stale --severity WARN \
+  --summary "e1 happy-path read-back probe" --detail-json '{"dedup_key":"data_stale:T20:B-11"}')
+RC20=$?
+check "T20 happy-path exit=0" "$([ "$RC20" -eq 0 ] && echo true || echo false)"
+check "T20 happy-path marker OK" "$(printf '%s' "$OUT20" | grep -q '^\[emit-signal\] OK dedup_key=' && echo true || echo false)"
+check "T20 happy-path get_agent_signals WAS called (mandatory read-back ran)" "$([ "$(call_count_for get_agent_signals)" -ge 1 ] && echo true || echo false)"
 
 # ── Summary ──────────────────────────────────────────────────────────────────
 echo ""

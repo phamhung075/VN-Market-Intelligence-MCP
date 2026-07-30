@@ -85,6 +85,22 @@ _mcp_call_parse() {
     return 1
   fi
 
+  # FIX-AUDITOR-OUTPUT-CONTRACT-SIGNALSPOSTED (AC-4): NOT every tool handler in
+  # this codebase sets `.result.isError` on every failure path — confirmed live
+  # (2026-07-30) that post_agent_signal's generic catch-all returned an
+  # `Error: <message>` TEXT body with isError left unset/false, which this
+  # function previously treated as a normal SUCCESS (returning that text on
+  # stdout with rc=0). The `Error:` prefix is this codebase's established,
+  # repo-wide convention for a failed tool call (see e.g. agentSignalTools.ts,
+  # multiple handlers) — treat it as a failure here too, belt-and-suspenders,
+  # for every caller of mcp_call(), not just the one tool that surfaced this.
+  case "$text" in
+    "Error:"*)
+      echo "[mcp-call] ERROR: tool=$tool_name text-prefixed-error (isError not set): $(printf '%s' "$text" | cut -c1-200)" >&2
+      return 1
+      ;;
+  esac
+
   printf '%s' "$text"
   return 0
 }

@@ -412,6 +412,45 @@ export function registerAgentSignalTools(server: McpServer): void {
           };
         }
 
+        // FIX-AUDITOR-OUTPUT-CONTRACT-SIGNALSPOSTED-COUNTS-CALLS-NOT-CONFIRMED-ROWS
+        // (AC-1 mechanism A): `postSignalWithCriticGate`/`postSignal` return the
+        // SAME sentinel `-1` for every dedup-suppressed no-op write — the
+        // `INSERT OR IGNORE` identical-payload guard (idx_agent_signals_dedup_
+        // identical) and the Task-1862g same-direction time-window guard — not
+        // only the critic-first-reject case handled above. Before this fix,
+        // any OTHER `id === -1` outcome fell straight through to the generic
+        // "success: true" response below, embedding the sentinel as if it
+        // were a real row id (`message: "...(id=-1,...)"`). A caller counting
+        // "signals_posted" from `success===true` alone would then count a
+        // call that wrote ZERO new rows to `agent_signals`. Report honestly:
+        // this is not a transport/tool error (no "Error:" prefix — the write
+        // was correctly, deliberately suppressed), but it is NOT a success
+        // either, so `success` must be false and `signal_id` must never be
+        // the bare `-1` sentinel.
+        if (id <= 0) {
+          const stockSuffix = args.stock_code ? ` [${args.stock_code}]` : "";
+          const suppressedResponse = JSON.stringify(
+            {
+              success: false,
+              signal_id: null,
+              critic_pass: criticResult?.pass ?? null,
+              critic_score: criticResult?.score ?? null,
+              message:
+                `Signal NOT written to ${args.to_agent}: ${args.signal_type}${stockSuffix} — ` +
+                `suppressed by dedup (identical payload or same-direction window); ` +
+                `no new row in agent_signals.`,
+            },
+            null,
+            2,
+          );
+          console.info(
+            `[post_agent_signal] Dedup-suppressed (no row written): ${args.signal_type}${stockSuffix}`,
+          );
+          return {
+            content: [{ type: "text" as const, text: suppressedResponse }],
+          };
+        }
+
         // Task 1920f — conditional audit write for price_confirmation / urgent_news only.
         // Fire-and-forget: any error is swallowed; MCP response is unaffected.
         const AUDIT_SIGNAL_TYPES = new Set(["price_confirmation", "urgent_news"]);
@@ -485,6 +524,16 @@ export function registerAgentSignalTools(server: McpServer): void {
         };
       } catch (err) {
         console.error("[post_agent_signal] Failed:", err);
+        // FIX-AUDITOR-OUTPUT-CONTRACT-SIGNALSPOSTED (AC-1 mechanism B / AC-4):
+        // this is the ONLY one of this handler's 3 non-success return paths
+        // that omitted `isError: true` — the schema-validation rejection
+        // (above, ~line 297) and the regime-threshold block (~line 344) both
+        // set it. A genuine thrown error here (e.g. an INSERT that fails
+        // mid-write during a corrupt-DB fault window) must be distinguishable
+        // from a success at the MCP transport layer, not only by sniffing the
+        // response text for an "Error:" prefix — callers using
+        // `.result.isError` alone (the documented, live-verified contract in
+        // scripts/agents-flow/mcp-call.sh) must see this as a failure too.
         return {
           content: [
             {
@@ -492,6 +541,7 @@ export function registerAgentSignalTools(server: McpServer): void {
               text: `Error: ${err instanceof Error ? err.message : String(err)}`,
             },
           ],
+          isError: true,
         };
       }
     },
