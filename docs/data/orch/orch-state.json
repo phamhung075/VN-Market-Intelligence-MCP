@@ -93,12 +93,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "active_task_id": null,
-    "next_agent": "router",
-    "next_action": "idle — FU-SBV-EFFECTIVE-DATE-COLUMN declined by dev-macro-indicators (wrong zone; sbv_rates write path is apps/mcp-server/ + vps-scripts/fetch-sbv.sh, not apps/macro-indicators/), returned to backlog re-zoned apps/mcp-server/ owner_agent=dev-mcp-server",
-    "updated_at": "2026-07-30T21:52:04Z",
-    "updated_by": "dev-macro-indicators"
+    "status": "in_progress",
+    "active_task_id": "FIX-COMMIT-SWEEP-GUARD-SCRIPT-ACTUATOR-AND-NOTEBOOK-LONGTAIL",
+    "next_agent": "developer",
+    "next_action": "BOUNDED-1 auto-pickup claim of FIX-COMMIT-SWEEP-GUARD-SCRIPT-ACTUATOR-AND-NOTEBOOK-LONGTAIL — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
+    "updated_at": "2026-07-30T22:17:40Z",
+    "updated_by": "dev-team (bounded-1 auto-pickup)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -10796,23 +10796,6 @@
         "origin_task": "FIX-SLA-SIGNALQUALITYAUDIT-MONTHLY-CADENCE-MISCLASSIFIED-48H"
       },
       {
-        "id": "FIX-COMMIT-SWEEP-GUARD-SCRIPT-ACTUATOR-AND-NOTEBOOK-LONGTAIL",
-        "type": "FIX",
-        "size": "M",
-        "priority": "P0",
-        "status": "BACKLOG",
-        "zone": "cross-service/",
-        "title": "Bare-commit sweep-guard actuator gap: dev-team-tick-preflight.sh:454-455 (git add + bare commit, 2x/hour) never migrated to pathspec form, plus a 31-file chore(memory/<agent-id>) notebook long-tail whose promised PM-tracked cleanup row was never minted",
-        "desc": "Two arms. (1) scripts/agents-flow/dev-team-tick-preflight.sh:454-455 does git add <2 paths> then a BARE git commit (TOCTOU shape, feedback_git_add_then_bare_commit_is_toctou_race_use_pathspec_commit) and runs on every dev-team tick; its flow-doc twin docs/agents/dev-team/flow/post-cycle.md:107 WAS fixed but the actuator that actually executes was not (feedback_fix_landed_in_the_pregate_not_the_probe_the_agent_actually_runs). (2) agent-father completion note on FIX-COMMIT-PATH-PEER-INDEX-SWEEP-GUARD-LAYER2 deferred a 31-file chore(memory/<agent-id>) notebook-commit pattern to \"a separate PM-tracked cleanup pass\" that does not exist on the board (epic-tail loss, feedback_epic_wrapper_closeout_gap_no_auto_revisit). AC: fix both arms so scripts/git-hooks/pre-commit GIT_SWEEP_GUARD_MODE=reject can actually be enabled fleet-wide (currently blocked at warn-by-default because these are unmigrated bypass surface). Unblocks the 4x-recurring P0 FIX-COMMIT-PATH-PEER-INDEX-SWEEP-GUARD (parent).",
-        "depends": [
-          "FIX-COMMIT-PATH-PEER-INDEX-SWEEP-GUARD-LAYER2"
-        ],
-        "created_at": "2026-07-30T09:18:19Z",
-        "created_by": "po/triage-20260730T0853",
-        "source": "PO triage 2026-07-30T09:06Z BATCH item 1/6 — decided+described by PO (ruling-20260730T0906Z-po-triage-po.md STEP po-1, LAYER2 row po_rescope_20260730 field), landed to orch-state by dev-team because PO's own orch-apply.sh write for 5 of 6 BATCH items did not execute this cycle (3rd recorded instance of feedback_po_notebook_mint_never_reaches_orchstate_board.md class — verified via grep, 0 occurrences pre-mint).",
-        "updated_at": "2026-07-30T09:18:20Z"
-      },
-      {
         "id": "FIX-SPRINT-REGISTRY-DANGLING-IDS-BREAK-SIGNOFF-AND-JOURNAL-ARCHIVE",
         "status": "BACKLOG",
         "type": "FIX",
@@ -18189,9 +18172,32 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-30T21:47:10Z",
+    "last_triaged_at": "2026-07-30T22:17:00Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": []
+    "in_progress": [
+      {
+        "id": "FIX-COMMIT-SWEEP-GUARD-SCRIPT-ACTUATOR-AND-NOTEBOOK-LONGTAIL",
+        "type": "FIX",
+        "size": "M",
+        "priority": "P0",
+        "status": "IN_PROGRESS",
+        "zone": "cross-service/",
+        "title": "Bare-commit sweep-guard actuator gap: dev-team-tick-preflight.sh:454-455 (git add + bare commit, 2x/hour) never migrated to pathspec form, plus a 31-file chore(memory/<agent-id>) notebook long-tail whose promised PM-tracked cleanup row was never minted",
+        "desc": "Two arms. (1) scripts/agents-flow/dev-team-tick-preflight.sh:454-455 does git add <2 paths> then a BARE git commit (TOCTOU shape, feedback_git_add_then_bare_commit_is_toctou_race_use_pathspec_commit) and runs on every dev-team tick; its flow-doc twin docs/agents/dev-team/flow/post-cycle.md:107 WAS fixed but the actuator that actually executes was not (feedback_fix_landed_in_the_pregate_not_the_probe_the_agent_actually_runs). (2) agent-father completion note on FIX-COMMIT-PATH-PEER-INDEX-SWEEP-GUARD-LAYER2 deferred a 31-file chore(memory/<agent-id>) notebook-commit pattern to \"a separate PM-tracked cleanup pass\" that does not exist on the board (epic-tail loss, feedback_epic_wrapper_closeout_gap_no_auto_revisit). AC: fix both arms so scripts/git-hooks/pre-commit GIT_SWEEP_GUARD_MODE=reject can actually be enabled fleet-wide (currently blocked at warn-by-default because these are unmigrated bypass surface). Unblocks the 4x-recurring P0 FIX-COMMIT-PATH-PEER-INDEX-SWEEP-GUARD (parent).",
+        "depends": [
+          "FIX-COMMIT-PATH-PEER-INDEX-SWEEP-GUARD-LAYER2"
+        ],
+        "created_at": "2026-07-30T09:18:19Z",
+        "created_by": "po/triage-20260730T0853",
+        "source": "PO triage 2026-07-30T09:06Z BATCH item 1/6 — decided+described by PO (ruling-20260730T0906Z-po-triage-po.md STEP po-1, LAYER2 row po_rescope_20260730 field), landed to orch-state by dev-team because PO's own orch-apply.sh write for 5 of 6 BATCH items did not execute this cycle (3rd recorded instance of feedback_po_notebook_mint_never_reaches_orchstate_board.md class — verified via grep, 0 occurrences pre-mint).",
+        "updated_at": "2026-07-30T22:17:40Z",
+        "promoted_at": "2026-07-30T22:17:00Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=0)",
+        "claimed_at": "2026-07-30T22:17:40Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)"
+      }
+    ]
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
