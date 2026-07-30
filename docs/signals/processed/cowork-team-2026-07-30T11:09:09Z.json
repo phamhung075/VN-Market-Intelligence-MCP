@@ -1,0 +1,55 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-07-30T11:09:09Z",
+    "matched_slots": [
+      "refine-bctc-slot-3"
+    ],
+    "won_slots": [
+      "refine-bctc-slot-3"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/refine_bctc_md/flow/main.md"
+    ],
+    "silent": false,
+    "drift_min": 5,
+    "errors": [],
+    "pressure_mode": "adaptive",
+    "calendar_status": "unknown",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "chef_mutex_applied": false,
+    "due_reasons": {
+      "refine-bctc-slot-3": "cron"
+    },
+    "cadence_minutes": {
+      "refine-bctc-slot-3": null
+    },
+    "last_fired_timestamp": "2026-07-30T11:08:55Z",
+    "last_fired_slots": [
+      "refine-bctc-slot-3"
+    ],
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "11:00",
+    "leader_lock": "acquired",
+    "dev_head": "in_progress",
+    "devq": 0,
+    "signal_backlog": 16,
+    "note": "single non-guaranteed bctc-offmarket slot fired on cron fallback; get_macro_snapshot returned source_tier:4/dataSource:estimate this tick (prior ticks were tier:2/live) — fixture-fallback observed, not investigated further, flagging for visibility only"
+  },
+  "priority": "low",
+  "createdAt": "2026-07-30T11:09:09Z",
+  "_processed": {
+    "fingerprint": "2b208eabdea950fcc01d4ac8ea6a54371f223162a382620c31da7d5737ab5689",
+    "processedAt": "2026-07-30T11:16:01Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
