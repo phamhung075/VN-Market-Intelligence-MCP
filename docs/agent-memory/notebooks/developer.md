@@ -1,24 +1,6 @@
 # Developer — Notebook
 
-**Last updated:** 2026-07-30 | **Cycle:** FIX-AUDITOR-A12-PROBE-TIMEOUT-EXITCODE-DEBOUNCE
-
-## Session 2026-07-30 — FIX-AUDITOR-A12-PROBE-TIMEOUT-EXITCODE-DEBOUNCE — REVIEW
-
-**Task:** dev-team BOUNDED-1 auto-pickup (`cross-service/`). system-auditor A-12 health probe collapsed every curl failure mode (timeout/refused/DNS) to one `CURL_ERR` token and glossed it as "unreachable"; deferred N-consecutive debounce from DONE `FIX-AUDITOR-A12A20A30-FP-REEMIT-CONVERGE` scope item 2.
-
-**Actions taken:** A1 `probe.sh:48` `--max-time` 3s→5s (floor only, repoint half stays soft-blocked on `FIX-APIGW-HEALTH-CAPABILITY-PROBE-GATE-PARALLEL-SINGLEFLIGHT`, still BACKLOG). A2 new `_classify_curl_exit()` (28/7/6/52→named reasons, else `CURL_ERR_n`), applied only to the transport-failure branch (real non-200 HTTP unchanged). Wrapped `probe.sh`'s body in a standalone-execution guard (mirrors `emit-audit-signal.sh`) so the classifier is unit-testable via `source` — new `probe.test.sh`. A3 N=3-consecutive transport-error debounce wired in `tier1-probe.md` + new extracted `tier1-overrides.md` child (persisted counter, `docs/data/auditor-a12-transport-debounce.json`, tmp+mv, self-heals empty, NOT pre-seeded) — kept OUT of `probe.sh` itself (stateless, no wall-time growth; the emit-decision this gates has never lived in `probe.sh` for any check). A4 fixed the "unreachable" gloss at its real template source (`tier1-probe.md`'s Health-Endpoints + Emit-per-failure sections) — `emit-audit-signal.sh` needed zero change (pure passthrough, verified). A5 CONFIRMED STALE: no live A-04/A-13 check-id exists anywhere; archived 2026-05-19 brief shows they were an OLD numbering scheme since renumbered to today's A-12 — implemented nothing for them.
-
-**Verify-live catch:** genuine RED confirmed by sourcing the PRE-fix `probe.sh` against the new test — the old script's own unconditional `exit 0` aborted the whole test process before any assertion ran (no guard existed then). Live sanity runs on this session's real host caught TWO different real transient conditions on mcp-server (`CONN_REFUSED` then `CURL_ERR_56` seconds apart, mid-restart) — correctly classified as distinct reasons instead of one bare `CURL_ERR`, real-world corroboration beyond the synthetic test cases.
-
-**Verification:** `probe.test.sh` 7/7 PASS. Debounce bash+jq snippet hand-verified in a scratch dir (bump×3→3, reset→0, per-service isolation, self-heal on missing/malformed file). No `apps/` source touched — `bun test`/`tsc` structurally N/A.
-
-**Board:** `task_board.in_progress[FIX-AUDITOR-A12-PROBE-TIMEOUT-EXITCODE-DEBOUNCE]` → `review` (`next_agent: qa`), `.head` reset to idle, same `orch-apply.sh` write.
-
-**Simplicity gate:** PASS — every new primitive reuses an existing in-repo convention (A-20's 3-sample count, the ledger's tmp+mv self-heal, the file's own documented extraction fallback) rather than inventing new ones.
-
-**Zone note:** No MCP/gateway tool available this session (Read/Edit/Write/Bash only, confirmed at Step 0) — task lock is held by the coordinating dev-team session; could not `task_heartbeat`/`task_release` or send Telegram (structural gap, flagged for the coordinating session).
-
-Zone health: live observation — mcp-server was mid-restart-cycling on this host during this session's live sanity run (unrelated to this task, out of scope to fix here) — flagged in RETURN for the coordinating session, not filed as a new row by me.
+**Last updated:** 2026-07-30 | **Cycle:** FIX-BOUNDED1-NONDEV-NEXTAGENT-RESIDUAL-NO-DISPATCH-LANE
 
 ## Session 2026-07-30 — FIX-AUDITOR-T1-PREGATE-MEMCREEP-SINGLE-POINT-SAMPLE — REVIEW
 
@@ -55,3 +37,23 @@ Zone health: notebook-auto-prune.sh's date-only-heading tie-break misfire (above
 **Zone note:** No MCP/gateway tool available this session (Read/Edit/Write/Bash only, confirmed at Step 0) — flipped the board row directly via `scripts/orch-apply.sh` (permitted, pure bash); could not release `task:FIX-STRANDED-SWEEP-CLASSIFY-AGENT-MODEL-SWITCH` or send Telegram (structural gap, flagged for the coordinating dev-team session).
 
 Zone health: no drift detected.
+
+## Session 2026-07-30 — FIX-BOUNDED1-NONDEV-NEXTAGENT-RESIDUAL-NO-DISPATCH-LANE — REVIEW
+
+**Task:** router-adjudicated direct dispatch (`cross-service/`, supervised+plan_only — same pattern as LAYER2/FIX-AUDITOR-CALLER-PROSE this cycle). Implemented architect's PO-ratified Design-Router Sweep (DRS): a 4th WIP≤2 idle-fallthrough writer for backlog rows whose `next_agent` is non-dev and not already SLS's supervised+plan_only territory.
+
+**Actions taken:** `is_design_router_allowed`/`is_design_router_eligible` added to `scripts/lib/devteam-eligibility.jq`. New `scripts/devteam-backlog-promote-design-router-sweep.jq` + `scripts/devteam-backlog-claim-design-router-sweep.jq` — mandatory conditional-guard `.head` write from day one (never unconditional; hard AC, PO ratification Q3). Wired into `docs/agents/dev-team/flow/main.md` as BOUNDED-1→SLS→RLC→**DRS**→QA-Drain→Step1. Ratified narrow allowlist `{architect, ba, pm, po, agents-architect}` — `agent-father`/`ops*`/`qa`/`system-auditor` excluded per the ruling's own reasoning. Extended `scripts/audits/devteam-dispatch-gate-satisfiability.sh` (+6 DRS assertions) and `scripts/audits/bounded1-supervised-lane-report.sh` (new non-gating DRS section, ELIGIBLE vs STRANDED-OFF-ALLOWLIST). CANONICAL pointer added to `dev-standards.md`.
+
+**Reconciliation (PO's added input beyond the brief):** live-computed the 34-row `supervised:true`/`plan_only`-not-true set (down from PO's 41 — one row separately fixed this cycle). 10 already DRS-eligible as specified (DRS excludes only the supervised+plan_only-BOTH class, an AND not an OR — includes P0s `UC-CCA-P3`/`FIX-CHEF-MARKER-KEY-WINDOW-ANCHOR`). 5 non-dev but off-allowlist (policy, not a gap). 7 carry a DEV-role `next_agent` (P0 `FIX-SPRINT-TASK-HEARTBEAT-LOCK`) — genuinely uncovered by BOUNDED-1/SLS/DRS alike; left explicitly out of scope (auto-dispatching a `supervised:true` row to `developer` unattended would defeat the flag's own purpose — a new risk decision, not this implementation cycle's call) and documented with live counts, not silently dropped.
+
+**Verify-live catch:** dry-run against a scratch copy of the LIVE board (never the live file) proved the conditional `.head` guard is load-bearing RIGHT NOW, not just synthetically — this row's own `.head` is genuinely SLS-busy (`FIX-AUDITOR-CALLER-PROSE-OVERRIDES-DOCUMENTED-DETECTOR-THRESHOLD`) and the claim script correctly left it byte-identical while still moving the picked row `ready[]→in_progress[]`. DRS's broader query also surfaced a real live malformed `created_at` (`backlog-detail.json:3820`, missing colons) that crashed the WHOLE `bounded1-supervised-lane-report.sh` instrument — hardened `age_days()` with `try/catch` so one bad timestamp degrades to `null` for that row only.
+
+**Verification:** `scripts/audits/devteam-dispatch-gate-satisfiability.sh` 34/34 PASS (never writes to the live file). `bounded1-supervised-lane-report.sh` DRS section runs clean (120 live target rows, 76 eligible, 44 stranded-off-allowlist by policy); pre-existing unrelated PRIMARY `[FAIL]` (5 rows, dispatch-lane=none) reproduced BEFORE this change too via `git stash` A/B — confirmed not a regression, out of scope. No `apps/` source touched (pure jq+bash+md) — `bun test`/`tsc` structurally N/A. `/graphify docs --update --no-viz` skipped — incremental manifest is repo-wide stale (3853 changed files flagged, overwhelmingly unrelated to this task's 3-doc touch); running it would be a disproportionate token spend for a size-M task and reflects pre-existing graphify-maintenance debt, not something this task introduced — flagged, not silently run or silently skipped.
+
+**Board:** left this row's own status/lane/next_agent UNTOUCHED (plan_only:true+supervised:true, per instruction) — dev-team RAW-verify + PO/dev-team disposition next, same discipline as LAYER2/FIX-AUDITOR-CALLER-PROSE.
+
+**Simplicity gate:** PASS — DRS mirrors SLS/RLC's existing promote+claim shape exactly (no new architecture); only 2 new shared-lib predicates added, both composed entirely from predicates the file already had; allowlist is a caller-supplied `--argjson` (a policy input per the ratification's own design, not new hardcoded config).
+
+**Zone note:** No MCP/gateway tool grant in this session (Read/Edit/Write/Bash only) — committing directly via explicit pathspec per INV-GATEWAY-1; coordinating dev-team session handles `task_heartbeat`/release and RAW-verify.
+
+Zone health: unrelated concurrent-session churn observed in `git status` (`scripts/emit-audit-signal.sh`/`.test.sh` modified by a peer session) — NOT staged/touched by this commit, pathspec-scoped add used throughout.
