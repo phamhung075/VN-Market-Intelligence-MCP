@@ -93,11 +93,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "active_task_id": null,
-    "next_agent": "router",
-    "updated_at": "2026-07-30T05:39:43Z",
-    "updated_by": "developer"
+    "status": "in_progress",
+    "active_task_id": "FIX-SLA-SIGNALQUALITYAUDIT-MONTHLY-CADENCE-MISCLASSIFIED-48H",
+    "next_agent": "developer",
+    "next_action": "BOUNDED-1 auto-pickup claim of FIX-SLA-SIGNALQUALITYAUDIT-MONTHLY-CADENCE-MISCLASSIFIED-48H — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
+    "updated_at": "2026-07-30T05:51:25Z",
+    "updated_by": "dev-team (bounded-1 auto-pickup)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -2030,6 +2031,17 @@
         "severity": "WARN",
         "status": "triaged",
         "payload_ref": null
+      },
+      {
+        "id": "dev-20260730T055200",
+        "ts": "2026-07-30T05:52:00Z",
+        "from": "dev-team",
+        "to": "po",
+        "type": "system-issue",
+        "summary": "stranded-state sweep: 18 unknown-owner dirty paths need classifier/owner (6th occurrence)",
+        "severity": "LOW",
+        "status": "NEW",
+        "payload_ref": "docs/signals/stranded-state-sweep-unknown-20260730T0552Z.json"
       }
     ],
     "last_triaged_at": "2026-07-29T06:25:00Z",
@@ -9939,26 +9951,6 @@
         "updated_at": "2026-07-28T14:53:20Z"
       },
       {
-        "id": "FIX-SLA-SIGNALQUALITYAUDIT-MONTHLY-CADENCE-MISCLASSIFIED-48H",
-        "type": "FIX",
-        "status": "BACKLOG",
-        "priority": "P2",
-        "size": "S",
-        "zone": "apps/mcp-server/",
-        "owner": "developer",
-        "next_agent": "developer",
-        "supervised": false,
-        "created_at": "2026-07-28T17:03:55Z",
-        "created_by": "po/triage-20260728T1637",
-        "updated_at": "2026-07-28T19:56:04Z",
-        "updated_by": "po",
-        "title": "sla-monitor grades signal_quality_audit (a monthly cron, 0 0 1 * *) against a 48h event-driven SLA — CRITICAL breach fires almost permanently; 37 unresolved alerts 2026-07-26->07-28, staleness climbing 73217->76067min (~52.8d), longer than even a working monthly cadence explains — job may also be genuinely dead since ~2026-06.",
-        "status_note": "MECHANICALLY VERIFIED (not inferred) from list_unresolved_reports() this tick: 37 unresolved [sla-monitor] CRITICAL breach alerts for signal_quality_audit, every hour from 2026-07-26T16:30:03Z (stale=73217min) through 2026-07-28T16:00:09Z (stale=76067min, still climbing), threshold constant at 2880min (48h) throughout — none marked resolved. Telegram report id 3838 (created 2026-07-26T16:30:03Z, status=new, unclaimed) is the first of this run.\nROOT-CAUSE HYPOTHESIS, read at source, TWO SEPARATE DEFECTS COMPOUNDING:\n(1) MISCLASSIFICATION: apps/mcp-server/src/scheduler/system/freshnessSlaMonitorJob.ts:97 comments signal_quality_audit as \"event-driven; 48h SLA\" — but cronConfig.ts:129 + schedulerJobTable.ts:227-233 register it as monthlySignalQualityAuditJob, cron `0 0 1 * *` (1st-of-month only). A monthly-cadence job graded against a 48h SLA is CRITICAL for ~28 of every ~30 days even when working correctly — same defect class as FIX-SLA-BCTC-THRESHOLD-TRACKS-STALENESS-NOT-CONSTANT (this file, adjacent metric) though the specific mechanism differs (there: threshold itself computed, not constant; here: a correct constant threshold applied to the wrong cadence class).\n(2) POSSIBLY-DEAD JOB ON TOP OF THAT: even a perfectly-functioning monthly cron caps observed staleness at ~31 days; 76067min = 52.8 days and climbing means the job has NOT fired since ~2026-06-06 — it should have fired 2026-07-01 and did not. schedulerJobTable.ts:227 registers this job with `recoverMissedExecutions: false` (explicit opt-out, code comment: \"recovery is opt-out here until a T4 dedup guard is added ... in a future sprint\") — if the mcp-server process was down/restarting at exactly 2026-07-01T00:00 UTC (this repo rebuilds/restarts containers frequently per ops history), that month's run is silently and permanently skipped, with zero recovery and zero distinguishing alert from \"normal quiet month\".\nREMEDY (direction, not fully prescribed): (a) give signal_quality_audit its own SLA class/threshold sized to the monthly cadence (e.g. ~35-40d grace, mirroring how bond_maturity already gets a 168h/7d threshold for its own weekly cadence in the SAME file) instead of the shared 48h \"event-driven\" bucket; (b) verify at source whether the 2026-07-01 fire actually ran (check logs/audit table for a row near that date) — if missed, this is the concrete, datable instance the code comment already anticipated, and argues for pulling the deferred T4 dedup/recovery guard forward rather than leaving it another sprint.\nACCEPTANCE: (1) signal_quality_audit threshold no longer fires CRITICAL merely for being mid-cycle on a working monthly cadence — assert against a fixture where MAX(created_at) is 20 days old (should NOT breach) and 40 days old (SHOULD breach); (2) confirm/refute at source whether the 2026-07-01 run actually executed — state the finding in the closing report, do not guess; (3) if confirmed missed, either backfill a corrective run or file the recoverMissedExecutions follow-up explicitly (do not silently leave both defects unaddressed).\nNOT BLOCKING: unlike ci_red, this does not gate any push or pipeline — P2, no urgency beyond \"alert trust\" (memory: feedback_passive_health_masks_dead_data). baseline_pass note: cd apps/mcp-server && bun test is RED right now for the SAME unrelated pre-existing reason as sibling row FIX-SLA-BCTC-THRESHOLD-TRACKS-STALENESS-NOT-CONSTANT (1408-tool-diacritics.test.ts stale assertion) — PO is routing that fix as UNBLOCK this same tick via FIX-BDI-SHIPPING-STALE-404-GUARD; re-check CI status before treating any bun-test red as this row's own regression.\n",
-        "baseline_pass": "cd apps/mcp-server && bun test",
-        "origin_signal_id": "telegram:3838",
-        "po_evidence_20260728": "ANTI-FALSE-GREEN WARNING + ARITHMETIC, appended by po 2026-07-28T19:5xZ. LIVE OBSERVATION: Telegram report id 3838 (2026-07-26T16:30:03Z, from_agent=analysis-agent, still status=new) reads '[sla-monitor] CRITICAL breach: signal_quality_audit stale 73217min (threshold 2880min)'. THE ARITHMETIC THIS ROW IS MISSING: 73217min = 50.85 days; back-solving from the report timestamp puts the last signal_quality_audit artifact at 2026-06-05T20:13Z. TWO CONSEQUENCES THE CURRENT ROW TITLE HIDES. (1) The stated cadence may be wrong: 2026-06-05 is not a 1st-of-month, so the artifact does not line up with the '0 0 1 * *' schedule this row asserts — confirm the real cadence from the live cron/scheduler before tuning anything. (2) THE JOB ALSO APPEARS GENUINELY DEAD, independent of the threshold bug: a monthly job last seen 2026-06-05 should have produced another artifact on 2026-07-01. It did not. So there are TWO defects stacked here and this row only names one. DO NOT CLOSE BY WIDENING THE THRESHOLD ALONE. A fixer who simply relabels the threshold from 2880min to a monthly value will produce a green board while a ~51-day-dead job stays dead — and if the chosen value carries any grace beyond 31 days, the breach signal is permanently silenced instead of fixed. ACCEPTANCE MUST INCLUDE a live probe showing a NEW signal_quality_audit artifact produced AFTER the fix, with its own timestamp — not merely that the CRITICAL alert stopped firing. Threshold correctness and job liveness must be verified as two separate assertions."
-      },
-      {
         "id": "FIX-PDFX-PARENT-PROCESS-MEMORY-BURST-HEADROOM",
         "type": "FIX",
         "status": "BACKLOG",
@@ -17689,9 +17681,35 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-30T05:20:30Z",
+    "last_triaged_at": "2026-07-30T05:51:15Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": []
+    "in_progress": [
+      {
+        "id": "FIX-SLA-SIGNALQUALITYAUDIT-MONTHLY-CADENCE-MISCLASSIFIED-48H",
+        "type": "FIX",
+        "status": "IN_PROGRESS",
+        "priority": "P2",
+        "size": "S",
+        "zone": "apps/mcp-server/",
+        "owner": "developer",
+        "next_agent": "developer",
+        "supervised": false,
+        "created_at": "2026-07-28T17:03:55Z",
+        "created_by": "po/triage-20260728T1637",
+        "updated_at": "2026-07-30T05:51:25Z",
+        "updated_by": "po",
+        "title": "sla-monitor grades signal_quality_audit (a monthly cron, 0 0 1 * *) against a 48h event-driven SLA — CRITICAL breach fires almost permanently; 37 unresolved alerts 2026-07-26->07-28, staleness climbing 73217->76067min (~52.8d), longer than even a working monthly cadence explains — job may also be genuinely dead since ~2026-06.",
+        "status_note": "MECHANICALLY VERIFIED (not inferred) from list_unresolved_reports() this tick: 37 unresolved [sla-monitor] CRITICAL breach alerts for signal_quality_audit, every hour from 2026-07-26T16:30:03Z (stale=73217min) through 2026-07-28T16:00:09Z (stale=76067min, still climbing), threshold constant at 2880min (48h) throughout — none marked resolved. Telegram report id 3838 (created 2026-07-26T16:30:03Z, status=new, unclaimed) is the first of this run.\nROOT-CAUSE HYPOTHESIS, read at source, TWO SEPARATE DEFECTS COMPOUNDING:\n(1) MISCLASSIFICATION: apps/mcp-server/src/scheduler/system/freshnessSlaMonitorJob.ts:97 comments signal_quality_audit as \"event-driven; 48h SLA\" — but cronConfig.ts:129 + schedulerJobTable.ts:227-233 register it as monthlySignalQualityAuditJob, cron `0 0 1 * *` (1st-of-month only). A monthly-cadence job graded against a 48h SLA is CRITICAL for ~28 of every ~30 days even when working correctly — same defect class as FIX-SLA-BCTC-THRESHOLD-TRACKS-STALENESS-NOT-CONSTANT (this file, adjacent metric) though the specific mechanism differs (there: threshold itself computed, not constant; here: a correct constant threshold applied to the wrong cadence class).\n(2) POSSIBLY-DEAD JOB ON TOP OF THAT: even a perfectly-functioning monthly cron caps observed staleness at ~31 days; 76067min = 52.8 days and climbing means the job has NOT fired since ~2026-06-06 — it should have fired 2026-07-01 and did not. schedulerJobTable.ts:227 registers this job with `recoverMissedExecutions: false` (explicit opt-out, code comment: \"recovery is opt-out here until a T4 dedup guard is added ... in a future sprint\") — if the mcp-server process was down/restarting at exactly 2026-07-01T00:00 UTC (this repo rebuilds/restarts containers frequently per ops history), that month's run is silently and permanently skipped, with zero recovery and zero distinguishing alert from \"normal quiet month\".\nREMEDY (direction, not fully prescribed): (a) give signal_quality_audit its own SLA class/threshold sized to the monthly cadence (e.g. ~35-40d grace, mirroring how bond_maturity already gets a 168h/7d threshold for its own weekly cadence in the SAME file) instead of the shared 48h \"event-driven\" bucket; (b) verify at source whether the 2026-07-01 fire actually ran (check logs/audit table for a row near that date) — if missed, this is the concrete, datable instance the code comment already anticipated, and argues for pulling the deferred T4 dedup/recovery guard forward rather than leaving it another sprint.\nACCEPTANCE: (1) signal_quality_audit threshold no longer fires CRITICAL merely for being mid-cycle on a working monthly cadence — assert against a fixture where MAX(created_at) is 20 days old (should NOT breach) and 40 days old (SHOULD breach); (2) confirm/refute at source whether the 2026-07-01 run actually executed — state the finding in the closing report, do not guess; (3) if confirmed missed, either backfill a corrective run or file the recoverMissedExecutions follow-up explicitly (do not silently leave both defects unaddressed).\nNOT BLOCKING: unlike ci_red, this does not gate any push or pipeline — P2, no urgency beyond \"alert trust\" (memory: feedback_passive_health_masks_dead_data). baseline_pass note: cd apps/mcp-server && bun test is RED right now for the SAME unrelated pre-existing reason as sibling row FIX-SLA-BCTC-THRESHOLD-TRACKS-STALENESS-NOT-CONSTANT (1408-tool-diacritics.test.ts stale assertion) — PO is routing that fix as UNBLOCK this same tick via FIX-BDI-SHIPPING-STALE-404-GUARD; re-check CI status before treating any bun-test red as this row's own regression.\n",
+        "baseline_pass": "cd apps/mcp-server && bun test",
+        "origin_signal_id": "telegram:3838",
+        "po_evidence_20260728": "ANTI-FALSE-GREEN WARNING + ARITHMETIC, appended by po 2026-07-28T19:5xZ. LIVE OBSERVATION: Telegram report id 3838 (2026-07-26T16:30:03Z, from_agent=analysis-agent, still status=new) reads '[sla-monitor] CRITICAL breach: signal_quality_audit stale 73217min (threshold 2880min)'. THE ARITHMETIC THIS ROW IS MISSING: 73217min = 50.85 days; back-solving from the report timestamp puts the last signal_quality_audit artifact at 2026-06-05T20:13Z. TWO CONSEQUENCES THE CURRENT ROW TITLE HIDES. (1) The stated cadence may be wrong: 2026-06-05 is not a 1st-of-month, so the artifact does not line up with the '0 0 1 * *' schedule this row asserts — confirm the real cadence from the live cron/scheduler before tuning anything. (2) THE JOB ALSO APPEARS GENUINELY DEAD, independent of the threshold bug: a monthly job last seen 2026-06-05 should have produced another artifact on 2026-07-01. It did not. So there are TWO defects stacked here and this row only names one. DO NOT CLOSE BY WIDENING THE THRESHOLD ALONE. A fixer who simply relabels the threshold from 2880min to a monthly value will produce a green board while a ~51-day-dead job stays dead — and if the chosen value carries any grace beyond 31 days, the breach signal is permanently silenced instead of fixed. ACCEPTANCE MUST INCLUDE a live probe showing a NEW signal_quality_audit artifact produced AFTER the fix, with its own timestamp — not merely that the CRITICAL alert stopped firing. Threshold correctness and job liveness must be verified as two separate assertions.",
+        "promoted_at": "2026-07-30T05:51:15Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
+        "claimed_at": "2026-07-30T05:51:25Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)"
+      }
+    ]
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
