@@ -1,6 +1,18 @@
 # Dev Team — Sprint Boundary Notebook
 
-**Written:** 2026-07-30T12:56Z
+**Written:** 2026-07-30T13:15Z
+
+## cycle-20260730T1307Z-verify — RAW-verified developer's auditor-signals-posted 3-layer fix clean; released lock on its behalf (no MCP grant); sibling task confirmed untouched
+
+- **RAW-verified all 4 commits real, on HEAD, correct order**: `a394e9edb` (fix+tests), `b069e10bb` (docs), `c60e9fb0f` (journal+notebook), `a42fb930e` (board flip).
+- **AC-1 diff confirmed exact match**: `agentSignalTools.ts`'s new `id<=0` branch returns `success:false`; verified it does NOT overlap the pre-existing critic-reject branch (that one already `return`s before reaching the new code — no dead/contradictory logic). Catch-all now sets `isError:true`.
+- **AC-4 `mcp-call.sh` verified correctly scoped**: `_mcp_call_parse()`'s new `Error:`-prefix check — re-ran its own test T4 confirming a mid-text "Error:" substring does NOT false-positive, only a literal prefix does.
+- **AC-2/AC-3 `emit-audit-signal.sh` verified**: `_run_e1()`'s new success/signal_id JSON-body check + mandatory `get_agent_signals` read-back — independently confirmed the read-back grep pattern `^\[id\] ` against the REAL formatter (`agentSignalTools.ts:205`), not just trusted.
+- **Independently re-ran every test claim, not trusted**: `mcp-call.test.sh` 9/9, `emit-audit-signal.test.sh` 67/67, new dedicated test 2/2, `audit-output-contract.test.sh` 35/35, `mcp-call-gateway-meta.test.sh` 20/20, a broad 457-test agent-signal-family sweep (43 files — wider net than the claimed 114) 0 fail, `tsc --noEmit` clean. Also verified the "no parser change needed" claim directly: `audit-output-contract.sh:149`'s `'[emit-signal] ABORT'*` wildcard genuinely catches both new ABORT markers.
+- **Board disposition confirmed**: single write, `in_progress[]→review[]` + `next_agent:qa` + `.head` idle-reset together (CANONICAL:SSOT-STATUSFLIP-LANEMOVE held); conservation `task_total 659→659`. Decision journal `task-id:` line matches DJ-GATE-1's required format exactly.
+- **Sibling `FIX-AUDITOR-DASHBOARD-APPEND-NO-ACTUATOR-CONTRACT-COUNT-NARRATED`** independently confirmed still `review[]`/`next_agent:qa`, untouched by this diff. Developer had no MCP/gateway grant — released `task:FIX-AUDITOR-OUTPUT-CONTRACT-...-ROWS` on its behalf (`released:1`, genuine). WORK telegram sent.
+- **No discrepancies — clean verify.**
+- **NEXT**: `.head` is idle again — a fresh tick's idle-fallthrough chain will reach BOUNDED-1 next.
 
 ## cycle-20260730T1237Z-tick — pipeline-resume confirmed alive (no re-dispatch); fixed recurring cold-evict bare-commit sweep-guard noise AT THE SCRIPT ROOT; deleted a stranded auditor scratch file instead of re-signaling it; skipped redundant PO re-triage
 
@@ -20,16 +32,3 @@
 - **CI probe**: deduped clean against the same `ci-red-ae5b2501-...` fingerprint (RED since 06:16Z, unchanged).
 - **Dispatched `developer`** (generic — zone `cross-service/`, not a single `apps/<service>/` specialist) on `FIX-AUDITOR-OUTPUT-CONTRACT-SIGNALSPOSTED-COUNTS-CALLS-NOT-CONFIRMED-ROWS`: system-auditor's `signals_posted=3` counter reported 3 posts while `agent_signals` shows a hard zero-row gap spanning the claimed post time — counter likely tallies calls issued, not rows confirmed. Sprint-task lock held open (LOCK-LIFETIME).
 - **NEXT**: await developer's return; RAW-verify per standing discipline (AC-1 empirical call-vs-DB-vanish determination, AC-2 read-back-derived count, AC-3 fail-loud mismatch, AC-4 `Error:`-prefix handling). Separately: the status_note-sequencing gap has now recurred twice with an identical mechanism — if a 3rd occurrence surfaces on a *different* row (not this same one, now fixed), that crosses into "surface to PO/architect as a real fleet-wide gate-widening ask," not a per-row patch.
-
-## cycle-20260730T1200Z-verify — RAW-verified dev-mcp-server's WAL-rearm fix clean; AC-2 sweep found 4 real out-of-zone instances of the same defect, minted narrow follow-up; released lock
-
-- **RAW-verified all 4 commits real, on HEAD, correct order**: `a7e437e16` (fix), `a365b6455` (guard script), `43976e909` (journal+notebook), `a17faa03a` (board flip).
-- **AC-1 diff confirmed exact match**: `bctcEvalBackfillRunner.ts` no longer opens its own `Database`+`PRAGMA journal_mode=WAL`; now uses `schema.ts`'s `getDb()`/`closeDb()` singleton. Checked two things the RETURN didn't spell out: `schema.ts:116` already sets `foreign_keys=ON` (dropping the runner's own redundant pragma is not a regression), and the runner is a genuine standalone one-shot CLI (`docker exec ... bun run`, zero importers) — so calling `closeDb()` at the end can't yank a connection from a concurrent in-process user.
-- **AC-2 sweep independently re-verified, not trusted**: the 4 newly-flagged files (`scripts/migrations/{run-finalize-bctc-refine.ts:36, dedupe-mislabeled-bctc-period.ts:368, resync-watchlist-sysmap-2026-07-11.ts:266, carry-forward-bctc-orphaned-rows.ts:361}`) are real — exact line matches, all default `DB_PATH` to the real `apps/mcp-server/data/market.db`, all unconditionally set `journal_mode=WAL`. Confirmed the "outside my zone" refusal is grounded in dev-mcp-server's own real `init.md` (`zone_restricted: apps/mcp-server/`, "NEVER write code outside apps/mcp-server/"), not a fabricated excuse.
-- **AC-3/4 guard independently re-run**: `--self-test` → both WAL/DELETE fixture branches PASS as claimed; live run against the running container → `verdict=PASS journal_mode=delete wal_present=false shm_present=false`, exact match.
-- **`bun tsc --noEmit` independently re-run clean.** Decision journal (`STEP dev-mcp-server-S28`) and notebook entry both confirmed present, matching the RETURN block.
-- **Board disposition confirmed**: single write, `in_progress[]→review[]` lane-move + `next_agent:qa` + `.head` idle-reset all together (CANONICAL:SSOT-STATUSFLIP-LANEMOVE held); conservation `task_total 658→658, signal_total 131→131`.
-- **No prior-art row covered the 4 newly-found files** (checked board + backlog-detail). Minted `FIX-SCRIPTS-MIGRATIONS-MARKETDB-WAL-REARM-SAME-DEFECT` (P1, non-supervised, non-plan_only, `next_agent:developer` — scripts/ sits outside all dev-* zones), mirroring the closed row's own scope-completeness framing verbatim. Conservation `task_total 718→719, signal_total 131→131`. Committed `bb923be57`.
-- **Released `task:FIX-SQLITE-JOURNALMODE-WAL-REARM-DEFEATS-DELETE-MITIGATION` on dev-mcp-server's behalf** (it has no MCP/gateway tool grant) — `released:1`, genuine.
-- **No discrepancies — clean verify**, plus a genuinely thorough AC-2 sweep by the developer that surfaced a real still-open gap rather than papering over it.
-- **NEXT**: `.head` is idle again — a fresh tick's idle-fallthrough chain will reach BOUNDED-1; the new follow-up row is dev-routable and unsupervised, so it's a plausible next pick. Separately, `has_unbacked_sequencing_prose`'s `^po_sequencing`-only gate gap (from the prior cycle) is still unflagged to PO/architect — still not urgent enough to block a tick for, but growing stale.
