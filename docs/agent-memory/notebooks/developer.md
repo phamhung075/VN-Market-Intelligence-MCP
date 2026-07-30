@@ -1,34 +1,6 @@
 # Developer — Notebook
 
-**Last updated:** 2026-07-30 | **Cycle:** FACTORY-GUARD-CI-COMPROOT-LOGIC-IMPL
-
-## Session 2026-07-29 — FACTORY-GUARD-CI-METRICMASK-IMPL — REVIEW
-
-**Task:** dev-team BOUNDED-1 idle-capacity pickup (`cross-service/`, epic FACTORY-MAINTAINABILITY-2026-06), build-vs-plan child of architect brief `2026-07-24-factory-guard-ci-metric-mask-lint.md`. Deliver the metric-mask CI guardrail + fix all live offenders (zero-tolerance, no baseline — unlike the size-lint sibling).
-
-**Actions taken:** New `scripts/audits/metric-mask-lint.sh` (`--check` only). Fixed `cascadeEngine.ts:356,375,394` `seedEntry.confidence ?? 0.6` → `?? 0` (behaviorally identical for every real input, below detector's 0.7 credibility floor either way). Fixed `marketSentimentCalculator.ts:174` `row.impact_score ?? 1.0` by excluding the row (impact_score genuinely nullable, `?? 0` would have fabricated a "zero impact" weight). Annotated `watchlist.ts:198` + a 5th real hit my own lint surfaced beyond the brief's declared scope — `brokerCredibilityTools.ts:51` `baseConfidence = 1` — with `metric-mask-allow:`.
-
-**Verification:** `metric-mask-lint.test.sh` 10/10 PASS. Targeted suites 100% green (FIX-1279-msci-bullish 14/14, P0-4-market-sentiment-index 37/37, cascade files 31/31, 915-broker-credibility 22/22, watchlist 25/25). `tsc --noEmit` clean. Full `bun test`: 14904-14907/15007 pass, 60-63 fail — all pre-existing, tracked by board row `FIX-MCP-SUITE-HEALTH-BASELINE` (order-dependent full-suite pollution); confirmed by re-running 3 sampled failing files in isolation, 32/32 pass standalone.
-
-**Board:** `task_board.in_progress[FACTORY-GUARD-CI-METRICMASK-IMPL]` → `review` (`next_agent: qa`), `.head` reset to idle, same `orch-apply.sh` write.
-
-**Simplicity gate:** PASS — no excess feature beyond the brief's 3 detected shapes, no single-use abstractions, structure mirrors size-lint sibling per instruction.
-
-Zone health: no drift detected.
-
-## Session 2026-07-29 — FACTORY-GUARD-CI-TSBOUNDARIES-IMPL — REVIEW
-
-**Task:** dev-team BOUNDED-1 auto-pickup (`cross-service/`, epic FACTORY-MAINTAINABILITY-2026-06), build-vs-plan child of architect brief `2026-07-24-factory-guard-ci-depguard-tier-boundaries.md`. Wire `eslint-plugin-boundaries` fences into CI for mcp-server/news-fetch/frontend + fix 4 live/previously-invisible violations first (zero-tolerance) + add the missing `news-fetch-go-lint` job.
-
-**Actions taken:** 3 new CI jobs (`mcp-server-eslint`/`news-fetch-eslint`/`frontend-eslint`) + `news-fetch-go-lint`. mcp-server: relocated `queryMarketWideForeignFlow` interface→infra (new `infrastructure/db/foreignFlowQueries.ts`) and the credit-flow computation interface→application (new `application/usecases/computeCreditFlowSignal.ts`, `creditFlowTools.ts` now a thin Vietnamese-text wrapper over it) — fixes 2 Fence-B hits in `getMoneyRadarComposite.ts`. Moved `recoverMissingOhlcvSession.ts` application→scheduler (its sole caller + core dependency are both scheduler-owned) — fixes the 3rd Fence-B hit. news-fetch: mapped the drifted `src/routes/**` directory into `boundaries/elements` (was invisible to the plugin, hiding a real Fence-C hit) + replaced `fetchArticle.ts`'s direct `PlaywrightBrowserFactory` import with an injectable `setPlaywrightLauncher` DI seam wired from `src/index.ts` (composition root). Bonus, unrelated to boundaries: removed 5 dead `react-hooks/exhaustive-deps` disable-comments in frontend (`eslint-plugin-react-hooks` was never installed) that were independently blocking the new `frontend-eslint` job.
-
-**Verification:** Every violation reproduced against a `git stash`-baseline BEFORE fixing (mcp-server 3/3, news-fetch's element-map-only intermediate state, frontend's 5 pre-existing errors) — proves each fix is real, not cosmetic. 2 scratchpad RAW-verify scripts exercised the actual post-relocation import graph (not test mocks): money-radar composite against a seeded real DB (`foreign_net_direction=0.2`, `credit_flow_direction=null` correctly HN-3-excluded) and news-fetch's DI wiring through a real Hono router (unconfigured→graceful error, configured→correct Contract B `ok` response). Zero regressions: mcp-server targeted 133/133 + full suite 14797/3-pre-existing-fail (stash-confirmed); news-fetch 241/241; frontend vitest 2183/2185 (2 pre-existing, stash-confirmed unrelated). `tsc`/`eslint`/`size-lint-justification.sh`/`metric-mask-lint.sh` all clean on all 3 services post-fix.
-
-**Board:** `task_board.in_progress[FACTORY-GUARD-CI-TSBOUNDARIES-IMPL]` → `review` (`next_agent: qa`), `.head` reset to idle, same `orch-apply.sh` write.
-
-**Simplicity gate:** PASS — every relocation is a verbatim body move (zero logic rewrite), DI seam is the minimal shape needed (no factory-function signature threading through composition-root.ts), no new dependency added (react-hooks fix was deletion, not addition).
-
-Zone health: no drift detected.
+**Last updated:** 2026-07-30 | **Cycle:** FACTORY-GUARD-CI-NOHARDCODE-IMPL
 
 ## Session 2026-07-30 — FACTORY-GUARD-CI-COMPROOT-LOGIC-IMPL — REVIEW
 
@@ -61,5 +33,23 @@ Zone health: no drift detected.
 **Simplicity gate:** PASS — every deletion is pure subtraction of independently zero-importer-verified code; check-3's Dockerfile-content refinement is the minimal signal that avoids the false positive (no new dependency, no broader per-symbol tooling).
 
 **Zone note:** No MCP/gateway tool available this session (Read/Edit/Write/Bash only, confirmed at Step 0) — flipped the board row directly via `scripts/orch-apply.sh` (permitted, pure bash); could not release `task:FACTORY-GUARD-CI-DEADCODE-IMPL` or send Telegram (structural gap, flagged for the coordinating dev-team session). Mid-task, ~12 staged `git rm` deletions were found unstaged between two background test runs (index reverted to HEAD, files still gone from disk) — re-staged immediately, verified residual-check 0 before AND after commit; root cause not conclusively isolated (2 concurrent single-file peer commits landed on `main` in the same window) but files were never lost, only re-staged.
+
+Zone health: no drift detected.
+
+## Session 2026-07-30 — FACTORY-GUARD-CI-NOHARDCODE-IMPL — REVIEW
+
+**Task:** dev-team BOUNDED-1 auto-pickup (`cross-service/`, epic FACTORY-MAINTAINABILITY-2026-06), 5th sibling (own brief `2026-07-24-factory-guard-ci-no-hardcode-allowlist-scan.md`, which itself corrects the ticket's naive "ticker allowlist" reading — hundreds of legit domain rule-table arrays are NOT the bug class, only a literal smuggled into a control-flow condition is). New CI gate + fix 2 cosmetic branches + annotate 2 known-debt findings (JANITOR-034/035).
+
+**Actions taken:** New `scripts/audits/no-hardcode-allowlist-scan.sh` (`--check`, zero-tolerance, 2 checks: temporal-combo `.includes('YYYY')`/Go `strings.Contains` near a literal-year `===`/`==`; ticker/code literal-branch vs `HOSE|HNX|UPCOM|BLOOMBERG`-denylisted quoted ALL-CAPS). Fixed `backfillBctcScalarsTool.ts`'s CTG-only reason branch and `pharmaEventMapper.ts`'s IMP-only reasoning branch to the generic message. Annotated `newsChainFallback.ts` (`JANITOR-035`) and `cascadeExecutor.ts`+`priceSourceRouter.ts` (`JANITOR-034`) with `hardcode-scan-allow:`. Wired `no-hardcode-allowlist-scan` CI job + CANONICAL pointer.
+
+**Verify-live catches:** (1) my own first-draft identifier-boundary regex excluded `.` from the valid-prefix set, silently blocking the real `report.action_code` property-access match — found by running the tool live before trusting it. (2) `priceBackfillService.ts:224` `ticker === "BAD"` (documented test-fixture sentinel, brief §2(c) explicitly out-of-scope) still matches check-2's literal regex — annotated rather than adding an ad-hoc "BAD" denylist entry.
+
+**Verification:** New `no-hardcode-allowlist-scan.test.sh` 9/9 PASS. `tsc --noEmit` clean. Targeted 17-file suite 191/191 pass. Full `bun test`: 14865-14869/40 skip/52-56 fail across 2 runs — matches the standing `FIX-MCP-SUITE-HEALTH-BASELINE` order-dependent pattern, grep-confirmed zero fails touch any file this task changed.
+
+**Board:** `task_board.in_progress[FACTORY-GUARD-CI-NOHARDCODE-IMPL]` → `review` (`next_agent: qa`), `.head` reset to idle, same `orch-apply.sh` write.
+
+**Simplicity gate:** PASS — 2 mechanical checks only (generic ticker-array-overlap detection explicitly deferred per brief §3), fixes are pure subtraction of a special-case branch, annotations cite ticket ids not blanket suppressions.
+
+**Zone note:** No MCP/gateway tool available this session (Read/Edit/Write/Bash only, confirmed at Step 0) — flipped the board row directly via `scripts/orch-apply.sh` (permitted, pure bash); could not release `task:FACTORY-GUARD-CI-NOHARDCODE-IMPL` or send Telegram (structural gap, flagged for the coordinating dev-team session).
 
 Zone health: no drift detected.
