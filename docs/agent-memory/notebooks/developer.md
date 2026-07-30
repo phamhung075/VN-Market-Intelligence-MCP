@@ -1,6 +1,20 @@
 # Developer — Notebook
 
-**Last updated:** 2026-07-30 | **Cycle:** FIX-NOTEBOOK-AUTOPRUNE-SAMEDAY-TIE-DROPS-NEWEST
+**Last updated:** 2026-07-30 | **Cycle:** FIX-DEVTEAM-CLAIM-SCRIPTS-UNCONDITIONAL-HEAD-OVERWRITE
+
+## Session 2026-07-30 — FIX-DEVTEAM-CLAIM-SCRIPTS-UNCONDITIONAL-HEAD-OVERWRITE — REVIEW
+
+**Task:** dev-team BOUNDED-1 auto-pickup (`cross-service/`), PO ratification `ruling-20260730T0906Z-po-triage-po.md` STEP po-4. Three dev-team claim scripts (`devteam-backlog-claim-bounded1.jq`, `devteam-backlog-claim-supervised-lane-sweep.jq`, `devteam-backlog-claim-ready-lane-consumer.jq`) performed an UNCONDITIONAL `.head` replace instead of a conditional guard — confirmed LIVE risk: `.head` was genuinely occupied by an in-flight supervised task (`FIX-AUDITOR-CALLER-PROSE-OVERRIDES-DOCUMENTED-DETECTOR-THRESHOLD`) at the exact tick this row was minted, while all 3 scripts sat live in the same head-idle fall-through dispatch chain.
+
+**Actions:** Mirrored the already-shipped, PO-ratified `$head_free` conditional-guard shape from `devteam-backlog-claim-design-router-sweep.jq` (DRS) onto all 3 scripts, exactly as instructed — no new pattern invented. SLS needed the guard in BOTH its PRIMARY and FALLBACK `.head` write branches (2 call sites, one shared `$head_free` computed once). Happy path (head idle/done/active_task_id-null) behavior unchanged; when a DIFFERENT task is genuinely live in `.head`, the write is now skipped instead of clobbering the live resume pointer.
+
+**Verify-live catch:** the live board's own `.head` was occupied by THIS task itself while running this fix — a real (not synthetic) exercise of the guard's busy-branch at the one live BOUNDED-1 call site, though the isolated fixture tests below are what actually prove the negative-control case (a DIFFERENT task's `.head` byte-identical after claim).
+
+**Verification:** Extended `scripts/audits/devteam-dispatch-gate-satisfiability.sh` with 8 new isolated single-row-fixture assertions (AC-BOUNDED1-HEAD-GUARD, AC-SLS-HEAD-GUARD PRIMARY+FALLBACK, AC-RLC-HEAD-GUARD — each with a positive half proving the row still moves `ready[]→in_progress[]` while `.head` stays untouched). Full suite 48/48 PASS, never writes to the live file. No `apps/` TS/Go source touched (zone `cross-service/`, pure jq+bash) — `bun test`/`tsc` structurally N/A.
+
+**Board:** flipped `IN_PROGRESS`→`REVIEW`, `next_agent:"qa"`, lane-moved `in_progress[]`→`review[]`, and reset `.head` to `{status:"idle", active_task_id:null, next_agent:"router"}` in the SAME `orch-apply.sh` write (branch:null direct-execute path, per `execute-tier.md`'s `CANONICAL:SSOT-STATUSFLIP-LANEMOVE`).
+
+**Zone note:** No MCP/gateway tool grant this session (Read/Edit/Write/Glob/Grep/Bash only, confirmed at Step 0) — could not `task_release`/`send_telegram`; flagged for the coordinating dev-team session (`owner_client_session=64c7c677-0f0f-4cee-a3ce-dba79d70b7ae`) to release `task:FIX-DEVTEAM-CLAIM-SCRIPTS-UNCONDITIONAL-HEAD-OVERWRITE` on my behalf.
 
 ## Session 2026-07-30 — FIX-NOTEBOOK-AUTOPRUNE-SAMEDAY-TIE-DROPS-NEWEST — REVIEW
 
