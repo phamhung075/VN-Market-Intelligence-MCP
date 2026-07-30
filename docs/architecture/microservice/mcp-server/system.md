@@ -13,7 +13,7 @@ Individual tool signatures: `docs/agents/tools/list/<tool>.md`
 | Tool | Purpose | Key inputs | Downstream |
 |------|---------|-----------|-----------|
 | `get_system_status` | Unified system health: MCP server, VPS, data freshness, error summary. Each of the 4 sections is guarded by a 3 000 ms per-section deadline (`withSectionDeadline`). A slow section degrades to honest "timeout/unknown" — never hangs the caller. | — | market.db (cron_job_runs) + VPS health checks |
-| `get_vps_proxy_health` | VPS proxy health and staleness check | — | market.db (market_prices.updated_at) |
+| `get_vps_proxy_health` | VPS proxy health and staleness check. Demand-driven routes (bctc) with a confirmed-empty own work queue report `idle-no-work`, not proxy-down — see `docs/agents/tools/list/get_vps_proxy_health.md` §Notes | — | market.db (market_prices.updated_at, vps_push_log, bctc_vps_queue) |
 | `get_vps_service_health` | Individual VPS service status | service? | SSH health check (operator only) |
 | `restart_vps_service` | Restart a VPS systemd service | service | vps/sshExec.ts (operator only) |
 | `get_cron_health` | Cron job health — last run, missed windows | — | market.db (cron_job_runs) |

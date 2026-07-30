@@ -10,7 +10,7 @@
 
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
-import { getVpsProxyHealth, type VpsServiceHealth } from "../../../../infrastructure/db/vpsPushLogStore.js";
+import { getVpsProxyHealth, getDemandQueueDepth, type VpsServiceHealth } from "../../../../infrastructure/db/vpsPushLogStore.js";
 import { getDb } from "../../../../infrastructure/db/schema.js";
 import {
   isVnMarketHours,
@@ -43,13 +43,32 @@ const NEWS_QUIET_HOURS_SERVICES = new Set(["news"]);
 // VPS service "sbv": SBV FX rates published on business days only.
 const SBV_BUSINESS_DAY_SERVICES = new Set(["sbv"]);
 
-function formatHealth(services: VpsServiceHealth[], now: Date = new Date()): string {
+/**
+ * FIX-VPSHEALTH-DEMANDROUTE-EMPTYQUEUE-MISREPORTS-PROXY-UNREACHABLE:
+ * `demandQueueDepths` separates OBSERVATION (isStale — raw push-age vs.
+ * expected interval, unchanged) from INFERENCE (the narration composed
+ * below). A service present in this map with a resolved depth of exactly 0
+ * is a demand-driven route whose own work queue is confirmed empty right
+ * now — a large push-age there is IDLE-NO-WORK, never proxy-down evidence.
+ * Generic: keyed by service name, works for any current or future
+ * demand-driven route (see DEMAND_QUEUE_SQL in vpsPushLogStore.ts), not just
+ * "bctc". A service absent from the map (or with a null/nonzero depth) is
+ * unaffected — falls through to the pre-fix behavior unchanged.
+ */
+function formatHealth(
+  services: VpsServiceHealth[],
+  now: Date = new Date(),
+  demandQueueDepths: Partial<Record<string, number | null>> = {},
+): string {
   const lines: string[] = [
     "=== VPS PROXY HEALTH ===",
     "",
     "Service     | Last Push           | Items | Status  | 24h Pushes | 24h Errors | Stale?",
     "------------|---------------------|-------|---------|------------|------------|-------",
   ];
+
+  const isIdleNoWork = (s: VpsServiceHealth): boolean =>
+    demandQueueDepths[s.service] === 0;
 
   for (const s of services) {
     const lastPush = s.lastPushAt ?? "never";
@@ -60,7 +79,7 @@ function formatHealth(services: VpsServiceHealth[], now: Date = new Date()): str
       (NEWS_QUIET_HOURS_SERVICES.has(s.service) && !isVnNewsPublishHours(now)) ||
       (SBV_BUSINESS_DAY_SERVICES.has(s.service) && !isVnSbvBusinessDay(now));
     const staleFlag = stale
-      ? (isOffHours ? "off-hours" : "YES")
+      ? (isOffHours ? "off-hours" : (isIdleNoWork(s) ? "idle-no-work" : "YES"))
       : "no";
 
     lines.push(
@@ -68,7 +87,7 @@ function formatHealth(services: VpsServiceHealth[], now: Date = new Date()): str
     );
   }
 
-  // Summary — off-hours stale services excluded from the "STALE" warning
+  // Summary — off-hours AND idle-no-work stale services excluded from the "STALE" warning
   const isServiceOffHours = (s: VpsServiceHealth) =>
     (MARKET_HOURS_ONLY_SERVICES.has(s.service) && !isVnMarketHours(now)) ||
     (NEWS_QUIET_HOURS_SERVICES.has(s.service) && !isVnNewsPublishHours(now)) ||
@@ -78,10 +97,16 @@ function formatHealth(services: VpsServiceHealth[], now: Date = new Date()): str
     if (!isStale(s, now)) return false;
     // Services outside their active window are expected stale — suppress warning
     if (isServiceOffHours(s)) return false;
+    // Demand-driven routes with a confirmed-empty own queue are idle by
+    // design — a stale push-age here is NOT proxy-down evidence.
+    if (isIdleNoWork(s)) return false;
     return true;
   });
   const offHoursServices = services.filter(
     (s) => isServiceOffHours(s) && isStale(s, now)
+  );
+  const idleNoWorkServices = services.filter(
+    (s) => isIdleNoWork(s) && isStale(s, now) && !isServiceOffHours(s)
   );
   const errorServices = services.filter((s) => s.errors24h > 0);
 
@@ -91,6 +116,9 @@ function formatHealth(services: VpsServiceHealth[], now: Date = new Date()): str
   }
   if (offHoursServices.length > 0) {
     lines.push(`OFF-HOURS (by design): ${offHoursServices.map((s) => s.service).join(", ")} — source sleeps outside its active publishing window`);
+  }
+  if (idleNoWorkServices.length > 0) {
+    lines.push(`IDLE-NO-WORK (by design): ${idleNoWorkServices.map((s) => s.service).join(", ")} — demand-driven route(s) with an empty own work queue right now; large push-age reflects no work being due, not a proxy fault`);
   }
   if (errorServices.length > 0) {
     lines.push(`ERRORS: ${errorServices.map((s) => `${s.service}(${s.errors24h})`).join(", ")}`);
@@ -199,7 +227,15 @@ export function registerVpsProxyTools(
         services = services.filter((s) => s.service === service);
       }
 
-      let output = formatHealth(services);
+      // FIX-VPSHEALTH-DEMANDROUTE-EMPTYQUEUE-MISREPORTS-PROXY-UNREACHABLE:
+      // resolve each service's demand-driven queue depth (null when the
+      // route is cadence-driven or the probe fails — fail-open, no gate).
+      const demandQueueDepths: Partial<Record<string, number | null>> = {};
+      for (const s of services) {
+        demandQueueDepths[s.service] = getDemandQueueDepth(db, s.service);
+      }
+
+      let output = formatHealth(services, undefined, demandQueueDepths);
 
       // Append recent log entries
       const logRows = db.prepare(
