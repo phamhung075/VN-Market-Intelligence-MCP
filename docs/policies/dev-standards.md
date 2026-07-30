@@ -1,6 +1,6 @@
 # Developer Standards
 
-<!-- size-justification: 140L — unified developer reference: code search tools, test patterns, DDD rules, TypeScript conventions, naming. All read together at sprint start to set context; splitting into tool-guide + test-patterns + naming-rules fragments the unified "how we code" standard. SCRIPT-PERSIST 2026-06-07: Script Persistence section incl. maintenance clause (+15L, user directive). SYSREMAKE-P2-DEVTEAM-BACKLOG-PICKUP-BOUNDED1 2026-07-04: CANONICAL pointer for the dev-team idle-capacity backlog pickup scripts (+11L). PUSH-AUTONOMY-1 2026-07-14: Autonomous Push Gate section (+16L, user directive — push on 100% green, no user action, post-push real-data verify task). FIX-CMH-OBSOLETE-FILE-CLEANUP 2026-07-20: CANONICAL pointer for scripts/audits/clean-obsolete-files.sh (+8L). BLOCK-PUSH-CRON-AUDIT-BATCH-NO-QA 2026-07-22 (qa): pinned the "targeted/merge-gate suite" reading against the standing FIX-MCP-SUITE-HEALTH-BASELINE full-suite red so it stops being re-litigated per push (+3L). UC-MDH-P3 2026-07-23: CANONICAL pointer for scripts/agents-flow/memory-prune-sweep.sh (+14L). UC-MDH-P4 2026-07-23: CANONICAL pointer for scripts/agents-flow/decision-journal-archive.sh (+15L). UC-GCP-P8 2026-07-23: CANONICAL pointer for scripts/agents-flow/stranded-state-sweep.sh (+13L). TE-T17 2026-07-23: CANONICAL pointer for scripts/agents-flow/notebook-linecap-sweep.sh (+13L). TE-T28 2026-07-23: CANONICAL pointer for scripts/gen-tool-list-stubs.py (+15L). TE-T31 2026-07-23: CANONICAL pointer for scripts/gen-tools-index.sh (+14L). TE-T33 2026-07-23: CANONICAL pointer for scripts/agents-flow/cold-archive-sweep.sh (+18L). FFLOW-STALE-0723-B-RECHECK-HARNESS 2026-07-23: CANONICAL pointer for scripts/check-foreign-flow-freshness.sh (+16L). FIX-COMMIT-PATH-PEER-INDEX-SWEEP-GUARD-HOOK 2026-07-28: CANONICAL pointer for scripts/git-hooks/pre-commit (+15L). FIX-AUDITOR-HEARTBEAT-OUT-OF-CONTRACT-AGENT-WRITE-TIER1 2026-07-29: CANONICAL sole-writer + shape invariant for docs/data/auditor-tier{1,2,3}-last-healthy.json, cited from both writers (+21L). FIX-NOTEBOOK-COMPOSE-REWRITES-RETAINED-PRIOR-SECTIONS-followup 2026-07-29: CANONICAL pointer for scripts/audits/verify-notebook-immutability-gate.sh (+9L). FIX-AUDITOR-DASHBOARD-APPEND-NO-ACTUATOR-CONTRACT-COUNT-NARRATED 2026-07-29: CANONICAL pointers for scripts/emit-dashboard-row.sh + scripts/audit-output-contract.sh (+24L). FACTORY-GUARD-CI-SIZELINT-IMPL 2026-07-29: CANONICAL pointer for scripts/audits/size-lint-justification.sh (+16L). FACTORY-GUARD-CI-METRICMASK-IMPL 2026-07-29: CANONICAL pointer for scripts/audits/metric-mask-lint.sh (+18L). FACTORY-GUARD-CI-TSBOUNDARIES-IMPL 2026-07-29: CANONICAL pointer for the 3 new TS eslint CI jobs (mcp-server/news-fetch/frontend) + news-fetch-go-lint (+22L). FACTORY-GUARD-CI-COMPROOT-LOGIC-IMPL 2026-07-30: CANONICAL pointer for scripts/audits/composition-root-logic-gate.go + the composition-root-logic-gate CI job (+30L). FACTORY-GUARD-CI-DEADCODE-IMPL 2026-07-30: CANONICAL pointer for scripts/audits/dead-code-gate.sh + the dead-code-gate CI job, incl. the check-3 twin-scaffold deviation from the board-row note's literal phrasing (news-fetch false-positive) (+35L). -->
+<!-- size-justification: 140L — unified developer reference: code search tools, test patterns, DDD rules, TypeScript conventions, naming. All read together at sprint start to set context; splitting into tool-guide + test-patterns + naming-rules fragments the unified "how we code" standard. SCRIPT-PERSIST 2026-06-07: Script Persistence section incl. maintenance clause (+15L, user directive). SYSREMAKE-P2-DEVTEAM-BACKLOG-PICKUP-BOUNDED1 2026-07-04: CANONICAL pointer for the dev-team idle-capacity backlog pickup scripts (+11L). PUSH-AUTONOMY-1 2026-07-14: Autonomous Push Gate section (+16L, user directive — push on 100% green, no user action, post-push real-data verify task). FIX-CMH-OBSOLETE-FILE-CLEANUP 2026-07-20: CANONICAL pointer for scripts/audits/clean-obsolete-files.sh (+8L). BLOCK-PUSH-CRON-AUDIT-BATCH-NO-QA 2026-07-22 (qa): pinned the "targeted/merge-gate suite" reading against the standing FIX-MCP-SUITE-HEALTH-BASELINE full-suite red so it stops being re-litigated per push (+3L). UC-MDH-P3 2026-07-23: CANONICAL pointer for scripts/agents-flow/memory-prune-sweep.sh (+14L). UC-MDH-P4 2026-07-23: CANONICAL pointer for scripts/agents-flow/decision-journal-archive.sh (+15L). UC-GCP-P8 2026-07-23: CANONICAL pointer for scripts/agents-flow/stranded-state-sweep.sh (+13L). TE-T17 2026-07-23: CANONICAL pointer for scripts/agents-flow/notebook-linecap-sweep.sh (+13L). TE-T28 2026-07-23: CANONICAL pointer for scripts/gen-tool-list-stubs.py (+15L). TE-T31 2026-07-23: CANONICAL pointer for scripts/gen-tools-index.sh (+14L). TE-T33 2026-07-23: CANONICAL pointer for scripts/agents-flow/cold-archive-sweep.sh (+18L). FFLOW-STALE-0723-B-RECHECK-HARNESS 2026-07-23: CANONICAL pointer for scripts/check-foreign-flow-freshness.sh (+16L). FIX-COMMIT-PATH-PEER-INDEX-SWEEP-GUARD-HOOK 2026-07-28: CANONICAL pointer for scripts/git-hooks/pre-commit (+15L). FIX-AUDITOR-HEARTBEAT-OUT-OF-CONTRACT-AGENT-WRITE-TIER1 2026-07-29: CANONICAL sole-writer + shape invariant for docs/data/auditor-tier{1,2,3}-last-healthy.json, cited from both writers (+21L). FIX-NOTEBOOK-COMPOSE-REWRITES-RETAINED-PRIOR-SECTIONS-followup 2026-07-29: CANONICAL pointer for scripts/audits/verify-notebook-immutability-gate.sh (+9L). FIX-AUDITOR-DASHBOARD-APPEND-NO-ACTUATOR-CONTRACT-COUNT-NARRATED 2026-07-29: CANONICAL pointers for scripts/emit-dashboard-row.sh + scripts/audit-output-contract.sh (+24L). FACTORY-GUARD-CI-SIZELINT-IMPL 2026-07-29: CANONICAL pointer for scripts/audits/size-lint-justification.sh (+16L). FACTORY-GUARD-CI-METRICMASK-IMPL 2026-07-29: CANONICAL pointer for scripts/audits/metric-mask-lint.sh (+18L). FACTORY-GUARD-CI-TSBOUNDARIES-IMPL 2026-07-29: CANONICAL pointer for the 3 new TS eslint CI jobs (mcp-server/news-fetch/frontend) + news-fetch-go-lint (+22L). FACTORY-GUARD-CI-COMPROOT-LOGIC-IMPL 2026-07-30: CANONICAL pointer for scripts/audits/composition-root-logic-gate.go + the composition-root-logic-gate CI job (+30L). FACTORY-GUARD-CI-DEADCODE-IMPL 2026-07-30: CANONICAL pointer for scripts/audits/dead-code-gate.sh + the dead-code-gate CI job, incl. the check-3 twin-scaffold deviation from the board-row note's literal phrasing (news-fetch false-positive) (+35L). FACTORY-GUARD-CI-NOHARDCODE-IMPL 2026-07-30: CANONICAL pointer for scripts/audits/no-hardcode-allowlist-scan.sh + the no-hardcode-allowlist-scan CI job, incl. the priceBackfillService.ts:224 verify-live deviation (documented test-fixture sentinel, annotated not fixed) (+38L). -->
 
 ## Script Persistence — scripts/, never /tmp
 
@@ -701,6 +701,51 @@ twin mirroring `news-fetch`'s own shape that passes). Wired as the `dead-code-ga
 `.github/workflows/ci.yml` (ubuntu-latest, checkout-only, no toolchain — cheapest job in the
 pipeline). Design brief: `docs/architecture-briefs/2026-07-24-factory-guard-ci-dead-code-gate.md`.
 Test: `scripts/audits/dead-code-gate.test.sh`.
+
+**CANONICAL: No-hardcode-allowlist CI guardrail (FACTORY-GUARD-CI-NOHARDCODE-IMPL)**
+```bash
+bash scripts/audits/no-hardcode-allowlist-scan.sh --check    # CI mode: exit 0 pass / 1 fail, no writes
+```
+Zero-tolerance (same fix-now pattern as metric-mask-lint.sh/dead-code-gate.sh, NOT baseline/ratchet
+like size-lint-justification.sh), 2 mechanically-reliable `git ls-files`/grep checks against a
+ticker/date literal smuggled INTO a control-flow condition — NOT a named, generically-consumed
+reference-data table (the brief's own verify-live pass found hundreds of legitimately-overlapping
+domain rule-table arrays across `predictionCascadeMapper.ts`/`policyImpactMapper.ts`/etc — those are
+explicitly excluded, not the bug class): (1) temporal special-case ban — `.includes('YYYY')` (TS) or
+`strings.Contains(x, "YYYY")` (Go) co-occurring within a +/-2 line window with a literal-year equality
+(`===?`/`==`); (2) ticker/code literal-branch ban — `(ticker|symbol|code|action_code)` (bare or
+`<obj>.<ident>` property access) compared via `===`/`==` against a quoted 2-5-char ALL-CAPS literal,
+denylisting the stable `HOSE|HNX|UPCOM|BLOOMBERG` exchange-enum comparisons (per §2(a) of the design
+brief — those are typed domain-enum mappings, not volatile reference data). A generic cross-file
+ticker-array-duplication detector (would have caught `JANITOR-034`) is explicitly DEFERRED — the repo
+has dozens of legitimately overlapping domain rule tables (e.g. `predictionCascadeMapper.ts`'s cascade
+categories intentionally re-use VCB/BID/CTG across unrelated buckets), so a mechanical
+"N-shared-elements" check would false-positive heavily. Live debt at design time: 2 cosmetic
+diagnostic-reason-string branches (`backfillBctcScalarsTool.ts` CTG-only, `pharmaEventMapper.ts`
+IMP-only) fixed outright in the same task that shipped the gate (RAW-verified behavior-preserving —
+only the reason/reasoning text differs, no classification/confidence/severity/direction field
+changed); 2 known-debt findings (`JANITOR-034` ticker-array overlap in `cascadeExecutor.ts`+
+`priceSourceRouter.ts`, `JANITOR-035` temporal special-case in `newsChainFallback.ts`) annotated via
+the `hardcode-scan-allow: <ticket-id> — <reason>` escape hatch (mirrors `size-justification:`/
+`metric-mask-allow:` — same-line-or-immediately-preceding-line contract) rather than generalized —
+both already require a human design decision their own `docs/data/code-janitor-known-findings.json`
+entries call for, out of this gate-shipping task's scope to make unilaterally.
+
+**Deviation (verify-live, not in the board-row note's file list):**
+`apps/mcp-server/src/domain/services/priceBackfillService.ts:224` (`ticker === "BAD"`) also matches
+check-2's literal shape but is NOT one of the 2 fix/2 annotate targets above — it is a documented
+test-fixture sentinel (`ohlcvWriteService.ts:49` already labels it "Historical seed/mock only...
+sentinel present"), never called outside `__tests__/`, explicitly excluded from this scan's offender
+count by the design brief's own §2(c) ("a test-mock-leaked-into-domain-layer issue, not a
+reference-data/allowlist issue — out of this scan's scope"). Left unfixed by design (no live
+behavior to change), but annotated with the same `hardcode-scan-allow:` escape hatch (citing the
+brief §2(c) directly) so the gate's own zero-tolerance mechanical check does not open red on day one
+against a site the design already ruled out of scope.
+
+Wired as the `no-hardcode-allowlist-scan` job in `.github/workflows/ci.yml` (ubuntu-latest,
+checkout-only, no toolchain — cheapest job in the pipeline). Design brief:
+`docs/architecture-briefs/2026-07-24-factory-guard-ci-no-hardcode-allowlist-scan.md`.
+Test: `scripts/audits/no-hardcode-allowlist-scan.test.sh`.
 
 `/tmp` is allowed ONLY for throwaway run-scoped DATA (payload json, stderr capture, session-id cache) — never for executable logic.
 

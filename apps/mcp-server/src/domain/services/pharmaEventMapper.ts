@@ -284,10 +284,7 @@ export function classifyPharmaEvent(
       affectedStocks: pharmaStocks.map((code) => ({
         code,
         direction: "up" as ImpactDirection,
-        reasoning:
-          code === "IMP"
-            ? "Vaccine distributor benefits most from outbreak demand"
-            : "Increased treatment drug demand during disease outbreak",
+        reasoning: "Increased treatment drug demand during disease outbreak",
       })),
       confidence: 0.70,
       description: "Disease outbreak detected — bullish for pharma sector (increased demand)",

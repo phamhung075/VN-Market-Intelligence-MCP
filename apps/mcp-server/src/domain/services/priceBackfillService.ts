@@ -220,7 +220,11 @@ async function fetchOhlcvData(
     // keeps low>=199, always well clear of the floor.
     const basePrice = 200 + Math.random() * 20;
 
-    // For tests: ticker="BAD" generates invalid OHLCV to test validation
+    // For tests: ticker="BAD" generates invalid OHLCV to test validation. Documented
+    // mock-only sentinel (see ohlcvWriteService.ts:49 "Historical seed/mock only...
+    // sentinel present"), never called outside __tests__/ — a test-mock-leaked-into-
+    // domain-layer shape, not the reference-data/allowlist bug class this gate targets.
+    // hardcode-scan-allow: test-fixture sentinel, not live reference data — see docs/architecture-briefs/2026-07-24-factory-guard-ci-no-hardcode-allowlist-scan.md §2(c)
     if (ticker === "BAD") {
       data.push({
         date: dateStr,

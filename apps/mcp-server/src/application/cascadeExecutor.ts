@@ -191,6 +191,7 @@ export function detectMsciCascadePeers(
 
   // ── Step 2: Use large-cap stock list ──────────────────────────────────
   // Default: hardcoded list of major Vietnamese large-cap stocks
+  // hardcode-scan-allow: JANITOR-034 — pending generalization decision, tracked in docs/data/code-janitor-known-findings.json
   const LARGE_CAP_FALLBACK = ["MWG", "KDH", "FPT", "MSN", "VCB", "HPG", "BID", "CTG"];
   const largeCapStocks = largeCapListOverride || LARGE_CAP_FALLBACK;
 

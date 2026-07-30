@@ -428,6 +428,25 @@ jobs:
       - name: Run dead-code-gate --check
         run: bash scripts/audits/dead-code-gate.sh --check
 
+  no-hardcode-allowlist-scan:
+    name: no-hardcode-allowlist-scan
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # Pure bash/git ls-files/grep — no bun/go/python toolchain needed, cheapest
+      # job in the pipeline. Zero-tolerance CI guardrail against a ticker/date
+      # literal smuggled INTO a control-flow condition (not a named, generically-
+      # consumed reference-data table — those are explicitly NOT the bug class).
+      # Live debt (2 cosmetic reason-string branches) fixed in the same task that
+      # shipped this gate; 2 known-debt findings (JANITOR-034/035) annotated via
+      # the hardcode-scan-allow: escape hatch pending their own design decisions.
+      # See docs/architecture-briefs/2026-07-24-factory-guard-ci-no-hardcode-allowlist-scan.md
+      - name: Run no-hardcode-allowlist-scan --check
+        run: bash scripts/audits/no-hardcode-allowlist-scan.sh --check
+
 # AC-8 (optional) — Branch protection setup:
 # To require CI jobs before merging to main, go to:
 #   GitHub repo > Settings > Branches > Add branch protection rule

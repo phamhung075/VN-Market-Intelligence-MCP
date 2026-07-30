@@ -195,10 +195,7 @@ export function buildBackfillBctcScalarsHandler(
             sort_key: report.sort_key,
             table_row_count: 0,
             status: "SKIPPED",
-            reason:
-              report.action_code === "CTG"
-                ? "CTG 0 table_rows — cover-letter-only PDF; requires BCTC-CTG-ATTACHMENT-FETCH"
-                : "0 table_rows — no parseable financial data; requires re-fetch or re-extraction",
+            reason: "0 table_rows — no parseable financial data; requires re-fetch or re-extraction",
           });
           continue;
         }

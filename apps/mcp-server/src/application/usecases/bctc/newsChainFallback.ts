@@ -221,6 +221,7 @@ export async function tryNewsChainFallback(
     // docs/data/code-janitor-known-findings.json for a future generalization decision.
     let temporalDiscount = 1.0;
     const signalText = signals.map(s => s.finding_data).join(' ');
+    // hardcode-scan-allow: JANITOR-035 — pending generalization decision, tracked in docs/data/code-janitor-known-findings.json
     if (signalText.includes('2023') && year === 2024) {
       temporalDiscount = TEMPORAL_DISCOUNT;
       logger.debug(`${tag} temporal discount applied (0.8x) for 2023 data`);

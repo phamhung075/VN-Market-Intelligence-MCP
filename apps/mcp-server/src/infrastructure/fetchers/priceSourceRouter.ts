@@ -50,6 +50,7 @@ export function priceSourceRouter(
   }
 ): PriceSourceRoute {
   const VPS_STALE_THRESHOLD_MINUTES = 10;
+  // hardcode-scan-allow: JANITOR-034 — pending generalization decision, tracked in docs/data/code-janitor-known-findings.json
   const MAJOR_CAPS = ["VNM", "FPT", "VCB", "HPG", "BID", "VHM", "VIC", "CTG"];
 
   // Calculate staleness of cached price
