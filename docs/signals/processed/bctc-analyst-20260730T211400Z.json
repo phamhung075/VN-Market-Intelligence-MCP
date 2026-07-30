@@ -1,0 +1,41 @@
+{
+  "id": "bca-20260730T211400Z",
+  "ts": "2026-07-30T21:14:00Z",
+  "from": "bctc-analyst",
+  "to": "dev-team",
+  "type": "esc-deep-dive-request",
+  "summary": "ESC deep-dive: FPT Q1-2026 ESC-5",
+  "severity": "HIGH",
+  "status": "NEW",
+  "payload_ref": null,
+  "payload": {
+    "trigger_id": "ESC-5",
+    "ticker": "FPT",
+    "quarter": "Q1-2026",
+    "report_id": "e8ea3df5-3f32-413d-a3eb-c71634c0438d",
+    "guard_key": "esc-deepdive:FPT:Q1-2026:ESC-5",
+    "context": {
+      "low_confidence_unit_ids": [
+        "unit-0008",
+        "unit-0009",
+        "unit-0010",
+        "unit-0011",
+        "unit-0012",
+        "unit-0013",
+        "unit-0014"
+      ],
+      "min_confidence": 0.45,
+      "total_units": 15,
+      "note": "7/15 refine units (footnotes: related-party transactions, subsidiary registry, borrowings detail, equity movement, EPS restatement) below 0.50 confidence — all OCR-degraded multi-column notes, refined_at 2026-05-31 (unchanged since original refine run). Guard esc-deepdive:FPT:Q1-2026:ESC-5 was previously claimed (expired ~21:11Z, TTL 86400s) and re-claimed (stolen:true) this cycle at 21:12Z — persistent condition, not new data."
+    },
+    "all_esc_fired": [
+      "ESC-5"
+    ]
+  },
+  "_processed": {
+    "fingerprint": "cbed2735531e7da58c435d9aad4b406f1475454c6f46ef7b10a4a44bf1158451",
+    "processedAt": "2026-07-30T21:15:50Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

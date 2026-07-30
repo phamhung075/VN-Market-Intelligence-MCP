@@ -1,0 +1,55 @@
+{
+  "from": "cowork-team",
+  "to": "orch-sentinel",
+  "type": "cowork-tick-telemetry",
+  "payload": {
+    "fire_time": "2026-07-30T21:06:32Z",
+    "matched_slots": [
+      "bctc-analyst-slot-3"
+    ],
+    "won_slots": [
+      "bctc-analyst-slot-3"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "bctc-analyst-slot-3"
+    ],
+    "silent": false,
+    "drift_min": 5,
+    "errors": [],
+    "pressure_mode": "adaptive",
+    "calendar_status": "unknown",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "chef_mutex_applied": false,
+    "due_reasons": {
+      "bctc-analyst-slot-3": "cron"
+    },
+    "cadence_minutes": {
+      "bctc-analyst-slot-3": null
+    },
+    "last_fired_timestamp": "2026-07-30T21:06:29Z",
+    "last_fired_slots": [
+      "bctc-analyst-slot-3"
+    ],
+    "last_fired_write_errors": [],
+    "classification": "WORK",
+    "reason": "non-guaranteed offmarket cron slot due (bctc-analyst-slot-3), policy_id=bctc-offmarket, due_reason=cron",
+    "nominal_tick": "2026-07-30T21:00Z",
+    "leader_lock": "held",
+    "dev_head": "in_progress",
+    "devq": 5,
+    "signal_backlog": 16,
+    "note": ""
+  },
+  "priority": "INFO",
+  "createdAt": "2026-07-30T21:06:45Z",
+  "_processed": {
+    "fingerprint": "548b80081dd03839a5a294ad2293adf74e3a7bc89abc3546ec173a1d405d90bf",
+    "processedAt": "2026-07-30T21:15:50Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
