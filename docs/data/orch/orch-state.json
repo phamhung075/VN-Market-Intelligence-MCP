@@ -93,11 +93,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "active_task_id": null,
-    "next_agent": "router",
-    "updated_at": "2026-07-30T02:09:15Z",
-    "updated_by": "developer"
+    "status": "in_progress",
+    "active_task_id": "FACTORY-GUARD-CI-SHAREDPKG-IMPL",
+    "next_agent": "developer",
+    "next_action": "BOUNDED-1 auto-pickup claim of FACTORY-GUARD-CI-SHAREDPKG-IMPL — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
+    "updated_at": "2026-07-30T02:34:10Z",
+    "updated_by": "dev-team (bounded-1 auto-pickup)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -133,7 +134,7 @@
     "does_not_consume_wip": true
   },
   "signal_queue": {
-    "_updated_at": "2026-07-30T02:33:19Z",
+    "_updated_at": "2026-07-30T02:37:06Z",
     "_updated_by": "dev-team",
     "archive": [],
     "rows": [
@@ -2032,17 +2033,6 @@
         "payload_ref": null
       },
       {
-        "id": "dev-20260730T012234",
-        "ts": "2026-07-30T01:22:34Z",
-        "from": "dev-team",
-        "to": "po",
-        "type": "system-issue",
-        "summary": "stranded-state sweep: 17 unknown-owner paths still unowned (3rd re-emit)",
-        "severity": "MED",
-        "status": "READ",
-        "payload_ref": "docs/handoffs/STRANDED-STATE-SWEEP-20260729T2342Z.md"
-      },
-      {
         "id": "dev-20260730T023319",
         "ts": "2026-07-30T02:33:19Z",
         "from": "dev-team",
@@ -2074,6 +2064,17 @@
         "severity": "CRITICAL",
         "status": "NEW",
         "payload_ref": null
+      },
+      {
+        "id": "dev-20260730T023706",
+        "ts": "2026-07-30T02:37:06Z",
+        "from": "dev-team",
+        "to": "po",
+        "type": "system-issue",
+        "summary": "stranded-state sweep: 17 unknown-owner paths still unowned (4th re-emit, unchanged set)",
+        "severity": "MED",
+        "status": "NEW",
+        "payload_ref": "docs/handoffs/STRANDED-STATE-SWEEP-20260729T2342Z.md"
       }
     ],
     "last_triaged_at": "2026-07-29T06:25:00Z",
@@ -9663,27 +9664,6 @@
         "note": "ROOT: quality-checklist.json (_updated_by: system-auditor, generated_at frozen 2026-06-10) stamps check.status=PASS with a REUSED evidence string instead of running that check's own recheck_how and capturing per-check evidence. RAW-confirmed byte-identical duplicates in the LIVE file this tick: 'observability demonstrably working — WORK-channel msg IDs 2743-2766' x4 across unrelated checks; 'CI green commit fc28bf41...' x4; 'HTTP 200' x7. This copy-paste PASS masked BCT-OBS-02 (sscCheck nightly WORK post) and DS-OBS-01 (freshnessSlaMonitor WORK/BUG alert) — both marked PASS while the real breach->human-visible Telegram alert was broken. Recurring 2x -> recurring-bug policy (block+fix root cause). FIX: (1) generator MUST NOT reuse an evidence string across distinct check_ids — each PASS requires its OWN freshly-captured evidence from executing recheck_how; (2) a check that cannot capture distinct real evidence stays UNKNOWN/UNVERIFIED, never a copy-paste PASS (fail-loud, empty-read-is-not-evidence); (3) add a validator (generation-time and/or serve-time in qualityChecklistHandler) that REJECTS a checklist where any evidence string is byte-identical across >1 check_id. AC: (a) live quality-checklist.json regenerated with zero cross-check byte-identical evidence; (b) BCT-OBS-02 + DS-OBS-01 checks reflect TRUE post-fix status from real recheck_how execution; (c) validator fails loud on a seeded duplicate-evidence checklist. DISTINCT from SPIKE-EVIDENCE-SCORE-CACHE-FRAGMENT-DECOUPLE (get_evidence_summary evidence_scores cache) + FIX-CHEF-QUALITY-VERDICT-FALSE-FULL (chef dish self-cert). Do NOT reopen BCT-OBS-02-FIX / DS-OBS-01-FIX (consumers, correctly in review/qa).",
         "baseline_pass": true,
         "updated_at": "2026-07-23T18:08:33Z"
-      },
-      {
-        "id": "FACTORY-GUARD-CI-SHAREDPKG-IMPL",
-        "type": "SPRINT-S",
-        "title": "Implement shared-package-import-check CI guardrail (baseline/ratchet script + workflow wiring)",
-        "status": "BACKLOG",
-        "priority": "P2",
-        "size": "S",
-        "zone": "cross-service/",
-        "epic": "FACTORY-MAINTAINABILITY-2026-06",
-        "cluster": "ci-regression-prevention",
-        "source": "architect design brief 2026-07-24, parent FACTORY-GUARD-CI-shared-package-import-check",
-        "detail_ref": "docs/architecture-briefs/2026-07-24-factory-guard-ci-shared-package-import-check.md#4-build-vs-plan--decomposed-not-self-implemented",
-        "dev_agent": "developer",
-        "next_agent": "developer",
-        "parent_task": "FACTORY-GUARD-CI-shared-package-import-check",
-        "brief_ref": "docs/architecture-briefs/2026-07-24-factory-guard-ci-shared-package-import-check.md",
-        "note": "files: scripts/audits/shared-package-import-check.sh (new, --check/--update modes, baseline/ratchet), docs/data/shared-package-import-baseline.json (new, generated by --update, seeded with shared-types/shared-config/shared-db), .github/workflows/ci.yml (add shared-package-import-check job), docs/policies/dev-standards.md (CANONICAL pointer), scripts/audits/shared-package-import-check.test.sh (new smoke test: baseline entry passes, synthetic new zero-importer package NOT in baseline fails, a package with a real importer passes regardless of baseline membership, an advisory name-collision is emitted without failing --check). EXPLICITLY OUT OF SCOPE (reserved for FACTORY-SHARED-wire-or-prune-shared-packages, still BACKLOG): no edits to packages/shared-*/ contents, no new consumer wiring, no package deletion, no field reconciliation. approach: check 1 (blocking, baseline/ratchet) — for every packages/*/package.json with a @vn-market/-scoped name, grep repo for a real import/dependency reference; zero hits + baseline-listed = PASS; zero hits + not baseline-listed = FAIL (blocks new packages/primitives-shaped phantom packages); any real importer always PASS. check 2 (advisory only, non-blocking) — same-exported-symbol-name collision scan between packages/shared-*/index.ts and apps/**/*.ts (today: Alert/Signal/McpConfig), printed as ADVISORY lines, never fails --check; full AST structural diffing explicitly deferred (no TS AST tool wired into any bash-only audit script in this repo; regex field-diff would false-positive on reorder/JSDoc/optional-marker churn). --update run once to seed baseline from live state (3 current orphans: shared-types/shared-config/shared-db); wire job into ci.yml; add CANONICAL pointer cross-referencing FACTORY-SHARED-wire-or-prune-shared-packages as the task whose completion should shrink the baseline. dod: --check exits 0 on current repo state (all 3 packages baseline-covered); a synthetic new packages/<foo>/package.json with zero importers and no baseline entry fails --check; a synthetic package with >=1 real importer passes even if still baseline-listed; the Alert/Signal/McpConfig advisory lines are emitted and do not affect exit code; smoke test covers all 4 cases; CI green on push.",
-        "created_at": "2026-07-24T19:56:48Z",
-        "created_by": "architect",
-        "updated_at": "2026-07-24T19:56:48Z"
       },
       {
         "id": "FACTORY-GUARD-CI-RAWVERIFY-IMPL",
@@ -17639,9 +17619,36 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-30T01:18:38Z",
+    "last_triaged_at": "2026-07-30T02:34:10Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": []
+    "in_progress": [
+      {
+        "id": "FACTORY-GUARD-CI-SHAREDPKG-IMPL",
+        "type": "SPRINT-S",
+        "title": "Implement shared-package-import-check CI guardrail (baseline/ratchet script + workflow wiring)",
+        "status": "IN_PROGRESS",
+        "priority": "P2",
+        "size": "S",
+        "zone": "cross-service/",
+        "epic": "FACTORY-MAINTAINABILITY-2026-06",
+        "cluster": "ci-regression-prevention",
+        "source": "architect design brief 2026-07-24, parent FACTORY-GUARD-CI-shared-package-import-check",
+        "detail_ref": "docs/architecture-briefs/2026-07-24-factory-guard-ci-shared-package-import-check.md#4-build-vs-plan--decomposed-not-self-implemented",
+        "dev_agent": "developer",
+        "next_agent": "developer",
+        "parent_task": "FACTORY-GUARD-CI-shared-package-import-check",
+        "brief_ref": "docs/architecture-briefs/2026-07-24-factory-guard-ci-shared-package-import-check.md",
+        "note": "files: scripts/audits/shared-package-import-check.sh (new, --check/--update modes, baseline/ratchet), docs/data/shared-package-import-baseline.json (new, generated by --update, seeded with shared-types/shared-config/shared-db), .github/workflows/ci.yml (add shared-package-import-check job), docs/policies/dev-standards.md (CANONICAL pointer), scripts/audits/shared-package-import-check.test.sh (new smoke test: baseline entry passes, synthetic new zero-importer package NOT in baseline fails, a package with a real importer passes regardless of baseline membership, an advisory name-collision is emitted without failing --check). EXPLICITLY OUT OF SCOPE (reserved for FACTORY-SHARED-wire-or-prune-shared-packages, still BACKLOG): no edits to packages/shared-*/ contents, no new consumer wiring, no package deletion, no field reconciliation. approach: check 1 (blocking, baseline/ratchet) — for every packages/*/package.json with a @vn-market/-scoped name, grep repo for a real import/dependency reference; zero hits + baseline-listed = PASS; zero hits + not baseline-listed = FAIL (blocks new packages/primitives-shaped phantom packages); any real importer always PASS. check 2 (advisory only, non-blocking) — same-exported-symbol-name collision scan between packages/shared-*/index.ts and apps/**/*.ts (today: Alert/Signal/McpConfig), printed as ADVISORY lines, never fails --check; full AST structural diffing explicitly deferred (no TS AST tool wired into any bash-only audit script in this repo; regex field-diff would false-positive on reorder/JSDoc/optional-marker churn). --update run once to seed baseline from live state (3 current orphans: shared-types/shared-config/shared-db); wire job into ci.yml; add CANONICAL pointer cross-referencing FACTORY-SHARED-wire-or-prune-shared-packages as the task whose completion should shrink the baseline. dod: --check exits 0 on current repo state (all 3 packages baseline-covered); a synthetic new packages/<foo>/package.json with zero importers and no baseline entry fails --check; a synthetic package with >=1 real importer passes even if still baseline-listed; the Alert/Signal/McpConfig advisory lines are emitted and do not affect exit code; smoke test covers all 4 cases; CI green on push.",
+        "created_at": "2026-07-24T19:56:48Z",
+        "created_by": "architect",
+        "updated_at": "2026-07-30T02:34:11Z",
+        "promoted_at": "2026-07-30T02:34:10Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
+        "claimed_at": "2026-07-30T02:34:10Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)"
+      }
+    ]
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
