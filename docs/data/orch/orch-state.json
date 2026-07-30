@@ -93,12 +93,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "active_task_id": null,
-    "next_agent": "router",
-    "next_action": "SPIKE-SQLITE-DOCKER-VIRT-CORRUPTION-HARDENING closed DONE by architect (plan-only design brief delivered, docs/architecture-briefs/2026-07-30-sqlite-docker-virt-corruption-hardening.md) — next: po triage of the brief's prioritized follow-up list into new board rows (highest priority: live stock-price Go WAL re-armer, brief §3).",
-    "updated_at": "2026-07-30T17:36:14Z",
-    "updated_by": "architect"
+    "status": "in_progress",
+    "active_task_id": "SPIKE-BCTC-EXTRACTION-DORMANT-MASS-ENRICHFAIL-FLOOD",
+    "next_agent": "ops",
+    "next_action": "Supervised-Lane Sweep claim of SPIKE-BCTC-EXTRACTION-DORMANT-MASS-ENRICHFAIL-FLOOD — spawn ops DIRECTLY (no zone-detect indirection; lane already resolved at promote time). supervised/plan_only preserved — do not clear.",
+    "updated_at": "2026-07-30T17:46:45Z",
+    "updated_by": "dev-team (supervised-lane sweep)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -10839,162 +10839,6 @@
         "updated_at": "2026-07-30T09:18:20Z"
       },
       {
-        "id": "SPIKE-BCTC-EXTRACTION-DORMANT-MASS-ENRICHFAIL-FLOOD",
-        "type": "SPIKE",
-        "mode": "spike",
-        "status": "BACKLOG",
-        "priority": "P0",
-        "size": "M",
-        "zone": "multi",
-        "owner": "ops",
-        "next_agent": "ops",
-        "timebox": 180,
-        "title": "SPIKE (plan-only): BCTC structured-extraction pipeline DORMANT since mid-June (RAW: bctc_layout_units frozen 2026-06-10, bctc_table_rows frozen 2026-06-30) despite FIX-BCTC-PDFPULL-WIRE-TABLE-EXTRACTION DONE_VERIFIED 07-10 — bctcExtractReconcileJob then mass-terminalized the ENTIRE multi-quarter watchlist backlog (Q4/Q3/Q2/Q1-2025) as enrich_failed overnight 07-15 20:05Z->07-16 07:15Z, emitting 76 fail-loud RECONCILE-EXHAUSTED reports (report-storm). Determine WHY extraction is dormant + add an emission circuit-breaker.",
-        "question": "Why is the BCTC structured-extraction layer producing nothing since mid-June despite the DONE_VERIFIED 07-10 wiring fix, and why did bctcExtractReconcileJob mass-terminalize the whole watchlist backlog in one overnight sweep? Did an infra event (DB restore / VM-rebuild / named-volume swap) between 07-12 and 07-16 revert the fix's effects and reset queue rows to pending?",
-        "detail": "PO report-triage 2026-07-16T21:00Z. RAW-verified readonly on live named-volume market.db (docker exec vn-market-intelligence-mcp-mcp-server-1 bun): (1) all 12 Q4-2025 flood tickers (DBC/DXG/FRT/GEX/KDC/KDH/MSN/PDR/SAB/VIX/VJC/VND) exist in financial_reports as Q4-2025 with text_status=COMPLETE + pdf_path SET but LAYOUT=0 / TABLE_ROWS=0 / refine_status=PENDING and NO bctc_vps_queue row remaining (enrich_failed Q4-2025 queue count now 0). text_status=COMPLETE+pdf_path SET => discovery/fetch/OCR-text layers ALL healthy; the failure is purely at PEK-layout + agentic-refine structured extraction. This DEFINITIVELY rules out source-outage/VPS-down/DNS. (2) GLOBAL freshness: MAX(bctc_layout_units.extracted_at)=2026-06-10, MAX(bctc_table_rows.extracted_at)=2026-06-30 => nothing extracted for ~5wk/~2.5wk. These maxes are OLDER than SPIKE-BCTC-TABLEROWS-FROZEN-HOLLOW-DONE's 07-12 readings (that spike RAW-read layout_units growing to 07-12/1829 rows + table_rows 07-08/4091) => a DATA-LOSS/ROLLBACK event between 07-12 and 07-16 is strongly implied (cf. memory: VM-rebuild DESTROYS named volumes->restore; gateway/volume swaps). (3) bctcExtractReconcileJob walked the whole watchlist backlog backwards Q4->Q3->Q2->Q1-2025 overnight (07-15 20:05Z->07-16 07:15Z, ~1 ticker/30min) marking each enrich_failed (cap-8) and emitting ONE fail-loud telegram report per ticker*quarter = 76-report storm (PO archived all 121 overnight reports 3358-3478 as duplicate this tick to stop the re-surface churn; ACK path via process_telegram_report/markProcessed CONFIRMED working). DO-NOT-RE-TREAD (cross-ref, do not re-investigate): FIX-BCTC-PDFPULL-WIRE-TABLE-EXTRACTION (DONE_VERIFIED 07-10 — the wiring; THIS spike asks why it is not PRODUCING in current prod, not to re-design it); SPIKE-BCTC-TABLEROWS-FROZEN-HOLLOW-DONE (hollow-done + refine-cron dormancy F4/F5); FIX-BCTC-REFINE-DURABLE-TRIGGER-BACKSTOP (table_rows producer durable backstop — the refine half); FIX-BCTC-D3C-FOLLOW-UP-RESET-ATTEMPTS (Arm-2 7d recycle re-exhausts because reconcile_attempts not zeroed — the per-row recycle mechanism); SPIKE-BCTC-REPARSE-CADENCE-GUARD-ROOTCAUSE-VERIFY (cadence guard). NET-NEW value = (a) infra rollback verification, (b) why extraction dormant since mid-June despite DONE_VERIFIED fix (cron registered+firing? PEK producing? fix effect reverted by rollback?), (c) a report-storm circuit-breaker so bctcExtractReconcileJob cannot emit one fail-loud per ticker*quarter against a systemically-dormant producer.",
-        "ac": "(AC-1 infra, route ops sub-question) verify whether a DB restore / VM-rebuild / named-volume swap occurred 07-12..07-16 (check .backups timestamps, launchd/compose history, market.db mtime vs extraction maxes) and whether it reverted the DONE_VERIFIED extraction data + reset queue rows to pending. (AC-2) RAW-establish why the structured-extraction pipeline (PEK layout + agentic-refine) has produced nothing since mid-June despite FIX-BCTC-PDFPULL-WIRE-TABLE-EXTRACTION DONE_VERIFIED: is the extraction cron registered and firing in current prod? is /pek-extract producing bctc_layout_units? is the refine trigger dormant (fold to FIX-BCTC-REFINE-DURABLE-TRIGGER-BACKSTOP if same root)? (AC-3) design a circuit-breaker for bctcExtractReconcileJob's fail-loud emission (batch/summarize/suppress when producer is systemically dormant, not one report per ticker*quarter) — MINT A FOLLOW-UP FIX, do not fix inline. OUTPUT=findings doc docs/spikes/SPIKE-BCTC-EXTRACTION-DORMANT-MASS-ENRICHFAIL-FLOOD.md.",
-        "related": [
-          "FIX-BCTC-REFINE-DURABLE-TRIGGER-BACKSTOP",
-          "FIX-BCTC-D3C-FOLLOW-UP-RESET-ATTEMPTS",
-          "SPIKE-BCTC-REPARSE-CADENCE-GUARD-ROOTCAUSE-VERIFY"
-        ],
-        "created_at": "2026-07-16T21:00:34Z",
-        "created_by": "po-report-triage-20260716",
-        "verify_note": "PLAN-ONLY. RAW-verified readonly probe of live market.db this tick. Prior-art cross-referenced: does not re-mint FIX-BCTC-PDFPULL-WIRE-TABLE-EXTRACTION (done) nor the refine/recycle rows; net-new = infra-rollback verify + dormancy-in-prod + report-storm circuit-breaker.",
-        "converge_note": "PO report-triage 2026-07-16T22:07Z: 3rd RECONCILE-EXHAUSTED duplicate in 2 ticks (3480 VND 2024-Q2, 3481 BSR 2024-Q1, 3482 VIX 2024-Q2). bctcExtractReconcileJob has now walked BACK INTO 2024 quarters => the backlog it is grinding is deep, so the flood is UNBOUNDED (~1 fail-loud report / 30-min tick), each forcing a full router->PO spawn just to archive one duplicate = churn-without-convergence. ESCALATED priority high->P0 to make this the next-worked item. FAST-TRACK AC-3 (bctcExtractReconcileJob emission circuit-breaker) as the FIRST, independently-shippable deliverable AHEAD of the AC-1 infra-rollback verify and AC-2 dormancy-root-cause diagnosis: the circuit-breaker is the ONLY lever that stops the per-tick report-storm churn and it does NOT depend on the diagnosis outcome (it only needs to detect systemic producer-dormancy and batch/summarize/suppress, not one fail-loud per ticker*quarter). AC-1/AC-2 remain in-scope but MUST NOT gate the churn-stopper. Split AC-3 into the follow-up FIX immediately (SPIKE already says 'MINT A FOLLOW-UP FIX') rather than waiting for the full diagnosis timebox.",
-        "converge_by": "po-report-triage-20260716T2207Z",
-        "ac3_followup": "FIX-BCTC-RECONCILE-EMISSION-CIRCUIT-BREAKER",
-        "ac3_followup_by": "po-report-triage-20260716T2237Z",
-        "ac3_followup_status": "done_verified",
-        "ac3_followup_resolved_to": "docs/data/orch/archive/2026-07.json",
-        "ac3_followup_resolved_at": "2026-07-17T01:23:19Z",
-        "ac3_followup_resolved_by": "po-scoped-triage-20260717",
-        "ac3_followup_resolved_note": "RESOLVED-TO-ARCHIVE — do NOT resurrect. ac3_followup FIX-BCTC-RECONCILE-EMISSION-CIRCUIT-BREAKER completed its full lifecycle (impl e5a70ab44 -> review 4c7f6b0ae -> qa 5b3783f30 verified_at=2026-07-17T00:08:52Z -> cold-evict 04ba446f6) and its canonical DONE_VERIFIED record lives in docs/data/orch/archive/2026-07.json (also transiently in live done_verified[] pending next cold-evict). This FK is NOT dangling — it resolves to the archived done_verified record. A ready[]-only lost-mint recovery scan misreads it as a lost mint (false resurrection commit 9dae10376 caused a no-op ~164k-token dev cycle). Lost-mint recovery MUST skip this FK. Root-cause hardening tracked by FIX-PO-LOSTMINT-RECOVERY-ARCHIVE-SCAN-GUARD.",
-        "kickoff": {
-          "by": "po-scoped-triage-20260717T0228Z",
-          "at": "2026-07-17T02:28:03Z",
-          "dev_team_tick": "2026-07-17T02:07Z",
-          "decision": "(a) SPRINT-KICKOFF — promote plan_only BACKLOG -> ready[] (dispatchable); single lane-move, no mint, no conservation change.",
-          "reason": "recurring-bug-2+ escalation: reconcile-exhausted duplicate reports arriving ~1/tick (3480 VND, 3481 BSR, 3482 VIX-Q2, 3494 SHB, 3495 VIX-Q1) = churn-without-convergence treadmill. AC-3 circuit-breaker already DONE_VERIFIED+archived; AC-1+AC-2 are now the ONLY convergence lever. Fleet idle (in_progress=0, ready=0, head idle) => no WIP gate blocks scheduling this top-priority P0. Per CLAUDE.md fix-root-cause-not-recurrent-symptom.",
-          "ordered_ac_dispatch": {
-            "AC-1": {
-              "owner": "ops",
-              "order": 1,
-              "gate": "critical-path FIRST — cheapest, highest-information; a confirmed data-loss finding short-circuits AC-2",
-              "scope": "infra-rollback verify 07-12..07-16: .backups mtimes, launchd/compose history, market.db mtime vs extraction maxes. RAW evidence in SPIKE detail: bctc_layout_units max REGRESSED to 2026-06-10 and bctc_table_rows max to 2026-06-30 — OLDER than SPIKE-BCTC-TABLEROWS-FROZEN-HOLLOW-DONE 07-12 readings => a named-volume rollback / VM-rebuild / restore between 07-12..07-16 is strongly implied. If confirmed: data-loss incident, remedy = RESTORE from .backups (ops/user-gated per feedback_vm_rebuild_destroys_named_volumes)."
-            },
-            "AC-2": {
-              "owner": "dev-mcp-server",
-              "assist": "dev-pdf-extractor (PEK-layout sub-probe)",
-              "order": 2,
-              "depends_on": "AC-1",
-              "scope": "RAW-establish why PEK-layout + agentic-refine produced nothing since mid-June: is the extraction cron registered+firing in current prod? is /pek-extract producing bctc_layout_units? is the refine trigger dormant => FOLD into FIX-BCTC-REFINE-DURABLE-TRIGGER-BACKSTOP (live backlog row) if same root. Output: findings doc docs/spikes/SPIKE-BCTC-EXTRACTION-DORMANT-MASS-ENRICHFAIL-FLOOD.md + fold recommendation."
-            },
-            "AC-3": {
-              "status": "DONE_VERIFIED",
-              "note": "FIX-BCTC-RECONCILE-EMISSION-CIRCUIT-BREAKER (circuit-breaker) shipped + archived docs/data/orch/archive/2026-07.json — do NOT re-mint / resurrect (see ac3_followup_resolved_note; lost-mint recovery must skip this FK)."
-            }
-          },
-          "wip_note": "12 sprint_goal.entries marked active but the dev fleet is idle at this tick (no in_progress/ready task); this is the single top-priority P0 root, so kickoff does not breach WIP."
-        },
-        "dispatched": {
-          "by": "router",
-          "at": "2026-07-17T02:35:42Z",
-          "tick": "2026-07-17T02:07Z",
-          "ac": "AC-1",
-          "agent": "ops"
-        },
-        "ac1_finding": {
-          "by": "ops, router git-verified",
-          "at": "2026-07-17T02:45:58Z",
-          "verdict": "AC-1 CLEAR — data-loss real but ALREADY RECOVERED; extraction freeze is dormant-producer, not ongoing loss",
-          "volume_destroy": "2026-07-15 hypervisor VM crash destroyed named market_data volume (commit 1c8701e78)",
-          "recovery": "commit 5ba622eca 2026-07-15T17:21Z restored July-1 host backup + switched all 9 services market_data->./data/live bind-mount (git-verified)",
-          "serving_db": "data/live/market.db host bind-mount (SUPERSEDES named-volume memory)",
-          "extraction_maxes": "layout_units 06-10 / table_rows 06-30 / md_tables 05-26 (== July-1 backup; producer dormant since ~06-30)",
-          "restore_rec_disposition": "REJECTED premature+wrong-remedy: corruption unconfirmed on serving plane (readonly->WAL-blind false-positive class); July-1 restore would DESTROY ~2.5wk live writes (live 380MB>backup 378MB) AND leaves same frozen extraction; fresher host copy market.db.backup 07-16 exists if ever warranted",
-          "corruption_corroboration": "RESOLVED (ops WAL-aware serving-file re-probe): corruption REAL but CONTAINED in non-extraction trees 97/151/152/234/247 — extraction rootpages 28/30/38 clean + all readable; /health ok; NOT serving-affecting; predates live DB (present in 07-16 backup too, inherited from 07-13 incident + 07-01 restore). NO RESTORE, NO user action. AC-1 FULLY CLEAR."
-        },
-        "ac2_dispatched": {
-          "by": "router",
-          "at": "2026-07-17T02:45:58Z",
-          "agent": "dev-mcp-server",
-          "assist": "dev-pdf-extractor",
-          "scope": "dormant-producer diagnostic READ-ONLY"
-        },
-        "ac2_finding": {
-          "by": "dev-mcp-server AC-2; router git-verified commit 60bdca243 (doc-only, +115L, no code/peer sweep)",
-          "at": "2026-07-17T02:59Z",
-          "verdict": "ROOT CAUSE FOUND — two independent dormant producers feeding bctcExtractReconcileJob 3-way OR success check; neither satisfied since ~06-30 => mass enrich_failed sweep + report-duplicate flood",
-          "crons_ok": "bctcPdfPullJob(*/30) + bctcExtractReconcileJob(5,35) both registered + firing status=success every tick (RAW cron_job_runs) — NOT a liveness/registration problem",
-          "pek_cause": "/pek-extract crashes EVERY call: FileNotFoundError doclayout_yolo_ft.pt — pek_model_cache named volume EMPTY (du 12K, stray yolo/settings.yaml only), wiped by SAME 2026-07-15 VM-rebuild that destroyed market_data (AC-1), never re-seeded",
-          "pek_fix": "ops re-run scripts/pek-fetch-weights.sh (idempotent; commit e418d606d; brief docs/architecture-briefs/2026-05-27-pek-weights-provisioning.md) + verify post-fetch /pek-extract logs successful model load; HF/ModelScope reachable now; low-risk populate-empty-volume, NOT a destructive swap",
-          "refine_cause": "agentic-refine half still dormant (bctc_refined_units MAX 2026-06-30; refine_status PENDING 181 vs 151 at 07-12) — pre-existing session-scoped-trigger fragility",
-          "refine_disposition": "FOLD into FIX-BCTC-REFINE-DURABLE-TRIGGER-BACKSTOP (backlog, unshipped) — NO new mint; PO to groom",
-          "dispatch": "ops => PEK volume re-seed (convergence lever); PO => fold refine half + SPIKE disposition",
-          "unverified": "refine-bctc-slot-1 armed-vs-inert; PaddleOCR lazy-download weights presence; exact crash->rebuild->fix minute sequencing",
-          "doc": "docs/spikes/SPIKE-BCTC-EXTRACTION-DORMANT-MASS-ENRICHFAIL-FLOOD.md @60bdca243"
-        },
-        "ac2_remediation": {
-          "by": "ops (PEK re-seed) + router docker-exec RAW spot-check corroborated",
-          "at": "2026-07-17T03:04Z",
-          "pek_reseed": "SUCCESS — pek_model_cache 12K→78M; doclayout_yolo_ft.pt present 40,709,302 bytes at /app/PDF-Extract-Kit/models/Layout/YOLO/ + HF-cache blob (router-confirmed); pdf-extractor container Up healthy after plain restart",
-          "crash_fixed": "DIFFERENTIAL PROOF — /pek-extract now returns HTTP 503 market_open guard (VN 02:00-08:00Z) INSTEAD of pre-fix FileNotFoundError; PekEngineAdapter imports clean. Crash root cause eliminated.",
-          "restart": "plain single-service docker restart pdf-extractor-1 (allowed); NO rebuild/force-recreate/swap; topology preserved",
-          "pending_proof": "FINAL producer-resumption proof DEFERRED to post-market-close: next bctcExtractReconcileJob run ~09:05Z 2026-07-17 (after 08:00Z VN close). SUCCESS PREDICATE: MAX(extracted_at) in bctc_layout_units advances past 2026-06-10 AND new rows land. A dev-team tick after ~09:05Z RAW-verifies serving-plane + closes the PEK half. NOT marked un-dormant until rows land (no false green).",
-          "refine_half": "unchanged — folding into FIX-BCTC-REFINE-DURABLE-TRIGGER-BACKSTOP (PO disposition in flight)"
-        },
-        "disposition": {
-          "by": "PO final sign-off (router-recorded; router owns SPIKE row write this cycle)",
-          "at": "2026-07-17T03:10Z",
-          "decision": "close-on-ops-confirm — SPIKE has NO remaining diagnostic deliverable; all branches tracked outside the SPIKE (AC-1 clear; AC-2 PEK = infra recovery APPLIED+pre-verified; AC-2 refine = folded; AC-3 circuit-breaker already done_verified+archived). NOT converted to FIX — durable-guard hardening lives in its own PLAN-ONLY row.",
-          "close_predicate": "post-market ~09:05Z bctcExtractReconcileJob run: bctc_layout_units MAX advances past 2026-06-10 AND new rows land => a dev-team tick after ~09:05Z RAW-verifies serving-plane + flips SPIKE to done_verified (executing PO's pre-authorized sign-off, NOT router self-cert). Self-verifying: if fix worked the reconcile-exhausted report flood stops; if not it re-surfaces + anomaly detector re-flags.",
-          "refine_half": "folded -> FIX-BCTC-REFINE-DURABLE-TRIGGER-BACKSTOP.spike_fold_20260717 (PENDING regressed 151->181, 3rd+ recurrence of session-scoped-CronCreate-dormancy class, priority high, schedule immediately after PEK resumes; sole remaining convergence lever for refined bctc_table_rows)",
-          "durable_guard": "FIX-INFRA-CRITICAL-VOLUME-PRESENCE-HEALTHCHECK minted PLAN-ONLY backlog (ops, high, supervised) — same 2026-07-15 VM-rebuild wiped TWO volumes (market_data + pek_model_cache), only one caught; guard asserts producer-critical volumes contain REQUIRED CONTENT (not just mount/du>0), boot+periodic, fail-loud, optionally auto-invokes scripts/pek-fetch-weights.sh; manifest SSOT-driven"
-        },
-        "close_caveat": {
-          "by": "router (tick 2026-07-17T04:07Z; from disposed dup reports 3498 SAB / 3499 VND, both 2024-Q1 enrich_failed=terminal)",
-          "at": "2026-07-17T04:23:44Z",
-          "concern": "bctcExtractReconcileJob marks queue rows enrich_failed=TERMINAL after 8 passes during the market-hours PEK-503 window (SAB report_id 1f6cbffe-7383-4be2-85bd-676a5183c5ae, VND report_id 11d8b60f-69e8-4f7e-8e3c-034d44249c70, + earlier VJC/DBC/VIX/SHB/BSR cluster). Reports advise manual /api/trigger-pek-extract re-fire once root cause fixed => terminal rows may NOT auto-retry after PEK resumes post-market.",
-          "verify_at_close": "post-market ~09:05Z close must ALSO confirm the terminal enrich_failed BACKLOG rows re-extract (bctc_layout_units gains rows for the failed 2024-Q1 tickers), NOT ONLY that MAX(extracted_at) advances + fresh PDFs land. Else FALSE-GREEN: close goes green off new PDFs while the ~2-day dormancy backlog stays permanently enrich_failed. If terminal rows do not auto-recover, an ops manual re-fire is required BEFORE flipping done_verified.",
-          "scope": "verification-rigor addition to PO close-on-ops-confirm (no-false-green); NOT a decision override, NOT a re-dispatch — head stays idle, SPIKE stays parked until the deferred proof."
-        },
-        "post_reseed_flood": {
-          "by": "po-report-triage-20260717T0707Z",
-          "at": "2026-07-17T07:26:24Z",
-          "dev_team_tick": "2026-07-17T07:07Z",
-          "disposition": "FOLD (no new mint). Same reconcile-exhausted / dormant-producer failure class as this SPIKE. Root cause already diagnosed (ac2_finding: pek_model_cache wiped by 07-15 VM-rebuild) and remediated (ac2_remediation: PEK re-seed 03:04Z, differential proof /pek-extract 503 not FileNotFoundError). Escalating a new dev-pdf-extractor fix would duplicate in-flight work; block-discipline (recurring 2+) does NOT apply because this is fix-applied-proof-pending, not recurring-failed-fix.",
-          "reports_folded": [
-            "3500 PDR 2024-Q1 report_id 8fd1d0f3-72e3-42ff-9b43-923f118689a6 @2026-07-17T05:35:02Z",
-            "3501 BSR 2023-Q4 report_id 8948a864-9c0d-4315-88c2-87cce67faada @2026-07-17T05:35:02Z",
-            "3502 DGC 2023-Q4 report_id 2c5e1d70-705c-413f-ac89-583df5cb12b5 @2026-07-17T06:05:02Z",
-            "3503 GEX 2023-Q4 report_id 48909a9a-c1d1-45bd-9eaf-3b75c6ae0510 @2026-07-17T08:06:03Z"
-          ],
-          "hygiene": "all 3 process_telegram_report resolution=duplicate; telegram msgs 3561/3562/3563 deleted; list_unresolved_reports now EMPTY.",
-          "expected_benign_rationale": "reports 05:35Z/06:05Z fall inside VN market-hours 02:00-08:00Z where /pek-extract is 503 market_open-guarded and cannot extract; reconcile attempts during market hours STILL exhaust to enrich_failed. This is NOT evidence the PEK re-seed failed. reconcile job is grinding deep 2023-2024 backlog (~1 report/30min tick).",
-          "close_verify_ADD": "The pending_proof 09:05Z close-verify MUST also confirm these 3 specific terminal enrich_failed rows recover (PDR 2024-Q1, BSR 2023-Q4, DGC 2023-Q4), not only SAB/VND + new-rows (extends close_caveat: verify terminal enrich_failed backlog recovery).",
-          "circuit_breaker_observation": "AC-3 FIX-BCTC-RECONCILE-EMISSION-CIRCUIT-BREAKER is DONE_VERIFIED+archived, yet post-reseed reconcile still emits ONE fail-loud report per ticker*quarter (3500/3501/3502). Either the breaker's systemic-dormancy heuristic does not treat market-hours-503 as dormant, or it is not deployed to the running mcp-server/analysis-agent. IF the flood persists PAST the 09:05Z post-close proof (producer resumes + rows land yet reports keep emitting one-per-ticker), escalate a breaker deployment/heuristic FIX. Do NOT mint pre-proof (would be churn).",
-          "producer_resumption_proof": {
-            "by": "po-report-triage-20260717T0826Z (dev-team tick 2026-07-17T08:07Z)",
-            "at": "2026-07-17T08:26:54Z",
-            "report": "3503 GEX 2023-Q4 reconcile-exhausted @08:06:03Z — 6min post-close straggler; router escalated to disambiguate pre-close-503-straggler vs post-guard-dormant-producer",
-            "verdict": "FOLD (duplicate) — SAME CLASS as 07:07Z PDR/BSR/DGC batch; GEX 8 passes ran pre-08:00Z under 503 market-open guard then exhausted+emitted 6min after close. Producer RAW-confirmed ALIVE post-close.",
-            "pek_extract": "POST /pek-extract = 202 Accepted (guard lifted post-08:00Z VN close); live logs show active page-by-page extraction of FRT_2023_Q4. NOT 503, NOT FileNotFoundError.",
-            "serving_plane": "bctc_layout_units MAX(extracted_at)=2026-07-17 08:20:21 — ADVANCED past 2026-06-10 close-predicate. 78 fresh rows in last 3h (report fad6ab7a, units_stored=78, push_layout OK). RAW via bun:sqlite market.db readonly.",
-            "container_health_note": "pdf-extractor-1 = Up 5h (unhealthy) is BENIGN: healthcheck curl hangs/timeouts under extraction CPU load; /health endpoint itself returns 200 OK in live logs. Not a dead producer.",
-            "close_status": "FIRST HALF of close_predicate (MAX advances past 2026-06-10 + new rows land) PRE-PROVEN at 08:20Z ahead of ~09:05Z tick. SECOND HALF (terminal enrich_failed backlog PDR/BSR/DGC/GEX recovers) STILL PENDING → SPIKE stays in_progress; no false green.",
-            "no_action": "no new dev row minted; ops NOT re-fired (would duplicate in-flight SPIKE)."
-          }
-        },
-        "supervised": true,
-        "po_wip_unblock_20260721T1845": "PO RULING — MOVED in_progress -> ready/TODO to unblock the board. Grounds: (1) IN_PROGRESS since 2026-07-16T21:00:34Z, five days, with NO updated_at field ever written and no evidence of work in that window. (2) It was the BINDING CONSTRAINT on the entire board: WIP was 2/2 (this + DESIGN-COWORK-FANOUT-PRODUCER-CONSUMER-ORDERING), so nothing could enter in_progress, AND the stale-crash reset that would normally clear it is STRUCTURALLY UNREACHABLE for this row — docs/agents/dev-team/flow/main.md:491 keys on head.updated_at >= 24h, an AGE comparison, and a row carrying no timestamp at all can never satisfy an age predicate. So the one mechanism designed to free this slot could not fire, by construction. (3) Chose MOVE-OUT over unblock-in-place or reassign: unblocking would assert progress that is not evidenced, and reassigning would hand a five-day-cold SPIKE to a new owner without re-triage. Moving it to ready preserves the row and its history, frees the WIP slot immediately, and forces a deliberate re-dispatch decision rather than a silent resumption. Owner stays ops. supervised:true added so BOUNDED-1 cannot idle-auto-claim a stale SPIKE straight back into the slot it was just freed from. NOTE: passing through orch-apply.sh stamps updated_at on this row for the first time, which also makes the age-based stale-reset reachable for it in future — the missing-timestamp defect is fixed for this row as a side effect, but the CLASS defect (rows created without updated_at are permanently immune to every age-based gate) is NOT fixed here and is recorded as instance 6 on SPIKE-SATURATED-COUNT-THRESHOLD-GATES-SWEEP.",
-        "updated_at": "2026-07-30T09:21:52Z",
-        "plan_only": true,
-        "updated_by": "po/triage-20260730T0853",
-        "po_unstrand_20260730": "UNSTRANDED by po 2026-07-30 — one-field fix, plan_only null -> true. THIS ROW'S OWN TITLE SAYS 'SPIKE (plan-only)' WHILE THE plan_only FIELD WAS null, and that single null made a P0 invisible to EVERY automated dispatch lane: Supervised-Lane Sweep requires supervised AND plan_only both true (devteam-backlog-promote-supervised-lane-sweep.jq:108-109) so plan_only=null skipped it; BOUNDED-1 requires effective_supervised != true (devteam-eligibility.jq:338) so supervised=true skipped it too. Exactly the failure mode feedback_po_notebook_mint_never_reaches_orchstate_board records: on-board is NOT pickable without the plan_only+supervised PAIR. WHY THIS IS URGENT AND NOT COSMETIC — PO RAW-probed the live named-volume DB 2026-07-30T08:5xZ (docker exec mcp-server, market.db readonly): bctc_layout_units MAX(extracted_at)=2026-07-28 11:06:59, i.e. 45.8h stale against the reconcile breaker's 2d (2880min) dormancy threshold. The breaker's last fire was telegram id 3996 at 2026-07-28T11:11Z — five minutes AFTER that last producer write, which is what silenced it. So this did NOT self-resolve: the producer emitted once on 07-28, the alarm went quiet, and the pipeline is now ~2h from re-tripping the identical breaker. That oscillation IS the defect (no durable producer trigger), and the quiet window is why a 3-day-old unclaimed telegram flood looked stale rather than live. Corroborating state: financial_reports refine_status = 203 PENDING vs 8 DONE; bctc_md_tables has exactly 1 row. Related-but-distinct leg: FIX-BCTC-REFINE-DURABLE-TRIGGER-BACKSTOP (agentic-refine -> bctc_table_rows) carries the IDENTICAL stranding shape (supervised=true, plan_only=null, next_agent=null) and is deliberately left stranded this tick — PO is not hand-stamping 41 rows one at a time; that class gets a lane, see FIX-BOUNDED1-NONDEV-NEXTAGENT-RESIDUAL-NO-DISPATCH-LANE.",
-        "po_unstrand2_20260730": "LANE CORRECTION by po 2026-07-30T09:18Z — moved ready[] -> backlog[]. WHY THE 2026-07-30 ONE-FIELD 'UNSTRAND' DID NOT LAND: the prior PO cycle read the SLS predicate (promote :108-109, the supervised AND plan_only pair) but not the LANE that predicate is applied to. SLS-promote iterates `.task_board.backlog[]` (:105; its own header :29 states 'candidate lane: .task_board.backlog[]'). This row is in `ready[]`, so setting plan_only=true could not make it visible to SLS. Full picker audit at that moment: BOUNDED-1 backlog-only -> blind; SLS-promote backlog-only -> blind; SLS-claim requires promoted_by == 'dev-team (supervised-lane sweep)' and this row's promoted_by is null -> blind; RLC rejects supervised/plan_only -> blind. Four pickers, zero coverage, priority P0. Known-failure-shape matched without reading which collection the predicate walks. Now in backlog[] with status TODO, no children, no depends_on, no backlog-detail entry, so SLS-promote can legitimately resolve its lane and stamp it. Flags left `true` — the point is to reach the supervised lane, not to bypass it. Class fix: FIX-DEVTEAM-READY-REVIEW-LANE-SUPERVISED-PLANONLY-NO-PICKER."
-      },
-      {
         "id": "FIX-COWORK-DISPATCH-ROUTER-INTENT-MUTEX-BYPASS",
         "type": "FIX",
         "title": "COWORK DISPATCH — router intent PRE-CLAIM and the cowork slot dispatcher share NO task_id namespace, so task_claim is a no-op mutex across paths; a peer router session double-dispatches a cowork slot agent while the cowork dispatcher's own instance still runs it (2nd confirmed instance same tick 2026-07-15: chef-evening 932+933 double-publish + tnb-audit dual c110 audit)",
@@ -17921,7 +17765,7 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-30T17:18:16Z",
+    "last_triaged_at": "2026-07-30T17:46:41Z",
     "last_triaged_by": "dev-team (supervised-lane sweep)",
     "in_progress": [
       {
@@ -17943,6 +17787,168 @@
         "next_agent": "architect",
         "blocked_reason": "AC re-check found a live consumer the original finding missed: apps/macro-indicators (separate Go service, container healthy) SJCGoldFXAdapter.fetchSJCFXInputsFromDB queries commodity_prices.cny_vnd_rate directly from the SAME market.db, plumbed end-to-end into mcp-server own live get_vn_liquidity_state MCP tool (registry.ts:262, FXCouplingSchema requires cny_vnd_rate:z.number()). Dropping the column breaks that cross-service SELECT entirely (single multi-column Scan()), zeroing gold_usd_per_oz/usd_vnd_rate/dxy collaterally too. Needs an architect/PO call: repoint to a real CNY/VND source (both mcp-server table write AND the macro-indicators consumer), or formalize as a permanently-null/is_estimate cross-service field (DSI-INV-1 pattern) instead of removing a column a live SQL query depends on. Full detail: docs/agent-memory/notebooks/dev-mcp-server.md 2026-07-30 FU-CNYVND-DEAD-FIELD-REMOVE section; decision journal sprint-COWORK-GUARANTEED-SLOT-CATCHUP-dev-mcp-server.md S31.",
         "blocked_at": "2026-07-30T16:53:28Z"
+      },
+      {
+        "id": "SPIKE-BCTC-EXTRACTION-DORMANT-MASS-ENRICHFAIL-FLOOD",
+        "type": "SPIKE",
+        "mode": "spike",
+        "status": "IN_PROGRESS",
+        "priority": "P0",
+        "size": "M",
+        "zone": "multi",
+        "owner": "ops",
+        "next_agent": "ops",
+        "timebox": 180,
+        "title": "SPIKE (plan-only): BCTC structured-extraction pipeline DORMANT since mid-June (RAW: bctc_layout_units frozen 2026-06-10, bctc_table_rows frozen 2026-06-30) despite FIX-BCTC-PDFPULL-WIRE-TABLE-EXTRACTION DONE_VERIFIED 07-10 — bctcExtractReconcileJob then mass-terminalized the ENTIRE multi-quarter watchlist backlog (Q4/Q3/Q2/Q1-2025) as enrich_failed overnight 07-15 20:05Z->07-16 07:15Z, emitting 76 fail-loud RECONCILE-EXHAUSTED reports (report-storm). Determine WHY extraction is dormant + add an emission circuit-breaker.",
+        "question": "Why is the BCTC structured-extraction layer producing nothing since mid-June despite the DONE_VERIFIED 07-10 wiring fix, and why did bctcExtractReconcileJob mass-terminalize the whole watchlist backlog in one overnight sweep? Did an infra event (DB restore / VM-rebuild / named-volume swap) between 07-12 and 07-16 revert the fix's effects and reset queue rows to pending?",
+        "detail": "PO report-triage 2026-07-16T21:00Z. RAW-verified readonly on live named-volume market.db (docker exec vn-market-intelligence-mcp-mcp-server-1 bun): (1) all 12 Q4-2025 flood tickers (DBC/DXG/FRT/GEX/KDC/KDH/MSN/PDR/SAB/VIX/VJC/VND) exist in financial_reports as Q4-2025 with text_status=COMPLETE + pdf_path SET but LAYOUT=0 / TABLE_ROWS=0 / refine_status=PENDING and NO bctc_vps_queue row remaining (enrich_failed Q4-2025 queue count now 0). text_status=COMPLETE+pdf_path SET => discovery/fetch/OCR-text layers ALL healthy; the failure is purely at PEK-layout + agentic-refine structured extraction. This DEFINITIVELY rules out source-outage/VPS-down/DNS. (2) GLOBAL freshness: MAX(bctc_layout_units.extracted_at)=2026-06-10, MAX(bctc_table_rows.extracted_at)=2026-06-30 => nothing extracted for ~5wk/~2.5wk. These maxes are OLDER than SPIKE-BCTC-TABLEROWS-FROZEN-HOLLOW-DONE's 07-12 readings (that spike RAW-read layout_units growing to 07-12/1829 rows + table_rows 07-08/4091) => a DATA-LOSS/ROLLBACK event between 07-12 and 07-16 is strongly implied (cf. memory: VM-rebuild DESTROYS named volumes->restore; gateway/volume swaps). (3) bctcExtractReconcileJob walked the whole watchlist backlog backwards Q4->Q3->Q2->Q1-2025 overnight (07-15 20:05Z->07-16 07:15Z, ~1 ticker/30min) marking each enrich_failed (cap-8) and emitting ONE fail-loud telegram report per ticker*quarter = 76-report storm (PO archived all 121 overnight reports 3358-3478 as duplicate this tick to stop the re-surface churn; ACK path via process_telegram_report/markProcessed CONFIRMED working). DO-NOT-RE-TREAD (cross-ref, do not re-investigate): FIX-BCTC-PDFPULL-WIRE-TABLE-EXTRACTION (DONE_VERIFIED 07-10 — the wiring; THIS spike asks why it is not PRODUCING in current prod, not to re-design it); SPIKE-BCTC-TABLEROWS-FROZEN-HOLLOW-DONE (hollow-done + refine-cron dormancy F4/F5); FIX-BCTC-REFINE-DURABLE-TRIGGER-BACKSTOP (table_rows producer durable backstop — the refine half); FIX-BCTC-D3C-FOLLOW-UP-RESET-ATTEMPTS (Arm-2 7d recycle re-exhausts because reconcile_attempts not zeroed — the per-row recycle mechanism); SPIKE-BCTC-REPARSE-CADENCE-GUARD-ROOTCAUSE-VERIFY (cadence guard). NET-NEW value = (a) infra rollback verification, (b) why extraction dormant since mid-June despite DONE_VERIFIED fix (cron registered+firing? PEK producing? fix effect reverted by rollback?), (c) a report-storm circuit-breaker so bctcExtractReconcileJob cannot emit one fail-loud per ticker*quarter against a systemically-dormant producer.",
+        "ac": "(AC-1 infra, route ops sub-question) verify whether a DB restore / VM-rebuild / named-volume swap occurred 07-12..07-16 (check .backups timestamps, launchd/compose history, market.db mtime vs extraction maxes) and whether it reverted the DONE_VERIFIED extraction data + reset queue rows to pending. (AC-2) RAW-establish why the structured-extraction pipeline (PEK layout + agentic-refine) has produced nothing since mid-June despite FIX-BCTC-PDFPULL-WIRE-TABLE-EXTRACTION DONE_VERIFIED: is the extraction cron registered and firing in current prod? is /pek-extract producing bctc_layout_units? is the refine trigger dormant (fold to FIX-BCTC-REFINE-DURABLE-TRIGGER-BACKSTOP if same root)? (AC-3) design a circuit-breaker for bctcExtractReconcileJob's fail-loud emission (batch/summarize/suppress when producer is systemically dormant, not one report per ticker*quarter) — MINT A FOLLOW-UP FIX, do not fix inline. OUTPUT=findings doc docs/spikes/SPIKE-BCTC-EXTRACTION-DORMANT-MASS-ENRICHFAIL-FLOOD.md.",
+        "related": [
+          "FIX-BCTC-REFINE-DURABLE-TRIGGER-BACKSTOP",
+          "FIX-BCTC-D3C-FOLLOW-UP-RESET-ATTEMPTS",
+          "SPIKE-BCTC-REPARSE-CADENCE-GUARD-ROOTCAUSE-VERIFY"
+        ],
+        "created_at": "2026-07-16T21:00:34Z",
+        "created_by": "po-report-triage-20260716",
+        "verify_note": "PLAN-ONLY. RAW-verified readonly probe of live market.db this tick. Prior-art cross-referenced: does not re-mint FIX-BCTC-PDFPULL-WIRE-TABLE-EXTRACTION (done) nor the refine/recycle rows; net-new = infra-rollback verify + dormancy-in-prod + report-storm circuit-breaker.",
+        "converge_note": "PO report-triage 2026-07-16T22:07Z: 3rd RECONCILE-EXHAUSTED duplicate in 2 ticks (3480 VND 2024-Q2, 3481 BSR 2024-Q1, 3482 VIX 2024-Q2). bctcExtractReconcileJob has now walked BACK INTO 2024 quarters => the backlog it is grinding is deep, so the flood is UNBOUNDED (~1 fail-loud report / 30-min tick), each forcing a full router->PO spawn just to archive one duplicate = churn-without-convergence. ESCALATED priority high->P0 to make this the next-worked item. FAST-TRACK AC-3 (bctcExtractReconcileJob emission circuit-breaker) as the FIRST, independently-shippable deliverable AHEAD of the AC-1 infra-rollback verify and AC-2 dormancy-root-cause diagnosis: the circuit-breaker is the ONLY lever that stops the per-tick report-storm churn and it does NOT depend on the diagnosis outcome (it only needs to detect systemic producer-dormancy and batch/summarize/suppress, not one fail-loud per ticker*quarter). AC-1/AC-2 remain in-scope but MUST NOT gate the churn-stopper. Split AC-3 into the follow-up FIX immediately (SPIKE already says 'MINT A FOLLOW-UP FIX') rather than waiting for the full diagnosis timebox.",
+        "converge_by": "po-report-triage-20260716T2207Z",
+        "ac3_followup": "FIX-BCTC-RECONCILE-EMISSION-CIRCUIT-BREAKER",
+        "ac3_followup_by": "po-report-triage-20260716T2237Z",
+        "ac3_followup_status": "done_verified",
+        "ac3_followup_resolved_to": "docs/data/orch/archive/2026-07.json",
+        "ac3_followup_resolved_at": "2026-07-17T01:23:19Z",
+        "ac3_followup_resolved_by": "po-scoped-triage-20260717",
+        "ac3_followup_resolved_note": "RESOLVED-TO-ARCHIVE — do NOT resurrect. ac3_followup FIX-BCTC-RECONCILE-EMISSION-CIRCUIT-BREAKER completed its full lifecycle (impl e5a70ab44 -> review 4c7f6b0ae -> qa 5b3783f30 verified_at=2026-07-17T00:08:52Z -> cold-evict 04ba446f6) and its canonical DONE_VERIFIED record lives in docs/data/orch/archive/2026-07.json (also transiently in live done_verified[] pending next cold-evict). This FK is NOT dangling — it resolves to the archived done_verified record. A ready[]-only lost-mint recovery scan misreads it as a lost mint (false resurrection commit 9dae10376 caused a no-op ~164k-token dev cycle). Lost-mint recovery MUST skip this FK. Root-cause hardening tracked by FIX-PO-LOSTMINT-RECOVERY-ARCHIVE-SCAN-GUARD.",
+        "kickoff": {
+          "by": "po-scoped-triage-20260717T0228Z",
+          "at": "2026-07-17T02:28:03Z",
+          "dev_team_tick": "2026-07-17T02:07Z",
+          "decision": "(a) SPRINT-KICKOFF — promote plan_only BACKLOG -> ready[] (dispatchable); single lane-move, no mint, no conservation change.",
+          "reason": "recurring-bug-2+ escalation: reconcile-exhausted duplicate reports arriving ~1/tick (3480 VND, 3481 BSR, 3482 VIX-Q2, 3494 SHB, 3495 VIX-Q1) = churn-without-convergence treadmill. AC-3 circuit-breaker already DONE_VERIFIED+archived; AC-1+AC-2 are now the ONLY convergence lever. Fleet idle (in_progress=0, ready=0, head idle) => no WIP gate blocks scheduling this top-priority P0. Per CLAUDE.md fix-root-cause-not-recurrent-symptom.",
+          "ordered_ac_dispatch": {
+            "AC-1": {
+              "owner": "ops",
+              "order": 1,
+              "gate": "critical-path FIRST — cheapest, highest-information; a confirmed data-loss finding short-circuits AC-2",
+              "scope": "infra-rollback verify 07-12..07-16: .backups mtimes, launchd/compose history, market.db mtime vs extraction maxes. RAW evidence in SPIKE detail: bctc_layout_units max REGRESSED to 2026-06-10 and bctc_table_rows max to 2026-06-30 — OLDER than SPIKE-BCTC-TABLEROWS-FROZEN-HOLLOW-DONE 07-12 readings => a named-volume rollback / VM-rebuild / restore between 07-12..07-16 is strongly implied. If confirmed: data-loss incident, remedy = RESTORE from .backups (ops/user-gated per feedback_vm_rebuild_destroys_named_volumes)."
+            },
+            "AC-2": {
+              "owner": "dev-mcp-server",
+              "assist": "dev-pdf-extractor (PEK-layout sub-probe)",
+              "order": 2,
+              "depends_on": "AC-1",
+              "scope": "RAW-establish why PEK-layout + agentic-refine produced nothing since mid-June: is the extraction cron registered+firing in current prod? is /pek-extract producing bctc_layout_units? is the refine trigger dormant => FOLD into FIX-BCTC-REFINE-DURABLE-TRIGGER-BACKSTOP (live backlog row) if same root. Output: findings doc docs/spikes/SPIKE-BCTC-EXTRACTION-DORMANT-MASS-ENRICHFAIL-FLOOD.md + fold recommendation."
+            },
+            "AC-3": {
+              "status": "DONE_VERIFIED",
+              "note": "FIX-BCTC-RECONCILE-EMISSION-CIRCUIT-BREAKER (circuit-breaker) shipped + archived docs/data/orch/archive/2026-07.json — do NOT re-mint / resurrect (see ac3_followup_resolved_note; lost-mint recovery must skip this FK)."
+            }
+          },
+          "wip_note": "12 sprint_goal.entries marked active but the dev fleet is idle at this tick (no in_progress/ready task); this is the single top-priority P0 root, so kickoff does not breach WIP."
+        },
+        "dispatched": {
+          "by": "router",
+          "at": "2026-07-17T02:35:42Z",
+          "tick": "2026-07-17T02:07Z",
+          "ac": "AC-1",
+          "agent": "ops"
+        },
+        "ac1_finding": {
+          "by": "ops, router git-verified",
+          "at": "2026-07-17T02:45:58Z",
+          "verdict": "AC-1 CLEAR — data-loss real but ALREADY RECOVERED; extraction freeze is dormant-producer, not ongoing loss",
+          "volume_destroy": "2026-07-15 hypervisor VM crash destroyed named market_data volume (commit 1c8701e78)",
+          "recovery": "commit 5ba622eca 2026-07-15T17:21Z restored July-1 host backup + switched all 9 services market_data->./data/live bind-mount (git-verified)",
+          "serving_db": "data/live/market.db host bind-mount (SUPERSEDES named-volume memory)",
+          "extraction_maxes": "layout_units 06-10 / table_rows 06-30 / md_tables 05-26 (== July-1 backup; producer dormant since ~06-30)",
+          "restore_rec_disposition": "REJECTED premature+wrong-remedy: corruption unconfirmed on serving plane (readonly->WAL-blind false-positive class); July-1 restore would DESTROY ~2.5wk live writes (live 380MB>backup 378MB) AND leaves same frozen extraction; fresher host copy market.db.backup 07-16 exists if ever warranted",
+          "corruption_corroboration": "RESOLVED (ops WAL-aware serving-file re-probe): corruption REAL but CONTAINED in non-extraction trees 97/151/152/234/247 — extraction rootpages 28/30/38 clean + all readable; /health ok; NOT serving-affecting; predates live DB (present in 07-16 backup too, inherited from 07-13 incident + 07-01 restore). NO RESTORE, NO user action. AC-1 FULLY CLEAR."
+        },
+        "ac2_dispatched": {
+          "by": "router",
+          "at": "2026-07-17T02:45:58Z",
+          "agent": "dev-mcp-server",
+          "assist": "dev-pdf-extractor",
+          "scope": "dormant-producer diagnostic READ-ONLY"
+        },
+        "ac2_finding": {
+          "by": "dev-mcp-server AC-2; router git-verified commit 60bdca243 (doc-only, +115L, no code/peer sweep)",
+          "at": "2026-07-17T02:59Z",
+          "verdict": "ROOT CAUSE FOUND — two independent dormant producers feeding bctcExtractReconcileJob 3-way OR success check; neither satisfied since ~06-30 => mass enrich_failed sweep + report-duplicate flood",
+          "crons_ok": "bctcPdfPullJob(*/30) + bctcExtractReconcileJob(5,35) both registered + firing status=success every tick (RAW cron_job_runs) — NOT a liveness/registration problem",
+          "pek_cause": "/pek-extract crashes EVERY call: FileNotFoundError doclayout_yolo_ft.pt — pek_model_cache named volume EMPTY (du 12K, stray yolo/settings.yaml only), wiped by SAME 2026-07-15 VM-rebuild that destroyed market_data (AC-1), never re-seeded",
+          "pek_fix": "ops re-run scripts/pek-fetch-weights.sh (idempotent; commit e418d606d; brief docs/architecture-briefs/2026-05-27-pek-weights-provisioning.md) + verify post-fetch /pek-extract logs successful model load; HF/ModelScope reachable now; low-risk populate-empty-volume, NOT a destructive swap",
+          "refine_cause": "agentic-refine half still dormant (bctc_refined_units MAX 2026-06-30; refine_status PENDING 181 vs 151 at 07-12) — pre-existing session-scoped-trigger fragility",
+          "refine_disposition": "FOLD into FIX-BCTC-REFINE-DURABLE-TRIGGER-BACKSTOP (backlog, unshipped) — NO new mint; PO to groom",
+          "dispatch": "ops => PEK volume re-seed (convergence lever); PO => fold refine half + SPIKE disposition",
+          "unverified": "refine-bctc-slot-1 armed-vs-inert; PaddleOCR lazy-download weights presence; exact crash->rebuild->fix minute sequencing",
+          "doc": "docs/spikes/SPIKE-BCTC-EXTRACTION-DORMANT-MASS-ENRICHFAIL-FLOOD.md @60bdca243"
+        },
+        "ac2_remediation": {
+          "by": "ops (PEK re-seed) + router docker-exec RAW spot-check corroborated",
+          "at": "2026-07-17T03:04Z",
+          "pek_reseed": "SUCCESS — pek_model_cache 12K→78M; doclayout_yolo_ft.pt present 40,709,302 bytes at /app/PDF-Extract-Kit/models/Layout/YOLO/ + HF-cache blob (router-confirmed); pdf-extractor container Up healthy after plain restart",
+          "crash_fixed": "DIFFERENTIAL PROOF — /pek-extract now returns HTTP 503 market_open guard (VN 02:00-08:00Z) INSTEAD of pre-fix FileNotFoundError; PekEngineAdapter imports clean. Crash root cause eliminated.",
+          "restart": "plain single-service docker restart pdf-extractor-1 (allowed); NO rebuild/force-recreate/swap; topology preserved",
+          "pending_proof": "FINAL producer-resumption proof DEFERRED to post-market-close: next bctcExtractReconcileJob run ~09:05Z 2026-07-17 (after 08:00Z VN close). SUCCESS PREDICATE: MAX(extracted_at) in bctc_layout_units advances past 2026-06-10 AND new rows land. A dev-team tick after ~09:05Z RAW-verifies serving-plane + closes the PEK half. NOT marked un-dormant until rows land (no false green).",
+          "refine_half": "unchanged — folding into FIX-BCTC-REFINE-DURABLE-TRIGGER-BACKSTOP (PO disposition in flight)"
+        },
+        "disposition": {
+          "by": "PO final sign-off (router-recorded; router owns SPIKE row write this cycle)",
+          "at": "2026-07-17T03:10Z",
+          "decision": "close-on-ops-confirm — SPIKE has NO remaining diagnostic deliverable; all branches tracked outside the SPIKE (AC-1 clear; AC-2 PEK = infra recovery APPLIED+pre-verified; AC-2 refine = folded; AC-3 circuit-breaker already done_verified+archived). NOT converted to FIX — durable-guard hardening lives in its own PLAN-ONLY row.",
+          "close_predicate": "post-market ~09:05Z bctcExtractReconcileJob run: bctc_layout_units MAX advances past 2026-06-10 AND new rows land => a dev-team tick after ~09:05Z RAW-verifies serving-plane + flips SPIKE to done_verified (executing PO's pre-authorized sign-off, NOT router self-cert). Self-verifying: if fix worked the reconcile-exhausted report flood stops; if not it re-surfaces + anomaly detector re-flags.",
+          "refine_half": "folded -> FIX-BCTC-REFINE-DURABLE-TRIGGER-BACKSTOP.spike_fold_20260717 (PENDING regressed 151->181, 3rd+ recurrence of session-scoped-CronCreate-dormancy class, priority high, schedule immediately after PEK resumes; sole remaining convergence lever for refined bctc_table_rows)",
+          "durable_guard": "FIX-INFRA-CRITICAL-VOLUME-PRESENCE-HEALTHCHECK minted PLAN-ONLY backlog (ops, high, supervised) — same 2026-07-15 VM-rebuild wiped TWO volumes (market_data + pek_model_cache), only one caught; guard asserts producer-critical volumes contain REQUIRED CONTENT (not just mount/du>0), boot+periodic, fail-loud, optionally auto-invokes scripts/pek-fetch-weights.sh; manifest SSOT-driven"
+        },
+        "close_caveat": {
+          "by": "router (tick 2026-07-17T04:07Z; from disposed dup reports 3498 SAB / 3499 VND, both 2024-Q1 enrich_failed=terminal)",
+          "at": "2026-07-17T04:23:44Z",
+          "concern": "bctcExtractReconcileJob marks queue rows enrich_failed=TERMINAL after 8 passes during the market-hours PEK-503 window (SAB report_id 1f6cbffe-7383-4be2-85bd-676a5183c5ae, VND report_id 11d8b60f-69e8-4f7e-8e3c-034d44249c70, + earlier VJC/DBC/VIX/SHB/BSR cluster). Reports advise manual /api/trigger-pek-extract re-fire once root cause fixed => terminal rows may NOT auto-retry after PEK resumes post-market.",
+          "verify_at_close": "post-market ~09:05Z close must ALSO confirm the terminal enrich_failed BACKLOG rows re-extract (bctc_layout_units gains rows for the failed 2024-Q1 tickers), NOT ONLY that MAX(extracted_at) advances + fresh PDFs land. Else FALSE-GREEN: close goes green off new PDFs while the ~2-day dormancy backlog stays permanently enrich_failed. If terminal rows do not auto-recover, an ops manual re-fire is required BEFORE flipping done_verified.",
+          "scope": "verification-rigor addition to PO close-on-ops-confirm (no-false-green); NOT a decision override, NOT a re-dispatch — head stays idle, SPIKE stays parked until the deferred proof."
+        },
+        "post_reseed_flood": {
+          "by": "po-report-triage-20260717T0707Z",
+          "at": "2026-07-17T07:26:24Z",
+          "dev_team_tick": "2026-07-17T07:07Z",
+          "disposition": "FOLD (no new mint). Same reconcile-exhausted / dormant-producer failure class as this SPIKE. Root cause already diagnosed (ac2_finding: pek_model_cache wiped by 07-15 VM-rebuild) and remediated (ac2_remediation: PEK re-seed 03:04Z, differential proof /pek-extract 503 not FileNotFoundError). Escalating a new dev-pdf-extractor fix would duplicate in-flight work; block-discipline (recurring 2+) does NOT apply because this is fix-applied-proof-pending, not recurring-failed-fix.",
+          "reports_folded": [
+            "3500 PDR 2024-Q1 report_id 8fd1d0f3-72e3-42ff-9b43-923f118689a6 @2026-07-17T05:35:02Z",
+            "3501 BSR 2023-Q4 report_id 8948a864-9c0d-4315-88c2-87cce67faada @2026-07-17T05:35:02Z",
+            "3502 DGC 2023-Q4 report_id 2c5e1d70-705c-413f-ac89-583df5cb12b5 @2026-07-17T06:05:02Z",
+            "3503 GEX 2023-Q4 report_id 48909a9a-c1d1-45bd-9eaf-3b75c6ae0510 @2026-07-17T08:06:03Z"
+          ],
+          "hygiene": "all 3 process_telegram_report resolution=duplicate; telegram msgs 3561/3562/3563 deleted; list_unresolved_reports now EMPTY.",
+          "expected_benign_rationale": "reports 05:35Z/06:05Z fall inside VN market-hours 02:00-08:00Z where /pek-extract is 503 market_open-guarded and cannot extract; reconcile attempts during market hours STILL exhaust to enrich_failed. This is NOT evidence the PEK re-seed failed. reconcile job is grinding deep 2023-2024 backlog (~1 report/30min tick).",
+          "close_verify_ADD": "The pending_proof 09:05Z close-verify MUST also confirm these 3 specific terminal enrich_failed rows recover (PDR 2024-Q1, BSR 2023-Q4, DGC 2023-Q4), not only SAB/VND + new-rows (extends close_caveat: verify terminal enrich_failed backlog recovery).",
+          "circuit_breaker_observation": "AC-3 FIX-BCTC-RECONCILE-EMISSION-CIRCUIT-BREAKER is DONE_VERIFIED+archived, yet post-reseed reconcile still emits ONE fail-loud report per ticker*quarter (3500/3501/3502). Either the breaker's systemic-dormancy heuristic does not treat market-hours-503 as dormant, or it is not deployed to the running mcp-server/analysis-agent. IF the flood persists PAST the 09:05Z post-close proof (producer resumes + rows land yet reports keep emitting one-per-ticker), escalate a breaker deployment/heuristic FIX. Do NOT mint pre-proof (would be churn).",
+          "producer_resumption_proof": {
+            "by": "po-report-triage-20260717T0826Z (dev-team tick 2026-07-17T08:07Z)",
+            "at": "2026-07-17T08:26:54Z",
+            "report": "3503 GEX 2023-Q4 reconcile-exhausted @08:06:03Z — 6min post-close straggler; router escalated to disambiguate pre-close-503-straggler vs post-guard-dormant-producer",
+            "verdict": "FOLD (duplicate) — SAME CLASS as 07:07Z PDR/BSR/DGC batch; GEX 8 passes ran pre-08:00Z under 503 market-open guard then exhausted+emitted 6min after close. Producer RAW-confirmed ALIVE post-close.",
+            "pek_extract": "POST /pek-extract = 202 Accepted (guard lifted post-08:00Z VN close); live logs show active page-by-page extraction of FRT_2023_Q4. NOT 503, NOT FileNotFoundError.",
+            "serving_plane": "bctc_layout_units MAX(extracted_at)=2026-07-17 08:20:21 — ADVANCED past 2026-06-10 close-predicate. 78 fresh rows in last 3h (report fad6ab7a, units_stored=78, push_layout OK). RAW via bun:sqlite market.db readonly.",
+            "container_health_note": "pdf-extractor-1 = Up 5h (unhealthy) is BENIGN: healthcheck curl hangs/timeouts under extraction CPU load; /health endpoint itself returns 200 OK in live logs. Not a dead producer.",
+            "close_status": "FIRST HALF of close_predicate (MAX advances past 2026-06-10 + new rows land) PRE-PROVEN at 08:20Z ahead of ~09:05Z tick. SECOND HALF (terminal enrich_failed backlog PDR/BSR/DGC/GEX recovers) STILL PENDING → SPIKE stays in_progress; no false green.",
+            "no_action": "no new dev row minted; ops NOT re-fired (would duplicate in-flight SPIKE)."
+          }
+        },
+        "supervised": true,
+        "po_wip_unblock_20260721T1845": "PO RULING — MOVED in_progress -> ready/TODO to unblock the board. Grounds: (1) IN_PROGRESS since 2026-07-16T21:00:34Z, five days, with NO updated_at field ever written and no evidence of work in that window. (2) It was the BINDING CONSTRAINT on the entire board: WIP was 2/2 (this + DESIGN-COWORK-FANOUT-PRODUCER-CONSUMER-ORDERING), so nothing could enter in_progress, AND the stale-crash reset that would normally clear it is STRUCTURALLY UNREACHABLE for this row — docs/agents/dev-team/flow/main.md:491 keys on head.updated_at >= 24h, an AGE comparison, and a row carrying no timestamp at all can never satisfy an age predicate. So the one mechanism designed to free this slot could not fire, by construction. (3) Chose MOVE-OUT over unblock-in-place or reassign: unblocking would assert progress that is not evidenced, and reassigning would hand a five-day-cold SPIKE to a new owner without re-triage. Moving it to ready preserves the row and its history, frees the WIP slot immediately, and forces a deliberate re-dispatch decision rather than a silent resumption. Owner stays ops. supervised:true added so BOUNDED-1 cannot idle-auto-claim a stale SPIKE straight back into the slot it was just freed from. NOTE: passing through orch-apply.sh stamps updated_at on this row for the first time, which also makes the age-based stale-reset reachable for it in future — the missing-timestamp defect is fixed for this row as a side effect, but the CLASS defect (rows created without updated_at are permanently immune to every age-based gate) is NOT fixed here and is recorded as instance 6 on SPIKE-SATURATED-COUNT-THRESHOLD-GATES-SWEEP.",
+        "updated_at": "2026-07-30T17:46:46Z",
+        "plan_only": true,
+        "updated_by": "po/triage-20260730T0853",
+        "po_unstrand_20260730": "UNSTRANDED by po 2026-07-30 — one-field fix, plan_only null -> true. THIS ROW'S OWN TITLE SAYS 'SPIKE (plan-only)' WHILE THE plan_only FIELD WAS null, and that single null made a P0 invisible to EVERY automated dispatch lane: Supervised-Lane Sweep requires supervised AND plan_only both true (devteam-backlog-promote-supervised-lane-sweep.jq:108-109) so plan_only=null skipped it; BOUNDED-1 requires effective_supervised != true (devteam-eligibility.jq:338) so supervised=true skipped it too. Exactly the failure mode feedback_po_notebook_mint_never_reaches_orchstate_board records: on-board is NOT pickable without the plan_only+supervised PAIR. WHY THIS IS URGENT AND NOT COSMETIC — PO RAW-probed the live named-volume DB 2026-07-30T08:5xZ (docker exec mcp-server, market.db readonly): bctc_layout_units MAX(extracted_at)=2026-07-28 11:06:59, i.e. 45.8h stale against the reconcile breaker's 2d (2880min) dormancy threshold. The breaker's last fire was telegram id 3996 at 2026-07-28T11:11Z — five minutes AFTER that last producer write, which is what silenced it. So this did NOT self-resolve: the producer emitted once on 07-28, the alarm went quiet, and the pipeline is now ~2h from re-tripping the identical breaker. That oscillation IS the defect (no durable producer trigger), and the quiet window is why a 3-day-old unclaimed telegram flood looked stale rather than live. Corroborating state: financial_reports refine_status = 203 PENDING vs 8 DONE; bctc_md_tables has exactly 1 row. Related-but-distinct leg: FIX-BCTC-REFINE-DURABLE-TRIGGER-BACKSTOP (agentic-refine -> bctc_table_rows) carries the IDENTICAL stranding shape (supervised=true, plan_only=null, next_agent=null) and is deliberately left stranded this tick — PO is not hand-stamping 41 rows one at a time; that class gets a lane, see FIX-BOUNDED1-NONDEV-NEXTAGENT-RESIDUAL-NO-DISPATCH-LANE.",
+        "po_unstrand2_20260730": "LANE CORRECTION by po 2026-07-30T09:18Z — moved ready[] -> backlog[]. WHY THE 2026-07-30 ONE-FIELD 'UNSTRAND' DID NOT LAND: the prior PO cycle read the SLS predicate (promote :108-109, the supervised AND plan_only pair) but not the LANE that predicate is applied to. SLS-promote iterates `.task_board.backlog[]` (:105; its own header :29 states 'candidate lane: .task_board.backlog[]'). This row is in `ready[]`, so setting plan_only=true could not make it visible to SLS. Full picker audit at that moment: BOUNDED-1 backlog-only -> blind; SLS-promote backlog-only -> blind; SLS-claim requires promoted_by == 'dev-team (supervised-lane sweep)' and this row's promoted_by is null -> blind; RLC rejects supervised/plan_only -> blind. Four pickers, zero coverage, priority P0. Known-failure-shape matched without reading which collection the predicate walks. Now in backlog[] with status TODO, no children, no depends_on, no backlog-detail entry, so SLS-promote can legitimately resolve its lane and stamp it. Flags left `true` — the point is to reach the supervised lane, not to bypass it. Class fix: FIX-DEVTEAM-READY-REVIEW-LANE-SUPERVISED-PLANONLY-NO-PICKER.",
+        "promoted_at": "2026-07-30T17:46:41Z",
+        "promoted_by": "dev-team (supervised-lane sweep)",
+        "promotion_note": "Supervised-Lane Sweep — assigned dispatch_lane='ops' (priority_rank=0); supervised/plan_only flags preserved, gate NOT disabled — see FIX-BOUNDED1-SUPERVISED-LANE-NO-SWEEPER",
+        "dispatch_lane": "ops",
+        "claimed_at": "2026-07-30T17:46:45Z",
+        "claimed_by": "dev-team (supervised-lane sweep)"
       }
     ]
   },
