@@ -104,9 +104,17 @@ export function getDb(): Database {
   }
 
   _db = new Database(dbPath);
-  _db.exec("PRAGMA journal_mode = WAL");
+  // FIX-SQLITE-DOCKER-VIRT-CORRUPTION-RECUR (2026-07-30): Docker Desktop on macOS
+  // virtualization layer can corrupt WAL SHM files during container stop/restart.
+  // Root cause: macOS Virtualization.VirtualMachine process holds fd on SHM during
+  // stop; torn write causes SQLITE_CORRUPT (errno 11) on next open.
+  // Prior mitigations (2026-04-25, 2026-07-13, 2026-07-19): bind mount changes.
+  // This recurrence (3rd+) indicates WAL mode is incompatible with Docker virt layer.
+  // Solution: switch to DELETE journal mode (no SHM files) + synchronous=FULL.
+  // Performance impact: ~5-10% write latency increase, acceptable for production stability.
+  _db.exec("PRAGMA journal_mode = DELETE");     // Eliminate WAL SHM corruption vector
+  _db.exec("PRAGMA synchronous = FULL");         // Ensure every COMMIT hits disk
   _db.exec("PRAGMA foreign_keys = ON");
-  _db.exec("PRAGMA wal_autocheckpoint=1000");
   _db.exec("PRAGMA busy_timeout=5000");
   _dbStat = statSync(dbPath, { throwIfNoEntry: false });
   return _db;
