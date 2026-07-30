@@ -1,4 +1,4 @@
-<!-- size-justification: 158L (TE-T09, 2026-07-13: extracted "Reusable triage scripts" registry → `scripts-registry.md` and Step PUSH-BACKSTOP body → `push-backstop.md`, both lazy-load pointers; corrects pre-existing drift — this header previously claimed 229L while the file was actually 274L pre-edit) — thin dispatcher; sub-flow routing table + BATCH schema spec + JUMP TO anchors + notebook-write skill route are tightly bound. Cross-file sub-flows live in `po/triage-*.md`, `po/channel-audit.md`, `po/sprint-*.md`, `po/scripts-registry.md`, `po/push-backstop.md`. -->
+<!-- size-justification: 158L (TE-T09, 2026-07-13: extracted "Reusable triage scripts" registry → `scripts-registry.md` and Step PUSH-BACKSTOP body → `push-backstop.md`, both lazy-load pointers; corrects pre-existing drift — this header previously claimed 229L while the file was actually 274L pre-edit) — thin dispatcher; sub-flow routing table + BATCH schema spec + JUMP TO anchors + notebook-write skill route are tightly bound. Cross-file sub-flows live in `po/triage-*.md`, `po/channel-audit.md`, `po/sprint-*.md`, `po/scripts-registry.md`, `po/push-backstop.md`. FIX-WF2-SUPERVISED-HOLD-NO-PO-SIDE-GOAHEAD-PRODUCER 2026-07-30: +4L pointer to new `po/supervised-goahead.md` sub-flow (WF-2 `po_goahead` producer — same lazy-load-pointer pattern as the two extractions above, no body inlined here). -->
 # Product Owner — Main Flow (Thin Dispatcher)
 
 **Tools:** `docs/agents/tools/package/po.md`
@@ -67,6 +67,9 @@ Never inline both pre-flight and a branch workflow — keep context lean. Pre-fl
 - Log: `"[dashboard] {N} new signals"` or `"[dashboard] inbox empty"`. Never fail-loud.
 
 **Pre-check**: `$PROJECT_ROOT/docs/data/orch/orch-state.json` `.task_board` blocked tasks waiting for PO → handle first
+
+**Pre-check — Supervised-hold ratification** → Run sub-flow: `docs/agents/po/flow/supervised-goahead.md`
+MANDATORY every tick. Producer for the `po_goahead_*` stamp dev-team's WF-2 SUPERVISED-HOLD gate (`docs/agents/dev-team/flow/main.md:467-483`) requires before it will resume a supervised in_progress/review/qa row. Empty candidate set → no-op, proceed.
 
 <!-- jump:tnb-audit -->
 ## Step 0-TNB — Read TNB Audit Findings (MANDATORY)
