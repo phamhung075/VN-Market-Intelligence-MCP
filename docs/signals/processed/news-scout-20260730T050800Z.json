@@ -1,0 +1,14 @@
+{
+  "from": "news-scout",
+  "to": "po",
+  "type": "bug-escalation",
+  "payload": "CRITICAL: Database disk image is malformed — affects all data operations. Stage 1 fetch_and_analyze call failed. get_agent_signals calls failed. System-wide data layer non-functional.",
+  "priority": "critical",
+  "createdAt": "2026-07-30T05:08:00Z",
+  "_processed": {
+    "fingerprint": "c5abd72c4a83259149a76560bbe4ef3543ed0c79717d4b21fbd19323dfaeb975",
+    "processedAt": "2026-07-30T05:15:34Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

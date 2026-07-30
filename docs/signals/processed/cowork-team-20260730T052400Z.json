@@ -3,7 +3,7 @@
   "to": "dev-team",
   "type": "cowork-fire",
   "payload": {
-    "fire_time": "2026-07-23T05:24:48Z",
+    "fire_time": "2026-07-30T05:23:42Z",
     "matched_slots": [
       "chef-morning",
       "chef-intraday"
@@ -31,9 +31,9 @@
     },
     "cadence_minutes": {
       "chef-morning": null,
-      "chef-intraday": "120"
+      "chef-intraday": 120
     },
-    "last_fired_timestamp": "2026-07-23T05:24:18Z",
+    "last_fired_timestamp": "2026-07-30T05:23:42Z",
     "last_fired_slots": [
       "chef-morning"
     ],
@@ -42,16 +42,16 @@
     "reason": "spawned",
     "nominal_tick": "05:15",
     "leader_lock": "acquired",
-    "dev_head": "idle",
+    "dev_head": "unknown",
     "devq": 5,
-    "signal_backlog": 10,
-    "note": "CHEF mutex fired (4.5c): chef-morning(guaranteed)+chef-intraday(non-guaranteed) both matched the 05:15 coincidence tick; chef-intraday dropped, last_fired left at 02:25:52Z so its next cadence window is unaffected. cycle_snapshot_promoted=false again — snapshot written as cycle-snapshot-05:23.json (assembly time per tick-snapshot.md:40) vs promoter key from tick_id 05:15 (UC-SDF-P2)."
+    "signal_backlog": 15,
+    "note": "CHEF same-tick mutex applied: chef-intraday (cadence-due, 120min) dropped in favor of guaranteed chef-morning per Step 4.5c invariant. DB-corruption tools (get_cycle_bootstrap, get_macro_snapshot) succeeded cleanly this tick."
   },
   "priority": "low",
-  "createdAt": "2026-07-23T05:24:48Z",
+  "createdAt": "2026-07-30T05:23:55Z",
   "_processed": {
-    "fingerprint": "a6a4cd573608b5783a504a5d330113c1fc0f7ff4e671eefe7b0b013d224b835c",
-    "processedAt": "2026-07-23T05:44:57Z",
+    "fingerprint": "738d106cd9c65db66fe023555e2d2aa20fa13d00c7799af6f1776cbe2855fef8",
+    "processedAt": "2026-07-30T05:50:01Z",
     "processedBy": "dev-team",
     "result": "routed-to-po"
   }
