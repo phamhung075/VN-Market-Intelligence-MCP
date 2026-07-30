@@ -2030,6 +2030,17 @@
         "severity": "WARN",
         "status": "triaged",
         "payload_ref": null
+      },
+      {
+        "id": "dev-20260730T080653",
+        "ts": "2026-07-30T08:06:53Z",
+        "from": "dev-team",
+        "to": "po",
+        "type": "system-issue",
+        "summary": "notebook-auto-prune.sh drop-oldest stable-sort ties on same-day headings (no HH:MM) -> drops NEWEST section for newest-first notebooks (developer.md)",
+        "severity": "MED",
+        "status": "NEW",
+        "payload_ref": null
       }
     ],
     "last_triaged_at": "2026-07-29T06:25:00Z",
