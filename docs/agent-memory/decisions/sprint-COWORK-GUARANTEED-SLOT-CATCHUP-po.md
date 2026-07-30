@@ -592,3 +592,34 @@
 **what-done:** Verified both commit-sweep-guard escalations against `git show` — BENIGN in effect (zero foreign paths), attached as corroboration instead of minting.
 **what-considered:** Mint a row per signal (priority=high on both). Grepped the board first: 5 open rows already own this class. 21:17Z case is this READY row's exact shape; 19:37Z case is victim-self-detect/LAYER2 scope.
 **why-change:** Prior-art grep turned a 2-row mint into 0 rows. Logged the real second-order finding instead: 10 sweep-guard signals on 07-29 alone, all priority=high, all warn-only, all benign — a guard firing ~2x/hour at high priority buries real signals in the same inbox.
+
+### STEP po-S60 · po · 2026-07-30T04:57:52Z
+**task-id:** FIX-CI-FRONTEND-ESLINT-BUNLOCK-DUAL-LOCKFILE-DRIFT
+**what-done:** Minted P1/S row for the frontend-eslint half of CI-RED-79013523 after reading the failing STEP (not the job name) out of `gh run view 30512236942 --log-failed`.
+**what-considered:**
+- Dedup as "already covered" — REFUTED: all-lane jq for eslint|lockfile|bun.lock|tailwindcss = 0 rows.
+- One `multi` row spanning both failing jobs — rejected, adds an architect split hop while main is red.
+- Blame-fix onto FACTORY-GUARD-CI-TSBOUNDARIES-IMPL (in review[]) — rejected, that row added the job; the drift predates it by 7 weeks.
+**why-decision:** Job inventory diff (10 jobs green at 44f04730 vs 19 jobs at 79013523) proves frontend-eslint is NEW and has a 0/2 green record, so the fence has never executed — that makes AC-3 ("expect more work after the lockfile fix") load-bearing, and it only fits in a frontend-zoned row.
+**why-change:** Deviated from triage-signals.md §ci_red on two points, deliberately: row lands in `ready[]`/READY not `backlog[]`/TODO (P1, main red, and that row's own history is 8 reds -> 0 rows), and dedup_key is FILE-scoped not SHA-scoped (AMNESTY AC-2 applied early).
+
+### STEP po-S61 · po · 2026-07-30T04:57:52Z
+**task-id:** FIX-CI-SIZELINT-MACRO-VMT-LIQUIDITY-RESOLVERS-NEW-OFFENDER
+**what-done:** Minted P1/S row for the size-lint half; named the offending file, the exact detector line (`size-lint-justification.sh:83` head -10 grep), and the one wrong fix that would look green.
+**what-considered:**
+- Fold into the frontend row — rejected, different zone and an independently verifiable per-job conclusion.
+- Fold into FACTORY-GUARD-CI-SIZELINT-IMPL / -size-lint-justification — rejected after reading both: those BUILT the gate and it worked correctly here.
+- Let the dev run `--check --update` to clear it — rejected and written into the row as AC-3 forbidden.
+**why-decision:** `--update` regenerates the baseline WHOLESALE (script :175 `_note`), so it would grandfather this file AND re-snapshot every other current offender — a 1-file failure silently converted into repo-wide amnesty that exits 0.
+**why-change:** no change from plan.
+
+### STEP po-S62 · po · 2026-07-30T04:57:52Z
+**task-id:** FIX-CI-RED-ALERTOUTCOME-CLOCK-SEAM
+**what-done:** Attached `ci_plane_verified` evidence (fix 760498706; `bun test` success on runs 30497473256 + 30512236942) without flipping status.
+**what-considered:**
+- Flip REVIEW -> DONE_VERIFIED myself — rejected.
+- Evidence-only annotation, next_agent stays qa — chosen.
+**why-decision:** The gate is satisfied for the `bun test` job, but the row's own prediction (daysAgo(2) fixtures age out 2026-08-02T12:00Z) is a time bomb that two current greens cannot disprove; confirming the committed fix removes it is a verify job, not a triage job. Evidence != verdict.
+**why-change:** no change from plan.
+
+### CAP-REACHED · 2026-07-30T04:57:52Z
