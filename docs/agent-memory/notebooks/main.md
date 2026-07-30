@@ -1,6 +1,18 @@
 # Dev Team — Sprint Boundary Notebook
 
-**Written:** 2026-07-30T10:00Z
+**Written:** 2026-07-30T10:17Z
+
+## cycle-20260730T1007Z-tick — Preflight RUN, drain empty, CI dedup clean; head-idle fallthrough reached BOUNDED-1: claimed+dispatched P0 FIX-DEVTEAM-READY-REVIEW-LANE-SUPERVISED-PLANONLY-NO-PICKER
+
+- **Preflight script RUN** (RC=1 is expected script behaviour for RUN/RUN-IDLE, not an error — verdict comes from the JSON `.verdict` field, not exit code; both locks confirmed held). `gcc-preflight`: no `.git/HEAD.lock`, `git worktree prune` clean, no stale worktree locks.
+- **Drain empty this tick**: `drain-signals.js --count-drainable` = 0, `.signal_queue.rows[]` has 0 `status=NEW` rows (131 total, 0 READ/RESOLVED — nothing to prune either). `task_list_held(kind=orphan-signal)` = 0 — no orphan adoption. `.task_board` non-empty (383 backlog/173 review/etc.) so did NOT fall to `session-gate`.
+- **CI health probe**: deduped clean against the same `ci-red-ae5b2501-...` fingerprint the prior tick already recorded — no new signal, non-fatal fall-through confirmed.
+- **`.head` was idle** (`active_task_id:null`, `updated_by:developer` from the AUD-CP-1 close-out) → fell through the full BOUNDED-1→SLS→RLC→DRS→QA-Drain chain starting at BOUNDED-1.
+- **BOUNDED-1 fired**: WIP(`in_progress`)=0. Promote picked `FIX-DEVTEAM-READY-REVIEW-LANE-SUPERVISED-PLANONLY-NO-PICKER` (P0, zone=cross-service/, next_agent=developer, priority_rank=0) — this is itself the fix for the SLS/RLC ready[]/review[] dead-lane gap PO ratified into DRS yesterday (`ruling-20260730T0906Z-po-triage-po.md` STEP po-4); NOT supervised/plan_only "on purpose" per its own `desc` (so it wouldn't queue behind the very backlog it unblocks). Claim moved it → `in_progress`, `.head.next_agent=developer`.
+- **Dispatched developer** (`task:FIX-DEVTEAM-READY-REVIEW-LANE-SUPERVISED-PLANONLY-NO-PICKER` claimed, `owner_client_session` = this session) with full AC-1..AC-6 text, the live blast-radius (3 P0 ready[] rows + 5 review[] rows), and an explicit reminder not to forge `promoted_by` (AC-2) or skip the branch:null head-idle sync on REVIEW flip (execute-tier.md MUST clause). **Deliberately did NOT release the sprint-task lock** post-spawn — LOCK-LIFETIME rule (background spawn returns before the agent finishes; releasing now would let next tick's `outer_claim` re-claim and double-spawn). TTL=3600s is the lifetime bound.
+- **Committed** `961f27dca` (BOUNDED-1 promote+claim writes), pathspec-scoped to `orch-state.json` only — tree was heavily concurrently dirty (cowork notebooks, analysis-briefs, other agents' JSON state), none of it touched.
+- **Released SF-1 + fire-election** (`dev-team-cron-singleton`, `cron:dev-team:2026-07-30T10:07Z`) — both `{"ok":true,"released":1}`.
+- **NEXT**: await developer's return on the ready/review-lane picker fix. Since BOUNDED-1 dispatched this tick, SLS/RLC/DRS/QA-Drain were never reached — still live for a future idle tick (review[]=173, ready[]=54 unexamined this cycle).
 
 ## cycle-20260730T1000Z-verify — AUD-CP-1 developer RAW-verified genuine; released task lock; row → review/qa, .head idle
 
@@ -22,10 +34,3 @@
 - **Carried for PO/router, not dev-team's to act on**: 34-of-40 dangling sprint-id registry gap (plan-first, correctly not naively gated fail-loud yet); 6x (not 3x) duplicate-heading corruption on `unified-agent.md` with a narrow one-signature auto-fix adjudication; `FIX-ALERT-COMMANDER-…` returned as UNBLOCK (needs deliberate dispatch, no automated lane).
 - **NEXT**: still await auditor-prose developer (`aad1923a9dd04266d`) return — confirmed still running this tick, no notification yet, did not duplicate-spawn.
 
-## cycle-20260730T0947Z-tick — Idle-equivalent tick: both in-flight background agents (auditor-prose developer, PO triage) still running, correctly skipped re-dispatch; drained 3 signals (2x commit-sweep-guard warn, 1x context-bloat on developer's own decision journal)
-
-- **Preflight RUN**, tick `2026-07-30T09:37Z`. Preflight's own Step 5.5 ran cold-evict (2 done + 1 signal row → `archive/2026-07.json`), committed `c85b7ffdf` (bare, no pathspec — the script's own commit, out of dev-team's control).
-- **Drain**: 3 real signals. 2x `commit-sweep-guard` bug-escalation (to:po) — one flags the DRS developer's own bare commit (`c919f69a1`, 8 files, no pathspec), one flags preflight's own cold-evict bare commit (`c85b7ffdf`, 2 files) — both live reproductions of the exact P0 class minted last cycle (`FIX-COMMIT-SWEEP-GUARD-SCRIPT-ACTUATOR-AND-NOTEBOOK-LONGTAIL`), good corroborating evidence for PO. 1x context-bloat breach on `sprint-COWORK-GUARANTEED-SLOT-CATCHUP-developer.md` (128381B vs 36000B cap, 92381B over — same recurring class as the architect version flagged last tick). Commit `f6ef44aa5`, residual=0. CI probe deduped clean.
-- **Step 0b: correctly recognized both in-flight dispatches as still running, skipped re-spawn.** `.head` unchanged (in_progress, next_agent=developer, not blocked, should_hold=false — same task as last tick). Both `task:FIX-AUDITOR-CALLER-PROSE-…` and `task:po-triage-20260730` are still held by this session from last tick's spawns, well within TTL, with no task-notification yet — absence of a notification means still running, not dead (`[[feedback_background_subagent_transcript_silence_is_not_death]]`). Re-spawning either via the generic re-entrant lock path would have duplicated live work. Deliberately did NOT re-dispatch.
-- **Nothing else eligible**: `.head.status` is `in_progress` (not idle), so BOUNDED-1/SLS/RLC/DRS/QA-Drain never fire this tick regardless — head-idle fallthrough is a precondition for all four.
-- **NEXT**: await auditor-prose developer + PO triage returns (both still in flight). RAW-verify each per standard discipline as they land.
