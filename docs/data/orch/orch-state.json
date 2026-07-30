@@ -94,11 +94,10 @@
   ],
   "head": {
     "status": "idle",
+    "updated_at": "2026-07-30T20:42:08Z",
+    "updated_by": "developer",
     "active_task_id": null,
-    "next_agent": "router",
-    "next_action": "FIX-BCTC-LAYOUT-PUSH-FAILURE-NETWORK-DEADLOCK flipped to REVIEW by dev-pdf-extractor -- po to decide close disposition + SPIKE-BCTC-EXTRACTION-DORMANT-MASS-ENRICHFAIL-FLOOD follow-through",
-    "updated_at": "2026-07-30T20:11:34Z",
-    "updated_by": "dev-pdf-extractor"
+    "next_agent": "router"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -4354,28 +4353,6 @@
           "FIX-BOUNDED1-NONDEV-NEXTAGENT-RESIDUAL-NO-DISPATCH-LANE",
           "FIX-BOUNDED1-SUPERVISED-LANE-NO-SWEEPER",
           "FIX-BCTC-LAYOUT-PUSH-FAILURE-NETWORK-DEADLOCK"
-        ],
-        "created_at": "2026-07-30T19:27:33Z",
-        "created_by": "po/triage-20260730T1907Z",
-        "updated_at": "2026-07-30T19:27:33Z"
-      },
-      {
-        "id": "FIX-DEVTEAM-WIP-BUDGET-COUNTS-BLOCKED-INPROGRESS-ROWS",
-        "type": "FIX",
-        "status": "BACKLOG",
-        "priority": "P1",
-        "size": "S",
-        "zone": "cross-service/",
-        "owner": "developer",
-        "next_agent": "developer",
-        "supervised": false,
-        "plan_only": false,
-        "title": "wip_in_progress counts BLOCKED rows as live concurrency — one parked row halves fleet dispatch throughput, two halt it entirely",
-        "detail": "scripts/lib/devteam-eligibility.jq def wip_in_progress is (.task_board.in_progress // []) | length — a bare length with NO status filter. A row that goes IN_PROGRESS -> BLOCKED and is left in the in_progress[] lane therefore keeps consuming a full concurrency slot forever, even though nothing is running. OBSERVED LIVE THIS TICK: FU-CNYVND-DEAD-FIELD-REMOVE flipped to BLOCKED at 2026-07-30T16:53:28Z with .head correctly reset to idle, but stayed parked in in_progress[]. With CCATO-MCP-T1-DOMAIN-ENGINE genuinely live in the other slot, wip=2=cap, so BOUNDED-1 (own cap <1) and SLS/RLC/DRS (shared cap <2) ALL no-opped — the entire idle-chain was starved for ~2.5h while backlog=374 / ready=54 / review=184. Independently corroborated by scripts/audits/devteam-dispatch-gate-satisfiability.sh, whose own header line printed: Live-shaped baseline: ready=54 in_progress=2 review=184. PO hand-unparked the row this tick (backlog[], disposition otherwise unchanged) — that is acute containment, not the fix.",
-        "ac": "1. wip_in_progress counts only rows that represent REAL live concurrency — a status-based predicate, not lane membership alone (BLOCKED/DEFERRED/CANCELLED-class rows in in_progress[] must not consume budget). Derive the non-counting set from the SSOT status enum in apps/mcp-server/src/infrastructure/orchStateSchema.ts — do not hardcode a fresh literal list. 2. Fix lives ONLY in scripts/lib/devteam-eligibility.jq so BOUNDED-1/SLS/RLC/DRS/QA-Drain all inherit it — no per-caller copy. 3. Regression test: a fixture with one BLOCKED + one IN_PROGRESS row in in_progress[] must leave SLS/RLC/DRS SATISFIABLE (wip=1), and two genuinely IN_PROGRESS rows must still saturate them (wip=2). Add it to scripts/audits/devteam-dispatch-gate-satisfiability.sh. 4. SECOND HALF (do not skip): whatever writes IN_PROGRESS->BLOCKED must also move the row OUT of in_progress[], so this cannot re-park. Fixing only the counter leaves BLOCKED rows accumulating in a lane they do not belong in.",
-        "related": [
-          "FU-CNYVND-DEAD-FIELD-REMOVE",
-          "UNBLOCK-DEVTEAM-DISPATCH-GATE-STAGING-DEADLOCK"
         ],
         "created_at": "2026-07-30T19:27:33Z",
         "created_by": "po/triage-20260730T1907Z",
@@ -18073,6 +18050,34 @@
         "ops_diagnostic_20260730": "ops investigated 2026-07-30T21:50Z (journal: docs/agent-memory/decisions/sprint-OPS-FIX-BCTC-LAYOUT-DEADLOCK-2026-07-30.md, commit bdc0c7e62). OCR gateway deadlock hypothesis TRANSIENT/cleared by 07-28T18:04Z restart (healthy now). Network push failure INCONCLUSIVE (connectivity verified OK, zero push-bctc-layout calls seen). PRIMARY DEFECT: no caller of POST /extract-layout-first found anywhere in mcp-server codebase -- the extraction trigger mechanism itself is missing/undiscovered. No infra/network code change needed. dev-pdf-extractor must locate what is (or should be) invoking /extract-layout-first (cron/scheduler registration, webhook, or manual-only path) and restore it.",
         "updated_by": "dev-pdf-extractor",
         "dev_pdf_extractor_diagnostic_20260730": "opsprior finding (no caller of POST /extract-layout-first) is a RED HERRING: ExtractLayoutFirstUseCase/LF-EXTRACT is genuinely dead/unwired code, never the bctc_layout_units producer. The REAL live trigger is POST /pek-extract (PekEngineAdapter), fired by bctcPdfPullJob.ts + re-fired by bctcExtractReconcileJob.ts (5,35 * * * *) -- both correctly registered in schedulerJobTable.ts and RAW-confirmed firing on schedule via cron_job_runs (2026-07-28 through present, zero gaps). Dormancy cause: bctc_vps_queue held 0 pending rows (no new filings) AND 0 pek_triggered rows -- all 128 rows already exhausted MAX_RECONCILE_ATTEMPTS=8 into terminal enrich_failed by 2026-07-28 21:35Z (last_attempt range 07-26 20:15 - 07-28 21:35), during/after the OCR-concurrency stall that FIX-PDFX-TESSERACT-CONCURRENCY (commit 4bac2b85d) already root-caused and fixed -- that fix was already baked into the running pdf-extractor image BEFORE the 07-28T18:04:41Z restart. No code change landed under THIS task. LIVE END-TO-END VERIFICATION (2026-07-30 ~19:56-20:05Z): manually re-fired POST /pek-extract for DPM 2025-Q4 (a terminal enrich_failed row, valid pdf_path) directly against the running containers -- 202 Accepted, PekEngineAdapter processed 52/52 pages in 368s (OCR gateway semaphore/os_children matched throughout, zero deadlock), LayoutFirstPushClient push succeeded, and RAW DB COUNT confirms bctc_layout_units grew 1193->1245 rows (all DPM report_id, timestamp 2026-07-30 20:05:13). Pipe conclusively unclogged on the currently-deployed code. RESIDUAL/OPEN, flagged not resolved: (1) exact mechanism behind the errno-111/semaphore-mismatch symptoms during the 07-28 11:06-18:04 window could not be independently re-confirmed -- both containers logs from that exact window are gone (pdf-extractor access log for 18:00-22:00 shows zero /pek-extract traffic at all; mcp-server docker logs only retain back to 07-30T08:28 due to rotation) -- soft inference only, consistent with but not re-proven against the concurrency fix. (2) 128 bctc_vps_queue rows remain terminal enrich_failed and will NOT auto-recover from the pipe being unclogged -- each needs an explicit re-fire; bulk backlog recovery explicitly out of this tasks AC per handoff, my one test row (DPM) is now internally inconsistent (bctc_vps_queue.status=enrich_failed but bctc_layout_units has 52 fresh rows) as a direct side-effect of the verification call -- left as-is, mcp-server DB write is outside apps/pdf-extractor/ zone. PO ACTION NEEDED: (a) decide whether this evidence-only (no-diff) finding closes DONE_VERIFIED directly or routes through qa verify-live; (b) SPIKE-BCTC-EXTRACTION-DORMANT-MASS-ENRICHFAIL-FLOOD (REVIEW, blocked on this row) can likely now progress -- recovery confirmed for the pipe, but its own close_predicate Part B (terminal-row recovery) is still unmet for the other 127 rows, PO to decide on bulk re-fire ownership (ops or dev-mcp-server) separate from this row. Journal: docs/agent-memory/decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-dev-pdf-extractor.md."
+      },
+      {
+        "id": "FIX-DEVTEAM-WIP-BUDGET-COUNTS-BLOCKED-INPROGRESS-ROWS",
+        "type": "FIX",
+        "status": "REVIEW",
+        "priority": "P1",
+        "size": "S",
+        "zone": "cross-service/",
+        "owner": "developer",
+        "next_agent": "qa",
+        "supervised": false,
+        "plan_only": false,
+        "title": "wip_in_progress counts BLOCKED rows as live concurrency — one parked row halves fleet dispatch throughput, two halt it entirely",
+        "detail": "scripts/lib/devteam-eligibility.jq def wip_in_progress is (.task_board.in_progress // []) | length — a bare length with NO status filter. A row that goes IN_PROGRESS -> BLOCKED and is left in the in_progress[] lane therefore keeps consuming a full concurrency slot forever, even though nothing is running. OBSERVED LIVE THIS TICK: FU-CNYVND-DEAD-FIELD-REMOVE flipped to BLOCKED at 2026-07-30T16:53:28Z with .head correctly reset to idle, but stayed parked in in_progress[]. With CCATO-MCP-T1-DOMAIN-ENGINE genuinely live in the other slot, wip=2=cap, so BOUNDED-1 (own cap <1) and SLS/RLC/DRS (shared cap <2) ALL no-opped — the entire idle-chain was starved for ~2.5h while backlog=374 / ready=54 / review=184. Independently corroborated by scripts/audits/devteam-dispatch-gate-satisfiability.sh, whose own header line printed: Live-shaped baseline: ready=54 in_progress=2 review=184. PO hand-unparked the row this tick (backlog[], disposition otherwise unchanged) — that is acute containment, not the fix.",
+        "ac": "1. wip_in_progress counts only rows that represent REAL live concurrency — a status-based predicate, not lane membership alone (BLOCKED/DEFERRED/CANCELLED-class rows in in_progress[] must not consume budget). Derive the non-counting set from the SSOT status enum in apps/mcp-server/src/infrastructure/orchStateSchema.ts — do not hardcode a fresh literal list. 2. Fix lives ONLY in scripts/lib/devteam-eligibility.jq so BOUNDED-1/SLS/RLC/DRS/QA-Drain all inherit it — no per-caller copy. 3. Regression test: a fixture with one BLOCKED + one IN_PROGRESS row in in_progress[] must leave SLS/RLC/DRS SATISFIABLE (wip=1), and two genuinely IN_PROGRESS rows must still saturate them (wip=2). Add it to scripts/audits/devteam-dispatch-gate-satisfiability.sh. 4. SECOND HALF (do not skip): whatever writes IN_PROGRESS->BLOCKED must also move the row OUT of in_progress[], so this cannot re-park. Fixing only the counter leaves BLOCKED rows accumulating in a lane they do not belong in.",
+        "related": [
+          "FU-CNYVND-DEAD-FIELD-REMOVE",
+          "UNBLOCK-DEVTEAM-DISPATCH-GATE-STAGING-DEADLOCK"
+        ],
+        "created_at": "2026-07-30T19:27:33Z",
+        "created_by": "po/triage-20260730T1907Z",
+        "updated_at": "2026-07-30T20:42:15Z",
+        "promoted_at": "2026-07-30T20:18:50Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
+        "claimed_at": "2026-07-30T20:18:50Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "review_note": "Implementation Record: docs/agent-memory/notebooks/developer.md 2026-07-30 session; decision journal sprint-COWORK-GUARANTEED-SLOT-CATCHUP-developer.md S45. wip_in_progress excludes BLOCKED/TERMINAL_SET rows (scripts/lib/devteam-eligibility.jq); main.md WIP/WIP2/WIP3/WIP4 gates re-pointed to call it; execute-tier.md CANONICAL:SSOT-STATUSFLIP-LANEMOVE(c) + WF-1 self-healing lane-move added; 6 new AC-WIP-BLOCKED-* assertions in devteam-dispatch-gate-satisfiability.sh, full suite 54/54 PASS."
       }
     ],
     "qa": [],
@@ -18092,8 +18097,8 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-30T19:27:33Z",
-    "last_triaged_by": "po/triage-20260730T1907Z",
+    "last_triaged_at": "2026-07-30T20:18:50Z",
+    "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
     "in_progress": []
   },
   "_meta": {
