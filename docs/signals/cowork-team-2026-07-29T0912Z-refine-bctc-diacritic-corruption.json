@@ -1,0 +1,23 @@
+{
+  "event": "refine_bctc_md systematically corrupts Vietnamese diacritics/words in refined markdown for table pages, at confidence ABOVE the 0.50 ESC-5 auto-escalation threshold, with empty flags[] -- the agent's own disagreement-detection does not catch this defect class",
+  "discovered_during": "cowork-team 09:00Z tick, slot=refine-bctc-slot-1, raw-verify (Step 5.3 + spot-check) of agent a933dfedcff18c65f's self-report",
+  "evidence": {
+    "report_id": "102672d1-a48d-471e-b366-eac5d3943690",
+    "source_doc": "REE_2025_Q4.pdf (24 pages)",
+    "verify_tool": "get_bctc_refined(report_id)",
+    "self_report_matched": "12/12 units (unit-0000..unit-0011), all window_status=DONE, confidence values matched self-report exactly -- no fabrication.",
+    "corruption_samples": [
+      {"unit_id": "unit-0001", "confidence": 0.8, "flags": [], "corrupted": "Đầu tư tài chính ngĂn hẠn", "expected": "Đầu tư tài chính ngắn hạn"},
+      {"unit_id": "unit-0002", "confidence": 0.75, "flags": [], "corrupted": "Phải thu ngĂn hạn", "expected": "Phải thu ngắn hạn"},
+      {"unit_id": "unit-0005", "confidence": 0.75, "flags": [], "corrupted": "TÀI SẢN Cố Định VÔ HÍNH", "expected": "TÀI SẢN CỐ ĐỊNH VÔ HÌNH"},
+      {"unit_id": "unit-0011", "confidence": 0.75, "flags": [], "corrupted": "THỮ PHÒNG VÀ CÓ THể PHÒNG / Thợ phòng", "expected": "DỰ PHÒNG (PHẢI TRẢ) / Dự phòng"},
+      {"unit_id": "unit-0010", "confidence": 0.75, "flags": [], "corrupted": "Khoản vậy ngĂn hạn", "expected": "Khoản vay ngắn hạn"}
+    ],
+    "pattern": "Not random OCR noise -- consistent substitution class: (a) diacritic mangling on 'ngắn hạn' -> 'ngĂn hạn' (breve+acute collapsed to bare breve+caps) recurring in 5+ of 12 units; (b) whole-word substitution e.g. 'Dự phòng' (provision) -> 'Thợ phòng' (nonsense/'worker room'), 'vay' (borrow) -> 'vậy' (thus); (c) abbreviation corruption 'TSCĐ' -> 'TÀ'. All at confidence 0.75-0.8, i.e. ABOVE get_bctc_refined's documented ESC-5 deep-dive-opus threshold (<0.50), so these will NOT auto-escalate. All flags[] arrays are empty, meaning refine_bctc_md's own numbers-vs-image disagreement gate (FR-13: 'numbers<-OCR, structure<-image, flag disagreements') is not designed to catch label/header text corruption -- only numeric cell disagreements."
+  },
+  "hypothesis": "Likely root cause is upstream OCR text quality (get_bctc_page_text) feeding corrupted Vietnamese label strings into the Haiku refine step, which then confidently reproduces the corruption rather than correcting it against the page image (image is only consulted for table STRUCTURE per FR-13, not for verifying label legibility). Numeric values (VND amounts, ma so codes) in these same units appear plausible/well-formed -- this looks like a label-text-only defect, not a numeric-accuracy defect, but downstream consumers matching chi tieu by label text (rather than by ma so) would silently mismatch.",
+  "impact_severity": "MED -- numeric data (used by bctc-analyst / downstream analysis) appears unaffected, but any consumer or human reviewer relying on the Vietnamese line-item labels for readability or matching would see corrupted/nonsensical text, and the confidence-gate + flags[] mechanism designed to catch refine defects does not surface this class at all (silent pass-through at 0.75-0.8 confidence).",
+  "recommendation": "Route to po for triage -> likely dev-pdf-extractor (check get_bctc_page_text OCR quality for this report's table pages) and/or dev-pdf-extractor/refine_bctc_md flow owner (consider adding a lightweight Vietnamese-label sanity check, e.g. dictionary/character-class validation on known chi-tieu label patterns, to the confidence/flags computation -- current flags[] logic evidently checks numeric disagreement only). Do NOT action from cowork-team -- observe+report only; also do not block the in-flight refine (remaining 12/24 windows on next fire) since numeric data is not implicated.",
+  "action_taken_by_dispatcher": "None beyond flagging. refine-bctc-slot-1's self-report was otherwise fully raw-verified as accurate (12/12 units match DB, no off-flow markers, PARTIAL finalize correct) -- this is an ADDITIONAL finding beyond what the self-report covered, not a contradiction of it.",
+  "ts": "2026-07-29T09:12:00Z"
+}

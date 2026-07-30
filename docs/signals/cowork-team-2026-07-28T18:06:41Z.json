@@ -1,0 +1,18 @@
+{
+  "tick": "2026-07-28T18:00Z",
+  "matched_slots": ["bctc-analyst-slot-2"],
+  "won_slots": ["bctc-analyst-slot-2"],
+  "spawned": ["docs/agents/bctc-analyst/flow/main.md"],
+  "silent": false,
+  "classification": "FIRE",
+  "reason": "spawned",
+  "pressure_mode": "adaptive",
+  "calendar_status": "unknown",
+  "host_headroom_mb": 2797,
+  "last_fired_timestamp": "2026-07-28T18:06:32Z",
+  "last_fired_slots": ["bctc-analyst-slot-2"],
+  "last_fired_write_errors": null,
+  "errors": [],
+  "note": "bctc-analyst-slot-2 (policy_id=bctc-offmarket, non-guaranteed) cron-due, last_fired 2026-07-24T18:08:05Z (~4d stale). calendar_status=unknown => no suppression (AC-P1-4-2 conservative). Non-degraded headroom throughout.",
+  "createdAt": "2026-07-28T18:06:41Z"
+}

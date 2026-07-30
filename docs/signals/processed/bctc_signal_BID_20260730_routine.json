@@ -1,0 +1,17 @@
+{
+  "ticker": "BID",
+  "signal_type": "bctc_signal",
+  "quarter": "Q1-2026",
+  "mode": "routine",
+  "beat_miss": null,
+  "product": "State-owned commercial banking — corporate lending, retail deposits, trade finance.",
+  "customer": "SOE and corporate borrowers, retail depositors, government-linked infrastructure financing clients.",
+  "ops": "Direct BCTC extraction CORRUPT (total_assets=0, forced 0% confidence) — sector-comparison fallback used: PE 9.5x in-line with sector median, ROE 18.8% above sector median 16.7%. Today price +5.08% on 3.0x average-volume spike (HIGH alert).",
+  "mgmt": "Q1-2026 BCTC filing QUÁ HẠN (overdue since 2026-05-15, 76 days) — first observed this cycle, governance/compliance flag for human review. No insider activity, no legal risk flags.",
+  "_processed": {
+    "fingerprint": "e87fb3da6758b2b21684454d03073757f60ccf31666e2cbf7ccc8dbce2744c29",
+    "processedAt": "2026-07-30T15:45:43Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

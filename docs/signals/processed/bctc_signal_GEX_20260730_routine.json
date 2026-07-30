@@ -1,0 +1,17 @@
+{
+  "ticker": "GEX",
+  "signal_type": "bctc_signal",
+  "quarter": "Q2-2026",
+  "mode": "routine",
+  "beat_miss": null,
+  "product": "Power generation/distribution (utilities), industrial manufacturing conglomerate (Gelex group).",
+  "customer": "Grid offtakers, industrial B2B customers, utility ratepayers.",
+  "ops": "Direct BCTC extraction CORRUPT (total_assets=0) — sector-comparison fallback: PE 25.1x PREMIUM +151% vs sector, ROE 9.3% below sector median 13.9% — valuation not supported by fundamentals despite today's +6.76% price / 3.3x volume spike (HIGH alert).",
+  "mgmt": "News cluster reports GELEX infra unit pre-tax profit ~1,000bn VND for H1 (cafef cross-mention) — NOT yet reflected in own BCTC extraction (still corrupt); do not treat as confirmed until re-extraction lands. Do NOT post bullish — valuation premium unsupported by fundamentals.",
+  "_processed": {
+    "fingerprint": "093a0eac963776b3e3400fd44ee164d1adb31604cc81bc071b64226ec0dd8368",
+    "processedAt": "2026-07-30T15:45:43Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

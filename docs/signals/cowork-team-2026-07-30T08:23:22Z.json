@@ -1,0 +1,41 @@
+{
+  "tick": "2026-07-30T08:15Z",
+  "ts": "2026-07-30T08:23:22Z",
+  "matched_slots": [
+    "chef-intraday"
+  ],
+  "won_slots": [
+    "chef-intraday"
+  ],
+  "spawned": [
+    {
+      "slot_id": "chef-intraday",
+      "agent": "unified-agent",
+      "flow_path": "docs/agents/unified-agent/flow/chef.md"
+    }
+  ],
+  "silent": false,
+  "drift_min": 5,
+  "errors": [],
+  "pressure_mode": "adaptive",
+  "calendar_status": "open",
+  "suppressed_calendar": [],
+  "suppressed_cadence": [],
+  "downgraded": [],
+  "chef_mutex_applied": false,
+  "due_reasons": {
+    "chef-intraday": "cadence"
+  },
+  "cadence_minutes": {
+    "chef-intraday": 60
+  },
+  "last_fired_timestamp": "2026-07-30T08:23:00Z",
+  "last_fired_slots": [
+    "chef-intraday"
+  ],
+  "last_fired_write_errors": null,
+  "classification": "FIRE",
+  "dev_head": "active",
+  "devq": 0,
+  "signal_backlog": 15
+}

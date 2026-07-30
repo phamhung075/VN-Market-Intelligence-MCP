@@ -1,0 +1,17 @@
+{
+  "ticker": "MWG",
+  "signal_type": "bctc_signal",
+  "quarter": "Q2-2026",
+  "mode": "routine",
+  "beat_miss": null,
+  "product": "Consumer electronics/mobile retail (Thế Giới Di Động, Điện Máy Xanh), grocery retail (Bách Hóa Xanh).",
+  "customer": "Mass-market Vietnamese consumers (electronics, mobile devices, groceries).",
+  "ops": "Direct BCTC extraction CORRUPT (total_assets=0) — sector-comparison fallback: PE 17.0x in-line with sector, ROE 23.3% above sector median 19.9%. News reports H1 profit roughly doubled YoY — not yet verifiable via own extraction.",
+  "mgmt": "T-19 real-revenue-growth check SKIPPED — revenue_growth_yoy unavailable (corrupt extraction); no price-driven tag fabricated without underlying data. No insider activity, no legal risk flags.",
+  "_processed": {
+    "fingerprint": "4364395ee9284f8ec366b7a8c58d3f055d4fbdfed5ed16a3bbed5e4b261a6aae",
+    "processedAt": "2026-07-30T15:45:43Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

@@ -1,0 +1,25 @@
+{
+  "tick": "2026-07-30T12:00Z",
+  "emitted_at": "2026-07-30T12:10:21.664Z",
+  "matched_slots": ["news-scout-offhours", "market-watcher-offhours", "alert-commander-critical"],
+  "won_slots": ["news-scout-offhours", "market-watcher-offhours", "alert-commander-critical"],
+  "spawned": [
+    "docs/agents/news-scout/flow/main.md",
+    "docs/agents/market-watcher/flow/main.md",
+    "docs/agents/alert-commander/flow/main.md"
+  ],
+  "chef_mutex_applied": false,
+  "dropped": [],
+  "due_reasons": {
+    "news-scout-offhours": "cadence",
+    "market-watcher-offhours": "cadence",
+    "alert-commander-critical": "cadence"
+  },
+  "last_fired_timestamp": "2026-07-30T12:09:59Z",
+  "last_fired_slots": ["news-scout-offhours", "market-watcher-offhours", "alert-commander-critical"],
+  "last_fired_write_errors": null,
+  "classification": "FIRE",
+  "dev_head": "idle",
+  "devq": 0,
+  "signal_backlog": 16
+}

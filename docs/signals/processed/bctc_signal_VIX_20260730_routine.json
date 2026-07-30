@@ -1,0 +1,17 @@
+{
+  "ticker": "VIX",
+  "signal_type": "bctc_signal",
+  "quarter": "Q2-2026",
+  "mode": "routine",
+  "beat_miss": null,
+  "product": "Securities brokerage, proprietary trading, investment banking (VIX Securities).",
+  "customer": "Retail and institutional trading clients, margin-lending customers.",
+  "ops": "No BCTC data available this cycle ('Chưa có dữ liệu') — sector-comparison only: PE 5.5x DISCOUNT -63% vs sector, ROE 28.9% well above sector median 10.0% — cheap + strong-ROE combo, best risk/reward in this rotation cluster.",
+  "mgmt": "No insider activity, no legal risk flags. Price +6.97% today on 3.2x volume spike (HIGH alert) — fundamentals-consistent, not a divergence.",
+  "_processed": {
+    "fingerprint": "d3633b2f26acfb3f2374cb57e11400e2b8b5f2332e4f5d7e67626db71dd3899a",
+    "processedAt": "2026-07-30T15:45:43Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

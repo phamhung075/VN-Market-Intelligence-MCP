@@ -1,0 +1,14 @@
+{
+  "event": "emit_pressure_state still writes host_headroom_mb, spawn-fanout.md Step 5.1 headroom gate reads container_vm_headroom_mb -> permanently forced DEGRADED fan-out",
+  "discovered_during": "08:00Z cowork tick, 3-slot fan-out (news-scout-offhours, market-watcher-offhours, alert-commander-critical)",
+  "evidence": {
+    "source_code": "apps/mcp-server/src/interface/mcp/tools/system/emitPressureStateTool.ts already defines/writes container_vm_headroom_mb (lines ~69, 393-394, 411) -- the rename FIX-PRESSURE-HOST-HEADROOM-WRONG-MACHINE-WRONG-QUANTITY (2026-07-28) is present in source.",
+    "live_output": "docs/data/pressure-state.json still shows the OLD field host_headroom_mb (checked across 3 separate emit_pressure_state calls this session: 07:50:37Z=5015, 07:35:41Z, 08:13:08Z=4819) -- never container_vm_headroom_mb.",
+    "consumer_impact": "docs/agents/cowork-team/flow/spawn-fanout.md Step 5.1 reads PRESSURE_STATE.container_vm_headroom_mb; since that key is absent from the live file, HEADROOM_MB always resolves to null -> DEGRADED is always forced true -> MAX_PARALLEL is permanently capped at max_parallel_degraded (2) instead of the intended adaptive default (4), regardless of actual container memory headroom."
+  },
+  "hypothesis": "Running mcp-server container is on a stale build that predates the 2026-07-28 rename commit -- source has the fix, deployed image does not. Matches the documented pattern in feedback_mcp_server_stale_image_mem_leak_rebuild_fixes (stale image drift after a dev change not yet rebuilt).",
+  "impact_severity": "Not correctness-breaking (fan-out still completes, just serialized into more/smaller batches with inter-batch waits) -- but has been silently running below its designed concurrency ceiling since 2026-07-28, and any tick with >2 due slots now always takes at least one extra batch-wait cycle.",
+  "recommendation": "ops/dev-mcp-server: verify running mcp-server image SHA against latest build containing emitPressureStateTool.ts's container_vm_headroom_mb; rebuild+restart that single service if stale (per feedback_rebuild_after_dev_change -- single-service rebuild, not a full docker compose down/up). Do NOT attempt from cowork-team; this is an ops-owned action.",
+  "action_taken_by_dispatcher": "None beyond flagging -- proceeded this tick with the documented null-forces-degraded fallback (MAX_PARALLEL=2), which is safe/conservative by design.",
+  "ts": "2026-07-29T08:14:00Z"
+}

@@ -1,0 +1,29 @@
+{
+  "tick": "2026-07-29T05:00Z",
+  "matched_slots": [
+    "news-scout-sentiment"
+  ],
+  "won_slots": [
+    "news-scout-sentiment"
+  ],
+  "spawned": [
+    "docs/agents/news-scout/flow/main.md"
+  ],
+  "silent": false,
+  "drift_min": 5,
+  "classification": "FIRE",
+  "reason": "spawned",
+  "chef_mutex_applied": false,
+  "all_held": false,
+  "errors": [],
+  "due_reasons": {
+    "news-scout-sentiment": "cadence"
+  },
+  "cadence_minutes": {
+    "news-scout-sentiment": 30
+  },
+  "pressure_mode": "adaptive",
+  "calendar_status": "open",
+  "created_at": "2026-07-29T05:09:57Z",
+  "note": "1 slot fired (news-scout-sentiment, gatherer-standard). 0 NEW cowork-addressed signal_queue rows this tick. Spawn used new IDENTITY_PREAMBLE contract (FIX-COWORK-SPAWN-IDENTITY-PREAMBLE-OFFFLOW). Single-batch tick — inter-batch wait skipped per spec (last batch); Step 5.3 off-flow check deferred to async completion notification."
+}

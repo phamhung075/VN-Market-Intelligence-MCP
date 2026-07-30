@@ -1,0 +1,14 @@
+{
+  "from": "bctc-analyst",
+  "to": "po",
+  "type": "bug-escalation",
+  "payload": "[bctc-analyst] get_kinhdich_reading returning 503 fleet-wide this cycle (15:0x UTC 2026-07-30) — 'insufficient price data for market reading, requires >=7 price points'. Confirmed on FPT/HPG/VCB/MWG (4/4 tickers tested, identical error text). Not present in get_recent_fixes(10) — first occurrence observed by this agent. Prior cycle c130 (00:14 UTC same day) all KD reads succeeded normally for 8 tickers, so this is a new regression within the last ~15h, not a persistent known gap. KD confirm/contradict step skipped this cycle for all tickers — no fabricated readings emitted.",
+  "priority": "high",
+  "createdAt": "2026-07-30T15:16:00Z",
+  "_processed": {
+    "fingerprint": "414baa274a61d89c0c447d80c1605493f9459485b7ab8f02a062e98d2110a310",
+    "processedAt": "2026-07-30T15:45:43Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

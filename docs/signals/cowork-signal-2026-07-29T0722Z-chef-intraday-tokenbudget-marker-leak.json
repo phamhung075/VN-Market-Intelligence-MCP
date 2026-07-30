@@ -1,0 +1,22 @@
+{
+  "event": "chef-intraday token-budget truncation before publish decision",
+  "tick_id": "2026-07-29T07:15:00Z",
+  "slot_id": "chef-intraday",
+  "agent_task_id": "a096fc86e7d45cc64",
+  "window": "14",
+  "sequence": {
+    "1": "Step 0.5 published-marker gate claimed OK: published:chef-intraday:2026-07-29:14 (owner_client_session=unified-agent-session, ttl=3600s)",
+    "2": "Step 0 GATHER completed (market context, macro snapshot, hexagram, sentiment, volatility, convictions)",
+    "3": "Step 1 CLUSTER completed — 5 qualifying convergence clusters identified: real-estate (VHM/VRE/VIC), retail (VRE/FRT/MWG), steel (HPG/HSG), securities/tech (VCI/FPT), agriculture (8 tickers HIGH alerts)",
+    "4": "Convergence rule QUALIFIED -> publication required per flow spec",
+    "5": "Agent self-reported 'token budget reached during Layer analysis phase' and returned WITHOUT executing Steps 2-8 (TNB 6-layer walk, conviction gates, synthesis JSON write, notebook commit, MARKET/WORK publish)",
+    "6": "No send_telegram occurred -> raw-verified via get_market_message_digest(hours_back=3): newest mcp-user ids still [1056,1061,1062,1063], no id attributable to this window",
+    "7": "task_list_held (unfiltered) confirmed published:chef-intraday:2026-07-29:14 still HELD by unified-agent/unified-agent-session -> matches the documented leak pattern (early marker claim before publish decision, no publish, no release)",
+    "8": "Dispatcher (cowork-team) released the marker per feedback_chef_leaks_published_marker_on_silent_exit invariant: send_telegram did NOT happen -> marker must not survive the exit. task_release succeeded (released:1)."
+  },
+  "root_cause_class": "Same structural defect as UC-CCA-P3 (early marker claim, ~650L before publish decision) but a NEW trigger: resource exhaustion (agent token/effort budget) mid-flow, not a designed silent-exit or a publish-then-improvised-release. Distinct from all 5 prior double-publish oscillations (07-02, 07-15, 07-23, 07-29 chef-morning x2) — this is a MISSED-publish, not a double-publish.",
+  "risk_flagged": "Marker TTL was 3600s (window closes ~08:22Z). If chef-intraday is re-spawned on the next tick(s) with an unchanged/similar convergence set (5 clusters, same market snapshot), it may hit the same token-budget wall repeatedly until the window closes, silently losing this window's dish every time despite qualifying clusters. Not fixed by this action -- only the marker-leak half was corrected.",
+  "recommendation_to_po_or_dev": "Consider: (a) UC-CCA-P3 fix (still BACKLOG per orch-state, opened 2026-07-13) would also need to account for non-publish exits caused by resource exhaustion, not just logic branches; (b) chef.md may need a cheaper/bounded Steps-2-8 path when cluster count is high (5 clusters this tick vs typical 1-2), e.g. cap per-cluster TNB depth or raise the agent's effort/token budget for intraday dispatches; (c) if the next chef-intraday retry also truncates, escalate as a recurring_bug per standing 2+ occurrence policy.",
+  "action_taken_by_dispatcher": "Released published:chef-intraday:2026-07-29:14 (owner_agent=unified-agent, owner_client_session=unified-agent-session). No MARKET messages existed to delete/modify (nothing was ever published this window).",
+  "ts": "2026-07-29T07:26:00Z"
+}

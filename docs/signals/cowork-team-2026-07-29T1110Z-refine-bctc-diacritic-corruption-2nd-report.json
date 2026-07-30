@@ -1,0 +1,23 @@
+{
+  "event": "SECOND occurrence, DIFFERENT report: refine_bctc_md's 'ngắn hạn' -> 'ngăn hạn' diacritic corruption (and related label-text corruption) reproduces across reports -- confirms this is a systemic pipeline defect, not a one-off artifact of the first report (REE_2025_Q4.pdf)",
+  "supersedes_or_extends": "cow-20260729T091200Z (docs/signals/cowork-team-2026-07-29T0912Z-refine-bctc-diacritic-corruption.json) -- first occurrence, report REE_2025_Q4.pdf. This row does NOT replace that one (still NEW, unactioned by po); it adds cross-report confirmation.",
+  "discovered_during": "cowork-team 11:00Z tick, slot=refine-bctc-slot-3, raw-verify of agent acc746cce0081a91b's self-report via get_bctc_refined(report_id=3e2a26d9-525a-4dba-8ebe-fcaecc0cb28e)",
+  "evidence": {
+    "report_id": "3e2a26d9-525a-4dba-8ebe-fcaecc0cb28e",
+    "source_doc": "DPM_2026_Q1.pdf (47 pages) -- DIFFERENT ticker/report from the first occurrence (REE)",
+    "self_report_matched": "35/35 total units confirmed via get_bctc_refined, 12 new this fire (unit-0023..unit-0034), all DONE, confidence range 0.45-0.75 matched self-report exactly.",
+    "corruption_samples": [
+      {"unit_id": "unit-0024", "confidence": 0.5, "corrupted": "Phải thu ngăn hạn khác", "expected": "Phải thu ngắn hạn khác"},
+      {"unit_id": "unit-0030", "confidence": 0.7, "corrupted": "Chí phí ngăn hạn", "expected": "Chi phí ngắn hạn"},
+      {"unit_id": "unit-0031", "confidence": 0.75, "corrupted": "A. Ngăn hạn", "expected": "A. Ngắn hạn"},
+      {"unit_id": "unit-0032", "confidence": 0.6, "corrupted": "Vay ngăn hạn có mối liên hẻng ngân hàng lớn nhất", "expected": "Vay ngắn hạn có quan hệ với các ngân hàng lớn nhất (also 'mối liên hẻng' is itself a further corruption of 'quan hệ')"},
+      {"unit_id": "unit-0033", "confidence": 0.55, "corrupted": "Phải trả người bán ngăn hạn", "expected": "Phải trả người bán ngắn hạn"}
+    ],
+    "pattern_confirmation": "Same substitution class as the first occurrence (ắ collapsed to bare Ă/ă), now observed in a second, unrelated report from a different ticker/pipeline run days apart (this report's earlier units 0000-0022 were refined 2026-07-25/07-28; today's units 0023-0034 refined 2026-07-29). Confidence range on the corrupted units (0.45-0.75) again sits ABOVE the 0.50 ESC-5 auto-escalation floor for most of them, and none of the flags[] arrays flag the label-text corruption specifically (flags present are OCR_quality_variable/critical, image_unavailable, table_structure_complex -- generic quality flags, not a diacritic-specific check)."
+  },
+  "hypothesis": "Reinforces the original hypothesis: root cause is upstream OCR text quality (get_bctc_page_text) or a systematic character-substitution bug in the OCR->refine pipeline that reproduces on 'ắ' specifically, independent of source document. Two occurrences across two different tickers/reports/OCR runs rules out a single-document artifact.",
+  "impact_severity": "Escalating MED -> HIGH per recurring-bug convention (2+ occurrences of the same defect): this is not an isolated data-quality blip, it appears to affect every BCTC table page refined through this pipeline. Numeric values still appear structurally intact in both reports (this is a label/header-text defect, not a numeric-accuracy defect) but any human-facing rendering of the refined markdown, or a future feature matching chi-tieu by label text rather than ma-so, would be affected fleet-wide.",
+  "recommendation": "Route to po -> dev-pdf-extractor for root-cause investigation of the OCR->refine text pipeline's handling of the Vietnamese character 'ắ' (U+1EAF, a with breve+acute) specifically -- check whether get_bctc_page_text's OCR engine or a downstream encoding/normalization step is dropping the acute accent while keeping the breve. Given 2 confirmed occurrences already, recommend NOT waiting for a 3rd before prioritizing -- this looks systemic and cheap to root-cause (single character-class bug) relative to its blast radius (every table page, every report, ongoing).",
+  "action_taken_by_dispatcher": "None beyond flagging -- refine-bctc-slot-3's self-report was otherwise fully raw-verified as accurate (35/35 units match DB). Do NOT action from cowork-team; observe+report only.",
+  "ts": "2026-07-29T11:10:55Z"
+}

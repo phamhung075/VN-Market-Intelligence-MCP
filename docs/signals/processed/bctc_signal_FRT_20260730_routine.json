@@ -1,0 +1,17 @@
+{
+  "ticker": "FRT",
+  "signal_type": "bctc_signal",
+  "quarter": "Q2-2026",
+  "mode": "routine",
+  "beat_miss": null,
+  "product": "Consumer electronics/mobile retail (FPT Shop), pharmacy retail (Long Châu).",
+  "customer": "Mass-market Vietnamese consumers (electronics, mobile devices, pharmacy/healthcare products).",
+  "ops": "Direct BCTC extraction CORRUPT (total_assets=0) — sector-comparison fallback: PE 32.2x PREMIUM +89% vs sector, ROE 26.1% above sector median 19.9% — strong ROE already priced in, valuation stretched (AVOID).",
+  "mgmt": "Today's biggest watchlist mover (+6.99%) with no matching HIGH volume alert registered — price momentum outrunning fundamentals; do NOT post bullish despite ROE strength.",
+  "_processed": {
+    "fingerprint": "f3973c30167b92eec0b94f85a2da50cf76dd7884410f37e259362b1dd944eb57",
+    "processedAt": "2026-07-30T15:45:43Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

@@ -1,0 +1,28 @@
+{
+  "event": "Router session independently dispatched chef-eod concurrently with cowork-cron's own chef-eod slot spawn -- resolved WITHOUT a double-publish only because the router's marker claim landed first",
+  "discovered_during": "cowork-team 08:45Z tick, slot=chef-eod (guaranteed, cron 45 8 * * 1-5)",
+  "evidence": {
+    "cowork_cron_spawn": {
+      "agent_id": "a69593e83d6792247",
+      "spawned_by_session": "a2161c5c-c4e1-4696-834e-d73fbbbbad81 (cowork-team dispatcher)",
+      "last_fired_stamped_at": "2026-07-29T08:53:12Z",
+      "result": "task_claim on published:chef-eod:2026-07-29 returned claimed:false -- exited cleanly with 'DONE: duplicate-publish blocked'. No off-flow markers in return text (Step 5.3 clean)."
+    },
+    "router_side_claimant": {
+      "marker_owner_client_session": "b5fdaa7f-e239-42a0-942a-dd688e927ad9",
+      "marker_claimed_at": "2026-07-29T08:53:45Z (unix 1785315225)",
+      "marker_ttl_seconds": 100800,
+      "session_presence_record": "session-presence:b5fdaa7f-e239-42a0-942a-dd688e927ad9 -- owner_agent:'router', host:'main-server', started_at:'2026-07-29T08:51:00Z', current_task:'dispatch-init'",
+      "note": "This is a SEPARATE interactive Claude Code session (the router/main-terminal seat), not a second cowork-cron fire. It independently reached chef.md's Step 0.5 marker claim ~33s before the cowork-cron spawn tried, ~2.5min after the router session itself started (08:51:00Z dispatch-init)."
+    },
+    "raw_publish_verify": {
+      "tool": "get_unreviewed_market_messages(limit=5)",
+      "result": "Exactly ONE chef-eod-shaped dish exists for 2026-07-29: id=1066, from_agent='mcp-user' (misattribution per feedback_chef_market_post_attribution, unfixed), sent_at='2026-07-29 08:55:13', content = VN-Index +24 EOD wrap (real estate/securities leading, USD/VND 26150, gold +1.97%). No duplicate EOD message present -- this specific race resolved safely."
+    }
+  },
+  "hypothesis": "Same family as feedback_router_intent_path_double_dispatches_cowork_slots / feedback_router_manual_drive_overlaps_devteam_loop -- a router-seat session performed its own chef.md dispatch for the SAME slot+date the cowork-cron master dispatcher was independently firing via its 15-min schedule, via a path outside the cowork fire-election lock (cron:cowork:<TICK>). This is the first time this pattern has concrete two-sided evidence (session-presence record + claim-timestamp race + single-publish confirmation) rather than being inferred after the fact from a stray extra claim.",
+  "impact_severity": "MED -- no double-publish this time (near-miss only), but: (1) the cowork-cron spawn burned a full unified-agent run (58673 tokens, 9 tool calls, 76s) purely to hit a blocked exit -- pure waste whenever this race recurs; (2) the outcome was a coin flip on claim-ordering -- had the cowork-cron spawn's task_claim landed 33s earlier, IT would have published, and the router-seat session (already past its own no-early-exit point) could plausibly have gone on to publish too, reproducing the confirmed 07-15/07-23/07-29-chef-morning double-publish pattern instead of a clean block.",
+  "recommendation": "Route to po/architect for UC-CCA-P3 scope review (the same P0 umbrella already tracking the marker-claim oscillation, still BACKLOG per cowork-20260729T052907Z-chef-morning-doublepublish-5th) -- specifically add a check for WHAT independently triggers chef.md dispatches from a router/main-terminal seat outside the cowork-cron schedule (manual /cowork drive? a mapped intent in dispatch/SKILL.md that lands on unified-agent's chef.md directly?), since that trigger path is what creates the race surface at all. Do not action from cowork-team -- observe+report only.",
+  "action_taken_by_dispatcher": "None beyond flagging + raw-verification that no double-publish occurred this instance. No marker action needed -- published:chef-eod:2026-07-29 is correctly held as a tombstone by the session that actually published (ttl_seconds=100800, matches contract).",
+  "ts": "2026-07-29T08:58:00Z"
+}

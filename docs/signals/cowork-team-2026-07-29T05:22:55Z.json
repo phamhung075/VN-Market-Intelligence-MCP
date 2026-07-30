@@ -1,0 +1,18 @@
+{
+  "tick": "2026-07-29T05:15Z",
+  "emitted_at": "2026-07-29T05:22:55Z",
+  "drift_min": 5,
+  "matched_slots": ["chef-morning"],
+  "won_slots": ["chef-morning"],
+  "spawned": ["docs/agents/unified-agent/flow/chef.md"],
+  "silent": false,
+  "classification": "FIRE",
+  "reason": "spawned",
+  "chef_mutex_applied": false,
+  "due_reasons": {"chef-morning": "cron"},
+  "cadence_minutes": {"chef-morning": null},
+  "pressure_mode": "adaptive",
+  "calendar_status": "open",
+  "errors": [],
+  "note": "chef-morning guaranteed slot (cron 15 5 * * 1-5), last_fired was 2026-07-24T05:22:26Z (5d stale) before this tick. Spawned unified-agent under the new IDENTITY_PREAMBLE + Step 5.3 off-flow-detector contract from spawn-fanout.md (dated 2026-07-29). Single/last batch — inter-batch wait skipped per spec; Step 5.3 OFFFLOW_MARKERS scan deferred to the async completion notification for agentId aea72a47924e800b0."
+}
