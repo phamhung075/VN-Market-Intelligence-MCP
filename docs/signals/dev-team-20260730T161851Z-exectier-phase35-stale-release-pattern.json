@@ -1,0 +1,14 @@
+{
+  "from": "dev-team",
+  "to": "po",
+  "type": "repair_task_request",
+  "priority": "medium",
+  "createdAt": "2026-07-30T16:18:51Z",
+  "payload": {
+    "summary": "execute-tier.md Phase-3.5 dispatcher-wrap (line 33) says 'release all after the batch returns' — for run_in_background=true spawns this fires immediately (Agent() returns in ms), releasing task:<id> right after spawn. Next tick's pipeline-resume S2 outer_claim on the same key would then succeed again and double-spawn onto the same task. main.md's own S2/SLS/RLC/DRS/QA-DRAIN dispatcher-wraps all carry an explicit LOCK-LIFETIME comment (no release on background-spawn success, TTL-bound instead) — execute-tier.md's Phase-3.5 text predates that fix and was never updated to match.",
+    "files": ["docs/agents/dev-team/flow/execute-tier.md"],
+    "suggestedZone": "docs/agents/dev-team/flow/execute-tier.md",
+    "found_during": "FIX-WF2-SUPERVISED-HOLD-NO-PO-SIDE-GOAHEAD-PRODUCER BOUNDED-1 dispatch — applied LOCK-LIFETIME-safe behavior manually instead of the literal stale text to avoid the double-spawn class",
+    "suggested_fix": "Update execute-tier.md Phase-3.5 (lines 33-66) to match the LOCK-LIFETIME convention documented at main.md S2/SLS/RLC/DRS/QA-DRAIN — no release in the success path for background spawns; release only on a throw before the agent handed off."
+  }
+}
