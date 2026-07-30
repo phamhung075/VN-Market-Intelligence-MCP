@@ -126,3 +126,5 @@
 **why-change:** Net board growth this tick +1 (733, from the S12 mint only — agent-father's writes were pure status flips, no new rows). All 3 background agents from this tick's dispatch work (`po`-adjacent carryover already closed, `dev-mcp-server` already closed, `agent-father` now closed) are processed. Only `developer` (BOUNDED-1 auto-pickup, `ab484e8a19a0e6084`) remains outstanding, resume lock held for the full TTL per LOCK-LIFETIME.
 
 ---
+
+### CAP-REACHED · 2026-07-30T23:30:00Z
