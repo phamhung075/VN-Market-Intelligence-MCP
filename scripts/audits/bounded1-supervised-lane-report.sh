@@ -66,6 +66,20 @@
 # see that file's header for the design-principle rationale, adopted from
 # SPIKE-BOUNDED1-ELIGIBILITY-CONTRACT-REVIEW).
 #
+# DRS / READY-XOR sections RETROFITTED 2026-07-31
+# (FIX-PO-NO-PRODUCER-FOR-MANUAL-DISPATCH-ESCAPE-HATCH) to call
+# `is_design_router_candidate` / `is_ready_xor_gap`
+# (`scripts/lib/po-manual-dispatch-eligibility.jq`) instead of their own
+# hand-inlined select-chains — those two chains are now ALSO the exact
+# predicate the new `docs/agents/po/flow/manual-dispatch-sweep.md` PO
+# sub-flow and its regression verifier consume; leaving this script's copy
+# hand-inlined would have created a 2nd hand-copy of the identical
+# composition the moment that 2nd consumer landed — exactly the drift class
+# `devteam-eligibility.jq`'s own header warns about. Mechanical extraction
+# only, no logic change — live-diffed before/after (`git stash` + re-run +
+# `diff`) to confirm byte-identical DRS/READY-XOR row sets across the
+# retrofit.
+#
 # TERTIARY section (FIX-DEVTEAM-BOUNDED1-PROSE-SEQUENCING-UNBACKED-GATE,
 # 2026-07-23, informational only — does not gate exit code, same rationale
 # as SECONDARY): lists every `task_board.backlog[]` row where
@@ -153,6 +167,7 @@ bash scripts/lib/archive-glob-cat.sh > "$ARCHIVE"
 
 JQ_DEFS='
   include "scripts/lib/devteam-eligibility";
+  include "scripts/lib/po-manual-dispatch-eligibility";
 
   def dispatch_lane($detail_items; $roster_map):
     (effective_next_agent($detail_items)) as $na
@@ -254,12 +269,7 @@ jq -c \
   | ($roster[0] | map({(.id): .type}) | add) as $roster_map
   | [ .task_board.backlog[]
     | select(.status == "BACKLOG" or .status == "TODO")
-    | select(. | is_non_dev_next_agent_unrouted($detail_items))
-    | select(. | (effective_supervised($detail_items) and effective_plan_only($detail_items)) | not)
-    | select(. | is_epic_wrapper($detail_items) | not)
-    | select(. | deps_satisfied($detail_items; $status_map))
-    | select(. | is_detail_deferred($detail_items) | not)
-    | select(. | has_unbacked_sequencing_prose($detail_items) | not)
+    | select(. | is_design_router_candidate($detail_items; $status_map))
     | report_row_drs($detail_items; $roster_map; $now_epoch; $allowlist)
     ] | sort_by([.rank, (.age_days // -1) * -1])
   ' "$STATE" > "$WORK/drs.json"
@@ -304,9 +314,7 @@ jq -c \
   (detail_items_from($detail)) as $detail_items
   | ($roster[0] | map({(.id): .type}) | add) as $roster_map
   | [ .task_board.ready[]
-    | select((. | effective_supervised($detail_items)) or (. | effective_plan_only($detail_items)))
-    | select((. | effective_supervised($detail_items)) and (. | effective_plan_only($detail_items)) | not)
-    | select((. | is_epic_wrapper($detail_items)) | not)
+    | select(. | is_ready_xor_gap($detail_items))
     | report_row($detail_items; $roster_map; $now_epoch)
     ] | sort_by([.rank, (.age_days // -1) * -1])
   ' "$STATE" > "$WORK/ready-xor.json"

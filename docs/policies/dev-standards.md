@@ -489,6 +489,30 @@ jq --arg now "$NOW" -f scripts/devteam-backlog-claim-design-router-sweep.jq \
 ```
 Owning flow doc: `docs/agents/dev-team/flow/main.md` § Design-Router Sweep (DRS), 4th writer of the pre-existing WIP≤2 in_progress budget (BOUNDED-1 → SLS → RLC → **DRS** → QA-Drain → Step 1), Step 0b head-idle fall-through, before Step 1 PO triage. PO ratification: `docs/agent-memory/decisions/ruling-20260730T0906Z-po-triage-po.md` STEP po-4. **Agent-identity allowlist** (`is_design_router_allowed`, `scripts/lib/devteam-eligibility.jq`) is DRS's compensating control in place of a supervised/plan_only flag gate — ratified NARROW: `{architect, ba, pm, po, agents-architect}`; `agent-father`/`ops`/`ops-mainserver-fetch`/`ops-vps-fetch`/`qa`/`system-auditor` explicitly excluded. **Eligibility** (`is_design_router_eligible`, same file): `is_non_dev_next_agent_unrouted` AND NOT (`effective_supervised` AND `effective_plan_only` both true — SLS's own territory, an AND not an OR, so a row carrying exactly one of the two flags remains DRS-eligible) AND allowlisted AND not an epic wrapper AND `depends_on` satisfied AND NOT detail-DEFERRED* AND no unbacked prose sequencing. **`.head` write is a MANDATORY conditional guard from day one** (never an unconditional replace — hard AC, PO ratification Q3) per the live `qadrain-head-slot-decouple` precedent (`docs/architecture-briefs/2026-07-29-qadrain-head-slot-decouple.md`). Test: `scripts/audits/devteam-dispatch-gate-satisfiability.sh` (DRS positive-fire + allowlist negative control + `.head` conditional-guard negative control) and `scripts/audits/bounded1-supervised-lane-report.sh`'s dedicated DRS section (DRS-ELIGIBLE vs DRS-STRANDED-OFF-ALLOWLIST split, non-gating).
 
+**CANONICAL: PO Manual-Dispatch Sweep — the "manual/PO dispatch" producer (FIX-PO-NO-PRODUCER-FOR-MANUAL-DISPATCH-ESCAPE-HATCH, 2026-07-31)**
+```bash
+DRS_ALLOWLIST='["architect","ba","pm","po","agents-architect"]'
+jq -c \
+  --argjson allowlist "$DRS_ALLOWLIST" \
+  --slurpfile detail docs/data/orch/archive/backlog-detail.json \
+  --slurpfile archive <(bash scripts/lib/archive-glob-cat.sh) \
+  -L scripts/lib \
+  'include "devteam-eligibility"; include "po-manual-dispatch-eligibility";
+   (detail_items_from($detail)) as $detail_items | dep_status_map($archive) as $status_map
+   | [ ((.task_board.backlog // []) | to_entries[] | .key as $idx | .value
+        | select(.status == "BACKLOG" or .status == "TODO")
+        | select(. | is_drs_stranded_off_allowlist($detail_items; $status_map; $allowlist))
+        | select((.po_manual_dispatch_flagged_at // "") == "")
+        | {id, rank: (. | priority_rank), idx: $idx, class: "DRS-STRANDED-OFF-ALLOWLIST"}),
+       ((.task_board.ready // []) | to_entries[] | .key as $idx | .value
+        | select(. | is_ready_xor_gap($detail_items))
+        | select((.po_manual_dispatch_flagged_at // "") == "")
+        | {id, rank: (. | priority_rank), idx: $idx, class: "READY-XOR-SUP-OR-PLANONLY"})
+     ] | sort_by([.rank, .idx])' \
+  docs/data/orch/orch-state.json
+```
+Owning flow doc: `docs/agents/po/flow/manual-dispatch-sweep.md`, MANDATORY pre-check every PO tick (pointer: `docs/agents/po/flow/main.md`, same placement pattern as `supervised-goahead.md`). Producer for the two live classes `docs/agents/dev-team/flow/main.md`'s Lane × Gate Coverage Matrix and `scripts/audits/bounded1-supervised-lane-report.sh`'s DRS/READY-XOR sections both name as "reachable only by manual/PO dispatch" but, before this fix, no PO flow step ever produced (4th instance of this "documented consumer, no documented producer" defect class — see `supervised-goahead.md`'s header for the 3rd). Shared predicates (`is_drs_stranded_off_allowlist`, `is_ready_xor_gap`, `scripts/lib/po-manual-dispatch-eligibility.jq`) `include` `scripts/lib/devteam-eligibility.jq` and reuse its predicates verbatim — zero new predicate logic, three call sites (this sub-flow, `bounded1-supervised-lane-report.sh`'s DRS/READY-XOR sections — retrofitted 2026-07-31, live-diffed byte-identical against a pinned snapshot before/after — and the regression verifier below), never a hand-copy. Does NOT write `.head`/`in_progress[]`/any WIP-budget lane — PO is not dev-team's dispatch loop and both target classes were deliberately excluded from that chain by policy (DRS allowlist ratification; sup-XOR-plan_only residual gaps). Action on the single top unflagged candidate per tick: additive `po_manual_dispatch_flagged_*` stamp (idempotency only, never a lane-move/gate-clear) + fold into PO's own `BATCH` this tick — the SAME dispatch mechanism every other PO-self-initiated finding already uses. Out of scope (explicit): widening the DRS allowlist to admit `agent-father` — a separate, already-ratified blast-radius control. Test: `scripts/audits/po-manual-dispatch-sweep-verify.sh` (doc-existence + main.md pointer + synthetic-fixture replay covering every named Matrix branch, positive and negative controls, + idempotency guard).
+
 **CANONICAL: Supervised-Lane Sweep (SLS) claim — `ready[]` FALLBACK for unstamped rows (FIX-DEVTEAM-READY-REVIEW-LANE-SUPERVISED-PLANONLY-NO-PICKER, 2026-07-30)**
 ```bash
 NOW=$(date -u +%Y-%m-%dT%H:%M:%SZ)

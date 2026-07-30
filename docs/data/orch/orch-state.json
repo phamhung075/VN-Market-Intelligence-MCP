@@ -93,11 +93,10 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "FIX-PO-NO-PRODUCER-FOR-MANUAL-DISPATCH-ESCAPE-HATCH",
-    "next_agent": "architect",
-    "next_action": "architect designing+implementing PO manual-dispatch-sweep producer",
-    "updated_at": "2026-07-30T22:44:02Z",
+    "status": "idle",
+    "active_task_id": null,
+    "next_agent": "router",
+    "updated_at": "2026-07-30T22:53:55Z",
     "updated_by": "architect"
   },
   "narrative": {
@@ -18214,6 +18213,38 @@
         "review_note": "head write in scripts/devteam-review-claim-qa-drain.jq made CONDITIONAL on $head_free (mirrors devteam-wrapper-autoclose.jq:122-128 guard shape) per brief docs/architecture-briefs/2026-07-29-qadrain-head-slot-decouple.md §3/§6/§8. Added AC-QADRAIN-HEAD-GUARD negative (busy .head byte-identical after) + positive (idle .head IS written) regression controls to devteam-dispatch-gate-satisfiability.sh per brief §6 DoD. review[]->qa[] lane-move logic byte-unchanged. Full audit suite green (all pre-existing + new assertions). No main.md edit (brief explicit: caller-side impact NONE; task AC-3 forbids it here — thats Part 2). .head untouched throughout this flip (head.active_task_id belongs to a different live task, FIX-PO-NO-PRODUCER-FOR-MANUAL-DISPATCH-ESCAPE-HATCH/architect — CANONICAL:SSOT-STATUSFLIP-LANEMOVE rule (b) only syncs .head when the flipped task IS .head.active_task_id, which it is not here).",
         "completed_at": "2026-07-30T22:52:08Z",
         "completed_by": "developer"
+      },
+      {
+        "id": "FIX-PO-NO-PRODUCER-FOR-MANUAL-DISPATCH-ESCAPE-HATCH",
+        "type": "FIX",
+        "title": "P0: 49 backlog rows (23 P1) + 3 ready[] rows are reachable ONLY by 'manual/PO dispatch' -- and no PO flow doc contains any step that produces it",
+        "status": "REVIEW",
+        "priority": "P0",
+        "size": "S",
+        "zone": "cross-service/",
+        "owner": "po",
+        "next_agent": "po",
+        "supervised": false,
+        "plan_only": false,
+        "created_at": "2026-07-30T22:37:30Z",
+        "created_by": "dev-team/po-batch-20260730T2227Z",
+        "updated_at": "2026-07-30T22:53:55Z",
+        "source": "po triage 2026-07-30T22:27Z tick (5th pass today)",
+        "desc": "dev-team/flow/main.md:645 and scripts/audits/bounded1-supervised-lane-report.sh:373 both state DRS-STRANDED-OFF-ALLOWLIST rows remain 'reachable only by manual/PO dispatch'. Grep-verified by po AND independently re-verified by dev-team this tick: every `.task_board.backlog|.task_board.ready` reference in docs/agents/po/flow/ is an APPEND site (mint a new row) or a one-off id-targeted script -- never a generic priority-ordered SWEEP of the existing backlog/ready lanes. The named destination does not exist. Measured live by po: 49 backlog rows zero-picker-by-policy (agent-father 37, ops 4, qa 3, bctc-analyst 2, ops-mainserver-fetch 2, ops-vps-fetch 1; 23 at P1) plus 3 ready[] rows in the sup-XOR-plan_only gap. FOURTH instance of documented-consumer-with-no-producer; the remedy shape is already proven and shipped for the WF-2 sibling: a MANDATORY per-tick PO pre-check sub-flow (docs/agents/po/flow/supervised-goahead.md + a lazy-load pointer in po/flow/main.md + a read-only regression verifier under scripts/audits/). Zero code, zero gate change, zero blast radius -- it only surfaces and dispatches rows the policy already assigns to PO.",
+        "files": [
+          "docs/agents/po/flow/main.md",
+          "docs/agents/po/flow/*.md",
+          "scripts/audits/"
+        ],
+        "deliverable": "AC: (1) new po/flow sub-flow that runs the two live predicates (49-backlog zero-picker set, 3-ready sup-XOR-plan_only gap) and emits a priority-ordered candidate list; (2) mandatory pointer in po/flow/main.md pre-check chain; (3) regression verifier that replays dev-team's OWN predicates (scripts/lib/devteam-eligibility.jq) byte-identical, never a reimplementation.",
+        "out_of_scope": "Widening the DRS allowlist to admit agent-father -- that exclusion is a ratified blast-radius control, not this row's fix.",
+        "baseline_pass": "9408",
+        "related": [
+          "FIX-DEVTEAM-QADRAIN-HEAD-WRITE-CONDITIONAL",
+          "FIX-BOUNDED1-NONDEV-NEXTAGENT-RESIDUAL-NO-DISPATCH-LANE"
+        ],
+        "branch": null,
+        "architect_review_note": "Design+implementation shipped this cycle (S-size, non-supervised, direct-execute per Step 3 routing): new po/flow/manual-dispatch-sweep.md sub-flow (mirrors supervised-goahead.md) + scripts/lib/po-manual-dispatch-eligibility.jq (include-s devteam-eligibility.jq, zero new predicate logic) + mandatory pointer in po/flow/main.md + scripts/audits/po-manual-dispatch-sweep-verify.sh (12/12 assertions pass) + retrofit of bounded1-supervised-lane-report.sh DRS/READY-XOR sections onto the same shared defs (live-diffed byte-identical against a pinned snapshot). Live-verified counts at design time: 43 DRS-STRANDED-OFF-ALLOWLIST + 3 READY-XOR = 46 (drift from POs stale 49 explained by a genuine concurrent board edit, observed mid-session). Did NOT widen the DRS allowlist (explicit out-of-scope). Did NOT write .head/in_progress[] from this new sub-flow (design-note in the sub-flow file explains why). PO next tick is the first live exercise of the new pre-check."
       }
     ],
     "qa": [],
@@ -18235,38 +18266,7 @@
     },
     "last_triaged_at": "2026-07-30T22:37:30Z",
     "last_triaged_by": "dev-team/po-batch-20260730T2227Z",
-    "in_progress": [
-      {
-        "id": "FIX-PO-NO-PRODUCER-FOR-MANUAL-DISPATCH-ESCAPE-HATCH",
-        "type": "FIX",
-        "title": "P0: 49 backlog rows (23 P1) + 3 ready[] rows are reachable ONLY by 'manual/PO dispatch' -- and no PO flow doc contains any step that produces it",
-        "status": "IN_PROGRESS",
-        "priority": "P0",
-        "size": "S",
-        "zone": "cross-service/",
-        "owner": "po",
-        "next_agent": "architect",
-        "supervised": false,
-        "plan_only": false,
-        "created_at": "2026-07-30T22:37:30Z",
-        "created_by": "dev-team/po-batch-20260730T2227Z",
-        "updated_at": "2026-07-30T22:44:03Z",
-        "source": "po triage 2026-07-30T22:27Z tick (5th pass today)",
-        "desc": "dev-team/flow/main.md:645 and scripts/audits/bounded1-supervised-lane-report.sh:373 both state DRS-STRANDED-OFF-ALLOWLIST rows remain 'reachable only by manual/PO dispatch'. Grep-verified by po AND independently re-verified by dev-team this tick: every `.task_board.backlog|.task_board.ready` reference in docs/agents/po/flow/ is an APPEND site (mint a new row) or a one-off id-targeted script -- never a generic priority-ordered SWEEP of the existing backlog/ready lanes. The named destination does not exist. Measured live by po: 49 backlog rows zero-picker-by-policy (agent-father 37, ops 4, qa 3, bctc-analyst 2, ops-mainserver-fetch 2, ops-vps-fetch 1; 23 at P1) plus 3 ready[] rows in the sup-XOR-plan_only gap. FOURTH instance of documented-consumer-with-no-producer; the remedy shape is already proven and shipped for the WF-2 sibling: a MANDATORY per-tick PO pre-check sub-flow (docs/agents/po/flow/supervised-goahead.md + a lazy-load pointer in po/flow/main.md + a read-only regression verifier under scripts/audits/). Zero code, zero gate change, zero blast radius -- it only surfaces and dispatches rows the policy already assigns to PO.",
-        "files": [
-          "docs/agents/po/flow/main.md",
-          "docs/agents/po/flow/*.md",
-          "scripts/audits/"
-        ],
-        "deliverable": "AC: (1) new po/flow sub-flow that runs the two live predicates (49-backlog zero-picker set, 3-ready sup-XOR-plan_only gap) and emits a priority-ordered candidate list; (2) mandatory pointer in po/flow/main.md pre-check chain; (3) regression verifier that replays dev-team's OWN predicates (scripts/lib/devteam-eligibility.jq) byte-identical, never a reimplementation.",
-        "out_of_scope": "Widening the DRS allowlist to admit agent-father -- that exclusion is a ratified blast-radius control, not this row's fix.",
-        "baseline_pass": "9408",
-        "related": [
-          "FIX-DEVTEAM-QADRAIN-HEAD-WRITE-CONDITIONAL",
-          "FIX-BOUNDED1-NONDEV-NEXTAGENT-RESIDUAL-NO-DISPATCH-LANE"
-        ]
-      }
-    ]
+    "in_progress": []
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
