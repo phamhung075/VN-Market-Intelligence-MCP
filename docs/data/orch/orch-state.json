@@ -10916,6 +10916,28 @@
         "depends_on": [
           "FIX-SPRINT-REGISTRY-DANGLING-IDS-BREAK-SIGNOFF-AND-JOURNAL-ARCHIVE"
         ]
+      },
+      {
+        "id": "FIX-BCTC-LAYOUT-PUSH-FAILURE-NETWORK-DEADLOCK",
+        "type": "FIX",
+        "mode": "fix",
+        "status": "BACKLOG",
+        "priority": "P0",
+        "size": "M",
+        "zone": "data",
+        "owner": "ops",
+        "next_agent": "ops",
+        "co_owner": "dev-pdf-extractor",
+        "title": "FIX (P0): BCTC PEK-layout extraction stalled — OCR gateway child process deadlock + network push failure prevents result recovery",
+        "question": "Why did PEK-layout extraction go dormant again on 2026-07-28 (55+ hours stale) despite weights being present?",
+        "detail": "Production probe 2026-07-30T17:47Z found bctc_layout_units stalled at 2026-07-28 11:06:59Z. Weights present. Root cause: OCR gateway child-process bookkeeping defect + LayoutFirstPushClient network failure.",
+        "ac": "Debug OCR gateway semaphore. Verify mcp-server reachability. Check port/firewall config.",
+        "related": [
+          "SPIKE-BCTC-EXTRACTION-DORMANT-MASS-ENRICHFAIL-FLOOD"
+        ],
+        "created_at": "2026-07-30T17:47:00Z",
+        "created_by": "ops-dispatch-supervised-lane-sweep",
+        "updated_at": "2026-07-30T17:52:55Z"
       }
     ],
     "closed_sprints": [
@@ -17746,53 +17768,12 @@
         "reviewed_at": "2026-07-30T16:28:02Z",
         "reviewed_by": "developer",
         "review_note": "Added docs/agents/po/flow/supervised-goahead.md (new PO-side producer for the po_goahead_* stamp WF-2 should_hold gate requires, docs/agents/dev-team/flow/main.md:467-483) + MANDATORY-every-tick pointer step in po/flow/main.md Pre-check + regression verifier scripts/audits/po-goahead-producer-verify.sh (replays should_hold jq against synthetic fixtures: RED before doc existed, GREEN after -- 4/4 PASS). Step 1 of the new sub-flow is scoped to only the .head.active_task_id row (the one row WF-2 actually evaluates per tick), not a broad board scan -- live-tested the broad alternative and it returned ~10 unrelated mid-flight rows, none ready to ratify. Commit 5c1f19b7b. Decision journal: sprint-COWORK-GUARANTEED-SLOT-CATCHUP-developer.md STEP developer-S44 (commit dff618bde). No apps/ TS/Go touched (zone cross-service/, pure doc+bash) - bun test/tsc structurally N/A. No MCP/gateway tool grant this session (Read/Edit/Write/Bash only) - board flip performed directly via scripts/orch-apply.sh, no task_claim/task_release needed (lock already held by dev-team dispatcher per this task spec, owner_client_session=64c7c677-0f0f-4cee-a3ce-dba79d70b7ae)."
-      }
-    ],
-    "qa": [],
-    "_closed_signals_20260614": {
-      "_by": "po-S50",
-      "_at": "2026-06-14T14:45:14Z",
-      "closed": [
-        {
-          "signal": "docs/signals/workflow-protocol-coherence-audit-20260614T141952Z.json",
-          "reason": "ALREADY IMPLEMENTED — all 6 COHERENCE-GAP tasks status=IMPLEMENTED, result=RESOLVED (commit 85935da3). No work to queue.",
-          "disposition": "move-to-processed"
-        },
-        {
-          "signal": "docs/signals/dev-team-tool-contract-cron-overlap-20260614T121816Z.json",
-          "reason": "ALREADY RESOLVED by the LIVE SF-1 single-flight guard (F2-A) + gateway-call-contract.md (F1) now in dev-team flow. This brief is the source that DELIVERED SF-1; no residual work.",
-          "disposition": "move-to-processed"
-        }
-      ]
-    },
-    "last_triaged_at": "2026-07-30T17:46:41Z",
-    "last_triaged_by": "dev-team (supervised-lane sweep)",
-    "in_progress": [
-      {
-        "id": "FU-CNYVND-DEAD-FIELD-REMOVE",
-        "priority": "P3",
-        "size": "S",
-        "sprint": "DATA-SERVE-INTEGRITY",
-        "status": "BLOCKED",
-        "title": "cny_vnd_rate is DEAD DATA — definitif cleanup (follow-up to DSI-S2-PRICE-TS-GAP type-honesty fix 54634eb2). CNHVND=X 404s permanently on Yahoo; dev-mcp-server confirmed ZERO live readers (MACRO_CODES excludes it, runImpactChain drops it, no get_* tool surfaces it). The 54634eb2 fix made the TS type null but the DB write still re-fabricates 0 via `?? 0` and the NOT NULL column + field remain wired through fetcher+usecase+8 test fixtures. Definitif fix = REMOVE the field + the cny_vnd_rate column (SQLite migration) + the `?? 0` re-fabrication entirely, OR repoint to a real CNY/VND source if a consumer is ever needed. Low consumer-break risk (zero readers) but needs a schema migration → P3.",
-        "type": "CLEAN",
-        "zone": "apps/mcp-server",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FU-CNYVND-DEAD-FIELD-REMOVE",
-        "promoted_at": "2026-07-30T16:46:10Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=3)",
-        "updated_at": "2026-07-30T16:53:28Z",
-        "claimed_at": "2026-07-30T16:46:13Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)",
-        "next_agent": "architect",
-        "blocked_reason": "AC re-check found a live consumer the original finding missed: apps/macro-indicators (separate Go service, container healthy) SJCGoldFXAdapter.fetchSJCFXInputsFromDB queries commodity_prices.cny_vnd_rate directly from the SAME market.db, plumbed end-to-end into mcp-server own live get_vn_liquidity_state MCP tool (registry.ts:262, FXCouplingSchema requires cny_vnd_rate:z.number()). Dropping the column breaks that cross-service SELECT entirely (single multi-column Scan()), zeroing gold_usd_per_oz/usd_vnd_rate/dxy collaterally too. Needs an architect/PO call: repoint to a real CNY/VND source (both mcp-server table write AND the macro-indicators consumer), or formalize as a permanently-null/is_estimate cross-service field (DSI-INV-1 pattern) instead of removing a column a live SQL query depends on. Full detail: docs/agent-memory/notebooks/dev-mcp-server.md 2026-07-30 FU-CNYVND-DEAD-FIELD-REMOVE section; decision journal sprint-COWORK-GUARANTEED-SLOT-CATCHUP-dev-mcp-server.md S31.",
-        "blocked_at": "2026-07-30T16:53:28Z"
       },
       {
         "id": "SPIKE-BCTC-EXTRACTION-DORMANT-MASS-ENRICHFAIL-FLOOD",
         "type": "SPIKE",
         "mode": "spike",
-        "status": "IN_PROGRESS",
+        "status": "REVIEW",
         "priority": "P0",
         "size": "M",
         "zone": "multi",
@@ -17938,9 +17919,9 @@
         },
         "supervised": true,
         "po_wip_unblock_20260721T1845": "PO RULING — MOVED in_progress -> ready/TODO to unblock the board. Grounds: (1) IN_PROGRESS since 2026-07-16T21:00:34Z, five days, with NO updated_at field ever written and no evidence of work in that window. (2) It was the BINDING CONSTRAINT on the entire board: WIP was 2/2 (this + DESIGN-COWORK-FANOUT-PRODUCER-CONSUMER-ORDERING), so nothing could enter in_progress, AND the stale-crash reset that would normally clear it is STRUCTURALLY UNREACHABLE for this row — docs/agents/dev-team/flow/main.md:491 keys on head.updated_at >= 24h, an AGE comparison, and a row carrying no timestamp at all can never satisfy an age predicate. So the one mechanism designed to free this slot could not fire, by construction. (3) Chose MOVE-OUT over unblock-in-place or reassign: unblocking would assert progress that is not evidenced, and reassigning would hand a five-day-cold SPIKE to a new owner without re-triage. Moving it to ready preserves the row and its history, frees the WIP slot immediately, and forces a deliberate re-dispatch decision rather than a silent resumption. Owner stays ops. supervised:true added so BOUNDED-1 cannot idle-auto-claim a stale SPIKE straight back into the slot it was just freed from. NOTE: passing through orch-apply.sh stamps updated_at on this row for the first time, which also makes the age-based stale-reset reachable for it in future — the missing-timestamp defect is fixed for this row as a side effect, but the CLASS defect (rows created without updated_at are permanently immune to every age-based gate) is NOT fixed here and is recorded as instance 6 on SPIKE-SATURATED-COUNT-THRESHOLD-GATES-SWEEP.",
-        "updated_at": "2026-07-30T17:46:46Z",
+        "updated_at": "2026-07-30T17:52:55Z",
         "plan_only": true,
-        "updated_by": "po/triage-20260730T0853",
+        "updated_by": "ops-dispatch-supervised-lane-sweep",
         "po_unstrand_20260730": "UNSTRANDED by po 2026-07-30 — one-field fix, plan_only null -> true. THIS ROW'S OWN TITLE SAYS 'SPIKE (plan-only)' WHILE THE plan_only FIELD WAS null, and that single null made a P0 invisible to EVERY automated dispatch lane: Supervised-Lane Sweep requires supervised AND plan_only both true (devteam-backlog-promote-supervised-lane-sweep.jq:108-109) so plan_only=null skipped it; BOUNDED-1 requires effective_supervised != true (devteam-eligibility.jq:338) so supervised=true skipped it too. Exactly the failure mode feedback_po_notebook_mint_never_reaches_orchstate_board records: on-board is NOT pickable without the plan_only+supervised PAIR. WHY THIS IS URGENT AND NOT COSMETIC — PO RAW-probed the live named-volume DB 2026-07-30T08:5xZ (docker exec mcp-server, market.db readonly): bctc_layout_units MAX(extracted_at)=2026-07-28 11:06:59, i.e. 45.8h stale against the reconcile breaker's 2d (2880min) dormancy threshold. The breaker's last fire was telegram id 3996 at 2026-07-28T11:11Z — five minutes AFTER that last producer write, which is what silenced it. So this did NOT self-resolve: the producer emitted once on 07-28, the alarm went quiet, and the pipeline is now ~2h from re-tripping the identical breaker. That oscillation IS the defect (no durable producer trigger), and the quiet window is why a 3-day-old unclaimed telegram flood looked stale rather than live. Corroborating state: financial_reports refine_status = 203 PENDING vs 8 DONE; bctc_md_tables has exactly 1 row. Related-but-distinct leg: FIX-BCTC-REFINE-DURABLE-TRIGGER-BACKSTOP (agentic-refine -> bctc_table_rows) carries the IDENTICAL stranding shape (supervised=true, plan_only=null, next_agent=null) and is deliberately left stranded this tick — PO is not hand-stamping 41 rows one at a time; that class gets a lane, see FIX-BOUNDED1-NONDEV-NEXTAGENT-RESIDUAL-NO-DISPATCH-LANE.",
         "po_unstrand2_20260730": "LANE CORRECTION by po 2026-07-30T09:18Z — moved ready[] -> backlog[]. WHY THE 2026-07-30 ONE-FIELD 'UNSTRAND' DID NOT LAND: the prior PO cycle read the SLS predicate (promote :108-109, the supervised AND plan_only pair) but not the LANE that predicate is applied to. SLS-promote iterates `.task_board.backlog[]` (:105; its own header :29 states 'candidate lane: .task_board.backlog[]'). This row is in `ready[]`, so setting plan_only=true could not make it visible to SLS. Full picker audit at that moment: BOUNDED-1 backlog-only -> blind; SLS-promote backlog-only -> blind; SLS-claim requires promoted_by == 'dev-team (supervised-lane sweep)' and this row's promoted_by is null -> blind; RLC rejects supervised/plan_only -> blind. Four pickers, zero coverage, priority P0. Known-failure-shape matched without reading which collection the predicate walks. Now in backlog[] with status TODO, no children, no depends_on, no backlog-detail entry, so SLS-promote can legitimately resolve its lane and stamp it. Flags left `true` — the point is to reach the supervised lane, not to bypass it. Class fix: FIX-DEVTEAM-READY-REVIEW-LANE-SUPERVISED-PLANONLY-NO-PICKER.",
         "promoted_at": "2026-07-30T17:46:41Z",
@@ -17948,7 +17929,49 @@
         "promotion_note": "Supervised-Lane Sweep — assigned dispatch_lane='ops' (priority_rank=0); supervised/plan_only flags preserved, gate NOT disabled — see FIX-BOUNDED1-SUPERVISED-LANE-NO-SWEEPER",
         "dispatch_lane": "ops",
         "claimed_at": "2026-07-30T17:46:45Z",
-        "claimed_by": "dev-team (supervised-lane sweep)"
+        "claimed_by": "dev-team (supervised-lane sweep)",
+        "disposition_note": "Recurring dormancy diagnosed; new root cause identified. FIX minted. Close_predicate unverified. Flip REVIEW->DONE_VERIFIED once FIX resolves dormancy."
+      }
+    ],
+    "qa": [],
+    "_closed_signals_20260614": {
+      "_by": "po-S50",
+      "_at": "2026-06-14T14:45:14Z",
+      "closed": [
+        {
+          "signal": "docs/signals/workflow-protocol-coherence-audit-20260614T141952Z.json",
+          "reason": "ALREADY IMPLEMENTED — all 6 COHERENCE-GAP tasks status=IMPLEMENTED, result=RESOLVED (commit 85935da3). No work to queue.",
+          "disposition": "move-to-processed"
+        },
+        {
+          "signal": "docs/signals/dev-team-tool-contract-cron-overlap-20260614T121816Z.json",
+          "reason": "ALREADY RESOLVED by the LIVE SF-1 single-flight guard (F2-A) + gateway-call-contract.md (F1) now in dev-team flow. This brief is the source that DELIVERED SF-1; no residual work.",
+          "disposition": "move-to-processed"
+        }
+      ]
+    },
+    "last_triaged_at": "2026-07-30T17:46:41Z",
+    "last_triaged_by": "dev-team (supervised-lane sweep)",
+    "in_progress": [
+      {
+        "id": "FU-CNYVND-DEAD-FIELD-REMOVE",
+        "priority": "P3",
+        "size": "S",
+        "sprint": "DATA-SERVE-INTEGRITY",
+        "status": "BLOCKED",
+        "title": "cny_vnd_rate is DEAD DATA — definitif cleanup (follow-up to DSI-S2-PRICE-TS-GAP type-honesty fix 54634eb2). CNHVND=X 404s permanently on Yahoo; dev-mcp-server confirmed ZERO live readers (MACRO_CODES excludes it, runImpactChain drops it, no get_* tool surfaces it). The 54634eb2 fix made the TS type null but the DB write still re-fabricates 0 via `?? 0` and the NOT NULL column + field remain wired through fetcher+usecase+8 test fixtures. Definitif fix = REMOVE the field + the cny_vnd_rate column (SQLite migration) + the `?? 0` re-fabrication entirely, OR repoint to a real CNY/VND source if a consumer is ever needed. Low consumer-break risk (zero readers) but needs a schema migration → P3.",
+        "type": "CLEAN",
+        "zone": "apps/mcp-server",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FU-CNYVND-DEAD-FIELD-REMOVE",
+        "promoted_at": "2026-07-30T16:46:10Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=3)",
+        "updated_at": "2026-07-30T16:53:28Z",
+        "claimed_at": "2026-07-30T16:46:13Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "next_agent": "architect",
+        "blocked_reason": "AC re-check found a live consumer the original finding missed: apps/macro-indicators (separate Go service, container healthy) SJCGoldFXAdapter.fetchSJCFXInputsFromDB queries commodity_prices.cny_vnd_rate directly from the SAME market.db, plumbed end-to-end into mcp-server own live get_vn_liquidity_state MCP tool (registry.ts:262, FXCouplingSchema requires cny_vnd_rate:z.number()). Dropping the column breaks that cross-service SELECT entirely (single multi-column Scan()), zeroing gold_usd_per_oz/usd_vnd_rate/dxy collaterally too. Needs an architect/PO call: repoint to a real CNY/VND source (both mcp-server table write AND the macro-indicators consumer), or formalize as a permanently-null/is_estimate cross-service field (DSI-INV-1 pattern) instead of removing a column a live SQL query depends on. Full detail: docs/agent-memory/notebooks/dev-mcp-server.md 2026-07-30 FU-CNYVND-DEAD-FIELD-REMOVE section; decision journal sprint-COWORK-GUARANTEED-SLOT-CATCHUP-dev-mcp-server.md S31.",
+        "blocked_at": "2026-07-30T16:53:28Z"
       }
     ]
   },

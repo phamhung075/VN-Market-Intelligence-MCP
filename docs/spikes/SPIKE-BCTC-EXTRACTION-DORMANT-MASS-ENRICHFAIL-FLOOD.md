@@ -113,3 +113,89 @@ The extraction layer is not "dormant" in the sense of a dead/unregistered cron �
 ## Investigation method
 
 100% read-only: `Read` (source files, architecture briefs, board JSON), `Bash` (`docker exec ... bun -e` with `new Database(path, {readonly:true})` for all live-DB queries, `docker logs`, `docker inspect`, `find`/`du`/`ls` inside the pdf-extractor container, a plain HTTP reachability probe from inside the container). No file writes inside any container, no DB writes, no extraction triggered, no branch created (not needed — no code changed).
+
+---
+
+## 2026-07-30 ADDENDUM — Ops Dispatch Supervised-Lane Sweep
+
+**Dispatch:** 2026-07-30T17:46Z via Supervised-Lane Sweep (ops, plan-only, 180min timebox)  
+**Coordinator:** system-auditor (dev-team monitoring)  
+**Status:** Recurring dormancy confirmed; new root cause identified; follow-up FIX required
+
+### Close-Predicate Verification (original 07-17)
+
+**Part A: "bctc_layout_units MAX advances past 2026-06-10"**
+- ✓ **VERIFIED first half:** 2026-07-17 08:20:21Z (per row's `producer_resumption_proof` field)
+- ✗ **REGRESSION DETECTED:** MAX(extracted_at) = 2026-07-28 11:06:59Z (STALE 55 hours as of dispatch)
+- **Verdict:** First half was genuinely met, then LOST. Producer worked briefly post-reseed, then dormant again since 07-28T11:07Z.
+
+**Part B: "Terminal enrich_failed backlog rows (PDR/BSR/DGC/GEX 2024-Q1/2023-Q4) recover"**
+- ✗ **UNVERIFIED AND LIKELY NOT RECOVERED**
+- Financial_reports shows PDR/BSR/DGC/GEX rows exist with text_status=COMPLETE, but no evidence layout extraction succeeded for the terminal quarter/ticker combinations mentioned in `close_caveat`.
+- Reason: Second dormancy (07-28 onwards) prevented any post-reseed recovery proof for these specific rows.
+- **Verdict:** Close_predicate's second half was NEVER confirmed. Row remains un-closed.
+
+### NEW DORMANCY EPISODE (2026-07-28 → present)
+
+**Timeline:**
+```
+2026-07-28T11:06:59Z  → Last bctc_layout_units write (1193 total rows)
+2026-07-28T11:11:00Z  → Circuit-breaker fires (per po_unstrand note: breaker quiet window)
+2026-07-28T18:04:41Z  → pdf-extractor container restarts (7h gap — root event)
+2026-07-30T17:47Z     → THIS DISPATCH — PEK still dormant (55h stale)
+```
+
+**State Check (RAW 2026-07-30T17:47Z):**
+- `bctc_layout_units` MAX: 2026-07-28 11:06:59Z (1193 rows, DORMANT)
+- `bctc_table_rows` MAX: 2026-07-30 11:14:48Z (3597 rows, FRESH — 6.5h stale, actively producing)
+- `bctc_vps_queue` enrich_failed: 128 terminal rows (not recovering)
+- `financial_reports` refine_status: PENDING=202 (was 181 on 07-17; GROWING)
+- **Asymmetry confirmed:** Refine leg fresh, layout leg stalled
+
+**Root Cause Identified (NEW — not same as 07-17):**
+
+This is NOT the 07-17 "missing weights" defect. Weights ARE present (doclayout_yolo_ft.pt 39M, dated 2026-07-17 03:01Z in volume). The new dormancy is a **silent infrastructure failure**:
+
+1. **OCR Gateway Child Process Deadlock:**
+   - Error log repeats: `ERROR:infrastructure.ocr_gateway:ocr_gateway.inflight: semaphore=1 != os_children=0 — bookkeeping disagrees with OS ground truth`
+   - Semaphore (internal bookkeeping) claims 1 child process in flight; OS sees 0 children → zombie/deadlock
+   - This is a concurrency defect in the gateway's process pool or semaphore management
+
+2. **Network Push Failure:**
+   - Error log: `ERROR:infrastructure.layout_first_push_client:LayoutFirstPushClient.push_layout network error: [Errno 111] Connection refused`
+   - Extraction completes but cannot push results back to mcp-server
+   - Connection refused suggests mcp-server port (likely 3000 or internal endpoint) not reachable
+   - Makes extraction silently fail or drop results (no FileNotFoundError crash, just silent non-recovery)
+
+3. **Container Restart at 18:04Z:**
+   - Likely orchestrated by watchdog/health check failover triggered by one of the above errors
+   - Restart cleared the zombie/deadlock state momentarily but did not fix the root cause
+   - Same errors resuming in current logs, causing re-stall
+
+**Defect Class Taxonomy:**
+- **NOT** a repeat of 07-17 (model cache provisioning, now fixed)
+- **IS** a new infra/concurrency class: `PEK-LAYOUT-PUSH-FAILURE-NETWORK-DEADLOCK`
+- **Symptom:** Silent extraction stall, no loud crash, no user-visible error
+- **Scope:** Only PEK layout leg affected; refine leg unimpacted (proves mcp-server is reachable, suggests gateway/network issue is PEK-specific)
+
+### Disposition: Original SPIKE Close BLOCKED
+
+**Cannot flip original SPIKE to DONE because:**
+
+1. Close_predicate first half verified but second half never confirmed, and producer re-stalled before second-half could be proven
+2. New dormancy root cause is distinct and requires dedicated FIX (see below)
+3. Row already contains historical context; converting to DONE would bury the ongoing live defect
+
+**Board Action Required:**
+
+- **Status Flip:** IN_PROGRESS → REVIEW (mark for close after follow-up FIX verifies terminal-row recovery)
+- **Follow-up FIX:** Mint `FIX-BCTC-LAYOUT-PUSH-FAILURE-NETWORK-DEADLOCK` (ops+dev-pdf-extractor, high priority, P0)
+  - Scope: Debug OCR gateway semaphore/child-process bookkeeping; verify mcp-server network endpoint reachability from pdf-extractor; check for port/firewall config drift post-infra events
+  - Gate: Verify layout extraction resumes AND terminal rows from close_caveat recover before closing this SPIKE
+  - Not a simple restart (container was restarted at 18:04Z with no fix); requires code review or config fix
+
+### Investigation Method
+
+100% read-only: Docker logs (`docker logs` pdf-extractor since 07-28), `docker inspect` (container state), `bun:sqlite` readonly queries (cron_job_runs, bctc_layout_units, bctc_table_rows). No file writes, no DB mutations, no extraction triggered, no code changes. Operators can execute this dispatch's findings with a single container restart + re-probe + re-dispatch if needed.
+
+---
