@@ -1,6 +1,18 @@
 # Dev Team — Sprint Boundary Notebook
 
-**Written:** 2026-07-30T11:39Z
+**Written:** 2026-07-30T11:46Z
+
+## cycle-20260730T1145Z-tick — pipeline-resume path confirmed: dev-mcp-server still alive on SQLite fix, no re-dispatch; drain surfaced 2 self-generated false-alarm sweep-guard signals, both benign
+
+- **Fresh preflight**: verdict RUN, tick `2026-07-30T11:37Z` (re-entry, SF-1+fire-election re-claimed clean).
+- **GCC-preflight clean**: no HEAD.lock, no stray worktrees (`git worktree list` = main only).
+- **`.head` still `in_progress` on `FIX-SQLITE-JOURNALMODE-WAL-REARM-DEFEATS-DELETE-MITIGATION`**, `next_agent:dev-mcp-server` — pipeline-resume path (Step 0b), not idle-fallthrough.
+- **Confirmed the background agent (`a006ff14ea24b62ed`) is genuinely alive, not silently dead**: tailed its transcript, saw an active self-test at `11:43:15Z` (`journal_mode=wal` + `-shm`/`-wal` pair check on a scratch DB) — consistent with AC-3/AC-4 (runtime regression guard for the WAL re-arm vector). Did NOT re-dispatch — absence of a task-notification ≠ death.
+- **Drain surfaced 2 new signals, both my own prior action's noise, not a new defect**: `commit-sweep-guard` fired twice on my `15e846205` amend — (1) the `_check_notebook_immutability` WARN re-firing (already diagnosed last cycle as comparing against the flawed `d9224efd7` intermediate parent, not the true baseline — settled, no action needed), (2) a "BARE commit" sweep-guard flag because `git commit --amend` carries no explicit pathspec argument. Checked `git show --stat 15e846205`: touched only `docs/agent-memory/notebooks/main.md`, nothing swept in from the 61 concurrently-dirty peer files. Both routed-to-po correctly (not dev-team-actionable); no live risk.
+- **CI probe deduped clean** against the same `ci-red-ae5b2501-...` fingerprint.
+- **Released tick-scoped locks**: first attempt at both used a wrong key shape (guessed `task:`-prefixed IDs) → `released:0` (silent no-op, not a real release, per `feedback_task_release_owner_agent_mismatch_orphans_lock`). Re-checked the real script source: keys are bare `dev-team-cron-singleton` and `cron:dev-team:<tick>`, no `task:` prefix. Retried with the correct keys → both `released:1`, genuine.
+- **`task:FIX-SQLITE-JOURNALMODE-WAL-REARM-DEFEATS-DELETE-MITIGATION` remains correctly held** (LOCK-LIFETIME, TTL=3600 from `11:37:41Z`, owned by the prior tick) — not released, since the developer is still running.
+- **NEXT**: await dev-mcp-server's return; RAW-verify per standing discipline (AC-1 shared-accessor enforcement, AC-2 sweep of other market.db openers incl. `coordinationStore.ts` + 8 script call sites, AC-3 runtime guard through the container not source, AC-4 `-wal`/`-shm` pair detection). If a further tick fires first, re-check `.head` before assuming idle.
 
 ## cycle-20260730T1137Z-tick — BOUNDED-1 top candidate blocked by unenforced status_note sequencing prose; skipped it, manually promoted+dispatched next-ranked clean row FIX-SQLITE-JOURNALMODE-WAL-REARM-DEFEATS-DELETE-MITIGATION
 
@@ -22,15 +34,3 @@
 - **Board disposition confirmed live**: row `REVIEW`/`next_agent:qa`/`branch:null`; `.head` idle-reset in the same write (`2169cf005`) — CANONICAL:SSOT-STATUSFLIP-LANEMOVE held.
 - **No discrepancies — clean verify.** Released `task:FIX-DEVTEAM-CLAIM-SCRIPTS-UNCONDITIONAL-HEAD-OVERWRITE` (correct `task:`-prefixed key used first try this time — `released:1`).
 - **NEXT**: `.head` is idle again — re-run preflight fresh, re-check idle-capacity chain (BOUNDED-1) for further dispatch this tick.
-
-## cycle-20260730T1117Z-tick — fresh preflight after RAW-verify closeout; head-idle fallthrough reached BOUNDED-1, claimed+dispatched P1 FIX-DEVTEAM-CLAIM-SCRIPTS-UNCONDITIONAL-HEAD-OVERWRITE
-
-- **Re-ran preflight fresh** (own tick locks had already been released mid-verify): verdict RUN, genuinely new tick `2026-07-30T11:07Z` (not a re-entry of the prior `10:37Z` minute). GCC-preflight clean (no HEAD.lock, no stale worktrees).
-- **Drain found 2 signals**, both routed-to-po per §0a-3 (a fresh context-bloat on the developer's own sprint-journal + a cowork-team informational file) — neither actionable by dev-team inline. 0 orphan-signal locks.
-- **CI probe deduped clean** against the same `ci-red-ae5b2501-...` fingerprint already recorded.
-- **`.head` was idle** → fell through to BOUNDED-1. WIP(`in_progress`)=0.
-- **BOUNDED-1 picked `FIX-DEVTEAM-CLAIM-SCRIPTS-UNCONDITIONAL-HEAD-OVERWRITE`** (P1) — the exact row PO ratified in STEP po-4 Q3 (`ruling-20260730T0906Z-po-triage-po.md`): 3 dev-team claim scripts (bounded1/SLS/RLC) do an unconditional `.head` replace instead of the `$head_free` conditional guard DRS's own claim script already uses. Confirmed live risk at mint time (`.head` was genuinely occupied by a different in-flight task while all 3 sat in the chain).
-- **Both writes validated**: `orch-validate` Stage 0+1 PASS, task_total 718→718, signal_total 131→131. Row → `in_progress`, `.head.next_agent=developer`.
-- **Dispatched developer** (background) with the exact DRS reference-pattern pointer (`scripts/devteam-backlog-claim-design-router-sweep.jq` lines ~90-113) so it mirrors the existing precedent rather than inventing a new shape. Sprint-task lock deliberately held open (LOCK-LIFETIME).
-- **Committed** `a76f69e3e` (promote+claim, pathspec-scoped). Released SF-1 + fire-election (`{"ok":true,"released":1}` both).
-- **NEXT**: await developer's return on the `.head`-overwrite-guard fix; RAW-verify before trusting.
