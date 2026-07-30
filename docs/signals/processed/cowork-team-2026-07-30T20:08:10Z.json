@@ -1,0 +1,67 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-07-30T20:08:10Z",
+    "matched_slots": [
+      "news-scout-offhours",
+      "market-watcher-offhours",
+      "alert-commander-critical"
+    ],
+    "won_slots": [
+      "news-scout-offhours",
+      "market-watcher-offhours",
+      "alert-commander-critical"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/news-scout/flow/main.md",
+      "docs/agents/market-watcher/flow/main.md",
+      "docs/agents/alert-commander/flow/main.md"
+    ],
+    "silent": false,
+    "drift_min": 5,
+    "errors": [],
+    "pressure_mode": "adaptive",
+    "calendar_status": "unknown",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "chef_mutex_applied": false,
+    "due_reasons": {
+      "news-scout-offhours": "cadence",
+      "market-watcher-offhours": "cadence",
+      "alert-commander-critical": "cadence"
+    },
+    "cadence_minutes": {
+      "news-scout-offhours": 240,
+      "market-watcher-offhours": 240,
+      "alert-commander-critical": 240
+    },
+    "last_fired_timestamp": "2026-07-30T20:07:49Z",
+    "last_fired_slots": [
+      "news-scout-offhours",
+      "market-watcher-offhours",
+      "alert-commander-critical"
+    ],
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "20:00",
+    "leader_lock": "acquired",
+    "dev_head": "active",
+    "devq": 5,
+    "signal_backlog": 21,
+    "note": "3 gatherer/critical slots (news-scout-offhours, market-watcher-offhours, alert-commander-critical) due on 240min cadence, no CHEF slot this tick so mutex no-op, MAX_PARALLEL=4 not degraded (headroom 2748MB/load 8.76/12 cores), single batch all spawned"
+  },
+  "priority": "low",
+  "createdAt": "2026-07-30T20:08:10Z",
+  "_processed": {
+    "fingerprint": "a0689d1aa2db8e7bff3e909207c65cb6e2f937369f086e6c3b3fd3e5d02d4d87",
+    "processedAt": "2026-07-30T20:16:33Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

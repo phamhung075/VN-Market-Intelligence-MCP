@@ -1,0 +1,55 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-07-30T20:04:39Z",
+    "matched_slots": [
+      "chef-evening"
+    ],
+    "won_slots": [
+      "chef-evening"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/unified-agent/flow/chef.md"
+    ],
+    "silent": false,
+    "drift_min": null,
+    "errors": [],
+    "pressure_mode": "adaptive",
+    "calendar_status": "unknown",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "chef_mutex_applied": false,
+    "due_reasons": {
+      "chef-evening": "cron"
+    },
+    "cadence_minutes": {
+      "chef-evening": null
+    },
+    "last_fired_timestamp": "2026-07-30T20:03:26Z",
+    "last_fired_slots": [
+      "chef-evening"
+    ],
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "19:45",
+    "leader_lock": "acquired",
+    "dev_head": "unknown",
+    "devq": 5,
+    "signal_backlog": 21,
+    "note": "chef-evening spawn (agentId aa91eda13dffef587) exited via its own published-marker gate: prior session (4aaf9451-15d8-454b-9f49-eb6c12f5d63d, claimed 2026-07-30T18:52:28Z) already published today's evening dish. Dispatcher-level treatment per AC-P1-7-4: not off-flow-router-latched, so kept in WON_SLOTS and last_fired stamped normally -- duplicate-publish is the agent's own semantic exit, not a dispatcher-level spawn failure. drift_min unavailable: preflight raw verdict JSON for this tick was not retained across a context compaction that occurred mid-flow."
+  },
+  "priority": "low",
+  "createdAt": "2026-07-30T20:04:39Z",
+  "_processed": {
+    "fingerprint": "7e1152d0a1a2a7877bf24b184e11409487a10fd14c7ce565657a5a9d9a73969e",
+    "processedAt": "2026-07-30T20:16:33Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

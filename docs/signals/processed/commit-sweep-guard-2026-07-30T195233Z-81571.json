@@ -1,0 +1,14 @@
+{
+  "from": "commit-sweep-guard",
+  "to": "po",
+  "type": "bug-escalation",
+  "priority": "high",
+  "createdAt": "2026-07-30T19:52:33Z",
+  "payload": "[sweep-guard] BARE commit about to absorb 11 staged file(s) not necessarily this actor's own: docs/signals/processed/bctc_signal_DIG_20260723_routine.json docs/signals/processed/bctc_signal_DPM_20260723_routine.json docs/signals/processed/bctc_signal_FPT_20260723_routine.json docs/signals/processed/bctc_signal_HPG_20260723_routine.json docs/signals/processed/bctc_signal_SAB_20260723_routine.json docs/signals/processed/bctc_signal_VCB_20260723_routine.json docs/signals/processed/bctc_signal_VIX_20260723_routine.json docs/signals/processed/commit-sweep-guard-2026-07-30T182753Z-35907.json docs/signals/processed/commit-sweep-guard-2026-07-30T194611Z-70834.json docs/signals/processed/commit-sweep-guard-2026-07-30T194832Z-74264.json docs/signals/processed/context-bloat--claude-skills-commit-mutex-SKILL-md-2026-07-30T194912Z.json. actor=64c7c677-0f0f-4cee-a3ce-dba79d70b7ae mode=warn. Fix: git commit -m \"<msg>\" -- <own-files-only>.",
+  "_processed": {
+    "fingerprint": "283dab50f3f48a9007c4425e558ca0319ead2946fc382bc6e612388b6f5d64bc",
+    "processedAt": "2026-07-30T20:16:33Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "from": "notebook-auto-prune-hook",
+  "to": "claude-manager-helper",
+  "type": "notebook_tiebreak_direction_unresolved_breach",
+  "priority": "high",
+  "createdAt": "2026-07-30T19:54:36Z",
+  "payload": {
+    "file": "docs/agent-memory/notebooks/unified-agent.md",
+    "tied_sections": "71:20260729000000000:## Session: 2026-07-29 (intraday 04:20 UTC)\n87:20260729000000000:## Session: 2026-07-29 (intraday 02:13 UTC)\n103:20260729000000000:## Session: 2026-07-29 (evening 19:53 UTC)",
+    "reason": "2+ ## sections share an identical normalized timestamp key (e.g. same-day date-only headings) and this file's OWN section timestamps give no newest-first/oldest-first direction signal; no declared override in docs/data/notebook-section-order.json either — refusing to guess which one is oldest (guessing wrong here is silent data loss of the newest content)",
+    "action_required": "declare_this_file_convention_in_notebook-section-order.json"
+  },
+  "_processed": {
+    "fingerprint": "fd510535d6e66d18fe51c4a415ec49b93f7af5363cd215ff7a9abf409e7f4ab0",
+    "processedAt": "2026-07-30T20:16:33Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
