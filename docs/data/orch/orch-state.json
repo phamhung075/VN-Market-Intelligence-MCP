@@ -93,11 +93,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "active_task_id": null,
-    "next_agent": "router",
-    "updated_at": "2026-07-30T06:23:09Z",
-    "updated_by": "dev-mcp-server"
+    "status": "in_progress",
+    "active_task_id": "FIX-PDFX-EXTRACTION-ENGINE-EMPTY-STRING-SWALLOW",
+    "next_agent": "dev-pdf-extractor",
+    "next_action": "BOUNDED-1 auto-pickup claim of FIX-PDFX-EXTRACTION-ENGINE-EMPTY-STRING-SWALLOW — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
+    "updated_at": "2026-07-30T06:48:09Z",
+    "updated_by": "dev-team (bounded-1 auto-pickup)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -2030,6 +2031,17 @@
         "severity": "WARN",
         "status": "triaged",
         "payload_ref": null
+      },
+      {
+        "id": "dev-20260730T065143",
+        "ts": "2026-07-30T06:51:43Z",
+        "from": "dev-team",
+        "to": "po",
+        "type": "system-issue",
+        "summary": "stranded-sweep: 18 unknown-owner paths, 6th emission, classifier-owner fix not yet actioned",
+        "severity": "LOW",
+        "status": "NEW",
+        "payload_ref": "docs/signals/stranded-state-sweep-unknown-20260730T0648Z.json"
       }
     ],
     "last_triaged_at": "2026-07-29T06:25:00Z",
@@ -9973,34 +9985,6 @@
         "updated_at": "2026-07-28T17:35:03Z"
       },
       {
-        "id": "FIX-PDFX-EXTRACTION-ENGINE-EMPTY-STRING-SWALLOW",
-        "type": "FIX",
-        "status": "BACKLOG",
-        "priority": "P2",
-        "size": "S",
-        "zone": "apps/pdf-extractor/",
-        "owner": "developer",
-        "next_agent": "dev-pdf-extractor",
-        "depends": [],
-        "created_at": "2026-07-28T17:33:25Z",
-        "created_by": "po/triage-20260728T1731-pdfx-empty-swallow",
-        "source": "dev_close_out + qa status_note on FIX-PDFX-TESSERACT-CONCURRENCY-VIOLATES-SINGLE-WORKER-INVARIANT (commit 4bac2b85d) -- explicitly flagged, explicitly NOT fixed, explicitly recommended as its own row by both dev-pdf-extractor and qa",
-        "title": "apps/pdf-extractor/infrastructure/extraction_engine.py:177-178 swallows an OCR failure (`except Exception: return \"\"`) and returns the empty string as if extraction had succeeded -- a failed, timed-out, or deadline-aborted OCR page is stored/served as a low-quality SUCCESS, byte-indistinguishable at read time from a genuinely sparse-but-real extraction",
-        "root_cause": "Confirmed unchanged by the concurrency fix. dev-pdf-extractor's own close-out: 'Flagged, explicitly NOT addressed ... extraction_engine.py:177-178's except Exception: return \"\" still swallows OCR failure into a low-quality-success shape'. qa's independent re-verification: 'Gap-3 ... confirmed unchanged, correctly left open, needs its own row'. The new ocr_gateway.py deadline mechanism (PDFX_OCR_PAGE_TIMEOUT_S) now GUARANTEES a bounded failure on a hung/abandoned OCR call instead of an unbounded hang -- which makes this swallow MORE likely to fire in practice (a deadline exceeded is exactly the kind of exception this catch block converts into a silent empty string) at the same time as it makes hangs rarer. The two changes compose: bounded-failure-more-often + failure-swallowed-into-success is a worse combination than either alone.",
-        "acceptance": [
-          "AC1: an OCR failure (tesseract error, deadline/timeout, capacity-exceeded passed through as an exception) at this call site is NOT returned as a plain empty string masquerading as success -- it is raised, tagged, or otherwise made distinguishable from a legitimate empty/sparse extraction result all the way to whatever stores or serves the page.",
-          "AC2: negative control -- a genuinely blank or near-blank scanned page (legitimate sparse text, no OCR failure) is NOT reclassified as a failure by this change; both directions must have a passing test.",
-          "AC3: regression floor -- existing extraction_engine.py tests plus the concurrency-fix's own test_ocr_concurrency_invariant.py suite still pass unmodified."
-        ],
-        "scope_out": "Do NOT touch the OCR concurrency/gateway mechanism itself (ocr_gateway.py, the semaphore, the deadline) -- that is DONE_VERIFIED on FIX-PDFX-TESSERACT-CONCURRENCY-VIOLATES-SINGLE-WORKER-INVARIANT; this row only changes what happens to the RESULT of a failure at this one call site.",
-        "related": [
-          "FIX-PDFX-TESSERACT-CONCURRENCY-VIOLATES-SINGLE-WORKER-INVARIANT",
-          "FIX-ERRAUDIT-W3-PEK-P2"
-        ],
-        "note": "PRIOR-ART CHECKED: FIX-ERRAUDIT-W3-PEK-P2 (BACKLOG/P2/apps/pdf-extractor/) targets validate_or_unknown (services.py:91) and parse_or_raise (extraction_engine.py:102) -- different lines, different functions, a different silent-swallow instance from a prior Wave-3 error-handling audit; NOT a duplicate of this line-177-178 empty-string-on-OCR-failure defect, but same file and same defect CLASS -- whoever picks up either row should read the other first to avoid a colliding edit to extraction_engine.py.",
-        "updated_at": "2026-07-28T17:35:03Z"
-      },
-      {
         "id": "FIX-PDFX-GENERIC-MD-TABLE-OCR-UNROUTED-GATEWAY",
         "type": "FIX",
         "status": "BACKLOG",
@@ -17716,9 +17700,43 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-30T05:51:15Z",
+    "last_triaged_at": "2026-07-30T06:48:05Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": []
+    "in_progress": [
+      {
+        "id": "FIX-PDFX-EXTRACTION-ENGINE-EMPTY-STRING-SWALLOW",
+        "type": "FIX",
+        "status": "IN_PROGRESS",
+        "priority": "P2",
+        "size": "S",
+        "zone": "apps/pdf-extractor/",
+        "owner": "developer",
+        "next_agent": "dev-pdf-extractor",
+        "depends": [],
+        "created_at": "2026-07-28T17:33:25Z",
+        "created_by": "po/triage-20260728T1731-pdfx-empty-swallow",
+        "source": "dev_close_out + qa status_note on FIX-PDFX-TESSERACT-CONCURRENCY-VIOLATES-SINGLE-WORKER-INVARIANT (commit 4bac2b85d) -- explicitly flagged, explicitly NOT fixed, explicitly recommended as its own row by both dev-pdf-extractor and qa",
+        "title": "apps/pdf-extractor/infrastructure/extraction_engine.py:177-178 swallows an OCR failure (`except Exception: return \"\"`) and returns the empty string as if extraction had succeeded -- a failed, timed-out, or deadline-aborted OCR page is stored/served as a low-quality SUCCESS, byte-indistinguishable at read time from a genuinely sparse-but-real extraction",
+        "root_cause": "Confirmed unchanged by the concurrency fix. dev-pdf-extractor's own close-out: 'Flagged, explicitly NOT addressed ... extraction_engine.py:177-178's except Exception: return \"\" still swallows OCR failure into a low-quality-success shape'. qa's independent re-verification: 'Gap-3 ... confirmed unchanged, correctly left open, needs its own row'. The new ocr_gateway.py deadline mechanism (PDFX_OCR_PAGE_TIMEOUT_S) now GUARANTEES a bounded failure on a hung/abandoned OCR call instead of an unbounded hang -- which makes this swallow MORE likely to fire in practice (a deadline exceeded is exactly the kind of exception this catch block converts into a silent empty string) at the same time as it makes hangs rarer. The two changes compose: bounded-failure-more-often + failure-swallowed-into-success is a worse combination than either alone.",
+        "acceptance": [
+          "AC1: an OCR failure (tesseract error, deadline/timeout, capacity-exceeded passed through as an exception) at this call site is NOT returned as a plain empty string masquerading as success -- it is raised, tagged, or otherwise made distinguishable from a legitimate empty/sparse extraction result all the way to whatever stores or serves the page.",
+          "AC2: negative control -- a genuinely blank or near-blank scanned page (legitimate sparse text, no OCR failure) is NOT reclassified as a failure by this change; both directions must have a passing test.",
+          "AC3: regression floor -- existing extraction_engine.py tests plus the concurrency-fix's own test_ocr_concurrency_invariant.py suite still pass unmodified."
+        ],
+        "scope_out": "Do NOT touch the OCR concurrency/gateway mechanism itself (ocr_gateway.py, the semaphore, the deadline) -- that is DONE_VERIFIED on FIX-PDFX-TESSERACT-CONCURRENCY-VIOLATES-SINGLE-WORKER-INVARIANT; this row only changes what happens to the RESULT of a failure at this one call site.",
+        "related": [
+          "FIX-PDFX-TESSERACT-CONCURRENCY-VIOLATES-SINGLE-WORKER-INVARIANT",
+          "FIX-ERRAUDIT-W3-PEK-P2"
+        ],
+        "note": "PRIOR-ART CHECKED: FIX-ERRAUDIT-W3-PEK-P2 (BACKLOG/P2/apps/pdf-extractor/) targets validate_or_unknown (services.py:91) and parse_or_raise (extraction_engine.py:102) -- different lines, different functions, a different silent-swallow instance from a prior Wave-3 error-handling audit; NOT a duplicate of this line-177-178 empty-string-on-OCR-failure defect, but same file and same defect CLASS -- whoever picks up either row should read the other first to avoid a colliding edit to extraction_engine.py.",
+        "updated_at": "2026-07-30T06:48:10Z",
+        "promoted_at": "2026-07-30T06:48:05Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
+        "claimed_at": "2026-07-30T06:48:09Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)"
+      }
+    ]
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
