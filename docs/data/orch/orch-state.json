@@ -93,11 +93,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "active_task_id": null,
-    "next_agent": "router",
-    "updated_at": "2026-07-30T14:51:44Z",
-    "updated_by": "dev-team (RAW-verify+disposition)"
+    "status": "in_progress",
+    "active_task_id": "FIX-VPSHEALTH-DEMANDROUTE-EMPTYQUEUE-MISREPORTS-PROXY-UNREACHABLE",
+    "next_agent": "dev-mcp-server",
+    "next_action": "BOUNDED-1 auto-pickup claim of FIX-VPSHEALTH-DEMANDROUTE-EMPTYQUEUE-MISREPORTS-PROXY-UNREACHABLE — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
+    "updated_at": "2026-07-30T15:16:30Z",
+    "updated_by": "dev-team (bounded-1 auto-pickup)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -10741,31 +10742,6 @@
         "po_ruling_20260730": "AMBIGUITY RESOLVED — this row has now been offered to BOUNDED-1 and declined 5 CONSECUTIVE times for the same reason, so the decision is made here and the prose is removed from the title (it was the literal blocker). (a) single-FIX vs ba->architect SPLIT: the row already contained its own answer and nobody read it — zone is already `multi`, and docs/agents/po/flow/main.md states that `multi` MEANS 'architect must split'. So: ARCHITECT SPLITS IT. No new judgement was ever required; this was 5 wasted dispatcher cycles on a question the zone field had already answered. (b) PRIORITY P2 -> P1: the CF-tunnel push path is a live, repeatedly-fragile dependency, not a hypothetical — the 2026-07-04 RCA is a 69h-undetected outage, and it recurred on 2026-07-15 (see RAG-FTS-BUILD-MEMORY-BOUND.gateway_infra: zenmidi.com/gateway origin aggregator down, CF-dashboard-managed tunnel, needed a USER Zero-Trust action because no detector fired). Two outages, zero detection, 26 days open. (c) DISPATCHABILITY: supervised+plan_only BOTH set to true, deliberately, so the Supervised-Lane Sweep (which requires BOTH — scripts/devteam-backlog-promote-supervised-lane-sweep.jq:108-109) routes it to architect for the split. It was previously supervised=null/plan_only=null with next_agent=null, which is why only BOUNDED-1 ever saw it and only ever to decline it. DO NOT re-add any scoping question to this title."
       },
       {
-        "id": "FIX-VPSHEALTH-DEMANDROUTE-EMPTYQUEUE-MISREPORTS-PROXY-UNREACHABLE",
-        "type": "FIX",
-        "title": "get_vps_proxy_health prints \"VPS may be down or unreachable\" for the bctc route when the real cause is an EMPTY work queue — proxy is provably up (prices/news/sbv pushing on the same proxy)",
-        "status": "BACKLOG",
-        "priority": "P2",
-        "size": "S",
-        "zone": "apps/mcp-server/",
-        "owner": "dev-mcp-server",
-        "next_agent": "dev-mcp-server",
-        "files": [
-          "apps/mcp-server/src"
-        ],
-        "created_at": "2026-07-29T19:30:16Z",
-        "created_by": "po/triage-20260729T1928",
-        "origin_signal_id": "sys-20260729T183440-1d23",
-        "baseline_pass": true,
-        "rebuild_required": true,
-        "root_cause": "The staleness verdict is derived from last-push AGE alone and then narrated with a fixed causal claim (VPS down/unreachable). bctc is a DEMAND-DRIVEN route: it pushes only when bctc_vps_queue holds actionable rows. RAW live probe 2026-07-29T19:2xZ through the mcp-server runtime: bctc_vps_queue statuses = deferred_infra 328, done 85, enrich_failed 128, url_not_found 39 — ZERO pending/queued. Meanwhile the SAME proxy shows prices ok (373 pushes/24h), news ok (148/24h, last 19:15:19), sbv ok (38/24h, last 18:57:33). The proxy is emphatically up.",
-        "fix_spec": "Separate OBSERVATION from INFERENCE for demand-driven routes. Either (a) suppress/downgrade the STALE verdict for a route whose own work queue has no actionable rows and label it IDLE-NO-WORK, or (b) keep STALE but replace the hardcoded VPS may be down or unreachable narration with a cause discriminated by whether sibling routes on the same proxy are pushing. Generic — no route-name or date literals.",
-        "ac": "AC: with bctc_vps_queue holding zero actionable rows AND >=1 sibling route pushing within its own SLA, get_vps_proxy_health MUST NOT assert the VPS is down/unreachable. Verify against live output, not a fixture.",
-        "dedup_checked": "Distinct from FIX-VPS-NEWS-STALE-FALSEPOS (zone apps/news-fetch/, news route, threshold-vs-cadence miscalibration where the feed IS pushing) and from FIX-VPS-HEALTH-OFFHOURS-MASK-FALSE-GREEN (off-hours grace double-apply, opposite direction). Here the STALE flag is CORRECT and only the attributed cause is wrong.",
-        "user_impact": "MED — a permanent recurring false incident: the queue stays drained until ALPHA-S6-OPTIONB-DECISION-GATE trips, so this WARN re-fires indefinitely and burns a system-auditor + PO triage slot each time.",
-        "updated_at": "2026-07-29T19:30:16Z"
-      },
-      {
         "id": "FIX-CIRED-TRIAGE-WRONG-PLANE-DEDUP-AMNESTY",
         "title": "ci_red triage has no mandatory failing-FILE read: 8 consecutive REAL per-file-isolation CI reds (2026-07-25 → 07-29, 3 distinct files) were amnestied as 'the standing full-suite baseline' and minted ZERO board rows — and the row's own dedup keys are both SHA-derived so they can never match across SHAs",
         "type": "FIX",
@@ -17942,9 +17918,40 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-30T14:18:33Z",
+    "last_triaged_at": "2026-07-30T15:16:22Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": []
+    "in_progress": [
+      {
+        "id": "FIX-VPSHEALTH-DEMANDROUTE-EMPTYQUEUE-MISREPORTS-PROXY-UNREACHABLE",
+        "type": "FIX",
+        "title": "get_vps_proxy_health prints \"VPS may be down or unreachable\" for the bctc route when the real cause is an EMPTY work queue — proxy is provably up (prices/news/sbv pushing on the same proxy)",
+        "status": "IN_PROGRESS",
+        "priority": "P2",
+        "size": "S",
+        "zone": "apps/mcp-server/",
+        "owner": "dev-mcp-server",
+        "next_agent": "dev-mcp-server",
+        "files": [
+          "apps/mcp-server/src"
+        ],
+        "created_at": "2026-07-29T19:30:16Z",
+        "created_by": "po/triage-20260729T1928",
+        "origin_signal_id": "sys-20260729T183440-1d23",
+        "baseline_pass": true,
+        "rebuild_required": true,
+        "root_cause": "The staleness verdict is derived from last-push AGE alone and then narrated with a fixed causal claim (VPS down/unreachable). bctc is a DEMAND-DRIVEN route: it pushes only when bctc_vps_queue holds actionable rows. RAW live probe 2026-07-29T19:2xZ through the mcp-server runtime: bctc_vps_queue statuses = deferred_infra 328, done 85, enrich_failed 128, url_not_found 39 — ZERO pending/queued. Meanwhile the SAME proxy shows prices ok (373 pushes/24h), news ok (148/24h, last 19:15:19), sbv ok (38/24h, last 18:57:33). The proxy is emphatically up.",
+        "fix_spec": "Separate OBSERVATION from INFERENCE for demand-driven routes. Either (a) suppress/downgrade the STALE verdict for a route whose own work queue has no actionable rows and label it IDLE-NO-WORK, or (b) keep STALE but replace the hardcoded VPS may be down or unreachable narration with a cause discriminated by whether sibling routes on the same proxy are pushing. Generic — no route-name or date literals.",
+        "ac": "AC: with bctc_vps_queue holding zero actionable rows AND >=1 sibling route pushing within its own SLA, get_vps_proxy_health MUST NOT assert the VPS is down/unreachable. Verify against live output, not a fixture.",
+        "dedup_checked": "Distinct from FIX-VPS-NEWS-STALE-FALSEPOS (zone apps/news-fetch/, news route, threshold-vs-cadence miscalibration where the feed IS pushing) and from FIX-VPS-HEALTH-OFFHOURS-MASK-FALSE-GREEN (off-hours grace double-apply, opposite direction). Here the STALE flag is CORRECT and only the attributed cause is wrong.",
+        "user_impact": "MED — a permanent recurring false incident: the queue stays drained until ALPHA-S6-OPTIONB-DECISION-GATE trips, so this WARN re-fires indefinitely and burns a system-auditor + PO triage slot each time.",
+        "updated_at": "2026-07-30T15:16:31Z",
+        "promoted_at": "2026-07-30T15:16:22Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
+        "claimed_at": "2026-07-30T15:16:30Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)"
+      }
+    ]
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
