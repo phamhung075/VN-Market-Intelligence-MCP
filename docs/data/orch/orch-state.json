@@ -94,10 +94,10 @@
   ],
   "head": {
     "status": "idle",
-    "updated_at": "2026-07-30T07:39:44Z",
-    "updated_by": "developer",
     "active_task_id": null,
-    "next_agent": "router"
+    "next_agent": "router",
+    "updated_at": "2026-07-30T07:58:27Z",
+    "updated_by": "developer"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -9999,24 +9999,6 @@
         "updated_at": "2026-07-28T17:35:03Z"
       },
       {
-        "id": "FIX-AUDITOR-T1-PREGATE-MEMCREEP-SINGLE-POINT-SAMPLE",
-        "type": "FIX",
-        "status": "BACKLOG",
-        "priority": "P2",
-        "size": "S",
-        "zone": "cross-service/",
-        "owner": "po",
-        "next_agent": "developer",
-        "sprint": "INFRA-AUDIT",
-        "created_at": "2026-07-28T19:00:26Z",
-        "created_by": "po/triage-20260728T1837",
-        "origin_signal_id": "sys-20260728T174652-22a6",
-        "title": "auditor-tier1-probe.sh _check_mem_creep() is a single-point-sample gate per invocation — live-verified re-run ~5.5min after a cited ALL_GREEN flipped GREEN->FAIL (pdf-extractor 99.91% MemPerc)",
-        "note": "System-auditor commit 7ee6eede5 (T1-PREGATE-SAMPLE-FREQ signal, 2026-07-28T17:51Z). Distinct from FIX-AUDITOR-TIER1-A30-MEM-SINGLE-CONTAINER-SCOPE (loop scope, already fixed) and FIX-AUDITOR-A30-VMHWM-VETO-TAUTOLOGY-FALSE-NEGATIVE (mcp-server veto tautology) — this is a NEW detector-methodology gap: a single sample can miss a transient memory peak, understating real risk during exactly the pdf-extractor P0 concurrency window (FIX-PDFX-TESSERACT-CONCURRENCY-VIOLATES-SINGLE-WORKER-INVARIANT). pdf-extractor's own memory condition is NOT re-signalled here — already owned by FIX-PDFX-PARENT-PROCESS-MEMORY-BURST-HEADROOM.",
-        "acceptance": "_check_mem_creep() in scripts/agents-flow/auditor-tier1-probe.sh takes N>=2 samples over a short window (or retries once before flipping ALL_GREEN) so a transient peak cannot be missed by a single unlucky sample; regression test reproduces the observed GREEN->FAIL flip scenario.",
-        "updated_at": "2026-07-28T19:02:26Z"
-      },
-      {
         "id": "FIX-AGENT-MODELS-NORMAL-PRESET-DRIFT",
         "type": "FIX",
         "title": "agent-models.json modes.normal.agents preset table drifted from live .claude/agents/*.md frontmatter for 3 agents (ops/po/semble-search) — switch-agent-models.sh normal silently mis-restores them",
@@ -17711,6 +17693,29 @@
         "claimed_at": "2026-07-30T07:22:41Z",
         "claimed_by": "dev-team (bounded-1 auto-pickup)",
         "review_note": "Fixed AC1 (_is_model_switch_only() content-gates .claude/agent-models.json + .claude/agents/*.md as OWNED-ELSEWHERE only when the git diff HEAD touches exclusively the current_mode/model value line), AC3 (UNKNOWN bucket now shares the AUTO-COMMIT bucket's SSS_AGE_HOURS young-skip mtime gate — deletions exempt), AC4 (_is_owned_elsewhere() extended with auditor-dedup-ledger.json/DASHBOARD.md/unified-agent-synthesis-*.json/fb-post-*.md). stranded-state-sweep.test.sh 25/25 PASS (19 pre-existing + 6 new). AC5 live-repo evidence captured during this task's own in-flight .head: unknown_paths=[], stderr proves both this task's own edited script files (age_h=0) and 7 unrelated in-flight docs/analysis-briefs/*.md files (age_h=15) correctly withheld as young rather than reported stranded — scratchpad sss-ac5-plan-20260730T0731Z.json / sss-ac5-stderr-20260730T0731Z.log. scope_out honored: .claude/agent-models.json and .claude/agents/*.md themselves untouched/unstaged, classifier code only. Commits: 5737ac189 (code+docs), 2a8530c72 (notebook+journal). Decision journal: docs/agent-memory/decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-developer.md STEP developer-S36."
+      },
+      {
+        "id": "FIX-AUDITOR-T1-PREGATE-MEMCREEP-SINGLE-POINT-SAMPLE",
+        "type": "FIX",
+        "status": "REVIEW",
+        "priority": "P2",
+        "size": "S",
+        "zone": "cross-service/",
+        "owner": "po",
+        "next_agent": "qa",
+        "sprint": "INFRA-AUDIT",
+        "created_at": "2026-07-28T19:00:26Z",
+        "created_by": "po/triage-20260728T1837",
+        "origin_signal_id": "sys-20260728T174652-22a6",
+        "title": "auditor-tier1-probe.sh _check_mem_creep() is a single-point-sample gate per invocation — live-verified re-run ~5.5min after a cited ALL_GREEN flipped GREEN->FAIL (pdf-extractor 99.91% MemPerc)",
+        "note": "System-auditor commit 7ee6eede5 (T1-PREGATE-SAMPLE-FREQ signal, 2026-07-28T17:51Z). Distinct from FIX-AUDITOR-TIER1-A30-MEM-SINGLE-CONTAINER-SCOPE (loop scope, already fixed) and FIX-AUDITOR-A30-VMHWM-VETO-TAUTOLOGY-FALSE-NEGATIVE (mcp-server veto tautology) — this is a NEW detector-methodology gap: a single sample can miss a transient memory peak, understating real risk during exactly the pdf-extractor P0 concurrency window (FIX-PDFX-TESSERACT-CONCURRENCY-VIOLATES-SINGLE-WORKER-INVARIANT). pdf-extractor's own memory condition is NOT re-signalled here — already owned by FIX-PDFX-PARENT-PROCESS-MEMORY-BURST-HEADROOM.",
+        "acceptance": "_check_mem_creep() in scripts/agents-flow/auditor-tier1-probe.sh takes N>=2 samples over a short window (or retries once before flipping ALL_GREEN) so a transient peak cannot be missed by a single unlucky sample; regression test reproduces the observed GREEN->FAIL flip scenario.",
+        "updated_at": "2026-07-30T07:58:27Z",
+        "promoted_at": "2026-07-30T07:43:55Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
+        "claimed_at": "2026-07-30T07:44:12Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)"
       }
     ],
     "qa": [],
@@ -17730,7 +17735,7 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-30T07:22:36Z",
+    "last_triaged_at": "2026-07-30T07:43:55Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
     "in_progress": []
   },
