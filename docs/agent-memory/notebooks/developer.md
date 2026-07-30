@@ -1,24 +1,6 @@
 # Developer — Notebook
 
-**Last updated:** 2026-07-30 | **Cycle:** FACTORY-GUARD-CI-RAWVERIFY-IMPL
-
-## Session 2026-07-30 — FACTORY-GUARD-CI-NOHARDCODE-IMPL — REVIEW
-
-**Task:** dev-team BOUNDED-1 auto-pickup (`cross-service/`, epic FACTORY-MAINTAINABILITY-2026-06), 5th sibling (own brief `2026-07-24-factory-guard-ci-no-hardcode-allowlist-scan.md`, which itself corrects the ticket's naive "ticker allowlist" reading — hundreds of legit domain rule-table arrays are NOT the bug class, only a literal smuggled into a control-flow condition is). New CI gate + fix 2 cosmetic branches + annotate 2 known-debt findings (JANITOR-034/035).
-
-**Actions taken:** New `scripts/audits/no-hardcode-allowlist-scan.sh` (`--check`, zero-tolerance, 2 checks: temporal-combo `.includes('YYYY')`/Go `strings.Contains` near a literal-year `===`/`==`; ticker/code literal-branch vs `HOSE|HNX|UPCOM|BLOOMBERG`-denylisted quoted ALL-CAPS). Fixed `backfillBctcScalarsTool.ts`'s CTG-only reason branch and `pharmaEventMapper.ts`'s IMP-only reasoning branch to the generic message. Annotated `newsChainFallback.ts` (`JANITOR-035`) and `cascadeExecutor.ts`+`priceSourceRouter.ts` (`JANITOR-034`) with `hardcode-scan-allow:`. Wired `no-hardcode-allowlist-scan` CI job + CANONICAL pointer.
-
-**Verify-live catches:** (1) my own first-draft identifier-boundary regex excluded `.` from the valid-prefix set, silently blocking the real `report.action_code` property-access match — found by running the tool live before trusting it. (2) `priceBackfillService.ts:224` `ticker === "BAD"` (documented test-fixture sentinel, brief §2(c) explicitly out-of-scope) still matches check-2's literal regex — annotated rather than adding an ad-hoc "BAD" denylist entry.
-
-**Verification:** New `no-hardcode-allowlist-scan.test.sh` 9/9 PASS. `tsc --noEmit` clean. Targeted 17-file suite 191/191 pass. Full `bun test`: 14865-14869/40 skip/52-56 fail across 2 runs — matches the standing `FIX-MCP-SUITE-HEALTH-BASELINE` order-dependent pattern, grep-confirmed zero fails touch any file this task changed.
-
-**Board:** `task_board.in_progress[FACTORY-GUARD-CI-NOHARDCODE-IMPL]` → `review` (`next_agent: qa`), `.head` reset to idle, same `orch-apply.sh` write.
-
-**Simplicity gate:** PASS — 2 mechanical checks only (generic ticker-array-overlap detection explicitly deferred per brief §3), fixes are pure subtraction of a special-case branch, annotations cite ticket ids not blanket suppressions.
-
-**Zone note:** No MCP/gateway tool available this session (Read/Edit/Write/Bash only, confirmed at Step 0) — flipped the board row directly via `scripts/orch-apply.sh` (permitted, pure bash); could not release `task:FACTORY-GUARD-CI-NOHARDCODE-IMPL` or send Telegram (structural gap, flagged for the coordinating dev-team session).
-
-Zone health: no drift detected.
+**Last updated:** 2026-07-30 | **Cycle:** FIX-ORCHSTATE-BLOCKS-FIELD-WRITE-ONLY-DECORATIVE
 
 ## Session 2026-07-30 — FACTORY-GUARD-CI-SHAREDPKG-IMPL — REVIEW
 
@@ -55,3 +37,21 @@ Zone health: no drift detected.
 **Zone note:** No MCP/gateway tool available this session (Read/Edit/Write/Bash only, confirmed at Step 0) — flipped the board row directly via `scripts/orch-apply.sh` (permitted, pure bash); could not release `task:FACTORY-GUARD-CI-RAWVERIFY-IMPL` or send Telegram (structural gap, flagged for the coordinating dev-team session, per the dispatch prompt's own instruction).
 
 Zone health: no drift detected. This closes the 7th and last `ci-regression-prevention` guardrail — epic `FACTORY-MAINTAINABILITY-2026-06` cluster `ci-regression-prevention` now complete.
+
+## Session 2026-07-30 — FIX-ORCHSTATE-BLOCKS-FIELD-WRITE-ONLY-DECORATIVE — REVIEW
+
+**Task:** dev-team BOUNDED-1 auto-pickup (`cross-service/`, no single `apps/<service>/` owner). PO row: `blocks`/`co_edit` orch-state.json task fields read as sequencing/atomic-ship constraints but are write-only — zero consumers repo-wide. Independently re-verified PO's 07-25 grep and found MORE than the catalogued 7 rows (5 more days of drift added 4 new `blocks` writers).
+
+**Actions taken:** New `checkDecorativeSequencingFields()` in `orchStateSchema.ts` §12, wired as `orch-validate.mjs` Stage 1e (hard fail): a `blocks` edge must be empty or backed by the named target's own `depends_on`/`depends`/`blocked_by` (the fields the real gate reads) else REJECTED at write time; `co_edit` rejected unconditionally (no forward-field equivalent exists). One-time migration `scripts/fix-orchstate-blocks-coedit-decorative-normalize.jq` applied live via `orch-apply.sh`: 3 already-backed rows untouched, 8 dangling shorthand-id `blocks` deleted (historical VN-MACRO-TOOLING sprint rows, target ids like `"VMT-1"` never matched the real full ids), 1 malformed-prose row (`FIX-MCP-SUITE-HEALTH-BASELINE`) renamed to `migrated_blocks_prose`, 2 `co_edit` rows (already co-shipped in commit `adb426877`) renamed to `migrated_co_edit_partner`. `scripts/orch-backlog-stub.sh:57` `STUB_FIELDS` default gained `depends_on,depends,blocked_by` (AC-4, PO-endorsed) — closes a second independent route to the same silent-gate-reopen failure.
+
+**Verify-live catches:** (1) an early full-repo jq scan under-reported (jq `,`/`|` precedence bug — `a,b | c` parses as `(a,b)|c`, silently dropping `active_sprints` rows from the stream) — caught by re-checking a known id count before trusting the result. (2) 3 of PO's original 7 rows were ALREADY correctly backed by a reciprocal `depends_on`/`blocked_by` on the target (added independently by PO/architect for unrelated reasons) — verified at source rather than assumed decorative.
+
+**Verification:** New `FIX-ORCHSTATE-BLOCKS-FIELD-WRITE-ONLY-DECORATIVE.test.ts` 11/11 PASS (incl. AC-3 negative control: freshly-authored reverse-only `blocks`/`co_edit` fixtures both caught). New `scripts/orch-backlog-stub.test.sh` 7/7 PASS — T2 reproduces the pre-fix silent-gate-reopen (`deps_satisfied()` false→true) via the OLD field list on the identical fixture. `orchStateSchema.test.ts` 104/104 (live-data C3-a: 0 coherence issues post-migration). `orchStateStore-atomic-write.test.ts` + `TASK-FIX-SPRINT-GOAL-STATUS-DRIFT-EVICT.test.ts` 13/13. `test-orch-validate-ac.mjs` 29/29. `tsc --noEmit` clean. `orch-state-validate.sh` exits 0 on the migrated live file.
+
+**Board:** `task_board.in_progress[FIX-ORCHSTATE-BLOCKS-FIELD-WRITE-ONLY-DECORATIVE]` → `review` (`next_agent: qa`), `.head` reset to idle, same `orch-apply.sh` write.
+
+**Simplicity gate:** PASS — validate-and-reject (mirrors the existing Stage 1d pattern) instead of full unknown-key rejection (PO's own note flags an unmeasured 658-row migration cost) or auto-mirror-at-write (idempotency/fight-a-hand-written-field risk PO's own menu flags).
+
+**Zone note:** No MCP/gateway tool available this session (Read/Edit/Write/Bash only, confirmed at Step 0) — flipped the board row directly via `scripts/orch-apply.sh` (permitted, pure bash); could not release `task:FIX-ORCHSTATE-BLOCKS-FIELD-WRITE-ONLY-DECORATIVE` or send Telegram (structural gap, flagged for the coordinating dev-team session).
+
+Zone health: no drift detected.
