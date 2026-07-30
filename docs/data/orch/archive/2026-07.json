@@ -15992,6 +15992,17 @@
       "severity": "MED",
       "status": "READ",
       "payload_ref": "docs/handoffs/STRANDED-STATE-SWEEP-20260729T2342Z.md"
+    },
+    {
+      "id": "dev-20260730T032218",
+      "ts": "2026-07-30T03:22:18Z",
+      "from": "dev-team",
+      "to": "po",
+      "type": "system-issue",
+      "summary": "stranded-state sweep: 17 unknown-owner paths (6th re-emit) — same known set, 3 in-flight SHAREDPKG paths resolved since landing",
+      "severity": "MED",
+      "status": "READ",
+      "payload_ref": "docs/handoffs/STRANDED-STATE-SWEEP-20260729T2342Z.md"
     }
   ],
   "backlog_detail": [
