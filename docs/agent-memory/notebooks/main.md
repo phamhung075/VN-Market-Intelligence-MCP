@@ -1,6 +1,17 @@
 # Dev Team — Sprint Boundary Notebook
 
-**Written:** 2026-07-30T03:32Z
+**Written:** 2026-07-30T03:50Z
+
+## cycle-20260730T0350Z-tick — Tick 03:37Z: BOUNDED-1 claimed FIX-VNINDEX-CACHE-STARTUP-PURGE (prior-stalled row, re-picked); fleet push fired (ahead=26>20)
+
+- **Preflight RUN** (tick=03:37Z); cold-evict auto-ran (1 signal row → archive/2026-07.json, commit `790135236`). gcc-preflight clean, no HEAD.lock, no stray worktrees.
+- **drain-signals**: 1 po-row marked READ (stranded-state 6th re-emit) + 3 file signals routed-to-po: 2 benign `commit-sweep-guard` self-triggers (my own cold-evict bare commit + a `notebook-immutability-guard` WARN on developer.md), `context_bloat_breach` re-emit (byte_overage now 71993, still growing).
+- **Notebook-immutability-guard finding (verified, not escalated)**: developer.md's just-landed RAWVERIFY-IMPL section was extended by a 2nd commit (`ea2723851`) within the same task — diffed both commits, same line count (57→57), one sentence appended to an existing bullet, zero data lost. New edge-case for the guard's known noise (own-section growth across 2 same-task commits ≠ real cross-cycle mutation); general defect class already QA-owned, not re-escalated.
+- **ci-health-probe**: deduped (same HEAD `2bdd28fb1` fingerprint pre-push) — no new signal.
+- **Step 0b**: `.head` idle (developer's own reset post-RAWVERIFY-IMPL) → idle-capacity chain.
+- **BOUNDED-1**: WIP=0, promoted+claimed `FIX-VNINDEX-CACHE-STARTUP-PURGE` (P2, apps/mcp-server/) — vn_index_cache purged on startup + market-hours-only refresh strands cache off-hours. **Carries a documented near-miss**: prior BOUNDED-1 pick of this exact row (2026-07-25) silently stalled `.head` 4h25m with zero progress. Dispatched dev-mcp-server in background with explicit RAW-verify mandate + instruction to commit/notebook incrementally so a second stall leaves a trail; flagged to escalate (not silently re-unpin) if it stalls again. `task:FIX-VNINDEX-CACHE-STARTUP-PURGE` lock HELD per LOCK-LIFETIME convention.
+- **Post-cycle**: mock-guard unchanged (11 CAUTION). Stranded-state sweep: still 17 paths (unchanged set). Epic-wrapper autoclose: 0 eligible. **Push-backstop FIRED**: ahead=26>20, both guards clear (no push_blocker, no commit-mutex held) → `fleet-worktree-push.sh` succeeded, 26 commits pushed to `origin/main` (`2bdd28fb1..790135236`) — first live pre-push run of the just-shipped `rebuild-raw-verify-check` hook, PASS.
+- **NEXT**: watch `FIX-VNINDEX-CACHE-STARTUP-PURGE` dispatch closely for the documented stall-repeat risk — if `.head` pins with no commit/notebook/lock evidence again, escalate as a reproducible per-row dispatch failure per the row's own note, do not just re-unpin. PO triage carryover unchanged, zero live PO ticks all session (12+ ticks now).
 
 ## cycle-20260730T0332Z-verify — RAW-verified developer's FACTORY-GUARD-CI-RAWVERIFY-IMPL completion (7th/final ci-regression-prevention guardrail); released task lock; clean verify, epic dispatch phase fully closed
 
@@ -24,14 +35,3 @@
 - **Post-cycle**: mock-guard unchanged (11 CAUTION). Stranded-state 6th re-emit: 17 unknown paths (down from 20 — 3 in-flight SHAREDPKG paths resolved on landing). Epic-wrapper autoclose: 0 eligible. Push-backstop: ahead=19≤20, silent no-op.
 - **STRUCTURAL FINDING (corroborating, already tracked, no new signal)**: live Telegram backlog now 265 unresolved (up from ~252), zero PO ticks all session confirmed. Root cause reproduced live THIS tick: `FIX-DEVTEAM-IDLE-CHAIN-STEP1-TRIAGE-STARVATION` (P0, `ready[]`, 8 days old) sat unclaimed AGAIN because BOUNDED-1 claimed a P2 backlog row first — exactly the defect that P0 row describes. 5+ existing `FIX-DEVTEAM-IDLE-CHAIN-*`/`TASK-DEVTEAM-IDLE-CHAIN-*` rows already cover this; no duplicate minted.
 - **NEXT**: await RAWVERIFY-IMPL completion (5th/truly-final sibling) for RAW-verify — epic will then have 0 BACKLOG remaining. PO triage carryover keeps growing, zero live PO ticks all session (11+ ticks now).
-
-## cycle-20260730T0302Z-verify — RAW-verified developer's FACTORY-GUARD-CI-SHAREDPKG-IMPL completion (4th/final epic sibling); released task lock; clean verify, zero net-new regressions (no apps/ touched)
-
-- **Commits genuine, on HEAD**: `9e9389089`/`7ebd42b60`/`fc9acda7e` real; dirty tree at verify time was entirely unrelated concurrent peer-agent notebook/signal/brief churn, none of it touching this task's files.
-- **Gate + test independently re-run, not trusted from claim**: `shared-package-import-check.sh --check` → PASS (3 BASELINE + 11 ADVISORY lines, exit 0) in 6.7s; new `.test.sh` → 4/4 PASS in 13.7s — both match the developer's own re-measured perf numbers (~7s/~14s) after their reported first-draft per-file-grep-loop hang (~7K+~34K forks) was batched into one `grep -l -- "${files[@]}"` call per package/symbol.
-- **CI + doc wiring confirmed via grep/test -f**: `shared-package-import-check` job real in `.github/workflows/ci.yml`; CANONICAL pointer real in `dev-standards.md`; cited architecture brief `2026-07-24-factory-guard-ci-shared-package-import-check.md` exists. `shellcheck` on both new scripts matches claim exactly (1 benign SC2329 info only).
-- **Board flip genuine**: row `review[]`, `status:REVIEW`, `next_agent:qa`; `.head` reset to idle by developer's own script write. `plan_only`/`supervised` both null — same as all 13 other FACTORY-GUARD-CI-* review rows, not a new anomaly (already covered by last tick's QA-Drain-starvation structural finding).
-- **Zero apps/ touched → no regression surface**: `git show --stat` confirms only `.github/workflows/ci.yml`, `docs/*`, `scripts/audits/*` changed — developer's own "bun test/tsc structurally N/A" claim is directly verifiable from the diff stat itself, so no live full-suite re-run was needed (unlike the DEADCODE-IMPL verify, which did touch `apps/`).
-- **Lock release caught its own near-miss**: first `task_release` call with bare id `FACTORY-GUARD-CI-SHAREDPKG-IMPL` returned `released:0` — did NOT treat this as clean per [[feedback_task_release_owner_agent_mismatch_orphans_lock]] ("ok+released=wrong"); `task_list_held` showed the real id carries a `task:` prefix; re-released correctly, `released:1` confirmed.
-- **Epic dispatch phase now closed**: `.task_board.in_progress` has 0 FACTORY-GUARD-CI-* rows — all 4 IMPL siblings now in review. 2 backlog rows remain (`FACTORY-GUARD-CI-REGRESSION-SPIKE`, `FACTORY-GUARD-CI-RAWVERIFY-IMPL`) for next BOUNDED-1 idle pickup; deferred to the standing armed cron rather than dispatched inline here.
-- **NEXT**: qa to pick up all 14 FACTORY-GUARD-CI-* review rows, still fully untouched all session (structural starvation, already tracked, no new signal). PO triage carryover unchanged from last tick.
