@@ -1,6 +1,20 @@
 # Developer — Notebook
 
-**Last updated:** 2026-07-30 | **Cycle:** FIX-SCRIPTS-MIGRATIONS-MARKETDB-WAL-REARM-SAME-DEFECT
+**Last updated:** 2026-07-30 | **Cycle:** FIX-DEVTEAM-WIP-BUDGET-COUNTS-BLOCKED-INPROGRESS-ROWS
+
+## Session 2026-07-30 — FIX-DEVTEAM-WIP-BUDGET-COUNTS-BLOCKED-INPROGRESS-ROWS — REVIEW
+
+**Task:** dev-team BOUNDED-1 idle-capacity auto-pickup (`cross-service/`), PO triage `chore(po): triage 2026-07-30T19:07Z` mint. `wip_in_progress` (`scripts/lib/devteam-eligibility.jq`) was a bare `.task_board.in_progress|length` — a row flipped IN_PROGRESS→BLOCKED and left parked in `in_progress[]` (live: `FU-CNYVND-DEAD-FIELD-REMOVE`) consumed a full concurrency slot forever, freezing BOUNDED-1/SLS/RLC/DRS fleet-wide for ~2.5h at wip=2=cap.
+
+**Actions:** READ side — `wip_in_progress` now excludes BLOCKED/`TERMINAL_SET` rows (relocated the existing `is_terminal_task_status`/`normalize_task_status` defs earlier in the file, reused not re-hardcoded). Grepping `main.md` found its own WIP/WIP2/WIP3/WIP4 gate checks were bare `jq` calls, NEVER `include`-ing the shared lib — fixed all 4 call sites to actually call `wip_in_progress` (AC-2's "no duplicate logic" required this, else the lib fix would be dead code against the live gates). WRITE side — added an explicit BLOCKED-disambiguation bullet to `execute-tier.md`'s CANONICAL:SSOT-STATUSFLIP-LANEMOVE clause (target lane = `backlog[]`, matching PO's own live containment action); WF-1's BLOCKED-task check now lane-moves `in_progress[]→backlog[]` as a self-healing backstop, and its status lookup was widened from active_sprints-only (which actively crashes on the live board's null-`.tasks` sprint-stub shape) to also scan the flat `in_progress[]` lane.
+
+**Verify-live catch:** the OLD WF-1 status query, run directly against the LIVE `orch-state.json`, threw `jq: error ... Cannot iterate over null` — it wasn't just missing flat-lane rows silently, it was structurally broken against the live board's shape.
+
+**Verification:** `scripts/audits/devteam-dispatch-gate-satisfiability.sh` 54/54 PASS (was 48/48; +6 new `AC-WIP-BLOCKED-*` assertions: BLOCKED+IN_PROGRESS mix reads `wip_in_progress=1` not raw-2, SLS non-vacuously fires under it; 2×IN_PROGRESS still reads 2). 5 sibling `devteam-eligibility.jq` consumer scripts re-run clean; one pre-existing `bounded1-supervised-lane-report.sh` exit=1 (5 unrelated live-data rows) confirmed byte-identical via `git stash` A/B. `bun scripts/orch-validate.mjs` on the live board still PASS. No `apps/` TS/Go touched (zone `cross-service/`, pure jq+bash+md) — `bun test`/`tsc` N/A.
+
+**Board:** `task_board.in_progress[FIX-DEVTEAM-WIP-BUDGET-COUNTS-BLOCKED-INPROGRESS-ROWS]` → `review` (`next_agent: qa`), lane-moved `in_progress[]→review[]`, `.head` reset to idle, same `orch-apply.sh` write.
+
+**Zone note:** No MCP/gateway tool grant this session (Read/Edit/Write/Bash only) — could not `task_release`/`send_telegram`; flagged for the coordinating dev-team session (`owner_client_session=64c7c677-0f0f-4cee-a3ce-dba79d70b7ae`) to release `task:FIX-DEVTEAM-WIP-BUDGET-COUNTS-BLOCKED-INPROGRESS-ROWS` on my behalf.
 
 ## Session 2026-07-30 — FIX-SCRIPTS-MIGRATIONS-MARKETDB-WAL-REARM-SAME-DEFECT — REVIEW
 
@@ -33,33 +47,3 @@
 **Zone note:** No MCP/gateway tool grant this session (Read/Edit/Write/Bash only) — could not `task_release`/`send_telegram`; flagged for the coordinating dev-team session (`owner_client_session=64c7c677-0f0f-4cee-a3ce-dba79d70b7ae`) to release `task:FIX-AUDITOR-OUTPUT-CONTRACT-SIGNALSPOSTED-COUNTS-CALLS-NOT-CONFIRMED-ROWS` on my behalf.
 
 Zone health: SIBLING `FIX-AUDITOR-DASHBOARD-APPEND-NO-ACTUATOR-CONTRACT-COUNT-NARRATED` (review, next=qa) is the same narrated-count class on the dashboard-append surface — untouched here per instructions, batch not merge; QA reviews both together. ALSO: notebook-auto-prune.sh's PostToolUse hook dropped only 1 of 2 required sections on this write (5→4, not 5→3) — 4th occurrence today, same file, same misfire this notebook's own prior 3 entries already flagged; manually dropped the true-oldest remaining section myself to reach cap. Escalate past "flag and move on" per the 2+-recurrence standing policy.
-
-## Session 2026-07-30 — FIX-DEVTEAM-CLAIM-SCRIPTS-UNCONDITIONAL-HEAD-OVERWRITE — REVIEW
-
-**Task:** dev-team BOUNDED-1 auto-pickup (`cross-service/`), PO ratification `ruling-20260730T0906Z-po-triage-po.md` STEP po-4. Three dev-team claim scripts (`devteam-backlog-claim-bounded1.jq`, `devteam-backlog-claim-supervised-lane-sweep.jq`, `devteam-backlog-claim-ready-lane-consumer.jq`) performed an UNCONDITIONAL `.head` replace instead of a conditional guard — confirmed LIVE risk: `.head` was genuinely occupied by an in-flight supervised task (`FIX-AUDITOR-CALLER-PROSE-OVERRIDES-DOCUMENTED-DETECTOR-THRESHOLD`) at the exact tick this row was minted, while all 3 scripts sat live in the same head-idle fall-through dispatch chain.
-
-**Actions:** Mirrored the already-shipped, PO-ratified `$head_free` conditional-guard shape from `devteam-backlog-claim-design-router-sweep.jq` (DRS) onto all 3 scripts, exactly as instructed — no new pattern invented. SLS needed the guard in BOTH its PRIMARY and FALLBACK `.head` write branches (2 call sites, one shared `$head_free` computed once). Happy path (head idle/done/active_task_id-null) behavior unchanged; when a DIFFERENT task is genuinely live in `.head`, the write is now skipped instead of clobbering the live resume pointer.
-
-**Verify-live catch:** the live board's own `.head` was occupied by THIS task itself while running this fix — a real (not synthetic) exercise of the guard's busy-branch at the one live BOUNDED-1 call site, though the isolated fixture tests below are what actually prove the negative-control case (a DIFFERENT task's `.head` byte-identical after claim).
-
-**Verification:** Extended `scripts/audits/devteam-dispatch-gate-satisfiability.sh` with 8 new isolated single-row-fixture assertions (AC-BOUNDED1-HEAD-GUARD, AC-SLS-HEAD-GUARD PRIMARY+FALLBACK, AC-RLC-HEAD-GUARD — each with a positive half proving the row still moves `ready[]→in_progress[]` while `.head` stays untouched). Full suite 48/48 PASS, never writes to the live file. No `apps/` TS/Go source touched (zone `cross-service/`, pure jq+bash) — `bun test`/`tsc` structurally N/A.
-
-**Board:** flipped `IN_PROGRESS`→`REVIEW`, `next_agent:"qa"`, lane-moved `in_progress[]`→`review[]`, and reset `.head` to `{status:"idle", active_task_id:null, next_agent:"router"}` in the SAME `orch-apply.sh` write (branch:null direct-execute path, per `execute-tier.md`'s `CANONICAL:SSOT-STATUSFLIP-LANEMOVE`).
-
-**Zone note:** No MCP/gateway tool grant this session (Read/Edit/Write/Glob/Grep/Bash only, confirmed at Step 0) — could not `task_release`/`send_telegram`; flagged for the coordinating dev-team session (`owner_client_session=64c7c677-0f0f-4cee-a3ce-dba79d70b7ae`) to release `task:FIX-DEVTEAM-CLAIM-SCRIPTS-UNCONDITIONAL-HEAD-OVERWRITE` on my behalf.
-
-## Session 2026-07-30 — FIX-NOTEBOOK-AUTOPRUNE-SAMEDAY-TIE-DROPS-NEWEST — REVIEW
-
-**Task:** dev-team BOUNDED-1 idle-capacity dispatch (`cross-service/`), PO-triaged P1 root-cause fix for the recurring (3x today, this notebook) same-day tie-break defect: `notebook-auto-prune.sh`'s lossy 17-char ts_key ties multiple date-only headings, and the old stable-sort-then-`head -1` always dropped the physically-first tied section — correct only for an oldest-first/append notebook, wrong (drops the newest) for a newest-first/prepend one like this file.
-
-**Actions:** Tie-break now resolves the minimum-key GROUP direction-aware: drop physically-LAST for newest_first (this file), physically-FIRST for oldest_first. Direction derives from the file's own distinguishable section timestamps first (43/46 live notebooks need zero config); new `docs/data/notebook-section-order.json` declares the 3 confirmed-ambiguous files (developer.md=newest_first, dev-frontend.md/dev-mcp-server.md=oldest_first, each verified via `git log -1 -p`). Unresolved+no-override now fails loud (`notebook_tiebreak_direction_unresolved_breach` signal, no truncation) instead of guessing.
-
-**Verify-live catch:** RED→GREEN A/B against a REAL padded copy of THIS file: pre-fix script wrongly kept only the oldest section (would have dropped this very entry once written); post-fix keeps only the newest (physically-first) section under identical multi-drop pressure.
-
-**Verification:** `notebook-auto-prune.test.sh` 7/7 PASS (T1-T4 pre-existing unaffected + new T5 prepend/T6 append/T7 unresolved-safe-fail). Sibling legacy `test-notebook-auto-prune.sh` 5/5 unaffected (untouched, flagged as a likely stale duplicate for code-janitor, out of scope). shellcheck: same 1 pre-existing unrelated info-only finding, none new. No `apps/` touched — `bun test`/`tsc` N/A.
-
-**Board:** `task_board.in_progress[FIX-NOTEBOOK-AUTOPRUNE-SAMEDAY-TIE-DROPS-NEWEST]` → `review` (`next_agent: qa`), `.head` reset to idle, same `orch-apply.sh` write.
-
-**Zone note:** No MCP/gateway tool grant this session (Read/Edit/Write/Bash only, confirmed at Step 0) — could not `task_release`/`send_telegram`; flagged for the coordinating dev-team session (`owner_client_session=64c7c677-0f0f-4cee-a3ce-dba79d70b7ae`) to release `task:FIX-NOTEBOOK-AUTOPRUNE-SAMEDAY-TIE-DROPS-NEWEST` on my behalf.
-
-Zone health: closes the recurring misfire flagged in this notebook's own prior 3 sections today ("3rd occurrence today, same file") — first cycle this class gets a root-cause fix instead of a same-cycle manual workaround.
