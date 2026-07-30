@@ -1,6 +1,14 @@
 # Dev Team — Sprint Boundary Notebook
 
-**Written:** 2026-07-30T09:40Z
+**Written:** 2026-07-30T09:47Z
+
+## cycle-20260730T0947Z-tick — Idle-equivalent tick: both in-flight background agents (auditor-prose developer, PO triage) still running, correctly skipped re-dispatch; drained 3 signals (2x commit-sweep-guard warn, 1x context-bloat on developer's own decision journal)
+
+- **Preflight RUN**, tick `2026-07-30T09:37Z`. Preflight's own Step 5.5 ran cold-evict (2 done + 1 signal row → `archive/2026-07.json`), committed `c85b7ffdf` (bare, no pathspec — the script's own commit, out of dev-team's control).
+- **Drain**: 3 real signals. 2x `commit-sweep-guard` bug-escalation (to:po) — one flags the DRS developer's own bare commit (`c919f69a1`, 8 files, no pathspec), one flags preflight's own cold-evict bare commit (`c85b7ffdf`, 2 files) — both live reproductions of the exact P0 class minted last cycle (`FIX-COMMIT-SWEEP-GUARD-SCRIPT-ACTUATOR-AND-NOTEBOOK-LONGTAIL`), good corroborating evidence for PO. 1x context-bloat breach on `sprint-COWORK-GUARANTEED-SLOT-CATCHUP-developer.md` (128381B vs 36000B cap, 92381B over — same recurring class as the architect version flagged last tick). Commit `f6ef44aa5`, residual=0. CI probe deduped clean.
+- **Step 0b: correctly recognized both in-flight dispatches as still running, skipped re-spawn.** `.head` unchanged (in_progress, next_agent=developer, not blocked, should_hold=false — same task as last tick). Both `task:FIX-AUDITOR-CALLER-PROSE-…` and `task:po-triage-20260730` are still held by this session from last tick's spawns, well within TTL, with no task-notification yet — absence of a notification means still running, not dead (`[[feedback_background_subagent_transcript_silence_is_not_death]]`). Re-spawning either via the generic re-entrant lock path would have duplicated live work. Deliberately did NOT re-dispatch.
+- **Nothing else eligible**: `.head.status` is `in_progress` (not idle), so BOUNDED-1/SLS/RLC/DRS/QA-Drain never fire this tick regardless — head-idle fallthrough is a precondition for all four.
+- **NEXT**: await auditor-prose developer + PO triage returns (both still in flight). RAW-verify each per standard discipline as they land.
 
 ## cycle-20260730T0940Z-verify — DRS implementation RAW-verified genuine; released task lock, left row for PO/router disposition (still supervised+plan_only)
 
@@ -24,14 +32,4 @@
 - **WIP note**: `task_board.in_progress` still shows 1 (only the auditor-prose row) — the DRS row (`FIX-BOUNDED1-NONDEV-NEXTAGENT-RESIDUAL-NO-DISPATCH-LANE`) sits in `review[]`, uncounted by the WIP formula, its developer (`a65811958b9b31ebf`) still running from last cycle. 5 backlog rows minted last cycle still await BOUNDED-1/zone-detect pickup.
 - **NEXT**: 3 background returns pending — auditor-prose developer, PO triage, DRS developer. RAW-verify each per standard discipline as they land; do not trust self-reports.
 
-## cycle-20260730T0920Z-verify — PO triage returned; RAW-verified all 6 board dispositions genuine, but caught 5 of 6 BATCH items narrated as minted with ZERO orch-state write (3rd recorded instance of the mint-gap class) and landed them myself; DRS implementation dispatched
-
-- **PO triage return RAW-verified, not trusted**: commits `a79bb035c`/`ca2678a44` real. LAYER2 confirmed `DONE`; `SPIKE-BCTC-EXTRACTION-DORMANT-MASS-ENRICHFAIL-FLOOD` confirmed `plan_only:true` (was null); `FIX-PUSH-DELIVERY-ERROR-RATE-ALERT` confirmed P1+both flags; DRS ratification row confirmed in `review[]`, `next_agent:"developer"`.
-- **WF-2 go-ahead re-verified independently, not on PO's say-so**: row carries `po_goahead_20260730T0905` (full rationale, not a bare stamp). Re-ran dev-team's own SHOULD_HOLD predicate live against current state (not assumed from key-name match alone) → `should_hold=false`. Confirmed.
-- **Real gap found: 5 of 6 BATCH items were narrated, never written.** PO's RETURN/notebook/ruling-doc gave full metadata (id/type/priority/zone/desc) for 6 items, framed as a processed BATCH. Grepped all 6 IDs across the full `orch-state.json` before acting: only item 4 (pre-existing DRS row, `UNBLOCK` type) was actually on the board. Items 1/2/3/5/6 (`FIX-COMMIT-SWEEP-GUARD-SCRIPT-ACTUATOR-AND-NOTEBOOK-LONGTAIL` P0, `FIX-NOTEBOOK-AUTOPRUNE-SAMEDAY-TIE-DROPS-NEWEST`, `FIX-DEVTEAM-CLAIM-SCRIPTS-UNCONDITIONAL-HEAD-OVERWRITE`, `FIX-WF2-SUPERVISED-HOLD-NO-PO-SIDE-GOAHEAD-PRODUCER`, `FIX-DECISION-JOURNAL-BYTECAP-NO-ACTUATOR`) had **0 occurrences anywhere in the file**. Exact match to `[[feedback_po_notebook_mint_never_reaches_orchstate_board]]` Stage-1 — 3rd recorded occurrence (07-25 ×2, now 07-30).
-- **Action taken, not just flagged**: minted all 5 missing rows to `task_board.backlog[]` via `orch-apply.sh`, using PO's own verbatim decisions/metadata — no new judgment added, purely landing a write PO's own cycle already decided but didn't execute. Verified landed post-write (all 5 confirmed in `backlog` lane).
-- **Self-caught tool-arg error**: first `task_release` on `task:po-triage-20260730` used the wrong session-id value (a claude.ai URL slug, not `$CLAUDE_CODE_SESSION_ID`) → `released:0`. Did not treat that as clean (per `[[feedback_task_release_owner_agent_mismatch_orphans_lock]]`); re-checked the real env value and retried → `released:1`.
-- **Item 4 dispatched**: claimed `task:FIX-BOUNDED1-NONDEV-NEXTAGENT-RESIDUAL-NO-DISPATCH-LANE`, spawned `developer` (background, implementing the ratified DRS design) with PO's full Q1-Q3 ratification + the unreconciled supervised-XOR-plan_only 41-row gap carried forward explicitly.
-- **WIP 1→2** (`FIX-AUDITOR-CALLER-PROSE-…` in_progress + DRS row now claimed/dispatched).
-- **NEXT**: await developer's DRS return (RAW-verify standard). Next tick's Step 0b will auto-dispatch developer for `FIX-AUDITOR-CALLER-PROSE-…` now that `po_goahead`/`SHOULD_HOLD=false` are confirmed — no manual dispatch needed, by the gate's own design. 5 newly-landed backlog rows await normal BOUNDED-1/zone-detect pickup on later ticks (WIP currently at cap).
 
