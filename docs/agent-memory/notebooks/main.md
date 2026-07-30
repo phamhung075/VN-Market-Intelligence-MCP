@@ -1,6 +1,17 @@
 # Dev Team — Sprint Boundary Notebook
 
-**Written:** 2026-07-30T10:50Z
+**Written:** 2026-07-30T11:12Z
+
+## cycle-20260730T1112Z-verify — RAW-verified notebook-auto-prune same-day tie-break fix clean (7/7 tests, board+journal confirmed); released lock (corrected malformed key)
+
+- **Developer completed `FIX-NOTEBOOK-AUTOPRUNE-SAMEDAY-TIE-DROPS-NEWEST` — RAW-verified before trusting**: commits `c280e00cd` (fix), `5f364d66c` (board REVIEW flip + `.head` idle-reset, same write), `d5c0d3f01` (notebook+journal) all real, on HEAD.
+- **Diff confirmed the exact claimed mechanism**: minimum-ts_key GROUP now resolved direction-aware (drop physically-LAST for newest-first/prepend, physically-FIRST for oldest-first/append) instead of the old direction-blind `sort|head -1`. Direction derived from the file's OWN distinguishable timestamps first; falls back to new `docs/data/notebook-section-order.json` only for 3 confirmed-permanently-ambiguous files (`developer.md=newest_first`, `dev-frontend.md`/`dev-mcp-server.md=oldest_first`). Unresolved+no-override now fails loud (`notebook_tiebreak_direction_unresolved_breach`, no truncation) instead of guessing — matches claim, verified from the diff itself not the commit message.
+- **Test suite independently re-run, not trusted from the "7/7" claim**: `bash scripts/agents-flow/notebook-auto-prune.test.sh` → **7 passed, 0 failed**, exact match, including all 3 new assertions (T5 prepend, T6 append, T7 unresolved-safe-fail).
+- **Decision journal STEP developer-S40 confirmed present and accurate**: mechanism, rejected-alternatives, and the honest structural-gap disclosure (no gateway grant, could not self-release) all match the RETURN block verbatim.
+- **Board disposition confirmed live**: row `REVIEW`/`next_agent:qa`/`branch:null`; `.head` idle-reset in the SAME write (`5f364d66c`) — CANONICAL:SSOT-STATUSFLIP-LANEMOVE held.
+- **Out-of-scope flag spot-checked**: `test-notebook-auto-prune.sh` IS a genuinely distinct legacy duplicate (different header/content, same target script) — correctly left untouched, flagged for code-janitor only.
+- **No discrepancies — clean verify.** Released `task:FIX-NOTEBOOK-AUTOPRUNE-SAMEDAY-TIE-DROPS-NEWEST` — first attempt omitted the `task:` prefix and silently no-opped (`released:0`, not an error per the tool's own semantics but NOT a real release either); corrected the key, confirmed genuine release (`released:1`).
+- **NEXT**: `.head` is idle again — re-run preflight fresh to reacquire tick-scoped locks, then re-check idle-capacity chain (BOUNDED-1) for further dispatch this tick.
 
 ## cycle-20260730T1037Z-tick — RAW-verified ready/review-lane picker fix clean (all 6 ACs); released lock; BOUNDED-1 re-fired same tick, claimed+dispatched 3rd-recurrence FIX-NOTEBOOK-AUTOPRUNE-SAMEDAY-TIE-DROPS-NEWEST
 
@@ -22,13 +33,3 @@
 - **Committed** `961f27dca` (BOUNDED-1 promote+claim writes), pathspec-scoped to `orch-state.json` only — tree was heavily concurrently dirty (cowork notebooks, analysis-briefs, other agents' JSON state), none of it touched.
 - **Released SF-1 + fire-election** (`dev-team-cron-singleton`, `cron:dev-team:2026-07-30T10:07Z`) — both `{"ok":true,"released":1}`.
 - **NEXT**: await developer's return on the ready/review-lane picker fix. Since BOUNDED-1 dispatched this tick, SLS/RLC/DRS/QA-Drain were never reached — still live for a future idle tick (review[]=173, ready[]=54 unexamined this cycle).
-
-## cycle-20260730T1000Z-verify — AUD-CP-1 developer RAW-verified genuine; released task lock; row → review/qa, .head idle
-
-- **Every claimed artifact independently checked, not trusted from RETURN text**: commits `1565b0d1d`/`0cea9ccdf`/`a27d824ca` real, on HEAD. `main.md` §CALLER-INSTRUCTION PRECEDENCE (AUD-CP-1) block + mandatory `CONTRACT-CONTRADICTION` RETURN line both present. `tier1-probe.md` diff confirmed the 4-line breadcrumb landed strictly between the A-21 query block's closing fence and `**Verdict:**` — the protected verdict-mapping text is untouched in the diff. `emit-audit-signal.sh`: `provenance:"detector"` hardcoded inside `_build_row_json()`, confirmed single def + single call site (grep count 2), no `--provenance` flag exists.
-- **Test suite independently re-run, not trusted from the 53/53 claim**: `bash scripts/emit-audit-signal.test.sh` → **53 passed, 0 failed**, exact match, including the 3 new T13/T14/T15 provenance assertions.
-- **Surprising claim verified rather than waved through**: developer said the `dev-standards.md` CANONICAL:AUD-CP-1 entry landed via an unrelated peer commit (`c919f69a1`, the DRS developer's commit) before it could commit its own — checked the actual diff of `c919f69a1` and the AUD-CP-1 block genuinely is in that commit's diff, byte-for-byte matching what the developer described. Live reproduction of `feedback_shared_main_peer_push_sweeps_held_data_commits` — correctly did not re-commit or duplicate the entry.
-- **Board disposition confirmed live**: row is `status:REVIEW`, `next_agent:qa`, `branch:null`. `.head` confirmed `status:idle`, `active_task_id:null`, `updated_by:developer` — correct idle-reset, nothing left in_progress.
-- **Structural gap acknowledged, not actionable by dev-team**: developer's session had no gateway/MCP grant so could not self-release its own lock or heartbeat — released `task:FIX-AUDITOR-CALLER-PROSE-OVERRIDES-DOCUMENTED-DETECTOR-THRESHOLD` on its behalf this cycle, per its own explicit flag.
-- **No discrepancies found** — clean verify. Both background dispatches from the 0930Z tick are now fully closed out (DRS earlier, this one now).
-- **NEXT**: row sits in `review[]` for QA pickup (review-lane QA-Drain, not dev-team's to force). Nothing else in flight from this session.
