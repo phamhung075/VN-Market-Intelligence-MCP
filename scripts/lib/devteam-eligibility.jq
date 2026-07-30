@@ -52,16 +52,70 @@ def detail_items_from($detail):
     else ($raw_items | map(select(.id != null) | {key: .id, value: .}) | from_entries)
     end;
 
+# ---- terminal task-status normalization + membership
+# (FIX-DEVTEAM-EPIC-WRAPPER-AUTOCLOSE-SWEEP, 2026-07-29; RELOCATED here from
+# further down this file by FIX-DEVTEAM-WIP-BUDGET-COUNTS-BLOCKED-INPROGRESS-
+# ROWS, 2026-07-30, so `wip_in_progress` below — which must run AFTER any def
+# it calls, per this file's own "NOTE ON DEF ORDER" precedent further down —
+# can reuse `is_terminal_task_status` instead of re-deriving a fresh literal
+# status list) ----
+# SSOT: apps/mcp-server/src/infrastructure/orchStateSchema.ts TERMINAL_SET,
+# mirrored verbatim by scripts/orch-cold-evict.sh TERMINAL_TASK_STATUSES /
+# TERMINAL_SPRINT_STATUSES ({DONE, DONE_VERIFIED, CANCELLED, DEFERRED,
+# SKIPPED}). orch-cold-evict.sh's own comparison is a case-SENSITIVE exact
+# `IN($tt_arr[])` match against the live hot-lane `.status` field (always
+# canonical-cased there). Cold-archived docs/data/orch/archive/YYYY-MM.json
+# `.done_tasks[].status` is NOT reliably canonical-cased (empirically
+# confirmed 2026-07-29: 2026-06.json alone carries "done"/"done_verified"
+# lowercase and "DONE-VERIFIED" dash-separated, alongside the canonical
+# forms) — this def normalizes case + separator (generalizes
+# normalize_archive_status above from just DONE_VERIFIED to the full
+# 5-value set) so a child task cold-evicted under a pre-canonicalization-era
+# status string still resolves terminal instead of a false-negative
+# conservative-skip forever.
+def normalize_task_status($s):
+  ($s // "" | tostring | ascii_upcase | gsub("[- ]"; "_"));
+
+def is_terminal_task_status($s):
+  (normalize_task_status($s)) as $n
+  | ($n | IN("DONE", "DONE_VERIFIED", "CANCELLED", "DEFERRED", "SKIPPED"));
+
 # ---- WIP / concurrency ----
-# FIX (this task): WIP is a CONCURRENCY budget, measured by in_progress[]
-# alone. ready[] is a staging queue (enqueued-but-not-yet-dispatched work),
-# not concurrency — counting it let a saturated staging lane permanently
-# starve every picker below (instance 9 on the count-threshold-gate class;
-# see docs/agent-memory/decisions/sprint-UNBLOCK-DEVTEAM-DISPATCH-GATE-
+# FIX (UNBLOCK-DEVTEAM-DISPATCH-GATE-STAGING-DEADLOCK, 2026-07-22): WIP is a
+# CONCURRENCY budget, measured by in_progress[] alone. ready[] is a staging
+# queue (enqueued-but-not-yet-dispatched work), not concurrency — counting it
+# let a saturated staging lane permanently starve every picker below
+# (instance 9 on the count-threshold-gate class; see
+# docs/agent-memory/decisions/sprint-UNBLOCK-DEVTEAM-DISPATCH-GATE-
 # DEADLOCK-po.md). Prior versions of this def (still visible in this file's
 # git history at each caller) read `(ready|length)+(in_progress|length)`.
+#
+# FURTHER FIX (FIX-DEVTEAM-WIP-BUDGET-COUNTS-BLOCKED-INPROGRESS-ROWS,
+# 2026-07-30): `in_progress[]` array LENGTH alone is STILL not "real live
+# concurrency" — a row that transitions IN_PROGRESS -> BLOCKED (escalated,
+# awaiting architect/PO adjudication) can be left parked in `in_progress[]`
+# and then silently consume a full concurrency slot forever, even though
+# nothing is actually running. OBSERVED LIVE: FU-CNYVND-DEAD-FIELD-REMOVE
+# flipped IN_PROGRESS->BLOCKED at 2026-07-30T16:53:28Z (`.head` correctly
+# reset to idle) but stayed parked in `in_progress[]`; with a second row
+# genuinely live, wip=2=cap froze BOUNDED-1/SLS/RLC/DRS fleet-wide for
+# ~2.5h. `wip_in_progress` now excludes any row whose `.status` is NOT real
+# live work: every `TERMINAL_SET` member (`is_terminal_task_status` above —
+# the pre-existing STATUSFLIP-LANEMOVE straggler class) UNION `BLOCKED` (a
+# distinct, non-terminal SSOT status — `apps/mcp-server/src/infrastructure/
+# orchStateSchema.ts` StatusEnum — this repo's ADD-2 lane-coherence comment
+# documents it as a schema-VALID "orthogonal sub-state" of `in_progress[]`;
+# that comment governs SCHEMA VALIDITY, not WIP accounting — a BLOCKED row
+# is valid to find sitting there, but it is still not LIVE work, so it must
+# not consume budget). Write-side companion fix (moves a newly-BLOCKED row
+# OUT of `in_progress[]` going forward, so correctness stops depending on
+# this read-side exclusion alone): `docs/agents/dev-team/flow/execute-
+# tier.md` § CANONICAL:SSOT-STATUSFLIP-LANEMOVE(c) + `docs/agents/dev-team/
+# flow/main.md` § WF-1 BLOCKED-task check.
 def wip_in_progress:
-  (.task_board.in_progress // []) | length;
+  [ (.task_board.in_progress // [])[]
+    | select( (is_terminal_task_status(.status) or (normalize_task_status(.status) == "BLOCKED")) | not )
+  ] | length;
 
 # ---- priority ordering (shared FIFO-proxy tiebreak convention) ----
 def priority_rank:
@@ -378,28 +432,14 @@ def rotation_selected($doc):
   | sort_by(.stamp)
   | .[0].id;
 
-# ---- terminal task-status normalization + membership
-# (FIX-DEVTEAM-EPIC-WRAPPER-AUTOCLOSE-SWEEP, 2026-07-29) ----
-# SSOT: apps/mcp-server/src/infrastructure/orchStateSchema.ts TERMINAL_SET,
-# mirrored verbatim by scripts/orch-cold-evict.sh TERMINAL_TASK_STATUSES /
-# TERMINAL_SPRINT_STATUSES ({DONE, DONE_VERIFIED, CANCELLED, DEFERRED,
-# SKIPPED}). orch-cold-evict.sh's own comparison is a case-SENSITIVE exact
-# `IN($tt_arr[])` match against the live hot-lane `.status` field (always
-# canonical-cased there). Cold-archived docs/data/orch/archive/YYYY-MM.json
-# `.done_tasks[].status` is NOT reliably canonical-cased (empirically
-# confirmed 2026-07-29: 2026-06.json alone carries "done"/"done_verified"
-# lowercase and "DONE-VERIFIED" dash-separated, alongside the canonical
-# forms) — this def normalizes case + separator (generalizes
-# normalize_archive_status above from just DONE_VERIFIED to the full
-# 5-value set) so a child task cold-evicted under a pre-canonicalization-era
-# status string still resolves terminal instead of a false-negative
-# conservative-skip forever.
-def normalize_task_status($s):
-  ($s // "" | tostring | ascii_upcase | gsub("[- ]"; "_"));
-
-def is_terminal_task_status($s):
-  (normalize_task_status($s)) as $n
-  | ($n | IN("DONE", "DONE_VERIFIED", "CANCELLED", "DEFERRED", "SKIPPED"));
+# ---- terminal task-status normalization + membership ----
+# `normalize_task_status`/`is_terminal_task_status` (FIX-DEVTEAM-EPIC-
+# WRAPPER-AUTOCLOSE-SWEEP, 2026-07-29) now live near the TOP of this file,
+# right after `detail_items_from` — RELOCATED by FIX-DEVTEAM-WIP-BUDGET-
+# COUNTS-BLOCKED-INPROGRESS-ROWS (2026-07-30) so `wip_in_progress` (also
+# near the top) can reuse them instead of re-deriving a fresh literal status
+# list, per this file's own def-order constraint (see "NOTE ON DEF ORDER"
+# above `dep_status_map`). No behavior change — same two defs, same bodies.
 
 # ---- hold_reason guard (FIX-DEVTEAM-EPIC-WRAPPER-AUTOCLOSE-SWEEP,
 # 2026-07-29) ----

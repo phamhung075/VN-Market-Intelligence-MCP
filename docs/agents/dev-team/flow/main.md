@@ -1,4 +1,4 @@
-<!-- size-justification: 868L — thin dispatcher; PREFLIGHT script-first gate + JUMP-TO table route Steps 0a/0a.5/3/4 to sub-flows; Steps 0b/1/2 (session-gate, PO triage, planning matrix) too small to extract; full change history in git log. UNBLOCK-DEVTEAM-DISPATCH-GATE-STAGING-DEADLOCK 2026-07-22: +113L — Ready-Lane Consumer + Review-Lane QA-Drain sections (2 new idle-fallthrough pickup lanes, mirroring BOUNDED-1/SLS's existing inline shape; extracting to a sub-flow would break the single linear head-idle fall-through chain BOUNDED-1→SLS→RLC→QA-Drain that makes same-tick `.head`-collision-freedom provable by control-flow inspection alone). FIX-DEVTEAM-BOUNDED1-PROSE-SEQUENCING-UNBACKED-GATE 2026-07-23: +1L (868→869) — PROSE-SEQUENCING GATE clause appended to the existing BOUNDED-1 Promote paragraph + predicate-list update (in-place, same lines) + ONE new Reusable Scripts bullet for the new regression verifier's own line; no new section. TE-T33 2026-07-23: +6L (869→875) — the 2 DJ-GATE-1 grep-pattern comments scoped from unbounded `sprint-*-*.md` to `sprint-${SPRINT_ID}-*.md` (matches agent-chaining-protocol.md's already-scoped canonical PATTERN), noting archive/ exclusion by non-recursive-glob construction; in-place, same lines. FIX-DEVTEAM-EPIC-WRAPPER-AUTOCLOSE-SWEEP 2026-07-29: +43L (875→918) — 2 new Reusable Scripts bullets (`scripts/devteam-wrapper-autoclose.jq` + its verifier) for the new Step 4.4 post-cycle candidate; the sub-flow itself lives in post-cycle.md (same placement convention as every other Step-4.x candidate), plus a 1-line Step-4-Covers accuracy fix (4.2/4.3/4.4 were never listed there). FIX-BOUNDED1-NONDEV-NEXTAGENT-RESIDUAL-NO-DISPATCH-LANE 2026-07-30: +66L (918→984) — new Design-Router Sweep (DRS) section inserted in-chain between RLC and Review-Lane QA-Drain (4th WIP≤2 writer, mirrors SLS's inline shape exactly — same single-linear-fall-through constraint as the 2026-07-22 note above applies), RLC/QA-Drain fall-through cross-references updated in place, 1 new Reusable Scripts bullet for the DRS promote+claim pair. FIX-DEVTEAM-READY-REVIEW-LANE-SUPERVISED-PLANONLY-NO-PICKER 2026-07-30: +28L (984→1012) — SLS Claim paragraph extended in-place (documents the new unstamped-ready[]-row FALLBACK path, same claim script, no new section); new "Lane × Gate Coverage Matrix" subsection under SLS (AC-1, the full lane×sup×po×wrapper resolution table, including the AC-4 epic-wrapper-children cross-reference to Step 4.4 in post-cycle.md); Review-Lane QA-Drain's Claim paragraph gained one AC-3 bullet (documents that the QA-Drain PRIMARY selector was ALREADY sup/po-agnostic by design — no code change there, prose-only clarification so it stops reading as an oversight). No new sub-flow extraction candidate — all three additions are in-place prose/section growth on existing SLS/QA-Drain blocks, same single-linear-fall-through constraint as every prior entry above. -->
+<!-- size-justification: 868L — thin dispatcher; PREFLIGHT script-first gate + JUMP-TO table route Steps 0a/0a.5/3/4 to sub-flows; Steps 0b/1/2 (session-gate, PO triage, planning matrix) too small to extract; full change history in git log. UNBLOCK-DEVTEAM-DISPATCH-GATE-STAGING-DEADLOCK 2026-07-22: +113L — Ready-Lane Consumer + Review-Lane QA-Drain sections (2 new idle-fallthrough pickup lanes, mirroring BOUNDED-1/SLS's existing inline shape; extracting to a sub-flow would break the single linear head-idle fall-through chain BOUNDED-1→SLS→RLC→QA-Drain that makes same-tick `.head`-collision-freedom provable by control-flow inspection alone). FIX-DEVTEAM-BOUNDED1-PROSE-SEQUENCING-UNBACKED-GATE 2026-07-23: +1L (868→869) — PROSE-SEQUENCING GATE clause appended to the existing BOUNDED-1 Promote paragraph + predicate-list update (in-place, same lines) + ONE new Reusable Scripts bullet for the new regression verifier's own line; no new section. TE-T33 2026-07-23: +6L (869→875) — the 2 DJ-GATE-1 grep-pattern comments scoped from unbounded `sprint-*-*.md` to `sprint-${SPRINT_ID}-*.md` (matches agent-chaining-protocol.md's already-scoped canonical PATTERN), noting archive/ exclusion by non-recursive-glob construction; in-place, same lines. FIX-DEVTEAM-EPIC-WRAPPER-AUTOCLOSE-SWEEP 2026-07-29: +43L (875→918) — 2 new Reusable Scripts bullets (`scripts/devteam-wrapper-autoclose.jq` + its verifier) for the new Step 4.4 post-cycle candidate; the sub-flow itself lives in post-cycle.md (same placement convention as every other Step-4.x candidate), plus a 1-line Step-4-Covers accuracy fix (4.2/4.3/4.4 were never listed there). FIX-BOUNDED1-NONDEV-NEXTAGENT-RESIDUAL-NO-DISPATCH-LANE 2026-07-30: +66L (918→984) — new Design-Router Sweep (DRS) section inserted in-chain between RLC and Review-Lane QA-Drain (4th WIP≤2 writer, mirrors SLS's inline shape exactly — same single-linear-fall-through constraint as the 2026-07-22 note above applies), RLC/QA-Drain fall-through cross-references updated in place, 1 new Reusable Scripts bullet for the DRS promote+claim pair. FIX-DEVTEAM-READY-REVIEW-LANE-SUPERVISED-PLANONLY-NO-PICKER 2026-07-30: +28L (984→1012) — SLS Claim paragraph extended in-place (documents the new unstamped-ready[]-row FALLBACK path, same claim script, no new section); new "Lane × Gate Coverage Matrix" subsection under SLS (AC-1, the full lane×sup×po×wrapper resolution table, including the AC-4 epic-wrapper-children cross-reference to Step 4.4 in post-cycle.md); Review-Lane QA-Drain's Claim paragraph gained one AC-3 bullet (documents that the QA-Drain PRIMARY selector was ALREADY sup/po-agnostic by design — no code change there, prose-only clarification so it stops reading as an oversight). No new sub-flow extraction candidate — all three additions are in-place prose/section growth on existing SLS/QA-Drain blocks, same single-linear-fall-through constraint as every prior entry above. FIX-DEVTEAM-WIP-BUDGET-COUNTS-BLOCKED-INPROGRESS-ROWS 2026-07-30: +17L (1012→1029) — WIP/WIP2/WIP3/WIP4 bash gates re-pointed from a bare `.task_board.in_progress|length` to the shared `wip_in_progress` def (`scripts/lib/devteam-eligibility.jq`, now excludes BLOCKED/TERMINAL_SET rows), in-place on the existing 4 gate lines, no new section; WF-1 BLOCKED-task check gained a flat-lane status lookup (was active_sprints-only, silently missed every BOUNDED-1-class flat-lane row) + a self-healing in_progress[]→backlog[] lane-move, in-place on the existing block. No new sub-flow extraction candidate. -->
 <!-- BGFAN-1: ALL Agent spawns from THIS dispatcher MUST use run_in_background=true. Canonical rule + rationale → docs/protocols/agent-chaining-protocol.md § Background Spawn Mandate. Background ≠ parallel: gated chain (po→ba→…→qa) still serializes on completion notification; independent tier tasks fan out concurrently. Commit-mutex serialization unchanged. -->
 # Dev Team — Cron Orchestration Flow (Thin Dispatcher)
 
@@ -450,17 +450,34 @@ head_updated_at   =$(printf '%s' "$HEAD" | jq -r '.updated_at')
 - `head.status == "in_progress"` AND `head.next_agent` non-null AND `head.updated_at < 24h` →
   **WF-1 BLOCKED-task check (AC-WF1-5 — run FIRST, before S2 dispatcher-wrap):**
   ```bash
+  # FIX-DEVTEAM-WIP-BUDGET-COUNTS-BLOCKED-INPROGRESS-ROWS (2026-07-30): status
+  # lookup now ALSO scans the flat in_progress[] lane (not just legacy
+  # active_sprints[].tasks[]) — every BOUNDED-1/SLS/RLC/DRS pickup lands a
+  # claimed row in in_progress[], the exact shape head.active_task_id points
+  # at here, so the old active_sprints-only query silently never matched a
+  # flat-lane row (confirmed: it would have missed FU-CNYVND-DEAD-FIELD-REMOVE
+  # entirely).
   task_status=$(jq -r --arg tid "$head_active_task" \
-    '.task_board.active_sprints[].tasks[] | select(.id == $tid or .task_id == $tid) | .status' \
-    docs/data/orch/orch-state.json | head -1)
+    '( [ (.task_board.in_progress // [])[], (.task_board.active_sprints // [])[].tasks[]? ]
+       | map(select(.id == $tid or .task_id == $tid)) | first.status ) // empty' \
+    docs/data/orch/orch-state.json)
   if [ "$task_status" = "BLOCKED" ]; then
-    # BLOCKED task — reset head to idle so pipeline-resume never re-spawns it
+    # BLOCKED task — reset head to idle so pipeline-resume never re-spawns it,
+    # AND (CANONICAL:SSOT-STATUSFLIP-LANEMOVE(c), execute-tier.md) lane-move
+    # the row OUT of in_progress[] INTO backlog[] in the SAME write if the
+    # agent that flipped it to BLOCKED did not already do so — self-healing
+    # backstop for the FU-CNYVND-DEAD-FIELD-REMOVE incident class (a parked
+    # BLOCKED row silently ate a full wip_in_progress concurrency slot).
     now=$(date -u +%Y-%m-%dT%H:%M:%SZ)
-    jq --arg s "idle" --arg t "$now" --arg u "dev-team" \
-      '.head = {status:$s, updated_at:$t, updated_by:$u, active_task_id:null, next_agent:null}' \
+    jq --arg s "idle" --arg t "$now" --arg u "dev-team" --arg tid "$head_active_task" \
+      '.head = {status:$s, updated_at:$t, updated_by:$u, active_task_id:null, next_agent:null}
+       | if ((.task_board.in_progress // []) | any(.id == $tid or .task_id == $tid)) then
+           .task_board.backlog = ((.task_board.backlog // []) + [ (.task_board.in_progress // [])[] | select(.id == $tid or .task_id == $tid) ])
+           | .task_board.in_progress = ((.task_board.in_progress // []) | map(select((.id != $tid) and ((.task_id // null) != $tid))))
+         else . end' \
       docs/data/orch/orch-state.json \
       | bash "$PROJECT_ROOT/scripts/orch-apply.sh" || true
-    send_telegram(channel="work", "[dev-team] head task " + head_active_task + " is BLOCKED — head reset idle, routing to triage")
+    send_telegram(channel="work", "[dev-team] head task " + head_active_task + " is BLOCKED — head reset idle + lane-moved in_progress[]→backlog[] if parked there, routing to triage")
     JUMP TO drain-signals   # PO triage picks up from here
   fi
   ```
@@ -523,10 +540,10 @@ head_updated_at   =$(printf '%s' "$HEAD" | jq -r '.updated_at')
 
 Runs ONLY on the head-idle fall-through above (`head.status == "idle"` or `head` missing/v1), BEFORE PO triage is spawned. Fixes the root-cause gap SYSREMAKE-P2-DEVTEAM-BACKLOG-PICKUP-BOUNDED1: with `ready[]=0` and `in_progress[]=0`, nothing previously promoted or claimed a plain BACKLOG/TODO row — the backlog pile was inert to unattended automation (PO triage only self-initiates NEW sprints off signals/Telegram, it never sweeps plain backlog[] rows). BOUNDED-1 caps this lane at ONE task in flight — user-gated 2026-07-04; do NOT raise past 1 for this lane (the existing WIP≤2 invariant below is the separate, human/router-supervised dispatch budget).
 
-**WIP FORMULA (corrected 2026-07-22, UNBLOCK-DEVTEAM-DISPATCH-GATE-STAGING-DEADLOCK):** WIP is `.task_board.in_progress` length ONLY — a pure concurrency count. `ready[]` is a STAGING queue (promoted-but-not-yet-claimed work, including rows placed there by other sources — PM/architect decomposition, PO triage, the Supervised-Lane Sweep, the Ready-Lane Consumer below), never concurrency. The prior formula `(ready|length)+(in_progress|length)` let a saturated `ready[]` (36 rows live 2026-07-21, mostly PM epic-decomposition children this gate had no way to drain — see the Ready-Lane Consumer below) permanently evaluate `WIP<1` as false even when `in_progress==0` — instance 9 on the count-threshold-gate class, deadlocking BOTH this gate and the Supervised-Lane Sweep's gate simultaneously. Root cause + fix: `docs/agent-memory/decisions/sprint-UNBLOCK-DEVTEAM-DISPATCH-GATE-DEADLOCK-po.md`. DoD/regression instrument (tests gate SATISFIABILITY on a live-shaped saturated fixture, not lane resolution): `scripts/audits/devteam-dispatch-gate-satisfiability.sh`.
+**WIP FORMULA (corrected 2026-07-22, UNBLOCK-DEVTEAM-DISPATCH-GATE-STAGING-DEADLOCK; FURTHER corrected 2026-07-30, FIX-DEVTEAM-WIP-BUDGET-COUNTS-BLOCKED-INPROGRESS-ROWS):** WIP is `wip_in_progress` (`scripts/lib/devteam-eligibility.jq`) — a pure concurrency count, EXCLUDING any `in_progress[]` row whose `.status` is not real live work (BLOCKED or any `TERMINAL_SET` member) — never a bare `.task_board.in_progress|length`. `ready[]` is a STAGING queue (promoted-but-not-yet-claimed work, including rows placed there by other sources — PM/architect decomposition, PO triage, the Supervised-Lane Sweep, the Ready-Lane Consumer below), never concurrency. The prior formula `(ready|length)+(in_progress|length)` let a saturated `ready[]` (36 rows live 2026-07-21, mostly PM epic-decomposition children this gate had no way to drain — see the Ready-Lane Consumer below) permanently evaluate `WIP<1` as false even when `in_progress==0` — instance 9 on the count-threshold-gate class, deadlocking BOTH this gate and the Supervised-Lane Sweep's gate simultaneously. Root cause + fix: `docs/agent-memory/decisions/sprint-UNBLOCK-DEVTEAM-DISPATCH-GATE-DEADLOCK-po.md`. Bare `in_progress|length` was STILL wrong even after that fix — a row parked in `in_progress[]` with `.status: "BLOCKED"` (escalated, awaiting adjudication) kept consuming a full concurrency slot forever; live incident FU-CNYVND-DEAD-FIELD-REMOVE froze this gate + SLS/RLC/DRS fleet-wide for ~2.5h. `wip_in_progress` is `include`-d ONCE in `scripts/lib/devteam-eligibility.jq` — every gate below (WIP/WIP2/WIP3/WIP4) calls it directly, no per-caller duplicate arithmetic. DoD/regression instrument (tests gate SATISFIABILITY on a live-shaped saturated fixture, not lane resolution): `scripts/audits/devteam-dispatch-gate-satisfiability.sh`.
 
 ```bash
-WIP=$(jq '.task_board.in_progress|length' docs/data/orch/orch-state.json)
+WIP=$(jq 'include "scripts/lib/devteam-eligibility"; wip_in_progress' docs/data/orch/orch-state.json)
 if [ "$WIP" -lt 1 ]; then
   NOW=$(date -u +%Y-%m-%dT%H:%M:%SZ)
   jq --arg now "$NOW" \
@@ -559,10 +576,10 @@ FIX-BOUNDED1-SUPERVISED-LANE-NO-SWEEPER (architect, 2026-07-21). Runs immediatel
 
 **Fix — SLS spends the SECOND slot of the pre-existing WIP≤2 invariant** (`docs/agents/dev-team/flow/main.md` § Invariants) — NOT a new budget. BOUNDED-1's own header comment already names this slot: *"[WIP≤2] is the existing, separate router/PO WIP budget for supervised/manual dispatch; this auto-pickup lane [BOUNDED-1] is bounded independently and more conservatively [WIP<1]"*. SLS is the automated writer for that previously-named-but-never-used slot. The Ready-Lane Consumer immediately below shares this SAME slot (a 2nd/3rd writer, not a 3rd budget).
 
-**WIP2 FORMULA (corrected 2026-07-22, UNBLOCK-DEVTEAM-DISPATCH-GATE-STAGING-DEADLOCK):** same fix as BOUNDED-1's WIP above — `.task_board.in_progress` length ONLY, never `ready[]`. The pre-fix formula `(ready|length)+(in_progress|length)` was 37 against the live board on the exact day this sweep shipped (ready=36, in_progress=1), so `WIP2<2` was false from the moment this section was written — this sweep was dead on arrival despite its own acceptance instrument (`scripts/audits/bounded1-supervised-lane-report.sh`, lane-resolution only) showing green. See `docs/agent-memory/decisions/sprint-UNBLOCK-DEVTEAM-DISPATCH-GATE-DEADLOCK-po.md` and the satisfiability instrument `scripts/audits/devteam-dispatch-gate-satisfiability.sh`.
+**WIP2 FORMULA (corrected 2026-07-22, UNBLOCK-DEVTEAM-DISPATCH-GATE-STAGING-DEADLOCK; FURTHER corrected 2026-07-30, FIX-DEVTEAM-WIP-BUDGET-COUNTS-BLOCKED-INPROGRESS-ROWS):** same fix as BOUNDED-1's WIP above — `wip_in_progress` (`scripts/lib/devteam-eligibility.jq`, excludes BLOCKED/TERMINAL_SET rows from the count), never a bare `.task_board.in_progress|length`, never `ready[]`. The pre-fix formula `(ready|length)+(in_progress|length)` was 37 against the live board on the exact day this sweep shipped (ready=36, in_progress=1), so `WIP2<2` was false from the moment this section was written — this sweep was dead on arrival despite its own acceptance instrument (`scripts/audits/bounded1-supervised-lane-report.sh`, lane-resolution only) showing green. See `docs/agent-memory/decisions/sprint-UNBLOCK-DEVTEAM-DISPATCH-GATE-DEADLOCK-po.md` and the satisfiability instrument `scripts/audits/devteam-dispatch-gate-satisfiability.sh`.
 
 ```bash
-WIP2=$(jq '.task_board.in_progress|length' docs/data/orch/orch-state.json)
+WIP2=$(jq 'include "scripts/lib/devteam-eligibility"; wip_in_progress' docs/data/orch/orch-state.json)
 if [ "$WIP2" -lt 2 ]; then
   NOW=$(date -u +%Y-%m-%dT%H:%M:%SZ)
   jq --arg now "$NOW" \
@@ -647,10 +664,10 @@ UNBLOCK-DEVTEAM-DISPATCH-GATE-STAGING-DEADLOCK (architect, 2026-07-22), PO rulin
 
 **Problem this closes:** `ready[]` holds rows from three sources — BOUNDED-1's own promote script, SLS's own promote script, and PM/architect decomposition (epic children minted DIRECTLY into `ready[]`, never through either promote script — e.g. `CCATO-MCP-T1..T8`, `SYSREMAKE-P2-T1..T9`, `DESIGN-COWORK-FANOUT-T1..T8`, 25 rows live 2026-07-21, all carrying a resolved inline `next_agent`). BOUNDED-1's and SLS's own CLAIM scripts each only claim rows stamped with their OWN `promoted_by` marker — the third source has neither marker and was therefore **never claimable by anything**: not by BOUNDED-1/SLS (marker mismatch), not by PO triage (`po/flow/main.md` never sweeps `ready[]` by priority), not by any other step in this file. RLC is the missing generic consumer.
 
-Shares the SAME WIP≤2 budget as SLS (`.task_board.in_progress` length ONLY, per the corrected formula above) — a 3rd writer of the same named slot, not a new budget.
+Shares the SAME WIP≤2 budget as SLS (`wip_in_progress`, per the corrected formula above) — a 3rd writer of the same named slot, not a new budget.
 
 ```bash
-WIP3=$(jq '.task_board.in_progress|length' docs/data/orch/orch-state.json)
+WIP3=$(jq 'include "scripts/lib/devteam-eligibility"; wip_in_progress' docs/data/orch/orch-state.json)
 if [ "$WIP3" -lt 2 ]; then
   NOW=$(date -u +%Y-%m-%dT%H:%M:%SZ)
   jq --arg now "$NOW" \
@@ -706,10 +723,10 @@ FIX-BOUNDED1-NONDEV-NEXTAGENT-RESIDUAL-NO-DISPATCH-LANE (architect brief 2026-07
 
 **Agent-identity allowlist (compensating control, ratified NARROW 2026-07-30):** UNLIKE SLS (no agent-identity filter — safe because SLS's rows are already double human-vetted via the supervised+plan_only pair at mint time), DRS fires on rows carrying NO deliberate-dispatch flag at all in the majority of live cases (86/122), so it needs a DIFFERENT compensating control — restrict WHICH resolved `next_agent` values it is willing to blind-dispatch. Ratified default allowlist: **`{architect, ba, pm, po, agents-architect}`** — pure design/decision/coordination agents, zero broad production-write tool grants. `agent-father` (fleet-wide blast radius — edits the files that define every OTHER agent), `ops`/`ops-mainserver-fetch`/`ops-vps-fetch` (repeated live-infra-mutation incident history), `qa` (wrong mechanism — has its own dedicated QA-Drain lane), and `system-auditor` (0 live rows at ratification time — unfalsifiable, add only once a real row appears) are explicitly NOT on the default allowlist — see `is_design_router_allowed` in `scripts/lib/devteam-eligibility.jq` for the full per-agent reasoning. A row whose resolved `next_agent` is off-allowlist simply is not a DRS candidate this tick — it stays inert in `backlog[]`, reachable only by deliberate PO/router dispatch; DRS narrows the gap, it does not close all of it.
 
-**WIP / concurrency budget:** DRS shares the SAME WIP≤2 (`.task_board.in_progress` length ONLY) budget BOUNDED-1/SLS/RLC already share — a 4th writer of the existing named slot, NOT a new budget (DRS's claimed rows move into the SAME `in_progress[]` lane with the SAME concurrency meaning those three already meter — unlike QA-Drain's independent `qa[]<1` budget, which is a structurally different lane).
+**WIP / concurrency budget:** DRS shares the SAME WIP≤2 (`wip_in_progress`) budget BOUNDED-1/SLS/RLC already share — a 4th writer of the existing named slot, NOT a new budget (DRS's claimed rows move into the SAME `in_progress[]` lane with the SAME concurrency meaning those three already meter — unlike QA-Drain's independent `qa[]<1` budget, which is a structurally different lane).
 
 ```bash
-WIP4=$(jq '.task_board.in_progress|length' docs/data/orch/orch-state.json)
+WIP4=$(jq 'include "scripts/lib/devteam-eligibility"; wip_in_progress' docs/data/orch/orch-state.json)
 if [ "$WIP4" -lt 2 ]; then
   NOW=$(date -u +%Y-%m-%dT%H:%M:%SZ)
   jq --arg now "$NOW" \
@@ -981,7 +998,7 @@ Covers: post-execution checks (4.0–4.1), cold-eviction backstop (4.2), strande
 
 ## Invariants
 
-- WIP ≤ 2 (`.task_board.in_progress` length ONLY — corrected 2026-07-22, UNBLOCK-DEVTEAM-DISPATCH-GATE-STAGING-DEADLOCK; `ready[]`/`review[]` are staging lanes, never counted toward concurrency) | `docs/data/orch/orch-state.json` `.task_board.active_sprints[].tasks` count ≤ 80 per sprint | project-stats.json updated each sprint
+- WIP ≤ 2 (`wip_in_progress`, `scripts/lib/devteam-eligibility.jq` — corrected 2026-07-22, UNBLOCK-DEVTEAM-DISPATCH-GATE-STAGING-DEADLOCK, FURTHER corrected 2026-07-30, FIX-DEVTEAM-WIP-BUDGET-COUNTS-BLOCKED-INPROGRESS-ROWS: excludes BLOCKED/TERMINAL_SET rows from `in_progress[]`, never a bare array length; `ready[]`/`review[]` are staging lanes, never counted toward concurrency) | `docs/data/orch/orch-state.json` `.task_board.active_sprints[].tasks` count ≤ 80 per sprint | project-stats.json updated each sprint
 - Docker restart: after final sprint merge only
 - Branch deleted by QA post-merge
 - Notify WORK at: fix shipped | sprint complete | blocker resolved | idle

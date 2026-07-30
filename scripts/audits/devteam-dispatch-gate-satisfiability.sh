@@ -69,6 +69,16 @@
 # would win the pick non-deterministically and never exercise OUR row's
 # head-guard behavior at all).
 #
+# EXTENDED 2026-07-30 (FIX-DEVTEAM-WIP-BUDGET-COUNTS-BLOCKED-INPROGRESS-
+# ROWS): § WIP EFFECTIVE COUNT below proves the corrected `wip_in_progress`
+# def (scripts/lib/devteam-eligibility.jq — now excludes BLOCKED/TERMINAL_SET
+# rows from the count, not a bare `in_progress|length`) reads 1, not 2, on an
+# isolated fixture shaped exactly like the live incident (1 IN_PROGRESS + 1
+# BLOCKED row both physically in in_progress[]), that a genuinely-saturated
+# 2x-IN_PROGRESS fixture still reads 2 (no false relief), and — non-vacuously
+# — that the REAL SLS claim script actually fires under the effective-wip=1
+# shape (not just an arithmetic assertion).
+#
 # Usage: bash scripts/audits/devteam-dispatch-gate-satisfiability.sh
 # Exit 0 = every assertion below passes. Exit 1 = at least one fails
 # (details printed). Never writes to the live orch-state.json.
@@ -492,6 +502,76 @@ jq --arg now "$NOW" --argjson allowlist "$DRS_ALLOWLIST" --slurpfile detail "$DE
 jq --arg now "$NOW" -f scripts/devteam-backlog-claim-design-router-sweep.jq "$WORK/capped-drs.json" > "$WORK/capped-drs2.json"
 CAPPED_DRS_CLAIMED_AT_MOST_ONE=$([ "$(jq '.task_board.in_progress|length' "$WORK/capped-drs2.json")" -le "$((CAPPED_INPROG + 1))" ] && echo true || echo false)
 assert "defense-in-depth: DRS claim script never claims more than ONE additional row per invocation even if called at/above the shared WIP<=2 cap" "$CAPPED_DRS_CLAIMED_AT_MOST_ONE"
+
+# =============================================================================
+# ---- WIP EFFECTIVE COUNT excludes BLOCKED rows (FIX-DEVTEAM-WIP-BUDGET-
+# COUNTS-BLOCKED-INPROGRESS-ROWS, 2026-07-30) ----
+# wip_in_progress (scripts/lib/devteam-eligibility.jq) must count only rows
+# representing REAL live concurrency, not raw in_progress[] array length.
+# Live incident: FU-CNYVND-DEAD-FIELD-REMOVE flipped IN_PROGRESS->BLOCKED and
+# stayed parked in in_progress[] — a bare-length WIP read at cap=2 froze
+# BOUNDED-1/SLS/RLC/DRS fleet-wide for ~2.5h despite only ONE row genuinely
+# live. Isolated single-row-array fixtures throughout (same discipline as the
+# HEAD-GUARD sections above), never mixed into the shared padded fixture.
+# =============================================================================
+echo ""
+echo "=== WIP EFFECTIVE COUNT (BLOCKED rows excluded from concurrency budget) ==="
+
+# Fixture A: raw in_progress[] array length 2, but only ONE row genuinely
+# IN_PROGRESS — mirrors the live incident shape exactly.
+WIP_BLOCKED_MIX_FIXTURE=$(jq -n --arg now "$NOW" '
+  { task_board: {
+      backlog: [], ready: [], qa: [], review: [], done: [], done_verified: [],
+      in_progress: [
+        { id: "GATESAT-WIP-LIVE", status: "IN_PROGRESS", priority: "P1",
+          type: "FIX", zone: "cross-service/", next_agent: "developer", claimed_at: $now },
+        { id: "GATESAT-WIP-PARKED-BLOCKED", status: "BLOCKED", priority: "P3",
+          type: "FIX", zone: "apps/mcp-server", next_agent: "architect",
+          blocked_reason: "synthetic — mirrors FU-CNYVND-DEAD-FIELD-REMOVE parked shape", claimed_at: $now }
+      ]
+    } }')
+echo "$WIP_BLOCKED_MIX_FIXTURE" > "$WORK/wip-blocked-mix.json"
+WIP_MIX_RAW_LEN=$(jq '.task_board.in_progress|length' "$WORK/wip-blocked-mix.json")
+WIP_MIX_EFFECTIVE=$(jq 'include "scripts/lib/devteam-eligibility"; wip_in_progress' "$WORK/wip-blocked-mix.json")
+assert "AC-WIP-BLOCKED-1: fixture has raw in_progress[] length 2 (1 IN_PROGRESS + 1 BLOCKED) — confirms the fixture models the live-incident shape" \
+  "$([ "$WIP_MIX_RAW_LEN" -eq 2 ] && echo true || echo false)"
+assert "AC-WIP-BLOCKED-2: wip_in_progress (corrected formula) reads 1 on this fixture, NOT the raw length 2 — the parked BLOCKED row does not consume a concurrency slot" \
+  "$([ "$WIP_MIX_EFFECTIVE" -eq 1 ] && echo true || echo false)"
+assert "AC-WIP-BLOCKED-3: at wip_in_progress=1, the shared SLS/RLC/DRS gate (wip_in_progress<2) IS satisfiable" \
+  "$([ "$WIP_MIX_EFFECTIVE" -lt 2 ] && echo true || echo false)"
+
+# Non-vacuous proof: SLS actually FIRES (claims a row, drains ready[]->
+# in_progress[]) when the gate is computed via wip_in_progress against this
+# exact BLOCKED-mix in_progress[] shape — not just an arithmetic fact.
+WIP_MIX_SLS_FIXTURE=$(jq --arg now "$NOW" '
+  .task_board.ready = [ { id: "GATESAT-WIP-BLOCKED-SLS-CANDIDATE", status: "READY", priority: "P1",
+    type: "FIX", zone: "cross-service/", next_agent: "architect", dispatch_lane: "architect",
+    promoted_by: "dev-team (supervised-lane sweep)", promoted_at: $now } ]
+' "$WORK/wip-blocked-mix.json")
+echo "$WIP_MIX_SLS_FIXTURE" > "$WORK/wip-blocked-mix-sls.json"
+jq --arg now "$NOW" --slurpfile detail "$DETAIL" --slurpfile archive "$ARCHIVE" -f scripts/devteam-backlog-claim-supervised-lane-sweep.jq "$WORK/wip-blocked-mix-sls.json" > "$WORK/wip-blocked-mix-sls-out.json"
+WIP_MIX_SLS_CLAIMED=$(jq -r '[.task_board.in_progress[] | select(.id=="GATESAT-WIP-BLOCKED-SLS-CANDIDATE")] | length' "$WORK/wip-blocked-mix-sls-out.json")
+assert "AC-WIP-BLOCKED-4 (non-vacuous): SLS claim script actually fires (claims ready[]->in_progress[]) under the effective-wip=1 BLOCKED-mix fixture, proving SLS/RLC/DRS stay SATISFIABLE with a parked BLOCKED row present" \
+  "$([ "$WIP_MIX_SLS_CLAIMED" -eq 1 ] && echo true || echo false)"
+
+# Fixture B: TWO genuinely IN_PROGRESS rows — must still saturate wip=2 (no
+# false relief from the fix).
+WIP_TWO_LIVE_FIXTURE=$(jq -n --arg now "$NOW" '
+  { task_board: {
+      backlog: [], ready: [], qa: [], review: [], done: [], done_verified: [],
+      in_progress: [
+        { id: "GATESAT-WIP-LIVE-A", status: "IN_PROGRESS", priority: "P1",
+          type: "FIX", zone: "cross-service/", next_agent: "developer", claimed_at: $now },
+        { id: "GATESAT-WIP-LIVE-B", status: "IN_PROGRESS", priority: "P1",
+          type: "FIX", zone: "cross-service/", next_agent: "developer", claimed_at: $now }
+      ]
+    } }')
+echo "$WIP_TWO_LIVE_FIXTURE" > "$WORK/wip-two-live.json"
+WIP_TWO_LIVE_EFFECTIVE=$(jq 'include "scripts/lib/devteam-eligibility"; wip_in_progress' "$WORK/wip-two-live.json")
+assert "AC-WIP-BLOCKED-5: two genuinely IN_PROGRESS rows still saturate wip_in_progress=2 (no false relief from the fix)" \
+  "$([ "$WIP_TWO_LIVE_EFFECTIVE" -eq 2 ] && echo true || echo false)"
+assert "AC-WIP-BLOCKED-6: at wip_in_progress=2, the shared SLS/RLC/DRS gate (wip_in_progress<2) is NOT satisfiable" \
+  "$([ "$WIP_TWO_LIVE_EFFECTIVE" -ge 2 ] && echo true || echo false)"
 
 # =============================================================================
 # ---- Step 4: FIX-DEPSSATISFIED-COLD-ARCHIVED-DEP-RESOLVES-MISSING ----
