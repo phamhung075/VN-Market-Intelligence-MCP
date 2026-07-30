@@ -10,7 +10,8 @@
 - **Pushed** `456f7f59e` under `commit-mutex:main`, 0/0 ahead-behind confirmed, released `task:po-triage-20260730`.
 - **Dispatched `ops`** (background, `a0c1e307209a1ae06`, intent-locked) for the UNBLOCK: single-service mcp-server rebuild + 2-command deploy-proof, so QA-Drain doesn't verify the review row against a 13h-stale image.
 - **Deliberately did NOT direct-dispatch `architect`** on `FIX-DONELANE-...` despite P0 — this tick's fallback chain (SLS/RLC/DRS/QA-Drain) was never reached (BOUNDED-1 already claimed the idle slot), so a direct dispatch now would race a future DRS sweep on the same row. Left in `backlog[]`.
-- **NEXT**: await ops's rebuild-verification return; RAW-verify the two claimed commands before flipping `rebuild_required→false` is trusted as done.
+- **ops returned rebuild-complete** — re-verified all 3 claims live myself (not trusted): grep=1 in-container, image `sha256:95ad7ae7ef39...` Created `22:06:34Z` (after the 21:30:47Z fix commit, genuine rebuild), health=`healthy`. Board diff exactly scoped (`rebuild_required→false` + verification fields only, `status`/`next_agent` untouched for QA). Committed+pushed `4d08733ce`, confirmed intent-lock genuinely free by re-claiming it myself. Row now ready for QA's 3-step behavioral gate against the correct binary.
+- **NEXT**: idle — this tick fully closed. FIX-DONELANE-... awaits DRS's natural next pass; FIX-SIGNALQUALITYAUDIT-... awaits QA pickup.
 
 ## cycle-20260730T2137Z-tick — new tick; drained 11 signals; BOUNDED-1 (WIP=0) picked FU-SBV-EFFECTIVE-DATE-COLUMN; caught+fixed own wrong PO-triage lock key; spawned PO 4th triage pass
 

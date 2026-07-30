@@ -36,3 +36,12 @@
 **why-change:** none to the board content itself — PO's mint/flip/gate-install stands as verified; the only correction is procedural (push + lock release, which PO cannot do without a gateway grant for push).
 
 ---
+
+### STEP dev-team-S4 · dev-team · 2026-07-31T00:15:00Z
+**task-id:** mcp-server rebuild (ops, `a0c1e307209a1ae06`)
+**what-done:** RAW-verify of ops's rebuild-complete return before committing the board write. Independently re-ran all 3 required checks myself, not trusted from self-report: `docker exec ... grep -c deriveAuditConfidence` = 1 (matched); `docker inspect` image sha `sha256:95ad7ae7ef39...` Created `2026-07-30T22:06:34Z` (matched, and genuinely after the fix commit's 21:30:47Z — confirms real rebuild not restart-of-stale-image); container health `healthy` (matched). `docker ps` across the fleet — 13 containers, all `healthy` (ops reported "12/12 healthy"; miscounted by one, but every container present IS healthy, so no degraded-peer risk from the single-service rebuild — not material). `git diff` on the resulting board write was minimal and exactly scoped: only `rebuild_required→false`, new `rebuild_verified_at`/`rebuild_verification` fields, `updated_at` bump — `status`/`next_agent` correctly left untouched for QA, as instructed. `orch-validate.mjs` Stage 0+1 PASS.
+**what-considered:** whether to trust the claimed intent-lock release or re-check — re-checked by attempting to re-claim `intent:ops:mcp-server-rebuild-signalqualityaudit-gate` myself; succeeded (`claimed:true`), proving it was genuinely free, then released my own verification claim immediately.
+**why-decision:** committed (`4d08733ce`) and pushed clean (0/0 ahead-behind). Row `FIX-SIGNALQUALITYAUDIT-WRITE-GATE-UNREACHABLE-BY-EMITTER-CONTRACT` is now genuinely ready for QA's 3-step `po_verification_gate_20260730T2148` behavioral gate against the correct running binary — the deploy leg of that gate is done and RAW-verified end to end (PO found the gap → dev-team confirmed it live → ops rebuilt → dev-team re-confirmed the rebuild live). Sent WORK Telegram closing the loop.
+**why-change:** none — pure verification + commit/push of ops's own board write.
+
+---
