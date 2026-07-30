@@ -1,0 +1,55 @@
+{
+  "from": "cowork-team",
+  "to": "orch-sentinel",
+  "type": "cowork-tick-telemetry",
+  "payload": {
+    "fire_time": "2026-07-30T20:21:58Z",
+    "matched_slots": [
+      "tnb-audit"
+    ],
+    "won_slots": [
+      "tnb-audit"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "tnb-audit"
+    ],
+    "silent": false,
+    "drift_min": 5,
+    "errors": [],
+    "pressure_mode": "adaptive",
+    "calendar_status": "unknown",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "chef_mutex_applied": false,
+    "due_reasons": {
+      "tnb-audit": "cron"
+    },
+    "cadence_minutes": {
+      "tnb-audit": null
+    },
+    "last_fired_timestamp": "2026-07-30T20:21:51Z",
+    "last_fired_slots": [
+      "tnb-audit"
+    ],
+    "last_fired_write_errors": [],
+    "classification": "WORK",
+    "reason": "guaranteed cron slot due (tnb-audit), legacy pass-through (policy_id null)",
+    "nominal_tick": "2026-07-30T20:15Z",
+    "leader_lock": "held",
+    "dev_head": "in_progress",
+    "devq": 5,
+    "signal_backlog": 16,
+    "note": ""
+  },
+  "priority": "INFO",
+  "createdAt": "2026-07-30T20:22:10Z",
+  "_processed": {
+    "fingerprint": "e4c26d965cfd2ec8e661173bd718bc8c2548e4964859437884288328fc53f42d",
+    "processedAt": "2026-07-30T20:49:13Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

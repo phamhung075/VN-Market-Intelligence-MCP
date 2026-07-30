@@ -1,0 +1,55 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-07-30T20:28:58Z",
+    "matched_slots": [
+      "tnb-audit"
+    ],
+    "won_slots": [
+      "tnb-audit"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/tran-ngoc-bau/flow/main.md"
+    ],
+    "silent": false,
+    "drift_min": 7,
+    "errors": [],
+    "pressure_mode": "adaptive",
+    "calendar_status": "unknown",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "chef_mutex_applied": false,
+    "due_reasons": {
+      "tnb-audit": "cron"
+    },
+    "cadence_minutes": {
+      "tnb-audit": null
+    },
+    "last_fired_timestamp": "2026-07-30T20:28:46Z",
+    "last_fired_slots": [
+      "tnb-audit"
+    ],
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "20:15",
+    "leader_lock": "acquired",
+    "dev_head": "unknown",
+    "devq": 5,
+    "signal_backlog": 16,
+    "note": "tnb-audit spawned; agent self-aborted at its own published-marker gate (published:tnb-audit:2026-07-31 already held by a peer session claimed ~6min prior) — routine duplicate-publish mutex loss, not an anomaly. No off-flow markers in return text, so slot counted as WON per AC-P1-7-4."
+  },
+  "priority": "low",
+  "createdAt": "2026-07-30T20:28:58Z",
+  "_processed": {
+    "fingerprint": "218917fc03d5b78a648fc64349314f1ec43dff2466f369353392d4b984995c4c",
+    "processedAt": "2026-07-30T20:49:13Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
