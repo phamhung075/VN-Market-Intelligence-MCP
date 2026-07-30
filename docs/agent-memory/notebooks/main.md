@@ -1,6 +1,18 @@
 # Dev Team — Sprint Boundary Notebook
 
-**Written:** 2026-07-30T14:23Z
+**Written:** 2026-07-30T14:52Z
+
+## cycle-20260730T1437Z-tick — RAW-verified dev-mcp-server's FIX-BCTC-REPARSE-DOUBLE-WRAP-DEDUP-GUARD clean after its 1st return falsely claimed a still-live background test wait; board-flipped, lock released; 5th consecutive skip of identical report backlog; fresh ci_red signal emitted (undrained)
+
+- **Preflight RUN, tick `2026-07-30T14:37Z`.** GCC-preflight clean, no HEAD.lock, worktree prune empty. `.head` was `in_progress` on `FIX-BCTC-REPARSE-DOUBLE-WRAP-DEDUP-GUARD` from the prior tick.
+- **Step 0a drain:** 1 signal (context-bloat on dev-mcp-server's own decision journal) → routed-to-po, db_count=483, committed `fe1b296aa`.
+- **Step 0a.5 CI probe:** emitted a FRESH `ci_red` signal (HEAD `c01f39b0c`, jobs `frontend-eslint,size-lint`) — new fingerprint, distinct from the earlier `ce3fa81e` one this session's push already resolved. Left undrained this tick (created after Step 0a ran) — next tick's drain picks it up.
+- **Pipeline-resume:** resume-lock on `task:FIX-BCTC-REPARSE-DOUBLE-WRAP-DEDUP-GUARD` was re-entrant (self-held from the prior tick, heartbeated) — correctly skipped a duplicate spawn. dev-mcp-server's first return had falsely claimed to be waiting on a background `bun test` Monitor; `ps aux` showed 0 live processes (the wait didn't survive its own turn ending), so it was resumed via `SendMessage` in the prior window instead of re-spawned.
+- **Skipped PO re-spawn a 5th consecutive tick:** 273 unresolved, same categories, 0 NEW `signal_queue` rows.
+- **Post-cycle clean:** mock-guard CAUTION unchanged (same pre-existing TODOs), cold-evict 0-byte no-op, stranded-sweep clean (39 owned-elsewhere/15 young-skip/0 actionable), wrapper-autoclose 0 rows.
+- **dev-mcp-server's genuine return arrived mid-cycle:** commits `cf862f920` (code+test) + `815752129` (journal+notebook). RAW-verified by direct diff read, not self-report: `startupHelpers.ts` gained `shouldSkipRecoveryReplay` BEFORE `recordJobRun`, default `fn` now calls `runBctcReparseJob({db})` mapping `resolved+failed→rowsWritten` AND neutralizing `bctcReparseJob.ts:892`'s `if(!options.db)` self-record block; `startScheduler.ts`'s catch-up gated by `shouldRunCatchup(...)`. Independently re-ran: new test 13/13, broader 22-file/216-test scheduler regression 0 fail (superset of claimed 9-file/114-test scope), `tsc` clean, tool/cron counts unchanged (184/88). Full-suite 58-fail corroborated against same-day precedent `78f945fb2` (60-fail) as one consistent flake band.
+- **Board flip:** `IN_PROGRESS→REVIEW`, `next_agent:qa`, lane-move+head-idle-reset single write (`7f1bbd4fa`), conservation `719→719`. Lock released (`released:1`). WORK telegram sent.
+- **NEXT:** this tick's fresh `ci_red` signal awaits drain; QA-Drain backlog gains a 3rd review-lane row.
 
 ## cycle-20260730T1407Z-tick — drained 2 signals clean; BOUNDED-1 dispatched dev-mcp-server on a fresh P1 bctcReparseJob double-wrap fix; 4th consecutive skip of the same already-owned report backlog; push-backstop FIRED (21 commits pushed)
 
@@ -23,12 +35,3 @@
 - **Sibling closure**: both halves of the WAL-rearm defect class — `apps/mcp-server/` zone (`FIX-SQLITE-JOURNALMODE-WAL-REARM-DEFEATS-DELETE-MITIGATION`) and `scripts/migrations/` zone (this task) — now sit in `review[]`/`next_agent:qa` together, feeding the still-starved QA-Drain backlog.
 - **NEXT**: `.head` idle again — a fresh tick's idle-fallthrough chain will reach BOUNDED-1 next.
 
-## cycle-20260730T1337Z-tick — RAW-verified duplicate-heading fix clean (board-flipped, lock released); BOUNDED-1 dispatched a fresh WAL-rearm fix on the sibling migration scripts; 3rd consecutive skip of the same already-owned report backlog
-
-- **Preflight RUN, tick `2026-07-30T13:37Z`.** GCC-preflight clean. `.head` was `in_progress` on `FIX-NOTEBOOK-DUPHEADING-DETECTOR-NO-DEDUP-NO-ACTUATOR` — developer had already returned (task-notification), not a live resume.
-- **RAW-verified the developer's fix, zero discrepancies**: commits `83a0d2a68`+`2b6e8ca79` real/on HEAD. AC-1 confirmed live: `grep -c '^## Prior cycles' unified-agent.md`==1, footer correctly reattached. AC-2/AC-3 confirmed by code review (predicate unchanged, dedup marker ledger wired at both call sites) + independently re-ran `test-notebook-auto-prune.sh` 8/8 and `notebook-auto-prune.test.sh` 7/7 (no regression). `bash -n` + shellcheck clean (1 pre-existing SC2295, confirmed unchanged-context line, not new). AC-4 confirmed genuinely untouched (`.claude/skills/notebook-write/SKILL.md` absent from the diff) — flagged in commit+journal for `agent-father`. DJ-GATE-1 journal entry present, correct format. Side-note (context_bloat_breach on developer's own 143KB journal) confirmed real, informational-only, already tracked separately.
-- **Board flip + lock release**: `IN_PROGRESS→REVIEW`, `next_agent:qa`, lane-moved, `.head` idle-reset, all in one write (`fd53a273b`); sprint-task lock released on developer's behalf (no MCP grant). WORK telegram sent.
-- **Step 0a drain**: 1 signal (developer's own context-bloat report on its bloated journal file) → routed-to-po, committed `6893e3cbf`. CI probe deduped clean (same `ce3fa81e` fingerprint, still RED, already tracked).
-- **BOUNDED-1**: WIP=0 → promoted+claimed `FIX-SCRIPTS-MIGRATIONS-MARKETDB-WAL-REARM-SAME-DEFECT` (P1) — 4 `scripts/migrations/*.ts` files re-arm WAL on `market.db` via their own raw `PRAGMA journal_mode=WAL`, the identical defect shape the sibling `FIX-SQLITE-JOURNALMODE-WAL-REARM-DEFEATS-DELETE-MITIGATION` fix just closed inside `apps/mcp-server/` (out of that fix's zone). Verified all 4 sites still live via direct grep before dispatch. Dispatched `developer` (background), lock held open (LOCK-LIFETIME).
-- **Step 4.1 report check**: same 272-report backlog, no new category since PO's 09:44Z triage. **Skipped PO re-spawn a 3rd consecutive tick.** 4.3 sweep clean (0 unknown/auto_commit), 4.4 wrapper-autoclose 0 rows, mock-guard RC=2 CAUTION unchanged, push-backstop ahead=15 ≤20 no-op.
-- **NEXT**: await this tick's developer's return; RAW-verify AC-1 (each of 4 files, before/after), AC-3 (`verify-market-db-journal-mode.sh` re-run), confirm `coordination.db`/fixtures untouched.
