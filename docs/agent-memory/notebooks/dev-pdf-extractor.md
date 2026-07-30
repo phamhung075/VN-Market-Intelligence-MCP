@@ -6,49 +6,6 @@ Zone: `apps/pdf-extractor/` | Stack: Python/FastAPI | DB: pdf_extractor.db (writ
 
 ---
 
-## Cycle 2026-07-28 — FIX-PDFX-TESSERACT-CONCURRENCY-VIOLATES-SINGLE-WORKER-INVARIANT
-
-**Sprint:** n/a (router direct dispatch, supervised) | P0 | size M
-
-### Bug
-`/extract` (100% of live OCR traffic) reached tesseract via `asyncio.to_thread`
-bound to the asyncio DEFAULT executor (`min(32,cpu+4)`=10 in prod) — an
-accident, not a guard; NEITHER declared guard (ProcessPoolExecutor(1),
-PekEngineAdapter Semaphore(1)) was ever on that path. No `timeout=` meant an
-abandoned request (mcp-server's 120s abort) permanently ratcheted a slot.
-
-### Fix
-New `infrastructure/ocr_gateway.py`: process-global `BoundedSemaphore(N)`
-(`PDFX_OCR_MAX_CONCURRENCY`, default 1) + dedicated `ThreadPoolExecutor`,
-bounded deadline (`PDFX_OCR_PAGE_TIMEOUT_S`, default 600s) passed to
-pytesseract's own `timeout=` (breaks the ratchet — bounded hold, not
-permanent). Queue-wait overflow → `OcrCapacityExceededError` → HTTP 429 +
-Retry-After. `/health` gains `ocr` block (semaphore/os_children via /proc).
-Rewired: extraction_engine.py (the live defect), ocr_backends.py, ocr_adapter.py,
-generic_md_table/unit_ocr.py. `extract_tables_usecase.py`'s ProcessPoolExecutor
-path composes via `ocr_gateway.slot_async()` in the parent. NOT rewired
-(documented, not silent): ocr_worker.py (subprocess child, can't see this
-process's semaphore) and generic_md_table/extractor.py (40-test direct seam —
-follow-up recommended). extraction_engine.py:177-178 empty-string-on-failure
-swallow left OPEN (flagged separately, per task instruction).
-
-### Verify
-New `test_ocr_concurrency_invariant.py` (8 tests): T1 drives 15 concurrent
-POST /extract via the REAL route (ASGITransport), asserts peak<=1 — RED-
-verified on unfixed main first via throwaway worktree (peak=15, pasted in
-close-out) before GREEN. Fence test (AST-based, not regex) + deadline-
-backstop (proves slot releases, not held forever) + /health observability +
-portable /proc-parsing unit tests. Full suite: same 11 pre-existing failures
-byte-identical before/after (confirmed via worktree diff) — 0 regressions.
-import-linter: 3/3 contracts kept. Rebuilt single service: image ID changed
-(`c9f3d366`→`a75ddd73`), live tesseract 10→1, MemPerc ~95%→~9-11%,
-`ocr.semaphore==ocr.os_children` across samples.
-
-### Status
-REVIEW → next_agent=qa (supervised:true — not self-certified)
-
----
-
 ## Cycle 2026-07-29 — FACTORY-PDF-split-handlers
 
 **Sprint:** n/a (BOUNDED-1 auto-pickup) | **Zone:** apps/pdf-extractor/ | **Size:** L | P2
@@ -141,3 +98,50 @@ standard gate (docker cp was for my verification only, not a substitute).
 ### Status
 REVIEW → next_agent=qa (rebuild_required: true — ops rebuild+swap → qa
 live-verify, standard Microservice Code-Change Close Gate)
+
+---
+
+## Cycle 2026-07-30 — FIX-PDFX-EXTRACTION-ENGINE-EMPTY-STRING-SWALLOW
+
+**Sprint:** n/a (BOUNDED-1 auto-pickup) | **Zone:** apps/pdf-extractor/ | **Size:** S | P2
+
+### Bug
+Follow-up flagged in FIX-PDFX-TESSERACT-CONCURRENCY §10.3: `_ocr_page()`'s
+`except Exception: return ""` swallowed ANY OCR failure (tesseract crash,
+corrupt raster) as if extraction succeeded. Combined with the quality gate
+(services.py:71 `ocr_conf<0.5 AND not tables` => reject), a doc with any
+table + zero OCR text passed the gate and was persisted as a hollow
+"success" — indistinguishable from a genuine blank scanned page.
+
+### Fix
+New `OcrPageFailedError(PDFProcessingError)` (domain/errors.py). `_ocr_page`'s
+generic except now raises it (`from exc`) instead of `return ""`.
+`_extract_text_ocr_sync`'s propagation tuple extended alongside the
+pre-existing `OcrCapacityExceededError`/`OcrDeadlineExceededError` (already
+propagated correctly — this closed the one remaining gap). Zero changes
+needed to services.py/usecases.py/HTTP layer — process_pdf()'s existing
+`except PDFProcessingError` branch already marks doc failed, never reaches
+store_extraction(). Negative control (blank page: OCR succeeds returning
+"") unaffected. Prior-art checked: FIX-ERRAUDIT-W3-PEK-P2 targets a
+different method in the same file (`_extract_tables_sync` bare-except,
+services.py `validate_or_unknown`) — zero overlap, grep-confirmed.
+
+### Verify
+New `test_extraction_engine_ocr_failure_swallow.py` (12 tests, both
+directions at `_ocr_page` + `_extract_text_ocr_sync` levels) + 2 new tests
+in `test_extract_pdf_service.py`. Falsification: reverting the 2 source
+files makes the new test module fail COLLECTION (ImportError:
+OcrPageFailedError undefined) — confirms load-bearing. Full suite: 1056
+passed + 3 pre-existing env-only failures (missing pandas, missing
+container-only PDF fixture) unchanged before/after. import-linter: 3/3
+kept. mypy: same pre-existing baseline noise, 0 new errors.
+
+### Commit
+`200eabcf3` fix(pdf-extractor/fix-pdfx-extraction-engine-empty-string-swallow)
+
+### Status
+REVIEW → next_agent=qa
+
+Zone health: flow/main.md's G12 sandbox gate (`sandbox_runner.py`) still
+references a script absent from the repo — pilot-status shows the SCALE
+pilot closed DONE 2026-05-24; stale doc-drift, not a new finding this cycle.
