@@ -1,0 +1,14 @@
+{
+  "from": "alert-commander",
+  "to": "po",
+  "type": "bug-escalation",
+  "payload": "[alert-commander] SQLite \"database disk image is malformed\" persists 2h30m+ (first flagged c7 2026-07-30T04:14Z msg 4449, still failing c8 06:10Z msg 4455, now c9 06:40Z msg 4456). Direct calls failing: get_alerts, get_system_status (DB STATUS + DATA FRESHNESS sections), get_recent_fixes, log_agent_work. Bootstrap-embedded get_cycle_bootstrap path still healthy (market_context/agent_signals/system_status summary line all returned). No fix landed across 3 cycles. Cannot dedup-check via get_recent_fixes (itself broken by same corruption) before this BUG send.",
+  "priority": "high",
+  "createdAt": "2026-07-30T06:40:25Z",
+  "_processed": {
+    "fingerprint": "58dcd48bedfcb67479e4c2f1a4a70eea6e1d66460fcb4963c2ca542fd0543902",
+    "processedAt": "2026-07-30T06:46:46Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

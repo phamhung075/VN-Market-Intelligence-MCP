@@ -1,0 +1,35 @@
+{
+  "from": "cowork-team",
+  "to": "orch-sentinel",
+  "type": "cowork-tick-telemetry",
+  "payload": {
+    "tick": "2026-07-30T06:15Z",
+    "verdict": "WORK",
+    "slots_due": 1,
+    "spawned": [
+      "docs/agents/unified-agent/flow/chef.md"
+    ],
+    "spawned_slots": [
+      "chef-intraday"
+    ],
+    "silent_drop": [],
+    "due_reasons": {
+      "chef-intraday": "cadence"
+    },
+    "signal_drain_new_rows": 0,
+    "collision_guard_triggered": false,
+    "pressure_mode": "adaptive",
+    "calendar_status": "unknown",
+    "pressure_emit_stale_warning": true,
+    "container_vm_headroom_mb": 4759,
+    "notes": "SQLite corruption incident (P0, owner=ops) not touched this tick — get_cycle_bootstrap/get_macro_snapshot both succeeded cleanly again. pressure emit at Step 6.0 returned stale_warning=true (first time observed this session, prior ticks were false) — flagging for next tick's Step 4.2 gate, no action taken here per emit_pressure_state being a pass-through, un-diagnosed server computation."
+  },
+  "priority": "LOW",
+  "createdAt": "2026-07-30T06:22:00Z",
+  "_processed": {
+    "fingerprint": "9eede933361933cd1f20d1266647a2e6d203784658adf46e005e9df857619486",
+    "processedAt": "2026-07-30T06:46:46Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

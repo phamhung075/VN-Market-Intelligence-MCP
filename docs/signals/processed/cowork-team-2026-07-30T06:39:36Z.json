@@ -1,0 +1,55 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-07-30T06:39:36Z",
+    "matched_slots": [
+      "alert-commander-market"
+    ],
+    "won_slots": [
+      "alert-commander-market"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/alert-commander/flow/main.md"
+    ],
+    "silent": false,
+    "drift_min": 5,
+    "errors": [],
+    "pressure_mode": "legacy",
+    "calendar_status": "open",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "chef_mutex_applied": false,
+    "due_reasons": {
+      "alert-commander-market": "cron"
+    },
+    "cadence_minutes": {
+      "alert-commander-market": null
+    },
+    "last_fired_timestamp": "2026-07-30T06:39:33Z",
+    "last_fired_slots": [
+      "alert-commander-market"
+    ],
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "06:30",
+    "leader_lock": "acquired",
+    "dev_head": "unknown",
+    "devq": 5,
+    "signal_backlog": 17,
+    "note": "pressure-state stale_warning=true observed on read at this tick (prior emission at 06:15Z) forced legacy cadence fallback per AC-P1-6-3; this tick's own emit cleared stale_warning back to false (tick_id=2026-07-30T06:30:00Z) -- transient, no action needed. SQLite corruption non-recurrence continues: get_cycle_bootstrap + get_macro_snapshot both succeeded cleanly this tick."
+  },
+  "priority": "low",
+  "createdAt": "2026-07-30T06:39:36Z",
+  "_processed": {
+    "fingerprint": "a25e9796f168f63bdda9e9517ca99a8877fb2c9f9a3cf9695cbb188def976113",
+    "processedAt": "2026-07-30T06:46:46Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
