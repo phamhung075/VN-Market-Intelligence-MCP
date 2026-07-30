@@ -10913,6 +10913,79 @@
         "recommended_action": "Add the deferred T4 dedup guard to runMonthlySignalQualityJob() (idempotency check against the target audit month before sending the Telegram report — e.g. skip if a report for that month/year was already sent, so recoverMissedExecutions can be safely flipped to true without risking a duplicate Telegram report on a scheduler restart/replay), THEN flip schedulerJobTable.ts:229 recoverMissedExecutions:false -> true. Given the intrinsic idempotency of \"prior month\" resolution (any fire within a calendar month resolves to the SAME prior-month target, so a same-day backfill is safe even without the guard), also consider a low-risk immediate backfill of the missed June audit specifically if this row is picked up before 2026-08-01 (after which the natural cadence moves on to auditing July and the June gap becomes unrecoverable without a manual historical query).",
         "not_blocking": "P3, observability/completeness gap only, no data loss (signal_rejections source table is untouched, a backfill remains possible for the July report specifically until it ages out of relevance) — same class as feedback_passive_health_masks_dead_data but lower severity than the P2 SLA-breach row that surfaced it.",
         "origin_task": "FIX-SLA-SIGNALQUALITYAUDIT-MONTHLY-CADENCE-MISCLASSIFIED-48H"
+      },
+      {
+        "id": "FIX-COMMIT-SWEEP-GUARD-SCRIPT-ACTUATOR-AND-NOTEBOOK-LONGTAIL",
+        "type": "FIX",
+        "size": "M",
+        "priority": "P0",
+        "status": "BACKLOG",
+        "zone": "cross-service/",
+        "title": "Bare-commit sweep-guard actuator gap: dev-team-tick-preflight.sh:454-455 (git add + bare commit, 2x/hour) never migrated to pathspec form, plus a 31-file chore(memory/<agent-id>) notebook long-tail whose promised PM-tracked cleanup row was never minted",
+        "desc": "Two arms. (1) scripts/agents-flow/dev-team-tick-preflight.sh:454-455 does git add <2 paths> then a BARE git commit (TOCTOU shape, feedback_git_add_then_bare_commit_is_toctou_race_use_pathspec_commit) and runs on every dev-team tick; its flow-doc twin docs/agents/dev-team/flow/post-cycle.md:107 WAS fixed but the actuator that actually executes was not (feedback_fix_landed_in_the_pregate_not_the_probe_the_agent_actually_runs). (2) agent-father completion note on FIX-COMMIT-PATH-PEER-INDEX-SWEEP-GUARD-LAYER2 deferred a 31-file chore(memory/<agent-id>) notebook-commit pattern to \"a separate PM-tracked cleanup pass\" that does not exist on the board (epic-tail loss, feedback_epic_wrapper_closeout_gap_no_auto_revisit). AC: fix both arms so scripts/git-hooks/pre-commit GIT_SWEEP_GUARD_MODE=reject can actually be enabled fleet-wide (currently blocked at warn-by-default because these are unmigrated bypass surface). Unblocks the 4x-recurring P0 FIX-COMMIT-PATH-PEER-INDEX-SWEEP-GUARD (parent).",
+        "depends": [
+          "FIX-COMMIT-PATH-PEER-INDEX-SWEEP-GUARD-LAYER2"
+        ],
+        "created_at": "2026-07-30T09:18:19Z",
+        "created_by": "po/triage-20260730T0853",
+        "source": "PO triage 2026-07-30T09:06Z BATCH item 1/6 — decided+described by PO (ruling-20260730T0906Z-po-triage-po.md STEP po-1, LAYER2 row po_rescope_20260730 field), landed to orch-state by dev-team because PO's own orch-apply.sh write for 5 of 6 BATCH items did not execute this cycle (3rd recorded instance of feedback_po_notebook_mint_never_reaches_orchstate_board.md class — verified via grep, 0 occurrences pre-mint).",
+        "updated_at": "2026-07-30T09:18:20Z"
+      },
+      {
+        "id": "FIX-NOTEBOOK-AUTOPRUNE-SAMEDAY-TIE-DROPS-NEWEST",
+        "type": "FIX",
+        "size": "S",
+        "priority": "P1",
+        "status": "BACKLOG",
+        "zone": "cross-service/",
+        "title": "notebook-auto-prune.sh same-day heading tie drops the newest section instead of the oldest",
+        "desc": "scripts/agents-flow/notebook-auto-prune.sh:261 makes the time component of a heading optional, so date-only headings all normalise to one 17-char sort key; :277 sort -k2,2 -s | head -1 then picks the FIRST PHYSICAL section, not the oldest by time. developer.md is prepend/newest-first (confirmed via git log -1 -p --unified=0) and held 3 tied 2026-07-30 sections this cycle, so the hook deleted the just-written entry instead of the oldest one. Distinct from the existing heading-level-mismatch pruner row and the byte-cap-no-actuator row (item below) — this is a same-day tie-break direction bug.",
+        "created_at": "2026-07-30T09:18:19Z",
+        "created_by": "po/triage-20260730T0853",
+        "source": "PO triage 2026-07-30T09:06Z BATCH item 2/6 — consumed from dashboard signal dev-20260730T080653 (ACKed NEW->READ via commit ca2678a44), landed to orch-state by dev-team per the same mint-gap as item 1.",
+        "updated_at": "2026-07-30T09:18:20Z"
+      },
+      {
+        "id": "FIX-DEVTEAM-CLAIM-SCRIPTS-UNCONDITIONAL-HEAD-OVERWRITE",
+        "type": "FIX",
+        "size": "M",
+        "priority": "P1",
+        "status": "BACKLOG",
+        "zone": "cross-service/",
+        "title": "3 dev-team claim scripts perform an unconditional .head replace, can silently clobber a live in-progress task's resume pointer",
+        "desc": "scripts/devteam-backlog-claim-bounded1.jq:57, scripts/devteam-supervised-lane-sweep.jq:66, and scripts/devteam-ready-lane-consumer.jq:151 all perform an unconditional .head replace rather than a conditional guard (mirrors the already-fixed qadrain-head-slot-decouple precedent, which correctly guards). Confirmed live-risk this exact tick: .head was genuinely occupied by an in-flight supervised task (FIX-AUDITOR-CALLER-PROSE-OVERRIDES-DOCUMENTED-DETECTOR-THRESHOLD) while all 3 scripts sat live in the dispatch chain. AC: each script gains a conditional guard — only write .head when it is idle or already targets the same task_id, mirroring qadrain's pattern.",
+        "created_at": "2026-07-30T09:18:19Z",
+        "created_by": "po/triage-20260730T0853",
+        "source": "PO triage 2026-07-30T09:06Z BATCH item 3/6 — PO ratification Q3 on docs/architecture-briefs/2026-07-29-fix-bounded1-nondev-nextagent-residual-no-dispatch-lane.md section 6 (ruling-20260730T0906Z-po-triage-po.md STEP po-4), landed to orch-state by dev-team per the same mint-gap as item 1.",
+        "updated_at": "2026-07-30T09:18:20Z"
+      },
+      {
+        "id": "FIX-WF2-SUPERVISED-HOLD-NO-PO-SIDE-GOAHEAD-PRODUCER",
+        "type": "FIX",
+        "size": "S",
+        "priority": "P2",
+        "status": "BACKLOG",
+        "zone": "cross-service/",
+        "title": "WF-2 SUPERVISED-HOLD gate (docs/agents/dev-team/flow/main.md:467-483) has no documented PO-side mechanism that ever produces the po_goahead_* stamp it requires to release",
+        "desc": "grep -rn 'po_goahead' docs/agents/po/ docs/protocols/ .claude/skills/ returns zero hits outside the gate's own consumer-side jq predicate and the rows it has been hand-stamped onto ad hoc (e.g. FIX-AUDITOR-CALLER-PROSE-OVERRIDES-DOCUMENTED-DETECTOR-THRESHOLD this cycle). The stamp exists only because a PO happened to hand-author the exact key pattern; nothing in po/flow/main.md instructs it to. Same structural class as FIX-BOUNDED1-SUPERVISED-LANE-NO-SWEEPER (2026-07-21, idled a P0 6+ days) — a documented consumer with no documented producer. AC: po/flow/main.md gains an explicit step/rule for stamping po_goahead_<ts> on a supervised row it ratifies, so the mechanism is reliable rather than incidental.",
+        "created_at": "2026-07-30T09:18:19Z",
+        "created_by": "po/triage-20260730T0853",
+        "source": "PO triage 2026-07-30T09:06Z BATCH item 5/6 — raised by dev-team (SendMessage to a84c0571776271792), confirmed by PO (ruling-20260730T0906Z-po-triage-po.md STEP po-5, po.md notebook), landed to orch-state by dev-team per the same mint-gap as item 1.",
+        "updated_at": "2026-07-30T09:18:20Z"
+      },
+      {
+        "id": "FIX-DECISION-JOURNAL-BYTECAP-NO-ACTUATOR",
+        "type": "FIX",
+        "size": "S",
+        "priority": "P2",
+        "status": "BACKLOG",
+        "zone": "cross-service/",
+        "title": "decision-journal-archive.sh is wired but fires on sprint-close, not on the 36000B byte cap, so non-sprint-scoped journals (e.g. po-decisions.md) can never trigger it",
+        "desc": "scripts/decision-journal-archive.sh exists and is invoked, but its trigger condition is sprint-close, not the documented 36000B per-file cap. po-decisions.md is 192KB and is not sprint-scoped, so it can never match the archiver's diff condition. Measured 2026-07-30: 15 of 578 decision journals are over the 36000B cap fleet-wide, worst offender 331KB (9.2x cap). Same detector/actuator-asymmetry shape as the notebook byte-cap row, different actuator. AC: archiver (or a new trigger) fires on byte-cap breach independent of sprint-close, for any decision journal file, not only sprint-scoped ones.",
+        "created_at": "2026-07-30T09:18:19Z",
+        "created_by": "po/triage-20260730T0853",
+        "source": "PO triage 2026-07-30T09:06Z BATCH item 6/6 — po.md notebook Carry-over section (\"Batched\"), landed to orch-state by dev-team per the same mint-gap as item 1.",
+        "updated_at": "2026-07-30T09:18:20Z"
       }
     ],
     "closed_sprints": [
