@@ -93,12 +93,11 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "FIX-VPSHEALTH-DEMANDROUTE-EMPTYQUEUE-MISREPORTS-PROXY-UNREACHABLE",
-    "next_agent": "dev-mcp-server",
-    "next_action": "BOUNDED-1 auto-pickup claim of FIX-VPSHEALTH-DEMANDROUTE-EMPTYQUEUE-MISREPORTS-PROXY-UNREACHABLE — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
-    "updated_at": "2026-07-30T15:16:30Z",
-    "updated_by": "dev-team (bounded-1 auto-pickup)"
+    "status": "idle",
+    "active_task_id": null,
+    "next_agent": "router",
+    "updated_at": "2026-07-30T15:58:51Z",
+    "updated_by": "dev-team (raw-verify disposition)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -17899,6 +17898,39 @@
         "claimed_by": "dev-team (bounded-1 auto-pickup)",
         "reviewed_note": "RAW-verified by dev-team: commits cf862f920 (code+test) + 815752129 (journal+notebook), both real/on HEAD. AC-1/AC-2/AC-3 diffs match spec exactly (shouldSkipRecoveryReplay guard before recordJobRun; default fn maps runBctcReparseJob({db}) result to rowsWritten and neutralizes bctcReparseJob.ts:892 self-record via options.db truthy; startScheduler.ts catch-up gated by shouldRunCatchup(db,bctcReparseJob,2,30,now,false)). Independently re-ran: new test file 13/13 pass, broader 22-file scheduler regression (216 tests, superset of claimed 9-file/114-test scope) 0 fail, tsc clean, toolCount/cronJobCount 184/88 unchanged. Full-suite 14906 pass/58 fail/1 error corroborated against same-day precedent commit 78f945fb2 (14870 pass/60 fail) — consistent pre-existing flake band, none of the 58 reference bctcReparse/startupHelpers/startScheduler/cron_job_runs. AC-5 correctly deferred (no post-deploy production history yet). DJ-GATE-1 entry confirmed at sprint-COWORK-GUARANTEED-SLOT-CATCHUP-dev-mcp-server.md:278.",
         "updated_by": "dev-team (RAW-verify+disposition)"
+      },
+      {
+        "id": "FIX-VPSHEALTH-DEMANDROUTE-EMPTYQUEUE-MISREPORTS-PROXY-UNREACHABLE",
+        "type": "FIX",
+        "title": "get_vps_proxy_health prints \"VPS may be down or unreachable\" for the bctc route when the real cause is an EMPTY work queue — proxy is provably up (prices/news/sbv pushing on the same proxy)",
+        "status": "REVIEW",
+        "priority": "P2",
+        "size": "S",
+        "zone": "apps/mcp-server/",
+        "owner": "dev-mcp-server",
+        "next_agent": "qa",
+        "files": [
+          "apps/mcp-server/src"
+        ],
+        "created_at": "2026-07-29T19:30:16Z",
+        "created_by": "po/triage-20260729T1928",
+        "origin_signal_id": "sys-20260729T183440-1d23",
+        "baseline_pass": true,
+        "rebuild_required": true,
+        "root_cause": "The staleness verdict is derived from last-push AGE alone and then narrated with a fixed causal claim (VPS down/unreachable). bctc is a DEMAND-DRIVEN route: it pushes only when bctc_vps_queue holds actionable rows. RAW live probe 2026-07-29T19:2xZ through the mcp-server runtime: bctc_vps_queue statuses = deferred_infra 328, done 85, enrich_failed 128, url_not_found 39 — ZERO pending/queued. Meanwhile the SAME proxy shows prices ok (373 pushes/24h), news ok (148/24h, last 19:15:19), sbv ok (38/24h, last 18:57:33). The proxy is emphatically up.",
+        "fix_spec": "Separate OBSERVATION from INFERENCE for demand-driven routes. Either (a) suppress/downgrade the STALE verdict for a route whose own work queue has no actionable rows and label it IDLE-NO-WORK, or (b) keep STALE but replace the hardcoded VPS may be down or unreachable narration with a cause discriminated by whether sibling routes on the same proxy are pushing. Generic — no route-name or date literals.",
+        "ac": "AC: with bctc_vps_queue holding zero actionable rows AND >=1 sibling route pushing within its own SLA, get_vps_proxy_health MUST NOT assert the VPS is down/unreachable. Verify against live output, not a fixture.",
+        "dedup_checked": "Distinct from FIX-VPS-NEWS-STALE-FALSEPOS (zone apps/news-fetch/, news route, threshold-vs-cadence miscalibration where the feed IS pushing) and from FIX-VPS-HEALTH-OFFHOURS-MASK-FALSE-GREEN (off-hours grace double-apply, opposite direction). Here the STALE flag is CORRECT and only the attributed cause is wrong.",
+        "user_impact": "MED — a permanent recurring false incident: the queue stays drained until ALPHA-S6-OPTIONB-DECISION-GATE trips, so this WARN re-fires indefinitely and burns a system-auditor + PO triage slot each time.",
+        "updated_at": "2026-07-30T15:58:51Z",
+        "promoted_at": "2026-07-30T15:16:22Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
+        "claimed_at": "2026-07-30T15:16:30Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "raw_verified_by": "dev-team",
+        "raw_verified_at": "2026-07-30T15:58:51Z",
+        "raw_verify_note": "Independently RAW-verified, not self-report: commits 6113890bb+0f8e8ee07 real/on-HEAD; diff matches claim exactly (DEMAND_QUEUE_SQL+getDemandQueueDepth in vpsPushLogStore.ts, formatHealth() idle-no-work branch in vpsProxyTools.ts, isStale() untouched); new test 7/7, sibling suite 22/22 (1113+VPT-1), tsc clean, tool/cron counts unchanged 184/88; live docker-exec probe against real market.db independently reproduces the claimed root cause exactly (bctc_vps_queue 328/128/85/39, 0 pending; news/sbv pushing within 30min); live undeployed get_vps_proxy_health tool call still reproduces the pre-fix bug verbatim, confirming REBUILD_REQUIRED=true is genuine and outstanding."
       }
     ],
     "qa": [],
@@ -17920,38 +17952,7 @@
     },
     "last_triaged_at": "2026-07-30T15:16:22Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": [
-      {
-        "id": "FIX-VPSHEALTH-DEMANDROUTE-EMPTYQUEUE-MISREPORTS-PROXY-UNREACHABLE",
-        "type": "FIX",
-        "title": "get_vps_proxy_health prints \"VPS may be down or unreachable\" for the bctc route when the real cause is an EMPTY work queue — proxy is provably up (prices/news/sbv pushing on the same proxy)",
-        "status": "IN_PROGRESS",
-        "priority": "P2",
-        "size": "S",
-        "zone": "apps/mcp-server/",
-        "owner": "dev-mcp-server",
-        "next_agent": "dev-mcp-server",
-        "files": [
-          "apps/mcp-server/src"
-        ],
-        "created_at": "2026-07-29T19:30:16Z",
-        "created_by": "po/triage-20260729T1928",
-        "origin_signal_id": "sys-20260729T183440-1d23",
-        "baseline_pass": true,
-        "rebuild_required": true,
-        "root_cause": "The staleness verdict is derived from last-push AGE alone and then narrated with a fixed causal claim (VPS down/unreachable). bctc is a DEMAND-DRIVEN route: it pushes only when bctc_vps_queue holds actionable rows. RAW live probe 2026-07-29T19:2xZ through the mcp-server runtime: bctc_vps_queue statuses = deferred_infra 328, done 85, enrich_failed 128, url_not_found 39 — ZERO pending/queued. Meanwhile the SAME proxy shows prices ok (373 pushes/24h), news ok (148/24h, last 19:15:19), sbv ok (38/24h, last 18:57:33). The proxy is emphatically up.",
-        "fix_spec": "Separate OBSERVATION from INFERENCE for demand-driven routes. Either (a) suppress/downgrade the STALE verdict for a route whose own work queue has no actionable rows and label it IDLE-NO-WORK, or (b) keep STALE but replace the hardcoded VPS may be down or unreachable narration with a cause discriminated by whether sibling routes on the same proxy are pushing. Generic — no route-name or date literals.",
-        "ac": "AC: with bctc_vps_queue holding zero actionable rows AND >=1 sibling route pushing within its own SLA, get_vps_proxy_health MUST NOT assert the VPS is down/unreachable. Verify against live output, not a fixture.",
-        "dedup_checked": "Distinct from FIX-VPS-NEWS-STALE-FALSEPOS (zone apps/news-fetch/, news route, threshold-vs-cadence miscalibration where the feed IS pushing) and from FIX-VPS-HEALTH-OFFHOURS-MASK-FALSE-GREEN (off-hours grace double-apply, opposite direction). Here the STALE flag is CORRECT and only the attributed cause is wrong.",
-        "user_impact": "MED — a permanent recurring false incident: the queue stays drained until ALPHA-S6-OPTIONB-DECISION-GATE trips, so this WARN re-fires indefinitely and burns a system-auditor + PO triage slot each time.",
-        "updated_at": "2026-07-30T15:16:31Z",
-        "promoted_at": "2026-07-30T15:16:22Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
-        "claimed_at": "2026-07-30T15:16:30Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)"
-      }
-    ]
+    "in_progress": []
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
