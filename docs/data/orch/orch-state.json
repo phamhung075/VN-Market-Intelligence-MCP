@@ -93,11 +93,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "updated_at": "2026-07-30T10:45:58Z",
-    "updated_by": "developer",
-    "active_task_id": null,
-    "next_agent": "router"
+    "status": "in_progress",
+    "active_task_id": "FIX-NOTEBOOK-AUTOPRUNE-SAMEDAY-TIE-DROPS-NEWEST",
+    "next_agent": "developer",
+    "next_action": "BOUNDED-1 auto-pickup claim of FIX-NOTEBOOK-AUTOPRUNE-SAMEDAY-TIE-DROPS-NEWEST — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
+    "updated_at": "2026-07-30T10:50:23Z",
+    "updated_by": "dev-team (bounded-1 auto-pickup)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -10924,20 +10925,6 @@
         "updated_at": "2026-07-30T09:18:20Z"
       },
       {
-        "id": "FIX-NOTEBOOK-AUTOPRUNE-SAMEDAY-TIE-DROPS-NEWEST",
-        "type": "FIX",
-        "size": "S",
-        "priority": "P1",
-        "status": "BACKLOG",
-        "zone": "cross-service/",
-        "title": "notebook-auto-prune.sh same-day heading tie drops the newest section instead of the oldest",
-        "desc": "scripts/agents-flow/notebook-auto-prune.sh:261 makes the time component of a heading optional, so date-only headings all normalise to one 17-char sort key; :277 sort -k2,2 -s | head -1 then picks the FIRST PHYSICAL section, not the oldest by time. developer.md is prepend/newest-first (confirmed via git log -1 -p --unified=0) and held 3 tied 2026-07-30 sections this cycle, so the hook deleted the just-written entry instead of the oldest one. Distinct from the existing heading-level-mismatch pruner row and the byte-cap-no-actuator row (item below) — this is a same-day tie-break direction bug.",
-        "created_at": "2026-07-30T09:18:19Z",
-        "created_by": "po/triage-20260730T0853",
-        "source": "PO triage 2026-07-30T09:06Z BATCH item 2/6 — consumed from dashboard signal dev-20260730T080653 (ACKed NEW->READ via commit ca2678a44), landed to orch-state by dev-team per the same mint-gap as item 1.",
-        "updated_at": "2026-07-30T09:18:20Z"
-      },
-      {
         "id": "FIX-DEVTEAM-CLAIM-SCRIPTS-UNCONDITIONAL-HEAD-OVERWRITE",
         "type": "FIX",
         "size": "M",
@@ -17869,9 +17856,29 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-30T10:16:51Z",
+    "last_triaged_at": "2026-07-30T10:49:53Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": []
+    "in_progress": [
+      {
+        "id": "FIX-NOTEBOOK-AUTOPRUNE-SAMEDAY-TIE-DROPS-NEWEST",
+        "type": "FIX",
+        "size": "S",
+        "priority": "P1",
+        "status": "IN_PROGRESS",
+        "zone": "cross-service/",
+        "title": "notebook-auto-prune.sh same-day heading tie drops the newest section instead of the oldest",
+        "desc": "scripts/agents-flow/notebook-auto-prune.sh:261 makes the time component of a heading optional, so date-only headings all normalise to one 17-char sort key; :277 sort -k2,2 -s | head -1 then picks the FIRST PHYSICAL section, not the oldest by time. developer.md is prepend/newest-first (confirmed via git log -1 -p --unified=0) and held 3 tied 2026-07-30 sections this cycle, so the hook deleted the just-written entry instead of the oldest one. Distinct from the existing heading-level-mismatch pruner row and the byte-cap-no-actuator row (item below) — this is a same-day tie-break direction bug.",
+        "created_at": "2026-07-30T09:18:19Z",
+        "created_by": "po/triage-20260730T0853",
+        "source": "PO triage 2026-07-30T09:06Z BATCH item 2/6 — consumed from dashboard signal dev-20260730T080653 (ACKed NEW->READ via commit ca2678a44), landed to orch-state by dev-team per the same mint-gap as item 1.",
+        "updated_at": "2026-07-30T10:50:24Z",
+        "promoted_at": "2026-07-30T10:49:53Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
+        "claimed_at": "2026-07-30T10:50:23Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)"
+      }
+    ]
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
