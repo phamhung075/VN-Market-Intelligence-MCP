@@ -274,3 +274,15 @@
 **Mitigation:** No immediate action beyond signal routing.
 
 ---
+
+## Anomaly: B-06 · VPS bctc proxy route stale 41+ hours
+**Severity:** CRITICAL | **Date:** 2026-07-30 | **Status:** OPEN
+**Location:** VPS proxy/bctc-route
+**Details:** Last push 2026-07-28T08:23:22Z (41+ hours ago); vn-bctc-fetch service unhealthy
+**Impact:** BCTC earnings data pipeline stalled; Q2 earnings window processing blocked
+**Root cause:** vn-bctc-fetch service unhealthy; existing issue tracked as FIX-AUDITOR-B05-BCTC-FRESHNESS-LAYER-SPLIT
+**Zone owner:** dev-mcp-server
+**Last reported:** 2026-07-30T07:11:46Z (signal sys-20260730T071126-4b11, system-auditor -> po, dedup_key=data_stale:vps_proxy:B-06, CRITICAL Telegram sent)
+**Mitigation:** No immediate action beyond signal routing.
+
+---
