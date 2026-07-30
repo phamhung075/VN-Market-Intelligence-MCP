@@ -93,9 +93,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "active_task_id": null,
-    "next_agent": "router"
+    "status": "in_progress",
+    "active_task_id": "FIX-AUDITOR-OUTPUT-CONTRACT-SIGNALSPOSTED-COUNTS-CALLS-NOT-CONFIRMED-ROWS",
+    "next_agent": "developer",
+    "next_action": "BOUNDED-1 auto-pickup claim of FIX-AUDITOR-OUTPUT-CONTRACT-SIGNALSPOSTED-COUNTS-CALLS-NOT-CONFIRMED-ROWS — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
+    "updated_at": "2026-07-30T12:20:27Z",
+    "updated_by": "dev-team (bounded-1 auto-pickup)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -10936,24 +10939,6 @@
         "updated_at": "2026-07-30T09:18:20Z"
       },
       {
-        "id": "FIX-DECISION-JOURNAL-BYTECAP-NO-ACTUATOR",
-        "type": "FIX",
-        "size": "S",
-        "priority": "P1",
-        "status": "BACKLOG",
-        "zone": "cross-service/",
-        "title": "decision-journal-archive.sh is wired but fires on sprint-close, not on the 36000B byte cap, so non-sprint-scoped journals (e.g. po-decisions.md) can never trigger it",
-        "desc": "scripts/decision-journal-archive.sh exists and is invoked, but its trigger condition is sprint-close, not the documented 36000B per-file cap. po-decisions.md is 192KB and is not sprint-scoped, so it can never match the archiver's diff condition. Measured 2026-07-30: 15 of 578 decision journals are over the 36000B cap fleet-wide, worst offender 331KB (9.2x cap). Same detector/actuator-asymmetry shape as the notebook byte-cap row, different actuator. AC: archiver (or a new trigger) fires on byte-cap breach independent of sprint-close, for any decision journal file, not only sprint-scoped ones.",
-        "created_at": "2026-07-30T09:18:19Z",
-        "created_by": "po/triage-20260730T0853",
-        "source": "PO triage 2026-07-30T09:06Z BATCH item 6/6 — po.md notebook Carry-over section (\"Batched\"), landed to orch-state by dev-team per the same mint-gap as item 1.",
-        "updated_at": "2026-07-30T09:40:54Z",
-        "status_note": "PO 2026-07-30T09:39Z (drain-tick-0907Z ctx-bloat triage) — SCOPE EXTENDED + raised P2->P1. The row's premise (only NON-sprint-scoped journals like po-decisions.md can never trigger) is too narrow. decision-journal-archive.sh selects STATUS-based over closed-vs-active sprint ids, so any id in NEITHER set is a third, unhandled state that is silently skipped — and 34 of 40 sprint ids referenced live on the board are in neither set. So SPRINT-scoped journals are unreachable too: 513 journals / 5.5MB in docs/agent-memory/decisions/, largest sprint-CI-RED-RECONCILE-po.md 331592B = 9.2x the 36000B cap. The third-state branch + the reconcile that must precede any fail-loud guard are owned by FIX-SPRINT-REGISTRY-DANGLING-IDS-BREAK-SIGNOFF-AND-JOURNAL-ARCHIVE (P1, supervised+plan_only, architect); THIS row keeps the byte-cap-trigger half (the archiver fires on sprint-close only, so a journal over 36000B mid-sprint has a detector and no actuator). Sequence after that row's AC-1 reconcile. Do not merge — different fix surfaces.",
-        "related": [
-          "FIX-SPRINT-REGISTRY-DANGLING-IDS-BREAK-SIGNOFF-AND-JOURNAL-ARCHIVE"
-        ]
-      },
-      {
         "id": "SPIKE-BCTC-EXTRACTION-DORMANT-MASS-ENRICHFAIL-FLOOD",
         "type": "SPIKE",
         "mode": "spike",
@@ -11146,25 +11131,6 @@
         "po_unstrand2_20260730": "LANE CORRECTION by po 2026-07-30T09:18Z — moved ready[] -> backlog[]. WHY THE 2026-07-30 ONE-FIELD 'UNSTRAND' DID NOT LAND: the prior PO cycle read the SLS predicate (promote :108-109, the supervised AND plan_only pair) but not the LANE that predicate is applied to. SLS-promote iterates `.task_board.backlog[]` (:105; its own header :29 states 'candidate lane: .task_board.backlog[]'). This row is in `ready[]`, so setting plan_only=true could not make it visible to SLS. Full picker audit at that moment: BOUNDED-1 backlog-only -> blind; SLS-promote backlog-only -> blind; SLS-claim requires promoted_by == 'dev-team (supervised-lane sweep)' and this row's promoted_by is null -> blind; RLC rejects supervised/plan_only -> blind. Four pickers, zero coverage, priority P0. Known-failure-shape matched without reading which collection the predicate walks. Now in backlog[] with status TODO, no children, no depends_on, no backlog-detail entry, so SLS-promote can legitimately resolve its lane and stamp it. Flags left `true` — the point is to reach the supervised lane, not to bypass it. Class fix: FIX-DEVTEAM-READY-REVIEW-LANE-SUPERVISED-PLANONLY-NO-PICKER."
       },
       {
-        "id": "FIX-AUDITOR-OUTPUT-CONTRACT-SIGNALSPOSTED-COUNTS-CALLS-NOT-CONFIRMED-ROWS",
-        "status": "BACKLOG",
-        "type": "FIX",
-        "priority": "P1",
-        "size": "S",
-        "zone": "cross-service/",
-        "next_agent": "developer",
-        "owner": "dev",
-        "title": "Auditor OUTPUT-CONTRACT reported signals_posted=3 while zero rows reached agent_signals — the counter must count rows read back, not post_agent_signal calls issued",
-        "desc": "EVIDENCE (verified live 2026-07-30, mode=ro read of the recovered market.db). The 07:09Z Tier-2 auditor returned `[OUTPUT-CONTRACT] signals_posted=3`. `agent_signals` has a HARD GAP with zero rows between `2026-07-30T03:48` and `2026-07-30T08:34` — nothing at or near 07:09Z. Rows on BOTH sides of the gap are present, so `.recover` salvaged this table successfully and the absence is not a recovery artifact: those three writes never landed and the audit reported success anyway.\n\nSCOPE — READ THIS BEFORE BLAMING THE TOOL. `post_agent_signal` is NOT unconditionally fail-silent: `apps/mcp-server/src/interface/mcp/tools/news-analysis/agentSignalTools.ts` wraps the handler in try/catch and returns a literal `Error: <message>` string on throw (:486-497), and only the OPTIONAL signal-quality-audit write is deliberately swallowed (:459-461, commented 'Fire-and-forget: any error is swallowed'). An INSERT into `agent_signals` (AUTOINCREMENT) during the fault had to touch the corrupt `sqlite_sequence` btree and should therefore have surfaced as an error string. So the likely defect is on the CALLER side: the auditor increments its counter per call issued rather than per success observed, and an MCP tool that reports failure in its text payload rather than as a transport error is easy to count as a success. FIRST TASK is to establish which of the two it is — instrument or replay before changing code.\n\nAC-1 determine empirically whether the tool returned an error string that the caller ignored, or the INSERT truly succeeded-and-vanished. State which, with evidence.\nAC-2 `signals_posted` must be derived from a read-back (count of ids confirmed present in `agent_signals`), never from a call tally.\nAC-3 a mismatch between attempted and confirmed must fail loudly in the audit output, not be silently rounded up.\nAC-4 caller must treat an `Error:`-prefixed text payload as a failure.\n\nSIBLING — BATCH, DO NOT MERGE: `FIX-AUDITOR-DASHBOARD-APPEND-NO-ACTUATOR-CONTRACT-COUNT-NARRATED` (review, P1, next=qa) is the same narrated-count class on the dashboard-append surface. Same discipline, different actuator; QA should review them together.\nWHY THIS MATTERS BEYOND THIS INCIDENT: during any DB write fault an agent's own success counters are not evidence a row exists, and here the signal table is the very channel the fault should have escalated through — the failure silenced its own alarm.",
-        "created_at": "2026-07-30T09:21:51Z",
-        "created_by": "po-triage-20260730T0918Z (sqlite-corruption-mechanism-20260730)",
-        "related": [
-          "SPIKE-SQLITE-DOCKER-VIRT-CORRUPTION-HARDENING",
-          "FIX-AUDITOR-DASHBOARD-APPEND-NO-ACTUATOR-CONTRACT-COUNT-NARRATED"
-        ],
-        "updated_at": "2026-07-30T09:21:52Z"
-      },
-      {
         "id": "FIX-SPRINT-REGISTRY-DANGLING-IDS-BREAK-SIGNOFF-AND-JOURNAL-ARCHIVE",
         "status": "BACKLOG",
         "type": "FIX",
@@ -11223,6 +11189,27 @@
           "FIX-SQLITE-JOURNALMODE-WAL-REARM-DEFEATS-DELETE-MITIGATION"
         ],
         "updated_at": "2026-07-30T12:03:19Z"
+      },
+      {
+        "id": "FIX-DECISION-JOURNAL-BYTECAP-NO-ACTUATOR",
+        "type": "FIX",
+        "size": "S",
+        "priority": "P1",
+        "status": "BACKLOG",
+        "zone": "cross-service/",
+        "title": "decision-journal-archive.sh is wired but fires on sprint-close, not on the 36000B byte cap, so non-sprint-scoped journals (e.g. po-decisions.md) can never trigger it",
+        "desc": "scripts/decision-journal-archive.sh exists and is invoked, but its trigger condition is sprint-close, not the documented 36000B per-file cap. po-decisions.md is 192KB and is not sprint-scoped, so it can never match the archiver's diff condition. Measured 2026-07-30: 15 of 578 decision journals are over the 36000B cap fleet-wide, worst offender 331KB (9.2x cap). Same detector/actuator-asymmetry shape as the notebook byte-cap row, different actuator. AC: archiver (or a new trigger) fires on byte-cap breach independent of sprint-close, for any decision journal file, not only sprint-scoped ones.",
+        "created_at": "2026-07-30T09:18:19Z",
+        "created_by": "po/triage-20260730T0853",
+        "source": "PO triage 2026-07-30T09:06Z BATCH item 6/6 — po.md notebook Carry-over section (\"Batched\"), landed to orch-state by dev-team per the same mint-gap as item 1.",
+        "updated_at": "2026-07-30T12:19:57Z",
+        "status_note": "PO 2026-07-30T09:39Z (drain-tick-0907Z ctx-bloat triage) — SCOPE EXTENDED + raised P2->P1. The row's premise (only NON-sprint-scoped journals like po-decisions.md can never trigger) is too narrow. decision-journal-archive.sh selects STATUS-based over closed-vs-active sprint ids, so any id in NEITHER set is a third, unhandled state that is silently skipped — and 34 of 40 sprint ids referenced live on the board are in neither set. So SPRINT-scoped journals are unreachable too: 513 journals / 5.5MB in docs/agent-memory/decisions/, largest sprint-CI-RED-RECONCILE-po.md 331592B = 9.2x the 36000B cap. The third-state branch + the reconcile that must precede any fail-loud guard are owned by FIX-SPRINT-REGISTRY-DANGLING-IDS-BREAK-SIGNOFF-AND-JOURNAL-ARCHIVE (P1, supervised+plan_only, architect); THIS row keeps the byte-cap-trigger half (the archiver fires on sprint-close only, so a journal over 36000B mid-sprint has a detector and no actuator). Sequence after that row's AC-1 reconcile. Do not merge — different fix surfaces. [dev-team 2026-07-30T12:xxZ: encoded this sequencing constraint as a real depends_on after BOUNDED-1's mechanical promote picked this row up a 2nd time — has_unbacked_sequencing_prose only checks ^po_sequencing keys, missing this status_note-borne constraint. See FIX-DEVTEAM-BOUNDED1-PROSESEQ-GATE-MISSES-STATUSNOTE-BORNE-CONSTRAINT for the fleet-wide gap.]",
+        "related": [
+          "FIX-SPRINT-REGISTRY-DANGLING-IDS-BREAK-SIGNOFF-AND-JOURNAL-ARCHIVE"
+        ],
+        "depends_on": [
+          "FIX-SPRINT-REGISTRY-DANGLING-IDS-BREAK-SIGNOFF-AND-JOURNAL-ARCHIVE"
+        ]
       }
     ],
     "closed_sprints": [
@@ -17910,9 +17897,34 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-30T11:37:31Z",
+    "last_triaged_at": "2026-07-30T12:20:12Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": []
+    "in_progress": [
+      {
+        "id": "FIX-AUDITOR-OUTPUT-CONTRACT-SIGNALSPOSTED-COUNTS-CALLS-NOT-CONFIRMED-ROWS",
+        "status": "IN_PROGRESS",
+        "type": "FIX",
+        "priority": "P1",
+        "size": "S",
+        "zone": "cross-service/",
+        "next_agent": "developer",
+        "owner": "dev",
+        "title": "Auditor OUTPUT-CONTRACT reported signals_posted=3 while zero rows reached agent_signals — the counter must count rows read back, not post_agent_signal calls issued",
+        "desc": "EVIDENCE (verified live 2026-07-30, mode=ro read of the recovered market.db). The 07:09Z Tier-2 auditor returned `[OUTPUT-CONTRACT] signals_posted=3`. `agent_signals` has a HARD GAP with zero rows between `2026-07-30T03:48` and `2026-07-30T08:34` — nothing at or near 07:09Z. Rows on BOTH sides of the gap are present, so `.recover` salvaged this table successfully and the absence is not a recovery artifact: those three writes never landed and the audit reported success anyway.\n\nSCOPE — READ THIS BEFORE BLAMING THE TOOL. `post_agent_signal` is NOT unconditionally fail-silent: `apps/mcp-server/src/interface/mcp/tools/news-analysis/agentSignalTools.ts` wraps the handler in try/catch and returns a literal `Error: <message>` string on throw (:486-497), and only the OPTIONAL signal-quality-audit write is deliberately swallowed (:459-461, commented 'Fire-and-forget: any error is swallowed'). An INSERT into `agent_signals` (AUTOINCREMENT) during the fault had to touch the corrupt `sqlite_sequence` btree and should therefore have surfaced as an error string. So the likely defect is on the CALLER side: the auditor increments its counter per call issued rather than per success observed, and an MCP tool that reports failure in its text payload rather than as a transport error is easy to count as a success. FIRST TASK is to establish which of the two it is — instrument or replay before changing code.\n\nAC-1 determine empirically whether the tool returned an error string that the caller ignored, or the INSERT truly succeeded-and-vanished. State which, with evidence.\nAC-2 `signals_posted` must be derived from a read-back (count of ids confirmed present in `agent_signals`), never from a call tally.\nAC-3 a mismatch between attempted and confirmed must fail loudly in the audit output, not be silently rounded up.\nAC-4 caller must treat an `Error:`-prefixed text payload as a failure.\n\nSIBLING — BATCH, DO NOT MERGE: `FIX-AUDITOR-DASHBOARD-APPEND-NO-ACTUATOR-CONTRACT-COUNT-NARRATED` (review, P1, next=qa) is the same narrated-count class on the dashboard-append surface. Same discipline, different actuator; QA should review them together.\nWHY THIS MATTERS BEYOND THIS INCIDENT: during any DB write fault an agent's own success counters are not evidence a row exists, and here the signal table is the very channel the fault should have escalated through — the failure silenced its own alarm.",
+        "created_at": "2026-07-30T09:21:51Z",
+        "created_by": "po-triage-20260730T0918Z (sqlite-corruption-mechanism-20260730)",
+        "related": [
+          "SPIKE-SQLITE-DOCKER-VIRT-CORRUPTION-HARDENING",
+          "FIX-AUDITOR-DASHBOARD-APPEND-NO-ACTUATOR-CONTRACT-COUNT-NARRATED"
+        ],
+        "updated_at": "2026-07-30T12:20:27Z",
+        "promoted_at": "2026-07-30T12:20:12Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
+        "claimed_at": "2026-07-30T12:20:27Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)"
+      }
+    ]
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
