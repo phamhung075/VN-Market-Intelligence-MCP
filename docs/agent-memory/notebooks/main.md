@@ -1,6 +1,15 @@
 # Dev Team — Sprint Boundary Notebook
 
-**Written:** 2026-07-30T16:49Z
+**Written:** 2026-07-30T18:55Z
+
+## cycle-20260730T1855Z-verify — RAW-verified dev-mcp-server's FU-CNYVND-DEAD-FIELD-REMOVE stop-and-report; correct escape-hatch use, board BLOCKED/next_agent=architect, lock released
+
+- **BGFAN-1 RAW-verification, all claims confirmed real, no fabrication**: commits `fc1b45c93`/`119dabb53` real, on HEAD, correctly scoped (only journal/notebook/orch-state — zero code/schema/test files touched, matching the "stopped, no removal" claim).
+- **Live cross-service consumer claim independently confirmed**: `apps/macro-indicators/pkg/infrastructure/adapters_vmt_sjc_fx.go:112` (`fetchSJCFXInputsFromDB`) queries `commodity_prices.cny_vnd_rate` directly from the shared `market.db` in the same multi-column `Scan()` as `gold_usd_per_oz`/`usd_vnd_rate`/`dxy`; plumbed through `usecases_vmt_liquidity.go`/`services_vmt_liquidity.go` into mcp-server's own live `get_vn_liquidity_state` tool (`registry.ts:262`, #168), whose `FXCouplingSchema` (`liquidityStateTools.ts:53`) requires `cny_vnd_rate: z.number()`. Container `vn-market-intelligence-mcp-macro-indicators-1` confirmed live/healthy (17h). Original zero-readers finding genuinely missed this — not a fabricated escalation.
+- **Fail-closed blast-radius claim verified**: the query's success gate (`err == nil && fetchedAt.Valid`) wraps all 4 field assignments in one block — dropping the column would error the whole `Scan()`, zeroing `gold_usd_per_oz`/`usd_vnd_rate`/`dxy` collaterally, not just `cny_vnd_rate`. Confirms the "not low consumer-break risk" reassessment.
+- **Board disposition genuine**: row `status:BLOCKED` (stayed in `in_progress` lane — verified `BLOCKED` IS a valid `in_progress` sub-status per `orchStateSchema.ts:432`'s `LANE_ALLOWED_STATUSES` map; agent's prose called it `LANE_STATUS_MAP`, a naming slip only, not a substantive error), `next_agent:architect`, `.head` reset to idle. DJ-GATE-1 confirmed (`STEP dev-mcp-server-S31`). Notebook within cap (43L/3 sections).
+- **Disposition**: sprint-task lock released, WORK telegram sent. No re-verification of tests needed — zero source/test delta to check.
+- **NEXT:** `FU-CNYVND-DEAD-FIELD-REMOVE` awaits an architect/PO call on repoint-vs-formalize-as-permanently-null; not dev-team's to auto-pick-up again (P3, blocked, needs architect first).
 
 ## cycle-20260730T1637Z-tick — drained 4 signals; BOUNDED-1 dispatched dev-mcp-server on FU-CNYVND-DEAD-FIELD-REMOVE (P3 dead-data cleanup); flagged log_agent_work stale call signature via signal; 9th consecutive PO-respawn skip
 
@@ -23,16 +32,3 @@
 - **Session Exit:** both tick locks released (`dev-team-cron-singleton`, fire-election) — `task:FIX-WF2-...` sprint lock deliberately held open pending developer's return.
 - **developer's return arrived post-tick** (`a760d993dc8bf4e9d`, 608s, 62 tool uses) — **RAW-verified, not trusted from self-report**: commits `5c1f19b7b`/`dff618bde`/`86a1bd3a4` real on HEAD; diff to `po/flow/main.md` + new `supervised-goahead.md` matches claim exactly (`should_hold` jq filter logic byte-identical to `main.md:469-478`). Independently re-ran `scripts/audits/po-goahead-producer-verify.sh` → **4/4 PASS**. DJ-GATE-1 confirmed at `STEP developer-S44`. Board disposition genuine: row in `review[]` (absent from `in_progress[]`), `next_agent:qa`, `.head` idle-reset, all one write. Sprint-task lock released. WORK telegram sent.
 - **NEXT:** QA-Drain backlog gains another review-lane row; PO's next tick should pick up the new `supervised-goahead.md` Pre-check + the `execute-tier.md` signal.
-
-## cycle-20260730T1437Z-tick — RAW-verified dev-mcp-server's FIX-BCTC-REPARSE-DOUBLE-WRAP-DEDUP-GUARD clean after its 1st return falsely claimed a still-live background test wait; board-flipped, lock released; 5th consecutive skip of identical report backlog; fresh ci_red signal emitted (undrained)
-
-- **Preflight RUN, tick `2026-07-30T14:37Z`.** GCC-preflight clean, no HEAD.lock, worktree prune empty. `.head` was `in_progress` on `FIX-BCTC-REPARSE-DOUBLE-WRAP-DEDUP-GUARD` from the prior tick.
-- **Step 0a drain:** 1 signal (context-bloat on dev-mcp-server's own decision journal) → routed-to-po, db_count=483, committed `fe1b296aa`.
-- **Step 0a.5 CI probe:** emitted a FRESH `ci_red` signal (HEAD `c01f39b0c`, jobs `frontend-eslint,size-lint`) — new fingerprint, distinct from the earlier `ce3fa81e` one this session's push already resolved. Left undrained this tick (created after Step 0a ran) — next tick's drain picks it up.
-- **Pipeline-resume:** resume-lock on `task:FIX-BCTC-REPARSE-DOUBLE-WRAP-DEDUP-GUARD` was re-entrant (self-held from the prior tick, heartbeated) — correctly skipped a duplicate spawn. dev-mcp-server's first return had falsely claimed to be waiting on a background `bun test` Monitor; `ps aux` showed 0 live processes (the wait didn't survive its own turn ending), so it was resumed via `SendMessage` in the prior window instead of re-spawned.
-- **Skipped PO re-spawn a 5th consecutive tick:** 273 unresolved, same categories, 0 NEW `signal_queue` rows.
-- **Post-cycle clean:** mock-guard CAUTION unchanged (same pre-existing TODOs), cold-evict 0-byte no-op, stranded-sweep clean (39 owned-elsewhere/15 young-skip/0 actionable), wrapper-autoclose 0 rows.
-- **dev-mcp-server's genuine return arrived mid-cycle:** commits `cf862f920` (code+test) + `815752129` (journal+notebook). RAW-verified by direct diff read, not self-report: `startupHelpers.ts` gained `shouldSkipRecoveryReplay` BEFORE `recordJobRun`, default `fn` now calls `runBctcReparseJob({db})` mapping `resolved+failed→rowsWritten` AND neutralizing `bctcReparseJob.ts:892`'s `if(!options.db)` self-record block; `startScheduler.ts`'s catch-up gated by `shouldRunCatchup(...)`. Independently re-ran: new test 13/13, broader 22-file/216-test scheduler regression 0 fail (superset of claimed 9-file/114-test scope), `tsc` clean, tool/cron counts unchanged (184/88). Full-suite 58-fail corroborated against same-day precedent `78f945fb2` (60-fail) as one consistent flake band.
-- **Board flip:** `IN_PROGRESS→REVIEW`, `next_agent:qa`, lane-move+head-idle-reset single write (`7f1bbd4fa`), conservation `719→719`. Lock released (`released:1`). WORK telegram sent.
-- **NEXT:** this tick's fresh `ci_red` signal awaits drain; QA-Drain backlog gains a 3rd review-lane row.
-
