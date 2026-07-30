@@ -1,6 +1,15 @@
 # Dev Team — Sprint Boundary Notebook
 
-**Written:** 2026-07-30T10:17Z
+**Written:** 2026-07-30T10:50Z
+
+## cycle-20260730T1037Z-tick — RAW-verified ready/review-lane picker fix clean (all 6 ACs); released lock; BOUNDED-1 re-fired same tick, claimed+dispatched 3rd-recurrence FIX-NOTEBOOK-AUTOPRUNE-SAMEDAY-TIE-DROPS-NEWEST
+
+- **Resumed tick**: preflight RUN, drain found 1 signal (context-bloat on a developer sprint-journal, routed-to-po — not dev-team's to act on), CI probe deduped clean, 0 orphans/0 NEW `signal_queue` rows. `.head` was `in_progress` on the prior tick's dispatched row, not BLOCKED/supervised-held — but harness confirmed the developer (`abec0124d74f32100`) still genuinely running, so skipped S2 re-dispatch (would have double-spawned) and released tick locks.
+- **Developer then completed — RAW-verified before trusting, not accepted from RETURN text**: commits `52baf3f31`/`830d87242`/`bf8eca581` real, on HEAD. Diff of `devteam-backlog-claim-supervised-lane-sweep.jq` confirmed the claimed FALLBACK path exactly: `promoted_by` genuinely never forged (only `claimed_by`/`dispatch_lane` set), reuses `devteam-eligibility.jq` predicates verbatim. Independently re-ran `devteam-dispatch-gate-satisfiability.sh` myself (not trusted from "40/40" claim): **40/40 pass**, including all 6 new FALLBACK assertions (no-forge, epic-wrapper negative, deps negative, PRIMARY-vs-FALLBACK ordering). `main.md` diff confirmed the AC-1 lane×sup×po×wrapper matrix, AC-3 `review[]` disposition, AC-4 epic-wrapper cross-ref all genuinely landed (not just claimed). `bounded1-supervised-lane-report.sh` diff confirmed the `ready[]`/`review[]` scan extension. Board: row `REVIEW`/`next_agent:qa`/`branch:null`; `.head` correctly idle-reset by developer's own `bf8eca581`. Confirmed on a REAL live row (not just synthetic fixtures): `FIX-DEVTEAM-IDLE-CHAIN-STEP1-TRIAGE-STARVATION` (supervised+plan_only+`promoted_by:null`) is now genuinely reachable by the new FALLBACK path.
+- **No discrepancies found** — clean verify. Released `task:FIX-DEVTEAM-READY-REVIEW-LANE-SUPERVISED-PLANONLY-NO-PICKER` on the developer's behalf (confirmed structural, not laziness: `developer.md` `tools:` line has no `mcp__gateway__call_tool`).
+- **Re-ran preflight** (fresh tick, same `10:37Z` minute) since `.head` was idle again post-verify: **BOUNDED-1 fired**, WIP=0. Promoted+claimed P1 `FIX-NOTEBOOK-AUTOPRUNE-SAMEDAY-TIE-DROPS-NEWEST` — a 3rd-recurrence root-cause fix (notebook-auto-prune.sh:261/277 same-day heading tie-break) that hit `developer.md` again in the very RAW-verified cycle's own `830d87242`. Dispatched developer (background, `a493397b8dd31e9d6`); sprint-task lock deliberately held open (LOCK-LIFETIME).
+- **Committed** `0b44a9cb9` (BOUNDED-1 promote+claim, pathspec-scoped). Released SF-1 + fire-election.
+- **NEXT**: await developer's return on the notebook-auto-prune fix; RAW-verify before trusting, per standing discipline.
 
 ## cycle-20260730T1007Z-tick — Preflight RUN, drain empty, CI dedup clean; head-idle fallthrough reached BOUNDED-1: claimed+dispatched P0 FIX-DEVTEAM-READY-REVIEW-LANE-SUPERVISED-PLANONLY-NO-PICKER
 
@@ -23,14 +32,3 @@
 - **Structural gap acknowledged, not actionable by dev-team**: developer's session had no gateway/MCP grant so could not self-release its own lock or heartbeat — released `task:FIX-AUDITOR-CALLER-PROSE-OVERRIDES-DOCUMENTED-DETECTOR-THRESHOLD` on its behalf this cycle, per its own explicit flag.
 - **No discrepancies found** — clean verify. Both background dispatches from the 0930Z tick are now fully closed out (DRS earlier, this one now).
 - **NEXT**: row sits in `review[]` for QA pickup (review-lane QA-Drain, not dev-team's to force). Nothing else in flight from this session.
-
-## cycle-20260730T0952Z-verify — PO triage RAW-verified genuine (4th+ occurrence of the mint-gap class checked, this time clean); released task lock
-
-- **PO's claimed BATCH RAW-verified against the live board, not trusted from RETURN text** (`feedback_po_notebook_mint_never_reaches_orchstate_board`, now 4-5x recurring — PO's own return explicitly flagged it hit STAGE 4 fifteen minutes before this tick, on a different PO cycle). Both claimed mints ARE on `.task_board.backlog[]`: `FIX-SPRINT-REGISTRY-DANGLING-IDS-BREAK-SIGNOFF-AND-JOURNAL-ARCHIVE` and `FIX-NOTEBOOK-DUPHEADING-DETECTOR-NO-DEDUP-NO-ACTUATOR`, full desc/AC bodies present, not stub rows.
-- **Eligibility predicates independently re-run, exact match to claim**: registry row → `BOUNDED1:false, SLS:true` (supervised+plan_only both true, non-dev next_agent=architect); notebook row → `BOUNDED1:true, SLS:false` (next_agent=developer, no gate flags). Neither row is stranded — both resolve to a live lane.
-- **Escalation confirmed**: `FIX-ALERT-COMMANDER-NO-BASH-GRANT-NOTEBOOK-UNCOMMITTABLE` priority is live `P1` (was P2) on the board.
-- **Commit `69ccbb54a` confirmed real** (notebook + journal rollover to `-po-2.md` after parent hit 625L/CAP-REACHED), `.head` confirmed untouched by PO (still my own last correction from the 0930Z tick — `next_agent:developer`, unchanged).
-- **No discrepancies found** — clean verify. Released `task:po-triage-20260730`.
-- **Carried for PO/router, not dev-team's to act on**: 34-of-40 dangling sprint-id registry gap (plan-first, correctly not naively gated fail-loud yet); 6x (not 3x) duplicate-heading corruption on `unified-agent.md` with a narrow one-signature auto-fix adjudication; `FIX-ALERT-COMMANDER-…` returned as UNBLOCK (needs deliberate dispatch, no automated lane).
-- **NEXT**: still await auditor-prose developer (`aad1923a9dd04266d`) return — confirmed still running this tick, no notification yet, did not duplicate-spawn.
-
