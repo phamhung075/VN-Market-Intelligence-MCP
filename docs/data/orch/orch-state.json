@@ -93,12 +93,9 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "FIX-SQLITE-JOURNALMODE-WAL-REARM-DEFEATS-DELETE-MITIGATION",
-    "next_agent": "dev-mcp-server",
-    "next_action": "BOUNDED-1 auto-pickup claim of FIX-SQLITE-JOURNALMODE-WAL-REARM-DEFEATS-DELETE-MITIGATION — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
-    "updated_at": "2026-07-30T11:37:41Z",
-    "updated_by": "dev-team (bounded-1 auto-pickup)"
+    "status": "idle",
+    "active_task_id": null,
+    "next_agent": "router"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -17850,6 +17847,32 @@
         "reviewed_at": "2026-07-30T11:27:20Z",
         "reviewed_by": "developer",
         "review_note": "Applied the identical $head_free conditional-guard shape from scripts/devteam-backlog-claim-design-router-sweep.jq (DRS) to all 3 claim scripts named in the mint: devteam-backlog-claim-bounded1.jq (line ~57), devteam-backlog-claim-supervised-lane-sweep.jq (BOTH its PRIMARY and FALLBACK .head write branches, ~153/~176), devteam-backlog-claim-ready-lane-consumer.jq (~151). Happy path (head idle/done/active_task_id-null) unchanged; when a DIFFERENT task is genuinely live in .head, the write is skipped (else .head end), never clobbered. Extended scripts/audits/devteam-dispatch-gate-satisfiability.sh with 8 new isolated-fixture assertions (AC-BOUNDED1-HEAD-GUARD, AC-SLS-HEAD-GUARD PRIMARY+FALLBACK, AC-RLC-HEAD-GUARD, each with a positive half proving the row still moves ready[]->in_progress[] while .head stays untouched) — full suite 48/48 PASS, never writes to the live orch-state.json. Commit 3519a09e4. Decision journal: sprint-COWORK-GUARANTEED-SLOT-CATCHUP-developer.md STEP developer-S41. No apps/ TS/Go source touched (zone cross-service/, pure jq+bash) - bun test/tsc structurally N/A. No MCP/gateway tool grant this session (Read/Edit/Write/Glob/Grep/Bash only, confirmed at Step 0) - could not task_release/send_telegram; coordinating dev-team session (owner_client_session=64c7c677-0f0f-4cee-a3ce-dba79d70b7ae) must release task:FIX-DEVTEAM-CLAIM-SCRIPTS-UNCONDITIONAL-HEAD-OVERWRITE on my behalf."
+      },
+      {
+        "id": "FIX-SQLITE-JOURNALMODE-WAL-REARM-DEFEATS-DELETE-MITIGATION",
+        "status": "REVIEW",
+        "type": "FIX",
+        "priority": "P1",
+        "size": "S",
+        "zone": "apps/mcp-server/",
+        "next_agent": "qa",
+        "owner": "dev",
+        "title": "market.db mitigation is reversible by a peer code path: bctcEvalBackfillRunner sets PRAGMA journal_mode=WAL on data/market.db, silently re-arming the corruption vector the 2026-07-30 permanent fix removed",
+        "desc": "`apps/mcp-server/src/interface/mcp/routes/bctcEvalBackfillRunner.ts` opens `resolve(projectRoot,'data/market.db')` (:44, `new Database(dbPath)` :48) and then executes `db.exec(\"PRAGMA journal_mode=WAL\")` (:49). journal_mode is a PERSISTENT property of the database FILE, not of a connection: converting to WAL from any connection re-creates the `-wal`/`-shm` pair and the setting survives that connection and the process. The permanent mitigation shipped hours earlier (157335892, `apps/mcp-server/src/infrastructure/db/schema.ts:115` journal_mode=DELETE + synchronous=FULL) was adopted specifically to remove the macOS-Docker-virt SHM torn-write vector that has now corrupted this DB four times. So a single backfill invocation silently undoes the fix for the duration of that run, and re-introduces the `-shm` file the fix exists to eliminate, with no alert and no log line saying the mode changed. `schema.ts` re-asserting DELETE on the next `getDb()` does not help: the window is the backfill's own runtime, which is long by construction.\n\nAC-1 no code path may set journal_mode on market.db except the single owner in `schema.ts`; `bctcEvalBackfillRunner.ts:49` uses the shared accessor or drops the PRAGMA.\nAC-2 sweep every other market.db opener for the same shape and fix or justify each. Grep evidence at triage time — `journal_mode` is set outside `schema.ts` in `bctcEvalBackfillRunner.ts:49`, `coordinationStore.ts:78` (different DB, see AC-B on the hardening SPIKE) and 8 `scripts/` call sites (`smoke-task-lock*.ts`, `migrations/*.ts`) that also open project DBs.\nAC-3 a regression guard that FAILS if journal_mode on market.db is anything but `delete` at runtime — assert through the running container, not by reading source (the source-vs-container distinction is what separated 'fixed' from 'fixed and shipped' earlier today).\nAC-4 same guard must catch a `-wal`/`-shm` pair appearing next to market.db.\n\nNOT plan_only and NOT supervised on purpose: this is a scope-completeness bug in a fix that already landed, not a design question, so it belongs in the lane that actually dispatches (BOUNDED-1). The DELETE-vs-WAL policy question per DB stays on SPIKE-SQLITE-DOCKER-VIRT-CORRUPTION-HARDENING AC-B.",
+        "created_at": "2026-07-30T09:21:51Z",
+        "created_by": "po-triage-20260730T0918Z (sqlite-corruption-mechanism-20260730)",
+        "related": [
+          "SPIKE-SQLITE-DOCKER-VIRT-CORRUPTION-HARDENING"
+        ],
+        "updated_at": "2026-07-30T11:58:12Z",
+        "promoted_at": "2026-07-30T11:37:31Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup - WIP (in_progress) was 0; top-ranked eligible candidate FIX-DECISION-JOURNAL-BYTECAP-NO-ACTUATOR (priority_rank=1) was deliberately SKIPPED this tick: its own status_note reads \"Sequence after that row's AC-1 reconcile\" (FIX-SPRINT-REGISTRY-DANGLING-IDS-BREAK-SIGNOFF-AND-JOURNAL-ARCHIVE, still BACKLOG/supervised+plan_only, AC-1 not yet done) - a real sequencing dependency the promote script's has_unbacked_sequencing_prose gate does not catch because it only keys on ^po_sequencing object keys, not a status_note field. Promoted the next-ranked eligible row instead (priority_rank=1, no hidden holds, PO explicitly noted it belongs in this lane).",
+        "claimed_at": "2026-07-30T11:37:41Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "reviewed_at": "2026-07-30T11:58:06Z",
+        "reviewed_by": "dev-mcp-server",
+        "review_note": "dev-mcp-server RAW-implemented (BOUNDED-1 auto-pickup, session 64c7c677-0f0f-4cee-a3ce-dba79d70b7ae). Live safety check FIRST: docker exec vn-market-intelligence-mcp-mcp-server-1, read-only PRAGMA on /app/data/market.db -> journal_mode=delete, no live -wal/-shm pair (not an active breach at triage time). AC-1: bctcEvalBackfillRunner.ts:44-49 own new Database(dbPath)+PRAGMA journal_mode=WAL replaced with schema.ts getDb()/closeDb() singleton (sole owner of journal_mode). AC-2 fresh grep sweep (not the stale triage list): coordinationStore.ts:78 different DB (coordination.db, out of scope per SPIKE-SQLITE-DOCKER-VIRT-CORRUPTION-HARDENING AC-B) untouched; ~90 test files + 4 smoke-task-lock*.ts all :memory:/tmp-only untouched (no risk); run-bt7-backfill.ts only reads journal_mode (no assignment) untouched. FOUND 4 REAL market.db WAL-setters with the SAME defect the triage list mislabeled: scripts/migrations/{run-finalize-bctc-refine.ts:36, dedupe-mislabeled-bctc-period.ts:368, resync-watchlist-sysmap-2026-07-11.ts:266, carry-forward-bctc-orphaned-rows.ts:361} -- NOT fixed by this agent: scripts/ migration scripts sit outside dev-mcp-server own zone_restricted (apps/mcp-server/) per its agent definition (forbidden_outputs: NEVER write code outside apps/mcp-server/) -- flagging for the coordinating session to either fix directly or mint a narrow follow-up task. This is a real, still-open live corruption-vector gap after this task closes. AC-3/AC-4: new scripts/audits/verify-market-db-journal-mode.sh -- asserts through the RUNNING container (never source): read-only docker exec bun -e PRAGMA query + exact-filename -wal/-shm file check (deliberately excludes suffixed backup/corrupt-snapshot copies so they cannot false-positive). --self-test builds two in-container fixture DBs (forced WAL / forced DELETE) and proves the guard FAILs (exit 2) the WAL one and PASSes (exit 0) the DELETE one -- both branches verified live. Exit contract: 0=PASS/2=FAIL/3=ERROR, verdict always stdout line 1. Evidence: bun tsc --noEmit clean. Live guard run: verdict=PASS journal_mode=delete wal_present=false shm_present=false. --self-test: SELF_TEST verdict=PASS. No pre-existing test exercised bctcEvalBackfillRunner.ts (zero importers, grep-confirmed) so no direct regression surface. Full bun test: 14894 pass/40 skip/55 fail/1 error/1242 files (567.12s) -- within the standing pre-existing-flake band (52-60 fail) recorded by sibling fixes this same sprint; neither changed file (bctcEvalBackfillRunner.ts has zero importers; the new script is a standalone bash probe outside the bun test runner) has any mechanism to cause a regression, and schema.ts itself was not modified. Decision journal: sprint-COWORK-GUARANTEED-SLOT-CATCHUP-dev-mcp-server.md STEP dev-mcp-server-S28. Zone apps/mcp-server/ only (git diff confirmed minimal: import swap + pragma removal). No apps/ files outside zone touched. No MCP/gateway tool grant this session (Read/Edit/Write/Bash only) - could not task_release/send_telegram; coordinating dev-team session (owner_client_session=64c7c677-0f0f-4cee-a3ce-dba79d70b7ae) must release task:FIX-SQLITE-JOURNALMODE-WAL-REARM-DEFEATS-DELETE-MITIGATION on my behalf. SCOPE NOTE: task is NOT fully closed system-wide -- 4 real scripts/migrations/*.ts market.db WAL-setters remain unfixed, see AC-2 finding above."
       }
     ],
     "qa": [],
@@ -17871,31 +17894,7 @@
     },
     "last_triaged_at": "2026-07-30T11:37:31Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": [
-      {
-        "id": "FIX-SQLITE-JOURNALMODE-WAL-REARM-DEFEATS-DELETE-MITIGATION",
-        "status": "IN_PROGRESS",
-        "type": "FIX",
-        "priority": "P1",
-        "size": "S",
-        "zone": "apps/mcp-server/",
-        "next_agent": "dev-mcp-server",
-        "owner": "dev",
-        "title": "market.db mitigation is reversible by a peer code path: bctcEvalBackfillRunner sets PRAGMA journal_mode=WAL on data/market.db, silently re-arming the corruption vector the 2026-07-30 permanent fix removed",
-        "desc": "`apps/mcp-server/src/interface/mcp/routes/bctcEvalBackfillRunner.ts` opens `resolve(projectRoot,'data/market.db')` (:44, `new Database(dbPath)` :48) and then executes `db.exec(\"PRAGMA journal_mode=WAL\")` (:49). journal_mode is a PERSISTENT property of the database FILE, not of a connection: converting to WAL from any connection re-creates the `-wal`/`-shm` pair and the setting survives that connection and the process. The permanent mitigation shipped hours earlier (157335892, `apps/mcp-server/src/infrastructure/db/schema.ts:115` journal_mode=DELETE + synchronous=FULL) was adopted specifically to remove the macOS-Docker-virt SHM torn-write vector that has now corrupted this DB four times. So a single backfill invocation silently undoes the fix for the duration of that run, and re-introduces the `-shm` file the fix exists to eliminate, with no alert and no log line saying the mode changed. `schema.ts` re-asserting DELETE on the next `getDb()` does not help: the window is the backfill's own runtime, which is long by construction.\n\nAC-1 no code path may set journal_mode on market.db except the single owner in `schema.ts`; `bctcEvalBackfillRunner.ts:49` uses the shared accessor or drops the PRAGMA.\nAC-2 sweep every other market.db opener for the same shape and fix or justify each. Grep evidence at triage time — `journal_mode` is set outside `schema.ts` in `bctcEvalBackfillRunner.ts:49`, `coordinationStore.ts:78` (different DB, see AC-B on the hardening SPIKE) and 8 `scripts/` call sites (`smoke-task-lock*.ts`, `migrations/*.ts`) that also open project DBs.\nAC-3 a regression guard that FAILS if journal_mode on market.db is anything but `delete` at runtime — assert through the running container, not by reading source (the source-vs-container distinction is what separated 'fixed' from 'fixed and shipped' earlier today).\nAC-4 same guard must catch a `-wal`/`-shm` pair appearing next to market.db.\n\nNOT plan_only and NOT supervised on purpose: this is a scope-completeness bug in a fix that already landed, not a design question, so it belongs in the lane that actually dispatches (BOUNDED-1). The DELETE-vs-WAL policy question per DB stays on SPIKE-SQLITE-DOCKER-VIRT-CORRUPTION-HARDENING AC-B.",
-        "created_at": "2026-07-30T09:21:51Z",
-        "created_by": "po-triage-20260730T0918Z (sqlite-corruption-mechanism-20260730)",
-        "related": [
-          "SPIKE-SQLITE-DOCKER-VIRT-CORRUPTION-HARDENING"
-        ],
-        "updated_at": "2026-07-30T11:37:41Z",
-        "promoted_at": "2026-07-30T11:37:31Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup - WIP (in_progress) was 0; top-ranked eligible candidate FIX-DECISION-JOURNAL-BYTECAP-NO-ACTUATOR (priority_rank=1) was deliberately SKIPPED this tick: its own status_note reads \"Sequence after that row's AC-1 reconcile\" (FIX-SPRINT-REGISTRY-DANGLING-IDS-BREAK-SIGNOFF-AND-JOURNAL-ARCHIVE, still BACKLOG/supervised+plan_only, AC-1 not yet done) - a real sequencing dependency the promote script's has_unbacked_sequencing_prose gate does not catch because it only keys on ^po_sequencing object keys, not a status_note field. Promoted the next-ranked eligible row instead (priority_rank=1, no hidden holds, PO explicitly noted it belongs in this lane).",
-        "claimed_at": "2026-07-30T11:37:41Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)"
-      }
-    ]
+    "in_progress": []
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
