@@ -1,0 +1,55 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-07-30T15:09:10Z",
+    "matched_slots": [
+      "bctc-analyst-slot-1"
+    ],
+    "won_slots": [
+      "bctc-analyst-slot-1"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/bctc-analyst/flow/main.md"
+    ],
+    "silent": false,
+    "drift_min": 5,
+    "errors": [],
+    "pressure_mode": "adaptive",
+    "calendar_status": "unknown",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "chef_mutex_applied": false,
+    "due_reasons": {
+      "bctc-analyst-slot-1": "cron"
+    },
+    "cadence_minutes": {
+      "bctc-analyst-slot-1": null
+    },
+    "last_fired_timestamp": "2026-07-30T15:08:53Z",
+    "last_fired_slots": [
+      "bctc-analyst-slot-1"
+    ],
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "15:00",
+    "leader_lock": "acquired",
+    "dev_head": "unknown",
+    "devq": 5,
+    "signal_backlog": 17,
+    "note": "single-slot WORK tick, bctc-analyst-slot-1 spawned background; emit_pressure_state returned stale_warning=true (server-side, non-blocking, no dispatcher action required per telemetry.md contract)"
+  },
+  "priority": "low",
+  "createdAt": "2026-07-30T15:09:10Z",
+  "_processed": {
+    "fingerprint": "3489eba5964d89ed423dce31642698c1b7a81a98dd57b0d6e5ecbb161f69a767",
+    "processedAt": "2026-07-30T15:15:21Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

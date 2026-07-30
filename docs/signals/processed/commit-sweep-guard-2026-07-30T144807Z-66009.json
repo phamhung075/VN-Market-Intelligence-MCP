@@ -1,0 +1,14 @@
+{
+  "from": "commit-sweep-guard",
+  "to": "po",
+  "type": "bug-escalation",
+  "priority": "high",
+  "createdAt": "2026-07-30T14:48:07Z",
+  "payload": "[sweep-guard] BARE commit about to absorb 3 staged file(s) not necessarily this actor's own: apps/mcp-server/src/__tests__/FIX-BCTC-REPARSE-DOUBLE-WRAP-DEDUP-GUARD.test.ts apps/mcp-server/src/scheduler/startScheduler.ts apps/mcp-server/src/scheduler/startupHelpers.ts. actor=64c7c677-0f0f-4cee-a3ce-dba79d70b7ae mode=warn. Fix: git commit -m \"<msg>\" -- <own-files-only>.",
+  "_processed": {
+    "fingerprint": "06265078ca035d73e9d7c13890d169988ae46bcd7b335efae23e7203711e841d",
+    "processedAt": "2026-07-30T15:15:21Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
