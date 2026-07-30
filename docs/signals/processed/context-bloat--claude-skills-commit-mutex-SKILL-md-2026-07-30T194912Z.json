@@ -1,0 +1,25 @@
+{
+  "from": "context-bloat-backstop-hook",
+  "to": "claude-manager-helper",
+  "type": "context_bloat_breach",
+  "priority": "high",
+  "createdAt": "2026-07-30T19:49:12Z",
+  "payload": {
+    "file": ".claude/skills/commit-mutex/SKILL.md",
+    "line_count": 255,
+    "cap": 200,
+    "byte_count": 12222,
+    "byte_cap": 12000,
+    "class": "skill-file",
+    "reason": "byte-cap",
+    "overage": 55,
+    "byte_overage": 222,
+    "action_required": "prune_or_split"
+  },
+  "_processed": {
+    "fingerprint": "f0eac27abbf3993c7838f4900c29d125ce22b85f85d1a9c9d8152be6e50ec7f3",
+    "processedAt": "2026-07-30T19:51:41Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
