@@ -250,3 +250,15 @@
 **Mitigation:** No immediate action beyond signal routing.
 
 ---
+
+## Anomaly: B-03 · foreign-flow data stale 189 minutes
+**Severity:** CRITICAL | **Date:** 2026-07-30 | **Status:** OPEN
+**Location:** foreign-flow/VPS
+**Details:** Last fetch approximately 3.15 hours ago; SLA threshold 10 minutes
+**Impact:** Real-time market flow data unavailable; critical for order-flow analysis and signal validation
+**Root cause:** VPS fetch pipeline delay; may indicate network latency or service degradation
+**Zone owner:** dev-mcp-server
+**Last reported:** 2026-07-30T07:11:33Z (signal sys-20260730T071114-45c7, system-auditor -> po, dedup_key=data_stale:foreign-flow:B-03, CRITICAL Telegram sent)
+**Mitigation:** No immediate action beyond signal routing.
+
+---
