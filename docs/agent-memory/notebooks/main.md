@@ -1,6 +1,14 @@
 # Dev Team — Sprint Boundary Notebook
 
-**Written:** 2026-07-30T20:20Z
+**Written:** 2026-07-30T20:30Z
+
+## cycle-20260730T1830Z-verify — RAW-verified pm's FIX-COWORK-DISPATCH-ROUTER-INTENT-MUTEX-BYPASS decomposition; found+fixed 2nd head-sync PARTIAL-reset gap this session; released lock + sent telegram (pm has no gateway grant)
+
+- **BGFAN-1 RAW-verification, all claims confirmed real**: commit `cc8323358` real, on HEAD, isolated diff clean (orch-state.json + 3 handoffs + pm's own decision journal, no unrelated content). Parent row genuinely `IN_PROGRESS→BACKLOG`, confirmed OUT of `in_progress[]` via live query (only `FU-CNYVND-DEAD-FIELD-REMOVE` remains).
+- **3 handoffs substantive, not boilerplate**: `TASK-COWORK-MUTEX-001/002/003` (73/118/74L) cite real architect FRs, real file paths, concrete ACs; dependency chain (001→002,003 parallel) correctly carried in YAML frontmatter `depends_on`/`blocks` (board rows themselves carry no such field by design — handoffs are the dependency SSOT, not a gap). `supervised:true` preserved on all 3 children. Decision journal `STEP pm-S5` present, DJ-GATE-1 timing intact (same commit as board flip).
+- **GAP found — 2nd instance this session of CANONICAL:SSOT-STATUSFLIP-LANEMOVE, this time PARTIAL not absent**: pm's write reset `.head.status`/`.active_task_id` to idle/null but left `next_agent:"pm"` + stale pre-decomposition `next_action` prose — contradicts pm's own RETURN text ("next_agent → null"). Self-corrected to full canonical idle shape, committed `50d778c09`.
+- **Tool-grant gap claim verified TRUE** ([[feedback_agent_reported_limitation_may_be_structural_check_the_tool_grant]]): `pm` agent type carries no `mcp__gateway__call_tool` grant (confirmed against agent roster) — released `task:FIX-COWORK-DISPATCH-ROUTER-INTENT-MUTEX-BYPASS` (dev-team was still holding it under its own session/claim) and sent the WORK telegram on pm's behalf.
+- **NEXT**: `TASK-COWORK-MUTEX-001/002/003` sit BACKLOG, `supervised:true` — will not auto-pick via BOUNDED-1/SLS; await deliberate PO/router dispatch of Tier 1 (`001`) first.
 
 ## cycle-20260730T1807Z-tick — drained 9 signals; head-sync self-corrected (ops's SPIKE flip never reset .head); SLS dispatched pm on FIX-COWORK-DISPATCH-ROUTER-INTENT-MUTEX-BYPASS (P0, 3rd-occurrence cross-path dispatch mutex bug, PO-authorized SLS reach)
 
@@ -17,12 +25,3 @@
 - **Task lock release independently verified**: claim-then-release probe returned `claimed:true` on first attempt (lock was genuinely free) — ops's `mcp__gateway__call_tool` grant (unlike architect, [[feedback_agent_reported_limitation_may_be_structural_check_the_tool_grant]]) held up as claimed.
 - **GAP found and self-remediated**: ops performed the write but never committed it to git — unlike architect/dev-mcp-server's self-commit pattern earlier this session. Dev-team pathspec-committed the 3 specific files (`d8f03702c`), explicitly avoiding a large pre-existing pile of ~25 unrelated uncommitted cowork-agent files (notebooks, analysis-briefs, 3 days of fb-posts) sitting in the same working tree — known standing issue, not remediated here (out of scope this cycle; sweeping it risks clobbering other agents' in-flight work per [[feedback_git_add_then_bare_commit_is_toctou_race_use_pathspec_commit]]).
 - **NEXT:** `FIX-BCTC-LAYOUT-PUSH-FAILURE-NETWORK-DEADLOCK` sits BACKLOG (P0, ops+dev-pdf-extractor) awaiting dispatch; SPIKE stays REVIEW until that FIX proves terminal-row recovery (PDR/BSR/DGC/GEX), then PO flips DONE_VERIFIED.
-
-## cycle-20260730T1936Z-verify — RAW-verified architect's SPIKE-SQLITE-DOCKER-VIRT-CORRUPTION-HARDENING return; SLS dispatch closed, dev-team self-released lock (architect has no MCP gateway grant)
-
-- **BGFAN-1 RAW-verification, all claims confirmed real**: commit `9ecfdd300` real, on HEAD (top of unpushed queue). Brief `docs/architecture-briefs/2026-07-30-sqlite-docker-virt-corruption-hardening.md` (195L) is substantively grounded — git-verified mount-type timeline (`ffa045e81` 04-25 bind→named-volume fix, `5ba622eca` 07-15 named-volume→bind revert after VM-rebuild wipe) plus live `docker inspect`/`PRAGMA journal_mode` reads, not the row's own prose alone. Corrected the row's own "named-volume sync fault" framing as backwards: bind-mount/VirtioFS is the actual fault surface (3/4 occurrences), the one named-volume occurrence (07-13) rules out mount-type as sole cause.
-- **New P0 finding surfaced, not fabricated**: live dormant WAL re-armer in `apps/stock-price` Go repos (`foreign_flow_repository.go`, `room_event_repository.go`) — `_journal_mode=WAL` + no `mode=ro` — missed by the sibling TS-only `FIX-SQLITE-JOURNALMODE-WAL-REARM-DEFEATS-DELETE-MITIGATION` sweep.
-- **Board disposition genuine**: row `status:DONE`, out of `in_progress[]`, `next_agent:po`, `.head` idle-reset (`updated_at:17:36:14Z`) — all one write, checked live not from prose. DJ-GATE-1 confirmed (`STEP architect-S19`), notebook entry present at `docs/agent-memory/notebooks/architect.md`.
-- **Tool-grant gap claim verified TRUE, not an excuse** ([[feedback_agent_reported_limitation_may_be_structural_check_the_tool_grant]]): `architect` agent type carries no `mcp__gateway__call_tool` grant — dev-team released `task:SPIKE-SQLITE-DOCKER-VIRT-CORRUPTION-HARDENING` and sent the WORK telegram itself.
-- **6 commits now queued unpushed** (`671272bf4`..`9ecfdd300`) — push-backstop deferred to the next tick's post-cycle per the already-filed SLS-skips-post-cycle signal (`70bc45408`); non-urgent, no new tick has fired this session since `17:07Z`.
-- **NEXT:** po triage of the brief's prioritized follow-up list on its next drain (highest priority: live stock-price WAL re-armer, brief §3).
