@@ -24,10 +24,20 @@
 #   B. OWNED-ELSEWHERE (silent skip — no signal, no commit): docs/signals/** (drain Step 0a owns the
 #      commit, per drain-signals.md:9 MANDATORY-PERSIST-GUARD), docs/data/orch/orch-state.json
 #      (orch-apply.sh flows only), docs/data/cowork-schedule.json, docs/data/coverage-state.json,
-#      docs/agent-memory/modules/** and docs/data/auditor-*-last-healthy.json (RC-GITSTATE candidates).
-#   C. UNKNOWN — everything else. Never auto-committed. Aggregated into ONE signal per tick (dedup
-#      probed read-only against orch-state.json .signal_queue.rows[] — an existing OPEN row from
-#      "dev-team" whose summary starts with the same prefix suppresses re-emission this tick).
+#      docs/agent-memory/modules/**, docs/data/auditor-*-last-healthy.json (RC-GITSTATE candidates),
+#      docs/data/auditor-dedup-ledger.json, docs/data/DASHBOARD.md,
+#      docs/data/unified-agent-synthesis-*.json and docs/social/fb-post-*.md — routine agent-output
+#      classes produced by agents (unified-agent, fb-market-poster) that hold no Bash/git tool and
+#      structurally cannot commit them; and TWO content-gated paths — .claude/agent-models.json and
+#      .claude/agents/*.md — recognized as OWNED-ELSEWHERE ONLY when the diff touches EXCLUSIVELY the
+#      current_mode / model value line (see `_is_model_switch_only`, FIX-STRANDED-SWEEP-CLASSIFY-AGENT-
+#      MODEL-SWITCH AC1); any other edit to these two paths still falls through to UNKNOWN.
+#   C. UNKNOWN — everything else. Never auto-committed. Same SSS_AGE_HOURS young-skip mtime gate as
+#      AUTO-COMMIT applies here too (deletions exempt, no on-disk mtime — FIX-STRANDED-SWEEP-CLASSIFY-
+#      AGENT-MODEL-SWITCH AC3, closing the gap where a file an agent is actively editing right now was
+#      reported stranded). Aggregated into ONE signal per tick (dedup probed read-only against
+#      orch-state.json .signal_queue.rows[] — an existing OPEN row from "dev-team" whose summary
+#      starts with the same prefix suppresses re-emission this tick).
 #      scripts/* auto-commits ALSO get one dedup-checked "verify Script Persistence pointer" signal.
 #
 # Execution cap: paths ACTED ON (AUTO-COMMIT + UNKNOWN) are capped at SSS_CAP per run, taken in
@@ -76,10 +86,29 @@ _age_hours() {
   echo $(( (NOW_EPOCH - mtime) / 3600 ))
 }
 
+_is_model_switch_only() {
+  # $1 = repo-relative path, $2 = ERE matching the ONE allowed changed-value line (both the
+  # `-old` and `+new` sides must match it). Fail-safe default: an empty/unparseable diff, or
+  # any +/- content line that does NOT match $2, returns 1 (not a model-switch diff -> caller
+  # falls through to UNKNOWN). Uses `git diff HEAD` so it sees the combined staged+unstaged
+  # delta regardless of index state (matches what `git status --porcelain` reports as dirty).
+  local path="$1" field_re="$2" diff content
+  diff="$(git -C "$REPO_ROOT" diff HEAD --unified=0 -- "$path" 2>/dev/null)"
+  [ -z "$diff" ] && return 1
+  content="$(printf '%s\n' "$diff" | grep -E '^[+-]' | grep -Ev '^(--- |\+\+\+ )')"
+  [ -z "$content" ] && return 1
+  printf '%s\n' "$content" | grep -Evq "$field_re" && return 1
+  return 0
+}
+
 _is_owned_elsewhere() {
   case "$1" in
-    docs/signals/*|docs/data/orch/orch-state.json|docs/data/cowork-schedule.json|docs/data/coverage-state.json|docs/agent-memory/modules/*|docs/data/auditor-*-last-healthy.json)
+    docs/signals/*|docs/data/orch/orch-state.json|docs/data/cowork-schedule.json|docs/data/coverage-state.json|docs/agent-memory/modules/*|docs/data/auditor-*-last-healthy.json|docs/data/auditor-dedup-ledger.json|docs/data/DASHBOARD.md|docs/data/unified-agent-synthesis-*.json|docs/social/fb-post-*.md)
       return 0 ;;
+    .claude/agent-models.json)
+      _is_model_switch_only "$1" '^[+-][[:space:]]*"current_mode":[[:space:]]*"[a-zA-Z0-9_-]+",?[[:space:]]*$' ;;
+    .claude/agents/*.md)
+      _is_model_switch_only "$1" '^[+-]model:[[:space:]]*[A-Za-z0-9_.-]+[[:space:]]*$' ;;
     *) return 1 ;;
   esac
 }
@@ -138,6 +167,15 @@ while IFS= read -r -d '' entry; do
       scripts) scripts_paths+=("$path") ;;
     esac
     continue
+  fi
+
+  if [ "$is_delete" -eq 0 ]; then
+    age=$(_age_hours "$REPO_ROOT/$path")
+    if [ "$age" -lt "$AGE_HOURS" ]; then
+      young_skipped_n=$((young_skipped_n + 1))
+      echo "[stranded-state-sweep] YOUNG-SKIP path=$path age_h=$age category=unknown" >&2
+      continue
+    fi
   fi
 
   if [ "$considered_n" -ge "$CAP" ]; then
