@@ -61,6 +61,14 @@ EOF
 export SYSTEM_MAP_PATH="$FIXTURE_MAP"
 export HEARTBEAT_FILE_PATH="$TMPDIR_TEST/auditor-tier1-last-healthy.json"
 
+# FIX-AUDITOR-T1-PREGATE-MEMCREEP-SINGLE-POINT-SAMPLE: _check_mem_creep() now
+# sleeps MEM_CREEP_SAMPLE_INTERVAL_SEC between samples (real default 2s) —
+# override to 0 BEFORE sourcing so every one of T1-T53's pre-existing cases
+# (which all take the new default MEM_CREEP_SAMPLES=2 sampling path) stays
+# instant. Left unset: MEM_CREEP_SAMPLES resolves to the script's own
+# default (2).
+export MEM_CREEP_SAMPLE_INTERVAL_SEC="0"
+
 # Default LAUNCHD_DIR_PATH → an EXISTING but EMPTY directory. _check_launchd_
 # agents() finds zero *.plist files in it and trivially PASSes — this keeps
 # every pre-existing T1-T23 assertion below byte-identical (they were all
@@ -132,6 +140,34 @@ vn-market-intelligence-mcp-api-gateway-1\tUp 2 hours (healthy)'
 # steady-state via $STUB_MEM_MCPSERVER), rag-service (capped, via
 # $STUB_MEM_RAG), mcp-gateway (UNCAPPED — Memory=0, must always be skipped
 # regardless of its own MemPerc, proving acceptance (4)).
+
+# FIX-AUDITOR-T1-PREGATE-MEMCREEP-SINGLE-POINT-SAMPLE: _check_mem_creep() now
+# calls `docker stats` MEM_CREEP_SAMPLES (>=2) times per container within
+# ONE _check_mem_creep() invocation. STUB_MEM_* values may now be a
+# comma-separated SEQUENCE (e.g. "70.00,99.91") — the Nth `docker stats` call
+# for that container returns the Nth list entry (clamped to the last entry
+# once the list is exhausted, so a plain single value like "93.67" — every
+# T1-T53 fixture — behaves EXACTLY as before: same value on every sample).
+# Counter is FILE-based (not an in-shell var/array) — `docker stats` is
+# invoked as `pct_raw=$(docker stats ...)` inside the script under test,
+# and command substitution always forks a subshell, so any in-memory
+# counter mutated inside that call would be silently discarded on return
+# (each call would see the SAME starting state, never advancing). A file
+# under $TMPDIR_TEST survives across forks; reset in run_case() so counts
+# never leak across test cases.
+_next_mem_stub() {
+  local key="$1" list="$2" cfile idx arr n
+  cfile="$TMPDIR_TEST/.stats-call-${key}"
+  idx=0
+  [ -f "$cfile" ] && idx=$(cat "$cfile" 2>/dev/null)
+  [[ "$idx" =~ ^[0-9]+$ ]] || idx=0
+  IFS=',' read -ra arr <<< "$list"
+  n=${#arr[@]}
+  [ "$idx" -ge "$n" ] && idx=$((n - 1))
+  printf '%s' "${arr[$idx]}"
+  echo $((idx + 1)) > "$cfile"
+}
+
 docker() {
   local sub="$1"
   case "$sub" in
@@ -168,13 +204,14 @@ vn-market-intelligence-mcp-api-gateway-1\tUp 2 hours (healthy)" ;;
       return 0
       ;;
     stats)
-      local name="${!#}"
+      local name="${!#}" val
       case "$name" in
-        *mcp-server*) printf '%s\n' "${STUB_MEM_MCPSERVER:-12.34}%" ;;
-        *rag-service*) printf '%s\n' "${STUB_MEM_RAG:-20.00}%" ;;
-        *gateway*) printf '%s\n' "${STUB_MEM_GATEWAY:-0.28}%" ;;
-        *) printf '%s\n' "${STUB_MEM_OTHER:-1.00}%" ;;
+        *mcp-server*) val=$(_next_mem_stub "mcpserver" "${STUB_MEM_MCPSERVER:-12.34}") ;;
+        *rag-service*) val=$(_next_mem_stub "rag" "${STUB_MEM_RAG:-20.00}") ;;
+        *gateway*) val=$(_next_mem_stub "gateway" "${STUB_MEM_GATEWAY:-0.28}") ;;
+        *) val=$(_next_mem_stub "other" "${STUB_MEM_OTHER:-1.00}") ;;
       esac
+      printf '%s%%\n' "$val"
       return 0
       ;;
     *) return 1 ;;
@@ -215,6 +252,10 @@ run_case() {
   STUB_MEM_FLEET="ok"; STUB_MEM_MCPSERVER="12.34"; STUB_MEM_RAG="20.00"; STUB_MEM_GATEWAY="0.28"
   STUB_H3000="200"; STUB_H3001="200"; STUB_DF="ok"
   rm -f "$HEARTBEAT_FILE_PATH"
+  # FIX-AUDITOR-T1-PREGATE-MEMCREEP-SINGLE-POINT-SAMPLE: wipe the per-container
+  # docker-stats sample-sequence counters so each test case's samples start
+  # fresh at index 0 (see _next_mem_stub above).
+  rm -f "$TMPDIR_TEST"/.stats-call-*
 }
 
 # ── T1: ALL_GREEN — every check passes ────────────────────────────────────────
@@ -1200,6 +1241,81 @@ check "T53 detail names ORCH-STATE-UNREADABLE" "$([[ "$DETAIL" == *"ORCH-STATE-U
 LAUNCHD_DIR="$LAUNCHD_EMPTY_DIR"
 LAUNCHD_ACK="$TMPDIR_TEST/no-such-ack-ledger.json"
 ORCH_STATE="$DEFAULT_ORCH_STATE"
+
+# ── T54-T58: FIX-AUDITOR-T1-PREGATE-MEMCREEP-SINGLE-POINT-SAMPLE regression
+# suite. Reproduces the live-verified defect this task fixes: a single
+# `docker stats` sample per container could read a quiet instant next to a
+# transient peak and manufacture a false ALL_GREEN. STUB_MEM_* now accepts a
+# comma-separated SEQUENCE — the Nth `docker stats` call for that container
+# returns the Nth entry (see _next_mem_stub above). DISTINCT from
+# T9/T40/T44-T48 above (single-value fixtures, unaffected, still GREEN
+# through this suite) — this block is the NEW multi-sample mechanism only.
+
+# ── T54: THE decisive reproduction — sample 1 reads 70.00% (well under the
+# 85% WARN_PCT threshold, i.e. what a single-point-sample gate would have
+# read as GREEN and stopped there), sample 2 (same invocation, short window)
+# reads 99.91% (the exact live-incident pdf-extractor figure) — must NOT
+# trust the first green sample; overall verdict must be FAILURE ──────────────
+run_case
+STUB_MEM_RAG="70.00,99.91"
+OUT=$(run_probe); RC=$?
+VERDICT=$(printf '%s' "$OUT" | jq -r '.verdict')
+DETAIL=$(printf '%s' "$OUT" | jq -r '.detail')
+check "T54 sample1=GREEN(70.00%) then sample2=FAIL(99.91%) -> verdict FAILURE (does not trust first green sample)" "$([ "$VERDICT" = "FAILURE" ] && echo true || echo false)"
+check "T54 exit=1" "$([ "$RC" -eq 1 ] && echo true || echo false)"
+check "T54 detail mentions mem_creep" "$([[ "$DETAIL" == *"mem_creep"* ]] && echo true || echo false)"
+check "T54 detail names rag-service with the WORST sampled percentage (99.91%%), not the first (70.00%%)" "$([[ "$DETAIL" == *"rag-service"*"99.91%"* ]] && [[ "$DETAIL" != *"70.00%"* ]] && echo true || echo false)"
+check "T54 does NOT write heartbeat file" "$([ ! -f "$HEARTBEAT_FILE_PATH" ] && echo true || echo false)"
+
+# ── T55: reverse order — sample 1 reads 99.91% (breach), sample 2 (same
+# window) reads 70.00% (would-be GREEN) — verdict must STILL be FAILURE.
+# Proves the fix gates off the WORST sample across the window, not merely
+# "trust whichever sample came first" (T54 alone would not distinguish a
+# real worst-of-N fix from a superficial "always re-check once, keep the
+# LAST reading" implementation — this case does) ─────────────────────────────
+run_case
+STUB_MEM_RAG="99.91,70.00"
+OUT=$(run_probe); RC=$?
+VERDICT=$(printf '%s' "$OUT" | jq -r '.verdict')
+DETAIL=$(printf '%s' "$OUT" | jq -r '.detail')
+check "T55 sample1=FAIL(99.91%) then sample2=GREEN(70.00%) -> verdict STILL FAILURE (worst-of-window, not last-sample)" "$([ "$VERDICT" = "FAILURE" ] && echo true || echo false)"
+check "T55 detail names rag-service with the WORST sampled percentage (99.91%%)" "$([[ "$DETAIL" == *"rag-service"*"99.91%"* ]] && echo true || echo false)"
+
+# ── T56: wiring proof — the default (MEM_CREEP_SAMPLES unset -> 2) path
+# actually calls `docker stats` twice for the sampled container, not once
+# (guards against a fix that reads MEM_CREEP_SAMPLES but never loops) ────────
+run_case
+STUB_MEM_RAG="20.00,20.00"
+OUT=$(run_probe); RC=$?
+VERDICT=$(printf '%s' "$OUT" | jq -r '.verdict')
+check "T56 all-samples-GREEN stays ALL_GREEN (multi-sample mechanism introduces no false positive)" "$([ "$VERDICT" = "ALL_GREEN" ] && echo true || echo false)"
+check "T56 docker stats was actually called 2x for rag-service (default MEM_CREEP_SAMPLES=2, real loop not a no-op)" "$([ "$(cat "$TMPDIR_TEST/.stats-call-rag" 2>/dev/null)" = "2" ] && echo true || echo false)"
+
+# ── T57: MEM_CREEP_SAMPLES honored as a real override (>2) — samples 1-2
+# GREEN, sample 3 (still same short window) FAIL -> verdict FAILURE, and the
+# call-count file proves all 3 samples were actually taken ───────────────────
+run_case
+MEM_CREEP_SAMPLES=3
+STUB_MEM_RAG="10.00,12.00,90.00"
+OUT=$(run_probe); RC=$?
+VERDICT=$(printf '%s' "$OUT" | jq -r '.verdict')
+DETAIL=$(printf '%s' "$OUT" | jq -r '.detail')
+check "T57 MEM_CREEP_SAMPLES=3 override: samples 1-2 GREEN, sample 3 FAIL -> verdict FAILURE" "$([ "$VERDICT" = "FAILURE" ] && echo true || echo false)"
+check "T57 detail names rag-service with the 3rd sample's percentage (90.00%%)" "$([[ "$DETAIL" == *"rag-service"*"90.00%"* ]] && echo true || echo false)"
+check "T57 docker stats was actually called 3x (override honored, not clamped back to 2)" "$([ "$(cat "$TMPDIR_TEST/.stats-call-rag" 2>/dev/null)" = "3" ] && echo true || echo false)"
+MEM_CREEP_SAMPLES=2
+
+# ── T58: MEM_CREEP_SAMPLES below the AC's N>=2 floor is defensively clamped
+# back up to 2 (a misconfigured "1" must not silently regress to the old
+# single-point-sample gate) ───────────────────────────────────────────────────
+run_case
+MEM_CREEP_SAMPLES=1
+STUB_MEM_RAG="70.00,99.91"
+OUT=$(run_probe); RC=$?
+VERDICT=$(printf '%s' "$OUT" | jq -r '.verdict')
+check "T58 MEM_CREEP_SAMPLES=1 (invalid, below AC floor) clamped to 2 -> still catches the 2nd-sample breach" "$([ "$VERDICT" = "FAILURE" ] && echo true || echo false)"
+check "T58 docker stats was actually called 2x despite the invalid override (clamp, not honor)" "$([ "$(cat "$TMPDIR_TEST/.stats-call-rag" 2>/dev/null)" = "2" ] && echo true || echo false)"
+MEM_CREEP_SAMPLES=2
 
 # ── Summary ────────────────────────────────────────────────────────────────────
 echo ""

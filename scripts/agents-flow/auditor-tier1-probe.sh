@@ -172,6 +172,16 @@ WARN_PCT=85
 # _mem_container_acked's header comment for the full calibration (2x the
 # ~20 MiB measured rag-service optimize()-rewrite burst, NOT the cap size).
 MEM_FLOOR_MIB=40
+# FIX-AUDITOR-T1-PREGATE-MEMCREEP-SINGLE-POINT-SAMPLE (2026-07-30): sampling
+# knobs for _check_mem_creep() — see that function's header comment for the
+# live-verified incident (ALL_GREEN flipped FAILURE ~5.5min later, pdf-
+# extractor 99.91% MemPerc, a transient peak a single sample missed). Both
+# resolved ONCE here (test seam, same pattern as SYSTEM_MAP/HEARTBEAT_FILE/
+# etc above — tests override the plain var directly post-source, not the env
+# var, for per-case knobs; the test SUITE-wide interval override is exported
+# before source so every case stays instant).
+MEM_CREEP_SAMPLES="${MEM_CREEP_SAMPLES:-2}"
+MEM_CREEP_SAMPLE_INTERVAL_SEC="${MEM_CREEP_SAMPLE_INTERVAL_SEC:-2}"
 
 _now_iso() { date -u +"%Y-%m-%dT%H:%M:%SZ"; }
 
@@ -330,10 +340,40 @@ _check_disk() {
 # headroom floor (MEM_FLOOR_MIB) the ACK cannot swallow, and a LIVE
 # tracked_by resolved against orch-state.json — see its own header comment
 # for the full calibration + staleness detail.
+#
+# FIX-AUDITOR-T1-PREGATE-MEMCREEP-SINGLE-POINT-SAMPLE (2026-07-30): this
+# check used to take exactly ONE `docker stats` sample per container and
+# gate ALL_GREEN/FAILURE off that single reading. LIVE-VERIFIED CONSEQUENCE:
+# a re-run of this exact script ~5.5 minutes after a cited ALL_GREEN result
+# flipped to FAILURE — pdf-extractor had hit 99.91% MemPerc, a transient
+# memory peak the earlier single-point sample simply landed a few seconds
+# clear of and never saw. DISTINCT mechanism from
+# FIX-AUDITOR-TIER1-A30-MEM-SINGLE-CONTAINER-SCOPE (that fix widened WHICH
+# containers are looked at; this fix widens HOW MANY TIMES each one is
+# sampled per invocation) — do not conflate the two, and this task does NOT
+# touch pdf-extractor's own memory-management code (that belongs to
+# FIX-PDFX-PARENT-PROCESS-MEMORY-BURST-HEADROOM) nor the mcp-server VmHWM
+# veto (FIX-AUDITOR-A30-VMHWM-VETO-TAUTOLOGY-FALSE-NEGATIVE) — detector
+# sampling methodology only.
+# Now takes MEM_CREEP_SAMPLES (>=2, default 2) samples per container,
+# MEM_CREEP_SAMPLE_INTERVAL_SEC apart (default 2s — both resolved once at
+# top-of-script, test seams), and gates off the WORST (max) sample
+# observed — a transient peak in ANY one sample forces FAILURE for that
+# container even when another sample in the SAME invocation reads
+# comfortably under WARN_PCT, so a single lucky/unlucky sample can no
+# longer manufacture a false ALL_GREEN. If any sample's `docker stats`
+# read is unavailable/unparseable the container is treated as a breach
+# (unchanged fail-loud behavior, now applied per-sample not just once).
 _check_mem_creep() {
   local ctr_ids inspect_out name mem_cap pct_raw pct
   local breach="" acked="" ack_list=""
   local headroom_mib ack_reason ack_rc
+  local samples interval sample_idx worst_pct sample_failed
+
+  samples="$MEM_CREEP_SAMPLES"
+  [[ "$samples" =~ ^[0-9]+$ ]] && [ "$samples" -ge 2 ] || samples=2
+  interval="$MEM_CREEP_SAMPLE_INTERVAL_SEC"
+  [[ "$interval" =~ ^[0-9]+(\.[0-9]+)?$ ]] || interval=2
 
   ctr_ids=$(docker ps -q 2>/dev/null)
   if [ -z "$ctr_ids" ]; then
@@ -360,16 +400,29 @@ _check_mem_creep() {
     [[ "$mem_cap" =~ ^[0-9]+$ ]] || continue
     [ "$mem_cap" -eq 0 ] && continue  # uncapped — MemPerc would be vs host mem, not a headroom signal
 
-    pct_raw=$(docker stats --no-stream --format '{{.MemPerc}}' "$name" 2>/dev/null)
-    if [ -z "$pct_raw" ]; then
-      breach="${breach}${name}(stats-unavailable) "
-      continue
-    fi
-    pct=$(printf '%s' "$pct_raw" | tr -d '%' | tr -d '\n')
-    if ! printf '%s' "$pct" | grep -Eq '^[0-9]+(\.[0-9]+)?$'; then
-      breach="${breach}${name}(unparseable:${pct_raw}) "
-      continue
-    fi
+    worst_pct=""
+    sample_failed=0
+    for ((sample_idx = 1; sample_idx <= samples; sample_idx++)); do
+      pct_raw=$(docker stats --no-stream --format '{{.MemPerc}}' "$name" 2>/dev/null)
+      if [ -z "$pct_raw" ]; then
+        breach="${breach}${name}(stats-unavailable) "
+        sample_failed=1
+        break
+      fi
+      pct=$(printf '%s' "$pct_raw" | tr -d '%' | tr -d '\n')
+      if ! printf '%s' "$pct" | grep -Eq '^[0-9]+(\.[0-9]+)?$'; then
+        breach="${breach}${name}(unparseable:${pct_raw}) "
+        sample_failed=1
+        break
+      fi
+      if [ -z "$worst_pct" ] || awk -v p="$pct" -v w="$worst_pct" 'BEGIN{exit !(p>w)}'; then
+        worst_pct="$pct"
+      fi
+      [ "$sample_idx" -lt "$samples" ] && sleep "$interval" 2>/dev/null
+    done
+    [ "$sample_failed" -eq 1 ] && continue
+    pct="$worst_pct"
+
     if awk -v p="$pct" -v w="$WARN_PCT" 'BEGIN{exit !(p>=w)}'; then
       headroom_mib=$(_mem_headroom_mib "$mem_cap" "$pct")
       ack_reason=$(_mem_container_acked "$name" "$headroom_mib" "$ack_list"); ack_rc=$?
