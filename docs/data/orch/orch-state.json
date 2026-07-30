@@ -93,12 +93,9 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "FIX-PDFX-EXTRACTION-ENGINE-EMPTY-STRING-SWALLOW",
-    "next_agent": "dev-pdf-extractor",
-    "next_action": "BOUNDED-1 auto-pickup claim of FIX-PDFX-EXTRACTION-ENGINE-EMPTY-STRING-SWALLOW — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
-    "updated_at": "2026-07-30T06:48:09Z",
-    "updated_by": "dev-team (bounded-1 auto-pickup)"
+    "status": "idle",
+    "active_task_id": null,
+    "next_agent": "router"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -17681,6 +17678,42 @@
         "dev_agent": "dev-mcp-server",
         "entered_review_at": "2026-07-30T06:23:09Z",
         "review_note": "ROOT-CAUSE HYPOTHESIS ON THE ROW WAS WRONG — corrected at source, not blindly implemented. Traced signal_quality_audit table's ONLY writer: insertSignalQualityAudit() (infrastructure/db/signalQualityAuditStore.ts), called from exactly one call site — post_agent_signal's handler (agentSignalTools.ts) — ONLY when signal_type is price_confirmation or urgent_news AND finding_data.confidence is a number. runMonthlySignalQualityJob() (the monthlySignalQualityAuditJob cron this row's title blames) queries signal_rejections and sends a Telegram WORK report only — it NEVER writes signal_quality_audit. The table genuinely IS event-driven, matching the ORIGINAL pre-fix code comment; the real defect is that 48h was too tight for how rarely that specific event actually fires. Live DB history (docker exec + bun:sqlite against the named-volume market.db): 6 rows ever, real gaps >2 weeks apart even in a healthy period, zero rows since 2026-06-05T20:12:12Z — the 76067min/52.8d staleness figure in the row's own evidence backs out to exactly that timestamp, not to any monthly-cron boundary.\n\nFIX: DEFAULT_SLA_CONFIG signal_quality_audit.defaultThresholdMinutes 2880 (48h) -> 43200 (30d), sized off the OBSERVED real writer cadence (not the wrong monthly-cron premise). AC-1 satisfied: fixture 20d=28800min -> ok (not breached); 40d=57600min -> breached. Anti-false-green check: the confirmed production gap (76067min) still breaches CRITICAL post-fix (76067 > 43200*1.5=64800) so the genuinely-dead-spot signal is not silenced. Corrected all 3 misleading event-driven/48h comments in freshnessSlaChecker.ts (x2) and freshnessSlaMonitorJob.ts (x1) to state the real writer mechanism so a future reader does not re-litigate the same wrong hypothesis.\n\nAC-2 (confirm/refute at source, do not guess): queried the LIVE named-volume market.db cron_job_runs table directly via docker exec + bun:sqlite. A naive SELECT * ... LIKE ... ORDER BY hit this table's known page corruption (database disk image is malformed — tracked separately as FIX-SQLITE-DOCKER-VIRT-CORRUPTION-RECUR-20260730, same DB, unrelated pre-existing defect) — worked around it with an exact job_name= match against the live idx_cron_job_runs_job_started index, which bypasses the corrupted scan path. Result: monthlySignalQualityAuditJob has exactly 2 rows ever, started_at=2026-05-01T00:00:00 and 2026-06-01T00:00:00, both status=success — NO row for 2026-07-01. CONFIRMED: the cron genuinely missed its July fire. This is real, but per the trace above it does NOT explain the signal_quality_audit SLA-breach defect (the cron never wrote that table in the first place) — the row conflated two unrelated mechanisms under one hypothesis.\n\nAC-3 (backfill or file follow-up): filed FIX-MONTHLYSIGNALQUALITYAUDITJOB-MISSED-JULY-RECOVER-GUARD (BACKLOG, P3, owner dev-mcp-server) via scripts/orch-apply.sh rather than live-backfilling — a live Telegram-sending production side effect against the running container is outside this zone's TDD/code-change scope, especially for a defect that does not touch this row's actual SLA breach; the filed row documents the confirmed missed run, the deferred T4-dedup-guard prerequisite before recoverMissedExecutions can safely flip true, and flags the 2026-08-01 cutoff after which a manual June-audit backfill becomes unrecoverable via the natural cadence.\n\nEvidence: new dedicated apps/mcp-server/src/__tests__/FIX-SLA-SIGNALQUALITYAUDIT-MONTHLY-CADENCE-MISCLASSIFIED-48H.test.ts (8 tests) — AC-1 bidirectional (20d ok / 40d breach, both via checkSignalSla and the full checkDataFreshnessSla pipeline), config pin, fixed-not-calendar-derived threshold check, boundary tests at exactly 30d/30d+1min, and an explicit anti-false-green test asserting the real production 76067min figure still breaches CRITICAL post-fix. Updated 1920i-freshness-sla-extension.test.ts TC-6f to the new value. tsc clean. Targeted SLA suite (12 files, 251 tests) 251/251 pass. Full bun test run TWICE post-fix: 14897 pass/40 skip/52 fail (546s) and 14894 pass/40 skip/55 fail (562s) — both within the standing pre-existing-flake band (54-59, per recent sibling-fix baselines this same sprint/day); grep-confirmed zero of either fail list references freshnessSlaChecker/freshnessSlaMonitorJob/signal_quality_audit/this task ID — same recurring pre-existing theme (5000ms MCP-client timeouts, vnstock/vps_push_log store schema issues) both runs. baseline_pass note resolved: 1408-tool-diacritics.test.ts (the sibling-row unblock this same tick, FIX-BDI-SHIPPING-STALE-404-GUARD) independently re-confirmed GREEN (8/8) locally; CI's bun test job is also green on the latest main push (30518106079) — only frontend-eslint (lockfile drift) and size-lint (unrelated files: usecases_vmt_liquidity_resolvers.go, orchStateSchema.ts) are red, neither touches apps/mcp-server SLA code. Decision journal: docs/agent-memory/decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-dev-mcp-server.md STEP dev-mcp-server-S27. Structural note: no MCP/gateway tool grant this session — flipped this board row via scripts/orch-apply.sh directly (permitted, pure bash); could not call task_release(task:FIX-SLA-SIGNALQUALITYAUDIT-MONTHLY-CADENCE-MISCLASSIFIED-48H) or send_telegram — the coordinating dev-team session holds that lock per its own dispatch note and must independently RAW-verify + release it.\n"
+      },
+      {
+        "id": "FIX-PDFX-EXTRACTION-ENGINE-EMPTY-STRING-SWALLOW",
+        "type": "FIX",
+        "status": "REVIEW",
+        "priority": "P2",
+        "size": "S",
+        "zone": "apps/pdf-extractor/",
+        "owner": "developer",
+        "next_agent": "qa",
+        "depends": [],
+        "created_at": "2026-07-28T17:33:25Z",
+        "created_by": "po/triage-20260728T1731-pdfx-empty-swallow",
+        "source": "dev_close_out + qa status_note on FIX-PDFX-TESSERACT-CONCURRENCY-VIOLATES-SINGLE-WORKER-INVARIANT (commit 4bac2b85d) -- explicitly flagged, explicitly NOT fixed, explicitly recommended as its own row by both dev-pdf-extractor and qa",
+        "title": "apps/pdf-extractor/infrastructure/extraction_engine.py:177-178 swallows an OCR failure (`except Exception: return \"\"`) and returns the empty string as if extraction had succeeded -- a failed, timed-out, or deadline-aborted OCR page is stored/served as a low-quality SUCCESS, byte-indistinguishable at read time from a genuinely sparse-but-real extraction",
+        "root_cause": "Confirmed unchanged by the concurrency fix. dev-pdf-extractor's own close-out: 'Flagged, explicitly NOT addressed ... extraction_engine.py:177-178's except Exception: return \"\" still swallows OCR failure into a low-quality-success shape'. qa's independent re-verification: 'Gap-3 ... confirmed unchanged, correctly left open, needs its own row'. The new ocr_gateway.py deadline mechanism (PDFX_OCR_PAGE_TIMEOUT_S) now GUARANTEES a bounded failure on a hung/abandoned OCR call instead of an unbounded hang -- which makes this swallow MORE likely to fire in practice (a deadline exceeded is exactly the kind of exception this catch block converts into a silent empty string) at the same time as it makes hangs rarer. The two changes compose: bounded-failure-more-often + failure-swallowed-into-success is a worse combination than either alone.",
+        "acceptance": [
+          "AC1: an OCR failure (tesseract error, deadline/timeout, capacity-exceeded passed through as an exception) at this call site is NOT returned as a plain empty string masquerading as success -- it is raised, tagged, or otherwise made distinguishable from a legitimate empty/sparse extraction result all the way to whatever stores or serves the page.",
+          "AC2: negative control -- a genuinely blank or near-blank scanned page (legitimate sparse text, no OCR failure) is NOT reclassified as a failure by this change; both directions must have a passing test.",
+          "AC3: regression floor -- existing extraction_engine.py tests plus the concurrency-fix's own test_ocr_concurrency_invariant.py suite still pass unmodified."
+        ],
+        "scope_out": "Do NOT touch the OCR concurrency/gateway mechanism itself (ocr_gateway.py, the semaphore, the deadline) -- that is DONE_VERIFIED on FIX-PDFX-TESSERACT-CONCURRENCY-VIOLATES-SINGLE-WORKER-INVARIANT; this row only changes what happens to the RESULT of a failure at this one call site.",
+        "related": [
+          "FIX-PDFX-TESSERACT-CONCURRENCY-VIOLATES-SINGLE-WORKER-INVARIANT",
+          "FIX-ERRAUDIT-W3-PEK-P2"
+        ],
+        "note": "PRIOR-ART CHECKED: FIX-ERRAUDIT-W3-PEK-P2 (BACKLOG/P2/apps/pdf-extractor/) targets validate_or_unknown (services.py:91) and parse_or_raise (extraction_engine.py:102) -- different lines, different functions, a different silent-swallow instance from a prior Wave-3 error-handling audit; NOT a duplicate of this line-177-178 empty-string-on-OCR-failure defect, but same file and same defect CLASS -- whoever picks up either row should read the other first to avoid a colliding edit to extraction_engine.py.",
+        "updated_at": "2026-07-30T07:07:19Z",
+        "promoted_at": "2026-07-30T06:48:05Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
+        "claimed_at": "2026-07-30T06:48:09Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "dev_commit": "200eabcf3",
+        "dev_notebook_commit": "554f17c43",
+        "status_note": "dev-pdf-extractor: added OcrPageFailedError(PDFProcessingError) (domain/errors.py); _ocr_page() generic except now raises it (from exc) instead of return \"\" — was the AC1 defect. _extract_text_ocr_sync propagation tuple extended alongside pre-existing OcrCapacityExceededError/OcrDeadlineExceededError. Zero services.py/usecases.py/HTTP-layer changes needed — process_pdf()'s existing except PDFProcessingError branch already marks doc failed + never reaches store_extraction(). AC2 negative control (legit blank page, OCR succeeds returning \"\") unaffected — dedicated test. AC3: new test_extraction_engine_ocr_failure_swallow.py (12 tests) + 2 new test_extract_pdf_service.py tests, full suite 1056 passed (was 1044) + same 3 pre-existing env-only failures (missing pandas, missing container-only PDF fixture) unchanged before/after; test_ocr_concurrency_invariant.py + test_extraction_engine_nonblocking.py pass unmodified. Falsification: reverting the 2 source files makes the new test module fail COLLECTION (ImportError: OcrPageFailedError undefined). import-linter 3/3 contracts kept. Prior-art FIX-ERRAUDIT-W3-PEK-P2 checked — zero overlap (different method, _extract_tables_sync untouched). No rebuild/deploy needed for a QA-scope code-review row (in-process Python service, no external contract change) — QA can verify-committed via pytest re-run."
       }
     ],
     "qa": [],
@@ -17702,41 +17735,7 @@
     },
     "last_triaged_at": "2026-07-30T06:48:05Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": [
-      {
-        "id": "FIX-PDFX-EXTRACTION-ENGINE-EMPTY-STRING-SWALLOW",
-        "type": "FIX",
-        "status": "IN_PROGRESS",
-        "priority": "P2",
-        "size": "S",
-        "zone": "apps/pdf-extractor/",
-        "owner": "developer",
-        "next_agent": "dev-pdf-extractor",
-        "depends": [],
-        "created_at": "2026-07-28T17:33:25Z",
-        "created_by": "po/triage-20260728T1731-pdfx-empty-swallow",
-        "source": "dev_close_out + qa status_note on FIX-PDFX-TESSERACT-CONCURRENCY-VIOLATES-SINGLE-WORKER-INVARIANT (commit 4bac2b85d) -- explicitly flagged, explicitly NOT fixed, explicitly recommended as its own row by both dev-pdf-extractor and qa",
-        "title": "apps/pdf-extractor/infrastructure/extraction_engine.py:177-178 swallows an OCR failure (`except Exception: return \"\"`) and returns the empty string as if extraction had succeeded -- a failed, timed-out, or deadline-aborted OCR page is stored/served as a low-quality SUCCESS, byte-indistinguishable at read time from a genuinely sparse-but-real extraction",
-        "root_cause": "Confirmed unchanged by the concurrency fix. dev-pdf-extractor's own close-out: 'Flagged, explicitly NOT addressed ... extraction_engine.py:177-178's except Exception: return \"\" still swallows OCR failure into a low-quality-success shape'. qa's independent re-verification: 'Gap-3 ... confirmed unchanged, correctly left open, needs its own row'. The new ocr_gateway.py deadline mechanism (PDFX_OCR_PAGE_TIMEOUT_S) now GUARANTEES a bounded failure on a hung/abandoned OCR call instead of an unbounded hang -- which makes this swallow MORE likely to fire in practice (a deadline exceeded is exactly the kind of exception this catch block converts into a silent empty string) at the same time as it makes hangs rarer. The two changes compose: bounded-failure-more-often + failure-swallowed-into-success is a worse combination than either alone.",
-        "acceptance": [
-          "AC1: an OCR failure (tesseract error, deadline/timeout, capacity-exceeded passed through as an exception) at this call site is NOT returned as a plain empty string masquerading as success -- it is raised, tagged, or otherwise made distinguishable from a legitimate empty/sparse extraction result all the way to whatever stores or serves the page.",
-          "AC2: negative control -- a genuinely blank or near-blank scanned page (legitimate sparse text, no OCR failure) is NOT reclassified as a failure by this change; both directions must have a passing test.",
-          "AC3: regression floor -- existing extraction_engine.py tests plus the concurrency-fix's own test_ocr_concurrency_invariant.py suite still pass unmodified."
-        ],
-        "scope_out": "Do NOT touch the OCR concurrency/gateway mechanism itself (ocr_gateway.py, the semaphore, the deadline) -- that is DONE_VERIFIED on FIX-PDFX-TESSERACT-CONCURRENCY-VIOLATES-SINGLE-WORKER-INVARIANT; this row only changes what happens to the RESULT of a failure at this one call site.",
-        "related": [
-          "FIX-PDFX-TESSERACT-CONCURRENCY-VIOLATES-SINGLE-WORKER-INVARIANT",
-          "FIX-ERRAUDIT-W3-PEK-P2"
-        ],
-        "note": "PRIOR-ART CHECKED: FIX-ERRAUDIT-W3-PEK-P2 (BACKLOG/P2/apps/pdf-extractor/) targets validate_or_unknown (services.py:91) and parse_or_raise (extraction_engine.py:102) -- different lines, different functions, a different silent-swallow instance from a prior Wave-3 error-handling audit; NOT a duplicate of this line-177-178 empty-string-on-OCR-failure defect, but same file and same defect CLASS -- whoever picks up either row should read the other first to avoid a colliding edit to extraction_engine.py.",
-        "updated_at": "2026-07-30T06:48:10Z",
-        "promoted_at": "2026-07-30T06:48:05Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
-        "claimed_at": "2026-07-30T06:48:09Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)"
-      }
-    ]
+    "in_progress": []
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
