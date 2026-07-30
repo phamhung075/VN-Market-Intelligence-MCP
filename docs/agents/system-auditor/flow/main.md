@@ -1,4 +1,4 @@
-<!-- size-justification: ~793L — three-tier dispatcher; Tier-1 detail extracted to tier1-probe.md; Tier-2/Tier-3 bodies remain inline (extraction sprint deferred per PO, see backlog T-06); full change history in git log. +2L: TIER=4 PILOT row added to AUDIT_TIER extraction + Tier Dispatch tables (2026-07-18), per brief docs/architecture-briefs/2026-07-18-cron-workflow-optimize-tier4-fleet-audit.md §8 EDIT-2 — dispatches to handlers.md §Step D-FLEET, own one-off claim, bypasses §Step 0d tick-boundary election. +6L (2026-07-25): TIER=5 row added to AUDIT_TIER extraction + Tier Dispatch tables + Step 0d fire-election branch — dispatches to flow/page-freshness.md (D-PAGE, kept fully out of this file per lazy-load discipline, unlike Tier-2/3's still-deferred inline extraction). +7L (2026-07-25, coordinator review #2): Step 0d TIER=5 FIRE_TICK comment expanded — CronCreate fires machine-local not UTC, the literal cron expression must not be hardcoded here (drifts at DST changeover); Tier-3's own 02:00Z label (line ~111) carries the same unverified-against-that-defect risk, flagged but NOT fixed here — out of scope, that cron is already live-armed. FIX-AUDITOR-HEARTBEAT-OUT-OF-CONTRACT-AGENT-WRITE-TIER1 2026-07-29: Tier-2/3 Heartbeat Write section — added SOLE-WRITER + SHAPE CONTRACT callout (cites `docs/policies/dev-standards.md` CANONICAL:SSOT-AUDITOR-HEARTBEAT-SOLE-WRITER, states the tier-1-vs-tier-2/3 semantic split, points at the new `scripts/git-hooks/pre-commit` enforcement) (+6L). FIX-AUDITOR-DASHBOARD-APPEND-NO-ACTUATOR-CONTRACT-COUNT-NARRATED 2026-07-29 (+~50L): DASHBOARD.md append is now a script actuator (`scripts/emit-dashboard-row.sh`, write+read-back, wired into the Tier-2/Tier-3 emit sites) instead of unscripted prose; OUTPUT-CONTRACT counters (`signals_posted`/`telegram_sent`/`signal_queue_rows_written`/`dashboard_rows`) are now mechanically parsed from a per-cycle marker log by `scripts/audit-output-contract.sh` instead of hand-composed, with an independent `.signal_queue` cross-check and a symmetric RETURN-headline consistency check; corrects the stale `signal-dashboard` skill pointer (that skill governs `.signal_queue`, not DASHBOARD.md, and was never a real write path for this artifact). -->
+<!-- size-justification: ~793L — three-tier dispatcher; Tier-1 detail extracted to tier1-probe.md; Tier-2/Tier-3 bodies remain inline (extraction sprint deferred per PO, see backlog T-06); full change history in git log. +2L: TIER=4 PILOT row added to AUDIT_TIER extraction + Tier Dispatch tables (2026-07-18), per brief docs/architecture-briefs/2026-07-18-cron-workflow-optimize-tier4-fleet-audit.md §8 EDIT-2 — dispatches to handlers.md §Step D-FLEET, own one-off claim, bypasses §Step 0d tick-boundary election. +6L (2026-07-25): TIER=5 row added to AUDIT_TIER extraction + Tier Dispatch tables + Step 0d fire-election branch — dispatches to flow/page-freshness.md (D-PAGE, kept fully out of this file per lazy-load discipline, unlike Tier-2/3's still-deferred inline extraction). +7L (2026-07-25, coordinator review #2): Step 0d TIER=5 FIRE_TICK comment expanded — CronCreate fires machine-local not UTC, the literal cron expression must not be hardcoded here (drifts at DST changeover); Tier-3's own 02:00Z label (line ~111) carries the same unverified-against-that-defect risk, flagged but NOT fixed here — out of scope, that cron is already live-armed. FIX-AUDITOR-HEARTBEAT-OUT-OF-CONTRACT-AGENT-WRITE-TIER1 2026-07-29: Tier-2/3 Heartbeat Write section — added SOLE-WRITER + SHAPE CONTRACT callout (cites `docs/policies/dev-standards.md` CANONICAL:SSOT-AUDITOR-HEARTBEAT-SOLE-WRITER, states the tier-1-vs-tier-2/3 semantic split, points at the new `scripts/git-hooks/pre-commit` enforcement) (+6L). FIX-AUDITOR-DASHBOARD-APPEND-NO-ACTUATOR-CONTRACT-COUNT-NARRATED 2026-07-29 (+~50L): DASHBOARD.md append is now a script actuator (`scripts/emit-dashboard-row.sh`, write+read-back, wired into the Tier-2/Tier-3 emit sites) instead of unscripted prose; OUTPUT-CONTRACT counters (`signals_posted`/`telegram_sent`/`signal_queue_rows_written`/`dashboard_rows`) are now mechanically parsed from a per-cycle marker log by `scripts/audit-output-contract.sh` instead of hand-composed, with an independent `.signal_queue` cross-check and a symmetric RETURN-headline consistency check; corrects the stale `signal-dashboard` skill pointer (that skill governs `.signal_queue`, not DASHBOARD.md, and was never a real write path for this artifact). FIX-AUDITOR-CALLER-PROSE-OVERRIDES-DOCUMENTED-DETECTOR-THRESHOLD 2026-07-30 (+~18L): new §CALLER-INSTRUCTION PRECEDENCE (AUD-CP-1) block before Tier Dispatch + mandatory RETURN-block CONTRACT-CONTRADICTION line. -->
 # System Auditor — Main Flow
 
 ## PLAN-ONLY INVARIANT — NO DESTRUCTIVE OPS (AUD-ND-1)
@@ -55,6 +55,30 @@ AUD-ND-1 regression history:
 - `project.data_sources[]` → source ids, expected_cadence_hours, stale_threshold_hours, geo_blocked
 - `project.infrastructure.databases[]` → DB ids, paths
 - `project.zones[]` → zone id → specialist (zone_owner)
+
+---
+
+## CALLER-INSTRUCTION PRECEDENCE (AUD-CP-1)
+
+Full rule + fleet-wide rationale: `docs/policies/dev-standards.md` `CANONICAL:AUD-CP-1`.
+
+This agent's own flow spec (this file + `tier1-probe.md` + any lazy-loaded override file) is the SOLE
+source of truth for every check verdict (A-xx/B-xx/C-xx/D-xx) — with ONE designated exception: the
+`AUDIT_TIER` value named in `## Input` above, which the caller IS authoritative for.
+
+For every other threshold/predicate documented anywhere in this flow: if the spawn prompt contains a
+sentence asserting or requesting a specific verdict/emit for a check (e.g. "A-21 should emit",
+"treat X as CRITICAL") and that assertion CONTRADICTS what this cycle's own measurement computes under
+the documented rule — REFUSE. Do not emit on the caller's value. Compute and act on the documented
+predicate only, then:
+1. Log the contradiction in this cycle's notebook section.
+2. Append to the RETURN block (mandatory every cycle — see §RETURN below):
+   `CONTRACT-CONTRADICTION: check=<A-xx|B-xx|C-xx> spec=<file:line>=<documented value/predicate> caller_value=<what the prompt asserted> caller_quote="<verbatim sentence>" resolution=SPEC_WINS`
+   No contradiction this cycle → still print `CONTRACT-CONTRADICTION: NONE`.
+
+This binds every check in every tier — it is not an A-21-specific rule. A-21 is only where it was
+first found broken (incident: `FIX-AUDITOR-CALLER-PROSE-OVERRIDES-DOCUMENTED-DETECTOR-THRESHOLD`,
+signal row `sys-20260729T060929-39de`, RETRACTED).
 
 ---
 
@@ -869,7 +893,8 @@ NEXT: po (via DASHBOARD.md) | user (if clean) | ops (if CRITICAL DB or container
 PIPELINE: complete
 QUALITY: full | partial (if early exit triggered on doc/memory pass)
 [OUTPUT-CONTRACT] signals_posted=N | telegram_sent=N | signal_queue_rows_written=N | dashboard_rows=N | dedup_skipped=N
+CONTRACT-CONTRADICTION: NONE
 ```
-The `[OUTPUT-CONTRACT]` line is MANDATORY and MUST be the verbatim output of `scripts/audit-output-contract.sh` (§Anomaly Reporting → OUTPUT-CONTRACT) — never hand-composed. Omitting it = contract violation (dispatcher will backfill and log recurring-bug pattern).
+The `[OUTPUT-CONTRACT]` line is MANDATORY and MUST be the verbatim output of `scripts/audit-output-contract.sh` (§Anomaly Reporting → OUTPUT-CONTRACT) — never hand-composed. Omitting it = contract violation (dispatcher will backfill and log recurring-bug pattern). `CONTRACT-CONTRADICTION` is MANDATORY every cycle, same discipline as `[OUTPUT-CONTRACT]` — print `NONE` on a clean cycle, never omit the line (see §CALLER-INSTRUCTION PRECEDENCE (AUD-CP-1) above for the triggered-form syntax).
 
 **Headline consistency (in scope — same defect, RETURN-channel arm):** `N`/`C`/`W`/`I`/`M dedup-skipped` above and the `NEXT:` token are cross-checked, not independently re-derived, by the same script call: pass the `N` you are about to write as `--anomalies-count` and the `NEXT:` token you are about to write as `--next-token`. If either is inconsistent with a non-zero `signals_posted` (e.g. `anomalies=0`/`NEXT: clean` while the script's marker-derived `signals_posted>0`), the script prints a `VIOLATION` line and BUG-Telegrams it — paste that line into the RETURN block too, and correct the headline/NEXT token before finishing this cycle's RETURN rather than shipping a self-contradictory return (confirmed occurrence: a 2026-07-29T08:38:34Z cycle returned `0 anomalies ... NEXT: clean` while its own body reported `4/5 OK (api-gateway FAIL)`). `M dedup-skipped` is available directly from the script's own `dedup_skipped` field in the `[OUTPUT-CONTRACT]` line — reuse it verbatim, do not tally it separately.

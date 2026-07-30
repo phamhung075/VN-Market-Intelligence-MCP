@@ -318,6 +318,15 @@ _gen_row_id() {
   printf '%s-%s-%s' "${FROM_AGENT:0:3}" "$compact" "$suffix"
 }
 
+# FIX-AUDITOR-CALLER-PROSE-OVERRIDES-DOCUMENTED-DETECTOR-THRESHOLD (AC-3/AC-4):
+# every row this function builds carries a hardcoded provenance:"detector" —
+# no --provenance flag exists anywhere in _parse_args(), so there is no
+# call-site-controllable path to any other value. SignalRowSchema is
+# .passthrough() (apps/mcp-server/src/infrastructure/orchStateSchema.ts) so
+# this needed no schema migration. A human/PO override channel already
+# exists and needs no new mechanism here: a direct field write via
+# orch-apply.sh (bypassing this script entirely), distinguishable by `from`
+# + the presence of po_disposition_*/po_amend_*-shaped keys.
 _build_row_json() {
   local row_id="$1" now_ts="$2"
   jq -n \
@@ -328,7 +337,7 @@ _build_row_json() {
     --arg type "$CATEGORY_TYPE" \
     --arg summary "$SUMMARY" \
     --arg severity "$SEVERITY" \
-    '{id:$id, ts:$ts, from:$from, to:$to, type:$type, summary:$summary, severity:$severity, status:"NEW", payload_ref:null}'
+    '{id:$id, ts:$ts, from:$from, to:$to, type:$type, summary:$summary, severity:$severity, status:"NEW", payload_ref:null, provenance:"detector"}'
 }
 
 # Step E-3: signal-row append via orch-apply.sh + POST-WRITE read-back.

@@ -268,6 +268,53 @@ check "T12 no-telegram marker" "$(printf '%s' "$OUT12" | grep -q '^\[emit-signal
 check "T12 no-telegram E-1 still fires" "$([ "$(call_count_for post_agent_signal)" -eq 1 ] && echo true || echo false)"
 check "T12 no-telegram E-2 skipped" "$([ "$(call_count_for send_telegram)" -eq 0 ] && echo true || echo false)"
 
+# ── T13/T14/T15: FIX-AUDITOR-CALLER-PROSE-OVERRIDES-DOCUMENTED-DETECTOR-
+# THRESHOLD §3 — every row _build_row_json() constructs carries
+# provenance:"detector", unconditional on args. Checked across 3 distinct
+# call shapes (plain dedup path / --e3-only / CAS-retry) since those are the
+# shapes most likely to diverge if a future edit re-parameterizes the
+# single row-construction choke point. ──────────────────────────────────────
+row_provenance() {
+  jq -r --arg id "$1" '[.signal_queue.rows[] | select(.id==$id)][0].provenance // "MISSING"' "$SCRATCH_ORCH"
+}
+
+# T13: plain dedup path (mirrors T1's call shape)
+reset_case
+OUT13=$(run_emit_signal --check-id B-04 --category-type data_stale --severity WARN \
+  --summary "provenance check" \
+  --detail-json '{"dedup_key":"data_stale:PROVTEST:B-04"}')
+RC13=$?
+ROW_ID13=$(printf '%s' "$OUT13" | grep -o 'id=[^ ]*$' | cut -d= -f2)
+check "T13 exit=0" "$([ "$RC13" -eq 0 ] && echo true || echo false)"
+check "T13 row always carries provenance=detector (plain path)" "$([ "$(row_provenance "$ROW_ID13")" = "detector" ] && echo true || echo false)"
+
+# T14: --e3-only path (mirrors T5's call shape)
+reset_case
+OUT14=$(run_emit_signal --check-id IMP-1 --category-type improvement_proposal --severity INFO \
+  --summary "provenance e3-only check" --detail-json '{}' --e3-only)
+ROW_ID14=$(printf '%s' "$OUT14" | grep -o 'id=[^ ]*' | head -1 | cut -d= -f2)
+check "T14 e3-only path row also carries provenance=detector" "$([ "$(row_provenance "$ROW_ID14")" = "detector" ] && echo true || echo false)"
+
+# T15: CAS-retry path (mirrors T9's call shape — succeeds on 3rd attempt)
+reset_case
+CAS_ATTEMPT3_FILE="$TMPDIR_TEST/cas-attempt3.count"
+: > "$CAS_ATTEMPT3_FILE"
+_orch_apply_invoke() {
+  local candidate attempt_n
+  candidate=$(cat)
+  echo x >> "$CAS_ATTEMPT3_FILE"
+  attempt_n=$(wc -l < "$CAS_ATTEMPT3_FILE" | tr -d ' ')
+  if [ "$attempt_n" -lt 3 ]; then
+    return 2
+  fi
+  printf '%s' "$candidate" > "$SCRATCH_ORCH"
+  return 0
+}
+OUT15=$(run_emit_signal --check-id A-20 --category-type signal_feedback --severity WARN \
+  --summary "provenance cas retry probe" --detail-json '{"dedup_key":"microservice_degraded:pdf-extractor:A-20-prov"}')
+ROW_ID15=$(printf '%s' "$OUT15" | grep -o 'id=[^ ]*$' | cut -d= -f2)
+check "T15 CAS-retry path row also carries provenance=detector" "$([ "$(row_provenance "$ROW_ID15")" = "detector" ] && echo true || echo false)"
+
 # ── Summary ──────────────────────────────────────────────────────────────────
 echo ""
 echo "Results: $PASS passed, $FAIL failed"
