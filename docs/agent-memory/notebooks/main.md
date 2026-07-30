@@ -1,6 +1,13 @@
 # Dev Team — Sprint Boundary Notebook
 
-**Written:** 2026-07-30T23:11Z
+**Written:** 2026-07-30T23:20Z
+
+## cycle-20260730T2320Z-tick — new tick 2307Z: first live BOUNDED-1 idle-pickup this session, found + minted a 2nd instance of the lock-lifetime bug class (execute-tier.md Phase-3.5), verified agent-father's Bash-grant return
+
+- **Tick 2026-07-30T23:07Z.** Preflight `RUN`. Drained 2 signals (context_bloat_breach on architect's + dev-mcp-server's journals, routed to po, committed `d9fbf4886`). CI probe non-fatal skip. `.head` idle → ran **BOUNDED-1 idle-capacity pickup for the first time this session**: WIP=0, promoted+claimed `FIX-DECISION-JOURNAL-SKILL-CAPCHECK-LINE-ONLY-NO-BYTE-ROLLOVER` (my own prior mint), `.head` set to in_progress/`developer`.
+- **Found a precise 2nd instance of the lock-lifetime bug class self-caught as a near-miss last tick**: BOUNDED-1's own "JUMP TO execute" comment names `execute-tier.md`'s Phase-3.5 as the claim+spawn target — read it directly, its `finally: task_release(...)` fires immediately after a background `Agent()` call returns, releasing the resume lock while the spawned agent is still live. Grepped `main.md` for `LOCK-LIFETIME`: the identical class was already fixed 5x for main.md's own S2/SLS/RLC/DRS/QA-Drain resume-dispatchers, but never for Phase-3.5. Deliberately did NOT follow Phase-3.5's own documented pattern for my own claim (hand-applied the S2-safe pattern instead: claim, spawn, no release on success). **Minted `FIX-EXECUTETIER-PHASE35-RESUME-LOCK-RELEASED-AT-SPAWN-NOT-COMPLETION`** (P1 → architect, DRS-eligible) — this crossed the "worth a FIX row if it recurs" bar set last tick.
+- **`agent-father` returned** on the Bash-grant co-dispatch — RAW-verified: all 3 `tools:` lines confirmed gained Bash; `git show --stat 610110e16` = exactly 5 files as claimed; both rows confirmed `REVIEW`/`next_agent:qa` (correctly not self-certified DONE — live-cycle behavioral verification still pending); `.head` independently confirmed untouched (still my own BOUNDED-1 claim); 2 unpushed commits confirmed matching its own claim. Committed `orch-state.json` (agent-father's flips + my mint, composed correctly) together with the mint script (`7b7e0d9af`).
+- **NEXT**: await `developer` (BOUNDED-1 auto-pickup, `ab484e8a19a0e6084`). Resume lock `task:FIX-DECISION-JOURNAL-...` held for full TTL (LOCK-LIFETIME) — will NOT release on return, only TTL lapse or `.head` moving off in_progress.
 
 ## cycle-20260730T2311Z-verify — RAW-verified dev-mcp-server's Polymarket retirement (genuine, 33/33 files match, 8/8 claims confirmed); both tick-2237Z background agents now closed out
 
@@ -14,11 +21,4 @@
 - **BATCH entry 1 was not a new mint** — `FIX-ALERT-COMMANDER-NO-BASH-GRANT-NOTEBOOK-UNCOMMITTABLE` is a pre-existing 2026-07-29 row that po's own new `manual-dispatch-sweep.md` sub-flow (first live exercise, stamp fields confirm) surfaced as zero-picker-stranded and folded into the BATCH text — read correctly as "dispatch now," not "duplicate mint."
 - **Minted 2 genuinely-new rows** (SIGNAL-OUTCOMES-LIVENESS-GUARD → dev-mcp-server, DECISION-JOURNAL-CAPCHECK-BYTE-ROLLOVER → developer), conservation 730→732. **Dispatched the stranded row** via S4 UNBLOCK to `agent-father`, co-batched with `FIX-COWORK-BASH-GRANT-COVERAGE-STAMP-TRANSPORT` per its own "one edit pass" instruction — `.head` untouched (side dispatch). Released `task:po-triage-20260730`.
 - **NEXT**: await `agent-father` (Bash-grant co-dispatch, `a4f956623c5633cde`) and `dev-mcp-server` (Polymarket retire, `a55f8e843576ef5b5`) returns. No lock currently held by this session.
-
-## cycle-20260730T2256Z-verify — RAW-verified architect's PO-manual-dispatch-sweep design (genuine, sound); `.head` now idle for next tick
-
-- **architect returned** on `FIX-PO-NO-PRODUCER-FOR-MANUAL-DISPATCH-ESCAPE-HATCH`: new `po/flow/manual-dispatch-sweep.md` sub-flow + shared jq lib + regression verifier + `po/flow/main.md` pointer. RAW-verified, not accepted on report alone: `git show --stat e27f6f0a5` = exactly 9 files as claimed; ran `po-manual-dispatch-sweep-verify.sh` myself — 12/12 PASS (every Lane × Gate Coverage Matrix branch resolves correctly); confirmed the `main.md` pointer exists at line 74; confirmed `.head` correctly reset idle and board row correctly moved `review[]`/`next_agent:po` per CANONICAL:SSOT-STATUSFLIP-LANEMOVE; read the sub-flow's own "why not `.head`/WIP-budget" design note directly — reasoning is sound (a 2nd independent `.head` writer would break the single-linear-chain collision-free proof the qadrain brief relies on).
-- Did not re-derive the 43+3=46-vs-49 count discrepancy myself — architect's own explanation (genuine concurrent board churn between PO's snapshot and design time) is plausible and non-alarming, and the regression verifier already exercises the live predicate correctly.
-- No further board action needed — row correctly parked in `review[]` for PO's own next tick (first live exercise of the new pre-check). `.head` is now idle — idle-fallthrough chain (BOUNDED-1/SLS/RLC/DRS/QA-Drain) is eligible again NEXT tick.
-- **NEXT**: await `po` (6th pass, `ad12c0db4daac313f`) and `dev-mcp-server` (Polymarket retire) returns. `task:po-triage-20260730` still held.
 
