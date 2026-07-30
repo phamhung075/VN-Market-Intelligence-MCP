@@ -45,3 +45,21 @@ Zone health: no drift detected.
 **Zone note:** No Agent/Task-spawn or MCP tool available this session (Read/Edit/Write/Bash only) — did the `apps/macro-indicators/` zone work directly instead of dispatching `dev-macro-indicators` (structural gap, not a process skip); filename corrected `composition-root-logic-gate.test.go`→`_test.go` per board note (Go only discovers `_test.go`).
 
 Zone health: no drift detected.
+
+## Session 2026-07-30 — FACTORY-GUARD-CI-DEADCODE-IMPL — REVIEW
+
+**Task:** dev-team BOUNDED-1 auto-pickup (`cross-service/`, epic FACTORY-MAINTAINABILITY-2026-06), 4th sibling of TSBOUNDARIES/COMPROOT-LOGIC above (same architect brief lineage, own brief `2026-07-24-factory-guard-ci-dead-code-gate.md`). New dead-code CI gate + fix all confirmed-orphaned trees first (zero-tolerance).
+
+**Actions taken:** New `scripts/audits/dead-code-gate.sh` (`--check`, 4 checks on TRACKED files: `.bak`/`.backup`/`.patch`, `_deprecated/` segment, Go/TS twin scaffold, `//go:build ignore`). Deleted 2 stray root `docker-compose.yml.backup`/`.patch`, mcp-server's 2 `_deprecated/` trees + `1077-kinh-dich-wrapper.test.ts`, pdf-extractor's `_deprecated/mock_echo`, stock-price's `_deprecated/services_v1.go`+test (the only 2 `//go:build ignore` files repo-wide) — zero live importers independently grep-verified for each. Surgical edit to `1081-sprint-054-smoke.test.ts` (Scenario 5/5b/5c only, 17→14 tests). `technical-analysis/package.json` trimmed `bun-types`/`typescript` devDeps. Wired `dead-code-gate` CI job + CANONICAL pointer.
+
+**Board-note correction:** Check-3's literal phrasing ("any Go `cmd/server`+`package.json`+`src/` combo bans") would permanently false-positive on the LIVE `apps/news-fetch` (legit WIP parallel Go port, TS side is what its Dockerfile actually builds/deploys) — refined to a Dockerfile-content signal (zero `src` reference = orphaned, matching technical-analysis's confirmed dead shape) instead of bare directory shape. Also found `apps/technical-analysis/src/` + its tests were ALREADY deleted by an unrelated prior commit (`099afddd3`, 2026-07-28) before this row was even dispatched — only the devDep trim remained live-actionable.
+
+**Verification:** `dead-code-gate.sh --check` 0 on live repo; new `dead-code-gate.test.sh` 8/8 PASS (4 DoD synthetic-offender cases + tracked-vs-untracked control + twin-scaffold Dockerfile-blind/-referencing pair proving the news-fetch exemption is deliberate). mcp-server: `tsc --noEmit` clean, `eslint src/` clean, `1081-*.test.ts` 14/14. technical-analysis: `go build`/`go vet`/`go test ./...`/`golangci-lint run` clean, `dashboard/build.sh` green (35/35 + headless render, esbuild/playwright-core confirmed still load-bearing). pdf-extractor `lint-imports` 3/3 kept; stock-price `golangci-lint run` 0 issues. Full `bun test`: standing `FIX-MCP-SUITE-HEALTH-BASELINE` order-dependent red only — 3-run base-vs-head A/B (disposable `git worktree`) showed every failing file either pre-existing in base or a run-to-run flip on identical code (base 20/9files, head-run1 24/10files, head-run2 2/2files); zero deterministic net-new failures.
+
+**Board:** `task_board.in_progress[FACTORY-GUARD-CI-DEADCODE-IMPL]` → `review` (`next_agent: qa`), `.head` reset to idle, same `orch-apply.sh` write.
+
+**Simplicity gate:** PASS — every deletion is pure subtraction of independently zero-importer-verified code; check-3's Dockerfile-content refinement is the minimal signal that avoids the false positive (no new dependency, no broader per-symbol tooling).
+
+**Zone note:** No MCP/gateway tool available this session (Read/Edit/Write/Bash only, confirmed at Step 0) — flipped the board row directly via `scripts/orch-apply.sh` (permitted, pure bash); could not release `task:FACTORY-GUARD-CI-DEADCODE-IMPL` or send Telegram (structural gap, flagged for the coordinating dev-team session). Mid-task, ~12 staged `git rm` deletions were found unstaged between two background test runs (index reverted to HEAD, files still gone from disk) — re-staged immediately, verified residual-check 0 before AND after commit; root cause not conclusively isolated (2 concurrent single-file peer commits landed on `main` in the same window) but files were never lost, only re-staged.
+
+Zone health: no drift detected.
