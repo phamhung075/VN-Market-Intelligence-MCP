@@ -13372,6 +13372,73 @@
         "architect_completed_at": "2026-07-29T14:31:31Z",
         "architect_brief": "docs/architecture-briefs/2026-07-29-fix-cowork-dispatch-router-intent-mutex-bypass-design.md",
         "dev_team_note_20260729T1446": "architect ruling complete + verified (commit 89d4b4340); row handed to next_agent=pm but SUPERVISED HOLD stays in effect per architect own report (do not auto-dispatch past architect without supervisor go-ahead). Moved in_progress[]->ready[] so this does not pin WIP indefinitely on a row that cannot be auto-picked anyway; supervised:true continues to block BOUNDED-1/SLS auto-pickup exactly as designed. Deliberate pm dispatch remains a router/PO decision."
+      },
+      {
+        "id": "FIX-CI-FRONTEND-ESLINT-BUNLOCK-DUAL-LOCKFILE-DRIFT",
+        "title": "CI job frontend-eslint (CI-RED-79013523, CI-RED-2bdd28fb) dies at `bun install --frozen-lockfile` in apps/frontend: apps/frontend tracks TWO lockfiles and only the npm one is maintained — apps/frontend/bun.lock is missing tailwindcss-animate. The job has NEVER been observed green (0/2 runs), so the boundaries fence it exists to enforce has never once executed.",
+        "type": "FIX",
+        "size": "S",
+        "priority": "P1",
+        "status": "READY",
+        "zone": "apps/frontend/",
+        "owner": "dev-frontend",
+        "next_agent": "dev-frontend",
+        "supervised": false,
+        "plan_only": false,
+        "created_by": "po/triage-20260730T0449",
+        "origin_signal_id": "ci-red-79013523-20260730041813",
+        "check_id": "CI-RED-79013523",
+        "ci_fingerprint": "e795202f4528cd5fd7141b83de450f68e9045e2eed00e40f682e08cc871c8a08",
+        "dedup_key": "ci_job:frontend-eslint|file:apps/frontend/bun.lock",
+        "verification_gate": "ci_green_on_subsequent_push",
+        "root_cause": "apps/frontend tracks TWO lockfiles — apps/frontend/bun.lock AND apps/frontend/package-lock.json. Commit 48eb49a0c (2026-06-11T06:33:36+02:00, 'fix(frontend): wire tailwindcss-animate plugin so tooltip fade-in CSS is generated') added `tailwindcss-animate: ^1.0.7` to apps/frontend/package.json and regenerated ONLY package-lock.json (grep -c tailwindcss-animate apps/frontend/package-lock.json => 3). apps/frontend/bun.lock was last written by 7793ca286 (2026-06-02T23:22:51+02:00) and does NOT contain it. Verified exhaustively, not sampled: iterated every key of (.dependencies + .devDependencies) in apps/frontend/package.json and grepped each in bun.lock — `tailwindcss-animate` is the ONLY missing one. .github/workflows/ci.yml:127-129 sets working-directory apps/frontend and :145-146 runs `bun install --frozen-lockfile`, which reads bun.lock, sees the package.json delta and exits 1 ('error: lockfile had changes, but lockfile is frozen'). The drift was latent for 7 weeks; it only became CI-visible when commit 66ab9deb3 (FACTORY-GUARD-CI-TSBOUNDARIES-IMPL, 2026-07-29) added the frontend-eslint job.",
+        "evidence": "Failing STEP read verbatim from the run log per FIX-CIRED-TRIAGE-WRONG-PLANE-DEDUP-AMNESTY AC-1, not inferred from the job name. `gh run view 30512236942 --log-failed` => `frontend-eslint / Install dependencies / error: lockfile had changes, but lockfile is frozen` + `note: try re-running without --frozen-lockfile and commit the updated lockfile` + `##[error]Process completed with exit code 1`. IDENTICAL on the preceding run `gh run view 30505571097 --log-failed` (headSha 2bdd28fb, created 2026-07-30T01:24:57Z) => cross-SHA PERSISTENT, not transient. JOB IS NEW — proven by job inventory diff, not assumed: run 30497473256 (headSha 44f04730, 2026-07-29T22:49:33Z, conclusion=success) has 10 jobs and NO frontend-eslint; run 30512236942 has 19 jobs including frontend-eslint. 30505571097 is therefore the FIRST run that ever contained this job, and it was red => 0/2 green record, never once observed passing. NOT a fence-config error: sibling jobs news-fetch-eslint and mcp-server-eslint added by the same commit BOTH pass on 30512236942 — the failure is apps/frontend-local. apps/frontend is a LIVE service (docker-compose.yml:417, build context apps/frontend), not a dead tree. bun test job is GREEN on this HEAD — the red is confined to frontend-eslint + size-lint.",
+        "ac": "(AC-1) `bun install` inside apps/frontend regenerates apps/frontend/bun.lock so that `bun install --frozen-lockfile` exits 0 there; regenerated bun.lock committed. (AC-2) FIX THE DUAL-LOCKFILE ROOT CAUSE, not just the missing entry — otherwise the next dependency add reproduces this byte-for-byte. CI reads bun.lock (ci.yml:142 cache key hashFiles('apps/frontend/bun.lock'); ci.yml:146 bun install), so bun.lock is canonical: delete apps/frontend/package-lock.json, OR if a named consumer genuinely needs it, record that consumer plus the single command that regenerates BOTH. State which option was taken and why. (AC-3) THE FENCE HAS NEVER RUN — EXPECT MORE WORK: the job dies at `Install dependencies`, i.e. BEFORE the `lint:fence` step, so there is ZERO evidence the apps/frontend boundaries fence passes. FACTORY-GUARD-CI-TSBOUNDARIES-IMPL's title claims it 'fixed 3 live fence violations'; for apps/frontend that claim has no CI evidence. After AC-1, run `bun run lint:fence` in apps/frontend and fix what it surfaces. If it surfaces >2 distinct violations, STOP and hand back to PO for a re-size — do not silently grow this row. (AC-4) VERIFY ON THE CI PLANE ONLY: `gh run list --branch main --limit 3 --json databaseId,headSha,conclusion` then `gh run view <databaseId> --json jobs -q '.jobs[]|select(.name==\"frontend-eslint\")|.conclusion'` must return `success` for a run whose headSha is AFTER 7901352361213352b0cedab2077c0393ad5f1837. A local `bun install` exiting 0 is NOT this AC — the whole reason this defect reached main is that local evidence was accepted for a CI-plane deliverable.",
+        "files": [
+          "apps/frontend/bun.lock",
+          "apps/frontend/package-lock.json",
+          "apps/frontend/package.json"
+        ],
+        "reference_only_files": [
+          ".github/workflows/ci.yml"
+        ],
+        "related": "Sibling half of the same CI RED: FIX-CI-SIZELINT-MACRO-VMT-LIQUIDITY-RESOLVERS-NEW-OFFENDER. Deliberately NOT one `multi` row — two independent root causes in two zones, each with its own per-job conclusion that is individually verifiable via `gh run view --json jobs`; a multi row would add an architect split hop while main stays red. Introduced-by (do not blame-fix, both are already in review[]): 66ab9deb3 / FACTORY-GUARD-CI-TSBOUNDARIES-IMPL added the job. Method credit: found by executing FIX-CIRED-TRIAGE-WRONG-PLANE-DEDUP-AMNESTY AC-1 (mandatory failing-log read before dedup) BY HAND — that row is still BACKLOG/unshipped, so the discipline is not yet enforced by the flow.",
+        "dedup_checked": "2026-07-30T04:49Z — jq over EVERY .task_board lane (backlog 378 / ready 54 / review 167 / in_progress 1 / done / done_verified / active_sprints / archive) matching id+title+status_note+root_cause against /CI-RED|ci_red|eslint|size-lint/i and separately against /lockfile|bun\\.lock|tailwindcss|frozen|usecases_vmt_liquidity/i. Zero rows own either failing job. Layer-2 (head_sha in an open FIX status_note) also zero. Note for the NEXT triage: layers 1+2 of triage-signals.md §ci_red are both SHA-derived and will NOT match this row on the next red — grep the FILE identity in dedup_key instead.",
+        "created_at": "2026-07-30T04:57:52Z",
+        "updated_at": "2026-07-30T04:57:52Z"
+      },
+      {
+        "id": "FIX-CI-SIZELINT-MACRO-VMT-LIQUIDITY-RESOLVERS-NEW-OFFENDER",
+        "title": "CI job size-lint went RED (CI-RED-79013523, CI-RED-2bdd28fb) after being GREEN 3h earlier — apps/macro-indicators/pkg/application/usecases_vmt_liquidity_resolvers.go landed at 224L (cap 120L) carrying a package doc comment but no `size-justification:` marker and no baseline entry, so --check classifies it new-offender.",
+        "type": "FIX",
+        "size": "S",
+        "priority": "P1",
+        "status": "READY",
+        "zone": "apps/macro-indicators/",
+        "owner": "dev-macro-indicators",
+        "next_agent": "dev-macro-indicators",
+        "supervised": false,
+        "plan_only": false,
+        "created_by": "po/triage-20260730T0449",
+        "origin_signal_id": "ci-red-79013523-20260730041813",
+        "check_id": "CI-RED-79013523",
+        "ci_fingerprint": "e795202f4528cd5fd7141b83de450f68e9045e2eed00e40f682e08cc871c8a08",
+        "dedup_key": "ci_job:size-lint|file:apps/macro-indicators/pkg/application/usecases_vmt_liquidity_resolvers.go",
+        "verification_gate": "ci_green_on_subsequent_push",
+        "root_cause": "scripts/audits/size-lint-justification.sh detects a justification at :83 via `head -10 \"$f\" | grep -E 'size-justification:'` and parses the declared count at :87; THRESHOLD=120 at :57. apps/macro-indicators/pkg/application/usecases_vmt_liquidity_resolvers.go is 224L (local `wc -l` = 224, matching CI exactly) and was added by 9431a7cdd ('feat(cross-service/factory-guard-ci-comproot-logic-impl): new go/ast composition-root-logic CI gate', 2026-07-30T02:03:45+02:00). Its first 6 lines are a descriptive package doc comment ('// Package application — VMT-5a/VMT-5b liquidity-state provider resolvers (FACTORY-GUARD-CI-COMPROOT-LOGIC-IMPL)...') — real prose, but NOT the literal `size-justification:` keyword the script greps for — and the file has no entry in docs/data/size-lint-baseline.json. It therefore falls through to the new-offender branch at :129 and --check exits 1.",
+        "evidence": "`gh run view 30512236942 --log-failed` => `size-lint / Run size-lint-justification --check / [size-lint] FAIL — 1 offending file(s) (scanned 1343): apps/macro-indicators/pkg/application/usecases_vmt_liquidity_resolvers.go — new-offender (224L > 120L, no baseline entry, no current justification header)`. Byte-identical on prior run 30505571097 (headSha 2bdd28fb) => cross-SHA persistent. CLEAN BEFORE/AFTER — size-lint is NOT a new job: it ran and PASSED on run 30497473256 (headSha 44f04730, 2026-07-29T22:49:33Z), so the regression was introduced inside the range 44f04730..2bdd28fb, and `git log -- <file>` returns exactly ONE commit, 9431a7cdd, which is in that range. Only 1 offending file out of 1343 scanned — scope is provably this single file, not a threshold or scanner change.",
+        "ac": "(AC-1) `bash scripts/audits/size-lint-justification.sh --check` exits 0 and no longer lists apps/macro-indicators/pkg/application/usecases_vmt_liquidity_resolvers.go. (AC-2) Fix by ONE of, in this preference order: (a) add `// size-justification: 224L — <specific reason this file is cohesive at 224L>` within the first 10 lines — the declared number must be within +/-10% or min 5L of actual (script :26, :87), so state the real count, not a round one; or (b) split the file so each part is <=120L. (AC-3) DO NOT fix by running `--update`: the baseline is regenerated WHOLESALE, not merged, on every --update (script :175 `_note`: 'Regenerated wholesale each --update (not merged)'), so an --update run would grandfather this file AND silently re-snapshot every other current offender in the repo — converting a 1-file failure into a repo-wide amnesty. This is the single most likely wrong fix; it would exit 0 and look green. (AC-4) VERIFY ON THE CI PLANE: `gh run view <run with headSha after 7901352361213352b0cedab2077c0393ad5f1837> --json jobs -q '.jobs[]|select(.name==\"size-lint\")|.conclusion'` == `success`. Local exit 0 is necessary, not sufficient.",
+        "files": [
+          "apps/macro-indicators/pkg/application/usecases_vmt_liquidity_resolvers.go"
+        ],
+        "reference_only_files": [
+          "scripts/audits/size-lint-justification.sh",
+          "docs/data/size-lint-baseline.json"
+        ],
+        "related": "Sibling half of the same CI RED: FIX-CI-FRONTEND-ESLINT-BUNLOCK-DUAL-LOCKFILE-DRIFT. Introduced-by 9431a7cdd / FACTORY-GUARD-CI-COMPROOT-LOGIC-IMPL (already in review[], flipped there 2026-07-30T00:04:55Z — i.e. 80 minutes BEFORE the first CI run containing that commit even started at 01:24:57Z). Distinct from FACTORY-GUARD-CI-SIZELINT-IMPL / FACTORY-GUARD-CI-size-lint-justification (both review[]): those rows BUILT this gate and it works correctly — this row is a genuine violation the working gate caught, not a gate defect. Do not merge them.",
+        "dedup_checked": "2026-07-30T04:49Z — same all-lane jq sweep as the sibling row (see its dedup_checked); zero rows reference this file or the size-lint job as a failing gate. FACTORY-GUARD-CI-SIZELINT-IMPL and FACTORY-GUARD-CI-size-lint-justification were read directly and are gate-construction rows, not violation rows.",
+        "created_at": "2026-07-30T04:57:52Z",
+        "updated_at": "2026-07-30T04:57:52Z"
       }
     ],
     "review": [
@@ -17403,7 +17470,7 @@
         "next_agent": "qa",
         "created_by": "po/triage-20260729T2107",
         "created_at": "2026-07-29T21:31:41Z",
-        "updated_at": "2026-07-29T22:09:25Z",
+        "updated_at": "2026-07-30T04:57:52Z",
         "root_cause": "apps/mcp-server/src/infrastructure/db/alertStore.ts:523 — `const since = new Date(Date.now() - windowDays * 86_400_000).toISOString();`. readPendingOutcomeAlerts(windowDays, db) takes NO clock parameter, so the deps.nowFn seam that runAlertOutcomeJob exposes (alertOutcomeJob.ts:34 `nowFn?: () => Date`, consumed at :147) is only PARTIALLY effective: it governs classification/elapsed-days logic but NOT the candidate-selection predicate at alertOutcomeJob.ts:164 `readPendingOutcomeAlerts(90, db)`. The test pins NOW = 2026-05-06T12:00:00Z (test:95-96) and seeds every alert at daysAgo(N) relative to that SAME pinned base (test:89-90), so as real wall-clock time advances the seeded rows silently drift out of the real-clock 90-day window and the job returns evaluated=0 for every scenario. Arithmetic: real `since` on 2026-07-29T12:47Z = 2026-04-30T12:47Z; fixtures at daysAgo(6) = 2026-04-30T12:00:00Z and daysAgo(7) = 2026-04-29T12:00:00Z now fall BELOW it. The 3 surviving tests are exactly the ones seeded at daysAgo(2) = 2026-05-04T12:00Z, still inside the window.",
         "evidence": "RAW, three independent planes. (1) CI plane: run 30452854795 (HEAD aa6c044b, 2026-07-29T12:47:22Z) = 14786 pass / 40 skip / 6 fail, FAILED FILES (1) = src/__tests__/1847d-C-alert-outcome-job.test.ts. run 30484792885 (HEAD c99c72bd, 19:34:15Z) = 14791 pass / 40 skip / 6 fail, same single file. run 30492102581 (HEAD 4381b08b = current origin/main, 21:22Z) = 14793 pass / 40 skip / 6 fail, same single file. (2) Local isolation plane: `STOCK_PRICE_DB_PATH=/tmp/… bun test src/__tests__/1847d-C-alert-outcome-job.test.ts` in apps/mcp-server = 3 pass / 6 fail, deterministic across 2 consecutive runs, byte-identical fail set to CI. Failing assertions are uniform `result.evaluated`/`result.hit` = 0 vs expected 1/10 (TEST-2,5,6,7,8,9). (3) Green-baseline plane: run 30425110302 (HEAD 39a4dac7, 2026-07-29T05:30:19Z) = 14762 pass / 40 skip / 0 FAIL. A 0-fail CI baseline is therefore REACHABLE and was reached 8h before this red.",
         "po_refutation": "The routing premise handed to this triage — 'strongly suspected to be the SAME standing FIX-MCP-SUITE-HEALTH-BASELINE order-dependent full-suite pollution (14904-14907 pass / 60-63 fail of 15007)' — is REJECTED on two independent grounds. (a) WRONG MEASUREMENT PLANE: .github/workflows/ci.yml has run `bash ../../scripts/ci-per-file-isolation.sh 16` since commit 3174de0ce (2026-06-09, 'switch bun test to per-file process isolation runner'). That runner forks one bun process per test file (script:24 `bun test \"$f\"` with a per-file unique STOCK_PRICE_DB_PATH), so cross-file order-dependent pollution is structurally IMPOSSIBLE in the CI plane. (b) NUMBERS DO NOT MATCH: CI reports 6 fail concentrated in 1 file; the cited local figure is 60-63 fail spread across the full suite. Different plane, different magnitude, different file set. 'Commit touched no application code' is not evidence of pre-existing pollution here — the defect is time-triggered, not commit-triggered, which is precisely why it appeared on docs-only commits.",
@@ -17426,7 +17493,8 @@
         "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
         "claimed_at": "2026-07-29T21:52:37Z",
         "claimed_by": "dev-team (bounded-1 auto-pickup)",
-        "review_note": "AC-1 clock threaded through readPendingOutcomeAlerts (default new Date(), zero prod behaviour change); AC-2 fixture de-rotted (TEST-10 regression test, NOW shifted 200 REAL days into the past, RED-proved via git-stash A/B against pre-fix code). Target file 10/10 pass (was 3/9). Full per-file-isolation run (ci-per-file-isolation.sh 16, the actual CI runner): 14797/40/3 fail — the 3 (1324-push-news-all-sources, 1398/1793-pollnews-cooldown) do not import alertStore/alertOutcomeJob and re-ran GREEN individually (P16 resource-contention + local missing-chromium flakes) — pre-existing, unrelated. tsc clean, toolCount=184/cronJobCount=88 unchanged. AC-3 (ci_green_on_subsequent_push) is QA/dispatcher gate — NOT closed here, requires a fresh CI run on a new SHA."
+        "review_note": "AC-1 clock threaded through readPendingOutcomeAlerts (default new Date(), zero prod behaviour change); AC-2 fixture de-rotted (TEST-10 regression test, NOW shifted 200 REAL days into the past, RED-proved via git-stash A/B against pre-fix code). Target file 10/10 pass (was 3/9). Full per-file-isolation run (ci-per-file-isolation.sh 16, the actual CI runner): 14797/40/3 fail — the 3 (1324-push-news-all-sources, 1398/1793-pollnews-cooldown) do not import alertStore/alertOutcomeJob and re-ran GREEN individually (P16 resource-contention + local missing-chromium flakes) — pre-existing, unrelated. tsc clean, toolCount=184/cronJobCount=88 unchanged. AC-3 (ci_green_on_subsequent_push) is QA/dispatcher gate — NOT closed here, requires a fresh CI run on a new SHA.",
+        "ci_plane_verified": "po/triage-20260730T0449 — CI-PLANE EVIDENCE, verification_gate ci_green_on_subsequent_push IS SATISFIED for the `bun test` job. Fix commit 760498706 (2026-07-30T00:08:24+02:00, thread injected clock through readPendingOutcomeAlerts window). `bun test` job conclusion=success on run 30497473256 (headSha 44f04730588344ef7c3aee190015c800609a40f8, 2026-07-29T22:49:33Z — the FIRST run after the fix) AND again on run 30512236942 (headSha 7901352361213352b0cedab2077c0393ad5f1837, 2026-07-30T03:50:15Z). Two consecutive greens on subsequent pushes. RESIDUAL for whoever closes this: the row also predicted daysAgo(2) fixtures age out on 2026-08-02T12:00Z => 9/9 red; confirm the committed fix removes that time bomb (not merely that the window currently contains the fixtures) before DONE_VERIFIED. PO did NOT flip the status — next_agent is still qa; this is evidence, not a verdict."
       },
       {
         "id": "FACTORY-GUARD-CI-TSBOUNDARIES-IMPL",
@@ -17611,8 +17679,8 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-30T04:18:51Z",
-    "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
+    "last_triaged_at": "2026-07-30T04:57:52Z",
+    "last_triaged_by": "po/triage-20260730T0449",
     "in_progress": [
       {
         "id": "FIX-SLA-BCTC-THRESHOLD-TRACKS-STALENESS-NOT-CONSTANT",
