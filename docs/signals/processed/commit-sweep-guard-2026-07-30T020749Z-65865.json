@@ -1,0 +1,14 @@
+{
+  "from": "commit-sweep-guard",
+  "to": "po",
+  "type": "bug-escalation",
+  "priority": "high",
+  "createdAt": "2026-07-30T02:07:49Z",
+  "payload": "[sweep-guard] BARE commit about to absorb 11 staged file(s) not necessarily this actor's own: .github/workflows/ci.yml apps/mcp-server/src/application/cascadeExecutor.ts apps/mcp-server/src/application/usecases/bctc/newsChainFallback.ts apps/mcp-server/src/domain/services/pharmaEventMapper.ts apps/mcp-server/src/domain/services/priceBackfillService.ts apps/mcp-server/src/infrastructure/fetchers/priceSourceRouter.ts apps/mcp-server/src/interface/mcp/tools/financial-reports/backfillBctcScalarsTool.ts docs/WORK.md docs/policies/dev-standards.md scripts/audits/no-hardcode-allowlist-scan.sh scripts/audits/no-hardcode-allowlist-scan.test.sh. actor=64c7c677-0f0f-4cee-a3ce-dba79d70b7ae mode=warn. Fix: git commit -m \"<msg>\" -- <own-files-only>.",
+  "_processed": {
+    "fingerprint": "f94f833446d28771571e69346c07e72a4d4dcdb390512d3432fb481269c82eb6",
+    "processedAt": "2026-07-30T02:30:36Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

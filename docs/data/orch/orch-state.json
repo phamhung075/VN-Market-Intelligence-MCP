@@ -133,7 +133,7 @@
     "does_not_consume_wip": true
   },
   "signal_queue": {
-    "_updated_at": "2026-07-30T01:22:34Z",
+    "_updated_at": "2026-07-30T02:33:19Z",
     "_updated_by": "dev-team",
     "archive": [],
     "rows": [
@@ -2039,8 +2039,41 @@
         "type": "system-issue",
         "summary": "stranded-state sweep: 17 unknown-owner paths still unowned (3rd re-emit)",
         "severity": "MED",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": "docs/handoffs/STRANDED-STATE-SWEEP-20260729T2342Z.md"
+      },
+      {
+        "id": "dev-20260730T023319",
+        "ts": "2026-07-30T02:33:19Z",
+        "from": "dev-team",
+        "to": "po",
+        "type": "system-issue",
+        "summary": "15 cowork discovery-notes un-routed (drain shape mismatch); incl. CONFIRMED refine_bctc_md diacritic corruption + pressure-headroom field never deployed",
+        "severity": "HIGH",
+        "status": "NEW",
+        "payload_ref": "docs/handoffs/COWORK-DISCOVERY-NOTES-BACKLOG-20260730T0231Z.md"
+      },
+      {
+        "id": "sys-20260730T023322-5538",
+        "ts": "2026-07-30T02:33:22Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "data_stale",
+        "summary": "bctc-discover data age 1951m exceeds SLA 120m",
+        "severity": "CRITICAL",
+        "status": "NEW",
+        "payload_ref": null
+      },
+      {
+        "id": "sys-20260730T023323-49ab",
+        "ts": "2026-07-30T02:33:23Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "data_stale",
+        "summary": "VPS bctc proxy stale 41h+ (vn-bctc-fetch unhealthy)",
+        "severity": "CRITICAL",
+        "status": "NEW",
+        "payload_ref": null
       }
     ],
     "last_triaged_at": "2026-07-29T06:25:00Z",

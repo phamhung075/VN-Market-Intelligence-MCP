@@ -1,0 +1,55 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-07-30T02:22:21Z",
+    "matched_slots": [
+      "chef-intraday"
+    ],
+    "won_slots": [
+      "chef-intraday"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/unified-agent/flow/chef.md"
+    ],
+    "silent": false,
+    "drift_min": 5,
+    "errors": [],
+    "pressure_mode": "adaptive",
+    "calendar_status": "unknown",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "chef_mutex_applied": false,
+    "due_reasons": {
+      "chef-intraday": "cadence"
+    },
+    "cadence_minutes": {
+      "chef-intraday": 120
+    },
+    "last_fired_timestamp": "2026-07-30T02:22:14Z",
+    "last_fired_slots": [
+      "chef-intraday"
+    ],
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "02:15",
+    "leader_lock": "acquired",
+    "dev_head": "unknown",
+    "devq": 5,
+    "signal_backlog": 1,
+    "note": "chef-intraday due on cadence (last_fired 2026-07-29T07:21:36Z, ~19h stale); 1 NEW signal (dev-20260730T012234, to=po) left untouched per standing decision pending cow-20260730T002605 scoping ruling"
+  },
+  "priority": "low",
+  "createdAt": "2026-07-30T02:22:21Z",
+  "_processed": {
+    "fingerprint": "35a89f51c5f1feda25b527d544aaae3e0a1f19a780cbb012a23d2f07b7efb91a",
+    "processedAt": "2026-07-30T02:30:36Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

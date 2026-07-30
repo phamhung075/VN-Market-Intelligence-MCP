@@ -1,0 +1,55 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-07-30T02:09:06Z",
+    "matched_slots": [
+      "alert-commander-market"
+    ],
+    "won_slots": [
+      "alert-commander-market"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/alert-commander/flow/main.md"
+    ],
+    "silent": false,
+    "drift_min": 5,
+    "errors": [],
+    "pressure_mode": "adaptive",
+    "calendar_status": "unknown",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "chef_mutex_applied": false,
+    "due_reasons": {
+      "alert-commander-market": "cadence"
+    },
+    "cadence_minutes": {
+      "alert-commander-market": 240
+    },
+    "last_fired_timestamp": "2026-07-30T02:09:01Z",
+    "last_fired_slots": [
+      "alert-commander-market"
+    ],
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "02:00",
+    "leader_lock": "acquired",
+    "dev_head": "unknown",
+    "devq": 5,
+    "signal_backlog": 16,
+    "note": "market-hours slot resumed at 02:00 UTC; single-slot batch, no collisions, no off-flow markers checkable yet (spawn backgrounded, checked on task-notification)."
+  },
+  "priority": "low",
+  "createdAt": "2026-07-30T02:09:06Z",
+  "_processed": {
+    "fingerprint": "214e229bb6112fbdccd9f52dfde37880c07a50869e3d7c8e3730626e2b05222f",
+    "processedAt": "2026-07-30T02:30:36Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

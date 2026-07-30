@@ -1,0 +1,38 @@
+{
+  "from": "ci-health-probe",
+  "to": "po",
+  "type": "ci_red",
+  "priority": "high",
+  "createdAt": "2026-07-30T01:45:49Z",
+  "dedup_key": "ci_red:2bdd28fb1dbc40ea4e3ecfc7597ad79ce9369a33:frontend-eslint,size-lint",
+  "payload": {
+    "check_id": "CI-RED-2bdd28fb",
+    "head_sha": "2bdd28fb1dbc40ea4e3ecfc7597ad79ce9369a33",
+    "run_id": 30505571097,
+    "run_url": "https://github.com/phamhung075/VN-Market-Intelligence-MCP/actions/runs/30505571097",
+    "conclusion": "failure",
+    "failing_jobs": [
+      {
+        "name": "frontend-eslint",
+        "conclusion": "failure",
+        "jobId": 90754468235
+      },
+      {
+        "name": "size-lint",
+        "conclusion": "failure",
+        "jobId": 90754468294
+      }
+    ],
+    "fingerprint": "2953c4ff53d12771d86274eb65852e145c3108934468d3e4cdcfc4728cf6d7ae",
+    "zone_owner": "dev-team (CI fix)",
+    "summary": "CI RED on main HEAD 2bdd28fb1dbc40ea4e3ecfc7597ad79ce9369a33: frontend-eslint,size-lint",
+    "suggested_sprint_class": "FIX",
+    "verification_gate": "ci_green_on_subsequent_push"
+  },
+  "_processed": {
+    "fingerprint": "af7f21f998c71d00b5ffb9aac810e4b458d8b9b325768901d001bae5456e950b",
+    "processedAt": "2026-07-30T02:30:36Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
