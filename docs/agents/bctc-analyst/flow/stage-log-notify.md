@@ -30,7 +30,7 @@ Section template (≤10L):
 ```bash
 # own_paths: [docs/agent-memory/notebooks/bctc-analyst.md]
 git add docs/agent-memory/notebooks/bctc-analyst.md
-git commit -m "chore(memory/bctc-analyst): notebook YYYY-MM-DD"
+git commit -m "chore(memory/bctc-analyst): notebook YYYY-MM-DD" -- docs/agent-memory/notebooks/bctc-analyst.md
 ```
 
 **5d-1. Published-marker guard (dedup vs peer double-post of the same slot's WORK telegram)** —
@@ -39,6 +39,12 @@ established practice since c120, not previously documented here:
 task_claim(task_id="published:bctc-analyst-<slot_id>:<cycle_tick_ISO>", task_kind="sprint-task",
   owner_agent="bctc-analyst", owner_client_session=$CLAUDE_CODE_SESSION_ID, ttl_seconds=3600)
 ```
+**`<cycle_tick_ISO>` MUST be the NOMINAL slot fire time from the cron schedule (`0 15,18,21,0 * * *`
+→ round DOWN to `HH:00Z`), never the agent's own observed bootstrap timestamp.** Two concurrent
+sessions dispatched for the same slot will have different observed ticks (e.g. one starts 21:07Z,
+another 21:09Z) — keying on the observed tick lets both claim distinct keys and both post to WORK,
+defeating the dedup this guard exists for (live-observed 2026-07-30, slot-3 double-dispatch,
+cycle_id 20260730-2100 — see notebook c133 addendum).
 `claimed:true` → proceed to 5e (WORK telegram). `claimed:false` (peer already posted this slot) →
 skip 5e, log `"[bctc-analyst] published-marker held by peer — WORK telegram skipped this cycle"` to
 notebook carry-over instead.
