@@ -76,3 +76,24 @@
 - Re-point to qa with evidence + dormancy warning — chosen.
 **why-decision:** Clause (a) reads "no ticker acquires NGAY NOP == run date over 3 cycles"; the BCTC producer is dormant (bctc stale 2008min, B-05 1951m, B-06 41h) so that clause can go green vacuously. Handing QA the trap is worth more than handing it a verdict.
 **why-change:** no change from plan.
+
+### STEP po-S67 · po · 2026-07-30T21:58:26Z
+**task-id:** FIX-DONELANE-NO-DONEVERIFIED-PRODUCER-DEP-STARVATION
+**what-done:** Minted a P0 for the missing DONE_VERIFIED producer after measuring 8 rows (4× P0) starved on it, and flipped exactly ONE dep token to unstarve the P0 commit-sweep chain.
+**what-considered:**
+- Loosen `deps_satisfied()` to accept plain `DONE` → rejected: that deletes the landed-vs-verified distinction the strict token exists to enforce, and would auto-dispatch successors of genuinely unverified work. The gate is right; the producer is missing.
+- Hand-flip all 10 `done[]` rows to DONE_VERIFIED and clear the measurement → rejected: PO would be ratifying work it never checked. `TASK-COWORK-CATCHUP-2` and `FACTORY-APP-split-assembleBriefing` carry `next_agent=qa` and nobody has verified them; they stay `DONE` as live evidence.
+- Fold into `FIX-COLDEVICT-DONE-LANE-TRIGGER-ACTION-AXIS-NOOP` (P2, review, also about `done[]`) → rejected after reading it: that is a count-vs-age EVICTION axis mismatch, a different defect from verification promotion.
+- Do nothing, treat as bookkeeping → rejected: a P0 was blocked on a P0 that was blocked on a STRING, for 12h, while the defect it prevents fired a 5th time at 21:30:47Z.
+**why-decision:** Three legs RAW-verified, not inferred. (1) `scripts/lib/devteam-eligibility.jq` `deps_satisfied()` requires the exact token and says verbatim "plain DONE is NOT sufficient". (2) `grep -rn 'task_board\.done\b'` across `scripts/devteam-*.jq`, `scripts/agents-flow/*.sh`, `docs/agents/dev-team/flow/*.md` (excluding `done_verified`) returns ZERO — no picker reads `done[]`; the only two mentions are cold-eviction. (3) `DONE_VERIFIED` is written only by 25+ hand-minted one-off jq scripts. So `done[]` is a terminal-looking dead-letter queue: 4 of its 11 rows carry a `next_agent` no sweeper reads. Third instance of this repo's documented-consumer-with-no-producer class.
+**why-change:** Flipped `FIX-COMMIT-PATH-PEER-INDEX-SWEEP-GUARD-LAYER2` DONE→DONE_VERIFIED — a departure from "mint the systemic row and change nothing else". Justified because that row's own `po_closure_20260730` already carried a file:line-precise PO RAW-verification from 09:05:59Z (4 skill pathspec sites, 3 init.md `RULE 1-3 (incl. 2.5)` lines, commit `aa6c044ba`), re-read at source before stamping. Only the token was wrong. Decisive test run BOTH sides: `is_bounded1_eligible` on `FIX-COMMIT-SWEEP-GUARD-SCRIPT-ACTUATOR-AND-NOTEBOOK-LONGTAIL` was `false` with `deps_satisfied` the SOLE failing gate before, `true` after; starved set 8→7 on the live file.
+
+### STEP po-S68 · po · 2026-07-30T21:58:26Z
+**task-id:** FIX-SIGNALQUALITYAUDIT-WRITE-GATE-UNREACHABLE-BY-EMITTER-CONTRACT
+**what-done:** Refuted the relayed "expected residual noise" framing on Telegram report 4220, installed `rebuild_required=true` + a 3-step verification gate on a review row that had `verification_gate=null` AND `acceptance=null`.
+**what-considered:**
+- Accept the relay (alert measures pre-fix staleness, QA will close it) → rejected on evidence, see below.
+- Mint a new row for the deploy gap → rejected: `FIX-MCP-SERVER-DEPLOY-LANE-STALL-REBUILD-REQUIRED-INERT` (P1, next=ops) already owns the class; annotated it with the fresh instance instead.
+- Resolve 4220 as `fixed` → rejected: nothing is fixed in the runtime.
+**why-decision:** Both planes read, not one. `docker exec … grep -c deriveAuditConfidence /app/src/domain/services/signalValidator.ts` = **0** in-container vs **1** on host; image `sha256:1bba4e58c9d2` created `08:27:58Z` predates commit `43e0d7ddc` (`21:30:47Z`) by 13h; `docker inspect` Mounts confirms `apps/mcp-server/src` is baked in, not bind-mounted. So the fix cannot take effect and the alert is CORRECT, not residual. Container shows `Up 18 minutes` against `CreatedAt 08:28` — someone restarted the service at ~21:31Z believing that deployed it; a restart re-runs the same image.
+**why-change:** Also wrote the gate itself rather than leaving it to QA. A `review`/`next_agent=qa` row with both `acceptance` and `verification_gate` null forces QA to improvise, and here the two plausible improvisations fail in opposite directions — host source reads GREEN, live container reads RED, both wrong for the same reason. Gate ordered deploy-assert → live-DB behaviour → negative control, with an explicit instruction not to accept the SLA alert going quiet as evidence.
