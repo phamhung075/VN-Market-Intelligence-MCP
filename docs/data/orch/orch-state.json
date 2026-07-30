@@ -11205,6 +11205,24 @@
           "FIX-NOTEBOOK-PRUNER-LINE-ONLY-SETPOINT-BYTE-CAP-NEVER-CONVERGES"
         ],
         "updated_at": "2026-07-30T09:40:54Z"
+      },
+      {
+        "id": "FIX-SCRIPTS-MIGRATIONS-MARKETDB-WAL-REARM-SAME-DEFECT",
+        "status": "BACKLOG",
+        "type": "FIX",
+        "priority": "P1",
+        "size": "S",
+        "zone": "scripts/",
+        "next_agent": "developer",
+        "owner": "dev",
+        "title": "4 scripts/migrations/*.ts open market.db and set PRAGMA journal_mode=WAL directly - same re-arm defect FIX-SQLITE-JOURNALMODE-WAL-REARM-DEFEATS-DELETE-MITIGATION just fixed in apps/mcp-server/, left open here by zone boundary",
+        "desc": "dev-mcp-server's AC-2 sweep on FIX-SQLITE-JOURNALMODE-WAL-REARM-DEFEATS-DELETE-MITIGATION found the identical defect shape in 4 files it could not fix (outside its zone_restricted: apps/mcp-server/): scripts/migrations/run-finalize-bctc-refine.ts:36, scripts/migrations/dedupe-mislabeled-bctc-period.ts:368, scripts/migrations/resync-watchlist-sysmap-2026-07-11.ts:266, scripts/migrations/carry-forward-bctc-orphaned-rows.ts:361 - each does `new Database(DB_PATH)` against the real market.db (default path apps/mcp-server/data/market.db, confirmed at each site) followed by `db.exec(\"PRAGMA journal_mode = WAL\")`, unconditionally re-arming the exact WAL/-shm corruption vector the 2026-07-30 permanent mitigation (schema.ts:115, journal_mode=DELETE+synchronous=FULL) was adopted to close after 4 prior corruptions. Running any of these 4 migration scripts silently undoes that fix for the script's runtime.\n\nAC-1 each of the 4 files must stop opening its own connection+PRAGMA against market.db; either import and reuse apps/mcp-server's schema.ts getDb()/closeDb() singleton (cross-package - confirm this is a sane import path for a scripts/ file, or reimplement the equivalent inline: open without setting journal_mode, since DELETE is SQLite's own default and the file already has it set as delete from schema.ts ownership) or drop the PRAGMA line entirely and rely on the file already being in DELETE mode.\nAC-2 do not touch coordination.db or :memory:/tmp-only fixtures - out of scope, already confirmed safe by the sibling fix's sweep.\nAC-3 after the fix, run scripts/audits/verify-market-db-journal-mode.sh (already exists, self-test passing) and confirm PASS on the live container - this script does NOT need to change, it already assert-checks market.db regardless of which code path last touched it.\n\nNOT plan_only and NOT supervised on purpose - this is the exact same scope-completeness pattern as the just-closed sibling row (mechanical remedy already known and proven, not a design question), belongs directly in the lane that dispatches (BOUNDED-1).",
+        "created_at": "2026-07-30T12:03:18Z",
+        "created_by": "dev-team (RAW-verify closeout of FIX-SQLITE-JOURNALMODE-WAL-REARM-DEFEATS-DELETE-MITIGATION)",
+        "related": [
+          "FIX-SQLITE-JOURNALMODE-WAL-REARM-DEFEATS-DELETE-MITIGATION"
+        ],
+        "updated_at": "2026-07-30T12:03:19Z"
       }
     ],
     "closed_sprints": [
