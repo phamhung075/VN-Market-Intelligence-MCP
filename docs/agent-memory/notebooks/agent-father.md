@@ -71,3 +71,25 @@
   `docs/architecture-briefs/2026-07-30-fix-taskclaim-owner-session-ci-guard.md` — produced because
   AC-3 explicitly required a CI guard; flagged to dev-team for review/commit rather than
   self-committed, per this task's own dispatch note (no gateway/MCP grant this session).
+
+## Fix (router-dispatched, dev-team session) 2026-07-31T00:00:00Z FIX-DEVTEAM-QADRAIN-HEAD-WRITE-CONDITIONAL
+- DECLINED: dispatched as owner=agent-father, next_agent=agent-father (board row +
+  architecture brief `2026-07-29-qadrain-head-slot-decouple.md` §8 "Actionable sequence
+  for agent-father") but the task is a production-code edit to
+  `scripts/devteam-review-claim-qa-drain.jq` (`cross-service/`). `docs/data/system-map.json`
+  `zones[].id=="cross-service"` names `specialist: "developer"`, not agent-father.
+  Confirmed against own init.md (`not_my_job`: "Writing production code — that's
+  developer"; `commit_zone.allowed` excludes scripts/) and 8 prior journal STEPs — zero
+  `.jq`/production-code precedent, all agent/.md/flow/skill work.
+- Same failure shape as the 2026-07-29T14:56:21Z A-30 row above: an architect-authored
+  brief claims scripts/-touching authority for agent-father; on direct read of the
+  canonical SSOT (system-map.json here, qa_note there) the claim does not hold. Recurring
+  pattern — architect-class agents keep writing "agent-father implements" into briefs
+  for scripts/ work without checking the zone-ownership table first.
+- Did NOT edit the `.jq` file, did NOT flip the board row's status/lane, did NOT write a
+  DJ-GATE-1 DONE/REVIEW entry (no completed action to gate). Wrote a DECLINE decision-
+  journal STEP instead (S8). Recommended in RETURN: PO/router reassign board row
+  owner/next_agent `agent-father` → `developer` per system-map.json, then re-dispatch;
+  optionally loop back to agents-architect to fix the brief's §8 heading so this doesn't
+  recur for Part 2/3 of the same epic.
+  self-committed, per this task's own dispatch note (no gateway/MCP grant this session).

@@ -118,3 +118,27 @@ baseline makes it visible/auditable, ratchets on any future edit to those exact 
 **why-change:** re-verify (AC5) found alert-commander's doc already compliant (separate
 Bash-grant defect, not this class) and refine_bctc_md needs a spawn-prompt channel fix too
 (cowork-team zone, not mine) — both surfaced honestly, not silently claimed closed.
+
+### STEP agent-father-S8 · agent-father · 2026-07-31T00:00:00Z
+**task-id:** FIX-DEVTEAM-QADRAIN-HEAD-WRITE-CONDITIONAL
+**what-done:** DECLINED execution — did not touch `scripts/devteam-review-claim-qa-drain.jq`,
+did not flip the board row's status/lane. Task requires production-code edit to a `.jq`
+orchestration script in `cross-service/` (`scripts/`), which `docs/data/system-map.json`
+zones[] names `developer` as specialist, not `agent-father`.
+**what-considered:**
+- Implement as dispatched (board `owner`/`next_agent`=agent-father, brief §8 titled
+  "Actionable sequence for agent-father") — rejected: violates own init.md `not_my_job`
+  ("Writing production code — that's developer"), `forbidden_outputs` ("NEVER write
+  production code"), and `commit_zone.allowed` (scripts/ absent; only docs/agents/,
+  docs/agent-memory/, .claude/skills/, .claude/agents/).
+- Silently re-scope self to "developer" persona and proceed — rejected: identity/tool
+  grant is fixed at spawn (`.claude/agents/agent-father.md` frontmatter), not self-assignable.
+- Decline + report with redirect evidence (chosen).
+**why-decision:** `system-map.json` zones[cross-service].specialist="developer" is the
+canonical, structured ownership SSOT (not a brief's prose or a PO triage field) — 8 prior
+journal entries (S1-S7) show agent-father's real footprint is agent/.md/flow/skill files
+only, zero `.jq`/production-code precedent.
+**why-change:** brief `docs/architecture-briefs/2026-07-29-qadrain-head-slot-decouple.md`
+§8 heading and the board row's owner/next_agent field both mis-name agent-father as
+implementer — cascaded from agents-architect's brief into PO's triage uncorrected;
+flagging so `developer` picks it up instead (see RETURN block).
