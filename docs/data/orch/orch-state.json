@@ -18526,42 +18526,21 @@
         "architect_review_note": "Architect design complete: [Architect] Brownfield Findings appended to docs/handoffs/FIX-COWORK-FIRE-ELECTION-TICK-TOMBSTONE-ba-spec.md. 6-file design: new pure predicate _tick_already_ran() (Step 2.5, cowork-tick-preflight.sh, before election claim) normalizes pressure-state.json tick_id (second-precision) vs nominal TICK (minute-precision) per NFR-1 landmine; mirrored in leader-lock.md pre-Fire-claim (FR-1 dual-path); new TOMBSTONED verdict + main.md JUMP-TO row + defensive unrecognized-verdict fallback row (FR-2/NFR-5); comment-only NFR-3 ordering-invariant pin in telemetry.md; cron-cowork-team SKILL.md NFR-5 rollout note (CronDelete+CronCreate required, bare /cron-cowork-team no-ops post-fix). Zone cross-service/ confirmed via system-map.json (specialist=developer). Test strategy: extend cowork-tick-preflight.test.sh with NFR-4 positive-control (literal replay of both incident tick_ids via the extracted pure predicate, no wall-clock seam needed) + negative controls + AC-1 zero-cowork-slot-claim assertion + NFR-2 regression. No code written (design only).",
         "architect_completed_at": "2026-07-31T01:37:22Z",
         "developer_implementation_note": "6-file fix implemented exactly per PM handoff / architect brownfield design (docs/handoffs/FIX-COWORK-FIRE-ELECTION-TICK-TOMBSTONE-dev.md). _tick_already_ran() pure predicate + new Step 2.5 in cowork-tick-preflight.sh (NFR-1 second-vs-minute precision normalization, DO-NOT-SIMPLIFY comment); mirrored in leader-lock.md ERROR-fallback path; TOMBSTONED + unrecognized-verdict fail-safe rows in main.md JUMP-TO table; NFR-3 ordering-invariant comment pin in telemetry.md; TOMBSTONED clause + CronDelete/CronCreate rollout note in cron-cowork-team/SKILL.md. Test suite extended 27->40 assertions, both AC-3 positive-control incident-replay tests explicitly assert true (verified by name in output, not just exit 0). Commit: 6452935abd0d06580eae03b3bac29036a0840ce5. QA: verify AC-3 positive-control assertions specifically per handoff Risk Flags; note cron rollout (CronDelete+CronCreate) is a separate required post-merge deployment step flagged to ops/main-terminal, not part of this code review."
-      }
-    ],
-    "qa": [],
-    "_closed_signals_20260614": {
-      "_by": "po-S50",
-      "_at": "2026-06-14T14:45:14Z",
-      "closed": [
-        {
-          "signal": "docs/signals/workflow-protocol-coherence-audit-20260614T141952Z.json",
-          "reason": "ALREADY IMPLEMENTED — all 6 COHERENCE-GAP tasks status=IMPLEMENTED, result=RESOLVED (commit 85935da3). No work to queue.",
-          "disposition": "move-to-processed"
-        },
-        {
-          "signal": "docs/signals/dev-team-tool-contract-cron-overlap-20260614T121816Z.json",
-          "reason": "ALREADY RESOLVED by the LIVE SF-1 single-flight guard (F2-A) + gateway-call-contract.md (F1) now in dev-team flow. This brief is the source that DELIVERED SF-1; no residual work.",
-          "disposition": "move-to-processed"
-        }
-      ]
-    },
-    "last_triaged_at": "2026-07-31T02:01:24Z",
-    "last_triaged_by": "dev-team/sweepguard-reroute-developer-20260731T0405Z",
-    "in_progress": [
+      },
       {
         "id": "FIX-ORCHSTATE-HEAD-STAMP-DROPPED-CI-RED-1837A",
         "type": "FIX",
         "size": "S",
         "priority": "P1",
-        "status": "IN_PROGRESS",
+        "status": "REVIEW",
         "zone": "cross-service/",
         "owner": "developer",
-        "next_agent": "developer",
+        "next_agent": "qa",
         "supervised": false,
         "plan_only": false,
         "created_by": "po/triage-20260731T0132",
         "created_at": "2026-07-31T01:32:47Z",
-        "updated_at": "2026-07-31T01:43:05Z",
+        "updated_at": "2026-07-31T02:04:00Z",
         "origin_signal_id": "CI-RED-8e1e66e5",
         "check_id": "CI-RED-8e1e66e5",
         "ci_fingerprint": "9de25f02daa1d23c07bab4bd741634c29a88ac0060e190c7ead1f70ce1fa2d0a",
@@ -18586,8 +18565,30 @@
         "desc": null,
         "updated_by": "dev-team/po-batch-dispatch-20260731T0141Z",
         "claimed_at": "2026-07-31T01:43:05Z",
-        "claimed_by": "dev-team (step 3 direct dispatch, po BATCH #1, takes free dev WIP slot)"
-      },
+        "claimed_by": "dev-team (step 3 direct dispatch, po BATCH #1, takes free dev WIP slot)",
+        "developer_implementation_note": "6-file-scope fix implemented per row own root_cause/evidence/ac (po direct-dispatch, no BA/architect/PM chain needed). scripts/orch-stamp-updated-at.mjs Stage 1.5 extended to diff-stamp .head (not just task_board rows): updated_at same content-excluding-timestamp diff as rows (idempotent); updated_by preserved verbatim when caller supplies it, backfilled with honest self-identifying placeholder (never fabricated agent name) only when a changed head omits it -- closes recurrence without touching orch-apply.sh call signature or HeadSchema (AC-4 landmine avoided). AC-1 live .head repaired via orch-apply.sh (real date -u stamp, updated_by=developer) -- landed correctly but content ended up committed via an adjacent peer commit (b5f2e9c8b) touching the same hot file, content-verified byte-identical. AC-3 landmine avoided: 1837a-pipeline-state.test.ts untouched. 3 AC-6 positive-control test groups added to scripts/test/orch-apply-wrapper-tests.sh (HEAD-STAMP-CHANGED/BACKFILL/IDEMPOTENT) -- 60/60 pass, confirmed RED pre-fix via stash-out control run. 1837a-pipeline-state.test.ts: 3pass/2fail -> 5pass/0fail. Full suite ci-per-file-isolation.sh: 14830 pass/40 skip/36 fail across 12 pre-existing unrelated files (news-poll/source-health), confirmed pre-existing via baseline subset re-run; 1837a not among them. tsc --noEmit clean. AC-5 (CI-plane bun-test-job green on next push) not yet observed this cycle -- flagged for QA to verify post-push. Commit: 8f2aa59d7 (orch-stamp-updated-at.mjs + wrapper-tests.sh), doc update dev-standards.md CANONICAL entry extended + WORK.md one-liner."
+      }
+    ],
+    "qa": [],
+    "_closed_signals_20260614": {
+      "_by": "po-S50",
+      "_at": "2026-06-14T14:45:14Z",
+      "closed": [
+        {
+          "signal": "docs/signals/workflow-protocol-coherence-audit-20260614T141952Z.json",
+          "reason": "ALREADY IMPLEMENTED — all 6 COHERENCE-GAP tasks status=IMPLEMENTED, result=RESOLVED (commit 85935da3). No work to queue.",
+          "disposition": "move-to-processed"
+        },
+        {
+          "signal": "docs/signals/dev-team-tool-contract-cron-overlap-20260614T121816Z.json",
+          "reason": "ALREADY RESOLVED by the LIVE SF-1 single-flight guard (F2-A) + gateway-call-contract.md (F1) now in dev-team flow. This brief is the source that DELIVERED SF-1; no residual work.",
+          "disposition": "move-to-processed"
+        }
+      ]
+    },
+    "last_triaged_at": "2026-07-31T02:01:24Z",
+    "last_triaged_by": "dev-team/sweepguard-reroute-developer-20260731T0405Z",
+    "in_progress": [
       {
         "id": "FIX-SWEEPGUARD-WARN-ONLY-NO-ACTUATOR-AND-TRIAGE-MISADJUDICATION",
         "type": "FIX",
