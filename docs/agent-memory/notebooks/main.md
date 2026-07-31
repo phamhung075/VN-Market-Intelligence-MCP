@@ -1,6 +1,14 @@
 # Dev Team — Sprint Boundary Notebook
 
-**Written:** 2026-07-31T13:20Z
+**Written:** 2026-07-31T13:33Z
+
+## cycle-20260731T1331Z-bctc1345b-rawverified — Async (no cron tick): dev-mcp-server's RETURN for FIX-BCTC-1345B-REPORT-BATCH RAW-verified with zero discrepancies, lock released. WIP 0, idle-head
+
+- **Root-cause + fix independently confirmed**: `893aca43b`'s new "open quality row" gate in `parseBctcReport.ts` reads `financial_reports.validation_status` for (action_code, sort_key) BEFORE the current report's own upsert — correctly reflects PRIOR-parse state only, so the self-closing claim (row re-alerts once a later re-parse produces real confidence) holds structurally, not just by assertion.
+- **RED and GREEN both independently reproduced**: reverted the gate → 2 pass/1 fail (matches claimed RED); restored via `git checkout` (not manual retype) → 3/3 pass. Cited regression files run directly by path (`1792-conviction-debounce` + `1345e`+`1424a`+`1810c`) → 24/24, exact match; a broader `-t "1792"` filter across all 1249 files gave false failures from cross-file mock/DB bleed — discarded in favor of direct-path targeting, not treated as a real regression.
+- **All other gates independently re-run, exact matches**: `tsc` clean; `gen-project-stats --dry-run` toolCount=183/cronJobCount=88 unchanged. Board row REVIEW/next_agent=qa/commit_sha=893aca43b correct with matching review_note; `.head` idle/next_agent=router (CANONICAL:SSOT-STATUSFLIP-LANEMOVE held).
+- **Released `task:FIX-BCTC-1345B-REPORT-BATCH`** on dev-mcp-server's behalf (INV-GATEWAY-1) — `released:1`, clean (not a TTL-lapse this time).
+- **NEXT**: no items remain from this cycle — WIP 0, idle-head, awaiting next cron tick. `TE-T12` remains the only undispatched item from PO's 2026-07-31T0637Z triage (routes to `agent-father`). Decision journal `sprint-COWORK-GUARANTEED-SLOT-CATCHUP-dev-team-5.md` now at 79L/33668B (93% of 36000B cap) — next entry will likely need to roll to a `-6.md` continuation file per the skill's rollover rule.
 
 ## cycle-20260731T1315Z-bctc1345b-reentrant-cifix — Fresh tick: fixed own size-lint CI-red (insertBctcAnalysis.ts new-offender), self-corrected bare-commit sweep-guard drift (2/3 threshold) to pathspec-only; TTL-lapse re-entrant confirm on FIX-BCTC-1345B-REPORT-BATCH, no re-spawn
 
@@ -15,14 +23,4 @@
 - **Dispatched dev-mcp-server with the prior-art context attached**: instructed to independently re-verify (not trust) this reading before writing any code, choose/justify between per-cycle batching vs. suppress-if-open-quality-row (or a better option), genuine RED→GREEN regression evidence, DJ-GATE-1, CANONICAL:SSOT-STATUSFLIP-LANEMOVE + INV-GATEWAY-1 closeout contract.
 - **BOUNDED-1 gate pass clean**: no supervised/epic-wrapper/depends-on/non-dev-owner/plan-only/prose-sequencing gate fired on the promoted row.
 - **NEXT**: await dev-mcp-server's RETURN, RAW-verify (root-cause re-confirm — especially whether the debounce prior art already covers this or not, regression test, board/head state). `TE-T12` remains the only other undispatched item from PO's 2026-07-31T0637Z triage (routes to `agent-father`).
-
-## cycle-20260731T1245Z-lancedbsegfault-rawverified — Fresh tick: CI probe caught a `bun test` timing flake (circuit-breaker) on own memory commit, correctly left unpruned; mid-tick dev-mcp-server's RETURN for FIX-LANCEDB-INSERT-SEGFAULT RAW-verified with zero discrepancies, lock released. WIP 0, idle-head
-
-- **Fresh CI-red distinguished from S69's genuine regression**: `136-circuit-breaker.test.ts` races `resetTimeoutMs:20` against `setTimeout(r,30)` — classic CI-jitter timing flake (same family as the documented `FIX-1267-ssc-circuit-breaker` flake), not caused by the flagged memory-only commit. Left signal unpruned by design — 2 subsequent pushes already exist and the standard `ci_green_on_subsequent_push` gate will resolve it.
-- **dev-mcp-server's root-cause CORRECTION re-confirmed real, not just trusted**: backlog claimed a native `@lancedb/lancedb` segfault; independently verified both cited superseding commits (`d29da3a8d` G5b HTTP rewire, `456851797` last-import deletion) are real and dated as claimed, and live grep confirms zero `@lancedb/lancedb` imports in `apps/mcp-server/src` today — segfault categorically impossible now.
-- **RED independently reproduced from scratch, not just trusted**: reverted only the try/catch placement in `insertBctcAnalysis.ts` (moved inserter-resolution back above the try block), re-ran the same test file — genuine 2/2 fail, exact propagation stack matching the claim (`insertBctcAnalysis.ts`→`fetchParseAndStoreBctc.ts:121`). Restored, confirmed `git diff` byte-identical to HEAD, re-ran → 2/2 pass.
-- **All other gates independently re-run, all exact matches**: `tsc` clean; AC3 regression subset 33/33; `gen-project-stats --dry-run` toolCount=183/cronJobCount=88 unchanged; boundary disclosure ("dev-rag-service NOT touched") verified honest via `git show --stat` (4 files, all mcp-server-side).
-- **Board/head clean**: row `REVIEW`/`next_agent:qa`/`commit_sha` correct with full matching `review_note`; `.head` idle/`next_agent:router`, lane-move + head-reset in the same write (CANONICAL:SSOT-STATUSFLIP-LANEMOVE held). Journal 44L, notebook 39L, both within cap — DJ-GATE-1 satisfied.
-- **Released `task:FIX-LANCEDB-INSERT-SEGFAULT`** on dev-mcp-server's behalf (INV-GATEWAY-1) — `released:0`, lock's TTL had already lapsed again since S70's re-claim; expected, not an error.
-- **NEXT**: no items remain from this tick's dispatch — WIP 0, idle-head. `TE-T12` remains the only undispatched item from PO's 2026-07-31T0637Z triage (routes to `agent-father`).
 
