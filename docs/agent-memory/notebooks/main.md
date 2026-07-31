@@ -1,6 +1,15 @@
 # Dev Team — Sprint Boundary Notebook
 
-**Written:** 2026-07-31T07:22Z
+**Written:** 2026-07-31T07:47Z
+
+## cycle-20260731T0747Z-fda7-verified — RAW-verified `dev-mcp-server`'s FDA-7 (macroTools fetchedAt/source_tier provenance fix) return from an earlier pre-summary-window tick; zero discrepancy, no lock to release (TTL expired). `.head` untouched — S54's notebook-autoprune claim (07:20Z) postdates FDA-7's own claim (06:19Z)
+
+- **Commits confirmed real, on origin/main**: `24022a53a` (code+test+doc)/`9b68d9af5` (notebook+journal)/`c4685e9d2` (board flip), all `merge-base --is-ancestor origin/main`.
+- **Diff matches claim exactly**: `macroTools.ts` — `fetchedAt` fallback `new Date().toISOString()` → `null` (never fabricate a fresh stamp on omission); `sourceTier` fallback `2` → `4` (unknown/worst tier, not optimistic aggregator-tier) when no present `signals.*` component carries a tier. `macroSnapshotGuard.ts` doc comment updated to match (`text` still the only gating field).
+- **Tests independently re-run, not trusted from self-report**: exact claimed 10-file targeted suite (089-tool-macro + 1423d/1423f/1570c/1881a/1903a/1918a/DSI-S1-MACRO/H3-urgent-news/TASK-unblock-cowork) → **128/128 pass**, exact match.
+- **Board+head confirmed independently**: `FDA-7` row `status:REVIEW`, `next_agent:qa`, `commit_sha:24022a53a`, `return_summary` matches verbatim. `.head` correctly still `in_progress`/`FIX-NOTEBOOK-AUTOPRUNE-...`/`developer` (S54's later claim) — FDA-7 predates it, confirming a separate earlier pickup.
+- **No lock to release**: `task_list_held` (both `dev-team` and `developer` owners) came back without an FDA-7 entry — read as TTL expiry under the agent's own long run (`571.59s` full suite), per `[[feedback_preclaim_ttl_600s_expires_under_long_agent_runs]]`, not an orphan requiring escalation.
+- **NEXT**: `abf1b0287f8dcffec` (`developer` on `FIX-NOTEBOOK-AUTOPRUNE-...`) still in flight, LOCK-LIFETIME held — await RETURN, RAW-verify (real AC = corpus-wide replay 0-unresolved + `unified-agent.md`/`digest-predict.md` under byte-caps), release. Proceed with this tick's own preflight/drain next.
 
 ## cycle-20260731T0722Z-bounded1-notebookautoprune-dispatched — Fresh tick: preflight RUN, drained 3 signals (all low-urgency), 0 orphans, CI probe queued/no-op, `.head` idle/WIP=0 → BOUNDED-1 claimed+dispatched `FIX-NOTEBOOK-AUTOPRUNE-DIRECTION-UNRESOLVABLE-ZERO-TS-NOTEBOOKS`; 1 background agent in flight
 
@@ -21,15 +30,3 @@
 - **Board+head confirmed independently**: row `status:REVIEW`, `next_agent:qa`, `commit_sha:8c45fc1a0`, `ci_run_id:30611681976`; `in_progress[]` empty for this id. `.head` correctly left untouched (was already idle, never pointed at this task per the S42 dual-in-flight convention) — matches claim.
 - Released `task:FIX-CI-FRONTEND-ESLINT-BUNLOCK-DUAL-LOCKFILE-DRIFT` (`released:1`). WIP 1→0 — both P0 CI-blocking BATCH rows now fully closed and verified.
 - **NEXT**: WIP=0, idle-head — the next tick's BOUNDED-1/SLS/RLC/DRS idle-capacity chain is now reachable. 2 P1 BATCH items remain undispatched from PO's 2026-07-31T0637Z triage (`FIX-NOTEBOOK-AUTOPRUNE-DIRECTION-UNRESOLVABLE-ZERO-TS-NOTEBOOKS`, `TE-T12` — routes to `agent-father` per PO's 2026-07-21 artifact-class ruling, not the generic ba→architect→pm chain) — candidates for the next tick's pickup, not force-dispatched now.
-
-## cycle-20260731T0714Z-macrovmt-verified-released — RAW-verified `dev-macro-indicators`'s FIX-CI-SIZELINT-MACRO-VMT return (self-report matched independent re-derivation exactly, zero discrepancy); released lock. 1 background agent in flight (dev-frontend, sibling CI row)
-
-- **Commits confirmed real, on origin/main** (`merge-base(HEAD,origin/main)==b6892d00f`, the exact origin tip): `e02e20192` (fix)/`5bea11aef` (journal+notebook)/`b6892d00f` (board flip).
-- **Diff matches claim exactly**: 7-line `size-justification: 231L` header added inside the required first-10-line scan window; no other file touched (`size-lint-justification.sh` + `size-lint-baseline.json` both untouched per `git show --stat`).
-- **Build/test claims independently re-run, not trusted from self-report**: `go build ./cmd/...`, `go vet ./...`, `go test ./pkg/application/...` — all green. `size-lint-justification.sh --check` independently re-run → `PASS — 0 unjustified offenders (scanned 1353 files)`.
-- **CI-plane independently re-confirmed** on the exact pushed headSha `e02e20192`: `gh run view 30611631146` → `size-lint` job `conclusion:success` (matches claim). Overall run `conclusion:failure` is solely `frontend-eslint` — the SIBLING task's own row, out of this row's scope.
-- **Board+head confirmed independently**: row `status:REVIEW`, `next_agent:qa`; `in_progress[]` empty for this id; `.head` idle/router, correctly documents the sibling row's separate LOCK-LIFETIME tracking (S42 precedent held again).
-- **`task_release` trap hit and self-corrected**: first call passed the literal string `$CLAUDE_CODE_SESSION_ID` (unexpanded by the LLM-issued call_tool layer) → `released:0`. `task_list_held` confirmed the lock was still held, owner_client_session matching my real session UUID. Retried with the actual UUID → `released:1`. [[feedback_llm_issued_call_tool_does_not_expand_session_id_variable]] confirmed again this session.
-- **Working-tree note, no action taken**: local HEAD sits 1 commit ahead of `origin/main` — `dev-frontend`'s own not-yet-pushed notebook+journal commit (`13fde27c2`, agent still running), plus numerous unrelated peer-session dirty files. Left untouched; no commit/push attempted against this tree state outside my own scoped files.
-- **NEXT**: await `dev-frontend`'s RETURN (sibling P0 row `FIX-CI-FRONTEND-ESLINT-BUNLOCK-DUAL-LOCKFILE-DRIFT`), RAW-verify (CI-plane `frontend-eslint` job green on its own pushed SHA is the real AC, not local exit 0), release its lock. After both P0 CI rows close, 2 P1 BATCH items (`FIX-NOTEBOOK-AUTOPRUNE-...`, `TE-T12`) remain candidates for a future tick.
-
