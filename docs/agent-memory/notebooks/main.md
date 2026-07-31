@@ -1,6 +1,16 @@
 # Dev Team — Sprint Boundary Notebook
 
-**Written:** 2026-07-31T09:32Z
+**Written:** 2026-07-31T09:46Z
+
+## cycle-20260731T0946Z-bounded1-pdfocrpagecap-dispatched — Fresh tick: preflight RUN, drained 3 signals (own-journal byte-cap DEFER, notebook-immutability WARN, routine telemetry), `.head` idle/WIP=0 → BOUNDED-1 claimed+dispatched FIX-PDFOCR-PAGECAP-COMPLETENESS-THRESHOLD-MISMATCH (clean dev-role row, no gate-gap this time); 1 background agent in flight
+
+- **Preflight/GCC-preflight clean**: verdict RUN, tick `09:37Z`. Preflight's own Step 5.5 self-triggered a cold-evict pass (committed `5e986f121`, not authored by me). No HEAD.lock, worktree prune empty.
+- **Drained 3 signals, none actionable beyond drain**: `commit-sweep-guard` notebook-immutability WARN on `architect.md` (mode=warn, non-blocking); dev-team's OWN `context_bloat_breach` on this sprint's decision journal (byte_count 80777 > cap 36000, line_count 197 well under 600 — DEFER-held, recurring, per established precedent); routine `cowork-fire` telemetry (fb-daily fired clean). 0 NEW `signal_queue` rows. Committed (`f22bc920f`), 0 residual.
+- **CI probe**: GREEN on HEAD `c857b523f`, no signal.
+- **`.head` idle, WIP=0** → BOUNDED-1 promote+claim → claimed `FIX-PDFOCR-PAGECAP-COMPLETENESS-THRESHOLD-MISMATCH` (P2/S, `dev-mcp-server`: the exact follow-up FIX architect minted last tick — threshold-vs-cap completeness-gate mismatch causing perpetual full re-OCR + a delete-before-reinsert availability gap on 3 named large PDFs). Row carried explicit `owner`+`next_agent` both `dev-mcp-server` from the start — **no `.route`-only gate-gap this time**, unlike S61's `FU-OCR-BOOT-LOOP-SEQUENTIAL`.
+- Dispatcher-wrap `task_claim("task:FIX-PDFOCR-PAGECAP-COMPLETENESS-THRESHOLD-MISMATCH", task_kind="sprint-task")` → `claimed:true` → spawned `dev-mcp-server` in background with full root-cause writeup, all 4 ACs, and explicit instruction to leave the row at `review[]`/`next_agent:qa` (real code fix, not a review-closeout — do not self-close to DONE_VERIFIED).
+- **Elected NOT to dispatch Step 1 PO triage this tick**: all 3 drained signals were already inert (WARN/DEFER/telemetry, no actionable payload) — BOUNDED-1 dispatched, JUMP TO end, consistent with S54/S57/S59/S61 precedent.
+- **NEXT**: await `dev-mcp-server`'s RETURN, RAW-verify (re-read fixed source lines, independently re-run RED→GREEN regression test, confirm board/head state per CANONICAL:SSOT-STATUSFLIP-LANEMOVE), release lock. `TE-T12` remains the only other undispatched item from PO's 2026-07-31T0637Z triage (routes to `agent-father`).
 
 ## cycle-20260731T0932Z-ocrbootloop-verified-released — RAW-verified `architect`'s FU-OCR-BOOT-LOOP-SEQUENTIAL return (zero discrepancy — cleanest verify this session, no gap found); pushed its commit + 1 unrelated peer `po` commit found in shared tree. WIP 0, idle-head
 
@@ -21,14 +31,4 @@
 - Dispatcher-wrap `task_claim("task:FU-OCR-BOOT-LOOP-SEQUENTIAL", task_kind="sprint-task")` → `claimed:true` → spawned `architect` in background with full task context, review-disposition options, and the gate-gap note.
 - **Elected NOT to dispatch Step 1 PO triage this tick**: BOUNDED-1 dispatched — JUMP TO end, consistent with S54/S57/S59 precedent.
 - **NEXT**: await `architect`'s RETURN, RAW-verify (re-read the actual composition-root code/commit `21c467e8`, confirm board/head state per CANONICAL:SSOT-STATUSFLIP-LANEMOVE), release lock. `TE-T12` remains the only other undispatched item from PO's 2026-07-31T0637Z triage (routes to `agent-father`).
-
-## cycle-20260731T0902Z-futctg-verified-released — RAW-verified `dev-vps-crawls`'s FU-CTG-DISCOVERY-FILENAME-FILTER return (zero discrepancy on code/tests; found+closed a `.head` sync gap); pushed 2 local-only commits + own board/head-sync commit. WIP 0, idle-head
-
-- **Commits confirmed real, built cleanly on this session's own S59 push**: `1c9959cdd` (fix+test)/`f133c659c` (notebook+journal) — both local-only (`git rev-list --left-right --count origin/main...HEAD` = 0/2 before push), zero divergence. Pushed cleanly.
-- **Diff matches claim exactly**: `discover-bctc-urls-browser.py` — added `is_cover_letter_filename(url)` (final path segment, case-insensitive, query-strip+URL-decode, checks `cv_cbtt`/`cong_van_cbtt`), wired into `_fetch_pdf_url()`'s href loop (skip+continue-scan on match, same disposition as the pre-existing title filter). `urllib.parse`/`sys` already imported — no missing dependency.
-- **Tests independently re-run, not trusted from self-report**: new `test_discover_bctc_filename_classifier.py` → **15/15 PASS**; full `vps-scripts/` suite → **57/57 PASS**; `py_compile` clean — exact match. Spot-checked the key test (`test_fetch_pdf_url_skips_cover_letter_returns_real_statement`) — genuinely exercises the real-world repro (article 613699's exact filenames), not a synthetic stand-in.
-- **`.head` sync GAP found and closed**: board row correctly moved `in_progress→review` (`status:REVIEW`, `next_agent:qa`, `commit_sha` correct) but `.head` was left stale at `in_progress`/`FU-CTG-DISCOVERY-FILENAME-FILTER` — unlike FDA-10's clean same-write sync last tick. Fixed via `orch-apply.sh` (`.head`→idle), committed separately (`b5712ef9e`), pushed.
-- **Coordination gap noted, not a defect**: `dev-vps-crawls` had no gateway/MCP grant to self-release; released on its behalf.
-- **NEXT**: no items remain from this tick's dispatch. `TE-T12` still the only undispatched item from PO's 2026-07-31T0637Z triage (routes to `agent-father`). Idle-head, WIP=0.
-
 
