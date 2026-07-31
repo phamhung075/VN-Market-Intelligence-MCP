@@ -134,8 +134,8 @@
     "does_not_consume_wip": true
   },
   "signal_queue": {
-    "_updated_at": "2026-07-31T19:22:51Z",
-    "_updated_by": "cowork-team",
+    "_updated_at": "2026-07-31T19:35:00Z",
+    "_updated_by": "dev-team",
     "archive": [],
     "rows": [
       {
@@ -2053,6 +2053,17 @@
         "severity": "MED",
         "status": "NEW",
         "payload_ref": null
+      },
+      {
+        "id": "dev-team-20260731T1935-journal-step-collision",
+        "ts": "2026-07-31T19:35:00Z",
+        "from": "dev-team",
+        "to": "po",
+        "type": "system-issue",
+        "summary": "dev-mcp-server journal wrote dup STEP-S41 (collided w/ unrelated S41 earlier same file); RAW-verify caught+fixed. decision-journal skill has no seq-number generation rule (notebook-write has c<NNN> AC-1; journal skill doesn't). Route agent-father: add equivalent safeguard.",
+        "severity": "LOW",
+        "status": "NEW",
+        "payload_ref": "docs/agent-memory/decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-dev-team-8.md"
       }
     ],
     "last_triaged_at": "2026-07-29T06:25:00Z",
