@@ -1,15 +1,5 @@
 # agents-architect — Notebook
 
-## 2026-07-21T15:03:37Z
-
-**Brief:** `docs/architecture-briefs/2026-07-21-orchestration-health-agent.md`
-
-Designed new recurring agent `orch-sentinel` (final name; working name "orchestration-health" retired) — meta-observer of the 4-loop orchestration (dev-team/cowork/claude-manager-helper/system-auditor), re-answering today's one-off 4-question audit on a weekly-FULL + daily-LITE cadence. Checked the D-FLEET precedent (5 days prior, rejected a new standalone agent) against this case and found a genuine structural difference: OH-3 must audit system-auditor's own coverage gaps, which cannot live inside the audited entity without recreating the self-resolve/false-green lesson — that's the deciding argument, not just task framing. Notebook stays OVERWRITE-class (≤80L, literal "full overwrite" honored); trend/delta data (utilization delta, consecutive-run counters) lives in a self-diffing scorecard (`docs/data/orch-sentinel-scorecard.md`, reads its own prior write before overwrite — same technique as system-auditor's D-BCTC-EVAL snapshot). Signal writes: `scripts/orch-apply.sh` only, POST-WRITE READ-BACK + CAS-retry contract. Worked corroboration-gate example (OH-1.3 ATB liveness) + anti-flood dedup so the new detector doesn't itself feed the OH-1.5 queue-congestion problem it measures.
-
-**Signal dropped:** `docs/signals/orchestration-health-agent-20260721T150023Z.json` → agent-father
-
----
-
 ## 2026-07-23T04:10:09Z
 
 **Brief:** `docs/architecture-briefs/2026-07-23-auditor-a30-reclamation-gate-a21-windowed-restart.md`
@@ -27,3 +17,13 @@ FIX-AUDITOR-A12A20A30-FP-REEMIT-CONVERGE (recurring_bug_count=4, PO-commissioned
 SPIKE-DEVTEAM-QADRAIN-HEAD-SLOT-DECOUPLE: root-caused why dev-team's Review-Lane QA-Drain (main.md §674-726, its own independent qa[]<1 budget) is nested inside the head-idle-only fall-through, so its budget is never evaluated while `.head` is busy (120 review[] rows eligible, oldest 6d+ stale, live-reconfirmed). Confirmed dev-team's filed remedy (run QA-Drain unconditionally) was correctly rejected by PO — the claim script's `.head` write is an unconditional whole-object replace that would clobber a genuinely live `.head` (PO's live dry-run proved it). Recommended: Part 1 — make the script's `.head` write conditional (mirrors `devteam-wrapper-autoclose.jq`'s own guard shape), script-only, zero file conflict, ships standalone; caller of the one existing call site needs no edit (head is always free there by construction). Part 2 — new head-decoupled invocation site placed AFTER the Session Gate / BEFORE Step 1 (traced control flow to verify zero byte overlap with the concurrent `FIX-DEVTEAM-IDLE-CHAIN-P1A-MAIN-ROTATION` P0 rewrite of §496-686, not assumed), carrying `depends_on` on that P0 row per PO's mandate (flagged as coordination safeguard, not strict technical necessity). Part 3 answered both framings explicitly: Part 2 remains necessary even after Part 1 ships (Part 1 only makes the write safe, doesn't change reachability), and one-row-per-tick throughput is NOT sufficient against the live backlog (hourly cron, `qa[]<1` is a system-wide cap) — recommended a separate follow-up row, out of scope here.
 
 **Signal dropped:** `docs/signals/qadrain-head-slot-decouple-20260729T212046Z.json` → po (cc agent-father, developer)
+
+---
+
+## 2026-07-31T01:48:31Z
+
+**Brief:** `docs/architecture-briefs/2026-07-31-sweepguard-escalation-actuator-and-triage-mechanism-check.md`
+
+Po directly dispatched (post-triage) FIX-SWEEPGUARD-WARN-ONLY-NO-ACTUATOR-AND-TRIAGE-MISADJUDICATION: sweep-guard hook (`scripts/git-hooks/pre-commit`) logs BARE commits forever but never blocks (14 warns/8h, 4 sessions), and this session's own triage had been dispositioning all 4 live signals "benign" on a clean `git show --stat` (outcome), not the mechanism the discriminator already proves by construction. Designed a per-actor escalation actuator (`GIT_SWEEP_GUARD_ESCALATE_THRESHOLD=3` default, reuses existing `.git/sweep-guard.log` `actor=` field, zero new deps) that converges repeat offenders to a hard block same-session, without waiting on po's own staged fleet-wide `GIT_SWEEP_GUARD_MODE` flip (kept as Phase 2, 24h observation + rollback command). New routing rows for `triage-signals.md` + `drain-signals.md` §0a-3 make the mechanism check (payload's own BARE/SCOPED tag + new `escalated=` field) mandatory and name the "`git show --stat` clean" non-disposition explicitly forbidden.
+
+**Signal dropped:** `docs/signals/sweepguard-escalation-actuator-and-triage-mechanism-check-20260731T014831Z.json` → agent-father (cc po, dev-team)
