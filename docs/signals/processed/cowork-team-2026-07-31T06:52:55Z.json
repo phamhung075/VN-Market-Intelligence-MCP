@@ -1,0 +1,55 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-07-31T06:52:55Z",
+    "matched_slots": [
+      "alert-commander-market"
+    ],
+    "won_slots": [
+      "alert-commander-market"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/alert-commander/flow/main.md"
+    ],
+    "silent": false,
+    "drift_min": 5,
+    "errors": [],
+    "pressure_mode": "legacy",
+    "calendar_status": "unknown",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "chef_mutex_applied": false,
+    "due_reasons": {
+      "alert-commander-market": "cron"
+    },
+    "cadence_minutes": {
+      "alert-commander-market": null
+    },
+    "last_fired_timestamp": "2026-07-31T06:52:43Z",
+    "last_fired_slots": [
+      "alert-commander-market"
+    ],
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "06:45",
+    "leader_lock": "acquired",
+    "dev_head": "unknown",
+    "devq": 5,
+    "signal_backlog": 20,
+    "note": "pressure_mode downgraded to legacy this tick (pressure-state.json stale_warning=true at read time); calendar suppression skipped per legacy-mode rule; no CHEF-family slot present, mutex script not invoked; cycle_snapshot_promoted=true on this tick's emit"
+  },
+  "priority": "low",
+  "createdAt": "2026-07-31T06:52:55Z",
+  "_processed": {
+    "fingerprint": "3c5b025737a7ef8df8ee64c36acd950506309ee7a45a8d5cb84a0b4e591be5c5",
+    "processedAt": "2026-07-31T07:19:09Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
