@@ -1,0 +1,55 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-07-31T19:52:28.000Z",
+    "matched_slots": [
+      "chef-evening"
+    ],
+    "won_slots": [
+      "chef-evening"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/unified-agent/flow/chef.md"
+    ],
+    "silent": false,
+    "drift_min": 5,
+    "errors": [],
+    "pressure_mode": "adaptive",
+    "calendar_status": "unknown",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "chef_mutex_applied": false,
+    "due_reasons": {
+      "chef-evening": "cron"
+    },
+    "cadence_minutes": {
+      "chef-evening": null
+    },
+    "last_fired_timestamp": "2026-07-31T19:52:23Z",
+    "last_fired_slots": [
+      "chef-evening"
+    ],
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "19:45",
+    "leader_lock": "acquired",
+    "dev_head": "unknown",
+    "devq": 5,
+    "signal_backlog": 18,
+    "note": "single-slot WORK tick, adaptive mode; chef-evening guaranteed daily CHEF slot, policy_id=null legacy cron pass-through, CHEF mutex script run (no-op, only 1 CHEF slot present), spawned cleanly. 3 NEW signal_queue rows this tick, all po-addressed, left NEW per corrected practice (no READ flip on po rows)."
+  },
+  "priority": "low",
+  "createdAt": "2026-07-31T19:52:28.000Z",
+  "_processed": {
+    "fingerprint": "24c37bcecaf5bc39b5b4f8d63e36ec42f36a1258cdfe1cde1a7a7bf0cd92495a",
+    "processedAt": "2026-07-31T20:15:45Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
