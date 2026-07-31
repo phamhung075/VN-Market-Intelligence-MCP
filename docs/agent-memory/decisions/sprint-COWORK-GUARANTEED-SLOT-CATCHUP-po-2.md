@@ -135,3 +135,30 @@
 - Attribute it to the stale 16-day stock-price image / deploy lane → rejected: the 3 commits since that build never touch the read path, and the defect is present in current source, so a rebuild would not fix it.
 **why-decision:** Reproduced the root cause in isolation rather than inferring it — `sqlite3 'file:data/live/market.db?mode=ro' 'PRAGMA journal_mode=WAL;'` returns `attempt to write a readonly database (8)` and swallows the following SELECT, while the same SELECT without the WAL pragma returns 22; live `PRAGMA journal_mode` = `delete`. fetchers.go:303/:240 still carry `mode=ro&_journal_mode=WAL` while the two sibling repos in the same package already dropped `mode=ro` with a comment naming this exact conflict — a 2-of-4-call-sites partial fix. The `//nolint:nilerr` at :318-320 turns the error into HTTP 200 + `[]`, which is why a total outage surfaced as a per-ticker 503.
 **why-change:** No change from plan for the triage sweep. Deviation on the manual-dispatch candidate: instead of dispatching FIX-MCP-SERVER-DEPLOY-LANE-STALL as written, I stamped an evidence correction — its "RUNTIME-VERIFIED" grep targeted `/app/apps/mcp-server/src/...`, a path that does not exist in the container, so 0 matches came from a missing file; the real path shows 9 occurrences and the image was rebuilt 2026-07-30T22:06Z, not 07-25.
+
+### STEP po-S73 · po · 2026-07-31T00:56Z
+**task-id:** FIX-COWORK-FIRE-ELECTION-TICK-TOMBSTONE
+**what-done:** Traced report 4229's bctc-analyst-slot-4 double-fire to an ALREADY-BOARDED, already-CONFIRMED row rather than minting a 9th cowork row; re-escalated it P2→P1 and cleared `plan_only`.
+**what-considered:**
+- Mint a new FIX for "dispatcher double-fires a non-guaranteed cowork slot"
+- Attach to FIX-GUARANTEED-SLOT-DUAL-PLANE-DOUBLE-FIRE / -ROUTER-INTENT-MUTEX-BYPASS
+- Re-escalate the tombstone row and discharge its own probe gate
+**why-decision:** The tombstone row's `po_retraction_2026-07-16` downgraded it P1→P2 *solely* because "BLAST RADIUS on a slot-bearing tick = INFERRED, NOT observed", with AC-3 demanding a forced same-tick re-fire on a slot-bearing tick before acting. That probe has now run in production twice in 27h (slot-3 07-30 21:00Z, slot-4 07-31 00:00Z) — the decisive test declared un-run was already measured by an incident. Mechanism fits exactly: both sessions started inside the 00:00–00:14 band, so `leader-lock.md:40` floors both to BOUNDARY_MINUTE=0 ⇒ identical key `cron:cowork:2026-07-31T00:00Z`, released at Step 6 and re-won by the re-fire. Ruled the two guaranteed/router rows out at source, not by title: all 4 bctc slots are `guaranteed:false` in cowork-schedule.json, and this was an unattended cron tick with no router.
+**why-change:** Changed from "mint" to "re-escalate existing" per prior-art discipline — the row already had the root cause, the fix, and the ACs; only its evidence bar was unmet.
+
+### STEP po-S74 · po · 2026-07-31T00:58Z
+**task-id:** FIX-TELEGRAM-REPORT-ACK-STATUS-STOP-RESURFACE
+**what-done:** Drained the report queue 9→0 with real dispositions and found the second root cause behind the recurrence.
+**what-considered:**
+- Report "no resolve tool in my grant" as a structural gap and mint a row
+- Test the grant before concluding, then locate why the drain never happens unattended
+**why-decision:** The "no tool" premise is false — `process_telegram_report` worked 9/9 and both planes went empty. But the 07-30 retarget's tool-doc cause is necessary and NOT sufficient, which is why this recurred inside 24h. Grep-verified the durable cause: `po/flow/telegram-reports.md` is a 131-line ORPHANED sub-flow — it already contains the correct ack at Step 2f, but `grep -rn "telegram-reports" docs/agents/po/ .claude/` returns ONE hit, the file's own header comment. main.md's Dispatch and Branch-Workflows tables both omit it; No-Task Guard:105 names the READ and never the ACK. So the queue drains only when a human/router explicitly says so (07-30 by hand, 07-31 by spawn prompt). Inverted producer/consumer gap: producer correct, route missing.
+**why-change:** No new row — folded both causes into the row that already owns the outcome, split as AC-1 (tool doc) / AC-2 (main.md pointer) / AC-3 (assert BOTH planes, since single-plane assertion is how 07-30 looked done while the route stayed dead).
+
+### STEP po-S75 · po · 2026-07-31T00:56Z
+**task-id:** UC-ASL-P6
+**what-done:** Ran the mandatory manual-dispatch sweep: 43 unflagged candidates (41 DRS-stranded, 2 ready-XOR), stamped the top one and folded it into this tick's BATCH.
+**what-considered:**
+- only path: sub-flow mandates exactly ONE top-priority candidate per invocation
+**why-decision:** UC-ASL-P6 is rank-1 (P1, idx 8) and its own `supervised_reason` states it is deliberately withheld from BOUNDED-1 and reachable by "deliberate on-demand dispatch of agent-father" only — precisely the class this producer exists to serve. Supervised-hold pre-check ran first and returned `should_hold=false` (head=FU-MACRO-SNAPSHOT-TIER-WORSTOF), so no ratification was owed this tick.
+**why-change:** no change from plan.
