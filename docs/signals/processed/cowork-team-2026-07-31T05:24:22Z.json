@@ -1,0 +1,58 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-07-31T05:24:22Z",
+    "matched_slots": [
+      "chef-morning",
+      "chef-intraday"
+    ],
+    "won_slots": [
+      "chef-morning"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/unified-agent/flow/chef.md"
+    ],
+    "silent": false,
+    "drift_min": 5,
+    "errors": [],
+    "pressure_mode": "adaptive",
+    "calendar_status": "unknown",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "chef_mutex_applied": true,
+    "due_reasons": {
+      "chef-morning": "cron",
+      "chef-intraday": "cadence"
+    },
+    "cadence_minutes": {
+      "chef-morning": null,
+      "chef-intraday": 120
+    },
+    "last_fired_timestamp": "2026-07-31T05:24:04Z",
+    "last_fired_slots": [
+      "chef-morning"
+    ],
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "05:15",
+    "leader_lock": "acquired",
+    "dev_head": "unknown",
+    "devq": 5,
+    "signal_backlog": 17,
+    "note": "chef-morning + chef-intraday same-tick coincidence; CHEF mutex applied (FIX-COWORK-CHEF-SAMETICK-MUTEX) — dropped non-guaranteed chef-intraday, guaranteed chef-morning fired"
+  },
+  "priority": "low",
+  "createdAt": "2026-07-31T05:24:22Z",
+  "_processed": {
+    "fingerprint": "5152e486e0435ae5a3e4e4a31a63c209f2eb6407fc14ddde730787054d1949ce",
+    "processedAt": "2026-07-31T05:45:44Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
