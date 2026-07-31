@@ -41,24 +41,20 @@ type TechnicalIndicators struct {
 
 ## Repository Ports
 
-> **Discovered signal (FACTORY-TECHANALYSIS-reconcile-ta-contract, 2026-07-08,
-> out of this task's file-scope — not fixed here):** `pkg/domain/ports.go`'s
-> `PriceHistoryRepository`/`TAIndicatorCalculator` below are consumed ONLY by
-> `pkg/domain/services.go`'s `CalculateTAService` — a domain-layer stub whose
-> `Compute()` is hardcoded to return a zero-value `TechnicalIndicators{Symbol:
-> symbol}` always (`// Stub: body will be filled in P1-B bucket tasks` — P1-B
-> has long since landed via `pkg/application`/`pkg/infrastructure` instead).
-> `cmd/server/main.go:71` constructs it and immediately discards the result
+> **Cleanup applied (FACTORY-TECHANALYSIS-fix-discarded-service-and-port,
+> 2026-07-31):** `pkg/domain/services.go`'s `CalculateTAService`
+> stub — previously constructed-then-discarded at `cmd/server/main.go:71`
 > (`_ = domain.NewCalculateTAService(priceRepo, calculator) // domain service
-> wired (unused HTTP path)`) — it is never reachable from any HTTP route. The
-> REAL wired path behind `/ta/indicators` uses the separate, differently-named
-> `pkg/application.PriceRepo`/`TACalculator` ports — see `usecases.md`. This
-> is a second, Go-native (not TypeScript) dead-code path discovered during the
-> contract-reconciliation investigation; flagged for a follow-up cleanup task
-> rather than fixed here (this task's file scope is `router.go`/`dtos.go`/
-> `api/openapi.yaml`).
+> wired (unused HTTP path)`) and never reachable from any HTTP route — has
+> been DELETED (no other caller existed). The REAL wired path behind
+> `/ta/indicators` uses the separate, differently-named
+> `pkg/application.PriceRepo`/`TACalculator` ports — see `usecases.md`.
+> `PriceHistoryRepository`/`TAIndicatorCalculator` below remain in
+> `pkg/domain/ports.go` (out of this task's declared file scope — only
+> `main.go`/`router.go` were touched) but now have zero consumers anywhere in
+> the codebase; a future cleanup may remove them from `ports.go` too.
 
-### PriceHistoryRepository (orphaned — see note above)
+### PriceHistoryRepository (orphaned — zero consumers, see note above)
 ```go
 // pkg/domain/ports.go
 type PriceHistoryRepository interface {
@@ -66,7 +62,7 @@ type PriceHistoryRepository interface {
 }
 ```
 
-### TAIndicatorCalculator (orphaned — see note above)
+### TAIndicatorCalculator (orphaned — zero consumers, see note above)
 ```go
 // pkg/domain/ports.go
 type TAIndicatorCalculator interface {

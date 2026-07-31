@@ -86,6 +86,40 @@ func TestHealth_Returns200(t *testing.T) {
 	if body["service"] != "technical-analysis" {
 		t.Errorf("service field: want technical-analysis, got %v", body["service"])
 	}
+	// FACTORY-TECHANALYSIS-fix-discarded-service-and-port: when RouterConfig.Port
+	// is unset (as here), /health must fall back to the documented default 5003
+	// rather than omitting the field or lying about a different value.
+	if body["port"] != float64(5003) {
+		t.Errorf("port field: want 5003 (default), got %v", body["port"])
+	}
+}
+
+// TestHealth_ReflectsConfiguredPort verifies /health echoes the REAL bound
+// port from RouterConfig.Port instead of a hardcoded literal — closes
+// FACTORY-TECHANALYSIS-fix-discarded-service-and-port (router.go used to
+// hardcode "port":5003 in the /health JSON string even when PORT was
+// env-overridden at the composition root).
+func TestHealth_ReflectsConfiguredPort(t *testing.T) {
+	router := httphandler.NewRouter(httphandler.RouterConfig{
+		Logger: slog.Default(),
+		Port:   "6100",
+	})
+	srv := httptest.NewServer(router)
+	defer srv.Close()
+
+	resp, err := http.Get(srv.URL + "/health")
+	if err != nil {
+		t.Fatalf("GET /health: %v", err)
+	}
+	defer resp.Body.Close()
+
+	var body map[string]any
+	if err := json.NewDecoder(resp.Body).Decode(&body); err != nil {
+		t.Fatalf("decode body: %v", err)
+	}
+	if body["port"] != float64(6100) {
+		t.Errorf("port field: want 6100 (configured), got %v", body["port"])
+	}
 }
 
 // ── POST /ta/indicators ───────────────────────────────────────────────────

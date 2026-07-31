@@ -18,6 +18,11 @@
 ```json
 { "status": "ok", "service": "technical-analysis", "port": 5003 }
 ```
+`port` reflects the ACTUAL bound HTTP port (the resolved `PORT` env var,
+default `5003`) — built via `RouterConfig.Port` → `json.Marshal`, not a
+hardcoded literal (fixed 2026-07-31,
+`FACTORY-TECHANALYSIS-fix-discarded-service-and-port`; previously the JSON
+string always said `5003` even when `PORT` was env-overridden).
 
 ## POST /ta/indicators
 Compute technical indicators for a stock. Request/response arrays are

@@ -68,7 +68,6 @@ func main() {
 	// --- TA indicators wiring (existing) ---
 	calculator := infrastructure.NewTACalculator()
 	priceRepo := infrastructure.NewSQLitePriceRepository()
-	_ = domain.NewCalculateTAService(priceRepo, calculator) // domain service wired (unused HTTP path)
 	useCase := application.NewComputeTAUseCase(calculator, priceRepo)
 
 	// --- P0-1 Volatility wiring ---
@@ -103,6 +102,7 @@ func main() {
 		ProxUseCase:      proxUseCase,
 		MoneyFlowUseCase: moneyFlowUseCase,
 		Logger:           logger,
+		Port:             port,
 	})
 
 	addr := fmt.Sprintf(":%s", port)

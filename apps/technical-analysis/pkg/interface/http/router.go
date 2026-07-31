@@ -10,12 +10,19 @@ import (
 	"encoding/json"
 	"log/slog"
 	"net/http"
+	"strconv"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 
 	"github.com/vn-market-intelligence/technical-analysis/pkg/application"
 )
+
+// defaultPort is the service's documented default (see cmd/server/main.go
+// header comment). Used by handleHealth when RouterConfig.Port is empty or
+// not a valid integer — e.g. sandbox/test callers that don't wire a real
+// listener port.
+const defaultPort = 5003
 
 // RouterConfig bundles all use cases and shared dependencies for the router.
 // Use cases may be nil — the corresponding route is not registered when nil.
@@ -27,6 +34,11 @@ type RouterConfig struct {
 	ProxUseCase      *application.Compute52WProximityUseCase
 	MoneyFlowUseCase *application.ComputeMoneyFlowUseCase
 	Logger           *slog.Logger
+	// Port is the actual HTTP port the composition root bound (the resolved
+	// PORT env var, default "5003"), echoed back in the /health response so
+	// it never lies when PORT is env-overridden. Empty is treated as
+	// defaultPort.
+	Port string
 }
 
 // NewRouter creates and returns a chi router with all routes registered.
@@ -37,7 +49,11 @@ func NewRouter(cfg RouterConfig) http.Handler {
 	r.Use(middleware.RequestID)
 	r.Use(middleware.Recoverer)
 
-	r.Get("/health", handleHealth())
+	port := defaultPort
+	if n, err := strconv.Atoi(cfg.Port); err == nil {
+		port = n
+	}
+	r.Get("/health", handleHealth(port))
 
 	if cfg.UseCase != nil {
 		r.Post("/ta/indicators", handleIndicators(cfg.UseCase, cfg.Logger))
@@ -66,11 +82,26 @@ func NewRouter(cfg RouterConfig) http.Handler {
 	return r
 }
 
-func handleHealth() http.HandlerFunc {
+// healthResponse is the JSON body for GET /health.
+type healthResponse struct {
+	Status  string `json:"status"`
+	Service string `json:"service"`
+	Port    int    `json:"port"`
+}
+
+// handleHealth builds the /health body once (the port is fixed for the
+// process lifetime) via a struct + json.Marshal, from the real bound port.
+func handleHealth(port int) http.HandlerFunc {
+	body, err := json.Marshal(healthResponse{Status: "ok", Service: "technical-analysis", Port: port})
+	if err != nil {
+		// Unreachable in practice (healthResponse always marshals cleanly) —
+		// fail safe rather than panic.
+		body = []byte(`{"status":"ok","service":"technical-analysis"}`)
+	}
 	return func(w http.ResponseWriter, _ *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
-		_, _ = w.Write([]byte(`{"status":"ok","service":"technical-analysis","port":5003}`))
+		_, _ = w.Write(body)
 	}
 }
 
