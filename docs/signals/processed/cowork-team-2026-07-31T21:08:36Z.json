@@ -3,52 +3,52 @@
   "to": "dev-team",
   "type": "cowork-fire",
   "payload": {
-    "fire_time": "2026-07-24T20:28:18Z",
+    "fire_time": "2026-07-31T21:08:36Z",
     "matched_slots": [
-      "tnb-audit"
+      "bctc-analyst-slot-3"
     ],
     "won_slots": [
-      "tnb-audit"
+      "bctc-analyst-slot-3"
     ],
     "held_by_other": [],
     "all_held": false,
     "spawned": [
-      "docs/agents/tran-ngoc-bau/flow/main.md"
+      "docs/agents/bctc-analyst/flow/main.md"
     ],
     "silent": false,
-    "drift_min": 9,
+    "drift_min": 5,
     "errors": [],
     "pressure_mode": "adaptive",
-    "calendar_status": "closed",
+    "calendar_status": "unknown",
     "suppressed_calendar": [],
     "suppressed_cadence": [],
     "downgraded": [],
     "chef_mutex_applied": false,
     "due_reasons": {
-      "tnb-audit": "cron"
+      "bctc-analyst-slot-3": "cron"
     },
     "cadence_minutes": {
-      "tnb-audit": null
+      "bctc-analyst-slot-3": null
     },
-    "last_fired_timestamp": "2026-07-24T20:27:18Z",
+    "last_fired_timestamp": "2026-07-31T21:08:27Z",
     "last_fired_slots": [
-      "tnb-audit"
+      "bctc-analyst-slot-3"
     ],
     "last_fired_write_errors": null,
     "classification": "FIRE",
     "reason": "spawned",
-    "nominal_tick": "20:15",
+    "nominal_tick": "21:00",
     "leader_lock": "acquired",
     "dev_head": "unknown",
     "devq": 5,
-    "signal_backlog": 12,
-    "note": "daily tnb-audit guaranteed slot (cron 13 20 UTC); tran-ngoc-bau spawned run_in_background; adaptive mode; market closed; 0 new signals; single-slot tick"
+    "signal_backlog": 4,
+    "note": "single-slot WORK tick; bctc-analyst-slot-3 spawned background; 4 po-addressed signal_queue rows still unactioned (unchanged since 19:20-20:11Z, now across 4 ticks)"
   },
   "priority": "low",
-  "createdAt": "2026-07-24T20:28:18Z",
+  "createdAt": "2026-07-31T21:08:36Z",
   "_processed": {
-    "fingerprint": "e80c19d462da35b38ae7005a522aed8a306b7c4ca490d94918db49d635f3111b",
-    "processedAt": "2026-07-24T20:47:02Z",
+    "fingerprint": "6f12310f078a6208cca3a4d1cc039a2a8fd46724047c1f5e9ef953032ad3acb5",
+    "processedAt": "2026-07-31T21:15:45Z",
     "processedBy": "dev-team",
     "result": "routed-to-po"
   }
