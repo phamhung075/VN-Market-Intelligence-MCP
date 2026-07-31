@@ -335,6 +335,100 @@ describe("Task 089 — get_macro_snapshot MCP tool", () => {
     expect(inner.usdVnd as number).toBeGreaterThan(0);
   });
 
+  // FDA-7: Go upstream omits provenance — proxy must not re-stamp fetchedAt=now
+  // nor default source_tier optimistically to 2.
+  describe("FDA-7 — provenance fallback when Go upstream omits fetchedAt/source_tier", () => {
+    it("fetchedAt is null (not a fresh timestamp) when the Go response omits fetchedAt", async () => {
+      const originalFetch = globalThis.fetch;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (globalThis as any).fetch = async (input: RequestInfo | URL, _init?: RequestInit) => {
+        const url = typeof input === "string" ? input : input.toString();
+        if (url.includes("/snapshot")) {
+          // fetchedAt deliberately OMITTED — simulates an older Go build.
+          const snapshot = makeMockSnapshot();
+          delete (snapshot as Record<string, unknown>)["fetchedAt"];
+          return new Response(JSON.stringify(snapshot), {
+            status: 200,
+            headers: { "Content-Type": "application/json" },
+          });
+        }
+        return originalFetch(input, _init);
+      };
+      try {
+        const server = makeServer();
+        const result = await callTool(server, "get_macro_snapshot");
+        const raw = JSON.parse(firstText(result)) as { fetchedAt: unknown };
+        // Must be explicit null — never a freshly re-stamped ISO string.
+        expect(raw.fetchedAt).toBeNull();
+      } finally {
+        globalThis.fetch = originalFetch;
+      }
+    });
+
+    it("source_tier defaults to 4 (conservative) — never 2 — when no signal component carries a tier", async () => {
+      const originalFetch = globalThis.fetch;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (globalThis as any).fetch = async (input: RequestInfo | URL, _init?: RequestInit) => {
+        const url = typeof input === "string" ? input : input.toString();
+        if (url.includes("/snapshot")) {
+          // signals present but every component omits source_tier — simulates an
+          // older Go build that has not yet been retrofitted with provenance fields.
+          const snapshot = makeMockSnapshot({
+            signals: {
+              carry: { regime: "NEUTRAL", carrySpread: 1.38 },
+              yield: { label: "CHEAP", spread: 3.2 },
+            },
+          });
+          return new Response(JSON.stringify(snapshot), {
+            status: 200,
+            headers: { "Content-Type": "application/json" },
+          });
+        }
+        return originalFetch(input, _init);
+      };
+      try {
+        const server = makeServer();
+        const result = await callTool(server, "get_macro_snapshot");
+        const env = parseEnvelope(result);
+        expect(env.source_tier).toBe(4);
+      } finally {
+        globalThis.fetch = originalFetch;
+      }
+    });
+
+    it("source_tier defaults to 4 when signals is entirely absent from the Go response", async () => {
+      const originalFetch = globalThis.fetch;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (globalThis as any).fetch = async (input: RequestInfo | URL, _init?: RequestInit) => {
+        const url = typeof input === "string" ? input : input.toString();
+        if (url.includes("/snapshot")) {
+          const snapshot = makeMockSnapshot();
+          delete (snapshot as Record<string, unknown>)["signals"];
+          return new Response(JSON.stringify(snapshot), {
+            status: 200,
+            headers: { "Content-Type": "application/json" },
+          });
+        }
+        return originalFetch(input, _init);
+      };
+      try {
+        const server = makeServer();
+        const result = await callTool(server, "get_macro_snapshot");
+        const env = parseEnvelope(result);
+        expect(env.source_tier).toBe(4);
+      } finally {
+        globalThis.fetch = originalFetch;
+      }
+    });
+
+    it("still returns a real fetchedAt string when the Go response DOES supply it (no regression)", async () => {
+      const server = makeServer();
+      const result = await callTool(server, "get_macro_snapshot");
+      const env = parseEnvelope(result);
+      expect(env.fetchedAt).toBe("2026-06-09T00:00:00Z");
+    });
+  });
+
   // MT-REGRESSION-1898a: response-shape guard — no electricity / portfolio content (stale-build guard)
   it("get_macro_snapshot returns macro JSON shape — no electricity or portfolio content (regression: 1898a / TNB c45 stale-build guard)", async () => {
     const server = makeServer();

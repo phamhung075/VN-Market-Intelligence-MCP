@@ -12,7 +12,10 @@
  *   and downstream regime inference silently fails.
  *
  * Guard contract:
- *   - Valid:   `{ text: string, [fetchedAt?: string], [source_tier?: number] }`
+ *   - Valid:   `{ text: string, [fetchedAt?: string | null], [source_tier?: number] }`
+ *              (FDA-7: `fetchedAt` is `null`, never re-stamped `now()`, when the
+ *              upstream macro-indicators response omits provenance — guard is
+ *              intentionally agnostic to this field, only `text` gates validity.)
  *   - Invalid: any object missing a string `text` field (system_status bleed,
  *              error payload, null, primitives, etc.)
  */

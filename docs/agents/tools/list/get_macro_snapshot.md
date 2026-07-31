@@ -23,7 +23,7 @@ get_macro_snapshot(
   _testCommodityClient?: any,   // test-only
   _testSbvClient?: any,         // test-only
   _testDinhGiaInputs?: any      // test-only
-) → { source_tier: 1 | 2 | 3 | 4, text: string, fetchedAt: string }
+) → { source_tier: 1 | 2 | 3 | 4, text: string, fetchedAt: string | null }
 ```
 
 ## Input Parameters
@@ -81,6 +81,12 @@ Calls get_macro_snapshot internally plus watchlist, alerts, analysis history
   `apps/mcp-server/src/interface/mcp/tools/macro/macroTools.ts` `get_macro_snapshot` handler.
 - TODO: upgrade the aggregator's own baseline tier when a direct SBV REST API replaces the proxy
 - Superseded for session-start use by `get_market_context` (compound tool, Task 239)
+- FDA-7 (2026-07-31): honest provenance-omission fallbacks. If NO present `signals.*`
+  component carries a `source_tier` (older Go build without provenance fields, or `signals`
+  entirely absent), `source_tier` defaults CONSERVATIVELY to `4` (unknown), never the
+  optimistic `2`. If the Go response omits `fetchedAt`, the field is returned as `null` —
+  the proxy never re-stamps `new Date().toISOString()` as a substitute, which would make a
+  stale/older-build snapshot masquerade as freshly fetched.
 
 ## Related Tools
 

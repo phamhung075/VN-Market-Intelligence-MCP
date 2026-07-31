@@ -475,10 +475,10 @@ export function registerMacroTools(server: McpServer): void {
       // treated as tier 0/best-case); only present components' source_tier values count.
       // Generic over data.signals so any future component (beyond today's carry + yield)
       // is picked up automatically, without a future edit here.
-      // Fallback: if no present component carries a tier annotation (older Go build, or
-      // signals entirely absent), default to 2 (aggregator service tier) rather than
-      // fail-loud — the tool is a thin HTTP proxy and 2 is the correct tier for a live
-      // upstream aggregator response.
+      // FDA-7: if no present component carries a tier annotation (older Go build that
+      // omits provenance entirely, or signals entirely absent), default CONSERVATIVELY
+      // to 4 (unknown/worst tier) rather than optimistically to 2 (aggregator tier) —
+      // an omitted tier is unknown provenance, not a confirmed-live aggregator response.
       const isSourceTier = (v: unknown): v is 1 | 2 | 3 | 4 =>
         v === 1 || v === 2 || v === 3 || v === 4;
       const presentTiers = Object.values(
@@ -487,13 +487,13 @@ export function registerMacroTools(server: McpServer): void {
         .map((component) => component?.source_tier)
         .filter(isSourceTier);
       const sourceTier: 1 | 2 | 3 | 4 =
-        presentTiers.length > 0 ? (Math.max(...presentTiers) as 1 | 2 | 3 | 4) : 2;
+        presentTiers.length > 0 ? (Math.max(...presentTiers) as 1 | 2 | 3 | 4) : 4;
 
-      // fetchedAt: use the true source timestamp from the Go service response, not re-stamp now.
-      // If the Go service omits fetchedAt (older build), fall back to new Date().toISOString()
-      // only as a last resort — the test mock provides "2026-06-05T00:00:00Z" at this field.
-      const fetchedAt: string = (data?.fetchedAt as string | undefined)
-        ?? new Date().toISOString();
+      // fetchedAt: use the true source timestamp from the Go service response, never
+      // re-stamp now on omission (FDA-7) — a fresh stamp would make a stale/older-build
+      // snapshot masquerade as freshly fetched. If the Go service omits fetchedAt, surface
+      // the absence explicitly as null (fail-loud provenance) rather than fabricating one.
+      const fetchedAt: string | null = (data?.fetchedAt as string | undefined) ?? null;
 
       // text: human-readable macro intelligence payload (full JSON of the upstream response).
       const text = JSON.stringify(data, null, 2);
