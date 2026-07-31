@@ -93,12 +93,11 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "FIX-SIGNAL-OUTCOMES-LIVENESS-GUARD-COUNTS-STRUCTURALLY-UNRESOLVABLE-ROWS",
-    "next_agent": "dev-mcp-server",
-    "next_action": "BOUNDED-1 auto-pickup claim of FIX-SIGNAL-OUTCOMES-LIVENESS-GUARD-COUNTS-STRUCTURALLY-UNRESOLVABLE-ROWS — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
-    "updated_at": "2026-07-30T23:47:02Z",
-    "updated_by": "dev-team (bounded-1 auto-pickup)"
+    "status": "idle",
+    "updated_at": "2026-07-31T00:36:43Z",
+    "updated_by": "dev-mcp-server",
+    "active_task_id": null,
+    "next_agent": "router"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -18361,6 +18360,41 @@
         "reviewed_by": "developer",
         "qa_verify_mode": "verify-committed",
         "review_note": "Cap Check now trips on LINES>LINE_CAP OR BYTES>BYTE_CAP. LINE_CAP read at runtime from docs/data/file-size-caps.json (pattern docs/agent-memory/decisions/sprint-*.md, cap=600) — same SSOT context-bloat-backstop.sh reads; BYTE_CAP=LINE_CAP*60 (=36000), never a 2nd hardcoded 36000 (TE-T24 derivation, mirrors the already-QA-approved sibling fix FIX-NOTEBOOK-PRUNER-LINE-ONLY-SETPOINT-BYTE-CAP-NEVER-CONVERGES for notebook-auto-prune.sh). Rollover target generalized from a hardcoded -2.md to a numeric-suffix increment parsed off the current JOURNAL_PATH (base=implicit index 1) — closes AC(5): a breaching -2.md now rolls to -3.md, unbounded. Verified by extracting the patched bash verbatim and running it against synthetic fixtures using the REAL file-size-caps.json: 300L/79800B rolls (byte axis, LINE_CAP=600/BYTE_CAP=36000 confirmed derived not hand-typed); 650L/19500B rolls (line axis not regressed); 300L/19800B untouched (both caps clear); synthetic -2.md@620L rolls to -3.md; -3.md@620L rolls to -4.md (confirms unbounded suffix). Applied live to this cycle own decision journal (499L/159,241B pre-fix — exactly the blind-spot shape the task cites as example 3 of 3) as an additional dogfood check: CAP-REACHED sentinel appended per fixed logic; the mandatory send_telegram bug notification could NOT be sent this session (no MCP/gateway tool grant in this spawn — Read/Edit/Write/Bash only), flagged for QA/PO follow-up. Automated fleet-wide sweep of the other ~10 over-cap journals is explicitly out of this row scope (owned by separate blocked P1 row FIX-DECISION-JOURNAL-BYTECAP-NO-ACTUATOR). No apps/ TS/Go touched (zone cross-service/, pure .claude/skills/ md) — bun test/tsc N/A. File itself 99L/4349B, well under its own governed .claude/skills/**/*.md cap (200L/12000B) — no size-justification header needed."
+      },
+      {
+        "id": "FIX-SIGNAL-OUTCOMES-LIVENESS-GUARD-COUNTS-STRUCTURALLY-UNRESOLVABLE-ROWS",
+        "type": "FIX",
+        "title": "checkStalledResolutionLiveness() counts non-ticker MACRO/MULTI rows that can never resolve -- permanent daily false BUG alert asserting 'price lookup failing' while the resolver is healthy at 103/105",
+        "status": "REVIEW",
+        "priority": "P1",
+        "size": "S",
+        "zone": "apps/mcp-server/",
+        "owner": "po",
+        "next_agent": "qa",
+        "supervised": false,
+        "plan_only": false,
+        "created_at": "2026-07-30T23:08:20Z",
+        "created_by": "dev-team/po-batch-20260730T2307Z",
+        "updated_at": "2026-07-31T00:36:44Z",
+        "source": "po triage 2026-07-30T22:59Z tick (6th pass today)",
+        "desc": "Report 4222. Measured in the live container by dev-team (docker exec + bun:sqlite readonly on /app/data/market.db), matching po's figures exactly: 105 total, 103 resolved, exactly 2 unresolved rows -- id 49 stock_code=MACRO created 2026-06-06, id 74 stock_code=MULTI created 2026-06-25, both checked_at=null. MACRO/MULTI are not tickers, so no price series exists and checked_at can never advance. signalOutcomeResolutionJob.ts:76-79's WHERE clause (`checked_at IS NULL AND created_at <= datetime('now','-72 hours')`) has no stock_code exclusion, confirmed by direct read (not a grepped comment) -- so stuckCount is permanently >=2 and emits one BUG alert every UTC day forever. NOT a duplicate of FIX-SIGNAL-OUTCOMES-RESOLUTION-STALLED (review, next=qa): that fix worked (102 pending -> 2) and its own review_note predicted these exact 2 rows as legitimately unresolvable -- then shipped a guard that alerts on them anyway. Secondary: _lastStalledAlertDate is module-level, so a container restart re-arms the once-per-day alert.",
+        "files": [
+          "apps/mcp-server/src/scheduler/alerts/signalOutcomeResolutionJob.ts",
+          "apps/mcp-server/src/__tests__/FIX-SIGNAL-OUTCOMES-RESOLUTION-STALLED.test.ts"
+        ],
+        "deliverable": "AC: guard excludes non-ticker stock_code (MACRO/MULTI or any row with no derivable price series) from the stuck-count query; positive control (a real ticker row stuck >72h) still alerts; test asserts 0 for the 2 live MACRO/MULTI rows.",
+        "baseline_pass": "9408 pass / 348 fail; guard returns 0 for the 2 live MACRO/MULTI rows; positive control (a real ticker row stuck >72h) still alerts",
+        "related": [
+          "FIX-SIGNAL-OUTCOMES-RESOLUTION-STALLED"
+        ],
+        "promoted_at": "2026-07-30T23:46:41Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
+        "claimed_at": "2026-07-30T23:47:02Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "rebuild_required": true,
+        "branch": null,
+        "review_note": "dev-mcp-server: root cause RAW-verified by dev-team/po before dispatch (not re-derived) — checkStalledResolutionLiveness() WHERE clause had no stock_code exclusion, so signal_outcomes id 49 (MACRO, 2026-06-06) + id 74 (MULTI, 2026-06-25) — non-ticker pseudo-codes, no price series can ever exist, checked_at never advances by design — count as \"stuck\" forever, firing a false daily BUG alert while the resolver is healthy (103/105 resolved). Fix: WHERE clause gains AND stock_code GLOB '[A-Z][A-Z][A-Z]' — verified live (docker exec readonly bun:sqlite, prod market.db) every real ticker across watchlist/agent_signals/signal_outcomes/vnstock_financials is exactly 3 uppercase letters; MACRO/MULTI (5 chars) are the only anomalies. Checked for an existing \"is this a real ticker\" utility first per AC-1: isValidTicker (commandHandlers.ts, bare /^[A-Za-z]{2,10}$/) does not discriminate (MACRO/MULTI both pass); KNOWN_VN_TICKERS (vnRelevanceFilter.ts) is explicitly doc-commented \"kept minimal,\" would blind the guard on real tickers outside its ~45-code list, violating AC-2. Extended FIX-SIGNAL-OUTCOMES-RESOLUTION-STALLED.test.ts (+2 tests, 11/11 pass): MACRO+MULTI-only stuck rows -> stuckCount=0 (matches the 2 live rows exactly); real ticker VNM stuck >72h mixed with MACRO/MULTI noise -> stuckCount=1, alert still fires (positive control, guard not blinded). Secondary note (_lastStalledAlertDate module-level, re-arms on restart) left untouched per dispatch guidance — already documented as an accepted tradeoff mirroring freshnessSlaMonitorJob.ts sibling pattern, disproportionate scope for this P1/S task. Evidence: tsc clean, target file 11/11, related-module sweep 34/34, toolCount=183/cronJobCount=88 unchanged. Full bun test: baseline (clean main) 14941 pass/56 fail/1 error/40 skip vs post-fix 14947 pass/52 fail/40 skip — diffed named-fail lists directly: vnstock-3statement.test.ts (the CI-red this task flagged) byte-identical in both runs (8 failures, pre-existing, unrelated); the 4 tests differing between runs (pollNews-Reuters-mock timing, PDF-timeout circuit-breaker, push-news-9-sources) match this sprints documented pre-existing-flake band, zero named fails reference signalOutcome/checkStalledResolutionLiveness/MACRO/MULTI in either run. rebuild_required=true — signalOutcomeResolutionJob.ts is baked into the mcp-server image at build time; QA needs a container rebuild to verify the live guard against the real MACRO(id49)/MULTI(id74) prod rows before closing. Commit 314e70718 (code+test) + 333eabfe5 (memory). QA: after rebuild, verify live container no longer emits the daily BUG alert (or emits 0 stuckCount) with those 2 rows still checked_at=NULL, and that a genuinely-stalled real ticker (if any) would still alert."
       }
     ],
     "qa": [],
@@ -18382,40 +18416,7 @@
     },
     "last_triaged_at": "2026-07-30T23:46:41Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": [
-      {
-        "id": "FIX-SIGNAL-OUTCOMES-LIVENESS-GUARD-COUNTS-STRUCTURALLY-UNRESOLVABLE-ROWS",
-        "type": "FIX",
-        "title": "checkStalledResolutionLiveness() counts non-ticker MACRO/MULTI rows that can never resolve -- permanent daily false BUG alert asserting 'price lookup failing' while the resolver is healthy at 103/105",
-        "status": "IN_PROGRESS",
-        "priority": "P1",
-        "size": "S",
-        "zone": "apps/mcp-server/",
-        "owner": "po",
-        "next_agent": "dev-mcp-server",
-        "supervised": false,
-        "plan_only": false,
-        "created_at": "2026-07-30T23:08:20Z",
-        "created_by": "dev-team/po-batch-20260730T2307Z",
-        "updated_at": "2026-07-30T23:47:03Z",
-        "source": "po triage 2026-07-30T22:59Z tick (6th pass today)",
-        "desc": "Report 4222. Measured in the live container by dev-team (docker exec + bun:sqlite readonly on /app/data/market.db), matching po's figures exactly: 105 total, 103 resolved, exactly 2 unresolved rows -- id 49 stock_code=MACRO created 2026-06-06, id 74 stock_code=MULTI created 2026-06-25, both checked_at=null. MACRO/MULTI are not tickers, so no price series exists and checked_at can never advance. signalOutcomeResolutionJob.ts:76-79's WHERE clause (`checked_at IS NULL AND created_at <= datetime('now','-72 hours')`) has no stock_code exclusion, confirmed by direct read (not a grepped comment) -- so stuckCount is permanently >=2 and emits one BUG alert every UTC day forever. NOT a duplicate of FIX-SIGNAL-OUTCOMES-RESOLUTION-STALLED (review, next=qa): that fix worked (102 pending -> 2) and its own review_note predicted these exact 2 rows as legitimately unresolvable -- then shipped a guard that alerts on them anyway. Secondary: _lastStalledAlertDate is module-level, so a container restart re-arms the once-per-day alert.",
-        "files": [
-          "apps/mcp-server/src/scheduler/alerts/signalOutcomeResolutionJob.ts",
-          "apps/mcp-server/src/__tests__/FIX-SIGNAL-OUTCOMES-RESOLUTION-STALLED.test.ts"
-        ],
-        "deliverable": "AC: guard excludes non-ticker stock_code (MACRO/MULTI or any row with no derivable price series) from the stuck-count query; positive control (a real ticker row stuck >72h) still alerts; test asserts 0 for the 2 live MACRO/MULTI rows.",
-        "baseline_pass": "9408 pass / 348 fail; guard returns 0 for the 2 live MACRO/MULTI rows; positive control (a real ticker row stuck >72h) still alerts",
-        "related": [
-          "FIX-SIGNAL-OUTCOMES-RESOLUTION-STALLED"
-        ],
-        "promoted_at": "2026-07-30T23:46:41Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
-        "claimed_at": "2026-07-30T23:47:02Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)"
-      }
-    ]
+    "in_progress": []
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
