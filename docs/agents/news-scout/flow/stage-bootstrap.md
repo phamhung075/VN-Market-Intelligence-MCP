@@ -2,7 +2,7 @@
 
 # News Scout — Stage 0: Bootstrap + Regime + Feedback
 
-**0. Bootstrap** → skill: `.claude/skills/cycle-bootstrap/SKILL.md` (replace `<agent-id>` with `news-scout`)
+**0. Bootstrap** → skill: `.claude/skills/step-0-cowork/SKILL.md` (replace `<agent-id>` with `news-scout`) — § 0b only for now (this flow does not read notebook carry-over at Step 0a); § 0c regime is invoked below, gated by news-scout's own shape-validation + news-fallback logic
 
 ```
 call_tool(server="vn-market", tool="get_cycle_bootstrap", arguments={ "agent_name": "news-scout" })
@@ -28,7 +28,7 @@ If `CYCLE_SNAPSHOT` IS set: extract `macro_snapshot` from `$CYCLE_SNAPSHOT.macro
 - **Invalid shape** (missing or non-string `text` field — e.g. `{"status":"degraded","message":"..."}` system_status bleed): route to news-fallback. Log `REGIME_SOURCE=news-fallback` + `[WARN] get_macro_snapshot shape mismatch — expected {text:string}, got: {actual_keys}`. Non-fatal; continue with news-fallback identical to call failure path.
 - **Call failure**: retry once. If retry also fails, derive regime hint from news context (dominant sentiment: bearish → TIGHTENING hint, bullish → EASING hint, mixed → NEUTRAL). Log `REGIME_SOURCE=news-fallback` + `[WARN] get_macro_snapshot unavailable after retry — regime is estimated`.
 
-On valid shape → skill: `.claude/skills/regime-extraction/SKILL.md`
+On valid shape → skill: `.claude/skills/step-0-cowork/SKILL.md` § 0c (already loaded above)
 Variables: REGIME, CARRY_REGIME
 
 **0c. Load self-signal cache + sibling-window dedup cache**

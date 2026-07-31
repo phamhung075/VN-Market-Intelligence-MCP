@@ -16,3 +16,12 @@ row's own declared sprint, matching the sibling po/qa/developer journal files fo
 - Drop vs keep size-justification header now under-cap — kept (updated): matches signal-dashboard precedent + brief's explicit instruction.
 **why-decision:** Po's landmine was one instance of a general rule ("keep gates, not just this one") — kept all 4 correctness gates verbatim, grep-verified post-write.
 **why-change:** Did not flip the board row (found BACKLOG, not dispatch-claimed IN_PROGRESS) — orch-state.json outside commit_zone; flagged in RETURN.
+
+### STEP agent-father-S2 · agent-father · 2026-07-31T02:36:00Z
+**task-id:** TE-T11
+**what-done:** Wired `step-0-cowork/SKILL.md` into 10 flow files (chef, market-watcher×2, news-scout, alert-commander, bctc-analyst, digest-predict×3, unified-agent/market-bootstrap); collapsed separate cycle-bootstrap+regime-extraction pointers into one line each, keeping all flow-specific fallback/shape logic verbatim.
+**what-considered:**
+- Swap all 11 audit-listed files vs. verify each first — chose verify: `cowork-team/tick-snapshot.md` makes raw MCP calls to PRODUCE the shared snapshot for others, never invokes cycle-bootstrap/regime-extraction as a skill reader — swap there is a category error, excluded (grep false-positive, not a real adopter gap).
+- Rewrite inline fallback/shape-validation prose (news-scout, alert-commander) vs. pointer-only swap — chose pointer-only: savings come from eliminating the separate SKILL.md file reads, not inline prose; touching prose = behavior-change risk, zero extra saving.
+**why-decision:** Per audit_ref correction, every new line reads "→ skill: step-0-cowork § 0b[-0c]" — never restates "embeds GATEWAY-BLIND/regime-fallback boundaries".
+**why-change:** Scope closed at 10 files not 11 — `tick-snapshot.md` deviation justified above.

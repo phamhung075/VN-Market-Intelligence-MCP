@@ -26,13 +26,11 @@ Self-refusal is a flow violation — 2x confirmed (2026-06-28, 2026-07-12T04:04Z
 **Step 0-GW — Gateway availability gate** → skill: `.claude/skills/gateway-availability-gate/SKILL.md`
 Replace `<agent-id>` with `market-watcher`. Run BEFORE bootstrap. On gateway dead: write signal file + BLOCKED notebook + EXIT. See skill for full protocol and explicit prohibitions.
 
-**0. Bootstrap** → skill: `.claude/skills/cycle-bootstrap/SKILL.md` (replace `<agent-id>` with `market-watcher`)
+**0+0b. Bootstrap + Regime** → skill: `.claude/skills/step-0-cowork/SKILL.md` (replace `<agent-id>` with `market-watcher`) — § 0b-0c only (this flow does not read notebook carry-over at Step 0a)
+Variables: REGIME, CARRY_REGIME, US10Y_SIGNAL, DXY_SIGNAL
 
 **0a. Rapid market cap screen** → skill: `.claude/skills/rapid-market-cap-screen/SKILL.md`
 For each ticker in watchlist, run the rapid screen BEFORE price analysis. SKIP-MICRO or SKIP-EXPENSIVE tickers are logged and dropped from the subsequent price evaluation loop.
-
-**0b. Regime** → skill: `.claude/skills/regime-extraction/SKILL.md`
-Variables: REGIME, CARRY_REGIME, US10Y_SIGNAL, DXY_SIGNAL
 
 Set adaptive thresholds (no tool call):
 ```

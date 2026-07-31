@@ -1,5 +1,28 @@
 # Agent Father — Notebook
 
+## Clean (router-dispatched, PO manual-dispatch DRS-STRANDED-OFF-ALLOWLIST) 2026-07-31T02:36:00Z TE-T11
+- Wired `step-0-cowork/SKILL.md` into 10 flow files (chef, market-watcher/cycle+eod,
+  news-scout, alert-commander, bctc-analyst, digest-predict×3, unified-agent/market-bootstrap):
+  collapsed the separate `cycle-bootstrap/SKILL.md` + `regime-extraction/SKILL.md` pointer
+  lines into one `step-0-cowork` reference each (`§ 0b` bootstrap-only where a flow doesn't
+  consume `$REGIME`; `§ 0b-0c` where it does). All flow-specific inline logic (news-scout/
+  alert-commander shape-validation gates, news-fallback derivation, tick-snapshot conditional)
+  left byte-for-byte untouched — savings come from eliminating the 2 separate SKILL.md file
+  reads, not from that in-file prose, so touching it would add risk for zero extra saving.
+- Excluded the audit's 11th listed file, `cowork-team/flow/tick-snapshot.md`: it makes raw
+  `get_cycle_bootstrap`/`get_macro_snapshot` MCP calls to PRODUCE the shared tick-snapshot
+  other agents' bootstrap reads consume — it never invokes cycle-bootstrap/regime-extraction
+  as a skill reader. Grep matched it only because a fallback-comment sentence contains the
+  string "cycle-bootstrap/SKILL.md". Applying the swap there would be a category error (writer
+  vs reader), not a genuine adoption gap — real scope is 10 files, not 11.
+- Corrected the DoD phrasing per audit_ref: every new pointer line reads "→ skill:
+  step-0-cowork/SKILL.md § 0b[-0c]" — never claims the composite "embeds the same
+  GATEWAY-BLIND/regime-fallback boundaries" (it POINTS to cycle-bootstrap's Error-handling SSOT).
+- Post-edit grep: `step-0-cowork` adoption count 0→10 (`grep -rl step-0-cowork
+  docs/agents/*/flow/*.md`); zero remaining `cycle-bootstrap/SKILL.md` or
+  `regime-extraction/SKILL.md` PRIMARY pointers in the 10 touched files (one intentional
+  secondary SSOT-reference in alert-commander).
+
 ## Clean (router-dispatched, po daily-triage maintenance-lane) 2026-07-31T01:52:02Z TE-T08
 - `.claude/skills/commit-mutex/SKILL.md` 256L→82L: inverted to a lazy-load hot card per
   the established repo pattern (signal-dashboard/doc-heal-system/pdf all split the same

@@ -19,7 +19,7 @@ Input: `$DISH_TYPE` = `morning` | `intraday` | `eod` | `evening`
 
 ---
 
-**0. Bootstrap** → skill: `.claude/skills/cycle-bootstrap/SKILL.md` (replace `<agent-id>` with `unified-agent`)
+**0. Bootstrap** → skill: `.claude/skills/step-0-cowork/SKILL.md` (replace `<agent-id>` with `unified-agent`) — § 0b only (chef does not consume `$REGIME`; Step 1.5 macro-health-read is the L1 macro source, and this flow does not read notebook carry-over at Step 0a)
 
 ---
 

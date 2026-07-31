@@ -16,7 +16,7 @@ Ledger entries in `docs/analysis-briefs/{TICKER}.md` | Signal file `docs/signals
 
 ---
 
-**0. Bootstrap** → skill: `.claude/skills/cycle-bootstrap/SKILL.md` (replace `<agent-id>` with `market-watcher`)
+**0. Bootstrap** → skill: `.claude/skills/step-0-cowork/SKILL.md` (replace `<agent-id>` with `market-watcher`) — § 0b only (this flow derives `regime_flag` directly from the bootstrap macro block below; it does not call regime-extraction separately, and does not read notebook carry-over at Step 0a)
 
 **A. Ledger** — per ticker, if `docs/analysis-briefs/{TICKER}.md` does not exist → create from `docs/references/analysis-ledger-template.md`
 

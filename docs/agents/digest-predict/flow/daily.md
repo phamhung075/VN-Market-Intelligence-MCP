@@ -14,9 +14,7 @@ Daily digest to MARKET | WORK status | dev team feedback
 
 ---
 
-**0. Bootstrap** → skill: `.claude/skills/cycle-bootstrap/SKILL.md` (replace `<agent-id>` with `digest-predict`)
-
-**0b. Regime** → skill: `.claude/skills/regime-extraction/SKILL.md`
+**0. Bootstrap + Regime** → skill: `.claude/skills/step-0-cowork/SKILL.md` (replace `<agent-id>` with `digest-predict`) — § 0b-0c only (this flow does not read notebook carry-over at Step 0a)
 Variables: REGIME, CARRY_REGIME, CARRY_SPREAD, US10Y_SIGNAL, US10Y_VALUE, DXY_SIGNAL, MAX_DEPOSIT_RATE
 
 Parse `get_macro_snapshot` text block already in bootstrap:

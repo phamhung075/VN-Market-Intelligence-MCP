@@ -14,9 +14,7 @@ Up to 3 prediction claims created | WORK notified | session log
 
 ---
 
-**0. Bootstrap** → skill: `.claude/skills/cycle-bootstrap/SKILL.md` (replace `<agent-id>` with `digest-predict`)
-
-**0b. Regime** → skill: `.claude/skills/regime-extraction/SKILL.md`
+**0. Bootstrap + Regime** → skill: `.claude/skills/step-0-cowork/SKILL.md` (replace `<agent-id>` with `digest-predict`) — § 0b-0c only (this flow does not read notebook carry-over at Step 0a)
 Variables: REGIME, DAMPENING_ACTIVE
 
 Parse `get_macro_snapshot` text block in bootstrap:
