@@ -19611,12 +19611,12 @@
         "promoted_at": "2026-07-31T21:18:55Z",
         "promoted_by": "dev-team (bounded-1 auto-pickup)",
         "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=3)",
-        "updated_at": "2026-07-31T21:22:31Z",
+        "updated_at": "2026-07-31T21:24:46Z",
         "claimed_at": "2026-07-31T21:19:00Z",
         "claimed_by": "dev-team (bounded-1 auto-pickup)",
-        "commit_sha": "8638467b6224da29ba7bc8743b236d81bd421e36",
+        "commit_sha": "4d3394f772d88e8911b0b82368304fdee007c8e8",
         "completed_at": "2026-07-31T21:22:30Z",
-        "review_note": "rebuild_required:true — ops must rebuild stock-price service before deploy"
+        "review_note": "rebuild_required:true — ops must rebuild stock-price service before deploy | dev-team RAW-verify 2026-07-31T21:24:46Z: commit_sha corrected from journal-commit 8638467b6 to actual code-commit 4d3394f77 (the refactor commit); rebuild pending ops; independent go build/test/gofmt/lint all clean, exact match to self-report"
       }
     ],
     "qa": [],
