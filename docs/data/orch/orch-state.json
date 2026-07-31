@@ -93,12 +93,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "active_task_id": null,
-    "next_agent": "router",
-    "next_action": "BOUNDED-1 auto-pickup FACTORY-SCHEDULER-split-bctcReparseJob flipped IN_PROGRESS->REVIEW by dev-mcp-server (branch:null direct-execute path) -- idle for next dispatch.",
-    "updated_at": "2026-07-31T19:30:26Z",
-    "updated_by": "dev-mcp-server"
+    "status": "in_progress",
+    "active_task_id": "FACTORY-TECHANALYSIS-fix-discarded-service-and-port",
+    "next_agent": "developer",
+    "next_action": "BOUNDED-1 auto-pickup claim of FACTORY-TECHANALYSIS-fix-discarded-service-and-port — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
+    "updated_at": "2026-07-31T19:48:26Z",
+    "updated_by": "dev-team (bounded-1 auto-pickup)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -5952,15 +5952,6 @@
         "status": "BACKLOG",
         "id": "FACTORY-FRONTEND-reconcile-formatters",
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-FRONTEND-reconcile-formatters"
-      },
-      {
-        "title": "Remove discarded domain service wiring + inject real port into /health",
-        "priority": "P3",
-        "zone": "technical-analysis",
-        "type": "FACTORY",
-        "status": "BACKLOG",
-        "id": "FACTORY-TECHANALYSIS-fix-discarded-service-and-port",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-TECHANALYSIS-fix-discarded-service-and-port"
       },
       {
         "title": "Extract 64-hexagram prose to an embedded data asset behind a small loader",
@@ -19586,9 +19577,25 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-31T19:18:24Z",
+    "last_triaged_at": "2026-07-31T19:47:52Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": []
+    "in_progress": [
+      {
+        "title": "Remove discarded domain service wiring + inject real port into /health",
+        "priority": "P3",
+        "zone": "technical-analysis",
+        "type": "FACTORY",
+        "status": "IN_PROGRESS",
+        "id": "FACTORY-TECHANALYSIS-fix-discarded-service-and-port",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-TECHANALYSIS-fix-discarded-service-and-port",
+        "promoted_at": "2026-07-31T19:47:52Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=3)",
+        "updated_at": "2026-07-31T19:48:26Z",
+        "claimed_at": "2026-07-31T19:48:25Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)"
+      }
+    ]
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
