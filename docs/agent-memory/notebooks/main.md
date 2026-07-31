@@ -1,6 +1,12 @@
 # Dev Team — Sprint Boundary Notebook
 
-**Written:** 2026-07-31T11:53Z
+**Written:** 2026-07-31T12:15Z
+
+## cycle-20260731T1207Z-lancedbsegfault-reentrant — Fresh tick: 3 signals drained (own ci_red left for its own verification gate + 2 routine/PO-routed), CI probe non-fatal in_progress skip, `.head` still FIX-LANCEDB-INSERT-SEGFAULT — TTL-lapse re-entrant confirm (claimed:true, not the usual false+match), live progress confirmed via git status, no re-spawn
+
+- **3 drained signals, all correctly routed-to-po, none needing dev-team action**: (1) my own `ci_red` from last tick — left untouched by design, its VERIFICATION GATE will find CI already green on `bf6c11054`; (2) routine `cowork-fire` telemetry (3 offhours slots spawned clean); (3) `news-scout` gateway-blind bug-escalation (known recurring cowork-subagent-loses-gateway pattern) — PO's remit, not fresh.
+- **TTL-lapse variant of the re-entrant probe**: `task_claim` returned `claimed:true` (lock's 600s TTL lapsed under the ~16min elapsed since last tick's dispatch) — NOT the usual `claimed:false`+session-match signature. Did not treat as license to re-spawn: `git status` shows `insertBctcAnalysis.ts` modified + new untracked `FIX-LANCEDB-INSERT-SEGFAULT-step4-guard.test.ts` (task-matched filename), genuine live progress, no commits yet.
+- **NEXT**: await dev-mcp-server's RETURN, RAW-verify (root-cause re-confirm, regression test, boundary-disclosure honesty check, board/head state). `TE-T12` remains the only other undispatched item from PO's 2026-07-31T0637Z triage (routes to `agent-father`).
 
 ## cycle-20260731T1151Z-lancedbsegfault-dispatched — Fresh tick: CI probe caught RED (size-lint on 9c682681, backfillBctcPdfPaths.ts baseline-exceeded), fixed+pushed+verified-green (bf6c11054); BOUNDED-1 claimed+dispatched FIX-LANCEDB-INSERT-SEGFAULT to dev-mcp-server; 1 background agent in flight
 
@@ -19,13 +25,3 @@
 - **Incidental "CV" KEYWORD_SET gap disclosure independently verified real** (grepped the actual array) — correctly scoped out, not silently masked, not fabricated.
 - **Did NOT re-run the full 14971-test suite** — blast radius genuinely narrow (1 external caller, `server.ts` startup only), targeted suite already exact-matched, RED reproduction is the stronger evidence class; proportionate stop.
 - **NEXT**: no items remain from this tick's dispatch. `TE-T12` still the only undispatched item from PO's 2026-07-31T0637Z triage (routes to `agent-father`). Idle-head, WIP=0.
-
-## cycle-20260731T1047Z-bounded1-coverletters-dispatched — Fresh tick: preflight RUN, drained 1 signal (own-journal byte-cap breach, DEFER-class), `.head` idle/WIP=0 → BOUNDED-1 claimed+dispatched FU-BACKFILL-MULTIPLE-COVER-LETTERS to dev-mcp-server; 1 background agent in flight
-
-- **Preflight/GCC-preflight clean**: verdict RUN, tick `10:37Z`. No HEAD.lock, worktree prune empty.
-- **Drained 1 signal**: dev-team's OWN `context_bloat_breach` on `sprint-...-dev-team-4.md` (byte_count 91512 > cap 36000) — routed-to-po (generic catch-all), DEFER-class per established precedent. Own cap-check (run separately, before this write) confirmed it live: 233L/600 but 96321B/36000 — rolled base file → `CAP-REACHED` marker appended, new `-5.md` continuation opened with STEP dev-team-S66.
-- **CI probe**: GREEN on HEAD `9d6605347`, no signal.
-- **`.head` idle, WIP=0** → BOUNDED-1 promote+claim → claimed `FU-BACKFILL-MULTIPLE-COVER-LETTERS` (P3/S, sprint BCTC-EXTRACT-QUALITY, zone `apps/mcp-server/` → `dev-mcp-server`). Residual weakness #2 from FIX-CTG-PDF-MISLINK: cover-letter-skip logic only excludes the FIRST cover-letter match, not all of them, when a ticker-quarter has 2+ cover-letter PDFs — wrong PDF can still be picked.
-- Dispatcher-wrap `task_claim("task:FU-BACKFILL-MULTIPLE-COVER-LETTERS", task_kind="sprint-task")` → `claimed:true` → spawned `dev-mcp-server` background with root-cause writeup, both ACs (AC1: synthetic 2+cover-letter+1-consolidated heals to consolidated; AC2: regression test must independently reproduce RED on the pre-fix first-match-only logic), DJ-GATE-1 clause, explicit review[]/next_agent:qa closeout (not self-close).
-- **Elected NOT to dispatch Step 1 PO triage this tick**: the sole drained signal was already inert (DEFER-class, own journal noise) — BOUNDED-1 dispatched, JUMP TO end, consistent with S54/S57/S59/S61/S63 precedent.
-- **NEXT**: await `dev-mcp-server`'s RETURN, RAW-verify (re-derive the hardened selection logic, independently reproduce RED against the pre-fix first-match-only code, confirm board/head state). `TE-T12` remains the only other undispatched item from PO's 2026-07-31T0637Z triage (routes to `agent-father`).
