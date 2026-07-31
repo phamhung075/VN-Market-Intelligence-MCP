@@ -93,11 +93,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "active_task_id": null,
-    "next_agent": "router",
-    "updated_at": "2026-07-31T18:40:52Z",
-    "updated_by": "dev-mcp-server"
+    "status": "in_progress",
+    "active_task_id": "FACTORY-APP-console-to-logger",
+    "next_agent": "developer",
+    "next_action": "BOUNDED-1 auto-pickup claim of FACTORY-APP-console-to-logger — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
+    "updated_at": "2026-07-31T18:47:18Z",
+    "updated_by": "dev-team (bounded-1 auto-pickup)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -133,8 +134,8 @@
     "does_not_consume_wip": true
   },
   "signal_queue": {
-    "_updated_at": "2026-07-31T02:11:27Z",
-    "_updated_by": "dev-team/drain-0aD-20260731T0217Z",
+    "_updated_at": "2026-07-31T18:48Z",
+    "_updated_by": "dev-team",
     "archive": [],
     "rows": [
       {
@@ -2029,6 +2030,17 @@
         "summary": "A-12 FAIL: api-gateway health check unreachable (HTTP CURL_ERR)",
         "severity": "WARN",
         "status": "triaged",
+        "payload_ref": null
+      },
+      {
+        "id": "dev-20260731T184857",
+        "ts": "2026-07-31T18:48Z",
+        "from": "dev-team",
+        "to": "po",
+        "type": "system-issue",
+        "summary": "stranded-state sweep: unknown path needs owner: docs/agent-memory/.auditor-cycle-markers-2026-07-30T16:00Z.tmp",
+        "severity": "LOW",
+        "status": "NEW",
         "payload_ref": null
       }
     ],
@@ -5900,15 +5912,6 @@
         "status": "BACKLOG",
         "id": "FACTORY-APP-split-assembleEveningSummary",
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-APP-split-assembleEveningSummary"
-      },
-      {
-        "title": "Replace console.* with the project logger in 5 application files",
-        "priority": "P3",
-        "zone": "mcp-server-application",
-        "type": "FACTORY",
-        "status": "BACKLOG",
-        "id": "FACTORY-APP-console-to-logger",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-APP-console-to-logger"
       },
       {
         "title": "Collapse the 7-deep INSERT cascade + split agentSignalStore by query seam",
@@ -19532,9 +19535,25 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-31T18:16:40Z",
+    "last_triaged_at": "2026-07-31T18:47:09Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": []
+    "in_progress": [
+      {
+        "title": "Replace console.* with the project logger in 5 application files",
+        "priority": "P3",
+        "zone": "mcp-server-application",
+        "type": "FACTORY",
+        "status": "IN_PROGRESS",
+        "id": "FACTORY-APP-console-to-logger",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-APP-console-to-logger",
+        "promoted_at": "2026-07-31T18:47:09Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=3)",
+        "updated_at": "2026-07-31T18:47:18Z",
+        "claimed_at": "2026-07-31T18:47:18Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)"
+      }
+    ]
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
