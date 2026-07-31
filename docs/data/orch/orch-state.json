@@ -93,12 +93,12 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "FIX-FOREIGN-FLOW-DEAD-ENDPOINT",
-    "next_agent": "dev-mcp-server",
-    "next_action": "BOUNDED-1 auto-pickup claim of FIX-FOREIGN-FLOW-DEAD-ENDPOINT — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
-    "updated_at": "2026-07-31T22:26:26Z",
-    "updated_by": "dev-team (bounded-1 auto-pickup)"
+    "status": "idle",
+    "active_task_id": null,
+    "next_agent": "router",
+    "next_action": "FIX-FOREIGN-FLOW-DEAD-ENDPOINT moved in_progress->review (dev-mcp-server), next_agent=qa",
+    "updated_at": "2026-07-31T23:12:16Z",
+    "updated_by": "dev-mcp-server"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -19599,6 +19599,25 @@
         "updated_by": "dev-mcp-server",
         "commit_sha": "b3a5c5145",
         "note": "Added apps/mcp-server/src/infrastructure/fetchers/__tests__/fetchDeadline.test.ts (12 tests): withDeadline (deadline->DeadlineError w/ label/deadlineMs/name+FR-6 log, fast-path clearTimeout exactly-once EC-1, non-abort error rethrown as same instance) + macroFetch (ok:false all 3 DegradeEnvelope.reason branches, ok:true only on response.ok). Test-only, zero production code touched (helper already code-verified via 6-check audit at parent T-1). bun tsc --noEmit clean; standalone 12/12 pass; full bun test x2 (15005/15007 pass, 54/52 fail) inside documented FIX-MCP-SUITE-HEALTH-BASELINE band, grep-confirmed zero fetchDeadline/withDeadline/macroFetch fails in either run. toolCount=183/cronJobCount=88 unchanged (no tool/scheduler code touched). testing.md doc-review done. Commit b3a5c5145; memory commit 3a19ad791."
+      },
+      {
+        "id": "FIX-FOREIGN-FLOW-DEAD-ENDPOINT",
+        "title": "Remove/stub dead fetchPrimaryVpsEndpoint() — GETs a nonexistent VPS /foreign-flow route, silent 404 every minute",
+        "type": "FIX",
+        "status": "REVIEW",
+        "priority": "P3",
+        "zone": "apps/mcp-server/",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-FOREIGN-FLOW-DEAD-ENDPOINT",
+        "promoted_at": "2026-07-31T22:26:14Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=3)",
+        "updated_at": "2026-07-31T23:12:16Z",
+        "claimed_at": "2026-07-31T22:26:14Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "next_agent": "qa",
+        "updated_by": "dev-mcp-server",
+        "commit_sha": "9ec88cd4e",
+        "note": "fetchForeignFlowWithFallback Strategy 1 (primary VPS GET, http://VINAHOST_IP/foreign-flow) gated behind overrides.fetchFn being explicitly injected — no production caller supplies it (only runForeignFlowFetcherJobCron->runForeignFlowFetcherJob() with no overrides), so the dead route (no /foreign-flow on vps-proxy-server.js, push-only architecture) no longer 404s every market-minute. fetchPrimaryVpsEndpoint kept (not deleted) — 5 test files (incl. 1392-foreign-flow-cb-probe-regression, 1288-foreign-flow-fallback §4) explicitly inject fetchFn as live regression coverage for the historical Task 1392 CB-stuck-open incident; deleting would orphan the out-of-scope foreignFlowValidator.ts. New FIX-foreign-flow-dead-endpoint.test.ts (4 tests) proves zero globalThis.fetch calls on production-shaped invocation. tsc clean, targeted 9-file foreign-flow suite 58/58 pass, full bun test 15008p/40skip/55f within documented FIX-MCP-SUITE-HEALTH-BASELINE band (zero foreign-flow-fetcher fails), toolCount=183/cronJobCount=88 unchanged. pushForeignFlowHandler.ts confirmed sole live writer. REBUILD_REQUIRED=true — live post-rebuild RAW row-count check for qa/ops."
       }
     ],
     "qa": [],
@@ -19687,22 +19706,6 @@
         "updated_by": "dev-team/po-batch-dispatch-20260731T2257Z",
         "claimed_at": "2026-07-31T23:09:27Z",
         "claimed_by": "dev-team (step 3 direct dispatch, next_agent=agent-father per po_routing_ruling_20260721 already on row, does not consume dev WIP slot)"
-      },
-      {
-        "id": "FIX-FOREIGN-FLOW-DEAD-ENDPOINT",
-        "title": "Remove/stub dead fetchPrimaryVpsEndpoint() — GETs a nonexistent VPS /foreign-flow route, silent 404 every minute",
-        "type": "FIX",
-        "status": "IN_PROGRESS",
-        "priority": "P3",
-        "zone": "apps/mcp-server/",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-FOREIGN-FLOW-DEAD-ENDPOINT",
-        "promoted_at": "2026-07-31T22:26:14Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=3)",
-        "updated_at": "2026-07-31T22:26:26Z",
-        "claimed_at": "2026-07-31T22:26:14Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)",
-        "next_agent": "dev-mcp-server"
       }
     ]
   },
