@@ -1,6 +1,15 @@
 # Dev Team — Sprint Boundary Notebook
 
-**Written:** 2026-07-31T08:26Z
+**Written:** 2026-07-31T08:47Z
+
+## cycle-20260731T0847Z-bounded1-futctg-dispatched — Fresh tick: preflight RUN, drained 2 DEFER-covered context-bloat signals, `.head` idle/WIP=0 → BOUNDED-1 claimed+dispatched FU-CTG-DISCOVERY-FILENAME-FILTER (HNX BCTC discovery cover-letter filename filter gap); 1 background agent in flight
+
+- **Preflight/GCC-preflight clean**: verdict RUN, tick `08:37Z`. No HEAD.lock, 3 external fleet-push worktrees untouched, dirty tree confirmed peer-session churn only (cowork notebooks/briefs/synthesis files).
+- **Drained 2 signals, both DEFER-covered**: context-bloat breach on `dev-mcp-server`'s own decision journal (386L/94833B, overage 58833B — live in-progress sprint journal, growing fast) and a 4th consecutive breach on this session's OWN dev-team-4 journal (161L/64551B, overage 28551B). Both held per standing [[feedback_ctxbloat_breach_on_live_sprint_file_defer]].
+- **CI probe**: GREEN on HEAD `39d1e0aaa`, no signal.
+- **`.head` idle, WIP=0** → BOUNDED-1 promote+claim (full `--arg now`+`--slurpfile` contract, no error this time) → claimed `FU-CTG-DISCOVERY-FILENAME-FILTER` (P3/S, HNX discovery resolves a good-title article to a cover-letter PDF attachment via ArticlesFileAttach — needs filename-based CV_CBTT/cong_van_cbtt post-filter mirroring FIX-CTG-2's existing title filter). **Router-corrected `.head.next_agent`**: task zone `vps-scripts + apps/mcp-server` isn't in `system-map.json`'s zone list (Tier-1/2 zone-detect can't resolve it, Tier-3 would fall to generic `developer`) — git-history-confirmed (`fix(vps-crawls:...)` prefix, incl. the exact predecessor `bbf0f54bd` FIX-CTG-2) `dev-vps-crawls` owns `vps-scripts/*.py`; corrected before dispatch, same class as BOUNDED-1's own documented NON-CODE/DESIGN gap note. Dispatcher-wrap `task_claim` → `claimed:true` → spawned `dev-vps-crawls` in background with full context + explicit instruction to flag (not silently expand) if the fix genuinely also needs an apps/mcp-server change.
+- **Elected NOT to dispatch Step 1 PO triage this tick**: BOUNDED-1 dispatched — same-tick fall-through skip per flow control (JUMP TO end after BOUNDED-1 claim).
+- **NEXT**: await `dev-vps-crawls`'s RETURN, RAW-verify (re-diff the filename filter, re-run any claimed test, confirm scope stayed in vps-scripts/, board/head state), release lock. `TE-T12` remains the only other undispatched item from PO's 2026-07-31T0637Z triage (routes to `agent-father`, outside this session's zone).
 
 ## cycle-20260731T0826Z-fda10-verified-released — RAW-verified `dev-mcp-server`'s FDA-10 return (zero discrepancy); pushed its 3 local-only commits to origin, released lock. WIP 0, idle-head
 
@@ -21,12 +30,3 @@
 - **Elected NOT to dispatch Step 1 PO triage this tick**: all 3 drained signals are DEFER-covered/pure-telemetry/purely-informational — none carry a genuine PO judgment call, matching S54's precedent.
 - **NEXT**: await `dev-mcp-server`'s RETURN, RAW-verify (re-diff the comment deletion, confirm no SCFI logic touched, re-run its claimed test command, re-read board/head state), release the lock. `TE-T12` remains the only undispatched item from PO's 2026-07-31T0637Z triage batch (routes to `agent-father`, outside this session's zone).
 
-## cycle-20260731T0805Z-notebookautoprune-verified-released — RAW-verified `developer`'s FIX-NOTEBOOK-AUTOPRUNE-DIRECTION-UNRESOLVABLE-ZERO-TS-NOTEBOOKS return (zero discrepancy); released lock (agent had no gateway grant to self-release). WIP 0, idle-head — both this session's BOUNDED-1 P1 rows now closed
-
-- **Commits confirmed real, on origin/main**: `9b0764631` (fix+tests+docs)/`678939927` (unified-agent.md prune)/`f3eb4d1ef` (digest-predict.md prune)/`0ad3bca62` (board flip+head sync).
-- **Diff matches claim exactly**: `notebook-auto-prune.sh` — tertiary sentinel-exclusion hardening (no vote when either side is the untimestamped sentinel), AC-1 primary (terminal "refuse forever" branch → deterministic `newest_first` default + new non-blocking `notebook_tiebreak_direction_defaulted` signal), AC-3 (`[ "$prev_key" \> "$cur_key" ]` bash-only → POSIX `-gt`).
-- **All 3 claimed verification commands independently re-run, not trusted from self-report**: `notebook-auto-prune.test.sh` → **7/7 PASS**. `test-notebook-auto-prune.sh` → **9/9 PASS**, including the exact cosmetic zsh `NOMATCH` glob noise the agent flagged as known/harmless. `notebook-direction-corpus-replay.sh` (all 46 live notebooks) → **0/46 unresolved**, matches AC-1 exactly.
-- **AC-4 live convergence independently confirmed**: `unified-agent.md` 90L/11562B, `digest-predict.md` 33L/9508B — both under the live 12000B cap (`LINE_CAP=200×60` derivation), exact match to claimed post-fix numbers.
-- **Board+head confirmed independently**: row `status:REVIEW`, `next_agent:qa`, `status_note` documents the fix accurately; `in_progress[]` empty (lane-move clean); `.head` `{status:idle, active_task_id:null, next_agent:router, updated_by:developer}`.
-- **Coordination gap noted, not a defect**: this `developer` instance had no gateway/MCP tool grant (Read/Edit/Write/Bash only) — could not call `task_release`/`send_telegram` itself; released its LOCK-LIFETIME hold on its behalf per standing convention.
-- **NEXT**: no P1 BATCH items remain from PO's 2026-07-31T0637Z triage undispatched except `TE-T12` (routes to `agent-father`, not this session's zone). Idle-head, WIP=0 — next tick's BOUNDED-1/SLS/RLC/DRS chain fully reachable.

@@ -93,11 +93,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "active_task_id": null,
-    "next_agent": "router",
-    "updated_at": "2026-07-31T08:21:47Z",
-    "updated_by": "dev-mcp-server (BOUNDED-1 auto-pickup)"
+    "status": "in_progress",
+    "active_task_id": "FU-CTG-DISCOVERY-FILENAME-FILTER",
+    "next_agent": "dev-vps-crawls",
+    "next_action": "BOUNDED-1 auto-pickup claim of FU-CTG-DISCOVERY-FILENAME-FILTER — router-corrected next_agent to dev-vps-crawls (vps-scripts/ not in system-map.json zones list, Tier-3 zone-detect would mis-route to generic developer; commit-history-confirmed dev-vps-crawls owns vps-scripts/*.py). Dispatcher-wrap then spawn directly.",
+    "updated_at": "2026-07-31T08:47:31Z",
+    "updated_by": "dev-team (bounded-1 auto-pickup)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -5531,17 +5532,6 @@
         "type": "DOC",
         "zone": "docs/data/system-map.json + docs/architecture-briefs",
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#FU-RUNTIME-SET-TRUTH-RECONCILE"
-      },
-      {
-        "id": "FU-CTG-DISCOVERY-FILENAME-FILTER",
-        "priority": "P3",
-        "size": "S",
-        "sprint": "BCTC-EXTRACT-QUALITY",
-        "status": "BACKLOG",
-        "title": "VPS HNX BCTC discovery (discover-bctc-urls-browser.py) resolves a legit-titled article to a cover-letter PDF attachment -> re-poison risk; add filename-based CV_CBTT detection",
-        "type": "FIX",
-        "zone": "vps-scripts + apps/mcp-server (fetch-pipeline design)",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FU-CTG-DISCOVERY-FILENAME-FILTER"
       },
       {
         "id": "FU-OCR-BOOT-LOOP-SEQUENTIAL",
@@ -18875,9 +18865,28 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-31T08:17:00Z",
+    "last_triaged_at": "2026-07-31T08:46:22Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": []
+    "in_progress": [
+      {
+        "id": "FU-CTG-DISCOVERY-FILENAME-FILTER",
+        "priority": "P3",
+        "size": "S",
+        "sprint": "BCTC-EXTRACT-QUALITY",
+        "status": "IN_PROGRESS",
+        "title": "VPS HNX BCTC discovery (discover-bctc-urls-browser.py) resolves a legit-titled article to a cover-letter PDF attachment -> re-poison risk; add filename-based CV_CBTT detection",
+        "type": "FIX",
+        "zone": "vps-scripts + apps/mcp-server (fetch-pipeline design)",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FU-CTG-DISCOVERY-FILENAME-FILTER",
+        "promoted_at": "2026-07-31T08:46:22Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=3)",
+        "updated_at": "2026-07-31T08:47:31Z",
+        "claimed_at": "2026-07-31T08:46:27Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "next_agent": "dev-vps-crawls"
+      }
+    ]
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
