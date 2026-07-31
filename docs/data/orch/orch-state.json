@@ -93,12 +93,12 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "FACTORY-APP-console-to-logger",
-    "next_agent": "developer",
-    "next_action": "BOUNDED-1 auto-pickup claim of FACTORY-APP-console-to-logger — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
-    "updated_at": "2026-07-31T18:47:18Z",
-    "updated_by": "dev-team (bounded-1 auto-pickup)"
+    "status": "idle",
+    "active_task_id": null,
+    "next_agent": "router",
+    "next_action": "BOUNDED-1 auto-pickup FACTORY-APP-console-to-logger flipped IN_PROGRESS->REVIEW by dev-mcp-server (branch:null direct-execute path) -- idle for next dispatch.",
+    "updated_at": "2026-07-31T19:12:51Z",
+    "updated_by": "dev-mcp-server"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -2040,7 +2040,7 @@
         "type": "system-issue",
         "summary": "stranded-state sweep: unknown path needs owner: docs/agent-memory/.auditor-cycle-markers-2026-07-30T16:00Z.tmp",
         "severity": "LOW",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": null
       }
     ],
@@ -19516,6 +19516,25 @@
         "ci_verification_run_id": "30655761525",
         "ci_verification_head_sha": "7b0833c0d709aef8262bab5033fe4dedcdb72519",
         "review_note": "Extracted EXPECTED_INTERVALS/MARKET_HOURS_ONLY_SERVICES/NEWS_QUIET_HOURS_SERVICES/SBV_BUSINESS_DAY_SERVICES (pure data, values/comments unchanged) out of vpsProxyStaleness.ts (123L -> 107L) into new sibling vpsProxyStalenessConfig.ts (48L) -- same split shape as freshnessSlaChecker.ts -> freshnessSlaConfig.ts (commit 9930ee008, same day). vpsProxyStaleness.ts imports+re-exports the 4 names unchanged (zero call-site changes for vpsProxyHealthFormat.ts / FIX-VPS-NEWS-STALE-FALSEPOS test). isStale() body moved verbatim, not edited -- EXPECTED_INTERVALS.news stays 20, AC-2 calibration integrity holds by construction. Did NOT add a size-justification header or run size-lint-justification.sh --update (AC-6 landmine) -- this file's whole prior existence is a cap-compliance split; justifying/grandfathering it would retroactively void that fix. Evidence: size-lint-justification.sh --check PASS 0 offenders (AC-4). AC-3 targeted suites run in the LIVE container (not worktree): FIX-VPS-NEWS-STALE-FALSEPOS-news-threshold-calibration.test.ts + VPT-1-vps-proxy-health-endpoint.test.ts + 1113-vps-proxy-health.test.ts = 19/19 pass, 0 fail. bun tsc --noEmit clean w.r.t. both touched files (2 pre-existing unrelated errors on scripts/migrations-referencing test files the image doesn't bake). gen-project-stats.ts --dry-run (host): toolCount=183, cronJobCount=88 unchanged; /health toolCount=183, zero import errors. Full in-container bun test: 252 fail/14912 -- grep-confirmed zero vps-staleness/1113/VPT-1 matches; every failure is a scripts/ or vps-scripts/ on-disk-existence assertion the container image never bakes (container-vs-host env gap, not a regression). AC-5 CI verification: commit e000c5e3f pushed to origin/main (HEAD 7b0833c0d709aef8262bab5033fe4dedcdb72519, includes this commit as ancestor); gh run 30655761525 (workflow CI) on that head_sha -- size-lint job conclusion=success, all 19 jobs green including bun test. REBUILD_REQUIRED=true per docker-deployment-runbook (code change needs image rebuild before live effect). Commits: e000c5e3f (code), 9257cd701 (memory). Journal: sprint-COWORK-GUARANTEED-SLOT-CATCHUP-dev-mcp-server-2.md S50."
+      },
+      {
+        "title": "Replace console.* with the project logger in 5 application files",
+        "priority": "P3",
+        "zone": "mcp-server-application",
+        "type": "FACTORY",
+        "status": "REVIEW",
+        "id": "FACTORY-APP-console-to-logger",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-APP-console-to-logger",
+        "promoted_at": "2026-07-31T18:47:09Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=3)",
+        "updated_at": "2026-07-31T19:12:51Z",
+        "claimed_at": "2026-07-31T18:47:18Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "next_agent": "qa",
+        "entered_review_at": "2026-07-31T19:12:51Z",
+        "updated_by": "dev-mcp-server",
+        "review_note": "Replaced every console.error/warn/log/info call site (24 total) in 5 application-layer files with the existing infrastructure/logger.ts ToolLogger instance -- discoverBctcPdfUrlDirectApi.ts (3x error, added missing logger import), parseBctcReport.ts (1x error, logger already imported), backfillBctcPdfPaths.ts (11x warn/info, added import), imfDataFetcher.ts (1x warn, added import), bctcBatchTableBackfillJob.ts (9x warn/log/error, added import). console.log mapped to logger.info per sibling convention (checkSscReports.ts, assembleAlertDigest.ts); 2-arg console.error(\"msg:\", err) sites (3x in discoverBctcPdfUrlDirectApi.ts) normalised to logger.error(msg, {error: err.message}) matching getMoneyRadarComposite.ts/fetchParseAndStoreBctc.ts convention. Pure mechanism swap -- message content and log level unchanged, no restructuring. RSI/MA consolidation half of the original 2026-06-15 audit finding explicitly OUT OF SCOPE (domain/services/technicalIndicators.ts already deleted; not touched). Also fixed one stale doc reference (usecases.md:289 said \"console.warn\", now \"logger.warn\"). Evidence: bun tsc --noEmit clean. Targeted suite (10 files covering all 5 changed files' own test coverage): 120/120 pass, 0 fail, 569 expect() calls. Fresh server boot (PORT=3099, port 3000 held by the live docker container): /health toolCount=183, zero import errors. gen-project-stats.ts --dry-run: toolCount=183, cronJobCount=88 -- both match pre-task baseline. Full bun test, 2 independent runs: run1=14988 pass/59 fail/2 errors, run2=14995 pass/52 fail/0 errors -- both land exactly inside the already-documented 14988-14995 pass, 52-59 fail FIX-MCP-SUITE-HEALTH-BASELINE order-dependent-red band (S49/S50, same day). Grep-confirmed ZERO matches for any of the 5 changed filenames/their test names in either run's full (fail) list; the 52-59 failures are all pre-existing unrelated classes (vnstock cash-flow/balance-sheet store upserts, VPS proxy health logging, send_telegram channel routing, insider-transactions streak calc, foreign-flow signal text) -- same shape as the previously-catalogued baseline red. REBUILD_REQUIRED=true per docker-deployment-runbook (code change needs image rebuild before live effect). Commits: 3a0619464 (code+doc), bcf820017 (notebook), cb969155f (journal). Journal: sprint-COWORK-GUARANTEED-SLOT-CATCHUP-dev-mcp-server-2.md S51. Tool grant note: this specialist agent does NOT have the gateway MCP call_tool grant (developer tools package = Read/Edit/Write/Glob/Grep/Bash/semble only) -- this orch-state.json write is performed via orch-apply.sh (Bash) but left UNCOMMITTED on disk per the dispatch brief's own instruction; dev-team commits it after RAW-verification."
       }
     ],
     "qa": [],
@@ -19537,23 +19556,7 @@
     },
     "last_triaged_at": "2026-07-31T18:47:09Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": [
-      {
-        "title": "Replace console.* with the project logger in 5 application files",
-        "priority": "P3",
-        "zone": "mcp-server-application",
-        "type": "FACTORY",
-        "status": "IN_PROGRESS",
-        "id": "FACTORY-APP-console-to-logger",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-APP-console-to-logger",
-        "promoted_at": "2026-07-31T18:47:09Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=3)",
-        "updated_at": "2026-07-31T18:47:18Z",
-        "claimed_at": "2026-07-31T18:47:18Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)"
-      }
-    ]
+    "in_progress": []
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
