@@ -278,3 +278,108 @@ func TestPriceHistory_PathParam_Success(t *testing.T) {
 		t.Errorf("code: want VCB, got %s", result.Code)
 	}
 }
+
+// ── Dedup verification (FACTORY-STOCK-dedup-history-handlers) ────────────────
+
+func TestPriceHistory_BothRoutes_IdenticalBehavior(t *testing.T) {
+	// Verify both routes return identical responses for the same query.
+	// This ensures the dedup refactor preserved behavior.
+	rows := makeHistoryRows(15)
+	srv := buildServer(&mockResolver{}, &mockHistory{rows: rows})
+	defer srv.Close()
+
+	// Query-param route
+	respQuery, err := http.Get(srv.URL + "/price/history?code=VCB&days=15")
+	if err != nil {
+		t.Fatalf("GET query-param route: %v", err)
+	}
+	defer respQuery.Body.Close()
+
+	// Path-param route
+	respPath, err := http.Get(srv.URL + "/price/history/VCB?days=15")
+	if err != nil {
+		t.Fatalf("GET path-param route: %v", err)
+	}
+	defer respPath.Body.Close()
+
+	// Both must succeed
+	if respQuery.StatusCode != http.StatusOK {
+		t.Errorf("query-param status: want 200, got %d", respQuery.StatusCode)
+	}
+	if respPath.StatusCode != http.StatusOK {
+		t.Errorf("path-param status: want 200, got %d", respPath.StatusCode)
+	}
+
+	var resultQuery, resultPath application.PriceHistoryResponse
+	if err := json.NewDecoder(respQuery.Body).Decode(&resultQuery); err != nil {
+		t.Fatalf("decode query-param response: %v", err)
+	}
+	if err := json.NewDecoder(respPath.Body).Decode(&resultPath); err != nil {
+		t.Fatalf("decode path-param response: %v", err)
+	}
+
+	// Same code returned
+	if resultQuery.Code != resultPath.Code {
+		t.Errorf("code mismatch: query=%s path=%s", resultQuery.Code, resultPath.Code)
+	}
+	// Same history length
+	if len(resultQuery.History) != len(resultPath.History) {
+		t.Errorf("history len mismatch: query=%d path=%d",
+			len(resultQuery.History), len(resultPath.History))
+	}
+}
+
+func TestPriceHistory_BothRoutes_DefaultDays(t *testing.T) {
+	// Verify both routes use the same default (30) when days is omitted.
+	rows := makeHistoryRows(30)
+	srv := buildServer(&mockResolver{}, &mockHistory{rows: rows})
+	defer srv.Close()
+
+	// Query-param route without days
+	respQuery, err := http.Get(srv.URL + "/price/history?code=VCB")
+	if err != nil {
+		t.Fatalf("GET query-param route: %v", err)
+	}
+	defer respQuery.Body.Close()
+
+	// Path-param route without days
+	respPath, err := http.Get(srv.URL + "/price/history/VCB")
+	if err != nil {
+		t.Fatalf("GET path-param route: %v", err)
+	}
+	defer respPath.Body.Close()
+
+	if respQuery.StatusCode != http.StatusOK {
+		t.Errorf("query-param status: want 200, got %d", respQuery.StatusCode)
+	}
+	if respPath.StatusCode != http.StatusOK {
+		t.Errorf("path-param status: want 200, got %d", respPath.StatusCode)
+	}
+}
+
+func TestPriceHistory_BothRoutes_InvalidDays(t *testing.T) {
+	// Verify both routes reject invalid days the same way.
+	srv := buildServer(&mockResolver{}, &mockHistory{})
+	defer srv.Close()
+
+	// Query-param route with invalid days
+	respQuery, err := http.Get(srv.URL + "/price/history?code=VCB&days=-1")
+	if err != nil {
+		t.Fatalf("GET query-param route: %v", err)
+	}
+	defer respQuery.Body.Close()
+
+	// Path-param route with invalid days
+	respPath, err := http.Get(srv.URL + "/price/history/VCB?days=-1")
+	if err != nil {
+		t.Fatalf("GET path-param route: %v", err)
+	}
+	defer respPath.Body.Close()
+
+	if respQuery.StatusCode != http.StatusBadRequest {
+		t.Errorf("query-param status: want 400, got %d", respQuery.StatusCode)
+	}
+	if respPath.StatusCode != http.StatusBadRequest {
+		t.Errorf("path-param status: want 400, got %d", respPath.StatusCode)
+	}
+}

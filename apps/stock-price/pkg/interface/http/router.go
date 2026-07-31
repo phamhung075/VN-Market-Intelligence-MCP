@@ -20,6 +20,11 @@ import (
 	"github.com/vn-market-intelligence/stock-price/pkg/domain"
 )
 
+// defaultHistoryDays is the number of days returned when the client omits the
+// days parameter from /price/history requests. Named constant per FACTORY-STOCK-
+// dedup-history-handlers to avoid magic literals.
+const defaultHistoryDays = 30
+
 // Handler holds all use cases and serves as the net/http handler collection.
 type Handler struct {
 	fetchUC        *application.FetchPriceUseCase
@@ -96,25 +101,7 @@ func (h *Handler) priceHistory(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "code is required"})
 		return
 	}
-
-	daysStr := r.URL.Query().Get("days")
-	days := 30
-	if daysStr != "" {
-		d, err := strconv.Atoi(daysStr)
-		if err != nil || d < 1 {
-			writeJSON(w, http.StatusBadRequest, map[string]string{"error": "days must be positive"})
-			return
-		}
-		days = d
-	}
-
-	result, err := h.historyUC.Execute(application.PriceHistoryRequest{Code: code, Days: days})
-	if err != nil {
-		slog.Error("price/history internal error", "error", err)
-		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": err.Error()})
-		return
-	}
-	writeJSON(w, http.StatusOK, result)
+	h.runHistory(w, r, code)
 }
 
 // ── GET /price/history/:code?days=N (backward compat with TS handlers.ts) ────
@@ -127,16 +114,17 @@ func (h *Handler) priceHistoryPathParam(w http.ResponseWriter, r *http.Request) 
 		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "code is required"})
 		return
 	}
+	h.runHistory(w, r, code)
+}
 
-	daysStr := r.URL.Query().Get("days")
-	days := 30
-	if daysStr != "" {
-		d, err := strconv.Atoi(daysStr)
-		if err != nil || d < 1 {
-			writeJSON(w, http.StatusBadRequest, map[string]string{"error": "days must be positive"})
-			return
-		}
-		days = d
+// runHistory is the shared implementation for both priceHistory (query param)
+// and priceHistoryPathParam (path param) handlers. Parses days from query,
+// validates, executes the history use case, and writes the JSON response.
+func (h *Handler) runHistory(w http.ResponseWriter, r *http.Request, code string) {
+	days, ok := parseDays(r)
+	if !ok {
+		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "days must be positive"})
+		return
 	}
 
 	result, err := h.historyUC.Execute(application.PriceHistoryRequest{Code: code, Days: days})
@@ -146,6 +134,21 @@ func (h *Handler) priceHistoryPathParam(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 	writeJSON(w, http.StatusOK, result)
+}
+
+// parseDays extracts the days query parameter from the request. Returns
+// defaultHistoryDays if the parameter is absent; returns (0, false) if the
+// parameter is present but invalid (non-integer or < 1).
+func parseDays(r *http.Request) (int, bool) {
+	daysStr := r.URL.Query().Get("days")
+	if daysStr == "" {
+		return defaultHistoryDays, true
+	}
+	d, err := strconv.Atoi(daysStr)
+	if err != nil || d < 1 {
+		return 0, false
+	}
+	return d, true
 }
 
 // ── POST /price/foreign-accum-rank ────────────────────────────────────────────
