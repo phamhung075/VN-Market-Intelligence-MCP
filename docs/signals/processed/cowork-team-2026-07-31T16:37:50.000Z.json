@@ -3,7 +3,7 @@
   "to": "dev-team",
   "type": "cowork-fire",
   "payload": {
-    "fire_time": "2026-07-24T16:37:54Z",
+    "fire_time": "2026-07-31T16:37:50.000Z",
     "matched_slots": [
       "refine-bctc-slot-4"
     ],
@@ -19,18 +19,18 @@
     "drift_min": 5,
     "errors": [],
     "pressure_mode": "legacy",
-    "calendar_status": "closed",
+    "calendar_status": "unknown",
     "suppressed_calendar": [],
     "suppressed_cadence": [],
     "downgraded": [],
     "chef_mutex_applied": false,
     "due_reasons": {
-      "refine-bctc-slot-4": "cadence"
+      "refine-bctc-slot-4": "cron"
     },
     "cadence_minutes": {
-      "refine-bctc-slot-4": 240
+      "refine-bctc-slot-4": null
     },
-    "last_fired_timestamp": "2026-07-24T16:37:29Z",
+    "last_fired_timestamp": "2026-07-31T16:37:41Z",
     "last_fired_slots": [
       "refine-bctc-slot-4"
     ],
@@ -40,15 +40,15 @@
     "nominal_tick": "16:30",
     "leader_lock": "acquired",
     "dev_head": "unknown",
-    "devq": null,
-    "signal_backlog": 10,
-    "note": "single-slot off-market bctc-refine dispatch; refine_bctc_md spawned bg for oldest pending row (get_bctc_pending_refine limit:1)"
+    "devq": 5,
+    "signal_backlog": 17,
+    "note": "single-slot legacy-mode tick (pressure-state stale >20min, isStale=true -> legacy). refine-bctc-slot-4 is the first FRESH task_claim test of FIX-COWORK-SPAWNFANOUT-NO-SESSION-ID-IN-LEAF-ENTRY-PROMPT since the prior refine-bctc-slot-2 confirmed loss on 2026-07-31T14:00Z -- watching completion notification for a real task_claim success (not a guard-already-held short-circuit) to close out that open item."
   },
   "priority": "low",
-  "createdAt": "2026-07-24T16:37:54Z",
+  "createdAt": "2026-07-31T16:37:50.000Z",
   "_processed": {
-    "fingerprint": "6115518ab93a092f34d12176e25e1ce0161f1ebc2727ae7b535485d5016124fa",
-    "processedAt": "2026-07-24T16:44:50Z",
+    "fingerprint": "603ab61400f3bd54e39d4f2c16ba2b9eebcff178846cbd067f31cf659dfc270d",
+    "processedAt": "2026-07-31T16:49:59Z",
     "processedBy": "dev-team",
     "result": "routed-to-po"
   }
