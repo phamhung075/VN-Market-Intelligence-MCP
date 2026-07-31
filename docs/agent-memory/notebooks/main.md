@@ -1,6 +1,17 @@
 # Dev Team — Sprint Boundary Notebook
 
-**Written:** 2026-07-31T04:52Z
+**Written:** 2026-07-31T05:10Z
+
+## cycle-20260731T0505Z-po-triage-verified-closed — RAW-verified `po`'s Step-1 triage return of 4 drained signals; clean verify, no discrepancies; released LOCK-LIFETIME hold; 1 background agent remains (FDA-6)
+
+- **Both commits confirmed real, on HEAD, pushed**: `28547bae8`/`9901a424f`, `origin/main`==local HEAD, no gap.
+- **AMNESTY row correctly left in `review[]`, not stranded in `ready[]`**: `next_agent:agent-father`, `plan_only:false`, substantive `po_goahead_20260731T045857` field present (PO re-derived the brief's own AC-1 by hand against 2 live reds rather than ratifying on the relay) — matches PO's stated reasoning exactly, not just asserted in prose.
+- **New mint + escalations verified on the live board**: `FIX-CI-SIZELINT-MCPSERVER-ENERGYTOOLS-NEW-OFFENDER` present (backlog/P0/dev-mcp-server, cites `af272fe1d`=FDA-5 as root cause); `FIX-CI-FRONTEND-ESLINT-BUNLOCK-DUAL-LOCKFILE-DRIFT` + `FIX-CI-SIZELINT-MACRO-VMT-...` both still `ready[]` as claimed (untouched, only flagged for hand-dispatch next tick).
+- **Undrained 2nd `ci_red` (HEAD `22bdf63b5`) confirmed still sitting in `docs/signals/` inbox** exactly as PO's notebook said — will dedup via file-scoped key on next drain, not mint a duplicate.
+- **Conservation count (740→741) not independently recomputable via flat lane sum** — `scripts/orch-conservation-check.mjs` also sums nested `active_sprints[].tasks[]`/`closed_sprints[].tasks[]`; script enforces this at write time (aborts non-zero on violation), so successful commit landing is itself sufficient proof, not something to hand-recompute.
+- Released `task:po-triage-20260731` LOCK-LIFETIME hold (`ok:true`).
+- **Escalation surfaced by PO, not yet actioned**: `FIX-CI-FRONTEND-ESLINT-BUNLOCK-DUAL-LOCKFILE-DRIFT` READY+P0+dispatchable ~24h with zero dispatch attempts, buried at `ready[]` idx 49 behind ~19 other P0s, job never once observed green. PO's own carry-over says "next tick: hand-dispatch it ahead of the P0 queue" — candidate for next tick's SLS/manual-dispatch, not actioned this turn (FDA-6 still in flight, no idle capacity).
+- **NEXT**: await `dev-mcp-server` (FDA-6) RETURN, RAW-verify, release its LOCK-LIFETIME hold — do NOT duplicate-spawn. Consider hand-dispatching `FIX-CI-FRONTEND-ESLINT-BUNLOCK-DUAL-LOCKFILE-DRIFT` next tick per PO's escalation. The 2nd fresh `ci_red` will surface on next drain — confirm it dedups (file-scoped) rather than mints.
 
 ## cycle-20260731T0437Z-fda6-dualdispatch-bounded1-plus-triage — Drain(4 routed-to-po)→0a-B 0 orphans→CI probe RED AGAIN (2nd distinct SHA in 2 ticks, same frontend-eslint+size-lint pair, ≥7th consecutive recurrence of the cired-triage brief's target churn class)→WIP=0 BOUNDED-1(FDA-6→dev-mcp-server) + deliberately-added Step-1 PO Triage(4 signals→po) both fired same tick; 2 background agents in flight
 
@@ -22,16 +33,4 @@
 - Own decision journal (`sprint-COWORK-GUARANTEED-SLOT-CATCHUP-dev-team-3.md`) hit CAP-REACHED (37406B) mid-cycle — rolled to continuation `-4.md` per the skill's own protocol.
 - Released `task:FDA-5` LOCK-LIFETIME hold (`ok:true`).
 - **NEXT**: idle — 0 background agents in flight. Two P0 CI-red content fixes (`FIX-CI-FRONTEND-ESLINT-BUNLOCK-DUAL-LOCKFILE-DRIFT`, `FIX-CI-SIZELINT-MACRO-VMT-LIQUIDITY-RESOLVERS-NEW-OFFENDER`) remain `ready[]` unclaimed; the cired-triage-failedfile-dedup brief awaits agent-father pickup. Await next cron tick or signal.
-
-## cycle-20260731T0436Z-cired-brief-verified-closed — RAW-verified `agents-architect`'s FIX-CIRED-TRIAGE-WRONG-PLANE-DEDUP-AMNESTY return; clean verify, no gaps; released LOCK-LIFETIME hold; 1 background agent remains (FDA-5)
-
-- **Commit + push confirmed**: `9db209f77` real ancestor of HEAD, `origin/main` == local HEAD (0 diff) — genuinely pushed, not just committed.
-- **Brief content independently read in full, not trusted from review_note alone**: `docs/architecture-briefs/2026-07-31-cired-triage-failedfile-dedup.md` — AC-1 mandatory FAILEDFILE read, AC-2 file-scoped `dedup_key`, AC-3 anti-amnesty fence, AC-4 0-fail backstop, AC-5 retro-sweep all present and match the claimed text exactly.
-- **AC-5 retro-sweep re-run myself, not trusted**: `gh run view 30603458514` — headSha `ad6d8cd69e4...` matches, `bun test` job conclusion=`success`, independently confirming the claimed 0-fail/GREEN state rather than accepting the self-report.
-- **Plan-only fence held**: neither implementation-target file (`triage-signals.md`, `ci-health-probe.md`) touched in the commit diff — only brief/notebook/journal/signal. Brief's own `Implementer: agent-father` line noted as a claim, not authority ([[feedback_brief_stated_implementer_not_authoritative_verify_commit_zone]]), but moot here since agents-architect implemented nothing itself.
-- **`.head` confirmed genuinely untouched** (`active_task_id:FDA-5`, `next_agent:developer`) — matches the dual-claim pointer-gap workaround from last cycle; board row correctly absent from `in_progress[]`, present in `review[]`/`next_agent:po`.
-- **Notebook + decision journal confirmed clean**: agents-architect notebook pruned to 3 sections/29L (oldest 2026-07-23 entry dropped); decision journal STEP agents-architect-S1 present, substantive.
-- Released `task:FIX-CIRED-TRIAGE-WRONG-PLANE-DEDUP-AMNESTY` LOCK-LIFETIME hold (`ok:true`).
-- **Own decision journal hit its byte cap while appending this verify's STEP S40** (37365B vs 36000B) — appended `### CAP-REACHED` marker per decision-journal skill's own rollover protocol; next dev-team journal entry lands in a new continuation file (`sprint-COWORK-GUARANTEED-SLOT-CATCHUP-dev-team-4.md`).
-- **NEXT**: await `dev-mcp-server` (FDA-5) RETURN, RAW-verify, release its LOCK-LIFETIME hold — do NOT duplicate-spawn, it is still in flight. Two P0 CI-red content fixes (`FIX-CI-FRONTEND-ESLINT-BUNLOCK-DUAL-LOCKFILE-DRIFT`, `FIX-CI-SIZELINT-MACRO-VMT-LIQUIDITY-RESOLVERS-NEW-OFFENDER`) remain `ready[]`, unclaimed. Once implemented, agent-father should pick up the cired-triage-failedfile-dedup brief next.
 
