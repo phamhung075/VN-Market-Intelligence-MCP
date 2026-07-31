@@ -1,0 +1,55 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-07-31T11:07:50Z",
+    "matched_slots": [
+      "refine-bctc-slot-3"
+    ],
+    "won_slots": [
+      "refine-bctc-slot-3"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/refine_bctc_md/flow/main.md"
+    ],
+    "silent": false,
+    "drift_min": 5,
+    "errors": [],
+    "pressure_mode": "adaptive",
+    "calendar_status": "unknown",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "chef_mutex_applied": false,
+    "due_reasons": {
+      "refine-bctc-slot-3": "cron"
+    },
+    "cadence_minutes": {
+      "refine-bctc-slot-3": null
+    },
+    "last_fired_timestamp": "2026-07-31T11:06:07Z",
+    "last_fired_slots": [
+      "refine-bctc-slot-3"
+    ],
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "11:00",
+    "leader_lock": "acquired",
+    "dev_head": "unknown",
+    "devq": 5,
+    "signal_backlog": 16,
+    "note": "single non-guaranteed bctc-offmarket cron slot refine-bctc-slot-3 (refine_bctc_md), due_reason=cron, spawned clean, headroom 1835MB/load 4.22 well under thresholds, single-slot batch so MAX_PARALLEL=4 unused"
+  },
+  "priority": "low",
+  "createdAt": "2026-07-31T11:07:50Z",
+  "_processed": {
+    "fingerprint": "df3bfeace3c6fd74ea9b8e8a9ddd8aa7a73447d276a7907752fb9a8c3fdebe50",
+    "processedAt": "2026-07-31T11:15:19Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
