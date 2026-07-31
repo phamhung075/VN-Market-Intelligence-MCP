@@ -1,6 +1,18 @@
 # Dev Team — Sprint Boundary Notebook
 
-**Written:** 2026-07-31T03:48Z
+**Written:** 2026-07-31T04:05Z
+
+## cycle-20260731T0405Z-pdfx-verified-closed — RAW-verified `dev-pdf-extractor`'s FIX-CI-SIZELINT-PDFX-EXTRACTION-ENGINE-TOLERANCE return; clean verify, no gaps; released LOCK-LIFETIME hold; 0 background agents remain
+
+- **Commit ancestry + diff shape confirmed**: `d808a6a11`/`2990393df`/`b4c573cc9` all real ancestors of HEAD. Read the raw `git show d808a6a11` diff line-by-line — comment/docstring-only (3x-repeated OCR-exception rationale collapsed to 1 canonical paragraph + 2 pointers); no `raise`/`return`/`except` logic changed. File 237L→226L, matches claim exactly.
+- **AC-1 independently re-run, not trusted**: `size-lint-justification.sh --check` → file no longer listed; only the known, separately-tracked sibling `usecases_vmt_liquidity_resolvers.go` (macro-indicators, its own ready[] row) remains.
+- **AC-2 confirmed**: `docs/data/size-lint-baseline.json` last-touch commit is still the original guardrail commit `22cd084d4` — none of the 3 new commits touched it.
+- **Tests independently re-run** (container has no bind mount, same pattern as prior pdf-extractor verifications): `docker cp`'d the fixed file into the live `pdf-extractor` container, ran the 2 directly-relevant test files (`test_extraction_engine_nonblocking.py`, `test_extraction_engine_ocr_failure_swallow.py`) → **14/14 pass**. Verification-only, does not persist past container restart — redeploy remains ops's job; not blocking review-flip since AC's DoD was test-suite-green, not deploy.
+- **Out-of-scope guard held**: `docs/architecture-briefs/2026-07-28-pdfx-tesseract-concurrency-invariant.md` confirmed untouched (`git status --porcelain` empty) — the fence carried into the spawn prompt last cycle worked.
+- **Board lane-move genuine, no metadata gap this time**: row `status:REVIEW`/`next_agent:qa`/`commit_sha` correctly stamped (unlike the prior mcp-server cycle, no patch needed). `.head` correctly reset to idle.
+- **DJ-GATE-1 confirmed present** (`dev-pdf-extractor` decision journal STEP S2, substantive what-considered/why-decision).
+- Released `task:FIX-CI-SIZELINT-PDFX-EXTRACTION-ENGINE-TOLERANCE` LOCK-LIFETIME hold (`ok:true`).
+- **NEXT**: idle — 0 background agents in flight. One sibling (`FIX-CI-SIZELINT-MACRO-VMT-LIQUIDITY-RESOLVERS-NEW-OFFENDER`) remains `ready[]`, not yet claimed — candidate for next tick's BOUNDED-1 once idle. Await next cron tick or signal.
 
 ## cycle-20260731T0337Z-drain-defer-bounded1-pdfx-dispatch — preflight RUN→GCC-clean→drain(1 context-bloat signal, DEFER'd inline)→0a-D(0 NEW)→0a-B both orphan-signals re-confirmed same recurring false-orphan class 4th consecutive cycle→CI probe deduped clean→head-idle BOUNDED-1 fired, claimed+dispatched `FIX-CI-SIZELINT-PDFX-EXTRACTION-ENGINE-TOLERANCE`→`dev-pdf-extractor`; 1 background agent in flight
 
@@ -24,11 +36,3 @@
 - Released `task:FIX-CI-SIZELINT-MCPSERVER-SIX-UNCOVERED-OFFENDERS` LOCK-LIFETIME hold (`ok:true`).
 - **NEXT**: idle — 0 background agents in flight. Await next cron tick or signal.
 
-## cycle-20260731T0316Z-resume-noop — preflight RUN→GCC-clean→drain(0 signals, 0 NEW queue rows)→0a-B both orphan-signals re-confirmed same recurring false-orphan class as last 2 cycles→CI probe deduped clean (0 new)→S2 correctly recognized live in-flight dispatch, did NOT re-spawn
-
-- **Drain**: `drainable_count=0`, 0 NEW `.signal_queue` rows. Nothing to persist this tick.
-- **0a-B orphan adoption — SKIPPED both, 3rd consecutive cycle, same false-orphan class**: `task:on-demand:agent-father:20260731`/TE-T08 re-confirmed still `REVIEW`/`qa`/commit `af63043ae8` (adoption would duplicate done work); `task:po-triage-20260731` re-confirmed as a legitimately-reused daily lock (board shows po activity at 01:32Z/01:41Z/01:43Z today under this key) — this tick's own Step 1 would exercise the same lock, so adoption would be redundant with work already in scope. `FIX-ORPHAN-ADOPTION-BOARD-STATE-GUARD` still the tracked permanent fix — no dup mint.
-- **CI probe**: deduped clean against the fingerprint persisted last cycle (`ci-red-40dfb1f9`). No new signal, no new dispatch.
-- **S2 pipeline-resume — correct no-op**: `.head` = `{status:in_progress, active_task_id:FIX-CI-SIZELINT-MCPSERVER-SIX-UNCOVERED-OFFENDERS, next_agent:dev-mcp-server}`. Verified the board row itself (not just `.head`) is genuinely `IN_PROGRESS`/`dev-mcp-server`, absent from review/done lanes — confirms this is a live resume, not a stale placeholder. Harness independently confirmed background agent `a302e834a3ad46e99` still running. Correctly withheld re-spawn (would have been the exact double-spawn class LOCK-LIFETIME exists to prevent). WIP=1 so BOUNDED-1 also correctly did not fire.
-- Released SF-1 + fire-election locks. `task:FIX-CI-SIZELINT-MCPSERVER-SIX-UNCOVERED-OFFENDERS` LOCK-LIFETIME hold continues (not yet released — background agent still in flight).
-- **NEXT**: unchanged from last cycle — await `dev-mcp-server` RETURN, RAW-verify (file-level size-lint gate per AC-1, DJ-GATE-1 journal presence, lane-move correctness), then release the held claim.

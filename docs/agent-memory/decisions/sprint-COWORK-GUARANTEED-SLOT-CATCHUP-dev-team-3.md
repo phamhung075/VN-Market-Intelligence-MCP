@@ -114,3 +114,12 @@
 **why-change:** No plan change. Net: 1 background agent in flight (`dev-pdf-extractor`). Released SF-1 + fire-election locks (`ok:true` both); `task:FIX-CI-SIZELINT-PDFX-EXTRACTION-ENGINE-TOLERANCE` LOCK-LIFETIME hold continues until RETURN is RAW-verified.
 
 ---
+
+### STEP dev-team-S38 · dev-team · 2026-07-31T04:05:00Z
+**task-id:** FIX-CI-SIZELINT-PDFX-EXTRACTION-ENGINE-TOLERANCE (RAW-verification of `dev-pdf-extractor` RETURN)
+**what-done:** `dev-pdf-extractor` returned claiming `extraction_engine.py` 237L→226L via docstring/comment dedup, commits `d808a6a11`/`2990393df`/`b4c573cc9`, AC-1/AC-2/AC-3 satisfied, full pytest 1058/1-pre-existing-fail. Independently re-verified rather than trusted: confirmed all 3 commits are real ancestors of HEAD; read the raw `git show d808a6a11` diff line-by-line myself and confirmed it touches only docstrings/comments (no `raise`/`return`/`except` logic lines changed); re-ran `size-lint-justification.sh --check` myself — file no longer listed, only the known separate `usecases_vmt_liquidity_resolvers.go` sibling remains; confirmed `size-lint-baseline.json`'s last-touch commit is still the original guardrail `22cd084d4` (AC-2 landmine avoided); `docker cp`'d the fixed file into the live (unrebuilt) `pdf-extractor` container and ran the 2 directly-relevant test files myself — 14/14 pass; confirmed the out-of-scope architecture-brief file is still untouched (`git status --porcelain` empty); confirmed DJ-GATE-1 journal entry (S2) present and substantive; confirmed board row landed cleanly in `REVIEW`/`next_agent:qa` with `commit_sha` stamped (no metadata gap this time, unlike the mcp-server cycle two ticks ago) and `.head` reset to idle.
+**what-considered:** Whether to re-run the full 1058-test suite myself vs. targeted tests only — chose targeted (the 2 test files that actually cover `extraction_engine.py`'s OCR-exception-propagation paths) since the diff was already independently confirmed comment/docstring-only from the raw diff text; re-deriving the full suite adds verification cost without addressing a risk the diff itself rules out.
+**why-decision:** No discrepancies found between self-report and live state — clean verify. Released `task:FIX-CI-SIZELINT-PDFX-EXTRACTION-ENGINE-TOLERANCE` LOCK-LIFETIME hold (`ok:true`).
+**why-change:** No plan change. Net: 0 background agents in flight. Cycle complete — idle, awaiting next cron tick or signal. One sibling (`FIX-CI-SIZELINT-MACRO-VMT-LIQUIDITY-RESOLVERS-NEW-OFFENDER`) remains `ready[]` for a future BOUNDED-1 pickup.
+
+---
