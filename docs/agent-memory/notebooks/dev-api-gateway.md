@@ -55,3 +55,21 @@ Zone: `apps/api-gateway/` | Stack: TS/Bun (active) + Go 1.22 (Phase 1 new siblin
 **Commit:** 9fad8d4ad (local main, explicit pathspecs, not pushed). Board flip in_progress→review done via scripts/orch-apply.sh (orch-state.json commit left to dispatcher).
 
 **Decision journal:** docs/agent-memory/decisions/sprint-FACTORY-APIGW-split-capability-prober-dev-api-gateway.md
+
+## c4 · 2026-07-31T20:54Z
+
+**Task:** FACTORY-APIGW-dedup-default-urls (P3, FACTORY-MAINTAINABILITY-2026-06 epic, BOUNDED-1 idle-capacity auto-pickup) — make `StaticServiceRegistry` the sole SSOT for default upstream URLs; `main.go` duplicated the same 9 default docker URLs (identical diff).
+
+**Status:** REVIEW — code+build/vet/test/lint+G12 green; `rebuild_required:true`, rebuild-verify PENDING-USER-GATED (docker rebuild is user-gated, not performed).
+
+**Result:** `main.go`'s 10-entry `serviceURLs` map literal (9 defaults + hardcoded `"api"` alias) replaced with `serviceURLOverrides()` — sparse-map builder over a `serviceEnvVars` lookup table; only non-empty env vars are included, unset keys fall through to `registry.go`'s existing `get(key, fallback)`. `"api"` has no env var — still resolves via `get("api", mcpURL)` inside the registry, unchanged. `registry.go` untouched (already correct SSOT).
+
+**New test:** `cmd/server/main_test.go` (package `main`, precedent: `apps/technical-analysis/cmd/server/main_test.go`) — `t.Setenv`-driven: all-unset→empty, subset→exact keys/values, all-set (docker-compose shape)→full 9-key map matching old literal 1:1, `"api"` never present. RED (undefined symbols) confirmed before GREEN.
+
+**Verify:** go build/vet/test (10/10 pkgs) clean, gofmt -l clean on touched files, golangci-lint 0 issues (Fence-C intact), G12 sandbox primitive 14/14 + module 1/1 GREEN. Zero-credentials scan clean.
+
+**Zone health:** no drift detected — registry.go's pre-existing gofmt map-alignment debt confirmed untouched/out-of-scope (git diff empty on that file).
+
+**Commit:** b184dde9f (code+test+doc), 3fe382445 (decision journal) — local main, explicit pathspecs.
+
+**Decision journal:** docs/agent-memory/decisions/sprint-FACTORY-APIGW-dedup-default-urls-dev-api-gateway.md
