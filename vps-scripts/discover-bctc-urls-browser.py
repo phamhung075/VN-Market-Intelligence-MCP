@@ -293,6 +293,39 @@ def is_consolidated_title(title: str) -> bool:
     return any(kw in t for kw in _CONSOLIDATED_KEYWORDS)
 
 
+# Filename markers (as opposed to article-title markers, see FIX-CTG-2 above)
+# that indicate the resolved PDF itself is a cover letter, independent of the
+# article title that pointed at it.
+#
+# FU-CTG-DISCOVERY-FILENAME-FILTER (2026-07-31): article 613699 had a
+# NON-cover-letter title ("Bao cao tai chinh quy 1/2026") — is_cover_letter_title()
+# correctly let it through — but its ArticlesFileAttach-resolved PDF was
+# CV_CBTT_BCTC_Quy_I.2026_VI.pdf, the cover letter itself. Title-based
+# discrimination cannot catch this; the filename of the resolved attachment
+# must be checked too. Same disposition as the title filter: reject.
+_COVER_LETTER_FILENAME_KEYWORDS = [
+    "cv_cbtt",
+    "cong_van_cbtt",
+]
+
+
+def is_cover_letter_filename(url: str) -> bool:
+    """
+    Return True when the filename of a resolved PDF URL indicates a
+    cover-letter / notice document rather than the actual financial statement.
+
+    Checks only the final path segment (the filename), case-insensitively,
+    after stripping any query string and URL-decoding — a good-titled HNX
+    article can still resolve (via ArticlesFileAttach) to a cover-letter PDF
+    such as ".../CV_CBTT_BCTC_Quy_I.2026_VI.pdf".
+    """
+    if not url:
+        return False
+    filename = url.rsplit("/", 1)[-1].split("?", 1)[0]
+    filename = urllib.parse.unquote(filename).lower()
+    return any(kw in filename for kw in _COVER_LETTER_FILENAME_KEYWORDS)
+
+
 # Title rank for candidate selection (lower = better).
 # Full consolidated statement → 0 (best)
 # Full statement (non-consolidated) → 1
@@ -477,13 +510,30 @@ def _parse_article_ids_and_titles(html: str, code: str, year: int, quarter: str)
 
 
 def _fetch_pdf_url(article_id: int) -> Optional[str]:
-    """POST to ArticlesFileAttach, extract first valid PDF href."""
+    """
+    POST to ArticlesFileAttach, extract first valid non-cover-letter PDF href.
+
+    FU-CTG-DISCOVERY-FILENAME-FILTER: a good-titled article (title filter
+    already passed in _parse_article_ids_and_titles) can still resolve to a
+    cover-letter attachment here — e.g. article 613699 ("Bao cao tai chinh
+    quy 1/2026") resolved to CV_CBTT_BCTC_Quy_I.2026_VI.pdf. Apply the same
+    disposition as the title-based filter (FIX-CTG-2): skip any candidate
+    whose filename contains a cover-letter marker and keep scanning the rest
+    of this article's attachments for a real statement PDF.
+    """
     try:
         html = _http_post(HNX_FILE_ENDPOINT, {"pArticlesID": str(article_id)},
                           referer=HNX_NY_REFERER)
         for url in re.findall(r'href="(https?://[^"]+\.pdf[^"]*)"', html, re.IGNORECASE):
-            if is_valid_pdf_url(url):
-                return url
+            if not is_valid_pdf_url(url):
+                continue
+            if is_cover_letter_filename(url):
+                print(
+                    f"    SKIP cover-letter filename id={article_id} url={url}",
+                    file=sys.stderr,
+                )
+                continue
+            return url
     except Exception as e:
         print(f"    ArticlesFileAttach error id={article_id}: {e}", file=sys.stderr)
     return None
