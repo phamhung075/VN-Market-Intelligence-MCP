@@ -1,6 +1,16 @@
 # Dev Team — Sprint Boundary Notebook
 
-**Written:** 2026-07-31T09:02Z
+**Written:** 2026-07-31T09:17Z
+
+## cycle-20260731T0917Z-bounded1-ocrbootloop-dispatched — Fresh tick: preflight RUN, drained 4 signals (1 informational new type), `.head` idle/WIP=0 → BOUNDED-1 claimed+dispatched FU-OCR-BOOT-LOOP-SEQUENTIAL (found+corrected a NEW gate-gap variant); 1 background agent in flight
+
+- **Preflight/GCC-preflight clean**: verdict RUN, tick `09:07Z`. No HEAD.lock, local HEAD==origin/main exactly, dirty tree = peer-session churn only.
+- **Drained 4 signals**: own-journal `context_bloat_breach` (DEFER-held, recurring), 2 `cowork-team` fire-events (routed-to-po), and a new `notebook_tiebreak_direction_defaulted` type on `unified-agent`'s notebook — read in full, confirmed informational-only (all sections lack parseable timestamps, documented `newest_first` fallback applied correctly, no action needed).
+- **CI probe**: GREEN on HEAD `f67be684d`, no signal.
+- **`.head` idle, WIP=0** → BOUNDED-1 promote+claim → claimed `FU-OCR-BOOT-LOOP-SEQUENTIAL` (P3/S, type REVIEW: dev-mcp-server's residual FIX-CTG-3-STEP-D concern — bootstrap OCR loop parallel→sequential in `21c467e8`, review if the startup-latency tradeoff still holds). **New gate-gap found**: detail row carries only `route:"architect"` (no `owner`/`next_agent`) — grepped `scripts/lib/devteam-eligibility.jq` + both bounded1 jq scripts, confirmed neither recognizes `.route`, so the NON-DEV-OWNER/NON-DEV-NEXT_AGENT gates (flow doc calls this "vestigial" for BOUNDED-1) did NOT actually exclude it — a live counterexample. Exactly 1 other live row shares this shape (`HARDEN-NOTEBOOK-WRITE-GATE-AC5-BLOCKING`). Corrected `.head.next_agent` + row's own `next_agent` `developer`→`architect` via `orch-apply.sh` before dispatch, same remediation class as S59's zone-map fix. Did NOT unilaterally patch the gate script — that's an architect-brief+PO-ratified process per this file's own precedent (DRS/SLS); flagged it in the dispatch prompt instead for architect's own judgment.
+- Dispatcher-wrap `task_claim("task:FU-OCR-BOOT-LOOP-SEQUENTIAL", task_kind="sprint-task")` → `claimed:true` → spawned `architect` in background with full task context, review-disposition options, and the gate-gap note.
+- **Elected NOT to dispatch Step 1 PO triage this tick**: BOUNDED-1 dispatched — JUMP TO end, consistent with S54/S57/S59 precedent.
+- **NEXT**: await `architect`'s RETURN, RAW-verify (re-read the actual composition-root code/commit `21c467e8`, confirm board/head state per CANONICAL:SSOT-STATUSFLIP-LANEMOVE), release lock. `TE-T12` remains the only other undispatched item from PO's 2026-07-31T0637Z triage (routes to `agent-father`).
 
 ## cycle-20260731T0902Z-futctg-verified-released — RAW-verified `dev-vps-crawls`'s FU-CTG-DISCOVERY-FILENAME-FILTER return (zero discrepancy on code/tests; found+closed a `.head` sync gap); pushed 2 local-only commits + own board/head-sync commit. WIP 0, idle-head
 
@@ -19,14 +29,5 @@
 - **`.head` idle, WIP=0** → BOUNDED-1 promote+claim (full `--arg now`+`--slurpfile` contract, no error this time) → claimed `FU-CTG-DISCOVERY-FILENAME-FILTER` (P3/S, HNX discovery resolves a good-title article to a cover-letter PDF attachment via ArticlesFileAttach — needs filename-based CV_CBTT/cong_van_cbtt post-filter mirroring FIX-CTG-2's existing title filter). **Router-corrected `.head.next_agent`**: task zone `vps-scripts + apps/mcp-server` isn't in `system-map.json`'s zone list (Tier-1/2 zone-detect can't resolve it, Tier-3 would fall to generic `developer`) — git-history-confirmed (`fix(vps-crawls:...)` prefix, incl. the exact predecessor `bbf0f54bd` FIX-CTG-2) `dev-vps-crawls` owns `vps-scripts/*.py`; corrected before dispatch, same class as BOUNDED-1's own documented NON-CODE/DESIGN gap note. Dispatcher-wrap `task_claim` → `claimed:true` → spawned `dev-vps-crawls` in background with full context + explicit instruction to flag (not silently expand) if the fix genuinely also needs an apps/mcp-server change.
 - **Elected NOT to dispatch Step 1 PO triage this tick**: BOUNDED-1 dispatched — same-tick fall-through skip per flow control (JUMP TO end after BOUNDED-1 claim).
 - **NEXT**: await `dev-vps-crawls`'s RETURN, RAW-verify (re-diff the filename filter, re-run any claimed test, confirm scope stayed in vps-scripts/, board/head state), release lock. `TE-T12` remains the only other undispatched item from PO's 2026-07-31T0637Z triage (routes to `agent-father`, outside this session's zone).
-
-## cycle-20260731T0826Z-fda10-verified-released — RAW-verified `dev-mcp-server`'s FDA-10 return (zero discrepancy); pushed its 3 local-only commits to origin, released lock. WIP 0, idle-head
-
-- **Commits confirmed real, built cleanly on this session's own S57 push**: `ec27c69d3` (comment fix)/`41eaa8445` (board REVIEW flip)/`520277a1d` (notebook+journal) — none were pre-pushed by the agent; `git rev-list --left-right --count origin/main...HEAD` showed 3 local-only before I pushed. Pushed cleanly (`689086370..520277a1d`), pre-push `tsc` gate passed.
-- **Diff matches claim exactly**: `shippingIndex.ts` — deleted the module-header line claiming "SCFI proxied via TE or BDI-related symbol"; corrected the `SHIPPING_SYMBOLS` JSDoc from "placeholder that resolves to BDI" to "SCFI has no free Yahoo ticker and is NOT fetched or proxied". Comment-only, `SHIPPING_SYMBOLS` array itself untouched. Independently ran `grep -i scfi` post-fix — exactly 1 hit, the corrected comment itself.
-- **Test + build independently re-run, not trusted from self-report**: `bun test src/__tests__/252-shipping-index.test.ts` → **8 pass/0 fail/20 expect()**, exact match. `bun tsc --noEmit` → clean, exact match.
-- **Board+head confirmed independently**: `FDA-10` row `status:REVIEW`, `next_agent:qa`, `commit_sha:ec27c69d3`, `status_note` accurate; `in_progress[]` empty; `.head` `{status:idle, active_task_id:null, next_agent:router, updated_by:dev-mcp-server}`.
-- **Coordination gap noted, not a defect**: same class as S54/S56 — this `dev-mcp-server` instance had no gateway/MCP grant to self-release/notify; released on its behalf.
-- **NEXT**: no items remain from this tick's dispatch. `TE-T12` still the only undispatched item from PO's 2026-07-31T0637Z triage (routes to `agent-father`). Idle-head, WIP=0.
 
 

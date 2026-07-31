@@ -1,0 +1,55 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-07-31T08:52:05Z",
+    "matched_slots": [
+      "chef-eod"
+    ],
+    "won_slots": [
+      "chef-eod"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/unified-agent/flow/chef.md"
+    ],
+    "silent": false,
+    "drift_min": 5,
+    "errors": [],
+    "pressure_mode": "adaptive",
+    "calendar_status": "unknown",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "chef_mutex_applied": false,
+    "due_reasons": {
+      "chef-eod": "cron"
+    },
+    "cadence_minutes": {
+      "chef-eod": null
+    },
+    "last_fired_timestamp": "2026-07-31T08:52:01Z",
+    "last_fired_slots": [
+      "chef-eod"
+    ],
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "08:45",
+    "leader_lock": "acquired",
+    "dev_head": "unknown",
+    "devq": 5,
+    "signal_backlog": 18,
+    "note": "Adaptive mode (pressure-state fresh, stale_warning=false). Single guaranteed cron slot chef-eod (unified-agent CHEF-family) due; CHEF same-tick mutex checked via live script (only 1 CHEF-family match, no conflict, chef_mutex_applied=false). Calendar_status=unknown -> no suppression (AC-P1-4-2). No cadence-tracked slots this tick (chef-eod is guaranteed/cron-based, policy_id null). MAX_PARALLEL=4 computed live (headroom=2729MB >=1500 floor, load=2.76 <= 2*12=24 cores) -> not degraded, trivial single-slot batch. Tick-snapshot 08:51 assembled (mc_len=58130, macro_ok=true). Spawned agentId a82ea630924513cb2, still running at telemetry-write time."
+  },
+  "priority": "low",
+  "createdAt": "2026-07-31T08:52:05Z",
+  "_processed": {
+    "fingerprint": "56b6d2f078b3f27441ae28adf7b75efcc413852b9bb0279f714566c0dea7e8cd",
+    "processedAt": "2026-07-31T09:15:23Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

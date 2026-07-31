@@ -93,11 +93,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "active_task_id": null,
-    "next_agent": "router",
-    "updated_at": "2026-07-31T08:58:09Z",
-    "updated_by": "dev-vps-crawls (FU-CTG-DISCOVERY-FILENAME-FILTER lane-move, .head sync closed by dev-team RAW-verify)"
+    "status": "in_progress",
+    "active_task_id": "FU-OCR-BOOT-LOOP-SEQUENTIAL",
+    "next_agent": "architect",
+    "next_action": "BOUNDED-1 auto-pickup claim of FU-OCR-BOOT-LOOP-SEQUENTIAL — router-corrected next_agent developer->architect (detail row carries only .route=\"architect\", no .owner/.next_agent field, so NON-DEV-OWNER/NON-DEV-NEXT_AGENT gates did not exclude it; dispatcher-wrap then JUMP TO end, not zone-detect).",
+    "updated_at": "2026-07-31T09:17:31Z",
+    "updated_by": "dev-team (bounded-1 auto-pickup)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -5533,16 +5534,6 @@
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#FU-RUNTIME-SET-TRUTH-RECONCILE"
       },
       {
-        "id": "FU-OCR-BOOT-LOOP-SEQUENTIAL",
-        "priority": "P3",
-        "size": "S",
-        "sprint": "BCTC-EXTRACT-QUALITY",
-        "status": "BACKLOG",
-        "title": "composition-root bootstrap OCR loop changed parallel->sequential in 21c467e8 (FIX-CTG-3-STEP-D) to wire the post-OCR reparse hook — review startup-latency tradeoff",
-        "type": "REVIEW",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FU-OCR-BOOT-LOOP-SEQUENTIAL"
-      },
-      {
         "id": "FU-BACKFILL-REAL-FILENAMES",
         "priority": "P3",
         "size": "S",
@@ -6590,11 +6581,12 @@
         "id": "FIX-MARKET-MESSAGES-TIMESTAMP-FORMAT",
         "type": "FIX",
         "status": "BACKLOG",
-        "priority": "P2",
+        "priority": "P1",
         "size": "S",
         "zone": "apps/mcp-server/",
-        "title": "market_messages.sent_at stored as space-separated TEXT ('YYYY-MM-DD HH:MM:SS') -> datetime/ISO comparison returns 0 rows even when fresh data exists (C-06 freshness query false-empty)",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-MARKET-MESSAGES-TIMESTAMP-FORMAT"
+        "title": "market.db TEXT-timestamp format non-normalization — 2 LIVE sites, recurring class (5x). (a) NEW 2026-07-31: agent_signals.created_at — apps/mcp-server/src/infrastructure/db/alertStore.ts storeAlerts() binds alert.createdAt RAW into created_at (ISO8601 T + .mmmZ) while the SAME value is bound through datetime(?, \"+2 hours\") for expires_at, so one row carries two formats; every other producer normalizes at agentSignalStore.ts:544. 106/234 rows (45%) are T-separated, ALL from_agent=alert-engine / signal_type=verified_decision, first at 2026-07-30T14:46:43.612Z (right after 0a7e91e5b un-gated the co-write payload). MEASURED LIVE 2026-07-31T09:16Z: `created_at >= datetime(\"now\",\"-60 minutes\")` returns 95 rows, correct answer 59 — 36 falsely included (+61%), because \"T\" (0x54) > \" \" (0x20) at position 11 makes every T row sort after every space row WITHIN the same date (cross-day windows still work by accident). Fix = wrap the created_at placeholder in datetime(?) in the same INSERT — one token, already proven correct by the adjacent expires_at column on the same row. (b) ORIGINAL: market_messages.sent_at space-separated TEXT vs datetime/ISO comparison -> C-06 freshness query false-empty. Ship the canonical rule with the fix: market.db TEXT timestamps are \"YYYY-MM-DD HH:MM:SS\"; writers normalize via SQLite datetime(), readers compare against datetime().",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-MARKET-MESSAGES-TIMESTAMP-FORMAT",
+        "updated_at": "2026-07-31T09:19:16Z"
       },
       {
         "id": "FIX-NEWS-REUTERS-DEAD-URL-DECOMMISSION",
@@ -9428,7 +9420,7 @@
       },
       {
         "id": "FIX-AUDITOR-C04-PARSEDAT-RECENCY-PREDICATE",
-        "title": "system-auditor C-04 counts bulk-reparse re-stamps as new low-confidence extractions (parsed_at is a mutation timestamp, not arrival) AND counts never-extracted rows (conf=0, status=pending) as low-confidence -> recurring WARN false-positive",
+        "title": "system-auditor predicate errors — mutation-timestamp + window class, 3 checks. (C-04) counts bulk-reparse re-stamps as new low-confidence extractions (parsed_at is a mutation timestamp, not arrival) AND counts never-extracted rows (conf=0, status=pending) as low-confidence -> recurring WARN false-positive. (C-01/C-02 — added 2026-07-31 by PO, verified live) their window is `date >= date(\"now\",\"-1 day\")` = TWO calendar dates: at 2026-07-31T09:12Z C-01 returned 947 and C-02 returned 1070 while date=2026-07-31 held only 129 distinct codes. The checks cannot measure same-day coverage at ANY threshold — the window is the defect, not the >=25 / >0 bar. Also write down the invariant that cost a router a full session on a phantom \"86% coverage collapse\": daily_ohlcv same-day coverage is ~130 BY DESIGN (live intraday tick universe = 117-119 codes EVERY session per intraday_ohlcv_5m 07-20..07-31 and market_prices_history); the full ~940-code universe lands ONLY via the nightly history backfill 00:00-02:20Z, which UPSERTs ~750k rows (97% of the 774k-row table, dates 2014-2026) and thereby CLOBBERS daily_ohlcv.updated_at — the exact same \"mutation timestamp is not arrival\" root cause as C-04. Every historical date shows 0-2 same-day writes vs 900-1000 next-day writes. Do NOT add a same-day-coverage-vs-trailing-median alarm: it would fire every single day.",
         "status": "BACKLOG",
         "type": "FIX",
         "priority": "P2",
@@ -9451,7 +9443,7 @@
           "UC-ASL-P3"
         ],
         "note": "Auditor-FP family (feedback_auditor_predicate_drift_false_regression), 4th sibling of the same species. The CURRENT alert is a FALSE POSITIVE and self-clears 2026-07-27 when the 7-day window rolls past 2026-07-20 — no data remediation needed, this row fixes the DETECTOR only. Per reference_low_confidence_handling.md low_confidence is a by-design flag (deliberate insert + WORK alert + filtered out of RAG/alerts/briefings), not corruption, so severity WARN db_integrity_breach was the wrong framing. Distinct from FIX-BCTC-BANK-SUMMARY-MAPPING (bank scalar-column data defect) and REVIEW-PPC-Q4-LOW-CONFIDENCE (per-ticker human review) — those remediate DATA, this fixes the CHECK. Only 1 of the 11 rows is a bank (MBB 2025-Q4) and it is a different period from REFLOW-MBB-Q1-2026.",
-        "updated_at": "2026-07-25T07:02:40Z"
+        "updated_at": "2026-07-31T09:19:16Z"
       },
       {
         "id": "FEAT-PREDCLAIM-UPDATED-AT",
@@ -18885,9 +18877,27 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-31T08:46:22Z",
+    "last_triaged_at": "2026-07-31T09:07Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": []
+    "in_progress": [
+      {
+        "id": "FU-OCR-BOOT-LOOP-SEQUENTIAL",
+        "priority": "P3",
+        "size": "S",
+        "sprint": "BCTC-EXTRACT-QUALITY",
+        "status": "IN_PROGRESS",
+        "title": "composition-root bootstrap OCR loop changed parallel->sequential in 21c467e8 (FIX-CTG-3-STEP-D) to wire the post-OCR reparse hook — review startup-latency tradeoff",
+        "type": "REVIEW",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FU-OCR-BOOT-LOOP-SEQUENTIAL",
+        "promoted_at": "2026-07-31T09:07Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=3)",
+        "claimed_at": "2026-07-31T09:07Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "next_agent": "architect",
+        "updated_at": "2026-07-31T09:17:31Z"
+      }
+    ]
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
