@@ -1,0 +1,55 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-07-31T05:06:38Z",
+    "matched_slots": [
+      "news-scout-sentiment"
+    ],
+    "won_slots": [
+      "news-scout-sentiment"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/news-scout/flow/main.md"
+    ],
+    "silent": false,
+    "drift_min": 5,
+    "errors": [],
+    "pressure_mode": "adaptive",
+    "calendar_status": "unknown",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "chef_mutex_applied": false,
+    "due_reasons": {
+      "news-scout-sentiment": "cadence"
+    },
+    "cadence_minutes": {
+      "news-scout-sentiment": "240"
+    },
+    "last_fired_timestamp": "2026-07-31T05:06:29Z",
+    "last_fired_slots": [
+      "news-scout-sentiment"
+    ],
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "05:00",
+    "leader_lock": "acquired",
+    "dev_head": "unknown",
+    "devq": 5,
+    "signal_backlog": 17,
+    "note": "single-slot 4h-cadence fire (news-scout-sentiment), single batch, no MAX_PARALLEL chunking needed"
+  },
+  "priority": "low",
+  "createdAt": "2026-07-31T05:06:38Z",
+  "_processed": {
+    "fingerprint": "e059a6d11ce7c1973d173095c020fcc7dffa186594f111bd99bc0ea69fa7ccf0",
+    "processedAt": "2026-07-31T05:15:35Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
