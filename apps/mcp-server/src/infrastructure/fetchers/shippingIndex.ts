@@ -4,7 +4,6 @@
  * Fetches global shipping indices from Yahoo Finance:
  *   ^BDI  — Baltic Dry Index (bulk shipping cost indicator)
  *   ^BFIY — Freightos Baltic Index Asia routes (FBX_ASIA_US proxy)
- *   SCFI proxied via TE or BDI-related symbol
  *
  * Piggybacks on the existing Yahoo Finance chart API pattern
  * (see yahooFinance.ts for the base pattern).
@@ -73,8 +72,8 @@ export function buildShippingIndexUrl(
 /**
  * Shipping index symbols mapped to their friendly names.
  * BDI is the primary bulk index, BFIY is the Freightos Baltic container rate.
- * SCFI has no free Yahoo ticker — we use a placeholder that resolves to BDI
- * for structural completeness.
+ * SCFI has no free Yahoo ticker and is NOT fetched or proxied by this module —
+ * only ^BDI and ^BFIY are emitted below.
  */
 const SHIPPING_SYMBOLS: Array<{ symbol: string; name: string }> = [
   { symbol: "^BDI", name: "BDI" },          // Baltic Dry Index
