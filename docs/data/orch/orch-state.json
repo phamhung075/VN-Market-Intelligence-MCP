@@ -93,12 +93,12 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "FIX-CI-IMF-INTEGRATION-TEST-NONHERMETIC-LIVE-API",
-    "next_agent": "dev-mcp-server",
-    "next_action": "dev-team S79 tier-1 dispatch: FIX-CI-IMF-INTEGRATION-TEST-NONHERMETIC-LIVE-API (dev-mcp-server) + FIX-PO-MANUAL-DISPATCH-SWEEP-FLAG-WITHOUT-DISPATCH-STRANDS-ROW (agent-father) both in flight, parallel worktree-isolated.",
-    "updated_at": "2026-07-31T15:04:08Z",
-    "updated_by": "dev-team (S79 tier-1 dispatch)"
+    "status": "idle",
+    "active_task_id": null,
+    "next_agent": "router",
+    "next_action": "S79 dispatch pair both closed out — WIP 0/2",
+    "updated_at": "2026-07-31T15:25:16Z",
+    "updated_by": "dev-team (S80 close-out)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -19033,6 +19033,71 @@
         "claimed_by": "dev-team (S1 tier-1 dispatch)",
         "commit": "0d16f28ce (fix+test+flow-docs+memory)",
         "updated_by": "dev-team (S78 RAW-verify + head-sync)"
+      },
+      {
+        "id": "FIX-CI-IMF-INTEGRATION-TEST-NONHERMETIC-LIVE-API",
+        "type": "FIX",
+        "title": "CI-RED-a26653ff-FIX — CI RED: bun test — src/__tests__/1296b-imf-integration.test.ts (non-hermetic: AC-7/AC-8 call live IMF API in CI)",
+        "status": "REVIEW",
+        "priority": "high",
+        "size": "S",
+        "zone": "apps/mcp-server/",
+        "owner": "po",
+        "next_agent": "qa",
+        "check_id": "CI-RED-a26653ff",
+        "dedup_key": "ci_job:bun test|file:src/__tests__/1296b-imf-integration.test.ts",
+        "ci_fingerprint": "88e080090cb9207fd265f3a9cb47f90481a979fd8200f27f2b604caae7c11cb0",
+        "origin_signal_id": "ci-red-a26653ff-20260731144640",
+        "created_at": "2026-07-31T14:55:59Z",
+        "created_by": "po/triage-20260731T1437Z",
+        "baseline_pass": "14908",
+        "verification_gate": "ci_green_on_subsequent_push",
+        "files": [
+          "apps/mcp-server/src/__tests__/1296b-imf-integration.test.ts"
+        ],
+        "desc": "CI RED on main HEAD a26653ff2 (run 30639708394), job \"bun test\", 14908 pass / 40 skip / 1 fail. FAILING_FILES read verbatim from `gh run view 30639708394 --log-failed` === FAILED FILES (1) === block: src/__tests__/1296b-imf-integration.test.ts (repo path apps/mcp-server/src/__tests__/1296b-imf-integration.test.ts). ROOT-CAUSE HYPOTHESIS (not yet confirmed — do not close on it): the file is NOT hermetic. describe AC-7 (runImfIndicatorPollerJob; its it() carries an explicit 35_000ms timeout commented \"poller has 30s timeout + overhead\") and describe AC-8 (getLatestImfIndicators + classifyImfIndicators) exercise a live external IMF API from CI. File untouched by any recent commit (last content change 2681856e5; moved by 8fc725347 + a09751686 monorepo scaffold), and the identical suite was green on the immediately-prior commit 6775752af minutes earlier — consistent with external-API flakiness rather than a code regression. Same defect CLASS as the already-open FIX-CI-GOLANGCI-CONFIG-VERIFY-NETWORK-FLAKE (different file, so no dedup).",
+        "deliverable": "AC: make apps/mcp-server/src/__tests__/1296b-imf-integration.test.ts hermetic in CI — AC-7/AC-8 must not depend on live IMF API reachability (mock the poller/fetch boundary, or gate the live-network describes behind an env flag CI does not set). Pure-logic describes (AC-5 IMF_CASCADE_RULES, AC-6 synthesizeChain conviction weights) must keep running unconditionally. Verify: gh run view <databaseId with headSha AFTER a26653ff2> --json jobs -q '.jobs[]|select(.name==\"bun test\")|.conclusion' == success.",
+        "status_note": "AC: gh run view <databaseId with headSha AFTER a26653ff2a0f36c804e6ec7448b8c6ae534761e8> --json jobs -q '.jobs[]|select(.name==\"bun test\")|.conclusion' == success (verification_gate=ci_green_on_subsequent_push). Priority: high. Failing job: bun test. Failing file: src/__tests__/1296b-imf-integration.test.ts. Observed SHAs: a26653ff2 (run 30639708394). MINTED PER ANTI-AMNESTY BACKSTOP: file-scoped PRIMARY dedup (dedup_key) and SECONDARY dedup (check_id / head_sha / file across backlog+ready+in_progress+review+qa) both returned zero hits; per triage-signals.md the CI plane baseline is 0 fail, so \"flake / pre-existing\" is NOT a valid disposition without a matched open row. If it proves transient, close on a GREEN subsequent run — do not close as \"not a real failure\" while the non-hermetic live-API dependency remains in the file.",
+        "related": [
+          "FIX-CI-GOLANGCI-CONFIG-VERIFY-NETWORK-FLAKE"
+        ],
+        "updated_at": "2026-07-31T15:25:16Z",
+        "claimed_at": "2026-07-31T15:08:00Z",
+        "claimed_by": "dev-team (S79 tier-1 dispatch)",
+        "commit_sha": "63f90ed7a",
+        "review_note": "dev-mcp-server: root cause was fetchLatestImfIndicators() doing 3 sequential live fetch() calls to www.imf.org (each 15s timeout, worst-case ~45s vs test's 35s per-it() timeout) — the actual mechanism behind CI-red a26653ff2/run 30639708394, not flake. AC-7 now injects fetchFn/storeFn/classifyFn via the poller's existing ImfPollerOptions DI seam (same pattern as 1353a-imf-indicator-poller-job-gaps.test.ts); AC-8 confirmed by inspection already hermetic (DB-cache read + pure classify only); AC-5/AC-6 untouched. Independently re-verified: 14/14 pass (~200ms), hermeticity re-confirmed with HTTPS_PROXY pointed at a closed port -> still 14/14 pass, zero live network reached. Commit 63f90ed7a."
+      },
+      {
+        "id": "FIX-PO-MANUAL-DISPATCH-SWEEP-FLAG-WITHOUT-DISPATCH-STRANDS-ROW",
+        "type": "FIX",
+        "title": "manual-dispatch-sweep idempotency guard strands any flagged row whose BATCH was never dispatched — re-creates the exact P0 class its own parent row cured",
+        "status": "REVIEW",
+        "priority": "P1",
+        "size": "S",
+        "zone": "cross-service/",
+        "owner": "po",
+        "next_agent": "qa",
+        "created_at": "2026-07-31T14:55:59Z",
+        "created_by": "po/triage-20260731T1437Z",
+        "baseline_pass": "14908",
+        "files": [
+          "docs/agents/po/flow/manual-dispatch-sweep.md",
+          "scripts/audits/po-manual-dispatch-sweep-verify.sh",
+          "docs/policies/dev-standards.md"
+        ],
+        "desc": "docs/agents/po/flow/manual-dispatch-sweep.md Step 1 excludes every row carrying po_manual_dispatch_flagged_at from the candidate list, but Step 3 only ever folds the ONE row Step 2 just stamped this tick. There is therefore no path by which a previously-flagged row re-enters any BATCH: stamp and dispatch are not atomic, so a row that gets stamped but whose BATCH is then deferred (e.g. dev-team WIP cap) becomes permanently invisible to the only producer that reaches it. MECHANISM PROVEN BY CONTROL FLOW, not by the single instance: repo-wide grep for po_manual_dispatch_flagged_at returns only (a) the two Step 1 exclusion filters in the sub-flow, (b) their mirror in docs/policies/dev-standards.md:517/521, (c) the G-ALREADY-FLAGGED fixture in scripts/audits/po-manual-dispatch-sweep-verify.sh, (d) two historical one-off mint scripts. NOTHING ever clears the stamp, and the sub-flow header itself states \"Consumer of this sub-flow's stamp: none automated by design\". LIVE INSTANCE: TE-T12 (P1, SPRINT-M, next_agent=agent-father) flagged 2026-07-31T06:56:27Z, still status=BACKLOG at 2026-07-31T14:49Z (~8h), still satisfies is_drs_stranded_off_allowlist, and is now excluded from every future sweep. Same documented-producer-strands-row failure the parent row FIX-PO-NO-PRODUCER-FOR-MANUAL-DISPATCH-ESCAPE-HATCH (P0, review) was built to cure — 5th instance of the producer/consumer defect family.",
+        "deliverable": "AC: (1) a flagged-but-still-in-backlog[]/ready[] row must be re-foldable into a later BATCH — e.g. Step 1 re-admits rows whose po_manual_dispatch_flagged_at is older than a bounded staleness window, or Step 3 folds the highest-priority already-flagged undispatched row when Step 2 stamps nothing; (2) the exclusion must still prevent double-BATCHing within a single tick; (3) scripts/audits/po-manual-dispatch-sweep-verify.sh gains a positive control for the re-admission branch (flagged + still in backlog + stale => candidate) alongside the existing G-ALREADY-FLAGGED negative control; (4) the docs/policies/dev-standards.md:517/521 mirror is updated in lockstep so the two copies do not drift.",
+        "out_of_scope": "Widening the DRS allowlist; making PO write .head / in_progress[] (the sub-flow's own design note explains why PO must not share dev-team's WIP budget).",
+        "status_note": "Found by po during the MANDATORY manual-dispatch-sweep pre-check, triage tick 2026-07-31T14:37Z. Recorded in docs/agent-memory/notebooks/po.md on a prior tick but never minted to the board (notebook notes are invisible to backlog sweeps) — this row closes that gap. NOTE: po deliberately did NOT stamp a new candidate (TE-T14) this tick precisely because stamping under a saturated WIP cap deterministically creates another stranded row; 40 unflagged candidates remain, so flag rate is not the binding constraint — dispatch is.",
+        "related": [
+          "FIX-PO-NO-PRODUCER-FOR-MANUAL-DISPATCH-ESCAPE-HATCH",
+          "TE-T12"
+        ],
+        "updated_at": "2026-07-31T15:25:16Z",
+        "claimed_at": "2026-07-31T15:08:00Z",
+        "claimed_by": "dev-team (S79 tier-1 dispatch)",
+        "commit_sha": "64d132e43",
+        "review_note": "agent-father: bound po_manual_dispatch_flagged_at exclusion to a 4h staleness window (flag_reentrant) so a flagged-but-undispatched row re-enters a later BATCH instead of being permanently stranded (live TE-T12 proof, now re-admitted top-ranked idx 27). scripts/audits/po-manual-dispatch-sweep-verify.sh: new M-STALE-FLAGGED-REENTRANT positive control + refreshed G-ALREADY-FLAGGED negative control. Independently re-run: 15 checks PASS, exit 0. docs/policies/dev-standards.md:504-526 mirror updated in lockstep. Same-tick double-BATCH still structurally impossible (Step 1 computes candidate list once before Step 2 stamps). Did not touch orch-state.json, did not widen DRS allowlist. Commit 64d132e43."
       }
     ],
     "qa": [],
@@ -19054,69 +19119,7 @@
     },
     "last_triaged_at": "2026-07-31T13:47:28Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": [
-      {
-        "id": "FIX-CI-IMF-INTEGRATION-TEST-NONHERMETIC-LIVE-API",
-        "type": "FIX",
-        "title": "CI-RED-a26653ff-FIX — CI RED: bun test — src/__tests__/1296b-imf-integration.test.ts (non-hermetic: AC-7/AC-8 call live IMF API in CI)",
-        "status": "IN_PROGRESS",
-        "priority": "high",
-        "size": "S",
-        "zone": "apps/mcp-server/",
-        "owner": "po",
-        "next_agent": "dev-mcp-server",
-        "check_id": "CI-RED-a26653ff",
-        "dedup_key": "ci_job:bun test|file:src/__tests__/1296b-imf-integration.test.ts",
-        "ci_fingerprint": "88e080090cb9207fd265f3a9cb47f90481a979fd8200f27f2b604caae7c11cb0",
-        "origin_signal_id": "ci-red-a26653ff-20260731144640",
-        "created_at": "2026-07-31T14:55:59Z",
-        "created_by": "po/triage-20260731T1437Z",
-        "baseline_pass": "14908",
-        "verification_gate": "ci_green_on_subsequent_push",
-        "files": [
-          "apps/mcp-server/src/__tests__/1296b-imf-integration.test.ts"
-        ],
-        "desc": "CI RED on main HEAD a26653ff2 (run 30639708394), job \"bun test\", 14908 pass / 40 skip / 1 fail. FAILING_FILES read verbatim from `gh run view 30639708394 --log-failed` === FAILED FILES (1) === block: src/__tests__/1296b-imf-integration.test.ts (repo path apps/mcp-server/src/__tests__/1296b-imf-integration.test.ts). ROOT-CAUSE HYPOTHESIS (not yet confirmed — do not close on it): the file is NOT hermetic. describe AC-7 (runImfIndicatorPollerJob; its it() carries an explicit 35_000ms timeout commented \"poller has 30s timeout + overhead\") and describe AC-8 (getLatestImfIndicators + classifyImfIndicators) exercise a live external IMF API from CI. File untouched by any recent commit (last content change 2681856e5; moved by 8fc725347 + a09751686 monorepo scaffold), and the identical suite was green on the immediately-prior commit 6775752af minutes earlier — consistent with external-API flakiness rather than a code regression. Same defect CLASS as the already-open FIX-CI-GOLANGCI-CONFIG-VERIFY-NETWORK-FLAKE (different file, so no dedup).",
-        "deliverable": "AC: make apps/mcp-server/src/__tests__/1296b-imf-integration.test.ts hermetic in CI — AC-7/AC-8 must not depend on live IMF API reachability (mock the poller/fetch boundary, or gate the live-network describes behind an env flag CI does not set). Pure-logic describes (AC-5 IMF_CASCADE_RULES, AC-6 synthesizeChain conviction weights) must keep running unconditionally. Verify: gh run view <databaseId with headSha AFTER a26653ff2> --json jobs -q '.jobs[]|select(.name==\"bun test\")|.conclusion' == success.",
-        "status_note": "AC: gh run view <databaseId with headSha AFTER a26653ff2a0f36c804e6ec7448b8c6ae534761e8> --json jobs -q '.jobs[]|select(.name==\"bun test\")|.conclusion' == success (verification_gate=ci_green_on_subsequent_push). Priority: high. Failing job: bun test. Failing file: src/__tests__/1296b-imf-integration.test.ts. Observed SHAs: a26653ff2 (run 30639708394). MINTED PER ANTI-AMNESTY BACKSTOP: file-scoped PRIMARY dedup (dedup_key) and SECONDARY dedup (check_id / head_sha / file across backlog+ready+in_progress+review+qa) both returned zero hits; per triage-signals.md the CI plane baseline is 0 fail, so \"flake / pre-existing\" is NOT a valid disposition without a matched open row. If it proves transient, close on a GREEN subsequent run — do not close as \"not a real failure\" while the non-hermetic live-API dependency remains in the file.",
-        "related": [
-          "FIX-CI-GOLANGCI-CONFIG-VERIFY-NETWORK-FLAKE"
-        ],
-        "updated_at": "2026-07-31T15:04:08Z",
-        "claimed_at": "2026-07-31T15:08:00Z",
-        "claimed_by": "dev-team (S79 tier-1 dispatch)"
-      },
-      {
-        "id": "FIX-PO-MANUAL-DISPATCH-SWEEP-FLAG-WITHOUT-DISPATCH-STRANDS-ROW",
-        "type": "FIX",
-        "title": "manual-dispatch-sweep idempotency guard strands any flagged row whose BATCH was never dispatched — re-creates the exact P0 class its own parent row cured",
-        "status": "IN_PROGRESS",
-        "priority": "P1",
-        "size": "S",
-        "zone": "cross-service/",
-        "owner": "po",
-        "next_agent": "agent-father",
-        "created_at": "2026-07-31T14:55:59Z",
-        "created_by": "po/triage-20260731T1437Z",
-        "baseline_pass": "14908",
-        "files": [
-          "docs/agents/po/flow/manual-dispatch-sweep.md",
-          "scripts/audits/po-manual-dispatch-sweep-verify.sh",
-          "docs/policies/dev-standards.md"
-        ],
-        "desc": "docs/agents/po/flow/manual-dispatch-sweep.md Step 1 excludes every row carrying po_manual_dispatch_flagged_at from the candidate list, but Step 3 only ever folds the ONE row Step 2 just stamped this tick. There is therefore no path by which a previously-flagged row re-enters any BATCH: stamp and dispatch are not atomic, so a row that gets stamped but whose BATCH is then deferred (e.g. dev-team WIP cap) becomes permanently invisible to the only producer that reaches it. MECHANISM PROVEN BY CONTROL FLOW, not by the single instance: repo-wide grep for po_manual_dispatch_flagged_at returns only (a) the two Step 1 exclusion filters in the sub-flow, (b) their mirror in docs/policies/dev-standards.md:517/521, (c) the G-ALREADY-FLAGGED fixture in scripts/audits/po-manual-dispatch-sweep-verify.sh, (d) two historical one-off mint scripts. NOTHING ever clears the stamp, and the sub-flow header itself states \"Consumer of this sub-flow's stamp: none automated by design\". LIVE INSTANCE: TE-T12 (P1, SPRINT-M, next_agent=agent-father) flagged 2026-07-31T06:56:27Z, still status=BACKLOG at 2026-07-31T14:49Z (~8h), still satisfies is_drs_stranded_off_allowlist, and is now excluded from every future sweep. Same documented-producer-strands-row failure the parent row FIX-PO-NO-PRODUCER-FOR-MANUAL-DISPATCH-ESCAPE-HATCH (P0, review) was built to cure — 5th instance of the producer/consumer defect family.",
-        "deliverable": "AC: (1) a flagged-but-still-in-backlog[]/ready[] row must be re-foldable into a later BATCH — e.g. Step 1 re-admits rows whose po_manual_dispatch_flagged_at is older than a bounded staleness window, or Step 3 folds the highest-priority already-flagged undispatched row when Step 2 stamps nothing; (2) the exclusion must still prevent double-BATCHing within a single tick; (3) scripts/audits/po-manual-dispatch-sweep-verify.sh gains a positive control for the re-admission branch (flagged + still in backlog + stale => candidate) alongside the existing G-ALREADY-FLAGGED negative control; (4) the docs/policies/dev-standards.md:517/521 mirror is updated in lockstep so the two copies do not drift.",
-        "out_of_scope": "Widening the DRS allowlist; making PO write .head / in_progress[] (the sub-flow's own design note explains why PO must not share dev-team's WIP budget).",
-        "status_note": "Found by po during the MANDATORY manual-dispatch-sweep pre-check, triage tick 2026-07-31T14:37Z. Recorded in docs/agent-memory/notebooks/po.md on a prior tick but never minted to the board (notebook notes are invisible to backlog sweeps) — this row closes that gap. NOTE: po deliberately did NOT stamp a new candidate (TE-T14) this tick precisely because stamping under a saturated WIP cap deterministically creates another stranded row; 40 unflagged candidates remain, so flag rate is not the binding constraint — dispatch is.",
-        "related": [
-          "FIX-PO-NO-PRODUCER-FOR-MANUAL-DISPATCH-ESCAPE-HATCH",
-          "TE-T12"
-        ],
-        "updated_at": "2026-07-31T15:04:08Z",
-        "claimed_at": "2026-07-31T15:08:00Z",
-        "claimed_by": "dev-team (S79 tier-1 dispatch)"
-      }
-    ]
+    "in_progress": []
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
