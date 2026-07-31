@@ -100,3 +100,30 @@
 - Stamp a fresh top candidate (TE-T14) instead — rejected: 2 flagged rows are already stranded undispatched; flag rate is not the binding constraint, dispatch is.
 **why-decision:** Image sha256:95ad7ae7ef39 built 2026-07-30T22:06:34Z vs fix commit 314e70718 authored 2026-07-31T00:34:15Z — 2h28m AFTER. The reports are pre-fix code running; disposition is deploy-lane, not resolver.
 **why-change:** Deviated from manual-dispatch-sweep Step 2 (no new stamp this tick) — logged as a sub-flow defect: Step 1's idempotency guard excludes flagged rows, so a flagged row whose BATCH never dispatched can never be re-surfaced.
+
+### STEP po-S91 · po · 2026-07-31T14:57:27Z
+**task-id:** FIX-CI-IMF-INTEGRATION-TEST-NONHERMETIC-LIVE-API
+**what-done:** Ran the ci_red rule's MANDATORY pre-dedup `gh run view 30639708394 --log-failed` read (FAILEDFILE: src/__tests__/1296b-imf-integration.test.ts, 1 file), both dedup planes zero-hit, minted the row.
+**what-considered:**
+- Accept the relayed "IMF external-API flakiness, not a real regression" disposition and skip.
+- Mint per the ANTI-AMNESTY BACKSTOP.
+**why-decision:** triage-signals.md is explicit: CI-plane green baseline is 0 fail, so "pre-existing/flake" is a FABRICATED disposition unless it names an already-open FILE-scoped row — none exists (nearest, FIX-CI-GOLANGCI-CONFIG-VERIFY-NETWORK-FLAKE, is a different file). The flake hypothesis is also itself a defect: AC-7/AC-8 call a live IMF API from CI, so the row is actionable either way.
+**why-change:** no change from plan — signal was not yet drained, but the row carries the exact dedup_key next tick's drain derives, so a re-drain dedups instead of double-minting.
+
+### STEP po-S92 · po · 2026-07-31T14:57:27Z
+**task-id:** FIX-PO-MANUAL-DISPATCH-SWEEP-FLAG-WITHOUT-DISPATCH-STRANDS-ROW
+**what-done:** Promoted a notebook-only finding (Carry-over L18, prior tick) to a real backlog row after proving the mechanism by control flow, not by its single instance.
+**what-considered:**
+- Leave in notebook and re-observe next tick.
+- Mint now.
+**why-decision:** Repo-wide grep of `po_manual_dispatch_flagged_at` shows only Step 1's two exclusion filters, their dev-standards.md mirror, and a verifier fixture — NOTHING clears it, and the sub-flow self-declares "Consumer of this stamp: none automated by design". So flagged+undispatched is structurally unreachable, not a one-off. TE-T12 (P1) is live-stranded ~8h. Notebook notes are invisible to backlog sweeps (`feedback_po_notebook_mint_never_reaches_orchstate_board`).
+**why-change:** Deliberately did NOT stamp a new candidate (TE-T14) again this tick — stamping under a saturated WIP cap deterministically manufactures the next stranded row.
+
+### STEP po-S93 · po · 2026-07-31T14:57:27Z
+**task-id:** FIX-PO-TRIAGE-SIGNALS-CIRED-TEMPLATE-STATUS-TODO-REJECTED-BY-VALIDATOR
+**what-done:** Minted a row for template-vs-validator drift discovered by reproducing it live during S91's mint.
+**what-considered:**
+- Silently use BACKLOG and move on (one-token workaround).
+- Mint the drift so the next ci_red triage does not re-pay it.
+**why-decision:** orch-apply Stage 1b ABORTS on the doc's own literal `status: "TODO"`; the validator's error text offers "move the row to another lane" as an alternative remedy, which a token-pressured agent could take and land the row in the wrong lane. Fail-loud but recurring => fix the doc.
+**why-change:** no change from plan. Routed to agent-father, not self-edited — docs/agents/** is instruction-prose per the 2026-07-21 ARTIFACT-CLASS ROUTING RULING.
