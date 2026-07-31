@@ -1,6 +1,16 @@
 # Dev Team — Sprint Boundary Notebook
 
-**Written:** 2026-07-31T04:05Z
+**Written:** 2026-07-31T04:25Z
+
+## cycle-20260731T0407Z-cired-churn-dualdispatch — drain(3 routed-to-po)→0a-B 0 orphans→CI probe RED (fresh sig, frontend-eslint+size-lint, 6th recurrence of a known dedup-defeating pattern)→WIP=0 BOUNDED-1(FDA-5→dev-mcp-server) + SLS(FIX-CIRED-TRIAGE-WRONG-PLANE-DEDUP-AMNESTY→agents-architect) both fired same tick; 2 background agents in flight
+
+- **Drain**: `drainable_count=3`. 2x `commit-sweep-guard` bug-escalation (1 mine — the bare-commit warn from last cycle's closeout, mode=warn/not escalated; 1 peer session's), 1x routine `cowork-team-fire` info (3 offhours slots spawned clean). All mechanically `routed-to-po`, no router-level disposition needed. Committed `1f21a0e76` with explicit pathspec on the commit itself this time (avoided repeating the exact bare-commit pattern that triggered the guard).
+- **0a-B**: 0 orphan-signals this cycle (the 4-cycle-recurring false-orphan class from before has aged out).
+- **CI probe — genuinely RED, new signal**: fresh `ci_red` (head_sha `ad6d8cd69`, jobs `frontend-eslint`+`size-lint`) — carried into `pendingSignals[]`. Found existing P0 backlog row `FIX-CIRED-TRIAGE-WRONG-PLANE-DEDUP-AMNESTY` documenting this is the 6th consecutive occurrence of an identical-failing-jobs pattern across distinct SHAs that structurally defeats SHA-keyed dedup, burning a full drain+triage cycle each time — the row itself is the mechanism fix.
+- **`.head` idle → BOTH BOUNDED-1 and SLS fired this tick (WIP 0→1→2)**: BOUNDED-1 promoted+claimed `FDA-5` (P3, `energyTools.ts` unstructured-estimate-flag hardening) → `dev-mcp-server`, JUMP-TO-execute path, zone-detect resolved `apps/mcp-server`→`dev-mcp-server` directly (bypassed, dispatched by hand since I already had zone confirmed). SLS promoted+claimed `FIX-CIRED-TRIAGE-WRONG-PLANE-DEDUP-AMNESTY` (P0, supervised+plan_only, dispatch_lane=`agents-architect`) — the exact churn-stopper row, surfaced independently by the script's own priority-rank selection. **Dual-claim head-pointer gap**: `.head` (single-slot) only reflects the FIRST claim (FDA-5) — SLS's claim left `.head` unchanged per its conditional-guard write. Dispatched the SLS row using its own resolved `dispatch_lane` field directly rather than trusting `.head`, and flagged the gap explicitly in both spawn prompts so neither agent's own head-reset clobbers the other's in-flight claim.
+- Per SLS's own "JUMP TO end — do not also fall through to PO triage in the same tick" instruction, skipped Step 1 PO Triage this tick (the dispatched fix already addresses the live churn signal in substance).
+- Released SF-1 + fire-election locks at tick close (both `ok:true`).
+- **NEXT**: await both `dev-mcp-server` (FDA-5) and `agents-architect` (FIX-CIRED-TRIAGE-WRONG-PLANE-DEDUP-AMNESTY) RETURNs, RAW-verify each independently, release both LOCK-LIFETIME holds. Two P0 CI-red content fixes (`FIX-CI-FRONTEND-ESLINT-BUNLOCK-DUAL-LOCKFILE-DRIFT`, `FIX-CI-SIZELINT-MACRO-VMT-LIQUIDITY-RESOLVERS-NEW-OFFENDER`) remain `ready[]`, unclaimed — candidates once WIP clears.
 
 ## cycle-20260731T0405Z-pdfx-verified-closed — RAW-verified `dev-pdf-extractor`'s FIX-CI-SIZELINT-PDFX-EXTRACTION-ENGINE-TOLERANCE return; clean verify, no gaps; released LOCK-LIFETIME hold; 0 background agents remain
 
@@ -24,15 +34,4 @@
 - **`.head` idle → BOUNDED-1 (WIP=0)**: promoted+claimed `FIX-CI-SIZELINT-PDFX-EXTRACTION-ENGINE-TOLERANCE` (P0, `apps/pdf-extractor/infrastructure/extraction_engine.py`, baseline-tolerance-exceeded 208→237L vs 228L upper, 9L over — smallest of the 8-offender size-lint job, sibling of the now-cleared mcp-server row). Task row explicitly flags the uncommitted `docs/architecture-briefs/2026-07-28-pdfx-tesseract-concurrency-invariant.md` as OUT OF SCOPE — carried that into the spawn prompt verbatim. Dispatched `dev-pdf-extractor` in background, LOCK-LIFETIME pattern applied (`task:FIX-CI-SIZELINT-PDFX-EXTRACTION-ENGINE-TOLERANCE` held, not released at spawn).
 - Released SF-1 + fire-election locks at tick close (both `ok:true`).
 - **NEXT**: await `dev-pdf-extractor` RETURN, RAW-verify (file-level size-lint gate per AC-1, AC-2 baseline-file untouched-or-justified, DJ-GATE-1 journal presence, lane-move correctness), then release the held claim. One sibling (`FIX-CI-SIZELINT-MACRO-VMT-LIQUIDITY-RESOLVERS-NEW-OFFENDER`) remains `ready[]`, not yet claimed.
-
-## cycle-20260731T0324Z-sizelint-verified-closed — RAW-verified `dev-mcp-server`'s FIX-CI-SIZELINT-MCPSERVER-SIX-UNCOVERED-OFFENDERS return; patched a board metadata gap (null commit_sha/review_note on an otherwise-genuine landing); released LOCK-LIFETIME hold; 0 background agents remain
-
-- **Commit ancestry + diff shape confirmed**: `e2502b98f` real ancestor of HEAD. 16-file diff matches claim: 5 files split into ≤120L siblings (claimCandidateScanner/vpsPushLogStore/signalValidator/vpsProxyTools/polymarket), `orchStateSchema.ts` trim+justification instead of split.
-- **Independently re-ran the file-level gate, not trusted**: `size-lint-justification.sh --check` → exactly 2 remaining offenders (macro-indicators, pdf-extractor — both claimed sibling rows), none of the 6 mcp-server files. `docs/data/size-lint-baseline.json` confirmed untouched in the commit (AC-2 landmine avoided). `wc -l` on all 6 target files matches claim exactly (116/160/177/87/462/839).
-- **orchStateSchema.ts justification header read in full** — substantive, not bare; declared 839L == actual exactly; cross-verified via grep that `scripts/orch-validate.mjs` genuinely imports it by name and `drain-signals.test.js` genuinely raw-copies it into an isolated harness (the stated reason a split was unsafe) — both true.
-- **Independently re-ran, not trusted**: `bun tsc --noEmit` (clean), 3 targeted test files spanning every split module (51/51 pass), `drain-signals.test.js` (36/36 pass — exercises the copied-orchStateSchema harness directly).
-- **DJ-GATE-1 confirmed present** (`dev-mcp-server` decision journal S35, substantive what-considered/why-decision). Lane-move confirmed (row absent from `in_progress[]`, present in `review[]`) and `.head` correctly reset to idle terminal state per `CANONICAL:SSOT-STATUSFLIP-LANEMOVE`.
-- **One real gap found and fixed**: board row landed with `commit_sha:null`/`review_note:null` despite the commit being genuine — patched both via `orch-apply.sh` (conservation check OK) and committed (`c2e146240`). Not a correctness defect in the work itself, just a missed traceability stamp on self-closeout.
-- Released `task:FIX-CI-SIZELINT-MCPSERVER-SIX-UNCOVERED-OFFENDERS` LOCK-LIFETIME hold (`ok:true`).
-- **NEXT**: idle — 0 background agents in flight. Await next cron tick or signal.
 
