@@ -51,3 +51,12 @@
 **why-change:** No plan change. Net: 4 background agents in flight (`po`/ci-red, `developer`/escalation-fix, `architect`/branch-hijack, `agent-father`/TE-T11), 0 released prematurely.
 
 ---
+
+### STEP dev-team-S31 · dev-team · 2026-07-31T04:52:00Z
+**task-id:** ci-red scope-limited `po` (terminal return, RAW-verify)
+**what-done:** RAW-verified the scope-limited `po`'s ci-red triage return — commit `89fae25df` confirmed ancestor of HEAD on `main`; diff matches claim exactly (4 files: orch-state.json, po.md notebook, decision journal roll `-po-2.md`→`-po-3.md`). Independently confirmed via jq, not just trusted the self-report: all 5 escalated rows (`FIX-CI-FRONTEND-ESLINT-BUNLOCK-DUAL-LOCKFILE-DRIFT`, `FIX-CI-SIZELINT-MACRO-VMT-LIQUIDITY-RESOLVERS-NEW-OFFENDER`, `FIX-CI-SIZELINT-MCPSERVER-SIX-UNCOVERED-OFFENDERS`, `FIX-CI-SIZELINT-PDFX-EXTRACTION-ENGINE-TOLERANCE`, `FIX-CIRED-TRIAGE-WRONG-PLANE-DEDUP-AMNESTY`) genuinely live at `priority=P0`; confirmed zero row minted matching `40dfb1f9` (dedup-declined as claimed, not silently minted anyway); confirmed my own BOUNDED-1 peer row (`FIX-SWEEPGUARD-ESCALATION-RETROACTIVE-COUNTER-AND-SESSION-SCOPED-ACTOR`, `IN_PROGRESS`/`developer`) conserved intact through po's write, exactly as po's commit body claimed ("carried peer work... content-identical move, not authored here").
+**what-considered:** Whether po's size-lint byte-identical-offender claim (`extraction_engine.py 208/237/228`) needed independent re-derivation. Judged it sufficient as cross-referenced evidentiary detail already consistent with the pre-existing `CI-RED-8e1e66e5` board row po cited by id — not a case with any prior evidence of divergence, unlike the reasons that drove deeper re-runs on the sweep-guard test-suite claim in S29.
+**why-decision:** No action required — clean verify, nothing to patch, no lock to release (po never held a lock on the batch-5 triage's own scope, and this dispatch's own commit-mutex was already released per its self-report). This `po` leg of the 4-way dispatch chain is now closed.
+**why-change:** No plan change. Net: 3 background agents still in flight (`developer`/escalation-fix, `architect`/branch-hijack, `agent-father`/TE-T11). Awaiting all 3 RETURNs before next board-state action.
+
+---
