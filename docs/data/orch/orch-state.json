@@ -96,9 +96,8 @@
     "status": "idle",
     "active_task_id": null,
     "next_agent": "router",
-    "updated_by": "dev-mcp-server",
-    "updated_at": "2026-07-31T03:20:04Z",
-    "note": "FIX-CI-SIZELINT-MCPSERVER-SIX-UNCOVERED-OFFENDERS self-closeout REVIEW, branch:null direct-execute path"
+    "updated_at": "2026-07-31T03:59:57Z",
+    "updated_by": "dev-pdf-extractor"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -10883,41 +10882,6 @@
         "acceptance": "(1) A named, executable producer for the DONE_VERIFIED token exists and is wired into a lane that actually runs (the dev-team idle chain rotation, or an equivalent the architect justifies), so a finished row reaching done[] cannot sit there indefinitely. (2) A DONE row carrying next_agent is REACHED by that producer - demonstrate on the two live 2-day-old cases (TASK-COWORK-CATCHUP-2, FACTORY-APP-split-assembleBriefing, both next=qa). (3) The producer NEVER promotes DONE -> DONE_VERIFIED on its own authority; promotion requires the verifier the token denotes. A row it cannot verify must become LOUDER (surfaced), not silently promoted. (4) A row that lands in done[] with NO next_agent is not silently invisible - it is surfaced to PO/router rather than defaulting to permanent residence. (5) The 8 currently-starved rows are re-measured with the ACTUAL predicate after the fix; the count must drop, and any row still starved must have a named reason. (6) Regression instrument: a script that re-runs is_bounded1_eligible over backlog[]+ready[] and reports the sole-deps_satisfied-failure set, so this class is detectable next time instead of being re-derived by hand.",
         "verification_gate": "Re-run the exact measurement in evidence_raw_verified_20260730T2148 leg 1 (is_bounded1_eligible with deps_satisfied isolated as the sole failing gate, threaded through the REAL scripts/lib/devteam-eligibility.jq, not a reimplementation) against the live board AFTER the fix, and show the starved-set count with each remaining member's named reason. PLUS: show a done[] row transitioning to DONE_VERIFIED through the new producer with real command output - not asserted from flow-doc prose (feedback_fix_landed_in_the_pregate_not_the_probe_the_agent_actually_runs).",
         "note": "Do NOT hand-flip the remaining DONE rows to clear the measurement. PO deliberately flipped exactly ONE (FIX-COMMIT-PATH-PEER-INDEX-SWEEP-GUARD-LAYER2) because that row's own po_closure_20260730 field already carried a file:line-precise PO RAW-verification from 09:05:59Z - the token was the only thing missing. TASK-COWORK-CATCHUP-2 and FACTORY-APP-split-assembleBriefing carry next_agent=qa and have NOT been verified by anyone; flipping them would be PO ratifying work it never checked, which is the exact vacuous-gate failure this row exists to prevent. They stay DONE as live evidence."
-      },
-      {
-        "id": "FIX-CI-SIZELINT-PDFX-EXTRACTION-ENGINE-TOLERANCE",
-        "type": "FIX",
-        "size": "S",
-        "priority": "P0",
-        "status": "BACKLOG",
-        "zone": "apps/pdf-extractor/",
-        "owner": "dev-pdf-extractor",
-        "next_agent": "dev-pdf-extractor",
-        "supervised": false,
-        "plan_only": false,
-        "created_by": "po/triage-20260731T0132",
-        "created_at": "2026-07-31T01:32:47Z",
-        "updated_at": "2026-07-31T02:27:29Z",
-        "origin_signal_id": "CI-RED-8e1e66e5",
-        "check_id": "CI-RED-8e1e66e5",
-        "dedup_key": "ci_job:size-lint|file:apps/pdf-extractor/infrastructure/extraction_engine.py",
-        "verification_gate": "size_lint_file_level_then_ci_green",
-        "title": "CI size-lint: apps/pdf-extractor/infrastructure/extraction_engine.py baseline-tolerance-exceeded (baseline=208L actual=237L upper=228L) — 9L over tolerance, smallest of the 8 offenders in the same red job.",
-        "root_cause": "File has a docs/data/size-lint-baseline.json entry at 208L and has grown to 237L, 9L past its 228L upper tolerance. Sub-mode is baseline-tolerance-exceeded, not new-offender — the file is already acknowledged, it just drifted.",
-        "evidence": "`gh run view 30596148097 --log-failed`, step 'Run size-lint-justification --check': `apps/pdf-extractor/infrastructure/extraction_engine.py — baseline-tolerance-exceeded (baseline=208L actual=237L upper=228L)`. Local `wc -l` = 237, matching CI exactly.",
-        "ac": "(AC-1) `bash scripts/audits/size-lint-justification.sh --check` no longer lists apps/pdf-extractor/infrastructure/extraction_engine.py. FILE-LEVEL gate — the size-lint job stays red until the two sibling-zone rows land; do not wait on job green. (AC-2) LANDMINE — NEVER `--update` (baseline is regenerated wholesale, script :175 `_note`; one --update grandfathers all 8 current offenders repo-wide). (AC-3) Prefer trimming 9L of genuine slack over re-baselining; if re-baselining, state what the +29L since 208L actually added and why it belongs in this file.",
-        "files": [
-          "apps/pdf-extractor/infrastructure/extraction_engine.py"
-        ],
-        "reference_only_files": [
-          "scripts/audits/size-lint-justification.sh",
-          "docs/data/size-lint-baseline.json"
-        ],
-        "related": "Sibling zone-split of the same red size-lint job: FIX-CI-SIZELINT-MCPSERVER-SIX-UNCOVERED-OFFENDERS (6 files) + FIX-CI-SIZELINT-MACRO-VMT-LIQUIDITY-RESOLVERS-NEW-OFFENDER (ready, 1 file). Do not open an untracked-brief-driven refactor here — docs/architecture-briefs/2026-07-28-pdfx-tesseract-concurrency-invariant.md is uncommitted and out of scope for this row.",
-        "dedup_checked": "2026-07-31T01:30Z — jq over every lane matching /extraction_engine|pdfx.*size|size.*pdf/i => 0 open rows.",
-        "baseline_pass": null,
-        "desc": null,
-        "status_note": "[po 2026-07-31T02:27:29Z] P3->P0. size-lint CONJUNCTION 3/3. Re-confirmed at run 30598372356 (head 40dfb1f9): extraction_engine.py baseline=208 actual=237 upper=228, byte-identical to the CI-RED-8e1e66e5 observation 54min earlier - zero drift. Smallest of the 8 offenders. Siblings: FIX-CI-SIZELINT-MACRO-VMT-LIQUIDITY-RESOLVERS-NEW-OFFENDER, FIX-CI-SIZELINT-MCPSERVER-SIX-UNCOVERED-OFFENDERS. Escalated with the cluster: at P3/idx 372 it was the single lowest-ranked row on the board, so the conjunction had a guaranteed-unreachable member."
       }
     ],
     "closed_sprints": [
@@ -18704,6 +18668,48 @@
         "claimed_by": "dev-team (bounded-1 auto-pickup)",
         "commit_sha": "e2502b98fbd9a8eb1210d1509e1dff471f1cbbf0",
         "review_note": "dev-team RAW-verify 2026-07-31T03:24Z: commit e2502b98f confirmed ancestor of HEAD. Independently re-ran size-lint-justification.sh --check — none of the 6 mcp-server files listed, exactly 2 remaining offenders both matching claimed sibling rows (macro-indicators, pdf-extractor). Confirmed docs/data/size-lint-baseline.json untouched (AC-2 landmine avoided). Verified actual wc -l for all 6 files matches claim exactly (claimCandidateScanner 116L, vpsPushLogStore 160L, signalValidator 177L, vpsProxyTools 87L, polymarket 462L, orchStateSchema 839L). orchStateSchema.ts justification header read in full — substantive, not bare, declared 839L matches actual exactly, cross-verified the named consumer (scripts/orch-validate.mjs imports by name) and harness (drain-signals.test.js raw-copies the file) claims against live grep. Independently re-ran bun tsc --noEmit (clean), 3 targeted test files touching every split module (51/51 pass), and drain-signals.test.js (36/36 pass, exercises the copied-orchStateSchema harness). DJ-GATE-1 entry confirmed present (dev-mcp-server decision journal S35). Lane-move + head-idle-reset confirmed correct per CANONICAL:SSOT-STATUSFLIP-LANEMOVE. Zero discrepancies found."
+      },
+      {
+        "id": "FIX-CI-SIZELINT-PDFX-EXTRACTION-ENGINE-TOLERANCE",
+        "type": "FIX",
+        "size": "S",
+        "priority": "P0",
+        "status": "REVIEW",
+        "zone": "apps/pdf-extractor/",
+        "owner": "dev-pdf-extractor",
+        "next_agent": "qa",
+        "supervised": false,
+        "plan_only": false,
+        "created_by": "po/triage-20260731T0132",
+        "created_at": "2026-07-31T01:32:47Z",
+        "updated_at": "2026-07-31T03:59:57Z",
+        "origin_signal_id": "CI-RED-8e1e66e5",
+        "check_id": "CI-RED-8e1e66e5",
+        "dedup_key": "ci_job:size-lint|file:apps/pdf-extractor/infrastructure/extraction_engine.py",
+        "verification_gate": "size_lint_file_level_then_ci_green",
+        "title": "CI size-lint: apps/pdf-extractor/infrastructure/extraction_engine.py baseline-tolerance-exceeded (baseline=208L actual=237L upper=228L) — 9L over tolerance, smallest of the 8 offenders in the same red job.",
+        "root_cause": "File has a docs/data/size-lint-baseline.json entry at 208L and has grown to 237L, 9L past its 228L upper tolerance. Sub-mode is baseline-tolerance-exceeded, not new-offender — the file is already acknowledged, it just drifted.",
+        "evidence": "`gh run view 30596148097 --log-failed`, step 'Run size-lint-justification --check': `apps/pdf-extractor/infrastructure/extraction_engine.py — baseline-tolerance-exceeded (baseline=208L actual=237L upper=228L)`. Local `wc -l` = 237, matching CI exactly.",
+        "ac": "(AC-1) `bash scripts/audits/size-lint-justification.sh --check` no longer lists apps/pdf-extractor/infrastructure/extraction_engine.py. FILE-LEVEL gate — the size-lint job stays red until the two sibling-zone rows land; do not wait on job green. (AC-2) LANDMINE — NEVER `--update` (baseline is regenerated wholesale, script :175 `_note`; one --update grandfathers all 8 current offenders repo-wide). (AC-3) Prefer trimming 9L of genuine slack over re-baselining; if re-baselining, state what the +29L since 208L actually added and why it belongs in this file.",
+        "files": [
+          "apps/pdf-extractor/infrastructure/extraction_engine.py"
+        ],
+        "reference_only_files": [
+          "scripts/audits/size-lint-justification.sh",
+          "docs/data/size-lint-baseline.json"
+        ],
+        "related": "Sibling zone-split of the same red size-lint job: FIX-CI-SIZELINT-MCPSERVER-SIX-UNCOVERED-OFFENDERS (6 files) + FIX-CI-SIZELINT-MACRO-VMT-LIQUIDITY-RESOLVERS-NEW-OFFENDER (ready, 1 file). Do not open an untracked-brief-driven refactor here — docs/architecture-briefs/2026-07-28-pdfx-tesseract-concurrency-invariant.md is uncommitted and out of scope for this row.",
+        "dedup_checked": "2026-07-31T01:30Z — jq over every lane matching /extraction_engine|pdfx.*size|size.*pdf/i => 0 open rows.",
+        "baseline_pass": null,
+        "desc": null,
+        "status_note": "[po 2026-07-31T02:27:29Z] P3->P0. size-lint CONJUNCTION 3/3. Re-confirmed at run 30598372356 (head 40dfb1f9): extraction_engine.py baseline=208 actual=237 upper=228, byte-identical to the CI-RED-8e1e66e5 observation 54min earlier - zero drift. Smallest of the 8 offenders. Siblings: FIX-CI-SIZELINT-MACRO-VMT-LIQUIDITY-RESOLVERS-NEW-OFFENDER, FIX-CI-SIZELINT-MCPSERVER-SIX-UNCOVERED-OFFENDERS. Escalated with the cluster: at P3/idx 372 it was the single lowest-ranked row on the board, so the conjunction had a guaranteed-unreachable member.",
+        "promoted_at": "2026-07-31T03:48:17Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=0)",
+        "claimed_at": "2026-07-31T03:48:21Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "commit_sha": "d808a6a11792a263a756c2a00f137e97ca36b897",
+        "review_note": "dev-pdf-extractor: trimmed 3x-repeated OcrCapacityExceededError/OcrDeadlineExceededError/OcrPageFailedError propagation rationale (2 docstrings + 1 comment, all restating commit 200eabcf3's rationale) into 1 canonical paragraph + 2 pointer references. extraction_engine.py 237L->226L (AC-1 upper=228L). Zero functional change. AC-1 verified: bash scripts/audits/size-lint-justification.sh --check no longer lists this file (1 unrelated macro-indicators offender remains, sibling row's scope). AC-2: docs/data/size-lint-baseline.json untouched (no --update, no direct edit; git log confirms last touch is the original guardrail commit 22cd084d4). AC-3: no re-baseline, trimmed genuine slack instead. Full pytest -q: 1058 passed / 1 pre-existing env-only fail (test_bt3_fix3_real_ocr_fidelity, missing /app/data/pdfs/... container fixture) — git-stash A/B confirmed identical before/after, unrelated to this change. Decision journal: docs/agent-memory/decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-dev-pdf-extractor.md STEP dev-pdf-extractor-S2."
       }
     ],
     "qa": [],
@@ -18723,7 +18729,7 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-31T02:52:07Z",
+    "last_triaged_at": "2026-07-31T03:48:17Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
     "in_progress": []
   },
