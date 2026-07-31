@@ -87,3 +87,12 @@
 **why-change:** No plan change. Net: 1 background agent in flight (`dev-mcp-server`/size-lint fix). Awaiting RETURN.
 
 ---
+
+### STEP dev-team-S35 · dev-team · 2026-07-31T03:16:00Z
+**task-id:** cron-tick (preflight→drain→CI-probe→0a-B→S2 pipeline-resume) — no dispatch, correct no-op tick
+**what-done:** Ran preflight (RUN verdict, same RC=1 quirk), GCC-preflight clean. Drain: `drainable_count=0`, 0 NEW `.signal_queue` rows — nothing to persist. 0a-B orphan probe surfaced the same 2 recurring false-orphans a 3rd consecutive cycle (`task:po-triage-20260731`, `task:on-demand:agent-father:20260731`/TE-T08) — re-verified against live board state rather than trusting the reaper's framing again: TE-T08 still `REVIEW`/`qa`/commit `af63043ae8`, and the po-triage lock shows genuine same-day reuse (board rows stamped 01:32Z/01:41Z/01:43Z under that key). Both correctly SKIPPED. CI probe deduped clean against last cycle's fingerprint — no new signal. Step 0b: checked `.head` (`in_progress`/`FIX-CI-SIZELINT-MCPSERVER-SIX-UNCOVERED-OFFENDERS`/`dev-mcp-server`) AND independently confirmed the board row itself is genuinely `IN_PROGRESS` (not sitting in review/done as a stale pointer would show), plus the harness's own notification that background agent `a302e834a3ad46e99` is still running. Correctly withheld re-spawn.
+**what-considered:** Whether the board-row-status check was redundant given `.head` already said `in_progress`. Chose to verify anyway — `.head` alone is a routing pointer, not proof of liveness; the actual defect class this guards against (per `[[feedback_pipeline_resume_stale_placeholder_duplicate_spawn_risk]]`) is exactly a `.head` pointer surviving after the row itself moved on. Checking both planes (`.head` + row lane + harness liveness signal) before concluding "no-op" is the same discipline as the RAW-verification pattern applied to agent RETURNs, applied pre-emptively here to a resume decision instead.
+**why-decision:** WIP=1 (the in-flight row), so BOUNDED-1 correctly did not fire either — no idle capacity to fill. Nothing else drained or triaged this tick. Released SF-1 + fire-election locks (`ok:true` both); `task:FIX-CI-SIZELINT-MCPSERVER-SIX-UNCOVERED-OFFENDERS` LOCK-LIFETIME hold continues.
+**why-change:** No plan change. Net: 1 background agent still in flight (unchanged from S34). Awaiting RETURN.
+
+---
