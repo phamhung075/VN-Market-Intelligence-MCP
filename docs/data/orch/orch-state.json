@@ -93,11 +93,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "active_task_id": null,
-    "next_agent": "router",
-    "updated_at": "2026-07-31T21:22:31Z",
-    "updated_by": "dev-stock-price"
+    "status": "in_progress",
+    "active_task_id": "FIX-ERRAUDIT-W2-DEADLINE-UNITTEST",
+    "next_agent": "dev-mcp-server",
+    "next_action": "BOUNDED-1 auto-pickup claim of FIX-ERRAUDIT-W2-DEADLINE-UNITTEST — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
+    "updated_at": "2026-07-31T21:47:52Z",
+    "updated_by": "dev-team (bounded-1 auto-pickup)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -6038,16 +6039,6 @@
         "zone": "apps/pdf-extractor/",
         "title": "Wave-3 P2 pdf-extractor: validate_or_unknown (services.py:91) + parse_or_raise (extraction_engine.py:102)",
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-ERRAUDIT-W3-PEK-P2"
-      },
-      {
-        "id": "FIX-ERRAUDIT-W2-DEADLINE-UNITTEST",
-        "type": "FIX",
-        "priority": "P3",
-        "size": "S",
-        "status": "BACKLOG",
-        "zone": "apps/mcp-server/",
-        "title": "Unit test fetchDeadline.ts (withDeadline + macroFetch)",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-ERRAUDIT-W2-DEADLINE-UNITTEST"
       },
       {
         "id": "FIX-BCTC-BANK-SUMMARY-MAPPING",
@@ -19637,9 +19628,27 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-31T21:18:55Z",
+    "last_triaged_at": "2026-07-31T21:47:38Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": []
+    "in_progress": [
+      {
+        "id": "FIX-ERRAUDIT-W2-DEADLINE-UNITTEST",
+        "type": "FIX",
+        "priority": "P3",
+        "size": "S",
+        "status": "IN_PROGRESS",
+        "zone": "apps/mcp-server/",
+        "title": "Unit test fetchDeadline.ts (withDeadline + macroFetch)",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-ERRAUDIT-W2-DEADLINE-UNITTEST",
+        "promoted_at": "2026-07-31T21:47:38Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=3)",
+        "updated_at": "2026-07-31T21:47:52Z",
+        "claimed_at": "2026-07-31T21:47:42Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "next_agent": "dev-mcp-server"
+      }
+    ]
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
