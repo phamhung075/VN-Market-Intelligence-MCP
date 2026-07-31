@@ -199,3 +199,12 @@
 - only path: sub-flow mandates exactly ONE top-priority candidate per invocation
 **why-decision:** TE-T08 is P1, `next_agent=agent-father`, off the DRS allowlist — exactly the stranded class this producer serves — and it routes to agent-father, so it costs dev-team no dev WIP slot and runs parallel to the CI work.
 **why-change:** Added a coupling landmine to the row. T-08 inverts the commit-mutex SKILL to a ~60L hot card; the pathspec-commit line MUST stay in the hot card, or the refactor deletes the only in-context instruction preventing the bare commits S78 just proved are live at 14/8h.
+
+### STEP po-S80 · po · 2026-07-31T01:40Z
+**task-id:** FIX-COLDEVICT-WITHIN-FILE-PEER-CONTENT-CAPTURE
+**what-done:** Caught a live positive control for this row — the architect's commit absorbed my own 4 triage rows 2 min after I wrote them — and cleared the `plan_only:null` that was stranding it.
+**what-considered:**
+- Treat it as a sweep-guard instance and fold into the row minted at S78
+- Check whether the hook fired before classifying it
+**why-decision:** `.git/sweep-guard.log` has ZERO entries after 01:17:02Z, so the hook never fired on 95a1083e5 — **correctly**, the commit WAS pathspec-scoped and legitimately named orch-state.json. The guard's detection unit is the FILE PATH (pre-commit:445-454); this defect lives strictly INSIDE one file every writer legitimately stages, so no pathspec discipline can ever reach it. Distinct row, must not merge.
+**why-change:** Content was conserved (both writers went through orch-apply.sh; conservation check 738=738) — only ATTRIBUTION was lost. So the AC should assert on ownership, not only on conservation; the dangerous variant is a stale-read writer landing a rollback under an innocent title.
