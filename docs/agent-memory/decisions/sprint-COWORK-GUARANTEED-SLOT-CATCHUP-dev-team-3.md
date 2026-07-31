@@ -24,3 +24,12 @@
 **why-change:** Also closed out `sprint-COWORK-GUARANTEED-SLOT-CATCHUP-dev-team-2.md` (byte-cap breach, 40769/36000, line count fine at 115/600) and rolled to this continuation file per the decision-journal skill's own protocol, sent the mandatory bug-channel telegram (msg 4501). Net: 2 background agents outstanding (`developer` on sweep-guard re-dispatch; `developer` on head-stamp fix, `a85fe24b775a623b5`, still no RETURN this entire window).
 
 ---
+
+### STEP dev-team-S28 · dev-team · 2026-07-31T02:09:00Z
+**task-id:** FIX-ORCHSTATE-HEAD-STAMP-DROPPED-CI-RED-1837A (developer terminal return) + branch-hijack escalation
+**what-done:** Head-stamp `developer` returned — RAW-verified 4 commits (`8f2aa59d7`/`3de82a7e8`/`f2bbc8273`/`a36a6c93d`) all ancestors of HEAD, 2-file fix diff matches. Independently re-ran `orch-apply-wrapper-tests.sh` (60/60, all 3 new AC-6 groups present) and `1837a-pipeline-state.test.ts` (5/5) rather than trust the self-report. Live `.head` confirmed genuinely stamped. Board row `REVIEW`/`next_agent:qa` — released the resume lock.
+**what-considered:** The developer flagged (as an aside) a transient git stash-pop failure caused by the same shared-cwd branch-hijack hazard already hit twice earlier this window (dev-team's own commit, agents-architect's commit). That's now 4 independent hits in one day with zero existing board row. Considered writing a 5th ad-hoc memory note vs. escalating for a real fix.
+**why-decision:** Per project standing policy (recurring 2+ occurrences → escalate, not re-note), dedup-checked the live board (zero matches) and dropped a `bug-escalation` signal to `po` instead, read-back confirmed. This converts a pattern I keep individually recovering from into something the fleet can actually fix (likely: PM handoff template stop defaulting to a `branch:` field, or developer dispatches default to `isolation:"worktree"`).
+**why-change:** Also compacted `MEMORY.md` (hook-triggered, 20.7KB approaching the 24.4KB read limit) — trimmed duplicated trailing prose already covered in topic files, tightened separators, dropped ~10 lowest-value pointers, landed at 17.1KB. Net: 1 background agent outstanding (`developer` on sweep-guard re-dispatch, resume lock held).
+
+---
