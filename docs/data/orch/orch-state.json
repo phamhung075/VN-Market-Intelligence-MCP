@@ -95,7 +95,9 @@
   "head": {
     "status": "idle",
     "active_task_id": null,
-    "next_agent": "router"
+    "next_agent": "router",
+    "updated_by": "developer",
+    "updated_at": "2026-07-31T01:52:01Z"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -4996,31 +4998,6 @@
         "mode": "spike",
         "timebox": 240,
         "next_agent": "ba"
-      },
-      {
-        "id": "TE-T08",
-        "title": "T-08 commit-mutex SKILL: invert to ~60L hot card + lazy backoff/failure refs [~60-90k tok/day]",
-        "owner": "agent-father",
-        "status": "BACKLOG",
-        "type": "CLEAN",
-        "size": "S",
-        "priority": "P1",
-        "wave": 2,
-        "est_saving": "~60-90k tok/day",
-        "zone": ".claude/skills/",
-        "sprint": "TOKEN-ECONOMY-AUDIT",
-        "depends": [],
-        "detail_ref": "docs/architecture-briefs/2026-07-12-token-economy-lazyload-audit.md#T-08",
-        "note": "29 flow files route commits through this 235L file; its own Quick Reference (21L) proves the happy path fits. Keep gates (C-2/C-2b fail-closed) + happy path on hot card (~70L); move backoff table/jitter/rebase-retry bash/rationale to references/. All gates stay verbatim.",
-        "next_agent": "agent-father",
-        "po_routing_ruling_20260721": "PO ARTIFACT-CLASS ROUTING RULING 2026-07-21T18:42Z. Rule: routing follows ARTIFACT CLASS, not directory. Any row whose deliverable is instruction-prose that an agent LOADS AND EXECUTES — .claude/agents/**, docs/agents/** (init/flow/knowledge/tools-package), .claude/skills/**/SKILL.md — routes to agent-father. Executable code (apps/**, scripts/**), codegen-from-registry, and data/root-config (docs/data/**, CLAUDE.md) route to zone-matched dev-* or developer. Rationale: for this system a flow doc IS the executable source; agent-father is already sole owner of agent-file lifecycle (dispatch/SKILL.md:48) and of NEW cron skill files (:50), and board precedent has 5/5 pre-existing docs/agents/ rows routed to agent-father/agents-architect/po and 0 to developer. Precedent for SKILL.md specifically: docs/signals/processed/dev-team-20260716T102429Z-autolaunch-safety-hold-uc-asl-p6.json already routed a signal-dashboard SKILL.md edit to agent-father as 'the factory rule'. ROOT CAUSE this closes: .claude/skills/zone-detect/SKILL.md resolves ONLY dev-<service> (Tier-1/2, needs apps/<service>/-shaped zone) or generic developer (Tier-3 fallback) — it has NO path to agent-father, so any docs/agents/ or .claude/skills/ row reaching execute-tier with next_agent unset gets the 'developer' placeholder and mis-routes. EXPECTED SIDE EFFECT (do NOT 'fix' this): next_agent=agent-father does not match the dev-role pattern ^dev(-|$)|^developer$, so the BOUNDED-1 NON-DEV-NEXT_AGENT gate (dev-team/flow/main.md:518) now WITHHOLDS these rows from unattended idle auto-pickup. That is the intended outcome — they require deliberate router dispatch to agent-father, not silent promotion to a generic developer.",
-        "updated_at": "2026-07-31T01:35:34Z",
-        "po_manual_dispatch_flagged_at": "2026-07-31T01:32:47Z",
-        "po_manual_dispatch_flagged_by": "po (manual-dispatch-sweep)",
-        "po_manual_dispatch_class": "DRS-STRANDED-OFF-ALLOWLIST",
-        "po_manual_dispatch_note": "po (manual-dispatch-sweep) surfaced DRS-STRANDED-OFF-ALLOWLIST candidate — folding into this tick's BATCH. Top of 20+ unflagged candidates by [rank, idx].",
-        "po_coupling_landmine_20260731T0132": "READ BEFORE REWRITING .claude/skills/commit-mutex/SKILL.md. This T-08 inversion turns the skill into a ~60L hot card with the rest lazy-loaded. The PATHSPEC-SCOPED COMMIT RULE (`git commit -m \"<msg>\" -- <own-files-only>`, never a bare commit, never a directory or '.') MUST STAY IN THE HOT CARD — demoting it to a lazy ref would delete the only in-context instruction that prevents bare commits, at the exact moment commit-sweep-guard is logging 14 bare-commit warns per 8h across 4 sessions (see FIX-SWEEPGUARD-WARN-ONLY-NO-ACTUATOR-AND-TRIAGE-MISADJUDICATION, minted this tick). Backoff/failure handling is the correct thing to lazy-load; the commit line shape is not. Verify after the rewrite by grepping the hot card for `-- ` on the commit example.",
-        "updated_by": "po (triage-20260731T0132)"
       },
       {
         "id": "TE-T11",
@@ -13148,6 +13125,33 @@
     ],
     "review": [
       {
+        "id": "TE-T08",
+        "title": "T-08 commit-mutex SKILL: invert to ~60L hot card + lazy backoff/failure refs [~60-90k tok/day]",
+        "owner": "agent-father",
+        "status": "REVIEW",
+        "type": "CLEAN",
+        "size": "S",
+        "priority": "P1",
+        "wave": 2,
+        "est_saving": "~60-90k tok/day",
+        "zone": ".claude/skills/",
+        "sprint": "TOKEN-ECONOMY-AUDIT",
+        "depends": [],
+        "detail_ref": "docs/architecture-briefs/2026-07-12-token-economy-lazyload-audit.md#T-08",
+        "note": "29 flow files route commits through this 235L file; its own Quick Reference (21L) proves the happy path fits. Keep gates (C-2/C-2b fail-closed) + happy path on hot card (~70L); move backoff table/jitter/rebase-retry bash/rationale to references/. All gates stay verbatim.",
+        "next_agent": "qa",
+        "po_routing_ruling_20260721": "PO ARTIFACT-CLASS ROUTING RULING 2026-07-21T18:42Z. Rule: routing follows ARTIFACT CLASS, not directory. Any row whose deliverable is instruction-prose that an agent LOADS AND EXECUTES — .claude/agents/**, docs/agents/** (init/flow/knowledge/tools-package), .claude/skills/**/SKILL.md — routes to agent-father. Executable code (apps/**, scripts/**), codegen-from-registry, and data/root-config (docs/data/**, CLAUDE.md) route to zone-matched dev-* or developer. Rationale: for this system a flow doc IS the executable source; agent-father is already sole owner of agent-file lifecycle (dispatch/SKILL.md:48) and of NEW cron skill files (:50), and board precedent has 5/5 pre-existing docs/agents/ rows routed to agent-father/agents-architect/po and 0 to developer. Precedent for SKILL.md specifically: docs/signals/processed/dev-team-20260716T102429Z-autolaunch-safety-hold-uc-asl-p6.json already routed a signal-dashboard SKILL.md edit to agent-father as 'the factory rule'. ROOT CAUSE this closes: .claude/skills/zone-detect/SKILL.md resolves ONLY dev-<service> (Tier-1/2, needs apps/<service>/-shaped zone) or generic developer (Tier-3 fallback) — it has NO path to agent-father, so any docs/agents/ or .claude/skills/ row reaching execute-tier with next_agent unset gets the 'developer' placeholder and mis-routes. EXPECTED SIDE EFFECT (do NOT 'fix' this): next_agent=agent-father does not match the dev-role pattern ^dev(-|$)|^developer$, so the BOUNDED-1 NON-DEV-NEXT_AGENT gate (dev-team/flow/main.md:518) now WITHHOLDS these rows from unattended idle auto-pickup. That is the intended outcome — they require deliberate router dispatch to agent-father, not silent promotion to a generic developer.",
+        "updated_at": "2026-07-31T01:56:09Z",
+        "po_manual_dispatch_flagged_at": "2026-07-31T01:32:47Z",
+        "po_manual_dispatch_flagged_by": "po (manual-dispatch-sweep)",
+        "po_manual_dispatch_class": "DRS-STRANDED-OFF-ALLOWLIST",
+        "po_manual_dispatch_note": "po (manual-dispatch-sweep) surfaced DRS-STRANDED-OFF-ALLOWLIST candidate — folding into this tick's BATCH. Top of 20+ unflagged candidates by [rank, idx].",
+        "po_coupling_landmine_20260731T0132": "READ BEFORE REWRITING .claude/skills/commit-mutex/SKILL.md. This T-08 inversion turns the skill into a ~60L hot card with the rest lazy-loaded. The PATHSPEC-SCOPED COMMIT RULE (`git commit -m \"<msg>\" -- <own-files-only>`, never a bare commit, never a directory or '.') MUST STAY IN THE HOT CARD — demoting it to a lazy ref would delete the only in-context instruction that prevents bare commits, at the exact moment commit-sweep-guard is logging 14 bare-commit warns per 8h across 4 sessions (see FIX-SWEEPGUARD-WARN-ONLY-NO-ACTUATOR-AND-TRIAGE-MISADJUDICATION, minted this tick). Backoff/failure handling is the correct thing to lazy-load; the commit line shape is not. Verify after the rewrite by grepping the hot card for `-- ` on the commit example.",
+        "updated_by": "dev-team/te-t08-review-flip-20260731T0354Z",
+        "commit_sha": "af63043ae81475db90c72e3eb66c2b8c6b8f8da2",
+        "return_summary": "82L hot card (was 256L) + 79L reference.md; pathspec-scoped commit gate (po's landmine) preserved verbatim, grep-verified; 2 stale cross-refs fixed in commit-boundary/SKILL.md + commit/SKILL.md; scripts/git-hooks/pre-commit:38 stale 'Step 3c' comment flagged non-blocking (outside agent-father commit zone)"
+      },
+      {
         "id": "UC-ASL-P6",
         "type": "CLEAN",
         "title": "Purge the DASHBOARD.md phantom protocol from the auditor flow; align SKILL.md hot-path write text with the orch-apply contract",
@@ -18510,8 +18514,8 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-31T01:43:05Z",
-    "last_triaged_by": "dev-team/po-batch-dispatch-20260731T0141Z",
+    "last_triaged_at": "2026-07-31T01:56:08Z",
+    "last_triaged_by": "dev-team/te-t08-review-flip-20260731T0354Z",
     "in_progress": [
       {
         "id": "FIX-ORCHSTATE-HEAD-STAMP-DROPPED-CI-RED-1837A",
