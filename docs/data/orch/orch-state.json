@@ -93,12 +93,11 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "FACTORY-STOCK-dedup-history-handlers",
-    "next_agent": "developer",
-    "next_action": "BOUNDED-1 auto-pickup claim of FACTORY-STOCK-dedup-history-handlers — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
-    "updated_at": "2026-07-31T21:19:00Z",
-    "updated_by": "dev-team (bounded-1 auto-pickup)"
+    "status": "idle",
+    "active_task_id": null,
+    "next_agent": "router",
+    "updated_at": "2026-07-31T21:22:31Z",
+    "updated_by": "dev-stock-price"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -19600,6 +19599,24 @@
         "updated_by": "dev-api-gateway",
         "commit_sha": "b184dde9fdbdb20c5117cad2235ac36bc781c928",
         "note": "main.go serviceURLs 10-entry map literal (9 default docker URLs + hardcoded api alias) replaced with serviceURLOverrides() sparse-map builder over serviceEnvVars lookup table -- only non-empty env vars included, unset keys fall through to registry.go get(key,fallback) defaults (untouched, already correct SSOT). api key omitted (no dedicated env var), still resolves via get(\"api\", mcpURL) inside registry, unchanged. New cmd/server/main_test.go (package main, precedent apps/technical-analysis/cmd/server/main_test.go) unit-tests serviceURLOverrides via t.Setenv: all-unset->empty, subset->exact keys, all-set (docker-compose shape)->full 9-key map matching old literal 1:1, api never present. RED (undefined symbols) confirmed before GREEN. go build/vet/test 10/10 pkgs clean, gofmt -l clean on touched files, golangci-lint 0 issues (Fence-C intact), G12 sandbox primitive 14/14 + module 1/1 GREEN. Zero-credentials scan clean. Commit b184dde9f (code+test+doc), 3fe382445 (decision journal), d930093e3 (notebook) -- local main, explicit pathspecs, not pushed. rebuild_required=true, USER-GATED; rebuild-verify PENDING-USER-GATED, code-only. Decision journal: docs/agent-memory/decisions/sprint-FACTORY-APIGW-dedup-default-urls-dev-api-gateway.md"
+      },
+      {
+        "title": "Dedup priceHistory handlers + name the days=30 default",
+        "priority": "P3",
+        "zone": "stock-price",
+        "type": "FACTORY",
+        "status": "REVIEW",
+        "id": "FACTORY-STOCK-dedup-history-handlers",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-STOCK-dedup-history-handlers",
+        "promoted_at": "2026-07-31T21:18:55Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=3)",
+        "updated_at": "2026-07-31T21:22:31Z",
+        "claimed_at": "2026-07-31T21:19:00Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "commit_sha": "8638467b6224da29ba7bc8743b236d81bd421e36",
+        "completed_at": "2026-07-31T21:22:30Z",
+        "review_note": "rebuild_required:true — ops must rebuild stock-price service before deploy"
       }
     ],
     "qa": [],
@@ -19621,23 +19638,7 @@
     },
     "last_triaged_at": "2026-07-31T21:18:55Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": [
-      {
-        "title": "Dedup priceHistory handlers + name the days=30 default",
-        "priority": "P3",
-        "zone": "stock-price",
-        "type": "FACTORY",
-        "status": "IN_PROGRESS",
-        "id": "FACTORY-STOCK-dedup-history-handlers",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-STOCK-dedup-history-handlers",
-        "promoted_at": "2026-07-31T21:18:55Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=3)",
-        "updated_at": "2026-07-31T21:19:00Z",
-        "claimed_at": "2026-07-31T21:19:00Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)"
-      }
-    ]
+    "in_progress": []
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
