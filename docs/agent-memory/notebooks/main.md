@@ -1,6 +1,15 @@
 # Dev Team — Sprint Boundary Notebook
 
-**Written:** 2026-07-31T09:46Z
+**Written:** 2026-07-31T10:29Z
+
+## cycle-20260731T1029Z-pdfocrpagecap-verified-released — RAW-verified `dev-mcp-server`'s FIX-PDFOCR-PAGECAP-COMPLETENESS-THRESHOLD-MISMATCH return (zero discrepancy — independently reproduced RED against pre-fix code myself, not just trusted the self-report); nudged agent past an unnecessary live-restart wait mid-flow. WIP 0, idle-head
+
+- **Mid-flow nudge (S64)**: a fresh tick found the agent paused waiting on its own internal monitor for an optional live mcp-server restart (AC4, explicitly best-effort). Confirmed re-entrant lock (not a peer collision), pushed its 2 interim commits so nothing was stranded, then `SendMessage`'d it to stop waiting and finalize — AC3's regression test was always the real DoD gate.
+- **Commit `dfbe9348f` (board/head write) real, pushed**, local==origin. Diff of `1b9425d6f` read in full — matches claim exactly: `OCR_MAX_PAGES=80` shared constant, threshold now capped-`expectedPages`-based, upfront blanket DELETE removed, defensive post-loop `DELETE...page_number>maxPages` added AFTER the loop (write-before-delete). Independently confirmed the UPSERT claim (`INSERT OR REPLACE` + schema `UNIQUE(filename,page_number)`) — not asserted-but-absent.
+- **RED independently reproduced, not just trusted**: swapped in the pre-fix file (`git show c04e00ed9:...`), re-ran the exact same test — 0 pass/2 fail, genuinely reproducing both defects. Restored the fix, re-verified 2/2 pass + clean `git diff`. `tsc` clean. Targeted OCR suite: agent's own exact 8-file list → **89/0, exact match**; a 9th file my own grep found (`293-ocr-fallback-pipeline.test.ts`, omitted from their list) also 0 fail — minor undercount, not a correctness gap.
+- **Board/head clean**: row `REVIEW`/`next_agent:qa`/`commit_sha` correct with full matching `review_note`; `.head` idle/`next_agent:router`, lane-move + head-reset in the SAME commit (CANONICAL:SSOT-STATUSFLIP-LANEMOVE held). Decision journal roll verified (byte-cap breach → `-2.md`, `CAP-REACHED` marker in base). Notebook 3 sections/35L.
+- **AC4 honestly disclosed NOT ATTEMPTED** — matches what I explicitly told the agent was best-effort/ops's job, not a shortfall.
+- **NEXT**: no items remain from this tick's dispatch. `TE-T12` still the only undispatched item from PO's 2026-07-31T0637Z triage (routes to `agent-father`). Idle-head, WIP=0.
 
 ## cycle-20260731T0946Z-bounded1-pdfocrpagecap-dispatched — Fresh tick: preflight RUN, drained 3 signals (own-journal byte-cap DEFER, notebook-immutability WARN, routine telemetry), `.head` idle/WIP=0 → BOUNDED-1 claimed+dispatched FIX-PDFOCR-PAGECAP-COMPLETENESS-THRESHOLD-MISMATCH (clean dev-role row, no gate-gap this time); 1 background agent in flight
 
@@ -22,13 +31,4 @@
 - **`.route`-only gate gap re-confirmed live (2nd instance)**: distinct from the already-closed `FIX-DEVTEAM-BOUNDED1-NONDEV-OWNER-BOARD-FALLBACK-GATE`; left for PO to weigh against the recurring-bug bar, not actioned further.
 - **NEXT**: no items remain from this tick's dispatch. `TE-T12` still the only undispatched item from PO's 2026-07-31T0637Z triage (routes to `agent-father`). Idle-head, WIP=0.
 
-## cycle-20260731T0917Z-bounded1-ocrbootloop-dispatched — Fresh tick: preflight RUN, drained 4 signals (1 informational new type), `.head` idle/WIP=0 → BOUNDED-1 claimed+dispatched FU-OCR-BOOT-LOOP-SEQUENTIAL (found+corrected a NEW gate-gap variant); 1 background agent in flight
-
-- **Preflight/GCC-preflight clean**: verdict RUN, tick `09:07Z`. No HEAD.lock, local HEAD==origin/main exactly, dirty tree = peer-session churn only.
-- **Drained 4 signals**: own-journal `context_bloat_breach` (DEFER-held, recurring), 2 `cowork-team` fire-events (routed-to-po), and a new `notebook_tiebreak_direction_defaulted` type on `unified-agent`'s notebook — read in full, confirmed informational-only (all sections lack parseable timestamps, documented `newest_first` fallback applied correctly, no action needed).
-- **CI probe**: GREEN on HEAD `f67be684d`, no signal.
-- **`.head` idle, WIP=0** → BOUNDED-1 promote+claim → claimed `FU-OCR-BOOT-LOOP-SEQUENTIAL` (P3/S, type REVIEW: dev-mcp-server's residual FIX-CTG-3-STEP-D concern — bootstrap OCR loop parallel→sequential in `21c467e8`, review if the startup-latency tradeoff still holds). **New gate-gap found**: detail row carries only `route:"architect"` (no `owner`/`next_agent`) — grepped `scripts/lib/devteam-eligibility.jq` + both bounded1 jq scripts, confirmed neither recognizes `.route`, so the NON-DEV-OWNER/NON-DEV-NEXT_AGENT gates (flow doc calls this "vestigial" for BOUNDED-1) did NOT actually exclude it — a live counterexample. Exactly 1 other live row shares this shape (`HARDEN-NOTEBOOK-WRITE-GATE-AC5-BLOCKING`). Corrected `.head.next_agent` + row's own `next_agent` `developer`→`architect` via `orch-apply.sh` before dispatch, same remediation class as S59's zone-map fix. Did NOT unilaterally patch the gate script — that's an architect-brief+PO-ratified process per this file's own precedent (DRS/SLS); flagged it in the dispatch prompt instead for architect's own judgment.
-- Dispatcher-wrap `task_claim("task:FU-OCR-BOOT-LOOP-SEQUENTIAL", task_kind="sprint-task")` → `claimed:true` → spawned `architect` in background with full task context, review-disposition options, and the gate-gap note.
-- **Elected NOT to dispatch Step 1 PO triage this tick**: BOUNDED-1 dispatched — JUMP TO end, consistent with S54/S57/S59 precedent.
-- **NEXT**: await `architect`'s RETURN, RAW-verify (re-read the actual composition-root code/commit `21c467e8`, confirm board/head state per CANONICAL:SSOT-STATUSFLIP-LANEMOVE), release lock. `TE-T12` remains the only other undispatched item from PO's 2026-07-31T0637Z triage (routes to `agent-father`).
 
