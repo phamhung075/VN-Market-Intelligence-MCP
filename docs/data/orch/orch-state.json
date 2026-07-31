@@ -93,12 +93,12 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "FACTORY-TECHANALYSIS-fix-discarded-service-and-port",
-    "next_agent": "developer",
-    "next_action": "BOUNDED-1 auto-pickup claim of FACTORY-TECHANALYSIS-fix-discarded-service-and-port — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
-    "updated_at": "2026-07-31T19:48:26Z",
-    "updated_by": "dev-team (bounded-1 auto-pickup)"
+    "status": "idle",
+    "active_task_id": null,
+    "next_agent": "router",
+    "next_action": "idle — router step 1 triage",
+    "updated_at": "2026-07-31T19:58:44Z",
+    "updated_by": "dev-technical-analysis (task cycle complete)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -19558,6 +19558,25 @@
         "entered_review_at": "2026-07-31T19:30:25Z",
         "updated_by": "dev-mcp-server",
         "review_note": "Named the 2 inline PDF-quality magic numbers as MIN_PDF_TEXT_CHARS=100 / MIN_PDF_CONFIDENCE=0.3 (all 4/2 occurrences across the Tier 1a/1b/2/3 extraction gates in reparseSingleWithOcrFallback) and extracted the agent_feedback escalation for-loop out of runBctcReparseJob into a new module-private processStrandedFeedback(db, rows, reparse, notify, fileExistsFn) helper -- pure mechanical naming/extraction, resolved threshold values and side-effect ordering/log messages unchanged byte-for-byte. Broader file-split premise from the original 2026-06-15 maintainability-factory-audit finding was overstated per this task's own scoping note (reparseSingleWithOcrFallback already DI'd/pure, no work needed there; oversize is covered by a separate zone-wide cap task) -- out of scope here. processStrandedFeedback kept module-private (not exported): no existing test imports an internal loop function, all 21 importing test files hit only the public exports (parseStrandedDetail, reparseSingleWithOcrFallback, runBctcReparseJob, parseYearQuarterFromFilename, scanDiskForStrandedPdfs). No docs/architecture/microservice/mcp-server/*.md reference the internal loop structure or the literal thresholds by number -- doc-review: NONE needed. Evidence: bun tsc --noEmit clean. Targeted suite (21 test files that import bctcReparseJob.ts): 195/196 pass (1 pre-existing skip), 0 fail, 693 expect() calls. gen-project-stats.ts --dry-run: toolCount=183, cronJobCount=88 -- unchanged (no tool/scheduler registration touched). Full bun test (single run): 14989 pass / 58 fail / 2 errors / 40 skip across 15087 tests -- lands inside the already-documented 14988-14995 pass, 52-59 fail, 0-2 errors FIX-MCP-SUITE-HEALTH-BASELINE order-dependent-red band (S49/S50/S51, same day); the 2 visible error stack traces are freshnessSlaMonitorJob.ts / OHLCV-aggregator / orchStateSchema.test.ts -- unrelated pre-existing classes, zero bctcReparseJob matches. REBUILD_REQUIRED=true per docker-deployment-runbook (live scheduler code change needs image rebuild before live effect). Commit: f0a622472. DJ: sprint-COWORK-GUARANTEED-SLOT-CATCHUP-dev-mcp-server-2.md S52. Tool grant note: this specialist agent does NOT have the gateway MCP call_tool grant (developer tools package = Read/Edit/Write/Glob/Grep/Bash/semble only) -- this orch-state.json write is performed via orch-apply.sh (Bash) but left UNCOMMITTED on disk per the dispatch brief's own instruction; dev-team commits it after RAW-verification."
+      },
+      {
+        "title": "Remove discarded domain service wiring + inject real port into /health",
+        "priority": "P3",
+        "zone": "technical-analysis",
+        "type": "FACTORY",
+        "status": "REVIEW",
+        "id": "FACTORY-TECHANALYSIS-fix-discarded-service-and-port",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-TECHANALYSIS-fix-discarded-service-and-port",
+        "promoted_at": "2026-07-31T19:47:52Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=3)",
+        "updated_at": "2026-07-31T19:58:44Z",
+        "claimed_at": "2026-07-31T19:48:25Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "next_agent": "qa",
+        "updated_by": "dev-technical-analysis",
+        "commit_sha": "39fbec098",
+        "note": "Discarded domain.CalculateTAService wiring deleted (pkg/domain/services.go removed, zero other callers); /health now reflects the real bound RouterConfig.Port instead of a hardcoded 5003 literal. go build/vet/test + golangci-lint clean; G12 sandbox 35/35 + render-check PASS. REBUILD_REQUIRED — ops rebuild+restart apps/technical-analysis before qa live-verify."
       }
     ],
     "qa": [],
@@ -19579,23 +19598,7 @@
     },
     "last_triaged_at": "2026-07-31T19:47:52Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": [
-      {
-        "title": "Remove discarded domain service wiring + inject real port into /health",
-        "priority": "P3",
-        "zone": "technical-analysis",
-        "type": "FACTORY",
-        "status": "IN_PROGRESS",
-        "id": "FACTORY-TECHANALYSIS-fix-discarded-service-and-port",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-TECHANALYSIS-fix-discarded-service-and-port",
-        "promoted_at": "2026-07-31T19:47:52Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=3)",
-        "updated_at": "2026-07-31T19:48:26Z",
-        "claimed_at": "2026-07-31T19:48:25Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)"
-      }
-    ]
+    "in_progress": []
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
