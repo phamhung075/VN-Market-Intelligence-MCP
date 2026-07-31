@@ -1,3 +1,33 @@
+## c010 · 2026-07-31T00:35:38Z
+### Audit Run Tier-3 (00:32–00:45 UTC 2026-07-31)
+- Tier: 3 | DB checks: 16 (C-01..C-16) | Queries: 16 host-side sqlite3 | Integrity: 5 DBs
+- Anomalies: 0 new (0 critical, 0 warn, 0 info) | 0 dedup-skipped
+- Status: HEALTHY (all DB checks PASS, off-market context confirmed for C-06/C-11)
+
+Fire-election: tick=2026-07-31T02:00Z (`0 2 * * *` Tier-3 daily) — claimed, led tick.
+
+DB Audit Summary (host-side `sqlite3 -readonly` per Tier-3 override):
+- market.db: quick_check=ok, journal_mode=delete (mitigation verified)
+- All PRAGMA integrity_check = ok across 5 DBs
+- WAL sizes: all <50MB (coordination.db 1.9MB, others <1MB)
+- C-01/C-02: daily_ohlcv 941 rows/codes ≥25 — PASS
+- C-03/C-04: financial_reports Q1=45 codes, 0 low-confidence — PASS
+- C-05: SSC portal URLs=0 — PASS
+- C-06: market_messages (3h)=0 — off-market quiet (last msg 20:01Z ~4.5h prior, expected)
+- C-07: agent_signals (24h)=27 — PASS
+- C-09: macro_indicators Vietnam=3 fields (CPI, GDP, interest_rate) — PASS
+- C-10/C-11: pdf_documents 0 failed, 0 done — off-season BCTC idle (expected)
+- C-14: top 3 code share=0.3% — PASS
+- C-15: financial_reports schema 4/4 columns — PASS
+- C-16: stale pending BCTC=0 — PASS
+
+Known Non-Issues (no action):
+- C-08 orphaned alerts=113: DISPOSITION DISPOSED (join premise wrong, no mint per brief)
+- agent_signals T-format: 11 rows found (10 documented + 1 new at 2026-07-30T23:52:14.665Z ID 10088)
+- Q2 2026 financial_reports: 0 (documented SPIKE-BCTC-EXTRACTION-DORMANT-MASS-ENRICHFAIL-FLOOD)
+
+[OUTPUT-CONTRACT] signals_posted=0 | telegram_sent=0 | signal_queue_rows_written=0 | dashboard_rows=0 | dedup_skipped=0
+
 ## c009 · 2026-07-30T10:33:18Z
 ### Audit Run Tier-2 (10:31–10:33 UTC 2026-07-30)
 - Tier: 2 | Cron health: A-29 PASS (all jobs healthy) | Sources: 5 checked
