@@ -384,3 +384,5 @@
 - touch `SHIPPING_SYMBOLS` or fetch logic to add a real SCFI entry — explicitly out of scope per task note ("do not touch SHIPPING_SYMBOLS or any fetch logic"); this is a documentation-accuracy fix, not a feature addition. Left `supplyChainTools.ts`'s `shipping_scfi` indicator name and `supplyChainAnalyzer.ts`'s `SCFI: "shipping_scfi"` mapping untouched (separate files, separate defect class if the indicator is genuinely never populated — out of this row's scope, not evaluated further here).
 **why-decision:** Task is pure comment cleanup after a prior read-only Slice-A audit (FAKE-DATA-AUDIT 2026-06-05) already confirmed no data fabrication occurs — SHIPPING_SYMBOLS (L79-82) contains only `^BDI`/`^BFIY`. No RED/GREEN cycle applicable (no behavior to test); existing `252-shipping-index.test.ts` suite (8/8) re-run as the regression check.
 **why-change:** none — scoped exactly to the task note's instruction, widened by one sibling line (L7) for the reason above, nothing else touched.
+
+### CAP-REACHED · 2026-07-31T10:06:45Z
