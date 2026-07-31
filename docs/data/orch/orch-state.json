@@ -93,12 +93,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "active_task_id": null,
-    "next_agent": "router",
-    "next_action": "idle — awaiting next tick",
-    "updated_at": "2026-07-31T16:12:07Z",
-    "updated_by": "dev-team (BOUNDED-1 revert — prose plan-only near-miss)"
+    "status": "in_progress",
+    "active_task_id": "FIX-VPS-NEWS-STALE-FALSEPOS",
+    "next_agent": "developer",
+    "next_action": "BOUNDED-1 auto-pickup claim of FIX-VPS-NEWS-STALE-FALSEPOS — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
+    "updated_at": "2026-07-31T16:17:37Z",
+    "updated_by": "dev-team (bounded-1 auto-pickup)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -5785,16 +5785,6 @@
         "verify_note": "prior_status=DEFERRED",
         "superseded_by": "TE-T06",
         "note": " [SUPERSEDED by TE-T06 (system-auditor main.md Tier-2/3 split, richer scope) — PO rerank 2026-07-17; dev-team: close as dup when TE-T06 is picked, do NOT dispatch independently.]"
-      },
-      {
-        "id": "FIX-VPS-NEWS-STALE-FALSEPOS",
-        "priority": "P3",
-        "status": "BACKLOG",
-        "title": "FIX-VPS-NEWS-STALE-FALSEPOS — get_vps_proxy_health reports news:STALE false-positive: 0407 push log shows recent pushes (03:52, 03:36, 03:20, 03:04, 03:00) contradicting the STALE flag. The VPS staleness threshold is miscalibrated vs actual news push cadence; no real data gap. FIX: align the news stale-detection threshold with the observed push cadence (decouple the STALE flag from data-flow health so a healthy, actively-pushing feed is not flagged stale).",
-        "type": "FIX",
-        "zone": "apps/news-fetch/",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-VPS-NEWS-STALE-FALSEPOS",
-        "verify_note": "prior_status=TODO"
       },
       {
         "id": "ARCH-WATCHDOG-WEEKDAY-AWARE-THRESHOLD",
@@ -19127,9 +19117,26 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-31T16:12:00Z",
+    "last_triaged_at": "2026-07-31T16:20:00Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": []
+    "in_progress": [
+      {
+        "id": "FIX-VPS-NEWS-STALE-FALSEPOS",
+        "priority": "P3",
+        "status": "IN_PROGRESS",
+        "title": "FIX-VPS-NEWS-STALE-FALSEPOS — get_vps_proxy_health reports news:STALE false-positive: 0407 push log shows recent pushes (03:52, 03:36, 03:20, 03:04, 03:00) contradicting the STALE flag. The VPS staleness threshold is miscalibrated vs actual news push cadence; no real data gap. FIX: align the news stale-detection threshold with the observed push cadence (decouple the STALE flag from data-flow health so a healthy, actively-pushing feed is not flagged stale).",
+        "type": "FIX",
+        "zone": "apps/news-fetch/",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-VPS-NEWS-STALE-FALSEPOS",
+        "verify_note": "prior_status=TODO",
+        "promoted_at": "2026-07-31T16:20:00Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=3)",
+        "updated_at": "2026-07-31T16:17:37Z",
+        "claimed_at": "2026-07-31T16:22:00Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)"
+      }
+    ]
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
