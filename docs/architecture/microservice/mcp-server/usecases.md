@@ -286,7 +286,7 @@ files is POSITIVE-match gated via `isConsolidatedReportFilename()` (line
 English "consolidated" marker (same signal `hsxBctcFetcher.ts::rankItem()`
 uses) to be selected. A lone candidate (`matches.length === 1`) always links
 regardless of classification (best available). Zero positive matches among
-2+ candidates → `no_match` (loud `console.warn`, row stays PENDING, never a
+2+ candidates → `no_match` (loud `logger.warn`, row stays PENDING, never a
 silent wrong pick); 2+ positive matches → `ambiguous`.
 
 **FU-BACKFILL-MULTIPLE-COVER-LETTERS (2026-07-31):** replaced FIX-CTG-PDF-

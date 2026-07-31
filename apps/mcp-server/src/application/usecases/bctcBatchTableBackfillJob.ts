@@ -34,6 +34,7 @@
 
 import type { Database } from "bun:sqlite";
 import { existsSync } from "node:fs";
+import { logger } from "../../infrastructure/logger.js";
 
 // ─── UUID validation ──────────────────────────────────────────────────────────
 
@@ -130,7 +131,7 @@ export async function backfillBctcTables(
       eligibleRows.push(row);
     } else {
       missingFileRows.push(row);
-      console.warn(
+      logger.warn(
         `[bctcBatchTableBackfillJob] SKIP no-file: doc_id=${row.id} ` +
           `(${row.action_code} ${row.period_year}Q${row.period_quarter ?? "?"}) ` +
           `pdf_path=${row.pdf_path}`,
@@ -150,7 +151,7 @@ export async function backfillBctcTables(
         .get() as { n: number }
     ).n;
 
-  console.log(
+  logger.info(
     `[bctcBatchTableBackfillJob] Starting one-shot backfill (BT3-FIX-3 fresh-OCR): ` +
       `${eligibleRows.length} eligible (PDF on disk), ` +
       `${missingFileRows.length} skipped (file not found), ` +
@@ -170,7 +171,7 @@ export async function backfillBctcTables(
 
     // UUID-validate before any HTTP call
     if (!isValidUuid(docId)) {
-      console.error(
+      logger.error(
         `[bctcBatchTableBackfillJob] ERROR invalid UUID: doc_id=${docId} — skipping`,
       );
       outcomes.push({
@@ -189,7 +190,7 @@ export async function backfillBctcTables(
     // BT3-FIX-3: POST report_id + pdf_path + statement_section ONLY.
     // No pages / pre_supplied_pages — the pdf-extractor container runs fresh
     // Tesseract via PdfOcrAdapter (the proven BT-3-D path, inline-layout OCR).
-    console.log(
+    logger.info(
       `[bctcBatchTableBackfillJob] Extracting ${docLabel} (${docId}) ` +
         `— fresh Tesseract OCR via container PdfOcrAdapter ...`,
     );
@@ -210,7 +211,7 @@ export async function backfillBctcTables(
 
       if (!resp.ok) {
         const errMsg = String(body?.detail ?? body?.error ?? resp.status);
-        console.error(
+        logger.error(
           `[bctcBatchTableBackfillJob] ERROR HTTP ${resp.status} for ${docLabel}: ${errMsg}`,
         );
         outcomes.push({
@@ -231,7 +232,7 @@ export async function backfillBctcTables(
         typeof body.blocked_reason === "string" ? body.blocked_reason : null;
 
       if (blockedReason) {
-        console.warn(
+        logger.warn(
           `[bctcBatchTableBackfillJob] GATE BLOCKED ${docLabel}: ${blockedReason}`,
         );
         outcomes.push({
@@ -250,7 +251,7 @@ export async function backfillBctcTables(
       const rowsStored = typeof body.rows_stored === "number" ? body.rows_stored : 0;
       const balancePass = body.balance_pass === true;
 
-      console.log(
+      logger.info(
         `[bctcBatchTableBackfillJob] OK ${docLabel}: rows_stored=${rowsStored} balance_pass=${balancePass}`,
       );
       outcomes.push({
@@ -266,7 +267,7 @@ export async function backfillBctcTables(
       successCount++;
     } catch (err) {
       const errMsg = err instanceof Error ? err.message : String(err);
-      console.error(
+      logger.error(
         `[bctcBatchTableBackfillJob] ERROR network/parse for ${docLabel}: ${errMsg}`,
       );
       outcomes.push({
@@ -303,7 +304,7 @@ export async function backfillBctcTables(
     outcomes,
   };
 
-  console.log(
+  logger.info(
     `[bctcBatchTableBackfillJob] DONE: success=${successCount} ` +
       `gate_blocked=${gateBlockedCount} failed=${failedCount} ` +
       `skipped_no_file=${missingFileRows.length} skipped_null_path=${nullPathCount}`,

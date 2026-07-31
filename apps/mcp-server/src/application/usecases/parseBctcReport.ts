@@ -781,7 +781,7 @@ export async function parseBctcReport(
     if (validation.errors.length > 0) notes.push(`Errors: ${validation.errors.join(" | ")}`);
     if (validation.warnings.length > 0) notes.push(`Warnings: ${validation.warnings.join(" | ")}`);
     validationNotes = notes.join("\n");
-    console.error(
+    logger.error(
       `[parseBctcReport] Validation FAILED for ${actionCode} ${period.sortKey}: ${validation.errors.join("; ")}`,
     );
   } else if (validation.warnings.length > 0) {

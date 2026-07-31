@@ -24,6 +24,7 @@ import {
 } from "../../domain/models/imfIndicators.js";
 import { CircuitBreaker } from "../../infrastructure/circuitBreaker.js";
 import { failLoud } from "../../domain/utils/safeQuery.js";
+import { logger } from "../../infrastructure/logger.js";
 
 // ── IMF API breaker (registered at module level) ──────────────────────────────
 
@@ -197,7 +198,7 @@ export async function fetchLatestImfIndicators(): Promise<ImfIndicator[]> {
     } catch (err) {
       // Circuit breaker open or HTTP error — skip this indicator
       const msg = err instanceof Error ? err.message : String(err);
-      console.warn(`[IMF Fetcher] Skipping ${key}: ${msg}`);
+      logger.warn(`[IMF Fetcher] Skipping ${key}: ${msg}`);
     }
   }
 

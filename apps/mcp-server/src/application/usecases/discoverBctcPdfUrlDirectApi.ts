@@ -11,6 +11,8 @@
  * - Avoids browser automation overhead (Chromium, memory, zombie processes)
  */
 
+import { logger } from "../../infrastructure/logger.js";
+
 interface BrowserDiscoveryResult {
   url: string | null;
   source: "HOSE" | "HNX" | "UPCOM" | null;
@@ -40,7 +42,9 @@ export async function discoverBctcPdfUrlDirectApi(
     if (error instanceof Error && (error.message.includes("timeout") || error.message.includes("abort"))) {
       lastTimeoutError = error;
     }
-    console.error("HOSE API error:", error);
+    logger.error("[discoverBctcPdfUrlDirectApi] HOSE API error", {
+      error: error instanceof Error ? error.message : String(error),
+    });
   }
 
   // Try HNX second
@@ -51,7 +55,9 @@ export async function discoverBctcPdfUrlDirectApi(
     if (error instanceof Error && (error.message.includes("timeout") || error.message.includes("abort"))) {
       lastTimeoutError = error;
     }
-    console.error("HNX API error:", error);
+    logger.error("[discoverBctcPdfUrlDirectApi] HNX API error", {
+      error: error instanceof Error ? error.message : String(error),
+    });
   }
 
   // Try UPCOM third (fallback)
@@ -62,7 +68,9 @@ export async function discoverBctcPdfUrlDirectApi(
     if (error instanceof Error && (error.message.includes("timeout") || error.message.includes("abort"))) {
       lastTimeoutError = error;
     }
-    console.error("UPCOM API error:", error);
+    logger.error("[discoverBctcPdfUrlDirectApi] UPCOM API error", {
+      error: error instanceof Error ? error.message : String(error),
+    });
   }
 
   // If we encountered a timeout, report it; otherwise report no PDF found

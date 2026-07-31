@@ -27,6 +27,7 @@
 import type { Database } from "bun:sqlite";
 import { readdirSync, existsSync } from "node:fs";
 import { resolve, basename } from "node:path";
+import { logger } from "../../infrastructure/logger.js";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -334,7 +335,7 @@ export function backfillBctcPdfPaths(db: Database, pdfDir: string): BackfillResu
 
   // Guard: pdfDir must exist
   if (!existsSync(pdfDir)) {
-    console.warn(`[backfillBctcPdfPaths] pdfDir not found: ${pdfDir} — skipping backfill`);
+    logger.warn(`[backfillBctcPdfPaths] pdfDir not found: ${pdfDir} — skipping backfill`);
     return result;
   }
 
@@ -343,7 +344,7 @@ export function backfillBctcPdfPaths(db: Database, pdfDir: string): BackfillResu
   try {
     pdfFiles = readdirSync(pdfDir).filter((f) => f.toLowerCase().endsWith(".pdf"));
   } catch {
-    console.warn(`[backfillBctcPdfPaths] failed to read pdfDir: ${pdfDir} — skipping`);
+    logger.warn(`[backfillBctcPdfPaths] failed to read pdfDir: ${pdfDir} — skipping`);
     return result;
   }
 
@@ -398,7 +399,7 @@ export function backfillBctcPdfPaths(db: Database, pdfDir: string): BackfillResu
     );
 
     if (matches.length === 0) {
-      console.info(
+      logger.info(
         `[backfillBctcPdfPaths] no match: ${actionCode} Q${quarter} ${year}`,
       );
       result.no_match++;
@@ -408,7 +409,7 @@ export function backfillBctcPdfPaths(db: Database, pdfDir: string): BackfillResu
       // only applies when there is an actual choice to make among 2+ files.
       const match = matches[0]!;
       updateStmt.run(match.absPath, row.id);
-      console.info(
+      logger.info(
         `[backfillBctcPdfPaths] linked (sole candidate): ${actionCode} Q${quarter} ${year} → ${match.filename}`,
       );
       result.updated++;
@@ -430,7 +431,7 @@ export function backfillBctcPdfPaths(db: Database, pdfDir: string): BackfillResu
         const names = rejected
           .map((m) => `${m.filename}${isCoverLetterFilename(m.filename) ? " [cover-letter]" : " [unclassified/non-report]"}`)
           .join(", ");
-        console.warn(
+        logger.warn(
           `[backfillBctcPdfPaths] NO POSITIVE CONSOLIDATED MATCH (${matches.length} candidates, 0 qualify): ${actionCode} Q${quarter} ${year} — [${names}] — leaving pdf_path NULL (PENDING)`,
         );
         result.no_match++;
@@ -439,11 +440,11 @@ export function backfillBctcPdfPaths(db: Database, pdfDir: string): BackfillResu
         const match = consolidated[0]!;
         updateStmt.run(match.absPath, row.id);
         if (rejected.length > 0) {
-          console.info(
+          logger.info(
             `[backfillBctcPdfPaths] linked (positive consolidated match): ${actionCode} Q${quarter} ${year} → ${match.filename} (rejected: [${rejected.map((m) => m.filename).join(", ")}])`,
           );
         } else {
-          console.info(
+          logger.info(
             `[backfillBctcPdfPaths] linked: ${actionCode} Q${quarter} ${year} → ${match.filename}`,
           );
         }
@@ -451,7 +452,7 @@ export function backfillBctcPdfPaths(db: Database, pdfDir: string): BackfillResu
       } else {
         // 2+ candidates positively match — ambiguous, leave pdf_path NULL.
         const names = consolidated.map((m) => m.filename).join(", ");
-        console.warn(
+        logger.warn(
           `[backfillBctcPdfPaths] ambiguous (${consolidated.length} consolidated files): ${actionCode} Q${quarter} ${year} — [${names}] — leaving pdf_path NULL`,
         );
         result.ambiguous++;
@@ -517,14 +518,14 @@ export function backfillBctcPdfPaths(db: Database, pdfDir: string): BackfillResu
       const best = candidates[0]!;
       healStmt.run(best.absPath, row.id);
       const currentKind = isCoverLetterFilename(currentBasename) ? "cover-letter" : "non-report";
-      console.warn(
+      logger.warn(
         `[backfillBctcPdfPaths] HEALED mislink: ${actionCode} Q${quarter} ${year} — was ${currentBasename} (${currentKind}) → ${best.filename} (consolidated)`,
       );
       result.healed++;
     } else if (candidates.length > 1) {
       // Multiple positively-matching candidates — ambiguous; leave the existing
       // link in place rather than making it worse.
-      console.warn(
+      logger.warn(
         `[backfillBctcPdfPaths] mislink AMBIGUOUS heal: ${actionCode} Q${quarter} ${year} — current=${currentBasename} but ${candidates.length} consolidated candidates — leaving unchanged`,
       );
     }
@@ -537,7 +538,7 @@ export function backfillBctcPdfPaths(db: Database, pdfDir: string): BackfillResu
   ).get() as { cnt: number };
   result.already_set = alreadySet.cnt;
 
-  console.info(
+  logger.info(
     `[backfillBctcPdfPaths] done: updated=${result.updated} no_match=${result.no_match} ambiguous=${result.ambiguous} healed=${result.healed} already_set=${result.already_set}`,
   );
 
