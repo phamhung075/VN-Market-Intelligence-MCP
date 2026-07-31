@@ -51,6 +51,8 @@ Append regime caveat to each MARKET alert (Vietnamese):
 - `chain_catalyst` + `bearish` (any regime):
   `"Cảnh báo: Xúc tác tiêu cực được phát hiện — kiểm tra danh mục ngay."`
 
+> **Clarification (alert-commander, discovered live 2026-07-31T20:14Z):** the GLOBAL-GEOPOLITICAL-SIGNAL-COVERAGE market-wide-advisory template (`stage-signals.md` § 3c carve-out) is already a complete, self-contained ≤140-char message that itself conveys the bearish/risk framing — do NOT additionally append the generic `chain_catalyst`+`bearish` caveat line above to it; concatenating both reliably blows the `urgent_format_max_chars: 140` cap. Also: `mark_alert_read()` below requires an `alerts`-table `alert_id` — it does not apply to a bus-only chain_catalyst fire (no corresponding `get_alerts` row); for those, `record_signal_outcome(signal_id, "fired", ...)` alone is the correct post-send step (per `stage-signals.md` § 3c item 6).
+
 After: `mark_alert_read()` + `record_signal_outcome(..., "fired")`
 
 **write_alert_verdict** (default order: call after `send_telegram` AND `mark_alert_read`, before Step 4b):
