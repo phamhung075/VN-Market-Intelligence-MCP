@@ -1,6 +1,16 @@
 # Dev Team — Sprint Boundary Notebook
 
-**Written:** 2026-07-31T09:17Z
+**Written:** 2026-07-31T09:32Z
+
+## cycle-20260731T0932Z-ocrbootloop-verified-released — RAW-verified `architect`'s FU-OCR-BOOT-LOOP-SEQUENTIAL return (zero discrepancy — cleanest verify this session, no gap found); pushed its commit + 1 unrelated peer `po` commit found in shared tree. WIP 0, idle-head
+
+- **Commit confirmed real, local-only before push**: `4e03b8b8c` (0/2 ahead of origin alongside peer `po` commit `87c2bd0bd`, sanity-checked its scope — own journal+notebook only, no orch-state.json — before pushing both). Pushed cleanly, confirmed local==origin==`4e03b8b8c`.
+- **Every code claim independently re-derived, not trusted**: `composition-root.ts` — `createBunServer()` at line 62, bootstrap OCR loop's `setTimeout(...,10_000)` spans 137-238, confirming it fires AFTER the server is already live (server-boot-latency claim holds). `pdfOcrWorker.ts` lines 205-270 — `threshold = Math.max(expectedPages*0.5, 3)` uses UNCAPPED `expectedPages`, `maxPages = Math.min(totalPages,80)` caps extraction, `DELETE FROM pdf_extracted_text` fires before re-extraction — exact match to the claimed root cause (PDFs >160 true pages can never satisfy their own threshold).
+- **Live DB independently queried** (`docker exec ... bun -e`, read-only, not trusted from self-report): all 3 named files (`GVR_2026_Q1.pdf`/`GVR_2025_Q4.pdf`/MSN annual report) confirmed pinned at exactly `c=80` rows, live, right now.
+- **Verdict + closure authorized**: architect's self-flip to `DONE_VERIFIED` (no code change — sequential loop confirmed correct) matches what my own dispatch prompt explicitly offered ("directly to a DONE-equivalent status if this is a closed non-action review"), not an overreach.
+- **New FIX minted correctly**: `FIX-PDFOCR-PAGECAP-COMPLETENESS-THRESHOLD-MISMATCH` (P2, `dev-mcp-server`) — explicit `owner`+`next_agent` both set, NOT another `.route`-only gate-gap instance. Sits in `backlog[]` for a future pickup, not dispatched this tick.
+- **`.route`-only gate gap re-confirmed live (2nd instance)**: distinct from the already-closed `FIX-DEVTEAM-BOUNDED1-NONDEV-OWNER-BOARD-FALLBACK-GATE`; left for PO to weigh against the recurring-bug bar, not actioned further.
+- **NEXT**: no items remain from this tick's dispatch. `TE-T12` still the only undispatched item from PO's 2026-07-31T0637Z triage (routes to `agent-father`). Idle-head, WIP=0.
 
 ## cycle-20260731T0917Z-bounded1-ocrbootloop-dispatched — Fresh tick: preflight RUN, drained 4 signals (1 informational new type), `.head` idle/WIP=0 → BOUNDED-1 claimed+dispatched FU-OCR-BOOT-LOOP-SEQUENTIAL (found+corrected a NEW gate-gap variant); 1 background agent in flight
 
@@ -20,14 +30,5 @@
 - **`.head` sync GAP found and closed**: board row correctly moved `in_progress→review` (`status:REVIEW`, `next_agent:qa`, `commit_sha` correct) but `.head` was left stale at `in_progress`/`FU-CTG-DISCOVERY-FILENAME-FILTER` — unlike FDA-10's clean same-write sync last tick. Fixed via `orch-apply.sh` (`.head`→idle), committed separately (`b5712ef9e`), pushed.
 - **Coordination gap noted, not a defect**: `dev-vps-crawls` had no gateway/MCP grant to self-release; released on its behalf.
 - **NEXT**: no items remain from this tick's dispatch. `TE-T12` still the only undispatched item from PO's 2026-07-31T0637Z triage (routes to `agent-father`). Idle-head, WIP=0.
-
-## cycle-20260731T0847Z-bounded1-futctg-dispatched — Fresh tick: preflight RUN, drained 2 DEFER-covered context-bloat signals, `.head` idle/WIP=0 → BOUNDED-1 claimed+dispatched FU-CTG-DISCOVERY-FILENAME-FILTER (HNX BCTC discovery cover-letter filename filter gap); 1 background agent in flight
-
-- **Preflight/GCC-preflight clean**: verdict RUN, tick `08:37Z`. No HEAD.lock, 3 external fleet-push worktrees untouched, dirty tree confirmed peer-session churn only (cowork notebooks/briefs/synthesis files).
-- **Drained 2 signals, both DEFER-covered**: context-bloat breach on `dev-mcp-server`'s own decision journal (386L/94833B, overage 58833B — live in-progress sprint journal, growing fast) and a 4th consecutive breach on this session's OWN dev-team-4 journal (161L/64551B, overage 28551B). Both held per standing [[feedback_ctxbloat_breach_on_live_sprint_file_defer]].
-- **CI probe**: GREEN on HEAD `39d1e0aaa`, no signal.
-- **`.head` idle, WIP=0** → BOUNDED-1 promote+claim (full `--arg now`+`--slurpfile` contract, no error this time) → claimed `FU-CTG-DISCOVERY-FILENAME-FILTER` (P3/S, HNX discovery resolves a good-title article to a cover-letter PDF attachment via ArticlesFileAttach — needs filename-based CV_CBTT/cong_van_cbtt post-filter mirroring FIX-CTG-2's existing title filter). **Router-corrected `.head.next_agent`**: task zone `vps-scripts + apps/mcp-server` isn't in `system-map.json`'s zone list (Tier-1/2 zone-detect can't resolve it, Tier-3 would fall to generic `developer`) — git-history-confirmed (`fix(vps-crawls:...)` prefix, incl. the exact predecessor `bbf0f54bd` FIX-CTG-2) `dev-vps-crawls` owns `vps-scripts/*.py`; corrected before dispatch, same class as BOUNDED-1's own documented NON-CODE/DESIGN gap note. Dispatcher-wrap `task_claim` → `claimed:true` → spawned `dev-vps-crawls` in background with full context + explicit instruction to flag (not silently expand) if the fix genuinely also needs an apps/mcp-server change.
-- **Elected NOT to dispatch Step 1 PO triage this tick**: BOUNDED-1 dispatched — same-tick fall-through skip per flow control (JUMP TO end after BOUNDED-1 claim).
-- **NEXT**: await `dev-vps-crawls`'s RETURN, RAW-verify (re-diff the filename filter, re-run any claimed test, confirm scope stayed in vps-scripts/, board/head state), release lock. `TE-T12` remains the only other undispatched item from PO's 2026-07-31T0637Z triage (routes to `agent-father`, outside this session's zone).
 
 
