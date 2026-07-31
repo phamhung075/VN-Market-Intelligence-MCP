@@ -1,5 +1,12 @@
 // Package application — VMT-5a/VMT-5b liquidity-state provider resolvers
 // (FACTORY-GUARD-CI-COMPROOT-LOGIC-IMPL).
+// size-justification: 231L — PolicyRatesResolver (VMT-5a) and omoResolver
+// (VMT-5b) are two distinct composition-root-logic-gate extractions moved
+// out of the SAME cmd/server/adapters.go composition root in one refactor;
+// each resolver's own interfaces+struct+constructor+method block runs
+// ~45-70L standalone, and splitting would fragment the single
+// FACTORY-GUARD-CI-COMPROOT-LOGIC-IMPL refactor rationale (see body below)
+// across two files for zero cohesion benefit.
 //
 // PolicyRatesResolver and omoResolver absorb the fallback-selection +
 // IsEstimate/ParseOK confidence-flag decision logic that used to live inside
