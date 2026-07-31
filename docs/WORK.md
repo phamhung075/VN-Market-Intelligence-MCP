@@ -1,5 +1,53 @@
 
 ---
+## [Developer] 2026-07-31 — FIX-NOTEBOOK-AUTOPRUNE-DIRECTION-UNRESOLVABLE-ZERO-TS-NOTEBOOKS
+
+`scripts/agents-flow/notebook-auto-prune.sh`'s same-day/tied-heading direction vote (dec/inc on
+adjacent `## ` section ts_keys) structurally deadlocked (TIE_COUNT>=2, dec=0, inc=0, forever) for any
+file where EVERY retained section lacks a parseable timestamp — non-chronological/rolling sections
+(e.g. `## Known patterns / preferences`, `## Identity`), not per-cycle dated journal entries. The
+`docs/data/notebook-section-order.json` override table (introduced by the sibling fix
+FIX-NOTEBOOK-AUTOPRUNE-SAMEDAY-TIE-DROPS-NEWEST) covered only 3 files and had no producer, so all 11
+confirmed-live deadlocked files (code-janitor, cowork-refactory-expert x2, digest-predict, idea-forge,
+market-analyst, ops-mainserver-fetch, pm-alpha-s2-rag-fts-rebuild-cron, po, semble-search,
+dev-technical-analysis) fail-louded at the hook's tie-break and exited 0 WITHOUT pruning — caps grew
+unchecked (11 fail-loud signals in ~35h across 2 files: unified-agent.md, digest-predict.md). PO's
+explicit preference (row): prefer an opt-IN derivation that always resolves over growing the
+opt-out override table one file at a time (`feedback_fleetwide_gate_validated_on_one_file_optout_allowlist`).
+Fix: (1) TERTIARY hardening — the vote no longer casts a phantom vote when either side of a pair is
+the untimestamped MAX-sentinel (a trailing rolling heading, e.g. `## Prior cycles`, was silently
+injecting a spurious "increasing" vote against the real timestamp before it); (2) PRIMARY — when
+neither the file's own votes NOR the override table give any signal (this is now provably permanent
+for a given file shape, not transient), the direction case-statement's default arm applies a
+documented, deterministic default (`newest_first`: drop the physically-LAST tied section) instead of
+refusing to prune forever, and emits a non-blocking INFORMATIONAL signal
+(`notebook_tiebreak_direction_defaulted`, glob `docs/signals/notebook-direction-defaulted-*.json`) —
+NOT a breach — recording that the default was used; (3) AC-3 — the `[ "$prev_key" \> "$cur_key" ]`
+vote comparison (a bash-`[`-builtin extension; under zsh's `[` it hard-errors and every differing
+pair silently inverts to the opposite direction, dropping the true-newest tied section — silent data
+loss) is replaced with a POSIX numeric `-gt` test, behaviorally identical for the fixed-width all-digit
+ts_key strings involved but portable across bash/zsh/dash — new Test 9 in
+`scripts/agents-flow/test-notebook-auto-prune.sh` proves the outcome is now IDENTICAL whether the
+script is invoked under bash or zsh (RED pre-fix, GREEN post-fix). `docs/data/notebook-section-order.json`
+kept (still a useful manually-verified precision override for the 2 known append-style files it
+correctly overrides) but made genuinely non-load-bearing (AC-2: the derivation never NEEDS it now) —
+`_maintained_by`/`_note` corrected to state the true contract (manual-only, as-needed, intentionally
+no automated producer — a wrong automated entry would silently invert the drop direction, worse than
+no entry). New reusable verification tool: `scripts/agents-flow/notebook-direction-corpus-replay.sh`
+(AC-1 — replays the derivation over the WHOLE 46-file live corpus in an isolated sandbox, forcing a
+full drain to exercise every tie depth; 21/46 deadlocked pre-fix (superset of the 11 named, since the
+forced full-drain reaches sub-ties the files' CURRENT content doesn't yet expose) → 0/46 post-fix, with
+an isolated vote-logic diff confirming zero regression in the FINAL direction for all 25 already-
+correctly-resolving files). AC-4 live convergence: ran the fixed hook for real against
+`docs/agent-memory/notebooks/unified-agent.md` (197L/25703B → 90L/11562B) and `digest-predict.md`
+(192L/51298B → 33L/9508B) — both now under the live 200L/12000B cap (`docs/data/file-size-caps.json`);
+retained sections verified byte-identical to their pre-prune slices (only whole sections dropped, per
+the existing immutability contract). Tests: `notebook-auto-prune.test.sh` 7/7 (T7 updated — its old
+assertion encoded the exact "refuse to guess forever" anti-pattern this task closes), sibling
+`test-notebook-auto-prune.sh` 9/9 (new Test 9). Decision journal:
+`docs/agent-memory/decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-developer.md`.
+
+---
 ## [Developer] 2026-07-31 — FIX-ORCHSTATE-HEAD-STAMP-DROPPED-CI-RED-1837A
 
 Extended `scripts/orch-stamp-updated-at.mjs` (`orch-apply.sh` Stage 1.5) to also diff-stamp the

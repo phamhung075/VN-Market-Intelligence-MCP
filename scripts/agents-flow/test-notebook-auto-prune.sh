@@ -14,6 +14,18 @@
 # dedup ledger: at most one signal while the corrupted condition persists, and a NEW signal
 # once it clears and later recurs (see scripts/agents-flow/notebook-auto-prune.sh
 # emit_dup_signal_deduped()/_dup_clear_markers_for_file()).
+#
+# Test 9 ADDED for FIX-NOTEBOOK-AUTOPRUNE-DIRECTION-UNRESOLVABLE-ZERO-TS-NOTEBOOKS AC-3
+# (2026-07-31): regression for the bash-`[`-specific `\>` string-comparison operator in the
+# direction vote (notebook-auto-prune.sh's vote loop). RED before the fix: invoking the
+# (unmodified) script under `zsh` instead of `bash` inverted the derived direction (zsh's `[`
+# treats `\>` as a hard error, "condition expected: >", and every differing pair silently
+# fell to the else branch) — dropping the tied group's physically-first (true newest,
+# just-written) section instead of the true oldest one. GREEN after the fix: the vote uses a
+# POSIX numeric `-gt` test instead, which is byte-for-byte behaviorally identical to the old
+# `\>` for the fixed-width all-digit ts_key strings involved, but portable — invoking the
+# script under bash vs zsh now produces an IDENTICAL outcome. Skips (does not fail) if zsh is
+# not installed on the runner.
 
 set -eu
 
@@ -32,12 +44,14 @@ TEST_DUP="$NOTEBOOKS_DIR/test-dup${TEST_SUFFIX}.md"
 TEST_DUP_CONTENT="$NOTEBOOKS_DIR/test-dup-content${TEST_SUFFIX}.md"
 TEST_DUP_NONADJ="$NOTEBOOKS_DIR/test-dup-nonadj${TEST_SUFFIX}.md"
 TEST_DUP_DEDUP="$NOTEBOOKS_DIR/test-dup-dedup${TEST_SUFFIX}.md"
+TEST_T9_BASH="$NOTEBOOKS_DIR/test-t9-bash${TEST_SUFFIX}.md"
+TEST_T9_ZSH="$NOTEBOOKS_DIR/test-t9-zsh${TEST_SUFFIX}.md"
 DEDUP_STATE_DIR="$PROJECT_ROOT/docs/data/notebook-dup-heading-signal-state"
 
 # Clean up on exit (test fixtures + any signal/marker files this run may emit)
 cleanup() {
   rm -f "$TEST_APPEND" "$TEST_PREPEND" "$TEST_COMPACT" "$TEST_DASHED_NOSEC" "$TEST_DUP" \
-        "$TEST_DUP_CONTENT" "$TEST_DUP_NONADJ" "$TEST_DUP_DEDUP"
+        "$TEST_DUP_CONTENT" "$TEST_DUP_NONADJ" "$TEST_DUP_DEDUP" "$TEST_T9_BASH" "$TEST_T9_ZSH"
   rm -f "$SIGNALS_DIR"/notebook-duplicate-heading-docs-agent-memory-notebooks-test-dup*.json 2>/dev/null || true
   rm -f "$DEDUP_STATE_DIR"/docs-agent-memory-notebooks-test-dup*.marker 2>/dev/null || true
 }
@@ -460,6 +474,84 @@ fi
 
 # shellcheck disable=SC2086  # intentional: glob pattern stored in var, must expand unquoted
 rm -f $T8_SIG_GLOB $T8_MARKER_GLOB "$FUNCS_FILE" 2>/dev/null || true
+
+# --- Test 9: AC-3 hardening — vote comparison must NOT invert under a non-bash
+# interpreter (FIX-NOTEBOOK-AUTOPRUNE-DIRECTION-UNRESOLVABLE-ZERO-TS-NOTEBOOKS) ---
+# Mirrors the row's own worked example: a real prepend-style file with a same-day
+# TIE_COUNT>=2 group PLUS one differing-day "anchor" section elsewhere in the file that
+# gives the file its real dec/inc vote (mirrors docs/agent-memory/notebooks/unified-
+# agent.md's real shape: physical order ANCHOR(newer day) -> TASK-NEWER(tied,
+# physically-first of the pair) -> TASK-OLDER(tied, physically-last of the pair)).
+# Pre-fix, line :438's `[ "$prev_key" \> "$cur_key" ]` is a bash-`[`-builtin extension —
+# under zsh's `[` it errors "condition expected: >" and the ANCHOR-vs-TASK-NEWER pair
+# (which should vote "decreasing" -> newest_first) silently falls to the else branch
+# instead ("increasing" -> oldest_first, the INVERSE), which drops TASK-NEWER (physically-
+# first of the tied pair, the true newest/just-written one) instead of TASK-OLDER — the
+# exact silent-data-loss defect. This test asserts the hook's OUTCOME (which section
+# survives) is IDENTICAL whether the script is invoked under bash or under zsh.
+echo ""
+echo "Test 9: AC-3 — vote comparison must not invert under bash vs zsh"
+if command -v zsh >/dev/null 2>&1; then
+  make_t9_fixture() {
+    {
+      echo "# T9 bash-vs-zsh vote-inversion regression fixture"
+      echo ""
+      echo "## 2026-07-31 — ANCHOR (differing day, gives the file its real vote)"
+      echo ""
+      seq 1 60 | while read -r i; do echo "anchor content line $i"; done
+      echo ""
+      echo "## 2026-07-28 — TASK-NEWER (tied pair, physically FIRST — true newest under prepend)"
+      echo ""
+      seq 1 90 | while read -r i; do echo "newer-tied content line $i"; done
+      echo ""
+      echo "## 2026-07-28 — TASK-OLDER (tied pair, physically LAST — true oldest under prepend)"
+      echo ""
+      seq 1 60 | while read -r i; do echo "older-tied content line $i"; done
+    } > "$1"
+  }
+  make_t9_fixture "$TEST_T9_BASH"
+  make_t9_fixture "$TEST_T9_ZSH"
+
+  T9_LINES_BEFORE=$(wc -l < "$TEST_T9_BASH" | tr -d ' ')
+  if [ "$T9_LINES_BEFORE" -le 200 ]; then
+    echo "✗ FAIL: test9-bash-vs-zsh-vote-not-inverted (fixture invalid: lines=$T9_LINES_BEFORE, expected >200)"
+    FAIL_COUNT=$((FAIL_COUNT + 1))
+  else
+    T9_HOOK_INPUT_BASH=$(cat <<EOF
+{"tool_input":{"file_path":"$TEST_T9_BASH"}}
+EOF
+)
+    T9_HOOK_INPUT_ZSH=$(cat <<EOF
+{"tool_input":{"file_path":"$TEST_T9_ZSH"}}
+EOF
+)
+    echo "$T9_HOOK_INPUT_BASH" | bash "$PROJECT_ROOT/scripts/agents-flow/notebook-auto-prune.sh"
+    echo "$T9_HOOK_INPUT_ZSH"  | zsh  "$PROJECT_ROOT/scripts/agents-flow/notebook-auto-prune.sh"
+
+    # NOTE: grep -c legitimately PRINTS "0" (not empty) and exits 1 on zero matches — a
+    # trailing `|| echo 0` here would run ALONGSIDE that already-printed "0" (not instead
+    # of it) and corrupt the captured value into two lines. Neutralize the exit code on
+    # the assignment itself instead, so the single "0" grep already printed is preserved.
+    T9_BASH_HAS_NEWER=$(grep -c "TASK-NEWER" "$TEST_T9_BASH" 2>/dev/null) || true
+    T9_BASH_HAS_OLDER=$(grep -c "TASK-OLDER" "$TEST_T9_BASH" 2>/dev/null) || true
+    T9_ZSH_HAS_NEWER=$(grep -c "TASK-NEWER" "$TEST_T9_ZSH" 2>/dev/null) || true
+    T9_ZSH_HAS_OLDER=$(grep -c "TASK-OLDER" "$TEST_T9_ZSH" 2>/dev/null) || true
+
+    if [ "$T9_BASH_HAS_NEWER" = "1" ] && [ "$T9_BASH_HAS_OLDER" = "0" ] && \
+       [ "$T9_ZSH_HAS_NEWER" = "1" ] && [ "$T9_ZSH_HAS_OLDER" = "0" ]; then
+      echo "✓ PASS: test9-bash-vs-zsh-vote-not-inverted"
+      echo "  - bash invocation: kept TASK-NEWER, dropped TASK-OLDER ✓"
+      echo "  - zsh  invocation: kept TASK-NEWER, dropped TASK-OLDER ✓ (identical outcome — no inversion)"
+      PASS_COUNT=$((PASS_COUNT + 1))
+    else
+      echo "✗ FAIL: test9-bash-vs-zsh-vote-not-inverted"
+      echo "  - bash: has_newer=$T9_BASH_HAS_NEWER has_older=$T9_BASH_HAS_OLDER | zsh: has_newer=$T9_ZSH_HAS_NEWER has_older=$T9_ZSH_HAS_OLDER (expected both: newer=1 older=0)"
+      FAIL_COUNT=$((FAIL_COUNT + 1))
+    fi
+  fi
+else
+  echo "⚠ SKIP: test9-bash-vs-zsh-vote-not-inverted — zsh not installed on this runner"
+fi
 
 # --- Summary ---
 echo ""

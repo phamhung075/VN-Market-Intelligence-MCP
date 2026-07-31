@@ -41,17 +41,28 @@
 #                                      PHYSICALLY-FIRST (top-most, true-oldest for an
 #                                      append file) tied section, retains the two newer ones.
 #   T7  3 same-day sections, NO declared override AND the file's own headings give zero
-#                                      distinguishing timestamp signal → refuses to guess:
-#                                      content byte-identical before/after (no truncation,
-#                                      no section dropped), notebook_tiebreak_direction_
-#                                      unresolved_breach signal emitted instead.
+#                                      distinguishing timestamp signal → UPDATED by
+#                                      FIX-NOTEBOOK-AUTOPRUNE-DIRECTION-UNRESOLVABLE-ZERO-
+#                                      TS-NOTEBOOKS (2026-07-31): this exact shape can NEVER
+#                                      self-resolve (no override will ever arrive for a
+#                                      permanently-zero-signal file) so "refuse to guess
+#                                      forever" left it unprunable past cap indefinitely
+#                                      (confirmed live: unified-agent.md, digest-predict.md).
+#                                      Now resolves via the documented default
+#                                      (newest_first: drops the physically-LAST tied
+#                                      section) and emits a non-blocking INFORMATIONAL
+#                                      signal (notebook_tiebreak_direction_defaulted, NOT a
+#                                      breach) instead of refusing to prune.
 #
 # Run:
 #   bash scripts/agents-flow/notebook-auto-prune.test.sh
 #
 # Exit 0 = all pass. Exit 1 = >=1 failure.
 # Owning tasks: FIX-NOTEBOOK-PRUNER-LINE-ONLY-SETPOINT-BYTE-CAP-NEVER-CONVERGES (T1-T4),
-#               FIX-NOTEBOOK-AUTOPRUNE-SAMEDAY-TIE-DROPS-NEWEST (T5-T7)
+#               FIX-NOTEBOOK-AUTOPRUNE-SAMEDAY-TIE-DROPS-NEWEST (T5-T7 as originally shipped),
+#               FIX-NOTEBOOK-AUTOPRUNE-DIRECTION-UNRESOLVABLE-ZERO-TS-NOTEBOOKS (T7 updated
+#               2026-07-31 — old assertion encoded the exact "refuse forever" anti-pattern
+#               this task closes; see docs/data/notebook-section-order.json for AC-2 context)
 set -uo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
@@ -364,11 +375,15 @@ else
   fi
 fi
 
-# ── T7: same-day tie-break — direction UNRESOLVABLE, no declared override ───────
+# ── T7: same-day tie-break — direction DEFAULTS safely (no forced deadlock) ─────
 # Same shape as T5/T6 but this filename has NO entry in notebook-section-order.json AND
 # all 3 headings share the identical date-only key (zero distinguishing signal from the
-# file's own content either). MUST refuse to guess: content byte-identical, no section
-# dropped, notebook_tiebreak_direction_unresolved_breach signal emitted instead.
+# file's own content either) — this is a PERMANENT condition (no override will ever
+# arrive, no future write to this file can create a distinguishing timestamp for a
+# same-day tie). FIX-NOTEBOOK-AUTOPRUNE-DIRECTION-UNRESOLVABLE-ZERO-TS-NOTEBOOKS
+# (2026-07-31): must now resolve via the documented default (newest_first: drops the
+# physically-LAST tied section, TASK-R) and emit a non-blocking INFORMATIONAL signal
+# (notebook_tiebreak_direction_defaulted) instead of refusing to prune forever.
 T7_FILE="$TMPDIR_TEST/docs/agent-memory/notebooks/sameday-tie-unresolved.md"
 {
   echo "# Sameday-Tie Unresolved Notebook"
@@ -386,26 +401,29 @@ if [ "$T7_LINES_BEFORE" -le 200 ]; then
   echo "FAIL T7 (fixture invalid): lines=$T7_LINES_BEFORE — expected >200 pre-run"
   FAIL=$((FAIL + 1))
 else
-  T7_HASH_BEFORE="$(shasum -a 256 "$T7_FILE" | cut -d' ' -f1)"
-  T7_SIG_BEFORE=$(signal_count "notebook-tiebreak-unresolved-*.json")
+  T7_SIG_BEFORE=$(signal_count "notebook-direction-defaulted-*.json")
 
   run_prune "$T7_FILE"
 
-  T7_HASH_AFTER="$(shasum -a 256 "$T7_FILE" | cut -d' ' -f1)"
-  T7_SIG_AFTER=$(signal_count "notebook-tiebreak-unresolved-*.json")
+  T7_SIG_AFTER=$(signal_count "notebook-direction-defaulted-*.json")
   T7_SECTIONS_AFTER=$(grep -c "^## " "$T7_FILE" 2>/dev/null || echo 0)
-  T7_SIG_FILE=$(find "$TMPDIR_TEST/docs/signals" -maxdepth 1 -name "notebook-tiebreak-unresolved-*.json" 2>/dev/null | head -1 || true)
+  T7_HAS_P=$(grep -c "TASK-P" "$T7_FILE" 2>/dev/null)
+  T7_HAS_Q=$(grep -c "TASK-Q" "$T7_FILE" 2>/dev/null)
+  T7_HAS_R=$(grep -c "TASK-R" "$T7_FILE" 2>/dev/null)
+  T7_LINES_AFTER=$(wc -l < "$T7_FILE" | tr -d ' ')
+  T7_SIG_FILE=$(find "$TMPDIR_TEST/docs/signals" -maxdepth 1 -name "notebook-direction-defaulted-*.json" 2>/dev/null | head -1 || true)
   T7_SIG_TYPE_OK=0
   if [ -n "$T7_SIG_FILE" ]; then
     T7_SIG_TYPE="$(jq -r '.type // empty' "$T7_SIG_FILE" 2>/dev/null || true)"
-    [ "$T7_SIG_TYPE" = "notebook_tiebreak_direction_unresolved_breach" ] && T7_SIG_TYPE_OK=1
+    [ "$T7_SIG_TYPE" = "notebook_tiebreak_direction_defaulted" ] && T7_SIG_TYPE_OK=1
   fi
 
-  if [ "$T7_HASH_BEFORE" = "$T7_HASH_AFTER" ] && [ "$T7_SECTIONS_AFTER" -eq 3 ] && [ "$T7_SIG_AFTER" -gt "$T7_SIG_BEFORE" ] && [ "$T7_SIG_TYPE_OK" -eq 1 ]; then
-    echo "PASS T7: unresolved direction — refused to guess (content byte-identical, all 3 sections retained), notebook_tiebreak_direction_unresolved_breach emitted"
+  if [ "$T7_SECTIONS_AFTER" -eq 2 ] && [ "$T7_HAS_R" -eq 0 ] && [ "$T7_HAS_P" -ge 1 ] && [ "$T7_HAS_Q" -ge 1 ] && \
+     [ "$T7_LINES_AFTER" -le 200 ] && [ "$T7_SIG_AFTER" -gt "$T7_SIG_BEFORE" ] && [ "$T7_SIG_TYPE_OK" -eq 1 ]; then
+    echo "PASS T7: zero-signal default applied — dropped physically-LAST tied section (TASK-R), retained TASK-P+TASK-Q, non-blocking informational signal emitted (notebook_tiebreak_direction_defaulted)"
     PASS=$((PASS + 1))
   else
-    echo "FAIL T7: hash_match=$([ "$T7_HASH_BEFORE" = "$T7_HASH_AFTER" ] && echo yes || echo no) sections_after=$T7_SECTIONS_AFTER sig_before=$T7_SIG_BEFORE sig_after=$T7_SIG_AFTER sig_type_ok=$T7_SIG_TYPE_OK"
+    echo "FAIL T7: sections_after=$T7_SECTIONS_AFTER has_P=$T7_HAS_P has_Q=$T7_HAS_Q has_R=$T7_HAS_R lines_after=$T7_LINES_AFTER sig_before=$T7_SIG_BEFORE sig_after=$T7_SIG_AFTER sig_type_ok=$T7_SIG_TYPE_OK (expected 2 sections, TASK-R dropped, TASK-P+TASK-Q retained, informational signal emitted)"
     FAIL=$((FAIL + 1))
   fi
 fi
