@@ -21,6 +21,37 @@
  *   (a synthesised timestamp is worse than a null one: it makes staleness
  *   sweeps confidently wrong and falsifies the audit trail).
  *
+ * HEAD STAMPING (task: FIX-ORCHSTATE-HEAD-STAMP-DROPPED-CI-RED-1837A):
+ *   `.head` (the top-level routing pointer, singular — NOT a task_board row)
+ *   gets the SAME diff-based `updated_at` treatment as rows, via the exact
+ *   same comparator (excluding STAMP_FIELD from the equality check). Root
+ *   cause this closes: 30+ ad-hoc jq callers replace `.head` with a bare
+ *   whole-object literal (e.g. `.head = {status:$s, active_task_id:$id,
+ *   next_agent:$n}`) that omits `updated_at`/`updated_by` entirely; because
+ *   HeadSchema declares both `.optional()` + `.passthrough()`, that write
+ *   validates clean and the routing pointer silently loses its freshness
+ *   stamp (apps/mcp-server/src/__tests__/1837a-pipeline-state.test.ts AC-1/
+ *   AC-3 — HeadSchema:227).
+ *   `.head.updated_by` is different from `.head.updated_at`: it identifies
+ *   WHICH AGENT wrote the pointer, information this script cannot honestly
+ *   invent (same principle as the no-timestamp-backfill rule above — a
+ *   fabricated agent name would be worse than an honest placeholder). So:
+ *     - If the candidate already carries `updated_by` (the overwhelming
+ *       common case — most callers DO set it; see git history), it is left
+ *       byte-for-byte alone — it "comes from the caller", exactly like every
+ *       other `updated_by`/`_updated_by` field in this schema (_meta,
+ *       signal_queue, task_board) is always caller-supplied and never
+ *       actuator-synthesised.
+ *     - Only if the candidate's head CHANGED (per the diff rule below) AND
+ *       `updated_by` is missing/empty does this script backfill an honest,
+ *       self-identifying placeholder (HEAD_UPDATED_BY_FALLBACK) — never a
+ *       fabricated agent identity — so the schema-required field is never
+ *       silently absent again, closing the recurrence gap for good without
+ *       requiring every one of the 30+ ad-hoc callers to be individually
+ *       fixed.
+ *   No second mechanism, no new CLI arg, no orch-apply.sh call-site change —
+ *   this reuses the same comparator/CLI contract already wired into Stage 1.5.
+ *
  * ALGORITHM:
  *   1. Flatten every task_board row (all lanes, id-keyed — id is a REQUIRED
  *      TaskSchema field, always unique) from BOTH the live file and the
@@ -81,6 +112,12 @@ const FLAT_LANES = ['backlog', 'done', 'done_verified', 'in_progress', 'qa', 're
 const NESTED_SPRINT_GROUPS = ['active_sprints', 'closed_sprints'];
 
 const STAMP_FIELD = 'updated_at';
+
+// ─── Head stamping (FIX-ORCHSTATE-HEAD-STAMP-DROPPED-CI-RED-1837A) ──────────
+const HEAD_UPDATED_BY_FIELD = 'updated_by';
+// Honest, self-identifying fallback — used ONLY when the candidate's head
+// changed AND the caller omitted updated_by. Never a fabricated agent name.
+const HEAD_UPDATED_BY_FALLBACK = 'orch-apply (Stage 1.5 auto-stamp — caller omitted updated_by)';
 
 /**
  * @param {string} path
@@ -178,14 +215,16 @@ function deepEqual(a, b) {
 }
 
 /**
- * Shallow clone of a row with STAMP_FIELD removed — used ONLY for the
- * equality check; never written back anywhere.
- * @param {Record<string, unknown>} row
+ * Shallow clone of an object with one field removed — used ONLY for the
+ * equality check; never written back anywhere. Reused for both row
+ * `updated_at` diffing and `.head` `updated_at` diffing (same rule).
+ * @param {Record<string, unknown>} obj
+ * @param {string} field
  * @returns {Record<string, unknown>}
  */
-function withoutStampField(row) {
-  const clone = { ...row };
-  delete clone[STAMP_FIELD];
+function omitField(obj, field) {
+  const clone = { ...obj };
+  delete clone[field];
   return clone;
 }
 
@@ -210,10 +249,33 @@ let stampedCount = 0;
 
 for (const [id, candidateRow] of candidateRows) {
   const liveRow = liveRows.get(id);
-  const changed = !liveRow || !deepEqual(withoutStampField(candidateRow), withoutStampField(liveRow));
+  const changed = !liveRow || !deepEqual(omitField(candidateRow, STAMP_FIELD), omitField(liveRow, STAMP_FIELD));
   if (changed) {
     candidateRow[STAMP_FIELD] = nowArg;
     stampedCount++;
+  }
+}
+
+// ─── Head stamping ────────────────────────────────────────────────────────
+// `.head` is a singleton (not a task_board row) — same diff-based rule as
+// above, applied once. See header comment for the updated_by fallback
+// rationale.
+let headStamped = false;
+const liveHead = liveDoc && typeof liveDoc === 'object' ? /** @type {any} */ (liveDoc).head : undefined;
+const candidateHead = candidateDoc && typeof candidateDoc === 'object' ? /** @type {any} */ (candidateDoc).head : undefined;
+
+if (candidateHead && typeof candidateHead === 'object') {
+  const headChanged =
+    !liveHead ||
+    typeof liveHead !== 'object' ||
+    !deepEqual(omitField(candidateHead, STAMP_FIELD), omitField(liveHead, STAMP_FIELD));
+  if (headChanged) {
+    candidateHead[STAMP_FIELD] = nowArg;
+    const existingUpdatedBy = candidateHead[HEAD_UPDATED_BY_FIELD];
+    if (typeof existingUpdatedBy !== 'string' || existingUpdatedBy.length === 0) {
+      candidateHead[HEAD_UPDATED_BY_FIELD] = HEAD_UPDATED_BY_FALLBACK;
+    }
+    headStamped = true;
   }
 }
 
@@ -226,5 +288,7 @@ try {
   process.exit(3);
 }
 
-process.stdout.write(`[orch-stamp-updated-at] stamped ${stampedCount} row(s) (updated_at=${nowArg})\n`);
+process.stdout.write(
+  `[orch-stamp-updated-at] stamped ${stampedCount} row(s) + head=${headStamped ? 'stamped' : 'unchanged'} (updated_at=${nowArg})\n`
+);
 process.exit(0);

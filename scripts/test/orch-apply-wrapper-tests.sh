@@ -692,6 +692,149 @@ fi
 assert_real_live_unchanged "STAMP-IDEMPOTENT"
 
 # =============================================================================
+# HEAD STAMPING TESTS (FIX-ORCHSTATE-HEAD-STAMP-DROPPED-CI-RED-1837A)
+# =============================================================================
+# .head (top-level routing pointer, singular) had ZERO updated_at/updated_by
+# stamping — 30+ ad-hoc jq callers replace it with a bare 3-field literal
+# ({status,active_task_id,next_agent}) that omits both, and HeadSchema
+# declares both .optional()+.passthrough() so it validates clean. This
+# extends the SAME Stage 1.5 actuator (scripts/orch-stamp-updated-at.mjs) to
+# also cover `.head`, diff-based, mirroring the row mechanism exactly:
+#   HEAD-STAMP-CHANGED      — head content changed (caller SUPPLIES
+#                             updated_by) -> updated_at freshly stamped,
+#                             caller's updated_by preserved verbatim (never
+#                             overridden — "comes from the caller").
+#   HEAD-STAMP-BACKFILL     — head content changed via the EXACT buggy
+#                             3-field-literal antipattern from the root
+#                             cause (no updated_at, no updated_by) ->
+#                             updated_at freshly stamped AND updated_by
+#                             backfilled with the honest actuator fallback
+#                             (never a fabricated agent name) — closes the
+#                             recurrence gap without touching the 30+ callers.
+#   HEAD-STAMP-IDEMPOTENT   — re-applying an unchanged head candidate a
+#                             second time does NOT re-stamp either field
+#                             (positive control per AC-6 — proves the stamp
+#                             fields are excluded from their own change
+#                             predicate, no feedback-loop churn).
+# =============================================================================
+HEAD_STAMP_LIVE="$FIXTURE_DIR/head-stamp-live.json"
+
+jq -n '{
+  "_meta": {"schema":"v4","ssot":true,"updated_at":"2026-06-01T00:00:00Z","updated_by":"fixture"},
+  "head": {"status":"idle","active_task_id":null,"next_agent":"router","updated_at":"2026-06-01T00:00:00Z","updated_by":"fixture-agent"},
+  "task_board": {"backlog": [{"id":"HEAD-STAMP-BACKLOG","status":"BACKLOG"}], "active_sprints": []},
+  "signal_queue": {"_updated_at":"2026-06-01T00:00:00Z","_updated_by":"fixture","rows":[]}
+}' > "$HEAD_STAMP_LIVE"
+
+# ─────────────────────────────────────────────────────────────────────────
+# HEAD-STAMP-CHANGED — candidate changes head.status, SUPPLIES its own
+# updated_by (as most real callers do). updated_at must be freshly stamped;
+# the caller-supplied updated_by must be preserved verbatim, not overridden.
+# ─────────────────────────────────────────────────────────────────────────
+HEAD_CANDIDATE_1=$(jq '.head = {status:"in_progress", active_task_id:"HEAD-STAMP-BACKLOG", next_agent:"developer", updated_by:"real-caller-agent"}' "$HEAD_STAMP_LIVE")
+
+EXIT_HEAD_1=0
+printf '%s' "$HEAD_CANDIDATE_1" \
+  | ORCH_APPLY_LIVE_FILE_OVERRIDE="$HEAD_STAMP_LIVE" bash "$APPLY_SH" 2>/dev/null \
+  || EXIT_HEAD_1=$?
+
+if [ "$EXIT_HEAD_1" -eq 0 ]; then
+  pass "HEAD-STAMP-CHANGED — mutated-head candidate accepted — exit 0"
+else
+  fail "HEAD-STAMP-CHANGED — expected exit 0, got $EXIT_HEAD_1"
+fi
+
+HEAD_UPDATED_AT_1=$(jq -r '.head.updated_at' "$HEAD_STAMP_LIVE")
+if [ -n "$HEAD_UPDATED_AT_1" ] && [ "$HEAD_UPDATED_AT_1" != "null" ] && [ "$HEAD_UPDATED_AT_1" != "2026-06-01T00:00:00Z" ]; then
+  pass "HEAD-STAMP-CHANGED — head.updated_at freshly stamped ($HEAD_UPDATED_AT_1)"
+else
+  fail "HEAD-STAMP-CHANGED — head.updated_at expected fresh non-baseline value, got '$HEAD_UPDATED_AT_1'"
+fi
+
+HEAD_UPDATED_BY_1=$(jq -r '.head.updated_by' "$HEAD_STAMP_LIVE")
+if [ "$HEAD_UPDATED_BY_1" = "real-caller-agent" ]; then
+  pass "HEAD-STAMP-CHANGED — caller-supplied head.updated_by preserved verbatim"
+else
+  fail "HEAD-STAMP-CHANGED — expected caller-supplied updated_by 'real-caller-agent', got '$HEAD_UPDATED_BY_1'"
+fi
+
+assert_real_live_unchanged "HEAD-STAMP-CHANGED"
+
+# ─────────────────────────────────────────────────────────────────────────
+# HEAD-STAMP-BACKFILL — candidate reproduces the EXACT root-cause
+# antipattern: a bare whole-object head replace with ONLY 3 fields, no
+# updated_at, no updated_by. Must be treated as changed (differs from live's
+# 5-field head), get a fresh updated_at, AND get updated_by backfilled with
+# the honest actuator fallback (never blank, never a fabricated agent name).
+# ─────────────────────────────────────────────────────────────────────────
+HEAD_CANDIDATE_2='{"status":"idle","active_task_id":null,"next_agent":"router"}'
+HEAD_BACKFILL_CANDIDATE=$(jq --argjson h "$HEAD_CANDIDATE_2" '.head = $h' "$HEAD_STAMP_LIVE")
+
+EXIT_HEAD_2=0
+printf '%s' "$HEAD_BACKFILL_CANDIDATE" \
+  | ORCH_APPLY_LIVE_FILE_OVERRIDE="$HEAD_STAMP_LIVE" bash "$APPLY_SH" 2>/dev/null \
+  || EXIT_HEAD_2=$?
+
+if [ "$EXIT_HEAD_2" -eq 0 ]; then
+  pass "HEAD-STAMP-BACKFILL — bare 3-field head literal accepted — exit 0"
+else
+  fail "HEAD-STAMP-BACKFILL — expected exit 0, got $EXIT_HEAD_2"
+fi
+
+HEAD_UPDATED_AT_2=$(jq -r '.head.updated_at' "$HEAD_STAMP_LIVE")
+if [ -n "$HEAD_UPDATED_AT_2" ] && [ "$HEAD_UPDATED_AT_2" != "null" ]; then
+  pass "HEAD-STAMP-BACKFILL — head.updated_at stamped non-null ($HEAD_UPDATED_AT_2)"
+else
+  fail "HEAD-STAMP-BACKFILL — head.updated_at expected non-null, got '$HEAD_UPDATED_AT_2'"
+fi
+
+HEAD_UPDATED_BY_2=$(jq -r '.head.updated_by' "$HEAD_STAMP_LIVE")
+if [ -n "$HEAD_UPDATED_BY_2" ] && [ "$HEAD_UPDATED_BY_2" != "null" ]; then
+  pass "HEAD-STAMP-BACKFILL — head.updated_by backfilled non-null ($HEAD_UPDATED_BY_2)"
+else
+  fail "HEAD-STAMP-BACKFILL — head.updated_by expected non-null backfill, got '$HEAD_UPDATED_BY_2'"
+fi
+
+assert_real_live_unchanged "HEAD-STAMP-BACKFILL"
+
+# ─────────────────────────────────────────────────────────────────────────
+# HEAD-STAMP-IDEMPOTENT — re-apply the CURRENT fixture content unchanged
+# (a no-op filter: `.`). Neither head.updated_at nor head.updated_by should
+# be re-stamped (positive control per AC-6: unchanged input -> zero churn).
+# ─────────────────────────────────────────────────────────────────────────
+HEAD_UPDATED_AT_BEFORE_IDEMPOTENT="$HEAD_UPDATED_AT_2"
+HEAD_UPDATED_BY_BEFORE_IDEMPOTENT="$HEAD_UPDATED_BY_2"
+
+sleep 1  # force a distinct wall-clock second so a false re-stamp is detectable
+
+EXIT_HEAD_IDEMPOTENT=0
+jq '.' "$HEAD_STAMP_LIVE" \
+  | ORCH_APPLY_LIVE_FILE_OVERRIDE="$HEAD_STAMP_LIVE" bash "$APPLY_SH" 2>/dev/null \
+  || EXIT_HEAD_IDEMPOTENT=$?
+
+if [ "$EXIT_HEAD_IDEMPOTENT" -eq 0 ]; then
+  pass "HEAD-STAMP-IDEMPOTENT — unchanged candidate accepted — exit 0"
+else
+  fail "HEAD-STAMP-IDEMPOTENT — expected exit 0, got $EXIT_HEAD_IDEMPOTENT"
+fi
+
+HEAD_UPDATED_AT_AFTER_IDEMPOTENT=$(jq -r '.head.updated_at' "$HEAD_STAMP_LIVE")
+if [ "$HEAD_UPDATED_AT_AFTER_IDEMPOTENT" = "$HEAD_UPDATED_AT_BEFORE_IDEMPOTENT" ]; then
+  pass "HEAD-STAMP-IDEMPOTENT — head.updated_at NOT re-stamped on unchanged re-apply"
+else
+  fail "HEAD-STAMP-IDEMPOTENT — head.updated_at churned: before='$HEAD_UPDATED_AT_BEFORE_IDEMPOTENT' after='$HEAD_UPDATED_AT_AFTER_IDEMPOTENT'"
+fi
+
+HEAD_UPDATED_BY_AFTER_IDEMPOTENT=$(jq -r '.head.updated_by' "$HEAD_STAMP_LIVE")
+if [ "$HEAD_UPDATED_BY_AFTER_IDEMPOTENT" = "$HEAD_UPDATED_BY_BEFORE_IDEMPOTENT" ]; then
+  pass "HEAD-STAMP-IDEMPOTENT — head.updated_by NOT re-stamped on unchanged re-apply"
+else
+  fail "HEAD-STAMP-IDEMPOTENT — head.updated_by churned: before='$HEAD_UPDATED_BY_BEFORE_IDEMPOTENT' after='$HEAD_UPDATED_BY_AFTER_IDEMPOTENT'"
+fi
+
+assert_real_live_unchanged "HEAD-STAMP-IDEMPOTENT"
+
+# =============================================================================
 # Summary
 # =============================================================================
 TOTAL=$((PASS+FAIL))
