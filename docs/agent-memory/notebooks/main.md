@@ -1,6 +1,17 @@
 # Dev Team — Sprint Boundary Notebook
 
-**Written:** 2026-07-31T07:14Z
+**Written:** 2026-07-31T07:21Z
+
+## cycle-20260731T0721Z-frontend-verified-released — RAW-verified `dev-frontend`'s FIX-CI-FRONTEND-ESLINT-BUNLOCK return (self-report matched independent re-derivation exactly, zero discrepancy); released lock. WIP 0, both P0 CI-blocking rows now closed — `main` fully CI-green
+
+- **Commits confirmed real, on origin/main**: `8c45fc1a0` (bun.lock regen fix)/`13fde27c2` (notebook+journal)/`975a1194a` (board flip), all pushed, all fetched from `origin/main` directly.
+- **Diff matches claim exactly**: `bun.lock` diff adds `tailwindcss-animate@1.0.7` + incidental transitive tightening from the stale June lockfile, nothing else. `package-lock.json` genuinely untouched (0 diff, matches claim it already had the dependency).
+- **AC-2 root-cause claim independently confirmed**: `apps/frontend/Dockerfile:11-12` — `COPY package.json package-lock.json*` + `RUN npm ci --ignore-scripts` — a real, live consumer of `package-lock.json`, not dead weight. Deleting it (option a) would have broken the Docker build; keeping both + documenting the regen-both command (option b) was the correct call.
+- **Claims independently re-run, not trusted from self-report**: `bun install --frozen-lockfile` → exit 0 ("no changes"). `bun run lint:fence` → exit 0, 0 violations (only pre-existing deprecation warnings, no rule failures) — first-ever clean run of this fence for `apps/frontend`, matches claim.
+- **CI-plane independently re-confirmed** on the exact pushed headSha `8c45fc1a0`: `gh run view 30611681976` → all 19 jobs green including `frontend-eslint:success` and the sibling `size-lint:success` — `main` is fully CI-green for the first time this session on this pair.
+- **Board+head confirmed independently**: row `status:REVIEW`, `next_agent:qa`, `commit_sha:8c45fc1a0`, `ci_run_id:30611681976`; `in_progress[]` empty for this id. `.head` correctly left untouched (was already idle, never pointed at this task per the S42 dual-in-flight convention) — matches claim.
+- Released `task:FIX-CI-FRONTEND-ESLINT-BUNLOCK-DUAL-LOCKFILE-DRIFT` (`released:1`). WIP 1→0 — both P0 CI-blocking BATCH rows now fully closed and verified.
+- **NEXT**: WIP=0, idle-head — the next tick's BOUNDED-1/SLS/RLC/DRS idle-capacity chain is now reachable. 2 P1 BATCH items remain undispatched from PO's 2026-07-31T0637Z triage (`FIX-NOTEBOOK-AUTOPRUNE-DIRECTION-UNRESOLVABLE-ZERO-TS-NOTEBOOKS`, `TE-T12` — routes to `agent-father` per PO's 2026-07-21 artifact-class ruling, not the generic ba→architect→pm chain) — candidates for the next tick's pickup, not force-dispatched now.
 
 ## cycle-20260731T0714Z-macrovmt-verified-released — RAW-verified `dev-macro-indicators`'s FIX-CI-SIZELINT-MACRO-VMT return (self-report matched independent re-derivation exactly, zero discrepancy); released lock. 1 background agent in flight (dev-frontend, sibling CI row)
 
@@ -21,14 +32,4 @@
 - **Hand-dispatched the 2 P0 CI FIX rows** via Step 3 `execute-tier.md` tier-batch pattern (`apps/macro-indicators/` vs `apps/frontend/` — disjoint zones/files, parallel-safe per Conflict Check): claimed both `task:` locks, lane-moved `ready[]→in_progress[]` via `orch-apply.sh` (conservation OK, 742/742), `.head` set to the macro-vmt row — the frontend row is tracked solely via its own LOCK-LIFETIME hold, per the S42 `FDA-6`+`po-triage` coexistence precedent (`.head` is a single-track convenience pointer, not the sole resumability mechanism). Spawned `dev-macro-indicators` + `dev-frontend` in background.
 - **Left the 2 lower-priority BATCH items undispatched this tick** (P1 `FIX-NOTEBOOK-AUTOPRUNE-...`, P1 `TE-T12`) — WIP would exceed the ≤2 cap; deferred to a future tick's pickup.
 - **NEXT**: await both `dev-macro-indicators`/`dev-frontend` RETURNs independently, RAW-verify each (CI-PLANE green is the real AC per both rows' own text, not local exit 0 alone), release both locks. Both are P0 standing escalations (~24-25h READY with zero prior dispatch attempts) — treat a self-report claiming success without independent CI-plane confirmation as incomplete verification, not done.
-
-## cycle-20260731T0651Z-fda7-verified-released — RAW-verified `dev-mcp-server`'s FDA-7 return (self-report matched independent re-derivation exactly, zero discrepancy); released lock. 1 background agent in flight (po triage)
-
-- **Commits confirmed real, on HEAD, pushed**: `24022a53a`/`9b68d9af5`/`c4685e9d2`, linear on top of my own `edf3bdb03`, `origin/main`==local HEAD.
-- **Diff matches claim exactly**: `macroTools.ts` — `sourceTier` fallback `2→4` (conservative/unknown) when no present `signals.*` component carries a tier; `fetchedAt` fallback `new Date().toISOString()→null` (type widened `string`→`string|null`), never re-stamping now on omission. `macroSnapshotGuard.ts` — comment-only (type annotation widened), no logic change, matches self-report. Doc file signature + Integration Notes updated to match both changes.
-- **Board+head confirmed independently**: `.task_board.review[]` row `FDA-7` — `status:REVIEW`, `next_agent:qa`, `commit_sha:24022a53a`; `.task_board.in_progress` empty; `.head` — `{status:idle, active_task_id:null, next_agent:router}`.
-- **Test/typecheck claims independently re-run, not trusted from self-report**: `bun test src/__tests__/089-tool-macro.test.ts` → **21 pass / 0 fail** (includes the 4 new RED→GREEN FDA-7 cases). `bun tsc --noEmit` → clean, exit 0.
-- **Out-of-scope note carried, not actioned**: `dev-mcp-server`'s own decision-journal file remains over the derived byte-cap (92,835B vs 36,000B, under the 600L line cap) — pre-existing, repeatedly routed as `context_bloat_breach` and DEFERRED per `[[feedback_ctxbloat_breach_on_live_sprint_file_defer]]`, not introduced by this task.
-- Released `task:FDA-7` (`released:1`).
-- **NEXT**: await `po`'s triage RETURN (release `task:po-triage-20260731` either way — BATCH or NOTHING). `in_progress[]` is now empty — `FIX-CI-FRONTEND-ESLINT-BUNLOCK-DUAL-LOCKFILE-DRIFT` (READY+P0, zero dispatch attempts, standing highest-priority escalation) is now reachable by BOUNDED-1 on the next idle-head tick, not force-dispatched this turn.
 
