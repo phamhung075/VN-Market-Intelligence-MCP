@@ -93,12 +93,11 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "FU-CTG-DISCOVERY-FILENAME-FILTER",
-    "next_agent": "dev-vps-crawls",
-    "next_action": "BOUNDED-1 auto-pickup claim of FU-CTG-DISCOVERY-FILENAME-FILTER — router-corrected next_agent to dev-vps-crawls (vps-scripts/ not in system-map.json zones list, Tier-3 zone-detect would mis-route to generic developer; commit-history-confirmed dev-vps-crawls owns vps-scripts/*.py). Dispatcher-wrap then spawn directly.",
-    "updated_at": "2026-07-31T08:47:31Z",
-    "updated_by": "dev-team (bounded-1 auto-pickup)"
+    "status": "idle",
+    "active_task_id": null,
+    "next_agent": "router",
+    "updated_at": "2026-07-31T08:58:09Z",
+    "updated_by": "dev-vps-crawls (FU-CTG-DISCOVERY-FILENAME-FILTER lane-move, .head sync closed by dev-team RAW-verify)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -18846,6 +18845,27 @@
         "commit_sha": "ec27c69d3108032244de7c18c9b9641d1c81cacb",
         "status_note": "Deleted/corrected the stale 'SCFI placeholder resolves to BDI' comment at shippingIndex.ts L7 + L73-77 (JSDoc for SHIPPING_SYMBOLS). Independently re-verified: SHIPPING_SYMBOLS (L79-82) only ever contained ^BDI/^BFIY — no SCFI symbol, proxy, or placeholder logic anywhere in the file (grep -i scfi confirms only the 2 comment mentions, both now corrected). Comment-only edit, SHIPPING_SYMBOLS/fetch logic untouched. cd apps/mcp-server && bun test src/__tests__/252-shipping-index.test.ts: 8 pass/0 fail (unchanged). bun tsc --noEmit: clean.",
         "updated_by": "dev-mcp-server (BOUNDED-1 auto-pickup)"
+      },
+      {
+        "id": "FU-CTG-DISCOVERY-FILENAME-FILTER",
+        "priority": "P3",
+        "size": "S",
+        "sprint": "BCTC-EXTRACT-QUALITY",
+        "status": "REVIEW",
+        "title": "VPS HNX BCTC discovery (discover-bctc-urls-browser.py) resolves a legit-titled article to a cover-letter PDF attachment -> re-poison risk; add filename-based CV_CBTT detection",
+        "type": "FIX",
+        "zone": "vps-scripts + apps/mcp-server (fetch-pipeline design)",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FU-CTG-DISCOVERY-FILENAME-FILTER",
+        "promoted_at": "2026-07-31T08:46:22Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=3)",
+        "updated_at": "2026-07-31T08:56:08Z",
+        "claimed_at": "2026-07-31T08:46:27Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "next_agent": "qa",
+        "updated_by": "dev-vps-crawls",
+        "commit_sha": "1c9959cdd16e80831c1ae90e6d62e192972e7e60",
+        "return_summary": "Filename-based cover-letter reject added to _fetch_pdf_url() in vps-scripts/discover-bctc-urls-browser.py — resolved PDF filenames containing cv_cbtt/cong_van_cbtt (case-insensitive) are skipped even when the article title passed FIX-CTG-2's title filter, matching article 613699's repro (good title, cover-letter attachment). 15 new tests (vps-scripts/test_discover_bctc_filename_classifier.py), 57/57 full suite PASS, py_compile clean. Fix fully contained in vps-scripts/ — no apps/mcp-server change needed for this defect. Deploy to VPS NOT performed (user-gated per standing policy)."
       }
     ],
     "qa": [],
@@ -18867,26 +18887,7 @@
     },
     "last_triaged_at": "2026-07-31T08:46:22Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": [
-      {
-        "id": "FU-CTG-DISCOVERY-FILENAME-FILTER",
-        "priority": "P3",
-        "size": "S",
-        "sprint": "BCTC-EXTRACT-QUALITY",
-        "status": "IN_PROGRESS",
-        "title": "VPS HNX BCTC discovery (discover-bctc-urls-browser.py) resolves a legit-titled article to a cover-letter PDF attachment -> re-poison risk; add filename-based CV_CBTT detection",
-        "type": "FIX",
-        "zone": "vps-scripts + apps/mcp-server (fetch-pipeline design)",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FU-CTG-DISCOVERY-FILENAME-FILTER",
-        "promoted_at": "2026-07-31T08:46:22Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=3)",
-        "updated_at": "2026-07-31T08:47:31Z",
-        "claimed_at": "2026-07-31T08:46:27Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)",
-        "next_agent": "dev-vps-crawls"
-      }
-    ]
+    "in_progress": []
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
