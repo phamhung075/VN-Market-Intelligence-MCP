@@ -93,12 +93,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "active_task_id": null,
-    "next_agent": "router",
-    "next_action": "S81 pair merged+reviewed; awaiting qa or further dev-team dispatch.",
-    "updated_at": "2026-07-31T15:47:47Z",
-    "updated_by": "dev-team (S81 close-out)"
+    "status": "in_progress",
+    "active_task_id": "INVESTIGATE-EMPTY-DATA-TABLES",
+    "next_agent": "developer",
+    "next_action": "BOUNDED-1 auto-pickup claim of INVESTIGATE-EMPTY-DATA-TABLES — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
+    "updated_at": "2026-07-31T15:50:44Z",
+    "updated_by": "dev-team (bounded-1 auto-pickup)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -5725,16 +5725,6 @@
         "po_corroboration_20260723": "CORROBORATION (PO CONVERGE drain 2026-07-23T03:52Z, folds sys-20260723T023146-7e7f WARN 'VPS proxy health degraded 3/5 services unhealthy'). Live get_system_status @03:52Z: recurring 'VPS endpoint timeout (>5000ms)' on foreign-flow-job with graceful fallback ACTIVE (all-fallbacks-exhausted -> returns empty, no crash); tradingEconomics disabled/stopped (known). Known recurring VPS-proxy degradation class (also FIX-VPS-SSC-INSIDER-502, OPS-POLLNEWS-NIGHT-ZERO). NO new mint. Not escalated to ops (graceful degradation working; user-gated VPS lane).",
         "updated_at": "2026-07-28T19:02:26Z",
         "po_corroboration_20260728": "Corroborating signal (WARN, dedup-fold, no new mint): sys-20260728T183937-73b5 (system-auditor, 2026-07-28T18:39:37Z) — vn-sbv-fetch VPS service unhealthy, uptime 59m (recent restart), sbv_rates last write 17:30:09Z. Consistent with this row's already-scoped 24h-staleness-threshold concern; single WARN observation post-restart, not yet a sustained pattern warranting a separate mint."
-      },
-      {
-        "id": "INVESTIGATE-EMPTY-DATA-TABLES",
-        "priority": "low",
-        "status": "BACKLOG",
-        "title": "5 EMPTY data tables — confirm intended-empty vs dead-pipeline: credit_data(0), insider_transactions(0), public_contracts(0), pharma_events(0), broker_sanctions(0). Each has a writer somewhere; 0 rows may be by-design (rare events) OR a dead pipeline. SINGLE investigation task (not 5).",
-        "type": "SPIKE",
-        "zone": "apps/mcp-server/",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#INVESTIGATE-EMPTY-DATA-TABLES",
-        "verify_note": "prior_status=TODO"
       },
       {
         "id": "OPS-POLLNEWS-NIGHT-ZERO",
@@ -19076,9 +19066,26 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-31T13:47:28Z",
+    "last_triaged_at": "2026-07-31T15:50:36Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": []
+    "in_progress": [
+      {
+        "id": "INVESTIGATE-EMPTY-DATA-TABLES",
+        "priority": "low",
+        "status": "IN_PROGRESS",
+        "title": "5 EMPTY data tables — confirm intended-empty vs dead-pipeline: credit_data(0), insider_transactions(0), public_contracts(0), pharma_events(0), broker_sanctions(0). Each has a writer somewhere; 0 rows may be by-design (rare events) OR a dead pipeline. SINGLE investigation task (not 5).",
+        "type": "SPIKE",
+        "zone": "apps/mcp-server/",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#INVESTIGATE-EMPTY-DATA-TABLES",
+        "verify_note": "prior_status=TODO",
+        "promoted_at": "2026-07-31T15:50:36Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=3)",
+        "updated_at": "2026-07-31T15:50:44Z",
+        "claimed_at": "2026-07-31T15:50:43Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)"
+      }
+    ]
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
