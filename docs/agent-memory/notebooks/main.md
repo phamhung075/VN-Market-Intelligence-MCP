@@ -1,6 +1,15 @@
 # Dev Team — Sprint Boundary Notebook
 
-**Written:** 2026-07-31T08:47Z
+**Written:** 2026-07-31T09:02Z
+
+## cycle-20260731T0902Z-futctg-verified-released — RAW-verified `dev-vps-crawls`'s FU-CTG-DISCOVERY-FILENAME-FILTER return (zero discrepancy on code/tests; found+closed a `.head` sync gap); pushed 2 local-only commits + own board/head-sync commit. WIP 0, idle-head
+
+- **Commits confirmed real, built cleanly on this session's own S59 push**: `1c9959cdd` (fix+test)/`f133c659c` (notebook+journal) — both local-only (`git rev-list --left-right --count origin/main...HEAD` = 0/2 before push), zero divergence. Pushed cleanly.
+- **Diff matches claim exactly**: `discover-bctc-urls-browser.py` — added `is_cover_letter_filename(url)` (final path segment, case-insensitive, query-strip+URL-decode, checks `cv_cbtt`/`cong_van_cbtt`), wired into `_fetch_pdf_url()`'s href loop (skip+continue-scan on match, same disposition as the pre-existing title filter). `urllib.parse`/`sys` already imported — no missing dependency.
+- **Tests independently re-run, not trusted from self-report**: new `test_discover_bctc_filename_classifier.py` → **15/15 PASS**; full `vps-scripts/` suite → **57/57 PASS**; `py_compile` clean — exact match. Spot-checked the key test (`test_fetch_pdf_url_skips_cover_letter_returns_real_statement`) — genuinely exercises the real-world repro (article 613699's exact filenames), not a synthetic stand-in.
+- **`.head` sync GAP found and closed**: board row correctly moved `in_progress→review` (`status:REVIEW`, `next_agent:qa`, `commit_sha` correct) but `.head` was left stale at `in_progress`/`FU-CTG-DISCOVERY-FILENAME-FILTER` — unlike FDA-10's clean same-write sync last tick. Fixed via `orch-apply.sh` (`.head`→idle), committed separately (`b5712ef9e`), pushed.
+- **Coordination gap noted, not a defect**: `dev-vps-crawls` had no gateway/MCP grant to self-release; released on its behalf.
+- **NEXT**: no items remain from this tick's dispatch. `TE-T12` still the only undispatched item from PO's 2026-07-31T0637Z triage (routes to `agent-father`). Idle-head, WIP=0.
 
 ## cycle-20260731T0847Z-bounded1-futctg-dispatched — Fresh tick: preflight RUN, drained 2 DEFER-covered context-bloat signals, `.head` idle/WIP=0 → BOUNDED-1 claimed+dispatched FU-CTG-DISCOVERY-FILENAME-FILTER (HNX BCTC discovery cover-letter filename filter gap); 1 background agent in flight
 
@@ -20,13 +29,4 @@
 - **Coordination gap noted, not a defect**: same class as S54/S56 — this `dev-mcp-server` instance had no gateway/MCP grant to self-release/notify; released on its behalf.
 - **NEXT**: no items remain from this tick's dispatch. `TE-T12` still the only undispatched item from PO's 2026-07-31T0637Z triage (routes to `agent-father`). Idle-head, WIP=0.
 
-## cycle-20260731T0817Z-bounded1-fda10-dispatched — Fresh tick: preflight RUN, drained 3 low-urgency/informational signals, 0 orphans, CI probe in_progress/no-op, `.head` idle/WIP=0 → BOUNDED-1 claimed+dispatched FDA-10 (shippingIndex stale comment cleanup); 1 background agent in flight
-
-- **Preflight/GCC-preflight clean**: verdict RUN, tick `08:07Z`. No HEAD.lock, 3 external fleet-push worktrees (peer sessions) untouched, dirty tree confirmed peer-session churn only.
-- **Drained 3 signals**: 3rd consecutive `context_bloat_breach` on this session's OWN decision journal (152L/60457B, overage now 24457B and growing fast — DEFER held, still a live in-progress sprint journal), 1 pure `cowork-fire` telemetry row (news-scout/market-watcher/alert-commander off-hours cadence — no action), 1 `notebook_tiebreak_direction_defaulted` informational signal on `digest-predict.md` confirming S54's autoprune-direction fix (verified S56) is firing correctly in production — no action, self-referencing an already-closed task.
-- **0 orphans**: `task_list_held(owner_agent="dev-team")` showed exactly the 3 expected locks (SF-1, fire-election, session-presence).
-- **CI probe**: run `30615612940` still in_progress, no signal emitted.
-- **`.head` idle, WIP=0** → BOUNDED-1 promote+claim run with the full documented invocation (`--arg now` + `--slurpfile detail` + `--slurpfile archive`, piped through `orch-apply.sh`; first bare `jq -f` attempt correctly failed loud on missing `$now`, caught pre-write) → claimed `FDA-10` (P3/XS/CLEAN, `apps/mcp-server/src/infrastructure/fetchers/shippingIndex.ts` — stale doc-comment claims a non-existent SCFI→BDI placeholder; already confirmed NOT-a-contamination by a prior FAKE-DATA-AUDIT sub-agent; comment-only fix, no logic/data change). Zone `apps/mcp-server` → `dev-mcp-server` confirmed via `docs/references/agent-roster.md`. Dispatcher-wrap `task_claim("task:FDA-10")` → `claimed:true` (genuinely new, no re-entrant collision) — spawned `dev-mcp-server` in background with full task detail + independent-reverify instruction + standard LOCK-LIFETIME/RAW-verify notice.
-- **Elected NOT to dispatch Step 1 PO triage this tick**: all 3 drained signals are DEFER-covered/pure-telemetry/purely-informational — none carry a genuine PO judgment call, matching S54's precedent.
-- **NEXT**: await `dev-mcp-server`'s RETURN, RAW-verify (re-diff the comment deletion, confirm no SCFI logic touched, re-run its claimed test command, re-read board/head state), release the lock. `TE-T12` remains the only undispatched item from PO's 2026-07-31T0637Z triage batch (routes to `agent-father`, outside this session's zone).
 
