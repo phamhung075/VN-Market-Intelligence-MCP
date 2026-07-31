@@ -25,13 +25,13 @@
 }
 ```
 
-**4.** Create BA task entry in `docs/data/orch/orch-state.json` `.task_board.backlog[]` — canonical shape per `docs/standards/task-schema.md`:
+**4.** Create BA task entry in `docs/data/orch/orch-state.json` `.task_board.backlog[]` — canonical shape per `docs/standards/task-schema.md`. `status` MUST be `"BACKLOG"` — `backlog[]`'s allowed set per `apps/mcp-server/src/infrastructure/orchStateSchema.ts` is `{BACKLOG, BLOCKED}` only; see `docs/agents/po/flow/triage-signals.md` § Regression verifier + `scripts/audits/po-triage-mint-backlog-status-lane-coherence-verify.sh`:
 ```json
 {
   "id": "BA-NNN",
   "title": "Requirement Spec for Vision NNN",
   "owner": "ba",
-  "status": "TODO",
+  "status": "BACKLOG",
   "zone": "docs/agents/",
   "created_at": "<ISO-8601 UTC now>"
 }

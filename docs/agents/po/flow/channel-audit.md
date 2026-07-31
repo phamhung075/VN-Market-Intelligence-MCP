@@ -93,7 +93,7 @@ Required output: every emitted FIX/SPRINT entry carries `zone:` (one of `apps/<s
 
 ---
 
-**If 1+ issues found**: create bug/correction tasks in `docs/data/orch/orch-state.json` `.task_board.backlog[]` — canonical shape per `docs/standards/task-schema.md`: `{id, title, owner, status: "TODO", zone, created_at}` (with correct root-cause label + zone) before proceeding to sprint planning.
+**If 1+ issues found**: create bug/correction tasks in `docs/data/orch/orch-state.json` `.task_board.backlog[]` — canonical shape per `docs/standards/task-schema.md`: `{id, title, owner, status: "BACKLOG", zone, created_at}` (with correct root-cause label + zone) before proceeding to sprint planning. `status` MUST be `"BACKLOG"` — `backlog[]`'s allowed set per `apps/mcp-server/src/infrastructure/orchStateSchema.ts` is `{BACKLOG, BLOCKED}` only; see `docs/agents/po/flow/triage-signals.md` § Regression verifier + `scripts/audits/po-triage-mint-backlog-status-lane-coherence-verify.sh`.
 
 **If clean**: proceed to No-Task Guard (back in main.md).
 
