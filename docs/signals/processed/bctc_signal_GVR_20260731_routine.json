@@ -1,0 +1,91 @@
+{
+  "ticker": "GVR",
+  "signal_type": "bctc_signal",
+  "quarter": "Q1-2026",
+  "mode": "routine",
+  "beat_miss": null,
+  "product": "State-owned rubber/plantation conglomerate: natural rubber cultivation/processing, industrial land-bank development, JV dividends",
+  "customer": "Industrial-park tenants (land-lease/land-bank compensation), rubber processors/exporters, JV partners",
+  "ops": "Gross margin 26.4%; Op. margin 21.7%; ROE 3.9% (below sector median 15.5%, though GVR's peer set here is agri/aquaculture, an imperfect comparator for a rubber/land-bank conglomerate); net profit (2,513.4 tỷ) modestly exceeds gross profit (2,336.7 tỷ) — flagged passed_with_warnings, non-operating income likely land-bank/JV-driven per SOE-conglomerate structural pattern",
+  "mgmt": "New rotation ticker this cycle (1st touch, n=1) — no prior track-record data gathered yet; no significant insider activity; zero legal-risk signals",
+  "valuation": {
+    "pe": null,
+    "sector_median_pe": 8.9,
+    "pb": null,
+    "sector_median_pb": 1.6,
+    "roe": 3.87,
+    "sector_median_roe": 15.5,
+    "valuation_verdict": "DATA-GAP",
+    "note": "get_bctc_full and sector_comparison both return PE=null/PB=null for GVR — cannot compute EARNING_YIELD/EY_SPREAD this cycle. Not fabricated. No valuation evidence fragment recorded as a result."
+  },
+  "balance_sheet": {
+    "total_assets_trieu_vnd": 87178899.384779,
+    "total_liabilities_trieu_vnd": 22194178.753373,
+    "equity_trieu_vnd": 64984720.631406,
+    "esc2_imbalance_pct": 0,
+    "esc2_result": "FALSE"
+  },
+  "esc4_non_operating_share": {
+    "pretax_profit_trieu_vnd": 2960895.481655,
+    "operating_profit_trieu_vnd": 1923300,
+    "non_operating_share_pct": 35,
+    "esc4_raw_result": "TRUE (> 15% threshold)",
+    "ac2_soe_conglomerate_downgrade": {
+      "applies": true,
+      "membership_class": "GVR, PHR, DPR, TRC, HRC",
+      "severity": "INFO (downgraded from HIGH)",
+      "structural_context_note": "SOE-conglomerate class (GVR): non-operating share reflects land-bank/JV structure, not confirmed one-off manipulation. Downgraded pending granular line-item availability (footnote/segment passes)."
+    },
+    "escalation_status": "PENDING (INFO)",
+    "guard_key": "esc-deepdive:GVR:Q1-2026:ESC-4",
+    "signal_emitted": "docs/signals/bctc-analyst-20260731T151901Z.json"
+  },
+  "esc3_ocf_vs_ni": {
+    "quarters_returned": 2,
+    "quarters_required": 4,
+    "esc3_status": "DATA-COVERAGE-LIMITED",
+    "coverage_guard_key": "esc-datacov:GVR:Q1-2026:ESC-3",
+    "coverage_guard_held": false,
+    "signal_emitted": "docs/signals/bctc-analyst-20260731T151900Z.json",
+    "note": "operating_cf extracted as 0 for Q1/2026 (further extraction-quality caveat); Q4/2025 period in same response returned an astronomically implausible operating_cf (~3.67e30) which the tool itself suppressed (ocf_ni_suppressed=true) — additional corroboration of the widespread extraction-defect pattern this cycle, not independently re-escalated."
+  },
+  "esc5_refine_confidence": {
+    "report_id": null,
+    "existing_refine_status": "PARTIAL",
+    "esc5_result": "FALSE",
+    "note": "get_bctc_report_id returned null — graceful skip"
+  },
+  "e3_cache": {
+    "status": "MISS",
+    "reason": "New rotation ticker, 1st touch this cycle.",
+    "passes_skipped": false
+  },
+  "trick_detection": {
+    "trick_summary": null,
+    "trick_confidence": "none",
+    "trick_pass_versions": [],
+    "pass_clean": true,
+    "note": "prose_sections=[] and refine_status=PARTIAL — no granular row/code-level OCR text available to run the 6 forensic passes against. pass_clean=true here is absence-of-evidence, NOT verified-absence (same honest-limitation treatment applied to other E3-MISS tickers with empty prose_sections in prior cycles, e.g. ACB/HVN at c134)."
+  },
+  "kinh_dich": {
+    "que": "31 - Ham",
+    "trend": "THUAN LOI",
+    "signal": "GIU",
+    "confidence_pct": 62
+  },
+  "insider": "no significant insider activity",
+  "legal_risk": "none",
+  "vps_staleness_context": "Served from last-known-good cache (published 2026-06-07T11:06:21.515Z); VPS push stale since 2026-07-28T08:23:22Z (78.8h, SLA=48h) — already-tracked P0, not re-escalated.",
+  "overdue": true,
+  "overdue_deadline": "2026-07-30 (Q2-2026)",
+  "search_similar_context_discrepancy_note": "search_similar_context index entry for GVR Q1/2026 shows different rounded figures (~34,000 trieu revenue / ~1,000 trieu profit) than get_bctc_full's authoritative structured_data (8,845,157 trieu / 2,513,382 trieu) used in this signal. Likely a display/formatting artifact in the search index, not treated as authoritative; flagged for awareness only, not escalated.",
+  "cycle_id": "20260731-1500",
+  "slot": "bctc-analyst-slot-1",
+  "emitted_at": "2026-07-31T15:19:00Z",
+  "_processed": {
+    "fingerprint": "588a85df6093c7caf47c95134ac779d241a62d357059f8f34d6593f4e46d5c44",
+    "processedAt": "2026-07-31T15:53:09Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

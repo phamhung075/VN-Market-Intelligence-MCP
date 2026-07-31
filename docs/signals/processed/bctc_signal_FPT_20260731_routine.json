@@ -4,38 +4,91 @@
   "quarter": "Q1-2026",
   "mode": "routine",
   "beat_miss": null,
-  "product": "Dịch vụ CNTT xuất khẩu (phần mềm, tích hợp hệ thống), viễn thông (FPT Telecom), giáo dục (FPT Edu), quảng cáo trực tuyến.",
-  "customer": "Doanh nghiệp CNTT toàn cầu (Nhật/Mỹ/APAC) thuê ngoài phần mềm, thuê bao viễn thông trong nước, sinh viên hệ thống FPT Edu.",
-  "ops": "Biên gộp 34.0%, biên hoạt động 22.0%; ROE quý 6.17%; cân đối kế toán khớp chính xác (imbalance 0%).",
-  "mgmt": "Dữ liệu BCTC là last-known-good — VPS push cuối 2026-07-28T08:23:22Z (63.8h trước, vượt SLA 48h); Q2-2026 vừa chuyển sang QUÁ HẠN (hạn 30/07 đã qua).",
-  "roe_pct": 6.17,
-  "esc2_balance_imbalance_pct": 0,
-  "esc3_status": "DATA-COVERAGE-LIMITED",
-  "esc3_note": "Carried forward from c133 live check (2/4 quarters available); guard esc-datacov:FPT:Q1-2026:ESC-3 HELD until ~2026-08-06, no re-emit this cycle (E3 cache-hit — full ESC recompute skipped).",
-  "esc4_result": "FALSE",
-  "esc4_non_operating_share_pct": 2,
-  "esc5_status": "PENDING",
-  "esc5_note": "Escalation bca-ddres/esc-deepdive:FPT:Q1-2026:ESC-5 already emitted by peer session c133 (docs/signals/bctc-analyst-20260730T211400Z.json) — 7/15 refine units confidence<0.50 (pages 26-46, related-party/subsidiary notes). Guard held until ~2026-07-31T21:14Z, no re-emit this cycle.",
-  "e3_cache_status": "HIT",
-  "e3_note": "Published timestamp unchanged (2026-05-24T06:55:35.108Z) vs prior cycle — byte-identical, 6-pass trick detection skipped per E3.",
-  "trick_summary": "Không phát hiện dấu hiệu bất thường trong kỳ này (E3 cache-hit — dữ liệu không đổi từ chu kỳ trước).",
-  "trick_confidence": "none",
-  "trick_pass_versions": [
-    "balance-sheet-v1",
-    "pl-v1",
-    "cashflow-v1",
-    "rpt-v1",
-    "footnote-v1",
-    "segment-v1"
-  ],
-  "insider_signals": "Không có tín hiệu đáng kể (thị trường chung: NEUTRAL, thiếu dữ liệu giao dịch 90d)",
-  "sentiment_trend": "TĂNG, slope +0.19 (30d, 19 tin)",
-  "extraction_confidence_pct": 81,
-  "published_at_source": "2026-05-24T06:55:35.108Z",
-  "generated_at": "2026-07-31T00:18:00Z",
+  "product": "IT services, software exports, telecom (FPT Telecom), education (FPT Edu)",
+  "customer": "Enterprise IT buyers (VN + offshore, notably Europe/Japan +44.4% growth), SME telecom subscribers",
+  "ops": "Op. margin 22.0%; Q1-2026 net revenue 12,480 tỷ (-22.3% headline YoY, but +8.7% YoY on FTEL-deconsolidation-adjusted basis per company explanation); NPAT +13.8% adjusted YoY",
+  "mgmt": "FTEL deconsolidation (equity-method switch from 01/01/2026) explained transparently in filing; buyback/dividend history steady",
+  "valuation": {
+    "pe": 13.8,
+    "sector_median_pe": 17.3,
+    "pe_verdict": "DISCOUNT -20%",
+    "pb": 3.6,
+    "sector_median_pb": 1.5,
+    "pb_verdict": "PREMIUM +136%",
+    "roe": 6.17,
+    "sector_median_roe": 10.6,
+    "earning_yield_pct": 7.25,
+    "max_deposit_rate_pct": 5,
+    "ey_spread_pct": 2.25,
+    "valuation_verdict": "FAIR"
+  },
+  "balance_sheet": {
+    "total_assets_trieu_vnd": 68586094.785217,
+    "total_liabilities_trieu_vnd": 28464058.214856,
+    "equity_trieu_vnd": 40122036.570361,
+    "esc2_imbalance_pct": 0,
+    "esc2_result": "FALSE"
+  },
+  "esc4_non_operating_share": {
+    "pretax_profit_trieu_vnd": 2803844.281676,
+    "operating_profit_trieu_vnd": 2747763.82705,
+    "non_operating_share_pct": 2,
+    "esc4_result": "FALSE"
+  },
+  "esc3_ocf_vs_ni": {
+    "quarters_returned": 2,
+    "quarters_required": 4,
+    "esc3_status": "DATA-COVERAGE-LIMITED",
+    "coverage_guard_key": "esc-datacov:FPT:Q1-2026:ESC-3",
+    "coverage_guard_held": true,
+    "ocf_ni_ratio_q1_2026": -1.1498
+  },
+  "esc5_refine_confidence": {
+    "report_id": "e8ea3df5-3f32-413d-a3eb-c71634c0438d",
+    "min_confidence": 0.45,
+    "low_confidence_unit_ids": [
+      "unit-0008",
+      "unit-0009",
+      "unit-0010",
+      "unit-0011",
+      "unit-0012",
+      "unit-0013",
+      "unit-0014"
+    ],
+    "esc5_result": "TRUE",
+    "escalation_status": "GUARD-HELD",
+    "guard_key": "esc-deepdive:FPT:Q1-2026:ESC-5",
+    "guard_holder": "bctc-analyst-slot-3 (claimed ~2026-07-30T21:14Z, expires ~2026-07-31T21:14Z)",
+    "note": "Live-reconfirmed this cycle by reading full 15-unit get_bctc_refined payload (226-line saved file, read in full). Confirms prior-cycle TRUE verdict. Guard still held (not yet expired) — a prior notebook carry-over note claiming the guard 'will have expired' by this 15:00Z slot was an arithmetic error (15:00Z < 21:14Z expiry); corrected here, no re-emit performed."
+  },
+  "e3_cache": {
+    "status": "HIT",
+    "basis": "get_bctc_full published_at unchanged (2026-05-24T06:55:35.108Z) vs prior cycles; structured_data numerically identical to values recorded in notebook c133/c134. Cached pass artifact file not independently re-verified (no Bash/Glob grant to inspect data/bctc-analysis-cache/ directly) — cache-hit determination made via published-timestamp/value identity, consistent with this agent's established no-Bash methodology across prior cycles.",
+    "passes_skipped": true
+  },
+  "trick_detection": {
+    "trick_summary": null,
+    "trick_confidence": "none",
+    "trick_pass_versions": [],
+    "note": "E3 cache-hit — 6 passes skipped per idempotency spec. Prior on-disk signal file for today's date not resident (likely already drained by dev-team drain-signals pipeline before this cycle); no fabricated pass detail carried forward. Structural checks (ESC-2 balance, ESC-4 non-op ratio) both clean/FALSE."
+  },
+  "kinh_dich": {
+    "que": "31 - Ham",
+    "trend": "THUAN LOI",
+    "signal": "GIU",
+    "confidence_pct": 62
+  },
+  "insider": "no significant insider activity",
+  "legal_risk": "none",
+  "vps_staleness_context": "BCTC VPS push last-ok 2026-07-28T08:23:22Z, 78.8h stale vs 48h SLA at fetch time — already-tracked P0 (FIX-PDFX-TESSERACT-CONCURRENCY, docs/architecture-briefs/2026-07-28-pdfx-tesseract-concurrency-invariant.md); FPT served from last-known-good cache, not re-escalated.",
+  "overdue": true,
+  "overdue_deadline": "2026-07-30 (Q2-2026)",
+  "cycle_id": "20260731-1500",
+  "slot": "bctc-analyst-slot-1",
+  "emitted_at": "2026-07-31T15:19:00Z",
   "_processed": {
-    "fingerprint": "cd948c11421cada60f96af0a741ca976674455a052948fcaa17888cac6faa7e7",
-    "processedAt": "2026-07-31T00:45:35Z",
+    "fingerprint": "fdef46c720b387dc89a019f492fe515c7d85c0c64e6da710ca520fda43a87dd3",
+    "processedAt": "2026-07-31T15:53:09Z",
     "processedBy": "dev-team",
     "result": "routed-to-po"
   }

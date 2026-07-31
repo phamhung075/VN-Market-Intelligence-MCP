@@ -4,38 +4,82 @@
   "quarter": "Q1-2026",
   "mode": "routine",
   "beat_miss": null,
-  "product": "Ngân hàng bán lẻ và doanh nghiệp, tài trợ thương mại xuất nhập khẩu, bancassurance.",
-  "customer": "Khách hàng doanh nghiệp lớn/FDI, khách hàng cá nhân đô thị, tổ chức xuất nhập khẩu.",
-  "ops": "Thu nhập lãi thuần 17.421 tỷ; lợi nhuận hoạt động 14.088,6 tỷ (80.9%); ROE quý 4.21%; cân đối kế toán lệch nhẹ 0.37% (dưới ngưỡng cảnh báo 0.5%).",
-  "mgmt": "15/15 đơn vị refine đã đọc; 7 đơn vị (trang 26-46, ghi chú công ty con/bên liên quan) độ tin cậy <50% — escalation ESC-5 đang PENDING xử lý bởi dev-team (Opus deep-dive).",
-  "roe_pct": 4.21,
-  "esc2_balance_imbalance_pct": 0.37,
-  "esc3_status": "DATA-COVERAGE-LIMITED",
-  "esc3_note": "Carried forward from c133 (3/4 quarters available); guard esc-datacov:VCB:Q1-2026:ESC-3 HELD until ~2026-08-06, no re-emit (E3 cache-hit).",
-  "esc4_result": "FALSE",
-  "esc4_non_operating_share_pct": -21.4,
-  "esc5_status": "FALSE",
-  "esc5_note": "get_bctc_report_id(VCB,Q1) reconfirmed live this cycle: report_id=null, existing_refine_status=PARTIAL — refine not finished, no escalation.",
-  "e3_cache_status": "HIT",
-  "e3_note": "Published timestamp unchanged (2026-07-19T12:43:43.098Z) vs prior cycle — byte-identical, 6-pass trick detection skipped per E3.",
-  "trick_summary": "Không phát hiện dấu hiệu bất thường trong kỳ này (E3 cache-hit — dữ liệu không đổi từ chu kỳ trước).",
-  "trick_confidence": "none",
-  "trick_pass_versions": [
-    "balance-sheet-v1",
-    "pl-v1",
-    "cashflow-v1",
-    "rpt-v1",
-    "footnote-v1",
-    "segment-v1"
-  ],
-  "insider_signals": "Không có tín hiệu đáng kể (thị trường chung: NEUTRAL, thiếu dữ liệu giao dịch 90d)",
-  "sentiment_trend": "ỔN ĐỊNH, slope +0.00 (30d, 2 tin)",
-  "extraction_confidence_pct": 75,
-  "published_at_source": "2026-07-19T12:43:43.098Z",
-  "generated_at": "2026-07-31T00:18:00Z",
+  "product": "State-owned commercial banking: corporate/retail lending, trade finance, bancassurance",
+  "customer": "Large corporates, SOEs, retail depositors, FX/trade-finance clients",
+  "ops": "Operating margin 80.9% (bank NIM-driven); ROE 4.2% (below sector median 16.7% on a total-equity basis — bank ROE metrics need care re: consolidated equity base); OCF/NI ratio 1.37x (healthy, though only 3/4 quarters available)",
+  "mgmt": "Today's news: foreign investors net-sold market overall but net-BOUGHT ~300 tỷ VND into VCB specifically — idiosyncratic demand not sector-wide; price +4.96% today on this flow, contrasting with KD BÁN (sell) signal at 100% confidence — flagged as a genuine KD-vs-price-action divergence, not resolved this cycle",
+  "valuation": {
+    "pe": 14.1,
+    "sector_median_pe": 9,
+    "pe_verdict": "PREMIUM +57%",
+    "pb": 2.2,
+    "sector_median_pb": 1.5,
+    "pb_verdict": "PREMIUM +45%",
+    "roe": 4.21,
+    "sector_median_roe": 17.6,
+    "roe_verdict": "BELOW MEDIAN",
+    "earning_yield_pct": 7.09,
+    "max_deposit_rate_pct": 5,
+    "ey_spread_pct": 2.09,
+    "valuation_verdict": "FAIR"
+  },
+  "balance_sheet": {
+    "total_assets_trieu_vnd": 2550963342,
+    "total_liabilities_trieu_vnd": 2316932013,
+    "equity_trieu_vnd": 224558726,
+    "esc2_imbalance_pct": 0.37,
+    "esc2_result": "FALSE (under 0.5% threshold)"
+  },
+  "esc4_non_operating_share": {
+    "pretax_profit_trieu_vnd": 11602302,
+    "operating_profit_trieu_vnd": 14088600,
+    "non_operating_share_pct": -21.4,
+    "esc4_result": "FALSE (negative value fails > 0.15 test)"
+  },
+  "esc3_ocf_vs_ni": {
+    "quarters_returned": 3,
+    "quarters_required": 4,
+    "esc3_status": "DATA-COVERAGE-LIMITED",
+    "coverage_guard_key": "esc-datacov:VCB:Q1-2026:ESC-3",
+    "coverage_guard_held": true,
+    "ocf_ni_ratio_q1_2026": 1.368
+  },
+  "esc5_refine_confidence": {
+    "report_id": null,
+    "existing_refine_status": "PARTIAL",
+    "esc5_result": "FALSE",
+    "note": "get_bctc_report_id returned null (refine not DONE) — graceful skip, reconfirmed live this cycle"
+  },
+  "e3_cache": {
+    "status": "HIT",
+    "basis": "get_bctc_full published_at unchanged (2026-07-19T12:43:43.098Z); structured_data identical to notebook c133/c134 record.",
+    "passes_skipped": true
+  },
+  "trick_detection": {
+    "trick_summary": null,
+    "trick_confidence": "none",
+    "trick_pass_versions": [],
+    "note": "E3 cache-hit — 6 passes skipped. ESC-2/ESC-4 both clean/FALSE."
+  },
+  "kinh_dich": {
+    "que": "12 - Bi",
+    "trend": "BAT LOI",
+    "signal": "BAN",
+    "confidence_pct": 100,
+    "note": "Bearish hexagram at max confidence, contradicts today's +4.96% price rally driven by idiosyncratic foreign net-buying. Flagged as unresolved divergence for chef narrative, not suppressed."
+  },
+  "insider": "no significant insider activity",
+  "legal_risk": "none",
+  "vps_staleness_context": "Served from last-known-good cache (published 2026-07-19); VPS push stale since 2026-07-28T08:23:22Z (78.8h, SLA=48h) — already-tracked P0, not re-escalated.",
+  "overdue": false,
+  "overdue_deadline": null,
+  "calendar_status": "Q1-2026 ĐÃ NỘP (2026-07-19); Q2-2026 not yet tracked in calendar for this ticker",
+  "cycle_id": "20260731-1500",
+  "slot": "bctc-analyst-slot-1",
+  "emitted_at": "2026-07-31T15:19:00Z",
   "_processed": {
-    "fingerprint": "8e2e89da9f30b5d33588ccf16b28f8d6843aba2db44379c115c59823d3135ce9",
-    "processedAt": "2026-07-31T00:45:35Z",
+    "fingerprint": "6bc4be0a05cd275103dd35e04329e1155f6dbd3efde0afcdc8f0b356077c6f36",
+    "processedAt": "2026-07-31T15:53:09Z",
     "processedBy": "dev-team",
     "result": "routed-to-po"
   }

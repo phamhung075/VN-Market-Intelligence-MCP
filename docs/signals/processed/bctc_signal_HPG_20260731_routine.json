@@ -4,38 +4,78 @@
   "quarter": "Q1-2026",
   "mode": "routine",
   "beat_miss": null,
-  "product": "Thép xây dựng, thép cuộn cán nóng (HRC), ống thép, nội thất, mảng nông nghiệp (thức ăn chăn nuôi).",
-  "customer": "Nhà thầu xây dựng, đại lý phân phối thép trong nước, doanh nghiệp sản xuất tôn mạ và xuất khẩu.",
-  "ops": "Biên gộp 15.8%; Operating Profit trích xuất = 0 (lỗi OCR đã biết, không phải thực tế kinh doanh); lợi nhuận ròng (9.055,9 tỷ) vượt lợi nhuận gộp (8.365,1 tỷ) — cảnh báo thu nhập ngoài hoạt động lớn, chưa thể phân tách do thiếu dữ liệu chi tiết.",
-  "mgmt": "Dữ liệu last-known-good — VPS push cuối 2026-07-28T08:23:22Z (63.8h trước, vượt SLA 48h); Q2-2026 vừa chuyển sang QUÁ HẠN.",
-  "roe_pct": 6.48,
-  "esc2_balance_imbalance_pct": 0,
-  "esc3_status": "DATA-COVERAGE-LIMITED",
-  "esc3_note": "Carried forward from c133 (2/4 quarters available); guard esc-datacov:HPG:Q1-2026:ESC-3 HELD until ~2026-08-06, no re-emit (E3 cache-hit).",
-  "esc4_result": "SKIPPED",
-  "esc4_note": "Operating Profit=0 known extraction defect (persists across cycles) — non_operating_share undefined, cannot compute reliably. Not treated as ESC-4 evidence.",
-  "esc5_status": "FALSE",
-  "esc5_note": "get_bctc_report_id(HPG,Q1) reconfirmed live this cycle: report_id=null, existing_refine_status=PARTIAL — refine not finished, no escalation.",
-  "e3_cache_status": "HIT",
-  "e3_note": "Published timestamp unchanged (2026-06-07T11:12:22.298Z) vs prior cycle — byte-identical, 6-pass trick detection skipped per E3.",
-  "trick_summary": "Không phát hiện dấu hiệu bất thường trong kỳ này (E3 cache-hit — dữ liệu không đổi từ chu kỳ trước).",
-  "trick_confidence": "none",
-  "trick_pass_versions": [
-    "balance-sheet-v1",
-    "pl-v1",
-    "cashflow-v1",
-    "rpt-v1",
-    "footnote-v1",
-    "segment-v1"
-  ],
-  "insider_signals": "Không có tín hiệu đáng kể (thị trường chung: NEUTRAL, thiếu dữ liệu giao dịch 90d)",
-  "sentiment_trend": "GIẢM, slope -0.22 (30d, 22 tin)",
-  "extraction_confidence_pct": 80,
-  "published_at_source": "2026-06-07T11:12:22.298Z",
-  "generated_at": "2026-07-31T00:18:00Z",
+  "product": "Steel production (long/flat steel, HRC), construction materials",
+  "customer": "Construction/infrastructure contractors, steel distributors, export markets",
+  "ops": "Gross margin 15.8%; Operating Profit extracted as 0 (known OCR/extraction-mapping defect, NOT a genuine zero-operations event — same defect class tracked under FIX-PDFX-TESSERACT-CONCURRENCY); Net Profit 9,055.9 tỷ exceeds Gross Profit, flagged passed_with_warnings",
+  "mgmt": "News this cycle: 'Hòa Phát vay nợ kỷ lục' (record borrowing) — sentiment trend GIẢM (negative, slope -0.13, 30d); no forensic confirmation possible this cycle (OCF/operating-profit fields unreliable)",
+  "valuation": {
+    "pe": 14.2,
+    "sector_median_pe": 32.6,
+    "pe_verdict": "DISCOUNT -57%",
+    "pb": 1.7,
+    "sector_median_pb": 0.9,
+    "pb_verdict": "PREMIUM +93%",
+    "roe": 6.48,
+    "sector_median_roe": 2.9,
+    "earning_yield_pct": 7.04,
+    "max_deposit_rate_pct": 5,
+    "ey_spread_pct": 2.04,
+    "valuation_verdict": "FAIR"
+  },
+  "balance_sheet": {
+    "total_assets_trieu_vnd": 259327500.205228,
+    "total_liabilities_trieu_vnd": 119545707.998756,
+    "equity_trieu_vnd": 139781792.206472,
+    "esc2_imbalance_pct": 0,
+    "esc2_result": "FALSE"
+  },
+  "esc4_non_operating_share": {
+    "esc4_result": "SKIPPED",
+    "reason": "operating_profit extracted as 0 (known defect) — non_operating_share would compute to 100% on garbage denominator basis, not a real accounting signal. Consistent with prior-cycle handling of this same ticker's extraction defect."
+  },
+  "esc3_ocf_vs_ni": {
+    "quarters_returned": 2,
+    "quarters_required": 4,
+    "esc3_status": "DATA-COVERAGE-LIMITED",
+    "coverage_guard_key": "esc-datacov:HPG:Q1-2026:ESC-3",
+    "coverage_guard_held": true,
+    "ocf_ni_ratio_q1_2026": 0,
+    "note": "operating_cf=0 in get_cash_flow also 0 — same extraction-defect class as operating_profit=0"
+  },
+  "esc5_refine_confidence": {
+    "report_id": null,
+    "existing_refine_status": "PARTIAL",
+    "esc5_result": "FALSE",
+    "note": "get_bctc_report_id returned null (refine not DONE) — graceful skip, reconfirmed live this cycle"
+  },
+  "e3_cache": {
+    "status": "HIT",
+    "basis": "get_bctc_full published_at unchanged (2026-06-07T11:12:22.298Z); structured_data identical to notebook c133/c134 record.",
+    "passes_skipped": true
+  },
+  "trick_detection": {
+    "trick_summary": null,
+    "trick_confidence": "none",
+    "trick_pass_versions": [],
+    "note": "E3 cache-hit — 6 passes skipped. operating_profit=0 extraction defect persists (not re-diagnosed, already tracked). ESC-4 skipped as a result."
+  },
+  "kinh_dich": {
+    "que": "31 - Ham",
+    "trend": "THUAN LOI",
+    "signal": "GIU",
+    "confidence_pct": 62
+  },
+  "insider": "no significant insider activity",
+  "legal_risk": "none",
+  "vps_staleness_context": "Served from last-known-good cache (published 2026-06-07); VPS push stale since 2026-07-28T08:23:22Z (78.8h, SLA=48h) — already-tracked P0, not re-escalated.",
+  "overdue": true,
+  "overdue_deadline": "2026-07-30 (Q2-2026)",
+  "cycle_id": "20260731-1500",
+  "slot": "bctc-analyst-slot-1",
+  "emitted_at": "2026-07-31T15:19:00Z",
   "_processed": {
-    "fingerprint": "eff6baf0c9f6afa2295ebb9fd8faab4565e61ffbba664d5dba36835de089f0f3",
-    "processedAt": "2026-07-31T00:45:35Z",
+    "fingerprint": "f93e69f475ec5ddb2f5055198ba90db0ee62c8893e686970e461bd90beaa44a7",
+    "processedAt": "2026-07-31T15:53:09Z",
     "processedBy": "dev-team",
     "result": "routed-to-po"
   }
