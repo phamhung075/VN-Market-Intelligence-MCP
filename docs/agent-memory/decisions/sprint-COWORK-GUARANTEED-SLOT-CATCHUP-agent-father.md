@@ -254,3 +254,58 @@ ONE allowed signal-queue DONE-mark") — same boundary honored in 3 prior
 STEPs this file (S-po-daily-triage, S-UC-ASL-P6, S-FIX-DEVTEAM-QADRAIN).
 Supplied the exact transform in RETURN for dev-team/router to execute
 instead; not a silent skip.
+
+### STEP agent-father-S15 · agent-father · 2026-07-31T15:37:59Z
+**task-id:** TE-T12
+**what-done:** Created `.claude/skills/dispatch-claim/CARD.md` (38L hot
+path: ownership-key rule, Phase A orphan-probe skeleton w/ N_MAX/ESCALATED
+idempotency, Phase A.5 roster read, Phase B intent PRE-CLAIM try/finally,
+edge-path pointers back to SKILL.md). Pointed CLAUDE.md step 2.5 at
+CARD.md instead of the 493L SKILL.md. Trimmed SKILL.md's "Reference
+Commits" section (11L pure git-SHA history) to a one-line git-log pointer
+and added a `<!-- size-justification -->` header explaining the file's
+intentional post-split size as the lazy-loaded full reference.
+**what-considered:**
+- Delete Reference Commits outright (row's other listed option) vs. trim
+  to a one-line pointer preserving discoverability — chosen the trim: the
+  SHAs are still recoverable via `git log --follow` and the linked 1962c
+  brief, so a pointer costs ~0L of ongoing budget while not silently
+  destroying the breadcrumb.
+- Also add SKILL.md's own size-justification header (not explicitly
+  required by the row's literal text, which only named it for the
+  Reference Commits sub-section) — chosen anyway: the row's own note field
+  says "Worst project ≤200L breach" for the WHOLE file, and the T-12
+  brief's proposal explicitly says "add size-justification or split" at
+  the file level; a header is cheaper than a further split and the row
+  already designs SKILL.md to stay as the full lazy-loaded reference.
+- Commit CLAUDE.md as part of THIS row vs. decline as out-of-zone — the
+  po_routing_ruling text quoted on this row says root-config (CLAUDE.md)
+  routes to developer generally (confirmed live: sibling TE-T23, the
+  deeper CLAUDE.md step-2.5 prose compression, IS owner=developer,
+  zone=cross-service/), and `.claude/skills/commit-boundary/SKILL.md`'s
+  agent-father zone table doesn't list CLAUDE.md either. Committed anyway
+  — this row's own `note` field explicitly names the CLAUDE.md pointer
+  swap as part of TE-T12's deliverable (CARD.md is dead weight until
+  something points at it), and the dispatch prompt quoted that note
+  directly. Read as a scoped, row-specific exception (single-line pointer
+  swap only, not the larger prose compression TE-T23 owns), not a general
+  zone-table amendment — flagging so the zone table gets a precedent note
+  if this recurs, not fixing the table unsupervised here.
+**why-decision:** CLAUDE.md is injected into every spawned subagent's
+system prompt — the hot-path swap (SKILL.md→CARD.md) is the load-bearing
+fix; SKILL.md's own size is now a cold-path concern (read only via
+CARD.md's edge-path pointers), matching the commit-mutex/signal-dashboard
+precedent (hot card + justified/lazy-loaded detail file) already used
+elsewhere in this repo.
+**why-change:** none — implemented as specified. Verified: CARD.md 38L
+(≤40L target); `grep "2.5 PRE-CLAIM"` CLAUDE.md confirms the CARD.md
+pointer; grepped all 8 live callers of `dispatch-claim` outside self-refs
+(cowork-team/dev-team main.md, orch-sentinel flow+init, task-lock
+SKILL.md, dev-standards.md, cron-orch-sentinel.md) — all reference named
+§-sections that remain intact in SKILL.md at the unchanged path, none
+stale. Did not touch TE-T23 (sibling row) or `orch-state.json` (own
+`commit_zone.excluded`) — status flip left to dev-team/router on RETURN.
+Noted but did not act on an automated `context_bloat_breach` signal the
+context-bloat-backstop hook emitted for SKILL.md post-edit (its byte-cap
+predicate is never suppressible by a line-based justification by design,
+TE-T24) — routed to claude-manager-helper, outside my `commit_zone`.

@@ -1,5 +1,13 @@
 # Skill: dispatch-claim
 
+<!-- size-justification: ~485L — TE-T12 lazy-load split (2026-07-31). This file is no longer the
+     hot-path read: CLAUDE.md step 2.5 now points at .claude/skills/dispatch-claim/CARD.md (<=40L —
+     ownership key, Phase A orphan-probe, Phase A.5 roster, Phase B PRE-CLAIM try/finally). This SKILL.md
+     stays large intentionally as the full lazy-loaded reference (namespace spec, Fire-Time Election,
+     Step 0a presence self-registration detail, sprint-task task: wrap, session-id passing, two-tier
+     model) — read only when CARD.md's edge-path pointers send an agent here for a section, not on
+     every dispatch. Reference Commits (Sprint 1962c SHAs) trimmed to a one-line git-log pointer. -->
+
 **Trigger:** router (or any dispatcher) about to spawn an agent for sprint-task, intent, or cowork-slot work
 
 **Related:** `.claude/skills/task-lock/SKILL.md` (inner self-claim — the two tiers coexist)
@@ -481,14 +489,9 @@ for each (agent_id, count) in agent_id_counts:
 
 ---
 
-## Reference Commits (Sprint 1962c — outer wrap origin)
-
-- `docs/agents/dev-team/flow/execute-tier.md` (S1) — `592fe1c4`
-- `docs/agents/dev-team/flow/main.md` (S2/S3/S4) — `348443d1`
-- `.claude/agents/developer.md` (S5) — `587f4265`
-- `.claude/agents/ba.md` (S6) — `7ae26e3b`
-- pm fan-out (S7) — `5ecf426c`
-
 **LIFTED TO ROUTER SCOPE:** sprint CROSS-SESSION-MULTI-TEAM-ORCH (TASK_1977) —
 rebinds from agent-scope `sprint-task:` to router-scope `intent:` namespace; requires
-`owner_client_session` on all claims. See brief §3.1.
+`owner_client_session` on all claims. See brief §3.1. (Reference-commit SHAs for the
+Sprint 1962c outer-wrap origin — dev-team execute-tier.md/main.md, developer.md, ba.md,
+pm fan-out — dropped from this always-relevant file; recoverable via `git log --follow`
+on those paths or `docs/architecture-briefs/2026-05-21-task-lock-dispatcher-wrap.md`.)

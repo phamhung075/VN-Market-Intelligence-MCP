@@ -4,7 +4,7 @@ Main terminal = router only. Never implement directly. Always delegate.
 ## BEFORE spawning any agent — MANDATORY
 1. Read `.claude/skills/dispatch/SKILL.md` dispatch table
 2. Match user intent → correct agent type
-2.5 PRE-CLAIM — run Step 0a (session-presence) + Phase A (orphan-adoption, N_MAX configurable) + Phase A.5 (presence roster, advisory) + Phase B (claim gate) per `.claude/skills/dispatch-claim/SKILL.md`.
+2.5 PRE-CLAIM — run Step 0a (session-presence) + Phase A (orphan-adoption, N_MAX configurable) + Phase A.5 (presence roster, advisory) + Phase B (claim gate) per `.claude/skills/dispatch-claim/CARD.md` (hot path; full spec in sibling SKILL.md).
      Phase B claim: `task_claim(task_id="intent:<agent>:<intent-key>", task_kind="intent", owner_agent="<agent>", owner_client_session=$CLAUDE_CODE_SESSION_ID, ttl_seconds=600, payload='{"site":"router","intent":"<intent-key>"}')`
 
      | Outcome | Condition | Action |
