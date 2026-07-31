@@ -93,12 +93,12 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "INVESTIGATE-EMPTY-DATA-TABLES",
-    "next_agent": "developer",
-    "next_action": "BOUNDED-1 auto-pickup claim of INVESTIGATE-EMPTY-DATA-TABLES — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
-    "updated_at": "2026-07-31T15:50:44Z",
-    "updated_by": "dev-team (bounded-1 auto-pickup)"
+    "status": "idle",
+    "active_task_id": null,
+    "next_agent": "router",
+    "next_action": "idle — awaiting next tick",
+    "updated_at": "2026-07-31T16:09:00Z",
+    "updated_by": "dev-team (SPIKE review-flip)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -19082,6 +19082,25 @@
         "updated_at": "2026-07-31T15:47:47Z",
         "commit_sha": "b164e37781f015680df8fe85d7a7419378b49fa7",
         "review_note": "dev-team RAW-verify 2026-07-31T15:57Z: commit cb6ba9567 (cherry-picked, sha above post-merge) confirmed. Diff to triage-signals.md/channel-audit.md/sprint-kickoff.md matches claim exactly (5x TODO->BACKLOG). Independently confirmed orchStateSchema.ts LANE_ALLOWED_STATUSES.backlog = {BACKLOG, BLOCKED} by reading the file directly. Independently re-ran scripts/audits/po-triage-mint-backlog-status-lane-coherence-verify.sh -- 42/42 PASS, exact match to self-report. Did not touch orch-apply.sh/orchStateSchema.ts or orch-state.json (commit_zone honored)."
+      },
+      {
+        "id": "INVESTIGATE-EMPTY-DATA-TABLES",
+        "priority": "low",
+        "status": "REVIEW",
+        "title": "5 EMPTY data tables — confirm intended-empty vs dead-pipeline: credit_data(0), insider_transactions(0), public_contracts(0), pharma_events(0), broker_sanctions(0). Each has a writer somewhere; 0 rows may be by-design (rare events) OR a dead pipeline. SINGLE investigation task (not 5).",
+        "type": "SPIKE",
+        "zone": "apps/mcp-server/",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#INVESTIGATE-EMPTY-DATA-TABLES",
+        "verify_note": "prior_status=TODO",
+        "promoted_at": "2026-07-31T15:50:36Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=3)",
+        "updated_at": "2026-07-31T16:09:00Z",
+        "claimed_at": "2026-07-31T15:50:43Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "next_agent": "qa",
+        "commit_sha": "d4569c5b8",
+        "review_note": "SPIKE complete — RAW-verified by dev-team: live row counts (all 5 tables = 0, sqlite3 -readonly), broker_sanctions defaultFetchSanctions() stub text, muasamcong.ts getMuasamcongUrl() verbatim env-var passthrough (no ?path= composition), davPharmacyJob.ts uses shouldSkipRecoveryReplay (T4 dedup guard) not shouldRunCatchup (confirms zero startup-catchup guard claim), davPharmacyCheckJob cron_job_runs = exactly 1 success ever (2026-04-30), brokerSanctionsSweep QUARTER_MONTHS=[3,6,9,12] confirms 07-31 internal-skip claim, insiderCheckJob 8/8 sampled days success+rows_written=0 — all spot-checked claims matched exactly. Verdict: credit_data=empty-by-design/already-guarded (no FIX needed); insider_transactions, public_contracts, pharma_events, broker_sanctions=dead-pipeline, each root-caused. 4 follow-up FIX tasks proposed in docs/spikes/SPIKE-INVESTIGATE-EMPTY-DATA-TABLES.md — forwarded to in-flight PO triage for minting rather than re-dispatching a new round. Investigation-only per SPIKE AC, zero code changes, zero orch-state.json touch by the agent (dev-team commit_zone boundary respected)."
       }
     ],
     "qa": [],
@@ -19103,24 +19122,7 @@
     },
     "last_triaged_at": "2026-07-31T15:50:36Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": [
-      {
-        "id": "INVESTIGATE-EMPTY-DATA-TABLES",
-        "priority": "low",
-        "status": "IN_PROGRESS",
-        "title": "5 EMPTY data tables — confirm intended-empty vs dead-pipeline: credit_data(0), insider_transactions(0), public_contracts(0), pharma_events(0), broker_sanctions(0). Each has a writer somewhere; 0 rows may be by-design (rare events) OR a dead pipeline. SINGLE investigation task (not 5).",
-        "type": "SPIKE",
-        "zone": "apps/mcp-server/",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#INVESTIGATE-EMPTY-DATA-TABLES",
-        "verify_note": "prior_status=TODO",
-        "promoted_at": "2026-07-31T15:50:36Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=3)",
-        "updated_at": "2026-07-31T15:50:44Z",
-        "claimed_at": "2026-07-31T15:50:43Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)"
-      }
-    ]
+    "in_progress": []
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
