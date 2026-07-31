@@ -96,8 +96,9 @@
     "status": "idle",
     "active_task_id": null,
     "next_agent": "router",
-    "updated_at": "2026-07-31T11:20:48Z",
-    "updated_by": "dev-mcp-server (FU-BACKFILL-MULTIPLE-COVER-LETTERS review-flip)"
+    "next_action": "FIX-BCTC-1345B-REPORT-BATCH flipped to review by dev-mcp-server — awaiting qa.",
+    "updated_at": "2026-07-31T13:26:54Z",
+    "updated_by": "dev-mcp-server (FIX-BCTC-1345B-REPORT-BATCH review-flip)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -5590,17 +5591,6 @@
         "verify_note": "prior_status=TODO"
       },
       {
-        "id": "FIX-LANCEDB-INSERT-SEGFAULT",
-        "priority": "P3",
-        "size": "XS",
-        "status": "BACKLOG",
-        "title": "Fix LanceDB insert segfault (Bun v1.3.13)",
-        "type": "DEV",
-        "zone": "apps/mcp-server/",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-LANCEDB-INSERT-SEGFAULT",
-        "verify_note": "prior_status=TODO"
-      },
-      {
         "id": "REVIEW-PPC-Q4-LOW-CONFIDENCE",
         "priority": "P2",
         "size": "XS",
@@ -5620,17 +5610,6 @@
         "type": "chore",
         "zone": "ops/",
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#DOCKER-IMAGE-RETENTION"
-      },
-      {
-        "id": "FIX-BCTC-1345B-REPORT-BATCH",
-        "priority": "P3",
-        "size": "XS",
-        "status": "BACKLOG",
-        "title": "Batch telegram analysis reports or suppress duplicates",
-        "type": "enhancement",
-        "zone": "apps/mcp-server/",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-BCTC-1345B-REPORT-BATCH",
-        "verify_note": "prior_status=TODO"
       },
       {
         "id": "SPIKE-UNIFIED-NB-GAP",
@@ -18900,6 +18879,49 @@
         "review_note": "Residual weakness #2 from FIX-CTG-PDF-MISLINK (77092007): backlog hypothesised \"first-match-only\" cover-letter exclusion, but code already used .filter() (excludes ALL literal cover letters). Real gap: the \"consolidated\" bucket was NEGATIVE-match (!isCoverLetterFilename) -- \"not a recognised cover letter\" != \"is the real report\". A non-report file (e.g. a P&L-variance explanatory note) that merely failed the cover-letter pattern could be wrongly selected as the sole \"consolidated\" candidate, or inflate false ambiguity when a real consolidated file was also present.\nFix (backfillBctcPdfPaths.ts): new isConsolidatedReportFilename() -- POSITIVE match on Vietnamese \"hop nhat\" / English \"consolidated\" marker (same signal hsxBctcFetcher.ts::rankItem() already uses). Both the NULL-pass and heal-pass now require this positive match before selecting a PDF among 2+ candidates; a lone candidate still always links (generalised from coverLetters.length===1 to matches.length===1). Zero positive matches among 2+ candidates -> loud console.warn, row stays PENDING (never a silent wrong pick). Heal-pass re-check guard broadened from isCoverLetterFilename(current) to !isConsolidatedReportFilename(current).\nAC1/AC2: FU-BACKFILL-MULTIPLE-COVER-LETTERS.test.ts (12 cases). Granular 2-layer RED confirmed: (1) isConsolidatedReportFilename added standalone first (no selection-logic change yet) -- AC-1/AC-3/AC-4/AC-2-GREEN genuinely failed against unmodified selection logic (AC-3 concretely reproduced the live mislink: old code returned updated=1, silently linking the non-report file); (2) legacyNegativeMatchSelect() -- a frozen, non-imported snapshot of the exact pre-fix 77092007 decision branches -- independently proves {kind:\"ambiguous\"} (fails to heal) on the identical AC-1 fixture. Post-fix: 12/12 pass.\nOne unrelated pre-existing gap found+sidestepped (out of scope, not fixed): extractTicker()'s KEYWORD_SET is missing \"CV\", so a CV_CBTT_TICKER_...-ordered filename mis-parses ticker as \"CV\" -- fixtures use the already-proven TICKER_..._CV_CBTT_... ordering instead.\nEvidence: bun tsc --noEmit clean. Targeted suite (new file + FIX-CTG-PDF-MISLINK.test.ts + PI3-bctc-inspect-reopen2.test.ts): 56/56 pass. gen-project-stats.ts --dry-run: toolCount=183, cronJobCount=88 -- unchanged from pre-task baseline. Fresh server boot (DB_PATH=:memory:, free port): /health toolCount=183; /api/bctc-inspect + /dashboards/news-fetch/ both 200. Full bun test (RAW-verified, full-capture, non-truncated log): 14971 pass/40 skip/57 fail/1 error/47501 expect (565.80s) -- grep of the complete \"(fail)\" line list confirms ZERO matches on bctc/pdf/backfill/cover/consolidated/financial_report; fail count is inside the documented pre-existing flake band (52-59, this session's own recent notebook entries: 52-53 on the last two cycles) -- driven by network-timeout/vps_push_log-table tests unrelated to this change. Docs: docs/architecture/microservice/mcp-server/usecases.md -- new backfillBctcPdfPaths.ts section (previously undocumented as its own use case). Simplicity gate: PASS. Commits: c515ec142 (fix+test+doc), 26bb028bc (notebook+DJ). DJ: sprint-COWORK-GUARANTEED-SLOT-CATCHUP-dev-mcp-server-2.md S42.",
         "review_by": "dev-mcp-server",
         "commit_sha": "c515ec142"
+      },
+      {
+        "id": "FIX-LANCEDB-INSERT-SEGFAULT",
+        "priority": "P3",
+        "size": "XS",
+        "status": "REVIEW",
+        "title": "Fix LanceDB insert segfault (Bun v1.3.13)",
+        "type": "DEV",
+        "zone": "apps/mcp-server/",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-LANCEDB-INSERT-SEGFAULT",
+        "verify_note": "prior_status=TODO",
+        "promoted_at": "2026-07-31T11:51:03Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=3)",
+        "updated_at": "2026-07-31T12:45:15Z",
+        "claimed_at": "2026-07-31T11:51:08Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "next_agent": "qa",
+        "commit_sha": "41f522117",
+        "review_note": "ROOT CAUSE RE-VERIFIED — DOES NOT HOLD: backlog note claimed a Bun v1.3.13 native @lancedb/lancedb segfault (addr 0x20) in fetchParseAndStoreBctc step-4 (2026-06-07T12:33:46Z repro). Commit d29da3a8d (2026-05-24, G5b HTTP rewire) had already replaced the native LanceDB call at that exact call site with an HTTP POST to rag-service (ragHttpClient.ts ragIndex, port 5002) — 2 WEEKS before the repro the note is based on. Commit 456851797 (2026-07-16, CI-RED-da847805-FIX) independently deleted the last @lancedb/lancedb import anywhere in the repo (_deprecated/, tests-only, zero production imports, confirmed by repo-wide grep before deletion). Live grep today: zero @lancedb/lancedb import statements in apps/mcp-server/src (2 comment-only mentions) — a native segfault on this path is categorically impossible today.\n\nREAL LIVE GUARD-GAP FOUND (same defect class — per task instruction to reproduce the same code path/guard-gap when a literal segfault can't be harnessed): insertBctcAnalysis.ts's `const inserter = insertAnalysisFn ?? (await getDefaultInsertAnalysis())` sat OUTSIDE its own try/catch. A throw during resolution (missing module, or historically a native-addon-import crash — the exact mechanism CI-RED-da847805-FIX fixed for bun test) propagated uncaught through fetchParseAndStoreBctc's unguarded Step-4 call, silently breaking the file's own documented \"LanceDB failure is non-fatal\" contract.\n\nFIX: moved the resolution line inside the try block (1-line structural move, insertBctcAnalysis.ts). Added a deterministic insertAnalysisResolverFn injection seam (both types.ts and insertBctcAnalysis.ts already document an \"everything injectable\" test philosophy), threaded through fetchParseAndStoreBctc.ts — used only by the new regression test, defaults to the real resolver in production.\n\nTEST EVIDENCE (RED->GREEN, apps/mcp-server/src/__tests__/FIX-LANCEDB-INSERT-SEGFAULT-step4-guard.test.ts, 2 cases: unit-level insertBctcAnalysis() + integration-level fetchParseAndStoreBctc()): RED confirmed genuinely by temporarily reverting the try/catch placement and re-running the SAME test file — both cases failed with the exact propagation stack insertBctcAnalysis.ts:79 -> fetchParseAndStoreBctc.ts:121. GREEN post-fix: both pass, insert failure logged non-fatal, SQLite Step-3 persistence unaffected. Design note: an earlier mock.module()-based simulation attempt was abandoned after empirical diagnosis showed it is order-dependent/flaky under the full suite (Bun eagerly hot-swaps a throwing factory at registration time whenever the target module was already cached by an earlier-run file — true almost always for ragHttpClient.js in a full run).\n\nGATES: bun tsc --noEmit clean. AC3 regression subset (new file + 1181-financial-reports-persist + 1352a-async-extraction-race + 1352b-pdf-extractor-wiring + p2-f-rag-http-rewire): 33/33 pass. gen-project-stats --dry-run: toolCount=183, cronJobCount=88 (unchanged, no tool/scheduler file touched). Full bun test: 14974 pass/40 skip/56 fail, 575s — inside the SAME pre-existing flake band already documented in this notebook's prior cycle this session (52-59; class: 5000ms-timeout/DB-contention — VPS Proxy Health/get_market_cap/insider_transactions/balance-cashflow-stores/MCP-SSE); this diff's own new test file is 0-fail in the full run (was itself flaky under the earlier mock.module design, now fixed); the sole fetchParseAndStoreBctc-touching entry in the fail list (FIX-1267 AC-7, 17.7s) independently re-run standalone -> 9/9 pass, confirming full-suite-only resource contention unrelated to this change. Port 3000 occupied by the live production Docker container -> skipped a conflicting local server-boot probe (Gate 2b); this is an mcp-server code change and needs an ops rebuild before it is live (not deployed by this task).\n\nBOUNDARY: dev-rag-service NOT touched (ragHttpClient.ts / rag-service source unchanged) — fix is 100% mcp-server-side, no cross-zone patch needed; the backlog's own \"dev-rag-service/dev-mcp-server boundary\" framing no longer applies once the root-cause correction above is accounted for.\n\nCommit 41f522117 (fix+test) + 32279f9a0 (memory: notebook+journal). DJ: sprint-COWORK-GUARANTEED-SLOT-CATCHUP-dev-mcp-server-2.md S43.",
+        "updated_by": "dev-mcp-server"
+      },
+      {
+        "id": "FIX-BCTC-1345B-REPORT-BATCH",
+        "priority": "P3",
+        "size": "XS",
+        "status": "REVIEW",
+        "title": "Batch telegram analysis reports or suppress duplicates",
+        "type": "enhancement",
+        "zone": "apps/mcp-server/",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-BCTC-1345B-REPORT-BATCH",
+        "verify_note": "prior_status=TODO",
+        "promoted_at": "2026-07-31T12:52:44Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=3)",
+        "updated_at": "2026-07-31T13:26:54Z",
+        "claimed_at": "2026-07-31T12:52:55Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "next_agent": "qa",
+        "updated_by": "dev-mcp-server",
+        "commit_sha": "893aca43b",
+        "review_note": "ROOT CAUSE RE-VERIFIED before coding (mandatory per dispatch brief), and the brief's own hypothesis was CORRECT: Task 1792's bctc_signal_debounce table only debounces the SAME (action_code, period_key) within a 1h rolling window (retry-storm case — 10 calls in 3 minutes) -- it is a PARTIAL fix, not the full fix. It does nothing for bctcReparseJob.ts, which runs DAILY at 09:30 GMT+7 and retries the same still-broken low-confidence backlog every single day, 24h apart, well outside 1792's 1h window. Each daily cycle therefore re-fires the exact same [BCTC-1345b] Telegram bug alert for a ticker+period that was ALREADY known/tracked the day before -- that daily re-fire (not same-minute retry storms, which 1792 already fully solved) is the actual source of the backlog note's \"6 reports today / 11 more the next day, all same low-confidence-guard class\" noise. No separate \"quality chain\" cross-ticker suppression mechanism exists elsewhere (checked telegramReportStore.ts's Task-1215 category dedup in telegram.ts's sendTelegramBug: it exists, is generic and DB-backed, but requires a \"checkbox-emoji category\" marker in the message text that the [BCTC-1345b] message does not carry, so it never engages for this alert; also its 4h window is shorter than the 24h reparse cadence and it would over-suppress genuinely-new-ticker findings sharing a category within the window -- rejected for that reason too).\n\nFIX (parseBctcReport.ts storeReport()): before sending the [BCTC-1345b] alert, query financial_reports.validation_status for the exact same (action_code, sort_key). If it is ALREADY 'low_confidence' from a PRIOR parse, suppress the Telegram send (the row still upserts as normal -- audit trail / validation_status tracking untouched). Reuses the existing validation_status column already on financial_reports -- zero new table/migration. Self-closing by construction: the moment a later re-parse produces real confidence, validation_status flips off 'low_confidence' and a future genuine regression will alert again (proven by test 3 below). 1792's 1h debounce is left fully in place underneath (belt-and-suspenders for the same-minute race case); this task's gate is a superset, not a replacement.\n\nOptions considered and rejected: (a) PO note's \"batch per-cycle\" digest -- no existing cycle-boundary primitive to hook into in this codebase; XS/P3 size does not justify inventing new batching infra for a P3/XS row. (b) tagging the [BCTC-1345b] message with a category marker to piggyback Task-1215's generic telegram.ts dedup -- rejected for the reasons above (window too short + over-suppression risk across genuinely-different tickers).\n\nTESTS (new file FIX-BCTC-1345B-REPORT-BATCH.test.ts, 3 cases): (1) REGRESSION -- ages the 1792 debounce row back 2h (simulating bctcReparseJob's next daily cycle, debounce window already expired) then re-parses the SAME already-low-confidence ticker+period; RED genuinely confirmed via git stash of the fix alone (2 Telegram sends observed, expected 1) then GREEN after restoring the fix (exactly 1 send). (2) 3 genuinely-different ticker+periods each still alert exactly once -- proves the fix does not over-suppress new findings. (3) after validation_status is flipped off 'low_confidence' (simulating a resolved issue), a LATER regression on the same ticker alerts again -- proves the self-closing property.\n\nEVIDENCE: bun tsc --noEmit clean. Targeted suites: new file 3/3; 1792-conviction-debounce.test.ts 5/5 (unchanged, still green); 1345e-integration-pipeline + 1424a-bctc-unit-scale-mismatch + 1810c-vnm-unit-mismatch 19/19. gen-project-stats.ts --dry-run: toolCount=183, cronJobCount=88 -- unchanged (no tool/scheduler file touched). Full bun test (RAW-verified, full-capture log): 14977 pass/40 skip/56 fail/47509 expect, 566s -- same pre-existing full-suite-only flake band already independently documented by this agent's own prior cycle this session (S43, FIX-LANCEDB-INSERT-SEGFAULT review_note: VPS Proxy Health, get_market_cap, insider_transactions, balance/cashflow stores, MCP SSE -- 5000ms-timeout/DB-contention class); re-ran every one of those exact failing files standalone (1146-get-insider-transactions + vnstock-3statement + 1113-vps-proxy-health) -> 35/35 pass, confirming not caused by this diff.\n\nBOUNDARY: the file's OTHER isBctcSignalDebounced call site (period-content-mismatch alert, same file, different code path) intentionally left untouched -- that branch REJECTS the parse before any financial_reports row is ever written, so there is no persistent row to gate against; out of the backlog note's [BCTC-1345b] scope.\n\nCommits: 893aca43b (fix + regression test), 8a08bb510 (notebook + decision journal). DJ: sprint-COWORK-GUARANTEED-SLOT-CATCHUP-dev-mcp-server-2.md S44.",
+        "review_by": "dev-mcp-server"
       }
     ],
     "qa": [],
@@ -18919,7 +18941,7 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-31T10:47:00Z",
+    "last_triaged_at": "2026-07-31T12:52:44Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
     "in_progress": []
   },
