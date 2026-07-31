@@ -93,11 +93,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "active_task_id": null,
-    "next_agent": "router",
-    "updated_at": "2026-07-31T22:13:13Z",
-    "updated_by": "dev-mcp-server"
+    "status": "in_progress",
+    "active_task_id": "FIX-FOREIGN-FLOW-DEAD-ENDPOINT",
+    "next_agent": "dev-mcp-server",
+    "next_action": "BOUNDED-1 auto-pickup claim of FIX-FOREIGN-FLOW-DEAD-ENDPOINT — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
+    "updated_at": "2026-07-31T22:26:26Z",
+    "updated_by": "dev-team (bounded-1 auto-pickup)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -6079,15 +6080,6 @@
         "priority": "P3",
         "zone": "apps/mcp-server/",
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#AUDIT-FC-NEWS-SENTIMENT"
-      },
-      {
-        "id": "FIX-FOREIGN-FLOW-DEAD-ENDPOINT",
-        "title": "Remove/stub dead fetchPrimaryVpsEndpoint() — GETs a nonexistent VPS /foreign-flow route, silent 404 every minute",
-        "type": "FIX",
-        "status": "BACKLOG",
-        "priority": "P3",
-        "zone": "apps/mcp-server/",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-FOREIGN-FLOW-DEAD-ENDPOINT"
       },
       {
         "id": "FIX-ERRAUDIT-W3-FE-LOADERS-CLIENT-CALLS",
@@ -19647,9 +19639,26 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-31T21:47:38Z",
+    "last_triaged_at": "2026-07-31T22:26:14Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": []
+    "in_progress": [
+      {
+        "id": "FIX-FOREIGN-FLOW-DEAD-ENDPOINT",
+        "title": "Remove/stub dead fetchPrimaryVpsEndpoint() — GETs a nonexistent VPS /foreign-flow route, silent 404 every minute",
+        "type": "FIX",
+        "status": "IN_PROGRESS",
+        "priority": "P3",
+        "zone": "apps/mcp-server/",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-FOREIGN-FLOW-DEAD-ENDPOINT",
+        "promoted_at": "2026-07-31T22:26:14Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=3)",
+        "updated_at": "2026-07-31T22:26:26Z",
+        "claimed_at": "2026-07-31T22:26:14Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "next_agent": "dev-mcp-server"
+      }
+    ]
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
