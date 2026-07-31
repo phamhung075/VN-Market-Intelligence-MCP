@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # scripts/audits/po-manual-dispatch-sweep-verify.sh
 #
-# Regression verifier for FIX-PO-NO-PRODUCER-FOR-MANUAL-DISPATCH-ESCAPE-HATCH.
+# Regression verifier for FIX-PO-NO-PRODUCER-FOR-MANUAL-DISPATCH-ESCAPE-HATCH
+# and its follow-up FIX-PO-MANUAL-DISPATCH-SWEEP-FLAG-WITHOUT-DISPATCH-STRANDS-ROW.
 #
 # PROBLEM (as filed): `docs/agents/dev-team/flow/main.md`'s Lane × Gate
 # Coverage Matrix and `scripts/audits/bounded1-supervised-lane-report.sh`'s
@@ -11,7 +12,17 @@
 # independently, by po and dev-team). 4th instance of the "documented
 # consumer, no documented producer" defect class.
 #
-# This script proves THREE things, none provable by reading prose alone:
+# FOLLOW-UP PROBLEM (FIX-PO-MANUAL-DISPATCH-SWEEP-FLAG-WITHOUT-DISPATCH-
+# STRANDS-ROW, 2026-07-31): the original Step 1 exclusion
+# `(.po_manual_dispatch_flagged_at // "") == ""` was PERMANENT — stamp (Step
+# 2) and dispatch (BATCH actually reaching dev-team under its own WIP cap)
+# are not atomic, so a row stamped on a tick whose BATCH then got deferred
+# became invisible to every later sweep forever (live-proved by `TE-T12`,
+# flagged 2026-07-31T06:56:27Z, still BACKLOG ~8h later). Cured by bounding
+# the exclusion to a staleness window (`flag_reentrant`, `$stale_seconds`) —
+# a fresh-flagged row stays excluded, a stale-flagged row is re-admitted.
+#
+# This script proves FOUR things, none provable by reading prose alone:
 #   DOC CHECK      — docs/agents/po/flow/manual-dispatch-sweep.md (the new
 #                    PO-side producer) exists and is routed from main.md.
 #   SHARED-LIB      — scripts/lib/po-manual-dispatch-eligibility.jq exists
@@ -28,9 +39,17 @@
 #                    logic anywhere; every check below composes ONLY the
 #                    shared `scripts/lib/devteam-eligibility.jq` +
 #                    `scripts/lib/po-manual-dispatch-eligibility.jq` defs.
-#   IDEMPOTENCY     — a row already carrying `po_manual_dispatch_flagged_at`
-#                    is excluded by the sub-flow's own Step 1 selection
-#                    (never re-surfaced/re-BATCHed every tick while queued).
+#   IDEMPOTENCY     — a row already carrying a FRESH `po_manual_dispatch_
+#                    flagged_at` (younger than `$stale_seconds`) is excluded
+#                    by the sub-flow's own Step 1 selection (never
+#                    re-surfaced/re-BATCHed while its BATCH still has a
+#                    realistic chance to actually dispatch it).
+#   RE-ADMISSION    — a row carrying a STALE `po_manual_dispatch_flagged_at`
+#                    (older than `$stale_seconds`) and still sitting in
+#                    `backlog[]` IS re-surfaced as a candidate — the positive
+#                    control for the bounded re-admission fix above. Replays
+#                    Step 1's own inline `flag_reentrant` def BYTE-IDENTICAL,
+#                    never reimplemented.
 #
 # Touches NO live file — synthetic fixtures only, no docs/data/orch/
 # orch-state.json I/O, no orch-apply.sh call.
@@ -40,6 +59,12 @@
 set -euo pipefail
 PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 cd "$PROJECT_ROOT"
+
+# NOTE: keep in lockstep with docs/agents/po/flow/manual-dispatch-sweep.md
+# Step 1 and docs/policies/dev-standards.md:517/521's mirror — same
+# $stale_seconds value, same flag_reentrant() body.
+NOW_EPOCH=$(date -u +%s)
+STALE_SECONDS=14400   # 4h
 
 fail=0
 
@@ -82,7 +107,17 @@ JSON
 # array, breaking archive_status_map's `(.done_tasks // [])[]` indexing.
 : > "$WORK/archive.json"
 
-cat > "$WORK/fixture.json" <<'JSON'
+# FRESH/STALE po_manual_dispatch_flagged_at timestamps computed relative to
+# $NOW_EPOCH via jq's own todateiso8601 (portable — no BSD-vs-GNU `date -d`/
+# `date -v` divergence, see feedback_bsd_date_3n_literal_corrupts_iso8601):
+#   FRESH_FLAG_ISO — 5 minutes ago, well inside $STALE_SECONDS -> must stay
+#                    EXCLUDED (G-ALREADY-FLAGGED negative control).
+#   STALE_FLAG_ISO — $STALE_SECONDS + 1h ago, past the window -> must be
+#                    RE-ADMITTED (M-STALE-FLAGGED-REENTRANT positive control).
+FRESH_FLAG_ISO=$(jq -rn --argjson e "$((NOW_EPOCH - 300))" '$e | todateiso8601')
+STALE_FLAG_ISO=$(jq -rn --argjson e "$((NOW_EPOCH - STALE_SECONDS - 3600))" '$e | todateiso8601')
+
+cat > "$WORK/fixture.json" <<JSON
 {
   "task_board": {
     "backlog": [
@@ -92,7 +127,8 @@ cat > "$WORK/fixture.json" <<'JSON'
       { "id": "D-SLS-TERRITORY",      "status": "BACKLOG", "next_agent": "ops", "supervised": true, "plan_only": true },
       { "id": "E-EPIC-WRAPPER",       "status": "BACKLOG", "next_agent": "ops", "children": ["E-CHILD-1"] },
       { "id": "F-DEPS-UNSATISFIED",   "status": "BACKLOG", "next_agent": "ops", "depends_on": ["MISSING-DEP-NEVER-DONE"] },
-      { "id": "G-ALREADY-FLAGGED",    "status": "BACKLOG", "next_agent": "agent-father", "po_manual_dispatch_flagged_at": "2026-07-30T00:00:00Z" }
+      { "id": "G-ALREADY-FLAGGED",    "status": "BACKLOG", "next_agent": "agent-father", "po_manual_dispatch_flagged_at": "$FRESH_FLAG_ISO" },
+      { "id": "M-STALE-FLAGGED-REENTRANT", "status": "BACKLOG", "next_agent": "agent-father", "po_manual_dispatch_flagged_at": "$STALE_FLAG_ISO" }
     ],
     "ready": [
       { "id": "H-SUP-ONLY",           "supervised": true,  "plan_only": false },
@@ -152,33 +188,52 @@ check "K-RLC-TERRITORY (neither flag, RLC's territory)" \
 check "L-READY-WRAPPER (XOR flags but epic wrapper -> no-picker-by-design)" \
   "$(echo "$RESULT" | jq -r '.ready[] | select(.id=="L-READY-WRAPPER") | .xor_gap')" "false"
 
-# --- IDEMPOTENCY: replay the FULL Step 1 selection (predicate + flagged-guard) ---
-# G-ALREADY-FLAGGED satisfies is_drs_stranded_off_allowlist on its own (same
-# shape as A) but MUST be excluded once po_manual_dispatch_flagged_at is set —
-# this is the sub-flow's Step 1 `select((.po_manual_dispatch_flagged_at // "") == "")`
-# guard, replayed verbatim here (not a different guard shape).
-G_RAW_STRANDED=$(echo "$RESULT" | jq -r '.backlog[] | select(.id=="G-ALREADY-FLAGGED")' 2>/dev/null || true)
-G_SELECTED=$(jq -r \
-  --argjson allowlist "$ALLOWLIST" \
-  --slurpfile detail "$WORK/detail.json" \
-  --slurpfile archive "$WORK/archive.json" \
-  -L scripts/lib \
-  'include "devteam-eligibility"; include "po-manual-dispatch-eligibility";
-   (detail_items_from($detail)) as $detail_items
-   | dep_status_map($archive) as $status_map
-   | [ .task_board.backlog[]
-       | select(.id == "G-ALREADY-FLAGGED")
-       | select(.status == "BACKLOG" or .status == "TODO")
-       | select(. | is_drs_stranded_off_allowlist($detail_items; $status_map; $allowlist))
-       | select((.po_manual_dispatch_flagged_at // "") == "")
-     ] | length' \
-  "$WORK/fixture.json")
-check "G-ALREADY-FLAGGED excluded by Step 1's idempotency guard despite satisfying the raw predicate" \
+# --- IDEMPOTENCY + RE-ADMISSION: replay the FULL Step 1 selection (predicate
+# + flag_reentrant guard, byte-identical to Step 1's own inline def) ---
+# G-ALREADY-FLAGGED and M-STALE-FLAGGED-REENTRANT both satisfy
+# is_drs_stranded_off_allowlist on their own (same shape as A) — they differ
+# ONLY in how old their po_manual_dispatch_flagged_at stamp is. G's is FRESH
+# (5min old, inside $STALE_SECONDS) -> MUST stay excluded (negative control,
+# unchanged from before the bounded re-admission fix). M's is STALE ($STALE_
+# SECONDS + 1h old) -> MUST be re-admitted as a candidate (positive control
+# for the fix itself — this is the check that would have failed before it).
+manual_dispatch_step1_selected_count() {
+  local id="$1"
+  jq -r \
+    --argjson now_epoch "$NOW_EPOCH" \
+    --argjson stale_seconds "$STALE_SECONDS" \
+    --argjson allowlist "$ALLOWLIST" \
+    --arg id "$id" \
+    --slurpfile detail "$WORK/detail.json" \
+    --slurpfile archive "$WORK/archive.json" \
+    -L scripts/lib \
+    'include "devteam-eligibility"; include "po-manual-dispatch-eligibility";
+     def flag_reentrant($now_epoch; $stale_seconds):
+       (.po_manual_dispatch_flagged_at // "") as $flagged
+       | ($flagged == "")
+         or (try (($now_epoch - ($flagged | fromdateiso8601)) > $stale_seconds) catch false);
+     (detail_items_from($detail)) as $detail_items
+     | dep_status_map($archive) as $status_map
+     | [ .task_board.backlog[]
+         | select(.id == $id)
+         | select(.status == "BACKLOG" or .status == "TODO")
+         | select(. | is_drs_stranded_off_allowlist($detail_items; $status_map; $allowlist))
+         | select(. | flag_reentrant($now_epoch; $stale_seconds))
+       ] | length' \
+    "$WORK/fixture.json"
+}
+
+G_SELECTED=$(manual_dispatch_step1_selected_count "G-ALREADY-FLAGGED")
+check "G-ALREADY-FLAGGED (fresh stamp, ${STALE_SECONDS}s window) excluded by Step 1's flag_reentrant guard despite satisfying the raw predicate" \
   "$G_SELECTED" "0"
+
+M_SELECTED=$(manual_dispatch_step1_selected_count "M-STALE-FLAGGED-REENTRANT")
+check "M-STALE-FLAGGED-REENTRANT (stamp older than ${STALE_SECONDS}s, still BACKLOG) RE-ADMITTED by Step 1's flag_reentrant guard — the bounded re-admission positive control" \
+  "$M_SELECTED" "1"
 
 echo ""
 if [ "$fail" -eq 0 ]; then
-  echo "PASS: manual-dispatch-sweep producer is documented (routed from main.md), its shared predicates (scripts/lib/po-manual-dispatch-eligibility.jq) resolve every named Lane × Gate Coverage Matrix branch correctly, and its idempotency guard excludes already-flagged rows."
+  echo "PASS: manual-dispatch-sweep producer is documented (routed from main.md), its shared predicates (scripts/lib/po-manual-dispatch-eligibility.jq) resolve every named Lane × Gate Coverage Matrix branch correctly, its bounded re-admission guard (flag_reentrant) excludes fresh-flagged rows, and re-admits stale-flagged-but-still-undispatched rows."
   exit 0
 else
   echo "FAIL: see above."
