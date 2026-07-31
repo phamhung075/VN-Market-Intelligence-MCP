@@ -94,11 +94,10 @@
   ],
   "head": {
     "status": "idle",
+    "updated_at": "2026-07-31T07:56:41Z",
+    "updated_by": "developer",
     "active_task_id": null,
-    "next_agent": "router",
-    "next_action": "FIX-CI-SIZELINT-MACRO-VMT-LIQUIDITY-RESOLVERS-NEW-OFFENDER flipped IN_PROGRESS->REVIEW (dev-macro-indicators), lane-moved in_progress[]->review[], next_agent=qa. Sibling FIX-CI-FRONTEND-ESLINT-BUNLOCK-DUAL-LOCKFILE-DRIFT remains tracked via its own LOCK-LIFETIME task_claim hold (S42 precedent), unaffected by this head idle-sync.",
-    "updated_at": "2026-07-31T07:11:39Z",
-    "updated_by": "dev-macro-indicators (CANONICAL:SSOT-STATUSFLIP-LANEMOVE branch:null direct-execute idle-sync)"
+    "next_agent": "router"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -10828,31 +10827,6 @@
         "acceptance": "(1) A named, executable producer for the DONE_VERIFIED token exists and is wired into a lane that actually runs (the dev-team idle chain rotation, or an equivalent the architect justifies), so a finished row reaching done[] cannot sit there indefinitely. (2) A DONE row carrying next_agent is REACHED by that producer - demonstrate on the two live 2-day-old cases (TASK-COWORK-CATCHUP-2, FACTORY-APP-split-assembleBriefing, both next=qa). (3) The producer NEVER promotes DONE -> DONE_VERIFIED on its own authority; promotion requires the verifier the token denotes. A row it cannot verify must become LOUDER (surfaced), not silently promoted. (4) A row that lands in done[] with NO next_agent is not silently invisible - it is surfaced to PO/router rather than defaulting to permanent residence. (5) The 8 currently-starved rows are re-measured with the ACTUAL predicate after the fix; the count must drop, and any row still starved must have a named reason. (6) Regression instrument: a script that re-runs is_bounded1_eligible over backlog[]+ready[] and reports the sole-deps_satisfied-failure set, so this class is detectable next time instead of being re-derived by hand.",
         "verification_gate": "Re-run the exact measurement in evidence_raw_verified_20260730T2148 leg 1 (is_bounded1_eligible with deps_satisfied isolated as the sole failing gate, threaded through the REAL scripts/lib/devteam-eligibility.jq, not a reimplementation) against the live board AFTER the fix, and show the starved-set count with each remaining member's named reason. PLUS: show a done[] row transitioning to DONE_VERIFIED through the new producer with real command output - not asserted from flow-doc prose (feedback_fix_landed_in_the_pregate_not_the_probe_the_agent_actually_runs).",
         "note": "Do NOT hand-flip the remaining DONE rows to clear the measurement. PO deliberately flipped exactly ONE (FIX-COMMIT-PATH-PEER-INDEX-SWEEP-GUARD-LAYER2) because that row's own po_closure_20260730 field already carried a file:line-precise PO RAW-verification from 09:05:59Z - the token was the only thing missing. TASK-COWORK-CATCHUP-2 and FACTORY-APP-split-assembleBriefing carry next_agent=qa and have NOT been verified by anyone; flipping them would be PO ratifying work it never checked, which is the exact vacuous-gate failure this row exists to prevent. They stay DONE as live evidence."
-      },
-      {
-        "id": "FIX-NOTEBOOK-AUTOPRUNE-DIRECTION-UNRESOLVABLE-ZERO-TS-NOTEBOOKS",
-        "type": "FIX",
-        "size": "M",
-        "priority": "P1",
-        "status": "BACKLOG",
-        "zone": "cross-service/",
-        "owner": "po",
-        "next_agent": "developer",
-        "title": "notebook-auto-prune direction-derivation is unresolvable for 11 live notebooks whose ## headings carry NO parseable timestamp — pruner refuses to run, caps can never converge (11 fail-loud signals in 35h)",
-        "desc": "Residual of FIX-NOTEBOOK-AUTOPRUNE-SAMEDAY-TIE-DROPS-NEWEST (REVIEW), NOT a duplicate of it: that fix correctly stopped the pruner guessing, but shipped (a) no derivation path for notebooks with zero parseable heading timestamps and (b) no producer for the docs/data/notebook-section-order.json override table it introduced. notebook-auto-prune.sh:436-453 derives newest_first/oldest_first by voting on adjacent section pairs whose normalized 17-char ts_key DIFFERS. Sections with no parseable timestamp are all assigned the SAME sentinel key 99999999999999999 (:403-404). Corpus replay of the derivation over all 46 live notebooks (bash, byte-identical logic) => 11 files have TIE_COUNT>=2 AND dec=0 AND inc=0, i.e. structurally underivable forever: code-janitor(3), cowork-refactory-expert(3), cowork-refactory-expert-2026-07-11-fr1-atomic(5), digest-predict(2), idea-forge(3), market-analyst(3), ops-mainserver-fetch(7), pm-alpha-s2-rag-fts-rebuild-cron(4), po(2), semble-search(2), dev-technical-analysis(2). The override table covers only 3 files (developer.md, dev-frontend.md, dev-mcp-server.md) and has no producer — nothing and nobody adds entries, so every one of the 11 fail-louds at :478 and exits 0 WITHOUT pruning. Downstream: the file then grows past its caps unchecked. Live proof arrived as two signals 1 SECOND apart from the same pruner run on the same file (notebook_tiebreak_direction_unresolved_breach 06:27:25Z + context_bloat_breach 06:27:26Z, unified-agent.md 25703B vs 12000B byte-cap). RECURRING: 11 fail-loud signals in ~35h across 2 files (7x unified-agent.md 07-30T195436Z..07-31T062725Z, 4x digest-predict.md 07-30T1742xx) => clears the recurring-2+ bar. SECONDARY (harden, do not assume live): the vote comparison at :438 is `[ \"$prev_key\" \\> \"$cur_key\" ]`, which is bash-`[`-specific. Replayed on the SAME live file: under bash dec=2/inc=1 => newest_first (correct, matches the physical prepend order 07-31 -> 07-30 -> 07-29); under zsh the test errors `condition expected: >` and every differing pair silently falls to the ELSE branch => dec=0/inc=3 => oldest_first, the exact INVERSE, which would drop the newest tied section. Shebang is #!/usr/bin/env bash so this is only reachable if a caller invokes it under an explicit non-bash interpreter — harden it anyway. TERTIARY: the 99999 no-timestamp sentinel is direction-blind — a trailing untimestamped section (e.g. `## Prior cycles`) is physically LAST but sorts as MAX, injecting a spurious inc vote (observed on unified-agent.md, pair 136->150).",
-        "status_note": "AC-1: replay the derivation over the WHOLE docs/agent-memory/notebooks/*.md corpus (not one file) and show 0 files land in the UNRESOLVED+TIE_COUNT>=2 bucket. Prefer an opt-IN derivation that always resolves (e.g. fall back to physical-order-vs-file-mtime, or make the untimestamped sentinel direction-aware) over growing the manual opt-out override table one file at a time (feedback_fleetwide_gate_validated_on_one_file_optout_allowlist). AC-2: if the override table is kept at all, it needs a named producer — today its _maintained_by says developer/architect but no flow step ever writes it. AC-3: harden the :438 string comparison so a non-bash interpreter cannot silently invert the derived direction; add a regression case that fails on the inverted vote. AC-4: verification gate is NOT `signal stopped firing` (the emitter is per-write and self-clears) — it is the corpus replay in AC-1 plus unified-agent.md and digest-predict.md both landing back under their 12000B byte-cap. EVIDENCE: docs/signals/processed/notebook-tiebreak-unresolved-*.json (11 files), docs/signals/processed/context-bloat-docs-agent-memory-notebooks-unified-agent-md-2026-07-31T062726Z.json. NOT a duplicate of FIX-NOTEBOOK-PRUNER-LINE-ONLY-SETPOINT-BYTE-CAP-NEVER-CONVERGES / FIX-NOTEBOOK-LINECAP-SWEEP-BYTE-BLIND-BACKSTOP (both REVIEW, both about the byte-vs-line SETPOINT) — this row is about the pruner declining to run AT ALL, which gates both of those from ever converging on these 11 files.",
-        "files": [
-          "scripts/agents-flow/notebook-auto-prune.sh",
-          "docs/data/notebook-section-order.json",
-          "scripts/agents-flow/test-notebook-auto-prune.sh"
-        ],
-        "baseline_pass": null,
-        "verification_gate": "corpus_replay_zero_unresolved_plus_bytecap_converged",
-        "created_at": "2026-07-31T06:56:27Z",
-        "created_by": "po/triage-20260731T0637Z",
-        "source": "PO Step 0-SIG — signals notebook_tiebreak_direction_unresolved_breach (unified-agent.md 06:27:25Z, 7th occ) + context_bloat_breach (unified-agent.md 06:27:26Z), both routed-to-po by dev-team drain 2026-07-31T0637Z tick",
-        "origin_signal_id": "notebook-tiebreak-unresolved-docs-agent-memory-notebooks-unified-agent-md-2026-07-31T062725Z",
-        "updated_at": "2026-07-31T06:56:28Z"
       }
     ],
     "closed_sprints": [
@@ -18842,6 +18816,36 @@
         "claimed_by": "dev-team (S3 hand-dispatch, po-batch-20260731T0637Z)",
         "commit_sha": "8c45fc1a0",
         "ci_run_id": "30611681976"
+      },
+      {
+        "id": "FIX-NOTEBOOK-AUTOPRUNE-DIRECTION-UNRESOLVABLE-ZERO-TS-NOTEBOOKS",
+        "type": "FIX",
+        "size": "M",
+        "priority": "P1",
+        "status": "REVIEW",
+        "zone": "cross-service/",
+        "owner": "po",
+        "next_agent": "qa",
+        "title": "notebook-auto-prune direction-derivation is unresolvable for 11 live notebooks whose ## headings carry NO parseable timestamp — pruner refuses to run, caps can never converge (11 fail-loud signals in 35h)",
+        "desc": "Residual of FIX-NOTEBOOK-AUTOPRUNE-SAMEDAY-TIE-DROPS-NEWEST (REVIEW), NOT a duplicate of it: that fix correctly stopped the pruner guessing, but shipped (a) no derivation path for notebooks with zero parseable heading timestamps and (b) no producer for the docs/data/notebook-section-order.json override table it introduced. notebook-auto-prune.sh:436-453 derives newest_first/oldest_first by voting on adjacent section pairs whose normalized 17-char ts_key DIFFERS. Sections with no parseable timestamp are all assigned the SAME sentinel key 99999999999999999 (:403-404). Corpus replay of the derivation over all 46 live notebooks (bash, byte-identical logic) => 11 files have TIE_COUNT>=2 AND dec=0 AND inc=0, i.e. structurally underivable forever: code-janitor(3), cowork-refactory-expert(3), cowork-refactory-expert-2026-07-11-fr1-atomic(5), digest-predict(2), idea-forge(3), market-analyst(3), ops-mainserver-fetch(7), pm-alpha-s2-rag-fts-rebuild-cron(4), po(2), semble-search(2), dev-technical-analysis(2). The override table covers only 3 files (developer.md, dev-frontend.md, dev-mcp-server.md) and has no producer — nothing and nobody adds entries, so every one of the 11 fail-louds at :478 and exits 0 WITHOUT pruning. Downstream: the file then grows past its caps unchecked. Live proof arrived as two signals 1 SECOND apart from the same pruner run on the same file (notebook_tiebreak_direction_unresolved_breach 06:27:25Z + context_bloat_breach 06:27:26Z, unified-agent.md 25703B vs 12000B byte-cap). RECURRING: 11 fail-loud signals in ~35h across 2 files (7x unified-agent.md 07-30T195436Z..07-31T062725Z, 4x digest-predict.md 07-30T1742xx) => clears the recurring-2+ bar. SECONDARY (harden, do not assume live): the vote comparison at :438 is `[ \"$prev_key\" \\> \"$cur_key\" ]`, which is bash-`[`-specific. Replayed on the SAME live file: under bash dec=2/inc=1 => newest_first (correct, matches the physical prepend order 07-31 -> 07-30 -> 07-29); under zsh the test errors `condition expected: >` and every differing pair silently falls to the ELSE branch => dec=0/inc=3 => oldest_first, the exact INVERSE, which would drop the newest tied section. Shebang is #!/usr/bin/env bash so this is only reachable if a caller invokes it under an explicit non-bash interpreter — harden it anyway. TERTIARY: the 99999 no-timestamp sentinel is direction-blind — a trailing untimestamped section (e.g. `## Prior cycles`) is physically LAST but sorts as MAX, injecting a spurious inc vote (observed on unified-agent.md, pair 136->150).",
+        "status_note": "AC-1: replay the derivation over the WHOLE docs/agent-memory/notebooks/*.md corpus (not one file) and show 0 files land in the UNRESOLVED+TIE_COUNT>=2 bucket. Prefer an opt-IN derivation that always resolves (e.g. fall back to physical-order-vs-file-mtime, or make the untimestamped sentinel direction-aware) over growing the manual opt-out override table one file at a time (feedback_fleetwide_gate_validated_on_one_file_optout_allowlist). AC-2: if the override table is kept at all, it needs a named producer — today its _maintained_by says developer/architect but no flow step ever writes it. AC-3: harden the :438 string comparison so a non-bash interpreter cannot silently invert the derived direction; add a regression case that fails on the inverted vote. AC-4: verification gate is NOT `signal stopped firing` (the emitter is per-write and self-clears) — it is the corpus replay in AC-1 plus unified-agent.md and digest-predict.md both landing back under their 12000B byte-cap. EVIDENCE: docs/signals/processed/notebook-tiebreak-unresolved-*.json (11 files), docs/signals/processed/context-bloat-docs-agent-memory-notebooks-unified-agent-md-2026-07-31T062726Z.json. NOT a duplicate of FIX-NOTEBOOK-PRUNER-LINE-ONLY-SETPOINT-BYTE-CAP-NEVER-CONVERGES / FIX-NOTEBOOK-LINECAP-SWEEP-BYTE-BLIND-BACKSTOP (both REVIEW, both about the byte-vs-line SETPOINT) — this row is about the pruner declining to run AT ALL, which gates both of those from ever converging on these 11 files. | developer: fix shipped (fix commit 9b0764631, notebook chores 678939927/f3eb4d1ef), AC-1 corpus replay 0/46 unresolved (pre-fix 21/46), AC-3 bash/zsh regression test 9/9 green, AC-4 live convergence verified on unified-agent.md + digest-predict.md — see decision journal sprint-COWORK-GUARANTEED-SLOT-CATCHUP-developer-2.md STEP developer-S50.",
+        "files": [
+          "scripts/agents-flow/notebook-auto-prune.sh",
+          "docs/data/notebook-section-order.json",
+          "scripts/agents-flow/test-notebook-auto-prune.sh"
+        ],
+        "baseline_pass": null,
+        "verification_gate": "corpus_replay_zero_unresolved_plus_bytecap_converged",
+        "created_at": "2026-07-31T06:56:27Z",
+        "created_by": "po/triage-20260731T0637Z",
+        "source": "PO Step 0-SIG — signals notebook_tiebreak_direction_unresolved_breach (unified-agent.md 06:27:25Z, 7th occ) + context_bloat_breach (unified-agent.md 06:27:26Z), both routed-to-po by dev-team drain 2026-07-31T0637Z tick",
+        "origin_signal_id": "notebook-tiebreak-unresolved-docs-agent-memory-notebooks-unified-agent-md-2026-07-31T062725Z",
+        "updated_at": "2026-07-31T07:56:41Z",
+        "promoted_at": "2026-07-31T07:20:32Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
+        "claimed_at": "2026-07-31T07:20:36Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)"
       }
     ],
     "qa": [],
@@ -18861,7 +18865,7 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-31T06:19:47Z",
+    "last_triaged_at": "2026-07-31T07:20:32Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
     "in_progress": []
   },
