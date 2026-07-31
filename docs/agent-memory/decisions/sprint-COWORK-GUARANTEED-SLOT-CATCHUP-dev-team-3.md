@@ -60,3 +60,12 @@
 **why-change:** No plan change. Net: 3 background agents still in flight (`developer`/escalation-fix, `architect`/branch-hijack, `agent-father`/TE-T11). Awaiting all 3 RETURNs before next board-state action.
 
 ---
+
+### STEP dev-team-S32 · dev-team · 2026-07-31T04:58:00Z
+**task-id:** TE-T11 (agent-father terminal return, RAW-verify)
+**what-done:** RAW-verified `agent-father`'s TE-T11 return — commit `704677ea3` confirmed a real ancestor of HEAD on `main`; 12-file diff matches claim exactly (10 flow files collapsing separate `cycle-bootstrap`+`regime-extraction` SKILL.md pointers into one `step-0-cowork` reference, plus its own decision journal + notebook). Independently confirmed via grep, not just trusted the self-report: `step-0-cowork` now appears in exactly the 10 claimed files (was 0 adopters). Confirmed `tick-snapshot.md` (the audit's 11th listed file) is genuinely absent from the changed-files list — agent-father's exclusion reasoning (it PRODUCES the snapshot via raw MCP calls, never consumes cycle-bootstrap/regime-extraction as a skill reader; grep false-positive on a fallback comment) checked out against the actual diff, not just its prose. Confirmed board row `TE-T11` genuinely `REVIEW`/`next_agent:qa`/`commit_sha` attached, removed from `backlog[]`. Confirmed `orch-state.json` correctly excluded from agent-father's own commit (its `commit_zone` boundary, board flip done separately via `orch-apply.sh` as claimed).
+**what-considered:** Whether the small per-file diff sizes (2-6 lines each) were suspiciously thin for a "wire a composite skill in" task. Checked against the stated mechanism — collapsing two existing SKILL.md pointer lines into one is inherently a small diff; verified at least one file's actual diff content (not just line count) to confirm it was a genuine pointer swap, not a stub edit.
+**why-decision:** No lock to release — TE-T11 was dispatched via the on-demand maintenance-lane pattern (claim released at spawn). Clean verify, nothing to patch.
+**why-change:** No plan change. Net: 2 background agents still in flight (`developer`/escalation-fix, `architect`/branch-hijack). Awaiting both RETURNs.
+
+---
