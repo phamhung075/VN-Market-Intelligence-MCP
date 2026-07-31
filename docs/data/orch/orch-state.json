@@ -93,12 +93,11 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "FIX-ERRAUDIT-W2-DEADLINE-UNITTEST",
-    "next_agent": "dev-mcp-server",
-    "next_action": "BOUNDED-1 auto-pickup claim of FIX-ERRAUDIT-W2-DEADLINE-UNITTEST — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
-    "updated_at": "2026-07-31T21:47:52Z",
-    "updated_by": "dev-team (bounded-1 auto-pickup)"
+    "status": "idle",
+    "active_task_id": null,
+    "next_agent": "router",
+    "updated_at": "2026-07-31T22:13:13Z",
+    "updated_by": "dev-mcp-server"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -19609,6 +19608,26 @@
         "completed_at": "2026-07-31T21:22:30Z",
         "review_note": "rebuild_required:true — ops must rebuild stock-price service before deploy | dev-team RAW-verify 2026-07-31T21:24:46Z: commit_sha corrected from journal-commit 8638467b6 to actual code-commit 4d3394f77 (the refactor commit); rebuild pending ops; independent go build/test/gofmt/lint all clean, exact match to self-report | next_agent patched null->qa 2026-07-31T21:25:12Z (confirmed-recurring gap, feedback_review_flip_next_agent_qa_check_missing_strands_row)",
         "next_agent": "qa"
+      },
+      {
+        "id": "FIX-ERRAUDIT-W2-DEADLINE-UNITTEST",
+        "type": "FIX",
+        "priority": "P3",
+        "size": "S",
+        "status": "REVIEW",
+        "zone": "apps/mcp-server/",
+        "title": "Unit test fetchDeadline.ts (withDeadline + macroFetch)",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-ERRAUDIT-W2-DEADLINE-UNITTEST",
+        "promoted_at": "2026-07-31T21:47:38Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=3)",
+        "updated_at": "2026-07-31T22:13:13Z",
+        "claimed_at": "2026-07-31T21:47:42Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "next_agent": "qa",
+        "updated_by": "dev-mcp-server",
+        "commit_sha": "b3a5c5145",
+        "note": "Added apps/mcp-server/src/infrastructure/fetchers/__tests__/fetchDeadline.test.ts (12 tests): withDeadline (deadline->DeadlineError w/ label/deadlineMs/name+FR-6 log, fast-path clearTimeout exactly-once EC-1, non-abort error rethrown as same instance) + macroFetch (ok:false all 3 DegradeEnvelope.reason branches, ok:true only on response.ok). Test-only, zero production code touched (helper already code-verified via 6-check audit at parent T-1). bun tsc --noEmit clean; standalone 12/12 pass; full bun test x2 (15005/15007 pass, 54/52 fail) inside documented FIX-MCP-SUITE-HEALTH-BASELINE band, grep-confirmed zero fetchDeadline/withDeadline/macroFetch fails in either run. toolCount=183/cronJobCount=88 unchanged (no tool/scheduler code touched). testing.md doc-review done. Commit b3a5c5145; memory commit 3a19ad791."
       }
     ],
     "qa": [],
@@ -19630,25 +19649,7 @@
     },
     "last_triaged_at": "2026-07-31T21:47:38Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": [
-      {
-        "id": "FIX-ERRAUDIT-W2-DEADLINE-UNITTEST",
-        "type": "FIX",
-        "priority": "P3",
-        "size": "S",
-        "status": "IN_PROGRESS",
-        "zone": "apps/mcp-server/",
-        "title": "Unit test fetchDeadline.ts (withDeadline + macroFetch)",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-ERRAUDIT-W2-DEADLINE-UNITTEST",
-        "promoted_at": "2026-07-31T21:47:38Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=3)",
-        "updated_at": "2026-07-31T21:47:52Z",
-        "claimed_at": "2026-07-31T21:47:42Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)",
-        "next_agent": "dev-mcp-server"
-      }
-    ]
+    "in_progress": []
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
