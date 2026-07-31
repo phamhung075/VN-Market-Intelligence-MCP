@@ -1,15 +1,5 @@
 # agents-architect — Notebook
 
-## 2026-07-23T04:10:09Z
-
-**Brief:** `docs/architecture-briefs/2026-07-23-auditor-a30-reclamation-gate-a21-windowed-restart.md`
-
-FIX-AUDITOR-A12A20A30-FP-REEMIT-CONVERGE (recurring_bug_count=4, PO-commissioned 2026-07-23T03:47Z): root-caused the 07-23T03:42Z false CRITICAL to an ungated 2-point MemPerc delta (tier1-probe.md's A-30 section defines no CRITICAL branch at all — the LLM improvised one) propagating correctly through emit-audit-signal.sh's (sound-by-design) severity-rank escalation-bypass. Found the fix mostly already exists unwired: `scripts/audits/verify-a30-mcp-memory-reclamation.sh` (multi-probe/OOMKilled/VmHWM discriminator, used ad hoc by cowork triage 3x) — design wires it as a conditional subprocess from probe.sh (baseline≥85% gate), makes A-30 verdict a single self-contained per-cycle bundle (never cross-cycle), adds a VmHWM>VmRSS veto in the calling layer (closes a real gap the untouched script left unwired). A-21 re-modeled as a read-only windowed bun:sqlite query porting mcp-server's own restartCadenceAlertJob.ts discriminator. Zero edit to emit-audit-signal.sh (shared, out of declared zone) — dedup item satisfied structurally since benign findings never call it. Change zone: docs/agents/system-auditor/probe.sh + flow/tier1-probe.md only. A-12/A-04/A-13 debounce (row scope item 2) explicitly flagged out-of-scope for this wave, not silently dropped.
-
-**Signal dropped:** `docs/signals/auditor-a30-reclamation-gate-a21-windowed-restart-20260723T041009Z.json` → agent-father
-
----
-
 ## 2026-07-29T21:20:46Z
 
 **Brief:** `docs/architecture-briefs/2026-07-29-qadrain-head-slot-decouple.md`
@@ -27,3 +17,13 @@ SPIKE-DEVTEAM-QADRAIN-HEAD-SLOT-DECOUPLE: root-caused why dev-team's Review-Lane
 Po directly dispatched (post-triage) FIX-SWEEPGUARD-WARN-ONLY-NO-ACTUATOR-AND-TRIAGE-MISADJUDICATION: sweep-guard hook (`scripts/git-hooks/pre-commit`) logs BARE commits forever but never blocks (14 warns/8h, 4 sessions), and this session's own triage had been dispositioning all 4 live signals "benign" on a clean `git show --stat` (outcome), not the mechanism the discriminator already proves by construction. Designed a per-actor escalation actuator (`GIT_SWEEP_GUARD_ESCALATE_THRESHOLD=3` default, reuses existing `.git/sweep-guard.log` `actor=` field, zero new deps) that converges repeat offenders to a hard block same-session, without waiting on po's own staged fleet-wide `GIT_SWEEP_GUARD_MODE` flip (kept as Phase 2, 24h observation + rollback command). New routing rows for `triage-signals.md` + `drain-signals.md` §0a-3 make the mechanism check (payload's own BARE/SCOPED tag + new `escalated=` field) mandatory and name the "`git show --stat` clean" non-disposition explicitly forbidden.
 
 **Signal dropped:** `docs/signals/sweepguard-escalation-actuator-and-triage-mechanism-check-20260731T014831Z.json` → agent-father (cc po, dev-team)
+
+---
+
+## 2026-07-31T04:29:55Z
+
+**Brief:** `docs/architecture-briefs/2026-07-31-cired-triage-failedfile-dedup.md`
+
+FIX-CIRED-TRIAGE-WRONG-PLANE-DEDUP-AMNESTY: triage-signals.md's `ci_red` row dedups only on SHA-derived `check_id`/`head_sha` and never reads the `FAILEDFILE` block `scripts/ci-per-file-isolation.sh` emits, so 8 reds/3 files/4 days got amnestied as "standing baseline" and minted zero rows (RAW-verified by a prior PO pass, re-confirmed). Designed: mandatory pre-dedup `gh run view {run_id} --log-failed` FAILEDFILE read, FILE-scoped `dedup_key: ci_job:<job>|file:<file>` as primary dedup key — already field-validated twice in production ahead of this row shipping (`FIX-CI-FRONTEND-ESLINT-BUNLOCK-DUAL-LOCKFILE-DRIFT`, `FIX-CI-SIZELINT-MACRO-VMT-LIQUIDITY-RESOLVERS-NEW-OFFENDER`, `FIX-ORCHSTATE-HEAD-STAMP-DROPPED-CI-RED-1837A`) — plus an explicit anti-amnesty fence vs `FIX-MCP-SUITE-HEALTH-BASELINE` and a 0-fail-baseline backstop. `ci-health-probe.md` gets a doc-accuracy-only correction (no probe/script behavior change, CANON-SCRIPT untouched, `payload.run_id` already threads through end-to-end). AC-5 retro-sweep executed: `1408-tool-diacritics` (fixed `9374e65e0`) and `emit-pressure-state` (fixed `98917416a`+`d19d6cdc5`) both confirmed GREEN on current main (run 30603458514, 0 fail).
+
+**Signal dropped:** `docs/signals/cired-triage-failedfile-dedup-20260731T042955Z.json` → agent-father (cc po, dev-team)
