@@ -1,6 +1,13 @@
 # Dev Team — Sprint Boundary Notebook
 
-**Written:** 2026-07-31T12:57Z
+**Written:** 2026-07-31T13:20Z
+
+## cycle-20260731T1315Z-bctc1345b-reentrant-cifix — Fresh tick: fixed own size-lint CI-red (insertBctcAnalysis.ts new-offender), self-corrected bare-commit sweep-guard drift (2/3 threshold) to pathspec-only; TTL-lapse re-entrant confirm on FIX-BCTC-1345B-REPORT-BATCH, no re-spawn
+
+- **Fixed a genuine, deterministic CI-red**: `size-lint` FAIL on own S71 commit `69a968c70` — `insertBctcAnalysis.ts` crossed 120L (132L, new-offender, no baseline/justification) from S71's FIX-LANCEDB-INSERT-SEGFAULT feature landing before any size-lint check ran. Added a `size-justification:` header (132L→136L, comment-only), local `--check` PASS, `tsc` clean, pathspec-committed (`2939dc8f2`), pushed, CI-wait launched (not assumed green).
+- **Self-corrected a real drift caught by my own tooling**: 4 drained signals were all self-generated from S71 — 2 `commit-sweep-guard` warnings for using bare `git add`+`git commit` instead of pathspec (now at `prior_warns=2/threshold=3`, one more triggers escalation) + 1 stale `notebook-immutability-guard` WARN (already superseded) + my own left-alone `ci_red` flake. Adopted direct pathspec-scoped commits for the rest of this session going forward — no more `git add` before a bare commit.
+- **TTL-lapse variant again**: `task_claim` on `FIX-BCTC-1345B-REPORT-BATCH` returned `claimed:true` (23min elapsed > 10min TTL, same known gap as S70/S71). Confirmed genuine live progress via `git status`: `parseBctcReport.ts` modified + new untracked `FIX-BCTC-1345B-REPORT-BATCH.test.ts` (task-matched filename) — did not re-spawn.
+- **NEXT**: await dev-mcp-server's RETURN, RAW-verify (root-cause re-confirm — especially whether the debounce prior art already covers this or not, regression test, board/head state). `TE-T12` remains the only other undispatched item from PO's 2026-07-31T0637Z triage (routes to `agent-father`).
 
 ## cycle-20260731T1253Z-bctc1345b-dispatched — Same tick: idle-capacity fall-through after RAW-verify closed FIX-LANCEDB-INSERT-SEGFAULT; BOUNDED-1 claimed+dispatched FIX-BCTC-1345B-REPORT-BATCH to dev-mcp-server; 1 background agent in flight
 
@@ -19,8 +26,3 @@
 - **Released `task:FIX-LANCEDB-INSERT-SEGFAULT`** on dev-mcp-server's behalf (INV-GATEWAY-1) — `released:0`, lock's TTL had already lapsed again since S70's re-claim; expected, not an error.
 - **NEXT**: no items remain from this tick's dispatch — WIP 0, idle-head. `TE-T12` remains the only undispatched item from PO's 2026-07-31T0637Z triage (routes to `agent-father`).
 
-## cycle-20260731T1207Z-lancedbsegfault-reentrant — Fresh tick: 3 signals drained (own ci_red left for its own verification gate + 2 routine/PO-routed), CI probe non-fatal in_progress skip, `.head` still FIX-LANCEDB-INSERT-SEGFAULT — TTL-lapse re-entrant confirm (claimed:true, not the usual false+match), live progress confirmed via git status, no re-spawn
-
-- **3 drained signals, all correctly routed-to-po, none needing dev-team action**: (1) my own `ci_red` from last tick — left untouched by design, its VERIFICATION GATE will find CI already green on `bf6c11054`; (2) routine `cowork-fire` telemetry (3 offhours slots spawned clean); (3) `news-scout` gateway-blind bug-escalation (known recurring cowork-subagent-loses-gateway pattern) — PO's remit, not fresh.
-- **TTL-lapse variant of the re-entrant probe**: `task_claim` returned `claimed:true` (lock's 600s TTL lapsed under the ~16min elapsed since last tick's dispatch) — NOT the usual `claimed:false`+session-match signature. Did not treat as license to re-spawn: `git status` shows `insertBctcAnalysis.ts` modified + new untracked `FIX-LANCEDB-INSERT-SEGFAULT-step4-guard.test.ts` (task-matched filename), genuine live progress, no commits yet.
-- **NEXT**: await dev-mcp-server's RETURN, RAW-verify (root-cause re-confirm, regression test, boundary-disclosure honesty check, board/head state). `TE-T12` remains the only other undispatched item from PO's 2026-07-31T0637Z triage (routes to `agent-father`).
