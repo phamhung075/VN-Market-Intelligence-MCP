@@ -279,11 +279,36 @@ async function storeReport(
       `Check for OCR corruption (VNM/VEA pattern: assets<equity or margin>100%).`;
     logger.warn(financialMsg);
 
-    // Task 1792 — DB-backed per-ticker+quarter debounce (1h cooldown).
-    // Prevents the same bug report firing 10× in a retry loop.
     const periodKey = `${report.period.year}-${report.period.periodType ?? ""}`;
     const db = getDb();
-    if (!isBctcSignalDebounced(db, report.actionCode, periodKey, BCTC_SIGNAL_DEBOUNCE_HOURS)) {
+
+    // FIX-BCTC-1345B-REPORT-BATCH: suppress the Telegram alert when this exact
+    // (action_code, sort_key) is ALREADY tracked as low_confidence from a PRIOR
+    // parse attempt — an "open quality row" per PO 2026-06-07T19:20:08Z. Task
+    // 1792's debounce below only covers a 1h retry-storm window; it does
+    // nothing for `bctcReparseJob` (scheduler/financial-reports/bctcReparseJob.ts),
+    // which retries the SAME still-broken backlog daily (24h apart, well
+    // outside any hourly cooldown) — that daily re-fire on an already-known,
+    // still-unresolved issue was the actual source of the "6 reports today /
+    // 11 more the next day" noise, not same-ticket retry storms (those were
+    // already fixed by 1792). Re-using the persistent `validation_status`
+    // column already on `financial_reports` (rather than a new table) means
+    // the row self-closes the moment a re-parse produces real confidence
+    // (validationStatus flips away from 'low_confidence' below) — no manual
+    // reset needed.
+    const existingQualityRow = db
+      .query<{ validation_status: string | null }, [string, string]>(
+        `SELECT validation_status FROM financial_reports WHERE action_code = ? AND sort_key = ?`,
+      )
+      .get(report.actionCode, report.period.sortKey);
+    const alreadyOpenQualityRow = existingQualityRow?.validation_status === "low_confidence";
+
+    // Task 1792 — DB-backed per-ticker+quarter debounce (1h cooldown).
+    // Prevents the same bug report firing 10× in a retry loop.
+    if (
+      !alreadyOpenQualityRow &&
+      !isBctcSignalDebounced(db, report.actionCode, periodKey, BCTC_SIGNAL_DEBOUNCE_HOURS)
+    ) {
       recordBctcSignalSent(db, report.actionCode, periodKey);
       // Task 1792 fix: await the send so test assertions run AFTER Telegram call.
       // Use injected telegramBugFn when provided (testability); otherwise dynamic import.
