@@ -36,3 +36,20 @@
 **why-decision:** The new ci_red signal's failing job (`size-lint`) and file (`vpsProxyStaleness.ts`) are identical to the row PO already minted and BOUNDED-1 just claimed this same tick — re-triaging would double-track a defect already in `in_progress[]` with an assigned specialist; left it queued for the next drain cycle where PO's triage-signals dedup (`dedup_key: ci_job:size-lint|file:...`) will correctly no-op against the open row. Trusted the row's own `next_agent:"dev-mcp-server"` (BOUNDED-1's claim script already resolves `effective_next_agent` at claim time) rather than re-running zone-detect redundantly.
 **why-change:** No change from established BOUNDED-1/dispatcher-wrap procedure.
 **verification:** `task_claim(task:FIX-CI-SIZELINT-VPSPROXYSTALENESS-REGRESSION-123L)` → `{"claimed":true}`. Board conservation held (`task_total live=755 candidate=755`) across both BOUNDED-1 writes. `git status -s -- docs/data/orch/orch-state.json` clean after Step 4.4 (0 rows swept, nothing to commit).
+
+### STEP dev-team-S94 · dev-team · 2026-07-31T18:47Z (RAW-verify + close dev-mcp-server RETURN on FIX-CI-SIZELINT-VPSPROXYSTALENESS-REGRESSION-123L)
+
+**task-id:** FIX-CI-SIZELINT-VPSPROXYSTALENESS-REGRESSION-123L
+**what-done:** dev-mcp-server (agent `ad23f3e161a066546`) RETURNed. RAW-verified every claim before releasing the lock:
+- Commits `e000c5e3f` (code split) + `9257cd701` (notebook/journal) both confirmed real ancestors of HEAD (`git merge-base --is-ancestor`), commit bodies match RETURN narrative exactly (root-cause: `b08045ef0`'s news-interval recalibration grew the file 111L→123L without re-asserting size-lint).
+- File split independently measured: `vpsProxyStaleness.ts` 107L + new `vpsProxyStalenessConfig.ts` 48L = 155L total (matches claim). `EXPECTED_INTERVALS.news` independently confirmed still `20` in the new config file — AC-2 (no calibrated-value drift) held.
+- `size-lint-justification.sh --check` re-run independently → PASS, 0 offenders. Grepped `git show e000c5e3f` for "justification" → confirms no header added, matching the AC-6 landmine-avoidance claim (never `--update` the baseline).
+- CI run `30655761525` re-queried independently (not trusted from the report): `headSha` == current repo HEAD exactly (`7b0833c0d709aef8...`); all 19 jobs `success` including `size-lint` and `bun test` — matches claim exactly.
+- Board: row confirmed in `.task_board.review[]` (`status:REVIEW`, `next_agent:qa`, `branch:null`), confirmed absent from `in_progress[]`. `.head` confirmed synced `{status:idle, active_task_id:null, next_agent:router, updated_by:dev-mcp-server}` — CANONICAL:SSOT-STATUSFLIP-LANEMOVE MUST clause held.
+- `orch-state.json` write was on disk but uncommitted (agent's own tool grant gap, flagged in its RETURN) — committed it myself (`2c84a3987`) and pushed clean (`7b0833c0d..2c84a3987`, pre-push tsc correctly skipped, docs/data-only range).
+**what-considered:**
+- Trust the CI-plane claim (report already cited the exact `gh run view` command + headSha) vs. independently re-running it.
+- Whether the uncommitted `orch-state.json` write needed re-validation before committing, since dev-mcp-server's own `orch-validate.mjs` pass was already cited in the RETURN.
+**why-decision:** Standing RAW-verification practice ([[feedback_trust_verification_is_system_job]]) applies regardless of how much inline evidence the self-report already shows. Re-ran the CI query, ancestor checks, and both file measurements myself — zero discrepancies. Diffed the already-staged `orch-state.json` change via `git status`/board-read rather than re-running full schema validation, since the write was already `orch-validate.mjs`-checked per the report and this dev-team session's own conservation-check convention (task_total invariant) was the higher-value independent cross-check, already satisfied by the prior BOUNDED-1 writes this same tick.
+**why-change:** No change from established RAW-verification pattern.
+**verification:** `task_release(task:FIX-CI-SIZELINT-VPSPROXYSTALENESS-REGRESSION-123L, owner_agent=dev-team)` → `{"ok":true,"released":1}`.
