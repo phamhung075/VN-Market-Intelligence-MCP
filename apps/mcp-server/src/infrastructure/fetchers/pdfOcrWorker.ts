@@ -45,6 +45,13 @@ import { currentDataEnv } from "../envCheck.js";
 
 const execFileAsync = promisify(execFile);
 
+// FIX-PDFOCR-PAGECAP-COMPLETENESS-THRESHOLD-MISMATCH (2026-07-31): the
+// extraction loop below hard-caps at this many pages per PDF. The
+// completeness gate MUST measure against this same cap (never the raw
+// pdfinfo page count) — see the threshold computation in
+// extractAndStorePdfPages for the full rationale.
+const OCR_MAX_PAGES = 80;
+
 // ── isOcrAvailable with module-level cache (FR-4) ─────────────────────────────
 // The first call runs two synchronous `execSync("which ...")` probes.
 // All subsequent calls return the cached boolean — no repeated execSync.
@@ -215,14 +222,32 @@ export async function extractAndStorePdfPages(
     } catch { /* can't verify — assume complete */ }
 
     // Task 292 / FR-3: threshold changed from Math.max(expectedPages * 0.8, 5) to Math.max(expectedPages * 0.5, 3)
-    const threshold = Math.max(expectedPages * 0.5, 3);
+    // FIX-PDFOCR-PAGECAP-COMPLETENESS-THRESHOLD-MISMATCH (2026-07-31): the extraction
+    // loop below hard-caps at OCR_MAX_PAGES pages, so a full extraction can never
+    // produce more than OCR_MAX_PAGES rows. Measuring completeness against the raw
+    // (uncapped) expectedPages made the gate permanently unsatisfiable for any PDF
+    // with totalPages > 2*OCR_MAX_PAGES — the capped-80 result was judged incomplete
+    // forever, triggering a full re-OCR (DELETE + re-run, capped at 80 again) on
+    // EVERY bootstrap OCR loop run. Cap expectedPages to OCR_MAX_PAGES before
+    // computing the threshold so a full capped extraction reaches a terminal state.
+    const cappedExpectedPages = Math.min(expectedPages, OCR_MAX_PAGES);
+    const threshold = Math.max(cappedExpectedPages * 0.5, 3);
     if (expectedPages === 0 || existing.c >= threshold) {
-      logger.info("[pdfOcr] already extracted", { filename, pages: existing.c, expected: expectedPages });
+      logger.info("[pdfOcr] already extracted", { filename, pages: existing.c, expected: expectedPages, cappedExpected: cappedExpectedPages });
       return { pages: existing.c, totalChars: 0, ocrStats: { pagesProcessed: existing.c, pagesSkipped: 0, pagesLowChar: 0, avgConfidence: 0 } };
     }
-    // Incomplete extraction — delete partial and re-extract
-    logger.info("[pdfOcr] incomplete extraction detected, re-extracting", { filename, have: existing.c, expected: expectedPages });
-    db.run("DELETE FROM pdf_extracted_text WHERE filename = ?", [filename]);
+    // Incomplete extraction — re-extract below.
+    // FIX-PDFOCR-PAGECAP-COMPLETENESS-THRESHOLD-MISMATCH AC2 (2026-07-31): do NOT
+    // blanket-DELETE existing rows up front — that opened an availability gap where
+    // a concurrent read_bctc_pdf/getCachedPdfText call during the (potentially
+    // multi-minute) re-OCR window saw ZERO cached pages instead of the
+    // stale-but-present partial text. The extraction loop below UPSERTs
+    // (INSERT OR REPLACE, UNIQUE(filename, page_number)) each page in place, so
+    // existing rows stay visible until their specific page is overwritten. Any
+    // stale rows beyond the current maxPages window (e.g. a prior run's pdfinfo
+    // probe returned a larger page count than this run) are pruned AFTER the new
+    // extraction completes — see the post-loop cleanup below, not before it starts.
+    logger.info("[pdfOcr] incomplete extraction detected, re-extracting", { filename, have: existing.c, expected: expectedPages, cappedExpected: cappedExpectedPages });
   }
 
   if (!isOcrAvailable()) {
@@ -258,7 +283,7 @@ export async function extractAndStorePdfPages(
   let pagesSkipped = 0;
   let pagesLowChar = 0;
   const pageConfidences: number[] = [];
-  const maxPages = Math.min(totalPages, 80);
+  const maxPages = Math.min(totalPages, OCR_MAX_PAGES);
 
   for (let page = 1; page <= maxPages; page++) {
     let pageText = "";
@@ -336,6 +361,13 @@ export async function extractAndStorePdfPages(
     // Yield to the event loop between pages to keep server responsive
     await new Promise(r => setTimeout(r, 2000));
   }
+
+  // FIX-PDFOCR-PAGECAP-COMPLETENESS-THRESHOLD-MISMATCH AC2 (2026-07-31): prune any
+  // stale rows beyond THIS run's maxPages window only AFTER the new pages have been
+  // written above (write-before-delete, never delete-before-write) — e.g. a prior
+  // run whose pdfinfo probe returned a larger page count than this run computed.
+  // In the normal case (stable totalPages across runs) this deletes 0 rows.
+  db.run("DELETE FROM pdf_extracted_text WHERE filename = ? AND page_number > ?", [filename, maxPages]);
 
   const avgConfidence = pageConfidences.length === 0
     ? 0
