@@ -73,3 +73,30 @@
 - Edit `docs/agents/system-auditor/flow/main.md` directly to document the invariant. Rejected — that is an agent definition file; PO must not edit it. The C-04 row already carries `zone: docs/agents/system-auditor/flow/` and `next_agent: architect`, i.e. the correct owner and file.
 **why-decision:** `intraday_ohlcv_5m` retains multiple days and is NOT rewritten by the backfill, so it is the clean discriminator `updated_at` cannot be: distinct codes per day = 118 (07-31), 119 (07-30), 118 (07-29), 118 (07-28), 117 (07-27), 118 (07-24), 118 (07-20). Today is identical to every prior session. `market_prices_history` holds a full healthy session (42,844 ticks, 118 codes, 02:00:00.098Z→09:00:13.033Z). Meanwhile EVERY historical date in `daily_ohlcv` shows 0–2 same-day writes against 900–1000 next-day writes (07-30: 2 vs 939; 07-24: 2 vs 984; 07-01: 0 vs 960) — the full universe has ALWAYS arrived from the nightly history backfill, which last night UPSERTed 750,317 rows (97% of the 774,221-row table, dates 2014-04-16→2026-07-30, 1,497 codes) and thereby clobbers `updated_at` on nearly every row. The 25 "frozen at 02:xx" tickers are alphabetically VFS…XPH, the tail of that walk — the only codes it reached after the 02:00Z open. So 129 is the designed steady state, and the router's premise "yesterday reached 900 rows by 08:36Z" is unsupported. The residue worth keeping is a mutation-timestamp defect identical in kind to C-04's `parsed_at`, plus the fact that C-01/C-02's window is `date >= date('now','-1 day')` = two calendar dates: run live at 09:12Z they return 947 and 1070, so they cannot measure same-day coverage at any threshold.
 **why-change:** Diverged from the brief, which framed Finding 1 as the serious one. It is the false alarm; Finding 2 is the only live defect.
+
+### STEP po-S88 · po · 2026-07-31T14:34:26Z
+**task-id:** FIX-COWORK-SPAWNFANOUT-NO-SESSION-ID-IN-LEAF-ENTRY-PROMPT
+**what-done:** Minted P1/S FIX (zone docs/agents/, next=agent-father) after reading spawn-fanout.md:288/292 + IDENTITY_PREAMBLE:240-253 myself — neither ENTRY_PROMPT branch injects a session id.
+**what-considered:**
+- Dedup into FIX-TASKCLAIM-OWNER-CLIENT-SESSION-MISSING-FLEET-FLOW-DOCS (REVIEW, next=po) — its own status_note explicitly deferred this as out-of-zone: "refine_bctc_md needs a spawn-prompt session-id channel too (cowork-team zone) — flagged not silently closed". Callee-side vs caller-side are different planes.
+- SPIKE for the leaf-worker-class convention — rejected: CLAUDE.md step 3 already mandates the exact convention for router-dispatched agents and this very PO spawn carries coordination_session=. Precedent settles the design; it is one composition line.
+**why-decision:** 2nd hit in 24h on two independent writer planes (signal_queue cow-20260731T140900 HIGH + telegram 4238, same minute), unrecoverable daily loss (last_fired is monotonic-forward-only), clears the recurring-bug bar.
+**why-change:** no change from plan.
+
+### STEP po-S89 · po · 2026-07-31T14:34:26Z
+**task-id:** FIX-PO-TRIAGE-SIGNALS-TABLE-MATCHES-ZERO-LIVE-SIGNAL-TYPES
+**what-done:** Minted P1/S FIX after measuring the live inbox: 128 hot signal_queue rows to=po span 16 types, and triage-signals.md's routing table intersects ZERO of them — 100% fall-through to "unknown type -> log and skip".
+**what-considered:**
+- Scope to system-issue only (the type that triggered it) — rejected: system-issue is 4 of 128; the miss is total, and a one-type patch would leave 124 rows still dark.
+- No mint, log only (board is 361/224) — rejected: this is the mechanism that would have dropped today's HIGH escalation had the router not independently relayed telegram 4238.
+**why-decision:** Measured 100% miss on the live plane, not a theoretical gap; corroborated by two secondary drifts (undeclared cowork-team/dev-team senders; live status "triaged" absent from the documented enum) proving PO ticks improvise past the table rather than execute it.
+**why-change:** no change from plan.
+
+### STEP po-S90 · po · 2026-07-31T14:34:26Z
+**task-id:** FIX-MCP-SERVER-DEPLOY-LANE-STALL-REBUILD-REQUIRED-INERT
+**what-done:** Folded the already-flagged (2026-07-31T00:29:27Z) but still-undispatched row into this tick's BATCH per manual-dispatch-sweep Step 3, with a 2nd independent runtime instance attached; rebuild_required count 9 -> 11.
+**what-considered:**
+- Mint a new row for telegram reports 4236/4237 (resolver stalled >72h) — rejected: FIX-SIGNAL-OUTCOMES-LIVENESS-GUARD-COUNTS-STRUCTURALLY-UNRESOLVABLE-ROWS already owns it in REVIEW, and the two firings 1h apart are the documented module-level _lastStalledAlertDate re-arm on container restart, not a new defect.
+- Stamp a fresh top candidate (TE-T14) instead — rejected: 2 flagged rows are already stranded undispatched; flag rate is not the binding constraint, dispatch is.
+**why-decision:** Image sha256:95ad7ae7ef39 built 2026-07-30T22:06:34Z vs fix commit 314e70718 authored 2026-07-31T00:34:15Z — 2h28m AFTER. The reports are pre-fix code running; disposition is deploy-lane, not resolver.
+**why-change:** Deviated from manual-dispatch-sweep Step 2 (no new stamp this tick) — logged as a sub-flow defect: Step 1's idempotency guard excludes flagged rows, so a flagged row whose BATCH never dispatched can never be re-surfaced.
