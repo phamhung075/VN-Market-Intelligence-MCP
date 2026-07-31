@@ -1,6 +1,16 @@
 # Dev Team — Sprint Boundary Notebook
 
-**Written:** 2026-07-31T10:48Z
+**Written:** 2026-07-31T11:30Z
+
+## cycle-20260731T1130Z-coverletters-verified-released — RAW-verified `dev-mcp-server`'s FU-BACKFILL-MULTIPLE-COVER-LETTERS return (zero discrepancy — agent's root-cause CORRECTED the backlog's own wrong hypothesis and disclosed it; independently reproduced RED from scratch on my own reverted copy, not just trusted the dev-time claim). WIP 0, idle-head
+
+- **Root cause differed from backlog, honestly disclosed**: backlog hypothesised "first-match-only" exclusion; code already `.filter()`-excluded ALL cover letters. Real gap: "consolidated" bucket was NEGATIVE-match (`!isCoverLetterFilename`) — any file merely failing the cover-letter pattern (e.g. an explanatory note) could be wrongly selected. Fix: new `isConsolidatedReportFilename()` POSITIVE matcher (Vietnamese "hop nhat"/English "consolidated", same signal `hsxBctcFetcher.ts::rankItem()` already uses — independently grep-confirmed real).
+- **Commits `c515ec142`/`26bb028bc`/`dfa0baf97` real, pushed by me** (clean scope, `tsc OK` pre-push gate). Diff read in full — matches claim exactly. Test file (405L, 12 cases) read in full; `legacyNegativeMatchSelect()`'s frozen pre-fix snapshot independently byte-diffed against `git show 77092007` — genuine, not paraphrased.
+- **RED independently reproduced from scratch, not just trusted**: reverted only the 3 selection-logic hunks to negative-match on a temp copy (kept the new matcher defined for import-compat), swapped in, re-ran — AC-1/AC-3/AC-4/AC-2-GREEN genuinely fail (8/12), AC-3 exact match to the claim (`updated=1`, wrong pick). Restored, re-verified clean `git diff` + 12/12 pass. `tsc` clean. Pre-existing suites (FIX-CTG-PDF-MISLINK + PI3) → 44/44 own run; combined 56/56 exact match.
+- **Board/head clean**: row `REVIEW`/`next_agent:qa`/`commit_sha` correct with full matching `review_note`; `.head` idle/`next_agent:router`, lane-move + head-reset in the SAME commit (CANONICAL:SSOT-STATUSFLIP-LANEMOVE held). Journal (`dev-mcp-server-2.md`) 34L/6369B, well within cap. Notebook 3 sections/35L.
+- **Incidental "CV" KEYWORD_SET gap disclosure independently verified real** (grepped the actual array) — correctly scoped out, not silently masked, not fabricated.
+- **Did NOT re-run the full 14971-test suite** — blast radius genuinely narrow (1 external caller, `server.ts` startup only), targeted suite already exact-matched, RED reproduction is the stronger evidence class; proportionate stop.
+- **NEXT**: no items remain from this tick's dispatch. `TE-T12` still the only undispatched item from PO's 2026-07-31T0637Z triage (routes to `agent-father`). Idle-head, WIP=0.
 
 ## cycle-20260731T1047Z-bounded1-coverletters-dispatched — Fresh tick: preflight RUN, drained 1 signal (own-journal byte-cap breach, DEFER-class), `.head` idle/WIP=0 → BOUNDED-1 claimed+dispatched FU-BACKFILL-MULTIPLE-COVER-LETTERS to dev-mcp-server; 1 background agent in flight
 
@@ -20,15 +30,4 @@
 - **Board/head clean**: row `REVIEW`/`next_agent:qa`/`commit_sha` correct with full matching `review_note`; `.head` idle/`next_agent:router`, lane-move + head-reset in the SAME commit (CANONICAL:SSOT-STATUSFLIP-LANEMOVE held). Decision journal roll verified (byte-cap breach → `-2.md`, `CAP-REACHED` marker in base). Notebook 3 sections/35L.
 - **AC4 honestly disclosed NOT ATTEMPTED** — matches what I explicitly told the agent was best-effort/ops's job, not a shortfall.
 - **NEXT**: no items remain from this tick's dispatch. `TE-T12` still the only undispatched item from PO's 2026-07-31T0637Z triage (routes to `agent-father`). Idle-head, WIP=0.
-
-## cycle-20260731T0946Z-bounded1-pdfocrpagecap-dispatched — Fresh tick: preflight RUN, drained 3 signals (own-journal byte-cap DEFER, notebook-immutability WARN, routine telemetry), `.head` idle/WIP=0 → BOUNDED-1 claimed+dispatched FIX-PDFOCR-PAGECAP-COMPLETENESS-THRESHOLD-MISMATCH (clean dev-role row, no gate-gap this time); 1 background agent in flight
-
-- **Preflight/GCC-preflight clean**: verdict RUN, tick `09:37Z`. Preflight's own Step 5.5 self-triggered a cold-evict pass (committed `5e986f121`, not authored by me). No HEAD.lock, worktree prune empty.
-- **Drained 3 signals, none actionable beyond drain**: `commit-sweep-guard` notebook-immutability WARN on `architect.md` (mode=warn, non-blocking); dev-team's OWN `context_bloat_breach` on this sprint's decision journal (byte_count 80777 > cap 36000, line_count 197 well under 600 — DEFER-held, recurring, per established precedent); routine `cowork-fire` telemetry (fb-daily fired clean). 0 NEW `signal_queue` rows. Committed (`f22bc920f`), 0 residual.
-- **CI probe**: GREEN on HEAD `c857b523f`, no signal.
-- **`.head` idle, WIP=0** → BOUNDED-1 promote+claim → claimed `FIX-PDFOCR-PAGECAP-COMPLETENESS-THRESHOLD-MISMATCH` (P2/S, `dev-mcp-server`: the exact follow-up FIX architect minted last tick — threshold-vs-cap completeness-gate mismatch causing perpetual full re-OCR + a delete-before-reinsert availability gap on 3 named large PDFs). Row carried explicit `owner`+`next_agent` both `dev-mcp-server` from the start — **no `.route`-only gate-gap this time**, unlike S61's `FU-OCR-BOOT-LOOP-SEQUENTIAL`.
-- Dispatcher-wrap `task_claim("task:FIX-PDFOCR-PAGECAP-COMPLETENESS-THRESHOLD-MISMATCH", task_kind="sprint-task")` → `claimed:true` → spawned `dev-mcp-server` in background with full root-cause writeup, all 4 ACs, and explicit instruction to leave the row at `review[]`/`next_agent:qa` (real code fix, not a review-closeout — do not self-close to DONE_VERIFIED).
-- **Elected NOT to dispatch Step 1 PO triage this tick**: all 3 drained signals were already inert (WARN/DEFER/telemetry, no actionable payload) — BOUNDED-1 dispatched, JUMP TO end, consistent with S54/S57/S59/S61 precedent.
-- **NEXT**: await `dev-mcp-server`'s RETURN, RAW-verify (re-read fixed source lines, independently re-run RED→GREEN regression test, confirm board/head state per CANONICAL:SSOT-STATUSFLIP-LANEMOVE), release lock. `TE-T12` remains the only other undispatched item from PO's 2026-07-31T0637Z triage (routes to `agent-father`).
-
 
