@@ -1,6 +1,15 @@
 # Dev Team — Sprint Boundary Notebook
 
-**Written:** 2026-07-31T08:17Z
+**Written:** 2026-07-31T08:26Z
+
+## cycle-20260731T0826Z-fda10-verified-released — RAW-verified `dev-mcp-server`'s FDA-10 return (zero discrepancy); pushed its 3 local-only commits to origin, released lock. WIP 0, idle-head
+
+- **Commits confirmed real, built cleanly on this session's own S57 push**: `ec27c69d3` (comment fix)/`41eaa8445` (board REVIEW flip)/`520277a1d` (notebook+journal) — none were pre-pushed by the agent; `git rev-list --left-right --count origin/main...HEAD` showed 3 local-only before I pushed. Pushed cleanly (`689086370..520277a1d`), pre-push `tsc` gate passed.
+- **Diff matches claim exactly**: `shippingIndex.ts` — deleted the module-header line claiming "SCFI proxied via TE or BDI-related symbol"; corrected the `SHIPPING_SYMBOLS` JSDoc from "placeholder that resolves to BDI" to "SCFI has no free Yahoo ticker and is NOT fetched or proxied". Comment-only, `SHIPPING_SYMBOLS` array itself untouched. Independently ran `grep -i scfi` post-fix — exactly 1 hit, the corrected comment itself.
+- **Test + build independently re-run, not trusted from self-report**: `bun test src/__tests__/252-shipping-index.test.ts` → **8 pass/0 fail/20 expect()**, exact match. `bun tsc --noEmit` → clean, exact match.
+- **Board+head confirmed independently**: `FDA-10` row `status:REVIEW`, `next_agent:qa`, `commit_sha:ec27c69d3`, `status_note` accurate; `in_progress[]` empty; `.head` `{status:idle, active_task_id:null, next_agent:router, updated_by:dev-mcp-server}`.
+- **Coordination gap noted, not a defect**: same class as S54/S56 — this `dev-mcp-server` instance had no gateway/MCP grant to self-release/notify; released on its behalf.
+- **NEXT**: no items remain from this tick's dispatch. `TE-T12` still the only undispatched item from PO's 2026-07-31T0637Z triage (routes to `agent-father`). Idle-head, WIP=0.
 
 ## cycle-20260731T0817Z-bounded1-fda10-dispatched — Fresh tick: preflight RUN, drained 3 low-urgency/informational signals, 0 orphans, CI probe in_progress/no-op, `.head` idle/WIP=0 → BOUNDED-1 claimed+dispatched FDA-10 (shippingIndex stale comment cleanup); 1 background agent in flight
 
@@ -21,12 +30,3 @@
 - **Board+head confirmed independently**: row `status:REVIEW`, `next_agent:qa`, `status_note` documents the fix accurately; `in_progress[]` empty (lane-move clean); `.head` `{status:idle, active_task_id:null, next_agent:router, updated_by:developer}`.
 - **Coordination gap noted, not a defect**: this `developer` instance had no gateway/MCP tool grant (Read/Edit/Write/Bash only) — could not call `task_release`/`send_telegram` itself; released its LOCK-LIFETIME hold on its behalf per standing convention.
 - **NEXT**: no P1 BATCH items remain from PO's 2026-07-31T0637Z triage undispatched except `TE-T12` (routes to `agent-father`, not this session's zone). Idle-head, WIP=0 — next tick's BOUNDED-1/SLS/RLC/DRS chain fully reachable.
-
-## cycle-20260731T0747Z-fda7-verified — RAW-verified `dev-mcp-server`'s FDA-7 (macroTools fetchedAt/source_tier provenance fix) return from an earlier pre-summary-window tick; zero discrepancy, no lock to release (TTL expired). `.head` untouched — S54's notebook-autoprune claim (07:20Z) postdates FDA-7's own claim (06:19Z)
-
-- **Commits confirmed real, on origin/main**: `24022a53a` (code+test+doc)/`9b68d9af5` (notebook+journal)/`c4685e9d2` (board flip), all `merge-base --is-ancestor origin/main`.
-- **Diff matches claim exactly**: `macroTools.ts` — `fetchedAt` fallback `new Date().toISOString()` → `null` (never fabricate a fresh stamp on omission); `sourceTier` fallback `2` → `4` (unknown/worst tier, not optimistic aggregator-tier) when no present `signals.*` component carries a tier. `macroSnapshotGuard.ts` doc comment updated to match (`text` still the only gating field).
-- **Tests independently re-run, not trusted from self-report**: exact claimed 10-file targeted suite (089-tool-macro + 1423d/1423f/1570c/1881a/1903a/1918a/DSI-S1-MACRO/H3-urgent-news/TASK-unblock-cowork) → **128/128 pass**, exact match.
-- **Board+head confirmed independently**: `FDA-7` row `status:REVIEW`, `next_agent:qa`, `commit_sha:24022a53a`, `return_summary` matches verbatim. `.head` correctly still `in_progress`/`FIX-NOTEBOOK-AUTOPRUNE-...`/`developer` (S54's later claim) — FDA-7 predates it, confirming a separate earlier pickup.
-- **No lock to release**: `task_list_held` (both `dev-team` and `developer` owners) came back without an FDA-7 entry — read as TTL expiry under the agent's own long run (`571.59s` full suite), per `[[feedback_preclaim_ttl_600s_expires_under_long_agent_runs]]`, not an orphan requiring escalation.
-- **NEXT**: `abf1b0287f8dcffec` (`developer` on `FIX-NOTEBOOK-AUTOPRUNE-...`) still in flight, LOCK-LIFETIME held — await RETURN, RAW-verify (real AC = corpus-wide replay 0-unresolved + `unified-agent.md`/`digest-predict.md` under byte-caps), release. Proceed with this tick's own preflight/drain next.
