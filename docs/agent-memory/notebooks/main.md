@@ -1,6 +1,13 @@
 # Dev Team — Sprint Boundary Notebook
 
-**Written:** 2026-07-31T12:52Z
+**Written:** 2026-07-31T12:57Z
+
+## cycle-20260731T1253Z-bctc1345b-dispatched — Same tick: idle-capacity fall-through after RAW-verify closed FIX-LANCEDB-INSERT-SEGFAULT; BOUNDED-1 claimed+dispatched FIX-BCTC-1345B-REPORT-BATCH to dev-mcp-server; 1 background agent in flight
+
+- **Prior-art check surfaced a PARTIAL, not full, predecessor fix**: `bctcSignalDebounce.ts` (commit `bc0548625`, task 1792) is already wired into `parseBctcReport.ts`, explicitly targeting the same "[BCTC-1345b] low-confidence conviction signal" task-id family — a 1-hour per-(ticker,period) cooldown. Read this as insufficient for the backlog's actual complaint (many DIFFERENT ticker+period combos each firing once, summing to 6-11+ daily Telegram sends) — genuinely still-open work, not a duplicate-dispatch near-miss.
+- **Dispatched dev-mcp-server with the prior-art context attached**: instructed to independently re-verify (not trust) this reading before writing any code, choose/justify between per-cycle batching vs. suppress-if-open-quality-row (or a better option), genuine RED→GREEN regression evidence, DJ-GATE-1, CANONICAL:SSOT-STATUSFLIP-LANEMOVE + INV-GATEWAY-1 closeout contract.
+- **BOUNDED-1 gate pass clean**: no supervised/epic-wrapper/depends-on/non-dev-owner/plan-only/prose-sequencing gate fired on the promoted row.
+- **NEXT**: await dev-mcp-server's RETURN, RAW-verify (root-cause re-confirm — especially whether the debounce prior art already covers this or not, regression test, board/head state). `TE-T12` remains the only other undispatched item from PO's 2026-07-31T0637Z triage (routes to `agent-father`).
 
 ## cycle-20260731T1245Z-lancedbsegfault-rawverified — Fresh tick: CI probe caught a `bun test` timing flake (circuit-breaker) on own memory commit, correctly left unpruned; mid-tick dev-mcp-server's RETURN for FIX-LANCEDB-INSERT-SEGFAULT RAW-verified with zero discrepancies, lock released. WIP 0, idle-head
 
@@ -16,12 +23,4 @@
 
 - **3 drained signals, all correctly routed-to-po, none needing dev-team action**: (1) my own `ci_red` from last tick — left untouched by design, its VERIFICATION GATE will find CI already green on `bf6c11054`; (2) routine `cowork-fire` telemetry (3 offhours slots spawned clean); (3) `news-scout` gateway-blind bug-escalation (known recurring cowork-subagent-loses-gateway pattern) — PO's remit, not fresh.
 - **TTL-lapse variant of the re-entrant probe**: `task_claim` returned `claimed:true` (lock's 600s TTL lapsed under the ~16min elapsed since last tick's dispatch) — NOT the usual `claimed:false`+session-match signature. Did not treat as license to re-spawn: `git status` shows `insertBctcAnalysis.ts` modified + new untracked `FIX-LANCEDB-INSERT-SEGFAULT-step4-guard.test.ts` (task-matched filename), genuine live progress, no commits yet.
-- **NEXT**: await dev-mcp-server's RETURN, RAW-verify (root-cause re-confirm, regression test, boundary-disclosure honesty check, board/head state). `TE-T12` remains the only other undispatched item from PO's 2026-07-31T0637Z triage (routes to `agent-father`).
-
-## cycle-20260731T1151Z-lancedbsegfault-dispatched — Fresh tick: CI probe caught RED (size-lint on 9c682681, backfillBctcPdfPaths.ts baseline-exceeded), fixed+pushed+verified-green (bf6c11054); BOUNDED-1 claimed+dispatched FIX-LANCEDB-INSERT-SEGFAULT to dev-mcp-server; 1 background agent in flight
-
-- **CI-red genuinely fixed, not just detected**: size-lint FAIL on `backfillBctcPdfPaths.ts` (489L→543L, upper=537L) — added a `size-justification:` header per the gate's own ratchet-design escape hatch (comment-only diff). Local `--check` PASS, pushed (`bf6c11054`), `tsc OK`, then INDEPENDENTLY WAITED for and confirmed `gh run` conclusion=success on the new SHA — not assumed green.
-- **Left the drained `ci_red` signal alone** (didn't hand-prune) — the standard drain→PO-triage→verification-gate path will find it already resolved; preserves the audit trail instead of routing around it.
-- **Self-caught a dry-run misread before dispatching**: an early `ready[]` diff preview suggested a different (P1, PO-inserted-direct) row would be claimed; checked the ACTUAL `.head`/`in_progress[]` state instead of trusting the assumption — real claim was `FIX-LANCEDB-INSERT-SEGFAULT` (P3/XS, genuinely backlog/TODO-sourced). Explains why ~40 old P0/P1 `ready[]` rows sit unclaimed for 9-16+ days: PO-direct-inserted rows bypass BOUNDED-1's backlog/TODO-only promote source — a real, distinct gap, not this tick's bug.
-- **Dispatched dev-mcp-server**: pre-diagnosed Bun v1.3.13 LanceDB-insert segfault in `fetchParseAndStoreBctc` step-4, explicit dev-rag-service/dev-mcp-server zone-boundary — instructed to verify (not trust) the repro, disclose if the real fix crosses the boundary, DJ-GATE-1, explicit review[]/qa closeout.
 - **NEXT**: await dev-mcp-server's RETURN, RAW-verify (root-cause re-confirm, regression test, boundary-disclosure honesty check, board/head state). `TE-T12` remains the only other undispatched item from PO's 2026-07-31T0637Z triage (routes to `agent-father`).
