@@ -18545,8 +18545,8 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-31T01:56:08Z",
-    "last_triaged_by": "dev-team/te-t08-review-flip-20260731T0354Z",
+    "last_triaged_at": "2026-07-31T02:01:24Z",
+    "last_triaged_by": "dev-team/sweepguard-reroute-developer-20260731T0405Z",
     "in_progress": [
       {
         "id": "FIX-ORCHSTATE-HEAD-STAMP-DROPPED-CI-RED-1837A",
@@ -18595,13 +18595,13 @@
         "priority": "P1",
         "status": "IN_PROGRESS",
         "zone": "cross-service/",
-        "owner": "agents-architect",
-        "next_agent": "agents-architect",
+        "owner": "developer",
+        "next_agent": "developer",
         "supervised": false,
         "plan_only": false,
         "created_by": "po/triage-20260731T0132",
         "created_at": "2026-07-31T01:32:47Z",
-        "updated_at": "2026-07-31T01:43:05Z",
+        "updated_at": "2026-07-31T02:01:25Z",
         "origin_signal_id": "commit-sweep-guard-20260731T0107Z-x4",
         "title": "commit-sweep-guard is DETECTOR-ONLY after 6 shipped rows: warn mode never blocks, agents keep issuing bare commits (14 warns / 8h across 4 distinct sessions), and this tick its consumer disposed ALL FOUR signals as 'benign, hook is too noisy' on a premise falsified by the hook's own source and by the repo's own verification script.",
         "root_cause": "TWO layers, both read at source 2026-07-31T01:28Z. (L1 — NO ACTUATOR) scripts/git-hooks/pre-commit :445-454 discriminates precisely: basename(GIT_INDEX_FILE) of `next-index-*.lock` => mode=SCOPED => `exit 0`, completely silent (AC-4 of the shipped hook row); `index`/`index.lock` => mode=BARE => warn + write_signal. Default GIT_SWEEP_GUARD_MODE is warn, which by construction never blocks, so an improvised bare commit always lands. Six rows exist on this defect family (HOOK + SKILLS + LAYER2 done/done_verified; PARENT blocked; SCRIPT-ACTUATOR-AND-NOTEBOOK-LONGTAIL in review/next_agent=po; SWEEP-VICTIM-SELF-DETECT backlog) and every one of them either detects the condition or migrates a call site — not one flips the guard from advisory to enforcing. (L2 — MIS-ADJUDICATION) neither docs/agents/dev-team/flow/drain-signals.md nor docs/agents/po/flow/triage-signals.md carries any adjudication rule for a `bug-escalation` from `commit-sweep-guard`, so triage falls back to the cheapest disposition. This tick that disposition was 'the hook warns unconditionally on any commit lacking a pathspec on the git commit invocation line itself, even when git add -- <files> + git commit ... -- <same files> was used correctly' — which is self-contradictory: had a pathspec been on the `git commit` line, git would have pre-resolved a scratch index and the hook would never have run its BARE branch. Same structural class as FIX-CIRED-TRIAGE-WRONG-PLANE-DEDUP-AMNESTY: a recognised signal type whose routing has no mandatory evidence read, so the cheapest disposition wins by default.",
@@ -18621,9 +18621,10 @@
         "dedup_checked": "2026-07-31T01:29Z — jq over every .task_board lane matching /sweep.?guard|SWEEP/i => 6 family rows + unrelated 'sweep' homonyms; read the full body of all 6 family rows; none carries an AC for the warn->reject flip or for a bug-escalation adjudication rule. Separately matched /GIT_SWEEP_GUARD_MODE|reject.mode|adjudicat/i => 0.",
         "baseline_pass": null,
         "desc": null,
-        "updated_by": "dev-team/po-batch-dispatch-20260731T0141Z",
+        "updated_by": "dev-team/sweepguard-reroute-developer-20260731T0405Z",
         "claimed_at": "2026-07-31T01:43:05Z",
-        "claimed_by": "dev-team (step 3 direct dispatch, po BATCH #2, routes to agents-architect per po's own routing note, does not consume dev WIP slot)"
+        "claimed_by": "dev-team (step 3 direct dispatch, po BATCH #2, routes to agents-architect per po's own routing note, does not consume dev WIP slot)",
+        "agentfather_decline_note": "agent-father correctly declined 2026-07-31T04:00Z: implementation requires scripts/git-hooks/pre-commit (production code, outside commit_zone/forbidden_outputs) + orch-state.json task_board flip (also excluded). Re-routed to developer per dispatch/SKILL.md. Brief (docs/architecture-briefs/2026-07-31-sweepguard-escalation-actuator-and-triage-mechanism-check.md, commit 7cfe64c8b) is implementation-ready, no re-design needed."
       }
     ]
   },
