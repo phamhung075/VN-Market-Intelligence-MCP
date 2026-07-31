@@ -1,6 +1,16 @@
 # Dev Team — Sprint Boundary Notebook
 
-**Written:** 2026-07-31T10:29Z
+**Written:** 2026-07-31T10:48Z
+
+## cycle-20260731T1047Z-bounded1-coverletters-dispatched — Fresh tick: preflight RUN, drained 1 signal (own-journal byte-cap breach, DEFER-class), `.head` idle/WIP=0 → BOUNDED-1 claimed+dispatched FU-BACKFILL-MULTIPLE-COVER-LETTERS to dev-mcp-server; 1 background agent in flight
+
+- **Preflight/GCC-preflight clean**: verdict RUN, tick `10:37Z`. No HEAD.lock, worktree prune empty.
+- **Drained 1 signal**: dev-team's OWN `context_bloat_breach` on `sprint-...-dev-team-4.md` (byte_count 91512 > cap 36000) — routed-to-po (generic catch-all), DEFER-class per established precedent. Own cap-check (run separately, before this write) confirmed it live: 233L/600 but 96321B/36000 — rolled base file → `CAP-REACHED` marker appended, new `-5.md` continuation opened with STEP dev-team-S66.
+- **CI probe**: GREEN on HEAD `9d6605347`, no signal.
+- **`.head` idle, WIP=0** → BOUNDED-1 promote+claim → claimed `FU-BACKFILL-MULTIPLE-COVER-LETTERS` (P3/S, sprint BCTC-EXTRACT-QUALITY, zone `apps/mcp-server/` → `dev-mcp-server`). Residual weakness #2 from FIX-CTG-PDF-MISLINK: cover-letter-skip logic only excludes the FIRST cover-letter match, not all of them, when a ticker-quarter has 2+ cover-letter PDFs — wrong PDF can still be picked.
+- Dispatcher-wrap `task_claim("task:FU-BACKFILL-MULTIPLE-COVER-LETTERS", task_kind="sprint-task")` → `claimed:true` → spawned `dev-mcp-server` background with root-cause writeup, both ACs (AC1: synthetic 2+cover-letter+1-consolidated heals to consolidated; AC2: regression test must independently reproduce RED on the pre-fix first-match-only logic), DJ-GATE-1 clause, explicit review[]/next_agent:qa closeout (not self-close).
+- **Elected NOT to dispatch Step 1 PO triage this tick**: the sole drained signal was already inert (DEFER-class, own journal noise) — BOUNDED-1 dispatched, JUMP TO end, consistent with S54/S57/S59/S61/S63 precedent.
+- **NEXT**: await `dev-mcp-server`'s RETURN, RAW-verify (re-derive the hardened selection logic, independently reproduce RED against the pre-fix first-match-only code, confirm board/head state). `TE-T12` remains the only other undispatched item from PO's 2026-07-31T0637Z triage (routes to `agent-father`).
 
 ## cycle-20260731T1029Z-pdfocrpagecap-verified-released — RAW-verified `dev-mcp-server`'s FIX-PDFOCR-PAGECAP-COMPLETENESS-THRESHOLD-MISMATCH return (zero discrepancy — independently reproduced RED against pre-fix code myself, not just trusted the self-report); nudged agent past an unnecessary live-restart wait mid-flow. WIP 0, idle-head
 
@@ -20,15 +30,5 @@
 - Dispatcher-wrap `task_claim("task:FIX-PDFOCR-PAGECAP-COMPLETENESS-THRESHOLD-MISMATCH", task_kind="sprint-task")` → `claimed:true` → spawned `dev-mcp-server` in background with full root-cause writeup, all 4 ACs, and explicit instruction to leave the row at `review[]`/`next_agent:qa` (real code fix, not a review-closeout — do not self-close to DONE_VERIFIED).
 - **Elected NOT to dispatch Step 1 PO triage this tick**: all 3 drained signals were already inert (WARN/DEFER/telemetry, no actionable payload) — BOUNDED-1 dispatched, JUMP TO end, consistent with S54/S57/S59/S61 precedent.
 - **NEXT**: await `dev-mcp-server`'s RETURN, RAW-verify (re-read fixed source lines, independently re-run RED→GREEN regression test, confirm board/head state per CANONICAL:SSOT-STATUSFLIP-LANEMOVE), release lock. `TE-T12` remains the only other undispatched item from PO's 2026-07-31T0637Z triage (routes to `agent-father`).
-
-## cycle-20260731T0932Z-ocrbootloop-verified-released — RAW-verified `architect`'s FU-OCR-BOOT-LOOP-SEQUENTIAL return (zero discrepancy — cleanest verify this session, no gap found); pushed its commit + 1 unrelated peer `po` commit found in shared tree. WIP 0, idle-head
-
-- **Commit confirmed real, local-only before push**: `4e03b8b8c` (0/2 ahead of origin alongside peer `po` commit `87c2bd0bd`, sanity-checked its scope — own journal+notebook only, no orch-state.json — before pushing both). Pushed cleanly, confirmed local==origin==`4e03b8b8c`.
-- **Every code claim independently re-derived, not trusted**: `composition-root.ts` — `createBunServer()` at line 62, bootstrap OCR loop's `setTimeout(...,10_000)` spans 137-238, confirming it fires AFTER the server is already live (server-boot-latency claim holds). `pdfOcrWorker.ts` lines 205-270 — `threshold = Math.max(expectedPages*0.5, 3)` uses UNCAPPED `expectedPages`, `maxPages = Math.min(totalPages,80)` caps extraction, `DELETE FROM pdf_extracted_text` fires before re-extraction — exact match to the claimed root cause (PDFs >160 true pages can never satisfy their own threshold).
-- **Live DB independently queried** (`docker exec ... bun -e`, read-only, not trusted from self-report): all 3 named files (`GVR_2026_Q1.pdf`/`GVR_2025_Q4.pdf`/MSN annual report) confirmed pinned at exactly `c=80` rows, live, right now.
-- **Verdict + closure authorized**: architect's self-flip to `DONE_VERIFIED` (no code change — sequential loop confirmed correct) matches what my own dispatch prompt explicitly offered ("directly to a DONE-equivalent status if this is a closed non-action review"), not an overreach.
-- **New FIX minted correctly**: `FIX-PDFOCR-PAGECAP-COMPLETENESS-THRESHOLD-MISMATCH` (P2, `dev-mcp-server`) — explicit `owner`+`next_agent` both set, NOT another `.route`-only gate-gap instance. Sits in `backlog[]` for a future pickup, not dispatched this tick.
-- **`.route`-only gate gap re-confirmed live (2nd instance)**: distinct from the already-closed `FIX-DEVTEAM-BOUNDED1-NONDEV-OWNER-BOARD-FALLBACK-GATE`; left for PO to weigh against the recurring-bug bar, not actioned further.
-- **NEXT**: no items remain from this tick's dispatch. `TE-T12` still the only undispatched item from PO's 2026-07-31T0637Z triage (routes to `agent-father`). Idle-head, WIP=0.
 
 
