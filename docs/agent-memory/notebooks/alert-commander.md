@@ -1,18 +1,10 @@
 # Alert Commander — Notebook
 
-**Last updated:** 2026-07-31 06:41 UTC | **Sprint:** FDA-7
+**Last updated:** 2026-07-31 06:55 UTC | **Sprint:** idle
 
 **Role:** Event-only alert dispatch (position-danger / watchlist-opportunity / CRITICAL-always) | **Cadence:** `*/15min` market hours (02:00–08:30 UTC) + 4h critical sweep | **Contract:** APPEND class, one `## c<NNN>` section per cycle per `.claude/skills/notebook-write/SKILL.md` AC-6.
 
 > **Structural reset (FIX-ALERT-COMMANDER-NOTEBOOK-SINGLE-BLOB-UNPRUNABLE, 2026-07-29):** prior history archived → `docs/agent-memory/notebooks/archive/alert-commander-archive-20260729.md`. One top-level `## c<NNN> · <ISO-timestamp>` section per cycle now.
-
-## c16 · 2026-07-31T04:08:30Z (slot=alert-commander-critical, tick=04:05)
-- Signals: 13 total (chain_catalyst 10117 no-ticker "VN-Index bật tăng ~80đ/3 phiên, tạo đáy" recap → suppressed, domestic index recap not external catalyst, fails carve-out; urgent_news VJC/VIC earnings/infra checked via kinhDich; 10x alert-engine verified_decision echo out-of-scope) | Fired: 0 | Suppressed: 1 (10117) | MARKET: 0
-- Position-danger: `get_alerts(type=price)` clean; VNH -11.11% price_drop (02:53Z, HIGH) already read/stale — price reverted to 900 (+0.00%) by 04:06 — no active stopLossHit+drop combo — gate fails.
-- Watchlist-opp: VJC kinhDich=GIU(tich cuc)/63%conf (fails BUY signal + <70% threshold); VIC kinhDich=THAN TRONG(tich cuc)/50%conf (fails BUY signal + <70% threshold) — both fail.
-- CRITICAL-always: legal_risk clean (`days=1/hours_back=6`), crisis_early_warning clean (reputation-score deterioration only, 25 tickers <50 incl. VNH/GAS/PLX/GVR/DPM/KDC/DLC/BDI=20 DANGER tier, no crisis signal), no verified_chain on bus.
-- Regime: NEUTRAL (fallback — tick-snapshot macro object has no literal REGIME field) | Carry: NEUTRAL (macro.carry_regime) | vol_regime ELEVATED (rv_20d_pctile=0.789) | Pivot window: false (pivotWindowWarning=null, next Sept 2026)
-- Used tick-snapshot `cycle-snapshot-04:05.json` (fresh, created_at 04:06:07Z, 53s old) — skipped `get_cycle_bootstrap`/`get_macro_snapshot`.
 
 ## c17 · 2026-07-31T06:11:41Z (slot=alert-commander-market, tick=06:06)
 - Signals: 0 total (`get_agent_signals` unread clean — no urgent_news/price_anomaly/chain_catalyst/legal_risk/crisis_velocity/verified_chain this cycle) | Fired: 0 | Suppressed: 0 | MARKET: 0
@@ -30,3 +22,11 @@
 - CRITICAL-always: legal_risk clean (`days=1/hours_back=6`), crisis_early_warning clean (no crisis signal; 25 tickers <50 reputation score incl. BDI/DLC/DPM/GAS/GVR/KDC/PLX/VNH=20 DANGER tier), no verified_chain on bus.
 - Regime: NEUTRAL (fallback — macro_snapshot has `text` field, valid shape, but no literal Global-Liquidity line) | Carry: NEUTRAL (1.37%) | vol_regime ELEVATED (rv_20d_pctile=0.782) | Pivot window: false (next Sept 2026)
 - No tick-snapshot file matched current UTC minute (checked 06:38-06:40) — fell through to direct `get_cycle_bootstrap`/`get_macro_snapshot` per Step 0b fallback.
+
+## c19 · 2026-07-31T06:55:18Z (slot=alert-commander-market, tick=06:55)
+- Signals: 0 new (`get_agent_signals(status=unread)` clean; bootstrap echoed ids 10118-10128 alert-engine verified_decision recaps VIC/HVN/VNH/HUT/CTG/VNM/VCB/VJC BCTC-day news_mention, all out-of-scope) | Fired: 0 | Suppressed: 0 | MARKET: 0
+- Position-danger: `get_alerts(type=price)` clean; VNH -11.11% (900→800, recap since 02:53Z) persists, no stopLossHit confirmed — gate fails. No other ticker >5% single-day drop (FRT+6.96%/VCB+5.49%/BID+2.68% all positive).
+- Watchlist-opp: checked FRT (Quẻ Bĩ/GIỮ tiêu cực 63%conf) and VCB (Quẻ Bĩ/BÁN tiêu cực 100%conf) — today's top movers — neither clears BUY signal + ≥70% threshold — gate fails.
+- CRITICAL-always: legal_risk clean (`days=1/hours_back=6`), crisis_early_warning clean (no crisis signal; 25 tickers <50 reputation score incl. BDI/DLC/DPM/GAS/GVR/KDC/PLX/VNH=20 DANGER tier), no verified_chain/chain_catalyst on bus.
+- Regime: NEUTRAL (fallback — macro_snapshot valid shape, no literal Global-Liquidity line) | Carry: NEUTRAL (1.37%) | vol_regime ELEVATED (rv_20d_pctile=0.782) | Pivot window: false (next Sept 2026)
+- No tick-snapshot file matched current UTC minute (checked 06:53) — fell through to direct `get_cycle_bootstrap`/`get_macro_snapshot` per Step 0b fallback.
