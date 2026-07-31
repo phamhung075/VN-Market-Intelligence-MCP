@@ -96,8 +96,8 @@
     "status": "idle",
     "active_task_id": null,
     "next_agent": "router",
-    "updated_at": "2026-07-31T03:59:57Z",
-    "updated_by": "dev-pdf-extractor"
+    "updated_at": "2026-07-31T04:37:05Z",
+    "updated_by": "dev-mcp-server"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -5529,17 +5529,6 @@
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#FU-RUNTIME-SET-TRUTH-RECONCILE"
       },
       {
-        "id": "FDA-5",
-        "priority": "P3",
-        "size": "S",
-        "sprint": "FAKE-DATA-AUDIT",
-        "status": "BACKLOG",
-        "title": "energyTools serves 4 hardcoded grid figures (40/22/45/85) — guarded by banner but figures sit in unstructured VN text",
-        "type": "FIX",
-        "zone": "apps/mcp-server",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FDA-5"
-      },
-      {
         "id": "FDA-6",
         "priority": "P3",
         "size": "S",
@@ -10613,32 +10602,6 @@
         "plan_only": true,
         "updated_by": "po/triage-20260730T0853",
         "po_ruling_20260730": "AMBIGUITY RESOLVED — this row has now been offered to BOUNDED-1 and declined 5 CONSECUTIVE times for the same reason, so the decision is made here and the prose is removed from the title (it was the literal blocker). (a) single-FIX vs ba->architect SPLIT: the row already contained its own answer and nobody read it — zone is already `multi`, and docs/agents/po/flow/main.md states that `multi` MEANS 'architect must split'. So: ARCHITECT SPLITS IT. No new judgement was ever required; this was 5 wasted dispatcher cycles on a question the zone field had already answered. (b) PRIORITY P2 -> P1: the CF-tunnel push path is a live, repeatedly-fragile dependency, not a hypothetical — the 2026-07-04 RCA is a 69h-undetected outage, and it recurred on 2026-07-15 (see RAG-FTS-BUILD-MEMORY-BOUND.gateway_infra: zenmidi.com/gateway origin aggregator down, CF-dashboard-managed tunnel, needed a USER Zero-Trust action because no detector fired). Two outages, zero detection, 26 days open. (c) DISPATCHABILITY: supervised+plan_only BOTH set to true, deliberately, so the Supervised-Lane Sweep (which requires BOTH — scripts/devteam-backlog-promote-supervised-lane-sweep.jq:108-109) routes it to architect for the split. It was previously supervised=null/plan_only=null with next_agent=null, which is why only BOUNDED-1 ever saw it and only ever to decline it. DO NOT re-add any scoping question to this title."
-      },
-      {
-        "id": "FIX-CIRED-TRIAGE-WRONG-PLANE-DEDUP-AMNESTY",
-        "title": "ci_red triage has no mandatory failing-FILE read: 8 consecutive REAL per-file-isolation CI reds (2026-07-25 → 07-29, 3 distinct files) were amnestied as 'the standing full-suite baseline' and minted ZERO board rows — and the row's own dedup keys are both SHA-derived so they can never match across SHAs",
-        "type": "FIX",
-        "size": "S",
-        "priority": "P0",
-        "status": "BACKLOG",
-        "zone": "docs/agents/po/flow/",
-        "owner": "agents-architect",
-        "next_agent": "agents-architect",
-        "supervised": true,
-        "plan_only": true,
-        "created_by": "po/triage-20260729T2107",
-        "created_at": "2026-07-29T21:31:41Z",
-        "updated_at": "2026-07-31T02:27:29Z",
-        "root_cause": "Two compounding gaps in docs/agents/po/flow/triage-signals.md §ci_red. (a) NO FAILING-FILE READ: the row tells PO to extract check_id / failing_jobs[].name / head_sha and dedup on those. failing_jobs[].name is always the literal GitHub job name — 'bun test' — for EVERY red, so the signal as consumed carries zero discriminating information about WHAT failed. Nothing in the row instructs PO to open the run log and read the `=== FAILED FILES (N) ===` / `FAILEDFILE:` block that scripts/ci-per-file-isolation.sh emits, which is the only place the actual failure identity lives. Result: every red looks identical to every other red, and the cheapest disposition — 'same standing baseline, dedup' — wins by default. (b) SHA-SCOPED DEDUP KEYS: both dedup layers in that row key on check_id (= CI-RED-<sha8>) and head_sha. Both are SHA-derived, so on a repo where main advances every few minutes they NEVER match across SHAs — the dedup is structurally inert for a persistent defect, and simultaneously offers no defence against the wrong-plane amnesty it was reached through.",
-        "evidence": "RAW audit of every ci_red emitted since 2026-07-25, run log read for each: bda56d1c 07-25T13:12Z -> 1408-tool-diacritics.test.ts (1 fail); da90fee8 07-25T17:49Z -> 1408-tool-diacritics.test.ts (1); 289a9d8e 07-28T16:18Z -> 1408-tool-diacritics.test.ts (1); 6ba39d3c 07-28T17:21Z -> 1408-tool-diacritics.test.ts (1); 977a7195 07-28T21:16Z -> emit-pressure-state.test.ts (1); cdd5fa5a 07-28T23:16Z -> emit-pressure-state.test.ts (1); aa6c044b 07-29T12:47Z -> 1847d-C-alert-outcome-job.test.ts (6); c99c72bd 07-29T19:34Z -> 1847d-C-alert-outcome-job.test.ts (6). Three distinct real files, all reproducible in per-file ISOLATION (pollution structurally excluded). Board check: jq over every .task_board lane for test(\"CI-RED\") returns [] — not one row was ever minted. All 8 were recorded in signals_processed as result='routed-to-po' and archived to docs/signals/processed/, i.e. the pipeline believed they were handled. Missed-corroboration cost: 1408-tool-diacritics red 07-25→07-28 while cowork independently filed refine-bctc diacritic-corruption reports TWICE on 07-29 (09:12Z, 11:10Z); emit-pressure-state red 07-28 21:16Z+23:16Z while cowork filed 'pressure-headroom field rename not deployed' (07-29T16:11Z). CI was corroborating both live defects from the other plane and the signal was discarded each time.",
-        "ac": "(AC-1) triage-signals.md §ci_red gains a MANDATORY pre-dedup step: read the failing job's log and extract the `FAILEDFILE:` list (`gh run view <run_id> --log-failed | grep -E 'pass / |FAILEDFILE'`); record that list verbatim on whatever row is created OR in the skip-log line if skipping. Dedup MUST NOT be evaluated before the file list is in hand. (AC-2) Dedup becomes FILE-SCOPED: match on the sorted FAILEDFILE list (plus check_id/head_sha as secondary), so a persistent defect dedups across advancing SHAs while a genuinely new file always mints. (AC-3) Explicit anti-amnesty fence: forbid deduping a ci_red into FIX-MCP-SUITE-HEALTH-BASELINE or any other LOCAL-full-suite row, with the one-line reason (ci.yml runs scripts/ci-per-file-isolation.sh per commit 3174de0ce; the CI plane's green baseline is 0 fail, proven run 30425110302). (AC-4) Backstop: if the CI plane's last known-green baseline is 0 fail, a ci_red is ALWAYS actionable — state that as the row's operating assumption so 'pre-existing' is never a valid disposition without a named, file-scoped, already-open row. (AC-5) Retro-sweep: confirm 1408-tool-diacritics and emit-pressure-state are green on current main (they are — run 30492102581 lists only 1847d-C) and record which change fixed each, so the 4-day blind window is closed with evidence rather than assumed.",
-        "files": [
-          "docs/agents/po/flow/triage-signals.md",
-          "docs/agents/dev-team/flow/ci-health-probe.md"
-        ],
-        "related": "Adjacent but DISTINCT from FIX-SIGNAL-ROUTING-ROWS-COVERAGE-GAP-DEEPDIVE (ready) — that row is about the catch-all silently dropping unrecognised signal TYPES (206/322 in 7d). This row is about a RECOGNISED type with a real routing row producing a wrong-plane dedup. Cross-reference, do not merge.",
-        "dedup_checked": "2026-07-29T21:2xZ — grepped all .task_board lanes for CI-RED / CIRED / ci_red / AMNESTY / WRONG-PLANE => 0 hits; reviewed FIX-SIGNAL-ROUTING-ROWS-COVERAGE-GAP-DEEPDIVE AC text directly and confirmed different scope (see related).",
-        "status_note": "[po 2026-07-31T02:27:29Z] P1->P0. This row predicted today verbatim: 'the row own dedup keys are both SHA-derived so they can never match across SHAs'. 5th live confirmation - ci_red fired 07-30T17:45Z, 07-31T00:15Z, 00:45Z, 01:20Z, 02:20Z across 5 DISTINCT head_shas with IDENTICAL failing jobs (frontend-eslint, size-lint) and an IDENTICAL 8-file size-lint offender set, producing ZERO dedup hits and burning a full dev-team drain + PO triage tick each time. Escalated because it is the only row on the board that stops the loop-burn; the four CI owner rows fix the red, this one fixes the churn. Note for the fix: dedup must key on the failing-job/offending-FILE set, never on check_id/head_sha."
       },
       {
         "id": "FIX-DEVTEAM-QADRAIN-INVOCATION-HEAD-DECOUPLED",
@@ -18710,6 +18673,61 @@
         "claimed_by": "dev-team (bounded-1 auto-pickup)",
         "commit_sha": "d808a6a11792a263a756c2a00f137e97ca36b897",
         "review_note": "dev-pdf-extractor: trimmed 3x-repeated OcrCapacityExceededError/OcrDeadlineExceededError/OcrPageFailedError propagation rationale (2 docstrings + 1 comment, all restating commit 200eabcf3's rationale) into 1 canonical paragraph + 2 pointer references. extraction_engine.py 237L->226L (AC-1 upper=228L). Zero functional change. AC-1 verified: bash scripts/audits/size-lint-justification.sh --check no longer lists this file (1 unrelated macro-indicators offender remains, sibling row's scope). AC-2: docs/data/size-lint-baseline.json untouched (no --update, no direct edit; git log confirms last touch is the original guardrail commit 22cd084d4). AC-3: no re-baseline, trimmed genuine slack instead. Full pytest -q: 1058 passed / 1 pre-existing env-only fail (test_bt3_fix3_real_ocr_fidelity, missing /app/data/pdfs/... container fixture) — git-stash A/B confirmed identical before/after, unrelated to this change. Decision journal: docs/agent-memory/decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-dev-pdf-extractor.md STEP dev-pdf-extractor-S2."
+      },
+      {
+        "id": "FIX-CIRED-TRIAGE-WRONG-PLANE-DEDUP-AMNESTY",
+        "title": "ci_red triage has no mandatory failing-FILE read: 8 consecutive REAL per-file-isolation CI reds (2026-07-25 → 07-29, 3 distinct files) were amnestied as 'the standing full-suite baseline' and minted ZERO board rows — and the row's own dedup keys are both SHA-derived so they can never match across SHAs",
+        "type": "FIX",
+        "size": "S",
+        "priority": "P0",
+        "status": "REVIEW",
+        "zone": "docs/agents/po/flow/",
+        "owner": "agents-architect",
+        "next_agent": "po",
+        "supervised": true,
+        "plan_only": true,
+        "created_by": "po/triage-20260729T2107",
+        "created_at": "2026-07-29T21:31:41Z",
+        "updated_at": "2026-07-31T04:33:28Z",
+        "root_cause": "Two compounding gaps in docs/agents/po/flow/triage-signals.md §ci_red. (a) NO FAILING-FILE READ: the row tells PO to extract check_id / failing_jobs[].name / head_sha and dedup on those. failing_jobs[].name is always the literal GitHub job name — 'bun test' — for EVERY red, so the signal as consumed carries zero discriminating information about WHAT failed. Nothing in the row instructs PO to open the run log and read the `=== FAILED FILES (N) ===` / `FAILEDFILE:` block that scripts/ci-per-file-isolation.sh emits, which is the only place the actual failure identity lives. Result: every red looks identical to every other red, and the cheapest disposition — 'same standing baseline, dedup' — wins by default. (b) SHA-SCOPED DEDUP KEYS: both dedup layers in that row key on check_id (= CI-RED-<sha8>) and head_sha. Both are SHA-derived, so on a repo where main advances every few minutes they NEVER match across SHAs — the dedup is structurally inert for a persistent defect, and simultaneously offers no defence against the wrong-plane amnesty it was reached through.",
+        "evidence": "RAW audit of every ci_red emitted since 2026-07-25, run log read for each: bda56d1c 07-25T13:12Z -> 1408-tool-diacritics.test.ts (1 fail); da90fee8 07-25T17:49Z -> 1408-tool-diacritics.test.ts (1); 289a9d8e 07-28T16:18Z -> 1408-tool-diacritics.test.ts (1); 6ba39d3c 07-28T17:21Z -> 1408-tool-diacritics.test.ts (1); 977a7195 07-28T21:16Z -> emit-pressure-state.test.ts (1); cdd5fa5a 07-28T23:16Z -> emit-pressure-state.test.ts (1); aa6c044b 07-29T12:47Z -> 1847d-C-alert-outcome-job.test.ts (6); c99c72bd 07-29T19:34Z -> 1847d-C-alert-outcome-job.test.ts (6). Three distinct real files, all reproducible in per-file ISOLATION (pollution structurally excluded). Board check: jq over every .task_board lane for test(\"CI-RED\") returns [] — not one row was ever minted. All 8 were recorded in signals_processed as result='routed-to-po' and archived to docs/signals/processed/, i.e. the pipeline believed they were handled. Missed-corroboration cost: 1408-tool-diacritics red 07-25→07-28 while cowork independently filed refine-bctc diacritic-corruption reports TWICE on 07-29 (09:12Z, 11:10Z); emit-pressure-state red 07-28 21:16Z+23:16Z while cowork filed 'pressure-headroom field rename not deployed' (07-29T16:11Z). CI was corroborating both live defects from the other plane and the signal was discarded each time.",
+        "ac": "(AC-1) triage-signals.md §ci_red gains a MANDATORY pre-dedup step: read the failing job's log and extract the `FAILEDFILE:` list (`gh run view <run_id> --log-failed | grep -E 'pass / |FAILEDFILE'`); record that list verbatim on whatever row is created OR in the skip-log line if skipping. Dedup MUST NOT be evaluated before the file list is in hand. (AC-2) Dedup becomes FILE-SCOPED: match on the sorted FAILEDFILE list (plus check_id/head_sha as secondary), so a persistent defect dedups across advancing SHAs while a genuinely new file always mints. (AC-3) Explicit anti-amnesty fence: forbid deduping a ci_red into FIX-MCP-SUITE-HEALTH-BASELINE or any other LOCAL-full-suite row, with the one-line reason (ci.yml runs scripts/ci-per-file-isolation.sh per commit 3174de0ce; the CI plane's green baseline is 0 fail, proven run 30425110302). (AC-4) Backstop: if the CI plane's last known-green baseline is 0 fail, a ci_red is ALWAYS actionable — state that as the row's operating assumption so 'pre-existing' is never a valid disposition without a named, file-scoped, already-open row. (AC-5) Retro-sweep: confirm 1408-tool-diacritics and emit-pressure-state are green on current main (they are — run 30492102581 lists only 1847d-C) and record which change fixed each, so the 4-day blind window is closed with evidence rather than assumed.",
+        "files": [
+          "docs/agents/po/flow/triage-signals.md",
+          "docs/agents/dev-team/flow/ci-health-probe.md"
+        ],
+        "related": "Adjacent but DISTINCT from FIX-SIGNAL-ROUTING-ROWS-COVERAGE-GAP-DEEPDIVE (ready) — that row is about the catch-all silently dropping unrecognised signal TYPES (206/322 in 7d). This row is about a RECOGNISED type with a real routing row producing a wrong-plane dedup. Cross-reference, do not merge.",
+        "dedup_checked": "2026-07-29T21:2xZ — grepped all .task_board lanes for CI-RED / CIRED / ci_red / AMNESTY / WRONG-PLANE => 0 hits; reviewed FIX-SIGNAL-ROUTING-ROWS-COVERAGE-GAP-DEEPDIVE AC text directly and confirmed different scope (see related).",
+        "status_note": "[po 2026-07-31T02:27:29Z] P1->P0. This row predicted today verbatim: 'the row own dedup keys are both SHA-derived so they can never match across SHAs'. 5th live confirmation - ci_red fired 07-30T17:45Z, 07-31T00:15Z, 00:45Z, 01:20Z, 02:20Z across 5 DISTINCT head_shas with IDENTICAL failing jobs (frontend-eslint, size-lint) and an IDENTICAL 8-file size-lint offender set, producing ZERO dedup hits and burning a full dev-team drain + PO triage tick each time. Escalated because it is the only row on the board that stops the loop-burn; the four CI owner rows fix the red, this one fixes the churn. Note for the fix: dedup must key on the failing-job/offending-FILE set, never on check_id/head_sha.",
+        "promoted_at": "2026-07-31T04:20:26Z",
+        "promoted_by": "dev-team (supervised-lane sweep)",
+        "promotion_note": "Supervised-Lane Sweep — assigned dispatch_lane='agents-architect' (priority_rank=0); supervised/plan_only flags preserved, gate NOT disabled — see FIX-BOUNDED1-SUPERVISED-LANE-NO-SWEEPER",
+        "dispatch_lane": "agents-architect",
+        "claimed_at": "2026-07-31T04:20:33Z",
+        "claimed_by": "dev-team (supervised-lane sweep)",
+        "updated_by": "agents-architect",
+        "review_note": "agents-architect brief complete: docs/architecture-briefs/2026-07-31-cired-triage-failedfile-dedup.md. Two files, zero production code. (1) triage-signals.md ci_red row: mandatory pre-dedup gh run view --log-failed FAILEDFILE read (AC-1), FILE-scoped dedup_key ci_job:<job>|file:<file> as primary key replacing SHA-only check_id/head_sha (AC-2, already field-validated pre-ship on FIX-CI-FRONTEND-ESLINT-BUNLOCK-DUAL-LOCKFILE-DRIFT + FIX-CI-SIZELINT-MACRO-VMT-LIQUIDITY-RESOLVERS-NEW-OFFENDER + FIX-ORCHSTATE-HEAD-STAMP-DROPPED-CI-RED-1837A), explicit anti-amnesty fence vs FIX-MCP-SUITE-HEALTH-BASELINE naming the CI-plane-vs-local-plane reason (AC-3), 0-fail-baseline backstop closing the pre-existing escape hatch (AC-4). (2) ci-health-probe.md: doc-accuracy-only correction to Hard Constraint 3-LAYER-DEDUP layer-c description + one clarifying NOTE under Step CI-3 DEDUP_KEY -- CANON-SCRIPT (ci-health-probe.js) untouched, no probe behavior change, payload.run_id already threads through end-to-end so no probe gap exists. AC-5 retro-sweep executed live (not re-asserted from the prior pass): gh run view 30603458514 (head ad6d8cd69, 2026-07-31T04:10:31Z) shows bun test job success, 14866 pass/40 skip/0 fail, zero FAILEDFILE lines -- 1408-tool-diacritics fixed by 9374e65e0 (2026-07-28T17:23:42Z), emit-pressure-state fixed by 98917416a+d19d6cdc5 (2026-07-28T18:01:11Z/23:49:42Z), both confirmed GREEN. Signal brief_complete sent to agent-father (cc po, dev-team) -- docs/signals/cired-triage-failedfile-dedup-20260731T042955Z.json. .head deliberately NOT touched: it points at FDA-5 (dev-mcp-server, dispatched same tick per this row own dispatch note) -- only this lane moved, per CANONICAL:SSOT-STATUSFLIP-LANEMOVE rule (b) (flipped task is not .head.active_task_id). Decision journal entry: docs/agent-memory/decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-agents-architect.md STEP agents-architect-S1."
+      },
+      {
+        "id": "FDA-5",
+        "priority": "P3",
+        "size": "S",
+        "sprint": "FAKE-DATA-AUDIT",
+        "status": "REVIEW",
+        "title": "energyTools serves 4 hardcoded grid figures (40/22/45/85) — guarded by banner but figures sit in unstructured VN text",
+        "type": "FIX",
+        "zone": "apps/mcp-server",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FDA-5",
+        "promoted_at": "2026-07-31T04:20:03Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=3)",
+        "updated_at": "2026-07-31T04:37:05Z",
+        "claimed_at": "2026-07-31T04:20:11Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "next_agent": "qa",
+        "updated_by": "dev-mcp-server",
+        "commit_sha": "af272fe1d",
+        "return_summary": "structuredContent field (is_estimate/source_tier/estimated_fields/grid_figures/hydro_data_source) added to get_energy_grid_signals alongside unchanged VN prose banner; 3 commits (af272fe1d code+test, 8084fb4f1 docs, 32476a610 memory); tsc clean, targeted 75/75 pass, toolCount=183/cronJobCount=88 unchanged; DJ sprint-COWORK-GUARANTEED-SLOT-CATCHUP-dev-mcp-server.md S36"
       }
     ],
     "qa": [],
@@ -18729,8 +18747,8 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-31T03:48:17Z",
-    "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
+    "last_triaged_at": "2026-07-31T04:20:26Z",
+    "last_triaged_by": "dev-team (supervised-lane sweep)",
     "in_progress": []
   },
   "_meta": {
