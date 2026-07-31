@@ -3,22 +3,22 @@
   "to": "claude-manager-helper",
   "type": "context_bloat_breach",
   "priority": "high",
-  "createdAt": "2026-07-24T02:44:08Z",
+  "createdAt": "2026-07-31T02:24:43Z",
   "payload": {
-    "file": "docs/agent-memory/notebooks/dev-mcp-server.md",
-    "line_count": 41,
+    "file": "docs/agent-memory/notebooks/unified-agent.md",
+    "line_count": 146,
     "cap": 200,
-    "byte_count": 13720,
+    "byte_count": 18767,
     "byte_cap": 12000,
     "class": "agent-notebook",
     "reason": "byte-cap",
     "overage": 0,
-    "byte_overage": 1720,
+    "byte_overage": 6767,
     "action_required": "prune_or_split"
   },
   "_processed": {
-    "fingerprint": "e3f8cb9366bc392e4f80b6561b4ace8934e8953330b72aaf8575b366e58bb8dd",
-    "processedAt": "2026-07-24T02:44:35Z",
+    "fingerprint": "a62f0fdcf9fba69332e69b996bf6b07dfaf9a4012248cad6fa50b89ebda2bc61",
+    "processedAt": "2026-07-31T02:49:13Z",
     "processedBy": "dev-team",
     "result": "routed-to-po"
   }
