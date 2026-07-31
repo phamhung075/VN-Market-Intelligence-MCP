@@ -93,12 +93,11 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "FDA-10",
-    "next_agent": "developer",
-    "next_action": "BOUNDED-1 auto-pickup claim of FDA-10 — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
-    "updated_at": "2026-07-31T08:17:06Z",
-    "updated_by": "dev-team (bounded-1 auto-pickup)"
+    "status": "idle",
+    "active_task_id": null,
+    "next_agent": "router",
+    "updated_at": "2026-07-31T08:21:47Z",
+    "updated_by": "dev-mcp-server (BOUNDED-1 auto-pickup)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -18836,6 +18835,27 @@
         "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
         "claimed_at": "2026-07-31T07:20:36Z",
         "claimed_by": "dev-team (bounded-1 auto-pickup)"
+      },
+      {
+        "id": "FDA-10",
+        "priority": "P3",
+        "size": "XS",
+        "sprint": "FAKE-DATA-AUDIT",
+        "status": "REVIEW",
+        "title": "shippingIndex stale 'SCFI placeholder resolves to BDI' comment — misleading, code does NOT fabricate (delete comment)",
+        "type": "CLEAN",
+        "zone": "apps/mcp-server",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FDA-10",
+        "promoted_at": "2026-07-31T08:17:00Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=3)",
+        "updated_at": "2026-07-31T08:21:47Z",
+        "claimed_at": "2026-07-31T08:17:06Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "next_agent": "qa",
+        "commit_sha": "ec27c69d3108032244de7c18c9b9641d1c81cacb",
+        "status_note": "Deleted/corrected the stale 'SCFI placeholder resolves to BDI' comment at shippingIndex.ts L7 + L73-77 (JSDoc for SHIPPING_SYMBOLS). Independently re-verified: SHIPPING_SYMBOLS (L79-82) only ever contained ^BDI/^BFIY — no SCFI symbol, proxy, or placeholder logic anywhere in the file (grep -i scfi confirms only the 2 comment mentions, both now corrected). Comment-only edit, SHIPPING_SYMBOLS/fetch logic untouched. cd apps/mcp-server && bun test src/__tests__/252-shipping-index.test.ts: 8 pass/0 fail (unchanged). bun tsc --noEmit: clean.",
+        "updated_by": "dev-mcp-server (BOUNDED-1 auto-pickup)"
       }
     ],
     "qa": [],
@@ -18857,25 +18877,7 @@
     },
     "last_triaged_at": "2026-07-31T08:17:00Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": [
-      {
-        "id": "FDA-10",
-        "priority": "P3",
-        "size": "XS",
-        "sprint": "FAKE-DATA-AUDIT",
-        "status": "IN_PROGRESS",
-        "title": "shippingIndex stale 'SCFI placeholder resolves to BDI' comment — misleading, code does NOT fabricate (delete comment)",
-        "type": "CLEAN",
-        "zone": "apps/mcp-server",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FDA-10",
-        "promoted_at": "2026-07-31T08:17:00Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=3)",
-        "updated_at": "2026-07-31T08:17:06Z",
-        "claimed_at": "2026-07-31T08:17:06Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)"
-      }
-    ]
+    "in_progress": []
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
