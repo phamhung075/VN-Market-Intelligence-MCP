@@ -2215,8 +2215,8 @@
     ]
   },
   "task_board": {
-    "_updated_at": "2026-07-31T14:33:39Z",
-    "_updated_by": "po/triage-20260731T1429Z",
+    "_updated_at": "2026-07-31T16:19:40Z",
+    "_updated_by": "po/ruling-20260731b",
     "active_sprints": [
       {
         "evidence": "Router raw-verified (get_bctc_full live, post-rebuild) after BEQ-9/10 refine. Core extraction incident RESOLVED, but populating real scalars exposed a SEPARATE pre-existing analytics/serving layer with 4 defect clusters: (a) RATIO-COMPUTE — VNM ROE=0/ROA=0/EPS=12VND/NetDebt-EBITDA=-7.5e13x; DHG ROA=7,891,932.0% (analyst falsely claimed fixed). Ratios emit 0 or astronomically wrong. (b) BANK-B02-TCTD-SERVING — SHB + EIB get_bctc_full returns 'balance sheet has no decomposition — forced-zero pass suspected'; banks UNSERVABLE despite DONE + committed scalars. (c) PERIOD-SEMANTICS — FPT 2025-Q4 rev=70112.8/NP=11225.5 are FULL-YEAR cumulative labeled 'Q4'; buildComparisonSection then compares cumulative-FY vs next-quarter -> false -82.2% mislabeled 'YoY'. (d) ENTITY-SCOPE — HPG 2025-Q4 is parent-only B01a (rev=0, conf44%) served as the canonical/headline HPG vs consolidated ~140k rev; misleading. PUBLISH-INTEGRITY GAP: NO semantic-sanity publish guard exists in orch-state (the triage-referenced 'Task #13' is NOT present). The BEQ-9/10 reports are now DONE -> flow into chef docs/agents/unified-agent/flow/market-analysis.md + market-analyst -> ROA 7.8M% / false YoY -82% / parent-only-headline CAN reach MARKET unattended. recurring-bug-escalation: BCTC area has >2 fix cycles -> architect root-cause SPIKE, not point-patch. | [dev-team 2026-06-03T11:44Z observation feeding BAL-0/BAL-1] After LF-SERVE-REFLOW recovered FPT Q1 absolute scalars (op_profit/ebitda/cash live-correct), get_bctc_full(FPT) STILL serves garbage DERIVED ratios: current_ratio=41527873060120x (denominator ~0), operating_margin_pct=0.0% (not recomputed from now-correct operating_profit). Confirms the analytics/serving derived-ratio layer is a distinct defect from scalar extraction. BAL-0 publish semantic-sanity gate MUST block current_ratio out-of-range before MARKET/FB; BAL-1 spike should pin the ratio recompute module. Repro: get_bctc_full(code=FPT).",
@@ -4333,6 +4333,33 @@
         "fold_note_20260725T1059": "FOLDED + CANCELLED 2026-07-25T10:59Z by po (ruling s150) into FIX-DEVTEAM-IDLE-CHAIN-STEP1-TRIAGE-STARVATION, which is now P0 and carries this concern as hard acceptance AC-2. Not dropped, and the hazard is CONFIRMED REAL — this row called it a 'latent hazard ... mitigated today by router discretion'; it is no longer latent and the mitigation is no longer discretionary. Live 2026-07-18..25: 363 signals drained result='routed-to-po' across 141 drain commits, against ONE dev-team Step-1 triage record. Folded rather than kept because (a) its proposed remedy — guard BOUNDED-1's JUMP-TO-execute on pendingSignals non-empty — covers only ONE of the four short-circuiting lanes, so it would leave SLS/RLC/QA-Drain still dropping signals; (b) a guard defers the drop rather than preventing it (the signal is already moved + fingerprinted by the time the guard is evaluated), whereas the parent's AC-2 requires a durable inbox that actually prevents loss; (c) both rows edit docs/agents/dev-team/flow/main.md, and the parent's own .note explicitly warns against racing that file with a concurrent row. If architect rejects the durable-inbox approach in favour of the narrower guard, RE-OPEN this row instead of silently narrowing the parent's AC-2.",
         "updated_at": "2026-07-25T11:01:56Z",
         "updated_by": "po/ruling-s150-20260725T1059"
+      },
+      {
+        "id": "FIX-ALERT-CASCADE-OUTCOME-DEAD",
+        "priority": "P1",
+        "status": "CANCELLED",
+        "title": "FIX-ALERT-CASCADE-OUTCOME-DEAD — record_signal_outcome never called: 1965+ rule hits, Eval=0 for ALL 49 cascade rules; 653/683 alerts (95.6%) 'unknown' verdict. Outcome feedback loop disconnected — system can't learn signal quality.",
+        "type": "FIX",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-ALERT-CASCADE-OUTCOME-DEAD",
+        "verify_note": "prior_status=TODO",
+        "zone": "apps/mcp-server/",
+        "po_zone_repair_20260731": "zone was null (structurally un-dispatchable: dev-team Step 3 rejects a batch entry with no zone) and priority P3. record_signal_outcome is defined in apps/mcp-server/src/interface/mcp/tools/news-analysis/agentSignalTools.ts + registered in .../bootstrap/agentBootstrap.ts, so zone=apps/mcp-server/. Priority raised P3->P1 on LIVE evidence read 2026-07-31T16:04:37Z from the running container (docker exec, readonly bun:sqlite, /app/data/market.db): signal_outcomes has 105 rows total, MAX(checked_at)=2026-07-26 00:17:00 and zero rows created in the 5 days since — the outcome feedback loop is confirmed dead in production right now, not merely historically.",
+        "updated_at": "2026-07-31T16:27:10Z",
+        "promoted_at": null,
+        "promoted_by": null,
+        "promotion_note": null,
+        "claimed_at": null,
+        "claimed_by": null,
+        "bounded1_revert_note": "BOUNDED-1 auto-claimed this row (zone=apps/mcp-server/ per PO 2026-07-31T16:04:37Z repair), but detail_ref (docs/data/orch/archive/backlog-detail.json, source health-recheck 2026-06-13) carries owner=dev-alert-engine, zone_owner=apps/alert-engine/, and scope text explicitly stating PLAN-ONLY at PO layer — a prose-embedded plan_only signal, not a structured plan_only:true field, so BOUNDED-1s structured plan-only gate could not see it (same near-miss class as FIX-MCP-MEMORY-CODE-LEAK/UC-CDC-P5). Reverted auto-claim before dispatch. next_agent set to po (non-dev) so the existing NON-DEV-NEXT_AGENT gate withholds this from future BOUNDED-1 auto-pickup until PO rules: (a) confirm apps/mcp-server/ zone + lift plan-only (dispatch to dev-mcp-server), or (b) confirm still plan-only and route through architect first, or (c) reconcile the stale detail_ref (owner/zone_owner/scope) to match. No code touched, no dev agent spawned.",
+        "plan_only": false,
+        "status_note": "SUPERSEDED — premise falsified by live code+DB verification. Successors: FIX-CASCADE-HIT-AFFECTED-STOCKS-NEVER-RECORDED, FIX-AGENT-SIGNALS-PRODUCTION-COLLAPSE-DEFECT-OR-DROUGHT, FIX-BOARD-ROW-PLAN-ONLY-NOT-MIRRORED-FROM-DETAIL.",
+        "superseded_by": [
+          "FIX-CASCADE-HIT-AFFECTED-STOCKS-NEVER-RECORDED",
+          "FIX-AGENT-SIGNALS-PRODUCTION-COLLAPSE-DEFECT-OR-DROUGHT",
+          "FIX-BOARD-ROW-PLAN-ONLY-NOT-MIRRORED-FROM-DETAIL"
+        ],
+        "po_ruling_20260731b": "RULING = (c), and neither (a) nor (b). dev-team asked whether the June 'PLAN-ONLY' framing is stale (dispatch it) or still a live design decision (route to architect). Answer: BOTH options assume the row's premise, and the premise is FALSE. Verified 2026-07-31T16:1xZ against live code and the running container (docker exec vn-market-intelligence-mcp-mcp-server-1, readonly bun:sqlite, /app/data/market.db). CLAUSE 1 — 'record_signal_outcome never called': FALSE. Two live production callers of recordOutcome exist: taAlertNotifierJob.ts:284 (writes 'fired' at dispatch) and signalOutcomeJob.ts:187 (writes confirmed/false_positive). The alert-commander agent flow also calls the MCP tool at two stages (stage-dispatch-log.md:54, stage-signals.md:70). CLAUSE 2 — 'auto-resolve price alerts vs 5-day close' (the supposed open design decision): ALREADY DECIDED AND SHIPPED. signalOutcomeJob (Task 1382d, wired by 1382c) resolves on a 4h price window; signalOutcomeResolutionJob resolves T+24h/T+48h and ran status=success hourly today 09:17 through 15:17. signal_outcomes holds 105 rows of which only 2 are unresolved (98.1% resolved). Routing this to architect would have commissioned a design brief for a loop that is already built twice and running. CLAUSE 3 — 'Eval=0 for ALL 49 cascade rules': the ONLY clause still true (now 64 rules; 27/9,922 hits evaluated = 0.27%), but its root cause has NOTHING to do with record_signal_outcome. It is runImpactChain.ts:220 calling recordHit(db, rule.key, rule.matchedKeyword, rule.sector) with FOUR args, omitting the 5th `stocks` param, so affected_stocks is NULL on 9,868/9,922 rows and cascadeBacktestJob — which fires daily and succeeds — has exactly ZERO eligible pending rows to price. CLAUSE 4 — '653/683 alerts (95.6%) unknown verdict': UNVERIFIABLE, the live alerts table has no `verdict` column at all. ALSO CORRECTED: this row's own po_zone_repair_20260731 note (written by PO earlier this same tick) concluded 'the outcome feedback loop is confirmed dead in production right now' from MAX(checked_at)=2026-07-26 plus zero new rows in 5 days. That was an empty-read-as-evidence error (feedback_empty_read_is_not_evidence, feedback_single_observation_degenerate_case_read_as_broken_mechanism): signal_outcomes is DOWNSTREAM of agent_signals, which received exactly ONE new row in the trailing 7 days. Nothing to resolve, so checked_at stalls. The recorder is starved, not broken. The P3->P1 raise made on that reading is withdrawn with the row. DISPOSITION: CANCELLED, not dispatched and not routed to architect — sending a developer to 'wire' an already-wired loop, or an architect to design an already-shipped one, is exactly the churn-without-convergence pattern this board keeps paying for. Three correctly-scoped successors minted this tick carry every still-live concern forward; nothing is dropped. dev-team's revert was the right call and is endorsed — the withholding gate (next_agent non-dev) did its job and must not be weakened.",
+        "updated_by": "po/ruling-20260731b"
       }
     ],
     "backlog": [
@@ -6457,7 +6484,9 @@
         "zone": "apps/mcp-server/",
         "title": "market.db TEXT-timestamp format non-normalization — 2 LIVE sites, recurring class (5x). (a) NEW 2026-07-31: agent_signals.created_at — apps/mcp-server/src/infrastructure/db/alertStore.ts storeAlerts() binds alert.createdAt RAW into created_at (ISO8601 T + .mmmZ) while the SAME value is bound through datetime(?, \"+2 hours\") for expires_at, so one row carries two formats; every other producer normalizes at agentSignalStore.ts:544. 106/234 rows (45%) are T-separated, ALL from_agent=alert-engine / signal_type=verified_decision, first at 2026-07-30T14:46:43.612Z (right after 0a7e91e5b un-gated the co-write payload). MEASURED LIVE 2026-07-31T09:16Z: `created_at >= datetime(\"now\",\"-60 minutes\")` returns 95 rows, correct answer 59 — 36 falsely included (+61%), because \"T\" (0x54) > \" \" (0x20) at position 11 makes every T row sort after every space row WITHIN the same date (cross-day windows still work by accident). Fix = wrap the created_at placeholder in datetime(?) in the same INSERT — one token, already proven correct by the adjacent expires_at column on the same row. (b) ORIGINAL: market_messages.sent_at space-separated TEXT vs datetime/ISO comparison -> C-06 freshness query false-empty. Ship the canonical rule with the fix: market.db TEXT timestamps are \"YYYY-MM-DD HH:MM:SS\"; writers normalize via SQLite datetime(), readers compare against datetime().",
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-MARKET-MESSAGES-TIMESTAMP-FORMAT",
-        "updated_at": "2026-07-31T09:19:16Z"
+        "updated_at": "2026-07-31T16:27:10Z",
+        "plan_only": true,
+        "plan_only_mirrored_20260731b": "Mirrored from backlog-detail.json plan_only:true by po/ruling-20260731b. Board-level gates (BOUNDED-1) read this field on the BOARD row, not in detail — 31 of 34 live plan-only rows were structurally invisible to them. Durable mechanism tracked as FIX-BOARD-ROW-PLAN-ONLY-NOT-MIRRORED-FROM-DETAIL."
       },
       {
         "id": "FIX-NEWS-REUTERS-DEAD-URL-DECOMMISSION",
@@ -6467,7 +6496,10 @@
         "size": "S",
         "zone": "apps/mcp-server/",
         "title": "Reuters RSS source: 221 consecutive fetch failures — VPS news service decommissioned but news-fetch:5008 still points at the dead Reuters URL (pollNewsJob/intelligenceCycleJob log noise, never fetched)",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-NEWS-REUTERS-DEAD-URL-DECOMMISSION"
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-NEWS-REUTERS-DEAD-URL-DECOMMISSION",
+        "plan_only": true,
+        "plan_only_mirrored_20260731b": "Mirrored from backlog-detail.json plan_only:true by po/ruling-20260731b. Board-level gates (BOUNDED-1) read this field on the BOARD row, not in detail — 31 of 34 live plan-only rows were structurally invisible to them. Durable mechanism tracked as FIX-BOARD-ROW-PLAN-ONLY-NOT-MIRRORED-FROM-DETAIL.",
+        "updated_at": "2026-07-31T16:27:10Z"
       },
       {
         "id": "FIX-MACRO-TE-CHROMIUM-FETCH-BROKEN",
@@ -6477,7 +6509,10 @@
         "size": "M",
         "zone": "apps/mcp-server/",
         "title": "Trading Economics fetch: 221-222 consecutive failures — Chromium TE scrape still broken despite prior Dockerfile fix (macroIndicatorRefreshJob degraded)",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-MACRO-TE-CHROMIUM-FETCH-BROKEN"
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-MACRO-TE-CHROMIUM-FETCH-BROKEN",
+        "plan_only": true,
+        "plan_only_mirrored_20260731b": "Mirrored from backlog-detail.json plan_only:true by po/ruling-20260731b. Board-level gates (BOUNDED-1) read this field on the BOARD row, not in detail — 31 of 34 live plan-only rows were structurally invisible to them. Durable mechanism tracked as FIX-BOARD-ROW-PLAN-ONLY-NOT-MIRRORED-FROM-DETAIL.",
+        "updated_at": "2026-07-31T16:27:10Z"
       },
       {
         "id": "FIX-MACRO-ISM-FRED-API-KEY-MISSING",
@@ -6487,7 +6522,10 @@
         "size": "S",
         "zone": "apps/mcp-server/",
         "title": "get_ism_subcomponents returns no data: fred_series_daily empty for ISM series — likely missing FRED_API_KEY config in the live macro fetch env",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-MACRO-ISM-FRED-API-KEY-MISSING"
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-MACRO-ISM-FRED-API-KEY-MISSING",
+        "plan_only": true,
+        "plan_only_mirrored_20260731b": "Mirrored from backlog-detail.json plan_only:true by po/ruling-20260731b. Board-level gates (BOUNDED-1) read this field on the BOARD row, not in detail — 31 of 34 live plan-only rows were structurally invisible to them. Durable mechanism tracked as FIX-BOARD-ROW-PLAN-ONLY-NOT-MIRRORED-FROM-DETAIL.",
+        "updated_at": "2026-07-31T16:27:10Z"
       },
       {
         "id": "FIX-AUDITOR-SBVFX-SLA-POSTMARKET-TOLERANCE",
@@ -6499,7 +6537,7 @@
         "sprint": null,
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-AUDITOR-SBVFX-SLA-POSTMARKET-TOLERANCE",
         "router_crosslink_20260721T1935": "ROUTER CROSSLINK — this stub is the probable true home of the sbv_fx SLA defect. PO minted FIX-SLA-SBV-FX-BUSINESS-DAY-AWARE on 2026-07-21 covering the same ground; that row carries verified acceptance clauses (2)(3)(4)(5) plus a router-corrected mechanism (the intra-day publish-window arm of getSlaThreshold, ~3 lines, helpers already exist). Read that row's router_* keys before either row is started. PO to rule on fold-vs-supersede; router did not merge them.",
-        "updated_at": "2026-07-21T20:18:20Z",
+        "updated_at": "2026-07-31T16:27:10Z",
         "priority": "P1",
         "owner": "developer",
         "updated_by": "po/ruling-20260721T2009",
@@ -6525,7 +6563,9 @@
         ],
         "router_accepts_po_correction_20260721T2020": "ROUTER'S OWN ANALYSIS ON THIS TOPIC WAS WRONG AND PO CORRECTED IT BY MEASUREMENT — the correction stands, router's earlier key does not. At 19:35Z router annotated the (now-superseded) duplicate row asserting the real defect was the intra-day arm only and the fix was '~3 lines mirroring the NEWS branch at 667-673, both helpers already exist'. PO imported freshnessSlaChecker under bun and RAN it rather than reading it, and found that mirroring the news branch WOULD NOT CLEAR THE FALSE POSITIVE. Router re-verified the root fact at source: freshnessSlaChecker.ts:562 hardcodes `const SBV_WINDOW_END_UTC_HOUR = 10; // 17:00 VN = 10:00 UTC`, while this row's own ground truth has SBV publishing ~03:05Z (10:05 VN). Age therefore clocks from the ~03:05Z publish while the threshold clocks from a 10:00Z window end, and OFF_HOURS_GRACE_MINUTES=30 (line 406) cannot absorb the ~6h55m gap. PO measured a CONSTANT 384-minute excess across two different days (Sat 10:00Z age=1854 thr=1470; Sun 06:00Z age=3054 thr=2670) — a constant offset is the signature of a MIS-SET CONSTANT, not a wrong branch. Router's proposed fix would have left that constant in place and shipped a row that did not fix the reported symptom.",
         "router_shipped_arm_never_worked_20260721T2020": "THE SEVERE FINDING NEITHER ROUTER NOR PO HAD BEFORE THIS PASS: THE ALREADY-SHIPPED WEEKEND ARM HAS NEVER WORKED AT REAL CADENCE. Commit d71e3f2e2 closed FIX-SLA-EXEMPT-NEWS-SBVFX with a dedicated passing regression file, and router cited that passing file at 19:35Z as PROOF the capability existed and PO's premise was false. The capability exists; it does not FUNCTION. Per PO's measurement its S-1 fixture asserts '289 min NOT breached' against a 1470 threshold — but 289 was never derived from the source's real cadence, which is ~1854. So the fixture is satisfiable by a broken implementation, and the row closed green while the false positives it existed to stop kept firing. THIS IS THE 'TEST PINS THE DEFECT' CLASS, one level worse than clause (E)'s pinning test: not a test that must be updated by the fix, but a test whose fixture was never grounded in the source's real behaviour, so it certified a non-working arm. LESSON FOR THE ROW AND FOR ROUTER: a passing regression file is evidence a code path EXISTS, never evidence it WORKS. Router treated the former as the latter. This row now covers BOTH arms plus a mandatory S-1 re-base against real ~03:05Z cadence; do not close it by fixing the intra-day arm alone.",
-        "router_clause_e_scope_correction_20260721T2020": "CLAUSE (E) SCOPE CORRECTED — router overstated it. Router called 1920i-freshness-sla-extension.test.ts:273 'the row's most valuable clause', on the belief it pins the 30-minute default against any fix. PO checked and it asserts against the DEFAULT_SLA_CONFIG FIELD, not getSlaThreshold's OUTPUT. So it does NOT block a branch-level fix; it only bites if the chosen remedy changes the config field itself. It is real but CONDITIONAL ON THE PATH TAKEN, not unconditional. Recorded so nobody plans around a constraint that may not apply to their chosen approach."
+        "router_clause_e_scope_correction_20260721T2020": "CLAUSE (E) SCOPE CORRECTED — router overstated it. Router called 1920i-freshness-sla-extension.test.ts:273 'the row's most valuable clause', on the belief it pins the 30-minute default against any fix. PO checked and it asserts against the DEFAULT_SLA_CONFIG FIELD, not getSlaThreshold's OUTPUT. So it does NOT block a branch-level fix; it only bites if the chosen remedy changes the config field itself. It is real but CONDITIONAL ON THE PATH TAKEN, not unconditional. Recorded so nobody plans around a constraint that may not apply to their chosen approach.",
+        "plan_only": true,
+        "plan_only_mirrored_20260731b": "Mirrored from backlog-detail.json plan_only:true by po/ruling-20260731b. Board-level gates (BOUNDED-1) read this field on the BOARD row, not in detail — 31 of 34 live plan-only rows were structurally invisible to them. Durable mechanism tracked as FIX-BOARD-ROW-PLAN-ONLY-NOT-MIRRORED-FROM-DETAIL."
       },
       {
         "id": "TASK-MACRO-COMMODITY-DELTA",
@@ -6543,7 +6583,10 @@
         "zone": "apps/mcp-server/",
         "priority": "low",
         "type": "FIX",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#DEFLAKE-1187-POLLNEWS-DEAD-PATH"
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#DEFLAKE-1187-POLLNEWS-DEAD-PATH",
+        "plan_only": true,
+        "plan_only_mirrored_20260731b": "Mirrored from backlog-detail.json plan_only:true by po/ruling-20260731b. Board-level gates (BOUNDED-1) read this field on the BOARD row, not in detail — 31 of 34 live plan-only rows were structurally invisible to them. Durable mechanism tracked as FIX-BOARD-ROW-PLAN-ONLY-NOT-MIRRORED-FROM-DETAIL.",
+        "updated_at": "2026-07-31T16:27:10Z"
       },
       {
         "id": "FIX-TELEGRAM-REPORT-ACK-STATUS-STOP-RESURFACE",
@@ -6556,9 +6599,11 @@
         "next_agent": "dev-mcp-server",
         "owner": "dev-mcp-server",
         "po_correction_20260730": "PREMISE REFUTED — do NOT build the capability described in the original title; it already shipped.\n\nREAD AT SOURCE: process_telegram_report (interface/mcp/tools/briefings/telegramReportTools.ts:160-242) takes resolution: z.enum([\"none\",\"fixed\",\"wontfix\",\"duplicate\",\"monitoring\"]). \"monitoring\" IS the dispositioned-but-deferred ack this row asks for; \"duplicate\" IS the tracked-elsewhere ack. Step 4 calls markProcessed(db,id) UNCONDITIONALLY, setting status=processed. read_telegram_reports filters WHERE status='new' (telegramReportStore.ts:108); listUnresolvedReports filters \"resolution NOT IN ('fixed','wontfix','duplicate') AND status != 'processed'\" (:391-401). So ANY process_telegram_report call drops the row out of BOTH polls.\n\nPROVEN END-TO-END, not inferred: PO acked report 4039, re-read list_unresolved_reports -> 179 dropped to 178 with 4039 absent; then acked the remaining 178 and both planes returned empty. 179 -> 0 in a single pass. The queue was never unclearable — it was uncleared.\n\nRETARGETED SCOPE (cheap, and this is the actual root cause):\n(1) Fix docs/agents/tools/list/process_telegram_report.md — it documents the parameter as `delete_message` (actual: `delete_telegram_message`) and does not mention `resolution` AT ALL. That doc drift is precisely why 179 reports sat at resolution=none: every agent reading the tool doc literally could not see the disposition values.\n(2) Wire an explicit ack step into whichever flow reads this queue (dev-team Step 4.1 / the PO report-queue pass) carrying the resolution decision table: fixed = the fix shipped; duplicate = root cause already has a board row; monitoring = real and tracked but not yet fixed; wontfix = detector/actuator mismatch that will never be actioned.\n(3) OPTIONAL follow-on ONLY if (1)+(2) prove insufficient: a report -> backlog-row link field. Do not start at (3).\n\nOBSERVED SIDE EFFECT — benign, documented here so nobody re-files it as a bug: delete_success=false for every Telegram message older than ~48h (bot deletion window), and delete_success=null when message_id=0 (dashboard-routed rows). The SQLite row is marked processed in all three cases. The DB is authoritative; the Telegram deletion is best-effort.\n",
-        "updated_at": "2026-07-31T00:58:14Z",
+        "updated_at": "2026-07-31T16:27:10Z",
         "updated_by": "po/triage-20260730T1907Z-reportqueue",
-        "po_second_root_cause_2026-07-31": "SECOND ROOT CAUSE FOUND + RE-ESCALATED P2->P1 2026-07-31T00:37Z by po (daily triage). The 07-30 retarget blamed the tool doc alone. That is necessary but NOT sufficient, and the sufficiency gap is why this recurred within 24h. REFUTATION OF THE REMAINING PREMISE: this row still implied PO lacks/does not know the ack capability. FALSE, re-proven live this tick -- po called process_telegram_report(resolution=...,delete_telegram_message=true) 9/9 times successfully and took BOTH planes to empty (read_telegram_reports(status=new) => \"Khong co bao cao moi\", list_unresolved_reports() => []). Dispositions used: 4221/4223 wontfix (Polymarket deliberately retired, enabled:false verified live at apps/mcp-server/mcp.config.json:96), 4222/4228 fixed (314e70718), 4224/4226 duplicate (FIX-SIGNALQUALITYAUDIT-WRITE-GATE-UNREACHABLE-BY-EMITTER-CONTRACT owns it), 4225 fixed, 4227 fixed (e370f5f51), 4229 monitoring (FIX-COWORK-FIRE-ELECTION-TICK-TOMBSTONE owns it). THE REAL DURABLE CAUSE (grep-verified this tick, not inferred): docs/agents/po/flow/telegram-reports.md is a 131-line ORPHANED SUB-FLOW. It already contains the correct drain step -- Step 2f `process_telegram_report(id=..., delete_telegram_message=true)` -- and has since it was written. But NOTHING ROUTES TO IT: `grep -rn \"telegram-reports\" docs/agents/po/ .claude/` returns exactly ONE hit, the files own size-justification header comment. po/flow/main.md has a 5-row Dispatch table and a Branch-Workflows table and telegram-reports.md appears in NEITHER; the only nod to it is No-Task Guard bullet 2 (main.md:105) which says `read_telegram_reports(status=\"new\")` -- any user requests? -> handle first, naming the READ but never the ACK and never pointing at the sub-flow that performs it. Net effect: the queue is drained ONLY when a human or the router explicitly tells PO to drain it (07-30 by hand, 07-31 by an explicit router instruction in the spawn prompt). On an ordinary unattended cron tick PO reads the reports, triages them into its BATCH, and leaves every row status=new/resolution=none -- so the same reports resurface every single tick forever. This is the 5th instance of the documented-consumer-with-no-documented-producer class already catalogued in po/flow/supervised-goahead.md and po/flow/manual-dispatch-sweep.md headers, except here it is inverted: the PRODUCER (telegram-reports.md) exists and is correct, and the ROUTE to it is what is missing. AC-1 (tool doc, dev-mcp-server, apps/mcp-server zone): docs/agents/tools/list/process_telegram_report.md still documents param `delete_message` (line 16, line 74) which is NOT the real param name, and still omits `resolution` entirely -- re-verified live this tick, unchanged since the 07-30 retarget. Document all 5 enum values none|fixed|wontfix|duplicate|monitoring and rename to delete_telegram_message. AC-2 (the fix that actually stops the recurrence): add telegram-reports.md to po/flow/main.md so an unattended tick reaches it -- one row in the Dispatch table and/or the Branch Workflows table, plus make No-Task Guard bullet 2 route there instead of dead-ending at \"handle first\". Pointer-line edit only, no agent-definition/factory work. AC-3: after both, a cron PO tick with >=1 status=new report must leave 0 rows in BOTH read_telegram_reports(status=new) AND list_unresolved_reports() -- assert on both planes, not one (single-plane assertion is how the 07-30 fix looked complete while the route stayed dead)."
+        "po_second_root_cause_2026-07-31": "SECOND ROOT CAUSE FOUND + RE-ESCALATED P2->P1 2026-07-31T00:37Z by po (daily triage). The 07-30 retarget blamed the tool doc alone. That is necessary but NOT sufficient, and the sufficiency gap is why this recurred within 24h. REFUTATION OF THE REMAINING PREMISE: this row still implied PO lacks/does not know the ack capability. FALSE, re-proven live this tick -- po called process_telegram_report(resolution=...,delete_telegram_message=true) 9/9 times successfully and took BOTH planes to empty (read_telegram_reports(status=new) => \"Khong co bao cao moi\", list_unresolved_reports() => []). Dispositions used: 4221/4223 wontfix (Polymarket deliberately retired, enabled:false verified live at apps/mcp-server/mcp.config.json:96), 4222/4228 fixed (314e70718), 4224/4226 duplicate (FIX-SIGNALQUALITYAUDIT-WRITE-GATE-UNREACHABLE-BY-EMITTER-CONTRACT owns it), 4225 fixed, 4227 fixed (e370f5f51), 4229 monitoring (FIX-COWORK-FIRE-ELECTION-TICK-TOMBSTONE owns it). THE REAL DURABLE CAUSE (grep-verified this tick, not inferred): docs/agents/po/flow/telegram-reports.md is a 131-line ORPHANED SUB-FLOW. It already contains the correct drain step -- Step 2f `process_telegram_report(id=..., delete_telegram_message=true)` -- and has since it was written. But NOTHING ROUTES TO IT: `grep -rn \"telegram-reports\" docs/agents/po/ .claude/` returns exactly ONE hit, the files own size-justification header comment. po/flow/main.md has a 5-row Dispatch table and a Branch-Workflows table and telegram-reports.md appears in NEITHER; the only nod to it is No-Task Guard bullet 2 (main.md:105) which says `read_telegram_reports(status=\"new\")` -- any user requests? -> handle first, naming the READ but never the ACK and never pointing at the sub-flow that performs it. Net effect: the queue is drained ONLY when a human or the router explicitly tells PO to drain it (07-30 by hand, 07-31 by an explicit router instruction in the spawn prompt). On an ordinary unattended cron tick PO reads the reports, triages them into its BATCH, and leaves every row status=new/resolution=none -- so the same reports resurface every single tick forever. This is the 5th instance of the documented-consumer-with-no-documented-producer class already catalogued in po/flow/supervised-goahead.md and po/flow/manual-dispatch-sweep.md headers, except here it is inverted: the PRODUCER (telegram-reports.md) exists and is correct, and the ROUTE to it is what is missing. AC-1 (tool doc, dev-mcp-server, apps/mcp-server zone): docs/agents/tools/list/process_telegram_report.md still documents param `delete_message` (line 16, line 74) which is NOT the real param name, and still omits `resolution` entirely -- re-verified live this tick, unchanged since the 07-30 retarget. Document all 5 enum values none|fixed|wontfix|duplicate|monitoring and rename to delete_telegram_message. AC-2 (the fix that actually stops the recurrence): add telegram-reports.md to po/flow/main.md so an unattended tick reaches it -- one row in the Dispatch table and/or the Branch Workflows table, plus make No-Task Guard bullet 2 route there instead of dead-ending at \"handle first\". Pointer-line edit only, no agent-definition/factory work. AC-3: after both, a cron PO tick with >=1 status=new report must leave 0 rows in BOTH read_telegram_reports(status=new) AND list_unresolved_reports() -- assert on both planes, not one (single-plane assertion is how the 07-30 fix looked complete while the route stayed dead).",
+        "plan_only": true,
+        "plan_only_mirrored_20260731b": "Mirrored from backlog-detail.json plan_only:true by po/ruling-20260731b. Board-level gates (BOUNDED-1) read this field on the BOARD row, not in detail — 31 of 34 live plan-only rows were structurally invisible to them. Durable mechanism tracked as FIX-BOARD-ROW-PLAN-ONLY-NOT-MIRRORED-FROM-DETAIL."
       },
       {
         "id": "FU-FPT-2025Q4-STAGE4-DUP",
@@ -6613,7 +6658,10 @@
         "priority": "high",
         "status": "BACKLOG",
         "sprint": "MARKET-INDICATOR-DEPTH-P0",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#IND-ROADMAP-LEDGER"
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#IND-ROADMAP-LEDGER",
+        "plan_only": true,
+        "plan_only_mirrored_20260731b": "Mirrored from backlog-detail.json plan_only:true by po/ruling-20260731b. Board-level gates (BOUNDED-1) read this field on the BOARD row, not in detail — 31 of 34 live plan-only rows were structurally invisible to them. Durable mechanism tracked as FIX-BOARD-ROW-PLAN-ONLY-NOT-MIRRORED-FROM-DETAIL.",
+        "updated_at": "2026-07-31T16:27:10Z"
       },
       {
         "id": "IND-P1-SECTOR-RRG",
@@ -6622,7 +6670,10 @@
         "priority": "medium",
         "status": "BACKLOG",
         "sprint": "MARKET-INDICATOR-DEPTH-P0",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#IND-P1-SECTOR-RRG"
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#IND-P1-SECTOR-RRG",
+        "plan_only": true,
+        "plan_only_mirrored_20260731b": "Mirrored from backlog-detail.json plan_only:true by po/ruling-20260731b. Board-level gates (BOUNDED-1) read this field on the BOARD row, not in detail — 31 of 34 live plan-only rows were structurally invisible to them. Durable mechanism tracked as FIX-BOARD-ROW-PLAN-ONLY-NOT-MIRRORED-FROM-DETAIL.",
+        "updated_at": "2026-07-31T16:27:10Z"
       },
       {
         "id": "IND-P1-RISK-DECOMPOSITION",
@@ -6631,7 +6682,10 @@
         "priority": "medium",
         "status": "BACKLOG",
         "sprint": "MARKET-INDICATOR-DEPTH-P0",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#IND-P1-RISK-DECOMPOSITION"
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#IND-P1-RISK-DECOMPOSITION",
+        "plan_only": true,
+        "plan_only_mirrored_20260731b": "Mirrored from backlog-detail.json plan_only:true by po/ruling-20260731b. Board-level gates (BOUNDED-1) read this field on the BOARD row, not in detail — 31 of 34 live plan-only rows were structurally invisible to them. Durable mechanism tracked as FIX-BOARD-ROW-PLAN-ONLY-NOT-MIRRORED-FROM-DETAIL.",
+        "updated_at": "2026-07-31T16:27:10Z"
       },
       {
         "id": "IND-P1-VN-YIELD-CURVE",
@@ -6640,7 +6694,10 @@
         "priority": "medium",
         "status": "BACKLOG",
         "sprint": "MARKET-INDICATOR-DEPTH-P0",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#IND-P1-VN-YIELD-CURVE"
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#IND-P1-VN-YIELD-CURVE",
+        "plan_only": true,
+        "plan_only_mirrored_20260731b": "Mirrored from backlog-detail.json plan_only:true by po/ruling-20260731b. Board-level gates (BOUNDED-1) read this field on the BOARD row, not in detail — 31 of 34 live plan-only rows were structurally invisible to them. Durable mechanism tracked as FIX-BOARD-ROW-PLAN-ONLY-NOT-MIRRORED-FROM-DETAIL.",
+        "updated_at": "2026-07-31T16:27:10Z"
       },
       {
         "id": "IND-P1-REGIONAL-DECOUPLING",
@@ -6649,7 +6706,10 @@
         "priority": "medium",
         "status": "BACKLOG",
         "sprint": "MARKET-INDICATOR-DEPTH-P0",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#IND-P1-REGIONAL-DECOUPLING"
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#IND-P1-REGIONAL-DECOUPLING",
+        "plan_only": true,
+        "plan_only_mirrored_20260731b": "Mirrored from backlog-detail.json plan_only:true by po/ruling-20260731b. Board-level gates (BOUNDED-1) read this field on the BOARD row, not in detail — 31 of 34 live plan-only rows were structurally invisible to them. Durable mechanism tracked as FIX-BOARD-ROW-PLAN-ONLY-NOT-MIRRORED-FROM-DETAIL.",
+        "updated_at": "2026-07-31T16:27:10Z"
       },
       {
         "id": "IND-P1-VN30F-BASIS",
@@ -6658,7 +6718,10 @@
         "priority": "medium",
         "status": "BACKLOG",
         "sprint": "MARKET-INDICATOR-DEPTH-P0",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#IND-P1-VN30F-BASIS"
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#IND-P1-VN30F-BASIS",
+        "plan_only": true,
+        "plan_only_mirrored_20260731b": "Mirrored from backlog-detail.json plan_only:true by po/ruling-20260731b. Board-level gates (BOUNDED-1) read this field on the BOARD row, not in detail — 31 of 34 live plan-only rows were structurally invisible to them. Durable mechanism tracked as FIX-BOARD-ROW-PLAN-ONLY-NOT-MIRRORED-FROM-DETAIL.",
+        "updated_at": "2026-07-31T16:27:10Z"
       },
       {
         "id": "IND-P1-LIMIT-LOCK",
@@ -6667,7 +6730,10 @@
         "priority": "medium",
         "status": "BACKLOG",
         "sprint": "MARKET-INDICATOR-DEPTH-P0",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#IND-P1-LIMIT-LOCK"
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#IND-P1-LIMIT-LOCK",
+        "plan_only": true,
+        "plan_only_mirrored_20260731b": "Mirrored from backlog-detail.json plan_only:true by po/ruling-20260731b. Board-level gates (BOUNDED-1) read this field on the BOARD row, not in detail — 31 of 34 live plan-only rows were structurally invisible to them. Durable mechanism tracked as FIX-BOARD-ROW-PLAN-ONLY-NOT-MIRRORED-FROM-DETAIL.",
+        "updated_at": "2026-07-31T16:27:10Z"
       },
       {
         "id": "IND-P1-PROP-NET-FLOW",
@@ -6676,7 +6742,10 @@
         "priority": "medium",
         "status": "BACKLOG",
         "sprint": "MARKET-INDICATOR-DEPTH-P0",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#IND-P1-PROP-NET-FLOW"
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#IND-P1-PROP-NET-FLOW",
+        "plan_only": true,
+        "plan_only_mirrored_20260731b": "Mirrored from backlog-detail.json plan_only:true by po/ruling-20260731b. Board-level gates (BOUNDED-1) read this field on the BOARD row, not in detail — 31 of 34 live plan-only rows were structurally invisible to them. Durable mechanism tracked as FIX-BOARD-ROW-PLAN-ONLY-NOT-MIRRORED-FROM-DETAIL.",
+        "updated_at": "2026-07-31T16:27:10Z"
       },
       {
         "id": "IND-P1-PUTTHROUGH-FLOW",
@@ -6685,7 +6754,10 @@
         "priority": "medium",
         "status": "BACKLOG",
         "sprint": "MARKET-INDICATOR-DEPTH-P0",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#IND-P1-PUTTHROUGH-FLOW"
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#IND-P1-PUTTHROUGH-FLOW",
+        "plan_only": true,
+        "plan_only_mirrored_20260731b": "Mirrored from backlog-detail.json plan_only:true by po/ruling-20260731b. Board-level gates (BOUNDED-1) read this field on the BOARD row, not in detail — 31 of 34 live plan-only rows were structurally invisible to them. Durable mechanism tracked as FIX-BOARD-ROW-PLAN-ONLY-NOT-MIRRORED-FROM-DETAIL.",
+        "updated_at": "2026-07-31T16:27:10Z"
       },
       {
         "id": "IND-P1-RETAIL-PULSE",
@@ -6694,7 +6766,10 @@
         "priority": "low",
         "status": "BACKLOG",
         "sprint": "MARKET-INDICATOR-DEPTH-P0",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#IND-P1-RETAIL-PULSE"
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#IND-P1-RETAIL-PULSE",
+        "plan_only": true,
+        "plan_only_mirrored_20260731b": "Mirrored from backlog-detail.json plan_only:true by po/ruling-20260731b. Board-level gates (BOUNDED-1) read this field on the BOARD row, not in detail — 31 of 34 live plan-only rows were structurally invisible to them. Durable mechanism tracked as FIX-BOARD-ROW-PLAN-ONLY-NOT-MIRRORED-FROM-DETAIL.",
+        "updated_at": "2026-07-31T16:27:10Z"
       },
       {
         "id": "IND-P1-CAP-TO-GDP",
@@ -6703,7 +6778,10 @@
         "priority": "low",
         "status": "BACKLOG",
         "sprint": "MARKET-INDICATOR-DEPTH-P0",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#IND-P1-CAP-TO-GDP"
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#IND-P1-CAP-TO-GDP",
+        "plan_only": true,
+        "plan_only_mirrored_20260731b": "Mirrored from backlog-detail.json plan_only:true by po/ruling-20260731b. Board-level gates (BOUNDED-1) read this field on the BOARD row, not in detail — 31 of 34 live plan-only rows were structurally invisible to them. Durable mechanism tracked as FIX-BOARD-ROW-PLAN-ONLY-NOT-MIRRORED-FROM-DETAIL.",
+        "updated_at": "2026-07-31T16:27:10Z"
       },
       {
         "id": "IND-P1-COMMODITY-COST",
@@ -6712,7 +6790,10 @@
         "priority": "medium",
         "status": "BACKLOG",
         "sprint": "MARKET-INDICATOR-DEPTH-P0",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#IND-P1-COMMODITY-COST"
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#IND-P1-COMMODITY-COST",
+        "plan_only": true,
+        "plan_only_mirrored_20260731b": "Mirrored from backlog-detail.json plan_only:true by po/ruling-20260731b. Board-level gates (BOUNDED-1) read this field on the BOARD row, not in detail — 31 of 34 live plan-only rows were structurally invisible to them. Durable mechanism tracked as FIX-BOARD-ROW-PLAN-ONLY-NOT-MIRRORED-FROM-DETAIL.",
+        "updated_at": "2026-07-31T16:27:10Z"
       },
       {
         "id": "IND-P1-FEAR-GREED",
@@ -6721,7 +6802,10 @@
         "priority": "low",
         "status": "BACKLOG",
         "sprint": "MARKET-INDICATOR-DEPTH-P0",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#IND-P1-FEAR-GREED"
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#IND-P1-FEAR-GREED",
+        "plan_only": true,
+        "plan_only_mirrored_20260731b": "Mirrored from backlog-detail.json plan_only:true by po/ruling-20260731b. Board-level gates (BOUNDED-1) read this field on the BOARD row, not in detail — 31 of 34 live plan-only rows were structurally invisible to them. Durable mechanism tracked as FIX-BOARD-ROW-PLAN-ONLY-NOT-MIRRORED-FROM-DETAIL.",
+        "updated_at": "2026-07-31T16:27:10Z"
       },
       {
         "id": "IND-P2-MARGIN-LEVERAGE",
@@ -6730,7 +6814,10 @@
         "priority": "low",
         "status": "BACKLOG",
         "sprint": "MARKET-INDICATOR-DEPTH-P0",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#IND-P2-MARGIN-LEVERAGE"
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#IND-P2-MARGIN-LEVERAGE",
+        "plan_only": true,
+        "plan_only_mirrored_20260731b": "Mirrored from backlog-detail.json plan_only:true by po/ruling-20260731b. Board-level gates (BOUNDED-1) read this field on the BOARD row, not in detail — 31 of 34 live plan-only rows were structurally invisible to them. Durable mechanism tracked as FIX-BOARD-ROW-PLAN-ONLY-NOT-MIRRORED-FROM-DETAIL.",
+        "updated_at": "2026-07-31T16:27:10Z"
       },
       {
         "id": "IND-P2-PARTICIPATION-BREADTH",
@@ -6739,7 +6826,10 @@
         "priority": "low",
         "status": "BACKLOG",
         "sprint": "MARKET-INDICATOR-DEPTH-P0",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#IND-P2-PARTICIPATION-BREADTH"
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#IND-P2-PARTICIPATION-BREADTH",
+        "plan_only": true,
+        "plan_only_mirrored_20260731b": "Mirrored from backlog-detail.json plan_only:true by po/ruling-20260731b. Board-level gates (BOUNDED-1) read this field on the BOARD row, not in detail — 31 of 34 live plan-only rows were structurally invisible to them. Durable mechanism tracked as FIX-BOARD-ROW-PLAN-ONLY-NOT-MIRRORED-FROM-DETAIL.",
+        "updated_at": "2026-07-31T16:27:10Z"
       },
       {
         "id": "IND-P2-TRIN",
@@ -6748,7 +6838,10 @@
         "priority": "low",
         "status": "BACKLOG",
         "sprint": "MARKET-INDICATOR-DEPTH-P0",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#IND-P2-TRIN"
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#IND-P2-TRIN",
+        "plan_only": true,
+        "plan_only_mirrored_20260731b": "Mirrored from backlog-detail.json plan_only:true by po/ruling-20260731b. Board-level gates (BOUNDED-1) read this field on the BOARD row, not in detail — 31 of 34 live plan-only rows were structurally invisible to them. Durable mechanism tracked as FIX-BOARD-ROW-PLAN-ONLY-NOT-MIRRORED-FROM-DETAIL.",
+        "updated_at": "2026-07-31T16:27:10Z"
       },
       {
         "id": "IND-P2-ETF-FLOW",
@@ -6757,7 +6850,10 @@
         "priority": "low",
         "status": "BACKLOG",
         "sprint": "MARKET-INDICATOR-DEPTH-P0",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#IND-P2-ETF-FLOW"
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#IND-P2-ETF-FLOW",
+        "plan_only": true,
+        "plan_only_mirrored_20260731b": "Mirrored from backlog-detail.json plan_only:true by po/ruling-20260731b. Board-level gates (BOUNDED-1) read this field on the BOARD row, not in detail — 31 of 34 live plan-only rows were structurally invisible to them. Durable mechanism tracked as FIX-BOARD-ROW-PLAN-ONLY-NOT-MIRRORED-FROM-DETAIL.",
+        "updated_at": "2026-07-31T16:27:10Z"
       },
       {
         "id": "FB-LAUNCHD-QA-FIRE-VERIFY-DEDUP",
@@ -6861,7 +6957,10 @@
         "priority": "low",
         "zone": "apps/mcp-server/",
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-SEARCH-1466-MOCK-MODULE-POLLUTION",
-        "verify_note": "prior_status=TODO"
+        "verify_note": "prior_status=TODO",
+        "plan_only": true,
+        "plan_only_mirrored_20260731b": "Mirrored from backlog-detail.json plan_only:true by po/ruling-20260731b. Board-level gates (BOUNDED-1) read this field on the BOARD row, not in detail — 31 of 34 live plan-only rows were structurally invisible to them. Durable mechanism tracked as FIX-BOARD-ROW-PLAN-ONLY-NOT-MIRRORED-FROM-DETAIL.",
+        "updated_at": "2026-07-31T16:27:10Z"
       },
       {
         "id": "FIX-AUDITOR-NOTEBOOK-COMMIT-TRAILER-DOC",
@@ -6871,7 +6970,10 @@
         "priority": "low",
         "zone": "cross-service/",
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-AUDITOR-NOTEBOOK-COMMIT-TRAILER-DOC",
-        "verify_note": "prior_status=TODO"
+        "verify_note": "prior_status=TODO",
+        "plan_only": true,
+        "plan_only_mirrored_20260731b": "Mirrored from backlog-detail.json plan_only:true by po/ruling-20260731b. Board-level gates (BOUNDED-1) read this field on the BOARD row, not in detail — 31 of 34 live plan-only rows were structurally invisible to them. Durable mechanism tracked as FIX-BOARD-ROW-PLAN-ONLY-NOT-MIRRORED-FROM-DETAIL.",
+        "updated_at": "2026-07-31T16:27:10Z"
       },
       {
         "id": "FEAT-SEVERITY-OVERRIDE-SURFACING",
@@ -6955,7 +7057,10 @@
         "zone": "cross-service/",
         "priority": "P2",
         "type": "FIX",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-BACKLOG-TERMINAL-ROW-DRIFT-EVICT-BLIND"
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-BACKLOG-TERMINAL-ROW-DRIFT-EVICT-BLIND",
+        "plan_only": true,
+        "plan_only_mirrored_20260731b": "Mirrored from backlog-detail.json plan_only:true by po/ruling-20260731b. Board-level gates (BOUNDED-1) read this field on the BOARD row, not in detail — 31 of 34 live plan-only rows were structurally invisible to them. Durable mechanism tracked as FIX-BOARD-ROW-PLAN-ONLY-NOT-MIRRORED-FROM-DETAIL.",
+        "updated_at": "2026-07-31T16:27:10Z"
       },
       {
         "id": "P1-DETECTOR-CLOSURE-TASK-ARCHIVE",
@@ -10729,23 +10834,207 @@
         "updated_at": "2026-07-31T16:04:37Z"
       },
       {
-        "id": "FIX-ALERT-CASCADE-OUTCOME-DEAD",
+        "id": "FIX-PUBLIC-CONTRACTS-MUASAMCONG-PROXY-PATH",
+        "type": "FIX",
+        "size": "S",
         "priority": "P1",
         "status": "BACKLOG",
-        "title": "FIX-ALERT-CASCADE-OUTCOME-DEAD — record_signal_outcome never called: 1965+ rule hits, Eval=0 for ALL 49 cascade rules; 653/683 alerts (95.6%) 'unknown' verdict. Outcome feedback loop disconnected — system can't learn signal quality.",
-        "type": "FIX",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-ALERT-CASCADE-OUTCOME-DEAD",
-        "verify_note": "prior_status=TODO",
         "zone": "apps/mcp-server/",
-        "po_zone_repair_20260731": "zone was null (structurally un-dispatchable: dev-team Step 3 rejects a batch entry with no zone) and priority P3. record_signal_outcome is defined in apps/mcp-server/src/interface/mcp/tools/news-analysis/agentSignalTools.ts + registered in .../bootstrap/agentBootstrap.ts, so zone=apps/mcp-server/. Priority raised P3->P1 on LIVE evidence read 2026-07-31T16:04:37Z from the running container (docker exec, readonly bun:sqlite, /app/data/market.db): signal_outcomes has 105 rows total, MAX(checked_at)=2026-07-26 00:17:00 and zero rows created in the 5 days since — the outcome feedback loop is confirmed dead in production right now, not merely historically.",
-        "updated_at": "2026-07-31T16:12:07Z",
-        "promoted_at": null,
-        "promoted_by": null,
-        "promotion_note": null,
-        "claimed_at": null,
-        "claimed_by": null,
-        "next_agent": "po",
-        "bounded1_revert_note": "BOUNDED-1 auto-claimed this row (zone=apps/mcp-server/ per PO 2026-07-31T16:04:37Z repair), but detail_ref (docs/data/orch/archive/backlog-detail.json, source health-recheck 2026-06-13) carries owner=dev-alert-engine, zone_owner=apps/alert-engine/, and scope text explicitly stating PLAN-ONLY at PO layer — a prose-embedded plan_only signal, not a structured plan_only:true field, so BOUNDED-1s structured plan-only gate could not see it (same near-miss class as FIX-MCP-MEMORY-CODE-LEAK/UC-CDC-P5). Reverted auto-claim before dispatch. next_agent set to po (non-dev) so the existing NON-DEV-NEXT_AGENT gate withholds this from future BOUNDED-1 auto-pickup until PO rules: (a) confirm apps/mcp-server/ zone + lift plan-only (dispatch to dev-mcp-server), or (b) confirm still plan-only and route through architect first, or (c) reconcile the stale detail_ref (owner/zone_owner/scope) to match. No code touched, no dev agent spawned."
+        "owner": "po",
+        "plan_only": false,
+        "created_at": "2026-07-31T16:19:40Z",
+        "created_by": "po/triage-20260731b (SPIKE INVESTIGATE-EMPTY-DATA-TABLES follow-up 1/4)",
+        "baseline_pass": "14908",
+        "verification_gate": "live_runtime_query_after_deploy",
+        "origin_spike": "docs/spikes/SPIKE-INVESTIGATE-EMPTY-DATA-TABLES.md#3",
+        "files": [
+          "apps/mcp-server/src/infrastructure/fetchers/muasamcong.ts",
+          "vps-scripts/vps-proxy-server.js",
+          "docker-compose.yml"
+        ],
+        "title": "public_contracts dead-pipeline: getMuasamcongUrl() uses MUASAMCONG_VPS_PROXY_URL verbatim and drops the ?path= param, so publicContractsJob scrapes the muasamcong PORTAL HOMEPAGE every week and writes 0 rows forever",
+        "desc": "Root cause pinned exactly by SPIKE INVESTIGATE-EMPTY-DATA-TABLES (dev-mcp-server, 2026-07-31, commit d4569c5b8), independently RAW-reverified by dev-team before merge. docker-compose.yml sets MUASAMCONG_VPS_PROXY_URL=http://125.212.251.27:8765/proxy/muasamcong with NO ?path= query param. getMuasamcongUrl() in muasamcong.ts returns that env var verbatim, discarding the results-page path baked into MUASAMCONG_ORIGIN (/web/guest/home-page-new-ver2/-/thauthau/ket-qua-chon-nha-thau). vps-proxy-server.js's /proxy/muasamcong route only forwards to the deep results path when it receives ?path=<encoded-path> — which is never supplied. Live curl of the exact configured URL during the SPIKE: HTTP 200, 295KB, but the payload is the muasamcong.mpi.gov.vn portal homepage (title 'He thong mang dau thau quoc gia', canonical link .../web/guest), zero table-result matches. parseContractsFromHtml() correctly finds nothing on a homepage and will find nothing on EVERY run forever, independent of how many real tenders VN government procurement publishes weekly. Job scheduling is healthy (Monday 03:00 UTC, status=success every week 06-01..07-27) — this is purely a URL-composition defect. Smallest and highest-ROI of the 4 SPIKE follow-ups: one dead weekly pipeline restored by one composition fix. Serve-layer for this table was already repaired separately by DS-DEGRADE-01-FIX (2026-07-23, b1d2f0582); this is the writer side.",
+        "deliverable": "AC-1: getMuasamcongUrl() composes ${MUASAMCONG_VPS_PROXY_URL}?path=${encodeURIComponent(<results-page-path>)} when the proxy env var is set, and continues to return the direct origin URL when it is not. AC-2: a unit test asserts the composed URL contains the encoded ket-qua-chon-nha-thau path in BOTH the proxy-set and proxy-unset branches — RED before the fix. AC-3: do NOT hardcode the VPS host anywhere in muasamcong.ts; the path is the only new literal and it must derive from the same constant MUASAMCONG_ORIGIN already uses. VERIFY (verification_gate=live_runtime_query_after_deploy, per feedback_host_cli_integrity_check_false_ok_verify_through_runtime): after rebuild, curl the composed URL through the live VPS proxy and confirm the response body contains the results table markup (not the portal homepage title), then trigger publicContractsJob in the running container and confirm cron_job_runs shows rows_written > 0 and public_contracts row count increases from its current 0.",
+        "related": [
+          "FIX-DAV-PHARMACY-CATCHUP-AND-VPS-PROXY",
+          "FIX-SSC-ADF-JS-RENDERING-INSIDER-TRANSACTIONS",
+          "FIX-BROKER-SANCTIONS-SSC-FETCHER-STUB"
+        ],
+        "updated_at": "2026-07-31T16:27:10Z"
+      },
+      {
+        "id": "FIX-DAV-PHARMACY-CATCHUP-AND-VPS-PROXY",
+        "type": "FIX",
+        "size": "M",
+        "priority": "P2",
+        "status": "BACKLOG",
+        "zone": "multi",
+        "owner": "po",
+        "next_agent": "architect",
+        "plan_only": false,
+        "created_at": "2026-07-31T16:19:40Z",
+        "created_by": "po/triage-20260731b (SPIKE INVESTIGATE-EMPTY-DATA-TABLES follow-up 2/4)",
+        "baseline_pass": "14908",
+        "verification_gate": "live_runtime_query_after_deploy",
+        "origin_spike": "docs/spikes/SPIKE-INVESTIGATE-EMPTY-DATA-TABLES.md#4",
+        "files": [
+          "apps/mcp-server/src/scheduler/schedulerJobTable.ts",
+          "apps/mcp-server/src/infrastructure/fetchers/davPharmacy.ts",
+          "vps-scripts/vps-proxy-server.js"
+        ],
+        "title": "pharma_events dead-pipeline, TWO stacked independent defects: (a) davPharmacyCheckJob has NO startup-catchup guard (1 successful run ever, 2026-04-30; June+July windows silently lost) and (b) dav.gov.vn hard-times-out from France with zero VPS-proxy fallback",
+        "desc": "SPIKE INVESTIGATE-EMPTY-DATA-TABLES (2026-07-31, d4569c5b8) found two INDEPENDENT stacked causes; dev-team RAW-reverified both, specifically confirming the catchup-vs-dedup guard distinction. (a) SCHEDULING: davPharmacyCheckJob (monthly, 1st @ 06:00 Asia/Ho_Chi_Minh = 23:00 UTC prior day, registered at schedulerJobTable.ts:354) has recorded exactly ONE successful run ever (2026-04-30 23:00 UTC). June 1 and July 1 were both silently missed — no error row, nothing. Same root-cause CLASS already fixed for 6 sibling jobs this sprint (FIX-CRON-SUNDAY-STARTUP-CATCHUP x4, FIX-CRON-SSCCHECKERJOB-DEAD-87D, FIX-BASE-RATE-COMPUTATION-CRON-DEAD): node-cron Scheduler.start() re-seeds lastCheck from new Date() on every container (re)construction, so a job with one narrow firing window per period loses the whole period if the process is not alive at that instant. davPharmacyCheckJob was never swept — it has shouldSkipRecoveryReplay (a DEDUP guard, prevents re-running) but NO shouldRunCatchup (a CATCHUP guard, makes a missed window run). These are opposite-direction guards; do not mistake the presence of one for the other. (b) REACHABILITY: live-tested during the SPIKE, https://dav.gov.vn/ hard-times-out (25s, curl exit 28, zero bytes) from the France-hosted mcp-server. davPharmacy.ts has zero VPS-proxy fallback (no env-var override, no vps-proxy-server.js route for dav.gov.vn) unlike its Sprint-1922-series siblings muasamcong.ts/sscInsider.ts. fetchDavPharmacy()'s 'never throws, empty on error' contract means even a correctly-scheduled run returns [] with a swallowed warning — so shipping (a) alone would NOT populate the table.",
+        "deliverable": "SPLIT IS PRE-SPECIFIED — architect's only job here is to cut this into two zone-clean rows and hand them off, NOT to re-derive the design: (a) zone apps/mcp-server/ -> add a davPharmacyCheckJob startup-catchup block mirroring the shouldRunCatchup + jobRunRepo.wrapRun pattern already proven for the 6 sibling jobs, keeping the existing shouldSkipRecoveryReplay dedup intact; (b) zone cross-service/ -> add a /proxy/dav-pharmacy route to vps-scripts/vps-proxy-server.js and wire davPharmacy.ts through it via a DAV_PHARMACY_VPS_PROXY_URL env var, mirroring muasamcong.ts/sscInsider.ts. Sequence (b) before or with (a) — (a) alone yields no data. AC-COMMON: a test asserts a simulated missed monthly window triggers exactly one catchup run (not zero, not two). VERIFY (live_runtime_query_after_deploy): after rebuild, confirm via docker exec + cron_job_runs that davPharmacyCheckJob executes on a simulated missed window, AND that a live fetch through the new VPS route returns non-empty HTML from dav.gov.vn, AND that pharma_events row count increases from its current 0.",
+        "related": [
+          "FIX-PUBLIC-CONTRACTS-MUASAMCONG-PROXY-PATH",
+          "FIX-CRON-SUNDAY-STARTUP-CATCHUP",
+          "FIX-CRON-SSCCHECKERJOB-DEAD-87D",
+          "FIX-BASE-RATE-COMPUTATION-CRON-DEAD"
+        ],
+        "note": "zone=multi is deliberate and honest: (a) lives in apps/mcp-server/, (b) lives in vps-scripts/ which no dev-<service> agent owns. next_agent=architect is for the ZONE SPLIT ONLY, NOT a design brief — the technical approach for both halves is already pinned by the SPIKE and by 6 shipped sibling fixes.",
+        "updated_at": "2026-07-31T16:27:10Z"
+      },
+      {
+        "id": "FIX-SSC-ADF-JS-RENDERING-INSIDER-TRANSACTIONS",
+        "type": "FIX",
+        "size": "L",
+        "priority": "P2",
+        "status": "BACKLOG",
+        "zone": "apps/mcp-server/",
+        "owner": "po",
+        "plan_only": false,
+        "created_at": "2026-07-31T16:19:40Z",
+        "created_by": "po/triage-20260731b (SPIKE INVESTIGATE-EMPTY-DATA-TABLES follow-up 3/4)",
+        "baseline_pass": "14908",
+        "verification_gate": "live_runtime_query_after_deploy",
+        "origin_spike": "docs/spikes/SPIKE-INVESTIGATE-EMPTY-DATA-TABLES.md#2",
+        "files": [
+          "apps/mcp-server/src/infrastructure/fetchers/sscInsider.ts",
+          "vps-scripts/vps-proxy-server.js"
+        ],
+        "title": "insider_transactions dead-pipeline: congbothongtin.ssc.gov.vn is Oracle ADF/WebCenter JS-only — sscInsider.ts's regex <tr>/<td> parser can NEVER extract rows from a bare HTTP GET, even when upstream returns 200",
+        "desc": "SPIKE INVESTIGATE-EMPTY-DATA-TABLES (2026-07-31, d4569c5b8), dev-team RAW-reverified. insiderCheckJob fires reliably every day (01:00 UTC, status=success, 8/8 sampled days 07-24..07-31) with rows_written=0 on EVERY run. sscInsider.ts fetches http://125.212.251.27:8765/proxy/ssc-insider (VPS proxy -> congbothongtin.ssc.gov.vn/faces/.../ketquagiaodich.jspx). Live curl through the real VPS proxy during the SPIKE returned HTTP 200, 6.8KB — which CONTRADICTS the vps-proxy-server.js code comment claiming a persistent 2026-07-29 upstream 503 outage. But the 200 body is a pure Oracle ADF/WebCenter JS bootstrap shell (AdfLoopbackUtils, ZERO <table>/<tr>/<td> tags, ends in 'This page uses JavaScript and requires a JavaScript enabled browser.'). parseInsiderHtml() is a plain regex <tr>/<td> extractor — structurally incapable of ever extracting rows from this endpoint, regardless of upstream health. This is a DEEPER, DISTINCT defect from the 07-29 outage diagnosis: even with SSC returning 200 right now, the pipeline is dead. IMPORTANT SCOPE NOTE: do NOT 'fix' this by widening the regex or adding retries — no HTML-text solution can work; the data does not exist in the response body.",
+        "deliverable": "AC-1: sscInsider.ts obtains the rendered results table via a JS-EXECUTING fetch path. Evaluate the already-deployed flaresolverr container FIRST (confirmed running and healthy 2026-07-31: vn-market-intelligence-mcp-flaresolverr-1, up 2 weeks) before proposing any new container or dependency — a new browser runtime must be justified against flaresolverr failing. Alternative acceptable approach: a proper ADF Partial-Page-Render (PPR) request sequence replaying the portal's own XHR contract. AC-2: parseInsiderHtml() (or its replacement) is exercised by a test against a CAPTURED REAL rendered response fixture, not a hand-written ideal table — the fixture must be captured from the live endpoint during implementation. AC-3: correct the stale vps-proxy-server.js comment asserting a persistent 503; it is factually wrong as of 2026-07-31 and misled prior diagnosis. AC-4: the fetch path must fail LOUD (cron_job_runs error row) when rendering yields zero rows, instead of the current silent rows_written=0 success — a pipeline that cannot distinguish 'no insider trades today' from 'renderer broken' will re-hide this same defect. VERIFY (live_runtime_query_after_deploy): after rebuild, docker exec + trigger insiderCheckJob and confirm insider_transactions row count increases from its current 0 with plausible, non-fabricated values (per feedback_nonzero_values_need_plausibility_check and feedback_no_fake_data_real_fetch).",
+        "related": [
+          "FIX-BROKER-SANCTIONS-SSC-FETCHER-STUB",
+          "FIX-PUBLIC-CONTRACTS-MUASAMCONG-PROXY-PATH"
+        ],
+        "note": "Largest of the 4 SPIKE follow-ups and the shared-obstacle root: FIX-BROKER-SANCTIONS-SSC-FETCHER-STUB hits the identical ADF/JS wall on a sibling SSC page. Whatever rendering helper this row builds MUST be factored for reuse by that row — do not inline a one-off into sscInsider.ts.",
+        "updated_at": "2026-07-31T16:27:10Z"
+      },
+      {
+        "id": "FIX-BROKER-SANCTIONS-SSC-FETCHER-STUB",
+        "type": "FIX",
+        "size": "M",
+        "priority": "P3",
+        "status": "BACKLOG",
+        "status_reason": "SEQUENCED: shares the ADF/JS rendering obstacle with FIX-SSC-ADF-JS-RENDERING-INSIDER-TRANSACTIONS. Do not dispatch before that row ships a reusable rendering helper.",
+        "zone": "apps/mcp-server/",
+        "owner": "po",
+        "plan_only": false,
+        "depends_on": [
+          "FIX-SSC-ADF-JS-RENDERING-INSIDER-TRANSACTIONS"
+        ],
+        "created_at": "2026-07-31T16:19:40Z",
+        "created_by": "po/triage-20260731b (SPIKE INVESTIGATE-EMPTY-DATA-TABLES follow-up 4/4)",
+        "baseline_pass": "14908",
+        "verification_gate": "live_runtime_query_after_deploy",
+        "origin_spike": "docs/spikes/SPIKE-INVESTIGATE-EMPTY-DATA-TABLES.md#5",
+        "files": [
+          "apps/mcp-server/src/scheduler/news-analysis/brokerSanctionsJob.ts"
+        ],
+        "title": "broker_sanctions dead-pipeline: defaultFetchSanctions() in brokerSanctionsJob.ts is a literal 'return []' TODO stub — Sprint 1920d shipped the scaffolding intentionally and the real SSC enforcement-page scraper was never built",
+        "desc": "SPIKE INVESTIGATE-EMPTY-DATA-TABLES (2026-07-31, d4569c5b8); dev-team RAW-verified the stub text against live code. Cleanest of the 5 findings, zero ambiguity. brokerSanctionsSweep fires correctly on its quarter-guard schedule (last-Friday-of-month, '0 8 25-31 * 5'; non-quarter months hit the skip branch, quarter months hit the real path — live-confirmed 05-29 skip, 06-26 real-run x2, 07-31 skip, matching the [3,6,9,12] guard exactly). The job's own defaultFetchSanctions() is an explicitly-labelled stub: '// TODO(1920d-fetcher): implement real SSC enforcement page scraper.' followed by 'async function defaultFetchSanctions(): Promise<InsertBrokerSanctionInput[]> { return []; }'. Sprint 1920d shipped quarter-guard + dedup schema + zero-result WORK alert deliberately with a stub fetcher and a comment naming the real scraper as follow-up; the follow-up was never done. BONUS FINDING (why this is P3 and sequenced, not P1 despite being trivially diagnosable): the target page https://congbothongtin.ssc.gov.vn/faces/NewsDetailPage.xhtml is — like insider_transactions — a pure Oracle ADF/WebCenter JS-only shell (zero table markup, same AdfLoopbackUtils/<noscript> signature). Implementing this without first solving JS rendering just re-derives the same wall.",
+        "deliverable": "AC-1: defaultFetchSanctions() performs a real fetch+parse of the SSC enforcement page and returns typed InsertBrokerSanctionInput[] rows. AC-2: it REUSES the JS-rendering helper delivered by FIX-SSC-ADF-JS-RENDERING-INSIDER-TRANSACTIONS — do not build a second rendering path. AC-3: parser test runs against a captured real rendered fixture, not a synthetic table. AC-4: remove the TODO(1920d-fetcher) comment only when the real implementation lands (a stub that returns [] with the comment deleted is strictly worse than today). AC-5: the existing zero-result WORK alert must now distinguish 'no sanctions this quarter' (legitimate) from 'fetch/parse failed' (defect) — a quarterly job that cannot tell these apart will hide the next regression for 3 months. VERIFY (live_runtime_query_after_deploy): docker exec + force-run the sweep out of quarter-guard in the running container and confirm broker_sanctions row count increases from its current 0 with plausible real values.",
+        "related": [
+          "FIX-SSC-ADF-JS-RENDERING-INSIDER-TRANSACTIONS"
+        ],
+        "updated_at": "2026-07-31T16:27:10Z"
+      },
+      {
+        "id": "FIX-CASCADE-HIT-AFFECTED-STOCKS-NEVER-RECORDED",
+        "type": "FIX",
+        "size": "S",
+        "priority": "P2",
+        "status": "BACKLOG",
+        "zone": "apps/mcp-server/",
+        "owner": "po",
+        "plan_only": false,
+        "created_at": "2026-07-31T16:19:40Z",
+        "created_by": "po/ruling-20260731b (successor to archived FIX-ALERT-CASCADE-OUTCOME-DEAD)",
+        "baseline_pass": "14908",
+        "verification_gate": "live_runtime_query_after_deploy",
+        "files": [
+          "apps/mcp-server/src/application/usecases/runImpactChain.ts",
+          "apps/mcp-server/src/infrastructure/db/cascadeHitStore.ts",
+          "apps/mcp-server/src/scheduler/macro/cascadeBacktestJob.ts"
+        ],
+        "title": "runImpactChain.ts:220 calls recordHit() WITHOUT the 5th `stocks` argument, so affected_stocks is NULL on 9,868/9,922 cascade_rule_hits rows (99.5%) — cascadeBacktestJob fires daily and succeeds while having literally ZERO eligible rows to price. This, not record_signal_outcome, is the real cause of 'Eval=0 for all cascade rules'.",
+        "desc": "MINTED 2026-07-31 by PO as the evidence-corrected successor to FIX-ALERT-CASCADE-OUTCOME-DEAD (archived CANCELLED this tick — premise falsified; see its po_ruling_20260731b note). LIVE EVIDENCE, read from the running container 2026-07-31T16:1xZ (docker exec vn-market-intelligence-mcp-mcp-server-1, readonly bun:sqlite on /app/data/market.db): cascade_rule_hits has 9,922 rows across 64 distinct rule_keys, most recent hit 2026-07-31 08:10:42 (the HIT recorder is very much alive); price_impact_3d is set on only 54 rows; outcome_correct is non-NULL on only 27 rows (0.27%); 9,868 rows (99.5%) have affected_stocks NULL or empty; 9,841 rows are age-eligible (hit_at <= now-3d) and 9,787 are still pending — of which EXACTLY ZERO have a non-empty affected_stocks. cascadeBacktestJob (cron 'cascade-backtest', 20:37 UTC daily) ran status=success on 07-28, 07-29 x2, 07-30 — it is NOT dead and NOT misscheduled. Its pending query (cascadeBacktestJob.ts:95-103) is correct; its very next step (L108-118) discards every row whose affected_stocks parses to an empty list. ROOT CAUSE, single call site: the only production caller of recordHit is runImpactChain.ts:220, which calls recordHit(db, rule.key, rule.matchedKeyword, rule.sector) — FOUR arguments. cascadeHitStore.recordHit's signature is (db, ruleKey, matchedText, sector?, stocks?, sourceRagId?, confidence?), so the 5th `stocks` parameter is undefined on every single hit and the column is written NULL. Every downstream 'Eval=0 / win rate 0' report is therefore a true reading of a structurally starved input, not a scoring bug. SECONDARY (do not fix here, just do not regress it): outcome_correct is left NULL by design when |avgImpact3d| <= 1.0 (cascadeBacktestJob.ts:167-171), so CascadeRuleMetric.evaluated will always undercount flat outcomes even after this fix — worth a follow-up only if the metric stays misleading post-fix.",
+        "deliverable": "AC-1: runImpactChain.ts passes the affected stock codes to recordHit as the 5th argument, sourced from the same rule->stocks resolution the impact chain already performs for its own output (do NOT invent a new mapping, and do NOT hardcode a ticker list — per feedback_no_hardcode_stats and the docs/data/system-map.json rule). AC-2: a unit test asserts a recorded hit persists a non-empty affected_stocks for a rule that resolves to at least one stock, and persists NULL/empty only when the rule genuinely resolves to none — RED before the fix. AC-3: DECIDE AND DOCUMENT the backfill disposition for the 9,868 existing NULL rows: either backfill affected_stocks from the stored rule_key+affected_sector (preferred — it makes ~9.8k historical hits backtestable and gives the win-rate metric real signal immediately) or explicitly record in the row why they are written off. Silently leaving them is not acceptable, because the metric will read 'improving from 0.27%' for months while the historical corpus stays dead. AC-4: cascadeBacktestJob must fail loud (or emit a WORK line) when its pending set is non-empty but 100% of rows are discarded for empty affected_stocks — that exact condition held every day for months and produced only status=success. VERIFY (verification_gate=live_runtime_query_after_deploy, per feedback_host_cli_integrity_check_false_ok_verify_through_runtime): after rebuild, docker exec the running mcp-server and confirm (i) newly-created cascade_rule_hits rows carry non-empty affected_stocks, and (ii) after one cascadeBacktestJob run, SUM(outcome_correct IS NOT NULL) has risen materially above 27.",
+        "related": [
+          "FIX-ALERT-CASCADE-OUTCOME-DEAD",
+          "FIX-AGENT-SIGNALS-PRODUCTION-COLLAPSE-DEFECT-OR-DROUGHT",
+          "FIX-SIGNAL-OUTCOMES-LIVENESS-BLIND-TO-ZERO-PRODUCTION"
+        ],
+        "updated_at": "2026-07-31T16:27:10Z"
+      },
+      {
+        "id": "FIX-AGENT-SIGNALS-PRODUCTION-COLLAPSE-DEFECT-OR-DROUGHT",
+        "type": "FIX",
+        "size": "S",
+        "priority": "P2",
+        "status": "BACKLOG",
+        "zone": "apps/mcp-server/",
+        "owner": "po",
+        "plan_only": false,
+        "created_at": "2026-07-31T16:19:40Z",
+        "created_by": "po/ruling-20260731b (successor to archived FIX-ALERT-CASCADE-OUTCOME-DEAD)",
+        "baseline_pass": "14908",
+        "verification_gate": "live_runtime_query_after_deploy",
+        "files": [
+          "apps/mcp-server/src/interface/mcp/tools/news-analysis/agentSignalTools.ts",
+          "apps/mcp-server/src/scheduler/alerts/signalOutcomeJob.ts",
+          "apps/mcp-server/src/scheduler/market-data/taAlertNotifierJob.ts"
+        ],
+        "title": "agent_signals production has collapsed: 28 rows (May) -> 52 (June) -> 25 (July) -> ONE in the last 7 days, and 100 of 105 rows sit at outcome=NULL forever. Determine whether post_agent_signal producers are broken/ungranted, or whether this is legitimate low event volume — then make the answer detectable.",
+        "desc": "MINTED 2026-07-31 by PO as the evidence-corrected successor to FIX-ALERT-CASCADE-OUTCOME-DEAD (archived CANCELLED this tick). This row keeps alive the PRODUCER-side thread that FIX-SIGNAL-OUTCOMES-LIVENESS-BLIND-TO-ZERO-PRODUCTION points at — that row's `related` reference to FIX-ALERT-CASCADE-OUTCOME-DEAD as 'the PRODUCER-side defect' now resolves HERE, correctly scoped. LIVE EVIDENCE (docker exec, readonly bun:sqlite, /app/data/market.db, 2026-07-31T16:1xZ): agent_signals holds 105 rows total — 28 created in 2026-05, 52 in 2026-06, 25 in 2026-07, and only ONE in the trailing 7 days. Outcome distribution: 100 rows outcome=NULL, 5 rows 'suppressed' (newest 2026-05-22). ZERO rows are 'fired', 'confirmed' or 'false_positive'. signal_outcomes (the child table) holds 105 rows of which only 2 are unresolved, MIN(checked_at)=2026-07-24, MAX=2026-07-26. CRITICAL FRAMING — the recorder is NOT broken, contrary to the archived row's title: recordOutcome has TWO live production callers (taAlertNotifierJob.ts:284 writes 'fired' at dispatch; signalOutcomeJob.ts:187 writes confirmed/false_positive), signalOutcomeJob ran status=success today at 08:30:01, and signalOutcomeResolutionJob runs hourly (success at 09:17 through 15:17 today). The pipeline is alive and starved, not dead. The open question is UPSTREAM and genuinely open: is the near-zero post_agent_signal volume (a) a real defect — producers lost their tool grant, a gatherer path silently regressed, or the alert-commander agent flow stopped calling post_agent_signal — or (b) legitimate low qualifying-event volume? Do not assume; per feedback_single_observation_degenerate_case_read_as_broken_mechanism and feedback_empty_read_is_not_evidence, a low count is not itself proof of breakage.",
+        "deliverable": "AC-1: identify every production producer of agent_signals rows (code jobs AND agent flows calling post_agent_signal) and report, per producer, its last successful write and whether its path is currently reachable. AC-2: state a defect-or-drought verdict backed by RAW evidence from at least two independent planes (e.g. producer-side job/agent logs AND the DB), not by the row count alone. AC-3: if DEFECT — fix the specific broken producer(s) in this row if single-zone, or mint a correctly-zoned successor. AC-4: regardless of verdict, close the detectability gap: the 100 rows stuck at outcome=NULL are invisible to every current guard, because signalOutcomeJob skips them (missing market_prices_history coverage at their historical created_at) and still reports success. Add an assertion that fails loud when agent_signals rows age past a threshold with outcome still NULL. Coordinate with FIX-SIGNAL-OUTCOMES-LIVENESS-BLIND-TO-ZERO-PRODUCTION (already in backlog, detector-side, P1) so the two guards are complementary and neither is vacuous. VERIFY (live_runtime_query_after_deploy): assert the new guard alerts against the CURRENT live market.db (which today has 100 permanently-NULL-outcome rows and a 7-day production gap) and stays quiet against a seeded healthy fixture.",
+        "related": [
+          "FIX-ALERT-CASCADE-OUTCOME-DEAD",
+          "FIX-SIGNAL-OUTCOMES-LIVENESS-BLIND-TO-ZERO-PRODUCTION",
+          "FIX-CASCADE-HIT-AFFECTED-STOCKS-NEVER-RECORDED"
+        ],
+        "updated_at": "2026-07-31T16:27:10Z"
+      },
+      {
+        "id": "FIX-BOARD-ROW-PLAN-ONLY-NOT-MIRRORED-FROM-DETAIL",
+        "type": "FIX",
+        "size": "M",
+        "priority": "P1",
+        "status": "BACKLOG",
+        "zone": "cross-service/",
+        "owner": "po",
+        "plan_only": false,
+        "created_at": "2026-07-31T16:19:40Z",
+        "created_by": "po/ruling-20260731b (structural root cause behind the 2026-07-31 BOUNDED-1 near-miss)",
+        "baseline_pass": "14908",
+        "verification_gate": "live_runtime_query_after_deploy",
+        "files": [
+          "scripts/orch-validate.mjs",
+          "scripts/orch-apply.sh",
+          "apps/mcp-server/src/infrastructure/orchStateSchema.ts",
+          "docs/agents/dev-team/flow/main.md"
+        ],
+        "title": "plan_only lives in backlog-detail.json but is NOT mirrored onto the orch-state board row, so BOUNDED-1's board-level plan-only gate is blind to it: 39 detail items carry plan_only:true, 34 are live on the board, and only 3 had it mirrored — 31 rows were silently auto-dispatchable design work",
+        "desc": "MINTED 2026-07-31 by PO. This is the STRUCTURAL root cause behind today's near-miss, not the single row that exposed it. dev-team's BOUNDED-1 auto-promoted and claimed FIX-ALERT-CASCADE-OUTCOME-DEAD, then caught the PLAN-ONLY marker only by manually reading detail_ref prose before dispatch, and reverted the claim. Same class as the previously-documented FIX-MCP-MEMORY-CODE-LEAK and UC-CDC-P5 near-misses. All three were remediated ONE ROW AT A TIME and the class was never swept. MEASURED SCOPE (jq cross-match of docs/data/orch/archive/backlog-detail.json against docs/data/orch/orch-state.json, 2026-07-31T16:1xZ): 39 detail items carry a structured plan_only:true; 34 of those ids are present on a live task_board lane; only THREE board rows carried plan_only:true themselves (FIX-MCP-MEMORY-CODE-LEAK, FIX-ORPHAN-ADOPTION-BOARD-STATE-GUARD, FIX-COWORK-SPAWN-IDENTITY-PREAMBLE-OFFFLOW — i.e. exactly the ones hand-patched after previous near-misses). The remaining 31 (including the entire IND-P1-*/IND-P2-* indicator-roadmap family, FIX-MACRO-TE-CHROMIUM-FETCH-BROKEN, FIX-MACRO-ISM-FRED-API-KEY-MISSING, DEFLAKE-1187-POLLNEWS-DEAD-PATH, FIX-TELEGRAM-REPORT-ACK-STATUS-STOP-RESURFACE and more) read as ordinary dispatchable FIX rows to every board-level gate. PO hot-patched the live data this tick as immediate mitigation (see AC-0) — this row is for the DURABLE mechanism, without which the same drift silently returns the next time a detail row is authored.",
+        "deliverable": "AC-0 (already done by PO this tick, do not redo — verify it held): plan_only:true was mirrored onto every live board row whose detail entry declares it, closing the immediate exposure. AC-1: make the drift structurally impossible OR structurally visible — preferred: a Stage-1 check in scripts/orch-validate.mjs that FAILS when a board row's id has plan_only:true in backlog-detail.json but the board row lacks it, so orch-apply.sh rejects the write at mint time (the same gate that already catches dangling detail_ref). AC-2: whichever gate BOUNDED-1 actually consults must be the one enforced — read docs/agents/dev-team/flow/main.md AND confirm against the LIVE gate implementation which field is read; do not infer from flow prose (per feedback_fix_landed_in_the_pregate_not_the_probe_the_agent_actually_runs and feedback_dispatch_prompt_inherits_stale_fence_prose_verify_live_config). AC-3: ALSO handle the prose-only case that has no structured detail field at all — FIX-ALERT-CASCADE-OUTCOME-DEAD's detail carried 'PLAN-ONLY at PO layer' as free text in .scope with NO plan_only key, so a mirror-only fix would still have missed it. A scan for PLAN-ONLY / PLAN ONLY / plan-only in detail title+scope text that surfaces unstructured markers to PO for promotion is required (8 detail items currently match the prose pattern; 4 of those have no structured plan_only field). AC-4: a test proving the new gate is non-vacuous — construct an orch-state where a board row lacks plan_only while its detail has it, assert the validator rejects; assert it passes once mirrored. AC-5: do NOT widen or weaken the existing NON-DEV-NEXT_AGENT withholding gate as part of this; it is the last line of defence and it worked today.",
+        "related": [
+          "FIX-ALERT-CASCADE-OUTCOME-DEAD",
+          "FIX-MCP-MEMORY-CODE-LEAK",
+          "FIX-ORPHAN-ADOPTION-BOARD-STATE-GUARD"
+        ],
+        "updated_at": "2026-07-31T16:27:10Z"
       }
     ],
     "closed_sprints": [
@@ -13346,7 +13635,10 @@
         "dispatched_at": "2026-07-17T09:06:35Z",
         "developer_completed_at": "2026-07-17T09:48:49Z",
         "developer_completed_by": "dev-mcp-server (FIX-OHLCV-DEPTH-ALERT-HONEST-GAP-SUPPRESS)",
-        "review_note": "Fixed BOTH emitters per PO spec. (1) ohlcvBackfillHandler.ts step-2 null-accounting: an empty-body ack (bars_pushed_total=null) no longer treated as a crash unconditionally -- cross-checks the honest-gap-aware serving-plane shallow-code list (shared with step-3) before escalating; bars_inserted UPDATE uses COALESCE (never clobbers a real count to NULL). (2) step-3 depth-shortfall re-queue + the scheduler ohlcvHistoryBackfillJob.ts gapTickers trigger both exclude permanently-empty/long-delisted honest-gap codes via new pure predicate isHonestGapCode (domain/services/market-data/ohlcvGapClassifier.ts: 0 bars, or newest bar stale >=30d -- data-driven, never a hardcoded ticker list; VNINDEX never exempted). Added 9 new tests (FIX-OHLCV-DEPTH-ALERT-HONEST-GAP-SUPPRESS-{handler,scheduler}.test.ts): honest-gap-only shortfall -> no re-queue/escalate at retry_count=0 and =5; empty-body ack after a real successful close with real depth healthy -> no false escalation; 2 regression controls (genuine shortfall still re-queues; VNINDEX at 0 bars never honest-gap-exempt). Updated 1360-ohlcv-backfill-queue.test.ts TC-6 (old assertion encoded the buggy null=ALWAYS-crash-regardless-of-depth assumption this fix corrects) + market-data.md invariants #9/#10. Verified: all 9 new + pre-existing OHLCV-BACKFILL/ALPHA-S1-OHLCV-BACKFILL-DONE-BUG suites green; bun tsc --noEmit exit 0; full suite 14594 pass/40 skip/41 fail, zero OHLCV-backfill hits in fail list (pre-existing flaky class, git-stash-confirmed); tool count 183/cronJobCount 2 unchanged. Commits: 876f07874 (code+tests), 2477cfba7 (docs). qa: RAW-verify against the live serving DB that report 3504-class BUG stops re-firing and daily_ohlcv depth stays healthy; re-run the two new test files + BT-1..BT-8 + OHLCV-BACKFILL-P0."
+        "review_note": "Fixed BOTH emitters per PO spec. (1) ohlcvBackfillHandler.ts step-2 null-accounting: an empty-body ack (bars_pushed_total=null) no longer treated as a crash unconditionally -- cross-checks the honest-gap-aware serving-plane shallow-code list (shared with step-3) before escalating; bars_inserted UPDATE uses COALESCE (never clobbers a real count to NULL). (2) step-3 depth-shortfall re-queue + the scheduler ohlcvHistoryBackfillJob.ts gapTickers trigger both exclude permanently-empty/long-delisted honest-gap codes via new pure predicate isHonestGapCode (domain/services/market-data/ohlcvGapClassifier.ts: 0 bars, or newest bar stale >=30d -- data-driven, never a hardcoded ticker list; VNINDEX never exempted). Added 9 new tests (FIX-OHLCV-DEPTH-ALERT-HONEST-GAP-SUPPRESS-{handler,scheduler}.test.ts): honest-gap-only shortfall -> no re-queue/escalate at retry_count=0 and =5; empty-body ack after a real successful close with real depth healthy -> no false escalation; 2 regression controls (genuine shortfall still re-queues; VNINDEX at 0 bars never honest-gap-exempt). Updated 1360-ohlcv-backfill-queue.test.ts TC-6 (old assertion encoded the buggy null=ALWAYS-crash-regardless-of-depth assumption this fix corrects) + market-data.md invariants #9/#10. Verified: all 9 new + pre-existing OHLCV-BACKFILL/ALPHA-S1-OHLCV-BACKFILL-DONE-BUG suites green; bun tsc --noEmit exit 0; full suite 14594 pass/40 skip/41 fail, zero OHLCV-backfill hits in fail list (pre-existing flaky class, git-stash-confirmed); tool count 183/cronJobCount 2 unchanged. Commits: 876f07874 (code+tests), 2477cfba7 (docs). qa: RAW-verify against the live serving DB that report 3504-class BUG stops re-firing and daily_ohlcv depth stays healthy; re-run the two new test files + BT-1..BT-8 + OHLCV-BACKFILL-P0.",
+        "plan_only": true,
+        "plan_only_mirrored_20260731b": "Mirrored from backlog-detail.json plan_only:true by po/ruling-20260731b. Board-level gates (BOUNDED-1) read this field on the BOARD row, not in detail — 31 of 34 live plan-only rows were structurally invisible to them. Durable mechanism tracked as FIX-BOARD-ROW-PLAN-ONLY-NOT-MIRRORED-FROM-DETAIL.",
+        "updated_at": "2026-07-31T16:27:10Z"
       },
       {
         "id": "FIX-BCTC-REPARSE-BATCH-CORRUPTION-NGAYNOP-FLIP",
@@ -19145,6 +19437,6 @@
     "ssot": true
   },
   "last_tick": "20260622T2215Z",
-  "_updated_at": "2026-07-31T16:04:37Z",
-  "_updated_by": "po/triage-20260731T1556Z"
+  "_updated_at": "2026-07-31T16:19:40Z",
+  "_updated_by": "po/ruling-20260731b"
 }

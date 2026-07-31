@@ -163,3 +163,6 @@
 - only path: Step 1 ranked TE-T14 first (P1, rank 1, lowest idx, unflagged); Step 2 mandates exactly ONE stamp per invocation.
 **why-decision:** Sub-flow is MANDATORY every tick and TE-T14 is a P1 DRS-STRANDED-OFF-ALLOWLIST backlog row (next_agent=agent-father, off the DRS allowlist) reachable by no other dispatch path.
 **why-change:** no change from plan. Supplied `files` from source (docs/agents/system-auditor/flow/main.md:51, the Step 0c full-read) since the row carried none.
+
+### CAP-REACHED · 2026-07-31T16:27:10Z
+BYTE_CAP 36000 (600L × 60B) exceeded — continued in sprint-COWORK-GUARANTEED-SLOT-CATCHUP-po-4.md (STEP po-S98 onward).
