@@ -93,12 +93,11 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "FACTORY-APIGW-dedup-default-urls",
-    "next_agent": "developer",
-    "next_action": "BOUNDED-1 auto-pickup claim of FACTORY-APIGW-dedup-default-urls — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
-    "updated_at": "2026-07-31T20:48:20Z",
-    "updated_by": "dev-team (bounded-1 auto-pickup)"
+    "status": "idle",
+    "active_task_id": null,
+    "next_agent": null,
+    "updated_at": "2026-07-31T20:56:15Z",
+    "updated_by": "dev-api-gateway"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -19589,6 +19588,26 @@
         "updated_by": "dev-technical-analysis",
         "commit_sha": "39fbec098",
         "note": "Discarded domain.CalculateTAService wiring deleted (pkg/domain/services.go removed, zero other callers); /health now reflects the real bound RouterConfig.Port instead of a hardcoded 5003 literal. go build/vet/test + golangci-lint clean; G12 sandbox 35/35 + render-check PASS. REBUILD_REQUIRED — ops rebuild+restart apps/technical-analysis before qa live-verify."
+      },
+      {
+        "title": "Make StaticServiceRegistry the sole SSOT for default upstream URLs",
+        "priority": "P3",
+        "zone": "api-gateway",
+        "type": "FACTORY",
+        "status": "REVIEW",
+        "id": "FACTORY-APIGW-dedup-default-urls",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-APIGW-dedup-default-urls",
+        "promoted_at": "2026-07-31T20:48:19Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=3)",
+        "updated_at": "2026-07-31T20:56:15Z",
+        "claimed_at": "2026-07-31T20:48:19Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "entered_review_at": "2026-07-31T20:56:02Z",
+        "next_agent": "qa",
+        "updated_by": "dev-api-gateway",
+        "commit_sha": "b184dde9fdbdb20c5117cad2235ac36bc781c928",
+        "note": "main.go serviceURLs 10-entry map literal (9 default docker URLs + hardcoded api alias) replaced with serviceURLOverrides() sparse-map builder over serviceEnvVars lookup table -- only non-empty env vars included, unset keys fall through to registry.go get(key,fallback) defaults (untouched, already correct SSOT). api key omitted (no dedicated env var), still resolves via get(\"api\", mcpURL) inside registry, unchanged. New cmd/server/main_test.go (package main, precedent apps/technical-analysis/cmd/server/main_test.go) unit-tests serviceURLOverrides via t.Setenv: all-unset->empty, subset->exact keys, all-set (docker-compose shape)->full 9-key map matching old literal 1:1, api never present. RED (undefined symbols) confirmed before GREEN. go build/vet/test 10/10 pkgs clean, gofmt -l clean on touched files, golangci-lint 0 issues (Fence-C intact), G12 sandbox primitive 14/14 + module 1/1 GREEN. Zero-credentials scan clean. Commit b184dde9f (code+test+doc), 3fe382445 (decision journal), d930093e3 (notebook) -- local main, explicit pathspecs, not pushed. rebuild_required=true, USER-GATED; rebuild-verify PENDING-USER-GATED, code-only. Decision journal: docs/agent-memory/decisions/sprint-FACTORY-APIGW-dedup-default-urls-dev-api-gateway.md"
       }
     ],
     "qa": [],
@@ -19610,23 +19629,7 @@
     },
     "last_triaged_at": "2026-07-31T20:48:19Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": [
-      {
-        "title": "Make StaticServiceRegistry the sole SSOT for default upstream URLs",
-        "priority": "P3",
-        "zone": "api-gateway",
-        "type": "FACTORY",
-        "status": "IN_PROGRESS",
-        "id": "FACTORY-APIGW-dedup-default-urls",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-APIGW-dedup-default-urls",
-        "promoted_at": "2026-07-31T20:48:19Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=3)",
-        "updated_at": "2026-07-31T20:48:20Z",
-        "claimed_at": "2026-07-31T20:48:19Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)"
-      }
-    ]
+    "in_progress": []
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
