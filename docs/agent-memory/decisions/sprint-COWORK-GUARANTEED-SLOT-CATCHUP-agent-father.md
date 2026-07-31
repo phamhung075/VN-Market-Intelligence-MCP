@@ -205,3 +205,21 @@ literally brief-specified would mint 0/3 hits, failing its own design goal.
 **why-change:** brief's §3 text (which I copied verbatim) itself carried
 this defect — amendment is IN the file already open per PO's own note,
 no re-dispatch, no lane move.
+
+### STEP agent-father-S13 · agent-father · 2026-07-31T15:05:00Z
+**task-id:** FIX-COWORK-SPAWNFANOUT-NO-SESSION-ID-IN-LEAF-ENTRY-PROMPT
+**what-done:** `spawn-fanout.md` Step 5.2 appends new `SESSION_ID_LINE`
+(cowork-team's own resolved `$CLAUDE_CODE_SESSION_ID`, never the unresolved
+token) to `ENTRY_PROMPT` in BOTH branches. `refine_bctc_md/flow/main.md`
+guard updated to name the extraction line. New static test
+`cowork-spawn-entry-prompt-session-id.test.js` (7/7, RED confirmed pre-fix).
+**what-considered:**
+- Uniform vs. SELF-IDENTITY-GUARD-scoped injection (row's AC-3 choice) —
+  uniform: matches router's own unconditional precedent, avoids a
+  6th-recurrence allowlist (row is already the 5th).
+- Append to composed `ENTRY_PROMPT` vs. write into stored `trigger_prompt`
+  — rejected the latter (AC-4); confirmed zero diff on `cowork-schedule.json`.
+**why-decision:** row named this the 5th "no documented producer" class —
+uniform is the only fix that closes the class, not one symptom.
+**why-change:** none. AC-6 live re-verify explicitly out of scope for me
+(dispatch prompt); QA/next tick owns it.

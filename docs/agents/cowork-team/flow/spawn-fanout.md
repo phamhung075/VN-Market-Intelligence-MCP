@@ -21,7 +21,21 @@
      the fix, since a self-report from an already-displaced spawn is a vacuous reader-is-writer
      check. Fixes the WRONG-LAYER gap left by FIX-MARKET-WATCHER-NARRATE-NOT-EXECUTE-GUARD
      (2026-07-12), which guarded market-watcher's OWN flow/main.md — unreachable when the spawn
-     never opens that file at all. -->
+     never opens that file at all.
+     FIX-COWORK-SPAWNFANOUT-NO-SESSION-ID-IN-LEAF-ENTRY-PROMPT 2026-07-31 (+11L, 5th occurrence
+     of the "documented consumer, no documented producer" defect class): NEITHER ENTRY_PROMPT
+     branch below, nor IDENTITY_PREAMBLE, ever carried a session identifier for the leaf worker
+     to use — `docs/agents/refine_bctc_md/flow/main.md`'s SELF-IDENTITY GUARD hard-requires
+     `owner_client_session` as a spawn-prompt literal (it has no Bash to resolve
+     `$CLAUDE_CODE_SESSION_ID` itself) and EXITs before claiming when absent. Recurred twice live
+     (2026-07-30 slot-4 raw schema error, 2026-07-31 slot-2 clean self-guard EXIT — same root
+     cause, symptom only changed once the guard existed). Both ENTRY_PROMPT branches now append a
+     `SESSION_ID_LINE` carrying cowork-team's OWN resolved session id as a concrete literal string
+     (uniform — every leaf worker, not scoped to only those with a known SELF-IDENTITY GUARD;
+     matches the router's own unconditional `CLAUDE.md` step-3 precedent and does not require a
+     future flow author to remember to opt in). `slot.trigger_prompt` in `cowork-schedule.json`
+     stays byte-identical — `SESSION_ID_LINE` is appended to the composed `ENTRY_PROMPT` only,
+     never written back to the stored field. -->
 <!-- BGFAN-1: every Agent spawn in this file MUST use run_in_background=true; UC-CDC-P4 bounds
      CONCURRENCY ACROSS batches via Step 5.1/5.2, it does not relax background=true within a
      batch. Canonical rule + batcher carve-out → docs/protocols/agent-chaining-protocol.md
@@ -272,7 +286,39 @@ IDENTITY_PREAMBLE =
 `extractPromptFlowPath()` in `scripts/agents-flow/cowork-match-slots.js`, one algorithm, not
 two divergent copies):**
 
+<!-- FIX-COWORK-SPAWNFANOUT-NO-SESSION-ID-IN-LEAF-ENTRY-PROMPT (2026-07-31): SESSION_ID_LINE
+     carries cowork-team's OWN resolved session id into ENTRY_PROMPT as a concrete literal
+     string, so a leaf worker with no Bash grant (e.g. refine_bctc_md) has something real to
+     put in owner_client_session for its own task_claim/task_heartbeat/task_release calls.
+
+     `$CLAUDE_CODE_SESSION_ID` below denotes cowork-team's own resolved value — the SAME value
+     this file already resolves and uses directly for its own task_claim calls (Step 4.6,
+     published-marker template above), substituted into a concrete string BEFORE ENTRY_PROMPT
+     is dispatched. This is NOT the forbidden pattern (memory:
+     feedback_llm_issued_call_tool_does_not_expand_session_id_variable): the forbidden pattern
+     is writing the UNRESOLVED TOKEN TEXT "$CLAUDE_CODE_SESSION_ID" into a prompt string that a
+     DIFFERENT LLM session receives as its own input — that session has no shell and cannot
+     expand it. Here cowork-team performs the substitution itself, with its own Bash/env access,
+     at composition time; the spawned leaf worker only ever sees the already-resolved concrete
+     value as plain text, never the token.
+
+     SCOPE DECISION (documented per row AC-3): injected UNCONDITIONALLY for every leaf worker,
+     not scoped to only slots whose flow.md is known to declare a SELF-IDENTITY GUARD. Reasons:
+     (a) matches the router's own unconditional CLAUDE.md step-3 precedent — every router spawn
+     already carries its coordination session regardless of whether the target agent's flow
+     happens to need it; (b) a scope-to-guarded-slots allowlist would require every future flow
+     author who adds an owner_client_session dependency to remember to also update this
+     dispatcher file — exactly the "documented consumer, no documented producer" defect class
+     this row is the 5th recurrence of, and the allowlist itself would be the next instance;
+     (c) cost of the unconditional line is one extra ignorable text line for leaf workers that
+     never read it — no behavioral risk, since IDENTITY_PREAMBLE already established the same
+     unconditional-injection precedent for the off-flow guard. -->
+
 ```
+SESSION_ID_LINE = "\n\nCoordination: owner_client_session=" + $CLAUDE_CODE_SESSION_ID
+# ^ $CLAUDE_CODE_SESSION_ID here = cowork-team's own resolved value (see comment above) —
+#   NEVER emit the literal unresolved token text into ENTRY_PROMPT.
+
 if slot.trigger_prompt is present and non-empty:
   PROMPT_FILE = match slot.trigger_prompt's FIRST LINE against /^run\s+(\S+)/, capture group 1
 
@@ -285,17 +331,20 @@ if slot.trigger_prompt is present and non-empty:
     })   # per-work-item token was already claimed in Step 4.6 — release it since no spawn occurs
     continue to next slot in batch — do NOT spawn
 
-  ENTRY_PROMPT = IDENTITY_PREAMBLE + slot.trigger_prompt
+  ENTRY_PROMPT = IDENTITY_PREAMBLE + slot.trigger_prompt + SESSION_ID_LINE
 else:
   # No trigger_prompt on this slot — compose from flow_path (legacy fallback; every live
   # slot as of this fix carries trigger_prompt, so this branch is defensive only)
-  ENTRY_PROMPT = IDENTITY_PREAMBLE + "run " + slot.flow_path + "  slot=" + slot.slot_id
+  ENTRY_PROMPT = IDENTITY_PREAMBLE + "run " + slot.flow_path + "  slot=" + slot.slot_id + SESSION_ID_LINE
 ```
 
-Note: `IDENTITY_PREAMBLE` is prepended to BOTH branches (never to `slot.trigger_prompt` stored
-in `cowork-schedule.json` itself — that field stays untouched so the consistency check above and
-`scripts/agents-flow/cowork-match-slots.js`'s `extractPromptFlowPath()` keep matching its literal
-first line unmodified). The preamble is composed into `ENTRY_PROMPT` only, at spawn time.
+Note: `IDENTITY_PREAMBLE` is prepended and `SESSION_ID_LINE` is appended to BOTH branches (never
+written into `slot.trigger_prompt` stored in `cowork-schedule.json` itself — that field stays
+untouched so the consistency check above and `scripts/agents-flow/cowork-match-slots.js`'s
+`extractPromptFlowPath()` keep matching its literal first line unmodified; appending
+`SESSION_ID_LINE` at the END of `ENTRY_PROMPT`, after the consistency check already ran against
+`slot.trigger_prompt`'s own first line, keeps that FIRST-LINE match unaffected too). Both the
+preamble and the session-id line are composed into `ENTRY_PROMPT` only, at spawn time.
 
 **Spawn:**
 

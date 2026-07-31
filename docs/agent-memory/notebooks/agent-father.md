@@ -126,3 +126,15 @@
   structurally excludes BACKLOG/READY lanes; live-measured 395/633 (62.4%) open rows invisible.
   Fixed both `ci_red` dedup checks + the pre-existing identical defect on `repair_task_request`
   in the same file, 2nd commit — never ship a known-defective spec even after first push.
+
+## Fix (dev-team dispatch) 2026-07-31T15:05:00Z FIX-COWORK-SPAWNFANOUT-NO-SESSION-ID-IN-LEAF-ENTRY-PROMPT
+- `spawn-fanout.md` Step 5.2: neither ENTRY_PROMPT branch nor IDENTITY_PREAMBLE ever carried a
+  session id — `refine_bctc_md`'s no-Bash SELF-IDENTITY GUARD EXITs before claiming without one
+  (recurred 2x live, 2026-07-30/31). Fixed by appending `SESSION_ID_LINE` (cowork-team's own
+  resolved `$CLAUDE_CODE_SESSION_ID`, substituted BEFORE dispatch — never the unresolved token
+  text handed to the spawned LLM session) to `ENTRY_PROMPT` in BOTH branches, uniformly (matches
+  router's own unconditional precedent, avoids a 6th "no producer" recurrence via allowlist).
+- `slot.trigger_prompt` in `cowork-schedule.json` untouched (confirmed zero diff) — new
+  `scripts/agents-flow/cowork-spawn-entry-prompt-session-id.test.js` (7/7, RED confirmed against
+  pre-fix content) statically asserts both branches append the line; sibling
+  `cowork-schedule-consistency.test.js` (9/9) and `cowork-match-slots.test.js` (43/43) unaffected.

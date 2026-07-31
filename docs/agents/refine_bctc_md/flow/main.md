@@ -26,12 +26,15 @@ holds NO Bash (`.claude/agents/refine_bctc_md.md` tools: `Read, Write, mcp__gate
 it cannot resolve `$CLAUDE_CODE_SESSION_ID` itself via a shell env read. The value MUST arrive as a
 literal string via the spawn-prompt coordination parameter (the cowork-team dispatcher's
 `trigger_prompt`/`IDENTITY_PREAMBLE` composition for this slot — see
-`docs/agents/cowork-team/flow/spawn-fanout.md` § Step 5.2). Use whatever literal value the spawn
-prompt handed you — NEVER write the literal text `$CLAUDE_CODE_SESSION_ID` into a `call_tool`
-argument (an LLM-issued call is a direct function call, not a shell command, so the variable is not
-expanded; session memory: `feedback_llm_issued_call_tool_does_not_expand_session_id_variable`). If no
-session id was supplied in the spawn prompt, log `[refine_bctc_md] no owner_client_session in spawn
-prompt — task_claim will fail schema validation` and EXIT before claiming (do not guess a value).
+`docs/agents/cowork-team/flow/spawn-fanout.md` § Step 5.2, `SESSION_ID_LINE`, added
+FIX-COWORK-SPAWNFANOUT-NO-SESSION-ID-IN-LEAF-ENTRY-PROMPT 2026-07-31). The spawn prompt carries a
+trailing `Coordination: owner_client_session=<value>` line — extract `<value>` from it. Use
+whatever literal value the spawn prompt handed you — NEVER write the literal text
+`$CLAUDE_CODE_SESSION_ID` into a `call_tool` argument (an LLM-issued call is a direct function
+call, not a shell command, so the variable is not expanded; session memory:
+`feedback_llm_issued_call_tool_does_not_expand_session_id_variable`). If no session id was
+supplied in the spawn prompt, log `[refine_bctc_md] no owner_client_session in spawn prompt —
+task_claim will fail schema validation` and EXIT before claiming (do not guess a value).
 
 ## OFF-HOSE Guard
 
