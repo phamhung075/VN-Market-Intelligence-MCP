@@ -64,3 +64,41 @@
 - only: stamp the top-ranked candidate as the sub-flow prescribes.
 **why-decision:** TE-T21 ranks first by [priority, idx] among 17+ DRS-stranded candidates and its premise is still true — `.claude/skills/task-lock/SKILL.md` measured 283L this tick, so the row is not silently already-satisfied.
 **why-change:** no change from plan.
+
+### STEP po-S104 · po · 2026-07-31T22:57:02Z
+**task-id:** FIX-CI-SIZELINT-TECHANALYSIS-ROUTER-NEW-OFFENDER-143L
+**what-done:** Minted the ci_red row for router.go (143L>120L) after the mandatory pre-dedup failing-file read + 5-lane file-scoped dedup returned zero matches on the 3rd consecutive tick this defect fired.
+**what-considered:**
+- Dedup into FACTORY-TECHANALYSIS-fix-discarded-service-and-port (review), whose commit 39fbec098 caused it — rejected.
+- Amnesty as "already-triaged, prior ticks saw it" — rejected by the ANTI-AMNESTY FENCE.
+- Mint a new file-scoped FIX row — chosen.
+**why-decision:** The fence is explicit that pre-existence with no MATCHED row is a fabricated disposition. PRIMARY (dedup_key), SECONDARY (check_id/head_sha) and a broad /technical-analysis|size-lint/ sweep across all 5 non-terminal lanes each returned zero. The causing row is a different deliverable with a different gate; folding a CI-red into it would strand the red behind an unrelated qa verify.
+**why-change:** no change from plan.
+
+### STEP po-S105 · po · 2026-07-31T22:57:35Z
+**task-id:** FIX-CHEF-EVENING-L5-KINHDICH-SILENT-OMISSION
+**what-done:** Adjudicated TNB c121's fold-vs-new-row request by reading the evening synthesis JSON at source; refuted its premise and folded the finding here as an AC refinement.
+**what-considered:**
+- New HIGH data-integrity row for fabricated hexagram narrative (TNB explanation b) — rejected.
+- Fold into FIX-CHEF-L6-TOKEN-PERSISTENCE-RECURRING (TNB explanation a) — rejected.
+- Fold here with a corrected premise — chosen.
+**why-decision:** TNB asserted the JSON holds ZERO hexagram fields; the file (89L, read in full) carries Kinh Dich content in 4 places, including NVL "Tap Kham reversal -100%" verbatim at :52 — the exact claim called unbacked. Fabrication is refuted, so (b) dies. It is not an L6 token, so (a) is mis-scoped. The true residual is gap-token OVER-SCOPING, which is this row's own subject.
+**why-change:** Adjudicated against the artifact rather than the relayed report, per the standing "verify at source, not on a relayed verdict" rule.
+
+### STEP po-S106 · po · 2026-07-31T23:02:12Z
+**task-id:** FIX-BCTC-INGEST-PERIOD-IDENTITY-UNVALIDATED-VS-CONTENT
+**what-done:** Attached live post-ship evidence (12 quarantines / 23.5 min / 10 tickers / 0 stores) instead of minting a row for the 9+ BCTC Telegram notices.
+**what-considered:**
+- Treat the notices as the guard working correctly and skip — rejected.
+- Mint a new FIX row for the quarantine storm — rejected.
+- Annotate this row with the rate + skew data for qa — chosen.
+**why-decision:** A 0% pass rate is a suspect validator, not a proven guard, and the supplied period never once wins with margins up to 68:2 — but this row already owns that exact mechanism and is unverified in review, so a second row would fragment one defect. Root-causing the detector is dev/qa work, out of PO scope, so the Q1->Q4 balance-sheet-comparative explanation is recorded as a labelled hypothesis with a cheap decisive test, not a verdict.
+**why-change:** no change from plan.
+
+### STEP po-S107 · po · 2026-07-31T22:57:13Z
+**task-id:** TE-T14
+**what-done:** Ran the mandatory manual-dispatch sweep; re-stamped TE-T14 under the bounded re-admission branch and folded it into this tick's BATCH.
+**what-considered:**
+- only: stamp the top-ranked candidate as the sub-flow prescribes.
+**why-decision:** TE-T14 ranks first by [priority, idx] among 41 candidates; its prior stamp (2026-07-31T16:04:37Z) aged past the 4h staleness window without reaching dispatch, which is exactly the re-admission case flag_reentrant exists to catch.
+**why-change:** no change from plan.

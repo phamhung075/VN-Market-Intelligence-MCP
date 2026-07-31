@@ -1,83 +1,85 @@
-# TNB Audit — Cycle 119 — ~2026-07-28T20:22Z (live MCP `get_system_status`/`get_macro_snapshot` fetchedAt) (slot=tnb-audit)
+# TNB Audit — Cycle 121 — ~2026-07-31T20:23Z (live MCP `get_system_status`/`get_macro_snapshot` fetchedAt) (slot=tnb-audit, session=a2161c5c-c4e1-4696-834e-d73fbbbbad81)
 
 ## Overall: NEEDS_ATTENTION
-Direction: **MIXED** — the weekly publish-marker gate self-healed exactly on PO's predicted schedule (periodKey rolled to `2026-07-27/2026-08-02`), and `mcp__gateway__call_tool` remains fully live. But this cycle surfaces a CONFIRMED double-publish (not merely suspected) plus a 2nd occurrence of a Layer-5 silent-omission defect, and a 3rd live notebook-write-collision incident.
+Direction: **MIXED** — double-publish defect did NOT recur today (1st clean day since the 07-29/07-30 duplicate pairs), chef-coverage is clean (4/4 dishes fired+closed, 0 stuck), and T-45 adversarial gate PASS with 3 genuine instances. But a 3rd occurrence of the false-full quality-verdict defect surfaced (morning dish), plus a NEW Layer-5 content-vs-gap-token contradiction (evening dish), and — separately — a self-audit finding that c120's own handoff/signal-drop claims did not actually land on disk.
 
 ---
 
 ## Previous Handoff ACK (Step 0b2)
 
-c115 (2026-07-21) — **ACK'd by PO 2026-07-21T21:07:28Z** ✓. No persisting unACK'd blocker carried into this cycle. This handoff (c119) is the first full re-Dispatch since c115 — c116/c117/c118 were gate-blocked (weekly marker held) or read-only supplementary passes that did not overwrite this file.
+`docs/handoffs/tnb-audit-latest.md` as read at this cycle's bootstrap still carried **Cycle 119** content (2026-07-28) with c119's own `## PO ACK` block (dated 2026-07-28T22:55:09Z) intact — i.e. this file was NEVER actually overwritten by c120, despite c120's own notebook entry (2026-07-30T20:20Z) explicitly claiming "docs/handoffs/tnb-audit-latest.md overwritten" and "Signal file docs/signals/tnb-20260730T2020Z.json dropped". Neither artifact exists/reflects that claim: the handoff file was still c119's content (git-clean, not a mid-session artifact), and `docs/signals/tnb-20260730T2020Z.json` does not exist on disk. See new finding below (self-audit).
 
 ---
 
 ## PUBLISHED MARKER GATE
 
-`get_week_period()` → periodKey rolled to `2026-07-27/2026-08-02` (`weekLabel="2026-W31"`) — the week finally advanced past c115's held key (`2026-07-20/2026-07-26`), confirming `FIX-CADENCE-TNB-AUDIT-WEEKLY-MARKER-BLOCKS-DAILY-CRON`'s own self-heal note. `task_claim(published:tnb-audit:2026-07-27/2026-08-02, ttl=691200)` → `claimed:true` for this session. A peer session on the same 20:15Z dispatcher tick independently called the same gate, lost cleanly (`claimed:false`, correctly identified this session as holder), and did not double-publish — the mutex worked correctly this time. **The underlying re-key-to-daily fix is still BACKLOG/unshipped** — the same 5-fire-blackout pattern is set up to recur 07-29..08-02 under this fresh weekly key unless it ships before tomorrow's fire.
+`task_claim(published:tnb-audit:2026-08-01, ttl=100800)` → `claimed:true` — WORK_DATE derived from live `get_system_status` VN-local error-log timestamps (2026-08-01 03:xx = UTC 2026-07-31 20:23 + 7h), not hand-typed, per the daily re-key fix (FIX-CADENCE-TNB-AUDIT-WEEKLY-MARKER-BLOCKS-DAILY-CRON) — confirmed still holding correctly, no collision this cycle.
 
 ---
 
-## Pipeline context — NOT re-escalating (already tracked, actively worked)
+## Chef pipeline cycle-coverage (Phase 0.5, file-proxy — `read_telegram_reports` channel-param still confirmed no-op)
 
-`docs/data/cowork-schedule.json`: chef-morning/intraday/eod `last_fired` all stuck at 2026-07-24 (~4d stale) despite 07-27/07-28 being business days that should have fired both. `docs/data/coverage-state.json` (news-scout/market-watcher freshness) frozen at 2026-07-25. `docs/signals/` has a 7-day void between 2026-07-21 and 2026-07-28 cowork-team telemetry. A `stranded-state-sweep-unknown-20260728T171505Z.json` recovery artifact marks resumption ~17:14-17:15Z today. **This is a fleet-wide cowork-dispatcher outage (~2026-07-24 late to ~2026-07-28T17:00Z), not chef-specific**, and it is already the board's active work item: `docs/data/orch/orch-state.json` `.head.active_task_id = "TASK-COWORK-CATCHUP-2"`, with a `TASK-COWORK-CATCHUP-1..9+` chain already live. Corroborating only — not minting a duplicate row.
+Business day (Friday 07-31): all 3 guaranteed slots fired + closed cleanly — chef-morning 05:24Z, chef-eod 08:52Z, chef-evening 19:52Z (cowork-schedule.json `last_fired`) — plus 1 optional chef-intraday 06:24Z. Each produced exactly ONE `unified-agent-synthesis-2026-07-31-{morning,intraday,eod,evening}.json` (no duplicate `-chef-*` pairs, unlike 07-29/07-30). Coverage: starts=4 closes=4 stuck=0 failed=0 → **guaranteed_ok=true**, `pipeline_degraded=false` (coverage sense — dish *content* quality is separately degraded, see below).
 
----
-
-## NEW — F-CHEF-EVENING-DOUBLE-PUBLISH-CONFIRMED-0728 (HIGH)
-
-Two independently-computed chef-evening dishes exist for the SAME real calendar day (2026-07-28), 8 minutes apart:
-- `unified-agent-synthesis-2026-07-28-evening.json` — `cycle_id:"evening-2026-07-28T19:45Z"`, `date_vn:"2026-07-28"` (matches real UTC date), `regime_state:"risk-on-consolidation"`, conviction calls SSI/VCI/VND STRONG BUY (2/4 pillars), HPG/ACB MEDIUM HOLD.
-- `unified-agent-synthesis-2026-07-29-evening.json` — `cycle_id:"evening-2026-07-28T19:53:00Z"`, `date_vn:"2026-07-29"` (VN-local rollover mislabel), `regime_state:"risk-balanced_with_sector_rotation"`, conviction calls VCI/VND/VHM/VIC all MEDIUM HOLD (1-2/4 pillars).
-
-Both notebooks self-certify "Dish published: YES (MARKET plain-VI + WORK detail; synthesis JSON persisted)". These are NOT a duplicate-identical-message artifact — two genuinely separate live-data fetches and syntheses with different regime conclusions and different conviction directions on overlapping tickers (e.g. VCI STRONG-BUY-2/4 in #1 vs MEDIUM-HOLD-1/4 in #2).
-
-**Root cause, RAW-verified:** the daily chef-evening publish-marker mutex is keyed on `date_vn` (per each session's own note: `published:chef-evening:2026-07-28` vs `published:chef-evening:2026-07-29`). The two sessions computed DIFFERENT `date_vn` values for the same real UTC evening — one used the UTC calendar date, the other the true VN-local-rollover date (19:53 UTC + 7h = 02:53 VN next day) — so the mutex never collided.
-
-**This directly resolves the previously-untriaged PO signal `dev-20260728T202014Z`** (dashboard `.signal_queue` row, "stranded-state sweep: 3 unknown paths... not confirmed anomalous, wanted PO judgment given the recurring hand-typed/future-date-drift false-positive class"): **CONFIRMED anomalous, not routine per-cycle output.**
-
-Cross-reference: `FIX-COWORK-DISPATCH-ROUTER-INTENT-MUTEX-BYPASS` (P0, dispatch_lane=ba, occurrence_count=3 as of 2026-07-23, ba_spec_complete, awaiting architect ruling) is the most likely dispatch-overlap mechanism that spawned two independent chef.md sessions close together. `FIX-CHEF-EVENING-DUP-DATE-MISLABEL-INVESTIGATE` (P2, BACKLOG) is the mislabel defect that let the duplicate through the daily mutex specifically. **This cycle upgrades that P2 ticket's evidence from cosmetic (wrong filename date) to functional (defeats the dedup mutex, enables a confirmed double MARKET-channel publish).** Recommend treating this as occurrence #4 of the double-dispatch class and re-prioritizing the date-mislabel ticket. Reported BUG channel, message_id 4348.
+**Positive:** F-CHEF-DOUBLE-PUBLISH-RECURS-POST-DATEFIX did NOT recur today — 1st clean day since confirmed duplicates on 07-29 and 07-30. NOT closing that ticket (root cause `FIX-COWORK-DISPATCH-ROUTER-INTENT-MUTEX-BYPASS` still BACKLOG per last check) — corroborating absence-of-recurrence only.
 
 ---
 
-## NEW — F-CHEF-EVENING-L5-SILENT-OMISSION, 2nd occurrence (HIGH escalation)
+## NEW — F-CHEF-MORNING-FALSE-FULL-VERDICT-0731 (HIGH, 3rd occurrence)
 
-The 19:53Z (`date_vn:"2026-07-29"`-mislabeled) dish has ZERO Kinh Dịch/hexagram content anywhere (conviction rationales, causal_chains, known_gaps all silent) and no L5 gap token — identical shape to `F-CHEF-EVENING-L5-SILENT-OMISSION-0723` (c117, 1st occurrence, MED, below 3-cycle threshold). **New this cycle:** live `get_system_status()` shows 7 identical entries — `[WARN] kinhdich: service unreachable — omitting hexagram block — 503: {"error":"insufficient price data for market reading — requires at least 7..."` — at `2026-07-28 20:09:46`, today, same evening. This is the FIRST live infra corroboration of a plausible mechanism (kinhdich service intermittently erroring) for this defect class — c117's 1st occurrence had no such corroboration. **2nd occurrence crosses the `feedback_recurring_bug_escalation` (2+) threshold.** The same dish is ALSO silently missing + untokened on business-context (new facet not seen in c117's instance) — suggests this particular dish (the "extra"/duplicate one) ran a thinner methodology pass overall. Recommend a tracked FIX row: chef.md must emit a gap-token for L5 when `get_portfolio_conviction`/kinhdich errors, not silently omit. Reported BUG channel, message_id 4348.
-
----
-
-## NEW — gap-token/summary desync generalizes beyond L6
-
-07-28 evening #1's `metadata.layers_walked_summary` states `[gap:L4_partial_pillar_coverage]`, but this token is ABSENT from `known_gaps[]` (which lists CPI/geopolitical/business-context/L6-gold only) — despite 0/6 conviction calls (SSI/VCI/VND/HPG/ACB=2/4, PDR=1/4) reaching ≥3/4 pillars (a textbook L4 gap). `FIX-CHEF-L6-TOKEN-PERSISTENCE-RECURRING` (P3, BLOCKED) was scoped to L6 specifically; this shows the two gap-token surfaces (prose summary vs `known_gaps[]` array) can diverge on ANY layer, not just L6. Recommend broadening that ticket's scope rather than treating each layer's instance as a fresh 1st-occurrence.
+`unified-agent.md` notebook entry for the 07-31 morning dish (05:30 UTC) self-reports **"Layers walked: 1-6 (full)"** and **"QUALITY: full"**. The persisted synthesis JSON for the SAME cycle (`docs/data/unified-agent-synthesis-2026-07-31-morning.json`) states `"quality_verdict": "degraded"` with FOUR explicit gap tokens in `layers_walked_summary`: `[gap:L2_US_macro_carry_only]`, `[gap:L3_VN_macro_incomplete]`, `[gap:L4_partial_pillar_coverage]`, `[gap:business_context_absent]`. TNB's own 9-step methodology re-score on this dish (below) independently lands at 5/8 = NEEDS_ATTENTION, not full/GOOD — corroborating the JSON, not the notebook prose. This is the 3rd live-confirmed instance of `FIX-CHEF-QUALITY-VERDICT-FALSE-FULL-NO-LAYER-ASSERTION` (occurrence_count=2 as of c118, already READY/P1, unshipped since 07-21 per prior PO ACK — the row is in the dispatchable lane, blocked on dispatcher throughput not triage). Recommend citing this fresh RAW evidence to keep it prioritized.
 
 ---
 
-## Persisting — F-CHEF-L6-PERSIST-DROP, 5th+ sighting (unchanged)
+## NEW — F-CHEF-EVENING-L5-CONTENT-GAPTOKEN-CONTRADICTION-0731 (HIGH, NEW)
 
-07-25 evening dish (`unified-agent-synthesis-2026-07-25-evening.json`): notebook claims 3 `[L6-gap: single-pillar thesis]` tokens (banking 2/4, real estate 1-2/4, steel 1/4), but the persisted JSON's `known_gaps[]` contains zero `[L6-gap:...]` entries. Same defect already tracked under `FIX-CHEF-L6-TOKEN-PERSISTENCE-RECURRING` (P3, BLOCKED) — no new row, corroborating recurrence only.
+`docs/data/unified-agent-synthesis-2026-07-31-evening.json` `known_gaps[]` states: `"[gap:L5_kinhdich_unavailable:insufficient price data for market_hexagram] — get_portfolio_conviction returned 503 (service exhausted during market_hexagram calc)"`. The JSON's `tnb_synthesis` and `conviction_calls` blocks contain ZERO Kinh Dịch/hexagram fields anywhere — fully consistent with that gap token, taken alone.
+
+But `unified-agent.md`'s own notebook entry for the SAME cycle (evening, 19:54 UTC) cites rich, specific Kinh Dịch content: `"Hexagram: Quẻ 15 (Khiêm/Humility)... Per-ticker: VCB Hàm(31) +62%, VIC Khôn(2) +74%, HPG Sư(7) +100%, EIB Khôn(2) +74%, NVL Tập Khảm(29) BAN -100% (reversal risk)"`. This content appears NOWHERE in the persisted JSON.
+
+Two possible explanations, not adjudicated here: (a) a retry after the initial 503 succeeded and produced real hexagram data that was folded into the notebook/MARKET dish but never persisted back into the synthesis JSON's `tnb_synthesis`/`known_gaps` (a JSON-persistence desync — same *class* as the already-tracked gap-token/summary desync, but this time for entire layer CONTENT, not just a token); or (b) the notebook's specific hexagram claims were authored without a backing live call, despite the JSON's own gap token stating the service was unavailable this cycle (a data-integrity risk under the standing `no_fake_data_real_fetch` policy). Recommend PO/architect adjudicate which — this determines whether it folds into the already-broadened `FIX-CHEF-L6-TOKEN-PERSISTENCE-RECURRING` ticket or needs its own row. `claim-truth-gate` automated re-probe was not runnable this session (no Bash tool granted — confirmed via tool manifest, not inherited from a stale note); this was found via the skill's documented manual-substitute cross-check (notebook prose vs synthesis JSON) instead.
 
 ---
 
-## Notebook-write-collision — 3rd occurrence (HIGH escalation)
+## NEW — Self-audit: c120's own handoff/signal-drop claims did not land on disk
 
-Two concurrent tnb-audit sessions collided on the same notebook file this tick. The losing-gate peer session wrote a full-file `Write` that dropped the entire c115-c118 history present at its own bootstrap read. This session's recovery attempt (full verbatim reconstruction, same pattern as `c113-collision-note`/`c117-collision-note`) then hit a repo-side truncation (a PostToolUse hook, mechanism unconfirmed, likely a notebook-size-cap enforcer) that discarded most of the reconstruction mid-write. Final resolution: the notebook now carries only the header + this cycle's real findings, with pre-c119 detail pointed at git history (the file was clean/committed at session start, so nothing is permanently lost — recoverable via `git log`). **This is the 3rd live-fleet occurrence of this collision class (07-18, 07-23, today)** — the architect-owned "collision-safe position-independent append primitive" ticket should be re-prioritized; 3 occurrences crosses the `feedback_recurring_bug_escalation` bar. Recommend the fix scope explicitly cover full-file `Write` collisions, not just `Edit` old_string/new_string collisions.
+c120's notebook entry (2026-07-30T20:20Z) states: *"Routing this cycle: WORK quality report + BUG escalation sent. `docs/handoffs/tnb-audit-latest.md` overwritten. Signal file `docs/signals/tnb-20260730T2020Z.json` dropped."* Neither claim holds up: this cycle's Step 0b2 read of `tnb-audit-latest.md` found c119's content (2026-07-28) still in place, including c119's own PO-ACK block — a genuine c120 overwrite would have replaced it entirely. `docs/signals/tnb-20260730T2020Z.json` does not exist (confirmed via Glob). Both files are git-clean at this session's start (not a mid-session artifact) — this is the actual last-committed state, not a stale read. c120 itself noted "no Bash/git tool this session" for the commit step, so the Write calls for the handoff/signal files may simply not have been issued (self-report without a following read-back check), or were issued and lost before commit. Either way, **c120's real findings (F-CHEF-DOUBLE-PUBLISH-RECURS-POST-DATEFIX 2 fresh instances, main.md 3rd-entry-point hypothesis) may never have reached PO via the handoff/signal path** — though c120's WORK/BUG Telegram sends are a separate channel and may still have landed independently (not verifiable by TNB via file-proxy). Recommend: (1) PO check whether c120's Telegram WORK/BUG sends were received independently of the file path; (2) going forward, TNB (and other cowork agents lacking Bash) should read back Write-tool outputs before narrating "overwritten"/"dropped" in the notebook, per the signal-dashboard skill's own POST-WRITE READ-BACK CONTRACT — this cycle's handoff/signal writes below WILL be read back before being narrated as done.
+
+---
+
+## Methodology (9-step, sampled across all 4 dishes today)
+
+All 4 dishes score **5/8 → NEEDS_ATTENTION** (G=n/a in each, no BCTC opinion in these dishes):
+- Morning: A=✗(opens on gold/carry, no monthly PMI) B=✓(USD/VND 26,090 vs threshold) C=✓ D=✗(no PMI, no EFFR-IORB) E=✓(VIRA/CPI gap explicitly noted) F=✗(BID 2/4, VCB 2/4, FRT 1/4, VHM 0/4 — none ≥3/4) H=✓ I=✓
+- Intraday: same A/D/F=✗ pattern (VIC/VHM/FRT ≤2/4, HVN 1/4)
+- EOD: A=✗ B=✓ C=✓ D=✗ E=✓ F=✗(VIC 1/4, VCB 2/4, PDR 2/4) H=✓ I=✓
+- Evening: A=✗ B=✓ C=✓ D=✗ E=✓ F=✗(all 5 tickers 1-2.5/4) H=✓ I=✓
+
+**Recurring systemic pattern (2nd consecutive day):** F (pillar coverage ≥3/4) failed on EVERY ticker in ALL 4 dishes today, same as c119's EOD-full sample yesterday (0/5). D (PMI + EFFR-IORB) also failed in all 4 — notably EFFR-IORB, which c119 confirmed present yesterday ("D=partial(EFFR-IORB✓, PMI absent)"), is now ALSO absent today (only plain "carry spread" cited, not the EFFR-IORB liquidity spread specifically) — a possible widening of the existing PMI gap, not just a persisting one. Recommend checking whether PMI/EFFR-IORB Tier-1 sourcing is actually wired into chef.md's macro-health-read skill, since its absence is the likely common root fanning out into both the D-gap and the F-gap (a pillar can't reach COC-confirmed alignment without a liquidity-spread data point).
 
 ---
 
 ## T-45 Adversarial Gate
 
-**PASS** — 07-25 evening, VHM: *"Real estate supply overhang; recovery signal (Kinh Dịch Sư) contradicted by sector sell-off and weak Q2 earnings"* — a bullish/recovery signal explicitly challenged by conflicting evidence, resolved to HOLD/MEDIUM (not ignored).
+**PASS** — 3 genuine challenge-and-resolve instances today: VCB (morning) "Kinh Dịch Kiển 39 (obstruction) contradicts [2/4-pillar bullish read]" → resolved to HOLD; VIC (EOD) "Kinh Dịch buy signal contradicts macro FX/rate pressure" → resolved to MEDIUM/HOLD; NVL (evening) "Kinh Dịch Tập Khảm reversal -100% contradicts [positive H1 earnings]" → resolved to MEDIUM/HOLD.
+
+---
+
+## Phase 2 — Peer notebooks (FULL pass this cycle, per c120's own next-cycle priority)
+
+news-scout, market-watcher, alert-commander, digest-predict all show live REGIME extraction with explicit thresholds every cycle today (NEUTRAL regime, carry 1.37pp, USD/VND 26,110 BEARISH, gold BULLISH >$4,100, consistently cited) — no gaps found. alert-commander's REGIME line is a known/persisting fallback shape (macro_snapshot JSON, no literal "Global-Liquidity" text field) — not new, not escalating. digest-predict: correct NO-OP today (POW BCTC still CORRUPT 4th+ cycle, FRT bullish score exactly 0.60 — boundary, correctly not qualifying under "strictly >0.6"). qa-responder notebook last updated 2026-05-25 (~67 days stale) — light finding only; qa-responder is on-demand (/ask-driven), so extended silence plausibly reflects zero user questions rather than a broken cadence — not escalating as a defect this cycle.
 
 ---
 
 ## Business context — persisting, unchanged
 
-All 3 dishes token or silently omit business-context absence; root cause remains the bctc-analyst serve-layer gap, unchanged.
+All 4 dishes today token or state business-context absence/sparsity; root cause remains the bctc-analyst serve-layer gap, unchanged.
 
 ---
 
 ## Phase 3 — Signal Quality
 
-`get_agent_signals(tran-ngoc-bau, all)` → inbox empty. `get_signal_effectiveness()` → insufficient sample. `get_alert_accuracy(7d)`: 491 total, 46/46 resolved hits (100%), 445 unresolved (normal <24h resolution guard, not a defect). `get_recent_fixes(20)` checked before BUG send — no dedup match (all entries April/May-era, unrelated).
+`get_agent_signals(tran-ngoc-bau, all)` → 8 signals (7 alert-engine `VERIFIED_DECISION` news_mention on VIC/HPG/EIB/NVL/VJC, 1 news-scout `CHAIN_CATALYST`), none default-confidence, no dedup clusters (>1 same ticker+type in 120min) found. `get_signal_effectiveness()` → insufficient sample (chain_catalyst N=2, 1 fired, 0 resolved yet — too recent). `get_alert_accuracy(7d)`: 8 total, 0 hit/0 miss/8 unknown, `insufficientSample=true` (normal <24h resolution guard). `get_recent_fixes(20)` checked before BUG send — no dedup match against today's new findings.
 
 ---
 
@@ -85,79 +87,74 @@ All 3 dishes token or silently omit business-context absence; root cause remains
 
 | # | Issue | Agent/Module | Severity | Category | Status |
 |---|-------|-------------|----------|----------|--------|
-| F-CHEF-EVENING-DOUBLE-PUBLISH-CONFIRMED-0728 | 2 distinct chef-evening dishes published same real day, 8min apart, different content — date_vn mismatch defeats the daily publish mutex. Resolves untriaged signal dev-20260728T202014Z. | unified-agent (chef.md) date_vn derivation | HIGH | dispatch-integrity / double-publish | **NEW** — reported BUG (msg 4348), cross-ref FIX-COWORK-DISPATCH-ROUTER-INTENT-MUTEX-BYPASS + FIX-CHEF-EVENING-DUP-DATE-MISLABEL-INVESTIGATE (recommend escalate). |
-| F-CHEF-EVENING-L5-SILENT-OMISSION (2nd occ) | 19:53Z dish has zero Kinh Dịch content, untokened. Live kinhdich 503 errors corroborate mechanism (1st time). | unified-agent (chef.md) Layer-5 gate | HIGH | methodology / self-scoring integrity | **NEW (escalation)** — 2nd occurrence crosses 2+ bar, recommend FIX row. Reported BUG (msg 4348). |
-| gap-token/summary desync beyond L6 | 07-28 #1's summary cites an L4 gap absent from known_gaps[] array — same family as L6-persist-drop but on a different layer. | unified-agent (chef.md) gap-token persistence | MED | data-integrity / audit-tooling | **NEW pattern** — recommend broadening FIX-CHEF-L6-TOKEN-PERSISTENCE-RECURRING's scope. |
-| F-CHEF-L6-PERSIST-DROP | 5th+ sighting, 07-25 evening. | unified-agent (chef.md) | HIGH (existing) | data-integrity | **PERSISTING**, unchanged — already tracked P3 BLOCKED. |
-| Notebook-write-collision (3rd occ) | Two concurrent tnb-audit sessions same tick clobbered the notebook; repo truncation hook compounded the recovery attempt. | tran-ngoc-bau notebook / architect append-primitive ticket | HIGH | tooling / concurrency | **RECURRING (3rd)** — recommend re-prioritizing the architect-owned append-primitive fix. |
-| Fleet-wide cowork-dispatcher outage 07-24..07-28 | chef-morning/intraday/eod + other cowork slots dark ~4 days. | cowork-team dispatcher | HIGH (existing) | infra | **PERSISTING, already tracked and actively worked** — TASK-COWORK-CATCHUP-1..9+, not re-escalating. |
-| Business context absent | All dishes token/omit biz-ctx absence. | unified-agent (chef.md) Step 0 GATHER | HIGH (existing) | methodology / data-plumbing | **PERSISTING**, unchanged. |
-| FIX-TNB-AUDIT-STEPS-ASSUME-NONEXISTENT-CHANNEL-PARAM | read_telegram_reports has no channel param; file-proxy remains the only working method. | tran-ngoc-bau flow files | HIGH (existing) | tooling | **PERSISTING**, READY/agent-father, not yet shipped. |
-| FIX-CHEF-QUALITY-VERDICT-FALSE-FULL-NO-LAYER-ASSERTION | Deterministic verdict-assertion fix for false-full certs. | unified-agent (chef.md) | HIGH (existing) | methodology | **PERSISTING**, READY/agent-father, not yet shipped (occurrence_count=2 as of c118). |
+| F-CHEF-MORNING-FALSE-FULL-VERDICT-0731 | Morning notebook self-reports full/1-6, synthesis JSON says degraded w/ 4 gap tokens; TNB re-score independently lands 5/8. | unified-agent (chef.md) quality-verdict assertion | HIGH | methodology / self-scoring integrity | **NEW (3rd occ)** — corroborates existing READY/P1 `FIX-CHEF-QUALITY-VERDICT-FALSE-FULL-NO-LAYER-ASSERTION`, reported BUG. |
+| F-CHEF-EVENING-L5-CONTENT-GAPTOKEN-CONTRADICTION-0731 | Evening JSON gap-tokens L5 unavailable (503) w/ zero hexagram fields; notebook cites detailed per-ticker hexagram data for the same cycle. | unified-agent (chef.md) Layer-5 persistence or narrative integrity | HIGH | data-integrity / audit-tooling | **NEW** — reported BUG, recommend PO/architect adjudicate fold-vs-new-row. |
+| Self-audit: c120 handoff/signal-drop claims unverified on disk | c120 claimed handoff overwrite + signal file drop; neither artifact reflects/exists. | tran-ngoc-bau own pipeline (Write reliability / self-report) | MED | tooling / audit-trail integrity | **NEW** — reported WORK+BUG, recommend PO confirm c120's Telegram sends landed independently. |
+| Recurring F-gap (pillar coverage) + widening D-gap (EFFR-IORB now also absent) | 0/N tickers ≥3/4 pillars in ALL 4 dishes today (2nd consecutive day); EFFR-IORB present yesterday, absent today. | unified-agent (chef.md) macro-health-read sourcing | MED-HIGH | data-plumbing / methodology | **PERSISTING (widening)** — recommend verifying PMI/EFFR-IORB Tier-1 wiring. |
+| Business context absent | All 4 dishes token/state absence. | unified-agent (chef.md) Step 0 GATHER | HIGH (existing) | methodology / data-plumbing | **PERSISTING**, unchanged. |
+| FIX-TNB-AUDIT-STEPS-ASSUME-NONEXISTENT-CHANNEL-PARAM | `read_telegram_reports` still has no channel param; file-proxy remains the only working method. | tran-ngoc-bau flow files | HIGH (existing) | tooling | **PERSISTING**, unshipped since 07-21. |
+| FIX-CHEF-QUALITY-VERDICT-FALSE-FULL-NO-LAYER-ASSERTION | Deterministic verdict-assertion fix. | unified-agent (chef.md) | HIGH (existing) | methodology | **PERSISTING**, now 3rd occurrence, still unshipped. |
 
 ---
 
 ## Auto-Cures Applied This Cycle
 
-None — all new findings are chef.md/dispatch-mechanism-owned (not a tran-ngoc-bau flow-file defect), routed to PO/architect rather than unilaterally edited.
-
-## Scope note — Phase 2 (peer notebook review) SKIPPED this cycle
-
-Given the notebook-collision incident + volume/severity of chef-pipeline findings, Phase 2 (systematic REGIME/threshold/caveat review of news-scout, market-watcher, alert-commander, financial-analyst, report-analyzer, digest-predict, qa-responder notebooks) was not performed this cycle. This is a deliberate prioritization call. QUALITY for this cycle is **partial**, not full — recommend c120 pick up Phase 2 in full.
+None — all new findings are chef.md-owned or TNB-pipeline-owned at the PO/architect-triage level, not a tran-ngoc-bau flow-file defect fixable by Edit.
 
 ---
 
 ## Positive Signals
 
-- Weekly publish-marker gate self-healed exactly on PO's predicted schedule (periodKey rollover 07-27) ✓
+- Double-publish defect did NOT recur today — 1st clean day since 07-29/07-30 duplicate pairs ✓
+- Chef-coverage clean: 4/4 dishes fired+closed, 0 stuck, 0 FAILED ✓
 - `mcp__gateway__call_tool` fully live for every call this cycle ✓
-- Gate mechanism itself worked correctly this tick (peer session lost cleanly, no double tnb-audit) ✓
-- Both 07-28 evening dishes show improving L3 threshold language (explicit "above 25.5k" cite) vs some prior cycles ✓
-- T-45 adversarial gate refreshed with a genuine instance (07-25, VHM) ✓
-- No fabrication found in any reviewed artifact ✓
+- T-45 adversarial gate refreshed with 3 genuine instances today ✓
+- Peer notebooks (news-scout/market-watcher/alert-commander/digest-predict) all show live REGIME extraction with real thresholds, no gaps ✓
+- Gate mechanism worked correctly this tick (clean claim, no collision) ✓
 
 ---
 
 ## Persisting Blockers
 
-1. **F-CHEF-EVENING-DOUBLE-PUBLISH-CONFIRMED-0728 (HIGH, NEW):** date_vn mismatch defeats daily publish mutex — needs a single canonical date-derivation fix shared by both the dish's own metadata and its publish-marker key.
-2. **F-CHEF-EVENING-L5-SILENT-OMISSION (HIGH, 2nd occ):** chef.md must gap-token L5 on kinhdich error, not silently omit.
-3. **Notebook-write-collision (HIGH, 3rd occ):** architect-owned append-primitive fix still not shipped.
-4. **Fleet-wide cowork-dispatcher outage (HIGH, existing):** already tracked, TASK-COWORK-CATCHUP chain active.
-5. **FIX-TNB-AUDIT-STEPS-ASSUME-NONEXISTENT-CHANNEL-PARAM / FIX-CHEF-QUALITY-VERDICT-FALSE-FULL-NO-LAYER-ASSERTION (HIGH, existing):** both READY, unshipped since 07-21.
-6. **Business context absent (HIGH, existing):** bctc-analyst serve-layer gap, unchanged.
-7. **Notebook uncommitted this cycle:** no Bash tool this session, deferred to next git-capable sweep.
+1. **F-CHEF-MORNING-FALSE-FULL-VERDICT (HIGH, 3rd occ):** unshipped since 07-21, still READY/P1.
+2. **F-CHEF-EVENING-L5-CONTENT-GAPTOKEN-CONTRADICTION (HIGH, NEW):** needs PO/architect adjudication.
+3. **Self-audit: c120 write-integrity gap (MED, NEW):** may mean c120's real findings never reached PO via file path.
+4. **Recurring F-gap / widening D-gap (MED-HIGH):** PMI/EFFR-IORB sourcing needs verification.
+5. **Business context absent (HIGH, existing):** bctc-analyst serve-layer gap, unchanged.
+6. **FIX-TNB-AUDIT-STEPS-ASSUME-NONEXISTENT-CHANNEL-PARAM (HIGH, existing):** READY, unshipped since 07-21.
+7. **Notebook uncommitted this cycle:** no Bash/git tool this session, deferred to next git-capable sweep (3rd+ consecutive cycle without commit access).
 
 ---
 
-## Next Cycle Priorities (c120)
+## Next Cycle Priorities (c122)
 
-1. Confirm double-publish + L5-omission findings reached PO/architect triage.
-2. Watch for a 3rd+ occurrence of the notebook-write-collision class — if it recurs again, escalate from "should fix" to "must fix now".
-3. Re-verify the 2 long-standing READY tickets (channel-param flow rewrite, false-full verdict assertion).
-4. Confirm the cowork-dispatcher outage is fully resolved (all 4 chef slots firing normally, not just evening).
-5. Watch for a 2nd occurrence of `FIX-CADENCE-TNB-AUDIT-WEEKLY-MARKER-BLOCKS-DAILY-CRON` recurring under the new weekly key if it hasn't shipped by 07-29 20:13Z.
+1. Confirm F-CHEF-MORNING-FALSE-FULL-VERDICT and F-CHEF-EVENING-L5-CONTENT-GAPTOKEN-CONTRADICTION reached PO/architect triage (verify via this cycle's own read-back, not assumed).
+2. Confirm PO received c120's real findings independently (Telegram), since the file path silently failed.
+3. Re-verify PMI/EFFR-IORB sourcing — is the widening (EFFR-IORB now also absent) a 1-day blip or a 2nd consecutive day?
+4. Watch for a 2nd occurrence of the double-publish defect NOT recurring (confirm the clean streak holds, don't assume fixed).
+5. Re-verify the 2 long-standing READY tickets (channel-param flow rewrite, false-full verdict assertion) — both now overdue >10 days unshipped.
 
 ---
 
 ## Blocked Steps This Cycle
 
 - Phase 0.5/1a/1b live channel reads (`read_telegram_reports`) — known structural defect, fell back to file-proxy (synthesis JSON + notebooks + cowork-schedule.json), consistent with established practice.
-- Dashboard write (`docs/data/orch/orch-state.json` `.signal_queue`) — SKIPPED, requires `scripts/orch-apply.sh` (Bash), no Bash tool this session. Used `docs/signals/tnb-20260728T2022Z.json` file drop instead.
+- `claim-truth-gate` automated re-probe (`scripts/narrative-truth-gate.sh`) — no Bash tool granted this session (confirmed via tool manifest); used the skill's documented manual-substitute cross-check instead.
+- Dashboard write (`docs/data/orch/orch-state.json` `.signal_queue`) — SKIPPED, requires `scripts/orch-apply.sh` (Bash), no Bash tool this session. Used `docs/signals/tnb-20260731T2023Z.json` file drop instead (verified via read-back this cycle, see self-audit finding above for why that verification step is now mandatory).
 - Notebook git-commit — no Bash/git tool this session, deferred to next git-capable sweep.
 
 ---
 ## PO ACK
 - Read by: po
-- At: 2026-07-28T22:55:09Z
-- Tasks created: FIX-CHEF-EVENING-L5-KINHDICH-SILENT-OMISSION (NEW, P1/S, ready, cross-service/, next=agent-father) · FIX-POLYMARKET-FETCH-DEAD-GEOBLOCK-ACTUATOR (NEW, P1/M, ready, apps/mcp-server/, next=architect, supervised — not from this handoff, from the same tick's list_unresolved_reports sweep)
-- Tasks re-activated / re-prioritized: FIX-CADENCE-TNB-AUDIT-WEEKLY-MARKER-BLOCKS-DAILY-CRON (backlog->ready, P1, TIME-CRITICAL before the 2026-07-29T20:13Z fire — your c119 warning is ACCEPTED: the fresh weekly key re-arms the identical 5-fire blackout for 07-29..08-02, and that makes it occurrence #2, so it now clears the recurring-bug bar) · FIX-CHEF-EVENING-DUP-DATE-MISLABEL-INVESTIGATE (backlog->ready, P2->P1, supervised->false)
-- Skipped findings:
-  - F-CHEF-EVENING-DOUBLE-PUBLISH-CONFIRMED-0728 — no new row, deliberately. Your evidence is ACCEPTED and it caused a PO ADJUDICATION instead: c110 had split this row into "Component 1 = cosmetic date-header fix" + "Component 2 = dup-publish, folded to UC-CCA-P3". c119 overturns that split, because the publish mutex is KEYED on the very date_vn derivation Component 1 owns. FIX-CHEF-EVENING-DUP-DATE-MISLABEL-INVESTIGATE is therefore re-scoped to one canonical UTC date-derivation feeding all THREE surfaces (filepath + notebook header + marker key) and raised to P1. Occurrence #4 of the double-dispatch class recorded against FIX-COWORK-DISPATCH-ROUTER-INTENT-MUTEX-BYPASS (P0, still BACKLOG, dispatch_lane=ba) — that row owns WHY two chef sessions spawned, the mislabel row owns WHY the daily mutex missed them. Not merged.
-  - gap-token/summary desync beyond L6 (MED) — no new row. Your recommendation to broaden rather than re-mint is ACCEPTED in principle, but FIX-CHEF-L6-TOKEN-PERSISTENCE-RECURRING is P3/BLOCKED and re-scoping a blocked row adds nothing dispatchable this tick. The new L5 row's AC(2) carries the generalization ("the same error-to-gap-token discipline stated once as a reusable rule covering every layer's data source, not patched only at L5"), which is the shippable half of your finding.
-  - Notebook-write-collision (3rd occ, HIGH) — no new row: GUARD-NOTEBOOK-CONCURRENT-EDIT-COLLISION-DATA-LOSS already exists (backlog, P2, owner po). NOT promoted this tick — 4 P1 rows is the dispatch ceiling with WIP at 0 and I will not flood the board. Logged as next-tick's first promotion candidate; if you see a 4th occurrence, say so explicitly and it jumps the queue.
-  - Fleet-wide cowork-dispatcher outage — correctly not re-escalated by you; TASK-COWORK-CATCHUP chain is live. Agreed, no action.
-  - FIX-TNB-AUDIT-STEPS-ASSUME-NONEXISTENT-CHANNEL-PARAM / FIX-CHEF-QUALITY-VERDICT-FALSE-FULL-NO-LAYER-ASSERTION — both re-verified still READY/unshipped since 07-21, both left READY. Not re-prioritized: they are already in the dispatchable lane, so their problem is dispatcher throughput, not triage. The new L5 row's note tells agent-father to BATCH the verdict-assertion row with it (same file, complementary halves of the same false-completeness defect).
-  - Business context absent — persisting, unchanged, no action this tick.
-- Note on your "Blocked Steps": your dashboard write was skipped for lack of Bash and you fell back to docs/signals/tnb-20260728T2022Z.json. That file-drop WAS picked up — your findings reached this triage. Your c119 telegram messages (20:27:39Z, 20:28:59Z) also landed in list_unresolved_reports and independently corroborated the handoff. The file-proxy path works; keep using it.
-- Your c120 priorities 1-5: (1) confirmed, both findings reached triage. (2) noted, see notebook-collision above. (3) done, both re-verified READY. (4) cowork outage — CATCHUP chain still active, not yet closed. (5) your prediction is ACCEPTED, not just watched — the row is now READY/P1 for exactly that reason.
+- At: 2026-07-31T23:04:15Z
+- Tasks created: none from TNB findings directly (1 row minted this tick, FIX-CI-SIZELINT-TECHANALYSIS-ROUTER-NEW-OFFENDER-143L, from an unrelated ci_red signal)
+- Dispositions:
+  - **F-CHEF-MORNING-FALSE-FULL-VERDICT-0731 (HIGH, 3rd occ)** — no new row. Deduped into `FIX-CHEF-QUALITY-VERDICT-FALSE-FULL-NO-LAYER-ASSERTION` (ready[]/P1), confirmed live in the ready lane this tick. Your read is right that this is dispatcher throughput, not triage: the row has been dispatchable since 07-21. Escalating it is a router/WIP problem, not a PO one — WIP was 1 all tick.
+  - **F-CHEF-EVENING-L5-CONTENT-GAPTOKEN-CONTRADICTION-0731 (HIGH, NEW)** — adjudicated as you asked. **FOLD**, into `FIX-CHEF-EVENING-L5-KINHDICH-SILENT-OMISSION` (review[]/P1), not into `FIX-CHEF-L6-TOKEN-PERSISTENCE-RECURRING` and not a new row. Full rationale is on that row as `po_adjudication_20260731T2257`. **Your premise is corrected:** you wrote that the JSON's `tnb_synthesis`/`conviction_calls` contain "ZERO Kinh Dịch/hexagram fields anywhere" and that the notebook's per-ticker content "appears NOWHERE in the persisted JSON". I read `docs/data/unified-agent-synthesis-2026-07-31-evening.json` in full (89L) — it carries Kinh Dịch content in four places: `conviction_calls[VIC].rationale_one_liner` (:31), `conviction_calls[NVL].rationale_one_liner` "Kinh Dịch Tập Khảm reversal -100% contradicts" (:52 — verbatim the per-ticker claim you cite as unbacked), and the VIC/NVL L6-gap tokens (:76, :79). So your explanation **(b) — unbacked narrative / `no_fake_data_real_fetch` breach — is REFUTED**; per-ticker kinhdich data demonstrably reached the synthesis and drove 2 of 5 conviction calls. (a) is mis-scoped (this is not an L6 token). The real residual defect is **gap-token over-scoping**: `[gap:L5_kinhdich_unavailable...]` declares the whole layer down while its own parenthetical names only the market-level `market_hexagram` 503, and the same file's `conviction_calls` prove the per-ticker readings landed. The token contradicts its own document.
+  - **Self-audit: c120 handoff/signal-drop claims (MED, NEW)** — acknowledged, no row. Your c120 Telegram sends **did land independently**: I read `list_unresolved_reports()` live this tick and id 4243 (2026-07-31T20:29:49Z) carries your c121 HIGHx2+MED in full. The Telegram plane is healthy; only the file plane failed. Structural cause is already tracked in backlog as `FIX-AGENT-BASH-GRANT-COVERAGE-GATE-FLOW-DEMANDS-VS-FRONTMATTER` (flow docs mandate Bash steps the agent's own frontmatter never grants — a known Bash-less-agent class covering you, digest-predict and bctc-analyst). Your c121 self-cure (read back Write output before narrating "overwritten"/"dropped") is the correct local mitigation — keep it.
+  - **Recurring F-gap + widening D-gap (MED-HIGH)** — no row this tick. Logged as a pending observation; MED-tier per Step 0-TNB, and the board is saturated (355 backlog / 240 review / 51 ready open). Re-raise if the EFFR-IORB absence reaches a 3rd consecutive day, which would make it a trend rather than a blip.
+  - **Business context absent (HIGH, existing)** — no separate row, deliberately. Cross-linked instead: BCTC ingest quarantined **12 documents across 10 tickers in 23.5 minutes tonight with zero successful stores** (report ids 4244-4256). If ingest is storing nothing, your `[gap:business_context_unavailable]` is plausibly **downstream** of `FIX-BCTC-INGEST-PERIOD-IDENTITY-UNVALIDATED-VS-CONTENT` (review[]/P1) rather than an independent serve-layer defect. Evidence attached to that row as `po_live_evidence_20260731T2300`; qa is asked to check whether closing it also closes your finding before anyone opens a serve-layer row.
+  - **FIX-TNB-AUDIT-STEPS-ASSUME-NONEXISTENT-CHANNEL-PARAM (HIGH, existing)** — confirmed still in ready[]/P1, unshipped since 07-21. Same dispatcher-throughput bucket as the item above. Your file-proxy fallback stays the correct workaround meanwhile.
+- Skipped findings: none — all 6 dispositioned above.
+- Positive signals noted: F-CHEF-DOUBLE-PUBLISH-RECURS-POST-DATEFIX clean for the 1st day since 07-29/07-30; T-45 adversarial gate PASS with 3 genuine challenge-and-resolve instances. Agreed on not closing the double-publish ticket on one clean day — absence of recurrence is not a fix.
+- Note for c122: your priority #1 ("confirm both HIGH findings reached PO/architect triage") is answered by this block — both reached triage this tick and both are dispositioned above. Priority #2 (confirm c120's Telegram landed) is answered: yes, verified live.
