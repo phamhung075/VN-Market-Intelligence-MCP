@@ -1,6 +1,6 @@
 # dev-frontend notebook
 
-**Last updated:** 2026-07-29 | **Sprint:** QUALITY-AUDIT-FRONTEND-COVERAGE
+**Last updated:** 2026-07-31 | **Sprint:** COWORK-GUARANTEED-SLOT-CATCHUP
 
 ---
 
@@ -46,6 +46,22 @@ rebuild_required=true, NOT performed (ops-gated, not my zone). Board flipped `in
 
 ---
 
-**Current state:** 100 test files; 2183 pass / 2 fail (pre-existing QUE-TOOLTIP schema); tsc 0 errors.
+## Session: 2026-07-31 (FIX-CI-FRONTEND-ESLINT-BUNLOCK-DUAL-LOCKFILE-DRIFT — P0 dev-team S3 hand-dispatch)
+
+**DONE — CI-plane verified green — frontend-eslint job's first-ever GREEN run (was 0/8+ since added)**
+
+Root cause: `apps/frontend` tracked TWO lockfiles. `bun.lock` (canonical for CI — ci.yml:142 cache key + :146 `bun install --frozen-lockfile`) was stale since 7793ca286 (2026-06-02); commit 48eb49a0c (2026-06-11) added `tailwindcss-animate` to package.json and regenerated only `package-lock.json`, never `bun.lock`. Job died at "Install dependencies", before `lint:fence` ever ran.
+
+Fix: `bun install` in apps/frontend regenerated `bun.lock` (adds tailwindcss-animate + tightens some transitive deps that had drifted since June); `--frozen-lockfile` now exits 0. `package-lock.json` is NOT dead weight — `apps/frontend/Dockerfile` stage `deps` runs `npm ci --ignore-scripts` against it for the production image build (docker-compose.yml:419) — kept both lockfiles, documented the single regen-both command: `cd apps/frontend && bun install && npm install --package-lock-only`. `npm install --package-lock-only` produced 0 diff this cycle (package-lock.json already had the dep from 48eb49a0c).
+
+`bun run lint:fence` ran for the first time in this job's history: 0 violations, exit 0 — validates the FACTORY-GUARD-CI-TSBOUNDARIES-IMPL "fixed 3 fence violations" claim with real CI evidence for apps/frontend (previously zero evidence, job never reached that step).
+
+Commit 8c45fc1a0 (bun.lock only — package-lock.json unchanged, not staged). Pushed; CI run 30611681976 (headSha 8c45fc1a0) `frontend-eslint` conclusion=success, all 19 jobs green including size-lint (sibling row FIX-CI-SIZELINT-MACRO-VMT-LIQUIDITY-RESOLVERS-NEW-OFFENDER landed same tier) — main is fully CI-green.
+
+Full vitest: 2183 pass / 2 fail — same pre-existing unrelated QUE_DESCRIPTIONS/Kinh-Dich codegen schema mismatch (file untouched since 2026-06-13, confirmed by reading the failing test's imports, not stash — no import overlap with bun.lock). tsc clean. Board flipped `in_progress`→`review`, `next_agent=qa`. `.head` NOT touched (was already pointed elsewhere per CANONICAL:SSOT-STATUSFLIP-LANEMOVE rule — flipped task ≠ `.head.active_task_id`). Decision journal: `sprint-COWORK-GUARANTEED-SLOT-CATCHUP-dev-frontend.md` STEP dev-frontend-S4.
+
+---
+
+**Current state:** 100 test files; 2183 pass / 2 fail (pre-existing QUE-TOOLTIP schema); tsc 0 errors; `apps/frontend` bun.lock+package-lock.json in sync; `lint:fence` 0 violations.
 **Tech stack:** Remix 2 + TypeScript 5 strict + Tailwind 3 + shadcn/ui + Vitest + Playwright
-**Key patterns:** useFetcher self-fetching zones; FreshnessBadge(intraday/daily/weekly/event SLA); safeFetch bounded; honest-NULL (null_reason + gray badge, never fabricate) EXCEPT where a DTO's own type contract predates the freshness work and already defines an always-a-string fallback (e.g. analysis-briefs `generated_at`) — don't invent null semantics unprompted onto a pre-existing parse function; DDD layers enforced; route-colocated DTO/parser/formatter families kept textually distinct across merged pages (do-not-homogenize); Playwright G12 gate must run with an unused `PLAYWRIGHT_PORT` override if the live frontend Docker container occupies :3001 (reuseExistingServer piggybacks on it otherwise, false-greening against stale code) — reconfirmed 2026-07-29 (5th+ time). quality-audit FRESH checks are LIVE-PROBED (not static); its per-check `last_verified` staleness (distinct field, 7d window) is classified via `check-verification.ts` — never conflate the two. `parseDate` (app/lib/formatDate.ts) is the SSOT naive-SQLite→UTC normalizer — reuse it, never re-derive the space→T+Z transform inline; NOT every timestamp field needs it — confirm the actual server-side emission code before assuming naive-SQLite risk. A loader that parses a real DTO field then discards it in favor of a second, independently-computed local timestamp is a provenance bug worth fixing when that field becomes a freshness-badge input. `git stash` is unsafe in this shared-main working tree (peer agents commit concurrently, hundreds of unrelated pre-existing stash entries already present) — prefer direct code-reading to confirm a failing test is unrelated instead of stash A/B when the file content itself is sufficient evidence.
+**Key patterns:** useFetcher self-fetching zones; FreshnessBadge(intraday/daily/weekly/event SLA); safeFetch bounded; honest-NULL (null_reason + gray badge, never fabricate) EXCEPT where a DTO's own type contract predates the freshness work and already defines an always-a-string fallback (e.g. analysis-briefs `generated_at`); DDD layers enforced; Playwright G12 gate must run with an unused `PLAYWRIGHT_PORT` override if the live frontend Docker container occupies :3001. `parseDate` (app/lib/formatDate.ts) is the SSOT naive-SQLite→UTC normalizer. `git stash` is unsafe in this shared-main working tree — prefer direct code-reading to confirm a failing test is unrelated. **Dual lockfile:** `apps/frontend` intentionally carries both `bun.lock` (CI-canonical, dev speed) AND `package-lock.json` (Dockerfile `npm ci` for the prod image) — any `package.json` dependency change MUST run `cd apps/frontend && bun install && npm install --package-lock-only` to regenerate BOTH, or the next drift silently reproduces this exact CI-red (bit me once, 7 weeks latent before the fence job surfaced it).
