@@ -1,5 +1,17 @@
 
 ---
+## [Developer] 2026-07-31 — FIX-ORCHSTATE-HEAD-STAMP-DROPPED-CI-RED-1837A
+
+Extended `scripts/orch-stamp-updated-at.mjs` (`orch-apply.sh` Stage 1.5) to also diff-stamp the
+top-level `.head` routing pointer, not just `task_board` rows — ad-hoc jq callers were replacing
+`.head` with a bare `{status,active_task_id,next_agent}` literal that silently dropped
+`updated_at`/`updated_by` (`HeadSchema` optional + passthrough validated it clean), CI-red on
+`1837a-pipeline-state.test.ts` AC-1/AC-3. `updated_by` is preserved verbatim when the caller
+supplies it, backfilled with an honest non-agent placeholder only when a changed head omits it.
+Repaired live `.head` via `orch-apply.sh`. See `docs/policies/dev-standards.md` §
+CANONICAL:FIX-ORCHSTATE-UPDATED-AT-WRITE-PATH ("Extension — `.head` coverage").
+
+---
 ## [Developer] 2026-07-31 — FIX-COWORK-FIRE-ELECTION-TICK-TOMBSTONE
 
 Fixed the production double-fire bug (confirmed twice in 27h, 2026-07-30T21:00Z + 2026-07-31T00:00Z):

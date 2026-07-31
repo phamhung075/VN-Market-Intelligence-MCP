@@ -257,6 +257,18 @@ BEFORE Stage 2 conservation check / CAS-mtime rename.
 Test coverage: `bash scripts/test/orch-apply-wrapper-tests.sh` (STAMP-CHANGED / STAMP-SIBLING /
 STAMP-NEWROW / STAMP-IDEMPOTENT cases).
 
+**Extension — `.head` coverage (FIX-ORCHSTATE-HEAD-STAMP-DROPPED-CI-RED-1837A):** the top-level
+`.head` routing pointer (singular, not a `task_board` row) gets the SAME diff-based `updated_at`
+treatment — 30+ ad-hoc jq callers replace `.head` with a bare `{status,active_task_id,next_agent}`
+literal that dropped both `updated_at`/`updated_by` (`HeadSchema` declares both `.optional()` +
+`.passthrough()`, so it validated clean). `updated_by` is different: it identifies which agent wrote
+the pointer, information the actuator cannot honestly invent, so it is left byte-for-byte alone
+whenever the caller already supplies it (the common case — mirrors every other caller-supplied
+`updated_by`/`_updated_by` field in this schema) and is backfilled with an honest, self-identifying
+placeholder (never a fabricated agent name) ONLY when a changed head omits it. No new CLI arg, no
+`orch-apply.sh` call-site change. Test coverage: same suite, HEAD-STAMP-CHANGED / HEAD-STAMP-BACKFILL
+/ HEAD-STAMP-IDEMPOTENT cases.
+
 **CANONICAL: Orch-state conservation circuit-breaker (FIX-ORCHSTATE-CONSERVATION-GUARD-CIRCUIT-BREAKER)**
 ```bash
 # Standalone invocation (usually called internally by orch-apply.sh Stage 2 — rarely called directly):
