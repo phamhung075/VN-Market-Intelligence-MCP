@@ -4979,7 +4979,11 @@
         "note": "Step 0c lists 6 exact key-paths then full-reads 1733L file. Rewrite as single jq projection (~2k tokens vs ~12.7k). CLAUDE.md + system-map-query SKILL already mandate jq-only. Read-only projection of same SSOT, no semantic change.",
         "next_agent": "agent-father",
         "po_routing_ruling_20260721": "PO ARTIFACT-CLASS ROUTING RULING 2026-07-21T18:42Z. Rule: routing follows ARTIFACT CLASS, not directory. Any row whose deliverable is instruction-prose that an agent LOADS AND EXECUTES — .claude/agents/**, docs/agents/** (init/flow/knowledge/tools-package), .claude/skills/**/SKILL.md — routes to agent-father. Executable code (apps/**, scripts/**), codegen-from-registry, and data/root-config (docs/data/**, CLAUDE.md) route to zone-matched dev-* or developer. Rationale: for this system a flow doc IS the executable source; agent-father is already sole owner of agent-file lifecycle (dispatch/SKILL.md:48) and of NEW cron skill files (:50), and board precedent has 5/5 pre-existing docs/agents/ rows routed to agent-father/agents-architect/po and 0 to developer. Precedent for SKILL.md specifically: docs/signals/processed/dev-team-20260716T102429Z-autolaunch-safety-hold-uc-asl-p6.json already routed a signal-dashboard SKILL.md edit to agent-father as 'the factory rule'. ROOT CAUSE this closes: .claude/skills/zone-detect/SKILL.md resolves ONLY dev-<service> (Tier-1/2, needs apps/<service>/-shaped zone) or generic developer (Tier-3 fallback) — it has NO path to agent-father, so any docs/agents/ or .claude/skills/ row reaching execute-tier with next_agent unset gets the 'developer' placeholder and mis-routes. EXPECTED SIDE EFFECT (do NOT 'fix' this): next_agent=agent-father does not match the dev-role pattern ^dev(-|$)|^developer$, so the BOUNDED-1 NON-DEV-NEXT_AGENT gate (dev-team/flow/main.md:518) now WITHHOLDS these rows from unattended idle auto-pickup. That is the intended outcome — they require deliberate router dispatch to agent-father, not silent promotion to a generic developer.",
-        "updated_at": "2026-07-21T18:44:02Z"
+        "updated_at": "2026-07-31T16:04:37Z",
+        "po_manual_dispatch_flagged_at": "2026-07-31T16:04:37Z",
+        "po_manual_dispatch_flagged_by": "po (manual-dispatch-sweep)",
+        "po_manual_dispatch_class": "DRS-STRANDED-OFF-ALLOWLIST",
+        "po_manual_dispatch_note": "po (manual-dispatch-sweep) surfaced DRS-STRANDED-OFF-ALLOWLIST candidate — folding into this tick's BATCH"
       },
       {
         "id": "TE-T21",
@@ -5784,12 +5788,15 @@
       },
       {
         "id": "FIX-ALERT-CASCADE-OUTCOME-DEAD",
-        "priority": "P3",
+        "priority": "P1",
         "status": "BACKLOG",
         "title": "FIX-ALERT-CASCADE-OUTCOME-DEAD — record_signal_outcome never called: 1965+ rule hits, Eval=0 for ALL 49 cascade rules; 653/683 alerts (95.6%) 'unknown' verdict. Outcome feedback loop disconnected — system can't learn signal quality.",
         "type": "FIX",
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-ALERT-CASCADE-OUTCOME-DEAD",
-        "verify_note": "prior_status=TODO"
+        "verify_note": "prior_status=TODO",
+        "zone": "apps/mcp-server/",
+        "po_zone_repair_20260731": "zone was null (structurally un-dispatchable: dev-team Step 3 rejects a batch entry with no zone) and priority P3. record_signal_outcome is defined in apps/mcp-server/src/interface/mcp/tools/news-analysis/agentSignalTools.ts + registered in .../bootstrap/agentBootstrap.ts, so zone=apps/mcp-server/. Priority raised P3->P1 on LIVE evidence read 2026-07-31T16:04:37Z from the running container (docker exec, readonly bun:sqlite, /app/data/market.db): signal_outcomes has 105 rows total, MAX(checked_at)=2026-07-26 00:17:00 and zero rows created in the 5 days since — the outcome feedback loop is confirmed dead in production right now, not merely historically.",
+        "updated_at": "2026-07-31T16:04:37Z"
       },
       {
         "id": "FIX-VPS-NEWS-STALE-FALSEPOS",
@@ -10715,6 +10722,33 @@
         "created_by": "po/triage-20260731T1429Z",
         "status_note": "Not a theoretical gap: measured 100% fall-through on the live inbox, and the 14:09Z HIGH escalation this same tick is one of the affected rows. Cheap + specific (one table + one SKILL section + one guard).",
         "updated_at": "2026-07-31T14:33:40Z"
+      },
+      {
+        "id": "FIX-SIGNAL-OUTCOMES-LIVENESS-BLIND-TO-ZERO-PRODUCTION",
+        "type": "FIX",
+        "title": "signal_outcomes liveness guard reports 0 = healthy while ZERO rows are being produced — post-GLOB-fix the only outcome-pipeline detector is structurally blind to producer death",
+        "status": "BACKLOG",
+        "priority": "P1",
+        "size": "S",
+        "zone": "apps/mcp-server/",
+        "owner": "po",
+        "created_at": "2026-07-31T16:04:37Z",
+        "created_by": "po/triage-20260731T1556Z",
+        "baseline_pass": "14908",
+        "verification_gate": "live_runtime_query_after_deploy",
+        "files": [
+          "apps/mcp-server/src/scheduler/alerts/signalOutcomeResolutionJob.ts",
+          "apps/mcp-server/src/__tests__/FIX-SIGNAL-OUTCOMES-RESOLUTION-STALLED.test.ts"
+        ],
+        "related": [
+          "FIX-ALERT-CASCADE-OUTCOME-DEAD",
+          "FIX-SIGNAL-OUTCOMES-LIVENESS-GUARD-COUNTS-STRUCTURALLY-UNRESOLVABLE-ROWS",
+          "FIX-SIGNAL-OUTCOMES-RESOLUTION-STALLED"
+        ],
+        "desc": "FOUND WHILE TRIAGING telegram reports #4236/#4237 (both RESOLVED as stale pre-deploy false alarms — see status_note). checkStalledResolutionLiveness() (signalOutcomeResolutionJob.ts:80-114) is the ONLY liveness detector on the signal-outcome calibration pipeline. It asks exactly one question: 'how many rows have checked_at IS NULL and created_at older than 72h (and a 3-letter ticker code)?'. That predicate is monotone in ROW EXISTENCE — it can only be non-zero if rows are actually being created. LIVE STATE read from the running container 2026-07-31T15:5xZ (docker exec vn-market-intelligence-mcp-mcp-server-1, readonly bun:sqlite on /app/data/market.db): 105 rows total, 103 resolved, the 2 unresolved are the known-structural MACRO (2026-06-06) + MULTI (2026-06-25) pseudo-codes, MAX(checked_at) = 2026-07-26 00:17:00, and ZERO rows created in the 5 days since. So the guard now returns 0 and reports HEALTHY at the precise moment the pipeline is deadest — the classic passive-health / dead-detector shape (feedback_passive_health_masks_dead_data, feedback_composite_score_masks_dead_detector_pruned_table). Note this is a SECOND-ORDER consequence of the correct fix 314e70718 (FIX-SIGNAL-OUTCOMES-LIVENESS-GUARD-COUNTS-STRUCTURALLY-UNRESOLVABLE-ROWS, now in review[]): before it, the MACRO/MULTI rows kept the count at 2, which by accident made the guard fire daily and kept the subsystem visible. Excluding them was right, but it removed the last thing making noise, so nothing is left to notice that record_signal_outcome has stopped emitting entirely. The PRODUCER-side defect is already tracked as FIX-ALERT-CASCADE-OUTCOME-DEAD (this triage repaired its null zone -> apps/mcp-server/ and raised P3 -> P1 on the live evidence above); THIS row is the distinct DETECTOR-side gap and must not be deduped into it — fixing the producer without fixing the detector leaves the next stall equally invisible.",
+        "deliverable": "AC-1: checkStalledResolutionLiveness() (or a sibling assertion invoked from the same job) additionally fails loud when signal_outcomes has had ZERO rows created within a configurable recency window (suggest: no new row in > 72h while the upstream alert/cascade path is live), so producer death is detectable and not merely resolver stall. AC-2: the new assertion must be provably non-vacuous — a unit test that seeds an EMPTY / stale-only signal_outcomes table and asserts the guard alerts, RED before the fix and GREEN after (the existing FIX-SIGNAL-OUTCOMES-RESOLUTION-STALLED.test.ts only covers the checked_at-NULL branch and passes today against a dead pipeline). AC-3: keep the 314e70718 GLOB '[A-Z][A-Z][A-Z]' non-ticker exclusion intact — do NOT re-introduce MACRO/MULTI counting to restore noise. AC-4: preserve the existing at-most-one-BUG-alert-per-UTC-day dedup on the new branch too. VERIFY (verification_gate=live_runtime_query_after_deploy — NOT a host-side bun test alone, per feedback_host_cli_integrity_check_false_ok_verify_through_runtime): after rebuild, docker exec the running mcp-server and confirm the new assertion returns non-zero/alerting against the CURRENT live market.db (which today has a 5-day creation gap), then confirm it returns clean against a seeded fixture with a fresh row.",
+        "status_note": "Origin: PO triage of unresolved telegram reports #4236 + #4237 ('[signal-outcome-resolution] LIVENESS: 2 signal_outcomes row(s) unresolved >72h'). Those two reports themselves are FALSE ALARMS and were resolved, NOT converted into this row — RAW evidence: the fix 314e70718 landed in git 2026-07-31T00:34:15Z but the mcp-server image was only rebuilt at 2026-07-31T14:44:17Z, so the container serving the 12:17:03Z and 13:17:00Z alerts was still running pre-GLOB code; the CURRENTLY deployed bundle does contain the filter (verified in-container at /app/src/scheduler/alerts/signalOutcomeResolutionJob.ts:92) and the live GLOB-filtered query now returns 0. The two alerts an hour apart (despite the at-most-one-per-UTC-day guard) are explained by the 14:44Z rebuild resetting the module-level _lastStalledAlertDate, not by a broken dedup. This row exists because verifying that false alarm surfaced a real, separate, undeduped defect.",
+        "updated_at": "2026-07-31T16:04:37Z"
       }
     ],
     "closed_sprints": [
@@ -18358,7 +18392,7 @@
         "plan_only": false,
         "created_by": "po/triage-20260731T0212",
         "created_at": "2026-07-31T02:12:46Z",
-        "updated_at": "2026-07-31T02:40:15Z",
+        "updated_at": "2026-07-31T16:04:37Z",
         "dedup_key": "sweepguard:escalation-actuator|defect:retroactive-unwindowed-counter+session-scoped-actor",
         "verification_gate": "live_repo_log_state_positive_control_not_fresh_scratch_actor",
         "title": "The escalation actuator shipped in eac71308e is ALREADY past threshold for 2 live sessions the moment it landed: prior_warns counts the ENTIRE historical .git/sweep-guard.log with no time window and no deploy baseline, so it is a de-facto instant fleet-wide reject flip — the exact flip the brief deliberately staged as a Phase-2 with 24h observation + rollback. Compounding it, `actor` is $CLAUDE_CODE_SESSION_ID, which every subagent of one router session SHARES, so it can never scope to an agent.",
@@ -18383,7 +18417,8 @@
         "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
         "claimed_at": "2026-07-31T02:23:07Z",
         "claimed_by": "dev-team (bounded-1 auto-pickup)",
-        "updated_by": "developer"
+        "updated_by": "developer",
+        "po_live_escalation_evidence_20260731": "FIRST LIVE POST-DEPLOY ESCALATED REJECT, mechanism-verified by po triage (docs/signals/processed/commit-sweep-guard-2026-07-31T154714Z-51817.json, 2026-07-31T15:47:14Z). Payload parsed per triage-signals.md MANDATORY parse-payload-first rule (NOT off git show --stat): 'escalated=true prior_warns=3 threshold=3 mode=warn', actor=64c7c677-0f0f-4cee-a3ce-dba79d70b7ae. Read scripts/git-hooks/pre-commit at source: L574-577 AC-1 deploy baseline self-installed at .git/sweep-guard.escalation-baseline=2026-07-31T04:04:07Z; L579-582 counts only log lines after that floor; L583-588 escalated=true forces escalate_effective=reject. Replayed the counter by hand against .git/sweep-guard.log: exactly 3 post-baseline BARE warns for this actor (04:04:07Z dev-team-3.md+notebooks/main.md, 12:50:40Z dev-team-5.md+notebooks/main.md, 12:57:21Z same pair) -> the 4th attempt was correctly BLOCKED. CONCLUSION FOR QA: AC-1 works as designed post-fix — the counter is genuinely windowed to the deploy baseline (pre-fix it would have counted the whole ~20-warn historical log), the block was a true positive, and the offending agent converged on its very first retry with an explicit pathspec. NO new sibling row minted: this is confirming evidence for THIS row, not a 7th member of the FIX-COMMIT-SWEEP-GUARD-* family. RESIDUAL NOTE (not re-litigated here): the AC-2 'session-scoped actor' arm was resolved by RENAME + documentation (pre-commit L491 keeps actor=$CLAUDE_CODE_SESSION_ID, L501/L612 now state the budget is POOLED across every agent in one coordination session) rather than by making it agent-scoped — QA should sign off on that as a deliberate WONTFIX-by-rename, not assume agent granularity was delivered."
       },
       {
         "id": "FIX-CI-SIZELINT-MCPSERVER-SIX-UNCOVERED-OFFENDERS",
@@ -19094,6 +19129,6 @@
     "ssot": true
   },
   "last_tick": "20260622T2215Z",
-  "_updated_at": "2026-07-31T05:02:21Z",
-  "_updated_by": "po (Step 0-SIG triage-20260731T050221)"
+  "_updated_at": "2026-07-31T16:04:37Z",
+  "_updated_by": "po/triage-20260731T1556Z"
 }

@@ -127,3 +127,39 @@
 - Mint the drift so the next ci_red triage does not re-pay it.
 **why-decision:** orch-apply Stage 1b ABORTS on the doc's own literal `status: "TODO"`; the validator's error text offers "move the row to another lane" as an alternative remedy, which a token-pressured agent could take and land the row in the wrong lane. Fail-loud but recurring => fix the doc.
 **why-change:** no change from plan. Routed to agent-father, not self-edited — docs/agents/** is instruction-prose per the 2026-07-21 ARTIFACT-CLASS ROUTING RULING.
+
+### STEP po-S94 · po · 2026-07-31T16:06:49Z
+**task-id:** FIX-CI-IMF-INTEGRATION-TEST-NONHERMETIC-LIVE-API
+**what-done:** ci_red CI-RED-a26653ff deduped to the existing review[] row; no new mint, no status_note edit.
+**what-considered:**
+- Mint per ANTI-AMNESTY BACKSTOP (CI baseline is 0 fail, so a ci_red is always actionable).
+- Dedup if and only if a FILE-scoped open row matches.
+**why-decision:** Ran the MANDATORY pre-dedup FAILEDFILE read FIRST (`gh run view 30639708394 --log-failed`) — FAILING_FILES = src/__tests__/1296b-imf-integration.test.ts, exactly 1. dedup_key `ci_job:bun test|file:src/__tests__/1296b-imf-integration.test.ts` matches the review[] row byte-for-byte, and that row's own origin_signal_id IS this signal id — same signal re-drained, not a new SHA. Fix d1bb1140f already landed AFTER a26653ff. Observed-SHA list already contains a26653ff2, so nothing to append.
+**why-change:** no change from plan.
+
+### STEP po-S95 · po · 2026-07-31T16:06:49Z
+**task-id:** FIX-SWEEPGUARD-ESCALATION-RETROACTIVE-COUNTER-AND-SESSION-SCOPED-ACTOR
+**what-done:** Parsed the bug-escalation payload (escalated=true) and appended live post-deploy evidence to this review[] row instead of minting a 7th family sibling.
+**what-considered:**
+- Mint a new REPEAT-OFFENDER-AFTER-BLOCK FIX row (literal reading of the triage table).
+- Append to the row that already owns escalation-actuator semantics ("open/append" — append is compliant).
+**why-decision:** Read scripts/git-hooks/pre-commit at SOURCE, not `git show --stat` (the row's own INVALID-disposition list). L574-577 self-installs the deploy baseline, L579-582 windows the count to it, L583-588 forces reject. Hand-replayed .git/sweep-guard.log: exactly 3 post-baseline BARE warns for this actor — the block was a TRUE POSITIVE and the actuator converged the offender on its first retry. That is the fix WORKING, so a new row would be churn; the family already has 3 rows awaiting QA.
+**why-change:** no change from plan. Flagged for QA that AC-2 "session-scoped actor" shipped as WONTFIX-by-rename (actor is still $CLAUDE_CODE_SESSION_ID, pooled across every agent in a session), so QA must sign that off deliberately rather than assume agent granularity.
+
+### STEP po-S96 · po · 2026-07-31T16:06:49Z
+**task-id:** FIX-SIGNAL-OUTCOMES-LIVENESS-BLIND-TO-ZERO-PRODUCTION
+**what-done:** Resolved telegram #4236/#4237 as stale pre-deploy false alarms, then minted the real defect their verification exposed; also repaired FIX-ALERT-CASCADE-OUTCOME-DEAD's null zone (-> apps/mcp-server/) and P3 -> P1.
+**what-considered:**
+- Treat #4236/#4237 as a live resolver stall and mint a stall row.
+- Dedup into the already-open FIX-SIGNAL-OUTCOMES-LIVENESS-GUARD-COUNTS-STRUCTURALLY-UNRESOLVABLE-ROWS and close.
+- Resolve the reports but mint the distinct DETECTOR-side gap the check surfaced.
+**why-decision:** Queried the LIVE runtime (docker exec, readonly bun:sqlite, /app/data/market.db), not the host: the 2 stuck rows are exactly MACRO+MULTI, and the deployed bundle DOES now carry the GLOB filter (verified in-container at signalOutcomeResolutionJob.ts:92) — fix 314e70718 landed 00:34Z but the image was only rebuilt 14:44Z, after both 12:17Z/13:17Z alerts. So the reports are stale, NOT a stall. But the same query showed MAX(checked_at)=2026-07-26 and zero rows created in 5d: the guard's predicate is monotone in row EXISTENCE, so post-fix it returns 0=healthy precisely when the producer is dead. Distinct from the producer row — fixing one without the other leaves the next stall invisible.
+**why-change:** no change from plan. Not deduped into FIX-ALERT-CASCADE-OUTCOME-DEAD: that row owns the producer, this one owns the detector.
+
+### STEP po-S97 · po · 2026-07-31T16:06:49Z
+**task-id:** TE-T14
+**what-done:** Manual-dispatch sweep stamped TE-T14 (top of 40 eligible candidates) and folded it into this tick's BATCH.
+**what-considered:**
+- only path: Step 1 ranked TE-T14 first (P1, rank 1, lowest idx, unflagged); Step 2 mandates exactly ONE stamp per invocation.
+**why-decision:** Sub-flow is MANDATORY every tick and TE-T14 is a P1 DRS-STRANDED-OFF-ALLOWLIST backlog row (next_agent=agent-father, off the DRS allowlist) reachable by no other dispatch path.
+**why-change:** no change from plan. Supplied `files` from source (docs/agents/system-auditor/flow/main.md:51, the Step 0c full-read) since the row carried none.
