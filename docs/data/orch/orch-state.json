@@ -93,12 +93,12 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "TE-T12",
-    "next_agent": "agent-father",
-    "next_action": "dev-team S81 tier-1 dispatch: TE-T12 (dispatch-claim SKILL split) + FIX-PO-TRIAGE-SIGNALS-CIRED-TEMPLATE-STATUS-TODO-REJECTED-BY-VALIDATOR, both agent-father, parallel worktree-isolated.",
-    "updated_at": "2026-07-31T15:32:41Z",
-    "updated_by": "dev-team (S81 tier-1 dispatch)"
+    "status": "idle",
+    "active_task_id": null,
+    "next_agent": "router",
+    "next_action": "S81 pair merged+reviewed; awaiting qa or further dev-team dispatch.",
+    "updated_at": "2026-07-31T15:47:47Z",
+    "updated_by": "dev-team (S81 close-out)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -19005,6 +19005,58 @@
         "claimed_by": "dev-team (S79 tier-1 dispatch)",
         "commit_sha": "64d132e43",
         "review_note": "agent-father: bound po_manual_dispatch_flagged_at exclusion to a 4h staleness window (flag_reentrant) so a flagged-but-undispatched row re-enters a later BATCH instead of being permanently stranded (live TE-T12 proof, now re-admitted top-ranked idx 27). scripts/audits/po-manual-dispatch-sweep-verify.sh: new M-STALE-FLAGGED-REENTRANT positive control + refreshed G-ALREADY-FLAGGED negative control. Independently re-run: 15 checks PASS, exit 0. docs/policies/dev-standards.md:504-526 mirror updated in lockstep. Same-tick double-BATCH still structurally impossible (Step 1 computes candidate list once before Step 2 stamps). Did not touch orch-state.json, did not widen DRS allowlist. Commit 64d132e43."
+      },
+      {
+        "id": "TE-T12",
+        "title": "T-12 dispatch-claim SKILL (493L): front with ~40L CARD.md; point CLAUDE.md 2.5 at card [~54k tok/day]",
+        "owner": "agent-father",
+        "status": "REVIEW",
+        "type": "SPRINT-M",
+        "size": "M",
+        "priority": "P1",
+        "wave": 2,
+        "est_saving": "~54k tok/day",
+        "zone": "multi",
+        "sprint": "TOKEN-ECONOMY-AUDIT",
+        "depends": [],
+        "detail_ref": "docs/architecture-briefs/2026-07-12-token-economy-lazyload-audit.md#T-12",
+        "note": "Create .claude/skills/dispatch-claim/CARD.md (<=40L hot: ownership-key + Phase A orphan-probe + A.5 roster + Phase B intent PRE-CLAIM w/ try/finally). Point CLAUDE.md step 2.5 at CARD. Delete Reference Commits L483-493; add size-justification or split. Worst project ≤200L breach. UNBLOCKS TE-T23.",
+        "next_agent": "qa",
+        "po_routing_ruling_20260721": "PO ARTIFACT-CLASS ROUTING RULING 2026-07-21T18:42Z. Rule: routing follows ARTIFACT CLASS, not directory. Any row whose deliverable is instruction-prose that an agent LOADS AND EXECUTES — .claude/agents/**, docs/agents/** (init/flow/knowledge/tools-package), .claude/skills/**/SKILL.md — routes to agent-father. Executable code (apps/**, scripts/**), codegen-from-registry, and data/root-config (docs/data/**, CLAUDE.md) route to zone-matched dev-* or developer. Rationale: for this system a flow doc IS the executable source; agent-father is already sole owner of agent-file lifecycle (dispatch/SKILL.md:48) and of NEW cron skill files (:50), and board precedent has 5/5 pre-existing docs/agents/ rows routed to agent-father/agents-architect/po and 0 to developer. Precedent for SKILL.md specifically: docs/signals/processed/dev-team-20260716T102429Z-autolaunch-safety-hold-uc-asl-p6.json already routed a signal-dashboard SKILL.md edit to agent-father as 'the factory rule'. ROOT CAUSE this closes: .claude/skills/zone-detect/SKILL.md resolves ONLY dev-<service> (Tier-1/2, needs apps/<service>/-shaped zone) or generic developer (Tier-3 fallback) — it has NO path to agent-father, so any docs/agents/ or .claude/skills/ row reaching execute-tier with next_agent unset gets the 'developer' placeholder and mis-routes. EXPECTED SIDE EFFECT (do NOT 'fix' this): next_agent=agent-father does not match the dev-role pattern ^dev(-|$)|^developer$, so the BOUNDED-1 NON-DEV-NEXT_AGENT gate (dev-team/flow/main.md:518) now WITHHOLDS these rows from unattended idle auto-pickup. That is the intended outcome — they require deliberate router dispatch to agent-father, not silent promotion to a generic developer.",
+        "updated_at": "2026-07-31T15:47:47Z",
+        "po_manual_dispatch_flagged_at": "2026-07-31T06:56:27Z",
+        "po_manual_dispatch_flagged_by": "po (manual-dispatch-sweep)",
+        "po_manual_dispatch_class": "DRS-STRANDED-OFF-ALLOWLIST",
+        "po_manual_dispatch_note": "po (manual-dispatch-sweep) surfaced DRS-STRANDED-OFF-ALLOWLIST candidate — folding into this tick BATCH. Top of 40 unflagged candidates (38 DRS-stranded backlog + 2 ready-XOR) by [priority_rank, idx]. Live prior-art re-verified before folding, row is NOT stale: .claude/skills/dispatch-claim/SKILL.md is 494L with no size-justification header in its first 12 lines, no CARD.md exists in that dir, CLAUDE.md:7 still points step 2.5 at SKILL.md, and TE-T23 (which this unblocks) is still BACKLOG.",
+        "commit_sha": "b164e37781f015680df8fe85d7a7419378b49fa7",
+        "review_note": "dev-team RAW-verify 2026-07-31T15:57Z: commit fd000eca4 (cherry-picked, sha above post-merge) confirmed. CARD.md 38L (target <=40L), SKILL.md 497L unchanged path all 10 headings intact, CLAUDE.md step 2.5 diff confirmed pointing at CARD.md. Independently grepped every live flow/skill caller of dispatch-claim (task-lock/SKILL.md, cowork-team/dev-team main.md, orch-sentinel init+flow/main.md, dev-standards.md, cron-orch-sentinel.md) -- all reference named sections (Step 0a, Fire-Time Election) intact at unchanged path, none stale. Did not touch TE-T23 or orch-state.json (commit_zone honored). Carried forward the context-bloat-backstop signal artifact left in the worktree so it is not lost."
+      },
+      {
+        "id": "FIX-PO-TRIAGE-SIGNALS-CIRED-TEMPLATE-STATUS-TODO-REJECTED-BY-VALIDATOR",
+        "type": "FIX",
+        "title": "triage-signals.md ci_red mint template hardcodes status \"TODO\" for a backlog[] append — lane-coherence validator only accepts BACKLOG|BLOCKED, so every ci_red mint fails orch-apply on first attempt",
+        "status": "REVIEW",
+        "priority": "P2",
+        "size": "S",
+        "zone": "cross-service/",
+        "owner": "po",
+        "next_agent": "qa",
+        "created_at": "2026-07-31T14:55:59Z",
+        "created_by": "po/triage-20260731T1437Z",
+        "baseline_pass": "14908",
+        "files": [
+          "docs/agents/po/flow/triage-signals.md"
+        ],
+        "desc": "docs/agents/po/flow/triage-signals.md, `ci_red` row: the mint template instructs `append to .task_board.backlog[]: {id: ..., status: \"TODO\", ...}`. orch-apply Stage 1b lane-coherence rejects it: 'task_board.backlog[id=...].status: \"TODO\" is not allowed in lane \"backlog\", expected: BACKLOG|BLOCKED'. Reproduced live this tick 2026-07-31T14:5xZ while minting FIX-CI-IMF-INTEGRATION-TEST-NONHERMETIC-LIVE-API — the write ABORTED (live file untouched) and only succeeded after relabelling to BACKLOG. Every existing backlog row uses BACKLOG (spot-checked TE-T12, FIX-CI-GOLANGCI-CONFIG-VERIFY-NETWORK-FLAKE), so the doc template — not the validator — is the drifted side. Impact: not silent (orch-apply fails loud and refuses the write), but it costs every ci_red triage a wasted round-trip and invites an agent under token pressure to mis-'fix' it by moving the row to the wrong lane, which the validator's own message explicitly offers as an alternative remedy.",
+        "deliverable": "AC: (1) change the `ci_red` mint template in docs/agents/po/flow/triage-signals.md from status: \"TODO\" to status: \"BACKLOG\"; (2) grep the rest of that file (and the sibling po/flow/*.md mint templates) for any other `.task_board.<lane>[]` append whose literal status token is not in that lane's allowed set per apps/mcp-server/src/infrastructure/orchStateSchema.ts, and correct them in the same pass — this is a template-vs-validator drift class, not a one-token typo.",
+        "out_of_scope": "Relaxing the lane-coherence validator to accept TODO in backlog[] — the validator is the correct side and is load-bearing for lane/status coherence.",
+        "status_note": "Found by po during triage tick 2026-07-31T14:37Z, reproduced live (orch-apply Stage 1b abort, exit 2). Routed to agent-father per the ARTIFACT-CLASS ROUTING RULING 2026-07-21 (docs/agents/** = instruction-prose an agent loads and executes).",
+        "related": [
+          "FIX-CI-IMF-INTEGRATION-TEST-NONHERMETIC-LIVE-API"
+        ],
+        "updated_at": "2026-07-31T15:47:47Z",
+        "commit_sha": "b164e37781f015680df8fe85d7a7419378b49fa7",
+        "review_note": "dev-team RAW-verify 2026-07-31T15:57Z: commit cb6ba9567 (cherry-picked, sha above post-merge) confirmed. Diff to triage-signals.md/channel-audit.md/sprint-kickoff.md matches claim exactly (5x TODO->BACKLOG). Independently confirmed orchStateSchema.ts LANE_ALLOWED_STATUSES.backlog = {BACKLOG, BLOCKED} by reading the file directly. Independently re-ran scripts/audits/po-triage-mint-backlog-status-lane-coherence-verify.sh -- 42/42 PASS, exact match to self-report. Did not touch orch-apply.sh/orchStateSchema.ts or orch-state.json (commit_zone honored)."
       }
     ],
     "qa": [],
@@ -19026,56 +19078,7 @@
     },
     "last_triaged_at": "2026-07-31T13:47:28Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": [
-      {
-        "id": "TE-T12",
-        "title": "T-12 dispatch-claim SKILL (493L): front with ~40L CARD.md; point CLAUDE.md 2.5 at card [~54k tok/day]",
-        "owner": "agent-father",
-        "status": "IN_PROGRESS",
-        "type": "SPRINT-M",
-        "size": "M",
-        "priority": "P1",
-        "wave": 2,
-        "est_saving": "~54k tok/day",
-        "zone": "multi",
-        "sprint": "TOKEN-ECONOMY-AUDIT",
-        "depends": [],
-        "detail_ref": "docs/architecture-briefs/2026-07-12-token-economy-lazyload-audit.md#T-12",
-        "note": "Create .claude/skills/dispatch-claim/CARD.md (<=40L hot: ownership-key + Phase A orphan-probe + A.5 roster + Phase B intent PRE-CLAIM w/ try/finally). Point CLAUDE.md step 2.5 at CARD. Delete Reference Commits L483-493; add size-justification or split. Worst project ≤200L breach. UNBLOCKS TE-T23.",
-        "next_agent": "agent-father",
-        "po_routing_ruling_20260721": "PO ARTIFACT-CLASS ROUTING RULING 2026-07-21T18:42Z. Rule: routing follows ARTIFACT CLASS, not directory. Any row whose deliverable is instruction-prose that an agent LOADS AND EXECUTES — .claude/agents/**, docs/agents/** (init/flow/knowledge/tools-package), .claude/skills/**/SKILL.md — routes to agent-father. Executable code (apps/**, scripts/**), codegen-from-registry, and data/root-config (docs/data/**, CLAUDE.md) route to zone-matched dev-* or developer. Rationale: for this system a flow doc IS the executable source; agent-father is already sole owner of agent-file lifecycle (dispatch/SKILL.md:48) and of NEW cron skill files (:50), and board precedent has 5/5 pre-existing docs/agents/ rows routed to agent-father/agents-architect/po and 0 to developer. Precedent for SKILL.md specifically: docs/signals/processed/dev-team-20260716T102429Z-autolaunch-safety-hold-uc-asl-p6.json already routed a signal-dashboard SKILL.md edit to agent-father as 'the factory rule'. ROOT CAUSE this closes: .claude/skills/zone-detect/SKILL.md resolves ONLY dev-<service> (Tier-1/2, needs apps/<service>/-shaped zone) or generic developer (Tier-3 fallback) — it has NO path to agent-father, so any docs/agents/ or .claude/skills/ row reaching execute-tier with next_agent unset gets the 'developer' placeholder and mis-routes. EXPECTED SIDE EFFECT (do NOT 'fix' this): next_agent=agent-father does not match the dev-role pattern ^dev(-|$)|^developer$, so the BOUNDED-1 NON-DEV-NEXT_AGENT gate (dev-team/flow/main.md:518) now WITHHOLDS these rows from unattended idle auto-pickup. That is the intended outcome — they require deliberate router dispatch to agent-father, not silent promotion to a generic developer.",
-        "updated_at": "2026-07-31T15:32:41Z",
-        "po_manual_dispatch_flagged_at": "2026-07-31T06:56:27Z",
-        "po_manual_dispatch_flagged_by": "po (manual-dispatch-sweep)",
-        "po_manual_dispatch_class": "DRS-STRANDED-OFF-ALLOWLIST",
-        "po_manual_dispatch_note": "po (manual-dispatch-sweep) surfaced DRS-STRANDED-OFF-ALLOWLIST candidate — folding into this tick BATCH. Top of 40 unflagged candidates (38 DRS-stranded backlog + 2 ready-XOR) by [priority_rank, idx]. Live prior-art re-verified before folding, row is NOT stale: .claude/skills/dispatch-claim/SKILL.md is 494L with no size-justification header in its first 12 lines, no CARD.md exists in that dir, CLAUDE.md:7 still points step 2.5 at SKILL.md, and TE-T23 (which this unblocks) is still BACKLOG."
-      },
-      {
-        "id": "FIX-PO-TRIAGE-SIGNALS-CIRED-TEMPLATE-STATUS-TODO-REJECTED-BY-VALIDATOR",
-        "type": "FIX",
-        "title": "triage-signals.md ci_red mint template hardcodes status \"TODO\" for a backlog[] append — lane-coherence validator only accepts BACKLOG|BLOCKED, so every ci_red mint fails orch-apply on first attempt",
-        "status": "IN_PROGRESS",
-        "priority": "P2",
-        "size": "S",
-        "zone": "cross-service/",
-        "owner": "po",
-        "next_agent": "agent-father",
-        "created_at": "2026-07-31T14:55:59Z",
-        "created_by": "po/triage-20260731T1437Z",
-        "baseline_pass": "14908",
-        "files": [
-          "docs/agents/po/flow/triage-signals.md"
-        ],
-        "desc": "docs/agents/po/flow/triage-signals.md, `ci_red` row: the mint template instructs `append to .task_board.backlog[]: {id: ..., status: \"TODO\", ...}`. orch-apply Stage 1b lane-coherence rejects it: 'task_board.backlog[id=...].status: \"TODO\" is not allowed in lane \"backlog\", expected: BACKLOG|BLOCKED'. Reproduced live this tick 2026-07-31T14:5xZ while minting FIX-CI-IMF-INTEGRATION-TEST-NONHERMETIC-LIVE-API — the write ABORTED (live file untouched) and only succeeded after relabelling to BACKLOG. Every existing backlog row uses BACKLOG (spot-checked TE-T12, FIX-CI-GOLANGCI-CONFIG-VERIFY-NETWORK-FLAKE), so the doc template — not the validator — is the drifted side. Impact: not silent (orch-apply fails loud and refuses the write), but it costs every ci_red triage a wasted round-trip and invites an agent under token pressure to mis-'fix' it by moving the row to the wrong lane, which the validator's own message explicitly offers as an alternative remedy.",
-        "deliverable": "AC: (1) change the `ci_red` mint template in docs/agents/po/flow/triage-signals.md from status: \"TODO\" to status: \"BACKLOG\"; (2) grep the rest of that file (and the sibling po/flow/*.md mint templates) for any other `.task_board.<lane>[]` append whose literal status token is not in that lane's allowed set per apps/mcp-server/src/infrastructure/orchStateSchema.ts, and correct them in the same pass — this is a template-vs-validator drift class, not a one-token typo.",
-        "out_of_scope": "Relaxing the lane-coherence validator to accept TODO in backlog[] — the validator is the correct side and is load-bearing for lane/status coherence.",
-        "status_note": "Found by po during triage tick 2026-07-31T14:37Z, reproduced live (orch-apply Stage 1b abort, exit 2). Routed to agent-father per the ARTIFACT-CLASS ROUTING RULING 2026-07-21 (docs/agents/** = instruction-prose an agent loads and executes).",
-        "related": [
-          "FIX-CI-IMF-INTEGRATION-TEST-NONHERMETIC-LIVE-API"
-        ],
-        "updated_at": "2026-07-31T15:32:41Z"
-      }
-    ]
+    "in_progress": []
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
