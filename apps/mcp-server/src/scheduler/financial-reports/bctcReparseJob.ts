@@ -102,6 +102,21 @@ const ALERT_AT_ATTEMPTS = 5;
  */
 const DEAD_AT_ATTEMPTS = 10;
 
+/**
+ * Minimum extracted-text length (chars) for a PDF-quality gate to pass.
+ * Below this, extraction output is treated as too-short/empty and the
+ * current tier falls through to the next fallback (see
+ * reparseSingleWithOcrFallback's three-tier extraction).
+ */
+const MIN_PDF_TEXT_CHARS = 100;
+
+/**
+ * Minimum extraction-confidence score (0-1) for a PDF-quality gate to pass.
+ * Below this, extraction output is treated as unreliable and the current
+ * tier falls through to the next fallback.
+ */
+const MIN_PDF_CONFIDENCE = 0.3;
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Helpers
 // ─────────────────────────────────────────────────────────────────────────────
@@ -319,7 +334,7 @@ export async function reparseSingleWithOcrFallback(
     try {
       const serviceResult = await deps.extractViaServicePdfPath(payload.filePath);
       if (serviceResult !== null && serviceResult.status === "success" &&
-          serviceResult.textContent.trim().length >= 100) {
+          serviceResult.textContent.trim().length >= MIN_PDF_TEXT_CHARS) {
         rawText = serviceResult.textContent;
         logger.info("[bctc-reparse-job] service extraction succeeded (Tier 1a pdf_path)", {
           filename: payload.filename,
@@ -351,7 +366,7 @@ export async function reparseSingleWithOcrFallback(
     try {
       const serviceResult = await deps.extractViaService(derivedVpsUrl);
       if (serviceResult !== null && serviceResult.status === "success" &&
-          serviceResult.textContent.trim().length >= 100) {
+          serviceResult.textContent.trim().length >= MIN_PDF_TEXT_CHARS) {
         rawText = serviceResult.textContent;
         logger.info("[bctc-reparse-job] service extraction succeeded (Tier 1b URL)", {
           filename: payload.filename,
@@ -378,7 +393,7 @@ export async function reparseSingleWithOcrFallback(
     try {
       const buf = deps.readFile(payload.filePath);
       const { text, confidence } = await deps.extractText(buf);
-      if (text && text.trim().length >= 100 && confidence >= 0.3) {
+      if (text && text.trim().length >= MIN_PDF_TEXT_CHARS && confidence >= MIN_PDF_CONFIDENCE) {
         rawText = text;
         logger.info("[bctc-reparse-job] pdf-parse Tier 2 succeeded", {
           filename: payload.filename,
@@ -403,7 +418,7 @@ export async function reparseSingleWithOcrFallback(
   // ── Tier 3: OCR cache (last resort — Bug 1068, kept for pre-existing OCR data) ──
   if (rawText === null) {
     const cached = deps.getOcrCache(payload.filename);
-    if (cached !== null && cached.confidence >= 0.3 && cached.text.trim().length >= 100) {
+    if (cached !== null && cached.confidence >= MIN_PDF_CONFIDENCE && cached.text.trim().length >= MIN_PDF_TEXT_CHARS) {
       rawText = cached.text;
       logger.info("[bctc-reparse-job] using OCR cache Tier 3", {
         filename: payload.filename,
@@ -680,74 +695,28 @@ async function reparseSingle(payload: StrandedPayload): Promise<boolean> {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Main entry point
+// agent_feedback escalation loop (extracted from runBctcReparseJob — pure
+// mechanical extraction, no behavior change)
 // ─────────────────────────────────────────────────────────────────────────────
 
 /**
- * Run one reparse cycle. Idempotent — resolved rows are not re-queued and
- * escalation/alerting are one-shot per feedback row.
+ * Process the `agent_feedback` stranded-PDF rows fetched by runBctcReparseJob:
+ * attempt reparse per row, mark resolved/dead, increment attempt counters,
+ * and fire the escalate-to-high-priority / one-shot WORK-channel alert side
+ * effects.
  *
- * Test hook: pass `options.db` to inject an in-memory SQLite, `options.notify`
- * to stub the WORK-channel send, and `options.reparseFn` to stub the parse
- * pipeline (so tests do not need real PDFs).
+ * Returns the partial counters this loop is responsible for; the caller
+ * merges them into the overall ReparseRunResult (disk-scan contributes the
+ * remaining `examined`/`resolved`/`failed` increments separately).
  */
-/**
- * @idempotency T4 — cron_job_runs recency guard; replay skipped if last success < 90% of daily cadence (21.6h window)
- */
-export async function runBctcReparseJob(
-  options: {
-    db?: Database;
-    notify?: (message: string) => Promise<unknown>;
-    reparseFn?: (payload: StrandedPayload) => Promise<boolean>;
-    /** Override PDF directory for disk scan (injectable for tests). */
-    pdfDir?: string;
-    /** Injectable nowMs for recovery dedup guard (tests only) */
-    nowMsFn?: () => number;
-    /**
-     * Injectable file-existence check for the DEAD_AT_ATTEMPTS permanent-miss
-     * guard (VCB-MISSING-PDFS). Defaults to the real filesystem check;
-     * override in tests to simulate a confirmed-missing file without
-     * depending on real disk state.
-     */
-    fileExistsFn?: (path: string) => boolean;
-  } = {},
-): Promise<ReparseRunResult> {
-  const db = options.db ?? getDb();
-
-  const DAILY_CADENCE_MS = 86_400_000;
-  if (shouldSkipRecoveryReplay(db, "bctcReparseJob", DAILY_CADENCE_MS, options.nowMsFn)) {
-    return { examined: 0, resolved: 0, failed: 0, escalated: 0, alerted: 0, deadMarked: 0 };
-  }
-  const notify =
-    options.notify ?? ((msg: string) => sendTelegramWork(msg, { parseMode: "" }));
-  const reparse = options.reparseFn ?? reparseSingle;
-  const fileExistsFn = options.fileExistsFn ?? existsSync;
-
-  const rows = db
-    .prepare(
-      `SELECT id, title, detail, reparse_attempts
-         FROM agent_feedback
-        WHERE agent = 'data-auditor'
-          AND category = 'other'
-          AND status = 'new'
-          AND title LIKE '[AUDIT] stranded_bctc_pdf%'`,
-    )
-    .all() as FeedbackRow[];
-
-  // 1196: Start-of-cycle observability
-  logger.info("[bctc-reparse-job] starting cycle", {
-    feedbackRows: rows.length,
-    timestamp: new Date().toISOString(),
-  });
-
-  const result: ReparseRunResult = {
-    examined: rows.length,
-    resolved: 0,
-    failed: 0,
-    escalated: 0,
-    alerted: 0,
-    deadMarked: 0,
-  };
+async function processStrandedFeedback(
+  db: Database,
+  rows: FeedbackRow[],
+  reparse: (payload: StrandedPayload) => Promise<boolean>,
+  notify: (message: string) => Promise<unknown>,
+  fileExistsFn: (path: string) => boolean,
+): Promise<Pick<ReparseRunResult, "resolved" | "failed" | "escalated" | "alerted" | "deadMarked">> {
+  const result = { resolved: 0, failed: 0, escalated: 0, alerted: 0, deadMarked: 0 };
 
   for (const row of rows) {
     const payload = parseStrandedDetail(row.detail);
@@ -842,6 +811,86 @@ export async function runBctcReparseJob(
       }
     }
   }
+
+  return result;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Main entry point
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Run one reparse cycle. Idempotent — resolved rows are not re-queued and
+ * escalation/alerting are one-shot per feedback row.
+ *
+ * Test hook: pass `options.db` to inject an in-memory SQLite, `options.notify`
+ * to stub the WORK-channel send, and `options.reparseFn` to stub the parse
+ * pipeline (so tests do not need real PDFs).
+ */
+/**
+ * @idempotency T4 — cron_job_runs recency guard; replay skipped if last success < 90% of daily cadence (21.6h window)
+ */
+export async function runBctcReparseJob(
+  options: {
+    db?: Database;
+    notify?: (message: string) => Promise<unknown>;
+    reparseFn?: (payload: StrandedPayload) => Promise<boolean>;
+    /** Override PDF directory for disk scan (injectable for tests). */
+    pdfDir?: string;
+    /** Injectable nowMs for recovery dedup guard (tests only) */
+    nowMsFn?: () => number;
+    /**
+     * Injectable file-existence check for the DEAD_AT_ATTEMPTS permanent-miss
+     * guard (VCB-MISSING-PDFS). Defaults to the real filesystem check;
+     * override in tests to simulate a confirmed-missing file without
+     * depending on real disk state.
+     */
+    fileExistsFn?: (path: string) => boolean;
+  } = {},
+): Promise<ReparseRunResult> {
+  const db = options.db ?? getDb();
+
+  const DAILY_CADENCE_MS = 86_400_000;
+  if (shouldSkipRecoveryReplay(db, "bctcReparseJob", DAILY_CADENCE_MS, options.nowMsFn)) {
+    return { examined: 0, resolved: 0, failed: 0, escalated: 0, alerted: 0, deadMarked: 0 };
+  }
+  const notify =
+    options.notify ?? ((msg: string) => sendTelegramWork(msg, { parseMode: "" }));
+  const reparse = options.reparseFn ?? reparseSingle;
+  const fileExistsFn = options.fileExistsFn ?? existsSync;
+
+  const rows = db
+    .prepare(
+      `SELECT id, title, detail, reparse_attempts
+         FROM agent_feedback
+        WHERE agent = 'data-auditor'
+          AND category = 'other'
+          AND status = 'new'
+          AND title LIKE '[AUDIT] stranded_bctc_pdf%'`,
+    )
+    .all() as FeedbackRow[];
+
+  // 1196: Start-of-cycle observability
+  logger.info("[bctc-reparse-job] starting cycle", {
+    feedbackRows: rows.length,
+    timestamp: new Date().toISOString(),
+  });
+
+  const result: ReparseRunResult = {
+    examined: rows.length,
+    resolved: 0,
+    failed: 0,
+    escalated: 0,
+    alerted: 0,
+    deadMarked: 0,
+  };
+
+  const feedbackResult = await processStrandedFeedback(db, rows, reparse, notify, fileExistsFn);
+  result.resolved += feedbackResult.resolved;
+  result.failed += feedbackResult.failed;
+  result.escalated += feedbackResult.escalated;
+  result.alerted += feedbackResult.alerted;
+  result.deadMarked += feedbackResult.deadMarked;
 
   // 1196 / 1945d: Disk scan runs unconditionally (not just when feedback rows = 0).
   // GAP-A fix: freshly-pushed PDFs (EIB/DHG Q1-2026) stored between D-7c audit
