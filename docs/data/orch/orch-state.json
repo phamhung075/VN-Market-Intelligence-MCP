@@ -93,12 +93,11 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "FACTORY-DOMAIN-extract-sla-config",
-    "next_agent": "developer",
-    "next_action": "BOUNDED-1 auto-pickup claim of FACTORY-DOMAIN-extract-sla-config — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
-    "updated_at": "2026-07-31T17:17:51Z",
-    "updated_by": "dev-team (bounded-1 auto-pickup)"
+    "status": "idle",
+    "active_task_id": null,
+    "next_agent": "router",
+    "updated_at": "2026-07-31T17:47:59Z",
+    "updated_by": "dev-mcp-server (FACTORY-DOMAIN-extract-sla-config review-flip)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -19405,6 +19404,25 @@
         "review_note": "RAW-verified by dev-team, zero discrepancies. Commit cherry-picked clean (3 files: vpsProxyStaleness.ts + new test + VPT-1 comment update, no orch-state.json). Code: EXPECTED_INTERVALS.news 10->20 in vpsProxyStaleness.ts confirmed via diff. Cron cadence claim (15min, vn-news-fetch.service) confirmed against docs/standards/cron-jobs.md line 287. Live DB re-queried independently (bun:sqlite in running mcp-server container, not the worktree's stale snapshot): vps_push_log service=news last-7d gaps during isVnNewsPublishHours, independent run got p90=16.08/p99=16.23/max=288.67min (dev claimed p90=16.07/p99=16.22/max=288, near-exact match; gap count differed 694 vs 886 due to query-timing window drift, not a discrepancy in conclusion) -- confirms hard cliff at ~17min and only 1 genuine outage. At old 10min threshold my own independent count showed 46.8% of gaps would false-flag STALE (dev claimed ~42%, same order/conclusion). New test file run directly in live container post-fix: 4/4 pass; pre-fix (accidentally reproduced via a path-copy bug): 1 pass/3 fail, matching dev claimed RED shape. Full 6-file regression group (VPT-1, 1113-vps-proxy-health, freshness-sla + coverage-map suite) run in the live container (proper deps installed, unlike dev's under-provisioned worktree): 77/77 pass -- confirms dev's diagnosis that the SC-2a failure they saw was a worktree dependency-provisioning artifact, not a real regression from this diff.",
         "updated_at": "2026-07-31T16:42:55Z",
         "updated_by": "dev-team (RAW-verify + merge)"
+      },
+      {
+        "title": "Move DEFAULT_SLA_CONFIG out of freshnessSlaChecker into shared-config",
+        "priority": "P3",
+        "zone": "mcp-server-domain",
+        "type": "FACTORY",
+        "status": "REVIEW",
+        "id": "FACTORY-DOMAIN-extract-sla-config",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-DOMAIN-extract-sla-config",
+        "promoted_at": "2026-07-31T17:17:01Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=3)",
+        "updated_at": "2026-07-31T17:47:59Z",
+        "claimed_at": "2026-07-31T17:17:51Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "next_agent": "qa",
+        "entered_review_at": "2026-07-31T17:47:39Z",
+        "updated_by": "dev-mcp-server",
+        "review_note": "Moved SignalType/SignalSlaConfig/DEFAULT_SLA_CONFIG out of freshnessSlaChecker.ts (966L->814L) into new sibling domain/services/freshnessSlaConfig.ts (194L, size-justification header); checker imports+re-exports all 3 unchanged (zero call-site changes, default unchanged everywhere). Did NOT use packages/shared-config (backlog approach primary suggestion) -- 0 real importers repo-wide, tracked separately by FACTORY-SHARED-wire-or-prune-shared-packages, outside apps/mcp-server/ zone -- used the approach note own \"(or a freshness/config.ts)\" alternative instead. Fixed 1 brittle literal-substring test assertion (234-vps-health-sla.test.ts AC-9) broken by the legitimate re-export syntax. Evidence: tsc --noEmit clean; targeted SLA suite 212/212 pass (14 files); size-lint-justification.sh --check PASS both touched files; tool/scheduler counts unchanged (183/88); fresh PORT=3099 server boot clean, zero import errors; full mcp-server suite 2 runs (14988-14995 pass/52-59 fail) grep-confirmed 0 SLA/freshness/config failures (pre-existing FIX-MCP-SUITE-HEALTH-BASELINE order-dependent red). REBUILD_REQUIRED=true per docker-deployment-runbook (code change needs image rebuild before live effect). Commits: 9930ee008 (code), 4097ffaea (memory). Journal: sprint-COWORK-GUARANTEED-SLOT-CATCHUP-dev-mcp-server-2.md S49."
       }
     ],
     "qa": [],
@@ -19426,23 +19444,7 @@
     },
     "last_triaged_at": "2026-07-31T17:17:01Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": [
-      {
-        "title": "Move DEFAULT_SLA_CONFIG out of freshnessSlaChecker into shared-config",
-        "priority": "P3",
-        "zone": "mcp-server-domain",
-        "type": "FACTORY",
-        "status": "IN_PROGRESS",
-        "id": "FACTORY-DOMAIN-extract-sla-config",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-DOMAIN-extract-sla-config",
-        "promoted_at": "2026-07-31T17:17:01Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=3)",
-        "updated_at": "2026-07-31T17:17:51Z",
-        "claimed_at": "2026-07-31T17:17:51Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)"
-      }
-    ]
+    "in_progress": []
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
