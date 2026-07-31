@@ -18389,7 +18389,7 @@
         "promoted_at": "2026-07-31T00:47:01Z",
         "promoted_by": "dev-team (bounded-1 auto-pickup)",
         "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=3)",
-        "updated_at": "2026-07-31T01:15:32Z",
+        "updated_at": "2026-07-31T01:20:14Z",
         "claimed_at": "2026-07-31T00:47:17Z",
         "claimed_by": "dev-team (bounded-1 auto-pickup)",
         "dispatched_to": "dev-mcp-server",
@@ -18398,7 +18398,13 @@
         "next_agent": "qa",
         "developer_completed_at": "2026-07-31T01:15:32Z",
         "developer_completed_by": "dev-mcp-server",
-        "review_note": "Fix: get_macro_snapshot handler (macroTools.ts get_macro_snapshot, ~L469-489) now derives sourceTier as max() over source_tier of every PRESENT signals.* component (generic Object.values(data.signals) reduce, not carry-only) — an absent component never enters the max (no tier-0/best-case default); empty fallback (no present tier at all) stays 2, unchanged. Tool description string also corrected (was hardcoded \"Source tier: 2\"). Tests: 1881a-source-tier.test.ts AC-3 case updated 2->4 (shared beforeAll fixture carry=2/yield=4, worst-of=4) with inline comment explaining why; AC-8 firstKey test strengthened with the same value assertion (was firstKey-only, would have false-greened); NEW AC(b) case added with its own local fetch-mock fixture that omits signals.yield entirely, asserting worst-of degenerates to carry=2 when yield absent. 1881a file: 21/21 pass (was 19). Related smoke suites (089-tool-macro, 1423d, 1423f, 1570c, 1903a, 1918a — all fixture carry==yield tier so unaffected): 68/68 pass. tsc --noEmit clean. Server boot on free port 3099: health toolCount=183 (matches gen-project-stats baseline), no import errors. gen-project-stats --dry-run: toolCount=183 cronJobCount=88, unchanged (no tool/scheduler surface touched). Full bun test (repo-wide, informational only per dev-standards.md:1135 CANONICAL merge-gate reading — targeted suite is the actual gate): 14944 pass/40 skip/56 fail/596.81s, consistent with this cluster's already-documented pre-existing flake band; zero grep hits for macro/source_tier/carry/yield/1881a in that runs tail summary context this session. No apps/mcp-server file outside macroTools.ts + its own test touched."
+        "review_note": "Fix: get_macro_snapshot handler (macroTools.ts get_macro_snapshot, ~L469-489) now derives sourceTier as max() over source_tier of every PRESENT signals.* component (generic Object.values(data.signals) reduce, not carry-only) — an absent component never enters the max (no tier-0/best-case default); empty fallback (no present tier at all) stays 2, unchanged. Tool description string also corrected (was hardcoded \"Source tier: 2\"). Tests: 1881a-source-tier.test.ts AC-3 case updated 2->4 (shared beforeAll fixture carry=2/yield=4, worst-of=4) with inline comment explaining why; AC-8 firstKey test strengthened with the same value assertion (was firstKey-only, would have false-greened); NEW AC(b) case added with its own local fetch-mock fixture that omits signals.yield entirely, asserting worst-of degenerates to carry=2 when yield absent. 1881a file: 21/21 pass (was 19). Related smoke suites (089-tool-macro, 1423d, 1423f, 1570c, 1903a, 1918a — all fixture carry==yield tier so unaffected): 68/68 pass. tsc --noEmit clean. Server boot on free port 3099: health toolCount=183 (matches gen-project-stats baseline), no import errors. gen-project-stats --dry-run: toolCount=183 cronJobCount=88, unchanged (no tool/scheduler surface touched). Full bun test (repo-wide, informational only per dev-standards.md:1135 CANONICAL merge-gate reading — targeted suite is the actual gate): 14944 pass/40 skip/56 fail/596.81s, consistent with this cluster's already-documented pre-existing flake band; zero grep hits for macro/source_tier/carry/yield/1881a in that runs tail summary context this session. No apps/mcp-server file outside macroTools.ts + its own test touched.",
+        "commits": [
+          "a401bda06 fix(mcp-server/macro): worst-of source_tier handler + test",
+          "31beeefab chore(memory/dev-mcp-server): notebook + journal",
+          "67e26e9f6 docs(mcp-server/macro): get_macro_snapshot reference doc corrected"
+        ],
+        "doc_review_note": "get_macro_snapshot.md tool signature + Integration Notes corrected to describe worst-of tier (was hardcoded 2); broader Yahoo/Vietcombank-vs-HTTP-rewire drift in that same doc is pre-existing, out of this XS task scope."
       }
     ],
     "qa": [],
