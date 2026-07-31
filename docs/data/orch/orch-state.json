@@ -93,12 +93,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "active_task_id": null,
-    "next_agent": "router",
-    "next_action": "",
-    "updated_at": "2026-07-31T16:58:45Z",
-    "updated_by": "dev-mcp-server (BOUNDED-1 dispatch)"
+    "status": "in_progress",
+    "active_task_id": "FACTORY-DOMAIN-extract-sla-config",
+    "next_agent": "developer",
+    "next_action": "BOUNDED-1 auto-pickup claim of FACTORY-DOMAIN-extract-sla-config — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
+    "updated_at": "2026-07-31T17:17:51Z",
+    "updated_by": "dev-team (bounded-1 auto-pickup)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -5879,15 +5879,6 @@
         "status": "BACKLOG",
         "id": "FACTORY-STOCK-delete-dead-port-and-deprecated",
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-STOCK-delete-dead-port-and-deprecated"
-      },
-      {
-        "title": "Move DEFAULT_SLA_CONFIG out of freshnessSlaChecker into shared-config",
-        "priority": "P3",
-        "zone": "mcp-server-domain",
-        "type": "FACTORY",
-        "status": "BACKLOG",
-        "id": "FACTORY-DOMAIN-extract-sla-config",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-DOMAIN-extract-sla-config"
       },
       {
         "title": "Split pollNews 1426L god-file into single-responsibility modules (staged)",
@@ -19433,9 +19424,25 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-31T16:52:09Z",
+    "last_triaged_at": "2026-07-31T17:17:01Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": []
+    "in_progress": [
+      {
+        "title": "Move DEFAULT_SLA_CONFIG out of freshnessSlaChecker into shared-config",
+        "priority": "P3",
+        "zone": "mcp-server-domain",
+        "type": "FACTORY",
+        "status": "IN_PROGRESS",
+        "id": "FACTORY-DOMAIN-extract-sla-config",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-DOMAIN-extract-sla-config",
+        "promoted_at": "2026-07-31T17:17:01Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=3)",
+        "updated_at": "2026-07-31T17:17:51Z",
+        "claimed_at": "2026-07-31T17:17:51Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)"
+      }
+    ]
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
