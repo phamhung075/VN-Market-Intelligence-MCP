@@ -18671,7 +18671,7 @@
         "plan_only": false,
         "created_by": "po/triage-20260731T0132",
         "created_at": "2026-07-31T01:32:47Z",
-        "updated_at": "2026-07-31T03:20:04Z",
+        "updated_at": "2026-07-31T03:23:35Z",
         "origin_signal_id": "CI-RED-8e1e66e5",
         "check_id": "CI-RED-8e1e66e5",
         "dedup_key": "ci_job:size-lint|files:claimCandidateScanner.ts,signalValidator.ts,vpsPushLogStore.ts,polymarket.ts,orchStateSchema.ts,vpsProxyTools.ts",
@@ -18701,7 +18701,9 @@
         "promoted_by": "dev-team (bounded-1 auto-pickup)",
         "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=0)",
         "claimed_at": "2026-07-31T02:52:12Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)"
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "commit_sha": "e2502b98fbd9a8eb1210d1509e1dff471f1cbbf0",
+        "review_note": "dev-team RAW-verify 2026-07-31T03:24Z: commit e2502b98f confirmed ancestor of HEAD. Independently re-ran size-lint-justification.sh --check — none of the 6 mcp-server files listed, exactly 2 remaining offenders both matching claimed sibling rows (macro-indicators, pdf-extractor). Confirmed docs/data/size-lint-baseline.json untouched (AC-2 landmine avoided). Verified actual wc -l for all 6 files matches claim exactly (claimCandidateScanner 116L, vpsPushLogStore 160L, signalValidator 177L, vpsProxyTools 87L, polymarket 462L, orchStateSchema 839L). orchStateSchema.ts justification header read in full — substantive, not bare, declared 839L matches actual exactly, cross-verified the named consumer (scripts/orch-validate.mjs imports by name) and harness (drain-signals.test.js raw-copies the file) claims against live grep. Independently re-ran bun tsc --noEmit (clean), 3 targeted test files touching every split module (51/51 pass), and drain-signals.test.js (36/36 pass, exercises the copied-orchStateSchema harness). DJ-GATE-1 entry confirmed present (dev-mcp-server decision journal S35). Lane-move + head-idle-reset confirmed correct per CANONICAL:SSOT-STATUSFLIP-LANEMOVE. Zero discrepancies found."
       }
     ],
     "qa": [],
