@@ -1,3 +1,30 @@
+
+## c012 · 2026-07-31T06:33:08Z
+### Audit Run Tier-2 (04:00–06:33 UTC 2026-07-31)
+- Tier: 2 | Cron health: PASS (A-29 all jobs healthy) | Sources: 5 checked
+- Data freshness: all 5 sources PASS (price 0m/10m, bctc 3630m/10080m, news 1m/30m, sbv_fx 1m/30m, foreign_flow 0m/10m)
+- DB spot checks: C-06 6 msgs/3h PASS, C-07 57 signals/24h PASS, B-08 279 PDFs PASS, B-09/B-13 PASS
+- VPS services: 4 healthy (price, news, sbv, foreign-flow), 1 unhealthy (bctc, idle-no-work)
+- Rate limits: B-12 PASS (14/14 ready)
+- Anomalies: 0 new (0 critical, 0 warn, 0 info) | 1 dedup-skipped (B-06 bctc service unhealthy)
+- Status: HEALTHY (all freshness SLA PASS, market OPEN, stricter in-session thresholds applied)
+
+Fire-election: tick=2026-07-31T04:00Z (`0 */4 * * *` Tier-2 boundary) — claimed, led tick.
+
+DB & Freshness Context (market OPEN closes 08:30Z ~1.9h away — stricter SLA thresholds):
+- PRAGMA journal_mode: delete | PRAGMA quick_check: ok | No corruption
+- market_prices newest: 2026-07-31T06:31:19.776Z (effectively live at 06:33Z audit time)
+- daily_ohlcv 2026-07-31: 104 rows updated in last 5 min / 129 total (excellent freshness)
+- SLA Status (get_sla_status): all 5 sources PASS with market-open in-session thresholds
+- bctc_vps_queue total: 580 (328 deferred_infra, 128 enrich_failed, 85 done, 39 url_not_found)
+
+Known Issues (unchanged from c011):
+- B-06: bctc vps_service_health UNHEALTHY despite proxy route ok (dedup-skipped, last c008)
+- B-06 both planes: proxy_health status=ok idle-no-work, service_health status=unhealthy
+- Q2 2026 financial_reports: 0 rows (documented SPIKE-BCTC-EXTRACTION-DORMANT-MASS-ENRICHFAIL-FLOOD)
+- agent_signals format: 125 space-separated (YYYY-MM-DD HH:MM:SS), 36 T-separated-with-Z (9 new rows since c011)
+
+[OUTPUT-CONTRACT] signals_posted=0 | telegram_sent=0 | signal_queue_rows_written=0 | dashboard_rows=0 | dedup_skipped=1
 ## c011 · 2026-07-31T02:33:33Z
 ### Audit Run Tier-2 (02:30–02:35 UTC 2026-07-31)
 - Tier: 2 | Cron health: PASS (A-29 all jobs healthy) | Sources: 5 checked
@@ -24,7 +51,6 @@ Known Issues (no change from c010):
 - agent_signals format split: 122 space-separated, 25 T-separated-with-Z (1 new T-format row since c010)
 
 [OUTPUT-CONTRACT] signals_posted=0 | telegram_sent=0 | signal_queue_rows_written=0 | dashboard_rows=0 | dedup_skipped=1
-
 ## c010 · 2026-07-31T00:35:38Z
 ### Audit Run Tier-3 (00:32–00:45 UTC 2026-07-31)
 - Tier: 3 | DB checks: 16 (C-01..C-16) | Queries: 16 host-side sqlite3 | Integrity: 5 DBs
@@ -54,27 +80,3 @@ Known Non-Issues (no action):
 - Q2 2026 financial_reports: 0 (documented SPIKE-BCTC-EXTRACTION-DORMANT-MASS-ENRICHFAIL-FLOOD)
 
 [OUTPUT-CONTRACT] signals_posted=0 | telegram_sent=0 | signal_queue_rows_written=0 | dashboard_rows=0 | dedup_skipped=0
-
-## c009 · 2026-07-30T10:33:18Z
-### Audit Run Tier-2 (10:31–10:33 UTC 2026-07-30)
-- Tier: 2 | Cron health: A-29 PASS (all jobs healthy) | Sources: 5 checked
-- Data freshness: sbv_fx RECOVERED 4m (SLA 30m), foreign-flow RECOVERED 92m (SLA 122m off-hours)
-- DB spot checks: C-06 2 msgs/3h PASS, C-07 154 signals/24h PASS, B-09/B-13 PASS
-- VPS services: 2 healthy (news, sbv), 2 idle (market closed), 1 unhealthy (bctc, known)
-- Rate limits: B-12 PASS (11/11 ready)
-- Anomalies: 0 new (0 critical, 0 warn, 0 info) | 1 dedup-skipped (B-06 bctc stale)
-- Status: HEALTHY (corruption remediation confirmed, all freshness SLA PASS)
-
-Fire-election: tick=2026-07-30T08:00Z (`0 */4 * * *` boundary) — claimed, led tick.
-
-Recovery findings (per db-incident preamble):
-- B-01: sbv_fx RECOVERED from CRITICAL 204m to PASS 4m
-- B-03: foreign-flow RECOVERED from CRITICAL 189m to PASS 92m
-- VPS-poll: services healthy/idle, polling resumed successfully
-- Journal mode: PRAGMA journal_mode=delete (mitigation in place, not reverted)
-
-Known issues (no change):
-- B-06: bctc vps route stale 2026-07-28T08:23:22Z (1.87d), already reported in c008
-- Q2 financial_reports: 0 rows (documented SPIKE-BCTC-EXTRACTION-DORMANT-MASS-ENRICHFAIL-FLOOD)
-
-[OUTPUT-CONTRACT] signals_posted=0 | telegram_sent=0 | signal_queue_rows_written=0 | dashboard_rows=0 | dedup_skipped=1
