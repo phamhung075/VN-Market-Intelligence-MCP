@@ -223,3 +223,34 @@ guard updated to name the extraction line. New static test
 uniform is the only fix that closes the class, not one symptom.
 **why-change:** none. AC-6 live re-verify explicitly out of scope for me
 (dispatch prompt); QA/next tick owns it.
+
+### STEP agent-father-S14 · agent-father · 2026-07-31T15:19:08Z
+**task-id:** FIX-PO-MANUAL-DISPATCH-SWEEP-FLAG-WITHOUT-DISPATCH-STRANDS-ROW
+**what-done:** Step 1's permanent `po_manual_dispatch_flagged_at` exclusion
+strands any flagged row whose BATCH never dispatched (live: TE-T12, ~8h).
+Added `flag_reentrant($now_epoch; 14400s)` — fresh stamp excluded, stale
+stamp re-admitted — to Step 1 + dev-standards.md:504-526 mirror. Verify
+script gained `M-STALE-FLAGGED-REENTRANT` positive control; `G-ALREADY-
+FLAGGED` negative control now uses a relative-fresh timestamp (jq
+`todateiso8601`, not hand-typed). Live-replayed Step 1 against real board:
+TE-T12 now surfaces (`reflag:true`, rank 1). Commit `64d132e43`.
+**what-considered:**
+- Bounded staleness window in Step 1 (chosen) vs. Step 3 fallback-fold
+  when Step 2 stamps nothing — window is smaller/more mechanical: only
+  touches Step 1's `select`, reuses the already-computed but unused
+  `$now_epoch` arg, no new Step-3 branch/tie-break logic needed.
+- 4h window: long enough that a row just stamped isn't immediately
+  re-surfaced while its BATCH still has a realistic dispatch chance;
+  short enough to unstick a WIP-cap-stranded row same working day.
+**why-decision:** row's own AC named both shapes as acceptable and asked
+for whichever is smaller/mechanical — staleness-window wins on both axes,
+and same-tick double-BATCH stays structurally impossible regardless
+(Step 1 computes its list once, before Step 2 stamps).
+**why-change:** none — implemented exactly the row's 4-point AC. Dispatch
+prompt's own step 5 asked me to run `orch-apply.sh` myself for the
+`in_progress[]→review[]` lane-move; declined per own init.md `commit_zone.
+excluded` ("orch-state.json ... NEVER in agent-father commits except the
+ONE allowed signal-queue DONE-mark") — same boundary honored in 3 prior
+STEPs this file (S-po-daily-triage, S-UC-ASL-P6, S-FIX-DEVTEAM-QADRAIN).
+Supplied the exact transform in RETURN for dev-team/router to execute
+instead; not a silent skip.

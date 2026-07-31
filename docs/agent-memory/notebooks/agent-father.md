@@ -47,56 +47,6 @@
   `status:BACKLOG` (`updated_by: "po (triage-20260731T0132)"`). Did not flip it —
   `orch-state.json` is outside agent-father's commit_zone; flagged for router/dev-team.
 
-## Fix (router-dispatched, dev-team session) 2026-07-31T00:00:00Z FIX-DEVTEAM-QADRAIN-HEAD-WRITE-CONDITIONAL
-- DECLINED: dispatched as owner=agent-father, next_agent=agent-father (board row +
-  architecture brief `2026-07-29-qadrain-head-slot-decouple.md` §8 "Actionable sequence
-  for agent-father") but the task is a production-code edit to
-  `scripts/devteam-review-claim-qa-drain.jq` (`cross-service/`). `docs/data/system-map.json`
-  `zones[].id=="cross-service"` names `specialist: "developer"`, not agent-father.
-  Confirmed against own init.md (`not_my_job`: "Writing production code — that's
-  developer"; `commit_zone.allowed` excludes scripts/) and 8 prior journal STEPs — zero
-  `.jq`/production-code precedent, all agent/.md/flow/skill work.
-- Same failure shape as the 2026-07-29T14:56:21Z A-30 row above: an architect-authored
-  brief claims scripts/-touching authority for agent-father; on direct read of the
-  canonical SSOT (system-map.json here, qa_note there) the claim does not hold. Recurring
-  pattern — architect-class agents keep writing "agent-father implements" into briefs
-  for scripts/ work without checking the zone-ownership table first.
-- Did NOT edit the `.jq` file, did NOT flip the board row's status/lane, did NOT write a
-  DJ-GATE-1 DONE/REVIEW entry (no completed action to gate). Wrote a DECLINE decision-
-  journal STEP instead (S8). Recommended in RETURN: PO/router reassign board row
-  owner/next_agent `agent-father` → `developer` per system-map.json, then re-dispatch;
-  optionally loop back to agents-architect to fix the brief's §8 heading so this doesn't
-  recur for Part 2/3 of the same epic.
-  self-committed, per this task's own dispatch note (no gateway/MCP grant this session).
-
-## Fix (router-dispatched, po manual-dispatch-sweep) 2026-07-31T01:10:34Z UC-ASL-P6
-- Reconciled the row's 2026-07-16 supervised_reason flag first: `docs/agents/system-auditor/flow/`
-  has no `init.md` (only main.md/page-freshness.md/tier1-overrides.md/tier1-probe.md) — the
-  agent's `init.md` is one level up (`docs/agents/system-auditor/init.md`). Row's file citation
-  is accurate read that way; no phantom-file confusion in the row itself.
-- main.md + tier1-probe.md: already fully disambiguated by a prior sprint
-  (FIX-AUDITOR-DASHBOARD-APPEND-NO-ACTUATOR-CONTRACT-COUNT-NARRATED, 2026-07-29) — names
-  `docs/data/DASHBOARD.md` as the live target, explicitly forbids `docs/handoffs/DASHBOARD.md`
-  (confirmed still exists, 650B, untouched since 2026-07-20 — the real phantom). No edit needed
-  there for the phantom-path class.
-- init.md was NOT touched by that prior sprint: fixed 3 residual bare "DASHBOARD.md" mentions
-  (skills bullet, forbidden_outputs, flow.catalog output) to name `docs/data/DASHBOARD.md` +
-  `scripts/emit-dashboard-row.sh`. The forbidden_outputs one had been internally contradicting
-  this same file's own not_my_job routing statement (findings → `.signal_queue`, not DASHBOARD.md).
-- main.md RETURN block `NEXT: po (via DASHBOARD.md)` was a genuine phantom-PROTOCOL claim (not
-  just a stale path) — grepped every po flow file, zero reads DASHBOARD.md. Fixed to
-  `po (via orch-state.json .signal_queue row)` per this file's own inter_agent contract.
-- SKILL.md (`.claude/skills/signal-dashboard/SKILL.md`) hot-path "Write protocol" line cited a
-  stale pre-orch-apply.sh brief (bare temp-then-rename), contradicting its own CONCURRENT WRITERS
-  CAS-guard mandate 2 sections below + `dashboard-protocol.md`'s already-correct WRITE step 4.
-  Fixed to name `scripts/orch-apply.sh` directly. Left the same-class stale line in
-  `dashboard-protocol.md`'s own preamble (L12) untouched — out of the task's explicit
-  SKILL.md-only scope; flagged for follow-up, not silently dropped.
-- DID NOT flip the board row BACKLOG→REVIEW or touch `orch-state.json` at all — own init.md
-  `commit_zone` excludes it from agent-father commits except a signal-queue DONE-mark, and this
-  dispatch (direct po manual-dispatch board row) has no linked signal_queue row. Deferred to
-  router/po; RETURN block carries the exact `orch-apply.sh` jq transform for the lane move.
-
 ## Fix (dev-team S4 UNBLOCK dispatch) 2026-07-31T05:35:00Z FIX-CIRED-TRIAGE-WRONG-PLANE-DEDUP-AMNESTY
 - Implemented `docs/architecture-briefs/2026-07-31-cired-triage-failedfile-dedup.md` §3/§4
   verbatim, two files, zero prod code: `docs/agents/po/flow/triage-signals.md` `ci_red` row
@@ -138,3 +88,26 @@
   `scripts/agents-flow/cowork-spawn-entry-prompt-session-id.test.js` (7/7, RED confirmed against
   pre-fix content) statically asserts both branches append the line; sibling
   `cowork-schedule-consistency.test.js` (9/9) and `cowork-match-slots.test.js` (43/43) unaffected.
+
+## Fix (dev-team S79 tier-1 dispatch) 2026-07-31T15:19:08Z FIX-PO-MANUAL-DISPATCH-SWEEP-FLAG-WITHOUT-DISPATCH-STRANDS-ROW
+- `manual-dispatch-sweep.md` Step 1's `po_manual_dispatch_flagged_at` exclusion was PERMANENT
+  (stamp/dispatch not atomic) — any row whose BATCH was deferred (WIP cap) became invisible to
+  every future sweep forever. Live: `TE-T12`, flagged 06:56:27Z, still BACKLOG ~8h later.
+- Fixed with a bounded staleness window (`flag_reentrant($now_epoch; 14400)`, 4h) — fresh stamp
+  stays excluded, stale stamp is re-admitted exactly like unflagged. Chose this over a Step-3
+  "fold highest-priority stale row when Step 2 stamps nothing" fallback: smaller/more mechanical,
+  reuses the `$now_epoch` arg the script already computed but never used. Same-tick double-BATCH
+  stays structurally impossible regardless (Step 1 computes its candidate list once, before Step
+  2 stamps). `docs/policies/dev-standards.md:504-526` mirror updated in lockstep.
+- Verify script: `G-ALREADY-FLAGGED` negative control switched from a hand-typed stale-dated
+  fixture (would have gone stale itself and started FALSE-passing the wrong branch as this repo's
+  clock advanced) to a relative-fresh timestamp computed via jq `todateiso8601` off `$NOW_EPOCH`
+  — portable, no BSD/GNU `date` divergence. New `M-STALE-FLAGGED-REENTRANT` positive control
+  (same offset math, past the window) — this is the check that would have failed pre-fix.
+- Live-replayed Step 1's exact jq against the real board (read-only, no orch-apply.sh call):
+  `TE-T12` now surfaces top-ranked with `reflag:true`, confirming the re-admission path fires on
+  the actual stranded row, not just the synthetic fixture.
+- DID NOT flip the board row `in_progress[]→review[]` myself — own init.md `commit_zone.excluded`
+  names `orch-state.json` "NEVER in agent-father commits except the ONE allowed signal-queue
+  DONE-mark", and `.head.active_task_id` at write time was a sibling task's id anyway (not mine).
+  Supplied the exact `orch-apply.sh` transform (no `.head` sync — condition not met) in RETURN.
