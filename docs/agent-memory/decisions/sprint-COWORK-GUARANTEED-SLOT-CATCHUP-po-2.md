@@ -162,3 +162,40 @@
 - only path: sub-flow mandates exactly ONE top-priority candidate per invocation
 **why-decision:** UC-ASL-P6 is rank-1 (P1, idx 8) and its own `supervised_reason` states it is deliberately withheld from BOUNDED-1 and reachable by "deliberate on-demand dispatch of agent-father" only — precisely the class this producer exists to serve. Supervised-hold pre-check ran first and returned `should_hold=false` (head=FU-MACRO-SNAPSHOT-TIER-WORSTOF), so no ratification was owed this tick.
 **why-change:** no change from plan.
+
+### STEP po-S76 · po · 2026-07-31T01:32Z
+**task-id:** FIX-ORCHSTATE-HEAD-STAMP-DROPPED-CI-RED-1837A
+**what-done:** Executed FIX-CIRED-TRIAGE-WRONG-PLANE-DEDUP-AMNESTY AC-1 by hand on CI-RED-8e1e66e5 (that row is still BACKLOG/unshipped) and root-caused `bun test` to a live-data defect, not a test defect.
+**what-considered:**
+- Dedup all 3 failing jobs into the 2 existing READY CI rows ("same standing red")
+- Read the failing-file identity per job first, then dedup on FILE, not on SHA
+**why-decision:** `gh run view --log-failed` gives `FAILEDFILE: src/__tests__/1837a-pipeline-state.test.ts` — a file owned by ZERO rows. Reproduced locally: live `.head` is `{status,active_task_id,next_agent}` with no `updated_at`/`updated_by`. HeadSchema:226-227 marks both optional so orch-apply.sh passes it; the test requires them. The stamper that would fix this already exists (orch-stamp-updated-at.mjs) and its own header cites HeadSchema:227 as why nothing complained — then covers rows only. Residual surface of a shipped fix.
+**why-change:** Deliberately did NOT hand-repair `.head`. That would turn CI green, erase the evidence, and let the actuator (AC-2) never ship — symptom over root cause.
+
+### STEP po-S77 · po · 2026-07-31T01:32Z
+**task-id:** FIX-CI-SIZELINT-MCPSERVER-SIX-UNCOVERED-OFFENDERS
+**what-done:** Found the existing size-lint READY row covers 1 of 8 live offenders; minted 2 sibling zone rows and corrected the existing row's now-unsatisfiable job-level AC.
+**what-considered:**
+- Dedup into the existing macro row (its dedup_key is `ci_job:size-lint|...`)
+- One `multi` row for all 7 remaining, architect splits
+- Per-zone split: apps/mcp-server (6) + apps/pdf-extractor (1)
+**why-decision:** Offender count went 1→8 in ~21h — a red gate has zero marginal cost, so the ratchet is broken. Dedup would have hidden 7 files. `multi` adds an architect hop while main is red. Per-zone split lets 3 zones work in parallel; I recorded its honest cost: all three share ONE job conclusion, so no row can verify at job level — each gets a FILE-level AC instead.
+**why-change:** Also stamped the existing macro row: its AC-1/AC-4 are no longer satisfiable alone. Left the `--update` landmine intact and escalated it — with 8 offenders a single `--update` now grandfathers all of them.
+
+### STEP po-S78 · po · 2026-07-31T01:32Z
+**task-id:** FIX-SWEEPGUARD-WARN-ONLY-NO-ACTUATOR-AND-TRIAGE-MISADJUDICATION
+**what-done:** Rejected dev-team's CLEAN disposition on all 4 commit-sweep-guard bug-escalations; they are true positives.
+**what-considered:**
+- Accept "benign, hook can't see the pathspec" and close as CLEAN
+- Accept "hook too noisy" and file a repair_task_request against the hook
+- Read the hook + rerun its verifier before adjudicating
+**why-decision:** The premise is self-contradictory and falsified at source. pre-commit:445-454: `next-index-*.lock` ⇒ SCOPED ⇒ `exit 0` silent; `index` ⇒ BARE ⇒ warn. Re-ran `scripts/audits/verify-commit-sweep-discriminator.sh` this tick: VERDICT PASS on git 2.49.0, C2 confirms git pre-resolves a scratch index for a pathspec commit. So a `BARE commit about to absorb` payload proves no pathspec by construction. `git show --stat` clean only means no peer staged anything in the race window — luck, not correctness.
+**why-change:** No 7th "make commits pathspec-scoped" row — 6 exist, all detectors. Minted the missing ACTUATOR (staged warn→reject) plus the missing adjudication rule. Flow docs already grep clean, so this is improvised agent behaviour only an enforcing gate stops.
+
+### STEP po-S79 · po · 2026-07-31T01:32Z
+**task-id:** TE-T08
+**what-done:** Manual-dispatch sweep: 20+ unflagged candidates, stamped rank-1 TE-T08 and folded it into this tick's BATCH; supervised-hold pre-check returned no hold.
+**what-considered:**
+- only path: sub-flow mandates exactly ONE top-priority candidate per invocation
+**why-decision:** TE-T08 is P1, `next_agent=agent-father`, off the DRS allowlist — exactly the stranded class this producer serves — and it routes to agent-father, so it costs dev-team no dev WIP slot and runs parallel to the CI work.
+**why-change:** Added a coupling landmine to the row. T-08 inverts the commit-mutex SKILL to a ~60L hot card; the pathspec-commit line MUST stay in the hot card, or the refactor deletes the only in-context instruction preventing the bare commits S78 just proved are live at 14/8h.
