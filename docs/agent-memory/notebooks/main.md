@@ -1,6 +1,17 @@
 # Dev Team — Sprint Boundary Notebook
 
-**Written:** 2026-07-31T03:16Z
+**Written:** 2026-07-31T03:24Z
+
+## cycle-20260731T0324Z-sizelint-verified-closed — RAW-verified `dev-mcp-server`'s FIX-CI-SIZELINT-MCPSERVER-SIX-UNCOVERED-OFFENDERS return; patched a board metadata gap (null commit_sha/review_note on an otherwise-genuine landing); released LOCK-LIFETIME hold; 0 background agents remain
+
+- **Commit ancestry + diff shape confirmed**: `e2502b98f` real ancestor of HEAD. 16-file diff matches claim: 5 files split into ≤120L siblings (claimCandidateScanner/vpsPushLogStore/signalValidator/vpsProxyTools/polymarket), `orchStateSchema.ts` trim+justification instead of split.
+- **Independently re-ran the file-level gate, not trusted**: `size-lint-justification.sh --check` → exactly 2 remaining offenders (macro-indicators, pdf-extractor — both claimed sibling rows), none of the 6 mcp-server files. `docs/data/size-lint-baseline.json` confirmed untouched in the commit (AC-2 landmine avoided). `wc -l` on all 6 target files matches claim exactly (116/160/177/87/462/839).
+- **orchStateSchema.ts justification header read in full** — substantive, not bare; declared 839L == actual exactly; cross-verified via grep that `scripts/orch-validate.mjs` genuinely imports it by name and `drain-signals.test.js` genuinely raw-copies it into an isolated harness (the stated reason a split was unsafe) — both true.
+- **Independently re-ran, not trusted**: `bun tsc --noEmit` (clean), 3 targeted test files spanning every split module (51/51 pass), `drain-signals.test.js` (36/36 pass — exercises the copied-orchStateSchema harness directly).
+- **DJ-GATE-1 confirmed present** (`dev-mcp-server` decision journal S35, substantive what-considered/why-decision). Lane-move confirmed (row absent from `in_progress[]`, present in `review[]`) and `.head` correctly reset to idle terminal state per `CANONICAL:SSOT-STATUSFLIP-LANEMOVE`.
+- **One real gap found and fixed**: board row landed with `commit_sha:null`/`review_note:null` despite the commit being genuine — patched both via `orch-apply.sh` (conservation check OK) and committed (`c2e146240`). Not a correctness defect in the work itself, just a missed traceability stamp on self-closeout.
+- Released `task:FIX-CI-SIZELINT-MCPSERVER-SIX-UNCOVERED-OFFENDERS` LOCK-LIFETIME hold (`ok:true`).
+- **NEXT**: idle — 0 background agents in flight. Await next cron tick or signal.
 
 ## cycle-20260731T0316Z-resume-noop — preflight RUN→GCC-clean→drain(0 signals, 0 NEW queue rows)→0a-B both orphan-signals re-confirmed same recurring false-orphan class as last 2 cycles→CI probe deduped clean (0 new)→S2 correctly recognized live in-flight dispatch, did NOT re-spawn
 
@@ -19,12 +30,4 @@
 - **BOUNDED-1 (WIP=0)**: promoted+claimed `FIX-CI-SIZELINT-MCPSERVER-SIX-UNCOVERED-OFFENDERS` (P0, `apps/mcp-server/`, 6 size-lint offenders — 1 new-offender + 5 baseline-tolerance-exceeded, AC-2 landmine explicitly flagged: never `--update` the baseline). Dispatched `dev-mcp-server` in background (`a302e834a3ad46e99`), LOCK-LIFETIME pattern applied (`task:FIX-CI-SIZELINT-MCPSERVER-SIX-UNCOVERED-OFFENDERS` held, not released at spawn). `JUMP TO execute` preempted Step 1 PO Triage this tick per the JUMP-TO table — the 3 just-drained signals surface once WIP clears BOUNDED-1's gate on a later tick.
 - Released SF-1 + fire-election locks at tick close (both `ok:true`).
 - **NEXT**: await `dev-mcp-server` RETURN, RAW-verify (file-level size-lint gate per AC-1, DJ-GATE-1 journal presence, lane-move correctness). A later tick's Step 1 PO Triage still owes the 3 pending signals.
-
-## cycle-20260731T0505Z-all-4-verified-cycle-closed — RAW-verified all 4 remaining dispatches from the 0445Z cron-tick (po ci-red triage, agent-father TE-T11, developer sweep-guard fix, architect branch-hijack brief); released the critical resume lock + sent completion telegram; 0 background agents remain
-
-- **po ci-red triage**: commit `89fae25df` confirmed ancestor of HEAD; 5 rows genuinely escalated to P0 (2 ready, 3 backlog); confirmed zero duplicate `40dfb1f9` row minted; confirmed my own BOUNDED-1 peer row conserved intact through the write.
-- **agent-father TE-T11**: commit `704677ea3` confirmed ancestor; grep-confirmed exactly 10 files now adopt `step-0-cowork` (was 0); confirmed `tick-snapshot.md`'s exclusion reasoning checked out against the actual diff (genuinely absent, not just claimed); board row genuinely `REVIEW`/`qa`.
-- **developer sweep-guard fix — highest-severity verify this cycle**: 3 commits (`27be11f4f`/`50b1db8e6`/`5b3a32f70`) all real ancestors; read the full `pre-commit` diff (AC-1 deploy-baseline awk timestamp-floor, AC-2 per-session rename) — matches claim exactly. Independently re-ran the test suite rather than trust "10/10 PASS": confirmed 10/10, T10 passing by name. Confirmed live `.git/sweep-guard.log` untouched (156 lines) and baseline marker correctly absent (no BARE commits yet). Released the LOCK-LIFETIME resume lock (verified held via `task_list_held` first) and sent the WORK-channel telegram the subagent couldn't (no MCP grant that cycle).
-- **architect branch-hijack brief**: commit `0f26359f5` confirmed ancestor; 376L brief file confirmed on disk. Verified (not just trusted) architect's unusual "my board write was absorbed into a peer's commit" claim by reading `50b1db8e6`'s actual diff hunk — genuinely true, row landed `READY`/`pm` via orch-apply.sh's CAS-retry.
-- **NEXT**: idle — all 4 dispatches from the S30 cron-tick fan-out resolved and RAW-verified with zero discrepancies. Bare commits confirmed safe again fleet-wide. Await next cron tick or signal.
 
