@@ -366,3 +366,12 @@
 - justification token — chosen: declared 224L matches actual exactly (not just within ±10%).
 **why-decision:** AC-1 explicitly names both remedies as legitimate; shrink is not viable here without deleting the exact type-safety/structural-guarantee content FDA-5 was tasked to add, so the justification-token path is the only remedy that doesn't regress FDA-5's own AC.
 **why-change:** none — AC-2 (baseline.json untouched, zero --update) and AC-3 (check/threshold/EXCLUDE_PATTERN unweakened) both honored. AC-4 CI-plane verified: run 30608934628 (head f4feb65517e, confirmed descendant of 22bdf63b5 via merge-base), size-lint --log-failed lists exactly 1 offender (macro-indicators sibling file), energyTools.ts absent.
+
+### STEP dev-mcp-server-S39 · dev-mcp-server · 2026-07-31T06:26:00Z
+**task-id:** FDA-7
+**what-done:** `get_macro_snapshot`'s HTTP-proxy handler in macroTools.ts: `sourceTier` fallback (no present `signals.*` component carries a tier — older Go build/empty signals) changed `2 → 4`; `fetchedAt` fallback (Go response omits it) changed `new Date().toISOString() → null`, type widened `string → string | null`.
+**what-considered:**
+- structuredContent (FDA-5/6 pattern) for the fallback flag — rejected: this envelope's `fetchedAt`/`source_tier` are already real top-level wire fields (not buried in `content[0].text`), so the FDA-5 problem (estimate flag invisible structurally) doesn't apply here; `null` on the existing field is sufficient per AC-1's own "null/omitted field, or a structured flag" either/or.
+- source_tier fallback value: 4 (matches this file's own CarryProvenance/MacroDataSourceInputs convention for is_estimate/unknown-provenance) not some new sentinel.
+**why-decision:** AC-1/AC-2 literally prescribe null-fetchedAt + tier=4; both defaults previously fired only when Go upstream response omits provenance entirely (an under-tested branch — 0 existing tests covered `presentTiers.length===0`), confirmed via RED run (3 new tests failed pre-fix: got "now"-string + tier=2) then GREEN post-fix.
+**why-change:** none — the `!result.ok` HTTP-failure branch's `source_tier: 2` literal is untouched (different case: transport failure, not upstream field omission; out of this row's note scope).
