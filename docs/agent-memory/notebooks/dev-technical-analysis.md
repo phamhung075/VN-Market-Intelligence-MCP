@@ -6,6 +6,30 @@ Zone: `apps/technical-analysis/` | Stack: **Go** (pilot active, 2026-05-22) | DB
 
 [3 most recent cycles retained below. Archive in git history.]
 
+### 2026-07-31 — FACTORY-TECHANALYSIS-fix-discarded-service-and-port — deleted dead domain service, real port in /health
+
+BOUNDED-1 idle-capacity auto-pickup. `cmd/server/main.go:71` built `domain.NewCalculateTAService(priceRepo,
+calculator)` then immediately discarded it (`_ = ...`) — grep-verified zero other callers repo-wide, so
+deleted `pkg/domain/services.go` (`CalculateTAService` stub) outright, not just the discard line. `/health`
+hardcoded `"port":5003` in a raw JSON string (would lie under `PORT` env-override) — added `RouterConfig.Port
+string` (threaded from `main.go`'s resolved `port` var), built via a `healthResponse` struct + `json.Marshal`,
+falling back to `defaultPort=5003` when empty/unparseable (keeps sandbox/test callers unaffected — they don't
+set `Port`). Kept the field `int` (not `string`) to match `api/openapi.yaml`'s existing `port: integer`
+schema — no wire-contract change for the default case. Added `TestHealth_ReflectsConfiguredPort` +
+strengthened `TestHealth_Returns200` with a default-port assertion (both previously untested). Simplicity
+gate Q2 caught a single-call-site `resolvePort()` helper — inlined into `NewRouter`. `PriceHistoryRepository`/
+`TAIndicatorCalculator` ports (`pkg/domain/ports.go`) are now zero-consumer orphans — left in place, out of
+this task's declared file scope (`main.go`/`router.go` only); flagged in `domain-model.md` as a follow-up.
+Gates: `go build/vet/test ./...` (12/12) + `golangci-lint run ./...` (0 issues) clean, G12 sandbox 35/35
+green + render-check PASS. Commit `39fbec098`. Full reasoning: decision journal STEP dev-technical-analysis-S2
+(sprint-COWORK-GUARANTEED-SLOT-CATCHUP).
+
+Zone health: no drift detected — this closes the last known discarded-wiring/hardcoded-config finding from
+the 2026-06-15 maintainability audit for this zone | HEALTHY
+
+**Status: REVIEW -> next_agent=ops** (Docker Microservice Code-Change Close Gate — `main.go`/`router.go` are
+on the real service's build graph; ops rebuild+swap, then qa live-verify, then po Step 6 sign-off).
+
 ### 2026-07-29 — FACTORY-TECHANALYSIS-dedup-calculator — shared module.ToDomainIndicators mapper, fixed MA5/20/50 sandbox drift
 
 BOUNDED-1 idle-capacity auto-pickup. `sandboxCalculator.Calculate` (`cmd/sandbox/service_adapters.go`,
