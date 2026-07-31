@@ -144,6 +144,7 @@ doesn't `unlinkSync` ~1,283 tracked files in one shot and leave a mass-dirty tre
 | `repair_task_request` | `system-auditor` | PO Step 0-SIG | anomaly→task bridge; PO triage-signals.md is authoritative handler (creates {check_id}-FIX BACKLOG) |
 | `ci_red` | `ci-health-probe` | PO Step 0-SIG | CI workflow RED on origin/main HEAD; payload = {check_id, failing_jobs, head_sha}; PO creates deduped FIX task (VERIFICATION GATE: ci_green_on_subsequent_push) |
 | `esc-deep-dive-request` | `bctc-analyst` | ESC-DISPATCH | dev-team dispatches model=opus bctc-analyst deep-dive; guard released after spawn. File-sourced (bctc-analyst has no Bash — emits via `docs/signals/bctc-analyst-*.json`, not orch-state.json) |
+| `bug-escalation` | `commit-sweep-guard` | PO Step 0-SIG | payload = string message, NOT a file path — starts `[sweep-guard] BARE commit about to absorb` (mechanism-true-positive by construction; PO triage-signals.md's dedicated row is authoritative — NEVER disposition via `git show --stat`, that is outcome not mechanism) or `[sweep-guard] INTERNAL:` (separate fail-open path, always actionable). |
 | any other | any | PO Step 0-SIG | PO decides; unknown types logged + WORK notified |
 
 **ESC-DISPATCH** (type=`esc-deep-dive-request`): handled before PO hand-off, inline this drain tick.

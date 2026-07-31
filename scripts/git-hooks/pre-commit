@@ -488,6 +488,23 @@ actor="${CLAUDE_CODE_SESSION_ID:-$(git config user.name 2>/dev/null || echo unkn
 staged_oneline="$(printf '%s' "$staged" | tr '\n' ' ')"
 mode_effective="${GIT_SWEEP_GUARD_MODE:-warn}"
 
+# --- AC-2: same-actor escalation (FIX-SWEEPGUARD-WARN-ONLY-NO-ACTUATOR-AND-TRIAGE-
+# MISADJUDICATION) — converts repeated BARE commits from the SAME actor into a
+# forcing function without a fleet-wide reject-mode flip. Threshold counts PRIOR
+# BARE log lines for this exact actor (computed BEFORE this attempt's own line is
+# appended below) — opt-out via GIT_SWEEP_GUARD_ESCALATE_THRESHOLD=0.
+escalate_threshold="${GIT_SWEEP_GUARD_ESCALATE_THRESHOLD:-3}"
+prior_warns=0
+escalated=false
+if [ "$mode_effective" != "reject" ] && [ "$escalate_threshold" -gt 0 ] 2>/dev/null; then
+  [ -f "$LOG_FILE" ] && prior_warns="$(grep -Fc " actor=${actor} " "$LOG_FILE" 2>/dev/null || echo 0)"
+  if [ "$prior_warns" -ge "$escalate_threshold" ] 2>/dev/null; then
+    escalated=true
+  fi
+fi
+escalate_effective="$mode_effective"
+[ "$escalated" = true ] && escalate_effective="reject"
+
 {
   echo "=============================================================================="
   echo "[sweep-guard] WARNING: this commit has NO pathspec — it will absorb ALL"
@@ -503,11 +520,15 @@ mode_effective="${GIT_SWEEP_GUARD_MODE:-warn}"
 log_line="$(date -u +"%Y-%m-%dT%H:%M:%SZ" 2>/dev/null || true) mode=${mode_effective} actor=${actor} n=${n} staged=[${staged_oneline}]"
 printf '%s\n' "$log_line" >> "$LOG_FILE" 2>/dev/null || true
 
-signal_msg="[sweep-guard] BARE commit about to absorb ${n} staged file(s) not necessarily this actor's own: ${staged_oneline}. actor=${actor} mode=${mode_effective}. Fix: git commit -m \"<msg>\" -- <own-files-only>."
+signal_msg="[sweep-guard] BARE commit about to absorb ${n} staged file(s) not necessarily this actor's own: ${staged_oneline}. actor=${actor} mode=${mode_effective} escalated=${escalated} prior_warns=${prior_warns} threshold=${escalate_threshold}. Fix: git commit -m \"<msg>\" -- <own-files-only>."
 write_signal "$signal_msg"
 
-if [ "$mode_effective" = "reject" ]; then
-  echo "[sweep-guard] GIT_SWEEP_GUARD_MODE=reject — BLOCKING this commit. Index is untouched; re-run with an explicit pathspec." >&2
+if [ "$escalate_effective" = "reject" ]; then
+  if [ "$mode_effective" = "reject" ]; then
+    echo "[sweep-guard] GIT_SWEEP_GUARD_MODE=reject — BLOCKING this commit. Index is untouched; re-run with an explicit pathspec." >&2
+  else
+    echo "[sweep-guard] ESCALATED REJECT: actor=${actor} has ${prior_warns} prior BARE warn(s) logged (threshold=${escalate_threshold}) — blocking THIS commit even though GIT_SWEEP_GUARD_MODE=${mode_effective}. Index is untouched; re-run with an explicit pathspec, or set GIT_SWEEP_GUARD_ESCALATE_THRESHOLD=0 to disable escalation (not recommended)." >&2
+  fi
   exit 1
 fi
 

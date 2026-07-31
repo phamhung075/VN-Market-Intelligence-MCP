@@ -31,6 +31,18 @@
 #   T6  UNKNOWN $GIT_INDEX_FILE shape fails OPEN + LOUD (AC-3) — invoked directly
 #       (git itself never produces this shape; this exercises the hook's own
 #       internal-error branch in isolation).
+#   T7  escalation fires (FIX-SWEEPGUARD-WARN-ONLY-NO-ACTUATOR-AND-TRIAGE-
+#       MISADJUDICATION §2.2) — same simulated actor issues `escalate_threshold`
+#       consecutive BARE commits in default mode=warn (each still succeeds,
+#       matching T1), then the (threshold+1)th BARE commit from that SAME actor
+#       is BLOCKED (non-zero exit, index untouched) even though
+#       GIT_SWEEP_GUARD_MODE is unset/warn.
+#   T8  per-actor scoping — immediately after T7's block, a DIFFERENT simulated
+#       actor's FIRST BARE commit in the SAME scratch repo still only WARNS
+#       (succeeds, exit 0) — proves escalation state is keyed per-actor, not a
+#       global side-effect of T7's run.
+#   T9  opt-out — GIT_SWEEP_GUARD_ESCALATE_THRESHOLD=0 lets the same actor from
+#       T7 issue an unbounded run of BARE commits, none ever escalate.
 #
 # Run:
 #   bash scripts/git-hooks/pre-commit.test.sh
@@ -207,6 +219,84 @@ else
   FAIL=$((FAIL + 1))
 fi
 rm -rf "$D6"
+
+# ── T7: escalation fires — same actor's (threshold+1)th BARE commit blocks ─────
+# FIX-SWEEPGUARD-WARN-ONLY-NO-ACTUATOR-AND-TRIAGE-MISADJUDICATION §2.2. Default
+# GIT_SWEEP_GUARD_ESCALATE_THRESHOLD=3: the actor's 1st-3rd BARE commits (prior_warns
+# 0,1,2 — all < 3) still only warn (exit 0, matching T1); the 4th (prior_warns=3 >= 3)
+# is escalated to a hard reject even though GIT_SWEEP_GUARD_MODE is unset/warn.
+D7="$(new_repo)"
+actor7="test-actor-T7-$$"
+(
+  cd "$D7" || exit 1
+  export CLAUDE_CODE_SESSION_ID="$actor7"
+  echo w1 > w1.txt; git add w1.txt; git commit -qm "warn 1" 2>stderr1.log; echo $? > exit1.log
+  echo w2 > w2.txt; git add w2.txt; git commit -qm "warn 2" 2>stderr2.log; echo $? > exit2.log
+  echo w3 > w3.txt; git add w3.txt; git commit -qm "warn 3" 2>stderr3.log; echo $? > exit3.log
+  echo w4 > w4.txt; git add w4.txt; git commit -qm "warn 4 - should block" 2>stderr4.log; echo $? > exit4.log
+)
+exit7_1="$(cat "$D7/exit1.log" 2>/dev/null)"
+exit7_2="$(cat "$D7/exit2.log" 2>/dev/null)"
+exit7_3="$(cat "$D7/exit3.log" 2>/dev/null)"
+exit7_4="$(cat "$D7/exit4.log" 2>/dev/null)"
+head7_count="$(cd "$D7" && git log --oneline | wc -l | tr -d ' ')"
+staged7="$(cd "$D7" && git diff --cached --name-only | tr '\n' ' ')"
+stderr7_4="$(cat "$D7/stderr4.log" 2>/dev/null)"
+if [[ "$exit7_1" == "0" && "$exit7_2" == "0" && "$exit7_3" == "0" && "$exit7_4" != "0" && "$head7_count" == "4" && "$staged7" == *"w4.txt"* && "$stderr7_4" == *"ESCALATED REJECT"* ]]; then
+  echo "PASS T7: actor's 1st-3rd BARE commits warned only (exit=0 each), 4th escalated+blocked (exit=$exit7_4, HEAD unchanged at $head7_count commits, w4.txt still staged)"
+  PASS=$((PASS + 1))
+else
+  echo "FAIL T7: exits=[$exit7_1,$exit7_2,$exit7_3,$exit7_4] head_count=$head7_count staged=[$staged7] stderr4=[$stderr7_4]"
+  FAIL=$((FAIL + 1))
+fi
+
+# ── T8: per-actor scoping — a DIFFERENT actor's first BARE commit still only WARNs ──
+# Runs immediately after T7's block, in the SAME scratch repo (D7 still live) — proves
+# the escalation counter is keyed per-actor (grep -Fc " actor=<id> " on the shared
+# .git/sweep-guard.log), not a global side-effect of T7's own run.
+(
+  cd "$D7" || exit 1
+  export CLAUDE_CODE_SESSION_ID="test-actor-T8-$$"
+  echo o1 > other1.txt; git add other1.txt; git commit -qm "other actor warn 1" 2>stderr_other.log; echo $? > exit_other.log
+)
+exit8="$(cat "$D7/exit_other.log" 2>/dev/null)"
+files8="$(cd "$D7" && git show --name-only --format="" HEAD 2>/dev/null | sort | tr '\n' ' ')"
+warn8_exists="no"; grep -q "sweep-guard" "$D7/stderr_other.log" 2>/dev/null && warn8_exists="yes"
+reject8_seen="no"; grep -qE "ESCALATED REJECT|GIT_SWEEP_GUARD_MODE=reject" "$D7/stderr_other.log" 2>/dev/null && reject8_seen="yes"
+if [[ "$exit8" == "0" && "$files8" == *"other1.txt"* && "$warn8_exists" == "yes" && "$reject8_seen" == "no" ]]; then
+  echo "PASS T8: a different actor's first BARE commit in the same repo still only WARNED (exit=$exit8), not escalated — per-actor scoping confirmed"
+  PASS=$((PASS + 1))
+else
+  echo "FAIL T8: exit=$exit8 files=[$files8] warn_exists=$warn8_exists reject_seen=$reject8_seen"
+  FAIL=$((FAIL + 1))
+fi
+rm -rf "$D7"
+
+# ── T9: opt-out — GIT_SWEEP_GUARD_ESCALATE_THRESHOLD=0 disables escalation ─────
+D9="$(new_repo)"
+actor9="test-actor-T9-$$"
+(
+  cd "$D9" || exit 1
+  export CLAUDE_CODE_SESSION_ID="$actor9"
+  export GIT_SWEEP_GUARD_ESCALATE_THRESHOLD=0
+  for i in 1 2 3 4 5; do
+    echo "x$i" > "x$i.txt"
+    git add "x$i.txt"
+    git commit -qm "opt-out warn $i" 2>>stderr_all.log
+    echo "$?" >> exits.log
+  done
+)
+exits9="$(cat "$D9/exits.log" 2>/dev/null | tr '\n' ' ')"
+head9_count="$(cd "$D9" && git log --oneline | wc -l | tr -d ' ')"
+nonzero9="no"; printf '%s' "$exits9" | grep -qE '[1-9]' && nonzero9="yes"
+if [[ "$nonzero9" == "no" && "$head9_count" == "6" ]]; then
+  echo "PASS T9: GIT_SWEEP_GUARD_ESCALATE_THRESHOLD=0 — 5 consecutive BARE commits from the same actor all succeeded (exits=[$exits9]), none escalated (HEAD=$head9_count)"
+  PASS=$((PASS + 1))
+else
+  echo "FAIL T9: exits=[$exits9] head_count=$head9_count"
+  FAIL=$((FAIL + 1))
+fi
+rm -rf "$D9"
 
 # ── Summary ───────────────────────────────────────────────────────────────────
 echo ""
