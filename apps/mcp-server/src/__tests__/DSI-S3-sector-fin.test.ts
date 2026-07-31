@@ -524,6 +524,75 @@ describe("DSI-S3 C1 — creditFlowTools flags hardcoded fallbacks as estimate", 
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
+// FDA-6: creditFlowTools' mortgage/YoY/date-stamp estimate flags must travel in
+// a STRUCTURED field alongside the VN prose `content` string (same class as
+// FDA-5/energyTools.ts — see that file's own comment: bespoke top-level keys
+// like the pre-existing `is_estimate`/`direction` on this handler's return get
+// silently zod-stripped by a real wire MCP client's CallToolResultSchema.parse;
+// only in-process callers, e.g. getMoneyRadarComposite.ts, ever actually see
+// them). Also covers the `date: new Date().toISOString()` fresh-stamp bug: the
+// current/previous CreditData snapshot must NOT claim a live "as of today" date
+// when its mortgage-rate and/or YoY-growth legs are hardcoded fallbacks — that
+// falsely implies the estimate was fetched live today.
+// ─────────────────────────────────────────────────────────────────────────────
+describe("FDA-6 — creditFlowTools estimate/date-stamp flags travel in a structured field", () => {
+  it("AC-FDA6-a: response carries a structuredContent object (not only unstructured text)", async () => {
+    const result = await getCreditFlowSignalHandler({});
+    expect(result).toHaveProperty("structuredContent");
+    expect(typeof result.structuredContent).toBe("object");
+    expect(result.structuredContent).not.toBeNull();
+  });
+
+  it("AC-FDA6-b: default path (no params) — mortgage+YoY both estimated → is_estimate=true, source_tier=4, fully_estimated=true", async () => {
+    const result = await getCreditFlowSignalHandler({});
+    expect(result.structuredContent?.is_estimate).toBe(true);
+    expect(result.structuredContent?.source_tier).toBe(4);
+    // Machine-readable fail-loud hook (FDA-6 FIX note): a downstream consumer
+    // can choose to omit/suppress the dish itself when BOTH legs are
+    // estimated, without this tool breaking its own existing text contract.
+    expect(result.structuredContent?.fully_estimated).toBe(true);
+  });
+
+  it("AC-FDA6-c: estimated_fields always lists the always-static reCreditRatioPct/totalCreditTrillion, plus mortgage/yoy when those also fall back", async () => {
+    const result = await getCreditFlowSignalHandler({});
+    const fields = result.structuredContent?.estimated_fields ?? [];
+    expect(fields).toContain("reCreditRatioPct");
+    expect(fields).toContain("totalCreditTrillion");
+    expect(fields).toContain("avgMortgageRatePct");
+    expect(fields).toContain("yoyGrowthPct");
+  });
+
+  it("AC-FDA6-d: current_date/previous_date are null (not a fresh new Date() stamp) when mortgage/YoY are estimates", async () => {
+    const result = await getCreditFlowSignalHandler({});
+    expect(result.structuredContent?.current_date).toBeNull();
+    expect(result.structuredContent?.previous_date).toBeNull();
+  });
+
+  it("AC-FDA6-e: all params provided → mortgage+YoY are live inputs, current_date/previous_date are real ISO dates, source_tier=2, fully_estimated=false", async () => {
+    const result = await getCreditFlowSignalHandler({
+      currentMortgageRatePct: 10.0,
+      previousMortgageRatePct: 10.5,
+      currentYoyGrowthPct: 14.0,
+      previousYoyGrowthPct: 12.0,
+      currentReCreditTrillion: 2800,
+      previousReCreditTrillion: 2744,
+    });
+    expect(result.structuredContent?.mortgage_is_estimate).toBe(false);
+    expect(result.structuredContent?.yoy_is_estimate).toBe(false);
+    expect(result.structuredContent?.fully_estimated).toBe(false);
+    expect(result.structuredContent?.source_tier).toBe(2);
+    expect(result.structuredContent?.current_date).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+    expect(result.structuredContent?.previous_date).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+    // reCreditRatioPct/totalCreditTrillion are ALWAYS static (never live) —
+    // still listed even when mortgage/yoy are fully live inputs.
+    expect(result.structuredContent?.estimated_fields).toEqual([
+      "reCreditRatioPct",
+      "totalCreditTrillion",
+    ]);
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Teardown — restore real hydrologicalData module (CI-RED-0d28104a-FIX)
 //
 // mock.module() in Bun 1.x is worker-scoped and permanent. Re-register the

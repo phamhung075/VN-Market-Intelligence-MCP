@@ -50,6 +50,21 @@ type GetCreditFlowSignalInput = ComputeCreditFlowSignalInput;
  * money-radar composite usecase now calls computeCreditFlowSignal directly
  * in-process (application-layer, Fence-B compliant) and reads the structured
  * fields directly instead of parsing the Vietnamese text block.
+ *
+ * FDA-6 (structuredContent — real wire-level MCP CallToolResult field, unlike
+ * the bespoke top-level keys above which a real MCP client's zod
+ * CallToolResultSchema.parse silently strips — see energyTools.ts FDA-5
+ * precedent for the same caveat): carries is_estimate/source_tier/
+ * estimated_fields/mortgage_is_estimate/yoy_is_estimate/fully_estimated/
+ * current_date/previous_date so a downstream consumer reading the payload
+ * structurally — not just parsing the VN prose — sees both the estimate
+ * provenance AND that current_date/previous_date are null (never a fresh
+ * `new Date()` stamp) whenever mortgage and/or YoY fell back to a hardcoded
+ * default. `fully_estimated` (mortgageIsEstimate && yoyIsEstimate) is a
+ * dedicated machine-readable hook for a downstream consumer to fail-loud /
+ * omit its own derived dish when NEITHER leg has any live backing — this
+ * tool's own VN `content` text is left unchanged (still emits the disclosed
+ * [ƯỚC TÍNH] analysis) to avoid a breaking behavior change on this P3/S fix.
  */
 export async function getCreditFlowSignalHandler(
   input: GetCreditFlowSignalInput,
@@ -58,6 +73,18 @@ export async function getCreditFlowSignalHandler(
   survey_distribution: SurveyDistribution;
   direction: "up" | "down" | "neutral";
   is_estimate: boolean;
+  structuredContent: {
+    is_estimate: boolean;
+    source_tier: 2 | 4;
+    estimated_fields: string[];
+    mortgage_is_estimate: boolean;
+    yoy_is_estimate: boolean;
+    /** true only when BOTH mortgage and YoY are hardcoded fallbacks — no live leg at all. */
+    fully_estimated: boolean;
+    direction: "up" | "down" | "neutral";
+    current_date: string | null;
+    previous_date: string | null;
+  };
 }> {
   const {
     signal,
@@ -65,6 +92,8 @@ export async function getCreditFlowSignalHandler(
     mortgageIsEstimate,
     yoyIsEstimate,
     survey_distribution,
+    currentDate,
+    previousDate,
   } = await computeCreditFlowSignal(input);
 
   const dirLabel =
@@ -106,6 +135,13 @@ export async function getCreditFlowSignalHandler(
     lines.push(...provenanceLines);
   }
 
+  // FDA-6: reCreditRatioPct/totalCreditTrillion are ALWAYS static (never live,
+  // no caller input feeds them at all) — listed unconditionally. mortgage/yoy
+  // are only listed when their own fallback actually engaged.
+  const estimatedFields: string[] = ["reCreditRatioPct", "totalCreditTrillion"];
+  if (mortgageIsEstimate) estimatedFields.push("avgMortgageRatePct");
+  if (yoyIsEstimate) estimatedFields.push("yoyGrowthPct");
+
   return {
     content: [{ type: "text" as const, text: lines.join("\n") }],
     survey_distribution,
@@ -116,6 +152,19 @@ export async function getCreditFlowSignalHandler(
     // whenever the caller omits explicit YoY inputs (the composite always does).
     direction: signal.direction,
     is_estimate: isEstimate,
+    // FDA-6: same data, real MCP CallToolResult field — survives a wire hop
+    // that would silently strip the bespoke top-level keys above.
+    structuredContent: {
+      is_estimate: isEstimate,
+      source_tier: isEstimate ? 4 : 2,
+      estimated_fields: estimatedFields,
+      mortgage_is_estimate: mortgageIsEstimate,
+      yoy_is_estimate: yoyIsEstimate,
+      fully_estimated: mortgageIsEstimate && yoyIsEstimate,
+      direction: signal.direction,
+      current_date: currentDate,
+      previous_date: previousDate,
+    },
   };
 }
 

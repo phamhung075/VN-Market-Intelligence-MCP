@@ -134,6 +134,14 @@ export interface ComputeCreditFlowSignalResult {
   survey_distribution: SurveyDistribution;
   /** Convenience alias for signal.direction — what in-process consumers (e.g. Money Radar composite) read. */
   direction: CreditSignal["direction"];
+  /**
+   * FDA-6: "as of" date used for the current/previous CreditData snapshot fed
+   * into analyzeCreditFlow. null whenever mortgageIsEstimate || yoyIsEstimate
+   * — a `new Date()` stamp on an estimate-backed row previously implied the
+   * hardcoded fallback values were fetched live today.
+   */
+  currentDate: string | null;
+  previousDate: string | null;
 }
 
 /**
@@ -181,6 +189,19 @@ export async function computeCreditFlowSignal(
   const resolvedCurrentCredit = input.currentReCreditTrillion ?? DEFAULT_RE_CREDIT_TRILLION;
   const resolvedPreviousCredit = input.previousReCreditTrillion ?? (DEFAULT_RE_CREDIT_TRILLION * 0.98);
 
+  // DSI-S3 C1: overall estimate flag — mortgage-rate and/or YoY-growth fallback.
+  // Computed BEFORE current/previous so the date stamp below can honestly
+  // reflect it (FDA-6 — moved up from after analyzeCreditFlow()).
+  const isEstimate = mortgageIsEstimate || yoyIsEstimate;
+
+  // FDA-6: null (not `new Date()`) when the snapshot's mortgage/YoY legs are
+  // hardcoded fallbacks — stamping "today" on an estimate-backed row falsely
+  // implied the estimate was fetched live today.
+  const currentDate = isEstimate ? null : new Date().toISOString().slice(0, 10);
+  const previousDate = isEstimate
+    ? null
+    : new Date(Date.now() - 30 * 86400 * 1000).toISOString().slice(0, 10);
+
   const current: CreditData = {
     totalCreditTrillion: resolvedCurrentCredit * 5, // rough estimate
     reCreditTrillion: resolvedCurrentCredit,
@@ -188,7 +209,7 @@ export async function computeCreditFlowSignal(
     reCreditRatioPct: 20,
     yoyGrowthPct: currentYoyResolved ?? 15,
     avgMortgageRatePct: resolvedCurrentMortgage,
-    date: new Date().toISOString().slice(0, 10),
+    date: currentDate,
   };
 
   const previous: CreditData = {
@@ -197,13 +218,10 @@ export async function computeCreditFlowSignal(
     reCreditRatioPct: 19,
     yoyGrowthPct: previousYoyResolved ?? -15,
     avgMortgageRatePct: resolvedPreviousMortgage,
-    date: new Date(Date.now() - 30 * 86400 * 1000).toISOString().slice(0, 10),
+    date: previousDate,
   };
 
   const signal = analyzeCreditFlow(current, previous);
-
-  // DSI-S3 C1: overall estimate flag — mortgage-rate and/or YoY-growth fallback.
-  const isEstimate = mortgageIsEstimate || yoyIsEstimate;
 
   // VMT-6: survey_distribution stub — DEGRADED mode (BLOCKER-6 deferred).
   // is_estimate=true: no machine-readable VIRA/VARA source is confirmed yet.
@@ -229,5 +247,7 @@ export async function computeCreditFlowSignal(
     yoyIsEstimate,
     survey_distribution,
     direction: signal.direction,
+    currentDate,
+    previousDate,
   };
 }

@@ -33,7 +33,14 @@ export interface CreditData {
   reCreditRatioPct: number;
   yoyGrowthPct: number;
   avgMortgageRatePct: number;
-  date: string;
+  /**
+   * "As of" date for this snapshot, or null when the snapshot's mortgage-rate
+   * and/or YoY-growth legs are hardcoded estimate fallbacks (FDA-6) — a real
+   * calendar date on an estimate-backed row falsely implies the estimate was
+   * fetched live on that date. Unused by analyzeCreditFlow itself (metadata
+   * only, not part of the chain-rule computation below).
+   */
+  date: string | null;
 }
 
 /**
