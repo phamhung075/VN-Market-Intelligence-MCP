@@ -1,17 +1,8 @@
 # dev-vps-crawls — Notebook
 
-**Last updated:** 2026-07-02T13:35Z | **Sprint:** BCTC-HNX-SSL-HARDEN
+**Last updated:** 2026-07-31T08:51Z | **Sprint:** BCTC-EXTRACT-QUALITY
 
 > Archive: docs/archive/notebooks/dev-vps-crawls-2026-05-21.md (pre-trim history)
-
----
-
-## Cycle Record — 2026-07-02T13:35Z BCTC-HNX-SSL-HARDEN REVIEW (deploy user-gated)
-
-Task: BCTC-HNX-SSL-HARDEN — replace VPS bctc curl -k with --cacert pinning. Commit 073fa27f. Deploy NOT run (user-gated).
-Root cause: owa.hnx.vn omits GlobalSign RSA OV SSL CA 2018 intermediate from served chain (verify code 21) — Jun-1 hotfix (e22427aa) worked around with insecure `curl -k`.
-Fix: vps-scripts/hnx-ca-bundle.pem (new, intermediate fetched from AIA CA-Issuers URL in the live HNX leaf cert + GlobalSign Root CA - R3) + fetch-bctc.sh curl --cacert /root/hnx-ca-bundle.pem + deploy-vinahost.sh ships the bundle.
-Evidence: `openssl verify -CAfile hnx-ca-bundle.pem <recon leaf>` → OK rc=0. Live: `curl --cacert hnx-ca-bundle.pem https://owa.hnx.vn/` → "SSL certificate verify ok." (HTTP 403 is app-layer WAF).
 
 ---
 
@@ -27,7 +18,7 @@ Evidence: `openssl verify -CAfile hnx-ca-bundle.pem <recon leaf>` → OK rc=0. L
 | vn-news-rss | /root/fetch-vn-news.sh | ua-rotation-rss | FIXED 2026-06-01 — is_blocked() false-positive on "robot" → cafef/vnexpress/tuoitre/nhandan restored. cafef-market: 20 items, cafef-biz: 20 items (was 0 since 2026-04-22). | 2026-06-01 |
 | article-body | /root/article-body-fetcher.py | plain-requests-open-api | NEW 2026-06-01 — cafef.vn + vneconomy.vn article body fetch. Endpoint: VPS:8765/proxy/article-body?url=. cafef 5000ch 200 OK, vneco 5000ch 200 OK. | 2026-06-01 |
 | vn-foreign-flow | /root/fetch-foreign-flow.sh | plain-requests-open-api | FIXED 2026-05-30 — field drift: fBuyVol→fBVol, fSellVol→fSVolume. FPT fBVol=110629 fSVolume=148534 confirmed. 103 items pushed 200 OK. | 2026-05-30 |
-| hsx-bctc (HNX/UPCOM) | /root/discover-bctc-urls-browser.py | hnx-ajax-post | OPERATIONAL — Q1/2026 BCTC flowing. SHB e2e PASS. | 2026-05-13T09:30Z |
+| hsx-bctc (HNX/UPCOM) | /root/discover-bctc-urls-browser.py | hnx-ajax-post | OPERATIONAL — Q1/2026 BCTC flowing. SHB e2e PASS. Filename-based cover-letter reject added 2026-07-31 (code-only, deploy pending). | 2026-05-13T09:30Z |
 | hsx-bctc (HOSE/SSC) | /root/discover-bctc-urls-browser.py | ssc-curl-adf (FIX-VPS-SSC-CURL-SCRAPER) | OPERATIONAL — GAS Q1/2026 confirmed 17.6 MB PDF, 15 rows parsed, no Playwright. | 2026-06-06 |
 
 ---
@@ -55,6 +46,7 @@ Evidence: `openssl verify -CAfile hnx-ca-bundle.pem <recon leaf>` → OK rc=0. L
 
 | Date | Source | Technique | Outcome |
 |------|--------|-----------|---------|
+| 2026-07-31T08:51Z | hsx-bctc (HNX/UPCOM) | filename-based-cover-letter-filter | FU-CTG-DISCOVERY-FILENAME-FILTER — added `is_cover_letter_filename()` + wired into `_fetch_pdf_url()`: rejects ArticlesFileAttach hrefs whose filename contains cv_cbtt/cong_van_cbtt even when the article TITLE passed (title-only filter, FIX-CTG-2, could not catch this). 15 new tests, 57/57 suite PASS. Code-only, deploy pending (user-gated). |
 | 2026-06-06T17:30Z | hsx-bctc (HOSE/SSC) | ssc-curl-adf | FIX-VPS-SSC-CURL-SCRAPER DONE — replaced _ssc_newsearch_playwright() (chromium/async) with sync discover_from_ssc_curl(). 3-step Oracle ADF HTTP recipe. GAS Q1/2026: 17.6 MB PDF, 15 rows parsed. No playwright/asyncio. Root-fixes pthread_create EAGAIN crash. |
 | 2026-06-04T17:45Z | vietstock-board-details | aspnet-csrf-double-submit | FIX-I-A DONE — 4 new files committed (5bca5280). vn-board-details.service active. /proxy/board-details live HTTP 200. FPT=1988, VCB=2021, VNM=2022. N/A→null confirmed. Blocks FIX-I-B. |
 | 2026-06-01T09:10Z | vn-news-rss + article-body | is_blocked-fix + plain-requests-open-api | VPS-NEWS-CAFEF-VNECO DONE — P1: fixed is_blocked() false-positive. cafef 0→20 items. P2: article-body-fetcher.py + /proxy/article-body. cafef 5000ch OK. |
@@ -83,16 +75,18 @@ Evidence: `openssl verify -CAfile hnx-ca-bundle.pem <recon leaf>` → OK rc=0. L
 
 ---
 
-## Cycle Record — 2026-07-03T20:35Z B-05-FU-SSC-503-RETRY DONE-CODE (deploy pending, user-gated)
+## Cycle Record — 2026-07-31T08:51Z FU-CTG-DISCOVERY-FILENAME-FILTER REVIEW (code-only, deploy pending)
 
-Task: B-05-FU-SSC-503-RETRY (FIX, size S, router-dispatched fire-tick). Reverts FIX-BCTC-SSC-503-RETRY (2026-06-16)'s 60s retry/backoff in `discover_from_ssc_curl()` step1 — RAW-verified (B-05 recon) as the ACTUAL 17-day queue freeze cause: mcp-server caller budgets only 5s for the whole VPS HTTP round-trip (`bctcQueueEnricherJob.ts DISCOVERY_TIMEOUT_MS=5_000`; `bctcDiscovery.ts` default `timeout=5_000`), but the retry could block up to ~100s (20s default urllib timeout + 60s sleep + 20s retry) — caller aborts, discovery silently returns [], rows pile into deferred_infra. Original backlog spec (add-retry) was inverted; PO re-specced the opposite.
+Task: FU-CTG-DISCOVERY-FILENAME-FILTER (FIX, P3/S, sprint BCTC-EXTRACT-QUALITY). Router manually routed (zone "vps-scripts + apps/mcp-server" not in system-map.json; commit-history-confirmed ownership).
 
-Fix: vps-scripts/discover-bctc-urls-browser.py step1 — ONE attempt, hard cap `_SSC_STEP1_TIMEOUT_SECONDS=4` (strictly < 5s caller budget). ANY error (transient 5xx/timeout or terminal 4xx) → return None immediately, no retry, no sleep. Removed dead `import time` (sole use was the removed sleep). `_is_transient_error()` kept (own 8-case test suite; now used for log classification only, not retry gating).
+Root cause: HNX article 613699 has a NON-cover-letter title ("Bao cao tai chinh quy 1/2026") — FIX-CTG-2's `is_cover_letter_title()` correctly lets it through — but its ArticlesFileAttach-resolved PDF is CV_CBTT_BCTC_Quy_I.2026_VI.pdf, the cover letter itself. Title-based discrimination cannot see the resolved attachment's filename.
 
-Evidence: 7/7 new tests (vps-scripts/test_discover_bctc_ssc_fastfail.py) PASS — simulated 503/timeout/404 all return None <1s, single attempt, timeout param <5s confirmed; 35/35 pre-existing classifier tests unaffected; py_compile clean. Live READ-ONLY VPS probe (no writes): SSC endpoint confirmed still 503 (0.17s raw HTTP, real ongoing outage per 2026-07-01 ops-vps-fetch recon). Ran the CURRENTLY-DEPLOYED (unfixed) script live for VCB 2026 Q1 → measured 76.7s wall-clock total, stderr showed "retrying in 60s" then "retry exhausted" — directly corroborates root cause and quantifies the exact defect removed.
+Fix: vps-scripts/discover-bctc-urls-browser.py — added `is_cover_letter_filename(url)` (checks final path segment, case-insensitive, after query-strip + URL-decode, for `cv_cbtt`/`cong_van_cbtt`) and wired it into `_fetch_pdf_url()`'s href loop: a matching attachment is skipped (same disposition as the title filter) and scanning continues over remaining hrefs from that ArticlesFileAttach response for a real statement PDF.
 
-Deploy: NOT performed — auto-mode classifier denied an SSH `cp` (backup-before-deploy write to shared live VPS); swaps/deploys are user-gated per standing policy. DONE-CODE only; ops follow-up to scp + verify live (head.note already flags this).
+Tests: new vps-scripts/test_discover_bctc_filename_classifier.py — 15 cases (real CTG filename repro, case variants, query-string/URL-encoding robustness, multi-attachment skip-then-select-real-statement, sole-cover-letter-attachment→None, no-marker unchanged, empty-hrefs→None). Full local suite 57/57 PASS (35 pre-existing title-classifier + 7 SSC-fastfail + 15 new). py_compile clean.
 
-HONESTY: unfreezes queue lifecycle only. Does NOT restore SSC/HOSE discovery success (SSC portal itself down, external outage, no bypass applies). HSX Strategy-0 discoverHosePdfUrls() 0-URLs (PRIMARY root) is separate/out-of-scope (SPIKE prepped next tick).
+Scope: fix fully contained inside `_fetch_pdf_url()` in vps-scripts/discover-bctc-urls-browser.py. No apps/mcp-server fetch-pipeline change needed for THIS defect — confirmed per router's ask before returning (the backlog row's broader "apps/mcp-server" zone note covers sibling FUs FU-BACKFILL-REAL-FILENAMES / FU-BACKFILL-MULTIPLE-COVER-LETTERS, not this one).
 
-DJ-GATE-1: docs/agent-memory/decisions/sprint-B-05-FU-SSC-503-RETRY-dev-vps-crawls.md
+Deploy: NOT performed — code-only fix in repo; VPS swap/deploy is user-gated per standing policy (same disposition as B-05-FU-SSC-503-RETRY above).
+
+DJ-GATE: docs/agent-memory/decisions/sprint-BCTC-EXTRACT-QUALITY-dev-vps-crawls.md
