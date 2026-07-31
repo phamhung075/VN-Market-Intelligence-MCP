@@ -1,4 +1,11 @@
-<!-- size-justification: 240L (120L overage) — complete acquire/critical-section/release protocol with 6 backoff-retry entries, fail-closed C-2/C-2b enum-drift paths, jitter formula, foreign-restore rule, pathspec-scoped commit guard (FIX-COMMIT-PATH-PEER-INDEX-SWEEP-GUARD-SKILLS), Step 3d-PUSH rebase-retry guard (bounded 2-attempt + conflict-abort semantics), release protocol, and code-paste wiring template. All steps load-bearing and executed in sequence; backoff table and push guard are data/code (not prose) and cannot be abbreviated. Split would break protocol documentation contract (single reference point for dispatcher-only rule enforcement). -->
+<!-- size-justification: ~85L — TE-T08 lazy-load inversion (2026-07-31). Was 235L (all backoff table/jitter,
+     push rebase-retry bash, and No-Heartbeat/TTL rationale inline); now under the 200L skill-file cap without
+     a justification even being required. Kept ONLY: INV-GATEWAY-1 scope gate, C-2/C-2b fail-closed gates
+     (verbatim), the PATHSPEC-SCOPED commit gate (verbatim — the only in-context instruction preventing
+     bare-commit sweep-guard TOCTOU warns, per po landmine 2026-07-31T0132), foreign-restore gate, and the
+     always-release step. Moved backoff table/jitter formula, full push rebase-retry bash, and No-Heartbeat/TTL
+     rationale to `reference.md` (loaded only on genuine contention or a failed push) — see
+     `docs/architecture-briefs/2026-07-12-token-economy-lazyload-audit.md#T-08`. -->
 # Skill: commit-mutex
 
 > **INV-GATEWAY-1 (enforced 2026-06-07):** This skill is DISPATCHER-ONLY. Dev-*/qa/ba/pm/architect
@@ -11,245 +18,65 @@
 **Design brief:** `docs/architecture-briefs/2026-05-24-commit-mutex-on-main/00-design.md`
 **Protocol reference:** `docs/protocols/task-lock-protocol.md` (§ commit-mutex kind)
 **PO ratification:** `docs/po-decisions/2026-05-24-commit-mutex-ratification.md` (C-1..C-4 binding)
-
----
+**Reference (lazy-load):** `.claude/skills/commit-mutex/reference.md` — backoff table/jitter, push
+rebase-retry bash, No-Heartbeat/TTL rationale. Load on: `claimed=false` WITH `current_holder`
+(contention), OR `git push` non-fast-forward.
 
 ## Purpose
 
 Eliminate the verify→commit race on the shared git index. Only the agent holding
 `commit-mutex:main` may be inside the `git add → git diff verify → git commit` critical section.
-All other agents back off (exponential + jitter) or skip and retry next cron tick.
+Scope: ONLY that seconds-long section — read/build/test/generate/signal-emit stay lock-free.
 
-**Scope of the mutex:** ONLY the seconds-long critical section below. Everything before
-(read, build, test, generate, signal emit, heartbeat for other lock kinds) is lock-free.
+## Protocol (happy path — hot card)
 
----
-
-## Full Protocol
-
-### Step 1 — Acquire
-
+**1. Acquire.**
 ```
-result = call_tool(server="vn-market", tool="task_claim", arguments={
-  task_id:               "commit-mutex:main",
-  task_kind:             "commit-mutex",
-  owner_agent:           "<your-agent-id>",
-  owner_client_session:  "<resolved CLAUDE_CODE_SESSION_ID>",
-  ttl_seconds:           90,
-  payload:               JSON({ paths: ["<path1>", "<path2>", ...], intent: "<one-line commit summary>" })
-})
+task_claim(task_id="commit-mutex:main", task_kind="commit-mutex", owner_agent="<agent>",
+  owner_client_session="<resolved CLAUDE_CODE_SESSION_ID — the ACTUAL value, NEVER the literal
+  text "$CLAUDE_CODE_SESSION_ID">, ttl_seconds=90, payload=JSON({paths:[...], intent:"<summary>"}))
 ```
+- **[C-2 FAIL-CLOSED]** MCP error / db_unavailable / tool-not-found → do NOT stage or commit →
+  `send_telegram(channel="bug", "[<agent>] commit-mutex: task_claim UNAVAILABLE — skipping commit, retry next tick")` → EXIT.
+- **[C-2b FAIL-CLOSED]** `claimed=false` with NO `current_holder` AND NO `error` → mechanism broken
+  (schema/enum drift), NOT contention → do NOT backoff/stage/commit →
+  `send_telegram(channel="bug", "[<agent>] commit-mutex: claimed=false with no holder — mechanism broken. Skipping, retry next tick.")` → EXIT.
+- `claimed=false` WITH `current_holder` → genuine contention → `reference.md § Backoff`.
+- `claimed=true` → proceed.
 
-**`owner_client_session` is REQUIRED — no default, call is rejected without it**
-(`apps/mcp-server/src/interface/mcp/tools/system/coordinationTools.ts:104-110`, `z.string()` with no
-`.optional()`, sole ownership discriminator, P1-FINAL/TASK_1980). Resolve the ACTUAL value before
-composing this call — via `Bash: echo $CLAUDE_CODE_SESSION_ID` if you hold a Bash grant, or from the
-literal value your dispatcher already substituted into your spawn prompt as a coordination parameter
-if you do not. **Never write the literal text `$CLAUDE_CODE_SESSION_ID` inside the `call_tool`
-arguments** — an LLM-issued `call_tool` is a direct function call, not a shell command; the variable
-is NOT expanded and the literal 24-character string gets sent as the session id, silently defeating
-the mutex for that agent every time (session memory:
-`feedback_llm_issued_call_tool_does_not_expand_session_id_variable`).
-
-**C-2 FAIL-CLOSED — MCP unavailable path (F3/F5 in task-lock-protocol.md):**
-If `task_claim` returns a tool-not-found error, db_unavailable, or any exception:
-- DO NOT proceed to stage or commit.
-- SKIP the commit (leave work in working tree; it is preserved for next cycle).
-- send_telegram(channel="bug", "[<agent>] commit-mutex: task_claim UNAVAILABLE — skipping commit, retry next tick")
-- EXIT the commit step immediately. Return to caller.
-
-**C-2b FAIL-CLOSED — mechanism broken (schema/enum drift guard):**
-If `task_claim` returns `{claimed: false}` WITH NO `current_holder` field AND NO `error` field:
-- This is NOT contention — it means the server rejected the lock kind (schema mismatch, zod enum gap,
-  or silently swallowed INSERT OR IGNORE due to CHECK constraint failure).
-- DO NOT proceed to backoff. DO NOT stage or commit.
-- send_telegram(channel="bug", "[<agent>] commit-mutex: claimed=false with no holder — mechanism broken (schema/enum drift?). Skipping commit, retry next tick.")
-- EXIT the commit step immediately. Return to caller.
-- (Distinguishable from contention: a genuinely contended lock ALWAYS returns `current_holder` with the owner info.)
-
-**On claimed = false WITH current_holder populated (genuine contention):** proceed to Step 2 (backoff).
-
-**On claimed = true:** proceed to Step 3 (critical section).
-
----
-
-### Step 2 — Backoff (contended path)
-
-Retry acquire with exponential backoff + jitter. Parameters per design brief §3.5:
-
-| Attempt | Base wait | Jitter (±20%) | Max cap | Running total (approx) |
-|---------|-----------|---------------|---------|------------------------|
-| 1       | 5s        | ±1s           | —       | ~5s                    |
-| 2       | 10s       | ±2s           | —       | ~15s                   |
-| 3       | 20s       | ±4s           | —       | ~35s                   |
-| 4       | 30s       | ±6s           | 30s     | ~65s                   |
-| 5       | 30s       | ±6s           | 30s     | ~95s                   |
-| 6       | 30s       | ±6s           | 30s     | ~125s                  |
-
-**Jitter formula:** `actual_wait = base_wait * (0.8 + random() * 0.4)`
-(`random()` = uniform [0,1]; result clipped to [base*0.8, base*1.2])
-
-After each sleep, retry `task_claim`. If `claimed = true` → proceed to Step 3.
-
-**Give-up (all 6 retries exhausted — C-4 required):**
-```
-send_telegram(channel="bug",
-  "[<agent>] commit-mutex: exhausted 6 retries (~125s) — skipping commit, retry next cron tick. Paths: <paths>")
-```
-SKIP the commit. Do NOT stage. Do NOT restore foreign. Leave work in working tree.
-Return to caller (caller resumes next cron tick from this commit step).
-
----
-
-### Step 3 — Critical section (lock held)
-
-Execute EXACTLY this sequence, no deviation:
-
+**2. Critical section** (exactly this order, no deviation):
 ```bash
-# 3a. Stage own files — EXPLICIT PATHS ONLY. NEVER -A / . / dir
-git add <path1> <path2> ...
+git add <path1> <path2> ...                # 2a. explicit paths ONLY — NEVER -A / . / dir
+STAGED=$(git diff --cached --name-only)     # 2b. foreign-path check
+# any path in STAGED not in own-paths → git restore --staged <foreign-path> ONLY (never own
+# path, never `git reset HEAD`) → re-check; still foreign → release (step 3) → ABORT → bug-telegram
 
-# 3b. Verify — foreign-path check
-STAGED=$(git diff --cached --name-only)
-# Compare STAGED against your own-paths list.
-# If STAGED contains any path NOT in own-paths:
-#   git restore --staged <that-foreign-path>   ← ONLY foreign paths; NEVER own paths
-#   Re-run STAGED check.
-#   If still foreign after restore → go to Step 4 (release) then ABORT commit.
-#   Log: "[<agent>] commit-mutex: foreign path found after restore — aborting commit"
-#   send_telegram(channel="bug", "[<agent>] commit-mutex: foreign-path abort — <foreign-path>")
+git commit -m "$(cat <<'EOF'                # 2c. PATHSPEC-SCOPED — NEVER bare, NEVER `.`/dir.
+<type>(<scope>): <task-id> <summary>          # Git resolves the listed paths atomically at commit
+EOF                                            # time (its own scratch index) so a peer's concurrent
+)" -- <path1> <path2> ...                     # `git add` can never be swept in, even if present in
+                                               # the shared index right now (FIX-COMMIT-PATH-PEER-
+                                               # INDEX-SWEEP-GUARD-SKILLS). Same paths as 2a, always.
 
-# 3c. Commit (only if verify is clean — STAGED == own-paths)
-# PATHSPEC-SCOPED — never bare. Git resolves <path1> <path2> ... atomically at
-# commit time (its own scratch index, race-free), so a peer's `git add` landing
-# in the gap after 3b's snapshot can NEVER be swept into this commit even if it
-# is present in the shared index. Reuse the EXACT same paths passed to 3a —
-# never a directory or `.` (FIX-COMMIT-PATH-PEER-INDEX-SWEEP-GUARD-SKILLS).
-git commit -m "$(cat <<'EOF'
-<type>(<scope>): <task-id> <summary>
+git push origin main                        # 2d. non-fast-forward → reference.md § Push retry
+                                             #     (bounded rebase-retry, max 2 attempts, no auto-resolve)
 
-<optional body>
-
-Sprint: <sprint>
-Task: <task-id>
-AC: <criterion>
-EOF
-)" -- <path1> <path2> ...
-
-# 3d-PUSH. Attempt push. If non-fast-forward: rebase once and retry.
-# MAX 2 total push attempts. Abort on conflict; never auto-resolve.
-# Lock is still held during this entire block.
-git push origin main
-PUSH_EXIT=$?
-if [ $PUSH_EXIT -ne 0 ]; then
-  # Retry: rebase then push
-  git pull --rebase origin main
-  REBASE_EXIT=$?
-  if [ $REBASE_EXIT -ne 0 ]; then
-    # Rebase conflict — abort cleanly, do not leave rebase state
-    git rebase --abort 2>/dev/null || true
-    send_telegram(channel="bug",
-      "[<agent>] commit-mutex: push rebase CONFLICT — rebase aborted; commit local-only. \
-       Paths: <own_paths>. Manual reconcile required.")
-    # EXIT push step — commit is preserved; origin lags by this one commit only
-    # Proceed to Step 3e (post-commit verify) then Step 4 (release) immediately
-  else
-    git push origin main
-    PUSH2_EXIT=$?
-    if [ $PUSH2_EXIT -ne 0 ]; then
-      send_telegram(channel="bug",
-        "[<agent>] commit-mutex: push retry FAILED after rebase; commit local-only. \
-         Paths: <own_paths>.")
-      # Proceed to Step 3e (post-commit verify) then Step 4 (release)
-    fi
-  fi
-fi
-
-# 3e. Post-commit verify — must be empty
-git diff --cached --name-only
-# If non-empty → send_telegram(channel="bug", "[<agent>] commit-mutex: residual staged files post-commit")
+git diff --cached --name-only               # 2e. must be EMPTY post-commit; non-empty → bug-telegram
 ```
 
-**Foreign-restore rule (non-negotiable):**
-- ONLY `git restore --staged <foreign-path>` (staged-only; does NOT disturb foreign agent's working tree).
-- NEVER `git restore --staged <own-path>` — that discards own work.
-- NEVER `git reset HEAD <anything>`.
-
----
-
-### Step 4 — Release (always — even on failure/abort)
-
+**3. Release — always**, even on abort/failure:
 ```
-call_tool(server="vn-market", tool="task_release", arguments={
-  task_id:               "commit-mutex:main",
-  owner_client_session:  "<same resolved value passed to task_claim in Step 1>"
-})
-# ok=false is acceptable (expired or already released) — log at DEBUG, not error.
+task_release(task_id="commit-mutex:main", owner_client_session="<same value as step 1>")
+# ok=false acceptable (expired/already released) — log DEBUG, not error.
 ```
 
-Release MUST be called on every exit path from Step 3 (success, foreign-abort, error).
+## Wiring (for flow authors)
 
----
-
-## Wiring Pattern (for flow authors)
-
-Replace any bare `git add ... && git commit` block with:
-
+Replace any bare `git add ... && git commit` with:
 ```
 → skill: .claude/skills/commit-mutex/SKILL.md
   own_paths: ["<exact paths this flow commits>"]
-  intent:    "<one-line summary for payload>"
+  intent:    "<one-line summary>"
 ```
-
-The skill is the ONLY permitted path to the git index for commit operations.
-An agent that bypasses this skill bypasses its own flow's output boundary — a
-fail-loud-protocol violation detectable in post-merge review.
-
----
-
-## No-Heartbeat Rule
-
-commit-mutex does NOT require `task_heartbeat` calls. The critical section (including
-push + worst-case rebase-retry) is 5–20s under normal conditions; TTL=90s is 4.5×
-headroom. Adding heartbeat round-trips to this window would add unnecessary MCP
-latency. The TTL handles crash-mid-section recovery automatically (next claimer wins
-after ≤90s).
-
----
-
-## TTL and Stale-Lock Reclaim
-
-TTL=90s. If the holder crashes before `task_release`, the lock expires in ≤90s and
-the next `task_claim` call wins (overwrite semantics built into `coordination.db`).
-No external watchdog needed. Inspect stuck locks via:
-```
-call_tool(server="vn-market", tool="task_list_held", arguments={ kind: "commit-mutex", expired: true })
-```
-TTL rationale: 90s / 20s worst-case critical section (commit + push + rebase-retry) = 4.5× headroom. See brief §3.2.
-
----
-
-## Quick Reference (copy-paste block for flow wiring)
-
-```
-## Commit step (mutex-guarded)
-→ skill: .claude/skills/commit-mutex/SKILL.md
-  own_paths: [<list exact file paths>]
-  intent:    "<commit summary>"
-
-Protocol:
-1. task_claim(task_id="commit-mutex:main", task_kind="commit-mutex", owner_agent="<agent>",
-   owner_client_session="<resolved CLAUDE_CODE_SESSION_ID — substitute the real value, NEVER
-   the literal text "$CLAUDE_CODE_SESSION_ID">, ttl_seconds=90)
-   - MCP error / db_unavailable → bug-telegram → SKIP commit → EXIT   [C-2]
-   - claimed=false, NO current_holder, NO error → mechanism broken → bug-telegram → SKIP → EXIT   [C-2b]
-   - claimed=false WITH current_holder → backoff (exp+jitter, 6 retries, ~125s max) → give-up → bug-telegram → SKIP
-2. git add <exact own_paths only>
-3. git diff --cached --name-only → if foreign: git restore --staged <foreign> only → re-check
-4. git commit -m heredoc -- <exact own_paths only, same list as step 2 — never bare, never dir/.>
-5. git push origin main → if non-fast-forward: git pull --rebase origin main && git push origin main
-   - rebase conflict → git rebase --abort → bug-telegram → commit stays local-only
-   - push2 fail → bug-telegram → commit stays local-only
-6. git diff --cached --name-only → must be empty  (Step 3e)
-7. task_release(task_id="commit-mutex:main", owner_client_session="<same resolved value as step 1>")  ← always, even on abort
-```
+This skill is the ONLY permitted path to the git index for commit operations. An agent that
+bypasses it bypasses its own flow's output boundary — a fail-loud-protocol violation.

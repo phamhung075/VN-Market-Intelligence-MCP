@@ -1,5 +1,29 @@
 # Agent Father — Notebook
 
+## Clean (router-dispatched, po daily-triage maintenance-lane) 2026-07-31T01:52:02Z TE-T08
+- `.claude/skills/commit-mutex/SKILL.md` 256L→82L: inverted to a lazy-load hot card per
+  the established repo pattern (signal-dashboard/doc-heal-system/pdf all split the same
+  way — hot SKILL.md + `reference.md`). New `.claude/skills/commit-mutex/reference.md`
+  (79L) holds the backoff table/jitter formula, full push rebase-retry bash, and
+  No-Heartbeat/TTL rationale — loaded only on genuine contention or a failed push.
+- Kept verbatim on the hot card (po landmine 2026-07-31T0132, all correctness gates,
+  not just the flagged one): INV-GATEWAY-1 scope note, C-2/C-2b fail-closed paths, the
+  foreign-restore rule, and — the flagged one — the PATHSPEC-SCOPED commit gate
+  (`git commit ... -- <paths>`, "NEVER bare"). Post-write grep confirmed `-- <path1>`
+  present in the commit example and all 5 gate-name strings still on the hot card.
+- Fixed 2 live stale cross-references my own renumbering (Step 3d-PUSH→2d, Steps 1-4→1-3)
+  broke: `.claude/skills/commit-boundary/SKILL.md` RULE 4 + its DRY-mirror line,
+  `.claude/skills/commit/SKILL.md` Step 2. Did NOT touch `scripts/git-hooks/pre-commit`
+  line 38 (same stale "Step 3c" comment) — `scripts/` is outside my commit_zone; flagged
+  for developer/dev-team, non-blocking (hook's gating logic doesn't depend on the label).
+- Left historical citations (architecture briefs, decision journals, `docs/WORK.md`) with
+  old line numbers/step letters untouched — dated point-in-time evidence records, not
+  live pointers, matching how prior lazy-load splits in this repo handled the same class.
+- Board-state discrepancy: dispatch prompt claimed `.task_board.in_progress[]` /
+  `status:IN_PROGRESS`; live read found the row in `.task_board.backlog[]` /
+  `status:BACKLOG` (`updated_by: "po (triage-20260731T0132)"`). Did not flip it —
+  `orch-state.json` is outside agent-father's commit_zone; flagged for router/dev-team.
+
 ## Fix (router-dispatched, dev-team session) 2026-07-31T00:00:00Z FIX-DEVTEAM-QADRAIN-HEAD-WRITE-CONDITIONAL
 - DECLINED: dispatched as owner=agent-father, next_agent=agent-father (board row +
   architecture brief `2026-07-29-qadrain-head-slot-decouple.md` §8 "Actionable sequence

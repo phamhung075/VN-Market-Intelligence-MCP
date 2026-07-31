@@ -89,8 +89,9 @@ git reset --soft HEAD~1   # undo commit (keeps changes staged)
 ## RULE 4 — PUSH (after RULE 3)
 
 After RULE 3 self-verify passes, push to origin using the bounded rebase-retry guard
-(same semantics as `.claude/skills/commit-mutex/SKILL.md` Step 3d-PUSH; that skill is
-the SSOT for the guard logic — see it for full shell implementation):
+(same semantics as `.claude/skills/commit-mutex/SKILL.md` Step 2d; that skill is
+the SSOT for the guard logic — full shell implementation now lives in its
+`reference.md` § Push retry, TE-T08 lazy-load split 2026-07-31):
 
 ```bash
 # PUSH — bounded rebase-retry guard (MAX 2 push attempts)
@@ -116,7 +117,7 @@ if [ $PUSH_EXIT -ne 0 ]; then
 fi
 ```
 
-**Key semantics (DRY — mirrors commit-mutex §3d-PUSH):**
+**Key semantics (DRY — mirrors commit-mutex Step 2d / reference.md § Push retry):**
 - 1 initial push + 1 rebase-retry = 2 total push attempts. Not infinite.
 - Conflict → `git rebase --abort` → log to notebook (no bug-telegram since no gateway binding).
 - No `task_release` step: commit-boundary agents hold no mutex.

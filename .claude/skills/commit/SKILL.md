@@ -75,8 +75,9 @@ budget and lets the lock silently expire mid-run.
 ```
 
 That skill is the SSOT for the full acquire/stage/verify/commit/push/release sequence
-(its Steps 1–4, including Step 3d-PUSH's bounded rebase-retry push guard) — do not
-duplicate that shell here. Fail-closed paths (C-2 MCP-unavailable, C-2b mechanism-broken,
+(its Steps 1–3, including Step 2d's bounded rebase-retry push guard — full shell now
+lives in `commit-mutex/reference.md` § Push retry, TE-T08 lazy-load split 2026-07-31) —
+do not duplicate that shell here. Fail-closed paths (C-2 MCP-unavailable, C-2b mechanism-broken,
 contention give-up after 6 backoff retries) all resolve to: skip this category's commit,
 move to the next category, work stays in the tree for next `/commit` run.
 
