@@ -78,5 +78,12 @@ NEWS_URL         → http://news-fetch:5008
 PORT             → 4000
 ```
 
+**Default-URL SSOT:** `StaticServiceRegistry` (`registry.go`) is the sole owner of the 9 default
+docker-compose URLs above — the defaults live only in `NewStaticServiceRegistry`'s `get(key, fallback)`
+calls. `cmd/server/main.go`'s `serviceURLOverrides()` builds a **sparse** map containing only the keys
+whose env var is actually non-empty; unset keys are omitted entirely and fall through to the registry's
+own default. `main.go` never repeats the default-URL literal. `api` has no dedicated env var — its
+override is inherited from `mcp`'s resolution inside the registry (`get("api", mcpURL)`).
+
 ## No Database
 Stateless routing layer. No database access.

@@ -27,19 +27,11 @@ func main() {
 
 	mcpURL := getenv("MCP_URL", "http://mcp-server:3000")
 
-	serviceURLs := map[string]string{
-		"mcp":       mcpURL,
-		"pdf":       getenv("PDF_URL", "http://pdf-extractor:5001"),
-		"rag":       getenv("RAG_URL", "http://rag-service:5002"),
-		"ta":        getenv("TA_URL", "http://technical-analysis:5003"),
-		"macro":     getenv("MACRO_URL", "http://macro-indicators:5004"),
-		"stock":     getenv("STOCK_URL", "http://stock-price:5000"),
-		"kinh-dich": getenv("KINH_DICH_URL", "http://kinh-dich-service:5005"),
-		"alert":     getenv("ALERT_URL", "http://alert-engine:5006"),
-		"news":      getenv("NEWS_URL", "http://news-fetch:5008"),
-		// Virtual alias: /api/* routes to MCP server with full path preserved
-		"api": mcpURL,
-	}
+	// StaticServiceRegistry (pkg/infrastructure/registry.go) is the sole SSOT
+	// for default docker-compose URLs — including the "api" virtual alias,
+	// which has no dedicated env var and resolves via get("api", mcpURL)
+	// inside the registry. serviceURLOverrides only supplies the env-set keys.
+	serviceURLs := serviceURLOverrides()
 
 	notDeployedRaw := getenv("NOT_DEPLOYED_SERVICES", "")
 	notDeployed := splitCSV(notDeployedRaw)
@@ -77,6 +69,37 @@ func getenv(key, fallback string) string {
 		return v
 	}
 	return fallback
+}
+
+// serviceEnvVars maps each StaticServiceRegistry key to its override env var
+// name. There is no entry for "api" — it is a virtual alias with no
+// dedicated env var; NewStaticServiceRegistry resolves it via
+// get("api", mcpURL) using the registry's own "mcp" resolution.
+var serviceEnvVars = map[string]string{
+	"mcp":       "MCP_URL",
+	"pdf":       "PDF_URL",
+	"rag":       "RAG_URL",
+	"ta":        "TA_URL",
+	"macro":     "MACRO_URL",
+	"stock":     "STOCK_URL",
+	"kinh-dich": "KINH_DICH_URL",
+	"alert":     "ALERT_URL",
+	"news":      "NEWS_URL",
+}
+
+// serviceURLOverrides returns a sparse map containing only the registry keys
+// whose env var is actually set (non-empty). Unset keys are intentionally
+// omitted so StaticServiceRegistry's own get(key, fallback) supplies the
+// default docker-compose URL — the registry stays the sole SSOT for
+// defaults; this file never duplicates that literal.
+func serviceURLOverrides() map[string]string {
+	out := make(map[string]string, len(serviceEnvVars))
+	for key, envVar := range serviceEnvVars {
+		if v := os.Getenv(envVar); v != "" {
+			out[key] = v
+		}
+	}
+	return out
 }
 
 // splitCSV splits a comma-separated string into trimmed non-empty tokens.
