@@ -400,3 +400,89 @@ describe("checkStalledResolutionLiveness", () => {
     expect(alerts).toHaveLength(0);
   });
 });
+
+// ── checkStalledResolutionLiveness — non-ticker pseudo-code exclusion ─────────
+// (FIX-SIGNAL-OUTCOMES-LIVENESS-GUARD-COUNTS-STRUCTURALLY-UNRESOLVABLE-ROWS)
+//
+// MACRO/MULTI are system-level pseudo `stock_code` values (macro-wide and
+// cross-stock signals, see alertStore.ts's `actionCode === "MACRO"` sentinel
+// convention) — not real VN tickers, so no price series can ever exist for
+// them and `checked_at` can never advance. Live prod shape reproduced here:
+// id 49 stock_code=MACRO created 2026-06-06, id 74 stock_code=MULTI created
+// 2026-06-25, both permanently checked_at=NULL. Counting them as "stuck"
+// fires a false daily BUG alert forever even though the resolver is healthy.
+
+describe("checkStalledResolutionLiveness — non-ticker pseudo-code exclusion", () => {
+  it("returns 0 and sends no alert when only MACRO/MULTI rows are stuck >72h (matches the 2 live prod rows)", async () => {
+    const db = makeDb();
+    const macroSid = insertSignal(db, { stockCode: "MACRO", createdAt: "2026-06-06 00:00:00" });
+    insertPendingOutcome(db, {
+      signalId: macroSid,
+      stockCode: "MACRO",
+      direction: "BULLISH",
+      createdAt: "2026-06-06 00:00:00",
+    });
+    const multiSid = insertSignal(db, { stockCode: "MULTI", createdAt: "2026-06-25 00:00:00" });
+    insertPendingOutcome(db, {
+      signalId: multiSid,
+      stockCode: "MULTI",
+      direction: "BULLISH",
+      createdAt: "2026-06-25 00:00:00",
+    });
+
+    const alerts: string[] = [];
+    const count = await checkStalledResolutionLiveness(
+      db,
+      async (msg: string) => {
+        alerts.push(msg);
+        return 1;
+      },
+      () => new Date("2026-07-30T00:00:00Z"),
+    );
+
+    expect(count).toBe(0);
+    expect(alerts).toHaveLength(0);
+  });
+
+  it("still counts a real ticker stuck >72h even when MACRO/MULTI noise rows are also stuck — guard not blinded (positive control)", async () => {
+    const db = makeDb();
+    // Noise: structurally-unresolvable pseudo-code rows, same shape as live id 49/74.
+    const macroSid = insertSignal(db, { stockCode: "MACRO", createdAt: "2026-06-06 00:00:00" });
+    insertPendingOutcome(db, {
+      signalId: macroSid,
+      stockCode: "MACRO",
+      direction: "BULLISH",
+      createdAt: "2026-06-06 00:00:00",
+    });
+    const multiSid = insertSignal(db, { stockCode: "MULTI", createdAt: "2026-06-25 00:00:00" });
+    insertPendingOutcome(db, {
+      signalId: multiSid,
+      stockCode: "MULTI",
+      direction: "BULLISH",
+      createdAt: "2026-06-25 00:00:00",
+    });
+
+    // Signal: a real ticker genuinely stuck >72h — must still trip the alert.
+    const realSid = insertSignal(db, { stockCode: "VNM", createdAt: "2026-07-01 00:00:00" });
+    insertPendingOutcome(db, {
+      signalId: realSid,
+      stockCode: "VNM",
+      direction: "BULLISH",
+      createdAt: "2026-07-01 00:00:00",
+    });
+
+    const alerts: string[] = [];
+    const count = await checkStalledResolutionLiveness(
+      db,
+      async (msg: string) => {
+        alerts.push(msg);
+        return 1;
+      },
+      () => new Date("2026-07-30T00:00:00Z"),
+    );
+
+    expect(count).toBe(1); // only the real VNM row counted — MACRO/MULTI excluded
+    expect(alerts).toHaveLength(1);
+    expect(alerts[0]).toContain("1 signal_outcomes row(s)");
+  });
+});

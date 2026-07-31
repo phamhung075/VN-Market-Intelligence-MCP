@@ -64,6 +64,18 @@ export function resetStalledResolverAlertGate(): void {
  * resolution mechanism (price lookup) is broken even though the job "succeeded".
  * Sends at most one BUG alert per UTC day; never throws (fail-safe — a
  * notification failure must not break the resolution job itself).
+ *
+ * FIX-SIGNAL-OUTCOMES-LIVENESS-GUARD-COUNTS-STRUCTURALLY-UNRESOLVABLE-ROWS:
+ * `stock_code` values like `MACRO` (macro-wide alerts — see alertStore.ts's
+ * `actionCode === "MACRO"` sentinel) and `MULTI` (cross-stock signals) are
+ * NOT real tickers — no price series can ever exist for them, so `checked_at`
+ * can never advance and they would stay "stuck" forever by design, not by
+ * defect. Every real VN ticker in this schema (watchlist, agent_signals,
+ * signal_outcomes, vnstock_financials — verified live) is exactly 3
+ * uppercase letters, so the GLOB shape filter below excludes any pseudo-code
+ * that doesn't look like a ticker (current: MACRO, MULTI; also covers any
+ * future non-ticker sentinel of a different shape) while leaving every real
+ * ticker — including ones genuinely stalled — counted.
  */
 export async function checkStalledResolutionLiveness(
   db: Database,
@@ -76,7 +88,8 @@ export async function checkStalledResolutionLiveness(
       .query<{ cnt: number }, []>(
         `SELECT COUNT(*) AS cnt FROM signal_outcomes
           WHERE checked_at IS NULL
-            AND created_at <= datetime('now', '-72 hours')`,
+            AND created_at <= datetime('now', '-72 hours')
+            AND stock_code GLOB '[A-Z][A-Z][A-Z]'`,
       )
       .get();
     stuckCount = row?.cnt ?? 0;
