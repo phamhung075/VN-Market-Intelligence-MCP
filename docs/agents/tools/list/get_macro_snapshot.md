@@ -23,7 +23,7 @@ get_macro_snapshot(
   _testCommodityClient?: any,   // test-only
   _testSbvClient?: any,         // test-only
   _testDinhGiaInputs?: any      // test-only
-) → { source_tier: 2, text: string, fetchedAt: string }
+) → { source_tier: 1 | 2 | 3 | 4, text: string, fetchedAt: string }
 ```
 
 ## Input Parameters
@@ -74,8 +74,12 @@ Calls get_macro_snapshot internally plus watchlist, alerts, analysis history
 ## Integration Notes
 
 - Called by: Market Analyst (direct macro query), `get_market_context` compound tool (internally)
-- Source tier: 2 (aggregator — Yahoo Finance + Vietcombank XML proxy for SBV rates)
-- TODO: upgrade to tier 1 when direct SBV REST API is implemented
+- Source tier: worst-of (max) `source_tier` across every `signals.*` component actually present in
+  the macro-indicators response (baseline 2 for the live aggregator; rises to e.g. 4 if any present
+  component — carry, yield, or a future addition — is itself an estimate/fixture). An absent
+  component never lowers the reported tier. Fix: FU-MACRO-SNAPSHOT-TIER-WORSTOF (2026-07-31),
+  `apps/mcp-server/src/interface/mcp/tools/macro/macroTools.ts` `get_macro_snapshot` handler.
+- TODO: upgrade the aggregator's own baseline tier when a direct SBV REST API replaces the proxy
 - Superseded for session-start use by `get_market_context` (compound tool, Task 239)
 
 ## Related Tools
