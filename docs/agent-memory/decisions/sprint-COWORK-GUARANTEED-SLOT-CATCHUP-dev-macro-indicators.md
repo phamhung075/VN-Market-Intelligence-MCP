@@ -16,3 +16,13 @@
 - Considered leaving the board row silently in_progress under my ownership — REJECTED: would strand the P1 row behind a dead-end owner. Instead moved it back to task_board.backlog with zone/owner corrected to apps/mcp-server/dev-mcp-server, full trace embedded in `zone_correction_note`, and reset `.head` to idle/router so the next dispatch cycle routes it correctly.
 **why-decision:** Zone boundary is a hard constraint (not_my_job + zone_restricted), and forcing a change outside it would violate CLAUDE.md's zone-restriction discipline and my own agent charter; correcting the board's zone/owner unblocks re-dispatch without fabricating a same-zone fix or silently stalling the task.
 **why-change:** Router's task brief assumed zone: apps/macro-indicators/ per the (stale) backlog-detail.json mint; live code inspection falsified that — the entire write path is apps/mcp-server/. No code changed in either zone. No G12 sandbox run (no code touched). No REVIEW flip — task returned to BACKLOG with corrected owner, not DONE.
+
+### STEP dev-macro-indicators-S2 · dev-macro-indicators · 2026-07-31T07:10:00Z
+**task-id:** FIX-CI-SIZELINT-MACRO-VMT-LIQUIDITY-RESOLVERS-NEW-OFFENDER
+**what-done:** Added a `size-justification: 231L` marker (line 3, within first-10-line scan window) to usecases_vmt_liquidity_resolvers.go, declaring the real post-edit `wc -l` count exactly; committed (e02e20192), pushed, verified size-lint job success on the exact pushed headSha via `gh run view 30611631146`.
+**what-considered:**
+- Option (a) justification header vs (b) split into two files — chose (a): PolicyRatesResolver (VMT-5a) and omoResolver (VMT-5b) are two sibling extractions of the SAME composition-root-logic-gate refactor commit, each a cohesive 45-70L block; a split would fragment one refactor rationale for no cohesion gain.
+- Rejected `--update`: task spec flags it as the most-likely-wrong-fix (wholesale baseline regen, would amnesty unrelated offenders).
+- Rounding 224→231: rejected using the stale pre-edit count; recomputed real `wc -l` after the insert and used that exact number to satisfy the script's own tolerance check.
+**why-decision:** (a) preserves both resolvers' shared refactor narrative in one file and is reversible/low-risk; local `--check` exit 0 and CI-plane `size-lint` job success on headSha e02e20192 both independently confirmed, not just local.
+**why-change:** none — matches task spec's preferred remedy exactly, zero script/baseline touch (git diff confirms only the target .go file changed).

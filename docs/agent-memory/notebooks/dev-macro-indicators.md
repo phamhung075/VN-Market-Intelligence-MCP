@@ -6,22 +6,6 @@ Zone: `apps/macro-indicators/` | Stack: Go 1.22 | DB: reads market.db (read-only
 
 ---
 
-## Session 2026-07-08 round 2 (FACTORY-MACRO-delete-dead-ts-tree — po FOLD-IN, deletion executed)
-
-**Task:** po expanded scope (STEP po-S2, whole-repo grep zero-external-importer) to fold the entire `__tests__/` tree into the same deletion, plus `docs/architecture/microservice/macro-indicators/testing.md` Go-only reconciliation.
-
-**Independent re-verify (mandatory, whole-repo scope this time) before touching anything:** re-ran grep myself, did not trust po's report alone — confirmed zero live code importer of `_deprecated/`, `infrastructure/scrapers/`, `__tests__/`, or the toolchain files outside the deletion set. 2 residual hits are stale doc-comments (not imports) pre-dating this task: `apps/mcp-server/src/infrastructure/microservices/clients.ts` (JSDoc pointing at an already-nonexistent `src/application/dtos.ts`) and `macro_investment_clock.go` (comment pointing at `src/domain/services.ts`, a path that never had `_deprecated/` in it — pre-existing typo, not one of po's counted 3).
-
-**Deleted:** `src/_deprecated/`, `src/infrastructure/scrapers/`, whole `__tests__/`, `package.json`, `tsconfig.json`, `bun.lock` (git rm), `node_modules/` (untracked/gitignored, `rm -rf`, 32M).
-
-**Verification before flip (all green):** `go build ./...`, `go vet ./...`, `golangci-lint run` (0 issues), `go test ./...` (33 files / 8 pkgs / 288 top-level tests / 543 incl. subtests, 0 fail). Fence-A/B/C checked via real `go list -f '{{.Imports}}'` import graph. G12 sandbox: primitive 18/18 PASS, module 2/2 PASS. `docker build` verify-only, no deploy.
-
-**Commit:** 39be5019a (46 files, +110/-5532). Decision journal: STEP dev-macro-indicators-S2. History preserved at git tag `macro-pre-delete`.
-
-Zone health: HEALTHY (Go service unchanged, RAW metric path untouched) | FACTORY-MACRO-delete-dead-ts-tree → REVIEW (next_agent: qa)
-
----
-
 ## Session 2026-07-09 (FACTORY-MACRO-split-sandbox — 831L god-file split + 6-comparator collapse)
 
 **Task:** BOUNDED-1 idle-capacity pickup. Split `cmd/sandbox/main.go` (831L, no header) into 4 files; collapse the 6 structurally-identical `executeMacroXxx` comparators into one helper; add dispatch-logic test coverage (zero pre-existing).
@@ -99,3 +83,17 @@ Zone health: HEALTHY (no code changed) | FIX-SBV-FETCHER-ZERO-VALUE-EMIT → ret
 **Task lock:** `task:FU-SBV-EFFECTIVE-DATE-COLUMN` NOT released by this agent — INV-GATEWAY-1 reserves task_claim/task_release to the dev-team dispatcher session (owner_client_session=64c7c677-0f0f-4cee-a3ce-dba79d70b7ae) that holds it on my behalf. Flagging here for that session to release.
 
 Zone health: HEALTHY (no code changed, Go service unaffected) | FU-SBV-EFFECTIVE-DATE-COLUMN → returned to BACKLOG, re-zoned apps/mcp-server/ (not a dev-macro-indicators task)
+
+---
+
+## Session 2026-07-31 (FIX-CI-SIZELINT-MACRO-VMT-LIQUIDITY-RESOLVERS-NEW-OFFENDER — S3 hand-dispatch, size-lint sole remaining CI offender)
+
+**Task:** `usecases_vmt_liquidity_resolvers.go` (224L, cap 120L) had a real package doc comment but not the literal `size-justification:` token, no baseline entry → `--check` new-offender, this was the SOLE remaining size-lint CI offender (confirmed via `gh run view 30608987675 --log-failed`).
+
+**Action:** Added `// size-justification: 231L — ...` inside the first 10 lines (option a, per task's own preference order) naming why PolicyRatesResolver (VMT-5a) + omoResolver (VMT-5b) — two sibling composition-root-logic-gate extractions of the same refactor — share one file; declared count matches the real post-edit `wc -l` exactly (224L→231L after the 7-line insert). Did NOT run `--update` (would launder unrelated offenders repo-wide). `git diff` confirms only the target `.go` file changed — `scripts/audits/size-lint-justification.sh` and `docs/data/size-lint-baseline.json` untouched.
+
+**Verification:** `go build`/`go vet`/`go test ./pkg/application/...` all green. Local `--check` exits 0. CI-plane VERIFIED (not just local): pushed commit `e02e20192`, `gh run view 30611631146 --json jobs -q '.jobs[]|select(.name=="size-lint")|.conclusion'` == `success` on the exact pushed headSha `e02e201925f0cdeec81e95ea30c77e4a0afe4082`.
+
+**Commit:** `e02e20192` (1 file, +7L). Decision journal: `sprint-COWORK-GUARANTEED-SLOT-CATCHUP-dev-macro-indicators.md` STEP dev-macro-indicators-S2.
+
+Zone health: HEALTHY (comment-only change, build/vet/test green, CI size-lint job confirmed green on pushed SHA) | FIX-CI-SIZELINT-MACRO-VMT-LIQUIDITY-RESOLVERS-NEW-OFFENDER → REVIEW (next_agent: qa)
