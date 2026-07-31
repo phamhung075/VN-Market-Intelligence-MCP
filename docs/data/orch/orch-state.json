@@ -18799,38 +18799,17 @@
         "claimed_at": "2026-07-31T07:02:08Z",
         "claimed_by": "dev-team (S3 hand-dispatch, po-batch-20260731T0637Z)",
         "review_note": "AC-1 local check exit 0 confirmed. AC-4 CI-PLANE VERIFIED (not just local): pushed commit e02e20192 (size-justification header, +7L only, only file changed per git diff), gh run view 30611631146 --json jobs -q .jobs[]|select(.name==\"size-lint\")|.conclusion == success on the exact pushed headSha e02e201925f0cdeec81e95ea30c77e4a0afe4082. AC-2/AC-3 respected: zero --update runs, scripts/audits/size-lint-justification.sh and docs/data/size-lint-baseline.json both untouched (git diff confirms). go build/go vet/go test ./pkg/application/... all green. Decision journal: sprint-COWORK-GUARANTEED-SLOT-CATCHUP-dev-macro-indicators.md STEP dev-macro-indicators-S2. qa: RAW-verify per repo precedent, then normal DONE close."
-      }
-    ],
-    "qa": [],
-    "_closed_signals_20260614": {
-      "_by": "po-S50",
-      "_at": "2026-06-14T14:45:14Z",
-      "closed": [
-        {
-          "signal": "docs/signals/workflow-protocol-coherence-audit-20260614T141952Z.json",
-          "reason": "ALREADY IMPLEMENTED — all 6 COHERENCE-GAP tasks status=IMPLEMENTED, result=RESOLVED (commit 85935da3). No work to queue.",
-          "disposition": "move-to-processed"
-        },
-        {
-          "signal": "docs/signals/dev-team-tool-contract-cron-overlap-20260614T121816Z.json",
-          "reason": "ALREADY RESOLVED by the LIVE SF-1 single-flight guard (F2-A) + gateway-call-contract.md (F1) now in dev-team flow. This brief is the source that DELIVERED SF-1; no residual work.",
-          "disposition": "move-to-processed"
-        }
-      ]
-    },
-    "last_triaged_at": "2026-07-31T06:19:47Z",
-    "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": [
+      },
       {
         "id": "FIX-CI-FRONTEND-ESLINT-BUNLOCK-DUAL-LOCKFILE-DRIFT",
         "title": "CI job frontend-eslint (CI-RED-79013523, CI-RED-2bdd28fb) dies at `bun install --frozen-lockfile` in apps/frontend: apps/frontend tracks TWO lockfiles and only the npm one is maintained — apps/frontend/bun.lock is missing tailwindcss-animate. The job has NEVER been observed green (0/2 runs), so the boundaries fence it exists to enforce has never once executed.",
         "type": "FIX",
         "size": "S",
         "priority": "P0",
-        "status": "IN_PROGRESS",
+        "status": "REVIEW",
         "zone": "apps/frontend/",
         "owner": "dev-frontend",
-        "next_agent": "dev-frontend",
+        "next_agent": "qa",
         "supervised": false,
         "plan_only": false,
         "created_by": "po/triage-20260730T0449",
@@ -18853,16 +18832,38 @@
         "related": "Sibling half of the same CI RED: FIX-CI-SIZELINT-MACRO-VMT-LIQUIDITY-RESOLVERS-NEW-OFFENDER. Deliberately NOT one `multi` row — two independent root causes in two zones, each with its own per-job conclusion that is individually verifiable via `gh run view --json jobs`; a multi row would add an architect split hop while main stays red. Introduced-by (do not blame-fix, both are already in review[]): 66ab9deb3 / FACTORY-GUARD-CI-TSBOUNDARIES-IMPL added the job. Method credit: found by executing FIX-CIRED-TRIAGE-WRONG-PLANE-DEDUP-AMNESTY AC-1 (mandatory failing-log read before dedup) BY HAND — that row is still BACKLOG/unshipped, so the discipline is not yet enforced by the flow.",
         "dedup_checked": "2026-07-30T04:49Z — jq over EVERY .task_board lane (backlog 378 / ready 54 / review 167 / in_progress 1 / done / done_verified / active_sprints / archive) matching id+title+status_note+root_cause against /CI-RED|ci_red|eslint|size-lint/i and separately against /lockfile|bun\\.lock|tailwindcss|frozen|usecases_vmt_liquidity/i. Zero rows own either failing job. Layer-2 (head_sha in an open FIX status_note) also zero. Note for the NEXT triage: layers 1+2 of triage-signals.md §ci_red are both SHA-derived and will NOT match this row on the next red — grep the FILE identity in dedup_key instead.",
         "created_at": "2026-07-30T04:57:52Z",
-        "updated_at": "2026-07-31T07:02:08Z",
+        "updated_at": "2026-07-31T07:13:58Z",
         "po_dedup_hit_20260731T0132": "CI-RED-8e1e66e5 (run 30594239516, headSha 8e1e66e5, and still failing identically on run 30596148097 / headSha 680fe759c) DEDUPED INTO THIS ROW — no new task minted. Matched on this row's own dedup_key (ci_job:frontend-eslint|file:apps/frontend/bun.lock), per the note this row left for the next triage that the two SHA-derived dedup layers in triage-signals.md would not match. Failing STEP re-read verbatim: `frontend-eslint / Install dependencies / error: lockfile had changes, but lockfile is frozen`. Green record now 0/6+ runs, unchanged root cause, cross-SHA persistent for ~24h. STILL UNSTARTED as of this triage — the row has sat READY since 2026-07-30T04:57Z while main stayed red.",
-        "updated_by": "dev-team",
-        "status_note": "[po 2026-07-31T04:58:57Z] 7th consecutive ci_red carrying this failing job (CI-RED-ad6d8cd6 04:10Z + CI-RED-22bdf63b 04:42Z this tick, on top of 79013523/2bdd28fb/8e1e66e5/680fe759/40dfb1f9). P0, READY and dispatchable since 2026-07-30T04:57Z — ~24h with ZERO dispatch attempts while main CI stayed continuously RED and the eslint boundaries fence this job exists to enforce has still never once executed. FILE-scoped dedup is working exactly as designed (both of this tick's reds folded in, no churn rows minted); the residual defect is DISPATCH, not triage — this row is next_agent=dev-frontend at ready[] idx 49 behind ~19 other P0s. Escalating visibility: if it is still unstarted next tick, it should be hand-dispatched ahead of the P0 queue, since it is one of exactly two files standing between main and CI green.\n[po 2026-07-31T06:56:27Z] FILE-scoped dedup hit #8 — ci_red CI-RED-5e97dbda (head_sha 5e97dbdaa1951a79fa5b73511ab1dae1034578b6, run 30608987675) folded in, no new row. Failing step re-read at source this tick: 'bun install --frozen-lockfile' -> 'error: lockfile had changes, but lockfile is frozen' + 'note: try re-running without --frozen-lockfile and commit the updated lockfile', working-directory apps/frontend (ci.yml:127-129) => apps/frontend/bun.lock, unchanged file identity. Still ~25h READY with zero dispatch attempts; job has NEVER been observed green. Together with FIX-CI-SIZELINT-MACRO-VMT-LIQUIDITY-RESOLVERS-NEW-OFFENDER these are now the ONLY two rows standing between main and full CI green. Re-folded into PO BATCH triage-20260731T065627-po.",
+        "updated_by": "dev-frontend",
+        "status_note": "[dev-frontend 2026-07-31T07:13:58Z] AC-1 bun.lock regenerated (bun install), --frozen-lockfile exits 0 in apps/frontend -- verified. AC-2 root cause fixed: apps/frontend/Dockerfile stage 'deps' runs npm ci --ignore-scripts against package-lock.json for the prod image (docker-compose.yml:419), a genuine live consumer, so option (a) delete was rejected; took option (b) -- kept both lockfiles, package-lock.json already had tailwindcss-animate (npm install --package-lock-only produced 0 diff), documented single regen-both command \"cd apps/frontend && bun install && npm install --package-lock-only\" for the next dep add. AC-3 bun run lint:fence ran for the first time ever in this job's history: 0 violations, exit 0 (0 <= 2, no scope-stop needed) -- validates FACTORY-GUARD-CI-TSBOUNDARIES-IMPL's \"fixed 3 fence violations\" claim with real CI evidence for apps/frontend. AC-4 CI-plane verified, not local-only: commit 8c45fc1a0 pushed; gh run list --branch main --limit 3 shows headSha 8c45fc1a0; gh run view 30611681976 --json jobs -q '.jobs[]|select(.name==\"frontend-eslint\")|.conclusion' returns success. Full run 30611681976 all 19 jobs green (incl size-lint -- sibling FIX-CI-SIZELINT-MACRO-VMT-LIQUIDITY-RESOLVERS-NEW-OFFENDER landed same tier) -- main fully CI-green. Full vitest 2183 pass/2 fail: pre-existing unrelated QUE_DESCRIPTIONS/Kinh-Dich codegen schema mismatch (file untouched since 2026-06-13, confirmed by reading imports, no overlap with bun.lock) -- not this row's scope, not fixed here. tsc clean. Decision journal: sprint-COWORK-GUARANTEED-SLOT-CATCHUP-dev-frontend.md STEP dev-frontend-S4. .head deliberately NOT touched -- .head.active_task_id is null/idle (dev-macro-indicators sibling flip), never pointed at this task per board mechanics note (tracked via own task:FIX-CI-FRONTEND-ESLINT-BUNLOCK-DUAL-LOCKFILE-DRIFT lock, S42 precedent), so CANONICAL:SSOT-STATUSFLIP-LANEMOVE rule (b) head-sync does not apply.",
         "po_dedup_hit_20260731T045857": "CI-RED-ad6d8cd6 (run 30603458514, head ad6d8cd69, 2026-07-31T04:10:31Z) AND CI-RED-22bdf63b (run 30604839507, head 22bdf63b5, 2026-07-31T04:42:19Z) BOTH deduped into this row on this row's own dedup_key (ci_job:frontend-eslint|file:apps/frontend/bun.lock) — no new task minted for either. FAILING STEP re-read verbatim on BOTH runs (gh run view <run_id> --log-failed), not inferred from job name: 'frontend-eslint / Install dependencies / bun install v1.3.13 / error: lockfile had changes, but lockfile is frozen / note: try re-running without --frozen-lockfile and commit the updated lockfile / ##[error]Process completed with exit code 1'. Byte-identical to the 02:12Z observation on run 30598372356 (head 40dfb1f9) => cross-SHA PERSISTENT, ~27h unchanged. Green record now 0/8+ runs since the job first existed.",
         "po_dedup_hit_20260731T0523": "[po ci_red FILE-SCOPED dedup 2026-07-31T05:23:57Z] HIT — signal ci-red-22bdf63b-20260731044716.json (check_id=CI-RED-22bdf63b, head_sha=22bdf63b5a9c43a06ffe20fea58fa713387decbd, run 30604839507 @04:42:35Z) deduped into THIS row on dedup_key='ci_job:frontend-eslint|file:apps/frontend/bun.lock'. 0 new mints. RAW disposition-grade read (gh run view 30604839507 --log-failed, executed 05:22Z, log retained): 'error: lockfile had changes, but lockfile is frozen' in step 'Install dependencies'. FILE IDENTITY INDEPENDENTLY RE-CONFIRMED at source this tick: .github/workflows/ci.yml:127-129 sets 'defaults.run.working-directory: apps/frontend' for job frontend-eslint, so 'bun install --frozen-lockfile' resolves apps/frontend/bun.lock (234784B) — and a competing apps/frontend/package-lock.json (487616B) sits beside it, so the DUAL-LOCKFILE-DRIFT this row names is materially present, not inferred. This is the 8th consecutive ci_red carrying this job; the job has still never been observed green. Still READY with ZERO dispatch attempts since 2026-07-30T04:57Z (~24.5h). PO is hand-dispatching it in this tick's BATCH ahead of the P0 queue.",
         "claimed_at": "2026-07-31T07:02:08Z",
-        "claimed_by": "dev-team (S3 hand-dispatch, po-batch-20260731T0637Z)"
+        "claimed_by": "dev-team (S3 hand-dispatch, po-batch-20260731T0637Z)",
+        "commit_sha": "8c45fc1a0",
+        "ci_run_id": "30611681976"
       }
-    ]
+    ],
+    "qa": [],
+    "_closed_signals_20260614": {
+      "_by": "po-S50",
+      "_at": "2026-06-14T14:45:14Z",
+      "closed": [
+        {
+          "signal": "docs/signals/workflow-protocol-coherence-audit-20260614T141952Z.json",
+          "reason": "ALREADY IMPLEMENTED — all 6 COHERENCE-GAP tasks status=IMPLEMENTED, result=RESOLVED (commit 85935da3). No work to queue.",
+          "disposition": "move-to-processed"
+        },
+        {
+          "signal": "docs/signals/dev-team-tool-contract-cron-overlap-20260614T121816Z.json",
+          "reason": "ALREADY RESOLVED by the LIVE SF-1 single-flight guard (F2-A) + gateway-call-contract.md (F1) now in dev-team flow. This brief is the source that DELIVERED SF-1; no residual work.",
+          "disposition": "move-to-processed"
+        }
+      ]
+    },
+    "last_triaged_at": "2026-07-31T06:19:47Z",
+    "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
+    "in_progress": []
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
