@@ -93,12 +93,12 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "FIX-VPS-NEWS-STALE-FALSEPOS",
-    "next_agent": "developer",
-    "next_action": "BOUNDED-1 auto-pickup claim of FIX-VPS-NEWS-STALE-FALSEPOS — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
-    "updated_at": "2026-07-31T16:17:37Z",
-    "updated_by": "dev-team (bounded-1 auto-pickup)"
+    "status": "idle",
+    "active_task_id": null,
+    "next_agent": "router",
+    "next_action": "",
+    "updated_at": "2026-07-31T16:42:55Z",
+    "updated_by": "dev-team (FIX-VPS-NEWS-STALE-FALSEPOS review-flip)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -19390,6 +19390,20 @@
         "next_agent": "qa",
         "commit_sha": "d4569c5b8",
         "review_note": "SPIKE complete — RAW-verified by dev-team: live row counts (all 5 tables = 0, sqlite3 -readonly), broker_sanctions defaultFetchSanctions() stub text, muasamcong.ts getMuasamcongUrl() verbatim env-var passthrough (no ?path= composition), davPharmacyJob.ts uses shouldSkipRecoveryReplay (T4 dedup guard) not shouldRunCatchup (confirms zero startup-catchup guard claim), davPharmacyCheckJob cron_job_runs = exactly 1 success ever (2026-04-30), brokerSanctionsSweep QUARTER_MONTHS=[3,6,9,12] confirms 07-31 internal-skip claim, insiderCheckJob 8/8 sampled days success+rows_written=0 — all spot-checked claims matched exactly. Verdict: credit_data=empty-by-design/already-guarded (no FIX needed); insider_transactions, public_contracts, pharma_events, broker_sanctions=dead-pipeline, each root-caused. 4 follow-up FIX tasks proposed in docs/spikes/SPIKE-INVESTIGATE-EMPTY-DATA-TABLES.md — forwarded to in-flight PO triage for minting rather than re-dispatching a new round. Investigation-only per SPIKE AC, zero code changes, zero orch-state.json touch by the agent (dev-team commit_zone boundary respected)."
+      },
+      {
+        "id": "FIX-VPS-NEWS-STALE-FALSEPOS",
+        "priority": "P3",
+        "status": "REVIEW",
+        "title": "FIX-VPS-NEWS-STALE-FALSEPOS — get_vps_proxy_health reports news:STALE false-positive: 0407 push log shows recent pushes (03:52, 03:36, 03:20, 03:04, 03:00) contradicting the STALE flag. The VPS staleness threshold is miscalibrated vs actual news push cadence; no real data gap. FIX: align the news stale-detection threshold with the observed push cadence (decouple the STALE flag from data-flow health so a healthy, actively-pushing feed is not flagged stale).",
+        "type": "FIX",
+        "zone": "apps/news-fetch/",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-VPS-NEWS-STALE-FALSEPOS",
+        "commit_sha": "b08045ef0",
+        "next_agent": "qa",
+        "review_note": "RAW-verified by dev-team, zero discrepancies. Commit cherry-picked clean (3 files: vpsProxyStaleness.ts + new test + VPT-1 comment update, no orch-state.json). Code: EXPECTED_INTERVALS.news 10->20 in vpsProxyStaleness.ts confirmed via diff. Cron cadence claim (15min, vn-news-fetch.service) confirmed against docs/standards/cron-jobs.md line 287. Live DB re-queried independently (bun:sqlite in running mcp-server container, not the worktree's stale snapshot): vps_push_log service=news last-7d gaps during isVnNewsPublishHours, independent run got p90=16.08/p99=16.23/max=288.67min (dev claimed p90=16.07/p99=16.22/max=288, near-exact match; gap count differed 694 vs 886 due to query-timing window drift, not a discrepancy in conclusion) -- confirms hard cliff at ~17min and only 1 genuine outage. At old 10min threshold my own independent count showed 46.8% of gaps would false-flag STALE (dev claimed ~42%, same order/conclusion). New test file run directly in live container post-fix: 4/4 pass; pre-fix (accidentally reproduced via a path-copy bug): 1 pass/3 fail, matching dev claimed RED shape. Full 6-file regression group (VPT-1, 1113-vps-proxy-health, freshness-sla + coverage-map suite) run in the live container (proper deps installed, unlike dev's under-provisioned worktree): 77/77 pass -- confirms dev's diagnosis that the SC-2a failure they saw was a worktree dependency-provisioning artifact, not a real regression from this diff.",
+        "updated_at": "2026-07-31T16:42:55Z",
+        "updated_by": "dev-team (RAW-verify + merge)"
       }
     ],
     "qa": [],
@@ -19411,24 +19425,7 @@
     },
     "last_triaged_at": "2026-07-31T16:20:00Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": [
-      {
-        "id": "FIX-VPS-NEWS-STALE-FALSEPOS",
-        "priority": "P3",
-        "status": "IN_PROGRESS",
-        "title": "FIX-VPS-NEWS-STALE-FALSEPOS — get_vps_proxy_health reports news:STALE false-positive: 0407 push log shows recent pushes (03:52, 03:36, 03:20, 03:04, 03:00) contradicting the STALE flag. The VPS staleness threshold is miscalibrated vs actual news push cadence; no real data gap. FIX: align the news stale-detection threshold with the observed push cadence (decouple the STALE flag from data-flow health so a healthy, actively-pushing feed is not flagged stale).",
-        "type": "FIX",
-        "zone": "apps/news-fetch/",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-VPS-NEWS-STALE-FALSEPOS",
-        "verify_note": "prior_status=TODO",
-        "promoted_at": "2026-07-31T16:20:00Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=3)",
-        "updated_at": "2026-07-31T16:17:37Z",
-        "claimed_at": "2026-07-31T16:22:00Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)"
-      }
-    ]
+    "in_progress": []
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
