@@ -43,6 +43,15 @@
 #       global side-effect of T7's run.
 #   T9  opt-out — GIT_SWEEP_GUARD_ESCALATE_THRESHOLD=0 lets the same actor from
 #       T7 issue an unbounded run of BARE commits, none ever escalate.
+#   T10 AC-1 deploy-baseline (FIX-SWEEPGUARD-ESCALATION-RETROACTIVE-COUNTER-AND-
+#       SESSION-SCOPED-ACTOR) — a scratch repo SEEDED with a byte-copy of the REAL
+#       live .git/sweep-guard.log (fixtures/sweep-guard-live-snapshot-2026-07-31.log,
+#       AC-5 — not a fresh empty log, not a synthetic one) must NOT block that
+#       actor's first post-deploy commit, even though the seed already has that
+#       exact actor far over threshold under the OLD unwindowed predicate. T7-T9
+#       all bootstrap from an EMPTY log and structurally cannot reach this
+#       scenario. Also proves escalation still fires normally going forward off
+#       the POST-baseline count only (not disabled outright by the fix).
 #
 # Run:
 #   bash scripts/git-hooks/pre-commit.test.sh
@@ -297,6 +306,54 @@ else
   FAIL=$((FAIL + 1))
 fi
 rm -rf "$D9"
+
+# ── T10: AC-1 deploy-baseline — scratch repo SEEDED with a byte-copy of the ────
+# REAL live .git/sweep-guard.log must NOT block that actor's first post-deploy
+# commit, and escalation must still fire normally afterward off the POST-baseline
+# count only. AC-5: the seed is a frozen byte-copy of the real live log captured
+# 2026-07-31 (fixtures/sweep-guard-live-snapshot-2026-07-31.log), NOT a fresh
+# empty log and NOT a synthetic/fabricated one — that fixture literally contains
+# actor=64c7c677-0f0f-4cee-a3ce-dba79d70b7ae at 70 occurrences (>= threshold=3
+# under the OLD unwindowed grep -Fc predicate), exactly the false-green condition
+# an empty-log control cannot reproduce.
+FIXTURE10="$SCRIPT_DIR/fixtures/sweep-guard-live-snapshot-2026-07-31.log"
+if [ ! -f "$FIXTURE10" ]; then
+  echo "FAIL T10: fixture not found at $FIXTURE10"
+  FAIL=$((FAIL + 1))
+else
+  D10="$(new_repo)"
+  cp "$FIXTURE10" "$D10/.git/sweep-guard.log"
+  seeded_prior10="$(grep -Fc " actor=64c7c677-0f0f-4cee-a3ce-dba79d70b7ae " "$D10/.git/sweep-guard.log" 2>/dev/null || echo 0)"
+  (
+    cd "$D10" || exit 1
+    export CLAUDE_CODE_SESSION_ID="64c7c677-0f0f-4cee-a3ce-dba79d70b7ae"
+    echo w1 > w1.txt; echo peer1 > peer1.txt; git add w1.txt peer1.txt
+    git commit -qm "post-deploy commit 1 (pre-seeded over-threshold log)" 2>stderr1.log; echo $? > exit1.log
+    echo w2 > w2.txt; git add w2.txt
+    git commit -qm "post-deploy commit 2" 2>stderr2.log; echo $? > exit2.log
+    echo w3 > w3.txt; git add w3.txt
+    git commit -qm "post-deploy commit 3" 2>stderr3.log; echo $? > exit3.log
+    echo w4 > w4.txt; git add w4.txt
+    git commit -qm "post-deploy commit 4 - should now escalate off POST-baseline count" 2>stderr4.log; echo $? > exit4.log
+  )
+  e1_10="$(cat "$D10/exit1.log" 2>/dev/null)"
+  e2_10="$(cat "$D10/exit2.log" 2>/dev/null)"
+  e3_10="$(cat "$D10/exit3.log" 2>/dev/null)"
+  e4_10="$(cat "$D10/exit4.log" 2>/dev/null)"
+  files1_10="$(cd "$D10" && git show --name-only --format="" HEAD~2 2>/dev/null | sort | tr '\n' ' ')"
+  stderr4_10="$(cat "$D10/stderr4.log" 2>/dev/null)"
+  head10_count="$(cd "$D10" && git log --oneline | wc -l | tr -d ' ')"
+  if [[ "$seeded_prior10" -ge 3 && "$e1_10" == "0" && "$files1_10" == *"peer1.txt"* && "$files1_10" == *"w1.txt"* \
+        && "$e2_10" == "0" && "$e3_10" == "0" && "$e4_10" != "0" \
+        && "$head10_count" == "4" && "$stderr4_10" == *"ESCALATED REJECT"* ]]; then
+    echo "PASS T10: seeded log had ${seeded_prior10} pre-existing prior-warn lines for this actor (>= threshold), yet commits 1-3 post-deploy still only warned (exits=0,0,0) — deploy baseline correctly excludes the pre-existing backlog — and escalation still fires normally on commit 4 using ONLY the post-baseline count (exit=$e4_10, HEAD=$head10_count)"
+    PASS=$((PASS + 1))
+  else
+    echo "FAIL T10: seeded_prior=$seeded_prior10 exits=[$e1_10,$e2_10,$e3_10,$e4_10] files1=[$files1_10] head_count=$head10_count stderr4=[$stderr4_10]"
+    FAIL=$((FAIL + 1))
+  fi
+  rm -rf "$D10"
+fi
 
 # ── Summary ───────────────────────────────────────────────────────────────────
 echo ""

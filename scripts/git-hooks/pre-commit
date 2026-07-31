@@ -68,6 +68,10 @@ fi
 LOG_FILE="$REPO_ROOT/.git/sweep-guard.log"
 SIGNALS_DIR="$REPO_ROOT/docs/signals"
 MARKER_FILE="$REPO_ROOT/.git/sweep-guard.pending"
+# AC-1 (FIX-SWEEPGUARD-ESCALATION-RETROACTIVE-COUNTER-AND-SESSION-SCOPED-ACTOR):
+# self-initializing per-clone deploy-baseline marker for the escalation counter
+# below — see the block that reads/creates it for the full rationale.
+BASELINE_FILE="$REPO_ROOT/.git/sweep-guard.escalation-baseline"
 
 # --- Best-effort, never-blocking docs/signals/ bug-escalation write -----------------
 # Shape matches the LIVE bug-escalation convention (verified against
@@ -488,16 +492,94 @@ actor="${CLAUDE_CODE_SESSION_ID:-$(git config user.name 2>/dev/null || echo unkn
 staged_oneline="$(printf '%s' "$staged" | tr '\n' ' ')"
 mode_effective="${GIT_SWEEP_GUARD_MODE:-warn}"
 
-# --- AC-2: same-actor escalation (FIX-SWEEPGUARD-WARN-ONLY-NO-ACTUATOR-AND-TRIAGE-
-# MISADJUDICATION) — converts repeated BARE commits from the SAME actor into a
-# forcing function without a fleet-wide reject-mode flip. Threshold counts PRIOR
-# BARE log lines for this exact actor (computed BEFORE this attempt's own line is
-# appended below) — opt-out via GIT_SWEEP_GUARD_ESCALATE_THRESHOLD=0.
+# --- AC-2: same-SESSION escalation (FIX-SWEEPGUARD-WARN-ONLY-NO-ACTUATOR-AND-TRIAGE-
+# MISADJUDICATION, corrected by FIX-SWEEPGUARD-ESCALATION-RETROACTIVE-COUNTER-AND-
+# SESSION-SCOPED-ACTOR) — converts repeated BARE commits from the SAME
+# $CLAUDE_CODE_SESSION_ID into a forcing function without a fleet-wide reject-mode
+# flip.
+#
+# RENAMED "per-actor" -> "per-session" (this was ALWAYS the true granularity —
+# only the label was wrong, nothing here changed the underlying key):
+# $CLAUDE_CODE_SESSION_ID is a per-ROUTER-COORDINATION-SESSION id, and every
+# subagent Claude Code spawns from one router (dev-team/pm/po/architect/
+# developer/qa/dev-*/...) inherits that SAME value — documented, intentional
+# framework behavior (.claude/skills/dispatch-claim/SKILL.md "Inheritance note:
+# subagents spawned via Agent() may inherit CLAUDE_CODE_SESSION_ID via env"), not
+# a bug this fix can route around. VERIFIED (not assumed) that no narrower
+# per-agent id is reachable inside a git hook subprocess: the only other
+# Claude-Code-supplied env vars visible here are CLAUDE_CODE_BRIDGE_SESSION_ID
+# (coarser still — one top-level CLI/UI session, constant across MANY DIFFERENT
+# router coordination sessions over time) and CLAUDE_PID (the top-level host CLI
+# process pid — also constant across every subagent in the whole session tree;
+# confirmed empirically identical across separate tool invocations, unlike `$$`
+# which changes on every single invocation and so cannot even correlate repeat
+# offenses by ONE agent). `git config user.name` (the fallback below) is
+# machine-wide, not per-agent, so it cannot help either. Nothing between
+# "changes every command" and "$CLAUDE_CODE_SESSION_ID" exists in this
+# environment.
+#
+# THRESHOLD RE-DERIVED, NOT JUST RENAMED: the owning brief's own math ("14 warns
+# / 4 sessions ~= 3.5/session" -> threshold=3) already counted 4 distinct
+# $CLAUDE_CODE_SESSION_ID values — i.e. it was ALREADY a per-session average, not
+# a per-individual-agent one. D2 was a mislabel of a quantity that was correct
+# all along, not a miscalibration of the number itself, so threshold=3 is kept
+# UNCHANGED here (no evidence-free new magic number). What DOES change under the
+# corrected mental model: a coordination session that fans out to 8+ agents
+# (dev-team -> pm/po/architect/developer/qa/dev-* specialists, all one session)
+# shares ONE POOLED budget of 3 BARE commits for the WHOLE session, not 3 per
+# agent — a single well-behaved agent's own first bare commit can still trip the
+# block if 3+ OTHER agents in the same session already warned. Flagged, not
+# silently re-tuned: the AC-1 deploy-baseline reset below also restarts a clean
+# 24h observation window (see docs/policies/dev-standards.md CANONICAL: same-
+# session escalation actuator) — that is the mechanism to gather real
+# session-agent-density-vs-trigger-rate data before PO decides whether the
+# pooled default needs raising.
+#
+# Threshold counts PRIOR BARE log lines for this exact session, WITHIN the
+# post-deploy baseline window (AC-1, below) — computed BEFORE this attempt's own
+# line is appended further down. Opt-out via GIT_SWEEP_GUARD_ESCALATE_THRESHOLD=0
+# (also documented in docs/policies/dev-standards.md CANONICAL: same-session
+# escalation actuator, an always-loaded policy doc, so an agent can find this
+# rollback BEFORE ever tripping the block, not only after via the stderr message
+# below).
 escalate_threshold="${GIT_SWEEP_GUARD_ESCALATE_THRESHOLD:-3}"
 prior_warns=0
 escalated=false
 if [ "$mode_effective" != "reject" ] && [ "$escalate_threshold" -gt 0 ] 2>/dev/null; then
-  [ -f "$LOG_FILE" ] && prior_warns="$(grep -Fc " actor=${actor} " "$LOG_FILE" 2>/dev/null || echo 0)"
+  # --- AC-1: deploy baseline — the counter must start at zero for state that
+  # predates this actuator's own deployment (D1: the originally-shipped version
+  # counted the ENTIRE historical, unwindowed .git/sweep-guard.log, so 2
+  # already-live sessions were instantly over-threshold the moment eac71308e
+  # landed). Chosen approach: a self-initializing 'since' TIMESTAMP bound, not a
+  # byte-offset/line-count bound and NOT a truncation of LOG_FILE (truncating or
+  # deleting the log is explicitly forbidden — it is the forensic record the
+  # whole sweep-guard family depends on). On the FIRST hook invocation to reach
+  # this branch after this fix's code is live, BASELINE_FILE does not exist yet;
+  # it is created ONCE with the current UTC timestamp, and that moment becomes
+  # the counting floor from then on — every prior log line (the entire pre-fix
+  # backlog) is, by construction, timestamped strictly before this floor and is
+  # therefore excluded. Picked over a line-count/byte-offset baseline because
+  # every log line's leading field is already `date -u +"%Y-%m-%dT%H:%M:%SZ"`
+  # (fixed-width, zero-padded, always UTC) — that exact shape sorts correctly
+  # under plain lexicographic string comparison, so a 'since' filter needs no
+  # date PARSING (no `date -d`, sidesteps the BSD-vs-GNU `date` portability trap
+  # this codebase has hit before) — a single string compare per line is enough.
+  # Self-installs per-repo-clone (BASELINE_FILE lives beside LOG_FILE/
+  # MARKER_FILE, untracked under .git/) — a fresh clone gets its OWN floor on
+  # its own first post-deploy hook run, never a shared/committed value that
+  # could go stale or leak one machine's clock into another's. A benign race if
+  # two peers' first post-deploy BARE commits land within the same instant (both
+  # create BASELINE_FILE with a near-identical "now") is acceptable — worst case
+  # a sub-second skew, never a correctness issue for a warn-by-default actuator.
+  if [ ! -f "$BASELINE_FILE" ]; then
+    date -u +"%Y-%m-%dT%H:%M:%SZ" > "$BASELINE_FILE" 2>/dev/null || true
+  fi
+  baseline_ts="$(cat "$BASELINE_FILE" 2>/dev/null || true)"
+  if [ -n "$baseline_ts" ] && [ -f "$LOG_FILE" ]; then
+    prior_warns="$(awk -v needle=" actor=${actor} " -v floor="$baseline_ts" \
+      'index($0, needle) > 0 && $1 >= floor { c++ } END { print c + 0 }' \
+      "$LOG_FILE" 2>/dev/null || echo 0)"
+  fi
   if [ "$prior_warns" -ge "$escalate_threshold" ] 2>/dev/null; then
     escalated=true
   fi
@@ -527,7 +609,7 @@ if [ "$escalate_effective" = "reject" ]; then
   if [ "$mode_effective" = "reject" ]; then
     echo "[sweep-guard] GIT_SWEEP_GUARD_MODE=reject — BLOCKING this commit. Index is untouched; re-run with an explicit pathspec." >&2
   else
-    echo "[sweep-guard] ESCALATED REJECT: actor=${actor} has ${prior_warns} prior BARE warn(s) logged (threshold=${escalate_threshold}) — blocking THIS commit even though GIT_SWEEP_GUARD_MODE=${mode_effective}. Index is untouched; re-run with an explicit pathspec, or set GIT_SWEEP_GUARD_ESCALATE_THRESHOLD=0 to disable escalation (not recommended)." >&2
+    echo "[sweep-guard] ESCALATED REJECT: actor=${actor} has ${prior_warns} prior BARE warn(s) logged since the post-deploy baseline (threshold=${escalate_threshold}) — blocking THIS commit even though GIT_SWEEP_GUARD_MODE=${mode_effective}. NOTE: 'actor' is \$CLAUDE_CODE_SESSION_ID, a per-COORDINATION-SESSION id shared by every agent spawned inside it — this budget is POOLED across the whole session, not exclusive to whichever agent is committing right now. Index is untouched; re-run with an explicit pathspec, or set GIT_SWEEP_GUARD_ESCALATE_THRESHOLD=0 to disable escalation (not recommended)." >&2
   fi
   exit 1
 fi

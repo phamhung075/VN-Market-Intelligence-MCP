@@ -643,6 +643,35 @@ MCP-bound commit-mutex skill, so it cannot be opted out of the way a skill can. 
 Discriminator premise verified live via `scripts/audits/verify-commit-sweep-discriminator.sh`
 (re-run on any new git version before trusting this hook).
 
+**CANONICAL: Same-session escalation actuator + deploy baseline (FIX-SWEEPGUARD-WARN-ONLY-NO-ACTUATOR-AND-TRIAGE-MISADJUDICATION, corrected by FIX-SWEEPGUARD-ESCALATION-RETROACTIVE-COUNTER-AND-SESSION-SCOPED-ACTOR)**
+`scripts/git-hooks/pre-commit`'s sweep-guard escalation block converts repeated BARE commits from
+the SAME `$CLAUDE_CODE_SESSION_ID` into a hard block (the `(threshold+1)`th BARE commit in default
+`mode=warn` is rejected) without a fleet-wide `GIT_SWEEP_GUARD_MODE=reject` flip. **Rollback:**
+`GIT_SWEEP_GUARD_ESCALATE_THRESHOLD=0` disables escalation entirely for the caller's own commit
+(the hook's own ESCALATED-REJECT stderr already names this, but it is documented HERE too so an
+agent can find it BEFORE ever tripping the block, not only after). **Renamed "per-actor" ->
+"per-session"**: `$CLAUDE_CODE_SESSION_ID` is a per-ROUTER-COORDINATION-SESSION id — every subagent
+spawned from one router (dev-team/pm/po/architect/developer/qa/dev-\*/...) inherits the SAME value
+by documented framework design (`.claude/skills/dispatch-claim/SKILL.md` "Inheritance note"), and
+no narrower per-agent identifier is reachable inside a git hook subprocess (verified, not assumed:
+`CLAUDE_CODE_BRIDGE_SESSION_ID` is coarser still — one top-level CLI session spanning many
+DIFFERENT coordination sessions; `CLAUDE_PID` is the top-level host process, also constant across
+every subagent in the tree; `$$` changes every invocation and so cannot even correlate repeat
+offenses by ONE agent). `threshold=3` is therefore a POOLED budget for the whole coordination
+session, not 3-per-agent — flagged, not silently re-tuned (the number itself needed no change, see
+the deploy-baseline note below for why). **Deploy baseline (AC-1):** the counter only counts BARE
+log lines timestamped AT OR AFTER a self-initializing per-clone marker
+(`.git/sweep-guard.escalation-baseline`, created once with the current UTC time on the first hook
+invocation to reach the escalation branch post-deploy) — pre-existing backlog in
+`.git/sweep-guard.log` (append-only, NEVER truncated — it is the forensic record the whole
+sweep-guard family depends on) is excluded by construction. **Observation window:** the original
+(pre-baseline-fix) actuator was live long enough to put 2 real sessions over threshold using the
+unwindowed counter (see `FIX-SWEEPGUARD-ESCALATION-RETROACTIVE-COUNTER-AND-SESSION-SCOPED-ACTOR`
+evidence) — that window is DISCARDED as contaminated data; the owning brief's §2.3 24h
+clean-observation requirement for the separate, still-unshipped Phase-2 global `warn`->`reject`
+default flip restarts counting from THIS baseline-fix's own deploy timestamp, not from
+`eac71308e`'s.
+
 **CANONICAL: Notebook retained-section immutability gate replay (FIX-NOTEBOOK-COMPOSE-REWRITES-RETAINED-PRIOR-SECTIONS)**
 ```bash
 bash scripts/audits/verify-notebook-immutability-gate.sh [--commits N] [--file <path>]
