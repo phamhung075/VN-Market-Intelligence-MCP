@@ -1,6 +1,18 @@
 # Developer — Notebook
 
-**Last updated:** 2026-07-31 | **Cycle:** FIX-COWORK-FIRE-ELECTION-TICK-TOMBSTONE
+**Last updated:** 2026-07-31 | **Cycle:** FIX-ORCHSTATE-HEAD-STAMP-DROPPED-CI-RED-1837A
+
+## Session 2026-07-31 — FIX-ORCHSTATE-HEAD-STAMP-DROPPED-CI-RED-1837A (sprint COWORK-GUARANTEED-SLOT-CATCHUP, zone `cross-service/`, P1) — REVIEW
+
+**Task:** po direct-dispatch, full root-cause already done. `.head`'s `updated_at`/`updated_by` silently dropped by 30+ ad-hoc jq whole-object head replaces (`HeadSchema` both `.optional()+.passthrough()` — validates clean); `1837a-pipeline-state.test.ts` AC-1/AC-3 CI red. `orch-stamp-updated-at.mjs` (Stage 1.5) already stamped `task_board` rows but was scoped short of `.head`.
+
+**Actions:** extended `orch-stamp-updated-at.mjs` to diff-stamp `.head.updated_at` the same way as rows (content-excluding-timestamp comparison, idempotent); `.head.updated_by` preserved verbatim when the caller supplies it, backfilled with an honest non-agent placeholder only when a changed head omits it (never a fabricated identity) — closes the recurrence gap without touching `orch-apply.sh`'s call signature. Repaired live `.head` via `orch-apply.sh` (real `date -u` stamp, `updated_by:"developer"`). Added 3 AC-6 positive-control test groups (HEAD-STAMP-CHANGED/BACKFILL/IDEMPOTENT) to `scripts/test/orch-apply-wrapper-tests.sh` — 60/60 pass.
+
+**Verify:** RED→GREEN on both planes — `1837a-pipeline-state.test.ts` 3pass/2fail→5pass/0fail; wrapper-tests: 3 new assertions confirmed RED pre-fix (stash-out control run), all 60/60 GREEN post-fix. Idempotency re-confirmed directly against the REAL live file (unchanged candidate → `head=unchanged`, byte-identical before/after). Full suite `ci-per-file-isolation.sh`: 14830 pass/40 skip/36 fail across 12 pre-existing unrelated files (news-poll/source-health/circuit-breaker) — confirmed pre-existing via baseline subset re-run, `1837a` not among them. `tsc --noEmit` clean (no TS touched). AC-5 (CI-plane green) needs a subsequent push+CI run — not yet observed this cycle, flagged for QA.
+
+**Concurrent-git hazard:** shared working directory (no worktree isolation) — a peer session force-switched the branch to `task/FIX-COWORK-FIRE-ELECTION-TICK-TOMBSTONE` mid-session (git state changed under me, discovered via a failed `git stash pop`); recovered via `git checkout main`, verified both owned files content-intact before continuing — no data loss. Live `.head` repair landed correctly but was swept into an adjacent peer commit (`b5f2e9c8b`, same hot file, explicit-pathspec) — content-verified byte-identical to the intended repair, no separate re-commit needed.
+
+**Board:** flipped `task_board.in_progress[FIX-ORCHSTATE-HEAD-STAMP-DROPPED-CI-RED-1837A]` → `review[]`, `next_agent:qa`, `.head` reset idle, via `scripts/orch-apply.sh`. Commit `8f2aa59d7` (Task/AC trailers). Decision journal: base `sprint-COWORK-GUARANTEED-SLOT-CATCHUP-developer.md` hit `CAP-REACHED` (pre-existing, prior cycle) — rolled to `-developer-2.md` STEP developer-S49.
 
 ## Session 2026-07-31 — FIX-COWORK-FIRE-ELECTION-TICK-TOMBSTONE (sprint COWORK-RELIABILITY, zone `cross-service/`, P1) — REVIEW
 
@@ -27,16 +39,4 @@
 **Scope discipline:** did not touch `macroTools.ts` or any `apps/mcp-server/` source file. No handoff doc exists for this BOUNDED-1-sourced thin backlog row (desc came from `backlog-detail.json` directly) — none created, routing recorded on the board row itself instead.
 
 **Zone note:** no MCP/gateway tool grant this session (Read/Edit/Write/Bash only) — could not `task_release`/`send_telegram`; flagged for the coordinating dev-team router session (`64c7c677-0f0f-4cee-a3ce-dba79d70b7ae`) to spawn `dev-mcp-server` next and release `task:FU-MACRO-SNAPSHOT-TIER-WORSTOF` on completion.
-
-## Session 2026-07-30 — FIX-DECISION-JOURNAL-SKILL-CAPCHECK-LINE-ONLY-NO-BYTE-ROLLOVER — REVIEW
-
-**Task:** BOUNDED-1 auto-pickup (`cross-service/`, P1). `.claude/skills/decision-journal/SKILL.md` § Cap Check tested only `LINES>600` — no byte branch — so journals under 600L but well over the 36000-byte cap never rolled, while `context-bloat-backstop.sh`'s `context_bloat_breach` fired on them every cycle. Third instance of this exact defect class; same fix shape as the already-QA-approved sibling `FIX-NOTEBOOK-PRUNER-LINE-ONLY-SETPOINT-BYTE-CAP-NEVER-CONVERGES` (`notebook-auto-prune.sh`).
-
-**Actions:** Cap Check now trips on `LINES>LINE_CAP OR BYTES>BYTE_CAP`. `LINE_CAP` read from `docs/data/file-size-caps.json` (SSOT, pattern `docs/agent-memory/decisions/sprint-*.md`, cap=600); `BYTE_CAP=LINE_CAP*60`(=36000) — same derivation `context-bloat-backstop.sh` uses (TE-T24), never a second hardcoded 36000. Rollover target generalized to a numeric-suffix increment parsed off the current `$JOURNAL_PATH` (base=implicit index 1) instead of a hardcoded `-2.md` — closes AC(5): a breaching `-2.md` now rolls to `-3.md`, unbounded.
-
-**Verification:** extracted the patched bash, ran against synthetic fixtures with the real `file-size-caps.json`: 300L/79800B→rolls (byte axis); 650L/19500B→rolls (line axis not regressed); 300L/19800B→untouched; synthetic `-2.md`@620L→rolls to `-3.md`; `-3.md`@620L→rolls to `-4.md` (unbounded confirmed). Applied live to this cycle's own decision journal (499L/159,241B — one of the 3 blind-spot examples named in the task) — `CAP-REACHED` sentinel appended; `send_telegram` bug notification NOT sent (no gateway tool grant this session), flagged for follow-up. No `apps/` TS/Go touched (zone `cross-service/`, pure `.claude/skills/` md) — `bun test`/`tsc` N/A. File itself 99L/4349B, under its own 200L/12000B skill-doc cap.
-
-**Board:** `task_board.in_progress[FIX-DECISION-JOURNAL-SKILL-CAPCHECK-LINE-ONLY-NO-BYTE-ROLLOVER]` → `review` (`next_agent: qa`), lane-moved `in_progress[]→review[]`, `.head` reset to idle/`active_task_id:null`/`next_agent:"router"`, same `orch-apply.sh` write.
-
-**Zone note:** No MCP/gateway tool grant this session (Read/Edit/Write/Bash only) — could not `task_release`/`send_telegram`; flagged for the coordinating router session (`64c7c677-0f0f-4cee-a3ce-dba79d70b7ae`) to release/notify on my behalf.
 
