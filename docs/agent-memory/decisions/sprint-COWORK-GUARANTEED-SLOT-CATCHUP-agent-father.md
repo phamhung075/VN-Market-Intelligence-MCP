@@ -167,3 +167,20 @@ co-dispatched with S9 in the same edit pass per the row's own deliverable instru
 `git log --since=2026-07-29T12:32:22Z` on the file was empty — matches row's own claim.
 **why-change:** none — executed as specified; no cascade needed (tool-package docs list
 MCP tools only, unaffected by a native Bash grant).
+
+### STEP agent-father-S11 · agent-father · 2026-07-31T05:35:00Z
+**task-id:** FIX-CIRED-TRIAGE-WRONG-PLANE-DEDUP-AMNESTY
+**what-done:** Implemented brief §3/§4 verbatim: replaced `ci_red` row in
+triage-signals.md (FAILEDFILE pre-dedup read AC-1, FILE-scoped `dedup_key`
+primary key AC-2, anti-amnesty fence AC-3, 0-fail backstop AC-4); corrected
+ci-health-probe.md Hard Constraint #2 layer-c text + CI-3 NOTE. Zero prod code.
+**what-considered:**
+- Byte-exact line-indexed extraction from brief into target files (chosen —
+  eliminates transcription drift on very long em-dash/curly-quote prose rows).
+- Manual Edit-tool retype of the full row (rejected — high risk of silent
+  character drift on a load-bearing multi-hundred-word spec row).
+**why-decision:** brief already field-validated this session against 3 live
+rows (po_goahead note); implementer's job is verbatim transcription only.
+**why-change:** none — executed as specified. AC-5 retro-sweep re-checked
+live: new red since ratification (frontend-eslint/size-lint) is a separate,
+already-tracked row, not the 3 AC-5 files — evidence still accurate.

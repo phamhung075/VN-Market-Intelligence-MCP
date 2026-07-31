@@ -14,7 +14,7 @@ This sub-flow probes GitHub Actions CI health on `origin/main` once per dev-team
 ## Hard Constraints (MANDATORY — all four must be preserved in the canonical script)
 
 1. **STALE-RUN GATE:** validate `run.headSha == git rev-parse origin/main` (after `git fetch origin main`) before emitting any signal. A run for an old HEAD is silently discarded.
-2. **3-LAYER DEDUP:** (a) probe-level `signals_processed` DB fingerprint check before signal write; (b) drain-signals.js fingerprint dedup on re-read; (c) PO triage-signals.md open-entry check on `check_id`+`head_sha`. No `ci_red` task may be duplicated.
+2. **3-LAYER DEDUP:** (a) probe-level `signals_processed` DB fingerprint check before signal write — SHA+job-scoped, prevents re-emitting the SAME signal for a SHA already signaled this tick, does NOT (and is not meant to) dedup a persistent defect across advancing SHAs; (b) drain-signals.js fingerprint dedup on re-read — same SHA-scoped fingerprint as (a); (c) PO triage-signals.md open-entry check — FILE-SCOPED (`dedup_key: "ci_job:<job>|file:<file>"`, built from a live `gh run view {run_id} --log-failed` FAILEDFILE read), with check_id/head_sha as secondary fallback only. Layer (c) is the ONLY layer that dedups a persistent defect across SHAs — (a)/(b) staying SHA-scoped is intentional, not a gap (see `FIX-CIRED-TRIAGE-WRONG-PLANE-DEDUP-AMNESTY`). No `ci_red` task may be duplicated.
 3. **VERIFICATION GATE:** a `ci_red` task's DONE acceptance = `conclusion=success` on a CI run whose `headSha` differs from the original failing SHA (local-only commits do not count).
 4. **SAFE-JSON:** all CI run/job fields are untrusted. Use `execFileSync` array args (never `execSync` with string concat), `jq --arg`/`--argjson` bound params, `JSON.stringify()`. Non-fatal if `gh` is absent, unauthenticated, or errors — log + continue, never exit non-zero from the dev-team tick perspective.
 
@@ -98,6 +98,12 @@ SORTED_JOBS = FAILING_JOBS[].name | sort | join(",")
 TS          = ISO-8601 UTC timestamp
 DEDUP_KEY   = "ci_red:" + HEAD_SHA + ":" + SORTED_JOBS
 FINGERPRINT = sha256(DEDUP_KEY)
+# NOTE: DEDUP_KEY is intentionally SHA+job-scoped — it exists ONLY to stop
+# this probe re-emitting the SAME signal for a SHA it already signaled this
+# tick (layer a/b above). It is NOT the mechanism that dedups a persistent
+# defect across advancing SHAs — that is PO's FILE-scoped dedup_key
+# (triage-signals.md §ci_red, layer c), built from a live FAILEDFILE read,
+# not from this field. Do not "fix" cross-SHA dedup here.
 
 # Layer 1 dedup: probe-level signals_processed check
 ALREADY = sqlite3 docs/signals/signals.db

@@ -118,3 +118,27 @@
   `commit_zone` excludes it from agent-father commits except a signal-queue DONE-mark, and this
   dispatch (direct po manual-dispatch board row) has no linked signal_queue row. Deferred to
   router/po; RETURN block carries the exact `orch-apply.sh` jq transform for the lane move.
+
+## Fix (dev-team S4 UNBLOCK dispatch) 2026-07-31T05:35:00Z FIX-CIRED-TRIAGE-WRONG-PLANE-DEDUP-AMNESTY
+- Implemented `docs/architecture-briefs/2026-07-31-cired-triage-failedfile-dedup.md` §3/§4
+  verbatim, two files, zero prod code: `docs/agents/po/flow/triage-signals.md` `ci_red` row
+  (mandatory FAILEDFILE pre-dedup read AC-1, FILE-scoped `dedup_key` primary key AC-2,
+  anti-amnesty fence vs `FIX-MCP-SUITE-HEALTH-BASELINE` AC-3, 0-fail backstop AC-4) and
+  `docs/agents/dev-team/flow/ci-health-probe.md` (Hard Constraint #2 layer-c text + Step CI-3
+  clarifying NOTE, doc-accuracy only — CANON-SCRIPT `ci-health-probe.js` untouched).
+- Used byte-exact line-indexed extraction (python, scratch-only) rather than manual retype —
+  the brief's replacement text is a very long single-line prose row with em-dashes/curly quotes;
+  programmatically verified `git diff` matches the brief's own text byte-for-byte on all 3 edits.
+- `size-lint` gate check: `ci-health-probe.md` grew 157L→163L; header still declares 157L but
+  file is baseline-grandfathered with +/-10%/min-5L tolerance (172.7L upper bound) — PASS, no
+  header update needed (brief itself flagged "no line-count budget concern").
+- AC-5 retro-sweep note (already closed by po this cycle) re-checked live, not re-derived: a
+  NEW ci_red fired since ratification (run 30606511365, frontend-eslint + size-lint failures)
+  but that's a SEPARATE already-tracked pair of rows (FIX-CI-FRONTEND-ESLINT-BUNLOCK-*,
+  FIX-CI-SIZELINT-MACRO-VMT-*), not a regression of the 3 files AC-5 covers — evidence stands.
+- Board row was already ratified (po_goahead stamped, plan_only:false) and left in review[]
+  deliberately per dispatch note (agent-father off DRS allowlist). Flipped next_agent
+  agent-father→qa in place (no lane-move — status stays REVIEW, only next_agent changed) per
+  repo precedent (`FIX-SWEEPGUARD-*`/`2026-07-13-FIX-DEVTEAM-STATUSFLIP-LANEMOVE-RULE`: even
+  pure flow-doc/bash fixes route through qa's RAW clause-content read, not self-closed by
+  the implementer).
