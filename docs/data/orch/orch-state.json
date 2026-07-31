@@ -93,12 +93,11 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "FIX-CI-SIZELINT-MCPSERVER-ENERGYTOOLS-NEW-OFFENDER",
-    "next_agent": "dev-mcp-server",
-    "next_action": "BOUNDED-1 auto-pickup claim of FIX-CI-SIZELINT-MCPSERVER-ENERGYTOOLS-NEW-OFFENDER — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
-    "updated_at": "2026-07-31T05:47:15Z",
-    "updated_by": "dev-team (bounded-1 auto-pickup)"
+    "status": "idle",
+    "updated_at": "2026-07-31T06:16:54Z",
+    "updated_by": "dev-mcp-server",
+    "active_task_id": null,
+    "next_agent": "router"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -18756,6 +18755,46 @@
         "updated_by": "dev-mcp-server",
         "commit_sha": "6a6d47e3a",
         "return_summary": "structuredContent field (is_estimate/source_tier/estimated_fields/mortgage_is_estimate/yoy_is_estimate/fully_estimated/current_date/previous_date) added to get_credit_flow_signal alongside unchanged VN prose; date=now fabrication fixed (CreditData.date null when mortgage/yoy estimated, not new Date()); 2 commits (6a6d47e3a code+test+doc, 08666fa6d memory); tsc clean, targeted 136/136 pass, toolCount=183/cronJobCount=88 unchanged; DJ sprint-COWORK-GUARANTEED-SLOT-CATCHUP-dev-mcp-server.md S37"
+      },
+      {
+        "id": "FIX-CI-SIZELINT-MCPSERVER-ENERGYTOOLS-NEW-OFFENDER",
+        "title": "CI job size-lint RED on a NEW file: apps/mcp-server/src/interface/mcp/tools/sector/energyTools.ts baseline-tolerance-exceeded (baseline=152L actual=215L upper=167L) — introduced 2026-07-31T04:32Z by af272fe1d (FDA-5), which added ~63L with neither a size-justification header nor a baseline entry",
+        "type": "FIX",
+        "size": "S",
+        "priority": "P0",
+        "status": "REVIEW",
+        "zone": "apps/mcp-server/",
+        "owner": "dev-mcp-server",
+        "next_agent": "qa",
+        "supervised": false,
+        "plan_only": false,
+        "created_by": "po/triage-20260731T045857 (Step 0-SIG ci_red, FILE-scoped dedup miss => mint)",
+        "created_at": "2026-07-31T04:58:57Z",
+        "check_id": "CI-RED-22bdf63b",
+        "dedup_key": "ci_job:size-lint|file:apps/mcp-server/src/interface/mcp/tools/sector/energyTools.ts",
+        "verification_gate": "ci_green_on_subsequent_push",
+        "root_cause": "af272fe1d ('fix(mcp-server): energyTools estimate flag now travels in structured field, not just VN prose', 2026-07-31T04:32:28+02:00, shipped as part of FDA-5) grew energyTools.ts past its size-lint baseline. scripts/audits/size-lint-justification.sh cmd_check reads docs/data/size-lint-baseline.json (entry: 152L), computes upper = baseline + max(baseline/10, 5) = 167, and fails any file above upper that does not carry a CURRENT 'size-justification: <N>L' token in its FIRST 10 LINES (is_justified_now, line 79-94). energyTools.ts is now 215L and its header comment (line 1-3, '/** Interface — Energy Grid MCP Tool (Task 262)') contains no such token — grep -c 'size-justification' = 0.",
+        "evidence": "Failing STEP read verbatim from the CI plane, not inferred from the job name (per FIX-CIRED-TRIAGE-WRONG-PLANE-DEDUP-AMNESTY AC-1): gh run view 30604839507 --log-failed => 'size-lint / Run size-lint-justification --check / [size-lint] FAIL — 2 offending file(s) (scanned 1353): apps/mcp-server/src/interface/mcp/tools/sector/energyTools.ts — baseline-tolerance-exceeded (baseline=152L actual=215L upper=167L)'. NEW, not pre-existing — proven by offender-set diff across three consecutive runs, not assumed: run 30598372356 (02:12Z) 8 offenders, energyTools ABSENT; run 30603458514 (04:10Z, head ad6d8cd69) 1 offender, energyTools ABSENT; run 30604839507 (04:42Z, head 22bdf63b5, first run containing af272fe1d) 2 offenders, energyTools PRESENT. Host-plane corroboration: wc -l apps/mcp-server/src/interface/mcp/tools/sector/energyTools.ts = 215.",
+        "ac": "(AC-1) size-lint reports ZERO offenders for this file. Exactly two legitimate remedies, both read from scripts/audits/size-lint-justification.sh at source: (a) shrink energyTools.ts to <=167L, or (b) add a literal 'size-justification: 215L — <reason>' line inside the first 10 lines, with the declared number within +/-10% of the real line count. (AC-2) DO NOT run 'size-lint-justification.sh --update'. That rewrites docs/data/size-lint-baseline.json wholesale and would launder this regression plus any other live offender into the baseline — the baseline file has not been touched since 22cd084d4 and must stay that way. (AC-3) Do not weaken the check, the threshold, or the EXCLUDE_PATTERN. (AC-4) VERIFY ON THE CI PLANE: gh run list --branch main --limit 3 --json databaseId,headSha,conclusion, then gh run view <databaseId> --log-failed must not name energyTools.ts, for a run whose headSha is AFTER 22bdf63b5a9c43a06ffe20fea58fa713387decbd. A local script run exiting 0 is NOT this AC.",
+        "files": [
+          "apps/mcp-server/src/interface/mcp/tools/sector/energyTools.ts"
+        ],
+        "reference_only_files": [
+          "docs/data/size-lint-baseline.json",
+          "scripts/audits/size-lint-justification.sh"
+        ],
+        "related": "Introduced by FDA-5 (review[], next_agent=qa) — cross-referenced there via po_ci_regression_note_20260731T045857; do NOT fold into FDA-5, whose AC is about the estimate flag travelling in a structured field, not about file size. Sibling standing size-lint offender in the SAME red job: FIX-CI-SIZELINT-MACRO-VMT-LIQUIDITY-RESOLVERS-NEW-OFFENDER (ready, P0) — size-lint goes green only when BOTH land. Predecessors already cleared from the same job: FIX-CI-SIZELINT-MCPSERVER-SIX-UNCOVERED-OFFENDERS, FIX-CI-SIZELINT-PDFX-EXTRACTION-ENGINE-TOLERANCE (both review, files verified absent from the offender set as of run 30603458514).",
+        "dedup_checked": "2026-07-31T04:5xZ — FILE-scoped (dedup_key) FIRST per the FIX-CIRED-TRIAGE-WRONG-PLANE-DEDUP-AMNESTY brief, then id/title/status_note: jq over every .task_board lane (backlog/ready/review/in_progress/done) for /energyTools/i returns exactly ONE row, FDA-5, whose scope is the hardcoded-grid-figures fix and not file size. No open row carries dedup_key ci_job:size-lint|file:...energyTools.ts. SHA-derived layers (check_id CI-RED-22bdf63b, head_sha 22bdf63b5) match nothing, as expected on this repo.",
+        "status_note": "dev-mcp-server 2026-07-31T06:20Z — AC-1 remedy (b) justification token: 63L growth from FDA-5 (structuredContent EnergyGridResult type + docstring + return object-literal) is functional code, not compressible to <=167L without losing type safety/the estimate-flag wire guarantee (unlike sibling pdfx tolerance fix's pure-comment-dedup case). Added 'size-justification: 224L' header inside first 10 lines (declared matches actual exactly), zero logic/type/export change. AC-2: docs/data/size-lint-baseline.json untouched, zero --update runs. AC-3: check/threshold/EXCLUDE_PATTERN untouched. AC-4 CI-PLANE VERIFIED: run 30608934628 (head f4feb65517e, confirmed descendant of 22bdf63b5 via git merge-base --is-ancestor) — size-lint step FAIL, but 'gh run view 30608934628 --log-failed' offender list contains exactly 1 file: apps/macro-indicators/pkg/application/usecases_vmt_liquidity_resolvers.go (sibling FIX-CI-SIZELINT-MACRO-VMT-LIQUIDITY-RESOLVERS-NEW-OFFENDER's file) — energyTools.ts is ABSENT, confirmed via grep -i energyTools returning zero matches on the raw log. bun test CI job on this same run: green. Job stays RED pending the macro sibling landing, by design (AC-4's own wording).",
+        "updated_at": "2026-07-31T06:16:54Z",
+        "po_dedup_hit_20260731T0523": "[po ci_red FILE-SCOPED dedup 2026-07-31T05:23:57Z] HIT — signal ci-red-22bdf63b-20260731044716.json (check_id=CI-RED-22bdf63b, head_sha=22bdf63b5a9c43a06ffe20fea58fa713387decbd, run 30604839507 @04:42:35Z) deduped into THIS row on dedup_key='ci_job:size-lint|file:apps/mcp-server/src/interface/mcp/tools/sector/energyTools.ts'. 0 new mints (this row was minted from this same run last tick, so the hit is the expected self-match — verified as a dedup_key match, NOT assumed from the shared check_id). RAW verbatim offender line from gh run view 30604839507 --log-failed (executed 05:22Z): 'apps/mcp-server/src/interface/mcp/tools/sector/energyTools.ts - baseline-tolerance-exceeded (baseline=152L actual=215L upper=167L)'. Remedy is one of exactly two: shrink to <=167L, or add a literal 'size-justification: 215L' token inside the FIRST 10 LINES. NEVER run size-lint-justification.sh --update — it rewrites the whole baseline and launders every live offender.",
+        "updated_by": "po (Step 0-SIG triage-20260731T052357Z)",
+        "promoted_at": "2026-07-31T05:47:14Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=0)",
+        "claimed_at": "2026-07-31T05:47:14Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "commit_sha": "f4feb65517e8353cafb8e6694ed5258dca46c6b9"
       }
     ],
     "qa": [],
@@ -18777,47 +18816,7 @@
     },
     "last_triaged_at": "2026-07-31T05:47:14Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": [
-      {
-        "id": "FIX-CI-SIZELINT-MCPSERVER-ENERGYTOOLS-NEW-OFFENDER",
-        "title": "CI job size-lint RED on a NEW file: apps/mcp-server/src/interface/mcp/tools/sector/energyTools.ts baseline-tolerance-exceeded (baseline=152L actual=215L upper=167L) — introduced 2026-07-31T04:32Z by af272fe1d (FDA-5), which added ~63L with neither a size-justification header nor a baseline entry",
-        "type": "FIX",
-        "size": "S",
-        "priority": "P0",
-        "status": "IN_PROGRESS",
-        "zone": "apps/mcp-server/",
-        "owner": "dev-mcp-server",
-        "next_agent": "dev-mcp-server",
-        "supervised": false,
-        "plan_only": false,
-        "created_by": "po/triage-20260731T045857 (Step 0-SIG ci_red, FILE-scoped dedup miss => mint)",
-        "created_at": "2026-07-31T04:58:57Z",
-        "check_id": "CI-RED-22bdf63b",
-        "dedup_key": "ci_job:size-lint|file:apps/mcp-server/src/interface/mcp/tools/sector/energyTools.ts",
-        "verification_gate": "ci_green_on_subsequent_push",
-        "root_cause": "af272fe1d ('fix(mcp-server): energyTools estimate flag now travels in structured field, not just VN prose', 2026-07-31T04:32:28+02:00, shipped as part of FDA-5) grew energyTools.ts past its size-lint baseline. scripts/audits/size-lint-justification.sh cmd_check reads docs/data/size-lint-baseline.json (entry: 152L), computes upper = baseline + max(baseline/10, 5) = 167, and fails any file above upper that does not carry a CURRENT 'size-justification: <N>L' token in its FIRST 10 LINES (is_justified_now, line 79-94). energyTools.ts is now 215L and its header comment (line 1-3, '/** Interface — Energy Grid MCP Tool (Task 262)') contains no such token — grep -c 'size-justification' = 0.",
-        "evidence": "Failing STEP read verbatim from the CI plane, not inferred from the job name (per FIX-CIRED-TRIAGE-WRONG-PLANE-DEDUP-AMNESTY AC-1): gh run view 30604839507 --log-failed => 'size-lint / Run size-lint-justification --check / [size-lint] FAIL — 2 offending file(s) (scanned 1353): apps/mcp-server/src/interface/mcp/tools/sector/energyTools.ts — baseline-tolerance-exceeded (baseline=152L actual=215L upper=167L)'. NEW, not pre-existing — proven by offender-set diff across three consecutive runs, not assumed: run 30598372356 (02:12Z) 8 offenders, energyTools ABSENT; run 30603458514 (04:10Z, head ad6d8cd69) 1 offender, energyTools ABSENT; run 30604839507 (04:42Z, head 22bdf63b5, first run containing af272fe1d) 2 offenders, energyTools PRESENT. Host-plane corroboration: wc -l apps/mcp-server/src/interface/mcp/tools/sector/energyTools.ts = 215.",
-        "ac": "(AC-1) size-lint reports ZERO offenders for this file. Exactly two legitimate remedies, both read from scripts/audits/size-lint-justification.sh at source: (a) shrink energyTools.ts to <=167L, or (b) add a literal 'size-justification: 215L — <reason>' line inside the first 10 lines, with the declared number within +/-10% of the real line count. (AC-2) DO NOT run 'size-lint-justification.sh --update'. That rewrites docs/data/size-lint-baseline.json wholesale and would launder this regression plus any other live offender into the baseline — the baseline file has not been touched since 22cd084d4 and must stay that way. (AC-3) Do not weaken the check, the threshold, or the EXCLUDE_PATTERN. (AC-4) VERIFY ON THE CI PLANE: gh run list --branch main --limit 3 --json databaseId,headSha,conclusion, then gh run view <databaseId> --log-failed must not name energyTools.ts, for a run whose headSha is AFTER 22bdf63b5a9c43a06ffe20fea58fa713387decbd. A local script run exiting 0 is NOT this AC.",
-        "files": [
-          "apps/mcp-server/src/interface/mcp/tools/sector/energyTools.ts"
-        ],
-        "reference_only_files": [
-          "docs/data/size-lint-baseline.json",
-          "scripts/audits/size-lint-justification.sh"
-        ],
-        "related": "Introduced by FDA-5 (review[], next_agent=qa) — cross-referenced there via po_ci_regression_note_20260731T045857; do NOT fold into FDA-5, whose AC is about the estimate flag travelling in a structured field, not about file size. Sibling standing size-lint offender in the SAME red job: FIX-CI-SIZELINT-MACRO-VMT-LIQUIDITY-RESOLVERS-NEW-OFFENDER (ready, P0) — size-lint goes green only when BOTH land. Predecessors already cleared from the same job: FIX-CI-SIZELINT-MCPSERVER-SIX-UNCOVERED-OFFENDERS, FIX-CI-SIZELINT-PDFX-EXTRACTION-ENGINE-TOLERANCE (both review, files verified absent from the offender set as of run 30603458514).",
-        "dedup_checked": "2026-07-31T04:5xZ — FILE-scoped (dedup_key) FIRST per the FIX-CIRED-TRIAGE-WRONG-PLANE-DEDUP-AMNESTY brief, then id/title/status_note: jq over every .task_board lane (backlog/ready/review/in_progress/done) for /energyTools/i returns exactly ONE row, FDA-5, whose scope is the hardcoded-grid-figures fix and not file size. No open row carries dedup_key ci_job:size-lint|file:...energyTools.ts. SHA-derived layers (check_id CI-RED-22bdf63b, head_sha 22bdf63b5) match nothing, as expected on this repo.",
-        "status_note": "AC: gh run view <databaseId of a run with headSha AFTER 22bdf63b5> --log-failed does not name energyTools.ts (verification_gate=ci_green_on_subsequent_push). Priority: P0 — one of exactly two files currently holding size-lint red, and the newest of them. Failing job: size-lint. Failing file: apps/mcp-server/src/interface/mcp/tools/sector/energyTools.ts. Minted by PO Step 0-SIG 2026-07-31T04:58:57Z from CI-RED-22bdf63b; the corresponding signal docs/signals/ci-red-22bdf63b-20260731044716.json is still undrained at mint time — when it drains next tick it MUST dedup into this row on dedup_key, not mint a second one.",
-        "updated_at": "2026-07-31T05:47:15Z",
-        "po_dedup_hit_20260731T0523": "[po ci_red FILE-SCOPED dedup 2026-07-31T05:23:57Z] HIT — signal ci-red-22bdf63b-20260731044716.json (check_id=CI-RED-22bdf63b, head_sha=22bdf63b5a9c43a06ffe20fea58fa713387decbd, run 30604839507 @04:42:35Z) deduped into THIS row on dedup_key='ci_job:size-lint|file:apps/mcp-server/src/interface/mcp/tools/sector/energyTools.ts'. 0 new mints (this row was minted from this same run last tick, so the hit is the expected self-match — verified as a dedup_key match, NOT assumed from the shared check_id). RAW verbatim offender line from gh run view 30604839507 --log-failed (executed 05:22Z): 'apps/mcp-server/src/interface/mcp/tools/sector/energyTools.ts - baseline-tolerance-exceeded (baseline=152L actual=215L upper=167L)'. Remedy is one of exactly two: shrink to <=167L, or add a literal 'size-justification: 215L' token inside the FIRST 10 LINES. NEVER run size-lint-justification.sh --update — it rewrites the whole baseline and launders every live offender.",
-        "updated_by": "po (Step 0-SIG triage-20260731T052357Z)",
-        "promoted_at": "2026-07-31T05:47:14Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=0)",
-        "claimed_at": "2026-07-31T05:47:14Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)"
-      }
-    ]
+    "in_progress": []
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
