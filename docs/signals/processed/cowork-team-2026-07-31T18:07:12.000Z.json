@@ -3,7 +3,7 @@
   "to": "dev-team",
   "type": "cowork-fire",
   "payload": {
-    "fire_time": "2026-07-24T18:09:03Z",
+    "fire_time": "2026-07-31T18:07:12.000Z",
     "matched_slots": [
       "bctc-analyst-slot-2"
     ],
@@ -18,19 +18,19 @@
     "silent": false,
     "drift_min": 5,
     "errors": [],
-    "pressure_mode": "legacy",
-    "calendar_status": "closed",
+    "pressure_mode": "adaptive",
+    "calendar_status": "unknown",
     "suppressed_calendar": [],
     "suppressed_cadence": [],
     "downgraded": [],
     "chef_mutex_applied": false,
     "due_reasons": {
-      "bctc-analyst-slot-2": "cadence"
+      "bctc-analyst-slot-2": "cron"
     },
     "cadence_minutes": {
-      "bctc-analyst-slot-2": 240
+      "bctc-analyst-slot-2": null
     },
-    "last_fired_timestamp": "2026-07-24T18:08:05Z",
+    "last_fired_timestamp": "2026-07-31T18:07:05Z",
     "last_fired_slots": [
       "bctc-analyst-slot-2"
     ],
@@ -41,14 +41,14 @@
     "leader_lock": "acquired",
     "dev_head": "unknown",
     "devq": 5,
-    "signal_backlog": 11,
-    "note": "single-slot bctc-analyst cadence dispatch (cron 0 18, 240min); off-market (calendar closed, VN 01:0X); legacy pressure mode; no signal drain (0 new), no one-shots; not CHEF (no mutex); not blind"
+    "signal_backlog": 18,
+    "note": "single-slot WORK tick, adaptive mode; bctc-analyst-slot-2 offmarket-cron slot (policy bctc-offmarket, calendar_status=unknown -> cron_fallback), spawned cleanly"
   },
   "priority": "low",
-  "createdAt": "2026-07-24T18:09:03Z",
+  "createdAt": "2026-07-31T18:07:12.000Z",
   "_processed": {
-    "fingerprint": "f7ba6e07320f7dc56e6ef7749d380785e46f741ac6511ed346a13f093e24d4ed",
-    "processedAt": "2026-07-24T18:15:35Z",
+    "fingerprint": "ed113621911fcf9700634110c9f8a8a9f5097733e25f04107be7b851432c909f",
+    "processedAt": "2026-07-31T18:15:39Z",
     "processedBy": "dev-team",
     "result": "routed-to-po"
   }
