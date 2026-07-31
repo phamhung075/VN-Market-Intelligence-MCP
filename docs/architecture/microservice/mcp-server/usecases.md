@@ -275,6 +275,35 @@ defaults `false`, never set `true` outside tests — grep-verified across
 write-back path. Known open gap, intentionally left for a separate scope
 decision rather than folded into FIX-BCTC-REPARSE-BATCH-CORRUPTION-NGAYNOP-FLIP.
 
+### backfillBctcPdfPaths.ts
+
+Idempotent startup task (`apps/mcp-server/src/application/usecases/backfillBctcPdfPaths.ts`)
+that links on-disk PDFs to `financial_reports` rows: a NULL-pass (`pdf_path IS
+NULL`) links unlinked rows, and a heal-pass corrects rows already mislinked to
+a non-report file. Selection among 2+ same-(ticker,year,quarter) candidate
+files is POSITIVE-match gated via `isConsolidatedReportFilename()` (line
+~291) — a filename must affirmatively contain the Vietnamese "hop nhat" or
+English "consolidated" marker (same signal `hsxBctcFetcher.ts::rankItem()`
+uses) to be selected. A lone candidate (`matches.length === 1`) always links
+regardless of classification (best available). Zero positive matches among
+2+ candidates → `no_match` (loud `console.warn`, row stays PENDING, never a
+silent wrong pick); 2+ positive matches → `ambiguous`.
+
+**FU-BACKFILL-MULTIPLE-COVER-LETTERS (2026-07-31):** replaced FIX-CTG-PDF-
+MISLINK's (77092007) NEGATIVE-match design (`matches.filter(m =>
+!isCoverLetterFilename(m.filename))` — "consolidated" = "not a recognised
+cover letter"). That design let a non-report file that merely failed the
+(necessarily incomplete) cover-letter pattern — e.g. a P&L-variance
+explanatory note — slip into the "consolidated" bucket by elimination alone,
+either wrongly winning as the sole candidate or inflating false ambiguity.
+Both the NULL-pass and the heal-pass (re-check guard + candidate filter) now
+require the positive match; `isCoverLetterFilename()` is retained only for
+diagnostic log classification (`[cover-letter]` vs `[unclassified/non-report]`
+in the loud PENDING warning), no longer for selection. Regression:
+`src/__tests__/FU-BACKFILL-MULTIPLE-COVER-LETTERS.test.ts` (12 cases,
+including a frozen non-imported snapshot of the pre-fix decision branches
+that independently proves the old design fails the same fixture).
+
 ### discoverBctcPdfUrlBrowser.ts / discoverBctcPdfUrlDirectApi.ts
 PDF discovery strategies (browser scraping vs direct API)
 

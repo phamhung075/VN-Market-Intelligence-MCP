@@ -259,6 +259,45 @@ export function isCoverLetterFilename(filename: string): boolean {
 }
 
 /**
+ * Returns true if the filename POSITIVELY matches known consolidated-report
+ * markers. This is a positive-match gate (FU-BACKFILL-MULTIPLE-COVER-LETTERS)
+ * — the counterpart to isCoverLetterFilename()'s negative-match design. A
+ * candidate must AFFIRMATIVELY look like the full consolidated financial
+ * statement before it is eligible for selection when 2+ files exist for a
+ * (ticker, year, quarter). This closes the residual gap from FIX-CTG-PDF-
+ * MISLINK (commit 77092007): its "consolidated" bucket was `matches.filter(m
+ * => !isCoverLetterFilename(m.filename))` — ANY file that merely failed the
+ * (necessarily incomplete) cover-letter pattern qualified, even if it wasn't
+ * actually the real consolidated report (e.g. an explanatory note, an
+ * audit-opinion PDF, or any other non-report file sharing the same
+ * ticker/year/quarter tokens).
+ *
+ * Patterns detected (diacritics stripped, case-insensitive):
+ *   - "hop nhat" (Vietnamese "hợp nhất" = consolidated) — the marker already
+ *     used by every real consolidated BCTC filename in this codebase's test
+ *     fixtures, and the same signal hsxBctcFetcher.ts's rankItem() uses to
+ *     rank HSX-API-discovered PDFs (fileName.includes("hop nhat")).
+ *   - "consolidated" (English form, seen on bilingual/English-only filings).
+ *
+ * Deliberately self-contained (no domain-layer import) — mirrors this file's
+ * own layering note ("no domain imports; no interface imports"): diacritics
+ * are stripped inline via a plain NFD-normalise + combining-mark strip
+ * (equivalent to domain/services/financial-reports/extractorHelpers.ts's
+ * stripDiacritics(), duplicated rather than imported to preserve the layer
+ * boundary).
+ *
+ * @param filename  Basename of the PDF file (not the full path)
+ */
+export function isConsolidatedReportFilename(filename: string): boolean {
+  const ascii = filename
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .replace(/[đĐ]/g, (c) => (c === "đ" ? "d" : "D"));
+  const normalised = normaliseForParsing(ascii);
+  return /\bHOP\s*NHAT\b/.test(normalised) || /\bCONSOLIDATED\b/.test(normalised);
+}
+
+/**
  * Parse a PDF filename into (ticker, year, quarter).
  * Returns null if any token cannot be extracted.
  */
@@ -361,39 +400,45 @@ export function backfillBctcPdfPaths(db: Database, pdfDir: string): BackfillResu
         `[backfillBctcPdfPaths] no match: ${actionCode} Q${quarter} ${year}`,
       );
       result.no_match++;
+    } else if (matches.length === 1) {
+      // Sole candidate on disk — always link it regardless of classification.
+      // It is the best (only) available PDF; the positive-match gate below
+      // only applies when there is an actual choice to make among 2+ files.
+      const match = matches[0]!;
+      updateStmt.run(match.absPath, row.id);
+      console.info(
+        `[backfillBctcPdfPaths] linked (sole candidate): ${actionCode} Q${quarter} ${year} → ${match.filename}`,
+      );
+      result.updated++;
     } else {
-      // Apply cover-letter filter: prefer consolidated files over cover-letter transmittals.
-      // Cover letters (CV_CBTT / short canonical form TICKER_YEAR_Qn.pdf) are skipped
-      // when at least one consolidated candidate exists. If ALL candidates are cover letters,
-      // leave pdf_path NULL — the consolidated PDF has not arrived yet.
-      const consolidated = matches.filter((m) => !isCoverLetterFilename(m.filename));
-      const coverLetters = matches.filter((m) => isCoverLetterFilename(m.filename));
+      // 2+ candidates — POSITIVE match required (FU-BACKFILL-MULTIPLE-COVER-
+      // LETTERS hardening). A file must AFFIRMATIVELY match consolidated-
+      // report criteria (isConsolidatedReportFilename) to be selected. This
+      // replaces FIX-CTG-PDF-MISLINK's negative-match design (`!isCoverLetterFilename`),
+      // which could pick ANY file that merely failed to look like a cover
+      // letter — including a non-report file (explanatory note, audit
+      // opinion, etc.) that was never a cover letter to begin with. Excludes
+      // EVERY non-matching candidate, not just recognised cover letters.
+      const consolidated = matches.filter((m) => isConsolidatedReportFilename(m.filename));
+      const rejected = matches.filter((m) => !isConsolidatedReportFilename(m.filename));
 
       if (consolidated.length === 0) {
-        if (coverLetters.length === 1) {
-          // Single candidate that looks like a cover letter but no consolidated PDF
-          // has arrived yet — link it as the best available option.
-          const match = coverLetters[0]!;
-          updateStmt.run(match.absPath, row.id);
-          console.info(
-            `[backfillBctcPdfPaths] linked (sole candidate, cover-letter form): ${actionCode} Q${quarter} ${year} → ${match.filename}`,
-          );
-          result.updated++;
-        } else {
-          // Multiple cover-letter candidates, no consolidated — ambiguous among cover letters.
-          const names = coverLetters.map((m) => m.filename).join(", ");
-          console.info(
-            `[backfillBctcPdfPaths] no consolidated match (all cover-letters): ${actionCode} Q${quarter} ${year} — [${names}] — leaving pdf_path NULL`,
-          );
-          result.no_match++;
-        }
+        // No candidate positively matches consolidated-report criteria —
+        // leave PENDING loudly. Never fall back to picking a non-report file.
+        const names = rejected
+          .map((m) => `${m.filename}${isCoverLetterFilename(m.filename) ? " [cover-letter]" : " [unclassified/non-report]"}`)
+          .join(", ");
+        console.warn(
+          `[backfillBctcPdfPaths] NO POSITIVE CONSOLIDATED MATCH (${matches.length} candidates, 0 qualify): ${actionCode} Q${quarter} ${year} — [${names}] — leaving pdf_path NULL (PENDING)`,
+        );
+        result.no_match++;
       } else if (consolidated.length === 1) {
-        // Exactly one consolidated candidate — link it.
+        // Exactly one candidate positively matches — link it.
         const match = consolidated[0]!;
         updateStmt.run(match.absPath, row.id);
-        if (coverLetters.length > 0) {
+        if (rejected.length > 0) {
           console.info(
-            `[backfillBctcPdfPaths] linked (cover-letter filtered): ${actionCode} Q${quarter} ${year} → ${match.filename} (skipped cover-letters: [${coverLetters.map((m) => m.filename).join(", ")}])`,
+            `[backfillBctcPdfPaths] linked (positive consolidated match): ${actionCode} Q${quarter} ${year} → ${match.filename} (rejected: [${rejected.map((m) => m.filename).join(", ")}])`,
           );
         } else {
           console.info(
@@ -402,7 +447,7 @@ export function backfillBctcPdfPaths(db: Database, pdfDir: string): BackfillResu
         }
         result.updated++;
       } else {
-        // 2+ consolidated candidates — ambiguous, leave pdf_path NULL.
+        // 2+ candidates positively match — ambiguous, leave pdf_path NULL.
         const names = consolidated.map((m) => m.filename).join(", ");
         console.warn(
           `[backfillBctcPdfPaths] ambiguous (${consolidated.length} consolidated files): ${actionCode} Q${quarter} ${year} — [${names}] — leaving pdf_path NULL`,
@@ -414,14 +459,20 @@ export function backfillBctcPdfPaths(db: Database, pdfDir: string): BackfillResu
 
   // ── Heal-mislinked pass ───────────────────────────────────────────────────
   // Problem: rows that already have a pdf_path set (non-NULL) are skipped by the
-  // NULL-only pass above. If that pdf_path points at a cover-letter file (e.g.
-  // CTG_2026_Q1.pdf), the mislink is never corrected — the row stays broken even
-  // after the consolidated PDF arrives. This pass corrects that class of errors.
+  // NULL-only pass above. If that pdf_path points at a non-report file (a cover
+  // letter, OR any other file that never positively matched consolidated-report
+  // criteria), the mislink is never corrected — the row stays broken even after
+  // the consolidated PDF arrives. This pass corrects that class of errors.
   //
   // Safety: only re-links when ALL of:
-  //   1. existing pdf_path basename isCoverLetterFilename()
-  //   2. at least one consolidated (non-cover-letter) candidate exists on disk
-  //   3. exactly one consolidated candidate (ambiguous → leave as-is)
+  //   1. existing pdf_path basename does NOT positively match
+  //      isConsolidatedReportFilename() (FU-BACKFILL-MULTIPLE-COVER-LETTERS —
+  //      broadened from the FIX-CTG-PDF-MISLINK guard, which only re-checked
+  //      rows whose CURRENT link matched the (necessarily incomplete)
+  //      isCoverLetterFilename() pattern; a row mislinked to some OTHER
+  //      non-report file was never eligible for healing at all)
+  //   2. at least one candidate positively matches consolidated-report criteria
+  //   3. exactly one such candidate (ambiguous → leave as-is)
   interface MislinkedRow {
     id: string;
     action_code: string;
@@ -440,39 +491,42 @@ export function backfillBctcPdfPaths(db: Database, pdfDir: string): BackfillResu
   ).all() as MislinkedRow[];
 
   for (const row of mislinkedRows) {
-    // Only re-check rows whose current pdf_path is a cover-letter filename
+    // Only re-check rows whose current pdf_path does NOT already positively
+    // match consolidated-report criteria (already correctly linked → skip).
     const currentBasename = basename(row.pdf_path);
-    if (!isCoverLetterFilename(currentBasename)) continue;
+    if (isConsolidatedReportFilename(currentBasename)) continue;
 
     const actionCode = row.action_code.toUpperCase().trim();
     const year = row.period_year;
     const quarter = row.period_quarter;
     if (!quarter) continue;
 
-    // Find consolidated candidates for this row
+    // Find candidates that POSITIVELY match consolidated-report criteria for
+    // this row (mirrors the NULL-pass positive-match gate above).
     const candidates = parsedFiles.filter(
       (f) =>
         f.ticker === actionCode &&
         f.year === year &&
         f.quarter === quarter &&
-        !isCoverLetterFilename(f.filename),
+        isConsolidatedReportFilename(f.filename),
     );
 
     if (candidates.length === 1) {
       const best = candidates[0]!;
       healStmt.run(best.absPath, row.id);
+      const currentKind = isCoverLetterFilename(currentBasename) ? "cover-letter" : "non-report";
       console.warn(
-        `[backfillBctcPdfPaths] HEALED mislink: ${actionCode} Q${quarter} ${year} — was ${currentBasename} (cover-letter) → ${best.filename} (consolidated)`,
+        `[backfillBctcPdfPaths] HEALED mislink: ${actionCode} Q${quarter} ${year} — was ${currentBasename} (${currentKind}) → ${best.filename} (consolidated)`,
       );
       result.healed++;
     } else if (candidates.length > 1) {
-      // Multiple consolidated — ambiguous; leave the existing cover-letter link in place
-      // rather than making it worse.
+      // Multiple positively-matching candidates — ambiguous; leave the existing
+      // link in place rather than making it worse.
       console.warn(
         `[backfillBctcPdfPaths] mislink AMBIGUOUS heal: ${actionCode} Q${quarter} ${year} — current=${currentBasename} but ${candidates.length} consolidated candidates — leaving unchanged`,
       );
     }
-    // candidates.length === 0: no consolidated on disk yet — nothing to do
+    // candidates.length === 0: no positively-matching consolidated file on disk yet — nothing to do
   }
 
   // Count already-set rows for transparency (informational only — not touched)
