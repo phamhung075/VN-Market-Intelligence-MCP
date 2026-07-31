@@ -4,82 +4,26 @@
   "quarter": "Q1-2026",
   "mode": "routine",
   "beat_miss": null,
-  "product": "State-owned commercial banking: corporate/retail lending, trade finance, bancassurance",
-  "customer": "Large corporates, SOEs, retail depositors, FX/trade-finance clients",
-  "ops": "Operating margin 80.9% (bank NIM-driven); ROE 4.2% (below sector median 16.7% on a total-equity basis — bank ROE metrics need care re: consolidated equity base); OCF/NI ratio 1.37x (healthy, though only 3/4 quarters available)",
-  "mgmt": "Today's news: foreign investors net-sold market overall but net-BOUGHT ~300 tỷ VND into VCB specifically — idiosyncratic demand not sector-wide; price +4.96% today on this flow, contrasting with KD BÁN (sell) signal at 100% confidence — flagged as a genuine KD-vs-price-action divergence, not resolved this cycle",
-  "valuation": {
-    "pe": 14.1,
-    "sector_median_pe": 9,
-    "pe_verdict": "PREMIUM +57%",
-    "pb": 2.2,
-    "sector_median_pb": 1.5,
-    "pb_verdict": "PREMIUM +45%",
-    "roe": 4.21,
-    "sector_median_roe": 17.6,
-    "roe_verdict": "BELOW MEDIAN",
-    "earning_yield_pct": 7.09,
-    "max_deposit_rate_pct": 5,
-    "ey_spread_pct": 2.09,
-    "valuation_verdict": "FAIR"
-  },
-  "balance_sheet": {
-    "total_assets_trieu_vnd": 2550963342,
-    "total_liabilities_trieu_vnd": 2316932013,
-    "equity_trieu_vnd": 224558726,
-    "esc2_imbalance_pct": 0.37,
-    "esc2_result": "FALSE (under 0.5% threshold)"
-  },
-  "esc4_non_operating_share": {
-    "pretax_profit_trieu_vnd": 11602302,
-    "operating_profit_trieu_vnd": 14088600,
-    "non_operating_share_pct": -21.4,
-    "esc4_result": "FALSE (negative value fails > 0.15 test)"
-  },
-  "esc3_ocf_vs_ni": {
-    "quarters_returned": 3,
-    "quarters_required": 4,
-    "esc3_status": "DATA-COVERAGE-LIMITED",
-    "coverage_guard_key": "esc-datacov:VCB:Q1-2026:ESC-3",
-    "coverage_guard_held": true,
-    "ocf_ni_ratio_q1_2026": 1.368
-  },
-  "esc5_refine_confidence": {
-    "report_id": null,
-    "existing_refine_status": "PARTIAL",
-    "esc5_result": "FALSE",
-    "note": "get_bctc_report_id returned null (refine not DONE) — graceful skip, reconfirmed live this cycle"
-  },
-  "e3_cache": {
-    "status": "HIT",
-    "basis": "get_bctc_full published_at unchanged (2026-07-19T12:43:43.098Z); structured_data identical to notebook c133/c134 record.",
-    "passes_skipped": true
-  },
-  "trick_detection": {
-    "trick_summary": null,
-    "trick_confidence": "none",
-    "trick_pass_versions": [],
-    "note": "E3 cache-hit — 6 passes skipped. ESC-2/ESC-4 both clean/FALSE."
-  },
-  "kinh_dich": {
-    "que": "12 - Bi",
-    "trend": "BAT LOI",
-    "signal": "BAN",
-    "confidence_pct": 100,
-    "note": "Bearish hexagram at max confidence, contradicts today's +4.96% price rally driven by idiosyncratic foreign net-buying. Flagged as unresolved divergence for chef narrative, not suppressed."
-  },
-  "insider": "no significant insider activity",
-  "legal_risk": "none",
-  "vps_staleness_context": "Served from last-known-good cache (published 2026-07-19); VPS push stale since 2026-07-28T08:23:22Z (78.8h, SLA=48h) — already-tracked P0, not re-escalated.",
-  "overdue": false,
-  "overdue_deadline": null,
-  "calendar_status": "Q1-2026 ĐÃ NỘP (2026-07-19); Q2-2026 not yet tracked in calendar for this ticker",
-  "cycle_id": "20260731-1500",
-  "slot": "bctc-analyst-slot-1",
-  "emitted_at": "2026-07-31T15:19:00Z",
+  "product": "Ngân hàng bán lẻ và doanh nghiệp hàng đầu, tín dụng, thanh toán quốc tế, ngoại hối.",
+  "customer": "Khách hàng doanh nghiệp lớn, khách hàng cá nhân thu nhập trung-cao, đối tác FDI.",
+  "ops": "Biên lợi nhuận hoạt động 80.9% (đặc thù ngân hàng); ROE quý 4.2% (so sánh ngành 16.7%, DUOI MEDIAN 17.6%); quarters_returned=3/4 — coverage vẫn hạn chế.",
+  "mgmt": "PE 14.1x PREMIUM +57% vs trung vị ngành 9.0x, PB 2.2x PREMIUM +45% → EY spread +2.09pp FAIR nhưng ROE dưới trung vị — định giá cao hơn hiệu suất. Kinh Dịch Quẻ Bi (BAT LOI/BAN, 100% tin cậy) MÂU THUẪN với đà tăng giá +4.96% hôm nay và dòng mua ròng khối ngoại ~300 tỷ riêng VCB — phân kỳ CHƯA GIẢI QUYẾT, không suppress.",
+  "valuation_verdict": "FAIR",
+  "ey_spread_pp": 2.09,
+  "esc2_balance_check": "PASS (imbalance 0.37%)",
+  "esc3_status": "DATA-COVERAGE-LIMITED",
+  "esc3_quarters_returned": 3,
+  "esc4_non_operating_share_pct": -21.4,
+  "esc4_result": "FALSE (negative share = non-operating drag, not gain-dressing)",
+  "esc5_result": "FALSE (report_id null — refine_status PARTIAL)",
+  "kd_reading": "Quẻ 12 Bi, BAT LOI, BAN, 100% conf — CONTRADICTS today's +4.96% rally",
+  "data_confidence_pct": 75,
+  "data_note": "[FR-DEGRADE-01] last-known-good — VPS BCTC proxy stale since 2026-07-28T08:23:22Z (~81.8h, SLA=48h breached; tracked P0, not re-escalated)",
+  "e3_cache": "HIT — byte-identical vs prior touch (published 2026-07-19T12:43:43Z)",
+  "computedAt": "2026-07-31T18:09:00Z",
   "_processed": {
-    "fingerprint": "6bc4be0a05cd275103dd35e04329e1155f6dbd3efde0afcdc8f0b356077c6f36",
-    "processedAt": "2026-07-31T15:53:09Z",
+    "fingerprint": "2cdc5618768ca82ed9e0c820ea5158f21b71f6f59e27821e9d6000a1eb03cf87",
+    "processedAt": "2026-07-31T18:45:34Z",
     "processedBy": "dev-team",
     "result": "routed-to-po"
   }
