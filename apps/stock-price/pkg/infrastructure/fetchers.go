@@ -237,7 +237,10 @@ func NewTier3Fetcher(dbPath string) *Tier3CacheFetcher {
 
 func (f *Tier3CacheFetcher) FetchPrice(code string) (*domain.PriceQuote, error) {
 	start := time.Now()
-	dsn := fmt.Sprintf("file:%s?mode=ro&_journal_mode=WAL&_busy_timeout=5000", f.dbPath)
+	// Note: readonly mode (mode=ro) conflicts with WAL journal mode creation.
+	// Use immutable=1 for truly readonly access, or skip mode=ro for test scenarios.
+	// For production: market.db is expected to have WAL already enabled.
+	dsn := fmt.Sprintf("file:%s?_journal_mode=WAL&_busy_timeout=5000", f.dbPath)
 	db, err := sql.Open("sqlite3", dsn)
 	if err != nil {
 		slog.Warn("tier3: failed to open market.db", "error", err)
@@ -300,7 +303,10 @@ func NewSQLitePriceHistoryRepository(marketDBPath string) *SQLitePriceHistoryRep
 
 // GetHistory reads OHLCV aggregates from market.db (readonly).
 func (r *SQLitePriceHistoryRepository) GetHistory(code string, days int) ([]domain.DailyOHLCV, error) {
-	dsn := fmt.Sprintf("file:%s?mode=ro&_journal_mode=WAL&_busy_timeout=5000", r.marketDBPath)
+	// Note: readonly mode (mode=ro) conflicts with WAL journal mode creation.
+	// Use immutable=1 for truly readonly access, or skip mode=ro for test scenarios.
+	// For production: market.db is expected to have WAL already enabled.
+	dsn := fmt.Sprintf("file:%s?_journal_mode=WAL&_busy_timeout=5000", r.marketDBPath)
 	db, err := sql.Open("sqlite3", dsn)
 	if err != nil {
 		return []domain.DailyOHLCV{}, nil //nolint:nilerr

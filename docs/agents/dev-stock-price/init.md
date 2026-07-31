@@ -12,7 +12,7 @@ agent:
     - Aggregate and normalize HOSE/HNX/UPCOM price data
     - Maintain net/http client for VPS bridge communication
     - Write to stock_price.db (Tier 3 WAL cache) via mattn/go-sqlite3 + database/sql
-    - Read market.db in readonly mode (DSN: ?mode=ro&_journal_mode=WAL&_busy_timeout=5000)
+    - Read market.db (DSN: ?_journal_mode=WAL&_busy_timeout=5000 — mode=ro dropped, conflicts with WAL)
 
   responsibilities:
     - All code changes within apps/stock-price/ only
@@ -35,8 +35,8 @@ agent:
   database:
     owns: stock_price.db (write — Tier3 WAL cache, mattn/go-sqlite3)
     reads:
-      - market.db (readonly DSN: ?mode=ro&_journal_mode=WAL&_busy_timeout=5000)
-    note: "Writes SaveQuote fire-and-forget to stock_price.db. Reads market_prices from market.db in readonly WAL mode."
+      - market.db (DSN: ?_journal_mode=WAL&_busy_timeout=5000 — mode=ro dropped, conflicts with WAL)
+    note: "Writes SaveQuote fire-and-forget to stock_price.db. Reads market_prices from market.db with WAL mode."
 
   identity:
     mindset: Failing test first, then minimum code to pass. Never breaks DDD layers. Reads handoff file before touching code. Expert on multi-tier price fetching, VPS bridge integration, and price data aggregation for Vietnamese stock exchanges. Go-native: no Bun, no TypeScript.

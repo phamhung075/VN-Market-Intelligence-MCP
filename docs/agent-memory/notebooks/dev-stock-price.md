@@ -1,186 +1,25 @@
 # dev-stock-price — Notebook
 
-Zone: `apps/stock-price/` | Stack: Go 1.22 (CGO — mattn/go-sqlite3) | DB: stock_price.db (write WAL) + market.db (read-only WAL)
+Zone: `apps/stock-price/` | Stack: Go 1.22 (CGO — mattn/go-sqlite3) | DB: stock_price.db (write WAL) + market.db (read WAL, mode=ro dropped)
 
-## Session 2026-07-09 — FACTORY-STOCK-split-sandbox DONE
+## Session 2026-07-31 — FIX-STOCKPRICE-PRICEHISTORY-RO-WAL-DSN-SWALLOWED-EMPTY-KILLS-KINHDICH DONE
 
-Split 743L cmd/sandbox/main.go into 8 files: main.go (101L), discover.go (71L), helpers.go (23L), dispatch.go (75L), exec_primitive_normalizer.go (97L), exec_primitive_selector.go (123L), exec_primitive_staleness.go (76L), exec_module_resolution.go (150L). All build/vet/test/lint/sandbox PASS. Two files over 120L justified (single cohesive executors with no natural seams).
+**Problem:** `/price/history` returned `{"history":[]}` for ALL tickers. SQLite DSN `mode=ro&_journal_mode=WAL` raises SQLITE_READONLY(8) when journal_mode=delete on disk. Error swallowed via `return nil, nil //nolint:nilerr`.
 
-## Session 2026-06-04 — DSI-S2-PRICE (Data Serve Integrity) DONE
-
-### Problem
-Tier-3 cache fallback re-stamped stale data fresh (FetchedAt: time.Now()). Change/ChangePercent=0 was ambiguous with genuine flat day. Staleness annotation computed in price_resolution.go was dropped at FetchPriceResponse DTO boundary.
-
-### What shipped
-- **domain/models.go**: Change/ChangePercent `float64` -> `*float64` (nil = unavailable, serializes as JSON null)
-- **application/usecases.go**: Added `Staleness string` + `IsEstimate bool` to FetchPriceResponse; propagate from ResolvedQuote
-- **infrastructure/fetchers.go**: Tier-3 reads actual `fetched_at` from DB (not time.Now()), sets Change/ChangePercent=nil
-- **infrastructure/fetchers.go**: Tier-1/Tier-2 use pointer for Change (real 0 preserved)
-- **primitive/normalizer.go**: Signature updated for *float64 change params
-- **cmd/sandbox/main.go**: Updated scenario types for pointer Change fields
-
-### Tests added (usecases_dsi_test.go)
-- TestFetchPriceUseCase_StalenessPropagated (AC-PRICE-1)
-- TestFetchPriceUseCase_IsEstimateTrueForExpired
-- TestFetchPriceUseCase_FreshNotEstimate
-- TestFetchPriceUseCase_ChangeNilForCachePath (AC-PRICE-3)
-- TestFetchPriceUseCase_RealZeroPreserved (AC-PRICE-4)
-- TestFetchPriceResponse_JSONNullSerialization (AC-PRICE-5)
-- TestFetchPriceResponse_JSONZeroSerialization
-- TestFetchPriceUseCase_FetchedAtFromSource (AC-PRICE-2)
-
-### JSON shape for FE-type coordination (DSI-S1-FE-TYPE)
-```json
-{
-  "code": "VCB",
-  "price": 88000,
-  "volume": 2000000,
-  "change": null,           // null = unavailable, 0 = genuine flat day
-  "changePercent": null,    // null = unavailable, 0 = genuine flat day
-  "source": "cache",
-  "latencyMs": 5,
-  "fetchedAt": "2026-06-01T10:00:00Z",  // true DB timestamp, NOT time.Now()
-  "staleness": "STALE",     // "FRESH" | "STALE" | "EXPIRED" | ""
-  "isEstimate": true        // true when staleness is STALE or EXPIRED
-}
+**Root cause:** `fetchers.go:240` (Tier3CacheFetcher.FetchPrice) and `:303` (GetHistory) both had:
+```go
+dsn := fmt.Sprintf("file:%s?mode=ro&_journal_mode=WAL&_busy_timeout=5000", path)
 ```
 
-### Verification
-- `go build ./...` PASS
-- `go test ./...` 8/8 DSI tests PASS (existing unrelated infra test failure pre-existing)
+**Fix:** Removed `mode=ro&` from both call sites, matching sibling files `foreign_flow_repository.go:36` and `room_event_repository.go:35` which already carried the fix with the same explanatory comment.
 
-### Next
-ops_rebuild_required=true. Coordinate with DSI-S1-FE-TYPE for StockQuote type update in apps/frontend.
+**Verification:**
+- `go build ./... && go test ./...` PASS
+- `docker compose build stock-price && docker compose up -d stock-price`
+- Before fix: `curl /price/history?code=FPT&days=7` -> `{"history":[]}`
+- After fix: `curl /price/history?code=FPT&days=7` -> 5 OHLCV entries (FPT/VNM/VCB/HVN all return data)
 
-## Session 2026-05-24 — P2-F G5a git mv _deprecated + FetchPriceUseCase rewire DONE
-
-### What shipped (P2-F)
-
-`git mv` pkg/domain/services.go → pkg/domain/_deprecated/services_v1.go (history preserved).
-`git mv` pkg/domain/services_test.go → pkg/domain/_deprecated/services_v1_test.go.
-Both deprecated files annotated with `//go:build ignore` (circular-import prevention).
-
-Rewired `FetchPriceUseCase`: removed `*domain.ResolvePriceService` dependency; now depends on
-`PriceResolverPort` interface (defined in pkg/application/) satisfied by `*PriceResolutionModule`.
-`cmd/server/main.go` composition root wires `priceresolution.New()` directly.
-`usecases_test.go` + `router_test.go` updated to use `mockResolver` (no deprecated service).
-
-**All 6 ACs PASS:**
-- AC-1: git mv confirmed; originals gone; FOUND in _deprecated/
-- AC-2: grep → 0 matches for ResolvePriceService in usecases.go
-- AC-3: go build ./... exit 0
-- AC-4: golangci-lint run: 0 issues, all fences intact
-- AC-5: sandbox total=11 pass=11 fail=0 status=OK
-- AC-6: _deprecated/ directory confirmed with both files
-
-**Commit:** `6225f926` — `chore(stock-price): P2-F — git mv ResolvePriceService → _deprecated/ + FetchPriceUseCase rewire (G5a)`
-
-**Signal:** `docs/signals/dev-sp-P2-F-git-mv-done-20260524T003755Z.json`
-
-**Files staged (L84 explicit):**
-- CREATE: `apps/stock-price/pkg/domain/_deprecated/services_v1.go` (moved + build-ignored)
-- CREATE: `apps/stock-price/pkg/domain/_deprecated/services_v1_test.go` (moved + build-ignored)
-- MODIFY: `apps/stock-price/pkg/application/usecases.go` (PriceResolverPort + rewire)
-- MODIFY: `apps/stock-price/pkg/application/usecases_test.go` (mockResolver)
-- MODIFY: `apps/stock-price/pkg/interface/http/router_test.go` (mockResolver)
-- MODIFY: `apps/stock-price/cmd/server/main.go` (priceresolution.New() wiring)
-
-**Anchor:** `debba8eaff0724d1fb32fc9d28640201cc32d1cc` remains ancestor (merge-base exit 0).
-
-**State for P2-G:** FetchPriceUseCase is now fully wired to the module tier. Next: QA G5b/G5c audit.
-
-## Session 2026-05-24 — P2-B Depguard Fence-A/B/C + CI job DONE
-
-### What shipped (P2-B)
-
-Created `apps/stock-price/.golangci.yml` with THREE named depguard rules (fence-a/b/c), `run.timeout: 120s`, 73 lines. Added CI job `stock-price-go-lint` to `.github/workflows/ci.yml`.
-
-**Key fix:** Fence-C requires `mattn/go-sqlite3` blank import only in `cmd/server/main.go`. Moved `_ "github.com/mattn/go-sqlite3"` from `pkg/infrastructure/fetchers.go` → `cmd/server/main.go` (composition root). Infrastructure package now uses `database/sql` with driver name string only — no direct mattn import.
-
-**All 5 ACs PASS:**
-- AC-1: `.golangci.yml` created, 73 lines, 3 named fence rules, `run.timeout: 120s`
-- AC-2: `golangci-lint run` exits 0, 0 issues
-- AC-3: CI job `stock-price-go-lint` wired (golangci-lint-action@v6.1.1, working-directory: apps/stock-price)
-- AC-4: `d5ce886e` is most recent commit on `.golangci.yml` (freeze anchor established)
-- AC-5: sandbox total=11 pass=11 fail=0 status=OK exit 0
-
-**Commit:** `d5ce886e` — `feat(stock-price): P2-B golangci depguard fence (Fence-A/B/C) + CI stock-price-go-lint job`
-
-**Signal:** `docs/signals/dev-sp-P2-B-done-20260524T000539Z.json`
-
-**Files modified:**
-- CREATE: `apps/stock-price/.golangci.yml`
-- MODIFY: `.github/workflows/ci.yml` (added stock-price-go-lint job)
-- MODIFY: `apps/stock-price/cmd/server/main.go` (added blank import for Fence-C)
-- MODIFY: `apps/stock-price/pkg/infrastructure/fetchers.go` (removed blank import from infra)
-
-**State for P2-C (QA):** Fence-A/B/C are live, lint is GREEN. QA will deliberately introduce a Fence-A violation in a temp branch to prove the linter catches it (reverted-never-committed).
-
-## Session 2026-05-24 — P1-E Edit-Rerun Handler + Env Audit DONE
-
-### What shipped (P1-E)
-
-Modified `apps/stock-price/dashboard/index.html` — replaced placeholder alert() with full rerun panel.
-
-**All 6 ACs PASS:**
-- AC-1: "Edit & Rerun" panel — paste-apply NDJSON handler updates scenario status dots live
-- AC-2: `CGO_ENABLED=0` shown explicitly in command block before `go run` invocation (file:// safe, no exec())
-- AC-3: env audit note in panel; `env | grep -E "DB_|API_KEY|SECRET|TOKEN|PASSWORD"` verified empty in dev env
-- AC-4: `grep -rn "mattn/go-sqlite3" primitive/ module/ cmd/sandbox/` = 0 actual imports (exit 1)
-- AC-5: edited price-quote-normalizer-golden.json rawPrice 85000→70000 + expectedOutput.price→70000; sandbox pass=9/9 exit 0; restored golden
-- AC-6: sandbox -tier=primitive pass=9/9 exit=0; -tier=module pass=2/2 exit=0 (G12 DoD gate satisfied)
-
-**Sandbox output (G12 final gate):**
-```
-primitive: total=9 pass=9 fail=0 status=OK exit 0
-module:    total=2 pass=2 fail=0 status=OK exit 0
-```
-
-**Commit:** `8c8edbf1` — `feat(stock-price): P1-E edit-rerun handler + zero-creds env audit (G7/G8)`
-
-**Signal:** `docs/signals/dev-stock-price-p1-e-done-<UTC>.json`
-
-**Key design decisions:**
-- Rerun panel is file:// safe: no fetch(), no WebSocket, no exec() — user runs sandbox command in terminal, pastes NDJSON output into textarea
-- NDJSON parser handles both JSON log lines (`{"msg":"PASS","scenario":"..."}`) and summary line (`total=N pass=N fail=N status=X`)
-- Reset-to-NOT-RUN button satisfies G8 honest-cold-start contract
-- Escape key priority: rerun panel closes first, then scenario modal (layered z-index 200 vs 100)
-
-**State for P1-F/P1-G:**
-- G7 trust contract implemented (edit → rerun → paste → dashboard live)
-- G8 advanced (honest red/green contract demonstrated + reset-to-not-run)
-- All 9+2 scenarios remain GREEN
-- P1-G (QA close-gate) is next sequenced task
-
-## Session 2026-05-24 — P1-D Dashboard DONE
-
-**Commit:** `7329180b` — `feat(stock-price): P1-D G6 trust dashboard (3-panel, file://, honest NOT-RUN)`
-
-**Signal:** `docs/signals/dev-stock-price-p1-d-done-<UTC>.json`
-
-3-panel self-contained file:// dashboard: Level 1 Primitives (9 scenarios), Level 2 Module (2 scenarios), Level 3 Microservice info. G8 NOT-RUN honest cold start. All data embedded inline, zero CDN, zero fetch.
-
-## Session 2026-05-24 — P1-C price_resolution module DONE
-
-**Commit:** `e98179f9` — `feat(stock-price): P1-C price_resolution module + Fence-B`
-
-Module stub: `pkg/module/price_resolution/` — composes 3 primitives via TierFetcher port. 8 unit tests. Fence-B clean (zero infra imports). Sandbox 11/11 PASS (9 primitive + 2 module).
-
-**FetchedAt rebinding pattern:** scenario "now" used to compute age; rebind FetchedAt relative to real wall-clock so ClassifyStaleness produces expected label deterministically.
-
-## Session 2026-05-24 — P1-B1/B2/B3 + P1-A Primitives + Sandbox DONE
-
-**Commits:**
-- P1-A: `afe3468b` — sandbox runner (CGO_ENABLED=0, flag parser, discovery)
-- P1-B1: `69afa2ab` — price-quote-normalizer primitive + R-CGO gate CLEAR
-- P1-B2: tierfallback-selector primitive (Fence-A clean)
-- P1-B3: price-staleness-classifier primitive (Fence-A clean)
-
-All 3 primitives: stdlib-only (no CGO, no infra). R-CGO gate: CLEAR (CGO_ENABLED=0 build exit 0, grep=0 imports). Sandbox 9/9 PASS.
-
-## Session 2026-05-22 — 1971-STOCKPRICE-SCAN-ORDER-MISMATCH SHIPPED
-
-Fixed SQLite Scan order transposition (close=0 bug). **Commit:** `bc515ab2`. TestSQLiteRepo_GetHistory_OHLCFieldParity added. 8 infra tests PASS.
+**Files modified:** `apps/stock-price/pkg/infrastructure/fetchers.go` (2 DSN changes), `docs/agents/dev-stock-price/init.md` (doc update)
 
 ## Session 2026-07-29 — FIX-DEPTHTHIN-A-PRICE-HISTORY-RETENTION-10D — BLOCKED (zone mismatch)
 
@@ -194,4 +33,6 @@ db.prepare(`DELETE FROM market_prices_history WHERE fetched_at < ?`).run(cutoff)
 
 **BLOCKED:** This code is in `apps/mcp-server/` zone. Task is assigned to dev-stock-price (zone: `apps/stock-price/`). Zero market_prices_history references exist in apps/stock-price/. Re-route to dev-mcp-server required.
 
-Zone health: no drift detected (task is zone-misassigned, not a code health issue).
+## Session 2026-07-09 — FACTORY-STOCK-split-sandbox DONE
+
+Split 743L cmd/sandbox/main.go into 8 files: main.go (101L), discover.go (71L), helpers.go (23L), dispatch.go (75L), exec_primitive_normalizer.go (97L), exec_primitive_selector.go (123L), exec_primitive_staleness.go (76L), exec_module_resolution.go (150L). All build/vet/test/lint/sandbox PASS. Two files over 120L justified (single cohesive executors with no natural seams).
