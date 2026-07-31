@@ -93,12 +93,12 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "FACTORY-INFRA-delete-deprecated-rag-kinhdich",
-    "next_agent": "developer",
-    "next_action": "BOUNDED-1 auto-pickup claim of FACTORY-INFRA-delete-deprecated-rag-kinhdich — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
-    "updated_at": "2026-07-31T16:52:23Z",
-    "updated_by": "dev-team (bounded-1 auto-pickup)"
+    "status": "idle",
+    "active_task_id": null,
+    "next_agent": "router",
+    "next_action": "",
+    "updated_at": "2026-07-31T16:58:45Z",
+    "updated_by": "dev-mcp-server (BOUNDED-1 dispatch)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -11026,6 +11026,25 @@
           "FIX-ORPHAN-ADOPTION-BOARD-STATE-GUARD"
         ],
         "updated_at": "2026-07-31T16:27:10Z"
+      },
+      {
+        "title": "Delete _deprecated rag/kinhDich infra code and remove the barrel re-exports",
+        "priority": "P3",
+        "zone": "mcp-server-infra",
+        "type": "FACTORY",
+        "status": "BLOCKED",
+        "id": "FACTORY-INFRA-delete-deprecated-rag-kinhdich",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-INFRA-delete-deprecated-rag-kinhdich",
+        "promoted_at": "2026-07-31T16:52:09Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=3)",
+        "updated_at": "2026-07-31T16:58:45Z",
+        "claimed_at": "2026-07-31T16:52:22Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "next_agent": "po",
+        "blocked_reason": "Investigated before coding (mandatory): task DoD already fully satisfied by 2 unrelated prior commits before this row was auto-picked up. 456851797 (2026-07-16, CI-RED-da847805-FIX) deleted rag/_deprecated/{vectorstore,retriever,embeddings}.ts + its 5 test anchors (011/012/013-rag-*/135-rag-temporal-decay/security-sql-injection) + removed the rag/index.ts and infrastructure/index.ts barrel re-exports. 448b41b0a (2026-07-30, FACTORY-GUARD-CI-DEADCODE-IMPL) deleted infrastructure/_deprecated/kinhDichWrapper.ts + 1077-kinh-dich-wrapper.test.ts + surgically trimmed 1081-sprint-054-smoke.test.ts. Repo-wide grep + find (re-verified live) confirm zero remaining _deprecated/kinhDichWrapper importers and all 4 target files + rag/_deprecated/ dir absent from disk. No code change made — nothing left to implement, flipping to REVIEW would send QA a no-op diff. This is a stale 2026-06-15 maintainability-factory-audit backlog row never retired after its scope was independently covered by other work — needs a PO close/retire decision on the source backlog row, not an architect design call. Full detail: docs/agent-memory/notebooks/dev-mcp-server.md 2026-07-31 FACTORY-INFRA-delete-deprecated-rag-kinhdich section; decision journal sprint-COWORK-GUARANTEED-SLOT-CATCHUP-dev-mcp-server-2.md S48.",
+        "blocked_at": "2026-07-31T16:58:45Z",
+        "updated_by": "dev-mcp-server (BOUNDED-1 dispatch)"
       }
     ],
     "closed_sprints": [
@@ -19416,23 +19435,7 @@
     },
     "last_triaged_at": "2026-07-31T16:52:09Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": [
-      {
-        "title": "Delete _deprecated rag/kinhDich infra code and remove the barrel re-exports",
-        "priority": "P3",
-        "zone": "mcp-server-infra",
-        "type": "FACTORY",
-        "status": "IN_PROGRESS",
-        "id": "FACTORY-INFRA-delete-deprecated-rag-kinhdich",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-INFRA-delete-deprecated-rag-kinhdich",
-        "promoted_at": "2026-07-31T16:52:09Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=3)",
-        "updated_at": "2026-07-31T16:52:23Z",
-        "claimed_at": "2026-07-31T16:52:22Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)"
-      }
-    ]
+    "in_progress": []
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
