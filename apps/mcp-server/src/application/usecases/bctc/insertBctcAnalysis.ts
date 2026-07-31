@@ -1,6 +1,10 @@
 /**
  * FACTORY-APP-split-fetchParseAndStoreBctc — extracted from fetchParseAndStoreBctc.ts
  * to keep the orchestrator a thin sequencer (DoD: orchestrator <=120L).
+ * size-justification: 132L — FIX-LANCEDB-INSERT-SEGFAULT moved the default-inserter
+ * resolution inside its own try/catch and added the insertAnalysisResolverFn
+ * injection seam (with its doc comment) to guard against an uncaught resolution
+ * throw breaking this file's own non-fatal contract.
  *
  * Step 4 of the BCTC pipeline: derive sector, build the RAG summary entry, and
  * embed it into LanceDB via the injected/real insertAnalysis function. LanceDB
