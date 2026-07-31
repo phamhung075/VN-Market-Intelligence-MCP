@@ -94,10 +94,10 @@
   ],
   "head": {
     "status": "idle",
-    "updated_at": "2026-07-31T06:16:54Z",
-    "updated_by": "dev-mcp-server",
     "active_task_id": null,
-    "next_agent": "router"
+    "next_agent": "router",
+    "updated_at": "2026-07-31T06:48:33Z",
+    "updated_by": "dev-mcp-server"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -5527,17 +5527,6 @@
         "type": "DOC",
         "zone": "docs/data/system-map.json + docs/architecture-briefs",
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#FU-RUNTIME-SET-TRUTH-RECONCILE"
-      },
-      {
-        "id": "FDA-7",
-        "priority": "P3",
-        "size": "S",
-        "sprint": "FAKE-DATA-AUDIT",
-        "status": "BACKLOG",
-        "title": "macroTools proxy re-stamps fetchedAt=now + source_tier ?? 2 when Go upstream omits provenance",
-        "type": "FIX",
-        "zone": "apps/mcp-server",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FDA-7"
       },
       {
         "id": "FDA-10",
@@ -18795,6 +18784,27 @@
         "claimed_at": "2026-07-31T05:47:14Z",
         "claimed_by": "dev-team (bounded-1 auto-pickup)",
         "commit_sha": "f4feb65517e8353cafb8e6694ed5258dca46c6b9"
+      },
+      {
+        "id": "FDA-7",
+        "priority": "P3",
+        "size": "S",
+        "sprint": "FAKE-DATA-AUDIT",
+        "status": "REVIEW",
+        "title": "macroTools proxy re-stamps fetchedAt=now + source_tier ?? 2 when Go upstream omits provenance",
+        "type": "FIX",
+        "zone": "apps/mcp-server",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FDA-7",
+        "promoted_at": "2026-07-31T06:19:47Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=3)",
+        "updated_at": "2026-07-31T06:48:33Z",
+        "claimed_at": "2026-07-31T06:19:52Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "next_agent": "qa",
+        "updated_by": "dev-mcp-server",
+        "commit_sha": "24022a53a",
+        "return_summary": "get_macro_snapshot fetchedAt fallback new Date()->null, source_tier fallback 2->4 when Go upstream omits provenance; commit 24022a53a (code+test+doc); tsc clean, targeted 128/128 pass (10 files, incl 4 new RED->GREEN FDA-7 tests), server boot toolCount=183/cronJobCount=88 unchanged, dashboard probes 200; full bun test 14961/40skip/53fail in-band (52-59), zero macro-related fails; DJ sprint-COWORK-GUARANTEED-SLOT-CATCHUP-dev-mcp-server.md S39"
       }
     ],
     "qa": [],
@@ -18814,7 +18824,7 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-31T05:47:14Z",
+    "last_triaged_at": "2026-07-31T06:19:47Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
     "in_progress": []
   },
