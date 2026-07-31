@@ -13210,11 +13210,13 @@
         "promoted_at": "2026-07-31T20:18:00Z",
         "promoted_by": "dev-team (bounded-1 auto-pickup)",
         "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=3)",
-        "updated_at": "2026-07-31T20:21:25Z",
+        "updated_at": "2026-07-31T20:22:50Z",
         "claimed_at": "2026-07-31T20:18:04Z",
         "claimed_by": "dev-team (bounded-1 auto-pickup)",
         "next_agent": "qa",
-        "updated_by": "dev-kinh-dich"
+        "updated_by": "dev-kinh-dich",
+        "commit_sha": "fa02f39f1",
+        "note": "6 data-driven invariant tests added (queDataMap/queMetaList/GetAllQueReferences/trigrams/O(1) lookup maps, all pinned at 64 entries 1..64). Test-only, zero production change. go build/vet/test + golangci-lint clean (12/12 packages). RAW-verified by dev-team: independently re-ran all 6 new tests + full suite, matches self-report exactly."
       },
       {
         "id": "TE-T08",
