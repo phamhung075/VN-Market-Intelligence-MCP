@@ -97,8 +97,8 @@
     "active_task_id": null,
     "next_agent": "router",
     "next_action": "idle — awaiting next tick",
-    "updated_at": "2026-07-31T16:09:00Z",
-    "updated_by": "dev-team (SPIKE review-flip)"
+    "updated_at": "2026-07-31T16:12:07Z",
+    "updated_by": "dev-team (BOUNDED-1 revert — prose plan-only near-miss)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -5787,18 +5787,6 @@
         "note": " [SUPERSEDED by TE-T06 (system-auditor main.md Tier-2/3 split, richer scope) — PO rerank 2026-07-17; dev-team: close as dup when TE-T06 is picked, do NOT dispatch independently.]"
       },
       {
-        "id": "FIX-ALERT-CASCADE-OUTCOME-DEAD",
-        "priority": "P1",
-        "status": "BACKLOG",
-        "title": "FIX-ALERT-CASCADE-OUTCOME-DEAD — record_signal_outcome never called: 1965+ rule hits, Eval=0 for ALL 49 cascade rules; 653/683 alerts (95.6%) 'unknown' verdict. Outcome feedback loop disconnected — system can't learn signal quality.",
-        "type": "FIX",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-ALERT-CASCADE-OUTCOME-DEAD",
-        "verify_note": "prior_status=TODO",
-        "zone": "apps/mcp-server/",
-        "po_zone_repair_20260731": "zone was null (structurally un-dispatchable: dev-team Step 3 rejects a batch entry with no zone) and priority P3. record_signal_outcome is defined in apps/mcp-server/src/interface/mcp/tools/news-analysis/agentSignalTools.ts + registered in .../bootstrap/agentBootstrap.ts, so zone=apps/mcp-server/. Priority raised P3->P1 on LIVE evidence read 2026-07-31T16:04:37Z from the running container (docker exec, readonly bun:sqlite, /app/data/market.db): signal_outcomes has 105 rows total, MAX(checked_at)=2026-07-26 00:17:00 and zero rows created in the 5 days since — the outcome feedback loop is confirmed dead in production right now, not merely historically.",
-        "updated_at": "2026-07-31T16:04:37Z"
-      },
-      {
         "id": "FIX-VPS-NEWS-STALE-FALSEPOS",
         "priority": "P3",
         "status": "BACKLOG",
@@ -10749,6 +10737,25 @@
         "deliverable": "AC-1: checkStalledResolutionLiveness() (or a sibling assertion invoked from the same job) additionally fails loud when signal_outcomes has had ZERO rows created within a configurable recency window (suggest: no new row in > 72h while the upstream alert/cascade path is live), so producer death is detectable and not merely resolver stall. AC-2: the new assertion must be provably non-vacuous — a unit test that seeds an EMPTY / stale-only signal_outcomes table and asserts the guard alerts, RED before the fix and GREEN after (the existing FIX-SIGNAL-OUTCOMES-RESOLUTION-STALLED.test.ts only covers the checked_at-NULL branch and passes today against a dead pipeline). AC-3: keep the 314e70718 GLOB '[A-Z][A-Z][A-Z]' non-ticker exclusion intact — do NOT re-introduce MACRO/MULTI counting to restore noise. AC-4: preserve the existing at-most-one-BUG-alert-per-UTC-day dedup on the new branch too. VERIFY (verification_gate=live_runtime_query_after_deploy — NOT a host-side bun test alone, per feedback_host_cli_integrity_check_false_ok_verify_through_runtime): after rebuild, docker exec the running mcp-server and confirm the new assertion returns non-zero/alerting against the CURRENT live market.db (which today has a 5-day creation gap), then confirm it returns clean against a seeded fixture with a fresh row.",
         "status_note": "Origin: PO triage of unresolved telegram reports #4236 + #4237 ('[signal-outcome-resolution] LIVENESS: 2 signal_outcomes row(s) unresolved >72h'). Those two reports themselves are FALSE ALARMS and were resolved, NOT converted into this row — RAW evidence: the fix 314e70718 landed in git 2026-07-31T00:34:15Z but the mcp-server image was only rebuilt at 2026-07-31T14:44:17Z, so the container serving the 12:17:03Z and 13:17:00Z alerts was still running pre-GLOB code; the CURRENTLY deployed bundle does contain the filter (verified in-container at /app/src/scheduler/alerts/signalOutcomeResolutionJob.ts:92) and the live GLOB-filtered query now returns 0. The two alerts an hour apart (despite the at-most-one-per-UTC-day guard) are explained by the 14:44Z rebuild resetting the module-level _lastStalledAlertDate, not by a broken dedup. This row exists because verifying that false alarm surfaced a real, separate, undeduped defect.",
         "updated_at": "2026-07-31T16:04:37Z"
+      },
+      {
+        "id": "FIX-ALERT-CASCADE-OUTCOME-DEAD",
+        "priority": "P1",
+        "status": "BACKLOG",
+        "title": "FIX-ALERT-CASCADE-OUTCOME-DEAD — record_signal_outcome never called: 1965+ rule hits, Eval=0 for ALL 49 cascade rules; 653/683 alerts (95.6%) 'unknown' verdict. Outcome feedback loop disconnected — system can't learn signal quality.",
+        "type": "FIX",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-ALERT-CASCADE-OUTCOME-DEAD",
+        "verify_note": "prior_status=TODO",
+        "zone": "apps/mcp-server/",
+        "po_zone_repair_20260731": "zone was null (structurally un-dispatchable: dev-team Step 3 rejects a batch entry with no zone) and priority P3. record_signal_outcome is defined in apps/mcp-server/src/interface/mcp/tools/news-analysis/agentSignalTools.ts + registered in .../bootstrap/agentBootstrap.ts, so zone=apps/mcp-server/. Priority raised P3->P1 on LIVE evidence read 2026-07-31T16:04:37Z from the running container (docker exec, readonly bun:sqlite, /app/data/market.db): signal_outcomes has 105 rows total, MAX(checked_at)=2026-07-26 00:17:00 and zero rows created in the 5 days since — the outcome feedback loop is confirmed dead in production right now, not merely historically.",
+        "updated_at": "2026-07-31T16:12:07Z",
+        "promoted_at": null,
+        "promoted_by": null,
+        "promotion_note": null,
+        "claimed_at": null,
+        "claimed_by": null,
+        "next_agent": "po",
+        "bounded1_revert_note": "BOUNDED-1 auto-claimed this row (zone=apps/mcp-server/ per PO 2026-07-31T16:04:37Z repair), but detail_ref (docs/data/orch/archive/backlog-detail.json, source health-recheck 2026-06-13) carries owner=dev-alert-engine, zone_owner=apps/alert-engine/, and scope text explicitly stating PLAN-ONLY at PO layer — a prose-embedded plan_only signal, not a structured plan_only:true field, so BOUNDED-1s structured plan-only gate could not see it (same near-miss class as FIX-MCP-MEMORY-CODE-LEAK/UC-CDC-P5). Reverted auto-claim before dispatch. next_agent set to po (non-dev) so the existing NON-DEV-NEXT_AGENT gate withholds this from future BOUNDED-1 auto-pickup until PO rules: (a) confirm apps/mcp-server/ zone + lift plan-only (dispatch to dev-mcp-server), or (b) confirm still plan-only and route through architect first, or (c) reconcile the stale detail_ref (owner/zone_owner/scope) to match. No code touched, no dev agent spawned."
       }
     ],
     "closed_sprints": [
@@ -19120,7 +19127,7 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-31T15:50:36Z",
+    "last_triaged_at": "2026-07-31T16:12:00Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
     "in_progress": []
   },
