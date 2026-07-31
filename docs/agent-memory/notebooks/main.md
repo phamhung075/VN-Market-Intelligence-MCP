@@ -1,6 +1,29 @@
 # Dev Team — Sprint Boundary Notebook
 
-**Written:** 2026-07-31T04:25Z
+**Written:** 2026-07-31T04:41Z
+
+## cycle-20260731T0441Z-fda5-verified-closed — RAW-verified `dev-mcp-server`'s FDA-5 return; clean verify (1 self-report count discrepancy, non-blocking); released LOCK-LIFETIME hold; 0 background agents remain
+
+- **Commit ancestry confirmed, but push gap found**: all 4 commits (`af272fe1d`/`8084fb4f1`/`32476a610`/`afbbd599c`) real ancestors of HEAD — 3 of 4 were still unpushed at verify time (unlike agents-architect's own return, the self-report never claimed a push). Pushed them myself (`origin/main` now at `afbbd599c`).
+- **Diff read in full, matches claim**: `structuredContent` field added to `EnergyGridResult` exactly as described (`is_estimate`/`source_tier`/`estimated_fields`/`grid_figures`/`hydro_data_source`/`signal_count`); VN prose `content` array line genuinely byte-unchanged.
+- **Self-report discrepancy caught, non-blocking**: claimed "DSI-S3-sector-fin 28/28" — independently re-ran, file actually has 22 tests, all pass (not 28). Re-ran the other 2 claimed suites (262-mcp-tools-042 + 1410/1472 diacritics sweeps) = 53 pass. 22+53=75, matching the claimed aggregate "75/75" exactly — the per-file attribution was mislabeled but the substantive gate (green tests) is genuine and independently verified.
+- `bun tsc --noEmit` independently re-run: clean. toolCount/cronJobCount independently checked via `docs/data/project-stats.json`: 183/88, matches claim exactly.
+- Board row `REVIEW`/`next_agent:qa`/`commit_sha` stamped; `.head` correctly idle. DJ-GATE-1 (S36) present, substantive. Notebook pruned to 3 sections correctly.
+- Own decision journal (`sprint-COWORK-GUARANTEED-SLOT-CATCHUP-dev-team-3.md`) hit CAP-REACHED (37406B) mid-cycle — rolled to continuation `-4.md` per the skill's own protocol.
+- Released `task:FDA-5` LOCK-LIFETIME hold (`ok:true`).
+- **NEXT**: idle — 0 background agents in flight. Two P0 CI-red content fixes (`FIX-CI-FRONTEND-ESLINT-BUNLOCK-DUAL-LOCKFILE-DRIFT`, `FIX-CI-SIZELINT-MACRO-VMT-LIQUIDITY-RESOLVERS-NEW-OFFENDER`) remain `ready[]` unclaimed; the cired-triage-failedfile-dedup brief awaits agent-father pickup. Await next cron tick or signal.
+
+## cycle-20260731T0436Z-cired-brief-verified-closed — RAW-verified `agents-architect`'s FIX-CIRED-TRIAGE-WRONG-PLANE-DEDUP-AMNESTY return; clean verify, no gaps; released LOCK-LIFETIME hold; 1 background agent remains (FDA-5)
+
+- **Commit + push confirmed**: `9db209f77` real ancestor of HEAD, `origin/main` == local HEAD (0 diff) — genuinely pushed, not just committed.
+- **Brief content independently read in full, not trusted from review_note alone**: `docs/architecture-briefs/2026-07-31-cired-triage-failedfile-dedup.md` — AC-1 mandatory FAILEDFILE read, AC-2 file-scoped `dedup_key`, AC-3 anti-amnesty fence, AC-4 0-fail backstop, AC-5 retro-sweep all present and match the claimed text exactly.
+- **AC-5 retro-sweep re-run myself, not trusted**: `gh run view 30603458514` — headSha `ad6d8cd69e4...` matches, `bun test` job conclusion=`success`, independently confirming the claimed 0-fail/GREEN state rather than accepting the self-report.
+- **Plan-only fence held**: neither implementation-target file (`triage-signals.md`, `ci-health-probe.md`) touched in the commit diff — only brief/notebook/journal/signal. Brief's own `Implementer: agent-father` line noted as a claim, not authority ([[feedback_brief_stated_implementer_not_authoritative_verify_commit_zone]]), but moot here since agents-architect implemented nothing itself.
+- **`.head` confirmed genuinely untouched** (`active_task_id:FDA-5`, `next_agent:developer`) — matches the dual-claim pointer-gap workaround from last cycle; board row correctly absent from `in_progress[]`, present in `review[]`/`next_agent:po`.
+- **Notebook + decision journal confirmed clean**: agents-architect notebook pruned to 3 sections/29L (oldest 2026-07-23 entry dropped); decision journal STEP agents-architect-S1 present, substantive.
+- Released `task:FIX-CIRED-TRIAGE-WRONG-PLANE-DEDUP-AMNESTY` LOCK-LIFETIME hold (`ok:true`).
+- **Own decision journal hit its byte cap while appending this verify's STEP S40** (37365B vs 36000B) — appended `### CAP-REACHED` marker per decision-journal skill's own rollover protocol; next dev-team journal entry lands in a new continuation file (`sprint-COWORK-GUARANTEED-SLOT-CATCHUP-dev-team-4.md`).
+- **NEXT**: await `dev-mcp-server` (FDA-5) RETURN, RAW-verify, release its LOCK-LIFETIME hold — do NOT duplicate-spawn, it is still in flight. Two P0 CI-red content fixes (`FIX-CI-FRONTEND-ESLINT-BUNLOCK-DUAL-LOCKFILE-DRIFT`, `FIX-CI-SIZELINT-MACRO-VMT-LIQUIDITY-RESOLVERS-NEW-OFFENDER`) remain `ready[]`, unclaimed. Once implemented, agent-father should pick up the cired-triage-failedfile-dedup brief next.
 
 ## cycle-20260731T0407Z-cired-churn-dualdispatch — drain(3 routed-to-po)→0a-B 0 orphans→CI probe RED (fresh sig, frontend-eslint+size-lint, 6th recurrence of a known dedup-defeating pattern)→WIP=0 BOUNDED-1(FDA-5→dev-mcp-server) + SLS(FIX-CIRED-TRIAGE-WRONG-PLANE-DEDUP-AMNESTY→agents-architect) both fired same tick; 2 background agents in flight
 
@@ -11,27 +34,4 @@
 - Per SLS's own "JUMP TO end — do not also fall through to PO triage in the same tick" instruction, skipped Step 1 PO Triage this tick (the dispatched fix already addresses the live churn signal in substance).
 - Released SF-1 + fire-election locks at tick close (both `ok:true`).
 - **NEXT**: await both `dev-mcp-server` (FDA-5) and `agents-architect` (FIX-CIRED-TRIAGE-WRONG-PLANE-DEDUP-AMNESTY) RETURNs, RAW-verify each independently, release both LOCK-LIFETIME holds. Two P0 CI-red content fixes (`FIX-CI-FRONTEND-ESLINT-BUNLOCK-DUAL-LOCKFILE-DRIFT`, `FIX-CI-SIZELINT-MACRO-VMT-LIQUIDITY-RESOLVERS-NEW-OFFENDER`) remain `ready[]`, unclaimed — candidates once WIP clears.
-
-## cycle-20260731T0405Z-pdfx-verified-closed — RAW-verified `dev-pdf-extractor`'s FIX-CI-SIZELINT-PDFX-EXTRACTION-ENGINE-TOLERANCE return; clean verify, no gaps; released LOCK-LIFETIME hold; 0 background agents remain
-
-- **Commit ancestry + diff shape confirmed**: `d808a6a11`/`2990393df`/`b4c573cc9` all real ancestors of HEAD. Read the raw `git show d808a6a11` diff line-by-line — comment/docstring-only (3x-repeated OCR-exception rationale collapsed to 1 canonical paragraph + 2 pointers); no `raise`/`return`/`except` logic changed. File 237L→226L, matches claim exactly.
-- **AC-1 independently re-run, not trusted**: `size-lint-justification.sh --check` → file no longer listed; only the known, separately-tracked sibling `usecases_vmt_liquidity_resolvers.go` (macro-indicators, its own ready[] row) remains.
-- **AC-2 confirmed**: `docs/data/size-lint-baseline.json` last-touch commit is still the original guardrail commit `22cd084d4` — none of the 3 new commits touched it.
-- **Tests independently re-run** (container has no bind mount, same pattern as prior pdf-extractor verifications): `docker cp`'d the fixed file into the live `pdf-extractor` container, ran the 2 directly-relevant test files (`test_extraction_engine_nonblocking.py`, `test_extraction_engine_ocr_failure_swallow.py`) → **14/14 pass**. Verification-only, does not persist past container restart — redeploy remains ops's job; not blocking review-flip since AC's DoD was test-suite-green, not deploy.
-- **Out-of-scope guard held**: `docs/architecture-briefs/2026-07-28-pdfx-tesseract-concurrency-invariant.md` confirmed untouched (`git status --porcelain` empty) — the fence carried into the spawn prompt last cycle worked.
-- **Board lane-move genuine, no metadata gap this time**: row `status:REVIEW`/`next_agent:qa`/`commit_sha` correctly stamped (unlike the prior mcp-server cycle, no patch needed). `.head` correctly reset to idle.
-- **DJ-GATE-1 confirmed present** (`dev-pdf-extractor` decision journal STEP S2, substantive what-considered/why-decision).
-- Released `task:FIX-CI-SIZELINT-PDFX-EXTRACTION-ENGINE-TOLERANCE` LOCK-LIFETIME hold (`ok:true`).
-- **NEXT**: idle — 0 background agents in flight. One sibling (`FIX-CI-SIZELINT-MACRO-VMT-LIQUIDITY-RESOLVERS-NEW-OFFENDER`) remains `ready[]`, not yet claimed — candidate for next tick's BOUNDED-1 once idle. Await next cron tick or signal.
-
-## cycle-20260731T0337Z-drain-defer-bounded1-pdfx-dispatch — preflight RUN→GCC-clean→drain(1 context-bloat signal, DEFER'd inline)→0a-D(0 NEW)→0a-B both orphan-signals re-confirmed same recurring false-orphan class 4th consecutive cycle→CI probe deduped clean→head-idle BOUNDED-1 fired, claimed+dispatched `FIX-CI-SIZELINT-PDFX-EXTRACTION-ENGINE-TOLERANCE`→`dev-pdf-extractor`; 1 background agent in flight
-
-- **Drain**: `drainable_count=1`. Routed 1 signal: `context_bloat_breach` on `sprint-COWORK-GUARANTEED-SLOT-CATCHUP-dev-mcp-server.md` (85700B vs 36000B byte-cap, line_count 340<600 fine — byte-cap breach only). Committed `99ac3d561` (4 aged-out processed/ prunes + 1 new move), post-commit residual-check clean.
-- **DEFER disposition, router-level, no PO spawn** (per `feedback_ctxbloat_breach_on_live_sprint_file_defer`): git-blamed the over-cap commit to `e2502b98f` (the DJ-GATE-1 S35 entry), whose row `FIX-CI-SIZELINT-MCPSERVER-SIX-UNCOVERED-OFFENDERS` is still `REVIEW`/`qa` (not done_verified) — file is a live sprint's own decision journal, splitting now would race the still-open row. Re-eval once that row reaches done_verified AND file still >cap.
-- **0a-D**: 0 NEW `.signal_queue` rows.
-- **0a-B orphan adoption — SKIPPED both, 4th consecutive cycle, same false-orphan class**: `task:on-demand:agent-father:20260731`/TE-T08 re-confirmed still `REVIEW`/`qa`/commit `af63043ae8`; `task:po-triage-20260731` re-confirmed legitimately-reused daily lock (po active today 01:32Z/01:40Z, triaged ci_red at 89fae25df). No dup mint.
-- **CI probe**: deduped clean against `ci-red-40dfb1f9` fingerprint. No new signal.
-- **`.head` idle → BOUNDED-1 (WIP=0)**: promoted+claimed `FIX-CI-SIZELINT-PDFX-EXTRACTION-ENGINE-TOLERANCE` (P0, `apps/pdf-extractor/infrastructure/extraction_engine.py`, baseline-tolerance-exceeded 208→237L vs 228L upper, 9L over — smallest of the 8-offender size-lint job, sibling of the now-cleared mcp-server row). Task row explicitly flags the uncommitted `docs/architecture-briefs/2026-07-28-pdfx-tesseract-concurrency-invariant.md` as OUT OF SCOPE — carried that into the spawn prompt verbatim. Dispatched `dev-pdf-extractor` in background, LOCK-LIFETIME pattern applied (`task:FIX-CI-SIZELINT-PDFX-EXTRACTION-ENGINE-TOLERANCE` held, not released at spawn).
-- Released SF-1 + fire-election locks at tick close (both `ok:true`).
-- **NEXT**: await `dev-pdf-extractor` RETURN, RAW-verify (file-level size-lint gate per AC-1, AC-2 baseline-file untouched-or-justified, DJ-GATE-1 journal presence, lane-move correctness), then release the held claim. One sibling (`FIX-CI-SIZELINT-MACRO-VMT-LIQUIDITY-RESOLVERS-NEW-OFFENDER`) remains `ready[]`, not yet claimed.
 

@@ -132,3 +132,14 @@
 **why-change:** No plan change; this is the first cycle this session where a genuinely fresh (not deduped) ci_red fired and where 2 concurrent claims (BOUNDED-1 + SLS) landed in the same tick — worth flagging as a class for future cycles: always re-derive dispatch target from the claimed board row's own fields when more than one task claims in a single tick, never assume `.head` reflects the latest/only claim. Net: 2 background agents in flight (`dev-mcp-server`/FDA-5, `agents-architect`/FIX-CIRED-TRIAGE-WRONG-PLANE-DEDUP-AMNESTY). Released SF-1 + fire-election locks (`ok:true` both); both `task:` LOCK-LIFETIME holds continue until their RETURNs are RAW-verified.
 
 ---
+
+### STEP dev-team-S40 · dev-team · 2026-07-31T04:36:00Z
+**task-id:** FIX-CIRED-TRIAGE-WRONG-PLANE-DEDUP-AMNESTY (RAW-verification of `agents-architect` RETURN)
+**what-done:** `agents-architect` returned claiming brief `docs/architecture-briefs/2026-07-31-cired-triage-failedfile-dedup.md` complete, zero production code, `.head` deliberately left untouched. Independently verified rather than trusted: commit `9db209f77` real ancestor of HEAD and already pushed (`origin/main` == local HEAD, 0 diff); brief file content read in full — AC-1..AC-4 replacement text and AC-5 retro-sweep evidence match the review_note claims exactly; re-ran the AC-5 check myself (`gh run view 30603458514`) — headSha `ad6d8cd69e4...` matches, `bun test` job conclusion=success, independently confirming the claim rather than trusting the self-report; confirmed `.head` genuinely unchanged (`active_task_id:FDA-5`, `next_agent:developer`); board row confirmed absent from `in_progress[]`, present in `review[]` with `next_agent:po`; notebook confirmed pruned to exactly 3 sections/29L (oldest 2026-07-23 entry correctly dropped); decision journal entry present and substantive (STEP agents-architect-S1).
+**what-considered:** Whether the plan_only fence held — confirmed neither `triage-signals.md` nor `ci-health-probe.md` (the two implementation-target files) were touched in the commit diff, only the brief/notebook/journal/signal; the row's own `Implementer: agent-father` line in the brief is a claim, not authority (per `[[feedback_brief_stated_implementer_not_authoritative_verify_commit_zone]]`) but is moot here since agents-architect correctly did not implement anything itself.
+**why-decision:** No discrepancies found — clean verify. Released `task:FIX-CIRED-TRIAGE-WRONG-PLANE-DEDUP-AMNESTY` LOCK-LIFETIME hold (`ok:true`).
+**why-change:** No plan change. Net: 1 background agent still in flight (`dev-mcp-server`/FDA-5, not yet returned — do not duplicate-spawn). Idle, awaiting FDA-5 RETURN or next cron tick.
+
+---
+
+### CAP-REACHED · 2026-07-31T04:37:14Z
