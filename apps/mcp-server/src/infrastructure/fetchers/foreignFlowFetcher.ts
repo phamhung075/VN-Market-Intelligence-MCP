@@ -1,9 +1,24 @@
 /**
  * Infrastructure — Foreign Flow Fetcher with Fallback
  *
- * Fetches foreign buy/sell flow data from primary VPS endpoint.
- * On primary timeout/failure, falls back to: cache → SSE → none.
- * Circuit breaker prevents cascade failures (open after 5 failures, 30s reset).
+ * Falls back to: cache → SSE → none.
+ *
+ * FIX-FOREIGN-FLOW-DEAD-ENDPOINT (2026-08-01): the VPS proxy
+ * (vps-scripts/vps-proxy-server.js) has never exposed a GET /foreign-flow
+ * route — the architecture is push-only (POST /api/push-foreign-flow,
+ * handled by pushForeignFlowHandler.ts, is the sole live write path). The
+ * "primary VPS endpoint" GET strategy below is therefore only attempted
+ * when a caller explicitly injects `overrides.fetchFn` — no production
+ * caller does (runForeignFlowFetcherJobCron -> runForeignFlowFetcherJob()
+ * always calls this with no overrides), so production never fires a GET
+ * against the dead route. The DI seam is kept (not deleted) because it is
+ * live regression coverage for the historical Task 1392 CB-stuck-open
+ * incident (fetchPrimaryVpsEndpoint's parse/validate/timeout/CB-
+ * noninterference contract) — see 1392-foreign-flow-cb-probe-regression.test.ts
+ * and 1288-foreign-flow-fallback.test.ts §4.
+ *
+ * Circuit breaker prevents cascade failures on the push path (open after
+ * 5 failures, 30s reset).
  *
  * Integrates with:
  * - circuitBreakerRegistry (breakers.foreignFlow)
@@ -94,7 +109,9 @@ let lastLoggedOpenState: boolean = false;
  * Main entry point: fetch foreign flow data with fallback strategy.
  *
  * Strategy (in order of preference):
- * 1. Primary: VPS endpoint (wrapped in circuit breaker)
+ * 1. Primary: VPS endpoint — DI-only (see module header, FIX-FOREIGN-FLOW-
+ *    DEAD-ENDPOINT); skipped unless overrides.fetchFn is explicitly injected,
+ *    which no production caller does.
  * 2. Fallback: in-memory cache from last successful run
  * 3. Fallback: SSE message bus recent messages (if available)
  * 4. None: return empty result with warning
@@ -118,51 +135,56 @@ export async function fetchForeignFlowWithFallback(
   // ───────────────────────────────────────────────────────────────────────────
   // Strategy 1: Try primary VPS endpoint (direct — no CB wrapping)
   //
-  // Task 1392 fix: breakers.foreignFlow guards DB writes in the push handler
-  // (POST /api/push-foreign-flow in server.ts) only. The VPS is push-only —
-  // there is no /foreign-flow GET endpoint. Wrapping this GET probe in
-  // execute() caused every half-open probe to hit 404 → _onFailure() →
-  // CB permanently stuck OPEN. CB state is intentionally not read here.
+  // FIX-FOREIGN-FLOW-DEAD-ENDPOINT: only attempted when a caller explicitly
+  // injects overrides.fetchFn — there is no live /foreign-flow GET route on
+  // the VPS proxy (push-only architecture), so without an injected transport
+  // this strategy is skipped entirely rather than firing a GET guaranteed to
+  // 404 every market-minute. See module header for full rationale.
+  //
+  // Task 1392 fix (still in effect): breakers.foreignFlow guards DB writes in
+  // the push handler (POST /api/push-foreign-flow in server.ts) only.
+  // Wrapping this GET probe in execute() caused every half-open probe to hit
+  // 404 → _onFailure() → CB permanently stuck OPEN. CB state is intentionally
+  // not read here.
   // ───────────────────────────────────────────────────────────────────────────
 
-  try {
-    const result = await fetchPrimaryVpsEndpoint(
-      overrides?.fetchFn ?? fetch,
-      5000, // timeout: 5 seconds
-    );
+  if (overrides?.fetchFn) {
+    try {
+      const result = await fetchPrimaryVpsEndpoint(overrides.fetchFn, 5000 /* timeout ms */);
 
-    if (result && result.length > 0) {
-      // Primary succeeded: write to DB and cache the result
-      const { writeForeignFlowToOhlcv } = await import("../db/ohlcvForeignFlowStore.js");
-      const { changes } = await writeForeignFlowToOhlcv(result);
+      if (result && result.length > 0) {
+        // Primary succeeded: write to DB and cache the result
+        const { writeForeignFlowToOhlcv } = await import("../db/ohlcvForeignFlowStore.js");
+        const { changes } = await writeForeignFlowToOhlcv(result);
 
-      lastSuccessCache = {
-        timestamp,
-        changes,
-        data: result,
-        cachedAt: timestamp,
-      };
+        lastSuccessCache = {
+          timestamp,
+          changes,
+          data: result,
+          cachedAt: timestamp,
+        };
 
-      if (lastRecoveryAt !== timestamp) {
-        lastRecoveryAt = timestamp;
-        lastLoggedOpenState = false;
-        logger.info("[fallback] primary endpoint recovered", { timestamp });
+        if (lastRecoveryAt !== timestamp) {
+          lastRecoveryAt = timestamp;
+          lastLoggedOpenState = false;
+          logger.info("[fallback] primary endpoint recovered", { timestamp });
+        }
+
+        return { changes, timestamp, source: "primary" };
       }
+    } catch (err) {
+      // Primary failed — proceed to fallback (does not affect CB)
+      const errMsg = err instanceof Error ? err.message : String(err);
 
-      return { changes, timestamp, source: "primary" };
-    }
-  } catch (err) {
-    // Primary failed — proceed to fallback (does not affect CB)
-    const errMsg = err instanceof Error ? err.message : String(err);
-
-    if (errMsg.includes("validation failed")) {
-      logger.warn("[fallback] VPS payload schema validation failed", {
-        error: errMsg,
-        timestamp,
-        hint: "Check VPS API response format — schema may have changed",
-      });
-    } else {
-      logger.warn("[fallback] primary endpoint failed", { error: errMsg });
+      if (errMsg.includes("validation failed")) {
+        logger.warn("[fallback] VPS payload schema validation failed", {
+          error: errMsg,
+          timestamp,
+          hint: "Check VPS API response format — schema may have changed",
+        });
+      } else {
+        logger.warn("[fallback] primary endpoint failed", { error: errMsg });
+      }
     }
   }
 
@@ -256,7 +278,13 @@ export async function fetchForeignFlowWithFallback(
  * Fetch foreign flow data from primary VPS endpoint (port 5005).
  * Returns parsed WriteForeignFlowItem array or null on parse failure.
  *
- * Endpoint format (expected from VPS):
+ * FIX-FOREIGN-FLOW-DEAD-ENDPOINT: this route does not exist on the VPS proxy
+ * (push-only architecture) and is never called in production — the sole
+ * caller (Strategy 1 above) only invokes it when a test explicitly injects
+ * `overrides.fetchFn`. Kept for DI-based regression coverage of the
+ * parse/validate/timeout contract, not for any live transport.
+ *
+ * Endpoint format (expected from VPS, were it ever implemented):
  *   GET http://vinahost:5005/foreign-flow
  *   Response: { data: WriteForeignFlowItem[] }
  */

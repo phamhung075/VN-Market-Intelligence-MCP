@@ -176,8 +176,20 @@ otherwise always the real ticker.
 | Fetcher | Source | Timeout | Fallback |
 |---------|--------|---------|----------|
 | `hose.ts` | VnDirect api-finfo v4 | exponential backoff (1m→30m cap) | legacy finfo-api |
-| `foreignFlowFetcher.ts` | VPS :5005 | 5s + circuit breaker (5 fail→open, 30s reset) | cache→SSE→none |
+| `foreignFlowFetcher.ts` | VPS :5005 GET — DI-only, never live (see note below) | 5s, only when a caller injects `overrides.fetchFn` | cache→SSE→none |
 | `ohlcvBackfill.ts` | VNDirect api-finfo v4/stock_prices | 15s abort per ticker; 200ms inter-ticker delay | none |
+
+**foreignFlowFetcher.ts primary-GET is DI-only, not live (FIX-FOREIGN-FLOW-DEAD-ENDPOINT, 2026-08-01):**
+The VPS proxy (`vps-scripts/vps-proxy-server.js`) has never exposed a `/foreign-flow` GET route — the
+architecture is push-only (`POST /api/push-foreign-flow`, `pushForeignFlowHandler.ts`, is the sole live
+write path). `fetchForeignFlowWithFallback`'s "Strategy 1: primary VPS endpoint" is now skipped entirely
+unless a caller explicitly injects `overrides.fetchFn` — no production caller does (the cron path
+`runForeignFlowFetcherJobCron -> runForeignFlowFetcherJob()` always calls with no overrides), so
+production never fires the GET that previously 404'd every market-minute. The DI seam (and
+`fetchPrimaryVpsEndpoint`) is kept, not deleted, because it is live regression coverage for the
+historical Task 1392 CB-stuck-open incident — see `1392-foreign-flow-cb-probe-regression.test.ts` and
+`1288-foreign-flow-fallback.test.ts` §4. Circuit breaker (`breakers.foreignFlow`, 5 fail→open, 30s reset)
+guards the push handler's DB writes only, never this GET path.
 
 **ohlcvBackfill flat-seed-bar guard (FIX-OHLCV-STARTUP-SEEDER-FLAT-BARS-P0):**
 VNDirect returns `open=high=low=close=reference_price, volume=0` for non-traded/illiquid tickers on
