@@ -17,7 +17,7 @@ import { runWeeklyAudit } from './news-analysis/dataAuditJob.js'
 import { runBctcReparseJob } from './financial-reports/bctcReparseJob.js'
 import { runEvidenceAccumulator } from './news-analysis/evidenceAccumulatorJob.js'
 import { runBaseRateComputation } from './macro/baseRateComputationJob.js'
-import { runPredictionResolutionJob } from './macro/predictionResolutionJob.js'
+import { runPredictionResolution } from './macro/predictionResolutionJob.js'
 import { runCalibrationReportJob } from './macro/calibrationReportJob.js'
 import { recordJobRun } from '../infrastructure/db/cronJobRunStore.js'
 import { VN_INDEX_FRESHNESS_MS } from '../domain/services/timeConstants.js'
@@ -484,11 +484,40 @@ export async function runBaseRateComputationWithDb(
   await recordJobRun(db, 'baseRateComputationJob', fn)
 }
 
-/** predictionResolutionJob — task 1125 */
+/** predictionResolutionJob — task 1125
+ *
+ * FIX-CRON-JOB-RUNS-DOUBLE-LOG (2026-07-31): default fn previously called the
+ * self-recording runPredictionResolutionJob() wrapper (predictionResolutionJob.ts),
+ * which ALSO calls recordJobRun internally — the exact "double-wrap" anti-pattern
+ * already diagnosed and fixed for runEvidenceAccumulatorWithDb / runBaseRateComputationWithDb
+ * / runBctcReparseWithDb above. RAW-verified live (docker exec, real market.db,
+ * 2026-07-31): every daily 16:35 UTC tick produced exactly 2 cron_job_runs rows —
+ * a rows_written=NULL row from THIS outer wrapper (fn discarded
+ * runPredictionResolutionJob()'s void return) immediately followed by a
+ * rows_written=N row from the inner self-recording call — on every single day
+ * sampled (07-21..07-30, ids 144635/144636 through 173661/173662). Fixed the
+ * same way: default fn now calls the core runPredictionResolution(db) directly
+ * (single recordJobRun call) and maps its real result to rowsWritten. The T4
+ * shouldSkipRecoveryReplay dedup guard — previously living only inside
+ * runPredictionResolutionJob(), invisible to a second physical node-cron tick
+ * because THIS wrapper (not that one) is what schedulerJobTable.ts actually
+ * invokes — is replicated here so a genuine same-window double-fire still
+ * no-ops cleanly with ZERO extra row.
+ *
+ * @idempotency T4 — cron_job_runs recency guard; replay skipped if last success < 90% of daily cadence (21.6h window)
+ */
 export async function runPredictionResolutionWithDb(
   db: Database,
-  fn: () => Promise<void> = async () => { await runPredictionResolutionJob() },
+  fn: () => Promise<{ rowsWritten?: number } | void> = async () => {
+    const result = await runPredictionResolution(db)
+    return { rowsWritten: result.resolved + result.unresolvable + result.excluded }
+  },
 ): Promise<void> {
+  const DAILY_CADENCE_MS = 86_400_000
+  if (shouldSkipRecoveryReplay(db, 'predictionResolutionJob', DAILY_CADENCE_MS)) {
+    log('[prediction-resolution] already ran within cadence window — dedup skip (recoverMissedExecutions guard)')
+    return
+  }
   await recordJobRun(db, 'predictionResolutionJob', fn)
 }
 
