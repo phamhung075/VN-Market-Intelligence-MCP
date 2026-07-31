@@ -93,12 +93,11 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "FDA-6",
-    "next_agent": "developer",
-    "next_action": "BOUNDED-1 auto-pickup claim of FDA-6 — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
-    "updated_at": "2026-07-31T04:48:03Z",
-    "updated_by": "dev-team (bounded-1 auto-pickup)"
+    "status": "idle",
+    "active_task_id": null,
+    "next_agent": "router",
+    "updated_at": "2026-07-31T05:19:10Z",
+    "updated_by": "dev-mcp-server"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -18762,6 +18761,27 @@
         "commit_sha": "af272fe1d",
         "return_summary": "structuredContent field (is_estimate/source_tier/estimated_fields/grid_figures/hydro_data_source) added to get_energy_grid_signals alongside unchanged VN prose banner; 3 commits (af272fe1d code+test, 8084fb4f1 docs, 32476a610 memory); tsc clean, targeted 75/75 pass, toolCount=183/cronJobCount=88 unchanged; DJ sprint-COWORK-GUARANTEED-SLOT-CATCHUP-dev-mcp-server.md S36",
         "po_ci_regression_note_20260731T045857": "PO Step 0-SIG cross-reference (advisory for qa, no status change): the commit that shipped this row, af272fe1d ('fix(mcp-server): energyTools estimate flag now travels in structured field, not just VN prose', 2026-07-31T04:32:28+02:00), grew apps/mcp-server/src/interface/mcp/tools/sector/energyTools.ts from ~152L to 215L with NEITHER a size-justification header NOR a baseline entry, turning size-lint red on a file that was previously clean — first observed on run 30604839507 (head 22bdf63b5, 04:42Z): 'energyTools.ts — baseline-tolerance-exceeded (baseline=152L actual=215L upper=167L)'. Tracked separately as FIX-CI-SIZELINT-MCPSERVER-ENERGYTOOLS-NEW-OFFENDER (backlog, P0, dev-mcp-server) so this row's own AC is not silently widened. qa: do not sign this row off as CI-clean without acknowledging that regression."
+      },
+      {
+        "id": "FDA-6",
+        "priority": "P3",
+        "size": "S",
+        "sprint": "FAKE-DATA-AUDIT",
+        "status": "REVIEW",
+        "title": "creditFlowTools fabricates mortgage/credit values + stamps date=now on estimate (already provenance-flagged)",
+        "type": "FIX",
+        "zone": "apps/mcp-server",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FDA-6",
+        "promoted_at": "2026-07-31T04:47:59Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=3)",
+        "updated_at": "2026-07-31T05:19:10Z",
+        "claimed_at": "2026-07-31T04:48:03Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "next_agent": "qa",
+        "updated_by": "dev-mcp-server",
+        "commit_sha": "6a6d47e3a",
+        "return_summary": "structuredContent field (is_estimate/source_tier/estimated_fields/mortgage_is_estimate/yoy_is_estimate/fully_estimated/current_date/previous_date) added to get_credit_flow_signal alongside unchanged VN prose; date=now fabrication fixed (CreditData.date null when mortgage/yoy estimated, not new Date()); 2 commits (6a6d47e3a code+test+doc, 08666fa6d memory); tsc clean, targeted 136/136 pass, toolCount=183/cronJobCount=88 unchanged; DJ sprint-COWORK-GUARANTEED-SLOT-CATCHUP-dev-mcp-server.md S37"
       }
     ],
     "qa": [],
@@ -18783,25 +18803,7 @@
     },
     "last_triaged_at": "2026-07-31T04:47:59Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": [
-      {
-        "id": "FDA-6",
-        "priority": "P3",
-        "size": "S",
-        "sprint": "FAKE-DATA-AUDIT",
-        "status": "IN_PROGRESS",
-        "title": "creditFlowTools fabricates mortgage/credit values + stamps date=now on estimate (already provenance-flagged)",
-        "type": "FIX",
-        "zone": "apps/mcp-server",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FDA-6",
-        "promoted_at": "2026-07-31T04:47:59Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=3)",
-        "updated_at": "2026-07-31T04:48:03Z",
-        "claimed_at": "2026-07-31T04:48:03Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)"
-      }
-    ]
+    "in_progress": []
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
