@@ -93,12 +93,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "active_task_id": null,
-    "next_agent": "router",
-    "next_action": "BOUNDED-1 auto-pickup FACTORY-APP-console-to-logger flipped IN_PROGRESS->REVIEW by dev-mcp-server (branch:null direct-execute path) -- idle for next dispatch.",
-    "updated_at": "2026-07-31T19:12:51Z",
-    "updated_by": "dev-mcp-server"
+    "status": "in_progress",
+    "active_task_id": "FACTORY-SCHEDULER-split-bctcReparseJob",
+    "next_agent": "developer",
+    "next_action": "BOUNDED-1 auto-pickup claim of FACTORY-SCHEDULER-split-bctcReparseJob — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
+    "updated_at": "2026-07-31T19:18:31Z",
+    "updated_by": "dev-team (bounded-1 auto-pickup)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -2030,6 +2030,17 @@
         "summary": "A-12 FAIL: api-gateway health check unreachable (HTTP CURL_ERR)",
         "severity": "WARN",
         "status": "triaged",
+        "payload_ref": null
+      },
+      {
+        "id": "dev-20260731T192021",
+        "ts": "2026-07-31T19:20:21Z",
+        "from": "dev-team",
+        "to": "po",
+        "type": "system-issue",
+        "summary": "stranded-state sweep: unknown path needs owner (docs/agent-memory/.auditor-cycle-markers-2026-07-30T16:00Z.tmp) — recurring, prior NEW row cold-evicted unresolved (never dispositioned)",
+        "severity": "LOW",
+        "status": "NEW",
         "payload_ref": null
       }
     ],
@@ -5910,15 +5921,6 @@
         "status": "BACKLOG",
         "id": "FACTORY-INFRA-split-agentSignalStore",
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-INFRA-split-agentSignalStore"
-      },
-      {
-        "title": "Name PDF-quality magic numbers + extract processStrandedFeedback in bctcReparseJob",
-        "priority": "P3",
-        "zone": "mcp-server-scheduler",
-        "type": "FACTORY",
-        "status": "BACKLOG",
-        "id": "FACTORY-SCHEDULER-split-bctcReparseJob",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-SCHEDULER-split-bctcReparseJob"
       },
       {
         "title": "Reconcile and dedup directionArrow/changePct formatters (behavior decision)",
@@ -19543,9 +19545,25 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-31T18:47:09Z",
+    "last_triaged_at": "2026-07-31T19:18:24Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": []
+    "in_progress": [
+      {
+        "title": "Name PDF-quality magic numbers + extract processStrandedFeedback in bctcReparseJob",
+        "priority": "P3",
+        "zone": "mcp-server-scheduler",
+        "type": "FACTORY",
+        "status": "IN_PROGRESS",
+        "id": "FACTORY-SCHEDULER-split-bctcReparseJob",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-SCHEDULER-split-bctcReparseJob",
+        "promoted_at": "2026-07-31T19:18:24Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=3)",
+        "updated_at": "2026-07-31T19:18:31Z",
+        "claimed_at": "2026-07-31T19:18:31Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)"
+      }
+    ]
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
