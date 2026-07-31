@@ -111,7 +111,7 @@ describe("VPT-1 — handleVpsProxyHealth (GET /api/vps-proxy-health)", () => {
 
   it("(b) fresh push within threshold → stale=false for that service", () => {
     const db = getDb();
-    // Insert a push for 'news' 1 minute ago (threshold 10 min → NOT stale)
+    // Insert a push for 'news' 1 minute ago (threshold 20 min → NOT stale)
     const recentAt = new Date(Date.now() - 60_000).toISOString();
     db.prepare(
       "INSERT INTO vps_push_log (service, items_count, status, pushed_at) VALUES (?, ?, ?, ?)"
@@ -140,11 +140,13 @@ describe("VPT-1 — handleVpsProxyHealth (GET /api/vps-proxy-health)", () => {
 
   it("(c) stale push beyond threshold → stale=true", () => {
     const db = getDb();
-    // 'news' threshold = 10 min during isVnNewsPublishHours (UTC 00:00–14:59).
+    // 'news' threshold = 20 min during isVnNewsPublishHours (UTC 00:00–14:59)
+    // (FIX-VPS-NEWS-STALE-FALSEPOS, 2026-07-31 — was 10min, miscalibrated
+    // against the real ~15min VPS cron cadence; see vpsProxyStaleness.ts).
     // Inject 'now' at a fixed UTC hour=06:00 so isVnNewsPublishHours returns true
     // unconditionally (avoids calendar-dependent quiet-hours grace window).
     const now = new Date("2026-06-09T06:00:00Z");  // UTC 06:00 → publish window
-    // Push 30 min before 'now' (well beyond 10-min threshold → must be stale).
+    // Push 30 min before 'now' (well beyond 20-min threshold → must be stale).
     const staleAt = new Date(now.getTime() - 30 * 60_000).toISOString();
     db.prepare(
       "INSERT INTO vps_push_log (service, items_count, status, pushed_at) VALUES (?, ?, ?, ?)"
