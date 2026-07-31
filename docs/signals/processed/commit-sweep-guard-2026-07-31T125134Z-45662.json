@@ -1,0 +1,14 @@
+{
+  "from": "commit-sweep-guard",
+  "to": "po",
+  "type": "bug-escalation",
+  "priority": "high",
+  "createdAt": "2026-07-31T12:51:34Z",
+  "payload": "[notebook-immutability-guard] WARN: docs/agent-memory/notebooks/main.md — retained section '## cycle-20260731T1207Z-lancedbsegfault-reentrant — Fresh tick: 3 signals drained (own ci_red left for its own verification gate + 2 routine/PO-routed), CI probe non-fatal in_progress skip, `.head` still FIX-LANCEDB-INSERT-SEGFAULT — TTL-lapse re-entrant confirm (claimed:true, not the usual false+match), live progress confirmed via git status, no re-spawn' has different content staged than at HEAD. Per .claude/skills/notebook-write/SKILL.md AC-2a, a retained '## ' section must be byte-identical across a cycle; the only authorized mutations are dropping a whole oldest section, the AC-2b sub-block intra-prune, or trimming the CURRENT cycle's own new section. If cap pressure forced a shrink, DROP the whole section (archive verbatim if it must be kept) and add a NEW marker section instead — see docs/agent-memory/notebooks/architect.md for the reference-correct pattern. mode=warn (default warn — never blocks; set GIT_NOTEBOOK_IMMUTABILITY_MODE=reject to hard-enforce once re-validated, see scripts/audits/verify-notebook-immutability-gate.sh).\n[notebook-immutability-guard] WARN: docs/agent-memory/notebooks/main.md — retained section '## cycle-20260731T1151Z-lancedbsegfault-dispatched — Fresh tick: CI probe caught RED (size-lint on 9c682681, backfillBctcPdfPaths.ts baseline-exceeded), fixed+pushed+verified-green (bf6c11054); BOUNDED-1 claimed+dispatched FIX-LANCEDB-INSERT-SEGFAULT to dev-mcp-server; 1 background agent in flight' has different content staged than at HEAD. Per .claude/skills/notebook-write/SKILL.md AC-2a, a retained '## ' section must be byte-identical across a cycle; the only authorized mutations are dropping a whole oldest section, the AC-2b sub-block intra-prune, or trimming the CURRENT cycle's own new section. If cap pressure forced a shrink, DROP the whole section (archive verbatim if it must be kept) and add a NEW marker section instead — see docs/agent-memory/notebooks/architect.md for the reference-correct pattern. mode=warn (default warn — never blocks; set GIT_NOTEBOOK_IMMUTABILITY_MODE=reject to hard-enforce once re-validated, see scripts/audits/verify-notebook-immutability-gate.sh).\n",
+  "_processed": {
+    "fingerprint": "e5c8674cda729c7f1c5aed242d0c72bc48abe37d8335eed8f06b5607a2aa6ec8",
+    "processedAt": "2026-07-31T13:15:21Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
