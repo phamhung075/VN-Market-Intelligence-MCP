@@ -87,3 +87,10 @@ Test isolation: `mock.module("node:child_process")` (restored in afterAll, same 
 **why-decision:** live reproduction against the actual proxy/origin endpoints was the only way to distinguish "genuinely rare events" from "silently broken pipeline" — code alone (esp. the "never throws" fetchers) gives identical symptoms (0 rows, no error) for both classes.
 **why-change:** none — matches SPIKE mode contract (investigation only, no fix landed inline).
 **verdicts:** `credit_data`=empty-by-design/orphan (already guarded, no FIX needed); `insider_transactions`, `public_contracts`, `pharma_events`, `broker_sanctions`=dead-pipeline, each root-caused with a scoped follow-up FIX task proposed in the RETURN/spike doc (not fixed inline, per task's own "investigation-only" AC).
+
+### STEP dev-mcp-server-S48 · dev-mcp-server · 2026-07-31T18:52:00Z
+**task-id:** FACTORY-INFRA-delete-deprecated-rag-kinhdich
+**what-done:** BOUNDED-1 auto-pickup of a 2026-06-15 audit-brief row; investigated before coding (mandatory) and found the entire DoD already satisfied by 2 unrelated prior tasks: `456851797` (2026-07-16, CI-RED-da847805-FIX) deleted `rag/_deprecated/{vectorstore,retriever,embeddings}.ts` + its 5 test anchors + the `rag/index.ts` barrel re-exports; `448b41b0a` (2026-07-30, FACTORY-GUARD-CI-DEADCODE-IMPL) deleted `infrastructure/_deprecated/kinhDichWrapper.ts` + `1077-kinh-dich-wrapper.test.ts` + surgically edited `1081-sprint-054-smoke.test.ts`.
+**what-considered:** implement anyway (no-op diff) vs flip BLOCKED per the dispatch brief's own "files already gone" trigger — chose BLOCKED per explicit dispatcher instruction; an empty/no-op commit would misrepresent QA-reviewable work.
+**why-decision:** grep-verified zero remaining `_deprecated`/`kinhDichWrapper` real imports repo-wide (only historical comments); all 5 target files already absent from disk.
+**why-change:** none — dispatcher explicitly named this exact scenario as a BLOCKED trigger.
