@@ -1,17 +1,5 @@
 # Agent Father — Notebook
 
-## Fix (dev-team dispatch) 2026-07-31T15:05:00Z FIX-COWORK-SPAWNFANOUT-NO-SESSION-ID-IN-LEAF-ENTRY-PROMPT
-- `spawn-fanout.md` Step 5.2: neither ENTRY_PROMPT branch nor IDENTITY_PREAMBLE ever carried a
-  session id — `refine_bctc_md`'s no-Bash SELF-IDENTITY GUARD EXITs before claiming without one
-  (recurred 2x live, 2026-07-30/31). Fixed by appending `SESSION_ID_LINE` (cowork-team's own
-  resolved `$CLAUDE_CODE_SESSION_ID`, substituted BEFORE dispatch — never the unresolved token
-  text handed to the spawned LLM session) to `ENTRY_PROMPT` in BOTH branches, uniformly (matches
-  router's own unconditional precedent, avoids a 6th "no producer" recurrence via allowlist).
-- `slot.trigger_prompt` in `cowork-schedule.json` untouched (confirmed zero diff) — new
-  `scripts/agents-flow/cowork-spawn-entry-prompt-session-id.test.js` (7/7, RED confirmed against
-  pre-fix content) statically asserts both branches append the line; sibling
-  `cowork-schedule-consistency.test.js` (9/9) and `cowork-match-slots.test.js` (43/43) unaffected.
-
 ## Fix (dev-team S79 tier-1 dispatch) 2026-07-31T15:19:08Z FIX-PO-MANUAL-DISPATCH-SWEEP-FLAG-WITHOUT-DISPATCH-STRANDS-ROW
 - `manual-dispatch-sweep.md` Step 1's `po_manual_dispatch_flagged_at` exclusion was PERMANENT
   (stamp/dispatch not atomic) — any row whose BATCH was deferred (WIP cap) became invisible to
@@ -59,3 +47,17 @@
   untouched (`docs/signals/` outside my `commit_zone.allowed`).
 - Did not touch TE-T23 (sibling row, CLAUDE.md 2.5 prose compression) or orch-state.json
   board row — dev-team/router flips status on RETURN per own init.md commit_zone.excluded.
+
+## Fix (dev-team dispatch) 2026-07-31T15:42:17Z FIX-PO-TRIAGE-SIGNALS-CIRED-TEMPLATE-STATUS-TODO-REJECTED-BY-VALIDATOR
+- `triage-signals.md`'s `ci_red` mint template + 4 sibling `.task_board.backlog[]` mints
+  (`zone_missing_tier3`/`repair_task_request` same file, `channel-audit.md`, `sprint-kickoff.md`)
+  hardcoded `status: "TODO"` — `orchStateSchema.ts`'s `LANE_ALLOWED_STATUSES.backlog` only permits
+  `{BACKLOG, BLOCKED}` (Stage 1b hard fail). Every mint from these templates aborted at
+  `orch-apply.sh` on first attempt (live: `FIX-CI-IMF-INTEGRATION-TEST-NONHERMETIC-LIVE-API`).
+- Fixed all 5 to `status: "BACKLOG"` — validator confirmed correct side (every live backlog[] row
+  already used BACKLOG); grepped the class across all `po/flow/*.md`, not just the named row.
+- New `scripts/audits/po-triage-mint-backlog-status-lane-coherence-verify.sh` (42/42): replays
+  each template's exact mint shape through the real `orch-apply.sh` on a throwaway fixture
+  (`ORCH_APPLY_LIVE_FILE_OVERRIDE`) — TODO reproduces the Stage 1b abort, BACKLOG passes and lands.
+- Did NOT touch `orch-apply.sh`/`orchStateSchema.ts` (explicit out-of-scope) or `orch-state.json`
+  (`commit_zone.excluded`) — board flip left to dev-team. Commit `cb6ba9567`.

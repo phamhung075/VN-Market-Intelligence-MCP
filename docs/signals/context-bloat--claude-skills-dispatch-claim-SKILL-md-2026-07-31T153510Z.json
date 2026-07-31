@@ -1,0 +1,19 @@
+{
+  "from": "context-bloat-backstop-hook",
+  "to": "claude-manager-helper",
+  "type": "context_bloat_breach",
+  "priority": "high",
+  "createdAt": "2026-07-31T15:35:10Z",
+  "payload": {
+    "file": ".claude/skills/dispatch-claim/SKILL.md",
+    "line_count": 489,
+    "cap": 200,
+    "byte_count": 23219,
+    "byte_cap": 12000,
+    "class": "skill-file",
+    "reason": "line-cap,byte-cap",
+    "overage": 289,
+    "byte_overage": 11219,
+    "action_required": "prune_or_split"
+  }
+}

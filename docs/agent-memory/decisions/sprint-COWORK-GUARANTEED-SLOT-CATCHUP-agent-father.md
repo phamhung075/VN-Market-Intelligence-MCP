@@ -309,3 +309,27 @@ Noted but did not act on an automated `context_bloat_breach` signal the
 context-bloat-backstop hook emitted for SKILL.md post-edit (its byte-cap
 predicate is never suppressible by a line-based justification by design,
 TE-T24) — routed to claude-manager-helper, outside my `commit_zone`.
+
+### STEP agent-father-S16 · agent-father · 2026-07-31T15:55:00Z
+**task-id:** FIX-PO-TRIAGE-SIGNALS-CIRED-TEMPLATE-STATUS-TODO-REJECTED-BY-VALIDATOR
+**what-done:** triage-signals.md's `ci_red` mint template + 4 sibling
+backlog[] mints (`zone_missing_tier3`/`repair_task_request` same file,
+channel-audit.md, sprint-kickoff.md) hardcoded `status: "TODO"`; only
+`{BACKLOG, BLOCKED}` are lane-coherent per `LANE_ALLOWED_STATUSES.backlog`
+(orchStateSchema.ts). Fixed all 5 to `status: "BACKLOG"`. Added
+`scripts/audits/po-triage-mint-backlog-status-lane-coherence-verify.sh`
+(42/42): replays each template's mint shape through the real
+`orch-apply.sh` on a throwaway fixture — TODO reproduces the Stage 1b
+abort, BACKLOG passes. Commit `cb6ba9567`.
+**what-considered:**
+- Fix ci_red only (literal scope) vs. grep the class across all po/flow/*.md
+  — chose the class sweep per the task's own AC(2); found 4 more instances
+  not named in the original filing.
+**why-decision:** validator confirmed correct side (every live backlog[]
+row already uses BACKLOG) — templates were the drifted side, class not typo.
+**why-change:** none — implemented exactly the row's 2-point AC. Did not
+touch `orch-apply.sh`/`orchStateSchema.ts` (explicit out-of-scope). Did not
+touch `orch-state.json` — `commit_zone.excluded` honored; board flip left
+to dev-team per this task's own routing note. (Renumbered S15→S16 at
+merge — this worktree branched from the same parent as the TE-T12 agent's
+worktree and independently minted its own S15; TE-T12's landed first.)
