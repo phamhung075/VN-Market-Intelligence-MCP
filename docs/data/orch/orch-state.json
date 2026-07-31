@@ -93,11 +93,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "active_task_id": null,
-    "next_agent": "router",
-    "updated_at": "2026-07-31T17:47:59Z",
-    "updated_by": "dev-mcp-server (FACTORY-DOMAIN-extract-sla-config review-flip)"
+    "status": "in_progress",
+    "active_task_id": "FIX-CI-SIZELINT-VPSPROXYSTALENESS-REGRESSION-123L",
+    "next_agent": "dev-mcp-server",
+    "next_action": "BOUNDED-1 auto-pickup claim of FIX-CI-SIZELINT-VPSPROXYSTALENESS-REGRESSION-123L — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
+    "updated_at": "2026-07-31T18:16:49Z",
+    "updated_by": "dev-team (bounded-1 auto-pickup)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -11041,43 +11042,6 @@
         "updated_by": "dev-mcp-server (BOUNDED-1 dispatch)"
       },
       {
-        "id": "FIX-CI-SIZELINT-VPSPROXYSTALENESS-REGRESSION-123L",
-        "type": "FIX",
-        "size": "S",
-        "priority": "P1",
-        "status": "BACKLOG",
-        "zone": "apps/mcp-server/",
-        "owner": "dev-mcp-server",
-        "next_agent": "dev-mcp-server",
-        "supervised": false,
-        "plan_only": false,
-        "created_by": "po/triage-20260731T1752",
-        "created_at": "2026-07-31T17:52:41Z",
-        "updated_at": "2026-07-31T17:54:20Z",
-        "origin_signal_id": "CI-RED-c809ee39",
-        "check_id": "CI-RED-c809ee39",
-        "ci_fingerprint": "a3234178f63d44d1cb7eb677518b42aa08246899716bcc5bf7ec848e908f88c2",
-        "dedup_key": "ci_job:size-lint|file:apps/mcp-server/src/interface/mcp/tools/system/vpsProxyStaleness.ts",
-        "verification_gate": "ci_green_on_subsequent_push",
-        "title": "CI job `size-lint` RED on origin/main for 3 consecutive runs — apps/mcp-server/src/interface/mcp/tools/system/vpsProxyStaleness.ts is 123L > 120L, classified `new-offender` (no baseline entry, no justification header). This is a REGRESSION of an already-shipped fix: the file's own module docblock (:6-8) says it was split out under FIX-CI-SIZELINT-MCPSERVER-SIX-UNCOVERED-OFFENDERS AC-4 specifically to keep this zone under 120L, and commit b08045ef0 (FIX-VPS-NEWS-STALE-FALSEPOS) grew it 111L -> 123L.",
-        "root_cause": "Two facts, both read at source this tick. (1) `git show b08045ef0^:<file> | wc -l` = 111, `git show b08045ef0:<file> | wc -l` = 123 — the news-staleness recalibration (EXPECTED_INTERVALS.news 10 -> 20 + the widened isStale rule and its comments) pushed the file 3L past the cap. (2) The merge was RAW-verified by dev-team on the CODE/TEST/DB planes only (see FIX-VPS-NEWS-STALE-FALSEPOS.review_note: live DB re-query, 4/4 new test, 77/77 regression) — the size-lint CI guard was never in that verification set, so a green-verified merge shipped a guaranteed-RED gate. The guard itself is CORRECT and did its job (FACTORY-GUARD-CI-SIZELINT-IMPL is working as designed); the gap is that this specific file's cap-compliance was an INVARIANT nobody re-asserted when editing it.",
-        "evidence": "Local replay of the exact CI command: `bash scripts/audits/size-lint-justification.sh --check` => RC=1, `[size-lint] FAIL — 1 offending file(s) (scanned 1354): apps/mcp-server/src/interface/mcp/tools/system/vpsProxyStaleness.ts — new-offender (123L > 120L, no baseline entry, no current justification header)`. CI plane, not inferred from the job name: `gh run view 30650707550 --json jobs` on origin/main HEAD c809ee39476f22f7c925f4bedce295dfdf06a0a8 => 1 failure / 19 success, sole failure = size-lint. Cross-run persistence: the same size-lint job is in the failing_jobs[] of all three consecutive ci_red signals (78b82dd5 16:51Z, 7fe631b3 17:16Z, c809ee39 17:45Z) while the OTHER two named jobs each appear once and are green on the latest HEAD — `Stock Price Go Lint` (78b82dd5 only) and `bun test` (7fe631b3 only, flaky). `wc -l` on the live file = 123.",
-        "ac": "(AC-1) Bring the file back to <=120L by EXTRACTING, not by adding a size-justification header. The header path is available to the script but is the wrong remedy here: this file EXISTS as the product of a prior split whose stated purpose (docblock :6-8) is cap compliance — declaring 123L as justified would retroactively void that fix and is exactly the dishonest-header pattern FACTORY-XZONE-size-justification-sweep is trying to unwind. Natural seam: the EXPECTED_INTERVALS table / threshold constants are pure data and can move to a sibling module, same shape as the FACTORY-DOMAIN-extract-sla-config extraction landed at 9930ee008 this same day. (AC-2) DO NOT change the calibrated values. EXPECTED_INTERVALS.news must stay 20 and the isStale() rule must stay behaviourally identical — b08045ef0 was independently RAW-verified against the live vps_push_log (p90=16.08 / p99=16.23 min, hard cliff ~17min); a refactor that silently reverts the calibration re-opens FIX-VPS-NEWS-STALE-FALSEPOS. (AC-3) The FIX-VPS-NEWS-STALE-FALSEPOS regression group must stay green after the extraction — at minimum the 4 tests in FIX-VPS-NEWS-STALE-FALSEPOS-news-threshold-calibration.test.ts (which target this file's isStale/EXPECTED_INTERVALS.news by name) plus the VPT-1 / 1113-vps-proxy-health suites, run in the LIVE container, not a worktree (the worktree's dep provisioning produced a false SC-2a failure last time — see that row's review_note). (AC-4) Local gate: `bash scripts/audits/size-lint-justification.sh --check` exits 0 with 0 offenders. (AC-5) VERIFY ON THE CI PLANE, not locally: `gh run view <run whose headSha is AFTER this fix> --json jobs -q '.jobs[]|select(.name==\"size-lint\")|.conclusion'` == success. Record the run id + headSha on this row before flipping it — a ci_red close without a recorded fingerprint re-drains next tick. (AC-6) LANDMINE — do NOT close by running `size-lint-justification.sh --update`. That regenerates docs/data/size-lint-baseline.json and would GRANDFATHER the 123L regression into the baseline, permanently disarming the guard for this file and silently widening the whole repo's debt snapshot to whatever else is over-cap at that moment.",
-        "files": [
-          "apps/mcp-server/src/interface/mcp/tools/system/vpsProxyStaleness.ts"
-        ],
-        "reference_only_files": [
-          "scripts/audits/size-lint-justification.sh",
-          "docs/data/size-lint-baseline.json",
-          "apps/mcp-server/src/interface/mcp/tools/system/vpsProxyTools.ts",
-          "apps/mcp-server/src/interface/mcp/tools/system/vpsProxyHealthFormat.ts"
-        ],
-        "related": "Regression of FIX-CI-SIZELINT-MCPSERVER-SIX-UNCOVERED-OFFENDERS (review) AC-4, introduced by FIX-VPS-NEWS-STALE-FALSEPOS (review) commit b08045ef0. DISTINCT from the 5 other FIX-CI-SIZELINT-* rows — every one of those names a different file and none names vpsProxyStaleness.ts. Do not merge into FACTORY-XZONE-size-justification-sweep (backlog): that row is a debt sweep over pre-existing grandfathered offenders, this is a NEW offender blocking main's CI right now.",
-        "dedup_checked": "2026-07-31T17:50Z — (1) grep -c vpsProxyStaleness docs/data/orch/orch-state.json => 1, and that single hit is prose inside FIX-VPS-NEWS-STALE-FALSEPOS.review_note, not a row's files[]/scope. (2) jq over every lane matching id/title/desc against /SIZE|LINT|VPS-PROXY|120L|size-lint/i => 11 rows, all read: 5 are FIX-CI-SIZELINT-* naming other files (energyTools.ts, extraction_engine.py, macro-vmt-liquidity-resolvers, the six-offender parent, frontend bun.lock), 3 are FACTORY-GUARD-CI-* guard implementations, 1 is FACTORY-XZONE debt sweep, 1 is LINT-OHLCV-WRITE-BYPASS (unrelated ESLint rule), 1 is FIX-DAV-PHARMACY-CATCHUP-AND-VPS-PROXY (pharma_events pipeline, matched on 'VPS-PROXY' only). Zero cover this file. (3) in_progress[] length = 0 and .head.status = idle at read time, so no live worker holds it.",
-        "baseline_pass": "gh run view <post-fix run> --json jobs => size-lint conclusion == success on origin/main",
-        "desc": null
-      },
-      {
         "id": "FIX-AGENT-BASH-GRANT-COVERAGE-GATE-FLOW-DEMANDS-VS-FRONTMATTER",
         "type": "FIX",
         "size": "M",
@@ -19521,9 +19485,52 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-31T17:52:41Z",
-    "last_triaged_by": "po/triage-20260731T1752",
-    "in_progress": []
+    "last_triaged_at": "2026-07-31T18:16:40Z",
+    "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
+    "in_progress": [
+      {
+        "id": "FIX-CI-SIZELINT-VPSPROXYSTALENESS-REGRESSION-123L",
+        "type": "FIX",
+        "size": "S",
+        "priority": "P1",
+        "status": "IN_PROGRESS",
+        "zone": "apps/mcp-server/",
+        "owner": "dev-mcp-server",
+        "next_agent": "dev-mcp-server",
+        "supervised": false,
+        "plan_only": false,
+        "created_by": "po/triage-20260731T1752",
+        "created_at": "2026-07-31T17:52:41Z",
+        "updated_at": "2026-07-31T18:16:49Z",
+        "origin_signal_id": "CI-RED-c809ee39",
+        "check_id": "CI-RED-c809ee39",
+        "ci_fingerprint": "a3234178f63d44d1cb7eb677518b42aa08246899716bcc5bf7ec848e908f88c2",
+        "dedup_key": "ci_job:size-lint|file:apps/mcp-server/src/interface/mcp/tools/system/vpsProxyStaleness.ts",
+        "verification_gate": "ci_green_on_subsequent_push",
+        "title": "CI job `size-lint` RED on origin/main for 3 consecutive runs — apps/mcp-server/src/interface/mcp/tools/system/vpsProxyStaleness.ts is 123L > 120L, classified `new-offender` (no baseline entry, no justification header). This is a REGRESSION of an already-shipped fix: the file's own module docblock (:6-8) says it was split out under FIX-CI-SIZELINT-MCPSERVER-SIX-UNCOVERED-OFFENDERS AC-4 specifically to keep this zone under 120L, and commit b08045ef0 (FIX-VPS-NEWS-STALE-FALSEPOS) grew it 111L -> 123L.",
+        "root_cause": "Two facts, both read at source this tick. (1) `git show b08045ef0^:<file> | wc -l` = 111, `git show b08045ef0:<file> | wc -l` = 123 — the news-staleness recalibration (EXPECTED_INTERVALS.news 10 -> 20 + the widened isStale rule and its comments) pushed the file 3L past the cap. (2) The merge was RAW-verified by dev-team on the CODE/TEST/DB planes only (see FIX-VPS-NEWS-STALE-FALSEPOS.review_note: live DB re-query, 4/4 new test, 77/77 regression) — the size-lint CI guard was never in that verification set, so a green-verified merge shipped a guaranteed-RED gate. The guard itself is CORRECT and did its job (FACTORY-GUARD-CI-SIZELINT-IMPL is working as designed); the gap is that this specific file's cap-compliance was an INVARIANT nobody re-asserted when editing it.",
+        "evidence": "Local replay of the exact CI command: `bash scripts/audits/size-lint-justification.sh --check` => RC=1, `[size-lint] FAIL — 1 offending file(s) (scanned 1354): apps/mcp-server/src/interface/mcp/tools/system/vpsProxyStaleness.ts — new-offender (123L > 120L, no baseline entry, no current justification header)`. CI plane, not inferred from the job name: `gh run view 30650707550 --json jobs` on origin/main HEAD c809ee39476f22f7c925f4bedce295dfdf06a0a8 => 1 failure / 19 success, sole failure = size-lint. Cross-run persistence: the same size-lint job is in the failing_jobs[] of all three consecutive ci_red signals (78b82dd5 16:51Z, 7fe631b3 17:16Z, c809ee39 17:45Z) while the OTHER two named jobs each appear once and are green on the latest HEAD — `Stock Price Go Lint` (78b82dd5 only) and `bun test` (7fe631b3 only, flaky). `wc -l` on the live file = 123.",
+        "ac": "(AC-1) Bring the file back to <=120L by EXTRACTING, not by adding a size-justification header. The header path is available to the script but is the wrong remedy here: this file EXISTS as the product of a prior split whose stated purpose (docblock :6-8) is cap compliance — declaring 123L as justified would retroactively void that fix and is exactly the dishonest-header pattern FACTORY-XZONE-size-justification-sweep is trying to unwind. Natural seam: the EXPECTED_INTERVALS table / threshold constants are pure data and can move to a sibling module, same shape as the FACTORY-DOMAIN-extract-sla-config extraction landed at 9930ee008 this same day. (AC-2) DO NOT change the calibrated values. EXPECTED_INTERVALS.news must stay 20 and the isStale() rule must stay behaviourally identical — b08045ef0 was independently RAW-verified against the live vps_push_log (p90=16.08 / p99=16.23 min, hard cliff ~17min); a refactor that silently reverts the calibration re-opens FIX-VPS-NEWS-STALE-FALSEPOS. (AC-3) The FIX-VPS-NEWS-STALE-FALSEPOS regression group must stay green after the extraction — at minimum the 4 tests in FIX-VPS-NEWS-STALE-FALSEPOS-news-threshold-calibration.test.ts (which target this file's isStale/EXPECTED_INTERVALS.news by name) plus the VPT-1 / 1113-vps-proxy-health suites, run in the LIVE container, not a worktree (the worktree's dep provisioning produced a false SC-2a failure last time — see that row's review_note). (AC-4) Local gate: `bash scripts/audits/size-lint-justification.sh --check` exits 0 with 0 offenders. (AC-5) VERIFY ON THE CI PLANE, not locally: `gh run view <run whose headSha is AFTER this fix> --json jobs -q '.jobs[]|select(.name==\"size-lint\")|.conclusion'` == success. Record the run id + headSha on this row before flipping it — a ci_red close without a recorded fingerprint re-drains next tick. (AC-6) LANDMINE — do NOT close by running `size-lint-justification.sh --update`. That regenerates docs/data/size-lint-baseline.json and would GRANDFATHER the 123L regression into the baseline, permanently disarming the guard for this file and silently widening the whole repo's debt snapshot to whatever else is over-cap at that moment.",
+        "files": [
+          "apps/mcp-server/src/interface/mcp/tools/system/vpsProxyStaleness.ts"
+        ],
+        "reference_only_files": [
+          "scripts/audits/size-lint-justification.sh",
+          "docs/data/size-lint-baseline.json",
+          "apps/mcp-server/src/interface/mcp/tools/system/vpsProxyTools.ts",
+          "apps/mcp-server/src/interface/mcp/tools/system/vpsProxyHealthFormat.ts"
+        ],
+        "related": "Regression of FIX-CI-SIZELINT-MCPSERVER-SIX-UNCOVERED-OFFENDERS (review) AC-4, introduced by FIX-VPS-NEWS-STALE-FALSEPOS (review) commit b08045ef0. DISTINCT from the 5 other FIX-CI-SIZELINT-* rows — every one of those names a different file and none names vpsProxyStaleness.ts. Do not merge into FACTORY-XZONE-size-justification-sweep (backlog): that row is a debt sweep over pre-existing grandfathered offenders, this is a NEW offender blocking main's CI right now.",
+        "dedup_checked": "2026-07-31T17:50Z — (1) grep -c vpsProxyStaleness docs/data/orch/orch-state.json => 1, and that single hit is prose inside FIX-VPS-NEWS-STALE-FALSEPOS.review_note, not a row's files[]/scope. (2) jq over every lane matching id/title/desc against /SIZE|LINT|VPS-PROXY|120L|size-lint/i => 11 rows, all read: 5 are FIX-CI-SIZELINT-* naming other files (energyTools.ts, extraction_engine.py, macro-vmt-liquidity-resolvers, the six-offender parent, frontend bun.lock), 3 are FACTORY-GUARD-CI-* guard implementations, 1 is FACTORY-XZONE debt sweep, 1 is LINT-OHLCV-WRITE-BYPASS (unrelated ESLint rule), 1 is FIX-DAV-PHARMACY-CATCHUP-AND-VPS-PROXY (pharma_events pipeline, matched on 'VPS-PROXY' only). Zero cover this file. (3) in_progress[] length = 0 and .head.status = idle at read time, so no live worker holds it.",
+        "baseline_pass": "gh run view <post-fix run> --json jobs => size-lint conclusion == success on origin/main",
+        "desc": null,
+        "promoted_at": "2026-07-31T18:16:40Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
+        "claimed_at": "2026-07-31T18:16:48Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)"
+      }
+    ]
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
