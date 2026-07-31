@@ -1,8 +1,38 @@
 # Architect — Notebook
 
-**Last updated:** 2026-07-31 01:35 UTC | **Sprint:** COWORK-GUARANTEED-SLOT-CATCHUP
+**Last updated:** 2026-07-31 02:41 UTC | **Sprint:** COWORK-GUARANTEED-SLOT-CATCHUP
 
 [3 most recent cycles retained. Older cycles archived to git history.]
+
+## 2026-07-31T02:41Z — FIX-SUBAGENT-BRANCH-CHECKOUT-HIJACKS-SHARED-WORKING-DIR (zone=cross-service/, P1/M, direct PO-mint FIX, `po/triage-20260731T0212`)
+
+**Task:** every subagent shares ONE git working dir + ONE `HEAD`; any agent that honors a `branch:`
+field (e.g. a PM handoff) checks out that branch, and a concurrent peer's commit silently lands on
+it. 4 independent hits 2026-07-31 alone.
+**Design:** verified git has NO `pre-checkout` hook (only `post-checkout`, which cannot block the
+checkout, only revert-after + force the caller's own exit code). Chose AC-1(a): new
+`scripts/git-hooks/post-checkout`, hard-reverts any non-`main` checkout in the primary working dir
+back to `main`, `MODE=enforce` default (deliberate divergence from the sweep-guard hook's own `warn`
+default — justified: zero legitimate off-`main` state exists live today, revert is self-healing not
+blocking). Exempts linked worktrees by construction (git-dir vs git-common-dir, live-tested) so it
+does not foreclose `SPIKE-C44` later. Rejected (b) worktree-isolation-for-everyone as primary (blast
+radius = whole fleet vs `SPIKE-C44`'s own 2-developer scope, itself unstarted) and (c)
+schema-level-ban as this row's own primary layer (the `branch:` field lives in free-form markdown,
+nothing for a schema to bind to).
+**Finding:** 5 live flow docs (`pm/flow/main.md:75`, `developer/flow/main.md:51-54+158`,
+`developer/flow/microservice-main.md:53-57+161`, `qa/flow/main.md:37,42,114-124,219-224`,
+`fixer/flow/*.md:34,36,60,110`) still actively author/verify/honor the `task/NNN-*` convention
+today, post-dating `UC-RDL-P7` STEP1's 2026-07-17 ruling — one of them fired hours before this brief
+on the row's own cited incident file. Shipping the hook with zero coordination breaks
+`developer/main.md`'s own `VERIFY` line for every M/L task; flagged as a rollout coordination note
+for PM, not implemented here (`UC-RDL-P7` STEP2 already owns those 5 files, `agent-father` zone).
+**Output:** `docs/architecture-briefs/2026-07-31-fix-subagent-branch-checkout-hijacks-shared-working-dir.md`
+— AC-4 live positive control satisfied via 5 scenarios in a disposable scratch repo (control
+reproduces the hijack; guarded prevents it; non-destructive-conflict edge case fails loud without
+discarding uncommitted work; linked-worktree exemption; re-entrancy, 0.39s, no recursion).
+**Next:** board row `backlog[]→ready[]`, `next_agent: pm`, `architect_brief`/`architect_review_note`
+written via `orch-apply.sh`. Did not implement `scripts/git-hooks/post-checkout` myself (design-only
+per `not_my_job`); did not touch the 5 flow docs (`UC-RDL-P7`'s scope, not this row's — AC-3 dedup).
 
 ## 2026-07-31T01:35Z — FIX-COWORK-FIRE-ELECTION-TICK-TOMBSTONE (zone=cross-service/, P1, size S, sprint COWORK-RELIABILITY, ba-spec relay, dev-team resume lock held across relay)
 
@@ -19,10 +49,3 @@
 **Verified:** Live counts at design time — 43 DRS-STRANDED-OFF-ALLOWLIST + 3 READY-XOR = 46 (drifted from PO's stale 49 via a genuine concurrent edit observed mid-session: `FIX-DEVTEAM-QADRAIN-HEAD-WRITE-CONDITIONAL` reassigned agent-father→developer by dev-team, correctly dropping it out of the target set — predicate proven live-reactive, not a stale snapshot). New regression verifier `scripts/audits/po-manual-dispatch-sweep-verify.sh`: 12/12 synthetic-fixture assertions pass (every named Matrix branch, positive+negative controls, plus the idempotency guard).
 **Output:** `docs/agents/po/flow/manual-dispatch-sweep.md` (new sub-flow) + `scripts/lib/po-manual-dispatch-eligibility.jq` (new) + `scripts/audits/po-manual-dispatch-sweep-verify.sh` (new) + pointer in `docs/agents/po/flow/main.md` + retrofit in `scripts/audits/bounded1-supervised-lane-report.sh` + `CANONICAL` pointer in `docs/policies/dev-standards.md`.
 **Next:** Did NOT widen the DRS allowlist to admit `agent-father` (explicit out-of-scope per the row). Flipped IN_PROGRESS→REVIEW myself (direct-execute, `branch:null`, `.head` reset to idle) per CANONICAL:SSOT-STATUSFLIP-LANEMOVE. `NEXT: po` — PO's own next tick is the first live exercise of the new pre-check.
-
-## 2026-07-30T17:36Z — SPIKE-SQLITE-DOCKER-VIRT-CORRUPTION-HARDENING (zone=multi, P0 supervised plan_only, dispatched by dev-team Supervised-Lane Sweep, direct SLS spawn — no dev-team escort)
-
-**Task:** 4th recurrence in ~3 months of market.db SQLITE_CORRUPT (tree-3/`sqlite_sequence`, silently freezes 66/99 AUTOINCREMENT tables including the system's own audit trail). Deliverable: findings/design doc on root cause among {concurrent exec-write race, WAL-checkpoint timing, Docker named-volume sync fault} + feasibility of 4 hardening options, plus 4 PO-added AC addenda (tree-3-specific survival, per-DB WAL-vs-DELETE evidence, quantify the DELETE-mode reader regression, rowid-reuse residual risk).
-**Finding:** Re-derived the mount-type history from git log + live `docker inspect` rather than trusting the row's own hypothesis framing: `ffa045e81` (2026-04-25) switched bind-mount→named-volume explicitly "to fix SQLite corruption" (macOS VirtioFS torn-SHM-write) — that commit **is** occurrence-1's own fix. `5ba622eca` (2026-07-15) switched back to bind-mount because a VM rebuild had destroyed the named volume and wiped all data — its commit message never cites the corruption history it silently reopens. Result: 3/4 occurrences (04-25, 07-19, 07-30) correlate with bind-mount exposure; occurrence 2 (07-13) happened **while on the named volume**, ruling out mount-type as the sole variable and pointing at a real, separate intra-container concurrent-write class. Found that class live: `apps/stock-price/pkg/infrastructure/{foreign_flow_repository.go, room_event_repository.go}` open market.db via mattn/go-sqlite3 with `_journal_mode=WAL` and no `mode=ro` (comment: "market.db is expected to have WAL already enabled") — wired into production (`main.go`→`wire.go`), never audited by the sibling `FIX-SQLITE-JOURNALMODE-WAL-REARM-DEFEATS-DELETE-MITIGATION` row (TS-only sweep). Verified dormant-not-active via one read-only `PRAGMA journal_mode` probe (=delete) — the only live-system touches this session made, both non-mutating. Also found: the existing weekly `integrity_check` + nightly `backupDatabase()` (zero pre-copy integrity gate, single generation, off-hours window overlapping the 07-30 onset) already partially cover hardening options 3/4, sharpening rather than greenfields the row's proposal; a 30-min `walCheckpointJob` written for market.db-as-WAL is now a harmless-but-pointless no-op cron against DELETE-mode market.db; and a second, larger, entirely unaudited directory of 21 direct `new Database(DB_PATH)` sites (`apps/mcp-server/scripts/**`) exists beyond the 4 the sibling FIX row found and left unfixed.
-**Output:** `docs/architecture-briefs/2026-07-30-sqlite-docker-virt-corruption-hardening.md`. AC-A: DELETE mode is mechanism-appropriate (removes the WAL/-shm class category-wide) but untested against tree-3 specifically — flagged, no test designed. AC-B: coordination.db is the one DB that matters (same exposure, worse blast radius) — measure lock-hold under DELETE in a fixture first, do not blanket-convert; alert_engine.db/macro_indicators.db are single-writer Go-owned, low urgency. AC-C: per-reader exposure table built (technical-analysis worst-configured — no `mode=ro` anywhere despite an unread `DB_READONLY=true` env var; macro-indicators missing `busy_timeout`) — live BUSY/READONLY rate scoped, not measured (ops/dev execution territory). AC-D: existing `checkOrphanAgentSignalsAlertId.ts` only catches dangling FK refs, not rowid-reuse silent misattribution — the actual blind spot this incident's own recovery can trigger; no external-consumer evidence found (targeted, not exhaustive, pass).
-**Next:** Flipped the row myself per this dispatch's explicit SLS convention (no dev-team escort to do it after me): `status: IN_PROGRESS→DONE`, lane `in_progress[]→done[]`, `next_agent: po`, `.head` reset to idle, all in one `orch-apply.sh` write (conservation check passed, 719/719 task_total unchanged). Did not self-mint the brief's 8 prioritized follow-ups as new board rows — routed to `po` since they span 4+ implementing zones/agent types and this dispatch did not request a split (unlike the `FIX-APIGW-HEALTH-CAPABILITY` precedent where the router explicitly asked for children). Released `task:SPIKE-SQLITE-DOCKER-VIRT-CORRUPTION-HARDENING` myself (owner session, direct spawn — matches the prompt's explicit instruction that dev-team will not independently verify+release this one).
