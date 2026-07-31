@@ -1,5 +1,7 @@
 /**
  * Application — backfillBctcPdfPaths
+ * size-justification: 543L — FU-BACKFILL-MULTIPLE-COVER-LETTERS added isConsolidatedReportFilename()
+ * positive-match selector + zero-match PENDING guard, replacing negative-match cover-letter exclusion.
  *
  * Idempotent startup task that links on-disk PDFs to financial_reports rows
  * where pdf_path IS NULL (inserted via news-inference fallback path).
