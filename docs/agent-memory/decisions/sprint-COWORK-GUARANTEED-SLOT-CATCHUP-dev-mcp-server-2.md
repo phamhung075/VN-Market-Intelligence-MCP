@@ -94,3 +94,13 @@ Test isolation: `mock.module("node:child_process")` (restored in afterAll, same 
 **what-considered:** implement anyway (no-op diff) vs flip BLOCKED per the dispatch brief's own "files already gone" trigger — chose BLOCKED per explicit dispatcher instruction; an empty/no-op commit would misrepresent QA-reviewable work.
 **why-decision:** grep-verified zero remaining `_deprecated`/`kinhDichWrapper` real imports repo-wide (only historical comments); all 5 target files already absent from disk.
 **why-change:** none — dispatcher explicitly named this exact scenario as a BLOCKED trigger.
+
+### STEP dev-mcp-server-S49 · dev-mcp-server · 2026-07-31T17:45:18Z
+**task-id:** FACTORY-DOMAIN-extract-sla-config
+**what-done:** Moved SignalType/SignalSlaConfig/DEFAULT_SLA_CONFIG out of freshnessSlaChecker.ts (966L) into new sibling domain/services/freshnessSlaConfig.ts (194L, size-justified); checker imports + re-exports all 3 unchanged, zero call-site changes.
+**what-considered:**
+- packages/shared-config (backlog approach's primary suggestion) — rejected: 0 real importers repo-wide, tracked separately (FACTORY-SHARED-wire-or-prune-shared-packages, shared-package-import-baseline.json), and outside apps/mcp-server/ zone boundary.
+- same-zone domain sibling file (backlog approach's own "(or a freshness/config.ts)" alternative) — chosen: in-zone, matches alertThresholds.ts/newsNormalizerTables.ts split-file precedent, zero new package-linkage risk.
+**why-decision:** lowest-risk in-zone option satisfying the DoD's actual intent (separate config DATA from breach-classification ALGORITHM) without preempting the separate wire-or-prune decision on the orphaned shared package.
+**why-change:** fixed 1 brittle literal-substring assertion in 234-vps-health-sla.test.ts AC-9 broken by the legitimate re-export syntax — not scope creep, required for G12 green gate.
+**verification:** tsc --noEmit clean; targeted SLA suite 212/212 pass (14 files); fresh PORT=3099 server boot clean (toolCount 183, 90 cron keys, no import errors); tool/scheduler counts match baseline (183/88); full mcp-server suite 2 runs (14988-14995 pass, 52-59 fail) — grep-confirmed 0 SLA/freshness/config-related failures in either run's fail list (pre-existing FIX-MCP-SUITE-HEALTH-BASELINE order-dependent red).
