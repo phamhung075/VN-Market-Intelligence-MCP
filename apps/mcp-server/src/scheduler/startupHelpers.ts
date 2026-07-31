@@ -1,3 +1,7 @@
+// size-justification: 530L — startup helper module bundling scheduler logger,
+// report-quality/catch-up guards, T4 idempotency dedup guard, and 6 testable
+// DB-backed cron-callback wrappers sharing the recordJobRun/shouldSkipRecoveryReplay
+// contract; splitting would fragment tightly-coupled callback+guard pairs.
 /**
  * startupHelpers.ts — startup helper functions and DB-backed job wrappers (task 1406e)
  *
