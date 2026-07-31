@@ -1,0 +1,55 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-07-31T09:21:27Z",
+    "matched_slots": [
+      "fb-daily"
+    ],
+    "won_slots": [
+      "fb-daily"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/fb-market-poster/flow/main.md"
+    ],
+    "silent": false,
+    "drift_min": 5,
+    "errors": [],
+    "pressure_mode": "adaptive",
+    "calendar_status": "unknown",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "chef_mutex_applied": false,
+    "due_reasons": {
+      "fb-daily": "cron"
+    },
+    "cadence_minutes": {
+      "fb-daily": null
+    },
+    "last_fired_timestamp": "2026-07-31T09:20:54Z",
+    "last_fired_slots": [
+      "fb-daily"
+    ],
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "09:15",
+    "leader_lock": "acquired",
+    "dev_head": "unknown",
+    "devq": 5,
+    "signal_backlog": 18,
+    "note": "Adaptive mode (pressure-state fresh, stale_warning=false). Single guaranteed cron slot fb-daily (fb-market-poster) due. Not CHEF-family, not GATHERER_SLOTS -> no mutex, no 4.5 downgrade applicable. Tick-snapshot 09:20 assembled (mc_len=58604, macro_ok=true). Spawned agentId a58d3610caccfc555, still running at telemetry-write time."
+  },
+  "priority": "low",
+  "createdAt": "2026-07-31T09:21:27Z",
+  "_processed": {
+    "fingerprint": "ae8bba9ccef38cf03b1cd3cce4d6cd8577ee446e4a1158a3beb95d6d4a3a144d",
+    "processedAt": "2026-07-31T09:45:36Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "from": "commit-sweep-guard",
+  "to": "po",
+  "type": "bug-escalation",
+  "priority": "high",
+  "createdAt": "2026-07-31T09:31:10Z",
+  "payload": "[notebook-immutability-guard] WARN: docs/agent-memory/notebooks/architect.md — retained section '## 2026-07-31T01:35Z — FIX-COWORK-FIRE-ELECTION-TICK-TOMBSTONE (zone=cross-service/, P1, size S, sprint COWORK-RELIABILITY, ba-spec relay, dev-team resume lock held across relay)' has different content staged than at HEAD. Per .claude/skills/notebook-write/SKILL.md AC-2a, a retained '## ' section must be byte-identical across a cycle; the only authorized mutations are dropping a whole oldest section, the AC-2b sub-block intra-prune, or trimming the CURRENT cycle's own new section. If cap pressure forced a shrink, DROP the whole section (archive verbatim if it must be kept) and add a NEW marker section instead — see docs/agent-memory/notebooks/architect.md for the reference-correct pattern. mode=warn (default warn — never blocks; set GIT_NOTEBOOK_IMMUTABILITY_MODE=reject to hard-enforce once re-validated, see scripts/audits/verify-notebook-immutability-gate.sh).\n",
+  "_processed": {
+    "fingerprint": "732bcb4469e39996a45d66bd10850367f290fdf2704ae81110c33162a7db5f54",
+    "processedAt": "2026-07-31T09:45:36Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
