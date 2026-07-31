@@ -29,6 +29,7 @@ function newsHealth(lastPushAt: string): VpsServiceHealth {
     pushes24h: 1,
     errors24h: 0,
     totalItems24h: 10,
+    avgDurationMs: 500,
   };
 }
 
