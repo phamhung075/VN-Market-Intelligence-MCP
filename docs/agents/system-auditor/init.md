@@ -1,5 +1,5 @@
 ---
-<!-- size-justification: 169L — agent definition covers 3-tier audit cadence (Tier 1/2/3), 6-pillar capability list, 60+ check IDs across runtime/fetch/DB surfaces, dedup policy, and typed signal shapes; each section is load-bearing and non-separable from the agent identity. +9L (2026-07-25): D-PAGE (Tier-5, daily 03:30Z quality-audit freshness rotation) capability/responsibility bullets + max_wall_time_tier5_seconds — full spec lives in flow/page-freshness.md + audit-dimensions.md §D-PAGE, kept out of this file per the same lazy-load discipline as tier1-probe.md. FIX-AUDITOR-DASHBOARD-APPEND-NO-ACTUATOR-CONTRACT-COUNT-NARRATED 2026-07-29: `on_critical_or_warn` line lengthened in place (0 new lines) to name the actuator script + correct target path. -->
+<!-- size-justification: 169L — agent definition covers 3-tier audit cadence (Tier 1/2/3), 6-pillar capability list, 60+ check IDs across runtime/fetch/DB surfaces, dedup policy, and typed signal shapes; each section is load-bearing and non-separable from the agent identity. +9L (2026-07-25): D-PAGE (Tier-5, daily 03:30Z quality-audit freshness rotation) capability/responsibility bullets + max_wall_time_tier5_seconds — full spec lives in flow/page-freshness.md + audit-dimensions.md §D-PAGE, kept out of this file per the same lazy-load discipline as tier1-probe.md. FIX-AUDITOR-DASHBOARD-APPEND-NO-ACTUATOR-CONTRACT-COUNT-NARRATED 2026-07-29: `on_critical_or_warn` line lengthened in place (0 new lines) to name the actuator script + correct target path. UC-ASL-P6 2026-07-31 (0 new lines): the 3 remaining bare `DASHBOARD.md` mentions (skills bullet, forbidden_outputs bullet, flow.catalog output bullet) lengthened in place to name `docs/data/DASHBOARD.md` + `scripts/emit-dashboard-row.sh`, matching the already-fixed `on_critical_or_warn` line and closing the last phantom-adjacent ambiguity in this file; the forbidden_outputs bullet also now matches `not_my_job`'s existing correct routing statement (both said "route findings" but disagreed on the target). -->
 
 agent:
   id: system-auditor
@@ -46,7 +46,7 @@ agent:
       - Microservice runtime health (docker ps, curl /health, restart count, tooling, inter-service)
       - Data fetch freshness (pipeline_health, VPS proxy, cadence thresholds from system-map.json)
       - DB write integrity (SQLite queries, WAL size, PRAGMA integrity_check, schema sentinels)
-      - Typed signal emission via `post_agent_signal` (`signal_type: signal_feedback`) and DASHBOARD.md append
+      - Typed signal emission via `post_agent_signal` (`signal_type: signal_feedback`) and `docs/data/DASHBOARD.md` row append via `scripts/emit-dashboard-row.sh`
 
   permissions:
     tools_packages:
@@ -92,7 +92,7 @@ agent:
       - "NEVER fix code or infrastructure — detect and report only"
       - "NEVER report the same dedup_key to BUG channel within the 7-day dedup window"
       - "NEVER modify other agents' notebooks or session logs"
-      - "NEVER spawn dev-* agents directly — route all findings to DASHBOARD.md"
+      - "NEVER spawn dev-* agents directly — route all findings to `orch-state.json` `.signal_queue` (WARN/CRITICAL also get a `docs/data/DASHBOARD.md` row via `scripts/emit-dashboard-row.sh`)"
       - "NEVER spawn cowork agents"
       - "NEVER write market channel"
     token_rule: "No changes detected in doc/memory pass (Tier-3 only) = skip doc pass. Runtime/fetch/DB checks always execute."
@@ -139,7 +139,7 @@ agent:
         output:
           - Typed signals via `post_agent_signal` (signal_type: signal_feedback)
           - BUG channel alerts for new anomalies (dedup 7d)
-          - DASHBOARD.md rows for WARN/CRITICAL findings
+          - `docs/data/DASHBOARD.md` rows for WARN/CRITICAL findings (via `scripts/emit-dashboard-row.sh`)
           - Notebook section-append + prune (skill: notebook-write, ≤200L hard cap)
 
   tools_package: docs/agents/tools/package/system-auditor.md

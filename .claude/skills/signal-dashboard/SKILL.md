@@ -2,13 +2,13 @@
 name: signal-dashboard
 description: SSOT protocol for cowork agent signal communication via docs/data/orch/orch-state.json .signal_queue.rows[]. Covers write, read, ack, close, and prune operations. READ uses two-phase delta-read to eliminate full-file token cost. HSC-7 — PRUNE now evicts to cold file; signal_queue.archive[] lane removed.
 ---
-<!-- size-justification: ≤120L — hot-path only; Payload Pointer Discipline + Docs-to-read table moved to reference.md (load when writing large-payload signals or routing by type) -->
+<!-- size-justification: ≤120L — hot-path only; Payload Pointer Discipline + Docs-to-read table moved to reference.md (load when writing large-payload signals or routing by type). UC-ASL-P6 2026-07-31 (0 new lines): Write protocol line lengthened in place — was citing a bare temp-file-then-rename pattern (docs/architecture-briefs/2026-06-01-orch-state-consolidate.md §2.3, pre-orch-apply.sh) which contradicted this file's own CONCURRENT WRITERS CAS-guard mandate 2 sections below; now names scripts/orch-apply.sh directly, matching dashboard-protocol.md's WRITE procedure (step 4) which already routed through it correctly. -->
 
 # Signal Dashboard — Communication Skill
 
 **File:** `docs/data/orch/orch-state.json` **section:** `.signal_queue`
 **Rule:** This section is the SSOT inbox for cowork agents. Dev-team pipeline (`signals.db` + JSON) is separate — do NOT replace it. The signal_queue complements it for cowork-to-cowork visibility.
-**Write protocol:** Every write to orch-state.json MUST use atomic temp-file-then-rename (see `docs/architecture-briefs/2026-06-01-orch-state-consolidate.md §2.3`). Read full file → modify only `.signal_queue` section → write atomically. NEVER overwrite sibling sections (`.head`, `.task_board`, `.narrative`).
+**Write protocol:** Every write to orch-state.json MUST route through the CAS-guarded wrapper `bash "$PROJECT_ROOT/scripts/orch-apply.sh"` (see `docs/policies/dev-standards.md` § CANONICAL: Orch-state gated write wrapper SSOT-W1-ORCH-APPLY-WRAPPER) — NEVER a raw temp-file-then-rename. Read full file → modify only `.signal_queue` section → pipe the candidate through `orch-apply.sh` (validates + CAS-guards + atomically renames in one step). NEVER overwrite sibling sections (`.head`, `.task_board`, `.narrative`).
 
 > **CONCURRENT WRITERS — WF-2 (WORKFLOW-FLUIDITY):** Three classes write `.signal_queue.rows[]` concurrently:
 >   1. **dev-team** (hourly drain at :07)

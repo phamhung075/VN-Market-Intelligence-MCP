@@ -1,29 +1,5 @@
 # Agent Father — Notebook
 
-## Follow-up 19:57 — 2026-07-30 FIX-TASKCLAIM-OWNER-CLIENT-SESSION-MISSING-FLEET-FLOW-DOCS
-- Re-derived the live schema from `coordinationTools.ts:82-218` directly (owner_client_session
-  REQUIRED, no default, on task_claim/task_heartbeat/task_release). Fixed 8 files: the 6 named
-  + refine_bctc_md's call_tool form + my OWN `edit-apply.md` (found live during the fleet sweep,
-  fixed opportunistically — own zone, low risk).
-- Independent fleet-wide re-verification (not trusted the "6 files" count at face value) found
-  23 MORE non-compliant call sites across 9 other-agent files (dev-team execute-tier.md +
-  drain-esc-dispatch.md, po, ba, developer, pm init.md, qa, unified-agent/chef.md) — larger than
-  the dispatched scope. Did not hand-fix them (other agents' zones, unverified blast radius);
-  grandfathered them in a new baseline-ratchet CI guard instead
-  (`scripts/audits/task-claim-owner-session-lint.sh` + `docs/data/task-claim-owner-session-baseline.json`)
-  so the debt is visible/auditable and any further edit to those exact lines re-triggers.
-- AC-5 re-verify: alert-commander's own doc was ALREADY compliant — the live incident there is a
-  separate, already-tracked structural defect (no Bash grant, `FIX-ALERT-COMMANDER-NO-BASH-GRANT-NOTEBOOK-UNCOMMITTABLE`,
-  BACKLOG). refine_bctc_md's doc fix alone is not sufficient either — its spawn prompt
-  (`cowork-team/flow/spawn-fanout.md`, `docs/data/cowork-schedule.json`) carries no session-id
-  coordination parameter today; flagged as a required follow-up, not claimed as closed.
-- New files created (outside my declared commit_zone: docs/agents/, docs/agent-memory/,
-  .claude/skills/, .claude/agents/) — `scripts/audits/task-claim-owner-session-lint.{sh,test.sh}`,
-  `.github/workflows/ci.yml` edit, `docs/data/task-claim-owner-session-baseline.json`,
-  `docs/architecture-briefs/2026-07-30-fix-taskclaim-owner-session-ci-guard.md` — produced because
-  AC-3 explicitly required a CI guard; flagged to dev-team for review/commit rather than
-  self-committed, per this task's own dispatch note (no gateway/MCP grant this session).
-
 ## Fix (router-dispatched, dev-team session) 2026-07-31T00:00:00Z FIX-DEVTEAM-QADRAIN-HEAD-WRITE-CONDITIONAL
 - DECLINED: dispatched as owner=agent-father, next_agent=agent-father (board row +
   architecture brief `2026-07-29-qadrain-head-slot-decouple.md` §8 "Actionable sequence
@@ -67,3 +43,31 @@
   are unreachable; followed `.claude/skills/commit-boundary/SKILL.md`'s gateway-blind
   fallback instead (solo operation — `.head.status=idle`, `active_task_id=null` at check
   time).
+
+## Fix (router-dispatched, po manual-dispatch-sweep) 2026-07-31T01:10:34Z UC-ASL-P6
+- Reconciled the row's 2026-07-16 supervised_reason flag first: `docs/agents/system-auditor/flow/`
+  has no `init.md` (only main.md/page-freshness.md/tier1-overrides.md/tier1-probe.md) — the
+  agent's `init.md` is one level up (`docs/agents/system-auditor/init.md`). Row's file citation
+  is accurate read that way; no phantom-file confusion in the row itself.
+- main.md + tier1-probe.md: already fully disambiguated by a prior sprint
+  (FIX-AUDITOR-DASHBOARD-APPEND-NO-ACTUATOR-CONTRACT-COUNT-NARRATED, 2026-07-29) — names
+  `docs/data/DASHBOARD.md` as the live target, explicitly forbids `docs/handoffs/DASHBOARD.md`
+  (confirmed still exists, 650B, untouched since 2026-07-20 — the real phantom). No edit needed
+  there for the phantom-path class.
+- init.md was NOT touched by that prior sprint: fixed 3 residual bare "DASHBOARD.md" mentions
+  (skills bullet, forbidden_outputs, flow.catalog output) to name `docs/data/DASHBOARD.md` +
+  `scripts/emit-dashboard-row.sh`. The forbidden_outputs one had been internally contradicting
+  this same file's own not_my_job routing statement (findings → `.signal_queue`, not DASHBOARD.md).
+- main.md RETURN block `NEXT: po (via DASHBOARD.md)` was a genuine phantom-PROTOCOL claim (not
+  just a stale path) — grepped every po flow file, zero reads DASHBOARD.md. Fixed to
+  `po (via orch-state.json .signal_queue row)` per this file's own inter_agent contract.
+- SKILL.md (`.claude/skills/signal-dashboard/SKILL.md`) hot-path "Write protocol" line cited a
+  stale pre-orch-apply.sh brief (bare temp-then-rename), contradicting its own CONCURRENT WRITERS
+  CAS-guard mandate 2 sections below + `dashboard-protocol.md`'s already-correct WRITE step 4.
+  Fixed to name `scripts/orch-apply.sh` directly. Left the same-class stale line in
+  `dashboard-protocol.md`'s own preamble (L12) untouched — out of the task's explicit
+  SKILL.md-only scope; flagged for follow-up, not silently dropped.
+- DID NOT flip the board row BACKLOG→REVIEW or touch `orch-state.json` at all — own init.md
+  `commit_zone` excludes it from agent-father commits except a signal-queue DONE-mark, and this
+  dispatch (direct po manual-dispatch board row) has no linked signal_queue row. Deferred to
+  router/po; RETURN block carries the exact `orch-apply.sh` jq transform for the lane move.
