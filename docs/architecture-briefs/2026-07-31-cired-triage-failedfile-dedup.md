@@ -163,3 +163,52 @@ interact with a running probe cycle mid-flight.
   file list and a `dedup_key` field on whatever row results — absence of
   either on the next occurrence means the row didn't actually change PO
   behavior and should be treated as CHANGES_REQUESTED.
+
+## 8. ADDENDUM — PO amendment, 2026-07-31T05:23:57Z (CHANGES_REQUESTED, in-place)
+
+**Read this before implementing §3. It changes one clause of the §3 replacement text.**
+
+Found by PO while running this brief's own AC-1 procedure by hand on the next
+real ci_red (`CI-RED-22bdf63b`, run `30604839507`). Not a design objection —
+the FILE-scoped `dedup_key` is correct and is retained verbatim. The defect is
+in the predicate it hangs off.
+
+**Defect.** §3 keeps the pre-existing open-entry qualifier
+`any open entry (status ∈ TODO/IN_PROGRESS/REVIEW/BLOCKED)`. That status enum
+does not intersect this board. Measured on live `orch-state.json` at 05:23Z:
+**633** open rows across `backlog/ready/in_progress/review/qa`; only **238**
+carry a status in that enum; **395 (62.4%) are invisible to it** — the two
+dominant open tokens are `BACKLOG` (349) and `READY` (46), and neither is in
+the enum. Canonical map: `apps/mcp-server/src/infrastructure/orchStateSchema.ts:420-428`
+`LANE_ALLOWED_STATUSES` = `backlog:{BACKLOG,BLOCKED}`, `ready:{READY,TODO}`,
+`review:{REVIEW,BLOCKED}`, `in_progress:{IN_PROGRESS,BLOCKED}`, `qa:{QA}`.
+
+**Consequence (decisive, measured — not hypothetical).** The three correct
+dedup hits from `CI-RED-22bdf63b` land on rows whose statuses are
+`READY` / `READY` / `BACKLOG`. An implementer following §3 literally matches
+**zero** of them and re-mints **three duplicate rows** — this rule would fail
+on precisely the case the brief exists to fix. §2's headline positive control
+("2 hits + 1 mint") is only reproducible because PO matched on `dedup_key`
+*without* applying the status filter.
+
+**Required amendment.** In the §3 replacement text, delete the status-token
+enum from the dedup predicate. Scan the **non-terminal lanes by name** —
+`.task_board.backlog[] + .ready[] + .in_progress[] + .review[] + .qa[]` — and
+match on the `dedup_key` field alone. Lane membership is the open/closed
+discriminant on this board; the status token is a lane sub-state and must
+never gate the scan. Apply the same correction to the identical enum in the
+`repair_task_request` row of `triage-signals.md` (pre-existing, same latent
+blindness) while the file is open.
+
+**Gate for qa.** Do not sign this row off while a status-token enum remains in
+the shipped `ci_red` dedup predicate. Check:
+
+```sh
+jq '["TODO","IN_PROGRESS","REVIEW","BLOCKED"] as $e
+    | [.task_board | (.backlog//[])+(.ready//[])+(.in_progress//[])+(.review//[])+(.qa//[])
+       | .[] | select(type=="object")] as $o
+    | {open:($o|length), visible:([$o[]|.status as $s|select($e|index($s))]|length)}' \
+  docs/data/orch/orch-state.json
+```
+
+A correct fix reaches all `open`, not just `visible`.
