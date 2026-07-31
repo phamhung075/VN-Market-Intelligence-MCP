@@ -68,11 +68,26 @@ export interface SlaCheckResult {
  *           = CRASH  if queueDepth > 0 AND ageMinutes > thresholdMinutes
  *           = IDLE   if serviceActive === true AND queueDepth === 0
  *                      (regardless of ageMinutes — no work was due)
+ *
+ * FIX-BCTC-SLA-FRESHNESS-EXCLUDE-TERMINAL reader contract: `queueDepth` MUST
+ * count only rows that can still make progress (e.g. 'pending' /
+ * 'pek_triggered' for the BCTC reader) — a caller's reader MUST exclude
+ * terminal/parked states (e.g. 'done', 'deferred_infra', 'enrich_failed',
+ * 'url_not_found') generically, with no per-ticker carve-out. A terminal row
+ * (a genuinely-absent ticker that will never be fileable, or a
+ * successfully-completed one) is not "work still due" — counting it toward
+ * queueDepth permanently defeats the `queueDepth === 0` IDLE branch above
+ * and lets an honest gap masquerade as unbounded CRASH staleness. See
+ * `queryBctcPipelineRuntimeState` in scheduler/system/freshnessSlaMonitorJob.ts
+ * for the reference reader implementing this contract.
  */
 export interface PipelineRuntimeState {
   /** True when the underlying service/process is confirmed active/running. */
   serviceActive: boolean;
-  /** Count of actionable/pending work items in the pipeline's queue. 0 = idle. */
+  /**
+   * Count of ACTIVE (still-progressable) work items in the pipeline's queue.
+   * 0 = idle. MUST exclude terminal/parked rows — see contract note above.
+   */
   queueDepth: number;
 }
 

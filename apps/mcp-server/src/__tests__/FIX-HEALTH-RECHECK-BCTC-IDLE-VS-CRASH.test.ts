@@ -296,15 +296,15 @@ describe("FIX-HEALTH-RECHECK-BCTC-IDLE-VS-CRASH — Group C: queryBctcPipelineRu
     db.close();
   });
 
-  it("C-2: pending queue rows => queueDepth reflects actionable count", () => {
+  it("C-2: pending queue rows => queueDepth reflects actionable count (url_not_found excluded — FIX-BCTC-SLA-FRESHNESS-EXCLUDE-TERMINAL)", () => {
     const db = makeDb();
     insertQueueRow(db, "VCB", "pending");
-    insertQueueRow(db, "VNM", "url_not_found");
-    insertQueueRow(db, "HPG", "done"); // not actionable — excluded
+    insertQueueRow(db, "VNM", "url_not_found"); // terminal (honest gap) — excluded
+    insertQueueRow(db, "HPG", "done"); // terminal (success) — excluded
     insertHealthRow(db, "healthy");
 
     const state = queryBctcPipelineRuntimeState(db);
-    expect(state).toEqual({ serviceActive: true, queueDepth: 2 });
+    expect(state).toEqual({ serviceActive: true, queueDepth: 1 });
     db.close();
   });
 
@@ -317,6 +317,31 @@ describe("FIX-HEALTH-RECHECK-BCTC-IDLE-VS-CRASH — Group C: queryBctcPipelineRu
 
     const state = queryBctcPipelineRuntimeState(db);
     expect(state).toEqual({ serviceActive: true, queueDepth: 2 });
+    db.close();
+  });
+
+  it("C-2c (FIX-BCTC-SLA-FRESHNESS-EXCLUDE-TERMINAL): enrich_failed rows are terminal/parked — excluded from queueDepth", () => {
+    const db = makeDb();
+    insertQueueRow(db, "VCB", "pending");
+    insertQueueRow(db, "VNM", "enrich_failed"); // terminal (bounded-retry, not currently actionable) — excluded
+    insertQueueRow(db, "HPG", "done"); // terminal — excluded
+    insertHealthRow(db, "healthy");
+
+    const state = queryBctcPipelineRuntimeState(db);
+    expect(state).toEqual({ serviceActive: true, queueDepth: 1 });
+    db.close();
+  });
+
+  it("C-2d (FIX-BCTC-SLA-FRESHNESS-EXCLUDE-TERMINAL): queue holding ONLY terminal rows (no pending/pek_triggered) => queueDepth 0, generic across every terminal status", () => {
+    const db = makeDb();
+    insertQueueRow(db, "VCB", "url_not_found");
+    insertQueueRow(db, "VNM", "enrich_failed");
+    insertQueueRow(db, "HPG", "done");
+    insertQueueRow(db, "MSN", "deferred_infra");
+    insertHealthRow(db, "healthy");
+
+    const state = queryBctcPipelineRuntimeState(db);
+    expect(state).toEqual({ serviceActive: true, queueDepth: 0 });
     db.close();
   });
 
@@ -424,5 +449,24 @@ describe("FIX-HEALTH-RECHECK-BCTC-IDLE-VS-CRASH — Group C: runFreshnessSlaMoni
     expect(result.escalations).toBe(1);
     expect(calls[0]!.signalType).toBe("bctc");
     bareDb.close();
+  });
+
+  it("C-10 (FIX-BCTC-SLA-FRESHNESS-EXCLUDE-TERMINAL): queue holding ONLY terminal rows (url_not_found/enrich_failed — genuinely-absent tickers) + stale push-age => NO escalation (mirrors live prod: 39 url_not_found + 128 enrich_failed, 0 pending, service healthy)", async () => {
+    const db = makeDb();
+    insertQueueRow(db, "BDI", "url_not_found");
+    insertQueueRow(db, "DAG", "url_not_found");
+    insertQueueRow(db, "SIS", "enrich_failed");
+    insertQueueRow(db, "VDC", "enrich_failed");
+    insertHealthRow(db, "healthy"); // service confirmed alive, queue has zero real actionable rows
+
+    const { spy, calls } = makeEscalateSpy();
+    const result = await runFreshnessSlaMonitor(
+      db, spy, staleAges("bctc", 1441), IN_WINDOW_OFF_HOURS, noopSendWork,
+    );
+
+    expect(result.breaches).toBe(0);
+    expect(result.escalations).toBe(0);
+    expect(calls.length).toBe(0);
+    db.close();
   });
 });

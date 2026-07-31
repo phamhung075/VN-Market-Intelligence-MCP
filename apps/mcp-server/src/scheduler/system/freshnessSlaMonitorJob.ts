@@ -188,13 +188,27 @@ export function querySignalAges(
  * queue (no filings currently due) produces a large push-age that is
  * completely normal, not a crash. This reads the two live signals the
  * fix_spec requires:
- *   - queueDepth: COUNT of actionable bctc_vps_queue rows (pending /
- *     url_not_found / enrich_failed / pek_triggered) — mirrors the
- *     queueGuardSql pattern already used by vpsHealthPoller.ts
- *     (FIX-BCTC-FRESHNESS-GATE). FIX-BCTC-D3B-GATE-PEK-TRIGGERED-STATUS added
- *     'pek_triggered': a row awaiting async PEK reconciliation is genuinely
- *     in-progress, not idle — omitting it would misread normal async
- *     operation as a false "queue idle" state.
+ *   - queueDepth: COUNT of ACTIVE (still-progressable) bctc_vps_queue rows —
+ *     'pending' / 'pek_triggered' only. FIX-BCTC-D3B-GATE-PEK-TRIGGERED-
+ *     STATUS added 'pek_triggered': a row awaiting async PEK reconciliation
+ *     is genuinely in-progress, not idle — omitting it would misread normal
+ *     async operation as a false "queue idle" state.
+ *
+ *     FIX-BCTC-SLA-FRESHNESS-EXCLUDE-TERMINAL (2026-08-01): 'url_not_found'
+ *     and 'enrich_failed' were REMOVED from this count. Both are
+ *     terminal/parked states (bctcQueueEnricherJob's Arm 2 only reactivates
+ *     them via a bounded 7-day grace-period retry, attempts<6 — they do not
+ *     represent live actionable work between reactivations). Counting them
+ *     as "active" meant a queue holding ONLY genuinely-absent (honest-gap)
+ *     or exhausted-retry tickers never reported queueDepth=0, permanently
+ *     defeating the idle branch below and letting terminal rows make an
+ *     otherwise-idle period misclassify as CRASH once push-age exceeded the
+ *     SLA threshold — a ticker that will never be fileable must not be able
+ *     to breach the SLA forever. Canonical terminal-state definition matches
+ *     the sibling SSOT comment in infrastructure/db/vpsDemandQueue.ts
+ *     ("Terminal/parked states (done, deferred_infra, enrich_failed,
+ *     url_not_found) are deliberately NOT counted"). Generic — status-list
+ *     only, no ticker/date literal.
  *   - serviceActive: latest vps_service_health.health_status for
  *     'vn-bctc-fetch' — 'unreachable' means the poller found zero evidence
  *     of the service ever running; any other status (healthy/idle/unhealthy)
@@ -224,7 +238,7 @@ export function queryBctcPipelineRuntimeState(
       .query<{ active_count: number }, []>(
         `SELECT COUNT(*) AS active_count
            FROM bctc_vps_queue
-          WHERE status IN ('pending', 'url_not_found', 'enrich_failed', 'pek_triggered')`,
+          WHERE status IN ('pending', 'pek_triggered')`,
       )
       .get();
     const queueDepth = queueRow?.active_count ?? 0;
