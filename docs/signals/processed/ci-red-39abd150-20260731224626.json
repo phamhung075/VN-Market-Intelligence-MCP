@@ -1,0 +1,31 @@
+{
+  "from": "ci-health-probe",
+  "to": "po",
+  "type": "ci_red",
+  "priority": "high",
+  "createdAt": "2026-07-31T22:46:26Z",
+  "dedup_key": "ci_red:39abd150dc551e1544e8eac35115dadf61031322:size-lint",
+  "payload": {
+    "check_id": "CI-RED-39abd150",
+    "head_sha": "39abd150dc551e1544e8eac35115dadf61031322",
+    "run_id": "30669964532",
+    "conclusion": "failure",
+    "failing_jobs": [
+      {
+        "name": "size-lint",
+        "conclusion": "failure",
+        "jobId": 91285409056
+      }
+    ],
+    "zone_owner": "dev-team (CI fix)",
+    "summary": "CI RED on main HEAD 39abd150: size-lint (apps/technical-analysis/pkg/interface/http/router.go 143L > 120L, no baseline/justification)",
+    "suggested_sprint_class": "FIX",
+    "verification_gate": "ci_green_on_subsequent_push"
+  },
+  "_processed": {
+    "fingerprint": "77014f80954604e222ad2bc5703f939cb4d75309d2ce0494d248b0d6114b9a02",
+    "processedAt": "2026-07-31T22:47:08Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
