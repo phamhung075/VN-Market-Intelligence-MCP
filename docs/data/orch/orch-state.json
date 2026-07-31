@@ -96,8 +96,8 @@
     "status": "idle",
     "active_task_id": null,
     "next_agent": "router",
-    "updated_at": "2026-07-31T10:22:29Z",
-    "updated_by": "dev-mcp-server (FIX-PDFOCR-PAGECAP-COMPLETENESS-THRESHOLD-MISMATCH review-flip)"
+    "updated_at": "2026-07-31T11:20:48Z",
+    "updated_by": "dev-mcp-server (FU-BACKFILL-MULTIPLE-COVER-LETTERS review-flip)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -5549,17 +5549,6 @@
           "FIX-BCTC-INGEST-PERIOD-IDENTITY-UNVALIDATED-VS-CONTENT"
         ],
         "po_binding_dep_20260725T1700": "po 2026-07-25T17:00:10Z — BINDING GATE ADDED. Supersedes the decorative guard po attached at 16:49Z.\n\nWHAT WAS WRONG. At 16:49Z po wrote `blocks: [\"FU-BACKFILL-REAL-FILENAMES\"]` onto FIX-BCTC-INGEST-PERIOD-IDENTITY-UNVALIDATED-VS-CONTENT and treated that as a sequencing guard. IT WAS NOT ONE. The dev-team 16:37Z tick caught it and po re-verified at source: scripts/lib/devteam-eligibility.jq:133-141 `effective_depends_on` reads ONLY the CANDIDATE row's own `.depends_on` + `.depends` + `.blocked_by` (inline first; falling back to backlog-detail.json for detail_ref'd rows). It never traverses a reverse `blocks` edge from another row. `deps_satisfied` (:161-164) then short-circuits `true` on an empty list. A full grep of scripts/lib/*.jq, scripts/devteam-*.jq, scripts/orch-*.mjs, scripts/orch-*.sh and scripts/agents-flow/*.sh confirms `blocks` is READ BY NOTHING anywhere in the repo — the only textual hits are unrelated test prose (\"blocks idle\"). This row therefore carried NO dependency at all in either plane (board row and the backlog-detail.json entry both had depends_on/depends/blocked_by = null), and with supervised/plan_only/owner/next_agent all null, status BACKLOG and no children, it was FULLY BOUNDED-1 ELIGIBLE. Only its P3 rank was holding it back, and rank is queue position, not a guard.\n\nWHAT IS NOW TRUE. `depends_on: [\"FIX-BCTC-INGEST-PERIOD-IDENTITY-UNVALIDATED-VS-CONTENT\"]` is written INLINE on this board row. Inline is the binding location by construction: `effective_depends_on` takes inline when non-empty and only consults backlog-detail.json when inline is empty. The gate's own semantics work in this row's favour on both axes — per the code comments at :159-164, a dep is satisfied ONLY when it resolves to `DONE_VERIFIED` (plain `DONE` is NOT sufficient), and a dep id found in NO lane is treated as UNSATISFIED (conservative-skip). The blocker is currently backlog/BACKLOG, so this row is gated until the period-validation fix is genuinely verified, not merely marked done.\n\nWHY IT IS WORTH A REAL GATE AND NOT A COMMENT. Shipping this row alone does not merely fail to help — it makes things worse. The filename is RENDERED from the stored period key (bctcVpsIngestHandler.ts:224 -> resolvePdfText.ts:45-61, canonical `ACTIONCODE_YEAR_QUARTER.pdf`), so today it is the only place a wrong period identity is visible to a human reading a directory listing. Deriving \"real\" filenames from source metadata decouples the two: a mislabelled row would then be named correctly while the corruption persists, invisibly. That is symptom deletion, and it is exactly what a decorative guard would have permitted.\n\nTHE REVERSE `blocks` EDGE IS DELIBERATELY RETAINED on the blocker row as human-readable documentation of intent. It is not load-bearing and must not be relied on. The systemic problem — that `blocks` reads as a constraint while binding nothing — is now owned by FIX-ORCHSTATE-BLOCKS-FIELD-WRITE-ONLY-DECORATIVE (backlog/P2).\n\nLATENT HAZARD, RECORDED SO IT IS NOT REDISCOVERED THE HARD WAY. scripts/orch-backlog-stub.sh defaults `STUB_FIELDS=\"id,title,priority,size,type,zone,status,sprint,detail_ref\"` — `depends_on`, `depends` and `blocked_by` are NOT in the keep-set. If that migration is ever re-run over the backlog it will strip this inline dep from the hot row. Normally harmless, because `effective_depends_on` falls back to backlog-detail.json for detail_ref'd rows and this row has a detail_ref — EXCEPT that the strip is documented idempotent with \"existing cold wins\" (docs/policies/dev-standards.md), and the existing cold entry for this id already carries `depends_on: null`. A re-strip could therefore drop the inline value while the stale null survives in cold, silently re-opening this gate. Scope item on the systemic row above; do NOT hand-edit backlog-detail.json to pre-empt it (761KB, outside the orch-apply validation gate — the cure is worse than the risk).\n\nPriority and scope otherwise UNCHANGED (P3/backlog/S). This is a sequencing gate, not a promotion.\n"
-      },
-      {
-        "id": "FU-BACKFILL-MULTIPLE-COVER-LETTERS",
-        "priority": "P3",
-        "size": "S",
-        "sprint": "BCTC-EXTRACT-QUALITY",
-        "status": "BACKLOG",
-        "title": "BCTC backfill: handle multiple cover-letter PDFs per ticker-quarter (skip ALL, not first-match)",
-        "type": "FIX",
-        "zone": "apps/mcp-server/",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FU-BACKFILL-MULTIPLE-COVER-LETTERS"
       },
       {
         "id": "SPIKE-C44-PARALLEL-PROOF",
@@ -18890,6 +18879,27 @@
         "review_note": "AC1/AC2 fixed in pdfOcrWorker.ts (commit 1b9425d6f, pushed): threshold now Math.max(Math.min(expectedPages, OCR_MAX_PAGES=80)*0.5, 3) instead of raw expectedPages -- a full capped-80 extraction now reaches a terminal \"already extracted\" state and is never re-attempted. Removed the upfront blanket DELETE on the incomplete branch -- the loop's existing INSERT OR REPLACE (UNIQUE(filename,page_number)) already UPSERTs per page so old rows stay visible; added a defensive post-loop DELETE (page_number > maxPages), write-before-delete, never before.\nAC3 (regression test, primary DoD gate): FIX-PDFOCR-PAGECAP-COMPLETENESS-THRESHOLD-MISMATCH.test.ts, 2 cases, committed alongside the fix. node:child_process mocked (restored afterAll, 047-bctc-orchestrator.test.ts pattern) to fake pdfinfo=204 pages and force isOcrAvailable()=false via throwing execSync -- avoids a real 80-page/160s+ tesseract loop; ?isolate= cache-busted import avoids cross-file _ocrAvailableCache poisoning. RED (183ms, pre-fix, captured before editing source): AC1 assertion failed alreadyExtracted=false (expected true, 80-row/204-page fixture judged incomplete, threshold=102 vs uncapped 204); AC2 assertion failed countRows=0 (expected 10 -- blanket DELETE wiped 10 pre-existing rows before any re-extraction, live-reproducing the availability-gap defect). GREEN (278ms, post-fix): both pass -- cappedExpected=80/threshold=40 for the 80-row fixture (already-extracted fast path, 0 rows touched); the 10-row fixture still correctly flagged incomplete under the new capped threshold too, but its 10 rows survive untouched (no DELETE fires).\nAC4 (live 3-file boot verify): NOT ATTEMPTED. No live mcp-server container restart was triggered or observed in this session -- per the task's own instruction this is explicitly best-effort, and per repo convention (REBUILD_REQUIRED gate) triggering a production container restart is ops's job, not dev-mcp-server's. Stating this honestly rather than claiming an unobserved boot cycle.\nEvidence: bun tsc --noEmit clean. Targeted OCR suite (292-ocr-audit, BPE-DEV-3, 1068-reparse-ocr-fallback, 1352c-ocr-health-logging, 1945d-reparse-pipeline-gap, FIX-CTG-3-STEP-D, 296-ocr-pipeline-e2e + the new file): 89/89 pass. gen-project-stats.ts --dry-run: toolCount=183, cronJobCount=88 -- both unchanged from pre-task baseline. Full bun test (RAW-verified, this write): 14964 pass/40 skip/52 fail/0 error across 15056 tests, 562s -- grep of the complete fail-list (\"(fail)\" lines) confirms ZERO entries matching pdf/ocr/bctc; fail count (52) is inside the pre-existing flake band this agent's own recent notebook entries already document (52-59 over the last several cycles, unrelated foreign-flow/IMF/timeout tests). Commits: 1b9425d6f (fix+test), b1a05ab56 (notebook+decision journal), both already pushed to origin/main. DJ: sprint-COWORK-GUARANTEED-SLOT-CATCHUP-dev-mcp-server-2.md S41.",
         "review_by": "dev-mcp-server",
         "commit_sha": "1b9425d6f"
+      },
+      {
+        "id": "FU-BACKFILL-MULTIPLE-COVER-LETTERS",
+        "priority": "P3",
+        "size": "S",
+        "sprint": "BCTC-EXTRACT-QUALITY",
+        "status": "REVIEW",
+        "title": "BCTC backfill: handle multiple cover-letter PDFs per ticker-quarter (skip ALL, not first-match)",
+        "type": "FIX",
+        "zone": "apps/mcp-server/",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FU-BACKFILL-MULTIPLE-COVER-LETTERS",
+        "promoted_at": "2026-07-31T10:47:00Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=3)",
+        "updated_at": "2026-07-31T11:20:48Z",
+        "claimed_at": "2026-07-31T10:47:04Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "next_agent": "qa",
+        "review_note": "Residual weakness #2 from FIX-CTG-PDF-MISLINK (77092007): backlog hypothesised \"first-match-only\" cover-letter exclusion, but code already used .filter() (excludes ALL literal cover letters). Real gap: the \"consolidated\" bucket was NEGATIVE-match (!isCoverLetterFilename) -- \"not a recognised cover letter\" != \"is the real report\". A non-report file (e.g. a P&L-variance explanatory note) that merely failed the cover-letter pattern could be wrongly selected as the sole \"consolidated\" candidate, or inflate false ambiguity when a real consolidated file was also present.\nFix (backfillBctcPdfPaths.ts): new isConsolidatedReportFilename() -- POSITIVE match on Vietnamese \"hop nhat\" / English \"consolidated\" marker (same signal hsxBctcFetcher.ts::rankItem() already uses). Both the NULL-pass and heal-pass now require this positive match before selecting a PDF among 2+ candidates; a lone candidate still always links (generalised from coverLetters.length===1 to matches.length===1). Zero positive matches among 2+ candidates -> loud console.warn, row stays PENDING (never a silent wrong pick). Heal-pass re-check guard broadened from isCoverLetterFilename(current) to !isConsolidatedReportFilename(current).\nAC1/AC2: FU-BACKFILL-MULTIPLE-COVER-LETTERS.test.ts (12 cases). Granular 2-layer RED confirmed: (1) isConsolidatedReportFilename added standalone first (no selection-logic change yet) -- AC-1/AC-3/AC-4/AC-2-GREEN genuinely failed against unmodified selection logic (AC-3 concretely reproduced the live mislink: old code returned updated=1, silently linking the non-report file); (2) legacyNegativeMatchSelect() -- a frozen, non-imported snapshot of the exact pre-fix 77092007 decision branches -- independently proves {kind:\"ambiguous\"} (fails to heal) on the identical AC-1 fixture. Post-fix: 12/12 pass.\nOne unrelated pre-existing gap found+sidestepped (out of scope, not fixed): extractTicker()'s KEYWORD_SET is missing \"CV\", so a CV_CBTT_TICKER_...-ordered filename mis-parses ticker as \"CV\" -- fixtures use the already-proven TICKER_..._CV_CBTT_... ordering instead.\nEvidence: bun tsc --noEmit clean. Targeted suite (new file + FIX-CTG-PDF-MISLINK.test.ts + PI3-bctc-inspect-reopen2.test.ts): 56/56 pass. gen-project-stats.ts --dry-run: toolCount=183, cronJobCount=88 -- unchanged from pre-task baseline. Fresh server boot (DB_PATH=:memory:, free port): /health toolCount=183; /api/bctc-inspect + /dashboards/news-fetch/ both 200. Full bun test (RAW-verified, full-capture, non-truncated log): 14971 pass/40 skip/57 fail/1 error/47501 expect (565.80s) -- grep of the complete \"(fail)\" line list confirms ZERO matches on bctc/pdf/backfill/cover/consolidated/financial_report; fail count is inside the documented pre-existing flake band (52-59, this session's own recent notebook entries: 52-53 on the last two cycles) -- driven by network-timeout/vps_push_log-table tests unrelated to this change. Docs: docs/architecture/microservice/mcp-server/usecases.md -- new backfillBctcPdfPaths.ts section (previously undocumented as its own use case). Simplicity gate: PASS. Commits: c515ec142 (fix+test+doc), 26bb028bc (notebook+DJ). DJ: sprint-COWORK-GUARANTEED-SLOT-CATCHUP-dev-mcp-server-2.md S42.",
+        "review_by": "dev-mcp-server",
+        "commit_sha": "c515ec142"
       }
     ],
     "qa": [],
@@ -18909,7 +18919,7 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-31T09:46:36Z",
+    "last_triaged_at": "2026-07-31T10:47:00Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
     "in_progress": []
   },
