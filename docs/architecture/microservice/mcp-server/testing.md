@@ -90,6 +90,20 @@
 | `230-bootstrap-verify.test.ts` | Cycle initialization |
 | `1838b-repository-adapters.test.ts` | Repository pattern compliance |
 
+### Colocated Infrastructure Tests
+Some `infrastructure/**` modules keep their unit test in a sibling `__tests__/`
+subfolder next to the source file instead of the top-level `apps/mcp-server/src/__tests__/`
+(both are discovered by `bun test` — `bunfig.toml` `[test].root = "./src"` scans
+the whole tree). Confirmed pattern (`docs/policies/dev-standards.md` §7th CI
+guardrail deviation note, 2026-07-30): `apps/mcp-server/src/infrastructure/**/__tests__/*.test.ts`.
+
+| Test File | Coverage |
+|-----------|----------|
+| `infrastructure/__tests__/orchStateSchema.test.ts` | `orchStateSchema.ts` — Zod validation, lane coherence, ref integrity |
+| `infrastructure/db/__tests__/FIX-SIGNAL-CONFIDENCE-DEFAULT-50-verified-decision.test.ts` | Signal-confidence verified-decision default-50 regression guard |
+| `infrastructure/fileStore/__tests__/alertVerdictStore.test.ts` | `alertVerdictStore.ts` — read/append/update/prune round-trip, atomic write, corrupt-JSON fail-loud |
+| `infrastructure/fetchers/__tests__/fetchDeadline.test.ts` | FIX-ERRAUDIT-W2-DEADLINE-UNITTEST: `withDeadline<T>` — DeadlineError on abort (label/deadlineMs/name), fast-path `clearTimeout` cleanup (EC-1), non-abort errors rethrown unchanged; `macroFetch<T>` — all 3 `DegradeEnvelope.reason` branches (`deadline`/`http-error`/`network`), `ok:true` only on `response.ok`. 12 tests, mocked `globalThis.fetch`, zero live network. |
+
 ## Test Patterns
 - **Mocking:** HttpClient injection, in-memory DB, time injection
 - **Fixtures:** Pre-seeded watchlists, sample BCTC PDFs, news articles
