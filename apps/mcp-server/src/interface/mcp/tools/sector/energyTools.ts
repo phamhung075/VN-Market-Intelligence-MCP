@@ -1,4 +1,13 @@
 /**
+ * size-justification: 224L — FDA-5 added a genuine typed result shape
+ * (EnergyGridResult) + its rationale docstring so is_estimate/source_tier
+ * travel in a structurally-readable MCP `structuredContent` field, not just
+ * embedded in the VN prose banner; the type declaration and the return
+ * object-literal below are functional code (not comment bloat), so this is
+ * not compressible further without losing type safety or the estimate-flag
+ * structural guarantee. Full design rationale: FDA-5 commit af272fe1d and
+ * the EnergyGridResult docstring further below in this file.
+ *
  * Interface — Energy Grid MCP Tool (Task 262)
  *
  * Registers `get_energy_grid_signals` on a McpServer instance.
