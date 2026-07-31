@@ -14,6 +14,7 @@ import { synthesizeChain, type ChainLink } from "../domain/services/chainSynthes
 import { runImfIndicatorPollerJob } from "../scheduler/market-data/imfIndicatorPollerJob.js";
 import { getLatestImfIndicators } from "../application/services/imfDataFetcher.js";
 import { classifyImfIndicators } from "../domain/services/imfDataClassifier.js";
+import type { ImfIndicator, ImfClassificationOutput } from "../domain/models/imfIndicators.js";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -30,6 +31,38 @@ function makeChainLink(overrides: Partial<ChainLink> = {}): ChainLink {
     },
     depth: 0,
     createdAt: new Date().toISOString(),
+    ...overrides,
+  };
+}
+
+// FIX-CI-IMF-INTEGRATION-TEST-NONHERMETIC-LIVE-API: AC-7 must never reach the
+// live IMF API from CI (was the root cause of the CI-red — see
+// runImfIndicatorPollerJob() default fetchFn, a26653ff2 / run 30639708394).
+// Mock at the poller's DI seam (fetchFn/storeFn/classifyFn — same seam already
+// exercised by 1353a-imf-indicator-poller-job-gaps.test.ts) instead of calling
+// the network-backed default.
+function mockImfIndicator(overrides: Partial<ImfIndicator> = {}): ImfIndicator {
+  return {
+    code: "NGDP_RPCH",
+    name: "Global GDP Growth (%)",
+    value: 3.1,
+    publishedAt: "2026-01-01T00:00:00Z",
+    ageInDays: 5,
+    previousValue: 3.0,
+    yoyChange: 0.1,
+    source: "imf_api",
+    confidence: 0.95,
+    ...overrides,
+  };
+}
+
+function mockImfClassification(overrides: Partial<ImfClassificationOutput> = {}): ImfClassificationOutput {
+  return {
+    sentiment: 0.35,
+    confidence: 0.8,
+    classification: "imf_bullish",
+    reasoning: "Mock reasoning — no live IMF API call",
+    sectorImpacts: [],
     ...overrides,
   };
 }
@@ -141,40 +174,61 @@ describe("Task 1296b — AC-6: IMF conviction weight in synthesizeChain", () => 
 // ── AC-7: runImfIndicatorPollerJob ────────────────────────────────────────────
 
 describe("Task 1296b — AC-7: IMF poller job result shape", () => {
-  it("runImfIndicatorPollerJob returns { success, indicator_count } shape", async () => {
-    const result = await runImfIndicatorPollerJob();
-    // Shape check — success may be false if circuit breaker is open or no network in test
+  // NOTE: the default fetchFn (fetchLatestImfIndicators) hits the live IMF
+  // DataMapper API and is deliberately NOT exercised here — CI must be
+  // hermetic. Every call below supplies fetchFn/storeFn/classifyFn via the
+  // poller's DI seam (ImfPollerOptions) so the network never leaves the
+  // process. Real-network behaviour is covered separately by
+  // 1353a-imf-indicator-poller-job-gaps.test.ts (also DI-mocked) and manually
+  // via the live scheduler in production.
+
+  it("runImfIndicatorPollerJob returns { success, indicator_count } shape (mocked — no live IMF API)", async () => {
+    const result = await runImfIndicatorPollerJob({
+      fetchFn: async () => [mockImfIndicator()],
+      storeFn: async () => {},
+      classifyFn: () => mockImfClassification(),
+    });
     expect(typeof result.success).toBe("boolean");
     expect(typeof result.indicator_count).toBe("number");
     expect(result.indicator_count).toBeGreaterThanOrEqual(0);
-  }, 35_000); // 35s timeout — poller has 30s timeout + overhead
+  });
 
-  it("runImfIndicatorPollerJob does not throw on failure", async () => {
-    // Call again — if first call opened circuit breaker, this returns cached/false without throw
+  it("runImfIndicatorPollerJob does not throw on failure (mocked fetchFn rejection)", async () => {
+    // Simulate a fetch-boundary failure (network unreachable / circuit breaker
+    // open) without touching the network — outer try/catch must absorb it.
     let threw = false;
     try {
-      await runImfIndicatorPollerJob();
+      await runImfIndicatorPollerJob({
+        fetchFn: async () => { throw new Error("simulated IMF API unreachable"); },
+        storeFn: async () => { throw new Error("storeFn must not be called"); },
+        classifyFn: () => { throw new Error("classifyFn must not be called"); },
+      });
     } catch {
       threw = true;
     }
     expect(threw).toBe(false);
-  }, 35_000);
+  });
 
-  it("on success: result.sentiment is defined with correct shape", async () => {
-    const result = await runImfIndicatorPollerJob();
-    if (result.success && result.sentiment) {
-      expect(typeof result.sentiment.sentiment).toBe("number");
-      expect(typeof result.sentiment.confidence).toBe("number");
-      expect(typeof result.sentiment.classification).toBe("string");
-      expect(Array.isArray(result.sentiment.sectorImpacts)).toBe(true);
-    } else {
-      // Network unavailable in test — acceptable, shape check skipped
-      expect(result.success === false || result.indicator_count >= 0).toBe(true);
-    }
-  }, 35_000);
+  it("on success: result.sentiment is defined with correct shape (mocked)", async () => {
+    const result = await runImfIndicatorPollerJob({
+      fetchFn: async () => [mockImfIndicator()],
+      storeFn: async () => {},
+      classifyFn: () => mockImfClassification(),
+    });
+    expect(result.success).toBe(true);
+    expect(result.sentiment).toBeDefined();
+    expect(typeof result.sentiment!.sentiment).toBe("number");
+    expect(typeof result.sentiment!.confidence).toBe("number");
+    expect(typeof result.sentiment!.classification).toBe("string");
+    expect(Array.isArray(result.sentiment!.sectorImpacts)).toBe(true);
+  });
 });
 
 // ── AC-8: MCP tool path (cache read + classify — no HTTP) ────────────────────
+// FIX-CI-IMF-INTEGRATION-TEST-NONHERMETIC-LIVE-API: getLatestImfIndicators()
+// reads the local SQLite cache only (see application/services/imfDataFetcher.ts
+// — no fetch() call) and classifyImfIndicators() is pure domain logic. This
+// describe is already hermetic; confirmed by inspection, not just assumed.
 
 describe("Task 1296b — AC-8: MCP tool path (getLatestImfIndicators + classify)", () => {
   beforeAll(async () => {
