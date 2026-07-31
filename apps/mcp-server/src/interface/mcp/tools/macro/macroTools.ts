@@ -433,7 +433,8 @@ export function registerMacroTools(server: McpServer): void {
       "Returns a formatted macro intelligence summary including commodity prices, " +
       "SBV central bank rates, carry trade regime, yield spread signal, and sector signals. " +
       "Routes through HTTP POST to the macro-indicators service (port 5004). " +
-      "Source tier: 2 (aggregator — macro-indicators microservice).",
+      "Source tier: worst-of every present signal component (baseline 2 for the " +
+      "aggregator; higher, e.g. 4, if any present component is an estimate/fixture).",
     {
       /** Optional request body fields forwarded to the Go service. */
       _params: z.record(z.unknown()).optional(),
@@ -468,17 +469,25 @@ export function registerMacroTools(server: McpServer): void {
 
       const data = result.data;
 
-      // DSI-INV-1: derive source_tier honestly from the snapshot's carry signal provenance.
-      // The Go macro-indicators service annotates signals.carry.source_tier per its own data
-      // pipeline (tier=2 when live, tier=4 when estimate/fixture).
-      // We use the carry tier as the primary provenance indicator for the macro snapshot
-      // because carry is the principal signal this tool surfaces; other signals (yield,
-      // investment-clock) are exposed through their own dedicated tools.
-      // Fallback: if the response does not carry a tier annotation (older Go build), default
-      // to 2 (aggregator service tier) rather than fail-loud — the tool is a thin HTTP proxy
-      // and 2 is the correct tier for a live upstream aggregator response.
+      // DSI-INV-1 (FU-MACRO-SNAPSHOT-TIER-WORSTOF): derive source_tier honestly as the
+      // WORST (max) tier across every signal component actually PRESENT in the response
+      // — not carry-only. A component that is ABSENT never enters the max (it is NOT
+      // treated as tier 0/best-case); only present components' source_tier values count.
+      // Generic over data.signals so any future component (beyond today's carry + yield)
+      // is picked up automatically, without a future edit here.
+      // Fallback: if no present component carries a tier annotation (older Go build, or
+      // signals entirely absent), default to 2 (aggregator service tier) rather than
+      // fail-loud — the tool is a thin HTTP proxy and 2 is the correct tier for a live
+      // upstream aggregator response.
+      const isSourceTier = (v: unknown): v is 1 | 2 | 3 | 4 =>
+        v === 1 || v === 2 || v === 3 || v === 4;
+      const presentTiers = Object.values(
+        (data?.signals ?? {}) as Record<string, { source_tier?: unknown } | undefined>,
+      )
+        .map((component) => component?.source_tier)
+        .filter(isSourceTier);
       const sourceTier: 1 | 2 | 3 | 4 =
-        (data?.signals?.carry?.source_tier as 1 | 2 | 3 | 4) ?? 2;
+        presentTiers.length > 0 ? (Math.max(...presentTiers) as 1 | 2 | 3 | 4) : 2;
 
       // fetchedAt: use the true source timestamp from the Go service response, not re-stamp now.
       // If the Go service omits fetchedAt (older build), fall back to new Date().toISOString()

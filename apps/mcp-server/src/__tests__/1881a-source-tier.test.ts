@@ -233,17 +233,72 @@ describe("1881a — AC-2: JSON-output tools have source_tier at root", () => {
 
 describe("1881a — AC-3: Text-output tools use JSON wrapper", () => {
 
-  it("get_macro_snapshot: source_tier=2, text field present, fetchedAt present", async () => {
+  it("get_macro_snapshot: source_tier=4 (worst-of carry=2, yield=4), text field present, fetchedAt present", async () => {
+    // FU-MACRO-SNAPSHOT-TIER-WORSTOF: the shared beforeAll fixture has carry.source_tier=2
+    // AND yield.source_tier=4 — the honest envelope-level tier is the WORST (max) across
+    // every PRESENT component, i.e. 4, not carry-only's 2.
     const server = makeServer(registerMacroTools);
     const result = await callTool(server, "get_macro_snapshot", {
       _testCommodityClient: null,
       _testSbvClient: null,
     });
     const parsed = parsedText(result);
-    expect(parsed.source_tier).toBe(2);
+    expect(parsed.source_tier).toBe(4);
     expect(typeof parsed.text).toBe("string");
     expect((parsed.text as string).length).toBeGreaterThan(0);
     expect(typeof parsed.fetchedAt).toBe("string");
+  });
+
+  it("get_macro_snapshot: source_tier=2 when yield is ABSENT (carry-only, worst-of degenerates to carry)", async () => {
+    // FU-MACRO-SNAPSHOT-TIER-WORSTOF AC(b): an absent component must NOT enter the max
+    // (never defaulted to tier 0/best-case) — with only carry present, worst-of === carry's
+    // own tier. Local fetch-mock fixture (distinct from the shared 1881a beforeAll fixture,
+    // which always includes signals.yield) omits signals.yield entirely.
+    const originalFetch = globalThis.fetch;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (globalThis as any).fetch = async (input: RequestInfo | URL, _init?: RequestInit) => {
+      const url = typeof input === "string" ? input : input.toString();
+      if (url.includes("/snapshot")) {
+        const snapshot = {
+          status: "ok",
+          fetchedAt: "2026-07-31T00:00:00Z",
+          signals: {
+            carry: {
+              regime: "NEUTRAL",
+              carrySpread: 1.38,
+              vndDepositRate: 5.0,
+              fedFundsRate: 3.62,
+              reasoning: "VND carry spread is moderate.",
+              computedAt: "2026-07-31T00:00:00Z",
+              is_estimate: false,
+              source_tier: 2,
+              fetched_at_source: "2026-07-30T00:00:00Z",
+            },
+            // signals.yield deliberately OMITTED — AC(b): carry-only case.
+            oil: {},
+            gold: {},
+            usdvnd: {},
+            "investment-clock": {},
+          },
+        };
+        return new Response(JSON.stringify(snapshot), {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        });
+      }
+      return originalFetch(input, _init);
+    };
+    try {
+      const server = makeServer(registerMacroTools);
+      const result = await callTool(server, "get_macro_snapshot", {
+        _testCommodityClient: null,
+        _testSbvClient: null,
+      });
+      const parsed = parsedText(result);
+      expect(parsed.source_tier).toBe(2);
+    } finally {
+      globalThis.fetch = originalFetch;
+    }
   });
 
   it("get_market_snapshot: source_tier=2, text field present", async () => {
@@ -357,15 +412,19 @@ describe("1881a — AC-8: source_tier is first key in serialized JSON", () => {
     expect(parsed.source_tier).toBe(2);
   });
 
-  it("get_macro_snapshot: source_tier is first key in wrapper", async () => {
+  it("get_macro_snapshot: source_tier is first key in wrapper (value = worst-of present components)", async () => {
     const server = makeServer(registerMacroTools);
     const result = await callTool(server, "get_macro_snapshot", {
       _testCommodityClient: null,
       _testSbvClient: null,
     });
     const text = result.content[0]?.text ?? "";
-    const firstKey = Object.keys(JSON.parse(text))[0];
+    const parsed = JSON.parse(text) as Record<string, unknown>;
+    const firstKey = Object.keys(parsed)[0];
     expect(firstKey).toBe("source_tier");
+    // FU-MACRO-SNAPSHOT-TIER-WORSTOF: shared fixture carry=2/yield=4 → worst-of=4,
+    // pinned here too so this AC-8 test can't false-green the carry-only under-report.
+    expect(parsed.source_tier).toBe(4);
   });
 
   it("get_imf_signals: source_tier is first key in envelope", async () => {
