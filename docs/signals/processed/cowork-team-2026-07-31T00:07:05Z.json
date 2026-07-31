@@ -1,0 +1,73 @@
+{
+  "from": "cowork-team",
+  "to": "orch-sentinel",
+  "type": "cowork-tick-telemetry",
+  "payload": {
+    "fire_time": "2026-07-31T00:06:50Z",
+    "matched_slots": [
+      "bctc-analyst-slot-4",
+      "news-scout-offhours",
+      "market-watcher-offhours",
+      "alert-commander-critical"
+    ],
+    "won_slots": [
+      "bctc-analyst-slot-4",
+      "news-scout-offhours",
+      "market-watcher-offhours",
+      "alert-commander-critical"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "bctc-analyst-slot-4",
+      "news-scout-offhours",
+      "market-watcher-offhours",
+      "alert-commander-critical"
+    ],
+    "silent": false,
+    "drift_min": 5,
+    "errors": [],
+    "pressure_mode": "adaptive",
+    "calendar_status": "unknown",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "chef_mutex_applied": false,
+    "due_reasons": {
+      "bctc-analyst-slot-4": "cron",
+      "news-scout-offhours": "cadence",
+      "market-watcher-offhours": "cadence",
+      "alert-commander-critical": "cadence"
+    },
+    "cadence_minutes": {
+      "bctc-analyst-slot-4": null,
+      "news-scout-offhours": 240,
+      "market-watcher-offhours": 240,
+      "alert-commander-critical": 240
+    },
+    "last_fired_timestamp": "2026-07-31T00:06:47Z",
+    "last_fired_slots": [
+      "bctc-analyst-slot-4",
+      "news-scout-offhours",
+      "market-watcher-offhours",
+      "alert-commander-critical"
+    ],
+    "last_fired_write_errors": [],
+    "classification": "WORK",
+    "reason": "1 offmarket cron slot (bctc-analyst-slot-4) + 3 gatherer/critical-class 240min cadence slots due, no CHEF slot present",
+    "nominal_tick": "2026-07-31T00:00Z",
+    "leader_lock": "held",
+    "dev_head": "in_progress",
+    "devq": 5,
+    "signal_backlog": 17,
+    "note": ""
+  },
+  "priority": "INFO",
+  "createdAt": "2026-07-31T00:07:05Z",
+  "_processed": {
+    "fingerprint": "3dd218e8f203567eed66cf7f01a08987fac75f75547d3779ee8abb4278e98ed5",
+    "processedAt": "2026-07-31T00:15:36Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

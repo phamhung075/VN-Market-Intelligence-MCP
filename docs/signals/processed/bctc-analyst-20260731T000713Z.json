@@ -1,0 +1,34 @@
+{
+  "id": "bca-20260731T000713Z",
+  "ts": "2026-07-31T00:07:13Z",
+  "from": "bctc-analyst",
+  "to": "dev-team",
+  "type": "esc-deep-dive-request",
+  "summary": "ESC deep-dive: HVN Q1-2026 ESC-2",
+  "severity": "HIGH",
+  "status": "NEW",
+  "payload_ref": null,
+  "payload": {
+    "trigger_id": "ESC-2",
+    "ticker": "HVN",
+    "quarter": "Q1-2026",
+    "report_id": null,
+    "guard_key": "esc-deepdive:HVN:Q1-2026:ESC-2",
+    "context": {
+      "assets_total": 10807412.979110999,
+      "liabilities_total": 9939070.524531,
+      "equity_total": 1160067.165196,
+      "imbalance": 0.02699,
+      "note": "Extracted revenue/net_profit/OCF all = 0 for HVN Q1-2026, contradicting live market news same-day reporting Vietnam Airlines revenue +28% YoY and real profitability. Balance-sheet identity fails by 2.7%. Consistent with the already-tracked pdf-extractor OCR-concurrency defect (docs/architecture-briefs/2026-07-28-pdfx-tesseract-concurrency-invariant.md) rather than a genuine going-concern event — flagged for Opus deep-dive per deterministic ESC-2 gate, not asserted as confirmed fraud."
+    },
+    "all_esc_fired": [
+      "ESC-2"
+    ]
+  },
+  "_processed": {
+    "fingerprint": "353ebb5a2917000085d663d207e42bab4bbb558082d4e7a3d787f4714d7307c9",
+    "processedAt": "2026-07-31T00:15:36Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

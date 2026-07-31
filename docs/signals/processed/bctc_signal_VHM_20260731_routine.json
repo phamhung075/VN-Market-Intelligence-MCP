@@ -1,0 +1,33 @@
+{
+  "ticker": "VHM",
+  "signal_type": "bctc_signal",
+  "quarter": "Q1-2026",
+  "mode": "routine",
+  "beat_miss": null,
+  "product": "Phat trien bat dong san nha o / khu do thi quy mo lon (Vinhomes)",
+  "customer": "Nguoi mua nha o trung-cao cap trong nuoc, nha dau tu thu cap",
+  "ops": "BCTC truc tiep Q1-2026 CORRUPT (total_assets=0, loi trich xuat OCR, 0% confidence) — du lieu so sanh nganh: PE 12.6x (DISCOUNT -35% vs nganh), PB 2.2x (PREMIUM +73%), ROE 19.0% (manh, tren trung vi nganh 6.3%).",
+  "mgmt": "Tin tuc 30/07: lai 6T2026 hon 52,000 ty dong (gap 5 lan cung ky) theo bao chi — KHONG the doi chieu forensic vi BCTC goc corrupt.",
+  "valuation_verdict": "FAIR (EY_SPREAD +2.94pp, gan nguong CHEAP)",
+  "roe_pct": 19,
+  "bctc_direct_status": "CORRUPT — total_assets=0 (OCR extraction failure), da biet root cause, khong re-escalate",
+  "esc_status": "SKIPPED toan bo — khong du du lieu forensic",
+  "kd_status": "unavailable — Kinh Dich service 503 insufficient price data",
+  "insider": "Khong co tin hieu giao dich noi bo dang ke",
+  "sector_comparison": {
+    "pe": 12.6,
+    "pb": 2.2,
+    "roe_pct": 19,
+    "vs_median_pe": "DISCOUNT -35%",
+    "vs_median_pb": "PREMIUM +73%",
+    "vs_median_roe": "TREN MEDIAN"
+  },
+  "cycle_id": "20260731-0000",
+  "e3_cache": "N/A — direct BCTC corrupt, sector-comparison-only downgrade",
+  "_processed": {
+    "fingerprint": "141addb737275ce523c82622103b5aa7877c935764666c9326098f8c5d95c33f",
+    "processedAt": "2026-07-31T00:15:36Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

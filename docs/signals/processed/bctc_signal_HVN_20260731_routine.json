@@ -1,0 +1,50 @@
+{
+  "ticker": "HVN",
+  "signal_type": "bctc_signal",
+  "quarter": "Q1-2026",
+  "mode": "routine",
+  "beat_miss": null,
+  "product": "Van tai hang khong (hanh khach noi dia/quoc te + hang hoa) qua Vietnam Airlines va cac cong ty con",
+  "customer": "Hanh khach ca nhan, hop dong doanh nghiep/chinh phu, khach van chuyen hang hoa",
+  "ops": "BCTC Q1-2026 trich xuat cho thay doanh thu=0/loi nhuan=0/OCF=0 toan bo — MAU THUAN voi tin tuc thi truong cung ngay (doanh thu +28%, co lai, da phuc hoi). Nghi ngo loi trich xuat OCR (root cause da biet, dang theo doi FIX-PDFX-TESSERACT-CONCURRENCY), khong phai ket qua kinh doanh thuc zero.",
+  "mgmt": "Dang trong ke hoach tai co cau von/no hau COVID voi ho tro nha nuoc; chua du du lieu de danh gia do chinh xac ke hoach quan tri.",
+  "valuation_verdict": "CHEAP theo cong thuc EY_SPREAD (+8.16pp, PE 7.6x DISCOUNT -50% vs nganh) — KHONG khuyen nghi hanh dong bullish do loi nhuan=0 va mat can doi ke toan cung ky.",
+  "ey_spread_pct": 8.16,
+  "roe_pct": 0,
+  "esc2_status": "TRUE — mat can doi ke toan 2.70% (tai san 10,807,412.98 vs no+VCSH 11,099,137.69 trieu VND)",
+  "esc2_escalation": {
+    "status": "PENDING",
+    "guard_key": "esc-deepdive:HVN:Q1-2026:ESC-2",
+    "signal_file": "docs/signals/bctc-analyst-20260731T000713Z.json"
+  },
+  "esc3_status": "DATA-COVERAGE-LIMITED (1/4 quarters, get_cash_flow)",
+  "esc3_coverage_gap": {
+    "guard_key": "esc-datacov:HVN:Q1-2026:ESC-3",
+    "signal_file": "docs/signals/bctc-analyst-20260731T000703Z.json"
+  },
+  "esc4_status": "SKIPPED — PretaxProfit=0 (undefined ratio guard)",
+  "esc5_status": "FALSE — get_bctc_report_id returned report_id=null, existing_refine_status=PARTIAL",
+  "trick_pass_note": "Khong du bctc_table_rows chi tiet de chay day du 6 lop kiem tra gian lan ke toan (prose_sections rong) — chi xac nhan duoc loi mat can doi tong hop qua ESC-2.",
+  "trick_summary": "Khong phat hien duoc dau hieu gian lan cu the do thieu du lieu chi tiet — nhung mat can doi ke toan 2.7% va doanh thu/loi nhuan bang 0 mau thuan voi tin tuc thuc te la dau hieu chat luong du lieu can luu y, khong phai bao cao sach.",
+  "trick_confidence": "none",
+  "trick_pass_versions": [],
+  "insider": "Khong co tin hieu giao dich noi bo dang ke (get_insider_signals); insider_sentiment_context thi truong chung = NEUTRAL, khong du du lieu 90 ngay (honest-NULL)",
+  "kd_status": "unavailable — Kinh Dich service 503 insufficient price data (can >=7 diem gia)",
+  "legal_risk": "Khong co tin hieu rui ro phap ly",
+  "sector_comparison": {
+    "pe": 7.6,
+    "pb": 11.7,
+    "roe_pct": 0,
+    "vs_median_pe": "DISCOUNT -50%",
+    "vs_median_pb": "PREMIUM +256%",
+    "vs_median_roe": "DUOI MEDIAN"
+  },
+  "cycle_id": "20260731-0000",
+  "e3_cache": "MISS — first touch this multi-day rotation cycle",
+  "_processed": {
+    "fingerprint": "71206fbaa835ba21dca1b8bac77b853256506ac466b05e1013bbd9e1b6f39074",
+    "processedAt": "2026-07-31T00:15:36Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

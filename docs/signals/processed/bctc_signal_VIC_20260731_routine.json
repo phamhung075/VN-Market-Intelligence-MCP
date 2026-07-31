@@ -1,0 +1,40 @@
+{
+  "ticker": "VIC",
+  "signal_type": "bctc_signal",
+  "quarter": "Q1-2026",
+  "mode": "routine",
+  "beat_miss": null,
+  "product": "Bat dong san khu do thi (Vinhomes), ban le mat bang thuong mai (Vincom Retail), o to dien qua cong ty lien ket (VinFast), nghi duong (Vinpearl)",
+  "customer": "Nguoi mua nha/can ho trung-cao cap, khach thue mat bang ban le, khach du lich nghi duong",
+  "ops": "BCTC truc tiep Q1-2026 CORRUPT (total_assets=0, loi trich xuat OCR, 0% confidence, force-flagged) — chi dung duoc du lieu so sanh nganh: PE 112.8x (PREMIUM +599% vs nganh), PB 8.6x (PREMIUM +575%), ROE 8.0% (tren trung vi nganh 6.3%).",
+  "mgmt": "Tin tuc 30/07: lai sau thue 6T2026 dat 20,375 ty dong (gap 4.5 lan cung ky) theo bao chi — KHONG the doi chieu forensic vi BCTC goc corrupt; chi ghi nhan qua nguon tin tuc, chua xac minh qua so lieu ke toan chi tiet.",
+  "valuation_verdict": "AVOID (EY_SPREAD -4.11pp, PE premium cuc lon) — KHONG khuyen nghi bullish du tin tuc loi nhuan tich cuc, dinh gia da qua cao.",
+  "roe_pct": 8,
+  "bctc_direct_status": "CORRUPT — total_assets=0 (OCR extraction failure), da biet root cause (pdf-extractor concurrency, tracked separately, khong re-escalate)",
+  "esc_status": "SKIPPED toan bo — khong du du lieu forensic tu BCTC goc corrupt",
+  "chain_finding": {
+    "signal_type": "urgent_news",
+    "from_agent": "news-scout",
+    "id": 10091,
+    "ts": "2026-07-31 00:09:04",
+    "note": "khong the xac nhan/phu nhan qua BCTC do du lieu corrupt — khong post fundamental_validation de tranh nguy tao du lieu forensic"
+  },
+  "kd_status": "unavailable — Kinh Dich service 503 insufficient price data",
+  "insider": "Khong co tin hieu giao dich noi bo dang ke",
+  "sector_comparison": {
+    "pe": 112.8,
+    "pb": 8.6,
+    "roe_pct": 8,
+    "vs_median_pe": "PREMIUM +599%",
+    "vs_median_pb": "PREMIUM +575%",
+    "vs_median_roe": "TREN MEDIAN"
+  },
+  "cycle_id": "20260731-0000",
+  "e3_cache": "N/A — direct BCTC corrupt, sector-comparison-only downgrade per Reprocess-vs-corrupt guard precedent",
+  "_processed": {
+    "fingerprint": "9fe65652e828837b252e12c0b059da85e062f6b2cf072f497edc6f212b71d929",
+    "processedAt": "2026-07-31T00:15:36Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

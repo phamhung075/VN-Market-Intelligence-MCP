@@ -1,0 +1,33 @@
+{
+  "ticker": "FPT",
+  "signal_type": "bctc_signal",
+  "quarter": "Q1-2026",
+  "mode": "routine",
+  "beat_miss": null,
+  "product": "Xuat khau phan mem / CNTT, tich hop he thong, vien thong (FPT Telecom), giao duc (FPT Edu)",
+  "customer": "Doanh nghiep CNTT trong/ngoai nuoc, thue bao vien thong SME/ho gia dinh",
+  "ops": "Bien loi nhuan gop 34.0%, hoat dong 22.0%; ROE 6.2% (ky don Q1); OCF am -2,847.8 ty VND. E3 cache-hit — du lieu khong doi qua nhieu chu ky (c131-c134).",
+  "mgmt": "Cong bo 2026-05-24, du lieu on dinh qua 6+ chu ky. ESC-5: 7/15 don vi refine confidence <0.50 (trang 26-46, ghi chu ben lien quan/cong ty con) — escalation da PENDING (guard bctc-analyst-20260730T211400Z, het han ~2026-07-31T21:14Z, khong re-emit chu ky nay).",
+  "valuation_verdict": "FAIR (PE 13.8x DISCOUNT -20% vs nganh, EY_SPREAD +2.25pp)",
+  "esc5_status": "PENDING (da emit tu chu ky truoc, guard con hieu luc ~21:14Z hom nay)",
+  "esc3_status": "DATA-COVERAGE-LIMITED (2/4 quarters, guard HELD den ~08-06)",
+  "esc4_status": "FALSE (non_operating_share 2.0%, khong doi)",
+  "e3_cache": "HIT — byte-identical vs c133 (2026-07-30T21:12Z), 6-pass SKIPPED",
+  "kd_status": "not re-touched this cycle (rotation focus = HVN/VIC/VHM)",
+  "insider": "Khong co tin hieu giao dich noi bo dang ke (theo chu ky truoc, khong re-fetch)",
+  "sector_comparison": {
+    "pe": 13.8,
+    "pb": 3.6,
+    "roe_pct": 28.3,
+    "vs_median_pe": "DISCOUNT -20%",
+    "vs_median_pb": "PREMIUM +136%",
+    "vs_median_roe": "TREN MEDIAN"
+  },
+  "cycle_id": "20260731-0000",
+  "_processed": {
+    "fingerprint": "84ad0b748df7c242921ac6b15f4a9833d7a665e89f9de0f6de60a37b612bbf04",
+    "processedAt": "2026-07-31T00:15:36Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

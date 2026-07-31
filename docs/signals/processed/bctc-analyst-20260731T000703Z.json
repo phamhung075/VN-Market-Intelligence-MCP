@@ -1,0 +1,28 @@
+{
+  "id": "bca-datacov-20260731T000703Z",
+  "ts": "2026-07-31T00:07:03Z",
+  "from": "bctc-analyst",
+  "to": "ops",
+  "type": "data-coverage-gap",
+  "summary": "ESC-3 DATA-COVERAGE-LIMITED: HVN Q1-2026 — 1/4 quarters available",
+  "severity": "LOW",
+  "status": "NEW",
+  "payload_ref": null,
+  "payload": {
+    "trigger_id": "ESC-3",
+    "ticker": "HVN",
+    "quarter": "Q1-2026",
+    "quarters_returned": 1,
+    "quarters_required": 4,
+    "root_task": "BCTC-HIST-VPS-BACKFILL",
+    "note": "Multi-period accrual decomposition blocked by data coverage, not tool bug. No Opus deep-dive warranted. Re-check when quarters_returned >= 4.",
+    "guard_key": "esc-datacov:HVN:Q1-2026:ESC-3",
+    "guard_ttl_days": 8
+  },
+  "_processed": {
+    "fingerprint": "ea4e5c1660e23b67ce7129a6e74702188b488dcb6b3553d790403fc77ca404c6",
+    "processedAt": "2026-07-31T00:15:36Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
