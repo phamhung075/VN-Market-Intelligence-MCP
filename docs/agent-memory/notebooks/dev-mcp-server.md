@@ -1,17 +1,5 @@
 # dev-mcp-server -- Notebook
 
-## 2026-07-31 — FDA-6 (BOUNDED-1 auto-pickup, P3/S) → REVIEW, next_agent=qa
-
-**Session:** 64c7c677-0f0f-4cee-a3ce-dba79d70b7ae. `get_credit_flow_signal` fabricates mortgage rate (10.5/11.0%), YoY credit growth (±15%), RE-credit ratio (20/19%, always-static), and total credit (reCredit×5, always-derived) when live SBV/NHNN data is absent — already DSI-hardened (mortgageIsEstimate/yoyIsEstimate flags + VN "[ƯỚC TÍNH] is_estimate=true source_tier=4"/"[static_seed]" prose). Two residuals: `date: new Date().toISOString()` stamped the current/previous CreditData snapshot as "today" even when its values were hardcoded fallbacks (same class as the frozen-usdVnd-labelled-tier1 lesson); the existing is_estimate/direction fields were bespoke top-level keys, not real MCP wire fields.
-
-**Fix:** `CreditData.date` widened `string → string | null` (`domain/services/creditFlowAnalyzer.ts`, unused inside the chain-rule computation, metadata only); `computeCreditFlowSignal.ts` now stamps `null` whenever `mortgageIsEstimate || yoyIsEstimate`, a real ISO date only when both legs are live. Added `structuredContent` (same FDA-5 pattern) to `getCreditFlowSignalHandler` carrying is_estimate/source_tier/estimated_fields/mortgage_is_estimate/yoy_is_estimate/fully_estimated/current_date/previous_date. Did NOT implement the dispatch note's "omit dish when BOTH estimated" suggestion — that's the tool's DEFAULT no-params call shape, so suppressing output there is an unreviewed breaking change for a P3/S ticket; added `fully_estimated` as a machine-readable hook instead so a future consumer can choose to fail-loud on its own. VN `content` text byte-identical to before.
-
-**Tests (`DSI-S3-sector-fin.test.ts`, new "FDA-6" describe block):** 5 new cases — structuredContent present, default-path is_estimate=true/source_tier=4/fully_estimated=true, estimated_fields lists all 4 field names (2 always-static + 2 conditional), current_date/previous_date null on the estimate path, and real ISO dates + source_tier=2 + fully_estimated=false + estimated_fields=[2 static only] on the all-params-live path. File: 27/27 pass (was 22).
-
-**Evidence:** `bun tsc --noEmit` clean. Targeted cluster (DSI-S3-sector-fin + 246-credit-flow + 1254-credit-flow-db-fallback + VMT-6-credit-flow-survey-distribution + MONEY-RADAR-P0-T2-COMPOSITE + 251-mcp-tools + 1410-diacritics-sweep + 1472-diacritics-batch2): 136/136 pass. Fresh server boot (`DB_PATH=:memory:`, free port): `/health` toolCount=183, zero import errors; dashboard probes (`/api/bctc-inspect`, `/dashboards/news-fetch/`) both 200. `gen-project-stats.ts --dry-run`: toolCount=183, cronJobCount=88 — both unchanged. Full `bun test`: 14954 pass/40 skip/56 fail/2 errors (489.64s) — inside the documented pre-existing flake band (52-59); zero credit/energy-related failures in the fail-list grep. Doc updated: `docs/agents/tools/list/get_credit_flow_signal.md` (structuredContent example, matches FDA-5's per-tool-doc precedent). DJ: sprint-COWORK-GUARANTEED-SLOT-CATCHUP-dev-mcp-server.md S37.
-
-Zone health: tsc clean, tool/scheduler counts unchanged (183/88), 4 source files touched (domain+application+interface+test) + 1 tool doc | HEALTHY.
-
 ## 2026-07-31 — FIX-CI-SIZELINT-MCPSERVER-ENERGYTOOLS-NEW-OFFENDER (BOUNDED-1 auto-pickup, P0) → REVIEW, next_agent=qa
 
 **Session:** 64c7c677-0f0f-4cee-a3ce-dba79d70b7ae. own prior FDA-5 commit (af272fe1d) grew `energyTools.ts` 152L→215L (baseline=152, upper=167) with no size-justification header — new size-lint offender, same red job as the SIX-UNCOVERED/pdfx rows above.
@@ -33,3 +21,13 @@ Zone health: tsc clean, tool/scheduler counts unchanged (183/88), 1 file touched
 **Evidence:** `bun tsc --noEmit` clean. Targeted suite (089-tool-macro + 1881a-source-tier + 1423d/1423f/1570c + 1903a + 1918a + H3-urgent-news + TASK-unblock-cowork + DSI-S1-MACRO, 10 files): 128/128 pass. Fresh server boot (`DB_PATH=:memory:`, free port): `/health` toolCount=183, zero import errors; dashboard probes (`/api/bctc-inspect`, `/dashboards/news-fetch/`) both 200. `gen-project-stats.ts --dry-run`: toolCount=183, cronJobCount=88 — both unchanged. Full `bun test`: 14961 pass/40 skip/53 fail/47465 expect (571.59s) — inside the documented pre-existing flake band (52-59); all 128 targeted macro-suite tests (incl. the 4 new FDA-7 ones) green, so none of the 53 standing failures are macro/FDA-7-related. Doc updated: `docs/agents/tools/list/get_macro_snapshot.md` (signature + Integration Notes). Also touched: `macroSnapshotGuard.ts` doc comment (`fetchedAt?: string | null`, no logic change — guard was already agnostic to this field). DJ: sprint-COWORK-GUARANTEED-SLOT-CATCHUP-dev-mcp-server.md S39.
 
 Zone health: tsc clean, tool/scheduler counts unchanged (183/88), 4 files touched (macroTools.ts + macroSnapshotGuard.ts + test + tool doc) | HEALTHY.
+
+## 2026-07-31 — FDA-10 (BOUNDED-1 auto-pickup, P3/XS) → REVIEW, next_agent=qa
+
+**Session:** 64c7c677-0f0f-4cee-a3ce-dba79d70b7ae. Comment-only cleanup: `shippingIndex.ts` module header (L7) and `SHIPPING_SYMBOLS` JSDoc (L73-77) both claimed an "SCFI placeholder that resolves to BDI" — false. Independently re-verified `SHIPPING_SYMBOLS` (L79-82) has always contained only `^BDI`/`^BFIY`; no SCFI symbol/proxy/placeholder logic exists anywhere in the file (`grep -i scfi` confirmed only these 2 comment mentions). A prior read-only Slice-A audit (FAKE-DATA-AUDIT 2026-06-05) already confirmed no fabrication occurs — this closes the stale-comment residue.
+
+**Fix:** Deleted the L7 mention entirely; corrected the L73-77 JSDoc to state SCFI has no free Yahoo ticker and is NOT fetched or proxied. Zero functional/logic change — `SHIPPING_SYMBOLS`/fetch logic untouched.
+
+**Evidence:** `bun test src/__tests__/252-shipping-index.test.ts`: 8 pass/0 fail (unchanged). `bun tsc --noEmit`: clean. Commit `ec27c69d3`. DJ: sprint-COWORK-GUARANTEED-SLOT-CATCHUP-dev-mcp-server.md S40.
+
+Zone health: tsc clean, 1 file touched (shippingIndex.ts, comment-only) | HEALTHY.
