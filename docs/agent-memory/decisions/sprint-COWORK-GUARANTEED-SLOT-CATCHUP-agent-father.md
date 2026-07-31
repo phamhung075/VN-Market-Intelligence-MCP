@@ -184,3 +184,24 @@ rows (po_goahead note); implementer's job is verbatim transcription only.
 **why-change:** none — executed as specified. AC-5 retro-sweep re-checked
 live: new red since ratification (frontend-eslint/size-lint) is a separate,
 already-tracked row, not the 3 AC-5 files — evidence still accurate.
+
+### STEP agent-father-S12 · agent-father · 2026-07-31T05:40:00Z
+**task-id:** FIX-CIRED-TRIAGE-WRONG-PLANE-DEDUP-AMNESTY
+**what-done:** Post-commit RAW-re-read of the board row surfaced a live
+`po_changes_requested_20260731T0523` note (filed 05:23:57Z, before my
+05:28:22Z commit — missed because I read the row at session start). Fixed:
+dropped the status-token enum (TODO/IN_PROGRESS/REVIEW/BLOCKED) from BOTH
+`ci_red` dedup checks + the pre-existing `repair_task_request` row, replaced
+with explicit non-terminal LANE-NAME scan (backlog+ready+in_progress+
+review+qa). 2nd commit, same 2 files.
+**what-considered:**
+- Re-verify PO's 633/238 claim live before trusting it (chosen — jq command
+  PO supplied reproduced exactly: 633 open, 238 visible under old enum).
+- Ship as-is and let qa catch it (rejected — qa note explicitly blocks
+  sign-off on this exact defect; shipping known-defective is not a fix).
+**why-decision:** PO's own dedup-hit reproduction (2 hits) only worked
+because PO manually bypassed the status filter — the shipped predicate as
+literally brief-specified would mint 0/3 hits, failing its own design goal.
+**why-change:** brief's §3 text (which I copied verbatim) itself carried
+this defect — amendment is IN the file already open per PO's own note,
+no re-dispatch, no lane move.

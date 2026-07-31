@@ -69,28 +69,6 @@
   recur for Part 2/3 of the same epic.
   self-committed, per this task's own dispatch note (no gateway/MCP grant this session).
 
-## Fix (router-dispatched, S4 UNBLOCK co-dispatch) 2026-07-30T23:11:49Z FIX-ALERT-COMMANDER-NO-BASH-GRANT-NOTEBOOK-UNCOMMITTABLE+FIX-COWORK-BASH-GRANT-COVERAGE-STAMP-TRANSPORT
-- Both BACKLOG/READY rows share next_agent=agent-father, same actuator (`tools:` line),
-  flagged CO-DISPATCH by the cowork row's own deliverable text — landed in one edit pass.
-- `FIX-COWORK-BASH-GRANT-COVERAGE-STAMP-TRANSPORT`: added `Bash` to news-scout.md +
-  market-watcher.md `tools:` line (exactly 2 lines, per po's pre-adjudicated transport
-  ruling on the row — not re-litigated).
-- `FIX-ALERT-COMMANDER-NO-BASH-GRANT-NOTEBOOK-UNCOMMITTABLE`: added `Bash` to
-  alert-commander.md `tools:` line (1 line) — closes both the notebook commit-mutex gap
-  (6 consecutive cycles uncommitted) and the `task_claim` session-id derivation gap that
-  had it firing verified CRITICAL alerts without the duplicate-publish mutex.
-- RAW pre-edit verify: all 3 `tools:` lines grep-confirmed still missing Bash;
-  `git log --since=2026-07-29T12:32:22Z -- .claude/agents/alert-commander.md` empty,
-  matching the row's own claim. RAW post-edit verify: all 3 now
-  `Read, Write, Edit, Bash, mcp__gateway__call_tool` — no Glob/Grep added.
-- No cascade: `docs/agents/tools/package/*.md` catalog MCP tools only, unaffected by a
-  native Bash grant.
-- Structural note: agent-father itself carries NO gateway MCP binding (own frontmatter:
-  `Read, Edit, Write, Glob, Grep, Bash`) — edit-apply.md's MCP task-lock steps (5a/7b/8b)
-  are unreachable; followed `.claude/skills/commit-boundary/SKILL.md`'s gateway-blind
-  fallback instead (solo operation — `.head.status=idle`, `active_task_id=null` at check
-  time).
-
 ## Fix (router-dispatched, po manual-dispatch-sweep) 2026-07-31T01:10:34Z UC-ASL-P6
 - Reconciled the row's 2026-07-16 supervised_reason flag first: `docs/agents/system-auditor/flow/`
   has no `init.md` (only main.md/page-freshness.md/tier1-overrides.md/tier1-probe.md) — the
@@ -142,3 +120,9 @@
   repo precedent (`FIX-SWEEPGUARD-*`/`2026-07-13-FIX-DEVTEAM-STATUSFLIP-LANEMOVE-RULE`: even
   pure flow-doc/bash fixes route through qa's RAW clause-content read, not self-closed by
   the implementer).
+- POST-COMMIT CATCH: RAW-re-read after pushing found a live `po_changes_requested_20260731T0523`
+  note filed 05:23:57Z (before my 05:28:22Z commit, missed at session-start read) — the brief's
+  §3 predicate I copied verbatim used a status-token enum (TODO/IN_PROGRESS/REVIEW/BLOCKED) that
+  structurally excludes BACKLOG/READY lanes; live-measured 395/633 (62.4%) open rows invisible.
+  Fixed both `ci_red` dedup checks + the pre-existing identical defect on `repair_task_request`
+  in the same file, 2nd commit — never ship a known-defective spec even after first push.
