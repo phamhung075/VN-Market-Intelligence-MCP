@@ -46,6 +46,15 @@ export interface FetchParseAndStoreBctcParams {
    */
   insertAnalysisFn?: InsertAnalysisFn;
   /**
+   * Test-only injection seam for the default-inserter RESOLVER itself (as
+   * opposed to insertAnalysisFn, which replaces the already-resolved
+   * inserter). Lets tests deterministically simulate a resolution failure
+   * (e.g. the historical module-load-time native-addon crash class) without
+   * depending on module-mock timing. Defaults to the real resolver.
+   * FIX-LANCEDB-INSERT-SEGFAULT.
+   */
+  insertAnalysisResolverFn?: () => Promise<InsertAnalysisFn>;
+  /**
    * Optional pre-discovered PDF URL (Task 289).
    * When provided the Step 1 SSC portal listing is bypassed and this URL is
    * used directly for download + extraction. Used by checkSscReports when

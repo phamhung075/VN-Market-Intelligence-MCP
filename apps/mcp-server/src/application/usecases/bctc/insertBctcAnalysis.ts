@@ -57,18 +57,36 @@ export interface InsertBctcAnalysisParams {
   year: number;
   quarter: QuarterString;
   insertAnalysisFn?: InsertAnalysisFn | undefined;
+  /**
+   * Test-only injection seam for the default-inserter RESOLVER itself (as
+   * opposed to insertAnalysisFn, which replaces the already-resolved
+   * inserter). Lets tests deterministically simulate a resolution failure
+   * (e.g. the historical module-load-time native-addon crash class) without
+   * depending on module-mock timing. Defaults to the real resolver.
+   * FIX-LANCEDB-INSERT-SEGFAULT.
+   */
+  insertAnalysisResolverFn?: (() => Promise<InsertAnalysisFn>) | undefined;
   /** Log tag, shared verbatim with the orchestrator's Step 1/2/3 log lines. */
   tag: string;
 }
 
 export async function insertBctcAnalysis(params: InsertBctcAnalysisParams): Promise<void> {
-  const { report, doc, actionCode, year, quarter, insertAnalysisFn, tag } = params;
+  const { report, doc, actionCode, year, quarter, insertAnalysisFn, insertAnalysisResolverFn, tag } = params;
 
   logger.info(`${tag} step 4: inserting analysis into LanceDB`);
 
-  const inserter = insertAnalysisFn ?? (await getDefaultInsertAnalysis());
-
   try {
+    // FIX-LANCEDB-INSERT-SEGFAULT: inserter resolution (including the lazy
+    // module import inside getDefaultInsertAnalysis) MUST stay inside this
+    // try/catch. This line used to sit ABOVE the try block, so a throw during
+    // resolution (missing module, or historically a native-addon crash on
+    // import — the exact mechanism CI-RED-da847805-FIX fixed for `bun test`)
+    // propagated uncaught out of this function AND out of the orchestrator's
+    // unguarded Step 4 call, silently breaking the "non-fatal" contract
+    // documented at the top of this file.
+    const resolveDefaultInsertAnalysis = insertAnalysisResolverFn ?? getDefaultInsertAnalysis;
+    const inserter = insertAnalysisFn ?? (await resolveDefaultInsertAnalysis());
+
     // DFR-P1-MCP FR-5: derive sector from ticker via mcp.config.json market.referenceStocks
     let sector = "";
     try {

@@ -47,7 +47,7 @@ export async function fetchParseAndStoreBctc(
 ): Promise<(FinancialReport & { fallback?: boolean; extraction_method?: string; confidence?: number; reason?: string }) | null> {
   const {
     actionCode, year, quarter, sscHttpClient, pdfHttpClient,
-    pdfTextOverride, insertAnalysisFn, pdfUrl, enableBctcFallback = false,
+    pdfTextOverride, insertAnalysisFn, insertAnalysisResolverFn, pdfUrl, enableBctcFallback = false,
   } = params;
 
   const tag = `[fetchParseAndStoreBctc] ${actionCode} ${year}-${quarter}`;
@@ -118,7 +118,7 @@ export async function fetchParseAndStoreBctc(
   (report as unknown as Record<string, unknown>).extraction_method = resolvedExtractionMethod;
 
   // ── Step 4: Embed into LanceDB ────────────────────────────────────────────
-  await insertBctcAnalysis({ report, doc, actionCode, year, quarter, insertAnalysisFn, tag });
+  await insertBctcAnalysis({ report, doc, actionCode, year, quarter, insertAnalysisFn, insertAnalysisResolverFn, tag });
 
   logger.info(`${tag} pipeline complete`, { reportId: report.id });
   return report;
