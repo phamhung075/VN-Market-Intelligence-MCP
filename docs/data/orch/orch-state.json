@@ -93,11 +93,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "updated_at": "2026-07-31T00:36:43Z",
-    "updated_by": "dev-mcp-server",
-    "active_task_id": null,
-    "next_agent": "router"
+    "status": "in_progress",
+    "active_task_id": "FU-MACRO-SNAPSHOT-TIER-WORSTOF",
+    "next_agent": "dev-mcp-server",
+    "next_action": "Zone-routed by developer team-lead — implement worst-of(carry,yield) source_tier fix in apps/mcp-server/src/interface/mcp/tools/macro/macroTools.ts get_macro_snapshot handler per backlog desc + AC (see dispatch_note on the board row).",
+    "updated_at": "2026-07-31T00:55:38Z",
+    "updated_by": "developer"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -2214,8 +2215,8 @@
     ]
   },
   "task_board": {
-    "_updated_at": "2026-07-31T00:44:56Z",
-    "_updated_by": "dev-stock-price",
+    "_updated_at": "2026-07-31T00:55:38Z",
+    "_updated_by": "developer",
     "active_sprints": [
       {
         "evidence": "Router raw-verified (get_bctc_full live, post-rebuild) after BEQ-9/10 refine. Core extraction incident RESOLVED, but populating real scalars exposed a SEPARATE pre-existing analytics/serving layer with 4 defect clusters: (a) RATIO-COMPUTE — VNM ROE=0/ROA=0/EPS=12VND/NetDebt-EBITDA=-7.5e13x; DHG ROA=7,891,932.0% (analyst falsely claimed fixed). Ratios emit 0 or astronomically wrong. (b) BANK-B02-TCTD-SERVING — SHB + EIB get_bctc_full returns 'balance sheet has no decomposition — forced-zero pass suspected'; banks UNSERVABLE despite DONE + committed scalars. (c) PERIOD-SEMANTICS — FPT 2025-Q4 rev=70112.8/NP=11225.5 are FULL-YEAR cumulative labeled 'Q4'; buildComparisonSection then compares cumulative-FY vs next-quarter -> false -82.2% mislabeled 'YoY'. (d) ENTITY-SCOPE — HPG 2025-Q4 is parent-only B01a (rev=0, conf44%) served as the canonical/headline HPG vs consolidated ~140k rev; misleading. PUBLISH-INTEGRITY GAP: NO semantic-sanity publish guard exists in orch-state (the triage-referenced 'Task #13' is NOT present). The BEQ-9/10 reports are now DONE -> flow into chef docs/agents/unified-agent/flow/market-analysis.md + market-analyst -> ROA 7.8M% / false YoY -82% / parent-only-headline CAN reach MARKET unattended. recurring-bug-escalation: BCTC area has >2 fix cycles -> architect root-cause SPIKE, not point-patch. | [dev-team 2026-06-03T11:44Z observation feeding BAL-0/BAL-1] After LF-SERVE-REFLOW recovered FPT Q1 absolute scalars (op_profit/ebitda/cash live-correct), get_bctc_full(FPT) STILL serves garbage DERIVED ratios: current_ratio=41527873060120x (denominator ~0), operating_margin_pct=0.0% (not recomputed from now-correct operating_profit). Confirms the analytics/serving derived-ratio layer is a distinct defect from scalar extraction. BAL-0 publish semantic-sanity gate MUST block current_ratio out-of-range before MARKET/FB; BAL-1 spike should pin the ratio recompute module. Repro: get_bctc_full(code=FPT).",
@@ -4554,7 +4555,12 @@
         "created_by": "po",
         "next_agent": "agent-father",
         "supervised": true,
-        "supervised_reason": "[po 2026-07-16T11:59:19Z] 3rd BOUNDED-1 tick churn converged. next_agent=agent-father is a MAINTENANCE-LANE on-demand-only agent (dev-team main.md L12) that zone-detect (cross-service/ => Tier-3 developer) CANNOT route to; idle auto-launch would mis-route factory work to a generic developer. supervised:true withholds it from BOUNDED-1 so the next tick picks a dev-routable P1 (UC-SDF-P4/UC-GCP-P2/UC-GCP-P4->developer, UC-MDH-P1->dev-mcp-server). Deliberate on-demand dispatch of agent-father (task:on-demand:agent-father:<date> mutex-wrap) only; on execution reconcile that the row cites system-auditor init.md but the flow dir has only main.md/tier1-probe.md. Durable class fix tracked by FIX-DEVTEAM-BOUNDED1-MAINTLANE-NEXTAGENT-GATE."
+        "supervised_reason": "[po 2026-07-16T11:59:19Z] 3rd BOUNDED-1 tick churn converged. next_agent=agent-father is a MAINTENANCE-LANE on-demand-only agent (dev-team main.md L12) that zone-detect (cross-service/ => Tier-3 developer) CANNOT route to; idle auto-launch would mis-route factory work to a generic developer. supervised:true withholds it from BOUNDED-1 so the next tick picks a dev-routable P1 (UC-SDF-P4/UC-GCP-P2/UC-GCP-P4->developer, UC-MDH-P1->dev-mcp-server). Deliberate on-demand dispatch of agent-father (task:on-demand:agent-father:<date> mutex-wrap) only; on execution reconcile that the row cites system-auditor init.md but the flow dir has only main.md/tier1-probe.md. Durable class fix tracked by FIX-DEVTEAM-BOUNDED1-MAINTLANE-NEXTAGENT-GATE.",
+        "po_manual_dispatch_flagged_at": "2026-07-31T00:56:04Z",
+        "po_manual_dispatch_flagged_by": "po (manual-dispatch-sweep)",
+        "po_manual_dispatch_class": "DRS-STRANDED-OFF-ALLOWLIST",
+        "po_manual_dispatch_note": "po (manual-dispatch-sweep) surfaced DRS-STRANDED-OFF-ALLOWLIST candidate — folding into this tick's BATCH",
+        "updated_at": "2026-07-31T00:56:05Z"
       },
       {
         "id": "UC-RDL-P7",
@@ -5590,17 +5596,6 @@
         "type": "DOC",
         "zone": "docs/data/system-map.json + docs/architecture-briefs",
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#FU-RUNTIME-SET-TRUTH-RECONCILE"
-      },
-      {
-        "id": "FU-MACRO-SNAPSHOT-TIER-WORSTOF",
-        "priority": "P3",
-        "size": "XS",
-        "sprint": "DATA-SERVE-INTEGRITY",
-        "status": "BACKLOG",
-        "title": "get_macro_snapshot wrapper source_tier should be worst-of(carry,yield) not carry-only",
-        "type": "FIX",
-        "zone": "apps/mcp-server",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FU-MACRO-SNAPSHOT-TIER-WORSTOF"
       },
       {
         "id": "FDA-5",
@@ -7958,12 +7953,12 @@
         "id": "FIX-COWORK-FIRE-ELECTION-TICK-TOMBSTONE",
         "type": "FIX",
         "size": "S",
-        "priority": "P2",
+        "priority": "P1",
         "status": "BACKLOG",
         "zone": "cross-service/",
         "owner": "po",
         "next_agent": "ba",
-        "plan_only": true,
+        "plan_only": false,
         "sprint": "COWORK-RELIABILITY",
         "created_at": "2026-07-15T21:59:35Z",
         "created_by": "po (triage-signals cow-20260715T214005)",
@@ -7971,7 +7966,9 @@
         "detail_ref": "docs/handoffs/2026-07-15-cowork-tick-refire-election-lock-does-not-span-its-tick.md",
         "title": "COWORK DISPATCH — the P3 fire-election lock cron:cowork:<TICK> is released at end of Step 6, so a re-fire of the SAME nominal tick (arriving after that release window) finds the key free, RE-ELECTS a leader and RE-RUNS the tick. CONFIRMED live 2026-07-15T21:30Z (task_release returned released:1 TWICE on the same key, one session). DISTINCT from FIX-COWORK-DISPATCH-ROUTER-INTENT-MUTEX-BYPASS (peer/two-path/two-session) — this is single-session self-refire; a namespace merge does NOT prevent it.",
         "note": "MINTED 2026-07-15 by po from signal cow-20260715T214005 (defect, MED). ROOT CAUSE: telemetry.md ~L79-93 releases cron:cowork:<TICK> at the END of Step 6 on every exit path -- correct as a leader-lock (must not outlive the tick) but its lifetime is [tick start, tick end], so a re-fire of the same tick that ARRIVES AFTER the release finds the key free and wins. There is NO other per-tick guard and NO re-fire suppression at all. PROOF: released:1 twice on cron:cowork:2026-07-15T21:30Z, same session (pass1 preflight drift 0 / pass2 drift 5, same nominal tick, same tick_id) -- release only reports released:1 if the lock was held, so it was claimed->released->re-claimed->re-released for one tick. WHY THE P1 ROW DOES NOT COVER IT (material triage finding): FIX-COWORK-DISPATCH-ROUTER-INTENT-MUTEX-BYPASS is scoped to router-intent-path vs cowork-slot dispatcher = TWO paths, TWO sessions; THIS instance has no peer and no router -- one session re-entering its OWN tick, same key legitimately released in between, so unifying the namespaces changes nothing. THIRD member of the recurring 'guard released when the work ends' class (feedback_recurring_bug_escalation 2+ -> block): #1 published:<slot>:<key> post-publish -> MARKET dup 932+933 (UC-CCA-P3, P0, peer-owned); #2 cowork-slot:<slot_id> right-after-spawn (FIX-COWORK-DISPATCH-ROUTER-INTENT-MUTEX-BYPASS, P1); #3 THIS cron:cowork:<TICK> at Step 6. Same invariant already established for the chef marker: published=>TOMBSTONE, never release. CHEAPEST CORRECT FIX (ba/architect own HOW): the preflight already computes the nominal tick and already reads pressure-state.json -> compare pressure_state.tick_id == nominal_tick => this tick already ran => SILENT/SUPPRESS, BEFORE the election. One comparison in the script; it would have caught this instance. CAVEAT: emit happens at Step 6, so a tick that DIES before Step 6 is not tombstoned and MUST re-run (desired behaviour, not a bug). COUPLING HAZARD (the real reason it is worth a row despite today's zero damage): guard #3 fails exactly when ticks run long, and long ticks ALSO push pressure-state past its staleness threshold -> legacy mode -> the mode with NO last_fired dedup (feedback_cowork_matcher_legacy_no_lastfired_dedup); the condition that triggers the re-fire is the same condition that removes the only remaining backstop. BLAST RADIUS on a slot-bearing tick = INFERRED, NOT observed (this instance slots:[] one_shots:[], zero harm) -- someone MUST probe before acting (force a same-tick re-fire on a slot-bearing tick in a sandbox, or read the matcher legacy branch for a last_fired comparison). Files: cowork preflight script + docs/agents/cowork-team/flow/telemetry.md (~L79-93, ~L92 comment already anticipates re-entrancy only as a reason the RELEASE no-ops). AC: (1) a re-fire of an already-completed nominal tick is SUPPRESSED before the election (no re-elect, no re-run); (2) a tick that died before Step 6 still re-runs; (3) RAW-verify a forced same-tick re-fire on a slot-bearing tick spawns 0 duplicate agents.",
-        "po_retraction_2026-07-16": "RE-SCOPED OFF P1 per signal cow-20260716T002226 (RAW-confirmed by reporter). The row's COUPLING HAZARD rationale (long ticks -> pressure-state stale -> legacy mode with NO last_fired dedup) is FALSIFIED: the legacy matcher DOES dedup (UC-CDC-P3; ref MEMORY reference_isstale + feedback_cowork_matcher_legacy_no_lastfired_dedup is NAME-OBSOLETE — legacy dedups). With the legacy backstop intact, a same-tick re-fire's blast radius on a slot-bearing tick is bounded, not open. Downgraded P1->P2. Still a real defect (guard #3 'lock released when work ends' class; single-session self-refire) and worth the tombstone fix, but not the P1 it was minted as. plan_only retained."
+        "po_retraction_2026-07-16": "RE-SCOPED OFF P1 per signal cow-20260716T002226 (RAW-confirmed by reporter). The row's COUPLING HAZARD rationale (long ticks -> pressure-state stale -> legacy mode with NO last_fired dedup) is FALSIFIED: the legacy matcher DOES dedup (UC-CDC-P3; ref MEMORY reference_isstale + feedback_cowork_matcher_legacy_no_lastfired_dedup is NAME-OBSOLETE — legacy dedups). With the legacy backstop intact, a same-tick re-fire's blast radius on a slot-bearing tick is bounded, not open. Downgraded P1->P2. Still a real defect (guard #3 'lock released when work ends' class; single-session self-refire) and worth the tombstone fix, but not the P1 it was minted as. plan_only retained.",
+        "po_reescalation_2026-07-31": "RE-ESCALATED P2->P1 + plan_only CLEARED 2026-07-31T00:37Z by po (daily triage, telegram report 4229). The 2026-07-16 retraction downgraded this row because \"BLAST RADIUS on a slot-bearing tick = INFERRED, NOT observed\" and AC-3 demanded someone force a same-tick re-fire on a slot-bearing tick before acting. THAT PROBE HAS NOW HAPPENED IN PRODUCTION, TWICE IN 27H: (1) bctc-analyst-slot-3, 2026-07-30 21:00Z tick, cycle_id 20260730-2100; (2) bctc-analyst-slot-4, 2026-07-31 00:00Z tick, cycle_id 20260731-0000 -- two independent sessions ran the SAME nominal tick in parallel (~00:07-00:16Z and ~00:11-00:20Z), both inside the 00:00-00:14 band so both snap to BOUNDARY_MINUTE=0 => IDENTICAL fire-election key cron:cowork:2026-07-31T00:00Z. OBSERVED blast radius (no longer inferred): 2 duplicate agent spawns, ~9-20min duplicate LLM work each, bctc_signal files for anchor FPT/HPG/VCB overwritten twice with materially-equivalent-but-not-byte-identical content, TWO independent c134 notebook entries written under the same cycle number, duplicate log_agent_work lifecycles (id 1710 + 1712, latter inert). AC-3 is therefore DISCHARGED by production evidence -- no sandbox probe needed, plan_only gate removed. WHY THE OTHER 8 COWORK ROWS DO NOT COVER IT (re-verified this tick): FIX-GUARANTEED-SLOT-DUAL-PLANE-DOUBLE-FIRE is scoped to guaranteed:true slots and ALL FOUR bctc-analyst slots are guaranteed:false (verified in docs/data/cowork-schedule.json); FIX-COWORK-DISPATCH-ROUTER-INTENT-MUTEX-BYPASS + FIX-ROUTER-COWORK-SLOT-DEMAND-DISPATCH-BLIND are router-intent-path defects and this was an unattended 00:00Z cron tick with no router in the loop; FIX-COWORK-SIBLING-WINDOW-CACHE-FAIL-OPEN needs a get_agent_signals transport failure, not present. WHY THE THREE EXISTING GUARDS ALL MISSED (all read at source this tick, not inferred): (g1) cowork-slot:<slot_id> task_claim TTL=180s is released right after each spawn attempt per slot-claim.md L12-18 -- its own header states it \"does NOT provide cross-tick dedup\"; (g2) isSuppressedByBoundaryDedup (scripts/agents-flow/cowork-match-slots.js L99-105) suppresses iff lastFiredUnix >= snapToCronBoundary(now,cron), but last_fired for slot-4 was still 2026-07-30T00:2xZ when the re-fire evaluated -- the stamp did not land until 00:22:30Z, AFTER both spawns, so the predicate was structurally blind for the whole job duration; (g3) the published-marker task_claim lives in stage-log-notify.md step 5d-1 i.e. the LAST stage, claimed at 00:15:49Z (~8m46s into session A) -- it correctly suppressed the DUPLICATE POST but by construction cannot prevent the duplicate WORK. LANDMINE IN THIS ROWS OWN PROPOSED FIX -- READ BEFORE IMPLEMENTING: the \"CHEAPEST CORRECT FIX\" above says compare pressure_state.tick_id == nominal_tick. THOSE TWO FIELDS HAVE DIFFERENT FORMATS AND THE COMPARISON IS ALWAYS FALSE: docs/data/pressure-state.json tick_id is second-precision (\"2026-07-31T00:45:00Z\") while leader-lock.md L40 builds TICK at minute precision with no seconds (\"2026-07-31T00:00Z\"). Implemented literally, the tombstone would never fire, the fix would ship green and suppress nothing. Normalise one side explicitly and assert the comparison is TRUE in a positive-control test -- do not let a passing suite mean an unexercised predicate. AC unchanged otherwise; AC-3 now re-reads as: regression-verify against the two recorded 07-30/07-31 incidents rather than a fresh sandbox re-fire.",
+        "updated_at": "2026-07-31T00:55:57Z"
       },
       {
         "id": "FIX-COVERAGE-STATE-CROSS-AGENT-LOST-UPDATE",
@@ -18419,9 +18416,30 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-31T00:37:41Z",
-    "last_triaged_by": "dev-team/po-batch-dispatch-20260731T0016Z",
-    "in_progress": []
+    "last_triaged_at": "2026-07-31T00:47:01Z",
+    "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
+    "in_progress": [
+      {
+        "id": "FU-MACRO-SNAPSHOT-TIER-WORSTOF",
+        "priority": "P3",
+        "size": "XS",
+        "sprint": "DATA-SERVE-INTEGRITY",
+        "status": "IN_PROGRESS",
+        "title": "get_macro_snapshot wrapper source_tier should be worst-of(carry,yield) not carry-only",
+        "type": "FIX",
+        "zone": "apps/mcp-server",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FU-MACRO-SNAPSHOT-TIER-WORSTOF",
+        "promoted_at": "2026-07-31T00:47:01Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=3)",
+        "updated_at": "2026-07-31T00:55:38Z",
+        "claimed_at": "2026-07-31T00:47:17Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "dispatched_to": "dev-mcp-server",
+        "dispatch_note": "developer team-lead 2026-07-31T00:55:38Z: zone verdict apps/mcp-server/ (system-map.json zone table + dev-mcp-server/init.md \"All code changes within apps/mcp-server/ only\", zone_restricted) — routed to dev-mcp-server per zone_dispatch, not implemented here. Target: apps/mcp-server/src/interface/mcp/tools/macro/macroTools.ts:480-481, sourceTier = data?.signals?.carry?.source_tier ?? 2. Fix: max() over ALL PRESENT signal components source_tier (carry + yield at minimum), excluding absent components from the max (do not default a missing one to tier 0/best-case). GOTCHA: apps/mcp-server/src/__tests__/1881a-source-tier.test.ts shared beforeAll fixture already has carry.source_tier=2 + yield.source_tier=4 — its own get_macro_snapshot assertions (L243, L360-369) currently pass on the pre-fix under-report and MUST be updated to expect 4, or theyll false-green this exact bug. AC(b) carry-only case needs a fresh fetch-mock fixture without signals.yield.",
+        "updated_by": "developer"
+      }
+    ]
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
