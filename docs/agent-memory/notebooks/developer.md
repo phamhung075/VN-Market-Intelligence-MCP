@@ -1,6 +1,20 @@
 # Developer — Notebook
 
-**Last updated:** 2026-07-30 | **Cycle:** FIX-DECISION-JOURNAL-SKILL-CAPCHECK-LINE-ONLY-NO-BYTE-ROLLOVER
+**Last updated:** 2026-07-31 | **Cycle:** FU-MACRO-SNAPSHOT-TIER-WORSTOF
+
+## Session 2026-07-31 — FU-MACRO-SNAPSHOT-TIER-WORSTOF (sprint DATA-SERVE-INTEGRITY, router-dispatched, zone `apps/mcp-server/`) — IN_PROGRESS, routed to dev-mcp-server (not implemented here)
+
+**Task:** BOUNDED-1 auto-pickup. Backlog desc: `get_macro_snapshot` wrapper derives `source_tier` from `signals.carry.source_tier ?? 2` only (commit `260655e3`) — DSI-INV-1 worst-of honesty requires `max()` over all PRESENT signal components (carry + yield, etc.), not carry-only, since a tier:4 `yield.earningYield` fixture can sit under an envelope mislabeled tier:2.
+
+**Zone check (Step 0, mandatory before any code):** target file `apps/mcp-server/src/interface/mcp/tools/macro/macroTools.ts` (handler `get_macro_snapshot`, lines 480-481) lives under `apps/mcp-server/` — `system-map.json` zone table + `dev-mcp-server/init.md` ("All code changes within apps/mcp-server/ only", `zone_restricted: apps/mcp-server/`) both name dev-mcp-server, not generic developer. Did not write any implementation code — dispatched instead, per Step 0 rule.
+
+**Pre-analysis handed to dev-mcp-server (not implemented):** Fix = `sourceTier = max(...present component tiers)`, excluding absent components (don't default a missing component to tier 0/best-case) — read `data?.signals?.carry?.source_tier` and `data?.signals?.yield?.source_tier` (both `1|2|3|4`), take the max of whichever are `!== undefined`. **Gotcha:** `apps/mcp-server/src/__tests__/1881a-source-tier.test.ts`'s shared `beforeAll` fetch mock already fixtures `carry.source_tier=2` + `yield.source_tier=4` for ALL its tests — its own `get_macro_snapshot` assertions (L243 `expect(parsed.source_tier).toBe(2)`, L360-369 firstKey-only check) currently pass on the pre-fix under-report and MUST be updated to expect `4` once worst-of lands, or they'll false-green the exact bug this task fixes. AC(b) (carry-only, yield absent) needs its own fetch-mock fixture that omits `signals.yield` entirely — the shared 1881a fixture always includes it.
+
+**Actions taken:** appended `dispatched_to`/`dispatch_note` to `task_board.in_progress[FU-MACRO-SNAPSHOT-TIER-WORSTOF]` (row stays `in_progress[]`, status unchanged), `.head.next_agent` → `dev-mcp-server` (was `developer`), via `scripts/orch-apply.sh`. Decision journal: `sprint-DATA-SERVE-INTEGRITY-developer.md` STEP developer-S1.
+
+**Scope discipline:** did not touch `macroTools.ts` or any `apps/mcp-server/` source file. No handoff doc exists for this BOUNDED-1-sourced thin backlog row (desc came from `backlog-detail.json` directly) — none created, routing recorded on the board row itself instead.
+
+**Zone note:** no MCP/gateway tool grant this session (Read/Edit/Write/Bash only) — could not `task_release`/`send_telegram`; flagged for the coordinating dev-team router session (`64c7c677-0f0f-4cee-a3ce-dba79d70b7ae`) to spawn `dev-mcp-server` next and release `task:FU-MACRO-SNAPSHOT-TIER-WORSTOF` on completion.
 
 ## Session 2026-07-30 — FIX-DECISION-JOURNAL-SKILL-CAPCHECK-LINE-ONLY-NO-BYTE-ROLLOVER — REVIEW
 
@@ -26,18 +40,3 @@
 
 **Zone note:** No MCP/gateway tool grant this session (Read/Edit/Write/Bash only) — could not `task_release`/`send_telegram`; flagged for the coordinating dev-team session (`owner_client_session=64c7c677-0f0f-4cee-a3ce-dba79d70b7ae`) to release any outer claim and notify on my behalf.
 
-## Session 2026-07-30 — FIX-COMMIT-SWEEP-GUARD-SCRIPT-ACTUATOR-AND-NOTEBOOK-LONGTAIL — REVIEW
-
-**Task:** dev-team BOUNDED-1 idle-capacity auto-pickup (`cross-service/`), two arms. Arm 1: `dev-team-tick-preflight.sh:454-455` bare `git commit` (2x/hourly actuator). Arm 2: 31-file `chore(memory/<agent-id>)` notebook-commit long-tail, deferred by an agent-father completion note to "a separate PM-tracked cleanup pass" that was never minted onto the board.
-
-**Actions:** Arm 1 — RAW-checked the live file BEFORE implementing (per `feedback_known_failure_shape_pattern_matched_without_reading_call_order`): already fixed pre-existing by commit `fc8a8d4f1` (6h after PO's own measurement this task was minted from). No code change — re-doing it would be pure churn. Arm 2 — found the deferred note (`agent_father_completion_20260729` field on the LAYER2 row, not `po_closure_20260730`), grepped `docs/agents/`+`.claude/skills/` for `chore(memory` sites: 34 total, 3 already pathspec-scoped, 31 genuinely bare — exact match to PO's count. Implemented directly (mechanical, identical pattern to the 3 already-fixed reference sites) rather than minting a new row: appended `-- <exact own path(s)>` to all 31, backslash-continuation form for the 4 multi-path sites, shell-glob `docs/signals/processed/*` for `unified-agent/chef.md` (architecture brief §2.3 forbids literal directory pathspecs on the commit line).
-
-**Decisive finding:** `docs/agents/bctc-analyst/flow/stage-log-notify.md` had an unrelated peer-written unstaged hunk mid-task. Isolated my hunk via `git apply --cached` (verified staged==mine, unstaged==peer's), then ran the mandated `git commit -- <path>` anyway swept BOTH hunks into one commit — reproduced cleanly in a scratch repo: `git commit -m ... -- <path>` uses git's own `--only`-when-pathspec-given semantics, reading the WORKING TREE (not the index) for the named path. Pathspec-scoped single-file commits — the exact pattern this whole sweep-guard family ships as "safe" — do NOT protect against same-file intra-file hunk sweep, only cross-file peer-staged sweep. Not destructive (content fully recoverable, `git show 2f16eea16`), but flagged to PO as load-bearing for the fleet-wide `GIT_SWEEP_GUARD_MODE=reject` decision.
-
-**Verification:** `scripts/audits/verify-commit-sweep-discriminator.sh` VERDICT PASS (git 2.49.0); `scripts/git-hooks/pre-commit.test.sh` 6/6 PASS; `bash -n` clean on the (unchanged) preflight script; post-fix re-grep of all 34 sites confirms 0 bare remain. No `apps/` TS/Go touched (zone `cross-service/`, pure md+bash+jq) — `bun test`/`tsc` N/A.
-
-**Board:** `task_board.in_progress[FIX-COMMIT-SWEEP-GUARD-SCRIPT-ACTUATOR-AND-NOTEBOOK-LONGTAIL]` → `review` (`next_agent: po` — parent-close + same-file-sweep-gap judgment call), lane-moved `in_progress[]→review[]`, `.head` reset to idle, same `orch-apply.sh` write.
-
-**Also flagged, out of this row's scope, not fixed:** `docs/agents/tools/package/cowork-refactory-expert.md:57` has a distinct bare-commit-with-directory-add example (`git add .claude/cowork/ && git commit -m "..."`) — different message shape, not part of the 31/34-count grep, not named in either arm; left untouched per "never touch files outside assigned task scope."
-
-**Zone note:** No MCP/gateway tool grant this session (Read/Edit/Write/Bash only) — could not `task_release`/`send_telegram`; flagged for the coordinating dev-team session (`owner_client_session=64c7c677-0f0f-4cee-a3ce-dba79d70b7ae`) to release `task:FIX-COMMIT-SWEEP-GUARD-SCRIPT-ACTUATOR-AND-NOTEBOOK-LONGTAIL` on my behalf.
