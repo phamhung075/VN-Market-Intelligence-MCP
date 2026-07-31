@@ -48,13 +48,28 @@ AUD-ND-1 regression history:
 
 **Step 0b — Read notebook** → skill: `.claude/skills/notebook-read/SKILL.md` (replace `<agent-id>` with `system-auditor`)
 
-**Step 0c — Load system-map.json** — lazy-load trigger: `runtime_or_fetch_or_db_audit`. Read `docs/data/system-map.json` and extract:
-- `project.microservices[]` → service ids, external_ports, zones (full catalog — for health endpoint ports and zone_owner lookup)
-- `project.infrastructure.docker.host_runtime_set.services[]` → **INTENDED runtime set** — the only set used for container-UP checks in Tier-1. Services NOT in this list are not deployed by design and MUST be reported INFO/grey, never CRITICAL/WARN.
-- `project.infrastructure.docker.host_runtime_set.not_deployed_by_design[]` → cross-check list for INFO labelling
-- `project.data_sources[]` → source ids, expected_cadence_hours, stale_threshold_hours, geo_blocked
-- `project.infrastructure.databases[]` → DB ids, paths
-- `project.zones[]` → zone id → specialist (zone_owner)
+**Step 0c — Load system-map.json** — lazy-load trigger: `runtime_or_fetch_or_db_audit`. Do NOT full-read `docs/data/system-map.json` (1757L / ~50.6KB, ~12.7k tok) — this agent only ever consumes 6 key-paths out of it. `jq`-project just those (~2k tok), same read-only SSOT, per `.claude/skills/system-map-query/SKILL.md`:
+
+```bash
+jq -c '{
+  microservices: [.project.microservices[] | {id, external_port, zone}],
+  host_runtime_set: .project.infrastructure.docker.host_runtime_set.services,
+  not_deployed_by_design: .project.infrastructure.docker.host_runtime_set.not_deployed_by_design,
+  data_sources: [.project.data_sources[] | {id, expected_cadence_hours, stale_threshold_hours, geo_blocked}],
+  databases: [.project.infrastructure.databases[] | {id, path}],
+  zones: [.project.zones[] | {id, specialist}]
+}' docs/data/system-map.json
+```
+
+Field semantics (unchanged from the prior full-read — projection only, no consumption change):
+- `microservices[]` → service ids, external_ports, zones (full catalog — for health endpoint ports and zone_owner lookup)
+- `host_runtime_set` → **INTENDED runtime set** — the only set used for container-UP checks in Tier-1. Services NOT in this list are not deployed by design and MUST be reported INFO/grey, never CRITICAL/WARN.
+- `not_deployed_by_design` → cross-check list for INFO labelling
+- `data_sources[]` → source ids, expected_cadence_hours, stale_threshold_hours, geo_blocked
+- `databases[]` → DB ids, paths
+- `zones[]` → zone id → specialist (zone_owner)
+
+Fail-loud fallback: `jq` unavailable → read `docs/data/system-map.json` directly (full file) and extract the same 6 key-paths by hand.
 
 ---
 

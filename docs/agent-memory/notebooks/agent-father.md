@@ -61,3 +61,22 @@
   (`ORCH_APPLY_LIVE_FILE_OVERRIDE`) — TODO reproduces the Stage 1b abort, BACKLOG passes and lands.
 - Did NOT touch `orch-apply.sh`/`orchStateSchema.ts` (explicit out-of-scope) or `orch-state.json`
   (`commit_zone.excluded`) — board flip left to dev-team. Commit `cb6ba9567`.
+
+## Clean (router-dispatched, PO manual-dispatch DRS-STRANDED-OFF-ALLOWLIST) 2026-08-01T00:00:00Z TE-T14
+- `docs/agents/system-auditor/flow/main.md` Step 0c was prose `Read docs/data/system-map.json and
+  extract:` + a 6-bullet key-path list underneath — the bullets never actually gated the Read, so
+  the step full-read the whole 1757L/~50.6KB file (~12.7k tok) every `runtime_or_fetch_or_db_audit`
+  cycle regardless. Rewrote as a single `jq -c` projection over the same 6 key-paths (microservices
+  id/external_port/zone, host_runtime_set.services + not_deployed_by_design, data_sources
+  cadence/threshold/geo_blocked, databases id/path, zones id/specialist) → ~4.8KB/~1.2k tok, plus a
+  `jq`-unavailable fail-loud fallback (full-read same paths by hand).
+- Verified live before writing: grepped real field names off the file (`external_port` singular,
+  not the row's paraphrased `external_ports`) rather than trusting the task description's bullet
+  text; ran the exact jq command against the live file post-edit — exit 0, all 6 arrays populated
+  (11/12/0/28/7/12). Grepped fleet-wide for `Step 0c` and `jq.*system-map.json` callers — no other
+  file references this step's old prose shape, no cascade edit needed.
+- Did NOT touch `orch-state.json` (`in_progress[]→review[]` lane-move) — own init.md
+  `commit_zone.excluded` names it "NEVER in agent-father commits except the ONE allowed
+  signal-queue DONE-mark", and this is a task_board row, not signal_queue. Same precedent as
+  TE-T12/S16: declined the dispatch prompt's instruction to run `orch-apply.sh` myself; supplied
+  the exact transform in RETURN for dev-team/router to apply.

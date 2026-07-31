@@ -333,3 +333,37 @@ touch `orch-state.json` — `commit_zone.excluded` honored; board flip left
 to dev-team per this task's own routing note. (Renumbered S15→S16 at
 merge — this worktree branched from the same parent as the TE-T12 agent's
 worktree and independently minted its own S15; TE-T12's landed first.)
+
+### STEP agent-father-S17 · agent-father · 2026-08-01T00:00:00Z
+**task-id:** TE-T14
+**what-done:** `docs/agents/system-auditor/flow/main.md` Step 0c rewritten
+— was prose `Read docs/data/system-map.json and extract:` (imperative
+full-Read despite the 6-bullet key-path list underneath, ~50.6KB/~12.7k
+tok). Now a single `jq -c` projection over the exact same 6 key-paths
+(microservices id/external_port/zone, host_runtime_set.services,
+host_runtime_set.not_deployed_by_design, data_sources cadence/threshold/
+geo_blocked, databases id/path, zones id/specialist) → ~4.8KB/~1.2k tok
+output, verified live against the real file (`jq` exit 0, all 6 arrays
+non-empty: 11/12/0/28/7/12 rows). Added a `jq`-unavailable fail-loud
+fallback line (full-read same 6 paths by hand) so the step degrades, not
+breaks.
+**what-considered:**
+- Field selection: mirror the row's literal bullet prose (`external_ports`
+  plural, no `used_by`) vs. the file's real field names — chose real
+  names: live schema has `external_port` (singular) not `external_ports`;
+  grepped `.project.microservices[0]|keys` / `.databases[0]|keys` before
+  writing the filter rather than trusting the row's paraphrase.
+- Pretty vs compact (`-c`) jq output — chose `-c`: compact cut the
+  projection from ~6.9KB to ~4.8KB with zero information loss, closer to
+  the row's own ~2k tok estimate.
+**why-decision:** Read-only projection of the same SSOT, no semantic
+change to what system-auditor consumes (row's own framing) — verified by
+diffing field lists 1:1 against the pre-edit bullet list before replacing
+it, not by re-deriving them from memory.
+**why-change:** none — scope was exactly the one Step 0c block; grepped
+`Step 0c` and `jq.*system-map.json` fleet-wide first, no other caller
+references this step's old prose shape, so no cascade edit needed. Did
+not touch `orch-state.json` (`in_progress[]→review[]` lane-move) —
+`commit_zone.excluded` honored per S16/TE-T12 precedent; exact
+`orch-apply.sh` transform supplied in RETURN for dev-team/router to
+apply.
