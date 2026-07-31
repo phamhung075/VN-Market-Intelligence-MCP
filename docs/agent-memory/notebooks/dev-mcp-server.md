@@ -1,15 +1,5 @@
 # dev-mcp-server -- Notebook
 
-## 2026-07-31 — FACTORY-DOMAIN-extract-sla-config (BOUNDED-1 auto-pickup, P3/M) → REVIEW, next_agent=qa
-
-**Session:** 64c7c677-0f0f-4cee-a3ce-dba79d70b7ae. Moved `SignalType`/`SignalSlaConfig`/`DEFAULT_SLA_CONFIG` out of `freshnessSlaChecker.ts` (966L) into a new sibling pure-data file `domain/services/freshnessSlaConfig.ts` (194L, `size-justification: ~180L` header) — mirrors the existing split-file precedent (`alertThresholds.ts`, `macroThresholds.ts`, `newsNormalizerTables.ts`). `freshnessSlaChecker.ts` (now 814L) imports the 3 names for local use and re-exports them unchanged so every existing import path (domain barrel, SLA MCP tools, the freshness monitor scheduler job, all 14 SLA test files) keeps working with zero call-site changes; behavior byte-identical (config table entries untouched, same order/values).
-
-**Deviation from the backlog approach note:** did NOT use `packages/shared-config/slaConfig.ts` (the note's primary suggestion) — that package currently has 0 real importers repo-wide and is tracked separately for a wire-or-prune decision (`FACTORY-SHARED-wire-or-prune-shared-packages`, `docs/data/shared-package-import-baseline.json`); it also sits outside `apps/mcp-server/`, this agent's zone boundary. Used the note's own explicitly-sanctioned alternative: "(or a freshness/config.ts)".
-
-**Fixed 1 brittle test:** `234-vps-health-sla.test.ts` AC-9 checked the exact literal substring `"export type SignalType"` — broke on the (equally valid) re-export syntax. Updated the assertion to check the new re-export line; AC-9's real intent (zero infrastructure imports, SignalType still exported) is unaffected.
-
-**Evidence:** `bun tsc --noEmit` clean. Targeted SLA suite (14 files): 212/212 pass. `size-lint-justification.sh --check` PASS on both touched files. `gen-project-stats.ts --dry-run`: toolCount=183, cronJobCount=88 — unchanged. Fresh server boot (PORT=3099): `/health` toolCount=183, 90 cron keys registered, zero import errors. Full `bun test`, 2 independent runs: 14988/14995 pass, 59/52 fail (1/0 error) — grep-confirmed ZERO SLA/freshness/SignalType/config matches in either fail list (pre-existing FIX-MCP-SUITE-HEALTH-BASELINE order-dependent red). DJ: sprint-COWORK-GUARANTEED-SLOT-CATCHUP-dev-mcp-server-2.md S49.
-
 ## 2026-07-31 — FIX-CI-SIZELINT-VPSPROXYSTALENESS-REGRESSION-123L (BOUNDED-1 auto-pickup) → REVIEW, next_agent=qa
 
 **Session:** 64c7c677-0f0f-4cee-a3ce-dba79d70b7ae. CI `size-lint` RED on origin/main for 3 consecutive runs: `b08045ef0` (FIX-VPS-NEWS-STALE-FALSEPOS, news-interval recalibration 10min->20min + widened `isStale`) grew `vpsProxyStaleness.ts` 111L -> 123L, and — same file's own docblock says it was split out under FIX-CI-SIZELINT-MCPSERVER-SIX-UNCOVERED-OFFENDERS AC-4 *specifically* to stay under the 120L cap — the size-lint CI guard was never in that merge's RAW-verification set (CODE/TEST/DB planes only), so a green-verified merge shipped a guaranteed-RED gate.
@@ -29,3 +19,11 @@ Zone health: tsc clean, tool/scheduler counts unchanged (183/88), 3 files touche
 **Evidence:** `bun tsc --noEmit` clean. Targeted suite (10 files covering all 5 changed files): 120/120 pass. Fresh boot (PORT=3099): toolCount=183, zero import errors. `gen-project-stats.ts --dry-run`: toolCount=183, cronJobCount=88 unchanged. Full `bun test`, 2 runs: 14988/14995 pass, 59/52 fail — both inside the documented FIX-MCP-SUITE-HEALTH-BASELINE band (S49/S50); grep-confirmed zero matches for any of the 5 filenames in either fail list. Commit `3a0619464`. DJ: sprint-COWORK-GUARANTEED-SLOT-CATCHUP-dev-mcp-server-2.md S51.
 
 Zone health: tsc clean, tool/scheduler counts unchanged (183/88), 6 files touched (5 code + 1 doc) | HEALTHY.
+
+## 2026-07-31 — FACTORY-SCHEDULER-split-bctcReparseJob (BOUNDED-1 auto-pickup, P3/S) → REVIEW, next_agent=qa
+
+**Session:** 64c7c677-0f0f-4cee-a3ce-dba79d70b7ae. Named the 2 inline PDF-quality magic numbers in `bctcReparseJob.ts` as `MIN_PDF_TEXT_CHARS=100`/`MIN_PDF_CONFIDENCE=0.3` (4+2 occurrences across the Tier 1a/1b/2/3 extraction gates) and extracted the `agent_feedback` escalation for-loop out of `runBctcReparseJob` into a new module-private `processStrandedFeedback(db, rows, reparse, notify, fileExistsFn)` helper — pure mechanical naming/extraction, resolved threshold values and side-effect ordering/log messages unchanged byte-for-byte. Original 2026-06-15 audit finding's broader-split premise was overstated per this task's own scoping note (`reparseSingleWithOcrFallback` already DI'd/pure; oversize covered by a separate zone-wide cap task) — out of scope here. `processStrandedFeedback` kept module-private: no existing test imports an internal loop function, all 21 importing test files hit only the public exports.
+
+**Evidence:** `bun tsc --noEmit` clean. Targeted suite (21 test files importing `bctcReparseJob.ts`): 195/196 pass (1 pre-existing skip), 0 fail, 693 expect() calls. `gen-project-stats.ts --dry-run`: toolCount=183, cronJobCount=88 — unchanged. Full `bun test` (single run): 14989 pass / 58 fail / 2 errors / 40 skip — within the documented 14988-14995 pass, 52-59 fail FIX-MCP-SUITE-HEALTH-BASELINE band (S49/S50/S51); the 2 visible errors are freshnessSlaMonitorJob/OHLCV-aggregator/orchStateSchema — unrelated. REBUILD_REQUIRED=true. Commit `f0a622472`. DJ: sprint-COWORK-GUARANTEED-SLOT-CATCHUP-dev-mcp-server-2.md S52.
+
+Zone health: tsc clean, tool/scheduler counts unchanged (183/88), 1 file touched (bctcReparseJob.ts) | HEALTHY.
