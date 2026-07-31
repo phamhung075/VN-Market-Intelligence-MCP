@@ -93,12 +93,11 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "FIX-SWEEPGUARD-ESCALATION-RETROACTIVE-COUNTER-AND-SESSION-SCOPED-ACTOR",
-    "next_agent": "developer",
-    "next_action": "BOUNDED-1 auto-pickup claim of FIX-SWEEPGUARD-ESCALATION-RETROACTIVE-COUNTER-AND-SESSION-SCOPED-ACTOR — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
-    "updated_at": "2026-07-31T02:23:09Z",
-    "updated_by": "dev-team (bounded-1 auto-pickup)"
+    "status": "idle",
+    "updated_at": "2026-07-31T02:40:15Z",
+    "updated_by": "developer",
+    "active_task_id": null,
+    "next_agent": null
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -4999,35 +4998,6 @@
         "mode": "spike",
         "timebox": 240,
         "next_agent": "ba"
-      },
-      {
-        "id": "TE-T11",
-        "title": "T-11 Wire step-0-cowork composite into the 11 flows still double-loading bootstrap+regime (ZERO adoption) [~55-160k tok/day]",
-        "owner": "agent-father",
-        "status": "BACKLOG",
-        "type": "CLEAN",
-        "size": "S",
-        "priority": "P1",
-        "wave": 2,
-        "est_saving": "~55-160k tok/day",
-        "zone": "docs/agents/",
-        "sprint": "TOKEN-ECONOMY-AUDIT",
-        "depends": [],
-        "detail_ref": "docs/architecture-briefs/2026-07-12-token-economy-lazyload-audit.md#T-11",
-        "note": "Composite skill shipped (Sprint 1968c-P02) but grep shows 0 flow adopters. Per-flow one-line swap replacing cycle-bootstrap+regime-extraction reads with step-0-cowork usage line. 11 mechanical edits under agent-md-factory discipline; composite embeds same GATEWAY-BLIND + regime-fallback boundaries.",
-        "audit_ref": {
-          "audit": "ultracode-2026-07-12",
-          "verdict": "cowork-cycle-agents-P1 rider (UC-CCA-P1-GWBLIND-DEDUP)",
-          "note": "Amend DoD text: composite POINTERS to cycle-bootstrap Error handling SSOT (not 'embeds the same GATEWAY-BLIND boundaries'). UC-CCA-P1-GWBLIND-DEDUP is dep-gated on this row.",
-          "ref": "docs/architecture-briefs/2026-07-12-ultracode-workflow-improvement-audit.md#cowork-cycle-agents-P1"
-        },
-        "next_agent": "agent-father",
-        "po_routing_ruling_20260721": "PO ARTIFACT-CLASS ROUTING RULING 2026-07-21T18:42Z. Rule: routing follows ARTIFACT CLASS, not directory. Any row whose deliverable is instruction-prose that an agent LOADS AND EXECUTES — .claude/agents/**, docs/agents/** (init/flow/knowledge/tools-package), .claude/skills/**/SKILL.md — routes to agent-father. Executable code (apps/**, scripts/**), codegen-from-registry, and data/root-config (docs/data/**, CLAUDE.md) route to zone-matched dev-* or developer. Rationale: for this system a flow doc IS the executable source; agent-father is already sole owner of agent-file lifecycle (dispatch/SKILL.md:48) and of NEW cron skill files (:50), and board precedent has 5/5 pre-existing docs/agents/ rows routed to agent-father/agents-architect/po and 0 to developer. Precedent for SKILL.md specifically: docs/signals/processed/dev-team-20260716T102429Z-autolaunch-safety-hold-uc-asl-p6.json already routed a signal-dashboard SKILL.md edit to agent-father as 'the factory rule'. ROOT CAUSE this closes: .claude/skills/zone-detect/SKILL.md resolves ONLY dev-<service> (Tier-1/2, needs apps/<service>/-shaped zone) or generic developer (Tier-3 fallback) — it has NO path to agent-father, so any docs/agents/ or .claude/skills/ row reaching execute-tier with next_agent unset gets the 'developer' placeholder and mis-routes. EXPECTED SIDE EFFECT (do NOT 'fix' this): next_agent=agent-father does not match the dev-role pattern ^dev(-|$)|^developer$, so the BOUNDED-1 NON-DEV-NEXT_AGENT gate (dev-team/flow/main.md:518) now WITHHOLDS these rows from unattended idle auto-pickup. That is the intended outcome — they require deliberate router dispatch to agent-father, not silent promotion to a generic developer.",
-        "updated_at": "2026-07-31T02:19:23Z",
-        "po_manual_dispatch_flagged_at": "2026-07-31T02:12:46Z",
-        "po_manual_dispatch_flagged_by": "po (manual-dispatch-sweep)",
-        "po_manual_dispatch_class": "DRS-STRANDED-OFF-ALLOWLIST",
-        "po_manual_dispatch_note": "po (manual-dispatch-sweep) surfaced DRS-STRANDED-OFF-ALLOWLIST candidate — folding into this tick's BATCH"
       },
       {
         "id": "TE-T12",
@@ -10987,39 +10957,6 @@
         "baseline_pass": null,
         "desc": null,
         "status_note": "[po 2026-07-31T02:27:29Z] P3->P0. size-lint CONJUNCTION 3/3. Re-confirmed at run 30598372356 (head 40dfb1f9): extraction_engine.py baseline=208 actual=237 upper=228, byte-identical to the CI-RED-8e1e66e5 observation 54min earlier - zero drift. Smallest of the 8 offenders. Siblings: FIX-CI-SIZELINT-MACRO-VMT-LIQUIDITY-RESOLVERS-NEW-OFFENDER, FIX-CI-SIZELINT-MCPSERVER-SIX-UNCOVERED-OFFENDERS. Escalated with the cluster: at P3/idx 372 it was the single lowest-ranked row on the board, so the conjunction had a guaranteed-unreachable member."
-      },
-      {
-        "id": "FIX-SUBAGENT-BRANCH-CHECKOUT-HIJACKS-SHARED-WORKING-DIR",
-        "type": "FIX",
-        "size": "M",
-        "priority": "P1",
-        "status": "BACKLOG",
-        "zone": "cross-service/",
-        "owner": "architect",
-        "next_agent": "architect",
-        "supervised": false,
-        "plan_only": false,
-        "created_by": "po/triage-20260731T0212",
-        "created_at": "2026-07-31T02:12:46Z",
-        "updated_at": "2026-07-31T02:19:23Z",
-        "origin_signal_id": "dev-20260731T020908",
-        "dedup_key": "git-isolation:shared-working-dir|symptom:branch-checkout-hijacks-peer-commits",
-        "verification_gate": "live_two_agent_concurrent_branch_scenario_no_cross_attribution",
-        "title": "Every subagent shares ONE git working directory + ONE HEAD: any agent that honours a `branch:` field (e.g. a PM handoff) checks out that branch in the shared checkout, and every concurrent peer's commits silently land on it. 4 independent hits on 2026-07-31 alone; zero board rows existed.",
-        "root_cause": "STRUCTURAL, not behavioural. There is no worktree/checkout isolation between agents — all agents (router, dev-team, pm, po, developer, architect, agents-architect, qa) operate on the same `$PROJECT_ROOT` and therefore the same `.git/HEAD`. `git checkout <branch>` is a process-global mutation of shared state with no lock, no claim and no TTL, so it is not serialisable against peers the way the index is (the index at least has `index.lock` + the Layer-0 sweep guard). CLAUDE.md's `NO branches — all work stays on main` invariant is the only thing holding the system together, and it is enforced by prose alone: nothing structurally prevents a `branch:` field from appearing in a PM handoff / task row and being obeyed. Note this is the SIBLING hazard to the shared-INDEX sweep (FIX-COMMIT-PATH-PEER-INDEX-SWEEP-GUARD family, 6 rows, Layer-0 hook shipped): same shared-working-dir root, different shared resource (HEAD vs index), and the sweep-guard hook is structurally blind to it because it only inspects $GIT_INDEX_FILE shape, never HEAD.",
-        "evidence": "dev-team signal `dev-20260731T020908` (signal_queue, status READ, minted by commit 3b20fc8c9): '4x today: subagents share dev-team's git checkout (no worktree isolation); a branch checkout (e.g. PM handoff's branch: field) hijacks peer commits.' The 4 named incidents that tick: dev-team's own stray commit, agents-architect's stray commit, the FIX-COWORK-FIRE-ELECTION-TICK-TOMBSTONE developer originating the branch, and the head-stamp developer's stash-pop failure. Independently corroborated by project memory `feedback_subagent_branch_checkout_hijacks_shared_working_dir` ('dev-team's own commits land on a subagent's branch; recover via isolated worktree, never checkout main mid-subagent-edit') — the hazard has been KNOWN and carried as tribal memory + ad-hoc recovery, never as a board row. 4 occurrences in one day clears the recurring-bug bar (>=2) by a factor of 2.",
-        "ac": "(AC-1) Name the enforcement layer and make it STRUCTURAL, not prose. The prose invariant already exists in CLAUDE.md and did not prevent 4 hits — a 5th doc sentence is a rejection. Candidate layers to evaluate explicitly, choosing and justifying one: (a) a `pre-checkout`-equivalent guard (git has no pre-checkout hook — say so if rejecting, do not silently assume one exists) e.g. a wrapper/alias or a `post-checkout` hook that hard-reverts + fail-louds any move off `main`; (b) real per-agent `git worktree` isolation; (c) a schema-level ban on the `branch:` field in task rows / PM handoffs so the trigger can never be authored. (AC-2) Whatever layer is chosen MUST be reachable by agents that have no MCP grant — the same reason the sweep guard was pushed down to a git hook (`docs/policies/dev-standards.md` CANONICAL sweep-guard entry): a skill-level or flow-doc-level fix can be improvised around, and 4/4 of these incidents were improvised behaviour, not doc-following. (AC-3) DEDUP/RECONCILE — do NOT mint a 3rd overlapping row. Two adjacent rows already exist and this row must explicitly state its boundary against both, in writing, before implementing: `UC-RDL-P7` (BACKLOG, next=po — 'Reconcile branch policy across the FULL branch lifecycle with the main-only invariant') owns the POLICY; `SPIKE-C44-PARALLEL-PROOF` (BACKLOG — 'two developer agents in worktrees on disjoint zones, no shared-index race -> lift sequential mandate') is the permission-WIDENING spike and shares the worktree mechanism this row may want to use as its fix. If the chosen fix is (b) worktree isolation, SPIKE-C44 becomes a hard dependency, not a sibling — say so and sequence it. (AC-4) Live positive control, two concurrent agents in the real repo (or a byte-clone of it): agent A checks out a branch, agent B commits its own files, assert B's commit landed on `main` and is not reachable only from A's branch. Asserting from hook/wrapper source prose is a rejection.",
-        "files": [],
-        "reference_only_files": [
-          "scripts/git-hooks/pre-commit",
-          "scripts/git-hooks/install.sh",
-          "CLAUDE.md",
-          "docs/policies/dev-standards.md"
-        ],
-        "related": "Sibling of the FIX-COMMIT-PATH-PEER-INDEX-SWEEP-GUARD family (shared working dir, shared INDEX) — this row owns the shared HEAD. Adjacent policy row UC-RDL-P7; adjacent mechanism spike SPIKE-C44-PARALLEL-PROOF (see AC-3).",
-        "dedup_checked": "2026-07-31T02:12Z — jq over EVERY task_board lane matching /branch|worktree|hijack|checkout/i => 10 hits, all read: 8 are unrelated uses of the word 'branch' in a code-path sense (dead branch, non-fatal branch, macOS branch, null-branch head-sync, etc.); the only 2 genuine matches are UC-RDL-P7 (policy scope) and SPIKE-C44-PARALLEL-PROOF (permission-widening spike) — neither owns the hazard, both cross-referenced in AC-3. Confirms dev-team's own 'zero existing board rows' claim in commit 3b20fc8c9, with the two adjacencies it did not surface.",
-        "baseline_pass": null,
-        "desc": null
       }
     ],
     "closed_sprints": [
@@ -13164,6 +13101,43 @@
         ],
         "epic_wrapper_note_20260730": "dev-team SLS auto-re-claimed this row (already decomposed by pm commit cc8323358) because the decomposition never stamped .children — fixed here by adding children[] (epic-wrapper gate) and moving IN_PROGRESS(SLS-claim)->READY. Row is now correctly excluded from BOUNDED-1/SLS/RLC/DRS per AC-4; closes via post-cycle.md Step 4.4 Epic-Wrapper Autoclose Sweep once all 3 children go terminal.",
         "po_corroboration_20260730": "PO 2026-07-30T21:1xZ (triage-20260730T2107Z) — 3rd CONFIRMED INSTANCE, priority/scope UNCHANGED (already P0). Telegram report 4219 (bctc-analyst, 2026-07-30T21:19:46Z) + bctc-analyst notebook c133 PEER-COLLISION ADDENDUM: the dispatcher fired bctc-analyst-slot-3 TWICE for the same 21:00 UTC tick (identical cycle_id 20260730-2100); a second session ran ~21:09-21:17Z in parallel and was detected only post-hoc, via an Edit-tool stale-read conflict on the notebook. Same shape as the two 2026-07-15 instances already in the title (chef-evening double-publish, tnb dual c110 audit).\n\nMEASURED BLAST RADIUS this time: 12 duplicate record_evidence_fragment rows (ids 761-772 duplicating 749-760), a duplicate log_agent_work lifecycle (id 1708 duplicating 1707), 2x tool-call cost for the slot, and both same-day bctc_signal_*_20260730_routine.json files rewritten twice.\n\nTWO FINDINGS WORTH CARRYING INTO THE FIX: (a) the ESC guard HELD correctly under the race — the second session's task_claim on esc-deepdive:FPT:Q1-2026:ESC-5 serialized properly (stolen:true only after the first guard's TTL genuinely lapsed at 21:10:43Z), so the mutex primitive is sound and the defect really is the missing shared task_id namespace named in this row's title, not lock semantics; (b) the cowork tick telemetry is BLIND to this class — docs/signals/processed/cowork-team-2026-07-30T21:06:45Z.json reports spawned:[bctc-analyst-slot-3], held_by_other:[], all_held:false, errors:[] for the very tick that double-fired. Any acceptance test that reads telemetry to prove the fix will false-green; assert on the duplicated downstream rows (record_evidence_fragment / log_agent_work) instead."
+      },
+      {
+        "id": "FIX-SUBAGENT-BRANCH-CHECKOUT-HIJACKS-SHARED-WORKING-DIR",
+        "type": "FIX",
+        "size": "M",
+        "priority": "P1",
+        "status": "READY",
+        "zone": "cross-service/",
+        "owner": "architect",
+        "next_agent": "pm",
+        "supervised": false,
+        "plan_only": false,
+        "created_by": "po/triage-20260731T0212",
+        "created_at": "2026-07-31T02:12:46Z",
+        "updated_at": "2026-07-31T02:40:52Z",
+        "origin_signal_id": "dev-20260731T020908",
+        "dedup_key": "git-isolation:shared-working-dir|symptom:branch-checkout-hijacks-peer-commits",
+        "verification_gate": "live_two_agent_concurrent_branch_scenario_no_cross_attribution",
+        "title": "Every subagent shares ONE git working directory + ONE HEAD: any agent that honours a `branch:` field (e.g. a PM handoff) checks out that branch in the shared checkout, and every concurrent peer's commits silently land on it. 4 independent hits on 2026-07-31 alone; zero board rows existed.",
+        "root_cause": "STRUCTURAL, not behavioural. There is no worktree/checkout isolation between agents — all agents (router, dev-team, pm, po, developer, architect, agents-architect, qa) operate on the same `$PROJECT_ROOT` and therefore the same `.git/HEAD`. `git checkout <branch>` is a process-global mutation of shared state with no lock, no claim and no TTL, so it is not serialisable against peers the way the index is (the index at least has `index.lock` + the Layer-0 sweep guard). CLAUDE.md's `NO branches — all work stays on main` invariant is the only thing holding the system together, and it is enforced by prose alone: nothing structurally prevents a `branch:` field from appearing in a PM handoff / task row and being obeyed. Note this is the SIBLING hazard to the shared-INDEX sweep (FIX-COMMIT-PATH-PEER-INDEX-SWEEP-GUARD family, 6 rows, Layer-0 hook shipped): same shared-working-dir root, different shared resource (HEAD vs index), and the sweep-guard hook is structurally blind to it because it only inspects $GIT_INDEX_FILE shape, never HEAD.",
+        "evidence": "dev-team signal `dev-20260731T020908` (signal_queue, status READ, minted by commit 3b20fc8c9): '4x today: subagents share dev-team's git checkout (no worktree isolation); a branch checkout (e.g. PM handoff's branch: field) hijacks peer commits.' The 4 named incidents that tick: dev-team's own stray commit, agents-architect's stray commit, the FIX-COWORK-FIRE-ELECTION-TICK-TOMBSTONE developer originating the branch, and the head-stamp developer's stash-pop failure. Independently corroborated by project memory `feedback_subagent_branch_checkout_hijacks_shared_working_dir` ('dev-team's own commits land on a subagent's branch; recover via isolated worktree, never checkout main mid-subagent-edit') — the hazard has been KNOWN and carried as tribal memory + ad-hoc recovery, never as a board row. 4 occurrences in one day clears the recurring-bug bar (>=2) by a factor of 2.",
+        "ac": "(AC-1) Name the enforcement layer and make it STRUCTURAL, not prose. The prose invariant already exists in CLAUDE.md and did not prevent 4 hits — a 5th doc sentence is a rejection. Candidate layers to evaluate explicitly, choosing and justifying one: (a) a `pre-checkout`-equivalent guard (git has no pre-checkout hook — say so if rejecting, do not silently assume one exists) e.g. a wrapper/alias or a `post-checkout` hook that hard-reverts + fail-louds any move off `main`; (b) real per-agent `git worktree` isolation; (c) a schema-level ban on the `branch:` field in task rows / PM handoffs so the trigger can never be authored. (AC-2) Whatever layer is chosen MUST be reachable by agents that have no MCP grant — the same reason the sweep guard was pushed down to a git hook (`docs/policies/dev-standards.md` CANONICAL sweep-guard entry): a skill-level or flow-doc-level fix can be improvised around, and 4/4 of these incidents were improvised behaviour, not doc-following. (AC-3) DEDUP/RECONCILE — do NOT mint a 3rd overlapping row. Two adjacent rows already exist and this row must explicitly state its boundary against both, in writing, before implementing: `UC-RDL-P7` (BACKLOG, next=po — 'Reconcile branch policy across the FULL branch lifecycle with the main-only invariant') owns the POLICY; `SPIKE-C44-PARALLEL-PROOF` (BACKLOG — 'two developer agents in worktrees on disjoint zones, no shared-index race -> lift sequential mandate') is the permission-WIDENING spike and shares the worktree mechanism this row may want to use as its fix. If the chosen fix is (b) worktree isolation, SPIKE-C44 becomes a hard dependency, not a sibling — say so and sequence it. (AC-4) Live positive control, two concurrent agents in the real repo (or a byte-clone of it): agent A checks out a branch, agent B commits its own files, assert B's commit landed on `main` and is not reachable only from A's branch. Asserting from hook/wrapper source prose is a rejection.",
+        "files": [],
+        "reference_only_files": [
+          "scripts/git-hooks/pre-commit",
+          "scripts/git-hooks/install.sh",
+          "CLAUDE.md",
+          "docs/policies/dev-standards.md"
+        ],
+        "related": "Sibling of the FIX-COMMIT-PATH-PEER-INDEX-SWEEP-GUARD family (shared working dir, shared INDEX) — this row owns the shared HEAD. Adjacent policy row UC-RDL-P7; adjacent mechanism spike SPIKE-C44-PARALLEL-PROOF (see AC-3).",
+        "dedup_checked": "2026-07-31T02:12Z — jq over EVERY task_board lane matching /branch|worktree|hijack|checkout/i => 10 hits, all read: 8 are unrelated uses of the word 'branch' in a code-path sense (dead branch, non-fatal branch, macOS branch, null-branch head-sync, etc.); the only 2 genuine matches are UC-RDL-P7 (policy scope) and SPIKE-C44-PARALLEL-PROOF (permission-widening spike) — neither owns the hazard, both cross-referenced in AC-3. Confirms dev-team's own 'zero existing board rows' claim in commit 3b20fc8c9, with the two adjacencies it did not surface.",
+        "baseline_pass": null,
+        "desc": null,
+        "updated_by": "architect",
+        "architect_completed_at": "2026-07-31T02:40:51Z",
+        "architect_brief": "docs/architecture-briefs/2026-07-31-fix-subagent-branch-checkout-hijacks-shared-working-dir.md",
+        "architect_review_note": "[architect 2026-07-31T02:40:37Z DESIGN COMPLETE — plan-only, no code shipped this cycle] Verified git has NO pre-checkout hook (git help githooks, git 2.49.0 — only post-checkout exists, contractually cannot block the checkout itself, only revert-after + force the calling command exit code). CHOSE AC-1(a): new scripts/git-hooks/post-checkout hard-reverts any non-main checkout in the PRIMARY working dir back to main (MODE=enforce default, diverges deliberately from the sweep-guard hooks WARN default — justified in brief SS3: zero legitimate off-main state exists live today per UC-RDL-P7s own 2026-07-17 ground truth, and revert is self-healing not blocking). Exempts LINKED worktrees by construction (git-dir vs git-common-dir, live-tested) so it does not foreclose SPIKE-C44 if that is ever adopted later — SPIKE-C44 is therefore NOT a dependency of this row (would only become one if fix (b) worktree-isolation were chosen as primary, which it was not). REJECTED (b) worktree-isolation-for-everyone as primary: blast radius is the WHOLE fleet (8 agent types share HEAD) vs SPIKE-C44s own 2-developer-disjoint-zone scope, and SPIKE-C44 itself is still unstarted. REJECTED (c) schema-level ban as this rows OWN primary layer: the branch: field lives in free-form markdown handoffs, not a Zod-validated shape (grepped orchStateSchema.ts — no branch field exists to ban) — a schema-ban has nothing to bind to there.\nCRITICAL COORDINATION FINDING (not in the original triage): grep-confirmed 5 flow docs still ACTIVELY author/verify/honor a task/NNN-* branch-checkout convention TODAY, post-dating UC-RDL-P7 STEP1s ruling by 2 weeks — pm/flow/main.md:75 (branch: template, fired literally hours before this brief on docs/handoffs/FIX-COWORK-FIRE-ELECTION-TICK-TOMBSTONE-dev.md, one of this rows own 4 cited incidents), developer/flow/main.md:51-54+158 (VERIFY: git branch --show-current must equal task/NNN-kebab-description — a HARD precondition before touching any file), developer/flow/microservice-main.md:53-57+161 (identical), qa/flow/main.md:37,42,114-124,219-224 (pipeline JUMP-TOs first line is git checkout task/NNN-*), fixer/flow/*.md:34,36,60,110. This means shipping the hook with ZERO coordination will make developer/microservice-main.mds own VERIFY line fail for every M/L task (the hook will have already reverted HEAD to main before that line runs) — this is UC-RDL-P7s own cited \"wedges QA merge if only one half edited\" hazard, reproduced via a different mechanism (a hook, not mixed doc state), same remedy needed either way. UC-RDL-P7 STEP2 (BACKLOG, next_agent=ba, unstarted) already owns rewriting exactly these 5 files — this row does NOT duplicate or implement that edit; the 5-file/line-number target list above is handed to whoever eventually works STEP2 (agent-father commit_zone per its own init.md — docs/agents/ is explicitly in its allowed list), found live via grep, not assumed.\nAC-4 LIVE PROOF: 5 scenarios reproduced in a disposable scratch repo (never the live repo) — control (reproduces the hijack exactly as reported), guarded (hijack prevented, peer commit lands on main, not reachable only from the checked-out branch), non-destructive-conflict edge case (git refuses the revert rather than discard uncommitted work, fails loud), linked-worktree exemption (fleet-worktree-push-style worktrees unaffected), re-entrancy (single pass, 0.39s, no recursion). Full design + transcripts: docs/architecture-briefs/2026-07-31-fix-subagent-branch-checkout-hijacks-shared-working-dir.md.\nROUTING: next_agent=pm (not developer directly) — deliverable is scripts/git-hooks/ (developer zone per this dispatchs own instruction not to assume agent-father there) but the coordination-timing call (accelerate/scope-down UC-RDL-P7 STEP2 to land same-wave, vs stage this hook via MODE=warn first) is a task-breakdown/prioritization judgment, which is PMs job per architects own not_my_job boundary, not architects to decide unilaterally."
       }
     ],
     "review": [
@@ -18650,42 +18624,53 @@
         "agentfather_decline_note": "agent-father correctly declined 2026-07-31T04:00Z: implementation requires scripts/git-hooks/pre-commit (production code, outside commit_zone/forbidden_outputs) + orch-state.json task_board flip (also excluded). Re-routed to developer per dispatch/SKILL.md. Brief (docs/architecture-briefs/2026-07-31-sweepguard-escalation-actuator-and-triage-mechanism-check.md, commit 7cfe64c8b) is implementation-ready, no re-design needed.",
         "developer_implementation_note": "Implemented agents-architect ratified brief (docs/architecture-briefs/2026-07-31-sweepguard-escalation-actuator-and-triage-mechanism-check.md) verbatim, no re-design, per row AC-1/AC-2/AC-3/AC-4. Per-actor escalation block in scripts/git-hooks/pre-commit (GIT_SWEEP_GUARD_ESCALATE_THRESHOLD default 3, grep -Fc actor= count against .git/sweep-guard.log, escalate_effective gates the reject branch, signal_msg enriched escalated=/prior_warns=/threshold=). T7/T8/T9 added to pre-commit.test.sh -- 9/9 PASS (6 pre-existing + 3 new: escalation-fires / per-actor-scoping / opt-out). New mandatory-evidence routing rows (verbatim from brief SS3.1/3.2) in docs/agents/po/flow/triage-signals.md and docs/agents/dev-team/flow/drain-signals.md SS0a-3 -- forbids git show --stat as a disposition, requires escalated= field parse. AC-4 live positive control run from a REAL shell (not just the test suite) in a disposable scratch repo: fresh actor 3 warm-up BARE commits warn-only (exit=0), 4th BARE commit from same actor BLOCKED (exit=1, ESCALATED REJECT stderr, HEAD unchanged, file still staged); pathspec commit from same over-threshold actor landed completely silently (0 stderr, log unchanged). Scope fence honored -- none of the other 5 sweep-guard family rows touched (brief SS5 already dedup-checked). No apps/ TS/Go source touched (zone cross-service/, pure bash+md) -- bun test/tsc structurally N/A. Commits: eac71308e (implementation), 7428b28a5 (notebook+journal). QA next -- verify T7-T9 assertions + re-run the live positive control independently per this row AC-4s own \"necessary, not sufficient\" instruction.",
         "po_review_note_20260731T0212": "PO Step 0-SIG: your 4 ACs are met as written — do NOT block QA on this note. BUT the shipped actuator is measurably already past threshold on the LIVE repo (prior_warns=70 for the live router session 64c7c677-…, 6 for ad265f86-…, threshold=3), because prior_warns counts the whole historical log with no deploy baseline; and `actor`=$CLAUDE_CODE_SESSION_ID is shared by every subagent, so 'per-actor' scoping is vacuous in production (T8 only passes because the scratch repo fabricates distinct ids). Both properties are owned by the new row FIX-SWEEPGUARD-ESCALATION-RETROACTIVE-COUNTER-AND-SESSION-SCOPED-ACTOR (backlog, P1). QA: please note in the verdict that the AC-4 positive control was a fresh-actor/empty-log scratch repo and therefore could not observe either property."
-      }
-    ],
-    "qa": [],
-    "_closed_signals_20260614": {
-      "_by": "po-S50",
-      "_at": "2026-06-14T14:45:14Z",
-      "closed": [
-        {
-          "signal": "docs/signals/workflow-protocol-coherence-audit-20260614T141952Z.json",
-          "reason": "ALREADY IMPLEMENTED — all 6 COHERENCE-GAP tasks status=IMPLEMENTED, result=RESOLVED (commit 85935da3). No work to queue.",
-          "disposition": "move-to-processed"
+      },
+      {
+        "id": "TE-T11",
+        "title": "T-11 Wire step-0-cowork composite into the 11 flows still double-loading bootstrap+regime (ZERO adoption) [~55-160k tok/day]",
+        "owner": "agent-father",
+        "status": "REVIEW",
+        "type": "CLEAN",
+        "size": "S",
+        "priority": "P1",
+        "wave": 2,
+        "est_saving": "~55-160k tok/day",
+        "zone": "docs/agents/",
+        "sprint": "TOKEN-ECONOMY-AUDIT",
+        "depends": [],
+        "detail_ref": "docs/architecture-briefs/2026-07-12-token-economy-lazyload-audit.md#T-11",
+        "note": "Composite skill shipped (Sprint 1968c-P02) but grep shows 0 flow adopters. Per-flow one-line swap replacing cycle-bootstrap+regime-extraction reads with step-0-cowork usage line. 11 mechanical edits under agent-md-factory discipline; composite embeds same GATEWAY-BLIND + regime-fallback boundaries.",
+        "audit_ref": {
+          "audit": "ultracode-2026-07-12",
+          "verdict": "cowork-cycle-agents-P1 rider (UC-CCA-P1-GWBLIND-DEDUP)",
+          "note": "Amend DoD text: composite POINTERS to cycle-bootstrap Error handling SSOT (not 'embeds the same GATEWAY-BLIND boundaries'). UC-CCA-P1-GWBLIND-DEDUP is dep-gated on this row.",
+          "ref": "docs/architecture-briefs/2026-07-12-ultracode-workflow-improvement-audit.md#cowork-cycle-agents-P1"
         },
-        {
-          "signal": "docs/signals/dev-team-tool-contract-cron-overlap-20260614T121816Z.json",
-          "reason": "ALREADY RESOLVED by the LIVE SF-1 single-flight guard (F2-A) + gateway-call-contract.md (F1) now in dev-team flow. This brief is the source that DELIVERED SF-1; no residual work.",
-          "disposition": "move-to-processed"
-        }
-      ]
-    },
-    "last_triaged_at": "2026-07-31T02:27:29Z",
-    "last_triaged_by": "po/triage-ci-red-20260731T0220",
-    "in_progress": [
+        "next_agent": "qa",
+        "po_routing_ruling_20260721": "PO ARTIFACT-CLASS ROUTING RULING 2026-07-21T18:42Z. Rule: routing follows ARTIFACT CLASS, not directory. Any row whose deliverable is instruction-prose that an agent LOADS AND EXECUTES — .claude/agents/**, docs/agents/** (init/flow/knowledge/tools-package), .claude/skills/**/SKILL.md — routes to agent-father. Executable code (apps/**, scripts/**), codegen-from-registry, and data/root-config (docs/data/**, CLAUDE.md) route to zone-matched dev-* or developer. Rationale: for this system a flow doc IS the executable source; agent-father is already sole owner of agent-file lifecycle (dispatch/SKILL.md:48) and of NEW cron skill files (:50), and board precedent has 5/5 pre-existing docs/agents/ rows routed to agent-father/agents-architect/po and 0 to developer. Precedent for SKILL.md specifically: docs/signals/processed/dev-team-20260716T102429Z-autolaunch-safety-hold-uc-asl-p6.json already routed a signal-dashboard SKILL.md edit to agent-father as 'the factory rule'. ROOT CAUSE this closes: .claude/skills/zone-detect/SKILL.md resolves ONLY dev-<service> (Tier-1/2, needs apps/<service>/-shaped zone) or generic developer (Tier-3 fallback) — it has NO path to agent-father, so any docs/agents/ or .claude/skills/ row reaching execute-tier with next_agent unset gets the 'developer' placeholder and mis-routes. EXPECTED SIDE EFFECT (do NOT 'fix' this): next_agent=agent-father does not match the dev-role pattern ^dev(-|$)|^developer$, so the BOUNDED-1 NON-DEV-NEXT_AGENT gate (dev-team/flow/main.md:518) now WITHHOLDS these rows from unattended idle auto-pickup. That is the intended outcome — they require deliberate router dispatch to agent-father, not silent promotion to a generic developer.",
+        "updated_at": "2026-07-31T02:38:02Z",
+        "po_manual_dispatch_flagged_at": "2026-07-31T02:12:46Z",
+        "po_manual_dispatch_flagged_by": "po (manual-dispatch-sweep)",
+        "po_manual_dispatch_class": "DRS-STRANDED-OFF-ALLOWLIST",
+        "po_manual_dispatch_note": "po (manual-dispatch-sweep) surfaced DRS-STRANDED-OFF-ALLOWLIST candidate — folding into this tick's BATCH",
+        "updated_by": "agent-father/te-t11-review-flip-20260731T023752Z",
+        "commit_sha": "704677ea3551f2ee069718a3e944429180970747",
+        "return_summary": "10 real flow files wired (0->10 adoption; grep -rl step-0-cowork docs/agents/*/flow/*.md): chef, market-watcher/cycle+eod, news-scout, alert-commander, bctc-analyst, digest-predict x3, unified-agent/market-bootstrap. Collapsed cycle-bootstrap+regime-extraction skill pointers into one step-0-cowork/SKILL.md reference each (0b-only where a flow does not consume $REGIME; 0b-0c where it does); all flow-specific fallback/shape-validation prose (news-scout/alert-commander) left byte-for-byte untouched. Excluded the audit's 11th listed file cowork-team/flow/tick-snapshot.md: it PRODUCES the shared snapshot via raw MCP calls, never reads cycle-bootstrap/regime-extraction as a skill consumer -- grep false-positive not a real adoption gap (see notebook for full reasoning). Zero remaining primary cycle-bootstrap/SKILL.md or regime-extraction/SKILL.md pointers in the 10 touched files."
+      },
       {
         "id": "FIX-SWEEPGUARD-ESCALATION-RETROACTIVE-COUNTER-AND-SESSION-SCOPED-ACTOR",
         "type": "FIX",
         "size": "S",
         "priority": "P1",
-        "status": "IN_PROGRESS",
+        "status": "REVIEW",
         "zone": "cross-service/",
         "owner": "developer",
-        "next_agent": "developer",
+        "next_agent": "qa",
         "supervised": false,
         "plan_only": false,
         "created_by": "po/triage-20260731T0212",
         "created_at": "2026-07-31T02:12:46Z",
-        "updated_at": "2026-07-31T02:23:09Z",
+        "updated_at": "2026-07-31T02:40:15Z",
         "dedup_key": "sweepguard:escalation-actuator|defect:retroactive-unwindowed-counter+session-scoped-actor",
         "verification_gate": "live_repo_log_state_positive_control_not_fresh_scratch_actor",
         "title": "The escalation actuator shipped in eac71308e is ALREADY past threshold for 2 live sessions the moment it landed: prior_warns counts the ENTIRE historical .git/sweep-guard.log with no time window and no deploy baseline, so it is a de-facto instant fleet-wide reject flip — the exact flip the brief deliberately staged as a Phase-2 with 24h observation + rollback. Compounding it, `actor` is $CLAUDE_CODE_SESSION_ID, which every subagent of one router session SHARES, so it can never scope to an agent.",
@@ -18709,9 +18694,30 @@
         "promoted_by": "dev-team (bounded-1 auto-pickup)",
         "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
         "claimed_at": "2026-07-31T02:23:07Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)"
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "updated_by": "developer"
       }
-    ]
+    ],
+    "qa": [],
+    "_closed_signals_20260614": {
+      "_by": "po-S50",
+      "_at": "2026-06-14T14:45:14Z",
+      "closed": [
+        {
+          "signal": "docs/signals/workflow-protocol-coherence-audit-20260614T141952Z.json",
+          "reason": "ALREADY IMPLEMENTED — all 6 COHERENCE-GAP tasks status=IMPLEMENTED, result=RESOLVED (commit 85935da3). No work to queue.",
+          "disposition": "move-to-processed"
+        },
+        {
+          "signal": "docs/signals/dev-team-tool-contract-cron-overlap-20260614T121816Z.json",
+          "reason": "ALREADY RESOLVED by the LIVE SF-1 single-flight guard (F2-A) + gateway-call-contract.md (F1) now in dev-team flow. This brief is the source that DELIVERED SF-1; no residual work.",
+          "disposition": "move-to-processed"
+        }
+      ]
+    },
+    "last_triaged_at": "2026-07-31T02:27:29Z",
+    "last_triaged_by": "po/triage-ci-red-20260731T0220",
+    "in_progress": []
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
