@@ -1,6 +1,17 @@
 # Dev Team — Sprint Boundary Notebook
 
-**Written:** 2026-07-31T07:02Z
+**Written:** 2026-07-31T07:14Z
+
+## cycle-20260731T0714Z-macrovmt-verified-released — RAW-verified `dev-macro-indicators`'s FIX-CI-SIZELINT-MACRO-VMT return (self-report matched independent re-derivation exactly, zero discrepancy); released lock. 1 background agent in flight (dev-frontend, sibling CI row)
+
+- **Commits confirmed real, on origin/main** (`merge-base(HEAD,origin/main)==b6892d00f`, the exact origin tip): `e02e20192` (fix)/`5bea11aef` (journal+notebook)/`b6892d00f` (board flip).
+- **Diff matches claim exactly**: 7-line `size-justification: 231L` header added inside the required first-10-line scan window; no other file touched (`size-lint-justification.sh` + `size-lint-baseline.json` both untouched per `git show --stat`).
+- **Build/test claims independently re-run, not trusted from self-report**: `go build ./cmd/...`, `go vet ./...`, `go test ./pkg/application/...` — all green. `size-lint-justification.sh --check` independently re-run → `PASS — 0 unjustified offenders (scanned 1353 files)`.
+- **CI-plane independently re-confirmed** on the exact pushed headSha `e02e20192`: `gh run view 30611631146` → `size-lint` job `conclusion:success` (matches claim). Overall run `conclusion:failure` is solely `frontend-eslint` — the SIBLING task's own row, out of this row's scope.
+- **Board+head confirmed independently**: row `status:REVIEW`, `next_agent:qa`; `in_progress[]` empty for this id; `.head` idle/router, correctly documents the sibling row's separate LOCK-LIFETIME tracking (S42 precedent held again).
+- **`task_release` trap hit and self-corrected**: first call passed the literal string `$CLAUDE_CODE_SESSION_ID` (unexpanded by the LLM-issued call_tool layer) → `released:0`. `task_list_held` confirmed the lock was still held, owner_client_session matching my real session UUID. Retried with the actual UUID → `released:1`. [[feedback_llm_issued_call_tool_does_not_expand_session_id_variable]] confirmed again this session.
+- **Working-tree note, no action taken**: local HEAD sits 1 commit ahead of `origin/main` — `dev-frontend`'s own not-yet-pushed notebook+journal commit (`13fde27c2`, agent still running), plus numerous unrelated peer-session dirty files. Left untouched; no commit/push attempted against this tree state outside my own scoped files.
+- **NEXT**: await `dev-frontend`'s RETURN (sibling P0 row `FIX-CI-FRONTEND-ESLINT-BUNLOCK-DUAL-LOCKFILE-DRIFT`), RAW-verify (CI-plane `frontend-eslint` job green on its own pushed SHA is the real AC, not local exit 0), release its lock. After both P0 CI rows close, 2 P1 BATCH items (`FIX-NOTEBOOK-AUTOPRUNE-...`, `TE-T12`) remain candidates for a future tick.
 
 ## cycle-20260731T0702Z-po-verified-batch-dispatched — RAW-verified `po`'s triage return (commit + all 4 BATCH board rows matched claim); released lock. Hand-dispatched 2 P0 CI-blocking FIX rows from the BATCH (standing highest-priority escalation) via Step 3 tier-batch; 3 background agents in flight
 
@@ -20,13 +31,4 @@
 - **Out-of-scope note carried, not actioned**: `dev-mcp-server`'s own decision-journal file remains over the derived byte-cap (92,835B vs 36,000B, under the 600L line cap) — pre-existing, repeatedly routed as `context_bloat_breach` and DEFERRED per `[[feedback_ctxbloat_breach_on_live_sprint_file_defer]]`, not introduced by this task.
 - Released `task:FDA-7` (`released:1`).
 - **NEXT**: await `po`'s triage RETURN (release `task:po-triage-20260731` either way — BATCH or NOTHING). `in_progress[]` is now empty — `FIX-CI-FRONTEND-ESLINT-BUNLOCK-DUAL-LOCKFILE-DRIFT` (READY+P0, zero dispatch attempts, standing highest-priority escalation) is now reachable by BOUNDED-1 on the next idle-head tick, not force-dispatched this turn.
-
-## cycle-20260731T0645Z-fda7-inflight-po-triage-dispatched — Fresh tick: preflight RUN, drained 6 signals, `.head` in_progress/FDA-7 (still held by this session, agent confirmed still running) → S2 resume-check correctly SKIPPED (re-entrant self-hold, not a peer collision) → fell through to Step 1, claimed+dispatched PO daily triage; 2 background agents in flight
-
-- **Preflight/HEAD.lock/worktree-GC clean**: HEAD.lock absent, 3 external fleet-push worktrees (peer sessions) untouched. Drained 6 signals (new `ci_red` HEAD `5e97dbda` — another AMNESTY file-scoped dedup test; a `context-bloat` breach on dev-mcp-server's own decision-journal file, likely FDA-7's in-flight journal growth; a `notebook-tiebreak-unresolved` breach on unified-agent.md — 2nd+ occurrence of this exact class, flagged for PO's escalation judgment; 2 cowork-team telemetry rows), all routed-to-po, committed+pushed `edf3bdb03`, persist-guard invariant 0.
-- **0 orphans**: `task_list_held(owner_agent="dev-team")` showed exactly the 4 locks expected — SF-1, fire-election, session-presence, and `task:FDA-7` — no stray dev-team holds.
-- **CI probe**: run still queued, no `ci_red` emitted this cycle (STALE-RUN gate correctly skipped).
-- **`.head` read in_progress/FDA-7** — matches my own still-held LOCK-LIFETIME lock (TTL good until 07:20Z). S2 dispatcher-wrap's `task_claim` on `task:FDA-7` correctly returned `claimed:false` with `current_holder.owner_client_session` == mine — re-entrant self-hold, not a peer collision (background agent `aa9f43dd131881bfe` confirmed still running). Did NOT duplicate-spawn; fell through to Step 1 per the flow's own SKIP branch — BOUNDED-1/SLS/RLC/DRS never ran this tick (head was non-idle throughout).
-- **Step 1 PO Triage**: S3 dispatcher-wrap claimed `task:po-triage-20260731` cleanly, spawned `po` in background (daily triage) with board/signal/telegram context, flagged the recurring unified-agent tiebreak + FDA-7-adjacent context-bloat breach for its attention. Hold NOT released — await BATCH/NOTHING return.
-- **NEXT**: await BOTH background returns independently — (1) `dev-mcp-server`'s FDA-7 RETURN (fetchedAt/source_tier fix, tests, commit, board+head flip — RAW-verify per standing discipline, release `task:FDA-7`), (2) `po`'s triage RETURN (release `task:po-triage-20260731` either way). `FIX-CI-FRONTEND-ESLINT-BUNLOCK-DUAL-LOCKFILE-DRIFT` remains the standing highest-priority escalation (READY+P0, zero dispatch attempts) — still unreachable, head was non-idle all tick.
 
