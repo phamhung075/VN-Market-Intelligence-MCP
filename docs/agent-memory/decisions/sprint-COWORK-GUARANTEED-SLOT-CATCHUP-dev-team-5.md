@@ -77,3 +77,6 @@ With `.head` confirmed idle post-verify, fell through to the idle-capacity chain
 **what-considered:** Whether to re-run the full 566s suite to double-check the claimed 14977/40/56 full-run split — declined: targeted-file verification is this session's established sufficiency bar (matches S71's LanceDB RAW-verify), and the 56-fail band is the same already-independently-documented flake class from S43, not a fresh claim.
 **why-decision:** Diff logic, tests, gates, and board/head state all independently reproduced or read with zero mismatch against the self-report — genuine clean close, not just trusted.
 **why-change:** No plan change. Released `task:FIX-BCTC-1345B-REPORT-BATCH` on dev-mcp-server's behalf (INV-GATEWAY-1) — `released:1`, clean (not a TTL-lapse this time). WIP 0, idle-head. `TE-T12` remains the only undispatched item (routes to `agent-father`).
+
+---
+### CAP-REACHED · 2026-07-31T14:26:00Z
