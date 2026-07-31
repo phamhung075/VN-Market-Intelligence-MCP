@@ -22,3 +22,12 @@
 - option B: use `immutable=1` (true readonly, but more restrictive than needed)
 **why-decision:** Chose option A — consistency with sibling files in the same package; `immutable=1` would block legitimate read access to an actively-written WAL DB.
 **why-change:** no change — fix applied exactly as specified in AC (2-of-4 remaining call sites, matching existing pattern).
+
+### STEP dev-stock-price-S3 · dev-stock-price · 2026-07-31T21:35:00Z
+**task-id:** FACTORY-STOCK-dedup-history-handlers
+**what-done:** Deduplicated priceHistory and priceHistoryPathParam handlers; named the days=30 default; added behavior-parity tests.
+**what-considered:**
+- option A: extract runHistory helper + parseDays helper (shared implementation, both handlers call it)
+- option B: closure-style (inline shared logic in a local closure)
+**why-decision:** Chose option A — helper functions are idiomatic Go, more testable, clearer separation; closures would add indirection without benefit.
+**why-change:** no change — implemented per approach in the task spec (shared runHistory/parseDays, named const defaultHistoryDays).
