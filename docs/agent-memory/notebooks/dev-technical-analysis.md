@@ -6,6 +6,28 @@ Zone: `apps/technical-analysis/` | Stack: **Go** (pilot active, 2026-05-22) | DB
 
 [3 most recent cycles retained below. Archive in git history.]
 
+### 2026-08-01 — FIX-CI-SIZELINT-TECHANALYSIS-ROUTER-NEW-OFFENDER-143L — extracted /health handler, router.go 143L→114L
+
+CI `size-lint` RED 3 consecutive runs on the same sole offender: `router.go` grew 112L→143L in the prior
+cycle's `39fbec098` (this agent's own commit), which inlined a new `/health` handler (`const defaultPort`,
+`type healthResponse`, `func handleHealth`) directly into `router.go` instead of extracting it — that
+commit's verification set never ran size-lint, so it shipped a guaranteed-RED gate. Fixed by extracting
+those three symbols into a new sibling `health_handler.go` (41L), following the package's existing
+file-per-handler convention (`momentum_handler.go`, `money_flow_handler.go`, `proximity_handler.go`,
+`relative_strength_handler.go`, `volatility_handler.go`). Zero behaviour change — `NewRouter` calls
+`handleHealth(port)` at the same call site; `TestHealth_Returns200` + `TestHealth_ReflectsConfiguredPort`
+pass unmodified. Did NOT add a size-justification header and did NOT run `size-lint-justification.sh
+--update` (would have grandfathered the regression into the baseline, disarming the guard). Gates:
+`go build/vet/test ./...` (12/12) + `golangci-lint run ./...` (0 issues) clean, `size-lint-justification.sh
+--check` RC=0 (0 offenders), G12 sandbox 35/35 green + render-check PASS. Full reasoning: decision journal
+STEP dev-technical-analysis-S3 (sprint-COWORK-GUARANTEED-SLOT-CATCHUP).
+
+Zone health: size-lint guard confirmed correctly catching a real regression this agent introduced — the
+gap was in that commit's verification set (missing size-lint), not the guard itself | HEALTHY
+
+**Status: REVIEW -> next_agent=qa** (branch:null direct-execute FIX row, no ops rebuild hop declared on
+this row — CI-plane verify via `ci_green_on_subsequent_push` gate is the close condition).
+
 ### 2026-07-31 — FACTORY-TECHANALYSIS-fix-discarded-service-and-port — deleted dead domain service, real port in /health
 
 BOUNDED-1 idle-capacity auto-pickup. `cmd/server/main.go:71` built `domain.NewCalculateTAService(priceRepo,
@@ -58,17 +80,15 @@ for the TA calculator; no other known duplicate mapper in this zone | HEALTHY
 **Status: REVIEW -> next_agent=ops** (Docker Microservice Code-Change Close Gate — `calculator.go`
 is on the real service's build graph; ops rebuild+swap, then qa live-verify, then po Step 6 sign-off).
 
-### 2026-07-28 — FACTORY-TECHANALYSIS-delete-orphaned-ts-service — deleted dead TS shadow service
-
-Final task of 3-task chain (go-livepath-tests → reconcile-ta-contract → this). Live grep (filtered false-positive `../src/` hits from OTHER apps' own src/) confirmed ONLY importers of `apps/technical-analysis/src/` were its own `__tests__/` — no prod code, no other app, no CI step. Deleted `src/`(9 files)+`__tests__/`(3)+`tsconfig.json`(dead include glob); trimmed `package.json` (`module`/`start`/`check`/`test` scripts, `hono` dep — `bun test` w/ 0 files verified live to exit 1, so removed not left as silent no-op). Auto-resolved `determineTrend()` 70/30 hardcode finding (dead-code-latent, per 2026-06-15 audit). Updated 4 docs + 2 code comments "scheduled for deletion"→"deleted 2026-07-28". Gates: go build/vet/test 12/12 GREEN, sandbox 35/35 GREEN+render PASS, Dockerfile/compose untouched. Commit `099afddd3`. Full reasoning: decision journal STEP dev-technical-analysis-S1 (sprint-COWORK-GUARANTEED-SLOT-CATCHUP).
-
-**NOTE (pruner behavior):** this cycle's write triggered `notebook-auto-prune.sh` byte-cap prune that dropped ALL 3 prior Working Memory cycles (split-sandbox, reconcile-ta-contract, go-livepath-tests) with no condensed Archive summary added — unlike the established "pruned to AC-2b" pattern below. Full detail recoverable via `git log -- docs/agent-memory/notebooks/dev-technical-analysis.md`. Flagged to bug channel; not fixed here (out of `apps/technical-analysis/` zone).
-
 ---
 
 ## Archive
 
 [Archived to git history; retained: 3 most recent cycles. Full history in git log.]
+
+### 2026-08-01 — pruned to AC-2b (3-cycle cap), round 4
+
+- 2026-07-28 FACTORY-TECHANALYSIS-delete-orphaned-ts-service (commit `099afddd3`) — deleted dead TS shadow service (`src/` 9 files, `__tests__/` 3, `tsconfig.json`, trimmed `package.json`); auto-resolved `determineTrend()` 70/30 hardcode finding. **NOTE (pruner behavior, carried forward):** the prior cycle's write had already triggered a byte-cap prune that dropped that cycle's own 3 prior Working Memory entries (split-sandbox, reconcile-ta-contract, go-livepath-tests) with no condensed Archive summary — full detail recoverable via `git log -- docs/agent-memory/notebooks/dev-technical-analysis.md`. Flagged to bug channel; not fixed here (out of `apps/technical-analysis/` zone).
 
 ### 2026-07-09 — pruned to AC-2b (3-cycle cap), round 3
 

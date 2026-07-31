@@ -36,3 +36,20 @@
 - `go test -count=1 ./...` — 12/12 packages ok (incl. 2 new /health assertions).
 - `bash dashboard/build.sh` (G12 gate) — 35/35 scenarios green, headless render-check PASS.
 - Commit: `39fbec098`.
+
+### STEP dev-technical-analysis-S3 · dev-technical-analysis · 2026-08-01T01:15:00Z
+**task-id:** FIX-CI-SIZELINT-TECHANALYSIS-ROUTER-NEW-OFFENDER-143L
+**what-done:** Extracted `const defaultPort`, `type healthResponse`, `func handleHealth` out of `router.go` (143L, size-lint new-offender) into a new sibling `health_handler.go` (41L), following the package's existing file-per-handler convention. `router.go` now 114L (<=120 cap), 0 behaviour change — `NewRouter` still calls `handleHealth(port)` at the same call site.
+**what-considered:**
+- Add a `size-justification:` header to router.go instead — rejected: row's AC-1/AC-6 explicitly forbid it (would legitimize a fresh regression, not grandfather pre-existing debt).
+- Run `size-lint-justification.sh --update` — rejected: row's AC-6 landmine, would silently widen the whole baseline.
+- Extraction target: new `health_handler.go` mirroring `money_flow_handler.go`'s header/import style (only real option — package already has 5 sibling `*_handler.go` files, zero prior art for a different split shape).
+**why-decision:** Extraction is the only fix that both satisfies the cap AND keeps zero-tolerance new-offender semantics intact; matches the package's own established convention so no new pattern is introduced.
+**why-change:** No deviation — introduced by 39fbec098 (this agent's own prior commit) which never ran size-lint in its own verification set; this closes that gap.
+
+**Verification evidence:**
+- `go build ./...` / `go vet ./...` / `golangci-lint run ./...` — clean, 0 issues.
+- `go test ./...` — 12/12 packages ok; `TestHealth_Returns200` + `TestHealth_ReflectsConfiguredPort` both PASS unmodified.
+- `bash scripts/audits/size-lint-justification.sh --check` — RC=0, "0 unjustified offenders (scanned 1355 files)".
+- `bash dashboard/build.sh` (G12 gate) — 35/35 scenarios green, headless render-check PASS.
+- CI plane verification pending push — see status_note for run id/headSha once recorded.
