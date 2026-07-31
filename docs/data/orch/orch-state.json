@@ -93,12 +93,9 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "FU-MACRO-SNAPSHOT-TIER-WORSTOF",
-    "next_agent": "dev-mcp-server",
-    "next_action": "Zone-routed by developer team-lead — implement worst-of(carry,yield) source_tier fix in apps/mcp-server/src/interface/mcp/tools/macro/macroTools.ts get_macro_snapshot handler per backlog desc + AC (see dispatch_note on the board row).",
-    "updated_at": "2026-07-31T00:55:38Z",
-    "updated_by": "developer"
+    "status": "idle",
+    "active_task_id": null,
+    "next_agent": "router"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -4537,30 +4534,6 @@
         "abort_path_ac_extended_by": "po",
         "key_agreement_20260722T2010Z": "[po 2026-07-22T20:10Z, from router intent chef-evening-double-publish; owner/priority/next_agent/scope UNCHANGED] AC EXTENSION — KEY AGREEMENT IS A SEPARATE PRECONDITION, NOT COVERED BY THIS ROW'S ACs. 5th real-world confirmation of the marker-gate cluster and the FIRST with a root cause this row does NOT address. On 2026-07-22 chef-evening published TWICE (19:56:15Z and 20:00:37Z, 4.5 min apart, two CLI sessions) because the two runs derived DIFFERENT marker keys from the SAME wall-clock instant: published:chef-evening:2026-07-22 and published:chef-evening:2026-07-23 were both HELD simultaneously (task_list_held, ttl 100800 each). Cause: chef-evening's cron `45 19 * * *` = 19:45 UTC = 02:45 VN of D+1, so chef.md Step 0.5's WORK_DATE = TZ=Asia/Ho_Chi_Minh date +%Y-%m-%d straddles a date boundary. CRITICAL: this row's own DESIGN RECOMMENDATION (early read-only probe + late task_claim immediately before send_telegram + never release) DOES NOT PREVENT IT — both peers compute different keys, both probes read free, both late claims succeed, both publish. Lifecycle and key-agreement are orthogonal. THEREFORE: UC-CCA-P3 MUST NOT be signed off while the key is derived from a wall-clock `date` read at the leaf. Added AC(6): the marker key is window-anchored and timezone-free (derived from the scheduled cron fire-window in UTC, never from a `date` call made by the executing agent), so two peers on the same window derive byte-identical keys. Root cause + full PO ruling on key-vs-label separation tracked in sibling row FIX-CHEF-MARKER-KEY-WINDOW-ANCHOR (P0) — the two MUST ship as ONE design (architect first); neither alone closes the class.",
         "updated_at": "2026-07-22T20:14:06Z"
-      },
-      {
-        "id": "UC-ASL-P6",
-        "type": "CLEAN",
-        "title": "Purge the DASHBOARD.md phantom protocol from the auditor flow; align SKILL.md hot-path write text with the orch-apply contract",
-        "status": "BACKLOG",
-        "priority": "P1",
-        "size": "M",
-        "zone": "cross-service/",
-        "sprint": "ULTRACODE-AUDIT-FIXALL",
-        "source": "ultracode-audit-2026-07-12",
-        "verdict": "CONFIRMED",
-        "detail_ref": "docs/architecture-briefs/2026-07-12-ultracode-workflow-improvement-audit.md#auditor-signal-loop-P6",
-        "note": "auditor main.md/init.md/tier1-probe.md mandate a phantom docs/handoffs/DASHBOARD.md with no live consumer, and signal-dashboard SKILL teaches bare temp-then-rename contradicting orch-apply.sh. Purge phantom refs; align write text to orch-apply CAS.",
-        "created_at": "2026-07-13T19:31:11Z",
-        "created_by": "po",
-        "next_agent": "agent-father",
-        "supervised": true,
-        "supervised_reason": "[po 2026-07-16T11:59:19Z] 3rd BOUNDED-1 tick churn converged. next_agent=agent-father is a MAINTENANCE-LANE on-demand-only agent (dev-team main.md L12) that zone-detect (cross-service/ => Tier-3 developer) CANNOT route to; idle auto-launch would mis-route factory work to a generic developer. supervised:true withholds it from BOUNDED-1 so the next tick picks a dev-routable P1 (UC-SDF-P4/UC-GCP-P2/UC-GCP-P4->developer, UC-MDH-P1->dev-mcp-server). Deliberate on-demand dispatch of agent-father (task:on-demand:agent-father:<date> mutex-wrap) only; on execution reconcile that the row cites system-auditor init.md but the flow dir has only main.md/tier1-probe.md. Durable class fix tracked by FIX-DEVTEAM-BOUNDED1-MAINTLANE-NEXTAGENT-GATE.",
-        "po_manual_dispatch_flagged_at": "2026-07-31T00:56:04Z",
-        "po_manual_dispatch_flagged_by": "po (manual-dispatch-sweep)",
-        "po_manual_dispatch_class": "DRS-STRANDED-OFF-ALLOWLIST",
-        "po_manual_dispatch_note": "po (manual-dispatch-sweep) surfaced DRS-STRANDED-OFF-ALLOWLIST candidate — folding into this tick's BATCH",
-        "updated_at": "2026-07-31T00:56:05Z"
       },
       {
         "id": "UC-RDL-P7",
@@ -13089,6 +13062,31 @@
     ],
     "review": [
       {
+        "id": "UC-ASL-P6",
+        "type": "CLEAN",
+        "title": "Purge the DASHBOARD.md phantom protocol from the auditor flow; align SKILL.md hot-path write text with the orch-apply contract",
+        "status": "REVIEW",
+        "priority": "P1",
+        "size": "M",
+        "zone": "cross-service/",
+        "sprint": "ULTRACODE-AUDIT-FIXALL",
+        "source": "ultracode-audit-2026-07-12",
+        "verdict": "CONFIRMED",
+        "detail_ref": "docs/architecture-briefs/2026-07-12-ultracode-workflow-improvement-audit.md#auditor-signal-loop-P6",
+        "note": "auditor main.md/init.md/tier1-probe.md mandate a phantom docs/handoffs/DASHBOARD.md with no live consumer, and signal-dashboard SKILL teaches bare temp-then-rename contradicting orch-apply.sh. Purge phantom refs; align write text to orch-apply CAS.",
+        "created_at": "2026-07-13T19:31:11Z",
+        "created_by": "po",
+        "next_agent": "qa",
+        "supervised": true,
+        "supervised_reason": "[po 2026-07-16T11:59:19Z] 3rd BOUNDED-1 tick churn converged. next_agent=agent-father is a MAINTENANCE-LANE on-demand-only agent (dev-team main.md L12) that zone-detect (cross-service/ => Tier-3 developer) CANNOT route to; idle auto-launch would mis-route factory work to a generic developer. supervised:true withholds it from BOUNDED-1 so the next tick picks a dev-routable P1 (UC-SDF-P4/UC-GCP-P2/UC-GCP-P4->developer, UC-MDH-P1->dev-mcp-server). Deliberate on-demand dispatch of agent-father (task:on-demand:agent-father:<date> mutex-wrap) only; on execution reconcile that the row cites system-auditor init.md but the flow dir has only main.md/tier1-probe.md. Durable class fix tracked by FIX-DEVTEAM-BOUNDED1-MAINTLANE-NEXTAGENT-GATE.",
+        "po_manual_dispatch_flagged_at": "2026-07-31T00:56:04Z",
+        "po_manual_dispatch_flagged_by": "po (manual-dispatch-sweep)",
+        "po_manual_dispatch_class": "DRS-STRANDED-OFF-ALLOWLIST",
+        "po_manual_dispatch_note": "po (manual-dispatch-sweep) surfaced DRS-STRANDED-OFF-ALLOWLIST candidate — folding into this tick's BATCH",
+        "updated_at": "2026-07-31T01:15:25Z",
+        "updated_by": "dev-team/agent-father-return-20260731T0115Z"
+      },
+      {
         "id": "TASK-W5-FIX-BCTC-BANK-SUMMARY-MAPPING-VALIDATION-REINGEST",
         "tier": "P1",
         "title": "W5: Truthful validation_status (FR-6, AC-6) + operational re-ingest of CTG report_id (AC-5, AC-10) — sequenced after W2+W4 deployed",
@@ -18377,6 +18375,30 @@
         "updated_by": "dev-stock-price",
         "claimed_at": "2026-07-31T00:37:41Z",
         "claimed_by": "dev-team (step 3 direct dispatch)"
+      },
+      {
+        "id": "FU-MACRO-SNAPSHOT-TIER-WORSTOF",
+        "priority": "P3",
+        "size": "XS",
+        "sprint": "DATA-SERVE-INTEGRITY",
+        "status": "REVIEW",
+        "title": "get_macro_snapshot wrapper source_tier should be worst-of(carry,yield) not carry-only",
+        "type": "FIX",
+        "zone": "apps/mcp-server",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FU-MACRO-SNAPSHOT-TIER-WORSTOF",
+        "promoted_at": "2026-07-31T00:47:01Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=3)",
+        "updated_at": "2026-07-31T01:15:32Z",
+        "claimed_at": "2026-07-31T00:47:17Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "dispatched_to": "dev-mcp-server",
+        "dispatch_note": "developer team-lead 2026-07-31T00:55:38Z: zone verdict apps/mcp-server/ (system-map.json zone table + dev-mcp-server/init.md \"All code changes within apps/mcp-server/ only\", zone_restricted) — routed to dev-mcp-server per zone_dispatch, not implemented here. Target: apps/mcp-server/src/interface/mcp/tools/macro/macroTools.ts:480-481, sourceTier = data?.signals?.carry?.source_tier ?? 2. Fix: max() over ALL PRESENT signal components source_tier (carry + yield at minimum), excluding absent components from the max (do not default a missing one to tier 0/best-case). GOTCHA: apps/mcp-server/src/__tests__/1881a-source-tier.test.ts shared beforeAll fixture already has carry.source_tier=2 + yield.source_tier=4 — its own get_macro_snapshot assertions (L243, L360-369) currently pass on the pre-fix under-report and MUST be updated to expect 4, or theyll false-green this exact bug. AC(b) carry-only case needs a fresh fetch-mock fixture without signals.yield.",
+        "updated_by": "dev-mcp-server",
+        "next_agent": "qa",
+        "developer_completed_at": "2026-07-31T01:15:32Z",
+        "developer_completed_by": "dev-mcp-server",
+        "review_note": "Fix: get_macro_snapshot handler (macroTools.ts get_macro_snapshot, ~L469-489) now derives sourceTier as max() over source_tier of every PRESENT signals.* component (generic Object.values(data.signals) reduce, not carry-only) — an absent component never enters the max (no tier-0/best-case default); empty fallback (no present tier at all) stays 2, unchanged. Tool description string also corrected (was hardcoded \"Source tier: 2\"). Tests: 1881a-source-tier.test.ts AC-3 case updated 2->4 (shared beforeAll fixture carry=2/yield=4, worst-of=4) with inline comment explaining why; AC-8 firstKey test strengthened with the same value assertion (was firstKey-only, would have false-greened); NEW AC(b) case added with its own local fetch-mock fixture that omits signals.yield entirely, asserting worst-of degenerates to carry=2 when yield absent. 1881a file: 21/21 pass (was 19). Related smoke suites (089-tool-macro, 1423d, 1423f, 1570c, 1903a, 1918a — all fixture carry==yield tier so unaffected): 68/68 pass. tsc --noEmit clean. Server boot on free port 3099: health toolCount=183 (matches gen-project-stats baseline), no import errors. gen-project-stats --dry-run: toolCount=183 cronJobCount=88, unchanged (no tool/scheduler surface touched). Full bun test (repo-wide, informational only per dev-standards.md:1135 CANONICAL merge-gate reading — targeted suite is the actual gate): 14944 pass/40 skip/56 fail/596.81s, consistent with this cluster's already-documented pre-existing flake band; zero grep hits for macro/source_tier/carry/yield/1881a in that runs tail summary context this session. No apps/mcp-server file outside macroTools.ts + its own test touched."
       }
     ],
     "qa": [],
@@ -18422,26 +18444,6 @@
         "updated_by": "dev-team/po-batch-dispatch-20260731T0100Z",
         "claimed_at": "2026-07-31T01:05:26Z",
         "claimed_by": "dev-team (step 3 direct dispatch, po BATCH)"
-      },
-      {
-        "id": "FU-MACRO-SNAPSHOT-TIER-WORSTOF",
-        "priority": "P3",
-        "size": "XS",
-        "sprint": "DATA-SERVE-INTEGRITY",
-        "status": "IN_PROGRESS",
-        "title": "get_macro_snapshot wrapper source_tier should be worst-of(carry,yield) not carry-only",
-        "type": "FIX",
-        "zone": "apps/mcp-server",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FU-MACRO-SNAPSHOT-TIER-WORSTOF",
-        "promoted_at": "2026-07-31T00:47:01Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=3)",
-        "updated_at": "2026-07-31T00:55:38Z",
-        "claimed_at": "2026-07-31T00:47:17Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)",
-        "dispatched_to": "dev-mcp-server",
-        "dispatch_note": "developer team-lead 2026-07-31T00:55:38Z: zone verdict apps/mcp-server/ (system-map.json zone table + dev-mcp-server/init.md \"All code changes within apps/mcp-server/ only\", zone_restricted) — routed to dev-mcp-server per zone_dispatch, not implemented here. Target: apps/mcp-server/src/interface/mcp/tools/macro/macroTools.ts:480-481, sourceTier = data?.signals?.carry?.source_tier ?? 2. Fix: max() over ALL PRESENT signal components source_tier (carry + yield at minimum), excluding absent components from the max (do not default a missing one to tier 0/best-case). GOTCHA: apps/mcp-server/src/__tests__/1881a-source-tier.test.ts shared beforeAll fixture already has carry.source_tier=2 + yield.source_tier=4 — its own get_macro_snapshot assertions (L243, L360-369) currently pass on the pre-fix under-report and MUST be updated to expect 4, or theyll false-green this exact bug. AC(b) carry-only case needs a fresh fetch-mock fixture without signals.yield.",
-        "updated_by": "developer"
       }
     ]
   },
