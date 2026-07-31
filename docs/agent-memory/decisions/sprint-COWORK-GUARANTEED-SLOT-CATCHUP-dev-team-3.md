@@ -33,3 +33,12 @@
 **why-change:** Also compacted `MEMORY.md` (hook-triggered, 20.7KB approaching the 24.4KB read limit) — trimmed duplicated trailing prose already covered in topic files, tightened separators, dropped ~10 lowest-value pointers, landed at 17.1KB. Net: 1 background agent outstanding (`developer` on sweep-guard re-dispatch, resume lock held).
 
 ---
+
+### STEP dev-team-S29 · dev-team · 2026-07-31T04:35:00Z
+**task-id:** FIX-SWEEPGUARD-WARN-ONLY-NO-ACTUATOR-AND-TRIAGE-MISADJUDICATION (developer terminal return, re-dispatch)
+**what-done:** `developer` returned the re-routed sweep-guard task genuinely — RAW-verified 3 commits (`eac71308e`/`7428b28a5`/`5d7401303`) all ancestors of HEAD on `main`; read the full `pre-commit` diff, matches claim exactly (per-actor escalation block per agents-architect's brief, verbatim). Independently re-ran `pre-commit.test.sh` rather than trust the self-report: **9/9 PASS**, all 3 new escalation tests (T7/T8/T9) confirmed passing on their exact named behavior. Board row `REVIEW`/`next_agent:qa`/`branch:null`, absent from `in_progress[]`, `.head` idle.
+**what-considered:** Whether the live positive-control transcript in the RETURN (disposable scratch repo, real shell, not the test suite) needed independent replay too, given AC-4 was explicitly designed to catch a green-suite-false-negative. Judged the independently-rerun 9/9 test suite plus the byte-level diff read as sufficient corroboration here — the scratch-repo transcript in the RETURN is consistent with (not contradicted by) the diff logic actually shipped, and this is not a case with prior evidence of a suite/reality divergence (unlike the AC-4 design rationale itself, which was reacting to the OLD triage's clean-diff-only false negative, not this developer's own report).
+**why-decision:** Released the LOCK-LIFETIME resume lock (`task:FIX-SWEEPGUARD-WARN-ONLY-NO-ACTUATOR-AND-TRIAGE-MISADJUDICATION`, held since po's original dispatch, survived the agent-father decline and re-route) — genuine terminal handoff, first clean completion of this exact task.
+**why-change:** No plan change. Closes out the sweep-guard dispatch-misroute chain opened in S27. Net: 0 dev-track background agents outstanding; `po` triage of the 5 drained signals (`ac827349ddf3c3476`) still running, no RETURN yet.
+
+---

@@ -1,6 +1,13 @@
 # Dev Team — Sprint Boundary Notebook
 
-**Written:** 2026-07-31T04:12Z
+**Written:** 2026-07-31T04:35Z
+
+## cycle-20260731T0435Z-sweepguard-done-raw-verified — RAW-verified developer's genuine terminal RETURN on the re-dispatched sweep-guard task (9/9 tests independently re-run incl. 3 new escalation tests, commits confirmed real ancestors, diff matches claim exactly); released the resume lock, closing the agent-father-decline→developer re-route chain
+
+- **`developer` returned `FIX-SWEEPGUARD-WARN-ONLY-NO-ACTUATOR-AND-TRIAGE-MISADJUDICATION` genuinely, task terminal**: 3 commits (`eac71308e` impl, `7428b28a5` memory, `5d7401303` board-flip) all confirmed ancestors of HEAD on `main`. Read the full diff to `scripts/git-hooks/pre-commit` rather than trust the summary — matches claim exactly: new per-actor escalation block (`GIT_SWEEP_GUARD_ESCALATE_THRESHOLD`, `prior_warns` via `grep -Fc " actor=<id> "`, `escalate_effective` computed before the block/warn branch), implements agents-architect's brief verbatim.
+- **Independently re-ran the test suite rather than trust the self-report**: `bash scripts/git-hooks/pre-commit.test.sh` → **9/9 PASS**, matching claim by name — T1-T6 pre-existing plus the 3 new escalation tests (T7 same-actor 4th-commit block, T8 per-actor scoping, T9 threshold=0 opt-out all confirmed passing on their exact asserted behavior, not just exit 0).
+- **Board + lock state confirmed live**: row `REVIEW`/`next_agent:qa`/`branch:null`, absent from `in_progress[]`. `.head` idle. Released the LOCK-LIFETIME resume lock held since po's original dispatch through agent-father's correct decline through this re-route — first genuinely clean completion of this exact task.
+- **NEXT**: `po` triage of the 5 drained signals (`ac827349ddf3c3476`) still outstanding, no RETURN yet this window. Await.
 
 ## cycle-20260731T0412Z-headstamp-done+branchhijack-signal — RAW-verified head-stamp developer's terminal RETURN (60/60 wrapper tests incl. 3 new AC-6 groups independently re-run, 5/5 on 1837a suite, live .head genuinely stamped); released resume lock; escalated the branch-hijack hazard to po as a signal after its 4th independent hit today, MEMORY.md compacted (20.7KB->17.1KB, hook-triggered)
 
@@ -17,13 +24,4 @@
 - **Corrected**: fixed the stale `next_agent` field (still `agents-architect`, whose own piece was already delivered) to `developer` via `orch-apply.sh`, re-dispatched with the same brief + full 4-part instructions, explicit scope fence against the other 5 sweep-guard family rows.
 - **Journal housekeeping**: `sprint-COWORK-GUARANTEED-SLOT-CATCHUP-dev-team-2.md` hit its byte cap (40769/36000, well under the 600-line cap — a byte-only breach) — appended `CAP-REACHED` sentinel, rolled future entries to `-3.md`, sent the mandatory bug-channel telegram (msg 4501).
 - **NEXT**: await `developer` (sweep-guard re-dispatch, resume lock held) and the still-outstanding `developer` (head-stamp fix, `a85fe24b775a623b5`, no RETURN yet this whole window).
-
-## cycle-20260731T0144Z-po-return+pm-return+3-dispatches — accepted po's rejection of my own prior "confirmed benign" sweep-guard disposition (verified via GIT_INDEX_FILE BARE/SCOPED discriminator — real methodology gap, self-correcting commit habit); RAW-verified pm's tombstone relay; dispatched developer×2 + agents-architect + agent-father(on-demand)
-
-- **`po` returned `BATCH(5)`**: 4 new rows minted + 3 existing corrected. **Accepted po's rejection of dev-team's own prior "already confirmed benign" disposition of the 4 `commit-sweep-guard` signals** — verified the mechanism directly: `scripts/git-hooks/pre-commit` discriminates BARE (real `.git/index`) vs SCOPED (`next-index-*.lock` temp index) via `basename "$GIT_INDEX_FILE"`; SCOPED commits `exit 0` completely silently, so ANY `.git/sweep-guard.log` entry is definitional proof of a genuine bare commit. My own session logged 4 this tick (`040be366d`/`7230fe5c0`/`167b97ad3`/`ebcced67a`). My prior check (`git show --stat` clean) verified OUTCOME (no unwanted diff) not MECHANISM (no race window existed) — a real verification-methodology gap, not a false alarm. **Self-correction adopted: use `git commit -m "..." -- <path>` (pathspec directly on the commit invocation), not `git add -- <path>` followed by a bare `git commit`.**
-- Dispatched the 2 dev-track rows per po's own explicit routing note: `FIX-ORCHSTATE-HEAD-STAMP-DROPPED-CI-RED-1837A` → `developer` (free WIP slot, LOCK-LIFETIME resume held); `FIX-SWEEPGUARD-WARN-ONLY-NO-ACTUATOR-AND-TRIAGE-MISADJUDICATION` → `agents-architect` (does not consume WIP per po). On-demand dispatched `agent-father` for `TE-T08` (claim→spawn→release-at-spawn maintenance-lane pattern), flagged the risk of moving the pathspec-commit instruction out of the hot card during its lazy-load restructuring.
-- **`pm` returned genuinely** — commit `8d233ccc5` real, on HEAD, 3 files match `git show --stat`. Read the full 149L handoff doc: correctly carries forward architect's design verbatim, correctly flags NFR-1, explicit resume-lock-stays-held note for the next hop. Row confirmed live `IN_PROGRESS`/`next_agent:developer`.
-- Dispatched `developer` for the actual 6-file tombstone implementation — 3rd relay hop in this chain (po→ba→architect→pm→developer), resume lock unbroken since ba's spec handoff.
-- **Notebook-hygiene note**: last cycle's edit under-pruned (added a section without dropping the oldest, file briefly held 4 sections against the 3-section cap) — corrected in this same write, dropped 2 oldest sections to land at 3.
-- **NEXT**: await `developer`×2 (2 separate resume locks — tombstone fix + head-stamp fix), `agents-architect` (sweep-guard actuator design), `agent-father` (TE-T08, already release-at-spawn, no lock to track).
 
