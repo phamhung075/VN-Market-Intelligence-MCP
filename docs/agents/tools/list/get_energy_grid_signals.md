@@ -18,13 +18,36 @@ Lấy tín hiệu thị trường điện lực VN: mức nước hồ thủy đ
 
 ## Returns
 
-Plain-text Vietnamese report showing:
+Plain-text Vietnamese report (`content[0].text`) showing:
 - Hydroelectric reservoir levels (% capacity, trend)
 - Power generation mix (hydro %, coal %, renewable %)
 - Grid frequency and demand status
 - Electricity price signals
 - Impact on energy stocks and industrial zones
 - Forecast for next 7-30 days
+
+**`structuredContent` (FDA-5, 2026-07-31):** thermalDispatchPct/renewableDispatchPct/
+peakDemandGW/installedCapacityGW are hardcoded approximations — Vietnam has no
+public live EVN grid-mix API. The VN text banner discloses this
+("[ƯỚC TÍNH] — dữ liệu lưới điện chưa từ EVN API"), and the same flag now also
+travels in `structuredContent` so a downstream consumer reading the payload
+structurally (not just parsing the Vietnamese prose) reliably sees the
+estimate provenance:
+```json
+{
+  "is_estimate": true,
+  "source_tier": 4,
+  "estimated_fields": ["thermalDispatchPct", "renewableDispatchPct", "peakDemandGW", "installedCapacityGW"],
+  "grid_figures": { "hydroCapacityPct": 42.5, "thermalDispatchPct": 40, "renewableDispatchPct": 22, "peakDemandGW": 45, "installedCapacityGW": 85 },
+  "hydro_data_source": "live_fetch",
+  "signal_count": 1
+}
+```
+`grid_figures.hydroCapacityPct` and `hydro_data_source` reflect real reservoir
+data when the vneconomy.vn scrape succeeds (`hydro_data_source: "live_fetch"`);
+otherwise `hydroCapacityPct` falls back to the 70% default
+(`hydro_data_source: "default_fallback"`) — the other 4 fields are always
+estimates regardless. Source: `apps/mcp-server/src/interface/mcp/tools/sector/energyTools.ts:61-79`.
 
 ## Output Example
 
