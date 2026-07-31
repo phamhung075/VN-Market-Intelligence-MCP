@@ -17,3 +17,15 @@
 **why-change:** Handoff assumed the fix belonged in pdf-extractor's/mcp-server's trigger-wiring layer; investigation found no code defect in either — the pipe was already fixed and just needed live re-validation, which I performed. No code change landed in `apps/pdf-extractor/`.
 
 ---
+
+### STEP dev-pdf-extractor-S2 · dev-pdf-extractor · 2026-07-31T00:00:00Z
+**task-id:** FIX-CI-SIZELINT-PDFX-EXTRACTION-ENGINE-TOLERANCE
+**what-done:** Trimmed `extraction_engine.py` 237L→226L by deduplicating the FIX-PDFX-TESSERACT-CONCURRENCY/FIX-PDFX-EXTRACTION-ENGINE-EMPTY-STRING-SWALLOW propagation rationale, which commit 200eabcf3 had restated near-verbatim in 3 places (2 docstrings + 1 inline comment); no functional change. Committed `d808a6a11`.
+**what-considered:**
+- Add a current size-justification header — rejected: would bypass the baseline check entirely rather than address the actual drift; AC-3 prefers trimming.
+- Re-baseline `docs/data/size-lint-baseline.json` to 237L — rejected: AC-2 landmine forbids touching it without a stated justification, and the +29L since the 208L baseline was 100% redundant prose (git-show confirmed), not new load-bearing content — no genuine justification existed.
+- Trim genuine redundant documentation (chosen): git-blame'd the 208→237 delta to a single commit, confirmed the entire +29L was 3x-repeated rationale for the same 3 exceptions, collapsed to 1 canonical paragraph + 2 pointer references.
+**why-decision:** File-level AC-1 only requires `--check` to stop listing the file; deduping redundant docs achieves that with zero behavior risk and no baseline mutation, satisfying AC-2/AC-3 by construction. Verified: `--check` no longer lists the file (1 unrelated macro-indicators offender remains, out of scope); full pytest suite 1058 pass / 1 pre-existing env-only fail (missing `/app/data/pdfs/...` fixture, confirmed identical on `git stash` — unrelated to this change).
+**why-change:** No change from plan.
+
+---
