@@ -93,12 +93,12 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "FIX-COWORK-SPAWNFANOUT-NO-SESSION-ID-IN-LEAF-ENTRY-PROMPT",
-    "next_agent": "agent-father",
-    "next_action": "dev-team S1 tier-1 dispatch: FIX-COWORK-SPAWNFANOUT-NO-SESSION-ID-IN-LEAF-ENTRY-PROMPT (agent-father) + FIX-MCP-SERVER-DEPLOY-LANE-STALL-REBUILD-REQUIRED-INERT (qa) both in flight, parallel worktree-isolated.",
-    "updated_at": "2026-07-31T14:40:15Z",
-    "updated_by": "dev-team (S1 tier-1 dispatch)"
+    "status": "idle",
+    "active_task_id": null,
+    "next_agent": "router",
+    "updated_at": "2026-07-31T15:01:44Z",
+    "updated_by": "dev-team (S78 head-sync on review-flip, CANONICAL:SSOT-STATUSFLIP-LANEMOVE)",
+    "next_action": "FIX-COWORK-SPAWNFANOUT-NO-SESSION-ID-IN-LEAF-ENTRY-PROMPT flipped to review by agent-father — awaiting qa."
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -19053,37 +19053,16 @@
         "updated_by": "dev-mcp-server (FIX-CRON-JOB-RUNS-DOUBLE-LOG review-flip)",
         "commit_sha": "0a73c5b0490d370cc01d28a9040b56f4920c1aac",
         "return_summary": "predictionResolutionJob double-wrap fixed (startupHelpers.ts): default fn now calls core runPredictionResolution(db) directly + replicated T4 shouldSkipRecoveryReplay guard, matching the evidenceAccumulator/baseRateComputation/bctcReparse sibling fixes. 10 new tests (RED-then-GREEN via git stash proof), 130/130 related-file regression, tsc clean, toolCount=183/cronJobCount=88 unchanged, full suite 14987 pass/56 fail (within documented 52-59 pre-existing flake band, zero prediction/cron/scheduler matches)."
-      }
-    ],
-    "qa": [],
-    "_closed_signals_20260614": {
-      "_by": "po-S50",
-      "_at": "2026-06-14T14:45:14Z",
-      "closed": [
-        {
-          "signal": "docs/signals/workflow-protocol-coherence-audit-20260614T141952Z.json",
-          "reason": "ALREADY IMPLEMENTED — all 6 COHERENCE-GAP tasks status=IMPLEMENTED, result=RESOLVED (commit 85935da3). No work to queue.",
-          "disposition": "move-to-processed"
-        },
-        {
-          "signal": "docs/signals/dev-team-tool-contract-cron-overlap-20260614T121816Z.json",
-          "reason": "ALREADY RESOLVED by the LIVE SF-1 single-flight guard (F2-A) + gateway-call-contract.md (F1) now in dev-team flow. This brief is the source that DELIVERED SF-1; no residual work.",
-          "disposition": "move-to-processed"
-        }
-      ]
-    },
-    "last_triaged_at": "2026-07-31T13:47:28Z",
-    "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": [
+      },
       {
         "id": "FIX-COWORK-SPAWNFANOUT-NO-SESSION-ID-IN-LEAF-ENTRY-PROMPT",
         "type": "FIX",
-        "status": "IN_PROGRESS",
+        "status": "REVIEW",
         "priority": "P1",
         "size": "S",
         "zone": "docs/agents/",
         "owner": "po",
-        "next_agent": "agent-father",
+        "next_agent": "qa",
         "supervised": false,
         "plan_only": false,
         "title": "cowork spawn-fanout ENTRY_PROMPT injects no session id into ANY leaf worker — every refine-bctc-slot-* fire is lost (2nd hit, corroborated on two independent planes)",
@@ -19105,12 +19084,34 @@
         "origin_signal_id": "cow-20260731T140900",
         "created_at": "2026-07-31T14:32:00Z",
         "created_by": "po/triage-20260731T1429Z",
-        "status_note": "RECURRING 2x (2026-07-30 slot-4, 2026-07-31 slot-2) — clears the recurring-bug-escalation bar (feedback_recurring_bug_escalation). Daily loss until shipped. Root cause is producer-side and one composition line; do not re-diagnose from scratch.",
-        "updated_at": "2026-07-31T14:40:15Z",
+        "status_note": "IMPLEMENTATION (agent-father): spawn-fanout.md Step 5.2 both ENTRY_PROMPT branches (trigger_prompt and legacy flow_path) now append new SESSION_ID_LINE (cowork-team own resolved $CLAUDE_CODE_SESSION_ID, substituted BEFORE dispatch -- never the unresolved token text). SCOPE DECISION (AC-3, documented in-file): uniform injection for every leaf worker. slot.trigger_prompt in cowork-schedule.json confirmed byte-identical. refine_bctc_md/flow/main.md SELF-IDENTITY GUARD updated to name the exact extraction line. New scripts/agents-flow/cowork-spawn-entry-prompt-session-id.test.js (7/7 PASS). Sibling cowork-schedule-consistency.test.js (9/9) and cowork-match-slots.test.js (43/43) re-run clean. dev-team RAW-verify (S78): all 3 test suites independently re-run, PASS/PASS/PASS, zero discrepancy. AC-6 (live re-verify on next refine-bctc-slot-* fire, 2026-08-01T14:00Z) explicitly out of scope -- QA/next dev-team tick verifies. Commit 0d16f28ce (cherry-picked from worktree 6c2f940b5).",
+        "updated_at": "2026-07-31T15:01:44Z",
         "claimed_at": "2026-07-31T14:40:15Z",
-        "claimed_by": "dev-team (S1 tier-1 dispatch)"
+        "claimed_by": "dev-team (S1 tier-1 dispatch)",
+        "commit": "0d16f28ce (fix+test+flow-docs+memory)",
+        "updated_by": "dev-team (S78 RAW-verify + head-sync)"
       }
-    ]
+    ],
+    "qa": [],
+    "_closed_signals_20260614": {
+      "_by": "po-S50",
+      "_at": "2026-06-14T14:45:14Z",
+      "closed": [
+        {
+          "signal": "docs/signals/workflow-protocol-coherence-audit-20260614T141952Z.json",
+          "reason": "ALREADY IMPLEMENTED — all 6 COHERENCE-GAP tasks status=IMPLEMENTED, result=RESOLVED (commit 85935da3). No work to queue.",
+          "disposition": "move-to-processed"
+        },
+        {
+          "signal": "docs/signals/dev-team-tool-contract-cron-overlap-20260614T121816Z.json",
+          "reason": "ALREADY RESOLVED by the LIVE SF-1 single-flight guard (F2-A) + gateway-call-contract.md (F1) now in dev-team flow. This brief is the source that DELIVERED SF-1; no residual work.",
+          "disposition": "move-to-processed"
+        }
+      ]
+    },
+    "last_triaged_at": "2026-07-31T13:47:28Z",
+    "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
+    "in_progress": []
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
