@@ -70,6 +70,8 @@ Script SSOT: `scripts/agents-flow/cowork-tick-preflight.sh` (uses shared `script
 | `LOST_ELECTION` | Done. Script already sent the `work`-channel telegram (peer session leads this tick). EXIT. |
 | `DEFER` | Done. AF-1 backstop-window defer — retries automatically at the next 15-min tick. EXIT. |
 | `ERROR` | Script hit a transport/tool/local-guard failure (`$VERDICT_JSON.detail` has why). Election lock state is undefined. Fall back to the full original inline pseudocode below (Steps 0a/0b/0b.3/0c/1-4b — unchanged, never deleted) — read from **Step 0a** onward as if the script never ran. |
+| `TOMBSTONED` | Done. `pressure-state.json`'s `tick_id` already matched this nominal tick — a prior session already completed it. Script made ZERO `task_claim` calls on `cron:cowork:<tick>` (suppressed before the election attempt, FR-1/FR-3). No re-elect, no re-run. EXIT. |
+| *(any other/unrecognized verdict string)* | **Fail-safe (NFR-5):** do NOT default to the WORK continuation path. Treat as done/EXIT, same as SILENT/LOST_ELECTION/DEFER — an unrecognized verdict means either a stale caller (e.g. an armed cron prompt that predates a verdict this script now emits) or a script bug; neither justifies running the dispatch body. |
 
 ### § WORK continuation
 

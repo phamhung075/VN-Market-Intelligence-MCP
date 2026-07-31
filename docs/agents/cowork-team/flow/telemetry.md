@@ -104,6 +104,18 @@ fi
      ok=false is acceptable (TTL expired on a pathologically long dispatch body — not an error).
      Spec: addendum §D.3 (explicit release mandatory on every exit path). -->
 
+<!-- ORDERING INVARIANT (FIX-COWORK-FIRE-ELECTION-TICK-TOMBSTONE NFR-3): Step 6.0
+     (emit_pressure_state, above) MUST run strictly BEFORE this release on the happy
+     path -- verified current: Step 6.0 is the first sub-step of Step 6, this release
+     is the last. This ordering is what makes the pre-election tombstone check
+     (cowork-tick-preflight.sh Step 2.5 / leader-lock.md's mirror) correct-by-
+     construction: pressure-state.json's tick_id only ever reflects a COMPLETED tick.
+     The Error Guard below (L117-152) deliberately releases WITHOUT calling
+     emit_pressure_state first -- that omission is what lets a tick that died before
+     Step 6.0 re-run on its next fire (NFR-2). Do NOT "fix" the Error Guard by adding
+     an emit_pressure_state call to it, and do NOT reorder Step 6.0 after this release
+     -- either change reopens this exact double-fire defect. -->
+
 ```
 call_tool(server="vn-market", tool="task_release", arguments={
   task_id:              "cron:cowork:" + TICK,

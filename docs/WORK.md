@@ -1,5 +1,23 @@
 
 ---
+## [Developer] 2026-07-31 — FIX-COWORK-FIRE-ELECTION-TICK-TOMBSTONE
+
+Fixed the production double-fire bug (confirmed twice in 27h, 2026-07-30T21:00Z + 2026-07-31T00:00Z):
+`cron:cowork:<TICK>` was released at end of Step 6, so a re-fire of the same completed tick found the
+key free and re-elected/re-ran from scratch. Added a pre-election tombstone check (new `_tick_already_ran()`
+predicate + new Step 2.5 in `scripts/agents-flow/cowork-tick-preflight.sh`) comparing `pressure-state.json`'s
+`tick_id` (server second-precision) against the nominal tick (script minute-precision), normalized by
+stripping the trailing `:SS` (NFR-1 landmine — a naive `==` is always false). New `TOMBSTONED` verdict makes
+ZERO `task_claim` calls on a tombstoned tick (AC-1, tool-call level). Mirrored the same check in
+`docs/agents/cowork-team/flow/leader-lock.md` (ERROR-fallback path, no shared runtime to reuse the bash
+predicate). Added `TOMBSTONED` + unrecognized-verdict fail-safe rows to `main.md`'s JUMP-TO table, an
+NFR-3 ordering-invariant comment pin in `telemetry.md`, and a `TOMBSTONED` clause + rollout note in
+`.claude/skills/cron-cowork-team/SKILL.md` (bare `/cron-cowork-team` re-run is a no-op post-fix — needs
+explicit `CronDelete`+`CronCreate`). `cowork-tick-preflight.test.sh` extended with 2 positive-control
+tests replaying the two real incident timestamps verbatim (must assert `true`, not just "suite exits 0"),
+negative controls, an end-to-end TOMBSTONED case, and an NFR-2 no-over-suppression regression — 40/40 pass.
+
+---
 ## [Developer] 2026-07-30 — FIX-DECISION-JOURNAL-SKILL-CAPCHECK-LINE-ONLY-NO-BYTE-ROLLOVER
 
 `.claude/skills/decision-journal/SKILL.md` § Cap Check tested only `LINES>600`, so a journal under

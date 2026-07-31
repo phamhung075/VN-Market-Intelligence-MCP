@@ -147,3 +147,24 @@ AC: AC-1 zero task_claim calls on tombstoned tick | AC-2 no over-suppression of 
 ```
 
 **Post-completion handoff:** When you're done and the branch is ready for review, the dev-team loop will advance the task status and route to QA. You won't close the task or manage its final state — that's the orchestration loop's job.
+
+---
+
+## [Developer] Implementation Record
+
+- **Files modified:**
+  - `scripts/agents-flow/cowork-tick-preflight.sh:18-22,35-45,84-104,183-191` — header docs (Step 2.5, TOMBSTONED in verdict/exit-code/lock-semantics), new `_tick_already_ran()` pure predicate (NFR-1 normalization + "DO NOT SIMPLIFY THIS AWAY" comment), new Step 2.5 call site between presence claim (Step 2) and election claim (Step 3)
+  - `scripts/agents-flow/cowork-tick-preflight.test.sh:132-165(new),357-384(new),133-141(log_count fix)` — 6 unit tests for `_tick_already_ran()` (2 positive-control incident replays + 4 negative controls), T6 end-to-end TOMBSTONED case (AC-1 zero cowork-slot claims), T7 NFR-2 stale-pressure-state regression, and a `log_count()` bugfix (double "0\n0" emission on true-zero match count, which broke the new AC-1 assertion)
+  - `docs/agents/cowork-team/flow/leader-lock.md:45-68(new section)` — prose-pseudocode mirror of `_tick_already_ran()` inserted between `### compute_tick_boundary` and `### Fire claim` (FR-1 dual-path requirement)
+  - `docs/agents/cowork-team/flow/main.md:73-74(new rows)` — `TOMBSTONED` + unrecognized-verdict fail-safe rows in the JUMP-TO table
+  - `docs/agents/cowork-team/flow/telemetry.md:107-116(new comment)` — NFR-3 ordering-invariant HTML comment before the P3 Fire-Election Release code block (comment-only, no logic change)
+  - `.claude/skills/cron-cowork-team/SKILL.md:61(edited),110-128(new section)` — `TOMBSTONED` + defensive-default clause added to the `CronCreate` prompt string; new rollout subsection documenting bare `/cron-cowork-team` re-run is a no-op post-fix (requires explicit `CronDelete`+`CronCreate`)
+- **Tests written:** `scripts/agents-flow/cowork-tick-preflight.test.sh` — 8 new unit-predicate assertions (2 positive-control incident replays, 6 negative controls) + 5 new end-to-end assertions (T6 TOMBSTONED ×3, T7 NFR-2 regression ×2) = 13 new assertions, all GREEN. Full suite: 40/40 pass (was 27/27 before this task).
+- **Git commits:** (see commit created immediately after this record — `fix(cowork): pre-election tombstone check to suppress already-completed ticks`)
+- **tsc status:** N/A — zone `cross-service/`, no `apps/*/src` TypeScript touched (bash + markdown only)
+- **Full suite:** `bash scripts/agents-flow/cowork-tick-preflight.test.sh` → 40 pass / 0 fail ✓ (includes both AC-3 positive-control assertions asserted TRUE, not just suite-exit-0 — verified individually in output)
+- **Docs updated:** `docs/agents/cowork-team/flow/leader-lock.md`, `main.md`, `telemetry.md`, `.claude/skills/cron-cowork-team/SKILL.md` (all 4 are part of the 6-file design itself, listed above) | `docs/WORK.md` — one-paragraph summary appended
+- **Graphify:** SKIPPED — this session has no Skill-tool grant (Read/Edit/Write/Bash only); flagged for the coordinating dev-team session to run `/graphify docs --update --no-viz` on the 4 touched `.md` docs
+- **Simplicity gate:** PASS — Q1 scope clean (no feature/flag beyond the 3 ACs), Q2 no single-use abstractions (`_tick_already_ran()` has 1 production call-site + is intentionally standalone-testable per architect design, mirrors existing `_step8_silent_release()` idiom), Q3 senior-test clean (no indirection layers, straightforward regex+compare), Q4 ratio <50% overhead (all added lines trace directly to AC-1/AC-2/AC-3 or the log_count test-harness bugfix needed to assert AC-1)
+- **NFR-1 landmine verification (explicit, per Risk Flags):** both positive-control tests in the suite output above assert `true` by name — `U-TOMBSTONE positive control slot-3 incident (21:00:00Z vs nominal 21:00Z)` and `U-TOMBSTONE positive control slot-4 incident (00:00:00Z vs nominal 00:00Z)` — confirmed PASS, not merely "suite exits 0"
+- **Out-of-scope note (not fixed, flagged only):** `docs/agents/dev-team/flow/main.md:101` references `_step8_silent_release`/`cowork-tick-preflight.sh lines 74-105` — that line range was already stale before this task (pre-existing drift) and drifted further since the new predicate shifted `_step8_silent_release` to ~107-143; left untouched, outside this task's 6-file scope and not a functional dependency (illustrative prose reference only)

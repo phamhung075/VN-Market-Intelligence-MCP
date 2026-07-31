@@ -130,8 +130,58 @@ run_case() {
 }
 
 log_has() { grep -q "^$1|" "$CALL_LOG_FILE" 2>/dev/null && echo true || echo false; }
-log_count() { grep -c "^$1|" "$CALL_LOG_FILE" 2>/dev/null || echo 0; }
+log_count() {
+  # FIX-COWORK-FIRE-ELECTION-TICK-TOMBSTONE: `grep -c` exits non-zero when the
+  # match count IS zero (that's "no lines matched", not "grep failed") even
+  # though it still prints "0" — the old `|| echo 0` fallback then ALSO fired,
+  # emitting a second "0" line and corrupting a true-zero assertion (AC-1
+  # needs to assert exactly 0 task_claim calls on a tombstoned tick). Capture
+  # into a var first so the exit code never reaches a shell `||`.
+  local n
+  n=$(grep -c "^$1|" "$CALL_LOG_FILE" 2>/dev/null)
+  echo "${n:-0}"
+}
 log_has_line() { grep -qF "$1" "$CALL_LOG_FILE" 2>/dev/null && echo true || echo false; }
+
+# ── U-TOMBSTONE: _tick_already_ran() pure predicate unit tests ───────────────
+# FIX-COWORK-FIRE-ELECTION-TICK-TOMBSTONE / NFR-4 positive control: replay the
+# two REAL incident tick_ids verbatim (second-precision, as pressure-state.json
+# actually stamps them) against the minute-precision nominal tick the script
+# computes. A regression back to a naive `==` string compare (the NFR-1
+# landmine) fails these two assertions immediately, not just "suite exits 0".
+cat > "$TMPDIR_TEST/pressure-slot3.json" <<'JSON'
+{"tick_id":"2026-07-30T21:00:00Z"}
+JSON
+check "U-TOMBSTONE positive control slot-3 incident (21:00:00Z vs nominal 21:00Z)" \
+  "$(_tick_already_ran "$TMPDIR_TEST/pressure-slot3.json" "2026-07-30T21:00Z")"
+
+cat > "$TMPDIR_TEST/pressure-slot4.json" <<'JSON'
+{"tick_id":"2026-07-31T00:00:00Z"}
+JSON
+check "U-TOMBSTONE positive control slot-4 incident (00:00:00Z vs nominal 00:00Z)" \
+  "$(_tick_already_ran "$TMPDIR_TEST/pressure-slot4.json" "2026-07-31T00:00Z")"
+
+# Negative controls — all must be "false" (NFR-2: never over-suppress).
+check "U-TOMBSTONE negative: non-matching tick_id" \
+  "$([ "$(_tick_already_ran "$TMPDIR_TEST/pressure-slot4.json" "2026-07-31T00:15Z")" = "false" ] && echo true || echo false)"
+check "U-TOMBSTONE negative: missing pressure-state.json file" \
+  "$([ "$(_tick_already_ran "$TMPDIR_TEST/does-not-exist-fixture.json" "2026-07-31T00:00Z")" = "false" ] && echo true || echo false)"
+
+echo '{}' > "$TMPDIR_TEST/pressure-empty-tick.json"
+check "U-TOMBSTONE negative: absent tick_id field" \
+  "$([ "$(_tick_already_ran "$TMPDIR_TEST/pressure-empty-tick.json" "2026-07-31T00:00Z")" = "false" ] && echo true || echo false)"
+
+echo '{"tick_id":""}' > "$TMPDIR_TEST/pressure-blank-tick.json"
+check "U-TOMBSTONE negative: empty-string tick_id field" \
+  "$([ "$(_tick_already_ran "$TMPDIR_TEST/pressure-blank-tick.json" "2026-07-31T00:00Z")" = "false" ] && echo true || echo false)"
+
+echo '{"tick_id":"not-a-timestamp"}' > "$TMPDIR_TEST/pressure-malformed.json"
+check "U-TOMBSTONE negative: malformed/non-ISO tick_id" \
+  "$([ "$(_tick_already_ran "$TMPDIR_TEST/pressure-malformed.json" "2026-07-31T00:00Z")" = "false" ] && echo true || echo false)"
+
+echo '{"tick_id":"2026-07-31T00:00Z"}' > "$TMPDIR_TEST/pressure-minuteprecision.json"
+check "U-TOMBSTONE negative: tick_id already minute-precision (no seconds — not what server writes, must still not crash the regex/compare)" \
+  "$([ "$(_tick_already_ran "$TMPDIR_TEST/pressure-minuteprecision.json" "2026-07-31T00:00Z")" = "false" ] && echo true || echo false)"
 
 # ── T1: SILENT path — no slots, no one-shots, no NEW signals ─────────────────
 run_case
@@ -244,6 +294,37 @@ OUT=$(run_preflight); RC=$?
 VERDICT=$(printf '%s' "$OUT" | jq -r '.verdict')
 check "T5 SILENT with missing pressure-state.json (R3 safe default path taken)" "$([ "$VERDICT" = "SILENT" ] && echo true || echo false)"
 check "T5 SILENT exit=0" "$([ "$RC" -eq 0 ] && echo true || echo false)"
+
+# ── T6: TOMBSTONED end-to-end via run_preflight (AC-1 — zero cowork-slot claims) ──
+# Computes the current tick boundary the same way the script's own Step 1 does
+# (avoids a flaky fixed-historical fixture — the script derives $tick from real
+# wall-clock, so the fixture must match whatever run_preflight computes at the
+# moment it runs, not a hardcoded past tick).
+run_case
+export SLOT_MATCHER_CMD='echo "{\"slots\":[],\"drift_min\":0}"'
+T6_CUR_MIN=$(date -u +%M); T6_CUR_MIN=$((10#$T6_CUR_MIN))
+T6_BOUNDARY_MIN=$(( T6_CUR_MIN / 15 * 15 ))
+T6_TICK=$(date -u +"%Y-%m-%dT%H:$(printf '%02d' "$T6_BOUNDARY_MIN")Z")
+export PRESSURE_STATE_PATH="$TMPDIR_TEST/pressure-tombstone-live.json"
+jq -n --arg tid "${T6_TICK%Z}:00Z" '{tick_id:$tid}' > "$PRESSURE_STATE_PATH"
+OUT=$(run_preflight); RC=$?
+VERDICT=$(printf '%s' "$OUT" | jq -r '.verdict')
+check "T6 TOMBSTONED verdict (pressure-state.json already has the live current tick)" "$([ "$VERDICT" = "TOMBSTONED" ] && echo true || echo false)"
+check "T6 TOMBSTONED exit=1" "$([ "$RC" -eq 1 ] && echo true || echo false)"
+check "T6 TOMBSTONED zero cowork-slot task_claim calls (AC-1 tool-call level, not merely zero successful claims)" "$([ "$(log_count "task_claim|cowork-slot")" -eq 0 ] && echo true || echo false)"
+export PRESSURE_STATE_PATH="$TMPDIR_TEST/does-not-exist-pressure-state.json"
+
+# ── T7: NFR-2 regression — stale/non-matching pressure-state.json must NOT
+#     tombstone (a tick that died before telemetry.md Step 6.0 must still re-run) ──
+run_case
+export SLOT_MATCHER_CMD='echo "{\"slots\":[],\"drift_min\":3}"'
+export PRESSURE_STATE_PATH="$TMPDIR_TEST/pressure-stale.json"
+echo '{"tick_id":"2020-01-01T00:00:00Z"}' > "$PRESSURE_STATE_PATH"
+OUT=$(run_preflight); RC=$?
+VERDICT=$(printf '%s' "$OUT" | jq -r '.verdict')
+check "T7 NFR-2 stale non-matching pressure-state stays SILENT (no over-suppression)" "$([ "$VERDICT" = "SILENT" ] && echo true || echo false)"
+check "T7 NFR-2 exit=0" "$([ "$RC" -eq 0 ] && echo true || echo false)"
+export PRESSURE_STATE_PATH="$TMPDIR_TEST/does-not-exist-pressure-state.json"
 
 # ── Summary ────────────────────────────────────────────────────────────────────
 echo ""

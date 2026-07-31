@@ -15,6 +15,11 @@
 #      re-entry by this same session. NEVER gates — proceeds regardless of
 #      claim/heartbeat outcome (ERROR is reserved for fire-election/transport
 #      failures below, not presence)
+#   2.5. Pre-election tombstone check (FIX-COWORK-FIRE-ELECTION-TICK-TOMBSTONE
+#      FR-1/FR-3) — _tick_already_ran() compares pressure-state.json's tick_id
+#      (normalized second-precision -> minute-precision) against the nominal
+#      tick; on match, TOMBSTONED verdict, ZERO task_claim calls are made on
+#      cron:cowork:<tick> (suppressed before Step 3 ever runs)
 #   3. Fire-time election claim (cron:cowork:<tick>, P3) — AF-1 backstop-defer
 #      gate on transport error; LOST_ELECTION when a peer session holds it
 #   4. claim_due_scheduled_tasks sweep — R2: verdict carries FULL task objects
@@ -28,14 +33,16 @@
 #      safe default) then release the election lock
 #
 # Verdict JSON (one line, stdout): {verdict, tick, drift_min, slots, one_shots,
-#   new_signals, detail}. verdict ∈ SILENT|WORK|LOST_ELECTION|DEFER|ERROR.
-# Exit code: 0 = SILENT (no LLM read needed). 1 = WORK|LOST_ELECTION|DEFER|ERROR
-#   (LLM continues — JUMP-TO table in main.md).
+#   new_signals, detail}. verdict ∈ SILENT|WORK|LOST_ELECTION|DEFER|ERROR|TOMBSTONED.
+# Exit code: 0 = SILENT (no LLM read needed). 1 = WORK|LOST_ELECTION|DEFER|ERROR|
+#   TOMBSTONED (LLM continues — JUMP-TO table in main.md).
 #
 # Lock semantics: SILENT releases the election lock (Step 8). WORK holds it —
 #   telemetry.md Step 6 P3 release runs at the end of the full dispatch body.
 #   LOST_ELECTION never held it. DEFER never claimed it (early return). ERROR
 #   leaves lock state undefined — the LLM fallback repairs via re-claim.
+#   TOMBSTONED never held it — same bucket as LOST_ELECTION/DEFER (Step 2.5
+#   returns before Step 3's task_claim is ever called).
 #
 # Env overrides (test seams — AC-6 fault injection; defaults = real project
 # paths / real script):
@@ -72,6 +79,28 @@ _emit_verdict() {
         --argjson slots "${slots:-[]}" --argjson one_shots "${one_shots:-[]}" \
         --argjson new_signals "${new_signals:-0}" --arg detail "$detail" \
     '{verdict:$verdict, tick:$tick, drift_min:$drift, slots:$slots, one_shots:$one_shots, new_signals:$new_signals, detail:$detail}'
+}
+
+# ── Tombstone predicate (FIX-COWORK-FIRE-ELECTION-TICK-TOMBSTONE FR-1) ──
+# Pure function: reads pressure-state.json, returns "true"/"false" on stdout.
+# NEVER makes an MCP call, NEVER throws. Edge cases collapse to ONE safe branch
+# ("false" -> proceed to normal election): missing file, missing/empty tick_id,
+# non-ISO tick_id, non-matching tick_id are all "false" -- do not special-case them.
+_tick_already_ran() {
+  local pressure_state_path="$1" nominal_tick="$2" raw_tick_id norm_tick_id
+  [ -f "$pressure_state_path" ] || { echo false; return; }
+  raw_tick_id=$(jq -r '.tick_id // empty' "$pressure_state_path" 2>/dev/null)
+  [ -z "$raw_tick_id" ] && { echo false; return; }
+  # NFR-1 LANDMINE: tick_id is server-stamped SECOND-precision
+  # ("YYYY-MM-DDTHH:MM:SSZ" -- emitPressureStateTool.ts always appends ":00").
+  # nominal_tick (this script's own $tick, Step 1) is MINUTE-precision
+  # ("YYYY-MM-DDTHH:MMZ"). A literal == on the raw strings is ALWAYS FALSE.
+  # Strip the trailing ":SS" before comparing -- DO NOT SIMPLIFY THIS AWAY.
+  if [[ "$raw_tick_id" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$ ]]; then
+    norm_tick_id="${raw_tick_id%:*}Z"
+    [ "$norm_tick_id" = "$nominal_tick" ] && { echo true; return; }
+  fi
+  echo false
 }
 
 # ── Step 8 (SILENT only): emit last-known pressure state, release election lock ──
@@ -150,6 +179,16 @@ run_preflight() {
     fi
   fi
   # Transport error on the claim itself falls through here too — presence never gates.
+
+  # ---- Step 2.5: pre-election tombstone check (FR-1/FR-3) ----
+  # MUST run before Step 3 ever calls task_claim on cron:cowork:$tick -- a
+  # tombstoned tick makes ZERO election-claim calls (AC-1 at the tool-call
+  # level, not merely zero *successful* claims).
+  if [ "$(_tick_already_ran "$PRESSURE_STATE_PATH" "$tick")" = "true" ]; then
+    _emit_verdict "TOMBSTONED" "$tick" "$drift_min" "[]" "[]" "0" \
+      "pressure-state.json tick_id already matches nominal tick $tick (server second-precision normalized to minute precision) -- a prior session already completed this exact tick; suppressed before any cron:cowork:$tick claim attempt, see docs/agents/cowork-team/flow/main.md JUMP-TO table"
+    return 1
+  fi
 
   # ---- Step 3: fire-time election claim (P3 — cron:cowork:<tick>) ----
   local payload_str election_args election_result election_rc claimed holder_session

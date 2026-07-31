@@ -42,6 +42,36 @@ TICK=$(date -u +"%Y-%m-%dT%H:$(printf '%02d' $BOUNDARY_MINUTE)Z")
 # Example: fire at 14:45Z → BOUNDARY_MINUTE=45 → TICK="2026-06-28T14:45Z"
 ```
 
+### Pre-election tombstone check (FIX-COWORK-FIRE-ELECTION-TICK-TOMBSTONE -- FR-1 mirror)
+
+<!-- Mirrors _tick_already_ran in scripts/agents-flow/cowork-tick-preflight.sh. This file
+     is reached only on the script's ERROR verdict or a manual/ad-hoc run -- it does NOT
+     inherit the script's already-computed result and MUST re-run this same check itself.
+     Skipping this here reopens the exact double-fire hole this row exists to close
+     ("fixing only one path leaves the other's known double-fire hole live"). -->
+
+```
+PRESSURE_TICK_ID = read .tick_id from docs/data/pressure-state.json (if it exists)
+
+# NFR-1 LANDMINE: PRESSURE_TICK_ID is SECOND-precision, e.g. "2026-07-31T00:00:00Z"
+# (server always appends ":00"). TICK (computed above) is MINUTE-precision, e.g.
+# "2026-07-31T00:00Z". A literal PRESSURE_TICK_ID == TICK compare is ALWAYS FALSE.
+# Normalize by stripping the trailing ":SS" segment before "Z":
+#   NORMALIZED_TICK_ID = strip_seconds(PRESSURE_TICK_ID)
+#   Example (real incident): "2026-07-31T00:00:00Z" -> "2026-07-31T00:00Z" == TICK -> MATCH.
+
+if PRESSURE_TICK_ID is absent OR empty OR not ISO8601 "YYYY-MM-DDTHH:MM:SSZ":
+  -> PROCEED to Fire claim below (conservative: no tombstone on doubt)
+
+else if NORMALIZED_TICK_ID == TICK:
+  log "[cowork] tick " + TICK + " ALREADY RAN (pressure-state.json tick_id=" + PRESSURE_TICK_ID + ") -- TOMBSTONED, suppressed before election claim"
+  EXIT   # do NOT call task_claim on cron:cowork:TICK -- FR-3, zero claim calls
+
+else:
+  -> PROCEED to Fire claim below (a tick that died before telemetry.md Step 6.0 leaves
+     an OLDER, non-matching tick_id here -- NFR-2, this is desired: allow it to re-run)
+```
+
 ### Fire claim
 
 ```

@@ -58,7 +58,7 @@ Only execute this step if Step 1 found no existing entry.
 CronCreate(
   description : "cowork-team master dispatcher — fires every 15 min, fans out to schedule SSOT (agents spawned run_in_background=true per BGFAN-1)",
   cron        : "*/15 * * * *",
-  prompt      : "Run: bash scripts/agents-flow/cowork-tick-preflight.sh (requires $CLAUDE_CODE_SESSION_ID) and read its one-line JSON verdict. On verdict=SILENT: done, no further reads needed (script already emitted pressure state and released the election lock). On verdict=WORK: read and execute docs/agents/cowork-team/flow/main.md starting at '§ WORK continuation' (script already handled presence/election/one-shot claims/blind guard/slot matching — do NOT re-run Steps 0b/0b.3/0c/1-4b, per main.md's own JUMP-TO table). On verdict=LOST_ELECTION: done, no further reads needed (script already sent the work-channel telegram — peer session leads this tick). On verdict=DEFER: done, no further reads needed (AF-1 backstop-window defer — retries automatically at the next 15-min tick). On verdict=ERROR: read and execute docs/agents/cowork-team/flow/main.md starting at Step 0a (original inline pseudocode, unabridged fallback — do NOT re-run Step 0's preflight script, its result is undefined).",
+  prompt      : "Run: bash scripts/agents-flow/cowork-tick-preflight.sh (requires $CLAUDE_CODE_SESSION_ID) and read its one-line JSON verdict. On verdict=SILENT: done, no further reads needed (script already emitted pressure state and released the election lock). On verdict=WORK: read and execute docs/agents/cowork-team/flow/main.md starting at '§ WORK continuation' (script already handled presence/election/one-shot claims/blind guard/slot matching — do NOT re-run Steps 0b/0b.3/0c/1-4b, per main.md's own JUMP-TO table). On verdict=LOST_ELECTION: done, no further reads needed (script already sent the work-channel telegram — peer session leads this tick). On verdict=DEFER: done, no further reads needed (AF-1 backstop-window defer — retries automatically at the next 15-min tick). On verdict=TOMBSTONED: done, no further reads needed (pressure-state.json's tick_id already matched this nominal tick — a prior session already completed it; script made ZERO task_claim calls on cron:cowork:<tick>, suppressed before the election attempt — FIX-COWORK-FIRE-ELECTION-TICK-TOMBSTONE FR-1/FR-3). On verdict=ERROR: read and execute docs/agents/cowork-team/flow/main.md starting at Step 0a (original inline pseudocode, unabridged fallback — do NOT re-run Step 0's preflight script, its result is undefined). On any other/unrecognized verdict string: done, EXIT — do NOT default to the WORK continuation path (stale prompt or script bug, neither justifies running the dispatch body).",
   durable     : true
 )
 ```
@@ -120,6 +120,26 @@ CronList
   script. WU-2 (Step 2 above) moves the script call into the prompt itself, so SILENT/LOST_ELECTION/
   DEFER ticks (~80% of fires) skip the `main.md` read entirely. main.md's own Step 0 and § Step 0
   JUMP-TO table are unchanged and still serve as the entry point for manual/ad-hoc runs of this flow.
+
+---
+
+## FIX-COWORK-FIRE-ELECTION-TICK-TOMBSTONE rollout note (NFR-5(b)/(c))
+
+**A bare `/cron-cowork-team` re-run after this fix ships is a no-op.** Step 1's idempotency
+guard finds the already-registered `*/15 * * * *` entry (matched by `cron_expression` +
+`description` only, per Step 1 above) and STOPs — it does **not** diff or re-propagate the
+`prompt:` text, so the live armed cron keeps running the OLD prompt string (no `TOMBSTONED`
+clause, no defensive fallback) until it is explicitly replaced.
+
+**Rollout requires an explicit `CronDelete` + `CronCreate` re-arm — this is a required
+post-merge deployment step, not optional cleanup:**
+```
+CronDelete(id=<current-id-from-CronList>)
+```
+then re-run Step 2 above to `CronCreate` with the updated `prompt:`.
+
+Who runs this: main terminal (or whoever holds `CronCreate`/`CronDelete` tool access) — this
+dispatcher's cron is session-scoped and is not spawnable by dev-team agents.
 
 ---
 
