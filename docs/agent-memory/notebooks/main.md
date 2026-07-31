@@ -1,6 +1,14 @@
 # Dev Team — Sprint Boundary Notebook
 
-**Written:** 2026-07-31T11:30Z
+**Written:** 2026-07-31T11:53Z
+
+## cycle-20260731T1151Z-lancedbsegfault-dispatched — Fresh tick: CI probe caught RED (size-lint on 9c682681, backfillBctcPdfPaths.ts baseline-exceeded), fixed+pushed+verified-green (bf6c11054); BOUNDED-1 claimed+dispatched FIX-LANCEDB-INSERT-SEGFAULT to dev-mcp-server; 1 background agent in flight
+
+- **CI-red genuinely fixed, not just detected**: size-lint FAIL on `backfillBctcPdfPaths.ts` (489L→543L, upper=537L) — added a `size-justification:` header per the gate's own ratchet-design escape hatch (comment-only diff). Local `--check` PASS, pushed (`bf6c11054`), `tsc OK`, then INDEPENDENTLY WAITED for and confirmed `gh run` conclusion=success on the new SHA — not assumed green.
+- **Left the drained `ci_red` signal alone** (didn't hand-prune) — the standard drain→PO-triage→verification-gate path will find it already resolved; preserves the audit trail instead of routing around it.
+- **Self-caught a dry-run misread before dispatching**: an early `ready[]` diff preview suggested a different (P1, PO-inserted-direct) row would be claimed; checked the ACTUAL `.head`/`in_progress[]` state instead of trusting the assumption — real claim was `FIX-LANCEDB-INSERT-SEGFAULT` (P3/XS, genuinely backlog/TODO-sourced). Explains why ~40 old P0/P1 `ready[]` rows sit unclaimed for 9-16+ days: PO-direct-inserted rows bypass BOUNDED-1's backlog/TODO-only promote source — a real, distinct gap, not this tick's bug.
+- **Dispatched dev-mcp-server**: pre-diagnosed Bun v1.3.13 LanceDB-insert segfault in `fetchParseAndStoreBctc` step-4, explicit dev-rag-service/dev-mcp-server zone-boundary — instructed to verify (not trust) the repro, disclose if the real fix crosses the boundary, DJ-GATE-1, explicit review[]/qa closeout.
+- **NEXT**: await dev-mcp-server's RETURN, RAW-verify (root-cause re-confirm, regression test, boundary-disclosure honesty check, board/head state). `TE-T12` remains the only other undispatched item from PO's 2026-07-31T0637Z triage (routes to `agent-father`).
 
 ## cycle-20260731T1130Z-coverletters-verified-released — RAW-verified `dev-mcp-server`'s FU-BACKFILL-MULTIPLE-COVER-LETTERS return (zero discrepancy — agent's root-cause CORRECTED the backlog's own wrong hypothesis and disclosed it; independently reproduced RED from scratch on my own reverted copy, not just trusted the dev-time claim). WIP 0, idle-head
 
@@ -21,13 +29,3 @@
 - Dispatcher-wrap `task_claim("task:FU-BACKFILL-MULTIPLE-COVER-LETTERS", task_kind="sprint-task")` → `claimed:true` → spawned `dev-mcp-server` background with root-cause writeup, both ACs (AC1: synthetic 2+cover-letter+1-consolidated heals to consolidated; AC2: regression test must independently reproduce RED on the pre-fix first-match-only logic), DJ-GATE-1 clause, explicit review[]/next_agent:qa closeout (not self-close).
 - **Elected NOT to dispatch Step 1 PO triage this tick**: the sole drained signal was already inert (DEFER-class, own journal noise) — BOUNDED-1 dispatched, JUMP TO end, consistent with S54/S57/S59/S61/S63 precedent.
 - **NEXT**: await `dev-mcp-server`'s RETURN, RAW-verify (re-derive the hardened selection logic, independently reproduce RED against the pre-fix first-match-only code, confirm board/head state). `TE-T12` remains the only other undispatched item from PO's 2026-07-31T0637Z triage (routes to `agent-father`).
-
-## cycle-20260731T1029Z-pdfocrpagecap-verified-released — RAW-verified `dev-mcp-server`'s FIX-PDFOCR-PAGECAP-COMPLETENESS-THRESHOLD-MISMATCH return (zero discrepancy — independently reproduced RED against pre-fix code myself, not just trusted the self-report); nudged agent past an unnecessary live-restart wait mid-flow. WIP 0, idle-head
-
-- **Mid-flow nudge (S64)**: a fresh tick found the agent paused waiting on its own internal monitor for an optional live mcp-server restart (AC4, explicitly best-effort). Confirmed re-entrant lock (not a peer collision), pushed its 2 interim commits so nothing was stranded, then `SendMessage`'d it to stop waiting and finalize — AC3's regression test was always the real DoD gate.
-- **Commit `dfbe9348f` (board/head write) real, pushed**, local==origin. Diff of `1b9425d6f` read in full — matches claim exactly: `OCR_MAX_PAGES=80` shared constant, threshold now capped-`expectedPages`-based, upfront blanket DELETE removed, defensive post-loop `DELETE...page_number>maxPages` added AFTER the loop (write-before-delete). Independently confirmed the UPSERT claim (`INSERT OR REPLACE` + schema `UNIQUE(filename,page_number)`) — not asserted-but-absent.
-- **RED independently reproduced, not just trusted**: swapped in the pre-fix file (`git show c04e00ed9:...`), re-ran the exact same test — 0 pass/2 fail, genuinely reproducing both defects. Restored the fix, re-verified 2/2 pass + clean `git diff`. `tsc` clean. Targeted OCR suite: agent's own exact 8-file list → **89/0, exact match**; a 9th file my own grep found (`293-ocr-fallback-pipeline.test.ts`, omitted from their list) also 0 fail — minor undercount, not a correctness gap.
-- **Board/head clean**: row `REVIEW`/`next_agent:qa`/`commit_sha` correct with full matching `review_note`; `.head` idle/`next_agent:router`, lane-move + head-reset in the SAME commit (CANONICAL:SSOT-STATUSFLIP-LANEMOVE held). Decision journal roll verified (byte-cap breach → `-2.md`, `CAP-REACHED` marker in base). Notebook 3 sections/35L.
-- **AC4 honestly disclosed NOT ATTEMPTED** — matches what I explicitly told the agent was best-effort/ops's job, not a shortfall.
-- **NEXT**: no items remain from this tick's dispatch. `TE-T12` still the only undispatched item from PO's 2026-07-31T0637Z triage (routes to `agent-father`). Idle-head, WIP=0.
-
