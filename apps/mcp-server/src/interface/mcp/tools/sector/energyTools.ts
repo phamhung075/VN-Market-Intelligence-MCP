@@ -34,16 +34,56 @@ export interface EnergyGridOptions {
  */
 export async function getEnergyGridSignals(
   _opts: EnergyGridOptions,
-): Promise<{ content: Array<{ type: "text"; text: string }> }> {
+): Promise<EnergyGridResult> {
   return getEnergyGridStatus(_opts);
 }
+
+/**
+ * Result shape for get_energy_grid_signals / get_energy_grid_status.
+ *
+ * FDA-5: `is_estimate`/`source_tier` were previously disclosed only inside the
+ * unstructured VN `content[0].text` string — the per-signal `is_estimate`/
+ * `source_tier` fields (see EnergySignal in energyMarketAnalyzer.ts) existed
+ * only in-memory to render that text and were never part of the returned
+ * object at all. `structuredContent` is the MCP protocol's own recognised
+ * field for exactly this "structured data alongside human-readable text" case
+ * (CallToolResult schema:
+ * `structuredContent: z.record(z.string(), z.unknown()).optional()`,
+ * present in the wire response server-side regardless of whether the tool
+ * declares an `outputSchema` — see @modelcontextprotocol/sdk types.js). It
+ * survives the wire even through an MCP-to-MCP proxy hop, unlike bespoke
+ * top-level result fields (which get silently zod-stripped by the client-side
+ * CallToolResultSchema.parse — see MONEY-RADAR-P0-T2-COMPOSITE's
+ * creditFlowTools.ts precedent for that caveat). Any downstream consumer
+ * reading `structuredContent.is_estimate` structurally — not just grepping
+ * the Vietnamese prose — sees the estimate flag unambiguously.
+ */
+export type EnergyGridResult = {
+  content: Array<{ type: "text"; text: string }>;
+  structuredContent: {
+    is_estimate: true;
+    source_tier: 4;
+    /** Which fields in grid_figures are hardcoded approximations (always all 4 — no live EVN API). */
+    estimated_fields: string[];
+    grid_figures: {
+      hydroCapacityPct: number;
+      thermalDispatchPct: number;
+      renewableDispatchPct: number;
+      peakDemandGW: number;
+      installedCapacityGW: number;
+    };
+    /** "live_fetch" when reservoir levels came back from the news scrape; "default_fallback" (70%) otherwise. */
+    hydro_data_source: "live_fetch" | "default_fallback";
+    signal_count: number;
+  };
+};
 
 /**
  * Core logic for energy grid status (alias for getEnergyGridSignals, exported for tests).
  */
 export async function getEnergyGridStatus(
   _opts: EnergyGridOptions,
-): Promise<{ content: Array<{ type: "text"; text: string }> }> {
+): Promise<EnergyGridResult> {
   // ── Fetch reservoir levels ─────────────────────────────────────────────
   let reservoirs: Awaited<ReturnType<typeof fetchReservoirLevels>> = [];
   try {
@@ -114,8 +154,31 @@ export async function getEnergyGridStatus(
     }
   }
 
+  // FDA-5: is_estimate/source_tier and the 4 hardcoded grid figures also travel
+  // in `structuredContent` — a real MCP CallToolResult field, not embedded-only
+  // in the VN prose above — so a downstream consumer reading the payload
+  // structurally cannot mistake these for live EVN data.
   return {
     content: [{ type: "text" as const, text }],
+    structuredContent: {
+      is_estimate: true,
+      source_tier: 4,
+      estimated_fields: [
+        "thermalDispatchPct",
+        "renewableDispatchPct",
+        "peakDemandGW",
+        "installedCapacityGW",
+      ],
+      grid_figures: {
+        hydroCapacityPct: avgCapacity,
+        thermalDispatchPct: energyData.thermalDispatchPct,
+        renewableDispatchPct: energyData.renewableDispatchPct,
+        peakDemandGW: energyData.peakDemandGW,
+        installedCapacityGW: energyData.installedCapacityGW,
+      },
+      hydro_data_source: reservoirs.length > 0 ? "live_fetch" : "default_fallback",
+      signal_count: signals.length,
+    },
   };
 }
 

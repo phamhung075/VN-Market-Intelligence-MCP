@@ -67,7 +67,7 @@ mock.module("../infrastructure/fetchers/hydrologicalData.js", () => ({
 }));
 
 // ── C2: energyTools is_estimate ──────────────────────────────────────────────
-import { getEnergyGridStatus } from "../interface/mcp/tools/sector/energyTools.js";
+import { getEnergyGridStatus, getEnergyGridSignals } from "../interface/mcp/tools/sector/energyTools.js";
 
 // ── C1: creditFlowTools is_estimate in response ──────────────────────────────
 import { getCreditFlowSignalHandler } from "../interface/mcp/tools/sector/creditFlowTools.js";
@@ -418,6 +418,56 @@ describe("DSI-S3 C2 — energyTools signals carry is_estimate=true when from har
     const text = result.content[0]?.text ?? "";
     // The text must contain an EVN API disclaimer or estimate label
     expect(text).toMatch(/ước tính|uoc tinh|EVN|ƯỚC TÍNH/i);
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// FDA-5: energyTools estimate flag must travel in a STRUCTURED field alongside
+// the VN prose `content` string — not only embedded in unstructured text —
+// so a downstream consumer parsing this payload structurally (e.g. reading
+// `structuredContent`, not just the human-readable `content[0].text`) still
+// sees the estimate flag and cannot silently lift the hardcoded grid figures
+// (thermalDispatchPct/renewableDispatchPct/peakDemandGW/installedCapacityGW)
+// as if they were real, live EVN data.
+// ─────────────────────────────────────────────────────────────────────────────
+describe("FDA-5 — energyTools estimate flag travels in a structured field, not just VN prose", () => {
+  it("AC-FDA5-a: response carries a structuredContent object (not only unstructured text)", async () => {
+    const result = await getEnergyGridStatus({});
+    expect(result).toHaveProperty("structuredContent");
+    expect(typeof result.structuredContent).toBe("object");
+    expect(result.structuredContent).not.toBeNull();
+  });
+
+  it("AC-FDA5-b: structuredContent.is_estimate is the literal boolean true (structurally readable, no text parsing)", async () => {
+    const result = await getEnergyGridStatus({});
+    expect(result.structuredContent?.is_estimate).toBe(true);
+    expect(result.structuredContent?.source_tier).toBe(4);
+  });
+
+  it("AC-FDA5-c: structuredContent.grid_figures carries the 4 hardcoded figures alongside the estimate flag", async () => {
+    const result = await getEnergyGridStatus({});
+    const gridFigures = result.structuredContent?.grid_figures;
+    expect(gridFigures).toBeDefined();
+    expect(gridFigures?.thermalDispatchPct).toBe(40);
+    expect(gridFigures?.renewableDispatchPct).toBe(22);
+    expect(gridFigures?.peakDemandGW).toBe(45);
+    expect(gridFigures?.installedCapacityGW).toBe(85);
+  });
+
+  it("AC-FDA5-d: structuredContent.estimated_fields lists the 4 hardcoded field names explicitly", async () => {
+    const result = await getEnergyGridStatus({});
+    const estimatedFields = result.structuredContent?.estimated_fields;
+    expect(estimatedFields).toEqual([
+      "thermalDispatchPct",
+      "renewableDispatchPct",
+      "peakDemandGW",
+      "installedCapacityGW",
+    ]);
+  });
+
+  it("AC-FDA5-e: getEnergyGridSignals (the registered tool's core fn) also carries structuredContent", async () => {
+    const result = await getEnergyGridSignals({});
+    expect(result.structuredContent?.is_estimate).toBe(true);
   });
 });
 
