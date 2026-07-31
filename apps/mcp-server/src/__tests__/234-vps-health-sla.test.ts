@@ -383,7 +383,12 @@ describe("Task 234 — VPS Health & SLA Monitoring", () => {
     // Verify domain exports are present
     expect(content).toContain("export function checkDataFreshnessSla");
     expect(content).toContain("export function checkSignalSla");
-    expect(content).toContain("export type SignalType");
+    // FACTORY-DOMAIN-extract-sla-config (2026-07-31): SignalType now lives in
+    // the sibling pure-data file freshnessSlaConfig.ts and is re-exported here
+    // (still zero infrastructure imports — the sibling is domain-layer pure
+    // data too) so the literal declaration site moved but the export path is
+    // unchanged for every existing caller.
+    expect(content).toContain('export type { SignalSlaConfig, SignalType } from "./freshnessSlaConfig.js"');
     expect(content).toContain("export interface FreshnessSlaCheckOutput");
   });
 
