@@ -96,9 +96,9 @@
     "status": "idle",
     "active_task_id": null,
     "next_agent": "router",
-    "next_action": "FIX-FOREIGN-FLOW-DEAD-ENDPOINT moved in_progress->review (dev-mcp-server), next_agent=qa",
-    "updated_at": "2026-07-31T23:12:16Z",
-    "updated_by": "dev-mcp-server"
+    "next_action": "FIX-CI-SIZELINT-TECHANALYSIS-ROUTER-NEW-OFFENDER-143L moved in_progress->review (dev-technical-analysis), next_agent=qa -- CI size-lint green on run 30672400942",
+    "updated_at": "2026-07-31T23:19:27Z",
+    "updated_by": "dev-technical-analysis"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -19618,41 +19618,20 @@
         "updated_by": "dev-mcp-server",
         "commit_sha": "9ec88cd4e",
         "note": "fetchForeignFlowWithFallback Strategy 1 (primary VPS GET, http://VINAHOST_IP/foreign-flow) gated behind overrides.fetchFn being explicitly injected — no production caller supplies it (only runForeignFlowFetcherJobCron->runForeignFlowFetcherJob() with no overrides), so the dead route (no /foreign-flow on vps-proxy-server.js, push-only architecture) no longer 404s every market-minute. fetchPrimaryVpsEndpoint kept (not deleted) — 5 test files (incl. 1392-foreign-flow-cb-probe-regression, 1288-foreign-flow-fallback §4) explicitly inject fetchFn as live regression coverage for the historical Task 1392 CB-stuck-open incident; deleting would orphan the out-of-scope foreignFlowValidator.ts. New FIX-foreign-flow-dead-endpoint.test.ts (4 tests) proves zero globalThis.fetch calls on production-shaped invocation. tsc clean, targeted 9-file foreign-flow suite 58/58 pass, full bun test 15008p/40skip/55f within documented FIX-MCP-SUITE-HEALTH-BASELINE band (zero foreign-flow-fetcher fails), toolCount=183/cronJobCount=88 unchanged. pushForeignFlowHandler.ts confirmed sole live writer. REBUILD_REQUIRED=true — live post-rebuild RAW row-count check for qa/ops."
-      }
-    ],
-    "qa": [],
-    "_closed_signals_20260614": {
-      "_by": "po-S50",
-      "_at": "2026-06-14T14:45:14Z",
-      "closed": [
-        {
-          "signal": "docs/signals/workflow-protocol-coherence-audit-20260614T141952Z.json",
-          "reason": "ALREADY IMPLEMENTED — all 6 COHERENCE-GAP tasks status=IMPLEMENTED, result=RESOLVED (commit 85935da3). No work to queue.",
-          "disposition": "move-to-processed"
-        },
-        {
-          "signal": "docs/signals/dev-team-tool-contract-cron-overlap-20260614T121816Z.json",
-          "reason": "ALREADY RESOLVED by the LIVE SF-1 single-flight guard (F2-A) + gateway-call-contract.md (F1) now in dev-team flow. This brief is the source that DELIVERED SF-1; no residual work.",
-          "disposition": "move-to-processed"
-        }
-      ]
-    },
-    "last_triaged_at": "2026-07-31T23:09:27Z",
-    "last_triaged_by": "dev-team/po-batch-dispatch-20260731T2257Z",
-    "in_progress": [
+      },
       {
         "id": "FIX-CI-SIZELINT-TECHANALYSIS-ROUTER-NEW-OFFENDER-143L",
         "type": "FIX",
         "size": "S",
         "priority": "P1",
-        "status": "IN_PROGRESS",
+        "status": "REVIEW",
         "zone": "apps/technical-analysis/",
         "owner": "po",
         "supervised": false,
         "plan_only": false,
         "created_by": "po/triage-20260731T2249",
         "created_at": "2026-07-31T22:56:53Z",
-        "updated_at": "2026-07-31T23:09:29Z",
+        "updated_at": "2026-07-31T23:19:27Z",
         "origin_signal_id": "CI-RED-39abd150",
         "check_id": "CI-RED-39abd150",
         "ci_fingerprint": "ci_red:39abd150dc551e1544e8eac35115dadf61031322:size-lint",
@@ -19675,17 +19654,18 @@
         "related": "Introduced by FACTORY-TECHANALYSIS-fix-discarded-service-and-port (review[], commit 39fbec098). DISTINCT from every other open FIX-CI-SIZELINT-* row — each names a different file (vpsProxyStaleness.ts, energyTools.ts, extraction_engine.py, usecases_vmt_liquidity_resolvers.go, the mcp-server six-offender parent) and none names router.go or any apps/technical-analysis/ path. Do NOT merge into FACTORY-XZONE-size-justification-sweep (backlog): that row is a debt sweep over pre-existing grandfathered offenders; this is a NEW offender blocking main`s CI right now.",
         "dedup_checked": "2026-07-31T22:49Z — FILE-SCOPED per triage-signals.md ci_red spec, across all 5 NON-TERMINAL LANES BY NAME (backlog+ready+in_progress+review+qa), never a status-token enum. (1) PRIMARY: zero rows carry dedup_key == `ci_job:size-lint|file:apps/technical-analysis/pkg/interface/http/router.go`; zero rows carry any dedup_key matching /router\\.go|technical-analysis/. (2) SECONDARY: zero rows contain `39abd150` or `CI-RED-39abd150` in id/title/status_note/check_id. (3) BROAD: 17 open rows match /technical-analysis/i and 18 match /SIZELINT|size-lint/i — all read; the technical-analysis matches are indicator/factory/gateway-path rows, the size-lint matches are guard implementations or other files. ZERO cover this file. ANTI-AMNESTY FENCE honoured: not deduped into FIX-MCP-SUITE-HEALTH-BASELINE or any LOCAL-full-suite row. Third consecutive tick this defect fired a ci_red (20:46Z, 21:18Z, 22:46Z drains) with no board row minted — per the fence, `pre-existing` with no matched row is a fabricated disposition, so the row is minted here.",
         "baseline_pass": "gh run view <post-fix run> --json jobs => size-lint conclusion == success on origin/main",
-        "status_note": "AC: gh run view <databaseId with headSha AFTER 39abd150dc551e1544e8eac35115dadf61031322> --json jobs -q `.jobs[]|select(.name==\"size-lint\")|.conclusion` == success (verification_gate=ci_green_on_subsequent_push). Priority: high. Failing job: size-lint. Failing file: apps/technical-analysis/pkg/interface/http/router.go. Observed SHAs (3 consecutive, same sole offender): 11677b75 run 30662758810, 18db3e63 run 30664924688, 39abd150 run 30669964532.",
-        "next_agent": "dev-technical-analysis",
-        "updated_by": "dev-team/po-batch-dispatch-20260731T2257Z",
+        "status_note": "AC: gh run view <databaseId with headSha AFTER 39abd150dc551e1544e8eac35115dadf61031322> --json jobs -q `.jobs[]|select(.name==\"size-lint\")|.conclusion` == success (verification_gate=ci_green_on_subsequent_push). Priority: high. Failing job: size-lint. Failing file: apps/technical-analysis/pkg/interface/http/router.go. Observed SHAs (3 consecutive, same sole offender): 11677b75 run 30662758810, 18db3e63 run 30664924688, 39abd150 run 30669964532. | CLOSE: code commit 969b5d96b (router.go 143L->114L, new health_handler.go 41L), memory commit d93e4fbc1, pushed to origin/main. CI run 30672400942 headSha d93e4fbc17862f9d65720fe1bc6424b5913c8369 -- size-lint job conclusion=success (gh run view 30672400942 --json jobs -q .jobs[]|select(.name==\"size-lint\")|.conclusion). Local: go build/vet/test + golangci-lint clean, size-lint-justification.sh --check RC=0 0 offenders, G12 sandbox 35/35 green + render-check PASS. Decision journal STEP dev-technical-analysis-S3 (sprint-COWORK-GUARANTEED-SLOT-CATCHUP).",
+        "next_agent": "qa",
+        "updated_by": "dev-technical-analysis",
         "claimed_at": "2026-07-31T23:09:27Z",
-        "claimed_by": "dev-team (step 3 direct dispatch, FIX type skips straight to execution per main.md Step 2, takes free dev WIP slot)"
+        "claimed_by": "dev-team (step 3 direct dispatch, FIX type skips straight to execution per main.md Step 2, takes free dev WIP slot)",
+        "commit_sha": "969b5d96b"
       },
       {
         "id": "TE-T14",
         "title": "T-14 system-auditor Step 0c: jq-project 6 key-paths instead of full-reading 50.6KB system-map.json [~75k tok/day]",
         "owner": "agent-father",
-        "status": "IN_PROGRESS",
+        "status": "REVIEW",
         "type": "CLEAN",
         "size": "S",
         "priority": "P1",
@@ -19696,18 +19676,40 @@
         "depends": [],
         "detail_ref": "docs/architecture-briefs/2026-07-12-token-economy-lazyload-audit.md#T-14",
         "note": "Step 0c lists 6 exact key-paths then full-reads 1733L file. Rewrite as single jq projection (~2k tokens vs ~12.7k). CLAUDE.md + system-map-query SKILL already mandate jq-only. Read-only projection of same SSOT, no semantic change.",
-        "next_agent": "agent-father",
+        "next_agent": "qa",
         "po_routing_ruling_20260721": "PO ARTIFACT-CLASS ROUTING RULING 2026-07-21T18:42Z. Rule: routing follows ARTIFACT CLASS, not directory. Any row whose deliverable is instruction-prose that an agent LOADS AND EXECUTES — .claude/agents/**, docs/agents/** (init/flow/knowledge/tools-package), .claude/skills/**/SKILL.md — routes to agent-father. Executable code (apps/**, scripts/**), codegen-from-registry, and data/root-config (docs/data/**, CLAUDE.md) route to zone-matched dev-* or developer. Rationale: for this system a flow doc IS the executable source; agent-father is already sole owner of agent-file lifecycle (dispatch/SKILL.md:48) and of NEW cron skill files (:50), and board precedent has 5/5 pre-existing docs/agents/ rows routed to agent-father/agents-architect/po and 0 to developer. Precedent for SKILL.md specifically: docs/signals/processed/dev-team-20260716T102429Z-autolaunch-safety-hold-uc-asl-p6.json already routed a signal-dashboard SKILL.md edit to agent-father as 'the factory rule'. ROOT CAUSE this closes: .claude/skills/zone-detect/SKILL.md resolves ONLY dev-<service> (Tier-1/2, needs apps/<service>/-shaped zone) or generic developer (Tier-3 fallback) — it has NO path to agent-father, so any docs/agents/ or .claude/skills/ row reaching execute-tier with next_agent unset gets the 'developer' placeholder and mis-routes. EXPECTED SIDE EFFECT (do NOT 'fix' this): next_agent=agent-father does not match the dev-role pattern ^dev(-|$)|^developer$, so the BOUNDED-1 NON-DEV-NEXT_AGENT gate (dev-team/flow/main.md:518) now WITHHOLDS these rows from unattended idle auto-pickup. That is the intended outcome — they require deliberate router dispatch to agent-father, not silent promotion to a generic developer.",
-        "updated_at": "2026-07-31T23:09:29Z",
+        "updated_at": "2026-07-31T23:19:36Z",
         "po_manual_dispatch_flagged_at": "2026-07-31T22:57:13Z",
         "po_manual_dispatch_flagged_by": "po (manual-dispatch-sweep)",
         "po_manual_dispatch_class": "DRS-STRANDED-OFF-ALLOWLIST",
         "po_manual_dispatch_note": "po (manual-dispatch-sweep) surfaced DRS-STRANDED-OFF-ALLOWLIST candidate — folding into this tick's BATCH (re-admitted: prior stamp 2026-07-31T16:04:37Z aged past the 4h staleness window without reaching dispatch)",
         "updated_by": "dev-team/po-batch-dispatch-20260731T2257Z",
         "claimed_at": "2026-07-31T23:09:27Z",
-        "claimed_by": "dev-team (step 3 direct dispatch, next_agent=agent-father per po_routing_ruling_20260721 already on row, does not consume dev WIP slot)"
+        "claimed_by": "dev-team (step 3 direct dispatch, next_agent=agent-father per po_routing_ruling_20260721 already on row, does not consume dev WIP slot)",
+        "commit_sha": "013c90710f491899840437e66de3aeadf96275ae",
+        "review_note": "agent-father: Step 0c rewritten as single jq -c projection over the 6 documented key-paths (was prose full-read). Verified live: jq exit 0, all 6 arrays populated (microservices=11, host_runtime_set=12, not_deployed_by_design=0, data_sources=28, databases=7, zones=12). No cascade -- grepped fleet-wide for Step 0c / jq.*system-map.json callers, none reference the old prose shape. Journal: sprint-COWORK-GUARANTEED-SLOT-CATCHUP-agent-father.md S17."
       }
-    ]
+    ],
+    "qa": [],
+    "_closed_signals_20260614": {
+      "_by": "po-S50",
+      "_at": "2026-06-14T14:45:14Z",
+      "closed": [
+        {
+          "signal": "docs/signals/workflow-protocol-coherence-audit-20260614T141952Z.json",
+          "reason": "ALREADY IMPLEMENTED — all 6 COHERENCE-GAP tasks status=IMPLEMENTED, result=RESOLVED (commit 85935da3). No work to queue.",
+          "disposition": "move-to-processed"
+        },
+        {
+          "signal": "docs/signals/dev-team-tool-contract-cron-overlap-20260614T121816Z.json",
+          "reason": "ALREADY RESOLVED by the LIVE SF-1 single-flight guard (F2-A) + gateway-call-contract.md (F1) now in dev-team flow. This brief is the source that DELIVERED SF-1; no residual work.",
+          "disposition": "move-to-processed"
+        }
+      ]
+    },
+    "last_triaged_at": "2026-07-31T23:09:27Z",
+    "last_triaged_by": "dev-team/po-batch-dispatch-20260731T2257Z",
+    "in_progress": []
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
