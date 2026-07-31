@@ -1,18 +1,10 @@
 # Alert Commander — Notebook
 
-**Last updated:** 2026-07-31 02:11 UTC | **Sprint:** idle
+**Last updated:** 2026-07-31 04:08 UTC | **Sprint:** idle
 
 **Role:** Event-only alert dispatch (position-danger / watchlist-opportunity / CRITICAL-always) | **Cadence:** `*/15min` market hours (02:00–08:30 UTC) + 4h critical sweep | **Contract:** APPEND class, one `## c<NNN>` section per cycle per `.claude/skills/notebook-write/SKILL.md` AC-6.
 
 > **Structural reset (FIX-ALERT-COMMANDER-NOTEBOOK-SINGLE-BLOB-UNPRUNABLE, 2026-07-29):** prior history archived → `docs/agent-memory/notebooks/archive/alert-commander-archive-20260729.md`. One top-level `## c<NNN> · <ISO-timestamp>` section per cycle now.
-
-## c13 · 2026-07-30T20:08:20Z (slot=alert-commander-critical, tick=2026-07-30T20:00Z)
-- Signals: 1 total (freshness-sla-monitor `urgent_news` SLA-breach noise id10081, confidence_score=90, no ticker) | Fired: 0 | Suppressed: 1 | MARKET: 0
-- Position-danger: broad rally continues (FRT+6.99%/VIX+6.97%/GEX+6.76%/VRE+6.81%/VHM+5.64%/BID+5.08%), no ticker >5% single-day drop; `get_alerts(type=price)` clean (no active alerts) — gate fails.
-- Watchlist-opp: sole bus signal is SLA-noise (no ticker, no BUY content) → agentSignalsMajority cannot resolve BUY — gate fails.
-- CRITICAL-always: legal_risk clean (`days=1/hours_back=6`), crisis_early_warning clean (reputation-score deterioration only — ACV/BDI/DBC/DLC/DPM/GAS/GVR/KDC/PLX/VNH etc, no crisis signal), no verified_chain/chain_catalyst on bus.
-- Regime: NEUTRAL (macro_snapshot JSON shape, no literal REGIME field) | Carry: NEUTRAL (1.37%) | vol_regime ELEVATED (rv_20d_pctile=0.79) | Pivot window: false (FOMC today, isPivotWindow=false) | `get_vn_liquidity_state` omo/interbank blocked_reason (HTML parse / VPS unreachable) [SKIP, non-blocking]
-- No Bash tool this session (13th consecutive) — notebook Edit landed via direct tool, git commit blocked, standing backlog (structural: no Bash grant, not a flow error).
 
 ## c14 · 2026-07-31T00:08:24Z (slot=alert-commander-critical, tick=00:05)
 - Signals: 2 total (alert-engine `verified_decision` NVL broadcast, out-of-scope; freshness-sla-monitor `urgent_news` SLA-noise id10089, no ticker) | Fired: 0 | Suppressed: 1 (id10089) | MARKET: 0
@@ -29,3 +21,11 @@
 - CRITICAL-always: legal_risk clean (`days=1/hours_back=6`), crisis_early_warning clean (reputation-score deterioration only, 26 tickers <50 score, no crisis signal), no verified_chain on bus.
 - Regime: NEUTRAL (fallback, macro_snapshot JSON shape has no literal REGIME field) | Carry: NEUTRAL (1.37%) | vol_regime ELEVATED (rv_20d_pctile=0.78) | Pivot window: false (pivotWindowWarning=null, next Sept 2026)
 - Used tick-snapshot `cycle-snapshot-02:06.json` (fresh, created_at 02:06:50Z, 53s old) — skipped `get_cycle_bootstrap`/`get_macro_snapshot`.
+
+## c16 · 2026-07-31T04:08:30Z (slot=alert-commander-critical, tick=04:05)
+- Signals: 13 total (chain_catalyst 10117 no-ticker "VN-Index bật tăng ~80đ/3 phiên, tạo đáy" recap → suppressed, domestic index recap not external catalyst, fails carve-out; urgent_news VJC/VIC earnings/infra checked via kinhDich; 10x alert-engine verified_decision echo out-of-scope) | Fired: 0 | Suppressed: 1 (10117) | MARKET: 0
+- Position-danger: `get_alerts(type=price)` clean; VNH -11.11% price_drop (02:53Z, HIGH) already read/stale — price reverted to 900 (+0.00%) by 04:06 — no active stopLossHit+drop combo — gate fails.
+- Watchlist-opp: VJC kinhDich=GIU(tich cuc)/63%conf (fails BUY signal + <70% threshold); VIC kinhDich=THAN TRONG(tich cuc)/50%conf (fails BUY signal + <70% threshold) — both fail.
+- CRITICAL-always: legal_risk clean (`days=1/hours_back=6`), crisis_early_warning clean (reputation-score deterioration only, 25 tickers <50 incl. VNH/GAS/PLX/GVR/DPM/KDC/DLC/BDI=20 DANGER tier, no crisis signal), no verified_chain on bus.
+- Regime: NEUTRAL (fallback — tick-snapshot macro object has no literal REGIME field) | Carry: NEUTRAL (macro.carry_regime) | vol_regime ELEVATED (rv_20d_pctile=0.789) | Pivot window: false (pivotWindowWarning=null, next Sept 2026)
+- Used tick-snapshot `cycle-snapshot-04:05.json` (fresh, created_at 04:06:07Z, 53s old) — skipped `get_cycle_bootstrap`/`get_macro_snapshot`.
