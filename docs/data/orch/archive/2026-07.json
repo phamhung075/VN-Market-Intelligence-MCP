@@ -16220,6 +16220,17 @@
       "severity": "LOW",
       "status": "READ",
       "payload_ref": null
+    },
+    {
+      "id": "dev-20260731T020908",
+      "ts": "2026-07-31T02:09:08Z",
+      "from": "dev-team",
+      "to": "po",
+      "type": "bug-escalation",
+      "summary": "4x today: subagents share dev-team's git checkout (no worktree isolation); a branch checkout (e.g. PM handoff's branch: field) hijacks peer commits. Needs FIX row, not more ad-hoc recovery.",
+      "severity": "MED",
+      "status": "READ",
+      "payload_ref": null
     }
   ],
   "backlog_detail": [
