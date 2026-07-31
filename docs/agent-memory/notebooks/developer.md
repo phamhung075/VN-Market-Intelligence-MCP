@@ -1,6 +1,18 @@
 # Developer — Notebook
 
-**Last updated:** 2026-07-31 | **Cycle:** FU-MACRO-SNAPSHOT-TIER-WORSTOF
+**Last updated:** 2026-07-31 | **Cycle:** FIX-COWORK-FIRE-ELECTION-TICK-TOMBSTONE
+
+## Session 2026-07-31 — FIX-COWORK-FIRE-ELECTION-TICK-TOMBSTONE (sprint COWORK-RELIABILITY, zone `cross-service/`, P1) — REVIEW
+
+**Task:** production double-fire defect, confirmed twice in 27h (2026-07-30T21:00Z, 2026-07-31T00:00Z). `cron:cowork:<TICK>` released at end of Step 6, so a re-fire of an already-completed tick found the key free and re-elected/re-ran. Fully designed end-to-end (po→ba→architect→pm); this cycle = straight implementation of the prescriptive 6-file handoff, no new design decisions.
+
+**Actions:** new `_tick_already_ran()` pure predicate + Step 2.5 call site in `cowork-tick-preflight.sh` (before Step 3's election claim) — normalizes pressure-state.json's second-precision `tick_id` to minute-precision (strip trailing `:SS`) and compares against nominal tick; new `TOMBSTONED` verdict, zero `task_claim` calls on match (AC-1, tool-call level). Mirrored the check in `leader-lock.md` (ERROR-fallback path — does not inherit the script's result, must re-run its own check). Added `TOMBSTONED` + unrecognized-verdict fail-safe rows to `main.md` JUMP-TO table, comment-only NFR-3 ordering-invariant pin in `telemetry.md`, `TOMBSTONED` clause + rollout note (`/cron-cowork-team` re-run is a no-op post-fix, needs explicit `CronDelete`+`CronCreate`) in `cron-cowork-team/SKILL.md`.
+
+**NFR-1 landmine:** replayed both real incident timestamps as explicit positive-control unit tests — both assert `"true"` by name in the output, not just "suite exits 0". Fixed a latent bug in the test harness's own `log_count()` (`grep -c ... || echo 0` double-emits `"0\n0"` on a genuine zero-match, since `grep -c` exits 1 on no-match while still printing "0") that corrupted the new AC-1 zero-claims assertion — in-scope, same test file the handoff already lists. Full suite: 40/40 pass (was 27/27).
+
+**Concurrent-git-race recovery:** this working directory is shared across concurrently-running agent sessions (no worktree isolation). Created `task/FIX-COWORK-FIRE-ELECTION-TICK-TOMBSTONE` per the generic flow doc's branch instructions, but a peer's `git checkout main` mid-session silently switched my branch context back before my commit landed (consistent with CLAUDE.md's actual "NO branches — all work stays on main" policy). While my branch was transiently checked out, two peer notebook commits landed on it instead of main: one (dev-team) was content-identical to a commit already on main (safe, discarded); the other (agents-architect notebook+brief) was UNIQUE and unreachable from main — cherry-picked it onto main (`7cfe64c8b`) to avoid losing a peer's work. Did not force-delete the now-orphaned local branch ref (`branch -D` requires explicit user request); left in place, harmless/unpushed.
+
+**Board/lock:** dev-team holds `task_claim("task:...")` across the relay chain — untouched. `.head` was already idle (not this row's slot) — untouched. Flipped board row myself via `scripts/orch-apply.sh` (in_progress[]→review[], status→REVIEW, next_agent→qa) since I have no MCP/gateway tool grant this session (Read/Edit/Write/Bash only) — could not `task_release`/`send_telegram`; flagged for the coordinating dev-team session (`64c7c677-0f0f-4cee-a3ce-dba79d70b7ae`) to notify/release on my behalf. Graphify SKIPPED (no Skill-tool grant), flagged same way. Commit: `6452935ab`.
 
 ## Session 2026-07-31 — FU-MACRO-SNAPSHOT-TIER-WORSTOF (sprint DATA-SERVE-INTEGRITY, router-dispatched, zone `apps/mcp-server/`) — IN_PROGRESS, routed to dev-mcp-server (not implemented here)
 
@@ -27,16 +39,4 @@
 **Board:** `task_board.in_progress[FIX-DECISION-JOURNAL-SKILL-CAPCHECK-LINE-ONLY-NO-BYTE-ROLLOVER]` → `review` (`next_agent: qa`), lane-moved `in_progress[]→review[]`, `.head` reset to idle/`active_task_id:null`/`next_agent:"router"`, same `orch-apply.sh` write.
 
 **Zone note:** No MCP/gateway tool grant this session (Read/Edit/Write/Bash only) — could not `task_release`/`send_telegram`; flagged for the coordinating router session (`64c7c677-0f0f-4cee-a3ce-dba79d70b7ae`) to release/notify on my behalf.
-
-## Session 2026-07-30 — FIX-DEVTEAM-QADRAIN-HEAD-WRITE-CONDITIONAL — REVIEW
-
-**Task:** board row `zone: cross-service/`, reassigned `agent-father → developer` mid-flight (agent-father correctly declined — `.jq` under `scripts/` is a `developer` zone per `system-map.json`, not agent-father's `docs/agents/`-only scope). Per ratified brief `docs/architecture-briefs/2026-07-29-qadrain-head-slot-decouple.md` §3/§6/§8: `scripts/devteam-review-claim-qa-drain.jq`'s `.head` write was an unconditional whole-object replace — PO's own live dry-run 2026-07-29 proved it would silently clobber a genuinely-running developer session's `.head.active_task_id` resume pointer.
-
-**Actions:** Made the `.head` write conditional on `$head_free` (`.head.status` in {idle,done} OR `.head.active_task_id == null`) — mirrors the proven `scripts/devteam-wrapper-autoclose.jq:122-128` guard shape (brief's own named precedent), applied in the claim-INTO-head direction. review[]→qa[] lane-move logic (selection, `$picked`, mutation) is byte-unchanged — only the final `.head` assignment now branches. No `main.md` edit (brief explicit: caller-side impact NONE, the one existing call site is only ever reached with `.head` already idle; task's own AC-3 forbids a `main.md` edit here — that's Part 2, a separate depends_on-gated row).
-
-**Verification:** `bash scripts/audits/devteam-dispatch-gate-satisfiability.sh` full suite green — added 3 new `AC-QADRAIN-HEAD-GUARD` assertions per brief §6 DoD: negative control (`.head` pre-seeded busy with an unrelated task → byte-identical after, row still moves review[]→qa[] underneath), positive control (`.head` idle before → IS written with the picked row, regression-guarding the one live call site). Also hand-verified via standalone jq run: `.head` MISSING entirely → still written correctly (`// "idle"`/`// null` defaults resolve `$head_free=true`). All pre-existing assertions (incl. 4 sibling HEAD-GUARD blocks: DRS/BOUNDED-1/SLS/RLC) stayed green — no regression. No `apps/` TS/Go touched (zone `cross-service/`, pure jq+bash) — `bun test`/`tsc` structurally N/A.
-
-**Board:** `task_board.backlog[FIX-DEVTEAM-QADRAIN-HEAD-WRITE-CONDITIONAL]` → `review` (`next_agent: qa`), lane-moved `backlog[]→review[]`, `.head` untouched (was busy with a peer's unrelated task per this task's own explicit constraint — never touch `.head` except the terminal-flip idle-reset, which does not apply here since `.head` was not this row's own slot).
-
-**Zone note:** No MCP/gateway tool grant this session (Read/Edit/Write/Bash only) — could not `task_release`/`send_telegram`; flagged for the coordinating dev-team session (`owner_client_session=64c7c677-0f0f-4cee-a3ce-dba79d70b7ae`) to release any outer claim and notify on my behalf.
 
