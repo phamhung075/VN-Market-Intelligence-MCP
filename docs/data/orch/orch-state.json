@@ -93,12 +93,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "active_task_id": null,
-    "next_agent": "router",
-    "next_action": "FIX-CI-SIZELINT-TECHANALYSIS-ROUTER-NEW-OFFENDER-143L moved in_progress->review (dev-technical-analysis), next_agent=qa -- CI size-lint green on run 30672400942",
-    "updated_at": "2026-07-31T23:19:27Z",
-    "updated_by": "dev-technical-analysis"
+    "status": "in_progress",
+    "active_task_id": "FIX-BCTC-SLA-FRESHNESS-EXCLUDE-TERMINAL",
+    "next_agent": "dev-mcp-server",
+    "next_action": "BOUNDED-1 auto-pickup claim of FIX-BCTC-SLA-FRESHNESS-EXCLUDE-TERMINAL — dispatcher-wrap then execute.",
+    "updated_at": "2026-07-31T23:26:05Z",
+    "updated_by": "dev-team (bounded-1 auto-pickup)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -6106,15 +6106,6 @@
         "priority": "P1",
         "size": "S",
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#LINT-OHLCV-WRITE-BYPASS"
-      },
-      {
-        "id": "FIX-BCTC-SLA-FRESHNESS-EXCLUDE-TERMINAL",
-        "type": "FIX",
-        "priority": "P3",
-        "status": "BACKLOG",
-        "title": "bctc SLA freshness metric must exclude url_not_found terminal rows so genuinely-absent tickers can't breach forever",
-        "zone": "apps/mcp-server/",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-BCTC-SLA-FRESHNESS-EXCLUDE-TERMINAL"
       },
       {
         "id": "FIX-AUDITOR-C06-OFFMARKET-RECALIBRATE",
@@ -19707,9 +19698,27 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-31T23:09:27Z",
-    "last_triaged_by": "dev-team/po-batch-dispatch-20260731T2257Z",
-    "in_progress": []
+    "last_triaged_at": "2026-07-31T23:26:04Z",
+    "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
+    "in_progress": [
+      {
+        "id": "FIX-BCTC-SLA-FRESHNESS-EXCLUDE-TERMINAL",
+        "type": "FIX",
+        "priority": "P3",
+        "status": "IN_PROGRESS",
+        "title": "bctc SLA freshness metric must exclude url_not_found terminal rows so genuinely-absent tickers can't breach forever",
+        "zone": "apps/mcp-server/",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-BCTC-SLA-FRESHNESS-EXCLUDE-TERMINAL",
+        "promoted_at": "2026-07-31T23:26:04Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=3)",
+        "next_agent": "dev-mcp-server",
+        "updated_at": "2026-07-31T23:26:05Z",
+        "updated_by": "dev-team/bounded1-dispatch-20260731T2324Z",
+        "claimed_at": "2026-07-31T23:26:04Z",
+        "claimed_by": "dev-team (BOUNDED-1 idle-capacity, zone apps/mcp-server/ -> dev-mcp-server)"
+      }
+    ]
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
