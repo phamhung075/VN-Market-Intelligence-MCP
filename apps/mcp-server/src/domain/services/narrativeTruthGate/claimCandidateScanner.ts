@@ -1,9 +1,14 @@
 /**
  * CCATO-MCP-T1-DOMAIN-ENGINE — Claim candidate scanner
  *
- * TS port of scripts/narrative-truth-gate.sh's python engine, lines 144-163
- * (ticker extraction + paragraph/sentence split) and 280-323 (Step 1-3:
- * negation-lexicon scan, dimension-keyword anchor, ticker resolution).
+ * TS port of scripts/narrative-truth-gate.sh's python engine, lines 280-323
+ * (Step 1-3: negation-lexicon scan, dimension-keyword anchor, ticker
+ * resolution). Ticker extraction and paragraph/sentence split moved to
+ * ./tickerExtraction.ts; input/output types moved to ./claimToolMapTypes.ts
+ * (task FIX-CI-SIZELINT-MCPSERVER-SIX-UNCOVERED-OFFENDERS, AC-5 — split to
+ * <=120L/file instead of a justification header since this file is 3 days
+ * old, not legacy). Both are re-exported below so existing callers/tests
+ * importing from this module path are unaffected.
  *
  * CCATO = Claim Contradicts Authorized Tool Output: an agent asserts
  * absence/unavailability of a data dimension its own authorized tools would
@@ -20,90 +25,11 @@
  * Pure functions, zero I/O. Domain layer only.
  */
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Public input types — mirror docs/data/claim-tool-map.json's shape
-// ─────────────────────────────────────────────────────────────────────────────
+import type { ClaimToolMap, ClaimCandidate } from "./claimToolMapTypes.js";
+import { findTickers, splitParagraphs, splitSentences } from "./tickerExtraction.js";
 
-/** One entry of claim-tool-map.json's `dimensions[]` array. */
-export interface ClaimToolMapDimension {
-  id: string;
-  keywords: string[];
-  tool: string;
-  requires_ticker: boolean;
-  arg_style: string;
-}
-
-/**
- * The subset of docs/data/claim-tool-map.json this scanner needs.
- * Loading/parsing the JSON file is infrastructure's job
- * (infrastructure/fileStore/claimToolMapLoader.ts) — this type is the
- * domain-owned contract that loader must produce.
- */
-export interface ClaimToolMap {
-  negation_lexicon: string[];
-  non_ticker_tokens: string[];
-  dimensions: ClaimToolMapDimension[];
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Public output type
-// ─────────────────────────────────────────────────────────────────────────────
-
-/** One CCATO candidate claim awaiting live re-probe + verdict classification. */
-export interface ClaimCandidate {
-  dimension: ClaimToolMapDimension;
-  /** Concrete probe ticker (always resolved — candidates with no ticker are dropped). */
-  ticker: string;
-  /**
-   * Claim-side identifier for the signal/report: a specific ticker when
-   * `dimension.requires_ticker` is true, otherwise the dimension id
-   * (script L306/L312 `ticker_or_dim`).
-   */
-  ticker_or_dim: string;
-  claim_text: string;
-  matched_negation: string;
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Ticker extraction (TS port of script L144-155)
-// ─────────────────────────────────────────────────────────────────────────────
-
-const TICKER_PATTERN = /\b([A-Z]{2,4})\b/g;
-
-/**
- * Extract VN-ticker candidates ([A-Z]{2,4}) from free text, first-seen order,
- * excluding the SSOT `non_ticker_tokens` denylist (already-uppercased set).
- */
-export function findTickers(text: string, nonTickerTokens: ReadonlySet<string>): string[] {
-  const out: string[] = [];
-  const seen = new Set<string>();
-  for (const match of text.matchAll(TICKER_PATTERN)) {
-    const ticker = match[1];
-    if (ticker === undefined) continue;
-    if (nonTickerTokens.has(ticker)) continue;
-    if (seen.has(ticker)) continue;
-    seen.add(ticker);
-    out.push(ticker);
-  }
-  return out;
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Paragraph / sentence split (TS port of script L159-163)
-// ─────────────────────────────────────────────────────────────────────────────
-
-/** Split a post body into non-blank paragraphs on blank-line boundaries. */
-export function splitParagraphs(body: string): string[] {
-  return body.split(/\n\s*\n/).filter((p) => p.trim().length > 0);
-}
-
-/** Split a paragraph into non-blank sentences on [.!?]-then-whitespace boundaries. */
-export function splitSentences(paragraph: string): string[] {
-  return paragraph
-    .trim()
-    .split(/(?<=[.!?])\s+/)
-    .filter((s) => s.trim().length > 0);
-}
+export type { ClaimToolMapDimension, ClaimToolMap, ClaimCandidate } from "./claimToolMapTypes.js";
+export { findTickers, splitParagraphs, splitSentences } from "./tickerExtraction.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // scanClaimCandidates — Step 1-3 (TS port of script L280-323)

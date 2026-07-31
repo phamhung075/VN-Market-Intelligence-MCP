@@ -94,10 +94,11 @@
   ],
   "head": {
     "status": "idle",
-    "updated_at": "2026-07-31T02:40:15Z",
-    "updated_by": "developer",
     "active_task_id": null,
-    "next_agent": null
+    "next_agent": "router",
+    "updated_by": "dev-mcp-server",
+    "updated_at": "2026-07-31T03:20:04Z",
+    "note": "FIX-CI-SIZELINT-MCPSERVER-SIX-UNCOVERED-OFFENDERS self-closeout REVIEW, branch:null direct-execute path"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -10884,46 +10885,6 @@
         "note": "Do NOT hand-flip the remaining DONE rows to clear the measurement. PO deliberately flipped exactly ONE (FIX-COMMIT-PATH-PEER-INDEX-SWEEP-GUARD-LAYER2) because that row's own po_closure_20260730 field already carried a file:line-precise PO RAW-verification from 09:05:59Z - the token was the only thing missing. TASK-COWORK-CATCHUP-2 and FACTORY-APP-split-assembleBriefing carry next_agent=qa and have NOT been verified by anyone; flipping them would be PO ratifying work it never checked, which is the exact vacuous-gate failure this row exists to prevent. They stay DONE as live evidence."
       },
       {
-        "id": "FIX-CI-SIZELINT-MCPSERVER-SIX-UNCOVERED-OFFENDERS",
-        "type": "FIX",
-        "size": "M",
-        "priority": "P0",
-        "status": "BACKLOG",
-        "zone": "apps/mcp-server/",
-        "owner": "dev-mcp-server",
-        "next_agent": "dev-mcp-server",
-        "supervised": false,
-        "plan_only": false,
-        "created_by": "po/triage-20260731T0132",
-        "created_at": "2026-07-31T01:32:47Z",
-        "updated_at": "2026-07-31T02:27:29Z",
-        "origin_signal_id": "CI-RED-8e1e66e5",
-        "check_id": "CI-RED-8e1e66e5",
-        "dedup_key": "ci_job:size-lint|files:claimCandidateScanner.ts,signalValidator.ts,vpsPushLogStore.ts,polymarket.ts,orchStateSchema.ts,vpsProxyTools.ts",
-        "verification_gate": "size_lint_file_level_then_ci_green",
-        "title": "CI job size-lint now reports 8 offending files, not 1 — the existing READY row FIX-CI-SIZELINT-MACRO-VMT-LIQUIDITY-RESOLVERS-NEW-OFFENDER covers exactly one of them, so fixing it alone CANNOT turn the job green. This row owns the 6 apps/mcp-server offenders (1 new-offender + 5 baseline-tolerance-exceeded).",
-        "root_cause": "RATCHET BROKEN BY A RED GATE. size-lint has been RED continuously since ~2026-07-30T01:24Z, so the marginal cost of adding a 9th offender is zero — nobody's commit is blocked by a gate that is already failing. Offender count went 1 -> 8 in ~21h (1 at 2026-07-30T04:49Z per the macro row's own evidence; 8 at 2026-07-31T01:22Z, run 30596148097). Two distinct sub-modes: `new-offender` = file >120L with no docs/data/size-lint-baseline.json entry and no `size-justification:` header in its first 10 lines (scripts/audits/size-lint-justification.sh :57 THRESHOLD, :83 detect, :129 branch); `baseline-tolerance-exceeded` = file HAS a baseline entry but grew past its upper tolerance.",
-        "evidence": "Read verbatim from `gh run view 30596148097 --log-failed`, step 'Run size-lint-justification --check': `[size-lint] FAIL — 8 offending file(s) (scanned 1346)`. The 6 in this zone, with LOCAL `wc -l` independently confirming CI's count byte-for-byte: apps/mcp-server/src/domain/services/narrativeTruthGate/claimCandidateScanner.ts NEW-OFFENDER 190L (>120L, no baseline, no header); apps/mcp-server/src/infrastructure/orchStateSchema.ts baseline=664 actual=870 upper=730 (+206L over baseline, +140 over tolerance — by far the worst); apps/mcp-server/src/infrastructure/fetchers/polymarket.ts baseline=447 actual=500 upper=491; apps/mcp-server/src/interface/mcp/tools/system/vpsProxyTools.ts baseline=233 actual=269 upper=256; apps/mcp-server/src/domain/services/signalValidator.ts baseline=215 actual=259 upper=236; apps/mcp-server/src/infrastructure/db/vpsPushLogStore.ts baseline=152 actual=212 upper=167. The 2 out-of-zone offenders are owned elsewhere: usecases_vmt_liquidity_resolvers.go (existing READY macro row) and apps/pdf-extractor/infrastructure/extraction_engine.py (sibling row FIX-CI-SIZELINT-PDFX-EXTRACTION-ENGINE-TOLERANCE).",
-        "ac": "(AC-1) `bash scripts/audits/size-lint-justification.sh --check` no longer lists ANY of the 6 files above. VERIFY AT FILE LEVEL, NOT JOB LEVEL — the job stays RED until the macro-indicators and pdf-extractor siblings also land, so `size-lint == success` is NOT this row's gate and must not be waited on. (AC-2) LANDMINE — NEVER fix with `--update`. The baseline is regenerated WHOLESALE, not merged, on every --update (script :175 `_note`), so one --update grandfathers every current offender repo-wide and converts an 8-file failure into a permanent amnesty. It would exit 0 and look green. This is the single most likely wrong fix. (AC-3) orchStateSchema.ts (870L, 31% over its own baseline) gets a REAL treatment, not a header bump: it is the Zod SSOT for a file every agent writes and it has grown +206L past a baseline that was itself already an exception. Split it by section (the file already has numbered `§ N` banners) or state explicitly, in the justification header, why 870L is cohesive. A bare `size-justification: 870L — large schema` is a rejection. (AC-4) For the 4 remaining baseline-tolerance-exceeded files, state per file which was chosen: genuine trim, or a justification header naming the real current count (the declared number must be within +/-10% or min 5L of actual — script :26, :87). (AC-5) claimCandidateScanner.ts is 190L and NEW (added by CCATO-MCP-T1-DOMAIN-ENGINE, 4d20a76a2): prefer a split to <=120L over a justification header — it is 3 days old, not legacy. (AC-6) After this row + both siblings land, `gh run view <run after all three> --json jobs -q '.jobs[]|select(.name==\"size-lint\")|.conclusion'` == success. Whoever lands LAST owns that check.",
-        "files": [
-          "apps/mcp-server/src/domain/services/narrativeTruthGate/claimCandidateScanner.ts",
-          "apps/mcp-server/src/infrastructure/orchStateSchema.ts",
-          "apps/mcp-server/src/infrastructure/fetchers/polymarket.ts",
-          "apps/mcp-server/src/interface/mcp/tools/system/vpsProxyTools.ts",
-          "apps/mcp-server/src/domain/services/signalValidator.ts",
-          "apps/mcp-server/src/infrastructure/db/vpsPushLogStore.ts"
-        ],
-        "reference_only_files": [
-          "scripts/audits/size-lint-justification.sh",
-          "docs/data/size-lint-baseline.json"
-        ],
-        "related": "Sibling zone-splits of ONE red job: FIX-CI-SIZELINT-MACRO-VMT-LIQUIDITY-RESOLVERS-NEW-OFFENDER (ready, apps/macro-indicators/, 1 file) and FIX-CI-SIZELINT-PDFX-EXTRACTION-ENGINE-TOLERANCE (this triage, apps/pdf-extractor/, 1 file). Split per-zone deliberately rather than one `multi` row — an architect split hop while main is already red costs more than it buys, and each zone's file list is independently verifiable from the same script output. NOTE the cost of that choice, recorded honestly: unlike the frontend-eslint/size-lint split of 2026-07-30, these three rows share ONE job conclusion, so no single row can verify at job level.",
-        "dedup_checked": "2026-07-31T01:30Z — jq over every lane matching /size-lint|sizelint|size_lint/i => 1 hit (the macro READY row); read its full body, it names exactly one file (usecases_vmt_liquidity_resolvers.go) in root_cause, dedup_key and files[], and pre-dates the other 7 offenders. Separately matched each of the 6 filenames => 0 open rows.",
-        "baseline_pass": null,
-        "desc": null,
-        "status_note": "[po 2026-07-31T02:27:29Z] P2->P0. size-lint CONJUNCTION 2/3 (owns 6 of the 8 offenders). Re-confirmed verbatim at run 30598372356 (head 40dfb1f9): claimCandidateScanner.ts new-offender 190L>120L; signalValidator.ts 259L vs upper 236L; vpsPushLogStore.ts 212L vs 167L; polymarket.ts 500L vs 491L; orchStateSchema.ts 870L vs 730L; vpsProxyTools.ts 269L vs 256L. Siblings: FIX-CI-SIZELINT-MACRO-VMT-LIQUIDITY-RESOLVERS-NEW-OFFENDER, FIX-CI-SIZELINT-PDFX-EXTRACTION-ENGINE-TOLERANCE. Escalated because at P2 it sat at backlog idx 371 of 374 behind 20 P0s - structurally unreachable by BOUNDED-1, so the size-lint conjunction could never close."
-      },
-      {
         "id": "FIX-CI-SIZELINT-PDFX-EXTRACTION-ENGINE-TOLERANCE",
         "type": "FIX",
         "size": "S",
@@ -18696,6 +18657,51 @@
         "claimed_at": "2026-07-31T02:23:07Z",
         "claimed_by": "dev-team (bounded-1 auto-pickup)",
         "updated_by": "developer"
+      },
+      {
+        "id": "FIX-CI-SIZELINT-MCPSERVER-SIX-UNCOVERED-OFFENDERS",
+        "type": "FIX",
+        "size": "M",
+        "priority": "P0",
+        "status": "REVIEW",
+        "zone": "apps/mcp-server/",
+        "owner": "dev-mcp-server",
+        "next_agent": "qa",
+        "supervised": false,
+        "plan_only": false,
+        "created_by": "po/triage-20260731T0132",
+        "created_at": "2026-07-31T01:32:47Z",
+        "updated_at": "2026-07-31T03:20:04Z",
+        "origin_signal_id": "CI-RED-8e1e66e5",
+        "check_id": "CI-RED-8e1e66e5",
+        "dedup_key": "ci_job:size-lint|files:claimCandidateScanner.ts,signalValidator.ts,vpsPushLogStore.ts,polymarket.ts,orchStateSchema.ts,vpsProxyTools.ts",
+        "verification_gate": "size_lint_file_level_then_ci_green",
+        "title": "CI job size-lint now reports 8 offending files, not 1 — the existing READY row FIX-CI-SIZELINT-MACRO-VMT-LIQUIDITY-RESOLVERS-NEW-OFFENDER covers exactly one of them, so fixing it alone CANNOT turn the job green. This row owns the 6 apps/mcp-server offenders (1 new-offender + 5 baseline-tolerance-exceeded).",
+        "root_cause": "RATCHET BROKEN BY A RED GATE. size-lint has been RED continuously since ~2026-07-30T01:24Z, so the marginal cost of adding a 9th offender is zero — nobody's commit is blocked by a gate that is already failing. Offender count went 1 -> 8 in ~21h (1 at 2026-07-30T04:49Z per the macro row's own evidence; 8 at 2026-07-31T01:22Z, run 30596148097). Two distinct sub-modes: `new-offender` = file >120L with no docs/data/size-lint-baseline.json entry and no `size-justification:` header in its first 10 lines (scripts/audits/size-lint-justification.sh :57 THRESHOLD, :83 detect, :129 branch); `baseline-tolerance-exceeded` = file HAS a baseline entry but grew past its upper tolerance.",
+        "evidence": "Read verbatim from `gh run view 30596148097 --log-failed`, step 'Run size-lint-justification --check': `[size-lint] FAIL — 8 offending file(s) (scanned 1346)`. The 6 in this zone, with LOCAL `wc -l` independently confirming CI's count byte-for-byte: apps/mcp-server/src/domain/services/narrativeTruthGate/claimCandidateScanner.ts NEW-OFFENDER 190L (>120L, no baseline, no header); apps/mcp-server/src/infrastructure/orchStateSchema.ts baseline=664 actual=870 upper=730 (+206L over baseline, +140 over tolerance — by far the worst); apps/mcp-server/src/infrastructure/fetchers/polymarket.ts baseline=447 actual=500 upper=491; apps/mcp-server/src/interface/mcp/tools/system/vpsProxyTools.ts baseline=233 actual=269 upper=256; apps/mcp-server/src/domain/services/signalValidator.ts baseline=215 actual=259 upper=236; apps/mcp-server/src/infrastructure/db/vpsPushLogStore.ts baseline=152 actual=212 upper=167. The 2 out-of-zone offenders are owned elsewhere: usecases_vmt_liquidity_resolvers.go (existing READY macro row) and apps/pdf-extractor/infrastructure/extraction_engine.py (sibling row FIX-CI-SIZELINT-PDFX-EXTRACTION-ENGINE-TOLERANCE).",
+        "ac": "(AC-1) `bash scripts/audits/size-lint-justification.sh --check` no longer lists ANY of the 6 files above. VERIFY AT FILE LEVEL, NOT JOB LEVEL — the job stays RED until the macro-indicators and pdf-extractor siblings also land, so `size-lint == success` is NOT this row's gate and must not be waited on. (AC-2) LANDMINE — NEVER fix with `--update`. The baseline is regenerated WHOLESALE, not merged, on every --update (script :175 `_note`), so one --update grandfathers every current offender repo-wide and converts an 8-file failure into a permanent amnesty. It would exit 0 and look green. This is the single most likely wrong fix. (AC-3) orchStateSchema.ts (870L, 31% over its own baseline) gets a REAL treatment, not a header bump: it is the Zod SSOT for a file every agent writes and it has grown +206L past a baseline that was itself already an exception. Split it by section (the file already has numbered `§ N` banners) or state explicitly, in the justification header, why 870L is cohesive. A bare `size-justification: 870L — large schema` is a rejection. (AC-4) For the 4 remaining baseline-tolerance-exceeded files, state per file which was chosen: genuine trim, or a justification header naming the real current count (the declared number must be within +/-10% or min 5L of actual — script :26, :87). (AC-5) claimCandidateScanner.ts is 190L and NEW (added by CCATO-MCP-T1-DOMAIN-ENGINE, 4d20a76a2): prefer a split to <=120L over a justification header — it is 3 days old, not legacy. (AC-6) After this row + both siblings land, `gh run view <run after all three> --json jobs -q '.jobs[]|select(.name==\"size-lint\")|.conclusion'` == success. Whoever lands LAST owns that check.",
+        "files": [
+          "apps/mcp-server/src/domain/services/narrativeTruthGate/claimCandidateScanner.ts",
+          "apps/mcp-server/src/infrastructure/orchStateSchema.ts",
+          "apps/mcp-server/src/infrastructure/fetchers/polymarket.ts",
+          "apps/mcp-server/src/interface/mcp/tools/system/vpsProxyTools.ts",
+          "apps/mcp-server/src/domain/services/signalValidator.ts",
+          "apps/mcp-server/src/infrastructure/db/vpsPushLogStore.ts"
+        ],
+        "reference_only_files": [
+          "scripts/audits/size-lint-justification.sh",
+          "docs/data/size-lint-baseline.json"
+        ],
+        "related": "Sibling zone-splits of ONE red job: FIX-CI-SIZELINT-MACRO-VMT-LIQUIDITY-RESOLVERS-NEW-OFFENDER (ready, apps/macro-indicators/, 1 file) and FIX-CI-SIZELINT-PDFX-EXTRACTION-ENGINE-TOLERANCE (this triage, apps/pdf-extractor/, 1 file). Split per-zone deliberately rather than one `multi` row — an architect split hop while main is already red costs more than it buys, and each zone's file list is independently verifiable from the same script output. NOTE the cost of that choice, recorded honestly: unlike the frontend-eslint/size-lint split of 2026-07-30, these three rows share ONE job conclusion, so no single row can verify at job level.",
+        "dedup_checked": "2026-07-31T01:30Z — jq over every lane matching /size-lint|sizelint|size_lint/i => 1 hit (the macro READY row); read its full body, it names exactly one file (usecases_vmt_liquidity_resolvers.go) in root_cause, dedup_key and files[], and pre-dates the other 7 offenders. Separately matched each of the 6 filenames => 0 open rows.",
+        "baseline_pass": null,
+        "desc": null,
+        "status_note": "[po 2026-07-31T02:27:29Z] P2->P0. size-lint CONJUNCTION 2/3 (owns 6 of the 8 offenders). Re-confirmed verbatim at run 30598372356 (head 40dfb1f9): claimCandidateScanner.ts new-offender 190L>120L; signalValidator.ts 259L vs upper 236L; vpsPushLogStore.ts 212L vs 167L; polymarket.ts 500L vs 491L; orchStateSchema.ts 870L vs 730L; vpsProxyTools.ts 269L vs 256L. Siblings: FIX-CI-SIZELINT-MACRO-VMT-LIQUIDITY-RESOLVERS-NEW-OFFENDER, FIX-CI-SIZELINT-PDFX-EXTRACTION-ENGINE-TOLERANCE. Escalated because at P2 it sat at backlog idx 371 of 374 behind 20 P0s - structurally unreachable by BOUNDED-1, so the size-lint conjunction could never close. [dev-mcp-server 2026-07-31T03:19:56Z] AC-1 file-level PASS — all 6 files cleared from size-lint-justification.sh --check (5 split to <=120L sibling files, orchStateSchema.ts trim+substantive-justification-header per AC-3 alt-path; zero --update/baseline.json edits). Job stays RED pending FIX-CI-SIZELINT-MACRO-VMT-LIQUIDITY-RESOLVERS-NEW-OFFENDER + FIX-CI-SIZELINT-PDFX-EXTRACTION-ENGINE-TOLERANCE siblings, by design.",
+        "promoted_at": "2026-07-31T02:52:07Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=0)",
+        "claimed_at": "2026-07-31T02:52:12Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)"
       }
     ],
     "qa": [],
@@ -18715,8 +18721,8 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-31T02:27:29Z",
-    "last_triaged_by": "po/triage-ci-red-20260731T0220",
+    "last_triaged_at": "2026-07-31T02:52:07Z",
+    "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
     "in_progress": []
   },
   "_meta": {

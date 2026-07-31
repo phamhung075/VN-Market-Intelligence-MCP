@@ -1,5 +1,20 @@
 /**
  * orchStateSchema.ts — Nested Zod SSOT schema for docs/data/orch/orch-state.json
+ * size-justification: 839L — one Zod SSOT (§1-8: StatusEnum/Task/Sprint/
+ *   SignalQueue/Head/Meta/TaskBoard/OrchState) plus 4 co-located write-time
+ *   validation guards (§9-12) that scripts/orch-validate.mjs imports BY NAME
+ *   from this exact file path. A physical split (even via re-export barrel)
+ *   would break scripts/agents-flow/drain-signals.test.js's
+ *   makeOrchRefHarness(), which raw-copies only this one path into an
+ *   isolated sandbox (not dependency-aware) to run the real orch-validate.mjs
+ *   end-to-end — the copied file's own import would dangle. Fixing that
+ *   harness's copy list is a 1-line change but lives in scripts/, outside
+ *   this agent's zone (apps/mcp-server/ only); flagged via decision journal
+ *   (FIX-CI-SIZELINT-MCPSERVER-SIX-UNCOVERED-OFFENDERS) for a scripts/-owning
+ *   agent to land alongside a coordinated split. Trimmed ~46L of duplicated/
+ *   verbose narrative comments pre-header (870L→824L, zero logic/type/export
+ *   changes) — the genuine reduction available without that split; this
+ *   justification block itself accounts for the remaining delta to 839L.
  *
  * Sprint: SSOT-INTEGRITY-PERIMETER  Task: SSOT-W1-ZOD-SCHEMA-MODEL
  *
@@ -105,18 +120,12 @@ export const TaskSchema = z
     notes: z.string().optional(),
     status_note: z.string().optional(),
   })
-  /**
-   * .passthrough() → .strict() PROMOTION TRIGGER (post-SHG-5):
-   *   When: SSOT-W1-SERVER-ENFORCE (rank-4, sprint SSOT-INTEGRITY-PERIMETER) ships.
-   *   Gate: all active-sprint tasks migrated to hot-field stubs (id, title, status,
-   *         owner, zone, priority, size, type, depends, wave, verify_note, detail_ref).
-   *         Zero unknown-key warnings in `checkRefIntegrity()` run across live data.
-   *   Then: replace `.passthrough()` here with `.strict()` and update
-   *         OrchStateTaskBoardTask.status from the hand-maintained union to
-   *         z.infer<typeof StatusEnum> (removing the `| string` escape hatch).
-   *   Cross-ref: docs/architecture-briefs/SSOT-INTEGRITY-PERIMETER-hardening.md §1.3
-   */
-  .passthrough(); // ← switch to .strict() post-SHG-5 (see SSOT-W1-SERVER-ENFORCE, rank-4)
+  // .passthrough() → .strict() PROMOTION TRIGGER (post-SHG-5, SSOT-W1-SERVER-ENFORCE
+  // rank-4): once all active-sprint tasks are migrated to hot-field stubs and
+  // checkRefIntegrity() shows zero unknown-key warnings on live data, switch to
+  // .strict() and drop TaskSchema.status's `| string` escape hatch.
+  // Cross-ref: docs/architecture-briefs/SSOT-INTEGRITY-PERIMETER-hardening.md §1.3
+  .passthrough();
 
 export type Task = z.infer<typeof TaskSchema>;
 
@@ -152,16 +161,11 @@ export const SprintSchema = z
     closed_at: z.string().optional(),
     priority: z.string().optional(),
   })
-  /**
-   * .passthrough() → .strict() PROMOTION TRIGGER (post-SHG-5):
-   *   When: SSOT-W1-SERVER-ENFORCE (rank-4) ships AND active vs closed sprint
-   *         key-sets converge (both carry the same hot-field subset).
-   *   Gate: closed_sprint stubs (id, title, closed_at, task_count, detail_ref) and
-   *         active sprints (id, status, tasks, ranked_scope, label, goal, opened_at)
-   *         must unify — or split into ActiveSprintSchema / ClosedSprintSchema.
-   *   Cross-ref: docs/architecture-briefs/SSOT-INTEGRITY-PERIMETER-hardening.md §1.3
-   */
-  .passthrough(); // ← switch to .strict() post-SHG-5 (see SSOT-W1-SERVER-ENFORCE, rank-4)
+  // .passthrough() → .strict() PROMOTION TRIGGER (post-SHG-5, SSOT-W1-SERVER-ENFORCE
+  // rank-4): once active vs closed sprint key-sets converge on the same hot-field
+  // subset (or split into ActiveSprintSchema / ClosedSprintSchema), switch to .strict().
+  // Cross-ref: docs/architecture-briefs/SSOT-INTEGRITY-PERIMETER-hardening.md §1.3
+  .passthrough();
 
 export type Sprint = z.infer<typeof SprintSchema>;
 
@@ -390,26 +394,17 @@ export type OrchState = z.infer<typeof OrchStateSchema>;
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // § 9. LANE-STATUS COHERENCE (ADD-2)
-//
-// Exported as a standalone function so the validator CLI can call it without
-// the schema parse blocking on coherence violations during the SHG data-migration
-// period (backlog[] still contains REVIEW/IN_PROGRESS/DONE stragglers pre-SHG-2).
-//
-// Once SHG-2 (status enum migration) and SHG-4 (sprint eviction) are confirmed
-// complete, promote this to a superRefine on OrchStateSchema.
-//
-// Source: SSOT-zod-validation-directive-2026-06-27.md ADD-2
-// Extended: D2.5 (BACKLOG-HYGIENE-VERIFY-PRUNE-SWEEP, PO-ratified 2026-07-10T18:41Z,
-// po_signoff commit aa1901c72) — BLOCKED admitted as an orthogonal sub-state of
-// backlog/review/in_progress (mandatory blocked_reason/verify_note); qa/done/
-// done_verified/ready deliberately left unchanged.
-//   backlog      → {BACKLOG, BLOCKED}
-//   review       → {REVIEW, BLOCKED}
-//   qa           → {QA}
-//   done         → {DONE, DONE_VERIFIED}
-//   done_verified→ {DONE_VERIFIED}
-//   ready        → {READY, TODO}
-//   in_progress  → {IN_PROGRESS, BLOCKED}
+// Standalone function (not a superRefine) so the validator CLI can call it
+// without the schema parse blocking on coherence violations during the SHG
+// data-migration period (backlog[] still has pre-SHG-2 REVIEW/IN_PROGRESS/
+// DONE stragglers). Promote to a superRefine once SHG-2 + SHG-4 land.
+// Source: SSOT-zod-validation-directive-2026-06-27.md ADD-2. Extended by D2.5
+// (PO-ratified 2026-07-10T18:41Z, commit aa1901c72): BLOCKED is an orthogonal
+// sub-state of backlog/review/in_progress (needs blocked_reason/verify_note);
+// qa/done/done_verified/ready unchanged.
+//   backlog→{BACKLOG,BLOCKED}  review→{REVIEW,BLOCKED}  qa→{QA}
+//   done→{DONE,DONE_VERIFIED}  done_verified→{DONE_VERIFIED}
+//   ready→{READY,TODO}  in_progress→{IN_PROGRESS,BLOCKED}
 // ═══════════════════════════════════════════════════════════════════════════════
 
 export interface LaneCoherenceIssue {
@@ -571,33 +566,26 @@ export function checkRefIntegrity(
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // § 11. SPRINT-GOAL TERMINAL-STATUS CANONICALIZATION (write-time drift guard)
-//
 // Task: FIX-SPRINT-GOAL-STATUS-DRIFT-EVICT
 //
-// .sprint_goal is validated only as z.record(z.unknown()).optional() (§8) — its
-// .entries[] shape is NOT schema-enforced (full typing is SSOT-W2-SPRINT-GOAL-PRUNE,
-// backlogged). This guard closes the specific recurring-8x drift class WITHOUT
-// waiting for that full schema: sprint sign-off paths write non-canonical
-// terminal-status synonyms/case-variants (CLOSED, COMPLETE, done, done_verified, ...)
-// that scripts/orch-cold-evict.sh's TERMINAL_SET-driven predicate can never match,
-// so the sprint entry is stranded forever and .sprint_goal.entries grows unbounded
+// .sprint_goal.entries[] is NOT schema-enforced (only z.record(z.unknown()) at §8;
+// full typing is backlogged SSOT-W2-SPRINT-GOAL-PRUNE). This guard closes ONE
+// recurring drift class without waiting for that full schema: sprint sign-off
+// paths write non-canonical terminal-status synonyms/case-variants (CLOSED,
+// COMPLETE, done, ...) that orch-cold-evict.sh's TERMINAL_SET predicate never
+// matches, so the entry is stranded and .sprint_goal.entries grows unbounded
 // (26 seen, cap 15; feedback_coldevict_complete_status_drift).
 //
 // SPRINT_GOAL_TERMINAL_ALIASES: uppercase(raw status) -> canonical TERMINAL_SET
-// token. An entry is a violation iff its raw status uppercases to a mapped alias
-// but is NOT already byte-identical to the canonical token — i.e. this is a
-// narrow "close but not canonical" check, not a full status enum. Non-terminal
-// tokens (OPEN, active, PLANNING, ACTIVE, ...) are deliberately untouched:
-// closing those sprints is a PO editorial act, out of scope here (see task
-// § OUT OF SCOPE).
+// token; a violation is "uppercases to a mapped alias but isn't already
+// byte-identical to it" — narrow "close but not canonical" check, not a full
+// enum. Non-terminal tokens (OPEN, ACTIVE, PLANNING, ...) are untouched by
+// design (closing a sprint is a PO editorial act).
 //
-// Called by:
-//   - scripts/orch-validate.mjs (Stage 1d — hard fail, mirrors checkRefIntegrity)
-//   - orchStateStore.ts server-side write path (rides next user-approved rebuild)
-//
-// Kept in lock-step with the identical alias map in
-// scripts/fix-sprint-goal-status-drift-evict-normalize.jq (the one-time AC-1
-// normalizer) — both must recognize exactly the same drift shapes.
+// Called by scripts/orch-validate.mjs (Stage 1d, hard fail) and (rides next
+// rebuild) orchStateStore.ts's write path. Keep in lock-step with the
+// identical alias map in scripts/fix-sprint-goal-status-drift-evict-
+// normalize.jq (one-time AC-1 normalizer) — both must recognize the same shapes.
 // ═══════════════════════════════════════════════════════════════════════════════
 
 export const SPRINT_GOAL_TERMINAL_ALIASES: Readonly<Record<string, Status>> = {
@@ -665,53 +653,34 @@ export function checkSprintGoalStatusCanonical(
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // § 12. DECORATIVE SEQUENCING FIELD GUARD (blocks / co_edit)
-//
 // Task: FIX-ORCHSTATE-BLOCKS-FIELD-WRITE-ONLY-DECORATIVE
 //
-// ROOT CAUSE: `blocks` and `co_edit` read as sequencing/atomic-ship constraints
-// on a task_board row but are WRITE-ONLY — grep-confirmed zero consumers across
+// ROOT CAUSE: `blocks`/`co_edit` read as sequencing/atomic-ship constraints on
+// a task_board row but are WRITE-ONLY (grep-confirmed zero consumers across
 // scripts/lib/*.jq, scripts/devteam-*.jq, scripts/orch-*.mjs/.sh,
-// scripts/agents-flow/*.sh, and the whole repo tree for `co_edit`.
-// `effective_depends_on()` in scripts/lib/devteam-eligibility.jq only ever
-// reads a CANDIDATE row's own `depends_on`/`depends`/`blocked_by` — it never
-// traverses a reverse `blocks` edge from another row, and there is no
-// forward-field equivalent for `co_edit` at all. An author who writes
-// `blocks: ["X"]` intending "X must not start before this row" has created
-// zero enforcement and no way to tell the difference from a working gate by
-// inspecting the board (PO's own guard on FU-BACKFILL-REAL-FILENAMES,
-// written the same day, was silently non-binding — the live proof).
+// scripts/agents-flow/*.sh). `effective_depends_on()` in
+// scripts/lib/devteam-eligibility.jq only reads a row's own
+// depends_on/depends/blocked_by — never a reverse `blocks` edge from another
+// row, and `co_edit` has no forward-field equivalent at all. An author
+// writing `blocks: ["X"]` creates zero enforcement with no way to tell from
+// the board alone (PO's own guard on FU-BACKFILL-REAL-FILENAMES was silently
+// non-binding — the live proof).
 //
 // GUARD SEMANTICS (write-time; wired as Stage 1e in scripts/orch-validate.mjs):
-//   blocks:
-//     - absent/null/empty array           → OK, no edge asserted.
-//     - present but not an array of non-empty strings (the malformed prose
-//       case, e.g. FIX-MCP-SUITE-HEALTH-BASELINE) → HARD-FAIL. Never silently
-//       swallowed.
-//     - non-empty array naming an id that does not resolve to any task_board
-//       row → HARD-FAIL (can't verify a binding to a row that doesn't exist).
-//     - non-empty array naming a REAL row that does NOT carry the source id
-//       back in its own depends_on/depends/blocked_by → HARD-FAIL. This is
-//       the reverse-only-edge trap itself: `blocks` alone can never bind
-//       anything, so the write is rejected until the author adds the real
-//       forward edge (`blocked_by`/`depends_on`) on the TARGET row — at
-//       which point `blocks` stays as pure, truthful, human-readable
-//       documentation of an edge that scripts/lib/devteam-eligibility.jq
-//       actually reads.
-//   co_edit:
-//     - absent/null/empty array           → OK.
-//     - any non-empty value               → HARD-FAIL, unconditionally.
-//       `co_edit` has NO forward-field equivalent anywhere in the schema
-//       (verified: repo-wide grep, zero consumers, unlike `blocks` which at
-//       least has `blocked_by`/`depends_on` to normalise into) — it can
-//       never be validated as bound, so it is never accepted. Encode the
-//       atomic-ship intent as prose plus a one-directional `depends_on` edge
-//       that at least serialises the two rows.
+//   blocks: absent/empty → OK. Not an array of non-empty strings → HARD-FAIL.
+//     Names an id absent from task_board → HARD-FAIL (unverifiable). Names a
+//     real row that does NOT carry the source id back in its own
+//     depends_on/depends/blocked_by → HARD-FAIL (the reverse-only-edge trap:
+//     `blocks` alone binds nothing until the TARGET row adds the real forward
+//     edge; once it does, `blocks` is truthful documentation of an edge
+//     devteam-eligibility.jq actually reads).
+//   co_edit: absent/empty → OK. Any non-empty value → HARD-FAIL,
+//     unconditionally — no forward-field equivalent exists anywhere in the
+//     schema, so it can never be validated as bound. Encode atomic-ship
+//     intent as prose plus a one-directional `depends_on` edge instead.
 //
-// One-time data migration for the rows already carrying these fields:
-//   scripts/fix-orchstate-blocks-coedit-decorative-normalize.jq
-//
-// Called by scripts/orch-validate.mjs (Stage 1e, after Stage 1d, hard fail —
-// mirrors checkSprintGoalStatusCanonical's wiring).
+// One-time data migration: scripts/fix-orchstate-blocks-coedit-decorative-normalize.jq
+// Called by scripts/orch-validate.mjs (Stage 1e, after Stage 1d, hard fail).
 // ═══════════════════════════════════════════════════════════════════════════════
 
 /** null → [], bare string → [string], array → as-is (mirrors scripts/lib/devteam-eligibility.jq's as_dep_array). */

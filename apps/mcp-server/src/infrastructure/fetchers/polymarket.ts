@@ -19,7 +19,6 @@
  */
 
 import { logger } from "../logger.js";
-import { getDb } from "../db/schema.js";
 import type { PredictionMarketsConfig } from "../config.js";
 import type { PredictionMarket } from "../../domain/services/predictionSignalDetector.js";
 import { breakers } from "../circuitBreakerRegistry.js";
@@ -454,47 +453,10 @@ export async function fetchPolymarkets(
 }
 
 // ---------------------------------------------------------------------------
-// SQLite persistence
+// SQLite persistence — moved to ./polymarketStore.ts (task FIX-CI-SIZELINT-
+// MCPSERVER-SIX-UNCOVERED-OFFENDERS AC-4 — kept this file under its size-lint
+// baseline tolerance); re-exported so existing imports of
+// storePolymarketSnapshot from this path are unaffected.
 // ---------------------------------------------------------------------------
 
-/**
- * Upserts a batch of `PredictionMarket` records into the `prediction_markets`
- * SQLite table (INSERT OR REPLACE — one row per market id).
- *
- * @param markets - Markets to persist (may be empty — no-op in that case).
- */
-export async function storePolymarketSnapshot(markets: PredictionMarket[]): Promise<void> {
-  if (markets.length === 0) return;
-
-  const db = getDb();
-  const stmt = db.prepare(`
-    INSERT OR REPLACE INTO prediction_markets
-      (id, question, end_date, yes_price, no_price, volume_24h, volume_total,
-       liquidity, last_trade_price, unique_wallets, tags, fetched_at, updated_at)
-    VALUES
-      (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-  `);
-
-  const now = new Date().toISOString();
-  const insertMany = db.transaction((rows: PredictionMarket[]) => {
-    for (const m of rows) {
-      stmt.run(
-        m.id,
-        m.question,
-        m.endDate,
-        m.yesPrice,
-        m.noPrice,
-        m.volume24h,
-        m.volumeTotal,
-        m.liquidity,
-        m.lastTradePrice,
-        m.uniqueWalletsCount,
-        JSON.stringify(m.tags),
-        m.fetchedAt,
-        now,
-      );
-    }
-  });
-
-  insertMany(markets);
-}
+export { storePolymarketSnapshot } from "./polymarketStore.js";
