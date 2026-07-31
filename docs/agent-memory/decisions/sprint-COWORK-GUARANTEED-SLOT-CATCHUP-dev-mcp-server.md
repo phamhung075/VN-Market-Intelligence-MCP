@@ -357,3 +357,12 @@
 - source_tier value when not estimated — chose 2 (matches codebase convention for "DB/caller-derived, not raw tier-1 feed"), not 1, since reCreditRatioPct/totalCreditTrillion are ALWAYS static regardless of mortgage/yoy live-ness (never truly tier-1).
 **why-decision:** date=now on an estimate row is the SAME defect class as the frozen-usdVnd-labelled-tier1 lesson (stale/estimate data stamped with a live-looking timestamp) — root-caused by gating the stamp on the pre-existing isEstimate flag rather than inventing a new mechanism. structuredContent mirrors FDA-5 exactly (same file family, same wire-strip risk already documented in this file's own MONEY-RADAR-P0-T2-COMPOSITE comment).
 **why-change:** scoped down from the FIX note's "consider omit dish" suggestion per its own "hint, not a spec" permission — chose the additive/non-breaking shape consistent with FDA-5 precedent.
+
+### STEP dev-mcp-server-S38 · dev-mcp-server · 2026-07-31T06:20:00Z
+**task-id:** FIX-CI-SIZELINT-MCPSERVER-ENERGYTOOLS-NEW-OFFENDER
+**what-done:** energyTools.ts (own prior FDA-5 commit af272fe1d grew it 152L→215L with no header) got a `size-justification: 224L` header inside the first 10 lines — comment-only, zero logic/type/export change.
+**what-considered:**
+- shrink to <=167L — rejected: the 63L growth is almost entirely the EnergyGridResult type declaration + its rationale docstring + the structuredContent return object-literal, all functional code (type safety / FDA-5's estimate-flag wire guarantee), not redundant comment restatement — unlike the sibling pdfx tolerance fix (3 near-duplicate paragraphs collapsed to 1) where dedup alone closed the gap. Even trimming every comment line here (~24L) would leave the file ~191L, still 24L over the 167L upper tolerance.
+- justification token — chosen: declared 224L matches actual exactly (not just within ±10%).
+**why-decision:** AC-1 explicitly names both remedies as legitimate; shrink is not viable here without deleting the exact type-safety/structural-guarantee content FDA-5 was tasked to add, so the justification-token path is the only remedy that doesn't regress FDA-5's own AC.
+**why-change:** none — AC-2 (baseline.json untouched, zero --update) and AC-3 (check/threshold/EXCLUDE_PATTERN unweakened) both honored. AC-4 CI-plane verified: run 30608934628 (head f4feb65517e, confirmed descendant of 22bdf63b5 via merge-base), size-lint --log-failed lists exactly 1 offender (macro-indicators sibling file), energyTools.ts absent.
