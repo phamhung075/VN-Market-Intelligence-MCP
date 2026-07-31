@@ -1,0 +1,30 @@
+{
+  "ticker": "CTG",
+  "signal_type": "bctc_signal",
+  "quarter": "Q1-2026",
+  "mode": "routine",
+  "beat_miss": null,
+  "product": "Ngân hàng thương mại nhà nước — bán lẻ, doanh nghiệp, tài trợ thương mại.",
+  "customer": "Khách hàng cá nhân, SME, doanh nghiệp nhà nước và tư nhân lớn.",
+  "ops": "KHÔNG THỂ ĐÁNH GIÁ — get_bctc_full(CTG) trả về CORRUPT DATA (total_assets=0, confidence=0% cưỡng bức) — vi phạm cân đối kế toán do lỗi trích xuất OCR. Không tính EY/ROE/định giá từ nguồn này để tránh dữ liệu giả.",
+  "mgmt": "Dùng số liệu peer từ get_sector_comparison (nguồn giá thị trường, không phải BCTC riêng): PE 7.8x, PB 1.5x, ROE 21% — chỉ mang tính tham chiếu ngành, KHÔNG phải số liệu BCTC riêng CTG đã kiểm chứng.",
+  "data_quality_flag": "CORRUPT",
+  "data_quality_note": "total_assets=0 (OCR extraction failure) — same known defect class as BID/GEX/MWG/FRT (tracked: docs/architecture-briefs/2026-07-28-pdfx-tesseract-concurrency-invariant.md, owner dev-pdf-extractor). Not re-escalated — already tracked.",
+  "pe_x_peer_reference": 7.8,
+  "pb_x_peer_reference": 1.5,
+  "roe_pct_peer_reference": 21,
+  "esc_gates": "SKIPPED — corrupt data, no reliable pass_1..pass_6 evaluable.",
+  "trick_summary": null,
+  "trick_confidence": "none",
+  "trick_pass_versions": [],
+  "insider_signals": "Không có tín hiệu giao dịch nội bộ đáng kể",
+  "evidence_fragments_recorded": false,
+  "evidence_fragments_note": "Skipped — no reliable ROE/valuation figure to record (avoid fabricating from corrupt data).",
+  "generated_at": "2026-07-31T00:18:00Z",
+  "_processed": {
+    "fingerprint": "6f04a5756e5ce48fa7ca0334cdf091f046434bc8ce38a0c7e23b5221fc9a0d23",
+    "processedAt": "2026-07-31T00:45:35Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

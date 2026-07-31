@@ -1,0 +1,14 @@
+{
+  "from": "commit-sweep-guard",
+  "to": "po",
+  "type": "bug-escalation",
+  "priority": "high",
+  "createdAt": "2026-07-31T00:45:30Z",
+  "payload": "[notebook-immutability-guard] WARN: docs/agent-memory/notebooks/dev-stock-price.md — retained section '## Session 2026-07-29 — FIX-DEPTHTHIN-A-PRICE-HISTORY-RETENTION-10D — BLOCKED (zone mismatch)' has different content staged than at HEAD. Per .claude/skills/notebook-write/SKILL.md AC-2a, a retained '## ' section must be byte-identical across a cycle; the only authorized mutations are dropping a whole oldest section, the AC-2b sub-block intra-prune, or trimming the CURRENT cycle's own new section. If cap pressure forced a shrink, DROP the whole section (archive verbatim if it must be kept) and add a NEW marker section instead — see docs/agent-memory/notebooks/architect.md for the reference-correct pattern. mode=warn (default warn — never blocks; set GIT_NOTEBOOK_IMMUTABILITY_MODE=reject to hard-enforce once re-validated, see scripts/audits/verify-notebook-immutability-gate.sh).\n",
+  "_processed": {
+    "fingerprint": "be1ad767d14700738e4e122e1dfad51a50761f0a6835557b06da79dd1b757636",
+    "processedAt": "2026-07-31T00:45:35Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

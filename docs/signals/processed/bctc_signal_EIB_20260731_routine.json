@@ -1,0 +1,30 @@
+{
+  "ticker": "EIB",
+  "signal_type": "bctc_signal",
+  "quarter": "Q1-2026",
+  "mode": "routine",
+  "beat_miss": null,
+  "product": "Ngân hàng thương mại cổ phần — bán lẻ, tài trợ thương mại, kinh doanh ngoại hối.",
+  "customer": "Khách hàng cá nhân, SME, doanh nghiệp xuất nhập khẩu.",
+  "ops": "KHÔNG THỂ ĐÁNH GIÁ — get_bctc_full(EIB) chặn ở PUB-5 gate: độ tin cậy trích xuất 31% < ngưỡng tối thiểu 50% để phục vụ làm dữ liệu chính. Không tính EY/ROE/định giá từ nguồn này để tránh dữ liệu giả.",
+  "mgmt": "Dùng số liệu peer từ get_sector_comparison (nguồn giá thị trường, không phải BCTC riêng): PE 37.7x (rất cao so trung vị ngành 9.1x), PB 1.6x, ROE 4% (thấp) — chỉ mang tính tham chiếu ngành, KHÔNG phải số liệu BCTC riêng EIB đã kiểm chứng. PE cao + ROE thấp gợi ý định giá kém hấp dẫn nếu số liệu peer chính xác, nhưng cần xác nhận qua nguồn BCTC riêng khi có.",
+  "data_quality_flag": "LOW_CONFIDENCE_GATED",
+  "data_quality_note": "PUB-5 gate: extraction confidence 31% (min 50% required). Distinct failure mode from CTG's zero-asset corruption — likely parent-only or poorly-extracted report per tool message. Not re-escalated this cycle — same known extraction-quality class as CTG/BID/GEX/MWG/FRT.",
+  "pe_x_peer_reference": 37.7,
+  "pb_x_peer_reference": 1.6,
+  "roe_pct_peer_reference": 4,
+  "esc_gates": "SKIPPED — sub-50% confidence gate, no reliable pass_1..pass_6 evaluable.",
+  "trick_summary": null,
+  "trick_confidence": "none",
+  "trick_pass_versions": [],
+  "insider_signals": "Không có tín hiệu giao dịch nội bộ đáng kể",
+  "evidence_fragments_recorded": false,
+  "evidence_fragments_note": "Skipped — no reliable ROE/valuation figure to record (avoid fabricating from gated/low-confidence data).",
+  "generated_at": "2026-07-31T00:18:00Z",
+  "_processed": {
+    "fingerprint": "478df60fdf5a0e24422067fb8d1b5465938c10003d1352ba23bd4520188769a8",
+    "processedAt": "2026-07-31T00:45:35Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
