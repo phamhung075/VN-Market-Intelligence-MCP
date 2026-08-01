@@ -2081,7 +2081,7 @@
         "type": "system-issue",
         "summary": "orch-cold-evict.sh own internal SHG-3 write-gate call (unredirected bash orch-state-validate.sh) leaks orch-validate.mjs non-fatal Stage-1g REPORT text onto orch-cold-evict.sh OWN stdout -- deeper root cause behind FIX-DEVTEAM-PREFLIGHT-STEP55-COLDEVICT-STDOUT-LEAK-CORRUPTS-VERDICT, fixed there at the wrapper boundary but this call site itself still leaks",
         "severity": "LOW",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": null,
         "note": "Confirmed by direct repro: ORCH_STATE=<isolated copy> bash scripts/orch-cold-evict.sh 1>out 2>err puts the [orch-validate] REPORT -- Stage 1g ... + Stage 0 + Stage 1 PASS lines in out (stdout), not err. dev-team-tick-preflight.sh Step 5.5 is now immune (its _step55_run_cold_evict wrapper captures the ENTIRE child stdout+stderr and re-emits to stderr -- commit f2b41e6df) but any FUTURE direct caller of orch-cold-evict.sh (non-dry-run) that captures only stdout would hit the same corruption class again. Root: scripts/orch-cold-evict.sh line ~930-932, bash orch-state-validate.sh \"${HOT_TEMP}\" || {...}, is unredirected; contrast scripts/orch-apply.sh:136 which correctly does validation_output=$(bun orch-validate.mjs ... 2>&1) then re-emits to stderr only. Out of file scope for FIX-DEVTEAM-PREFLIGHT-STEP55-COLDEVICT-STDOUT-LEAK-CORRUPTS-VERDICT (files=[dev-team-tick-preflight.sh, its test, dev-team/flow/main.md] only) -- flagging for a scoped follow-up FIX row on orch-cold-evict.sh itself, same fix pattern (capture 2>&1, redirect to stderr) as the row just closed."
       }
