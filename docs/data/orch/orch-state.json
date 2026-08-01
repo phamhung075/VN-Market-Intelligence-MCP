@@ -134,8 +134,8 @@
     "does_not_consume_wip": true
   },
   "signal_queue": {
-    "_updated_at": "2026-07-31T19:35:00Z",
-    "_updated_by": "dev-team",
+    "_updated_at": "2026-08-01T01:57:51Z",
+    "_updated_by": "dev-mcp-server",
     "archive": [],
     "rows": [
       {
@@ -2059,6 +2059,17 @@
         "triaged_at": "2026-08-01T01:25:12Z",
         "triaged_by": "po",
         "disposition": "ACTIONED — root cause found and row minted: FIX-COWORK-FLOWDOC-STALE-TRANSPORT-GAP-CAVEAT (ready[], P1, next_agent=agent-father, returned in this tick BATCH). NOT another silent cold-evict. The escalation was correct and the issue is live: coverage-state.json _updated_at is still 2026-07-25T16:14:39Z, 6.4 days frozen. Root cause is NOT a missing Bash grant — the grant landed 2026-07-30T23:18Z (commit 610110e16). It is a STALE FLOW-DOC CAVEAT: docs/agents/market-watcher/flow/cycle.md:265 tells the agent it holds no Bash and cites .claude/agents/market-watcher.md:5 as proof, but that line now reads tools: Read, Write, Edit, Bash, mcp__gateway__call_tool. The caveat instructs the agent to SKIP the coverage write and log [coverage-write-skipped: no-transport], so both agents keep skipping. Same stale text in news-scout stage-log-notify.md:81 and stage-sentiment.md:18. PO verified transport is live by running scripts/agents-flow/coverage-stamp.sh --list-stale directly this tick (returned a correct 3-ticker list). This was ALREADY escalated once: agent-father wrote it into the review_note of FIX-COWORK-BASH-GRANT-COVERAGE-STAMP-TRANSPORT on 2026-07-30T23:16:56Z as ACCEPTANCE 4 unmet, explicitly asking PO for a separate follow-up row; that ask was lost. Also noted: the parent row is deadlocked in REVIEW because its AC-2/AC-3 were assumed to self-heal on a live cycle, which cannot happen while the caveat stops the cycle from writing."
+      },
+      {
+        "id": "dev-20260801T015751",
+        "ts": "2026-08-01T01:57:51Z",
+        "from": "dev-mcp-server",
+        "to": "po",
+        "type": "system-issue",
+        "summary": "FIX-AGENTSIGNALS-EXPIRED-GC-CRON (commit f5698cb76) needs ops rebuild+qa live-verify before DONE",
+        "severity": "LOW",
+        "status": "NEW",
+        "payload_ref": null
       }
     ],
     "last_triaged_at": "2026-07-29T06:25:00Z",
@@ -19747,6 +19758,26 @@
         "updated_at": "2026-08-01T01:43:19Z",
         "updated_by": "dev-mcp-server",
         "commit_sha": "f28c6c239"
+      },
+      {
+        "id": "FIX-AGENTSIGNALS-EXPIRED-GC-CRON",
+        "type": "FIX",
+        "title": "DB-retention GC cron — no cleanup for expired agent_signals (3493 rows) OR stale-unresolved alerts (205 rows >30d) accumulating unbounded",
+        "priority": "P3",
+        "status": "REVIEW",
+        "size": "S",
+        "zone": "apps/mcp-server/",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-AGENTSIGNALS-EXPIRED-GC-CRON",
+        "promoted_at": "2026-08-01T01:17:26Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=3)",
+        "claimed_at": "2026-08-01T01:17:26Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "next_agent": "qa",
+        "updated_at": "2026-08-01T01:57:05Z",
+        "updated_by": "dev-mcp-server",
+        "commit_sha": "f5698cb76",
+        "note": "RAW-verify-on-pickup found the AC magnitudes stale (live: agent_signals total=124/expired=119 [104 FK-blocked, 15 GC-eligible]; alerts total=8/unresolved=8/unresolved>30d=0 -- far below the 2026-06-20/21 auditor snapshot ~3493/829/205). Root cause: both tables already have working daily off-hours GC wired into the SAME dataAuditJob:daily cron (0 23 * * * Asia/Ho_Chi_Minh) -- agentSignalStore.cleanExpired() for agent_signals, checkStaleAlerts D-3/D-4 for alerts. Hardened both in place instead of shipping a 3rd/4th duplicate mechanism: wrapped both predicates as datetime(col) < datetime(now, ...) not just the threshold (feedback_sqlite_iso8601_datetime_strcompare_bypass -- alerts.triggered_at stores raw JS .toISOString() T...Z while agent_signals.expires_at stores the SQLite-normalized space format), tightened checkStaleAlerts D-4 threshold 60d->30d + resolution_notes marker to auto-resolved by retention GC per spec. Never hard-deletes alert history. Deliberately did NOT narrow cleanExpired() to literal status IN (read,expired) -- no expired status value is ever written; would strand unread-expired rows forever. autoResolveStaleAlerts.ts (72h low/med-only, briefing-triggered) left untouched -- different concern, out of scope. 8 new tests (ISO T...Z format, 30d boundary, resolved-row immunity). tsc clean. toolCount=183/cronJobCount=88 unchanged (no new cron -- folded into existing dataAuditJob:daily). Full bun test: 15035 pass/40 skip/52 fail, 486.66s, inside FIX-MCP-SUITE-HEALTH-BASELINE band, zero fail-list matches for agentSignal/checkStaleAlerts/cleanExpired/retention or any of the 3 touched test files. REBUILD_REQUIRED=true -- signal written to PO per task instructions."
       }
     ],
     "qa": [],
@@ -19768,24 +19799,7 @@
     },
     "last_triaged_at": "2026-08-01T01:25:12Z",
     "last_triaged_by": "po/triage-20260801T0125",
-    "in_progress": [
-      {
-        "id": "FIX-AGENTSIGNALS-EXPIRED-GC-CRON",
-        "title": "DB-retention GC cron — no cleanup for expired agent_signals (3493 rows) OR stale-unresolved alerts (205 rows >30d) accumulating unbounded",
-        "type": "FIX",
-        "size": "S",
-        "priority": "P3",
-        "zone": "apps/mcp-server/",
-        "status": "IN_PROGRESS",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-AGENTSIGNALS-EXPIRED-GC-CRON",
-        "promoted_at": "2026-08-01T01:17:26Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=3)",
-        "updated_at": "2026-08-01T01:17:27Z",
-        "claimed_at": "2026-08-01T01:17:26Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)"
-      }
-    ]
+    "in_progress": []
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
