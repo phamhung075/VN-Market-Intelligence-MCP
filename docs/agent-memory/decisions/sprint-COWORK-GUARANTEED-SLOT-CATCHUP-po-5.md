@@ -77,3 +77,12 @@
 - Write the board myself, since PO already owns orch-apply writes elsewhere in this same flow
 **why-decision:** dev-team RAW-verified and found neither row on the board. `BATCH` is a dispatch *hand-off*, not a persistence mechanism — and this flow's own manual-dispatch-sweep and triage-signals steps both write `.task_board` directly, so "PO doesn't write the board" was never true. A disposition that exists only in prose is `feedback_po_notebook_mint_never_reaches_orchstate_board`.
 **why-change:** Deviation from S119/S120, which stated dispositions in the RETURN without persisting them. Analysis was independently confirmed sound; only the mechanical write was missing.
+
+### STEP po-S123 · po · 2026-08-01T04:12:27Z
+**task-id:** FIX-PO-MAINFLOW-ORPHANS-TELEGRAM-REPORTS-RESOLVER-SUBFLOW
+**what-done:** Resolved reports 4271/4272 (`duplicate`/`duplicate`, `delete_telegram_message:false`), then root-caused why they were never resolved and minted the flow fix; appended occurrences 5+6 to the existing P0 rather than duplicating it.
+**what-considered:**
+- Just call `process_telegram_report` and move on (treat as my own lapse)
+- Check whether the resolver step is reachable from the triage entry path at all
+**why-decision:** Second instance of decide-without-actuate in ONE tick — that is a mechanism, not a lapse. `docs/agents/po/flow/telegram-reports.md` is the sole owner of `process_telegram_report` and has **zero** inbound refs from any flow/agent/skill file, while `main.md:20/105` wires only the reader and says "handle first". Reader wired, resolver orphaned — 6th instance of this flow's own documented-consumer-no-producer family. Distinct plane from FIX-PO-BATCH-MINT-NO-WRITE-ACTUATOR (board writes) and FIX-TELEGRAM-REPORT-ACK-STATUS-STOP-RESURFACE (server-side ack), so deliberately not deduped into either.
+**why-change:** Chose `delete_telegram_message:false` against the tool's `true` default — the underlying defect is still open (row BACKLOG), so destroying the channel trace of an unfixed bug is an irreversible act with no upside; clearing the queue was the actual ask.
