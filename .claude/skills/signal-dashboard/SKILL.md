@@ -2,7 +2,7 @@
 name: signal-dashboard
 description: SSOT protocol for cowork agent signal communication via docs/data/orch/orch-state.json .signal_queue.rows[]. Covers write, read, ack, close, and prune operations. READ uses two-phase delta-read to eliminate full-file token cost. HSC-7 — PRUNE now evicts to cold file; signal_queue.archive[] lane removed.
 ---
-<!-- size-justification: ≤120L — hot-path only; Payload Pointer Discipline + Docs-to-read table moved to reference.md (load when writing large-payload signals or routing by type). UC-ASL-P6 2026-07-31 (0 new lines): Write protocol line lengthened in place — was citing a bare temp-file-then-rename pattern (docs/architecture-briefs/2026-06-01-orch-state-consolidate.md §2.3, pre-orch-apply.sh) which contradicted this file's own CONCURRENT WRITERS CAS-guard mandate 2 sections below; now names scripts/orch-apply.sh directly, matching dashboard-protocol.md's WRITE procedure (step 4) which already routed through it correctly. -->
+<!-- size-justification: ≤120L — hot-path only; Payload Pointer Discipline + Docs-to-read table moved to reference.md (load when writing large-payload signals or routing by type). UC-ASL-P6 2026-07-31 (0 new lines): Write protocol line lengthened in place — was citing a bare temp-file-then-rename pattern (docs/architecture-briefs/2026-06-01-orch-state-consolidate.md §2.3, pre-orch-apply.sh) which contradicted this file's own CONCURRENT WRITERS CAS-guard mandate 2 sections below; now names scripts/orch-apply.sh directly, matching dashboard-protocol.md's WRITE procedure (step 4) which already routed through it correctly. FIX-COLDEVICT-MALFORMED-TS-CATCH0-EVICTS-FRESH-SIGNAL-ROWS 2026-08-01 (0 new lines): WRITE block `ts` field pinned to explicit second-precision format — the prior "<ISO-8601 UTC compact>" wording did not pin seconds and was readable as permitting minute-precision, which is exactly the shape that defeated orch-cold-evict.sh's age gate (jq fromdateiso8601 throws on it). -->
 
 # Signal Dashboard — Communication Skill
 
@@ -44,7 +44,7 @@ Row shape: per orch-state.json schema `signal_queue.rows[]`:
 ```json
 {
   "id": "{from[0:3]}-{YYYYMMDDTHHmmss}",
-  "ts": "<ISO-8601 UTC compact>",
+  "ts": "<ISO-8601 UTC, seconds MANDATORY: YYYY-MM-DDTHH:MM:SSZ — no minute-only, no fractional>",
   "from": "<agent-id>",
   "to": "<agent-id>",
   "type": "<signal-type>",
