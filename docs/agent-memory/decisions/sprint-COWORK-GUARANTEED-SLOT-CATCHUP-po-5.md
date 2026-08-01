@@ -86,3 +86,12 @@
 - Check whether the resolver step is reachable from the triage entry path at all
 **why-decision:** Second instance of decide-without-actuate in ONE tick — that is a mechanism, not a lapse. `docs/agents/po/flow/telegram-reports.md` is the sole owner of `process_telegram_report` and has **zero** inbound refs from any flow/agent/skill file, while `main.md:20/105` wires only the reader and says "handle first". Reader wired, resolver orphaned — 6th instance of this flow's own documented-consumer-no-producer family. Distinct plane from FIX-PO-BATCH-MINT-NO-WRITE-ACTUATOR (board writes) and FIX-TELEGRAM-REPORT-ACK-STATUS-STOP-RESURFACE (server-side ack), so deliberately not deduped into either.
 **why-change:** Chose `delete_telegram_message:false` against the tool's `true` default — the underlying defect is still open (row BACKLOG), so destroying the channel trace of an unfixed bug is an irreversible act with no upside; clearing the queue was the actual ask.
+
+### STEP po-S124 · po · 2026-08-01T04:25:15Z
+**task-id:** FIX-PO-BATCH-MINT-NO-WRITE-ACTUATOR
+**what-done:** Renumbered my `occurrences_5_6` → `occurrences_7_8` (incl. the labels inside the prose) and corrected `occurrence_count` 6→8; separately re-derived the task_total delta and held my 765→767 against dev-team's 766→767 flag.
+**what-considered:**
+- Apply dev-team's correction as given (both items)
+- Verify each against the row/commits first, then apply only what holds
+**why-decision:** Item 1 held — the row's own `po_corroboration_20260801T025855` says "occurrence_count raised 4 -> 6" and binds 5/6 to the QA-DRAIN and TNB incidents, so my labels collided and the counter was undercounting the `feedback_recurring_bug_escalation` threshold by 2. Item 2 did NOT hold: `orch-conservation-check.mjs` against `cdbc14190` (last orch-state commit before my first write) gives task_total=765 vs live 767, +2 for two mints. dev-team re-ran the real formula and confirmed; their 766→767 was a narrower span.
+**why-change:** Deviation from "accept the coordinator's correction" — a relayed number is a claim, same as a relayed verdict. My own first re-derivation was ALSO wrong (passed a local-time `--until` to `git log`, picked baseline 757); redone under `TZ=UTC`. Commit dates render `+02:00` and read as Z.
