@@ -6011,7 +6011,7 @@
         "id": "FIX-BCTC-BANK-SUMMARY-MAPPING",
         "type": "FIX",
         "priority": "P1",
-        "status": "BLOCKED",
+        "status": "BACKLOG",
         "sprint": "BCTC-ANALYTICS-LAYER",
         "zone": "apps/mcp-server/src/interface/mcp/tools/financial-reports/",
         "size": "M",
@@ -6019,7 +6019,12 @@
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-BCTC-BANK-SUMMARY-MAPPING",
         "relabeled_at": "2026-07-10T19:05:55Z",
         "relabeled_by": "developer@D1-BACKLOG-HYGIENE-SWEEP-EXECUTE",
-        "relabeled_reason": "D0B triage_result.exceptions[] EXCLUDE: status=DONE but genuinely open (CTG 2026Q1 net_margin_pct=229157%, total_assets=0; corroborated by BLOCKED review sub-task TASK-W5-FIX-BCTC-BANK-SUMMARY-MAPPING-VALIDATION-REINGEST); DONE label was wrong, blocked on ops re-ingest."
+        "relabeled_reason": "D0B triage_result.exceptions[] EXCLUDE: status=DONE but genuinely open (CTG 2026Q1 net_margin_pct=229157%, total_assets=0; corroborated by BLOCKED review sub-task TASK-W5-FIX-BCTC-BANK-SUMMARY-MAPPING-VALIDATION-REINGEST); DONE label was wrong, blocked on ops re-ingest.",
+        "next_agent": "ba",
+        "po_unblocked_at": "2026-08-01T04:02:28Z",
+        "po_unblocked_by": "po (triage tick 2026-08-01T03:37Z)",
+        "po_unblock_note": "[po triage 2026-08-01T03:37Z tick] UNBLOCKED + rerouted to ba. (1) STRANDED: hot row was status=BLOCKED with NO next_agent field at all, while its own detail entry (docs/data/orch/archive/backlog-detail.json) says status=BACKLOG / next_agent=ba / route po->ba->architect(SPIKE to pin module owner)->pm->dev-pdf-extractor->qa. Hot/cold divergence left it with no dispatch path. The 2026-07-10 relabeled_reason \"blocked on ops re-ingest\" is stale as a gate - the open work is the BA/architect SPIKE named in owner_decision, not an ops dependency. (2) FRESH RECURRENCE: analysis-agent telegram reports 4271/4272 (2026-08-01T03:47Z) - EIB 2026-Q2 composite=0.00/financial=0.00, extraction total_assets=0, write REFUSED (no prior stored report, refusing to CREATE a corrupt row). EIB is Banking (docs/data/stock-classification.json), so the alert own \"VNM/VEA pattern (assets<equity or margin>100%)\" hint names the WRONG corruption family - the symptom is total_assets=0, which this row title states verbatim. Deduped here rather than minting a new EIB row. (3) SCOPE CORRECTION - this row title claim \"on every bank ticker\" is OVERSTATED, do not inherit it: live probe 2026-08-01T03:5xZ via get_bctc_full shows CTG=[CORRUPT DATA - SKIP] but VCB CLEAN (total_assets 2.550.963,3 ty, accounting identity holds, confidence 75%), reproducing this row own 2026-06-21 po_reconfirm_log per-form-edge finding unchanged. It is a bank-form layout/scale variant, NOT a total bank outage - keep P1, no per-ticker allowlist. (4) SERVE-GUARD LEG NOW CLOSED (stale in the good direction): po_reconfirm_log.serve_guard_gap recorded CTG being SERVED at confidence 56% with a \"Validation: FAILED\" label instead of hard-blocked; live CTG is now confidence 0% + [CORRUPT DATA - SKIP], so the identity-serve-guard enforcement landed. Remaining open scope = the SCALAR-MAPPING leg only (bank B02-TCTD rows squeezed into income-statement scalar columns, total_assets dropped). (5) NO TASK for report 4272 - get_bctc_full(EIB) returns \"Chua co du lieu BCTC\", confirming the write-refusal guardrail genuinely prevented a corrupt row rather than merely announcing it.",
+        "updated_at": "2026-08-01T04:02:29Z"
       },
       {
         "id": "AUDIT-FC-FRED-MACRO",
@@ -11089,7 +11094,9 @@
         "source": "po triage tick 2026-08-01T03:37Z — commit-sweep-guard bug-escalation signal (first live fire of the AC-3 detector), root-caused at source",
         "created_at": "2026-08-01T04:02:08Z",
         "created_by": "po",
-        "updated_at": "2026-08-01T04:02:08Z"
+        "updated_at": "2026-08-01T04:04:22Z",
+        "occurrence_count": 2,
+        "occurrence_2": "OCCURRENCE 2/2 (added 2026-08-01T04:0xZ, ~21 min after occurrence 1 — the FP rate is NOT \"once ever\"): signal docs/signals/commit-sweep-guard-2026-08-01T040225Z-73718.json, fired on peer commit 3ed27359f (chore(tasks): FIX-COLDEVICT-SIGNALQUEUE-NO-AGE-GATE-ORPHANS-READ-ROWS IN_PROGRESS -> REVIEW), path docs/data/orch/orch-state.json. Classified with the same discriminator: real_blob=569ef942b65ad1d7bdb626caa0cedc6d0605e1b4 and `git rev-parse 3ed27359f^:docs/data/orch/orch-state.json`=569ef942b65ad1d7bdb626caa0cedc6d0605e1b4 - BYTE-IDENTICAL, so the shared index held only the HEAD blob and nothing was ever staged. CLASS A, pure false positive, same as occurrence 1. Both live fires of this detector to date are false positives. NOTE: orch-state.json is the fleet hot file and is written by many agents via scripts/orch-apply.sh (which does an atomic rename, never a git add) and then committed with a pathspec line - so this path structurally reproduces case (A) on essentially every orch-state commit. Expect this FP to dominate the signal volume until the discriminator lands."
       }
     ],
     "closed_sprints": [
