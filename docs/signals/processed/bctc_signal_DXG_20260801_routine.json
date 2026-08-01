@@ -1,34 +1,26 @@
 {
   "ticker": "DXG",
   "signal_type": "bctc_signal",
-  "quarter": "Q1-2026",
+  "quarter": "Q2-2026",
   "mode": "routine",
   "beat_miss": null,
-  "product": "Residential real estate development (Dat Xanh Group — brokerage + project development)",
-  "customer": "Homebuyers + investor-buyers across multiple provinces, brokerage-fee-paying developers",
-  "ops": "PEER-REFERENCE-ONLY — BCTC extraction CORRUPT (total_assets=0, forced 0% confidence), 1st touch this rotation. New addition to tracked extraction-quality crisis list alongside KDH.",
-  "mgmt": "No BCTC-derived management-track data this cycle (corrupt source) — no claim made.",
-  "sector_comparison_peer_reference": {
-    "pe": 66.5,
-    "pe_sector_median": 16.1,
-    "pb": 1.2,
-    "pb_sector_median": 1.3,
-    "roe_pct": 1.9,
-    "roe_sector_median_pct": 7.3
-  },
+  "product": "Real estate developer — residential/urban projects (HCMC + satellite provinces)",
+  "customer": "Middle-income homebuyers, institutional JV partners",
+  "ops": "DATA-GAP this cycle: get_bctc_full outage (cross-watchlist, see bug-escalation bca-20260801T151341Z). get_bctc_ocf additionally returns an implausible value (ocf_operating=4.23e18, confidence 0.3125) — clear OCR/parsing garbage, NOT cited as real. Peer-reference proxy only: sector-comparison ROE 1.9% (real-estate sector median 7.3%, well below), PE 66.5 (312% premium to sector median 16.1) — extreme-overvaluation read using sector-comparison PE as a stand-in for the unavailable primary EY_SPREAD calc, not a primary-source verdict.",
+  "mgmt": "ESC-5 refine status PENDING (not yet refined). 2nd rotation touch: 1st touch (c138) showed CORRUPT total_assets=0 via get_bctc_full; today's symptom is the tool-wide outage, so DXG's own corruption status could not be independently reconfirmed this cycle — carried forward for a 3rd touch.",
+  "data_quality": "DEGRADED — get_bctc_full unavailable this cycle; figures above are peer-reference / cross-tool proxy only, with one figure (OCF) explicitly discarded as implausible. No E1 trick-detection passes run (no balance-sheet/PL data).",
   "kinhdich": {
-    "que": "39-Kien",
+    "que": "39 Kien",
     "signal": "BAN",
-    "confidence_pct": 100,
-    "direction": "BAT LOI"
+    "trend": "BAT LOI",
+    "confidence": 1
   },
-  "data_quality_status": "CORRUPT",
-  "corrupt_detail": "total_assets=0 (OCR extraction failure) — 1st touch, extends tracked extraction-quality crisis (docs/architecture-briefs/2026-07-28-pdfx-tesseract-concurrency-invariant.md), not re-diagnosed here. Retry next 2 touches for durability confirmation per E3 pattern.",
+  "insider": "no significant activity",
   "overdue": true,
-  "ts": "2026-08-01T00:18:00Z",
+  "generated_at": "2026-08-01T15:13:41Z",
   "_processed": {
-    "fingerprint": "07b729fd986d0be7a6c45cea0b5de6a815e216be90d1fab646d9a7f0166ca932",
-    "processedAt": "2026-08-01T00:15:37Z",
+    "fingerprint": "390b0c109006c16b2f963cd9c825c64f760827be760d31c2003abde9c93581de",
+    "processedAt": "2026-08-01T15:17:03Z",
     "processedBy": "dev-team",
     "result": "routed-to-po"
   }

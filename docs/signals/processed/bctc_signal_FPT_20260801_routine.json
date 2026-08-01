@@ -1,51 +1,26 @@
 {
   "ticker": "FPT",
   "signal_type": "bctc_signal",
-  "quarter": "Q1-2026",
+  "quarter": "Q2-2026",
   "mode": "routine",
   "beat_miss": null,
   "product": "IT services, software exports, telecom (FPT Telecom), education (FPT Edu)",
-  "customer": "Enterprise IT buyers (VN + offshore), SME telecom subscribers, students",
-  "ops": "Operating margin 22.0%; ROE 6.2% (quarter, unannualized); OCF/NI ratio -1.15 (negative OCF this quarter, WC build, not distress-flagged)",
-  "mgmt": "FY guidance track record positive; share buyback historically executed on schedule",
-  "valuation": {
-    "pe": 13.8,
-    "pe_sector_median": 17.3,
-    "earning_yield_pct": 7.25,
-    "ey_spread_pct": 2.25,
-    "verdict": "FAIR"
-  },
-  "sector_comparison": {
-    "pb": 3.6,
-    "pb_sector_median": 1.5,
-    "roe_bctc_quarter_pct": 6.17,
-    "roe_ttm_sector_pct": 28.3
-  },
-  "balance_sheet_check": {
-    "imbalance_pct": 0,
-    "status": "PASS"
-  },
-  "esc3_status": "DATA-COVERAGE-LIMITED",
-  "quarters_returned": 2,
-  "esc4_result": "FALSE",
-  "non_operating_share_pct": 2,
-  "esc5_escalation_status": "PENDING",
-  "esc5_guard_key": "esc-deepdive:FPT:Q1-2026:ESC-5",
+  "customer": "Enterprise IT buyers (VN + offshore Japan/APAC/US), SME + retail telecom subscribers, students",
+  "ops": "DATA-GAP this cycle: get_bctc_full outage (cross-watchlist, see bug-escalation bca-20260801T151341Z) blocks a live margin/opex read. Last confirmed-good record is Q1-2026 (filed 2026-05-24) and is still intact underneath (get_bctc_report_id: refine_status=DONE; get_bctc_ocf: OCF operating=-2,847.8bn VND, confidence 0.81) but unreachable via the primary tool today. Peer-reference proxy only: sector-comparison ROE 28.3% (sector median 10.6%), PE 13.8 (20% discount to tech-sector median 17.3).",
+  "mgmt": "Q1-2026 refine confidence previously flagged LOW (7 of 15 units <0.50 confidence, all footnote/subsidiary-list, not core financials) — tracked, guard fresh until ~2026-08-01T21:12Z, not re-checked this cycle. Historically FY guidance met 3 consecutive quarters per prior cycle notes.",
+  "data_quality": "DEGRADED — get_bctc_full unavailable this cycle; figures above are peer-reference / cross-tool proxy, not a fresh primary-source BCTC read. No E1 trick-detection passes run (no balance-sheet/PL data).",
   "kinhdich": {
-    "que": "31-Ham",
+    "que": "31 Ham",
     "signal": "GIU",
-    "confidence_pct": 62,
-    "direction": "THUAN LOI"
+    "trend": "THUAN LOI",
+    "confidence": 0.63
   },
-  "trick_confidence": "none",
-  "trick_summary": null,
-  "e3_cache": "HIT",
+  "insider": "no significant activity",
   "overdue": true,
-  "data_quality_note": "[FR-DEGRADE-01] VPS BCTC proxy stale ~87.8h since 2026-07-28T08:23:22Z (SLA 48h) — last-known-good data served",
-  "ts": "2026-08-01T00:15:00Z",
+  "generated_at": "2026-08-01T15:13:41Z",
   "_processed": {
-    "fingerprint": "114ca7f5061aadceb0dba3c1c46e22765bcedb866d914294575fab72959d2a8a",
-    "processedAt": "2026-08-01T00:15:37Z",
+    "fingerprint": "d081ec6fe3e905fa50f9d2efaf45615be90464776dc6be217436c88c4e5c1deb",
+    "processedAt": "2026-08-01T15:17:03Z",
     "processedBy": "dev-team",
     "result": "routed-to-po"
   }

@@ -1,0 +1,18 @@
+{
+  "ticker": "BID",
+  "signal_type": "bctc_signal",
+  "quarter": "Q1-2026",
+  "mode": "routine",
+  "beat_miss": null,
+  "product": "State-owned corporate + retail banking, largest branch network",
+  "customer": "SOE/corporate clients, retail depositors and borrowers",
+  "ops": "PEER-REFERENCE ONLY (get_bctc_full DATA-GAP this cycle): PE 9.5 vs sector median 9.0 (ngang bằng), PB 1.6 vs 1.5 (ngang bằng), ROE 18.8% vs 16.7% median — above sector",
+  "mgmt": "No new BCTC data this cycle to assess",
+  "data_quality_flag": "DATA-GAP — get_bctc_full returned 'Chưa có dữ liệu BCTC' despite BID_2026_Q2.pdf landing 2026-08-01 (mass-batch reprocess event, see docs/signals/bctc-analyst-20260801T151300Z.json). Note: BID's Q1-2026 filing is separately QUÁ HẠN 78 days per calendar (existing HIGH alert 2026-08-01 02:00, bctc_overdue) — this is the outstanding Q1 gap, not the new Q2 PDF. No revenue/NI/beat-miss fabricated.",
+  "_processed": {
+    "fingerprint": "7198762a6afaa9ad34301e13bd985768cb2c71caa66cdabe328b9790a1af47c9",
+    "processedAt": "2026-08-01T15:17:03Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

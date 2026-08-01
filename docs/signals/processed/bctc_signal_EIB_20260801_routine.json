@@ -1,34 +1,17 @@
 {
   "ticker": "EIB",
   "signal_type": "bctc_signal",
-  "quarter": "Q1-2026",
+  "quarter": "Q2-2026",
   "mode": "routine",
   "beat_miss": null,
-  "product": "Retail and corporate banking, trade finance",
-  "customer": "Retail depositors, SME and corporate borrowers",
-  "ops": "PEER-REFERENCE-ONLY — extraction confidence 31% < 50% minimum, gated from headline serving. No margin/ROE claims from this cycle's extraction (would be fabrication). Recurring gate status, not re-diagnosed.",
-  "mgmt": "Governance instability signal in news chain (recent CEO resignation, see get_open_chain_findings urgent_news EIB) — relevant to management-track context but not from BCTC.",
-  "sector_comparison_peer_reference": {
-    "pe": 37.7,
-    "pe_sector_median": 9,
-    "pb": 1.6,
-    "pb_sector_median": 1.5,
-    "roe_pct": 4.5,
-    "roe_sector_median_pct": 17.6
-  },
-  "kinhdich": {
-    "que": "39-Kien",
-    "signal": "GIU",
-    "confidence_pct": 25,
-    "direction": "BAT LOI"
-  },
-  "data_quality_status": "GATED",
-  "gated_detail": "PUB-5: extraction confidence 31% < 50% minimum required for headline serving — parent-only or poorly extracted report.",
-  "overdue": false,
-  "ts": "2026-08-01T00:18:00Z",
+  "product": "Retail + SME banking, trade finance",
+  "customer": "Retail depositors, SME borrowers",
+  "ops": "PEER-REFERENCE ONLY (get_bctc_full DATA-GAP this cycle): PE 37.7 vs sector median 9.0 (premium +321%), PB 1.6 vs 1.5 (ngang bằng), ROE 4.5% vs 17.6% median — well below sector, richly valued for the ROE delivered",
+  "mgmt": "No new BCTC data this cycle to assess; today's news flags acting-CEO resignation (Quyền tổng giám đốc Eximbank từ nhiệm) as a governance watch item",
+  "data_quality_flag": "DATA-GAP — get_bctc_full returned 'Chưa có dữ liệu BCTC' despite EIB_2026_Q2.pdf landing 2026-08-01 (mass-batch reprocess event, see docs/signals/bctc-analyst-20260801T151300Z.json). No revenue/NI/beat-miss fabricated.",
   "_processed": {
-    "fingerprint": "19cf89f786ead30b118f8be68e648e930f09f429c7c7f767b286ecabd9ba1c61",
-    "processedAt": "2026-08-01T00:15:37Z",
+    "fingerprint": "580929f53b14c0b8d8ec7874fbf78cef9b590ac5918cd7cc5a557691e551134f",
+    "processedAt": "2026-08-01T15:17:03Z",
     "processedBy": "dev-team",
     "result": "routed-to-po"
   }

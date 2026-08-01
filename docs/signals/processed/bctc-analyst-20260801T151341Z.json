@@ -1,0 +1,43 @@
+{
+  "id": "bca-20260801T151341Z",
+  "ts": "2026-08-01T15:13:41Z",
+  "from": "bctc-analyst",
+  "to": "dev-team",
+  "type": "bug-escalation",
+  "summary": "get_bctc_full total outage — 8/8 tested tickers return literal \"Chưa có dữ liệu BCTC\", including 3 previously-healthy anchors (FPT/HPG/VCB) that were fully working with byte-identical E3 cache-hit confirmation ~15h ago (c138). Cross-tool corroboration proves this is a tool/read-path regression, not real data loss.",
+  "severity": "CRITICAL",
+  "status": "NEW",
+  "payload_ref": null,
+  "payload": {
+    "tool": "get_bctc_full",
+    "tickers_tested": [
+      "FPT",
+      "HPG",
+      "VCB",
+      "DXG",
+      "EIB",
+      "SHB",
+      "KDH",
+      "HUT"
+    ],
+    "result": "ALL 8 returned the literal no-data string — including explicit period=\"Q1\" retries for FPT/HPG/VCB (previously-confirmed-good periods) and a bare same-call retry on FPT taken ~7 min later (still failing).",
+    "cross_validation": {
+      "get_bctc_report_id(FPT,Q1)": "report_id=e8ea3df5-3f32-413d-a3eb-c71634c0438d, refine_status=DONE, published_at=2026-05-24T06:55:35Z — underlying record intact",
+      "get_bctc_ocf(FPT,2026,Q1)": "found=true, ocf_operating=-2847813.72 (VND mn), confidence=0.8125, extraction_method=pdf-parse — real figures still queryable via a different tool",
+      "get_sector_comparison(FPT)": "succeeds live, returns full PE 13.8 / PB 3.6 / ROE 28.3%",
+      "get_cash_flow(FPT)": "found=true but auto-resolves to period=Q2/2026 (new, unparsed) with operating_cf/investing_cf/financing_cf all null — a different tool showing a different, expected symptom (Q2 not yet OCR'd)"
+    },
+    "regression_marker": "FPT/HPG/VCB were fully healthy at notebook cycle c138 (2026-08-01T00:20Z, ~15h before this cycle, 'byte-identical vs prior touch'). This is a NEW-since-last-cycle regression, not a pre-existing data gap.",
+    "likely_correlated_event": "list_stored_pdfs shows 30 new Q2-2026 BCTC PDFs landed 2026-08-01 (Q2 deadline was 2026-07-31) across nearly the whole watchlist (incl. FPT/HPG/VCB/DXG/EIB/SHB/KDH/BID/VIC and more) — a mass concurrent-filing burst. Timing coincides exactly with this outage. NOT claiming root cause (infra diagnosis is dev-team's job) — flagging correlation only. May interact with the already-tracked P0 docs/architecture-briefs/2026-07-28-pdfx-tesseract-concurrency-invariant.md (pdf-extractor OCR pool ratchet under concurrent /extract bursts), but that brief is scoped to NEW-extraction OCR, not to get_bctc_full's read path over ALREADY-extracted rows — this may be a distinct defect surfaced by the same burst event; needs dev-team triage to confirm whether it is the same root cause or a new one (e.g. mcp-server DB write-lock contention from the batch-insert of 30 new financial_reports rows blocking the get_bctc_full read query).",
+    "impact": "Routine BCTC pipeline (stage-analyze.md Step 2) cannot fetch revenue/PE/ROE/net-profit for ANY ticker this cycle via the primary tool. E1 6-pass trick detection and ESC-1/ESC-2/ESC-4 gates could not run (no balance-sheet/PL data available). This cycle degraded to peer-reference-only signals (sector-comparison + kinhdich + insider + get_bctc_ocf where plausible) for FPT/HPG/VCB/DXG — no fabrication from missing data. Also blocks the imminent release-mode QoQ/YoY beat/miss analysis once get_earnings_calendar flips these tickers to ĐÃ NỘP for Q2-2026 (all 30 are currently still tracked QUÁ HẠN despite PDFs being on file).",
+    "not_escalated_via_esc_gate": "This is a tool-availability defect, not an accounting-manipulation finding — routed as bug-escalation, not ESC-1..5."
+  },
+  "priority": "high",
+  "createdAt": "2026-08-01T15:13:41Z",
+  "_processed": {
+    "fingerprint": "897b934d1af232d510b48bfc1257cde27ca757296ce3dab48762c6d70889eb2c",
+    "processedAt": "2026-08-01T15:17:03Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

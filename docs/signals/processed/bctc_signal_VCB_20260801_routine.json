@@ -4,50 +4,25 @@
   "quarter": "Q1-2026",
   "mode": "routine",
   "beat_miss": null,
-  "product": "Retail and corporate banking, trade finance, bancassurance cross-sell",
-  "customer": "Urban corporate/SOE clients, retail depositors, trade-finance importers/exporters",
-  "ops": "Operating margin 80.9%; ROE 4.2% (quarter, unannualized); OCF/NI ratio 1.37 (healthy, no forensic concern)",
-  "mgmt": "Consistent dividend/capital-adequacy discipline; long track record among top-tier SOE banks",
-  "valuation": {
-    "pe": 14.1,
-    "pe_sector_median": 9,
-    "earning_yield_pct": 7.09,
-    "ey_spread_pct": 2.09,
-    "verdict": "FAIR"
-  },
-  "sector_comparison": {
-    "pb": 2.2,
-    "pb_sector_median": 1.5,
-    "roe_bctc_quarter_pct": 4.21,
-    "roe_sector_median_pct": 17.6
-  },
-  "balance_sheet_check": {
-    "imbalance_pct": 0.37,
-    "status": "PASS"
-  },
-  "esc3_status": "DATA-COVERAGE-LIMITED",
-  "quarters_returned": 3,
-  "esc4_result": "FALSE",
-  "non_operating_share_pct": -21.4,
-  "esc4_note": "Negative non_operating_share = drag from below-the-line items, not one-off gain-dressing",
-  "esc5_escalation_status": "FALSE",
-  "esc5_reason": "report_id null/PARTIAL refine_status",
+  "product": "State-controlled commercial bank — corporate lending, retail banking, trade finance, FX",
+  "customer": "Corporates (SOEs + large private), retail depositors/borrowers, trade-finance importers/exporters",
+  "ops": "DATA-GAP this cycle: get_bctc_full outage (cross-watchlist, see bug-escalation bca-20260801T151341Z). Peer-reference proxy only: sector-comparison ROE 16.7% (sector median 17.6%, below), PE 14.1 (57% premium to banking-sector median 9.0). get_bctc_ocf confirms OCF operating=+12,944.9bn VND, confidence 0.75 — plausible, consistent with prior cycles.",
+  "mgmt": "ESC-5 refine status PARTIAL (report_id not DONE), unchanged from prior cycles. KD reading contradicts today's price action — see kinhdich field.",
+  "data_quality": "DEGRADED — get_bctc_full unavailable this cycle; figures above are peer-reference / cross-tool proxy only. No E1 trick-detection passes run (no balance-sheet/PL data).",
   "kinhdich": {
-    "que": "12-Bi",
+    "que": "12 Bi",
     "signal": "BAN",
-    "confidence_pct": 100,
-    "direction": "BAT LOI"
+    "trend": "BAT LOI",
+    "confidence": 1,
+    "note": "5th consecutive cycle CONTRADICTS a strong same-day price rally (sector-comparison shows VCB +5.0% vs sector -0.4%) — flagged, not suppressed, divergence unresolved 5 cycles running"
   },
-  "kinhdich_divergence_flag": "VCB KD BAT LOI/BAN 100% conf CONTRADICTS today's +4.96% rally + market volume_spike alert — 4th consecutive cycle unresolved divergence, flagged not suppressed",
-  "trick_confidence": "none",
-  "trick_summary": null,
-  "e3_cache": "HIT",
+  "insider": "no significant activity",
   "overdue": false,
-  "data_quality_note": "[FR-DEGRADE-01] VPS BCTC proxy stale ~87.8h since 2026-07-28T08:23:22Z (SLA 48h) — last-known-good data served",
-  "ts": "2026-08-01T00:15:00Z",
+  "filing_status": "ĐÃ NỘP Q1-2026 (2026-07-19); Q2-2026 not yet tracked as filed by get_earnings_calendar despite a Q2 PDF already on file (VCB_2026_Q2.pdf, uploaded 2026-08-01)",
+  "generated_at": "2026-08-01T15:13:41Z",
   "_processed": {
-    "fingerprint": "88c45b7f8297eb825a3d48483f82cc647d16ce6747e434b5af2134c870ba90d2",
-    "processedAt": "2026-08-01T00:15:37Z",
+    "fingerprint": "ec6b77482cd7cbae5ca572973757f3cb08caae42370d2a53b26213947cd94547",
+    "processedAt": "2026-08-01T15:17:03Z",
     "processedBy": "dev-team",
     "result": "routed-to-po"
   }

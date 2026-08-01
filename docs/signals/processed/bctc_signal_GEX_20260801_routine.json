@@ -1,0 +1,18 @@
+{
+  "ticker": "GEX",
+  "signal_type": "bctc_signal",
+  "quarter": "Q2-2026",
+  "mode": "routine",
+  "beat_miss": null,
+  "product": "Power generation, cable/wire manufacturing, industrial-park development (Gelex)",
+  "customer": "Industrial/construction B2B buyers, power offtakers",
+  "ops": "PEER-REFERENCE ONLY (get_bctc_full DATA-GAP this cycle): PE 25.1 vs sector median 10.0 (premium +151%), PB 2.1 vs 1.3 (premium +55%), ROE 9.3% vs 13.9% median — below sector, richly valued",
+  "mgmt": "No new BCTC data this cycle to assess",
+  "data_quality_flag": "DATA-GAP — get_bctc_full returned 'Chưa có dữ liệu BCTC' despite GEX_2026_Q2.pdf landing 2026-08-01 (mass-batch reprocess event, see docs/signals/bctc-analyst-20260801T151300Z.json). No revenue/NI/beat-miss fabricated.",
+  "_processed": {
+    "fingerprint": "177382447bf2b234d24112c619726bbce7c6c7f8784b5be4240d1fcb23e45bbd",
+    "processedAt": "2026-08-01T15:17:03Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

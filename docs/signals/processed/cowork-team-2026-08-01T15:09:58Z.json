@@ -1,0 +1,55 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-08-01T15:09:58Z",
+    "matched_slots": [
+      "bctc-analyst-slot-1"
+    ],
+    "won_slots": [
+      "bctc-analyst-slot-1"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/bctc-analyst/flow/main.md"
+    ],
+    "silent": false,
+    "drift_min": 7,
+    "errors": [],
+    "pressure_mode": "adaptive",
+    "calendar_status": "closed",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "chef_mutex_applied": false,
+    "due_reasons": {
+      "bctc-analyst-slot-1": "cadence"
+    },
+    "cadence_minutes": {
+      "bctc-analyst-slot-1": 240
+    },
+    "last_fired_timestamp": "2026-08-01T15:09:45Z",
+    "last_fired_slots": [
+      "bctc-analyst-slot-1"
+    ],
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "15:00",
+    "leader_lock": "acquired",
+    "dev_head": "unknown",
+    "devq": 5,
+    "signal_backlog": 17,
+    "note": "bctc-offmarket cadence, closed calendar unmatched -> 240min fallback; single-slot batch, MAX_PARALLEL=4 headroom OK"
+  },
+  "priority": "low",
+  "createdAt": "2026-08-01T15:09:58Z",
+  "_processed": {
+    "fingerprint": "682e0f30b134c17f06f3d72f2a336d2244abc4ed1afa914c8e8f16d87cb60f96",
+    "processedAt": "2026-08-01T15:17:03Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
