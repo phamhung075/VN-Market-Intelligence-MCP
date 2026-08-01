@@ -93,12 +93,12 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "FIX-BCTC-SLA-FRESHNESS-EXCLUDE-TERMINAL",
-    "next_agent": "dev-mcp-server",
-    "next_action": "BOUNDED-1 auto-pickup claim of FIX-BCTC-SLA-FRESHNESS-EXCLUDE-TERMINAL — dispatcher-wrap then execute.",
-    "updated_at": "2026-07-31T23:26:05Z",
-    "updated_by": "dev-team (bounded-1 auto-pickup)"
+    "status": "idle",
+    "active_task_id": null,
+    "next_agent": "router",
+    "updated_at": "2026-08-01T00:02:55Z",
+    "updated_by": "dev-mcp-server",
+    "note": "FIX-BCTC-SLA-FRESHNESS-EXCLUDE-TERMINAL IN_PROGRESS->REVIEW (branch:null direct-execute row, dev-mcp-server self-drove). commit f0831e6be. next_agent=qa."
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -19679,6 +19679,25 @@
         "claimed_by": "dev-team (step 3 direct dispatch, next_agent=agent-father per po_routing_ruling_20260721 already on row, does not consume dev WIP slot)",
         "commit_sha": "013c90710f491899840437e66de3aeadf96275ae",
         "review_note": "agent-father: Step 0c rewritten as single jq -c projection over the 6 documented key-paths (was prose full-read). Verified live: jq exit 0, all 6 arrays populated (microservices=11, host_runtime_set=12, not_deployed_by_design=0, data_sources=28, databases=7, zones=12). No cascade -- grepped fleet-wide for Step 0c / jq.*system-map.json callers, none reference the old prose shape. Journal: sprint-COWORK-GUARANTEED-SLOT-CATCHUP-agent-father.md S17."
+      },
+      {
+        "id": "FIX-BCTC-SLA-FRESHNESS-EXCLUDE-TERMINAL",
+        "type": "FIX",
+        "priority": "P3",
+        "status": "REVIEW",
+        "title": "bctc SLA freshness metric must exclude url_not_found terminal rows so genuinely-absent tickers can't breach forever",
+        "zone": "apps/mcp-server/",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-BCTC-SLA-FRESHNESS-EXCLUDE-TERMINAL",
+        "promoted_at": "2026-07-31T23:26:04Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=3)",
+        "next_agent": "qa",
+        "updated_at": "2026-08-01T00:02:55Z",
+        "updated_by": "dev-mcp-server",
+        "claimed_at": "2026-07-31T23:26:04Z",
+        "claimed_by": "dev-team (BOUNDED-1 idle-capacity, zone apps/mcp-server/ -> dev-mcp-server)",
+        "commit_sha": "f0831e6be",
+        "note": "queryBctcPipelineRuntimeState() (freshnessSlaMonitorJob.ts) narrowed bctc queueDepth SQL from status IN ('pending','url_not_found','enrich_failed','pek_triggered') to status IN ('pending','pek_triggered') — url_not_found/enrich_failed are terminal/parked (bounded 7d grace-retry only), counting them permanently defeated the checkSignalSla IDLE branch, letting a genuinely-absent ticker breach the SLA forever. Live DB confirmed: vn-bctc-fetch health unhealthy since 07-28 with 0 pending/pek_triggered (39 url_not_found+128 enrich_failed only) — a genuinely idle queue. get_sla_status (financial_reports.parsed_at MAX) was already structurally unaffected by terminal rows — real defect was the runtime-state CRASH/IDLE gate feeding the live cron. Documented reader contract on PipelineRuntimeState in freshnessSlaChecker.ts. Sibling duplicate bug found in vpsHealthPoller.ts bctc queueGuardSql (same live false-unhealthy symptom) — deliberately NOT touched (separate tool/test contract), flagged as follow-on candidate. RED->GREEN TDD: FIX-HEALTH-RECHECK-BCTC-IDLE-VS-CRASH.test.ts 23/23 pass (4 new/updated cases). Targeted 25-file suite 338/338 pass. tsc clean. toolCount=183/cronJobCount=88 unchanged. Full bun test x2: 15007/15009 pass, 59/57 fail (within documented 14988-14995/52-59 FIX-MCP-SUITE-HEALTH-BASELINE band), zero fail-list matches for freshnessSla|FIX-HEALTH-RECHECK-BCTC|FIX-BCTC-SLA-FRESHNESS|queryBctcPipelineRuntimeState|vpsHealthPoller."
       }
     ],
     "qa": [],
@@ -19700,25 +19719,7 @@
     },
     "last_triaged_at": "2026-07-31T23:26:04Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": [
-      {
-        "id": "FIX-BCTC-SLA-FRESHNESS-EXCLUDE-TERMINAL",
-        "type": "FIX",
-        "priority": "P3",
-        "status": "IN_PROGRESS",
-        "title": "bctc SLA freshness metric must exclude url_not_found terminal rows so genuinely-absent tickers can't breach forever",
-        "zone": "apps/mcp-server/",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-BCTC-SLA-FRESHNESS-EXCLUDE-TERMINAL",
-        "promoted_at": "2026-07-31T23:26:04Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=3)",
-        "next_agent": "dev-mcp-server",
-        "updated_at": "2026-07-31T23:26:05Z",
-        "updated_by": "dev-team/bounded1-dispatch-20260731T2324Z",
-        "claimed_at": "2026-07-31T23:26:04Z",
-        "claimed_by": "dev-team (BOUNDED-1 idle-capacity, zone apps/mcp-server/ -> dev-mcp-server)"
-      }
-    ]
+    "in_progress": []
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
