@@ -93,12 +93,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "active_task_id": null,
-    "next_agent": "router",
-    "updated_at": "2026-08-01T00:02:55Z",
-    "updated_by": "dev-mcp-server",
-    "note": "FIX-BCTC-SLA-FRESHNESS-EXCLUDE-TERMINAL IN_PROGRESS->REVIEW (branch:null direct-execute row, dev-mcp-server self-drove). commit f0831e6be. next_agent=qa."
+    "status": "in_progress",
+    "active_task_id": "FIX-MACRO-SNAPSHOT-HUMANIZE-TEXT",
+    "next_agent": "developer",
+    "next_action": "BOUNDED-1 auto-pickup claim of FIX-MACRO-SNAPSHOT-HUMANIZE-TEXT — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
+    "updated_at": "2026-08-01T00:18:33Z",
+    "updated_by": "dev-team (bounded-1 auto-pickup)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -6134,17 +6134,6 @@
         "zone": "scripts/agents-flow/",
         "size": "XS",
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#FOLLOW-ON-CWKSCH-3"
-      },
-      {
-        "id": "FIX-MACRO-SNAPSHOT-HUMANIZE-TEXT",
-        "type": "FIX",
-        "title": "Make get_macro_snapshot.text human-readable like get_market_snapshot (close latent raw-JSON leak-trap)",
-        "priority": "P3",
-        "status": "BACKLOG",
-        "zone": "apps/mcp-server/",
-        "size": "S",
-        "sprint": "BACKLOG",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-MACRO-SNAPSHOT-HUMANIZE-TEXT"
       },
       {
         "id": "CLEAN-OHLCV-INTEGRITY-RESIDUE-REPAIR",
@@ -19717,9 +19706,27 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-31T23:26:04Z",
+    "last_triaged_at": "2026-08-01T00:18:28Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": []
+    "in_progress": [
+      {
+        "id": "FIX-MACRO-SNAPSHOT-HUMANIZE-TEXT",
+        "type": "FIX",
+        "title": "Make get_macro_snapshot.text human-readable like get_market_snapshot (close latent raw-JSON leak-trap)",
+        "priority": "P3",
+        "status": "IN_PROGRESS",
+        "zone": "apps/mcp-server/",
+        "size": "S",
+        "sprint": "BACKLOG",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-MACRO-SNAPSHOT-HUMANIZE-TEXT",
+        "promoted_at": "2026-08-01T00:18:28Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=3)",
+        "updated_at": "2026-08-01T00:18:33Z",
+        "claimed_at": "2026-08-01T00:18:32Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)"
+      }
+    ]
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
