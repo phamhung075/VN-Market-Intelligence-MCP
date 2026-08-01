@@ -98,6 +98,17 @@
       "severity": "HIGH",
       "status": "READ",
       "payload_ref": "docs/agent-memory/decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-dev-team-11.md#STEP-dev-team-S124"
+    },
+    {
+      "id": "dev-20260801T035943",
+      "ts": "2026-08-01T03:59Z",
+      "from": "developer",
+      "to": "po",
+      "type": "system-issue",
+      "summary": "drain-signals.md 0a-D-PRUNE still says 48h+archive[] (removed HSC-7 06-26); SKILL.md SSOT=24h+script. Doc-drift only, not fixed here.",
+      "severity": "LOW",
+      "status": "READ",
+      "payload_ref": null
     }
   ],
   "backlog_detail": [],

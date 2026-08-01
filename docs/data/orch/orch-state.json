@@ -5,8 +5,8 @@
     "last_linecount": 135,
     "po": {
       "section_name": "po",
-      "last_mtime": "2026-08-01T00:16:42Z",
-      "last_linecount": 135
+      "last_mtime": 1785563194,
+      "last_linecount": 136
     }
   },
   "decision_journal": [
@@ -2093,7 +2093,7 @@
         "type": "system-issue",
         "summary": "notebook writes have no CAS guard (unlike orch-apply.sh); concurrent devs can silently drop sections — repro'd live 08-01",
         "severity": "MED",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": null
       }
     ],
