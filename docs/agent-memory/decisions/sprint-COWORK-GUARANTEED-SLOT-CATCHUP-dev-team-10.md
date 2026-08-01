@@ -77,3 +77,5 @@
 **why-decision:** Standard RAW-verify discipline; applied the MUST status-flip=lane-move clause dev-team itself is bound by, since agent-father correctly declined to touch orch-state.json outside its own commit zone.
 **why-change:** `docs/data/orch/orch-state.json`: 1 row moved backlog→done_verified with verification stamps (via `orch-apply.sh`).
 **verification:** Read-back confirmed row now in `done_verified[]` with correct `status`/`commit_sha`/`verified_by` fields. `orch-conservation-check` OK. Commit + push pending immediately after this entry.
+
+CAP-REACHED 2026-08-01T01:15Z — file at 79L/34664B, next entry would exceed BYTE_CAP=36000. Rolled to `-11.md`.
