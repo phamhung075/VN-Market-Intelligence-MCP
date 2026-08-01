@@ -93,11 +93,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "active_task_id": null,
-    "next_agent": "router",
-    "updated_at": "2026-08-01T02:00:26Z",
-    "updated_by": "dev-team (head-coherence-repair: active_task moved to review[] without head sync)"
+    "status": "in_progress",
+    "active_task_id": "FIX-DEVTEAM-IDLE-CHAIN-DANGLING-DEPS-STRAND-5-P0-ROWS",
+    "next_agent": "developer",
+    "next_action": "BOUNDED-1 auto-pickup claim of FIX-DEVTEAM-IDLE-CHAIN-DANGLING-DEPS-STRAND-5-P0-ROWS — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
+    "updated_at": "2026-08-01T02:13:36Z",
+    "updated_by": "dev-team (bounded-1 auto-pickup)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -10982,31 +10983,6 @@
         "desc": null
       },
       {
-        "id": "FIX-DEVTEAM-IDLE-CHAIN-DANGLING-DEPS-STRAND-5-P0-ROWS",
-        "type": "FIX",
-        "title": "5 P0 rows un-dispatchable since 2026-07-29: effective_depends_on UNIONS .depends + .depends_on, so PM's reconciliation writing only .depends_on could never remove the deleted S1/P1B ids -- deps_satisfied is fail-closed on MISSING",
-        "status": "BACKLOG",
-        "priority": "P0",
-        "size": "S",
-        "zone": "cross-service/",
-        "owner": "po",
-        "next_agent": "developer",
-        "supervised": false,
-        "plan_only": false,
-        "created_at": "2026-08-01T01:37:00Z",
-        "created_by": "po/triage-20260801T0137",
-        "updated_at": "2026-08-01T02:10:50Z",
-        "source": "PO triage 2026-08-01T01:37Z BATCH item 1/5 -- landed to orch-state by dev-team because PO's own commit (ca1b0ee35) touched only the decision journal + notebook, not orch-state.json (4th+ recorded instance of feedback_po_notebook_mint_never_reaches_orchstate_board.md class -- RAW-verified live before landing, not trusted from the self-report). AC-1 already applied directly by dev-team at mint time (small, mechanical, precedented -- mirrors how the sibling sweep-guard row's own arm-1 was accepted as a direct fix rather than a new row): see dangling_deps_fix_20260801T0209 field on FIX-DEVTEAM-IDLE-CHAIN-{P1A-MAIN-ROTATION,P2A-DURABLE-DRAIN,MAIN-COMPLETION}.",
-        "desc": "ROOT CAUSE, verified at source. scripts/lib/devteam-eligibility.jq:188 computes effective_depends_on as a CONCATENATION: ((.depends_on|as_dep_array) + (.depends|as_dep_array) + (.blocked_by|as_dep_array)). Editing one field can only GROW the effective dep set, never shrink it. Commit 2833b71bf deleted rows S1-SCHEMA-SELECTION and P1B-STAMP and wrote the corrected refs into .depends_on -- but left the stale ids sitting in .depends, which the union resurrects. deps_satisfied (jq:278-281) maps an unresolvable id to MISSING and requires all(.==DONE_VERIFIED) -- fail-CLOSED, permanently. NOT the cold-archive class (FIX-DEPSSATISFIED-COLD-ARCHIVED-DEP-RESOLVES-MISSING, review[]/P1, explicitly disclaims this class as 'a separate, smaller class' of genuine unknowns/free-text deps).",
-        "ac": "AC-1 DONE (applied 2026-08-01T02:09Z by dev-team): cleared stale .depends on the 3 rows -- see dangling_deps_fix field on each row for before/after. AC-2 (dedupe MAIN-COMPLETION's effective set): moot under the fix actually applied -- .depends was cleared entirely rather than merged with .depends_on, so no duplicate entries exist. AC-3 (durable guard, root cause not symptom -- REMAINING, real code work): scripts/orch-validate.mjs has NO depends-target validation. Add a check that fails loud when .depends and .depends_on diverge on the same row, and report (do not hard-fail) rows whose dep resolves MISSING in both hot board and cold archive -- 8 other rows are currently in that state and must not be broken by the new gate. AC-4 (REMAINING): do NOT 'fix' this by making deps_satisfied treat MISSING as satisfied -- that is the cold-archive row's territory and would mask real typos.",
-        "files": [
-          "docs/data/orch/orch-state.json",
-          "scripts/orch-validate.mjs",
-          "scripts/lib/devteam-eligibility.jq"
-        ],
-        "baseline_pass": "9408"
-      },
-      {
         "id": "FIX-SWEEPGUARD-SAMEFILE-HUNK-PATHSPEC-ONLY-SEMANTICS-NONGOAL-AND-DETECTOR",
         "type": "FIX",
         "title": "git commit -- <path> uses --only semantics (working-tree content, NOT the staged subset), so the fleet-mandated pathspec commit still sweeps a peer's differently-staged hunk in the SAME file -- undocumented and untested",
@@ -19886,9 +19862,40 @@
         }
       ]
     },
-    "last_triaged_at": "2026-08-01T01:25:12Z",
-    "last_triaged_by": "po/triage-20260801T0125",
-    "in_progress": []
+    "last_triaged_at": "2026-08-01T02:13:27Z",
+    "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
+    "in_progress": [
+      {
+        "id": "FIX-DEVTEAM-IDLE-CHAIN-DANGLING-DEPS-STRAND-5-P0-ROWS",
+        "type": "FIX",
+        "title": "5 P0 rows un-dispatchable since 2026-07-29: effective_depends_on UNIONS .depends + .depends_on, so PM's reconciliation writing only .depends_on could never remove the deleted S1/P1B ids -- deps_satisfied is fail-closed on MISSING",
+        "status": "IN_PROGRESS",
+        "priority": "P0",
+        "size": "S",
+        "zone": "cross-service/",
+        "owner": "po",
+        "next_agent": "developer",
+        "supervised": false,
+        "plan_only": false,
+        "created_at": "2026-08-01T01:37:00Z",
+        "created_by": "po/triage-20260801T0137",
+        "updated_at": "2026-08-01T02:13:36Z",
+        "source": "PO triage 2026-08-01T01:37Z BATCH item 1/5 -- landed to orch-state by dev-team because PO's own commit (ca1b0ee35) touched only the decision journal + notebook, not orch-state.json (4th+ recorded instance of feedback_po_notebook_mint_never_reaches_orchstate_board.md class -- RAW-verified live before landing, not trusted from the self-report). AC-1 already applied directly by dev-team at mint time (small, mechanical, precedented -- mirrors how the sibling sweep-guard row's own arm-1 was accepted as a direct fix rather than a new row): see dangling_deps_fix_20260801T0209 field on FIX-DEVTEAM-IDLE-CHAIN-{P1A-MAIN-ROTATION,P2A-DURABLE-DRAIN,MAIN-COMPLETION}.",
+        "desc": "ROOT CAUSE, verified at source. scripts/lib/devteam-eligibility.jq:188 computes effective_depends_on as a CONCATENATION: ((.depends_on|as_dep_array) + (.depends|as_dep_array) + (.blocked_by|as_dep_array)). Editing one field can only GROW the effective dep set, never shrink it. Commit 2833b71bf deleted rows S1-SCHEMA-SELECTION and P1B-STAMP and wrote the corrected refs into .depends_on -- but left the stale ids sitting in .depends, which the union resurrects. deps_satisfied (jq:278-281) maps an unresolvable id to MISSING and requires all(.==DONE_VERIFIED) -- fail-CLOSED, permanently. NOT the cold-archive class (FIX-DEPSSATISFIED-COLD-ARCHIVED-DEP-RESOLVES-MISSING, review[]/P1, explicitly disclaims this class as 'a separate, smaller class' of genuine unknowns/free-text deps).",
+        "ac": "AC-1 DONE (applied 2026-08-01T02:09Z by dev-team): cleared stale .depends on the 3 rows -- see dangling_deps_fix field on each row for before/after. AC-2 (dedupe MAIN-COMPLETION's effective set): moot under the fix actually applied -- .depends was cleared entirely rather than merged with .depends_on, so no duplicate entries exist. AC-3 (durable guard, root cause not symptom -- REMAINING, real code work): scripts/orch-validate.mjs has NO depends-target validation. Add a check that fails loud when .depends and .depends_on diverge on the same row, and report (do not hard-fail) rows whose dep resolves MISSING in both hot board and cold archive -- 8 other rows are currently in that state and must not be broken by the new gate. AC-4 (REMAINING): do NOT 'fix' this by making deps_satisfied treat MISSING as satisfied -- that is the cold-archive row's territory and would mask real typos.",
+        "files": [
+          "docs/data/orch/orch-state.json",
+          "scripts/orch-validate.mjs",
+          "scripts/lib/devteam-eligibility.jq"
+        ],
+        "baseline_pass": "9408",
+        "promoted_at": "2026-08-01T02:13:27Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=0)",
+        "claimed_at": "2026-08-01T02:13:35Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)"
+      }
+    ]
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
