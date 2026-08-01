@@ -15,12 +15,14 @@ STALE_TICKERS = scripts/agents-flow/coverage-stamp.sh --agent news-scout --list-
     48) — do NOT hand-derive this list; that non-determinism is what made the sweep dead
     (FIX-COVERAGE-SWEEP-BLANKET-STAMP-DEAD-TRIGGER). Fail-silent if coverage-state.json is
     missing (same as before: every ticker treated as never-covered).
-  ⚠ TRANSPORT GAP (open 2026-07-25 — see task note on the board row): this agent holds no
-    Bash (.claude/agents/news-scout.md:5) and cannot invoke the script directly yet. Until a
-    Bash-capable caller wires this in, fall back to the equivalent hand-filter (prior
-    behaviour: null OR >48h vs COVERAGE_STATE.tickers[t].last_covered_news_scout, sorted
-    oldest-first, take ≤3) for THIS read-only sub-step — bounded risk (filter, not a
-    document rewrite). Do NOT apply this fallback to the Step 7 write in stage-log-notify.md.
+  Invoke directly via Bash (this agent holds Bash — .claude/agents/news-scout.md:5 —
+    granted 2026-07-30T23:18Z, commit 610110e16). If the Bash invocation itself errors
+    (script missing, non-zero exit, malformed JSON — a genuine transport failure, not a
+    tool-grant gap), fall back to the equivalent hand-filter (prior behaviour: null OR >48h
+    vs COVERAGE_STATE.tickers[t].last_covered_news_scout, sorted oldest-first, take ≤3) for
+    THIS read-only sub-step and log the actual error on the WORK ping — bounded risk (filter,
+    not a document rewrite). Do NOT apply this fallback to the Step 7 write in
+    stage-log-notify.md.
 
 For each ticker in STALE_TICKERS that is NOT already in the article-impacted set:
   → explicitly include it in sentiment/impact analysis this cycle even if impact_score < threshold

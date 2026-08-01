@@ -368,7 +368,17 @@ not touch `orch-state.json` (`in_progress[]→review[]` lane-move) —
 `orch-apply.sh` transform supplied in RETURN for dev-team/router to
 apply.
 
-### STEP agent-father-S18 · agent-father · 2026-08-01T01:20:00Z
+### STEP agent-father-S18
+
+### STEP agent-father-S19 · agent-father · 2026-08-01T01:35:22Z
+**task-id:** FIX-COWORK-FLOWDOC-STALE-TRANSPORT-GAP-CAVEAT
+**what-done:** Rewrote 4 caveat sections (market-watcher/flow/cycle.md L71-76+L265-270, news-scout/flow/stage-log-notify.md L81-86, news-scout/flow/stage-sentiment.md L18-23) — "this agent holds no Bash" premise replaced with direct Bash invocation; also fixed stale L1 dangling comment reference in cycle.md.
+**what-considered:**
+- Delete caveat entirely → rejected: loses a legit error-handling path for real script/mutex failures.
+- Keep text, just strike "TRANSPORT GAP" heading → rejected: leaves false "holds no Bash" premise intact, doesn't satisfy AC-1 grep.
+- Demote to genuine-error-only fallback (chosen): invoke via Bash now; fallback triggers only on actual invocation error, not tool-grant fiction.
+**why-decision:** AC-1 requires zero normal-operation TRANSPORT-GAP/no-transport text; PO ruling proved the premise false via live grant commit 610110e16 — demotion is the only option matching both the grep gate and real operational safety.
+**why-change:** no change from board row spec; AC-4 negative control verified — zero diff to any `.claude/agents/*.md`. · agent-father · 2026-08-01T01:20:00Z
 **task-id:** TE-T21
 **what-done:** `.claude/skills/task-lock/SKILL.md` 283L→186L: replaced
 §Session-Presence Row (73L, near-verbatim dupe of dispatch-claim's own

@@ -1,4 +1,4 @@
-<!-- size-justification: 309L — atomic price-monitoring flow; sigma-threshold logic, channel routing, coverage-rotation floor, and execution-contract guard are step-by-step coupled; exceeds 200L cap (pre-existing debt, split out of scope); history in git log. FIX-COVERAGE-SWEEP-BLANKET-STAMP-DEAD-TRIGGER 2026-07-25: replaced prose read-modify-write (Step 0-sweep + Step 5c) with calls to the deterministic scripts/agents-flow/coverage-stamp.sh, +18L incl. a documented transport-gap caveat (agent holds no Bash — see caveat inline). -->
+<!-- size-justification: 309L — atomic price-monitoring flow; sigma-threshold logic, channel routing, coverage-rotation floor, and execution-contract guard are step-by-step coupled; exceeds 200L cap (pre-existing debt, split out of scope); history in git log. FIX-COVERAGE-SWEEP-BLANKET-STAMP-DEAD-TRIGGER 2026-07-25: replaced prose read-modify-write (Step 0-sweep + Step 5c) with calls to the deterministic scripts/agents-flow/coverage-stamp.sh, +18L incl. a documented transport caveat. FIX-COWORK-FLOWDOC-STALE-TRANSPORT-GAP-CAVEAT 2026-08-01: Bash grant landed 2026-07-30T23:18Z (commit 610110e16) — caveat demoted to a genuine invocation-error fallback only, see inline. -->
 # Market Watcher — Cycle Flow
 
 **Tools:** `docs/agents/tools/package/market-watcher.md`
@@ -68,12 +68,13 @@ STALE_TICKERS = scripts/agents-flow/coverage-stamp.sh --agent market-watcher --l
     48) — do NOT hand-derive this list; that non-determinism is what made the sweep dead
     (FIX-COVERAGE-SWEEP-BLANKET-STAMP-DEAD-TRIGGER). Fail-silent if coverage-state.json is
     missing (same as before: every ticker treated as never-covered).
-  ⚠ TRANSPORT GAP (open 2026-07-25 — see task note on the board row): this agent holds no
-    Bash (.claude/agents/market-watcher.md:5) and cannot invoke the script directly yet.
-    Until a Bash-capable caller wires this in, fall back to the equivalent hand-filter (prior
-    behaviour: null OR >48h vs COVERAGE_STATE.tickers[t].last_covered_market_watcher, sorted
-    oldest-first, take ≤3) for THIS read-only sub-step — bounded risk (filter, not a
-    document rewrite). Do NOT apply this fallback to Step 5c's write below.
+  Invoke directly via Bash (this agent holds Bash — .claude/agents/market-watcher.md:5 —
+    granted 2026-07-30T23:18Z, commit 610110e16). If the Bash invocation itself errors
+    (script missing, non-zero exit, malformed JSON — a genuine transport failure, not a
+    tool-grant gap), fall back to the equivalent hand-filter (prior behaviour: null OR >48h
+    vs COVERAGE_STATE.tickers[t].last_covered_market_watcher, sorted oldest-first, take ≤3)
+    for THIS read-only sub-step and log the actual error on the WORK ping — bounded risk
+    (filter, not a document rewrite). Do NOT apply this fallback to Step 5c's write below.
 
 For each ticker in STALE_TICKERS:
   → include in Step 1 price analysis even if move < sigma_threshold
@@ -262,12 +263,12 @@ scripts/agents-flow/coverage-stamp.sh --agent market-watcher --tickers <TICKERS_
   blanket-stamped ALL tickers (measured live), making the 48h staleness trigger permanently
   unsatisfiable. Do NOT regenerate/overwrite the whole file as a substitute for this step.
 
-  ⚠ TRANSPORT GAP (open 2026-07-25): this agent holds no Bash (.claude/agents/market-watcher.md:5)
-  and cannot invoke the script directly today — closing this needs either a Bash grant
-  (governance decision) or an MCP-tool wrapper (dev-mcp-server zone); neither is decided yet.
-  Until resolved: if this step cannot execute, SKIP the coverage-state write entirely this
-  cycle and log `[coverage-write-skipped: no-transport]` on the WORK ping — do NOT fall back
-  to a full-file rewrite, that reintroduces the exact bug this task fixed.
+  Invoke directly via Bash (this agent holds Bash — .claude/agents/market-watcher.md:5 —
+  granted 2026-07-30T23:18Z, commit 610110e16). If the Bash invocation itself errors (script
+  missing, non-zero exit, mutex timeout — a genuine transport failure, not a tool-grant gap):
+  SKIP the coverage-state write entirely this cycle and log `[coverage-write-skipped:
+  <reason>]` on the WORK ping — do NOT fall back to a full-file rewrite, that reintroduces
+  the exact bug this task fixed.
 ```
 
 **Post-write wc guard** (OVERWRITE class — fail-loud):

@@ -78,12 +78,12 @@ scripts/agents-flow/coverage-stamp.sh --agent news-scout --tickers <TICKERS_COVE
   blanket-stamped ALL tickers (measured live), making the 48h staleness trigger permanently
   unsatisfiable. Do NOT regenerate/overwrite the whole file as a substitute for this step.
 
-  ⚠ TRANSPORT GAP (open 2026-07-25): this agent holds no Bash (.claude/agents/news-scout.md:5)
-  and cannot invoke the script directly today — closing this needs either a Bash grant
-  (governance decision) or an MCP-tool wrapper (dev-mcp-server zone); neither is decided yet.
-  Until resolved: if this step cannot execute, SKIP the coverage-state write entirely this
-  cycle and log `[coverage-write-skipped: no-transport]` on the WORK ping — do NOT fall back
-  to a full-file rewrite, that reintroduces the exact bug this task fixed.
+  Invoke directly via Bash (this agent holds Bash — .claude/agents/news-scout.md:5 —
+  granted 2026-07-30T23:18Z, commit 610110e16). If the Bash invocation itself errors (script
+  missing, non-zero exit, mutex timeout — a genuine transport failure, not a tool-grant gap):
+  SKIP the coverage-state write entirely this cycle and log `[coverage-write-skipped:
+  <reason>]` on the WORK ping — do NOT fall back to a full-file rewrite, that reintroduces
+  the exact bug this task fixed.
 ```
 
 **8. WORK channel** (ULTRA tier — inter-agent status ping per `.claude/skills/caveman/SKILL.md`)
