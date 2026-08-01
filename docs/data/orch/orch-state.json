@@ -93,12 +93,12 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "FIX-MACRO-SNAPSHOT-HUMANIZE-TEXT",
-    "next_agent": "developer",
-    "next_action": "BOUNDED-1 auto-pickup claim of FIX-MACRO-SNAPSHOT-HUMANIZE-TEXT — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
-    "updated_at": "2026-08-01T00:18:33Z",
-    "updated_by": "dev-team (bounded-1 auto-pickup)"
+    "status": "idle",
+    "active_task_id": null,
+    "next_agent": "router",
+    "next_action": "FIX-MACRO-SNAPSHOT-HUMANIZE-TEXT moved in_progress->review (dev-mcp-server), next_agent=qa",
+    "updated_at": "2026-08-01T00:59:27Z",
+    "updated_by": "dev-mcp-server"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -19647,6 +19647,27 @@
         "claimed_by": "dev-team (BOUNDED-1 idle-capacity, zone apps/mcp-server/ -> dev-mcp-server)",
         "commit_sha": "f0831e6be",
         "note": "queryBctcPipelineRuntimeState() (freshnessSlaMonitorJob.ts) narrowed bctc queueDepth SQL from status IN ('pending','url_not_found','enrich_failed','pek_triggered') to status IN ('pending','pek_triggered') — url_not_found/enrich_failed are terminal/parked (bounded 7d grace-retry only), counting them permanently defeated the checkSignalSla IDLE branch, letting a genuinely-absent ticker breach the SLA forever. Live DB confirmed: vn-bctc-fetch health unhealthy since 07-28 with 0 pending/pek_triggered (39 url_not_found+128 enrich_failed only) — a genuinely idle queue. get_sla_status (financial_reports.parsed_at MAX) was already structurally unaffected by terminal rows — real defect was the runtime-state CRASH/IDLE gate feeding the live cron. Documented reader contract on PipelineRuntimeState in freshnessSlaChecker.ts. Sibling duplicate bug found in vpsHealthPoller.ts bctc queueGuardSql (same live false-unhealthy symptom) — deliberately NOT touched (separate tool/test contract), flagged as follow-on candidate. RED->GREEN TDD: FIX-HEALTH-RECHECK-BCTC-IDLE-VS-CRASH.test.ts 23/23 pass (4 new/updated cases). Targeted 25-file suite 338/338 pass. tsc clean. toolCount=183/cronJobCount=88 unchanged. Full bun test x2: 15007/15009 pass, 59/57 fail (within documented 14988-14995/52-59 FIX-MCP-SUITE-HEALTH-BASELINE band), zero fail-list matches for freshnessSla|FIX-HEALTH-RECHECK-BCTC|FIX-BCTC-SLA-FRESHNESS|queryBctcPipelineRuntimeState|vpsHealthPoller."
+      },
+      {
+        "id": "FIX-MACRO-SNAPSHOT-HUMANIZE-TEXT",
+        "type": "FIX",
+        "title": "Make get_macro_snapshot.text human-readable like get_market_snapshot (close latent raw-JSON leak-trap)",
+        "priority": "P3",
+        "status": "REVIEW",
+        "zone": "apps/mcp-server/",
+        "size": "S",
+        "sprint": "BACKLOG",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-MACRO-SNAPSHOT-HUMANIZE-TEXT",
+        "promoted_at": "2026-08-01T00:18:28Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=3)",
+        "updated_at": "2026-08-01T00:59:27Z",
+        "claimed_at": "2026-08-01T00:18:32Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "next_agent": "qa",
+        "updated_by": "dev-mcp-server",
+        "commit_sha": "e64ad8870",
+        "note": "Added buildMacroSnapshotText() (macroTools.ts): generic recursive renderer (humanizeKey/formatScalar/renderSection) walks the raw macro-indicators response and emits a bracketed [Section]/indented Key: Value prose block — no per-field/per-ticker hardcode, replacing text: JSON.stringify(data, null, 2) (the raw-JSON leak-trap). Added data (raw upstream object, verbatim passthrough) as a new envelope field alongside source_tier/text/fetchedAt for typed access. Rewired 5 test files' parseInner() helper (089-tool-macro, 1423d-thien-thoi-snapshot, 1423f-deposit-rate-display, 1570c-dinh-gia-snapshot, 1903a-dispatch-regression) from JSON.parse(env.text) to env.data — those files' helper WAS the leak-trap behavior itself. New FIX-MACRO-SNAPSHOT-HUMANIZE-TEXT.test.ts (16 tests). bun tsc --noEmit clean, targeted 8-file macro suite 106/106 pass, toolCount=183/cronJobCount=88 unchanged, full bun test x2 15027/15026 pass 52/53 fail inside FIX-MCP-SUITE-HEALTH-BASELINE band with zero macro-related fail-list matches. macro.md + get_macro_snapshot.md doc-review done."
       }
     ],
     "qa": [],
@@ -19668,25 +19689,7 @@
     },
     "last_triaged_at": "2026-08-01T00:53:56Z",
     "last_triaged_by": "po/triage-20260801T0037Z",
-    "in_progress": [
-      {
-        "id": "FIX-MACRO-SNAPSHOT-HUMANIZE-TEXT",
-        "type": "FIX",
-        "title": "Make get_macro_snapshot.text human-readable like get_market_snapshot (close latent raw-JSON leak-trap)",
-        "priority": "P3",
-        "status": "IN_PROGRESS",
-        "zone": "apps/mcp-server/",
-        "size": "S",
-        "sprint": "BACKLOG",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-MACRO-SNAPSHOT-HUMANIZE-TEXT",
-        "promoted_at": "2026-08-01T00:18:28Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=3)",
-        "updated_at": "2026-08-01T00:18:33Z",
-        "claimed_at": "2026-08-01T00:18:32Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)"
-      }
-    ]
+    "in_progress": []
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
