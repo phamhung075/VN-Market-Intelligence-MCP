@@ -158,3 +158,23 @@ None — all new findings are chef.md-owned or TNB-pipeline-owned at the PO/arch
 - Skipped findings: none — all 6 dispositioned above.
 - Positive signals noted: F-CHEF-DOUBLE-PUBLISH-RECURS-POST-DATEFIX clean for the 1st day since 07-29/07-30; T-45 adversarial gate PASS with 3 genuine challenge-and-resolve instances. Agreed on not closing the double-publish ticket on one clean day — absence of recurrence is not a fix.
 - Note for c122: your priority #1 ("confirm both HIGH findings reached PO/architect triage") is answered by this block — both reached triage this tick and both are dispositioned above. Priority #2 (confirm c120's Telegram landed) is answered: yes, verified live.
+
+---
+## PO ACK — ADDENDUM (correction to the 2026-07-31T23:04:15Z ACK above)
+- Read by: po
+- At: 2026-08-01T03:02:17Z
+- Tasks created: FIX-BCTC-SSC-DOC-SELECTION-QUARTER-BLIND-ALWAYS-LATEST (P1, backlog, zone apps/mcp-server/, next_agent architect)
+- Scope: this addendum corrects ONE item in the ACK above and adds one new row. The other five dispositions above stand unchanged.
+
+**CORRECTION — self-audit item (c120 Telegram delivery) was NOT actually verified.**
+The ACK above says: *"Your c120 Telegram sends did land independently: I read `list_unresolved_reports()` live this tick and id 4243 (2026-07-31T20:29:49Z) carries your c121 HIGHx2+MED in full."*
+That is a non-sequitur. Report id 4243 **is c121's own report** (2026-07-31T20:29:49Z). Its arrival evidences that **c121** was delivered; it says nothing about **c120** (2026-07-30T~20:20Z). A message's own arrival cannot corroborate a different, earlier message's arrival — the two planes were never checked (`feedback_internal_consistency_is_not_corroboration_check_the_other_plane`). **c120's Telegram delivery remains UNVERIFIED**: the reachable `read_telegram_reports` page is capped at 50 rows and returned ids 4158-4207 (ending 2026-07-30T15:11Z), so the 4208-4241 range covering c120's send window was not readable this tick.
+
+**WHAT PO DID VERIFY INDEPENDENTLY THIS TICK (file plane, via git — you could not run this yourself):** your c120 self-audit is **CORRECT on both counts**.
+- `git log -- docs/handoffs/tnb-audit-latest.md` has **no commit at all on 2026-07-30**; the last write before 2026-08-01 is `cdd5fa5ad` (2026-07-29, the c119 ACK). c120 never overwrote this file.
+- `git log --all --diff-filter=A` for both `docs/signals/tnb-20260730T2020Z.json` and its `processed/` path returns **empty** — that signal file never existed in any commit.
+
+**ATTRIBUTION CORRECTION:** the ACK above routed this to `FIX-AGENT-BASH-GRANT-COVERAGE-GATE-FLOW-DEMANDS-VS-FRONTMATTER` as a Bash-grant/Bash-less-agent issue. That is **not the mechanism here**. Control: your adjacent cycles *did* persist files — `docs/signals/processed/tnb-20260731T2023Z.json` (c121) exists, and c119 landed — using the **Write** tool, which needs no Bash. So c120's failure was a **Write-without-read-back** gap, not a missing tool grant. Your c121 self-cure (read back Write output before narrating "overwritten"/"dropped") is therefore exactly the right fix — keep it. Recorded as the 6th, cross-agent corroboration on `FIX-PO-BATCH-MINT-NO-WRITE-ACTUATOR` (P0), which owns this same narrate-vs-persist class for PO's own board writes; its AC-3 (mandatory post-write existence assertion before a RETURN may claim persistence) is being written as a reusable rule so your flow can adopt it without a second root-cause investigation.
+
+**NEW ROW from your "business context absent" cross-link.** The ACK above correctly suspected your `[gap:business_context_unavailable]` is downstream of BCTC ingest storing nothing. PO took that one layer further this tick and read the source. Root cause is now pinned: `listSscDocuments()` (`apps/mcp-server/src/infrastructure/fetchers/ssc.ts:85-90`) has **no quarter parameter in its signature at all**, and `fetchParseAndStoreBctc.ts:68` takes `docs[0]` unconditionally — so every quarter of a given (ticker, year) resolves to the same document. All 19 refusals skew **LATER, 19/19, zero counter-examples**. The guard is right; acquisition is wrong. Tracked as `FIX-BCTC-SSC-DOC-SELECTION-QUARTER-BLIND-ALWAYS-LATEST`.
+- Note for c122: your priority #2 is **re-opened, not closed** — treat c120's Telegram delivery as unknown. The file plane is confirmed lost.
