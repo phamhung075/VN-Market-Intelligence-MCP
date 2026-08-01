@@ -343,6 +343,26 @@ def resolved_dispatch_lane($detail_items):
     elif ($ow | length) > 0 then $ow
     else "developer" end;
 
+# ---- Review-Lane SECONDARY-Drain (owner-triage sweep) resolved dispatch
+# target (FIX-DEVTEAM-REVIEW-LANE-SECONDARY-DRAIN, architect brief
+# docs/architecture-briefs/2026-08-01-review-lane-drain-throughput-and-
+# secondary-sweep.md §2b) ----
+# `.` = candidate review[] row object. Resolves the SAME
+# effective_next_agent(...) every other def in this file already reads if
+# present-non-empty, ELSE the reasoned default "po" (this system's
+# designated triage/decision role for a review row with no resolvable
+# owner — brief §2b: of the live SECONDARY rows, several already resolve to
+# next_agent=="architect"; routing null rows to architect too would
+# concentrate load on the one agent already carrying the largest single
+# non-null SECONDARY share). Deliberately does NOT fall back to
+# effective_owner (unlike resolved_dispatch_lane above) — a review[] row's
+# owner is who IMPLEMENTED it, not necessarily who should TRIAGE a stalled
+# sign-off; PO can re-route any individual row via its own normal triage
+# note, same as always.
+def resolved_secondary_dispatch_target($detail_items):
+  (effective_next_agent($detail_items)) as $na
+  | if ($na | length) > 0 then $na else "po" end;
+
 # ---- prose-sequencing-without-machine-encoding guard
 # (FIX-DEVTEAM-BOUNDED1-PROSE-SEQUENCING-UNBACKED-GATE, 2026-07-23) ----
 # ROOT CAUSE: PO-authored sequencing constraints written in prose fields
