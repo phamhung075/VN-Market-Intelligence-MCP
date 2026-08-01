@@ -331,6 +331,47 @@ compute_id_maps() {
     '
       include "scripts/lib/devteam-eligibility";
 
+      # FIX-COLDEVICT-MALFORMED-TS-CATCH0-EVICTS-FRESH-SIGNAL-ROWS (2026-08-01):
+      # jq fromdateiso8601 accepts ONLY the exact %Y-%m-%dT%H:%M:%SZ form. A
+      # well-formed-but-non-canonical timestamp — minute precision
+      # ("...T03:59Z", no seconds) or fractional-second ("...T23:00:01.546Z")
+      # — THROWS. The pre-existing `try (.ts|fromdateiso8601) catch 0` at every
+      # cutoff comparison in this script swallowed that throw into epoch 0
+      # (== 1970-01-01), and `0 < $cutoff` is unconditionally true, so a row
+      # with a genuinely well-known, recent instant was treated as infinitely
+      # old and evicted regardless of real age (live incident: signal row
+      # dev-20260801T035943, ts "2026-08-01T03:59Z", evicted ~22min after
+      # being marked READ against a 24h gate). These two helpers normalize the
+      # two known near-miss variants to canonical form BEFORE the parse
+      # attempt, so the row TRUE instant is used. A value that still fails
+      # after normalization (genuinely malformed, or null) falls through to
+      # epoch 0 (== oldest == evictable) — the SAME poison-row-must-never-be-
+      # permanently-resident convention the done[]/decision_journal[] cutoffs
+      # below already use, NOT a polarity flip to "newest" (a naked flip would
+      # make an unparseable ts immortal, defeating the age gate the opposite
+      # way).
+      def coldevict_normalize_ts_variant:
+        if test("^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}\\.[0-9]+Z$") then
+          sub("\\.[0-9]+Z$"; "Z")                      # strip fractional seconds
+        elif test("^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}Z$") then
+          sub("Z$"; ":00Z")                            # pad missing :SS
+        else
+          null
+        end;
+
+      def coldevict_ts_epoch_or_oldest:
+        if . == null then 0
+        else
+          ( . as $raw
+            | (try ($raw | fromdateiso8601) catch null) as $exact
+            | if $exact != null then $exact
+              else
+                ($raw | coldevict_normalize_ts_variant) as $norm
+                | if $norm != null then (try ($norm | fromdateiso8601) catch null) else null end
+              end
+          ) // 0
+        end;
+
       . as $root |
 
       # ── parse config ─────────────────────────────────────────────────────
@@ -465,9 +506,15 @@ compute_id_maps() {
       # terminal status. Now ANDed with $sig_cutoff, mirroring the done[]/decision_journal[]
       # null-ts convention above (null/unparseable ts == unknown-age == treated as oldest,
       # so a poison row is never permanently un-evictable).
+      # FIX-COLDEVICT-MALFORMED-TS-CATCH0-EVICTS-FRESH-SIGNAL-ROWS: the age term now goes
+      # through coldevict_ts_epoch_or_oldest (normalizes minute-precision / fractional-
+      # second variants to their TRUE instant before comparing against $sig_cutoff) instead
+      # of a bare `try fromdateiso8601 catch 0` — the raw form silently mapped ANY
+      # non-canonical-but-well-formed .ts to epoch 0, defeating this very age gate for
+      # every writer that omits seconds or emits milliseconds.
       [.signal_queue.rows // [] | .[] | select(
           .id != null and (.status | IN($tsig_arr[])) and
-          ((.ts == null) or ((try (.ts | fromdateiso8601) catch 0) < $sig_cutoff))
+          ((.ts | coldevict_ts_epoch_or_oldest) < $sig_cutoff)
         ) | .id
       ] as $all_terminal_sig_row_ids |
 

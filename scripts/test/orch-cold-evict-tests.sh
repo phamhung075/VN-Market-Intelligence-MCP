@@ -612,6 +612,98 @@ fi
 assert_real_live_unchanged "T9"
 
 # =============================================================================
+# TEST 10 — FIX-COLDEVICT-MALFORMED-TS-CATCH0-EVICTS-FRESH-SIGNAL-ROWS: a
+#   well-formed-but-non-canonical .ts (minute precision, no seconds; or
+#   fractional-second) must be aged from its TRUE instant, not silently
+#   mapped to epoch 0 by the bare `try fromdateiso8601 catch 0` TEST 9 added.
+#   Replays the live incident VERBATIM: signal row dev-20260801T035943, ts
+#   "2026-08-01T03:59Z" (minute precision), status READ, evicted ~22min after
+#   being marked READ against the 24h gate — this test seeds a row in the
+#   SAME malformed shape at the CURRENT UTC minute (fresh) and asserts it
+#   survives; a sibling row in the same malformed shape but genuinely 30h old
+#   must still evict (proves the age gate now actually gates on malformed-
+#   shape timestamps instead of always-true). Covers both known near-miss
+#   variants (minute-precision, fractional-second) at both fresh and aged
+#   instants, plus a null-ts row retained as still-evictable (AC-2: the
+#   poison-row protection this convention exists for must be PRESERVED, not
+#   flipped to "newest").
+# =============================================================================
+T10_NOW_MIN=$(date -u +%Y-%m-%dT%H:%MZ)
+T10_AGED_MIN=$(date -u -v-30H +%Y-%m-%dT%H:%MZ 2>/dev/null || date -u -d '30 hours ago' +%Y-%m-%dT%H:%MZ)
+T10_NOW_FRAC="$(date -u +%Y-%m-%dT%H:%M:%S).123Z"
+T10_AGED_FRAC="$(date -u -v-30H +%Y-%m-%dT%H:%M:%S 2>/dev/null || date -u -d '30 hours ago' +%Y-%m-%dT%H:%M:%S).546Z"
+
+MALFORMED_TS_FIXTURE=$(jq -n \
+  --arg now_min  "$T10_NOW_MIN" \
+  --arg aged_min "$T10_AGED_MIN" \
+  --arg now_frac "$T10_NOW_FRAC" \
+  --arg aged_frac "$T10_AGED_FRAC" \
+  '{
+  "_meta": {"schema":"v4","ssot":true,"updated_at":"2026-06-01T00:00:00Z","updated_by":"fixture"},
+  "head": {"status":"idle","active_task_id":null,"next_agent":null},
+  "task_board": {
+    "backlog": [], "review": [], "qa": [], "in_progress": [], "ready": [],
+    "done": [], "done_verified": [], "active_sprints": []
+  },
+  "signal_queue": {
+    "_updated_at":"2026-06-01T00:00:00Z","_updated_by":"fixture",
+    "rows": [
+      {"id":"dev-20260801T035943","ts":$now_min,"from":"developer","to":"po","type":"system-issue","summary":"LIVE INCIDENT REPLAY — minute-precision ts, fresh READ — must NOT evict","severity":"LOW","status":"READ","payload_ref":null},
+      {"id":"SIG-AGED-MINUTE-PRECISION","ts":$aged_min,"from":"test","to":"po","type":"system-issue","summary":"30h-old minute-precision READ — MUST evict (age gate must still bind on malformed shape)","severity":"LOW","status":"READ","payload_ref":null},
+      {"id":"SIG-FRESH-FRACTIONAL","ts":$now_frac,"from":"test","to":"po","type":"system-issue","summary":"fresh fractional-second READ — must NOT evict","severity":"LOW","status":"READ","payload_ref":null},
+      {"id":"SIG-AGED-FRACTIONAL","ts":$aged_frac,"from":"test","to":"po","type":"system-issue","summary":"30h-old fractional-second RESOLVED — MUST evict","severity":"LOW","status":"RESOLVED","payload_ref":null},
+      {"id":"SIG-NULL-TS-RETAINED","ts":null,"from":"test","to":"po","type":"system-issue","summary":"null ts — still treated as unknown-age/oldest post-fix, MUST evict (AC-2 poison-row guard not broken)","severity":"LOW","status":"SUPERSEDED","payload_ref":null}
+    ]
+  },
+  "sprint_goal": {"entries": []}
+}')
+new_fixture "t10-malformed-ts-catch0" "$MALFORMED_TS_FIXTURE"
+
+EXIT_T10=0
+run_cold_evict || EXIT_T10=$?
+if [ "$EXIT_T10" -eq 0 ]; then
+  pass "T10 — malformed-ts age-gate live run exits 0"
+else
+  fail "T10 — expected exit 0, got $EXIT_T10 ($(cat "$FIXTURE_ROOT/.last-stderr" | tail -5))"
+fi
+
+T10_HOT_SIG_IDS=$(jq -c '[.signal_queue.rows[].id] | sort' "$HOT_PATH" 2>/dev/null)
+if [ "$T10_HOT_SIG_IDS" = '["SIG-FRESH-FRACTIONAL","dev-20260801T035943"]' ]; then
+  pass "T10 — hot signal_queue.rows[] keeps ONLY the two fresh malformed-ts rows (live-incident replay survives)"
+else
+  fail "T10 — hot signal_queue.rows[] unexpected: $T10_HOT_SIG_IDS (live-incident row must survive — regression)"
+fi
+
+COLD_FILE_T10="$ARCHIVE_PATH/$MONTH.json"
+T10_COLD_SIG_IDS=$(jq -c '[(.signal_rows // [])[].id] | sort' "$COLD_FILE_T10" 2>/dev/null)
+if [ "$T10_COLD_SIG_IDS" = '["SIG-AGED-FRACTIONAL","SIG-AGED-MINUTE-PRECISION","SIG-NULL-TS-RETAINED"]' ]; then
+  pass "T10 — cold .signal_rows[] contains exactly the 2 genuinely-aged malformed-ts rows + the null-ts poison row"
+else
+  fail "T10 — cold .signal_rows[] unexpected: $T10_COLD_SIG_IDS"
+fi
+
+# Idempotent re-run: nothing left to evict (2 hot rows survive by true age) —
+# second run must be a byte-identical no-op.
+HASH_HOT_T10_1=$(file_hash "$HOT_PATH")
+HASH_COLD_T10_1=$(file_hash "$COLD_FILE_T10")
+EXIT_T10B=0
+run_cold_evict || EXIT_T10B=$?
+if [ "$EXIT_T10B" -eq 0 ]; then
+  pass "T10 — second (idempotent) run exits 0"
+else
+  fail "T10 — expected exit 0 on re-run, got $EXIT_T10B"
+fi
+HASH_HOT_T10_2=$(file_hash "$HOT_PATH")
+HASH_COLD_T10_2=$(file_hash "$COLD_FILE_T10")
+if [ "$HASH_HOT_T10_1" = "$HASH_HOT_T10_2" ] && [ "$HASH_COLD_T10_1" = "$HASH_COLD_T10_2" ]; then
+  pass "T10 — hot + cold byte-identical after idempotent re-run"
+else
+  fail "T10 — hot or cold CHANGED on malformed-ts re-run (not idempotent)"
+fi
+
+assert_real_live_unchanged "T10"
+
+# =============================================================================
 # Summary
 # =============================================================================
 TOTAL=$((PASS+FAIL))
