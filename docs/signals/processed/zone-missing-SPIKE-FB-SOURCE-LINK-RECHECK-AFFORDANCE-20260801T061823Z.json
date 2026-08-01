@@ -9,5 +9,11 @@
     "files": [],
     "suggestedZone": "multi",
     "note": "zone field explicitly \"multi\" (not apps/<service>/) — cross-cutting SPIKE spanning fb-market-poster flow doc + possible new dashboard endpoint; Tier-1/2 both miss, routed developer generic per Tier-3 fallback"
+  },
+  "_processed": {
+    "fingerprint": "3b22e6759a4ef9cb6ecdc26665dd8c8e5f6a8471495f7b1f52f0bf560c3f29d3",
+    "processedAt": "2026-08-01T06:48:11Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
   }
 }
