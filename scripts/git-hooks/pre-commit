@@ -499,6 +499,17 @@ _detect_samefile_pathspec_only_divergence() {
     scratch_blob="$(git rev-parse ":$f" 2>/dev/null)" || continue
     real_blob="$(GIT_INDEX_FILE="$real_index" git rev-parse ":$f" 2>/dev/null)" || continue
     [ -z "$real_blob" ] && continue   # never staged in the shared index by anyone — nothing to diverge from
+    # FIX-SWEEPGUARD-SAMEFILE-DETECTOR-UNSTAGED-PATH-FALSE-POSITIVE (AC-1): `git
+    # rev-parse ":$f"` against the real index returns the HEAD blob for ANY tracked
+    # path and NEVER returns empty, so the fail-open check above is unreachable for
+    # the population it claims to protect. An ordinary tracked file committed via
+    # pathspec WITHOUT a preceding `git add` (git never touches the shared index in
+    # that idiom) leaves the real-index entry identical to the HEAD blob — that is
+    # NOT a staged divergence, it is simply "nothing was ever staged". Gate on HEAD
+    # instead: only a real-index blob that differs from HEAD reflects a genuine
+    # `git add`/`git apply --cached` staging action worth comparing against.
+    head_blob="$(git rev-parse "HEAD:$f" 2>/dev/null)" || head_blob=""
+    [ "$real_blob" = "$head_blob" ] && continue   # shared index entry is merely the HEAD blob — nothing genuinely staged
     if [ "$real_blob" != "$scratch_blob" ]; then
       msg="[sweep-guard] SAME-FILE DIVERGENCE (non-blocking, AC-3 detector): '${f}' is being committed via a pathspec-SCOPED commit line, which takes its WORKING TREE content (git's --only semantics) — NOT the subset already staged in the shared index for this exact path. The shared index's staged blob for '${f}' (${real_blob}) differs from what is about to land in this commit (${scratch_blob}) — a peer's differently-staged hunk (or your own further, unreviewed edit) in this SAME file may be about to be swept in. Documented NON-GOAL of the pathspec-commit mandate, see docs/architecture-briefs/2026-07-21-commit-path-peer-index-sweep-guard.md §2.7 — detector only, never blocked. Inspect before trusting this commit's scope: git diff ${real_blob} ${scratch_blob} -- ${f}"
       echo "$msg" >&2

@@ -251,6 +251,32 @@ mis-attributed to the wrong commit/author) — this is an attribution-corruption
 loss class, consistent with all 3 of this brief's original occurrences (§1.1) and with §2.3's
 directory-pathspec loophole.
 
+**Unstaged-path carve-out — false-positive class found and closed (2026-08-01,
+`FIX-SWEEPGUARD-SAMEFILE-DETECTOR-UNSTAGED-PATH-FALSE-POSITIVE`):** the detector shipped above
+(`_detect_samefile_pathspec_only_divergence`) carried its own fail-open comment — `[ -z
+"$real_blob" ] && continue   # never staged in the shared index by anyone — nothing to diverge
+from` — intended to skip a tracked path that nobody had ever `git add`'d. That branch was dead
+code for the entire population it claimed to protect: `git rev-parse ":$f"` against the REAL,
+shared index returns the HEAD blob for ANY tracked path and **never** returns empty (an unstaged
+tracked file's index entry is simply its unchanged HEAD blob, not an absent entry). Consequence:
+an ordinary tracked file committed via `git commit -- <path>` with NO preceding `git add` — the
+exact idiom `scripts/orch-apply.sh`'s atomic-rename write + pathspec-commit pattern uses on every
+write to the fleet's hot files (`docs/data/orch/orch-state.json` foremost) — was indistinguishable
+from a genuinely peer-staged conflicting hunk and reported as one. Confirmed 10/10 live fires,
+10/10 false positives, zero true positives (first fire 2026-08-01T03:41:58Z), pumping
+`priority:high` `bug-escalation` signals into PO triage on completely ordinary commits.
+
+Fix: gate the comparison on `real_blob != $(git rev-parse "HEAD:$f")` in addition to the existing
+`[ -z "$real_blob" ]` check — i.e. skip the divergence report whenever the shared-index entry for
+the path is merely the HEAD blob (nothing genuinely staged by `git add`/`git apply --cached` since
+the last commit touching that path). Verified against all four cases replayed in a scratch repo:
+(A) modify + NO `git add` + `git commit -- <path>` → now silent (was the false positive, now
+fixed); (B) `git add` + `git commit -- <path>` (no further edit) → silent, unchanged; (C) `git
+add` + further edit + `git commit -- <path>` (genuine own-stale-stage) → still fires, unchanged;
+peer-staged same-file hunk (this section's own §2.7 reproduction, T11) → still fires, unchanged.
+Only case (A) flips. See `scripts/git-hooks/pre-commit.test.sh` T13 (new, replays case A) and the
+still-passing T11/T12 (peer-staged and ordinary-`git add` controls, both unaffected by this gate).
+
 ---
 
 ## 3. Disposition decision — WARN default, REJECT opt-in (the trade-off, stated plainly)

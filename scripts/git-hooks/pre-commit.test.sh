@@ -70,6 +70,13 @@
 #       leftover unstaged content, nothing to diverge from) produces ZERO detector
 #       output — proves the new detector does not false-positive on the mandated,
 #       correct-usage pattern every other test (T2 included) already exercises.
+#   T13 FIX-SWEEPGUARD-SAMEFILE-DETECTOR-UNSTAGED-PATH-FALSE-POSITIVE AC-2 — a
+#       tracked file modified WITHOUT a preceding `git add` (the atomic-rename +
+#       pathspec-commit idiom scripts/orch-apply.sh uses on every write) then
+#       committed via `git commit -- <path>` produces ZERO detector output. T12
+#       does NOT cover this: its own header comment scopes it to the `git add`
+#       idiom only, so the unstaged path was never exercised and the false-
+#       positive class shipped silently past 12/12 green.
 #
 # Run:
 #   bash scripts/git-hooks/pre-commit.test.sh
@@ -448,6 +455,39 @@ else
   FAIL=$((FAIL + 1))
 fi
 rm -rf "$D12"
+
+# ── T13: FIX-SWEEPGUARD-SAMEFILE-DETECTOR-UNSTAGED-PATH-FALSE-POSITIVE ──────────
+# AC-2 — unstaged `git commit -- <path>` (NO preceding `git add`) on a tracked file
+# must produce ZERO detector output. Root cause: `git rev-parse ":$f"` against the
+# REAL index returns the HEAD blob for ANY tracked path and NEVER returns empty, so
+# the old "never staged in the shared index" fail-open branch was dead code for the
+# entire population it claimed to protect — an unstaged tracked-file pathspec
+# commit (e.g. every scripts/orch-apply.sh atomic-rename write followed by a
+# pathspec commit, which never calls `git add`) was indistinguishable from a
+# peer-staged conflicting hunk and reported as one.
+D13="$(new_repo)"
+(
+  cd "$D13" || exit 1
+  echo v1 > mine13.txt
+  git add mine13.txt
+  git commit -qm "seed mine13" -- mine13.txt   # tracked; real-index blob == HEAD blob
+
+  echo v2 > mine13.txt                          # modify WITHOUT git add — simulates
+                                                 # an atomic-rename write (orch-apply.sh)
+  git commit -qm "unstaged pathspec commit" -- mine13.txt 2>stderr13.log
+  echo $? > exit13.log
+)
+exit13="$(cat "$D13/exit13.log" 2>/dev/null)"
+stderr13_empty="yes"; [ -s "$D13/stderr13.log" ] && stderr13_empty="no"
+committed13="$(cd "$D13" && git show HEAD:mine13.txt 2>/dev/null)"
+if [[ "$exit13" == "0" && "$stderr13_empty" == "yes" && "$committed13" == "v2" ]]; then
+  echo "PASS T13: unstaged 'git commit -- <path>' (no preceding git add) on a tracked file produced ZERO detector output — false-positive class killed"
+  PASS=$((PASS + 1))
+else
+  echo "FAIL T13: exit=$exit13 stderr_empty=$stderr13_empty committed=[$committed13] stderr=[$(cat "$D13/stderr13.log" 2>/dev/null)]"
+  FAIL=$((FAIL + 1))
+fi
+rm -rf "$D13"
 
 # ── Summary ───────────────────────────────────────────────────────────────────
 echo ""
