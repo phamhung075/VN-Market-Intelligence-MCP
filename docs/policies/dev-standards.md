@@ -685,6 +685,16 @@ index-blob vs about-to-be-committed-blob comparison per named SCOPED path) — n
 `GIT_SWEEP_GUARD_MODE`, never blocks a commit. Test: `scripts/git-hooks/pre-commit.test.sh` T11
 (pins the `--only` behavior) / T12 (detector false-positive negative control).
 
+**FIX (2026-08-01, `FIX-SWEEPGUARD-SAMEFILE-DETECTOR-UNSTAGED-PATH-FALSE-POSITIVE`) — unstaged-path
+false positive closed:** the detector above false-fired on every ordinary tracked-file pathspec
+commit with NO preceding `git add` (e.g. every `scripts/orch-apply.sh` atomic-rename write +
+pathspec commit, `docs/data/orch/orch-state.json` dominant) — `git rev-parse ":$f"` against the real
+index returns the HEAD blob for ANY tracked path and never returns empty, so its "never staged"
+fail-open check never fired. Now also skips when the real-index blob equals `HEAD:$f`'s blob
+(nothing genuinely staged). Confirmed 10/10 live fires were false positives before this fix; T11
+(peer-staged) and T12 (`git add` idiom) unaffected. Test: `pre-commit.test.sh` T13. Detail: owning
+brief §2.7.
+
 **CANONICAL: Same-session escalation actuator + deploy baseline (FIX-SWEEPGUARD-WARN-ONLY-NO-ACTUATOR-AND-TRIAGE-MISADJUDICATION, corrected by FIX-SWEEPGUARD-ESCALATION-RETROACTIVE-COUNTER-AND-SESSION-SCOPED-ACTOR)**
 `scripts/git-hooks/pre-commit`'s sweep-guard escalation block converts repeated BARE commits from
 the SAME `$CLAUDE_CODE_SESSION_ID` into a hard block (the `(threshold+1)`th BARE commit in default
