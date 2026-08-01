@@ -227,3 +227,53 @@ Blast radius, measured not inferred: 5 P0 rows permanently un-dispatchable since
 **why-decision:** supervised-goahead — replayed dev-team's own WF-2 `should_hold` jq byte-identical against the live file: `head.status=in_progress`, `head.active_task_id=FIX-AGENTSIGNALS-EXPIRED-GC-CRON`, `should_hold=false`. Nothing held, no-op, no stamp. manual-dispatch sweep — 39 eligible candidates (`0 re-admitted stale-flagged`); top by `[rank, idx]` is `TE-T02` (P1, rank=1, idx=28, DRS-STRANDED-OFF-ALLOWLIST, `next_agent=agent-father` which is OFF the ratified DRS allowlist, so no automated lane reaches it). Stamped and folded into BATCH.
 
 **why-change:** No change from plan. One deviation surfaced rather than silently corrected: TE-T02's own `zone` is `docs/agents/`, which is not a member of the `main.md` zone enum (`apps/<service>/` | `multi` | `cross-service/`). Step 3 of the sweep mandates building the entry from the row's OWN fields, "never re-authored", so I passed the row's value through unchanged and flagged the enum conflict to dev-team instead of quietly rewriting it to `cross-service/`.
+
+## STEP po-S119 — 2026-08-01T02:29Z — root-caused MY OWN recurring persistence failure (signal dev-20260801T021232, HIGH, 4th+ instance)
+
+**task_id:** FIX-PO-BATCH-MINT-NO-WRITE-ACTUATOR
+
+**what-considered:**
+- Accept dev-team's framing ("your commit step keeps not landing") and harden the commit step
+- Assume the earlier remedy pattern (dev-team hand-lands PO's BATCH) is adequate and just be more careful
+- Inventory every PO sub-flow's write path and find which ones can actuate a board mutation at all
+
+**why-decision:** Third. The first two both presuppose the write reached the file. It did not, and the proof is a discriminating test with controls I did not have to construct — the prior tick already ran it. On 01:37Z, five board mutations were decided by one agent in one session. The two owned by sub-flows that carry a `jq | orch-apply.sh` pipe (`manual-dispatch-sweep.md:81` → TE-T02's stamp; `supervised-goahead.md`-adjacent ruling write → the sweep-guard `po_ruling` field) BOTH landed on disk. The three owned by the BATCH path landed nowhere. 2-for-2 against 0-for-3, split exactly on the presence of the pipe — not internal consistency, not a known-shape pattern match, an actual negative control.
+
+The inventory then named the mechanism without ambiguity: `sprint-kickoff.md` (the canonical self-initiated mint path), `channel-audit.md`, `market-group.md` and `telegram-reports.md` all instruct `.task_board.backlog[]` appends in prose and contain ZERO `orch-apply.sh` references. `sprint-kickoff.md:15` points at a `§2.3` atomic-write section that exists in no file, and its only commit step (line 66) is "Commit notebook". `main.md`'s single orch-apply mention (line 157) hangs off the scripts-registry pointer that line 158 gates behind "load ONLY when minting a NEW triage script" — so a tick that mints rows without minting a script never reaches a write instruction at all.
+
+Second, independent defect found in the same pass: `main.md:152` declares `own_paths: ["docs/agent-memory/notebooks/po.md"]`. `.claude/skills/commit-mutex/SKILL.md` step 2b actively `git restore --staged`s any path outside own_paths and step 2c commits pathspec-scoped to exactly that list. So `orch-state.json` is FOREIGN to PO's own commit step by construction — even a write that lands cannot be committed by me. That is why the two fields that did land sat dirty until dev-team's unrelated head-repair `orch-apply` read-modify-wrote the file and absorbed them into `f4f30e38a` under a message that never mentions them.
+
+Third finding, which is what makes defect A load-bearing rather than cosmetic: nobody downstream mints them either. `grep` of `docs/agents/dev-team/flow/*.md` finds exactly one `.task_board.backlog =` write and it is the WF-2 BLOCKED lane-move backstop. Step 2 and Step 3 both presuppose the row exists — S4 UNBLOCK claims `task:<batch_id>`, Step 3 flips an existing row's status. A BATCH entry PO does not mint is minted by no one. dev-team has silently absorbed this four times (`f6ef8acd5`, `e0691787f`, `cc1786c12`, `5cba4c9fa`).
+
+**why-change:** Changed the disposition dev-team's signal implied. It asked me to diagnose why my commit step keeps not landing; the commit step was the second defect, not the first, and fixing it alone would have converted silent data loss into silently-uncommitted data — a different failure, not a fix. Minted ONE row with both as ACs rather than two rows: fixing either alone leaves the class open (write with no commit → absorbed by a peer; commit with no write → nothing to commit), same file family, same owner, same zone. Refused to fragment one defect, on the same reasoning I used against the BCTC split at po-S115. Added AC-3 as the anti-false-green closure test, because the prior three instances were each "remediated" downstream by dev-team landing the batch and none touched the producer — `feedback_detection_vs_recurring_failed_fix`.
+
+## STEP po-S120 — 2026-08-01T02:29Z — signal dev-20260801T015751 (LOW): ordering, not urgency
+
+**task_id:** FIX-DEVTEAM-REBUILD-REQUIRED-MARKER-NO-CONSUMER
+
+**what-considered:**
+- Dispatch ops now to rebuild mcp-server, leave the row's routing alone
+- Note it for the next planning pass (what the signal offered as the alternative)
+- Repoint the row qa → ops and mint the systemic gap separately
+
+**why-decision:** Third. Checking whether a rebuild gate exists at all inverted the question. `grep -rn 'REBUILD_REQUIRED|rebuild' docs/agents/dev-team/flow/*.md docs/agents/qa/flow/*.md` returns exactly one hit, an unrelated comment about lock TTL surviving a restart (`main.md:149`). dev-mcp-server wrote `REBUILD_REQUIRED=true` into a free-text `note` and set `next_agent=qa`. There is no consumer. So qa was queued to live-verify retention-GC predicates from `f5698cb76` against an image built before that commit — the code under test is not in the running container, and a green verify would have been structurally false (`feedback_host_cli_integrity_check_false_ok_verify_through_runtime`).
+
+Option 1 fixes this row and leaves every future one broken; option 2 leaves a false-green live in the queue. The row itself is genuinely not urgent — dev-mcp-server's own RAW-verify-on-pickup re-measured the live magnitudes far below the AC's 2026-06-20 snapshot (agent_signals 124 total / 119 expired, only 15 GC-eligible; alerts 8 total, 0 unresolved >30d) and folded the work into the existing `dataAuditJob:daily` with no new cron. What mattered was the ORDERING, so the cheap correct action is the repoint, and the general defect gets its own row.
+
+Noted the class shape for the record: this is the DUAL of the defect this codebase has recorded five times. `supervised-goahead.md` and `manual-dispatch-sweep.md` headers document instances 3, 4 and 5 of "documented consumer, no documented producer". This one is a producer with no consumer, and it is only visible because dev-mcp-server ALSO hand-escalated a signal — a discretionary act. Every dev-`<service>` fix that does not hand-escalate reaches qa silently un-deployed.
+
+**why-change:** No change from plan. Deliberately did NOT dispatch ops inline — PO routes, it does not drive infrastructure, and the row now names ops as `next_agent` with the single-service constraint written in-row (`feedback_rebuild_recreate_destroys_peers`, `feedback_docker_rebuild_race_pgrep_deadlock`).
+
+## STEP po-S121 — 2026-08-01T02:29Z — mandatory pre-checks + the verification I owed
+
+**task_id:** TE-T03
+
+**what-considered:** only path: both pre-checks are MANDATORY every tick per `po/flow/main.md`.
+
+**why-decision:** supervised-goahead — replayed dev-team's own WF-2 `should_hold` jq byte-identical against the live file: `head.status=in_progress`, `active_task_id=FIX-DEVTEAM-IDLE-CHAIN-DANGLING-DEPS-STRAND-5-P0-ROWS`, `should_hold=false`. Nothing held, no stamp. manual-dispatch sweep — 38 candidates, **0 re-admitted stale-flagged**; TE-T02 correctly aged out of the top slot inside its 4h freshness window, which is the `flag_reentrant` guard doing exactly its job one tick after I stamped it. Top by `[rank, idx]` is TE-T03 (P1, rank=1, idx=29, DRS-STRANDED-OFF-ALLOWLIST, `next_agent=agent-father` off the ratified DRS allowlist). Stamped and folded into BATCH.
+
+Applied my own carry-over from last tick before trusting the sweep: replayed `deps_satisfied` rather than reading the field. `effective_depends_on(TE-T03) = [TE-T01]`, and TE-T01 resolves `DONE_VERIFIED` via `dep_status_map` over the cold archive — genuinely satisfied, not the dangling-dep false-positive that stranded five P0 rows for three days.
+
+**why-change:** No change from plan, but one deviation surfaced rather than silently corrected, for the second consecutive tick: both rows minted this tick carry `zone: "docs/agents/"`, which follows the ratified PO ARTIFACT-CLASS ROUTING RULING (2026-07-21T18:42Z) and live board precedent, but is NOT a member of the zone enum `main.md:30` declares. Rewriting to `cross-service/` would mis-route flow-doc work to a generic developer and contradict the ruling. Passed through unchanged and flagged to dev-team, same as TE-T02 last tick.
+
+Verification actually performed before returning, per the signal's explicit instruction and `feedback_verification_gate_timestamp_not_prose`: ran the transform through `scripts/orch-apply.sh` (exit 0, `task_total 760→762`, `signal_total unchanged=135`, 4 rows stamped), re-read all four mutations back off disk by `jq`, and ran `git show --stat` on my own commit to confirm `docs/data/orch/orch-state.json` is in the file list. Result recorded in the notebook. I did not report persistence I had not independently checked.
