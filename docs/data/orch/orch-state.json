@@ -2084,6 +2084,17 @@
         "status": "READ",
         "payload_ref": null,
         "note": "Confirmed by direct repro: ORCH_STATE=<isolated copy> bash scripts/orch-cold-evict.sh 1>out 2>err puts the [orch-validate] REPORT -- Stage 1g ... + Stage 0 + Stage 1 PASS lines in out (stdout), not err. dev-team-tick-preflight.sh Step 5.5 is now immune (its _step55_run_cold_evict wrapper captures the ENTIRE child stdout+stderr and re-emits to stderr -- commit f2b41e6df) but any FUTURE direct caller of orch-cold-evict.sh (non-dry-run) that captures only stdout would hit the same corruption class again. Root: scripts/orch-cold-evict.sh line ~930-932, bash orch-state-validate.sh \"${HOT_TEMP}\" || {...}, is unredirected; contrast scripts/orch-apply.sh:136 which correctly does validation_output=$(bun orch-validate.mjs ... 2>&1) then re-emits to stderr only. Out of file scope for FIX-DEVTEAM-PREFLIGHT-STEP55-COLDEVICT-STDOUT-LEAK-CORRUPTS-VERDICT (files=[dev-team-tick-preflight.sh, its test, dev-team/flow/main.md] only) -- flagging for a scoped follow-up FIX row on orch-cold-evict.sh itself, same fix pattern (capture 2>&1, redirect to stderr) as the row just closed."
+      },
+      {
+        "id": "dev-20260801T050503",
+        "ts": "2026-08-01T05:05:03Z",
+        "from": "dev-team",
+        "to": "po",
+        "type": "system-issue",
+        "summary": "notebook writes have no CAS guard (unlike orch-apply.sh); concurrent devs can silently drop sections — repro'd live 08-01",
+        "severity": "MED",
+        "status": "NEW",
+        "payload_ref": null
       }
     ],
     "last_triaged_at": "2026-07-29T06:25:00Z",
@@ -10622,42 +10633,6 @@
         "acceptance": "(1) A named, executable producer for the DONE_VERIFIED token exists and is wired into a lane that actually runs (the dev-team idle chain rotation, or an equivalent the architect justifies), so a finished row reaching done[] cannot sit there indefinitely. (2) A DONE row carrying next_agent is REACHED by that producer - demonstrate on the two live 2-day-old cases (TASK-COWORK-CATCHUP-2, FACTORY-APP-split-assembleBriefing, both next=qa). (3) The producer NEVER promotes DONE -> DONE_VERIFIED on its own authority; promotion requires the verifier the token denotes. A row it cannot verify must become LOUDER (surfaced), not silently promoted. (4) A row that lands in done[] with NO next_agent is not silently invisible - it is surfaced to PO/router rather than defaulting to permanent residence. (5) The 8 currently-starved rows are re-measured with the ACTUAL predicate after the fix; the count must drop, and any row still starved must have a named reason. (6) Regression instrument: a script that re-runs is_bounded1_eligible over backlog[]+ready[] and reports the sole-deps_satisfied-failure set, so this class is detectable next time instead of being re-derived by hand.",
         "verification_gate": "Re-run the exact measurement in evidence_raw_verified_20260730T2148 leg 1 (is_bounded1_eligible with deps_satisfied isolated as the sole failing gate, threaded through the REAL scripts/lib/devteam-eligibility.jq, not a reimplementation) against the live board AFTER the fix, and show the starved-set count with each remaining member's named reason. PLUS: show a done[] row transitioning to DONE_VERIFIED through the new producer with real command output - not asserted from flow-doc prose (feedback_fix_landed_in_the_pregate_not_the_probe_the_agent_actually_runs).",
         "note": "Do NOT hand-flip the remaining DONE rows to clear the measurement. PO deliberately flipped exactly ONE (FIX-COMMIT-PATH-PEER-INDEX-SWEEP-GUARD-LAYER2) because that row's own po_closure_20260730 field already carried a file:line-precise PO RAW-verification from 09:05:59Z - the token was the only thing missing. TASK-COWORK-CATCHUP-2 and FACTORY-APP-split-assembleBriefing carry next_agent=qa and have NOT been verified by anyone; flipping them would be PO ratifying work it never checked, which is the exact vacuous-gate failure this row exists to prevent. They stay DONE as live evidence."
-      },
-      {
-        "id": "FIX-PO-TRIAGE-SIGNALS-TABLE-MATCHES-ZERO-LIVE-SIGNAL-TYPES",
-        "type": "FIX",
-        "status": "BACKLOG",
-        "priority": "P1",
-        "size": "S",
-        "zone": "docs/agents/",
-        "owner": "po",
-        "next_agent": "agent-father",
-        "supervised": false,
-        "plan_only": false,
-        "title": "PO signal-triage routing table matches 0 of the 16 live signal types addressed to po — all 128 hot signal_queue rows fall through to 'unknown type -> log and skip'",
-        "desc": "MEASURED by po 2026-07-31T14:28Z against the live docs/data/orch/orch-state.json. Hot .signal_queue.rows[] with to=='po' = 128 rows across 16 distinct type values: signal_feedback 51, microservice_degraded 29, data_stale 20, db_integrity_breach 6, system-issue 4, routing-gap 4, orch-health-finding 3, tool_contract_gap 3, and 1 each of bctc-data-quality-anomaly, config_drift, context_bloat_breach, methodology-flag, notebook_unparseable_breach, ops_followup_request, recurring_churn_escalation, triage-persist-request. docs/agents/po/flow/triage-signals.md's routing table keys on a DISJOINT set: audit-handoff, brief_complete, news_impact/price_anomaly/bctc_signal/fundamental_*, zone_missing_tier3, zone_health_report, implementation_complete, improvement_proposal, repair_task_request, ci_red, bug-escalation. The intersection with the live distribution is EMPTY — 128/128 = 100% of PO's live signal inbox routes to the table's own last row, 'any unknown type -> Log ... and skip'. TRIGGERING INSTANCE: the 2026-07-31T14:09Z HIGH escalation cow-20260731T140900 (refine_bctc_md session-id gap) is type 'system-issue' — a CANONICAL type in .claude/skills/signal-dashboard/SKILL.md's own § Signal types table WITH po as its declared receiver — and it has no rule, so a doc-faithful PO tick would have logged-and-skipped a HIGH infra escalation. It only survived because the router independently relayed a corroborating telegram report (4238). 47 further archived to=po system-issue rows exist in docs/data/orch/archive/2026-07.json. SECONDARY DRIFT, same file family: (a) the SKILL's § Receivers table lists po's senders as tran-ngoc-bau/agents-architect/system-auditor, but cowork-team and dev-team both write to po in practice and are undeclared; (b) live rows carry status 'triaged', which is NOT in the SKILL's documented enum (NEW/READ/RESOLVED/SUPERSEDED) — direct evidence that PO ticks have been improvising past this table rather than executing it, the same 'agents visibly improvising past a drifted doc' shape recorded on .claude/skills/commit-mutex/SKILL.md in FIX-TASKCLAIM-OWNER-CLIENT-SESSION-MISSING-FLEET-FLOW-DOCS.",
-        "ac": "1. Every one of the 16 live to=po types has an explicit rule in docs/agents/po/flow/triage-signals.md, or an explicit documented alias onto an existing rule (e.g. bctc-data-quality-anomaly -> the bctc_signal rule) — no type may resolve to the unknown-type fallback. 2. The type list is re-derived from the LIVE .signal_queue.rows[] distribution (hot + docs/data/orch/archive/*.json cold), NOT copied from the SKILL's canonical list, which is itself incomplete. 3. system-issue gets a first-class rule (infrastructure problem -> FIX/CLEAN with zone taken from the payload, or explicit ops route) since it is the type reserved for infra escalations to po. 4. .claude/skills/signal-dashboard/SKILL.md § Receivers adds cowork-team and dev-team as declared senders to po; the status enum either admits 'triaged' or the writing flows are corrected to use the documented enum — pick one and state it. 5. A guard (script or test) FAILS when any .signal_queue.rows[] row addressed to po carries a type with no rule in triage-signals.md, so the drift cannot silently return. 6. triage-signals.md stays inside its size cap — if the table cannot absorb 16 more rows, split the low-traffic types into a lazy-load sibling and keep a pointer, per the waterfall/lazy-load standard.",
-        "files": [
-          "docs/agents/po/flow/triage-signals.md",
-          ".claude/skills/signal-dashboard/SKILL.md",
-          "docs/data/orch/orch-state.json"
-        ],
-        "baseline_pass": "jq over live .signal_queue.rows[] with to=='po': every distinct .type resolves to a named rule in triage-signals.md (0 fall-throughs); new guard script exits non-zero on a synthetic unrouted type.",
-        "deliverable": "triage-signals.md routing table covering the live signal-type distribution + signal-dashboard SKILL receiver/status reconciliation + a drift guard.",
-        "related": [
-          "FIX-COWORK-SPAWNFANOUT-NO-SESSION-ID-IN-LEAF-ENTRY-PROMPT",
-          "FIX-TASKCLAIM-OWNER-CLIENT-SESSION-MISSING-FLEET-FLOW-DOCS",
-          "P1-DETECTOR-CLOSURE-TRIAGE-SIGNALS",
-          "FIX-COWORK-STEP0A-TOPO-DRAIN-STATUS-CONTRACT"
-        ],
-        "created_at": "2026-07-31T14:32:00Z",
-        "created_by": "po/triage-20260731T1429Z",
-        "status_note": "Not a theoretical gap: measured 100% fall-through on the live inbox, and the 14:09Z HIGH escalation this same tick is one of the affected rows. Cheap + specific (one table + one SKILL section + one guard).",
-        "updated_at": "2026-08-01T04:36:41Z",
-        "po_manual_dispatch_flagged_at": "2026-08-01T04:36:40Z",
-        "po_manual_dispatch_flagged_by": "po (manual-dispatch-sweep)",
-        "po_manual_dispatch_class": "DRS-STRANDED-OFF-ALLOWLIST",
-        "po_manual_dispatch_note": "po (manual-dispatch-sweep) surfaced DRS-STRANDED-OFF-ALLOWLIST candidate — folding into this tick's BATCH. SELECTION DEVIATION, logged deliberately: Step 1's sort is [rank, idx] and the strict top was TE-T06 (P1, idx 31). Both are rank 1 (P1), so the tie-break between them is array position, which carries no priority meaning. TE-T06 was passed over for two reasons: (1) it is a SPRINT-M carrying NEITHER files[] NOR baseline_pass, and Step 3 builds its BATCH entry from exactly those fields — dispatching it would emit a structurally incomplete entry; (2) this row earned selection on live evidence from THIS tick rather than on position. While dispositioning the 10 commit-sweep-guard fires I hit the defect this row describes head-on: triage-signals.md bug-escalation enumerates only the payload classes \"[sweep-guard] BARE commit about to absorb\" and \"[sweep-guard] INTERNAL:\" and instructs PO to route by parsing escalated= from the payload, but all 10 live fires are a third class, \"[sweep-guard] SAME-FILE DIVERGENCE (non-blocking, AC-3 detector)\", whose signal JSON carries no escalated key at all. That is an independent, same-tick confirmation of this row's own claim (0 of 16 live signal types match a named rule), observed from the consumer side. TE-T06 remains eligible and unflagged for a future tick."
       },
       {
         "id": "FIX-SIGNAL-OUTCOMES-LIVENESS-BLIND-TO-ZERO-PRODUCTION",
@@ -20171,6 +20146,47 @@
         "updated_by": "developer",
         "commit_sha": "1c9b55d4d",
         "note": "AC-1: gated same-file divergence detector on real_blob != HEAD:$f blob (skips report when shared-index entry is merely the HEAD blob, nothing genuinely staged). AC-2: new T13 (unstaged pathspec commit, no preceding git add -> zero output); T11/T12 unaffected. AC-3: full suite 13/13 PASS (real run). AC-4: carve-out documented in brief §2.7 + dev-standards.md CANONICAL block pointer. Live re-verify: this task's own real commit (hook+test+brief) landed via unstaged pathspec commit -- 0 stderr WARN, 0 new docs/signals/commit-sweep-guard-*.json. Zone cross-service/, bun test/tsc N/A. Commits: 1c9b55d4d (fix+test+brief), e799d94a2 (WORK.md+dev-standards.md), 9bdb19085 (notebook+journal)."
+      },
+      {
+        "id": "FIX-PO-TRIAGE-SIGNALS-TABLE-MATCHES-ZERO-LIVE-SIGNAL-TYPES",
+        "type": "FIX",
+        "status": "REVIEW",
+        "priority": "P1",
+        "size": "S",
+        "zone": "docs/agents/",
+        "owner": "po",
+        "next_agent": "qa",
+        "supervised": false,
+        "plan_only": false,
+        "title": "PO signal-triage routing table matches 0 of the 16 live signal types addressed to po — all 128 hot signal_queue rows fall through to 'unknown type -> log and skip'",
+        "desc": "MEASURED by po 2026-07-31T14:28Z against the live docs/data/orch/orch-state.json. Hot .signal_queue.rows[] with to=='po' = 128 rows across 16 distinct type values: signal_feedback 51, microservice_degraded 29, data_stale 20, db_integrity_breach 6, system-issue 4, routing-gap 4, orch-health-finding 3, tool_contract_gap 3, and 1 each of bctc-data-quality-anomaly, config_drift, context_bloat_breach, methodology-flag, notebook_unparseable_breach, ops_followup_request, recurring_churn_escalation, triage-persist-request. docs/agents/po/flow/triage-signals.md's routing table keys on a DISJOINT set: audit-handoff, brief_complete, news_impact/price_anomaly/bctc_signal/fundamental_*, zone_missing_tier3, zone_health_report, implementation_complete, improvement_proposal, repair_task_request, ci_red, bug-escalation. The intersection with the live distribution is EMPTY — 128/128 = 100% of PO's live signal inbox routes to the table's own last row, 'any unknown type -> Log ... and skip'. TRIGGERING INSTANCE: the 2026-07-31T14:09Z HIGH escalation cow-20260731T140900 (refine_bctc_md session-id gap) is type 'system-issue' — a CANONICAL type in .claude/skills/signal-dashboard/SKILL.md's own § Signal types table WITH po as its declared receiver — and it has no rule, so a doc-faithful PO tick would have logged-and-skipped a HIGH infra escalation. It only survived because the router independently relayed a corroborating telegram report (4238). 47 further archived to=po system-issue rows exist in docs/data/orch/archive/2026-07.json. SECONDARY DRIFT, same file family: (a) the SKILL's § Receivers table lists po's senders as tran-ngoc-bau/agents-architect/system-auditor, but cowork-team and dev-team both write to po in practice and are undeclared; (b) live rows carry status 'triaged', which is NOT in the SKILL's documented enum (NEW/READ/RESOLVED/SUPERSEDED) — direct evidence that PO ticks have been improvising past this table rather than executing it, the same 'agents visibly improvising past a drifted doc' shape recorded on .claude/skills/commit-mutex/SKILL.md in FIX-TASKCLAIM-OWNER-CLIENT-SESSION-MISSING-FLEET-FLOW-DOCS.",
+        "ac": "1. Every one of the 16 live to=po types has an explicit rule in docs/agents/po/flow/triage-signals.md, or an explicit documented alias onto an existing rule (e.g. bctc-data-quality-anomaly -> the bctc_signal rule) — no type may resolve to the unknown-type fallback. 2. The type list is re-derived from the LIVE .signal_queue.rows[] distribution (hot + docs/data/orch/archive/*.json cold), NOT copied from the SKILL's canonical list, which is itself incomplete. 3. system-issue gets a first-class rule (infrastructure problem -> FIX/CLEAN with zone taken from the payload, or explicit ops route) since it is the type reserved for infra escalations to po. 4. .claude/skills/signal-dashboard/SKILL.md § Receivers adds cowork-team and dev-team as declared senders to po; the status enum either admits 'triaged' or the writing flows are corrected to use the documented enum — pick one and state it. 5. A guard (script or test) FAILS when any .signal_queue.rows[] row addressed to po carries a type with no rule in triage-signals.md, so the drift cannot silently return. 6. triage-signals.md stays inside its size cap — if the table cannot absorb 16 more rows, split the low-traffic types into a lazy-load sibling and keep a pointer, per the waterfall/lazy-load standard.",
+        "files": [
+          "docs/agents/po/flow/triage-signals.md",
+          ".claude/skills/signal-dashboard/SKILL.md",
+          "docs/data/orch/orch-state.json"
+        ],
+        "baseline_pass": "jq over live .signal_queue.rows[] with to=='po': every distinct .type resolves to a named rule in triage-signals.md (0 fall-throughs); new guard script exits non-zero on a synthetic unrouted type.",
+        "deliverable": "triage-signals.md routing table covering the live signal-type distribution + signal-dashboard SKILL receiver/status reconciliation + a drift guard.",
+        "related": [
+          "FIX-COWORK-SPAWNFANOUT-NO-SESSION-ID-IN-LEAF-ENTRY-PROMPT",
+          "FIX-TASKCLAIM-OWNER-CLIENT-SESSION-MISSING-FLEET-FLOW-DOCS",
+          "P1-DETECTOR-CLOSURE-TRIAGE-SIGNALS",
+          "FIX-COWORK-STEP0A-TOPO-DRAIN-STATUS-CONTRACT"
+        ],
+        "created_at": "2026-07-31T14:32:00Z",
+        "created_by": "po/triage-20260731T1429Z",
+        "status_note": "Not a theoretical gap: measured 100% fall-through on the live inbox, and the 14:09Z HIGH escalation this same tick is one of the affected rows. Cheap + specific (one table + one SKILL section + one guard).",
+        "updated_at": "2026-08-01T05:04:00Z",
+        "po_manual_dispatch_flagged_at": "2026-08-01T04:36:40Z",
+        "po_manual_dispatch_flagged_by": "po (manual-dispatch-sweep)",
+        "po_manual_dispatch_class": "DRS-STRANDED-OFF-ALLOWLIST",
+        "po_manual_dispatch_note": "po (manual-dispatch-sweep) surfaced DRS-STRANDED-OFF-ALLOWLIST candidate — folding into this tick's BATCH. SELECTION DEVIATION, logged deliberately: Step 1's sort is [rank, idx] and the strict top was TE-T06 (P1, idx 31). Both are rank 1 (P1), so the tie-break between them is array position, which carries no priority meaning. TE-T06 was passed over for two reasons: (1) it is a SPRINT-M carrying NEITHER files[] NOR baseline_pass, and Step 3 builds its BATCH entry from exactly those fields — dispatching it would emit a structurally incomplete entry; (2) this row earned selection on live evidence from THIS tick rather than on position. While dispositioning the 10 commit-sweep-guard fires I hit the defect this row describes head-on: triage-signals.md bug-escalation enumerates only the payload classes \"[sweep-guard] BARE commit about to absorb\" and \"[sweep-guard] INTERNAL:\" and instructs PO to route by parsing escalated= from the payload, but all 10 live fires are a third class, \"[sweep-guard] SAME-FILE DIVERGENCE (non-blocking, AC-3 detector)\", whose signal JSON carries no escalated key at all. That is an independent, same-tick confirmation of this row's own claim (0 of 16 live signal types match a named rule), observed from the consumer side. TE-T06 remains eligible and unflagged for a future tick.",
+        "commits": [
+          "af2f13536",
+          "ee07ae65a"
+        ],
+        "review_note": "agent-father: routing table re-derived from live 132 to=po rows (5 inline + 11 sibling triage-signals-longtail.md), bug-escalation SAME-FILE DIVERGENCE branch fixed, signal-dashboard SKILL Receivers+status-enum updated, main.md Pre-check wired, inline jq guard live-verified. Flagged follow-up (not fixed, out of zone): orch-cold-evict.sh TERMINAL_SIGNAL_STATUSES missing triaged/RETRACTED."
       }
     ],
     "qa": [],
