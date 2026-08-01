@@ -1,0 +1,14 @@
+{
+  "from": "commit-sweep-guard",
+  "to": "po",
+  "type": "bug-escalation",
+  "priority": "high",
+  "createdAt": "2026-08-01T03:41:58Z",
+  "payload": "[sweep-guard] SAME-FILE DIVERGENCE (non-blocking, AC-3 detector): 'docs/agent-memory/decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-dev-team-12.md' is being committed via a pathspec-SCOPED commit line, which takes its WORKING TREE content (git's --only semantics) — NOT the subset already staged in the shared index for this exact path. The shared index's staged blob for 'docs/agent-memory/decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-dev-team-12.md' (cdd10362b2a9405ab5346f7a38c2c71ceed844af) differs from what is about to land in this commit (ece758c3d51f9b7b438086ad0e2afb9ea3a909f6) — a peer's differently-staged hunk (or your own further, unreviewed edit) in this SAME file may be about to be swept in. Documented NON-GOAL of the pathspec-commit mandate, see docs/architecture-briefs/2026-07-21-commit-path-peer-index-sweep-guard.md §2.7 — detector only, never blocked. Inspect before trusting this commit's scope: git diff cdd10362b2a9405ab5346f7a38c2c71ceed844af ece758c3d51f9b7b438086ad0e2afb9ea3a909f6 -- docs/agent-memory/decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-dev-team-12.md",
+  "_processed": {
+    "fingerprint": "e373b1204ec7fcaaf968cf1a706aff706cc407b135cbc34ec9f348755ab19a57",
+    "processedAt": "2026-08-01T03:45:33Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
