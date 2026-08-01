@@ -80,3 +80,22 @@
   signal-queue DONE-mark", and this is a task_board row, not signal_queue. Same precedent as
   TE-T12/S16: declined the dispatch prompt's instruction to run `orch-apply.sh` myself; supplied
   the exact transform in RETURN for dev-team/router to apply.
+
+## Fix (dev-team dispatch, PO triage DRS-STRANDED-OFF-ALLOWLIST) 2026-08-01T01:20:00Z TE-T21
+- `.claude/skills/task-lock/SKILL.md` 283L→186L. §Session-Presence Row (73L) was near-verbatim
+  duplicate of dispatch-claim's own claim/heartbeat/current_task-reclaim/non-adoptable blocks —
+  replaced with a 7L pointer. Verified the dedup direction BEFORE editing: task said point at
+  CARD.md §0a, but CARD.md:38 is itself only a 1-line forward-pointer at SKILL.md — SKILL.md §Step
+  0a is the actual fuller/authoritative spec (497L incl. full code), so pointed there instead,
+  matching the source audit's own proposal (`docs/architecture-briefs/2026-07-12-token-economy-
+  lazyload-audit.md#T-21`). Lesson: when a task names a candidate SSOT, verify it isn't itself a
+  thin pointer one hop from the real fuller doc — don't dedup toward a summary-of-a-summary.
+- Also deleted §Phase Status (23L shipped-sprint commit-SHA changelog, recoverable via `git log`)
+  and §Legacy Backward-Compat Fallback (14L "TRANSITIONAL" note for a matching-ladder rung) — the
+  latter is not just stale prose but factually WRONG now: grepped live
+  `coordinationStore.ts:716,761` and confirmed TASK_1980/P1-FINAL already deleted the fallback
+  rungs the section claimed still existed. Left as-is it would have actively misled a future reader
+  into thinking a dead code path was live.
+- No other active flow/skill/package doc references the 2 deleted section names or breaks — only
+  historical audit/handoff docs cite exact old line numbers (point-in-time citations, untouched by
+  design). `dispatch-claim/CARD.md` needed no edit — read for SSOT verification only.

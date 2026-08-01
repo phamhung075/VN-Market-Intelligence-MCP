@@ -367,3 +367,30 @@ not touch `orch-state.json` (`in_progress[]→review[]` lane-move) —
 `commit_zone.excluded` honored per S16/TE-T12 precedent; exact
 `orch-apply.sh` transform supplied in RETURN for dev-team/router to
 apply.
+
+### STEP agent-father-S18 · agent-father · 2026-08-01T01:20:00Z
+**task-id:** TE-T21
+**what-done:** `.claude/skills/task-lock/SKILL.md` 283L→186L: replaced
+§Session-Presence Row (73L, near-verbatim dupe of dispatch-claim's own
+claim/heartbeat/reclaim blocks) with a 7L pointer; deleted §Phase Status
+(23L shipped-sprint SHA changelog) and §Legacy Backward-Compat Fallback
+(14L, described a matching-ladder rung — verified DEAD in live
+coordinationStore.ts:716,761, TASK_1980/P1-FINAL already removed it).
+**what-considered:**
+- Dedup target CARD.md §0a (per task's literal phrasing) vs SKILL.md
+  §Step 0a — read both first: CARD.md:38 is itself only a 1-line pointer
+  at SKILL.md, not the fuller spec — chose dispatch-claim/SKILL.md as the
+  genuine SSOT, matching the source audit's own proposal
+  (token-economy-lazyload-audit.md#T-21).
+- Delete vs move §Phase Status to an architecture-brief — chose delete:
+  commit SHAs already permanently recoverable via `git log`, and the
+  underlying sprint history already lives in decision journals/handoffs
+  (TASK_1989/1990/1980 docs), so no unique info was lost.
+**why-decision:** Audit brief (2026-07-12) already specified this exact
+3-part fix with line ranges; independently re-verified all 3 premises
+live (grep'd coordinationStore.ts for the "removed" fallback rungs,
+confirmed no active flow/skill doc references the deleted section names)
+before applying rather than trusting the stale audit text alone.
+**why-change:** none — scope matched task Files list exactly;
+dispatch-claim/CARD.md read for SSOT verification, needed no edit (its
+existing §0a pointer to SKILL.md was already correct).
