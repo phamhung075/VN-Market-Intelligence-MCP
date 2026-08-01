@@ -26,7 +26,13 @@ import { computeFinancialRatios } from "../../domain/services/financial-reports/
 import { computePeriodDelta } from "../../domain/services/financial-reports/periodDeltaComputer.js";
 import type { FinancialMetrics } from "../../domain/services/financial-reports/periodDeltaComputer.js";
 import { validateFinancialReport } from "../../domain/services/financial-reports/bctcValidator.js";
-import { validateFinancialFigures, detectUnitMismatch, detectBsIntraStmtUnitMismatch } from "../../domain/services/financial-reports/financialFiguresValidator.js";
+import {
+  validateFinancialFigures,
+  validateFinancialFiguresDetailed,
+  detectUnitMismatch,
+  detectBsIntraStmtUnitMismatch,
+} from "../../domain/services/financial-reports/financialFiguresValidator.js";
+import type { FinancialFiguresInput } from "../../domain/services/financial-reports/financialFiguresValidator.js";
 import { getDb, initDatabase } from "../../infrastructure/db/schema.js";
 import {
   isBctcSignalDebounced,
@@ -176,6 +182,72 @@ function computeConfidence(
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// FIX-BCTC-1345B-ALERT-NAMES-A-RULE-FAMILY-THAT-CANNOT-PRODUCE-ITS-OWN-VALUE
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Build a truthful, figure-bearing description of WHY `confidenceFinancial`
+ * is what it is — consumed by the `[BCTC-1345b]` alert text in `storeReport`.
+ *
+ * AC-1: must name the detector that ACTUALLY fired — cross-statement unit
+ * mismatch, intra-BS unit mismatch, or the specific BCTC-VAL-NN rule, with
+ * the offending figures. Never a hard-coded ticker-pattern hint.
+ * AC-2: the VNM/VEA corruption-signature phrase may only be attached when
+ * the value came from `validateFinancialFiguresDetailed` and the matched
+ * rule is BCTC-VAL-01 (assets<equity) or BCTC-VAL-03/BCTC-VAL-10 (margin
+ * outlier) — the two families the original hard-coded hint named — AND the
+ * resulting confidence is a value that rule family can actually produce
+ * (0.0 hard-fail / 0.8 single-soft-violation). This falls out of the
+ * function's own structure (VAL-01 hard-fails to exactly 0.0; a lone
+ * VAL-03 soft violation yields exactly 0.8) rather than a separate gate.
+ *
+ * When `crossStmtMismatch` or `bsIntraStmtMismatch` fired, `validateFinancialFigures()`
+ * was NEVER called (parseBctcReport's short-circuit) — so this branch never
+ * mentions BCTC-VAL-NN rules or the VNM/VEA signature at all.
+ */
+export function describeConfidenceFinancialReason(params: {
+  crossStmtMismatch: boolean;
+  bsIntraStmtMismatch: boolean;
+  figures: FinancialFiguresInput;
+}): string {
+  const { crossStmtMismatch, bsIntraStmtMismatch, figures } = params;
+  const { totalAssets, netRevenue, totalLiabilities } = figures;
+
+  if (crossStmtMismatch || bsIntraStmtMismatch) {
+    const parts: string[] = [];
+    if (crossStmtMismatch && totalAssets !== null && netRevenue !== null && netRevenue !== 0) {
+      const ratio = totalAssets > netRevenue ? totalAssets / netRevenue : netRevenue / totalAssets;
+      parts.push(
+        `cross-statement unit mismatch (assets/revenue ratio ${ratio.toFixed(0)}x — total_assets=${totalAssets}, net_revenue=${netRevenue})`,
+      );
+    }
+    if (bsIntraStmtMismatch && totalAssets !== null && totalLiabilities !== null && totalLiabilities !== 0) {
+      const ratio = totalAssets > totalLiabilities ? totalAssets / totalLiabilities : totalLiabilities / totalAssets;
+      parts.push(
+        `intra-BS unit mismatch (assets/liabilities ratio ${ratio.toFixed(0)}x — total_assets=${totalAssets}, total_liabilities=${totalLiabilities})`,
+      );
+    }
+    return (
+      `${parts.join(" AND ")}. OCR unit-normalisation defect (one statement in raw VND, ` +
+      `another in triệu) — validateFinancialFigures() was NOT evaluated for this record.`
+    );
+  }
+
+  const { violations } = validateFinancialFiguresDetailed(figures);
+  if (violations.length === 0) {
+    return "validateFinancialFigures() found no rule violation for the extracted figures — this alert fired from extraction confidence, not the financial-figures rule set.";
+  }
+
+  const ruleText = violations.map((v) => `${v.rule}: ${v.detail}`).join("; ");
+  const matchesVnmVeaSignature = violations.some(
+    (v) => v.rule === "BCTC-VAL-01" || v.rule === "BCTC-VAL-03" || v.rule === "BCTC-VAL-10",
+  );
+  return matchesVnmVeaSignature
+    ? `${ruleText} (matches the VNM/VEA OCR-corruption signature: assets<equity or margin>100%).`
+    : `${ruleText}.`;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Delta helper: build FinancialMetrics from a FinancialReport
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -236,6 +308,7 @@ async function storeReport(
   extractionConfidence: number,
   confidenceFinancial?: number,
   telegramBugFn?: (msg: string) => Promise<boolean>,
+  confidenceFinancialDetail?: string,
 ): Promise<void> {
   // 1196: Guard — all-zero extraction produces no usable data; skip insert entirely.
   if (extractionConfidence === 0) {
@@ -272,11 +345,16 @@ async function storeReport(
 
   if (confidenceFinancial !== undefined && compositeConfidence <= 0.3) {
     validationStatus = "low_confidence";
+    // FIX-BCTC-1345B-ALERT-NAMES-A-RULE-FAMILY-THAT-CANNOT-PRODUCE-ITS-OWN-VALUE:
+    // name the detector that ACTUALLY fired (AC-1) instead of an unconditional
+    // hard-coded ticker-pattern hint. `confidenceFinancialDetail` is built by
+    // `describeConfidenceFinancialReason()` at the call site, where the raw
+    // detector booleans and figures are still in scope.
     const financialMsg =
       `[BCTC-1345b] Low financial confidence (composite=${compositeConfidence.toFixed(2)}, ` +
       `financial=${confidenceFinancial.toFixed(2)}) — conviction signal skipped for ` +
       `${report.actionCode} ${report.period.year}-${report.period.periodType ?? ""}. ` +
-      `Check for OCR corruption (VNM/VEA pattern: assets<equity or margin>100%).`;
+      `${confidenceFinancialDetail ?? "validateFinancialFigures() detail unavailable — see confidence_financial column."}`;
     logger.warn(financialMsg);
 
     const periodKey = `${report.period.year}-${report.period.periodType ?? ""}`;
@@ -734,18 +812,32 @@ export async function parseBctcReport(
     balanceSheet.totalAssets || null,
     balanceSheet.totalLiabilities || null,
   );
-  const confidenceFinancial = (detectUnitMismatch(
+  // FIX-BCTC-1345B-ALERT-NAMES-A-RULE-FAMILY-THAT-CANNOT-PRODUCE-ITS-OWN-VALUE:
+  // named separately from bsIntraStmtMismatch (was previously inlined directly
+  // into the ternary below) so describeConfidenceFinancialReason() can report
+  // WHICH of the two unit-mismatch detectors actually fired.
+  const crossStmtMismatch = detectUnitMismatch(
     balanceSheet.totalAssets || null,
     incomeStatement.netRevenue || null,
-  ) || bsIntraStmtMismatch)
+  );
+  const financialFiguresInput: FinancialFiguresInput = {
+    totalAssets: balanceSheet.totalAssets || null,
+    totalEquity: balanceSheet.equity.total || null,
+    totalLiabilities: balanceSheet.totalLiabilities || null,
+    operatingMargin: operatingMarginRatio,
+    netRevenue: incomeStatement.netRevenue || null,
+  };
+  const confidenceFinancial = (crossStmtMismatch || bsIntraStmtMismatch)
     ? 0.1
-    : validateFinancialFigures({
-        totalAssets: balanceSheet.totalAssets || null,
-        totalEquity: balanceSheet.equity.total || null,
-        totalLiabilities: balanceSheet.totalLiabilities || null,
-        operatingMargin: operatingMarginRatio,
-        netRevenue: incomeStatement.netRevenue || null,
-      });
+    : validateFinancialFigures(financialFiguresInput);
+  // AC-1/AC-2: truthful, figure-bearing description of the detector that
+  // actually produced confidenceFinancial — replaces the old unconditional
+  // hard-coded VNM/VEA hint in the [BCTC-1345b] alert text (storeReport).
+  const confidenceFinancialDetail = describeConfidenceFinancialReason({
+    crossStmtMismatch,
+    bsIntraStmtMismatch,
+    figures: financialFiguresInput,
+  });
 
   // ── Step 5d: Validate the extracted data (Task 132) ──────────────────────
   // C-5 (BANK-DEV-1): pass isBankForm so bctcValidator skips gross_profit comparisons
@@ -859,7 +951,7 @@ export async function parseBctcReport(
   const db = getDb();
 
   try {
-    await storeReport(report, validationStatus, validationNotes, extractionConfidence, confidenceFinancial, _telegramBugFn);
+    await storeReport(report, validationStatus, validationNotes, extractionConfidence, confidenceFinancial, _telegramBugFn, confidenceFinancialDetail);
   } catch (err) {
     throw new Error(
       `storeReport failed: ${err instanceof Error ? err.message : String(err)}`,
