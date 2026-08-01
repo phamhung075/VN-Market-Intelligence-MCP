@@ -78,13 +78,55 @@ describe("FACTORY-SCHEDULER-split-dataAuditJob — extracted checks are individu
 
   it("checkStaleAlerts: returns D-3 + D-4 findings in order, both isolated to alerts table", () => {
     const db = makeDb();
-    db.prepare("INSERT INTO alerts (id, triggered_at, read) VALUES ('a1', datetime('now','-31 days'), 0)").run();
+    // D-3 and D-4 now share the same 30d threshold (FIX-AGENTSIGNALS-EXPIRED-GC-CRON
+    // tightened D-4 from 60d -> 30d), so to isolate each check to exactly 1 row: a1 is
+    // already resolved (excluded from D-4's `resolved_at IS NULL` predicate) but still
+    // unread (caught by D-3); a2 is already read (excluded from D-3's `read = 0`
+    // predicate) but still unresolved (caught by D-4).
+    db.prepare("INSERT INTO alerts (id, triggered_at, read, resolved_at) VALUES ('a1', datetime('now','-31 days'), 0, datetime('now','-1 days'))").run();
     db.prepare("INSERT INTO alerts (id, triggered_at, read, resolved_at) VALUES ('a2', datetime('now','-61 days'), 1, NULL)").run();
 
     const findings = checkStaleAlerts(db);
     expect(findings.map((f) => f.check)).toEqual(["stale_unread_alerts", "auto_expire_unresolved"]);
     expect(findings[0]!.rowsAffected).toBe(1);
     expect(findings[1]!.rowsAffected).toBe(1);
+  });
+
+  // FIX-AGENTSIGNALS-EXPIRED-GC-CRON: D-4 retention-GC predicates, direct unit coverage.
+  it("checkStaleAlerts D-4: 30d threshold — in-range survives, out-of-range auto-resolved with the retention-GC marker", () => {
+    const db = makeDb();
+    db.prepare("INSERT INTO alerts (id, triggered_at, read, resolved_at) VALUES ('fresh', datetime('now','-29 days'), 1, NULL)").run();
+    db.prepare("INSERT INTO alerts (id, triggered_at, read, resolved_at) VALUES ('stale', datetime('now','-31 days'), 1, NULL)").run();
+
+    const findings = checkStaleAlerts(db);
+    const d4 = findings.find((f) => f.check === "auto_expire_unresolved");
+    expect(d4!.rowsAffected).toBe(1);
+
+    const fresh = db.query<{ resolved_at: string | null }, []>("SELECT resolved_at FROM alerts WHERE id = 'fresh'").get();
+    expect(fresh!.resolved_at).toBeNull();
+
+    const stale = db.query<{ resolved_at: string | null; resolution_notes: string | null }, []>(
+      "SELECT resolved_at, resolution_notes FROM alerts WHERE id = 'stale'"
+    ).get();
+    expect(stale!.resolved_at).not.toBeNull();
+    expect(stale!.resolution_notes).toBe("auto-resolved by retention GC");
+  });
+
+  // FIX-AGENTSIGNALS-EXPIRED-GC-CRON hard constraint: ISO 'T...Z' format (real production
+  // write format, alertStore.ts:453) must be caught by the datetime()-wrapped predicate.
+  it("checkStaleAlerts D-4: catches a stale row whose triggered_at is ISO 'T...Z' formatted, never hard-deletes", () => {
+    const db = makeDb();
+    const thirtyFiveDaysAgoIso = new Date(Date.now() - 35 * 24 * 60 * 60 * 1000).toISOString();
+    db.prepare("INSERT INTO alerts (id, triggered_at, read, resolved_at) VALUES ('iso-fmt', ?, 1, NULL)").run(thirtyFiveDaysAgoIso);
+
+    const findings = checkStaleAlerts(db);
+    const d4 = findings.find((f) => f.check === "auto_expire_unresolved");
+    expect(d4!.rowsAffected).toBe(1);
+
+    const row = db.query<{ resolved_at: string | null }, []>("SELECT resolved_at FROM alerts WHERE id = 'iso-fmt'").get();
+    expect(row!.resolved_at).not.toBeNull(); // UPDATE, never a DELETE — row still present
+    const count = db.query<{ c: number }, []>("SELECT COUNT(*) c FROM alerts WHERE id = 'iso-fmt'").get();
+    expect(count!.c).toBe(1);
   });
 
   it("checkIndicatorRanges: flags an out-of-range indicator as critical + inserts agent_feedback", () => {

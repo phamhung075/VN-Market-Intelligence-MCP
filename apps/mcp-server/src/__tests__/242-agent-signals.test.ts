@@ -225,6 +225,41 @@ describe("Task 242 — Agent Signal Bus", () => {
     expect(deleted).toBe(0);
   });
 
+  // FIX-AGENTSIGNALS-EXPIRED-GC-CRON hard constraint: the predicate wraps the column
+  // (`datetime(expires_at) < datetime('now')`), not just the threshold, per
+  // feedback_sqlite_iso8601_datetime_strcompare_bypass. Defense-in-depth: the
+  // production writer (expiresAt() helper) always normalizes to the canonical
+  // "YYYY-MM-DD HH:MM:SS" form, but this proves an ISO 'T...Z' formatted row (e.g. a
+  // legacy/foreign write path) is still correctly identified as expired, never
+  // silently skipped by a raw string compare.
+  it("cleanExpired removes a row whose expires_at is ISO 'T...Z' formatted (defense-in-depth)", () => {
+    const pastIso = new Date(Date.now() - 60 * 60 * 1000).toISOString(); // 1h ago
+    db.exec(`
+      INSERT INTO agent_signals (from_agent, to_agent, signal_type, payload, expires_at)
+      VALUES ('a', 'b', 'urgent_news', '{}', '${pastIso}')
+    `);
+
+    const deleted = cleanExpired(db);
+    expect(deleted).toBe(1);
+
+    const remaining = db.query<{ cnt: number }, []>("SELECT COUNT(*) as cnt FROM agent_signals").get();
+    expect(remaining?.cnt).toBe(0);
+  });
+
+  it("cleanExpired does NOT remove a row whose expires_at is ISO 'T...Z' formatted and still in the future", () => {
+    const futureIso = new Date(Date.now() + 60 * 60 * 1000).toISOString(); // 1h from now
+    db.exec(`
+      INSERT INTO agent_signals (from_agent, to_agent, signal_type, payload, expires_at)
+      VALUES ('a', 'b', 'urgent_news', '{}', '${futureIso}')
+    `);
+
+    const deleted = cleanExpired(db);
+    expect(deleted).toBe(0);
+
+    const remaining = db.query<{ cnt: number }, []>("SELECT COUNT(*) as cnt FROM agent_signals").get();
+    expect(remaining?.cnt).toBe(1);
+  });
+
   // ── signal_type validation ─────────────────────────────────────────────────
 
   it("postSignal accepts all valid signal_type values", () => {

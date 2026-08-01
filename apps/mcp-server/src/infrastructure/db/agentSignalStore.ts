@@ -1220,6 +1220,25 @@ export function getSignalEffectiveness(
  * intentionally-permanent accuracy ledger (never pruned) — so this adds no new unbounded
  * growth, it just correctly reflects an existing invariant instead of throwing on it.
  *
+ * FIX-AGENTSIGNALS-EXPIRED-GC-CRON (2026-08-01): already wired daily into the off-hours
+ * `dataAuditJob:daily` cron (`0 23 * * *` Asia/Ho_Chi_Minh — see schedulerJobTable.ts) via
+ * runDailyAudit(); this IS the "agent_signals GC cron" — no separate cron needed. Hardened
+ * the predicate to `datetime(expires_at) < datetime('now')` (wrapping the column, not just
+ * the threshold) per feedback_sqlite_iso8601_datetime_strcompare_bypass: the writer
+ * (expiresAt() helper, this file) always normalizes to the canonical SQLite
+ * "YYYY-MM-DD HH:MM:SS" format today, so this is defense-in-depth against any future/legacy
+ * write path landing a "T...Z" ISO string here (SQLite's datetime() parses both forms
+ * correctly — verified live — the wrap just makes that normalization explicit and immune to
+ * a raw-string-compare regression). Deliberately NOT narrowed to `status IN ('read',
+ * 'expired')` as originally proposed: there is no `'expired'` status literal anywhere in
+ * this codebase (no CHECK constraint; only 'unread'/'read' are ever written) and an
+ * unread-but-expired row can never be read again (getSignals filters `expires_at >
+ * datetime('now')`), so excluding 'unread' would strand those rows and reintroduce
+ * unbounded growth — the exact defect this function exists to prevent. RAW-verified
+ * 2026-08-01 against the live named-volume DB: 124 total / 119 expired (104 FK-blocked by
+ * signal_outcomes, 15 GC-eligible) — far below the stale 2026-06-20 auditor snapshot
+ * (~3493) because this daily cron has been running the whole time.
+ *
  * @param db - Active bun:sqlite Database connection
  * @returns  Number of rows deleted
  */
@@ -1228,7 +1247,7 @@ export function cleanExpired(db: Database): number {
     const result = db
       .prepare(`
         DELETE FROM agent_signals
-         WHERE expires_at < datetime('now')
+         WHERE datetime(expires_at) < datetime('now')
            AND id NOT IN (SELECT signal_id FROM signal_outcomes)
       `)
       .run();
@@ -1240,7 +1259,7 @@ export function cleanExpired(db: Database): number {
     // (fail-loud-protocol) is re-thrown rather than masked by a second blind attempt.
     if (!msg.includes("no such table")) throw err;
     const result = db
-      .prepare("DELETE FROM agent_signals WHERE expires_at < datetime('now')")
+      .prepare("DELETE FROM agent_signals WHERE datetime(expires_at) < datetime('now')")
       .run();
     return result.changes;
   }

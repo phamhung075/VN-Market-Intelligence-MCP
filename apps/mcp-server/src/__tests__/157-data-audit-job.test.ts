@@ -433,8 +433,8 @@ describe("Task 157 — Data Audit Job", () => {
     expect(countAfterSecond).toBeGreaterThanOrEqual(countAfterFirst);
   });
 
-  // ── Extra: D-4 auto-expire unresolved alerts ──────────────────────────────
-  it("D-4: auto-expires unresolved alerts older than 60 days", async () => {
+  // ── Extra: D-4 auto-resolve unresolved alerts (retention GC) ──────────────
+  it("D-4: auto-resolves unresolved alerts older than 30 days (retention GC)", async () => {
     db.prepare(`
       INSERT INTO alerts (id, triggered_at, severity, read, resolved_at)
       VALUES (?, datetime('now','-65 days'), 'warning', 1, NULL)
@@ -447,7 +447,80 @@ describe("Task 157 — Data Audit Job", () => {
       "SELECT resolved_at, resolution_notes FROM alerts WHERE id = 'alert-old-unresolved'"
     ).get();
     expect(row!.resolved_at).not.toBeNull();
-    expect(row!.resolution_notes).toBe("auto-expired by audit");
+    expect(row!.resolution_notes).toBe("auto-resolved by retention GC");
+  });
+
+  // FIX-AGENTSIGNALS-EXPIRED-GC-CRON: 30d threshold boundary — a row inside the old
+  // 60d window but outside the new 30d window must now be caught (proves the
+  // threshold actually tightened, not just the marker text).
+  it("D-4: auto-resolves a 45-day-old unresolved alert (inside old 60d window, outside new 30d window)", async () => {
+    db.prepare(`
+      INSERT INTO alerts (id, triggered_at, severity, read, resolved_at)
+      VALUES (?, datetime('now','-45 days'), 'high', 1, NULL)
+    `).run("alert-45d-unresolved");
+
+    const { runDailyAudit } = await import("../scheduler/news-analysis/dataAuditJob.js");
+    await runDailyAudit(db, async () => {});
+
+    const row = db.query<{ resolved_at: string | null; resolution_notes: string | null }, []>(
+      "SELECT resolved_at, resolution_notes FROM alerts WHERE id = 'alert-45d-unresolved'"
+    ).get();
+    expect(row!.resolved_at).not.toBeNull();
+    expect(row!.resolution_notes).toBe("auto-resolved by retention GC");
+  });
+
+  // FIX-AGENTSIGNALS-EXPIRED-GC-CRON: in-range row (< 30d) must survive untouched.
+  it("D-4: does NOT touch an unresolved alert only 10 days old", async () => {
+    db.prepare(`
+      INSERT INTO alerts (id, triggered_at, severity, read, resolved_at)
+      VALUES (?, datetime('now','-10 days'), 'high', 1, NULL)
+    `).run("alert-fresh-unresolved");
+
+    const { runDailyAudit } = await import("../scheduler/news-analysis/dataAuditJob.js");
+    await runDailyAudit(db, async () => {});
+
+    const row = db.query<{ resolved_at: string | null; resolution_notes: string | null }, []>(
+      "SELECT resolved_at, resolution_notes FROM alerts WHERE id = 'alert-fresh-unresolved'"
+    ).get();
+    expect(row!.resolved_at).toBeNull();
+    expect(row!.resolution_notes).toBeNull();
+  });
+
+  // FIX-AGENTSIGNALS-EXPIRED-GC-CRON hard constraint: triggered_at stored in the
+  // "T...Z" ISO format (alertStore.ts's real production write format — see
+  // alertStore.ts:453) must still be caught by the datetime()-wrapped predicate,
+  // never silently bypassed by a raw string compare.
+  it("D-4: auto-resolves a stale alert whose triggered_at uses ISO 'T...Z' format (production write format)", async () => {
+    const fortyDaysAgoIso = new Date(Date.now() - 40 * 24 * 60 * 60 * 1000).toISOString();
+    db.prepare(`
+      INSERT INTO alerts (id, triggered_at, severity, read, resolved_at)
+      VALUES (?, ?, 'high', 1, NULL)
+    `).run("alert-iso-tz-format", fortyDaysAgoIso);
+
+    const { runDailyAudit } = await import("../scheduler/news-analysis/dataAuditJob.js");
+    await runDailyAudit(db, async () => {});
+
+    const row = db.query<{ resolved_at: string | null; resolution_notes: string | null }, []>(
+      "SELECT resolved_at, resolution_notes FROM alerts WHERE id = 'alert-iso-tz-format'"
+    ).get();
+    expect(row!.resolved_at).not.toBeNull();
+    expect(row!.resolution_notes).toBe("auto-resolved by retention GC");
+  });
+
+  // Already-resolved rows must never be re-touched regardless of age.
+  it("D-4: does NOT touch an already-resolved alert even if very old", async () => {
+    db.prepare(`
+      INSERT INTO alerts (id, triggered_at, severity, read, resolved_at, resolution_notes)
+      VALUES (?, datetime('now','-90 days'), 'high', 1, datetime('now','-89 days'), 'manually resolved')
+    `).run("alert-already-resolved");
+
+    const { runDailyAudit } = await import("../scheduler/news-analysis/dataAuditJob.js");
+    await runDailyAudit(db, async () => {});
+
+    const row = db.query<{ resolution_notes: string | null }, []>(
+      "SELECT resolution_notes FROM alerts WHERE id = 'alert-already-resolved'"
+    ).get();
+    expect(row!.resolution_notes).toBe("manually resolved");
   });
 
   // ── Extra: D-9 old log purge ──────────────────────────────────────────────
