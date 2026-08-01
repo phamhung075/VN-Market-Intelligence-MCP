@@ -116,3 +116,12 @@
 - Read authoritative row from MAIN checkout (not stale worktree copy — divergent inode/content, row had moved backlog→in_progress there); checked `.head.active_task_id` != this task before writing, left `.head` untouched.
 **why-decision:** DONE_VERIFIED — genuinely-stale claim confirmed and fixed at runtime plane before+after; deploy-lane defect this row names is resolved.
 **why-change:** none — followed dev-team's 5-step dispatch exactly; telemetry-omission gap flagged for PO to mint separately, not actioned (out of QA scope).
+
+### STEP qa-S11 · qa · 2026-08-01T01:06:46Z
+**task-id:** FIX-DEVTEAM-QADRAIN-HEAD-WRITE-CONDITIONAL
+**what-done:** Direct-commit verify (`review[]` row, no `branch` field, PO-dispatched directly outside the normal QA-Drain picker — this row IS that picker's own fix, circular otherwise). Verified commit 9fe706fa2 on main ancestry, `git show --stat` matches `.files[]` exactly, diff read directly confirms `.head` write is now conditional on `$head_free`. Re-ran `scripts/audits/devteam-dispatch-gate-satisfiability.sh` myself (not trusted from PO-attested prose): exit 0, 57 PASS / 0 FAIL incl. new AC-QADRAIN-HEAD-GUARD negative+positive controls.
+**what-considered:**
+- No TS files touched (.jq + .sh only) → bun test/tsc structurally N/A; `mock-guard.sh --files` on both → PASS ("no production source to scan").
+- `.head.active_task_id` was null (idle, unrelated task in next_action prose) — flipped task is NOT `.head.active_task_id`, so CANONICAL:SSOT-STATUSFLIP-LANEMOVE rule (b) head-sync does not apply; left `.head` untouched.
+**why-decision:** APPROVED, DONE_VERIFIED. Both files independently confirmed changed as claimed, full audit suite genuinely green under my own run, no discrepancies found. Lane-moved `task_board.review[]`→`task_board.done_verified[]` via jq+`scripts/orch-apply.sh` in one write (review 245→244, done_verified 1→2, conservation check task_total 756→756).
+**why-change:** none — PO's direct-dispatch rationale (circular picker) followed exactly; noted in status_note that `scripts/devteam-review-claim-qa-drain.jq` is now safe to run normally on subsequent ticks.
