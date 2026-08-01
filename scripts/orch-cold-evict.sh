@@ -131,6 +131,27 @@ TERMINAL_SPRINT_STATUSES="${TERMINAL_SPRINT_STATUSES:-DONE,DONE_VERIFIED,CANCELL
 # signal_queue.archive[] is always fully evicted (inline archive = RC-1 root cause).
 TERMINAL_SIGNAL_STATUSES="${TERMINAL_SIGNAL_STATUSES:-READ,RESOLVED,SUPERSEDED,ACUTE-RESOLVED-ROOT-TRACKED}"
 
+# FIX-COLDEVICT-SIGNALQUEUE-NO-AGE-GATE-ORPHANS-READ-ROWS (2026-08-01): the
+# signal_queue.rows[] eviction pass below previously selected on TERMINAL_SIGNAL_STATUSES
+# alone with ZERO age check — unlike done[]/sprint eviction (which gate on rank AND
+# cutoff), a row could get cold-evicted the SAME tick it was flipped to a terminal
+# status, before a reader (e.g. po triage) ever saw it. 3/3 confirmed live incidents
+# silently orphaned po-addressed escalations (most recently 2026-08-01T02:36Z, evicted
+# ~18min after being marked READ) — see docs/agent-memory (memory
+# feedback_coldevict_no_age_gate_orphans_unread_po_escalation.md) for the confirmation
+# trail. SSOT for the cutoff value: .claude/skills/signal-dashboard/SKILL.md § PRUNE
+# ("status IN (READ, RESOLVED, SUPERSEDED) AND row ts older than 24h" — set at HSC-7,
+# commit bff0362c2, 2026-06-26, when PRUNE was switched from inline signal_queue.archive[]
+# writes to this script; verified live/current 2026-08-01, NOT the pre-HSC-7 48h figure
+# still floating in some stale prose (docs/agents/dev-team/flow/drain-signals.md
+# §0a-D-PRUNE was never updated at HSC-7 and both over-states the window AND still
+# references the now-removed archive[] lane — separate drift, flagged not fixed here,
+# out of this task's file scope). HOURS (not days) because the doc's own unit is hours;
+# a SEPARATE tunable from DONE_MAX_AGE_DAYS above by design — different lane, different
+# retention story, do not conflate the two (this is NOT the unrelated 7-day/604800s
+# file-plane drain window in drain-signals.md §0a-2 either).
+SIGNAL_MAX_AGE_HOURS="${SIGNAL_MAX_AGE_HOURS:-24}"
+
 # Terminal task statuses: comma-separated list (D4-BACKLOG-HYGIENE-ORCH-COLD-EVICT-EXTEND).
 # Rows in the flat task lanes below whose .status matches any of these are evicted.
 # SAME definition as TERMINAL_SPRINT_STATUSES above — both mirror TERMINAL_SET,
@@ -291,6 +312,7 @@ compute_id_maps() {
     -L "${REPO_ROOT}" \
     --argjson keep_n      "${KEEP_RECENT_DONE}" \
     --argjson max_days    "${DONE_MAX_AGE_DAYS}" \
+    --argjson max_hours_sig "${SIGNAL_MAX_AGE_HOURS}" \
     --arg     term_sprint "${TERMINAL_SPRINT_STATUSES}" \
     --arg     term_signal "${TERMINAL_SIGNAL_STATUSES}" \
     --arg     term_task   "${TERMINAL_TASK_STATUSES}" \
@@ -325,6 +347,9 @@ compute_id_maps() {
         as $relabel_status_by_lane |
       (now - ($max_days * 86400)) as $cutoff |
       (now - ($max_days_dj * 86400)) as $dj_cutoff |
+      # FIX-COLDEVICT-SIGNALQUEUE-NO-AGE-GATE-ORPHANS-READ-ROWS: hours-granularity
+      # cutoff, distinct from $cutoff (days-granularity, done[] lane) above.
+      (now - ($max_hours_sig * 3600)) as $sig_cutoff |
 
       # ── FIX-DEPSSATISFIED-COLD-ARCHIVED-DEP-RESOLVES-MISSING referential
       # eviction guard: union of effective_depends_on across every row in
@@ -434,9 +459,15 @@ compute_id_maps() {
 
       [$all_terminal_sprint_goal_ids[] | select($csg_set[.] != true)] as $new_sprint_goal_ids |
 
-      # ── signal_queue.rows[]: terminal statuses ───────────────────────────
+      # ── signal_queue.rows[]: terminal statuses AND age cutoff ────────────
+      # FIX-COLDEVICT-SIGNALQUEUE-NO-AGE-GATE-ORPHANS-READ-ROWS: previously status-only
+      # (no .ts term at all) — a row could be evicted the same tick it was flipped to a
+      # terminal status. Now ANDed with $sig_cutoff, mirroring the done[]/decision_journal[]
+      # null-ts convention above (null/unparseable ts == unknown-age == treated as oldest,
+      # so a poison row is never permanently un-evictable).
       [.signal_queue.rows // [] | .[] | select(
-          .id != null and (.status | IN($tsig_arr[]))
+          .id != null and (.status | IN($tsig_arr[])) and
+          ((.ts == null) or ((try (.ts | fromdateiso8601) catch 0) < $sig_cutoff))
         ) | .id
       ] as $all_terminal_sig_row_ids |
 

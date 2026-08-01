@@ -529,6 +529,89 @@ fi
 assert_real_live_unchanged "T8"
 
 # =============================================================================
+# TEST 9 — FIX-COLDEVICT-SIGNALQUEUE-NO-AGE-GATE-ORPHANS-READ-ROWS: signal_queue
+#   .rows[] eviction must be status IN (TERMINAL_SIGNAL_STATUSES) AND ts older
+#   than SIGNAL_MAX_AGE_HOURS (default 24h) — previously status-only, no .ts
+#   term at all, so a row could be cold-evicted the SAME tick it was flipped to
+#   a terminal status (3/3 confirmed live incidents silently orphaned
+#   po-addressed escalations before po ever triaged them — memory
+#   feedback_coldevict_no_age_gate_orphans_unread_po_escalation.md). Covers:
+#   fresh terminal-status row survives, aged terminal-status row evicts, a
+#   status=NEW row is NEVER evicted regardless of age (pre-existing rule, must
+#   not regress), null .ts is treated as unknown-age == oldest (same
+#   convention as done[]/decision_journal[] above) so a poison row can never
+#   become permanently un-evictable.
+# =============================================================================
+SIG_NOW=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+SIG_73H=$(date -u -v-73H +%Y-%m-%dT%H:%M:%SZ 2>/dev/null || date -u -d '73 hours ago' +%Y-%m-%dT%H:%M:%SZ)
+SIG_100H=$(date -u -v-100H +%Y-%m-%dT%H:%M:%SZ 2>/dev/null || date -u -d '100 hours ago' +%Y-%m-%dT%H:%M:%SZ)
+
+SIGNAL_FIXTURE=$(jq -n --arg now "$SIG_NOW" --arg h73 "$SIG_73H" --arg h100 "$SIG_100H" '{
+  "_meta": {"schema":"v4","ssot":true,"updated_at":"2026-06-01T00:00:00Z","updated_by":"fixture"},
+  "head": {"status":"idle","active_task_id":null,"next_agent":null},
+  "task_board": {
+    "backlog": [], "review": [], "qa": [], "in_progress": [], "ready": [],
+    "done": [], "done_verified": [], "active_sprints": []
+  },
+  "signal_queue": {
+    "_updated_at":"2026-06-01T00:00:00Z","_updated_by":"fixture",
+    "rows": [
+      {"id":"SIG-FRESH-READ","ts":$now,"from":"test","to":"po","type":"system-issue","summary":"fresh READ — must NOT evict","severity":"LOW","status":"READ","payload_ref":null},
+      {"id":"SIG-STALE-READ","ts":$h73,"from":"test","to":"po","type":"system-issue","summary":"73h-old READ — MUST evict","severity":"LOW","status":"READ","payload_ref":null},
+      {"id":"SIG-STALE-RESOLVED","ts":$h100,"from":"test","to":"po","type":"system-issue","summary":"100h-old RESOLVED — MUST evict","severity":"LOW","status":"RESOLVED","payload_ref":null},
+      {"id":"SIG-NEW-STALE","ts":$h100,"from":"test","to":"po","type":"system-issue","summary":"100h-old NEW — must NEVER evict (not a terminal status)","severity":"LOW","status":"NEW","payload_ref":null},
+      {"id":"SIG-NULL-TS","ts":null,"from":"test","to":"po","type":"system-issue","summary":"null ts — treated as unknown-age/oldest, MUST evict","severity":"LOW","status":"SUPERSEDED","payload_ref":null}
+    ]
+  },
+  "sprint_goal": {"entries": []}
+}')
+new_fixture "t9-signal-age-gate" "$SIGNAL_FIXTURE"
+
+EXIT_T9=0
+run_cold_evict || EXIT_T9=$?
+if [ "$EXIT_T9" -eq 0 ]; then
+  pass "T9 — signal_queue age-gate live run exits 0"
+else
+  fail "T9 — expected exit 0, got $EXIT_T9 ($(cat "$FIXTURE_ROOT/.last-stderr" | tail -5))"
+fi
+
+T9_HOT_SIG_IDS=$(jq -c '[.signal_queue.rows[].id] | sort' "$HOT_PATH" 2>/dev/null)
+if [ "$T9_HOT_SIG_IDS" = '["SIG-FRESH-READ","SIG-NEW-STALE"]' ]; then
+  pass "T9 — hot signal_queue.rows[] keeps fresh terminal-status row + aged NEW row (NEW never evicted)"
+else
+  fail "T9 — hot signal_queue.rows[] unexpected: $T9_HOT_SIG_IDS"
+fi
+
+COLD_FILE_T9="$ARCHIVE_PATH/$MONTH.json"
+T9_COLD_SIG_IDS=$(jq -c '[(.signal_rows // [])[].id] | sort' "$COLD_FILE_T9" 2>/dev/null)
+if [ "$T9_COLD_SIG_IDS" = '["SIG-NULL-TS","SIG-STALE-READ","SIG-STALE-RESOLVED"]' ]; then
+  pass "T9 — cold .signal_rows[] contains exactly the 3 aged terminal-status rows (incl. null-ts as oldest)"
+else
+  fail "T9 — cold .signal_rows[] unexpected: $T9_COLD_SIG_IDS"
+fi
+
+# Idempotent re-run: nothing left to evict (2 hot rows survive by rule, not
+# age) — second run must be a byte-identical no-op.
+HASH_HOT_T9_1=$(file_hash "$HOT_PATH")
+HASH_COLD_T9_1=$(file_hash "$COLD_FILE_T9")
+EXIT_T9B=0
+run_cold_evict || EXIT_T9B=$?
+if [ "$EXIT_T9B" -eq 0 ]; then
+  pass "T9 — second (idempotent) run exits 0"
+else
+  fail "T9 — expected exit 0 on re-run, got $EXIT_T9B"
+fi
+HASH_HOT_T9_2=$(file_hash "$HOT_PATH")
+HASH_COLD_T9_2=$(file_hash "$COLD_FILE_T9")
+if [ "$HASH_HOT_T9_1" = "$HASH_HOT_T9_2" ] && [ "$HASH_COLD_T9_1" = "$HASH_COLD_T9_2" ]; then
+  pass "T9 — hot + cold byte-identical after idempotent re-run"
+else
+  fail "T9 — hot or cold CHANGED on signal_queue re-run (not idempotent)"
+fi
+
+assert_real_live_unchanged "T9"
+
+# =============================================================================
 # Summary
 # =============================================================================
 TOTAL=$((PASS+FAIL))
