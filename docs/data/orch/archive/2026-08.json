@@ -1,7 +1,35 @@
 {
   "month": "2026-08",
   "created_at": "2026-08-01T00:45:13Z",
-  "done_tasks": [],
+  "done_tasks": [
+    {
+      "id": "TE-T21",
+      "title": "T-21 task-lock SKILL 283L: dedup ~70L session-presence protocol (SSOT->dispatch-claim §0a) + drop stale history [~10-15k tok/day]",
+      "owner": "agent-father",
+      "status": "DONE_VERIFIED",
+      "type": "CLEAN",
+      "size": "S",
+      "priority": "P1",
+      "wave": 2,
+      "est_saving": "~10-15k tok/day + kills 4-way drift",
+      "zone": ".claude/skills/",
+      "sprint": "TOKEN-ECONOMY-AUDIT",
+      "depends": [],
+      "detail_ref": "docs/architecture-briefs/2026-07-12-token-economy-lazyload-audit.md#T-21",
+      "note": "§Session-Presence Row near-verbatim dup of dispatch-claim §Step 0a. Make dispatch-claim §0a sole SSOT, replace with 3L pointer; move Phase Status SHAs to brief; verify TASK_1980 landed then delete Legacy Backward-Compat. 283L -> ~175L, back under cap.",
+      "next_agent": "agent-father",
+      "po_routing_ruling_20260721": "PO ARTIFACT-CLASS ROUTING RULING 2026-07-21T18:42Z. Rule: routing follows ARTIFACT CLASS, not directory. Any row whose deliverable is instruction-prose that an agent LOADS AND EXECUTES — .claude/agents/**, docs/agents/** (init/flow/knowledge/tools-package), .claude/skills/**/SKILL.md — routes to agent-father. Executable code (apps/**, scripts/**), codegen-from-registry, and data/root-config (docs/data/**, CLAUDE.md) route to zone-matched dev-* or developer. Rationale: for this system a flow doc IS the executable source; agent-father is already sole owner of agent-file lifecycle (dispatch/SKILL.md:48) and of NEW cron skill files (:50), and board precedent has 5/5 pre-existing docs/agents/ rows routed to agent-father/agents-architect/po and 0 to developer. Precedent for SKILL.md specifically: docs/signals/processed/dev-team-20260716T102429Z-autolaunch-safety-hold-uc-asl-p6.json already routed a signal-dashboard SKILL.md edit to agent-father as 'the factory rule'. ROOT CAUSE this closes: .claude/skills/zone-detect/SKILL.md resolves ONLY dev-<service> (Tier-1/2, needs apps/<service>/-shaped zone) or generic developer (Tier-3 fallback) — it has NO path to agent-father, so any docs/agents/ or .claude/skills/ row reaching execute-tier with next_agent unset gets the 'developer' placeholder and mis-routes. EXPECTED SIDE EFFECT (do NOT 'fix' this): next_agent=agent-father does not match the dev-role pattern ^dev(-|$)|^developer$, so the BOUNDED-1 NON-DEV-NEXT_AGENT gate (dev-team/flow/main.md:518) now WITHHOLDS these rows from unattended idle auto-pickup. That is the intended outcome — they require deliberate router dispatch to agent-father, not silent promotion to a generic developer.",
+      "updated_at": "2026-08-01T01:07:30Z",
+      "po_manual_dispatch_flagged_at": "2026-08-01T00:53:56Z",
+      "po_manual_dispatch_flagged_by": "po (manual-dispatch-sweep)",
+      "po_manual_dispatch_class": "DRS-STRANDED-OFF-ALLOWLIST",
+      "po_manual_dispatch_note": "po (manual-dispatch-sweep) surfaced DRS-STRANDED-OFF-ALLOWLIST candidate (rank-1, re-admitted after 2026-07-31T17:52:41Z stamp aged past the 4h staleness window) — folding into this tick's BATCH",
+      "commit_sha": "ee9db20ab",
+      "verified_by": "dev-team",
+      "verified_at": "2026-08-01T01:07:30Z",
+      "verification_note": "RAW-verified: diff matches claim exactly (283L->186L confirmed), dispatch-claim/SKILL.md §Step 0a confirmed genuine SSOT target (not a stub), deleted Phase Status/Legacy-Backward-Compat sections confirmed dead via grep (no live doc refs), git show --stat matches 3-file claim."
+    }
+  ],
   "closed_sprints": [],
   "closed_sprint_goals": [],
   "signal_rows": [
