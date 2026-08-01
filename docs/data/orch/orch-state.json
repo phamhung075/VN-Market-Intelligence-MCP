@@ -93,12 +93,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "active_task_id": null,
-    "next_agent": null,
-    "next_action": "FIX-BCTC-1345B-ALERT-NAMES-A-RULE-FAMILY-THAT-CANNOT-PRODUCE-ITS-OWN-VALUE moved in_progress→review (next_agent=qa); dispatcher may pick up next eligible row.",
-    "updated_at": "2026-08-01T12:46:56Z",
-    "updated_by": "dev-mcp-server"
+    "status": "in_progress",
+    "active_task_id": "FIX-MACRO-INDICATORS-EMPTY-COLUMNS",
+    "next_agent": "dev-macro-indicators",
+    "next_action": "FIX-MACRO-INDICATORS-EMPTY-COLUMNS (zone=apps/macro-indicators/, BOUNDED-1 auto-pickup) — zone-detect resolved dev-macro-indicators",
+    "updated_at": "2026-08-01T12:52:04Z",
+    "updated_by": "dev-team (zone-detect Step 3)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -6328,15 +6328,6 @@
         "status": "BACKLOG",
         "zone": "apps/mcp-server/",
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-KINHDICH-READINGS-DEDUP"
-      },
-      {
-        "id": "FIX-MACRO-INDICATORS-EMPTY-COLUMNS",
-        "title": "macro_indicators latest row (id=675, vietnam) populates ONLY cpi/gdp_growth/interest_rate; unemployment_rate/inflation_rate/trade_balance/current_account/government_debt/budget_deficit/manufacturing_pmi/consumer_confidence/retail_sales are ALL EMPTY -> /dashboard/macro mostly blank. Residual data-completeness gap NOT covered by macro-fetch-cluster (FRED/PMI) nor TASK-MACRO-COMMODITY-DELTA.",
-        "type": "FIX",
-        "priority": "P3",
-        "status": "BACKLOG",
-        "zone": "apps/macro-indicators/",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-MACRO-INDICATORS-EMPTY-COLUMNS"
       },
       {
         "id": "GAP-CHEF-SYNTHESIS-B-ENDPOINT-CARD",
@@ -20314,9 +20305,26 @@
         }
       ]
     },
-    "last_triaged_at": "2026-08-01T06:49:27Z",
+    "last_triaged_at": "2026-08-01T12:51:13Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": []
+    "in_progress": [
+      {
+        "id": "FIX-MACRO-INDICATORS-EMPTY-COLUMNS",
+        "title": "macro_indicators latest row (id=675, vietnam) populates ONLY cpi/gdp_growth/interest_rate; unemployment_rate/inflation_rate/trade_balance/current_account/government_debt/budget_deficit/manufacturing_pmi/consumer_confidence/retail_sales are ALL EMPTY -> /dashboard/macro mostly blank. Residual data-completeness gap NOT covered by macro-fetch-cluster (FRED/PMI) nor TASK-MACRO-COMMODITY-DELTA.",
+        "type": "FIX",
+        "priority": "P3",
+        "status": "IN_PROGRESS",
+        "zone": "apps/macro-indicators/",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-MACRO-INDICATORS-EMPTY-COLUMNS",
+        "promoted_at": "2026-08-01T12:51:13Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=3)",
+        "updated_at": "2026-08-01T12:52:04Z",
+        "claimed_at": "2026-08-01T12:51:31Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "next_agent": "dev-macro-indicators"
+      }
+    ]
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
