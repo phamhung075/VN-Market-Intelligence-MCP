@@ -93,11 +93,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "active_task_id": null,
-    "next_agent": "router",
-    "updated_at": "2026-08-01T05:57:21Z",
-    "updated_by": "dev-mcp-server (FIX-AGENTSIGNALS-ALLPRODUCERS-NULLSTRIP closeout, CANONICAL:SSOT-STATUSFLIP-LANEMOVE branch:null direct-execute)"
+    "status": "in_progress",
+    "active_task_id": "SPIKE-FB-SOURCE-LINK-RECHECK-AFFORDANCE",
+    "next_agent": "developer",
+    "next_action": "BOUNDED-1 auto-pickup claim of SPIKE-FB-SOURCE-LINK-RECHECK-AFFORDANCE — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
+    "updated_at": "2026-08-01T06:17:43Z",
+    "updated_by": "dev-team (bounded-1 auto-pickup)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -6253,15 +6254,6 @@
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#F1-CLOUD-TRIGGER-DECOMMISSION"
       },
       {
-        "id": "SPIKE-FB-SOURCE-LINK-RECHECK-AFFORDANCE",
-        "status": "BACKLOG",
-        "priority": "P3",
-        "zone": "multi",
-        "type": "SPIKE",
-        "title": "FB post carries ZERO source-link / re-check affordance — violates standing goal project_all_info_source_link_dropdown_recheck",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#SPIKE-FB-SOURCE-LINK-RECHECK-AFFORDANCE"
-      },
-      {
         "id": "FIX-AUDITOR-C11-PDFX-STATUS-PREDICATE",
         "type": "FIX",
         "priority": "low",
@@ -9647,15 +9639,18 @@
         "created_by": "po/triage-20260728T1731-pdfx-parent-rss-burst",
         "source": "qa status_note on FIX-PDFX-TESSERACT-CONCURRENCY-VIOLATES-SINGLE-WORKER-INVARIANT (commit 4bac2b85d, qa_verified_at 2026-07-28T17:15:19Z, read-only docker inspect/exec-ps/GET-health) + router's own independent 10-sample series 17:18:46Z-17:21:47Z",
         "title": "pdf-extractor's uvicorn PARENT process (PID 1) -- not tesseract concurrency, which is already fixed and proven bounded -- is the dominant memory driver, and the row's OOM-risk business case remains open: VmHWM=2,541,184kB (~2.42 GiB, ~97% of the 2.5 GiB cap) was recorded inside this container's post-fix life, which would leave the just-shipped AC-4 bar (<=80% of cap) violated at peak even though it is satisfied at trough",
-        "root_cause": "MECHANISM (qa+router corroborated, both read-only): a load-correlated SAWTOOTH in the parent uvicorn process, released at job boundaries -- NOT accumulation/climbing; that framing was explicitly refuted by direct observation and must not be carried forward. (1) VmHWM (all-time high-water mark since container start 2026-07-28T16:45:08Z, RestartCount=0) = 2,541,184 kB -- a real peak reached ~97% of the 2.5 GiB cap at least once in this container's post-fix life, proving the ceiling is reachable. (2) qa's own re-sample ~23min after the concurrency-fix rebuild, under ordinary (non-burst) traffic: MemPerc 78-83%, PID1 (uvicorn) alone RSS ~2.0-2.1 GiB (~83-84% of the container BY ITSELF) while tesseract stayed bounded at 0-1 (~90-95 MiB each) -- the now-fixed tesseract concurrency is not the term driving the container back toward the cap. (3) auditor samples 45.18% (17:10:56Z) and 44.74% (17:16:32Z) -- stable/declining in that window, consistent with a trough. (4) router's own 10-sample series 17:18:46Z-17:21:47Z: PID1 RSS held 1.08-1.11 GiB with tesseract=1 in-flight; at 17:21:06Z tesseract dropped to 0 and MemPerc fell to 40.44%; at 17:21:26Z tesseract returned to 1 and RSS jumped 1.24->1.39 GiB in one sample -- RSS moving WITH an OCR job starting/stopping, not monotonically, by a magnitude (100s of MiB per job) that dwarfs a single tesseract child's own footprint. (5) parent dominance: PID1 RSS ~2.0-2.1 GiB at peak vs tesseract child ~90-95 MiB -- the child term was already proven bounded by FIX-PDFX-TESSERACT-CONCURRENCY-VIOLATES-SINGLE-WORKER-INVARIANT; this row is specifically the PARENT term, a different mechanism in a different process from that row's fix.",
+        "root_cause": "MECHANISM (qa+router corroborated, both read-only): a load-correlated SAWTOOTH in the parent uvicorn process, released at job boundaries -- NOT accumulation/climbing; that framing was explicitly refuted by direct observation and must not be carried forward. (1) VmHWM (all-time high-water mark since container start 2026-07-28T16:45:08Z, RestartCount=0) = 2,541,184 kB -- a real peak reached ~97% of the 2.5 GiB cap at least once in this container's post-fix life, proving the ceiling is reachable. (2) qa's own re-sample ~23min after the concurrency-fix rebuild, under ordinary (non-burst) traffic: MemPerc 78-83%, PID1 (uvicorn) alone RSS ~2.0-2.1 GiB (~83-84% of the container BY ITSELF) while tesseract stayed bounded at 0-1 (~90-95 MiB each) -- the now-fixed tesseract concurrency is not the term driving the container back toward the cap. (3) auditor samples 45.18% (17:10:56Z) and 44.74% (17:16:32Z) -- stable/declining in that window, consistent with a trough. (4) router's own 10-sample series 17:18:46Z-17:21:47Z: PID1 RSS held 1.08-1.11 GiB with tesseract=1 in-flight; at 17:21:06Z tesseract dropped to 0 and MemPerc fell to 40.44%; at 17:21:26Z tesseract returned to 1 and RSS jumped 1.24->1.39 GiB in one sample -- RSS moving WITH an OCR job starting/stopping, not monotonically, by a magnitude (100s of MiB per job) that dwarfs a single tesseract child's own footprint. (5) parent dominance: PID1 RSS ~2.0-2.1 GiB at peak vs tesseract child ~90-95 MiB -- the child term was already proven bounded by FIX-PDFX-TESSERACT-CONCURRENCY-VIOLATES-SINGLE-WORKER-INVARIANT; this row is specifically the PARENT term, a different mechanism in a different process from that row's fix.  ||  EVIDENCE ADDENDUM 2026-08-01T06:08Z-06:17Z (po/triage-auditor-findings-20260801, read-only: docker inspect + docker stats + docker exec cat /proc/1/status + /sys/fs/cgroup/memory.* + docker logs). THIS ADDENDUM FALSIFIES THIS ROW OWN PRIOR root_cause ON ONE POINT -- read it before planning. (1) THE BURST IS NOT RELEASED AT THE JOB BOUNDARY. A 47-page PekEngineAdapter job ran to successful completion at 06:09:53.913Z (\"_run_pek_extract: DONE report_id=486980a8-2b61-4e02-8bf1-65166542670c push_echo_units=47 push_echo_pages=47\"). From 06:10:01Z to 06:16:59Z -- 40 consecutive samples at 8-15s spacing, entirely AFTER that completion, with tesseract child count 0 in every sample -- PID1 (uvicorn/python3) VmRSS was BYTE-IDENTICAL at 2521008 kB in all 40 samples, VmHWM constant at 2641368 kB, and cgroup memory.current oscillated only 2609258496-2610274304 B (+/-0.04%). At 06:17Z ps inside the container showed PID1 python3 RSS 2521008 kB as the ONLY non-transient process. 2521008 kB = 2.404 GiB = 96.2% of the 2.5 GiB cap HELD AT IDLE, with zero work in flight. The prior root_cause clause \"a load-correlated SAWTOOTH ... released at job boundaries -- NOT accumulation/climbing\" does NOT hold for this container life: the down-stroke of the sawtooth did not occur. (2) RESTING STATE IS AT THE WALL. 06:08:34Z docker stats: 2.468GiB / 2.5GiB = 98.70%, PIDs=29. cgroup v2 at the same moment: memory.current=2675834880 of memory.max=2684354560 = 99.68%, memory.peak=2684391424 (i.e. peak has touched/exceeded the limit), anon=2564096000, file=52416512, slab=17084624. Container: RestartCount=2, StartedAt=2026-08-01T02:46:16.989733302Z, State.ExitCode=0, OOMKilled=false, RestartPolicy=unless-stopped, HostConfig.Memory=2684354560. Free headroom at 06:08Z was ~8.5 MB of cgroup budget -- not enough for one more page raster, let alone one more job. (3) THE FAILURE MODE IS A CLEAN EXIT, NOT AN OOM KILL. ExitCode=0 / OOMKilled=false with RestartPolicy=unless-stopped means this service silently self-terminates and is restarted by Docker rather than being OOM-killed, so NOTHING in the OOM-detection plane (A-30 state.oom_killed, dmesg OOM-killer) will ever witness it. Any acceptance criterion that keys on OOMKilled will pass while the service is dying. (4) LOAD CONTROL FOR THE TRAJECTORY -- CORRECTS THE BRIEF THAT PROMPTED THIS ADDENDUM. The auditor brief reported the 53%->80-82% climb as occurring at \"0 extracts/30m\" (i.e. an idle leak). docker logs --since 2026-08-01T02:46:00Z contradicts that: 52 POST /extract in this container life, 51 of them inside 03:27:22-03:35:38Z and 1 in hour 05. The climb window was NOT idle -- it contained a 51-job burst. So the correct reading is neither \"idle leak\" nor \"released sawtooth\": memory is acquired during jobs and RETAINED ACROSS job boundaries, producing a monotonically rising FLOOR (53% at 03:06Z -> 96.2% floor at 06:17Z after ~52 jobs). (5) QUEUE PRESSURE IS REAL: bctc_vps_queue live at 06:17Z = deferred_infra 328, enrich_failed 128, done 98, url_not_found 42, pending 13, pek_triggered 5 -- there is queued work that will re-enter this service.",
         "deliverable": "Diagnose what in the uvicorn PARENT process holds 100s of MiB-to-~1GiB per job and releases it at job boundaries (candidates, not a prescription: PDF page rasterization/image buffers held in the request-handling coroutine before/after handing a page to OCR, pdfplumber/PyMuPDF page-object retention across a multi-page document, response-body buffering, GC-deferred large objects between requests) -- name the mechanism with a captured artifact, not prose. Then size a bound so peak MemPerc stays <=80% under the SAME caller shape used to verify the concurrency fix (a 15-wide POST /extract burst), OR make an explicit, evidenced recommendation that the cap itself needs revisiting (user/ops-gated infra decision -- do not decide the cap here).",
         "acceptance": [
           "AC1: mechanism named with a captured artifact (not prose) explaining which parent-process code path drives RSS by 100s of MiB to ~1 GiB+ per OCR job and releases it at job end.",
           "AC2: peak docker stats MemPerc for pdf-extractor during and shortly after a 15-wide POST /extract burst (the same trigger shape already used to verify the concurrency fix) is measured and reported with raw output + date -u timestamps -- whatever the number is, report it honestly.",
           "AC3: EITHER a change lands that keeps peak MemPerc <=80% of the 2.5 GiB cap under that burst, OR an explicit evidence-backed recommendation is written that 80%-of-cap is not achievable at the current cap for the largest real observed document, routed to ops/user for a capacity decision.",
-          "AC4: regression floor -- BCTC extraction still succeeds end-to-end on at least one real scanned PDF after any change."
+          "AC4: regression floor -- BCTC extraction still succeeds end-to-end on at least one real scanned PDF after any change.",
+          "AC5 (added 2026-08-01): explicitly discriminate unreleased-Python-heap vs malloc-arena-fragmentation vs deliberate-cache as the cause of the retained idle floor, with an artifact (e.g. tracemalloc/gc totals vs RSS, or a malloc_trim/jemalloc A-B) -- a fix aimed at the wrong one of these three will not move RSS.",
+          "AC6 (added 2026-08-01): the accepted bound must hold at IDLE, not only at peak -- measure PID1 VmRSS at least 5 minutes after the last job completes with tesseract child count 0, and report it. The 2026-08-01 idle floor was 2521008 kB = 96.2% of cap.",
+          "AC7 (added 2026-08-01): do NOT use OOMKilled as a success signal -- the observed failure mode is State.ExitCode=0 / OOMKilled=false under RestartPolicy=unless-stopped. Any regression gate must key on MemPerc/VmRSS or on RestartCount growth, never on the OOM flag."
         ],
-        "scope_out": "Do NOT reopen or duplicate FIX-PDFX-TESSERACT-CONCURRENCY-VIOLATES-SINGLE-WORKER-INVARIANT (DONE_VERIFIED 2026-07-28, commit 4bac2b85d) -- tesseract concurrency IS fixed, proven bounded, backpressure live-firing (429); out of scope here. Do NOT assume or carry forward an 'accumulation/leak' framing -- REFUTED by direct sawtooth observation. Do NOT restart, stop, kill, or recreate the container to test -- read-only discipline only. Do NOT invoke or re-litigate the embargoed '458 PDF extraction jobs stuck in processing' claim -- disposed of as unsubstantiated 2026-07-25T14:53Z; revive only with a live jobs-table count.",
+        "scope_out": "Do NOT reopen or duplicate FIX-PDFX-TESSERACT-CONCURRENCY-VIOLATES-SINGLE-WORKER-INVARIANT (DONE_VERIFIED 2026-07-28, commit 4bac2b85d) -- tesseract concurrency IS fixed, proven bounded, backpressure live-firing (429); out of scope here. Do NOT assume or carry forward an 'accumulation/leak' framing -- REFUTED by direct sawtooth observation. Do NOT restart, stop, kill, or recreate the container to test -- read-only discipline only. Do NOT invoke or re-litigate the embargoed '458 PDF extraction jobs stuck in processing' claim -- disposed of as unsubstantiated 2026-07-25T14:53Z; revive only with a live jobs-table count.  ||  SCOPE_OUT AMENDED 2026-08-01 (po/triage-auditor-findings-20260801): the previous blanket prohibition \"Do NOT assume or carry forward an accumulation/leak framing -- REFUTED by direct sawtooth observation\" is WITHDRAWN and MUST NOT be applied as written. It was true of the 2026-07-28 container life and is FALSE of the 2026-08-01 container life (see root_cause EVIDENCE ADDENDUM 2026-08-01 clause 1: 40 post-completion samples, tesseract=0, PID1 VmRSS byte-identical at 2521008 kB -- no release at the job boundary). BOTH framings now have direct read-only evidence from different container lives. The architect MUST discriminate between them with a captured artifact rather than inheriting either as a premise -- specifically, determine whether the retained 2.4 GiB floor is (a) genuine unreleased Python heap (leak/reference retention across requests), (b) glibc/malloc arena fragmentation where freed objects are never returned to the OS (RSS stays flat while Python-level memory IS freed -- distinguishable via tracemalloc/gc vs RSS divergence, and directly testable with MALLOC_TRIM/malloc_trim or jemalloc), or (c) a page/image cache deliberately held across requests. These have different fixes and (b) is the one most consistent with a byte-identical RSS plateau. STILL OUT OF SCOPE, unchanged: do NOT reopen FIX-PDFX-TESSERACT-CONCURRENCY-VIOLATES-SINGLE-WORKER-INVARIANT (DONE_VERIFIED 2026-07-28, commit 4bac2b85d) -- tesseract concurrency IS fixed and was measured bounded again on 2026-08-01 (single tesseract child at 78308 kB while PID1 held 2521000 kB); do NOT restart/stop/kill/recreate the container to test -- read-only discipline only; do NOT revive the embargoed \"458 PDF extraction jobs stuck in processing\" claim without a live jobs-table count.",
         "related": [
           "FIX-PDFX-TESSERACT-CONCURRENCY-VIOLATES-SINGLE-WORKER-INVARIANT",
           "PERF-PEK-PER-PAGE-LATENCY",
@@ -9663,7 +9658,8 @@
           "FIX-AUDITOR-EMIT-SEVERITY-LABEL-FLAT-ESCALATION-BYPASS-NEVER-FIRES"
         ],
         "note": "MINTED per qa's explicit recommendation on FIX-PDFX-TESSERACT-CONCURRENCY-VIOLATES-SINGLE-WORKER-INVARIANT's status_note: 'Recommend PO mint a new row: pdf-extractor parent-process (uvicorn) RSS dominates container memory, independent of tesseract concurrency...'. PRIOR-ART: grep across all task_board lanes for memory|oom|headroom|leak|vmhwm|rss|uvicorn found only detector-side rows (FIX-AUDITOR-A30-VMHWM-VETO-TAUTOLOGY-FALSE-NEGATIVE, FIX-AUDITOR-EMIT-SEVERITY-LABEL-FLAT-ESCALATION-BYPASS-NEVER-FIRES) -- the SEEING-memory-pressure plane, not the CAUSING-it plane this row occupies; no fold. WHY architect+plan_only+supervised: mirrors the sibling row's own justification -- mechanism undiagnosed with several live candidate causes in a service that is already fragile (SPIKE-BCTC-EXTRACTION-DORMANT-MASS-ENRICHFAIL-FLOOD, READY/P0 adjacent), so diagnose-then-design first.",
-        "updated_at": "2026-07-28T17:35:03Z"
+        "updated_at": "2026-08-01T06:19:30Z",
+        "evidence_refresh_20260801": "po/triage-auditor-findings-20260801 — read-only re-measurement 2026-08-01T06:08Z-06:17Z; falsifies the released-at-job-boundary clause, confirms and raises the headroom business case (98.70% MemPerc, 99.68% of cgroup budget, clean-exit not OOM-kill)."
       },
       {
         "id": "FIX-PDFX-GENERIC-MD-TABLE-OCR-UNROUTED-GATEWAY",
@@ -20252,9 +20248,25 @@
         }
       ]
     },
-    "last_triaged_at": "2026-08-01T05:48:18Z",
+    "last_triaged_at": "2026-08-01T06:17:21.947Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": []
+    "in_progress": [
+      {
+        "id": "SPIKE-FB-SOURCE-LINK-RECHECK-AFFORDANCE",
+        "status": "IN_PROGRESS",
+        "priority": "P3",
+        "zone": "multi",
+        "type": "SPIKE",
+        "title": "FB post carries ZERO source-link / re-check affordance — violates standing goal project_all_info_source_link_dropdown_recheck",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#SPIKE-FB-SOURCE-LINK-RECHECK-AFFORDANCE",
+        "promoted_at": "2026-08-01T06:17:21.947Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=3)",
+        "updated_at": "2026-08-01T06:17:43Z",
+        "claimed_at": "2026-08-01T06:17:40.191Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)"
+      }
+    ]
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",

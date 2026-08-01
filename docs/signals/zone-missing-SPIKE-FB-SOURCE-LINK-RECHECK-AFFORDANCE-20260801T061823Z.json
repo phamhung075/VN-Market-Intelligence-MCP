@@ -1,0 +1,13 @@
+{
+  "from": "dev-team",
+  "to": "po",
+  "type": "zone_missing_tier3",
+  "priority": "medium",
+  "createdAt": "2026-08-01T06:18:23.097Z",
+  "payload": {
+    "taskId": "SPIKE-FB-SOURCE-LINK-RECHECK-AFFORDANCE",
+    "files": [],
+    "suggestedZone": "multi",
+    "note": "zone field explicitly \"multi\" (not apps/<service>/) — cross-cutting SPIKE spanning fb-market-poster flow doc + possible new dashboard endpoint; Tier-1/2 both miss, routed developer generic per Tier-3 fallback"
+  }
+}
