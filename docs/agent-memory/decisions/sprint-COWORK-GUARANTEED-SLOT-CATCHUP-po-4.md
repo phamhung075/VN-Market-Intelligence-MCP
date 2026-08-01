@@ -170,3 +170,60 @@
 - Confirm prior dispositions and add nothing
 **why-decision:** Third. The prior tick (00:37Z) already attached `po_live_evidence_20260731T2300` to the owning review row and recorded why a 4th producer row fragments one defect; the 5 additional quarantines I read (4257-4261) are the same storm continuing past that ACK, not new evidence. TNB c121 was fully ACKed at 2026-07-31T23:04:15Z with all 6 findings dispositioned and the file is unchanged since — re-ACKing is churn. The one thing genuinely missing was the stale `occurrence_count=1` on the chef row despite c118 measuring 2 and c121 measuring 3; that is a field correction, not a mint (po-S113).
 **why-change:** No change from plan — deliberate non-action on inputs a peer tick already resolved, per `feedback_router_skip_po_respawn_identical_inputs`.
+
+---
+
+## STEP po-S115 — 2026-08-01T01:58Z — tick 01:37Z (dev-team Step 1 triage, dedup key task:po-triage-20260801)
+
+**task_id:** FIX-DEVTEAM-IDLE-CHAIN-P1A-MAIN-ROTATION (the P0 this tick's headline finding unblocks)
+
+**what-considered:**
+- Accept the relayed framing that ci_red + sweep-guard + BCTC were the three inputs, and triage those
+- Verify each relayed premise at source first, then triage whatever survives
+
+**why-decision:** Second. All three relayed inputs turned out to be already-owned, and the one finding that mattered was not in the relay at all — it surfaced only from RAW-verifying the architect brief's third board claim. Detail:
+
+1. **ci_red d1a62fd6** — ran the MANDATORY pre-dedup failing-file read (`gh run view 30677336536 --log-failed`), got `apps/mcp-server/src/interface/mcp/tools/macro/macroTools.ts — baseline-tolerance-exceeded (baseline=501L actual=618L upper=551L)`. Dedup key `ci_job:size-lint|file:<that path>` is an EXACT match on `FIX-CI-SIZELINT-MACROTOOLS-HUMANIZE-618L` (review[]). Valid skip under the ANTI-AMNESTY BACKSTOP because it names a specific, already-open, FILE-scoped row — which is the only permitted form of "pre-existing".
+2. **commit-sweep-guard escalated=true** — dedup hit on `FIX-SWEEPGUARD-ESCALATION-RETROACTIVE-COUNTER-AND-SESSION-SCOPED-ACTOR`. Did NOT mint an 8th family row. Replayed the hook's own awk against the unmodified live log: 7 post-baseline warns (payload's 6 is the pre-append count; 6+1=7 reconciles), whole-log count 77 → AC-1's deploy baseline is genuinely windowing. Attributed the 7 by staged-path proxy to 3 distinct agents (dev-team x5, agent-father x1, dev-mcp-server x1) sharing one pooled session budget — this IS the AC-2 measurement `pre-commit` L530-536 explicitly defers to PO.
+3. **BCTC 24 notices** — already owned by `FIX-BCTC-INGEST-PERIOD-IDENTITY-UNVALIDATED-VS-CONTENT`. But found genuinely new evidence the 00:37Z tick could not have seen (ids 4257/4267 postdate its ACK): two VND pairs with BYTE-IDENTICAL detector counts (115/26 and 130/27) under DIFFERENT supplied periods.
+4. **TNB id 4243** — already fully ACKed 2026-07-31T23:04:15Z, file git-clean, no newer cycle. No re-ACK.
+
+**why-change:** Changed the prior tick's own stated plan on BCTC. It wrote that a separate upstream row "would itself be a severe, separately-actionable upstream defect for which no row exists" — i.e. it pre-committed to minting one once the branch resolved. The branch has now resolved, and I declined the mint anyway: identical detector counts on identical bytes prove the CALLER is enumerating period keys, which is the same unvalidated-caller-supplied-key mechanism the existing row's title already names, seen from the other end. Splitting before the cheap decisive test runs would fragment one defect and scope the second row wrong. Recorded as `po_live_evidence_20260801T0158`.
+
+## STEP po-S116 — 2026-08-01T01:58Z — the finding that was not in the relay
+
+**task_id:** FIX-DEVTEAM-IDLE-CHAIN-P1A-MAIN-ROTATION
+
+**what-considered:**
+- Take the coordinator's third claim at face value ("TASK-DEVTEAM-IDLE-CHAIN-1-SCHEMA-UTILITIES stuck in REVIEW 3 days, blocking a P0")
+- Replay `deps_satisfied` against the live board and read what actually blocks it
+
+**why-decision:** Second, per `feedback_brief_stated_implementer_not_authoritative_verify_commit_zone`. The claim is TRUE but NOT SUFFICIENT, and the insufficiency is the whole finding. `FIX-DEVTEAM-IDLE-CHAIN-P1A-MAIN-ROTATION`'s effective deps are TWO ids, not one: `TASK-DEVTEAM-IDLE-CHAIN-1-SCHEMA-UTILITIES` (REVIEW) **and** `FIX-DEVTEAM-IDLE-CHAIN-S1-SCHEMA-SELECTION` (**MISSING**). `deps_satisfied` (`scripts/lib/devteam-eligibility.jq:278-281`) maps an unresolvable dep to `"MISSING"` and requires `all(. == "DONE_VERIFIED")` — fail-CLOSED. So QA clearing the REVIEW row would leave P1A still ineligible, forever.
+
+Verified S1 was never merely cold-archived (the `empty≠evidence` trap, and the exact failure mode `FIX-DEPSSATISFIED-COLD-ARCHIVED-DEP-RESOLVES-MISSING` describes): `git log -S` found commit `2833b71bf pm(reconciliation): dedup FIX-DEVTEAM-IDLE-CHAIN — remove S1 + P1B, fix deps to old TASK-1`. PM **deliberately deleted** S1 and P1B on 07-29 as duplicates. The prescription at `sprint-FIX-DEVTEAM-IDLE-CHAIN-STEP1-TRIAGE-STARVATION-pm.md:106,112` is an explicit **REPLACE** (`depends_on: [S1]` → `depends_on: [TASK-1]`). It was executed as an **ADD**: the new dep landed, the stale one was never removed. Follow-up `0e6614448` even records "pm's reconciliation only touched .head, board rows were untouched" — and the board rows are *still* untouched at `orch-state.json:10271,10297`.
+
+Blast radius, measured not inferred: 5 P0 rows permanently un-dispatchable since 2026-07-29 (P1A, P2A directly; MAIN-COMPLETION via missing P1B-STAMP + duplicated P1A/P2A entries; TEST-FAIRNESS and TEST-DURABLE transitively). Board-wide there are exactly 11 rows with ≥1 dangling dep.
+
+**why-change:** Dedup call went against the nearest row and I want the reasoning on record. `FIX-DEPSSATISFIED-COLD-ARCHIVED-DEP-RESOLVES-MISSING` (REVIEW/P1) scopes itself to the cold-archived class (29 of 40 ids DONE_VERIFIED in archive) and explicitly disclaims the rest: "The remaining 11 are genuine unknowns or free-text prose deps ... and are a **separate, smaller class**." My 11-row scan matches that count exactly. S1/P1B are a third sub-class it does not name — ids *deliberately deleted* with a ratified remedy already written down and never applied. Not a duplicate; minted.
+
+## STEP po-S117 — 2026-08-01T01:58Z — P0 ruling given so a row could move
+
+**task_id:** FIX-COMMIT-SWEEP-GUARD-SCRIPT-ACTUATOR-AND-NOTEBOOK-LONGTAIL
+
+**what-considered:**
+- Leave the same-file-hunk finding as a blocker on the fleet-wide `GIT_SWEEP_GUARD_MODE=reject` flip
+- Rule it a documented non-goal + carve out a detector row
+
+**why-decision:** Second. The row sat `next_agent=po`/P0 since 2026-07-30T22:30Z waiting on exactly this call. Decisive ground is orthogonality: reject-mode governs the NO-pathspec branch; the reported gap fires on commits that DO carry a correct pathspec (git's `--only` default takes working-tree content, not the staged subset). Flipping cannot worsen it and holding cannot mitigate it — gating the decision on it gates it on a variable it is not a function of. Precedent is T3's directory-pathspec non-goal, the nearer sibling. Ruled, `next_agent` → qa.
+
+**why-change:** No change from plan. Explicitly bounded the ruling in-row so it cannot be over-cited: it removes ONE objection, does NOT authorise the flip (still gated on bypass-surface migration + the 24h observation window closing 2026-08-01T04:04:07Z), and does NOT close the gap.
+
+## STEP po-S118 — 2026-08-01T01:58Z — mandatory pre-checks
+
+**task_id:** TE-T02
+
+**what-considered:** only path: both pre-checks are MANDATORY every tick per `po/flow/main.md`.
+
+**why-decision:** supervised-goahead — replayed dev-team's own WF-2 `should_hold` jq byte-identical against the live file: `head.status=in_progress`, `head.active_task_id=FIX-AGENTSIGNALS-EXPIRED-GC-CRON`, `should_hold=false`. Nothing held, no-op, no stamp. manual-dispatch sweep — 39 eligible candidates (`0 re-admitted stale-flagged`); top by `[rank, idx]` is `TE-T02` (P1, rank=1, idx=28, DRS-STRANDED-OFF-ALLOWLIST, `next_agent=agent-father` which is OFF the ratified DRS allowlist, so no automated lane reaches it). Stamped and folded into BATCH.
+
+**why-change:** No change from plan. One deviation surfaced rather than silently corrected: TE-T02's own `zone` is `docs/agents/`, which is not a member of the `main.md` zone enum (`apps/<service>/` | `multi` | `cross-service/`). Step 3 of the sweep mandates building the entry from the row's OWN fields, "never re-authored", so I passed the row's value through unchanged and flagged the enum conflict to dev-team instead of quietly rewriting it to `cross-service/`.
