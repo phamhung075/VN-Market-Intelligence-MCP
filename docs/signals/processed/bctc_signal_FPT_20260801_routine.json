@@ -1,0 +1,52 @@
+{
+  "ticker": "FPT",
+  "signal_type": "bctc_signal",
+  "quarter": "Q1-2026",
+  "mode": "routine",
+  "beat_miss": null,
+  "product": "IT services, software exports, telecom (FPT Telecom), education (FPT Edu)",
+  "customer": "Enterprise IT buyers (VN + offshore), SME telecom subscribers, students",
+  "ops": "Operating margin 22.0%; ROE 6.2% (quarter, unannualized); OCF/NI ratio -1.15 (negative OCF this quarter, WC build, not distress-flagged)",
+  "mgmt": "FY guidance track record positive; share buyback historically executed on schedule",
+  "valuation": {
+    "pe": 13.8,
+    "pe_sector_median": 17.3,
+    "earning_yield_pct": 7.25,
+    "ey_spread_pct": 2.25,
+    "verdict": "FAIR"
+  },
+  "sector_comparison": {
+    "pb": 3.6,
+    "pb_sector_median": 1.5,
+    "roe_bctc_quarter_pct": 6.17,
+    "roe_ttm_sector_pct": 28.3
+  },
+  "balance_sheet_check": {
+    "imbalance_pct": 0,
+    "status": "PASS"
+  },
+  "esc3_status": "DATA-COVERAGE-LIMITED",
+  "quarters_returned": 2,
+  "esc4_result": "FALSE",
+  "non_operating_share_pct": 2,
+  "esc5_escalation_status": "PENDING",
+  "esc5_guard_key": "esc-deepdive:FPT:Q1-2026:ESC-5",
+  "kinhdich": {
+    "que": "31-Ham",
+    "signal": "GIU",
+    "confidence_pct": 62,
+    "direction": "THUAN LOI"
+  },
+  "trick_confidence": "none",
+  "trick_summary": null,
+  "e3_cache": "HIT",
+  "overdue": true,
+  "data_quality_note": "[FR-DEGRADE-01] VPS BCTC proxy stale ~87.8h since 2026-07-28T08:23:22Z (SLA 48h) — last-known-good data served",
+  "ts": "2026-08-01T00:15:00Z",
+  "_processed": {
+    "fingerprint": "114ca7f5061aadceb0dba3c1c46e22765bcedb866d914294575fab72959d2a8a",
+    "processedAt": "2026-08-01T00:15:37Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

@@ -1,0 +1,33 @@
+{
+  "ticker": "HUT",
+  "signal_type": "bctc_signal",
+  "quarter": "Q1-2026",
+  "mode": "routine",
+  "beat_miss": null,
+  "product": "Construction and infrastructure (Tasco Group — BOT toll roads, auto trading, insurance)",
+  "customer": "Toll-road users, auto dealership customers, insurance policyholders",
+  "ops": "DATA-GAP — get_bctc_full returns \"Chưa có dữ liệu\" (no cached extraction exists for this ticker/period). No margin/ROE claims (would be fabrication).",
+  "mgmt": "No BCTC-derived management-track data this cycle (no source) — no claim made.",
+  "sector_comparison_peer_reference": {
+    "pe": 33,
+    "pb": 1.7,
+    "roe_pct": 5.1,
+    "peer_data_note": "insufficient peer PE/PB/ROE data for sector median in this sub-sector"
+  },
+  "kinhdich": {
+    "que": "2-Khon",
+    "signal": "GIU",
+    "confidence_pct": 37,
+    "direction": "TRUNG TINH"
+  },
+  "data_quality_status": "DATA-GAP",
+  "data_gap_detail": "No BCTC ever extracted for HUT current period despite stored PDFs existing (HUT_2024_Q1.pdf etc. on file, but not this quarter) — VPS backlog, same tracked P0.",
+  "overdue": true,
+  "ts": "2026-08-01T00:18:00Z",
+  "_processed": {
+    "fingerprint": "7a9331bf605abaa157cfe76c1237a7e26f7e58b95fb557816ad1b15e66df7443",
+    "processedAt": "2026-08-01T00:15:37Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

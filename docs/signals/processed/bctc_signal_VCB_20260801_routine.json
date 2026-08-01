@@ -1,0 +1,54 @@
+{
+  "ticker": "VCB",
+  "signal_type": "bctc_signal",
+  "quarter": "Q1-2026",
+  "mode": "routine",
+  "beat_miss": null,
+  "product": "Retail and corporate banking, trade finance, bancassurance cross-sell",
+  "customer": "Urban corporate/SOE clients, retail depositors, trade-finance importers/exporters",
+  "ops": "Operating margin 80.9%; ROE 4.2% (quarter, unannualized); OCF/NI ratio 1.37 (healthy, no forensic concern)",
+  "mgmt": "Consistent dividend/capital-adequacy discipline; long track record among top-tier SOE banks",
+  "valuation": {
+    "pe": 14.1,
+    "pe_sector_median": 9,
+    "earning_yield_pct": 7.09,
+    "ey_spread_pct": 2.09,
+    "verdict": "FAIR"
+  },
+  "sector_comparison": {
+    "pb": 2.2,
+    "pb_sector_median": 1.5,
+    "roe_bctc_quarter_pct": 4.21,
+    "roe_sector_median_pct": 17.6
+  },
+  "balance_sheet_check": {
+    "imbalance_pct": 0.37,
+    "status": "PASS"
+  },
+  "esc3_status": "DATA-COVERAGE-LIMITED",
+  "quarters_returned": 3,
+  "esc4_result": "FALSE",
+  "non_operating_share_pct": -21.4,
+  "esc4_note": "Negative non_operating_share = drag from below-the-line items, not one-off gain-dressing",
+  "esc5_escalation_status": "FALSE",
+  "esc5_reason": "report_id null/PARTIAL refine_status",
+  "kinhdich": {
+    "que": "12-Bi",
+    "signal": "BAN",
+    "confidence_pct": 100,
+    "direction": "BAT LOI"
+  },
+  "kinhdich_divergence_flag": "VCB KD BAT LOI/BAN 100% conf CONTRADICTS today's +4.96% rally + market volume_spike alert — 4th consecutive cycle unresolved divergence, flagged not suppressed",
+  "trick_confidence": "none",
+  "trick_summary": null,
+  "e3_cache": "HIT",
+  "overdue": false,
+  "data_quality_note": "[FR-DEGRADE-01] VPS BCTC proxy stale ~87.8h since 2026-07-28T08:23:22Z (SLA 48h) — last-known-good data served",
+  "ts": "2026-08-01T00:15:00Z",
+  "_processed": {
+    "fingerprint": "88c45b7f8297eb825a3d48483f82cc647d16ce6747e434b5af2134c870ba90d2",
+    "processedAt": "2026-08-01T00:15:37Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

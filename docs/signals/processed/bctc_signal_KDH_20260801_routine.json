@@ -1,0 +1,35 @@
+{
+  "ticker": "KDH",
+  "signal_type": "bctc_signal",
+  "quarter": "Q1-2026",
+  "mode": "routine",
+  "beat_miss": null,
+  "product": "Residential real estate development (Khang Dien Group — mid/high-end housing projects, HCMC/Binh Duong)",
+  "customer": "Middle/upper-income homebuyers, HCMC metro-area residential demand",
+  "ops": "PEER-REFERENCE-ONLY — BCTC extraction CORRUPT (total_assets=0, forced 0% confidence), 2nd consecutive touch confirmed corrupt. No margin/ROE claims from this cycle's extraction (would be fabrication).",
+  "mgmt": "No BCTC-derived management-track data this cycle (corrupt source) — no claim made.",
+  "sector_comparison_peer_reference": {
+    "pe": 28,
+    "pe_sector_median": 16.1,
+    "pb": 1.6,
+    "pb_sector_median": 1.3,
+    "roe_pct": 5.8,
+    "roe_sector_median_pct": 7.3
+  },
+  "kinhdich": {
+    "que": "39-Kien",
+    "signal": "BAN",
+    "confidence_pct": 100,
+    "direction": "BAT LOI"
+  },
+  "data_quality_status": "CORRUPT",
+  "corrupt_detail": "total_assets=0 (OCR extraction failure) — 2nd touch persisting since first observed corrupt at prior cycle. Part of tracked extraction-quality crisis (docs/architecture-briefs/2026-07-28-pdfx-tesseract-concurrency-invariant.md), not re-diagnosed here.",
+  "overdue": true,
+  "ts": "2026-08-01T00:18:00Z",
+  "_processed": {
+    "fingerprint": "b890d026391f60047804d50f89221afb0b6f7ae72cb5aa0a502f1b0a827d0ae9",
+    "processedAt": "2026-08-01T00:15:37Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

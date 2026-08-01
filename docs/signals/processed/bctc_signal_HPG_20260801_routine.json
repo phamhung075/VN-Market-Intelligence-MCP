@@ -1,0 +1,51 @@
+{
+  "ticker": "HPG",
+  "signal_type": "bctc_signal",
+  "quarter": "Q1-2026",
+  "mode": "routine",
+  "beat_miss": null,
+  "product": "Steel production (long steel, HRC), construction materials, agriculture/livestock feed",
+  "customer": "Construction contractors, steel distributors, downstream fabricators",
+  "ops": "Gross margin 15.8%; ROE 6.5% (quarter, unannualized); operating_profit field returns 0 (known extraction defect, ESC-4 SKIPPED for this reason, not a real zero)",
+  "mgmt": "Consistent capacity-expansion execution (Dung Quat complex); historically on-schedule capex delivery",
+  "valuation": {
+    "pe": 14.2,
+    "pe_sector_median": 32.6,
+    "earning_yield_pct": 7.04,
+    "ey_spread_pct": 2.04,
+    "verdict": "FAIR"
+  },
+  "sector_comparison": {
+    "pb": 1.7,
+    "pb_sector_median": 0.9,
+    "roe_bctc_quarter_pct": 6.48
+  },
+  "balance_sheet_check": {
+    "imbalance_pct": 0,
+    "status": "PASS"
+  },
+  "esc3_status": "DATA-COVERAGE-LIMITED",
+  "quarters_returned": 2,
+  "esc4_result": "SKIPPED",
+  "esc4_skip_reason": "operating_profit=0 extraction defect persists (not re-diagnosed, tracked P0)",
+  "esc5_escalation_status": "FALSE",
+  "esc5_reason": "report_id null/PARTIAL refine_status",
+  "kinhdich": {
+    "que": "31-Ham",
+    "signal": "GIU",
+    "confidence_pct": 62,
+    "direction": "THUAN LOI"
+  },
+  "trick_confidence": "none",
+  "trick_summary": null,
+  "e3_cache": "HIT",
+  "overdue": true,
+  "data_quality_note": "[FR-DEGRADE-01] VPS BCTC proxy stale ~87.8h since 2026-07-28T08:23:22Z (SLA 48h) — last-known-good data served; net_profit > gross_profit validation warning carried from source (possible non-operating income)",
+  "ts": "2026-08-01T00:15:00Z",
+  "_processed": {
+    "fingerprint": "337392aa01ccd924b623c2dafefc5703c93e0b733f82d9f5a99fcfd77965bd12",
+    "processedAt": "2026-08-01T00:15:37Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
