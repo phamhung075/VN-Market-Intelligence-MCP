@@ -54,6 +54,22 @@ source "$PREFLIGHT_SH"
 # stub-driven wiring is correct.
 eval "$(declare -f _step55_would_evict | sed '1s/^_step55_would_evict/_step55_would_evict_REAL/')"
 
+# ── Capture the REAL (pristine, pre-stub) _step55_run_cold_evict under a new
+# name too — FIX-DEVTEAM-PREFLIGHT-STEP55-COLDEVICT-STDOUT-LEAK-CORRUPTS-
+# VERDICT regression guard. T36 below invokes this (via the
+# $USE_REAL_COLD_EVICT toggle on the stub, not by calling it directly — the
+# stub owns CALL_LOG_FILE bookkeeping) against a hermetic fixture standing in
+# for orch-cold-evict.sh, to prove the ACTUAL capture-and-redirect
+# implementation never lets a child process's stdout noise reach this
+# script's own stdout — not just that the stub wiring behaves.
+eval "$(declare -f _step55_run_cold_evict | sed '1s/^_step55_run_cold_evict/_step55_run_cold_evict_REAL/')"
+
+# ── Save the sourced script's own $ROOT (git-relative default) so T36 can
+# temporarily repoint it at a hermetic fixture dir, then restore it — every
+# OTHER test relies on $ROOT resolving to the real repo (e.g. Step 5's
+# drain-signals.js shell-out), so this swap must never leak past T36.
+ORIGINAL_ROOT="$ROOT"
+
 # ── Isolated tmp fixture (call log only — this script touches no local files) ──
 TMPDIR_TEST=$(mktemp -d /private/tmp/dev-team-preflight-test-XXXXXX)
 cleanup() { rm -rf "$TMPDIR_TEST"; }
@@ -176,6 +192,14 @@ _step55_would_evict() {
 # (see dev-team-tick-preflight.sh header comment on ORCH_STATE_PATH). Behavior
 # controlled by $STUB_COLD_EVICT_RC / $STUB_VALIDATE_RC (default: succeed).
 _step55_run_cold_evict() {
+  # FIX-DEVTEAM-PREFLIGHT-STEP55-COLDEVICT-STDOUT-LEAK-CORRUPTS-VERDICT: T36
+  # flips this to exercise the REAL (post-fix) implementation captured above
+  # as _step55_run_cold_evict_REAL, against a hermetic fixture script — every
+  # other test leaves this at the default (pure stub, zero real shell-outs).
+  if [ "${USE_REAL_COLD_EVICT:-false}" = "true" ]; then
+    _step55_run_cold_evict_REAL
+    return $?
+  fi
   echo "_step55_run_cold_evict" >> "$CALL_LOG_FILE"
   return "${STUB_COLD_EVICT_RC:-0}"
 }
@@ -193,6 +217,7 @@ run_case() {
   STUB_PRESENCE="ok"; STUB_SF1="won"; STUB_ELECTION="won"
   STUB_MUTEX="won"; STUB_COLD_EVICT_RC=0; STUB_VALIDATE_RC=0
   STUB_WOULD_EVICT="false"
+  USE_REAL_COLD_EVICT="false"
   # Step 5 idle-check fixtures — default = deliberately NOT idle (isolates
   # T1-T12's RUN assertions from the live repo's docs/signals/ + orch-state.json).
   export SIGNALS_DIR="$TMPDIR_TEST/signals-nonempty"
@@ -618,6 +643,57 @@ unset ARCHIVE_DIR
 
 T35_REAL_HASH_AFTER=$(shasum -a 256 "$REAL_LIVE_ORCH_STATE" 2>/dev/null | awk '{print $1}')
 check "T35 REAL live orch-state.json UNCHANGED (dry-run performs no writes)" "$([ "$T35_REAL_HASH_BEFORE" = "$T35_REAL_HASH_AFTER" ] && echo true || echo false)"
+
+# ── T36: REAL (unstubbed) _step55_run_cold_evict — FIX-DEVTEAM-PREFLIGHT-
+# STEP55-COLDEVICT-STDOUT-LEAK-CORRUPTS-VERDICT regression guard (AC-2). A
+# hermetic fixture script stands in for orch-cold-evict.sh, deliberately
+# reproducing the EXACT live-incident leak shape (multi-line progress text —
+# including a downstream sub-validator's own leaked REPORT text — written
+# straight to stdout, unredirected), so this test exercises the ACTUAL
+# capture-and-redirect-to-stderr fix in _step55_run_cold_evict_REAL, not just
+# the CALL_LOG_FILE-based stub every other Step 5.5 test above relies on.
+# Standing in for the real (much heavier, multi-script bun validation chain)
+# orch-cold-evict.sh keeps this hermetic/fast/deterministic — consistent with
+# this file's own "zero real side-effecting calls" convention (T35's header
+# comment): the real orch-cold-evict.sh is never shelled out to here either,
+# only a fixture written by this test that reproduces its documented leak
+# shape. $ROOT is temporarily repointed at the fixture dir (T35/T33-style
+# scoped override), then restored immediately after — see ORIGINAL_ROOT save
+# near the top of this file.
+run_case
+mkdir -p "$TMPDIR_TEST/fake-root/scripts/agents-flow"
+cat > "$TMPDIR_TEST/fake-root/scripts/orch-cold-evict.sh" <<'FIXTURE'
+#!/usr/bin/env bash
+# T36 fixture — reproduces the live-incident leak shape verbatim: multi-line
+# progress output written UNREDIRECTED to stdout (the real script's own
+# "[orch-cold-evict] ..." log lines are correctly on stderr already — the
+# actual leak source one level deeper is a downstream sub-validator's own
+# non-fatal REPORT text reaching orch-cold-evict.sh's stdout via an internal
+# unredirected call). Reproduced directly here so this test stays hermetic.
+echo "[orch-cold-evict] Validating hot file: fake-hot-file.json"
+echo "[orch-cold-evict] Attempt 1/3: ID maps computed"
+echo "[orch-cold-evict] Writing cold archive (atomic rename): fake-cold-file.json"
+echo "[orch-validate] Stage 0 + Stage 1 PASS — fake-hot-temp.tmp"
+echo "[orch-cold-evict] Eviction complete. Both files jq-validated."
+exit 0
+FIXTURE
+cat > "$TMPDIR_TEST/fake-root/scripts/agents-flow/drain-signals.js" <<'FIXTURE'
+#!/usr/bin/env node
+// T36 fixture stand-in — only the --count-drainable contract Step 5 needs.
+console.log("drainable_count=0");
+FIXTURE
+STUB_WOULD_EVICT="true"
+USE_REAL_COLD_EVICT="true"
+ROOT="$TMPDIR_TEST/fake-root"
+T36_STDERR="$TMPDIR_TEST/t36-stderr.txt"
+OUT=$(run_preflight 2>"$T36_STDERR"); RC=$?
+ROOT="$ORIGINAL_ROOT"
+check "T36 stdout is a SINGLE valid JSON document (jq -e . parses cleanly — AC-2)" "$(printf '%s' "$OUT" | jq -e . >/dev/null 2>&1 && echo true || echo false)"
+T36_VERDICT=$(printf '%s' "$OUT" | jq -r '.verdict' 2>/dev/null)
+check "T36 RUN verdict despite noisy REAL cold-evict fixture (verdict channel uncorrupted)" "$([ "$T36_VERDICT" = "RUN" ] && echo true || echo false)"
+check "T36 RUN exit=1" "$([ "$RC" -eq 1 ] && echo true || echo false)"
+check "T36 fixture's own leaked progress line reached stderr instead" "$(grep -qF '[orch-cold-evict] Attempt 1/3' "$T36_STDERR" && echo true || echo false)"
+check "T36 fixture's leaked downstream sub-validator REPORT line also reached stderr" "$(grep -qF '[orch-validate] Stage 0 + Stage 1 PASS' "$T36_STDERR" && echo true || echo false)"
 
 # ── Summary ────────────────────────────────────────────────────────────────────
 echo ""

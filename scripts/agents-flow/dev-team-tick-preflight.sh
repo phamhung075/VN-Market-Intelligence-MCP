@@ -439,8 +439,31 @@ _step55_cold_evict_and_commit() {
 
 # ── Overridable side-effect seams (test harness replaces these wholesale —
 # see dev-team-tick-preflight.test.sh — NEVER exercised against the live repo).
+# FIX-DEVTEAM-PREFLIGHT-STEP55-COLDEVICT-STDOUT-LEAK-CORRUPTS-VERDICT
+# (2026-08-01): this is the REAL (non-dry-run) eviction — orch-cold-evict.sh's
+# own multi-line progress output (plus anything a downstream sub-validator it
+# shells out to writes unredirected, e.g. orch-validate.mjs's non-fatal Stage-
+# 1g REPORT text reaching orch-cold-evict.sh's OWN stdout via its internal
+# SHG-3 write-gate call) MUST be captured here, never left to stream straight
+# through to THIS script's stdout — every caller (main.md's canonical
+# `VERDICT_JSON=$(...)` pattern) treats that stream as a single JSON document
+# and parses it with jq. Same capture-then-redirect-to-stderr pattern
+# _step55_would_evict already used for the --dry-run variant above (line ~393)
+# — that one never leaked BECAUSE it was already captured; this one leaked
+# precisely because it was not. Reproduced live 2026-08-01T02:36Z (jq parse
+# error on VERDICT_JSON, self-healed only via a same-tick retry once nothing
+# was left to evict) — see task row for the full incident trail.
 _step55_run_cold_evict() {
-  ORCH_STATE="$ORCH_STATE_PATH" bash "$ROOT/scripts/orch-cold-evict.sh"
+  local out rc
+  out=$(ORCH_STATE="$ORCH_STATE_PATH" bash "$ROOT/scripts/orch-cold-evict.sh" 2>&1)
+  rc=$?
+  # Unconditional (not failure-only): the pre-fix behavior streamed ALL of
+  # orch-cold-evict.sh's progress output through unfiltered on both success
+  # and failure — preserving that same operational visibility on the RIGHT
+  # channel (stderr) keeps cron-log debugging value unchanged while fixing
+  # only the channel it lands on.
+  [ -n "$out" ] && printf '%s\n' "$out" >&2
+  return "$rc"
 }
 
 _step55_run_validate() {
