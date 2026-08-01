@@ -20,34 +20,54 @@ Note: `get_market_context` is the recommended compound entry point for agents at
 
 ```typescript
 get_macro_snapshot(
-  _testCommodityClient?: any,   // test-only
-  _testSbvClient?: any,         // test-only
-  _testDinhGiaInputs?: any      // test-only
-) → { source_tier: 1 | 2 | 3 | 4, text: string, fetchedAt: string | null }
+  _params?: Record<string, unknown>   // optional passthrough to the Go /snapshot POST body
+) → {
+  source_tier: 1 | 2 | 3 | 4,
+  text: string,                       // human-readable prose — see FIX-MACRO-SNAPSHOT-HUMANIZE-TEXT below
+  fetchedAt: string | null,
+  data: Record<string, unknown>,      // raw macro-indicators payload, passed through verbatim
+}
 ```
 
 ## Input Parameters
 
-No production parameters. All three parameters are test-injection hooks and must not be passed in agent calls.
+No production parameters. `_params` is an internal passthrough forwarded to the macro-indicators
+`/snapshot` HTTP POST body and is not intended for agent-supplied use.
 
 ## Output Format
 
-JSON envelope wrapping a plain-text macro summary:
+**FIX-MACRO-SNAPSHOT-HUMANIZE-TEXT (2026-08-01):** `text` is a human-readable, section-block-shaped
+prose summary — the SAME shape family as `get_market_snapshot`'s `text` — built generically by
+`buildMacroSnapshotText()` (`macroTools.ts`). It walks the raw upstream response recursively and
+renders EVERY field it finds as a bracketed `[Section]` header with indented `Key: Value` lines — no
+per-field/per-ticker hardcode, so a field the Go service adds tomorrow renders automatically. `text`
+is prose (previously it was `JSON.stringify(data)` — a latent raw-JSON leak-trap for any downstream
+prose-parser that echoes `.text` verbatim to the MARKET channel; closed by this fix). The raw
+upstream payload is ALSO passed through verbatim as the envelope's `data` field so synthesizing
+agents that need typed values read `data.signals.carry.regime` etc. directly instead of parsing prose.
 
 ```json
 {
   "source_tier": 2,
-  "text": "=== MACRO SNAPSHOT — 2026-05-19T08:00:00Z ===\n\n[COMMODITY PRICES]\nBrent Crude : 78.40 USD/bbl  (+0.8%)\nGold        : 2,345 USD/oz   (+0.3%)\nUSD/VND     : 25,410         (-0.1%)\n...\n\n[SBV RATES]\nOvernight   : 4.50%\nRefinancing : 4.50%\nOfficial FX : 25,400 VND/USD\n...\n\n[REGIME SIGNALS]\nRegime      : EASING\nCarry Regime: NEUTRAL\n...",
-  "fetchedAt": "2026-05-19T08:00:00.000Z"
+  "text": "[Macro Snapshot]\nStatus: ok\nVn Index: 1282.50\nOil Usd: 84.37\nGold Usd: 1950.50\nUsd Vnd: 25450\nData Source: live\n\n[Signals]\n  [Carry]\n    Regime: NEUTRAL\n    Carry Spread: 1.38\n    Vnd Deposit Rate: 5\n    Fed Funds Rate: 3.62\n    Source Tier: 2\n  [Yield]\n    Label: CHEAP\n    Spread: 3.20\n  ...\n\nGenerated: 2026-05-19T08:00:00.000Z",
+  "fetchedAt": "2026-05-19T08:00:00.000Z",
+  "data": {
+    "status": "ok",
+    "vnIndex": 1282.5,
+    "oilUsd": 84.37,
+    "goldUsd": 1950.5,
+    "usdVnd": 25450.0,
+    "dataSource": "live",
+    "signals": { "carry": { "regime": "NEUTRAL", "carrySpread": 1.38, "source_tier": 2 }, "yield": { "label": "CHEAP", "spread": 3.2 } }
+  }
 }
 ```
 
-Key fields in `text` narrative:
-- `[COMMODITY PRICES]` — Brent, gold, USD/VND, DXY, US 10Y with direction delta
-- `[SBV RATES]` — overnight, refinancing, official FX (omitted if SBV fetch fails)
-- `[REGIME SIGNALS]` — TIGHTENING / EASING / NEUTRAL, carry regime, us10y signal, dxy signal (from Thien Thoi DB; omitted if DB query fails)
-- `[DINH GIA]` — earnings yield vs deposit rate spread (from tracked_indicators DB; omitted if DB query fails)
-- Sector cascade signals for energy, gold, banking, real estate, aviation
+Key sections in `text` (rendered generically from whatever `data` contains — no fixed field list):
+- Top-level scalars (`status`, `vnIndex`, `oilUsd`, `goldUsd`, `usdVnd`, `dataSource`, ...) — one `Key: Value` line each
+- `[Signals]` — nested sub-sections per component (`[Carry]`, `[Yield]`, `[Oil]`, `[Gold]`, `[Usdvnd]`, `[Investment Clock]`, and any future component)
+- `null`/`undefined` fields render as the honest string `unavailable`, never fabricated
+- Trailing `Generated: <fetchedAt>` line (`unavailable` when the upstream omits `fetchedAt` — FDA-7)
 
 ## Error / Degradation Conditions
 

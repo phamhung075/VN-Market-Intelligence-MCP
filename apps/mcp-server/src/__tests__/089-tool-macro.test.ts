@@ -2,8 +2,8 @@
  * Task 089 — get_macro_snapshot MCP Tool Tests
  *
  * Tests for the macro snapshot tool that proxies to the macro-indicators
- * Go microservice (port 5004) and returns a { source_tier, text, fetchedAt }
- * JSON wrapper.
+ * Go microservice (port 5004) and returns a
+ * { source_tier, text, fetchedAt, data } JSON wrapper.
  *
  * Strategy (C1 FIX-CI-C1-MACRO-INJECT-SEAM-TESTS):
  * - DB_PATH set to :memory: before any import to prevent module-level side effects.
@@ -11,8 +11,13 @@
  * - globalThis.fetch is mocked in beforeAll to intercept POST /snapshot calls.
  *   This is the new injection point after the P2-B1 HTTP rewire removed
  *   _testCommodityClient / _testSbvClient injection seams (commit 98df0f43).
- * - All assertions updated from section-header strings to JSON field checks
- *   against the { source_tier, text: JSON.stringify(MacroSnapshotResponse), fetchedAt } wrapper.
+ * - All assertions updated from section-header strings to JSON field checks.
+ *
+ * FIX-MACRO-SNAPSHOT-HUMANIZE-TEXT (2026-08-01): `text` is now a
+ * human-readable prose section block (was raw `JSON.stringify(data)` — a
+ * latent MARKET-channel leak-trap). The typed `MacroSnapshotResponse` payload
+ * moved to the envelope's `data` passthrough field — `parseInner()` below
+ * reads `env.data` directly instead of `JSON.parse(env.text)`.
  */
 
 // Set DB_PATH before any import that triggers getDb() (needed for hnx.ts module-level init)
@@ -67,19 +72,30 @@ function firstText(result: { content: Array<{ type: string; text: string }> }): 
   return item.text;
 }
 
-/** Parse the outer { source_tier, text, fetchedAt } envelope. */
+/** Parse the outer { source_tier, text, fetchedAt, data } envelope. */
 function parseEnvelope(result: { content: Array<{ type: string; text: string }> }): {
   source_tier: number;
   text: string;
   fetchedAt: string;
+  data?: Record<string, unknown>;
 } {
-  return JSON.parse(firstText(result)) as { source_tier: number; text: string; fetchedAt: string };
+  return JSON.parse(firstText(result)) as {
+    source_tier: number;
+    text: string;
+    fetchedAt: string;
+    data?: Record<string, unknown>;
+  };
 }
 
-/** Parse the inner MacroSnapshotResponse from the envelope's text field. */
+/**
+ * Typed structured payload alongside the envelope's human-readable `text`.
+ * FIX-MACRO-SNAPSHOT-HUMANIZE-TEXT: `text` is now prose, not raw JSON — the
+ * raw MacroSnapshotResponse lives in the envelope's `data` passthrough field
+ * instead of requiring JSON.parse(env.text).
+ */
 function parseInner(result: { content: Array<{ type: string; text: string }> }): Record<string, unknown> {
   const env = parseEnvelope(result);
-  return JSON.parse(env.text) as Record<string, unknown>;
+  return env.data ?? {};
 }
 
 function makeServer(): McpServer {
@@ -298,14 +314,17 @@ describe("Task 089 — get_macro_snapshot MCP tool", () => {
     expect(tools["get_macro_snapshot"]).toBeDefined();
   });
 
-  // Additional: Inner text is valid JSON string
-  it("inner text field is a parseable JSON string containing signals", async () => {
+  // FIX-MACRO-SNAPSHOT-HUMANIZE-TEXT: text is now human-readable prose, NOT
+  // raw JSON (was the leak-trap this task closes) — the typed `signals`
+  // payload lives in the envelope's `data` field instead.
+  it("text field is human-readable prose (not JSON); data.signals is defined", async () => {
     const server = makeServer();
     const result = await callTool(server, "get_macro_snapshot");
 
     const env = parseEnvelope(result);
-    expect(() => JSON.parse(env.text)).not.toThrow();
-    const inner = JSON.parse(env.text) as Record<string, unknown>;
+    expect(() => JSON.parse(env.text)).toThrow();
+    expect(env.text).toContain("[Macro Snapshot]");
+    const inner = parseInner(result);
     expect(inner.signals).toBeDefined();
   });
 

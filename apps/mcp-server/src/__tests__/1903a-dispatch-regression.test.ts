@@ -215,16 +215,26 @@ describe("1903a — Suite A: write_alert_verdict shape guard", () => {
 
 describe("1903a — Suite B: get_macro_snapshot shape guard", () => {
 
+  // FIX-MACRO-SNAPSHOT-HUMANIZE-TEXT (2026-08-01): `text` is now human-readable
+  // prose (was raw JSON — the leak-trap this task closes), so JSON.parse(raw.text)
+  // no longer applies. The typed "macro signal summary" payload now lives in the
+  // envelope's `data` passthrough field.
   it("GMS-REG-02: response is a valid JSON envelope with source_tier and signals (replaces '[Macro Signal Summary]' section check)", async () => {
     const server = makeMacroServer();
     const result = await callMacroTool(server, "get_macro_snapshot");
 
-    const raw = JSON.parse(firstText(result)) as { source_tier: number; text: string; fetchedAt: string };
+    const raw = JSON.parse(firstText(result)) as {
+      source_tier: number;
+      text: string;
+      fetchedAt: string;
+      data?: Record<string, unknown>;
+    };
     expect(typeof raw.source_tier).toBe("number");
     expect(typeof raw.text).toBe("string");
+    expect(() => JSON.parse(raw.text)).toThrow();
 
     // Inner payload must contain signals (the new form of "macro signal summary")
-    const inner = JSON.parse(raw.text) as Record<string, unknown>;
+    const inner = raw.data ?? {};
     expect(inner.signals).toBeDefined();
     const signals = inner.signals as Record<string, unknown>;
     expect(signals.carry).toBeDefined();

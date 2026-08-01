@@ -55,6 +55,17 @@ Individual tool signatures: `docs/agents/tools/list/<tool>.md`
 ## Invariants
 
 1. `get_macro_snapshot` is the canonical source for VN interest rates, USD/VND, gold, oil in agent briefings.
+1a. **`get_macro_snapshot.text` is human-readable prose, never raw JSON (FIX-MACRO-SNAPSHOT-HUMANIZE-TEXT, 2026-08-01):**
+   `text` is built by `buildMacroSnapshotText()` (`macroTools.ts`) — a GENERIC recursive
+   renderer (`renderSection`/`humanizeKey`) that walks the raw macro-indicators response
+   and emits a bracketed `[Section]` / indented `Key: Value` block, same shape family as
+   `get_market_snapshot`'s text. No per-field/per-ticker hardcode: any field the Go
+   service adds is rendered automatically, zero code change needed here. The raw
+   upstream payload is ALSO passed through verbatim as the envelope's `data` field
+   (`{ source_tier, text, fetchedAt, data }`) so synthesizing agents that need typed
+   values (e.g. `data.signals.carry.regime`) don't have to parse prose. Closes a latent
+   MARKET-channel leak-trap (VERIFY-COWORK-MACRO-SNAPSHOT-ENVELOPE, router-verified no
+   active leak at the time) where `text` used to be `JSON.stringify(data)`.
 2. Prediction market thresholds: `mcp.config.json` → `predictionMarkets` (volume threshold, probability shift %, min wallets).
 3. `update_thresholds` is operator-level — dev-team flow only, not Cowork agents.
 4. Adaptive thresholds auto-adjust based on rolling window statistics. Manual override via `update_thresholds`.

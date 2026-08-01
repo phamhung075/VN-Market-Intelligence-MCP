@@ -61,20 +61,31 @@ function makeServer(): McpServer {
   return server;
 }
 
-/** Parse the outer { source_tier, text, fetchedAt } envelope. */
+/** Parse the outer { source_tier, text, fetchedAt, data } envelope. */
 function parseEnvelope(result: { content: Array<{ type: string; text: string }> }): {
   source_tier: number;
   text: string;
   fetchedAt: string;
+  data?: Record<string, unknown>;
 } {
   const text = result.content[0]?.text ?? "";
-  return JSON.parse(text) as { source_tier: number; text: string; fetchedAt: string };
+  return JSON.parse(text) as {
+    source_tier: number;
+    text: string;
+    fetchedAt: string;
+    data?: Record<string, unknown>;
+  };
 }
 
-/** Parse the inner MacroSnapshotResponse from the envelope's text field. */
+/**
+ * Typed structured payload alongside the envelope's human-readable `text`.
+ * FIX-MACRO-SNAPSHOT-HUMANIZE-TEXT: `text` is now prose, not raw JSON — the
+ * raw MacroSnapshotResponse lives in the envelope's `data` passthrough field
+ * instead of requiring JSON.parse(env.text).
+ */
 function parseInner(result: { content: Array<{ type: string; text: string }> }): Record<string, unknown> {
   const env = parseEnvelope(result);
-  return JSON.parse(env.text) as Record<string, unknown>;
+  return env.data ?? {};
 }
 
 // ---------------------------------------------------------------------------

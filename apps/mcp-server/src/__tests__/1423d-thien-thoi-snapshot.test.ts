@@ -64,19 +64,30 @@ function firstText(result: { content: Array<{ type: string; text: string }> }): 
   return item.text;
 }
 
-/** Parse the outer { source_tier, text, fetchedAt } envelope. */
+/** Parse the outer { source_tier, text, fetchedAt, data } envelope. */
 function parseEnvelope(result: { content: Array<{ type: string; text: string }> }): {
   source_tier: number;
   text: string;
   fetchedAt: string;
+  data?: Record<string, unknown>;
 } {
-  return JSON.parse(firstText(result)) as { source_tier: number; text: string; fetchedAt: string };
+  return JSON.parse(firstText(result)) as {
+    source_tier: number;
+    text: string;
+    fetchedAt: string;
+    data?: Record<string, unknown>;
+  };
 }
 
-/** Parse the inner MacroSnapshotResponse from the envelope's text field. */
+/**
+ * Typed structured payload alongside the envelope's human-readable `text`.
+ * FIX-MACRO-SNAPSHOT-HUMANIZE-TEXT: `text` is now prose, not raw JSON — the
+ * raw MacroSnapshotResponse lives in the envelope's `data` passthrough field
+ * instead of requiring JSON.parse(env.text).
+ */
 function parseInner(result: { content: Array<{ type: string; text: string }> }): Record<string, unknown> {
   const env = parseEnvelope(result);
-  return JSON.parse(env.text) as Record<string, unknown>;
+  return env.data ?? {};
 }
 
 function makeServer(): McpServer {
@@ -268,8 +279,11 @@ describe("Task 1423d — formatThienThoi() pure helper", () => {
 
 describe("Task 1423d — get_macro_snapshot [Thien Thoi] block integration", () => {
 
-  // TT-07: tool output envelope contains source_tier and parseable text (replaces DXY section check)
-  it("TT-07: tool output is valid envelope with source_tier and parseable inner text", async () => {
+  // TT-07 (FIX-MACRO-SNAPSHOT-HUMANIZE-TEXT, 2026-08-01): tool output envelope
+  // contains source_tier and human-readable text (was "parseable JSON text" —
+  // that raw-JSON shape is exactly the latent leak-trap this fix closes).
+  // The typed payload is still reachable via env.data (see parseInner()).
+  it("TT-07: tool output is valid envelope with source_tier and human-readable text", async () => {
     const server = makeServer();
     const result = await callTool(server, "get_macro_snapshot");
 
@@ -277,7 +291,9 @@ describe("Task 1423d — get_macro_snapshot [Thien Thoi] block integration", () 
     const env = parseEnvelope(result);
     expect(typeof env.source_tier).toBe("number");
     expect(typeof env.text).toBe("string");
-    expect(() => JSON.parse(env.text)).not.toThrow();
+    expect(() => JSON.parse(env.text)).toThrow();
+    expect(env.text).toContain("[Macro Snapshot]");
+    expect(env.data).toBeDefined();
   });
 
   // TT-08: inner text contains signals object (replaces "[Commodity Prices]" ordering check)
