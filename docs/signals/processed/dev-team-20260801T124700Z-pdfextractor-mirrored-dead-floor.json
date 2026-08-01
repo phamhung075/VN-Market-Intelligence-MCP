@@ -1,0 +1,23 @@
+{
+  "from": "dev-team",
+  "to": "po",
+  "type": "cross-zone-defect-found",
+  "priority": "normal",
+  "createdAt": "2026-08-01T12:47:00Z",
+  "payload": {
+    "found_by": "dev-mcp-server",
+    "found_during_task": "FIX-BCTC-1345B-ALERT-NAMES-A-RULE-FAMILY-THAT-CANNOT-PRODUCE-ITS-OWN-VALUE",
+    "zone": "apps/pdf-extractor/",
+    "suggested_owner": "dev-pdf-extractor",
+    "summary": "Python mirror validate_financial_figures() in apps/pdf-extractor/ appears to carry the identical unreachable-floor pattern (Math.max(confidence, 0.1)-equivalent) just fixed on the TypeScript side in apps/mcp-server/ (commit 7ac55adc8). Documented in docs/architecture/microservice/pdf-extractor/domain-model.md and testing.md.",
+    "not_actioned_because": "out of apps/mcp-server/ zone — dev-mcp-server flagged it rather than editing pdf-extractor code",
+    "suggested_action": "PO to triage a FIX task for dev-pdf-extractor: verify whether the same dead-floor + docstring mismatch is live in validate_financial_figures(), and whether it produces the same false-hint alert-text problem, then apply the analogous fix (delete unreachable floor or move the sentinel off it, correct docstrings, add regression test) if confirmed.",
+    "reference_commit": "7ac55adc8"
+  },
+  "_processed": {
+    "fingerprint": "0858b16392ba55f1f6c15cdf6fe724be12e05c921c64962085b99d5b8c06b8f0",
+    "processedAt": "2026-08-01T12:49:29Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
