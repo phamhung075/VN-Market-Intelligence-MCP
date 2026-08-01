@@ -102,3 +102,31 @@
 - only: stamp the top-ranked candidate as the sub-flow prescribes.
 **why-decision:** TE-T14 ranks first by [priority, idx] among 41 candidates; its prior stamp (2026-07-31T16:04:37Z) aged past the 4h staleness window without reaching dispatch, which is exactly the re-admission case flag_reentrant exists to catch.
 **why-change:** no change from plan.
+
+### STEP po-S108 · po · 2026-08-01T00:53:56Z
+**task-id:** (ambient — dev-team Step 1 triage, tick 2026-08-01T00:37Z)
+**what-done:** Ran both mandatory pre-checks; supervised-goahead `should_hold=false` (head `FIX-MACRO-SNAPSHOT-HUMANIZE-TEXT` is not `effective_supervised`) → no-op; manual-dispatch sweep returned 40 candidates, stamped `TE-T21`.
+**what-considered:**
+- Mechanical top-of-list = `TE-T21` (P1, rank 1, idx 27, `reflag:true`)
+- Override to `FIX-DEVTEAM-REVIEW-LANE-QA-DRAIN` (P1, rank 1, idx 42) as higher-leverage on a rank tie
+**why-decision:** Took `TE-T21`. Its `reflag:true` is the FIRST live exercise of the bounded re-admission branch shipped 07-31 (`FIX-PO-MANUAL-DISPATCH-SWEEP-FLAG-WITHOUT-DISPATCH-STRANDS-ROW`) — prior stamp 2026-07-31T17:52:41Z aged past the 4h window without ever reaching dispatch. Skipping it would re-create the exact permanent-strand bug that fix cured, on that fix's own first test case. Routes to `agent-father` (`.claude/skills/`), so it does not contend for the occupied dev WIP slot.
+**why-change:** no change from plan.
+
+### STEP po-S109 · po · 2026-08-01T00:53:56Z
+**task-id:** FIX-BCTC-INGEST-PERIOD-IDENTITY-UNVALIDATED-VS-CONTENT
+**what-done:** Refuted the prior tick's own leading hypothesis from data already in hand, logged storm growth 12→23 quarantines / 13 tickers, and found an 11-of-13 cohort overlap with `FIX-BCTC-REPARSE-BATCH-CORRUPTION-NGAYNOP-FLIP`. Evidence appended to both rows; no mint.
+**what-considered:**
+- Mint a producer-side row for the wrong-URL/period association
+- Attach to the two existing owner rows and cross-link them
+**why-decision:** Attached. The opening-balance hypothesis predicts detection of Q4-of-PRIOR-year; five instances (FRT/DXG/DIG/GEX/DBC 2024-Q1) detect Q4-of-SAME-year, so it is falsified without a probe. The real signature — detected period NEVER earlier than supplied — is fetch-side, and is the same residual `po_corroboration_20260728` already recorded as UNVERIFIED on this row. Producer prior art already exists three ways (`BCTC-HIST-VPS-BACKFILL`, `BCTC-ENRICHER-OLD-QUARTERS`, `FU-CTG-DISCOVERY-FILENAME-FILTER`); a 4th row fragments one defect across four.
+**why-change:** Prior tick routed the correct/broken decision to qa. That actuator is dead (see po-S110), so I resolved what was resolvable from evidence instead of re-deferring.
+
+### STEP po-S110 · po · 2026-08-01T00:53:56Z
+**task-id:** FIX-DEVTEAM-QADRAIN-HEAD-WRITE-CONDITIONAL
+**what-done:** Escalated review-lane QA-drain starvation from throughput complaint to UNBLOCK, on evidence it is now load-bearing on live data corruption. Single BATCH entry.
+**what-considered:**
+- Leave out of scope per spawn prompt
+- Dispatch the `architect` design row `FIX-DEVTEAM-REVIEW-LANE-QA-DRAIN`
+- Dispatch qa directly at the already-shipped Part-1 row, bypassing the starved picker
+**why-decision:** Third. The starvation is circular: 202 review rows carry `next_agent:qa`, and the remedy is itself inside them — Part 1 (`9fe706fa2`, verified real, script-only, size S, no depends) has sat unverified ~26h. Meanwhile `FIX-BCTC-REPARSE-BATCH-CORRUPTION-NGAYNOP-FLIP` ("ACTIVE + SPREADING") has sat 10.3 days while its generator still emitted three `total_assets=0` writes tonight, one aimed at a known-good row. PO BATCH → dev-team Step 3 is the one dispatch path that does not traverse the starved picker; verifying Part 1 is what makes that picker safe to run at all. Designing more (option 2) ships nothing.
+**why-change:** Spawn prompt flagged this out of scope "unless you judge it now warrants escalation" — the corruption evidence is new tonight and changes that judgement.
