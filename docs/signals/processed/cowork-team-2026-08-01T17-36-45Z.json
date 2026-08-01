@@ -1,0 +1,55 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-08-01T17:30Z",
+    "matched_slots": [
+      "digest-daily"
+    ],
+    "won_slots": [
+      "digest-daily"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/digest-predict/flow/main.md"
+    ],
+    "silent": false,
+    "drift_min": 5,
+    "errors": [],
+    "pressure_mode": "adaptive",
+    "calendar_status": "closed",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "chef_mutex_applied": false,
+    "due_reasons": {
+      "digest-daily": "cron"
+    },
+    "cadence_minutes": {
+      "digest-daily": null
+    },
+    "last_fired_timestamp": "2026-08-01T17:30:00Z",
+    "last_fired_slots": [
+      "digest-daily"
+    ],
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "17:30",
+    "leader_lock": "acquired",
+    "dev_head": "unknown",
+    "devq": 5,
+    "signal_backlog": 17,
+    "note": "single guaranteed slot digest-daily, no drain rows, no one-shots"
+  },
+  "priority": "low",
+  "createdAt": "2026-08-01T17:36:45Z",
+  "_processed": {
+    "fingerprint": "d2510f929dfcbb09ba0f7402cf4c59277460a06c269ffbaab7671a45b6b14bb0",
+    "processedAt": "2026-08-01T17:47:44Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
