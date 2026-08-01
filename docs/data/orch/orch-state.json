@@ -93,11 +93,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "active_task_id": null,
-    "next_agent": "router",
-    "updated_at": "2026-08-01T04:01:59Z",
-    "updated_by": "developer"
+    "status": "in_progress",
+    "active_task_id": "FIX-DEVTEAM-PREFLIGHT-STEP55-COLDEVICT-STDOUT-LEAK-CORRUPTS-VERDICT",
+    "next_agent": "developer",
+    "next_action": "BOUNDED-1 auto-pickup claim of FIX-DEVTEAM-PREFLIGHT-STEP55-COLDEVICT-STDOUT-LEAK-CORRUPTS-VERDICT — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
+    "updated_at": "2026-08-01T04:22:47Z",
+    "updated_by": "dev-team (bounded-1 auto-pickup)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -11029,31 +11030,6 @@
         "updated_at": "2026-08-01T02:28:56Z"
       },
       {
-        "id": "FIX-DEVTEAM-PREFLIGHT-STEP55-COLDEVICT-STDOUT-LEAK-CORRUPTS-VERDICT",
-        "type": "FIX",
-        "title": "dev-team-tick-preflight.sh Step 5.5's REAL (non-dry-run) cold-evict invocation leaks orch-cold-evict.sh's own multi-line stdout into the script's stdout, corrupting the single-JSON-document verdict every caller parses with jq",
-        "status": "BACKLOG",
-        "priority": "P1",
-        "size": "S",
-        "zone": "cross-service/",
-        "owner": "dev-team",
-        "next_agent": "developer",
-        "supervised": false,
-        "plan_only": false,
-        "created_at": "2026-08-01T02:42:00Z",
-        "created_by": "dev-team (2026-08-01T02:37Z tick, root-caused live)",
-        "updated_at": "2026-08-01T02:41:57Z",
-        "source": "Reproduced live 2026-08-01T02:36Z: dev-team-tick-preflight.sh's own Step 5.5 dry-run predicted the hot file would shrink, ran the REAL eviction, and that succeeded correctly (commit f7c928f6a landed clean, data intact). But the calling flow instruction in docs/agents/dev-team/flow/main.md Step 0-PREFLIGHT is `VERDICT_JSON=$(bash .../dev-team-tick-preflight.sh); VERDICT=$(echo \"$VERDICT_JSON\" | jq -r '.verdict')` -- and this run's VERDICT_JSON captured ~15 lines of orch-cold-evict.sh's own progress output (\"[orch-cold-evict] Validating hot file...\", \"Attempt 1/3...\", \"Writing cold archive...\", etc.) ahead of the final _emit_verdict JSON block, so the downstream jq parse failed outright (\"jq: parse error: Invalid numeric literal at line 2, column 15\") instead of yielding verdict=RUN. A same-tick retry (once cold-evict had nothing left to do) produced a clean single JSON document and worked. Confirmed NOT a data-integrity bug -- the eviction+commit is correct and safe -- purely a stdout-contract violation on the verdict channel.",
-        "desc": "Root cause pinned by direct read of scripts/agents-flow/dev-team-tick-preflight.sh:442-444: `_step55_run_cold_evict() { ORCH_STATE=\"$ORCH_STATE_PATH\" bash \"$ROOT/scripts/orch-cold-evict.sh\"; }` invokes the REAL (non-dry-run) eviction with no stdout capture/redirect, so its output streams directly through to the parent script's own stdout. Contrast the dry-run variant used by the trigger predicate at line 393: `out=$(ORCH_STATE=\"$ORCH_STATE_PATH\" bash \"$ROOT/scripts/orch-cold-evict.sh\" --dry-run 2>&1)` -- correctly captured into a variable, never leaks. Call chain: run_preflight (line 529) -> _step55_board_hygiene (line 372-379, calls _step55_cold_evict_and_commit only when _step55_would_evict is true) -> _step55_cold_evict_and_commit (line 405-438) -> _step55_run_cold_evict (line 442-444, THE LEAK) -- all of this runs strictly BEFORE the terminal _emit_verdict \"RUN\" call at line 537, so the leaked text always lands ahead of the JSON in the combined stdout stream whenever a real eviction fires mid-tick. Blast radius: this is the SAME code path documented callers use verbatim (main.md's canonical VERDICT_JSON=$(...) pattern) -- any tick (scheduled cron OR manual) that happens to coincide with Step 5.5 needing a real eviction hits this. Downstream effect on main.md is worse than a clean ERROR: VERDICT ends up as an empty string or jq's own error text, which matches NONE of the JUMP-TO table's RUN/RUN-IDLE/SKIP/ERROR string values -- the documented table has no branch for this, unlike the explicit ERROR verdict path which at least routes to preflight-fallback.",
-        "ac": "AC-1: redirect/capture _step55_run_cold_evict's real (non-dry-run) invocation the same way the dry-run variant already does -- either `out=$(... 2>&1); rc=$?; [ $rc -ne 0 ] && echo \"$out\" >&2; return $rc` (log only on failure) or unconditionally tee to stderr so operational visibility is preserved without polluting stdout. AC-2: regression test -- fixture where _step55_would_evict returns true, run full run_preflight, assert stdout is a SINGLE valid JSON document parseable by `jq .` with no leading/trailing non-JSON bytes (extend dev-team-tick-preflight.test.sh, which the file's own header notes already exists and never touches the live repo). AC-3: add the missing JUMP-TO table branch (or note) in docs/agents/dev-team/flow/main.md for 'VERDICT_JSON failed to parse as JSON at all' distinct from the ERROR verdict string case, since today that state has no defined caller behavior. AC-4: live re-verify after fix by forcing _step55_would_evict true again (or waiting for natural recurrence) and confirming a clean RUN/RUN-IDLE verdict on the SAME tick, not requiring a retry.",
-        "files": [
-          "scripts/agents-flow/dev-team-tick-preflight.sh",
-          "scripts/agents-flow/dev-team-tick-preflight.test.sh",
-          "docs/agents/dev-team/flow/main.md"
-        ],
-        "baseline_pass": "BROKEN at baseline — reproduced live 2026-08-01T02:36Z tick, jq parse error on VERDICT_JSON; self-heals only via manual retry once nothing left to evict"
-      },
-      {
         "id": "FIX-BCTC-SSC-DOC-SELECTION-QUARTER-BLIND-ALWAYS-LATEST",
         "type": "FIX",
         "title": "BCTC acquisition is structurally quarter-blind: listSscDocuments() has no quarter parameter and fetchParseAndStoreBctc takes docs[0] unconditionally, so every quarter of a given (ticker, year) resolves to the same document — 19/19 live period-mismatch refusals all skew LATER, backfill stores zero",
@@ -20094,9 +20070,40 @@
         }
       ]
     },
-    "last_triaged_at": "2026-08-01T03:46:52Z",
+    "last_triaged_at": "2026-08-01T04:22:46Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": []
+    "in_progress": [
+      {
+        "id": "FIX-DEVTEAM-PREFLIGHT-STEP55-COLDEVICT-STDOUT-LEAK-CORRUPTS-VERDICT",
+        "type": "FIX",
+        "title": "dev-team-tick-preflight.sh Step 5.5's REAL (non-dry-run) cold-evict invocation leaks orch-cold-evict.sh's own multi-line stdout into the script's stdout, corrupting the single-JSON-document verdict every caller parses with jq",
+        "status": "IN_PROGRESS",
+        "priority": "P1",
+        "size": "S",
+        "zone": "cross-service/",
+        "owner": "dev-team",
+        "next_agent": "developer",
+        "supervised": false,
+        "plan_only": false,
+        "created_at": "2026-08-01T02:42:00Z",
+        "created_by": "dev-team (2026-08-01T02:37Z tick, root-caused live)",
+        "updated_at": "2026-08-01T04:22:47Z",
+        "source": "Reproduced live 2026-08-01T02:36Z: dev-team-tick-preflight.sh's own Step 5.5 dry-run predicted the hot file would shrink, ran the REAL eviction, and that succeeded correctly (commit f7c928f6a landed clean, data intact). But the calling flow instruction in docs/agents/dev-team/flow/main.md Step 0-PREFLIGHT is `VERDICT_JSON=$(bash .../dev-team-tick-preflight.sh); VERDICT=$(echo \"$VERDICT_JSON\" | jq -r '.verdict')` -- and this run's VERDICT_JSON captured ~15 lines of orch-cold-evict.sh's own progress output (\"[orch-cold-evict] Validating hot file...\", \"Attempt 1/3...\", \"Writing cold archive...\", etc.) ahead of the final _emit_verdict JSON block, so the downstream jq parse failed outright (\"jq: parse error: Invalid numeric literal at line 2, column 15\") instead of yielding verdict=RUN. A same-tick retry (once cold-evict had nothing left to do) produced a clean single JSON document and worked. Confirmed NOT a data-integrity bug -- the eviction+commit is correct and safe -- purely a stdout-contract violation on the verdict channel.",
+        "desc": "Root cause pinned by direct read of scripts/agents-flow/dev-team-tick-preflight.sh:442-444: `_step55_run_cold_evict() { ORCH_STATE=\"$ORCH_STATE_PATH\" bash \"$ROOT/scripts/orch-cold-evict.sh\"; }` invokes the REAL (non-dry-run) eviction with no stdout capture/redirect, so its output streams directly through to the parent script's own stdout. Contrast the dry-run variant used by the trigger predicate at line 393: `out=$(ORCH_STATE=\"$ORCH_STATE_PATH\" bash \"$ROOT/scripts/orch-cold-evict.sh\" --dry-run 2>&1)` -- correctly captured into a variable, never leaks. Call chain: run_preflight (line 529) -> _step55_board_hygiene (line 372-379, calls _step55_cold_evict_and_commit only when _step55_would_evict is true) -> _step55_cold_evict_and_commit (line 405-438) -> _step55_run_cold_evict (line 442-444, THE LEAK) -- all of this runs strictly BEFORE the terminal _emit_verdict \"RUN\" call at line 537, so the leaked text always lands ahead of the JSON in the combined stdout stream whenever a real eviction fires mid-tick. Blast radius: this is the SAME code path documented callers use verbatim (main.md's canonical VERDICT_JSON=$(...) pattern) -- any tick (scheduled cron OR manual) that happens to coincide with Step 5.5 needing a real eviction hits this. Downstream effect on main.md is worse than a clean ERROR: VERDICT ends up as an empty string or jq's own error text, which matches NONE of the JUMP-TO table's RUN/RUN-IDLE/SKIP/ERROR string values -- the documented table has no branch for this, unlike the explicit ERROR verdict path which at least routes to preflight-fallback.",
+        "ac": "AC-1: redirect/capture _step55_run_cold_evict's real (non-dry-run) invocation the same way the dry-run variant already does -- either `out=$(... 2>&1); rc=$?; [ $rc -ne 0 ] && echo \"$out\" >&2; return $rc` (log only on failure) or unconditionally tee to stderr so operational visibility is preserved without polluting stdout. AC-2: regression test -- fixture where _step55_would_evict returns true, run full run_preflight, assert stdout is a SINGLE valid JSON document parseable by `jq .` with no leading/trailing non-JSON bytes (extend dev-team-tick-preflight.test.sh, which the file's own header notes already exists and never touches the live repo). AC-3: add the missing JUMP-TO table branch (or note) in docs/agents/dev-team/flow/main.md for 'VERDICT_JSON failed to parse as JSON at all' distinct from the ERROR verdict string case, since today that state has no defined caller behavior. AC-4: live re-verify after fix by forcing _step55_would_evict true again (or waiting for natural recurrence) and confirming a clean RUN/RUN-IDLE verdict on the SAME tick, not requiring a retry.",
+        "files": [
+          "scripts/agents-flow/dev-team-tick-preflight.sh",
+          "scripts/agents-flow/dev-team-tick-preflight.test.sh",
+          "docs/agents/dev-team/flow/main.md"
+        ],
+        "baseline_pass": "BROKEN at baseline — reproduced live 2026-08-01T02:36Z tick, jq parse error on VERDICT_JSON; self-heals only via manual retry once nothing left to evict",
+        "promoted_at": "2026-08-01T04:22:46Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
+        "claimed_at": "2026-08-01T04:22:46Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)"
+      }
+    ]
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
