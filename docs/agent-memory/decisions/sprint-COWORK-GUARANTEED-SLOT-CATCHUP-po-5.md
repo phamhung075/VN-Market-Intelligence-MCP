@@ -43,3 +43,28 @@
 - Correct it and record the git-verified file-plane finding
 **why-decision:** Using a message's own arrival as proof that a DIFFERENT earlier message arrived is a non-sequitur; leaving it would let a false "verified" close the loop.
 **why-change:** no change from plan.
+
+### STEP po-S119 · po · 2026-08-01T03:56:29Z
+**task-id:** FIX-SWEEPGUARD-SAMEFILE-HUNK-PATHSPEC-ONLY-SEMANTICS-NONGOAL-AND-DETECTOR
+**what-done:** Rejected dev-team's "expected/correct behavior, not a bug" read of the first SAME-FILE DIVERGENCE fire; root-caused a structural false-positive class in the new AC-3 detector.
+**what-considered:**
+- Accept dev-team's relayed `git diff` verdict (benign, archive as clean first fire)
+- Re-derive from the detector source + scratch-repo reproduction
+**why-decision:** `pre-commit:501`'s `[ -z "$real_blob" ] && continue` fail-open is DEAD for tracked paths — `git rev-parse ":$f"` returns the HEAD blob, never empty. Live fire's real_blob `cdd10362` == `git rev-parse a5abe7f36^:<path>` → nothing was ever staged, no peer content existed. Scratch repo: unstaged pathspec commit FIRES, `git add`+pathspec silent, stale-stage FIRES. T12's own header shows the negative control only covers the staged idiom, so the FP class is untested. Discriminator `skip when real_blob == HEAD:$f` verified to kill the FP while preserving both peer-staged (T11 repro) and stale-stage true positives.
+**why-change:** Relayed verdict was outcome-evidence about one commit, not the mechanism — same class as the invalid-disposition fence the triage table already forbids for BARE payloads.
+
+### STEP po-S120 · po · 2026-08-01T03:56:29Z
+**task-id:** FIX-BCTC-BANK-SUMMARY-MAPPING
+**what-done:** Routed EIB 2026-Q2 reports 4271/4272 into the existing BLOCKED row as fresh recurrence evidence; UNBLOCK rather than new mint.
+**what-considered:**
+- Mint a new EIB/OCR-corruption FIX (the alert text's VNM/VEA hint)
+- Dedup into the existing bank B02-TCTD scalar-mapping row
+**why-decision:** EIB is Banking (stock-classification.json), and the alert's VNM/VEA non-bank pattern (assets<equity, margin>100%) is a red herring — the symptom is total_assets=0, which this row's title names verbatim. Live probe: CTG corrupt, VCB clean — reproducing the row's own recorded per-form-edge finding, so scope already matches. Row is stranded: hot board BLOCKED/next_agent=null vs detail BACKLOG/next_agent=ba, "blocked on ops re-ingest" premise stale.
+**why-change:** Report 4272 (write refused, no corrupt row) is the guardrail working — live `get_bctc_full(EIB)` returns "Chưa có dữ liệu BCTC", confirming no fabricated row landed. No task for that half.
+
+### STEP po-S121 · po · 2026-08-01T03:56:29Z
+**task-id:** TE-T05
+**what-done:** manual-dispatch-sweep Step 2 stamp + Step 3 BATCH fold of top DRS-STRANDED-OFF-ALLOWLIST candidate.
+**what-considered:** only path: sub-flow mandates exactly one top-priority candidate per tick
+**why-decision:** TE-T05 top by [rank, idx] (P1, idx 30, next_agent=agent-father, reflag=false); stamp applied via orch-apply.sh, conservation check OK 765/765.
+**why-change:** no change from plan
