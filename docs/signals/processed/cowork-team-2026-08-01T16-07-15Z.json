@@ -3,7 +3,7 @@
   "to": "dev-team",
   "type": "cowork-fire",
   "payload": {
-    "fire_time": "2026-07-25T16:15:23Z",
+    "fire_time": "2026-08-01T16:00Z",
     "matched_slots": [
       "news-scout-offhours",
       "market-watcher-offhours",
@@ -22,7 +22,7 @@
       "docs/agents/alert-commander/flow/main.md"
     ],
     "silent": false,
-    "drift_min": 9,
+    "drift_min": 5,
     "errors": [],
     "pressure_mode": "adaptive",
     "calendar_status": "closed",
@@ -40,27 +40,19 @@
       "market-watcher-offhours": 240,
       "alert-commander-critical": 240
     },
-    "last_fired_timestamp": "2026-07-25T16:13:49Z",
+    "last_fired_timestamp": "2026-08-01T16:07:03Z",
     "last_fired_slots": [
       "news-scout-offhours",
       "market-watcher-offhours",
       "alert-commander-critical"
     ],
-    "last_fired_write_errors": null,
-    "classification": "FIRE",
-    "reason": "spawned",
-    "nominal_tick": "16:00",
-    "leader_lock": "acquired",
-    "dev_head": "idle",
-    "devq": 393,
-    "signal_backlog": 10,
-    "note": "calendar_status=\"closed\" is out-of-domain: gatherer-standard defines rules only for open/half_day/holiday/weekend/unknown, so evaluateCadence fell through to the unmatched 240min default. Today is Saturday; correct value \"weekend\" maps to 480min AND would have triggered Step 4.3 suppression of all 3 non-guaranteed slots (elapsed 4h11m < 480min => not due). Both weekend brakes bypassed by one frozen field. Root cause: Step 6.0 re-emits CALENDAR_STATUS read at Step 4.2 from the same file it rewrites - self-perpetuating, no independent calendar source. Any value written becomes the permanent freeze; \"closed\" preserved deliberately (over-fires) rather than writing \"weekend\", which would freeze suppression ON through Monday trading. Routed to PO as UC-CDC-P1 root cause."
+    "last_fired_write_errors": null
   },
   "priority": "low",
-  "createdAt": "2026-07-25T16:15:23Z",
+  "createdAt": "2026-08-01T16:07:15Z",
   "_processed": {
-    "fingerprint": "0f79d0ba8a179e3dc750059652b5d6a5eb1b642156c95245d0693da55c010aa6",
-    "processedAt": "2026-07-25T16:25:01Z",
+    "fingerprint": "99159fd9db2ca81e1cff42d63c7cf2e3a3121081e3431a3ac639472957d01c02",
+    "processedAt": "2026-08-01T16:16:29Z",
     "processedBy": "dev-team",
     "result": "routed-to-po"
   }
