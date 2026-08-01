@@ -130,3 +130,43 @@
 - Dispatch qa directly at the already-shipped Part-1 row, bypassing the starved picker
 **why-decision:** Third. The starvation is circular: 202 review rows carry `next_agent:qa`, and the remedy is itself inside them — Part 1 (`9fe706fa2`, verified real, script-only, size S, no depends) has sat unverified ~26h. Meanwhile `FIX-BCTC-REPARSE-BATCH-CORRUPTION-NGAYNOP-FLIP` ("ACTIVE + SPREADING") has sat 10.3 days while its generator still emitted three `total_assets=0` writes tonight, one aimed at a known-good row. PO BATCH → dev-team Step 3 is the one dispatch path that does not traverse the starved picker; verifying Part 1 is what makes that picker safe to run at all. Designing more (option 2) ships nothing.
 **why-change:** Spawn prompt flagged this out of scope "unless you judge it now warrants escalation" — the corruption evidence is new tonight and changes that judgement.
+
+### STEP po-S111 · po · 2026-08-01T01:25:12Z
+**task-id:** FIX-COWORK-FLOWDOC-STALE-TRANSPORT-GAP-CAVEAT
+**what-done:** Traced the re-filed HIGH escalation (`cow-20260801T010430`, coverage-state frozen 6.4d) to a stale flow-doc caveat, not a missing tool grant, and minted the row agent-father had already asked PO for 26h earlier. Marked both NEW `to:po` signal rows triaged.
+**what-considered:**
+- Treat it as the known open transport gap and re-attach to `FIX-COWORK-BASH-GRANT-COVERAGE-STAMP-TRANSPORT` (review[])
+- Reopen the Bash grant as insufficient
+- Mint a separate follow-up row for the flow-doc text alone
+**why-decision:** Third. The grant is already correct — `.claude/agents/market-watcher.md:5` reads `tools: Read, Write, Edit, Bash, ...` since `610110e16` (2026-07-30T23:18Z), so option 2 is refuted at source. Option 1 cannot work either: the parent's own AC-2/AC-3 were written to "self-heal once a live cycle runs the script", and the caveat is exactly what stops any cycle from running it — attaching there re-creates the deadlock. The decisive check was reading the cited line rather than the prose that cites it: `cycle.md:265` asserts "this agent holds no Bash (.claude/agents/market-watcher.md:5)" and that very line refutes the assertion. Transport proven live, not assumed — I ran `coverage-stamp.sh --agent market-watcher --list-stale` myself and got a correct 3-ticker list.
+**why-change:** No change from plan — but the row should have existed 26h ago. agent-father wrote the ask into `FIX-COWORK-BASH-GRANT-COVERAGE-STAMP-TRANSPORT`'s `review_note` (2026-07-30T23:16:56Z), and the escalating signal was cold-evicted `READ/triaged_by:null` before any PO read it (2nd confirmed `feedback_coldevict_no_age_gate_orphans_unread_po_escalation`). A `review_note` is not a delivery mechanism to PO — the row it sits on is not on any PO surface.
+
+### STEP po-S112 · po · 2026-08-01T01:27:03Z
+**task-id:** FIX-CI-SIZELINT-MACROTOOLS-HUMANIZE-618L
+**what-done:** Refuted the spawn prompt's "pre-existing debt on a docs-only SHA" hypothesis for `ci-red-d1a62fd6`, minted the file-scoped row, and gated the sibling row that caused it against a premature DONE.
+**what-considered:**
+- Accept the docs-only-SHA framing and skip the mint
+- Dedup into one of the 8 existing `FIX-CI-SIZELINT-*` rows
+- Mint file-scoped and bind it to `FIX-MACRO-SNAPSHOT-HUMANIZE-TEXT`
+**why-decision:** Third. The mandatory pre-dedup failing-file read named a single offender — `apps/mcp-server/.../macro/macroTools.ts`, baseline=501L actual=618L upper=551L. `git show e64ad8870^:<path> | wc -l` = 510 vs 618 at HEAD, so `e64ad8870` alone crossed the tolerance; CI merely attributed it to the next SHA it ran on. Option 1 is therefore a fabricated disposition under the anti-amnesty fence. Option 2 fails file-scoped dedup: all 8 existing size-lint rows name different files, and the 3 open rows mentioning macroTools are about thresholds, new tickers and `fetchedAt`, none a size-lint row.
+**why-change:** The prompt asked me to sanity-check for an existing row covering "the actual new offender" before minting. I did, and the check inverted the conclusion: no covering row exists, and the offender is the very commit a second signal this tick was relaying as "RAW-verified clean". Registered the new row as `depends_on` on `FIX-MACRO-SNAPSHOT-HUMANIZE-TEXT` — the validator rejected a `blocks`-only edge as decorative, which was the correct catch and forced the binding direction.
+
+### STEP po-S113 · po · 2026-08-01T01:27:57Z
+**task-id:** FIX-DEVTEAM-REVIEW-LANE-QA-DRAIN
+**what-done:** Manual-dispatch sweep picked this row and folded it into the BATCH; raised `FIX-CHEF-QUALITY-VERDICT-FALSE-FULL-NO-LAYER-ASSERTION` `occurrence_count` 1→3 without minting.
+**what-considered:**
+- Pick the unflagged candidate `FIX-CHEF-QUALITY-VERDICT-FALSE-FULL-NO-LAYER-ASSERTION`
+- Pick the reflagged `FIX-DEVTEAM-REVIEW-LANE-QA-DRAIN`
+- Re-stamp `po_promoted_at` on both and dispatch neither
+**why-decision:** Second. My own carry-over from last tick says a `reflag:true` candidate is the sweep's most fragile case, not its least urgent — this row was stamped `po_promoted_at` on 2026-07-28 and no dispatch followed for 4 days, so re-stamping (option 3) is the documented failure mode. The 07-28 tie with TE-T21 was broken by array index only; TE-T21 has since shipped (`ee9db20ab`, DONE_VERIFIED at `f9e229f13`), so the tie resolves here. Independent reason: it is the structural cause of the constraint both prior ticks named — 244 review rows against an empty `qa[]` lane — and specifically why the HIGH escalation I triaged in po-S111 sat unread inside a `review_note` for 26h.
+**why-change:** No change from plan. Scope untouched: the two candidate remedy shapes in `po_triage_20260728` stand and PO still does not pick between them.
+
+### STEP po-S114 · po · 2026-08-01T01:28Z
+**task-id:** FIX-BCTC-INGEST-PERIOD-IDENTITY-UNVALIDATED-VS-CONTENT
+**what-done:** Declined to mint on the continuing BCTC period-mismatch quarantine storm (17 reports, ids 4244-4261, through 23:07:29Z) and on TNB c121; re-verified both were already dispositioned.
+**what-considered:**
+- Mint a quarantine-drain/re-key row for the discarded documents
+- Re-ACK the TNB c121 handoff
+- Confirm prior dispositions and add nothing
+**why-decision:** Third. The prior tick (00:37Z) already attached `po_live_evidence_20260731T2300` to the owning review row and recorded why a 4th producer row fragments one defect; the 5 additional quarantines I read (4257-4261) are the same storm continuing past that ACK, not new evidence. TNB c121 was fully ACKed at 2026-07-31T23:04:15Z with all 6 findings dispositioned and the file is unchanged since — re-ACKing is churn. The one thing genuinely missing was the stale `occurrence_count=1` on the chef row despite c118 measuring 2 and c121 measuring 3; that is a field correction, not a mint (po-S113).
+**why-change:** No change from plan — deliberate non-action on inputs a peer tick already resolved, per `feedback_router_skip_po_respawn_identical_inputs`.
