@@ -96,8 +96,8 @@
     "status": "idle",
     "active_task_id": null,
     "next_agent": "router",
-    "updated_at": "2026-08-01T05:31:00Z",
-    "updated_by": "dev-mcp-server (SPIKE-BCTC-REFINE-MAXWINDOW-TRUNCATION closeout, CANONICAL:SSOT-STATUSFLIP-LANEMOVE branch:null direct-execute)"
+    "updated_at": "2026-08-01T05:57:21Z",
+    "updated_by": "dev-mcp-server (FIX-AGENTSIGNALS-ALLPRODUCERS-NULLSTRIP closeout, CANONICAL:SSOT-STATUSFLIP-LANEMOVE branch:null direct-execute)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -4424,6 +4424,25 @@
         ],
         "po_ruling_20260731b": "RULING = (c), and neither (a) nor (b). dev-team asked whether the June 'PLAN-ONLY' framing is stale (dispatch it) or still a live design decision (route to architect). Answer: BOTH options assume the row's premise, and the premise is FALSE. Verified 2026-07-31T16:1xZ against live code and the running container (docker exec vn-market-intelligence-mcp-mcp-server-1, readonly bun:sqlite, /app/data/market.db). CLAUSE 1 — 'record_signal_outcome never called': FALSE. Two live production callers of recordOutcome exist: taAlertNotifierJob.ts:284 (writes 'fired' at dispatch) and signalOutcomeJob.ts:187 (writes confirmed/false_positive). The alert-commander agent flow also calls the MCP tool at two stages (stage-dispatch-log.md:54, stage-signals.md:70). CLAUSE 2 — 'auto-resolve price alerts vs 5-day close' (the supposed open design decision): ALREADY DECIDED AND SHIPPED. signalOutcomeJob (Task 1382d, wired by 1382c) resolves on a 4h price window; signalOutcomeResolutionJob resolves T+24h/T+48h and ran status=success hourly today 09:17 through 15:17. signal_outcomes holds 105 rows of which only 2 are unresolved (98.1% resolved). Routing this to architect would have commissioned a design brief for a loop that is already built twice and running. CLAUSE 3 — 'Eval=0 for ALL 49 cascade rules': the ONLY clause still true (now 64 rules; 27/9,922 hits evaluated = 0.27%), but its root cause has NOTHING to do with record_signal_outcome. It is runImpactChain.ts:220 calling recordHit(db, rule.key, rule.matchedKeyword, rule.sector) with FOUR args, omitting the 5th `stocks` param, so affected_stocks is NULL on 9,868/9,922 rows and cascadeBacktestJob — which fires daily and succeeds — has exactly ZERO eligible pending rows to price. CLAUSE 4 — '653/683 alerts (95.6%) unknown verdict': UNVERIFIABLE, the live alerts table has no `verdict` column at all. ALSO CORRECTED: this row's own po_zone_repair_20260731 note (written by PO earlier this same tick) concluded 'the outcome feedback loop is confirmed dead in production right now' from MAX(checked_at)=2026-07-26 plus zero new rows in 5 days. That was an empty-read-as-evidence error (feedback_empty_read_is_not_evidence, feedback_single_observation_degenerate_case_read_as_broken_mechanism): signal_outcomes is DOWNSTREAM of agent_signals, which received exactly ONE new row in the trailing 7 days. Nothing to resolve, so checked_at stalls. The recorder is starved, not broken. The P3->P1 raise made on that reading is withdrawn with the row. DISPOSITION: CANCELLED, not dispatched and not routed to architect — sending a developer to 'wire' an already-wired loop, or an architect to design an already-shipped one, is exactly the churn-without-convergence pattern this board keeps paying for. Three correctly-scoped successors minted this tick carry every still-live concern forward; nothing is dropped. dev-team's revert was the right call and is endorsed — the withholding gate (next_agent non-dev) did its job and must not be weakened.",
         "updated_by": "po/ruling-20260731b"
+      },
+      {
+        "id": "FIX-AGENTSIGNALS-ALLPRODUCERS-NULLSTRIP",
+        "type": "FIX",
+        "status": "CANCELLED",
+        "priority": "P3",
+        "zone": "apps/mcp-server/",
+        "size": "S",
+        "title": "get_agent_signals all-producers mode broken when MCP transport strips from_agent:null -> undefined (falls into inbox-mode error branch)",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-AGENTSIGNALS-ALLPRODUCERS-NULLSTRIP",
+        "updated_at": "2026-08-01T05:57:21Z",
+        "updated_by": "dev-mcp-server/FIX-AGENTSIGNALS-ALLPRODUCERS-NULLSTRIP-closeout",
+        "po_correction_20260721T1724": "LIVE EVIDENCE ADDED (PO triage, cow-20260721T162324). This row premises that all-producers mode is BROKEN when the MCP transport strips from_agent:null -> undefined. That premise is now PARTLY refuted at the transport this project actually uses: cowork-team called get_agent_signals(from_agent:null, hours_back:0.25) through the SAME gateway transport the cowork agents use and got a correct all-producers result (94 rows). So null is NOT stripped on that path. agentSignalTools.ts:471 declares from_agent: z.string().nullable().optional(); 507-510 implement the all-producers branch; 525 handles undefined separately — the feature ships and is reachable. Before working this row, RE-ESTABLISH that a null-stripping transport path still exists; if none does, close it as NOT-A-DEFECT rather than implementing against a premise that no longer holds. Related but distinct: FIX-COWORK-SIBLING-WINDOW-CACHE-FAIL-OPEN (minted this triage) covers the flow-level fail-open, which is a different layer and remains live either way.",
+        "promoted_at": "2026-08-01T05:48:18Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=3)",
+        "claimed_at": "2026-08-01T05:48:24Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "dev_mcp_server_closure_20260801": "NOT-A-DEFECT — re-verified 2026-08-01 (dev-mcp-server) per po_correction_20260721T1724's instruction. Re-established the premise myself: grepped every real from_agent:null caller of get_agent_signals in the repo. (1) Both actual callers — market-watcher Step 0-GW corroboration (docs/agents/market-watcher/flow/main.md:78-82) and news-scout SIBLING_WINDOW_CACHE (docs/agents/news-scout/flow/stage-bootstrap.md:56-60) — invoke call_tool(server=\"vn-market\", tool=\"get_agent_signals\", arguments={\"from_agent\": null,...}), the identical mcp__gateway__call_tool mechanism PO already live-verified returns a correct all-producers result (94 rows, cow-20260721T162324). No distinct transport exists for these 2 callers. (2) grep of every bash-transport caller (scripts/agents-flow/mcp-call.sh, which bypasses the gateway and POSTs directly to vn-market's own /mcp endpoint) found zero call sites passing from_agent:null to get_agent_signals — the only bash caller, scripts/emit-audit-signal.sh:288, uses a concrete from_agent string, unaffected. (3) getCycleBootstrap.ts / agentBootstrap.ts never cross the MCP/Zod tool boundary for signals at all — they call getSignals()/getBroadcastSignals() domain functions directly, bypassing this class of defect entirely. (4) Read the MCP TypeScript SDK itself (@modelcontextprotocol/sdk dist/esm/server/mcp.js:430): safeParseAsync(argsObj, request.params.arguments) parses the raw JSON-RPC arguments object straight into Zod; from_agent: z.string().nullable().optional() accepts and preserves literal null — no null-to-undefined stripping exists anywhere in the SDK's request path. (5) agentSignalTools.ts's `if (args.from_agent === null)` all-producers branch has been checked FIRST (before the inbox undefined-guard) since it was introduced in commit 51c727254 (2026-06-18) and is byte-structurally unchanged today — no regression window. (6) Independent precedent: sibling residue row FIX-COWORK-SIBLING-WINDOW-CACHE-FAIL-OPEN already carries a PO note (po_provenance_20260721T1724) that reached the identical NOT-A-DEFECT conclusion for a near-identical 2026-07-21 news-scout false report, attributing it to \"a transport failure misread as a tool-contract rejection\" during an mcp-server restart window — the same failure signature most plausibly explains this row's original source (health-recheck 2026-06-21T20:07Z BUG-6 probe, source_report 3286): a one-off transient, not a reproducible code defect. No remaining null-stripping path found anywhere in the codebase for get_agent_signals. Per PO's explicit instruction, closing without speculative code (the fix_spec's defensive all_producers:true flag / get_recent_signals routing was NOT implemented — the premise it exists to defend against does not reproduce; if a future genuine transport-strip is RAW-observed, re-open with the concrete caller/transport identified, don't re-implement blind)."
       }
     ],
     "backlog": [
@@ -6222,19 +6241,6 @@
         "title": "fb-market-poster flow calls get_sentiment_trend({}) with EMPTY args but tool REQUIRES stock_code -> silent error every fb-poster cycle -> sentiment signal permanently blind",
         "size": "S",
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-FBPOSTER-SENTIMENT-TREND-BARE-CALL"
-      },
-      {
-        "id": "FIX-AGENTSIGNALS-ALLPRODUCERS-NULLSTRIP",
-        "type": "FIX",
-        "status": "BACKLOG",
-        "priority": "P3",
-        "zone": "apps/mcp-server/",
-        "size": "S",
-        "title": "get_agent_signals all-producers mode broken when MCP transport strips from_agent:null -> undefined (falls into inbox-mode error branch)",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-AGENTSIGNALS-ALLPRODUCERS-NULLSTRIP",
-        "updated_at": "2026-07-21T17:24:33Z",
-        "updated_by": "po/triage-20260721T1707",
-        "po_correction_20260721T1724": "LIVE EVIDENCE ADDED (PO triage, cow-20260721T162324). This row premises that all-producers mode is BROKEN when the MCP transport strips from_agent:null -> undefined. That premise is now PARTLY refuted at the transport this project actually uses: cowork-team called get_agent_signals(from_agent:null, hours_back:0.25) through the SAME gateway transport the cowork agents use and got a correct all-producers result (94 rows). So null is NOT stripped on that path. agentSignalTools.ts:471 declares from_agent: z.string().nullable().optional(); 507-510 implement the all-producers branch; 525 handles undefined separately — the feature ships and is reachable. Before working this row, RE-ESTABLISH that a null-stripping transport path still exists; if none does, close it as NOT-A-DEFECT rather than implementing against a premise that no longer holds. Related but distinct: FIX-COWORK-SIBLING-WINDOW-CACHE-FAIL-OPEN (minted this triage) covers the flow-level fail-open, which is a different layer and remains live either way."
       },
       {
         "id": "F1-CLOUD-TRIGGER-DECOMMISSION",
@@ -20246,7 +20252,7 @@
         }
       ]
     },
-    "last_triaged_at": "2026-08-01T05:18:59Z",
+    "last_triaged_at": "2026-08-01T05:48:18Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
     "in_progress": []
   },
