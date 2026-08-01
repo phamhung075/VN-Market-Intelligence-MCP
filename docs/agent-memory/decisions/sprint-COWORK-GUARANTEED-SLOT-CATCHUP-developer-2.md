@@ -97,3 +97,16 @@
 **why-decision:** matches the pre-verified discriminator exactly; independently re-confirmed via `git stash` A/B on `scripts/git-hooks/pre-commit` alone — T13 FAILs 12/13 against the pre-fix hook (proves the test is non-vacuous), PASSes 13/13 post-fix.
 **why-change:** no change from the task's own pre-designed fix.
 **verify:** `bash scripts/git-hooks/pre-commit.test.sh` → 13 passed, 0 failed (real run, this session). T11 (peer-staged same-file hunk still fires) and T12 (ordinary `git add` idiom, still silent) both still PASS — only the false-positive case (A) flipped. Live re-verify: this task's own real commit (`scripts/git-hooks/pre-commit` + `pre-commit.test.sh` + the brief, commit `1c9b55d4d`) was itself committed via pathspec WITHOUT a preceding `git add` — no stderr WARN, no new `docs/signals/commit-sweep-guard-*.json` written (the one pre-existing pre-fix signal in the dir is untouched, dated before this fix landed). No `apps/` TS/Go touched (zone `cross-service/`, pure bash+md) — `bun test`/`tsc` structurally N/A.
+
+### STEP developer-S58 · developer · 2026-08-01T06:23:56Z
+**task-id:** SPIKE-FB-SOURCE-LINK-RECHECK-AFFORDANCE
+**what-done:** Findings doc written (`docs/architecture-briefs/2026-08-01-fb-source-link-recheck-affordance.md`) recommending option (a), narrowly scoped: static "Nguồn dữ liệu" footer naming live STEP-1b tool names, WITHOUT a dashboard-URL clause; proposed follow-on `FIX-FB-SOURCE-TOOL-FOOTER` for PO to mint.
+**what-considered:**
+- (a) tool-name footer, (b) companion dashboard card, (c) explicit NO-GO — per task text.
+- Re-verified premise myself (not trusted from 06-24 audit): read `fb-market-poster/flow/main.md` STEP 5 + all 16 STEP 4 checks + post template full — zero source-link mechanism anywhere; grepped all 53 live `fb-post-*.md` files for `https?://` — 0/53 (worse than audit's 0/27, same defect, more instances).
+- Checked whether (a)'s "dashboard verify URL" / (b)'s companion card are even deployable: `nginx.conf` (public zenmidi.com proxy) has zero route to `frontend`; `docker-compose.yml` publishes frontend only on host `3001:3001` — no public dashboard URL exists today. This ruled out shipping either option's URL/card half without a separate infra task.
+**why-decision:** (a)'s tool-name half needs zero new infra/tool calls (reuses STEP 1b working memory already gathered every cycle) and directly satisfies the audit's own stated bar ("named tool/source citation"); (b) requires infra that doesn't exist plus a multi-file FEATURE, out of spike scope; (c) is unnecessarily pessimistic given (a)'s cheap partial fix is real and available now.
+**why-change:** narrowed (a) to exclude its own dashboard-URL sub-clause (not in the original task's 3 named options) after discovering §2's infra gap — flagged explicitly in the findings doc rather than silently dropped.
+**verify:** RAW re-derivation this cycle, not chain-trust: full read of `fb-market-poster/flow/main.md` (995L); `grep -lE "https?://" docs/social/fb-post-*.md` = 0/53 files; `grep -n "location" nginx.conf` = no `frontend` block; `docker-compose.yml:421-422` confirms host-only port publish. No `apps/` code touched — findings-doc-only spike, `bun test`/`tsc` structurally N/A.
+
+### CAP-REACHED · 2026-08-01T06:24:38Z
