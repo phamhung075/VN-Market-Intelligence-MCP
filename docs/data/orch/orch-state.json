@@ -95,9 +95,10 @@
   "head": {
     "status": "idle",
     "active_task_id": null,
-    "next_agent": "router",
-    "updated_at": "2026-08-01T06:26:22Z",
-    "updated_by": "developer"
+    "next_agent": null,
+    "next_action": "FIX-BCTC-1345B-ALERT-NAMES-A-RULE-FAMILY-THAT-CANNOT-PRODUCE-ITS-OWN-VALUE moved in_progress→review (next_agent=qa); dispatcher may pick up next eligible row.",
+    "updated_at": "2026-08-01T12:46:56Z",
+    "updated_by": "dev-mcp-server"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -2094,6 +2095,17 @@
         "summary": "notebook writes have no CAS guard (unlike orch-apply.sh); concurrent devs can silently drop sections — repro'd live 08-01",
         "severity": "MED",
         "status": "READ",
+        "payload_ref": null
+      },
+      {
+        "id": "cow-20260801T120900",
+        "ts": "2026-08-01T12:09:00Z",
+        "from": "cowork-team",
+        "to": "po",
+        "type": "system-issue",
+        "summary": "3/3 mw+ns co-fire loses coverage-write (task_claim race). Tracker BACKLOG 16d, needs priority bump — see memory.",
+        "severity": "HIGH",
+        "status": "NEW",
         "payload_ref": null
       }
     ],
@@ -11058,27 +11070,6 @@
           "SPIKE-BCTC-REFINE-MAXWINDOW-TRUNCATION",
           "FIX-BCTC-BANK-BS-COLUMN-ORDER"
         ]
-      },
-      {
-        "id": "FIX-BCTC-1345B-ALERT-NAMES-A-RULE-FAMILY-THAT-CANNOT-PRODUCE-ITS-OWN-VALUE",
-        "type": "FIX",
-        "title": "[BCTC-1345b] alert hard-codes 'Check for OCR corruption (VNM/VEA pattern: assets<equity or margin>100%)' but financial=0.10 is emitted ONLY by the unit-mismatch short-circuit that bypasses those rules entirely — 65 live rows (23 tickers) each send the triager to a rule family that provably cannot return 0.10",
-        "status": "BACKLOG",
-        "priority": "P2",
-        "size": "S",
-        "zone": "apps/mcp-server/",
-        "owner": "dev-mcp-server",
-        "next_agent": "dev-mcp-server",
-        "created_at": "2026-08-01T06:29:04Z",
-        "created_by": "po/triage-telegram-report-4273",
-        "updated_at": "2026-08-01T06:29:12Z",
-        "source": "telegram_reports id=4273 (from_agent=analysis-agent, 2026-08-01T05:52:16Z, NVL 2026-Q2 composite=0.10 financial=0.10)",
-        "baseline_pass": 9408,
-        "files": [
-          "apps/mcp-server/src/application/usecases/parseBctcReport.ts",
-          "apps/mcp-server/src/domain/services/financial-reports/financialFiguresValidator.ts"
-        ],
-        "desc": "MEASURED, not inferred.\n\nROOT CAUSE. parseBctcReport.ts:737-741 computes confidence_financial as a ternary: when detectUnitMismatch(totalAssets, netRevenue) (cross-statement, >1000x) OR detectBsIntraStmtUnitMismatch(totalAssets, totalLiabilities) (intra-BS, >100x) fires, it SHORT-CIRCUITS to the literal 0.1 and validateFinancialFigures() is never called. The alert built at parseBctcReport.ts:275-279 then tells the reader to check the VNM/VEA patterns -- but those are BCTC-VAL-01 (assets<equity) and BCTC-VAL-03 (margin>100%), both implemented INSIDE the validateFinancialFigures() call that was just skipped.\n\nPROOF THE HINT IS UNREACHABLE FOR THIS VALUE. Brute-forced validateFinancialFigures over 160,000 input combinations (totalAssets/totalEquity/totalLiabilities/netRevenue x 10 values each, operatingMargin x 16): the ONLY outputs it can ever return are {0, 0.4, 0.6, 0.8, 1.0}. It returns 0.1 ZERO times. Documented VNM pattern (assets 957 << equity 18829, revenue 63645) -> 0.8; same without the >30x-revenue escape -> 0.0; documented VEA pattern (margin 3.3 = 330%) -> 0.8. None is 0.10. Therefore financial=0.10 is a UNIQUE, unambiguous fingerprint of the unit-mismatch branch and NEVER of the two patterns the alert names.\n\nSECOND DEFECT -- DEAD FLOOR. financialFiguresValidator.ts:306 'return Math.max(confidence, 0.1)' and its docstrings at :28 and :177 ('soft violations stack, floor at 0.1') describe a floor that cannot be reached: max stacked soft penalty is 0.6, because BCTC-VAL-01's guard requires totalEquity>0 while BCTC-VAL-06 requires totalEquity<0, so those two can never both fire. Minimum non-hard-fail output is 0.4. The 0.1 in the docstring is what makes the collision with the unit-mismatch sentinel invisible on reading.\n\nLIVE BLAST RADIUS (market.db via runtime container, 2026-08-01T06:2xZ). confidence_financial distribution over 221 non-null rows: 1.0 -> 121, 0.1 -> 65, 0.8 -> 18, 0.0 -> 17. Note 0.4 and 0.6 have ZERO rows, and 0.1 is the 2nd most common value at 29.4%. All 65 came through the unit-mismatch branch (independently corroborates the brute-force). 23 distinct tickers. Sub-detector split over those 65: cross-statement only 44, intra-BS only 11, both 7, neither-now 3.\n\nTRIGGERING INSTANCE. NVL 2026-Q2, parsed_at 2026-08-01T05:52:14.418Z: total_assets=420322071420, total_liabilities=0, equity_total=0, net_revenue=31, extraction_confidence=0.375, confidence_financial=0.1, validation_status=low_confidence. assets/revenue ratio = 1.4e10 -> detectUnitMismatch fires (raw VND vs trieu VND). assets>equity, so the VNM signature the alert names is ABSENT; the VEA margin rule was never evaluated. Contained at serve time only INCIDENTALLY: get_bctc_full returns 'Chua co du lieu BCTC' via PUB-1 (refine_status=PENDING, not DONE/PARTIAL) -- NOT via any corruption guard. checkBctcIdentityGuard's predicate (total_assets<=0 OR total_assets<equity_total) passes this row, since equity_total=0 makes assets>=equity trivially true.\n\nAC-1: the [BCTC-1345b] message must name the detector that ACTUALLY fired -- cross-statement unit mismatch (assets/revenue ratio R), intra-BS unit mismatch (assets/liabilities ratio R), or the specific BCTC-VAL-NN rule -- with the offending figures. No hard-coded ticker-pattern hint.\nAC-2: the VNM/VEA hint may only appear on values that rule family can actually return (0.0/0.8).\nAC-3: resolve financialFiguresValidator.ts:306. Either delete the unreachable floor and correct the :28/:177 docstrings, or keep it and move the unit-mismatch sentinel off 0.1 so the two stop colliding. Do NOT silently leave both.\nAC-4: regression test asserting the unit-mismatch alert text does NOT contain the VNM/VEA string, and that a genuine BCTC-VAL-01/03 alert does.\nAC-5: NON-GOAL -- this row does NOT fix the underlying unit normalisation (no open row owns that; the 2026-06-07 commit 06c65978c added the DETECTOR only) and does NOT repair the 65 existing rows. Scope is alert truthfulness + the dead floor.\n\nPRIOR ART CHECKED. FIX-BCTC-1345B-REPORT-BATCH (review[], next_agent=qa) touches the same emission block but is about VOLUME/dedup, not text correctness -- its verdict must not be read as making this alert accurate. FIX-BCTC-VALIDATION-GATE-NONBANK-ZERO-SCALE (backlog, architect) is the serve-time validation_status label, not the alert. SPIKE-BCTC-CONVICTION-COMPOSITE-DRAG-PERFECT-FINANCIAL is the inverse case (financial=1.00 dragged by extraction). 48 open BCTC rows scanned; none covers this."
       }
     ],
     "closed_sprints": [
@@ -20275,6 +20266,35 @@
         "updated_by": "developer",
         "completed_at": "2026-08-01T06:26:21Z",
         "note": "SPIKE complete — findings at docs/architecture-briefs/2026-08-01-fb-source-link-recheck-affordance.md. RAW re-verified premise this cycle (not audit-blind): 0/53 live fb-post-*.md files contain any URL/citation (widened from audit's 0/27); fb-market-poster/flow/main.md STEP 5 + all 16 STEP4 checks confirmed zero source-link mechanism anywhere. Recommends option (a) narrowly scoped: static tool-name footer (STEP 1b hard-required-live tool names), WITHOUT the dashboard-URL clause — new finding: nginx.conf (public zenmidi.com proxy) has zero route to apps/frontend, so no reachable public dashboard URL exists today; option (b) companion-dashboard-card is blocked on the same infra gap plus is a multi-file FEATURE, out of spike scope. Proposed follow-on FIX-FB-SOURCE-TOOL-FOOTER (S, docs/agents/fb-market-poster/ zone) spelled out in the doc for PO to mint, not built here."
+      },
+      {
+        "id": "FIX-BCTC-1345B-ALERT-NAMES-A-RULE-FAMILY-THAT-CANNOT-PRODUCE-ITS-OWN-VALUE",
+        "type": "FIX",
+        "title": "[BCTC-1345b] alert hard-codes 'Check for OCR corruption (VNM/VEA pattern: assets<equity or margin>100%)' but financial=0.10 is emitted ONLY by the unit-mismatch short-circuit that bypasses those rules entirely — 65 live rows (23 tickers) each send the triager to a rule family that provably cannot return 0.10",
+        "status": "REVIEW",
+        "priority": "P2",
+        "size": "S",
+        "zone": "apps/mcp-server/",
+        "owner": "dev-mcp-server",
+        "next_agent": "qa",
+        "created_at": "2026-08-01T06:29:04Z",
+        "created_by": "po/triage-telegram-report-4273",
+        "updated_at": "2026-08-01T12:46:56Z",
+        "source": "telegram_reports id=4273 (from_agent=analysis-agent, 2026-08-01T05:52:16Z, NVL 2026-Q2 composite=0.10 financial=0.10)",
+        "baseline_pass": 9408,
+        "files": [
+          "apps/mcp-server/src/application/usecases/parseBctcReport.ts",
+          "apps/mcp-server/src/domain/services/financial-reports/financialFiguresValidator.ts"
+        ],
+        "desc": "MEASURED, not inferred.\n\nROOT CAUSE. parseBctcReport.ts:737-741 computes confidence_financial as a ternary: when detectUnitMismatch(totalAssets, netRevenue) (cross-statement, >1000x) OR detectBsIntraStmtUnitMismatch(totalAssets, totalLiabilities) (intra-BS, >100x) fires, it SHORT-CIRCUITS to the literal 0.1 and validateFinancialFigures() is never called. The alert built at parseBctcReport.ts:275-279 then tells the reader to check the VNM/VEA patterns -- but those are BCTC-VAL-01 (assets<equity) and BCTC-VAL-03 (margin>100%), both implemented INSIDE the validateFinancialFigures() call that was just skipped.\n\nPROOF THE HINT IS UNREACHABLE FOR THIS VALUE. Brute-forced validateFinancialFigures over 160,000 input combinations (totalAssets/totalEquity/totalLiabilities/netRevenue x 10 values each, operatingMargin x 16): the ONLY outputs it can ever return are {0, 0.4, 0.6, 0.8, 1.0}. It returns 0.1 ZERO times. Documented VNM pattern (assets 957 << equity 18829, revenue 63645) -> 0.8; same without the >30x-revenue escape -> 0.0; documented VEA pattern (margin 3.3 = 330%) -> 0.8. None is 0.10. Therefore financial=0.10 is a UNIQUE, unambiguous fingerprint of the unit-mismatch branch and NEVER of the two patterns the alert names.\n\nSECOND DEFECT -- DEAD FLOOR. financialFiguresValidator.ts:306 'return Math.max(confidence, 0.1)' and its docstrings at :28 and :177 ('soft violations stack, floor at 0.1') describe a floor that cannot be reached: max stacked soft penalty is 0.6, because BCTC-VAL-01's guard requires totalEquity>0 while BCTC-VAL-06 requires totalEquity<0, so those two can never both fire. Minimum non-hard-fail output is 0.4. The 0.1 in the docstring is what makes the collision with the unit-mismatch sentinel invisible on reading.\n\nLIVE BLAST RADIUS (market.db via runtime container, 2026-08-01T06:2xZ). confidence_financial distribution over 221 non-null rows: 1.0 -> 121, 0.1 -> 65, 0.8 -> 18, 0.0 -> 17. Note 0.4 and 0.6 have ZERO rows, and 0.1 is the 2nd most common value at 29.4%. All 65 came through the unit-mismatch branch (independently corroborates the brute-force). 23 distinct tickers. Sub-detector split over those 65: cross-statement only 44, intra-BS only 11, both 7, neither-now 3.\n\nTRIGGERING INSTANCE. NVL 2026-Q2, parsed_at 2026-08-01T05:52:14.418Z: total_assets=420322071420, total_liabilities=0, equity_total=0, net_revenue=31, extraction_confidence=0.375, confidence_financial=0.1, validation_status=low_confidence. assets/revenue ratio = 1.4e10 -> detectUnitMismatch fires (raw VND vs trieu VND). assets>equity, so the VNM signature the alert names is ABSENT; the VEA margin rule was never evaluated. Contained at serve time only INCIDENTALLY: get_bctc_full returns 'Chua co du lieu BCTC' via PUB-1 (refine_status=PENDING, not DONE/PARTIAL) -- NOT via any corruption guard. checkBctcIdentityGuard's predicate (total_assets<=0 OR total_assets<equity_total) passes this row, since equity_total=0 makes assets>=equity trivially true.\n\nAC-1: the [BCTC-1345b] message must name the detector that ACTUALLY fired -- cross-statement unit mismatch (assets/revenue ratio R), intra-BS unit mismatch (assets/liabilities ratio R), or the specific BCTC-VAL-NN rule -- with the offending figures. No hard-coded ticker-pattern hint.\nAC-2: the VNM/VEA hint may only appear on values that rule family can actually return (0.0/0.8).\nAC-3: resolve financialFiguresValidator.ts:306. Either delete the unreachable floor and correct the :28/:177 docstrings, or keep it and move the unit-mismatch sentinel off 0.1 so the two stop colliding. Do NOT silently leave both.\nAC-4: regression test asserting the unit-mismatch alert text does NOT contain the VNM/VEA string, and that a genuine BCTC-VAL-01/03 alert does.\nAC-5: NON-GOAL -- this row does NOT fix the underlying unit normalisation (no open row owns that; the 2026-06-07 commit 06c65978c added the DETECTOR only) and does NOT repair the 65 existing rows. Scope is alert truthfulness + the dead floor.\n\nPRIOR ART CHECKED. FIX-BCTC-1345B-REPORT-BATCH (review[], next_agent=qa) touches the same emission block but is about VOLUME/dedup, not text correctness -- its verdict must not be read as making this alert accurate. FIX-BCTC-VALIDATION-GATE-NONBANK-ZERO-SCALE (backlog, architect) is the serve-time validation_status label, not the alert. SPIKE-BCTC-CONVICTION-COMPOSITE-DRAG-PERFECT-FINANCIAL is the inverse case (financial=1.00 dragged by extraction). 48 open BCTC rows scanned; none covers this.",
+        "promoted_at": "2026-08-01T06:49:27Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
+        "claimed_at": "2026-08-01T06:49:33Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "updated_by": "dev-mcp-server",
+        "commit_sha": "7ac55adc8",
+        "note": "describeConfidenceFinancialReason() + validateFinancialFiguresDetailed() ship: [BCTC-1345b] alert now names the detector that actually fired (cross-stmt/intra-BS unit mismatch w/ figures, or the specific BCTC-VAL-NN rule) instead of an unconditional VNM/VEA hint on a value validateFinancialFigures cannot produce. Dead Math.max(confidence,0.1) floor deleted (true floor is 0.4), docstrings corrected. 9 new regression tests (31 expect(), FIX-BCTC-1345B-ALERT-NAMES-A-RULE-FAMILY.test.ts). Targeted 10-file BCTC suite 72/72 pass. tsc clean. Full bun test 15050 pass/60 fail/2 err — zero fail-list matches for bctc/financial/1345b/VAL-01/VAL-03; all pre-existing unrelated classes. toolCount=183/cronJobCount=88 unchanged. Server boot + /health + /api/bctc-inspect verified live on PORT=3198."
       }
     ],
     "qa": [],
@@ -20294,7 +20314,7 @@
         }
       ]
     },
-    "last_triaged_at": "2026-08-01T06:17:21.947Z",
+    "last_triaged_at": "2026-08-01T06:49:27Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
     "in_progress": []
   },
