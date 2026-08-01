@@ -2,7 +2,7 @@
 name: signal-dashboard
 description: SSOT protocol for cowork agent signal communication via docs/data/orch/orch-state.json .signal_queue.rows[]. Covers write, read, ack, close, and prune operations. READ uses two-phase delta-read to eliminate full-file token cost. HSC-7 — PRUNE now evicts to cold file; signal_queue.archive[] lane removed.
 ---
-<!-- size-justification: ≤120L — hot-path only; Payload Pointer Discipline + Docs-to-read table moved to reference.md (load when writing large-payload signals or routing by type). UC-ASL-P6 2026-07-31 (0 new lines): Write protocol line lengthened in place — was citing a bare temp-file-then-rename pattern (docs/architecture-briefs/2026-06-01-orch-state-consolidate.md §2.3, pre-orch-apply.sh) which contradicted this file's own CONCURRENT WRITERS CAS-guard mandate 2 sections below; now names scripts/orch-apply.sh directly, matching dashboard-protocol.md's WRITE procedure (step 4) which already routed through it correctly. FIX-COLDEVICT-MALFORMED-TS-CATCH0-EVICTS-FRESH-SIGNAL-ROWS 2026-08-01 (0 new lines): WRITE block `ts` field pinned to explicit second-precision format — the prior "<ISO-8601 UTC compact>" wording did not pin seconds and was readable as permitting minute-precision, which is exactly the shape that defeated orch-cold-evict.sh's age gate (jq fromdateiso8601 throws on it). -->
+<!-- size-justification: ≤120L — hot-path only; Payload Pointer Discipline + Docs-to-read table moved to reference.md (load when writing large-payload signals or routing by type). UC-ASL-P6 2026-07-31 (0 new lines): Write protocol line lengthened in place — was citing a bare temp-file-then-rename pattern (docs/architecture-briefs/2026-06-01-orch-state-consolidate.md §2.3, pre-orch-apply.sh) which contradicted this file's own CONCURRENT WRITERS CAS-guard mandate 2 sections below; now names scripts/orch-apply.sh directly, matching dashboard-protocol.md's WRITE procedure (step 4) which already routed through it correctly. FIX-COLDEVICT-MALFORMED-TS-CATCH0-EVICTS-FRESH-SIGNAL-ROWS 2026-08-01 (0 new lines): WRITE block `ts` field pinned to explicit second-precision format — the prior "<ISO-8601 UTC compact>" wording did not pin seconds and was readable as permitting minute-precision, which is exactly the shape that defeated orch-cold-evict.sh's age gate (jq fromdateiso8601 throws on it). FIX-PO-TRIAGE-SIGNALS-TABLE-MATCHES-ZERO-LIVE-SIGNAL-TYPES 2026-08-01 (+2 lines): Receivers row for `po` gains cowork-team/dev-team (the two actual largest live senders, previously undeclared); ACK/CLOSE gains the `triaged`/`RETRACTED` status admission + a flagged TERMINAL_SIGNAL_STATUSES eviction gap (follow-up, not fixed here). Canonical Signal types table (below) deliberately left as-is — full live type list now lives in docs/agents/po/flow/triage-signals.md § Live .signal_queue.rows[] inbox, this table stays a non-exhaustive quick-reference to respect the ≤120L cap. -->
 
 # Signal Dashboard — Communication Skill
 
@@ -29,7 +29,7 @@ description: SSOT protocol for cowork agent signal communication via docs/data/o
 
 | `to` value | Receives from |
 |---|---|
-| `po` | tran-ngoc-bau, agents-architect, system-auditor |
+| `po` | tran-ngoc-bau, agents-architect, system-auditor, cowork-team, dev-team (measured live 2026-08-01: cowork-team + dev-team are the two largest actual senders — 100+/132 hot rows — undeclared until this fix) |
 | `tran-ngoc-bau` | unified-agent, market-watcher, financial-analyst (methodology flags) |
 | `unified-agent` | market-watcher, news-scout, digest-predict |
 | `alert-commander` | market-watcher, news-scout |
@@ -80,6 +80,7 @@ No cache → skip Phase 1, go straight to Phase 2. Missing orch-state.json or ab
 - **ACK** (signal received, processing in progress): update row `status: "NEW"` → `"READ"` (atomic write)
 - **CLOSE** (signal fully consumed, no further action): update row `status: "READ"` → `"RESOLVED"` (atomic write)
 - Modify only the target row's `status` field in `.signal_queue.rows[]` — never overwrite other rows or sections.
+- **Extended statuses (admitted, PO-only, decided 2026-08-01 per FIX-PO-TRIAGE-SIGNALS-TABLE-MATCHES-ZERO-LIVE-SIGNAL-TYPES AC-4):** `"triaged"` (disposition recorded — carries `disposition`/`triaged_at`/`triaged_by`; treat as equivalent to `RESOLVED` for downstream consumers) and `"RETRACTED"` (verified false positive, no action taken). Both were live on 127+3 of 132 hot `to=po` rows with zero prior doc backing before this fix — chosen over rewriting PO's writing flow because the richer audit trail is already load-bearing. **KNOWN GAP, not fixed by this doc:** `scripts/orch-cold-evict.sh`'s `TERMINAL_SIGNAL_STATUSES` default (`READ,RESOLVED,SUPERSEDED,ACUTE-RESOLVED-ROOT-TRACKED`) omits both → every `triaged`/`RETRACTED` row is stuck in the hot file forever (0/130 evicted, confirmed live). Needs a follow-up code fix (developer, `scripts/orch-cold-evict.sh`) to add both to that default before the 200-row cap is threatened.
 
 ---
 

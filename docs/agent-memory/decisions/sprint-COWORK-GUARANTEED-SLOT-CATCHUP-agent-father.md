@@ -404,3 +404,39 @@ before applying rather than trusting the stale audit text alone.
 **why-change:** none — scope matched task Files list exactly;
 dispatch-claim/CARD.md read for SSOT verification, needed no edit (its
 existing §0a pointer to SKILL.md was already correct).
+
+### STEP agent-father-S20 · agent-father · 2026-08-01T04:57:50Z
+**task-id:** FIX-PO-TRIAGE-SIGNALS-TABLE-MATCHES-ZERO-LIVE-SIGNAL-TYPES
+**what-done:** Re-derived triage-signals.md's routing table from LIVE
+`.signal_queue.rows[]` (to=po, 132 rows, jq-measured, not copied from
+SKILL.md's 6-type canonical list); added all 16 live types (5 inline +
+11 in new lazy-load sibling triage-signals-longtail.md), fixed
+bug-escalation's undocumented 3rd payload class (SAME-FILE DIVERGENCE,
+no escalated key), added cowork-team/dev-team as declared po senders +
+admitted triaged/RETRACTED to the status enum in signal-dashboard
+SKILL.md, added an inline jq coverage guard (AC-5), wired main.md's
+Pre-check to actually call the new table (root cause of the drift).
+**what-considered:**
+- Guard as scripts/audits/*.sh vs inline jq in the .md — chose inline:
+  scripts/ is outside agent-father's commit_zone (docs/agents/,
+  docs/agent-memory/, .claude/skills/, .claude/agents/ only); verified
+  the inline guard live (PASS on real file, FAIL on synthetic type).
+- Fix scripts/orch-cold-evict.sh's TERMINAL_SIGNAL_STATUSES (missing
+  triaged/RETRACTED, so 130 rows never evict) vs flag-only — chose
+  flag-only: same commit_zone boundary; documented as a KNOWN GAP in
+  SKILL.md + this entry for a follow-up developer FIX row.
+- Flip task_board row to REVIEW myself (write via orch-apply.sh, no
+  commit) vs supply the transform only — chose supply-only, matching
+  this exact agent's own 3x precedent this sprint (TE-T12/TE-T14/TE-T21
+  notebook entries): orch-state.json is router-owned even for writes,
+  not just commits — a write-without-commit still risks colliding with
+  a concurrent writer's own uncommitted transform on the same hot file.
+**why-decision:** AC-1/AC-2 required live-measured coverage of exactly
+the 16 to=po types (verified 0 unrouted via the guard); AC-6 size cap
+forced the sibling split; commit_zone is a hard boundary in my own
+agent spec, not optional even under a direct task instruction to
+"commit pathspec-scoped" the board flip.
+**why-change:** none of the 6 ACs required editing orch-state.json's
+task_board contents directly — AC-5's guard was satisfiable inline
+without a new scripts/ file, so no scope change from the row's own
+files[] list (triage-signals.md, signal-dashboard/SKILL.md).

@@ -63,7 +63,7 @@ Never inline both pre-flight and a branch workflow — keep context lean. Pre-fl
 **Pre-check — Resolve project root** → run skill: `.claude/skills/project-root/SKILL.md`
 
 **Pre-check — Signal dashboard** → skill: `.claude/skills/signal-dashboard/SKILL.md` (§ READ)
-- Scan `## po` section for NEW rows. For each: read payload → add to triage context. Mark READ.
+- Scan `## po` section for NEW rows. For each: read payload → route per `docs/agents/po/flow/triage-signals.md` § Live `.signal_queue.rows[]` inbox (Pipeline B) by `type` — do NOT just "add to triage context" and defer; that ambiguity is what let 128/132 live rows fall through unrouted before FIX-PO-TRIAGE-SIGNALS-TABLE-MATCHES-ZERO-LIVE-SIGNAL-TYPES. Mark READ, then `triaged`/`RESOLVED`/`RETRACTED` per the routed disposition.
 - Log: `"[dashboard] {N} new signals"` or `"[dashboard] inbox empty"`. Never fail-loud.
 
 **Pre-check**: `$PROJECT_ROOT/docs/data/orch/orch-state.json` `.task_board` blocked tasks waiting for PO → handle first
