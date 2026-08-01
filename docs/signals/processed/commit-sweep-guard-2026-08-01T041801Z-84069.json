@@ -1,0 +1,14 @@
+{
+  "from": "commit-sweep-guard",
+  "to": "po",
+  "type": "bug-escalation",
+  "priority": "high",
+  "createdAt": "2026-08-01T04:18:01Z",
+  "payload": "[sweep-guard] SAME-FILE DIVERGENCE (non-blocking, AC-3 detector): 'docs/data/orch/orch-state.json' is being committed via a pathspec-SCOPED commit line, which takes its WORKING TREE content (git's --only semantics) — NOT the subset already staged in the shared index for this exact path. The shared index's staged blob for 'docs/data/orch/orch-state.json' (199340f2acf32d68719187c48167e369b8eec7e7) differs from what is about to land in this commit (da2eddaab7e2296150592e37ec21d7e54c628064) — a peer's differently-staged hunk (or your own further, unreviewed edit) in this SAME file may be about to be swept in. Documented NON-GOAL of the pathspec-commit mandate, see docs/architecture-briefs/2026-07-21-commit-path-peer-index-sweep-guard.md §2.7 — detector only, never blocked. Inspect before trusting this commit's scope: git diff 199340f2acf32d68719187c48167e369b8eec7e7 da2eddaab7e2296150592e37ec21d7e54c628064 -- docs/data/orch/orch-state.json",
+  "_processed": {
+    "fingerprint": "6e5a003e2e2699fafca9ca79f67052c446b730fcc64888b41785a8074a7d1497",
+    "processedAt": "2026-08-01T04:20:58Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

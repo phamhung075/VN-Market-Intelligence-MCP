@@ -2060,17 +2060,6 @@
         "disposition": "ACTIONED — root cause found and row minted: FIX-COWORK-FLOWDOC-STALE-TRANSPORT-GAP-CAVEAT (ready[], P1, next_agent=agent-father, returned in this tick BATCH). NOT another silent cold-evict. The escalation was correct and the issue is live: coverage-state.json _updated_at is still 2026-07-25T16:14:39Z, 6.4 days frozen. Root cause is NOT a missing Bash grant — the grant landed 2026-07-30T23:18Z (commit 610110e16). It is a STALE FLOW-DOC CAVEAT: docs/agents/market-watcher/flow/cycle.md:265 tells the agent it holds no Bash and cites .claude/agents/market-watcher.md:5 as proof, but that line now reads tools: Read, Write, Edit, Bash, mcp__gateway__call_tool. The caveat instructs the agent to SKIP the coverage write and log [coverage-write-skipped: no-transport], so both agents keep skipping. Same stale text in news-scout stage-log-notify.md:81 and stage-sentiment.md:18. PO verified transport is live by running scripts/agents-flow/coverage-stamp.sh --list-stale directly this tick (returned a correct 3-ticker list). This was ALREADY escalated once: agent-father wrote it into the review_note of FIX-COWORK-BASH-GRANT-COVERAGE-STAMP-TRANSPORT on 2026-07-30T23:16:56Z as ACCEPTANCE 4 unmet, explicitly asking PO for a separate follow-up row; that ask was lost. Also noted: the parent row is deadlocked in REVIEW because its AC-2/AC-3 were assumed to self-heal on a live cycle, which cannot happen while the caveat stops the cycle from writing."
       },
       {
-        "id": "dev-20260801T035943",
-        "ts": "2026-08-01T03:59Z",
-        "from": "developer",
-        "to": "po",
-        "type": "system-issue",
-        "summary": "drain-signals.md 0a-D-PRUNE still says 48h+archive[] (removed HSC-7 06-26); SKILL.md SSOT=24h+script. Doc-drift only, not fixed here.",
-        "severity": "LOW",
-        "status": "NEW",
-        "payload_ref": null
-      },
-      {
         "id": "cow-20260801T041122",
         "ts": "2026-08-01T04:11:22Z",
         "from": "cowork-team",
@@ -2078,7 +2067,7 @@
         "type": "system-issue",
         "summary": "coverage-stamp lock collision: mw+news-scout both failed same tick (TTL-err vs mutex-timeout), no-Bash NOT cited",
         "severity": "MED",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": null
       }
     ],
