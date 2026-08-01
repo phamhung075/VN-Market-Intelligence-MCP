@@ -93,11 +93,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "updated_at": "2026-08-01T04:59:58Z",
-    "updated_by": "developer",
-    "active_task_id": null,
-    "next_agent": "router"
+    "status": "in_progress",
+    "active_task_id": "SPIKE-BCTC-REFINE-MAXWINDOW-TRUNCATION",
+    "next_agent": "developer",
+    "next_action": "BOUNDED-1 auto-pickup claim of SPIKE-BCTC-REFINE-MAXWINDOW-TRUNCATION — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
+    "updated_at": "2026-08-01T05:19:09Z",
+    "updated_by": "dev-team (bounded-1 auto-pickup)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -6222,15 +6223,6 @@
         "title": "fb-market-poster flow calls get_sentiment_trend({}) with EMPTY args but tool REQUIRES stock_code -> silent error every fb-poster cycle -> sentiment signal permanently blind",
         "size": "S",
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-FBPOSTER-SENTIMENT-TREND-BARE-CALL"
-      },
-      {
-        "id": "SPIKE-BCTC-REFINE-MAXWINDOW-TRUNCATION",
-        "title": "Recon: does maxWindowPages truncation drop financial data in BCTC refine? (NOT a news signal-drop)",
-        "type": "SPIKE",
-        "zone": "apps/mcp-server/",
-        "priority": "P3",
-        "status": "BACKLOG",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#SPIKE-BCTC-REFINE-MAXWINDOW-TRUNCATION"
       },
       {
         "id": "FIX-AGENTSIGNALS-ALLPRODUCERS-NULLSTRIP",
@@ -20206,9 +20198,25 @@
         }
       ]
     },
-    "last_triaged_at": "2026-08-01T04:51:55Z",
+    "last_triaged_at": "2026-08-01T05:18:59Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": []
+    "in_progress": [
+      {
+        "id": "SPIKE-BCTC-REFINE-MAXWINDOW-TRUNCATION",
+        "title": "Recon: does maxWindowPages truncation drop financial data in BCTC refine? (NOT a news signal-drop)",
+        "type": "SPIKE",
+        "zone": "apps/mcp-server/",
+        "priority": "P3",
+        "status": "IN_PROGRESS",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#SPIKE-BCTC-REFINE-MAXWINDOW-TRUNCATION",
+        "promoted_at": "2026-08-01T05:18:59Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=3)",
+        "updated_at": "2026-08-01T05:19:09Z",
+        "claimed_at": "2026-08-01T05:19:09Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)"
+      }
+    ]
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
