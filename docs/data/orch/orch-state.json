@@ -96,8 +96,8 @@
     "status": "idle",
     "active_task_id": null,
     "next_agent": "router",
-    "updated_at": "2026-08-01T03:38:02Z",
-    "updated_by": "developer (FIX-DEVTEAM-REVIEW-LANE-SECONDARY-DRAIN self-closeout)"
+    "updated_at": "2026-08-01T04:01:59Z",
+    "updated_by": "developer"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -133,8 +133,8 @@
     "does_not_consume_wip": true
   },
   "signal_queue": {
-    "_updated_at": "2026-08-01T01:57:51Z",
-    "_updated_by": "dev-mcp-server",
+    "_updated_at": "2026-08-01T03:59:43Z",
+    "_updated_by": "developer",
     "archive": [],
     "rows": [
       {
@@ -2058,6 +2058,17 @@
         "triaged_at": "2026-08-01T01:25:12Z",
         "triaged_by": "po",
         "disposition": "ACTIONED — root cause found and row minted: FIX-COWORK-FLOWDOC-STALE-TRANSPORT-GAP-CAVEAT (ready[], P1, next_agent=agent-father, returned in this tick BATCH). NOT another silent cold-evict. The escalation was correct and the issue is live: coverage-state.json _updated_at is still 2026-07-25T16:14:39Z, 6.4 days frozen. Root cause is NOT a missing Bash grant — the grant landed 2026-07-30T23:18Z (commit 610110e16). It is a STALE FLOW-DOC CAVEAT: docs/agents/market-watcher/flow/cycle.md:265 tells the agent it holds no Bash and cites .claude/agents/market-watcher.md:5 as proof, but that line now reads tools: Read, Write, Edit, Bash, mcp__gateway__call_tool. The caveat instructs the agent to SKIP the coverage write and log [coverage-write-skipped: no-transport], so both agents keep skipping. Same stale text in news-scout stage-log-notify.md:81 and stage-sentiment.md:18. PO verified transport is live by running scripts/agents-flow/coverage-stamp.sh --list-stale directly this tick (returned a correct 3-ticker list). This was ALREADY escalated once: agent-father wrote it into the review_note of FIX-COWORK-BASH-GRANT-COVERAGE-STAMP-TRANSPORT on 2026-07-30T23:16:56Z as ACCEPTANCE 4 unmet, explicitly asking PO for a separate follow-up row; that ask was lost. Also noted: the parent row is deadlocked in REVIEW because its AC-2/AC-3 were assumed to self-heal on a live cycle, which cannot happen while the caveat stops the cycle from writing."
+      },
+      {
+        "id": "dev-20260801T035943",
+        "ts": "2026-08-01T03:59Z",
+        "from": "developer",
+        "to": "po",
+        "type": "system-issue",
+        "summary": "drain-signals.md 0a-D-PRUNE still says 48h+archive[] (removed HSC-7 06-26); SKILL.md SSOT=24h+script. Doc-drift only, not fixed here.",
+        "severity": "LOW",
+        "status": "NEW",
+        "payload_ref": null
       }
     ],
     "last_triaged_at": "2026-07-29T06:25:00Z",
@@ -5108,7 +5119,11 @@
         },
         "next_agent": "agent-father",
         "po_routing_ruling_20260721": "PO ARTIFACT-CLASS ROUTING RULING 2026-07-21T18:42Z. Rule: routing follows ARTIFACT CLASS, not directory. Any row whose deliverable is instruction-prose that an agent LOADS AND EXECUTES — .claude/agents/**, docs/agents/** (init/flow/knowledge/tools-package), .claude/skills/**/SKILL.md — routes to agent-father. Executable code (apps/**, scripts/**), codegen-from-registry, and data/root-config (docs/data/**, CLAUDE.md) route to zone-matched dev-* or developer. Rationale: for this system a flow doc IS the executable source; agent-father is already sole owner of agent-file lifecycle (dispatch/SKILL.md:48) and of NEW cron skill files (:50), and board precedent has 5/5 pre-existing docs/agents/ rows routed to agent-father/agents-architect/po and 0 to developer. Precedent for SKILL.md specifically: docs/signals/processed/dev-team-20260716T102429Z-autolaunch-safety-hold-uc-asl-p6.json already routed a signal-dashboard SKILL.md edit to agent-father as 'the factory rule'. ROOT CAUSE this closes: .claude/skills/zone-detect/SKILL.md resolves ONLY dev-<service> (Tier-1/2, needs apps/<service>/-shaped zone) or generic developer (Tier-3 fallback) — it has NO path to agent-father, so any docs/agents/ or .claude/skills/ row reaching execute-tier with next_agent unset gets the 'developer' placeholder and mis-routes. EXPECTED SIDE EFFECT (do NOT 'fix' this): next_agent=agent-father does not match the dev-role pattern ^dev(-|$)|^developer$, so the BOUNDED-1 NON-DEV-NEXT_AGENT gate (dev-team/flow/main.md:518) now WITHHOLDS these rows from unattended idle auto-pickup. That is the intended outcome — they require deliberate router dispatch to agent-father, not silent promotion to a generic developer.",
-        "updated_at": "2026-07-21T18:44:02Z"
+        "updated_at": "2026-08-01T03:55:50Z",
+        "po_manual_dispatch_flagged_at": "2026-08-01T03:55:50Z",
+        "po_manual_dispatch_flagged_by": "po (manual-dispatch-sweep)",
+        "po_manual_dispatch_class": "DRS-STRANDED-OFF-ALLOWLIST",
+        "po_manual_dispatch_note": "po (manual-dispatch-sweep) surfaced DRS-STRANDED-OFF-ALLOWLIST candidate — folding into this tick's BATCH"
       },
       {
         "id": "TE-T06",
@@ -11007,32 +11022,6 @@
         "updated_at": "2026-08-01T02:28:56Z"
       },
       {
-        "id": "FIX-COLDEVICT-SIGNALQUEUE-NO-AGE-GATE-ORPHANS-READ-ROWS",
-        "type": "FIX",
-        "title": "orch-cold-evict.sh evicts signal_queue.rows[] on status alone (READ,RESOLVED,SUPERSEDED,ACUTE-RESOLVED-ROOT-TRACKED) with ZERO ts age check -- contradicts signal-dashboard skill's documented 48h retention, orphans a row before the recipient's next read cycle",
-        "status": "BACKLOG",
-        "priority": "P1",
-        "size": "S",
-        "zone": "cross-service/",
-        "owner": "dev-team",
-        "next_agent": "developer",
-        "supervised": false,
-        "plan_only": false,
-        "created_at": "2026-08-01T02:38:00Z",
-        "created_by": "dev-team (2026-08-01T02:07Z tick, root-caused live)",
-        "updated_at": "2026-08-01T02:38:42Z",
-        "source": "3rd confirmed instance of this exact class (memory: feedback_coldevict_no_age_gate_orphans_unread_po_escalation.md, 2/2 prior: 07-31 self-caused, 08-01 dev-team-drain-lost-own-HIGH-row-re-filed). This tick: dev-team drained signal_queue row dev-20260801T021232 (HIGH, dev-team->po, re-filed copy of the SAME row the memory's 2nd instance already lost once), marked it READ at 02:20Z (commit 5186fda90), fed its content directly to po in the spawn prompt (mitigation -- content was NOT actually lost this time only because dev-team happened to inline it rather than relying on po re-reading the dashboard). Immediately after, scripts/agents-flow/dev-team-tick-preflight.sh's own Step 5.5 cold-evict dry-run fired mid-preflight and evicted the row to docs/data/orch/archive/2026-08.json within ~18 minutes of it being marked READ -- signal_total 135->133 (2 rows evicted, both same-tick READ marks). Root cause read directly from scripts/orch-cold-evict.sh:129-133: TERMINAL_SIGNAL_STATUSES=\"READ,RESOLVED,SUPERSEDED,ACUTE-RESOLVED-ROOT-TRACKED\" selects purely on .status via IN($tsig_arr[]) at line ~437-440 -- no .ts comparison anywhere in the signal_queue.rows[] eviction branch, unlike the done[]/done_verified[] branches which DO carry a rank-AND-age gate. .claude/skills/signal-dashboard/SKILL.md PRUNE section explicitly documents the intended contract: \"Archive rows where status = RESOLVED or READ + ts < now() - 48h\" -- the script never implements the age half of that AND.",
-        "desc": "Two independent fixes needed, do not treat as redundant: (1) scripts/orch-cold-evict.sh's signal_queue.rows[] eviction branch (~line 437-440) needs a ts age predicate ANDed with the status-IN check, matching the done[]/done_verified[] branches' existing rank-AND-age pattern and the skill doc's documented 48h contract -- exact cutoff should match the skill (48h), not the file-plane drain's unrelated 7-day/604800s constant used elsewhere in this codebase (do not conflate the two retention windows). (2) scripts/agents-flow/dev-team-tick-preflight.sh Step 5.5 fires cold-evict on EVERY tick where its own --dry-run predicts shrinkage, with no coordination against a row's actual READ timestamp -- once (1) lands this becomes moot for the age dimension, but confirm no OTHER preflight-adjacent caller has its own copy of the no-age-gate assumption baked in (grep TERMINAL_SIGNAL_STATUSES call sites).",
-        "ac": "AC-1: add ts<now-48h to the signal_queue.rows[] selection alongside the existing status-IN(TERMINAL_SIGNAL_STATUSES) check. AC-2: regression test on a fixture row with status=READ and ts=now() (fresh) -- MUST NOT evict; a second fixture row status=READ ts=73h-ago -- MUST evict. AC-3: live-verify against the actual orch-state.json before/after -- 0 currently-fresh-READ rows should move. AC-4 (doc parity): confirm .claude/skills/signal-dashboard/SKILL.md's stated 48h contract stays the single SSOT the script is verified against -- do not silently redefine the window in the script instead of fixing it to match the doc.",
-        "files": [
-          "scripts/orch-cold-evict.sh",
-          "scripts/agents-flow/dev-team-tick-preflight.sh",
-          ".claude/skills/signal-dashboard/SKILL.md",
-          "docs/agent-memory/decisions/"
-        ],
-        "baseline_pass": "BROKEN at baseline -- reproduced live 2026-08-01T02:36Z, signal_total 135->133 with 0 rows older than 18min evicted"
-      },
-      {
         "id": "FIX-DEVTEAM-PREFLIGHT-STEP55-COLDEVICT-STDOUT-LEAK-CORRUPTS-VERDICT",
         "type": "FIX",
         "title": "dev-team-tick-preflight.sh Step 5.5's REAL (non-dry-run) cold-evict invocation leaks orch-cold-evict.sh's own multi-line stdout into the script's stdout, corrupting the single-JSON-document verdict every caller parses with jq",
@@ -11076,6 +11065,31 @@
         "updated_at": "2026-08-01T03:07:19Z",
         "po_provenance_20260801T030036": "PROVENANCE / CREDIT — read this before treating the note above as newly-discovered. The OBSERVATIONAL half of this row's evidence was NOT first found this tick. Three earlier PO ticks had already built it up on FIX-BCTC-INGEST-PERIOD-IDENTITY-UNVALIDATED-VS-CONTENT, and each is worth reading in full: po_live_evidence_20260731T2300 (first logged the storm, 12 quarantines, flagged the 0% pass rate as a suspect-validator shape, and offered an opening-balance 'So dau nam' parsing hypothesis); po_live_evidence_20260801T0047 (REFUTED that hypothesis on its own data — the comparative column is 31/12 of the PRIOR year and cannot produce a same-year Q4 — and correctly re-framed the skew as a FETCH/RESOLUTION signature rather than a text-parsing one); po_live_evidence_20260801T0158 (independently found the byte-identical VND detector fingerprints 115/26 and 130/27 under different supplied keys, and established the run was a bounded 43.5-minute batch, not a live incident).\n\nWHAT THIS TICK ADDED, and why it justified finally minting a row after three ticks had explicitly declined to: those three ticks reasoned entirely from the Telegram message text and stopped at 'fetch/resolution signature' as a HYPOTHESIS. None of them read the source. This tick read it and pinned the mechanism mechanically — listSscDocuments (ssc.ts:85-90) has no quarter parameter in its signature at all, and fetchParseAndStoreBctc.ts:68 takes docs[0] unconditionally — which converts the hypothesis into a located, one-call-site defect.\n\nON THE PRIOR NON-MINT DECISIONS (explicitly revisited, not ignored): po_live_evidence_20260801T0047 declined to mint on the grounds that 'this row plus FIX-BCTC-REPARSE-BATCH-CORRUPTION-NGAYNOP-FLIP already own both halves' and that a 4th row 'would fragment one defect across four'. That reasoning was sound for an unlocated defect but does not survive the source read: a grep of every task_board lane for listSscDocuments / docs[0] / quarter-blind returned ZERO rows this tick. The rows those ticks named own the DETECTOR (this one, in review/qa), the reparse CORRUPTION cohort (NGAYNOP-FLIP), and two backfill CONSUMERS (BCTC-HIST-VPS-BACKFILL, BCTC-ENRICHER-OLD-QUARTERS). None owns document SELECTION, and none is routable to a developer who could change ssc.ts. Leaving it unminted is the detector-right/actuator-blind trap named in feedback_router_blames_detector_when_actuator_or_policy_is_at_fault — the guard keeps getting evidence added to it while the thing that must actually change has no owner. That is what this row fixes.\n",
         "po_sequencing_note": "SEQUENCE AFTER BCTC-ENRICHER-OLD-QUARTERS (P1, dev-mcp-server). That row is 0-URLs-found; this row is wrong-document-returned. This row AC-5 (re-run a historical backfill slice, show stored rows > 0) cannot pass while that row is open, because the slice will find no URLs to fetch. Live corroboration for the pairing: telegram id 4269, 2026-08-01T03:00:19Z, 2 consecutive enricher cycles urlsPopulated=0."
+      },
+      {
+        "id": "FIX-SWEEPGUARD-SAMEFILE-DETECTOR-UNSTAGED-PATH-FALSE-POSITIVE",
+        "type": "FIX",
+        "title": "_detect_samefile_pathspec_only_divergence() false-positives on every pathspec commit of a tracked file that was not git-added first: pre-commit:501 fail-open `[ -z \"$real_blob\" ]` is unreachable (git rev-parse \":$f\" returns the HEAD blob, never empty), so \"nobody staged this\" is reported as \"a peer staged a conflicting hunk\" -> priority:high bug-escalation pumped into PO triage on ordinary commits",
+        "desc": "ROOT CAUSE (verified at source, not inferred): scripts/git-hooks/pre-commit:501 `[ -z \"$real_blob\" ] && continue` is commented \"never staged in the shared index by anyone - nothing to diverge from\", but `git rev-parse \":$f\"` against the REAL index returns the HEAD blob for ANY tracked path and NEVER returns empty. The branch is dead code for the entire population it claims to protect, so an unstaged tracked file is indistinguishable from a peer-staged conflicting hunk and is reported as the latter.\n\nLIVE EVIDENCE (blob identity, first fire 2026-08-01T03:41:58Z on docs/agent-memory/decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-dev-team-12.md): signal real_blob=cdd10362b2a9405ab5346f7a38c2c71ceed844af and `git rev-parse a5abe7f36^:<path>`=cdd10362b2a9405ab5346f7a38c2c71ceed844af - byte-identical. Nothing was ever staged for that path; no peer content and not even an own stale stage existed. Pure false positive.\n\nCLASS CHARACTERIZED in a scratch repo (all three replayed against the real hook): (A) modify + NO git add + `git commit -- <path>` -> FIRES (false positive); (B) `git add` + `git commit -- <path>` -> silent; (C) `git add` + further edit + `git commit -- <path>` -> FIRES (genuine own-stale-stage). The FP trigger is committing a tracked file without git add first - a legitimate and common idiom, since pathspec commits do not require staging.\n\nFIX (discriminator verified on all four cases before proposal): gate the comparison on `real_blob != $(git rev-parse \"HEAD:$f\")` - i.e. skip when the shared index entry is merely the HEAD blob (nothing genuinely staged). Verified to KILL case (A) while PRESERVING case (C) own-stale-stage AND the peer-staged case that is T11 own reproduction (peer `git apply --cached` a different hunk in the same file). Only the FP flips.\n\nTEST GAP: T12 is scoped by its own header comment to \"the ORDINARY, already-safe `git add <path> && git commit -- <path>` idiom\" - i.e. case (B) only. The unstaged path (A) was never exercised, so pre-commit.test.sh 12/12 PASS was green over an untested false-positive class. Add T13 covering `git commit -- <path>` with NO preceding `git add`, plus an explicit T11-preservation assertion.\n\nSEQUENCING: parent row FIX-SWEEPGUARD-SAMEFILE-HUNK-PATHSPEC-ONLY-SEMANTICS-NONGOAL-AND-DETECTOR (commit 66e850138) is in review[]/next_agent=qa. Its AC-1/AC-2/AC-4 are independently verified good and were deliberately NOT flipped back. QA MUST NOT sign AC-3 off clean - land this row first, or the FP class is inherited silently past sign-off.\n\nSEVERITY NOTE: detector never gates (always returns 0, ignores GIT_SWEEP_GUARD_MODE), so this is not a commit-blocking risk. The cost is that every ordinary unstaged pathspec commit emits a priority:high bug-escalation signal straight into the PO triage lane.",
+        "ac": "AC-1: pre-commit skips the divergence report when the real-index blob for a path equals that path HEAD blob. AC-2: pre-commit.test.sh gains T13 (unstaged `git commit -- <path>`, NO preceding git add -> ZERO detector output) and retains a passing T11 (peer-staged same-file hunk still FIRES) + T12. AC-3: full suite green (>=13/13). AC-4: architecture brief 2026-07-21-commit-path-peer-index-sweep-guard.md §2.7 records the unstaged-path carve-out so the fail-open intent is documented as implemented, not assumed.",
+        "baseline_pass": "bash scripts/git-hooks/pre-commit.test.sh exits 0 with T13 present and T11+T12 still passing (>=13/13). Live re-verify: a `git commit -- <own path>` with NO preceding `git add` on a tracked file emits NO stderr WARN and writes NO docs/signals/commit-sweep-guard-*.json; a peer-staged same-file hunk still DOES.",
+        "status": "BACKLOG",
+        "priority": "P1",
+        "size": "S",
+        "zone": "cross-service/",
+        "owner": "po",
+        "next_agent": "developer",
+        "supervised": false,
+        "plan_only": false,
+        "files": [
+          "scripts/git-hooks/pre-commit",
+          "scripts/git-hooks/pre-commit.test.sh",
+          "docs/architecture-briefs/2026-07-21-commit-path-peer-index-sweep-guard.md"
+        ],
+        "source": "po triage tick 2026-08-01T03:37Z — commit-sweep-guard bug-escalation signal (first live fire of the AC-3 detector), root-caused at source",
+        "created_at": "2026-08-01T04:02:08Z",
+        "created_by": "po",
+        "updated_at": "2026-08-01T04:02:08Z"
       }
     ],
     "closed_sprints": [
@@ -19993,6 +20007,40 @@
         "commit": "87bd59032",
         "status_note": "Implemented brief sec2 verbatim: new scripts/devteam-review-claim-secondary-drain.jq (age-ordered single-row claim of oldest review[] row where status==REVIEW && effective_next_agent!=qa; stamps secondary_claimed_at/secondary_claimed_by/secondary_dispatch_target IN PLACE, no lane move, never writes .head); new shared predicate resolved_secondary_dispatch_target in scripts/lib/devteam-eligibility.jq (next_agent-or-po); new unconditional Review-Lane SECONDARY-Drain section in docs/agents/dev-team/flow/main.md between Session Gate and Step 1 PO Triage, single-row cap, always falls through to Step 1 (never JUMP TO end) per brief sec2b AC. Re-measured live at impl time (row desc stale 41): review[]=249 (246 REVIEW/3 BLOCKED), PRIMARY(qa)=202, SECONDARY=44.",
         "review_note": "branch:null direct-commit row (no task branch/handoff) — same precondition as PRIMARY qa-drain rows. Scratch-copy dry-run verified: claims oldest SECONDARY row, .head byte-identical, review[] length unchanged. tsc clean (0 errors). bun test: 15044 pass/40 skip/57 fail/1 error (baseline re-measured live, well above stale 9408 ref); 57 fail/1 error pre-existing and structurally unrelated (0 TS files touched, no test file executes either touched jq file). Decision journal: docs/agent-memory/decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-developer-2.md STEP developer-S53. Commit: 87bd59032. Verify-committed mode required (qa/flow/main.md sec Direct-Commit Verify)."
+      },
+      {
+        "id": "FIX-COLDEVICT-SIGNALQUEUE-NO-AGE-GATE-ORPHANS-READ-ROWS",
+        "type": "FIX",
+        "title": "orch-cold-evict.sh evicts signal_queue.rows[] on status alone (READ,RESOLVED,SUPERSEDED,ACUTE-RESOLVED-ROOT-TRACKED) with ZERO ts age check -- contradicts signal-dashboard skill's documented 48h retention, orphans a row before the recipient's next read cycle",
+        "status": "REVIEW",
+        "priority": "P1",
+        "size": "S",
+        "zone": "cross-service/",
+        "owner": "dev-team",
+        "next_agent": "qa",
+        "supervised": false,
+        "plan_only": false,
+        "created_at": "2026-08-01T02:38:00Z",
+        "created_by": "dev-team (2026-08-01T02:07Z tick, root-caused live)",
+        "updated_at": "2026-08-01T04:01:59Z",
+        "source": "3rd confirmed instance of this exact class (memory: feedback_coldevict_no_age_gate_orphans_unread_po_escalation.md, 2/2 prior: 07-31 self-caused, 08-01 dev-team-drain-lost-own-HIGH-row-re-filed). This tick: dev-team drained signal_queue row dev-20260801T021232 (HIGH, dev-team->po, re-filed copy of the SAME row the memory's 2nd instance already lost once), marked it READ at 02:20Z (commit 5186fda90), fed its content directly to po in the spawn prompt (mitigation -- content was NOT actually lost this time only because dev-team happened to inline it rather than relying on po re-reading the dashboard). Immediately after, scripts/agents-flow/dev-team-tick-preflight.sh's own Step 5.5 cold-evict dry-run fired mid-preflight and evicted the row to docs/data/orch/archive/2026-08.json within ~18 minutes of it being marked READ -- signal_total 135->133 (2 rows evicted, both same-tick READ marks). Root cause read directly from scripts/orch-cold-evict.sh:129-133: TERMINAL_SIGNAL_STATUSES=\"READ,RESOLVED,SUPERSEDED,ACUTE-RESOLVED-ROOT-TRACKED\" selects purely on .status via IN($tsig_arr[]) at line ~437-440 -- no .ts comparison anywhere in the signal_queue.rows[] eviction branch, unlike the done[]/done_verified[] branches which DO carry a rank-AND-age gate. .claude/skills/signal-dashboard/SKILL.md PRUNE section explicitly documents the intended contract: \"Archive rows where status = RESOLVED or READ + ts < now() - 48h\" -- the script never implements the age half of that AND.",
+        "desc": "Two independent fixes needed, do not treat as redundant: (1) scripts/orch-cold-evict.sh's signal_queue.rows[] eviction branch (~line 437-440) needs a ts age predicate ANDed with the status-IN check, matching the done[]/done_verified[] branches' existing rank-AND-age pattern and the skill doc's documented 48h contract -- exact cutoff should match the skill (48h), not the file-plane drain's unrelated 7-day/604800s constant used elsewhere in this codebase (do not conflate the two retention windows). (2) scripts/agents-flow/dev-team-tick-preflight.sh Step 5.5 fires cold-evict on EVERY tick where its own --dry-run predicts shrinkage, with no coordination against a row's actual READ timestamp -- once (1) lands this becomes moot for the age dimension, but confirm no OTHER preflight-adjacent caller has its own copy of the no-age-gate assumption baked in (grep TERMINAL_SIGNAL_STATUSES call sites).",
+        "ac": "AC-1: add ts<now-48h to the signal_queue.rows[] selection alongside the existing status-IN(TERMINAL_SIGNAL_STATUSES) check. AC-2: regression test on a fixture row with status=READ and ts=now() (fresh) -- MUST NOT evict; a second fixture row status=READ ts=73h-ago -- MUST evict. AC-3: live-verify against the actual orch-state.json before/after -- 0 currently-fresh-READ rows should move. AC-4 (doc parity): confirm .claude/skills/signal-dashboard/SKILL.md's stated 48h contract stays the single SSOT the script is verified against -- do not silently redefine the window in the script instead of fixing it to match the doc.",
+        "files": [
+          "scripts/orch-cold-evict.sh",
+          "scripts/agents-flow/dev-team-tick-preflight.sh",
+          ".claude/skills/signal-dashboard/SKILL.md",
+          "docs/agent-memory/decisions/"
+        ],
+        "baseline_pass": "BROKEN at baseline -- reproduced live 2026-08-01T02:36Z, signal_total 135->133 with 0 rows older than 18min evicted",
+        "promoted_at": "2026-08-01T03:46:52Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
+        "claimed_at": "2026-08-01T03:46:59Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "updated_by": "developer",
+        "commit_sha": "d963b487b",
+        "note": "AC-1..4 done: SIGNAL_MAX_AGE_HOURS(default 24, matches live SKILL.md HSC-7 SSOT, not stale 48h) ANDed with status check in orch-cold-evict.sh signal_queue.rows[] selection. TEST 9 added to scripts/test/orch-cold-evict-tests.sh, 47/47 pass. Live dry-run 0 evictions before/after (fix). SKILL.md needed no edit (already correct); drain-signals.md 48h+archive[] drift found+flagged via signal dev-20260801T035943 to po, not fixed (out of scope). SECONDARY grep: no other TERMINAL_SIGNAL_STATUSES call site. Journal: sprint-COWORK-GUARANTEED-SLOT-CATCHUP-developer-2.md S54."
       }
     ],
     "qa": [],
@@ -20012,7 +20060,7 @@
         }
       ]
     },
-    "last_triaged_at": "2026-08-01T03:18:16Z",
+    "last_triaged_at": "2026-08-01T03:46:52Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
     "in_progress": []
   },
