@@ -93,11 +93,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "active_task_id": null,
-    "next_agent": "router",
-    "updated_at": "2026-08-01T02:32:21Z",
-    "updated_by": "developer"
+    "status": "in_progress",
+    "active_task_id": "FIX-SWEEPGUARD-SAMEFILE-HUNK-PATHSPEC-ONLY-SEMANTICS-NONGOAL-AND-DETECTOR",
+    "next_agent": "developer",
+    "next_action": "BOUNDED-1 auto-pickup claim of FIX-SWEEPGUARD-SAMEFILE-HUNK-PATHSPEC-ONLY-SEMANTICS-NONGOAL-AND-DETECTOR — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
+    "updated_at": "2026-08-01T02:42:42Z",
+    "updated_by": "dev-team (bounded-1 auto-pickup)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -10964,32 +10965,6 @@
         "desc": null
       },
       {
-        "id": "FIX-SWEEPGUARD-SAMEFILE-HUNK-PATHSPEC-ONLY-SEMANTICS-NONGOAL-AND-DETECTOR",
-        "type": "FIX",
-        "title": "git commit -- <path> uses --only semantics (working-tree content, NOT the staged subset), so the fleet-mandated pathspec commit still sweeps a peer's differently-staged hunk in the SAME file -- undocumented and untested",
-        "status": "BACKLOG",
-        "priority": "P1",
-        "size": "S",
-        "zone": "cross-service/",
-        "owner": "po",
-        "next_agent": "developer",
-        "supervised": false,
-        "plan_only": false,
-        "created_at": "2026-08-01T01:37:00Z",
-        "created_by": "po/triage-20260801T0137",
-        "updated_at": "2026-08-01T02:10:50Z",
-        "source": "PO triage 2026-08-01T01:37Z BATCH item 2/5, carved out of po_ruling_20260801T0158 on FIX-COMMIT-SWEEP-GUARD-SCRIPT-ACTUATOR-AND-NOTEBOOK-LONGTAIL (that ruling names this row explicitly) -- landed to orch-state by dev-team, PO's own commit ca1b0ee35 did not touch orch-state.json.",
-        "desc": "Reported and reproduced 2/2 in a clean scratch repo by the developer on the sweep-guard row: staged one isolated hunk via git apply --cached, verified git diff --cached showed only it, ran the mandated git commit -m ... -- <path>, and BOTH hunks landed (commit 2f16eea16). Architecture brief 2026-07-21 sec2.1/2.3 analyse only cross-file and directory-pathspec sweep; pre-commit.test.sh T1-T6 are all cross-file. NOT destructive (attribution corruption, peer content recoverable).",
-        "ac": "AC-1: document the same-file-hunk case as an explicit NON-GOAL of the pathspec mandate, mirroring how T3's directory-pathspec non-goal is already carried -- in the brief AND in the skills/flow docs that mandate the pattern. AC-2: add a test (T11) pinning the actual --only behaviour so a future git version change is caught. AC-3: evaluate a detector for the case (staged-subset vs working-tree divergence on a named pathspec at pre-commit time) -- detector only, no new block. AC-4 (epic-tail, unowned): docs/agents/tools/package/cowork-refactory-expert.md:57 carries a bare-commit-with-directory-add example that fell outside both arms of the 31/34-site grep. Migrate it.",
-        "files": [
-          "scripts/git-hooks/pre-commit.test.sh",
-          "docs/architecture-briefs/2026-07-21-commit-path-peer-index-sweep-guard.md",
-          "docs/agents/tools/package/cowork-refactory-expert.md",
-          "docs/policies/dev-standards.md"
-        ],
-        "baseline_pass": "9408"
-      },
-      {
         "id": "FIX-DEVTEAM-REVIEW-LANE-SECONDARY-DRAIN",
         "type": "FIX",
         "title": "41 review[] rows carry a null or non-qa next_agent and NO automated lane sweeps them -- new SECONDARY-Drain mechanism per brief sec2",
@@ -19961,9 +19936,41 @@
         }
       ]
     },
-    "last_triaged_at": "2026-08-01T02:13:27Z",
+    "last_triaged_at": "2026-08-01T02:42:27Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": []
+    "in_progress": [
+      {
+        "id": "FIX-SWEEPGUARD-SAMEFILE-HUNK-PATHSPEC-ONLY-SEMANTICS-NONGOAL-AND-DETECTOR",
+        "type": "FIX",
+        "title": "git commit -- <path> uses --only semantics (working-tree content, NOT the staged subset), so the fleet-mandated pathspec commit still sweeps a peer's differently-staged hunk in the SAME file -- undocumented and untested",
+        "status": "IN_PROGRESS",
+        "priority": "P1",
+        "size": "S",
+        "zone": "cross-service/",
+        "owner": "po",
+        "next_agent": "developer",
+        "supervised": false,
+        "plan_only": false,
+        "created_at": "2026-08-01T01:37:00Z",
+        "created_by": "po/triage-20260801T0137",
+        "updated_at": "2026-08-01T02:42:42Z",
+        "source": "PO triage 2026-08-01T01:37Z BATCH item 2/5, carved out of po_ruling_20260801T0158 on FIX-COMMIT-SWEEP-GUARD-SCRIPT-ACTUATOR-AND-NOTEBOOK-LONGTAIL (that ruling names this row explicitly) -- landed to orch-state by dev-team, PO's own commit ca1b0ee35 did not touch orch-state.json.",
+        "desc": "Reported and reproduced 2/2 in a clean scratch repo by the developer on the sweep-guard row: staged one isolated hunk via git apply --cached, verified git diff --cached showed only it, ran the mandated git commit -m ... -- <path>, and BOTH hunks landed (commit 2f16eea16). Architecture brief 2026-07-21 sec2.1/2.3 analyse only cross-file and directory-pathspec sweep; pre-commit.test.sh T1-T6 are all cross-file. NOT destructive (attribution corruption, peer content recoverable).",
+        "ac": "AC-1: document the same-file-hunk case as an explicit NON-GOAL of the pathspec mandate, mirroring how T3's directory-pathspec non-goal is already carried -- in the brief AND in the skills/flow docs that mandate the pattern. AC-2: add a test (T11) pinning the actual --only behaviour so a future git version change is caught. AC-3: evaluate a detector for the case (staged-subset vs working-tree divergence on a named pathspec at pre-commit time) -- detector only, no new block. AC-4 (epic-tail, unowned): docs/agents/tools/package/cowork-refactory-expert.md:57 carries a bare-commit-with-directory-add example that fell outside both arms of the 31/34-site grep. Migrate it.",
+        "files": [
+          "scripts/git-hooks/pre-commit.test.sh",
+          "docs/architecture-briefs/2026-07-21-commit-path-peer-index-sweep-guard.md",
+          "docs/agents/tools/package/cowork-refactory-expert.md",
+          "docs/policies/dev-standards.md"
+        ],
+        "baseline_pass": "9408",
+        "promoted_at": "2026-08-01T02:42:27Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
+        "claimed_at": "2026-08-01T02:42:41Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)"
+      }
+    ]
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
