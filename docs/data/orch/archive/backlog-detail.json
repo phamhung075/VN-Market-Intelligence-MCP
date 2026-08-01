@@ -1,7 +1,7 @@
 {
   "_sentinel": "backlog-detail-v1",
   "created_at": "2026-06-26T19:51:45Z",
-  "updated_at": "2026-07-30T21:52:04Z",
+  "updated_at": "2026-08-01T13:03:12Z",
   "count": 437,
   "items": [
     {
@@ -5053,17 +5053,24 @@
       "type": "FIX",
       "priority": "P3",
       "status": "BACKLOG",
-      "zone": "apps/macro-indicators/",
+      "zone": "apps/mcp-server/",
       "owner": "developer",
-      "root_cause": "macro_indicators writer/fetcher populates only 3 of 13 columns for the vietnam row; remaining columns are never sourced/written.",
-      "generic_mandate": "RAW-verify LIVE before any change (re-query macro_indicators latest vietnam row on the named-volume DB; confirm the columns are persistently empty, not a one-off). Then dev-team to SCOPE which source feeds each column + whether the writer drops them; manufacturing_pmi may be subsumed by macro-fetch-cluster item(3) FRED_API_KEY-unset (do NOT duplicate that). Fill the genuinely-uncovered columns (unemployment_rate/inflation_rate/trade_balance/current_account/government_debt/budget_deficit/consumer_confidence/retail_sales) from real sources OR leave an honest gap+flag — no fabricated/zero fill (memory feedback_no_fake_data_real_fetch).",
+      "root_cause": "CONFIRMED LIVE 2026-08-01 by dev-macro-indicators (RAW-verified market.db: single row id=675 country=vietnam, only cpi/gdp_growth/interest_rate set). Traced every writer of macro_indicators: (1) apps/mcp-server/src/domain/services/macro/macroIndicatorFetcher.ts storeIndicators() -- dead code, writes country='VN' not 'vietnam', comment self-flags \"production path returns success:false (task 239c not wired)\". (2) apps/mcp-server/src/infrastructure/fetchers/tradingEconomics.ts storeMacroIndicators()/fetchMacroIndicatorsWithFallback() -- dead, zero call sites outside its own barrel export (grep-confirmed), only ever handles cpi/gdp_growth/interest_rate anyway. (3) apps/mcp-server/src/scheduler/macro/macroIndicatorRefreshJob.ts -- the ONLY live cron; writes interest_rate (real, from Go /snapshot sbvRefinancingRate) + attempts cpi/manufacturing_pmi via parseCpiFromExternal/parsePmiFromExternal reading GET /macro/external sources.tradingEconomics, but live-curled apps/macro-indicators' own GET /external (handlers_external.go) returns only vn-market/commodity-prices/macro-signals -- no tradingEconomics key exists in the live response at all; separately, mcp-server's getMacroExternal() client calls POST against that GET-only route (405) -- belt-and-suspenders dead. gdp_growth/inflation_rate are hardcoded null in that INSERT (comment: \"not exposed by /macro/snapshot\"), COALESCE-preserved only, never freshly written. unemployment_rate/trade_balance/current_account/government_debt/budget_deficit/consumer_confidence/retail_sales never appear in ANY live INSERT column list. (4) apps/mcp-server/src/interface/mcp/routes/macroPushHandler.ts handlePushTradingEconomics/handlePushGso -- the ONLY writer covering all 12 columns via allowlist UPDATE, fed by vps-scripts/fetch-tradingeconomics.sh and fetch-gso.sh. SSH-confirmed live: fetch-tradingeconomics.sh has SKIPped 500+ consecutive hourly cycles since deploy (\"TE_API_KEY not configured -- set TRADING_ECONOMICS_API_KEY in .env and redeploy\", /var/log/vn-tradingeconomics-fetch.log on the VPS); fetch-gso.sh has browser automation deliberately removed (\"VPS too lite to run headless browser\") and only ever pushes an empty payload to bump fetched_at. Both are credential/infra-blocked, not a code bug. apps/macro-indicators/ (Go, dev-macro-indicators zone) has ZERO write access to market.db by design (agent init.md: database.reads=market.db readonly-only) -- cannot implement any part of this fix regardless of root cause.",
+      "generic_mandate": "2 of the 9 empty columns have a genuinely-live alternate source already implemented (read-only, real NSO/GSO data) in apps/macro-indicators/'s own VMT-6/7 family: POST /trade-balance (dtos_vmt_trade.go, proxied by apps/mcp-server get_vn_trade_balance tool) covers trade_balance; POST /bop covers current_account (bloc_split.fdi/domestic always is_estimate=true per ARCH Decision A, but the top-line totals are real). Concrete dev-mcp-server path: call those two Go endpoints from a new (or extended) mcp-server job and UPDATE macro_indicators.trade_balance/current_account from the response -- no new external credential needed. The remaining 6 (unemployment_rate/inflation_rate/government_debt/budget_deficit/consumer_confidence/retail_sales) have NO live source anywhere in the codebase; their only designed path (VPS TE/GSO push) is credential/infra-blocked per root_cause -- either escalate TRADING_ECONOMICS_API_KEY acquisition to PO/ops + VPS redeploy, or add an honest dashboard-side conditional hide (apps/frontend/) for columns with zero live source instead of rendering blank. manufacturing_pmi stays OUT of scope -- already tracked under the macro-fetch-cluster FRED_API_KEY-unset item per this row's original mandate; do not duplicate. No fabricated/zero fill (memory feedback_no_fake_data_real_fetch).",
       "verification_gate": "LIVE: after fix, the latest macro_indicators vietnam row populates the scoped columns with REAL fetched values (or honest is_estimate/gap flags) and /dashboard/macro renders them; RAW-verify against named-volume DB.",
       "source_signal": "router-dbsweep-20260625T1906Z-r4-macro-indicators-empty-columns",
       "related_signal": "devteam-20260619T170200Z-macro-fetch-cluster (partial overlap, item 3 — FRED/PMI only)",
       "router_verified": true,
       "minted_by": "po",
       "minted_at": "2026-06-25T19:17:54Z",
-      "note": "PLAN-ONLY: minted BACKLOG, NOT promoted. LOW->P3 (UX-completeness, no live-correctness regression)."
+      "note": "PLAN-ONLY: minted BACKLOG, NOT promoted. LOW->P3 (UX-completeness, no live-correctness regression). | THIRD occurrence of the \"zone labeled by domain-keyword match, not verified write-path owner\" class -- see FIX-SBV-FETCHER-ZERO-VALUE-EMIT (2026-07-28) and FU-SBV-EFFECTIVE-DATE-COLUMN (2026-07-30), both zone-corrected by dev-macro-indicators for the same reason (apps/macro-indicators/ is a CONSUMER of market.db, never the write-path OWNER -- it is read-only by design). Both prior occurrences flagged a proactive backlog audit for PO; neither was actioned before this 3rd BOUNDED-1 misroute burned another cycle. Recommend PO now run that audit (grep backlog-detail.json for zone:apps/macro-indicators/ rows and verify each against the actual write path) rather than deferring again.",
+      "owner_agent": "dev-mcp-server",
+      "zone_corrected_by": "dev-macro-indicators",
+      "zone_corrected_at": "2026-08-01T13:03:12Z",
+      "related": [
+        "FIX-SBV-FETCHER-ZERO-VALUE-EMIT",
+        "FU-SBV-EFFECTIVE-DATE-COLUMN"
+      ]
     },
     {
       "id": "GAP-CHEF-SYNTHESIS-A-FLOW-PERSIST",

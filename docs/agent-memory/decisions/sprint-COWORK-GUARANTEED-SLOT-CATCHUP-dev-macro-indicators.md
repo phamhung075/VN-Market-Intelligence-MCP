@@ -26,3 +26,13 @@
 - Rounding 224→231: rejected using the stale pre-edit count; recomputed real `wc -l` after the insert and used that exact number to satisfy the script's own tolerance check.
 **why-decision:** (a) preserves both resolvers' shared refactor narrative in one file and is reversible/low-risk; local `--check` exit 0 and CI-plane `size-lint` job success on headSha e02e20192 both independently confirmed, not just local.
 **why-change:** none — matches task spec's preferred remedy exactly, zero script/baseline touch (git diff confirms only the target .go file changed).
+
+### STEP dev-macro-indicators-S3 · dev-macro-indicators · 2026-08-01T13:00:11Z
+**task-id:** FIX-MACRO-INDICATORS-EMPTY-COLUMNS
+**what-done:** RAW-verified live market.db (single row id=675 country=vietnam; only cpi/gdp_growth/interest_rate set); traced every writer of `macro_indicators`; declined — wrong zone (3rd occurrence of the class) — corrected board+detail zone/owner, reset `.head`.
+**what-considered:**
+- My zone has zero write path into market.db by design (init.md: reads-only). macroIndicatorFetcher.ts + tradingEconomics.ts storeMacroIndicators() are both dead (zero call sites / wrong country key). Live cron macroIndicatorRefreshJob.ts only writes interest_rate/cpi/manufacturing_pmi via parseCpiFromExternal/parsePmiFromExternal reading GET /macro/external `sources.tradingEconomics` — live-curled my own Go /external and it returns no such key (only vn-market/commodity-prices/macro-signals); caller also POSTs a GET-only route (405), doubly dead. gdp_growth/inflation_rate hardcoded null there; the other 7 cols never appear in any live INSERT column list at all.
+- Only writer covering all 12 cols is macroPushHandler.ts's VPS-push allowlist. SSH-confirmed vps-scripts/fetch-tradingeconomics.sh has SKIPped 500+ consecutive hourly cycles ("TE_API_KEY not configured") since deploy; fetch-gso.sh browser automation was deliberately removed (VPS too lite), pushes empty payload only. Both credential/infra-blocked, not a code bug.
+- 2 of 9 (trade_balance, current_account) DO have a live alt source already in my own zone (VMT-6/7 Go endpoints, NSO/GSO-sourced) never wired into macro_indicators — flagged as dev-mcp-server's concrete path. manufacturing_pmi excluded per task's own note (tracked under macro-fetch-cluster FRED_API_KEY item).
+**why-decision:** zone_restricted + read-only DB grant make this structurally undoable here regardless of finding quality; corrected board zone/owner with full trace so dev-mcp-server doesn't re-derive it.
+**why-change:** board zone label was wrong — 3rd occurrence of this class (see S1 SBV precedent); re-flagging PO since the 2 prior audit recommendations went unactioned.

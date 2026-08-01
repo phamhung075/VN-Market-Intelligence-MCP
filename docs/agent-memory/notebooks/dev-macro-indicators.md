@@ -6,58 +6,6 @@ Zone: `apps/macro-indicators/` | Stack: Go 1.22 | DB: reads market.db (read-only
 
 ---
 
-## Session 2026-07-09 (FACTORY-MACRO-split-sandbox — 831L god-file split + 6-comparator collapse)
-
-**Task:** BOUNDED-1 idle-capacity pickup. Split `cmd/sandbox/main.go` (831L, no header) into 4 files; collapse the 6 structurally-identical `executeMacroXxx` comparators into one helper; add dispatch-logic test coverage (zero pre-existing).
-
-**Split:** main.go (103L, flags+loop) / discovery.go (86L) / primitives.go (366L, justified) / module.go (250L, justified). Collapsed all 8 diff-builders into `compareFields(label, []fieldDiff)`; `formatVal` preserves original formatting so FAIL "reason" text is byte-identical pre/post-split.
-
-**Root-cause fix mid-task:** `apps/macro-indicators/.gitignore`'s unanchored `sandbox` pattern also matched the `cmd/sandbox/` directory — silently excluded new files from git. Anchored to `/sandbox`.
-
-**Parity verification:** `git stash` clean pre-split tree, ran sandbox binary before/after against full 20-scenario suite + 2 forced-mismatch probes — byte-identical output (msg/scenario/reason) incl. exit codes. `go build`/`go vet`/`go test`/`golangci-lint` all GREEN.
-
-**Docker routing:** `cmd/sandbox` is a standalone CLI, never compiled into the deployed image — routed `next_agent: qa` directly, no ops/Close Gate.
-
-**Commit:** 60c9a880a (6 files, +865/-735). Decision journal: STEP dev-macro-indicators-S3.
-Zone health: HEALTHY (Go service unaffected, sandbox parity confirmed) | FACTORY-MACRO-split-sandbox → REVIEW (next_agent: qa)
-
----
-
-## Session 2026-07-09 round 2 (FACTORY-MACRO-split-repositories — 905L god-file split, live-deployed → ops)
-
-**Task:** BOUNDED-1 idle-capacity pickup. Split `pkg/infrastructure/repositories.go` (905L, 6 adapters) into per-adapter files; factor the repeated "open ro → defer Close → fetch" shape into a shared `openReadOnly` helper.
-
-**Split:** repositories_fixture.go / repositories_market_index.go / repositories_commodity.go / repositories_sbv_rate.go / repositories_carry_yield.go (shared `openReadOnly`). 4/5 files >120L — size-justification headers added.
-
-**Parity verification (beyond `go test`):** Throwaway harness (`cmd/verify_repos_tmp`, never committed) seeding a real fixture SQLite DB and calling constructors + all 9 port methods through real `DB_PATH` wiring. Ran post-split and `git stash`'d pre-split: all values byte-identical. `go build`/`go vet`/`go test`/`golangci-lint` all GREEN.
-
-**Docker routing:** Confirmed `cmd/server/main.go` imports `pkg/infrastructure` and constructs all 6 adapter types — this IS the live-deployed service. Routed `next_agent: ops` for Docker Close Gate.
-
-**Commit:** c3962350d (6 files, +1026/-905). Decision journal: STEP dev-macro-indicators-S4.
-Zone health: HEALTHY (build/vet/test/lint all green, served values verified byte-identical pre/post-split) | FACTORY-MACRO-split-repositories → REVIEW (next_agent: ops)
-
----
-
-## Session 2026-07-24 (FACTORY-MACRO-split-or-justify-over-cap — sjc_fx split + cohesive-file justify + main.go shim move)
-
-**Task:** BOUNDED-1 auto-pickup. Split-vs-justify triage per task spec (a)/(b)/(c).
-
-**Split:** `adapters_vmt_sjc_fx.go` (504L) → SJCGoldFXAdapter DB adapter stays (167L, justified) + new `parsers_vmt_sbv_policy_rates.go` (372L, justified — SBV policy-rates HTML parse/fetch/TLS + DB fallback), same package, no import-graph change.
-
-**Justify (no split):** `usecases.go` (585L, cohesive ComputeMacroUseCase) + 5 VMT parser files (`parsers_vmt_bop/cpi/gso_indicators/sbv_interbank_omo/trade.go`) — honest size-justification headers added, matching the existing `repositories_*.go` header convention (grepped for exact format).
-
-**Move:** `cmd/server/main.go`'s 9 composition-root adapter shim types → new sibling `cmd/server/adapters.go` (still `package main`, Fence-C preserved). Had to also patch `.golangci.yml`'s fence-c depguard file-allowlist (filename-scoped to `main.go`, not the whole `cmd/server/` dir) to admit `adapters.go` — a real lint failure caught post-move, not in the original task spec.
-
-**Behavior-unchanged verification:** comment-stripped + sorted diff between original committed files and post-split pairs. Caught + fixed one real regression: a Unicode non-breaking-space (U+00A0) byte inside two string literals (`extractFirstNumber`, `ParseVNRate`) got silently normalized to ASCII space during file copy — restored via targeted byte-level patch, re-verified byte-identical after fix.
-
-**Verification (all green):** `go build`/`go vet`/`go test ./...`/`golangci-lint` clean. G12 sandbox: primitive 18/18 PASS, module 2/2 PASS.
-
-**Commit:** a87079574 (11 files, +781/-626). Decision journal: `sprint-FACTORY-MACRO-split-or-justify-over-cap-dev-macro-indicators.md` STEP S1-S2. `rebuild_required=true` but USER-GATED per task constraint — rebuild-verify PENDING-USER-GATED.
-
-Zone health: HEALTHY (build/vet/test/lint/sandbox all green; caught+fixed one byte-level encoding regression during self-verification) | FACTORY-MACRO-split-or-justify-over-cap → REVIEW (dev-team dispatcher closeout)
-
----
-
 ## Session 2026-07-28 (FIX-SBV-FETCHER-ZERO-VALUE-EMIT — BOUNDED-1 pickup, DECLINED: wrong zone)
 
 **Task:** BOUNDED-1 idle-capacity auto-pickup, labeled zone `apps/macro-indicators/`. Live investigation found the label was wrong.
@@ -97,3 +45,21 @@ Zone health: HEALTHY (no code changed, Go service unaffected) | FU-SBV-EFFECTIVE
 **Commit:** `e02e20192` (1 file, +7L). Decision journal: `sprint-COWORK-GUARANTEED-SLOT-CATCHUP-dev-macro-indicators.md` STEP dev-macro-indicators-S2.
 
 Zone health: HEALTHY (comment-only change, build/vet/test green, CI size-lint job confirmed green on pushed SHA) | FIX-CI-SIZELINT-MACRO-VMT-LIQUIDITY-RESOLVERS-NEW-OFFENDER → REVIEW (next_agent: qa)
+
+---
+
+## Session 2026-08-01 (FIX-MACRO-INDICATORS-EMPTY-COLUMNS — BOUNDED-1 pickup, DECLINED: wrong zone, 3rd occurrence of same class)
+
+**Task:** BOUNDED-1 idle-capacity auto-pickup, labeled zone `apps/macro-indicators/`. Same zone-mislabel class as the two 2026-07-28/07-30 SBV occurrences (see above) — `apps/macro-indicators` matched by domain-keyword/table-name, not by verified write-path owner.
+
+**RAW-verify:** `sqlite3 data/live/market.db` — table has exactly 1 row (`UNIQUE(country)`, id=675, country=vietnam); only `cpi=5.46`/`gdp_growth=7.4`/`interest_rate=4.5` set, the other 9 columns NULL, `fetched_at` fresh (today) despite that.
+
+**Finding:** Traced every writer. `apps/mcp-server/src/domain/services/macro/macroIndicatorFetcher.ts` storeIndicators() — dead (writes `country='VN'`, comment self-flags unwired). `apps/mcp-server/src/infrastructure/fetchers/tradingEconomics.ts` storeMacroIndicators()/fetchMacroIndicatorsWithFallback() — dead, zero call sites outside its own barrel re-export (grep-confirmed), and only ever handles 3 of 12 fields anyway. The one LIVE cron, `macroIndicatorRefreshJob.ts`, writes `interest_rate` for real (Go `/snapshot` sbvRefinancingRate) but its `cpi`/`manufacturing_pmi` path (`parseCpiFromExternal`/`parsePmiFromExternal` reading `GET /macro/external sources.tradingEconomics`) is doubly dead: live-curled my own Go `/external` handler (`handlers_external.go`) and confirmed the live response has no `tradingEconomics` key at all (only `vn-market`/`commodity-prices`/`macro-signals`); separately mcp-server's client calls `POST` against that `GET`-only route (405). `gdp_growth`/`inflation_rate` are hardcoded `null` in that INSERT, COALESCE-preserved only (explains the misleadingly-fresh `fetched_at` on a frozen value — same class as the known usdVnd frozen-value anti-pattern). The other 7 columns never appear in any live INSERT column list. The only writer covering all 12 columns, `macroPushHandler.ts`'s VPS-push allowlist, is fed by `vps-scripts/fetch-tradingeconomics.sh` — SSH-confirmed live on the VPS: 500+ consecutive hourly `SKIP: TE_API_KEY not configured` cycles since deploy — and `fetch-gso.sh`, whose browser automation was deliberately removed (VPS too lite), pushing only empty payloads. Both credential/infra-blocked, not a code bug. `apps/macro-indicators/` (my zone) has ZERO write access to `market.db` by design (init.md: reads-only) — structurally cannot implement any part of this fix. Bonus finding: 2 of the 9 empty columns (`trade_balance`, `current_account`) DO have a live alternate source already in my own zone (VMT-6/7 `POST /trade-balance` / `POST /bop`, real NSO/GSO data) never wired into `macro_indicators` — flagged as dev-mcp-server's concrete actionable path (no new credential needed for those 2).
+
+**Action:** No code change (either zone). Corrected `docs/data/orch/orch-state.json` via `scripts/orch-apply.sh` (exit 0, conservation 770/770): moved row `in_progress`→`backlog` with `zone: apps/mcp-server/`, `owner_agent: dev-mcp-server`, full root_cause/generic_mandate trace embedded (incl. the trade_balance/current_account actionable path + the credential-blocked TE/GSO finding); `.head` reset to idle/router. Corrected `docs/data/orch/archive/backlog-detail.json` (direct atomic write, item-count-preserved 442/442) with the same trace + `related: [FIX-SBV-FETCHER-ZERO-VALUE-EMIT, FU-SBV-EFFECTIVE-DATE-COLUMN]`. Decision journal: `sprint-COWORK-GUARANTEED-SLOT-CATCHUP-dev-macro-indicators.md` STEP dev-macro-indicators-S3.
+
+**Recurrence flag for PO (3rd time):** this is the THIRD backlog row mislabeled `zone: apps/macro-indicators/` for the identical structural reason — `apps/macro-indicators` is a CONSUMER/reader of `market.db`, never a write-path owner, by explicit agent-definition design. Both prior occurrences (2026-07-28, 2026-07-30) already recommended a one-time audit of remaining `apps/macro-indicators`-tagged backlog rows against actual write-path ownership; neither recommendation was actioned before this one burned a third BOUNDED-1 cycle. Re-recommending now, more strongly: run the audit before a 4th occurrence.
+
+**Task lock:** `task:FIX-MACRO-INDICATORS-EMPTY-COLUMNS` NOT released by this agent — INV-GATEWAY-1 reserves task_claim/task_release to the dev-team dispatcher session (owner_client_session=64c7c677-0f0f-4cee-a3ce-dba79d70b7ae) that holds it on my behalf.
+
+Zone health: HEALTHY (no code changed, Go service unaffected) | FIX-MACRO-INDICATORS-EMPTY-COLUMNS → returned to BACKLOG, re-zoned apps/mcp-server/ (not a dev-macro-indicators task)
