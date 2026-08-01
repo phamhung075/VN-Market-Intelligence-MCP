@@ -2031,50 +2031,6 @@
         "severity": "WARN",
         "status": "triaged",
         "payload_ref": null
-      },
-      {
-        "id": "dev-20260731T192021",
-        "ts": "2026-07-31T19:20:21Z",
-        "from": "dev-team",
-        "to": "po",
-        "type": "system-issue",
-        "summary": "stranded-state sweep: unknown path needs owner (docs/agent-memory/.auditor-cycle-markers-2026-07-30T16:00Z.tmp) — recurring, prior NEW row cold-evicted unresolved (never dispositioned)",
-        "severity": "LOW",
-        "status": "READ",
-        "payload_ref": null
-      },
-      {
-        "id": "cow-20260731T192200",
-        "ts": "2026-07-31T19:22:51Z",
-        "from": "cowork-team",
-        "to": "po",
-        "type": "system-issue",
-        "summary": "self-caused: Step 0a flipped po-addressed row READ, cold-evicted unseen in ~35min. main.md Step 0a needs po-row read-not-write fix, routed architect.",
-        "severity": "MED",
-        "status": "READ",
-        "payload_ref": null
-      },
-      {
-        "id": "dev-team-20260731T1935-journal-step-collision",
-        "ts": "2026-07-31T19:35:00Z",
-        "from": "dev-team",
-        "to": "po",
-        "type": "system-issue",
-        "summary": "dev-mcp-server journal wrote dup STEP-S41 (collided w/ unrelated S41 earlier same file); RAW-verify caught+fixed. decision-journal skill has no seq-number generation rule (notebook-write has c<NNN> AC-1; journal skill doesn't). Route agent-father: add equivalent safeguard.",
-        "severity": "LOW",
-        "status": "READ",
-        "payload_ref": "docs/agent-memory/decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-dev-team-8.md"
-      },
-      {
-        "id": "cow-20260731T201100",
-        "ts": "2026-07-31T20:11:00Z",
-        "from": "cowork-team",
-        "to": "po",
-        "type": "system-issue",
-        "summary": "coverage-state.json last_covered_{market_watcher,news_scout} frozen since 2026-07-25 (6d, ~144h) — TRANSPORT GAP notes in 5 call sites (cycle.md x2, eod.md, stage-log-notify.md, stage-sentiment.md) say agent holds no Bash, but .claude/agents/{market-watcher,news-scout}.md:5 both grant Bash NOW. Stale doc silently defeats FIX-COVERAGE-SWEEP-BLANKET-STAMP-DEAD-TRIGGER. Route to architect/agent-father: verify live coverage-stamp.sh works end-to-end, then strip the 5 stale TRANSPORT GAP notes.",
-        "severity": "HIGH",
-        "status": "READ",
-        "payload_ref": null
       }
     ],
     "last_triaged_at": "2026-07-29T06:25:00Z",
