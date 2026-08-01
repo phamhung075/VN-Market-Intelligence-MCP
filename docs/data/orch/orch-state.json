@@ -10959,39 +10959,6 @@
         "dedup_checked": "2026-07-31T17:51Z — jq over every lane matching id/title/note against /BASH|TOOL-?GRANT|no Bash|tool grant|GRANT/i => 5 rows, all read: 3 are the per-agent point fixes named in `related` (none covers digest-predict), 1 is the schedule_task grant, 1 is FIX-ROUTER-COWORK-SLOT-DEMAND-DISPATCH-BLIND (matched on 'grants false exclusivity' prose, unrelated). `ls scripts/audits/ | grep -i grant` => no existing coverage script. Zero rows own the gate.",
         "baseline_pass": "scripts/audits/agent-bash-grant-coverage.sh exits 0 across all 22 agents AND a live digest-predict cycle commits docs/agent-memory/notebooks/digest-predict.md",
         "desc": null
-      },
-      {
-        "id": "FIX-CI-SIZELINT-MACROTOOLS-HUMANIZE-618L",
-        "type": "FIX",
-        "size": "S",
-        "priority": "P1",
-        "status": "BACKLOG",
-        "zone": "apps/mcp-server/",
-        "owner": "po",
-        "next_agent": "dev-mcp-server",
-        "plan_only": false,
-        "supervised": false,
-        "created_at": "2026-08-01T01:25:12Z",
-        "created_by": "po/triage-20260801T0125",
-        "check_id": "CI-RED-d1a62fd6",
-        "dedup_key": "ci_job:size-lint|file:apps/mcp-server/src/interface/mcp/tools/macro/macroTools.ts",
-        "ci_fingerprint": "262ba2f29a824886dd1cdd2f5ce7d7efa472bebcaa7781e1db2249b3df807c07",
-        "origin_signal_id": "CI-RED-d1a62fd6",
-        "verification_gate": "ci_green_on_subsequent_push",
-        "baseline_pass": true,
-        "rebuild_required": false,
-        "caused_by_commit": "e64ad8870",
-        "blocks": [
-          "FIX-MACRO-SNAPSHOT-HUMANIZE-TEXT"
-        ],
-        "title": "CI-RED-d1a62fd6-FIX — CI RED: size-lint — apps/mcp-server/src/interface/mcp/tools/macro/macroTools.ts baseline-tolerance-exceeded (baseline=501L actual=618L upper=551L), introduced by e64ad8870 (FIX-MACRO-SNAPSHOT-HUMANIZE-TEXT)",
-        "files": [
-          "apps/mcp-server/src/interface/mcp/tools/macro/macroTools.ts"
-        ],
-        "status_note": "AC: gh run view <databaseId with headSha AFTER d1a62fd609cde6183820bad487aed243605c31d3> --json jobs -q .jobs[]|select(.name==\"size-lint\")|.conclusion == success (verification_gate=ci_green_on_subsequent_push). Priority: high. Failing job: size-lint. Failing file: apps/mcp-server/src/interface/mcp/tools/macro/macroTools.ts. RAW log line from run 30677336536: [size-lint] FAIL — 1 offending file(s) (scanned 1355): apps/mcp-server/src/interface/mcp/tools/macro/macroTools.ts — baseline-tolerance-exceeded (baseline=501L actual=618L upper=551L). REMEDY IS A JUDGEMENT CALL FOR THE IMPLEMENTER, not pre-decided here: either extract buildMacroSnapshotText (humanizeKey/formatScalar/renderSection) into its own module — it is a self-contained generic renderer with no coupling to the tool registration around it, so it is the natural seam — or, if the growth is judged legitimate and atomic, raise the baseline WITH a real size-justification. Do not silently bump the baseline with no justification.",
-        "po_ruling_20260801T0125": "THE ROUTER HYPOTHESIS THAT THIS IS PRE-EXISTING DEBT ON A DOCS-ONLY SHA IS REFUTED — DO NOT DEDUP IT AWAY. The ci_red fired on HEAD d1a62fd60, which is indeed a docs-only journal commit, but the offending change came from e64ad8870, two commits earlier and still ahead of the last green. RAW proof: git show e64ad8870^:apps/mcp-server/src/interface/mcp/tools/macro/macroTools.ts | wc -l = 510, and the file is 618L at HEAD — e64ad8870 added ~108L (buildMacroSnapshotText). Baseline is 501L, upper tolerance 551L. The file crossed the tolerance inside that one commit. CI simply attributed it to whatever HEAD it next ran on. FILE-SCOPED DEDUP RUN AND CLEAN: no row in backlog/ready/in_progress/review/qa carries dedup_key ci_job:size-lint|file:...macroTools.ts. The three open rows that mention macroTools are all unrelated (FIX-USDVND-THRESHOLD-SSOT = threshold SSOT, FEAT-MACRO-US-EQUITY-INDEX-TOOL = new tickers, FDA-7 = fetchedAt re-stamping) and none is a size-lint row. The 8 existing FIX-CI-SIZELINT-* rows are all scoped to DIFFERENT files (technical-analysis router, pdf-extractor extraction_engine, energyTools, vmt-liquidity resolvers, vpsProxyStaleness). Per the anti-amnesty fence, pre-existing was not an available disposition here and the row is minted.",
-        "po_link_note": "SIBLING/BLOCKER RELATIONSHIP — read before closing either row. Signal dev-20260801T010302 asks PO to route FIX-MACRO-SNAPSHOT-HUMANIZE-TEXT (REVIEW, next_agent=qa) for ops rebuild + qa live-verify, describing commit e64ad8870 as RAW-verified clean. It is NOT clean: the same commit turned CI size-lint RED. The RAW-verify covered behaviour but not the CI plane. FIX-MACRO-SNAPSHOT-HUMANIZE-TEXT MUST NOT be flipped DONE/DONE_VERIFIED until size-lint is green on a subsequent push. Whoever picks this row should expect to close both together.",
-        "updated_at": "2026-08-01T01:27:03Z"
       }
     ],
     "closed_sprints": [
@@ -19745,6 +19712,41 @@
         "updated_at": "2026-08-01T01:38:25Z",
         "branch": "438e66958f9853d95d2120890d0abf029928e5fe",
         "review_note": "dev-team RAW-verified agent-father's return: commit 438e66958 contains exactly the 4 claimed files (3 flow docs + agent-father journal), grep for TRANSPORT GAP/no-transport/holds-no-Bash across all 3 sections returns zero matches (AC-1 confirmed), git diff --stat .claude/agents/*.md is empty (AC-4 negative control confirmed). Board flip applied by dev-team on agent-father's behalf per its own commit-zone exclusion of orch-state.json (docs/agents/, docs/agent-memory/, .claude/skills/, .claude/agents/ only)."
+      },
+      {
+        "id": "FIX-CI-SIZELINT-MACROTOOLS-HUMANIZE-618L",
+        "type": "FIX",
+        "size": "S",
+        "priority": "P1",
+        "status": "REVIEW",
+        "zone": "apps/mcp-server/",
+        "owner": "po",
+        "next_agent": "qa",
+        "plan_only": false,
+        "supervised": false,
+        "created_at": "2026-08-01T01:25:12Z",
+        "created_by": "po/triage-20260801T0125",
+        "check_id": "CI-RED-d1a62fd6",
+        "dedup_key": "ci_job:size-lint|file:apps/mcp-server/src/interface/mcp/tools/macro/macroTools.ts",
+        "ci_fingerprint": "262ba2f29a824886dd1cdd2f5ce7d7efa472bebcaa7781e1db2249b3df807c07",
+        "origin_signal_id": "CI-RED-d1a62fd6",
+        "verification_gate": "ci_green_on_subsequent_push",
+        "baseline_pass": true,
+        "rebuild_required": false,
+        "caused_by_commit": "e64ad8870",
+        "blocks": [
+          "FIX-MACRO-SNAPSHOT-HUMANIZE-TEXT"
+        ],
+        "title": "CI-RED-d1a62fd6-FIX — CI RED: size-lint — apps/mcp-server/src/interface/mcp/tools/macro/macroTools.ts baseline-tolerance-exceeded (baseline=501L actual=618L upper=551L), introduced by e64ad8870 (FIX-MACRO-SNAPSHOT-HUMANIZE-TEXT)",
+        "files": [
+          "apps/mcp-server/src/interface/mcp/tools/macro/macroTools.ts"
+        ],
+        "status_note": "AC: gh run view <databaseId with headSha AFTER d1a62fd609cde6183820bad487aed243605c31d3> --json jobs -q .jobs[]|select(.name==\"size-lint\")|.conclusion == success (verification_gate=ci_green_on_subsequent_push). Priority: high. Failing job: size-lint. Failing file: apps/mcp-server/src/interface/mcp/tools/macro/macroTools.ts. RAW log line from run 30677336536: [size-lint] FAIL — 1 offending file(s) (scanned 1355): apps/mcp-server/src/interface/mcp/tools/macro/macroTools.ts — baseline-tolerance-exceeded (baseline=501L actual=618L upper=551L). REMEDY IS A JUDGEMENT CALL FOR THE IMPLEMENTER, not pre-decided here: either extract buildMacroSnapshotText (humanizeKey/formatScalar/renderSection) into its own module — it is a self-contained generic renderer with no coupling to the tool registration around it, so it is the natural seam — or, if the growth is judged legitimate and atomic, raise the baseline WITH a real size-justification. Do not silently bump the baseline with no justification. | CLOSE: extracted humanizeKey/formatScalar/renderSection/buildMacroSnapshotText out of macroTools.ts into new sibling macroSnapshotText.ts (109L), mirroring FIX-CI-SIZELINT-TECHANALYSIS-ROUTER-NEW-OFFENDER-143L precedent (file-per-concern, not justification-header/baseline-update). macroTools.ts 618L->530L (baseline 501L/upper 551L -- within tolerance). Code commit f28c6c239, memory commit 9f0aab4ab, pushed to origin/main. CI run 30678397978 headSha f28c6c239ac8a4e8e8e97ad83dbf2d8b8e121113 -- size-lint job conclusion=success (gh run view 30678397978 --json jobs -q .jobs[]|select(.name==\"size-lint\")|.conclusion). Local: size-lint-justification.sh --check RC=0 0 offenders, bun tsc --noEmit clean, FIX-MACRO-SNAPSHOT-HUMANIZE-TEXT.test.ts + 089-tool-macro.test.ts 34/34 pass 72 expect(), byte-identical function bodies (pure move, zero logic change). Decision journal STEP dev-mcp-server-S57 (sprint-COWORK-GUARANTEED-SLOT-CATCHUP-dev-mcp-server-3.md).",
+        "po_ruling_20260801T0125": "THE ROUTER HYPOTHESIS THAT THIS IS PRE-EXISTING DEBT ON A DOCS-ONLY SHA IS REFUTED — DO NOT DEDUP IT AWAY. The ci_red fired on HEAD d1a62fd60, which is indeed a docs-only journal commit, but the offending change came from e64ad8870, two commits earlier and still ahead of the last green. RAW proof: git show e64ad8870^:apps/mcp-server/src/interface/mcp/tools/macro/macroTools.ts | wc -l = 510, and the file is 618L at HEAD — e64ad8870 added ~108L (buildMacroSnapshotText). Baseline is 501L, upper tolerance 551L. The file crossed the tolerance inside that one commit. CI simply attributed it to whatever HEAD it next ran on. FILE-SCOPED DEDUP RUN AND CLEAN: no row in backlog/ready/in_progress/review/qa carries dedup_key ci_job:size-lint|file:...macroTools.ts. The three open rows that mention macroTools are all unrelated (FIX-USDVND-THRESHOLD-SSOT = threshold SSOT, FEAT-MACRO-US-EQUITY-INDEX-TOOL = new tickers, FDA-7 = fetchedAt re-stamping) and none is a size-lint row. The 8 existing FIX-CI-SIZELINT-* rows are all scoped to DIFFERENT files (technical-analysis router, pdf-extractor extraction_engine, energyTools, vmt-liquidity resolvers, vpsProxyStaleness). Per the anti-amnesty fence, pre-existing was not an available disposition here and the row is minted.",
+        "po_link_note": "SIBLING/BLOCKER RELATIONSHIP — read before closing either row. Signal dev-20260801T010302 asks PO to route FIX-MACRO-SNAPSHOT-HUMANIZE-TEXT (REVIEW, next_agent=qa) for ops rebuild + qa live-verify, describing commit e64ad8870 as RAW-verified clean. It is NOT clean: the same commit turned CI size-lint RED. The RAW-verify covered behaviour but not the CI plane. FIX-MACRO-SNAPSHOT-HUMANIZE-TEXT MUST NOT be flipped DONE/DONE_VERIFIED until size-lint is green on a subsequent push. Whoever picks this row should expect to close both together.",
+        "updated_at": "2026-08-01T01:43:19Z",
+        "updated_by": "dev-mcp-server",
+        "commit_sha": "f28c6c239"
       }
     ],
     "qa": [],
