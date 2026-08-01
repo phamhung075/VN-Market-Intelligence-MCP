@@ -1,0 +1,55 @@
+{
+  "from": "cowork-team",
+  "to": "unified-agent",
+  "type": "cowork-tick-telemetry",
+  "payload": {
+    "fire_time": "2026-08-01T09:00Z",
+    "matched_slots": [
+      "refine-bctc-slot-1"
+    ],
+    "won_slots": [
+      "refine-bctc-slot-1"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/refine_bctc_md/flow/main.md"
+    ],
+    "silent": false,
+    "drift_min": 5,
+    "errors": [],
+    "pressure_mode": "degraded",
+    "calendar_status": "closed",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "chef_mutex_applied": false,
+    "due_reasons": {
+      "refine-bctc-slot-1": "cadence"
+    },
+    "cadence_minutes": {
+      "refine-bctc-slot-1": 240
+    },
+    "last_fired_timestamp": "2026-08-01T09:06:15Z",
+    "last_fired_slots": [
+      "refine-bctc-slot-1"
+    ],
+    "last_fired_write_errors": [],
+    "classification": "single-slot-fanout",
+    "reason": "cadence-due-bctc-refine",
+    "nominal_tick": "2026-08-01T09:00Z",
+    "leader_lock": "cron:cowork:2026-08-01T09:00Z",
+    "dev_head": null,
+    "devq": 5,
+    "signal_backlog": 17,
+    "note": "single-slot batch, no inter-batch wait needed; container headroom 956MB below 1500MB floor (degraded) but irrelevant at n=1"
+  },
+  "priority": "low",
+  "createdAt": "2026-08-01T09:06:33.000Z",
+  "_processed": {
+    "fingerprint": "6229df8790b532f566247096d8499a25622cc7b68fcd86dccbc8816655ceca0d",
+    "processedAt": "2026-08-01T09:16:20Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
