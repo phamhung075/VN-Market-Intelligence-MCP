@@ -1,4 +1,36 @@
 
+## c14 · 2026-08-01T00:34:17Z
+### Audit Run Tier-3 (00:33–00:34 UTC 2026-08-01)
+- Tier: 3 | Container tooling: PASS (pdftoppm, tesseract, vie lang all present) | Services: 4/4 healthy (stock-price, technical-analysis, alert-engine, pdf-extractor)
+- EPIPE crash check: 0 events in 30m PASS | PDF landing: 279 files PASS
+- DB integrity checks: C-01 thru C-16 all PASS
+  - C-01: 1166 distinct codes (≥25) ✓
+  - C-02: 2863 ohlcv rows (>0) ✓
+  - C-03: 45 action_codes Q1 2026 (≥26 expected Apr-May) ✓
+  - C-04: 0 low-confidence reports (≤5) ✓
+  - C-05: 0 SSC portal URLs (=0) ✓
+  - C-06: 0 market_messages in 3h (expected pre-market 02:00Z open) ✓
+  - C-07: 20 agent_signals in 24h (>0) ✓
+  - C-08: 0 orphaned alerts (=0) ✓
+  - C-09: 3 macro indicators Vietnam (≥3) ✓
+  - C-10: 0 failed PDFs (≤2) ✓
+  - C-11: 0 done PDFs (off-season ok) ✓
+  - C-12: PRAGMA integrity_check all DBs = ok ✓
+  - C-13: WAL sizes <50MB (market 3MB, coordination 1MB) ✓
+  - C-14: Top-3 concentration 0.3% (<60%) ✓
+  - C-15: Schema present (action_code, period_year, extraction_confidence, net_revenue) ✓
+  - C-16: 0 stale pending BCTC (=0) ✓
+- DB State: journal_mode=wal (market, coordination, alert_engine, macro_indicators), delete (pdf_extractor), quick_check=ok all DBs
+- Anomalies: 0 new (0 critical, 0 warn, 0 info)
+- Status: HEALTHY (all system checks pass, pre-market window)
+
+Fire-election: tick=2026-08-01T02:00Z (Tier-3 daily 02:00 UTC) — claimed, led tick.
+
+Known Issues (Trap 4 — timestamp format mismatch FIX-MARKET-MESSAGES-TIMESTAMP-FORMAT, P1):
+- agent_signals format split: 111 space-separated, 13 ISO-8601 (causes 24-h space-delimited predicate to return 0 instead of 20)
+- market_messages all 1099 rows use space-separated format (no T), no fresh ingestion in 3h pre-market
+
+[OUTPUT-CONTRACT] signals_posted=0 | telegram_sent=0 | signal_queue_rows_written=0 | dashboard_rows=0 | dedup_skipped=0
 ## c013 · 2026-07-31T18:34:00Z
 ### Audit Run Tier-2 (16:00–18:34 UTC 2026-07-31)
 - Tier: 2 | Cron health: PASS (A-29 all jobs healthy) | Sources: 5 checked
@@ -47,31 +79,5 @@ Known Issues (unchanged from c011):
 - B-06 both planes: proxy_health status=ok idle-no-work, service_health status=unhealthy
 - Q2 2026 financial_reports: 0 rows (documented SPIKE-BCTC-EXTRACTION-DORMANT-MASS-ENRICHFAIL-FLOOD)
 - agent_signals format: 125 space-separated (YYYY-MM-DD HH:MM:SS), 36 T-separated-with-Z (9 new rows since c011)
-
-[OUTPUT-CONTRACT] signals_posted=0 | telegram_sent=0 | signal_queue_rows_written=0 | dashboard_rows=0 | dedup_skipped=1
-## c011 · 2026-07-31T02:33:33Z
-### Audit Run Tier-2 (02:30–02:35 UTC 2026-07-31)
-- Tier: 2 | Cron health: PASS (A-29 all jobs healthy) | Sources: 5 checked
-- Data freshness: all 5 sources PASS (price 0m/10m, bctc 3391m/10080m, news 2m/30m, sbv_fx 2m/30m, foreign_flow 0m/10m)
-- DB spot checks: C-06 4 msgs/3h PASS, C-07 43 signals/24h PASS, B-09/B-13 PASS
-- VPS services: bctc service UNHEALTHY (proxy route ok, idle-no-work), 4 healthy (price, news, sbv, foreign-flow)
-- Rate limits: B-12 PASS (11/11 ready)
-- Anomalies: 0 new (0 critical, 0 warn, 0 info) | 1 dedup-skipped (B-06 bctc service unhealthy)
-- Status: HEALTHY (all freshness SLA PASS, price ingestion confirmed fresh at 02:31:31Z, market OPEN with stricter SLA thresholds)
-
-Fire-election: tick=2026-07-31T00:00Z (`0 */4 * * *` Tier-2 boundary) — claimed, led tick.
-
-DB & Freshness Context (market OPEN — stricter SLA thresholds apply):
-- PRAGMA journal_mode: wal | PRAGMA quick_check: ok | WAL size: 4.2MB
-- market_prices newest: 2026-07-31T02:31:31.933Z (0m freshness)
-- daily_ohlcv 2026-07-31: 124 rows (live data flowing)
-- SLA Status (get_sla_status): 5 sources OK (price 0m/10m, bctc 3391m/10080m, news 2m/30m, sbv_fx 2m/30m, foreign_flow 0m/10m)
-- All in-session SLA comparisons PASS despite market being OPEN
-
-Known Issues (no change from c010):
-- B-06: bctc vps_service_health UNHEALTHY (dedup-skipped, last reported c008)
-- B-06 both planes: proxy_health status=ok idle-no-work, service_health status=unhealthy
-- Q2 2026 financial_reports: 0 rows (documented SPIKE-BCTC-EXTRACTION-DORMANT-MASS-ENRICHFAIL-FLOOD)
-- agent_signals format split: 122 space-separated, 25 T-separated-with-Z (1 new T-format row since c010)
 
 [OUTPUT-CONTRACT] signals_posted=0 | telegram_sent=0 | signal_queue_rows_written=0 | dashboard_rows=0 | dedup_skipped=1
