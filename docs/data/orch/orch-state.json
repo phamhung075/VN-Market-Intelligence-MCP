@@ -2243,8 +2243,8 @@
     ]
   },
   "task_board": {
-    "_updated_at": "2026-08-01T01:25:12Z",
-    "_updated_by": "po/triage-20260801T0125",
+    "_updated_at": "2026-08-01T01:47:00Z",
+    "_updated_by": "dev-team",
     "active_sprints": [
       {
         "evidence": "Router raw-verified (get_bctc_full live, post-rebuild) after BEQ-9/10 refine. Core extraction incident RESOLVED, but populating real scalars exposed a SEPARATE pre-existing analytics/serving layer with 4 defect clusters: (a) RATIO-COMPUTE — VNM ROE=0/ROA=0/EPS=12VND/NetDebt-EBITDA=-7.5e13x; DHG ROA=7,891,932.0% (analyst falsely claimed fixed). Ratios emit 0 or astronomically wrong. (b) BANK-B02-TCTD-SERVING — SHB + EIB get_bctc_full returns 'balance sheet has no decomposition — forced-zero pass suspected'; banks UNSERVABLE despite DONE + committed scalars. (c) PERIOD-SEMANTICS — FPT 2025-Q4 rev=70112.8/NP=11225.5 are FULL-YEAR cumulative labeled 'Q4'; buildComparisonSection then compares cumulative-FY vs next-quarter -> false -82.2% mislabeled 'YoY'. (d) ENTITY-SCOPE — HPG 2025-Q4 is parent-only B01a (rev=0, conf44%) served as the canonical/headline HPG vs consolidated ~140k rev; misleading. PUBLISH-INTEGRITY GAP: NO semantic-sanity publish guard exists in orch-state (the triage-referenced 'Task #13' is NOT present). The BEQ-9/10 reports are now DONE -> flow into chef docs/agents/unified-agent/flow/market-analysis.md + market-analyst -> ROA 7.8M% / false YoY -82% / parent-only-headline CAN reach MARKET unattended. recurring-bug-escalation: BCTC area has >2 fix cycles -> architect root-cause SPIKE, not point-patch. | [dev-team 2026-06-03T11:44Z observation feeding BAL-0/BAL-1] After LF-SERVE-REFLOW recovered FPT Q1 absolute scalars (op_profit/ebitda/cash live-correct), get_bctc_full(FPT) STILL serves garbage DERIVED ratios: current_ratio=41527873060120x (denominator ~0), operating_margin_pct=0.0% (not recomputed from now-correct operating_profit). Confirms the analytics/serving derived-ratio layer is a distinct defect from scalar extraction. BAL-0 publish semantic-sanity gate MUST block current_ratio out-of-range before MARKET/FB; BAL-1 spike should pin the ratio recompute module. Repro: get_bctc_full(code=FPT).",
@@ -13137,39 +13137,6 @@
         "architect_completed_at": "2026-07-31T02:40:51Z",
         "architect_brief": "docs/architecture-briefs/2026-07-31-fix-subagent-branch-checkout-hijacks-shared-working-dir.md",
         "architect_review_note": "[architect 2026-07-31T02:40:37Z DESIGN COMPLETE — plan-only, no code shipped this cycle] Verified git has NO pre-checkout hook (git help githooks, git 2.49.0 — only post-checkout exists, contractually cannot block the checkout itself, only revert-after + force the calling command exit code). CHOSE AC-1(a): new scripts/git-hooks/post-checkout hard-reverts any non-main checkout in the PRIMARY working dir back to main (MODE=enforce default, diverges deliberately from the sweep-guard hooks WARN default — justified in brief SS3: zero legitimate off-main state exists live today per UC-RDL-P7s own 2026-07-17 ground truth, and revert is self-healing not blocking). Exempts LINKED worktrees by construction (git-dir vs git-common-dir, live-tested) so it does not foreclose SPIKE-C44 if that is ever adopted later — SPIKE-C44 is therefore NOT a dependency of this row (would only become one if fix (b) worktree-isolation were chosen as primary, which it was not). REJECTED (b) worktree-isolation-for-everyone as primary: blast radius is the WHOLE fleet (8 agent types share HEAD) vs SPIKE-C44s own 2-developer-disjoint-zone scope, and SPIKE-C44 itself is still unstarted. REJECTED (c) schema-level ban as this rows OWN primary layer: the branch: field lives in free-form markdown handoffs, not a Zod-validated shape (grepped orchStateSchema.ts — no branch field exists to ban) — a schema-ban has nothing to bind to there.\nCRITICAL COORDINATION FINDING (not in the original triage): grep-confirmed 5 flow docs still ACTIVELY author/verify/honor a task/NNN-* branch-checkout convention TODAY, post-dating UC-RDL-P7 STEP1s ruling by 2 weeks — pm/flow/main.md:75 (branch: template, fired literally hours before this brief on docs/handoffs/FIX-COWORK-FIRE-ELECTION-TICK-TOMBSTONE-dev.md, one of this rows own 4 cited incidents), developer/flow/main.md:51-54+158 (VERIFY: git branch --show-current must equal task/NNN-kebab-description — a HARD precondition before touching any file), developer/flow/microservice-main.md:53-57+161 (identical), qa/flow/main.md:37,42,114-124,219-224 (pipeline JUMP-TOs first line is git checkout task/NNN-*), fixer/flow/*.md:34,36,60,110. This means shipping the hook with ZERO coordination will make developer/microservice-main.mds own VERIFY line fail for every M/L task (the hook will have already reverted HEAD to main before that line runs) — this is UC-RDL-P7s own cited \"wedges QA merge if only one half edited\" hazard, reproduced via a different mechanism (a hook, not mixed doc state), same remedy needed either way. UC-RDL-P7 STEP2 (BACKLOG, next_agent=ba, unstarted) already owns rewriting exactly these 5 files — this row does NOT duplicate or implement that edit; the 5-file/line-number target list above is handed to whoever eventually works STEP2 (agent-father commit_zone per its own init.md — docs/agents/ is explicitly in its allowed list), found live via grep, not assumed.\nAC-4 LIVE PROOF: 5 scenarios reproduced in a disposable scratch repo (never the live repo) — control (reproduces the hijack exactly as reported), guarded (hijack prevented, peer commit lands on main, not reachable only from the checked-out branch), non-destructive-conflict edge case (git refuses the revert rather than discard uncommitted work, fails loud), linked-worktree exemption (fleet-worktree-push-style worktrees unaffected), re-entrancy (single pass, 0.39s, no recursion). Full design + transcripts: docs/architecture-briefs/2026-07-31-fix-subagent-branch-checkout-hijacks-shared-working-dir.md.\nROUTING: next_agent=pm (not developer directly) — deliverable is scripts/git-hooks/ (developer zone per this dispatchs own instruction not to assume agent-father there) but the coordination-timing call (accelerate/scope-down UC-RDL-P7 STEP2 to land same-wave, vs stage this hook via MODE=warn first) is a task-breakdown/prioritization judgment, which is PMs job per architects own not_my_job boundary, not architects to decide unilaterally."
-      },
-      {
-        "id": "FIX-COWORK-FLOWDOC-STALE-TRANSPORT-GAP-CAVEAT",
-        "type": "FIX",
-        "size": "S",
-        "priority": "P1",
-        "status": "READY",
-        "zone": "docs/agents/",
-        "owner": "po",
-        "next_agent": "agent-father",
-        "plan_only": false,
-        "supervised": false,
-        "sprint": "COWORK-RELIABILITY",
-        "created_at": "2026-08-01T01:25:12Z",
-        "created_by": "po/triage-20260801T0125",
-        "origin_signal_id": "cow-20260801T010430",
-        "unblocks": [
-          "FIX-COWORK-BASH-GRANT-COVERAGE-STAMP-TRANSPORT",
-          "FIX-COVERAGE-SWEEP-BLANKET-STAMP-DEAD-TRIGGER",
-          "FIX-COVERAGE-STATE-CROSS-AGENT-LOST-UPDATE"
-        ],
-        "baseline_pass": true,
-        "rebuild_required": false,
-        "title": "Flow docs still tell news-scout + market-watcher they hold no Bash — the stale TRANSPORT GAP caveat makes both agents SKIP every coverage-state write, freezing docs/data/coverage-state.json for 6.4 days AFTER the Bash grant already landed",
-        "files": [
-          "docs/agents/market-watcher/flow/cycle.md (L71-76 list-stale caveat, L265-270 Step 5c write caveat)",
-          "docs/agents/news-scout/flow/stage-log-notify.md (L81-85 write caveat)",
-          "docs/agents/news-scout/flow/stage-sentiment.md (L18 list-stale caveat)"
-        ],
-        "status_note": "AC-1 RAW: zero occurrences of TRANSPORT GAP / [coverage-write-skipped: no-transport] remain as a NORMAL-operation instruction in the 4 sections above (demote to a genuine error path only). AC-2 RAW: after one live news-scout AND one live market-watcher cycle, jq [.tickers|to_entries[]|.value.last_covered_news_scout]|group_by(.)|length > 1 (it is 1 today) and the same for last_covered_market_watcher (also 1 today). AC-3 RAW: jq has(sweep_config) on docs/data/coverage-state.json == true (false today; the script self-repairs it). AC-4 NEGATIVE CONTROL: no change to any .claude/agents/*.md in this row — the tool grant is already correct and must not be touched.",
-        "po_ruling_20260801T0125": "ROOT CAUSE PROVEN AT SOURCE, NOT RELAYED. (1) docs/agents/market-watcher/flow/cycle.md:265 asserts >this agent holds no Bash (.claude/agents/market-watcher.md:5)< — that very line ACTUALLY reads >tools: Read, Write, Edit, Bash, mcp__gateway__call_tool<. The doc cites a line that now refutes it. Same contradiction at docs/agents/news-scout/flow/stage-log-notify.md:81 and stage-sentiment.md:18. (2) Bash was granted 2026-07-30T23:18Z by commit 610110e16 (grant Bash to alert-commander, news-scout, market-watcher). (3) TRANSPORT PROVEN LIVE, not assumed: PO ran `bash scripts/agents-flow/coverage-stamp.sh --agent market-watcher --list-stale --watchlist FPT,VNM,HPG,VCB` this tick and it returned [FPT,VNM,HPG] — a correct <=3 oldest-first list, clean exit. The script works; only the doc claims it cannot. (4) The caveat is not passive prose, it is an executable instruction: >if this step cannot execute, SKIP the coverage-state write entirely this cycle and log [coverage-write-skipped: no-transport]<. The agents obey it and skip. coverage-state.json _updated_at is still 2026-07-25T16:14:39Z = 6.4 days frozen, ~26h of which are AFTER the grant landed. (5) THIS WAS ALREADY ESCALATED TO PO AND LOST: the review_note that agent-father wrote on FIX-COWORK-BASH-GRANT-COVERAGE-STAMP-TRANSPORT (2026-07-30T23:16:56Z) states ACCEPTANCE 4 ... still present in docs/agents/market-watcher/flow/cycle.md and docs/agents/news-scout/flow/stage-log-notify.md ... flagging item 4 to po as a possible separate follow-up row rather than silently claiming it in scope. PO never minted that row. THIS row is that row, 26h late. (6) DEADLOCK NOTE for whoever closes the parent: parent AC-2/AC-3 were deemed to self-heal once a live cycle runs the script — they CANNOT, because the AC-4 caveat is precisely what stops any cycle from running it. The parent stays in REVIEW until this ships. Do NOT close the parent on its grep-only AC-1.",
-        "po_origin_note": "Minted from HIGH signal_queue row cow-20260801T010430, itself a re-file of cow-20260731T201100 which was cold-evicted status:READ / triaged_by:null before any PO triage (2nd confirmed feedback_coldevict_no_age_gate_orphans_unread_po_escalation). LANE CHOICE: ready[] not backlog[] — next_agent=agent-father is non-dev, and a backlog row with a non-dev next_agent and no plan_only+supervised pair matches NO automated sweep lane (BOUNDED-1 requires a dev-prefixed next_agent; SLS requires both flags true). Same lane reasoning the parent row recorded. Also returned in this tick BATCH so it has a real dispatch path and does not repeat the strand.",
-        "updated_at": "2026-08-01T01:26:17Z"
       }
     ],
     "review": [
@@ -19743,6 +19710,41 @@
           "FIX-CI-SIZELINT-MACROTOOLS-HUMANIZE-618L"
         ],
         "po_gate_20260801T0125": "DO NOT FLIP DONE/DONE_VERIFIED ON THIS ROW UNTIL CI size-lint IS GREEN. Signal dev-20260801T010302 relayed this row as RAW-verified clean, commit e64ad8870, needing only ops rebuild + qa live-verify. PO checked the CI plane and it is NOT clean: e64ad8870 grew apps/mcp-server/src/interface/mcp/tools/macro/macroTools.ts from 510L to 618L (RAW: git show e64ad8870^:<path> | wc -l = 510; wc -l at HEAD = 618) against a size-lint baseline of 501L and an upper tolerance of 551L, turning CI job size-lint RED (run 30677336536, reported on HEAD d1a62fd60). The behavioural RAW-verify was correct as far as it went — it simply did not cover the CI plane. New sibling row FIX-CI-SIZELINT-MACROTOOLS-HUMANIZE-618L now carries that fix and is registered here as depends_on. The ops rebuild + qa live-verify this row is waiting on may proceed in parallel; only the terminal flip is gated."
+      },
+      {
+        "id": "FIX-COWORK-FLOWDOC-STALE-TRANSPORT-GAP-CAVEAT",
+        "type": "FIX",
+        "size": "S",
+        "priority": "P1",
+        "status": "REVIEW",
+        "zone": "docs/agents/",
+        "owner": "po",
+        "next_agent": "qa",
+        "plan_only": false,
+        "supervised": false,
+        "sprint": "COWORK-RELIABILITY",
+        "created_at": "2026-08-01T01:25:12Z",
+        "created_by": "po/triage-20260801T0125",
+        "origin_signal_id": "cow-20260801T010430",
+        "unblocks": [
+          "FIX-COWORK-BASH-GRANT-COVERAGE-STAMP-TRANSPORT",
+          "FIX-COVERAGE-SWEEP-BLANKET-STAMP-DEAD-TRIGGER",
+          "FIX-COVERAGE-STATE-CROSS-AGENT-LOST-UPDATE"
+        ],
+        "baseline_pass": true,
+        "rebuild_required": false,
+        "title": "Flow docs still tell news-scout + market-watcher they hold no Bash — the stale TRANSPORT GAP caveat makes both agents SKIP every coverage-state write, freezing docs/data/coverage-state.json for 6.4 days AFTER the Bash grant already landed",
+        "files": [
+          "docs/agents/market-watcher/flow/cycle.md (L71-76 list-stale caveat, L265-270 Step 5c write caveat)",
+          "docs/agents/news-scout/flow/stage-log-notify.md (L81-85 write caveat)",
+          "docs/agents/news-scout/flow/stage-sentiment.md (L18 list-stale caveat)"
+        ],
+        "status_note": "AC-1 RAW: zero occurrences of TRANSPORT GAP / [coverage-write-skipped: no-transport] remain as a NORMAL-operation instruction in the 4 sections above (demote to a genuine error path only). AC-2 RAW: after one live news-scout AND one live market-watcher cycle, jq [.tickers|to_entries[]|.value.last_covered_news_scout]|group_by(.)|length > 1 (it is 1 today) and the same for last_covered_market_watcher (also 1 today). AC-3 RAW: jq has(sweep_config) on docs/data/coverage-state.json == true (false today; the script self-repairs it). AC-4 NEGATIVE CONTROL: no change to any .claude/agents/*.md in this row — the tool grant is already correct and must not be touched.",
+        "po_ruling_20260801T0125": "ROOT CAUSE PROVEN AT SOURCE, NOT RELAYED. (1) docs/agents/market-watcher/flow/cycle.md:265 asserts >this agent holds no Bash (.claude/agents/market-watcher.md:5)< — that very line ACTUALLY reads >tools: Read, Write, Edit, Bash, mcp__gateway__call_tool<. The doc cites a line that now refutes it. Same contradiction at docs/agents/news-scout/flow/stage-log-notify.md:81 and stage-sentiment.md:18. (2) Bash was granted 2026-07-30T23:18Z by commit 610110e16 (grant Bash to alert-commander, news-scout, market-watcher). (3) TRANSPORT PROVEN LIVE, not assumed: PO ran `bash scripts/agents-flow/coverage-stamp.sh --agent market-watcher --list-stale --watchlist FPT,VNM,HPG,VCB` this tick and it returned [FPT,VNM,HPG] — a correct <=3 oldest-first list, clean exit. The script works; only the doc claims it cannot. (4) The caveat is not passive prose, it is an executable instruction: >if this step cannot execute, SKIP the coverage-state write entirely this cycle and log [coverage-write-skipped: no-transport]<. The agents obey it and skip. coverage-state.json _updated_at is still 2026-07-25T16:14:39Z = 6.4 days frozen, ~26h of which are AFTER the grant landed. (5) THIS WAS ALREADY ESCALATED TO PO AND LOST: the review_note that agent-father wrote on FIX-COWORK-BASH-GRANT-COVERAGE-STAMP-TRANSPORT (2026-07-30T23:16:56Z) states ACCEPTANCE 4 ... still present in docs/agents/market-watcher/flow/cycle.md and docs/agents/news-scout/flow/stage-log-notify.md ... flagging item 4 to po as a possible separate follow-up row rather than silently claiming it in scope. PO never minted that row. THIS row is that row, 26h late. (6) DEADLOCK NOTE for whoever closes the parent: parent AC-2/AC-3 were deemed to self-heal once a live cycle runs the script — they CANNOT, because the AC-4 caveat is precisely what stops any cycle from running it. The parent stays in REVIEW until this ships. Do NOT close the parent on its grep-only AC-1.",
+        "po_origin_note": "Minted from HIGH signal_queue row cow-20260801T010430, itself a re-file of cow-20260731T201100 which was cold-evicted status:READ / triaged_by:null before any PO triage (2nd confirmed feedback_coldevict_no_age_gate_orphans_unread_po_escalation). LANE CHOICE: ready[] not backlog[] — next_agent=agent-father is non-dev, and a backlog row with a non-dev next_agent and no plan_only+supervised pair matches NO automated sweep lane (BOUNDED-1 requires a dev-prefixed next_agent; SLS requires both flags true). Same lane reasoning the parent row recorded. Also returned in this tick BATCH so it has a real dispatch path and does not repeat the strand.",
+        "updated_at": "2026-08-01T01:38:25Z",
+        "branch": "438e66958f9853d95d2120890d0abf029928e5fe",
+        "review_note": "dev-team RAW-verified agent-father's return: commit 438e66958 contains exactly the 4 claimed files (3 flow docs + agent-father journal), grep for TRANSPORT GAP/no-transport/holds-no-Bash across all 3 sections returns zero matches (AC-1 confirmed), git diff --stat .claude/agents/*.md is empty (AC-4 negative control confirmed). Board flip applied by dev-team on agent-father's behalf per its own commit-zone exclusion of orch-state.json (docs/agents/, docs/agent-memory/, .claude/skills/, .claude/agents/ only)."
       }
     ],
     "qa": [],
