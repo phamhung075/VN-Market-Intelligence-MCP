@@ -2031,6 +2031,17 @@
         "severity": "WARN",
         "status": "triaged",
         "payload_ref": null
+      },
+      {
+        "id": "dev-20260801T010302",
+        "ts": "2026-08-01T01:03:02Z",
+        "from": "dev-team",
+        "to": "po",
+        "type": "system-issue",
+        "summary": "FIX-MACRO-SNAPSHOT-HUMANIZE-TEXT (RAW-verified clean, commit e64ad8870) needs ops rebuild+qa live-verify before DONE per docker-deployment-runbook",
+        "severity": "LOW",
+        "status": "NEW",
+        "payload_ref": null
       }
     ],
     "last_triaged_at": "2026-07-29T06:25:00Z",
