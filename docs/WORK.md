@@ -1,5 +1,19 @@
 
 ---
+## [Developer] 2026-08-01 — FIX-COLDEVICT-SIGNALQUEUE-NO-AGE-GATE-ORPHANS-READ-ROWS
+
+`scripts/orch-cold-evict.sh`'s `signal_queue.rows[]` eviction selected on `TERMINAL_SIGNAL_STATUSES`
+alone with zero age check — a row could be cold-evicted the same tick it was flipped to a terminal
+status, before a reader (po triage) ever saw it. 3/3 confirmed live incidents silently orphaned
+po-addressed escalations. Added `SIGNAL_MAX_AGE_HOURS` (default 24) ANDed with the status check,
+matching `.claude/skills/signal-dashboard/SKILL.md` § PRUNE's live SSOT (set deliberately at HSC-7,
+2026-06-26 — the task's own "48h" premise was stale, traced to a DIFFERENT flow doc,
+`docs/agents/dev-team/flow/drain-signals.md` §0a-D-PRUNE, never updated at HSC-7; flagged via a LOW
+signal to po, not fixed — out of this task's file scope). TEST 9 added to the canonical
+`scripts/test/orch-cold-evict-tests.sh` (47/47 pass). Live-verified: 0 signal evictions before/after
+against the real `orch-state.json`.
+
+---
 ## [Developer] 2026-07-31 — FIX-NOTEBOOK-AUTOPRUNE-DIRECTION-UNRESOLVABLE-ZERO-TS-NOTEBOOKS
 
 `scripts/agents-flow/notebook-auto-prune.sh`'s same-day/tied-heading direction vote (dec/inc on

@@ -370,6 +370,10 @@ bash scripts/orch-cold-evict.sh --dry-run
 bash scripts/orch-cold-evict.sh
 # Override retention policy (env vars):
 KEEP_RECENT_DONE=10 DONE_MAX_AGE_DAYS=7 bash scripts/orch-cold-evict.sh --dry-run
+# signal_queue.rows[] age gate (FIX-COLDEVICT-SIGNALQUEUE-NO-AGE-GATE-ORPHANS-READ-ROWS,
+# 2026-08-01): terminal-status rows also require ts older than SIGNAL_MAX_AGE_HOURS
+# (default 24, matches .claude/skills/signal-dashboard/SKILL.md § PRUNE's live SSOT):
+SIGNAL_MAX_AGE_HOURS=24 bash scripts/orch-cold-evict.sh --dry-run
 # One-time migration safety valve — skip specific task IDs regardless of status
 # (repeatable flag or comma-separated; also settable via EXCLUDE_TASK_IDS env):
 bash scripts/orch-cold-evict.sh --exclude-ids FIX-BCTC-BANK-SUMMARY-MAPPING --exclude-ids OTHER-ID
@@ -402,9 +406,9 @@ fixture; without it orch-apply.sh silently falls back to its own default, the RE
 sets `ORCH_APPLY_ALLOW_SHRINK` (this script is one of only 2 legitimate bulk-eviction bypass
 call sites — see FIX-ORCHSTATE-CONSERVATION-GUARD-CIRCUIT-BREAKER above).
 Test coverage: `bash scripts/test/orch-cold-evict-tests.sh` (evict-correctness / non-terminal-skip /
---exclude-ids / idempotent-rerun / conservation-guard-still-fires / --dry-run-no-mutation — mirrors
-`orch-apply-wrapper-tests.sh`'s fixture + real-live-hash-unchanged safety pattern; never run against
-the live `docs/data/orch/orch-state.json` file).
+--exclude-ids / idempotent-rerun / conservation-guard-still-fires / --dry-run-no-mutation / signal_queue
+age-gate fresh-vs-aged-vs-NEW-vs-null-ts (TEST 9) — mirrors `orch-apply-wrapper-tests.sh`'s fixture +
+real-live-hash-unchanged safety pattern; never run against the live `docs/data/orch/orch-state.json` file).
 
 **CANONICAL: Backlog stub migration + cold detail writer (ORCH-STATE-HOT-COLD-SPLIT HSC-4)**
 ```bash
