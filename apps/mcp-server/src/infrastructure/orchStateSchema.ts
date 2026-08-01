@@ -1,8 +1,8 @@
 /**
  * orchStateSchema.ts — Nested Zod SSOT schema for docs/data/orch/orch-state.json
- * size-justification: 839L — one Zod SSOT (§1-8: StatusEnum/Task/Sprint/
- *   SignalQueue/Head/Meta/TaskBoard/OrchState) plus 4 co-located write-time
- *   validation guards (§9-12) that scripts/orch-validate.mjs imports BY NAME
+ * size-justification: 1074L — one Zod SSOT (§1-8: StatusEnum/Task/Sprint/
+ *   SignalQueue/Head/Meta/TaskBoard/OrchState) plus 6 co-located write-time
+ *   validation guards (§9-14) that scripts/orch-validate.mjs imports BY NAME
  *   from this exact file path. A physical split (even via re-export barrel)
  *   would break scripts/agents-flow/drain-signals.test.js's
  *   makeOrchRefHarness(), which raw-copies only this one path into an
@@ -14,7 +14,15 @@
  *   agent to land alongside a coordinated split. Trimmed ~46L of duplicated/
  *   verbose narrative comments pre-header (870L→824L, zero logic/type/export
  *   changes) — the genuine reduction available without that split; this
- *   justification block itself accounts for the remaining delta to 839L.
+ *   justification block itself accounted for the remaining delta to 839L.
+ *   FIX-DEVTEAM-IDLE-CHAIN-DANGLING-DEPS-STRAND-5-P0-ROWS AC-3 2026-08-01:
+ *   added §13 checkDependsDivergence() (hard-fail write-time guard on the
+ *   exact .depends/.depends_on divergence shape that starved 5 P0 rows for
+ *   3 days) + §14 checkMissingDependencyReport()/collectHotDepStatusLaneIds()
+ *   (non-fatal live-visibility report for the separate, PO-ratified
+ *   cold-archive-resolves-MISSING class) — same one-file-per-guard
+ *   co-location precedent as §9-12, same reason a split still cannot land
+ *   yet (+235L).
  *
  * Sprint: SSOT-INTEGRITY-PERIMETER  Task: SSOT-W1-ZOD-SCHEMA-MODEL
  *
@@ -834,6 +842,241 @@ export function checkDecorativeSequencingFields(data: OrchState): DecorativeFiel
   (tb.closed_sprints ?? []).forEach((sprint, si) =>
     visitLane(sprint.tasks, `closed_sprints[${si}].tasks`),
   );
+
+  return issues;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// § 13. .depends / .depends_on DIVERGENCE GUARD (write-time, hard fail)
+// Task: FIX-DEVTEAM-IDLE-CHAIN-DANGLING-DEPS-STRAND-5-P0-ROWS AC-3
+//
+// ROOT CAUSE this closes: scripts/lib/devteam-eligibility.jq's
+// effective_depends_on() (line ~188) is a CONCATENATION —
+// `(.depends_on|as_dep_array) + (.depends|as_dep_array) + (.blocked_by|as_dep_array)`.
+// Editing exactly one of those fields can only GROW the effective dependency
+// set a picker resolves, never shrink it. Commit 2833b71bf (2026-07-29)
+// deleted duplicate rows S1-SCHEMA-SELECTION / P1B-STAMP and wrote the
+// corrected reference set into `.depends_on` on 3 rows, but never touched
+// the legacy `.depends` field those same rows still carried — the deleted
+// ids stayed resident there and the union kept resurrecting them.
+// deps_satisfied() maps an unresolvable id to "MISSING" and requires ALL
+// deps DONE_VERIFIED (fail-CLOSED) — so those 3 rows, plus 2 more that
+// depended on them, were permanently un-dispatchable for 3 days (2026-07-29
+// to 2026-08-01) before being caught (5 P0 rows total).
+//
+// This guard closes the class at write time: a row that carries BOTH
+// `.depends` and `.depends_on` where `.depends` names an id NOT present in
+// `.depends_on` is rejected — the author must reconcile both fields to the
+// same set (or clear the stale one) instead of leaving a silently
+// resurrectable orphan behind.
+//
+// Deliberately scoped to `.depends` vs `.depends_on` ONLY (not
+// `.blocked_by`, which the AC does not implicate) — widening the check
+// beyond the exact incident shape is an unverified generalization this
+// task does not make (feedback_gate_widening_recommendation_requires_
+// actuator_dry_run).
+//
+// HARD-FAIL (like Stage 1c/1e siblings): live-verified 0 violations across
+// all 9 task-bearing lanes on 2026-08-01 (post AC-1 cleanup on the 3
+// incident rows), so flipping this on cannot break any live row today.
+//
+// Called by scripts/orch-validate.mjs (Stage 1f, after Stage 1e, hard fail).
+// ═══════════════════════════════════════════════════════════════════════════════
+
+export interface DependsDivergenceIssue {
+  path: string;
+  taskId: string;
+  depends: unknown;
+  dependsOn: unknown;
+  extraIds: string[];
+  message: string;
+  fix: string;
+}
+
+/**
+ * Check every task_board row (all 9 lane shapes) for a `.depends` value that
+ * names an id absent from `.depends_on` while BOTH fields are present — the
+ * exact shape of the FIX-DEVTEAM-IDLE-CHAIN-DANGLING-DEPS incident. Returns
+ * an array of issues (empty = fully reconciled, or one/both fields absent).
+ */
+export function checkDependsDivergence(data: OrchState): DependsDivergenceIssue[] {
+  const issues: DependsDivergenceIssue[] = [];
+  const tb = data.task_board;
+
+  const visitRow = (row: Record<string, unknown>, path: string) => {
+    const dependsRaw = row["depends"];
+    const dependsOnRaw = row["depends_on"];
+    // Only compare when BOTH fields are present — a row carrying only one
+    // of the two is not a "divergence" (nothing to reconcile against).
+    if (dependsRaw == null || dependsOnRaw == null) return;
+
+    const dependsIds = toIdArray(dependsRaw);
+    const dependsOnIds = new Set(toIdArray(dependsOnRaw));
+    const extraIds = dependsIds.filter((id) => !dependsOnIds.has(id));
+    if (extraIds.length === 0) return;
+
+    const taskId = typeof row["id"] === "string" ? (row["id"] as string) : "(no-id)";
+    issues.push({
+      path,
+      taskId,
+      depends: dependsRaw,
+      dependsOn: dependsOnRaw,
+      extraIds,
+      message:
+        `"depends" names ${JSON.stringify(extraIds)} which "depends_on" does not carry. ` +
+        `scripts/lib/devteam-eligibility.jq's effective_depends_on() UNIONS both fields — a ` +
+        `stale/deleted id left in "depends" alone is silently resurrected forever and can ` +
+        `fail-close deps_satisfied() permanently (the FIX-DEVTEAM-IDLE-CHAIN-DANGLING-DEPS ` +
+        `incident, 2026-07-29 to 2026-08-01, starved 5 P0 rows for 3 days).`,
+      fix:
+        `reconcile "depends" and "depends_on" to the same id set — either add ${JSON.stringify(extraIds)} ` +
+        `to "depends_on" (if still a real, live dependency) or remove ${JSON.stringify(extraIds)} from ` +
+        `"depends" (if stale/deleted).`,
+    });
+  };
+
+  const visitLane = (tasks: TaskLane | undefined, laneLabel: string) => {
+    if (!tasks) return;
+    tasks.forEach((t, i) => visitRow(t as Record<string, unknown>, `task_board.${laneLabel}[${i}]`));
+  };
+
+  visitLane(tb.backlog, "backlog");
+  visitLane(tb.done, "done");
+  visitLane(tb.done_verified, "done_verified");
+  visitLane(tb.in_progress, "in_progress");
+  visitLane(tb.qa, "qa");
+  visitLane(tb.ready, "ready");
+  visitLane(tb.review, "review");
+  visitLane(tb.archive, "archive");
+  tb.active_sprints.forEach((sprint, si) =>
+    visitLane(sprint.tasks, `active_sprints[${si}].tasks`),
+  );
+  (tb.closed_sprints ?? []).forEach((sprint, si) =>
+    visitLane(sprint.tasks, `closed_sprints[${si}].tasks`),
+  );
+
+  return issues;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// § 14. MISSING-DEPENDENCY REPORT (non-fatal, write-time visibility only)
+// Task: FIX-DEVTEAM-IDLE-CHAIN-DANGLING-DEPS-STRAND-5-P0-ROWS AC-3
+//
+// Reports (does NOT hard-fail) rows whose effective dependency set
+// (depends_on ∪ depends ∪ blocked_by, mirroring effective_depends_on() in
+// scripts/lib/devteam-eligibility.jq) names an id that resolves to MISSING
+// in BOTH the hot board's 7 flat lanes (the same lane set dep_status_map()
+// scans: backlog/ready/in_progress/qa/review/done/done_verified) and the
+// cold archive (docs/data/orch/archive/YYYY-MM.json .done_tasks[]).
+//
+// Deliberately NOT a hard-fail: FIX-DEPSSATISFIED-COLD-ARCHIVED-DEP-
+// RESOLVES-MISSING (review[], P1 at the time this was written) explicitly
+// ratifies this as "a separate, smaller class" of genuine unknowns/
+// free-text deps (typos, prose left in a dependency field, ids that
+// predate the board entirely) — NOT every instance is a bug, and
+// deps_satisfied() already treats MISSING as UNSATISFIED-but-not-fatal by
+// design (do not "fix" this by making it satisfied — see that row's own
+// negative-control ACs). This report exists purely so a human/PO can see
+// the live count without re-running a bespoke jq one-liner each time.
+//
+// SCOPE — flat lanes (backlog/done/done_verified/in_progress/qa/ready/
+// review/archive) + closed_sprints[].tasks[]. Deliberately EXCLUDES
+// active_sprints[].tasks[]: dep_status_map() never scans into
+// active_sprints/closed_sprints when building its id->status map (only the
+// 7 flat lanes + cold archive), so EVERY intra-sprint dependency edge (a
+// live sprint task naming a sibling task in the SAME still-open sprint) is
+// trivially "MISSING" by construction regardless of whether that sibling
+// actually finished — that is normal in-flight WIP sequencing, not a
+// signal of this task's root-cause class, and live-measured at ~47 rows
+// (vs. 8 in the included scope below) — including it would swamp genuine
+// signal with structural noise. closed_sprints IS included because a
+// CLOSED sprint's dependency graph is settled/frozen — any residual
+// MISSING dep there will never resolve on its own and is a legitimate
+// one-time cleanup candidate, the same class as the flat lanes.
+//
+// Live-verified 2026-08-01: 8 rows in scope (4 backlog, 4 closed_sprints),
+// all genuine unknowns/free-text (e.g. "user-escalation-vps-restart", ids
+// with a trailing " — explanation" clause appended) or historical
+// sprint-internal ids — none is the resurrected-stale-board-id shape
+// Stage 1f (§13 above) targets. This report must not regress that count to
+// a hard-fail — see scripts/orch-validate.mjs Stage 1g.
+//
+// Called by scripts/orch-validate.mjs (Stage 1g, after Stage 1f, REPORT
+// ONLY — never exit(2) on these issues).
+// ═══════════════════════════════════════════════════════════════════════════════
+
+export interface MissingDependencyReportIssue {
+  path: string;
+  taskId: string;
+  missingIds: string[];
+}
+
+/**
+ * Hot-lane id set mirroring dep_status_map()'s own 7-lane scan
+ * (scripts/lib/devteam-eligibility.jq) — the id space a dependency can
+ * resolve against WITHOUT falling back to the cold archive.
+ */
+export function collectHotDepStatusLaneIds(tb: z.infer<typeof TaskBoardSchema>): Set<string> {
+  const ids = new Set<string>();
+  const add = (tasks: TaskLane | undefined) => {
+    if (!tasks) return;
+    for (const t of tasks) {
+      const raw = t as Record<string, unknown>;
+      if (typeof raw["id"] === "string" && raw["id"]) ids.add(raw["id"]);
+    }
+  };
+  add(tb.backlog);
+  add(tb.ready);
+  add(tb.in_progress);
+  add(tb.qa);
+  add(tb.review);
+  add(tb.done);
+  add(tb.done_verified);
+  return ids;
+}
+
+/**
+ * Report rows (flat lanes + closed_sprints[].tasks[] — see § 14 header for
+ * why active_sprints is excluded) whose effective dependency set names an
+ * id absent from `resolvedIds` (the caller-injected union of hot-lane ids
+ * ∪ cold-archive done_tasks ids — kept as an injected parameter, mirroring
+ * checkRefIntegrity's FileResolver pattern, so this stays unit-testable
+ * without real filesystem access). Never hard-fails — REPORT ONLY.
+ */
+export function checkMissingDependencyReport(
+  data: OrchState,
+  resolvedIds: Set<string>,
+): MissingDependencyReportIssue[] {
+  const issues: MissingDependencyReportIssue[] = [];
+  const tb = data.task_board;
+
+  const visitRow = (row: Record<string, unknown>, path: string) => {
+    const effIds = forwardEdgeIds(row); // depends_on ∪ depends ∪ blocked_by
+    if (effIds.length === 0) return;
+    const taskId = typeof row["id"] === "string" ? (row["id"] as string) : "(no-id)";
+    const missingIds = effIds.filter((id) => !resolvedIds.has(id));
+    if (missingIds.length > 0) {
+      issues.push({ path, taskId, missingIds });
+    }
+  };
+
+  const visitLane = (tasks: TaskLane | undefined, laneLabel: string) => {
+    if (!tasks) return;
+    tasks.forEach((t, i) => visitRow(t as Record<string, unknown>, `task_board.${laneLabel}[${i}]`));
+  };
+
+  visitLane(tb.backlog, "backlog");
+  visitLane(tb.done, "done");
+  visitLane(tb.done_verified, "done_verified");
+  visitLane(tb.in_progress, "in_progress");
+  visitLane(tb.qa, "qa");
+  visitLane(tb.ready, "ready");
+  visitLane(tb.review, "review");
+  visitLane(tb.archive, "archive");
+  (tb.closed_sprints ?? []).forEach((sprint, si) =>
+    visitLane(sprint.tasks, `closed_sprints[${si}].tasks`),
+  );
+  // active_sprints[] deliberately excluded — see § 14 header.
 
   return issues;
 }

@@ -34,13 +34,32 @@
  *       Closes task FIX-ORCHSTATE-BLOCKS-FIELD-WRITE-ONLY-DECORATIVE — both
  *       fields read as sequencing/atomic-ship constraints but were read by
  *       ZERO consumers anywhere in the repo.
+ *     Stage 1f: checkDependsDivergence() — hard fail when a row's `.depends`
+ *       names an id absent from `.depends_on` while BOTH fields are present.
+ *       Closes task FIX-DEVTEAM-IDLE-CHAIN-DANGLING-DEPS-STRAND-5-P0-ROWS
+ *       AC-3 — scripts/lib/devteam-eligibility.jq's effective_depends_on()
+ *       UNIONS `.depends_on` + `.depends` + `.blocked_by`, so editing only
+ *       one field on a stale dep can never shrink the effective set; a
+ *       deleted id left resident in `.depends` alone silently resurrects
+ *       forever and permanently fail-closes deps_satisfied() (the incident
+ *       that starved 5 P0 rows for 3 days, 2026-07-29 to 2026-08-01).
+ *     Stage 1g: checkMissingDependencyReport() — NON-FATAL report (never
+ *       exits non-zero on its own) of rows whose effective dependency set
+ *       resolves to MISSING in both the hot board's 7 flat lanes and the
+ *       cold archive (docs/data/orch/archive/YYYY-MM.json .done_tasks[]).
+ *       Deliberately not a hard fail — FIX-DEPSSATISFIED-COLD-ARCHIVED-
+ *       DEP-RESOLVES-MISSING already ratifies this as a separate, smaller
+ *       class of genuine unknowns/free-text deps; this stage exists purely
+ *       for live visibility.
  *
  * EXIT CODES:
  *   0  = Stage 0 + Stage 1 pass (zero coherence issues, zero dangling refs, canonical statuses)
+ *        (Stage 1g may still print a non-fatal report — does not affect exit code)
  *   1  = Stage 0 failure (duplicate JSON keys detected in raw text)
  *   2  = Stage 1 failure (schema violation) OR Stage 1b (lane-coherence) OR
  *        Stage 1c (dangling refs) OR Stage 1d (sprint_goal status drift) OR
- *        Stage 1e (decorative blocks/co_edit field)
+ *        Stage 1e (decorative blocks/co_edit field) OR Stage 1f
+ *        (.depends/.depends_on divergence)
  *   3  = file not found / unreadable
  *
  * AUTO-FIX ERROR CONTRACT (per directive § "Auto-fix error contract"):
@@ -52,7 +71,7 @@
  *   Demoted by: SSOT-W1-BASH-SHIM (SSOT-INTEGRITY-PERIMETER sprint, 2026-06-27).
  */
 
-import { existsSync, readFileSync } from 'node:fs';
+import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -65,6 +84,9 @@ import {
   checkRefIntegrity,
   checkSprintGoalStatusCanonical,
   checkDecorativeSequencingFields,
+  checkDependsDivergence,
+  checkMissingDependencyReport,
+  collectHotDepStatusLaneIds,
 } from '../apps/mcp-server/src/infrastructure/orchStateSchema.ts';
 
 // ─── Paths ────────────────────────────────────────────────────────────────────
@@ -481,6 +503,76 @@ if (decorativeFieldIssues.length > 0) {
     process.stderr.write(`    fix: ${di.fix}\n`);
   }
   process.exit(2);
+}
+
+// ── Stage 1f: .depends / .depends_on divergence guard (hard fail) ─────────────
+//
+// A row carrying BOTH `.depends` and `.depends_on` where `.depends` names an
+// id absent from `.depends_on` is rejected — see orchStateSchema.ts §13 for
+// the full incident writeup (FIX-DEVTEAM-IDLE-CHAIN-DANGLING-DEPS-STRAND-5-
+// P0-ROWS AC-3). Live-verified 0 violations on 2026-08-01 across all 9
+// task-bearing lanes, so this cannot regress any row that is clean today.
+
+const dependsDivergenceIssues = checkDependsDivergence(result.data);
+
+if (dependsDivergenceIssues.length > 0) {
+  const c = dependsDivergenceIssues.length;
+  process.stderr.write(
+    `\nORCH-STATE VALIDATION FAILED — Stage 1f (${c} .depends/.depends_on divergence issue${c !== 1 ? 's' : ''}) — fix and retry:\n`
+  );
+  for (let i = 0; i < c; i++) {
+    const dd = dependsDivergenceIssues[i];
+    process.stderr.write(`[${i + 1}] ${dd.path} (id=${dd.taskId}): ${dd.message}\n`);
+    process.stderr.write(`    fix: ${dd.fix}\n`);
+  }
+  process.exit(2);
+}
+
+// ── Stage 1g: missing-dependency report (NON-FATAL — live visibility only) ────
+//
+// Reports, but never fails the write on, rows whose effective dependency set
+// resolves to MISSING in both the hot board's 7 flat lanes and the cold
+// archive (docs/data/orch/archive/YYYY-MM.json .done_tasks[]). See
+// orchStateSchema.ts §14 for full scope rationale (active_sprints excluded
+// as WIP-normal intra-sprint noise; closed_sprints included as settled/
+// frozen). Archive read is best-effort/fail-soft — a missing or malformed
+// monthly archive file never blocks this report (or the write), it just
+// yields a smaller "known ids" set for that run.
+
+const archiveDir = resolve(PROJECT_ROOT, 'docs/data/orch/archive');
+const archiveIds = new Set();
+try {
+  const archiveFiles = readdirSync(archiveDir).filter((f) => /^\d{4}-\d{2}\.json$/.test(f));
+  for (const af of archiveFiles) {
+    try {
+      const archiveDoc = JSON.parse(readFileSync(resolve(archiveDir, af), 'utf-8'));
+      for (const t of archiveDoc.done_tasks ?? []) {
+        if (t && typeof t.id === 'string' && t.id) archiveIds.add(t.id);
+      }
+    } catch {
+      // fail-soft: one unreadable/malformed monthly archive file must not
+      // block this non-fatal report (or the write itself).
+    }
+  }
+} catch {
+  // fail-soft: archive dir missing entirely — report runs with hot-lane ids only.
+}
+
+const resolvedDepIds = new Set([
+  ...collectHotDepStatusLaneIds(result.data.task_board),
+  ...archiveIds,
+]);
+const missingDepIssues = checkMissingDependencyReport(result.data, resolvedDepIds);
+
+if (missingDepIssues.length > 0) {
+  const c = missingDepIssues.length;
+  process.stdout.write(
+    `\n[orch-validate] REPORT — Stage 1g (${c} row${c !== 1 ? 's' : ''} with a dependency resolving to MISSING in both hot board + cold archive; NON-FATAL, see orchStateSchema.ts §14):\n`
+  );
+  for (let i = 0; i < c; i++) {
+    const mi = missingDepIssues[i];
+    process.stdout.write(`  [${i + 1}] ${mi.path} (id=${mi.taskId}): ${JSON.stringify(mi.missingIds)}\n`);
+  }
 }
 
 // ── All checks passed ──────────────────────────────────────────────────────────
