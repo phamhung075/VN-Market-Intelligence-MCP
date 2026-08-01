@@ -5,8 +5,8 @@
     "last_linecount": 135,
     "po": {
       "section_name": "po",
-      "last_mtime": 1785563194,
-      "last_linecount": 136
+      "last_mtime": 1785590238,
+      "last_linecount": 137
     }
   },
   "decision_journal": [
@@ -2105,7 +2105,7 @@
         "type": "system-issue",
         "summary": "3/3 mw+ns co-fire loses coverage-write (task_claim race). Tracker BACKLOG 16d, needs priority bump — see memory.",
         "severity": "HIGH",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": null
       }
     ],
