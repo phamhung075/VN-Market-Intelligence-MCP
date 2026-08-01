@@ -53,8 +53,10 @@ Edit: old instruction → new instruction
 # Write new cowork workflow
 Write: .claude/cowork/workflows/<workflow-name>.md
 
-# Commit prompt updates
-Bash: git add .claude/cowork/ && git commit -m "refactor: clarify <agent-id> prompt"
+# Commit prompt updates (explicit path only — NEVER a directory add; pathspec-scoped on the
+# commit line itself, NEVER bare — see docs/policies/dev-standards.md CANONICAL: Commit-path
+# peer-index sweep guard / .claude/skills/commit-boundary/SKILL.md RULE 1 + RULE 2.5)
+Bash: git add .claude/cowork/agents/<agent-id>.md && git commit -m "refactor: clarify <agent-id> prompt" -- .claude/cowork/agents/<agent-id>.md
 ```
 
 ## Documentation Patterns

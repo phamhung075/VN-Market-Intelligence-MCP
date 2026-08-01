@@ -195,6 +195,62 @@ Built a near-final hook (logic in §4.1) and ran it through the row's exact scen
 Transcripts for all of the above are in this session's tool history; the exact script is in §4.1
 and should become `scripts/git-hooks/pre-commit.test.sh`'s fixture (§8).
 
+### 2.7 Second residual loophole found post-ship (2026-08-01): same-file, differently-staged
+hunks — `git commit -- <path>`'s `-o`/`--only` semantics take WORKING TREE content, not the
+staged subset
+
+**Added by:** `FIX-SWEEPGUARD-SAMEFILE-HUNK-PATHSPEC-ONLY-SEMANTICS-NONGOAL-AND-DETECTOR`
+(developer, 2026-08-01), a follow-up row against this brief, not a re-opening of it — this
+brief's §2.1/§2.3 verdicts stand unchanged for the cases they actually analysed.
+
+§2.1 above proved pathspec-scoped commit "structurally prevents the sweep" for the **cross-file**
+case (a peer's entirely separate file staged in the shared index). That proof is correct and
+remains correct. What §2.1/§2.2/§2.3 never examined — and what this row's own reproduction (2/2
+in a clean scratch repo, commit `2f16eea16`) surfaced — is the **same-file** case: two peers (or
+one actor across two edits) touching **disjoint hunks of the SAME named path**.
+
+Empirically verified (git 2.49.0, macOS, this session, mirrors §2's methodology exactly):
+```
+actor:  git apply --cached mine.patch      # stages ONLY actor's own isolated hunk (line 1)
+        git diff --cached -- f.txt         # confirms ONLY that hunk is staged — matches the
+                                            # row's own "verified git diff --cached showed only
+                                            # it" reproduction step exactly
+peer:   (edits line 5 of the SAME file directly in the working tree, never stages it)
+actor:  git commit -m "..." -- f.txt       # the exact mandated pathspec-commit form (§4.2)
+```
+Result: `git show HEAD:f.txt` contains **both** the actor's staged hunk AND the peer's unstaged
+hunk. This is not a bug in this brief's hook or in the pathspec-commit mandate — it is git's own
+documented `-o`/`--only` behavior (`git-commit(1)`): *"Make a commit by taking the **updated
+working tree contents** of the paths specified on the command line, disregarding any contents
+that have been staged for OTHER paths."* The load-bearing phrase is "updated working tree
+contents of the paths specified" — for the NAMED path itself, `--only` reads current working-tree
+content, not the index. §2.2's `$GIT_INDEX_FILE` discriminator correctly classifies this commit as
+SCOPED (git resolves it via the same private `next-index-<pid>.lock` scratch-index mechanism as
+any other pathspec commit) — which is exactly why the pre-commit hook's `[ "$mode" = "SCOPED" ] &&
+exit 0` gate (§4.1) is silent here: SCOPED was proven immune to the cross-file sweep (§2.1), so the
+hook correctly never re-examines the named path's own content, and this same-file case was a blind
+spot in the ORIGINAL design, not a regression of it.
+
+**Disposition — NON-GOAL, not a new hard-block target.** Mirrors the treatment §2.3 already gives
+the directory/dot-pathspec loophole: git has no per-hunk attribution (no way to tell "my own
+further edit after staging" from "a peer's differently-staged hunk" from git state alone), so the
+pathspec-commit mandate cannot be strengthened into a mechanical same-file guarantee without a
+manifest/intent-declaration primitive outside this brief's scope (the same class of gap AC-6/§6
+already named for the swept-VICTIM side, `FIX-COMMIT-SWEEP-VICTIM-SELF-DETECT`). What CAN be
+shipped, and was, by the follow-up row: a **non-blocking detector** (its own AC-3) that compares
+the blob about to be committed for each SCOPED path against that same path's blob in the REAL
+shared index — a mismatch means the commit is about to include more than what was actually staged
+for that exact path, surfaced as a stderr WARN + `docs/signals/` write, never gating (does not read
+or honor `GIT_SWEEP_GUARD_MODE`). Verified false-positive-clean against the ordinary `git add
+<path> && git commit -- <path>` idiom and against `git rebase` replay (§2.4) — see
+`scripts/git-hooks/pre-commit.test.sh` T11 (pins the `--only` behavior above, replaying this
+exact reproduction) and T12 (negative control for the detector).
+
+**Not destructive, same as the family's other findings:** the peer's content still lands (albeit
+mis-attributed to the wrong commit/author) — this is an attribution-corruption class, not a data-
+loss class, consistent with all 3 of this brief's original occurrences (§1.1) and with §2.3's
+directory-pathspec loophole.
+
 ---
 
 ## 3. Disposition decision — WARN default, REJECT opt-in (the trade-off, stated plainly)
@@ -428,6 +484,12 @@ either** — it should carry this brief's §4.1 pseudocode as an explicit, super
   only on git 2.49.0/macOS in this session; recommend the implementer also run it once in CI/Linux
   before treating AC as durably satisfied).
 
+**Modify (2026-08-01 addendum, §2.7, `FIX-SWEEPGUARD-SAMEFILE-HUNK-PATHSPEC-ONLY-SEMANTICS-NONGOAL-AND-DETECTOR`):**
+- `scripts/git-hooks/pre-commit` — new `_detect_samefile_pathspec_only_divergence` (§2.7), invoked
+  only for SCOPED commits, before the AC-4 exit — developer zone
+- `scripts/git-hooks/pre-commit.test.sh` — new T11 (pins the `--only` behavior) + T12 (detector
+  negative control) — developer zone
+
 **Modify:**
 - `scripts/git-hooks/install.sh` line 10 — §4.3, developer zone
 - `.claude/skills/commit-mutex/SKILL.md` Step 3c — §4.2, agent-father zone
@@ -445,6 +507,11 @@ either** — it should carry this brief's §4.1 pseudocode as an explicit, super
 - Row's own `verification_gate` text is satisfied by the same scratch-repo technique already used
   in §2.6 of this brief — implementer should re-run it against the FINAL script, not just this
   brief's prototype, before marking the row DONE.
+- §2.7 addendum (2026-08-01, `FIX-SWEEPGUARD-SAMEFILE-HUNK-PATHSPEC-ONLY-SEMANTICS-NONGOAL-AND-
+  DETECTOR`): T11 pins the `--only`-takes-working-tree-content behavior via the same scratch-repo
+  technique (replays the row's own 2/2 reproduction verbatim); T12 is the negative control proving
+  the new detector does not false-positive on the ordinary `git add && git commit -- <path>` idiom
+  every other test (T2 included) already exercises.
 
 ## Risk flags
 
@@ -462,5 +529,12 @@ either** — it should carry this brief's §4.1 pseudocode as an explicit, super
 4. **Directory/dot-pathspec loophole (§2.3) is policy-enforced, not 100% mechanically closed** —
    acceptable because it is not one of the 3 observed occurrences and the row's verification_gate
    does not require it; flagged so it is not silently forgotten.
+5. **Same-file, differently-staged-hunk loophole (§2.7, found post-ship 2026-08-01) is also a
+   documented NON-GOAL, not mechanically closed** — git's own `-o`/`--only` semantics take working-
+   tree content for a named pathspec, not the staged subset; no per-hunk attribution exists to
+   mechanically distinguish "own further edit" from "peer's differently-staged hunk." Mitigated by
+   a non-blocking detector (§2.7, `_detect_samefile_pathspec_only_divergence` in
+   `scripts/git-hooks/pre-commit`) that WARNs on staged-vs-working-tree divergence for the named
+   path — never gates, same disposition precedent as item 4.
 
 ## Scan clean: true ✓

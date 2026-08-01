@@ -52,6 +52,24 @@
 #       all bootstrap from an EMPTY log and structurally cannot reach this
 #       scenario. Also proves escalation still fires normally going forward off
 #       the POST-baseline count only (not disabled outright by the fix).
+#   T11 FIX-SWEEPGUARD-SAMEFILE-HUNK-PATHSPEC-ONLY-SEMANTICS-NONGOAL-AND-DETECTOR
+#       AC-2 — pins git's own `-o`/`--only` semantics (git-commit(1)): actor stages
+#       ONE isolated hunk of a file via `git apply --cached` (`git diff --cached`
+#       confirms ONLY that hunk is staged), a peer's DIFFERENT hunk of the SAME file
+#       sits unstaged in the working tree, then the fleet-mandated pathspec commit
+#       (`git commit -m ... -- <path>`) runs on that exact file. BOTH hunks land in
+#       the resulting commit (documented NON-GOAL, brief §2.7 — not a bug in this
+#       hook, a real git semantics fact this test exists to catch if a future git
+#       version ever changes it) — this is the row's real reproduction, replayed
+#       verbatim (see docs/architecture-briefs/2026-07-21-commit-path-peer-index-
+#       sweep-guard.md §2.7 for the live commit 2f16eea16 this mirrors). AC-3 — also
+#       asserts the new same-file divergence DETECTOR fired (stderr banner naming
+#       the file), non-blocking (commit still succeeds, exit 0).
+#   T12 negative control for T11's detector (AC-3) — the ORDINARY, already-safe
+#       `git add <path> && git commit -- <path>` idiom on a modified file (no
+#       leftover unstaged content, nothing to diverge from) produces ZERO detector
+#       output — proves the new detector does not false-positive on the mandated,
+#       correct-usage pattern every other test (T2 included) already exercises.
 #
 # Run:
 #   bash scripts/git-hooks/pre-commit.test.sh
@@ -354,6 +372,82 @@ else
   fi
   rm -rf "$D10"
 fi
+
+# ── T11: FIX-SWEEPGUARD-SAMEFILE-HUNK-PATHSPEC-ONLY-SEMANTICS-NONGOAL-AND-DETECTOR ──
+# AC-2 pin: git's `-o`/`--only` semantics take WORKING TREE content of a named
+# pathspec, not the previously-staged subset — replays the row's own real
+# reproduction. AC-3: also asserts the new same-file divergence detector fired.
+D11="$(new_repo)"
+(
+  cd "$D11" || exit 1
+  printf 'line1\nline2\nline3\nline4\nline5\n' > f11.txt
+  git add f11.txt
+  git commit -qm "seed f11" -- f11.txt
+
+  # Actor's own isolated hunk (top of file), captured as a standalone patch.
+  cat > mine11.patch <<'PATCH'
+--- a/f11.txt
++++ b/f11.txt
+@@ -1,4 +1,4 @@
+-line1
++line1-MINE
+ line2
+ line3
+ line4
+PATCH
+  git apply --cached mine11.patch   # stage ONLY the actor's hunk (index)
+  git apply mine11.patch            # reflect the SAME hunk in the working tree too
+
+  # Peer's DIFFERENT hunk of the SAME file — present in the working tree only,
+  # never staged by anyone (simulates a peer mid-edit, same file, disjoint region).
+  sed -i.bak '5s/.*/line5-PEER-WIP/' f11.txt && rm -f f11.txt.bak
+
+  echo "--- staged (must show ONLY the actor's own hunk) ---" > diffcheck.log
+  git diff --cached -- f11.txt >> diffcheck.log
+
+  git commit -qm "actor commits only own hunk (pathspec-scoped, per fleet mandate)" -- f11.txt 2>stderr11.log
+  echo $? > exit11.log
+)
+exit11="$(cat "$D11/exit11.log" 2>/dev/null)"
+committed11="$(cd "$D11" && git show HEAD:f11.txt 2>/dev/null)"
+staged_check11="$(cat "$D11/diffcheck.log" 2>/dev/null)"
+stderr11="$(cat "$D11/stderr11.log" 2>/dev/null)"
+if [[ "$exit11" == "0" \
+      && "$staged_check11" == *"-line1"* && "$staged_check11" == *"+line1-MINE"* && "$staged_check11" != *"line5"* \
+      && "$committed11" == *"line1-MINE"* && "$committed11" == *"line5-PEER-WIP"* \
+      && "$stderr11" == *"SAME-FILE DIVERGENCE"* && "$stderr11" == *"f11.txt"* ]]; then
+  echo "PASS T11: git diff --cached showed ONLY the actor's own hunk before commit, yet the pathspec-scoped commit landed BOTH hunks (--only takes working-tree content, not the staged subset) — committed=[${committed11}] — AND the new same-file divergence detector fired (non-blocking, exit=$exit11)"
+  PASS=$((PASS + 1))
+else
+  echo "FAIL T11: exit=$exit11 committed=[$committed11] staged_check=[$staged_check11] stderr=[$stderr11]"
+  FAIL=$((FAIL + 1))
+fi
+rm -rf "$D11"
+
+# ── T12: negative control — ordinary `git add && commit -- <path>` never false-positives ──
+D12="$(new_repo)"
+(
+  cd "$D12" || exit 1
+  echo mine12 > mine12.txt
+  git add mine12.txt
+  git commit -qm "first version" -- mine12.txt
+
+  echo mine12-edited > mine12.txt
+  git add mine12.txt                          # stage the FULL current working-tree content
+  git commit -qm "clean pathspec commit, no divergence" -- mine12.txt 2>stderr12.log
+  echo $? > exit12.log
+)
+exit12="$(cat "$D12/exit12.log" 2>/dev/null)"
+stderr12_empty="yes"; [ -s "$D12/stderr12.log" ] && stderr12_empty="no"
+committed12="$(cd "$D12" && git show HEAD:mine12.txt 2>/dev/null)"
+if [[ "$exit12" == "0" && "$stderr12_empty" == "yes" && "$committed12" == "mine12-edited" ]]; then
+  echo "PASS T12: ordinary git add + pathspec commit (no leftover unstaged content) produced ZERO detector output — no false positive on the mandated correct-usage pattern"
+  PASS=$((PASS + 1))
+else
+  echo "FAIL T12: exit=$exit12 stderr_empty=$stderr12_empty committed=[$committed12] stderr=[$(cat "$D12/stderr12.log" 2>/dev/null)]"
+  FAIL=$((FAIL + 1))
+fi
+rm -rf "$D12"
 
 # ── Summary ───────────────────────────────────────────────────────────────────
 echo ""

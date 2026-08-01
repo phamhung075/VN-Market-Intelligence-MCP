@@ -446,6 +446,70 @@ NBFILES
 
 _check_notebook_immutability || exit 1
 
+# --- Same-file staged-subset vs working-tree divergence detector (SCOPED mode only) --
+# TASK: FIX-SWEEPGUARD-SAMEFILE-HUNK-PATHSPEC-ONLY-SEMANTICS-NONGOAL-AND-DETECTOR
+# SPEC: docs/architecture-briefs/2026-07-21-commit-path-peer-index-sweep-guard.md §2.7
+#
+# BUG THIS DETECTS (NOT prevented — detector only, this row's AC-3): a pathspec-scoped
+# `git commit -m ... -- <path>` ALWAYS runs under git's own `-o`/`--only` semantics
+# (git-commit(1)), which commit the UPDATED WORKING TREE CONTENTS of the named
+# path(s) — NOT the previously-staged subset held in the shared index. This is git's
+# own documented behavior, not a defect the SCOPED discriminator below can see: it
+# classifies ANY pathspec commit as structurally immune (correct for the CROSS-FILE
+# sweep AC-4 already closes, see T2) and exits before ever inspecting the named
+# file's OWN content. Reproduced empirically 2/2: stage one isolated hunk via
+# `git apply --cached`, confirm `git diff --cached` shows only it, run the fleet-
+# mandated pathspec commit on that same file — BOTH hunks land (commit 2f16eea16).
+#
+# WHY A DETECTOR, NOT A NEW HARD BLOCK: distinguishing "my own further edit after
+# staging" from "a peer's differently-staged hunk in the same file" is not
+# mechanically possible from git state alone (no per-hunk attribution exists) — the
+# fleet's pathspec-commit mandate (commit-mutex Step 2c / commit-boundary RULE 2.5 /
+# commit skill Step 2) still structurally prevents the CROSS-FILE sweep it was
+# designed for; this same-file case is a documented residual NON-GOAL (mirrors the
+# directory/dot-pathspec non-goal already carried in §2.3/T3), surfaced loudly here
+# instead of silently assumed closed.
+#
+# MECHANISM: for every file this SCOPED commit is about to write (the scratch index
+# git already resolved), compare its blob there (what is ABOUT to be committed —
+# working-tree content, per --only) against its blob in the REAL, shared, persistent
+# index (what was actually explicitly staged via `git add`/`git apply --cached`, if
+# anything). A mismatch means the commit is about to include MORE than the staged
+# subset for that exact path. A file with no entry at all in the real index (never
+# staged by anyone) is not a divergence — skipped, same "nothing to compare against"
+# fail-open logic as every other branch in this hook.
+#
+# NEVER GATES: always returns 0, never reads/honors GIT_SWEEP_GUARD_MODE — WARN is
+# the only disposition this detector has (AC-3's explicit "detector only, no new hard
+# block" scope). False-positive-clean verified against: (a) the normal `git add
+# <path> && git commit -- <path>` idiom (staged blob == working-tree blob, no
+# divergence — T12), (b) `git rebase` replay of an already-scoped commit (brief
+# §2.4 — rebase reconstructs from a fixed tree, never touches the live shared index
+# for the replayed path — T4 unaffected).
+_detect_samefile_pathspec_only_divergence() {
+  local real_index="$REPO_ROOT/.git/index"
+  [ -f "$real_index" ] || return 0   # no prior `git add` ever landed in this clone — nothing to diverge from
+
+  local scoped_files f scratch_blob real_blob msg
+  scoped_files="$(git diff --cached --name-only 2>/dev/null)" || return 0
+  [ -z "$scoped_files" ] && return 0
+
+  while IFS= read -r f; do
+    [ -z "$f" ] && continue
+    scratch_blob="$(git rev-parse ":$f" 2>/dev/null)" || continue
+    real_blob="$(GIT_INDEX_FILE="$real_index" git rev-parse ":$f" 2>/dev/null)" || continue
+    [ -z "$real_blob" ] && continue   # never staged in the shared index by anyone — nothing to diverge from
+    if [ "$real_blob" != "$scratch_blob" ]; then
+      msg="[sweep-guard] SAME-FILE DIVERGENCE (non-blocking, AC-3 detector): '${f}' is being committed via a pathspec-SCOPED commit line, which takes its WORKING TREE content (git's --only semantics) — NOT the subset already staged in the shared index for this exact path. The shared index's staged blob for '${f}' (${real_blob}) differs from what is about to land in this commit (${scratch_blob}) — a peer's differently-staged hunk (or your own further, unreviewed edit) in this SAME file may be about to be swept in. Documented NON-GOAL of the pathspec-commit mandate, see docs/architecture-briefs/2026-07-21-commit-path-peer-index-sweep-guard.md §2.7 — detector only, never blocked. Inspect before trusting this commit's scope: git diff ${real_blob} ${scratch_blob} -- ${f}"
+      echo "$msg" >&2
+      write_signal "$msg"
+    fi
+  done <<SCOPEDFILES
+$scoped_files
+SCOPEDFILES
+  return 0
+}
+
 idx_base="$(basename -- "${GIT_INDEX_FILE:-}" 2>/dev/null || true)"
 
 case "$idx_base" in
@@ -454,7 +518,17 @@ case "$idx_base" in
   *)                  mode="UNKNOWN";;
 esac
 
-# AC-4: pathspec-scoped commits are NEVER blocked or warned — completely silent.
+# AC-3 detector (FIX-SWEEPGUARD-SAMEFILE-HUNK-PATHSPEC-ONLY-SEMANTICS-NONGOAL-AND-
+# DETECTOR) runs ONLY for SCOPED commits, BEFORE the AC-4 exit below — see the
+# function's own header comment for full rationale. Never blocks; does not weaken
+# AC-4's original "cross-file pathspec commit is completely silent" guarantee (T2)
+# — that guarantee is about files NOT named on the pathspec line. This detector only
+# inspects the NAMED file(s) themselves, a structurally different (same-file)
+# surface AC-4 never covered.
+[ "$mode" = "SCOPED" ] && _detect_samefile_pathspec_only_divergence
+
+# AC-4: pathspec-scoped commits are NEVER BLOCKED — exit 0 here regardless of what
+# the detector above found (WARN-only, never gating, per this row's AC-3 scope).
 [ "$mode" = "SCOPED" ] && exit 0
 
 if [ "$mode" = "UNKNOWN" ]; then
