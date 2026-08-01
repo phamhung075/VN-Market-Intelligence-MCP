@@ -68,3 +68,12 @@
 **what-considered:** only path: sub-flow mandates exactly one top-priority candidate per tick
 **why-decision:** TE-T05 top by [rank, idx] (P1, idx 30, next_agent=agent-father, reflag=false); stamp applied via orch-apply.sh, conservation check OK 765/765.
 **why-change:** no change from plan
+
+### STEP po-S122 · po · 2026-08-01T04:03:05Z
+**task-id:** FIX-SWEEPGUARD-SAMEFILE-DETECTOR-UNSTAGED-PATH-FALSE-POSITIVE
+**what-done:** Applied the two board writes S119/S120 had only *decided* — minted the row (P1/S/cross-service//next_agent:developer, task_total 765→766) and flipped FIX-BCTC-BANK-SUMMARY-MAPPING BLOCKED→BACKLOG +next_agent:ba. Both re-read off disk.
+**what-considered:**
+- Treat `BATCH` as the whole deliverable and let the router mint (what I actually did — wrong)
+- Write the board myself, since PO already owns orch-apply writes elsewhere in this same flow
+**why-decision:** dev-team RAW-verified and found neither row on the board. `BATCH` is a dispatch *hand-off*, not a persistence mechanism — and this flow's own manual-dispatch-sweep and triage-signals steps both write `.task_board` directly, so "PO doesn't write the board" was never true. A disposition that exists only in prose is `feedback_po_notebook_mint_never_reaches_orchstate_board`.
+**why-change:** Deviation from S119/S120, which stated dispositions in the RETURN without persisting them. Analysis was independently confirmed sound; only the mechanical write was missing.
