@@ -94,10 +94,10 @@
   ],
   "head": {
     "status": "idle",
-    "updated_at": "2026-08-01T02:57:29Z",
-    "updated_by": "developer",
     "active_task_id": null,
-    "next_agent": "router"
+    "next_agent": "router",
+    "updated_at": "2026-08-01T03:38:02Z",
+    "updated_by": "developer (FIX-DEVTEAM-REVIEW-LANE-SECONDARY-DRAIN self-closeout)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -10969,31 +10969,6 @@
         "desc": null
       },
       {
-        "id": "FIX-DEVTEAM-REVIEW-LANE-SECONDARY-DRAIN",
-        "type": "FIX",
-        "title": "41 review[] rows carry a null or non-qa next_agent and NO automated lane sweeps them -- new SECONDARY-Drain mechanism per brief sec2",
-        "status": "BACKLOG",
-        "priority": "P1",
-        "size": "M",
-        "zone": "cross-service/",
-        "owner": "po",
-        "next_agent": "developer",
-        "supervised": false,
-        "plan_only": false,
-        "created_at": "2026-08-01T01:37:00Z",
-        "created_by": "po/triage-20260801T0137",
-        "updated_at": "2026-08-01T02:10:50Z",
-        "source": "PO triage 2026-08-01T01:37Z BATCH item 3/5 -- landed to orch-state by dev-team, PO's own commit ca1b0ee35 did not touch orch-state.json. Minted per architecture brief docs/architecture-briefs/2026-08-01-review-lane-drain-throughput-and-secondary-sweep.md sec2 (commit 46a3f9eb0, verified on origin/main).",
-        "desc": "Design is in the brief -- do not re-derive. PO's brief-cited count (44) was stale at mint time; RAW-re-measured by dev-team 2026-08-01T02:09Z: live is 41 (review[] total=247, qa=206). Breakdown: null=11, ops=9, dev-team=8, po=5, agent-father=2, architect=2, developer=2, ba=1, dev-kinh-dich=1. Implementer MUST re-measure at implementation time rather than hardcode either number -- the board is live and churns between ticks.",
-        "ac": "Brief sec2b constraint: this lane carries a single-row cap and falls through to Step 1 rather than consuming the tick.",
-        "files": [
-          "docs/agents/dev-team/flow/main.md",
-          "docs/data/orch/orch-state.json",
-          "scripts/lib/devteam-eligibility.jq"
-        ],
-        "baseline_pass": "9408"
-      },
-      {
         "id": "FIX-PO-BATCH-MINT-NO-WRITE-ACTUATOR",
         "type": "FIX",
         "title": "PO's BATCH/self-initiated mint path has NO write actuator, and PO's own commit step structurally excludes orch-state.json — 4th+ instance of decided-but-unpersisted board rows",
@@ -19982,6 +19957,42 @@
         "updated_by": "developer",
         "commit_sha": "66e850138",
         "note": "AC-1 non-goal docs (brief §2.7 + dev-standards.md CANONICAL block), AC-2 T11 pins --only behavior, AC-3 non-blocking _detect_samefile_pathspec_only_divergence() detector (never gates), AC-4 cowork-refactory-expert.md migrated to pathspec form. pre-commit.test.sh 12/12 PASS. Zone cross-service/, bun test/tsc N/A."
+      },
+      {
+        "id": "FIX-DEVTEAM-REVIEW-LANE-SECONDARY-DRAIN",
+        "type": "FIX",
+        "title": "41 review[] rows carry a null or non-qa next_agent and NO automated lane sweeps them -- new SECONDARY-Drain mechanism per brief sec2",
+        "status": "REVIEW",
+        "priority": "P1",
+        "size": "M",
+        "zone": "cross-service/",
+        "owner": "po",
+        "next_agent": "qa",
+        "supervised": false,
+        "plan_only": false,
+        "created_at": "2026-08-01T01:37:00Z",
+        "created_by": "po/triage-20260801T0137",
+        "updated_at": "2026-08-01T03:38:02Z",
+        "source": "PO triage 2026-08-01T01:37Z BATCH item 3/5 -- landed to orch-state by dev-team, PO's own commit ca1b0ee35 did not touch orch-state.json. Minted per architecture brief docs/architecture-briefs/2026-08-01-review-lane-drain-throughput-and-secondary-sweep.md sec2 (commit 46a3f9eb0, verified on origin/main).",
+        "desc": "Design is in the brief -- do not re-derive. PO's brief-cited count (44) was stale at mint time; RAW-re-measured by dev-team 2026-08-01T02:09Z: live is 41 (review[] total=247, qa=206). Breakdown: null=11, ops=9, dev-team=8, po=5, agent-father=2, architect=2, developer=2, ba=1, dev-kinh-dich=1. Implementer MUST re-measure at implementation time rather than hardcode either number -- the board is live and churns between ticks.",
+        "ac": "Brief sec2b constraint: this lane carries a single-row cap and falls through to Step 1 rather than consuming the tick.",
+        "files": [
+          "docs/agents/dev-team/flow/main.md",
+          "docs/data/orch/orch-state.json",
+          "scripts/lib/devteam-eligibility.jq"
+        ],
+        "baseline_pass": "9408",
+        "promoted_at": "2026-08-01T03:18:16Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
+        "claimed_at": "2026-08-01T03:18:31Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "reviewed_at": "2026-08-01T03:38:01Z",
+        "reviewed_by": "developer",
+        "branch": null,
+        "commit": "87bd59032",
+        "status_note": "Implemented brief sec2 verbatim: new scripts/devteam-review-claim-secondary-drain.jq (age-ordered single-row claim of oldest review[] row where status==REVIEW && effective_next_agent!=qa; stamps secondary_claimed_at/secondary_claimed_by/secondary_dispatch_target IN PLACE, no lane move, never writes .head); new shared predicate resolved_secondary_dispatch_target in scripts/lib/devteam-eligibility.jq (next_agent-or-po); new unconditional Review-Lane SECONDARY-Drain section in docs/agents/dev-team/flow/main.md between Session Gate and Step 1 PO Triage, single-row cap, always falls through to Step 1 (never JUMP TO end) per brief sec2b AC. Re-measured live at impl time (row desc stale 41): review[]=249 (246 REVIEW/3 BLOCKED), PRIMARY(qa)=202, SECONDARY=44.",
+        "review_note": "branch:null direct-commit row (no task branch/handoff) — same precondition as PRIMARY qa-drain rows. Scratch-copy dry-run verified: claims oldest SECONDARY row, .head byte-identical, review[] length unchanged. tsc clean (0 errors). bun test: 15044 pass/40 skip/57 fail/1 error (baseline re-measured live, well above stale 9408 ref); 57 fail/1 error pre-existing and structurally unrelated (0 TS files touched, no test file executes either touched jq file). Decision journal: docs/agent-memory/decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-developer-2.md STEP developer-S53. Commit: 87bd59032. Verify-committed mode required (qa/flow/main.md sec Direct-Commit Verify)."
       }
     ],
     "qa": [],
@@ -20001,8 +20012,8 @@
         }
       ]
     },
-    "last_triaged_at": "2026-08-01T02:58:55Z",
-    "last_triaged_by": "po (triage tick 2026-08-01T02:49Z)",
+    "last_triaged_at": "2026-08-01T03:18:16Z",
+    "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
     "in_progress": []
   },
   "_meta": {
