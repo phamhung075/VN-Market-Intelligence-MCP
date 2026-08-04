@@ -82,12 +82,45 @@
 #      sweep (which the old predicate never referenced) rides along for free.
 #
 # Verdict JSON (one line, stdout): {verdict, tick, detail}.
-#   verdict ∈ RUN|RUN-IDLE|SKIP|ERROR.
-# Exit code: 0 = SKIP (no LLM read needed — script already sent the telegram
-#   and settled lock state). 1 = RUN|RUN-IDLE|ERROR (LLM continues: RUN reads
-#   main.md at `gcc-preflight` onward; RUN-IDLE does the same but skips Step
-#   0a drain-signals.md entirely; ERROR falls back to the full original
-#   inline pseudocode at `preflight-fallback`).
+#   verdict ∈ RUN|RUN-IDLE|SKIP|SKIP-WIDENED|ERROR.
+# Exit code: 0 = SKIP|SKIP-WIDENED (no LLM read needed — script already sent
+#   the telegram (SKIP only) and settled lock state). 1 = RUN|RUN-IDLE|ERROR
+#   (LLM continues: RUN reads main.md at `gcc-preflight` onward; RUN-IDLE
+#   does the same but skips Step 0a drain-signals.md entirely; ERROR falls
+#   back to the full original inline pseudocode at `preflight-fallback`).
+#
+# CADRAT-5 (docs/architecture-briefs/2026-08-04-cadence-rationalization.md
+# §8 item 6) — extended-idle outer-poll widening, evaluated BEFORE any lock
+# claim (Steps 2-4 below), using the SAME idle-check predicates Step 5
+# already computes (reused, not recomputed, for this same tick):
+#   verdict=SKIP-WIDENED (exit 0, zero MCP calls this tick — the cheapest
+#   possible outcome, one rung below RUN-IDLE) fires ONLY when BOTH hold:
+#     (a) the persisted consecutive-RUN-IDLE counter (docs/data/
+#         dev-team-idle-widen-state.json, sole-written by this script,
+#         mirrors the auditor-tier*-last-healthy.json sole-writer pattern)
+#         is >= WIDEN_N after accounting for THIS tick, AND
+#     (b) calendar_status (pressure-state.json, ENUM-GATED against the SAME
+#         5-value domain cadence-policy.json uses — {open,half_day,weekend,
+#         holiday,unknown} — an out-of-domain live value, e.g. the known
+#         live "closed" literal, fails CLOSED: never treated as weekend/
+#         holiday, per memory
+#         feedback_pressure_state_caller_supplied_fields_dead_server_computed_live)
+#         is exactly "weekend" or "holiday".
+#   WIDEN_N=16 (16 * the 30min tick spacing = 480min) matches
+#   `gatherer-standard`'s OWN weekend/holiday widened rate in
+#   docs/data/cadence-policy.json (interval_minutes:480 on calendar_status
+#   weekend|holiday) — reusing an existing, already-approved "how long is
+#   normal to go quiet" benchmark, not a freshly-invented number.
+#   The counter RESETS to 0 on any tick whose idle-check reads false (i.e.
+#   verdict=RUN) and increments by 1 on every tick whose idle-check reads
+#   true (RUN-IDLE or SKIP-WIDENED alike) — so is it re-read FRESH every
+#   single tick, widened or not (AC-4 safety property): a signal_queue NEW
+#   row / fresh docs/signals/*.json / non-empty active_sprints on ANY tick
+#   flips idle-check false immediately, which both prevents that tick's
+#   own widening AND resets the counter, so the very next tick is back to a
+#   normal RUN. Widening is a per-tick suppression only — it does NOT
+#   change WIDEN_N-independently the underlying cron expression, which stays
+#   exactly `7,37 * * * *` (SS9 row 17: no schedule change).
 #
 # NOT part of this script (R6 — CronCreate/CronList/CronDelete are Claude
 # Code CLI-native tools, unreachable from a curl-based script): self-arm of
@@ -118,6 +151,14 @@
 #     _step55_would_evict / _step55_run_cold_evict / _step55_run_validate /
 #     _step55_git_commit_evict — the test harness replaces these wholesale so it
 #     NEVER shells out to the real scripts or touches the real git index.
+#   WIDEN_STATE_PATH   — CADRAT-5 consecutive-RUN-IDLE counter file (default:
+#     $PREFLIGHT_ROOT/docs/data/dev-team-idle-widen-state.json). Sole-written
+#     by this script (tmp-file+mv, never a raw truncate — see
+#     _widen_write_counter). Test seam only — no other reader/writer exists.
+#   PRESSURE_STATE_PATH — CADRAT-5 calendar_status source (default:
+#     $PREFLIGHT_ROOT/docs/data/pressure-state.json — same file + field
+#     cowork-tick-preflight.sh already reads). Read-only, ENUM-gated (see
+#     _widen_read_calendar_status). Test seam only.
 #
 # HARD CONSTRAINT: NEVER live-claim dev-team-cron-singleton or
 # cron:dev-team:* outside a real cron tick — these are PRODUCTION mutexes.
@@ -138,6 +179,13 @@ SIGNALS_DIR="${SIGNALS_DIR:-$ROOT/docs/signals}"
 SIGNALS_DB_PATH="${SIGNALS_DB_PATH:-$SIGNALS_DIR/signals.db}"
 ORCH_STATE_PATH="${ORCH_STATE_PATH:-$ROOT/docs/data/orch/orch-state.json}"
 IDLE_STALE_HOURS=24
+
+# ── CADRAT-5 extended-idle widening paths + threshold (env-overridable test
+# seams — see header comment above for the full mechanism) ──────────────────
+WIDEN_STATE_PATH="${WIDEN_STATE_PATH:-$ROOT/docs/data/dev-team-idle-widen-state.json}"
+PRESSURE_STATE_PATH="${PRESSURE_STATE_PATH:-$ROOT/docs/data/pressure-state.json}"
+WIDEN_N=16
+CALENDAR_STATUS_DOMAIN="open half_day weekend holiday unknown"
 
 _trunc() { printf '%s' "$1" | tr '\n' ' ' | cut -c1-200; }
 
@@ -479,6 +527,48 @@ _step55_git_commit_evict() {
     -- "$ORCH_STATE_PATH" "$archive_path"
 }
 
+# ── CADRAT-5 widen-state read/write — sole-writer, atomic tmp+mv (mirrors
+# auditor-tier1-probe.sh's heartbeat write pattern). Malformed/missing file
+# reads as counter=0 (safe default — never widen on an unreadable state). ──
+_widen_read_counter() {
+  local n
+  n=$(jq -r '.consecutive_run_idle // 0' "$WIDEN_STATE_PATH" 2>/dev/null)
+  [[ "$n" =~ ^[0-9]+$ ]] || n=0
+  printf '%s' "$n"
+}
+
+_widen_write_counter() {
+  local n="$1" ts tmp
+  ts=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+  tmp="$(mktemp "${WIDEN_STATE_PATH}.tmp.XXXXXX" 2>/dev/null)" || tmp="${WIDEN_STATE_PATH}.tmp.$$"
+  jq -n --argjson n "$n" --arg ts "$ts" '{consecutive_run_idle:$n, updated_at:$ts}' > "$tmp" 2>/dev/null
+  if [ ! -s "$tmp" ]; then
+    rm -f "$tmp" 2>/dev/null
+    return 1
+  fi
+  chmod 644 "$tmp" 2>/dev/null
+  mv -f "$tmp" "$WIDEN_STATE_PATH" 2>/dev/null
+}
+
+# ── CADRAT-5 ENUM-GATED calendar_status read (AC-3): an out-of-domain live
+# value (e.g. the known live "closed" literal — NOT in cadence-policy.json's
+# 5-value domain) fails CLOSED — prints empty, never treated as weekend or
+# holiday. Missing file / missing field / any value outside the domain all
+# resolve identically (empty). ────────────────────────────────────────────
+_widen_read_calendar_status() {
+  local raw v
+  [ -f "$PRESSURE_STATE_PATH" ] || { printf ''; return 0; }
+  raw=$(jq -r '.calendar_status // empty' "$PRESSURE_STATE_PATH" 2>/dev/null)
+  for v in $CALENDAR_STATUS_DOMAIN; do
+    if [ "$raw" = "$v" ]; then
+      printf '%s' "$raw"
+      return 0
+    fi
+  done
+  printf ''
+  return 0
+}
+
 run_preflight() {
   local session_id="${CLAUDE_CODE_SESSION_ID:-}"
   if [ -z "$session_id" ]; then
@@ -496,6 +586,33 @@ run_preflight() {
   fi
   tick=$(date -u +"%Y-%m-%dT%H:${tick_bound}Z")
   ts=$(date -u +%Y%m%dT%H%M%SZ)
+
+  # ---- Step 1.5 (CADRAT-5): idle check computed ONCE here — reused by both
+  # the widening decision below AND Step 5 further down (same tick, no
+  # recomputation) — and the extended-idle widening decision itself, BEFORE
+  # any lock claim (Steps 2-4). See header comment for the full mechanism.
+  local idle_result widen_counter_prev widen_counter_new calendar_status is_extended_calendar
+  idle_result=$(_step5_idle_check)
+
+  widen_counter_prev=$(_widen_read_counter)
+  if [ "$idle_result" = "true" ]; then
+    widen_counter_new=$((widen_counter_prev + 1))
+  else
+    widen_counter_new=0
+  fi
+  _widen_write_counter "$widen_counter_new"
+
+  calendar_status=$(_widen_read_calendar_status)
+  is_extended_calendar="false"
+  if [ "$calendar_status" = "weekend" ] || [ "$calendar_status" = "holiday" ]; then
+    is_extended_calendar="true"
+  fi
+
+  if [ "$idle_result" = "true" ] && [ "$widen_counter_new" -ge "$WIDEN_N" ] && [ "$is_extended_calendar" = "true" ]; then
+    _emit_verdict "SKIP-WIDENED" "$tick" \
+      "extended-idle widening: ${widen_counter_new} consecutive RUN-IDLE ticks (>= WIDEN_N=${WIDEN_N}) during calendar_status=${calendar_status} — SAME idle-check predicates as RUN-IDLE re-evaluated fresh this tick (AC-4 safety property), zero lock claimed, zero MCP call, zero LLM continuation. Cron expression 7,37 * * * * unchanged — this is a per-tick suppression, not a schedule edit."
+    return 0
+  fi
 
   # ---- Step 2: presence (best-effort, never a gate) ----
   _step_presence "$session_id" "$ts"
@@ -542,8 +659,8 @@ run_preflight() {
   # election_rc == 0: claimed (or re-entrant-renewed) — both locks HELD.
 
   # ---- Step 5: idle check (RUN path only, evaluated BEFORE Step 0a drain) ----
-  local idle_result
-  idle_result=$(_step5_idle_check)
+  # $idle_result was already computed once in Step 1.5 above (CADRAT-5) — same
+  # tick, reused here rather than shelling out to drain-signals.js a 2nd time.
 
   # ---- Step 5.5: board-hygiene / cold-eviction backstop (dev-team-loop-P2) ----
   # Runs on EVERY lock-winning tick — both the RUN-IDLE and RUN branches below

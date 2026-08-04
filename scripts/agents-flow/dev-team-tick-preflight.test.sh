@@ -223,6 +223,14 @@ run_case() {
   export SIGNALS_DIR="$TMPDIR_TEST/signals-nonempty"
   export SIGNALS_DB_PATH="$TMPDIR_TEST/does-not-exist-signals.db"
   export ORCH_STATE_PATH="$TMPDIR_TEST/orch-not-idle.json"
+  # CADRAT-5 widen fixtures — default = fresh/nonexistent (counter reads as 0,
+  # calendar_status reads as empty/not-in-domain) so EVERY pre-existing T1-T36
+  # case stays hermetic (never touches the live repo's docs/data/
+  # dev-team-idle-widen-state.json or docs/data/pressure-state.json) and never
+  # widens by accident. Dedicated widen tests (T37+) override + seed these.
+  export WIDEN_STATE_PATH="$TMPDIR_TEST/widen-state.json"
+  export PRESSURE_STATE_PATH="$TMPDIR_TEST/does-not-exist-pressure-state.json"
+  rm -f "$WIDEN_STATE_PATH"
   : > "$CALL_LOG_FILE"
   : > "$WOULD_EVICT_LOG_FILE"
 }
@@ -694,6 +702,117 @@ check "T36 RUN verdict despite noisy REAL cold-evict fixture (verdict channel un
 check "T36 RUN exit=1" "$([ "$RC" -eq 1 ] && echo true || echo false)"
 check "T36 fixture's own leaked progress line reached stderr instead" "$(grep -qF '[orch-cold-evict] Attempt 1/3' "$T36_STDERR" && echo true || echo false)"
 check "T36 fixture's leaked downstream sub-validator REPORT line also reached stderr" "$(grep -qF '[orch-validate] Stage 0 + Stage 1 PASS' "$T36_STDERR" && echo true || echo false)"
+
+# ── CADRAT-5: extended-idle outer-poll widening (docs/architecture-briefs/
+# 2026-08-04-cadence-rationalization.md §8 item 6) — WIDEN_N=16 in the real
+# script. Idle fixtures below reuse T13's exact combo (SIGNALS_DIR=signals-
+# empty, no signals.db, ORCH_STATE_PATH=orch-idle.json) so idle_result=true
+# on every case here unless a case deliberately overrides it. Widen-state is
+# PRE-SEEDED via jq (not built up via 16 real run_preflight loops) — same
+# fixture-seeding idiom the signals-stale.db mtime fixture already uses. ────
+
+_seed_widen_counter() {
+  jq -n --argjson n "$1" '{consecutive_run_idle:$n, updated_at:"2026-08-01T00:00:00Z"}' > "$WIDEN_STATE_PATH"
+}
+_seed_calendar_status() {
+  jq -n --arg cs "$1" '{calendar_status:$cs, emitted_at:"2026-08-04T00:00:00Z", stale_warning:false}' > "$PRESSURE_STATE_PATH"
+}
+
+# ── T37: below-N no-widen — counter reaches 11 (< WIDEN_N=16) this tick, weekend ──
+run_case
+export SIGNALS_DIR="$TMPDIR_TEST/signals-empty"
+export ORCH_STATE_PATH="$TMPDIR_TEST/orch-idle.json"
+_seed_widen_counter 10
+_seed_calendar_status "weekend"
+OUT=$(run_preflight); RC=$?
+VERDICT=$(printf '%s' "$OUT" | jq -r '.verdict')
+NEW_COUNTER=$(jq -r '.consecutive_run_idle' "$WIDEN_STATE_PATH")
+check "T37 below-N: verdict stays RUN-IDLE (not widened)" "$([ "$VERDICT" = "RUN-IDLE" ] && echo true || echo false)"
+check "T37 below-N: exit=1 (LLM continues, normal RUN-IDLE family)" "$([ "$RC" -eq 1 ] && echo true || echo false)"
+check "T37 below-N: counter incremented 10->11" "$([ "$NEW_COUNTER" = "11" ] && echo true || echo false)"
+check "T37 below-N: locks WERE claimed (task_claim called)" "$([ "$(log_has task_claim)" = "true" ] && echo true || echo false)"
+
+# ── T38: at-N+weekend widen — counter reaches 16 (>= WIDEN_N) this tick, weekend ──
+run_case
+export SIGNALS_DIR="$TMPDIR_TEST/signals-empty"
+export ORCH_STATE_PATH="$TMPDIR_TEST/orch-idle.json"
+_seed_widen_counter 15
+_seed_calendar_status "weekend"
+OUT=$(run_preflight); RC=$?
+VERDICT=$(printf '%s' "$OUT" | jq -r '.verdict')
+NEW_COUNTER=$(jq -r '.consecutive_run_idle' "$WIDEN_STATE_PATH")
+check "T38 at-N+weekend: verdict=SKIP-WIDENED" "$([ "$VERDICT" = "SKIP-WIDENED" ] && echo true || echo false)"
+check "T38 at-N+weekend: exit=0 (no further reads needed, cheapest outcome)" "$([ "$RC" -eq 0 ] && echo true || echo false)"
+check "T38 at-N+weekend: counter incremented 15->16" "$([ "$NEW_COUNTER" = "16" ] && echo true || echo false)"
+check "T38 at-N+weekend: ZERO MCP calls this tick (no lock claimed at all)" "$([ "$(wc -l < "$CALL_LOG_FILE" | tr -d ' ')" -eq 0 ] && echo true || echo false)"
+
+# ── T39: at-N+weekday no-widen — counter reaches 16 but calendar_status=open ──
+run_case
+export SIGNALS_DIR="$TMPDIR_TEST/signals-empty"
+export ORCH_STATE_PATH="$TMPDIR_TEST/orch-idle.json"
+_seed_widen_counter 15
+_seed_calendar_status "open"
+OUT=$(run_preflight); RC=$?
+VERDICT=$(printf '%s' "$OUT" | jq -r '.verdict')
+check "T39 at-N+weekday: verdict stays RUN-IDLE (never widen on a weekday)" "$([ "$VERDICT" = "RUN-IDLE" ] && echo true || echo false)"
+check "T39 at-N+weekday: exit=1" "$([ "$RC" -eq 1 ] && echo true || echo false)"
+check "T39 at-N+weekday: locks WERE claimed" "$([ "$(log_has task_claim)" = "true" ] && echo true || echo false)"
+
+# ── T40: out-of-domain calendar_status no-widen — counter>=N, but calendar_status
+# is the LIVE-OBSERVED "closed" literal, NOT in cadence-policy.json's 5-value
+# domain {open,half_day,weekend,holiday,unknown} — must fail CLOSED (AC-3) ──────
+run_case
+export SIGNALS_DIR="$TMPDIR_TEST/signals-empty"
+export ORCH_STATE_PATH="$TMPDIR_TEST/orch-idle.json"
+_seed_widen_counter 20
+_seed_calendar_status "closed"
+OUT=$(run_preflight); RC=$?
+VERDICT=$(printf '%s' "$OUT" | jq -r '.verdict')
+check "T40 out-of-domain calendar_status='closed': verdict stays RUN-IDLE (fail CLOSED, never widen)" "$([ "$VERDICT" = "RUN-IDLE" ] && echo true || echo false)"
+check "T40 out-of-domain: exit=1" "$([ "$RC" -eq 1 ] && echo true || echo false)"
+check "T40 out-of-domain: locks WERE claimed" "$([ "$(log_has task_claim)" = "true" ] && echo true || echo false)"
+
+# ── T41: counter-reset-on-RUN — counter was deep into an idle stretch, but THIS
+# tick has genuine work (active_sprints non-empty) -> verdict=RUN, counter->0 ──
+run_case
+export SIGNALS_DIR="$TMPDIR_TEST/signals-empty"
+export ORCH_STATE_PATH="$TMPDIR_TEST/orch-not-idle.json"
+_seed_widen_counter 25
+_seed_calendar_status "weekend"
+OUT=$(run_preflight); RC=$?
+VERDICT=$(printf '%s' "$OUT" | jq -r '.verdict')
+NEW_COUNTER=$(jq -r '.consecutive_run_idle' "$WIDEN_STATE_PATH")
+check "T41 counter-reset: verdict=RUN (real work present)" "$([ "$VERDICT" = "RUN" ] && echo true || echo false)"
+check "T41 counter-reset: counter reset 25->0" "$([ "$NEW_COUNTER" = "0" ] && echo true || echo false)"
+
+# ── T42 (AC-4 safety property, bonus beyond the 5 named cases): a tick that
+# WOULD widen on counter+calendar alone, but has genuine NEW work THIS tick
+# (signal_queue NEW row) -> idle-check re-evaluated fresh overrides widening,
+# same predicates RUN-IDLE already checks, never suppresses real work ───────
+run_case
+export SIGNALS_DIR="$TMPDIR_TEST/signals-empty"
+export ORCH_STATE_PATH="$TMPDIR_TEST/orch-new-signal-only.json"
+_seed_widen_counter 15
+_seed_calendar_status "weekend"
+OUT=$(run_preflight); RC=$?
+VERDICT=$(printf '%s' "$OUT" | jq -r '.verdict')
+NEW_COUNTER=$(jq -r '.consecutive_run_idle' "$WIDEN_STATE_PATH")
+check "T42 AC-4 override: verdict=RUN (fresh signal_queue NEW row beats widen eligibility)" "$([ "$VERDICT" = "RUN" ] && echo true || echo false)"
+check "T42 AC-4 override: counter reset to 0 (not-idle this tick)" "$([ "$NEW_COUNTER" = "0" ] && echo true || echo false)"
+check "T42 AC-4 override: locks WERE claimed (real work proceeds normally)" "$([ "$(log_has task_claim)" = "true" ] && echo true || echo false)"
+
+# ── T43: malformed widen-state file reads as counter=0 (safe default, never
+# widen on an unreadable state) ───────────────────────────────────────────
+run_case
+export SIGNALS_DIR="$TMPDIR_TEST/signals-empty"
+export ORCH_STATE_PATH="$TMPDIR_TEST/orch-idle.json"
+echo 'not valid json {{{' > "$WIDEN_STATE_PATH"
+_seed_calendar_status "weekend"
+OUT=$(run_preflight); RC=$?
+VERDICT=$(printf '%s' "$OUT" | jq -r '.verdict')
+NEW_COUNTER=$(jq -r '.consecutive_run_idle' "$WIDEN_STATE_PATH")
+check "T43 malformed widen-state: verdict stays RUN-IDLE (counter read as 0, not widened)" "$([ "$VERDICT" = "RUN-IDLE" ] && echo true || echo false)"
+check "T43 malformed widen-state: RE-SEEDED with valid JSON, counter=1" "$([ "$NEW_COUNTER" = "1" ] && echo true || echo false)"
 
 # ── Summary ────────────────────────────────────────────────────────────────────
 echo ""
