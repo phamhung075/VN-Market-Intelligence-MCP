@@ -1,0 +1,12 @@
+{
+  "from": "agents-architect",
+  "to": "po",
+  "cc": ["agent-father"],
+  "type": "architecture_brief",
+  "payload": "docs/architecture-briefs/2026-08-04-cadence-rationalization.md",
+  "priority": "normal",
+  "status": "AWAITING_USER_CONFIRMATION",
+  "action": "NONE — informational only. Do NOT auto-implement. Brief was authored under an explicit PLAN-ONLY posture (ad-hoc user request: 'give me suggestion for i confirm before'). Hold until the user picks a subset of the numbered list in §8 of the brief.",
+  "summary": "Cadence-rationalization survey across cowork-team/dev-team/system-auditor: 15-cron inventory, 1 naively-fixed cron found (cron-db-data-integrity.md, zero conditioning), 1 latent config gap (alert-commander policy_id has no matching cadence-policy.json rows), 1 distinct operational finding (fleet crons unarmed ~3 days — CronList empty, pressure-state.json 72h stale — root cause is un-re-armed session-scoped crons, NOT a design failure), and a Phase-3+ greenlight verdict of NO (the ask is Phase-1's domain, already shipped for cowork; Phase 3/4/5 solve routing/DAG/backpressure, a different problem, and stay correctly deferred).",
+  "createdAt": "2026-08-04T18:16:13Z"
+}
