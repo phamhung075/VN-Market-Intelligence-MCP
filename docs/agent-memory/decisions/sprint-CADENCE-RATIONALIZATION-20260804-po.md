@@ -41,3 +41,12 @@
 - Repeat per-row + make it a gradeable AC
 **why-decision:** CADRAT-4's deliverable is literally a file full of CronCreate calls. A sprint-level note is not read by a row-scoped implementer; an AC that must be signed off is. Precedent: `feedback_chef_dryrun_publishes` — an agent authoring a publish path executed it "to verify".
 **why-change:** no change from plan.
+
+### STEP po-S5 · po · 2026-08-04T20:55:30Z
+**task-id:** CADRAT-3-DIFFGATE-CODE-JANITOR-AND-AGENT-FATHER + CADRAT-7-NEWS-SCOUT-SENTIMENT-PREMARKET-TIME-FIX
+**what-done:** Drained signal `agent-father-20260804T200926Z-cadrat3-7-done` (NEW→RESOLVED) and lane-moved both rows `ready[]`→`review[]`, `next_agent` agent-father→qa, stamping `commit_sha` 5ee84f0f5 / d916aa40b.
+**what-considered:**
+- Trust the signal's "shipped" claim and move (fastest)
+- Verify commit existence + ancestry + file-set first, move, and write the not-a-QA-verdict fence into `status_note`
+**why-decision:** `feedback_brief_stated_implementer_not_authoritative_verify_commit_zone` — a hand-off claim is not evidence. Both SHAs resolve, `git branch --contains` → main, `git show --stat` touches exactly the AC-named files and no third. But existence ≠ ACs met, so `status_note` says so explicitly; QA still owns AC-1..7 (esp. CADRAT-3 AC-4 dry-run proof, CADRAT-7 AC-5 last_fired).
+**why-change:** Rows were stale-READY only because agent-father's commit_zone excludes task_board writes by design — a structural hand-off gap, not a failed implementation.

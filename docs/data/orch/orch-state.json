@@ -134,8 +134,8 @@
     "does_not_consume_wip": true
   },
   "signal_queue": {
-    "_updated_at": "2026-08-01T03:59:43Z",
-    "_updated_by": "developer",
+    "_updated_at": "2026-08-04T20:55:29Z",
+    "_updated_by": "po/cadrat-3-7-lane-move",
     "archive": [],
     "rows": [
       {
@@ -2116,8 +2116,11 @@
         "type": "task-complete",
         "summary": "CADRAT-3+7 shipped. AC-4 dry-run proof done. QA verify+lane-move needed (agent-father can't write task_board).",
         "severity": "LOW",
-        "status": "NEW",
-        "payload_ref": null
+        "status": "RESOLVED",
+        "payload_ref": null,
+        "disposition": "routed: both claimed commits verified real on main (5ee84f0f5 CADRAT-3, d916aa40b CADRAT-7); CADRAT-3 + CADRAT-7 lane-moved ready[]->review[] with next_agent=qa. Signal fully consumed, no residual action for po.",
+        "triaged_at": "2026-08-04T20:55:29Z",
+        "triaged_by": "po/cadrat-3-7-lane-move"
       }
     ],
     "last_triaged_at": "2026-07-29T06:25:00Z",
@@ -2302,8 +2305,8 @@
     ]
   },
   "task_board": {
-    "_updated_at": "2026-08-01T01:47:00Z",
-    "_updated_by": "dev-team",
+    "_updated_at": "2026-08-04T20:55:29Z",
+    "_updated_by": "po/cadrat-3-7-lane-move",
     "active_sprints": [
       {
         "evidence": "Router raw-verified (get_bctc_full live, post-rebuild) after BEQ-9/10 refine. Core extraction incident RESOLVED, but populating real scalars exposed a SEPARATE pre-existing analytics/serving layer with 4 defect clusters: (a) RATIO-COMPUTE — VNM ROE=0/ROA=0/EPS=12VND/NetDebt-EBITDA=-7.5e13x; DHG ROA=7,891,932.0% (analyst falsely claimed fixed). Ratios emit 0 or astronomically wrong. (b) BANK-B02-TCTD-SERVING — SHB + EIB get_bctc_full returns 'balance sheet has no decomposition — forced-zero pass suspected'; banks UNSERVABLE despite DONE + committed scalars. (c) PERIOD-SEMANTICS — FPT 2025-Q4 rev=70112.8/NP=11225.5 are FULL-YEAR cumulative labeled 'Q4'; buildComparisonSection then compares cumulative-FY vs next-quarter -> false -82.2% mislabeled 'YoY'. (d) ENTITY-SCOPE — HPG 2025-Q4 is parent-only B01a (rev=0, conf44%) served as the canonical/headline HPG vs consolidated ~140k rev; misleading. PUBLISH-INTEGRITY GAP: NO semantic-sanity publish guard exists in orch-state (the triage-referenced 'Task #13' is NOT present). The BEQ-9/10 reports are now DONE -> flow into chef docs/agents/unified-agent/flow/market-analysis.md + market-analyst -> ROA 7.8M% / false YoY -82% / parent-only-headline CAN reach MARKET unattended. recurring-bug-escalation: BCTC area has >2 fix cycles -> architect root-cause SPIKE, not point-patch. | [dev-team 2026-06-03T11:44Z observation feeding BAL-0/BAL-1] After LF-SERVE-REFLOW recovered FPT Q1 absolute scalars (op_profit/ebitda/cash live-correct), get_bctc_full(FPT) STILL serves garbage DERIVED ratios: current_ratio=41527873060120x (denominator ~0), operating_margin_pct=0.0% (not recomputed from now-correct operating_profit). Confirms the analytics/serving derived-ratio layer is a distinct defect from scalar extraction. BAL-0 publish semantic-sanity gate MUST block current_ratio out-of-range before MARKET/FB; BAL-1 spike should pin the ratio recompute module. Repro: get_bctc_full(code=FPT).",
@@ -13408,58 +13411,6 @@
         "architect_completed_at": "2026-07-31T02:40:51Z",
         "architect_brief": "docs/architecture-briefs/2026-07-31-fix-subagent-branch-checkout-hijacks-shared-working-dir.md",
         "architect_review_note": "[architect 2026-07-31T02:40:37Z DESIGN COMPLETE — plan-only, no code shipped this cycle] Verified git has NO pre-checkout hook (git help githooks, git 2.49.0 — only post-checkout exists, contractually cannot block the checkout itself, only revert-after + force the calling command exit code). CHOSE AC-1(a): new scripts/git-hooks/post-checkout hard-reverts any non-main checkout in the PRIMARY working dir back to main (MODE=enforce default, diverges deliberately from the sweep-guard hooks WARN default — justified in brief SS3: zero legitimate off-main state exists live today per UC-RDL-P7s own 2026-07-17 ground truth, and revert is self-healing not blocking). Exempts LINKED worktrees by construction (git-dir vs git-common-dir, live-tested) so it does not foreclose SPIKE-C44 if that is ever adopted later — SPIKE-C44 is therefore NOT a dependency of this row (would only become one if fix (b) worktree-isolation were chosen as primary, which it was not). REJECTED (b) worktree-isolation-for-everyone as primary: blast radius is the WHOLE fleet (8 agent types share HEAD) vs SPIKE-C44s own 2-developer-disjoint-zone scope, and SPIKE-C44 itself is still unstarted. REJECTED (c) schema-level ban as this rows OWN primary layer: the branch: field lives in free-form markdown handoffs, not a Zod-validated shape (grepped orchStateSchema.ts — no branch field exists to ban) — a schema-ban has nothing to bind to there.\nCRITICAL COORDINATION FINDING (not in the original triage): grep-confirmed 5 flow docs still ACTIVELY author/verify/honor a task/NNN-* branch-checkout convention TODAY, post-dating UC-RDL-P7 STEP1s ruling by 2 weeks — pm/flow/main.md:75 (branch: template, fired literally hours before this brief on docs/handoffs/FIX-COWORK-FIRE-ELECTION-TICK-TOMBSTONE-dev.md, one of this rows own 4 cited incidents), developer/flow/main.md:51-54+158 (VERIFY: git branch --show-current must equal task/NNN-kebab-description — a HARD precondition before touching any file), developer/flow/microservice-main.md:53-57+161 (identical), qa/flow/main.md:37,42,114-124,219-224 (pipeline JUMP-TOs first line is git checkout task/NNN-*), fixer/flow/*.md:34,36,60,110. This means shipping the hook with ZERO coordination will make developer/microservice-main.mds own VERIFY line fail for every M/L task (the hook will have already reverted HEAD to main before that line runs) — this is UC-RDL-P7s own cited \"wedges QA merge if only one half edited\" hazard, reproduced via a different mechanism (a hook, not mixed doc state), same remedy needed either way. UC-RDL-P7 STEP2 (BACKLOG, next_agent=ba, unstarted) already owns rewriting exactly these 5 files — this row does NOT duplicate or implement that edit; the 5-file/line-number target list above is handed to whoever eventually works STEP2 (agent-father commit_zone per its own init.md — docs/agents/ is explicitly in its allowed list), found live via grep, not assumed.\nAC-4 LIVE PROOF: 5 scenarios reproduced in a disposable scratch repo (never the live repo) — control (reproduces the hijack exactly as reported), guarded (hijack prevented, peer commit lands on main, not reachable only from the checked-out branch), non-destructive-conflict edge case (git refuses the revert rather than discard uncommitted work, fails loud), linked-worktree exemption (fleet-worktree-push-style worktrees unaffected), re-entrancy (single pass, 0.39s, no recursion). Full design + transcripts: docs/architecture-briefs/2026-07-31-fix-subagent-branch-checkout-hijacks-shared-working-dir.md.\nROUTING: next_agent=pm (not developer directly) — deliverable is scripts/git-hooks/ (developer zone per this dispatchs own instruction not to assume agent-father there) but the coordination-timing call (accelerate/scope-down UC-RDL-P7 STEP2 to land same-wave, vs stage this hook via MODE=warn first) is a task-breakdown/prioritization judgment, which is PMs job per architects own not_my_job boundary, not architects to decide unilaterally."
-      },
-      {
-        "id": "CADRAT-3-DIFFGATE-CODE-JANITOR-AND-AGENT-FATHER",
-        "type": "FIX",
-        "status": "READY",
-        "priority": "medium",
-        "size": "S",
-        "owner": "po",
-        "zone": "cross-service/",
-        "next_agent": "agent-father",
-        "sprint": "CADENCE-RATIONALIZATION-20260804",
-        "created_at": "2026-08-04T19:49:43Z",
-        "created_by": "po/cadence-rationalization-greenlight-20260804T1949Z",
-        "updated_at": "2026-08-04T19:52:23Z",
-        "updated_by": "po/cadence-rationalization-greenlight-20260804T1949Z",
-        "title": "SS8 items 3+5 (FOLDED - identical pattern, brief itself says batch them): add a `git diff --name-only HEAD~3..HEAD` Pre-Check skip-gate to docs/agents/code-janitor/flow/main.md (gates ONLY the Decision-Tree DRY scan) and to docs/agents/agent-father/flow/keep.md (gates the orphan+roster sweep), mirroring claude-manager-helper/flow/main.md's existing best-in-class gate",
-        "note": "docs/architecture-briefs/2026-08-04-cadence-rationalization.md SS8 item 3 (lines 164-177) + item 5 (line 200). Brief item 5 explicitly says 'Worth doing only as a batch with item 3 (same pattern, same effort)' - hence folded. PRECEDENT TO MIRROR, live-confirmed 2026-08-04T19:48Z: docs/agents/claude-manager-helper/flow/main.md:31-47 - a <!-- jump:precheck --> block running `git diff --name-only HEAD~3..HEAD`, GROUP_* path buckets, then a 3-branch Routing table (all-empty+Mon/Thu -> pass-9b / all-empty+other -> end / any-non-empty -> fall through). Brief SS8 item 8 names this the best-in-class example in the whole survey - mirror its SHAPE, do not modify that file. CODE-JANITOR INSERTION POINT IS EXACT: docs/agents/code-janitor/flow/main.md (217L), between Step 0b 'Read notebook' (:17) and '## Decision Tree' (:19). CRITICAL SCOPE FENCE: gate ONLY the Decision-Tree DRY grep scan. The 3 script-driven sweeps (Memory Prune :69, Notebook Line-Cap :113, Cold Archive :139) MUST stay unconditional - they sweep docs/agent-memory/ and docs/handoffs/, NOT source code, and already carry their own internal no-op guards; gating them behind a code-diff check would be a regression. Janitor scan surface = src/, apps/*/src/. AGENT-FATHER keep.md (131L): same gate on the orphan+roster sweep under '## Steps' (:22); its scan surface = .claude/agents/*.md, docs/agents/*/flow/*.md. Routed to agent-father because docs/agents/*/flow/*.md is its write-ownership zone (board precedent: SYSREMAKE-P2-T8-FLOW-DOC-WIRING 'agent-father owned'). If BOUNDED-1's maintenance-lane next_agent withhold ever ships (row FIX-DEVTEAM-BOUNDED1-MAINTLANE-NEXTAGENT-GATE, currently BACKLOG) this row becomes manual/PO-dispatch - flagging now, not later. NO-RE-ARM HARD CONSTRAINT (user-set, applies to EVERY row in sprint CADENCE-RATIONALIZATION-20260804): editing a cron authoring .md / skill .md / register.md is IN scope. Actually ARMING anything is OUT of scope. Do NOT call CronCreate. Do NOT run /cron-cowork-team or /cron-detect-loop or /cron-standalone-team. The cron fleet is currently fully dormant (zero armed jobs) and MUST stay dormant until the user separately greenlights re-arm (brief SS8 item 9) after this whole batch is implemented+verified. Re-arming as a 'helpful' side effect is a defect, not a bonus.",
-        "acceptance": [
-          "AC-1 code-janitor/flow/main.md carries a Pre-Check between Step 0b and Decision Tree running `git diff --name-only HEAD~3..HEAD`; zero files under src/ or apps/*/src/ -> SKIP the Decision-Tree DRY scan this cycle and JUMP straight to the 3 every-scan sweeps.",
-          "AC-2 The 3 every-scan sweeps (Memory Prune / Notebook Line-Cap / Cold Archive) remain reachable and UNCONDITIONAL on the skip path - explicitly verified, not assumed. A skip must not silently strand them.",
-          "AC-3 agent-father/flow/keep.md carries the same gate on its orphan+roster sweep, scan surface .claude/agents/*.md + docs/agents/*/flow/*.md.",
-          "AC-4 DRY-RUN PROOF, both gates, against REAL git history (QA bar is explicit): find a real HEAD~3..HEAD window that DID touch each agent's scan surface and show the gate correctly falls through (does NOT skip); and a window that did NOT and show it correctly skips. Paste both raw command outputs. A gate that false-skips when scope-relevant files changed is worse than no gate.",
-          "AC-5 docs/agents/claude-manager-helper/flow/main.md is NOT modified (brief item 8: leave best-in-class alone).",
-          "AC-6 Both flow docs stay within their size caps (waterfall <=200L / zone 120L per docs/policies) or carry an updated line-1 size-justification comment.",
-          "AC-7 No CronCreate call made."
-        ]
-      },
-      {
-        "id": "CADRAT-7-NEWS-SCOUT-SENTIMENT-PREMARKET-TIME-FIX",
-        "type": "FIX",
-        "status": "READY",
-        "priority": "medium",
-        "size": "S",
-        "owner": "po",
-        "zone": "cross-service/",
-        "next_agent": "agent-father",
-        "sprint": "CADENCE-RATIONALIZATION-20260804",
-        "created_at": "2026-08-04T19:49:43Z",
-        "created_by": "po/cadence-rationalization-greenlight-20260804T1949Z",
-        "updated_at": "2026-08-04T19:52:23Z",
-        "updated_by": "po/cadence-rationalization-greenlight-20260804T1949Z",
-        "title": "SS9 row 4: news-scout-sentiment slot fires 0 5 * * 1-5 = 12:00 ICT, 3h AFTER the 09:00 open and inside the 11:30-13:00 lunch closure, while its own vn_description calls it 'pre-market batch' - correct to 30 1 * * 1-5 (08:30 ICT, 30min before open). Time-of-day only, frequency unchanged at 5/wk",
-        "note": "docs/architecture-briefs/2026-08-04-cadence-rationalization.md SS9 row 4 (line 251). LOCATION CORRECTION vs the brief - the brief did not name the file; PO located it 2026-08-04T19:48Z. This is a COWORK SLOT, not a CronCreate cron. Two files carry the value: (a) docs/data/cowork-schedule.json slot_id=news-scout-sentiment (:271) fields cron / utc_description ('05:00 UTC Mon-Fri') / vn_description ('12:00 VN Mon-Fri (pre-market batch)') - all three must move together or the label lies again; (b) docs/agents/news-scout/init.md:94 batch2_sentiment cron mirror + its description ('Daily sentiment log to ticker ledgers (05:00 UTC)'). WRITE-OWNERSHIP GATE SATISFIED: cowork-schedule.json declares _maintained_by = 'agent-father (via architect brief only)'. The architect brief EXISTS and is the authority for this change - docs/architecture-briefs/2026-08-04-cadence-rationalization.md SS9 row 4 - so agent-father may proceed; cite it in the commit. BECAUSE THIS IS A SLOT NOT A CRON, editing it arms nothing: the cowork dispatcher is dormant and the slot's due-matcher just reads the new value whenever the fleet is next armed. Do NOT touch last_fired (memory: feedback_cowork_lastfired_multislot_jq_needle_clobbers_schedule - a careless jq needle has clobbered this file before). NO-RE-ARM HARD CONSTRAINT (user-set, applies to EVERY row in sprint CADENCE-RATIONALIZATION-20260804): editing a cron authoring .md / skill .md / register.md is IN scope. Actually ARMING anything is OUT of scope. Do NOT call CronCreate. Do NOT run /cron-cowork-team or /cron-detect-loop or /cron-standalone-team. The cron fleet is currently fully dormant (zero armed jobs) and MUST stay dormant until the user separately greenlights re-arm (brief SS8 item 9) after this whole batch is implemented+verified. Re-arming as a 'helpful' side effect is a defect, not a bonus.",
-        "acceptance": [
-          "AC-1 docs/data/cowork-schedule.json slot news-scout-sentiment: cron = '30 1 * * 1-5'.",
-          "AC-2 SAME slot's utc_description and vn_description updated to match ('01:30 UTC Mon-Fri' / '08:30 VN Mon-Fri (pre-market batch)') - the mislabel IS the defect; fixing the expression while leaving the prose stale reproduces it.",
-          "AC-3 docs/agents/news-scout/init.md:94 batch2_sentiment cron + description mirror the new value. No third copy left anywhere: grep -rn '0 5 \\* \\* 1-5' returns ONLY historical signal/notebook/brief archives, zero live config.",
-          "AC-4 NO OTHER SLOT in cowork-schedule.json is modified - diff must be scoped to the news-scout-sentiment object plus nothing else. Verify with a per-slot jq diff, not eyeball.",
-          "AC-5 last_fired, trigger_id, policy_id, guaranteed, enabled on that slot are UNCHANGED.",
-          "AC-6 cowork-schedule.json remains valid JSON and slot count is unchanged.",
-          "AC-7 Frequency stays 5/wk (Mon-Fri, once daily). This is a time-of-day correction, NOT a frequency cut. No CronCreate call made."
-        ]
       }
     ],
     "review": [
@@ -20540,6 +20491,66 @@
         "updated_by": "dev-mcp-server",
         "commit_sha": "7ac55adc8",
         "note": "describeConfidenceFinancialReason() + validateFinancialFiguresDetailed() ship: [BCTC-1345b] alert now names the detector that actually fired (cross-stmt/intra-BS unit mismatch w/ figures, or the specific BCTC-VAL-NN rule) instead of an unconditional VNM/VEA hint on a value validateFinancialFigures cannot produce. Dead Math.max(confidence,0.1) floor deleted (true floor is 0.4), docstrings corrected. 9 new regression tests (31 expect(), FIX-BCTC-1345B-ALERT-NAMES-A-RULE-FAMILY.test.ts). Targeted 10-file BCTC suite 72/72 pass. tsc clean. Full bun test 15050 pass/60 fail/2 err — zero fail-list matches for bctc/financial/1345b/VAL-01/VAL-03; all pre-existing unrelated classes. toolCount=183/cronJobCount=88 unchanged. Server boot + /health + /api/bctc-inspect verified live on PORT=3198."
+      },
+      {
+        "id": "CADRAT-3-DIFFGATE-CODE-JANITOR-AND-AGENT-FATHER",
+        "type": "FIX",
+        "status": "REVIEW",
+        "priority": "medium",
+        "size": "S",
+        "owner": "po",
+        "zone": "cross-service/",
+        "next_agent": "qa",
+        "sprint": "CADENCE-RATIONALIZATION-20260804",
+        "created_at": "2026-08-04T19:49:43Z",
+        "created_by": "po/cadence-rationalization-greenlight-20260804T1949Z",
+        "updated_at": "2026-08-04T20:55:30Z",
+        "updated_by": "po/cadrat-3-7-lane-move",
+        "title": "SS8 items 3+5 (FOLDED - identical pattern, brief itself says batch them): add a `git diff --name-only HEAD~3..HEAD` Pre-Check skip-gate to docs/agents/code-janitor/flow/main.md (gates ONLY the Decision-Tree DRY scan) and to docs/agents/agent-father/flow/keep.md (gates the orphan+roster sweep), mirroring claude-manager-helper/flow/main.md's existing best-in-class gate",
+        "note": "docs/architecture-briefs/2026-08-04-cadence-rationalization.md SS8 item 3 (lines 164-177) + item 5 (line 200). Brief item 5 explicitly says 'Worth doing only as a batch with item 3 (same pattern, same effort)' - hence folded. PRECEDENT TO MIRROR, live-confirmed 2026-08-04T19:48Z: docs/agents/claude-manager-helper/flow/main.md:31-47 - a <!-- jump:precheck --> block running `git diff --name-only HEAD~3..HEAD`, GROUP_* path buckets, then a 3-branch Routing table (all-empty+Mon/Thu -> pass-9b / all-empty+other -> end / any-non-empty -> fall through). Brief SS8 item 8 names this the best-in-class example in the whole survey - mirror its SHAPE, do not modify that file. CODE-JANITOR INSERTION POINT IS EXACT: docs/agents/code-janitor/flow/main.md (217L), between Step 0b 'Read notebook' (:17) and '## Decision Tree' (:19). CRITICAL SCOPE FENCE: gate ONLY the Decision-Tree DRY grep scan. The 3 script-driven sweeps (Memory Prune :69, Notebook Line-Cap :113, Cold Archive :139) MUST stay unconditional - they sweep docs/agent-memory/ and docs/handoffs/, NOT source code, and already carry their own internal no-op guards; gating them behind a code-diff check would be a regression. Janitor scan surface = src/, apps/*/src/. AGENT-FATHER keep.md (131L): same gate on the orphan+roster sweep under '## Steps' (:22); its scan surface = .claude/agents/*.md, docs/agents/*/flow/*.md. Routed to agent-father because docs/agents/*/flow/*.md is its write-ownership zone (board precedent: SYSREMAKE-P2-T8-FLOW-DOC-WIRING 'agent-father owned'). If BOUNDED-1's maintenance-lane next_agent withhold ever ships (row FIX-DEVTEAM-BOUNDED1-MAINTLANE-NEXTAGENT-GATE, currently BACKLOG) this row becomes manual/PO-dispatch - flagging now, not later. NO-RE-ARM HARD CONSTRAINT (user-set, applies to EVERY row in sprint CADENCE-RATIONALIZATION-20260804): editing a cron authoring .md / skill .md / register.md is IN scope. Actually ARMING anything is OUT of scope. Do NOT call CronCreate. Do NOT run /cron-cowork-team or /cron-detect-loop or /cron-standalone-team. The cron fleet is currently fully dormant (zero armed jobs) and MUST stay dormant until the user separately greenlights re-arm (brief SS8 item 9) after this whole batch is implemented+verified. Re-arming as a 'helpful' side effect is a defect, not a bonus.",
+        "acceptance": [
+          "AC-1 code-janitor/flow/main.md carries a Pre-Check between Step 0b and Decision Tree running `git diff --name-only HEAD~3..HEAD`; zero files under src/ or apps/*/src/ -> SKIP the Decision-Tree DRY scan this cycle and JUMP straight to the 3 every-scan sweeps.",
+          "AC-2 The 3 every-scan sweeps (Memory Prune / Notebook Line-Cap / Cold Archive) remain reachable and UNCONDITIONAL on the skip path - explicitly verified, not assumed. A skip must not silently strand them.",
+          "AC-3 agent-father/flow/keep.md carries the same gate on its orphan+roster sweep, scan surface .claude/agents/*.md + docs/agents/*/flow/*.md.",
+          "AC-4 DRY-RUN PROOF, both gates, against REAL git history (QA bar is explicit): find a real HEAD~3..HEAD window that DID touch each agent's scan surface and show the gate correctly falls through (does NOT skip); and a window that did NOT and show it correctly skips. Paste both raw command outputs. A gate that false-skips when scope-relevant files changed is worse than no gate.",
+          "AC-5 docs/agents/claude-manager-helper/flow/main.md is NOT modified (brief item 8: leave best-in-class alone).",
+          "AC-6 Both flow docs stay within their size caps (waterfall <=200L / zone 120L per docs/policies) or carry an updated line-1 size-justification comment.",
+          "AC-7 No CronCreate call made."
+        ],
+        "commit_sha": "5ee84f0f5",
+        "commit": "5ee84f0f5",
+        "branch": "main",
+        "status_note": "[PO] Lane-move ready[] -> review[] 2026-08-04T20:55:29Z, next_agent agent-father -> qa. agent-father SHIPPED commit 5ee84f0f5 'fix(cross-service): CADRAT-3 git-diff pre-check gate for code-janitor DRY scan + agent-father orphan+roster sweep' (docs/agents/agent-father/flow/keep.md +12/-1, docs/agents/code-janitor/flow/main.md +12/-1) but agent-father's commit_zone excludes task_board writes by design, so it emitted hand-off signal agent-father-20260804T200926Z-cadrat3-7-done instead of flipping the lane; the row was left stale-READY. PO INDEPENDENTLY VERIFIED: git log --oneline -1 5ee84f0f5 resolves; git branch --contains 5ee84f0f5 -> main; git show --stat touches exactly the two AC-named flow docs and no third file; docs/agents/claude-manager-helper/flow/main.md absent from the diff (AC-5 consistent). THIS IS NOT A QA VERDICT -- existence-of-commit only. AC-1..AC-7 remain unverified and are qa's to adjudicate, in particular AC-2 (3 every-scan sweeps still reachable+unconditional on the skip path -- must be explicitly verified, not assumed), AC-4 (both-direction dry-run proof against real git history, raw outputs pasted; agent-father claims this is done -- read it, do not take the claim), AC-6 (size caps / line-1 size-justification) and AC-7 (zero CronCreate in the diff)."
+      },
+      {
+        "id": "CADRAT-7-NEWS-SCOUT-SENTIMENT-PREMARKET-TIME-FIX",
+        "type": "FIX",
+        "status": "REVIEW",
+        "priority": "medium",
+        "size": "S",
+        "owner": "po",
+        "zone": "cross-service/",
+        "next_agent": "qa",
+        "sprint": "CADENCE-RATIONALIZATION-20260804",
+        "created_at": "2026-08-04T19:49:43Z",
+        "created_by": "po/cadence-rationalization-greenlight-20260804T1949Z",
+        "updated_at": "2026-08-04T20:55:30Z",
+        "updated_by": "po/cadrat-3-7-lane-move",
+        "title": "SS9 row 4: news-scout-sentiment slot fires 0 5 * * 1-5 = 12:00 ICT, 3h AFTER the 09:00 open and inside the 11:30-13:00 lunch closure, while its own vn_description calls it 'pre-market batch' - correct to 30 1 * * 1-5 (08:30 ICT, 30min before open). Time-of-day only, frequency unchanged at 5/wk",
+        "note": "docs/architecture-briefs/2026-08-04-cadence-rationalization.md SS9 row 4 (line 251). LOCATION CORRECTION vs the brief - the brief did not name the file; PO located it 2026-08-04T19:48Z. This is a COWORK SLOT, not a CronCreate cron. Two files carry the value: (a) docs/data/cowork-schedule.json slot_id=news-scout-sentiment (:271) fields cron / utc_description ('05:00 UTC Mon-Fri') / vn_description ('12:00 VN Mon-Fri (pre-market batch)') - all three must move together or the label lies again; (b) docs/agents/news-scout/init.md:94 batch2_sentiment cron mirror + its description ('Daily sentiment log to ticker ledgers (05:00 UTC)'). WRITE-OWNERSHIP GATE SATISFIED: cowork-schedule.json declares _maintained_by = 'agent-father (via architect brief only)'. The architect brief EXISTS and is the authority for this change - docs/architecture-briefs/2026-08-04-cadence-rationalization.md SS9 row 4 - so agent-father may proceed; cite it in the commit. BECAUSE THIS IS A SLOT NOT A CRON, editing it arms nothing: the cowork dispatcher is dormant and the slot's due-matcher just reads the new value whenever the fleet is next armed. Do NOT touch last_fired (memory: feedback_cowork_lastfired_multislot_jq_needle_clobbers_schedule - a careless jq needle has clobbered this file before). NO-RE-ARM HARD CONSTRAINT (user-set, applies to EVERY row in sprint CADENCE-RATIONALIZATION-20260804): editing a cron authoring .md / skill .md / register.md is IN scope. Actually ARMING anything is OUT of scope. Do NOT call CronCreate. Do NOT run /cron-cowork-team or /cron-detect-loop or /cron-standalone-team. The cron fleet is currently fully dormant (zero armed jobs) and MUST stay dormant until the user separately greenlights re-arm (brief SS8 item 9) after this whole batch is implemented+verified. Re-arming as a 'helpful' side effect is a defect, not a bonus.",
+        "acceptance": [
+          "AC-1 docs/data/cowork-schedule.json slot news-scout-sentiment: cron = '30 1 * * 1-5'.",
+          "AC-2 SAME slot's utc_description and vn_description updated to match ('01:30 UTC Mon-Fri' / '08:30 VN Mon-Fri (pre-market batch)') - the mislabel IS the defect; fixing the expression while leaving the prose stale reproduces it.",
+          "AC-3 docs/agents/news-scout/init.md:94 batch2_sentiment cron + description mirror the new value. No third copy left anywhere: grep -rn '0 5 \\* \\* 1-5' returns ONLY historical signal/notebook/brief archives, zero live config.",
+          "AC-4 NO OTHER SLOT in cowork-schedule.json is modified - diff must be scoped to the news-scout-sentiment object plus nothing else. Verify with a per-slot jq diff, not eyeball.",
+          "AC-5 last_fired, trigger_id, policy_id, guaranteed, enabled on that slot are UNCHANGED.",
+          "AC-6 cowork-schedule.json remains valid JSON and slot count is unchanged.",
+          "AC-7 Frequency stays 5/wk (Mon-Fri, once daily). This is a time-of-day correction, NOT a frequency cut. No CronCreate call made."
+        ],
+        "commit_sha": "d916aa40b",
+        "commit": "d916aa40b",
+        "branch": "main",
+        "status_note": "[PO] Lane-move ready[] -> review[] 2026-08-04T20:55:29Z, next_agent agent-father -> qa. agent-father SHIPPED commit d916aa40b 'fix(cross-service): CADRAT-7 news-scout-sentiment pre-market time fix (12:00->08:30 ICT)' (docs/agents/news-scout/init.md +2/-2, docs/data/cowork-schedule.json +3/-3) but agent-father's commit_zone excludes task_board writes by design, so it emitted hand-off signal agent-father-20260804T200926Z-cadrat3-7-done instead of flipping the lane; the row was left stale-READY. PO INDEPENDENTLY VERIFIED: git log --oneline -1 d916aa40b resolves; git branch --contains d916aa40b -> main; git show --stat touches exactly the two AC-named files and no third file. THIS IS NOT A QA VERDICT -- existence-of-commit only. AC-1..AC-7 remain unverified and are qa's to adjudicate, in particular AC-2 (utc_description AND vn_description moved with the cron expr -- the mislabel IS the defect), AC-3 (grep -rn '0 5 \\* \\* 1-5' returns zero LIVE config), AC-4 (per-slot jq diff proving no other slot changed -- not eyeball), AC-5 (last_fired/trigger_id/policy_id/guaranteed/enabled byte-unchanged; memory: feedback_cowork_lastfired_multislot_jq_needle_clobbers_schedule) and AC-7 (frequency still 5/wk, zero CronCreate)."
       }
     ],
     "qa": [],
@@ -20586,6 +20597,6 @@
     "ssot": true
   },
   "last_tick": "20260622T2215Z",
-  "_updated_at": "2026-07-31T16:19:40Z",
-  "_updated_by": "po/ruling-20260731b"
+  "_updated_at": "2026-08-04T20:55:29Z",
+  "_updated_by": "po/cadrat-3-7-lane-move"
 }
