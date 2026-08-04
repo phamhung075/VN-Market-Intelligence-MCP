@@ -450,6 +450,48 @@ describe("T-11: OQ-P1-3 — bctc-offmarket: holiday→null, weekend→1440, open
   });
 });
 
+// ─── T-11b: CADRAT-1 — alert-commander-{market,critical}: all 5 calendar_status
+//            values pin {interval_minutes:null, _cron_fallback:true} ────────
+//
+// AC-6 note: evaluateCadence() is a pure policy-table lookup — it takes no
+// pressure_state/stale_warning input and has no legacy-vs-adaptive branch of
+// its own (that branch lives one layer up, in cowork-match-slots.js's
+// matchSlots(), gated by isStale()). Calling evaluateCadence() directly, as
+// T-11 does for bctc-offmarket, bypasses that branch entirely — there is no
+// stale-window path here that could make this assertion pass vacuously, so
+// there is nothing to "pin" stale_warning=false against at this call site.
+
+describe("T-11b: CADRAT-1 — alert-commander-market: 5/5 calendar_status → null+_cron_fallback", () => {
+  // RED proof: before CADRAT-1, cadence-policy.json had ZERO alert-commander-market
+  // rows, so every calendar_status fell through to the generic unmatched safe
+  // default {interval_minutes:240, _cron_fallback:false} — this test would fail
+  // on both fields for all 5 values.
+  // GREEN proof: 5 authored rows (one per calendar_status), each pinned
+  // interval_minutes:null + _cron_fallback:true (cron governs, no behavior change).
+  const calendarStatuses = ["holiday", "weekend", "open", "half_day", "unknown"];
+
+  for (const cs of calendarStatuses) {
+    test(`alert-commander-market + ${cs} → {interval_minutes:null, _cron_fallback:true}`, () => {
+      const result = evaluateCadence("alert-commander-market", cs, "*", "*", policyObj);
+      expect(result.interval_minutes).toBeNull();
+      expect(result._cron_fallback).toBe(true);
+    });
+  }
+});
+
+describe("T-11c: CADRAT-1 — alert-commander-critical: 5/5 calendar_status → null+_cron_fallback", () => {
+  // RED/GREEN proof: identical shape to T-11b, distinct policy_id.
+  const calendarStatuses = ["holiday", "weekend", "open", "half_day", "unknown"];
+
+  for (const cs of calendarStatuses) {
+    test(`alert-commander-critical + ${cs} → {interval_minutes:null, _cron_fallback:true}`, () => {
+      const result = evaluateCadence("alert-commander-critical", cs, "*", "*", policyObj);
+      expect(result.interval_minutes).toBeNull();
+      expect(result._cron_fallback).toBe(true);
+    });
+  }
+});
+
 // ─── T-12: EC-6 audit — No open+chef-intraday rule has null interval ─────────
 
 describe("T-12: EC-6 audit — No open+chef-intraday rule has null interval_minutes", () => {

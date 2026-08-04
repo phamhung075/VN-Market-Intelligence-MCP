@@ -31,6 +31,18 @@
     { "policy_id": "bctc-offmarket",    "calendar_status": "weekend",  "signal_backlog_tier": "*",      "volatility_tier": "*",   "interval_minutes": 1440 },
     { "policy_id": "bctc-offmarket",    "calendar_status": "open",     "signal_backlog_tier": "*",      "volatility_tier": "*",   "interval_minutes": null, "_cron_fallback": true },
     { "policy_id": "bctc-offmarket",    "calendar_status": "half_day", "signal_backlog_tier": "*",      "volatility_tier": "*",   "interval_minutes": null, "_cron_fallback": true },
-    { "policy_id": "bctc-offmarket",    "calendar_status": "unknown",  "signal_backlog_tier": "*",      "volatility_tier": "*",   "interval_minutes": null, "_cron_fallback": true }
+    { "policy_id": "bctc-offmarket",    "calendar_status": "unknown",  "signal_backlog_tier": "*",      "volatility_tier": "*",   "interval_minutes": null, "_cron_fallback": true },
+
+    { "policy_id": "alert-commander-market",   "calendar_status": "holiday",  "signal_backlog_tier": "*", "volatility_tier": "*", "interval_minutes": null, "_cron_fallback": true },
+    { "policy_id": "alert-commander-market",   "calendar_status": "weekend",  "signal_backlog_tier": "*", "volatility_tier": "*", "interval_minutes": null, "_cron_fallback": true },
+    { "policy_id": "alert-commander-market",   "calendar_status": "open",     "signal_backlog_tier": "*", "volatility_tier": "*", "interval_minutes": null, "_cron_fallback": true },
+    { "policy_id": "alert-commander-market",   "calendar_status": "half_day", "signal_backlog_tier": "*", "volatility_tier": "*", "interval_minutes": null, "_cron_fallback": true },
+    { "policy_id": "alert-commander-market",   "calendar_status": "unknown",  "signal_backlog_tier": "*", "volatility_tier": "*", "interval_minutes": null, "_cron_fallback": true },
+
+    { "policy_id": "alert-commander-critical", "calendar_status": "holiday",  "signal_backlog_tier": "*", "volatility_tier": "*", "interval_minutes": null, "_cron_fallback": true },
+    { "policy_id": "alert-commander-critical", "calendar_status": "weekend",  "signal_backlog_tier": "*", "volatility_tier": "*", "interval_minutes": null, "_cron_fallback": true },
+    { "policy_id": "alert-commander-critical", "calendar_status": "open",     "signal_backlog_tier": "*", "volatility_tier": "*", "interval_minutes": null, "_cron_fallback": true },
+    { "policy_id": "alert-commander-critical", "calendar_status": "half_day", "signal_backlog_tier": "*", "volatility_tier": "*", "interval_minutes": null, "_cron_fallback": true },
+    { "policy_id": "alert-commander-critical", "calendar_status": "unknown",  "signal_backlog_tier": "*", "volatility_tier": "*", "interval_minutes": null, "_cron_fallback": true }
   ]
 }
