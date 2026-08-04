@@ -93,12 +93,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "active_task_id": null,
-    "next_agent": "router",
-    "next_action": "idle — FIX-MACRO-INDICATORS-EMPTY-COLUMNS declined by dev-macro-indicators (wrong zone; macro_indicators table write path is apps/mcp-server/, not apps/macro-indicators/), returned to backlog re-zoned apps/mcp-server/ owner_agent=dev-mcp-server",
-    "updated_at": "2026-08-01T13:02:49Z",
-    "updated_by": "dev-macro-indicators"
+    "status": "in_progress",
+    "active_task_id": "FIX-DEPTHTHIN-B-GATEWAY-TA-PATH-REWRITE",
+    "next_agent": "developer",
+    "next_action": "BOUNDED-1 auto-pickup claim of FIX-DEPTHTHIN-B-GATEWAY-TA-PATH-REWRITE — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
+    "updated_at": "2026-08-01T13:18:39Z",
+    "updated_by": "dev-team (bounded-1 auto-pickup)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -6339,15 +6339,6 @@
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#GAP-CHEF-SYNTHESIS-B-ENDPOINT-CARD"
       },
       {
-        "id": "FIX-DEPTHTHIN-B-GATEWAY-TA-PATH-REWRITE",
-        "title": "DEPTH_THIN (b): dashboard.technical OHLCV candles render but TA indicators (MA/RSI/MACD) are MISSING — the api-gateway /ta path-rewrite is a TODO so technical-analysis indicators never reach the frontend. Wire the gateway /ta path-rewrite; also add generatedAt to /api/price-history.",
-        "type": "FIX",
-        "priority": "P3",
-        "status": "BACKLOG",
-        "zone": "multi",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-DEPTHTHIN-B-GATEWAY-TA-PATH-REWRITE"
-      },
-      {
         "id": "FIX-AUDITOR-TASKBOARD-OVERFLOW-PREDICATE-WIP-ONLY",
         "type": "FIX",
         "priority": "low",
@@ -7772,9 +7763,10 @@
         "status_note": "AC: (1) evaluateCadence('alert-commander-market', ...) resolves to interval_minutes:15 via an authored policy (RAW-run, not badge). (2) A NEW unresolvable-policy_id DV/test asserts fail-loud OR cron-fallback (NOT 240) AND MUST pin stale_warning=false so the adaptive branch (cowork-match-slots.js:288) is actually exercised — a stale window exercises legacy cron and passes vacuously (handoff Consequence #2). AC-P1-1-3's existing DV only covers unmatched-rule; a new AC is required or the fix regresses. (3) Dangling-ref sweep: [.slots[].policy_id]-[.policies[].policy_id] == [] (today alert-commander-market + alert-commander-critical dangle; critical is benign since 240 intent coincides — market is the only harmed slot). Partial regression of completed FIX-ALERT-COMMANDER-DEAD-NO-SLOT (2026-07-03, HIGH) whose decision journal named the policies but the sprint never authored cadence-policy.json. Handoff: docs/handoffs/2026-07-16-alert-commander-market-dangling-policy-240min.md. Files: docs/data/cadence-policy.json, scripts/agents-flow/cadence-policy.js (:71 safe default), scripts/agents-flow/cowork-match-slots.js (:288 adaptive/legacy branch). Baseline CI GREEN on b9cfe58b2. RAW-verified 03:55Z: grep alert-commander cadence-policy.json=0; policy_id diff=[alert-commander-critical,alert-commander-market].",
         "verify_note": "prior_status=BACKLOG (minted by po dev-team triage tick 2026-07-16T03:37Z from signal cow-20260716T031800; BOUNDED-1 withhold on peer-dirty tree — leave for program pickup on clean tree)",
         "po_triage_20260725T0927": "po_triage 2026-07-25T09:27:11Z — THIS ROW'S \"(240 genuinely safe)\" PREMISE IS NOW REFUTED BY LIVE EVIDENCE.\n\nThis row's class statement asks the implementer to \"distinguish policy-not-found (config error -> cron fallback per FR-P1-2) from unmatched-rule-in-real-policy (240 genuinely safe)\". The parenthetical is wrong, and there is now a live counter-example.\n\nCOUNTER-EXAMPLE (observed 2026-07-25, 2 sightings same day — cowork signals cwk-20260725T091107-1f13, tick 08:00Z and 09:00Z): pressure-state.json emits calendar_status=\"closed\" (live at 09:24:44Z, steady since 2026-07-24T17:37Z). Both gatherer-standard and bctc-offmarket are REAL, present policies — so this is NOT policy-not-found, it is exactly the \"unmatched-rule-in-real-policy\" case this row declares safe. It is not safe: the 240-min generic default silently REPLACES the slot's declared weekend rate (gatherer-standard 480, bctc-offmarket 1440), over-firing non-guaranteed slots by up to ~5 extra runs per weekend day, with the slot's declared policy bypassed and nothing logged.\n\nTHE CORRECTED DISTINCTION: unmatched-rule-in-real-policy is safe ONLY when the unmatched axis VALUE is itself in-domain (a legitimate combination the table simply does not enumerate). An OUT-OF-DOMAIN axis value — calendar_status=\"closed\" against the file's 5-value domain {open, half_day, weekend, holiday, unknown} — is a CONFIG ERROR wearing the unmatched-rule costume, and must take the fail-loud path, not the 240 default.\n\nAC ADDITION (do not ship this row without it): the standing `[.slots[].policy_id] - [.policies[].policy_id] diff == []` check is necessary but not sufficient — it validates only the policy_id axis. Add a DOMAIN check on the VALUE axes: every literal the dispatcher can emit for calendar_status (and any other policy-matching axis) MUST be a member of that axis's value set in cadence-policy.json; fail loud on miss instead of silently absorbing it into the 240 default.\n\nCO-SHIP with UC-CDC-P1 (see that row's 2026-07-25 note for the traced root cause: calendar_status is a caller-supplied self-recycling loop with no enum gate). Producer fix without this domain validation re-arms the class; domain validation without the producer fix leaves the value permanently wrong. Neither alone is sufficient.\n",
-        "updated_at": "2026-07-25T15:29:39Z",
-        "updated_by": "po/signal-triage-20260725T1507",
-        "po_evidence_20260725T1507": "po_evidence_20260725T1507: EVIDENCE ATTACHED, NO NEW ROW MINTED. This row already carries a 2026-07-25T09:27Z note refuting its own \"(240 genuinely safe)\" premise; that refutation is now backed by a DIRECT MEASUREMENT rather than inference. docs/signals/processed/cowork-team-20260725T151200Z.json, tick 15:12Z Saturday: cadence_minutes {\"bctc-analyst-slot-1\":\"240\"}, due_reasons {\"bctc-analyst-slot-1\":\"cadence\"}, pressure_mode \"adaptive\", calendar_status \"closed\". Config cross-check by PO this tick: cowork-schedule.json binds bctc-analyst-slot-1 to policy bctc-offmarket; cadence-policy.json bctc-offmarket has a weekend row of 1440min and NO closed row. So a real, present policy with a real, present weekend rule was silently replaced by the 240 generic default on the exact calendar day its weekend rule exists to govern — 6x over-fire, nothing logged. This is the \"unmatched-rule-in-real-policy\" case this row declares safe, measured and unsafe. The AC ADDITION already written into this row (domain-check every policy-matching axis VALUE, not just the policy_id axis) is the correct fix and is unchanged. RANK: stays high, co-ship with UC-CDC-P1, sequenced after UC-SDF-P2."
+        "updated_at": "2026-08-04T19:53:07Z",
+        "updated_by": "po/cadence-rationalization-greenlight-20260804T1949Z",
+        "po_evidence_20260725T1507": "po_evidence_20260725T1507: EVIDENCE ATTACHED, NO NEW ROW MINTED. This row already carries a 2026-07-25T09:27Z note refuting its own \"(240 genuinely safe)\" premise; that refutation is now backed by a DIRECT MEASUREMENT rather than inference. docs/signals/processed/cowork-team-20260725T151200Z.json, tick 15:12Z Saturday: cadence_minutes {\"bctc-analyst-slot-1\":\"240\"}, due_reasons {\"bctc-analyst-slot-1\":\"cadence\"}, pressure_mode \"adaptive\", calendar_status \"closed\". Config cross-check by PO this tick: cowork-schedule.json binds bctc-analyst-slot-1 to policy bctc-offmarket; cadence-policy.json bctc-offmarket has a weekend row of 1440min and NO closed row. So a real, present policy with a real, present weekend rule was silently replaced by the 240 generic default on the exact calendar day its weekend rule exists to govern — 6x over-fire, nothing logged. This is the \"unmatched-rule-in-real-policy\" case this row declares safe, measured and unsafe. The AC ADDITION already written into this row (domain-check every policy-matching axis VALUE, not just the policy_id axis) is the correct fix and is unchanged. RANK: stays high, co-ship with UC-CDC-P1, sequenced after UC-SDF-P2.",
+        "po_reconcile_20260804T1953": "po_reconcile 2026-08-04T19:53Z — SPEC CONFLICT RESOLVED. THIS ROW'S 'INSTANCE' HALF IS NOW SUPERSEDED BY CADRAT-1-ALERT-COMMANDER-CADENCE-POLICY-ROWS (ready[], user-greenlit 2026-08-04). DO NOT IMPLEMENT THIS ROW'S INSTANCE CLAUSE — THE TWO SPECS CONTRADICT EACH OTHER ON THE SAME FILE.\n\nTHE CONFLICT, EXACTLY: this row's title says 'Instance: author alert-commander-market(interval_minutes 15) + alert-commander-critical(240) in cadence-policy.json', and its AC-1 demands evaluateCadence('alert-commander-market', ...) resolve to interval_minutes:15. The user-greenlit architecture brief (docs/architecture-briefs/2026-08-04-cadence-rationalization.md §8 item 1, lines 116-132) instead specifies all 10 rows pinned to interval_minutes:null + _cron_fallback:true. Whichever lands second silently overwrites the first. This note exists so that does not happen by accident.\n\nWHY THE BRIEF'S SPEC WINS: 15/240 would INTRODUCE new adaptive suppression/widening behavior for a slot that today is governed by its cron and already self-gates per spawn (§5). null+_cron_fallback:true is a strict no-op on live behavior — it only closes the dangling-ref hole so the generic 240min unmatched-fallback can never silently capture these two policy_ids once adaptive mode reactivates. Choosing the behavior-preserving option is correct while the fleet is dormant and unobservable; picking 15/240 would ship an unmeasured 16x cadence change into a system nobody is currently watching. If the adaptive 15min rate is genuinely wanted later, that is a separate, deliberate design row with its own measurement — not a side effect of a config-hole fix.\n\nWHAT SURVIVES IN THIS ROW (still valuable, still open, NOT superseded): the whole CLASS half — (a) fail-loud validation that every cowork-schedule.json policy_id resolves to a rule at load, distinguishing policy-not-found from unmatched-rule-in-real-policy; (b) the standing [.slots[].policy_id] - [.policies[].policy_id] diff == [] check; (c) the 2026-07-25 AC ADDITION requiring a DOMAIN check on the VALUE axes (the live calendar_status='closed' literal is out-of-domain against the file's 5-value set {open,half_day,weekend,holiday,unknown} and is a config error wearing the unmatched-rule costume — it must fail loud, not absorb into the 240 default); (d) co-ship with UC-CDC-P1. CADRAT-1 does NOT deliver any of (a)-(d).\n\nACTION FOR WHOEVER PICKS THIS UP: after CADRAT-1 lands, re-scope this row to the class half only, and REMOVE the '(interval_minutes 15) + (240)' instance clause from its title so the contradiction cannot be re-read as live intent. Rank unchanged (high), still co-ship with UC-CDC-P1, still sequenced after UC-SDF-P2. Note also that CADRAT-1's AC-4 delivers this row's dangling-ref sweep (c) as a one-shot verification — it does NOT make it a standing check, which is what this row still owes."
       },
       {
         "id": "FIX-VNINDEX-ESTIMATE-IMPLAUSIBLE-DELTA-GATE",
@@ -13231,6 +13223,197 @@
         "architect_completed_at": "2026-07-31T02:40:51Z",
         "architect_brief": "docs/architecture-briefs/2026-07-31-fix-subagent-branch-checkout-hijacks-shared-working-dir.md",
         "architect_review_note": "[architect 2026-07-31T02:40:37Z DESIGN COMPLETE — plan-only, no code shipped this cycle] Verified git has NO pre-checkout hook (git help githooks, git 2.49.0 — only post-checkout exists, contractually cannot block the checkout itself, only revert-after + force the calling command exit code). CHOSE AC-1(a): new scripts/git-hooks/post-checkout hard-reverts any non-main checkout in the PRIMARY working dir back to main (MODE=enforce default, diverges deliberately from the sweep-guard hooks WARN default — justified in brief SS3: zero legitimate off-main state exists live today per UC-RDL-P7s own 2026-07-17 ground truth, and revert is self-healing not blocking). Exempts LINKED worktrees by construction (git-dir vs git-common-dir, live-tested) so it does not foreclose SPIKE-C44 if that is ever adopted later — SPIKE-C44 is therefore NOT a dependency of this row (would only become one if fix (b) worktree-isolation were chosen as primary, which it was not). REJECTED (b) worktree-isolation-for-everyone as primary: blast radius is the WHOLE fleet (8 agent types share HEAD) vs SPIKE-C44s own 2-developer-disjoint-zone scope, and SPIKE-C44 itself is still unstarted. REJECTED (c) schema-level ban as this rows OWN primary layer: the branch: field lives in free-form markdown handoffs, not a Zod-validated shape (grepped orchStateSchema.ts — no branch field exists to ban) — a schema-ban has nothing to bind to there.\nCRITICAL COORDINATION FINDING (not in the original triage): grep-confirmed 5 flow docs still ACTIVELY author/verify/honor a task/NNN-* branch-checkout convention TODAY, post-dating UC-RDL-P7 STEP1s ruling by 2 weeks — pm/flow/main.md:75 (branch: template, fired literally hours before this brief on docs/handoffs/FIX-COWORK-FIRE-ELECTION-TICK-TOMBSTONE-dev.md, one of this rows own 4 cited incidents), developer/flow/main.md:51-54+158 (VERIFY: git branch --show-current must equal task/NNN-kebab-description — a HARD precondition before touching any file), developer/flow/microservice-main.md:53-57+161 (identical), qa/flow/main.md:37,42,114-124,219-224 (pipeline JUMP-TOs first line is git checkout task/NNN-*), fixer/flow/*.md:34,36,60,110. This means shipping the hook with ZERO coordination will make developer/microservice-main.mds own VERIFY line fail for every M/L task (the hook will have already reverted HEAD to main before that line runs) — this is UC-RDL-P7s own cited \"wedges QA merge if only one half edited\" hazard, reproduced via a different mechanism (a hook, not mixed doc state), same remedy needed either way. UC-RDL-P7 STEP2 (BACKLOG, next_agent=ba, unstarted) already owns rewriting exactly these 5 files — this row does NOT duplicate or implement that edit; the 5-file/line-number target list above is handed to whoever eventually works STEP2 (agent-father commit_zone per its own init.md — docs/agents/ is explicitly in its allowed list), found live via grep, not assumed.\nAC-4 LIVE PROOF: 5 scenarios reproduced in a disposable scratch repo (never the live repo) — control (reproduces the hijack exactly as reported), guarded (hijack prevented, peer commit lands on main, not reachable only from the checked-out branch), non-destructive-conflict edge case (git refuses the revert rather than discard uncommitted work, fails loud), linked-worktree exemption (fleet-worktree-push-style worktrees unaffected), re-entrancy (single pass, 0.39s, no recursion). Full design + transcripts: docs/architecture-briefs/2026-07-31-fix-subagent-branch-checkout-hijacks-shared-working-dir.md.\nROUTING: next_agent=pm (not developer directly) — deliverable is scripts/git-hooks/ (developer zone per this dispatchs own instruction not to assume agent-father there) but the coordination-timing call (accelerate/scope-down UC-RDL-P7 STEP2 to land same-wave, vs stage this hook via MODE=warn first) is a task-breakdown/prioritization judgment, which is PMs job per architects own not_my_job boundary, not architects to decide unilaterally."
+      },
+      {
+        "id": "CADRAT-1-ALERT-COMMANDER-CADENCE-POLICY-ROWS",
+        "type": "FIX",
+        "status": "READY",
+        "priority": "high",
+        "size": "S",
+        "owner": "po",
+        "zone": "cross-service/",
+        "next_agent": "developer",
+        "sprint": "CADENCE-RATIONALIZATION-20260804",
+        "created_at": "2026-08-04T19:49:43Z",
+        "created_by": "po/cadence-rationalization-greenlight-20260804T1949Z",
+        "updated_at": "2026-08-04T19:52:23Z",
+        "updated_by": "po/cadence-rationalization-greenlight-20260804T1949Z",
+        "title": "SS8 item 1: close the alert-commander dangling policy_id gap - append 10 rows (alert-commander-market + alert-commander-critical x 5 calendar_status) to docs/data/cadence-policy.json .policies[], all pinned interval_minutes:null + _cron_fallback:true, + 2 boundary test cases mirroring the existing bctc-offmarket T-11 test",
+        "note": "docs/architecture-briefs/2026-08-04-cadence-rationalization.md SS8 item 1 carries the EXACT 10-row JSON at lines 118-130 - copy verbatim, do not re-derive. Live file confirmed 2026-08-04T19:47Z: docs/data/cadence-policy.json has 22 policy rows, ZERO alert-commander rows, so both slot policy_ids currently dangle into the generic 240min unmatched-fallback. Insert AFTER the last bctc-offmarket row (:34), before the closing ]. The _cron_fallback:true pin is DELIBERATE and preserves today's live behavior (cron governs; alert-commander already self-gates per spawn) - do NOT substitute interval_minutes 15/240, that would be a new-behavior design change. Test file apps/mcp-server/src/__tests__/DWF-phase1-cadence.test.ts (816L) already exists and already carries the T-11 bctc-offmarket boundary test to mirror. NOTE ON SCOPE FENCE: that test file lives under apps/mcp-server/src/__tests__/ - it is a TEST, not production src/ code, and is explicitly in scope; do NOT touch any other apps/*/src/ file. NO-RE-ARM HARD CONSTRAINT (user-set, applies to EVERY row in sprint CADENCE-RATIONALIZATION-20260804): editing a cron authoring .md / skill .md / register.md is IN scope. Actually ARMING anything is OUT of scope. Do NOT call CronCreate. Do NOT run /cron-cowork-team or /cron-detect-loop or /cron-standalone-team. The cron fleet is currently fully dormant (zero armed jobs) and MUST stay dormant until the user separately greenlights re-arm (brief SS8 item 9) after this whole batch is implemented+verified. Re-arming as a 'helpful' side effect is a defect, not a bonus.",
+        "root_cause": "FIX-ALERT-COMMANDER-DEAD-NO-SLOT (2026-07-03) named these two policies in its decision journal but the sprint never authored them into cadence-policy.json. Nothing fails loud on a dangling policy_id, so the miss stayed invisible.",
+        "related": [
+          "FIX-COWORK-CADENCE-DANGLING-POLICY-ID",
+          "UC-CDC-P1"
+        ],
+        "acceptance": [
+          "AC-1 docs/data/cadence-policy.json parses as valid JSON (jq -e . exits 0) after the edit.",
+          "AC-2 NO duplicate (policy_id, calendar_status) pair anywhere in .policies[] - verify RAW: jq -r '[.policies[]|.policy_id+\"|\"+.calendar_status]|group_by(.)|map(select(length>1))|length' == 0.",
+          "AC-3 All 10 new rows present: jq '[.policies[]|select(.policy_id|startswith(\"alert-commander\"))]|length' == 10, and every one has interval_minutes==null AND _cron_fallback==true.",
+          "AC-4 Dangling-ref sweep now clean: [.slots[].policy_id from docs/data/cowork-schedule.json] - [.policies[].policy_id from cadence-policy.json] == [].",
+          "AC-5 2 NEW test cases added to apps/mcp-server/src/__tests__/DWF-phase1-cadence.test.ts mirroring its existing T-11 bctc-offmarket boundary test: evaluateCadence('alert-commander-market', <each of the 5 calendar_status values>) and evaluateCadence('alert-commander-critical', ...) BOTH return {interval_minutes:null,_cron_fallback:true} - NOT the generic {240,false}.",
+          "AC-6 Test cases MUST pin stale_warning=false so the adaptive branch is actually exercised (a stale window exercises the legacy cron path and passes VACUOUSLY - see FIX-COWORK-CADENCE-DANGLING-POLICY-ID status_note consequence #2).",
+          "AC-7 RAW test run pasted into the close-out (full suite, no --no-verify, per docs/policies/commit-convention.md). Green badge alone is not evidence."
+        ]
+      },
+      {
+        "id": "CADRAT-2-DB-INTEGRITY-PROBE-PREGATE-AND-SCHEDULE-SPLIT",
+        "type": "FIX",
+        "status": "READY",
+        "priority": "high",
+        "size": "M",
+        "owner": "po",
+        "zone": "cross-service/",
+        "next_agent": "developer",
+        "sprint": "CADENCE-RATIONALIZATION-20260804",
+        "created_at": "2026-08-04T19:49:43Z",
+        "created_by": "po/cadence-rationalization-greenlight-20260804T1949Z",
+        "updated_at": "2026-08-04T19:52:23Z",
+        "updated_by": "po/cadence-rationalization-greenlight-20260804T1949Z",
+        "title": "SS8 item 2 + SS9 row 13 (FOLDED - same file, additive not substitutable): new scripts/agents-flow/db-integrity-probe.sh SKIP-SPAWN/SPAWN pre-gate + prepend gate line to cron-db-data-integrity.md prompt, AND split that cron's authored schedule 15,45 * * * * (336/wk) into 15,45 2-9 * * 1-5 + 15 22 * * * (87/wk, -74%)",
+        "note": "docs/architecture-briefs/2026-08-04-cadence-rationalization.md SS8 item 2 (lines 136-161) gives the full read/write/exit contract and the EXACT cron-prompt gate line (lines 155-157) - copy verbatim. SS9 row 13 (line 263) gives the schedule split. FOLDED INTO ONE ROW DELIBERATELY: both edit .claude/commands/crons/cron-db-data-integrity.md, so two rows would race on the same file. The brief's SS9 reconciliation note (lines 270-275) proves they are ADDITIVE not substitutes - schedule cut reduces how often the cheap probe runs, pre-gate reduces spawn-rate-per-fire; ship BOTH. Live file confirmed 2026-08-04T19:47Z: cron-db-data-integrity.md is 185L, cron line reads '- **cron**: `15,45 * * * *`   (every 30 min, offset)'. scripts/agents-flow/db-integrity-probe.sh does NOT yet exist; scripts/agents-flow/auditor-tier1-probe.sh (925L) is the mirror-source for structure + tmp-file+rename heartbeat-write. REPO CONVENTION - every probe in scripts/agents-flow/ ships a paired .test.sh (auditor-tier1-probe.test.sh, cowork-tick-preflight.test.sh, dev-team-tick-preflight.test.sh); db-integrity-probe.test.sh is MANDATORY, not optional. v1 is COUNT(*)-diff only - the brief is explicit this under-detects daily_ohlcv in-place backfill rewrites (memory: reference_daily_ohlcv_updated_at_is_mutation_not_arrival_backfill_rewrites_97pct); that is ACCEPTED for v1 (Tier-3 daily deep sweep still covers it) - write the limitation into the script header, do NOT silently pretend full coverage. NO-RE-ARM HARD CONSTRAINT (user-set, applies to EVERY row in sprint CADENCE-RATIONALIZATION-20260804): editing a cron authoring .md / skill .md / register.md is IN scope. Actually ARMING anything is OUT of scope. Do NOT call CronCreate. Do NOT run /cron-cowork-team or /cron-detect-loop or /cron-standalone-team. The cron fleet is currently fully dormant (zero armed jobs) and MUST stay dormant until the user separately greenlights re-arm (brief SS8 item 9) after this whole batch is implemented+verified. Re-arming as a 'helpful' side effect is a defect, not a bonus.",
+        "acceptance": [
+          "AC-1 scripts/agents-flow/db-integrity-probe.sh exists, executable, reads ONLY: (a) its own new docs/data/db-integrity-probe-last-snapshot.json, (b) the live DB via the exact read-only sidecar already in the cron prompt (docker run --rm -v vn-market-intelligence-mcp_market_data:/data keinos/sqlite3 sqlite3 \"file:/data/market.db?immutable=1\"). Uses file:?immutable=1, NEVER sqlite3 -readonly (readonly-on-live-WAL blinding class).",
+          "AC-2 Writes ONLY docs/data/db-integrity-probe-last-snapshot.json, via tmp-file+rename (never raw truncate). NEVER writes docs/data/db-integrity-history.json - that stays the system-auditor subagent's own output, untouched.",
+          "AC-3 Watches exactly the 17 tables already named in the cron prompt: daily_ohlcv, market_prices, market_prices_history, vn_index_cache, alerts, price_alerts, alert_engine_records, agent_signals, signal_outcomes, financial_reports, macro_indicators, sbv_rates, fred_series_daily, deep_fetch_queue, deep_fetch_stats, cron_job_runs, scheduler_locks.",
+          "AC-4 stdout is ONE line of valid JSON: {\"verdict\":\"SKIP-SPAWN\"|\"SPAWN\",\"detail\":\"...\",\"tables_changed\":N,\"checked_at\":\"<ISO-UTC>\"} and it is the FIRST thing on stdout (memory: feedback_tick_preflight_verdict_is_first_json_key_tail_always_drops_it - no progress output may leak ahead of it, that exact class already corrupted dev-team's verdict once).",
+          "AC-5 exit 0 = SKIP-SPAWN, and ONLY when every watched table's COUNT(*) matches the snapshot exactly.",
+          "AC-6 exit 1 = SPAWN, FAIL-OPEN, on ALL of: any table count changed OR snapshot missing OR snapshot malformed OR first-run OR the sidecar query itself failed for any reason. A probe fault must NEVER suppress a legitimate run.",
+          "AC-7 db-integrity-probe.test.sh exists and covers BOTH paths RAW-tested: exit-0 no-change path AND exit-1 path, with exit-1 exercised for EACH of its 4 triggers separately (count-changed / snapshot-missing / snapshot-malformed / sidecar-failure). QA-bar explicit.",
+          "AC-8 .claude/commands/crons/cron-db-data-integrity.md prompt gets the brief's gate line prepended as the new FIRST line of the prompt block, verbatim from brief lines 155-157. The existing AUDIT_TIER=DATA body is otherwise byte-identical.",
+          "AC-9 Same file's registration shape becomes TWO jobs instead of one: (a) 15,45 2-9 * * 1-5 weekday session+settlement window, (b) 15 22 * * * daily off-hours backstop. The '- **cron**:' line and the surrounding prose/fires-per-week arithmetic are updated to match (336/wk -> 87/wk). AUTHORING DOC ONLY.",
+          "AC-10 GREP-PROOF no arming happened: git diff of this row's commit contains ZERO CronCreate invocations, and the implementer states explicitly in close-out that no CronCreate/CronList mutation call was made."
+        ]
+      },
+      {
+        "id": "CADRAT-3-DIFFGATE-CODE-JANITOR-AND-AGENT-FATHER",
+        "type": "FIX",
+        "status": "READY",
+        "priority": "medium",
+        "size": "S",
+        "owner": "po",
+        "zone": "cross-service/",
+        "next_agent": "agent-father",
+        "sprint": "CADENCE-RATIONALIZATION-20260804",
+        "created_at": "2026-08-04T19:49:43Z",
+        "created_by": "po/cadence-rationalization-greenlight-20260804T1949Z",
+        "updated_at": "2026-08-04T19:52:23Z",
+        "updated_by": "po/cadence-rationalization-greenlight-20260804T1949Z",
+        "title": "SS8 items 3+5 (FOLDED - identical pattern, brief itself says batch them): add a `git diff --name-only HEAD~3..HEAD` Pre-Check skip-gate to docs/agents/code-janitor/flow/main.md (gates ONLY the Decision-Tree DRY scan) and to docs/agents/agent-father/flow/keep.md (gates the orphan+roster sweep), mirroring claude-manager-helper/flow/main.md's existing best-in-class gate",
+        "note": "docs/architecture-briefs/2026-08-04-cadence-rationalization.md SS8 item 3 (lines 164-177) + item 5 (line 200). Brief item 5 explicitly says 'Worth doing only as a batch with item 3 (same pattern, same effort)' - hence folded. PRECEDENT TO MIRROR, live-confirmed 2026-08-04T19:48Z: docs/agents/claude-manager-helper/flow/main.md:31-47 - a <!-- jump:precheck --> block running `git diff --name-only HEAD~3..HEAD`, GROUP_* path buckets, then a 3-branch Routing table (all-empty+Mon/Thu -> pass-9b / all-empty+other -> end / any-non-empty -> fall through). Brief SS8 item 8 names this the best-in-class example in the whole survey - mirror its SHAPE, do not modify that file. CODE-JANITOR INSERTION POINT IS EXACT: docs/agents/code-janitor/flow/main.md (217L), between Step 0b 'Read notebook' (:17) and '## Decision Tree' (:19). CRITICAL SCOPE FENCE: gate ONLY the Decision-Tree DRY grep scan. The 3 script-driven sweeps (Memory Prune :69, Notebook Line-Cap :113, Cold Archive :139) MUST stay unconditional - they sweep docs/agent-memory/ and docs/handoffs/, NOT source code, and already carry their own internal no-op guards; gating them behind a code-diff check would be a regression. Janitor scan surface = src/, apps/*/src/. AGENT-FATHER keep.md (131L): same gate on the orphan+roster sweep under '## Steps' (:22); its scan surface = .claude/agents/*.md, docs/agents/*/flow/*.md. Routed to agent-father because docs/agents/*/flow/*.md is its write-ownership zone (board precedent: SYSREMAKE-P2-T8-FLOW-DOC-WIRING 'agent-father owned'). If BOUNDED-1's maintenance-lane next_agent withhold ever ships (row FIX-DEVTEAM-BOUNDED1-MAINTLANE-NEXTAGENT-GATE, currently BACKLOG) this row becomes manual/PO-dispatch - flagging now, not later. NO-RE-ARM HARD CONSTRAINT (user-set, applies to EVERY row in sprint CADENCE-RATIONALIZATION-20260804): editing a cron authoring .md / skill .md / register.md is IN scope. Actually ARMING anything is OUT of scope. Do NOT call CronCreate. Do NOT run /cron-cowork-team or /cron-detect-loop or /cron-standalone-team. The cron fleet is currently fully dormant (zero armed jobs) and MUST stay dormant until the user separately greenlights re-arm (brief SS8 item 9) after this whole batch is implemented+verified. Re-arming as a 'helpful' side effect is a defect, not a bonus.",
+        "acceptance": [
+          "AC-1 code-janitor/flow/main.md carries a Pre-Check between Step 0b and Decision Tree running `git diff --name-only HEAD~3..HEAD`; zero files under src/ or apps/*/src/ -> SKIP the Decision-Tree DRY scan this cycle and JUMP straight to the 3 every-scan sweeps.",
+          "AC-2 The 3 every-scan sweeps (Memory Prune / Notebook Line-Cap / Cold Archive) remain reachable and UNCONDITIONAL on the skip path - explicitly verified, not assumed. A skip must not silently strand them.",
+          "AC-3 agent-father/flow/keep.md carries the same gate on its orphan+roster sweep, scan surface .claude/agents/*.md + docs/agents/*/flow/*.md.",
+          "AC-4 DRY-RUN PROOF, both gates, against REAL git history (QA bar is explicit): find a real HEAD~3..HEAD window that DID touch each agent's scan surface and show the gate correctly falls through (does NOT skip); and a window that did NOT and show it correctly skips. Paste both raw command outputs. A gate that false-skips when scope-relevant files changed is worse than no gate.",
+          "AC-5 docs/agents/claude-manager-helper/flow/main.md is NOT modified (brief item 8: leave best-in-class alone).",
+          "AC-6 Both flow docs stay within their size caps (waterfall <=200L / zone 120L per docs/policies) or carry an updated line-1 size-justification comment.",
+          "AC-7 No CronCreate call made."
+        ]
+      },
+      {
+        "id": "CADRAT-4-CRON-STANDALONE-TEAM-REARM-SKILL",
+        "type": "FEAT",
+        "status": "READY",
+        "priority": "medium",
+        "size": "M",
+        "owner": "po",
+        "zone": "cross-service/",
+        "next_agent": "developer",
+        "sprint": "CADENCE-RATIONALIZATION-20260804",
+        "depends": [
+          "CADRAT-2-DB-INTEGRITY-PROBE-PREGATE-AND-SCHEDULE-SPLIT"
+        ],
+        "created_at": "2026-08-04T19:49:43Z",
+        "created_by": "po/cadence-rationalization-greenlight-20260804T1949Z",
+        "updated_at": "2026-08-04T19:52:23Z",
+        "updated_by": "po/cadence-rationalization-greenlight-20260804T1949Z",
+        "title": "SS8 item 4: close the auto-re-arm coverage gap for the 4 orphan crons (db-data-integrity, agent-father, claude-manager-helper, code-janitor) - PO DECISION: mint a NEW lightweight .claude/skills/cron-standalone-team/ skill (SKILL.md + register.md) mirroring cron-cowork-team's single-purpose shape, do NOT widen cron-detect-loop",
+        "note": "docs/architecture-briefs/2026-08-04-cadence-rationalization.md SS8 item 4 (lines 181-194) flagged extend-vs-new-skill as an OPEN SUB-DECISION and left it to the implementer. PO RESOLVED IT: build the NEW skill. Three reasons, all verifiable. (1) Naming accuracy - the brief's own objection: these 4 crons share no dispatch-loop relationship with dev-team/Tier-1/2/3, so folding them into a skill literally named 'cron-detect-loop' is a scope smell. (2) TOKEN ECONOMY, the decisive one: .claude/skills/cron-detect-loop/SKILL.md is 51L and its lines 14-17 carry an EXPLICIT size-justification that the hot path (~46-48 of 48 dev-team ticks/day where nothing is missing) must never load register.md. Doubling its Step-1 idempotency guard from 4 to 8 CronList conditions taxes that hot path 48x/day for 4 crons that are not part of the loop - a documented-rationale regression. (3) Precedent exists - /cron-cowork-team is already exactly this shape (idempotency guard + N CronCreate calls, no dispatch-loop logic). SOURCE OF TRUTH for each job's cadence+prompt = its own .claude/commands/crons/*.md authoring doc, copied VERBATIM: cron-db-data-integrity.md (post-CADRAT-2 -> TWO entries, 15,45 2-9 * * 1-5 + 15 22 * * *, prompt WITH the db-integrity-probe.sh gate line), cron-agent-father.md (23 14 * * *), cron-claude-manager-helper.md (30 19 * * 1,4), cron-code-janitor.md (0 */6 * * *). DEPENDS on CADRAT-2 precisely so the db-integrity job is registered with the corrected schedule+gate, not the stale one. Fire-election period-keys are OUT of scope (no multi-session collision history on these 4). NO-RE-ARM HARD CONSTRAINT (user-set, applies to EVERY row in sprint CADENCE-RATIONALIZATION-20260804): editing a cron authoring .md / skill .md / register.md is IN scope. Actually ARMING anything is OUT of scope. Do NOT call CronCreate. Do NOT run /cron-cowork-team or /cron-detect-loop or /cron-standalone-team. The cron fleet is currently fully dormant (zero armed jobs) and MUST stay dormant until the user separately greenlights re-arm (brief SS8 item 9) after this whole batch is implemented+verified. Re-arming as a 'helpful' side effect is a defect, not a bonus.",
+        "acceptance": [
+          "AC-1 .claude/skills/cron-standalone-team/SKILL.md exists: frontmatter name+description, a Step-1 CronList idempotency guard, an all-found STOP/no-op line, and a lazy-load pointer to register.md (mirror cron-detect-loop/SKILL.md's thin-dispatcher shape, which is the pattern to COPY even though its scope is the thing we are NOT widening).",
+          "AC-2 .claude/skills/cron-standalone-team/register.md exists with one Job block per registered entry, each carrying the CronCreate call authored VERBATIM from that cron's own .claude/commands/crons/*.md - zero hand-rewritten prompts (hand-porting is the documented mechanism that spreads drift across artifacts).",
+          "AC-3 db-data-integrity registers as TWO entries post-CADRAT-2 (15,45 2-9 * * 1-5 + 15 22 * * *) and its prompt includes the db-integrity-probe.sh gate line. If CADRAT-2 has not landed, this row BLOCKS - it does not register the stale 15,45 * * * * shape.",
+          "AC-4 .claude/skills/cron-detect-loop/SKILL.md and register.md are NOT modified (that is the whole point of the extend-vs-new decision).",
+          "AC-5 CLAUDE.md's '## Skills (slash commands)' section gains a /cron-standalone-team pointer line alongside the existing /cron-cowork-team and /cron-detect-loop entries - otherwise the new skill is undiscoverable and the coverage gap is only cosmetically closed.",
+          "AC-6 HARDEST AC, DO NOT SKIP: the skill is AUTHORED but NEVER INVOKED. No CronCreate call is made while implementing this row. Writing the CronCreate call INTO register.md is the deliverable; EXECUTING it is out of scope and is the exact 'helpful side effect' the user forbade. The fleet stays at zero armed jobs when this row closes.",
+          "AC-7 Close-out states explicitly: skill authored, fleet still dormant, zero CronCreate calls issued."
+        ]
+      },
+      {
+        "id": "CADRAT-5-DEVTEAM-EXTENDED-IDLE-POLL-WIDEN",
+        "type": "FIX",
+        "status": "READY",
+        "priority": "low",
+        "size": "S",
+        "owner": "po",
+        "zone": "cross-service/",
+        "next_agent": "developer",
+        "sprint": "CADENCE-RATIONALIZATION-20260804",
+        "created_at": "2026-08-04T19:49:43Z",
+        "created_by": "po/cadence-rationalization-greenlight-20260804T1949Z",
+        "updated_at": "2026-08-04T19:52:23Z",
+        "updated_by": "po/cadence-rationalization-greenlight-20260804T1949Z",
+        "title": "SS8 item 6: widen dev-team's outer poll interval during CONFIRMED extended-idle stretches - N consecutive RUN-IDLE ticks + weekend/holiday -> widen from 30min toward ~480min (gatherer-standard's weekend rate)",
+        "note": "docs/architecture-briefs/2026-08-04-cadence-rationalization.md SS8 item 6 (line 206) gives the shape only, not an exact spec - this row needs a small design decision on N and on where the consecutive-RUN-IDLE counter is persisted. Live anchors confirmed 2026-08-04T19:48Z: the RUN-IDLE verdict is emitted at scripts/agents-flow/dev-team-tick-preflight.sh:555 (_emit_verdict \"RUN-IDLE\") and consumed by docs/agents/dev-team/flow/main.md:101. Brief is explicit this is LOW priority and buys fewer tick COUNTS, not less real work - RUN-IDLE already makes idle ticks near-free. Ship only if it can be done without weakening the RUN-IDLE emptiness predicate itself. Do NOT change the cron expression 7,37 * * * * (SS9 row 17 says no change) - the widening is an in-script suppression, not a schedule edit. NO-RE-ARM HARD CONSTRAINT (user-set, applies to EVERY row in sprint CADENCE-RATIONALIZATION-20260804): editing a cron authoring .md / skill .md / register.md is IN scope. Actually ARMING anything is OUT of scope. Do NOT call CronCreate. Do NOT run /cron-cowork-team or /cron-detect-loop or /cron-standalone-team. The cron fleet is currently fully dormant (zero armed jobs) and MUST stay dormant until the user separately greenlights re-arm (brief SS8 item 9) after this whole batch is implemented+verified. Re-arming as a 'helpful' side effect is a defect, not a bonus.",
+        "acceptance": [
+          "AC-1 A consecutive-RUN-IDLE counter is persisted somewhere durable + sole-written by the preflight script (mirror the auditor-tier*-last-healthy.json sole-writer pattern); it RESETS to zero on the first non-RUN-IDLE verdict.",
+          "AC-2 Widening fires ONLY when BOTH hold: counter >= N AND calendar_status is weekend or holiday. Never on a weekday. N is chosen and justified in the script header.",
+          "AC-3 calendar_status is read from a source with an ENUM GATE, and an out-of-domain value (e.g. the live 'closed' literal that is NOT in cadence-policy.json's 5-value domain) must fail CLOSED - i.e. do NOT widen. Memory: feedback_pressure_state_caller_supplied_fields_dead_server_computed_live + the FIX-COWORK-CADENCE-DANGLING-POLICY-ID 2026-07-25 counter-example where an out-of-domain calendar_status silently ate a slot's declared rate.",
+          "AC-4 The widened state can never suppress a tick that would have had real work: any signal_queue NEW row / fresh docs/signals/*.json / non-empty active_sprints breaks the widening immediately, same predicates RUN-IDLE already checks.",
+          "AC-5 dev-team-tick-preflight.test.sh extended with RAW-tested cases: below-N no-widen, at-N+weekend widen, at-N+weekday no-widen, out-of-domain calendar_status no-widen, and counter-reset-on-RUN.",
+          "AC-6 Cron expression 7,37 * * * * unchanged. No CronCreate call made."
+        ]
+      },
+      {
+        "id": "CADRAT-6-ORCH-SENTINEL-LITE-PREGATE",
+        "type": "FIX",
+        "status": "READY",
+        "priority": "low",
+        "size": "S",
+        "owner": "po",
+        "zone": "cross-service/",
+        "next_agent": "developer",
+        "sprint": "CADENCE-RATIONALIZATION-20260804",
+        "created_at": "2026-08-04T19:49:43Z",
+        "created_by": "po/cadence-rationalization-greenlight-20260804T1949Z",
+        "updated_at": "2026-08-04T19:52:23Z",
+        "updated_by": "po/cadence-rationalization-greenlight-20260804T1949Z",
+        "title": "SS8 item 7 (consistency only): give orch-sentinel's daily MODE=LITE run (OH-1 plumbing check) the same ALL_GREEN + fresh-heartbeat shell pre-gate pattern system-auditor Tier-1/2/3 already use",
+        "note": "docs/architecture-briefs/2026-08-04-cadence-rationalization.md SS8 item 7 (line 212). Brief is explicit: NO concrete waste was found here - this is a CONSISTENCY row, not a waste-removal row. Do not manufacture a saving that was not measured. Live anchors confirmed 2026-08-04T19:48Z: .claude/commands/crons/cron-orch-sentinel.md registers two modes (FULL weekly 18 3 * * 0, LITE daily 48 1 * * *, :39-47 is the LITE block); MODE dispatch at docs/agents/orch-sentinel/flow/main.md:39-40,55,86; LITE runs dim-oh1-feedback-loop.md then emit-scorecard.md. Pattern source = scripts/agents-flow/auditor-tier1-probe.sh (925L) and the WU-3 gate wording in .claude/skills/cron-detect-loop/register.md Job 3/4. SS9 row 15 says the 48 1 * * * TIMING is already correct (08:48 ICT, pre-open) - do NOT change the schedule. FAIL-OPEN is mandatory: any probe fault -> run the LITE sweep. NO-RE-ARM HARD CONSTRAINT (user-set, applies to EVERY row in sprint CADENCE-RATIONALIZATION-20260804): editing a cron authoring .md / skill .md / register.md is IN scope. Actually ARMING anything is OUT of scope. Do NOT call CronCreate. Do NOT run /cron-cowork-team or /cron-detect-loop or /cron-standalone-team. The cron fleet is currently fully dormant (zero armed jobs) and MUST stay dormant until the user separately greenlights re-arm (brief SS8 item 9) after this whole batch is implemented+verified. Re-arming as a 'helpful' side effect is a defect, not a bonus.",
+        "acceptance": [
+          "AC-1 A shell pre-gate exists for the LITE path with the SAME contract as the auditor tiers: one-line JSON verdict FIRST on stdout, exit 0 = SKIP-SPAWN, exit 1 = SPAWN.",
+          "AC-2 FAIL-OPEN: probe fault / missing state / malformed state / first-run all yield exit 1 (SPAWN). Never suppress on a probe fault.",
+          "AC-3 Gate condition is ALL_GREEN + heartbeat freshness, matching the Tier-1/2/3 semantics - not a re-invented predicate. Predicate drift is a documented false-regression source (feedback_auditor_predicate_drift_false_regression).",
+          "AC-4 MODE=FULL (weekly Sunday) is NOT gated - it must still run unconditionally.",
+          "AC-5 Paired .test.sh covering exit-0 and exit-1 (incl. each fault trigger), per the scripts/agents-flow/ convention.",
+          "AC-6 Cron expressions 48 1 * * * and 18 3 * * 0 unchanged. No CronCreate call made."
+        ]
+      },
+      {
+        "id": "CADRAT-7-NEWS-SCOUT-SENTIMENT-PREMARKET-TIME-FIX",
+        "type": "FIX",
+        "status": "READY",
+        "priority": "medium",
+        "size": "S",
+        "owner": "po",
+        "zone": "cross-service/",
+        "next_agent": "agent-father",
+        "sprint": "CADENCE-RATIONALIZATION-20260804",
+        "created_at": "2026-08-04T19:49:43Z",
+        "created_by": "po/cadence-rationalization-greenlight-20260804T1949Z",
+        "updated_at": "2026-08-04T19:52:23Z",
+        "updated_by": "po/cadence-rationalization-greenlight-20260804T1949Z",
+        "title": "SS9 row 4: news-scout-sentiment slot fires 0 5 * * 1-5 = 12:00 ICT, 3h AFTER the 09:00 open and inside the 11:30-13:00 lunch closure, while its own vn_description calls it 'pre-market batch' - correct to 30 1 * * 1-5 (08:30 ICT, 30min before open). Time-of-day only, frequency unchanged at 5/wk",
+        "note": "docs/architecture-briefs/2026-08-04-cadence-rationalization.md SS9 row 4 (line 251). LOCATION CORRECTION vs the brief - the brief did not name the file; PO located it 2026-08-04T19:48Z. This is a COWORK SLOT, not a CronCreate cron. Two files carry the value: (a) docs/data/cowork-schedule.json slot_id=news-scout-sentiment (:271) fields cron / utc_description ('05:00 UTC Mon-Fri') / vn_description ('12:00 VN Mon-Fri (pre-market batch)') - all three must move together or the label lies again; (b) docs/agents/news-scout/init.md:94 batch2_sentiment cron mirror + its description ('Daily sentiment log to ticker ledgers (05:00 UTC)'). WRITE-OWNERSHIP GATE SATISFIED: cowork-schedule.json declares _maintained_by = 'agent-father (via architect brief only)'. The architect brief EXISTS and is the authority for this change - docs/architecture-briefs/2026-08-04-cadence-rationalization.md SS9 row 4 - so agent-father may proceed; cite it in the commit. BECAUSE THIS IS A SLOT NOT A CRON, editing it arms nothing: the cowork dispatcher is dormant and the slot's due-matcher just reads the new value whenever the fleet is next armed. Do NOT touch last_fired (memory: feedback_cowork_lastfired_multislot_jq_needle_clobbers_schedule - a careless jq needle has clobbered this file before). NO-RE-ARM HARD CONSTRAINT (user-set, applies to EVERY row in sprint CADENCE-RATIONALIZATION-20260804): editing a cron authoring .md / skill .md / register.md is IN scope. Actually ARMING anything is OUT of scope. Do NOT call CronCreate. Do NOT run /cron-cowork-team or /cron-detect-loop or /cron-standalone-team. The cron fleet is currently fully dormant (zero armed jobs) and MUST stay dormant until the user separately greenlights re-arm (brief SS8 item 9) after this whole batch is implemented+verified. Re-arming as a 'helpful' side effect is a defect, not a bonus.",
+        "acceptance": [
+          "AC-1 docs/data/cowork-schedule.json slot news-scout-sentiment: cron = '30 1 * * 1-5'.",
+          "AC-2 SAME slot's utc_description and vn_description updated to match ('01:30 UTC Mon-Fri' / '08:30 VN Mon-Fri (pre-market batch)') - the mislabel IS the defect; fixing the expression while leaving the prose stale reproduces it.",
+          "AC-3 docs/agents/news-scout/init.md:94 batch2_sentiment cron + description mirror the new value. No third copy left anywhere: grep -rn '0 5 \\* \\* 1-5' returns ONLY historical signal/notebook/brief archives, zero live config.",
+          "AC-4 NO OTHER SLOT in cowork-schedule.json is modified - diff must be scoped to the news-scout-sentiment object plus nothing else. Verify with a per-slot jq diff, not eyeball.",
+          "AC-5 last_fired, trigger_id, policy_id, guaranteed, enabled on that slot are UNCHANGED.",
+          "AC-6 cowork-schedule.json remains valid JSON and slot count is unchanged.",
+          "AC-7 Frequency stays 5/wk (Mon-Fri, once daily). This is a time-of-day correction, NOT a frequency cut. No CronCreate call made."
+        ]
       }
     ],
     "review": [
@@ -20330,9 +20513,25 @@
         }
       ]
     },
-    "last_triaged_at": "2026-08-01T12:51:13Z",
-    "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": []
+    "last_triaged_at": "2026-08-04T19:49:43Z",
+    "last_triaged_by": "po/cadence-rationalization-greenlight-20260804T1949Z",
+    "in_progress": [
+      {
+        "id": "FIX-DEPTHTHIN-B-GATEWAY-TA-PATH-REWRITE",
+        "title": "DEPTH_THIN (b): dashboard.technical OHLCV candles render but TA indicators (MA/RSI/MACD) are MISSING — the api-gateway /ta path-rewrite is a TODO so technical-analysis indicators never reach the frontend. Wire the gateway /ta path-rewrite; also add generatedAt to /api/price-history.",
+        "type": "FIX",
+        "priority": "P3",
+        "status": "IN_PROGRESS",
+        "zone": "multi",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-DEPTHTHIN-B-GATEWAY-TA-PATH-REWRITE",
+        "promoted_at": "2026-08-01T13:18:33Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=3)",
+        "updated_at": "2026-08-01T13:18:39Z",
+        "claimed_at": "2026-08-01T13:18:38Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)"
+      }
+    ]
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
