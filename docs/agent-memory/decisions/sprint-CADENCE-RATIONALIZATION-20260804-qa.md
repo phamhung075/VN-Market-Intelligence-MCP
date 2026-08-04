@@ -54,3 +54,20 @@
 - Force a review of unimplemented rows vs report the discrepancy and hold
 **why-decision:** cannot QA work that was never done; reviewing a READY row would be reviewing nothing (no diff/commit exists) — reported back instead.
 **why-change:** scope reduced from 7 to 5 rows actually reviewable; flagged, not silently absorbed.
+
+### STEP qa-S7 · qa · 2026-08-04T21:14:36Z
+**task-id:** CADRAT-3-DIFFGATE-CODE-JANITOR-AND-AGENT-FATHER
+**what-done:** Direct-commit verify 5ee84f0f5 (po lane-moved review[] after cycle-501) — AC-1..7 RAW-adjudicated, not accepted from po's existence-only attestation.
+**what-considered:**
+- AC-2 "3 sweeps stay unconditional" — trust the routing prose vs read full file structurally
+- AC-4 dry-run proof — trust agent-father's claimed outputs vs re-run both gates × both directions myself
+**why-decision:** read full code-janitor/flow/main.md — the 3 sweeps sit in doc order after Decision Tree with no gate wrapper, confirmed reachable not assumed; re-ran AC-4 against 4 real historical windows (2 per gate) myself, all 4 correct.
+**why-change:** no change from plan — po's note explicitly said AC-1..7 remain qa's to adjudicate.
+
+### STEP qa-S8 · qa · 2026-08-04T21:14:36Z
+**task-id:** CADRAT-7-NEWS-SCOUT-SENTIMENT-PREMARKET-TIME-FIX
+**what-done:** Direct-commit verify d916aa40b — AC-1..7 RAW-adjudicated via jq per-slot diff (not eyeball) + re-ran cowork-schedule-consistency.test.js (9/9) + DWF-phase1-cadence.test.ts (61/61).
+**what-considered:**
+- Dirty cowork-schedule.json in working tree — treat as commit violation vs verify po's last_fired-churn claim myself
+**why-decision:** `git diff -U0 cowork-schedule.json | grep -v last_fired` left only bare hunk headers, zero content lines — confirms every uncommitted change is last_fired runtime churn, not this commit; AC-5 byte-diff on the slot object independently confirms last_fired/trigger_id/policy_id/guaranteed/enabled untouched BY THE COMMIT itself.
+**why-change:** no change from plan.
