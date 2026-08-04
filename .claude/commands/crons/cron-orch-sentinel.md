@@ -38,11 +38,19 @@ router/PO-gated action, reported as PENDING in agent-father's RETURN block.**
 
 ## MODE=LITE — Daily Plumbing Check (before VN market open)
 
+**CADRAT-6 pre-gate (docs/architecture-briefs/2026-08-04-cadence-rationalization.md §8 item 7,
+consistency only — no schedule change, timing unchanged per SS9 row 15):** the prompt below now
+gives LITE the SAME `ALL_GREEN` + fresh-heartbeat shell pre-gate pattern system-auditor
+Tier-1/2/3 already use, via `scripts/agents-flow/orch-sentinel-lite-probe.sh`. MODE=FULL (below)
+is deliberately NOT gated.
+
 - **cron**: `48 1 * * *` (01:48 UTC daily = 08:48 VN, before 09:00 VN market open)
 - **recurring**: true
 - **durable**: true
 - **prompt**:
   ```
+  Run: bash scripts/agents-flow/orch-sentinel-lite-probe.sh and read its exit code + one-line JSON verdict. If exit code = 0 (verdict=SKIP-SPAWN): done, log '[cron-orch-sentinel] LITE SKIP-SPAWN (infra ALL_GREEN + OH-STATE run_ts fresh, no plumbing check needed this tick)', do NOT spawn a subagent. FAIL-OPEN on anything else — exit code 1 (verdict=SPAWN, includes infra FAILURE/missing or stale OH-STATE run_ts/probe fault): proceed to the existing prompt body below unchanged.
+
   Launch subagent (subagent_type=orch-sentinel). Read and execute docs/agents/orch-sentinel/flow/main.md
   MODE=LITE
   MCP: https://zenmidi.com/vn-market/mcp
