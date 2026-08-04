@@ -72,3 +72,26 @@
 - Did NOT touch `orch-state.json`'s task_board row myself (`commit_zone.excluded`, same
   precedent as TE-T12/TE-T14/TE-T21) despite the dispatch prompt asking for the flip —
   supplied the exact BACKLOG→REVIEW `orch-apply.sh` transform in RETURN for router to run.
+
+## Fix (router-dispatched, sprint CADENCE-RATIONALIZATION-20260804) 2026-08-04T20:10:00Z CADRAT-3+CADRAT-7
+- CADRAT-3: git-diff pre-check gate (`HEAD~3..HEAD`) added to code-janitor/flow/main.md
+  (skips Decision-Tree DRY scan when src/|apps/*/src/ untouched; 3 every-scan sweeps stay
+  unconditional) and agent-father/flow/keep.md (skips Steps 1-2 orphan+roster scan when
+  .claude/agents/*.md|docs/agents/*/flow/*.md untouched; Steps 3-5 stay reachable).
+  claude-manager-helper/flow/main.md untouched (precedent, not edited). AC-4 dry-run proof
+  ran against real git history for both gates (correct-skip + correct-fall-through each).
+- CADRAT-7: news-scout-sentiment cron 05:00→01:30 UTC (self-contradicted "pre-market" label
+  — 12:00 ICT was 3h post-open, inside lunch) in cowork-schedule.json + news-scout/init.md.
+- **Lesson (live, costly near-miss):** `git commit -m ... -- <path>` on a path that is ALSO
+  modified elsewhere in the working tree does NOT respect a partial `git apply --cached`
+  stage for that path — pathspec-commit implies `--only`, i.e. WORKING TREE content wins,
+  index is ignored for named paths. First CADRAT-7 commit attempt swept 22 unrelated live
+  `last_fired` bumps from cowork-schedule.json (a dispatcher-mutated hot file) into the
+  commit. Caught via the sweep-guard hook's non-blocking warning, not by me pre-checking.
+  Fix pattern for isolating one hunk in a concurrently-dirty tracked file: stage the hunk
+  (`git apply --cached`) → `git checkout-index -f -- <path>` to materialize ONLY the index
+  content into the working tree → commit with pathspec (now safe) → restore the backed-up
+  full working-tree content afterward so other agents' pending writes aren't lost.
+- Wrote the one allowed exception write (signal_queue DONE-mark, `orch-apply.sh`, read-back
+  confirmed) addressed to po requesting QA verify + task_board lane-move — did not touch
+  task_board rows directly (`commit_zone.excluded`), same precedent as prior cycles above.
