@@ -1,15 +1,5 @@
 # agents-architect — Notebook
 
-## 2026-07-31T01:48:31Z
-
-**Brief:** `docs/architecture-briefs/2026-07-31-sweepguard-escalation-actuator-and-triage-mechanism-check.md`
-
-Po directly dispatched (post-triage) FIX-SWEEPGUARD-WARN-ONLY-NO-ACTUATOR-AND-TRIAGE-MISADJUDICATION: sweep-guard hook (`scripts/git-hooks/pre-commit`) logs BARE commits forever but never blocks (14 warns/8h, 4 sessions), and this session's own triage had been dispositioning all 4 live signals "benign" on a clean `git show --stat` (outcome), not the mechanism the discriminator already proves by construction. Designed a per-actor escalation actuator (`GIT_SWEEP_GUARD_ESCALATE_THRESHOLD=3` default, reuses existing `.git/sweep-guard.log` `actor=` field, zero new deps) that converges repeat offenders to a hard block same-session, without waiting on po's own staged fleet-wide `GIT_SWEEP_GUARD_MODE` flip (kept as Phase 2, 24h observation + rollback command). New routing rows for `triage-signals.md` + `drain-signals.md` §0a-3 make the mechanism check (payload's own BARE/SCOPED tag + new `escalated=` field) mandatory and name the "`git show --stat` clean" non-disposition explicitly forbidden.
-
-**Signal dropped:** `docs/signals/sweepguard-escalation-actuator-and-triage-mechanism-check-20260731T014831Z.json` → agent-father (cc po, dev-team)
-
----
-
 ## 2026-07-31T04:29:55Z
 
 **Brief:** `docs/architecture-briefs/2026-07-31-cired-triage-failedfile-dedup.md`
@@ -27,3 +17,13 @@ FIX-CIRED-TRIAGE-WRONG-PLANE-DEDUP-AMNESTY: triage-signals.md's `ci_red` row ded
 Ad-hoc user request ("right moment, not all the time") across cowork-team/dev-team/system-auditor: 15-cron inventory found cowork's DWF-Phase1 `cadence-policy.json` engine and dev-team/system-auditor's independently-reinvented bespoke idle/health gates (dev-team RUN-IDLE; `auditor-tier1-probe.sh` ALL_GREEN+fresh-heartbeat) already adaptive; one naively-fixed cron found (`cron-db-data-integrity.md` — zero conditioning, full agent spawn every 30min 24/7); one latent config gap (alert-commander `policy_id` has zero matching `cadence-policy.json` rows — masked today only because the fleet is in legacy-cron fallback); and one distinct operational finding kept separate from the design question per the brief's own instruction: fleet crons (cowork-team, dev-team, auditor Tier-1/2/3) have been unarmed ~3 days (`CronList` empty, `pressure-state.json` 72h stale, independently corroborated via a git-log gap since commit `02d9ac3c7`) — a re-arm gap, not a broken design. Verdict on whether this is the deferred Phase 3+ greenlight: NO — the ask is Phase-1's domain (already shipped for cowork); Phase 3/4/5 solve routing/DAG/backpressure, a different problem, and correctly stay deferred. Brief ends with a 7-item numbered candidate list for user confirmation — PLAN-ONLY, nothing implemented, no cron/flow/`.task_board` file touched.
 
 **Signal dropped:** `docs/signals/cadence-rationalization-20260804T181613Z.json` → po (cc agent-father) — AWAITING_USER_CONFIRMATION, informational only
+
+---
+
+## 2026-08-04T19:28:44Z
+
+**Brief:** `docs/architecture-briefs/2026-08-04-cadence-rationalization.md` (updated in place, no new file)
+
+User follow-up (via coordinator): widen to ALL crons and make the confirmed-worth-fixing items implementation-ready, with the fleet re-arm explicitly sequenced LAST. Widened inventory 15→18 rows: added `cron-agent-father.md` (`23 14 * * *` daily, unconditional `keep.md` orphan+roster sweep, no diff-gate — naively fixed, lower severity), `cron-claude-manager-helper.md` (`30 19 * * 1,4`, ALREADY best-in-class adaptive — real `git diff --name-only HEAD~3..HEAD` mutation-delta routing + per-pass SKIP-IF stubs, no change needed), `cron-code-janitor.md` (`0 */6 * * *` 4x/day, mixed — 3 of 4 sweep legs self-gate via internal script thresholds but the core DRY-duplication grep scan has no diff-gate, 2nd clearest naive-fix gap found, with claude-manager-helper's own pattern as a ready precedent). Turned the 3 already-confirmed items into implementation-ready specs: literal 10-row JSON block for the alert-commander `cadence-policy.json` gap (`_cron_fallback:true` mirroring `bctc-offmarket`, preserves current behavior, no regression); full contract for a new `db-integrity-probe.sh` pre-gate script (COUNT(*)-diff v1 against a new dedicated snapshot file, not the unstable `db-integrity-history.json`; FAIL-OPEN SPAWN/SKIP-SPAWN shape mirroring Tier-2/3); exact `cron-detect-loop/SKILL.md` + `register.md` line-level changes to bring 4 unarmed crons under auto-re-arm coverage. Re-sequenced §8 so item 9 (fleet re-arm) runs explicitly last, after any greenlit corrections are implemented+verified.
+
+**Signal dropped:** `docs/signals/cadence-rationalization-20260804T181613Z.json` (updated, same file) → po (cc agent-father) — AWAITING_USER_CONFIRMATION, informational only
