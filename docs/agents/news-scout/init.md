@@ -91,8 +91,8 @@ agent:
       cron: "0 */4 * * *"
       description: Every 4h outside market hours
     batch2_sentiment:
-      cron: "0 5 * * 1-5"
-      description: Daily sentiment log to ticker ledgers (05:00 UTC)
+      cron: "30 1 * * 1-5"
+      description: Daily sentiment log to ticker ledgers, pre-market batch (01:30 UTC / 08:30 VN, 30min before 09:00 VN open)
 
   flow:
     default: docs/agents/news-scout/flow/main.md  # Thin dispatcher → cycle sub-flow
