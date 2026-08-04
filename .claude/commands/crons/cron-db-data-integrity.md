@@ -1,10 +1,14 @@
 # cron-db-data-integrity — Live DB Data-Anomaly Sweep → Signal → dev-team
 
-**Purpose:** Every 30 min, an agent inspects the **live market DB** for *data* anomalies
-(missing/failed, stale/unavailable, duplicate/repeat, incorrect/out-of-range — the "aleator"
-class), records every finding to a JSON history, and writes GENUINE issues as signals to
+**Purpose:** On a schedule scoped to when the watched tables can actually change (weekday
+trading session + settlement window, plus a daily off-hours backstop — CADRAT-2, §9 row 13
+below), an agent inspects the **live market DB** for *data* anomalies (missing/failed,
+stale/unavailable, duplicate/repeat, incorrect/out-of-range — the "aleator" class), records
+every finding to a JSON history, and writes GENUINE issues as signals to
 `orch-state.json .signal_queue.rows[]` so the hourly dev-team cron drains them into permanent,
-root-cause fixes. **Detection only — never fixes the DB directly.**
+root-cause fixes. **Detection only — never fixes the DB directly.** A cheap
+`db-integrity-probe.sh` pre-gate (below) additionally skips the subagent spawn on any tick
+where no watched table's row count moved since the last sweep.
 
 Complements `cron-system-auditor.md` Tier-3 (deep DB integrity, daily) with a frequent,
 data-value-focused pass. Cadence offset to `:15/:45` to avoid colliding with the
@@ -14,11 +18,33 @@ system-auditor `*/30` (:00/:30) and dev-team `:07` crons.
 
 ## Create with CronCreate
 
-- **cron**: `15,45 * * * *`   (every 30 min, offset)
+**CADRAT-2 schedule split (docs/architecture-briefs/2026-08-04-cadence-rationalization.md §9 row 13):**
+the watched tables cannot change outside trading hours + a short settlement window by construction,
+so checking them every 30min around the clock was checking something provably unchanged most ticks.
+TWO registrations now share the SAME prompt below (only the `cron` expression differs):
+
+### Job A — Weekday session + settlement window
+- **cron**: `15,45 2-9 * * 1-5`   (16 fires/weekday = 80/wk; 09:00-16:59 VN Mon-Fri, covers the trading
+  session + ~2h settlement)
 - **recurring**: true
 - **durable**: true
-- **prompt**:
+
+### Job B — Daily off-hours backstop
+- **cron**: `15 22 * * *`   (1 fire/day = 7/wk; 05:00 VN daily, still catches a stuck pipeline/overnight
+  macro-feed failure outside Job A's window)
+- **recurring**: true
+- **durable**: true
+
+**Combined new total: 87 fires/wk, down from the prior single-job `15,45 * * * *` 336/wk (−74%).**
+
+Additive to, not a substitute for, the `db-integrity-probe.sh` pre-gate below (docs/architecture-briefs/
+2026-08-04-cadence-rationalization.md §9 Reconciliation) — fewer raw fires (this schedule split) ×
+lower spawn-rate-per-fire (the pre-gate) compounds; both ship together.
+
+- **prompt** (both jobs, byte-identical):
   ```
+  Run: bash scripts/agents-flow/db-integrity-probe.sh and read its exit code + one-line JSON verdict. If exit code = 0 (verdict=SKIP-SPAWN): done, log '[cron-db-data-integrity] SKIP-SPAWN (no watched table row-count changed since last sweep)', do NOT spawn a subagent. FAIL-OPEN on anything else — exit code 1 (verdict=SPAWN, includes probe faults/missing snapshot/first-run): proceed to the existing prompt body below unchanged.
+
   Launch subagent (subagent_type=system-auditor). Read and execute docs/agents/system-auditor/flow/main.md
   AUDIT_TIER=DATA
   MCP: https://zenmidi.com/vn-market/mcp
@@ -165,9 +191,10 @@ system-auditor `*/30` (:00/:30) and dev-team `:07` crons.
 
 ## Run it
 
-Paste the prompt block above into a `CronCreate` call (or ask the router to register it).
-First run can be invoked once manually to seed `docs/data/db-integrity-history.json` and
-confirm the sidecar + signal write work before the cron takes over.
+Paste the SAME prompt block above into TWO `CronCreate` calls, one per Job A/Job B `cron`
+expression (or ask the router to register both). First run can be invoked once manually to
+seed `docs/data/db-integrity-history.json` and confirm the sidecar + signal write work before
+either cron takes over.
 
 ## Manage
 `CronList` | `CronDelete <id>`
@@ -177,9 +204,12 @@ confirm the sidecar + signal write work before the cron takes over.
   mutates the DB; all fixes flow through dev-team. This honours the router/agent "detect ≠ fix"
   boundary. The immutable=1 URI flag bypasses WAL/-shm and avoids uid-mismatch failures after the
   writer restarts (see DB ACCESS note above).
-- **Tune cadence** if the 30-min sweep strains the host (16GB cap, see host-memory-panic): a
-  full-table outlier scan is heavier than aggregate checks — keep queries aggregate; drop to
-  hourly (`15 * * * *`) if load climbs.
+- **Schedule split (CADRAT-2)** already narrows raw fires from 336/wk to 87/wk (see Create with
+  CronCreate above); the `db-integrity-probe.sh` pre-gate additionally narrows spawn-rate-per-fire
+  on top of that — the two are additive, not substitutes for each other (docs/architecture-briefs/
+  2026-08-04-cadence-rationalization.md §9 Reconciliation). If the host still strains under Job A's
+  16 weekday fires, keep the pre-gate load-bearing (it already SKIP-SPAWNs on every no-change tick)
+  before considering a further schedule cut.
 - **Deeper integration** (optional, later): the check battery could move into
   `docs/agents/system-auditor/flow/main.md` as a first-class `AUDIT_TIER=DATA` branch instead of
   living in this prompt — do that via the agent-flow owner if this proves load-bearing.
