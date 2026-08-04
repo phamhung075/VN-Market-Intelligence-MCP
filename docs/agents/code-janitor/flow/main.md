@@ -1,4 +1,4 @@
-<!-- size-justification: 182L — cap 120; UC-MDH-P3 added the Memory Prune Sweep section (script invocation + FLOW-vs-script signal_queue boundary, ~35L) which is tightly coupled to the adjacent Memory + State section it precedes; splitting into a child doc would orphan a 6-step sequential procedure that must run in one pass every scan. TE-T17 2026-07-23: added Notebook Line-Cap Sweep (script pointer, ~20L) — same every-scan cadence, precedes Memory + State for the same reason. TE-T33 2026-07-23: added Cold Archive Sweep (script pointer, ~26L) — internally monthly-guarded, same every-scan cron invocation pattern, precedes Memory + State for the same reason. -->
+<!-- size-justification: 227L — cap 120; UC-MDH-P3 added the Memory Prune Sweep section (script invocation + FLOW-vs-script signal_queue boundary, ~35L) which is tightly coupled to the adjacent Memory + State section it precedes; splitting into a child doc would orphan a 6-step sequential procedure that must run in one pass every scan. TE-T17 2026-07-23: added Notebook Line-Cap Sweep (script pointer, ~20L) — same every-scan cadence, precedes Memory + State for the same reason. TE-T33 2026-07-23: added Cold Archive Sweep (script pointer, ~26L) — internally monthly-guarded, same every-scan cron invocation pattern, precedes Memory + State for the same reason. CADRAT-3 2026-08-04: added Pre-Check gate (git diff --name-only HEAD~3..HEAD, ~10L) between Step 0b and Decision Tree — skips the DRY scan on cycles with zero src/ or apps/*/src/ changes, mirroring claude-manager-helper/flow/main.md's precedent; the 3 every-scan sweeps stay unconditional. -->
 
 # Code Janitor — Main Flow
 
@@ -15,6 +15,16 @@ Direct fixes committed | Backlog tasks created | `docs/data/code-janitor-known-f
 **Step 0a — Resolve project root** → run skill: `.claude/skills/project-root/SKILL.md`
 
 **Step 0b — Read notebook** → skill: `.claude/skills/notebook-read/SKILL.md` (replace `<agent-id>` with `code-janitor`)
+
+## Pre-Check (gates ONLY the Decision-Tree DRY scan below — CADRAT-3)
+```bash
+git diff --name-only HEAD~3..HEAD
+```
+Scope: `src/**` | `apps/*/src/**` — the DRY-duplication scan's input surface (source code only).
+
+**Routing:**
+- Zero files under `src/` or `apps/*/src/` → SKIP the Decision-Tree DRY scan this cycle — skip straight to **Memory Prune Sweep** (below). The 3 every-scan sweeps (Memory Prune / Notebook Line-Cap / Cold Archive) stay UNCONDITIONAL on this gate — they sweep `docs/agent-memory/`/`docs/handoffs/`, not source code, and already carry their own internal no-op guards.
+- Any match under `src/` or `apps/*/src/` → fall through to Decision Tree as normal.
 
 ## Decision Tree
 ```

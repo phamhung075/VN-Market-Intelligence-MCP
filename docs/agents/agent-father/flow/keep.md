@@ -1,4 +1,4 @@
-<!-- size-justification: 127L — atomic maintenance flow with inline 15-check audit table + 5-check sweep matrix; splitting individual check rows yields no token benefit. -->
+<!-- size-justification: 141L — atomic maintenance flow with inline 15-check audit table + 5-check sweep matrix; splitting individual check rows yields no token benefit. CADRAT-3 2026-08-04: added Pre-Check gate (git diff --name-only HEAD~3..HEAD, ~10L) before Steps 1-2 — skips the orphan+roster sweep on cycles with zero .claude/agents/*.md or docs/agents/*/flow/*.md changes, mirroring claude-manager-helper/flow/main.md's precedent; Steps 3-5 stay reachable and run with empty scan-orphans output. -->
 # Agent Father — Keep (Maintenance) Flow — Thin Dispatcher
 
 **Tools:** `docs/agents/tools/package/agent-father.md`
@@ -25,6 +25,16 @@ Agent-specific: **Graceful degradation** — SKIP failed checks, continue. Tag `
 
 **0b. Read notebook** → `docs/agent-memory/notebooks/agent-father.md`
 - Check carry-over from last maintenance run (known issues, deferred fixes)
+
+**Pre-Check (gates ONLY the orphan+roster sweep below — CADRAT-3)**
+```bash
+git diff --name-only HEAD~3..HEAD
+```
+Scope: `.claude/agents/*.md` | `docs/agents/*/flow/*.md` — the orphan+roster scan's input surface.
+
+**Routing:**
+- Zero files under `.claude/agents/*.md` or `docs/agents/*/flow/*.md` → SKIP Steps 1-2 this cycle (no ORPHAN/MISSING/UNREGISTERED/PHANTOM findings possible without a change to the scanned surface) — go straight to **Step 3-5** with empty scan-orphans output.
+- Any match → fall through to Steps 1-2 as normal.
 
 **1-2. Scan orphans + roster** → run sub-flow: `docs/agents/agent-father/flow/scan-orphans.md`
 
