@@ -442,3 +442,15 @@
 **Mitigation:** No immediate action beyond signal routing.
 
 ---
+
+## Anomaly: A-30 · rag-service critical memory pressure (98.05%)
+**Severity:** CRITICAL | **Date:** 2026-08-05 | **Status:** OPEN
+**Location:** rag-service/memory
+**Details:** Memory usage at 98.05% (753MiB/768MiB), only 15MiB free (below 40MiB floor). Escalating trend: 90.62%→95.77%→98.05% over 2 hours. No reclamation observed.
+**Impact:** Approaching OOM-kill territory. Service is healthy now but at critical risk. Fix deployed but container not rebuilt.
+**Root cause:** Undeployed fix: FIX-RAG-SERVICE-CLEAN-EXIT-RESTART-LOOP (verified, awaiting container rebuild)
+**Zone owner:** dev-infrastructure
+**Last reported:** 2026-08-05T16:34:24Z (signal sys-20260805T163415-6b8c, system-auditor -> po, dedup_key=mem_pressure:rag-service:A-30, CRITICAL Telegram sent)
+**Mitigation:** No immediate action beyond signal routing.
+
+---
