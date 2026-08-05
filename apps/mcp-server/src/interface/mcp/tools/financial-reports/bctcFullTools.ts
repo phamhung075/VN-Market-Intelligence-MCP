@@ -951,11 +951,70 @@ export function registerBctcFullTools(
         }
 
         const whereClause = conditions.join(" AND ");
-        const latestRow = db
-          .query<ReportRow, typeof params>(
-            `SELECT * FROM financial_reports WHERE ${whereClause} ORDER BY sort_key DESC LIMIT 1`,
-          )
-          .get(params);
+
+        // ── FIX-BCTC-FULL-SERVING-EMPTY-NEWEST-PERIOD-HEAD-OF-LINE ────────
+        // Root cause: the single `ORDER BY sort_key DESC LIMIT 1` fetch below
+        // trusted the newest period unconditionally — an empty extraction
+        // shell (refine_status=PENDING, created the instant the PDF is
+        // pulled, before extraction runs) head-of-line-blocked the whole
+        // ticker response with "Chưa có dữ liệu BCTC" even though older,
+        // fully-DONE periods sat one or two quarters back (live-confirmed
+        // FPT/HPG/VCB, 2026-08-05).
+        //
+        // Fix scope: the no-explicit-{year,quarter} call path ONLY. An
+        // explicit period request must keep returning an honest per-period
+        // answer for that exact period (including today's PUB-1 rejection
+        // text) — silently substituting a different period would be a
+        // correctness regression, not a fix.
+        //
+        // For the no-filter path: scan the newest CANDIDATE_WINDOW periods
+        // and reuse the EXISTING exported checkPublishability gate (PUB-1..8,
+        // already the single source of truth for "is this row servable?") to
+        // pick the newest candidate that actually passes. Falls through to
+        // today's unchanged rejection when nothing in the window qualifies —
+        // no new failure mode, same PUB-* reason strings fire as before.
+        const CANDIDATE_WINDOW = 6;
+        let latestRow: ReportRow | null;
+        // Set to the true-newest sort_key only when we served an OLDER period
+        // because the newest one wasn't servable — null means "served row IS
+        // the newest" (no degradation to disclose).
+        let fallbackFromNewestSortKey: string | null = null;
+
+        if (year === undefined && quarter === undefined) {
+          const candidateParams: Record<string, string> = { $code: upperCode };
+          const candidates = db
+            .query<ReportRow, typeof candidateParams>(
+              `SELECT * FROM financial_reports WHERE action_code = $code
+               ORDER BY sort_key DESC LIMIT ${CANDIDATE_WINDOW}`,
+            )
+            .all(candidateParams);
+
+          latestRow = null;
+          for (const candidate of candidates) {
+            const candidateBankForm = isBankFormFromDb(db, candidate.id);
+            const candidateCheck = checkPublishability(db, candidate.id, candidateBankForm, candidate);
+            if (candidateCheck.publishable) {
+              latestRow = candidate;
+              if (candidate.id !== candidates[0]?.id) {
+                fallbackFromNewestSortKey = candidates[0]?.sort_key ?? null;
+              }
+              break;
+            }
+          }
+          // No candidate in the window is publishable → preserve today's honest-
+          // rejection behavior by falling through to the absolute-newest row, so
+          // PUB-1..8's existing reason strings still fire (NOT a silent-absence
+          // regression — this is the unchanged behavior for a ticker with
+          // genuinely no usable data in the window).
+          if (latestRow === null) latestRow = candidates[0] ?? null;
+        } else {
+          // Explicit {year, quarter} — byte-identical to pre-fix behavior.
+          latestRow = db
+            .query<ReportRow, typeof params>(
+              `SELECT * FROM financial_reports WHERE ${whereClause} ORDER BY sort_key DESC LIMIT 1`,
+            )
+            .get(params);
+        }
 
         if (!latestRow) {
           // FR-DEGRADE-01 FIX: when no data found, signal stale/unavailable with reason.
@@ -1226,7 +1285,19 @@ export function registerBctcFullTools(
               ]
             : [];
 
-        const textOutput = [summarySection, "", comparisonSection, "", sentimentSection, ...staleNote].join("\n");
+        // FIX-BCTC-FULL-SERVING-EMPTY-NEWEST-PERIOD-HEAD-OF-LINE: honest note when
+        // a non-newest period was served because the true newest period isn't
+        // servable yet (same FR-DEGRADE-01 transparency philosophy — never
+        // silently serve a different period than "the newest" without saying so).
+        const fallbackNote =
+          fallbackFromNewestSortKey !== null
+            ? [
+                "",
+                `Kỳ mới nhất (${fallbackFromNewestSortKey}) chưa được trích xuất — hiển thị kỳ gần nhất có dữ liệu (${latestRow.sort_key}).`,
+              ]
+            : [];
+
+        const textOutput = [summarySection, "", comparisonSection, "", sentimentSection, ...staleNote, ...fallbackNote].join("\n");
 
         // ── FIX-D: structured_data block ─────────────────────────────────
         // All numeric values are recomputed on read (latestRow has already been
@@ -1355,6 +1426,11 @@ export function registerBctcFullTools(
                 stale: bctcVpsStaleSince !== null,
                 stale_since: bctcVpsStaleSince,
                 stale_age_hours: bctcVpsStaleAgeHours,
+                // FIX-BCTC-FULL-SERVING-EMPTY-NEWEST-PERIOD-HEAD-OF-LINE: machine-
+                // readable mirror of the fallbackNote — the sort_key of the true
+                // newest period when it was skipped (not yet servable) in favor of
+                // this older period. null when the served period IS the newest.
+                fallback_from_newest_sort_key: fallbackFromNewestSortKey,
               }),
             },
           ],

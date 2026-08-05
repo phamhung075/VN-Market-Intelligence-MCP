@@ -73,6 +73,8 @@ function insertFinancialRow(
     published_at: string;
     yoy_delta_json: string | null;
     qoq_delta_json: string | null;
+    /** FIX-BCTC-FULL-SERVING-EMPTY-NEWEST-PERIOD-HEAD-OF-LINE: PENDING | DONE | PARTIAL | FAILED */
+    refine_status: string;
   }> = {},
 ): string {
   const defaults = {
@@ -118,6 +120,7 @@ function insertFinancialRow(
     published_at: "2026-01-30",
     yoy_delta_json: null,
     qoq_delta_json: null,
+    refine_status: "DONE",
     ...overrides,
   };
 
@@ -131,7 +134,7 @@ function insertFinancialRow(
       operating_cf, investing_cf, financing_cf, capex, free_cash_flow,
       gross_margin_pct, operating_margin_pct, net_margin_pct,
       roe, roa, current_ratio, debt_to_equity, net_debt_to_ebitda, pe, pb,
-      published_at, yoy_delta_json, qoq_delta_json
+      published_at, yoy_delta_json, qoq_delta_json, refine_status
     ) VALUES (
       lower(hex(randomblob(8))),
       ?, ?, ?, ?, ?, ?,
@@ -143,7 +146,7 @@ function insertFinancialRow(
       ?, ?, ?, ?, ?,
       ?, ?, ?,
       ?, ?, ?, ?, ?, ?, ?,
-      ?, ?, ?
+      ?, ?, ?, ?
     )`).run(
     defaults.action_code,
     defaults.company_name,
@@ -187,6 +190,7 @@ function insertFinancialRow(
     defaults.published_at,
     defaults.yoy_delta_json,
     defaults.qoq_delta_json,
+    defaults.refine_status,
   );
 
   // Return the inserted ID for use in related table inserts
@@ -1143,5 +1147,164 @@ describe("FR-DEGRADE-01 — get_bctc_full degrades gracefully when VPS bctc push
     const parsed = JSON.parse(result.content[1]!.text) as Record<string, unknown>;
     expect(parsed["stale"]).toBe(false);
     expect(parsed["stale_since"]).toBeNull();
+  });
+});
+
+// ── FIX-BCTC-FULL-SERVING-EMPTY-NEWEST-PERIOD-HEAD-OF-LINE ───────────────────
+//
+// Root cause (architect brief 2026-08-05): get_bctc_full's row-selection query
+// (`ORDER BY sort_key DESC LIMIT 1`) has no predicate on refine_status — an
+// empty newest-period extraction shell (refine_status='PENDING', created the
+// moment the PDF is pulled, before extraction runs) head-of-line-blocks the
+// whole ticker response with "Chưa có dữ liệu BCTC" even though older,
+// fully-DONE/validated periods sit one or two quarters back. Live-reproduced
+// for FPT/HPG/VCB (2026-Q2 shell blocking 2026-Q1/2025-Q4 COMPLETE data).
+//
+// Fix: bound a 6-period candidate scan for the no-explicit-{year,quarter}
+// call path only, reuse the existing exported checkPublishability gate (no
+// duplicated logic) to pick the newest candidate that's actually servable,
+// fall through to today's unchanged rejection when nothing in the window
+// qualifies. Explicit {year, quarter} calls are untouched by design.
+describe("FIX-BCTC-FULL-SERVING-EMPTY-NEWEST-PERIOD-HEAD-OF-LINE — fallback to newest servable period", () => {
+  let db: Database;
+
+  beforeEach(() => {
+    db = makeDb();
+  });
+
+  it("AC-1/AC-3 core case: 2026-Q2 PENDING shell + 2026-Q1 DONE → serves Q1 data with fallback note, NOT the bare rejection", async () => {
+    // Older, fully-servable period.
+    const q1Id = insertFinancialRow(db, {
+      action_code: "FPT",
+      period_year: 2026,
+      period_quarter: 1,
+      period_type: "Q1",
+      sort_key: "2026-Q1",
+      refine_status: "DONE",
+      net_revenue: 12_479_997,
+      net_profit: 2_000_000,
+    });
+    insertTableRow(db, q1Id, "balance_sheet", 0);
+    insertRefinedUnit(db, q1Id);
+
+    // Newest period — empty pending-extraction shell (no table rows, no refined
+    // units — the real-world shell has total_assets=NULL, which the identity
+    // guard fails-open on; PUB-1's refine_status check is the gate that must
+    // actually block it, matching production).
+    insertFinancialRow(db, {
+      action_code: "FPT",
+      period_year: 2026,
+      period_quarter: 2,
+      period_type: "Q2",
+      sort_key: "2026-Q2",
+      refine_status: "PENDING",
+    });
+
+    const server = makeServer(db);
+    const text = await callTool(server, "get_bctc_full", { code: "FPT" });
+
+    expect(text).not.toBe("Chưa có dữ liệu BCTC");
+    expect(text).toContain("2026-Q1");
+    // Honest fallback note mentions the newer, not-yet-servable period.
+    expect(text).toContain("2026-Q2");
+  });
+
+  it("negative control: explicit {year:2026, quarter:Q2} must NOT fall back — still returns the PUB-1 rejection for Q2 specifically", async () => {
+    insertFinancialRow(db, {
+      action_code: "FPT",
+      period_year: 2026,
+      period_quarter: 1,
+      period_type: "Q1",
+      sort_key: "2026-Q1",
+      refine_status: "DONE",
+    });
+    const q1IdForRows = db
+      .query<{ id: string }, [string, string]>(
+        "SELECT id FROM financial_reports WHERE action_code = ? AND sort_key = ?",
+      )
+      .get("FPT", "2026-Q1");
+    insertTableRow(db, q1IdForRows!.id, "balance_sheet", 0);
+    insertRefinedUnit(db, q1IdForRows!.id);
+
+    insertFinancialRow(db, {
+      action_code: "FPT",
+      period_year: 2026,
+      period_quarter: 2,
+      period_type: "Q2",
+      sort_key: "2026-Q2",
+      refine_status: "PENDING",
+    });
+
+    const server = makeServer(db);
+    const text = await callTool(server, "get_bctc_full", { code: "FPT", year: 2026, quarter: "Q2" });
+
+    expect(text).toBe("Chưa có dữ liệu BCTC");
+    expect(text).not.toContain("2026-Q1");
+  });
+
+  it("no usable period in window — unchanged failure behavior when only a PENDING shell exists", async () => {
+    insertFinancialRow(db, {
+      action_code: "HPG",
+      period_year: 2026,
+      period_quarter: 2,
+      period_type: "Q2",
+      sort_key: "2026-Q2",
+      refine_status: "PENDING",
+    });
+    // No table rows / refined units — nothing publishable exists at all.
+
+    const server = makeServer(db);
+    const text = await callTool(server, "get_bctc_full", { code: "HPG" });
+
+    expect(text).toBe("Chưa có dữ liệu BCTC");
+  });
+
+  it("multi-period skip: DONE (2025-Q4) → FAILED (2026-Q1) → PENDING shell (2026-Q2) — skips both unusable periods, serves 2025-Q4", async () => {
+    const q4Id = insertFinancialRow(db, {
+      action_code: "VCB",
+      period_year: 2025,
+      period_quarter: 4,
+      period_type: "Q4",
+      sort_key: "2025-Q4",
+      refine_status: "DONE",
+    });
+    insertTableRow(db, q4Id, "balance_sheet", 0);
+    insertRefinedUnit(db, q4Id);
+
+    // FAILED extraction attempt — no publishable rows.
+    insertFinancialRow(db, {
+      action_code: "VCB",
+      period_year: 2026,
+      period_quarter: 1,
+      period_type: "Q1",
+      sort_key: "2026-Q1",
+      refine_status: "FAILED",
+      total_assets: 0,
+    });
+
+    // Newest — PENDING shell.
+    insertFinancialRow(db, {
+      action_code: "VCB",
+      period_year: 2026,
+      period_quarter: 2,
+      period_type: "Q2",
+      sort_key: "2026-Q2",
+      refine_status: "PENDING",
+      total_assets: 0,
+    });
+
+    const server = makeServer(db);
+    const text = await callTool(server, "get_bctc_full", { code: "VCB" });
+
+    expect(text).toContain("2025-Q4");
+    expect(text).not.toBe("Chưa có dữ liệu BCTC");
+  });
+
+  it("regression: zero financial_reports rows at all — existing graceful message unchanged", async () => {
+    const server = makeServer(db);
+    const text = await callTool(server, "get_bctc_full", { code: "XYZ" });
+
+    expect(text).toContain("Chưa có dữ liệu BCTC cho XYZ");
+    expect(text).toContain("list_stored_pdfs");
   });
 });
