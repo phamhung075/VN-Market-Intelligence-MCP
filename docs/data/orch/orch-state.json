@@ -2253,6 +2253,19 @@
         "payload_ref": null,
         "provenance": "detector",
         "audit_cycle_tag": null
+      },
+      {
+        "id": "sys-20260805T121137-606d",
+        "ts": "2026-08-05T12:11:37Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "signal_feedback",
+        "summary": "A-30 WARN: rag-service memory 92.07% (above 85% threshold, recurring)",
+        "severity": "WARN",
+        "status": "NEW",
+        "payload_ref": null,
+        "provenance": "detector",
+        "audit_cycle_tag": "cron:auditor-t1:2026-08-05T12:00Z"
       }
     ],
     "last_triaged_at": "2026-07-29T06:25:00Z",
@@ -2437,7 +2450,7 @@
     ]
   },
   "task_board": {
-    "_updated_at": "2026-08-05T12:06:57Z",
+    "_updated_at": "2026-08-05T12:13:17Z",
     "_updated_by": "router",
     "active_sprints": [
       {
@@ -11362,6 +11375,21 @@
         "created_at": "2026-08-05T12:06:57Z",
         "created_by": "router",
         "updated_at": "2026-08-05T12:06:58Z",
+        "updated_by": "router"
+      },
+      {
+        "id": "FIX-COWORK-BATCH-COVERAGESTATE-CONTENTION-CORRELATES-WITH-MISSED-NOTEBOOK-COMMIT",
+        "type": "FIX",
+        "title": "2x same-tick: coverage-state:main mutex contention (parallel-batch spawn) correlates with the agent also skipping its own notebook git-commit step",
+        "desc": "Live-confirmed 2026-08-05T12:00Z cowork tick, 3 slots spawned in one parallel batch (news-scout-offhours, market-watcher-offhours, alert-commander-critical): the 2 agents that do ticker/coverage sweeps (news-scout, market-watcher) BOTH self-reported deferring their coverage-state write (task_claim(\"coverage-state:main\"), TTL=30s, scripts/agents-flow/coverage-stamp.sh) due to TTL/lock contention -- expected, by-design mutex behavior when multiple agents race the same shared key. BUT both of those same 2 agents ALSO left their notebook write genuinely on-disk but UNCOMMITTED (git status dirty, stale last-commit date) -- router found and committed both manually (commits cf41c6e9e market-watcher, ae158d580 news-scout). The third slot (alert-commander, which does NOT touch coverage-state) committed its own notebook cleanly. Hypothesis: hitting the coverage-state mutex-contention retry/defer path consumes enough of the agent's own turn budget or otherwise disrupts its closing sequence that it never reaches its own mandatory git-commit step. Needs a developer to trace the actual flow-doc code path (news-scout/flow/main.md and market-watcher/flow/main.md, near their coverage-state + notebook-commit steps) to confirm or refute this correlation and fix the root cause -- either isolate the notebook-commit step so a coverage-state defer can never prevent it, or fix the coverage-state contention itself (e.g. longer TTL, or stagger cowork-team's own batch spawn timing so same-batch agents don't all hit the mutex in the same second).",
+        "priority": "P2",
+        "size": "S",
+        "zone": "cross-service/",
+        "next_agent": "developer",
+        "status": "BACKLOG",
+        "created_at": "2026-08-05T12:13:17Z",
+        "created_by": "router",
+        "updated_at": "2026-08-05T12:13:18Z",
         "updated_by": "router"
       }
     ],
