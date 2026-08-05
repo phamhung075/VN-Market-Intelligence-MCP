@@ -28,8 +28,8 @@
     "sev": 3
   },
   "mem_pressure:rag-service:A-30": {
-    "ts": "2026-08-05T16:18:34Z",
-    "sev": 2
+    "ts": "2026-08-05T16:34:14Z",
+    "sev": 3
   },
   "mem_pressure:mcp-server:A-30": {
     "ts": "2026-08-05T09:12:06Z",
