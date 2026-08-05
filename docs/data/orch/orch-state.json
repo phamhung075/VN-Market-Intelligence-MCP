@@ -93,12 +93,11 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "CCATO-MCP-T2-CLAIM-MAP-LOADER",
-    "next_agent": "dev-mcp-server",
-    "next_action": "Ready-Lane Consumer claim of CCATO-MCP-T2-CLAIM-MAP-LOADER — spawn dev-mcp-server DIRECTLY (no zone-detect indirection; row already carried a resolved next_agent/owner).",
-    "updated_at": "2026-08-05T17:23:09Z",
-    "updated_by": "dev-team (ready-lane consumer)"
+    "status": "idle",
+    "active_task_id": null,
+    "next_agent": "router",
+    "updated_at": "2026-08-05T17:41:29Z",
+    "updated_by": "dev-mcp-server"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -2514,8 +2513,8 @@
     ]
   },
   "task_board": {
-    "_updated_at": "2026-08-05T15:18:06Z",
-    "_updated_by": "dev-team (router)",
+    "_updated_at": "2026-08-05T17:40:15Z",
+    "_updated_by": "dev-mcp-server",
     "active_sprints": [
       {
         "evidence": "Router raw-verified (get_bctc_full live, post-rebuild) after BEQ-9/10 refine. Core extraction incident RESOLVED, but populating real scalars exposed a SEPARATE pre-existing analytics/serving layer with 4 defect clusters: (a) RATIO-COMPUTE — VNM ROE=0/ROA=0/EPS=12VND/NetDebt-EBITDA=-7.5e13x; DHG ROA=7,891,932.0% (analyst falsely claimed fixed). Ratios emit 0 or astronomically wrong. (b) BANK-B02-TCTD-SERVING — SHB + EIB get_bctc_full returns 'balance sheet has no decomposition — forced-zero pass suspected'; banks UNSERVABLE despite DONE + committed scalars. (c) PERIOD-SEMANTICS — FPT 2025-Q4 rev=70112.8/NP=11225.5 are FULL-YEAR cumulative labeled 'Q4'; buildComparisonSection then compares cumulative-FY vs next-quarter -> false -82.2% mislabeled 'YoY'. (d) ENTITY-SCOPE — HPG 2025-Q4 is parent-only B01a (rev=0, conf44%) served as the canonical/headline HPG vs consolidated ~140k rev; misleading. PUBLISH-INTEGRITY GAP: NO semantic-sanity publish guard exists in orch-state (the triage-referenced 'Task #13' is NOT present). The BEQ-9/10 reports are now DONE -> flow into chef docs/agents/unified-agent/flow/market-analysis.md + market-analyst -> ROA 7.8M% / false YoY -82% / parent-only-headline CAN reach MARKET unattended. recurring-bug-escalation: BCTC area has >2 fix cycles -> architect root-cause SPIKE, not point-patch. | [dev-team 2026-06-03T11:44Z observation feeding BAL-0/BAL-1] After LF-SERVE-REFLOW recovered FPT Q1 absolute scalars (op_profit/ebitda/cash live-correct), get_bctc_full(FPT) STILL serves garbage DERIVED ratios: current_ratio=41527873060120x (denominator ~0), operating_margin_pct=0.0% (not recomputed from now-correct operating_profit). Confirms the analytics/serving derived-ratio layer is a distinct defect from scalar extraction. BAL-0 publish semantic-sanity gate MUST block current_ratio out-of-range before MARKET/FB; BAL-1 spike should pin the ratio recompute module. Repro: get_bctc_full(code=FPT).",
@@ -11445,11 +11444,12 @@
         "status": "BACKLOG",
         "created_at": "2026-08-05T17:03:00Z",
         "created_by": "router",
-        "updated_at": "2026-08-05T17:02:56Z",
+        "updated_at": "2026-08-05T17:46:11Z",
         "updated_by": "router",
         "related": [
           "FIX-AGENT-BASH-GRANT-COVERAGE-GATE-FLOW-DEMANDS-VS-FRONTMATTER"
-        ]
+        ],
+        "dev_class_nuance_20260805T1745": "5th confirmed instance overall, but a DIFFERENT nuance for the dev-* class specifically: dev-mcp-server hit the same tool-absence on CCATO-MCP-T2-CLAIM-MAP-LOADER, but its own tool-package doc (docs/agents/tools/package/developer.md, section Task-Lock Coordination Tools) explicitly labels task_claim/task_release wiring as \"Phase 3 Ready — not yet active in flows\" for this agent class. That reads as a DELIBERATE, already-documented phased rollout, not a flow-doc-promises-capability-frontmatter-lacks mismatch like the architect/agent-father cases. When agents-architect scopes AC1/AC2 on this row, treat the dev-* class as a separate sub-decision (is Phase 3 ready to activate now, given 3+ live incidents this session where the router had to manually relay release/telegram on dev-* agents own behalf too) rather than assuming the same fix applies uniformly to architect+agent-father+dev-*."
       },
       {
         "id": "FIX-CI-SIZELINT-BCTC-1345B-PARSE-VALIDATOR-PAIR",
@@ -21063,6 +21063,27 @@
         "po_manual_dispatch_note": "po (manual-dispatch-sweep) re-admitted stale-flagged DRS-STRANDED-OFF-ALLOWLIST candidate (prior stamp 2026-08-01T01:58:29Z, ~4.6d stale) — top of 18-candidate priority-sorted list, folded into BATCH 2026-08-05T16:30:13Z",
         "updated_by": "router",
         "partial_completion_note": "PARTIAL COMPLETION 2026-08-05T17:02Z (agent-father, relayed by router -- no gateway tool grant). 2 of 3 relocations landed, byte-verified verbatim (WU-2 guarantee), committed dcbae13e9, pushed to origin/main: Step 0-PREFLIGHT-FALLBACK -> docs/agents/dev-team/flow/preflight-fallback.md; Step 0a-B orphan-adoption loop -> docs/agents/dev-team/flow/orphan-adoption.md (8-line task_list_held probe kept inline per the row's own note). main.md 1087L/128392B -> 888L/118924B (-9609B). Markdown/anchor sanity confirmed (36 code fences even, 12 jump: anchors intact). 3rd relocation (BOUNDED-1 gate-history paragraphs + NON-CODE/DESIGN note -> scripts/devteam-backlog-promote-bounded1.jq header, ~10.6KB) was written, verified (jq still parses; no new test failures), then DELIBERATELY REVERTED by agent-father itself after finding scripts/ sits outside its own commit_zone.allowed (.claude/skills/commit-boundary/SKILL.md) even when a dispatch prompt names it -- correct zone-boundary discipline, not a failure. main.md's BOUNDED-1 section is byte-identical to original (no half-shrunk state). The validated relocation text is saved at /private/tmp/claude-501/-Users-admin-Documents-Hung---works-----PROJET---labo-VN-Market-Intelligence-MCP/f298ccf7-8cf4-452d-9a5a-57dcb47e65ac/scratchpad/te-t02-followup-patch/ for a developer to land in one atomic commit alongside the corresponding main.md shrink -- next_agent for that 3rd piece should be developer, not agent-father (commit-zone boundary), when picked up.\""
+      },
+      {
+        "id": "CCATO-MCP-T2-CLAIM-MAP-LOADER",
+        "type": "IMPL-XS",
+        "status": "REVIEW",
+        "size": "XS",
+        "zone": "mcp-server",
+        "priority": "P0",
+        "title": "infrastructure/fileStore/claimToolMapLoader.ts",
+        "depends": [],
+        "next_agent": "qa",
+        "supervised": false,
+        "updated_at": "2026-08-05T17:41:29Z",
+        "updated_by": "dev-mcp-server",
+        "claimed_at": "2026-08-05T17:23:09Z",
+        "claimed_by": "dev-team (ready-lane consumer)",
+        "dispatch_lane": "dev-mcp-server",
+        "owner": "dev-mcp-server",
+        "entered_review_at": "2026-08-05T17:40:15Z",
+        "branch": null,
+        "review_note": "T2 of 8 (SPRINT-CCATO-TRUTHGATE-MCP-NATIVE, architect brief docs/architecture-briefs/2026-07-17-ccato-truthgate-mcp-native.md). New infrastructure/fileStore/claimToolMapLoader.ts (loadClaimToolMap(filePath?), CLAIM_TOOL_MAP_PATH) + claimToolMapValidator.ts (shape assertion, split <=120L each -- size-lint, matching T1's own precedent): reads+validates docs/data/claim-tool-map.json, fail-loud ClaimToolMapLoadError on missing/unreadable/unparsable/shape-mismatched input, tolerates additive SSOT fields. Returns T1's ClaimToolMap type with zero transformation. Deviation from brief's literal spec (flagged, not silent): improvementSignalWriter.ts's fixed __dirname hop-count REPO_ROOT pattern verified empirically to resolve wrong in both local-dev and the deployed container -- used the already-correct getProjectRoot() helper instead for the NEW path constant; improvementSignalWriter.ts itself untouched (out of zone/scope). Evidence: new CCATO-MCP-T2-CLAIM-MAP-LOADER.test.ts 14/14 pass (25 expect()); bun tsc --noEmit clean; size-lint-justification.sh --check: 2 pre-existing unrelated offenders only; tool/scheduler counts unchanged 183/88 (T2 registers no MCP tool/cron); fresh boot health+dashboard probes clean; full bun test 15085 pass/40 skip/54 fail/47837 expect() -- improved vs same-day baseline (15070/55fail/1err), and structurally provable zero-regression since grep confirms the only consumer of the 2 new modules is this task's own new test file (no production code imports them yet -- T5-USECASE not landed). Doc-review: infrastructure.md + testing.md + domain-model.md updated. Decision journal: docs/agent-memory/decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-dev-mcp-server-3.md S63. Commits: f79019f9b (impl), 533a745d3 (memory). QA: verify the 3 new files + re-run CCATO-MCP-T2-CLAIM-MAP-LOADER.test.ts; downstream T3/T5-T8 depend on this landing."
       }
     ],
     "qa": [
@@ -21141,23 +21162,6 @@
         "claimed_at": "2026-08-05T06:45:34Z",
         "claimed_by": "dev-team (supervised-lane sweep)",
         "po_goahead_20260805T090611": "RATIFIED by po 2026-08-05T09:06:11Z at source, not on relay. (1) Deliverable EXISTS: docs/architecture-briefs/2026-07-12-ultracode-workflow-improvement-audit.md, 382391B, anchor '## Completeness critic — lanes not audited' present at L1973. (2) Load-bearing claim RE-DERIVED FROM LIVE CONFIG (not brief prose): .claude/settings.local.json contains EXACTLY 6 hook commands terminating in '2>/dev/null || true' (tmux-agent.sh status, tmux set-option, branch-hygiene-stop.sh, notebook-auto-prune.sh, context-bloat-backstop.sh, orch-state-hook-bash-backstop.sh) + 1 more '|| true' in .claude/settings.json (graphify PreToolUse) = 7 of 8 hook invocations swallow failure. Claim CONFIRMED, count exact, still true 24 days after the brief was written. (3) ATTRIBUTION CORRECTION for BA: the brief names the 'orch-state prewrite Zod gate' among the swallowing hooks — that is WRONG on live config. orch-state-hook-prewrite.mjs is the ONE fail-closed hook (no || true, no 2>/dev/null); the swallowing orch-state hook is orch-state-hook-bash-backstop.sh (PostToolUse). BA must scope the fix to the bash-backstop, and must NOT 'fix' the prewrite gate, which is already correct. Plan-only SPIKE, timebox 180 — safe to resume."
-      },
-      {
-        "id": "CCATO-MCP-T2-CLAIM-MAP-LOADER",
-        "type": "IMPL-XS",
-        "status": "IN_PROGRESS",
-        "size": "XS",
-        "zone": "mcp-server",
-        "priority": "P0",
-        "title": "infrastructure/fileStore/claimToolMapLoader.ts",
-        "depends": [],
-        "next_agent": "dev-mcp-server",
-        "supervised": false,
-        "updated_at": "2026-08-05T17:23:09Z",
-        "updated_by": "pm (decompose SPRINT-CCATO-TRUTHGATE-MCP-NATIVE)",
-        "claimed_at": "2026-08-05T17:23:09Z",
-        "claimed_by": "dev-team (ready-lane consumer)",
-        "dispatch_lane": "dev-mcp-server"
       }
     ]
   },
@@ -21168,6 +21172,6 @@
     "ssot": true
   },
   "last_tick": "20260622T2215Z",
-  "_updated_at": "2026-08-05T07:06:06Z",
-  "_updated_by": "po"
+  "_updated_at": "2026-08-05T17:40:15Z",
+  "_updated_by": "dev-mcp-server"
 }
