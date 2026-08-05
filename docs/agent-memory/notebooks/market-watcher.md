@@ -1,34 +1,34 @@
 # Market Watcher — Notebook
-**Last updated:** 2026-08-05 04:08 UTC | **Sprint:** 2026-Q3
+**Last updated:** 2026-08-05 12:09 UTC | **Sprint:** 2026-Q3
 
 ## Carry-over
-None.
+None
 
-## Cycle (04:08 UTC offhours-slot-forced)
-- Mode: offhours (market technically OPEN but slot=market-watcher-offhours forces conservative thresholds)
-- Stocks analyzed: 6 (3 movers + 3 sweep-forced)
-- Anomalies: 0 (no moves exceed 2.5σ offhours floor)
-- Volume spikes: 0
+## Cycle (12:09 UTC offhours)
+- Mode: offhours (slot=market-watcher-offhours, market CLOSED, 2.5σ floor)
+- Stocks analyzed: 3 (sweep-forced: DBC, DPM, KDC)
+- Anomalies: 0 (no real anomalies, market closed)
+- Volume spikes: 0 (DPM 3.3x observed in prior session, off-hours guard suppresses re-emission)
 - Chain confirms: 0
 - Signals emitted: 0
-- Signals suppressed: 0 (no anomalies to suppress; duplicate guard active)
+- Signals suppressed: 0
 
 ## Market context
-Market OPEN (02:00–08:59 UTC). Volatility ELEVATED (79.6th percentile). Real estate sector leading (+1.52% 1d), banking stable (+0.39% 1d). Key movers (NVL +3.73%, VHM +3.01%, KDH +2.78%) all show neutral technical consensus. Sweep coverage refreshed: DBC, DPM, KDC forced into analysis.
+Market CLOSED (closed at 08:59 UTC). Offhours sweep coverage run for stale tickers. No intraday moves.
 
-## Regime
-- Global Liquidity: NEUTRAL (oil $78.43 neutral band)
-- VND Carry: NEUTRAL (1.37pp spread)
-- DXY: USD STRENGTHENING (USDVND 26080)
-- US10Y: RISK-OFF (gold $4185 safe-haven)
+## Macro read
+- Oil (Brent): 80.37 (+1.99%) — within normal bands
+- Gold: 4,230.9 (+2.58%) — continued safe-haven demand
+- USD/VND: 26,080 — stable
+- Volatility: 23.5% (ELEVATED, 20d)
 
-## Metrics (cycle 2026-08-05 04:08 UTC)
+## Metrics (cycle 2026-08-05 12:09 UTC)
 | Field | Value |
 |---|---|
-| cycles_run | 1 (offhours-slot) |
-| items_fetched | 6 |
+| cycles_run | 1 |
+| items_fetched | 3 |
 | signals_emitted | 0 |
 | signals_suppressed | 0 |
-| sweep_tickers_forced | 3 (DBC/DPM/KDC) |
+| sweep_tickers_forced | 3 |
 | coverage_state_updated | pending |
 | exit_status | complete |
