@@ -87,7 +87,7 @@ Before composing, refresh the preamble line: `SPRINT=$(jq -r '.head.active_task_
 
 Compose per skill Step 1 — drop oldest `## c<NNN>` section(s) while >3 sections OR while the body would exceed 200L OR 12000B (this file ran 10x over the byte cap historically at 632B/line; check bytes explicitly, not lines alone) — then land ONE settled Edit/Write. AC-5 gate: `wc -l` ≤200 AND `wc -c` ≤12000, both BLOCKING.
 
-`log_agent_work(...)` first (narration goes here), then the settled notebook write above.
+`log_agent_work(...)` first (narration goes in `findings`/`actions`, NOT a `context` field — no such param exists; two-call `status:"running"`→`id`→`status:"completed"` recipe → `docs/agents/tools/list/log_agent_work.md` / `docs/agents/tools/package/alert-commander.md`), then the settled notebook write above.
 
 **Commit (mutex-guarded)** → skill: `.claude/skills/commit-mutex/SKILL.md`
 ```bash
