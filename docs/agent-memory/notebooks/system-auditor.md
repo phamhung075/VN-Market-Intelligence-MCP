@@ -1,4 +1,71 @@
 
+
+## c33 · 2026-08-05T12:12:12Z
+### Audit Run Tier-1 (12:00–12:11 UTC 2026-08-05)
+- Tier: 1 | Containers: 13 checked (all UP, healthy) | Health endpoints: 5/5 OK
+- Anomalies: 0 new | 1 recurring/dedup-skipped (rag-service A-30 memory)
+- Status: DEGRADED (recurring WARN from prior cycles)
+
+Fire-election: tick=2026-08-05T12:00Z (`*/30 * * * *` Tier-1 boundary) — claimed, led tick.
+
+### RAW-PROBE (2026-08-05T12:09:51Z):
+```
+=== AUDITOR PROBE 2026-08-05T12:09:51Z ===
+
+--- docker ps -a ---
+All 13 host_runtime_set containers UP (all healthy status)
+- mcp-server: Up 2 hours
+- rag-service: Up 20 seconds (recently restarted)
+- All others: healthy
+
+--- health endpoints ---
+[health] mcp-server:3000/health OK (HTTP 200)
+[health] api-gateway:4000/health OK (HTTP 200)
+[health] macro-indicators:5004/health OK (HTTP 200)
+[health] pdf-extractor:5001/health OK (HTTP 200)
+[health] frontend:3001/ OK (HTTP 200)
+
+--- A-20 pdf-extractor multi-probe ---
+[A-20-PROBE-1] in-container HTTP 200
+[A-20-PROBE-2] in-container HTTP 200
+[A-20-PROBE-3] in-container HTTP 200
+[A-20] pass_count=3/3 ✓ PASS
+
+--- memory pressure ---
+mcp-server: 22.48% (690.5MiB / 3GiB) ✓ PASS
+[A-30] SKIP deep-probe — baseline 22.48% < 85%
+rag-service: 92.07% (707.1MiB / 768MiB) ⚠ WARN (above 85%)
+
+--- A-21 windowed crashes ---
+6 crashes in 4h window (threshold: 2) — no new since baseline 2026-08-05T10:13:07Z
+
+--- disk df -h / ---
+38% capacity (22Gi free) ✓ PASS
+
+=== PROBE DONE ===
+```
+
+### Tier-1 Check Summary:
+1. **Container Status (A-01–A-11):** ✓ PASS (13/13 UP)
+2. **Health Endpoints (A-12–A-20):** ✓ PASS (5/5 OK, A-20 multi-probe 3/3)
+3. **A-21 Windowed Crashes:** ✓ PASS on new crashes (6 total is recurring baseline, no new since 10:13:07Z)
+4. **A-30 Memory Pressure:** ⚠ RECURRING DEDUP
+   - mcp-server: 22.48% ✓ PASS
+   - rag-service: 92.07% (RECURRING, source fix in commit 22232ad2b awaiting rebuild)
+5. **A-32 Disk:** ✓ PASS (38% < 85%)
+
+### A-30 Recurring Finding:
+- **Service:** rag-service (recent restart 20 seconds ago)
+- **Metric:** 92.07% memory (707.1MiB / 768MiB)
+- **Dedup Key:** mem_pressure:rag-service:A-30
+- **Last Signal:** 2026-08-05T10:11:02Z (61 minutes ago)
+- **Status:** SKIP-dedup (within 7d window, no new BUG telegram)
+- **Root Cause:** FIX-RAG-SERVICE-CLEAN-EXIT-RESTART-LOOP (source fix committed, awaiting container rebuild post-QA signoff)
+- **Signal ID:** sys-20260805T121137-606d
+
+[OUTPUT-CONTRACT] signals_posted=1 | telegram_sent=0 | signal_queue_rows_written=1 | dashboard_rows=1 | dedup_skipped=1
+CONTRACT-CONTRADICTION: NONE
+
 ## c32 · 2026-08-05T11:41:37Z
 ### Audit Run Tier-1 (11:30–11:41 UTC 2026-08-05)
 - Tier: 1 | Containers: 13 checked (all UP, healthy) | Health endpoints: 5/5 OK
@@ -90,24 +157,4 @@ Fire-election: tick=2026-08-05T11:00Z (`*/30 * * * *` Tier-1 boundary) — claim
   - Action: PLAN-ONLY detection; remediation is ops/developer job per AUD-ND-1
 
 [OUTPUT-CONTRACT] signals_posted=1 | telegram_sent=0 | signal_queue_rows_written=1 | dashboard_rows=1 | dedup_skipped=1
-CONTRACT-CONTRADICTION: NONE
-
-## c31 · 2026-08-05T11:33:11Z
-### Audit Run Tier-1 (11:30–11:34 UTC 2026-08-05)
-- Tier: 1 | Containers: 13 checked (all UP, healthy) | Health endpoints: 5/5 OK
-- Anomalies: 0 new | 1 recurring/dedup-skipped (rag-service A-30 memory) | 1 recurring/not-new (A-21 crashes)
-- Status: DEGRADED (recurring issues pre-deployment)
-
-Fire-election: tick=2026-08-05T11:30Z (`*/30 * * * *` Tier-1 boundary) — claimed, led tick.
-
-### Findings Summary:
-- **NO NEW ANOMALIES DETECTED** — all findings are recurring from prior cycles
-- **A-21 RECURRING:** mcp-server 6 windowed crashes (no new crashes since 10:13:07Z) — already signaled in c27
-- **A-30 RECURRING DEDUP:** rag-service 97.81% memory (pre-deployment state)
-  - Root cause fix landed in source code: commit 22232ad2b
-  - Deployment tracking: FIX-RAG-SERVICE-CLEAN-EXIT-RESTART-LOOP (board row status: review[], next_agent=qa)
-  - Live container still running pre-fix code (not rebuilt yet)
-  - This is EXPECTED behavior until container rebuild occurs post-QA signoff
-
-[OUTPUT-CONTRACT] signals_posted=0 | telegram_sent=0 | signal_queue_rows_written=0 | dashboard_rows=0 | dedup_skipped=0
 CONTRACT-CONTRADICTION: NONE
