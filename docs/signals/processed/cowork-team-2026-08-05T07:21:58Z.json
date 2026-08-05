@@ -1,0 +1,61 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-08-05T07:21:58Z",
+    "matched_slots": [
+      "chef-intraday",
+      "alert-commander-market"
+    ],
+    "won_slots": [
+      "chef-intraday",
+      "alert-commander-market"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/unified-agent/flow/chef.md",
+      "docs/agents/alert-commander/flow/main.md"
+    ],
+    "silent": false,
+    "drift_min": 3,
+    "errors": [],
+    "pressure_mode": "adaptive",
+    "calendar_status": "open",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "chef_mutex_applied": false,
+    "due_reasons": {
+      "chef-intraday": "cadence",
+      "alert-commander-market": "cron"
+    },
+    "cadence_minutes": {
+      "chef-intraday": 60,
+      "alert-commander-market": null
+    },
+    "last_fired_timestamp": "2026-08-05T07:21:40Z",
+    "last_fired_slots": [
+      "chef-intraday",
+      "alert-commander-market"
+    ],
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "07:15",
+    "leader_lock": "acquired",
+    "dev_head": "unknown",
+    "devq": 5,
+    "signal_backlog": 17,
+    "note": "cycle_snapshot_promoted:false again (3rd consecutive tick 06:45/07:00/07:15) -- already escalated via signal cow-20260805T070907 to po last tick, not re-minted (dedup). CHEF mutex check run, no-op (single CHEF slot, chef_mutex_applied:false)."
+  },
+  "priority": "low",
+  "createdAt": "2026-08-05T07:21:58Z",
+  "_processed": {
+    "fingerprint": "79fc0d8ba6587cea448da32c95ade26f801758317ecbea37ca17229c6a1e5533",
+    "processedAt": "2026-08-05T07:22:15Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
