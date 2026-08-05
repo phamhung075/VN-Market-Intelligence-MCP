@@ -2437,8 +2437,8 @@
     ]
   },
   "task_board": {
-    "_updated_at": "2026-08-05T11:51:00Z",
-    "_updated_by": "dev-team (router)",
+    "_updated_at": "2026-08-05T12:06:57Z",
+    "_updated_by": "router",
     "active_sprints": [
       {
         "evidence": "Router raw-verified (get_bctc_full live, post-rebuild) after BEQ-9/10 refine. Core extraction incident RESOLVED, but populating real scalars exposed a SEPARATE pre-existing analytics/serving layer with 4 defect clusters: (a) RATIO-COMPUTE — VNM ROE=0/ROA=0/EPS=12VND/NetDebt-EBITDA=-7.5e13x; DHG ROA=7,891,932.0% (analyst falsely claimed fixed). Ratios emit 0 or astronomically wrong. (b) BANK-B02-TCTD-SERVING — SHB + EIB get_bctc_full returns 'balance sheet has no decomposition — forced-zero pass suspected'; banks UNSERVABLE despite DONE + committed scalars. (c) PERIOD-SEMANTICS — FPT 2025-Q4 rev=70112.8/NP=11225.5 are FULL-YEAR cumulative labeled 'Q4'; buildComparisonSection then compares cumulative-FY vs next-quarter -> false -82.2% mislabeled 'YoY'. (d) ENTITY-SCOPE — HPG 2025-Q4 is parent-only B01a (rev=0, conf44%) served as the canonical/headline HPG vs consolidated ~140k rev; misleading. PUBLISH-INTEGRITY GAP: NO semantic-sanity publish guard exists in orch-state (the triage-referenced 'Task #13' is NOT present). The BEQ-9/10 reports are now DONE -> flow into chef docs/agents/unified-agent/flow/market-analysis.md + market-analyst -> ROA 7.8M% / false YoY -82% / parent-only-headline CAN reach MARKET unattended. recurring-bug-escalation: BCTC area has >2 fix cycles -> architect root-cause SPIKE, not point-patch. | [dev-team 2026-06-03T11:44Z observation feeding BAL-0/BAL-1] After LF-SERVE-REFLOW recovered FPT Q1 absolute scalars (op_profit/ebitda/cash live-correct), get_bctc_full(FPT) STILL serves garbage DERIVED ratios: current_ratio=41527873060120x (denominator ~0), operating_margin_pct=0.0% (not recomputed from now-correct operating_profit). Confirms the analytics/serving derived-ratio layer is a distinct defect from scalar extraction. BAL-0 publish semantic-sanity gate MUST block current_ratio out-of-range before MARKET/FB; BAL-1 spike should pin the ratio recompute module. Repro: get_bctc_full(code=FPT).",
@@ -11347,6 +11347,21 @@
         "created_at": "2026-08-05T10:33:32Z",
         "created_by": "router",
         "updated_at": "2026-08-05T10:33:32Z",
+        "updated_by": "router"
+      },
+      {
+        "id": "FIX-AUDITOR-A30-PROBE-SH-MISSES-RAG-SERVICE-CONTAINER",
+        "type": "FIX",
+        "title": "docs/agents/system-auditor/probe.sh A-30 mem_creep check is hardcoded to MCP_CONTAINER (mcp-server) only — never checks rag-service, blind to a live near-OOM incident",
+        "desc": "Live-confirmed 2026-08-05T12:05Z: a spawned Tier-1 system-auditor agent (a7706f96) ran docs/agents/system-auditor/probe.sh, got A-30 PASS (mcp-server baseline 16.45%, deep-probe correctly skipped since <85%), and reported ALL_GREEN + notebook-write-skipped + released its lock — while rag-service-1 was independently, simultaneously confirmed at 97.71% mem via both the router's canonical scripts/agents-flow/auditor-tier1-probe.sh pre-gate (which DOES check rag-service and correctly returned FAILURE) and a direct `docker stats` call. Root cause: probe.sh line 123 sets MCP_CONTAINER via `docker ps | grep mcp-server`, and the entire A-30 deep-probe subprocess block (lines ~138-159) is scoped to that single variable — there is no equivalent loop/variable for rag-service or any other high-memory-risk container. This is a genuine false-negative / passive-health-masking gap INSIDE the agent's own audit tooling, one layer below what the cron-level heartbeat-age wrapper can catch (the heartbeat file itself was NOT poisoned this time only because the underlying probe.sh run happened to also leave auditor-tier1-last-healthy.json untouched — that is incidental, not a designed safeguard against THIS gap). Fix: generalize the A-30 mem_creep check to loop over all containers matching the project's docker-compose service list (or at minimum add rag-service explicitly, given its known history of thin memory headroom), not just MCP_CONTAINER.",
+        "priority": "P1",
+        "size": "S",
+        "zone": "cross-service/",
+        "next_agent": "agent-father",
+        "status": "BACKLOG",
+        "created_at": "2026-08-05T12:06:57Z",
+        "created_by": "router",
+        "updated_at": "2026-08-05T12:06:58Z",
         "updated_by": "router"
       }
     ],
