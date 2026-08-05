@@ -1,4 +1,26 @@
 
+## c21 · 2026-08-05T08:42:26Z
+### Audit Run Tier-1 (08:30–08:40 UTC 2026-08-05)
+- Tier: 1 | Containers: 13 checked (all UP) | Health endpoints: 5/5 OK
+- Memory: mcp-server 92.50% (FOLD — transient spike recovered), rag-service restarted 9min ago
+- A-20 multi-probe: 3/3 pass | A-21 windowed crashes: 0 | Disk: 40% (OK)
+- Anomalies: 0 new (0 critical, 0 warn, 0 info) | Status: HEALTHY
+- State transition: DEGRADED→HEALTHY (recovered from c19 rag-service floor breach)
+
+Fire-election: tick=2026-08-05T08:30Z claimed.
+
+### RAW-PROBE (2026-08-05T08:40:05Z):
+- All 13 host_runtime_set UP; Health: 5/5 OK; A-20: 3/3 pass; A-21: 0 crashes; Disk: 40%
+- **mcp-server memory:** 92.50% (FOLD verdict, benign GC, recovered from 94.59% transient)
+- **Analysis:** max 93.61%, min 92.52%, 0 reclamation dips — transient pressure, no OOMKilled
+
+### Findings: NONE — All checks PASS
+- mcp-server A-30: FOLD (no emit, transient spike recovered per multi-probe discriminator)
+- Status change from DEGRADED to HEALTHY warrants notebook entry
+
+[OUTPUT-CONTRACT] signals_posted=0 | telegram_sent=0 | signal_queue_rows_written=0 | dashboard_rows=0 | dedup_skipped=0
+CONTRACT-CONTRADICTION: NONE
+
 ## c20 · 2026-08-05T08:19:21Z
 ### Audit Run Tier-DATA (08:15–08:19 UTC 2026-08-05)
 - Tier: DATA | Tables: 17 checked (daily_ohlcv, alerts, financial_reports, macro_indicators, etc.)
@@ -127,62 +149,3 @@ Container=vn-market-intelligence-mcp-mcp-server-1 MemPerc=73.12% MemUsage=2.194G
 --- memory pressure (rag-service — docker stats manual check) ---
 Container=vn-market-intelligence-mcp-rag-service-1 MemPerc=97.83% MemUsage=751.3MiB / 768MiB
 [A-30-RAG] BELOW-FLOOR: headroom 16.7MiB < 40MiB threshold
-
---- disk df -h / ---
-/dev/disk1s4s1: 40% capacity (13Gi used, 20Gi free)
-
---- pdf-extractor in-container multi-probe (A-20) ---
-[A-20-PROBE-1] in-container HTTP 200
-[A-20-PROBE-2] in-container HTTP 200
-[A-20-PROBE-3] in-container HTTP 200
-[A-20] pass_count=3/3
-```
-
-### A-30 Finding — rag-service WARN
-- **Status:** WARN / Memory pressure (97.83% of 768MiB) — BELOW 40MiB floor
-- **Evidence:** docker stats vn-market-intelligence-mcp-rag-service-1 at 2026-08-05T07:42Z shows 751.3MiB used, 16.7MiB free
-- **Root cause:** Sentence-transformers model singleton (apps/rag-service/infrastructure/embedder.py:37-51) with no release path; fixed ~700 MiB baseline reached on first embed
-- **Tracked by:** FU-RAG-DEPLOY-MEMORY (BACKLOG, owner: po/infra trade decision), FIX-RAG-SERVICE-CLEAN-EXIT-RESTART-LOOP (READY, in backlog)
-- **Reference:** auditor-launchd-ack.json .acked_memory[0] tracks this with floor_enforcement_20260729: entry was acknowledged but re-flagged because headroom_mib_at_ack_review=11.2 MiB < MEM_FLOOR_MIB=40 (code-enforced by FIX-AUDITOR-MEMACK-HEADROOM-FLOOR-AND-DEAD-TRACKEDBY)
-- **Signal:** [emit-signal] SKIP-dedup dedup_key=mem_pressure:rag-service:A-30 last_sent=2026-08-05T07:41:37Z id=sys-20260805T074206-2897
-- **DASHBOARD:** [emit-dashboard] OK id=sys-20260805T074206-2897 check_id=A-30
-
-[OUTPUT-CONTRACT] signals_posted=1 | telegram_sent=0 | signal_queue_rows_written=2 | dashboard_rows=1 | dedup_skipped=1
-CONTRACT-CONTRADICTION: NONE
-
-
-## c17 · 2026-08-05T06:52:58Z
-### Audit Run Tier-3 (06:47–06:53 UTC 2026-08-05)
-- Tier: 3 | DB checks C-01..C-16 run | Container tooling verified | DB integrity scanned
-- **Anomalies: 1 CRITICAL (C-OHLCV-VIOLATIONS)**
-- Status: CRITICAL
-
-Fire-election: tick=2026-08-05T02:00Z (Tier-3 daily 02:00 UTC) — claimed, led tick.
-
-**DB Integrity Scan Results:**
-- C-01: 98 distinct codes in daily_ohlcv (≥25) ✓
-- C-02: 194 ohlcv rows (>0) ✓
-- C-03: 45 action_codes Q1 2026 (≥26) ✓
-- C-04: 30 low-confidence reports (<0.2) — BY-DESIGN ✓
-- C-05: 0 SSC portal URLs (=0) ✓
-- C-06: 2 market_messages in 3h ✓
-- C-07: 27 agent_signals in 24h (>0) ✓
-- C-08: 22 orphaned alerts (baseline; structural join cardinality) ⚠
-- C-09: 3 macro indicators Vietnam (≥3) ✓
-- C-10: 0 failed PDFs (≤2) ✓
-- C-11: 0 done PDFs (off-season) ✓
-- C-12: PRAGMA integrity_check all DBs = ok ✓
-- C-13: WAL sizes market 0B, pdf_extractor missing (ok) ✓
-- C-14: Top-3 concentration 3.1% (<60%) ✓
-- C-15: Schema all required columns present ✓
-- C-16: 0 stale pending BCTC (=0) ✓
-
-**CRITICAL Finding (sys-20260805T065227-25f7):**
-- Table: daily_ohlcv
-- Class: INCORRECT (OHLCV constraint violation)
-- Detail: 336 records with high=0, low=0 (should be ≥ open, close, low). All from 2026-05-15.
-- Sample: VNDAFS004 2026-05-15 O=21183.99 H=0 L=0 C=21183.99
-- Root cause: Data extraction/load bug on 2026-05-15; high/low values missing
-- Signal ID: sys-20260805T065227-25f7 → posted to dev-team
-
-[OUTPUT-CONTRACT] signals_posted=1 | telegram_sent=1 | signal_queue_rows_written=1 | dashboard_rows=1 | dedup_skipped=0
