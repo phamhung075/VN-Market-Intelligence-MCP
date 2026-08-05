@@ -2105,6 +2105,30 @@
         "severity": "MED",
         "status": "READ",
         "payload_ref": null
+      },
+      {
+        "id": "sys-20260805T074138-37d7",
+        "ts": "2026-08-05T07:41:38Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "microservice_degraded",
+        "summary": "rag-service A-30 WARN: memory 97.83% (751.3MiB) — below floor",
+        "severity": "WARN",
+        "status": "NEW",
+        "payload_ref": null,
+        "provenance": "detector"
+      },
+      {
+        "id": "sys-20260805T074206-2897",
+        "ts": "2026-08-05T07:42:06Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "microservice_degraded",
+        "summary": "rag-service A-30 WARN: memory 97.83% (751.3MiB) — below floor",
+        "severity": "WARN",
+        "status": "NEW",
+        "payload_ref": null,
+        "provenance": "detector"
       }
     ],
     "last_triaged_at": "2026-07-29T06:25:00Z",
@@ -13483,7 +13507,11 @@
         "next_agent": "dev-kinh-dich",
         "completed_at": "2026-07-09T19:23:35Z",
         "completed_by": "dev-kinh-dich",
-        "status_note": "Code complete, tests green, sandbox green. Rebuild verification deferred to ops (signal: ops-rebuild-verify-kinh-dich-20260709T1923Z.json)"
+        "status_note": "Code complete, tests green, sandbox green. Rebuild verification deferred to ops (signal: ops-rebuild-verify-kinh-dich-20260709T1923Z.json)",
+        "secondary_claimed_at": "2026-08-05T07:44:38Z",
+        "secondary_claimed_by": "dev-team (review-lane secondary-drain)",
+        "secondary_dispatch_target": "dev-kinh-dich",
+        "updated_at": "2026-08-05T07:44:39Z"
       },
       {
         "title": "Split the 743L stock-price sandbox by executor seam",
@@ -14006,33 +14034,6 @@
         "updated_at": "2026-07-22T02:18:01Z",
         "owner": "agent-father",
         "next_agent": "agent-father"
-      },
-      {
-        "id": "TE-T17",
-        "title": "T-17 ops notebook 701L (3.5x cap): fix prune bypass (non-Write/Edit writes skip auto-prune hook) + janitor sweep [~18-36k tok/day]",
-        "owner": "developer",
-        "status": "REVIEW",
-        "type": "FIX",
-        "size": "S",
-        "priority": "P1",
-        "wave": 2,
-        "est_saving": "~18-36k tok/day + prevents class on all 30 notebooks",
-        "zone": "multi",
-        "sprint": "TOKEN-ECONOMY-AUDIT",
-        "depends": [],
-        "detail_ref": "docs/architecture-briefs/2026-07-12-token-economy-lazyload-audit.md#T-17",
-        "note": "PostToolUse auto-prune hook only matches Write|Edit; Bash-heredoc writes bypass it (07-11 Docker incidents). (1) prune ops.md now (move incident detail to docs/incidents/), (2) add notebook line-cap sweep to code-janitor 6h cron (catches Bash writes), (3) add pre-commit wc -l gate to ops notebook-commit step. Also delete untracked .test-notebook-prune-debug/.",
-        "promoted_at": "2026-07-23T08:17:03Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
-        "updated_at": "2026-07-23T08:32:48Z",
-        "claimed_at": "2026-07-23T08:17:03Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)",
-        "next_agent": "qa",
-        "branch": null,
-        "completed_at": "2026-07-23T08:32:29Z",
-        "completed_by": "developer",
-        "status_note": "TE-T17 DONE. (1) ops.md 1197L->29L: 23 sections moved verbatim to docs/incidents/<date>-<slug>.md, one-line pointers left. (2) New scripts/agents-flow/notebook-linecap-sweep.sh (+test) wired into code-janitor/flow/main.md's existing 6h cron -- write-path-agnostic backstop, delegates over-cap files to notebook-auto-prune.sh's own drop-oldest logic via synthetic PostToolUse JSON (no duplicated pruning code). (3) Blocking wc -l pre-commit gate added to ops/flow/main.md's notebook-commit step. (4) .test-notebook-prune-debug/ already absent -- verified no-op. Tests: 5/5 pre-existing test-notebook-auto-prune.sh GREEN (post cross-ref comment edit), new notebook-linecap-sweep.test.sh 7/7 GREEN + idempotent. Scope discipline: agent-father.md (303L) and system-auditor.md (204L) also currently over cap -- left untouched (out of named scope), will be caught by the new sweep's next 6h cron fire. Commits: 32529e57f (fix, ops.md+incidents+sweep+gate), 29e17fca8 (memory), both pushed to main. DJ entry: sprint-TOKEN-ECONOMY-AUDIT-developer.md STEP developer-S9. Direct-commit branch:null -- qa verify-committed-fix mode applies (docs/agents/qa/flow/main.md Direct-Commit Verify)."
       },
       {
         "id": "BCTC-REPORT-ID-LOOKUP-TOOL",
@@ -20381,7 +20382,35 @@
         "note": "describeConfidenceFinancialReason() + validateFinancialFiguresDetailed() ship: [BCTC-1345b] alert now names the detector that actually fired (cross-stmt/intra-BS unit mismatch w/ figures, or the specific BCTC-VAL-NN rule) instead of an unconditional VNM/VEA hint on a value validateFinancialFigures cannot produce. Dead Math.max(confidence,0.1) floor deleted (true floor is 0.4), docstrings corrected. 9 new regression tests (31 expect(), FIX-BCTC-1345B-ALERT-NAMES-A-RULE-FAMILY.test.ts). Targeted 10-file BCTC suite 72/72 pass. tsc clean. Full bun test 15050 pass/60 fail/2 err — zero fail-list matches for bctc/financial/1345b/VAL-01/VAL-03; all pre-existing unrelated classes. toolCount=183/cronJobCount=88 unchanged. Server boot + /health + /api/bctc-inspect verified live on PORT=3198."
       }
     ],
-    "qa": [],
+    "qa": [
+      {
+        "id": "TE-T17",
+        "title": "T-17 ops notebook 701L (3.5x cap): fix prune bypass (non-Write/Edit writes skip auto-prune hook) + janitor sweep [~18-36k tok/day]",
+        "owner": "developer",
+        "status": "QA",
+        "type": "FIX",
+        "size": "S",
+        "priority": "P1",
+        "wave": 2,
+        "est_saving": "~18-36k tok/day + prevents class on all 30 notebooks",
+        "zone": "multi",
+        "sprint": "TOKEN-ECONOMY-AUDIT",
+        "depends": [],
+        "detail_ref": "docs/architecture-briefs/2026-07-12-token-economy-lazyload-audit.md#T-17",
+        "note": "PostToolUse auto-prune hook only matches Write|Edit; Bash-heredoc writes bypass it (07-11 Docker incidents). (1) prune ops.md now (move incident detail to docs/incidents/), (2) add notebook line-cap sweep to code-janitor 6h cron (catches Bash writes), (3) add pre-commit wc -l gate to ops notebook-commit step. Also delete untracked .test-notebook-prune-debug/.",
+        "promoted_at": "2026-07-23T08:17:03Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
+        "updated_at": "2026-08-05T07:48:16Z",
+        "claimed_at": "2026-08-05T07:48:15Z",
+        "claimed_by": "dev-team (review-lane qa-drain)",
+        "next_agent": "qa",
+        "branch": null,
+        "completed_at": "2026-07-23T08:32:29Z",
+        "completed_by": "developer",
+        "status_note": "TE-T17 DONE. (1) ops.md 1197L->29L: 23 sections moved verbatim to docs/incidents/<date>-<slug>.md, one-line pointers left. (2) New scripts/agents-flow/notebook-linecap-sweep.sh (+test) wired into code-janitor/flow/main.md's existing 6h cron -- write-path-agnostic backstop, delegates over-cap files to notebook-auto-prune.sh's own drop-oldest logic via synthetic PostToolUse JSON (no duplicated pruning code). (3) Blocking wc -l pre-commit gate added to ops/flow/main.md's notebook-commit step. (4) .test-notebook-prune-debug/ already absent -- verified no-op. Tests: 5/5 pre-existing test-notebook-auto-prune.sh GREEN (post cross-ref comment edit), new notebook-linecap-sweep.test.sh 7/7 GREEN + idempotent. Scope discipline: agent-father.md (303L) and system-auditor.md (204L) also currently over cap -- left untouched (out of named scope), will be caught by the new sweep's next 6h cron fire. Commits: 32529e57f (fix, ops.md+incidents+sweep+gate), 29e17fca8 (memory), both pushed to main. DJ entry: sprint-TOKEN-ECONOMY-AUDIT-developer.md STEP developer-S9. Direct-commit branch:null -- qa verify-committed-fix mode applies (docs/agents/qa/flow/main.md Direct-Commit Verify)."
+      }
+    ],
     "_closed_signals_20260614": {
       "_by": "po-S50",
       "_at": "2026-06-14T14:45:14Z",
