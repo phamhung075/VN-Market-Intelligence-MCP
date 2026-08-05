@@ -1,21 +1,23 @@
 # dev-team notebook
 
-**Last updated:** 2026-06-01 | **Sprint:** current
+**Last updated:** 2026-08-05 | **Sprint:** current
 
 > Archive: `docs/archive/notebooks/dev-team-2026-05-21.md` (full session history prior to 2026-05-21 trim)
+
+## Current state (tick 2026-08-05T08:37Z) — Task-tool `developer` subagent ran this tick, NO nested spawn capability
+- Router preflight already held SF-1 + fire-election locks; this session entered at gcc-preflight (no HEAD.lock, worktree clean). Gateway-blind on `mcp__gateway__call_tool` (absent from tool binding) — used `scripts/agents-flow/mcp-call.sh` bash bridge throughout, per gateway-call-contract §6b.
+- Step 0a drain: 3 files routed-to-po (1 `ci_red` CI-RED-513a53d3 bun-test+size-lint, 2 routine `cowork-fire` telemetry), 2 aged processed/ files pruned. Committed **86fd86d07** `chore(signals): drain + prune 20260805T084227Z`. Post-commit residual check = 0. signal_queue 0a-D: no NEW rows (nothing to drain/prune).
+- Step 0a.5 CI probe: run 30990034959 still `in_progress` — non-fatal skip, no new signal.
+- Step 0b: head=in_progress on `UC-CRITIC-HOOKS-ENFORCEMENT` (next_agent=ba, updated 06:45Z, <24h) — NOT BLOCKED but WF-2 SUPERVISED-HOLD fires (supervised=true, plan_only=true, no `po_goahead_*` stamp anywhere) → head left unchanged, task NOT spawned. Idle-chain (BOUNDED-1/SLS/RLC/DRS) correctly skipped (head not idle). QA-Drain no-op (qa[]=1, not <1).
+- Ran **Review-Lane SECONDARY-Drain** claim script (safe, no-spawn-required) — stamped `FIX-FOREIGN-FLOW-COVERAGE` (`secondary_dispatch_target:"ops"`) in place in `review[]`, no lane move, `.head` untouched. orch-apply OK (conservation 774/774, 140/140).
+- **Step 1 PO Triage NOT executed** — requires `Agent("po", ...)` nested spawn, structurally unavailable to a Task-tool `developer` subagent (`docs/protocols/agent-chaining-protocol.md:10` — sub-agents cannot spawn each other). Did NOT claim `triage_key` (left free for a live CLI dev-team session to actually spawn po + the SECONDARY-Drain-stamped `ops` dispatch). No duplicate signal/board row filed for this — same standing gap as prior ticks (memory: `feedback_devteam_flow_needs_nested_agent_spawn_subagent_cannot`).
+- Released SF-1 (`dev-team-cron-singleton`) + fire-election (`cron:dev-team:2026-08-05T08:37Z`) cleanly at jump:end via bash bridge.
 
 ## Current state (:07 — 2026-06-01T20:20Z) — AUD-ND-1 (CRITICAL) IMPLEMENTED+QA-PASS; 3 reports triaged
 - Idle pipeline, 4 cowork heartbeats (drained) + 3 NEW telegram reports. Spawned **po** triage. Reports: 3022 (stale news-fetch, fixed) + 3023 (mcp-server SIGTERM → reinforces AUD-ND-1, monitoring) + 3024 (CTG composite=0.00) — PO raw-verified 3024 = NOT misparse: stored CTG_2026_Q1.pdf is a 0.5MB Thông tư 96 cover-letter stub (zero financials), low-conf skip CORRECT → new backlog **BCTC-CTG-ATTACHMENT-FETCH** (fetch grabbed announcement not attachment). All 3 reports `process_telegram_report`'d + Telegram msgs deleted. Commit **ff8ecad8**.
 - **Dispatched AUD-ND-1 (CRITICAL top-of-queue, the #1 fleet-safety item)** — chain po→**agents-architect**→**agent-father**→**qa**, all mutex-wrapped. agents-architect wrote brief `…/2026-06-01-detector-plan-only-safety.md` (131f0731): root cause = no authored destructive step, violations come from LLM *inference* ("CRITICAL → I'll docker stop") → fix = explicit PLAN-ONLY prohibition block. agent-father edited 3 files (flow/main.md invariant block + init.md plan_only_invariant yaml + tools-package Bash read-only allowlist), edit-but-no-commit so I could **raw-verify every safety line pre-commit** → committed **d30f9221**.
 - **qa PASS static+flow-walk** (PLAN-ONLY, no live auditor run — would risk re-triggering the docker-stop): enumerated every Bash block = 0 destructive authored step; all CRITICAL/WARN paths → signal+DASHBOARD+BUG+EXIT; invariant positioned before all decision points; allowlist breaks no diagnostic; registration line-1 intact. **LIVE-PROVEN-RED DEFERRED** (ops-supervised off-hours injection). **SA-FLOW-CAP** noted (flow 494L pre-existing >> 120L cap).
 - Closed: pipeline idle; TASKS.md 68/80; AUD-ND-1 mutex released; closeout **b538bc0d**. origin push-backlog cleared (was 145, now ~2-behind). RETAINED **tnb-c85 audit-handoff** (HIGH, chef-narrative quality; morning-dish guaranteed-publish miss already self-fixed by agent-father same cycle) for next-tick PO triage.
-
-## (prior :07 — 2026-06-01T19:40Z) — TOOL-SURFACE-HYGIENE CLOSED (TSH-6 shipped + live-verified); MSG-2 resolved
-- Idle pipeline + 4 signals. Drained 2 cowork-fire heartbeats; spawned **po** triage (mutex) on the 2 actionable: ops macro/socat-recovery (→ **VPS-SOCAT-PERSIST CLOSED**: launchd plist `com.vn-market.socat-bridge` replaces hand-PID + macro-indicators restarted) + po-TSH-6 task_ready. PO BATCH = single FIX (TSH-6); raw-verified PO's TASKS.md reconcile (TSH-1 ✅, no over-cap, no commit). Commit **85a255cc**.
-- TSH-6 = FIX → dispatched **dev-mcp-server** (3 bare-catch sites → `catch(error)`+`logger.warn`+omit; 200-data-short guard preserved). Router raw-verified the diff + ran independent `tsc --noEmit` exit 0. Commit **9b895ffd**.
-- **ops** rebuilt mcp-server `--no-cache --force-recreate` (single service; host-mem guard checked) → Up(healthy), /health 200. ops flagged toolCount=154 (expected 153) — handed the contradiction to qa.
-- Router live raw-verify: `get_market_snapshot{codes:[FPT]}` ends at "Generated:" — NO trailing "Chưa đủ dữ liệu" line (AC5 PASS). **qa** raw `tools/list`: 154 tools, `get_market_hexagram` **ABSENT** → TSH-1 truly done; /health 154 is correct (baseline was 155, not 154 — the "153" expectation was a bad assumption); project-stats consistent → TSH-5 no edit. qa PLAN-ONLY (no docker/commit). MSG-2 resolved by same fix.
-- Closed: TASKS.md 79→67 (sprint→1-liner); pipeline head→idle; mutex released. Concurrent sessions committed FB-post/ops-runbook/memory-sweep on top of mine — verified my 2 SHAs intact (no rebase/loss). Closeout **2f7ea34f**.
 
 ## Lessons / patterns
 
