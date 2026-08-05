@@ -1,4 +1,42 @@
 
+
+## c17 · 2026-08-05T06:52:58Z
+### Audit Run Tier-3 (06:47–06:53 UTC 2026-08-05)
+- Tier: 3 | DB checks C-01..C-16 run | Container tooling verified | DB integrity scanned
+- **Anomalies: 1 CRITICAL (C-OHLCV-VIOLATIONS)**
+- Status: CRITICAL
+
+Fire-election: tick=2026-08-05T02:00Z (Tier-3 daily 02:00 UTC) — claimed, led tick.
+
+**DB Integrity Scan Results:**
+- C-01: 98 distinct codes in daily_ohlcv (≥25) ✓
+- C-02: 194 ohlcv rows (>0) ✓
+- C-03: 45 action_codes Q1 2026 (≥26) ✓
+- C-04: 30 low-confidence reports (<0.2) — BY-DESIGN ✓
+- C-05: 0 SSC portal URLs (=0) ✓
+- C-06: 2 market_messages in 3h ✓
+- C-07: 27 agent_signals in 24h (>0) ✓
+- C-08: 22 orphaned alerts (baseline; structural join cardinality) ⚠
+- C-09: 3 macro indicators Vietnam (≥3) ✓
+- C-10: 0 failed PDFs (≤2) ✓
+- C-11: 0 done PDFs (off-season) ✓
+- C-12: PRAGMA integrity_check all DBs = ok ✓
+- C-13: WAL sizes market 0B, pdf_extractor missing (ok) ✓
+- C-14: Top-3 concentration 3.1% (<60%) ✓
+- C-15: Schema all required columns present ✓
+- C-16: 0 stale pending BCTC (=0) ✓
+
+**CRITICAL Finding (sys-20260805T065227-25f7):**
+- Table: daily_ohlcv
+- Class: INCORRECT (OHLCV constraint violation)
+- Detail: 336 records with high=0, low=0 (should be ≥ open, close, low). All from 2026-05-15.
+- Sample: VNDAFS004 2026-05-15 O=21183.99 H=0 L=0 C=21183.99
+- Root cause: Data extraction/load bug on 2026-05-15; high/low values missing
+- Signal ID: sys-20260805T065227-25f7 → posted to dev-team
+
+[OUTPUT-CONTRACT] signals_posted=1 | telegram_sent=1 | signal_queue_rows_written=1 | dashboard_rows=1 | dedup_skipped=0
+
+
 ## c16 · 2026-08-05T06:41:02Z
 ### Audit Run Tier-1 (06:39–06:40 UTC 2026-08-05)
 - Tier: 1 | Services: 12/12 UP | Health endpoints: 5/5 OK | A-20 multi-probe: 3/3 pass
