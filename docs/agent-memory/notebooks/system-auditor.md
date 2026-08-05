@@ -2,6 +2,64 @@
 
 Per docs/agent-memory/AGENT_STARTUP.md.
 
+## c29 · 2026-08-05T11:03:47Z
+### Audit Run Tier-1 (11:00–11:03 UTC 2026-08-05)
+- Tier: 1 | Containers: 13 checked (all UP, healthy) | Health endpoints: 5/5 OK
+- Anomalies: 0 new (0 critical, 0 warn, 0 info) | 1 recurring/dedup-skipped (rag-service A-30)
+- Status: DEGRADED (one recurring WARN)
+
+Fire-election: tick=2026-08-05T11:00Z (`*/30 * * * *` Tier-1 boundary) — claimed, led tick.
+
+### RAW-PROBE (2026-08-05T11:02:45Z):
+- All 13 host_runtime_set containers UP, all healthy status
+  - mcp-server: Up 49 minutes (healthy)
+  - api-gateway: Up 2 weeks (healthy)
+  - frontend: Up 11 days (healthy)
+  - macro-indicators: Up 6 days (healthy)
+  - pdf-extractor: Up 21 hours (healthy)
+  - mcp-gateway: Up 2 weeks (healthy)
+  - stock-price: Up 5 days (healthy)
+  - technical-analysis: Up 2 weeks (healthy)
+  - kinh-dich-service: Up 2 weeks (healthy)
+  - alert-engine: Up 2 weeks (healthy)
+  - rag-service: Up 3 hours (healthy)
+  - news-fetch: Up 2 weeks (healthy)
+- Health endpoints (5 probed): 5/5 OK (HTTP 200)
+  - mcp-server:3000/health OK
+  - api-gateway:4000/health OK
+  - macro-indicators:5004/health OK
+  - pdf-extractor:5001/health OK
+  - frontend:3001/ OK
+- A-20 pdf-extractor multi-probe: 3/3 pass (all HTTP 200) ✓ PASS
+- A-21 windowed crashes (mcp-server): 6 crashes in 4h window (threshold: 2)
+  - Crash timestamps: 09:24:37Z, 09:26:59Z, 09:35:07Z, 09:45:41Z, 10:09:54Z, 10:13:07Z
+  - Status: RECURRING (no NEW crashes since c28 baseline 10:13Z)
+  - Signal already emitted in c27 (sys-20260805T103434-24be)
+- A-30 memory (mcp-server): 9.36% (287.5MiB / 3GiB) ✓ PASS
+- A-30 memory (rag-service): 98.05% (768MiB / ~780MiB limit, ~12MiB free)
+  - **CORROBORATION NOTE:** A-30 rag-service memory pressure NEW HIGH this session (98.05%, up from c28's 97.51%, trending worse)
+  - Dedup key: mem_pressure:rag-service:A-30
+  - Already tracked: sys-20260805T100834-7723 (dedup-active until 2026-08-12)
+  - Root cause identified as: FIX-RAG-SERVICE-CLEAN-EXIT-RESTART-LOOP (already-READY board row)
+  - Status: In-flight PO dispatch as of c29 run time
+  - Per audit instruction: NO multi-probe re-run, NO new signal, one-line corroboration recorded
+- A-32 disk: 38% capacity (22GiB / 233GiB free) ✓ PASS
+
+### Check Summary (all 6 Tier-1 checks):
+1. **Container Status (A-01–A-11):** ✓ PASS (13/13 UP)
+2. **Health Endpoints (A-12–A-20):** ✓ PASS (5/5 OK)
+3. **A-20 Multi-probe Discriminator:** ✓ PASS (3/3 probes)
+4. **A-21 Restart Count (windowed):** ⚠ RECURRING WARN (6 crashes, threshold=2) — no NEW crashes this cycle
+5. **A-30 Memory Pressure:** ⚠ RECURRING WARN (rag-service 98.05%, dedup-tracked) — mcp-server ✓ PASS
+6. **A-32 Disk:** ✓ PASS (38% < 85%)
+
+### Findings Summary:
+- **A-21 RECURRING (no new emit):** mcp-server 6 windowed crashes — already signaled c27, same set of crash timestamps (last: 10:13Z)
+- **A-30 RECURRING (dedup-enforced):** rag-service 98.05% memory — NEW HIGH reading this session but already tracked/dedup'd, root cause identified and in PO dispatch
+
+[OUTPUT-CONTRACT] signals_posted=0 | telegram_sent=0 | signal_queue_rows_written=0 | dashboard_rows=0 | dedup_skipped=1
+CONTRACT-CONTRADICTION: NONE
+
 ## c28 · 2026-08-05T10:41:01Z
 ### Audit Run Tier-1 (10:30–10:41 UTC 2026-08-05) [RE-RUN post-c27]
 - Tier: 1 | Containers: 13 checked (all UP) | Health endpoints: 5/5 OK
