@@ -1,8 +1,15 @@
 # Architect — Notebook
 
-**Last updated:** 2026-08-05 09:40 UTC | **Sprint:** COWORK-GUARANTEED-SLOT-CATCHUP
+**Last updated:** 2026-08-05 16:35 UTC | **Sprint:** COWORK-GUARANTEED-SLOT-CATCHUP
 
 [3 most recent cycles retained. Older cycles archived to git history.]
+
+## 2026-08-05T16:35Z — SPIKE-BOUNDED1-ELIGIBILITY-CONTRACT-REVIEW (zone=cross-service/, high, dev-team Review-Lane SECONDARY-Drain dispatch, stale review[]-lane sign-off)
+
+**Task:** Independently re-verify (not the 07-21 self-report) whether the "refactor eligibility gating into one shared detail-resolution contract" recommendation is still ADOPTED-AND-HOLDING 15 days later, then dispose the stale row.
+**Design/Finding:** `scripts/lib/devteam-eligibility.jq` confirmed live (31 defs, last commit TODAY), all 5 originally-cited call sites still `include` it (grep-verified), adoption expanded to 30+ callers — every picker built since 07-21 extends this ONE library, never forks. 2 isolated regression suites pass live (5/5, 7/7; one dated today closed a real self-target bug through the shared fn). Ran the 2 broader dispatch-chain audit instruments for corroboration — both exit non-zero, but neither FAIL traces to this library's predicates: (1) a stale `ready[]` `promoted_by` stamp survived a same-day PO WIP-eviction because `devteam-backlog-claim-bounded1.jq` has no self-contained WIP recheck (relies on `main.md:549`'s outer bash gate — harmless today, WIP=1 live, but a latent gap); (2) 5 backlog rows resolve `dispatch-lane=none` because owner+next_agent are both null at mint time — the resolver correctly reports unresolvable, an ongoing instance of the already-PO-tracked mint-hygiene residual, not a predicate defect.
+**Output:** `review[]→done_verified[]` via `orch-apply.sh`; full evidence in `completion_note`. Both new findings flagged out-of-scope (telegram + status_note pointer), not folded into this row.
+**Next:** PO/dev-team triage: (a) decide whether `devteam-backlog-claim-bounded1.jq` needs its own WIP recheck or the eviction path should clear stale stamps; (b) data-fix the 5 null-owner/null-next_agent backlog rows.
 
 ## 2026-08-05T09:40Z — FIX-BCTC-FALLBACK-SHELL-REPORTS-STRUCTURALLY-UNEXTRACTABLE (zone=apps/mcp-server/, P0/M, direct PO board-mint, dev-team triage tick)
 
@@ -19,11 +26,3 @@
 **Finding:** The reconciliation rule itself was not the defect — it was being fed corrupted operands. Once Bug A (port the `to_epoch` helper already live in `emit-audit-signal.sh::_ledger_prune_and_lookup()`) and Bug B (thread the already-unique `FIRE_TASK_ID` through as a new `--cycle-tag`/`audit_cycle_tag` passthrough field, zero schema migration — `SignalRowSchema.passthrough()` confirmed live) are fixed, take-the-max is provably sound: the only remaining divergence sources (post-write drain, or a dropped marker line) both genuinely favor the higher operand.
 **Output:** `docs/architecture-briefs/2026-08-05-fix-audit-output-contract-signalqueue-mismatch.md` (diffs, test plan T12/T13). `architect_review_note` written via `orch-apply.sh`, `backlog[]→ready[]`, `next_agent:developer` (matches `FIX-AUDITOR-A12-PROBE-TIMEOUT-EXITCODE-DEBOUNCE` precedent, same S/P2 shape).
 **Next:** developer implements brief §4 (2 scripts + 7 call-site flag threads) + §5 tests; verification gate = replay §0's two repros, both must show no VIOLATION.
-
-## 2026-08-05T09:25Z — FIX-BCTC-FULL-SERVING-EMPTY-NEWEST-PERIOD-HEAD-OF-LINE (zone=apps/mcp-server/, P0/S, direct PO board-mint, dev-team-triage-tick pick)
-
-**Task:** `get_bctc_full` serves "Chua co du lieu BCTC" for FPT/HPG/VCB (day 4 outage) while COMPLETE data sits 1-2 periods back; PO asked to confirm/refute a shared-root-cause hypothesis vs `FIX-BCTC-PENDING-REFINE-HEAD-OF-LINE-FAILED-ROW` first.
-**Design:** Root cause confirmed: `bctcFullTools.ts:954-958` `ORDER BY sort_key DESC LIMIT 1` has no `refine_status`/`text_status` predicate; PUB-1 (`checkPublishability`) correctly rejects the empty PENDING shell but the handler returns that rejection with zero fallback to an older DONE period. Fix: bound a 6-period candidate scan for the no-explicit-filter path only, reuse existing exported `checkPublishability` to pick the newest servable row, fall through to today's unchanged rejection when none qualify. Explicit `{year,quarter}` calls untouched by design.
-**Finding:** Shared-root-cause hypothesis REFUTED as a literal shared-helper claim (grep-confirmed zero cross-imports between `bctcFullTools.ts` and `getBctcPendingRefineTool.ts`; different scope/sort-axis/fix-mechanics) but CONFIRMED as the same recurring bug class — 3rd instance in the file family (`reports.ts`'s `get_financial_summary` already carries a narrower fix, `FIX-BCTC-SERVE-GATE-FINANCIAL-REPORTS`; `compare_financials` NOT affected, always-explicit periods).
-**Output:** `docs/architecture-briefs/2026-08-05-fix-bctc-full-serving-empty-newest-period-fallback.md`. `architect_review_note` written to the row via `orch-apply.sh`, `next_agent` set to `dev-mcp-server` (status left BACKLOG for BOUNDED-1 auto-pickup, matches its gate: status=BACKLOG/supervised=false/depends=[]/next_agent=dev-mcp-server pattern).
-**Next:** dev-mcp-server implements brief §4/§6 directly in `bctcFullTools.ts` + `240-bctc-full.test.ts`; flagged `reports.ts`'s `get_financial_summary` for a P2/P3 follow-up (same class, narrower symptom, not this P0's scope) and the 4 unverified `ORDER BY sort_key DESC` call sites for `SPIKE-BCTC-Q1-2026-SERVABILITY-CENSUS` to sweep.
