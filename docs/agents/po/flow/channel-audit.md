@@ -93,7 +93,13 @@ Required output: every emitted FIX/SPRINT entry carries `zone:` (one of `apps/<s
 
 ---
 
-**If 1+ issues found**: create bug/correction tasks in `docs/data/orch/orch-state.json` `.task_board.backlog[]` — canonical shape per `docs/standards/task-schema.md`: `{id, title, owner, status: "BACKLOG", zone, created_at}` (with correct root-cause label + zone) before proceeding to sprint planning. `status` MUST be `"BACKLOG"` — `backlog[]`'s allowed set per `apps/mcp-server/src/infrastructure/orchStateSchema.ts` is `{BACKLOG, BLOCKED}` only; see `docs/agents/po/flow/triage-signals.md` § Regression verifier + `scripts/audits/po-triage-mint-backlog-status-lane-coherence-verify.sh`.
+**If 1+ issues found**: create bug/correction tasks in `docs/data/orch/orch-state.json` `.task_board.backlog[]` — canonical shape per `docs/standards/task-schema.md`: `{id, title, owner, status: "BACKLOG", zone, created_at}` (with correct root-cause label + zone) before proceeding to sprint planning. `status` MUST be `"BACKLOG"` — `backlog[]`'s allowed set per `apps/mcp-server/src/infrastructure/orchStateSchema.ts` is `{BACKLOG, BLOCKED}` only; see `docs/agents/po/flow/triage-signals.md` § Regression verifier + `scripts/audits/po-triage-mint-backlog-status-lane-coherence-verify.sh`. Write actuator — never a raw read→modify→write, ALWAYS route via `scripts/orch-apply.sh` (FIX-PO-BATCH-MINT-NO-WRITE-ACTUATOR):
+```bash
+jq --arg id "TASK-NNN" --arg title "<root-cause label> <description>" --arg owner "ops|developer" \
+   --arg zone "<resolved zone>" --arg now "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+  '.task_board.backlog += [{id:$id, title:$title, owner:$owner, status:"BACKLOG", zone:$zone, created_at:$now}]' \
+  "$PROJECT_ROOT/docs/data/orch/orch-state.json" | bash "$PROJECT_ROOT/scripts/orch-apply.sh"
+```
 
 **If clean**: proceed to No-Task Guard (back in main.md).
 

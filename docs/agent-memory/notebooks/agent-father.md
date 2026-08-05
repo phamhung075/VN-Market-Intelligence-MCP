@@ -95,3 +95,28 @@
 - Wrote the one allowed exception write (signal_queue DONE-mark, `orch-apply.sh`, read-back
   confirmed) addressed to po requesting QA verify + task_board lane-move — did not touch
   task_board rows directly (`commit_zone.excluded`), same precedent as prior cycles above.
+
+## Fix (router-dispatched, PO self-triage) 2026-08-05T09:32:49Z FIX-PO-BATCH-MINT-NO-WRITE-ACTUATOR
+- Confirmed both defects live before editing: grepped all 14 `docs/agents/po/flow/*.md` —
+  `sprint-kickoff.md`, `channel-audit.md`, `market-group.md`, `telegram-reports.md` each had a
+  prose-only "append to `.task_board.backlog[]`" step with zero `orch-apply.sh` pipe (2 carried a
+  dangling "§2.3 atomic write" pointer to a section that never existed anywhere in the repo); vs
+  `manual-dispatch-sweep.md`/`supervised-goahead.md`/`triage-signals.md` which already pipe.
+  `main.md`'s commit-mutex `own_paths` declared `["docs/agent-memory/notebooks/po.md"]` only —
+  `orch-state.json` genuinely excluded from PO's own commit, matching the row's own diagnosis.
+- Fixed the 4 sub-flows in place: replaced prose with inline `jq ... | bash scripts/orch-apply.sh`
+  at each mutation point, field-shape unchanged. Widened `main.md`'s commit-mutex `own_paths` to
+  `[notebook, decision-journal path, orch-state.json]` — one committer per cycle (supersedes
+  decision-journal's own separate bare-commit rule for PO specifically, never touches the shared
+  skill). Added AC-3: mandatory `git show --stat $(git rev-parse HEAD)` self-verification before
+  any RETURN may claim "committed"/"confirmed in HEAD" — stated as a generic reusable rule
+  (write-then-assert-persistence must re-read git HEAD, not the write call's exit code) so
+  tran-ngoc-bau/cowork can adopt without re-deriving the mechanism, per the row's own scope note.
+- Verified: re-ran the 3 existing PO regression verifiers
+  (`po-triage-mint-backlog-status-lane-coherence-verify.sh` 42/42,
+  `po-manual-dispatch-sweep-verify.sh`, `po-goahead-producer-verify.sh`) — all still PASS, no
+  regression from the edits. `orch-state.json` untouched by my session (`git status` clean on it).
+- Declined to author `scripts/audits/po-mint-orchapply-actuator-verify.sh` (the row's own AC also
+  asks for this) — `scripts/` is outside `commit_zone.allowed`, same boundary as S1-S20 precedent
+  above. Documented the exact grep predicate as a spec inline in `main.md` § Regression verifier
+  and handed off via RETURN (NEXT: developer/architect) rather than widening my own commit.

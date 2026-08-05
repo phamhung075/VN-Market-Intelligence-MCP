@@ -1,4 +1,4 @@
-<!-- size-justification: 131L — atomic market-group audit flow; step table + SSOT signal classification table cannot decompose cleanly without breaking step references. -->
+<!-- size-justification: 141L — atomic market-group audit flow; step table + SSOT signal classification table cannot decompose cleanly without breaking step references. +10L 2026-08-05 FIX-PO-BATCH-MINT-NO-WRITE-ACTUATOR: 4 prose-only backlog appends replaced with explicit orch-apply.sh pipes. -->
 # PO — Market Group Analysis Flow
 
 **Tools:** `docs/agents/tools/package/po.md`
@@ -51,26 +51,33 @@ For each unreviewed message (or cluster by ticker/topic):
 - Same alert fired twice?
 - Alert fired but condition not met per snapshot?
 - Message format broken/truncated?
-→ Append to `.task_board.backlog[]` (atomic write):
-```json
-{"id": "TASK-NNN", "summary": "[BUG] <description> — market-group", "priority": "high"}
+→ Append to `.task_board.backlog[]` — write actuator, never a raw write (FIX-PO-BATCH-MINT-NO-WRITE-ACTUATOR):
+```bash
+jq --arg id "TASK-NNN" --arg summary "[BUG] <description> — market-group" --arg now "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+  '.task_board.backlog += [{id:$id, title:$summary, status:"BACKLOG", priority:"high", zone:"<resolved zone>", created_at:$now}]' \
+  "$PROJECT_ROOT/docs/data/orch/orch-state.json" | bash "$PROJECT_ROOT/scripts/orch-apply.sh"
 ```
+(status MUST be `"BACKLOG"` — `apps/mcp-server/src/infrastructure/orchStateSchema.ts` `LANE_ALLOWED_STATUSES.backlog` only permits `{BACKLOG, BLOCKED}`)
 
 ### 3c. Signal Quality (noisy, low conviction, unhelpful)
 - Alert fired but price moved <0.3%?
 - Signal not confirmed by any chain?
 - User would ignore this → UX friction
-→ Append to `.task_board.backlog[]`:
-```json
-{"id": "TASK-NNN", "summary": "[QUALITY] Improve signal threshold for <type> — market-group", "priority": "normal"}
+→ Append to `.task_board.backlog[]` — same actuator as 3b:
+```bash
+jq --arg id "TASK-NNN" --arg summary "[QUALITY] Improve signal threshold for <type> — market-group" --arg now "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+  '.task_board.backlog += [{id:$id, title:$summary, status:"BACKLOG", priority:"normal", zone:"<resolved zone>", created_at:$now}]' \
+  "$PROJECT_ROOT/docs/data/orch/orch-state.json" | bash "$PROJECT_ROOT/scripts/orch-apply.sh"
 ```
 
 ### 3d. UX Improvement (presentation, wording, structure)
 - Message unclear, too long, missing context?
 - Format inconsistent across alert types?
-→ Append to `.task_board.backlog[]`:
-```json
-{"id": "TASK-NNN", "summary": "[UX] <description> — market-group", "priority": "normal"}
+→ Append to `.task_board.backlog[]` — same actuator as 3b:
+```bash
+jq --arg id "TASK-NNN" --arg summary "[UX] <description> — market-group" --arg now "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+  '.task_board.backlog += [{id:$id, title:$summary, status:"BACKLOG", priority:"normal", zone:"<resolved zone>", created_at:$now}]' \
+  "$PROJECT_ROOT/docs/data/orch/orch-state.json" | bash "$PROJECT_ROOT/scripts/orch-apply.sh"
 ```
 
 ---
@@ -94,9 +101,11 @@ After ops returns findings → main terminal re-spawns `po/market-group.md` Step
 
 ## Step 5: Task Creation from Ops Findings (after ops returns)
 
-Read ops validation report. For each confirmed data issue, append to `.task_board.backlog[]`:
-```json
-{"id": "TASK-NNN", "summary": "[DATA] <ticker>: <stale|missing|wrong> data from <service> — ops-finding", "priority": "high"}
+Read ops validation report. For each confirmed data issue, append to `.task_board.backlog[]` — same actuator as Step 3 (never a raw write):
+```bash
+jq --arg id "TASK-NNN" --arg summary "[DATA] <ticker>: <stale|missing|wrong> data from <service> — ops-finding" --arg now "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+  '.task_board.backlog += [{id:$id, title:$summary, status:"BACKLOG", priority:"high", zone:"<resolved zone>", created_at:$now}]' \
+  "$PROJECT_ROOT/docs/data/orch/orch-state.json" | bash "$PROJECT_ROOT/scripts/orch-apply.sh"
 ```
 Recurrent data issue (same service, same ticker in last 7d) → set summary prefix `[ARCH REVIEW]`.
 

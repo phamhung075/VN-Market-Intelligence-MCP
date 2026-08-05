@@ -1,4 +1,4 @@
-<!-- size-justification: 164L (TE-T09, 2026-07-13: extracted "Reusable triage scripts" registry → `scripts-registry.md` and Step PUSH-BACKSTOP body → `push-backstop.md`, both lazy-load pointers; corrects pre-existing drift — this header previously claimed 229L while the file was actually 274L pre-edit) — thin dispatcher; sub-flow routing table + BATCH schema spec + JUMP TO anchors + notebook-write skill route are tightly bound. Cross-file sub-flows live in `po/triage-*.md`, `po/channel-audit.md`, `po/sprint-*.md`, `po/scripts-registry.md`, `po/push-backstop.md`. FIX-WF2-SUPERVISED-HOLD-NO-PO-SIDE-GOAHEAD-PRODUCER 2026-07-30: +4L pointer to new `po/supervised-goahead.md` sub-flow (WF-2 `po_goahead` producer — same lazy-load-pointer pattern as the two extractions above, no body inlined here). FIX-PO-NO-PRODUCER-FOR-MANUAL-DISPATCH-ESCAPE-HATCH 2026-07-31: +4L pointer to new `po/manual-dispatch-sweep.md` sub-flow (producer for the DRS-STRANDED-OFF-ALLOWLIST/ready-XOR "manual/PO dispatch" rows — same lazy-load-pointer pattern, no body inlined here). -->
+<!-- size-justification: 179L (TE-T09, 2026-07-13: extracted "Reusable triage scripts" registry → `scripts-registry.md` and Step PUSH-BACKSTOP body → `push-backstop.md`, both lazy-load pointers; corrects pre-existing drift — this header previously claimed 229L while the file was actually 274L pre-edit) — thin dispatcher; sub-flow routing table + BATCH schema spec + JUMP TO anchors + notebook-write skill route are tightly bound. Cross-file sub-flows live in `po/triage-*.md`, `po/channel-audit.md`, `po/sprint-*.md`, `po/scripts-registry.md`, `po/push-backstop.md`. FIX-WF2-SUPERVISED-HOLD-NO-PO-SIDE-GOAHEAD-PRODUCER 2026-07-30: +4L pointer to new `po/supervised-goahead.md` sub-flow (WF-2 `po_goahead` producer — same lazy-load-pointer pattern as the two extractions above, no body inlined here). FIX-PO-NO-PRODUCER-FOR-MANUAL-DISPATCH-ESCAPE-HATCH 2026-07-31: +4L pointer to new `po/manual-dispatch-sweep.md` sub-flow (producer for the DRS-STRANDED-OFF-ALLOWLIST/ready-XOR "manual/PO dispatch" rows — same lazy-load-pointer pattern, no body inlined here). FIX-PO-BATCH-MINT-NO-WRITE-ACTUATOR 2026-08-05: +15L — commit-mutex own_paths widened to `orch-state.json` + decision-journal path (PO's own write actuator, no longer relies on an external agent/sweep to commit its board mutations) and a mandatory post-commit `git show --stat` self-verification step added before any RETURN may assert persistence. -->
 # Product Owner — Main Flow (Thin Dispatcher)
 
 **Tools:** `docs/agents/tools/package/po.md`
@@ -146,16 +146,31 @@ Write at minimum ONE entry per task you complete stamped with its task-id. Routi
 
 > Invariant: timestamp = current UTC, never future, never speculative. ALWAYS get via `date -u +"%Y-%m-%dT%H:%M:%SZ"` before any ACK append or notebook header.
 
-**Commit notebook** (mutex-guarded):
+**Commit PO's writes** (mutex-guarded, ONE commit — PO's OWN actuator for `orch-state.json`; FIX-PO-BATCH-MINT-NO-WRITE-ACTUATOR: no longer depends on an external agent/sweep to commit on PO's behalf):
 ```
 → skill: .claude/skills/commit-mutex/SKILL.md
-  own_paths: ["docs/agent-memory/notebooks/po.md"]
-  intent:    "chore(memory/po): notebook YYYY-MM-DD"
+  own_paths: [
+    "docs/agent-memory/notebooks/po.md",                       # always present — every cycle writes it
+    "docs/agent-memory/decisions/sprint-<sprint-id>-po.md",    # include ONLY if § Write Entry ran this cycle (path won't exist on an ambient/no-task tick)
+    "docs/data/orch/orch-state.json"                           # include unconditionally — file always exists; `git add` on an unmodified-but-existing path is a harmless no-op
+  ]
+  intent:    "chore(memory/po): notebook + journal + board YYYY-MM-DD"
 ```
-Convention: `docs/policies/commit-convention.md` § Notebook Commits
+Convention: `docs/policies/commit-convention.md` § Notebook Commits. Supersedes decision-journal's generic `§ Commit Rule` for PO (main.md invokes only its `§ Write Entry`) — one committer of PO's paths per cycle, never two racing bare commits.
 
-**Reusable triage scripts** — idempotent backlog appends. ALL writes: `jq ... docs/data/orch/orch-state.json | bash "$PROJECT_ROOT/scripts/orch-apply.sh"` — NEVER raw temp→rename.
-Reusable triage script catalog → `docs/agents/po/flow/scripts-registry.md` (load ONLY when minting a NEW triage script — check for an existing reusable pattern first)
+**AC-3 — mandatory self-verification before RETURN may assert persistence** (closes "narrated but never landed" — occ. 7/8): if this cycle ran any `orch-apply.sh` pipe, after the commit above:
+```bash
+SHA=$(git rev-parse HEAD)
+git show --stat "$SHA" | grep -q 'docs/data/orch/orch-state.json' \
+  && echo "[po] orch-state.json CONFIRMED in HEAD $SHA" \
+  || send_telegram(channel="bug", message="[po] FAIL-LOUD: orch-state.json NOT in own commit $SHA — landed on disk via orch-apply.sh but not in git HEAD")
+```
+RETURN may claim "committed"/"confirmed in HEAD" only after this passes — the `orch-apply.sh` write alone guarantees only the on-disk file, never git HEAD. Generic rule (adoptable by tran-ngoc-bau/cowork, same failure shape): **any step that writes an artifact AND asserts its own persistence must re-read the persistence layer (git HEAD) before claiming it, never trust the write call's own exit code.**
+
+**Reusable triage scripts** — idempotent backlog appends. ALL writes: `jq ... docs/data/orch/orch-state.json | bash "$PROJECT_ROOT/scripts/orch-apply.sh"` — NEVER raw temp→rename. Every mint/mutate sub-flow (`sprint-kickoff.md`, `channel-audit.md`, `market-group.md`, `telegram-reports.md`, `manual-dispatch-sweep.md`, `supervised-goahead.md`, `triage-signals.md`) carries this pipe inline at the mutation point — prose-only "append to backlog[]" with no pipe was the FIX-PO-BATCH-MINT-NO-WRITE-ACTUATOR defect.
+Reusable triage script catalog → `docs/agents/po/flow/scripts-registry.md` (load ONLY when minting a NEW triage script)
+
+**Regression verifier (spec, unimplemented — owned by developer/architect, `scripts/` is outside agent-father's commit zone):** `scripts/audits/po-mint-orchapply-actuator-verify.sh` — greps `docs/agents/po/flow/*.md` for a board-mutation instruction with no `orch-apply.sh` pipe in the same step, opt-IN allowlist only (`feedback_fleetwide_gate_validated_on_one_file_optout_allowlist`). Filed as follow-up via this task's RETURN handoff, not authored here.
 
 **Doc self-heal** → skill: `.claude/skills/doc-self-heal/SKILL.md`
 

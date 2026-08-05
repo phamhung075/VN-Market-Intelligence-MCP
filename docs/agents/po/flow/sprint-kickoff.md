@@ -12,20 +12,22 @@
 
 **2.** Highest-impact: reliability (failing tests, footguns) | coverage (missing signals) | UX (useless alerts) | architecture (DDD debt)
 
-**3.** Append entry to `docs/data/orch/orch-state.json` `.sprint_goal.entries[]` (atomic write per §2.3, read full → modify only `.sprint_goal` → write atomically):
-```json
-{
-  "sprint_id": "NNN",
-  "status": "active",
-  "vision": "<one sentence: business outcome>",
-  "scope_in": "<what we're building>",
-  "scope_out": "<what we're NOT doing>",
-  "success_metric": "<how we know it's done>",
-  "created_at": "<ISO-8601 UTC>"
-}
+**3.** Append entry to `docs/data/orch/orch-state.json` `.sprint_goal.entries[]` — write actuator, never raw read→modify→write, ALWAYS route via `scripts/orch-apply.sh` (FIX-PO-BATCH-MINT-NO-WRITE-ACTUATOR, 2026-08-05):
+```bash
+NOW=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+jq --arg sid "$SPRINT_ID" --arg vision "$VISION" --arg scope_in "$SCOPE_IN" \
+   --arg scope_out "$SCOPE_OUT" --arg metric "$SUCCESS_METRIC" --arg now "$NOW" \
+  '.sprint_goal.entries += [{sprint_id:$sid, status:"active", vision:$vision, scope_in:$scope_in, scope_out:$scope_out, success_metric:$metric, created_at:$now}]' \
+  "$PROJECT_ROOT/docs/data/orch/orch-state.json" | bash "$PROJECT_ROOT/scripts/orch-apply.sh"
 ```
+(field shape unchanged — see JSON above for the entry produced)
 
-**4.** Create BA task entry in `docs/data/orch/orch-state.json` `.task_board.backlog[]` — canonical shape per `docs/standards/task-schema.md`. `status` MUST be `"BACKLOG"` — `backlog[]`'s allowed set per `apps/mcp-server/src/infrastructure/orchStateSchema.ts` is `{BACKLOG, BLOCKED}` only; see `docs/agents/po/flow/triage-signals.md` § Regression verifier + `scripts/audits/po-triage-mint-backlog-status-lane-coherence-verify.sh`:
+**4.** Create BA task entry in `docs/data/orch/orch-state.json` `.task_board.backlog[]` — canonical shape per `docs/standards/task-schema.md`. `status` MUST be `"BACKLOG"` — `backlog[]`'s allowed set per `apps/mcp-server/src/infrastructure/orchStateSchema.ts` is `{BACKLOG, BLOCKED}` only; see `docs/agents/po/flow/triage-signals.md` § Regression verifier + `scripts/audits/po-triage-mint-backlog-status-lane-coherence-verify.sh`. Same actuator as step 3, never a raw write:
+```bash
+jq --arg id "BA-$SPRINT_ID" --arg title "Requirement Spec for Vision $SPRINT_ID" --arg now "$NOW" \
+  '.task_board.backlog += [{id:$id, title:$title, owner:"ba", status:"BACKLOG", zone:"docs/agents/", created_at:$now}]' \
+  "$PROJECT_ROOT/docs/data/orch/orch-state.json" | bash "$PROJECT_ROOT/scripts/orch-apply.sh"
+```
 ```json
 {
   "id": "BA-NNN",

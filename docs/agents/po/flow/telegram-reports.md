@@ -1,4 +1,4 @@
-<!-- size-justification: 128L — atomic telegram-reports handler; routing decision table + per-category action rules cannot decompose without losing handler coherence. -->
+<!-- size-justification: 134L — atomic telegram-reports handler; routing decision table + per-category action rules cannot decompose without losing handler coherence. +6L 2026-08-05 FIX-PO-BATCH-MINT-NO-WRITE-ACTUATOR: dangling §2.3 pointer replaced with explicit orch-apply.sh pipe. -->
 # PO — Telegram Reports Flow
 
 **Tools:** `docs/agents/tools/package/po.md`
@@ -89,10 +89,14 @@ git log --oneline --all --grep="<keywords>" | head -10
   - Set `priority: high`
 
 ### 2e. Create Task
-Add to `docs/data/orch/orch-state.json` `.task_board.backlog[]` (atomic write per §2.3):
-```json
-{"id": "TASK-NNN", "summary": "[ARCH REVIEW?] <title from report> — telegram:#ID", "priority": "high"}
+Add to `docs/data/orch/orch-state.json` `.task_board.backlog[]` — write actuator, never a raw read→modify→write, ALWAYS route via `scripts/orch-apply.sh` (FIX-PO-BATCH-MINT-NO-WRITE-ACTUATOR, 2026-08-05):
+```bash
+jq --arg id "TASK-NNN" --arg summary "[ARCH REVIEW?] <title from report> — telegram:#ID" --arg owner "ops|developer|ba|po" \
+   --arg zone "<resolved zone>" --arg now "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+  '.task_board.backlog += [{id:$id, title:$summary, owner:$owner, status:"BACKLOG", priority:"high", zone:$zone, created_at:$now}]' \
+  "$PROJECT_ROOT/docs/data/orch/orch-state.json" | bash "$PROJECT_ROOT/scripts/orch-apply.sh"
 ```
+(status MUST be `"BACKLOG"` — `apps/mcp-server/src/infrastructure/orchStateSchema.ts` `LANE_ALLOWED_STATUSES.backlog` only permits `{BACKLOG, BLOCKED}`)
 
 Agent assignment:
 - `bug` (infra) → `ops`

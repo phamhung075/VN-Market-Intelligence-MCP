@@ -440,3 +440,20 @@ agent spec, not optional even under a direct task instruction to
 task_board contents directly — AC-5's guard was satisfiable inline
 without a new scripts/ file, so no scope change from the row's own
 files[] list (triage-signals.md, signal-dashboard/SKILL.md).
+
+### STEP agent-father-S21 · agent-father · 2026-08-05T09:32:49Z
+**task-id:** FIX-PO-BATCH-MINT-NO-WRITE-ACTUATOR
+**what-done:** Confirmed both defects live (grep-verified 4 sub-flows with
+prose-only backlog appends, no orch-apply.sh pipe; main.md own_paths=
+[notebook only]). Fixed sprint-kickoff/channel-audit/market-group/
+telegram-reports.md with inline jq|orch-apply.sh actuators; widened
+main.md commit-mutex own_paths to notebook+journal+orch-state.json
+(one committer, supersedes decision-journal's own bare-commit rule for
+PO); added AC-3 git-HEAD self-verification gate before RETURN.
+**what-considered:**
+- Also mint the scripts/audits/ regression verifier — declined, same
+  commit_zone boundary as my own S1-S20 precedent (orch-state.json
+  writes and scripts/ are both out of zone); filed as RETURN handoff.
+**why-decision:** AC-1/AC-2/AC-3 are all doc-content fixes squarely in
+docs/agents/ — zero orch-state.json writes needed to close them.
+**why-change:** none — matches the row's own AC text verbatim.
