@@ -1,4 +1,4 @@
-<!-- size-justification: 868L — thin dispatcher; PREFLIGHT script-first gate + JUMP-TO table route Steps 0a/0a.5/3/4 to sub-flows; Steps 0b/1/2 (session-gate, PO triage, planning matrix) too small to extract; full change history in git log. UNBLOCK-DEVTEAM-DISPATCH-GATE-STAGING-DEADLOCK 2026-07-22: +113L — Ready-Lane Consumer + Review-Lane QA-Drain sections (2 new idle-fallthrough pickup lanes, mirroring BOUNDED-1/SLS's existing inline shape; extracting to a sub-flow would break the single linear head-idle fall-through chain BOUNDED-1→SLS→RLC→QA-Drain that makes same-tick `.head`-collision-freedom provable by control-flow inspection alone). FIX-DEVTEAM-BOUNDED1-PROSE-SEQUENCING-UNBACKED-GATE 2026-07-23: +1L (868→869) — PROSE-SEQUENCING GATE clause appended to the existing BOUNDED-1 Promote paragraph + predicate-list update (in-place, same lines) + ONE new Reusable Scripts bullet for the new regression verifier's own line; no new section. TE-T33 2026-07-23: +6L (869→875) — the 2 DJ-GATE-1 grep-pattern comments scoped from unbounded `sprint-*-*.md` to `sprint-${SPRINT_ID}-*.md` (matches agent-chaining-protocol.md's already-scoped canonical PATTERN), noting archive/ exclusion by non-recursive-glob construction; in-place, same lines. FIX-DEVTEAM-EPIC-WRAPPER-AUTOCLOSE-SWEEP 2026-07-29: +43L (875→918) — 2 new Reusable Scripts bullets (`scripts/devteam-wrapper-autoclose.jq` + its verifier) for the new Step 4.4 post-cycle candidate; the sub-flow itself lives in post-cycle.md (same placement convention as every other Step-4.x candidate), plus a 1-line Step-4-Covers accuracy fix (4.2/4.3/4.4 were never listed there). FIX-BOUNDED1-NONDEV-NEXTAGENT-RESIDUAL-NO-DISPATCH-LANE 2026-07-30: +66L (918→984) — new Design-Router Sweep (DRS) section inserted in-chain between RLC and Review-Lane QA-Drain (4th WIP≤2 writer, mirrors SLS's inline shape exactly — same single-linear-fall-through constraint as the 2026-07-22 note above applies), RLC/QA-Drain fall-through cross-references updated in place, 1 new Reusable Scripts bullet for the DRS promote+claim pair. FIX-DEVTEAM-READY-REVIEW-LANE-SUPERVISED-PLANONLY-NO-PICKER 2026-07-30: +28L (984→1012) — SLS Claim paragraph extended in-place (documents the new unstamped-ready[]-row FALLBACK path, same claim script, no new section); new "Lane × Gate Coverage Matrix" subsection under SLS (AC-1, the full lane×sup×po×wrapper resolution table, including the AC-4 epic-wrapper-children cross-reference to Step 4.4 in post-cycle.md); Review-Lane QA-Drain's Claim paragraph gained one AC-3 bullet (documents that the QA-Drain PRIMARY selector was ALREADY sup/po-agnostic by design — no code change there, prose-only clarification so it stops reading as an oversight). No new sub-flow extraction candidate — all three additions are in-place prose/section growth on existing SLS/QA-Drain blocks, same single-linear-fall-through constraint as every prior entry above. FIX-DEVTEAM-WIP-BUDGET-COUNTS-BLOCKED-INPROGRESS-ROWS 2026-07-30: +17L (1012→1029) — WIP/WIP2/WIP3/WIP4 bash gates re-pointed from a bare `.task_board.in_progress|length` to the shared `wip_in_progress` def (`scripts/lib/devteam-eligibility.jq`, now excludes BLOCKED/TERMINAL_SET rows), in-place on the existing 4 gate lines, no new section; WF-1 BLOCKED-task check gained a flat-lane status lookup (was active_sprints-only, silently missed every BOUNDED-1-class flat-lane row) + a self-healing in_progress[]→backlog[] lane-move, in-place on the existing block. No new sub-flow extraction candidate. FIX-DEVTEAM-REVIEW-LANE-SECONDARY-DRAIN 2026-08-01: +55L (1029→1084) — new Review-Lane SECONDARY-Drain section inserted between the Session Gate and Step 1 PO Triage (the head-decoupled anchor point the qadrain-head-slot-decouple brief already identified), mirroring SLS/RLC/DRS/QA-Drain's existing inline promote/claim-script shape but UNGATED on `head.status` and NEVER writing `.head` (own design, brief 2026-08-01-review-lane-drain-throughput-and-secondary-sweep.md §2b) — single-row cap, always falls through to Step 1 (never JUMP TO end), so it cannot break the existing single-linear head-idle fall-through chain above it; 2 new Reusable Scripts bullets (`scripts/devteam-review-claim-secondary-drain.jq` + its shared-lib predicate). No new sub-flow extraction candidate. -->
+<!-- size-justification: 868L — thin dispatcher; PREFLIGHT script-first gate + JUMP-TO table route Steps 0a/0a.5/3/4 to sub-flows; Steps 0b/1/2 (session-gate, PO triage, planning matrix) too small to extract; full change history in git log. UNBLOCK-DEVTEAM-DISPATCH-GATE-STAGING-DEADLOCK 2026-07-22: +113L — Ready-Lane Consumer + Review-Lane QA-Drain sections (2 new idle-fallthrough pickup lanes, mirroring BOUNDED-1/SLS's existing inline shape; extracting to a sub-flow would break the single linear head-idle fall-through chain BOUNDED-1→SLS→RLC→QA-Drain that makes same-tick `.head`-collision-freedom provable by control-flow inspection alone). FIX-DEVTEAM-BOUNDED1-PROSE-SEQUENCING-UNBACKED-GATE 2026-07-23: +1L (868→869) — PROSE-SEQUENCING GATE clause appended to the existing BOUNDED-1 Promote paragraph + predicate-list update (in-place, same lines) + ONE new Reusable Scripts bullet for the new regression verifier's own line; no new section. TE-T33 2026-07-23: +6L (869→875) — the 2 DJ-GATE-1 grep-pattern comments scoped from unbounded `sprint-*-*.md` to `sprint-${SPRINT_ID}-*.md` (matches agent-chaining-protocol.md's already-scoped canonical PATTERN), noting archive/ exclusion by non-recursive-glob construction; in-place, same lines. FIX-DEVTEAM-EPIC-WRAPPER-AUTOCLOSE-SWEEP 2026-07-29: +43L (875→918) — 2 new Reusable Scripts bullets (`scripts/devteam-wrapper-autoclose.jq` + its verifier) for the new Step 4.4 post-cycle candidate; the sub-flow itself lives in post-cycle.md (same placement convention as every other Step-4.x candidate), plus a 1-line Step-4-Covers accuracy fix (4.2/4.3/4.4 were never listed there). FIX-BOUNDED1-NONDEV-NEXTAGENT-RESIDUAL-NO-DISPATCH-LANE 2026-07-30: +66L (918→984) — new Design-Router Sweep (DRS) section inserted in-chain between RLC and Review-Lane QA-Drain (4th WIP≤2 writer, mirrors SLS's inline shape exactly — same single-linear-fall-through constraint as the 2026-07-22 note above applies), RLC/QA-Drain fall-through cross-references updated in place, 1 new Reusable Scripts bullet for the DRS promote+claim pair. FIX-DEVTEAM-READY-REVIEW-LANE-SUPERVISED-PLANONLY-NO-PICKER 2026-07-30: +28L (984→1012) — SLS Claim paragraph extended in-place (documents the new unstamped-ready[]-row FALLBACK path, same claim script, no new section); new "Lane × Gate Coverage Matrix" subsection under SLS (AC-1, the full lane×sup×po×wrapper resolution table, including the AC-4 epic-wrapper-children cross-reference to Step 4.4 in post-cycle.md); Review-Lane QA-Drain's Claim paragraph gained one AC-3 bullet (documents that the QA-Drain PRIMARY selector was ALREADY sup/po-agnostic by design — no code change there, prose-only clarification so it stops reading as an oversight). No new sub-flow extraction candidate — all three additions are in-place prose/section growth on existing SLS/QA-Drain blocks, same single-linear-fall-through constraint as every prior entry above. FIX-DEVTEAM-WIP-BUDGET-COUNTS-BLOCKED-INPROGRESS-ROWS 2026-07-30: +17L (1012→1029) — WIP/WIP2/WIP3/WIP4 bash gates re-pointed from a bare `.task_board.in_progress|length` to the shared `wip_in_progress` def (`scripts/lib/devteam-eligibility.jq`, now excludes BLOCKED/TERMINAL_SET rows), in-place on the existing 4 gate lines, no new section; WF-1 BLOCKED-task check gained a flat-lane status lookup (was active_sprints-only, silently missed every BOUNDED-1-class flat-lane row) + a self-healing in_progress[]→backlog[] lane-move, in-place on the existing block. No new sub-flow extraction candidate. FIX-DEVTEAM-REVIEW-LANE-SECONDARY-DRAIN 2026-08-01: +55L (1029→1084) — new Review-Lane SECONDARY-Drain section inserted between the Session Gate and Step 1 PO Triage (the head-decoupled anchor point the qadrain-head-slot-decouple brief already identified), mirroring SLS/RLC/DRS/QA-Drain's existing inline promote/claim-script shape but UNGATED on `head.status` and NEVER writing `.head` (own design, brief 2026-08-01-review-lane-drain-throughput-and-secondary-sweep.md §2b) — single-row cap, always falls through to Step 1 (never JUMP TO end), so it cannot break the existing single-linear head-idle fall-through chain above it; 2 new Reusable Scripts bullets (`scripts/devteam-review-claim-secondary-drain.jq` + its shared-lib predicate). No new sub-flow extraction candidate. TE-T02 2026-08-05 (docs/architecture-briefs/2026-07-12-token-economy-lazyload-audit.md#T-02): -199L (1087→888), -9,609B — 2 of 3 rare/unreachable-on-the-common-tick blocks relocated verbatim (WU-2 guarantee, content moved not deleted), never inline-summarized-away: (a) Step 0-PREFLIGHT-FALLBACK (ERROR-verdict-only) -> preflight-fallback.md; (b) Step 0a-B's per-signal orphan-adoption loop -> orphan-adoption.md, 8-line task_list_held probe kept inline so the common no-orphan-signals tick pays zero extra read cost. (c) BOUNDED-1 Promote bullet's 8 gate-history paragraphs + the NON-CODE/DESIGN next_agent-gap note (~10.6KB) intentionally left UNCHANGED here, still verbatim — the relocation target is scripts/devteam-backlog-promote-bounded1.jq, outside agent-father's commit_zone.allowed (scripts/, same precedent as TE-T12/TE-T14/TE-T21/S1-S20); exact ready-to-apply patch (both halves, to land atomically) supplied via RETURN for a developer to commit. ~130k tok/day estimated saving landed this pass; ~200k/day total once (c) lands. -->
 <!-- BGFAN-1: ALL Agent spawns from THIS dispatcher MUST use run_in_background=true. Canonical rule + rationale → docs/protocols/agent-chaining-protocol.md § Background Spawn Mandate. Background ≠ parallel: gated chain (po→ba→…→qa) still serializes on completion notification; independent tier tasks fan out concurrently. Commit-mutex serialization unchanged. -->
 # Dev Team — Cron Orchestration Flow (Thin Dispatcher)
 
@@ -101,7 +101,7 @@ Script SSOT: `scripts/agents-flow/dev-team-tick-preflight.sh` (uses shared
 | `RUN-IDLE` | Same precondition as `RUN` — SF-1 + fire-election locks are HELD by this session; Step 5 of the script only evaluates idle-emptiness after winning both. `docs/signals/*.json`, `signals.db` freshness, `signal_queue` NEW rows, and `task_board.active_sprints` are ALL empty/fresh (`$VERDICT_JSON.detail` names the checked fields). Mirrors cowork's silent-release (`_step8_silent_release`, `scripts/agents-flow/cowork-tick-preflight.sh` lines 74-105): emit last state (`log "[dev-team] RUN-IDLE — " + $VERDICT_JSON.detail`) + release both locks + **zero commit**. Do NOT run `gcc-preflight` (no HEAD.lock/worktree-GC) and do NOT JUMP TO `drain-signals` (no signal drain, no board write, no `chore(signals): drain + prune` commit) — set `FIRE_TICK=$(jq -r '.tick' <<< "$VERDICT_JSON")` so the existing `jump:end` SF-1/fire-election release logic fires for both locks, then JUMP TO `end` directly. |
 | `SKIP` | Done. Script already sent the `work`-channel telegram and preserved R7 lock semantics: SF-1-claim-failed → nothing released (never held it); fire-election-lost-after-SF-1-won → SF-1 released. EXIT — no further reads needed. |
 | `SKIP-WIDENED` | CADRAT-5 extended-idle outer-poll widening (docs/architecture-briefs/2026-08-04-cadence-rationalization.md §8 item 6). **No lock was ever claimed this tick** — the script short-circuits BEFORE presence/SF-1/fire-election, evaluated via the SAME idle-check predicates `RUN-IDLE` uses (re-read fresh, never stale) once the persisted consecutive-RUN-IDLE counter (`docs/data/dev-team-idle-widen-state.json`) has reached its threshold AND `calendar_status` (`docs/data/pressure-state.json`, ENUM-gated) is `weekend` or `holiday`. Done — no further reads needed, zero telegram (unlike `SKIP`, this is not a peer collision, just nothing to do during a confirmed-quiet stretch). Cron expression `7,37 * * * *` is unchanged — this is a per-tick suppression, not a schedule edit. |
-| `ERROR` | Script hit a transport/malformed-response/local-guard failure (`$VERDICT_JSON.detail` has why — lock state may be undefined). JUMP TO `preflight-fallback` below (unchanged, never deleted) — read from there as if the script never ran. |
+| `ERROR` | Script hit a transport/malformed-response/local-guard failure (`$VERDICT_JSON.detail` has why — lock state may be undefined). JUMP TO `preflight-fallback` below (relocated to its own sub-flow file, never deleted — TE-T02) — read from there as if the script never ran. |
 | *(none of the above — `$VERDICT` is empty/unset)* | `VERDICT_JSON` was not a single valid JSON document — `jq -r '.verdict'` on malformed/non-JSON input prints nothing, so `$VERDICT` matches NONE of the RUN/RUN-IDLE/SKIP/SKIP-WIDENED/ERROR strings above and is otherwise undefined caller behavior. Historically caused by FIX-DEVTEAM-PREFLIGHT-STEP55-COLDEVICT-STDOUT-LEAK-CORRUPTS-VERDICT (Step 5.5's real cold-eviction call leaking `orch-cold-evict.sh`'s multi-line progress output onto this script's stdout ahead of the JSON verdict — fixed at the source 2026-08-01, kept here as a defensive fallback for any future regression of the same shape). Treat identically to `ERROR`: JUMP TO `preflight-fallback` below — lock state is undefined, the fallback repairs via re-claim. |
 
 ---
@@ -110,113 +110,10 @@ Script SSOT: `scripts/agents-flow/dev-team-tick-preflight.sh` (uses shared
 ## Step 0-PREFLIGHT-FALLBACK — Original Presence/SF-1/Fire-Election (ERROR-fallback only)
 
 > Reached ONLY on `ERROR` verdict from `scripts/agents-flow/dev-team-tick-preflight.sh` above (or
-> when this flow is run manually / pre-WU-2). Kept verbatim below, never deleted — R6/R7/R8
-> fallback guarantee, see `docs/handoffs/TOKEN-ECONOMY-TICK-PREFLIGHT.md` § Design decisions.
+> when this flow is run manually / pre-WU-2). Content relocated verbatim (never deleted, TE-T02) —
+> R6/R7/R8 fallback guarantee, see `docs/handoffs/TOKEN-ECONOMY-TICK-PREFLIGHT.md` § Design decisions.
 
-```
-ts          = $(date -u +%Y%m%dT%H%M%SZ)
-start_epoch = $(date +%s)
-ts_human    = $(date "+%Y-%m-%d %H:%M:%S %Z")   # local wall-clock for readability
-send_telegram(channel="work", message="[dev-team] cron START — actual fire {ts_human} ({ts})")
-# Self-arm detect→plan loop (idempotent — skill Step 1 CronList guard makes this a no-op once armed)
-→ skill: .claude/skills/cron-detect-loop/SKILL.md
-# Guarantees system-auditor Tier-1/2/3 + dev-team crons stay live while this always-on session runs.
-
-# P2-PRESENCE: session-presence self-registration — fires before SF-1 so this session is visible
-# even when SF-1 causes an early exit on duplicate-tick guard.
-# dispatch-claim SKILL § Step 0a is authoritative — this is the dev-team instantiation.
-# Non-adoptable: presence row expiry = liveness GC, NEVER orphan-signal.
-presence_result = call_tool(server="vn-market", tool="task_claim", arguments={
-  task_id:              "session-presence:" + $CLAUDE_CODE_SESSION_ID,
-  task_kind:            "session-presence",
-  owner_agent:          "dev-team",
-  owner_client_session: $CLAUDE_CODE_SESSION_ID,
-  ttl_seconds:          1800,
-  payload:              {
-    agent_id:     "dev-team",
-    host:         $(hostname),
-    started_at:   ts,           # reuse ts set above (UTC ISO string)
-    current_task: "preflight"
-  }
-})
-if not presence_result.claimed:
-  if presence_result.current_holder.owner_client_session == $CLAUDE_CODE_SESSION_ID:
-    call_tool(server="vn-market", tool="task_heartbeat", arguments={
-      task_id: "session-presence:" + $CLAUDE_CODE_SESSION_ID,
-      owner_client_session: $CLAUDE_CODE_SESSION_ID
-    })
-# Presence result is NEVER a gate — always proceed to SF-1.
-
-# SF-1: SINGLE-FLIGHT GUARD — session-level cron overlap prevention (TTL-only, no owner-session binding)
-# Survives mcp-server restart: TTL clock continues; orphaned lock expiry is natural. → memory: lock_orphaned_by_rebuild
-sf_result = call_tool(server="vn-market", tool="task_claim", arguments={
-  task_id:              "dev-team-cron-singleton",
-  task_kind:            "sprint-task",
-  owner_agent:          "dev-team",
-  owner_client_session: $CLAUDE_CODE_SESSION_ID,   // REQUIRED — P1-FINAL (TASK_1980)
-  ttl_seconds:          5400,          # 90min — 1.5× observed 99th-pct tick duration
-  payload:              {"site": "SF-1", "tick": ts}   # structured object — DRAIN-INJECTION-SAFE
-})
-if not sf_result.claimed:
-  log "[dev-team] SF-1 SKIP — session already running (holder: " + sf_result.current_holder.owner_agent + " since " + sf_result.current_holder.claimed_at + ")"
-  call_tool(server="vn-market", tool="send_telegram", arguments={channel: "work", message: "[dev-team] cron SKIP — single-flight held by peer (TTL ~" + sf_result.current_holder.expires_in_s + "s)"})
-  JUMP TO end   # exit immediately — do NOT run any step
-
-# SF-1 claimed — proceed to fire-time election (Step [3])
-
-# P3-FIRE-ELECTION Step [3] — Cross-session tick dedup (NEW — TASK_1994)
-# Fires AFTER SF-1 (session-level guard), BEFORE HEAD.lock guard.
-# SF-1 ensures this session is not mid-tick from a prior tick. Fire-election ensures this
-# session leads THIS specific tick vs any other session attempting the same tick.
-# On election LOSS: release SF-1 (so this session can win SF-1 on next tick) then EXIT.
-# On election WIN: proceed with full HEAD.lock guard + dispatch pipeline.
-# Spec: addendum §C.2 (ordering), §C.3 (why SF-1 first), §C.4 (deadlock-free).
-
-# compute_tick_boundary for expression "7,37 * * * *" (boundary minutes: 07, 37)
-# Largest scheduled minute ≤ current_minute.
-CURRENT_MINUTE_FIREELECT=$(date -u +%M)
-if [ "$CURRENT_MINUTE_FIREELECT" -ge 37 ]; then
-  FIRE_TICK_BOUND="37"
-else
-  FIRE_TICK_BOUND="07"
-fi
-FIRE_TICK=$(date -u +"%Y-%m-%dT%H:${FIRE_TICK_BOUND}Z")
-# e.g. fire at 14:38Z → FIRE_TICK="2026-06-28T14:37Z"
-# e.g. fire at 14:09Z → FIRE_TICK="2026-06-28T14:07Z" (jitter absorbed)
-
-fire_result = call_tool(server="vn-market", tool="task_claim", arguments={
-  task_id:              "cron:dev-team:" + FIRE_TICK,
-  task_kind:            "sprint-task",
-  owner_agent:          "dev-team",
-  owner_client_session: $CLAUDE_CODE_SESSION_ID,
-  ttl_seconds:          600,
-  payload:              {"site": "fire-election", "tick": FIRE_TICK}
-})
-
-if not fire_result.claimed:
-  fire_peer = fire_result.current_holder.owner_client_session
-  if fire_peer == $CLAUDE_CODE_SESSION_ID:
-    # Re-entrant: this session already holds this tick's key (restart within same session mid-tick).
-    log "[dev-team] fire-election RE-ENTRANT tick=" + FIRE_TICK + " — renewing + proceeding"
-    call_tool(server="vn-market", tool="task_heartbeat", arguments={
-      task_id:              "cron:dev-team:" + FIRE_TICK,
-      owner_client_session: $CLAUDE_CODE_SESSION_ID
-    })
-    # → proceed (SF-1 is held, fire-election renewed)
-  else:
-    # Peer session leads this tick — release SF-1 so this session is free for the next tick.
-    log "[dev-team] fire-election SKIP tick=" + FIRE_TICK + " — peer=" + fire_peer + " leads; releasing SF-1"
-    call_tool(server="vn-market", tool="send_telegram", arguments={
-      channel: "work",
-      message: "[dev-team] fire-election SKIP tick=" + FIRE_TICK + " (peer session leads)"
-    })
-    call_tool(server="vn-market", tool="task_release", arguments={
-      task_id:              "dev-team-cron-singleton",
-      owner_client_session: $CLAUDE_CODE_SESSION_ID
-    })
-    JUMP TO end   # EXIT cleanly — no head set, no dispatch, no orphan work
-# else: fire_result.claimed == true → won the election → FIRE_TICK is the active tick key
-```
+→ Run sub-flow: `docs/agents/dev-team/flow/preflight-fallback.md`, then continue at `jump:gcc-preflight` below.
 
 <!-- jump:gcc-preflight -->
 ## Step 0-PREFLIGHT-CONTINUE — GCC-PREFLIGHT + HEAD.lock Guard + Worktree GC
@@ -305,109 +202,13 @@ orphan_signals = call_tool(server="vn-market", tool="task_list_held", arguments=
   owner_agent: "dev-team"
 })
 # READ-ONLY probe — DoD-P15-2: NEVER use task_heartbeat/task_claim to probe published artifacts
-
-for each signal in orphan_signals where signal.payload.original_task_kind == "sprint-task":
-  original_task_id           = signal.payload.original_task_id
-  redispatch_count           = signal.payload.redispatch_count   # DoD-P15-3: carry forward
-  last_payload               = signal.payload.last_payload
-  dead_session               = signal.payload.original_owner_client_session
-  task_zone                  = signal.payload.zone ?? infer_from_task_id(original_task_id)
-
-  if redispatch_count >= N_MAX:
-    # Router P1.5-AF-1 handles escalation — dev-team SKIPS; do NOT re-dispatch
-    log "[dev-team] orphan-signal:{original_task_id} redispatch_count={redispatch_count} >= N_MAX — skip (router escalates)"
-    continue
-
-  # Claim the original task_id (stale-steal succeeds: reaper deleted the original row)
-  adopt_result = call_tool(server="vn-market", tool="task_claim", arguments={
-    task_id:              original_task_id,
-    task_kind:            "sprint-task",
-    owner_agent:          "dev-team",
-    owner_client_session: $CLAUDE_CODE_SESSION_ID,   # REQUIRED — authoritative key
-    ttl_seconds:          3600,
-    payload:              {"site": "orphan-adoption",
-                           "adopted_from": dead_session,
-                           "redispatch_count": redispatch_count}   # DoD-P15-3: carry forward
-  })
-
-  if not adopt_result.claimed:
-    log "[dev-team] orphan-signal:{original_task_id} — adoption lost to peer; skip"
-    continue
-
-  # --- DoD-P15-1 GATE: Tree-Hygiene PRECONDITION (MANDATORY — load-bearing) ---
-  # A dead worker's uncommitted edits are LIVE in the shared working tree and corrupt until reverted.
-  # This gate MUST run BEFORE any resume work. The checkpoint SHA is blind to live tree state.
-  #
-  # Run git status --porcelain scoped to the task zone:
-  uncommitted = $(git status --porcelain -- {task_zone} | grep -E '^[ M]M')
-  reverted_files = []
-  for each line in uncommitted:
-    filepath = line[3:]   # strip status prefix
-    git checkout -- {filepath}
-    reverted_files.append(filepath)
-    log "[dev-team] tree-hygiene: reverted uncommitted edit in {filepath} (dead session: {dead_session})"
-
-  # Leave untracked files in place (e.g. .DS_Store, build artifacts, node_modules/ if not tracked)
-  # Lines starting with '??' in git status are untracked — leave them
-
-  # Surface reverted list in board note (see board flip below)
-  tree_hygiene_note = "tree-hygiene: reverted " + len(reverted_files) + " file(s): " + join(reverted_files, ", ")
-  send_telegram(channel="work",
-    message="[dev-team] Adopted orphan task {original_task_id} from dead session {dead_session}. {tree_hygiene_note}")
-
-  # --- Read checkpoint from signal payload (§6.5.5 resume contract) ---
-  git_sha = last_payload.git_sha ?? null
-
-  if git_sha:
-    # Verify checkpoint is in repo history
-    sha_valid = $(git log --oneline -5 {git_sha} 2>&1 | grep -c {git_sha})
-    if sha_valid == 0:
-      send_telegram(channel="bug",
-        message="[dev-team] Orphan adoption {original_task_id}: git_sha {git_sha} not in history — cannot resume; skip")
-      call_tool(server="vn-market", tool="task_release", arguments={
-        task_id: original_task_id, owner_client_session: $CLAUDE_CODE_SESSION_ID
-      })
-      call_tool(server="vn-market", tool="task_release", arguments={
-        task_id: "orphan-signal:" + original_task_id, owner_client_session: $CLAUDE_CODE_SESSION_ID
-      })
-      continue
-    # Checkpoint valid — continue work from git_sha (DO NOT re-run already-committed steps)
-    log "[dev-team] resuming from checkpoint SHA={git_sha} (DoD-P15-3 redispatch_count={redispatch_count})"
-  else:
-    # No git SHA checkpoint — resume from board state (task_board entry is authoritative)
-    log "[dev-team] no git_sha checkpoint in orphan-signal payload; resuming from board state"
-
-  # --- Board flip: update assigned_to, leave status=in_progress (re-assign only) ---
-  # MUST route via scripts/orch-apply.sh (NEVER raw write — SSOT-W1-ORCH-APPLY-WRAPPER)
-  NOW=$(date -u +%Y-%m-%dT%H:%M:%SZ)
-  # DoD-P15-2: check for cowork-slot or cron published artifact before re-running
-  # (sprint-task checkpoint is git SHA; this check is belt-and-suspenders for mixed-kind adoptions)
-  jq --arg tid "{original_task_id}" --arg now "$NOW" --arg note "{tree_hygiene_note}" \
-    --arg session "$CLAUDE_CODE_SESSION_ID" \
-    '(.task_board.active_sprints[].tasks[] | select(.id == $tid))
-     |= (.assigned_to = $session | .adopted_at = $now | .tree_hygiene_note = $note)' \
-    docs/data/orch/orch-state.json \
-    | bash "$PROJECT_ROOT/scripts/orch-apply.sh"
-
-  # --- Release the orphan-signal row after successful adoption ---
-  call_tool(server="vn-market", tool="task_release", arguments={
-    task_id:              "orphan-signal:" + original_task_id,
-    owner_client_session: $CLAUDE_CODE_SESSION_ID
-  })
-
-  # --- Resume work ---
-  # Treat adopted task as the next task to execute — prepend to work queue
-  # Spawn the appropriate agent with checkpoint; dev-team owns the original task_id lock
-  Agent(<zone-agent>, prompt="run docs/agents/<zone-agent>/flow/main.md
-        coordination_session=$CLAUDE_CODE_SESSION_ID
-        task={original_task_id}
-        checkpoint={git_sha}
-        redispatch_count={redispatch_count}
-        mode=adopt-resume",
-        run_in_background=true)   # BGFAN-1
-  # Adoption path exits here — release original lock inside the spawned agent's finally block
-  JUMP TO end   # adopted task queued; do not process further signals in this tick
 ```
+
+If any `orphan_signals` row has `signal.payload.original_task_kind == "sprint-task"` →
+→ Run sub-flow: `docs/agents/dev-team/flow/orphan-adoption.md` (full per-signal adoption loop:
+N_MAX redispatch-count gate, claim, DoD-P15-1 tree-hygiene precondition, checkpoint verify,
+board flip, resume-spawn; sub-flow ends with its own `JUMP TO end` once a task is adopted this tick).
+Common case (`orphan_signals` empty, or no `sprint-task` rows in it) → fall through, no further read needed.
 
 **Scope note:** Step 0a-B handles `original_task_kind="sprint-task"` only. `cowork-slot` and
 `dashboard-row` orphan-signals directed to `owner_agent="dev-team"` are rare edge cases;
