@@ -13633,7 +13633,7 @@
         "claimed_at": "2026-07-09T23:20:22Z",
         "claimed_by": "dev-team (bounded-1 auto-pickup)",
         "next_agent": "ops",
-        "updated_at": "2026-07-09T23:36:14Z",
+        "updated_at": "2026-08-05T08:45:08Z",
         "updated_by": "dev-mcp-server",
         "status_note": "Root cause (AUDIT-FC-FOREIGN-FLOW-recon.md): CODES sent to bgapidatafeed were built only from watchlist+referenceStocks (~111 codes), leaving ~1457/1569 daily_ohlcv codes permanently foreign_net_vol=NULL. Fix: new GET /api/ohlcv-codes (ohlcvBackfillHandler.ts handleOhlcvCodes -- SELECT DISTINCT code FROM daily_ohlcv, no hardcoded list); vps-scripts/fetch-foreign-flow.sh now sources CODES from it (fallback: /api/watchlist), mirroring fetch-ohlcv-backfill.sh's pre-existing R-2 pattern -- that script already expected this endpoint but it was never implemented (dormant 404, confirmed in ohlcv-backfill-pipeline-stall/recon.md), so this closes both gaps. money_terms_elevated half (fBValue/fSValue VND columns + get_foreign_flow tỷ đồng serving) was already shipped 2026-06-16 (ddc36452e) -- verified live via docker-exec query, no new work needed. Live-tested single-call design against the real API off-market-hours: 1459 codes -> HTTP 200, 1400 items, ~1.2MB, ~7s, no truncation -- confirms no pagination at full scale. Bumped PAYLOAD_SIZE_THRESHOLD 50000->3000000 and fetch timeout 60s->90s for the ~13x larger payload. New FIX-FOREIGN-FLOW-COVERAGE.test.ts (5/5, TDD RED->GREEN). Targeted suite (foreign-flow+ohlcv-backfill, 9 files) 78/78 pass, tsc clean, toolCount=183 unchanged, server-boot+dashboard circular-dep probes clean, shellcheck clean. Container still on pre-change image -- mcp-server rebuild+swap is USER-GATED, not run by dev-mcp-server (feedback_container_swaps_user_gated.md). Filed docs/signals/ops-rebuild-verify-mcp-server-20260709T2332Z.json for deferred market-hours RAW-verify (live foreign_net_vol coverage growth + VPS script redeploy confirmation). Decision journal: sprint-SYSTEMIC-REMAKE-P1-dev-mcp-server.md STEP dev-mcp-server-S25.",
         "files": [
@@ -13643,7 +13643,10 @@
           "vps-scripts/fetch-foreign-flow.sh",
           "docs/architecture/microservice/mcp-server/market-data.md"
         ],
-        "rebuild_required": true
+        "rebuild_required": true,
+        "secondary_claimed_at": "2026-08-05T08:45:07Z",
+        "secondary_claimed_by": "dev-team (review-lane secondary-drain)",
+        "secondary_dispatch_target": "ops"
       },
       {
         "id": "OPS-COWORK-GUARANTEED-SLOT-INSTALL",
