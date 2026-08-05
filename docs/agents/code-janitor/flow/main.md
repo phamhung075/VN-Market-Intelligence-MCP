@@ -186,10 +186,8 @@ the notebook commit below.
 - Checks: [which] | Findings: N new, M recurrent | Action: shipped X | backlog Y | clean
 ```
 - **Commit notebook**:
-**Commit (mutex-guarded)** → skill: `.claude/skills/commit-mutex/SKILL.md`
+**Commit (pathspec-scoped)** — code-janitor is invoked by cron (not dispatcher), so uses direct pathspec commit instead of commit-mutex (dispatcher-only per INV-GATEWAY-1):
 ```bash
-# own_paths: [docs/agent-memory/notebooks/code-janitor.md]
-# Protocol: task_claim commit-mutex:main (TTL=60s) → git add <own_paths> → verify → git commit → task_release
 git add docs/agent-memory/notebooks/code-janitor.md
 git commit -m "chore(memory/code-janitor): notebook YYYY-MM-DD" -- docs/agent-memory/notebooks/code-janitor.md
 ```
