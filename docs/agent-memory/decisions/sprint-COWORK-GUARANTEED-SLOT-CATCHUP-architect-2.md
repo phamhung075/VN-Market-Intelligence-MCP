@@ -105,3 +105,13 @@
 - Family-B/DPM: traced to `bctcVpsIngestHandler.ts:182-201` (receive-only endpoint, no in-repo caller) rather than assuming it shares this row's mechanism — mechanistically proven separate (never calls `listSscDocuments`), so out of scope; recommended (not minted) a follow-up row for PO.
 **why-decision:** Reused two already-shipped, already-tested signals (title keyword convention, `deriveQuarterFromPublishedAt`) instead of inventing new I/O or repurposing the detector's conservative veto semantics into a selector role they were not designed for.
 **why-change:** No change from the row's own framing — this cycle resolved the row's own open DESIGN QUESTION and its own flagged counter-example (DPM/family B), both explicitly deferred to architect.
+
+### STEP architect-S32 · architect · 2026-08-05T17:20:00Z
+**task-id:** FIX-MCP-MEMORY-CODE-LEAK
+**what-done:** Re-verified the 07-02 recon's `initDatabase()` finding still live at HEAD (call-sites grew 68→117); confirmed cap-bump+rebuild (recon's cheap tracks) already shipped and sawtooth persisted as predicted. Designed `WeakSet<Database>` identity guard (schema.ts:156). Found + wrote up a 2nd, distinct, higher-volume leak mechanism (SSE per-connection `McpServer`+heartbeat, transport.ts, never explicitly closed on the documented "dial-and-drop" gateway pattern) as an explicit fast-follow, not folded in.
+**what-considered:**
+- Bare module boolean guard (recon's literal suggestion) vs identity-keyed `WeakSet<Database>` — chose WeakSet: grepped 15+ test files that pass a fresh per-test `Database` as `dbArg`; a boolean would silently skip DDL on every 2nd+ test in one `bun test` process (suite-wide false-red). WeakSet also self-GCs, so the guard itself can't become a leak.
+- Fold Finding 2 (SSE session leak) into this same fix vs flag separately — flagged separately: different file/mechanism/risk profile, needs its own `/health` sessionCount-correlation confirmation step first (mirrors this row's own standing "instrument before speculative fix" constraint), would blow this row's "single-file, atomic" sizing.
+- PM decomposition vs direct-to-dev-mcp-server — direct: single file, ~4 lines, next_agent/owner already dev-mcp-server (PO 07-29), matches this sprint's own precedent for FIX rows this size.
+**why-decision:** Cheapest-sufficient-first, per the 07-02 recon's own decision matrix, which this row had never advanced past due to the plan_only/supervised dispatch gap SLS closed today.
+**why-change:** No change from the 07-02 recon's own sequencing; extended it with a live re-verification + one new independently-found mechanism it did not attribute a leak to.
