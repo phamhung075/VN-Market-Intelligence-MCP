@@ -115,3 +115,13 @@
 - PM decomposition vs direct-to-dev-mcp-server — direct: single file, ~4 lines, next_agent/owner already dev-mcp-server (PO 07-29), matches this sprint's own precedent for FIX rows this size.
 **why-decision:** Cheapest-sufficient-first, per the 07-02 recon's own decision matrix, which this row had never advanced past due to the plan_only/supervised dispatch gap SLS closed today.
 **why-change:** No change from the 07-02 recon's own sequencing; extended it with a live re-verification + one new independently-found mechanism it did not attribute a leak to.
+
+### STEP architect-S33 · architect · 2026-08-05T17:52:45Z
+**task-id:** FIX-CI-GATES-INVISIBLE-TO-PREPUSH-DOCS-PATH-FILTER
+**what-done:** Ran AC1's mandatory measured dry-run (not skipped): `size-lint-justification.sh --check` ~13.3-14.0s + `task-claim-owner-session-lint.sh --check` ~5.5-6.1s + `bun test tool-registry-parity` ~0.1-0.3s, 3 runs each, real `time` output — combined ~19.5-20s, ~4.5x under the 90s commit-mutex TTL. Live side-effect: all 3 runs reproduced the exact 3 CI-red conditions already on GitHub Actions, proving local/CI detection parity would close if wired in. Designed the hook change: add the 3 checks UNCONDITIONALLY (not `CODE_TOUCHING_REGEX`-gated) before the existing `PRE_PUSH_SKIP_TSC` early-exit; leave tsc/rebuild-raw-verify on their existing gate untouched.
+**what-considered:**
+- Widen `CODE_TOUCHING_REGEX` to include `docs/` (the naive fix) — rejected: would make every doc-only push pay tsc's measured ~94s against the 90s TTL that regex exists to protect, re-opening the exact UC-GCP-P4 bug.
+- Run the 3 checks only when `CODE_TOUCHING_REGEX` does NOT match (mutually exclusive with tsc) vs unconditionally on every push — chose unconditional, per the row's own AC2/AC3 steer and because CI already runs all 3 on every push regardless of path; local coverage should match that, not add a 2nd path-based skip condition.
+- Leave `PRE_PUSH_SKIP_TSC=1` as a full-hook bypass (its current, mislabeled behavior) vs reorder so it only skips tsc — chose reorder: the var's own name and header doc already claim "skip tsc check"; leaving the new unconditional checks skippable by the same var would silently reopen AC3's "no fail-open on docs-only" concern via a different door.
+**why-decision:** AC1 is explicit that this row cannot be closed by assumption — the number itself (not "these are probably cheap") is the design constraint; measuring first, then designing to the measured number, is the only way to honor that gate.
+**why-change:** No change from the row's own framing; fence honored explicitly (this row does not touch the 3 symptom files/lines that are separately tracked).
