@@ -1,3 +1,4 @@
+<!-- size-justification: 121L — FIX-OPS-DEPLOY-SELFREPORT-FABRICATED-FUTURE-TIMESTAMP-NONEXISTENT-IMAGE 2026-08-05: added the mandatory Deploy-Evidence Capture block (raw `date -u`/`docker inspect` output + SHA-gate pointer) to § Post-Rebuild Health Verification and tightened its Pass/Fail criteria (+9L over the prior 113L) — a fail-loud instrument with no factoring seam from the verification procedure it gates. -->
 # Ops — Docker Flow
 
 **Tools:** `docs/agents/tools/package/ops.md`
@@ -95,11 +96,19 @@ docker port mcp-server 3000                          # gateway port still bound?
 jq -r '.project.microservices[] | "curl -s -o /dev/null -w \"%{http_code}\\n\" http://localhost:\(.port)/health  # \(.id)"' docs/data/system-map.json
 ```
 
-**Pass:** all containers `Up`, port 3000 bound, all `/health` return 200.
-**Fail:** any container Restarting/Exit OR any `/health` non-200 OR port unbound →
-- `send_telegram(channel="bug")` with collateral-damage signal: `🚨 POST-REBUILD COLLATERAL: <service> healthy but <other-service> degraded after rebuild`
+**Deploy-Evidence Capture (MANDATORY, before Pass/Fail — closes FIX-OPS-DEPLOY-SELFREPORT-FABRICATED-FUTURE-TIMESTAMP-NONEXISTENT-IMAGE, 2026-08-05):** `docker compose ps` + `/health`==200 alone cannot prove a redeploy actually happened — a container already `Up`/healthy BEFORE the dispatch stays `Up`/green if the `up -d --no-deps <svc>` swap silently no-ops. Run BOTH commands below and paste their LITERAL raw output into the notebook/decision-journal/task-board entry — a narrated conclusion ("Pass: all Up") with no attached command output is NOT a valid deploy report:
+```bash
+date -u                                                                   # copy verbatim as your report timestamp — never hand-type/estimate an ISO string
+docker inspect <svc> --format '{{.State.StartedAt}} {{.RestartCount}}'   # StartedAt MUST be AFTER dispatch time, else the container was never swapped
+docker image inspect <hash-you-are-about-to-cite> --format '{{.Id}}'     # MUST return with no error — never cite a hash you have not confirmed exists on this host
+```
+Code-change deploy in scope (e.g. `UNBLOCK-DEPLOY-*` / `FIX-*-RESTART-LOOP` redeploys, not a bare restart)? Also run the authoritative SHA gate instead of eyeballing timestamps: `docs/protocols/docker-deployment-runbook.md` § Microservice Code-Change Close Gate — `bash scripts/verify-deploy-sha.sh <svc>` MUST exit 0. Root cause of the 2026-08-05 fabrication: this gate already existed but ops's own flow never pointed to it for a directly-dispatched deploy task — the gap, not a missing tool, is what made a fabricated success narrative easier to produce than an honest partial-failure report.
+
+**Pass:** all containers `Up`, port 3000 bound, all `/health` return 200, AND the Deploy-Evidence Capture output above shows `StartedAt` after dispatch time + a confirmed-existing image hash (SHA gate exit 0 when it applies).
+**Fail:** any container Restarting/Exit OR any `/health` non-200 OR port unbound OR any Deploy-Evidence criterion above fails (stale `StartedAt`, unchanged `RestartCount` when a restart was expected, nonexistent image hash, SHA gate non-zero) →
+- Report the gap exactly as observed (e.g. "build succeeded, swap did not take — StartedAt predates dispatch") via `send_telegram(channel="bug")` — an honest partial-failure report is the required output; never substitute a cleaner-looking invented result.
 - `docker compose up -d --no-deps --no-build <degraded-service>` → re-verify
-- If still failing after 1 restart → escalate (do NOT mark rebuild as successful in signal/notebook)
+- If still failing after 1 restart → escalate. Do NOT mark rebuild as successful in signal/notebook, and do NOT claim a task_board update you did not execute via `scripts/orch-apply.sh` (ops has no other write path into `orch-state.json`).
 
 **Final step — builder cache prune (MANDATORY, run AFTER health checks pass, BEFORE notebook write):**
 ```bash
