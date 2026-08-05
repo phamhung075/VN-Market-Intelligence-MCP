@@ -298,3 +298,15 @@
 **Mitigation:** No immediate action beyond signal routing.
 
 ---
+
+## Anomaly: A-30 · rag-service memory 97.83% (below floor)
+**Severity:** WARN | **Date:** 2026-08-05 | **Status:** OPEN
+**Location:** rag-service
+**Details:** rag-service memory at 97.83% of 768MiB cap (usage: 751.3MiB) — absolute headroom ~16.7 MiB BELOW 40 MiB floor
+**Impact:** Container approaching OOM due to sentinel model memory (embedder.py:37-51)
+**Root cause:** No release path for sentence-transformers model singleton (FU-RAG-DEPLOY-MEMORY)
+**Zone owner:** po
+**Last reported:** 2026-08-05T07:42:07Z (signal sys-20260805T074206-2897, system-auditor -> po, dedup_key=mem_pressure:rag-service:A-30, WARN Telegram sent)
+**Mitigation:** No immediate action beyond signal routing.
+
+---
