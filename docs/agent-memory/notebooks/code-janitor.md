@@ -1,10 +1,27 @@
 # Code Janitor Notebook
 
-**Last updated:** 2026-05-30 (scan-20 DOUBLON-FUNCTION detection — 3 critical Puppeteer doublons)
+**Last updated:** 2026-08-05 (scan-21 Memory+State sweep cycle — no source changes)
 
 > Archive: docs/archive/notebooks/code-janitor-2026-05-21.md (pre-trim history)
 
 ## State summary
+
+### Session 26 (2026-08-05 — Memory+State sweep cycle)
+
+**Scope:** Scheduled 6-hourly maintenance sweep. No source code changes in last 3 commits (pre-check gate active).
+
+**Checks:** DRY scan skipped (zero `src/` or `apps/*/src/` changes). Three unconditional sweeps executed:
+- Memory Prune Sweep: 1 session archived, 76 old health checks deleted, 1 signal written
+- Notebook Line-Cap Sweep: 2 notebooks checked; 1 pruned (fb-market-poster.md 84L→34L)
+- Cold Archive Sweep: Skipped (not 1st of month)
+
+**Escalations:** SIGNAL-WRITTEN for team-tool-recheck writer dead since 06-23 → routed to PO (replace-vs-retire decision).
+
+**Backlog:** Unchanged at 9 items (JANITOR-034, JANITOR-028 to JANITOR-032, JANITOR-011, -013, -017, -020, -027).
+
+**Quality:** Full. All sweeps executed nominally. No knowledge load failures.
+
+---
 
 ### Session 25 (2026-05-30 — Focused DOUBLON-FUNCTION detection cycle)
 

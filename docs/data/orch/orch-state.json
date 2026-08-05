@@ -2181,6 +2181,17 @@
         "payload_ref": null,
         "provenance": "detector",
         "audit_cycle_tag": "cron:auditor-t1:2026-08-05T10:00Z"
+      },
+      {
+        "id": "cj-20260805T103243Z",
+        "ts": "2026-08-05T10:32:43Z",
+        "from": "code-janitor",
+        "to": "po",
+        "type": "system-issue",
+        "summary": "team-tool-recheck writer dead since 06-23 — replace-vs-retire decision needed",
+        "severity": "LOW",
+        "status": "NEW",
+        "payload_ref": "docs/signals/janitor-health-recheck-writer-retired-2026-08-05.json"
       }
     ],
     "last_triaged_at": "2026-07-29T06:25:00Z",

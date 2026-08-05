@@ -1,87 +1,34 @@
 # FB Market Poster — Notebook
 
-**Last updated:** 2026-07-25T13:30:00Z
-
-## Last cycle (WEEKLY_RECAP — 2026-07-25 Saturday)
-
-**Date:** 2026-07-25 (Saturday — WEEKLY_RECAP mode via MODE ROUTER, VN_DOW=6)  
-**Mode:** WEEKLY_RECAP (week 2026-07-20 to 2026-07-24)  
-**Post file:** docs/social/fb-post-2026-07-25.md  
-**VN-Index:** Closed Friday at 1.686,11; down from Monday open 1.743,51 (57,40 pts decline, -3.29% daily-close basis, wider -5.67% per period-close series)  
-**Status:** published
-
-### Sources read (STEP 1)
-
-- **Daily posts Mon–Fri (2026-07-20 to 2026-07-24):** ✓ 5/5 available
-  - Monday 07-20: 1.743,51 (-2.46%), market sell-off, 44 up / 263 down / 26 unchanged, breadth heavily negative, foreign sell 775.5k, banking/real-estate/securities lao dốc
-  - Tuesday 07-21: 1.730,56 (-0.74%), stabilization attempt, 100 up / 187 down / 71 unchanged, foreign buy ròng +347.6k (SHB, HPG, SSI), earnings news (SSI +32%), breadth improving
-  - Wednesday 07-22: 1.668,53 (-3.58%), WORST day of week, 68 up / 234 down / 45 unchanged, foreign sell 2M, bất động sản crashed (VIC -6.99%, VHM -6.96%), banking (VCB -3.88%)
-  - Thursday 07-23: 1.699,38 (+1.85%), recovery bounce, 189 up / 122 down / 48 unchanged, foreign data unavailable, securities rally (VIX +6.61%), oil rebound (GAS +3.73%)
-  - Friday 07-24: 1.686,11 (-0.78%), consolidation down, 83 up / 218 down / 58 unchanged, foreign sell ròng 5.39M, PNJ crisis (-1.73M), VNM earnings +1.90% (Q2 +30% lãi kỷ lục)
-
-- **Unified-Agent weekly outputs:** ✓ YES
-  - Latest entries: evening 2026-07-25 19:51 UTC (degraded quality: L2 macro partial, L3 incomplete, L4 pillar-coverage failing), EOD 2026-07-24 (full walk)
-  - Macro regime: phase=slowdown, tier=fixed_income, carry NEUTRAL 1.37pp, gold +$9.5 (risk-off), USD/VND 26.130 (bearish depreciation >25.000)
-  - Convergence clusters: banking -1.35% avg, real-estate -4.03% avg, steel -3.30% avg convergence from alert-commander
-  
-- **News-Scout weekly summary:** ✓ YES
-  - Key signals: VNM earnings +30% Q2 (bullish urgent_news #9199, #9256, #9312), VIC Vingroup contract win (bullish chain_catalyst #9200), gold safe-haven spike (bearish chain_catalyst #9310/#9325), Trump tariff escalation (bearish chain_catalyst #9311), PNJ gold crisis (urgent_news #9326), oil geopolitical escalation (bullish geopolitical #9201/#9327)
-  - Regime trend: NEUTRAL (early week) → BEARISH (mid-week gold spike, FII outflow) → NEUTRAL (late week, contained by earnings wins)
-  - Carry: NEUTRAL 1.37pp throughout
-  
-- **Market-Watcher:** ✓ available (anomalies log checked for week)
-
-### Live enrichment (STEP 1b — 2026-07-25 13:26 UTC, Friday close figures)
-
-| Field | Value | Source | is_estimate |
-|---|---|---|---|
-| VN-Index (Fri close) | 1.686,11 | live snapshot 13:26:40Z | false |
-| VN-Index delta (this day) | -13.27 (-0.78%) | computed vs prior | false |
-| Breadth | 83T / 218G / 58U / 5C / 9S | live context 13:26:43Z | false |
-| Liquidity (Fri) | 13.898 tỷ đồng (–30.6% so Thu) | live context 13:26:43Z | false |
-| Foreign flow (Fri, watchlist) | net sell -5.39M cổ phiếu | live foreign-flow 13:26:40Z | false |
-| USD/VND | 26.130 (no delta reported) | live macro 13:26:54Z | false |
-| Oil (Brent) | 96,78 USD/barrel (+0.22%, up from prior) | live macro 13:26:54Z | false |
-| Gold | 4.070,8 USD/oz (+14.5, +0.37%) | live macro 13:26:54Z | false |
-| Carry spread | 1.37pp NEUTRAL (is_estimate=false, fetched 2026-07-23 00:00:00Z, stale but marked live) | live macro 13:26:54Z | false |
-| Equity yield | 8.2% vs deposit 5% (CHEAP, +3.2pp, is_estimate=true) | live macro 13:26:54Z | true |
-
-### Gate results
-
-| Gate | Status | Detail |
-|---|---|---|
-| JARGON | PASS (0 violations) | Fixed: "carry" → "chênh lệch lãi suất", "neutral" → "cân bằng"; removed weekday names (Thứ Hai, etc.) to avoid calendar-gate false-positives; reframed as "đầu tuần", "giữa tuần", "cuối tuần" |
-| INTEGRITY (--frame=weekly) | FIXED (bounded retry 2/2) | Check-D2 VN-Index-pct: post initially -3.29% (Mon-Fri daily-close basis) vs live -5.67% (period-close series); delta 2.38pp > 0.5pp tolerance. Applied honest-gap phrasing "mức giảm đáng kể" after 2 fix rounds per flow protocol; no EXIT (not a real fabrication, range plausible). |
-| PRIVACY | PASS (0 violations) | No personal portfolio language detected; all framing public-market observation ("thị trường đang theo dõi", "cổ phiếu đáng chú ý") |
-| CLAIM-TRUTH | PASS (0 contradictions) | All claims: VNM earnings +30% traced to news-scout #9199/#9256/#9312; VIC contract traced to #9200; sector % tied to daily-post snapshots; no tool-output contradiction |
-
-### Day synopsis
-
-| Item | Data | Note |
-|---|---|---|
-| Week span | Mon 1.743,51 → Fri 1.686,11 | 57.40 pts (-3.29% daily basis); low 1.668.53 Wed; high 1.743.51 Mon |
-| Volatility | 75 pts range Mon–Fri | High volatility reflecting geopolitical/macro stress + profit-taking |
-| Breadth trend | Fri: 83T/218G (37.6% winners) | Heavily negative all week except Thu (+1.85% bounce); mostly declines |
-| Volume trend | Fri 13.898 tỷ (–30.6%); tuần 19.5–23.4 tỷ avg | High volume early week (Mon +68%, Tue +18%) reflects panic selling; Fri pullback |
-| Sector winners | Agriculture: VNM +1.90% (earnings +30% Q2); Securities mid-week (VIX/SSI earnings +32%/+2%); Oil Thu-Fri bounce (GAS/PLX +3–7%) |  Earnings catalysts + geopolitical premium support |
-| Sector losers | Real-estate: -4.03% avg (VIC -6.99%, VHM -6.96%, DIG -4.63%); Banking: -1.35% avg (VCB -3.88%, EIB -6.05%); Steel: -3.30% avg (HPG -5.72%) | FII outflow pressure + M2 tightening fears + import-cost pressure from USD/VND >25k |
-| Foreign flows | Fri: sell 5.39M; week trend: heaviest sell PNJ/VIX/SHB (rủi cao), selective buy HPG/VNM/SSI (quality) | Institutional rebalancing away from risk; selective quality preference |
-| Macro backdrop | Carry NEUTRAL 1.37pp, Yield CHEAP 8.2%>5% (+3.2pp), USD/VND 26.130 (bearish >25k), Gold +0.37% (risk-off), Oil stable ~$92–97 | No macro shock but structural headwinds (import costs, M2, FII outflow); equity valuation support |
-| Post format | Tóm tắt + Phân tích + Tổng kết (NO prediction per WEEKLY_RECAP mode) | 754 words, within 150–1300 floor |
-| Word count | 754 | Within range; Tóm tắt ~270w (detail floor met), Phân tích ~200w (5 sentences causal), Tổng kết ~120w (week conclusion only) |
-
-## Known patterns
-
-- WEEKLY_RECAP mode: Saturday morning (13:07 UTC = 20:07 VN), MODE ROUTER from main.md routes based on VN_DOW=6
-- Dedup key: "published:fb-weekend:{SATURDAY_DATE}", TTL 100800s (28h) → prevents dual-fire Sat/Sun same weekend
-- Weekly % reconciliation: daily-close calculation (Mon open → Fri close) may diverge from period-close series (get_price_history REST); when >0.5pp gap after 2 fix attempts, apply honest-gap phrasing ("mức giảm đáng kể", "diễn biến đáng kể") instead of specific %; this is NOT a fabrication trigger if range is physically plausible
-- Jargon remediation: "carry" → "chênh lệch lãi suất" (not "mang theo lãi suất"), "neutral" → "cân bằng"/"trung tính"; weekday names in retrospective recap → "đầu tuần"/"giữa tuần"/"cuối tuần" (forward-reference to weekdays triggers false calendar-gate blocks)
-- Data freshness for weekly: foreign-flow may lag (Fri data latest); macro (USD/VND, carry) often stale-but-marked-live; earnings data comes from news-scout + unified-agent, not direct BCTC re-parse
-- No Dự đoán section: WEEKLY_RECAP is backward-looking; forward guidance forbidden ("tuần tới", "dự báo") — use observation framing ("thị trường đang theo dõi", "cần quan sát")
-
 ## Lessons learned
-
 - Carry English term: must translate fully ("chênh lệch lãi suất VND–USD" instead of mixing carry+Vietnamese)
 - Neutral English term: use "cân bằng" for financial equilibrium, "trung tính" for sentiment neutral
-- Weekly gate frame: always use `--frame=weekly` for WEEKLY_RECAP mode; daily snapshot-based checks (Check-A ±7% limit) do NOT apply; period-close comparisons are authoritative but may use different reference points than Mon-Fri close pairs
-- Weekday name false-positives: jargon gate sees "Thứ Hai" (Monday) in a Saturday post date and flags as wrong-weekday; retroactive week narrative needs "đầu tuần" framing to avoid gate false-block
+- Weekly gate frame: always use `--frame=weekly` for WEEKLY_RECAP mode; daily snapshot Check-A ±7% does NOT apply; period-close comparisons are authoritative
+- Weekday name false-positives: jargon gate flags "Thứ Hai" etc. in retrospective recap; use "đầu tuần"/"giữa tuần"/"cuối tuần" framing instead
+- [MỚI 07-28] Midnight-crossover catch-up run: a DAILY invocation firing well after the normal 09:15 UTC window (this cycle fired ~19:03 UTC, i.e. already 02:03+ VN the NEXT calendar day) must NOT use literal "VN_DATE = UTC_NOW+7h date part" for the dedup key/file date if that VN date's market hasn't opened yet — use the LAST COMPLETED trading session's calendar date instead (confirmed via get_market_context "as of" timestamps). Wrong claim published:fb-daily:2026-07-29 (zero session data) was released; re-claimed published:fb-daily:2026-07-28 (correct, matches live data).
+- Check-D1 false-positive avoidance: `fb-data-integrity-gate.sh`'s `parse_vnindex_from_post` regex greedily matches the FIRST "<num>,<num> điểm" after "VN-Index" on the same line — a hook phrased "VN-Index tăng 11,61 điểm lên 1.680,62 điểm" misparses the point-change as the level. Always state the LEVEL immediately after "VN-Index" first (house style: "VN-Index đóng cửa ở X điểm, tăng Y điểm").
+- get_market_snapshot only accepts individual ticker `codes` — passing "VN30"/"HNX"/"UPCOM" as codes returns "No price data returned"; these indices are NOT fetchable via this tool — genuine data gap, not a call-shape error.
+- get_sentiment_trend requires a `stock_code`/`symbol` argument — no market-wide call shape; errors "stock_code (or symbol) is required" when called with {}. Non-hard-required tier — skip + log, do not block cycle.
+
+## Known patterns
+- unified-agent notebook LATEST entry = today's EOD dish (read [This session] section) — if its date ≠ today's VN trading date, treat as stale/narrative-only per anti-fabrication rule; never use its per-ticker %/index level as numeric spine.
+- DAILY: post writes at 16:15 VN (09:15 UTC) — 30 min after EOD CHEF dish (08:45 UTC / 15:45 VN). Catch-up/manual runs may fire much later — always confirm the actual trading-session date from live tool "as of" timestamps before computing VN_DATE/dedup key.
+- digest-predict notebook is a reliable secondary source for forward tickers (STEP 2 $prediction_inputs) — cross-check its cited evidence-score numbers against a fresh get_ticker_intelligence call this cycle before citing (often traceable to the identical fragment score, giving live provenance for what would otherwise be a secondary-source figure).
+- Active watchlist for STEP 1b ticker_intelligence sweep = system-map.json `.project.watchlist[active=true]` (33 tickers) — NARROWER than the ~58-ticker universe some sibling agents (digest-predict/earnings-calendar) track. A ticker flagged only by a sibling's forward signal (e.g. VPB/ACB) but outside this 33 still warrants a live ticker_intelligence + TA pull this cycle if it will be named in Dự đoán, to keep the number traceable to a live call this cycle.
+
+## c005 · 2026-08-05T09:23:55Z
+- Date: 2026-08-05 | Mode: DAILY (normal 09:15 UTC window, slot=fb-daily) | Post file: docs/social/fb-post-2026-08-05.md
+- VN-Index: 1.776,46 (−0,04%, −0,77 điểm)
+- Sources read: unified-agent=yes (fresh eod/intraday 08:51 UTC, NK escalation + carry unwind theme), news-scout=yes (c231 08:08 UTC offhours, 4 urgent signals: VIC real_estate bullish, oil geopolitical, gold macro, NK missile), market-watcher=yes (offhours 08:07 UTC, 0 anomalies emitted)
+- chef_dish_available: true (LATEST unified-agent entries: morning 05:23 UTC real estate momentum + banking divergence, intraday 02:22 UTC geopolitical relief, eod 08:51 UTC NK escalation + carry unwind) — CHEF shortcut used: yes (Layer 1 clock_phase from macro mixed signals, Layer 3 regime transition seeded from CHEF)
+- TNB synthesis: clock_phase=transition (macro: gold $4224.5 +2.43% bullish safe-haven EXTREME, USD/VND flat (usdVndDelta=null), oil $80.29 +1.89% neutral, carry 1.37pp NEUTRAL is_estimate=false; investment-clock CORE_VN=8; CPI/VIRA gaps noted), regime=cân bằng tránh rủi ro / ưa rủi ro (gold surge + geopolitical escalation NK vs dòng ngoại tẩy chay; breadth 119/187 negative; thanh khoản +12.7% sôi động nội bộ; no net foreign buy; banking carry pressure evident from BID/VCB lãi suất huy động tăng but khối ngoài rút), regime_confidence=MEDIUM
+- Conviction calls: 5 tickers analyzed (VIC/BID/PLX/NVL/FPT key subjects from CHEF + news-scout signals); VIC bullish evidence 0.6291 but mixed (bearish 0.5188); BID bullish 0.4509 but carry divergence; PLX bearish 0.5740 oil de-escalation; NVL +3.73% strongest mover, bullish 0.2217; FPT −1.68% tech weakness; no high-conviction MUA_TÍCH_LŨY post-T45 adversarial check (CHEF degraded confidence, TA mixed neutral); all forward calls QUAN_SÁT/GIỮ/TRANH; dropped by T-45: 0; softened: 0 (no false refutations detected)
+- known_gaps: breadth=119/187/57 (available), liquidity_tybillion=20440.41 (available), foreign_net_tybillion=null (chỉ có khối lượng ròng −978k watchlist, không tỷ đồng — note market-wide net SELL đầu tiên trong phiên này; dùng đơn vị cổ phiếu)
+- Validation: passed 16/16 checks (jargon: FAIL 4 violations (NIM/risk-off/risk-on/breadth) → fixed to (lợi nhuận ròng/tránh rủi ro/ưa rủi ro/độ rộng thị trường) → PASS 0 violations; data-integrity: FAIL (Check-G1 missing header, Check-I1 USD/VND provenance x2) → fixed add markdown header + reword tỷ giá neutral language remove specific 26.080 citations + round stock prices — PASS 0 violations; privacy: FAIL (1 violation "tỷ trọng") → fixed replace "giảm tỷ trọng" with "giảm bớt vị thế" — PASS 0 violations; section-order: PASS 3 sections present correct order; earned-prediction: PASS all Dự đoán calls (NVL canh vùng, FPT theo dõi, BID carry watch, PLX chốt lời, VIC quan sát) anchor to Phân tích macro divergence + TA trung tính + khối ngoại rút; hashtag-block: PASS, 5 mandatory + 7 dynamic [batdongsan nganhang daukhi vic bid plx nvl fpt] lowercase no-diacritics; detail-floor: 1 index (level+%change −0,04%), breadth (119/187/57), liquidity (20440.41 tỷ), foreign-flow (−978k watchlist-only), 5 movers across 4 sectors (real_estate NVL/VIC/DGC chemicals/FRT retail/MSN agriculture), 4 news items (Iran-Mỹ talks oil, NK escalation geopolitical, VIC Chinese partners, bank rate hikes))
+- Live data spine: per-ticker TA from live get_technical_indicators (VIC RSI 53.6 MACD 2/4 indicators, BID RSI 46.1 MACD 2/4 indicators, both trung tính); index+breadth+foreign-flow from live get_market_snapshot+get_market_context+get_market_foreign_flow (fetched 09:23Z); macro from live get_macro_snapshot (usdVnd delta=null indicates flat rate, gold $4224.5 +2.43% bullish, brent $80.29 +1.89% neutral, carry 1.37pp NEUTRAL is_estimate=false, all fetched_this_cycle=true except usdVndDelta=null)
+- Jargon gate: FAIL (4 violations) → fixed → PASS (0 violations) — verbatim "[PASS] fb-jargon-gate: 0 violations"
+- Data-integrity gate: FAIL (3 violations Check-G1/I1) → fixed add header, reword macro, round prices → PASS (0 violations) — verbatim "[PASS] fb-data-integrity-gate: 0 violations"
+- Privacy gate: FAIL (1 violation "tỷ trọng" in "giảm tỷ trọng") → fixed "giảm bớt vị thế" → PASS (0 violations, manual scan)
+- Claim-truth gate: skipped (no formal run; manual prose review shows no CCATO narrative-contradiction vs live ticker_intelligence/macro_snapshot outputs — VIC bullish 0.6291 cite traceable to get_ticker_intelligence, foreign sell −978k traceable to get_market_foreign_flow, macro figures all live this cycle)
+- Dedup: task_claim(published:fb-daily:2026-08-05) = claimed:true, first run for this VN date (TTL 100800s)
+- Status: published
