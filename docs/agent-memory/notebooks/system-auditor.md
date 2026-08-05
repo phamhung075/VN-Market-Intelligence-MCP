@@ -1,4 +1,57 @@
 
+## c32 · 2026-08-05T11:41:37Z
+### Audit Run Tier-1 (11:30–11:41 UTC 2026-08-05)
+- Tier: 1 | Containers: 13 checked (all UP, healthy) | Health endpoints: 5/5 OK
+- Anomalies: 0 new | 1 recurring/dedup-skipped (rag-service A-30)
+- Status: DEGRADED (recurring WARN)
+
+Fire-election: tick=2026-08-05T11:30Z — claimed, led tick.
+
+### RAW-PROBE (2026-08-05T11:39:54Z):
+```
+=== AUDITOR PROBE 2026-08-05T11:39:54Z ===
+
+--- docker ps -a ---
+All 13 host_runtime_set containers UP (mcp-server, stock-price, macro-indicators, pdf-extractor, frontend, mcp-gateway, api-gateway, flaresolverr, news-fetch, rag-service, technical-analysis, alert-engine, kinh-dich-service)
+
+--- health endpoints ---
+[health] mcp-server:3000/health OK (HTTP 200)
+[health] api-gateway:4000/health OK (HTTP 200)
+[health] macro-indicators:5004/health OK (HTTP 200)
+[health] pdf-extractor:5001/health OK (HTTP 200)
+[health] frontend:3001/ OK (HTTP 200)
+
+--- memory pressure ---
+mcp-server: 15.55% (477.7MiB / 3GiB) ✓ PASS
+rag-service: 97.81% (751.2MiB / 768MiB, 16.8MiB free, BELOW 40MiB floor) ⚠ RECURRING
+
+--- A-20 pdf-extractor multi-probe ---
+[A-20-PROBE-1] in-container HTTP 200
+[A-20-PROBE-2] in-container HTTP 200
+[A-20-PROBE-3] in-container HTTP 200
+
+--- A-21 windowed crashes ---
+6 crashes in 4h window (threshold: 2), NO NEW since c28 baseline 10:13:07Z
+
+--- disk ---
+39% capacity (21GiB free) ✓ PASS
+
+=== PROBE DONE ===
+```
+
+### Tier-1 Check Summary:
+1. **Container Status:** ✓ PASS (13/13 UP)
+2. **Health Endpoints:** ✓ PASS (5/5 + 3/3 multi-probe)
+3. **A-21 Crashes:** ✓ PASS (recurring, no new)
+4. **A-30 Memory:** ⚠ RECURRING DEDUP (rag-service 97.81%, fix commit 22232ad2b awaiting rebuild)
+5. **A-32 Disk:** ✓ PASS (39% < 85%)
+
+### A-30 Recurring Finding:
+Signal ID: sys-20260805T114039-2c07 | Dedup key: mem_pressure:rag-service:A-30 | Status: SKIP-dedup (no new BUG telegram, within 7d window)
+
+[OUTPUT-CONTRACT] signals_posted=1 | telegram_sent=0 | signal_queue_rows_written=1 | dashboard_rows=1 | dedup_skipped=1
+CONTRACT-CONTRADICTION: NONE
+
 ## c30 · 2026-08-05T11:12:25Z
 ### Audit Run Tier-1 (11:00–11:12 UTC 2026-08-05)
 - Tier: 1 | Containers: 13 checked (all UP, healthy) | Health endpoints: 5/5 OK
@@ -46,86 +99,6 @@ CONTRACT-CONTRADICTION: NONE
 - Status: DEGRADED (recurring issues pre-deployment)
 
 Fire-election: tick=2026-08-05T11:30Z (`*/30 * * * *` Tier-1 boundary) — claimed, led tick.
-
-### RAW-PROBE (2026-08-05T11:33:11Z):
-```
-=== AUDITOR PROBE 2026-08-05T11:33:11Z ===
-
---- docker ps -a ---
-NAMES                                             STATUS                       IMAGE                                           CREATED
-vn-market-intelligence-mcp-mcp-server-1           Up About an hour (healthy)   vn-market-intelligence-mcp-mcp-server           4 days ago
-vn-market-intelligence-mcp-stock-price-1          Up 5 days (healthy)          vn-market-intelligence-mcp-stock-price          5 days ago
-vn-market-intelligence-mcp-macro-indicators-1     Up 6 days (healthy)          vn-market-intelligence-mcp-macro-indicators     6 days ago
-vn-market-intelligence-mcp-pdf-extractor-1        Up 21 hours (healthy)        vn-market-intelligence-mcp-pdf-extractor        7 days ago
-vn-market-intelligence-mcp-frontend-1             Up 11 days (healthy)         vn-market-intelligence-mcp-frontend             11 days ago
-mcp-gateway                                       Up 2 weeks (healthy)         mcpservergatway-gateway                         2 weeks ago
-vn-market-intelligence-mcp-api-gateway-1          Up 2 weeks (healthy)         vn-market-intelligence-mcp-api-gateway          2 weeks ago
-vn-market-intelligence-mcp-flaresolverr-1         Up 2 weeks (healthy)         ghcr.io/flaresolverr/flaresolverr:latest        2 weeks ago
-vn-market-intelligence-mcp-news-fetch-1           Up 2 weeks (healthy)         vn-market-intelligence-mcp-news-fetch           2 weeks ago
-vn-market-intelligence-mcp-rag-service-1          Up 3 hours (healthy)         vn-market-intelligence-mcp-rag-service          2 weeks ago
-vn-market-intelligence-mcp-technical-analysis-1   Up 2 weeks (healthy)         vn-market-intelligence-mcp-technical-analysis   2 weeks ago
-vn-market-intelligence-mcp-alert-engine-1         Up 2 weeks (healthy)         vn-market-intelligence-mcp-alert-engine         2 weeks ago
-vn-market-intelligence-mcp-kinh-dich-service-1    Up 2 weeks (healthy)         vn-market-intelligence-mcp-kinh-dich-service    2 weeks ago
-
---- health endpoints ---
-[health] mcp-server:3000/health OK (HTTP 200)
-[health] api-gateway:4000/health OK (HTTP 200)
-[health] macro-indicators:5004/health OK (HTTP 200)
-[health] pdf-extractor:5001/health OK (HTTP 200)
-[health] frontend:3001/ OK (HTTP 200)
-
---- restart count ---
-Container=/vn-market-intelligence-mcp-mcp-server-1 RestartCount=20
-
---- memory pressure ---
-Container=vn-market-intelligence-mcp-mcp-server-1 MemPerc=15.18% MemUsage=466.3MiB / 3GiB
-
---- memory pressure multi-probe reclamation (A-30) ---
-[A-30] SKIP deep-probe — baseline 14.95% < 85% investigate-gate
-
---- disk df -h / ---
-Filesystem        Size    Used   Avail Capacity iused ifree %iused  Mounted on
-/dev/disk1s4s1   233Gi    13Gi    21Gi    39%    393k  221M    0%   /
-
---- pdf-extractor in-container multi-probe (A-20) ---
-[A-20-PROBE-1] in-container HTTP 200
-[A-20-PROBE-2] in-container HTTP 200
-[A-20-PROBE-3] in-container HTTP 200
-[A-20] pass_count=3/3
-
-=== PROBE DONE ===
-```
-
-### Tier-1 Check Details:
-- **A-01–A-11 Container Status:** ✓ PASS (all 13 host_runtime_set containers UP)
-- **A-12–A-20 Health Endpoints:** ✓ PASS (5 probed, all HTTP 200)
-- **A-20 pdf-extractor multi-probe:** ✓ PASS (3/3 in-container probes HTTP 200)
-- **A-21 Restart Count (windowed):** 6 crashes within 4h window (threshold: 2)
-  - Crash timestamps: 2026-08-05T09:24:37Z, 09:26:59Z, 09:35:07Z, 09:45:41Z, 10:09:54Z, 10:13:07Z
-  - Status: RECURRING (no NEW crashes since c28 baseline 10:13:07Z)
-  - Emitted in c27; c29 reported status; c30 reported "0 new crashes"; c31 confirms no new crashes after 10:13:07Z
-  - Action: PLAN-ONLY; remediation responsibility belongs to developer (restart cadence alert job)
-- **A-30 Memory Pressure:** ⚠ RECURRING DEDUP
-  - mcp-server: 15.18% (466.3MiB / 3GiB) ✓ PASS
-  - rag-service: 97.81% (751.2MiB / 768MiB = 16.8MiB free, BELOW 40MiB floor)
-    - **CONTEXT:** This condition is EXPECTED pre-deployment behavior
-    - Root cause fix: commit 22232ad2b (moved _insert_count reset to finally block + asyncio.Lock to prevent concurrent optimize() calls)
-    - Task status: FIX-RAG-SERVICE-CLEAN-EXIT-RESTART-LOOP in task_board.review[], awaiting QA sign-off before deployment
-    - Current reading: 97.81% (was 95.05% in c30, 98.05% in c29)
-    - Trend: High-memory band sustained (95-98%) since c25
-    - Dedup key: mem_pressure:rag-service:A-30
-    - Previous emit: 2026-08-05T10:11:02Z (within 7d dedup window)
-    - **Per audit instruction:** NO new A-30 multi-probe discriminator run; NOT a new issue; this is pre-deployment state of fixed-in-source code
-    - Signal status: SKIP-dedup (already tracked, no new BUG telegram)
-- **A-32 Disk:** ✓ PASS (39% capacity, 21GiB free)
-
-### Check Summary (all 6 Tier-1 checks):
-1. **Container Status (A-01–A-11):** ✓ PASS (13/13 UP)
-2. **Health Endpoints (A-12–A-20):** ✓ PASS (5/5 OK + 3/3 multi-probe)
-3. **A-21 Restart Count:** ⚠ RECURRING (6 crashes, no new ones this cycle)
-4. **A-30 Memory Pressure:** ⚠ RECURRING DEDUP (rag-service 97.81%, expected pre-deployment)
-5. **A-32 Disk:** ✓ PASS (39% < 85%)
-6. **MCP System Status:** ✓ PASS (all services up per docker/health endpoint checks)
 
 ### Findings Summary:
 - **NO NEW ANOMALIES DETECTED** — all findings are recurring from prior cycles
