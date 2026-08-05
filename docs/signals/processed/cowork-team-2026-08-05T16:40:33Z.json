@@ -3,7 +3,7 @@
   "to": "dev-team",
   "type": "cowork-fire",
   "payload": {
-    "fire_time": "2026-07-29T16:37:40Z",
+    "fire_time": "2026-08-05T16:40:33Z",
     "matched_slots": [
       "refine-bctc-slot-4"
     ],
@@ -16,10 +16,10 @@
       "docs/agents/refine_bctc_md/flow/main.md"
     ],
     "silent": false,
-    "drift_min": 5,
+    "drift_min": 2,
     "errors": [],
     "pressure_mode": "adaptive",
-    "calendar_status": "unknown",
+    "calendar_status": "open",
     "suppressed_calendar": [],
     "suppressed_cadence": [],
     "downgraded": [],
@@ -30,7 +30,7 @@
     "cadence_minutes": {
       "refine-bctc-slot-4": null
     },
-    "last_fired_timestamp": "2026-07-29T16:37:30Z",
+    "last_fired_timestamp": "2026-08-05T16:40:33Z",
     "last_fired_slots": [
       "refine-bctc-slot-4"
     ],
@@ -41,14 +41,14 @@
     "leader_lock": "acquired",
     "dev_head": "unknown",
     "devq": 5,
-    "signal_backlog": 18,
-    "note": "Single-slot tick, no collision, no schedule anomalies this fire. pressure-state.json host_headroom_mb (still not renamed to container_vm_headroom_mb per FIX-PRESSURE-HOST-HEADROOM-WRONG-MACHINE-WRONG-QUANTITY) remains live-broken, already flagged in docs/signals/cowork-signal-2026-07-29T0813Z-pressure-headroom-field-stale-container.json."
+    "signal_backlog": 20,
+    "note": "single-slot tick, refine-bctc-slot-4 (bctc-offmarket policy, cron-governed on calendar_status=open). Spawned a7e9ec8ec64f477ce, awaiting completion notification for raw-verify (incl. Step 5.3 off-flow check on its return text)."
   },
   "priority": "low",
-  "createdAt": "2026-07-29T16:37:40Z",
+  "createdAt": "2026-08-05T16:40:33Z",
   "_processed": {
-    "fingerprint": "27d32e06f1056b4ff5dcb5edd24873824bf0ac722094253b82bde23fe6657a9f",
-    "processedAt": "2026-07-29T16:45:30Z",
+    "fingerprint": "09e2b29f4a7594287910035dab79a022c0cf00a358046b5bd8ef8a90e09ed0dc",
+    "processedAt": "2026-08-05T16:51:59Z",
     "processedBy": "dev-team",
     "result": "routed-to-po"
   }
