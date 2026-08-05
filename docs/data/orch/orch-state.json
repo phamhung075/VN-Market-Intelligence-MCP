@@ -134,8 +134,8 @@
     "does_not_consume_wip": true
   },
   "signal_queue": {
-    "_updated_at": "2026-08-05T12:17:43Z",
-    "_updated_by": "cowork-team (0a drain)",
+    "_updated_at": "2026-08-05T13:02:58Z",
+    "_updated_by": "router",
     "archive": [],
     "rows": [
       {
@@ -2266,6 +2266,18 @@
         "payload_ref": null,
         "provenance": "detector",
         "audit_cycle_tag": "cron:auditor-t1:2026-08-05T12:00Z"
+      },
+      {
+        "id": "sys-20260805T130258-af01",
+        "ts": "2026-08-05T13:02:58Z",
+        "from": "agent-father",
+        "to": "po",
+        "type": "system-issue",
+        "summary": "semble-search init.md fails compliance checks #1/#3 (fail-loud-protocol, boundary_rules) — architecturally a Task-tool utility wrapper, not Cowork/Dev-Team; guide has no carve-out",
+        "severity": "LOW",
+        "status": "NEW",
+        "payload_ref": null,
+        "note": "Relayed by router — agent-father lacks mcp__gateway__call_tool in its own tool grant (confirmed against agent roster) so could not write this to signal_queue itself; full finding in docs/agent-memory/notebooks/agent-father.md commit 61f0a22de. Decision needed: bring semble-search into full lifecycle compliance vs. document an explicit utility/tool-wrapper exception class in docs/AGENT_CREATION_GUIDE.md."
       }
     ],
     "last_triaged_at": "2026-07-29T06:25:00Z",
