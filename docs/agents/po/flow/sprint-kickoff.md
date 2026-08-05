@@ -42,11 +42,13 @@ jq --arg id "BA-$SPRINT_ID" --arg title "Requirement Spec for Vision $SPRINT_ID"
 **4b.** Claim sprint umbrella lock → load skill: `.claude/skills/task-lock/SKILL.md`
 ```
 result = call_tool(server="vn-market", tool="task_claim", arguments={
-  task_id:     "task:" + sprint_id,
-  task_kind:   "sprint-task",
-  owner_agent: "po",
-  ttl_seconds: 3600,
-  payload:     '{"sprint_id":"' + sprint_id + '","stage":"kickoff"}'
+  task_id:              "task:" + sprint_id,
+  task_kind:            "sprint-task",
+  owner_agent:          "po",
+  owner_client_session: "<resolved CLAUDE_CODE_SESSION_ID — REQUIRED, coordinationTools.ts:104-110;
+    substitute the real value, NEVER write the literal text "$CLAUDE_CODE_SESSION_ID">",
+  ttl_seconds:          3600,
+  payload:              '{"sprint_id":"' + sprint_id + '","stage":"kickoff"}'
 })
 if not result.claimed:
   → Apply migration check per `.claude/skills/task-lock/SKILL.md` § On claim-fail

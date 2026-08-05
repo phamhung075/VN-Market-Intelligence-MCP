@@ -25,7 +25,11 @@ Read `reports/SPRINT_REPORT_NNN.md` + run a smoke test (MCP tool call or recent 
 
   **Release umbrella lock** → load skill: `.claude/skills/task-lock/SKILL.md`
   ```
-  call_tool(server="vn-market", tool="task_release", arguments={ task_id: "task:" + sprint_id })
+  call_tool(server="vn-market", tool="task_release", arguments={
+    task_id:              "task:" + sprint_id,
+    owner_client_session: "<resolved CLAUDE_CODE_SESSION_ID — REQUIRED, coordinationTools.ts:199-205;
+      substitute the real value, NEVER write the literal text "$CLAUDE_CODE_SESSION_ID">"
+  })
   // ok=false is acceptable (TTL already expired across long sprint)
   ```
   ```
@@ -39,7 +43,11 @@ Read `reports/SPRINT_REPORT_NNN.md` + run a smoke test (MCP tool call or recent 
 
   **Release umbrella lock** → load skill: `.claude/skills/task-lock/SKILL.md`
   ```
-  call_tool(server="vn-market", tool="task_release", arguments={ task_id: "task:" + sprint_id })
+  call_tool(server="vn-market", tool="task_release", arguments={
+    task_id:              "task:" + sprint_id,
+    owner_client_session: "<resolved CLAUDE_CODE_SESSION_ID — REQUIRED, coordinationTools.ts:199-205;
+      substitute the real value, NEVER write the literal text "$CLAUDE_CODE_SESSION_ID">"
+  })
   // ok=false is acceptable (TTL already expired across long sprint)
   ```
   ```
