@@ -1,4 +1,4 @@
-<!-- size-justification: 162L — mcp-server root developer flow; pre-code checklist, TDD loop with heartbeat, INV-GATEWAY-1 dispatcher-lock comments, doc-update+graphify protocol, implementation record template, mandatory decision-journal steps, and RETURN schema are all tightly coupled sequential steps that must be read in one pass. +12L: WF-1 task_release + atomic .head idle-reset on both STOP paths (AC-WF1-1/2). +1L: WF-3 INV-GATEWAY-1 comment. -->
+<!-- size-justification: 162L — mcp-server root developer flow; pre-code checklist, TDD loop with heartbeat, INV-GATEWAY-1 dispatcher-lock comments, doc-update+graphify protocol, implementation record template, mandatory decision-journal steps, and RETURN schema are all tightly coupled sequential steps that must be read in one pass. +12L: WF-1 task_release + atomic .head idle-reset on both STOP paths (AC-WF1-1/2). +1L: WF-3 INV-GATEWAY-1 comment. doc-self-heal 2026-08-05 (+2L, FIX-AUDIT-OUTPUT-CONTRACT-SIGNALQUEUE-ROWS-WRITTEN-SELFREPORT-MISMATCH): Pre-code checklist step 2's branch-per-task text was dead prose, contradicting CLAUDE.md § Defaults ("NO branches — all work stays on main") and every real commit in this repo's history — marked SUPERSEDED rather than deleted (historical marker only). -->
 # Developer — Main Flow
 
 **Scope:** `apps/mcp-server/` root only (TypeScript/Bun). Dev-* zone agents use [`microservice-main.md`](./microservice-main.md) for `apps/<service>/` zone work.
@@ -47,11 +47,8 @@ Read handoff using delta-read skill:
 ```
 
 **Pre-code checklist**
-1. Confirm task status in `docs/data/orch/orch-state.json` `.task_board` (jq `.task_board.active_sprints[].tasks[] | select(.task_id=="NNN")`)
-2. Branch setup — run exactly one of:
-   - Branch exists: `git checkout task/NNN-kebab-description && git status` — verify clean, on correct branch
-   - Branch missing: `git checkout main && git pull origin main && git checkout -b task/NNN-kebab-description`
-   - VERIFY: `git branch --show-current` must equal `task/NNN-kebab-description` before touching any file
+1. Confirm task status in `docs/data/orch/orch-state.json` `.task_board` (jq `.task_board.active_sprints[].tasks[] | select(.task_id=="NNN")` — for a flat-lane row, e.g. `ready[]`/`backlog[]`, match on `.id` instead)
+2. Branch setup — **SUPERSEDED, do NOT create a `task/NNN-*` branch.** CLAUDE.md § Defaults: `NO branches — all work stays on main`. Stay on `main` (`git branch --show-current` should already read `main`); commit directly per §"After code" step 4 below (pathspec-scoped, never `-a`/`-am`). This step's original branch-per-task text is dead prose — no live commit in this repo's history creates a `task/NNN-*` branch; kept here only as a historical marker of the two workflows having diverged (self-healed 2026-08-05, FIX-AUDIT-OUTPUT-CONTRACT-SIGNALQUEUE-ROWS-WRITTEN-SELFREPORT-MISMATCH).
 
 **2b. Sprint-task lock — dispatcher holds it**
 ```
