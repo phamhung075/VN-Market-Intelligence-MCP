@@ -93,12 +93,12 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "FIX-AGENT-NOTEBOOK-UUID-PROVENANCE",
-    "next_agent": "architect",
-    "next_action": "Supervised-Lane Sweep claim of FIX-AGENT-NOTEBOOK-UUID-PROVENANCE — spawn architect DIRECTLY (no zone-detect indirection; lane already resolved at promote time). supervised/plan_only preserved — do not clear.",
-    "updated_at": "2026-08-05T18:53:59Z",
-    "updated_by": "dev-team (supervised-lane sweep)"
+    "status": "idle",
+    "active_task_id": null,
+    "next_agent": "router",
+    "next_action": "FIX-AGENT-NOTEBOOK-UUID-PROVENANCE flipped IN_PROGRESS->REVIEW by architect, branch:null direct-execute path -> idle per CANONICAL:SSOT-STATUSFLIP-LANEMOVE rule (b). next_agent=qa is on the TASK object (task_board.review[]), not on head.",
+    "updated_at": "2026-08-05T19:13:43Z",
+    "updated_by": "architect"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -13920,11 +13920,14 @@
         "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
         "claimed_at": "",
         "claimed_by": "dev-team (bounded-1 auto-pickup)",
-        "updated_at": "2026-07-22T15:14:41Z",
+        "updated_at": "2026-08-05T19:13:29Z",
         "updated_by": "dev-pdf-extractor",
         "review_note": "Root cause FOUND+FIXED: OCR-misread trailing-separator bug in domain/primitives/vn_number_normalize/primitive.py — Tesseract renders the LAST thousands-dot of a large VN-formatted integer as a comma (e.g. \"43.751.466.292,590\"), which the old Pattern-B VN-decimal regex misclassified as a 3-digit decimal fraction, shrinking FPT code 400 (Total Equity) from 43,751,466,292,590 VND to 43,751,466,292.59 VND (1000x loss). Fix: new _VN_OCR_MISREAD_LAST_SEP_RE (requires >=1 existing thousands-dot group + EXACTLY 3 digits after comma) checked before Pattern B, reinterprets the comma as a mis-scanned dot. VERIFIED: balance_sheet_equation delta 43,707,714,826,297.41 -> 0.0 EXACT (codes 270/300/400 match golden anchors to the dong). Non-regression: full apps/pdf-extractor suite -m not slow = 1019 passed/7 failed(pre-existing PIL.Image test-pollution, confirmed identical via git-stash A/B, unrelated)/7 deselected; targeted corporate-form+balance+decimal suites (vn_number_normalize/text_table_extractor/extract_tables_cross_check/bs_accounting_identities/extract_tables_usecase/reconcile_figures/b02_tctd_parser[bank-form non-regression]/decimal_normalizer/extract_tables_fpt/bt3_fix2/bt3_fix3) = 213 passed/0 failed/1 deselected(slow). REMAINING GAP (landing in review, not closing DONE): the named test test_extract_tables_bt3d_real_ocr.py::test_extract_tables_usecase_real_ocr_path still fails, but at a DIFFERENT unrelated assertion (rows_stored=79 < required >=80) NOT the balance_pass assertion (balance identity is now exact). Traced: page 8 of the auto-located BS OCR range actually contains income-statement EPS lines (codes 70/71, 4-value-column layout) whose code-extraction spuriously yields a fake code \"868\" from a value token on 2 lines; FR-5 dedup (0ae36a0eb, landed 2026-06-28, AFTER this test threshold was set 2026-05-28 in d1be50504) correctly drops 1 exact duplicate, taking raw 80 -> 79. This is a separate bug class (page-boundary/section-detection + EPS multi-column false-positive code match), out of BT5-BALANCE-GATE scope — did NOT touch dedup, thresholds, or drop any line items to force a match (fail_loud_requirement compliance). Decision journal: docs/agent-memory/decisions/dev-pdf-extractor-2026-07-09T23:00:10Z-FIX-BCTC-FPT-BT5-BALANCE-GATE.md. Recommend follow-up ticket for the page-8 EPS-bleed row-count gap.",
         "next_agent": "dev-team",
-        "po_triage_20260722": "Owner assigned (was null next_agent) so no row is ownerless (PO AC1). Remains in REVIEW, deferred-behind the review-lane sweeper FIX-DEVTEAM-REVIEW-LANE-QA-DRAIN + FIX-BOUNDED1-SUPERVISED-LANE-NO-SWEEPER (both activated -> backlog this tick). Not silently dropped; the sweeper routes it to next_agent once built."
+        "po_triage_20260722": "Owner assigned (was null next_agent) so no row is ownerless (PO AC1). Remains in REVIEW, deferred-behind the review-lane sweeper FIX-DEVTEAM-REVIEW-LANE-QA-DRAIN + FIX-BOUNDED1-SUPERVISED-LANE-NO-SWEEPER (both activated -> backlog this tick). Not silently dropped; the sweeper routes it to next_agent once built.",
+        "secondary_claimed_at": "2026-08-05T19:13:28Z",
+        "secondary_claimed_by": "dev-team (review-lane secondary-drain)",
+        "secondary_dispatch_target": "po"
       },
       {
         "id": "FIX-FOREIGN-FLOW-COVERAGE",
@@ -21094,6 +21097,31 @@
         "po_manual_dispatch_note": "po (manual-dispatch-sweep) surfaced DRS-STRANDED-OFF-ALLOWLIST candidate — folding into this tick(2026-08-05T18:07Z) BATCH. P0, rank 0, next_agent=agent-father is off the DRS allowlist so no automated lane can reach it.",
         "commit_sha": "1f15f47b21b1b498b7184b0c83a7694aeee43c6d",
         "note": "agent-father: root-caused + fixed docs/agents/ops/flow/docker.md (Post-Rebuild Health Verification checked docker compose ps Up + /health==200 only, never verified StartedAt/RestartCount/image-hash against the actual dispatch, and ops's flow never pointed to the pre-existing scripts/verify-deploy-sha.sh Close-Gate) - narration without attached command output was the gap that made fabrication easier than an honest partial-failure report. Added a MANDATORY Deploy-Evidence Capture step (paste literal date -u + docker inspect StartedAt/RestartCount/image-hash before any Pass claim) plus a SHA-gate pointer; applied GENERALLY to every future ops rebuild/restart trigger via the ONE shared verification section main.md already delegates to, not scoped to this one incident (AC-4 judgment call). AC-3 (actually complete the rag-service deploy) explicitly OUT OF SCOPE per router dispatch override - separate concern (UNBLOCK-DEPLOY-RAG-SERVICE / FIX-RAG-SERVICE-CLEAN-EXIT-RESTART-LOOP), needs a real ops re-dispatch after this fix lands. Board flip executed directly by agent-father (deviates from this agent's own standing decline-and-supply-transform precedent) because this dispatch is router-direct-supervised: router holds task lock, gave the explicit write instruction, and owns independent post-verification - matches the narrow per-task-dispatch orch-state write carve-out in agent-father's own init.md, not a general policy change."
+      },
+      {
+        "id": "FIX-AGENT-NOTEBOOK-UUID-PROVENANCE",
+        "title": "Agents write raw owner_client_session/CLAUDE_CODE_SESSION_ID UUID into committed notebooks (RECURRING). Fix agent instructions via agent-father to log (router-dispatched); add pre-commit/CI guard failing on session-token-shaped UUID in committed diffs",
+        "type": "FIX",
+        "status": "REVIEW",
+        "zone": "multi",
+        "priority": "P1",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-AGENT-NOTEBOOK-UUID-PROVENANCE",
+        "next_agent": "qa",
+        "owner": "architect",
+        "supervised": true,
+        "plan_only": true,
+        "po_recurrence_20260729": "RECURRENCE CONFIRMED 2026-07-29T06:09:36Z, and the ROW ITSELF WAS THE GAP. docs/agent-memory/notebooks/system-auditor.md:1 was committed in 9b27e9723 reading '## ad265f86 - 2026-07-29T06:09:36Z', where ad265f86 is the first segment of the coordination_session UUID. The spawn prompt for that cycle carried the prohibition EXPLICITLY and it was written anyway. This row was minted 2026-07-03T18:32:21Z and sat 26 days in backlog with next_agent UNSET, i.e. structurally undispatchable by any dispatcher - the standing memory feedback_agent_commits_session_uuid_into_notebook existed, a board row existed, and still nothing could pick it up. PO is therefore setting next_agent=architect per this row's own status_note ('zone:multi -> architect splits agent-father instruction edit from the CI-guard') and raising to P1 rather than minting a 2nd row. Same undispatchable-by-construction class as EPIC-AUDITOR-DETECTOR-CORRECTNESS-DRAIN, though this row is NOT in that epic's 18. FIX DIRECTION UNCHANGED and already correct in the title: (a) agent instructions via agent-father, (b) a pre-commit/CI guard failing on a session-token-shaped UUID in a committed diff. ADD: the peer convention on this exact heading line is a fixed SOURCE LABEL - '## d4-auto - <ts>' appears in the same notebook - so the remedy for the heading is a fixed agent/source label, not a redacted UUID. NOTE for the CI guard: a bare 8-hex-segment matcher will collide with git short SHAs, which legitimately appear in notebooks; the guard must be shaped to avoid that false positive.",
+        "po_recurrence_at": "2026-07-29T06:25:00Z",
+        "updated_at": "2026-08-05T19:13:43Z",
+        "agent_father_partial_note": "PART (a) DONE 2026-07-29 by agent-father (router-dispatched): .claude/skills/notebook-write/SKILL.md AC-1 now states the c<NNN> generation rule explicitly (real incrementing counter per bctc-analyst.md c125->c126 precedent, or a fixed source label) and forbids deriving the token from $CLAUDE_CODE_SESSION_ID/owner_client_session/any session-UUID fragment, citing the confirmed live leak (## ad265f86 in system-auditor.md, ad265f86 = this dispatch session own prefix). docs/agents/system-auditor/flow/main.md local heading template updated to match. Part (b), the pre-commit/CI guard against a session-UUID-shaped heading, with the SHA-collision false-positive shape this row already flags, is UNTOUCHED and remains architect/next_agent as-is; status/owner/next_agent NOT changed by this note.",
+        "promoted_at": "2026-08-05T17:51:16Z",
+        "promoted_by": "dev-team (supervised-lane sweep)",
+        "promotion_note": "Supervised-Lane Sweep — assigned dispatch_lane='architect' (priority_rank=1); supervised/plan_only flags preserved, gate NOT disabled — see FIX-BOUNDED1-SUPERVISED-LANE-NO-SWEEPER",
+        "dispatch_lane": "architect",
+        "claimed_at": "2026-08-05T18:53:57Z",
+        "claimed_by": "dev-team (supervised-lane sweep)",
+        "updated_by": "architect",
+        "architect_note": "Part (b) DESIGNED + SHIPPED directly (row itself is small: guard, not a service; used judgment per spawn-prompt latitude, same as other small plan_only rows closed via direct architect implement). Corpus-verified via scripts/audits/verify-notebook-uuid-provenance-gate.sh: 79 historical RULE2 (bare-hex-token) hits confirmed, ALL in system-auditor.md pre-2026-07-29 (part-a fix holding since, 0 in last-8-commits window) -- quantifies the incident named in po_recurrence_20260729 as the tail of a standing daily failure, not a one-off. Second, structurally different leak found live: tran-ngoc-bau.md commit f449a1cdaada embeds a FULL session UUID as heading-line prose (session=22ed5ba1-...), not as the AC-1 token -- RULE 1 catches this shape, RULE 2 (token-position-only) would have missed it; a currently-uncommitted recurrence of the SAME pattern is in that agents working tree now (router_session=1004035c-...), flagged not fixed (out of scope, different agents own notebook). Shipped: scripts/git-hooks/pre-commit _check_notebook_uuid_provenance (+ pure _notebook_uuid_line_verdict classifier) colocated with the sibling _check_notebook_immutability guard; scripts/audits/verify-notebook-uuid-provenance-gate.sh (corpus replay, mirrors verify-notebook-immutability-gate.sh sourcing pattern); scripts/git-hooks/pre-commit-notebook-uuid-provenance.test.sh (10/10 new, isolated scratch-repo). RULE 1 = full UUID anywhere on an ADDED heading line (false-positive-proof vs short SHAs by construction -- no internal hyphens). RULE 2 = bare 6-8 hex first-TOKEN (the confirmed ad265f86 shape), c<NNN> counter excluded FIRST (c is itself a hex nibble, verified against a synthetic c12345 negative control) -- WARN-only forever, never escalates. Both default WARN (never blocks) mirroring _check_notebook_immutability precedent; diff-scoped so pre-existing corpus debt never blocks a future commit, no baseline JSON needed. Regression: pre-existing pre-commit.test.sh 13/13 + pre-commit-auditor-heartbeat.test.sh 6/6 still green (shared file, no interference). CI companion deliberately DEFERRED (brief S5) -- hook already reaches the INV-GATEWAY-1-exempt population, same justification the sweep-guard brief used; recommend a sized-S PO follow-up only if hook-only coverage proves insufficient. Design: docs/architecture-briefs/2026-08-05-fix-agent-notebook-uuid-provenance-guard.md. SKILL.md AC-1 cross-references the backstop (mirrors AC-2a pattern)."
       }
     ],
     "qa": [
@@ -21172,29 +21200,6 @@
         "claimed_at": "2026-08-05T06:45:34Z",
         "claimed_by": "dev-team (supervised-lane sweep)",
         "po_goahead_20260805T090611": "RATIFIED by po 2026-08-05T09:06:11Z at source, not on relay. (1) Deliverable EXISTS: docs/architecture-briefs/2026-07-12-ultracode-workflow-improvement-audit.md, 382391B, anchor '## Completeness critic — lanes not audited' present at L1973. (2) Load-bearing claim RE-DERIVED FROM LIVE CONFIG (not brief prose): .claude/settings.local.json contains EXACTLY 6 hook commands terminating in '2>/dev/null || true' (tmux-agent.sh status, tmux set-option, branch-hygiene-stop.sh, notebook-auto-prune.sh, context-bloat-backstop.sh, orch-state-hook-bash-backstop.sh) + 1 more '|| true' in .claude/settings.json (graphify PreToolUse) = 7 of 8 hook invocations swallow failure. Claim CONFIRMED, count exact, still true 24 days after the brief was written. (3) ATTRIBUTION CORRECTION for BA: the brief names the 'orch-state prewrite Zod gate' among the swallowing hooks — that is WRONG on live config. orch-state-hook-prewrite.mjs is the ONE fail-closed hook (no || true, no 2>/dev/null); the swallowing orch-state hook is orch-state-hook-bash-backstop.sh (PostToolUse). BA must scope the fix to the bash-backstop, and must NOT 'fix' the prewrite gate, which is already correct. Plan-only SPIKE, timebox 180 — safe to resume."
-      },
-      {
-        "id": "FIX-AGENT-NOTEBOOK-UUID-PROVENANCE",
-        "title": "Agents write raw owner_client_session/CLAUDE_CODE_SESSION_ID UUID into committed notebooks (RECURRING). Fix agent instructions via agent-father to log (router-dispatched); add pre-commit/CI guard failing on session-token-shaped UUID in committed diffs",
-        "type": "FIX",
-        "status": "IN_PROGRESS",
-        "zone": "multi",
-        "priority": "P1",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-AGENT-NOTEBOOK-UUID-PROVENANCE",
-        "next_agent": "architect",
-        "owner": "architect",
-        "supervised": true,
-        "plan_only": true,
-        "po_recurrence_20260729": "RECURRENCE CONFIRMED 2026-07-29T06:09:36Z, and the ROW ITSELF WAS THE GAP. docs/agent-memory/notebooks/system-auditor.md:1 was committed in 9b27e9723 reading '## ad265f86 - 2026-07-29T06:09:36Z', where ad265f86 is the first segment of the coordination_session UUID. The spawn prompt for that cycle carried the prohibition EXPLICITLY and it was written anyway. This row was minted 2026-07-03T18:32:21Z and sat 26 days in backlog with next_agent UNSET, i.e. structurally undispatchable by any dispatcher - the standing memory feedback_agent_commits_session_uuid_into_notebook existed, a board row existed, and still nothing could pick it up. PO is therefore setting next_agent=architect per this row's own status_note ('zone:multi -> architect splits agent-father instruction edit from the CI-guard') and raising to P1 rather than minting a 2nd row. Same undispatchable-by-construction class as EPIC-AUDITOR-DETECTOR-CORRECTNESS-DRAIN, though this row is NOT in that epic's 18. FIX DIRECTION UNCHANGED and already correct in the title: (a) agent instructions via agent-father, (b) a pre-commit/CI guard failing on a session-token-shaped UUID in a committed diff. ADD: the peer convention on this exact heading line is a fixed SOURCE LABEL - '## d4-auto - <ts>' appears in the same notebook - so the remedy for the heading is a fixed agent/source label, not a redacted UUID. NOTE for the CI guard: a bare 8-hex-segment matcher will collide with git short SHAs, which legitimately appear in notebooks; the guard must be shaped to avoid that false positive.",
-        "po_recurrence_at": "2026-07-29T06:25:00Z",
-        "updated_at": "2026-08-05T18:53:59Z",
-        "agent_father_partial_note": "PART (a) DONE 2026-07-29 by agent-father (router-dispatched): .claude/skills/notebook-write/SKILL.md AC-1 now states the c<NNN> generation rule explicitly (real incrementing counter per bctc-analyst.md c125->c126 precedent, or a fixed source label) and forbids deriving the token from $CLAUDE_CODE_SESSION_ID/owner_client_session/any session-UUID fragment, citing the confirmed live leak (## ad265f86 in system-auditor.md, ad265f86 = this dispatch session own prefix). docs/agents/system-auditor/flow/main.md local heading template updated to match. Part (b), the pre-commit/CI guard against a session-UUID-shaped heading, with the SHA-collision false-positive shape this row already flags, is UNTOUCHED and remains architect/next_agent as-is; status/owner/next_agent NOT changed by this note.",
-        "promoted_at": "2026-08-05T17:51:16Z",
-        "promoted_by": "dev-team (supervised-lane sweep)",
-        "promotion_note": "Supervised-Lane Sweep — assigned dispatch_lane='architect' (priority_rank=1); supervised/plan_only flags preserved, gate NOT disabled — see FIX-BOUNDED1-SUPERVISED-LANE-NO-SWEEPER",
-        "dispatch_lane": "architect",
-        "claimed_at": "2026-08-05T18:53:57Z",
-        "claimed_by": "dev-team (supervised-lane sweep)"
       }
     ]
   },

@@ -45,6 +45,18 @@ the writer treated the session id's first 8 hex chars as a valid stand-in for
 applies for your agent, check the AC-6 table below for its existing
 convention before writing a new heading.
 
+Mechanical backstop (FIX-AGENT-NOTEBOOK-UUID-PROVENANCE, part (b) — prose
+alone already failed once on this exact class, see part (a) above): the
+pre-commit hook `scripts/git-hooks/pre-commit` `_check_notebook_uuid_provenance`
+scans every ADDED `## ` heading line in a staged notebook diff for (1) a full
+UUID anywhere on the line, or (2) a bare 6-8 hex first-token (the confirmed
+`ad265f86` shape) — never body prose, so a legitimate git short-SHA citation
+elsewhere in a notebook is never touched. WARN-by-default (never blocks) until
+a caller opts in via `GIT_NOTEBOOK_UUID_PROVENANCE_MODE=reject`; replay/
+validate first with `scripts/audits/verify-notebook-uuid-provenance-gate.sh`.
+Escape hatch: `notebook-uuid-lint-allow: <reason>` on the heading line. Design:
+`docs/architecture-briefs/2026-08-05-fix-agent-notebook-uuid-provenance-guard.md`.
+
 ### Retention rule (AC-2)
 
 Keep: current cycle + 2 prior `## ` sections = last 3 total, ALWAYS — this is

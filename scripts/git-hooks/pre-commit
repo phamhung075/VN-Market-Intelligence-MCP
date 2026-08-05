@@ -446,6 +446,167 @@ NBFILES
 
 _check_notebook_immutability || exit 1
 
+# --- Agent-notebook heading-line session-UUID provenance guard --------------
+# TASK: FIX-AGENT-NOTEBOOK-UUID-PROVENANCE (docs/data/orch/orch-state.json
+#       .task_board, P1). SPEC: docs/architecture-briefs/
+#       2026-08-05-fix-agent-notebook-uuid-provenance-guard.md
+#
+# PART (a) of this row (agent-father, 2026-07-29) already fixed the root
+# cause in prose: .claude/skills/notebook-write/SKILL.md AC-1 now states the
+# c<NNN> generation rule explicitly and forbids deriving a heading token from
+# $CLAUDE_CODE_SESSION_ID/owner_client_session/coordination_session or ANY
+# fragment of a per-invocation UUID. This is PART (b): a mechanical
+# commit-time backstop for the SAME defect class, mirroring the
+# _check_notebook_immutability precedent immediately above (prose alone was
+# already tried on that class too, and did not hold on its own).
+#
+# BUG THIS PREVENTS (CONFIRMED LIVE, not hypothetical): commit 9b27e9723
+# (## ad265f86 · 2026-07-29T06:09:36Z, system-auditor.md) — ad265f86 is the
+# first 8 hex chars of that cycle's OWN coordination_session UUID, treated as
+# a stand-in for the AC-1 <NNN> token. Corpus replay (scripts/audits/
+# verify-notebook-uuid-provenance-gate.sh) found this was the STANDING
+# failure mode across dozens of system-auditor.md cycles before the
+# 2026-07-29 fix, not a one-off. A structurally DIFFERENT leak shape is
+# confirmed live in docs/agent-memory/notebooks/tran-ngoc-bau.md: heading
+# '## c117-collision-note · ... session=22ed5ba1-502f-4683-8a7e-70fd79e71645
+# ...' embeds a FULL session UUID as explanatory prose ON the heading line
+# itself (not as the AC-1 token slot) — same standing violation
+# (feedback_agent_commits_session_uuid_into_notebook: a session id is a
+# coordination PARAMETER ONLY, never authored into a committed file), via a
+# different code path. Both shapes are detected below.
+#
+# SCOPE: added '## ' HEADING LINES ONLY, in the STAGED DIFF of
+# docs/agent-memory/notebooks/*.md — never scans prose below a heading. This
+# is deliberate and load-bearing: the peer convention on this exact heading
+# line legitimately uses fixed non-UUID source labels (e.g. '## d4-auto -
+# <ts>'), and bare git short SHAs (7-8 hex chars) legitimately appear in
+# notebook PROSE elsewhere — scanning body text would false-positive on
+# those. Being diff-scoped (only lines this commit ADDS) also means
+# pre-existing debt already in HEAD (both examples above) is never
+# retroactively flagged — this guard only fires on a NEW commit introducing
+# the pattern, matching the row's own title ("...introduces a session-token-
+# shaped UUID in a committed diff").
+#
+# TWO RULES:
+#
+#   RULE 1 (FULL UUID, unambiguous) — a canonical 8-4-4-4-12 hyphenated hex
+#     UUID appearing ANYWHERE on an added '## ' line. False-positive-proof
+#     against the short-SHA class BY CONSTRUCTION: a bare short SHA has no
+#     internal hyphens and can never match this exact grouped shape.
+#
+#   RULE 2 (BARE HEX FRAGMENT, ambiguous by nature) — the FIRST whitespace-
+#     delimited token immediately after '## ' is 6-8 hex characters and
+#     NOTHING ELSE — the confirmed 'ad265f86' shape (first segment of a full
+#     UUID, not a full UUID itself). A legitimate 'c<NNN>' counter is
+#     excluded FIRST: note its own characters CAN be all hex-representable
+#     ('c' is itself a valid hex nibble, so e.g. a hypothetical 5-digit
+#     'c12345' counter would otherwise collide) — the '^c[0-9]+$' shape check
+#     must run before the hex-fragment check, not alongside it. Ambiguous
+#     residual risk this rule accepts and documents rather than pretends to
+#     close: a future fixed SOURCE LABEL that happens to be an all-hex-letter
+#     word (e.g. 'facade', 'decade') would still collide — WARN-only by
+#     design (never escalated to reject, regardless of
+#     GIT_NOTEBOOK_UUID_PROVENANCE_MODE), with a documented escape hatch.
+#
+# ESCAPE HATCH (mirrors task-claim-owner-session-lint.sh's own convention):
+# a 'notebook-uuid-lint-allow: <reason>' comment anywhere on the same heading
+# line suppresses BOTH rules for that one line.
+#
+# DISPOSITION: WARN-by-default, fleet-wide, on day 1 (GIT_NOTEBOOK_UUID_
+# PROVENANCE_MODE defaults to 'warn') — mirrors GIT_NOTEBOOK_IMMUTABILITY_MODE
+# immediately above, same rationale: this is a NEW gate on a corpus not yet
+# proven zero-false-positive end-to-end (Rule 2 in particular is ambiguous by
+# construction). Rule 1 CAN be hard-enforced by setting mode=reject once a
+# caller has verified no legitimate full-UUID-on-heading-line convention
+# (e.g. tran-ngoc-bau's own collision-note pattern) is still in active use.
+# Rule 2 never hard-blocks regardless of mode — see its own note above.
+#
+# PURE CLASSIFIER (no git/env access — sourced verbatim by scripts/audits/
+# verify-notebook-uuid-provenance-gate.sh, same "never reimplement" bar as
+# _is_dated_heading above). $1 = one heading line, ALREADY STRIPPED of any
+# leading diff '+' marker (i.e. starts with '## '). Prints one of:
+#   RULE1<TAB><line>   — full UUID anywhere on the line
+#   RULE2<TAB><token>  — bare 6-8 hex first-token (ambiguous)
+#   (nothing)          — clean, or escape-hatched
+# Prints at most one verdict per line (RULE1 takes priority; a line matching
+# both is only ever the RULE1 case in practice since a full UUID's first
+# segment is 8 hex chars immediately followed by a hyphen, which already
+# fails RULE2's "nothing else" containment on the token boundary above).
+_notebook_uuid_line_verdict() {
+  local line="$1" token
+  local full_uuid_re='[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}'
+
+  [[ "$line" == *"notebook-uuid-lint-allow:"* ]] && return 0
+
+  if [[ "$line" =~ $full_uuid_re ]]; then
+    printf 'RULE1\t%s\n' "$line"
+    return 0
+  fi
+
+  token="$(printf '%s\n' "$line" | sed -E 's/^## ([^[:space:]]+).*/\1/')"
+  [[ "$token" =~ ^c[0-9]+$ ]] && return 0   # AC-1 legitimate incrementing counter — never flagged
+  if [[ "$token" =~ ^[0-9a-fA-F]{6,8}$ ]]; then
+    printf 'RULE2\t%s\n' "$token"
+  fi
+  return 0
+}
+
+_check_notebook_uuid_provenance() {
+  local staged nb_files f mode_uuid rc all_msgs added_lines raw line verdict rule payload verdict_word msg
+  mode_uuid="${GIT_NOTEBOOK_UUID_PROVENANCE_MODE:-warn}"
+
+  staged="$(git diff --cached --name-status 2>/dev/null)" || return 0
+  [ -z "$staged" ] && return 0
+
+  nb_files="$(printf '%s\n' "$staged" | awk '$1 ~ /^[AM]$/ && $2 ~ /^docs\/agent-memory\/notebooks\/.*\.md$/ {print $2}')"
+  [ -z "$nb_files" ] && return 0
+
+  rc=0
+  all_msgs=""
+  while IFS= read -r f; do
+    [ -z "$f" ] && continue
+
+    added_lines="$(git diff --cached -- "$f" 2>/dev/null | grep -E '^\+## ')"
+    [ -z "$added_lines" ] && continue
+
+    while IFS= read -r raw; do
+      [ -z "$raw" ] && continue
+      line="${raw#+}"
+
+      verdict="$(_notebook_uuid_line_verdict "$line")"
+      [ -z "$verdict" ] && continue
+      rule="${verdict%%$'\t'*}"
+      payload="${verdict#*$'\t'}"
+
+      if [ "$rule" = "RULE1" ]; then
+        verdict_word="WARN"
+        [ "$mode_uuid" = "reject" ] && verdict_word="REJECT"
+        msg="[notebook-uuid-provenance-guard] ${verdict_word}: ${f} — added heading line embeds a full session/coordination UUID: '${payload}'. Per .claude/skills/notebook-write/SKILL.md AC-1 and feedback_agent_commits_session_uuid_into_notebook, a session id is a per-invocation coordination PARAMETER ONLY, never authored into a committed file — use a c<NNN> counter or a fixed source label instead. mode=${mode_uuid} (default warn; set GIT_NOTEBOOK_UUID_PROVENANCE_MODE=reject to hard-enforce once re-validated via scripts/audits/verify-notebook-uuid-provenance-gate.sh). Escape hatch: add 'notebook-uuid-lint-allow: <reason>' on this line if intentional."
+        echo "$msg" >&2
+        all_msgs="${all_msgs}${msg}
+"
+        rc=1
+      else
+        msg="[notebook-uuid-provenance-guard] WARN (ambiguous, never hard-blocked — see hook header comment): ${f} — added heading's first token '${payload}' is a bare 6-8 hex-char string, the exact shape of a truncated session-UUID fragment (confirmed live: '## ad265f86 · ...', commit 9b27e9723). If intentional (e.g. a genuine short-SHA source label), add 'notebook-uuid-lint-allow: <reason>' on this line. Otherwise use a c<NNN> counter or a fixed non-hex source label per .claude/skills/notebook-write/SKILL.md AC-1. Line: '${line}'."
+        echo "$msg" >&2
+        all_msgs="${all_msgs}${msg}
+"
+      fi
+    done <<ADDEDLINES
+$added_lines
+ADDEDLINES
+  done <<NBFILES
+$nb_files
+NBFILES
+
+  [ -n "$all_msgs" ] && write_signal "$all_msgs"
+
+  [ "$rc" -eq 1 ] && [ "$mode_uuid" != "reject" ] && return 0
+  return $rc
+}
+
+_check_notebook_uuid_provenance || exit 1
+
 # --- Same-file staged-subset vs working-tree divergence detector (SCOPED mode only) --
 # TASK: FIX-SWEEPGUARD-SAMEFILE-HUNK-PATHSPEC-ONLY-SEMANTICS-NONGOAL-AND-DETECTOR
 # SPEC: docs/architecture-briefs/2026-07-21-commit-path-peer-index-sweep-guard.md §2.7
