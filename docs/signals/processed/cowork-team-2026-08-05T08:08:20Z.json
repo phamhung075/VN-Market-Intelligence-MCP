@@ -1,0 +1,73 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-08-05T08:08:20Z",
+    "matched_slots": [
+      "news-scout-offhours",
+      "market-watcher-offhours",
+      "alert-commander-market",
+      "alert-commander-critical"
+    ],
+    "won_slots": [
+      "news-scout-offhours",
+      "market-watcher-offhours",
+      "alert-commander-market",
+      "alert-commander-critical"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/news-scout/flow/main.md",
+      "docs/agents/market-watcher/flow/main.md",
+      "docs/agents/alert-commander/flow/main.md",
+      "docs/agents/alert-commander/flow/main.md"
+    ],
+    "silent": false,
+    "drift_min": 3,
+    "errors": [],
+    "pressure_mode": "adaptive",
+    "calendar_status": "open",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "chef_mutex_applied": false,
+    "due_reasons": {
+      "news-scout-offhours": "cadence",
+      "market-watcher-offhours": "cadence",
+      "alert-commander-market": "cron",
+      "alert-commander-critical": "cron"
+    },
+    "cadence_minutes": {
+      "news-scout-offhours": 30,
+      "market-watcher-offhours": 30,
+      "alert-commander-market": null,
+      "alert-commander-critical": null
+    },
+    "last_fired_timestamp": "2026-08-05T08:08:03Z",
+    "last_fired_slots": [
+      "news-scout-offhours",
+      "market-watcher-offhours",
+      "alert-commander-market",
+      "alert-commander-critical"
+    ],
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "08:00",
+    "leader_lock": "acquired",
+    "dev_head": "unknown",
+    "devq": 5,
+    "signal_backlog": 19,
+    "note": "4-slot batch fire (agent_id=alert-commander collision WARN sent for market+critical, R3 allows). cycle_snapshot_promoted:false 6th consecutive tick -- already escalated cow-20260805T070907 to po, not re-minted. 2 NEW to=po signals (system-auditor rag-service memory WARN dup) left untouched -- PO's own inbox scope."
+  },
+  "priority": "low",
+  "createdAt": "2026-08-05T08:08:20Z",
+  "_processed": {
+    "fingerprint": "7b9ab6e879a218b3e544beb31405f24bb03b1e42cdec67272c94e411cb6cb914",
+    "processedAt": "2026-08-05T08:11:08Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
