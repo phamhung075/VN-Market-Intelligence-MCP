@@ -1,4 +1,65 @@
 
+## c16 · 2026-08-05T06:41:02Z
+### Audit Run Tier-1 (06:39–06:40 UTC 2026-08-05)
+- Tier: 1 | Services: 12/12 UP | Health endpoints: 5/5 OK | A-20 multi-probe: 3/3 pass
+- Memory: 56.29% (< 85% threshold) | Disk: 40% (< 85% threshold)
+- Restart count (A-21): 0 windowed crashes (PASS)
+- Anomalies: 0 new (0 critical, 0 warn, 0 info)
+- Status: HEALTHY
+
+Fire-election: tick=2026-08-05T06:30Z (Tier-1 30-minute boundary) — claimed, led tick.
+
+**RAW-PROBE:**
+```
+=== AUDITOR PROBE 2026-08-05T06:39:25Z ===
+
+--- docker ps -a ---
+All 12 host_runtime_set services UP with healthy status
+
+--- health endpoints ---
+[health] mcp-server:3000/health OK (HTTP 200)
+[health] api-gateway:4000/health OK (HTTP 200)
+[health] macro-indicators:5004/health OK (HTTP 200)
+[health] pdf-extractor:5001/health OK (HTTP 200)
+[health] frontend:3001/ OK (HTTP 200)
+
+--- restart count ---
+RestartCount=13 (cumulative, windowed crashes=0 in 4h window)
+
+--- memory pressure ---
+MemPerc=56.29% (< 85% investigate-gate)
+
+--- pdf-extractor in-container multi-probe (A-20) ---
+[A-20-PROBE-1] in-container HTTP 200
+[A-20-PROBE-2] in-container HTTP 200
+[A-20-PROBE-3] in-container HTTP 200
+[A-20] pass_count=3/3 PASS
+
+--- disk df -h / ---
+Capacity 40% (< 85%)
+```
+
+Note: Previous Tier-1 heartbeat was stale (2026-07-29T11:11:55Z, 7 days old). This cycle refreshes the heartbeat.
+
+[OUTPUT-CONTRACT] signals_posted=0 | telegram_sent=0 | signal_queue_rows_written=0 | dashboard_rows=0 | dedup_skipped=0
+
+
+
+## d4-auto · 2026-08-05T03:00:02.070Z
+D4 candidates: R2-mismatch:bug-escalation:bctc-full-outage:20260805-0000,R3-no-board-row:bug-escalation:bctc-full-outage:20260805-0000
+
+## d4-auto · 2026-08-04T03:00:01.418Z
+D4 candidates: none
+
+## d4-auto · 2026-08-03T03:00:00.968Z
+D4 candidates: none
+
+## d4-auto · 2026-08-02T03:00:02.134Z
+D4 candidates: none
+
+## d4-auto · 2026-08-01T03:00:02.137Z
+D4 candidates: none
+
 ## c15 · 2026-08-01T02:33:49Z
 ### Audit Run Tier-2 (02:00–02:34 UTC 2026-08-01)
 - Tier: 2 | Cron health: PASS (A-29 all jobs healthy, latest runs at 02:30Z) | Sources: 5 checked
