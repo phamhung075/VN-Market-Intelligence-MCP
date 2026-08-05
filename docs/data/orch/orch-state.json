@@ -11437,40 +11437,6 @@
         "precision_correction_20260805T1805": "IMPORTANT DISAMBIGUATION before agents-architect scopes this row (relayed by agent-father, verified by router at source, .claude/skills/commit-boundary/SKILL.md:144): the doc explicitly names agents-architect + agent-father (no gateway binding -- mutex physically unreachable) as a DELIBERATE, documented architectural boundary -- not a bug for THOSE TWO agent types. But agents-architect is a DISTINCT, narrower meta-agent (agent-system design) from architect (technical blueprint / brownfield design), the agent type actually spawned on all 4 of this rows own confirmed instances this session. Do NOT assume architect inherits agents-architects documented deliberate-design rationale just because the names are similar -- commit-boundary/SKILL.md says nothing about architect specifically. AC1 for this row must resolve architect (undocumented gap, still needs a decision) and agent-father (also undocumented for its OWN gateway gap specifically -- commit-boundary/SKILL.md documents the ORCH-SCOPE/commit_zone boundary, not a rationale for the missing gateway tool itself) as open questions, while treating agents-architects absence as already-settled/deliberate and out of this rows scope entirely."
       },
       {
-        "id": "FIX-CI-SIZELINT-BCTC-1345B-PARSE-VALIDATOR-PAIR",
-        "type": "FIX",
-        "size": "M",
-        "priority": "P0",
-        "status": "BACKLOG",
-        "zone": "apps/mcp-server/",
-        "owner": "po",
-        "next_agent": "dev-mcp-server",
-        "plan_only": false,
-        "supervised": false,
-        "created_at": "2026-08-05T17:30:42Z",
-        "created_by": "po/triage-20260805T1730Z",
-        "check_id": "CI-RED-f080fbc0",
-        "dedup_key": "ci_job:size-lint|file:apps/mcp-server/src/application/usecases/parseBctcReport.ts+apps/mcp-server/src/domain/services/financial-reports/financialFiguresValidator.ts",
-        "origin_signal_id": "CI-RED-f080fbc0",
-        "verification_gate": "ci_green_on_subsequent_push",
-        "baseline_pass": true,
-        "rebuild_required": false,
-        "caused_by_commit": "7ac55adc8",
-        "title": "CI RED (30 consecutive runs, since 2026-08-01) — size-lint: parseBctcReport.ts 976L (baseline 859L, upper 944L) + financialFiguresValidator.ts 426L (baseline 307L, upper 337L), BOTH blown past tolerance by the single commit 7ac55adc8 (FIX-BCTC-1345B-ALERT-NAMES-A-RULE-FAMILY...)",
-        "files": [
-          "apps/mcp-server/src/application/usecases/parseBctcReport.ts",
-          "apps/mcp-server/src/domain/services/financial-reports/financialFiguresValidator.ts"
-        ],
-        "related": [
-          "FIX-BCTC-1345B-ALERT-NAMES-A-RULE-FAMILY-THAT-CANNOT-PRODUCE-ITS-OWN-VALUE",
-          "FIX-CI-SIZELINT-MACROTOOLS-HUMANIZE-618L",
-          "FIX-CI-SIZELINT-TECHANALYSIS-ROUTER-NEW-OFFENDER-143L"
-        ],
-        "status_note": "AC: gh run view <run with headSha AFTER the fix> --json jobs -q '.jobs[]|select(.name==\"size-lint\")|.conclusion' == success, AND local `bash scripts/audits/size-lint-justification.sh --check` RC=0 with 0 offenders. RAW (re-verified by PO 2026-08-05T17:26Z, not relayed): [size-lint] FAIL - 2 offending file(s) (scanned 1356): parseBctcReport.ts baseline-tolerance-exceeded (baseline=859L actual=976L upper=944L); financialFiguresValidator.ts baseline-tolerance-exceeded (baseline=307L actual=426L upper=337L). ONE ROW NOT TWO - single root cause: `git show --stat 7ac55adc8` = 116 insertions parseBctcReport.ts + 153 insertions financialFiguresValidator.ts, 240 ins / 29 del across exactly these 2 files. Baseline snapshot is from 22cd084d4 (2026-07-29), so both were compliant until that one commit. REMEDY IS THE IMPLEMENTER'S JUDGEMENT CALL, not pre-decided: the two sibling closes in this family (MACROTOOLS-HUMANIZE, TECHANALYSIS-ROUTER) both chose file-per-concern EXTRACTION over baseline-bump, and the natural seam here is the new code 7ac55adc8 added - describeConfidenceFinancialReason() (parseBctcReport.ts) and validateFinancialFiguresDetailed() (financialFiguresValidator.ts) are both self-contained reason/detail builders. Alternative: raise the baseline WITH a real size-justification header. Do NOT silently bump the baseline with no justification.",
-        "po_ruling_20260805T1730Z": "THE RELAYED HYPOTHESIS THAT THIS SESSION'S BCTC WORK (2026-08-05 FIX-BCTC-* rows) CAUSED THIS IS REFUTED. RAW: `git log -- <each file>` shows the last commit touching EITHER file is 7ac55adc8, dated 2026-08-01 - four days before this session. This session's BCTC rows (FIX-BCTC-FALLBACK-SHELL-*, FIX-BCTC-SSC-DOC-SELECTION-*) touch different files entirely. Do NOT tie this to them. FAMILY-SHAPE RULING: the 7 prior FIX-CI-SIZELINT-* rows are NOT evidence of a non-converging pattern - the lint now reports only these 2 files, i.e. all 7 prior target files are green, so the family shape works and a new row in the same shape is the correct disposition. Those 7 rows are merely parked in review/next_agent=qa awaiting sign-off; that is a lane-drain backlog, not a failed fix. FILE-SCOPED DEDUP RUN AND CLEAN: no row in backlog/ready/in_progress/review/qa carries a size-lint dedup_key or a files[] entry for either file.",
-        "updated_at": "2026-08-05T17:33:04Z"
-      },
-      {
         "id": "FIX-CI-PARITY-CLAUDEMD-CRON-LITERAL-EXEMPTION-SHAPE",
         "type": "FIX",
         "size": "S",
@@ -12375,32 +12341,6 @@
         "status_note": "[QA] Review Record (direct-commit verify): Verified commit 9fe706fa2 on main ancestry (git merge-base --is-ancestor). git show --stat matches claimed file set exactly (scripts/devteam-review-claim-qa-drain.jq, scripts/audits/devteam-dispatch-gate-satisfiability.sh), zero foreign files. Read the full diff directly (not the dev's review_note alone): the .head write in the review[]->qa[] claim branch is now CONDITIONAL on $head_free (.head.status in {idle,done} OR .head.active_task_id==null) -- else-branch preserves .head byte-identical; mirrors devteam-wrapper-autoclose.jq:122-128's proven guard shape (claim-INTO-head direction); review[]->qa[] lane-move logic itself is byte-unchanged (only the trailing .head assignment block changed). Independently re-ran scripts/audits/devteam-dispatch-gate-satisfiability.sh myself rather than trusting the PO-attested baseline_pass:true claim -- fresh run: exit 0, 57 [PASS] / 0 [FAIL], including the new AC-QADRAIN-HEAD-GUARD negative (.head byte-identical when a different task busy, lane-move still happens) + positive (.head IS written when idle) controls, all passing. bash scripts/audits/mock-guard.sh --files on both touched files -- PASS (\"No production source files to scan\" -- .jq/.sh fall outside its .ts/.py/.go scan scope by design). No TS files touched by this commit -- bun test/tsc structurally N/A (Smart-Skip); the audit script itself IS this row's targeted regression suite and is fully green. Row was dispatched OUTSIDE scripts/devteam-review-claim-qa-drain.jq's own picker (PO Step-2 S4 UNBLOCK, direct-execute) since this row IS that picker's own head-write fix -- running it through the picker it patches would be circular/deadlocked. VERDICT: APPROVED, DONE_VERIFIED. scripts/devteam-review-claim-qa-drain.jq is now safe to run normally on subsequent ticks -- its own defect (unconditional .head clobber) is closed and independently confirmed, not just self-reported.",
         "qa_verified_at": "2026-08-01T01:06:46Z",
         "qa_verified_by": "qa"
-      },
-      {
-        "title": "Split the 743L stock-price sandbox by executor seam",
-        "priority": "P1",
-        "zone": "stock-price",
-        "type": "FACTORY",
-        "status": "DONE_VERIFIED",
-        "id": "FACTORY-STOCK-split-sandbox",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-STOCK-split-sandbox",
-        "promoted_at": "2026-07-09T20:47:26Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
-        "claimed_at": "2026-07-09T20:47:26Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)",
-        "reviewed_at": "2026-07-09T20:55:11Z",
-        "reviewed_by": "dev-stock-price",
-        "next_agent": "architect",
-        "po_triage_20260722": "Owner assigned (was null next_agent) so no row is ownerless (PO AC1). Remains in REVIEW, deferred-behind the review-lane sweeper FIX-DEVTEAM-REVIEW-LANE-QA-DRAIN + FIX-BOUNDED1-SUPERVISED-LANE-NO-SWEEPER (both activated -> backlog this tick). Not silently dropped; the sweeper routes it to next_agent once built.",
-        "updated_at": "2026-08-05T17:58:00Z",
-        "secondary_claimed_at": "2026-08-05T17:52:20Z",
-        "secondary_claimed_by": "dev-team (review-lane secondary-drain)",
-        "secondary_dispatch_target": "architect",
-        "done_verified": true,
-        "verified_by": "architect",
-        "verified_at": "2026-08-05T17:57:59Z",
-        "signoff_note": "Architect SECONDARY-DRAIN review (dev-team review-lane sweep, claimed 2026-08-05T17:52:20Z) of a 27-day-stale review[] row. Original dev-stock-price review (2026-07-09T20:55:11Z, commit 0d93b3c95) claimed: 743L apps/stock-price/cmd/sandbox/main.go split into 8 files by executor seam (main.go 101L / discover.go 71L / helpers.go 23L / dispatch.go 75L / exec_primitive_normalizer.go 97L / exec_primitive_selector.go 123L / exec_primitive_staleness.go 76L / exec_module_resolution.go 150L), pure file-move no signature changes, 11/11 sandbox scenarios PASS, lint 0 issues, CGO fence CLEAR; the 2 files over 120L explicitly justified as single cohesive executors. Drift check: git log 0d93b3c95..HEAD -- apps/stock-price/cmd/sandbox/ is EMPTY -- zero commits touched the split since the 07-09 review, working tree clean for that path -- the review has NOT gone stale relative to the code. Independently re-verified live (not chain-trusted): go build ./cmd/sandbox/ exit 0; go vet ./cmd/sandbox/... exit 0; golangci-lint run ./cmd/sandbox/... -> 0 issues; CGO_ENABLED=0 go build exit 0 (CGO fence confirmed clear); ran the built binary against docs/scenarios/stock-price/{primitives,module}/*.json -> total=11 pass=11 fail=0 status=OK, matching the original review claim exactly. Additional check beyond the original review: apps/stock-price/Dockerfile builds ONLY ./cmd/server/ -- cmd/sandbox/ is never baked into the deployed image (grep-confirmed, no Dockerfile/CI reference) -- so despite backlog-detail.json carrying a generic rebuild_required:true flag (a batch default from the 2026-06-15 maintainability audit, not row-specific reasoning), no Docker Microservice Code-Change Close Gate applies here: this is a pure dev/test-harness relocation with zero production deploy surface, unlike the FACTORY-APP-split-fetchParseAndStoreBctc precedent where apps/mcp-server/ IS baked into its serving image. File split matches the backlog-detail.json approach spec exactly (all 7 named files present + helpers.go for the float-ptr helpers the spec called out but did not name). DoD fully met: files split by seam, each file <=120L or justified, sandbox runs identically, tests green, generic (no task-specific hardcoding in the split files), tooling behavior unchanged. Sign-off: DONE_VERIFIED -- no rework, no rebuild/ops step, no reassignment needed."
       }
     ],
     "head": {
@@ -21073,6 +21013,42 @@
         "updated_by": "router",
         "router_verification_note": "router-verified 2026-08-05T17:59Z: agent-father implemented and committed (21e97ab66) -- sprint-kickoff.md:44 task_claim + sprint-signoff.md:28/:42 task_release now carry owner_client_session. orch-state.json writes are outside agent-father's commit_zone (same boundary pattern as TE-T02 earlier this session), so the board was never flipped despite the code landing -- router closes the gap. Independently re-ran bash scripts/audits/task-claim-owner-session-lint.sh --check: PASS, 0 new offenders (270 files scanned, baseline carries 23 grandfathered sites). -> review, next_agent=qa.",
         "ac2_ac5_complete_20260805T1810": "AC2 (baseline paydown, 23->20 grandfathered entries for docs/agents/po/flow/**) and AC5 (lint FAIL message distinguishes LINE-MOVED grandfathered site from a genuinely NEW call site -- closes the exact ambiguity that caused this defect to be misdiagnosed twice upstream this session) both landed and independently re-verified twice (agent-father built+verified+reverted for zone reasons, developer applied+re-verified the same patch fresh, commit e44d85222). lint --check: PASS, 0 new offenders, 270 files scanned. Full test suite 9/9 green (developer additionally A/B-tested an intermittent SIGABRT and proved it pre-existing/environment-level, not a regression). All 3 ACs (AC1/AC2/AC5) now complete for this row -- qa sign-off scope covers the full set, not just AC1."
+      },
+      {
+        "id": "FIX-CI-SIZELINT-BCTC-1345B-PARSE-VALIDATOR-PAIR",
+        "type": "FIX",
+        "size": "M",
+        "priority": "P0",
+        "status": "REVIEW",
+        "zone": "apps/mcp-server/",
+        "owner": "po",
+        "next_agent": "qa",
+        "plan_only": false,
+        "supervised": false,
+        "created_at": "2026-08-05T17:30:42Z",
+        "created_by": "po/triage-20260805T1730Z",
+        "check_id": "CI-RED-f080fbc0",
+        "dedup_key": "ci_job:size-lint|file:apps/mcp-server/src/application/usecases/parseBctcReport.ts+apps/mcp-server/src/domain/services/financial-reports/financialFiguresValidator.ts",
+        "origin_signal_id": "CI-RED-f080fbc0",
+        "verification_gate": "ci_green_on_subsequent_push",
+        "baseline_pass": true,
+        "rebuild_required": false,
+        "caused_by_commit": "7ac55adc8",
+        "title": "CI RED (30 consecutive runs, since 2026-08-01) — size-lint: parseBctcReport.ts 976L (baseline 859L, upper 944L) + financialFiguresValidator.ts 426L (baseline 307L, upper 337L), BOTH blown past tolerance by the single commit 7ac55adc8 (FIX-BCTC-1345B-ALERT-NAMES-A-RULE-FAMILY...)",
+        "files": [
+          "apps/mcp-server/src/application/usecases/parseBctcReport.ts",
+          "apps/mcp-server/src/domain/services/financial-reports/financialFiguresValidator.ts"
+        ],
+        "related": [
+          "FIX-BCTC-1345B-ALERT-NAMES-A-RULE-FAMILY-THAT-CANNOT-PRODUCE-ITS-OWN-VALUE",
+          "FIX-CI-SIZELINT-MACROTOOLS-HUMANIZE-618L",
+          "FIX-CI-SIZELINT-TECHANALYSIS-ROUTER-NEW-OFFENDER-143L"
+        ],
+        "status_note": "AC: gh run view <run with headSha AFTER the fix> --json jobs -q '.jobs[]|select(.name==\"size-lint\")|.conclusion' == success, AND local `bash scripts/audits/size-lint-justification.sh --check` RC=0 with 0 offenders. RAW (re-verified by PO 2026-08-05T17:26Z, not relayed): [size-lint] FAIL - 2 offending file(s) (scanned 1356): parseBctcReport.ts baseline-tolerance-exceeded (baseline=859L actual=976L upper=944L); financialFiguresValidator.ts baseline-tolerance-exceeded (baseline=307L actual=426L upper=337L). ONE ROW NOT TWO - single root cause: `git show --stat 7ac55adc8` = 116 insertions parseBctcReport.ts + 153 insertions financialFiguresValidator.ts, 240 ins / 29 del across exactly these 2 files. Baseline snapshot is from 22cd084d4 (2026-07-29), so both were compliant until that one commit. REMEDY IS THE IMPLEMENTER'S JUDGEMENT CALL, not pre-decided: the two sibling closes in this family (MACROTOOLS-HUMANIZE, TECHANALYSIS-ROUTER) both chose file-per-concern EXTRACTION over baseline-bump, and the natural seam here is the new code 7ac55adc8 added - describeConfidenceFinancialReason() (parseBctcReport.ts) and validateFinancialFiguresDetailed() (financialFiguresValidator.ts) are both self-contained reason/detail builders. Alternative: raise the baseline WITH a real size-justification header. Do NOT silently bump the baseline with no justification.\n\nrouter-verified 2026-08-05T18:24Z, independently, not relayed from agent report. Commit b56dc6cc2 confirmed via git log --stat: extracts describeConfidenceFinancialReason() -> confidenceFinancialReasonBuilder.ts (79L) and validateFinancialFiguresDetailed()+types+UNIT_SCALE_RATIO_THRESHOLD -> financialFiguresRules.ts (300L, carries its own size-justification header, not a baseline bump). Re-measured line counts directly: parseBctcReport.ts=916L (<=944L upper), financialFiguresValidator.ts=162L (<=337L upper) -- matches agent's claim exactly. Re-ran bash scripts/audits/size-lint-justification.sh --check myself: 1 offending file only (schema.ts, baseline=336L actual=377L upper=369L) -- confirmed via git status this is the SEPARATE still-running dev-mcp-server initDatabase-guard agent's uncommitted in-progress work (FIX-MCP-MEMORY-CODE-LEAK, lock task:FIX-MCP-MEMORY-CODE-LEAK still held per task_list_held, expires 18:51:58Z), not a regression from this task. Re-ran bun tsc --noEmit in apps/mcp-server: clean. Re-ran all 21 test files that reference the changed/extracted symbols directly (grep -rl across src/__tests__): 160 pass / 0 fail / 399 expect() calls -- broader sweep than the agent's own claimed \"8 files/64 tests\" subset, all green. docs/data/size-lint-baseline.json confirmed untouched (git status clean on that path, matches agent's claim that no baseline bump was needed for either target file). task_list_held confirms no live lock remains under this task's id -- release genuinely happened. -> review, next_agent=qa, same lane-parking pattern PO specified for the 7 prior size-lint sibling rows (MACROTOOLS-HUMANIZE, TECHANALYSIS-ROUTER, etc.) awaiting QA sign-off drain.\n",
+        "po_ruling_20260805T1730Z": "THE RELAYED HYPOTHESIS THAT THIS SESSION'S BCTC WORK (2026-08-05 FIX-BCTC-* rows) CAUSED THIS IS REFUTED. RAW: `git log -- <each file>` shows the last commit touching EITHER file is 7ac55adc8, dated 2026-08-01 - four days before this session. This session's BCTC rows (FIX-BCTC-FALLBACK-SHELL-*, FIX-BCTC-SSC-DOC-SELECTION-*) touch different files entirely. Do NOT tie this to them. FAMILY-SHAPE RULING: the 7 prior FIX-CI-SIZELINT-* rows are NOT evidence of a non-converging pattern - the lint now reports only these 2 files, i.e. all 7 prior target files are green, so the family shape works and a new row in the same shape is the correct disposition. Those 7 rows are merely parked in review/next_agent=qa awaiting sign-off; that is a lane-drain backlog, not a failed fix. FILE-SCOPED DEDUP RUN AND CLEAN: no row in backlog/ready/in_progress/review/qa carries a size-lint dedup_key or a files[] entry for either file.",
+        "updated_at": "2026-08-05T18:24:33Z",
+        "landed_commit": "b56dc6cc2",
+        "updated_by": "router"
       }
     ],
     "qa": [
