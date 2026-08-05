@@ -322,3 +322,15 @@
 **Mitigation:** No immediate action beyond signal routing.
 
 ---
+
+## Anomaly: C-08 · alerts: 22 orphaned (no agent_signals)
+**Severity:** WARN | **Date:** 2026-08-05 | **Status:** OPEN
+**Location:** market.db/alerts
+**Details:** 22 alerts triggered in last 24h with no corresponding agent_signals (expected 0). Severity: 1 high, 2 low, 14 medium, 5 warning. Examples: FPT news mention, FRT overbought, price surge alerts.
+**Impact:** Orphaned alerts may not trigger proper downstream signal routing or system response
+**Root cause:** Alerts created by alert-engine but not propagated to agent_signals table
+**Zone owner:** dev-mcp-server
+**Last reported:** 2026-08-05T08:19:15Z (signal sys-20260805T081846-1853, system-auditor -> po, dedup_key=db_integrity_breach:alerts:C-08, WARN Telegram sent)
+**Mitigation:** No immediate action beyond signal routing.
+
+---
