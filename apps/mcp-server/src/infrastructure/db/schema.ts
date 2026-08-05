@@ -68,6 +68,14 @@ export function ensureCustomAlertRulesTable(db: Database): void {
 let _db: Database | null = null;
 let _dbStat: ReturnType<typeof statSync> | null = null;
 
+// FIX-MCP-MEMORY-CODE-LEAK: tracks which Database objects have already run
+// initDatabase()'s expensive domain-slice DDL sweep + seed/backfill block
+// (NOT its always-run "Post-init migrations" tail), keyed by object identity
+// (not a bare boolean -- see the guard inside initDatabase() for why). WeakSet
+// lets a test-scoped, no-longer-referenced Database be garbage-collected
+// normally.
+const _initializedDbs = new WeakSet<Database>();
+
 /**
  * Returns the singleton `bun:sqlite` Database instance.
  * Opens the database on first call and creates the data directory if needed.
@@ -156,69 +164,94 @@ export function closeDb(): void {
 export async function initDatabase(dbArg?: import("bun:sqlite").Database): Promise<void> {
   const db = dbArg ?? getDb();
 
-  // ── Domain slices ──────────────────────────────────────────────────────────
-  initMarketDataTables(db);
-  initAlertsTables(db);
-  initFinancialReportsTables(db);
-  initNewsTables(db);
-  initPortfolioTables(db);
-  initBriefingsTables(db);
-  initMacroTables(db);
-  initSystemTables(db);
-  initBacktestingTables(db);
-  // FIX-G: AGM plan + actuals tables
-  initAgmPlanTables(db);
-
-  // ── Seed default watchlist from mcp.config.json (skip in tests) ────────────
-  // Sprint 053 / 1021: the previous version used `return` to skip the
-  // seed block in test mode. That also skipped EVERY table defined after this
-  // point. Now we only guard the seed logic itself and continue after.
+  // FIX-MCP-MEMORY-CODE-LEAK: identity-keyed guard (WeakSet, not a bare boolean)
+  // around the EXPENSIVE, safe-to-run-once section only (domain-slice DDL sweep +
+  // the seed/backfill block below) — NOT the whole function body. Production call
+  // sites (117, all bare `await initDatabase()`) always resolve through getDb()'s
+  // own singleton, so this is the same `db` object for the whole process lifetime
+  // -- the guard fires once, eliminating the redundant ~3300-line DDL sweep + the
+  // unconditional backfillBctcQ4/Q1_2026/Historical re-run (seedWatchlist.ts) on
+  // every tool invocation. A bare module boolean would instead break the ~15+
+  // test files that pass a fresh, distinct `Database` as `dbArg` per test/
+  // beforeEach -- WeakSet keys on that object's own identity, so a genuinely new
+  // Database is never short-circuited, only a repeat call against an
+  // already-seen one. WeakSet (not Set) so a test-scoped Database can still be
+  // GC'd once its test ends -- this guard must not become a leak of its own.
+  // Scoped to stop BEFORE "Post-init migrations" below (deliberately, not an
+  // oversight): those statements are cheap single-row DELETE/UPDATE/UPSERTs, not
+  // the brief's identified cost, and two tests (Task 1489, TASK_2001) explicitly
+  // re-run initDatabase() against the SAME db after seeding new rows and assert
+  // the cleanup/backfill re-fires — guarding them too would be a real regression,
+  // not just a test-suite technicality. See
+  // docs/architecture-briefs/2026-08-05-fix-mcp-memory-code-leak-initdatabase-guard.md
   const currentDbPath = Bun.env["DB_PATH"] ?? DEFAULT_DB_PATH;
   const isTestEnv =
     currentDbPath === ":memory:" ||
     Bun.env["BUN_ENV"] === "test" ||
     typeof Bun.env["BUN_TEST"] !== "undefined";
-  if (!isTestEnv) {
-    try {
-      const { mcpConfig } = await import("../config.js");
-      const defaultStocks = mcpConfig.market.watchlist;
-      if (defaultStocks.length > 0) {
-        const existing = db.query("SELECT COUNT(*) as c FROM watchlist").get() as { c: number };
-        if (existing.c === 0) {
-          const { getStockProfile } = await import("../../domain/services/sectorPeers.js");
-          const ins = db.prepare(
-            "INSERT OR IGNORE INTO watchlist (code, exchange, domain, added_at, alert_drop_pct, alert_rise_pct, alert_impact_min, alert_report_new) VALUES (?, ?, ?, datetime('now'), -3, 5, 7, 1)"
-          );
-          for (const code of defaultStocks) {
-            const profile = getStockProfile(code);
-            ins.run(
-              code,
-              profile?.exchange ?? "HOSE",
-              profile?.domain ?? "other",
+
+  if (!_initializedDbs.has(db)) {
+    _initializedDbs.add(db);
+
+    // ── Domain slices ────────────────────────────────────────────────────────
+    initMarketDataTables(db);
+    initAlertsTables(db);
+    initFinancialReportsTables(db);
+    initNewsTables(db);
+    initPortfolioTables(db);
+    initBriefingsTables(db);
+    initMacroTables(db);
+    initSystemTables(db);
+    initBacktestingTables(db);
+    // FIX-G: AGM plan + actuals tables
+    initAgmPlanTables(db);
+
+    // ── Seed default watchlist from mcp.config.json (skip in tests) ──────────
+    // Sprint 053 / 1021: the previous version used `return` to skip the
+    // seed block in test mode. That also skipped EVERY table defined after this
+    // point. Now we only guard the seed logic itself and continue after.
+    if (!isTestEnv) {
+      try {
+        const { mcpConfig } = await import("../config.js");
+        const defaultStocks = mcpConfig.market.watchlist;
+        if (defaultStocks.length > 0) {
+          const existing = db.query("SELECT COUNT(*) as c FROM watchlist").get() as { c: number };
+          if (existing.c === 0) {
+            const { getStockProfile } = await import("../../domain/services/sectorPeers.js");
+            const ins = db.prepare(
+              "INSERT OR IGNORE INTO watchlist (code, exchange, domain, added_at, alert_drop_pct, alert_rise_pct, alert_impact_min, alert_report_new) VALUES (?, ?, ?, datetime('now'), -3, 5, 7, 1)"
             );
+            for (const code of defaultStocks) {
+              const profile = getStockProfile(code);
+              ins.run(
+                code,
+                profile?.exchange ?? "HOSE",
+                profile?.domain ?? "other",
+              );
+            }
           }
         }
-      }
-    } catch { /* config not available — skip seeding */ }
+      } catch { /* config not available — skip seeding */ }
+    }
+
+    // ── Task 1343a: Restore 30-ticker watchlist + Q4 2025 BCTC backfill ───────
+    // Upserts the canonical 30-ticker watchlist (idempotent) and enqueues any
+    // missing Q4 2025 BCTC fetches. Runs always (not just on empty table) so
+    // post-migration DBs with partial data get restored to full 30-ticker state.
+    if (!isTestEnv) {
+      seedWatchlist(db);
+      backfillBctcQ4(db);
+      // Task 1782: seed Q1-2026 rows unconditionally — bypasses the month-1..4
+      // gate in detectTargetQuarter() that keeps targeting Q4-2025 through April.
+      backfillBctcQ1_2026(db);
+      // BCTC-HIST-SEED: seed last 8 quarters (Q3-2025 → Q4-2023) for all tickers.
+      // INSERT OR IGNORE makes this idempotent across restarts.
+      // Actual data arrives async as VPS fetch+refine pipeline drains the queue.
+      backfillBctcHistorical(db);
+    }
   }
 
-  // ── Task 1343a: Restore 30-ticker watchlist + Q4 2025 BCTC backfill ─────────
-  // Upserts the canonical 30-ticker watchlist (idempotent) and enqueues any
-  // missing Q4 2025 BCTC fetches. Runs always (not just on empty table) so
-  // post-migration DBs with partial data get restored to full 30-ticker state.
-  if (!isTestEnv) {
-    seedWatchlist(db);
-    backfillBctcQ4(db);
-    // Task 1782: seed Q1-2026 rows unconditionally — bypasses the month-1..4
-    // gate in detectTargetQuarter() that keeps targeting Q4-2025 through April.
-    backfillBctcQ1_2026(db);
-    // BCTC-HIST-SEED: seed last 8 quarters (Q3-2025 → Q4-2023) for all tickers.
-    // INSERT OR IGNORE makes this idempotent across restarts.
-    // Actual data arrives async as VPS fetch+refine pipeline drains the queue.
-    backfillBctcHistorical(db);
-  }
-
-  // ── Post-init migrations ───────────────────────────────────────────────────
+  // ── Post-init migrations (always run — NOT guarded, see note above) ────────
 
   // Task 1407 — HUT domain migration
   db.exec(

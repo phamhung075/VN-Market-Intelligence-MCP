@@ -11,7 +11,8 @@
  * Windows while still exercising the full initDatabase() code path.
  */
 
-import { describe, it, expect, beforeAll, afterAll } from "bun:test";
+import { describe, it, expect, beforeAll, afterAll, afterEach } from "bun:test";
+import { Database as SqliteDatabase } from "bun:sqlite";
 
 // Use in-memory SQLite for test isolation — avoids WAL file locking on Windows.
 // Must be set BEFORE importing schema module so the module-level DB_PATH picks it up.
@@ -354,5 +355,81 @@ describe("Task 002 — SQLite schema + migrations", () => {
       foreign_keys: number;
     };
     expect(row.foreign_keys).toBe(1);
+  });
+});
+
+// ── FIX-MCP-MEMORY-CODE-LEAK: initDatabase() identity guard ──────────────────
+// Uses isolated, freshly-constructed `Database` instances (not the module
+// singleton) so these tests never interact with the shared state the describe
+// block above depends on.
+//
+// The guard only wraps the EXPENSIVE domain-slice DDL sweep + seed/backfill
+// block, not initDatabase()'s "Post-init migrations" tail (deliberate — see
+// schema.ts:165-184) — that tail must keep re-running every call, which is
+// exactly what Task 1489 (`1489-tracked-indicators-dedup.test.ts`) and
+// TASK_2001 (`daily-foreign-flow-backfill.test.ts`) already assert. So the
+// marker used here to prove the GUARDED section was skipped on a repeat call
+// is a DDL side-effect from that section (the `watchlist` table, created by
+// `initMarketDataTables()`), not anything in the always-run tail.
+describe("FIX-MCP-MEMORY-CODE-LEAK — initDatabase() identity guard", () => {
+  const testDbs: import("bun:sqlite").Database[] = [];
+
+  function freshDb(): import("bun:sqlite").Database {
+    const db = new SqliteDatabase(":memory:");
+    testDbs.push(db);
+    return db;
+  }
+
+  function tableExists(db: import("bun:sqlite").Database, name: string): boolean {
+    const row = db
+      .prepare("SELECT name FROM sqlite_master WHERE type='table' AND name=?")
+      .get(name) as { name: string } | undefined;
+    return row?.name === name;
+  }
+
+  afterEach(() => {
+    while (testDbs.length > 0) {
+      try {
+        testDbs.pop()!.close();
+      } catch {
+        // ignore — already closed
+      }
+    }
+  });
+
+  it("a second/third call against the SAME db does not re-run the domain-slice DDL sweep (the guard's whole point)", async () => {
+    const db = freshDb();
+    await initDatabase(db);
+
+    // Sanity: first call ran initBacktestingTables() (part of the guarded
+    // section). `backtest_runs` is never referenced by the always-run
+    // "Post-init migrations" tail, so dropping it below can't collide with
+    // that unguarded code the way a core table (watchlist/financial_reports/
+    // bctc_vps_queue/etc.) would.
+    expect(tableExists(db, "backtest_runs")).toBe(true);
+
+    // Drop the table the guarded DDL sweep would recreate if it re-ran.
+    db.exec("DROP TABLE backtest_runs");
+    expect(tableExists(db, "backtest_runs")).toBe(false);
+
+    await initDatabase(db); // 2nd call, same object identity — must be a no-op
+    await initDatabase(db); // 3rd call, same object identity — must be a no-op
+
+    // Guarded section skipped -> table stays dropped (proves the guard fired,
+    // not just that CREATE TABLE IF NOT EXISTS is a no-op).
+    expect(tableExists(db, "backtest_runs")).toBe(false);
+  });
+
+  it("TWO different fresh Database instances passed as dbArg BOTH get fully initialized (regression guard against a naive bare-boolean fix)", async () => {
+    const dbA = freshDb();
+    const dbB = freshDb();
+
+    await initDatabase(dbA);
+    await initDatabase(dbB);
+
+    for (const db of [dbA, dbB]) {
+      expect(tableExists(db, "watchlist")).toBe(true);
+      expect(tableExists(db, "backtest_runs")).toBe(true);
+    }
   });
 });

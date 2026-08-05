@@ -513,6 +513,18 @@ confirmed byte-identical.
   zero transformation (verified in `CCATO-MCP-T2-CLAIM-MAP-LOADER.test.ts`).
 
 ## Key Infrastructure Patterns
+- **`initDatabase()` identity-keyed init guard (FIX-MCP-MEMORY-CODE-LEAK, 2026-08-05):**
+  `infrastructure/db/schema.ts:156` memoizes on a module-level `WeakSet<Database>`
+  (`_initializedDbs`) so the ~3300-line domain-slice DDL sweep + the unconditional
+  `backfillBctcQ4`/`backfillBctcQ1_2026`/`backfillBctcHistorical` calls
+  (`seedWatchlist.ts`) only execute once per resolved `db` object, not on every one
+  of the 117 bare `await initDatabase()` call sites (which all resolve through
+  `getDb()`'s own singleton — same object for a process's whole lifetime). Keyed
+  by object identity, NOT a bare boolean: ~15+ test files pass a fresh, distinct
+  `Database` as `dbArg` per test/`beforeEach` (e.g. `SPRINT-HPG-QUEUE-URL-FIX.test.ts`),
+  and a bare boolean would silently skip DDL creation on every 2nd+ such test in the
+  same `bun test` process. `WeakSet` (not `Set`) so a test-scoped `Database` can
+  still be GC'd once its test ends. Design: `docs/architecture-briefs/2026-08-05-fix-mcp-memory-code-leak-initdatabase-guard.md`.
 - **Circuit breaker:** `circuitBreakerRegistry.ts` (open/closed/half-open)
 - **Rate limiter:** `rateLimiter.ts`
 - **Resilient fetcher:** `resilientFetcher.ts` (retry + timeout + fallback)

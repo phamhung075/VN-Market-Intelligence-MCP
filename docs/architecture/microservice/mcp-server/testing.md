@@ -6,6 +6,7 @@
 ### Core Infrastructure
 | Test File | Coverage |
 |-----------|----------|
+| `002-db-schema.test.ts` | `initDatabase()` table/column/index/pragma creation + idempotency; FIX-MCP-MEMORY-CODE-LEAK identity guard: a 2nd/3rd call against the SAME `Database` object does not re-run the guarded domain-slice DDL sweep (proven by dropping `backtest_runs` and asserting it stays dropped), TWO different fresh `Database` instances passed as `dbArg` both get fully initialized (regression guard against a naive bare-boolean fix) |
 | `003-env-config.test.ts` | Environment variable validation |
 | `012-lancedb-store.test.ts` | Vector embedding storage |
 | `013-rag-retriever.test.ts` | RAG search functionality |
