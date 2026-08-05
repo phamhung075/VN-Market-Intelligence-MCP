@@ -755,7 +755,7 @@ DASHBOARD Append. Test: `scripts/emit-dashboard-row.test.sh`.
 **CANONICAL: Audit OUTPUT-CONTRACT parser (FIX-AUDITOR-DASHBOARD-APPEND-NO-ACTUATOR-CONTRACT-COUNT-NARRATED)**
 ```bash
 scripts/audit-output-contract.sh --markers-file <path> [--cycle-start-ts <ISO8601>] \
-  [--anomalies-count <N>] [--next-token <token>] [--orch-state-file <path>]
+  [--anomalies-count <N>] [--next-token <token>] [--orch-state-file <path>] [--cycle-tag <value>]
 ```
 Mechanically parses the `[emit-signal]`/`[emit-dashboard]`/`[post-agent-signal]` marker lines a
 system-auditor cycle accumulated into a scratch file and PRINTS the
@@ -768,6 +768,20 @@ cross-check (closes a previously vacuous same-agent-narrates-both-operands check
 violation checks for `dashboard_rows==0` and RETURN-headline/`NEXT`-token consistency, each firing its
 own BUG-channel Telegram. Owning flow: `docs/agents/system-auditor/flow/main.md` §Anomaly Reporting →
 OUTPUT-CONTRACT. Test: `scripts/audit-output-contract.test.sh`.
+
+FIX-AUDIT-OUTPUT-CONTRACT-SIGNALQUEUE-ROWS-WRITTEN-SELFREPORT-MISMATCH (2026-08-05) fixed two
+independent structural bugs in the V1 `.signal_queue.rows[]` cross-check above (reproduced 100%
+deterministically, NOT a concurrency race — occurrences 4412/4413/4415/4420): Bug A — the raw jq
+string `.ts >= $cycle_start_ts` compare silently dropped any row written in the tick's own clock-minute
+(`FIRE_TICK` is minute-precision, row `.ts` is second-precision; `":"` 0x3A sorts below `"Z"` 0x5A right
+after `HH:MM`), now fixed by porting `emit-audit-signal.sh`'s `to_epoch` helper and comparing as epoch
+ints. Bug B — no call site passed `--from-agent`, so every tier/session shared the default
+`from="system-auditor"`, letting a concurrently-running peer tier's row inflate the count; now fixed by
+threading the tier's own unique `FIRE_TASK_ID` through both scripts as `--cycle-tag`, stored as the
+row's `audit_cycle_tag` passthrough field and matched exactly (falls back to the from+ts-window path
+when `--cycle-tag` is omitted). All 7 call sites (6 `emit-audit-signal.sh` + 1
+`audit-output-contract.sh`, across `main.md`/`tier1-probe.md`) now pass `--cycle-tag "$FIRE_TASK_ID"`.
+Full design: `docs/architecture-briefs/2026-08-05-fix-audit-output-contract-signalqueue-mismatch.md`.
 
 **CANONICAL: E-1 write confirmed by read-back, not by call success (FIX-AUDITOR-OUTPUT-CONTRACT-SIGNALSPOSTED-COUNTS-CALLS-NOT-CONFIRMED-ROWS)**
 Confirmed live (2026-07-30, empirical repro before any code change — not assumed): `mcp_call` returning
