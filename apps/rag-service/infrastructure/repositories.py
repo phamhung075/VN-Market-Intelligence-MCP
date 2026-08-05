@@ -5,6 +5,7 @@ Implements VectorStorePort.
 Infrastructure layer: may import lancedb, sqlite3, etc.
 """
 
+import asyncio
 import json
 import logging
 import os
@@ -131,6 +132,10 @@ class LanceDBVectorStore(VectorStorePort):
         self._db = None
         self._table = None
         self._insert_count: int = 0  # inserts since last compaction
+        # FIX-RAG-SERVICE-CLEAN-EXIT-RESTART-LOOP: serializes compact() so two
+        # concurrent insert() coroutines that both cross _COMPACT_EVERY cannot
+        # each launch their own table.optimize() — see compact() below.
+        self._compact_lock = asyncio.Lock()
         # DFR-P3: per-process flag for lazy FTS index build.
         # Set to True after first successful _build_fts_index() call.
         # Never reset to False in normal operation (index persists in LanceDB).
@@ -244,19 +249,52 @@ class LanceDBVectorStore(VectorStorePort):
         Compaction is online-safe: reads and writes continue during compaction.
         The latest version is always preserved — no data loss is possible.
         Temporal-decay logic is unaffected (stored created_at timestamps are not changed).
+
+        FIX-RAG-SERVICE-CLEAN-EXIT-RESTART-LOOP (was: repositories.py compact()
+        reset `self._insert_count = 0` inside the try success-path, right after
+        `optimize()`. Any optimize() failure skipped the reset entirely, so the
+        counter stayed >= _COMPACT_EVERY and EVERY subsequent insert re-fired a
+        full-table optimize() — repeated large rewrites inside the container's
+        thin memory headroom. insert()'s own except handler that was meant to
+        reset the counter on failure was unreachable, because compact() already
+        swallowed the exception internally).
+        Two changes:
+        (1) The reset now lives in `finally:` so it always runs, success or
+            failure — a failed optimize() still clears the counter exactly once.
+        (2) `self._compact_lock` (asyncio.Lock, per-instance) serializes actual
+            optimize() execution. If a compaction is already in flight when a
+            second concurrent insert() crosses the threshold, that second call
+            returns immediately without launching its own optimize() — the
+            in-flight compaction's `finally` will reset the counter for both.
         """
-        try:
-            table = await self._get_table()
-            stats = await table.optimize(cleanup_older_than=_COMPACT_RETENTION)
-            self._insert_count = 0
-            logger.info(
-                "LanceDB compaction complete: compaction=%s prune=%s",
-                stats.compaction,
-                stats.prune,
+        if self._compact_lock.locked():
+            # A compaction is already running (triggered by a concurrent
+            # insert() that crossed the threshold first). Its `finally` below
+            # will reset _insert_count when it completes — nothing more to do
+            # here, and launching a second optimize() on the same table is
+            # exactly the concurrency hazard this lock exists to prevent.
+            logger.debug(
+                "LanceDB compaction already in flight — skipping duplicate trigger"
             )
-        except Exception as exc:  # noqa: BLE001
-            # Non-fatal: log and continue — compaction failure must not block indexing.
-            logger.warning("LanceDB compaction failed (non-fatal): %s", exc)
+            return
+
+        async with self._compact_lock:
+            try:
+                table = await self._get_table()
+                stats = await table.optimize(cleanup_older_than=_COMPACT_RETENTION)
+                logger.info(
+                    "LanceDB compaction complete: compaction=%s prune=%s",
+                    stats.compaction,
+                    stats.prune,
+                )
+            except Exception as exc:  # noqa: BLE001
+                # Non-fatal: log and continue — compaction failure must not block indexing.
+                logger.warning("LanceDB compaction failed (non-fatal): %s", exc)
+            finally:
+                # Runs on BOTH success and failure — this is the fix. A failed
+                # optimize() must not leave the counter >= _COMPACT_EVERY, or
+                # every following insert would re-fire compact() immediately.
+                self._insert_count = 0
 
     # ── Private helpers (shared by search() and hybrid_search()) ─────────────
 

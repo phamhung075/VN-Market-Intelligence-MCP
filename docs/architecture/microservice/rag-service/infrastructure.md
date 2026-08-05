@@ -29,8 +29,16 @@ resets the counter. Compaction failure is non-fatal — insert still succeeds.
 Runs `table.optimize(cleanup_older_than=timedelta(days=2))`:
 - Merges small fragment files into larger compacted files (online-safe, reads/writes continue)
 - Prunes version manifests older than 2 days; latest version is always kept
-- Resets `_insert_count` to 0
+- Resets `_insert_count` to 0 **in a `finally:` block — unconditionally, whether `optimize()`
+  succeeds or raises** (FIX-RAG-SERVICE-CLEAN-EXIT-RESTART-LOOP, 2026-08-05: the reset used to
+  live only in the try success-path, so a failed `optimize()` left the counter stuck
+  `>= _COMPACT_EVERY` and every subsequent `insert()` re-fired a full-table optimize —
+  repeated large rewrites inside the container's thin memory headroom)
 - Failure is logged as WARNING and does not raise
+- Serialized by a per-instance `asyncio.Lock` (`self._compact_lock`): if a compaction is
+  already in flight when a second concurrent `insert()` crosses `_COMPACT_EVERY`, that
+  second `compact()` call returns immediately without launching its own `optimize()` — the
+  in-flight compaction's `finally` resets the counter for both callers
 - Can be called directly for manual/maintenance runs (e.g. a `/compact` admin endpoint or cron)
 
 **Why this matters:** every `table.add()` creates a new fragment file + manifest version.

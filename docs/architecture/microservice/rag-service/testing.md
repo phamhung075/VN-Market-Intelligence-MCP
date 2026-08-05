@@ -36,6 +36,20 @@ Mocks: `VectorStorePort`, `EmbedderPort` (AsyncMock)
 - Deduplication: same article re-indexed multiple times
 - Schema verification: all fields preserved through storage
 
+## Unit Tests — LanceDB Compaction Guard
+**File:** `apps/rag-service/__tests__/unit/test_lancedb_compaction.py`
+
+- `compact()` fires exactly once when insert count reaches `_COMPACT_EVERY`
+- `compact()` resets `_insert_count` on success
+- `compact()` failure is non-fatal — `insert()` still succeeds
+- `compact()` called directly does not remove live rows
+- **AC1 (FIX-RAG-SERVICE-CLEAN-EXIT-RESTART-LOOP):** a real, injected `table.optimize()`
+  failure still resets `_insert_count` to 0 exactly once (via `finally:`), and the very
+  next `insert()` does not immediately re-fire `compact()`
+- **AC2 (FIX-RAG-SERVICE-CLEAN-EXIT-RESTART-LOOP):** two concurrent `insert()` coroutines
+  that both cross `_COMPACT_EVERY` (`asyncio.gather`) produce exactly ONE `table.optimize()`
+  call, not two — verifies the `self._compact_lock` serialization
+
 ## Unit Tests — RAG-FTS-BUILD-MEMORY-BOUND
 **File:** `apps/rag-service/__tests__/unit/test_rag_fts_build_memory_bound.py`
 
