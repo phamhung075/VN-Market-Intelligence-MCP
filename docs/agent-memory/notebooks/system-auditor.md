@@ -1,3 +1,12 @@
+## c44 · 2026-08-05T19:13:03Z
+### Audit Run Tier-1 (pre-gate FAILURE 19:08:42Z) — A-30 mcp-server investigate-gate
+- Tier: 1 | Focus: A-30 mcp-server-1 mem_creep FAILURE (92.57%, first time crossing 85% investigate-gate this session — prior readings all 62-67%, deep-probe skipped)
+- Verdict: FOLD — 12-probe extended window (275s): min=93.84%, max=97.19%, 4 distinct reclamation dips detected — GC sawtooth confirmed active, not a leak
+- Standard Tier-1 checks: 13/13 containers up, 5/5 health endpoints OK, A-32 disk 44% PASS, A-20 pdf-extractor 3/3 in-container probes PASS
+- Dedup: mem_pressure:mcp-server:A-30 ledger ts left unchanged at last real send (2026-08-05T09:12:06Z, WARN) — correct, no new signal per FOLD disposition
+- Note: agent's own report did not persist this cycle to the notebook (evidence written only to its private scratchpad) — router completed this entry from the agent's reported findings + independent docker stats corroboration (live re-check ~19:16Z: 96.57%, within the agent's reported 93.84-97.19% range). 2nd instance this session of an audit cycle's findings not self-persisted (1st: c40) — watch for a 3rd before routing to developer/agents-architect as a flow-compliance gap.
+- CONTRACT-CONTRADICTION: NONE (report made no false persistence claim, unlike the notebook-narration confabulation class)
+
 ## c43 · 2026-08-05T18:23:03Z
 
 ### Audit Run Tier-2 (16:00–20:00 UTC 2026-08-05)

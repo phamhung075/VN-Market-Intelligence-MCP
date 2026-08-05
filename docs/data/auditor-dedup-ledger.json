@@ -42,5 +42,9 @@
   "microservice_degraded:pdf-extractor:A-30": {
     "ts": "2026-08-05T14:34:48Z",
     "sev": 2
+  },
+  "system_issue:notebook_overflow:claude-manager-helper": {
+    "ts": "2026-08-05T18:10:56Z",
+    "sev": 2
   }
 }
