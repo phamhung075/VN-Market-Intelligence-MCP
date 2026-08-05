@@ -94,11 +94,11 @@
   ],
   "head": {
     "status": "in_progress",
-    "active_task_id": "FIX-MCP-MEMORY-CODE-LEAK",
-    "next_agent": "architect",
-    "next_action": "Supervised-Lane Sweep claim of FIX-MCP-MEMORY-CODE-LEAK — spawn architect DIRECTLY (no zone-detect indirection; lane already resolved at promote time). supervised/plan_only preserved — do not clear.",
-    "updated_at": "2026-08-05T16:56:57Z",
-    "updated_by": "dev-team (supervised-lane sweep)"
+    "active_task_id": "CCATO-MCP-T2-CLAIM-MAP-LOADER",
+    "next_agent": "dev-mcp-server",
+    "next_action": "Ready-Lane Consumer claim of CCATO-MCP-T2-CLAIM-MAP-LOADER — spawn dev-mcp-server DIRECTLY (no zone-detect indirection; row already carried a resolved next_agent/owner).",
+    "updated_at": "2026-08-05T17:23:09Z",
+    "updated_by": "dev-team (ready-lane consumer)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -11449,6 +11449,143 @@
         "related": [
           "FIX-AGENT-BASH-GRANT-COVERAGE-GATE-FLOW-DEMANDS-VS-FRONTMATTER"
         ]
+      },
+      {
+        "id": "FIX-CI-SIZELINT-BCTC-1345B-PARSE-VALIDATOR-PAIR",
+        "type": "FIX",
+        "size": "M",
+        "priority": "P0",
+        "status": "BACKLOG",
+        "zone": "apps/mcp-server/",
+        "owner": "po",
+        "next_agent": "dev-mcp-server",
+        "plan_only": false,
+        "supervised": false,
+        "created_at": "2026-08-05T17:30:42Z",
+        "created_by": "po/triage-20260805T1730Z",
+        "check_id": "CI-RED-f080fbc0",
+        "dedup_key": "ci_job:size-lint|file:apps/mcp-server/src/application/usecases/parseBctcReport.ts+apps/mcp-server/src/domain/services/financial-reports/financialFiguresValidator.ts",
+        "origin_signal_id": "CI-RED-f080fbc0",
+        "verification_gate": "ci_green_on_subsequent_push",
+        "baseline_pass": true,
+        "rebuild_required": false,
+        "caused_by_commit": "7ac55adc8",
+        "title": "CI RED (30 consecutive runs, since 2026-08-01) — size-lint: parseBctcReport.ts 976L (baseline 859L, upper 944L) + financialFiguresValidator.ts 426L (baseline 307L, upper 337L), BOTH blown past tolerance by the single commit 7ac55adc8 (FIX-BCTC-1345B-ALERT-NAMES-A-RULE-FAMILY...)",
+        "files": [
+          "apps/mcp-server/src/application/usecases/parseBctcReport.ts",
+          "apps/mcp-server/src/domain/services/financial-reports/financialFiguresValidator.ts"
+        ],
+        "related": [
+          "FIX-BCTC-1345B-ALERT-NAMES-A-RULE-FAMILY-THAT-CANNOT-PRODUCE-ITS-OWN-VALUE",
+          "FIX-CI-SIZELINT-MACROTOOLS-HUMANIZE-618L",
+          "FIX-CI-SIZELINT-TECHANALYSIS-ROUTER-NEW-OFFENDER-143L"
+        ],
+        "status_note": "AC: gh run view <run with headSha AFTER the fix> --json jobs -q '.jobs[]|select(.name==\"size-lint\")|.conclusion' == success, AND local `bash scripts/audits/size-lint-justification.sh --check` RC=0 with 0 offenders. RAW (re-verified by PO 2026-08-05T17:26Z, not relayed): [size-lint] FAIL - 2 offending file(s) (scanned 1356): parseBctcReport.ts baseline-tolerance-exceeded (baseline=859L actual=976L upper=944L); financialFiguresValidator.ts baseline-tolerance-exceeded (baseline=307L actual=426L upper=337L). ONE ROW NOT TWO - single root cause: `git show --stat 7ac55adc8` = 116 insertions parseBctcReport.ts + 153 insertions financialFiguresValidator.ts, 240 ins / 29 del across exactly these 2 files. Baseline snapshot is from 22cd084d4 (2026-07-29), so both were compliant until that one commit. REMEDY IS THE IMPLEMENTER'S JUDGEMENT CALL, not pre-decided: the two sibling closes in this family (MACROTOOLS-HUMANIZE, TECHANALYSIS-ROUTER) both chose file-per-concern EXTRACTION over baseline-bump, and the natural seam here is the new code 7ac55adc8 added - describeConfidenceFinancialReason() (parseBctcReport.ts) and validateFinancialFiguresDetailed() (financialFiguresValidator.ts) are both self-contained reason/detail builders. Alternative: raise the baseline WITH a real size-justification header. Do NOT silently bump the baseline with no justification.",
+        "po_ruling_20260805T1730Z": "THE RELAYED HYPOTHESIS THAT THIS SESSION'S BCTC WORK (2026-08-05 FIX-BCTC-* rows) CAUSED THIS IS REFUTED. RAW: `git log -- <each file>` shows the last commit touching EITHER file is 7ac55adc8, dated 2026-08-01 - four days before this session. This session's BCTC rows (FIX-BCTC-FALLBACK-SHELL-*, FIX-BCTC-SSC-DOC-SELECTION-*) touch different files entirely. Do NOT tie this to them. FAMILY-SHAPE RULING: the 7 prior FIX-CI-SIZELINT-* rows are NOT evidence of a non-converging pattern - the lint now reports only these 2 files, i.e. all 7 prior target files are green, so the family shape works and a new row in the same shape is the correct disposition. Those 7 rows are merely parked in review/next_agent=qa awaiting sign-off; that is a lane-drain backlog, not a failed fix. FILE-SCOPED DEDUP RUN AND CLEAN: no row in backlog/ready/in_progress/review/qa carries a size-lint dedup_key or a files[] entry for either file.",
+        "updated_at": "2026-08-05T17:33:04Z"
+      },
+      {
+        "id": "FIX-CI-PARITY-CLAUDEMD-CRON-LITERAL-EXEMPTION-SHAPE",
+        "type": "FIX",
+        "size": "S",
+        "priority": "P0",
+        "status": "BACKLOG",
+        "zone": "cross-service/",
+        "owner": "po",
+        "next_agent": "developer",
+        "plan_only": false,
+        "supervised": false,
+        "created_at": "2026-08-05T17:30:42Z",
+        "created_by": "po/triage-20260805T1730Z",
+        "check_id": "CI-RED-f080fbc0",
+        "dedup_key": "ci_job:bun-test|test:tool-registry-parity T-U3-4/T-U3-7|file:CLAUDE.md",
+        "origin_signal_id": "CI-RED-f080fbc0",
+        "verification_gate": "ci_green_on_subsequent_push",
+        "baseline_pass": true,
+        "rebuild_required": false,
+        "caused_by_commit": "9af50bb26",
+        "title": "CI RED — bun test tool-registry-parity T-U3-4 + T-U3-7 (2/17 fail): CLAUDE.md's /cron-standalone-team bullet writes the per-skill cron count as bare prose 'the 4 standalone crons', which the exemption predicate (whole-match must be paren-wrapped) does not recognise, so 4 is read as a GLOBAL count diverging from project-stats.json cronJobCount=88",
+        "files": [
+          "CLAUDE.md",
+          "apps/mcp-server/src/__tests__/tool-registry-parity.test.ts"
+        ],
+        "related": [
+          "P1-DRIFT-PARITY-TEST-EXTEND"
+        ],
+        "status_note": "AC1: `bun test src/__tests__/tool-registry-parity.test.ts` = 17/17 pass, and CI job `bun test` conclusion=success on a subsequent push. AC2 (anti-recurrence, do not skip): T-U3-7 currently asserts `hits.every(h => h.exempted)` - i.e. EVERY cron-count literal anywhere in CLAUDE.md must be exempt. That is strictly stronger than its own docstring ('the per-skill (N crons) arming annotation ... is found AND correctly marked exempt') and would ALSO fail on a perfectly legitimate un-parenthesised global literal that MATCHES the SSOT (e.g. 'the scheduler runs 88 crons'). Tighten T-U3-7 to assert that the specific paren-wrapped annotation hits are exempt, without forbidding a correct global literal. AC3: preserve the exemption predicate's narrowness - do NOT widen `findCronCountLiterals`'s exemption to un-parenthesised prose shapes; that would punch a hole through which real global-count drift walks (memory: gate-widening requires an actuator dry-run first). AC4: the CLAUDE.md edit must be PUNCTUATION-ONLY with ZERO change to instruction semantics - CLAUDE.md is the user-owned project instruction file; make the minimal edit and do not restructure, reorder or reword the bullet's meaning.",
+        "po_ruling_20260805T1730Z": "WHICH SIDE IS CORRECT - RULED AFTER READING BOTH, NOT ASSUMED. Read `findCronCountLiterals` (tool-registry-parity.test.ts:223-235): regex /\\b(\\d+)\\b(?:\\s+\\w+){0,3}?\\s+crons?\\b/gi, exemption `wrapped = content[start-1]===\"(\" && content[end]===\")\"` - the ENTIRE match must be immediately paren-wrapped. CLAUDE.md:47 `/cron-detect-loop ... loop (4 crons) after every session restart` -> match '4 crons', preceded by '(' and followed by ')' -> exempted, correct. CLAUDE.md:48 `/cron-standalone-team - re-arm the 4 standalone crons (db-data-integrity, ...)` -> match '4 standalone crons', preceded by a space -> NOT exempted, value 4. THE RELAYED CLAIM THAT project-stats.json cronJobCount 'may actually agree with 4' IS FALSE: cronJobCount=88 (verified). So 4 IS divergent as a global literal and the detector is behaving exactly as designed. The defect is on the CLAUDE.md side: line 48 is semantically a per-skill annotation identical in kind to line 47, but was written without the convention's paren token. Introduced 2026-08-04 by 9af50bb26 (feat(skills/cron-standalone-team)) - the test predates it and was written when only ONE such annotation existed. PRIMARY FIX = conform CLAUDE.md's wording to the existing `(N crons)` convention; the test-side change is the narrow AC2 correction only, NOT a regex widening. NOTE FOR THE IMPLEMENTER: `(4 crons: db-integrity, ...)` will NOT satisfy the predicate - content[end] would be ':' not ')'. The literal token must be exactly `(4 crons)`.",
+        "updated_at": "2026-08-05T17:33:04Z"
+      },
+      {
+        "id": "FIX-CI-TASKCLAIM-PO-FLOW-OWNER-SESSION-PAYDOWN",
+        "type": "FIX",
+        "size": "S",
+        "priority": "P0",
+        "status": "BACKLOG",
+        "zone": "cross-service/",
+        "owner": "po",
+        "next_agent": "agent-father",
+        "plan_only": false,
+        "supervised": false,
+        "created_at": "2026-08-05T17:30:42Z",
+        "created_by": "po/triage-20260805T1730Z",
+        "check_id": "CI-RED-f080fbc0",
+        "dedup_key": "ci_job:task-claim-owner-session-lint|file:docs/agents/po/flow/sprint-kickoff.md",
+        "origin_signal_id": "CI-RED-f080fbc0",
+        "verification_gate": "ci_green_on_subsequent_push",
+        "baseline_pass": true,
+        "rebuild_required": false,
+        "caused_by_commit": "3ce726a6e",
+        "title": "CI RED — task-claim-owner-session-lint: docs/agents/po/flow/sprint-kickoff.md:44 task_claim omits the REQUIRED owner_client_session. Not a new defect and not a missed scope — the call site is UNCHANGED since 2026-05-27; commit 3ce726a6e added 2 lines above it, shifting it 42->44 and de-grandfathering it from the line-keyed baseline. Pay the debt: 1 task_claim + 2 task_release sites, all in PO's own flow docs.",
+        "files": [
+          "docs/agents/po/flow/sprint-kickoff.md",
+          "docs/agents/po/flow/sprint-signoff.md",
+          "docs/data/task-claim-owner-session-baseline.json",
+          "scripts/audits/task-claim-owner-session-lint.sh"
+        ],
+        "related": [
+          "FIX-TASKCLAIM-OWNER-CLIENT-SESSION-MISSING-FLEET-FLOW-DOCS",
+          "FIX-PO-BATCH-MINT-NO-WRITE-ACTUATOR"
+        ],
+        "status_note": "AC1: `bash scripts/audits/task-claim-owner-session-lint.sh --check` RC=0 / 0 violations, AND CI job `task-claim-owner-session-lint` conclusion=success on a subsequent push. AC2 (fix, do NOT re-grandfather): add owner_client_session to sprint-kickoff.md:44 (task_claim) AND to sprint-signoff.md:28 and :42 (task_release, both still grandfathered only because that file has not been touched) - this removes docs/agents/po/flow/** from the baseline entirely so no future line-shift can re-trigger this. Running --update to re-grandfather is NOT an acceptable close. AC3: parameter names re-derived from apps/mcp-server/src/interface/mcp/tools/system/coordinationTools.ts, not copied from a sibling doc. AC4: the docs must instruct SUBSTITUTING the real session id (spawn-prompt `Coordination: owner_client_session=<value>` line) - a doc that writes the literal $CLAUDE_CODE_SESSION_ID inside a call_tool argument gets sent LITERALLY (known memory hazard); mirror the shape already used in docs/agents/pm/flow/main.md:127 and .claude/skills/commit-mutex/SKILL.md:36. AC5 (ergonomics, prevents the next misdiagnosis): task-claim-owner-session-lint.sh's FAIL message should state when a violation corresponds to a baseline entry whose LINE moved (same file+snippet, different line) vs a genuinely new call site - this exact failure was relayed up the chain as 'the fix never covered this file / was reintroduced', both wrong.",
+        "po_ruling_20260805T1730Z": "ROOT CAUSE RULED FROM RAW EVIDENCE, REJECTING BOTH RELAYED HYPOTHESES. (a) `git blame -L 42,53 docs/agents/po/flow/sprint-kickoff.md` = dc430566c2, 2026-05-27, for the ENTIRE task_claim block - the call site was neither created nor edited after the parent fix landed, so 'reintroduced' is false. (b) docs/data/task-claim-owner-session-baseline.json DOES grandfather this exact site, as `docs/agents/po/flow/sprint-kickoff.md:42` - so 'the fix never covered this file' is also false; it was covered, as explicitly-scoped grandfathered debt (23 sites / 9 files). (c) The actual trigger: commit 3ce726a6e (2026-08-05, FIX-PO-BATCH-MINT-NO-WRITE-ACTUATOR, +14/-12 in this file) inserted 2 net lines above the block, moving it to line 44. The lint's own header documents the key as the EXACT (file, line, snippet) triple - 'if the line moves or its content changes it is no longer grandfathered'. So the guard did exactly what it was designed to do. THIS IS NOT A LINT-COSMETIC ISSUE - IT IS A LIVE DEFECT. coordinationTools.ts declares owner_client_session as z.string() with NO .optional() on BOTH task_claim (l.104-110) and task_release (l.199-205) - verified by reading the source. A doc-faithful PO therefore (i) never engages the sprint umbrella mutex at kickoff, and (ii) can never release task:<sprint_id>, stranding it for the full 3600s TTL. PO's own flow has carried this since 2026-05-27. DISPOSITION: fix, do not re-grandfather. DELIBERATELY NOT DONE: widening the baseline key from (file,line,snippet) to (file,snippet). That would loosen a ratchet that is currently working, and gate-widening requires an actuator dry-run first (standing rule). The ratchet's boy-scout intent - touch a file, pay its debt - is correct; the only real failure here is that nobody paid a 1-line debt for 4 days.",
+        "updated_at": "2026-08-05T17:33:04Z"
+      },
+      {
+        "id": "FIX-CI-GATES-INVISIBLE-TO-PREPUSH-DOCS-PATH-FILTER",
+        "type": "FIX",
+        "size": "M",
+        "priority": "P1",
+        "status": "BACKLOG",
+        "zone": "cross-service/",
+        "owner": "po",
+        "next_agent": "architect",
+        "plan_only": false,
+        "supervised": false,
+        "created_at": "2026-08-05T17:30:42Z",
+        "created_by": "po/triage-20260805T1730Z",
+        "check_id": "CI-RED-f080fbc0",
+        "dedup_key": "ci_gate_divergence|hook:pre-push|jobs:size-lint+bun-test+task-claim-owner-session-lint",
+        "origin_signal_id": "CI-RED-f080fbc0",
+        "verification_gate": "dry_run_measured_then_ci_green",
+        "baseline_pass": true,
+        "rebuild_required": false,
+        "title": "ROOT CAUSE of 30 consecutive RED CI runs: pre-push enforces only tsc + rebuild-raw-verify, and its CODE_TOUCHING_REGEX path-filter explicitly EXCLUDES docs/ — but 2 of the 3 gates that broke main are tripped by docs/ and root-file edits, so a docs-only push can turn main red and nothing local ever sees it",
+        "files": [
+          ".git/hooks/pre-push",
+          "scripts/audits/size-lint-justification.sh",
+          "scripts/audits/task-claim-owner-session-lint.sh",
+          ".github/workflows/ci.yml"
+        ],
+        "related": [
+          "FACTORY-GUARD-CI-RAWVERIFY-IMPL",
+          "FIX-CI-SIZELINT-BCTC-1345B-PARSE-VALIDATOR-PAIR",
+          "FIX-CI-PARITY-CLAUDEMD-CRON-LITERAL-EXEMPTION-SHAPE",
+          "FIX-CI-TASKCLAIM-PO-FLOW-OWNER-SESSION-PAYDOWN"
+        ],
+        "status_note": "AC1 (MEASURE BEFORE WIDENING - do not skip, this is the gate on the whole row): dry-run the candidate gate set over the last ~30 real pushes and report measured added wall-clock per push. The hook carries a documented hard constraint - UC-GCP-P4 recorded that the full tsc alone is ~94s, LONGER than the commit-mutex TTL of 90s, which is precisely why the docs/-excluding path-filter exists. Any widening that pushes a docs-only push past that budget re-opens the mutex-expiry bug the filter was added to fix. Report the numbers before proposing the change. AC2: the three CI-only gates (size-lint, task-claim-owner-session-lint, and the tool-registry-parity test file) are all cheap greps/one-file tests - measure them individually; a docs-only push may be able to run the two lints without approaching the 90s budget even though it cannot run tsc. AC3: whatever lands must FAIL LOUD and must not fail-open silently on a docs-only push. AC4: verification is a dry-run report + a subsequent green CI, not a self-assertion.",
+        "po_ruling_20260805T1730Z": "WHY THIS ROW EXISTS AT ALL - the other three rows in this batch are symptoms; this is the mechanism that let all three persist. RAW EVIDENCE: `gh run list --workflow=CI --limit 100` shows 30 CONSECUTIVE failures; last green = run 30699139566, 2026-08-01T12:09, headSha 70cc91af4. Main has been red for over 4 days. Three INDEPENDENT gates broke on three DIFFERENT days from three UNRELATED commits: size-lint at 7ac55adc8 (2026-08-01 14:45, code), bun test at 9af50bb26 (2026-08-04, CLAUDE.md - a ROOT doc), task-claim lint at 3ce726a6e (2026-08-05, docs/agents/po/flow/ - a DOCS path). `.git/hooks/pre-push` (115L, read in full) runs exactly two things: `pnpm --filter vn-market check` (tsc) and scripts/audits/rebuild-raw-verify-check.sh - neither size-lint, nor task-claim lint, nor bun test. Worse, both are gated behind CODE_TOUCHING_REGEX = apps/**, packages/**, scripts/**/*.{ts,tsx,js,mjs,json}, root package.json / pnpm-lock.yaml / pnpm-workspace.yaml, with docs/ EXPLICITLY excluded. Two of the three breakages arrived on exactly the paths that filter excludes. That is the mechanism, stated precisely: the local gate and the CI gate have diverged, and the divergence is widest on the file classes this fleet edits most (docs/ and root config). RECURRENCE COUNT IS 3 IN 5 DAYS, which clears the standing recurring-bug escalation bar. THIS ROW MUST NOT BE CLOSED BY THE THREE SYMPTOM ROWS GOING GREEN.",
+        "updated_at": "2026-08-05T17:33:04Z"
       }
     ],
     "closed_sprints": [
@@ -12374,20 +12511,6 @@
           "from": "ci-health-probe",
           "disambiguation_required": "Fix MUST FIRST pull the actual CI failure log (run 29943451339 / job 89002842796). Do NOT re-run a local full-suite A/B first — po 17:25Z already ran one on THIS exact cron-audit batch (isolated worktree pinned to base 3509a3974): BASE 14600 pass/42 fail vs HEAD 14651 pass/42 fail = ZERO net-new regressions locally. So any batch-attributable CI red is CI-ENVIRONMENT-SPECIFIC (not reproduced locally). LEADING HYPOTHESIS = this row's own root cause: the pre-existing sla-monitor/reaper setInterval leak now times out ON CI because the batch merged between prior-GREEN 5a7a464a9 and RED 8a0b079b1 added never-unref'd intervals (b3317f7f3 watchdog-widen 16->25 jobs; ac621f648 Sunday node-cron; schedulerWatchdogJob.ts). CI was historically green on this suite (the 42 LOCAL fails do not reproduce on CI), so the flip is a NEW CI-side hang/timeout — consistent with this row. ALT: a new cron/watchdog test that fails only in the CI env. Commit 8a0b079b1 msg 'CI green confirmed' contradicts this bun-test red = subset false-green in the push gate (verify raw, not badges). Related standing red: FIX-MCP-SUITE-HEALTH-BASELINE (42 local fails)."
         }
-      },
-      {
-        "id": "CCATO-MCP-T2-CLAIM-MAP-LOADER",
-        "type": "IMPL-XS",
-        "status": "READY",
-        "size": "XS",
-        "zone": "mcp-server",
-        "priority": "P0",
-        "title": "infrastructure/fileStore/claimToolMapLoader.ts",
-        "depends": [],
-        "next_agent": "dev-mcp-server",
-        "supervised": false,
-        "updated_at": "2026-07-17T04:53:14ZZ",
-        "updated_by": "pm (decompose SPRINT-CCATO-TRUTHGATE-MCP-NATIVE)"
       },
       {
         "id": "CCATO-MCP-T3-PROBE-ADAPTERS",
@@ -18630,20 +18753,23 @@
         "size": "S",
         "zone": "cross-service/",
         "owner": "agent-father",
-        "next_agent": "po",
+        "next_agent": "qa",
         "supervised": false,
         "plan_only": false,
         "title": "6 flow docs / skills document a task_claim call that omits the REQUIRED owner_client_session — every such mutex silently never engages",
         "detail": "apps/mcp-server/src/interface/mcp/tools/system/coordinationTools.ts:104-110 declares owner_client_session: z.string() with NO .optional() — REQUIRED (P1-FINAL / TASK_1980, sole ownership discriminator), confirmed by reading the source, not the tool description. Six files still document a task_claim( call with no owner_client_session anywhere in the file: docs/agents/pm/flow/main.md, docs/agents/pm/flow/task-archive.md, docs/agents/market-watcher/flow/cycle.md, docs/agents/news-scout/flow/stage-log-notify.md, .claude/skills/commit-boundary/SKILL.md, .claude/skills/commit-mutex/SKILL.md. docs/agents/refine_bctc_md/flow/main.md:37-38 is the same defect in call_tool form. LIVE VICTIMS TODAY (list_unresolved_reports, both unresolved): 2026-07-30T16:43Z cowork-team — refine_bctc_md BLOCKED, claim fails schema validation on every fire; 2026-07-30T00:12Z alert-commander — published-marker task_claim REJECTED and the agent then PROCEEDED TO PUBLISH A CRITICAL SIGNAL WITHOUT THE MARKER CLAIM, i.e. the double-publish mutex was silently absent. .claude/skills/commit-mutex/SKILL.md:228 is the worst instance — it is the fleet-wide notebook/commit mutex EVERY agent is told to use, and its documented call is task_claim(commit-mutex:main, kind=..., ttl=90): THREE schema drifts at once (missing owner_client_session, kind= instead of task_kind=, ttl= instead of ttl_seconds=). Its own error branch C-2 says MCP error -> SKIP commit -> EXIT, so a doc-faithful agent can never commit; agents are visibly improvising past it, which means the serialization the mutex exists to provide is not actually in force — a plausible standing contributor to the recurring concurrent-commit / peer-index-sweep class.",
         "ac": "1. Every documented task_claim / task_release / task_heartbeat call in docs/agents/** and .claude/skills/** passes owner_client_session (and the correct task_kind / ttl_seconds parameter NAMES) exactly as the live Zod schema declares them. 2. Parameter names are re-derived from apps/mcp-server/src/interface/mcp/tools/system/coordinationTools.ts — not copied from a sibling doc that may carry the same drift. 3. Every touched flow states where the session id comes from (spawn-prompt coordination parameter). Note the LLM-literal hazard already recorded in memory: a doc that writes $CLAUDE_CODE_SESSION_ID inside a call_tool argument gets sent LITERALLY — the doc must say to substitute the real value. 4. A grep-based guard fails CI when a task_claim call site in docs/.claude lacks owner_client_session, so the drift cannot silently return. 5. .claude/skills/commit-mutex/SKILL.md is fixed FIRST — it has the widest blast radius. 6. Re-verify the two live victims (refine_bctc_md, alert-commander published-marker) actually claim after the fix.",
         "related": [
-          "FIX-COWORK-BASH-GRANT-COVERAGE-STAMP-TRANSPORT",
-          "FIX-ALERT-COMMANDER-NO-BASH-GRANT-NOTEBOOK-UNCOMMITTABLE"
+          "FIX-ALERT-COMMANDER-NO-BASH-GRANT-NOTEBOOK-UNCOMMITTABLE",
+          "FIX-CI-TASKCLAIM-PO-FLOW-OWNER-SESSION-PAYDOWN",
+          "FIX-COWORK-BASH-GRANT-COVERAGE-STAMP-TRANSPORT"
         ],
         "created_at": "2026-07-30T19:27:33Z",
         "created_by": "po/triage-20260730T1907Z",
-        "updated_at": "2026-07-30T19:59:51Z",
-        "status_note": "AC1-4 done: 8 files fixed (6 named+refine_bctc_md call_tool form+own edit-apply.md found live), CI guard shipped (task-claim-owner-session-lint.sh, 7/7 tests; baseline grandfathers 23 sites/9 files beyond scope, e.g. dev-team execute-tier.md). AC5 partial: no MCP grant to live-test; alert-commander doc was ALREADY compliant (separate Bash-grant defect, see related[]); refine_bctc_md needs a spawn-prompt session-id channel too (cowork-team zone) — flagged not silently closed. Brief: docs/architecture-briefs/2026-07-30-fix-taskclaim-owner-session-ci-guard.md"
+        "updated_at": "2026-08-05T17:33:04Z",
+        "status_note": "AC1-4 done: 8 files fixed (6 named+refine_bctc_md call_tool form+own edit-apply.md found live), CI guard shipped (task-claim-owner-session-lint.sh, 7/7 tests; baseline grandfathers 23 sites/9 files beyond scope, e.g. dev-team execute-tier.md). AC5 partial: no MCP grant to live-test; alert-commander doc was ALREADY compliant (separate Bash-grant defect, see related[]); refine_bctc_md needs a spawn-prompt session-id channel too (cowork-team zone) — flagged not silently closed. Brief: docs/architecture-briefs/2026-07-30-fix-taskclaim-owner-session-ci-guard.md",
+        "updated_by": "po/triage-20260805T1730Z",
+        "po_ruling_20260805T1730Z": "PO DISPOSITION (row was parked at next_agent=po since 2026-07-30T19:59:51Z). AC1-AC4 stand as recorded. AC5/AC6 are now SATISFIED on re-verification, not on the prior partial note: .claude/skills/commit-mutex/SKILL.md:36 and :69 both carry owner_client_session (widest-blast-radius file, AC5 first-priority target); docs/agents/refine_bctc_md/flow/main.md:24-36 now documents the REQUIRED field AND the spawn-prompt Coordination: owner_client_session=<value> extraction channel that the note said was missing; docs/agents/pm/flow/main.md:127,139,170,181,193 compliant; alert-commander was already compliant per the original note. AC4 IS NOW POSITIVELY PROVEN, NOT MERELY SHIPPED: the guard it delivered caught a REAL regression today (CI run 31028825500, job task-claim-owner-session-lint, docs/agents/po/flow/sprint-kickoff.md:44) - that is the anti-false-green evidence the row previously lacked. ROUTED TO QA FOR SIGN-OFF. SCOPE FENCE: the sprint-kickoff.md:44 hit is NOT a defect of this row and must not reopen it - that site is grandfathered in this row own baseline as sprint-kickoff.md:42 and only surfaced because commit 3ce726a6e shifted it 2 lines. It is carried by the new row FIX-CI-TASKCLAIM-PO-FLOW-OWNER-SESSION-PAYDOWN."
       },
       {
         "id": "FIX-BCTC-LAYOUT-PUSH-FAILURE-NETWORK-DEADLOCK",
@@ -20983,8 +21109,8 @@
         }
       ]
     },
-    "last_triaged_at": "2026-08-05T16:56:56Z",
-    "last_triaged_by": "dev-team (supervised-lane sweep)",
+    "last_triaged_at": "2026-08-05T17:30:42Z",
+    "last_triaged_by": "po",
     "in_progress": [
       {
         "id": "UC-CRITIC-HOOKS-ENFORCEMENT",
@@ -21014,6 +21140,23 @@
         "claimed_at": "2026-08-05T06:45:34Z",
         "claimed_by": "dev-team (supervised-lane sweep)",
         "po_goahead_20260805T090611": "RATIFIED by po 2026-08-05T09:06:11Z at source, not on relay. (1) Deliverable EXISTS: docs/architecture-briefs/2026-07-12-ultracode-workflow-improvement-audit.md, 382391B, anchor '## Completeness critic — lanes not audited' present at L1973. (2) Load-bearing claim RE-DERIVED FROM LIVE CONFIG (not brief prose): .claude/settings.local.json contains EXACTLY 6 hook commands terminating in '2>/dev/null || true' (tmux-agent.sh status, tmux set-option, branch-hygiene-stop.sh, notebook-auto-prune.sh, context-bloat-backstop.sh, orch-state-hook-bash-backstop.sh) + 1 more '|| true' in .claude/settings.json (graphify PreToolUse) = 7 of 8 hook invocations swallow failure. Claim CONFIRMED, count exact, still true 24 days after the brief was written. (3) ATTRIBUTION CORRECTION for BA: the brief names the 'orch-state prewrite Zod gate' among the swallowing hooks — that is WRONG on live config. orch-state-hook-prewrite.mjs is the ONE fail-closed hook (no || true, no 2>/dev/null); the swallowing orch-state hook is orch-state-hook-bash-backstop.sh (PostToolUse). BA must scope the fix to the bash-backstop, and must NOT 'fix' the prewrite gate, which is already correct. Plan-only SPIKE, timebox 180 — safe to resume."
+      },
+      {
+        "id": "CCATO-MCP-T2-CLAIM-MAP-LOADER",
+        "type": "IMPL-XS",
+        "status": "IN_PROGRESS",
+        "size": "XS",
+        "zone": "mcp-server",
+        "priority": "P0",
+        "title": "infrastructure/fileStore/claimToolMapLoader.ts",
+        "depends": [],
+        "next_agent": "dev-mcp-server",
+        "supervised": false,
+        "updated_at": "2026-08-05T17:23:09Z",
+        "updated_by": "pm (decompose SPRINT-CCATO-TRUTHGATE-MCP-NATIVE)",
+        "claimed_at": "2026-08-05T17:23:09Z",
+        "claimed_by": "dev-team (ready-lane consumer)",
+        "dispatch_lane": "dev-mcp-server"
       }
     ]
   },
