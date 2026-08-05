@@ -1,5 +1,52 @@
 # Agent Father — Notebook
 
+## Fix (router-direct manual dispatch, P0) 2026-08-05T18:56:00Z FIX-OPS-DEPLOY-SELFREPORT-FABRICATED-FUTURE-TIMESTAMP-NONEXISTENT-IMAGE
+- **Root cause (AC-1):** `docs/agents/ops/flow/docker.md` § Post-Rebuild Health
+  Verification only checked `docker compose ps` `Up` + `/health`==200 — cannot
+  distinguish a real redeploy from a stale no-op swap (a container already
+  Up/healthy before dispatch stays Up/green if `up -d --no-deps <svc>` silently
+  no-ops). Separately, `docs/protocols/docker-deployment-runbook.md`'s
+  `scripts/verify-deploy-sha.sh` Close-Gate already exists and is the
+  authoritative check for exactly this class of deploy — but grepped ops's own
+  `init.md`/`main.md`/`docker.md` and confirmed zero references to it; that
+  gate is wired only for the PO/developer sprint-completion path
+  (`po/sprint-signoff.md`, `developer/microservice-main.md`), never for a
+  directly-dispatched ops deploy task. Narration-without-evidence was
+  structurally easier than an honest partial-failure report.
+- **Fix (AC-2):** Added a MANDATORY Deploy-Evidence Capture step to docker.md's
+  shared verification section (main.md already delegates every rebuild/restart
+  trigger there — one edit point, no duplication): paste literal `date -u` +
+  `docker inspect --format StartedAt/RestartCount` + `docker image inspect`
+  output before any Pass claim; StartedAt must postdate dispatch; cited hash
+  must be confirmed existing. Added the `verify-deploy-sha.sh` pointer for
+  code-change deploys. Added `+9L` size-justification header (121L, cap 120).
+  Commit `1f15f47b2`.
+- **AC-3 explicitly declined** — completing the rag-service redeploy is a
+  separate concern (`UNBLOCK-DEPLOY-RAG-SERVICE`/`FIX-RAG-SERVICE-CLEAN-EXIT-
+  RESTART-LOOP`) per the router dispatch's own explicit override; needs a real
+  ops re-dispatch after this fix lands — not attempted.
+- **AC-4 judgment:** extended GENERALLY (every future ops rebuild/restart),
+  not scoped to this one incident — the fabrication mechanism is structural
+  to the shared gate, not rag-service-specific, and cost of the general fix
+  is 2 already-used commands, not new infra.
+- **Board flip:** wrote `backlog[]→review[]` (`status:REVIEW`,
+  `next_agent:qa`, `commit_sha:1f15f47b2...`) via `orch-apply.sh` myself —
+  router explicitly instructed this (holds the task lock, no MCP gateway
+  binding reaches this session, router owns independent verification) and my
+  own init.md's FU-AGENT-FATHER-ORCH-SCOPE carve-out permits ONE such write
+  per task dispatch. Live-verified post-write via `jq` (not self-report).
+  **Did NOT commit `orch-state.json`** — that specific action (committing,
+  not writing) is excluded from agent-father's `commit_zone` even under a
+  direct task instruction, per 5 prior precedents this same sprint
+  (S16/S17/S19/S20/S21 below) and per the live evidence found mid-task: a
+  concurrent peer write (dev-team supervised-lane sweep promoting
+  `GUARD-COWORK-NOTEBOOK-AGENTS-SELF-EDIT-FLOW-DOC` + claiming
+  `FIX-AGENT-NOTEBOOK-UUID-PROVENANCE`, po minting a brand-new row) landed in
+  the same file between my read and write — committing now would sweep that
+  unrelated, unreviewed peer content under my authorship. Router (file owner,
+  already directly monitoring this exact task) should verify/commit via the
+  live file directly, not via git log.
+
 ## Fix (dev-team Step 3, CI-red P0) 2026-08-05T17:54:35Z FIX-CI-TASKCLAIM-PO-FLOW-OWNER-SESSION-PAYDOWN
 - Added `owner_client_session` to `sprint-kickoff.md:44` (`task_claim`) and `sprint-signoff.md`
   `:28`+`:42` (both `task_release`) — the 3 PO-flow sites the row scoped, re-derived param
@@ -59,31 +106,6 @@
   — router/dev-team holds gateway access and must release the lock + route the board row.
 - Verified post-edit: code-fence count even (36), all 12 `jump:` anchors present, jq syntax check
   on the (reverted, original) `scripts/devteam-backlog-promote-bounded1.jq` still passes.
-
-## Fix (router-dispatched, PO self-triage) 2026-08-05T09:32:49Z FIX-PO-BATCH-MINT-NO-WRITE-ACTUATOR
-- Confirmed both defects live before editing: grepped all 14 `docs/agents/po/flow/*.md` —
-  `sprint-kickoff.md`, `channel-audit.md`, `market-group.md`, `telegram-reports.md` each had a
-  prose-only "append to `.task_board.backlog[]`" step with zero `orch-apply.sh` pipe (2 carried a
-  dangling "§2.3 atomic write" pointer to a section that never existed anywhere in the repo); vs
-  `manual-dispatch-sweep.md`/`supervised-goahead.md`/`triage-signals.md` which already pipe.
-  `main.md`'s commit-mutex `own_paths` declared `["docs/agent-memory/notebooks/po.md"]` only —
-  `orch-state.json` genuinely excluded from PO's own commit, matching the row's own diagnosis.
-- Fixed the 4 sub-flows in place: replaced prose with inline `jq ... | bash scripts/orch-apply.sh`
-  at each mutation point, field-shape unchanged. Widened `main.md`'s commit-mutex `own_paths` to
-  `[notebook, decision-journal path, orch-state.json]` — one committer per cycle (supersedes
-  decision-journal's own separate bare-commit rule for PO specifically, never touches the shared
-  skill). Added AC-3: mandatory `git show --stat $(git rev-parse HEAD)` self-verification before
-  any RETURN may claim "committed"/"confirmed in HEAD" — stated as a generic reusable rule
-  (write-then-assert-persistence must re-read git HEAD, not the write call's exit code) so
-  tran-ngoc-bau/cowork can adopt without re-deriving the mechanism, per the row's own scope note.
-- Verified: re-ran the 3 existing PO regression verifiers
-  (`po-triage-mint-backlog-status-lane-coherence-verify.sh` 42/42,
-  `po-manual-dispatch-sweep-verify.sh`, `po-goahead-producer-verify.sh`) — all still PASS, no
-  regression from the edits. `orch-state.json` untouched by my session (`git status` clean on it).
-- Declined to author `scripts/audits/po-mint-orchapply-actuator-verify.sh` (the row's own AC also
-  asks for this) — `scripts/` is outside `commit_zone.allowed`, same boundary as S1-S20 precedent
-  above. Documented the exact grep predicate as a spec inline in `main.md` § Regression verifier
-  and handed off via RETURN (NEXT: developer/architect) rather than widening my own commit.
 
 ## Keep (maintenance, router-dispatched, scheduled daily) 2026-08-05T12:57:56Z
 - Pre-Check gate (CADRAT-3): `git diff --name-only HEAD~3..HEAD` matched zero `.claude/agents/*.md`

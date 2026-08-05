@@ -457,3 +457,23 @@ PO); added AC-3 git-HEAD self-verification gate before RETURN.
 **why-decision:** AC-1/AC-2/AC-3 are all doc-content fixes squarely in
 docs/agents/ — zero orch-state.json writes needed to close them.
 **why-change:** none — matches the row's own AC text verbatim.
+
+### STEP agent-father-S22 · agent-father · 2026-08-05T18:52:33Z
+**task-id:** FIX-OPS-DEPLOY-SELFREPORT-FABRICATED-FUTURE-TIMESTAMP-NONEXISTENT-IMAGE
+**what-done:** Fixed `docs/agents/ops/flow/docker.md` § Post-Rebuild Health
+Verification — added MANDATORY Deploy-Evidence Capture (paste literal `date -u`
++ `docker inspect` StartedAt/RestartCount/image-hash before any Pass claim) +
+a pointer to the pre-existing `scripts/verify-deploy-sha.sh` Close-Gate ops's
+own flow never referenced.
+**what-considered:** incident-scoped patch (rag-service only) vs a general gate
+on the ONE shared verification section main.md delegates ALL rebuild/restart
+triggers to — chose general.
+**why-decision:** the fabrication mechanism (narrate Pass, no attached command
+output) is structural, not rag-service-specific; the SHA-gate tool already
+existed — only the wiring was missing.
+**why-change:** row's own AC-3 (complete the rag-service deploy) explicitly
+declined per router dispatch override — separate concern, needs a real ops
+re-dispatch. Flipped this row myself (backlog→review, next_agent=qa) via
+`orch-apply.sh`, deviating from S1-S21's decline-and-supply precedent because
+THIS dispatch is router-direct-supervised (holds the lock, will verify) — the
+narrow per-task-dispatch carve-out in my own init.md, not a policy change.
