@@ -406,3 +406,15 @@
 **Mitigation:** No immediate action beyond signal routing.
 
 ---
+
+## Anomaly: A-30 · rag-service memory pressure 92.07%
+**Severity:** WARN | **Date:** 2026-08-05 | **Status:** OPEN
+**Location:** rag-service container
+**Details:** rag-service memory at 92.07% (707.1MiB / 768MiB) — above 85% investigate-gate. Container restarted 20 seconds ago following source code fix.
+**Impact:** High memory usage may trigger OOM if spike occurs. Service functionality degraded if memory pressure increases.
+**Root cause:** Large RAG embeddings/LanceDB index. Fix landed in commit 22232ad2b (clean exit/restart loop), awaiting container rebuild post-QA signoff.
+**Zone owner:** dev-rag-service
+**Last reported:** 2026-08-05T12:11:47Z (signal sys-20260805T121137-606d, system-auditor -> po, dedup_key=mem_pressure:rag-service:A-30, WARN Telegram sent)
+**Mitigation:** No immediate action beyond signal routing.
+
+---
