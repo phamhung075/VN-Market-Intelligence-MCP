@@ -187,6 +187,63 @@ else
   cat /tmp/task-claim-lint-test-dod6.txt
 fi
 
+# ---------------------------------------------------------------------------
+# DoD-7 (AC5 ergonomics — FIX-CI-TASKCLAIM-PO-FLOW-OWNER-SESSION-PAYDOWN):
+# FAIL message tags a baseline entry whose LINE MOVED (same file+snippet,
+# different line — e.g. an earlier edit inserted lines above it) as
+# LINE-MOVED, distinct from a genuinely new call site. This exact ambiguity
+# was relayed upstream as "the fix never covered this file" / "was
+# reintroduced" — both wrong; the line-shift ratchet behaved as designed.
+# ---------------------------------------------------------------------------
+BASELINE_TMP7="$FIXTURE_DIR/../tc7-baseline.json"
+F7="$FIXTURE_DIR/tc7_moved.md"
+cat > "$F7" <<'EOF'
+# Fixture — line-moved call site
+
+```
+call_tool(server="vn-market", tool="task_release", arguments={ task_id: "task:demo-moved" })
+```
+EOF
+REL7="docs/agents/__task_claim_lint_fixtures__/flow/tc7_moved.md"
+# --update ALWAYS scoped via BASELINE_OVERRIDE — never touches the real baseline file.
+TASKCLAIM_LINT_BASELINE_OVERRIDE="$BASELINE_TMP7" TASKCLAIM_LINT_INCLUDE_OVERRIDE="$REL7" bash "$SCRIPT" --update > /dev/null 2>&1
+# baseline now grandfathers the call site at its current line; insert 2 lines
+# above it so the SAME call site shifts to a new line (mirrors 3ce726a6e).
+sed -i.bak '1a\
+Extra line A\
+Extra line B' "$F7" && rm -f "$F7.bak"
+TASKCLAIM_LINT_BASELINE_OVERRIDE="$BASELINE_TMP7" TASKCLAIM_LINT_INCLUDE_OVERRIDE="$REL7" bash "$SCRIPT" --check > /tmp/task-claim-lint-test-dod7.txt 2>&1
+RC7=$?
+rm -f "$BASELINE_TMP7"
+if [ "$RC7" -eq 1 ] && grep -q "LINE-MOVED" /tmp/task-claim-lint-test-dod7.txt; then
+  ok "DoD-7-ac5-fail-message-flags-line-moved-not-new (rc=${RC7})"
+else
+  bad "DoD-7-ac5-fail-message-flags-line-moved-not-new (rc=${RC7})"
+  cat /tmp/task-claim-lint-test-dod7.txt
+fi
+
+# ---------------------------------------------------------------------------
+# Bonus: negative control — a genuinely new call site (no baseline entry for
+# this file+snippet under ANY line) must NOT be tagged LINE-MOVED.
+# ---------------------------------------------------------------------------
+F7B="$FIXTURE_DIR/tc7b_new.md"
+cat > "$F7B" <<'EOF'
+# Fixture — genuinely new call site
+
+```
+call_tool(server="vn-market", tool="task_release", arguments={ task_id: "task:brand-new" })
+```
+EOF
+REL7B="docs/agents/__task_claim_lint_fixtures__/flow/tc7b_new.md"
+TASKCLAIM_LINT_INCLUDE_OVERRIDE="$REL7B" bash "$SCRIPT" --check > /tmp/task-claim-lint-test-dod7b.txt 2>&1
+RC7B=$?
+if [ "$RC7B" -eq 1 ] && grep -q "NEW call site" /tmp/task-claim-lint-test-dod7b.txt && ! grep -q "LINE-MOVED" /tmp/task-claim-lint-test-dod7b.txt; then
+  ok "bonus-negative-control-genuinely-new-call-site-not-tagged-line-moved (rc=${RC7B})"
+else
+  bad "bonus-negative-control-genuinely-new-call-site-not-tagged-line-moved (rc=${RC7B})"
+  cat /tmp/task-claim-lint-test-dod7b.txt
+fi
+
 echo "========================================"
 echo "Test Results: PASS=${PASS_COUNT} FAIL=${FAIL_COUNT}"
 echo "========================================"

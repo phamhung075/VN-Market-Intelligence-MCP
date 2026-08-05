@@ -128,7 +128,7 @@ find_violations() {
 }
 
 cmd_check() {
-  local total=0 fail_count=0 fail_list="" f ln snippet found
+  local total=0 fail_count=0 fail_list="" f ln snippet found moved_line
   local baseline_tsv
   baseline_tsv="$(mktemp 2>/dev/null || echo "/tmp/task-claim-lint-baseline-$$.tsv")"
   trap 'rm -f "$baseline_tsv"' RETURN
@@ -149,7 +149,20 @@ cmd_check() {
         continue   # grandfathered — exact (file, line, snippet) match
       fi
       fail_count=$((fail_count + 1))
-      fail_list="${fail_list}${f}:${ln} — ${snippet}\n"
+      # AC5 ergonomics (FIX-CI-TASKCLAIM-PO-FLOW-OWNER-SESSION-PAYDOWN): distinguish
+      # "grandfathered site whose LINE moved" (same file+snippet, baseline just has a
+      # stale line number — an earlier edit inserted/removed lines above it, this is
+      # NOT a new call site and NOT a reintroduced regression) from a genuinely NEW
+      # call site never before seen. Both were previously indistinguishable in the
+      # FAIL output and were misdiagnosed upstream as "the fix never covered this
+      # file" / "was reintroduced" — both wrong; the lint's own line-shift ratchet
+      # behavior (by design) was the actual cause.
+      moved_line="$(awk -F'\t' -v p="$f" -v s="$snippet" '$1==p && $3==s{print $2; exit}' "$baseline_tsv" 2>/dev/null || true)"
+      if [ -n "$moved_line" ]; then
+        fail_list="${fail_list}${f}:${ln} — ${snippet}  [LINE-MOVED: grandfathered in baseline at line ${moved_line} — same file+snippet, NOT a new call site, NOT a reintroduced regression. Pay the debt (add owner_client_session); do not re-run --update to relabel the line.]\n"
+      else
+        fail_list="${fail_list}${f}:${ln} — ${snippet}  [NEW call site — no baseline entry for this file+snippet under any line]\n"
+      fi
     done < <(find_violations "$f")
   done < <(list_files)
 
