@@ -1,19 +1,7 @@
 {
-  "data_stale:sbv_fx:B-12": {
-    "ts": "2026-07-29T10:33:36Z",
-    "sev": 2
-  },
-  "data_stale:sbv_fx:B-01": {
-    "ts": "2026-07-29T14:34:45Z",
-    "sev": 3
-  },
   "data_stale:vps_proxy:B-06": {
     "ts": "2026-07-30T07:11:26Z",
     "sev": 3
-  },
-  "data_stale:bctc_discover:B-05": {
-    "ts": "2026-07-29T14:34:57Z",
-    "sev": 2
   },
   "data_freshness:market_messages:C-06": {
     "ts": "2026-07-29T18:34:38Z",
@@ -40,11 +28,19 @@
     "sev": 3
   },
   "mem_pressure:rag-service:A-30": {
-    "ts": "2026-08-05T10:11:02Z",
+    "ts": "2026-08-05T16:18:34Z",
     "sev": 2
   },
   "mem_pressure:mcp-server:A-30": {
     "ts": "2026-08-05T09:12:06Z",
+    "sev": 2
+  },
+  "microservice_degraded:mcp-server:A-21": {
+    "ts": "2026-08-05T10:34:34Z",
+    "sev": 2
+  },
+  "microservice_degraded:pdf-extractor:A-30": {
+    "ts": "2026-08-05T14:34:48Z",
     "sev": 2
   }
 }
