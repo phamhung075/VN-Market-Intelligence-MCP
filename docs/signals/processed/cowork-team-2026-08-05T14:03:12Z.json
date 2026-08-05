@@ -3,7 +3,7 @@
   "to": "dev-team",
   "type": "cowork-fire",
   "payload": {
-    "fire_time": "2026-07-29T14:07:58Z",
+    "fire_time": "2026-08-05T14:03:12Z",
     "matched_slots": [
       "refine-bctc-slot-2"
     ],
@@ -16,10 +16,10 @@
       "docs/agents/refine_bctc_md/flow/main.md"
     ],
     "silent": false,
-    "drift_min": 5,
+    "drift_min": 2,
     "errors": [],
     "pressure_mode": "adaptive",
-    "calendar_status": "unknown",
+    "calendar_status": "open",
     "suppressed_calendar": [],
     "suppressed_cadence": [],
     "downgraded": [],
@@ -30,7 +30,7 @@
     "cadence_minutes": {
       "refine-bctc-slot-2": null
     },
-    "last_fired_timestamp": "2026-07-29T14:07:29Z",
+    "last_fired_timestamp": "2026-08-05T14:03:07Z",
     "last_fired_slots": [
       "refine-bctc-slot-2"
     ],
@@ -39,16 +39,16 @@
     "reason": "spawned",
     "nominal_tick": "14:00",
     "leader_lock": "acquired",
-    "dev_head": "unknown",
+    "dev_head": "idle",
     "devq": 5,
-    "signal_backlog": 15,
-    "note": "Single-slot tick (refine-bctc-slot-2, cron-due). MAX_PARALLEL moot (1 slot). Spawned refine_bctc_md async; consistency check passed (trigger_prompt/flow_path match). No signal_queue drain needed (0 NEW cowork-addressed rows)."
+    "signal_backlog": 17,
+    "note": "rag-service memory holding steady ~90% (acknowledged-degraded, within tolerance), fix still pending QA/deployment."
   },
   "priority": "low",
-  "createdAt": "2026-07-29T14:07:58Z",
+  "createdAt": "2026-08-05T14:03:12Z",
   "_processed": {
-    "fingerprint": "ad968e49c24bf5cb35595537435648399cfcfb01eda529d780e4b067b90d82e6",
-    "processedAt": "2026-07-29T14:15:19Z",
+    "fingerprint": "59f27faf97602731c4a020bf0c58d236d3a83c84ec062b9436a192fb22dcbcd8",
+    "processedAt": "2026-08-05T14:20:19Z",
     "processedBy": "dev-team",
     "result": "routed-to-po"
   }
