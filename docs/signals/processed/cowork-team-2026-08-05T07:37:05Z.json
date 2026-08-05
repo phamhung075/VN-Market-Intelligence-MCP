@@ -1,0 +1,55 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-08-05T07:37:05Z",
+    "matched_slots": [
+      "alert-commander-market"
+    ],
+    "won_slots": [
+      "alert-commander-market"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/alert-commander/flow/main.md"
+    ],
+    "silent": false,
+    "drift_min": 3,
+    "errors": [],
+    "pressure_mode": "adaptive",
+    "calendar_status": "open",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "chef_mutex_applied": false,
+    "due_reasons": {
+      "alert-commander-market": "cron"
+    },
+    "cadence_minutes": {
+      "alert-commander-market": null
+    },
+    "last_fired_timestamp": "2026-08-05T07:36:49Z",
+    "last_fired_slots": [
+      "alert-commander-market"
+    ],
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "07:30",
+    "leader_lock": "acquired",
+    "dev_head": "unknown",
+    "devq": 5,
+    "signal_backlog": 17,
+    "note": "cycle_snapshot_promoted:false again (4th consecutive tick 06:45/07:00/07:15/07:30) -- already escalated via signal cow-20260805T070907 to po at 07:00Z tick, not re-minted (dedup discipline)."
+  },
+  "priority": "low",
+  "createdAt": "2026-08-05T07:37:05Z",
+  "_processed": {
+    "fingerprint": "cf52c02a26476a69a200e91bae28ca374b0b54b7a7e713870ef3f24f1797aa8b",
+    "processedAt": "2026-08-05T07:41:01Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
