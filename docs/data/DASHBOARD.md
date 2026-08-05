@@ -346,3 +346,15 @@
 **Mitigation:** No immediate action beyond signal routing.
 
 ---
+
+## Anomaly: A-30 · rag-service-1 A-30: memory 96.91% sustained (23.7MiB free — below floor)
+**Severity:** WARN | **Date:** 2026-08-05 | **Status:** OPEN
+**Location:** rag-service-1/memory
+**Details:** Sustained memory pressure at 96.91% over 65-second probe window with zero reclamation dips. Free memory 23.7 MiB, below floor threshold of 40 MiB. Loss of reclamation capability indicated.
+**Impact:** Service is memory-starved and at risk of OOM. Will likely fail without intervention.
+**Root cause:** Code memory leak or inefficient memory usage in rag-service-1. Monotonic degradation trend visible across audit cycles.
+**Zone owner:** dev-rag-service
+**Last reported:** 2026-08-05T10:08:43Z (signal sys-20260805T100834-7723, system-auditor -> po, dedup_key=mem_pressure:rag-service:A-30, WARN Telegram sent)
+**Mitigation:** No immediate action beyond signal routing.
+
+---
