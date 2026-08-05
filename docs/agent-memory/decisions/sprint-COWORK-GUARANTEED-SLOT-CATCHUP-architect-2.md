@@ -125,3 +125,13 @@
 - Leave `PRE_PUSH_SKIP_TSC=1` as a full-hook bypass (its current, mislabeled behavior) vs reorder so it only skips tsc — chose reorder: the var's own name and header doc already claim "skip tsc check"; leaving the new unconditional checks skippable by the same var would silently reopen AC3's "no fail-open on docs-only" concern via a different door.
 **why-decision:** AC1 is explicit that this row cannot be closed by assumption — the number itself (not "these are probably cheap") is the design constraint; measuring first, then designing to the measured number, is the only way to honor that gate.
 **why-change:** No change from the row's own framing; fence honored explicitly (this row does not touch the 3 symptom files/lines that are separately tracked).
+
+### STEP architect-S34 · architect · 2026-08-05T17:58:00Z
+**task-id:** FACTORY-STOCK-split-sandbox
+**what-done:** Review-Lane SECONDARY-Drain triage of a 27-day-stale review[] row (dev-stock-price reviewed 2026-07-09). Read commit 0d93b3c95's own message (the review record) + live files; ran `git log 0d93b3c95..HEAD -- apps/stock-price/cmd/sandbox/` (EMPTY — zero drift since review) then independently re-executed the AC live: `go build`/`go vet`/`golangci-lint run` all clean, `CGO_ENABLED=0 go build` clean, built binary run against all 11 real scenario JSONs -> 11/11 PASS, matching the original review exactly. Closed DONE_VERIFIED via `scripts/devteam-close-task-done-verified.jq` -> `orch-apply.sh`.
+**what-considered:**
+- Request rework — rejected: no defect found; DoD fully met, review not stale (file byte-identical to reviewed state).
+- Reassign next_agent (e.g. to qa) for a 2nd verification pass — rejected: I already performed a more rigorous re-verify than a fresh QA pass would (live build+vet+lint+scenario-run against the actual committed code, not chain-trust of the review note).
+- Escalate BLOCKED — rejected: nothing blocking; the 27-day staleness was a review-lane drain-throughput gap (now closed by this sweep), not a work-quality defect.
+**why-decision:** DONE_VERIFIED sign-off is the only option matching the evidence — commit message + git history + live re-run all corroborate the split is complete, correct, and undrifted; also confirmed (beyond dev-stock-price's original scope) that `cmd/sandbox/` is never baked into the Docker image (Dockerfile builds only `./cmd/server/`), so the backlog-detail.json `rebuild_required:true` flag was a generic audit-batch default, not applicable here — no ops/rebuild gate needed.
+**why-change:** No change from plan; this agent lacked gateway MCP tool access this session (Read/Edit/Write/Bash only) so `task_release` for the PRE-CLAIM lock is deferred to the spawning dev-team session per its own fallback instruction.
