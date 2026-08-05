@@ -430,3 +430,15 @@
 **Mitigation:** No immediate action beyond signal routing.
 
 ---
+
+## Anomaly: A-30 · rag-service memory pressure 95.77%
+**Severity:** WARN | **Date:** 2026-08-05 | **Status:** OPEN
+**Location:** rag-service container / memory
+**Details:** Memory usage: 95.77% (735.5MiB/768MiB). Multi-probe analysis over 40 seconds: 5 samples all at 95.77% with no reclamation dip detected. Loss of reclamation confirmed.
+**Impact:** Container memory approaching limit with no automatic reclamation; may eventually hit OOM if baseline continues
+**Root cause:** Potential memory leak in rag-service or insufficient GC tuning; needs investigation
+**Zone owner:** dev-mcp-server
+**Last reported:** 2026-08-05T16:18:51Z (signal sys-20260805T161834-0151, system-auditor -> po, dedup_key=mem_pressure:rag-service:A-30, WARN Telegram sent)
+**Mitigation:** No immediate action beyond signal routing.
+
+---
