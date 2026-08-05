@@ -3,7 +3,7 @@
   "to": "dev-team",
   "type": "cowork-fire",
   "payload": {
-    "fire_time": "2026-07-29T12:10:29Z",
+    "fire_time": "2026-08-05T12:07:53Z",
     "matched_slots": [
       "news-scout-offhours",
       "market-watcher-offhours",
@@ -22,10 +22,10 @@
       "docs/agents/alert-commander/flow/main.md"
     ],
     "silent": false,
-    "drift_min": 5,
+    "drift_min": 2,
     "errors": [],
     "pressure_mode": "adaptive",
-    "calendar_status": "unknown",
+    "calendar_status": "open",
     "suppressed_calendar": [],
     "suppressed_cadence": [],
     "downgraded": [],
@@ -33,14 +33,14 @@
     "due_reasons": {
       "news-scout-offhours": "cadence",
       "market-watcher-offhours": "cadence",
-      "alert-commander-critical": "cadence"
+      "alert-commander-critical": "cron"
     },
     "cadence_minutes": {
-      "news-scout-offhours": "240",
-      "market-watcher-offhours": "240",
-      "alert-commander-critical": "240"
+      "news-scout-offhours": 30,
+      "market-watcher-offhours": 30,
+      "alert-commander-critical": null
     },
-    "last_fired_timestamp": "2026-07-29T12:10:17Z",
+    "last_fired_timestamp": "2026-08-05T12:07:47Z",
     "last_fired_slots": [
       "news-scout-offhours",
       "market-watcher-offhours",
@@ -51,18 +51,16 @@
     "reason": "spawned",
     "nominal_tick": "12:00",
     "leader_lock": "acquired",
-    "dev_head": "unknown",
+    "dev_head": "idle",
     "devq": 5,
-    "signal_backlog": 14,
-    "max_parallel": 2,
-    "degraded": true,
-    "note": "3 offhours/critical cadence slots (240min) matched at 12:00Z tick, drift 5min. MAX_PARALLEL=2 (degraded, container_vm_headroom_mb still absent from pressure-state.json). Batch1 (news-scout-offhours, market-watcher-offhours) spawned first; both still mid-flow (real MCP calls confirmed, no off-flow markers) after the 120s combined inter-batch wait budget expired -- proceeded to batch2 (alert-commander-critical, already at degraded cap) per timeout fallback. All 3 last_fired stamped on spawn per AC-P1-7-1."
+    "signal_backlog": 17,
+    "note": "Found + fixed a real auditor false-negative this tick: docs/agents/system-auditor/probe.sh's A-30 check is hardcoded to mcp-server only, blind to rag-service -- FIX-AUDITOR-A30-PROBE-SH-MISSES-RAG-SERVICE-CONTAINER minted P1. rag-service fix (commit 22232ad2b) still pending QA/deployment, dev_head correctly idle after dev-rag-service's clean handoff."
   },
   "priority": "low",
-  "createdAt": "2026-07-29T12:10:29Z",
+  "createdAt": "2026-08-05T12:07:53Z",
   "_processed": {
-    "fingerprint": "e29422e620d851abdd3345b3927e53c910e8266f2577ae628fd4d88b73bae572",
-    "processedAt": "2026-07-29T12:16:09Z",
+    "fingerprint": "3cc33e5048ee5de4d42a2658589fdb33e1df02e60477cadae486282431329cb9",
+    "processedAt": "2026-08-05T12:20:55Z",
     "processedBy": "dev-team",
     "result": "routed-to-po"
   }
