@@ -134,8 +134,8 @@
     "does_not_consume_wip": true
   },
   "signal_queue": {
-    "_updated_at": "2026-08-05T14:47:46Z",
-    "_updated_by": "cowork-team (0a drain)",
+    "_updated_at": "2026-08-05T16:22:00Z",
+    "_updated_by": "dev-team",
     "archive": [],
     "rows": [
       {
@@ -2291,6 +2291,19 @@
         "payload_ref": null,
         "provenance": "detector",
         "audit_cycle_tag": null
+      },
+      {
+        "id": "sys-20260805T161834-0151",
+        "ts": "2026-08-05T16:18:34Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "signal_feedback",
+        "summary": "rag-service A-30 memory pressure 95.77% — no reclamation dip, loss of reclamation",
+        "severity": "WARN",
+        "status": "READ",
+        "payload_ref": null,
+        "provenance": "detector",
+        "audit_cycle_tag": "cron:auditor-t1:2026-08-05T16:00Z"
       }
     ],
     "last_triaged_at": "2026-07-29T06:25:00Z",
@@ -11416,6 +11429,26 @@
         "created_by": "router",
         "updated_at": "2026-08-05T12:13:18Z",
         "updated_by": "router"
+      },
+      {
+        "id": "FIX-MARKETWATCHER-EODMD-STALE-NOBASH-CAVEAT-SKIPS-COMMIT-LOSES-NOTEBOOK",
+        "type": "FIX",
+        "title": "eod.md:78 still carries the pre-2026-07-31 no-Bash caveat that cycle.md already fixed -- market-watcher-eod skips its notebook commit every fire, loses the EOD cycle entry to the next same-agent overwrite, and strands news-scouts L-7-deferred commit",
+        "desc": "VERIFIED live 2026-08-05T16:00Z EOD fire (agent a0df2bd1afc971ce7). Chain: (1) .claude/agents/market-watcher.md granted Bash 2026-07-31 commit 610110e16b. (2) cycle.md carried an identical no-Bash transport-gap caveat and was fixed 2026-08-01 (FIX-COWORK-FLOWDOC-STALE-TRANSPORT-GAP-CAVEAT, see cycle.md own header comment) -- caveat demoted to a genuine invocation-error fallback only. (3) eod.md:78 was never touched by that fix -- still reads verbatim this agent holds no Bash and cannot run git add/git_commit_retry directly ... SKIP this step entirely. (4) Todays EOD fire followed eod.md literally: wrote all 4 ledger entries (analysis-briefs DGC/DPM/DBC/VNM) + docs/signals/price_anomaly_20260805T1605.json correctly (Steps A/B unaffected per the docs own text) but skipped Step D (notebook write/commit), citing the docs own stale line as its reason -- not a fabrication, a propagated stale doc. (5) DISPROOF same day, same batch: market-watcher-offhours fired 2 min later (a1f7356854a55a25f) and committed cleanly with Bash (09beb0997) -- direct proof the grant is live and eod.md is simply wrong. (6) Net effect: market-watcher.md notebook has NO Cycle (EOD) section anywhere post-16:06Z -- the EOD narrative was never durably captured, either never written or clobbered when the offhours slot did its own full-overwrite write+commit right after. (7) news-scout.md c233 entry was left dangling uncommitted -- its own flow (docs/agents/news-scout/flow/stage-log-notify.md:14, L-7) explicitly defers its git commit to market-watchers EOD batch commit at market close; that EOD-side half of the contract never fires while eod.md:78 stands. Router committed the stranded news-scout.md manually this cycle as a workaround; the underlying skip will repeat every weekday 16:00 UTC fire until eod.md is fixed.",
+        "ac": "1. Update docs/agents/market-watcher/flow/eod.md:78 to match cycle.mds already-fixed prose (Bash grant live since 2026-07-31 commit 610110e16b -- demote to a genuine invocation-error fallback, not an unconditional skip). 2. Separately decide and fix the lost-update exposure: the per-cycle full-overwrite notebook model has no protection when EOD and a same-agent sibling slot (e.g. offhours) both match in the same cowork-tick batch and fire minutes apart -- either preserve/merge the EOD section across the next overwrite, or serialize same-agent multi-slot fires so one cannot clobber the others uncommitted work. 3. Confirm news-scouts L-7 dependency (stage-log-notify.md:14) resumes working end-to-end on the next weekday EOD fire (its notebook commits without router intervention).",
+        "priority": "P1",
+        "size": "S",
+        "zone": "cross-service/",
+        "next_agent": "developer",
+        "status": "BACKLOG",
+        "created_at": "2026-08-05T16:10:00Z",
+        "created_by": "router",
+        "updated_at": "2026-08-05T16:15:51Z",
+        "updated_by": "router",
+        "related": [
+          "FIX-COWORK-BATCH-COVERAGESTATE-CONTENTION-CORRELATES-WITH-MISSED-NOTEBOOK-COMMIT"
+        ],
+        "not_duplicate_of": "FIX-COWORK-BATCH-COVERAGESTATE-CONTENTION-CORRELATES-WITH-MISSED-NOTEBOOK-COMMIT -- that row is a contention HYPOTHESIS on coverage-state:main mutex; this row is a DIRECTLY VERIFIED stale-doc root cause, distinct mechanism, same symptom family."
       }
     ],
     "closed_sprints": [

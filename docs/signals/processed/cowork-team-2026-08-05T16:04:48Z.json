@@ -3,7 +3,7 @@
   "to": "dev-team",
   "type": "cowork-fire",
   "payload": {
-    "fire_time": "2026-07-29T161110Z",
+    "fire_time": "2026-08-05T16:04:48Z",
     "matched_slots": [
       "news-scout-offhours",
       "market-watcher-offhours",
@@ -25,10 +25,10 @@
       "docs/agents/alert-commander/flow/main.md"
     ],
     "silent": false,
-    "drift_min": 5,
+    "drift_min": 2,
     "errors": [],
     "pressure_mode": "adaptive",
-    "calendar_status": "unknown",
+    "calendar_status": "open",
     "suppressed_calendar": [],
     "suppressed_cadence": [],
     "downgraded": [],
@@ -37,15 +37,15 @@
       "news-scout-offhours": "cadence",
       "market-watcher-offhours": "cadence",
       "market-watcher-eod": "cadence",
-      "alert-commander-critical": "cadence"
+      "alert-commander-critical": "cron"
     },
     "cadence_minutes": {
-      "news-scout-offhours": 240,
-      "market-watcher-offhours": 240,
-      "market-watcher-eod": 240,
-      "alert-commander-critical": 240
+      "news-scout-offhours": 30,
+      "market-watcher-offhours": 30,
+      "market-watcher-eod": 30,
+      "alert-commander-critical": null
     },
-    "last_fired_timestamp": "2026-07-29T16:10:35Z",
+    "last_fired_timestamp": "2026-08-05T16:04:42Z",
     "last_fired_slots": [
       "news-scout-offhours",
       "market-watcher-offhours",
@@ -57,16 +57,17 @@
     "reason": "spawned",
     "nominal_tick": "16:00",
     "leader_lock": "acquired",
-    "dev_head": "unknown",
+    "dev_head": "idle",
     "devq": 5,
-    "signal_backlog": 14,
-    "note": "market-watcher matched 2 slots this tick (offhours 4h-cadence + eod cron coincide at 16:00 UTC) - collision WARN sent, both spawned per R3. Step 5.1 headroom read null (pressure-state.json still emits legacy host_headroom_mb, not the renamed container_vm_headroom_mb field per FIX-PRESSURE-HOST-HEADROOM-WRONG-MACHINE-WRONG-QUANTITY) -> forced DEGRADED branch, MAX_PARALLEL=2, fired in 2 batches of 2."
+    "signal_backlog": 17,
+    "collision_warning": "market-watcher matched 2 slots (offhours + eod) — WORK telegram sent, both spawned per R3, briefed each on the shared-notebook-write risk",
+    "note": "rag-service holding steady ~90%, fix pending QA/deployment. pdf-extractor memory pressure from earlier today self-resolved (67.59%, down from 88-96%)."
   },
   "priority": "low",
-  "createdAt": "2026-07-29T161110Z",
+  "createdAt": "2026-08-05T16:04:48Z",
   "_processed": {
-    "fingerprint": "9ef5e479c9008a9e205118e65a33c06b64601aacd84b52feb53f780e62e1ec52",
-    "processedAt": "2026-07-29T16:15:28Z",
+    "fingerprint": "d06793fdb0ca791dcc2ef49e06a35061b0f46994c39b39824029107562e72dfc",
+    "processedAt": "2026-08-05T16:20:54Z",
     "processedBy": "dev-team",
     "result": "routed-to-po"
   }
