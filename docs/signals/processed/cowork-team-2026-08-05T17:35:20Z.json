@@ -3,7 +3,7 @@
   "to": "dev-team",
   "type": "cowork-fire",
   "payload": {
-    "fire_time": "2026-07-29T17:37:17Z",
+    "fire_time": "2026-08-05T17:35:20Z",
     "matched_slots": [
       "digest-daily"
     ],
@@ -16,10 +16,10 @@
       "docs/agents/digest-predict/flow/main.md"
     ],
     "silent": false,
-    "drift_min": 5,
+    "drift_min": 2,
     "errors": [],
     "pressure_mode": "adaptive",
-    "calendar_status": "unknown",
+    "calendar_status": "open",
     "suppressed_calendar": [],
     "suppressed_cadence": [],
     "downgraded": [],
@@ -30,7 +30,7 @@
     "cadence_minutes": {
       "digest-daily": null
     },
-    "last_fired_timestamp": "2026-07-29T17:36:51Z",
+    "last_fired_timestamp": "2026-08-05T17:35:20Z",
     "last_fired_slots": [
       "digest-daily"
     ],
@@ -41,14 +41,14 @@
     "leader_lock": "acquired",
     "dev_head": "unknown",
     "devq": 5,
-    "signal_backlog": 15,
-    "note": "single guaranteed slot digest-daily fired cleanly; tick-snapshot assembled via pinned FILE_TICK=17:36 with no timing defect; container_vm_headroom_mb field-rename drift (host_headroom_mb still live) previously flagged, not re-flagged this tick"
+    "signal_backlog": 20,
+    "note": "guaranteed daily slot, single-slot tick. tick-snapshot Step 4.7 hit the documented minute-boundary race (staged 17:33, assembly recomputed 17:34) -- skipped per fallback, digest-predict falls back to direct get_cycle_bootstrap. Also cleaned up an orphaned stage file from an earlier tick (16:35) whose trap-cleanup apparently never fired."
   },
   "priority": "low",
-  "createdAt": "2026-07-29T17:37:17Z",
+  "createdAt": "2026-08-05T17:35:20Z",
   "_processed": {
-    "fingerprint": "88bdb1848d2d953dbae3f0bf75dd96b3d1f349e6282652306797e8c8a9ae2d3f",
-    "processedAt": "2026-07-29T17:45:23Z",
+    "fingerprint": "4e1fabf40125872b84a108f0fd9023584ebee4f08dc3cfcdbb179b8792746b49",
+    "processedAt": "2026-08-05T17:50:07Z",
     "processedBy": "dev-team",
     "result": "routed-to-po"
   }

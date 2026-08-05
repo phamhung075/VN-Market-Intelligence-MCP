@@ -3,20 +3,20 @@
   "to": "claude-manager-helper",
   "type": "notebook_single_section_overage_breach",
   "priority": "high",
-  "createdAt": "2026-07-29T17:45:07Z",
+  "createdAt": "2026-08-05T17:37:24Z",
   "payload": {
     "file": "docs/agent-memory/notebooks/digest-predict.md",
-    "line_count": 135,
+    "line_count": 37,
     "cap": 200,
-    "byte_count": 35432,
+    "byte_count": 13918,
     "byte_cap": 12000,
     "section_count": 1,
     "reason": "only preamble+1 section remain; cannot prune further without data loss",
     "action_required": "manual_split_to_archive"
   },
   "_processed": {
-    "fingerprint": "c6a247c096510c1ec2c66d5bca5943240e9a5327c1cc9b29e23fb80e136abedb",
-    "processedAt": "2026-07-29T17:45:23Z",
+    "fingerprint": "7e214ce07186cbef2d713e198dac494bd572b3bb817aba3d3d681e5d3beb6a74",
+    "processedAt": "2026-08-05T17:50:07Z",
     "processedBy": "dev-team",
     "result": "routed-to-po"
   }
