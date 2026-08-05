@@ -1,0 +1,61 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-08-05T08:51:16Z",
+    "matched_slots": [
+      "chef-eod",
+      "alert-commander-market"
+    ],
+    "won_slots": [
+      "chef-eod",
+      "alert-commander-market"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/unified-agent/flow/chef.md",
+      "docs/agents/alert-commander/flow/main.md"
+    ],
+    "silent": false,
+    "drift_min": 2,
+    "errors": [],
+    "pressure_mode": "adaptive",
+    "calendar_status": "open",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "chef_mutex_applied": false,
+    "due_reasons": {
+      "chef-eod": "cron",
+      "alert-commander-market": "cron"
+    },
+    "cadence_minutes": {
+      "chef-eod": null,
+      "alert-commander-market": null
+    },
+    "last_fired_timestamp": "2026-08-05T08:51:06Z",
+    "last_fired_slots": [
+      "chef-eod",
+      "alert-commander-market"
+    ],
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "08:45",
+    "leader_lock": "acquired",
+    "dev_head": "in_progress",
+    "devq": 5,
+    "signal_backlog": 18,
+    "note": "First fire since cowork-team + dev-team + auditor T1-3 crons were re-armed this session (all had evaporated on the prior session boundary). tick-snapshot Step 4.7 hit a minor FILE_TICK minute-boundary race (08:48->08:49); non-blocking, flagged bug#4708, snapshot skipped this tick per documented fallback."
+  },
+  "priority": "low",
+  "createdAt": "2026-08-05T08:51:16Z",
+  "_processed": {
+    "fingerprint": "a27915fbe9b9a6e4b65fd144a9f67684c80dc51222399ce9d1dd628b9b0d4790",
+    "processedAt": "2026-08-05T08:55:19Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
