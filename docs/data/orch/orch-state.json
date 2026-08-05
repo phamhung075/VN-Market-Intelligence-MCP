@@ -134,8 +134,8 @@
     "does_not_consume_wip": true
   },
   "signal_queue": {
-    "_updated_at": "2026-08-05T08:13:29Z",
-    "_updated_by": "dev-team",
+    "_updated_at": "2026-08-05T09:19:14Z",
+    "_updated_by": "cowork-team/step0a",
     "archive": [],
     "rows": [
       {
@@ -2165,7 +2165,7 @@
         "type": "signal_feedback",
         "summary": "A-30 WARN: mcp-server memory sustained >93% with no reclamation dips (94.50% max, 65s window)",
         "severity": "WARN",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": null,
         "provenance": "detector"
       }
@@ -11296,7 +11296,7 @@
         "size": "S",
         "zone": "apps/mcp-server/",
         "owner": "po",
-        "next_agent": "architect",
+        "next_agent": "dev-mcp-server",
         "created_at": "2026-08-05T09:07:24Z",
         "created_by": "po (dev-team triage tick 2026-08-05T08:37Z)",
         "verdict": "REPRODUCED-LIVE-BY-PO-THIS-TICK",
@@ -11309,31 +11309,9 @@
           "SPIKE-BCTC-Q1-2026-SERVABILITY-CENSUS",
           "telegram-report:4408"
         ],
-        "updated_at": "2026-08-05T09:07:25Z"
-      },
-      {
-        "id": "FIX-DEVTEAM-SECONDARY-DRAIN-NO-SELF-TARGET-RESOLVER-CASE",
-        "type": "FIX",
-        "title": "SECONDARY-Drain resolver has no next_agent==\"dev-team\" case — it hands dev-team a row targeting dev-team, which dev-team must refuse (anti-recursion), stranding the row every tick. The script own header already enumerates 5 such rows",
-        "status": "BACKLOG",
-        "priority": "P1",
-        "size": "S",
-        "zone": "cross-service/",
-        "owner": "po",
-        "next_agent": "architect",
-        "created_at": "2026-08-05T09:10:11Z",
-        "created_by": "po (dev-team triage tick 2026-08-05T08:37Z)",
-        "verdict": "MECHANISM-CONFIRMED-IN-THE-SCRIPT-OWN-DOCUMENTATION",
-        "source": "telegram-report 4422 (dev-team bug-channel, 2026-08-05T08:57:47Z) + live read of scripts/devteam-review-claim-secondary-drain.jq",
-        "verification_gate": "secondary_drain_never_returns_a_row_whose_resolved_target_is_dev_team",
-        "status_note": "AC-1: scripts/devteam-review-claim-secondary-drain.jq never resolves secondary_dispatch_target to \"dev-team\". AC-2: replay the 5 enumerated dev-team-targeted review rows through the script and assert each resolves to a spawnable non-dev-team agent. AC-3: OPS-BCTC-BANK-2025Q4-ENRICH-0ROW-REPARSE (repointed to architect by PO this tick) is no longer the only unstranding, i.e. the fix is in the resolver and not hand-applied per row.",
-        "note": "LIVE TRIGGER: dev-team SECONDARY-Drain claimed review[] row OPS-BCTC-BANK-2025Q4-ENRICH-0ROW-REPARSE this tick, whose resolved secondary_dispatch_target was \"dev-team\" — its own next_agent field, literally. dev-team correctly REFUSED to Agent()-spawn itself (non-negotiable anti-recursion guard) and reported the gap. The row was claimed, could not be dispatched, and was left stranded with secondary_claimed_at set.\n\nMECHANISM CONFIRMED BY READING THE SCRIPT, NOT INFERRED: scripts/devteam-review-claim-secondary-drain.jq selects on `(.value | effective_next_agent($detail_items)) != \"qa\"` (line 114). effective_next_agent (scripts/lib/devteam-eligibility.jq) resolves to the row next_agent when present-non-empty, ELSE the string \"po\". So there is exactly ONE defaulting case, null->po, and every non-null value passes through verbatim — including \"dev-team\". There is no self-target guard anywhere in the selection or the claim stamp.\n\nTHIS IS NOT A ONE-OFF. The script own header comment (lines 20-21) already enumerates the live distribution it was written against: SECONDARY(next_agent!=\"qa\")=44 across 12 distinct non-null next_agent values, itemised as `ops=8, dev-team=5, po=5, ...`. The author counted five dev-team-targeted rows and still shipped no case for them. So four more rows behind this one will strand identically, one per tick, each burning a claim and a bug-channel report. Rate of recurrence is bounded only by how often SECONDARY-Drain reaches them.\n\nFIX SHAPE (architect to choose): either (a) extend the resolver default so next_agent==\"dev-team\" resolves to \"po\" exactly as null does — cheapest, consistent with the existing single defaulting rule, and correct because a dev-team-targeted review row is by definition one nobody has triaged to a real owner; or (b) exclude self-targeted rows from the SECONDARY selection entirely and surface them on a PO sweep instead. Do NOT fix by hand-editing the 5 rows: PO already repointed one of them this tick and that is a symptom patch, not the root cause.\n\nRELATED STANDING MEMORY: feedback_devteam_flow_needs_nested_agent_spawn_subagent_cannot — dev-team cannot Agent()-spawn at all from the subagent context, re-confirmed live this tick by telegram-report 4411 (2026-08-05T06:49:38Z). The anti-recursion refusal is therefore correct behaviour and must NOT be relaxed as the fix.",
-        "related": [
-          "OPS-BCTC-BANK-2025Q4-ENRICH-0ROW-REPARSE",
-          "telegram-report:4422",
-          "telegram-report:4411"
-        ],
-        "updated_at": "2026-08-05T09:10:12Z"
+        "updated_at": "2026-08-05T09:27:41Z",
+        "architect_review_note": "ARCHITECT DESIGN 2026-08-05T09:25Z — Full brief: docs/architecture-briefs/2026-08-05-fix-bctc-full-serving-empty-newest-period-fallback.md.\n\nROOT CAUSE (verified by direct read, bctcFullTools.ts:954-958): get_bctc_full selects the newest financial_reports row per ticker via `ORDER BY sort_key DESC LIMIT 1` with NO predicate on refine_status/text_status/validation_status. Downstream PUB-1 (checkPublishability, :616-627) requires refine_status IN (DONE,PARTIAL) and rejects the row when it is an ensureFinancialReportShellRow.ts empty PENDING shell (2026-Q2 for FPT/HPG/VCB) — the handler (:1190-1200) then returns pubCheck.reason verbatim (\"Chua co du lieu BCTC\") with ZERO fallback to the older, fully DONE/validated 2026-Q1 or 2025-Q4 rows that exist for the same ticker. Selection defect, not a gate defect — PUB-1..8 correctly flag the newest row as unusable, nothing tries the next-most-recent row after that.\n\nSHARED-ROOT-CAUSE HYPOTHESIS vs FIX-BCTC-PENDING-REFINE-HEAD-OF-LINE-FAILED-ROW: REFUTED as a literal shared-helper claim — grep-confirmed neither file (bctcFullTools.ts vs getBctcPendingRefineTool.ts) imports the other, no shared row-selection helper module exists for either. Different scope (one-ticker newest-period vs all-tickers refine queue), different sort axis (sort_key/period vs parsed_at/ingestion order), different fix shape (fallback-to-older-period needed here vs exclude-terminal-dead-row-from-queue there — the sibling fix NOT (refine_status IN (PARTIAL,FAILED) AND zero-remaining-windows) does not port verbatim, a queue exclusion has nothing to \"fall back to\"). CONFIRMED as the same recurring BUG CLASS though — 3rd live instance in this file family: reports.ts get_financial_summary (:308-328, FIX-BCTC-SERVE-GATE-FINANCIAL-REPORTS) already carries a narrower version of the same fix (gates on validation_status=pending_extraction, honest message, but still no fallback to an older COMPLETE period) — not in scope for this P0 (not the reported live outage), flagged for a P2/P3 follow-up row once this ships. compare_financials (reports.ts:430) is NOT affected — both periods are mandatory explicit inputs, no implicit-latest selection exists there. bctcSeriesTools.ts/getBctcReportIdTool.ts/tickerIntelligenceTools.ts/compareTools.ts also have ORDER BY sort_key DESC but were NOT read this session (out of this S-size row scope) — flagged for SPIKE-BCTC-Q1-2026-SERVABILITY-CENSUS to sweep, do not mint a duplicate census row.\n\nFIX DESIGN (full detail + code sketch in brief §4): scope the fallback to the no-explicit-year/quarter call path ONLY (explicit {year,quarter} requests must keep returning an honest per-period answer for that exact period — no silent substitution). For the no-filter path, replace the single LIMIT 1 fetch with a bounded CANDIDATE_WINDOW=6 newest-periods scan, reuse the EXISTING exported checkPublishability gate (already covers PUB-1..8 in one place — extend not duplicate) to pick the newest candidate that actually passes; fall through to todays unchanged rejection behavior if none in the window qualify (no new failure mode). Emit an honest fallback note (same FR-DEGRADE-01 transparency philosophy already used in this file for VPS staleness) when a non-newest period is served, e.g. \"Ky moi nhat (2026-Q2) chua duoc trich xuat - hien thi ky gan nhat co du lieu (2026-Q1).\"\n\nRISK FLAGS: explicit-period behavior must not change (branch on year===undefined&&quarter===undefined specifically); PUB-1 own known pre-existing caveat re: legacy-pipeline rows with stale refine_status default is adjacent but not worsened by this fix, only surfaced slightly more often across 6 candidates instead of 1 (QA test-design awareness note, not a blocker); no new domain/application layer extraction warranted for one call site (YAGNI) — if a 4th instance of this class turns up during the servability census, THAT is the trigger to extract a shared selectServableFinancialReport() helper, not now.\n\nTEST STRATEGY (brief §6): extend apps/mcp-server/src/__tests__/240-bctc-full.test.ts (existing fixture helpers, DB default refine_status=DONE). 5 cases: (1) RED-then-GREEN core case — 2026-Q1 DONE + 2026-Q2 PENDING shell, no year/quarter filter, must serve Q1 + fallback note, reproduces this row verification_gate as a unit test; (2) negative control — explicit {year:2026,quarter:Q2} must still return the Q2-specific PUB-1 rejection, proves explicit path untouched; (3) no usable period in window at all — unchanged \"Chua co du lieu BCTC\" behavior; (4) multi-period skip — DONE, then FAILED, then PENDING shell, must skip both unusable and serve the DONE one; (5) regression — existing zero-rows-at-all test at :475 stays green. Live verification gate per this row AC is the gateway call for FPT/HPG/VCB post-deploy — SAME user-gated-rebuild caveat as the sibling row (do not rebuild autonomously; surface the rebuild request explicitly to QA/PO, do not assume or skip the live gate).\n\nSTANDARD DETECTION: BUG-FIX/REFACTOR in-zone, no new primitives -> BUILD-STANDARD: not-applicable (skip).",
+        "updated_by": "architect"
       },
       {
         "id": "FIX-AUDIT-OUTPUT-CONTRACT-SIGNALQUEUE-ROWS-WRITTEN-SELFREPORT-MISMATCH",
@@ -12232,6 +12210,33 @@
         "status_note": "[QA] Review Record (direct-commit verify): Verified commit 9fe706fa2 on main ancestry (git merge-base --is-ancestor). git show --stat matches claimed file set exactly (scripts/devteam-review-claim-qa-drain.jq, scripts/audits/devteam-dispatch-gate-satisfiability.sh), zero foreign files. Read the full diff directly (not the dev's review_note alone): the .head write in the review[]->qa[] claim branch is now CONDITIONAL on $head_free (.head.status in {idle,done} OR .head.active_task_id==null) -- else-branch preserves .head byte-identical; mirrors devteam-wrapper-autoclose.jq:122-128's proven guard shape (claim-INTO-head direction); review[]->qa[] lane-move logic itself is byte-unchanged (only the trailing .head assignment block changed). Independently re-ran scripts/audits/devteam-dispatch-gate-satisfiability.sh myself rather than trusting the PO-attested baseline_pass:true claim -- fresh run: exit 0, 57 [PASS] / 0 [FAIL], including the new AC-QADRAIN-HEAD-GUARD negative (.head byte-identical when a different task busy, lane-move still happens) + positive (.head IS written when idle) controls, all passing. bash scripts/audits/mock-guard.sh --files on both touched files -- PASS (\"No production source files to scan\" -- .jq/.sh fall outside its .ts/.py/.go scan scope by design). No TS files touched by this commit -- bun test/tsc structurally N/A (Smart-Skip); the audit script itself IS this row's targeted regression suite and is fully green. Row was dispatched OUTSIDE scripts/devteam-review-claim-qa-drain.jq's own picker (PO Step-2 S4 UNBLOCK, direct-execute) since this row IS that picker's own head-write fix -- running it through the picker it patches would be circular/deadlocked. VERDICT: APPROVED, DONE_VERIFIED. scripts/devteam-review-claim-qa-drain.jq is now safe to run normally on subsequent ticks -- its own defect (unconditional .head clobber) is closed and independently confirmed, not just self-reported.",
         "qa_verified_at": "2026-08-01T01:06:46Z",
         "qa_verified_by": "qa"
+      },
+      {
+        "id": "FIX-DEVTEAM-SECONDARY-DRAIN-NO-SELF-TARGET-RESOLVER-CASE",
+        "type": "FIX",
+        "title": "SECONDARY-Drain resolver has no next_agent==\"dev-team\" case — it hands dev-team a row targeting dev-team, which dev-team must refuse (anti-recursion), stranding the row every tick. The script own header already enumerates 5 such rows",
+        "status": "DONE_VERIFIED",
+        "priority": "P1",
+        "size": "S",
+        "zone": "cross-service/",
+        "owner": "po",
+        "next_agent": "architect",
+        "created_at": "2026-08-05T09:10:11Z",
+        "created_by": "po (dev-team triage tick 2026-08-05T08:37Z)",
+        "verdict": "MECHANISM-CONFIRMED-IN-THE-SCRIPT-OWN-DOCUMENTATION",
+        "source": "telegram-report 4422 (dev-team bug-channel, 2026-08-05T08:57:47Z) + live read of scripts/devteam-review-claim-secondary-drain.jq",
+        "verification_gate": "secondary_drain_never_returns_a_row_whose_resolved_target_is_dev_team",
+        "status_note": "AC-1: scripts/devteam-review-claim-secondary-drain.jq never resolves secondary_dispatch_target to \"dev-team\". AC-2: replay the 5 enumerated dev-team-targeted review rows through the script and assert each resolves to a spawnable non-dev-team agent. AC-3: OPS-BCTC-BANK-2025Q4-ENRICH-0ROW-REPARSE (repointed to architect by PO this tick) is no longer the only unstranding, i.e. the fix is in the resolver and not hand-applied per row.",
+        "note": "LIVE TRIGGER: dev-team SECONDARY-Drain claimed review[] row OPS-BCTC-BANK-2025Q4-ENRICH-0ROW-REPARSE this tick, whose resolved secondary_dispatch_target was \"dev-team\" — its own next_agent field, literally. dev-team correctly REFUSED to Agent()-spawn itself (non-negotiable anti-recursion guard) and reported the gap. The row was claimed, could not be dispatched, and was left stranded with secondary_claimed_at set.\n\nMECHANISM CONFIRMED BY READING THE SCRIPT, NOT INFERRED: scripts/devteam-review-claim-secondary-drain.jq selects on `(.value | effective_next_agent($detail_items)) != \"qa\"` (line 114). effective_next_agent (scripts/lib/devteam-eligibility.jq) resolves to the row next_agent when present-non-empty, ELSE the string \"po\". So there is exactly ONE defaulting case, null->po, and every non-null value passes through verbatim — including \"dev-team\". There is no self-target guard anywhere in the selection or the claim stamp.\n\nTHIS IS NOT A ONE-OFF. The script own header comment (lines 20-21) already enumerates the live distribution it was written against: SECONDARY(next_agent!=\"qa\")=44 across 12 distinct non-null next_agent values, itemised as `ops=8, dev-team=5, po=5, ...`. The author counted five dev-team-targeted rows and still shipped no case for them. So four more rows behind this one will strand identically, one per tick, each burning a claim and a bug-channel report. Rate of recurrence is bounded only by how often SECONDARY-Drain reaches them.\n\nFIX SHAPE (architect to choose): either (a) extend the resolver default so next_agent==\"dev-team\" resolves to \"po\" exactly as null does — cheapest, consistent with the existing single defaulting rule, and correct because a dev-team-targeted review row is by definition one nobody has triaged to a real owner; or (b) exclude self-targeted rows from the SECONDARY selection entirely and surface them on a PO sweep instead. Do NOT fix by hand-editing the 5 rows: PO already repointed one of them this tick and that is a symptom patch, not the root cause.\n\nRELATED STANDING MEMORY: feedback_devteam_flow_needs_nested_agent_spawn_subagent_cannot — dev-team cannot Agent()-spawn at all from the subagent context, re-confirmed live this tick by telegram-report 4411 (2026-08-05T06:49:38Z). The anti-recursion refusal is therefore correct behaviour and must NOT be relaxed as the fix.",
+        "related": [
+          "OPS-BCTC-BANK-2025Q4-ENRICH-0ROW-REPARSE",
+          "telegram-report:4422",
+          "telegram-report:4411"
+        ],
+        "updated_at": "2026-08-05T09:29:16Z",
+        "commit": "4a6d53151",
+        "updated_by": "architect (direct-implement)",
+        "architect_review_note": "Direct-implemented (own file family; task explicitly authorized direct-implement at architect judgment for this S-size fix). resolved_secondary_dispatch_target() (scripts/lib/devteam-eligibility.jq) now treats next_agent==\"dev-team\" the same as null/absent -- falls back to \"po\" instead of passing it through verbatim, closing the self-target resolver gap that stranded review[] row OPS-BCTC-BANK-2025Q4-ENRICH-0ROW-REPARSE. AC-1: grep-confirmed resolved_secondary_dispatch_target has exactly ONE caller repo-wide (devteam-review-claim-secondary-drain.jq); the def never returns \"dev-team\" post-fix (verified via new regression test, 5/5 pass). AC-2/AC-3: live read-only re-query (no write) confirms all 4 currently-live dev-team-targeted review[] rows (FIX-BCTC-FPT-BT5-BALANCE-GATE, FIX-MACRO-THRESHOLD-FXFLOOR-OVERCLAMP, FIX-FOREIGN-FLOW-BULLETIN-UNAVAIL-STRING, FIX-DRAIN-TEST-HARNESS-ORCH-HELPER-COPY-LIST) now resolve to \"po\" -- fix is in the resolver, not hand-applied per row. Zone cross-service/ (pure jq+bash+md, scripts/lib + docs/agents/dev-team/flow/main.md prose update -- no apps/ TS/Go touched, no orch-state schema change). Regression: scripts/devteam-eligibility-resolved-secondary-dispatch-target.test.sh (5/5 pass, new); scripts/orch-backlog-stub.test.sh (7/7 pass, re-run, sibling predicate unaffected). Decision journal: sprint-COWORK-GUARANTEED-SLOT-CATCHUP-architect-2.md STEP architect-S25."
       }
     ],
     "head": {
