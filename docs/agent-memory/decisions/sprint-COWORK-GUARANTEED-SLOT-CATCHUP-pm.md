@@ -113,3 +113,13 @@ PIPELINE: continue (P0, decomposition-only, no code changes in this cycle)
 
 ---
 
+### STEP pm-S6 · FIX-BCTC-FALLBACK-SHELL-REPORTS-STRUCTURALLY-UNEXTRACTABLE Decomposition · pm · 2026-08-05T09:40:22Z
+**task-id:** FIX-BCTC-FALLBACK-SHELL-REPORTS-STRUCTURALLY-UNEXTRACTABLE
+**what-done:** Decomposed architect's brief (docs/architecture-briefs/2026-08-05-fix-bctc-fallback-shell-reports-structurally-unextractable.md) into 2 sequenced tasks: FIX-BCTC-FALLBACK-SHELL-REPORTS-UNEXTRACTABLE-write (status TODO, no deps, next_agent dev-mcp-server — swap isValidUuid format-gate for a DB existence-gate across pushBctcLayoutHandler.ts/pushBctcTableHandler.ts/pushBctcMdTablesHandler.ts) and FIX-BCTC-FALLBACK-SHELL-REPORTS-READ-SIDE-FAST-FOLLOW (status BACKLOG, depends_on=[write-task], the ~14 read-side isValidUuid call sites architect flagged out-of-scope). Handoffs at docs/handoffs/FIX-BCTC-FALLBACK-SHELL-REPORTS-{UNEXTRACTABLE-write,READ-SIDE-FAST-FOLLOW}.md. Full narrative (options considered, sizing rationale) in the original entry PM authored this same cycle at docs/agent-memory/decisions/sprint-FIX-BCTC-FALLBACK-SHELL-REPORTS-STRUCTURALLY-UNEXTRACTABLE-2026-08-05T09:40:22Z.md — that file used a non-canonical SPRINT_ID (task-id as sprint name, not the active COWORK-GUARANTEED-SLOT-CATCHUP sprint from .sprint_goal.entries[]) and a non-matching `**Task:**` header instead of `**task-id:**`, so it would not satisfy DJ-GATE-1's grep pattern (docs/protocols/agent-chaining-protocol.md:59-63) for this task-id; router (dev-team) added this correctly-formatted entry at the canonical path so the gate can find it. No new decision made here — this is a compliance backfill of pm-S6's own prior work, not a re-litigation.
+
+**why-decision:** Parent architect design was complete; PM's decomposition (unified single write-side task vs 3-way split, fast-follow minted now with explicit depends_on rather than deferred) is documented in full in the original (non-canonical-path) entry, unchanged.
+
+**why-change:** No change to PM's decision — only the journal's discoverability was corrected.
+
+---
+
