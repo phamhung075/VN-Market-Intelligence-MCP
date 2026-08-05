@@ -134,8 +134,8 @@
     "does_not_consume_wip": true
   },
   "signal_queue": {
-    "_updated_at": "2026-08-05T10:33:32Z",
-    "_updated_by": "router",
+    "_updated_at": "2026-08-05T10:47:44Z",
+    "_updated_by": "cowork-team (0a drain)",
     "archive": [],
     "rows": [
       {
@@ -2195,6 +2195,32 @@
         "triaged_by": "router",
         "triaged_at": "2026-08-05T10:33:32Z",
         "triage_note": "DUPLICATE of already-resolved decision. PO already answered this exact question 2026-07-23 (signal janitor-health-recheck-writer-retired-20260723, status=triaged, DECISION=RETIRE, no board task, let 30d rule drain the directory). Re-fired because memory-prune-sweep.sh scripts/agents-flow/memory-prune-sweep.sh:109 idempotency guard only checks docs/signals/ (live inbox) for a prior marker file, never docs/signals/processed/ (where drain-signals.js moves a successfully-processed marker) — structurally guaranteed to recur every 6h cycle forever. Root cause tracked as FIX-JANITOR-HEALTHRECHECK-IDEMPOTENCY-GUARD-MISSES-PROCESSED-DIR. No new PO decision needed — original RETIRE decision stands."
+      },
+      {
+        "id": "sys-20260805T103434-24be",
+        "ts": "2026-08-05T10:34:34Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "signal_feedback",
+        "summary": "A-21 WARN: mcp-server 6 windowed crashes in 4h window (alert_threshold=2)",
+        "severity": "WARN",
+        "status": "READ",
+        "payload_ref": null,
+        "provenance": "detector",
+        "audit_cycle_tag": null
+      },
+      {
+        "id": "sys-20260805T104107-762a",
+        "ts": "2026-08-05T10:41:07Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "microservice_degraded",
+        "summary": "rag-service memory pressure: 97.51% of 768MiB (748.9MiB used)",
+        "severity": "WARN",
+        "status": "READ",
+        "payload_ref": null,
+        "provenance": "detector",
+        "audit_cycle_tag": "cron:auditor-t1:2026-08-05T10:30Z"
       }
     ],
     "last_triaged_at": "2026-07-29T06:25:00Z",
