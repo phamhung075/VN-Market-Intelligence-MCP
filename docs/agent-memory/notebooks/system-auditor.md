@@ -1,3 +1,36 @@
+## c25 · 2026-08-05T10:11:02Z
+### Audit Run Tier-1 (10:00–10:11 UTC 2026-08-05)
+- Tier: 1 | Containers: 13 checked (all UP) | Health endpoints: 5/5 OK
+- Memory: rag-service 97.77% (FAIL, persistent WARN issue), mcp-server 10.63% (PASS — recovered)
+- A-20 multi-probe: 3/3 pass | A-21 windowed crashes: 0 | Disk: 39% (OK)
+- Anomalies: 1 recurring (0 critical, 1 warn, 0 info) | Status: DEGRADED
+- Pattern: rag-service sustained high memory ~96-98% range since 07:41:37Z; mcp-server recovered
+
+Fire-election: tick=2026-08-05T10:00Z (`*/30 * * * *` Tier-1 boundary) — claimed, led tick.
+
+### RAW-PROBE (2026-08-05T10:10:12Z):
+- All 13 host_runtime_set UP; Health: 5/5 OK; A-20: 3/3 pass; A-21: 0 crashes; Disk: 39%
+- **rag-service-1 memory:** 97.77% (750.9MiB / 768MiB limit) — **FAIL** (consistent with c24 96.91%)
+- **mcp-server memory:** 10.63% (326.6MiB / 3GiB) — **PASS** (recovered from c23's 94.50%)
+- Container baseline check: rag-service over threshold; mcp-server well below
+
+### Findings: A-30 WARN (Recurring)
+- **rag-service-1 A-30:** FAIL at 97.77% memory — **WARN-severity** finding
+  - This is a **RECURRING dedup match** (dedup key: mem_pressure:rag-service:A-30)
+  - Last emitted: 2026-08-05T07:41:37Z (2h 29m ago, within 7d dedup window)
+  - Current finding: **SKIP-dedup** (already tracked per 7d policy, no new signal)
+  - Continues pattern from c24 (96.91%) — flat-lined high memory, approaching OOM
+  - Mapped to backlog: FIX-RAG-DEPLOY-MEMORY (known recurring issue)
+  - Action: PLAN-ONLY detection; remediation is ops/developer responsibility
+- **mcp-server A-30:** PASS at 10.63% memory
+  - State change from c23 (09:12Z @ 94.50% → WARN) to c25 (10:11Z @ 10.63% → PASS)
+  - Recovery confirmed after c23's escalation; A-30 verdict=FOLD (no emit)
+  - Previous cycle's signal was valid; healthy state now resumed
+- All other checks PASS (A-01–A-11 UP, A-12 health 5/5, A-20 3/3, A-21 windowed=0, A-32 disk 39%)
+
+[OUTPUT-CONTRACT] signals_posted=0 | telegram_sent=0 | signal_queue_rows_written=0 | dashboard_rows=0 | dedup_skipped=1
+CONTRACT-CONTRADICTION: NONE
+
 ## c24 · 2026-08-05T10:08:34Z
 ### Audit Run Tier-1 Follow-Up (09:54–10:08 UTC 2026-08-05)
 - Tier: 1 (follow-up dispatch) | Service: rag-service-1 | Check: A-30 memory pressure
