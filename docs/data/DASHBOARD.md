@@ -418,3 +418,15 @@
 **Mitigation:** No immediate action beyond signal routing.
 
 ---
+
+## Anomaly: A-30 · pdf-extractor memory pressure 89-96% (no reclamation)
+**Severity:** WARN | **Date:** 2026-08-05 | **Status:** OPEN
+**Location:** pdf-extractor service
+**Details:** Memory usage oscillating 89-96% over 30s with no garbage collection. VmPeak 6.77GB, VmHWM 2.46GB. Approaching 2.5GB container limit. Child process errors logged.
+**Impact:** Rapid memory growth without reclamation suggests leak; may lead to OOMKill. Service degraded.
+**Root cause:** Possible memory leak in pdf-extractor uvicorn process; child process tracking errors in OCR gateway suggest Tesseract process residue not cleaned.
+**Zone owner:** developer
+**Last reported:** 2026-08-05T14:34:56Z (signal sys-20260805T143448-6948, system-auditor -> po, dedup_key=microservice_degraded:pdf-extractor:A-30, WARN Telegram sent)
+**Mitigation:** No immediate action beyond signal routing.
+
+---
