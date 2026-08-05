@@ -1,8 +1,16 @@
 # Architect — Notebook
 
-**Last updated:** 2026-08-01 01:50 UTC | **Sprint:** COWORK-GUARANTEED-SLOT-CATCHUP
+**Last updated:** 2026-08-05 09:22 UTC | **Sprint:** COWORK-GUARANTEED-SLOT-CATCHUP
 
 [3 most recent cycles retained. Older cycles archived to git history.]
+
+## 2026-08-05T09:22Z — FIX-DEVTEAM-SECONDARY-DRAIN-NO-SELF-TARGET-RESOLVER-CASE (zone=cross-service/, P1/S, direct PO-mint FIX, router-observed live trigger)
+
+**Task:** `resolved_secondary_dispatch_target()` (`scripts/lib/devteam-eligibility.jq`) had exactly one defaulting case (null→"po") and passed every other `next_agent` value through verbatim — including the literal string `"dev-team"`, which dev-team's own hard anti-recursion guard can never actually dispatch (spawning the dispatcher flow from within itself). Live-confirmed strand on `OPS-BCTC-BANK-2025Q4-ENRICH-0ROW-REPARSE`; PO hand-repointed that one row as a symptom patch, 4 more live rows carried the identical shape.
+**Design:** Direct-implemented (own file family — authored BOUNDED-1/SLS/RLC/DRS/QA-Drain/SECONDARY-Drain, S24 precedent, task explicitly authorized direct-implement at architect's judgment for this S-size fix). `next_agent=="dev-team"` now falls to `"po"` too, same shape as null — the row's own suggested fix (a), generalized into the resolver instead of hand-applied per row.
+**Finding:** Read-only re-query against the live board (no write) confirmed all 4 enumerated rows (`FIX-BCTC-FPT-BT5-BALANCE-GATE`, `FIX-MACRO-THRESHOLD-FXFLOOR-OVERCLAMP`, `FIX-FOREIGN-FLOW-BULLETIN-UNAVAIL-STRING`, `FIX-DRAIN-TEST-HARNESS-ORCH-HELPER-COPY-LIST`) now resolve to `"po"` post-fix — matches PO's own triage enumeration exactly. Grep-confirmed exactly ONE caller repo-wide (`devteam-review-claim-secondary-drain.jq`) before editing — blast radius fully enumerable.
+**Output:** `scripts/lib/devteam-eligibility.jq` edited (1 def); new regression test `scripts/devteam-eligibility-resolved-secondary-dispatch-target.test.sh` (5/5 pass); re-ran `scripts/orch-backlog-stub.test.sh` (7/7 pass, sibling predicate unaffected); updated both prose call sites (`scripts/devteam-review-claim-secondary-drain.jq` header + `docs/agents/dev-team/flow/main.md` § Review-Lane SECONDARY-Drain Claim paragraph + new Reusable Scripts bullet). Decision journal `sprint-COWORK-GUARANTEED-SLOT-CATCHUP-architect-2.md` STEP architect-S25.
+**Next:** board row `backlog[]→done_verified[]`, `status:DONE_VERIFIED`, commit + push per PUSH-AUTONOMY-1.
 
 ## 2026-08-01T01:50Z — FIX-DEVTEAM-REVIEW-LANE-QA-DRAIN (zone=docs/agents/dev-team/flow/, P1/M, PLAN-ONLY, supervised, PO manual-dispatch sweep pick)
 
@@ -19,34 +27,4 @@
 **Finding:** the *actual* backlog driver is unrelated to sequential-vs-parallel: an 80-page hard cap (pdfOcrWorker.ts:261) checked against an uncapped 50%-of-total completeness threshold (pdfOcrWorker.ts:217-219) can never be satisfied for any PDF >160 pages — perpetual delete-then-re-OCR, forever, plus a real availability gap (DELETE runs before re-insert, so concurrent cache reads see zero rows mid-boot).
 **Output:** board row `in_progress[]→done_verified[]`, `status:DONE_VERIFIED`, `.head` reset to idle, SAME `orch-apply.sh` write (CANONICAL:SSOT-STATUSFLIP-LANEMOVE). New backlog row minted: `FIX-PDFOCR-PAGECAP-COMPLETENESS-THRESHOLD-MISMATCH` (P2, `apps/mcp-server/`, owner+next_agent both explicit `dev-mcp-server`).
 **Next:** flagged to po (journal, not acted here): this row's cold-detail entry carried `.route` only (no `.owner`/`.next_agent`) — BOUNDED-1's NON-DEV-OWNER/NEXT_AGENT gates don't key on `.route`, so it silently auto-promoted past them; `HARDEN-NOTEBOOK-WRITE-GATE-AC5-BLOCKING` has the identical shape live today. Distinct from the already-closed `FIX-DEVTEAM-BOUNDED1-NONDEV-OWNER-BOARD-FALLBACK-GATE` (that one covered board-level non-dev `.owner` presence, not detail-level `.route`-only absence).
-
-## 2026-07-31T02:41Z — FIX-SUBAGENT-BRANCH-CHECKOUT-HIJACKS-SHARED-WORKING-DIR (zone=cross-service/, P1/M, direct PO-mint FIX, `po/triage-20260731T0212`)
-
-**Task:** every subagent shares ONE git working dir + ONE `HEAD`; any agent that honors a `branch:`
-field (e.g. a PM handoff) checks out that branch, and a concurrent peer's commit silently lands on
-it. 4 independent hits 2026-07-31 alone.
-**Design:** verified git has NO `pre-checkout` hook (only `post-checkout`, which cannot block the
-checkout, only revert-after + force the caller's own exit code). Chose AC-1(a): new
-`scripts/git-hooks/post-checkout`, hard-reverts any non-`main` checkout in the primary working dir
-back to `main`, `MODE=enforce` default (deliberate divergence from the sweep-guard hook's own `warn`
-default — justified: zero legitimate off-`main` state exists live today, revert is self-healing not
-blocking). Exempts linked worktrees by construction (git-dir vs git-common-dir, live-tested) so it
-does not foreclose `SPIKE-C44` later. Rejected (b) worktree-isolation-for-everyone as primary (blast
-radius = whole fleet vs `SPIKE-C44`'s own 2-developer scope, itself unstarted) and (c)
-schema-level-ban as this row's own primary layer (the `branch:` field lives in free-form markdown,
-nothing for a schema to bind to).
-**Finding:** 5 live flow docs (`pm/flow/main.md:75`, `developer/flow/main.md:51-54+158`,
-`developer/flow/microservice-main.md:53-57+161`, `qa/flow/main.md:37,42,114-124,219-224`,
-`fixer/flow/*.md:34,36,60,110`) still actively author/verify/honor the `task/NNN-*` convention
-today, post-dating `UC-RDL-P7` STEP1's 2026-07-17 ruling — one of them fired hours before this brief
-on the row's own cited incident file. Shipping the hook with zero coordination breaks
-`developer/main.md`'s own `VERIFY` line for every M/L task; flagged as a rollout coordination note
-for PM, not implemented here (`UC-RDL-P7` STEP2 already owns those 5 files, `agent-father` zone).
-**Output:** `docs/architecture-briefs/2026-07-31-fix-subagent-branch-checkout-hijacks-shared-working-dir.md`
-— AC-4 live positive control satisfied via 5 scenarios in a disposable scratch repo (control
-reproduces the hijack; guarded prevents it; non-destructive-conflict edge case fails loud without
-discarding uncommitted work; linked-worktree exemption; re-entrancy, 0.39s, no recursion).
-**Next:** board row `backlog[]→ready[]`, `next_agent: pm`, `architect_brief`/`architect_review_note`
-written via `orch-apply.sh`. Did not implement `scripts/git-hooks/post-checkout` myself (design-only
-per `not_my_job`); did not touch the 5 flow docs (`UC-RDL-P7`'s scope, not this row's — AC-3 dedup).
 
