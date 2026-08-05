@@ -1,3 +1,39 @@
+# System Auditor — Cycle Log
+
+Per docs/agent-memory/AGENT_STARTUP.md.
+
+## c28 · 2026-08-05T10:41:01Z
+### Audit Run Tier-1 (10:30–10:41 UTC 2026-08-05) [RE-RUN post-c27]
+- Tier: 1 | Containers: 13 checked (all UP) | Health endpoints: 5/5 OK
+- Anomalies: 0 new (0 critical, 0 warn, 0 info) | 1 recurring/dedup-skipped
+- Status: DEGRADED
+
+Fire-election: tick=2026-08-05T10:30Z (`*/30 * * * *` Tier-1 boundary) — claimed, led tick. Note: c28 re-run of same tick (c27 ran 10:30 tick, router pre-gate FAILURE on rag-service mem triggered re-audit).
+
+### RAW-PROBE (2026-08-05T10:39:53Z):
+- All 13 host_runtime_set UP; Health: 5/5 OK (mcp-server:3000, api-gateway:4000, macro-indicators:5004, pdf-extractor:5001, frontend:3001)
+- A-20 pdf-extractor multi-probe: 3/3 pass (3×HTTP200)
+- A-21 windowed crashes: 0 (no new crashes since c27 10:13:07Z baseline)
+- A-30 memory (mcp-server): 8.10% ✓ PASS (baseline below 85% investigate-gate — deep-probe SKIP)
+- A-30 memory (rag-service): 97.51% (RECURRING WARN, dedup-skipped) — matches c27 97.51% exactly
+  - Headroom: 19.1 MiB free of 768 MiB total (below 40 MiB floor threshold)
+  - Dedup key: mem_pressure:rag-service:A-30
+  - Last tracked (dedup ledger): 2026-08-05T10:11:02Z (30 minutes prior to this cycle)
+  - Decision: Within 7-day dedup window → SKIP-dedup (BUG telegram not sent, signal_queue row written)
+  - Signal ID: sys-20260805T104107-762a | DASHBOARD row appended
+- Disk: 39% capacity ✓ PASS
+
+### Findings: A-30 recurring (dedup-enforced)
+- **A-30 RECURRING (DEDUP-ENFORCED):** rag-service memory 97.51% (19 MiB free, below 40 MiB floor)
+  - Persistent high-memory condition (c25: 97.77%, c27: 97.51%, c28: 97.51%) — sustained >97% for >3h
+  - Dedup match: mem_pressure:rag-service:A-30 last sent 2026-08-05T10:11:02Z (now 30m ago)
+  - Signal emitted: sys-20260805T104107-762a (dedup_key: mem_pressure:rag-service:A-30)
+  - Outcome: SKIP-dedup (no BUG telegram within 7d window), signal_queue row written, DASHBOARD appended
+  - Tracked backlog: FIX-RAG-DEPLOY-MEMORY (ops/developer responsibility)
+
+[OUTPUT-CONTRACT] signals_posted=1 | telegram_sent=0 | signal_queue_rows_written=1 | dashboard_rows=1 | dedup_skipped=1
+CONTRACT-CONTRADICTION: NONE
+
 ## c27 · 2026-08-05T10:35:09Z
 ### Audit Run Tier-1 (10:30–10:35 UTC 2026-08-05)
 - Tier: 1 | Containers: 13 checked (all UP) | Health endpoints: 5/5 OK
