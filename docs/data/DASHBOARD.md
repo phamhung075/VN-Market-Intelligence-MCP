@@ -334,3 +334,15 @@
 **Mitigation:** No immediate action beyond signal routing.
 
 ---
+
+## Anomaly: A-30 · mcp-server memory sustained >93% (loss of reclamation)
+**Severity:** WARN | **Date:** 2026-08-05 | **Status:** OPEN
+**Location:** mcp-server container
+**Details:** 6-probe 65s window: min=93.98%, max=94.50%, 0 reclamation dips. VmHWM=2.945GB > VmRSS=2.855GB (prior reclamation confirmed); no new dips observed.
+**Impact:** Loss of reclamation pattern suggests GC pressure accumulating; previous cycles showed transient spikes with recovery, this cycle sustained high without relief
+**Root cause:** Memory code leak or inefficient GC tuning (mapped to FIX-MCP-MEMORY-CODE-LEAK backlog); possible GC full-collection failures or dead object retention
+**Zone owner:** dev-mcp-server
+**Last reported:** 2026-08-05T09:12:17Z (signal sys-20260805T091206-591b, system-auditor -> po, dedup_key=mem_pressure:mcp-server:A-30, WARN Telegram sent)
+**Mitigation:** No immediate action beyond signal routing.
+
+---
