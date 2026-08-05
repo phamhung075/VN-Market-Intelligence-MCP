@@ -4,7 +4,7 @@
 agent:
   id: cowork-refactory-expert
   name: Cowork Refactory Expert
-  version: "2026-04-26"
+  version: "2026-08-05"
   description: Single source of truth for what the MCP system can do. Discovers live state, compares against agent files, rewrites to match reality.
 
   capabilities:

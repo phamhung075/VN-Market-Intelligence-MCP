@@ -1,24 +1,5 @@
 # Agent Father — Notebook
 
-## Clean (router-dispatched, PO manual-dispatch DRS-STRANDED-OFF-ALLOWLIST) 2026-08-01T00:00:00Z TE-T14
-- `docs/agents/system-auditor/flow/main.md` Step 0c was prose `Read docs/data/system-map.json and
-  extract:` + a 6-bullet key-path list underneath — the bullets never actually gated the Read, so
-  the step full-read the whole 1757L/~50.6KB file (~12.7k tok) every `runtime_or_fetch_or_db_audit`
-  cycle regardless. Rewrote as a single `jq -c` projection over the same 6 key-paths (microservices
-  id/external_port/zone, host_runtime_set.services + not_deployed_by_design, data_sources
-  cadence/threshold/geo_blocked, databases id/path, zones id/specialist) → ~4.8KB/~1.2k tok, plus a
-  `jq`-unavailable fail-loud fallback (full-read same paths by hand).
-- Verified live before writing: grepped real field names off the file (`external_port` singular,
-  not the row's paraphrased `external_ports`) rather than trusting the task description's bullet
-  text; ran the exact jq command against the live file post-edit — exit 0, all 6 arrays populated
-  (11/12/0/28/7/12). Grepped fleet-wide for `Step 0c` and `jq.*system-map.json` callers — no other
-  file references this step's old prose shape, no cascade edit needed.
-- Did NOT touch `orch-state.json` (`in_progress[]→review[]` lane-move) — own init.md
-  `commit_zone.excluded` names it "NEVER in agent-father commits except the ONE allowed
-  signal-queue DONE-mark", and this is a task_board row, not signal_queue. Same precedent as
-  TE-T12/S16: declined the dispatch prompt's instruction to run `orch-apply.sh` myself; supplied
-  the exact transform in RETURN for dev-team/router to apply.
-
 ## Fix (dev-team dispatch, PO triage DRS-STRANDED-OFF-ALLOWLIST) 2026-08-01T01:20:00Z TE-T21
 - `.claude/skills/task-lock/SKILL.md` 283L→186L. §Session-Presence Row (73L) was near-verbatim
   duplicate of dispatch-claim's own claim/heartbeat/current_task-reclaim/non-adoptable blocks —
@@ -120,3 +101,36 @@
   asks for this) — `scripts/` is outside `commit_zone.allowed`, same boundary as S1-S20 precedent
   above. Documented the exact grep predicate as a spec inline in `main.md` § Regression verifier
   and handed off via RETURN (NEXT: developer/architect) rather than widening my own commit.
+
+## Keep (maintenance, router-dispatched, scheduled daily) 2026-08-05T12:57:56Z
+- Pre-Check gate (CADRAT-3): `git diff --name-only HEAD~3..HEAD` matched zero `.claude/agents/*.md`
+  or `docs/agents/*/flow/*.md` paths (last 3 commits touched notebooks + signal files only) →
+  correctly SKIPPED Steps 1-2 orphan+roster scan, fell through to Steps 3-5 with empty
+  scan-orphans output (0 ORPHAN/MISSING/UNREGISTERED/PHANTOM).
+- Top-5 sweep ran against all 42 `docs/agents/*/init.md` (the real full agent-definition files —
+  `.claude/agents/*.md` are thin bootstrap pointers only, confirmed 0/42 carry fail-loud-
+  protocol/boundary_rules inline by design). Checks 1/3/4 (fail-loud-protocol, boundary_rules,
+  flow-path resolves + Error Boundary present in flow main.md) PASS fleet-wide except
+  `semble-search` (fails #1+#3) — NOT auto-fixed: it's a Task-tool utility subagent (haiku
+  model, wraps `semble` CLI) outside the guide's two agent families (Cowork/Dev Team), so
+  bolting on full-lifecycle sections may be architecturally wrong, not a genuine gap. Escalated
+  to PO: bring into compliance vs. document as an explicit guide exception (utility/tool-wrapper
+  class) — guide currently has zero carve-out for this shape.
+- Check #5 (version >90d stale): 13/42 flagged — architect/ba/code-janitor/cowork-refactory-
+  expert/fixer/idea-forge/ops/pm/po/qa-responder/qa (2026-04-26, 101d) + dev-mcp-server/
+  dev-pdf-extractor (2026-05-06, 91d). Did not blind-stamp: spot-read 2 of the 13 in full
+  (po, architect — confirmed every cross-referenced path in tools_package/flow.default/
+  knowledge.always_load actually resolves) plus reconfirmed all 13 already pass Checks
+  #1/#3/#4 before bumping `version:` → `2026-08-05` on all 13, the documented mechanical
+  auto-fix (sweep-fixes.md Step 4). Guide itself defines no `version` field semantics (grepped
+  guide + all 6 guide-*.md parts, zero hits) — treated the bump as "confirmed still-compliant
+  as of this date", not a fabricated content claim.
+- Step 5 stale-notebook report (info only, no action): 4/46 notebooks >30d —
+  semble-search/market-analyst/idea-forge (94d), qa-responder (69d).
+- FYI-only per dispatch note (NOT actioned — keep.md has no backlog-scan step, so this wasn't
+  "reached" this cycle): `FIX-AUDITOR-A30-PROBE-SH-MISSES-RAG-SERVICE-CONTAINER` (P1,
+  next_agent=agent-father) — `docs/agents/system-auditor/probe.sh`'s A-30 mem-creep deep-probe
+  is scoped to `MCP_CONTAINER` only (derived line ~123, deep-probe block ~138-159), no
+  rag-service loop; live-verified the gap myself by reading the script. Left untouched per the
+  explicit "not a directive to go out of your way this cycle" instruction — surfacing in RETURN
+  for developer/architect.

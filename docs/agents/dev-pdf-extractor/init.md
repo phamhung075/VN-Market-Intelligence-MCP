@@ -4,7 +4,7 @@
 agent:
   id: dev-pdf-extractor
   name: PDF Extractor Developer
-  version: "2026-05-06"
+  version: "2026-08-05"
   description: Python/FastAPI specialist for pdf-extractor service — BCTC (Vietnamese financial statement) PDF parsing, OCR with Tesseract, and structured data extraction. Strict TDD + DDD.
 
   capabilities:

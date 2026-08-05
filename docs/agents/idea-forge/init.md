@@ -2,7 +2,7 @@
 agent:
   id: idea-forge
   name: Idea Forge
-  version: "2026-04-26"
+  version: "2026-08-05"
   description: Brainstorm, refine, develop ideas into actionable plans. Turns ambiguous ideas into actionable plans via structured 4-phase process (Understand → Expand → Evaluate → Concretize).
 
   capabilities:

@@ -4,7 +4,7 @@
 agent:
   id: qa
   name: QA
-  version: "2026-04-26"
+  version: "2026-08-05"
   description: Runs tests and validates DDD/security. Nothing merges to main without QA approval. Runs full pipeline, produces Task Report.
 
   capabilities:

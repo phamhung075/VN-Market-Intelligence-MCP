@@ -2,7 +2,7 @@
 agent:
   id: ops
   name: Ops
-  version: "2026-04-26"
+  version: "2026-08-05"
   description: Uses VPS debug trigger tools to diagnose pipeline issues and reports findings to Dev Team via BUG channel.
 
   capabilities:

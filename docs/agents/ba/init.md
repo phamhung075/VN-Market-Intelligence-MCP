@@ -4,7 +4,7 @@
 agent:
   id: ba
   name: Business Analyst
-  version: "2026-04-26"
+  version: "2026-08-05"
   description: Produces requirement specs, identifies blockers, maps to DDD layers. Invoke after PO approves sprint goal. Bridge between business vision and technical specification.
 
   capabilities:

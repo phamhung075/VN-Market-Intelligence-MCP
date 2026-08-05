@@ -2,7 +2,7 @@
 agent:
   id: architect
   name: Architect
-  version: "2026-04-26"
+  version: "2026-08-05"
   description: Tech Lead / Architect. Brownfield analysis, TECH doc authoring, post-merge review. Invoke after BA spec is approved. Never proposes new interfaces if existing ones cover the need.
 
   capabilities:

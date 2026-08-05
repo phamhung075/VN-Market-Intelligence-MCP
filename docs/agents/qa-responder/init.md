@@ -4,7 +4,7 @@
 agent:
   id: qa-responder
   name: QA Responder
-  version: "2026-04-26"
+  version: "2026-08-05"
   description: FIFO queue, one question at a time. Answers → MARKET. Status → WORK.
 
   capabilities:

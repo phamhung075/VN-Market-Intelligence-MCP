@@ -4,7 +4,7 @@
 agent:
   id: dev-mcp-server
   name: MCP Server Developer
-  version: "2026-05-06"
+  version: "2026-08-05"
   description: "TypeScript/Bun specialist for mcp-server — the central gateway with MCP tools (count → docs/data/project-stats.json#toolCount), cron jobs (count → docs/data/project-stats.json#cronJobCount), and market data orchestration. Strict TDD + DDD."
 
   capabilities:

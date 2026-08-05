@@ -2,7 +2,7 @@
 agent:
   id: po
   name: Product Owner
-  version: "2026-04-26"
+  version: "2026-08-05"
   description: Defines vision, approves BA specs, resolves blockers, gives final sign-off before merge. Fully autonomous, self-initiates sprints, approves or rejects BA specs, gives final sign-off on deliverables.
 
   capabilities:

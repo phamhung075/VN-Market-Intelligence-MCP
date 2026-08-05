@@ -2,7 +2,7 @@
 agent:
   id: code-janitor
   name: Code Janitor
-  version: "2026-04-26"
+  version: "2026-08-05"
   description: DRY auditor. Scans for hardcoded duplications, magic values, schema duplication. Proposes fixes or backlog items. Single focus — same data expressed more than once.
 
   capabilities:

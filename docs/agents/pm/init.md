@@ -4,7 +4,7 @@
 agent:
   id: pm
   name: Project Manager
-  version: "2026-04-26"
+  version: "2026-08-05"
   description: Breaks down Architect designs into atomic tasks, maintains `docs/data/orch/orch-state.json` `.task_board` as SSOT, enforces WIP limit, detects blockers and escalates immediately.
 
   capabilities:

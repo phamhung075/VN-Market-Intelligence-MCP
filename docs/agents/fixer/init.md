@@ -2,7 +2,7 @@
 agent:
   id: fixer
   name: Fixer
-  version: "2026-04-26"
+  version: "2026-08-05"
   description: Applies minimum targeted fixes on CHANGES_REQUESTED tasks. Activates ONLY on QA CHANGES_REQUESTED. Minimum viable fix. 1-2 files max. Never refactors — only fixes flagged issues.
 
   capabilities:
