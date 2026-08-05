@@ -1,0 +1,55 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-08-05T08:21:50Z",
+    "matched_slots": [
+      "alert-commander-market"
+    ],
+    "won_slots": [
+      "alert-commander-market"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/alert-commander/flow/main.md"
+    ],
+    "silent": false,
+    "drift_min": 3,
+    "errors": [],
+    "pressure_mode": "adaptive",
+    "calendar_status": "open",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "chef_mutex_applied": false,
+    "due_reasons": {
+      "alert-commander-market": "cron"
+    },
+    "cadence_minutes": {
+      "alert-commander-market": null
+    },
+    "last_fired_timestamp": "2026-08-05T08:21:37Z",
+    "last_fired_slots": [
+      "alert-commander-market"
+    ],
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "08:15",
+    "leader_lock": "acquired",
+    "dev_head": "unknown",
+    "devq": 5,
+    "signal_backlog": 19,
+    "note": "single-slot tick (alert-commander-market, cron-driven). No collision (1 slot). cycle_snapshot_promoted:false now 7th consecutive tick (docs/data/cycle-snapshot-latest.json stuck since 2026-07-31 06:52:28Z) — already escalated via cow-20260805T070907, not re-minted. 1 NEW to=po signal (sys-20260805T081846-1853, db_integrity_breach WARN, 22 orphaned alerts) left untouched — PO scope, not cowork-team's."
+  },
+  "priority": "low",
+  "createdAt": "2026-08-05T08:21:50Z",
+  "_processed": {
+    "fingerprint": "4f052c30c688e562fdc6eda6f2531d5b8e6daf8bb5a59ae9ca2723a26f5ad8ea",
+    "processedAt": "2026-08-05T08:41:27Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

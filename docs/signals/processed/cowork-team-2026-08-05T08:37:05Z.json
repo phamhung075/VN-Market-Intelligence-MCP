@@ -1,0 +1,55 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-08-05T08:37:05Z",
+    "matched_slots": [
+      "alert-commander-market"
+    ],
+    "won_slots": [
+      "alert-commander-market"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/alert-commander/flow/main.md"
+    ],
+    "silent": false,
+    "drift_min": 3,
+    "errors": [],
+    "pressure_mode": "adaptive",
+    "calendar_status": "open",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "chef_mutex_applied": false,
+    "due_reasons": {
+      "alert-commander-market": "cron"
+    },
+    "cadence_minutes": {
+      "alert-commander-market": null
+    },
+    "last_fired_timestamp": "2026-08-05T08:36:43Z",
+    "last_fired_slots": [
+      "alert-commander-market"
+    ],
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "08:30",
+    "leader_lock": "acquired",
+    "dev_head": "unknown",
+    "devq": 5,
+    "signal_backlog": 18,
+    "note": "single-slot tick. cycle_snapshot_promoted:false 8th consecutive occurrence — already escalated as cow-20260805T070907, not re-minted. 0 NEW signal_queue rows this tick (Step 0a scope check clean)."
+  },
+  "priority": "low",
+  "createdAt": "2026-08-05T08:37:05Z",
+  "_processed": {
+    "fingerprint": "c2f164954ab6155154b8175f5c4cb4d428b6da7b9404db374e68874a941f8f7e",
+    "processedAt": "2026-08-05T08:41:27Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
