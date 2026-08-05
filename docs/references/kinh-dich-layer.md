@@ -6,13 +6,13 @@
 
 Kinh Dich is the **DEFAULT layer for every stock analysis**.
 - Server: analysis tools auto-append hexagram reading to output
-- Agent: every Cowork agent MUST call `get_kinhdich_reading(ticker)` when analyzing a stock
+- Agent: every Cowork agent MUST call `get_kinhdich_reading(code)` when analyzing a stock
 
 ## Tools
 
 | Tool | Returns |
 |------|---------|
-| `get_kinhdich_reading(ticker)` | 3-layer: Quẻ chính (main), Hỗ quẻ (nuclear), Biến quẻ (changing) + Lão/Thiếu hào states + Ngũ Hành |
+| `get_kinhdich_reading(code)` | 3-layer: Quẻ chính (main), Hỗ quẻ (nuclear), Biến quẻ (changing) + Lão/Thiếu hào states + Ngũ Hành |
 | `get_market_hexagram()` | Market-wide I Ching state |
 | `run_hexagram_backtest(days)` | Historical accuracy over N days |
 | `get_transition_probabilities(hexagram_number)` | Transition probabilities to next states |
@@ -36,7 +36,7 @@ Priority lines: **Hào 3** = current price action | **Hào 5** = medium-term tre
 
 Every Cowork agent analyzing a stock:
 ```
-Call get_kinhdich_reading({ticker})
+Call get_kinhdich_reading({code})    <!-- param name is "code", not "ticker" (docs/agents/tools/list/get_kinhdich_reading.md) — 2026-08-05 alert-commander doc-self-heal, live tool call rejected "ticker" -->
 → Output: "Kinh Dịch: Quẻ {name} — {1-line trend}. Biến quẻ: {name} ({direction})"
 → Lão Dương on Hào 3 → add "Lão Dương — RSI quá mua, cảnh báo đảo chiều"
 → Lão Âm on Hào 3  → add "Lão Âm — quá bán, có thể hồi phục"
