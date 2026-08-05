@@ -2141,6 +2141,21 @@
         "status": "READ",
         "payload_ref": null,
         "provenance": "detector"
+      },
+      {
+        "id": "sys-20260805T081846-1853",
+        "ts": "2026-08-05T08:18:46Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "db_integrity_breach",
+        "summary": "alerts: 22 orphaned alerts no agent_signals (check C-08)",
+        "severity": "WARN",
+        "status": "triaged",
+        "payload_ref": null,
+        "provenance": "detector",
+        "triaged_at": "2026-08-05T08:28:16Z",
+        "triaged_by": "po",
+        "disposition": "FALSE POSITIVE - detector defect, not a data defect. RAW-verified live against the named-volume market.db 2026-08-05T08:23-08:27Z. C-08 expected=0 is mathematically unsatisfiable (24h alerts window vs 2h-TTL agent_signals correlation stubs purged by cleanExpired) AND its window over-captures via the ISO8601 strcmp bypass (as-written 40 alerts/22 orphans vs TRUE 24h 28 alerts/10 orphans; oldest admitted row 31h old). Write path is HEALTHY: alerts <=17h old are 18/18 LINKED, >=18h old are 22/22 orphaned - a pure GC-timing artifact, and every producer family appears on both sides. Claimed 1->22 growth is FALSE (true history 1 -> 121 on 07-30 -> 22; tracks alert volume). MINTED FIX-AUDITOR-C08-UNSATISFIABLE-TTL-WINDOW-AND-ISO8601-STRCMP (backlog, high, cross-service/). Dedup violation folded into FIX-AUDITOR-DEDUP-TASKBOARD-PRECHECK-NOT-ENFORCED as live instance #2 - no duplicate row minted."
       }
     ],
     "last_triaged_at": "2026-07-29T06:25:00Z",
@@ -11149,7 +11164,7 @@
         "source": "PO triage of system-auditor Tier-DATA sweep 2026-08-05T06:47Z — signal sys-20260805T065227-25f7",
         "created_at": "2026-08-05T07:06:06Z",
         "created_by": "po",
-        "updated_at": "2026-08-05T07:08:17Z",
+        "updated_at": "2026-08-05T08:29:43Z",
         "root_cause": "register.md:144-150 states an anomaly is ALREADY-OPEN and must not be re-signalled if '(a) a .task_board FIX-* task tracks its root, OR (b) a prior .signal_queue row for the same table+defect has status NEW/READ/TRIAGED/ACUTE-RESOLVED-ROOT-TRACKED'. It is pure prose with no actuator: nothing reads .task_board, nothing computes the dedup key, nothing blocks the write. On 2026-08-05 the auditor emitted CRITICAL sys-20260805T065227-25f7 for daily_ohlcv high=0/low=0 while CLEAN-OHLCV-INTEGRITY-RESIDUE-REPAIR (BACKLOG, same rows, filed at 835) and FIX-OHLCV-WRITER-INTEGRITY-CONSTRAINT-SCALE-P0 (REVIEW, the writer root) were both open on the board. Clause (a) matched exactly and was never evaluated. Compare FIX-AUDITOR-D4-WHITELIST-DATA-QUALITY-ANOMALY-PREFIX and the auditor-dedup-ledger: dedup exists for OTHER surfaces but not for the .task_board plane.",
         "secondary_defect": "The same signal shipped a fabricated root cause. Notebook c17 (commit 35104ef89) asserted 'All 336 violations are from 2026-05-15 (concentrated date)' — the actual GROUP BY returns 20 distinct dates. The agent reported a scoping conclusion it had not measured. This is the confabulation class in memory feedback_agent_selfreport_metalayer_confabulation; the fix should force the scoping query's raw output into the history entry rather than let the agent narrate it, which is the same remedy register.md:108-113 already applies to counts.",
         "files": [
@@ -11164,7 +11179,12 @@
           "AC-2 Replay the 2026-08-05 case as the regression test: with CLEAN-OHLCV-INTEGRITY-RESIDUE-REPAIR present on the board, a daily_ohlcv high=0/low=0 finding MUST be suppressed and recorded as already-open in db-integrity-history.json instead of appended to .signal_queue.",
           "AC-3 Do not validate on this one case alone — replay the last ~30 db-integrity signals against the proposed dedup key and report how many would have been suppressed and whether any TRUE positive would have been lost. Per memory feedback_fleetwide_gate_validated_on_one_file_optout_allowlist, a gate proven on a single example is not proven.",
           "AC-4 Scoping honesty: when a finding is row-count based, the history entry must carry the RAW distribution output (the GROUP BY result) as data, not an agent sentence about it. An agent-authored claim like 'concentrated on <date>' with no matching query result in the entry should be structurally impossible.",
-          "AC-5 Also cover the routing defect from the same signal: to=\"po\" + payload_ref=null were both written against an explicit spec (register.md:132-135). If the row is assembled by a helper, make the helper own to/payload_ref; if the agent hand-writes it, assert the shape post-write in the same read-back that already exists for row presence."
+          "AC-5 Also cover the routing defect from the same signal: to=\"po\" + payload_ref=null were both written against an explicit spec (register.md:132-135). If the row is assembled by a helper, make the helper own to/payload_ref; if the agent hand-writes it, assert the shape post-write in the same read-back that already exists for row presence.",
+          "AC-6 GROWTH-DELTA EXCEPTION - resolve the dedup-vs-material-regression tension explicitly, do not leave it implicit. The C-08 case is the motivating example and it cuts AGAINST a naive count-based exception: the prior PO disposition on sys-20260721T003810-2b02 literally reads Watch; revisit only if count climbs, and the count did climb 1->22, so a naive delta rule would have PASSED this signal through - yet the re-signal was still pure noise, because the count is a GC-timing x alert-volume artifact and the true history is non-monotonic (1 -> 121 on 07-30 -> 22 on 08-05). Therefore: (a) a magnitude delta alone MUST NOT re-open an already-open anomaly; (b) if a re-signal path is offered at all it must compare against the LAST REPORTED value for that dedup key (the ledger already stores it) and not against the oldest open row, and must carry the prior value + delta in the row so PO can see the series rather than a bare new number; (c) any check whose expected value is unsatisfiable by construction is exempt from re-signalling entirely until its detector is fixed - see FIX-AUDITOR-C08-UNSATISFIABLE-TTL-WINDOW-AND-ISO8601-STRCMP. Validate per AC-3 by replaying whether a delta rule would have suppressed the 07-30 and 08-05 C-08 firings."
+        ],
+        "corroboration": [
+          "LIVE INSTANCE #2, 2026-08-05T08:18:46Z (72 min after the instance this row was filed for). system-auditor c20 wrote sys-20260805T081846-1853 (C-08) as a fresh NEW row while sys-20260721T003810-2b02, same table+defect (identical dedup_key db_integrity_breach:alerts:C-08), sat at status triaged. Clause (b) of the DEDUP-ENFORCEMENT contract (.claude/skills/cron-standalone-team/register.md:144-150) matched exactly and was never evaluated. Two things sharpen the root cause: (i) the auditor SAW the recurrence - its own notebook labels C-08 RECURRING - and still wrote the row, so this is not a detection failure but a missing WRITE-SIDE actuator, confirming AC-1s premise that prose in a prompt body cannot carry this; (ii) the dedup key ALREADY EXISTS in docs/data/auditor-dedup-ledger.json and correctly suppressed the Telegram send (notebook: Telegram dedup-skipped, last sent 2026-07-30), while the .signal_queue write went through unguarded. That is direct proof of this rows core claim that dedup exists for OTHER surfaces but not for the signal_queue/.task_board plane - the ledger and the queue-writer are simply not wired to each other. Cheapest fix shape: have the queue-writer consult the SAME ledger the Telegram gate already consults.",
+          "OUTPUT-CONTRACT counter defect observed in the same c20 entry: the auditor emitted dedup_skipped=0 while its own narrative for that cycle says Telegram dedup-skipped, and then asserted CONTRACT-CONTRADICTION: NONE. The counter does not count the suppression that actually happened, so contract self-checks cannot detect dedup regressions. Fold into AC-5s helper-owns-the-shape remedy."
         ]
       },
       {
@@ -11189,6 +11209,41 @@
           "AC-1 ops: restart ONLY vn-market-intelligence-mcp-mcp-server-1 to flush the memo, then curl /api/cron-status and assert layer_b length matches the parse of all 16 files. Single-service restart per memory feedback_rebuild_after_dev_change — never `docker compose down && up`, which kills peers. Do it in a quiet window: 4 live CLI agent sessions currently route every gateway call through this container.",
           "AC-2 Decide whether a process-lifetime memo over a bind-mounted doc dir is the right design at all. It means any cron-doc edit is invisible to the dashboard until the next container restart, which silently backdates the operator's view. A cheap mtime check or a short TTL would close it; if the memo is kept deliberately, say so in the handler doc so the next person does not read a stale table as ground truth.",
           "AC-3 Replace the hardcoded '13 live files' expectation in both AC-12 tests with a count derived from the directory (or from system-map.json), so the suite tracks the real fleet instead of pinning a number that was already wrong twice."
+        ]
+      },
+      {
+        "id": "FIX-AUDITOR-C08-UNSATISFIABLE-TTL-WINDOW-AND-ISO8601-STRCMP",
+        "type": "FIX",
+        "title": "system-auditor C-08 is a broken detector, not a real defect: its expected=0 threshold is mathematically unsatisfiable (24h alerts window vs 2h-TTL agent_signals stubs) AND its window over-captures via the ISO8601 strcmp bypass already fixed in the code-plane twin",
+        "zone": "cross-service/",
+        "priority": "high",
+        "status": "BACKLOG",
+        "size": "S",
+        "next_agent": "dev-team",
+        "supervised": false,
+        "plan_only": false,
+        "baseline_pass": true,
+        "source": "PO triage of system-auditor Tier-DATA sweep c20 2026-08-05T08:18:46Z - signal sys-20260805T081846-1853. Root-caused live against the named-volume market.db (readonly) 2026-08-05T08:23-08:27Z.",
+        "created_at": "2026-08-05T08:28:16Z",
+        "created_by": "po",
+        "updated_at": "2026-08-05T08:29:43Z",
+        "root_cause": "C-08 (docs/agents/system-auditor/flow/main.md:649) is `SELECT count(*) FROM alerts a LEFT JOIN agent_signals s ON a.id = s.alert_id WHERE s.id IS NULL AND a.triggered_at > datetime('now','-24 hours')` with expected=0. TWO independent faults compound, and the reported anomaly is a FALSE POSITIVE - the alert-engine write path is HEALTHY. (A) UNSATISFIABLE THRESHOLD: agent_signals alert-correlation stubs are TTL-bound at 2h (`expiresAt(ttlMinutes ?? 120)`, agentSignalStore.ts:570/604/634/661/688/715) and hard-purged by cleanExpired() on the daily off-hours dataAuditJob cron, while `alerts` rows are retained ~30d (checkStaleAlerts.ts D-4 is UPDATE-only, never deletes). So every alert older than the last GC sweep NECESSARILY has no surviving correlation row. expected=0 can only be met if zero alerts fired in the whole stale band. The check's own code-plane inverse (checkOrphanAgentSignalsAlertId.ts:15-16) already states this in prose: 'agent_signals correlation stubs are TTL-bound, ~2h, and purged by cleanExpired(), so any historical debt self-expires' - C-08 was never re-derived against that fact. (B) ISO8601 STRCMP BYPASS: `alerts.triggered_at` is a raw JS toISOString() string ('2026-08-04T01:21:58.806Z') while `datetime('now','-24 hours')` renders space-separated ('2026-08-04 08:26:52'). At index 10 'T'(0x54) > ' '(0x20), so every row sharing the bound's date-part compares greater and the window over-captures. LIVE PROOF 2026-08-05T08:26Z: as-written window = 40 alerts / 22 orphans; TRUE 24h window (julianday) = 28 alerts / 10 orphans; the oldest row the as-written window admitted was 31 HOURS old. This is the known recurring class feedback_sqlite_iso8601_datetime_strcompare_bypass, and it was ALREADY FIXED in the code-plane twin on 2026-08-01 (checkStaleAlerts.ts:23-30 wraps both sides as `datetime(triggered_at) < datetime('now',...)` and cites the same lesson by name) - the remedy simply never propagated to the flow-doc SQL the agent actually executes. That is memory feedback_fix_landed_in_the_pregate_not_the_probe_the_agent_actually_runs.",
+        "evidence_write_path_is_healthy": "Age-bucketed LEFT JOIN on the live DB gives a perfectly clean split with NO overlap: alerts <=17h old = 18 linked / 0 orphaned; alerts >=18h old = 22 orphaned / 0 linked. The 18h boundary equals the last cleanExpired() sweep (oldest surviving correlation stub = 2026-08-04T14:29:22Z, 17h old; 131 of 144 agent_signals rows are already past expires_at and awaiting the next sweep). Orphan status is therefore a pure function of GC timing x alert volume and carries ZERO information about write-path health. Producer-family breakdown confirms no producer-specific gap - EVERY family appears on BOTH sides (news 7 orphan/9 linked, price 9/1, ta 3/3, other 2/3, macro 1/2); a genuine co-write gap would concentrate in one family. fingerprint-null does not correlate either (21/16 vs 1/2). The brief's hypothesis that 'alert-engine writes alerts/price_alerts but not agent_signals' is DISCONFIRMED: `price_alerts` and `alert_engine_records` both hold 0 rows, and the prior co-write gap FU-ALERT-COWRITE-SCHEDULER-JOBS (2026-06 archive) is DONE and holding.",
+        "growth_claim_is_false": "The escalating brief framed this as monotonic 1->22 growth over 15 days implying a worsening defect. RAW-verified FALSE. True firing history: 1 orphan (sys-20260721T003810-2b02, 07-21) -> 121 orphans (sys-20260730T003538-10ba, 07-30, recorded in docs/data/DASHBOARD.md:242-249 and MISSING from both the live .signal_queue and the archives) -> 22 orphans (08-05). Non-monotonic, and it tracks alert volume: alerts/day = 8 (07-31), 11 (08-01), 7 (08-02), 42 (08-03), 26 (08-04). The 22 orphans are exactly the 08-04 alerts that fired before the 14:29Z GC horizon. There is no regression to chase.",
+        "files": [
+          "docs/agents/system-auditor/flow/main.md",
+          "apps/mcp-server/src/scheduler/news-analysis/audit-checks/checkOrphanAgentSignalsAlertId.ts",
+          "apps/mcp-server/src/scheduler/news-analysis/audit-checks/checkStaleAlerts.ts",
+          "docs/data/DASHBOARD.md",
+          "docs/protocols/system-audit-runbook.md"
+        ],
+        "ac": [
+          "AC-1 Make C-08 satisfiable or delete it. The threshold must be derivable from the data model: either (i) bound the alerts window to the agent_signals correlation-stub TTL horizon rather than 24h, or (ii) join only alerts whose paired stub could still be alive, or (iii) retire C-08 outright and rely on the code-plane inverse checkOrphanAgentSignalsAlertId (D-NEW2), which is TTL-aware by construction. Do NOT keep expected=0 against a 24h window - state explicitly in the flow doc WHY the chosen bound is satisfiable.",
+          "AC-2 Fix the ISO8601 strcmp bypass in the C-08 predicate by wrapping BOTH sides in datetime(), copying the already-proven pattern and rationale comment from checkStaleAlerts.ts:23-30 verbatim rather than reinventing it.",
+          "AC-3 FLEET REPLAY, not one line. Per memory feedback_fleetwide_gate_validated_on_one_file_optout_allowlist, audit EVERY C-xx/B-xx check in docs/agents/system-auditor/flow/main.md that compares a timestamp column against datetime('now',...) and report per-check whether the column is T-format. Already measured and CONFIRMED AFFECTED: financial_reports.parsed_at is 100% T-format (C-04, 7-day window) and agent_signals.created_at is MIXED 13% T / 87% space (C-07, 24h window - heterogeneous is the worst case because the same query silently applies two different semantics). Confirmed NOT affected: market_messages.sent_at 0% T (C-06), daily_ohlcv.updated_at 2% T. Fix every affected check in one pass.",
+          "AC-4 Regression test: seed an alerts row older than the correlation-stub TTL with its stub already purged, and assert C-08 (or its replacement) does NOT flag it. Also assert a row whose date-part matches the bound but which is genuinely outside the window is EXCLUDED - that is the strcmp bypass, and it must fail loudly if reintroduced.",
+          "AC-5 Retract the fabricated root causes already published. docs/data/DASHBOARD.md:246 asserts 'Signal processing pipeline may be delayed or alert-signal mapping broken' and :330 asserts 'Alerts created by alert-engine but not propagated to agent_signals table'. Both are agent-narrated, unmeasured, and now DISCONFIRMED. :243 also names the wrong table ('no matching signal_queue rows' - the join is on agent_signals). This is the confabulation class feedback_agent_selfreport_metalayer_confabulation; correct or withdraw both entries.",
+          "AC-6 Do not silently drop coverage. If AC-1 retires C-08, confirm in writing that checkOrphanAgentSignalsAlertId (D-NEW2) plus the storeAlerts/storeAlertsFromCommander writer guard genuinely cover the co-write-gap failure mode that C-08 was introduced to catch, so this fix does not trade a false positive for a blind spot."
         ]
       }
     ],
