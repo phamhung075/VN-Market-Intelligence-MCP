@@ -1,0 +1,18 @@
+{
+  "ticker": "DXG",
+  "signal_type": "bctc_signal",
+  "quarter": "Q1-2026",
+  "mode": "routine",
+  "beat_miss": null,
+  "product": "Real-estate developer — residential land-bank development, project sales (Dat Xanh brand)",
+  "customer": "Homebuyers/investors in HCMC-region and satellite provinces; no BCTC-full detail available this cycle to assess concentration",
+  "ops": "PEER-REFERENCE ONLY (get_bctc_full outage, no primary income-statement pull this cycle): ROE 1.9% vs sector median 7.3% (DUOI MEDIAN — weak profitability vs BĐS peers); PE 66.5 vs 16.1 median (PREMIUM +312%); PB 1.2 vs 1.3 (roughly in line). EY=1.5%, EY_SPREAD=-3.5% vs 5% deposit rate → valuation_verdict=AVOID — do NOT post bullish signal. get_bctc_ocf returned an implausible 4.23e18 VND operating-CF value (conf 0.31) — DISCARDED, not cited (same implausibility flagged in prior cycles).",
+  "mgmt": "Q2-2026 filing QUÁ HẠN (deadline 30/07/2026 passed, unfiled as of 2026-08-05). Kinh Dịch: Quẻ 63 Ký Tế / THUAN LOI, conf 100% — bullish reading CONTRADICTS the AVOID valuation verdict; flagged not suppressed. No insider signals.",
+  "data_quality_note": "get_bctc_full tool outage CONFIRMED PERSISTING (day 4, since 2026-08-01T15:13Z). get_bctc_report_id(DXG,Q1) returns existing_refine_status=PENDING (report_id null) — refine not started, ESC-5 not evaluable this cycle (graceful FALSE). DXG corrupt/thin-data status (flagged since 2026-08-01, notebook carry-over 'needs 3rd touch') remains UNRESOLVED — still blocked by the same tool outage, could not independently reconfirm this cycle either.",
+  "_processed": {
+    "fingerprint": "46ac65f48630ce8d138691e3d396c5e724f70935ba763b51ff102549edc8a6b9",
+    "processedAt": "2026-08-05T06:40:41Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

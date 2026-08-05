@@ -1,0 +1,20 @@
+{
+  "ticker": "FPT",
+  "signal_type": "bctc_signal",
+  "quarter": "Q1-2026",
+  "mode": "routine",
+  "beat_miss": null,
+  "product": "IT services & software exports (offshore dev for JP/US/EU), telecom via 45.66%-owned FPT Telecom (equity-method since 2026-01-01, no longer consolidated), education (FPT Edu network)",
+  "customer": "Enterprise IT buyers in Vietnam + offshore (Japan/US/EU, no single client >10% of receivables per note 7), broadband/telecom subscribers via FTEL associate, students across FPT University/Polytechnic system",
+  "ops": "Q1-2026 revenue 12,480bn VND (headline -22.3% YoY from FTEL deconsolidation; +8.7% YoY on like-for-like basis restated for the same method). NI (parent) 2,487.4bn (+13.8% YoY adjusted), driven partly by associate income +36% (FTEL equity pickup +176.5bn). ROE 28.3% vs sector median 10.6% (TREN MEDIAN); PE 13.8 vs 17.3 median (DISCOUNT -20%); PB 3.6 vs 1.5 (PREMIUM +136%). OCF -2,847.8bn VND this quarter (negative, source_tier1 conf 0.81) — working-capital drag (payables/accrued-liability reduction ~2,597bn) not an earnings-quality alarm on its own.",
+  "mgmt": "Q2-2026 filing QUÁ HẠN (deadline 30/07/2026 passed, still unfiled as of 2026-08-05). Get_bctc_full tool outage persisting day 4 (since 2026-08-01) — this signal sourced from get_bctc_refined (primary OCR extraction, not the broken serving path). ESC-5 fired this cycle: 7 of 15 refine units (all footnote pages — related-party, borrowings schedule, subsidiary registry) scored confidence 0.45 (<0.50 bar); core B01/B02/B03 statements scored 0.55-0.85 and passed balance_check. Opus deep-dive escalated to dev-team.",
+  "data_quality_note": "get_bctc_full tool outage CONFIRMED PERSISTING (day 4, since 2026-08-01T15:13Z) — cross-tool corroborated real data intact via get_bctc_report_id + get_bctc_refined + get_sector_comparison (all live). Primary-source figures above extracted from get_bctc_refined units, not get_bctc_full.",
+  "escalation_status": "PENDING",
+  "guard_key": "esc-deepdive:FPT:Q1-2026:ESC-5",
+  "_processed": {
+    "fingerprint": "68d5fbee4d0cae2ac6b7e9df5e92919490fb44eed1f4aa5e464f4551228774c2",
+    "processedAt": "2026-08-05T06:40:41Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

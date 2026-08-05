@@ -4,23 +4,34 @@
   "quarter": "Q2-2026",
   "mode": "routine",
   "beat_miss": null,
-  "product": "Steel production (construction steel, HRC), agriculture (feed/livestock), real estate (urban projects)",
-  "customer": "Construction and infrastructure contractors, industrial steel buyers, domestic + SE Asia export",
-  "ops": "DATA-GAP this cycle: get_bctc_full outage (cross-watchlist, see bug-escalation bca-20260801T151341Z). Peer-reference proxy only: sector-comparison ROE 12.7% (sector median 2.9%, above), PE 14.2 (57% discount to steel-sector median 32.6). get_bctc_ocf returns exactly 0/0/0 for operating/investing/financing CF — this is the already-tracked pre-existing op_profit=0 extraction defect (not new this cycle), not cited as a real zero.",
-  "mgmt": "ESC-5 refine status PARTIAL (report_id not DONE) — refine incomplete, no confidence read possible this cycle (unchanged from prior cycles).",
-  "data_quality": "DEGRADED — get_bctc_full unavailable this cycle; figures above are peer-reference / cross-tool proxy only. No E1 trick-detection passes run (no balance-sheet/PL data).",
-  "kinhdich": {
-    "que": "31 Ham",
-    "signal": "GIU",
-    "trend": "THUAN LOI",
-    "confidence": 0.63
+  "product": "Steel production (construction steel, HRC, pipes/coated products) and integrated ore-to-finished-steel manufacturing",
+  "customer": "Domestic construction/infrastructure buyers, export markets, industrial fabricators",
+  "ops": "DATA-GAP — get_bctc_full total outage, 3rd consecutive cycle since 2026-08-01T15:13Z, no fresh Q2-2026 operating detail; peer data only: ROE 12.7% vs sector median 2.9%, PE 14.2 (57% discount to sector), PB 1.7 (93% premium)",
+  "mgmt": "DATA-GAP — cannot assess Q2-2026 guidance/capital-allocation execution this cycle; root cause is pdf-extractor OCR thread-pool saturation (docs/architecture-briefs/2026-07-28-pdfx-tesseract-concurrency-invariant.md), a known tracked P0, not a company-side event",
+  "data_gap": true,
+  "data_gap_reason": "get_bctc_full returns 'Chưa có dữ liệu BCTC' for FPT/HPG/VCB this cycle — cross-tool corroborated as tool/read-path regression not real data loss",
+  "peer_reference_only": true,
+  "sector_comparison": {
+    "pe": 14.2,
+    "pe_sector_median": 32.6,
+    "pb": 1.7,
+    "pb_sector_median": 0.9,
+    "roe_pct": 12.7,
+    "roe_sector_median_pct": 2.9
   },
-  "insider": "no significant activity",
+  "kinhdich": {
+    "que": "31 - Ham",
+    "trend": "THUAN LOI",
+    "signal": "GIU",
+    "confidence_pct": 62
+  },
+  "insider": "none significant",
   "overdue": true,
-  "generated_at": "2026-08-01T15:13:41Z",
+  "overdue_deadline": "2026-07-31",
+  "as_of": "2026-08-01T18:08:00Z",
   "_processed": {
-    "fingerprint": "f1d974cb6b8e2ea5aaecf4e4a4cd3c78415b8b18f32dc991bace9367199f3045",
-    "processedAt": "2026-08-01T15:17:03Z",
+    "fingerprint": "d95686bd4e76727a3b8574d723ffe591de534be97ee0081e4888f2957e6b6fb4",
+    "processedAt": "2026-08-05T06:40:41Z",
     "processedBy": "dev-team",
     "result": "routed-to-po"
   }

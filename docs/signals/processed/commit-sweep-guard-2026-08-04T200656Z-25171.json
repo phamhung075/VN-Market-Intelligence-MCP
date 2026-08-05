@@ -1,0 +1,14 @@
+{
+  "from": "commit-sweep-guard",
+  "to": "po",
+  "type": "bug-escalation",
+  "priority": "high",
+  "createdAt": "2026-08-04T20:06:56Z",
+  "payload": "[sweep-guard] SAME-FILE DIVERGENCE (non-blocking, AC-3 detector): 'docs/data/cowork-schedule.json' is being committed via a pathspec-SCOPED commit line, which takes its WORKING TREE content (git's --only semantics) — NOT the subset already staged in the shared index for this exact path. The shared index's staged blob for 'docs/data/cowork-schedule.json' (82b45b0d746fa3a67f34440aed0fac933628f941) differs from what is about to land in this commit (cb587da9f231ba99b546b81ab3c87d73f561c59a) — a peer's differently-staged hunk (or your own further, unreviewed edit) in this SAME file may be about to be swept in. Documented NON-GOAL of the pathspec-commit mandate, see docs/architecture-briefs/2026-07-21-commit-path-peer-index-sweep-guard.md §2.7 — detector only, never blocked. Inspect before trusting this commit's scope: git diff 82b45b0d746fa3a67f34440aed0fac933628f941 cb587da9f231ba99b546b81ab3c87d73f561c59a -- docs/data/cowork-schedule.json",
+  "_processed": {
+    "fingerprint": "7350321eb72d934d9d44d703f81acd3d935bf8f3130a3eb34c589753f89a6e3c",
+    "processedAt": "2026-08-05T06:40:41Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

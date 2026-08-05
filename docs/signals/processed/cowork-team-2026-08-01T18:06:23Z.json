@@ -1,0 +1,55 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-08-01T18:06:23Z",
+    "matched_slots": [
+      "bctc-analyst-slot-2"
+    ],
+    "won_slots": [
+      "bctc-analyst-slot-2"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/bctc-analyst/flow/main.md"
+    ],
+    "silent": false,
+    "drift_min": 5,
+    "errors": [],
+    "pressure_mode": "adaptive",
+    "calendar_status": "closed",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "chef_mutex_applied": false,
+    "due_reasons": {
+      "bctc-analyst-slot-2": "cadence"
+    },
+    "cadence_minutes": {
+      "bctc-analyst-slot-2": "240"
+    },
+    "last_fired_timestamp": "2026-08-01T18:00:00Z",
+    "last_fired_slots": [
+      "bctc-analyst-slot-2"
+    ],
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "18:00",
+    "leader_lock": "acquired",
+    "dev_head": "unknown",
+    "devq": 5,
+    "signal_backlog": 17,
+    "note": "bctc-analyst-slot-2 fire watched for get_bctc_full outage recovery per project_get_bctc_full_outage_20260801 memory; SESSION_ID_LINE typo in spawn prompt caught and corrected via SendMessage before agent likely reached any task_claim call"
+  },
+  "priority": "low",
+  "createdAt": "2026-08-01T18:06:23Z",
+  "_processed": {
+    "fingerprint": "da727c9fb47a2a0e9402e1410bf230da61db255280b055368dc8f6cddcb6e01e",
+    "processedAt": "2026-08-05T06:40:41Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

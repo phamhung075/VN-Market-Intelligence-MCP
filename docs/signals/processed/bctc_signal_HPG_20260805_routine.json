@@ -1,0 +1,18 @@
+{
+  "ticker": "HPG",
+  "signal_type": "bctc_signal",
+  "quarter": "Q1-2026",
+  "mode": "routine",
+  "beat_miss": null,
+  "product": "Steel production — construction steel (rebar), HRC (hot-rolled coil), steel pipe; agriculture (Hoa Phat feed/livestock) as secondary segment",
+  "customer": "Construction contractors and distributors (domestic), HRC exported to regional steel processors; no BCTC-full detail available this cycle to assess concentration",
+  "ops": "PEER-REFERENCE ONLY (get_bctc_full outage, no primary income-statement pull this cycle): ROE 12.7% vs sector median 2.9% (TREN MEDIAN); PE 14.2 vs 32.6 median (DISCOUNT -57%); PB 1.7 vs 0.9 (PREMIUM +93%). get_bctc_ocf returned ocf_operating/investing/financing = 0/0/0 — known pre-existing data-quality defect (not new), DISCARDED as implausible, not cited.",
+  "mgmt": "Q2-2026 filing QUÁ HẠN (deadline 30/07/2026 passed, unfiled as of 2026-08-05). No insider signals, no legal/regulatory flags this cycle.",
+  "data_quality_note": "get_bctc_full tool outage CONFIRMED PERSISTING (day 4, since 2026-08-01T15:13Z) — 'Chưa có dữ liệu BCTC' re-tested 2026-08-05T00:09Z, still failing. get_bctc_report_id(HPG,Q1) returns existing_refine_status=PARTIAL (report_id null) — refine not finished, ESC-5 not evaluable for HPG this cycle (graceful FALSE). Sector-comparison figures live-verified 2026-08-05T00:10Z.",
+  "_processed": {
+    "fingerprint": "8877659c8b5bb5e2dd3008c3aa96a0b1f4e1f0cd877e5bd2ba1ae8175408ca57",
+    "processedAt": "2026-08-05T06:40:41Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

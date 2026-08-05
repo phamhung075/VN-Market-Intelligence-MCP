@@ -1,0 +1,18 @@
+{
+  "ticker": "VCB",
+  "signal_type": "bctc_signal",
+  "quarter": "Q1-2026",
+  "mode": "routine",
+  "beat_miss": null,
+  "product": "State-controlled commercial bank — corporate lending, retail/SME credit, trade finance, bancassurance cross-sell",
+  "customer": "Corporate + retail depositors/borrowers nationwide; large state-linked corporate clients concentrated in trade finance",
+  "ops": "PEER-REFERENCE ONLY (get_bctc_full outage, no primary income-statement pull this cycle): ROE 16.7% vs sector median 17.6% (DUOI MEDIAN — below-median profitability vs bank peers this quarter); PE 14.1 vs 9.0 median (PREMIUM +57%); PB 2.2 vs 1.5 (PREMIUM +45%) — market still pays a premium for VCB despite below-median ROE. get_bctc_ocf real pull: ocf_operating=12,944,932(mn VND) conf 0.75, source_tier1 — plausible for a bank of this scale.",
+  "mgmt": "Already ĐÃ NỘP for its tracked Q1-2026 period (filed 2026-07-19); not overdue this cycle. Kinh Dịch reading changed this cycle: Quẻ 28 Đại Quá / BAT LOI (conf 25%), price -1.3% today — bearish reading now DIRECTIONALLY ALIGNED with today's price move, which RESOLVES the prior 6-consecutive-cycle KD-vs-price divergence (previously Quẻ 12 Bĩ / BAT LOI contradicted a +5% rally) — worth continued observation, not yet a confirmed pattern break.",
+  "data_quality_note": "get_bctc_full tool outage CONFIRMED PERSISTING (day 4, since 2026-08-01T15:13Z) — re-tested 2026-08-05T00:09Z, still failing. get_bctc_report_id(VCB,Q1) returns existing_refine_status=PARTIAL (report_id null) — refine not finished, ESC-5 not evaluable this cycle (graceful FALSE).",
+  "_processed": {
+    "fingerprint": "6ee3d7e3908eea3c71f2e192c084490cc237403aea16006b4552874fecd3ec7c",
+    "processedAt": "2026-08-05T06:40:41Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

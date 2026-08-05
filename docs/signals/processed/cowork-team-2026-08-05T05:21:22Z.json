@@ -1,0 +1,55 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-08-05T05:21:22Z",
+    "matched_slots": [
+      "chef-morning"
+    ],
+    "won_slots": [
+      "chef-morning"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/unified-agent/flow/chef.md"
+    ],
+    "silent": false,
+    "drift_min": 2,
+    "errors": [],
+    "pressure_mode": "adaptive",
+    "calendar_status": "closed",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "chef_mutex_applied": false,
+    "due_reasons": {
+      "chef-morning": "cron"
+    },
+    "cadence_minutes": {
+      "chef-morning": null
+    },
+    "last_fired_timestamp": "2026-08-05T05:21:11Z",
+    "last_fired_slots": [
+      "chef-morning"
+    ],
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "05:15",
+    "leader_lock": "acquired",
+    "dev_head": "unknown",
+    "devq": 5,
+    "signal_backlog": 28,
+    "note": "guaranteed daily chef-morning cron slot (policy_id=null, due_reason=cron); calendar_status=closed did not suppress (guaranteed slots never suppressed); CHEF same-tick mutex ran, no-op (only one CHEF slot matched)"
+  },
+  "priority": "low",
+  "createdAt": "2026-08-05T05:21:22Z",
+  "_processed": {
+    "fingerprint": "ccae220d34eb876c5c89aed8df2e63245a7fd2a9d46c1ddc4bf41f3624eaa16a",
+    "processedAt": "2026-08-05T06:40:41Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

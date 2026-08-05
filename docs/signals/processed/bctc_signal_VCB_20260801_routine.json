@@ -4,25 +4,35 @@
   "quarter": "Q1-2026",
   "mode": "routine",
   "beat_miss": null,
-  "product": "State-controlled commercial bank — corporate lending, retail banking, trade finance, FX",
-  "customer": "Corporates (SOEs + large private), retail depositors/borrowers, trade-finance importers/exporters",
-  "ops": "DATA-GAP this cycle: get_bctc_full outage (cross-watchlist, see bug-escalation bca-20260801T151341Z). Peer-reference proxy only: sector-comparison ROE 16.7% (sector median 17.6%, below), PE 14.1 (57% premium to banking-sector median 9.0). get_bctc_ocf confirms OCF operating=+12,944.9bn VND, confidence 0.75 — plausible, consistent with prior cycles.",
-  "mgmt": "ESC-5 refine status PARTIAL (report_id not DONE), unchanged from prior cycles. KD reading contradicts today's price action — see kinhdich field.",
-  "data_quality": "DEGRADED — get_bctc_full unavailable this cycle; figures above are peer-reference / cross-tool proxy only. No E1 trick-detection passes run (no balance-sheet/PL data).",
-  "kinhdich": {
-    "que": "12 Bi",
-    "signal": "BAN",
-    "trend": "BAT LOI",
-    "confidence": 1,
-    "note": "5th consecutive cycle CONTRADICTS a strong same-day price rally (sector-comparison shows VCB +5.0% vs sector -0.4%) — flagged, not suppressed, divergence unresolved 5 cycles running"
+  "product": "State-owned commercial bank — corporate lending, retail banking, trade finance, FX",
+  "customer": "Large corporates, SOEs, retail depositors, import/export clients",
+  "ops": "DATA-GAP — get_bctc_full total outage, 3rd consecutive cycle since 2026-08-01T15:13Z, no fresh operating detail; peer data only: ROE 16.7% vs banking-sector median 17.6% (below median), PE 14.1 (57% premium to sector), PB 2.2 (45% premium)",
+  "mgmt": "DATA-GAP — cannot assess guidance/capital-allocation execution this cycle; root cause is pdf-extractor OCR thread-pool saturation (docs/architecture-briefs/2026-07-28-pdfx-tesseract-concurrency-invariant.md), a known tracked P0, not a company-side event",
+  "data_gap": true,
+  "data_gap_reason": "get_bctc_full returns 'Chưa có dữ liệu BCTC' for FPT/HPG/VCB this cycle — cross-tool corroborated as tool/read-path regression not real data loss",
+  "peer_reference_only": true,
+  "sector_comparison": {
+    "pe": 14.1,
+    "pe_sector_median": 9,
+    "pb": 2.2,
+    "pb_sector_median": 1.5,
+    "roe_pct": 16.7,
+    "roe_sector_median_pct": 17.6
   },
-  "insider": "no significant activity",
+  "kinhdich": {
+    "que": "12 - Bi",
+    "trend": "BAT LOI",
+    "signal": "BAN",
+    "confidence_pct": 100,
+    "note": "6th consecutive cycle contradicting today's +5.0% price rally + HIGH volume_spike alert (18:25 07-31) — flagged, not suppressed"
+  },
+  "insider": "none significant",
   "overdue": false,
-  "filing_status": "ĐÃ NỘP Q1-2026 (2026-07-19); Q2-2026 not yet tracked as filed by get_earnings_calendar despite a Q2 PDF already on file (VCB_2026_Q2.pdf, uploaded 2026-08-01)",
-  "generated_at": "2026-08-01T15:13:41Z",
+  "already_filed": "2026-07-19 (Q1-2026)",
+  "as_of": "2026-08-01T18:08:00Z",
   "_processed": {
-    "fingerprint": "ec6b77482cd7cbae5ca572973757f3cb08caae42370d2a53b26213947cd94547",
-    "processedAt": "2026-08-01T15:17:03Z",
+    "fingerprint": "1bdf9763f20bd66821fca8bd70bf990cc6623ccc4632b56d9de660f7df9d74f6",
+    "processedAt": "2026-08-05T06:40:41Z",
     "processedBy": "dev-team",
     "result": "routed-to-po"
   }
