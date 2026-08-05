@@ -286,3 +286,15 @@
 **Mitigation:** No immediate action beyond signal routing.
 
 ---
+
+## Anomaly: C-OHLCV-VIOLATIONS · daily_ohlcv: 336 records with H=0, L=0 (OHLCV violation)
+**Severity:** CRITICAL | **Date:** 2026-08-05 | **Status:** OPEN
+**Location:** market.db/daily_ohlcv
+**Details:** 336 daily_ohlcv records with high=0 and low=0, violating OHLCV constraint (high must be >= open, close, low). All from 2026-05-15.
+**Impact:** Invalid price data affects technical analysis and trading signals downstream
+**Root cause:** Data extraction/load bug on 2026-05-15, high/low values missing and written as 0
+**Zone owner:** dev-mcp-server
+**Last reported:** 2026-08-05T06:52:35Z (signal sys-20260805T065227-25f7, system-auditor -> po, dedup_key=db_integrity_breach:daily_ohlcv:OHLCV_H_L_ZERO, CRITICAL Telegram sent)
+**Mitigation:** No immediate action beyond signal routing.
+
+---
