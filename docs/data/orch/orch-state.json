@@ -11500,41 +11500,6 @@
         "status_note": "AC1: `bun test src/__tests__/tool-registry-parity.test.ts` = 17/17 pass, and CI job `bun test` conclusion=success on a subsequent push. AC2 (anti-recurrence, do not skip): T-U3-7 currently asserts `hits.every(h => h.exempted)` - i.e. EVERY cron-count literal anywhere in CLAUDE.md must be exempt. That is strictly stronger than its own docstring ('the per-skill (N crons) arming annotation ... is found AND correctly marked exempt') and would ALSO fail on a perfectly legitimate un-parenthesised global literal that MATCHES the SSOT (e.g. 'the scheduler runs 88 crons'). Tighten T-U3-7 to assert that the specific paren-wrapped annotation hits are exempt, without forbidding a correct global literal. AC3: preserve the exemption predicate's narrowness - do NOT widen `findCronCountLiterals`'s exemption to un-parenthesised prose shapes; that would punch a hole through which real global-count drift walks (memory: gate-widening requires an actuator dry-run first). AC4: the CLAUDE.md edit must be PUNCTUATION-ONLY with ZERO change to instruction semantics - CLAUDE.md is the user-owned project instruction file; make the minimal edit and do not restructure, reorder or reword the bullet's meaning.",
         "po_ruling_20260805T1730Z": "WHICH SIDE IS CORRECT - RULED AFTER READING BOTH, NOT ASSUMED. Read `findCronCountLiterals` (tool-registry-parity.test.ts:223-235): regex /\\b(\\d+)\\b(?:\\s+\\w+){0,3}?\\s+crons?\\b/gi, exemption `wrapped = content[start-1]===\"(\" && content[end]===\")\"` - the ENTIRE match must be immediately paren-wrapped. CLAUDE.md:47 `/cron-detect-loop ... loop (4 crons) after every session restart` -> match '4 crons', preceded by '(' and followed by ')' -> exempted, correct. CLAUDE.md:48 `/cron-standalone-team - re-arm the 4 standalone crons (db-data-integrity, ...)` -> match '4 standalone crons', preceded by a space -> NOT exempted, value 4. THE RELAYED CLAIM THAT project-stats.json cronJobCount 'may actually agree with 4' IS FALSE: cronJobCount=88 (verified). So 4 IS divergent as a global literal and the detector is behaving exactly as designed. The defect is on the CLAUDE.md side: line 48 is semantically a per-skill annotation identical in kind to line 47, but was written without the convention's paren token. Introduced 2026-08-04 by 9af50bb26 (feat(skills/cron-standalone-team)) - the test predates it and was written when only ONE such annotation existed. PRIMARY FIX = conform CLAUDE.md's wording to the existing `(N crons)` convention; the test-side change is the narrow AC2 correction only, NOT a regex widening. NOTE FOR THE IMPLEMENTER: `(4 crons: db-integrity, ...)` will NOT satisfy the predicate - content[end] would be ':' not ')'. The literal token must be exactly `(4 crons)`.",
         "updated_at": "2026-08-05T17:33:04Z"
-      },
-      {
-        "id": "FIX-CI-TASKCLAIM-PO-FLOW-OWNER-SESSION-PAYDOWN",
-        "type": "FIX",
-        "size": "S",
-        "priority": "P0",
-        "status": "BACKLOG",
-        "zone": "cross-service/",
-        "owner": "po",
-        "next_agent": "agent-father",
-        "plan_only": false,
-        "supervised": false,
-        "created_at": "2026-08-05T17:30:42Z",
-        "created_by": "po/triage-20260805T1730Z",
-        "check_id": "CI-RED-f080fbc0",
-        "dedup_key": "ci_job:task-claim-owner-session-lint|file:docs/agents/po/flow/sprint-kickoff.md",
-        "origin_signal_id": "CI-RED-f080fbc0",
-        "verification_gate": "ci_green_on_subsequent_push",
-        "baseline_pass": true,
-        "rebuild_required": false,
-        "caused_by_commit": "3ce726a6e",
-        "title": "CI RED — task-claim-owner-session-lint: docs/agents/po/flow/sprint-kickoff.md:44 task_claim omits the REQUIRED owner_client_session. Not a new defect and not a missed scope — the call site is UNCHANGED since 2026-05-27; commit 3ce726a6e added 2 lines above it, shifting it 42->44 and de-grandfathering it from the line-keyed baseline. Pay the debt: 1 task_claim + 2 task_release sites, all in PO's own flow docs.",
-        "files": [
-          "docs/agents/po/flow/sprint-kickoff.md",
-          "docs/agents/po/flow/sprint-signoff.md",
-          "docs/data/task-claim-owner-session-baseline.json",
-          "scripts/audits/task-claim-owner-session-lint.sh"
-        ],
-        "related": [
-          "FIX-TASKCLAIM-OWNER-CLIENT-SESSION-MISSING-FLEET-FLOW-DOCS",
-          "FIX-PO-BATCH-MINT-NO-WRITE-ACTUATOR"
-        ],
-        "status_note": "AC1: `bash scripts/audits/task-claim-owner-session-lint.sh --check` RC=0 / 0 violations, AND CI job `task-claim-owner-session-lint` conclusion=success on a subsequent push. AC2 (fix, do NOT re-grandfather): add owner_client_session to sprint-kickoff.md:44 (task_claim) AND to sprint-signoff.md:28 and :42 (task_release, both still grandfathered only because that file has not been touched) - this removes docs/agents/po/flow/** from the baseline entirely so no future line-shift can re-trigger this. Running --update to re-grandfather is NOT an acceptable close. AC3: parameter names re-derived from apps/mcp-server/src/interface/mcp/tools/system/coordinationTools.ts, not copied from a sibling doc. AC4: the docs must instruct SUBSTITUTING the real session id (spawn-prompt `Coordination: owner_client_session=<value>` line) - a doc that writes the literal $CLAUDE_CODE_SESSION_ID inside a call_tool argument gets sent LITERALLY (known memory hazard); mirror the shape already used in docs/agents/pm/flow/main.md:127 and .claude/skills/commit-mutex/SKILL.md:36. AC5 (ergonomics, prevents the next misdiagnosis): task-claim-owner-session-lint.sh's FAIL message should state when a violation corresponds to a baseline entry whose LINE moved (same file+snippet, different line) vs a genuinely new call site - this exact failure was relayed up the chain as 'the fix never covered this file / was reintroduced', both wrong.",
-        "po_ruling_20260805T1730Z": "ROOT CAUSE RULED FROM RAW EVIDENCE, REJECTING BOTH RELAYED HYPOTHESES. (a) `git blame -L 42,53 docs/agents/po/flow/sprint-kickoff.md` = dc430566c2, 2026-05-27, for the ENTIRE task_claim block - the call site was neither created nor edited after the parent fix landed, so 'reintroduced' is false. (b) docs/data/task-claim-owner-session-baseline.json DOES grandfather this exact site, as `docs/agents/po/flow/sprint-kickoff.md:42` - so 'the fix never covered this file' is also false; it was covered, as explicitly-scoped grandfathered debt (23 sites / 9 files). (c) The actual trigger: commit 3ce726a6e (2026-08-05, FIX-PO-BATCH-MINT-NO-WRITE-ACTUATOR, +14/-12 in this file) inserted 2 net lines above the block, moving it to line 44. The lint's own header documents the key as the EXACT (file, line, snippet) triple - 'if the line moves or its content changes it is no longer grandfathered'. So the guard did exactly what it was designed to do. THIS IS NOT A LINT-COSMETIC ISSUE - IT IS A LIVE DEFECT. coordinationTools.ts declares owner_client_session as z.string() with NO .optional() on BOTH task_claim (l.104-110) and task_release (l.199-205) - verified by reading the source. A doc-faithful PO therefore (i) never engages the sprint umbrella mutex at kickoff, and (ii) can never release task:<sprint_id>, stranding it for the full 3600s TTL. PO's own flow has carried this since 2026-05-27. DISPOSITION: fix, do not re-grandfather. DELIBERATELY NOT DONE: widening the baseline key from (file,line,snippet) to (file,snippet). That would loosen a ratchet that is currently working, and gate-widening requires an actuator dry-run first (standing rule). The ratchet's boy-scout intent - touch a file, pay its debt - is correct; the only real failure here is that nobody paid a 1-line debt for 4 days.",
-        "updated_at": "2026-08-05T17:33:04Z"
       }
     ],
     "closed_sprints": [
@@ -12409,6 +12374,32 @@
         "status_note": "[QA] Review Record (direct-commit verify): Verified commit 9fe706fa2 on main ancestry (git merge-base --is-ancestor). git show --stat matches claimed file set exactly (scripts/devteam-review-claim-qa-drain.jq, scripts/audits/devteam-dispatch-gate-satisfiability.sh), zero foreign files. Read the full diff directly (not the dev's review_note alone): the .head write in the review[]->qa[] claim branch is now CONDITIONAL on $head_free (.head.status in {idle,done} OR .head.active_task_id==null) -- else-branch preserves .head byte-identical; mirrors devteam-wrapper-autoclose.jq:122-128's proven guard shape (claim-INTO-head direction); review[]->qa[] lane-move logic itself is byte-unchanged (only the trailing .head assignment block changed). Independently re-ran scripts/audits/devteam-dispatch-gate-satisfiability.sh myself rather than trusting the PO-attested baseline_pass:true claim -- fresh run: exit 0, 57 [PASS] / 0 [FAIL], including the new AC-QADRAIN-HEAD-GUARD negative (.head byte-identical when a different task busy, lane-move still happens) + positive (.head IS written when idle) controls, all passing. bash scripts/audits/mock-guard.sh --files on both touched files -- PASS (\"No production source files to scan\" -- .jq/.sh fall outside its .ts/.py/.go scan scope by design). No TS files touched by this commit -- bun test/tsc structurally N/A (Smart-Skip); the audit script itself IS this row's targeted regression suite and is fully green. Row was dispatched OUTSIDE scripts/devteam-review-claim-qa-drain.jq's own picker (PO Step-2 S4 UNBLOCK, direct-execute) since this row IS that picker's own head-write fix -- running it through the picker it patches would be circular/deadlocked. VERDICT: APPROVED, DONE_VERIFIED. scripts/devteam-review-claim-qa-drain.jq is now safe to run normally on subsequent ticks -- its own defect (unconditional .head clobber) is closed and independently confirmed, not just self-reported.",
         "qa_verified_at": "2026-08-01T01:06:46Z",
         "qa_verified_by": "qa"
+      },
+      {
+        "title": "Split the 743L stock-price sandbox by executor seam",
+        "priority": "P1",
+        "zone": "stock-price",
+        "type": "FACTORY",
+        "status": "DONE_VERIFIED",
+        "id": "FACTORY-STOCK-split-sandbox",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-STOCK-split-sandbox",
+        "promoted_at": "2026-07-09T20:47:26Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
+        "claimed_at": "2026-07-09T20:47:26Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "reviewed_at": "2026-07-09T20:55:11Z",
+        "reviewed_by": "dev-stock-price",
+        "next_agent": "architect",
+        "po_triage_20260722": "Owner assigned (was null next_agent) so no row is ownerless (PO AC1). Remains in REVIEW, deferred-behind the review-lane sweeper FIX-DEVTEAM-REVIEW-LANE-QA-DRAIN + FIX-BOUNDED1-SUPERVISED-LANE-NO-SWEEPER (both activated -> backlog this tick). Not silently dropped; the sweeper routes it to next_agent once built.",
+        "updated_at": "2026-08-05T17:58:00Z",
+        "secondary_claimed_at": "2026-08-05T17:52:20Z",
+        "secondary_claimed_by": "dev-team (review-lane secondary-drain)",
+        "secondary_dispatch_target": "architect",
+        "done_verified": true,
+        "verified_by": "architect",
+        "verified_at": "2026-08-05T17:57:59Z",
+        "signoff_note": "Architect SECONDARY-DRAIN review (dev-team review-lane sweep, claimed 2026-08-05T17:52:20Z) of a 27-day-stale review[] row. Original dev-stock-price review (2026-07-09T20:55:11Z, commit 0d93b3c95) claimed: 743L apps/stock-price/cmd/sandbox/main.go split into 8 files by executor seam (main.go 101L / discover.go 71L / helpers.go 23L / dispatch.go 75L / exec_primitive_normalizer.go 97L / exec_primitive_selector.go 123L / exec_primitive_staleness.go 76L / exec_module_resolution.go 150L), pure file-move no signature changes, 11/11 sandbox scenarios PASS, lint 0 issues, CGO fence CLEAR; the 2 files over 120L explicitly justified as single cohesive executors. Drift check: git log 0d93b3c95..HEAD -- apps/stock-price/cmd/sandbox/ is EMPTY -- zero commits touched the split since the 07-09 review, working tree clean for that path -- the review has NOT gone stale relative to the code. Independently re-verified live (not chain-trusted): go build ./cmd/sandbox/ exit 0; go vet ./cmd/sandbox/... exit 0; golangci-lint run ./cmd/sandbox/... -> 0 issues; CGO_ENABLED=0 go build exit 0 (CGO fence confirmed clear); ran the built binary against docs/scenarios/stock-price/{primitives,module}/*.json -> total=11 pass=11 fail=0 status=OK, matching the original review claim exactly. Additional check beyond the original review: apps/stock-price/Dockerfile builds ONLY ./cmd/server/ -- cmd/sandbox/ is never baked into the deployed image (grep-confirmed, no Dockerfile/CI reference) -- so despite backlog-detail.json carrying a generic rebuild_required:true flag (a batch default from the 2026-06-15 maintainability audit, not row-specific reasoning), no Docker Microservice Code-Change Close Gate applies here: this is a pure dev/test-harness relocation with zero production deploy surface, unlike the FACTORY-APP-split-fetchParseAndStoreBctc precedent where apps/mcp-server/ IS baked into its serving image. File split matches the backlog-detail.json approach spec exactly (all 7 named files present + helpers.go for the float-ptr helpers the spec called out but did not name). DoD fully met: files split by seam, each file <=120L or justified, sandbox runs identically, tests green, generic (no task-specific hardcoding in the split files), tooling behavior unchanged. Sign-off: DONE_VERIFIED -- no rework, no rebuild/ops step, no reassignment needed."
       }
     ],
     "head": {
@@ -13990,28 +13981,6 @@
         "secondary_claimed_by": "dev-team (review-lane secondary-drain)",
         "secondary_dispatch_target": "dev-kinh-dich",
         "updated_at": "2026-08-05T07:44:39Z"
-      },
-      {
-        "title": "Split the 743L stock-price sandbox by executor seam",
-        "priority": "P1",
-        "zone": "stock-price",
-        "type": "FACTORY",
-        "status": "REVIEW",
-        "id": "FACTORY-STOCK-split-sandbox",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-STOCK-split-sandbox",
-        "promoted_at": "2026-07-09T20:47:26Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
-        "claimed_at": "2026-07-09T20:47:26Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)",
-        "reviewed_at": "2026-07-09T20:55:11Z",
-        "reviewed_by": "dev-stock-price",
-        "next_agent": "architect",
-        "po_triage_20260722": "Owner assigned (was null next_agent) so no row is ownerless (PO AC1). Remains in REVIEW, deferred-behind the review-lane sweeper FIX-DEVTEAM-REVIEW-LANE-QA-DRAIN + FIX-BOUNDED1-SUPERVISED-LANE-NO-SWEEPER (both activated -> backlog this tick). Not silently dropped; the sweeper routes it to next_agent once built.",
-        "updated_at": "2026-08-05T17:52:21Z",
-        "secondary_claimed_at": "2026-08-05T17:52:20Z",
-        "secondary_claimed_by": "dev-team (review-lane secondary-drain)",
-        "secondary_dispatch_target": "architect"
       },
       {
         "id": "FIX-BCTC-FPT-BT5-BALANCE-GATE",
@@ -21065,6 +21034,43 @@
         "entered_review_at": "2026-08-05T17:40:15Z",
         "branch": null,
         "review_note": "T2 of 8 (SPRINT-CCATO-TRUTHGATE-MCP-NATIVE, architect brief docs/architecture-briefs/2026-07-17-ccato-truthgate-mcp-native.md). New infrastructure/fileStore/claimToolMapLoader.ts (loadClaimToolMap(filePath?), CLAIM_TOOL_MAP_PATH) + claimToolMapValidator.ts (shape assertion, split <=120L each -- size-lint, matching T1's own precedent): reads+validates docs/data/claim-tool-map.json, fail-loud ClaimToolMapLoadError on missing/unreadable/unparsable/shape-mismatched input, tolerates additive SSOT fields. Returns T1's ClaimToolMap type with zero transformation. Deviation from brief's literal spec (flagged, not silent): improvementSignalWriter.ts's fixed __dirname hop-count REPO_ROOT pattern verified empirically to resolve wrong in both local-dev and the deployed container -- used the already-correct getProjectRoot() helper instead for the NEW path constant; improvementSignalWriter.ts itself untouched (out of zone/scope). Evidence: new CCATO-MCP-T2-CLAIM-MAP-LOADER.test.ts 14/14 pass (25 expect()); bun tsc --noEmit clean; size-lint-justification.sh --check: 2 pre-existing unrelated offenders only; tool/scheduler counts unchanged 183/88 (T2 registers no MCP tool/cron); fresh boot health+dashboard probes clean; full bun test 15085 pass/40 skip/54 fail/47837 expect() -- improved vs same-day baseline (15070/55fail/1err), and structurally provable zero-regression since grep confirms the only consumer of the 2 new modules is this task's own new test file (no production code imports them yet -- T5-USECASE not landed). Doc-review: infrastructure.md + testing.md + domain-model.md updated. Decision journal: docs/agent-memory/decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-dev-mcp-server-3.md S63. Commits: f79019f9b (impl), 533a745d3 (memory). QA: verify the 3 new files + re-run CCATO-MCP-T2-CLAIM-MAP-LOADER.test.ts; downstream T3/T5-T8 depend on this landing."
+      },
+      {
+        "id": "FIX-CI-TASKCLAIM-PO-FLOW-OWNER-SESSION-PAYDOWN",
+        "type": "FIX",
+        "size": "S",
+        "priority": "P0",
+        "status": "REVIEW",
+        "zone": "cross-service/",
+        "owner": "po",
+        "next_agent": "qa",
+        "plan_only": false,
+        "supervised": false,
+        "created_at": "2026-08-05T17:30:42Z",
+        "created_by": "po/triage-20260805T1730Z",
+        "check_id": "CI-RED-f080fbc0",
+        "dedup_key": "ci_job:task-claim-owner-session-lint|file:docs/agents/po/flow/sprint-kickoff.md",
+        "origin_signal_id": "CI-RED-f080fbc0",
+        "verification_gate": "ci_green_on_subsequent_push",
+        "baseline_pass": true,
+        "rebuild_required": false,
+        "caused_by_commit": "3ce726a6e",
+        "title": "CI RED — task-claim-owner-session-lint: docs/agents/po/flow/sprint-kickoff.md:44 task_claim omits the REQUIRED owner_client_session. Not a new defect and not a missed scope — the call site is UNCHANGED since 2026-05-27; commit 3ce726a6e added 2 lines above it, shifting it 42->44 and de-grandfathering it from the line-keyed baseline. Pay the debt: 1 task_claim + 2 task_release sites, all in PO's own flow docs.",
+        "files": [
+          "docs/agents/po/flow/sprint-kickoff.md",
+          "docs/agents/po/flow/sprint-signoff.md",
+          "docs/data/task-claim-owner-session-baseline.json",
+          "scripts/audits/task-claim-owner-session-lint.sh"
+        ],
+        "related": [
+          "FIX-TASKCLAIM-OWNER-CLIENT-SESSION-MISSING-FLEET-FLOW-DOCS",
+          "FIX-PO-BATCH-MINT-NO-WRITE-ACTUATOR"
+        ],
+        "status_note": "AC1: `bash scripts/audits/task-claim-owner-session-lint.sh --check` RC=0 / 0 violations, AND CI job `task-claim-owner-session-lint` conclusion=success on a subsequent push. AC2 (fix, do NOT re-grandfather): add owner_client_session to sprint-kickoff.md:44 (task_claim) AND to sprint-signoff.md:28 and :42 (task_release, both still grandfathered only because that file has not been touched) - this removes docs/agents/po/flow/** from the baseline entirely so no future line-shift can re-trigger this. Running --update to re-grandfather is NOT an acceptable close. AC3: parameter names re-derived from apps/mcp-server/src/interface/mcp/tools/system/coordinationTools.ts, not copied from a sibling doc. AC4: the docs must instruct SUBSTITUTING the real session id (spawn-prompt `Coordination: owner_client_session=<value>` line) - a doc that writes the literal $CLAUDE_CODE_SESSION_ID inside a call_tool argument gets sent LITERALLY (known memory hazard); mirror the shape already used in docs/agents/pm/flow/main.md:127 and .claude/skills/commit-mutex/SKILL.md:36. AC5 (ergonomics, prevents the next misdiagnosis): task-claim-owner-session-lint.sh's FAIL message should state when a violation corresponds to a baseline entry whose LINE moved (same file+snippet, different line) vs a genuinely new call site - this exact failure was relayed up the chain as 'the fix never covered this file / was reintroduced', both wrong.",
+        "po_ruling_20260805T1730Z": "ROOT CAUSE RULED FROM RAW EVIDENCE, REJECTING BOTH RELAYED HYPOTHESES. (a) `git blame -L 42,53 docs/agents/po/flow/sprint-kickoff.md` = dc430566c2, 2026-05-27, for the ENTIRE task_claim block - the call site was neither created nor edited after the parent fix landed, so 'reintroduced' is false. (b) docs/data/task-claim-owner-session-baseline.json DOES grandfather this exact site, as `docs/agents/po/flow/sprint-kickoff.md:42` - so 'the fix never covered this file' is also false; it was covered, as explicitly-scoped grandfathered debt (23 sites / 9 files). (c) The actual trigger: commit 3ce726a6e (2026-08-05, FIX-PO-BATCH-MINT-NO-WRITE-ACTUATOR, +14/-12 in this file) inserted 2 net lines above the block, moving it to line 44. The lint's own header documents the key as the EXACT (file, line, snippet) triple - 'if the line moves or its content changes it is no longer grandfathered'. So the guard did exactly what it was designed to do. THIS IS NOT A LINT-COSMETIC ISSUE - IT IS A LIVE DEFECT. coordinationTools.ts declares owner_client_session as z.string() with NO .optional() on BOTH task_claim (l.104-110) and task_release (l.199-205) - verified by reading the source. A doc-faithful PO therefore (i) never engages the sprint umbrella mutex at kickoff, and (ii) can never release task:<sprint_id>, stranding it for the full 3600s TTL. PO's own flow has carried this since 2026-05-27. DISPOSITION: fix, do not re-grandfather. DELIBERATELY NOT DONE: widening the baseline key from (file,line,snippet) to (file,snippet). That would loosen a ratchet that is currently working, and gate-widening requires an actuator dry-run first (standing rule). The ratchet's boy-scout intent - touch a file, pay its debt - is correct; the only real failure here is that nobody paid a 1-line debt for 4 days.",
+        "updated_at": "2026-08-05T17:58:40Z",
+        "updated_by": "router",
+        "router_verification_note": "router-verified 2026-08-05T17:59Z: agent-father implemented and committed (21e97ab66) -- sprint-kickoff.md:44 task_claim + sprint-signoff.md:28/:42 task_release now carry owner_client_session. orch-state.json writes are outside agent-father's commit_zone (same boundary pattern as TE-T02 earlier this session), so the board was never flipped despite the code landing -- router closes the gap. Independently re-ran bash scripts/audits/task-claim-owner-session-lint.sh --check: PASS, 0 new offenders (270 files scanned, baseline carries 23 grandfathered sites). -> review, next_agent=qa."
       }
     ],
     "qa": [
@@ -21112,8 +21118,8 @@
         }
       ]
     },
-    "last_triaged_at": "2026-08-05T17:51:16Z",
-    "last_triaged_by": "dev-team (supervised-lane sweep)",
+    "last_triaged_at": "2026-08-05T17:57:59Z",
+    "last_triaged_by": "architect",
     "in_progress": [
       {
         "id": "UC-CRITIC-HOOKS-ENFORCEMENT",
