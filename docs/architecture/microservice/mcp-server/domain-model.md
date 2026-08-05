@@ -118,9 +118,12 @@ TS port of `scripts/narrative-truth-gate.sh`'s python scan/classify/quarter-reso
 
 Input SSOT (loaded by the caller, not this layer): `docs/data/claim-tool-map.json` (`negation_lexicon`,
 `dimensions[]`, `non_ticker_tokens`, `tool_null_markers`) — schema mirrored by `ClaimToolMap` in
-`claimCandidateScanner.ts`. Live re-probe adapters, SSOT loader, signal-emit writer, use-case
+`claimCandidateScanner.ts` (re-exported from `claimToolMapTypes.ts`). SSOT loader landed:
+`infrastructure/fileStore/claimToolMapLoader.ts`'s `loadClaimToolMap()` — see
+`docs/architecture/microservice/mcp-server/infrastructure.md` § File Store Readers
+(CCATO-MCP-T2-CLAIM-MAP-LOADER). Live re-probe adapters, signal-emit writer, use-case
 orchestration, and MCP tool registration are separate, not-yet-landed sub-tasks
-(CCATO-MCP-T2..T8) of the same sprint (`SPRINT-CCATO-TRUTHGATE-MCP-NATIVE`).
+(CCATO-MCP-T3..T8) of the same sprint (`SPRINT-CCATO-TRUTHGATE-MCP-NATIVE`).
 
 ## Repository Interfaces
 - `IWatchlistRepository`, `IMarketPriceRepository`

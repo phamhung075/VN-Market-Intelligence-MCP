@@ -486,6 +486,32 @@ confirmed byte-identical.
 - Predictions: `predictionStore`, `predictionClaimStore`
 - Signal: `agentSignalStore`, `bctcSignalDebounce`
 
+## File Store Readers (`infrastructure/fileStore/`)
+- `alertVerdictStore.ts` — append/read/prune JSON-file alert-verdict log, atomic write.
+- `analysisBriefReader.ts` — reads/parses `docs/analysis-briefs/{TICKER}.md`, plus a
+  full-catalogue index reader for `GET /api/analysis-briefs`.
+- `claimToolMapLoader.ts` (CCATO-MCP-T2-CLAIM-MAP-LOADER) — `loadClaimToolMap(filePath?)`
+  reads + validates `docs/data/claim-tool-map.json` (the CCATO Tier-1 SSOT — negation
+  lexicon, dimension→tool routing, `arg_style`, `non_ticker_tokens`; shared unchanged with
+  `scripts/narrative-truth-gate.sh`, dual-runtime read of the same data file). Fail-loud:
+  throws `ClaimToolMapLoadError` (never coerces/defaults) on a missing file, unreadable
+  file, unparsable JSON, or a body missing/mistyping `negation_lexicon`/`non_ticker_tokens`/
+  `dimensions[].{id,keywords,tool,requires_ticker,arg_style}` — the caller
+  (`application/usecases/runNarrativeTruthGate.ts`, CCATO-MCP-T5, not yet landed) maps this
+  to the tool's `GATE_VERDICT: CONFIG_ERROR: <message>` response. Additive top-level SSOT
+  fields (`tool_null_markers`, `_meta`, `version`) are tolerated, not rejected. Default path
+  constant `CLAIM_TOOL_MAP_PATH` resolves via `getProjectRoot()` (`infrastructure/
+  projectRoot.ts`) rather than a hardcoded `__dirname`-relative hop-count — verified
+  empirically that the sibling `improvementSignalWriter.ts`'s fixed
+  `resolve(__dirname, "../../../../../../")` pattern the architecture brief pointed at
+  resolves ONE LEVEL ABOVE the real monorepo root in a local checkout and above `/`
+  entirely inside the deployed container (`Dockerfile` `COPY apps/mcp-server/src/ ./src/`
+  puts this file's runtime `__dirname` at a shallower depth than local dev), so it was not
+  safe to replicate verbatim for a NEW path constant. Injectable `filePath` override param
+  for test isolation (mirrors `analysisBriefReader.ts`'s `projectRoot` param convention).
+  Returns the exact `ClaimToolMap` type domain's `claimCandidateScanner.ts` consumes with
+  zero transformation (verified in `CCATO-MCP-T2-CLAIM-MAP-LOADER.test.ts`).
+
 ## Key Infrastructure Patterns
 - **Circuit breaker:** `circuitBreakerRegistry.ts` (open/closed/half-open)
 - **Rate limiter:** `rateLimiter.ts`
