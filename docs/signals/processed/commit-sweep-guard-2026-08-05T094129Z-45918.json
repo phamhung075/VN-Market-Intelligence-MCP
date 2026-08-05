@@ -1,0 +1,14 @@
+{
+  "from": "commit-sweep-guard",
+  "to": "po",
+  "type": "bug-escalation",
+  "priority": "high",
+  "createdAt": "2026-08-05T09:41:29Z",
+  "payload": "[sweep-guard] BARE commit about to absorb 4 staged file(s) not necessarily this actor's own: docs/agent-memory/decisions/sprint-FIX-BCTC-FALLBACK-SHELL-REPORTS-STRUCTURALLY-UNEXTRACTABLE-2026-08-05T09:40:22Z.md docs/data/orch/orch-state.json docs/handoffs/FIX-BCTC-FALLBACK-SHELL-REPORTS-READ-SIDE-FAST-FOLLOW.md docs/handoffs/FIX-BCTC-FALLBACK-SHELL-REPORTS-UNEXTRACTABLE-write.md. actor=f298ccf7-8cf4-452d-9a5a-57dcb47e65ac mode=warn escalated=false prior_warns=1 threshold=3. Fix: git commit -m \"<msg>\" -- <own-files-only>.",
+  "_processed": {
+    "fingerprint": "9c3c870c34c86e553051db3b5308a35770faa85c06ed96bfc528d0d44b11c0e8",
+    "processedAt": "2026-08-05T09:50:36Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
