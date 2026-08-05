@@ -1,5 +1,64 @@
 
 
+## c19 · 2026-08-05T08:11:30Z
+### Audit Run Tier-1 (08:00–08:11 UTC 2026-08-05)
+- Tier: 1 | Containers: 13 checked (all UP) | Health endpoints: 5/5 OK
+- Memory: mcp-server 76.98% (OK), rag-service 99.81% (WARN — below 40MiB floor)
+- A-20 multi-probe: 3/3 pass | A-21 windowed crashes: 0 | Disk: 39% (OK)
+- Anomalies: 1 new (0 critical, 1 warn, 0 info) | 1 dedup-skipped
+- Status: DEGRADED (rag-service below floor threshold — recurring condition)
+
+Fire-election: tick=2026-08-05T08:00Z (`*/30 * * * *` Tier-1 boundary) — claimed, led tick.
+
+### RAW-PROBE:
+```
+=== AUDITOR PROBE 2026-08-05T08:10:45Z ===
+
+--- docker ps -a ---
+All 13 host_runtime_set services UP (mcp-server:17h, pdf-extractor:18h, rag-service:8h, frontend:11d, others:2-6w)
+
+--- health endpoints ---
+[health] mcp-server:3000/health OK (HTTP 200)
+[health] api-gateway:4000/health OK (HTTP 200)
+[health] macro-indicators:5004/health OK (HTTP 200)
+[health] pdf-extractor:5001/health OK (HTTP 200)
+[health] frontend:3001/ OK (HTTP 200)
+
+--- restart count ---
+Container=/vn-market-intelligence-mcp-mcp-server-1 RestartCount=13
+
+--- memory pressure (mcp-server) ---
+Container=vn-market-intelligence-mcp-mcp-server-1 MemPerc=76.98% MemUsage=2.309GiB / 3GiB
+[A-30] SKIP deep-probe — baseline 76.98% < 85% investigate-gate
+
+--- memory pressure (rag-service — docker stats manual check) ---
+Container=vn-market-intelligence-mcp-rag-service-1 MemPerc=99.81% MemUsage=766.5MiB / 768MiB
+[A-30-RAG] BELOW-FLOOR: headroom 1.5MiB < 40MiB threshold
+
+--- disk df -h / ---
+/dev/disk1s4s1: 39% capacity (13Gi used, 21Gi free)
+
+--- pdf-extractor in-container multi-probe (A-20) ---
+[A-20-PROBE-1] in-container HTTP 200
+[A-20-PROBE-2] in-container HTTP 200
+[A-20-PROBE-3] in-container HTTP 200
+[A-20] pass_count=3/3
+```
+
+### A-30 Finding — rag-service WARN (recurring)
+- **Status:** WARN / Memory 99.81% BELOW 40MiB floor (worsened from 97.83%)
+- **Recurrence:** 3rd consecutive Tier-1 detection (97.72–97.78% two ticks ago, 97.83% c18, 99.81% now)
+- **Root cause:** Sentence-transformers model singleton, ~700MiB baseline
+- **Tracked by:** FU-RAG-DEPLOY-MEMORY (BACKLOG), FIX-RAG-SERVICE-CLEAN-EXIT-RESTART-LOOP (READY)
+- **Signal:** [emit-signal] SKIP-dedup id=sys-20260805T081125-5e0d
+- **DASHBOARD:** [emit-dashboard] OK id=sys-20260805T081125-5e0d
+
+Dedup: c18 sent at 07:41:37Z (13min ago, within 7d window). SKIP-dedup correct per flow contract.
+
+[OUTPUT-CONTRACT] signals_posted=1 | telegram_sent=0 | signal_queue_rows_written=1 | dashboard_rows=1 | dedup_skipped=1
+CONTRACT-CONTRADICTION: NONE
+
+
 ## c18 · 2026-08-05T07:42:36Z
 ### Audit Run Tier-1 (07:30–07:42 UTC 2026-08-05)
 - Tier: 1 | Containers: 13 checked (all UP) | Health endpoints: 5/5 OK
