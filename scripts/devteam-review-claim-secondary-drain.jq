@@ -45,6 +45,13 @@
 # reasoning (PO is the designated no-resolvable-owner triage role; null
 # rows are deliberately NOT routed to architect, to avoid concentrating
 # load on the agent already carrying the largest single non-null share).
+# next_agent=="dev-team" ALSO falls to "po", same as null/absent (FIX-
+# DEVTEAM-SECONDARY-DRAIN-NO-SELF-TARGET-RESOLVER-CASE, architect,
+# 2026-08-05): "dev-team" is the dispatcher FLOW id, not a spawnable
+# individual agent — the caller's own hard anti-recursion guard ("NEVER
+# spawn the dev-team dispatcher flow from within itself") means a
+# dev-team-targeted row could never actually be dispatched and would strand
+# claimed-but-refused forever, re-picked every tick.
 #
 # Mutation — DELIBERATELY DOES NOT move the row to a new board lane (brief
 # §2b): TaskBoardSchema (apps/mcp-server/src/infrastructure/

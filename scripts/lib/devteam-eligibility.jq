@@ -359,9 +359,27 @@ def resolved_dispatch_lane($detail_items):
 # owner is who IMPLEMENTED it, not necessarily who should TRIAGE a stalled
 # sign-off; PO can re-route any individual row via its own normal triage
 # note, same as always.
+# SELF-TARGET CASE (FIX-DEVTEAM-SECONDARY-DRAIN-NO-SELF-TARGET-RESOLVER-CASE,
+# architect, 2026-08-05): next_agent=="dev-team" ALSO falls back to "po",
+# exactly like the null/absent case above. "dev-team" is the dispatcher FLOW
+# id, not a spawnable individual agent — docs/agents/dev-team/flow/main.md
+# carries a hard, non-negotiable "NEVER spawn the dev-team dispatcher flow
+# from within itself" anti-recursion guard, so a row that resolves to
+# "dev-team" can never actually be dispatched: dev-team correctly refuses to
+# Agent()-spawn itself, but this script's own claim stamp
+# (secondary_claimed_at/secondary_claimed_by/secondary_dispatch_target) is
+# NOT undone on refusal (by design — see this file's own no-lane-move
+# rationale), so the row would sit claimed-yet-undispatched and be re-picked
+# every subsequent tick, hitting the identical wall forever. LIVE-CONFIRMED
+# 2026-08-05: SECONDARY-Drain claimed review[] row
+# OPS-BCTC-BANK-2025Q4-ENRICH-0ROW-REPARSE this way; PO hand-repointed that
+# ONE row's next_agent to "architect" as a symptom patch (not a fix — this
+# def is the fix). A dev-team-targeted review row is, by construction, one
+# nobody has triaged to a real owner yet, same reasoning as the null case
+# this branch now shares its fallback with.
 def resolved_secondary_dispatch_target($detail_items):
   (effective_next_agent($detail_items)) as $na
-  | if ($na | length) > 0 then $na else "po" end;
+  | if ($na | length) > 0 and ($na != "dev-team") then $na else "po" end;
 
 # ---- prose-sequencing-without-machine-encoding guard
 # (FIX-DEVTEAM-BOUNDED1-PROSE-SEQUENCING-UNBACKED-GATE, 2026-07-23) ----
