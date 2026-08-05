@@ -4,6 +4,22 @@ Zone: `apps/rag-service/` | Stack: Python/FastAPI | DB: rag_service.db (write)
 
 ## Working Memory
 
+### 2026-08-05 — FIX-RAG-SERVICE-CLEAN-EXIT-RESTART-LOOP (P1 LIVE INCIDENT)
+
+**Task:** compact() failure-path never reset `_insert_count` — PO already root-caused at source (repositories.py:251 reset was inside the `try`, right after `optimize()`); the `except:` block only warned and returned normally, so ANY optimize() failure left the counter stuck `>= _COMPACT_EVERY` and every following insert re-fired a full-table optimize() — burst rewrites inside the 768MiB cap, matching the OOMKilled=false crash pattern. Scope held to this one file per PO directive; 768MiB cap sizing (FU-RAG-DEPLOY-MEMORY) and on-disk amplification (FIX-RAG-COMPACTION-DISK-AMPLIFICATION) explicitly out of scope.
+
+**Fix:** (1) moved `self._insert_count = 0` into a `finally:` on `compact()` so it resets on both success and failure. (2) Added `self._compact_lock` (per-instance `asyncio.Lock`); `compact()` now does `if self._compact_lock.locked(): return` before entering `async with self._compact_lock:` — a concurrent second trigger short-circuits instead of launching its own `optimize()`, and the in-flight call's `finally` resets the counter for both. Did NOT gate the lock body on a re-checked `_insert_count` threshold (considered, rejected — would silently no-op direct/maintenance-cron `compact()` calls below threshold, changing an already-documented contract not covered by fix_spec).
+
+**Tests (AC1/AC2, the DoD):** both new tests inject failure/tracking on the REAL LanceDB table object (not a `store.compact` monkeypatch shortcut, which would bypass the actual finally/lock logic under test). AC1: `table.optimize = AsyncMock(side_effect=RuntimeError(...))`, insert to threshold, assert `_insert_count == 0` after the failure and that the very next insert does not re-fire compact(). AC2: `asyncio.gather()` of two concurrent `insert()` coroutines both crossing threshold, tracking-wrapper around real `table.optimize`, assert exactly 1 call. Stable across 5 pytest-randomly seeds.
+
+**Verified:** pytest 163/163 (161 baseline + 2 new), 4 pre-existing compaction tests unchanged/still pass. mypy: repositories.py 14→14 errors (0 new, all pre-existing patterns at shifted line numbers); test file baseline-consistent +7 (missing-annotation/method-assign on the 2 new test helpers — same untyped-test-function style already used by 100% of this file's existing tests, not a new category). Sandbox 16/16 primitive + 2/2 module GREEN exit 0. Env audit EMPTY via canonical `_audit_env()` (loose `env|grep` shows the same known `CTX_ADVISOR_*TOKEN*` non-credential substring false positive). Fence-A/B grep hits are pre-existing docstring prose only. Graphify: skipped — no Skill-tool path for this spawned Task-tool agent (same structural constraint noted by prior siblings); doc content (infrastructure.md, testing.md) updated directly instead.
+
+**DJ:** `docs/agent-memory/decisions/sprint-FIX-RAG-SERVICE-CLEAN-EXIT-RESTART-LOOP-dev-rag-service.md`
+
+Zone health: `apps/rag-service/` test suite 163/163 green, no other drift observed this cycle. HEALTHY.
+
+---
+
 ### 2026-07-24 — FACTORY-RAG-delete-dead-sqlite-repo (dead-code removal, P2)
 
 **Task:** delete dead `SQLiteAnalysisRepository` + phantom `AnalysisRepositoryPort`. Investigated at source FIRST (did not trust ticket title): grep-confirmed `SQLiteAnalysisRepository` constructed ONLY in `test_rag_integration.py`'s `sqlite_repo` fixture (4 tests, `TestSQLiteRepository`); `AnalysisRepositoryPort` implemented ONLY by that class; `app_factory.build_real_adapters()` (sole prod-adapter composition point) and `main.py` wire only `SentenceTransformersEmbedder`+`LanceDBVectorStore` — zero `SQLiteAnalysisRepository` construction anywhere live. `IndexUseCase`/`SearchUseCase` `__init__` never took an analysis-repo param (the `IndexUseCase` docstring's `analysis_repo (optional)` claim was itself phantom — fixed). Matches (and independently verified, not just trusted) `docs/architecture-briefs/2026-06-15-maintainability-factory-audit.md` FACTORY-RAG-delete-dead-sqlite-repo entry.
