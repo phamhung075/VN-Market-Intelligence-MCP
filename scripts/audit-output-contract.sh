@@ -51,6 +51,18 @@
 #                                       # green).
 #     [--orch-state-file <path>        default: $REPO_ROOT/docs/data/orch/orch-state.json]
 #     [--from-agent <agent-id>         default: "system-auditor"]
+#     [--cycle-tag <value>]            # FIX-AUDIT-OUTPUT-CONTRACT-SIGNALQUEUE-
+#                                       # ROWS-WRITTEN-SELFREPORT-MISMATCH — when
+#                                       # supplied (the caller's own FIRE_TASK_ID),
+#                                       # V1 scopes the independent re-read to an
+#                                       # EXACT audit_cycle_tag match instead of
+#                                       # the from+ts-window guess below, immune to
+#                                       # cross-tier/cross-session identity
+#                                       # collision (every tier shares the same
+#                                       # default from="system-auditor"). Falls
+#                                       # back to the legacy from+ts-window path
+#                                       # (--from-agent / --cycle-start-ts) when
+#                                       # absent, for backward compatibility.
 #
 # STDOUT — MANDATORY, paste verbatim into the RETURN block:
 #   [OUTPUT-CONTRACT] signals_posted=<N> | telegram_sent=<N> | signal_queue_rows_written=<N> | dashboard_rows=<N> | dedup_skipped=<N>
@@ -118,6 +130,7 @@ run_audit_output_contract() {
   local markers_file="" anomalies_count="" next_token="" cycle_start_ts=""
   local orch_state_file="${REPO_ROOT}/docs/data/orch/orch-state.json"
   local from_agent="system-auditor"
+  local cycle_tag=""
 
   while [ $# -gt 0 ]; do
     case "$1" in
@@ -127,6 +140,7 @@ run_audit_output_contract() {
       --cycle-start-ts) cycle_start_ts="${2:-}"; shift 2 ;;
       --orch-state-file) orch_state_file="${2:-}"; shift 2 ;;
       --from-agent) from_agent="${2:-}"; shift 2 ;;
+      --cycle-tag) cycle_tag="${2:-}"; shift 2 ;;
       *)
         echo "[audit-output-contract] ABORT unknown-arg $1"
         return 2
@@ -194,16 +208,44 @@ run_audit_output_contract() {
   # ── V1: independent signal_queue cross-check ────────────────────────────
   if [ -n "$cycle_start_ts" ] && [ -f "$orch_state_file" ]; then
     local independent_sqr
-    independent_sqr=$(jq --arg from "$from_agent" --arg ts "$cycle_start_ts" \
-      '[.signal_queue.rows[] | select(.from == $from and .ts >= $ts)] | length' \
-      "$orch_state_file" 2>/dev/null)
+    if [ -n "$cycle_tag" ]; then
+      # Exact-tag scoping (Bug B fix) — no from/time-window guessing, immune
+      # to cross-tier/cross-session identity collision (every tier/session
+      # shares the same default from="system-auditor").
+      independent_sqr=$(jq --arg tag "$cycle_tag" \
+        '[.signal_queue.rows[] | select(.audit_cycle_tag == $tag)] | length' \
+        "$orch_state_file" 2>/dev/null)
+    else
+      # Legacy from+ts-window fallback for callers not yet passing
+      # --cycle-tag. to_epoch ported verbatim from emit-audit-signal.sh's
+      # _ledger_prune_and_lookup() (Bug A fix — cycle_start_ts is always
+      # minute-precision FIRE_TICK, .ts is always second-precision; a raw
+      # string >= silently drops same-minute rows).
+      independent_sqr=$(jq --arg from "$from_agent" --arg ts "$cycle_start_ts" '
+        def to_epoch:
+          if test("^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}Z$")
+          then (sub("Z$"; ":00Z") | fromdateiso8601)
+          else fromdateiso8601
+          end;
+        ($ts | to_epoch) as $cutoff
+        | [.signal_queue.rows[] | select(.from == $from and ((.ts // "1970-01-01T00:00:00Z") | to_epoch) >= $cutoff)] | length
+      ' "$orch_state_file" 2>/dev/null)
+    fi
     if [ -n "$independent_sqr" ] && [ "$independent_sqr" != "null" ]; then
       if [ "$independent_sqr" -ne "$signal_queue_rows_written" ]; then
         echo "[OUTPUT-CONTRACT] VIOLATION: signal_queue_rows_written mismatch narrated=${signal_queue_rows_written} independent=${independent_sqr}"
         _send_bug_telegram "[audit-output-contract] BUG: signal_queue_rows_written mismatch — marker-parsed=${signal_queue_rows_written}, independent re-read of .signal_queue.rows[]=${independent_sqr}. Trusting the higher (real-artifact) value."
         violations=$((violations + 1))
-        # Never under-report a real write: the independent, ground-truth
-        # read of the artifact itself wins on mismatch.
+        # Take-the-max is sound ONLY because both operands are now
+        # trustworthy per-direction (docs/architecture-briefs/2026-08-05-
+        # fix-audit-output-contract-signalqueue-mismatch.md §3):
+        #   independent < marker -> a verified write was drained/pruned
+        #     AFTER this cycle wrote it; cannot un-write a real append,
+        #     marker (already higher) wins by construction (no-op below).
+        #   independent > marker -> this cycle's own $MARKERS_FILE is
+        #     missing a row that legitimately carries its cycle-tag
+        #     (dropped marker line / bypassed-script write); the scoped
+        #     ground-truth read wins.
         if [ "$independent_sqr" -gt "$signal_queue_rows_written" ]; then
           signal_queue_rows_written=$independent_sqr
         fi

@@ -180,43 +180,102 @@ check "T8 headline-mismatch V4 fired" "$(printf '%s' "$OUT8" | grep -q '^\[OUTPU
 check "T8 headline-mismatch V5 fired" "$(printf '%s' "$OUT8" | grep -q '^\[OUTPUT-CONTRACT\] VIOLATION: RETURN NEXT=clean but signals_posted>0$' && echo true || echo false)"
 
 # ── T9: independent signal_queue cross-check (V1) — scratch orch-state
-# has 2 rows for this cycle-start-ts, markers file only accounts for 1 ─────
+# has 3 rows for this cycle-start-ts (2 unambiguous + 1 same-tick-minute,
+# FIX-AUDIT-OUTPUT-CONTRACT-SIGNALQUEUE-ROWS-WRITTEN-SELFREPORT-MISMATCH
+# Bug A regression coverage), markers file only accounts for 1. Cutoff is
+# now minute-precision — the REAL FIRE_TICK shape (main.md Step 0d), not
+# the already-second-precision fixture the original T9 used (which never
+# exercised the defect). ────────────────────────────────────────────────
 reset_log
 SCRATCH_ORCH="$TMPDIR_TEST/orch-state.json"
 jq -n '{signal_queue:{rows:[
   {id:"sys-a", ts:"2026-07-29T10:00:00Z", from:"system-auditor"},
-  {id:"sys-b", ts:"2026-07-29T10:05:00Z", from:"system-auditor"}
+  {id:"sys-b", ts:"2026-07-29T10:05:00Z", from:"system-auditor"},
+  {id:"sys-c", ts:"2026-07-29T09:55:45Z", from:"system-auditor"}
 ]}}' > "$SCRATCH_ORCH"
 MF9=$(markers_file <<'EOF'
 [emit-signal] OK dedup_key=x:y:Z id=sys-a
 [emit-dashboard] OK id=sys-a check_id=Z
 EOF
 )
-OUT9=$(run_audit_output_contract --markers-file "$MF9" --cycle-start-ts "2026-07-29T09:55:00Z" --orch-state-file "$SCRATCH_ORCH")
+OUT9=$(run_audit_output_contract --markers-file "$MF9" --cycle-start-ts "2026-07-29T09:55Z" --orch-state-file "$SCRATCH_ORCH")
 RC9=$?
 check "T9 independent-crosscheck exit=1 (mismatch detected)" "$([ "$RC9" -ne 0 ] && echo true || echo false)"
-check "T9 independent-crosscheck V1 fired narrated=1 independent=2" "$(printf '%s' "$OUT9" | grep -q '^\[OUTPUT-CONTRACT\] VIOLATION: signal_queue_rows_written mismatch narrated=1 independent=2$' && echo true || echo false)"
-check "T9 independent-crosscheck final count uses the HIGHER (ground-truth) value, never under-reports" "$(printf '%s' "$OUT9" | grep -q 'signal_queue_rows_written=2' && echo true || echo false)"
+check "T9 independent-crosscheck V1 fired narrated=1 independent=3" "$(printf '%s' "$OUT9" | grep -q '^\[OUTPUT-CONTRACT\] VIOLATION: signal_queue_rows_written mismatch narrated=1 independent=3$' && echo true || echo false)"
+check "T9 independent-crosscheck final count uses the HIGHER (ground-truth) value, never under-reports" "$(printf '%s' "$OUT9" | grep -q 'signal_queue_rows_written=3' && echo true || echo false)"
 
-# ── T10: independent cross-check AGREES — no violation, no false alarm ────
+# ── T10: independent cross-check AGREES — no violation, no false alarm.
+# sys-c (same clock-minute as the minute-precision cutoff) is INCLUDED
+# here — before the Bug A fix this row was silently dropped from the
+# independent re-read, which would have produced a FALSE VIOLATION
+# (narrated=3, independent=2) on a cycle that genuinely wrote 3 rows. ─────
 reset_log
 MF10=$(markers_file <<'EOF'
 [emit-signal] OK dedup_key=x:y:Z id=sys-a
 [emit-signal] OK dedup_key=x:y:W id=sys-b
+[emit-signal] OK dedup_key=x:y:V id=sys-c
 [emit-dashboard] OK id=sys-a check_id=Z
 [emit-dashboard] OK id=sys-b check_id=W
+[emit-dashboard] OK id=sys-c check_id=V
 EOF
 )
-OUT10=$(run_audit_output_contract --markers-file "$MF10" --cycle-start-ts "2026-07-29T09:55:00Z" --orch-state-file "$SCRATCH_ORCH")
+OUT10=$(run_audit_output_contract --markers-file "$MF10" --cycle-start-ts "2026-07-29T09:55Z" --orch-state-file "$SCRATCH_ORCH")
 RC10=$?
 check "T10 independent-crosscheck-agrees exit=0" "$([ "$RC10" -eq 0 ] && echo true || echo false)"
 check "T10 independent-crosscheck-agrees no V1 violation" "$(! printf '%s' "$OUT10" | grep -q 'VIOLATION' && echo true || echo false)"
+check "T10 independent-crosscheck-agrees signal_queue_rows_written=3 (same-tick-minute row NOT silently dropped)" "$(printf '%s' "$OUT10" | grep -q 'signal_queue_rows_written=3' && echo true || echo false)"
 
 # ── T11: bad usage — no --markers-file — exit 2 ────────────────────────────
 OUT11=$(run_audit_output_contract)
 RC11=$?
 check "T11 bad-usage exit=2" "$([ "$RC11" -eq 2 ] && echo true || echo false)"
 check "T11 bad-usage marker ABORT" "$(printf '%s' "$OUT11" | grep -q '^\[audit-output-contract\] ABORT missing-required-arg' && echo true || echo false)"
+
+# ── T12: Bug A — same-tick-minute row, bare FIRE_TICK shape (minute-
+# precision cutoff, no --cycle-tag). Before the fix, the raw jq string
+# ">=" compare silently drops any row whose .ts falls in the SAME clock-
+# minute as the tick (":" 0x3A sorts below "Z" 0x5A right after HH:MM),
+# producing a FALSE narrated=1/independent=0 violation on the routine
+# case of a row written within the tick's own minute (occurrences
+# 4412/4415). After the fix (to_epoch, epoch-int compare), no violation —
+# signal_queue_rows_written matches the marker exactly. ────────────────────
+reset_log
+SCRATCH_ORCH12="$TMPDIR_TEST/orch-state-t12.json"
+jq -n '{signal_queue:{rows:[
+  {id:"sys-t12", ts:"2026-08-05T06:00:03Z", from:"system-auditor"}
+]}}' > "$SCRATCH_ORCH12"
+MF12=$(markers_file <<'EOF'
+[emit-signal] OK dedup_key=x:y:T12 id=sys-t12
+[emit-dashboard] OK id=sys-t12 check_id=T12
+EOF
+)
+OUT12=$(run_audit_output_contract --markers-file "$MF12" --cycle-start-ts "2026-08-05T06:00Z" --orch-state-file "$SCRATCH_ORCH12")
+RC12=$?
+check "T12 same-tick-minute exit=0 (no violation — row correctly counted)" "$([ "$RC12" -eq 0 ] && echo true || echo false)"
+check "T12 same-tick-minute no V1 violation" "$(! printf '%s' "$OUT12" | grep -q 'VIOLATION' && echo true || echo false)"
+check "T12 same-tick-minute signal_queue_rows_written=1 (matches marker exactly)" "$(printf '%s' "$OUT12" | grep -q 'signal_queue_rows_written=1' && echo true || echo false)"
+
+# ── T13: Bug B — --cycle-tag exact scoping. Scratch orch-state has one
+# row tagged with THIS cycle's tag and one UNRELATED row sharing
+# from="system-auditor" with a DIFFERENT tag (simulates a peer tier/
+# session writing under the same shared default identity — occurrence
+# 4420). The peer row must NOT be picked up when --cycle-tag is supplied. ──
+reset_log
+SCRATCH_ORCH13="$TMPDIR_TEST/orch-state-t13.json"
+jq -n '{signal_queue:{rows:[
+  {id:"sys-t13-mine", ts:"2026-08-05T06:02:03Z", from:"system-auditor", audit_cycle_tag:"cron:auditor-t2:2026-08-05T06:00Z"},
+  {id:"sys-t13-peer", ts:"2026-08-05T06:02:40Z", from:"system-auditor", audit_cycle_tag:"cron:auditor-t1:2026-08-05T06:02Z"}
+]}}' > "$SCRATCH_ORCH13"
+MF13=$(markers_file <<'EOF'
+[emit-signal] OK dedup_key=x:y:T13 id=sys-t13-mine
+[emit-dashboard] OK id=sys-t13-mine check_id=T13
+EOF
+)
+OUT13=$(run_audit_output_contract --markers-file "$MF13" --cycle-start-ts "2026-08-05T06:00Z" --cycle-tag "cron:auditor-t2:2026-08-05T06:00Z" --orch-state-file "$SCRATCH_ORCH13")
+RC13=$?
+check "T13 cycle-tag-scoped exit=0 (no violation — peer row excluded)" "$([ "$RC13" -eq 0 ] && echo true || echo false)"
+check "T13 cycle-tag-scoped no V1 violation" "$(! printf '%s' "$OUT13" | grep -q 'VIOLATION' && echo true || echo false)"
+check "T13 cycle-tag-scoped signal_queue_rows_written=1 (peer row not counted)" "$(printf '%s' "$OUT13" | grep -q 'signal_queue_rows_written=1' && echo true || echo false)"
 
 # ── Summary ──────────────────────────────────────────────────────────────────
 echo ""

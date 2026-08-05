@@ -428,6 +428,34 @@ check "T20 happy-path exit=0" "$([ "$RC20" -eq 0 ] && echo true || echo false)"
 check "T20 happy-path marker OK" "$(printf '%s' "$OUT20" | grep -q '^\[emit-signal\] OK dedup_key=' && echo true || echo false)"
 check "T20 happy-path get_agent_signals WAS called (mandatory read-back ran)" "$([ "$(call_count_for get_agent_signals)" -ge 1 ] && echo true || echo false)"
 
+# ── T21/T22: FIX-AUDIT-OUTPUT-CONTRACT-SIGNALQUEUE-ROWS-WRITTEN-SELFREPORT-
+# MISMATCH Bug B — --cycle-tag threads through _build_row_json() into the
+# row's new audit_cycle_tag passthrough field (SignalRowSchema.passthrough(),
+# zero migration); omitted → field is null (backward-compat — none of
+# T1-T20 assert on this key's absence, so they stay green unmodified). ─────
+row_cycle_tag() {
+  jq -r --arg id "$1" '[.signal_queue.rows[] | select(.id==$id)][0].audit_cycle_tag' "$SCRATCH_ORCH"
+}
+
+# T21: --cycle-tag supplied — row carries it verbatim
+reset_case
+OUT21=$(run_emit_signal --check-id B-12 --category-type data_stale --severity WARN \
+  --summary "cycle-tag probe" --detail-json '{"dedup_key":"data_stale:T21:B-12"}' \
+  --cycle-tag "cron:auditor-t2:2026-08-05T06:00Z")
+RC21=$?
+ROW_ID21=$(printf '%s' "$OUT21" | grep -o 'id=[^ ]*$' | cut -d= -f2)
+check "T21 cycle-tag exit=0" "$([ "$RC21" -eq 0 ] && echo true || echo false)"
+check "T21 cycle-tag row carries audit_cycle_tag verbatim" "$([ "$(row_cycle_tag "$ROW_ID21")" = "cron:auditor-t2:2026-08-05T06:00Z" ] && echo true || echo false)"
+
+# T22: --cycle-tag omitted — field is null, not a missing key or empty string
+reset_case
+OUT22=$(run_emit_signal --check-id B-13 --category-type data_stale --severity WARN \
+  --summary "no cycle-tag probe" --detail-json '{"dedup_key":"data_stale:T22:B-13"}')
+RC22=$?
+ROW_ID22=$(printf '%s' "$OUT22" | grep -o 'id=[^ ]*$' | cut -d= -f2)
+check "T22 no-cycle-tag exit=0" "$([ "$RC22" -eq 0 ] && echo true || echo false)"
+check "T22 no-cycle-tag row's audit_cycle_tag is null" "$([ "$(row_cycle_tag "$ROW_ID22")" = "null" ] && echo true || echo false)"
+
 # ── Summary ──────────────────────────────────────────────────────────────────
 echo ""
 echo "Results: $PASS passed, $FAIL failed"

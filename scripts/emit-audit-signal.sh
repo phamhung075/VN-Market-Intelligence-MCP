@@ -36,6 +36,17 @@
 #                        # skipped. Distinct from --e3-only. Reserved for a
 #                        # future call site — none of the 6 current sites use
 #                        # this flag standalone.
+#     [--cycle-tag <value>]  # FIX-AUDIT-OUTPUT-CONTRACT-SIGNALQUEUE-ROWS-
+#                        # WRITTEN-SELFREPORT-MISMATCH (Bug B): stored
+#                        # verbatim as the row's audit_cycle_tag passthrough
+#                        # field (SignalRowSchema.passthrough(), zero schema
+#                        # migration). Every call site passes the tier's own
+#                        # FIRE_TASK_ID here so audit-output-contract.sh's V1
+#                        # independent re-read can scope to exactly this
+#                        # cycle's own writes instead of guessing off a
+#                        # shared from+ts-window (every tier defaults to the
+#                        # same from="system-auditor"). Omitted -> field is
+#                        # null (backward-compatible).
 #
 # DDD LAYER SPLIT (bash has no module system — layers are function-naming/
 # ordering, not file separation, per architect design decision 1):
@@ -163,6 +174,7 @@ _parse_args() {
   E3_ONLY="false"
   NO_TELEGRAM="false"
   DEDUP_KEY=""
+  CYCLE_TAG=""
 
   while [ $# -gt 0 ]; do
     case "$1" in
@@ -175,6 +187,7 @@ _parse_args() {
       --to-agent) TO_AGENT="${2:-}"; shift 2 ;;
       --e3-only) E3_ONLY="true"; shift ;;
       --no-telegram) NO_TELEGRAM="true"; shift ;;
+      --cycle-tag) CYCLE_TAG="${2:-}"; shift 2 ;;
       *)
         echo "[emit-signal] ABORT unknown-arg $1"
         return 2
@@ -391,7 +404,8 @@ _build_row_json() {
     --arg type "$CATEGORY_TYPE" \
     --arg summary "$SUMMARY" \
     --arg severity "$SEVERITY" \
-    '{id:$id, ts:$ts, from:$from, to:$to, type:$type, summary:$summary, severity:$severity, status:"NEW", payload_ref:null, provenance:"detector"}'
+    --arg cycle_tag "$CYCLE_TAG" \
+    '{id:$id, ts:$ts, from:$from, to:$to, type:$type, summary:$summary, severity:$severity, status:"NEW", payload_ref:null, provenance:"detector", audit_cycle_tag: (if $cycle_tag == "" then null else $cycle_tag end)}'
 }
 
 # Step E-3: signal-row append via orch-apply.sh + POST-WRITE read-back.
