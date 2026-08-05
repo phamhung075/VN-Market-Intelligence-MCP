@@ -1,18 +1,10 @@
 # Alert Commander — Notebook
 
-**Last updated:** 2026-08-05 00:12 UTC | **Sprint:** FIX-DEPTHTHIN-B-GATEWAY-TA-PATH-REWRITE
+**Last updated:** 2026-08-05 02:10 UTC | **Sprint:** FIX-DEPTHTHIN-B-GATEWAY-TA-PATH-REWRITE
 
 **Role:** Event-only alert dispatch (position-danger / watchlist-opportunity / CRITICAL-always) | **Cadence:** `*/15min` market hours (02:00–08:30 UTC) + 4h critical sweep | **Contract:** APPEND class, one `## c<NNN>` section per cycle per `.claude/skills/notebook-write/SKILL.md` AC-6.
 
 > **Structural reset (FIX-ALERT-COMMANDER-NOTEBOOK-SINGLE-BLOB-UNPRUNABLE, 2026-07-29):** prior history archived → `docs/agent-memory/notebooks/archive/alert-commander-archive-20260729.md`. One top-level `## c<NNN> · <ISO-timestamp>` section per cycle now.
-
-## c27 · 2026-08-01T12:09:03Z (slot=alert-commander-critical, tick=12:06)
-- Signals: 0 new (`get_agent_signals(status=unread)` clean, bus carried only 2 already-read rows: 10241 verified_decision/DIG echo, 10242 urgent_news freshness-sla-monitor noise) | Fired: 0 | Suppressed: 0 | MARKET: 0
-- Position-danger: `get_alerts(type=price)` clean (no stopLossHit). Portfolio: FPT qty5000 avg80.3k cur67.1k P/L-16.4%, daily +0.15% (stale close) — no live trigger.
-- Watchlist-opp: live `get_kinhdich_reading` FPT(GIỮ 62%), DIG(BÁN 25%), VNM(GIỮ 100%), VCB(BÁN 100%), HPG(GIỮ 62%), VIC(THẬN TRỌNG 50%), NVL(GIỮ 100%), BSR(GIỮ 100%), PLX(GIỮ 100%), EIB(GIỮ tiêu cực 25%) — none BUY — gate fails.
-- CRITICAL-always: legal_risk clean (days=1/hours_back=6), crisis_early_warning clean (no crisis threshold exceeded; 19 tickers <50 reputation incl. new BSR=37 deteriorating, DPM/KDC/PLX DANGER unchanged), no verified_chain/chain_catalyst/unread urgent_news on bus.
-- Regime: NEUTRAL (fallback — macro_snapshot JSON shape, no literal Global-Liquidity line) | Carry: NEUTRAL (1.37%) | vol_regime ELEVATED (rv_20d_pctile=0.789) | Pivot window: false (next Sept 2026)
-- Market CLOSED (off-hours critical sweep; VN-Index -0.51% 1735.78, breadth 119up/196down, prices as of 2026-07-31 09:00Z close) — no tick-snapshot for 12:06 today — bootstrap/macro/context/alerts/agent_signals/legal_risk/crisis/kinhdich×10/vol/liquidity/foreign_room/macro_calendar/watchlist/positions/market_snapshot all called live.
 
 ## c28 · 2026-08-01T16:09:57Z (slot=alert-commander-critical, tick=16:07)
 - Signals: 0 new (`get_agent_signals(status=unread)` clean) | Fired: 0 | Suppressed: 0 | MARKET: 0
@@ -30,3 +22,12 @@
 - CRITICAL-always: legal_risk clean (days=1/hours_back=6), crisis_early_warning clean (23 tickers <50 reputation, DPM/PLX DANGER=20, KDC DANGER=22 — same tier as prior cycles), no verified_chain.
 - Regime: NEUTRAL (fallback — macro_snapshot JSON shape, investment-clock score=8/CORE_VN) | Carry: NEUTRAL (1.37%) | vol_regime ELEVATED (rv_20d_pctile=0.793) | Pivot window: false (next Sept 2026)
 - Market CLOSED (off-hours sweep, pre-open; VN-Index 1777.23 +0.82%, breadth 165up/139down, EOD 2026-08-04 close) — tick-snapshot hit (cycle-snapshot-00:05.json, 1.5min fresh) — macro from snapshot, remaining tools called live (macro_calendar/context/alerts/vol/liquidity/foreign_room/legal_risk/crisis/agent_signals/kinhdich×11/market_snapshot).
+
+## c30 · 2026-08-05T02:10:39Z (slot=alert-commander-market, tick=02:06)
+- Signals: 11 on bus (2h) | Fired: 0 | Suppressed: 1 new (10350) | MARKET: 0
+- ChainCatalyst: 0 fired | 1 new suppressed (10350 oil/Iran de-escalation, conf 0.70<0.75 NEUTRAL threshold) | 10347 carryover from c29 (unchanged, not re-processed)
+- New unread: 10349 DPM urgent_news (pillars all neutral) — live `get_kinhdich_reading` DPM → GIU(HOLD) tich cuc 100%, not BUY — gate fails. 10345/10346 (VIC/PLX) carryover from c29, GIU 37% unchanged.
+- Position-danger: `get_alerts(type=price)` clean (no stopLossHit), no ticker >5% singleDayDrop (max BSR+2.40%/FRT-1.80% per snapshot) — gate fails 1/3.
+- CRITICAL-always: legal_risk clean (days=1/hours_back=6 + bus check), crisis_early_warning clean (reputation DANGER DPM/PLX=20, KDC=22 — same tier as c29), no verified_chain.
+- Regime: NEUTRAL (fallback — macro_snapshot JSON shape) | Carry: NEUTRAL (1.37%) | vol_regime ELEVATED (rv_20d_pctile=0.789) | Pivot window: false (pivotWindowWarning null, next Sept 2026)
+- Market OPEN (VN-Index 1777.23 flat, delta=0) — tick-snapshot hit (cycle-snapshot-02:04.json, ~1min fresh) — macro+context from snapshot; macro_calendar/alerts/vol/liquidity/foreign_room/legal_risk/crisis/agent_signals/kinhdich(DPM) called live. Silent exit — no MARKET/WORK send. `log_agent_work` id=1751.
