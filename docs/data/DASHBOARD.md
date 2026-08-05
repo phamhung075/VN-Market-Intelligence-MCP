@@ -382,3 +382,15 @@
 **Mitigation:** No immediate action beyond signal routing.
 
 ---
+
+## Anomaly: A-30 · rag-service memory pressure 95.05%
+**Severity:** WARN | **Date:** 2026-08-05 | **Status:** OPEN
+**Location:** rag-service container
+**Details:** Memory usage 95.05% (38.0 MiB free, below 40 MiB floor threshold)
+**Impact:** Service running on critical memory margin; risk of OOM kill if usage spikes
+**Root cause:** RAG service embedding model loads consume large VRAM; container memory limit insufficient
+**Zone owner:** ai-ml-platform
+**Last reported:** 2026-08-05T11:11:40Z (signal sys-20260805T111131-1c02, system-auditor -> po, dedup_key=mem_pressure:rag-service:A-30, WARN Telegram sent)
+**Mitigation:** No immediate action beyond signal routing.
+
+---
