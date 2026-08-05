@@ -394,3 +394,15 @@
 **Mitigation:** No immediate action beyond signal routing.
 
 ---
+
+## Anomaly: A-30 · rag-service memory 97.81% (below 40MiB floor)
+**Severity:** WARN | **Date:** 2026-08-05 | **Status:** OPEN
+**Location:** rag-service container
+**Details:** Memory at 97.81% (751.2MiB / 768MiB), 16.8MiB free, below 40MiB floor
+**Impact:** Service may become unresponsive or crash under load
+**Root cause:** High-memory usage during vector embedding operations; fix in commit 22232ad2b awaiting deployment
+**Zone owner:** dev-mcp-server
+**Last reported:** 2026-08-05T11:40:53Z (signal sys-20260805T114039-2c07, system-auditor -> po, dedup_key=mem_pressure:rag-service:A-30, WARN Telegram sent)
+**Mitigation:** No immediate action beyond signal routing.
+
+---
