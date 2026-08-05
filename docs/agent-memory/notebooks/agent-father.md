@@ -1,5 +1,30 @@
 # Agent Father — Notebook
 
+## Fix (dev-team Step 3, CI-red P0) 2026-08-05T17:54:35Z FIX-CI-TASKCLAIM-PO-FLOW-OWNER-SESSION-PAYDOWN
+- Added `owner_client_session` to `sprint-kickoff.md:44` (`task_claim`) and `sprint-signoff.md`
+  `:28`+`:42` (both `task_release`) — the 3 PO-flow sites the row scoped, re-derived param
+  names/lines from `coordinationTools.ts:104-110,199-205` (both non-optional `z.string()`), not
+  copied from a sibling doc. Substitution instruction mirrors `pm/flow/main.md:127` /
+  `commit-mutex/SKILL.md:36`. `scripts/audits/task-claim-owner-session-lint.sh --check` → PASS
+  RC=0, 0 new offenders (270 files) on the actual committed working tree.
+- Did NOT commit AC2 (baseline trim, drop `docs/agents/po/flow/**` from
+  `task-claim-owner-session-baseline.json`) or AC5 (lint FAIL message distinguishes
+  line-moved-grandfathered from genuinely-new call sites, implemented + 2 new tests added,
+  9/9 suite green): both files sit in `scripts/`/`docs/data/`, outside `commit_zone.allowed`
+  even though the row's own scope note names them — same precedent as this file's TE-T02 entry
+  today (S1-S20/TE-T12/TE-T14/TE-T21). Built + fully verified locally, then reverted
+  (`git checkout --`) to keep the commit zone-clean; exact diff supplied in RETURN for a
+  developer to land in one commit.
+- Confirmed live (not assumed) that `mcp__gateway__call_tool` / `mcp__gateway__list_servers` /
+  `mcp__gateway__search_tools` / bare `mcp__vn-market__task_release` all error "No such tool
+  available" — matches `commit-mutex/SKILL.md`'s own documented statement that agent-father has
+  "no gateway binding — mutex physically unreachable" (not a bug, the designed architecture).
+  Could not self-`task_release` `task:FIX-CI-TASKCLAIM-PO-FLOW-OWNER-SESSION-PAYDOWN`; router/
+  dev-team holds gateway access and releases on my behalf, per the dispatch note.
+- Sibling row `FIX-TASKCLAIM-OWNER-CLIENT-SESSION-MISSING-FLEET-FLOW-DOCS` (review[]/next_agent
+  =qa) untouched — its own PO scope-fence note already states `sprint-kickoff.md:44` is not its
+  defect; did not add/alter any field on it.
+
 ## Fix (dev-team dispatch, TOKEN-ECONOMY-AUDIT) 2026-08-05T16:59:18Z TE-T02
 - `docs/agents/dev-team/flow/main.md` 1087L/128,392B → 888L/118,924B (-9,609B, ~2.4k tok). 2 of the
   row's 3 relocations landed, byte-verified verbatim (WU-2 guarantee) via sed-extract + diff before
@@ -34,29 +59,6 @@
   — router/dev-team holds gateway access and must release the lock + route the board row.
 - Verified post-edit: code-fence count even (36), all 12 `jump:` anchors present, jq syntax check
   on the (reverted, original) `scripts/devteam-backlog-promote-bounded1.jq` still passes.
-
-## Fix (router-dispatched, sprint CADENCE-RATIONALIZATION-20260804) 2026-08-04T20:10:00Z CADRAT-3+CADRAT-7
-- CADRAT-3: git-diff pre-check gate (`HEAD~3..HEAD`) added to code-janitor/flow/main.md
-  (skips Decision-Tree DRY scan when src/|apps/*/src/ untouched; 3 every-scan sweeps stay
-  unconditional) and agent-father/flow/keep.md (skips Steps 1-2 orphan+roster scan when
-  .claude/agents/*.md|docs/agents/*/flow/*.md untouched; Steps 3-5 stay reachable).
-  claude-manager-helper/flow/main.md untouched (precedent, not edited). AC-4 dry-run proof
-  ran against real git history for both gates (correct-skip + correct-fall-through each).
-- CADRAT-7: news-scout-sentiment cron 05:00→01:30 UTC (self-contradicted "pre-market" label
-  — 12:00 ICT was 3h post-open, inside lunch) in cowork-schedule.json + news-scout/init.md.
-- **Lesson (live, costly near-miss):** `git commit -m ... -- <path>` on a path that is ALSO
-  modified elsewhere in the working tree does NOT respect a partial `git apply --cached`
-  stage for that path — pathspec-commit implies `--only`, i.e. WORKING TREE content wins,
-  index is ignored for named paths. First CADRAT-7 commit attempt swept 22 unrelated live
-  `last_fired` bumps from cowork-schedule.json (a dispatcher-mutated hot file) into the
-  commit. Caught via the sweep-guard hook's non-blocking warning, not by me pre-checking.
-  Fix pattern for isolating one hunk in a concurrently-dirty tracked file: stage the hunk
-  (`git apply --cached`) → `git checkout-index -f -- <path>` to materialize ONLY the index
-  content into the working tree → commit with pathspec (now safe) → restore the backed-up
-  full working-tree content afterward so other agents' pending writes aren't lost.
-- Wrote the one allowed exception write (signal_queue DONE-mark, `orch-apply.sh`, read-back
-  confirmed) addressed to po requesting QA verify + task_board lane-move — did not touch
-  task_board rows directly (`commit_zone.excluded`), same precedent as prior cycles above.
 
 ## Fix (router-dispatched, PO self-triage) 2026-08-05T09:32:49Z FIX-PO-BATCH-MINT-NO-WRITE-ACTUATOR
 - Confirmed both defects live before editing: grepped all 14 `docs/agents/po/flow/*.md` —
