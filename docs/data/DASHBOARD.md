@@ -310,3 +310,15 @@
 **Mitigation:** No immediate action beyond signal routing.
 
 ---
+
+## Anomaly: A-30 · rag-service memory 99.81% BELOW 40MiB floor
+**Severity:** WARN | **Date:** 2026-08-05 | **Status:** OPEN
+**Location:** rag-service/memory
+**Details:** rag-service at 99.81% of 768MiB (1.5MiB free, BELOW 40MiB floor threshold)
+**Impact:** Service may crash or fail under memory pressure
+**Root cause:** Sentence-transformers model singleton with no release path; ~700MiB baseline reached on first embed
+**Zone owner:** dev-mcp-server
+**Last reported:** 2026-08-05T08:11:34Z (signal sys-20260805T081125-5e0d, system-auditor -> po, dedup_key=mem_pressure:rag-service:A-30, WARN Telegram sent)
+**Mitigation:** No immediate action beyond signal routing.
+
+---
