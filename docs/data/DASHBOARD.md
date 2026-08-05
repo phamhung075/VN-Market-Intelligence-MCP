@@ -370,3 +370,15 @@
 **Mitigation:** No immediate action beyond signal routing.
 
 ---
+
+## Anomaly: A-30 · rag-service memory pressure: 97.51% of 768MiB
+**Severity:** WARN | **Date:** 2026-08-05 | **Status:** OPEN
+**Location:** rag-service container
+**Details:** Memory usage: 748.9MiB / 768MiB (97.51%) — critical headroom exhaustion
+**Impact:** Approaching OOM kill threshold — service restart risk imminent
+**Root cause:** High memory footprint in RAG embeddings cache or vector store operations
+**Zone owner:** dev-mcp-server
+**Last reported:** 2026-08-05T10:41:15Z (signal sys-20260805T104107-762a, system-auditor -> po, dedup_key=mem_pressure:rag-service:A-30, WARN Telegram sent)
+**Mitigation:** No immediate action beyond signal routing.
+
+---
