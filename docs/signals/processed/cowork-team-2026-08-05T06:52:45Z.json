@@ -1,0 +1,55 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-08-05T06:52:45Z",
+    "matched_slots": [
+      "alert-commander-market"
+    ],
+    "won_slots": [
+      "alert-commander-market"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/alert-commander/flow/main.md"
+    ],
+    "silent": false,
+    "drift_min": 3,
+    "errors": [],
+    "pressure_mode": "adaptive",
+    "calendar_status": "open",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "chef_mutex_applied": false,
+    "due_reasons": {
+      "alert-commander-market": "cron"
+    },
+    "cadence_minutes": {
+      "alert-commander-market": null
+    },
+    "last_fired_timestamp": "2026-08-05T06:52:18Z",
+    "last_fired_slots": [
+      "alert-commander-market"
+    ],
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "06:45",
+    "leader_lock": "acquired",
+    "dev_head": "unknown",
+    "devq": 5,
+    "signal_backlog": 17,
+    "note": "pressure-state.json fresh this tick (8.5min old, threshold 20min) -> adaptive mode, calendar_status=open cron_fallback for alert-commander-market policy. Data-quality flag: emit_pressure_state returned cycle_snapshot_promoted=false; docs/data/cycle-snapshot-latest.json still shows created_at=2026-07-31T06:52:28Z (5 days stale) despite a fresh docs/data/cycle-snapshot-06:52.json written this tick -- promotion mechanism (EMIT-DARK-RECURRING) appears not to be firing; worth a system-auditor look if this recurs."
+  },
+  "priority": "low",
+  "createdAt": "2026-08-05T06:52:45Z",
+  "_processed": {
+    "fingerprint": "54383006baa5efdf7261a8ddade94e2451dc92f7b101c64b08d80cacce0e7876",
+    "processedAt": "2026-08-05T07:11:00Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

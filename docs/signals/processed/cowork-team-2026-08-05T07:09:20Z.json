@@ -1,0 +1,55 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-08-05T07:09:20Z",
+    "matched_slots": [
+      "alert-commander-market"
+    ],
+    "won_slots": [
+      "alert-commander-market"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/alert-commander/flow/main.md"
+    ],
+    "silent": false,
+    "drift_min": 3,
+    "errors": [],
+    "pressure_mode": "adaptive",
+    "calendar_status": "open",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "chef_mutex_applied": false,
+    "due_reasons": {
+      "alert-commander-market": "cron"
+    },
+    "cadence_minutes": {
+      "alert-commander-market": null
+    },
+    "last_fired_timestamp": "2026-08-05T07:08:29Z",
+    "last_fired_slots": [
+      "alert-commander-market"
+    ],
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "07:00",
+    "leader_lock": "acquired",
+    "dev_head": "unknown",
+    "devq": 5,
+    "signal_backlog": 17,
+    "note": "cycle_snapshot_promoted:false AGAIN this tick (2nd consecutive observed occurrence, 06:45+07:00) -- cycle-snapshot-latest.json still shows created_at=2026-07-31 despite fresh cycle-snapshot-07:05.json written this tick. Escalated: wrote signal cow-20260805T070907 to po (type=system-issue, severity=MED) per recurring-bug policy (2+ occurrences -> escalate, not just note). Non-blocking: agents fall back to direct get_cycle_bootstrap. Also found 1 NEW cowork-drain-scoped signal (sys-20260805T065227-25f7, to=po, db_integrity_breach CRITICAL, 336 daily_ohlcv rows) -- left untouched (po's own drain-signals.md is the actual consumer, not cowork-team)."
+  },
+  "priority": "low",
+  "createdAt": "2026-08-05T07:09:20Z",
+  "_processed": {
+    "fingerprint": "c13d3567f310fa8a534063c13c59296cec280b38f389e518650508de2d31331d",
+    "processedAt": "2026-08-05T07:11:00Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
