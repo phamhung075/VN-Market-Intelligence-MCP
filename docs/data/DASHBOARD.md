@@ -358,3 +358,15 @@
 **Mitigation:** No immediate action beyond signal routing.
 
 ---
+
+## Anomaly: A-21 · mcp-server A-21 crash restart — 6 crashes in 4h window
+**Severity:** WARN | **Date:** 2026-08-05 | **Status:** OPEN
+**Location:** mcp-server container
+**Details:** mcp-server windowed crash count=6 (threshold=2) — crashes at 09:24:37Z, 09:26:59Z, 09:35:07Z, 09:45:41Z, 10:09:54Z, 10:13:07Z
+**Impact:** Repeated container restarts indicate underlying stability issue — may impact data freshness if pattern continues
+**Root cause:** Unknown — requires investigation; possible memory pressure (rag-service high), I/O issue, or OOM kill
+**Zone owner:** dev-mcp-server
+**Last reported:** 2026-08-05T10:34:43Z (signal sys-20260805T103434-24be, system-auditor -> po, dedup_key=microservice_degraded:mcp-server:A-21, WARN Telegram sent)
+**Mitigation:** No immediate action beyond signal routing.
+
+---
