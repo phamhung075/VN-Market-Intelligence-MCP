@@ -2191,7 +2191,7 @@
         "summary": "team-tool-recheck writer dead since 06-23 — replace-vs-retire decision needed",
         "severity": "LOW",
         "status": "triaged",
-        "payload_ref": "docs/signals/janitor-health-recheck-writer-retired-2026-08-05.json",
+        "payload_ref": "docs/signals/processed/janitor-health-recheck-writer-retired-2026-08-05.json",
         "triaged_by": "router",
         "triaged_at": "2026-08-05T10:33:32Z",
         "triage_note": "DUPLICATE of already-resolved decision. PO already answered this exact question 2026-07-23 (signal janitor-health-recheck-writer-retired-20260723, status=triaged, DECISION=RETIRE, no board task, let 30d rule drain the directory). Re-fired because memory-prune-sweep.sh scripts/agents-flow/memory-prune-sweep.sh:109 idempotency guard only checks docs/signals/ (live inbox) for a prior marker file, never docs/signals/processed/ (where drain-signals.js moves a successfully-processed marker) — structurally guaranteed to recur every 6h cycle forever. Root cause tracked as FIX-JANITOR-HEALTHRECHECK-IDEMPOTENCY-GUARD-MISSES-PROCESSED-DIR. No new PO decision needed — original RETIRE decision stands."
