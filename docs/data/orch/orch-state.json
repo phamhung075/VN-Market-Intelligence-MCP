@@ -134,8 +134,8 @@
     "does_not_consume_wip": true
   },
   "signal_queue": {
-    "_updated_at": "2026-08-05T10:17:45Z",
-    "_updated_by": "cowork-team (0a drain)",
+    "_updated_at": "2026-08-05T10:33:32Z",
+    "_updated_by": "router",
     "archive": [],
     "rows": [
       {
@@ -2190,8 +2190,11 @@
         "type": "system-issue",
         "summary": "team-tool-recheck writer dead since 06-23 — replace-vs-retire decision needed",
         "severity": "LOW",
-        "status": "NEW",
-        "payload_ref": "docs/signals/janitor-health-recheck-writer-retired-2026-08-05.json"
+        "status": "triaged",
+        "payload_ref": "docs/signals/janitor-health-recheck-writer-retired-2026-08-05.json",
+        "triaged_by": "router",
+        "triaged_at": "2026-08-05T10:33:32Z",
+        "triage_note": "DUPLICATE of already-resolved decision. PO already answered this exact question 2026-07-23 (signal janitor-health-recheck-writer-retired-20260723, status=triaged, DECISION=RETIRE, no board task, let 30d rule drain the directory). Re-fired because memory-prune-sweep.sh scripts/agents-flow/memory-prune-sweep.sh:109 idempotency guard only checks docs/signals/ (live inbox) for a prior marker file, never docs/signals/processed/ (where drain-signals.js moves a successfully-processed marker) — structurally guaranteed to recur every 6h cycle forever. Root cause tracked as FIX-JANITOR-HEALTHRECHECK-IDEMPOTENCY-GUARD-MISSES-PROCESSED-DIR. No new PO decision needed — original RETIRE decision stands."
       }
     ],
     "last_triaged_at": "2026-07-29T06:25:00Z",
@@ -2376,8 +2379,8 @@
     ]
   },
   "task_board": {
-    "_updated_at": "2026-08-05T09:35:52Z",
-    "_updated_by": "dev-team (router)",
+    "_updated_at": "2026-08-05T10:33:32Z",
+    "_updated_by": "router",
     "active_sprints": [
       {
         "evidence": "Router raw-verified (get_bctc_full live, post-rebuild) after BEQ-9/10 refine. Core extraction incident RESOLVED, but populating real scalars exposed a SEPARATE pre-existing analytics/serving layer with 4 defect clusters: (a) RATIO-COMPUTE — VNM ROE=0/ROA=0/EPS=12VND/NetDebt-EBITDA=-7.5e13x; DHG ROA=7,891,932.0% (analyst falsely claimed fixed). Ratios emit 0 or astronomically wrong. (b) BANK-B02-TCTD-SERVING — SHB + EIB get_bctc_full returns 'balance sheet has no decomposition — forced-zero pass suspected'; banks UNSERVABLE despite DONE + committed scalars. (c) PERIOD-SEMANTICS — FPT 2025-Q4 rev=70112.8/NP=11225.5 are FULL-YEAR cumulative labeled 'Q4'; buildComparisonSection then compares cumulative-FY vs next-quarter -> false -82.2% mislabeled 'YoY'. (d) ENTITY-SCOPE — HPG 2025-Q4 is parent-only B01a (rev=0, conf44%) served as the canonical/headline HPG vs consolidated ~140k rev; misleading. PUBLISH-INTEGRITY GAP: NO semantic-sanity publish guard exists in orch-state (the triage-referenced 'Task #13' is NOT present). The BEQ-9/10 reports are now DONE -> flow into chef docs/agents/unified-agent/flow/market-analysis.md + market-analyst -> ROA 7.8M% / false YoY -82% / parent-only-headline CAN reach MARKET unattended. recurring-bug-escalation: BCTC area has >2 fix cycles -> architect root-cause SPIKE, not point-patch. | [dev-team 2026-06-03T11:44Z observation feeding BAL-0/BAL-1] After LF-SERVE-REFLOW recovered FPT Q1 absolute scalars (op_profit/ebitda/cash live-correct), get_bctc_full(FPT) STILL serves garbage DERIVED ratios: current_ratio=41527873060120x (denominator ~0), operating_margin_pct=0.0% (not recomputed from now-correct operating_profit). Confirms the analytics/serving derived-ratio layer is a distinct defect from scalar extraction. BAL-0 publish semantic-sanity gate MUST block current_ratio out-of-range before MARKET/FB; BAL-1 spike should pin the ratio recompute module. Repro: get_bctc_full(code=FPT).",
@@ -11293,6 +11296,21 @@
         "verify_note": "Sequenced after write-side verification to keep AC gates crisp. Read-side data is stranded without this, but requires write-side to land first.",
         "handoff": "docs/handoffs/FIX-BCTC-FALLBACK-SHELL-REPORTS-READ-SIDE-FAST-FOLLOW.md",
         "updated_at": "2026-08-05T09:40:16Z"
+      },
+      {
+        "id": "FIX-JANITOR-HEALTHRECHECK-IDEMPOTENCY-GUARD-MISSES-PROCESSED-DIR",
+        "type": "FIX",
+        "title": "memory-prune-sweep.sh idempotency guard for janitor-health-recheck-writer-retired-*.json only scans docs/signals/, never docs/signals/processed/ — re-fires every 6h forever",
+        "desc": "scripts/agents-flow/memory-prune-sweep.sh:109 uses find \"$SIGNALS_DIR\" -maxdepth 1 -name \"janitor-health-recheck-writer-retired-*.json\" to decide whether to write a fresh PO-decision signal. Once drain-signals.js processes and moves that marker file to docs/signals/processed/ (normal, expected drain behavior), the guard can never see it again — confirmed live 2nd occurrence, 13 days apart (2026-07-23 original, 2026-08-05 duplicate), both times PO already answered RETIRE. Fix: widen the find to also check docs/signals/processed/, or better, use a durable state marker independent of the signals inbox lifecycle (e.g. a dedicated docs/data/janitor-*-done marker file) so the guard survives normal signal drain/archival.",
+        "priority": "P2",
+        "size": "S",
+        "zone": "cross-service/",
+        "next_agent": "developer",
+        "status": "BACKLOG",
+        "created_at": "2026-08-05T10:33:32Z",
+        "created_by": "router",
+        "updated_at": "2026-08-05T10:33:32Z",
+        "updated_by": "router"
       }
     ],
     "closed_sprints": [
