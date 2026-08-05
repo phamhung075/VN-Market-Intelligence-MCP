@@ -454,3 +454,15 @@
 **Mitigation:** No immediate action beyond signal routing.
 
 ---
+
+## Anomaly: A-30 · rag-service memory pressure — sustained high, no reclamation dips
+**Severity:** WARN | **Date:** 2026-08-05 | **Status:** OPEN
+**Location:** rag-service container
+**Details:** Memory 95.74–96.55% over 65s probe window (6 samples, 13s spacing). All samples >93% with zero reclamation dips. Free memory 33MiB.
+**Impact:** Unsustainable memory trend with loss of reclamation. Risk of OOM if trend continues.
+**Root cause:** Likely memory leak in rag-service or ineffective GC. See feedback_auditor_mcpserver_a21_a30_memory_fp_reemit_churn and FIX-RAG-SERVICE-CLEAN-EXIT-RESTART-LOOP (commit 22232ad2b).
+**Zone owner:** dev-rag-service
+**Last reported:** 2026-08-05T16:43:56Z (signal sys-20260805T164347-372c, system-auditor -> po, dedup_key=mem_pressure:rag-service:A-30, WARN Telegram sent)
+**Mitigation:** No immediate action beyond signal routing.
+
+---
