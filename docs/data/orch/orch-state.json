@@ -2368,10 +2368,13 @@
         "type": "agent_flow_defect",
         "summary": "scripts/agents-flow/db-integrity-probe.sh (and cron-db-data-integrity.md's embedded DB ACCESS instructions handed to system-auditor AUDIT_TIER=DATA) still target the sidecar-mounted named volume vn-market-intelligence-mcp_market_data. That volume has been empty/unused since commit 5ba622eca (2026-07-15) replaced it with a host bind-mount (./data/live -> /app/data, MARKET_DB_PATH=/app/data/market.db per docker-compose.yml) so the DB survives VM rebuilds; feedback_live_db_is_named_volume_not_host_data.md was already corrected for this on 2026-07-30 but the probe script + cron template were never updated to match. Effect: db-integrity-probe.sh's sidecar query fails every tick (confirmed today, exit 1, \"sidecar query failed (docker unreachable...)\") and FAIL-OPENs to verdict=SPAWN every single time regardless of whether tables actually changed -- meaning the change-detection gate this script exists for has been silently defeated since 07-15/07-30, and every AUDIT_TIER=DATA spawn that inherits the same stale instructions would hit an empty volume too (unless the router manually overrides the DB ACCESS block per-spawn, as done this cycle). Root-cause tracked-fix needed: update db-integrity-probe.sh's sidecar call and the cron-db-data-integrity.md / cron-standalone-team register.md DB ACCESS prose to query the host bind-mount path directly (host sqlite3 \"file:./data/live/market.db?immutable=1\", verified working today -- daily_ohlcv=775599 rows) instead of the defunct named-volume sidecar. Recommend routing to dev-mcp-server (owns market data orchestration + the probe script) via the normal po triage -> dev-team chain.",
         "severity": "MED",
-        "status": "READ",
+        "status": "triaged",
         "payload_ref": null,
         "provenance": "router",
-        "audit_cycle_tag": null
+        "audit_cycle_tag": null,
+        "triaged_at": "2026-08-06T07:23:23Z",
+        "triaged_by": "po",
+        "disposition": "FOLD — ALREADY TRACKED, no new mint. FIX-DB-INTEGRITY-SIDECAR-NAMED-VOLUME-DRIFT (backlog, P1/high, zone cross-service/, next_agent dev-team, created 2026-08-05T07:06:06Z by po) covers this exactly: its files[] already names scripts/agents-flow/db-integrity-probe.sh, scripts/db-integrity-counts.sh, .claude/commands/crons/cron-db-data-integrity.md and .claude/skills/cron-standalone-team/register.md, and its AC-1/AC-5 already mandate the host bind-mount access pattern plus the cron-template prose correction. Router's tick note ('should already be in your queue from a prior tick; if you haven't triaged it yet') is answered: it WAS triaged on 2026-08-05 and the row is dispatchable now. This is dispatcher throughput, not a triage gap."
       },
       {
         "id": "cj-20260806T085500",
@@ -2443,13 +2446,13 @@
         "type": "db_integrity_breach",
         "summary": "financial_reports: 43 very-low-confidence extractions (threshold: <5)",
         "severity": "WARN",
-        "status": "READ",
+        "status": "triaged",
         "payload_ref": null,
         "provenance": "detector",
         "audit_cycle_tag": "cron:auditor-data:2026-08-06T06:55:15Z",
-        "triaged_at": "2026-08-06T07:09:22Z",
+        "triaged_at": "2026-08-06T07:23:23Z",
         "triaged_by": "po",
-        "disposition": "pendingObservations — WARN, single fire, known BCTC low-confidence-extraction class with an established handling convention. Per the WARN/single-fire rule (feedback_auditor_mcpserver_a21_a30_memory_fp_reemit_churn) po does NOT mint on one tick; left READ for recurrence check next cycle."
+        "disposition": "FOLD — Tier-DATA/Tier-3 sweep 2026-08-06. Empty-table + low-confidence + C-04/C-08/C-11 findings all fold onto existing non-terminal rows (FIX-AUDITOR-EMPTYTABLE-CHECK-NO-WRITER-DISCRIMINATOR backlog, INVESTIGATE-EMPTY-DATA-TABLES review, FIX-ALERT-ENGINE-VERIFIED-DECISION-EMPTY-PAYLOAD-NULL-STOCKCODE review). PO independently re-verified the empty-table premise against the live host DB this tick and attached the evidence (incl. the new pdf_documents table-does-not-exist finding) to FIX-AUDITOR-EMPTYTABLE-CHECK-NO-WRITER-DISCRIMINATOR as po_live_evidence_20260806T0717. C-08/C-04/C-11 were already self-dedup-skipped by system-auditor as recurring."
       },
       {
         "id": "sys-20260806T070045-3355",
@@ -2459,10 +2462,13 @@
         "type": "db_integrity_breach",
         "summary": "financial_reports check C-04 failed (actual=30)",
         "severity": "CRITICAL",
-        "status": "READ",
+        "status": "triaged",
         "payload_ref": null,
         "provenance": "detector",
-        "audit_cycle_tag": "cron:auditor-t3:2026-08-06T02:00Z"
+        "audit_cycle_tag": "cron:auditor-t3:2026-08-06T02:00Z",
+        "triaged_at": "2026-08-06T07:23:23Z",
+        "triaged_by": "po",
+        "disposition": "FOLD — Tier-DATA/Tier-3 sweep 2026-08-06. Empty-table + low-confidence + C-04/C-08/C-11 findings all fold onto existing non-terminal rows (FIX-AUDITOR-EMPTYTABLE-CHECK-NO-WRITER-DISCRIMINATOR backlog, INVESTIGATE-EMPTY-DATA-TABLES review, FIX-ALERT-ENGINE-VERIFIED-DECISION-EMPTY-PAYLOAD-NULL-STOCKCODE review). PO independently re-verified the empty-table premise against the live host DB this tick and attached the evidence (incl. the new pdf_documents table-does-not-exist finding) to FIX-AUDITOR-EMPTYTABLE-CHECK-NO-WRITER-DISCRIMINATOR as po_live_evidence_20260806T0717. C-08/C-04/C-11 were already self-dedup-skipped by system-auditor as recurring."
       },
       {
         "id": "sys-20260806T070116-0c12",
@@ -2472,10 +2478,13 @@
         "type": "db_integrity_breach",
         "summary": "alerts check C-08 failed (actual=42)",
         "severity": "CRITICAL",
-        "status": "READ",
+        "status": "triaged",
         "payload_ref": null,
         "provenance": "detector",
-        "audit_cycle_tag": "cron:auditor-t3:2026-08-06T02:00Z"
+        "audit_cycle_tag": "cron:auditor-t3:2026-08-06T02:00Z",
+        "triaged_at": "2026-08-06T07:23:23Z",
+        "triaged_by": "po",
+        "disposition": "FOLD — Tier-DATA/Tier-3 sweep 2026-08-06. Empty-table + low-confidence + C-04/C-08/C-11 findings all fold onto existing non-terminal rows (FIX-AUDITOR-EMPTYTABLE-CHECK-NO-WRITER-DISCRIMINATOR backlog, INVESTIGATE-EMPTY-DATA-TABLES review, FIX-ALERT-ENGINE-VERIFIED-DECISION-EMPTY-PAYLOAD-NULL-STOCKCODE review). PO independently re-verified the empty-table premise against the live host DB this tick and attached the evidence (incl. the new pdf_documents table-does-not-exist finding) to FIX-AUDITOR-EMPTYTABLE-CHECK-NO-WRITER-DISCRIMINATOR as po_live_evidence_20260806T0717. C-08/C-04/C-11 were already self-dedup-skipped by system-auditor as recurring."
       },
       {
         "id": "sys-20260806T070131-0ecb",
@@ -2485,10 +2494,13 @@
         "type": "db_integrity_breach",
         "summary": "financial_reports check C-04 failed (actual=30)",
         "severity": "CRITICAL",
-        "status": "READ",
+        "status": "triaged",
         "payload_ref": null,
         "provenance": "detector",
-        "audit_cycle_tag": "cron:auditor-t3:2026-08-06T02:00Z"
+        "audit_cycle_tag": "cron:auditor-t3:2026-08-06T02:00Z",
+        "triaged_at": "2026-08-06T07:23:23Z",
+        "triaged_by": "po",
+        "disposition": "FOLD — Tier-DATA/Tier-3 sweep 2026-08-06. Empty-table + low-confidence + C-04/C-08/C-11 findings all fold onto existing non-terminal rows (FIX-AUDITOR-EMPTYTABLE-CHECK-NO-WRITER-DISCRIMINATOR backlog, INVESTIGATE-EMPTY-DATA-TABLES review, FIX-ALERT-ENGINE-VERIFIED-DECISION-EMPTY-PAYLOAD-NULL-STOCKCODE review). PO independently re-verified the empty-table premise against the live host DB this tick and attached the evidence (incl. the new pdf_documents table-does-not-exist finding) to FIX-AUDITOR-EMPTYTABLE-CHECK-NO-WRITER-DISCRIMINATOR as po_live_evidence_20260806T0717. C-08/C-04/C-11 were already self-dedup-skipped by system-auditor as recurring."
       },
       {
         "id": "sys-20260806T070136-7959",
@@ -2498,10 +2510,13 @@
         "type": "db_integrity_breach",
         "summary": "pdf_documents check C-11 failed (actual=0)",
         "severity": "WARN",
-        "status": "READ",
+        "status": "triaged",
         "payload_ref": null,
         "provenance": "detector",
-        "audit_cycle_tag": "cron:auditor-t3:2026-08-06T02:00Z"
+        "audit_cycle_tag": "cron:auditor-t3:2026-08-06T02:00Z",
+        "triaged_at": "2026-08-06T07:23:23Z",
+        "triaged_by": "po",
+        "disposition": "FOLD — Tier-DATA/Tier-3 sweep 2026-08-06. Empty-table + low-confidence + C-04/C-08/C-11 findings all fold onto existing non-terminal rows (FIX-AUDITOR-EMPTYTABLE-CHECK-NO-WRITER-DISCRIMINATOR backlog, INVESTIGATE-EMPTY-DATA-TABLES review, FIX-ALERT-ENGINE-VERIFIED-DECISION-EMPTY-PAYLOAD-NULL-STOCKCODE review). PO independently re-verified the empty-table premise against the live host DB this tick and attached the evidence (incl. the new pdf_documents table-does-not-exist finding) to FIX-AUDITOR-EMPTYTABLE-CHECK-NO-WRITER-DISCRIMINATOR as po_live_evidence_20260806T0717. C-08/C-04/C-11 were already self-dedup-skipped by system-auditor as recurring."
       },
       {
         "id": "dev-team-20260806T071449Z-head-stale-done-gap",
@@ -2515,9 +2530,9 @@
         "payload_ref": null,
         "provenance": "router",
         "audit_cycle_tag": null,
-        "triaged_at": "2026-08-06T07:21:17Z",
+        "triaged_at": "2026-08-06T07:23:23Z",
         "triaged_by": "po",
-        "disposition": "MINTED FIX-DEVTEAM-PIPELINE-RESUME-TERMINAL-LANE-BLIND. Not folded: the two adjacent rows cover different gaps in the same function -- FIX-DEVTEAM-STEP0B-RESUME-SUPERVISED-HOLD-GATE is the supervised-spawn gap (and is PLAN-ONLY/REVIEW, folding a second defect in would muddy it), FIX-DEVTEAM-HEAD-PIN-STALE-THRESHOLD-24H-VS-TICK-CADENCE is the reset-threshold gap. This one is terminal-lane blindness in the lookup itself. INDEPENDENTLY CORROBORATED by po this same cycle from the other direction: po's own WF-2 supervised-hold pre-check read should_hold=true on GUARD-COWORK-NOTEBOOK-AGENTS-SELF-EDIT-FLOW-DOC while the task had already been closed to done[], and .head sat in_progress on it with updated_at 2026-08-05T19:41:30Z. Two independent agents hit the same blind spot within one tick, which is why this is minted rather than observed."
+        "disposition": "MINTED FIX-DEVTEAM-PIPELINE-RESUME-TERMINAL-LANE-BLIND (P1, backlog, zone cross-service/, next_agent architect). Confirmed genuinely new — dedup-scanned all 5 non-terminal lanes for HEAD/RESUME/STEP0B/IDLE: nearest neighbours FIX-DEVTEAM-STEP0B-RESUME-SUPERVISED-HOLD-GATE (review, supervised-hold gate, different defect) and FIX-DEVTEAM-HEAD-PIN-STALE-THRESHOLD-24H-VS-TICK-CADENCE (backlog, 24h staleness threshold, different defect). Router's live .head idle reset acknowledged as a data patch, not the fix."
       },
       {
         "id": "sys-20260806T071552-5539",
@@ -2531,9 +2546,9 @@
         "payload_ref": null,
         "provenance": "detector",
         "audit_cycle_tag": "cron:auditor-t1:2026-08-06T07:00Z",
-        "triaged_at": "2026-08-06T07:21:17Z",
+        "triaged_at": "2026-08-06T07:23:23Z",
         "triaged_by": "po",
-        "disposition": "pendingObservations, NO MINT. microservice_degraded WARN, single fire. A-30 on this service carries a documented false-positive/re-emit-churn history (feedback_auditor_mcpserver_a21_a30_memory_fp_reemit_churn) AND a documented scoring defect (feedback_a30_discriminator_crash_cliff_misscored_as_reclamation_dip, 2026-08-05) -- 'sustained >93% with no reclamation dip' is the exact phrasing that discriminator gets wrong, so the summary is not trustworthy as-stated. Per the microservice_degraded rule a single WARN blip with no fresh corroboration does not mint. RAG-SERVICE-AVAIL-01-FIX already tracks this service's availability class if it escalates. Re-check next auditor cycle; mint only on a second consecutive fire."
+        "disposition": "FOLD — rag-service A-30 memory is the highest-volume recurring signal on this board (9 fires 2026-08-05 alone). Already tracked across 5 non-terminal rows: RAG-SERVICE-AVAIL-01-FIX (backlog), FIX-AUDITOR-A30-PROBE-SH-MISSES-RAG-SERVICE-CONTAINER (backlog), FIX-AUDITOR-TIER1-A30-MEM-SINGLE-CONTAINER-SCOPE (review), FIX-AUDITOR-A30-VMHWM-VETO-TAUTOLOGY-FALSE-NEGATIVE (review), FIX-RAG-SERVICE-CLEAN-EXIT-RESTART-LOOP (review). Single WARN blip with existing coverage -> no mint per microservice_degraded rule. CAUTION carried forward: feedback_a30_discriminator_crash_cliff_misscored_as_reclamation_dip — 'no reclamation dip' wording is a KNOWN mis-scoring shape; do not treat it as corroborated severity without a VmHWM cross-check."
       },
       {
         "id": "sys-20260806T072127-34b3",
@@ -2543,10 +2558,13 @@
         "type": "db_anomaly_illiquid_ohlcv",
         "summary": "daily_ohlcv: 336 rows with incomplete H/L/V data (illiquid tickers)",
         "severity": "WARN",
-        "status": "NEW",
+        "status": "triaged",
         "payload_ref": null,
         "provenance": "detector",
-        "audit_cycle_tag": "cron:auditor-data:2026-08-06T07:09Z"
+        "audit_cycle_tag": "cron:auditor-data:2026-08-06T07:09Z",
+        "triaged_at": "2026-08-06T07:24:21Z",
+        "triaged_by": "po",
+        "disposition": "FOLD, no mint. PO re-verified the premise directly against the live host DB this tick: sqlite3 \"file:./data/live/market.db?immutable=1\" \"SELECT COUNT(*) FROM daily_ohlcv WHERE high=0 AND low=0;\" -> 336, EXACTLY the count already recorded as evidence on FIX-DB-INTEGRITY-SIDECAR-NAMED-VOLUME-DRIFT on 2026-08-05. Identical value a day apart = a stable known illiquid-ticker residue, NOT a new regression or a growing gap. Natural home is CLEAN-OHLCV-INTEGRITY-RESIDUE-REPAIR (backlog). Single WARN with no corroborating prior fire -> no mint on one tick per the signal_feedback rule.  ADDENDUM (coordinator cross-check, PO-verified live, not relayed): this is LIVE INSTANCE #3 of the auditor dedup-precheck defect, not merely an OHLCV residue re-fire. The same 336 rows were already dispositioned DUPLICATE-ALREADY-TRACKED on 2026-08-05 (sys-20260805T065227-25f7). It re-fired because FIX-AUDITOR-DEDUP-TASKBOARD-PRECHECK-NOT-ENFORCED is still unactioned. PO read that row's corroboration[] live from the hot file (3 entries confirmed, NOT taken from the relay) and escalated it high -> P0 plus folded it into this tick's BATCH. The residue itself remains tracked by CLEAN-OHLCV-INTEGRITY-RESIDUE-REPAIR (backlog/P1); FIX-OHLCV-WRITER-INTEGRITY-CONSTRAINT-SCALE-P0 is already DONE_VERIFIED (terminal) and is therefore NOT a live dedup target."
       }
     ],
     "last_triaged_at": "2026-07-29T06:25:00Z",
@@ -4675,6 +4693,55 @@
           "SYSREMAKE-P2-T8-FLOW-DOC-WIRING",
           "SYSREMAKE-P2-T9-QA-GATE"
         ]
+      },
+      {
+        "id": "FIX-DIGEST-RSI-DUAL-ENGINE-DIVERGE",
+        "label": "Evening digest RSI dual-engine divergence — Go/alert path (35-candle) vs TS/digest path (15-candle + fallback)",
+        "opened_at": "2026-08-06T07:29:06Z",
+        "priority": "high",
+        "status": "ACTIVE",
+        "evidence": "Architect brief docs/architecture-briefs/2026-06-21-digest-rsi-dual-engine-diverge.md (verified present 2026-08-06, decomposition-ready); NVL example: alert RSI=29.7 vs digest RSI=27.6 (2026-06-19); root cause: candle window + min-candle gate + fallback mismatch",
+        "tasks": [
+          {
+            "id": "503",
+            "type": "CONTRACT",
+            "title": "Write canonical Go RSI engine contract documentation (pure-compute path, Wilder params, 35-candle gate)",
+            "zone": "apps/technical-analysis/",
+            "size": "S",
+            "status": "TODO",
+            "owner": "dev-technical-analysis",
+            "priority": "high",
+            "depends": [],
+            "created_at": "2026-08-06T07:29:06Z",
+            "files": [
+              "docs/standards/ta-engine-contract.md"
+            ],
+            "note": "Contract doc only (no Go code changes). Freezes interface so dev-mcp-server can rely on Go service contract without re-reading source. Blocking task for TASK-504.",
+            "updated_at": "2026-08-06T07:29:07Z"
+          },
+          {
+            "id": "504",
+            "type": "FIX",
+            "title": "Rewire defaultComputeTa() to use Go computeTAIndicators engine; align candle window; raise min-candle to 35; remove market_prices_history fallback; make async; add stub-bar guard",
+            "zone": "apps/mcp-server/",
+            "size": "M",
+            "status": "TODO",
+            "owner": "dev-mcp-server",
+            "priority": "high",
+            "depends": [
+              "503"
+            ],
+            "created_at": "2026-08-06T07:29:06Z",
+            "files": [
+              "apps/mcp-server/src/application/usecases/assembleBriefing.ts",
+              "apps/mcp-server/src/application/usecases/assembleEveningSummary.ts",
+              "apps/mcp-server/src/__tests__/assembleBriefing.test.ts",
+              "apps/mcp-server/src/__tests__/assembleEveningSummary.test.ts"
+            ],
+            "note": "Async refactor; replaces TS-local RSI with Go service call; LIVE verification gate required (evening cycle, RSI agreement ≤0.1 across ≥3 tickers). Rebuild required. Completion unblocks verification (not QA, not developer — PM runs LIVE-plane gate post-rebuild).",
+            "updated_at": "2026-08-06T07:29:07Z"
+          }
+        ]
       }
     ],
     "archive": [
@@ -5577,11 +5644,11 @@
         },
         "next_agent": "agent-father",
         "po_routing_ruling_20260721": "PO ARTIFACT-CLASS ROUTING RULING 2026-07-21T18:42Z. Rule: routing follows ARTIFACT CLASS, not directory. Any row whose deliverable is instruction-prose that an agent LOADS AND EXECUTES — .claude/agents/**, docs/agents/** (init/flow/knowledge/tools-package), .claude/skills/**/SKILL.md — routes to agent-father. Executable code (apps/**, scripts/**), codegen-from-registry, and data/root-config (docs/data/**, CLAUDE.md) route to zone-matched dev-* or developer. Rationale: for this system a flow doc IS the executable source; agent-father is already sole owner of agent-file lifecycle (dispatch/SKILL.md:48) and of NEW cron skill files (:50), and board precedent has 5/5 pre-existing docs/agents/ rows routed to agent-father/agents-architect/po and 0 to developer. Precedent for SKILL.md specifically: docs/signals/processed/dev-team-20260716T102429Z-autolaunch-safety-hold-uc-asl-p6.json already routed a signal-dashboard SKILL.md edit to agent-father as 'the factory rule'. ROOT CAUSE this closes: .claude/skills/zone-detect/SKILL.md resolves ONLY dev-<service> (Tier-1/2, needs apps/<service>/-shaped zone) or generic developer (Tier-3 fallback) — it has NO path to agent-father, so any docs/agents/ or .claude/skills/ row reaching execute-tier with next_agent unset gets the 'developer' placeholder and mis-routes. EXPECTED SIDE EFFECT (do NOT 'fix' this): next_agent=agent-father does not match the dev-role pattern ^dev(-|$)|^developer$, so the BOUNDED-1 NON-DEV-NEXT_AGENT gate (dev-team/flow/main.md:518) now WITHHOLDS these rows from unattended idle auto-pickup. That is the intended outcome — they require deliberate router dispatch to agent-father, not silent promotion to a generic developer.",
-        "updated_at": "2026-08-01T03:55:50Z",
-        "po_manual_dispatch_flagged_at": "2026-08-01T03:55:50Z",
+        "updated_at": "2026-08-06T07:23:23Z",
+        "po_manual_dispatch_flagged_at": "2026-08-06T07:23:23Z",
         "po_manual_dispatch_flagged_by": "po (manual-dispatch-sweep)",
         "po_manual_dispatch_class": "DRS-STRANDED-OFF-ALLOWLIST",
-        "po_manual_dispatch_note": "po (manual-dispatch-sweep) surfaced DRS-STRANDED-OFF-ALLOWLIST candidate — folding into this tick's BATCH"
+        "po_manual_dispatch_note": "po (manual-dispatch-sweep) surfaced DRS-STRANDED-OFF-ALLOWLIST candidate — folding into this tick's BATCH. Re-admitted per flag_reentrant staleness window (prior flag 2026-08-01T03:55:50Z, >4h stale, never dispatched)."
       },
       {
         "id": "TE-T06",
@@ -11348,7 +11415,7 @@
         "type": "FIX",
         "title": "system-auditor DEDUP-ENFORCEMENT is prose-only — it re-signalled a 52-day-old residue already tracked by two board rows, with a fabricated single-date root cause",
         "zone": "cross-service/",
-        "priority": "high",
+        "priority": "P0",
         "status": "BACKLOG",
         "size": "S",
         "next_agent": "dev-team",
@@ -11358,7 +11425,7 @@
         "source": "PO triage of system-auditor Tier-DATA sweep 2026-08-05T06:47Z — signal sys-20260805T065227-25f7",
         "created_at": "2026-08-05T07:06:06Z",
         "created_by": "po",
-        "updated_at": "2026-08-05T08:29:43Z",
+        "updated_at": "2026-08-06T07:28:59Z",
         "root_cause": "register.md:144-150 states an anomaly is ALREADY-OPEN and must not be re-signalled if '(a) a .task_board FIX-* task tracks its root, OR (b) a prior .signal_queue row for the same table+defect has status NEW/READ/TRIAGED/ACUTE-RESOLVED-ROOT-TRACKED'. It is pure prose with no actuator: nothing reads .task_board, nothing computes the dedup key, nothing blocks the write. On 2026-08-05 the auditor emitted CRITICAL sys-20260805T065227-25f7 for daily_ohlcv high=0/low=0 while CLEAN-OHLCV-INTEGRITY-RESIDUE-REPAIR (BACKLOG, same rows, filed at 835) and FIX-OHLCV-WRITER-INTEGRITY-CONSTRAINT-SCALE-P0 (REVIEW, the writer root) were both open on the board. Clause (a) matched exactly and was never evaluated. Compare FIX-AUDITOR-D4-WHITELIST-DATA-QUALITY-ANOMALY-PREFIX and the auditor-dedup-ledger: dedup exists for OTHER surfaces but not for the .task_board plane.",
         "secondary_defect": "The same signal shipped a fabricated root cause. Notebook c17 (commit 35104ef89) asserted 'All 336 violations are from 2026-05-15 (concentrated date)' — the actual GROUP BY returns 20 distinct dates. The agent reported a scoping conclusion it had not measured. This is the confabulation class in memory feedback_agent_selfreport_metalayer_confabulation; the fix should force the scoping query's raw output into the history entry rather than let the agent narrate it, which is the same remedy register.md:108-113 already applies to counts.",
         "files": [
@@ -11378,8 +11445,11 @@
         ],
         "corroboration": [
           "LIVE INSTANCE #2, 2026-08-05T08:18:46Z (72 min after the instance this row was filed for). system-auditor c20 wrote sys-20260805T081846-1853 (C-08) as a fresh NEW row while sys-20260721T003810-2b02, same table+defect (identical dedup_key db_integrity_breach:alerts:C-08), sat at status triaged. Clause (b) of the DEDUP-ENFORCEMENT contract (.claude/skills/cron-standalone-team/register.md:144-150) matched exactly and was never evaluated. Two things sharpen the root cause: (i) the auditor SAW the recurrence - its own notebook labels C-08 RECURRING - and still wrote the row, so this is not a detection failure but a missing WRITE-SIDE actuator, confirming AC-1s premise that prose in a prompt body cannot carry this; (ii) the dedup key ALREADY EXISTS in docs/data/auditor-dedup-ledger.json and correctly suppressed the Telegram send (notebook: Telegram dedup-skipped, last sent 2026-07-30), while the .signal_queue write went through unguarded. That is direct proof of this rows core claim that dedup exists for OTHER surfaces but not for the signal_queue/.task_board plane - the ledger and the queue-writer are simply not wired to each other. Cheapest fix shape: have the queue-writer consult the SAME ledger the Telegram gate already consults.",
-          "OUTPUT-CONTRACT counter defect observed in the same c20 entry: the auditor emitted dedup_skipped=0 while its own narrative for that cycle says Telegram dedup-skipped, and then asserted CONTRACT-CONTRADICTION: NONE. The counter does not count the suppression that actually happened, so contract self-checks cannot detect dedup regressions. Fold into AC-5s helper-owns-the-shape remedy."
-        ]
+          "OUTPUT-CONTRACT counter defect observed in the same c20 entry: the auditor emitted dedup_skipped=0 while its own narrative for that cycle says Telegram dedup-skipped, and then asserted CONTRACT-CONTRADICTION: NONE. The counter does not count the suppression that actually happened, so contract self-checks cannot detect dedup regressions. Fold into AC-5s helper-owns-the-shape remedy.",
+          "LIVE INSTANCE #3, 2026-08-06T07:21:27Z (AUDIT_TIER=DATA cycle cron:auditor-data:2026-08-06T07:09Z). Auditor re-signalled the SAME 336-row daily_ohlcv residue (CLEAN-OHLCV-INTEGRITY-RESIDUE-REPAIR / FIX-OHLCV-WRITER-INTEGRITY-CONSTRAINT-SCALE-P0, PO-triaged DUPLICATE-ALREADY-TRACKED on 2026-08-05) as fresh NEW row sys-20260806T072127-34b3, to=po (AC-5 routing defect repeats, 3rd occurrence). Two new details sharpen AC-1: (i) this cycle used a DIFFERENT dedup key/type than instance #1 (db_anomaly:daily_ohlcv:illiquid_ohlcv_incomplete / type db_anomaly_illiquid_ohlcv vs the original db_integrity_breach:daily_ohlcv:OHLCV_H_L_ZERO) for the identical underlying rows -- proving a literal ledger-key-match check is insufficient even once AC-1 lands; the actuator must key on table+row-signature or task_board linkage, not on whatever string the agent free-types that cycle. (ii) OUTPUT-CONTRACT counter defect (corroboration #2) reproduced verbatim: agent narrative to router claimed Status: ALREADY TRACKED -- Signal suppressed by dedup while its own contract line in the SAME report read dedup_skipped=0 | signal_queue_rows_written=1 -- self-contradictory and false (RAW-verified: row status is NEW, not suppressed). Per feedback_recurring_detection_vs_recurring_failed_fix: this is a recurring DETECTION of an un-shipped fix (task has sat BACKLOG/next_agent=dev-team since 2026-08-05T08:29Z with 0 completions), not a recurring failed fix -- correct action is to dispatch/prioritize this task in the next dev-team Planning pass, not to block it or mint a 4th duplicate signal row."
+        ],
+        "po_escalation_20260806T0728": "PRIORITY high -> P0 by po, triage tick 2026-08-06T07:07Z. Basis: 3 CONFIRMED live instances (filing instance 2026-08-05T07:06Z, #2 2026-08-05T08:18:46Z, #3 2026-08-06T07:21:27Z) with ZERO fix attempts in ~24h while sitting BACKLOG/next_agent=dev-team. Classified per feedback_recurring_detection_vs_recurring_failed_fix as a recurring DETECTION of an UN-SHIPPED fix, NOT a recurring failed fix - so the correct action is to DISPATCH this row, never to block it or mint a 4th duplicate. ALSO FOLDED INTO THIS TICK po BATCH: a priority bump on a row already ignored across 3 instances is inert on its own, which is the precise failure mode this row itself documents.",
+        "po_ac_addendum_20260806T0728": "AC ADDENDUM from instance #3, raises the bar on the eventual fix. A naive ledger-key match will NOT be sufficient even after AC-1 lands. Instance #1 keyed the identical 336 daily_ohlcv rows as type=db_integrity_breach with dedup_key db_integrity_breach:daily_ohlcv:OHLCV_H_L_ZERO; instance #3 keyed the SAME rows as type=db_anomaly_illiquid_ohlcv with dedup_key db_anomaly:daily_ohlcv:illiquid_ohlcv_incomplete. Same rows, same defect, two different keys - so dedup MUST key on table + row-signature, not on the emitter-chosen type/dedup_key string. VERIFICATION CAVEAT for the implementer: the auditor OUTPUT-CONTRACT counter defect from corroboration entry 2 reproduced verbatim on instance #3 (narrative claimed the signal was suppressed by dedup while the same report contract line read dedup_skipped=0 and signal_queue_rows_written=1; RAW-verify confirmed the row landed NEW). Do NOT accept the auditor self-report as pass/fail evidence for this fix - read .signal_queue.rows[] directly."
       },
       {
         "id": "OPS-MCPSERVER-RESTART-FLUSH-LAYERB-CRON-MEMO",
@@ -11697,7 +11767,8 @@
           "sys-20260806T065709-49e3"
         ],
         "status_note": "AC: the empty-table check classifies a 0-row table by WRITER PROVENANCE before assigning severity — (a) table with >=1 production INSERT site on a scheduled/pipeline path => may stay CRITICAL; (b) table whose only writers are tests (alert_engine_records: every INSERT INTO is in apps/alert-engine/pkg/infrastructure/sqlite_test.go) => never emits, or emits INFO at most; (c) table written only by an on-demand user-facing tool (price_alerts: sole writer priceAlertTools.ts:148) => emptiness is the expected steady state, must not be reported as a broken pipeline. Verified by replaying the 2026-08-06T06:57Z auditor cycle: the two CRITICALs must not re-fire, while a genuinely-broken pipeline table still does (negative control required — do NOT let this fix silence class (a)). Evidence: po independently confirmed all three tables are 0 rows, so the COUNTS were right and only the severity/interpretation was wrong.",
-        "updated_at": "2026-08-06T07:14:42Z"
+        "updated_at": "2026-08-06T07:23:23Z",
+        "po_live_evidence_20260806T0717": "PO verified the 2026-08-06T06:57Z Tier-DATA sweep's three empty-table CRITICALs/WARN DIRECTLY against the live host bind-mount DB (sqlite3 'file:./data/live/market.db?immutable=1', 426135552 bytes, mtime 2026-08-06 09:19): price_alerts=0 CONFIRMED, alert_engine_records=0 CONFIRMED, deep_fetch_stats=0 CONFIRMED. These are REAL, not stale-named-volume artifacts — control: daily_ohlcv=775599, alerts=144, financial_reports=257 in the same query session. NEW FINDING for this row's own thesis: pdf_documents DOES NOT EXIST as a table at all ('Error: in prepare, no such table: pdf_documents') yet the auditor reported check C-11 as 'failed (actual=0)' — the detector renders a MISSING TABLE and an EMPTY TABLE identically, which is a strictly stronger form of the missing writer-discriminator this row already tracks. Also note C-04 reported financial_reports actual=30 against a live raw count of 257 and C-08 reported alerts actual=42 against 144, so both checks carry an undocumented window/predicate — worth naming in the fix so the numbers stop reading as raw row counts."
       },
       {
         "id": "CHORE-TEAM-TOOL-RECHECK-LOCAL-CRON",
@@ -11721,7 +11792,7 @@
         "status": "BACKLOG",
         "type": "FIX",
         "priority": "P1",
-        "zone": "docs/agents/",
+        "zone": "cross-service/",
         "next_agent": "architect",
         "created_at": "2026-08-06T07:21:17Z",
         "created_by": "po (triage 2026-08-06)",
@@ -11732,7 +11803,126 @@
           "FIX-WF2-SUPERVISED-HOLD-NO-PO-SIDE-GOAHEAD-PRODUCER"
         ],
         "status_note": "ROOT CAUSE (from signal): docs/agents/dev-team/flow/main.md pipeline-resume task_status lookup (~line 263) queries only in_progress[] + active_sprints[].tasks[] — never done[]/done_verified[]/review[]/qa[]/ready[]/backlog[]. A gateway-less specialist closing its own head task can only write the lane, not .head (INV-GATEWAY-1), so .head stays {status:in_progress, active_task_id:<now-done task>}. Next tick's resume then reads task_status=empty (NOT 'BLOCKED', so the existing carve-out misses it), falls through the WF-2 supervised check (also terminal-lane-blind), and re-spawns the agent on already-finished work via the S2 dispatcher-wrap. LIVE INSTANCE 2026-08-06: architect closed GUARD-COWORK-NOTEBOOK-AGENTS-SELF-EDIT-FLOW-DOC to done[] (commit 336228ebe); .head stayed pinned at updated_at 2026-08-05T19:41:30Z until the router hand-patched it to idle at 07:14:28Z. That hand-patch is a DATA fix, not a code fix — recurrence is certain without this row. AC: (1) task_status resolution scans terminal lanes and short-circuits to an idle-reset, mirroring the existing BLOCKED carve-out's self-heal shape; (2) the WF-2 should_hold predicate gets the same terminal-lane guard (po hit this independently the same tick — should_hold returned true for a task already in done[]); (3) regression fixture replays the live shape: head pinned in_progress at a done[]-lane task id => resume must idle-reset, NOT re-spawn. NEGATIVE CONTROL REQUIRED: a genuinely in-flight in_progress task must still resume normally — a fix that idle-resets everything trivially passes (1)-(3) and breaks the pipeline.",
-        "updated_at": "2026-08-06T07:21:18Z"
+        "updated_at": "2026-08-06T07:26:12Z",
+        "size": "S",
+        "supervised": false,
+        "plan_only": false,
+        "baseline_pass": true,
+        "ac": [
+          "AC-1 Add a terminal-lane check (done[] + done_verified[]) to BOTH the task_status lookup and the should_hold lookup, mirroring the shape of the existing BLOCKED carve-out's self-heal (~lines 267-285) rather than inventing a new control-flow branch.",
+          "AC-2 On a terminal-lane hit, short-circuit to an idle .head reset — never fall through to S2 dispatcher-wrap. Write via scripts/orch-apply.sh per the hot-file write contract.",
+          "AC-3 Negative control: a head naming a row that is genuinely in_progress must still resume exactly as today. A head naming a BLOCKED row must still take the existing BLOCKED carve-out, unchanged.",
+          "AC-4 Positive control: replay this tick's exact shape (head.active_task_id = a done[] row, head.status=in_progress) and assert the resume path idles the head instead of spawning next_agent.",
+          "AC-5 Root-cause framing to preserve in the fix: the trigger is a gateway-less specialist closing its own head task (INV-GATEWAY-1), which is a NORMAL, supported condition — not an error path. The fix must not require the specialist to gain gateway access."
+        ],
+        "evidence": "Live instance this tick: architect closed GUARD-COWORK-NOTEBOOK-AGENTS-SELF-EDIT-FLOW-DOC to done[] but .head still named it with status=in_progress. Router caught it by hand via a task_board.done[] lookup and reset .head to idle (updated_by='dev-team (head-idle-repair, task confirmed DONE 2026-08-06)', updated_at 2026-08-06T07:14:28Z) BEFORE the next tick could fire the duplicate spawn. That was a live-data patch, not a code fix — the flow doc is unchanged and will re-strand on the next gateway-less close.",
+        "files": [
+          "docs/agents/dev-team/flow/main.md"
+        ],
+        "po_dedup_fold_20260806T0726": "DUPLICATE-MINT RESOLVED. A second copy of this row was minted at 07:23:23Z by a concurrently-spawned po (router dispatched a fresh triage tick for 2026-08-06T07:07Z while this row was landing at 07:21:17Z, commit ffc58145d). The later copy has been DELETED and its unique content folded here: the 5 explicit ac[] entries, evidence[], files[], and zone corrected docs/agents/ -> cross-service/ (docs/agents/ is not one of the three zone tokens dev-team Step 3 accepts: apps/<service>/, multi, cross-service/ — an invalid zone would have bounced this row back to po). Provenance of the FIRST-LANDED row preserved per normal dedup discipline (fold into existing, never keep the newer mint)."
+      },
+      {
+        "id": "FIX-NOTEBOOK-COMPOSE-SCRIPT-ACTUATOR",
+        "type": "FIX",
+        "title": "notebook compose has no mechanical actuator — retention/prune arithmetic runs inside an LLM-narrated flow step and silently orphans section bodies",
+        "zone": "cross-service/",
+        "priority": "P1",
+        "status": "BACKLOG",
+        "size": "M",
+        "next_agent": "developer",
+        "supervised": false,
+        "plan_only": false,
+        "baseline_pass": true,
+        "recurring_bug_escalation": true,
+        "prior_warns": 7,
+        "source": "agent-father partial-implementation handoff docs/signals/processed/2026-08-06-fix-system-auditor-notebook-compose-actuator-handoff.json (Fix A primary + Fix D(b)); brief docs/architecture-briefs/2026-08-06-fix-system-auditor-notebook-compose-actuator-and-immutability-blindspot.md",
+        "created_at": "2026-08-06T07:23:23Z",
+        "created_by": "po",
+        "root_cause": "Brief Finding 1: the notebook compose step is unreliable-by-construction — the model itself parses '## ' boundaries, decides which sections to drop, and issues the write. There is no deterministic actuator, so a heading can vanish while its body stays (commit 0fcc6a5d2: file went 80->81L while a heading disappeared). agent-father landed the in-zone half (Fix E Write-only spec collapse; Fix A interim Step 2a revert-gate in docs/agents/system-auditor/flow/main.md; Fix D documented-policy). scripts/ is outside agent-father's commit_zone (precedent c72b5ca34) so the primary actuator was never authored.",
+        "evidence": "PO verified this tick: brief exists (14073 bytes, docs/architecture-briefs/2026-08-06-fix-system-auditor-notebook-compose-actuator-and-immutability-blindspot.md); handoff signal payload names exactly 3 out-of-zone asks. Independent live corroboration: commit-sweep-guard fired [notebook-immutability-guard] WARN on docs/agent-memory/notebooks/system-auditor.md section '## c45 - 2026-08-06T06:41:47Z' at 2026-08-06T06:57:21Z (signal commit-sweep-guard-2026-08-06T065721Z-69006.json), a 2nd fire on the SAME agent's notebook after the 2026-08-05 fire that created the guard's own triage rule.",
+        "files": [
+          "scripts/notebook-compose.sh",
+          "scripts/agents-flow/notebook-auto-prune.sh",
+          "scripts/auditor-notebook-commit.sh",
+          "docs/data/notebook-section-order.json"
+        ],
+        "ac": [
+          "AC-1 New scripts/notebook-compose.sh <notebook-path> <new-section-body-file> [max-sections=3] [section-cap=60], mirroring scripts/auditor-notebook-commit.sh's precedent EXACTLY (same header-comment style, same 'model calls ONE script, branches on stdout marker' contract).",
+          "AC-2 Takes ONLY the already-authored new-section text. Mechanically reads the file, parses '## ' boundaries, derives the newest-first/oldest-first convention by REUSING the self-deriving-from-headings + docs/data/notebook-section-order.json tie-break logic already in scripts/agents-flow/notebook-auto-prune.sh — do NOT reimplement a second divergent copy.",
+          "AC-3 Enforces 3-section retention steady state + AC-2b sub-block intra-prune + 60L/200L caps. ONE settled write via mktemp+mv — never a Claude Write/Edit tool call.",
+          "AC-4 Negative control: replay the 0fcc6a5d2 shape (PRE_COUNT too low to require any drop, heading vanishes anyway, file grows 80->81L) through the script and assert it is structurally unreachable, not merely warned about.",
+          "AC-5 Marker contract documented in the script header so agent-father can rewire docs/agents/system-auditor/flow/main.md Step 1/2/2a (all three, including agent-father's own interim Step 2a gate which this script supersedes) to one invocation + marker branch. That rewire is agent-father's follow-up, NOT this task.",
+          "AC-6 RECURRING-BUG ESCALATION (satisfies brief Fix D(b)): prior_warns=7 already crossed the fleet 2+ threshold per feedback_recurring_bug_escalation.md, independently of this brief. Freeze further per-occurrence notebook patches until this actuator lands."
+        ],
+        "related": [
+          "FIX-NOTEBOOK-IMMUTABILITY-ORPHANED-BODY-CHECK"
+        ],
+        "updated_at": "2026-08-06T07:23:23Z"
+      },
+      {
+        "id": "FIX-NOTEBOOK-IMMUTABILITY-ORPHANED-BODY-CHECK",
+        "type": "FIX",
+        "title": "pre-commit _check_notebook_immutability treats any HEAD-present/staged-absent heading as an authorized whole-section drop with zero corroboration",
+        "zone": "cross-service/",
+        "priority": "P2",
+        "status": "BACKLOG",
+        "size": "S",
+        "next_agent": "developer",
+        "supervised": false,
+        "plan_only": false,
+        "baseline_pass": true,
+        "source": "agent-father partial-implementation handoff (Fix B) — docs/architecture-briefs/2026-08-06-fix-system-auditor-notebook-compose-actuator-and-immutability-blindspot.md",
+        "created_at": "2026-08-06T07:23:23Z",
+        "created_by": "po",
+        "root_cause": "scripts/git-hooks/pre-commit _check_notebook_immutability (~lines 244-331): a dated heading present at HEAD but absent from staged is ALWAYS read as an authorized 'dropped whole', with no check that the body actually left with it. So the orphaned-body shape (heading gone, body retained, file did not shrink) passes the gate silently — exactly the 0fcc6a5d2 landing.",
+        "evidence": "Brief-supplied and PO-confirmed against the handoff payload: 0fcc6a5d2 went 80L -> 81L while a dated heading disappeared, and the gate passed.",
+        "files": [
+          "scripts/git-hooks/pre-commit",
+          "scripts/audits/verify-notebook-immutability-gate.sh"
+        ],
+        "ac": [
+          "AC-1 When a dated heading present at HEAD is absent from staged, verify the staged file's total line count shrank by ~that HEAD section's own line span (heading through the line before the next heading/EOF), net of the new cycle's added lines under the existing retention arithmetic.",
+          "AC-2 No shrinkage (file same size or grew) -> emit a NEW, DISTINCT violation class 'notebook-heading-orphaned-body' rather than silently passing. Do not fold it into the existing AC-2a class.",
+          "AC-3 mode=warn preserved — this MUST NOT start blocking commits as part of this change.",
+          "AC-4 DO NOT flip GIT_NOTEBOOK_IMMUTABILITY_MODE to reject, fleet-wide OR scoped (brief Fix C). Live replay this session (scripts/audits/verify-notebook-immutability-gate.sh, full corpus, 2026-08-06T07:0x-07:1xZ) reads 33 rejects across 13 files over each file's last 8 commits — not 0, which is the skill doc's own stated bar (.claude/skills/notebook-write/SKILL.md AC-2a). Even a system-auditor.md-only scoped flip is unclean: 3 of ITS OWN last 8 commits already reject (57681e89ffdf, 423596abed1e, 1697b1fb2a6f).",
+          "AC-5 After AC-1/AC-2 land, re-run the replay script and individually inspect each flagged commit per the script's own instructions (git show <parent>:<file> vs git show <commit>:<file>, separating real violations from the two known false-positive classes) BEFORE anyone reconsiders reject-mode. Report the new reject count; do not flip."
+        ],
+        "related": [
+          "FIX-NOTEBOOK-COMPOSE-SCRIPT-ACTUATOR"
+        ],
+        "updated_at": "2026-08-06T07:23:23Z"
+      },
+      {
+        "id": "FIX-PO-TRIAGE-SIGNALS-AGENT-FLOW-DEFECT-TYPE-UNROUTED",
+        "type": "FIX",
+        "title": "PO triage-signals routing tables have no row for agent_flow_defect — a live to=po type; the doc's own coverage guard FAILS against the live board",
+        "zone": "cross-service/",
+        "priority": "P1",
+        "status": "BACKLOG",
+        "size": "S",
+        "next_agent": "agent-father",
+        "supervised": false,
+        "plan_only": false,
+        "baseline_pass": true,
+        "source": "PO self-detection during triage tick 2026-08-06T07:07Z — ran the doc's own guard_signal_type_coverage() against the live hot file",
+        "created_at": "2026-08-06T07:23:23Z",
+        "created_by": "po",
+        "root_cause": "docs/agents/po/flow/triage-signals.md routes 16 to=po types across its Pipeline-A table, its Pipeline-B table and the longtail sibling. agent_flow_defect is in NONE of them, so it falls to the 'any unknown type' catch-all (log + skip). The type is now live and carrying the tick's highest-value findings. Same drift class as FIX-PO-TRIAGE-SIGNALS-TABLE-MATCHES-ZERO-LIVE-SIGNAL-TYPES (fixed 2026-08-01) — that fix shipped the guard that detects this, but nothing schedules the guard, so drift re-accumulated silently.",
+        "evidence": "PO ran the doc's own § Regression verifier verbatim this tick: guard_signal_type_coverage docs/data/orch/orch-state.json -> FAIL, unrouted to=po types: [\"agent_flow_defect\"]. 4 live rows carry it, all 2026-08-06: cowork-20260806T063614Z-chef-evening-marker-leak (MED), cowork-20260806T064440Z-chef-evening-retry-date-drift (HIGH), sau-20260806T065408-dbaccess-stale-mount (MED), dev-team-20260806T071449Z-head-stale-done-gap (MED). SELF-DEMONSTRATING: the last two are this tick's two most actionable signals and reached triage ONLY because the router hand-narrated them in the spawn prompt — the documented path would have logged-and-skipped both.",
+        "files": [
+          "docs/agents/po/flow/triage-signals.md",
+          "docs/agents/po/flow/triage-signals-longtail.md"
+        ],
+        "ac": [
+          "AC-1 Add an agent_flow_defect row to the correct table (Pipeline-B live inbox — all 4 live rows arrive via .signal_queue.rows[], not the file drain). From: any agent observing a defect in another agent's flow doc/dispatch path. Action: dedup-check the NON-TERMINAL LANES, then mint a FIX routed by ARTIFACT CLASS per the PO ARTIFACT-CLASS ROUTING RULING 2026-07-21 (flow-doc/skill prose -> agent-father or architect; scripts/apps code -> zone-matched dev-*).",
+          "AC-2 Add agent_flow_defect to the guard's $routed array in the same edit — the doc's own § Regression verifier states that array MUST be kept in sync whenever either table is edited, and that is the single drift point the guard exists to catch.",
+          "AC-3 Re-run guard_signal_type_coverage against the LIVE hot file and paste the PASS output. A synthetic-fixture PASS is not acceptable evidence — the guard already passes on fixtures today while failing live.",
+          "AC-4 ROOT CAUSE, not symptom: the 2026-08-01 fix shipped this guard but wired no caller, so it only runs when a PO happens to run it by hand. Wire it into a step that actually executes every tick (PO main.md pre-check, or the dev-team tick preflight) so the next new type FAILS LOUD instead of accumulating silently. Adding the one missing row without wiring the caller re-creates the identical defect on the next type.",
+          "AC-5 Sweep for further drift while in there: diff the live distinct to=po type set against the union of both tables and report any other gaps found.",
+          "AC-6 Add db_anomaly_illiquid_ohlcv as well (2nd unrouted type, observed 2026-08-06T07:21:27Z mid-triage). Route: dedup-check then FOLD onto the OHLCV integrity family (CLEAN-OHLCV-INTEGRITY-RESIDUE-REPAIR) — a WARN whose count is stable against the prior day is residue, not a regression; do not mint per fire."
+        ],
+        "updated_at": "2026-08-06T07:24:22Z",
+        "po_corroboration_20260806T0721": "SECOND unrouted type observed 14 minutes into the very tick that minted this row: sys-20260806T072127-34b3, type=db_anomaly_illiquid_ohlcv, from=system-auditor, to=po, WARN. Also absent from all three routing tables AND from the guard $routed array. This upgrades the finding from a single missing row to demonstrated ONGOING drift at ~2 new types/hour during an active audit sweep, and is the strongest available argument for AC-4 (wire the guard to a caller that actually runs) over merely adding the missing rows by hand."
       }
     ],
     "closed_sprints": [
@@ -14365,9 +14555,10 @@
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-DIGEST-RSI-DUAL-ENGINE-DIVERGE",
         "next_agent": "pm",
         "po_triage_20260722": "Owner assigned (was null next_agent) so no row is ownerless (PO AC1). Remains in REVIEW, deferred-behind the review-lane sweeper FIX-DEVTEAM-REVIEW-LANE-QA-DRAIN + FIX-BOUNDED1-SUPERVISED-LANE-NO-SWEEPER (both activated -> backlog this tick). Not silently dropped; the sweeper routes it to next_agent once built.",
-        "updated_at": "2026-08-06T07:12:45Z",
-        "updated_by": "po (triage 2026-08-06)",
-        "po_triage_20260806": "TRIAGED + ROUTED TO PM. dev-team's review-lane secondary-drain stamped secondary_dispatch_target=pm at 06:50:19Z but could not spawn (subagents cannot spawn Agents) -- stale claim fields cleared so the row is not read as in-flight. Upstream gate is SATISFIED: architect brief docs/architecture-briefs/2026-06-21-digest-rsi-dual-engine-diverge.md verified present (14894 bytes, 2026-06-21), and backlog-detail carries a complete fix_spec + verification_gate + files[] -- so this is decomposition-ready, NOT design-ready. zone=multi means PM must split across the 3 named files (taAlertScanJob.ts / assembleBriefing.ts / assembleEveningSummary.ts). rebuild_required=true. Verification gate is LIVE-plane (same ticker, identical RSI to 1dp in alert-block vs TA/sector-block across >=3 tickers in a real evening_summary cycle) -- a unit-test-only green does NOT close this row. NOT dispatched by po: po holds no Agent-spawn tool either; returned to router in BATCH for a pm spawn."
+        "updated_at": "2026-08-06T07:29:07Z",
+        "updated_by": "pm (decomposition 2026-08-06)",
+        "po_triage_20260806": "TRIAGED + ROUTED TO PM. dev-team's review-lane secondary-drain stamped secondary_dispatch_target=pm at 06:50:19Z but could not spawn (subagents cannot spawn Agents) -- stale claim fields cleared so the row is not read as in-flight. Upstream gate is SATISFIED: architect brief docs/architecture-briefs/2026-06-21-digest-rsi-dual-engine-diverge.md verified present (14894 bytes, 2026-06-21), and backlog-detail carries a complete fix_spec + verification_gate + files[] -- so this is decomposition-ready, NOT design-ready. zone=multi means PM must split across the 3 named files (taAlertScanJob.ts / assembleBriefing.ts / assembleEveningSummary.ts). rebuild_required=true. Verification gate is LIVE-plane (same ticker, identical RSI to 1dp in alert-block vs TA/sector-block across >=3 tickers in a real evening_summary cycle) -- a unit-test-only green does NOT close this row. NOT dispatched by po: po holds no Agent-spawn tool either; returned to router in BATCH for a pm spawn.",
+        "status_note": "PM DECOMPOSED: TASK-503 (contract doc, blocks) + TASK-504 (impl, blocked by 503). Both assigned to task_board.active_sprints. Rebuild required=true. Verification gate is LIVE-plane (RSI agreement test in evening cycle, not unit tests only)."
       },
       {
         "id": "FIX-FOREIGN-FLOW-BULLETIN-UNAVAIL-STRING",
@@ -21376,8 +21567,8 @@
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-MCP-MEMORY-CODE-LEAK",
         "po_corroboration_20260721": "CORROBORATION / high-water (PO converge-drain po-s147 2026-07-21T14:23:45Z): 5 A-30 mcp-server MemPerc samples this session 94.43→90.58→88.38→88.53→88.81% — reclaimed from peak, WITHIN the documented 85–93% GC-sawtooth band, NO OOM, tripwire UNtripped (no OOMKilled, no >93%-no-dip, no >97%-sustained). Benign leak episode already tracked here → NO new mint. DO NOT escalate to ops; DO NOT recommend a restart (would destroy trajectory evidence for zero OOM-risk benefit — feedback_auditor_mcpserver_a21_a30_memory_fp_reemit_churn).",
         "po_corroboration_20260721_1537": "HIGH-WATER CORROBORATION (PO signal-drain 2026-07-21T15:37Z, folds A-30 sys-20260721T151241-28d6). Router-verified 18-sample x12s window: mcp-server MemPerc 95.39-99.99% GC sawtooth WITH reclamation dips; band crept up ~6pt this session (floor 95.39% vs historical 89.2%). VmHWM 2.95GiB > current VmRSS 2.77GiB (high-water above current = reclaim happening), OOMKilled=false, gateway serving, rag-service co-pinned 99.8%. Genuine tripwire (OOMKilled / >93%-no-reclaim-across-all-samples / >97%-sustained) UNtripped -> benign-but-elevated. NO new mint. DO NOT escalate to ops; DO NOT restart/rebuild (user-gated; would destroy trajectory evidence). FP re-emission of this same in-band condition tracked by FIX-AUDITOR-A12A20A30-FP-REEMIT-CONVERGE (already commissioned, next=architect).",
-        "status_note": "CORROBORATION 2026-07-22: real outage — mcp-server mem wedge degraded ~08:30Z, fully wedged, CLEAN restart 14:53Z (exit=0, OOMKilled=false, NOT OOM). High-water ~87%. Downstream false-CRITICALs (auditor recovery artifacts, self-resolved): news-vps data_stale (sys-...635a) + market_messages db_integrity_breach (sys-...7ed7). Confirms 'accumulates ~87% in 12h' — raises leak-fix priority.",
-        "updated_at": "2026-08-06T06:42:19Z",
+        "status_note": "CORROBORATION 2026-07-22: real outage — mcp-server mem wedge degraded ~08:30Z, fully wedged, CLEAN restart 14:53Z (exit=0, OOMKilled=false, NOT OOM). High-water ~87%. Downstream false-CRITICALs (auditor recovery artifacts, self-resolved): news-vps data_stale (sys-...635a) + market_messages db_integrity_breach (sys-...7ed7). Confirms 'accumulates ~87% in 12h' — raises leak-fix priority. | CI-RED OBSERVED AGAIN 2026-08-06T06:45:49Z: check_id=CI-RED-def6ac67 head_sha=def6ac67c0349d3d54d213211051d148d75c99fc run_id=31077879870. Mandatory pre-dedup failing-file read performed (gh run view 31077879870 --log-failed): FAILING_FILES=[apps/mcp-server/src/infrastructure/db/schema.ts] — 'baseline-tolerance-exceeded (baseline=336L actual=377L upper=369L)'. Exact file-scoped dedup_key match on this row (ci_job:size-lint|file:apps/mcp-server/src/infrastructure/db/schema.ts) -> duplicate, no new row minted. File has drifted a further +41L over baseline since this row opened.",
+        "updated_at": "2026-08-06T07:23:23Z",
         "po_escalation_20260722": "ESCALATION (PO triage 2026-07-22T15:15Z; SUPERSEDES the 07-21 'benign GC-sawtooth' corroboration notes above AND folds a peer PO 15:10Z tick whose board write was lost but whose live verification is preserved here). Recurring memory-cap exhaustion CONFIRMED, NOT benign sawtooth: A-30 reached 100pct (3GiB/3GiB) at 2026-07-22T00:11Z; cowork discriminator 07-21T23:26Z saw 8/8 samples 96.26-96.70pct with 0 reclamation dips/140s = the >93pct-no-reclaim tripwire GENUINELY TRIPPED (first non-FP). Server went transiently unreachable across the cap windows (00:31Z A-12 FAIL; 14:45-14:52Z cowork fleet-blind, curl exit=28). Resolved by restart 14:53Z -- live get_system_status @15:06Z confirms this restart was CLEAN (exit=0, NOT OOMKilled; uptime 13m, 16/16 breakers OK, DB 374MB no malformed). Mechanism: leak drives memory to cap + loss-of-reclamation -> transient unreachable -> restart clears it -> leak re-accumulates (~87pct in 12h) = recurring. Durable code fix is now TOP priority (recurring-bug-escalation). Restart/rebuild is user-gated ops-lane and NOT a substitute (re-leaks next cycle). Folds signal_queue cowork-20260721T232634Z-a30-mcp-oom-escalate + auditor A-30 chain 07-21T00:12..07-22T14:51.",
         "po_corroboration_20260723": "HIGH-WATER CORROBORATION (PO CONVERGE drain 2026-07-23T03:47Z; folds A-30 sys-...031127-05d0 91.33% + ...031220-42fc 91.25% + ...034235-2a44 92.50% CRITICAL). RAW 03:43Z: cgroup MemPerc 94.98% = new session high-water; VmRSS 2,843,808kB (90.4% of 3GiB cap), VmHWM 2,971,264kB>VmRSS => reclamation already happened (benign sawtooth). OOMKilled=false, RestartCount=0, :3000/health 200 in 2.35ms, gateway serving. Genuine tripwire (OOMKilled / >93%-no-dip-across-all-samples / >97%-sustained / total-unresponsiveness) UNtripped -> benign-but-elevated instance of the recurring leak already tracked here. NO new mint. DO NOT escalate to ops; DO NOT restart/rebuild (user-gated; would destroy trajectory evidence for zero OOM-risk benefit). FP re-emission + auto-escalation of this in-band condition is tracked by FIX-AUDITOR-A12A20A30-FP-REEMIT-CONVERGE (commissioned to architect 2026-07-23).",
         "po_corroboration_20260729": "HIGH-WATER CORROBORATION (OPS verification 2026-07-29T22:06Z; routes sys-20260728T215425-23ef A-30 CRITICAL routed at 21:54:25Z). FRESH 8-SAMPLE WINDOW (10s intervals, ~80s total): mcp-server MemPerc 95.52→94.87% with CLEAR GC RECLAMATION DIPS (peak 95.52%, floor 94.84% @ probe 7, recovery 94.87% @ probe 8). OOMKilled=false, RestartCount=2, Health=healthy, :3000/health 200/~2ms latency. Genuine tripwire (>93%-NO-RECLAIM-across-all-samples) UNtripped => FALSE POSITIVE re-confirmation. No OOM risk, no restart warranted. Benign-but-elevated instance of the recurring leak already tracked here. DO NOT escalate to ops; DO NOT restart/rebuild (user-gated; zero OOM-risk benefit). FP re-emission is tracked by FIX-AUDITOR-A12A20A30-FP-REEMIT-CONVERGE. High-water note: session peak 95.79% (probe 1 of fresh window, 2026-07-29T22:02:37Z), compared to historical 87% @ 2026-07-22 wedge, indicates ~9pt session elevation but within recurring pattern (no escalation signal).",
