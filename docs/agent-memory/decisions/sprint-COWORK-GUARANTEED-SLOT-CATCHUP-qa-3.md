@@ -57,3 +57,13 @@
 - Re-ran `coverage-stamp.test.sh` myself: 29/29 PASS — confirms script quality is real; not the question. Confirmed commit `f824befee` on main ancestry, touches claimed files.
 **why-decision:** CHANGES_REQUESTED. Artifact (script+tests+flow-doc rewiring) is genuine; the row's own acceptance bar (G2/G3, operational proof) is unmet live. This is a runtime/mutex-ttl + notebook-corroboration gap, not a design defect. Bounced qa[]→review[], routed to row's own owner (po) per flow's `verify-committed-changes` (no branch, no fixer target), redispatch_count 0→1.
 **why-change:** none — followed the row's own embedded close-gate exactly.
+
+### STEP qa-S43 · qa · 2026-08-06T17:10:00Z
+**task-id:** FIX-FB-GATE-CHECKD2-NONWAIVABLE-NUMERIC-BLOCK
+**what-done:** Direct-commit verify (Review-Lane QA-Drain, `qa[]` row, `branch:null`). Diff-verified commits `1b506cbdd`+`7b87ac372` on main ancestry, touch exactly the claimed files. Re-ran the developer's own regression harness (`scripts/test-fb-gate-checkd2-nonwaivable.sh`) against live HEAD instead of trusting the "GREEN 10/10" prose.
+**what-considered:**
+- Result: 8/10 pass, 2 FAIL — (3b)/(3c) grep `docs/agents/fb-market-poster/flow/main.md` for `NON-WAIVABLE`/`Check-D2 fix protocol`/Check-C waive sentence, not found.
+- Root-caused via `git log` on main.md: a LATER unrelated commit `8d165e8d6` (TE-T26, 2026-08-06) split main.md (994L→88L thin dispatcher), relocating this task's entire STEP 4b block into new `docs/agents/fb-market-poster/flow/daily.md:640-641,677-678` — grep-confirmed content present there verbatim; weekly-recap.md/weekly-prediction.md cross-refs already correctly repointed to `daily.md` by that same split. Not a substance regression — a test-script path drift (harness hardcodes the pre-split `main.md` location).
+- Assertions (1)/(2) (live-fixture Check-D2 BLOCK proof + no-regression PASS contrast) and (3a)/(3d) still hold; sibling `test-fb-gate-checkc-negation.sh` unaffected (6/6). `docs/social/fb-post-2026-07-25.md` confirmed untouched (0 diff).
+**why-decision:** CHANGES_REQUESTED. Per verify-committed's own mechanical rule ("any failing check → vc-changes"), a currently-RED regression proof for this exact task blocks done_verified even though root cause is a foreign later commit, not this developer's work. Bounced qa[]→review[], routed to row's own owner (developer, `updated_by` fallback — no `.owner` field existed) per flow's `verify-committed-changes` (no branch, no fixer target), redispatch_count 0→1.
+**why-change:** none — followed flow spec exactly; flagged root cause precisely so developer's follow-up is a 2-line path fix, not a re-investigation.
