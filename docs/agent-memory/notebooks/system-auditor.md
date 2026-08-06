@@ -1,4 +1,27 @@
 
+## c64 · 2026-08-06T15:11:23Z
+### Audit Run Tier-1 (15:00–15:10 UTC 2026-08-06)
+- Tier: 1 | Services: 13 checked | Sources: 0 | DB checks: 0
+- Anomalies: 1 dedup-skipped (0 new, 1 known)
+- Status: DEGRADED
+
+### Findings:
+**A-01 to A-11 (Container Status):** All 13 host_runtime_set services UP ✓
+
+**A-12 to A-20 (Health Endpoints):** All 5 OK ✓
+
+**A-20 pdf-extractor multi-probe:** 3/3 pass ✓
+
+**A-30 (Memory Pressure):**
+- rag-service: 96.56% of 1GiB → WARN (persistent high baseline, no reclamation dips)
+- mcp-server: 39.32% → PASS
+Signal emitted (dedup-skipped, last sent 2026-08-06T08:16:21Z, occurrence 5-6 in FIX-RAG-EMBEDDER-IDLE-UNLOAD-PATH) | id=sys-20260806T151042-6d28
+
+[emit-signal] SKIP-dedup dedup_key=microservice_degraded:rag-service:A-30 last_sent=2026-08-06T08:16:21Z id=sys-20260806T151042-6d28
+[emit-dashboard] OK id=sys-20260806T151042-6d28 check_id=A-30
+
+[OUTPUT-CONTRACT] signals_posted=1 | telegram_sent=0 | signal_queue_rows_written=1 | dashboard_rows=1 | dedup_skipped=1
+CONTRACT-CONTRADICTION: NONE
 
 ## c63 · 2026-08-06T14:43:48Z
 ### Audit Run Tier-1 (14:30–14:42 UTC 2026-08-06)
