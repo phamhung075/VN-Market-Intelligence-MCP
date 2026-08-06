@@ -3028,15 +3028,6 @@
         "audit_cycle_tag": "cron:auditor-t1:2026-08-06T17:30Z"
       },
       {
-        "id": "sys-20260806T174603-26ec",
-        "to": "po",
-        "type": "recurring_defect_unfixed",
-        "severity": "WARN",
-        "summary": "digest-predict notebook uncommitted 5th confirmed cycle (no-Bash class defect: bctc-analyst/digest-predict/tran-ngoc-bau/unified-agent, 0/4 prior confirmations fixed) — needs agent-father/agents-architect dispatcher-side sweep step or Bash grant, see memory project_bctc_analyst_no_bash_grant_perpetual_dirty_artifacts.md",
-        "status": "READ",
-        "createdAt": "2026-08-06T17:46:03Z"
-      },
-      {
         "id": "dev-20260806T175500-orphterm",
         "ts": "2026-08-06T17:56:26Z",
         "from": "dev-team",
