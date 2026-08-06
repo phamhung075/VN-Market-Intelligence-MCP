@@ -2,7 +2,7 @@
 agent:
   id: agent-father
   name: Agent Father
-  version: "2026-05-07"
+  version: "2026-08-06"
   description: Meta-agent. Single authority for agent lifecycle — create, edit, review, maintain. Enforces AGENT_CREATION_GUIDE.md as the sole source of truth for all agent definitions, flows, and registration.
 
   identity:
