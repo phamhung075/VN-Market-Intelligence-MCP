@@ -1,0 +1,56 @@
+{
+  "checked_at": "2026-08-06T20:48:48Z",
+  "tables": {
+    "daily_ohlcv": {
+      "rowcount": 779212
+    },
+    "market_prices": {
+      "rowcount": 117
+    },
+    "market_prices_history": {
+      "rowcount": 39612
+    },
+    "vn_index_cache": {
+      "rowcount": 1
+    },
+    "alerts": {
+      "rowcount": 108
+    },
+    "price_alerts": {
+      "rowcount": 0
+    },
+    "alert_engine_records": {
+      "rowcount": 0
+    },
+    "agent_signals": {
+      "rowcount": 136
+    },
+    "signal_outcomes": {
+      "rowcount": 105
+    },
+    "financial_reports": {
+      "rowcount": 257
+    },
+    "macro_indicators": {
+      "rowcount": 1
+    },
+    "sbv_rates": {
+      "rowcount": 1
+    },
+    "fred_series_daily": {
+      "rowcount": 8381
+    },
+    "deep_fetch_queue": {
+      "rowcount": 1783
+    },
+    "deep_fetch_stats": {
+      "rowcount": 0
+    },
+    "cron_job_runs": {
+      "rowcount": 183379
+    },
+    "scheduler_locks": {
+      "rowcount": 1
+    }
+  }
+}

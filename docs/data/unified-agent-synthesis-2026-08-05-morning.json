@@ -1,0 +1,78 @@
+{
+  "metadata": {
+    "cycle_id": "morning-2026-08-05T05:23Z",
+    "dish_type": "morning",
+    "date_vn": "2026-08-05",
+    "timestamp_utc": "2026-08-05T05:23:32Z",
+    "quality_verdict": "degraded",
+    "layers_walked_summary": "1-6 (partial — [gap:L3_VN_macro_incomplete] [gap:business_context_unavailable])"
+  },
+
+  "tnb_synthesis": {
+    "clock_phase": "expansion",
+    "regime_state": "transition_risk_off",
+    "regime_confidence": "MEDIUM",
+    "us_macro_layer": "Geopolitical de-escalation signal (US-Iran talks progress, news-scout chain_catalyst #10364) reducing macro uncertainty; gold safe-haven spike (+3.25σ to $4194) confirms elevated risk-off demand despite oil decline (-5.56% to $78.97).",
+    "vn_macro_layer": "USD/VND 26,080 (BEARISH VND depreciation above 25,500 carry threshold). Carry regime NEUTRAL at 1.37pp (SBV 5.00% vs Fed 3.63%, source_tier 2). Market sentiment mixed (ema_5d +1.49). [gap: CPI trend unavailable] [gap: VIRA FX reserves unavailable].",
+    "valuation_layer": "Real estate (VHM/VIC) expansion phase on strong momentum (ROC deciles 10, RS 87.96/91.67 STRONG) with 3/4 pillars aligned. Banking (BID) slowdown phase on 2/4 pillars + rate policy tightening + carry unwind divergence. All conviction capped MEDIUM due to missing business context."
+  },
+
+  "conviction_calls": [
+    {
+      "ticker": "VHM",
+      "conviction_level": "MEDIUM",
+      "direction": "BUY",
+      "pillars_aligned_count": 3,
+      "rationale_one_liner": "Momentum leader (ROC +60.5% decile 10, RS composite 87.96 STRONG) + expansion phase on 3/4 pillars; capped MEDIUM due to elevated volatility (rv_20d 23.6%), missing BCTC fundamentals, gold regime-drift risk."
+    },
+    {
+      "ticker": "VIC",
+      "conviction_level": "MEDIUM",
+      "direction": "BUY",
+      "pillars_aligned_count": 3,
+      "rationale_one_liner": "Strongest momentum on watchlist (ROC +87.5% decile 10, RS composite 91.67 STRONGEST) + recovery phase on 3/4 pillars; same MEDIUM caps apply (volatility risk, no BCTC, regime-drift)."
+    },
+    {
+      "ticker": "BID",
+      "conviction_level": "LOW",
+      "direction": "HOLD",
+      "pillars_aligned_count": 2,
+      "rationale_one_liner": "Mixed pillars (2/4: rate hikes positive for NIM but FII carry unwind negative) + momentum decile 9 not sufficient + RS composite 56.5 NEUTRAL; requires business fundamentals to elevate conviction."
+    }
+  ],
+
+  "sector_phases": [
+    {
+      "sector_vn": "bất động sản (real estate)",
+      "investment_phase": "expansion",
+      "pyramid_tier": "equity",
+      "direction_this_cycle": "positive"
+    },
+    {
+      "sector_vn": "ngân hàng (banking)",
+      "investment_phase": "slowdown",
+      "pyramid_tier": "fixed_income",
+      "direction_this_cycle": "mixed"
+    }
+  ],
+
+  "known_gaps": [
+    "[L6-gap: gold >$4,300 active — regime-drift risk: gold-driven safe-haven spike may lead actual risk-off reversal]",
+    "[L6-gap: single-pillar thesis — BID pillars_aligned_count 2/4]",
+    "[gap: L3_VN_macro_incomplete — CPI trend and VIRA/FX reserves unavailable]",
+    "[gap: business_context_absent — no bctc_signal_*/fundamental_* data this cycle for watchlist]",
+    "[gap: L5_kinhdich_unavailable — get_portfolio_conviction not called]"
+  ],
+
+  "causal_chains": [
+    "Geopolitical de-escalation (US-Iran talks) → gold safe-haven +3.25σ (macro uncertainty persists) → USD/VND 26,080 carry pressure → real estate momentum leader (VHM/VIC domestic-demand insulated, +60-87% ROC) versus banking sector FII unwind (BID rate hikes insufficient offset)",
+    "Oil -5.56% + macro uncertainty easing signals → positive for cost-sensitive sectors; negative for energy carry trades"
+  ],
+
+  "clusters_summary": {
+    "qualified": 3,
+    "tickers_covered": ["VHM", "VIC", "BID"],
+    "sectors_covered": ["real_estate", "banking"],
+    "convergence_types": ["ticker convergence (VHM/VIC +2 signals each)", "sector convergence (real estate +2 signals)", "macro risk-off (gold +3.25σ)"]
+  }
+}

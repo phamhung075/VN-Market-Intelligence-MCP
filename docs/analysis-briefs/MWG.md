@@ -36,3 +36,7 @@ Active cash deployment into securities and lending for diversified returns.
 
 Q1 2026 positive outlook: margin expansion + financial positioning strong. Await formal earnings release and BCTC filing.
 2026-05-14 16:00 | Close: 84,200 VND | RSI: N/A(16c) | Vol: 400.2K (N/A% avg) | YoY: N/A
+
+## [Market Watcher] EOD Updates
+
+2026-07-30 16:00 | Close: 69.800 VND | RSI: 41.3 | Vol: N/A | YoY: +31.4% | Daily: +4.96% | Sentiment: Bullish | Brief action: Accumulate | Regime: NEUTRAL | Earnings catalyst: The Gioi Di Dong Q2 earnings nearly doubled; retail tech sector strength visible; consumer confidence recovery theme

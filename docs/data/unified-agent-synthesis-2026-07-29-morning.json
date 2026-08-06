@@ -1,0 +1,102 @@
+{
+  "metadata": {
+    "cycle_id": "morning-2026-07-29T05:23:00Z",
+    "dish_type": "morning",
+    "date_vn": "2026-07-29",
+    "timestamp_utc": "2026-07-29T05:23:00Z",
+    "quality_verdict": "degraded",
+    "layers_walked_summary": "partial — [gap:L5_kinhdich_unavailable] [gap:L3_VN_macro_incomplete] [gap:business_context_sparse]"
+  },
+  "tnb_synthesis": {
+    "clock_phase": "expansion",
+    "regime_state": "earnings-recovery-carry-neutral",
+    "regime_confidence": "MEDIUM",
+    "us_macro_layer": "Fed funds rate 3.63% stable, no geopolitical event signal detected. EFFR-IORB spread reflects moderate tightening posture. Energy prices stable (oil 87.19 USD/bbl neutral band).",
+    "vn_macro_layer": "USD/VND 26.150 stable below 26,500 threshold, no FX pressure. Carry regime NEUTRAL (1.37pp spread). [gap:CPI_trend_unavailable] [gap:VIRA_unavailable].",
+    "valuation_layer": "Q2 earnings season accelerating with HPG +103% YoY, VRE +30% YoY. Real estate sector finding bid after oversold levels (VHM 52w proximity mid-range recovery). Banking sector margins under deposit-rate pressure (5.00% cost rising). Most watchlist tickers near 52w lows (compressed valuations)."
+  },
+  "conviction_calls": [
+    {
+      "ticker": "VHM",
+      "conviction_level": "HIGH",
+      "direction": "BUY",
+      "pillars_aligned_count": 3,
+      "rationale_one_liner": "Momentum leader (decile 10, z=2.45) with strong relative strength (91.7%), price surge +5.38% on oversold recovery, earnings catalysts supporting sector."
+    },
+    {
+      "ticker": "VRE",
+      "conviction_level": "MEDIUM",
+      "direction": "HOLD",
+      "pillars_aligned_count": 3,
+      "rationale_one_liner": "Earnings beat (+30% YoY profit) but valuation at mid-range, momentum neutral (decile 8). Requires sustained operating execution."
+    },
+    {
+      "ticker": "HPG",
+      "conviction_level": "MEDIUM",
+      "direction": "HOLD",
+      "pillars_aligned_count": 2,
+      "rationale_one_liner": "Strong earnings (+103% YoY) masks commodity/FX headwinds. Momentum NEUTRAL (decile 6), relative strength NEUTRAL (43.5). Construction demand cyclical risk."
+    }
+  ],
+  "sector_phases": [
+    {
+      "sector_vn": "real_estate",
+      "investment_phase": "recovery",
+      "pyramid_tier": "equity",
+      "direction_this_cycle": "positive"
+    },
+    {
+      "sector_vn": "steel",
+      "investment_phase": "expansion",
+      "pyramid_tier": "equity",
+      "direction_this_cycle": "mixed"
+    },
+    {
+      "sector_vn": "agriculture",
+      "investment_phase": "slowdown",
+      "pyramid_tier": "cash",
+      "direction_this_cycle": "negative"
+    },
+    {
+      "sector_vn": "banking",
+      "investment_phase": "slowdown",
+      "pyramid_tier": "fixed_income",
+      "direction_this_cycle": "mixed"
+    }
+  ],
+  "known_gaps": [
+    "[gap:L5_kinhdich_unavailable: service call structure pending]",
+    "[gap:market_hexagram_unavailable: 501 or not called]",
+    "[gap:geopolitical_event_absent: no war/trade-war signal this cycle]",
+    "[gap:CPI_trend_unavailable: macro_health call skipped]",
+    "[gap:VIRA_unavailable: FX reserves data not retrieved]",
+    "[gap:business_context_sparse: limited bctc_signal_* or fundamental_* data for non-core tickers]",
+    "[L6-gap: single-pillar thesis — VHM 3/4 pillars aligned; earnings drive case but sustained demand unclear]",
+    "[L6-gap: HPG insufficient business context on cost structure and margin sustainability]"
+  ],
+  "causal_chains": [
+    "Stable carry regime (1.37pp) + Q2 earnings beats (HPG +103%, VRE +30%) + foreign room abundant (no exhaustion) → sector rotation into earnings winners + oversold real estate recovery (VHM near 52w high again) → VHM/VRE directionally positive despite banking sector pressure on deposit rates rising"
+  ],
+  "clusters_summary": {
+    "qualified": 4,
+    "tickers_covered": [
+      "VHM",
+      "VRE",
+      "HPG",
+      "BDI",
+      "DLC",
+      "DPM",
+      "VNM",
+      "MSN",
+      "SAB",
+      "KDC",
+      "GVR"
+    ],
+    "sectors_covered": [
+      "real_estate",
+      "retail",
+      "steel",
+      "agriculture"
+    ]
+  }
+}

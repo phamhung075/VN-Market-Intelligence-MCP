@@ -11,7 +11,8 @@
 
 ## [Market Watcher] Price, Volume, Technicals
 
-(Awaiting market watcher entries)
+2026-08-05 16:00 | Close: 40.550 VND | RSI: 42.4 | Vol: 709700 (101.4% avg) | YoY: -12.3%
+2026-08-06 16:06 | Close: 40.350 VND | Change: +1.89% daily | RSI: N/A | Vol: Standard | YoY: N/A | Regime: NEUTRAL | Brief action: Watch — DGC defying market selloff (+1.89% vs index -0.66%); news sentiment bullish post-earnings; legal risk mitigated by operational recovery signal; accumulation setup
 
 ## [Unified Agent] Quarterly Syntheses
 

@@ -61,3 +61,5 @@ Signal: fundamental_validation #7942 | Confidence: 0.75 | Critic: 0.8
 2026-07-16 16:08 | Close: 59.400 VND | Change: +0.34% daily | RSI: N/A | Volume: Standard | YoY: N/A | Regime: NEUTRAL | Brief action: Hold — VCB stabilizing after Q2 earnings beat; banking sector recovery on policy outlook
 
 2026-07-24 16:00 | Close: 54.100 VND (+0.19%) | RSI: 18.6 | Vol: 2.5M (45% avg) | YoY: -12.88% | Anomaly: YES — extreme oversold (RSI<20); banking sector -1.35% avg broad weakness; support forming at BB lower band 53.8k; buy-dip signal for tier-1 blue chip
+2026-07-31 16:08 | Close: 59.300 VND | RSI: 56.3 | Vol: 18.314M (3150% avg) | YoY: -1.49% | Daily: +4.96% | Anomaly: YES — extreme volume spike (18.3M shares, 3150% of 581K average), strongest volume day in 60d sample, FII allocation 300B VND signal, institutional buying pressure into banking rally
+2026-08-06 16:06 | Close: 60.000 VND | Change: 0.00% daily | RSI: 52.7 | Vol: 2.96M (66% avg) | YoY: N/A | Regime: NEUTRAL | Brief action: Hold — Banking sector consolidation post-earnings; neutral technicals mid-BB band; macro tightening headwind; risk-reward balanced

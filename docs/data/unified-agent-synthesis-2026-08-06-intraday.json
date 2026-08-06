@@ -1,0 +1,78 @@
+{
+  "metadata": {
+    "cycle_id": "intraday-2026-08-06T07:25:00Z",
+    "dish_type": "intraday",
+    "date_vn": "2026-08-06",
+    "timestamp_utc": "2026-08-06T07:25:00Z",
+    "quality_verdict": "degraded",
+    "layers_walked_summary": "partial — [gap:business_context_unavailable] [gap:sentiment_z_unavailable] [gap:insider_sentiment_unavailable]"
+  },
+  "tnb_synthesis": {
+    "clock_phase": "transition",
+    "regime_state": "risk-off",
+    "regime_confidence": "MEDIUM",
+    "us_macro_layer": "Fed rate 3.63% balanced against SBV 5.0%; carry neutral at 1.37pp. Gold bullish at 4314.9/oz signals risk-off sentiment.",
+    "vn_macro_layer": "USD/VND at 26040 (bearish, above 25k). Carry spread neutral. Equity fairly valued (EPS yield 6.70% vs deposit 5.00%). Volatility elevated (78th percentile).",
+    "valuation_layer": "All 4 pillars evaluated: M2 carry neutral, CoC balanced, EPS sector mixed (real estate weakness), Valuation fairly valued. 2-3 aligned = medium conviction base."
+  },
+  "conviction_calls": [
+    {
+      "ticker": "HUT",
+      "conviction_level": "MEDIUM",
+      "direction": "NEUTRAL",
+      "pillars_aligned_count": 2,
+      "rationale_one_liner": "Ticker convergence (news FDI + ta_oversold RSI 10.6 + BB breakout) but FDI news contradicts bearish technicals, creating mixed thesis. Requires business context confirmation."
+    },
+    {
+      "ticker": "VHM",
+      "conviction_level": "MEDIUM",
+      "direction": "NEUTRAL",
+      "pillars_aligned_count": 2,
+      "rationale_one_liner": "Technical convergence (ta_oversold RSI 21.9 + BB breakout) within real estate sector weakness backdrop. Fair valuation baseline but momentum negative."
+    },
+    {
+      "ticker": "DGC",
+      "conviction_level": "LOW",
+      "direction": "HOLD",
+      "pillars_aligned_count": 1,
+      "rationale_one_liner": "Single price surge signal (6.91% jump, medium confidence) lacks ticker convergence or sector context."
+    }
+  ],
+  "sector_phases": [
+    {
+      "sector_vn": "xay dung (construction)",
+      "investment_phase": "slowdown",
+      "pyramid_tier": "fixed_income",
+      "direction_this_cycle": "negative"
+    },
+    {
+      "sector_vn": "bat dong san (real estate)",
+      "investment_phase": "slowdown",
+      "pyramid_tier": "fixed_income",
+      "direction_this_cycle": "negative"
+    },
+    {
+      "sector_vn": "hoa chat (chemicals)",
+      "investment_phase": "neutral",
+      "pyramid_tier": "equity",
+      "direction_this_cycle": "mixed"
+    }
+  ],
+  "known_gaps": [
+    "[gap:business_context_unavailable - no bctc_signal/fundamental data for HUT/VHM/DGC this cycle]",
+    "[gap:sentiment_z_unavailable - only 7 days history available, 21 days required for z-score baseline]",
+    "[gap:insider_sentiment_unavailable]",
+    "[L6-gap: single-pillar thesis - HUT 2/4 pillars aligned; business context missing, carry thesis incomplete]",
+    "[L6-gap: single-pillar thesis - VHM 2/4 pillars aligned; ops/customer context absent, earnings visibility low]",
+    "[L6-gap: mixed signal contradiction - HUT FDI bullish news narrative contradicts ta_oversold bearish setup; unclear which signal is precedent]"
+  ],
+  "causal_chains": [
+    "Gold bullish (4314.9/oz, risk-off) + USD/VND high (26040, bearish for imports) + foreign outflow (z=0.96) -> real estate sector pressure -> HUT/VHM ta_bb_breakout + oversold -> technical convergence gate triggered.",
+    "FDI news (Gia tang suc hut dong von FDI chat luong cao) contradicts tech bearish posture on HUT -> mixed thesis requiring business context verification before conviction elevation."
+  ],
+  "clusters_summary": {
+    "qualified": 3,
+    "tickers_covered": ["HUT", "VHM", "DGC"],
+    "sectors_covered": ["construction", "real_estate", "chemicals"]
+  }
+}

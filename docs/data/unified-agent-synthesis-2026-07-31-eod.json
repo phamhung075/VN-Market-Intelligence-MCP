@@ -1,0 +1,108 @@
+{
+  "metadata": {
+    "cycle_id": "eod-2026-07-31T08:50:33Z",
+    "dish_type": "eod",
+    "date_vn": "2026-07-31",
+    "timestamp_utc": "2026-07-31T08:50:33Z",
+    "quality_verdict": "degraded",
+    "layers_walked_summary": "1-6 (partial) — [gap:macro_health_missing] [gap:business_context_unavailable] [gap:L3_CPI_VIRA_unavailable]"
+  },
+  "tnb_synthesis": {
+    "clock_phase": "slowdown",
+    "regime_state": "risk-off",
+    "regime_confidence": "MEDIUM",
+    "us_macro_layer": "Apple supply chain adjustment signals global tech headwind (impact_score=9); no direct PMI/Fed data available this cycle",
+    "vn_macro_layer": "USD/VND at 26,110 (vs 25,500 threshold) — VND depreciation rising import costs. Carry 1.37pp NEUTRAL. Equity valuation FAIRLY_VALUED (6.64% EY vs 5% deposit rate). CPI trend unavailable. FX reserves (VIRA) unavailable.",
+    "valuation_layer": "Money supply: M2 flat/unavailable | Cost of capital: rates rising (USD/VND pressure) | Earnings: BCTC Q2 pending, sector mixed | Valuation: fairly priced vs deposits but sensitive to rate moves. Conviction floor: MEDIUM across all sectors due to macro degradation."
+  },
+  "conviction_calls": [
+    {
+      "ticker": "VIC",
+      "conviction_level": "MEDIUM",
+      "direction": "HOLD",
+      "pillars_aligned_count": 1,
+      "rationale_one_liner": "Kinh Dịch buy signal (Khôn/Mông 74%) contradicts macro (FX pressure, rate headwind); insufficient business data to confirm thesis"
+    },
+    {
+      "ticker": "VCB",
+      "conviction_level": "MEDIUM",
+      "direction": "HOLD",
+      "pillars_aligned_count": 2,
+      "rationale_one_liner": "Carry plateau (1.37pp) vs rising FX pressure (26,110); banking bifurcation (SOE flow +4.96% but retail cohort down -2% avg)"
+    },
+    {
+      "ticker": "PDR",
+      "conviction_level": "MEDIUM",
+      "direction": "HOLD",
+      "pillars_aligned_count": 2,
+      "rationale_one_liner": "Real estate sector consensus (Kinh Dịch MUA 74%) on fair valuation, but rate sensitivity (COC rising) limits upside; downside risk if FX pressure persists"
+    }
+  ],
+  "sector_phases": [
+    {
+      "sector_vn": "bất động sản",
+      "investment_phase": "slowdown",
+      "pyramid_tier": "fixed_income",
+      "direction_this_cycle": "negative",
+      "conviction": "MEDIUM",
+      "note": "8 tickers avg -1.93%; rate pressure vs. fair valuation floor"
+    },
+    {
+      "sector_vn": "ngân hàng",
+      "investment_phase": "slowdown",
+      "pyramid_tier": "fixed_income",
+      "direction_this_cycle": "mixed",
+      "conviction": "MEDIUM",
+      "note": "7 tickers bifurcated (SOE +4.96% vs retail cohort -2% avg); carry plateau with FX headwind"
+    },
+    {
+      "sector_vn": "nông nghiệp",
+      "investment_phase": "slowdown",
+      "pyramid_tier": "defensive",
+      "direction_this_cycle": "negative",
+      "conviction": "LOW",
+      "note": "7 tickers avg -3.21%; commodity cycle downturn, no macro support"
+    },
+    {
+      "sector_vn": "chứng khoán",
+      "investment_phase": "slowdown",
+      "pyramid_tier": "cash",
+      "direction_this_cycle": "negative",
+      "conviction": "LOW",
+      "note": "6 tickers avg -2.15%; margin compression from rate rises, structural headwind"
+    },
+    {
+      "sector_vn": "dầu khí",
+      "investment_phase": "slowdown",
+      "pyramid_tier": "defensive",
+      "direction_this_cycle": "negative",
+      "conviction": "LOW",
+      "note": "5 tickers avg -2.24%; global oil NEUTRAL at $88, Vietnam-specific FX headwind"
+    }
+  ],
+  "known_gaps": [
+    "[gap:macro_health_missing — no PMI/Fed/macro snapshot fetched via macro-health-read skill]",
+    "[gap:business_context_unavailable — no bctc_signal_*/fundamental_* data available this cycle for RE/Banking/Agri tickers]",
+    "[gap:L3_CPI_VIRA_unavailable — CPI trend (inflation.cpi_peaked) and FX reserves (VIRA) not available]",
+    "[L6-gap: single-pillar thesis — VIC 1/4 pillars (COC only); insufficient data]",
+    "[L6-gap: single-pillar thesis — Banking sector 2.5/4 pillars; mixed SOE vs retail signals]",
+    "[L6-gap: business_context absent — BCTC Q2 announcements cited in signals, but no detailed extraction available]"
+  ],
+  "causal_chains": [
+    "Apple supply adjustment (chain_catalyst) → global tech headwind + USD/VND 26,110 → FX pressure on VN importers → sector-wide convergence on real estate/banking/agri (rate sensitivity + FX headwind) → multi-sector sell-off despite Kinh Dịch buy signals"
+  ],
+  "clusters_summary": {
+    "qualified": 5,
+    "tickers_covered": [
+      "VIC", "VCB", "BID", "PDR", "DXG", "VNH", "MSN", "VND", "VCI", "SSI", "HCM", "SHB", "ACB", "BSR", "PLX", "GAS", "DAG", "KBC", "TCH", "DIG"
+    ],
+    "sectors_covered": [
+      "real_estate", "banking", "agriculture", "securities", "energy"
+    ],
+    "signal_sources": [
+      "alert-engine (price_drop x40+, price_surge x2, volume_spike x3)",
+      "news-scout (chain_catalyst x1: Apple supply chain)"
+    ],
+    "signal_ids_consumed": "10123-10174 (50+ signals, confidence 40-90%)"
+  }
+}

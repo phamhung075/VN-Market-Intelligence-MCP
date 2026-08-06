@@ -1,0 +1,89 @@
+{
+  "metadata": {
+    "cycle_id": "evening-2026-07-31T19:54:00Z",
+    "dish_type": "evening",
+    "date_vn": "2026-07-31",
+    "timestamp_utc": "2026-07-31T19:54:00Z",
+    "quality_verdict": "degraded",
+    "layers_walked_summary": "partial — [gap:L2_US_macro_absent_no_gap_token] [gap:L3_VN_macro_incomplete] [gap:L4_partial_pillar_coverage] [gap:L5_kinhdich_unavailable:insufficient price data] [gap:business_context_unavailable]"
+  },
+  "tnb_synthesis": {
+    "clock_phase": "transition",
+    "regime_state": "risk-off",
+    "regime_confidence": "MEDIUM",
+    "us_macro_layer": "[gap:L2_US_macro_absent_no_gap_token] — No PMI/EFFR data available this cycle",
+    "vn_macro_layer": "USD/VND 26.110 (carry pressure rising vs 25,500 base); gold 4.105 USD/oz risk-off signal (-1.44%); oil 90.12 neutral. [gap:CPI_unavailable] [gap:VIRA_unavailable] L3 incomplete. FII flow: net selling 2.500B dong week-ending 7/31, banking targeted.",
+    "valuation_layer": "Banking sector bifurcation: VCB absorbs domestic SOE inflows (+4.96%) vs EIB headline risk (CEO resign). Real estate consensus weak (VIC -2.68%, VHM flat, NVL flat) despite Vingroup profit news; FII selling dominates fundamentals. All 5 tickers scored 1.5-2.5/4 pillars (single-pillar gap on each)."
+  },
+  "conviction_calls": [
+    {
+      "ticker": "VCB",
+      "conviction_level": "MEDIUM",
+      "direction": "HOLD",
+      "pillars_aligned_count": 2,
+      "rationale_one_liner": "Volume confirm + domestic SOE inflow, but carry plateau limits upside; M2 neutral, COC rising FX pressure"
+    },
+    {
+      "ticker": "VIC",
+      "conviction_level": "MEDIUM",
+      "direction": "HOLD",
+      "pillars_aligned_count": 2,
+      "rationale_one_liner": "News positive (Vingroup profit) contradicted by macro FII exit; pricing extremes +110.5% 52w-low, Kinh Dịch reversal risk"
+    },
+    {
+      "ticker": "HPG",
+      "conviction_level": "MEDIUM",
+      "direction": "HOLD",
+      "pillars_aligned_count": 2,
+      "rationale_one_liner": "Record debt news signals COC rising; earnings clarity needed; M2/valuation neutral"
+    },
+    {
+      "ticker": "EIB",
+      "conviction_level": "MEDIUM",
+      "direction": "HOLD",
+      "pillars_aligned_count": 1,
+      "rationale_one_liner": "CEO resign governance risk unquantified; COC rising FX pressure; earnings impact TBD"
+    },
+    {
+      "ticker": "NVL",
+      "conviction_level": "MEDIUM",
+      "direction": "HOLD",
+      "pillars_aligned_count": 2,
+      "rationale_one_liner": "Earnings positive (1.8T dong H1) but Kinh Dịch Tập Khảm reversal -100% contradicts; COC rising, M2 flat"
+    }
+  ],
+  "sector_phases": [
+    {
+      "sector_vn": "ngân hàng",
+      "investment_phase": "transition",
+      "pyramid_tier": "fixed_income",
+      "direction_this_cycle": "mixed (VCB +4.96% domestic vs EIB risk)"
+    },
+    {
+      "sector_vn": "bất động sản",
+      "investment_phase": "slowdown",
+      "pyramid_tier": "fixed_income",
+      "direction_this_cycle": "negative (FII net selling despite profit news)"
+    }
+  ],
+  "known_gaps": [
+    "[gap:L2_US_macro_absent_no_gap_token] — No PMI/EFFR available; macro_health tool not invoked this cycle",
+    "[gap:L3_VN_macro_incomplete] — CPI trend and VIRA/FX-reserves unavailable",
+    "[gap:L4_partial_pillar_coverage] — All 5 tickers 1.5-2.5/4 pillars; single-pillar gap on each",
+    "[gap:L5_kinhdich_unavailable:insufficient price data for market_hexagram] — get_portfolio_conviction returned 503 (service exhausted during market_hexagram calc)",
+    "[gap:business_context_unavailable] — bctc_signal_*/fundamental_* data sparse; Q2 BCTC announcements (Vingroup/Novaland profit) cited in news alerts but not extracted/quantified by sector decomposition",
+    "[L6-gap: single-pillar thesis — VCB 2/4 pillars; missing M2 concrete + valuation depth]",
+    "[L6-gap: single-pillar thesis — VIC 2/4 pillars; Kinh Dịch buy contradicts technical/macro pressure]",
+    "[L6-gap: single-pillar thesis — HPG 2/4 pillars; debt clarity needed on incremental COC impact]",
+    "[L6-gap: single-pillar thesis — EIB 1.5/4 pillars; governance event unquantified]",
+    "[L6-gap: single-pillar thesis — NVL 2.5/4 pillars; Kinh Dịch reversal contradicts earnings positivity]"
+  ],
+  "causal_chains": [
+    "Fed rate hold + VND depreciation 26.110 (FX pressure rising) → Banking FII flow neutral (carry 1.37pp) but VCB absorbs domestic SOE inflows → VCB +4.96% vs sector → Real estate FII net selling (-221k shares/5d) → VIC -2.68% despite Vingroup profit news → Carry unwind thesis dominating fundamentals; risk-off tone (gold -1.44%) warns against peaks."
+  ],
+  "clusters_summary": {
+    "qualified": 2,
+    "tickers_covered": ["VCB", "VIC", "HPG", "EIB", "NVL"],
+    "sectors_covered": ["banking", "real_estate"]
+  }
+}

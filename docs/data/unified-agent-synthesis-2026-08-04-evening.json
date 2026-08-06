@@ -1,0 +1,102 @@
+{
+  "metadata": {
+    "cycle_id": "evening-2026-08-04T19:49:35Z",
+    "dish_type": "evening",
+    "date_vn": "2026-08-04",
+    "timestamp_utc": "2026-08-04T19:49:35Z",
+    "quality_verdict": "degraded",
+    "layers_walked_summary": "partial — [gap:L2_macro_depth_absent_no_geopolitical_signal] [gap:L3_CPI_VIRA_unavailable] [gap:business_context_unavailable]"
+  },
+  "tnb_synthesis": {
+    "clock_phase": "transition",
+    "regime_state": "carry-neutral-with-fii-quality-concentration",
+    "regime_confidence": "MEDIUM",
+    "us_macro_layer": "Carry spread 1.37pp NEUTRAL (VND 5.00% vs USD 3.63% Fed funds). Earnings yield 6.70% fairly-valued vs 5.00% deposit rate. Oil weakness (-4.88% to $79.46, -2.03σ) signals macro caution; without PMI/consumer data this cycle, depth partial.",
+    "vn_macro_layer": "USD/VND 26,080 at carry-pressure threshold (>25,500). FII portfolio rebalancing selective: market 24.5% foreign-room saturated, banking 58.1%, FPT tech 56.3%. No CPI/VIRA data available this cycle.",
+    "valuation_layer": "Real estate cluster 2-pillar alignment (sentiment+ops, liquidity/COC tight). Banking cluster 0-pillar (all headwinds). Macro transition mode: rate-sticky environment caps cyclical upside; quality anchors outperform."
+  },
+  "conviction_calls": [
+    {
+      "ticker": "VHM",
+      "conviction_level": "MEDIUM",
+      "direction": "BUY",
+      "pillars_aligned_count": 2,
+      "rationale_one_liner": "FII inflow + Vingroup recruitment ops catalyst drive +3.31% morning, but liquidity tight & carry pressure limit near-term upside. Hexagram Tỉnh (48, +MUA, 56% confidence) supports tactical entry; watch rate environment."
+    },
+    {
+      "ticker": "VIC",
+      "conviction_level": "MEDIUM",
+      "direction": "HOLD",
+      "pillars_aligned_count": 2,
+      "rationale_one_liner": "Inflow narrative +2.35%, but hexagram Kiển (39, -MUA reversal caution, 61% confidence) flags mean-reversion risk. Pillar alignment limited (sentiment+ops, missing liquidity/COC). Await earnings confirmation."
+    },
+    {
+      "ticker": "VRE",
+      "conviction_level": "MEDIUM",
+      "direction": "BUY",
+      "pillars_aligned_count": 2,
+      "rationale_one_liner": "Sector momentum +4.76%, FII quality positioning intact (room 9.5% utilized). Hexagram Tỉnh (48, +MUA, 43% confidence) moderately bullish. Conviction capped by carry headwinds and valuation premium."
+    },
+    {
+      "ticker": "VCB",
+      "conviction_level": "LOW",
+      "direction": "HOLD",
+      "pillars_aligned_count": 0,
+      "rationale_one_liner": "Banking -1.32% despite sector +0.15%. Zero pillar alignment (liquidity tight, COC 5% sticky, EPS mixed, valuation uncertain). Hexagram Sư (7, +GIU holding, 100% confidence) defensive but uninspiring. Wait for earnings clarity on deposit/NIM."
+    },
+    {
+      "ticker": "BID",
+      "conviction_level": "LOW",
+      "direction": "HOLD",
+      "pillars_aligned_count": 0,
+      "rationale_one_liner": "Banking -0.65%, hexagram Sư (7, +GIU holding). Rate-regime cap on NIM expansion; deposit rate sticky at 5%. Fundamentals opaque without BCTC data this cycle. Hold for valuation reversion; no new longs."
+    },
+    {
+      "ticker": "FPT",
+      "conviction_level": "MEDIUM",
+      "direction": "HOLD",
+      "pillars_aligned_count": 2,
+      "rationale_one_liner": "Tech sector +1.48%, FPT -0.28% (micro/macro divergence). Foreign room 56.3% utilized (approaching exhaustion). Hexagram Khôn (2, +MUA, 74% confidence) and 12% US revenue exposure offer defensive quality. Sentiment positive but positioned defensively."
+    }
+  ],
+  "sector_phases": [
+    {
+      "sector_vn": "bất động sản",
+      "investment_phase": "transition",
+      "pyramid_tier": "equity",
+      "direction_this_cycle": "positive",
+      "rationale": "FII inflow on Vingroup recruitment signal. Carry pressure (USD/VND 26,080) and liquidity tightness (M2 constrained) limit upside. Phase remains transition: await macro clarity."
+    },
+    {
+      "sector_vn": "ngân hàng",
+      "investment_phase": "slowdown",
+      "pyramid_tier": "fixed_income",
+      "direction_this_cycle": "negative",
+      "rationale": "Deposit rate sticky 5%, NIM capped. Foreign room 58.1% saturated (selective dumping of weak hands). Sector momentum +0.15% underperforms individual weakness (-0.94% avg). Rate regime headwinds dominate."
+    },
+    {
+      "sector_vn": "công nghệ",
+      "investment_phase": "expansion",
+      "pyramid_tier": "equity",
+      "direction_this_cycle": "neutral",
+      "rationale": "Sector +1.48%, but FPT (-0.28%) shows divergence. Foreign room 56.3% (FPT) near exhaustion. US demand narrative strong (FPT 12% revenue from US). Quality anchor in rate-uncertain regime."
+    }
+  ],
+  "known_gaps": [
+    "[gap:L2_macro_depth_absent_no_geopolitical_signal — US macro depth unavailable (no PMI/consumer data this evening cycle); no open geopolitical/trade-war signals.]",
+    "[gap:L3_CPI_VIRA_unavailable — CPI trend unknown (macro_state partial); FX reserves/VIRA data unavailable this cycle.]",
+    "[gap:business_context_unavailable — No bctc_signal_* or fundamental_* data available this cycle for watchlist tickers; FII volume narrative insufficient to anchor thesis.]",
+    "[L6-gap: gold approaching $4,300 threshold — Gold $4,139.9 (+2.56σ spike) near safe-haven regime-drift level. If spike continues >$4,300, monitor for actual carry-unwind confirmation via EFFR-IORB spread.]",
+    "[L6-gap: single-pillar thesis — VHM MEDIUM conviction grounded on 2/4 pillars (FII sentiment + ops catalyst); missing liquidity context (M2 tight) and COC confirmation (5% deposit rate sticky). Per tnb-methodology-valuation.md, add external liquidity/rate forecast or state insufficient-data.]"
+  ],
+  "causal_chains": [
+    "Neutral carry spread (1.37pp, VND 5.00% vs USD 3.63% Fed funds) → FII portfolio selective high-quality accumulation despite FX pressure (USD/VND 26,080) → real estate sector captures FII inflow on Vingroup recruitment catalyst → VHM/VIC/VRE +3-5% overperforms banking sector.",
+    "Oil price collapse (-4.88% to $79.46, -2.03σ macro risk-off signal) + USD/VND carry pressure (26,080) → macro utility reversal (rates stay sticky, liquidity constrained) → banking sector -0.94% average despite sector +0.15% momentum (foreign room 58% saturated, selective exit) → LOW conviction on financials pending earnings clarity.",
+    "Macro regime transition (tightening→tight-but-not-crisis) + FII foreign-room utilization 24.5% (selective discernment, quality concentration) → risk-on within quality anchors (growth REITs, tech exports), risk-off from cyclical/weak-hand names (commodities, generalist banks) → divergence: VHM/VIC/VRE outperform VCB/BID/SHB despite sector tailwinds."
+  ],
+  "clusters_summary": {
+    "qualified": 3,
+    "tickers_covered": ["VHM", "VIC", "VRE", "VCB", "BID", "SHB", "FPT"],
+    "sectors_covered": ["real_estate", "banking", "tech"]
+  }
+}

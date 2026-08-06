@@ -44,3 +44,5 @@ Banking sector pressure continuing. Moderate decline, watch for support levels.
 ## [Market Watcher] EOD Updates
 2026-07-02 16:00 | Close: 42,550 VND | RSI: 52 | Vol: 2.98M (-8.5% avg) | YoY: +1.8% | Regime: Neutral
 2026-07-16 16:08 | Close: 39.300 VND | Change: -0.51% daily | RSI: N/A | Volume: Standard | YoY: N/A | Regime: NEUTRAL | Brief action: Hold — Banking sector showing FII rotation to FDI-sensitive names amid Q2 earnings strength
+2026-07-30 16:00 | Close: 37.250 VND | RSI: 41.4 | Vol: 6.6M (220% avg) | YoY: +12.5% | Regime: NEUTRAL | Anomaly: Volume spike 2.2x, bank sector accumulation — foreign flow positive signal despite 5% single-day gain
+2026-08-06 16:06 | Close: 38.200 VND | Change: +0.53% daily | RSI: N/A | Vol: Standard | YoY: N/A | Regime: NEUTRAL | Brief action: Hold — BID stabilizing post-earnings; modest recovery +2.55% from 07-30 low; macro headwind from rate cycle persists

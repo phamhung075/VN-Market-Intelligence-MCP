@@ -1,0 +1,84 @@
+{
+  "metadata": {
+    "cycle_id": "eod-2026-07-30T08:37:00Z",
+    "dish_type": "eod",
+    "date_vn": "2026-07-30",
+    "timestamp_utc": "2026-07-30T08:37:00Z",
+    "quality_verdict": "degraded",
+    "layers_walked_summary": "partial — [gap:L3_VN_macro_incomplete] [gap:L4_partial_pillar_coverage] [gap:L5_kinhdich_unavailable] [gap:business_context_absent]"
+  },
+
+  "tnb_synthesis": {
+    "clock_phase": "transition",
+    "regime_state": "risk-off_carry_neutral",
+    "regime_confidence": "MEDIUM",
+    "us_macro_layer": "Fed liquidity stable; gold $4,110 +1.02% risk-off signal; EFFR-IORB baseline unchanged.",
+    "vn_macro_layer": "USD/VND 26,140 NEUTRAL carry (1.37pp); VND depreciation pressure vs 25,500 level; CPI and VIRA unavailable.",
+    "valuation_layer": "Sector rotation: securities (VIX) leading on volume 3.2x; real-estate (GEX) 3.3x volume; banking (BID) 3.0x volume. All tickers 2/4 pillars aligned; volume spikes indicate distribution risk without fundamental catalyst."
+  },
+
+  "conviction_calls": [
+    {
+      "ticker": "VIX",
+      "conviction_level": "MEDIUM",
+      "direction": "HOLD",
+      "pillars_aligned_count": 2,
+      "rationale_one_liner": "Volume spike (+6.97%, 3.2x) reflects sector rotation momentum but lacks earnings validation; risk-off headwind caps upside."
+    },
+    {
+      "ticker": "GEX",
+      "conviction_level": "MEDIUM",
+      "direction": "HOLD",
+      "pillars_aligned_count": 2,
+      "rationale_one_liner": "Real-estate volume spike (+6.76%, 3.3x avg) on technical momentum; earnings revision cycle limits conviction ceiling."
+    },
+    {
+      "ticker": "BID",
+      "conviction_level": "MEDIUM",
+      "direction": "HOLD",
+      "pillars_aligned_count": 2,
+      "rationale_one_liner": "Banking volume spike (+5.08%, 3.0x) amid FII carry unwind; carry regime neutral but US rate differential stable constrains moves."
+    }
+  ],
+
+  "sector_phases": [
+    {
+      "sector_vn": "chứng khoán",
+      "investment_phase": "transition",
+      "pyramid_tier": "defensive",
+      "direction_this_cycle": "mixed"
+    },
+    {
+      "sector_vn": "bất động sản",
+      "investment_phase": "transition",
+      "pyramid_tier": "equity",
+      "direction_this_cycle": "positive"
+    },
+    {
+      "sector_vn": "ngân hàng",
+      "investment_phase": "slowdown",
+      "pyramid_tier": "fixed_income",
+      "direction_this_cycle": "negative"
+    }
+  ],
+
+  "known_gaps": [
+    "[gap:L3_VN_macro_incomplete — CPI trend unavailable, VIRA FX-reserves unavailable]",
+    "[gap:L4_partial_pillar_coverage — all 3 tickers 2/4 pillars aligned]",
+    "[gap:L5_kinhdich_unavailable — portfolio_conviction service error]",
+    "[gap:business_context_absent — no bctc_signal or fundamental files for tickers this cycle]",
+    "[L6-gap: single-pillar thesis — VIX/GEX/BID all 2/4 pillars; insufficient data to confirm multi-factor thesis]",
+    "[L6-gap: volume-spike distribution risk — 3x average volume without earnings catalyst suggests late-session profit-taking, not accumulation]"
+  ],
+
+  "causal_chains": [
+    "Risk-off macro (gold +1.02%, safe-haven) → VN carry regime NEUTRAL (USD/VND 26,140) → sector rotation (securities/real-estate volume spikes) → banking sector pressure from FII carry unwind → mixed direction across VIX/GEX/BID volume distribution."
+  ],
+
+  "clusters_summary": {
+    "qualified": 0,
+    "tickers_covered": ["VIX", "GEX", "BID"],
+    "sectors_covered": ["securities", "real_estate", "banking"],
+    "qualification_reason": "EOD guaranteed-publish floor: 0 convergence clusters (volume spikes across 3 tickers/3 sectors — no sector >=3 signals, no ticker >=2 types); published with available data + degradation notes per floor rule."
+  }
+}

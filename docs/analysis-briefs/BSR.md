@@ -13,4 +13,6 @@ Oil sector supported by Brent crude (+1.63%); high liquidity on 20-session high
 
 2026-07-13 16:00 | Close: 25.850 VND | RSI: 47.2 | Vol: 2680000 (118.3% avg) | YoY: 12.4% | Status: Oil sector strength, bullish sentiment, high volume accumulation
 
+2026-07-30 16:00 | Close: 25.700 VND | RSI: 54.2 | Vol: N/A | YoY: +24.7% | Daily: +3.63% | Sentiment: Bullish | Brief action: Hold for strength | Regime: NEUTRAL | Earnings catalyst: Q2 2026 profit up 780%, earning 5.8T VND daily interest from 47T VND deposits; strong deposit-yield arbitrage strategy paying off; energy sector resilience
+
 ## [Unified Agent] Quarterly Syntheses

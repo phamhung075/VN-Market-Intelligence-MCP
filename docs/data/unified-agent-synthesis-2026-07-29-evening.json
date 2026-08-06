@@ -1,0 +1,90 @@
+{
+  "metadata": {
+    "cycle_id": "evening-2026-07-28T19:53:00Z",
+    "dish_type": "evening_preview",
+    "date_vn": "2026-07-29",
+    "timestamp_utc": "2026-07-28T19:53:00Z",
+    "quality_verdict": "degraded",
+    "layers_walked_summary": "partial — [gap:L3_VN_macro_incomplete] [gap:L4_partial_pillar_coverage] [gap:L6_gap_catalogue_not_enumerated]"
+  },
+
+  "tnb_synthesis": {
+    "clock_phase": "transition",
+    "regime_state": "risk-balanced_with_sector_rotation",
+    "regime_confidence": "MEDIUM",
+    "us_macro_layer": "Oil anomaly -2.44 sigma below mean 88.19; carry spread NEUTRAL 1.37pp (VND 5.00% vs Fed 3.63%); earnings yield premium 1.64pp over deposits supports equities. No sharp risk-off signal yet.",
+    "vn_macro_layer": "USD/VND at 26,145 above 25.5k threshold (carry pressure active). Market sentiment Z +0.106 neutral. Breadth deteriorating (ADL -645) despite index gain +11.61 — classic negative divergence. CPI/VIRA data unavailable.",
+    "valuation_layer": "Securities sector +4.46% momentum-driven rally (VCI +6.78%, VND +6.84%); conviction MEDIUM, 1-2 pillars aligned only. Real estate (VHM, VIC) relative strength STRONG (86-95 composite), momentum LEADER decile 10; conviction MEDIUM, 2 pillars. Phase TRANSITION with recovery undertone. All conviction capped MEDIUM due to negative breadth divergence and incomplete pillar alignment."
+  },
+
+  "conviction_calls": [
+    {
+      "ticker": "VCI",
+      "conviction_level": "MEDIUM",
+      "direction": "HOLD",
+      "pillars_aligned_count": 1,
+      "rationale_one_liner": "Sector momentum rally (convergence signal) but earnings support thin; breadth cap applied"
+    },
+    {
+      "ticker": "VND",
+      "conviction_level": "MEDIUM",
+      "direction": "HOLD",
+      "pillars_aligned_count": 2,
+      "rationale_one_liner": "Securities convergence +6.84% but pillar alignment mixed (M2/COC signals only); breadth divergence warning"
+    },
+    {
+      "ticker": "VHM",
+      "conviction_level": "MEDIUM",
+      "direction": "HOLD",
+      "pillars_aligned_count": 2,
+      "rationale_one_liner": "Relative strength STRONG (86.1%), momentum LEADER, but earnings/macro context incomplete; transition phase"
+    },
+    {
+      "ticker": "VIC",
+      "conviction_level": "MEDIUM",
+      "direction": "HOLD",
+      "pillars_aligned_count": 2,
+      "rationale_one_liner": "Relative strength composite STRONG (95.4%), dividend news supportive, but valuation gap; momentum breakout confirmation"
+    }
+  ],
+
+  "sector_phases": [
+    {
+      "sector_vn": "Chung khoan (Securities)",
+      "investment_phase": "transition",
+      "pyramid_tier": "equity",
+      "direction_this_cycle": "positive"
+    },
+    {
+      "sector_vn": "Bat dong san (Real Estate)",
+      "investment_phase": "transition",
+      "pyramid_tier": "equity",
+      "direction_this_cycle": "positive"
+    },
+    {
+      "sector_vn": "Ngan hang (Banking)",
+      "investment_phase": "slowdown",
+      "pyramid_tier": "fixed_income",
+      "direction_this_cycle": "flat"
+    }
+  ],
+
+  "known_gaps": [
+    "[gap:L3_VN_macro_incomplete — CPI trend unavailable, VIRA/FX reserves unavailable]",
+    "[gap:L4_partial_pillar_coverage — VCI 1/4, VND 2/4, VHM 2/4, VIC 2/4 pillars; M2/earnings/valuation data incomplete]",
+    "[gap:L6_gap_catalogue_not_enumerated — breadth divergence risk, carry regime watch, sector earnings support thin]",
+    "[gap:US_PMI_EFFR_details_unavailable]",
+    "[L6-gap: single-pillar thesis — VCI scored 1/4 pillars, requires third+fourth pillar confirmation]",
+    "[L6-gap: breadth divergence — ADL -645 declining despite +11.61 index gain; technical reversal risk flagged]"
+  ],
+
+  "causal_chains": [
+    "Oil price anomaly (-2.44 sigma) + carry NEUTRAL regime → no sharp risk-off trigger → sector rotation (securities +4.46%, real estate +1.8%) on domestic flows + news (PDR CEO buyback, Vincom restructure, VIC dividend) → banking sector flat (carry trade shadow) → market phase remains TRANSITION; breadth divergence (ADL -645) signals caution despite momentum leaders rallying."
+  ],
+
+  "clusters_summary": {
+    "qualified": 4,
+    "tickers_covered": ["VCI", "VND", "HCM", "SSI", "VIX", "VHM", "VIC", "PDR"],
+    "sectors_covered": ["securities", "real_estate", "banking"]
+  }
+}

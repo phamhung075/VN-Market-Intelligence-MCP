@@ -13,3 +13,5 @@
 2026-06-04 16:00 | Close: 31.100 VND | RSI: N/A | Vol: 3.98M | YoY: -10.25% (30d) | Anomaly: +3.49% recovery bounce, sector stabilizing
 
 2026-07-13 16:00 | Close: 25.450 VND | RSI: 29.2 | Vol: 8900000 (101.2% avg) | YoY: -22.1% | Status: Oversold (BB-20.1%), high volume selloff, sector headwinds persist, reduce exposure
+
+2026-07-29 16:00 | Close: 22.750 VND | RSI: N/A | Vol: 8.31M (220% avg) | YoY: N/A | Daily: +6.81% | Sentiment: Bullish | Brief action: Hold | Regime: NEUTRAL

@@ -1,0 +1,105 @@
+{
+  "metadata": {
+    "cycle_id": "eod-2026-07-30T08:59:35Z",
+    "dish_type": "eod",
+    "date_vn": "2026-07-30",
+    "timestamp_utc": "2026-07-30T08:59:35Z",
+    "quality_verdict": "full",
+    "layers_walked_summary": "1-6 (full)"
+  },
+  "tnb_synthesis": {
+    "clock_phase": "transition",
+    "regime_state": "risk-off-with-sentiment-divergence",
+    "regime_confidence": "MEDIUM",
+    "us_macro_layer": "Fed funds 3.63% NEUTRAL carry posture; EFFR-IORB spread stable; gold $4126.30 signals safe-haven demand above $2200 threshold.",
+    "vn_macro_layer": "USD/VND 26110 exceeds 25500 resistance — VND depreciation pressure on importers; carry spread 1.37pp NEUTRAL; market sentiment z-score +2.40σ contradicts risk-off macro (sentiment-macro divergence flagged).",
+    "valuation_layer": "Banking sector: net-positive on interest-rate environment (higher deposit rates benefit retail deposits), but carry unwind risk via FII flow. Real estate: volume distribution pressure signals profit-taking, valuation stability at concern. Securities: strong conviction on BUY signals from TA strength (Tỉnh Kinh Dịch 56-100% confidence across VIX/BID/VCB)."
+  },
+  "conviction_calls": [
+    {
+      "ticker": "BID",
+      "conviction_level": "MEDIUM",
+      "direction": "HOLD",
+      "pillars_aligned_count": 2,
+      "rationale_one_liner": "Price +5.08% + 7 alerts + Kinh Dịch Tỉnh BUY; banking sector positive on rates, but FII pressure via carry unwind limits upside (2/4 pillars: COC, valuation only; missing earnings, M2 depth)."
+    },
+    {
+      "ticker": "GEX",
+      "conviction_level": "MEDIUM",
+      "direction": "HOLD",
+      "pillars_aligned_count": 2,
+      "rationale_one_liner": "Price +6.76% surge conflicts with Kinh Dịch Kiển (negative 48% confidence); utilities sector faces rate pressure, tech risk on margin — 2/4 pillars; volume distribution risk flagged."
+    },
+    {
+      "ticker": "VIX",
+      "conviction_level": "MEDIUM",
+      "direction": "HOLD",
+      "pillars_aligned_count": 2,
+      "rationale_one_liner": "Securities: +6.97% price + strong conviction 0.62, Kinh Dịch Tỉnh MUA; but sector valuation premium vs earnings growth uncertain; 2/4 pillars (COC, sentiment); profit-taking risk given 3.2x volume spike."
+    },
+    {
+      "ticker": "VHM",
+      "conviction_level": "MEDIUM",
+      "direction": "HOLD",
+      "pillars_aligned_count": 1,
+      "rationale_one_liner": "Real estate: +5.64% price + Kinh Dịch Mông (uncertain 43% confidence); sector under distribution pressure (2.87% sector gain but individual volume spike 2x+ avg); missing business fundamentals (BCTC unavailable) and earnings validation — 1/4 pillars only."
+    },
+    {
+      "ticker": "VCB",
+      "conviction_level": "MEDIUM",
+      "direction": "HOLD",
+      "pillars_aligned_count": 2,
+      "rationale_one_liner": "Banking flagship: +3.48% + 2 alerts; Kinh Dịch Kiển BAN (negative 48% confidence); carry regime NEUTRAL, but rising USD/VND pressure offsets deposit rate benefits; 2/4 pillars (COC, M2 flat); macro divergence between rates and sentiment flagged."
+    }
+  ],
+  "sector_phases": [
+    {
+      "sector_vn": "ngân hàng",
+      "investment_phase": "transition",
+      "pyramid_tier": "fixed_income",
+      "direction_this_cycle": "mixed"
+    },
+    {
+      "sector_vn": "bất động sản",
+      "investment_phase": "slowdown",
+      "pyramid_tier": "defensive",
+      "direction_this_cycle": "negative"
+    },
+    {
+      "sector_vn": "chứng khoán",
+      "investment_phase": "transition",
+      "pyramid_tier": "equity",
+      "direction_this_cycle": "positive"
+    }
+  ],
+  "known_gaps": [
+    "[L6-gap: single-pillar thesis BID 2/4 pillars — missing earnings depth and M2 trends]",
+    "[L6-gap: single-pillar thesis GEX 2/4 pillars — utilities rate sensitivity incomplete without forward guidance]",
+    "[L6-gap: single-pillar thesis VIX 2/4 pillars — sector profitability thesis requires EPS validation]",
+    "[L6-gap: single-pillar thesis VHM 1/4 pillars — real estate critical: missing product/customer/ops from BCTC signals (bctc-analyst serve-layer-blocked per tracker)]",
+    "[L6-gap: business-context-absent — VHM, VCB, GEX all lack BCTC/fundamental signal data this cycle]",
+    "[gap:L3_VN_macro_incomplete — CPI/VIRA trending data unavailable; USD/VND level cited, carry regime available]",
+    "[gap:sentiment-macro divergence — news_sentiment_z +2.40σ contradicts gold risk-off at $4126.30 and USD/VND depreciation pressure; flag as L6 regime-drift risk]"
+  ],
+  "causal_chains": [
+    "Gold $4126.30 risk-off + USD/VND 26110 carry pressure → banking sector carry unwind momentum → BID/VCB supply pressure at higher prices; sentiment +2.40σ diverges from macro fundamentals.",
+    "Real estate distribution (VHM +5.64% volume 2x avg) + slowdown phase (COC rising, M2 flat) → profit-taking cycle, not accumulation; valuation risk flagged via 1/4 pillar alignment.",
+    "Securities TA strength (VIX Kinh Dịch Tỉnh MUA, +6.97% price) contrasts with Kinh Dịch macro Minh Di (36) darkness — flagged as sentiment euphoria in macro headwinds; 3.2x volume spike suggests distribution, not accumulation."
+  ],
+  "clusters_summary": {
+    "qualified": 3,
+    "tickers_covered": [
+      "BID",
+      "GEX",
+      "VIX",
+      "VHM",
+      "VCB"
+    ],
+    "sectors_covered": [
+      "ngân hàng",
+      "bất động sản",
+      "chứng khoán",
+      "điện"
+    ]
+  }
+}

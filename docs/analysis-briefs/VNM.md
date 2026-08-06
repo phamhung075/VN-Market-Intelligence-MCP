@@ -69,3 +69,5 @@ Sentiment: +0.3 (stable positive) | Insider: no activity
 Summary: Day closed strong on sector momentum. Fair value target approaching.
 
 2026-07-23 16:00 | Close: 57,800 VND (-2.20%) | RSI: N/A | Vol: 4.83M | Sector: Neutral headwinds; defensive staple positioning continues
+
+2026-08-05 16:00 | Close: 58.600 VND | RSI: 50.5 | Vol: 5288700 (117.6% avg) | YoY: -2.5%

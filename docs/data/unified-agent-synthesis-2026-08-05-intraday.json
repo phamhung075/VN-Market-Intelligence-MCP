@@ -1,0 +1,79 @@
+{
+  "metadata": {
+    "cycle_id": "intraday-2026-08-05T07:23:00Z",
+    "dish_type": "intraday",
+    "date_vn": "2026-08-05",
+    "timestamp_utc": "2026-08-05T07:23:15Z",
+    "quality_verdict": "degraded",
+    "layers_walked_summary": "partial — [gap:L2_macro_health_partial] [gap:L3_VN_macro_incomplete_cpi_vira] [gap:L4_partial_pillar_coverage] [gap:business_context_unavailable] [gap:foreign_room_utilization_null]"
+  },
+  "tnb_synthesis": {
+    "clock_phase": "transition",
+    "regime_state": "risk-off_gold_driven",
+    "regime_confidence": "MEDIUM",
+    "us_macro_layer": "Macro data partial — carry spread neutral (1.37pp), but Fed rate environment and PMI data unavailable this cycle",
+    "vn_macro_layer": "USD/VND at 26,080 (exceeds 25,000 threshold, bearish). CPI trend and FX reserves via VIRA data unavailable. Gold at extreme (+3.25-sigma) drives safe-haven demand away from domestic carry trades.",
+    "valuation_layer": "Real estate sector conviction MEDIUM (0.55-0.58 range) on news catalyst + technical breakouts. Steel sector (HPG) LOW conviction (0.42) with China-exposure news. Four pillars partially aligned for real estate names; macro and business context data gaps cap conviction at MEDIUM."
+  },
+  "conviction_calls": [
+    {
+      "ticker": "VIC",
+      "conviction_level": "MEDIUM",
+      "direction": "BUY",
+      "pillars_aligned_count": 2,
+      "rationale_one_liner": "News catalyst (China tower project) + Kinh Dich Khiem BUY signal + sector momentum +0.51%, offset by macro carry uncertainty"
+    },
+    {
+      "ticker": "VHM",
+      "conviction_level": "MEDIUM",
+      "direction": "BUY",
+      "pillars_aligned_count": 2,
+      "rationale_one_liner": "TA breakout (bb_up) + Kinh Dich Tinh BUY signal + sector momentum, mixed price action, macro carry reversal anticipated"
+    },
+    {
+      "ticker": "NVL",
+      "conviction_level": "MEDIUM",
+      "direction": "BUY",
+      "pillars_aligned_count": 2,
+      "rationale_one_liner": "Strong intraday move +3.36% + TA breakout + Kinh Dich Tinh BUY, but sector-wide move on external macro (gold) not fundamentals"
+    },
+    {
+      "ticker": "HPG",
+      "conviction_level": "LOW",
+      "direction": "HOLD",
+      "pillars_aligned_count": 1,
+      "rationale_one_liner": "China-related news exposure (+5% China revenue) + geopolitical angle, but mixed TA signals and weak momentum (decile 5). Await clarity on tower project impact."
+    }
+  ],
+  "sector_phases": [
+    {
+      "sector_vn": "bat dong san (real estate)",
+      "investment_phase": "transition",
+      "pyramid_tier": "fixed_income",
+      "direction_this_cycle": "positive"
+    },
+    {
+      "sector_vn": "thep (steel)",
+      "investment_phase": "transition",
+      "pyramid_tier": "cash",
+      "direction_this_cycle": "mixed"
+    }
+  ],
+  "known_gaps": [
+    "[gap:L2_macro_health_partial — no PMI or EFFR-IORB data this cycle; carry spread only]",
+    "[gap:L3_VN_macro_incomplete — CPI trend and FX reserves/VIRA data unavailable]",
+    "[gap:L4_partial_pillar_coverage — money supply, capital cost pillars weak for medium conviction; require business context from BCTC signals]",
+    "[gap:business_context_unavailable — no bctc_signal or fundamental gatherer data in cycle, 14/16 watchlist tickers blocked upstream per BCTC-EXTRACT-QUALITY]",
+    "[gap:foreign_room_utilization_null — watchlist foreign room data unavailable; cannot assess carry unwind velocity risk]",
+    "[gap:insider_sentiment_null — insufficient market transactions for insider sentiment baseline]"
+  ],
+  "causal_chains": [
+    "Gold extreme risk-off signal (+3.25-sigma to $4,229.8) → VND carry reversal anticipated (NEUTRAL regime challenged) → Real estate bid from domestic reallocation (safe-haven) → News catalyst (China tower project) amplifies VIC/VHM bid and extends sector momentum.",
+    "[gap: no US macro signal in cycle] → [gap: VN macro incomplete — no CPI/VIRA] → Real estate sector leadership → [gap: no business context data to validate earnings thesis] — conviction capped at MEDIUM."
+  ],
+  "clusters_summary": {
+    "qualified": 2,
+    "tickers_covered": ["VIC", "VHM", "NVL", "HPG"],
+    "sectors_covered": ["real_estate", "steel"]
+  }
+}

@@ -1,0 +1,74 @@
+{
+  "metadata": {
+    "cycle_id": "intraday-2026-07-31T02:23:15Z",
+    "dish_type": "intraday",
+    "date_vn": "2026-07-31",
+    "timestamp_utc": "2026-07-31T02:23:15Z",
+    "quality_verdict": "degraded",
+    "layers_walked_summary": "1-4 partial — [gap:L3_VIRA_FX_reserves_unavailable] [gap:L5_kinhdich_unavailable]"
+  },
+
+  "tnb_synthesis": {
+    "clock_phase": "expansion",
+    "regime_state": "risk-on with carry-neutral",
+    "regime_confidence": "MEDIUM",
+    "us_macro_layer": "Fed rate 3.63%, carry spread 1.37pp NEUTRAL. Oil $88 within neutral band. Gold $4143.5 bullish (safe-haven demand). Market sentiment z=2.64 (strongly bullish).",
+    "vn_macro_layer": "USD/VND 26090 creating VND depreciation pressure (BEARISH). Equity earnings yield 6.64% > deposit 5% (FAIRLY_VALUED). Volatility ELEVATED at 79th percentile.",
+    "valuation_layer": "Real estate tickers (VHM, VIC) showing recovery-driven earnings growth. Momentum leaders (decile 10 z-scores 2.4-3.7). Valuation fairly valued relative to savings rates. Cost of capital moderate (SBV 5%). Money supply regime NEUTRAL at 1.37pp carry spread."
+  },
+
+  "conviction_calls": [
+    {
+      "ticker": "VHM",
+      "conviction_level": "MEDIUM",
+      "direction": "BUY",
+      "pillars_aligned_count": 3,
+      "rationale_one_liner": "Real estate recovery on earnings beat +6.96% surge, decile 10 momentum, fairly valued equity yield."
+    },
+    {
+      "ticker": "VIC",
+      "conviction_level": "MEDIUM",
+      "direction": "BUY",
+      "pillars_aligned_count": 3,
+      "rationale_one_liner": "Vingroup profit 20.375B (+4.5x YoY), momentum leader z=3.71, fairly valued relative to deposit rates."
+    },
+    {
+      "ticker": "VJC",
+      "conviction_level": "LOW",
+      "direction": "HOLD",
+      "pillars_aligned_count": 2,
+      "rationale_one_liner": "Aviation recovery narrative strong but macro/valuation pillars incomplete; requires more data before conviction."
+    }
+  ],
+
+  "sector_phases": [
+    {
+      "sector_vn": "real_estate",
+      "investment_phase": "expansion",
+      "pyramid_tier": "equity",
+      "direction_this_cycle": "positive"
+    },
+    {
+      "sector_vn": "aviation",
+      "investment_phase": "recovery",
+      "pyramid_tier": "equity",
+      "direction_this_cycle": "mixed"
+    }
+  ],
+
+  "known_gaps": [
+    "[gap:L3_VIRA_FX_reserves_unavailable]",
+    "[gap:L5_kinhdich_unavailable: get_portfolio_conviction not yet called for tickers]",
+    "[L6-gap: single-pillar VJC — 2/4 pillars aligned; insufficient macro/valuation data]"
+  ],
+
+  "causal_chains": [
+    "Gold $4143.5 (safe-haven bullish) → VND depreciation at 26090 → Real estate recovery on local-currency tailwind → VHM/VIC price surge +6.96% on momentum confirmation (decile 10 z-scores)."
+  ],
+
+  "clusters_summary": {
+    "qualified": 3,
+    "tickers_covered": ["VHM", "VIC", "VRE", "PDR", "TCH", "NVL", "VJC", "HVN"],
+    "sectors_covered": ["real_estate", "aviation"]
+  }
+}

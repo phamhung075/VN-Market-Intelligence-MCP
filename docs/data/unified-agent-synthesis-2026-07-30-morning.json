@@ -1,0 +1,71 @@
+{
+  "metadata": {
+    "cycle_id": "morning-2026-07-30T05:24:25Z",
+    "dish_type": "morning",
+    "date_vn": "2026-07-30",
+    "timestamp_utc": "2026-07-30T05:24:25Z",
+    "quality_verdict": "degraded",
+    "layers_walked_summary": "partial — [gap:L2_US_macro_via_carry_proxy] [gap:L3_VN_macro_VIRA_missing] [gap:L4_partial_pillar_coverage] [gap:business_context_absent] [gap:L5_kinhdich_unavailable]"
+  },
+  "tnb_synthesis": {
+    "clock_phase": "recovery",
+    "regime_state": "mixed-divergence",
+    "regime_confidence": "MEDIUM",
+    "us_macro_layer": "FED hold supports neutral carry 1.37pp. Gold +1.02% ($4,110.60) signals risk-off. Macro uncertainty on rate path.",
+    "vn_macro_layer": "USD/VND 26,140 (above resistance). SBV 5% neutral carry. Equity earnings yield 6.64% > deposit rate FAIRLY_VALUED. [gap:VIRA unavailable]",
+    "valuation_layer": "Banking 2/4 pillars (cost+earnings +25.6% growth). Real estate 1/4 pillars (strong TA but no business context). Conviction MEDIUM capped by data gaps."
+  },
+  "conviction_calls": [
+    {
+      "ticker": "VCB",
+      "conviction_level": "MEDIUM",
+      "direction": "BUY",
+      "pillars_aligned_count": 2,
+      "rationale_one_liner": "Oversold bounce (RSI 23.6) + news catalyst + +2.38% + deposit-equity spread favorable"
+    },
+    {
+      "ticker": "MBB",
+      "conviction_level": "MEDIUM",
+      "direction": "BUY",
+      "pillars_aligned_count": 2,
+      "rationale_one_liner": "RSI oversold 29.8 + earnings +25.6% sector growth + +2.26% gain"
+    },
+    {
+      "ticker": "VHM",
+      "conviction_level": "MEDIUM",
+      "direction": "HOLD",
+      "pillars_aligned_count": 1,
+      "rationale_one_liner": "Strong surge +5.0% signals accumulation but business context missing"
+    }
+  ],
+  "sector_phases": [
+    {
+      "sector_vn": "ngân hàng",
+      "investment_phase": "recovery",
+      "pyramid_tier": "equity",
+      "direction_this_cycle": "positive"
+    },
+    {
+      "sector_vn": "bất động sản",
+      "investment_phase": "transition",
+      "pyramid_tier": "equity",
+      "direction_this_cycle": "positive"
+    }
+  ],
+  "known_gaps": [
+    "[gap:L2_US_macro_via_carry_proxy_only]",
+    "[gap:L3_VN_macro_VIRA_missing]",
+    "[gap:L4_partial_pillar_coverage_2-4_per_sector]",
+    "[gap:business_context_absent_RE_sector]",
+    "[gap:L5_kinhdich_unavailable_database_error]",
+    "[L6-gap: gold >$4,110 regime-drift risk]"
+  ],
+  "causal_chains": [
+    "FED hold → carry 1.37pp NEUTRAL → oversold bounce RSI<30 → banking accumulation (BID +3.1%, MBB +2.26%, VCB +2.38%)"
+  ],
+  "clusters_summary": {
+    "qualified": 3,
+    "tickers_covered": ["VCB", "MBB", "BID", "VHM", "VRE", "KDH"],
+    "sectors_covered": ["banking", "real_estate"]
+  }
+}

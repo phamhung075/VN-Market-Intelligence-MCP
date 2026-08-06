@@ -1,0 +1,94 @@
+{
+  "metadata": {
+    "cycle_id": "eod-2026-07-29T08:54:00Z",
+    "dish_type": "eod",
+    "date_vn": "2026-07-29",
+    "timestamp_utc": "2026-07-29T08:54:00Z",
+    "quality_verdict": "degraded",
+    "layers_walked_summary": "partial — [gap:L3_CPI_unavailable] [gap:L3_VIRA_unavailable] [gap:business_context_unavailable] [gap:L5_market_hexagram_unavailable]"
+  },
+
+  "tnb_synthesis": {
+    "clock_phase": "transition",
+    "regime_state": "mixed-carry-neutral-with-fxi-pressure",
+    "regime_confidence": "MEDIUM",
+    "us_macro_layer": "Federal funds rate 3.63% signals tightening plateau. Carry spread 1.37pp (VND deposit 5% vs USD 3.63%) remains neutral—neither attracting nor repelling foreign capital. Oil $87.13 (neutral band). Gold $4,094.90 up 1.97% reflects modest safe-haven demand.",
+    "vn_macro_layer": "USD/VND 26.150 VND/USD above 25,500 threshold creates VND depreciation pressure on import-linked sectors. Earnings yield 6.64% vs SBV deposit 5% offers modest equity premium (fairly valued). CPI trend unavailable [gap]. FX reserves (VIRA) unavailable [gap]. Carry regime neutral prevents extreme FII unwinding.",
+    "valuation_layer": "Real estate sector +1.76%: VHM 3/4 pillars aligned (credit expansion, recovery thesis, attractive valuation), VRE 3/4 pillars, VIC momentum decile 10 but Kinh Dịch cautions. Securities sector rally: VCI 0/4 pillars (price spike only, no business context). Market breadth deteriorating (ADL -621) contradicts price strength in mega-caps—concentration risk high."
+  },
+
+  "conviction_calls": [
+    {
+      "ticker": "VHM",
+      "conviction_level": "MEDIUM",
+      "direction": "BUY",
+      "pillars_aligned_count": 3,
+      "rationale_one_liner": "Post-correction recovery thesis (credit expansion supporting RE) + momentum decile 10 (ROC 0.632) + Kinh Dịch Tỉnh (48) BUY signal, but carry pressure from USD/VND above threshold and breadth divergence temper conviction"
+    },
+    {
+      "ticker": "VRE",
+      "conviction_level": "MEDIUM",
+      "direction": "BUY",
+      "pillars_aligned_count": 3,
+      "rationale_one_liner": "RE recovery accumulation (volume 2.2x avg) + Kinh Dịch Tỉnh (48), but momentum neutral (decile 8) and same macro headwinds as VHM"
+    },
+    {
+      "ticker": "VIC",
+      "conviction_level": "MEDIUM",
+      "direction": "NEUTRAL",
+      "pillars_aligned_count": 2,
+      "rationale_one_liner": "Momentum leader (decile 10, ROC 0.919) but Kinh Dịch Kiển (39) signals negative bias and reversal risk near sector highs"
+    },
+    {
+      "ticker": "VCI",
+      "conviction_level": "LOW",
+      "direction": "HOLD",
+      "pillars_aligned_count": 0,
+      "rationale_one_liner": "Price bounce (+5.58%) technical only; zero pillar support; momentum laggard (decile 2). Breadth weakness contradicts sector enthusiasm."
+    }
+  ],
+
+  "sector_phases": [
+    {
+      "sector_vn": "bất động sản (real estate)",
+      "investment_phase": "recovery",
+      "pyramid_tier": "equity",
+      "direction_this_cycle": "positive",
+      "rationale": "Post-correction accumulation driven by credit expansion + affordable valuations. VN-Index +1.76% supports sector, but USD/VND pressure and narrow breadth limit upside."
+    },
+    {
+      "sector_vn": "chứng khoán (securities)",
+      "investment_phase": "transition",
+      "pyramid_tier": "fixed_income",
+      "direction_this_cycle": "mixed",
+      "rationale": "Technical bounce from oversold (VCI RSI 33) but momentum deteriorating (VCI decile 2). Sector lacks business fundamentals support. Breadth collapse warns against chasing."
+    }
+  ],
+
+  "known_gaps": [
+    "[gap:L3_CPI_unavailable: inflation trend data not available]",
+    "[gap:L3_VIRA_unavailable: FX reserves via VIRA scraper down—prevents VN macro layer 3-element check]",
+    "[gap:business_context_unavailable: no bctc_signal_* or fundamental_* files in signal stream this cycle]",
+    "[gap:L5_market_hexagram_unavailable: 501 service error—market-wide Kinh Dịch overlay not available; per-ticker hexagrams sourced from get_portfolio_conviction instead]",
+    "[L6-gap: breadth divergence—ADL -621, RANA 6.69% (6 up / 69 down) contradicts VN-Index +1.76% and mega-cap rally concentration in VHM/VRE/VIC. Narrow breadth signals exhaustion risk.]",
+    "[L6-gap: single-pillar thesis—VCI 0/4 pillars aligned; conviction capped LOW per tnb-methodology-valuation.md §Layer 6]"
+  ],
+
+  "causal_chains": [
+    "Fed tightening plateau (3.63%, carry 1.37pp neutral) → mixed FII flow signal + VND depreciation pressure from USD/VND 26.150 → real estate sector recovery (+1.76%) driven by post-correction accumulation and credit expansion → VHM +6.14%, VRE +6.81% on volume surge (2.5x, 2.2x avg) despite narrow market breadth."
+  ],
+
+  "clusters_summary": {
+    "qualified": 2,
+    "tickers_covered": [
+      "VHM",
+      "VRE",
+      "VIC",
+      "VCI"
+    ],
+    "sectors_covered": [
+      "bất động sản (real estate)",
+      "chứng khoán (securities)"
+    ]
+  }
+}

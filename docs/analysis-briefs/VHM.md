@@ -52,3 +52,6 @@ Brief action: Watch — Extreme oversold conditions, test support at MA20=146,22
 
 2026-07-23 16:00 | Close: 132,000 VND (+4.02%) | Vol: 4.57M | Daily: +4.02%
 Real estate recovery bounce — FII re-entry evident. VHM leading sector rebound. Watch key resistancelevels post-oversold bounce.
+
+2026-07-29 16:00 | Close: 140,000 VND | RSI: N/A | Vol: 6.57M (246% avg) | YoY: N/A | Daily: +6.14% | Sentiment: Bullish | Brief action: Hold | Regime: NEUTRAL
+2026-07-30 16:00 | Close: 147.900 VND | RSI: 56.0 | Vol: N/A | YoY: +28.5% | Daily: +5.64% | Sentiment: Bullish | Brief action: Buy on dip | Regime: NEUTRAL | Earnings catalyst: Q2 2026 results announced, MACD momentum positive, real estate sector rotation underway

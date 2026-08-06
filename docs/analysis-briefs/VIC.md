@@ -44,3 +44,5 @@ Brief action: Buy on dip — Vingroup sector leadership, FII accumulation on rea
 2026-07-22 16:10 | Close: 202.100 VND | RSI: 35.3 (Oversold) | Vol: 5,736,200 (203% avg) | YoY: +71.89% | Daily: -6.99%
 Sector sell-off — Real estate broad decline (8 stocks avg -4.55%). Oversold signals warrant Watch. Bollinger Band: -41.2% below upper band indicates extreme weakness.
 Brief action: Watch — Extreme oversold conditions, potential bounce target MA20=219,655
+
+2026-07-29 16:00 | Close: 219.400 VND | Daily: +2.62% | RSI: N/A | Volume: 4.95M (169% avg) | YoY: N/A | Sentiment: Bullish | Brief action: Hold | Regime: NEUTRAL

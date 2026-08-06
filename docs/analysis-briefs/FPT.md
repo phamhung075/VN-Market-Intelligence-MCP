@@ -57,3 +57,8 @@ Close: 70.900 VND | Daily: +0.42% | RSI: 42.7 | Volume: 3240000 (78.5% avg) | Yo
 **[Market Watcher] 16:08 UTC**
 Close: 68.000 VND | Change: +1.80% daily | RSI: N/A | Volume: Standard | YoY: N/A | Regime: NEUTRAL
 Brief action: Hold — Tech sector positive despite Q2 revenue headwinds; AI narrative recovery supporting sector
+
+## EOD 2026-07-29
+
+**[Market Watcher] 16:00 UTC**
+Close: 65.100 VND | Daily: +3.33% | RSI: N/A | Volume: 6.11M (184% avg) | YoY: N/A | Sentiment: Bullish | Brief action: Hold | Regime: NEUTRAL

@@ -1,0 +1,87 @@
+{
+  "metadata": {
+    "cycle_id": "chef-evening-20260729T1945Z",
+    "dish_type": "evening_preview",
+    "date_vn": "2026-07-29",
+    "timestamp_utc": "2026-07-29T19:57:30Z",
+    "quality_verdict": "full",
+    "layers_walked_summary": "1-6 (full) [gap:L5_kinhdich_market_unavailable]"
+  },
+  "tnb_synthesis": {
+    "clock_phase": "transition",
+    "regime_state": "risk-on equities vs risk-off macro (gold +3.55%)",
+    "regime_confidence": "MEDIUM",
+    "us_macro_layer": "Carry spread 1.37pp NEUTRAL (VND deposit 5.0% vs Fed funds 3.63%); Oil $90.1 NEUTRAL ($60-$100 band); Gold $4,158.60 +3.55% signals safe-haven regime entry, contradicting equity accumulation",
+    "vn_macro_layer": "USD/VND at 26,135 (breached 25,500 carry threshold); VND depreciation pressure mounting; FX reserves and CPI data unavailable this cycle",
+    "valuation_layer": "Real estate sector recovery: VHM/VRE accumulation on Q2 earnings (prior cycle) + volume 2.5x-2.2x average; 3/4 pillars aligned each (M2 neutral, CoC medium, EPS bullish, valuation fair). Securities technical break VCI +5.58% but Kinh Dịch Kiển (39) signals caution; insufficient business context (0-2 pillars). Transition phase: M2 flat, CoC rising on FX pressure, EPS mixed across sectors, policy carry neutral"
+  },
+  "conviction_calls": [
+    {
+      "ticker": "VHM",
+      "conviction_level": "MEDIUM",
+      "direction": "HOLD",
+      "pillars_aligned_count": 3,
+      "rationale_one_liner": "Real estate recovery on Q2 earnings + accumulation volume (2.5x average) offsets FX carry pressure; Kinh Dịch Tỉnh (48) mildly bullish (43% confidence)"
+    },
+    {
+      "ticker": "VRE",
+      "conviction_level": "MEDIUM",
+      "direction": "HOLD",
+      "pillars_aligned_count": 3,
+      "rationale_one_liner": "Sister accumulation to VHM; same pillar alignment + Tỉnh confirmation; carry pressure offset by domestic SOE inflow"
+    },
+    {
+      "ticker": "VCI",
+      "conviction_level": "LOW",
+      "direction": "SELL",
+      "pillars_aligned_count": 0,
+      "rationale_one_liner": "Technical break +5.58% contradicted by Kinh Dịch Kiển (39) reversal caution; insufficient business context; realization risk"
+    }
+  ],
+  "sector_phases": [
+    {
+      "sector_vn": "bất động sản",
+      "investment_phase": "transition",
+      "pyramid_tier": "equity",
+      "direction_this_cycle": "positive"
+    },
+    {
+      "sector_vn": "chứng khoán",
+      "investment_phase": "transition",
+      "pyramid_tier": "fixed_income",
+      "direction_this_cycle": "mixed"
+    },
+    {
+      "sector_vn": "thép",
+      "investment_phase": "transition",
+      "pyramid_tier": "equity",
+      "direction_this_cycle": "positive"
+    }
+  ],
+  "known_gaps": [
+    "[gap:L5_kinhdich_market_unavailable — get_market_hexagram 501 or service absent; ticker-level conviction dashboard populated but market-wide hexagram unavailable]",
+    "[gap:L3_CPI_unavailable]",
+    "[gap:L3_VIRA_unavailable]",
+    "[gap:business_context_unavailable — no bctc_signal_* or fundamental_* data read in Step 0 GATHER this cycle]",
+    "[L6-gap: gold trending toward $4,300 safe-haven regime; monitor for reversal risk if gold breaks $4,200 support]",
+    "[L6-gap: single-pillar thesis VCI 0-2/4 pillars aligned; insufficient data to confirm technical bounce; per tnb-methodology Layer 6, cannot recommend action]",
+    "[L6-gap: breadth divergence — VN-Index +1.76% on narrow mega-cap concentration (10 stocks) while ADL -621 (6 up vs 69 down); distribution risk for sustained rally]",
+    "[gap:geopolitical_event_absent — no open_chain_catalyst signals with war/geopolitical markers in Step 0 bootstrap or open alerts this cycle]"
+  ],
+  "causal_chains": [
+    "Fed liquidity neutral (carry 1.37pp, no tightening urgency) + Gold safe-haven regime entry ($4,158.60 +3.55%) → VND depreciation pressure mounts (USD/VND 26,135 above threshold) → Real estate foreign accumulation (VHM +6.14%, volume 2.5x) offsets FII carry unwind via domestic SOE inflow → Securities technical bounce (VCI +5.58%) contradicted by Kinh Dịch caution (Kiển 39) signals profit-taking in higher-beta, realization risk"
+  ],
+  "clusters_summary": {
+    "qualified": 3,
+    "tickers_covered": [
+      "VHM",
+      "VRE",
+      "VCI"
+    ],
+    "sectors_covered": [
+      "real_estate",
+      "securities",
+      "steel"
+    ]
+  }
+}

@@ -1,0 +1,61 @@
+{
+  "metadata": {
+    "cycle_id": "evening-2026-08-06T19:52:09Z",
+    "dish_type": "evening",
+    "date_vn": "2026-08-06",
+    "timestamp_utc": "2026-08-06T19:52:09Z",
+    "quality_verdict": "degraded",
+    "layers_walked_summary": "partial — [gap:US_macro_specific_signals_absent] [gap:CPI_trend_unavailable] [gap:VIRA_FX_reserves_unavailable] [gap:business_context_unavailable] [gap:L5_kinhdich_unavailable]"
+  },
+  "tnb_synthesis": {
+    "clock_phase": "CORE_VN",
+    "regime_state": "mixed_signals",
+    "regime_confidence": "MEDIUM",
+    "regime_note": "Gold >$4,300 signals risk-off; USD/VND depreciation pressure; equity yield (8.2%) remains attractive vs deposits (5%)",
+    "us_macro_layer": "Gold bullish signal ($4,306.90); oil neutral ($82.65/bbl). Specific US macro (PMI, EFFR-IORB) unavailable this cycle.",
+    "vn_macro_layer": "USD/VND at 26,040 (above 25k threshold) = VND depreciation pressure. Equity earnings yield 8.2% vs SBV 5% = attractive valuation. Carry spread neutral (1.37pp). CPI trend and FX reserves data unavailable.",
+    "valuation_layer": "No new signal data to assess individual stock valuations. General market valuation: CHEAP (8.2% equity yield vs 5% deposits). Investment clock: CORE_VN (8/10)."
+  },
+  "conviction_calls": [],
+  "clusters_qualified": 0,
+  "signals_consumed": 0,
+  "market_indicators": {
+    "volatility_regime": "ELEVATED",
+    "vol_20d_pct": 19.54,
+    "breadth_adl": -299,
+    "breadth_quality": "WARMUP",
+    "sentiment_ema_5d": 1.27,
+    "sentiment_quality": "INSUFFICIENT",
+    "foreign_room_utilization": 23.05,
+    "insider_sentiment": "NEUTRAL"
+  },
+  "data_gaps": [
+    "No signal clusters (price_anomaly, news_impact, bctc_signal, fundamental) detected this cycle",
+    "US macro specific signals (PMI, EFFR-IORB spread) unavailable",
+    "CPI trend data missing",
+    "FX reserves / VIRA data unavailable",
+    "BCTC/fundamental business context absent",
+    "Kinh Dịch (L5) conviction data unavailable"
+  ],
+  "macro_snapshot": {
+    "vn_index": 1785.7,
+    "vn_index_delta": 9.24,
+    "vn_index_direction": "up",
+    "gold_usd": 4306.9,
+    "gold_signal": "BULLISH (>$2200 = risk-off)",
+    "oil_usd": 82.65,
+    "oil_signal": "NEUTRAL ($60-$100 band)",
+    "usd_vnd": 26040,
+    "usd_vnd_signal": "BEARISH (>25000 = VND depreciation)",
+    "carry_spread_pp": 1.37,
+    "carry_regime": "NEUTRAL",
+    "vnd_deposit_rate": 5.0,
+    "fed_funds_rate": 3.63,
+    "equity_earnings_yield": 8.2,
+    "equity_vs_deposit_spread_pp": 3.2,
+    "yield_signal": "CHEAP"
+  },
+  "quality_note": "Degraded-dish floor. 0 signals this cycle; guaranteed-publish (evening slot). Conviction capped at MEDIUM per Step 7.5 gate. Macro regime-state (risk-off via gold; VND pressure; equity yield attractive) delivered as regime-update minimum valid floor. All data gaps explicitly tokened.",
+  "source_tier_summary": "macro_tier_1, carry_tier_2, yield_tier_4, market_indicators_tier_3",
+  "fetched_at": "2026-08-06T19:52:09Z"
+}

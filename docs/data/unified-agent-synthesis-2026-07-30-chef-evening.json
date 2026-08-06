@@ -1,0 +1,101 @@
+{
+  "metadata": {
+    "cycle_id": "evening-2026-07-30T19:59:12Z",
+    "dish_type": "evening",
+    "date_vn": "2026-07-30",
+    "timestamp_utc": "2026-07-30T19:59:12Z",
+    "quality_verdict": "degraded",
+    "layers_walked_summary": "partial — [gap:L4_partial_pillar_coverage_VCB_MWG] [gap:L5_kinhdich_hexagram_price_contradiction] [gap:business_context_partial_bctc_limited] [gap:insider_sentiment_unavailable]"
+  },
+  "tnb_synthesis": {
+    "clock_phase": "expansion",
+    "regime_state": "bullish-micro-bearish-macro-divergence",
+    "regime_confidence": "MEDIUM",
+    "us_macro_layer": "Fed funds rate 3.63% stable; gold $4162.6 signals risk-off safe-haven demand; volatility elevated at 78.5th percentile indicates market nervousness despite price strength; carry spread 1.37pp neutral, neither attracting nor repelling foreign capital flows.",
+    "vn_macro_layer": "USD/VND at 26,110 (breach 25,500 threshold) signals VND depreciation pressure; carry regime neutral but FII net-accumulation +680B this session indicates foreign institutional positioning despite macro caution; market sentiment z-score +2.30σ shows extreme bullish consensus, diverging from macro headwinds.",
+    "valuation_layer": "Real estate (VHM +5.64%, VRE +6.81%, D2D +3.82%) and banking (BID +5.08%, VCB +3.48%, VPB +2.67%) leading on earnings beats and recovery narrative; retail (MWG +4.96%, FRT +6.99%) following earnings rebound; securities (VIX +6.97%, SSI +3.23%) trading sector momentum. Earnings-driven rally concentrated in large-cap conglomerates; SME coverage sparse."
+  },
+  "conviction_calls": [
+    {
+      "ticker": "VHM",
+      "conviction_level": "MEDIUM",
+      "direction": "BUY",
+      "pillars_aligned_count": 3,
+      "rationale_one_liner": "Earnings +5x YoY (Vinhomes record +52T profit), FII accumulation via carry support, Kinh Dịch Tỉnh MUA (43% conf) — but L5 price-hexagram contradiction (Quẻ 36 Minh Di bearish vs +5.64% price surge) flags reversal risk at cycle-top."
+    },
+    {
+      "ticker": "VIC",
+      "conviction_level": "MEDIUM",
+      "direction": "HOLD",
+      "pillars_aligned_count": 3,
+      "rationale_one_liner": "Earnings +4.5x (Vingroup lãi 20.4T), convergence trigger (news_mention + real_estate sector +2.87%), but minimal price move (+0.27%) despite earnings surprise, Kinh Dịch neutral (Khôn MUA 74% conf) — risk of delayed market reaction."
+    },
+    {
+      "ticker": "VCB",
+      "conviction_level": "MEDIUM",
+      "direction": "HOLD",
+      "pillars_aligned_count": 2,
+      "rationale_one_liner": "Banking sector +2.81% (7 alerts), carry spread 1.37pp neutral, but news mention generic (BCTC update, not VCB-specific), Kinh Dịch negative (Kiển BAN 48% conf), USD/VND pressure rising — insufficient L4 pillar alignment for conviction upgrade."
+    },
+    {
+      "ticker": "MWG",
+      "conviction_level": "MEDIUM",
+      "direction": "BUY",
+      "pillars_aligned_count": 2,
+      "rationale_one_liner": "Retail earnings nearly doubled, MWG +4.96%, sector momentum +2.74%, but Kinh Dịch mixed (Sư GIU 100% conf — positive) — L4 limited to 2/4 pillars; insufficient business-context (no bctc_signal specific to MWG)."
+    }
+  ],
+  "sector_phases": [
+    {
+      "sector_vn": "bất động sản",
+      "investment_phase": "expansion",
+      "pyramid_tier": "equity",
+      "direction_this_cycle": "positive"
+    },
+    {
+      "sector_vn": "ngân hàng",
+      "investment_phase": "transition",
+      "pyramid_tier": "equity",
+      "direction_this_cycle": "positive"
+    },
+    {
+      "sector_vn": "bán lẻ",
+      "investment_phase": "expansion",
+      "pyramid_tier": "equity",
+      "direction_this_cycle": "positive"
+    },
+    {
+      "sector_vn": "chứng khoán",
+      "investment_phase": "expansion",
+      "pyramid_tier": "equity",
+      "direction_this_cycle": "positive"
+    }
+  ],
+  "known_gaps": [
+    "[L6-gap: single-pillar thesis — VCB 2/4 pillars aligned; per tnb-methodology-valuation.md Layer 6, carry support + micro alerts insufficient without EPS revision or capital cost structural change]",
+    "[L6-gap: single-pillar thesis — MWG 2/4 pillars aligned; earnings momentum + sector tailwind without valuation context (P/E vs retail average) or margin sustainability]",
+    "[L6-gap: hexagram-price contradiction — Quẻ 36 Minh Di (55% bearish) vs +2.3% bullish VN-Index rally; market darkness theme contradicts micro strength, flags cycle-top vulnerability]",
+    "[gap:insider_sentiment_unavailable — no insider buy/sell concentration data this cycle; corroboration layer missing for earnings-driven thesis]",
+    "[gap:business_context_partial — bctc_signal/fundamental_* files minimal; BCTC-analyst tier1 blocked on 14/16 tickers (serve-layer downstream); product/customer/ops context inferred from news alerts, not quantified]",
+    "[gap:US_PMI_specific_unavailable — US macro conveyed via Fed rate + gold risk-off, not PMI expansion/contraction; lacks hard state-transition anchor per Layer 2 data-discipline]"
+  ],
+  "causal_chains": [
+    "Fed stable 3.63% (neutral global transmission) → USD/VND 26,110 pressures VN import costs (state-transition breach 25,500) → but FII +680B accumulation + carry 1.37pp support offsets pressure → banking/real-estate sectors rally on earnings catalysts (+4-5x profit jumps) + foreign institutional positioning → retail sector follows earnings beat (+4-5%) despite macro headwinds; Quẻ 36 darkness contradicts rally, signaling cycle-top reversal risk.",
+    "Gold $4162.6 rises toward risk-off threshold → Kinh Dịch Quẻ 36 Minh Di (injured light, 52% confidence) warns macro darkness → market sentiment z +2.30σ remains bullish (potential regime-drift where euphoria masks macro caution) → VHM/VIC/MWG earnings +4-5x drive price gains despite L5 contradiction; conviction capped MEDIUM to reflect hexagram-price mismatch."
+  ],
+  "clusters_summary": {
+    "qualified": 4,
+    "tickers_covered": [
+      "VHM",
+      "VIC",
+      "VCB",
+      "MWG"
+    ],
+    "sectors_covered": [
+      "real_estate",
+      "banking",
+      "retail",
+      "securities"
+    ]
+  }
+}
