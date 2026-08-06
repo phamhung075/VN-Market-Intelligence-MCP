@@ -1,5 +1,56 @@
 # Agent Father — Notebook
 
+## Fix (router-direct dispatch, P1) 2026-08-06T10:16Z FIX-DEVTEAM-RESUME-GATES-OMIT-READY-LANE
+- **Root cause:** Step 0b's 3 resume gates (WF-1 task_status lookup, WF-1b terminal-lane,
+  WF-2 should_hold) all scanned `[in_progress, active_sprints, done, done_verified]` (WF-1/
+  WF-1b) / `[in_progress, review, qa, done, done_verified]` (WF-2) — neither included `ready[]`.
+  A row handed off into `ready[]` while `.head` still names it `in_progress` (measured live
+  2026-08-06T09:48Z on `UC-CRITIC-HOOKS-ENFORCEMENT`: architect finished, wrote
+  `next_agent=developer` on row + `.head`, left the row `ready[]`-resident) is invisible to
+  every carve-out and falls through to a duplicate S2 spawn. 5th instance of the
+  pipeline-resume duplicate-spawn family (`feedback_pipeline_resume_stale_placeholder_duplicate_spawn_risk`).
+  Live board had already self-healed by the time I read it (`.head` back to idle) — reproduced
+  the exact scenario with synthetic scratch fixtures instead (positive: `ready[]`-resident
+  head-pin correctly short-circuits before S2; negative: genuine `in_progress[]` row still
+  resolves to normal resume) run against the real jq filters before committing.
+- **`docs/agents/dev-team/flow/main.md` (AC-1 + AC-2):** WF-1's `task_status` array and WF-2's
+  `$row` array both gained `(.task_board.ready // [])[]`, APPENDED LAST (after
+  done/done_verified) to preserve the `first`-prefers-live-copy STATUSFLIP-LANEMOVE ordering
+  discipline. New **WF-1c READY-LANE check** inserted between WF-1b (terminal-lane) and WF-2
+  (supervised-hold) — mirrors WF-1b's shape: `task_status == "READY"` → idle-reset `.head`, NO
+  lane-move (row already correctly resident in `ready[]`), JUMP TO drain-signals, **before**
+  WF-2 ever evaluates `should_hold` on it (a `ready[]`-resident row is staged, not "held" —
+  WF-2's hold/resume contract doesn't apply). Chose this disposition over the alternative
+  (folding `ready[]` into WF-2's hold semantics) because a staged row was never resumed in the
+  first place, so "hold until po_goahead" is the wrong mental model for it — explicitly stated
+  per PO's AC-2 requirement, not left implied by the array widening alone. WF-2's ordinal
+  retitled BLOCKED→TERMINAL-LANE→READY-LANE→WF-2; S2 fall-through summary line corrected to
+  name all three carve-outs; top-of-file changelog + Reusable Scripts section updated in place.
+- **`docs/agents/po/flow/supervised-goahead.md` (AC-3):** re-synced Step 1's `should_hold` jq
+  to be byte-identical to `main.md`'s corrected block — the file had drifted on TWO axes: (1)
+  its `$row` array was still 3 lanes against `main.md`'s already-widened 5 (from the
+  same-day `FIX-DEVTEAM-PIPELINE-RESUME-TERMINAL-LANE-BLIND`, never mirrored here), (2) it used
+  a `-L scripts/lib` + bare `include "devteam-eligibility"` mechanism instead of `main.md`'s own
+  `include "scripts/lib/devteam-eligibility";` — two working-but-textually-different ways to
+  load the same library, which defeats a literal byte-diff drift guard. Fixed both; diffed the
+  two files' jq program text (normalized only for the per-file `--arg tid` bash variable name)
+  to confirm byte-identical. Fixed the stale `469-478`/`467-483` line references (also stale in
+  `docs/agents/po/flow/main.md`'s own pointer) — switched both to a named-section pointer
+  (`§ WF-2 SUPERVISED-HOLD check`) with an explicit "line numbers drift, re-read live" caveat
+  rather than a hardcoded number, since this exact file has now drifted from `main.md` twice.
+- **AC-4/AC-5 (verifier extension + drift guard, `scripts/`) — NOT implemented, flagged as a
+  companion developer row** per PO's own split precedent (TE-T02/TE-T12, `scripts/` outside
+  `commit_zone.allowed`): documented the exact spec as a new Reusable Scripts PENDING bullet in
+  `main.md` (positive/negative control for WF-1c + a mechanical byte-diff drift guard between
+  the two `should_hold` copies) and dropped `signal_queue` row `age-20260806T101656` (`to: po`)
+  — read-back confirmed present. Did NOT mint the board row myself (`commit_zone.excluded`
+  covers `orch-state.json` structurally, not just commits).
+- **Board:** lane-moved `backlog[]→review[]`, `status=REVIEW`, `next_agent=qa` via
+  `orch-apply.sh` (router explicitly directed this in the dispatch prompt, same precedent as
+  TE-T16 below). **Did NOT commit** `orch-state.json` myself — flagged via the same signal row
+  above. Verified both pre-existing regression verifiers still PASS after the widening:
+  `devteam-pipeline-resume-terminal-lane-verify.sh` and `po-goahead-producer-verify.sh`.
+
 ## Split (router-direct dispatch, P1) 2026-08-06T09:45Z TE-T16 (TOKEN-ECONOMY-AUDIT wave 3)
 - Split `docs/agents/unified-agent/flow/chef.md` at its existing Step-1 intraday silent-exit
   gate, per `docs/architecture-briefs/2026-07-12-token-economy-lazyload-audit.md#T-16`.
@@ -26,22 +77,6 @@
   (same shape as the prior `FIX-DEVTEAM-QADRAIN-INVOCATION-HEAD-DECOUPLED` entry below).
   Doc commit (`docs/agents/unified-agent/flow/chef.md` + `chef-dish.md` + `init.md`) done
   and pushed within my own zone.
-
-## Fix (router-direct dispatch, P2) 2026-08-06T07:39Z FIX-AUDITOR-EMPTYTABLE-CHECK-NO-WRITER-DISCRIMINATOR + CHORE-TEAM-TOOL-RECHECK-LOCAL-CRON
-- **Row 1 (empty-table discriminator):** `docs/agents/system-auditor/audit-dimensions.md` is already at its own 200L hard cap (header says split, not grow) and the `AUDIT_TIER=DATA` check family (`.claude/commands/crons/cron-db-data-integrity.md`) had ZERO registry entry anywhere — new `docs/agents/system-auditor/flow/data-writer-provenance.md` fills both gaps: writer-provenance discriminator (class (a) scheduled-pipeline may stay CRITICAL / (b) test-only-writer INFO ceiling / (c) on-demand-tool-writer INFO-WARN ceiling), a missing-table-vs-empty-table split (fixes the `pdf_documents` rendered-identically finding), a seeded table classification (price_alerts=c, alert_engine_records=b, deep_fetch_stats=a-adjacent unresolved), and an explicit negative-control requirement so class (a) tables (`daily_ohlcv`) can't be silenced. `flow/main.md` gets a 1-line changelog + 1 new `AUDIT_TIER` extraction bullet cross-referencing it — no dispatch rewire (still falls through to the tier-3 default, unchanged behavior).
-- **Row 1 out-of-zone:** the actual actuator is inline free text in `.claude/commands/crons/cron-db-data-integrity.md` — outside `commit_zone.allowed`. Flagged via `docs/signals/2026-08-06-fix-auditor-emptytable-writer-discriminator-handoff.json` (left uncommitted for dev-team's drain, same pattern as the prior notebook-compose-actuator handoff) recommending either a direct transcription or, better, a deterministic `scripts/db-empty-table-classify.sh` (developer scope).
-- **Row 2 (team-tool-recheck):** historical writer (122 files, 2026-06-13→06-23, ~every 2h) was a cloud-RemoteTrigger-driven LIVE MCP-probe sweep (tool param-name drift, cron/VPS health) — `agent-father` holds no `mcp__gateway__call_tool` grant (confirmed tools line) and cannot reproduce that. Re-established the STATIC subset instead: new `docs/agents/agent-father/flow/team-tool-recheck.md`, wired into `keep.md` as Step 5b, runs on the EXISTING daily `cron-agent-father.md` cadence (`23 14 * * *`, already <30d — no new cron registration, no `.claude/commands/crons/` edit needed). Checks tool-grant vs declared-write-boundary consistency across the 7 boundary-declared cowork agents (per `docs/architecture-briefs/2026-08-06-guard-cowork-notebook-agent-write-boundary.md` §1), explicitly excluding `fb-market-poster`/`orch-sentinel`/`system-auditor` (different class, reasoned in the flow doc).
-- **Row 2 positive control (AC requirement) — RAN LIVE, not just designed:** wrote `docs/agent-memory/health/team-tool-recheck-2026-08-06-0739.md`, first run since 2026-06-23. Correctly flags alert-commander/market-watcher/news-scout CRITICAL (`Bash` granted by commit `610110e16` 2026-07-31 for commit-mutex/coverage-stamp.sh, description text never updated — still reads "No other filesystem writes permitted" unqualified); correctly leaves bctc-analyst/digest-predict/unified-agent/qa-responder CLEAN (no `Bash`). `write_boundary` field confirmed absent from `system-map.json` (0 matches) and no `agent-write-boundary-guard` hook registered in either settings file — mechanical-enforcement status recorded as prose-only.
-- **Row 2 out-of-zone:** the live-MCP-probe remainder (tool schema drift, cron/VPS health) flagged via `docs/signals/2026-08-06-chore-team-tool-recheck-livescope-handoff.json` — recommends po assign a gateway-bound owner (system-auditor extension candidate), not a revival of the old ~2h cadence (that granularity was for live-incident response; the now-separated static check doesn't need it).
-- **Not implemented (adjacent but distinct, not this task's scope):** `GUARD-COWORK-NOTEBOOK-AGENTS-SELF-EDIT-FLOW-DOC` closed to `done[]` by architect (brief complete) but its actual mechanism (§4.1 `system-map.json write_boundary` + §4.2 PreToolUse hook) is NOT implemented — confirmed live (0 `write_boundary` keys, no hook file). This is why Row 2's fallback uses the brief's hardcoded 7-agent list instead of reading the (not-yet-existing) authoritative field; noted, not fixed here — out of these two rows' scope.
-
-## Fix (router-direct dispatch, P1) 2026-08-06T07:11:10Z FIX-SYSAUDITOR-NOTEBOOK-COMPOSE-ACTUATOR
-- **Scope call:** brief (docs/architecture-briefs/2026-08-06-fix-system-auditor-notebook-compose-actuator-and-immutability-blindspot.md) named fixes A-E "for agent-father", but A/B/C/D's actual actuators/hooks live under `scripts/` — outside `commit_zone.allowed` (same precedent as TE-T02/TE-T12/TE-T14/TE-T21, `c72b5ca34`). Split each fix into its in-zone doc/spec half (done below) vs out-of-zone code half (flagged via signal).
-- **E (done):** `.claude/skills/notebook-write/SKILL.md` AC-3 Step 2 collapsed the Edit(whole-file `old_string`)/Write conflict to Write-only, matching `docs/agents/system-auditor/flow/main.md`. First cut breached cap (201L/12138B vs 200L/12000B — live `context_bloat_breach` signal fired, routed-to-po); trimmed rationale prose instead of adding a justification header — final 198L/11926B, both under cap, signal left for po as the accurate record.
-- **A interim (done, NOT a replacement for the real fix):** `main.md` Step 1a now runs a real bash `PRE_HEADINGS`/`PRE_COUNT` snapshot (not narrated); new BLOCKING Step 2a computes `EXPECTED_DROPS` from `PRE_COUNT` alone — never the compose step's own self-report — and `git checkout --`-reverts on mismatch before any commit is attempted. Would have caught the `0fcc6a5d2` shape (heading vanished, 80->81L, zero drops required). `scripts/notebook-compose.sh` script actuator itself flagged to developer.
-- **D doc half (done):** `docs/agents/tools/package/system-auditor.md` Bash row now names `auditor-notebook-commit.sh` the ONE authorized git write and explicitly FORBIDS raw git add/commit on the notebook path; matching callout added at `main.md`'s Commit step, citing the 3-second bare-commit-then-retry sweep-guard evidence.
-- **B/C (pure `scripts/git-hooks/pre-commit` + env-var config, not mine):** ran the corpus replay live (`scripts/audits/verify-notebook-immutability-gate.sh`) as due diligence before recommending: 33 reject(s)/13 files fleet-wide, INCLUDING 3/8 of `system-auditor.md`'s own last commits — the skill's stated "reads 0" bar for `GIT_NOTEBOOK_IMMUTABILITY_MODE=reject` is not met even scoped to this one file. Recommended NOT flipping yet.
-- **Handoff:** `docs/signals/2026-08-06-fix-system-auditor-notebook-compose-actuator-handoff.json` → po — full spec for `scripts/notebook-compose.sh` (A), the pre-commit blind-spot fix (B), the C replay evidence above, and D's runtime-enforcement/recurring-bug-ticket ask (`prior_warns=7`, already past the 2+ recurring-bug threshold).
 
 ## Fix (router-direct dispatch, P1) 2026-08-06T09:41Z FIX-DEVTEAM-QADRAIN-INVOCATION-HEAD-DECOUPLED
 - Edited `docs/agents/dev-team/flow/main.md` per architect's `architect_review_note`

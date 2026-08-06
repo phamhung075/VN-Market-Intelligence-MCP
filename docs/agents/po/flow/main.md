@@ -69,7 +69,7 @@ Never inline both pre-flight and a branch workflow — keep context lean. Pre-fl
 **Pre-check**: `$PROJECT_ROOT/docs/data/orch/orch-state.json` `.task_board` blocked tasks waiting for PO → handle first
 
 **Pre-check — Supervised-hold ratification** → Run sub-flow: `docs/agents/po/flow/supervised-goahead.md`
-MANDATORY every tick. Producer for the `po_goahead_*` stamp dev-team's WF-2 SUPERVISED-HOLD gate (`docs/agents/dev-team/flow/main.md:467-483`) requires before it will resume a supervised in_progress/review/qa row. Empty candidate set → no-op, proceed.
+MANDATORY every tick. Producer for the `po_goahead_*` stamp dev-team's WF-2 SUPERVISED-HOLD gate (`docs/agents/dev-team/flow/main.md` § WF-2 SUPERVISED-HOLD check, line numbers drift on every `main.md` edit — see `supervised-goahead.md`'s own live-verified pointer rather than trust a hardcoded number here) requires before it will resume a supervised in_progress/review/qa/done/done_verified/ready row. Empty candidate set → no-op, proceed.
 
 **Pre-check — Manual-dispatch sweep** → Run sub-flow: `docs/agents/po/flow/manual-dispatch-sweep.md`
 MANDATORY every tick. Producer for the "reachable only by manual/PO dispatch" rows dev-team's own Lane × Gate Coverage Matrix (`docs/agents/dev-team/flow/main.md` § Design-Router Sweep) and `scripts/audits/bounded1-supervised-lane-report.sh`'s DRS-STRANDED-OFF-ALLOWLIST/READY-XOR sections both document but never produced a dispatch path for — a backlog row whose `next_agent` is non-dev and off DRS's ratified allowlist, or a `ready[]` row carrying exactly one of `supervised`/`plan_only`. Surfaces a priority-ordered candidate list and folds the top unflagged one into this tick's `BATCH`. Empty candidate set → no-op, proceed.
