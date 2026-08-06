@@ -1,0 +1,14 @@
+{
+  "from": "commit-sweep-guard",
+  "to": "po",
+  "type": "bug-escalation",
+  "priority": "high",
+  "createdAt": "2026-08-06T09:16:41Z",
+  "payload": "[sweep-guard] BARE commit about to absorb 15 staged file(s) not necessarily this actor's own: docs/data/orch/orch-state.json docs/signals/processed/ci-red-f22225f2-20260806084355.json docs/signals/processed/commit-sweep-guard-2026-07-30T082612Z-94074.json docs/signals/processed/commit-sweep-guard-2026-07-30T082827Z-94846.json docs/signals/processed/commit-sweep-guard-2026-07-30T083515Z-97039.json docs/signals/processed/commit-sweep-guard-2026-07-30T084644Z-1216.json docs/signals/processed/commit-sweep-guard-2026-08-06T084823Z-42199.json docs/signals/processed/commit-sweep-guard-2026-08-06T091138Z-67147.json docs/signals/processed/context-bloat--claude-skills-cron-standalone-team-register-job-db-integrity-offhours-md-2026-08-06T091033Z.json docs/signals/processed/context-bloat--claude-skills-cron-standalone-team-register-job-db-integrity-weekday-md-2026-08-06T090915Z.json docs/signals/processed/context-bloat-docs-agent-memory-decisions-sprint-COWORK-GUARANTEED-SLOT-CATCHUP-developer-md-2026-07-30T082857Z.json docs/signals/processed/cowork-team-2026-08-06T09:06:00Z.json docs/signals/processed/cowork-team-20260806T084950Z.json docs/signals/processed/notebook-direction-defaulted-docs-agent-memory-notebooks-unified-agent-md-2026-08-06T085202Z.json docs/signals/processed/notebook-duplicate-heading-docs-agent-memory-notebooks-unified-agent-md-2026-07-30T082501Z.json. actor=24817246-8a3f-4511-95f7-1b4385797bee mode=warn escalated=true prior_warns=13 threshold=3. Fix: git commit -m \"<msg>\" -- <own-files-only>.",
+  "_processed": {
+    "fingerprint": "6b9f453c9effcc26f5cb35198644761947a8e1843649308824c2c20632e77147",
+    "processedAt": "2026-08-06T09:41:50Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

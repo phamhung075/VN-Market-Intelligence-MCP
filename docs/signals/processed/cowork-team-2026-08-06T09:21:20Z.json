@@ -3,7 +3,7 @@
   "to": "dev-team",
   "type": "cowork-fire",
   "payload": {
-    "fire_time": "2026-07-30T09:23:02Z",
+    "fire_time": "2026-08-06T09:21:20Z",
     "matched_slots": [
       "fb-daily"
     ],
@@ -16,7 +16,7 @@
       "docs/agents/fb-market-poster/flow/main.md"
     ],
     "silent": false,
-    "drift_min": 5,
+    "drift_min": 2,
     "errors": [],
     "pressure_mode": "adaptive",
     "calendar_status": "unknown",
@@ -30,7 +30,7 @@
     "cadence_minutes": {
       "fb-daily": null
     },
-    "last_fired_timestamp": "2026-07-30T09:22:46Z",
+    "last_fired_timestamp": "2026-08-06T09:20:57Z",
     "last_fired_slots": [
       "fb-daily"
     ],
@@ -39,16 +39,16 @@
     "reason": "spawned",
     "nominal_tick": "09:15",
     "leader_lock": "acquired",
-    "dev_head": "in_progress",
-    "devq": 0,
-    "signal_backlog": 19,
-    "note": "single guaranteed daily slot fb-daily fired on cron; no CHEF slots this tick, mutex no-op"
+    "dev_head": "unknown",
+    "devq": 5,
+    "signal_backlog": 21,
+    "note": "guaranteed daily slot fb-daily fired on schedule; tick-snapshot succeeded this tick (09:19 file-tick, fixed variable to avoid prior minute-boundary race)."
   },
   "priority": "low",
-  "createdAt": "2026-07-30T09:23:02Z",
+  "createdAt": "2026-08-06T09:21:20Z",
   "_processed": {
-    "fingerprint": "e94f9cc664401e11fcdb6ffa1c9214f6cca7a960ced7484a5eff1f32cc97f209",
-    "processedAt": "2026-07-30T09:25:53Z",
+    "fingerprint": "e82d61a4a2bd1bbfa17bd7da19622c183e3b246e6d2692a2afec7d3a9a90f000",
+    "processedAt": "2026-08-06T09:41:50Z",
     "processedBy": "dev-team",
     "result": "routed-to-po"
   }
