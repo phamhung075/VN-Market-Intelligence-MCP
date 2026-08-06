@@ -11946,32 +11946,6 @@
         "updated_at": "2026-08-06T09:29:50Z"
       },
       {
-        "id": "FIX-CI-TASKCLAIM-CHEF-MD-OWNER-SESSION-PAYDOWN",
-        "type": "FIX",
-        "title": "CI-RED-246eb859-FIX — CI RED: task-claim-owner-session-lint — docs/agents/unified-agent/flow/chef.md",
-        "desc": "CI job task-claim-owner-session-lint is RED on main HEAD 246eb859 (run 31091505185). Failing call site: docs/agents/unified-agent/flow/chef.md:108 PUBLISH_CLAIM = call_tool(server=\"vn-market\", tool=\"task_claim\", ...) with no owner_client_session. The lint itself labels it LINE-MOVED (grandfathered in docs/data/task-claim-owner-session-baseline.json at line 102, same file+snippet) and instructs: pay the debt, do NOT re-run --update to relabel the line. TRIGGER IDENTIFIED (not assumed): commit ff1745e5a `refactor(agents/unified-agent): TE-T16 split chef.md at intraday silent-exit gate` shifted the grandfathered call site 102 -> 108. This is the SECOND instance of the same structural class (1st: FIX-CI-TASKCLAIM-PO-FLOW-OWNER-SESSION-PAYDOWN, file docs/agents/po/flow/sprint-kickoff.md) — a line-keyed baseline entry re-triggers CI RED whenever any unrelated refactor touches the file. The AC5 ergonomics fix from that first row DID ship (the LINE-MOVED label is present in this very failure output), so triage is no longer misdirected; what remains is the debt itself.",
-        "status": "BACKLOG",
-        "priority": "high",
-        "size": "S",
-        "owner": "po",
-        "zone": "cross-service/",
-        "next_agent": "developer",
-        "check_id": "CI-RED-246eb859",
-        "dedup_key": "ci_job:task-claim-owner-session-lint|file:docs/agents/unified-agent/flow/chef.md",
-        "ci_fingerprint": "6e36e3ac53e890a2d96c0ecd2829d86e2b5905bc75c5cfa10d23460cd1efdfbd",
-        "origin_signal_id": "ci-red-246eb859-20260806101238",
-        "created_at": "2026-08-06T10:25:32Z",
-        "created_by": "po/triage-20260806T1019",
-        "baseline_pass": false,
-        "files": [
-          "docs/agents/unified-agent/flow/chef.md",
-          "docs/data/task-claim-owner-session-baseline.json"
-        ],
-        "verification_gate": "ci_green_on_subsequent_push",
-        "status_note": "AC1: add owner_client_session to the task_claim call at docs/agents/unified-agent/flow/chef.md:108 AND remove that file entirely from docs/data/task-claim-owner-session-baseline.json so no future line-shift can re-trigger it — running --update to re-grandfather is NOT an acceptable close (same AC2 discipline as the sibling row FIX-CI-TASKCLAIM-PO-FLOW-OWNER-SESSION-PAYDOWN). AC2: `bash scripts/audits/task-claim-owner-session-lint.sh --check` RC=0. AC3: `gh run view <databaseId with headSha AFTER 246eb859191045e8776e74300327cfade6f8d046> --json jobs -q '.jobs[]|select(.name==\"task-claim-owner-session-lint\")|.conclusion'` == success. AC4: the doc must instruct SUBSTITUTING the real session id from the spawn-prompt coordination line — a doc that writes the literal $CLAUDE_CODE_SESSION_ID inside a call_tool argument gets sent LITERALLY (known memory hazard feedback_llm_issued_call_tool_does_not_expand_session_id_variable); mirror docs/agents/pm/flow/main.md and .claude/skills/commit-mutex/SKILL.md. AC5 (2nd-instance structural ask, do not skip): the baseline is LINE-KEYED, which is why an unrelated refactor (ff1745e5a, TE-T16) turned CI red. Either re-key the baseline on file+snippet-hash instead of file+line, or state explicitly in the lint doc that line-keying is deliberate debt pressure. Failing job: task-claim-owner-session-lint. Failing file: docs/agents/unified-agent/flow/chef.md. Head SHA observed: 246eb859191045e8776e74300327cfade6f8d046 (run 31091505185).",
-        "updated_at": "2026-08-06T10:25:43Z"
-      },
-      {
         "id": "FIX-DEVTEAM-BOUNDED1-CLAIM-NO-OWN-WIP-RECHECK",
         "type": "FIX",
         "title": "scripts/devteam-backlog-claim-bounded1.jq has no own WIP re-check — re-claims any ready[] row still stamped promoted_by=\"dev-team (bounded-1 auto-pickup)\" even while a different row holds the WIP slot",
@@ -22085,6 +22059,34 @@
         "commit_sha": "edea85e66",
         "note": "Structural fix per AC-3/AC-4 (root cause reproduced live, not just theorized): parallelism bound to actual vCPU (nproc/sysctl auto-detect replaces hardcoded P=16) in scripts/ci-per-file-isolation.sh + .github/workflows/ci.yml; aggregation loop now checks the already-captured per-file rc (a killed/crashed 0-parsed-fail process previously reported false-GREEN -- verified before/after with a SIGKILL repro). AC-1/AC-2 evidence gathered live 2026-08-06 (this dev machine, not a GH-hosted runner -- noted as a fidelity caveat): 2 full-suite ci-per-file-isolation.sh runs on the SAME unchanged tree produced DIFFERENT failing-file sets (14 files at P=16 vs 9 files at auto-P=12, partial overlap) -- rotating identity confirms runner/environment nondeterminism per AC-1's own discriminator, not a stable single-file defect. Captured one concrete mechanism instance: 102-job-news-poll.test.ts asserted rag_analyses COUNT(*)=2, got 0 -- an unawaited-background-write race that only manifests under concurrent-load scheduler delay, matching AC-2's \"resource contention under CI exact concurrency\" hypothesis exactly. Did NOT add blanket retries (AC-3 explicit prohibition). tsc clean, tools=183/cron=88 unchanged (no src/ touched, code_under_test is repo-root scripts/ci.yml only). Full local convergence to 0 fail was NOT achieved on this shared dev host (other concurrent Claude Code agent sessions -- detect-loop/standalone-team/cowork-team -- observed consuming real CPU throughout measurement via ps), so AC-5's 20-consecutive-0-fail claim is deferred to the real isolated GH-hosted runner via gh run rerun on this commit post-push (authoritative environment, not a noisy local proxy). AC-6 (re-evaluate the 4 DEFLAKE-*/transient rows) intentionally deferred until AC-5 is confirmed green by whoever verifies. Commit edea85e66.",
         "verification_gate": "ci_green_on_subsequent_push"
+      },
+      {
+        "id": "FIX-CI-TASKCLAIM-CHEF-MD-OWNER-SESSION-PAYDOWN",
+        "type": "FIX",
+        "title": "CI-RED-246eb859-FIX — CI RED: task-claim-owner-session-lint — docs/agents/unified-agent/flow/chef.md",
+        "desc": "CI job task-claim-owner-session-lint is RED on main HEAD 246eb859 (run 31091505185). Failing call site: docs/agents/unified-agent/flow/chef.md:108 PUBLISH_CLAIM = call_tool(server=\"vn-market\", tool=\"task_claim\", ...) with no owner_client_session. The lint itself labels it LINE-MOVED (grandfathered in docs/data/task-claim-owner-session-baseline.json at line 102, same file+snippet) and instructs: pay the debt, do NOT re-run --update to relabel the line. TRIGGER IDENTIFIED (not assumed): commit ff1745e5a `refactor(agents/unified-agent): TE-T16 split chef.md at intraday silent-exit gate` shifted the grandfathered call site 102 -> 108. This is the SECOND instance of the same structural class (1st: FIX-CI-TASKCLAIM-PO-FLOW-OWNER-SESSION-PAYDOWN, file docs/agents/po/flow/sprint-kickoff.md) — a line-keyed baseline entry re-triggers CI RED whenever any unrelated refactor touches the file. The AC5 ergonomics fix from that first row DID ship (the LINE-MOVED label is present in this very failure output), so triage is no longer misdirected; what remains is the debt itself.",
+        "status": "REVIEW",
+        "priority": "high",
+        "size": "S",
+        "owner": "po",
+        "zone": "cross-service/",
+        "next_agent": "qa",
+        "check_id": "CI-RED-246eb859",
+        "dedup_key": "ci_job:task-claim-owner-session-lint|file:docs/agents/unified-agent/flow/chef.md",
+        "ci_fingerprint": "6e36e3ac53e890a2d96c0ecd2829d86e2b5905bc75c5cfa10d23460cd1efdfbd",
+        "origin_signal_id": "ci-red-246eb859-20260806101238",
+        "created_at": "2026-08-06T10:25:32Z",
+        "created_by": "po/triage-20260806T1019",
+        "baseline_pass": true,
+        "files": [
+          "docs/agents/unified-agent/flow/chef.md",
+          "docs/data/task-claim-owner-session-baseline.json"
+        ],
+        "verification_gate": "ci_green_on_subsequent_push",
+        "status_note": "AC1: add owner_client_session to the task_claim call at docs/agents/unified-agent/flow/chef.md:108 AND remove that file entirely from docs/data/task-claim-owner-session-baseline.json so no future line-shift can re-trigger it — running --update to re-grandfather is NOT an acceptable close (same AC2 discipline as the sibling row FIX-CI-TASKCLAIM-PO-FLOW-OWNER-SESSION-PAYDOWN). AC2: `bash scripts/audits/task-claim-owner-session-lint.sh --check` RC=0. AC3: `gh run view <databaseId with headSha AFTER 246eb859191045e8776e74300327cfade6f8d046> --json jobs -q '.jobs[]|select(.name==\"task-claim-owner-session-lint\")|.conclusion'` == success. AC4: the doc must instruct SUBSTITUTING the real session id from the spawn-prompt coordination line — a doc that writes the literal $CLAUDE_CODE_SESSION_ID inside a call_tool argument gets sent LITERALLY (known memory hazard feedback_llm_issued_call_tool_does_not_expand_session_id_variable); mirror docs/agents/pm/flow/main.md and .claude/skills/commit-mutex/SKILL.md. AC5 (2nd-instance structural ask, do not skip): the baseline is LINE-KEYED, which is why an unrelated refactor (ff1745e5a, TE-T16) turned CI red. Either re-key the baseline on file+snippet-hash instead of file+line, or state explicitly in the lint doc that line-keying is deliberate debt pressure. Failing job: task-claim-owner-session-lint. Failing file: docs/agents/unified-agent/flow/chef.md. Head SHA observed: 246eb859191045e8776e74300327cfade6f8d046 (run 31091505185).",
+        "updated_at": "2026-08-06T10:40:45Z",
+        "updated_by": "developer",
+        "developer_verification_note": "chef.md:108 PUBLISH_CLAIM task_claim now carries owner_client_session (substitution-instruction pattern mirrors pm/flow/main.md:127 + commit-mutex/SKILL.md, per AC4). Baseline entry for this file dropped from task-claim-owner-session-baseline.json (20->19 grandfathered sites) per AC1/PO instruction — did NOT re-run --update. Verified locally: scripts/audits/task-claim-owner-session-lint.sh --check RC=0, 0 new offenders (274 files scanned); scripts/audits/task-claim-owner-session-lint.test.sh 9/9 PASS. Commit be3545412. AC3 (CI green on subsequent push) pending push/CI run outside this agent scope. AC5 (re-key baseline file+snippet vs line, or document line-keying-is-deliberate in the lint doc) intentionally NOT actioned: files scope for this row is [chef.md, baseline.json] only (excludes scripts/audits/task-claim-owner-session-lint.sh); the sibling first-instance row explicitly ruled widening/re-keying the baseline key OUT OF SCOPE for a same-shape fix (gate-widening requires an actuator dry-run first, standing rule) and the lint script header already documents the line-keyed-ratchet rationale. qa: please independently re-run --check + confirm CI green post-push."
       }
     ],
     "qa": [
