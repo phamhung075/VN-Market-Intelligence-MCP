@@ -538,3 +538,15 @@
 **Mitigation:** No immediate action beyond signal routing.
 
 ---
+
+## Anomaly: A-30 · rag-service memory 97.52-97.55% sustained (no reclamation dips)
+**Severity:** WARN | **Date:** 2026-08-06 | **Status:** OPEN
+**Location:** rag-service container
+**Details:** Memory sustained 97.54-97.55% across 6 probes (65s window) with zero reclamation dips — loss of GC relief cycles
+**Impact:** rag-service embeddings pipeline at imminent OOM risk; restarts will recur without remediation
+**Root cause:** Known residual FU-RAG-DEPLOY-MEMORY: embedder model load pattern causes persistent high baseline memory without GC relief cycles
+**Zone owner:** dev-rag-service
+**Last reported:** 2026-08-06T09:07:38Z (signal sys-20260806T090729-27b7, system-auditor -> po, dedup_key=microservice_degraded:rag-service:A-30, WARN Telegram sent)
+**Mitigation:** No immediate action beyond signal routing.
+
+---
