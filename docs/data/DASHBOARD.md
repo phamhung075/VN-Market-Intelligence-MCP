@@ -610,3 +610,15 @@
 **Mitigation:** No immediate action beyond signal routing.
 
 ---
+
+## Anomaly: A-30 · rag-service memory pressure CRITICAL (96.69%)
+**Severity:** CRITICAL | **Date:** 2026-08-06 | **Status:** OPEN
+**Location:** vn-market-intelligence-mcp-rag-service-1
+**Details:** Memory usage 96.69% (990.2MiB / 1GiB) — approaching OOM risk
+**Impact:** Service may become unresponsive or crash due to memory exhaustion
+**Root cause:** Potential memory leak or inefficient data retention in RAG service
+**Zone owner:** dev-rag-service
+**Last reported:** 2026-08-06T14:38:30Z (signal sys-20260806T143821-0c09, system-auditor -> po, dedup_key=microservice_degraded:rag-service:A-30, CRITICAL Telegram sent)
+**Mitigation:** No immediate action beyond signal routing.
+
+---
