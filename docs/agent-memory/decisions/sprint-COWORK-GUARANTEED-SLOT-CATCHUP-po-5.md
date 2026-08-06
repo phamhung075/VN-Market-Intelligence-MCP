@@ -190,3 +190,14 @@
 - (d) generalize the EXISTING exogenous spawner-side gate (Step 5.3) with an artifact-delta arm + close the cron-spawn coverage hole — ADOPTED
 **why-decision:** The one gate the project already ratified as load-bearing is exogenous, and its predicate is a 6-string positive match on the router-latch shape only; both of today's returns contained zero of those strings, so both passed clean. Fixing the predicate at the observer is one edit that covers every agent; fixing the narrator is N edits that already demonstrably do not hold.
 **why-change:** Requester framed this as possibly-new and offered an in-flow remedy; prior art (feedback_cowork_spawn_narrates_not_executes, 4 occurrences from 06-18) shows it is neither new nor in-flow-fixable. Also deviates from a pure mint: occurrence 2 already had a READY row with an architect brief written 49min before it happened, so per feedback_recurring_detection_vs_recurring_failed_fix + feedback_file_prior_art_check_before_minting_row I enriched instead of minting.
+
+### STEP po-S140 · po · 2026-08-06T11:19:50Z
+**task-id:** FIX-REFINE-SUBFLOW-OPTIONC-CONTRACT-DRIFT
+**what-done:** Root-caused 2 consecutive zero-push refine_bctc_md fires to an Option-C doc-contract defect (main.md:94 calls execute_sub_flow_logic(), a function with zero definitions repo-wide; all 4 sub-flow docs still say "Task return value"/"the orchestrator collects"); minted P0 row to agent-father incl. slot pause, plus P2 get_bctc_refined projection row to dev-mcp-server.
+**what-considered:**
+- (a) image-heavy resume chunk needs smaller REFINE_CHUNK_SIZE — FALSIFIED at source
+- (b) pure behavior drift, harden SELF-IDENTITY GUARD — insufficient alone, treats symptom
+- (c) get_bctc_refined resume-read blowing context — MEASURED 25KB/~7k tok, too small to be cause
+- (d) doc-contract defect: loop body names a non-existent executor — ADOPTED
+**why-decision:** Only (d) explains the agent's verbatim complaint ("**sub-flow logic** implementation ... not executable with current tool grant") as a literal read of a real line rather than free confabulation. (a) died on RAW window data: success chunk unit-0000..0011 = 21p/20img/4x 3-page continuation vs abandoned chunk unit-0012..0023 = 22p/22img/4x 3-page continuation — same shape, so the prior memory's "unusually continuation-heavy" premise is factually wrong. Grant is proven sufficient by this agent's own 08-05T16:41Z run on this same report, so no grant change.
+**why-change:** Escalation asked for architect-vs-agent-father routing; feedback_recurring_bug_escalation targets patch LOOPS (>=2 prior fixes) and here zero fixes were ever attempted, so a first concrete fix is correct and an architect design cycle would be over-escalation — the architect-grade analysis is in the row itself. Slot pause is partial (3 of 4) not total, keeping slot-4 as canary so throughput is not zeroed and re-arm cannot be silently forgotten.
