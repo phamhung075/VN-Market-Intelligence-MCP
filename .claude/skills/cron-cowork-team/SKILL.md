@@ -24,25 +24,92 @@ Invoking `/cron-cowork-team` at session start ensures the dispatcher is always l
 
 ---
 
-## Step 1 — Check if master cron already exists (idempotency guard)
+## Step 1 — Cross-session registration guard (FIX-CRON-REARM-CROSS-SESSION-DEDUP §1.2/§2)
 
+CronCreate/CronList are strictly per-CLI-session — a peer terminal's registration is invisible to
+`CronList`. This step uses a cross-session marker (`task_id="cron-registration:cowork-team"`,
+`task_kind="sprint-task"` reused per `coordinationStore.ts:446-451` precedent) so two sessions never
+both `CronCreate` the same dispatcher, THEN runs the local `CronList` classify below.
+Full mechanism spec: `docs/architecture-briefs/2026-08-06-cron-rearm-cross-session-dedup.md` §1.2-1.4.
+
+**Step 1a — Fast path (cheap, blind heartbeat):**
+```
+hb = call_tool(server="vn-market", tool="task_heartbeat", arguments={
+  task_id: "cron-registration:cowork-team", owner_client_session: $CLAUDE_CODE_SESSION_ID
+})
+```
+`hb.ok == true` → this session already owns the marker → **GOTO Step 1d** (local classify).
+`hb.ok == false` → not found, or owned by someone else → continue to Step 1b.
+
+**Step 1b — Read the marker + resolve the holder:**
+```
+marker_rows = call_tool(server="vn-market", tool="task_list_held", arguments={kind: "sprint-task"})
+# no task_id filter exists on this tool — filter client-side for
+# task_id == "cron-registration:cowork-team"
+```
+- No matching row → **GOTO Step 1c** (register).
+- Matching row, `owner_client_session == $CLAUDE_CODE_SESSION_ID` → race with Step 1a — heartbeat it
+  again, **GOTO Step 1d**.
+- Matching row, peer session owns it → continue to Step 1b.1.
+
+**Step 1b.1 — Peer liveness cross-check (session-presence, primary staleness oracle):**
+```
+presence_rows = call_tool(server="vn-market", tool="task_list_held", arguments={kind: "session-presence"})
+# find the row whose owner_client_session matches the marker's owner_client_session
+```
+- **LIVE** (row found, unexpired) → compare the marker's `payload.jobs[].cron_expression` against
+  canonical (Step 1d's Phase 2 table). All match → **STOP, no-op.** Log
+  `"[cron-cowork-team] already armed by live peer session <SID>. No-op."`
+  Any mismatch → **STOP** — do NOT register a 2nd copy (no cross-session `CronDelete`/`CronCreate`
+  exists). Log + `send_telegram(channel="work", "[cron-cowork-team] peer session <SID> holds a live
+  but stale-valued cowork-team registration — will self-heal next time that session re-runs the
+  skill, or fix manually in that terminal.")`.
+- **DEAD** (no presence row, or expired) →
+  ```
+  release = call_tool(server="vn-market", tool="task_force_release_orphan", arguments={
+    task_id: "cron-registration:cowork-team", owner_client_session: <marker's owner_client_session>,
+    orphan_threshold_seconds: 7200
+  })
+  ```
+  - `released:true` → **GOTO Step 1c** (register).
+  - `released:false` (fresh heartbeat — race) → treat conservatively as LIVE → **STOP, no-op.**
+  - `released:false` (lock not found — peer already rotated it) → re-read from Step 1b.
+
+**Step 1c — Register the marker:**
+```
+claim = call_tool(server="vn-market", tool="task_claim", arguments={
+  task_id: "cron-registration:cowork-team", task_kind: "sprint-task",
+  owner_agent: "cron-cowork-team", owner_client_session: $CLAUDE_CODE_SESSION_ID,
+  ttl_seconds: 691200,
+  payload: {"jobs":[{"identity":"cowork-team master dispatcher","cron_expression":"*/15 * * * *"}],"registered_at":"<ISO8601 now>"}
+})
+```
+`claim.claimed == true` → **GOTO Step 1d.** `claim.claimed == false` → a peer won a race between
+Step 1b's read and this claim → abort, re-run from Step 1b.
+
+**Step 1d — Local two-phase classify (stale-vs-missing guard fix, §2):**
 ```
 CronList
 ```
+Phase 1 — IDENTITY (stable, cadence-independent): find any live entry whose `description` contains
+`"cowork-team master dispatcher"`.
+Phase 2 — VALUE (only for identity-matched entries): compare `cron_expression` against
+`*/15 * * * *` AND compare `prompt` for the `"TOMBSTONED"` fragment (the FIX-COWORK-FIRE-ELECTION-
+TICK-TOMBSTONE content marker — its absence is exactly the stale-prompt bug this fix closes, see
+rollout note below).
 
-Scan output for any entry matching ALL of:
-- `cron_expression` = `*/15 * * * *`
-- `description` contains `cowork-team`
-
-**If found → STOP. Log:** `[cron-cowork-team] Master dispatcher already registered (id=<id>). No-op.`
-
-Do NOT create a duplicate. This is the idempotency guarantee.
+| Phase 1 | Phase 2 | Action |
+|---|---|---|
+| no match | — | genuinely missing → **Step 2** (CronCreate) |
+| match | both values match | present-and-correct → **STOP, no-op.** Log `"[cron-cowork-team] Master dispatcher already registered (id=<id>). No-op."` |
+| match | either value mismatches | present-but-WRONG → `CronDelete(id=<found_id>)` THEN **Step 2** (CronCreate canonical) — replace in place, never add a 2nd copy |
 
 ---
 
 ## Step 2 — Register the master CronCreate
 
-Only execute this step if Step 1 found no existing entry.
+Reached from Step 1d's "missing" or "mismatch" branch (mismatch branch runs `CronDelete` first,
+immediately above).
 
 <!-- BGFAN-1: The dispatcher that runs on each tick (cowork-team/flow/main.md → spawn-fanout.md) MUST spawn all cowork agents with run_in_background=true. Canonical rule → docs/protocols/agent-chaining-protocol.md § Background Spawn Mandate -->
 
@@ -123,13 +190,20 @@ CronList
 
 ---
 
-## FIX-COWORK-FIRE-ELECTION-TICK-TOMBSTONE rollout note (NFR-5(b)/(c))
+## FIX-COWORK-FIRE-ELECTION-TICK-TOMBSTONE rollout note (NFR-5(b)/(c)) — SUPERSEDED
 
-**A bare `/cron-cowork-team` re-run after this fix ships is a no-op.** Step 1's idempotency
-guard finds the already-registered `*/15 * * * *` entry (matched by `cron_expression` +
-`description` only, per Step 1 above) and STOPs — it does **not** diff or re-propagate the
-`prompt:` text, so the live armed cron keeps running the OLD prompt string (no `TOMBSTONED`
-clause, no defensive fallback) until it is explicitly replaced.
+**SUPERSEDED by FIX-CRON-REARM-CROSS-SESSION-DEDUP (2026-08-06/07).** Step 1d's two-phase
+classify now checks Phase 2 VALUE for the `"TOMBSTONED"` prompt fragment specifically — a bare
+`/cron-cowork-team` re-run correctly detects a stale `prompt:` (identity match + value mismatch)
+and self-heals via `CronDelete` + `CronCreate`, closing the gap this note originally flagged. The
+history below is kept for incident record; the manual rollout requirement it describes no longer
+applies going forward.
+
+**A bare `/cron-cowork-team` re-run BEFORE this fix shipped was a no-op.** The OLD Step 1
+idempotency guard found the already-registered `*/15 * * * *` entry (matched by `cron_expression` +
+`description` only) and STOPped — it did **not** diff or re-propagate the `prompt:` text, so the
+live armed cron kept running the OLD prompt string (no `TOMBSTONED` clause, no defensive fallback)
+until it was explicitly replaced.
 
 **Rollout requires an explicit `CronDelete` + `CronCreate` re-arm — this is a required
 post-merge deployment step, not optional cleanup:**

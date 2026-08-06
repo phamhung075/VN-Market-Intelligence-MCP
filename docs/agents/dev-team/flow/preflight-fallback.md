@@ -44,6 +44,16 @@ if not presence_result.claimed:
     })
 # Presence result is NEVER a gate — always proceed to SF-1.
 
+# FIX-CRON-REARM-CROSS-SESSION-DEDUP §1.4: renewal heartbeat for the cross-session cron-registration
+# marker (.claude/skills/cron-detect-loop/SKILL.md Step 1c). Best-effort, no-op if this session
+# doesn't own it (or the marker was never claimed yet) — never a gate. system-auditor/flow/main.md
+# Step 0d carries the same addition for cron-registration:detect-loop; multiple flows heartbeating
+# the same marker is harmless/idempotent (whichever fires most recently wins).
+call_tool(server="vn-market", tool="task_heartbeat", arguments={
+  task_id: "cron-registration:detect-loop",
+  owner_client_session: $CLAUDE_CODE_SESSION_ID
+})
+
 # SF-1: SINGLE-FLIGHT GUARD — session-level cron overlap prevention (TTL-only, no owner-session binding)
 # Survives mcp-server restart: TTL clock continues; orphaned lock expiry is natural. → memory: lock_orphaned_by_rebuild
 sf_result = call_tool(server="vn-market", tool="task_claim", arguments={

@@ -147,6 +147,14 @@ if not presence_result.claimed:
       owner_client_session: $CLAUDE_CODE_SESSION_ID
     })
 # Always proceed — presence result is NEVER a gate.
+
+# FIX-CRON-REARM-CROSS-SESSION-DEDUP §1.4: renewal heartbeat for the cross-session cron-registration
+# marker (.claude/skills/cron-cowork-team/SKILL.md Step 1c). Best-effort, no-op if this session
+# doesn't own it (or the marker was never claimed yet) — never a gate on dispatch.
+call_tool(server="vn-market", tool="task_heartbeat", arguments={
+  task_id: "cron-registration:cowork-team",
+  owner_client_session: $CLAUDE_CODE_SESSION_ID
+})
 ```
 
 **Step 0b.2 — Fire-time election (P3)** → Run sub-flow: `docs/agents/cowork-team/flow/leader-lock.md`

@@ -27,3 +27,18 @@ pages) and HSG (0 units) both still sit ahead of VHM in ORDER BY parsed_at ASC �
 record; this journal entry is secondary per DJ-GATE-1 (not strictly mandatory — no DONE/REVIEW
 flip this cycle, but recorded for continuity with S23-S27's chain). Returning short RAW-verified
 status to router: task stays IN_PROGRESS, lock heartbeat-extended, no board change.
+
+### STEP agent-father-S29 · agent-father · 2026-08-07T00:52:00Z
+**task-id:** FIX-CRON-REARM-CROSS-SESSION-DEDUP (Lane 1, brief §4 items 1-2)
+**what-done:** Shipped §2 IDENTITY-then-VALUE classify + §1.2-1.4 `cron-registration:<family>`
+marker in all 3 cron skills, standalone Job1/2 anchor→`description` fix, §1.4 heartbeats in the 3
+named flow files, `cron-registration:*` added to both D4-R1b doc-sync files.
+**what-considered:**
+- Brief mixes `task_kind=`/`kind=` for `task_list_held` — live schema only has `kind`; used that.
+- Brief's Step-0 "already claimed this session" fast path → realized as a blind `task_heartbeat`
+  probe (ticks are fresh agent contexts, no memory) instead of an unimplementable memory check.
+**why-decision:** Brief is SSOT; cross-checked every literal (ttl 691200, threshold min 120) vs
+live `coordinationTools.ts` Zod schema — exact match, no design deviation, only schema-drift fixes.
+**why-change:** AC-4 confirmed by reading live source (not re-derived): `gcExpiredLocks` +
+`KNOWN_LEGIT_PREFIXES` both already exclude `cron-registration:*` (`951ddfdba`/`86b31eccd`). No
+`Cron*` tool called; doc-authoring only.

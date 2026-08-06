@@ -1,5 +1,50 @@
 # Agent Father — Notebook
 
+## Direct-implement 2026-08-07T00:52Z FIX-CRON-REARM-CROSS-SESSION-DEDUP — Lane 1 (guard fix + marker mechanism)
+- Read `docs/architecture-briefs/2026-08-06-cron-rearm-cross-session-dedup.md` §1-2/§4 in full.
+  Sequencing gate (dev-team's `coordinationStore.ts`/`tasksMdJanitorJob.ts` `cron-registration:*`
+  exclusion) confirmed already deployed — RAW-verified live source (`951ddfdba`/`86b31eccd`), not
+  re-derived, per AC-4.
+- 3 skills (`.claude/skills/cron-{cowork-team,detect-loop,standalone-team}/SKILL.md`): restructured
+  Step 1 from single identity+value binary → explicit Phase-1-IDENTITY-then-Phase-2-VALUE classify
+  (§2). Standalone Job1/Job2 identity anchor switched `db-integrity-probe.sh` (shared,
+  ambiguous) → `description`'s `"CADRAT-2 Job A"`/`"CADRAT-2 Job B"` (already-live tokens,
+  confirmed in `register-job-db-integrity-{weekday,offhours}.md`). detect-loop Job1 anchor left
+  as prompt-substring `dev-team/flow/main.md` (not `description`, which bakes in cadence text) per
+  brief's explicit naming-trap warning. cowork-team master's Phase-2 VALUE check now includes the
+  `"TOMBSTONED"` prompt fragment, closing the self-flagged FIX-COWORK-FIRE-ELECTION-TICK-TOMBSTONE
+  gap (marked SUPERSEDED in that section, history kept).
+- Added the §1.2 cross-session marker guard (fast-path `task_heartbeat` probe →
+  `task_list_held(kind="sprint-task")` client-filtered → session-presence liveness cross-check →
+  `task_force_release_orphan` on confirmed-dead → `task_claim` register) ahead of each skill's
+  local classify. One marker per skill (`cron-registration:cowork-team`/`detect-loop`/
+  `standalone-team`), `task_kind:"sprint-task"` reused, `ttl_seconds:691200`,
+  `orphan_threshold_seconds` 7200 (cowork-team/detect-loop) / 120 (standalone-team, tool minimum —
+  no natural tick hook for this family, session-presence is the sole practical staleness signal).
+- Renewal heartbeats (§1.4) added to exactly the 3 named per-tick flow files:
+  `cowork-team/flow/main.md` Step 0b.1, `dev-team/flow/preflight-fallback.md`,
+  `system-auditor/flow/main.md` Step 0d. Did NOT touch `dispatch-claim/CARD.md` Step 0a (explicit
+  out-of-scope, universal hot path). Verified live: for cowork-team/dev-team, the named
+  presence-block only runs on the ERROR-fallback/manual-run path (WU-1/WU-2 preflight scripts
+  bypass it on the common SILENT/WORK/RUN/SKIP path) — added there anyway per exact task
+  instruction; not a correctness gap since session-presence (not this marker's own heartbeat_at)
+  is the documented PRIMARY staleness oracle (§1.3) for dead-session detection. Flagged
+  transparently in RETURN, did not expand scope into the out-of-zone `.sh` scripts to "fix" it.
+- lane1_addendum doc-sync (2 files, explicitly my zone per the parent row, dev-team confirmed both
+  untouched): `system-auditor/handlers.md` Step R-1b item 1 + `audit-dimensions.md` D4-R1b table —
+  both now list `cron-registration:*` in the known-legit exclusion whitelist, matching the live
+  `KNOWN_LEGIT_PREFIXES` code exactly.
+- Did NOT call any `Cron*`/`task_claim`/`task_heartbeat` tool (plan/spec authoring only, per brief's
+  own constraint). Did NOT touch `apps/mcp-server/src/**` (out of zone, already fixed by dev-team).
+  Did NOT perform §3's one-time remediation (explicitly the user's own action, zero agent
+  involvement by design).
+- Files changed: `.claude/skills/cron-cowork-team/SKILL.md`, `.claude/skills/cron-detect-loop/
+  SKILL.md`, `.claude/skills/cron-standalone-team/SKILL.md`, `docs/agents/cowork-team/flow/main.md`,
+  `docs/agents/dev-team/flow/preflight-fallback.md`, `docs/agents/system-auditor/flow/main.md`,
+  `docs/agents/system-auditor/handlers.md`, `docs/agents/system-auditor/audit-dimensions.md`. No
+  `register.md`/`register-job-*.md` edits needed — none of the `CronCreate` call bodies changed,
+  only the guard match logic that decides when to run them.
+
 ## Verify (dev-team S2 resume, P0) 2026-08-06T23:01Z FIX-REFINE-SUBFLOW-OPTIONC-CONTRACT-DRIFT — AC-7 recheck #2, still open
 - Resumed own prior in-flight task after original lock TTL lapsed w/o release. Router had
   already re-claimed `task:FIX-REFINE-SUBFLOW-OPTIONC-CONTRACT-DRIFT` under my session
@@ -27,57 +72,6 @@
   cycle, silently breached by the 19:12Z entry with no `CAP-REACHED` marker. Per skill's own
   protocol, appended the marker + rolled this cycle's STEP to `-2.md` rather than repeat the
   breach; a `bug`-channel telegram alert is owed but not sent (no telegram binding this session).
-
-## Verify (router-direct dispatch, P0) 2026-08-06T19:12Z FIX-REFINE-SUBFLOW-OPTIONC-CONTRACT-DRIFT — AC-7 recheck, still open
-- Re-claimed same row a peer instance shipped AC-1..AC-6 for (`da489f36f`, this session's
-  history). Independently re-verified (not trusted from the prior notebook entry): grepped
-  `docs/agents/refine_bctc_md/` + `.claude/agents/refine_bctc_md.md` for `execute_sub_flow_logic`,
-  `Task return value`, `orchestrator collects`, `<=7 windows`, `PARTIAL_EXIT` — every remaining
-  hit is explanatory prose describing the FIXED defect (size-justification header, the
-  anti-confabulation line itself, the restated-enum line naming `PARTIAL_EXIT` as invalid), zero
-  live drift. Confirmed the explicit `Read docs/agents/refine_bctc_md/flow/<page_type>.md` step
-  is present (main.md:111-114). AC-1..AC-6 stand.
-- **AC-7 still not satisfiable — found the actual reason, not just "no fire happened yet":**
-  I hold no `mcp__gateway__call_tool` binding in this session (confirmed: tool call errored
-  `No such tool available`), so I RAW-verified via `docker exec` into the live
-  `vn-market-intelligence-mcp-mcp-server-1` container + `bun:sqlite` against the SAME
-  `/app/data/market.db` the server runs on (not a host-mounted copy — session memory
-  `feedback_live_db_is_named_volume_not_host_data`) — schema read from `sqlite_master` first,
-  no guessed column names (`feedback_contract_from_live_payload_not_schema_comment`).
-  - Report `a3a41225` (VHM_2026_Q1): `bctc_refined_units` = **0 rows**, `refine_status='PENDING'`,
-    unchanged. NOT `>12` — AC-7's literal gate fails.
-  - Slot-4's post-fix fire DID happen and DID work: `last_fired=2026-08-06T16:36:27Z` (after fix
-    commit `da489f36f` at `15:17:45Z` UTC), and it pushed a full 12-unit chunk
-    (`unit-0012`..`unit-0023`, 3 DONE + 9 FAILED, all inserted — `pushed_this_fire=12`, so this
-    fire's STATUS would correctly be `PARTIAL`, never `PARTIAL_EXIT`/zero-push) to a DIFFERENT
-    report: `76129128-947c-422b-a591-e1d2b95cbeb8` (KBC_2026_Q1). This is real evidence the
-    contract-drift class of bug is fixed — but not the report AC-7 names.
-  - **Root cause of the mismatch, RAW-confirmed via `get_bctc_pending_refine`'s own SQL** (Branch
-    3, `ORDER BY parsed_at ASC`): KBC (`parsed_at=2026-06-07T18:56:06.899Z`) and HSG
-    (`ae1f30bf...`, `parsed_at=2026-06-07T19:03:52.763Z`) both sit strictly ahead of VHM
-    (`parsed_at=2026-06-07T19:03:53.332Z`, ~0.6s later) in the eligible queue and neither is
-    finished (KBC: 24/`?` units pushed, still `PENDING`; HSG: 0 units pushed). The `limit:1`
-    "oldest pending row" fetch in every slot's `trigger_prompt` has no ticker/report_id
-    targeting — it cannot reach VHM until both clear. Checked the 8 other older PARTIAL/FAILED
-    reports (ACB/VEA/VCB/GVR/HPG/HVN/MBB/POW, all parsed April-June) for head-of-line blocking
-    too — all have `remaining_non_terminal=0`, correctly excluded by the tool's own exclusion
-    SQL, not blocking.
-  - Did NOT re-enable slots 1-3 — AC-7 ties re-enable to the canary confirming push to a3a41225
-    specifically; re-enabling before that (especially now that the "fix works generically" signal
-    already exists from KBC) would defeat the one purpose the pause serves. Left slots 1-3
-    `enabled:false`, slot-4 sole canary, unchanged.
-  - Did not touch `apps/mcp-server` (out of scope) or `docs/data/cowork-schedule.json` (no board
-    change decided this cycle) — zero code diff this cycle, verification-only. No commit needed
-    for `docs/agents/`/`.claude/agents/` (all already correct from `da489f36f`); this notebook +
-    decision-journal entry is the only write.
-  - Returning `PIPELINE: blocked-pending-live-verification` to router/PO, same as the prior
-    instance, with the sharper diagnosis attached — this is a QA-gated row per its dispatch;
-    handing to `qa`/`po`, not self-closing. Next observer: RAW-check
-    `bctc_refined_units WHERE report_id='a3a41225-3491-4b4f-b4d0-3b80a989b76a'` (or
-    `get_bctc_refined` with `fields:"ids"` once gateway-bound) for `total_units > 0` — it is
-    currently 0, not 12, so even the row's own ">12" framing under-states the gap; do not accept
-    a fired agent's self-report as that evidence. Full detail:
-    `sprint-COWORK-GUARANTEED-SLOT-CATCHUP-agent-father.md` STEP agent-father-S27.
 
 ## TE-T05 (router-direct dispatch, P1) 2026-08-06T19:25Z — end-0-cowork composite shipped
 - Built `.claude/skills/end-0-cowork/SKILL.md` (87L, target ~110L) mirroring `step-0-cowork`'s

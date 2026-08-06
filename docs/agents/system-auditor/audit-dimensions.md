@@ -52,7 +52,7 @@ This file is the canonical registry of what system-auditor checks and why. Each 
 | Check | Description | Pass condition |
 |-------|-------------|---------------|
 | D4-R1 | `task_list_held(kind="sprint-task", expired=false)` MCP call | Tool responds (empty or populated); empty AND `orch-state.json .head.active_task_id` non-null → alert |
-| D4-R1b | Exclusion whitelist (`cron:*`, `*-singleton`, `po-triage-*`, `esc-datacov:*`, `esc-deepdive:*`, `session-presence*`, `commit-mutex*`, `intent:*`) + live-concurrent-session guard | Held locks matching either filter are excluded from D4-R2/D4-R3 entirely (FIX-D4-HELD-LOCK-NO-BOARD-ROW-RECONCILE) |
+| D4-R1b | Exclusion whitelist (`cron:*`, `cron-registration:*`, `*-singleton`, `po-triage-*`, `esc-datacov:*`, `esc-deepdive:*`, `session-presence*`, `commit-mutex*`, `intent:*`) + live-concurrent-session guard | Held locks matching either filter are excluded from D4-R2/D4-R3 entirely (FIX-D4-HELD-LOCK-NO-BOARD-ROW-RECONCILE; `cron-registration:*` added FIX-CRON-REARM-CROSS-SESSION-DEDUP 2026-08-07) |
 | D4-R2 | orch-state.json `.head` cross-check (locks surviving D4-R1b only) | `.head.active_task_id` matches the held lock task_id (or both null) |
 | D4-R3 | `.task_board` owner/status cross-check (locks surviving D4-R1b only) | For each held lock: task_board entry exists, owner matches `task_locks.owner_agent`, status = `IN_PROGRESS` |
 | D4-R4 | git log concurrent-commit detection | No two commits to `docs/data/orch/orch-state.json` land within a 30-second window (unaffected by R1b/R4b — not lock-based) |

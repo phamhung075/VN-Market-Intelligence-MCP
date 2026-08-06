@@ -264,6 +264,17 @@ if fire_result.claimed == false:
     EXIT   # clean exit — no audit work; no orphan signals
 # else: claimed=true → won the election → proceed with tier work
 # Release FIRE_TASK_ID at end of tier's notebook-write + commit step (see each tier's end-of-cycle).
+
+# FIX-CRON-REARM-CROSS-SESSION-DEDUP §1.4: renewal heartbeat for the cross-session cron-registration
+# marker (.claude/skills/cron-detect-loop/SKILL.md Step 1c). Fires on every tier's every cycle that
+# reaches this point (won election OR re-entrant — never on the SKIP/EXIT branch above). Best-effort,
+# no-op if this session doesn't own it. dev-team/flow/preflight-fallback.md carries the same
+# addition for cron-registration:detect-loop; multiple flows heartbeating the same marker is
+# harmless/idempotent (whichever fires most recently wins).
+call_tool(server="vn-market", tool="task_heartbeat", arguments={
+  task_id: "cron-registration:detect-loop",
+  owner_client_session: $CLAUDE_CODE_SESSION_ID
+})
 ```
 
 **Release convention:** call `task_release(task_id=FIRE_TASK_ID, owner_client_session=$CLAUDE_CODE_SESSION_ID)` at the very end of the tier's cycle (after notebook write + commit step). This is the final step before RETURN. TTL=600s is the crash-safety backstop; explicit release is the normal exit path.
