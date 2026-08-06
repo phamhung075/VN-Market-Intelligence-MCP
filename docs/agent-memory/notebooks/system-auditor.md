@@ -179,3 +179,92 @@ CONTRACT-CONTRADICTION: NONE
 
 [OUTPUT-CONTRACT] signals_posted=1 | telegram_sent=1 | signal_queue_rows_written=1 | dashboard_rows=1 | dedup_skipped=0
 CONTRACT-CONTRADICTION: NONE
+
+## c70 · 2026-08-06T20:42:15Z
+### Audit Run Tier-1 (20:42 UTC 2026-08-06)
+- Tier: 1 | Services: 13 checked | Sources: 0 | DB checks: 0
+- Anomalies: 0 new (C 0, W 1-dedup-skip, I 0) | Status: DEGRADED (floor breach — acknowledged, tracked by FU-RAG-DEPLOY-MEMORY)
+
+### Findings:
+**A-01 to A-11 (Container Status):** All 13 host_runtime_set services UP ✓
+
+**A-12 to A-20 (Health Endpoints):** All 5 endpoints OK (HTTP 200) ✓
+
+**A-20 pdf-extractor multi-probe:** 3/3 probes pass ✓
+
+**A-21 (Restart Count):** mcp-server RestartCount=0, no crashes in 4h window ✓
+
+**A-30 (Memory Pressure):**
+- mcp-server: 28.69% (881.3 MiB / 3 GiB) → PASS ✓
+- **rag-service: 98.08% (≈1004 MiB / 1024 MiB, 19.7 MiB free) → WARN (FLOOR BREACH)**
+  - Absolute floor threshold: 40 MiB
+  - Current headroom: 19.7 MiB (BELOW FLOOR)
+  - Tracked by: FU-RAG-DEPLOY-MEMORY (open, capacity planning context)
+  - Signal: mem_pressure:rag-service:A-30-floor-breach (SKIP-dedup, within 7d window of 2026-08-06T17:15:06Z)
+  - Signal ID: sys-20260806T204129-7435
+
+**A-32 (Disk):** 60% < 85% → PASS ✓
+
+**A-33 (Hook Enforcement):** INFO/grey (expected scripts not deployed)
+
+### Notes:
+- Spawn verdict: FAILURE (mem_creep, rag-service floor-breach flagged in pre-gate)
+- Recurring condition (3rd occurrence this session) — acknowledged-degraded, backlog fix-task tracks it
+- Dedup status: Same dedup key was first emitted 2026-08-06T17:15:06Z (c66), still within 7-day window
+- Current cycle detects genuine floor breach (19.7 MiB < 40 MiB floor) but is suppressed from duplicate alert per dedup ledger
+
+### RAW-PROBE:
+```
+=== AUDITOR PROBE 2026-08-06T20:40:31Z ===
+
+--- docker ps -a ---
+NAMES                                             STATUS                    IMAGE                                           CREATED
+vn-market-intelligence-mcp-mcp-server-1           Up 54 minutes (healthy)   vn-market-intelligence-mcp-mcp-server           54 minutes ago
+vn-market-intelligence-mcp-stock-price-1          Up 5 hours (healthy)      vn-market-intelligence-mcp-stock-price          5 hours ago
+vn-market-intelligence-mcp-rag-service-1          Up 8 hours (healthy)      vn-market-intelligence-mcp-rag-service          8 hours ago
+vn-market-intelligence-mcp-macro-indicators-1     Up 7 days (healthy)       vn-market-intelligence-mcp-macro-indicators     7 days ago
+vn-market-intelligence-mcp-pdf-extractor-1        Up 2 days (healthy)       vn-market-intelligence-mcp-pdf-extractor        9 days ago
+vn-market-intelligence-mcp-frontend-1             Up 13 days (healthy)      vn-market-intelligence-mcp-frontend             13 days ago
+mcp-gateway                                       Up 3 weeks (healthy)      mcpservergatway-gateway                         3 weeks ago
+vn-market-intelligence-mcp-api-gateway-1          Up 3 weeks (healthy)      vn-market-intelligence-mcp-api-gateway          3 weeks ago
+vn-market-intelligence-mcp-flaresolverr-1         Up 3 weeks (healthy)      ghcr.io/flaresolverr/flaresolverr:latest        3 weeks ago
+vn-market-intelligence-mcp-news-fetch-1           Up 3 weeks (healthy)      vn-market-intelligence-mcp-news-fetch           3 weeks ago
+vn-market-intelligence-mcp-technical-analysis-1   Up 3 weeks (healthy)      vn-market-intelligence-mcp-technical-analysis   3 weeks ago
+vn-market-intelligence-mcp-alert-engine-1         Up 3 weeks (healthy)      vn-market-intelligence-mcp-alert-engine         3 weeks ago
+vn-market-intelligence-mcp-kinh-dich-service-1    Up 3 weeks (healthy)      vn-market-intelligence-mcp-kinh-dich-service    3 weeks ago
+
+--- health endpoints ---
+[health] mcp-server:3000/health OK (HTTP 200)
+[health] api-gateway:4000/health OK (HTTP 200)
+[health] macro-indicators:5004/health OK (HTTP 200)
+[health] pdf-extractor:5001/health OK (HTTP 200)
+[health] frontend:3001/ OK (HTTP 200)
+
+--- restart count ---
+Container=/vn-market-intelligence-mcp-mcp-server-1 RestartCount=0
+
+--- memory pressure ---
+Container=vn-market-intelligence-mcp-mcp-server-1 MemPerc=28.69% MemUsage=881.3MiB / 3GiB
+
+--- memory pressure multi-probe reclamation (A-30) ---
+[A-30] SKIP deep-probe — baseline 28.69% < 85% investigate-gate
+
+--- disk df -h / ---
+Filesystem        Size    Used   Avail Capacity iused ifree %iused  Mounted on
+/dev/disk1s4s1   233Gi    13Gi   9,2Gi    60%    393k   96M    0%   /
+
+--- pdf-extractor in-container multi-probe (A-20) ---
+[A-20-PROBE-1] in-container HTTP 200
+[A-20-PROBE-2] in-container HTTP 200
+[A-20-PROBE-3] in-container HTTP 200
+[A-20] pass_count=3/3
+
+=== PROBE DONE ===
+```
+
+[emit-signal] SKIP-dedup dedup_key=mem_pressure:rag-service:A-30-floor-breach last_sent=2026-08-06T17:15:06Z id=sys-20260806T204129-7435
+
+[OUTPUT-CONTRACT] signals_posted=0 | telegram_sent=0 | signal_queue_rows_written=1 (via E-3 SKIP-dedup) | dashboard_rows=0 | dedup_skipped=1
+CONTRACT-CONTRADICTION: NONE
+
+---
