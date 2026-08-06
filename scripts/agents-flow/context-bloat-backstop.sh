@@ -38,15 +38,30 @@
 #   - jq called at most once (after classification)
 #   - wc -l and wc -c each called at most once (after classification confirms governed);
 #     a second settled read of both happens only on the settle-window breach path
-#   - Script NEVER blocks the write — always exits 0
+#   - Script NEVER blocks the write — exit code (0 or 1, see NON-BLOCKING
+#     note below) cannot undo an already-completed Write/Edit/NotebookEdit
 #   - Script NEVER invokes any Claude tool
 #
-# Non-blocking: always exit 0. Failure modes are silent (|| exit 0 guards).
+# NON-BLOCKING: exit code never undoes the write that already happened.
+#   0 = clean pass OR legitimate no-op (unchanged from before this fix).
+#   1 = FR-2 discriminator (UC-CRITIC-HOOKS-ENFORCEMENT) detected a
+#       prerequisite crash — e.g. `git`/`jq` binary missing, stdin capture
+#       failed, or the file-size-caps.json SSOT itself is corrupted — cases
+#       that used to collapse silently into the same exit 0 as "non-governed
+#       path" (see `.claude/settings.local.json`'s invocation, which no
+#       longer swallows this exit code behind `2>/dev/null || true`).
+# Failure modes on the ALREADY-GOVERNED path (breach detection itself) are
+# unaffected by this change and still always exit 0.
 set -u
 
+# FR-2 (UC-CRITIC-HOOKS-ENFORCEMENT): shared crash-vs-clean-pass discriminator.
+source "$(dirname "${BASH_SOURCE[0]}")/lib/hook-guard.sh"
+
 # --- Resolve project root (matches branch-hygiene-stop.sh pattern) ---
-PROJECT_ROOT="$(git rev-parse --show-toplevel 2>/dev/null || echo "${CLAUDE_PROJECT_DIR:-}")"
-[ -z "$PROJECT_ROOT" ] && exit 0
+if ! PROJECT_ROOT=$(hg_resolve_project_root); then
+  exit 1   # git binary itself missing — real prerequisite crash, not "no project root"
+fi
+[ -z "$PROJECT_ROOT" ] && exit 0   # legitimately outside any project context — unchanged no-op
 
 CAPS_FILE="$PROJECT_ROOT/docs/data/file-size-caps.json"
 SIGNALS_DIR="$PROJECT_ROOT/docs/signals"
@@ -55,11 +70,15 @@ SIGNALS_DIR="$PROJECT_ROOT/docs/signals"
 [ -f "$CAPS_FILE" ] || exit 0
 
 # --- Parse the file path from PostToolUse JSON on STDIN ---
-STDIN_JSON="$(cat 2>/dev/null || true)"
-[ -z "$STDIN_JSON" ] && exit 0
+if ! STDIN_JSON=$(hg_run "cat:stdin" cat); then
+  exit 1   # cat itself crashed reading the hook payload — real prerequisite failure
+fi
+[ -z "$STDIN_JSON" ] && exit 0   # cat succeeded, payload genuinely empty — unchanged no-op
 
-FILE_PATH="$(echo "$STDIN_JSON" | jq -r '.tool_input.file_path // empty' 2>/dev/null || true)"
-[ -z "$FILE_PATH" ] && exit 0
+if ! FILE_PATH=$(printf '%s' "$STDIN_JSON" | hg_run "jq:tool_input.file_path" jq -r '.tool_input.file_path // empty'); then
+  exit 1   # jq itself crashed — NOT the same as "no file_path field"
+fi
+[ -z "$FILE_PATH" ] && exit 0   # jq succeeded, field genuinely absent — unchanged no-op
 
 # Resolve to absolute path if relative (using CLAUDE_PROJECT_DIR or project root)
 case "$FILE_PATH" in
@@ -81,20 +100,33 @@ MATCHED_CLASS=""
 MATCHED_EXEMPT_SIBLING=""
 MATCHED_EXEMPT=""
 
-while IFS=$'\t' read -r pattern cap class exempt_sibling exempt_flag; do
-  # Use bash glob-style match (fnmatch via case) — ** not natively supported
-  # in bash case, but our patterns are shallow enough to work with simple globs.
-  # For docs/agents/*/flow/**/*.md and .claude/skills/**/*.md we use an extended match.
-  case "$REL_PATH" in
-    $pattern)
-      MATCHED_CAP="$cap"
-      MATCHED_CLASS="$class"
-      MATCHED_EXEMPT_SIBLING="$exempt_sibling"
-      MATCHED_EXEMPT="$exempt_flag"
-      break
-      ;;
-  esac
-done < <(jq -r '.caps[] | [.pattern, (.cap | tostring), .class, (.exempt_if_sibling // ""), (.exempt // false | tostring)] | @tsv' "$CAPS_FILE" 2>/dev/null || true)
+# FR-2 highest-value target (architect-flagged): before this fix, a
+# CORRUPTED file-size-caps.json (the governance SSOT itself) made jq exit
+# nonzero, which fell through `2>/dev/null || true` as an EMPTY TSV — that
+# then read as "REL_PATH matched no governed pattern" (MATCHED_CAP stays
+# empty), the exact same outcome as a genuinely non-governed path. This is
+# the worst instance of the whole defect class: an SSOT-corruption event
+# silently masquerading as "nothing to check", not a per-call fluke.
+if ! CAPS_TSV=$(hg_run "jq:file-size-caps.json" jq -r '.caps[] | [.pattern, (.cap | tostring), .class, (.exempt_if_sibling // ""), (.exempt // false | tostring)] | @tsv' "$CAPS_FILE"); then
+  exit 1   # SSOT parse itself crashed (corrupted JSON) — NOT "no caps configured"
+fi
+
+if [ -n "$CAPS_TSV" ]; then
+  while IFS=$'\t' read -r pattern cap class exempt_sibling exempt_flag; do
+    # Use bash glob-style match (fnmatch via case) — ** not natively supported
+    # in bash case, but our patterns are shallow enough to work with simple globs.
+    # For docs/agents/*/flow/**/*.md and .claude/skills/**/*.md we use an extended match.
+    case "$REL_PATH" in
+      $pattern)
+        MATCHED_CAP="$cap"
+        MATCHED_CLASS="$class"
+        MATCHED_EXEMPT_SIBLING="$exempt_sibling"
+        MATCHED_EXEMPT="$exempt_flag"
+        break
+        ;;
+    esac
+  done <<< "$CAPS_TSV"
+fi
 
 # --- Non-governed path → instant exit (hot path, no wc -l) ---
 [ -z "$MATCHED_CAP" ] && exit 0

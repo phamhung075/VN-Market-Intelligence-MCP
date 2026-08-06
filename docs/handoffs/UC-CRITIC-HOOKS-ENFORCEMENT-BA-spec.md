@@ -184,3 +184,50 @@ ZONE: cross-service/
 NEXT: developer — atomic, single-zone, fully specified (no PM decomposition needed).
 HANDOFF: docs/handoffs/UC-CRITIC-HOOKS-ENFORCEMENT-BA-spec.md
 PIPELINE: continue
+
+---
+
+## [Developer] Implementation Record
+
+**FR-1 (invocation boundary, live-file-only):** dropped `2>/dev/null || true` from exactly the 4 CRITICAL/HIGH invocation strings in `.claude/settings.local.json` (`branch-hygiene-stop.sh`, `notebook-auto-prune.sh`, `context-bloat-backstop.sh`, `orch-state-hook-bash-backstop.sh`). Left `tmux-agent.sh status`, the `tmux set-option` PreToolUse hook, and `orch-state-hook-prewrite.mjs` byte-for-byte untouched. Re-confirmed live: `git check-ignore -v .claude/settings.local.json` still matches — this edit carries no commit surface, as architect flagged; `git status`/`git diff` will never show it.
+
+**FR-2 (shared discriminator):** new `scripts/agents-flow/lib/hook-guard.sh` — `hg_run <label> <cmd...>` (merged stdout+stderr capture, zero new subprocess forks vs. the pre-existing call site — deliberately NOT using a temp file/fd-juggling to keep NFR-3) and `hg_resolve_project_root` (a `command -v git` builtin check discriminates "git binary missing" from "git ran fine, not inside a repo", zero new forks on either branch). Applied at exactly the input-boundary guards architect named per script:
+- `orch-state-hook-bash-backstop.sh`: PROJECT_ROOT resolution, `mktemp` for the stdin-capture tmp file, the `cat >` stdin write, the `jq` command-field extraction (canonical pattern), and the validator-missing check (`[ -f "$VALIDATOR" ]` → now a real PREREQUISITE-FAILURE, since ORCHSTATE already exists — this is CRITICAL-tier's core concern, a silently-disabled backstop).
+- `context-bloat-backstop.sh`: PROJECT_ROOT resolution, stdin capture (`cat` + `jq` file_path extraction), and the `file-size-caps.json` caps-TSV `jq` read — architect's named "highest-value target" (a corrupted governance SSOT used to fall through as "non-governed path", the worst instance of the defect class). Deliberately did NOT wrap the `wc -l`/`wc -c` measurement calls (lines architect listed as read/considered, not part of the canonical FR-2 pattern, and `wc` is a core-OS utility outside BA's named dependency-removal risk set (`git`/`jq`/`bun` via the whitelisted Homebrew `rm -rf`) — wrapping it added real regression risk (pipefail-sensitive rewrite) to a hot-path/well-tested script for negligible coverage gain; flagged here as a deliberate scope-narrowing, not an oversight.
+- `notebook-auto-prune.sh`: PROJECT_ROOT resolution + stdin capture (same shape as context-bloat-backstop.sh). The separate `LINE_CAP`-from-SSOT read (old L306, its own `case ... ''|*[!0-9]*) LINE_CAP=200` fallback) was deliberately left untouched — architect flagged it as already-safe/non-gating, explicitly not part of this fix's scope.
+- `branch-hygiene-stop.sh`: opposite polarity per architect's design — the 3 `git` calls (`rev-parse --abbrev-ref HEAD`, `status --porcelain`, `worktree list --porcelain`) now flip a `problems+=(...)` entry AND set a `prereq_crash` flag on failure (rather than an early `exit 1`, since these feed a report); script exits 1 only if `prereq_crash=1`, still exits 0 for a normal "real problems found" report (unchanged).
+- Exit convention, uniform across all 4: `0` = clean pass/legit no-op (unchanged), `1` = FR-2 discriminator caught a prerequisite crash.
+
+**Incidental root-cause fix:** while crash-testing `orch-state-hook-bash-backstop.sh`, found its `mktemp` template (`orch-backstop-stdin-XXXXXX.json`) has a suffix AFTER the trailing `X`s — BSD/macOS `mktemp` (unlike GNU) only randomizes `X`s at the very end of the template, so this literally created the SAME non-random filename every invocation; the first-ever run on a given `$TMPDIR` succeeds, then every subsequent run collides with "File exists". This was invisible before (silently swallowed by the very wrapper this task removes) and would have made the CRITICAL backstop non-functional after its very first firing on any given host. Fixed by dropping the `.json` suffix from the template (functionally irrelevant — the file's extension was never read by anything).
+
+**FR-3 (liveness backstop):** new **A-33 "Hook Enforcement Liveness"** section in `docs/agents/system-auditor/flow/tier1-probe.md` (after A-32/Disk, before "MCP System Status") — `check_hook_liveness()` helper checks (a) file exists, (b) executable bit, (c) registered in the owning settings file (`.claude/settings.local.json` for the 4 load-bearing + 2 of the 3 LOW-tier; `.claude/settings.json` for graphify) via a `jq` substring match against `.hooks[][].hooks[]?.command`. Load-bearing hooks get (a)+(b)+(c); the 3 LOW-tier hooks get (c) only, per FR-6. Verified live against the real `.claude/settings.local.json`/`.claude/settings.json` — all 7 currently register clean (empty `reasons`); a synthetic missing-script case correctly returns `missing:...` + `not-registered:...`. Emits via `scripts/emit-audit-signal.sh` on WARN (load-bearing only), dedup key `hook_enforcement_liveness:<script-basename>` (NFR-2). FR-3(d) ("evidence it fired") explicitly descoped per architect — no new plumbing (FR-4/NFR-4).
+
+**Test scope resolution:** the router-relayed test scope listed "add coverage for orch-state-hook-bash-backstop.sh (currently zero test coverage)" AND separately "extend orch-state-hook.test.mjs AC-3" — these are the SAME target (the AC-3 `describe` block in that file already exercises `orch-state-hook-bash-backstop.sh`, as architect's own Verified Paths note independently confirmed/corrected). Resolved as ONE action: retitled + extended AC-3 (2 new crash-injection cases: `jq` unavailable via `PATH` override, unwritable `TMPDIR`), rather than also minting a redundant parallel test file for the same script.
+
+- `scripts/agents-flow/orch-state-hook.test.mjs`: AC-3 retitled ("exit 0 on pass/no-op, exit 1 on a prerequisite crash"), 2 new crash cases — **21/21 pass** (19 pre-existing + 2 new).
+- `scripts/agents-flow/context-bloat-backstop.test.sh`: +T5 (corrupted `file-size-caps.json` → exit 1) — **5/5 pass**.
+- `scripts/agents-flow/notebook-auto-prune.test.sh`: +T8 (`jq` missing via `PATH` override → exit 1) — **8/8 pass**.
+- `scripts/agents-flow/branch-hygiene-stop.test.sh` (NEW — first-ever coverage): T1 clean/main/no-warning, T2 non-main branch, T3 dirty tree, T4 git-binary-missing crash (opposite polarity, exit 1) — **4/4 pass**. Isolated via a copied fixture repo (this hook resolves its own root via `$0`, not `git rev-parse`, so PROJECT_ROOT env overrides don't apply here the way they do for the other 3 scripts).
+
+**Files modified:** `.claude/settings.local.json` (live-only, untracked — no diff), `scripts/agents-flow/lib/hook-guard.sh` (NEW), `scripts/agents-flow/orch-state-hook-bash-backstop.sh`, `scripts/agents-flow/context-bloat-backstop.sh`, `scripts/agents-flow/notebook-auto-prune.sh`, `scripts/agents-flow/branch-hygiene-stop.sh`, `scripts/agents-flow/orch-state-hook.test.mjs`, `scripts/agents-flow/context-bloat-backstop.test.sh`, `scripts/agents-flow/notebook-auto-prune.test.sh`, `scripts/agents-flow/branch-hygiene-stop.test.sh` (NEW), `docs/agents/system-auditor/flow/tier1-probe.md`, `docs/policies/dev-standards.md`, `docs/WORK.md`.
+
+**Tests written:** 2 new + AC-3 retitle (`orch-state-hook.test.mjs`), T5 (`context-bloat-backstop.test.sh`), T8 (`notebook-auto-prune.test.sh`), 4 new (`branch-hygiene-stop.test.sh`) — all GREEN, no regressions (19→21, 4→5, 7→8, 0→4).
+
+**tsc status:** N/A — zone is `cross-service/` (pure bash/md/json), no `apps/` TS/Go source touched.
+
+**Full suite:** all touched/extended shell + `bun:test` files re-run directly and confirmed green (see counts above); no unified cross-repo shell-test runner exists to invoke as a single command (confirmed — each `*.test.sh` is run standalone, matching this file's own precedent for prior `cross-service/` FIX rows).
+
+**Docs updated:** `docs/agents/system-auditor/flow/tier1-probe.md` (new A-33 section), `docs/policies/dev-standards.md` (exit-code line for the orch-state hook gate, +T5 note on the context-bloat regression-test block, new CANONICAL block for `hook-guard.sh`), `docs/WORK.md` (one-liner).
+
+**Graphify:** skipped — no Skill-tool path available to this spawned agent (matches prior developer sessions' documented structural constraint, e.g. `FIX-DEVTEAM-REVIEW-LANE-SECONDARY-DRAIN`'s WORK.md entry).
+
+**Simplicity gate:** PASS — Q1 scope clean (no config knob/flag beyond what FR-1/FR-2/FR-3 require), Q2 no single-use abstractions (`hg_run` has 4 call-sites across 4 scripts, `hg_resolve_project_root` has 3), Q3 senior-test clean, Q4 ratio <50% overhead (scope narrowed twice — `wc` calls, `notebook-auto-prune.sh` LINE_CAP read — rather than expanded to "be thorough", reasons recorded above).
+
+→ journal: `docs/agent-memory/decisions/sprint-UC-CRITIC-HOOKS-ENFORCEMENT-developer.md` [task_id: UC-CRITIC-HOOKS-ENFORCEMENT]
+
+## RETURN (developer)
+DONE: FR-1 (live-only `.claude/settings.local.json` edit, 4 invocations), FR-2 (`hook-guard.sh` + 4 scripts, scoped to named input-boundary guards, 1 incidental BSD-mktemp bug fixed), FR-3 (A-33 in `tier1-probe.md`, reuses `emit-audit-signal.sh`) all implemented. FR-4 satisfied by reuse. FR-5 respected — zero edits to `orch-state-hook-prewrite.mjs`, confirmed. Tests: 21/21 + 5/5 + 8/8 + 4/4 (new file) all GREEN, no regressions.
+ZONE: cross-service/
+NEXT: qa — verify-committed mode (this task has no dedicated branch; changes are on `main` per repo convention). Flag for QA: `.claude/settings.local.json`'s FR-1 edit will NOT appear in `git diff` — verify it directly on disk, not via git.
+HANDOFF: docs/handoffs/UC-CRITIC-HOOKS-ENFORCEMENT-BA-spec.md
+PIPELINE: continue

@@ -198,6 +198,85 @@ check).
 From `PROBE_OUT` `--- disk df -h / ---` section:
 - Capacity column < 85% → PASS; ≥ 85% → WARN; ≥ 95% → CRITICAL
 
+## Hook Enforcement Liveness (A-33) — UC-CRITIC-HOOKS-ENFORCEMENT FR-3
+
+**Rationale:** `Bash(*)` allow-all + per-event-only hooks means a hook script can be
+deleted, `chmod -x`'d, or have its `.claude/settings*.json` entry removed outright, and
+nothing else in the system ever fires to say so — no event depends on the hook having
+run. This is an independent, periodic check that the enforcement mechanism itself is
+still wired up, separate from any single tool-call outcome.
+
+**Scope:** the 4 CRITICAL/HIGH load-bearing hooks (checks a/b/c below) +
+the 3 LOW-tier hooks (check c only — registration-presence, per FR-6; no
+file-existence/executable-bit treatment for these, matching their exempt-from-full-
+redesign status in the BA risk tiers).
+
+```bash
+SETTINGS_LOCAL="$PROJECT_ROOT/.claude/settings.local.json"   # untracked/gitignored — read from disk, not git
+SETTINGS_TRACKED="$PROJECT_ROOT/.claude/settings.json"
+
+check_hook_liveness() {
+  local script_rel="$1" settings_file="$2" match_substr="$3"
+  local script_abs="$PROJECT_ROOT/$script_rel"
+  local reasons=()
+
+  if [ -n "$script_rel" ]; then
+    [ -f "$script_abs" ] || reasons+=("missing:$script_rel")
+    [ -f "$script_abs" ] && [ ! -x "$script_abs" ] && reasons+=("not-executable:$script_rel")
+  fi
+
+  if [ -f "$settings_file" ]; then
+    jq -e --arg m "$match_substr" \
+      '[.hooks[][] | .hooks[]?.command // empty | select(contains($m))] | length > 0' \
+      "$settings_file" >/dev/null 2>&1 || reasons+=("not-registered:$match_substr")
+  else
+    reasons+=("settings-file-missing:$settings_file")
+  fi
+
+  echo "${reasons[*]}"
+}
+```
+
+**4 load-bearing checks (a=exists, b=executable, c=registered):**
+```
+check_hook_liveness "scripts/agents-flow/orch-state-hook-bash-backstop.sh" "$SETTINGS_LOCAL" "orch-state-hook-bash-backstop.sh"
+check_hook_liveness "scripts/agents-flow/context-bloat-backstop.sh"        "$SETTINGS_LOCAL" "context-bloat-backstop.sh"
+check_hook_liveness "scripts/agents-flow/notebook-auto-prune.sh"           "$SETTINGS_LOCAL" "notebook-auto-prune.sh"
+check_hook_liveness "scripts/agents-flow/branch-hygiene-stop.sh"           "$SETTINGS_LOCAL" "branch-hygiene-stop.sh"
+```
+
+**3 LOW-tier checks (c only — pass `""` as script_rel to skip a/b):**
+```
+check_hook_liveness "" "$SETTINGS_LOCAL"   "tmux-agent.sh status"
+check_hook_liveness "" "$SETTINGS_LOCAL"   "tmux set-option"
+check_hook_liveness "" "$SETTINGS_TRACKED" "graphify"
+```
+
+**Verdict:** any non-empty `reasons` string for a load-bearing (CRITICAL/HIGH) hook →
+WARN (this backstop itself may be silently disabled — the exact failure class this
+task exists to close). A non-empty reasons string for a LOW-tier hook → INFO only (no
+signal — cosmetic-only blast radius per BA risk tiers, FR-6).
+
+**FR-3(d) explicitly descoped:** "evidence it fired in a window its trigger condition
+was met" is NOT checked here — no fire-log plumbing exists today and building one would
+be new infrastructure (violates FR-4's "reuse existing, don't invent" + NFR-4's "no new
+dependency stack"). Checks (a)+(b)+(c) alone already close the two edge cases BA named in
+§5 (file deleted/renamed, chmod'd non-executable).
+
+**Emit on WARN** (load-bearing hooks only; dedup scoped per-script per NFR-2):
+```bash
+bash scripts/emit-audit-signal.sh \
+  --check-id "A-33" \
+  --category-type "signal_feedback" \
+  --severity "WARN" \
+  --summary "A-33 hook-liveness: <script-basename> — <reasons>" \
+  --detail-json '{"title":"A-33 FAIL: hook enforcement liveness","detail":"<script-basename>: <reasons>","dedup_key":"hook_enforcement_liveness:<script-basename>"}' \
+  --cycle-tag "$FIRE_TASK_ID"
+```
+Paste the verbatim `[emit-signal] OK|SKIP-dedup|OK-escalation-bypass|ABORT ...` marker
+into the notebook AND `$MARKERS_FILE` — same E-1/E-2/E-3 contract as every other A-xx
+emit in this file (§ Emit per failure below).
+
 ## MCP System Status
 
 ```

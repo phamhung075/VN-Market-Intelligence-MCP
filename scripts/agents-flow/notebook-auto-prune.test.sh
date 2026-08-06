@@ -54,6 +54,16 @@
 #                                      signal (notebook_tiebreak_direction_defaulted, NOT a
 #                                      breach) instead of refusing to prune.
 #
+# T8 (UC-CRITIC-HOOKS-ENFORCEMENT FR-2): `jq` unavailable (PATH override) while
+# reading the PostToolUse stdin payload → exit 1, not the pre-fix silent exit 0
+# ("no file_path field" and "jq itself crashed" used to collapse to the same outcome).
+# NOTE: the SEPARATE LINE_CAP-from-SSOT read further down this script (guarded by its
+# own `case ... ''|*[!0-9]*) LINE_CAP=200` fallback) is DELIBERATELY left untouched by
+# this fix — architect flagged it as already-safe/non-gating (see UC-CRITIC-HOOKS-
+# ENFORCEMENT decision journal) — so no "malformed file-size-caps.json" case is added
+# here (unlike context-bloat-backstop.test.sh's T5, a different call site with no
+# equivalent safe fallback).
+#
 # Run:
 #   bash scripts/agents-flow/notebook-auto-prune.test.sh
 #
@@ -62,7 +72,8 @@
 #               FIX-NOTEBOOK-AUTOPRUNE-SAMEDAY-TIE-DROPS-NEWEST (T5-T7 as originally shipped),
 #               FIX-NOTEBOOK-AUTOPRUNE-DIRECTION-UNRESOLVABLE-ZERO-TS-NOTEBOOKS (T7 updated
 #               2026-07-31 — old assertion encoded the exact "refuse forever" anti-pattern
-#               this task closes; see docs/data/notebook-section-order.json for AC-2 context)
+#               this task closes; see docs/data/notebook-section-order.json for AC-2 context),
+#               UC-CRITIC-HOOKS-ENFORCEMENT (T8)
 set -uo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
@@ -126,6 +137,14 @@ run_prune() {
   local file_path="$1"
   local json="{\"tool_input\":{\"file_path\":\"$file_path\"}}"
   (cd "$TMPDIR_TEST" && echo "$json" | bash "$PRUNE_SH")
+}
+
+# UC-CRITIC-HOOKS-ENFORCEMENT FR-2 crash-injection variant — runs with a caller-supplied
+# PATH so a test can simulate a missing prerequisite binary (e.g. jq).
+run_prune_with_path() {
+  local file_path="$1" test_path="$2"
+  local json="{\"tool_input\":{\"file_path\":\"$file_path\"}}"
+  (cd "$TMPDIR_TEST" && echo "$json" | PATH="$test_path" bash "$PRUNE_SH")
 }
 
 dense_section() {
@@ -426,6 +445,28 @@ else
     echo "FAIL T7: sections_after=$T7_SECTIONS_AFTER has_P=$T7_HAS_P has_Q=$T7_HAS_Q has_R=$T7_HAS_R lines_after=$T7_LINES_AFTER sig_before=$T7_SIG_BEFORE sig_after=$T7_SIG_AFTER sig_type_ok=$T7_SIG_TYPE_OK (expected 2 sections, TASK-R dropped, TASK-P+TASK-Q retained, informational signal emitted)"
     FAIL=$((FAIL + 1))
   fi
+fi
+
+# ── T8 (UC-CRITIC-HOOKS-ENFORCEMENT FR-2): jq unavailable → exit 1, not silent 0 ────
+NO_JQ_BIN=$(mktemp -d /private/tmp/notebook-prune-no-jq-XXXXXX)
+for b in bash cat mktemp printf rm dirname grep awk head tail wc tr mv date git sort shasum sha256sum; do
+  p=$(command -v "$b" 2>/dev/null || true)
+  [ -n "$p" ] && ln -sf "$p" "$NO_JQ_BIN/$b"
+done
+
+T8_FILE="$TMPDIR_TEST/docs/agent-memory/notebooks/t8-jq-missing.md"
+echo "## seed" > "$T8_FILE"
+
+EXIT8=0
+run_prune_with_path "$T8_FILE" "$NO_JQ_BIN" || EXIT8=$?
+rm -rf "$NO_JQ_BIN"
+
+if [ "$EXIT8" -eq 1 ]; then
+  echo "PASS T8: jq unavailable (PATH override) → exit 1 (prerequisite crash surfaced, not swallowed)"
+  PASS=$((PASS + 1))
+else
+  echo "FAIL T8: jq unavailable (PATH override) → exit $EXIT8 (expected 1)"
+  FAIL=$((FAIL + 1))
 fi
 
 # ── Summary ───────────────────────────────────────────────────────────────────

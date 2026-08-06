@@ -23,30 +23,58 @@
 # VALIDATOR: bun scripts/orch-validate.mjs (SSOT-W1-ZOD-VALIDATOR-CLI canonical)
 #   Same binary as the PreToolUse hook — single SSOT schema, no duplication.
 #
-# NON-BLOCKING: always exits 0 (the action already happened).
-#   On failure: outputs a structured warning to stdout which Claude Code surfaces
-#   as feedback, prompting corrective action (rollback / fix).
+# NON-BLOCKING: exit code never undoes the Bash call that already happened.
+#   0 = clean pass OR legitimate no-op (unchanged from before this fix).
+#   1 = FR-2 discriminator (UC-CRITIC-HOOKS-ENFORCEMENT) detected a
+#       prerequisite crash — e.g. `git`/`jq` binary missing, stdin capture
+#       failed, the canonical Zod validator itself is missing — a case that
+#       used to collapse silently into the same exit 0 as "nothing to check"
+#       (see `.claude/settings.local.json`'s invocation, which no longer
+#       swallows this exit code behind `2>/dev/null || true`).
+#   On a genuine SSOT validation failure (validator ran, found bad content):
+#   still exits 0 — that case was never swallowed (the warning is printed to
+#   stdout, which Claude Code already surfaces regardless of exit code).
 #
 # INPUT (stdin): PostToolUse JSON hook payload
 #   { "tool_name": "Bash", "tool_input": { "command": "..." }, ... }
 
 set -uo pipefail
 
-PROJECT_ROOT="$(git rev-parse --show-toplevel 2>/dev/null || echo "${CLAUDE_PROJECT_DIR:-}")"
-[ -z "$PROJECT_ROOT" ] && exit 0
+# FR-2 (UC-CRITIC-HOOKS-ENFORCEMENT): shared crash-vs-clean-pass discriminator.
+source "$(dirname "${BASH_SOURCE[0]}")/lib/hook-guard.sh"
+
+if ! PROJECT_ROOT=$(hg_resolve_project_root); then
+  exit 1   # git binary itself missing — real prerequisite crash, not "no project root"
+fi
+[ -z "$PROJECT_ROOT" ] && exit 0   # legitimately outside any project context — unchanged no-op
 
 ORCHSTATE="$PROJECT_ROOT/docs/data/orch/orch-state.json"
 [ -f "$ORCHSTATE" ] || exit 0
 
-STDIN_TMP=$(mktemp "${TMPDIR:-/tmp}/orch-backstop-stdin-XXXXXX.json")
-trap 'rm -f "$STDIN_TMP" 2>/dev/null || true' EXIT
+# NOTE: template ends in XXXXXX with NO trailing suffix — BSD/macOS mktemp
+# (unlike GNU mktemp) only randomizes a trailing run of 'X's when it is the
+# LAST thing in the template; a suffix like ".json" here would make BSD
+# mktemp treat the whole string as a literal (non-randomized) path, so every
+# invocation after the first would collide with "File exists" (latent
+# pre-fix bug this FR-2 crash-discriminator newly surfaces — previously
+# swallowed silently by the very `2>/dev/null || true` this task removes).
+if ! STDIN_TMP=$(hg_run "mktemp:stdin-tmp" mktemp "${TMPDIR:-/tmp}/orch-backstop-stdin-XXXXXX"); then
+  exit 1   # cannot even create the stdin capture file (e.g. read-only TMPDIR) — real crash
+fi
+trap 'rm -f "$STDIN_TMP" "$STDIN_TMP.stderr" 2>/dev/null || true' EXIT
 
 # Read PostToolUse payload
-cat > "$STDIN_TMP" 2>/dev/null || exit 0
+if ! cat > "$STDIN_TMP" 2>"$STDIN_TMP.stderr"; then
+  printf '[orch-state-backstop] PREREQUISITE-FAILURE: failed to capture hook stdin payload: %s\n' \
+    "$(cat "$STDIN_TMP.stderr" 2>/dev/null)" >&2
+  exit 1
+fi
 
 # Extract the bash command
-BASH_CMD=$(jq -r '.tool_input.command // empty' "$STDIN_TMP" 2>/dev/null || true)
-[ -z "$BASH_CMD" ] && exit 0
+if ! BASH_CMD=$(hg_run "jq:tool_input.command" jq -r '.tool_input.command // empty' "$STDIN_TMP"); then
+  exit 1   # jq itself crashed — NOT the same as "no command field"
+fi
+[ -z "$BASH_CMD" ] && exit 0   # jq succeeded, field genuinely absent — unchanged no-op
 
 # ── FILTER: skip if command cannot have touched orch-state.json ──────────────
 # Matches: direct file writes, mv/cp operations, tee, sed -i targeting orch paths.
@@ -57,7 +85,14 @@ fi
 
 # ── RUN CANONICAL VALIDATOR ───────────────────────────────────────────────────
 VALIDATOR="$PROJECT_ROOT/scripts/orch-validate.mjs"
-[ -f "$VALIDATOR" ] || exit 0
+if [ ! -f "$VALIDATOR" ]; then
+  # The validator disappearing is NOT "nothing to validate" — ORCHSTATE exists
+  # (checked above) and always needs validating. A missing canonical validator
+  # means this CRITICAL backstop is silently disabled — must be surfaced, not
+  # swallowed the way "no matching orch path" legitimately is.
+  printf '[orch-state-backstop] PREREQUISITE-FAILURE: canonical validator missing: %s\n' "$VALIDATOR" >&2
+  exit 1
+fi
 
 VALIDATE_OUT=""
 VALIDATE_EXIT=0

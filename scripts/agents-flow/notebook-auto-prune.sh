@@ -13,7 +13,9 @@
 #   - only preamble + 1 section left and still over cap (either axis) → emit notebook_single_section_overage_breach, do NOT truncate
 #
 # Atomic write: bash mv (NOT a Claude Edit/Write tool — avoids PostToolUse re-trigger loop).
-# Always exit 0 (non-blocking). Never modifies non-notebook files.
+# Non-blocking (exit code cannot undo an already-completed Write/Edit) — see the
+# NON-BLOCKING note below for the 0/1 exit-code contract (UC-CRITIC-HOOKS-ENFORCEMENT
+# FR-2). Never modifies non-notebook files.
 #
 # Pointer: docs/agents/agent-father/flow/main.md § notebook-auto-prune hook
 #          docs/policies/dev-standards.md § Script Persistence
@@ -54,11 +56,24 @@
 # honest signal, no truncation — now reachable on either axis. Rationale: smallest
 # change, consistent with the current contract, and truncating mid-section would
 # destroy the current cycle's record, which is explicitly not acceptable.
+# NON-BLOCKING: exit code never undoes the write that already happened.
+#   0 = clean pass OR legitimate no-op (unchanged from before this fix).
+#   1 = FR-2 discriminator (UC-CRITIC-HOOKS-ENFORCEMENT) detected a
+#       prerequisite crash — e.g. `git`/`jq` binary missing or stdin capture
+#       failed — a case that used to collapse silently into the same exit 0
+#       as "non-notebook path" (see `.claude/settings.local.json`'s
+#       invocation, which no longer swallows this exit code behind
+#       `2>/dev/null || true`).
 set -u
 
+# FR-2 (UC-CRITIC-HOOKS-ENFORCEMENT): shared crash-vs-clean-pass discriminator.
+source "$(dirname "${BASH_SOURCE[0]}")/lib/hook-guard.sh"
+
 # --- Resolve project root ---
-PROJECT_ROOT="$(git rev-parse --show-toplevel 2>/dev/null || echo "${CLAUDE_PROJECT_DIR:-}")"
-[ -z "$PROJECT_ROOT" ] && exit 0
+if ! PROJECT_ROOT=$(hg_resolve_project_root); then
+  exit 1   # git binary itself missing — real prerequisite crash, not "no project root"
+fi
+[ -z "$PROJECT_ROOT" ] && exit 0   # legitimately outside any project context — unchanged no-op
 
 SIGNALS_DIR="$PROJECT_ROOT/docs/signals"
 CAPS_FILE="$PROJECT_ROOT/docs/data/file-size-caps.json"
@@ -245,11 +260,15 @@ EOF
 }
 
 # --- Parse file path from PostToolUse JSON on STDIN ---
-STDIN_JSON="$(cat 2>/dev/null || true)"
-[ -z "$STDIN_JSON" ] && exit 0
+if ! STDIN_JSON=$(hg_run "cat:stdin" cat); then
+  exit 1   # cat itself crashed reading the hook payload — real prerequisite failure
+fi
+[ -z "$STDIN_JSON" ] && exit 0   # cat succeeded, payload genuinely empty — unchanged no-op
 
-FILE_PATH="$(echo "$STDIN_JSON" | jq -r '.tool_input.file_path // empty' 2>/dev/null || true)"
-[ -z "$FILE_PATH" ] && exit 0
+if ! FILE_PATH=$(printf '%s' "$STDIN_JSON" | hg_run "jq:tool_input.file_path" jq -r '.tool_input.file_path // empty'); then
+  exit 1   # jq itself crashed — NOT the same as "no file_path field"
+fi
+[ -z "$FILE_PATH" ] && exit 0   # jq succeeded, field genuinely absent — unchanged no-op
 
 # Resolve to absolute if relative
 case "$FILE_PATH" in

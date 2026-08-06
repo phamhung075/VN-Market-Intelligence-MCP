@@ -2,6 +2,7 @@
 # scripts/agents-flow/context-bloat-backstop.test.sh
 #
 # Regression test for FIX-CTXBLOAT-ARCHIVE-CAP-OVERMATCH + TE-T24 (byte-cap predicate)
+# + UC-CRITIC-HOOKS-ENFORCEMENT FR-2 (crash-vs-clean-pass discriminator, T5).
 #
 # Coverage:
 #   T1  docs/agent-memory/notebooks/archive/*.md >200L                    → EXEMPT (0 signals)
@@ -11,12 +12,17 @@
 #         proves the line-count-only evasion (dense mega-lines) is now caught (TE-T24).
 #   T4  docs/agent-memory/notebooks/*.md 150L, normal width                → CLEAN (0 signals)
 #       — confirms no false-positive on an ordinary multi-line file within both caps.
+#   T5  file-size-caps.json is CORRUPTED (malformed JSON)                  → exit 1, NOT
+#       silent exit 0 (before UC-CRITIC-HOOKS-ENFORCEMENT: a corrupted governance SSOT
+#       fell through as "non-governed path", the worst instance of the swallowed-crash
+#       defect class — architect-flagged highest-value target).
 #
 # Run:
 #   bash scripts/agents-flow/context-bloat-backstop.test.sh
 #
 # Exit 0 = all pass. Exit 1 = ≥1 failure.
-# Owning tasks: FIX-CTXBLOAT-ARCHIVE-CAP-OVERMATCH (T1/T2), TE-T24 (T3/T4)
+# Owning tasks: FIX-CTXBLOAT-ARCHIVE-CAP-OVERMATCH (T1/T2), TE-T24 (T3/T4),
+#               UC-CRITIC-HOOKS-ENFORCEMENT (T5)
 set -uo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
@@ -162,6 +168,27 @@ if [ "$SIG4" = "0" ]; then
   PASS=$((PASS + 1))
 else
   echo "FAIL T4: normal.md 150L, ordinary width → $SIG4 signal(s) emitted (expected 0)"
+  FAIL=$((FAIL + 1))
+fi
+
+# ── T5 (UC-CRITIC-HOOKS-ENFORCEMENT FR-2): corrupted caps SSOT → exit 1, not silent 0 ──
+# Overwrite the (valid) caps file with malformed JSON, then run against a file that
+# WOULD be governed under the normal caps file — proves a corrupted SSOT is now
+# surfaced as a real crash instead of silently reading as "non-governed path".
+cp "$TMPDIR_TEST/docs/data/file-size-caps.json" "$TMPDIR_TEST/docs/data/file-size-caps.json.bak"
+printf 'NOT VALID JSON {{{' > "$TMPDIR_TEST/docs/data/file-size-caps.json"
+
+EXIT5=0
+(cd "$TMPDIR_TEST" && echo "{\"tool_name\":\"Write\",\"tool_input\":{\"file_path\":\"$TMPDIR_TEST/docs/agent-memory/notebooks/top-level.md\"}}" \
+  | CONTEXT_BLOAT_SETTLE_SECONDS=0 bash "$BACKSTOP_SH") || EXIT5=$?
+
+mv "$TMPDIR_TEST/docs/data/file-size-caps.json.bak" "$TMPDIR_TEST/docs/data/file-size-caps.json"
+
+if [ "$EXIT5" -eq 1 ]; then
+  echo "PASS T5: corrupted file-size-caps.json → exit 1 (prerequisite crash surfaced, not swallowed)"
+  PASS=$((PASS + 1))
+else
+  echo "FAIL T5: corrupted file-size-caps.json → exit $EXIT5 (expected 1)"
   FAIL=$((FAIL + 1))
 fi
 

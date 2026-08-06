@@ -33,6 +33,7 @@ import { test, expect, describe } from 'bun:test';
 import { spawnSync } from 'node:child_process';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { mkdirSync, chmodSync, rmSync } from 'node:fs';
 
 const SCRIPTS_DIR = dirname(fileURLToPath(import.meta.url));
 const PROJECT_ROOT = resolve(SCRIPTS_DIR, '../..');
@@ -214,15 +215,24 @@ describe('AC-2 — PreToolUse Write and Edit paths', () => {
   });
 });
 
-// ── AC-3: PostToolUse Bash backstop always exits 0 ───────────────────────────
+// ── AC-3: PostToolUse Bash backstop exit-code contract ───────────────────────
+// RETITLED (UC-CRITIC-HOOKS-ENFORCEMENT FR-2, 2026-08-06): the old blanket
+// "always exits 0" claim went stale — none of the 3 original cases below
+// exercised a crash path, so it happened to still hold, but the backstop now
+// deliberately exits 1 when a PREREQUISITE itself crashes (missing `jq`
+// binary, unreadable stdin capture) rather than silently collapsing that
+// case into the same exit 0 as "nothing to check". The 3 original cases are
+// unchanged (still exit 0 — none of them are crash paths); 2 new
+// crash-injection cases are added below.
 
-describe('AC-3 — PostToolUse Bash backstop is non-blocking (always exits 0)', () => {
-  function runBackstop(stdinData) {
+describe('AC-3 — PostToolUse Bash backstop: exit 0 on pass/no-op, exit 1 on a prerequisite crash', () => {
+  function runBackstop(stdinData, extraEnv) {
     return spawnSync('bash', [BACKSTOP_SH], {
       input: stdinData,
       encoding: 'utf-8',
       cwd: PROJECT_ROOT,
       timeout: 30000,
+      env: extraEnv ? { ...process.env, ...extraEnv } : process.env,
     });
   }
 
@@ -245,9 +255,44 @@ describe('AC-3 — PostToolUse Bash backstop is non-blocking (always exits 0)', 
     expect(result.status).toBe(0);
   });
 
-  test('Empty stdin → exit 0', () => {
+  test('Empty stdin → exit 0 (jq exits 0 on empty input — genuinely nothing to check)', () => {
     const result = runBackstop('');
     expect(result.status).toBe(0);
+  });
+
+  // ── Crash-injection cases (NFR-5, architect Test Strategy) ─────────────────
+
+  test('CRASH: jq unavailable (PATH override) → exit 1 with PREREQUISITE-FAILURE marker', () => {
+    // Mirrors this file's own ORCH_HOOK_BUN_BIN-style override convention —
+    // a PATH lacking jq's directory makes `jq: command not found` (exit 127)
+    // reachable without needing to actually uninstall jq from the host.
+    const payload = JSON.stringify({
+      tool_name: 'Bash',
+      tool_input: { command: 'echo hi orch-state' },
+    });
+    const result = runBackstop(payload, { PATH: '/usr/bin:/bin' });
+    // /usr/bin:/bin still has `bash`/`cat`/`mktemp` on macOS but not jq.
+    expect(result.status).toBe(1);
+    expect(result.stderr).toContain('PREREQUISITE-FAILURE');
+    expect(result.stderr).toContain('jq');
+  });
+
+  test('CRASH: stdin capture cannot be written (read-only TMPDIR) → exit 1 with PREREQUISITE-FAILURE marker', () => {
+    const roTmp = resolve(PROJECT_ROOT, '.tmp-ac3-readonly-test');
+    mkdirSync(roTmp, { recursive: true });
+    chmodSync(roTmp, 0o555);
+    try {
+      const payload = JSON.stringify({
+        tool_name: 'Bash',
+        tool_input: { command: 'echo hi orch-state' },
+      });
+      const result = runBackstop(payload, { TMPDIR: roTmp });
+      expect(result.status).toBe(1);
+      expect(result.stderr).toContain('PREREQUISITE-FAILURE');
+    } finally {
+      chmodSync(roTmp, 0o755);
+      rmSync(roTmp, { recursive: true, force: true });
+    }
   });
 });
 
