@@ -15,7 +15,10 @@ import { logger } from "../../infrastructure/logger.js";
 import { formatPnlSection } from "../../domain/services/portfolioPnlCalculator.js";
 import { TelegramMessageFactory } from "../../infrastructure/notifiers/telegramMessageFactory.js";
 import { formatGlobalSnapshotSection } from "./format/globalSnapshotSection.js";
-import { formatForeignFlowSection } from "./format/foreignFlowSection.js";
+import {
+  formatForeignFlowSection,
+  formatForeignFlowSectionOrUnavailable,
+} from "./format/foreignFlowSection.js";
 import { formatMoversSection } from "./format/moversSection.js";
 import { isVnIndexFresh } from "./format/vnIndexFreshness.js";
 import type { GlobalSnapshot } from "../../application/usecases/assembleBriefing.js";
@@ -188,7 +191,9 @@ export function formatEveningSummaryLines(summary: EveningSummary): string[] {
   }
 
   // ── Khối ngoại / Foreign flow (task 1503) ───────────────────────
-  lines.push(...formatForeignFlowSection(summary.foreignFlowMovers ?? []));
+  // FIX-FFLOW-BULLETIN-OUTAGE-SILENT-OMISSION: empty/missing movers must
+  // render the canonical unavailable line, not vanish from the bulletin.
+  lines.push(...formatForeignFlowSectionOrUnavailable(summary.foreignFlowMovers ?? []));
 
   // ── Global snapshot (task 1512) ──────────────────────────────────
   if (summary.globalSnapshot) {

@@ -43,3 +43,35 @@ export function formatForeignFlowSection(
   }
   return lines;
 }
+
+/**
+ * Same as {@link formatForeignFlowSection}, except a totally empty `movers`
+ * array is treated as "no data available" and renders the canonical
+ * unavailable line instead of silently returning `[]`
+ * (FIX-FFLOW-BULLETIN-OUTAGE-SILENT-OMISSION).
+ *
+ * Root cause this closes: the default SQL path (assembleEveningSummary.ts /
+ * franceSummaryJob.ts) filters to `foreign_net_vol <> 0` before this module
+ * ever sees the rows, so a genuine pipeline outage or DB error (caught,
+ * movers=[]) is byte-identical to that empty shape — both used to vanish
+ * from the bulletin with zero indication anything was wrong (mirror of the
+ * already-fixed FIX-FOREIGN-FLOW-BULLETIN-UNAVAIL-STRING, whose canonical
+ * copy lived one branch lower and was unreachable by the real query).
+ *
+ * `formatForeignFlowSection` itself is intentionally left unchanged — its
+ * own internal all-zero branch stays reachable for callers that inject raw,
+ * unfiltered rows via `getForeignFlowMoversFn` — this wrapper is what
+ * production call sites should use instead of calling the pure formatter
+ * directly on a possibly-empty array.
+ *
+ * @param movers - Same shape as formatForeignFlowSection's input.
+ * @returns string[] — never silently empty for a truly empty input.
+ */
+export function formatForeignFlowSectionOrUnavailable(
+  movers: { code: string; foreignNetVol: number; foreignBuyVol: number; foreignSellVol: number }[],
+): string[] {
+  if (movers.length === 0) {
+    return ["", "Khối ngoại: Dữ liệu không khả dụng (pipeline tạm dừng)"];
+  }
+  return formatForeignFlowSection(movers);
+}

@@ -25,7 +25,7 @@ import type { PortfolioPnlResult } from "../../domain/services/portfolioPnlCalcu
 import type { VnIndexSnapshot } from "../../application/usecases/assembleEveningSummary.js"
 import type { GlobalSnapshot } from "../../application/usecases/assembleBriefing.js"
 import { formatGlobalSnapshotSection } from "./format/globalSnapshotSection.js"
-import { formatForeignFlowSection } from "./format/foreignFlowSection.js"
+import { formatForeignFlowSectionOrUnavailable } from "./format/foreignFlowSection.js"
 import { isVnIndexFresh } from "./format/vnIndexFreshness.js"
 import { formatAlertLines } from "./format/alertLines.js"
 import type { ForeignFlowMover } from "../../application/usecases/assembleEveningSummary.js"
@@ -431,8 +431,15 @@ export function formatFranceSummaryVI(
   }
 
   // Section 1.5: Foreign investor flow (Khối ngoại) — Task 1516
-  if (foreignFlowMovers && foreignFlowMovers.length > 0) {
-    blocks.push(...formatForeignFlowSection(foreignFlowMovers))
+  // FIX-FFLOW-BULLETIN-OUTAGE-SILENT-OMISSION: `undefined` still means the
+  // caller never attempted a foreign-flow query at all (kept omitted — many
+  // message-quality tests exercise this function without the param and
+  // don't care about this section). An explicit array — even an EMPTY one —
+  // means "we checked and there is nothing", which must now render the
+  // canonical unavailable line instead of vanishing silently, mirroring the
+  // already-shipped FIX-FOREIGN-FLOW-BULLETIN-UNAVAIL-STRING fix.
+  if (foreignFlowMovers !== undefined) {
+    blocks.push(...formatForeignFlowSectionOrUnavailable(foreignFlowMovers))
   }
 
   // Section 2: alerts — omit entirely when empty

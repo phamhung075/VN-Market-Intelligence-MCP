@@ -218,18 +218,27 @@ describe("1516 AC-3 — formatFranceSummaryVI renders Khối ngoại section", (
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
-// AC-4 — formatFranceSummaryVI omits section when empty/absent
+// AC-4 — formatFranceSummaryVI omits section when the param is truly absent,
+// but renders the unavailable line for an explicit empty array
+//
+// UPDATED for FIX-FFLOW-BULLETIN-OUTAGE-SILENT-OMISSION: the second case here
+// used to assert silent omission on an explicit empty array — that WAS the
+// bug (a real pipeline outage produces exactly this shape and used to vanish
+// from the bulletin with no indication anything was wrong). `undefined`
+// still omits (the caller never attempted a foreign-flow query at all, e.g.
+// every other formatFranceSummaryVI test in this suite that omits the arg).
 // ─────────────────────────────────────────────────────────────────────────────
 
-describe("1516 AC-4 — formatFranceSummaryVI omits section when empty", () => {
+describe("1516 AC-4 — formatFranceSummaryVI omits section only when the param is absent", () => {
   it("omits 'Khối ngoại' when foreignFlowMovers is undefined", () => {
     const msg = formatFranceSummaryVI("20/04/2026", [], [], [], null, null, null);
     expect(msg).not.toContain("Khối ngoại");
   });
 
-  it("omits 'Khối ngoại' when foreignFlowMovers is empty array", () => {
+  it("renders the unavailable line when foreignFlowMovers is an explicit empty array", () => {
     const msg = formatFranceSummaryVI("20/04/2026", [], [], [], null, null, null, []);
-    expect(msg).not.toContain("Khối ngoại");
+    expect(msg).toContain("Khối ngoại");
+    expect(msg).toContain("Dữ liệu không khả dụng");
   });
 });
 
