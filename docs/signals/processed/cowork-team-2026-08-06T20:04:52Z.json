@@ -1,0 +1,40 @@
+{
+  "from": "cowork-team",
+  "tick": "2026-08-06T20:00Z",
+  "matched_slots": [
+    "news-scout-offhours",
+    "market-watcher-offhours",
+    "alert-commander-critical"
+  ],
+  "won_slots": [
+    "news-scout-offhours",
+    "market-watcher-offhours",
+    "alert-commander-critical"
+  ],
+  "collision": null,
+  "spawned": [
+    "docs/agents/news-scout/flow/main.md",
+    "docs/agents/market-watcher/flow/main.md",
+    "docs/agents/alert-commander/flow/main.md"
+  ],
+  "silent": false,
+  "errors": [],
+  "drift_min": 3,
+  "pressure_mode": "adaptive",
+  "calendar_status": "unknown",
+  "due_reasons": {
+    "news-scout-offhours": "cadence",
+    "market-watcher-offhours": "cadence",
+    "alert-commander-critical": "cron"
+  },
+  "classification": "FIRE",
+  "signal_backlog": 30,
+  "new_signals_this_tick": 0,
+  "createdAt": "2026-08-06T20:04:52Z",
+  "_processed": {
+    "fingerprint": "66ce6ab079db6f461bdf380c24e7503795b87e310bfc3f45a741feb421d2f437",
+    "processedAt": "2026-08-06T20:23:19Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

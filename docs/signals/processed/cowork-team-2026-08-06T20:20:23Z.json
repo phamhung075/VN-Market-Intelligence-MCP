@@ -1,0 +1,32 @@
+{
+  "from": "cowork-team",
+  "tick": "2026-08-06T20:15Z",
+  "matched_slots": [
+    "tnb-audit"
+  ],
+  "won_slots": [
+    "tnb-audit"
+  ],
+  "collision": null,
+  "spawned": [
+    "docs/agents/tran-ngoc-bau/flow/main.md"
+  ],
+  "silent": false,
+  "errors": [],
+  "drift_min": 3,
+  "pressure_mode": "adaptive",
+  "calendar_status": "unknown",
+  "due_reasons": {
+    "tnb-audit": "cron"
+  },
+  "classification": "FIRE",
+  "signal_backlog": 30,
+  "new_signals_this_tick": 0,
+  "createdAt": "2026-08-06T20:20:23Z",
+  "_processed": {
+    "fingerprint": "3275e39956622983add5a48d418bd9a7e05f519e4f71a755d3b4179d78a6536a",
+    "processedAt": "2026-08-06T20:23:19Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
