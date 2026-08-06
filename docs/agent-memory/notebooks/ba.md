@@ -2,6 +2,16 @@
 
 **Last updated:** 2026-08-06 | **Sprint:** ULTRACODE-AUDIT-FIXALL
 
+## TE-T05 · 2026-08-06
+
+Spec complete. REQ file: `docs/handoffs/TE-T05-BA-spec.md`. **BLOCKED — did not hand off to architect.**
+
+Live-verified the "6-file/385L" stamp before trusting it: 6 files confirmed, but live total is **511L** (notebook-write 94→198L, decision-journal 77→99L — both grew via real hardened-fix commits since the 07-12 audit, not drift/noise). All 3 cited skip-parenthetical line numbers had also drifted (news-scout:96→101, chef.md:672→chef-dish.md:704 [file renamed], bctc:66→68).
+
+Blocker B1 (routing-class conflict, top priority): live `owner`/`next_agent` on this row = `agent-father`, matching PO's 2026-07-21 artifact-class ruling (`.claude/skills/**/SKILL.md` → agent-father) and **26/26** sibling `TOKEN-ECONOMY-AUDIT` rows with `owner=agent-father` — zero of them route through a ba→architect→pm relay, despite several (incl. this row) tagged `type:SPRINT-M`. The dispatch prompt for this BA pass asked for the relay anyway — a router-level mismatch, not something to paper over. Did not mutate `next_agent`/add `ba_spec_complete` on the live board row; left it exactly as found pending PO's ruling. Also flagged B2 (should the unrelated `cowork-boundary`/`cowork-error-boundary` dedup riding in the same row's `note` ship bundled or split?) and B3 (row's `note` still carries the append-session-record deletion clause its own `audit_ref` already says to drop — UC-MDH-P2 owns that, unapplied via orch-apply so far).
+
+Decision journal (task_id: TE-T05): see `docs/agent-memory/decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-ba.md`.
+
 ## UC-CRITIC-HOOKS-ENFORCEMENT · 2026-08-06
 
 Spec complete. REQ file: `docs/handoffs/UC-CRITIC-HOOKS-ENFORCEMENT-BA-spec.md`. Zero PO blockers. NEXT: architect.
@@ -15,22 +25,6 @@ PO ratification (`po_goahead_20260805T090611`) had already corrected the brief's
 MCP gateway binding note: this session's tool grant was Read/Edit/Write/Bash only — no `mcp__gateway__call_tool` function available despite the MCP server instructions being injected (matches the documented dev-star-gateway-binding gap, apparently also live for a router-dispatched BA sub-agent this cycle, not just dev-* zone specialists). Could not `task_claim`/`task_heartbeat`/`task_release` the inner `task:UC-CRITIC-HOOKS-ENFORCEMENT` sprint-task lock or `send_telegram`; all board/`.head`/notebook/journal writes done via Bash+jq+`orch-apply.sh` (no MCP needed for those). Router should be aware release/heartbeat of any outer intent-claim it holds is its own responsibility, per the standing dispatcher-finally-block convention.
 
 Decision journal (task_id: UC-CRITIC-HOOKS-ENFORCEMENT): see `docs/agent-memory/decisions/sprint-ULTRACODE-AUDIT-FIXALL-ba.md`.
-
-## FIX-VNINDEX-CROSS-PLANE-PLAUSIBILITY-GATE · 2026-08-06
-
-Spec complete. REQ file: `docs/handoffs/FIX-VNINDEX-CROSS-PLANE-PLAUSIBILITY-GATE-BA-spec.md`. Zero PO blockers (one scope-correction flagged for ratification, non-blocking). NEXT: architect.
-
-Dispatch's own "UPSTREAM PROBE FIRST" instruction (CI-FRESH-01: is vnIndexRefresh alive?) executed live during actual VN market hours (07:35-07:41Z, inside the 02:15-07:45Z window): confirmed alive — `vn_index_cache.fetched_at` <3min stale, `macro-indicators /snapshot` returning tier-1/is_estimate=false/dataSource=live. Blast radius does NOT currently extend beyond the already-known transient tier-4 fallback branch; already `done_verified` 2026-07-17, no code owed.
-
-CRITICAL FINDING — dispatch's REQUIRED-FIX Part 1 ("delta against `prevFetchedAt:null` must not be emitted") is disproven, not a live defect: the SAME `detail_ref` handoff already self-retracted this exact clause at §8.2 ("the delta is fine... §6.4 is FALSE... acting on it would delete a correct field") hours before the board `note` was written — a stale premise survived forward through the board row into this dispatch untouched. Independently re-confirmed from live Go source (`apps/macro-indicators/pkg/application/usecases.go`) before trusting the retraction: `computeDelta()` already refuses to emit when its own `prev` is nil; `prevFetchedAt` is structurally the oil/gold/usdVnd baseline field, NOT vnIndex's (vnIndex anchors to `prevVnIndex`/`resolvePrevSessionVnIndex`/`daily_ohlcv`, a different port). The 07-15 -526.13 was `resolveVNIndex()` falling back to a tier-4 fixture on the CURRENT value while the prior-close baseline stayed correct — garbage-in, not a broken delta mechanism. Recommended PO ratify: close Part 1 literal, keep Part 2 (cross-plane gate) as sole primary AC + a small FR-3 companion (vnIndex's own baseline-provenance field).
-
-Corrected `po_falsification_20260725T1507`'s RE-TEST instruction (tested a `vnIndexDelta`-vs-`prevFetchedAt` coupling that does not exist in code) and ran the corrected form live this cycle: 2 probes 13s apart during market hours showed a stable implied baseline (1776.46) matching an independent `vn_index_cache.prev_price` read exactly — closes that open sub-question.
-
-Resolved a 3-way naming collision on `market_context (tier-2)`: neither `get_market_context()` (doesn't surface VNINDEX at all, code-confirmed) nor chef-synthesis's own `market_context.vn_index` field (shares the tier-4 pipeline per the handoff's own §2a — comparing against it is vacuous) is the right target; recommended `market_prices.VNINDEX` (what `get_market_snapshot` serves, genuinely independent write path).
-
-Dedup: `FIX-VNINDEX-ESTIMATE-IMPLAUSIBLE-DELTA-GATE` (P2, `apps/macro-indicators/`, BACKLOG) is a narrower prior sibling in the wrong zone (producer, not consumer) — flagged to fold in on completion.
-
-Decision journal (task_id: FIX-VNINDEX-CROSS-PLANE-PLAUSIBILITY-GATE): see `docs/agent-memory/decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-ba.md`.
 
 ## Archive
 
@@ -48,3 +42,4 @@ Pre-2026-06-24 specs (FIX-SIGNAL-CONFIDENCE-DEFAULT-50-VERIFIED-DECISION, FIX-CO
 - Frontend route-file precedent: page routes may colocate DTO+parser+formatter+fetcher+component in ONE file (dashboard.momentum.tsx, dashboard.money-radar.tsx) and cross-import from sibling route files (momentum imports formatZScore from dashboard.indicator-gauges.tsx) — no shared lib/ module is required for page-scoped logic.
 - cowork guaranteed-slot crons are ALL "MM H * * *" shape (MM≠0) — `snapToCronBoundary` (cowork-match-slots.js) has no snap branch for this shape; schedule-level `isSuppressedByBoundaryDedup` is provably always-false for these 8 slots. The `published:<slot_id>:<VN-date>` task_claim marker (via `task_list_held`) is the only real dedup/delivery-evidence source — never trust `last_fired` for delivery confirmation (stamped at spawn-dispatch only, cowork-team/flow/last-fired.md Step 5b).
 - macro-indicators `usecases.go`: `vnIndexDelta`'s baseline is `prevVnIndex` (`resolvePrevSessionVnIndex`/`daily_ohlcv`), NOT `prevFetchedAt` — that field is the oil/gold/usdVnd commodity anchor only, name-collision risk. `computeDelta()` already null-guards (returns nil when its own `prev` is nil). `market_context` is a 3-way name collision: the `get_market_context()` MCP tool (no VNINDEX today), chef-synthesis's own field of the same name (shares macro_snapshot's tier-4 pipeline, not independent), and `market_prices.VNINDEX` (the real independent tier-1/2 plane, same value `get_market_snapshot` serves) — always disambiguate which is meant before wiring a cross-plane check.
+- **Notebook-auto-prune hook over-drop (2026-08-06):** adding a 3rd dated section (TE-T05) alongside 2 existing (UC-CRITIC-HOOKS-ENFORCEMENT, FIX-VNINDEX-CROSS-PLANE-PLAUSIBILITY-GATE) — exactly AC-2's 3-section cap, no prune warranted — triggered the `notebook-auto-prune.sh` PostToolUse hook to silently drop FIX-VNINDEX anyway (working-tree only; still intact in git HEAD, commits 8732d0854/2b55a01b1). Suspect the hook's heading-count includes the 2 non-dated ROLLING headings (`Archive`, `Known patterns / preferences`) toward its cap instead of excluding them per AC-2a's dated-heading scope — reconstructed via `git show HEAD` and re-landed with a single settled Write rather than trusting the hook's output. Worth a signal to developer/ops if it recurs on another agent's notebook.

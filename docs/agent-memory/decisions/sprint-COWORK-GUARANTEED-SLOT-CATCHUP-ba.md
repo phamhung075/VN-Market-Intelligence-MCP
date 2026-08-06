@@ -50,3 +50,12 @@
 - Trust `market_context (tier-2)` as written vs resolve which of 3 same-named candidates in live code it actually points to.
 **why-decision:** `detail_ref` §8.2 already self-retracted Part 1 ("the delta is fine... acting on §6.4 would delete a correct field") — a stale premise had survived forward into the dispatch. I re-derived the same conclusion independently from `usecases.go` (`computeDelta` already null-guards; `prevFetchedAt` is the oil/gold/usdVnd anchor, not vnIndex's) before trusting the retraction. For `market_context`: code-read showed `get_market_context()` doesn't surface VNINDEX at all and chef's synthesis field of the same name shares the tier-4 pipeline (comparing against either is a no-op) — recommended `market_prices.VNINDEX` instead, the one genuinely independent plane.
 **why-change:** Narrowed Part 1 to a small FR-3 companion (baseline-provenance field, cosmetic) and kept Part 2 (cross-plane gate) as the sole durable AC — flagged for PO ratification, not a blocker. Row moved `in_progress[]`→`backlog[]`, `next_agent`=architect (via `orch-apply.sh`, conservation 800↔800).
+
+### STEP ba-S6 · ba · 2026-08-06T18:53:00Z
+**task-id:** TE-T05
+**what-done:** Wrote FR/NFR/DDD spec (`docs/handoffs/TE-T05-BA-spec.md`); re-measured the 6 skill files live (511L, not the brief's 385L — notebook-write 94→198L, decision-journal 77→99L via 3 intervening hardened-fix commits) instead of trusting the stamp's numbers.
+**what-considered:**
+- Proceed straight to architect per the dispatch prompt's framing ("sequential relay: ba → architect → pm").
+- Check the row's own `next_agent`/`owner` + sibling-row precedent before relaying.
+**why-decision:** Live `owner`/`next_agent` = `agent-father` on TE-T05, matching PO's 2026-07-21 artifact-class ruling (`.claude/skills/**/SKILL.md` → agent-father) and **26/26** sibling `TOKEN-ECONOMY-AUDIT` rows sharing `owner=agent-father` (zero use a ba→architect→pm relay despite several, incl. TE-T05, tagged `type:SPRINT-M`). This is a router-level dispatch mismatch, not a call BA should paper over — held per BA's own "blockers must be resolved before returning" rule.
+**why-change:** Did NOT hand off to architect and did NOT mutate the live board row (no `next_agent`/`ba_spec_complete` write) — flagged as Blocker B1 to PO instead. Also flagged B2 (bundle-vs-split the unrelated `cowork-boundary`/`cowork-error-boundary` dedup riding in the same row) and B3 (queued append-session-record note-amendment not yet applied).
