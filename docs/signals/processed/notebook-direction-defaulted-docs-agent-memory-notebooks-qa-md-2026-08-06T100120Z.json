@@ -1,0 +1,20 @@
+{
+  "from": "notebook-auto-prune-hook",
+  "to": "claude-manager-helper",
+  "type": "notebook_tiebreak_direction_defaulted",
+  "priority": "normal",
+  "createdAt": "2026-08-06T10:01:20Z",
+  "payload": {
+    "file": "docs/agent-memory/notebooks/qa.md",
+    "tied_sections": "3:20260806000000000:## cycle-503 · 2026-08-06 · FIX-CI-SIZELINT-SCHEMA-TS-BASELINE-TOLERANCE-377L — APPROVED, DONE_VERIFIED (direct-commit verify, P0 router direct-dispatch bypassing QA-Drain, `review[]` row, `branch:null`)\n11:20260806000000000:## cycle-504 · 2026-08-06 · FIX-AUDITOR-A30-VMHWM-VETO-TAUTOLOGY-FALSE-NEGATIVE — APPROVED, DONE_VERIFIED (direct-commit verify, `qa[]` row, supervised/plan_only, 6th A-30 fix in family)\n19:20260806000000000:## cycle-504 · 2026-08-06 · CCATO-MCP-T1-DOMAIN-ENGINE — APPROVED, DONE_VERIFIED (direct-commit verify, `qa[]` row claimed by dev-team review-lane QA-Drain, `branch:null`)\n27:20260806000000000:## cycle-504 · 2026-08-06 · FFLOW-STALE-0723-B-RECHECK-HARNESS — APPROVED, DONE_VERIFIED (direct-commit verify, dev-team Review-Lane QA-Drain spawn, `qa[]` row, `branch:null`)\n35:20260806000000000:## cycle-505 · 2026-08-06 · FIX-PREDCLAIM-BACKFILL-NULL-CREATIONPRICE — APPROVED, DONE_VERIFIED (direct-commit verify, dev-team Review-Lane QA-Drain, `qa[]` row, `branch:null`; router flagged deadline-timing check)\n43:20260806000000000:## cycle-506 · 2026-08-06 · FFLOW-STALE-0723-A-VPS-FIX — APPROVED, DONE_VERIFIED (direct-commit verify, dev-team Review-Lane QA-Drain spawn, `qa[]` row, `branch:null`, INFRA-DOWNTIME not code fault)",
+    "direction_applied": "newest_first",
+    "reason": "every retained ## section in this file lacks a parseable timestamp (non-chronological/rolling sections, e.g. 'Known patterns / preferences') so neither this file's own headings nor docs/data/notebook-section-order.json can ever give a direction signal — the documented default (newest_first: drop the physically-LAST tied section) was applied and the prune proceeded. Informational only, not a blocking breach (FIX-NOTEBOOK-AUTOPRUNE-DIRECTION-UNRESOLVABLE-ZERO-TS-NOTEBOOKS).",
+    "action_required": "informational_no_action_needed"
+  },
+  "_processed": {
+    "fingerprint": "26bec15383a0494f5837cab19dd66c2b5e6bf690bbf1d6dbe1da68f4472bead9",
+    "processedAt": "2026-08-06T10:11:01Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

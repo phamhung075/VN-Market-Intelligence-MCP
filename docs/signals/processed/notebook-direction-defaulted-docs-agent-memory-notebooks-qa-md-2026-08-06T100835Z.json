@@ -1,0 +1,20 @@
+{
+  "from": "notebook-auto-prune-hook",
+  "to": "claude-manager-helper",
+  "type": "notebook_tiebreak_direction_defaulted",
+  "priority": "normal",
+  "createdAt": "2026-08-06T10:08:35Z",
+  "payload": {
+    "file": "docs/agent-memory/notebooks/qa.md",
+    "tied_sections": "3:20260806000000000:## cycle-503 · 2026-08-06 · FIX-CI-SIZELINT-SCHEMA-TS-BASELINE-TOLERANCE-377L — APPROVED, DONE_VERIFIED (direct-commit verify, P0 router direct-dispatch bypassing QA-Drain, `review[]` row, `branch:null`)\n11:20260806000000000:## cycle-504 · 2026-08-06 · FIX-CI-SIZELINT-PDFX-EXTRACTION-ENGINE-TOLERANCE — APPROVED, DONE_VERIFIED (direct-commit verify, `qa[]` row, dev-team Review-Lane QA-Drain head-decoupled spawn, `branch:null`)\n19:20260806000000000:## cycle-504 · 2026-08-06 · FIX-AUDITOR-A30-VMHWM-VETO-TAUTOLOGY-FALSE-NEGATIVE — APPROVED, DONE_VERIFIED (direct-commit verify, `qa[]` row, supervised/plan_only, 6th A-30 fix in family)\n27:20260806000000000:## cycle-504 · 2026-08-06 · CCATO-MCP-T1-DOMAIN-ENGINE — APPROVED, DONE_VERIFIED (direct-commit verify, `qa[]` row claimed by dev-team review-lane QA-Drain, `branch:null`)\n35:20260806000000000:## cycle-504 · 2026-08-06 · FFLOW-STALE-0723-B-RECHECK-HARNESS — APPROVED, DONE_VERIFIED (direct-commit verify, dev-team Review-Lane QA-Drain spawn, `qa[]` row, `branch:null`)\n43:20260806000000000:## cycle-505 · 2026-08-06 · FIX-PREDCLAIM-BACKFILL-NULL-CREATIONPRICE — APPROVED, DONE_VERIFIED (direct-commit verify, dev-team Review-Lane QA-Drain, `qa[]` row, `branch:null`; router flagged deadline-timing check)",
+    "direction_applied": "newest_first",
+    "reason": "every retained ## section in this file lacks a parseable timestamp (non-chronological/rolling sections, e.g. 'Known patterns / preferences') so neither this file's own headings nor docs/data/notebook-section-order.json can ever give a direction signal — the documented default (newest_first: drop the physically-LAST tied section) was applied and the prune proceeded. Informational only, not a blocking breach (FIX-NOTEBOOK-AUTOPRUNE-DIRECTION-UNRESOLVABLE-ZERO-TS-NOTEBOOKS).",
+    "action_required": "informational_no_action_needed"
+  },
+  "_processed": {
+    "fingerprint": "9681f4fa611049ecbb6378fdce9b3e8d8e8d2d0d41dd99062cc698cf80c936e7",
+    "processedAt": "2026-08-06T10:11:01Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
