@@ -1,13 +1,8 @@
 {
   "dashboard_section_cache": {
     "section_name": "po",
-    "last_mtime": 1786013353,
-    "last_linecount": 174,
-    "po": {
-      "section_name": "po",
-      "last_mtime": 1786003902,
-      "last_linecount": 167
-    }
+    "last_mtime": 1786014684,
+    "last_linecount": 176
   },
   "decision_journal": [
     {
@@ -2703,7 +2698,7 @@
         "type": "system-issue",
         "summary": "stranded-state sweep: 5 unknown paths need owner",
         "severity": "LOW",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": "docs/signals/stranded-state-sweep-unknown-20260806T105540Z.json"
       },
       {
@@ -2714,7 +2709,7 @@
         "type": "system-issue",
         "summary": "stranded-state sweep: 2 scripts auto-committed, verify persistence pointer",
         "severity": "LOW",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": "docs/signals/stranded-state-sweep-scripts-pointer-20260806T105540Z.json"
       }
     ],
