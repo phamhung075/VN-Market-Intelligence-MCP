@@ -477,3 +477,20 @@ re-dispatch. Flipped this row myself (backlog→review, next_agent=qa) via
 `orch-apply.sh`, deviating from S1-S21's decline-and-supply precedent because
 THIS dispatch is router-direct-supervised (holds the lock, will verify) — the
 narrow per-task-dispatch carve-out in my own init.md, not a policy change.
+
+### STEP agent-father-S23 · agent-father · 2026-08-06T09:41:22Z
+**task-id:** FIX-DEVTEAM-QADRAIN-INVOCATION-HEAD-DECOUPLED
+**what-done:** Edited `docs/agents/dev-team/flow/main.md`: rewrote idle-tick
+Review-Lane QA-Drain (`qa[]<1`→`QA_CAP=10`/`TAKE_BUDGET` batch) + inserted new
+head-decoupled invocation section at Session-Gate→Step-1 anchor, same shape.
+**what-considered:** insert head-decoupled section BEFORE vs AFTER
+SECONDARY-Drain — chose AFTER (SECONDARY-Drain's unconditional every-tick
+fall-through must not be starved by a new JUMP-TO-end sibling running first).
+**why-decision:** brief §1b/§3 mandated ONE shared batch shape, not two
+divergent ones; ordering choice preserves SECONDARY-Drain's own DoD (≥1 row/
+tick) regardless of whether QA-Drain also fires same tick.
+**why-change:** none — implemented per architect_review_note verbatim. Mid-
+edit, a peer `git reset` wiped 3 of 4 uncommitted Edit calls; re-applied and
+verified via git diff before commit (`92ff5fb43`). Left `orch-state.json` row
+flip to router/PO per `commit_zone.excluded` (FU-AGENT-FATHER-ORCH-SCOPE, no
+signal_queue exception here — router-direct dispatch, no linked signal row).

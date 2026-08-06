@@ -16,49 +16,27 @@
 - **B/C (pure `scripts/git-hooks/pre-commit` + env-var config, not mine):** ran the corpus replay live (`scripts/audits/verify-notebook-immutability-gate.sh`) as due diligence before recommending: 33 reject(s)/13 files fleet-wide, INCLUDING 3/8 of `system-auditor.md`'s own last commits — the skill's stated "reads 0" bar for `GIT_NOTEBOOK_IMMUTABILITY_MODE=reject` is not met even scoped to this one file. Recommended NOT flipping yet.
 - **Handoff:** `docs/signals/2026-08-06-fix-system-auditor-notebook-compose-actuator-handoff.json` → po — full spec for `scripts/notebook-compose.sh` (A), the pre-commit blind-spot fix (B), the C replay evidence above, and D's runtime-enforcement/recurring-bug-ticket ask (`prior_warns=7`, already past the 2+ recurring-bug threshold).
 
-## Fix (router-direct manual dispatch, P0) 2026-08-05T18:56:00Z FIX-OPS-DEPLOY-SELFREPORT-FABRICATED-FUTURE-TIMESTAMP-NONEXISTENT-IMAGE
-- **Root cause (AC-1):** `docs/agents/ops/flow/docker.md` § Post-Rebuild Health
-  Verification only checked `docker compose ps` `Up` + `/health`==200 — cannot
-  distinguish a real redeploy from a stale no-op swap (a container already
-  Up/healthy before dispatch stays Up/green if `up -d --no-deps <svc>` silently
-  no-ops). Separately, `docs/protocols/docker-deployment-runbook.md`'s
-  `scripts/verify-deploy-sha.sh` Close-Gate already exists and is the
-  authoritative check for exactly this class of deploy — but grepped ops's own
-  `init.md`/`main.md`/`docker.md` and confirmed zero references to it; that
-  gate is wired only for the PO/developer sprint-completion path
-  (`po/sprint-signoff.md`, `developer/microservice-main.md`), never for a
-  directly-dispatched ops deploy task. Narration-without-evidence was
-  structurally easier than an honest partial-failure report.
-- **Fix (AC-2):** Added a MANDATORY Deploy-Evidence Capture step to docker.md's
-  shared verification section (main.md already delegates every rebuild/restart
-  trigger there — one edit point, no duplication): paste literal `date -u` +
-  `docker inspect --format StartedAt/RestartCount` + `docker image inspect`
-  output before any Pass claim; StartedAt must postdate dispatch; cited hash
-  must be confirmed existing. Added the `verify-deploy-sha.sh` pointer for
-  code-change deploys. Added `+9L` size-justification header (121L, cap 120).
-  Commit `1f15f47b2`.
-- **AC-3 explicitly declined** — completing the rag-service redeploy is a
-  separate concern (`UNBLOCK-DEPLOY-RAG-SERVICE`/`FIX-RAG-SERVICE-CLEAN-EXIT-
-  RESTART-LOOP`) per the router dispatch's own explicit override; needs a real
-  ops re-dispatch after this fix lands — not attempted.
-- **AC-4 judgment:** extended GENERALLY (every future ops rebuild/restart),
-  not scoped to this one incident — the fabrication mechanism is structural
-  to the shared gate, not rag-service-specific, and cost of the general fix
-  is 2 already-used commands, not new infra.
-- **Board flip:** wrote `backlog[]→review[]` (`status:REVIEW`,
-  `next_agent:qa`, `commit_sha:1f15f47b2...`) via `orch-apply.sh` myself —
-  router explicitly instructed this (holds the task lock, no MCP gateway
-  binding reaches this session, router owns independent verification) and my
-  own init.md's FU-AGENT-FATHER-ORCH-SCOPE carve-out permits ONE such write
-  per task dispatch. Live-verified post-write via `jq` (not self-report).
-  **Did NOT commit `orch-state.json`** — that specific action (committing,
-  not writing) is excluded from agent-father's `commit_zone` even under a
-  direct task instruction, per 5 prior precedents this same sprint
-  (S16/S17/S19/S20/S21 below) and per the live evidence found mid-task: a
-  concurrent peer write (dev-team supervised-lane sweep promoting
-  `GUARD-COWORK-NOTEBOOK-AGENTS-SELF-EDIT-FLOW-DOC` + claiming
-  `FIX-AGENT-NOTEBOOK-UUID-PROVENANCE`, po minting a brand-new row) landed in
-  the same file between my read and write — committing now would sweep that
-  unrelated, unreviewed peer content under my authorship. Router (file owner,
-  already directly monitoring this exact task) should verify/commit via the
-  live file directly, not via git log.
+## Fix (router-direct dispatch, P1) 2026-08-06T09:41Z FIX-DEVTEAM-QADRAIN-INVOCATION-HEAD-DECOUPLED
+- Edited `docs/agents/dev-team/flow/main.md` per architect's `architect_review_note`
+  (brief `docs/architecture-briefs/2026-08-06-review-lane-qadrain-throughput-unblock.md`):
+  rewrote idle-tick Review-Lane QA-Drain from hardcoded `qa[]<1` single-claim to
+  `QA_CAP=10`/`TAKE_BUDGET` batch-claim (absorbs `FIX-DEVTEAM-QADRAIN-THROUGHPUT-CAP`'s
+  main.md half, zone-correct per `po_routing_ruling_20260721`), and inserted a new
+  head-decoupled invocation section at the Session-Gate→Step-1 anchor (after
+  SECONDARY-Drain, before Step 1) using the identical batch shape — reachable on busy
+  ticks, closing the gap where QA-Drain's independent `qa[]` budget was never evaluated
+  outside the head-idle fall-through. Updated SECONDARY-Drain's cross-refs + the Lane ×
+  Gate Coverage Matrix `review[]` row + 2 stale `qa[]<1` numeric mentions elsewhere in
+  the file (DRS budget note, AC-3 bullet) for consistency. `scripts/devteam-review-claim-qa-drain.jq`
+  (developer's parallel `FIX-DEVTEAM-QADRAIN-THROUGHPUT-CAP` row, uncommitted mid-edit
+  at time of writing) already implements the matching `--argjson take_budget`/
+  `sort_by([priority_rank,age])`/batch shape — confirmed compatible before writing the
+  caller side. Committed `92ff5fb43`, pushed clean (size-lint PASS, tsc PASS).
+- **Mid-task incident:** a peer `git reset` on the shared working tree wiped 3 of 4
+  uncommitted `Edit` calls (only the last-applied insertion survived) — caught via the
+  Edit tool's "modified on disk" warning + `git diff --stat` mismatch, re-applied all 3
+  lost edits, re-verified full diff before committing. No data loss, but flags the
+  shared-working-tree collision risk class again (see `feedback_subagent_branch_checkout_hijacks_shared_working_dir.md`).
+- **Left for router/PO:** `docs/data/orch/orch-state.json` board flip (`ready[]→review[]`
+  or `done[]`) — no signal_queue-linked exception applies to this router-direct
+  dispatch, so `commit_zone.excluded` stands; doc work is complete and pushed.
