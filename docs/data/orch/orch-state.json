@@ -14412,38 +14412,6 @@
         "architect_review_note": "2026-08-06T09:03Z architect (design brief, unified with sibling FIX-CHEF-MARKER-KEY-WINDOW-ANCHOR per PO's explicit \"one lifecycle, one design\" ruling -- both designed together; this row's board fields updated, ANCHOR row left status-unchanged per this cycle's assigned scope with a light cross-ref note added there). Brief: docs/architecture-briefs/2026-08-06-cowork-marker-lifecycle-anchor-and-release.md. CORRECTED FINDING: exhaustive grep across chef.md/spawn-fanout.md/cowork-boundary/dwf-ops-runbook.md finds ZERO code paths that call task_release on a published:* key today -- this row's title describes the pre-07-03 shape of the bug, not a live mechanism. The actual 08-05/06 release was a MANUAL PO action (06:53Z, per the sibling ANCHOR row's own note) made on a content-correctness judgment, not a delivery-evidence check. COMPONENT A (closes the retry-drift variant + ANCHOR AC1-3): cowork-catchup-predicate.js already computes scheduled_utc_time/expected_publish_task_id for catch-up candidates, unconsumed by chef.md's Step 0.5 (which still calls `date -u` at execution time, live or retry). Gap found: live on-time matches do not expose the equivalent field either (cowork-match-slots.js computes nominalTick internally today only for drift_min) -- so TASK-COWORK-CATCHUP-3 (READY/developer, already fully designed, handoff exists) wiring catch-up alone would still leave live and catch-up fires deriving keys two different ways. Designed: expose scheduled_utc_time on live MATCHES too (same field name, zero new computation), append scheduled_utc=<ISO8601> to the trigger_prompt built ONCE in spawn-fanout.md Step 5 (benefits every guaranteed slot, not chef alone, per ANCHOR AC5), chef.md Step 0.5 parses it the same way it already parses slot=<slot_id>, falls back to `date -u` only on a genuine ad-hoc invocation. COMPONENT B (closes this row's actual title): new Published Marker Release Gate in spawn-fanout.md -- ANY task_release on published:* (human or automated) must first pass a delivery-evidence check (task_list_held + absence of the synthesis artifact + absence of a matching MARKET message) or is REFUSED and escalated instead of freed; under this gate the 08-06 manual release would have been refused (the artifact existed) and correctly routed as a content/relabeling problem instead of a mutex problem. UC-CCA-P3 (claim-timing) is unchanged/orthogonal -- all three still ship together per PO's sequencing. Files: scripts/agents-flow/cowork-match-slots.js, docs/agents/cowork-team/flow/match-slots.md + spawn-fanout.md, docs/agents/unified-agent/flow/chef.md, docs/protocols/dwf-ops-runbook.md. Zone cross-service/ (multi). BUILD-STANDARD: not-applicable."
       },
       {
-        "id": "FIX-DEVTEAM-QADRAIN-INVOCATION-HEAD-DECOUPLED",
-        "title": "Part 2 (flow-doc, ONLY after Part 1 is DONE_VERIFIED): add a head-decoupled QA-Drain invocation between the Session Gate and Step 1 so the lane is reachable on busy ticks — 119 REVIEW+next_agent=qa rows are currently unreachable, oldest 6 days",
-        "type": "FIX",
-        "size": "S",
-        "priority": "P1",
-        "status": "READY",
-        "zone": "docs/agents/dev-team/flow/",
-        "owner": "agent-father",
-        "next_agent": "agent-father",
-        "supervised": true,
-        "plan_only": true,
-        "depends": [
-          "FIX-DEVTEAM-QADRAIN-HEAD-WRITE-CONDITIONAL"
-        ],
-        "created_by": "po/triage-20260729T2107",
-        "created_at": "2026-07-29T21:31:41Z",
-        "updated_at": "2026-08-06T09:20:28Z",
-        "root_cause": "docs/agents/dev-team/flow/main.md:518 gates the whole BOUNDED-1 -> SLS -> RLC -> QA-Drain fall-through on head.status in {idle,done,missing}; :676 places QA-Drain inside that same fall-through. QA-Drain owns an INDEPENDENT budget (.task_board.qa|length < 1, main.md:685-686) that is consequently never evaluated on a busy tick.",
-        "ac": "(AC-1) Implement brief §4a/§4b placement — verified ZERO byte overlap with the concurrent P0 main.md:496-686 wholesale rewrite (FIX-DEVTEAM-IDLE-CHAIN-P1A-MAIN-ROTATION). (AC-2) Idle-tick priority ordering must be preserved unchanged so this does not aggravate FIX-DEVTEAM-IDLE-CHAIN-STEP1-TRIAGE-STARVATION. (AC-3) depends[] above is MACHINE-READABLE and load-bearing: prose sequencing alone gets blind-promoted (see FIX-DEVTEAM-BOUNDED1-PROSE-SEQUENCING-UNBACKED-GATE). Do not implement while either dependency is open. ADDENDUM (architect 2026-08-06): absorb FIX-DEVTEAM-QADRAIN-THROUGHPUT-CAP's main.md half -- rewrite the EXISTING idle-tick QA-Drain block AND the new head-decoupled section to the identical QA_CAP=10/TAKE_BUDGET batch-claim shape (not two divergent shapes). depends on FIX-DEVTEAM-IDLE-CHAIN-P1A-MAIN-ROTATION dropped as obsolete/deadlocked -- see architect_review_note.",
-        "files": [
-          "docs/agents/dev-team/flow/main.md"
-        ],
-        "brief_ref": "docs/architecture-briefs/2026-07-29-qadrain-head-slot-decouple.md §4a, §4b, §4c, §8 step 2",
-        "parent_spike": "SPIKE-DEVTEAM-QADRAIN-HEAD-SLOT-DECOUPLE",
-        "dedup_checked": "2026-07-29T21:2xZ — see brief §'Dedup check'; both depends targets verified present on the live board (FIX-DEVTEAM-IDLE-CHAIN-P1A-MAIN-ROTATION=backlog, FIX-DEVTEAM-BOUNDED1-PROSE-SEQUENCING-UNBACKED-GATE=review) so neither depends ref is dangling.",
-        "architect_review_note": "[architect 2026-08-06T09:1xZ REVIEW-LANE-QADRAIN-THROUGHPUT-UNBLOCK] Dropped depends on FIX-DEVTEAM-IDLE-CHAIN-P1A-MAIN-ROTATION -- transitively deadlocked (its own dep TASK-DEVTEAM-IDLE-CHAIN-1-SCHEMA-UTILITIES sits in review[] 8d, itself one of the 226 PRIMARY rows this fix drains) and empirically obsolete (FIX-DEVTEAM-REVIEW-LANE-SECONDARY-DRAIN already shipped at the IDENTICAL Session-Gate->Step-1 anchor 2026-08-01 with zero conflict against that same still-untouched rotation task). SCOPE UNIFIED: this row now also absorbs FIX-DEVTEAM-QADRAIN-THROUGHPUT-CAP main.md half -- rewrite the EXISTING idle-tick Review-Lane QA-Drain block to the QA_CAP=10/TAKE_BUDGET batch shape (08-01 brief sec1a) AND insert the NEW head-decoupled section using the SAME batch shape (not the 07-29 brief's stale single-claim illustration -- that shape drift was never reconciled until now). Full design: docs/architecture-briefs/2026-08-06-review-lane-qadrain-throughput-unblock.md sec1a/1b/3. Promoted BACKLOG->READY -- ready for deliberate agent-father dispatch (SLS-eligible: supervised&&plan_only, but this row's own sibling FIX-DEVTEAM-REVIEW-LANE-QA-DRAIN proved supervised-quarantine rows do not reliably get picked up passively -- flag for direct dispatch, do not assume auto-pickup).",
-        "promoted_at": "2026-08-06T09:20:27Z",
-        "promoted_by": "architect (qadrain-throughput-unblock 2026-08-06)",
-        "promotion_note": "Deliberate architect dispatch -- see docs/architecture-briefs/2026-08-06-review-lane-qadrain-throughput-unblock.md",
-        "updated_by": "architect"
-      },
-      {
         "id": "UC-CRITIC-HOOKS-ENFORCEMENT",
         "type": "SPIKE",
         "title": "HIGH-RISK: enforcement hooks all end in '2>/dev/null || true' — a crashed validator is indistinguishable from a pass (gates are vigilance-shaped, not structural)",
@@ -22051,6 +22019,41 @@
         "po_manual_dispatch_class": "DRS-STRANDED-OFF-ALLOWLIST",
         "po_manual_dispatch_note": "po (manual-dispatch-sweep) surfaced DRS-STRANDED-OFF-ALLOWLIST candidate - folding into this tick BATCH",
         "agent_father_completed_at": "2026-08-06T09:45:35Z"
+      },
+      {
+        "id": "FIX-DEVTEAM-QADRAIN-INVOCATION-HEAD-DECOUPLED",
+        "title": "Part 2 (flow-doc, ONLY after Part 1 is DONE_VERIFIED): add a head-decoupled QA-Drain invocation between the Session Gate and Step 1 so the lane is reachable on busy ticks — 119 REVIEW+next_agent=qa rows are currently unreachable, oldest 6 days",
+        "type": "FIX",
+        "size": "S",
+        "priority": "P1",
+        "status": "REVIEW",
+        "zone": "docs/agents/dev-team/flow/",
+        "owner": "agent-father",
+        "next_agent": "qa",
+        "supervised": true,
+        "plan_only": true,
+        "depends": [
+          "FIX-DEVTEAM-QADRAIN-HEAD-WRITE-CONDITIONAL"
+        ],
+        "created_by": "po/triage-20260729T2107",
+        "created_at": "2026-07-29T21:31:41Z",
+        "updated_at": "2026-08-06T09:46:36Z",
+        "root_cause": "docs/agents/dev-team/flow/main.md:518 gates the whole BOUNDED-1 -> SLS -> RLC -> QA-Drain fall-through on head.status in {idle,done,missing}; :676 places QA-Drain inside that same fall-through. QA-Drain owns an INDEPENDENT budget (.task_board.qa|length < 1, main.md:685-686) that is consequently never evaluated on a busy tick.",
+        "ac": "(AC-1) Implement brief §4a/§4b placement — verified ZERO byte overlap with the concurrent P0 main.md:496-686 wholesale rewrite (FIX-DEVTEAM-IDLE-CHAIN-P1A-MAIN-ROTATION). (AC-2) Idle-tick priority ordering must be preserved unchanged so this does not aggravate FIX-DEVTEAM-IDLE-CHAIN-STEP1-TRIAGE-STARVATION. (AC-3) depends[] above is MACHINE-READABLE and load-bearing: prose sequencing alone gets blind-promoted (see FIX-DEVTEAM-BOUNDED1-PROSE-SEQUENCING-UNBACKED-GATE). Do not implement while either dependency is open. ADDENDUM (architect 2026-08-06): absorb FIX-DEVTEAM-QADRAIN-THROUGHPUT-CAP's main.md half -- rewrite the EXISTING idle-tick QA-Drain block AND the new head-decoupled section to the identical QA_CAP=10/TAKE_BUDGET batch-claim shape (not two divergent shapes). depends on FIX-DEVTEAM-IDLE-CHAIN-P1A-MAIN-ROTATION dropped as obsolete/deadlocked -- see architect_review_note.",
+        "files": [
+          "docs/agents/dev-team/flow/main.md"
+        ],
+        "brief_ref": "docs/architecture-briefs/2026-07-29-qadrain-head-slot-decouple.md §4a, §4b, §4c, §8 step 2",
+        "parent_spike": "SPIKE-DEVTEAM-QADRAIN-HEAD-SLOT-DECOUPLE",
+        "dedup_checked": "2026-07-29T21:2xZ — see brief §'Dedup check'; both depends targets verified present on the live board (FIX-DEVTEAM-IDLE-CHAIN-P1A-MAIN-ROTATION=backlog, FIX-DEVTEAM-BOUNDED1-PROSE-SEQUENCING-UNBACKED-GATE=review) so neither depends ref is dangling.",
+        "architect_review_note": "[architect 2026-08-06T09:1xZ REVIEW-LANE-QADRAIN-THROUGHPUT-UNBLOCK] Dropped depends on FIX-DEVTEAM-IDLE-CHAIN-P1A-MAIN-ROTATION -- transitively deadlocked (its own dep TASK-DEVTEAM-IDLE-CHAIN-1-SCHEMA-UTILITIES sits in review[] 8d, itself one of the 226 PRIMARY rows this fix drains) and empirically obsolete (FIX-DEVTEAM-REVIEW-LANE-SECONDARY-DRAIN already shipped at the IDENTICAL Session-Gate->Step-1 anchor 2026-08-01 with zero conflict against that same still-untouched rotation task). SCOPE UNIFIED: this row now also absorbs FIX-DEVTEAM-QADRAIN-THROUGHPUT-CAP main.md half -- rewrite the EXISTING idle-tick Review-Lane QA-Drain block to the QA_CAP=10/TAKE_BUDGET batch shape (08-01 brief sec1a) AND insert the NEW head-decoupled section using the SAME batch shape (not the 07-29 brief's stale single-claim illustration -- that shape drift was never reconciled until now). Full design: docs/architecture-briefs/2026-08-06-review-lane-qadrain-throughput-unblock.md sec1a/1b/3. Promoted BACKLOG->READY -- ready for deliberate agent-father dispatch (SLS-eligible: supervised&&plan_only, but this row's own sibling FIX-DEVTEAM-REVIEW-LANE-QA-DRAIN proved supervised-quarantine rows do not reliably get picked up passively -- flag for direct dispatch, do not assume auto-pickup).",
+        "promoted_at": "2026-08-06T09:20:27Z",
+        "promoted_by": "architect (qadrain-throughput-unblock 2026-08-06)",
+        "promotion_note": "Deliberate architect dispatch -- see docs/architecture-briefs/2026-08-06-review-lane-qadrain-throughput-unblock.md",
+        "updated_by": "dev-team (router lane-move on agent-father commit_zone.excluded)",
+        "commit": "92ff5fb43",
+        "memory_commit": "f1fddde0d",
+        "router_lanemove_note": "agent-father completed + pushed (92ff5fb43 fix.main.md +78L, f1fddde0d notebook); could not flip its own board row per commit_zone.excluded (no linked signal_queue row). Router verified both commits real + pushed (origin/main HEAD matches), moved ready->review, next_agent=qa mirroring sibling FIX-DEVTEAM-QADRAIN-THROUGHPUT-CAP treatment."
       }
     ],
     "qa": [
