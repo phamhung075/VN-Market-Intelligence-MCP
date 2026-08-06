@@ -1,0 +1,9 @@
+{
+  "sweep_generated_at": "2026-08-06T10:55:40Z",
+  "auto_committed_paths": [
+    "scripts/dev-team-drain-0aD-mark-read-20260731-0217.jq",
+    "scripts/po-s153-pdfavail02-close-deploygate-lifecycle-mint.jq"
+  ],
+  "commit": "c5175e984",
+  "note": "Verify against docs/policies/dev-standards.md § Script Persistence pointer requirement — these were stranded untracked scripts auto-committed by stranded-state-sweep.sh, no owning flow-doc pointer confirmed yet."
+}

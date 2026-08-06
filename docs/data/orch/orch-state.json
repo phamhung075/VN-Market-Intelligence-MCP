@@ -134,8 +134,8 @@
     "does_not_consume_wip": true
   },
   "signal_queue": {
-    "_updated_at": "2026-08-06T07:21:17Z",
-    "_updated_by": "po (triage 2026-08-06 addendum)",
+    "_updated_at": "2026-08-06T10:56:50Z",
+    "_updated_by": "dev-team",
     "archive": [],
     "rows": [
       {
@@ -2694,6 +2694,28 @@
         "status": "READ",
         "payload_ref": null,
         "provenance": "agent-father"
+      },
+      {
+        "id": "dev-20260806T105639",
+        "ts": "2026-08-06T10:56:39Z",
+        "from": "dev-team",
+        "to": "po",
+        "type": "system-issue",
+        "summary": "stranded-state sweep: 5 unknown paths need owner",
+        "severity": "LOW",
+        "status": "NEW",
+        "payload_ref": "docs/signals/stranded-state-sweep-unknown-20260806T105540Z.json"
+      },
+      {
+        "id": "dv2-20260806T105650",
+        "ts": "2026-08-06T10:56:50Z",
+        "from": "dev-team",
+        "to": "po",
+        "type": "system-issue",
+        "summary": "stranded-state sweep: 2 scripts auto-committed, verify persistence pointer",
+        "severity": "LOW",
+        "status": "NEW",
+        "payload_ref": "docs/signals/stranded-state-sweep-scripts-pointer-20260806T105540Z.json"
       }
     ],
     "last_triaged_at": "2026-07-29T06:25:00Z",
