@@ -3039,6 +3039,19 @@
         "payload_ref": null,
         "provenance": "detector",
         "audit_cycle_tag": "dev-team-tick:2026-08-06T17:37Z"
+      },
+      {
+        "id": "cmh-20260806T180630-dochealpartial",
+        "ts": "2026-08-06T18:06:30Z",
+        "from": "claude-manager-helper",
+        "to": "po",
+        "type": "recurring_defect_unfixed",
+        "severity": "INFO",
+        "summary": "claude-manager-helper Thu 18:06Z cron cycle (commit 5024251f8): Pass 9b ran doc-heal-system discovery only (4115 files scanned, correctly found code-janitor.md notebook 224L>200 and 6 oversized SKILL.md files: dispatch-claim 497L, docx 590L, skill-creator 485L, pdf 314L, mcp-builder 236L, xlsx 291L) but skipped the skills own mandated Phase 4 auto-fix (extract reusable rules to knowledge, per .claude/skills/doc-heal-system/phases.md Size Caps table — SKILL.md cap IS 200L, auto-fix not escalate) and Phase 7 (write reports/DOC_HEAL_2026-08-06.md + dedicated docs(heal) commit) entirely — verified reports/DOC_HEAL_2026-08-06.md does not exist anywhere in the repo, and the only commit this cycle was the notebook-append (chore(memory/claude-manager-helper)), not a docs(heal) commit. Self-report and notebook entry both accurately describe this as noted for next cycle / non-critical, so this is not a self-report confabulation (contrast feedback_leaf_agent_analysis_only_exit_recurring_pattern_20260806) — it is main.md Pass 9b invoking doc-heal-system for discovery only and never running its auto-fix/report/commit phases, so violations found on Mon/Thu accumulate indefinitely with no report trail unless a human or another agent notices.",
+        "status": "NEW",
+        "payload_ref": null,
+        "provenance": "detector",
+        "audit_cycle_tag": "claude-manager-helper-cron:2026-08-06T18:06Z"
       }
     ],
     "last_triaged_at": "2026-07-29T06:25:00Z",
