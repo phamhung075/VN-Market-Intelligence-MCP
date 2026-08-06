@@ -88,11 +88,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "active_task_id": null,
-    "next_agent": "router",
-    "updated_at": "2026-08-06T17:09:40Z",
-    "updated_by": "dev-mcp-server (self-closeout branch:null REVIEW flip, CANONICAL:SSOT-STATUSFLIP-LANEMOVE)"
+    "status": "in_progress",
+    "active_task_id": "DEFLAKE-VNSTOCK-3STATEMENT",
+    "next_agent": "dev-mcp-server",
+    "next_action": "BOUNDED-1 auto-pickup claim of DEFLAKE-VNSTOCK-3STATEMENT — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
+    "updated_at": "2026-08-06T17:15:37Z",
+    "updated_by": "dev-team (bounded-1 auto-pickup)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -2975,6 +2976,19 @@
         "severity": "LOW",
         "status": "READ",
         "payload_ref": "docs/signals/processed/janitor-health-recheck-writer-retired-2026-08-06.json"
+      },
+      {
+        "id": "sys-20260806T171507-1243",
+        "ts": "2026-08-06T17:15:07Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "microservice_degraded",
+        "summary": "rag-service A-30 floor-breach — 98.79% memory, 12 MiB free (BELOW 40 MiB floor)",
+        "severity": "WARN",
+        "status": "NEW",
+        "payload_ref": null,
+        "provenance": "detector",
+        "audit_cycle_tag": "cron:auditor-t1:2026-08-06T17:12Z"
       }
     ],
     "last_triaged_at": "2026-07-29T06:25:00Z",
@@ -11655,21 +11669,6 @@
         "updated_at": "2026-08-05T09:40:16Z"
       },
       {
-        "id": "FIX-JANITOR-HEALTHRECHECK-IDEMPOTENCY-GUARD-MISSES-PROCESSED-DIR",
-        "type": "FIX",
-        "title": "memory-prune-sweep.sh idempotency guard for janitor-health-recheck-writer-retired-*.json only scans docs/signals/, never docs/signals/processed/ — re-fires every 6h forever",
-        "desc": "scripts/agents-flow/memory-prune-sweep.sh:109 uses find \"$SIGNALS_DIR\" -maxdepth 1 -name \"janitor-health-recheck-writer-retired-*.json\" to decide whether to write a fresh PO-decision signal. Once drain-signals.js processes and moves that marker file to docs/signals/processed/ (normal, expected drain behavior), the guard can never see it again — confirmed live 2nd occurrence, 13 days apart (2026-07-23 original, 2026-08-05 duplicate), both times PO already answered RETIRE. Fix: widen the find to also check docs/signals/processed/, or better, use a durable state marker independent of the signals inbox lifecycle (e.g. a dedicated docs/data/janitor-*-done marker file) so the guard survives normal signal drain/archival.",
-        "priority": "P2",
-        "size": "S",
-        "zone": "cross-service/",
-        "next_agent": "developer",
-        "status": "BACKLOG",
-        "created_at": "2026-08-05T10:33:32Z",
-        "created_by": "router",
-        "updated_at": "2026-08-05T10:33:32Z",
-        "updated_by": "router"
-      },
-      {
         "id": "FIX-AUDITOR-A30-PROBE-SH-MISSES-RAG-SERVICE-CONTAINER",
         "type": "FIX",
         "title": "docs/agents/system-auditor/probe.sh A-30 mem_creep check is hardcoded to MCP_CONTAINER (mcp-server) only — never checks rag-service, blind to a live near-OOM incident",
@@ -13604,6 +13603,38 @@
         "status_note": "[QA] Review Record (direct-commit verify, 2026-08-06): Commit 120e5d42b confirmed on main ancestry; git show --stat matches all 3 claimed files (pressure-cadence.md, cowork-chef-mutex.js, cowork-chef-mutex.test.js) exactly. Re-ran the row's own test myself, not trusted from review_note prose: `node scripts/agents-flow/cowork-chef-mutex.test.js` -> 25/25 PASS (TC-1..8, incl. TC-7 CLI-stdin integration and TC-8 regression guard). mock-guard.sh --files on the new production script -> PASS. bun tsc --noEmit (apps/mcp-server) -> 0 errors (commit touches zero TS/apps files; no-regression baseline). Went beyond the row's own claims: independently re-reproduced BOTH failure modes live under zsh against the REAL unmodified docs/data/cowork-schedule.json (not the test's synthetic fixture) -- (a) the OLD `SCHEDULE=$(cat ...); echo \"$SCHEDULE\" | jq` pattern still throws the exact historical \"Invalid string: control characters ... must be escaped\" parse error on today's live chef-intraday trigger_prompt, proving the defect is real on live data, not theoretical; (b) the documented NEW Step 4.5c invocation (`printf '%s' \"$MATCHES\" | node cowork-chef-mutex.js` -> `jq -n --argjson`) run against MATCHES=[chef-morning, chef-intraday] on that same real file yields chef_mutex_applied:true, matches=[chef-morning] only, dropped=[chef-intraday] -- AC (\"coincidence tick fires exactly 1 CHEF dish\") satisfied end-to-end against live data, not just unit-asserted. DJ: developer's own journal entry present (sprint-FIX-COWORK-CHEF-MUTEX-ECHO-JQ-DEFEAT-developer.md). VERDICT: APPROVED, DONE_VERIFIED.",
         "verified_at": "2026-08-06T17:12:44Z",
         "verified_by": "qa"
+      },
+      {
+        "id": "FE-PG-QUALITY-AUDIT-LASTVERIFIED-RENDER-FIX",
+        "type": "FIX",
+        "status": "DONE_VERIFIED",
+        "priority": "P1",
+        "size": "S",
+        "zone": "apps/frontend/",
+        "owner": "dev-frontend",
+        "next_agent": "qa",
+        "created_by": "po",
+        "source": "user-demand-20260725-quality-audit-verified-at",
+        "baseline_pass": true,
+        "title": "/dashboard/quality-audit renders every check identically regardless of how long ago it was verified — surface per-check last_verified + staleness marker (user demand: 'need update at for know when verify is done')",
+        "note": "GAP (RAW-verified 2026-07-25T08:00Z): apps/frontend/app/routes/dashboard.quality-audit.tsx renders check.check_id / dimension / question / severity / status / evidence (lines ~234-255) and NOTHING else — grep for last_verified|lastVerified|_updated_at|updatedAt returns ZERO matches; the AuditCheck interface (line 55-62) has no last_verified field, though parseQualityChecklistDto is a pass-through cast (`raw as QualityChecklist`) so the value IS present in the served payload at runtime. LIVE DATA: docs/data/quality-checklist.json holds 442 checks with last_verified; age split 264 @ 2026-06-10 (45d stale) / 178 @ 2026-07-25. Today all 442 render identically — a 45-day-stale check is visually indistinguishable from one verified this morning; that IS the defect. This is also the concrete instance of the masking already flagged by the page's own checks FE-PG-QUALITY-AUDIT-FRESH (INFO: data_asof = request time, always ~0 age by compute-on-read design, NOT a recency signal) and FE-PG-QUALITY-AUDIT-CONTENT-REGEN-CORR (WARN: generated_at 44.9d old behind an always-green badge). SCOPE: (1) render last_verified per check on dashboard.quality-audit.tsx (add to AuditCheck type + the check row/card); (2) staleness marker when last_verified is older than the D-PAGE re-verification window (7-day full rotation — docs/agents/system-auditor/flow/page-freshness.md Step 2 'not re-probed within the 7-day window'); (3) TOLERATE ALL FOUR timestamp shapes present in the live file — bare date `2026-06-10` (4 rows), second precision `...THH:MM:SSZ` (413), millisecond `...THH:MM:SS.mmmZ` (24), microsecond `...THH:MM:SS.ffffffZ` (1, check FR-FRESH-02 = `2026-06-10T09:18:46.945489Z`; router brief said 3 formats, RAW says 4). Bare dates break naive ISO string comparison and Date-based age arithmetic must not NaN/crash or silently mis-bucket; an unparseable/missing last_verified must render an explicit UNKNOWN marker, never a silent fresh-looking blank (empty-read-is-not-evidence). AC: (a) each check row on /dashboard/quality-audit shows its own last_verified; (b) a check with last_verified older than 7d is visually distinguishable from a fresh one WITHOUT hovering (the 264 @ 2026-06-10 must all be marked stale, the 178 @ 2026-07-25 must not); (c) all four timestamp shapes above render correctly — playwright/render-check proves no crash and correct stale/fresh bucketing on a fixture containing all four; (d) missing/unparseable last_verified renders UNKNOWN, not fresh. OUT OF SCOPE (do NOT fold in): rewriting/mass-stamping the 264 stale last_verified values — they are honest and destroying them destroys exactly the signal the user asked for; docs/data/quality-checklist.json is qa-owned (docs/agents/qa/flow/quality-audit.md) and MUST NOT be touched by this row. ALSO OUT OF SCOPE: the system-auditor's own `verified_at` (docs/data/auditor-page-reverify-ledger.json — internal telemetry, ledger-only, not served by any endpoint; page-freshness.md explicitly forbids conflating the two fields). DISTINCT FROM: FIX-QUALITY-CHECKLIST-GENERATOR-FABRICATED-PASS-EVIDENCE (generator-side evidence fabrication, cross-service/architect) and the FE-PG-{_INDEX,BCTC,INTEL}-FRESH-FIX family (page-level freshness badge on OTHER dashboard pages). Prior-art scan 2026-07-25: zero board rows in any lane touch quality-audit render / last_verified display.",
+        "files": [
+          "apps/frontend/app/routes/dashboard.quality-audit.tsx"
+        ],
+        "created_at": "2026-07-25T08:01:26Z",
+        "updated_at": "2026-08-06T17:15:32Z",
+        "promoted_at": "2026-07-25T13:47:58Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
+        "claimed_at": "2026-08-06T17:02:18Z",
+        "claimed_by": "dev-team (review-lane qa-drain)",
+        "reviewed_at": "2026-07-25T14:08:07Z",
+        "reviewed_by": "dev-frontend",
+        "review_note": "Every check on /dashboard/quality-audit rendered identically regardless of last_verified age (264/442 checks 45d stale @2026-06-10, 178 fresh @2026-07-25 -- indistinguishable). Delivered AC (a)-(d): (a) new \"Last Verified\" column on ChecksTable shows each check's own last_verified. (b) LastVerifiedBadge: green+date (fresh, <=7d) / red+date+explicit \"stale\" text label (stale, >7d -- color is never the only signal) / grey \"UNKNOWN\" badge (missing/unparseable -- never a silent fresh-looking blank, AC d). (c) new app/domain/formatters/check-verification.ts: classifyCheckVerification(rawLastVerified: unknown, now: Date) wraps the pre-existing, already-tested classifyStaleBadge (app/domain/formatters/stale-badge.ts, UNCHANGED) with a typeof===\"string\" runtime guard -- AuditCheck.last_verified is typed unknown on purpose because parseQualityChecklistDto is a pass-through cast (raw as QualityChecklist), so the DTO type is not runtime-enforced. Fixed CHECK_VERIFICATION_WINDOW_MINUTES=10080 (7 days, matches docs/agents/system-auditor/flow/page-freshness.md Step 2 \"not re-probed within the 7-day window\" D-PAGE rotation). classifyStaleBadge already tolerated all 4 live timestamp shapes (bare date \"2026-06-10\", second/ms/microsecond-precision ISO) because it feeds the raw string into new Date(...), confirmed via a node probe BEFORE writing any code (none produced NaN, including the microsecond row FR-FRESH-02 = \"2026-06-10T09:18:46.945489Z\", which truncates cleanly to ms). now is threaded from the loader's pre-existing fetchedAt (never new Date() inside render -- avoids SSR/hydration mismatch).\n\nEvidence: tsc --noEmit clean. app/domain/formatters/check-verification.test.ts: 16/16 pass (all 4 shapes stale+fresh, exact-7d boundary fresh / 7d+1min stale, undefined/null/empty/garbage-string/number/object/array all -> unknown, none throw). Full vitest: 2166 pass / 2 fail (97 files) -- the 2 fails are the pre-existing QUE_DESCRIPTIONS/Kinh Dich tooltip codegen schema mismatches, unrelated, confirmed identical with this change git-stashed out (A/B). Playwright: ran with PLAYWRIGHT_PORT=3011 FRONTEND_ORIGIN=http://localhost:3011 (fresh npm run dev), NOT the default :3001, because :3001 is the LIVE DOCKER CONTAINER (image predates this commit) and reuseExistingServer would have false-greened against stale code (documented gotcha, notebook dev-frontend.md, reconfirmed a 3rd time). New tests/e2e/quality-audit-lastverified.spec.ts (3 tests) run against that fresh dev server talking to the REAL, UNMODIFIED mcp-server on :3000 -- its live docs/data/quality-checklist.json ALREADY contains all 4 timestamp shapes naturally, so no synthetic fixture was needed to satisfy AC(c)'s \"fixture containing all four\" requirement: (1) no-crash / no Application Error text; (2) all 4 shapes (FR-FUNC-01 second/stale, FR-FRESH-02 microsecond/stale, MAC-CONSIST-01 bare-date/stale, STOCK-PRICE-FUNC-01 millisecond/stale) show the \"stale\" text label in their Last Verified cell (assertions scoped to td:nth(5), NOT the whole row -- FR-FRESH-04's free-text Evidence column legitimately contains the word \"stale\" in unrelated prose and would have false-positived a whole-row match, caught and fixed during this task); (3) FR-FRESH-04 (fresh, 2026-07-25T06:46:06Z) shows no stale marker. 7/7 e2e green total (3 new + existing render-check.spec.ts 3/3 + smoke.spec.ts 1/1) -- G12 gate intact, no regression.\n\nPENDING-REBUILD: the code and behavior are proven against the real served path (real Remix SSR loader + real mcp-server :3000 data) via a throwaway dev-server instance, NOT against the actual named :3001 Docker container the real user hits -- that container still serves the pre-this-commit image. Rebuild is USER-GATED and was NOT performed (not dev-frontend's zone/authority). No AC is unproven; the deploy of the proven code to the live container is what remains pending.\n\nAside (found, NOT fixed, out of scope for this row): AuditCapability.capability_id is dead at runtime -- the served field is cap_id, not capability_id (confirmed via curl :3000/api/quality-checklist), so every CapabilitySection key={cap.capability_id} is undefined (React key-warning only, no functional break, pre-existing since before this task). Documented in domain-model.md for whoever picks it up; not a duplicate of this row's scope (last_verified vs capability_id are unrelated fields).\n\nFiles: apps/frontend/app/routes/dashboard.quality-audit.tsx, apps/frontend/app/domain/formatters/check-verification.ts (new), apps/frontend/app/domain/formatters/check-verification.test.ts (new), apps/frontend/tests/e2e/quality-audit-lastverified.spec.ts (new), docs/architecture/microservice/frontend/domain-model.md, docs/architecture/microservice/frontend/api-reference.md. Commits: 3a9803677 (code+tests+docs), 866e15920 (notebook+journal). Decision journal: docs/agent-memory/decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-dev-frontend.md STEP dev-frontend-S3.",
+        "status_note": "\n\n[QA] Review Record (direct-commit verify): commit 3a9803677 confirmed on main ancestry (author-date 2026-07-25T14:05:48Z, ~2min after row's own reviewed_at); git show --stat matches the row's declared file (dashboard.quality-audit.tsx) plus 3 undeclared sibling files (new check-verification.ts+test, new e2e spec) -- read all 4 directly, code matches review_note claim-for-claim. Re-ran independently (not trusted from prose): tsc --noEmit 0 errors; targeted check-verification.test.ts 16/16 PASS (all 4 live timestamp shapes + 7d boundary + 4 non-string-guard cases, matches claim exactly); full vitest 2183 pass/2 fail/2185 -- the 2 fails (QUE_DESCRIPTIONS \"exactly 2 own keys\") reconfirmed pre-existing/out-of-zone, zero grep overlap with this diff; mock-guard.sh --files PASS on both touched production files; DDD clean (check-verification.ts imports only ./stale-badge, zero infra/route/component imports); security clean, the one process.env line in the route file is pre-existing outside this diff. All 4 ACs (a)-(d) proven at code level.\n\nPENDING-REBUILD independently corroborated LIVE, not trusted from prose: docker inspect vn-market-intelligence-mcp-frontend-1 created 2026-07-24T18:02:36Z, ~20h BEFORE this commit. curl :3001/dashboard/quality-audit (200) grepped for the literal new column header \"Last Verified\" -> zero matches; the stale/UNKNOWN hits present in the raw HTML are pre-existing check evidence/question prose (topically about staleness elsewhere, e.g. vps_stale), not the new LastVerifiedBadge component -- live container genuinely does not yet serve this fix, confirming the row's own claim.\n\nCORRECTION to this row's own phrasing: \"Rebuild is USER-GATED\" is retired language (feedback_po_deploy_rebuild_full_autonomy_no_user_gate, 2026-08-01 standing directive) -- rebuild/redeploy needs NO user gate; per PUSH-AUTONOMY-1 §5 (dev-standards.md) single-service rebuild+deploy is ops-executed directly. No VERIFY-<id>-REALDATA task exists yet for this row (board-checked, none found) -- flagging for PO to mint + dispatch ops rebuild of the frontend container now; not held against this row per established precedent (FIX-PREDCLAIM-DASHBOARD-HITRATE-HONESTY qa review, same PENDING-REBUILD shape).\n\nVERDICT: APPROVED, DONE_VERIFIED.",
+        "commit": "3a9803677",
+        "verified_at": "2026-08-06T17:15:32Z",
+        "verified_by": "qa"
       }
     ],
     "head": {
@@ -15072,72 +15103,6 @@
         "architect_review_note": "2026-08-06T10:49Z architect (plan_only brief per PO explicit ask -- adjudicate a/b/c, no code shipped). Brief: docs/architecture-briefs/2026-08-06-guard-notebook-concurrent-write-mutex.md. DECISIVE EVIDENCE READ RAW (not POs summary): 11 notebook-direction-defaulted signals on qa.md (10:00:46Z-10:08:36Z) show a non-monotone retained-section set AND 3 simultaneous duplicate ## cycle-504 headings with different content -- proves concurrent lost-update + stale c<NNN> counter allocation, not a pruning-order bug. Ruled out the suspected 3rd-writer formatter hook: context-bloat-backstop.sh read in full, only ever writes its OWN signal file, never the notebook -- confirmed no 3rd mutator exists (only the writing agent Write/Edit + notebook-auto-prune.sh PostToolUse hook touch notebook content). ADJUDICATION: (b) append-only cannot work standalone (AC-2 retention/AC-5 cap both require removing content, no true append primitive exists on native Write/Edit); (c) fan-out cap alone independently disproven -- the ORIGINAL tran-ngoc-bau.md c113 incident was N=2 writers, no fan-out involved, so a lower cap only narrows frequency, never closes the class; (a) task_claim mutex is the right direction but NOT a drop-in -- task_kind is a closed 7-value Zod enum (coordinationTools.ts) with no fitting kind, needs an additive notebook-write value (companion dev-mcp-server row, blocking prereq). RECOMMENDATION: task_claim(task_kind=notebook-write) mutex bracketing ONLY the mechanical fresh-read-merge-write span (LLM authoring stays OUTSIDE the held window, explicit ttl_seconds=120 not the 3600s default -- avoids this repos own corroborated TTL-hazard lesson) as new SKILL.md AC-7; PostToolUse hook (cannot call task_claim, no MCP-from-bash bridge exists) hardened instead with a stat-based staleness recheck immediately before its own mv, deliberately NOT a new mkdir/flock lock file since docs/agent-memory is a named, still-unexcluded VirtioFS bind-mount race hazard per docs/protocols/head-lock-self-cure.md (H4, confirmed not hypothesized) -- reusing task_claims server-side SQLite lock state sidesteps that hazard entirely. Files split across 3 owner zones (mixed-zone flag for PM, same class already resolved for FIX-DEVTEAM-QADRAIN-THROUGHPUT-CAP): agent-father (.claude/skills/notebook-write/SKILL.md AC-7 + docs/agents/dev-team/flow/main.md 1-sentence note), developer (scripts/agents-flow/notebook-auto-prune.sh staleness guard), dev-mcp-server (task_kind enum +1, companion row, blocks agent-father row). Acceptance test extends the EXISTING apps/mcp-server/src/__tests__/task-lock-coordination-store.test.ts harness (new AC-12 describe block, N-concurrent-writer negative/positive control on a fixture notebook) rather than a new shell script -- satisfies this rows own verification_gate directly. Sequencing: dev-mcp-server row first (blocking), developer row independent/ships anytime, agent-father row last. Zone cross-service/. BUILD-STANDARD: not-applicable."
       },
       {
-        "id": "DEFLAKE-VNSTOCK-3STATEMENT",
-        "type": "FIX",
-        "status": "READY",
-        "priority": "P2",
-        "size": "S",
-        "zone": "apps/mcp-server/",
-        "next_agent": "dev-mcp-server",
-        "title": "De-flake vnstock-3statement.test.ts — CI per-file-isolation transient (2+ obs recurring-bug escalation): same-code green→red twice, never a regression",
-        "desc": "apps/mcp-server/src/__tests__/vnstock-3statement.test.ts intermittently fails under CI per-file-isolation `bun test` while passing locally/full-suite. TWICE the failing HEAD was byte-identical in non-test code to a GREEN baseline (range diffs were docs/notebook/orch-state/signal only, ZERO non-test code) => same-code-green-then-red = per-file-isolation non-determinism, NOT a regression. Suspected shared-state root: the file mutates the global DB_PATH env at module-load time (lines 16-17), drives a process-global DB singleton via closeDb()/initDatabase() in beforeEach, and carries an `?isolate=vnstock3stmt` query-bust import to dodge the mock.module cache poison stubbed by test 1466 (in-file comment lines 20-24). Any of these leaking across the isolate/worker boundary can flip pass<->fail depending on file order / worker assignment. Router already ran `gh run rerun --failed 29576568819` to restore the transient green; THIS row is the DURABLE fix so the rerun toil stops.",
-        "ac": "AC-1 Root-cause: identify the exact shared-state / order / timing dependency that makes this file non-deterministic in per-file-isolation `bun test` — candidates: (a) module-load-time DB_PATH env mutation (lines 16-17) leaking to sibling files that share the Bun worker, (b) the closeDb()/initDatabase() process-global DB singleton lifecycle, (c) the mock.module cache poison from test 1466 that the `?isolate=vnstock3stmt` query-bust currently papers over. State which interleaving/worker-assignment reproduces the flake. AC-2 Fix determinism at the source: isolate this file's DB state so it neither depends on nor leaks global/module-load state (e.g. per-test fresh DB + env scoped and restored in teardown that cannot poison siblings). Do NOT merely add retries / test.retry / rerun-on-fail. AC-3 If the 1466 mock.module cache poison is the shared cause, fix it at source so the `?isolate=` query-bust workaround is no longer load-bearing. AC-4 RAW-verify: run the file in per-file-isolation mode >=20x (and interleaved with the sibling that shares its worker) with 0 failures, and confirm the full `bun test` suite stays green — attach run output. Prior-art: no existing backlog/ready/in_progress/review/qa row for vnstock-3statement (router-checked 2026-07-17). Follow the established DEFLAKE-* de-flake convention (cf. DEFLAKE-1187-POLLNEWS-DEAD-PATH).",
-        "evidence": [
-          "docs/signals/processed/ci-red-c2893251-20260717064818.json",
-          "docs/signals/processed/ci-red-00e3c4b1-20260717114821.json"
-        ],
-        "code_under_test": [
-          "apps/mcp-server/src/__tests__/vnstock-3statement.test.ts",
-          "apps/mcp-server/src/infrastructure/db/vnstockStore.js",
-          "apps/mcp-server/src/infrastructure/db/schema.js"
-        ],
-        "obs": [
-          {
-            "n": 1,
-            "tick": "0637Z",
-            "ci_run": "c2893251",
-            "run_id": 29559748162,
-            "head": "c28932513c491d5eb5765a2c4469c426eba9b81c",
-            "disposition": "1st-obs classified-flaky-not-escalated"
-          },
-          {
-            "n": 2,
-            "tick": "1137Z",
-            "ci_run": "00e3c4b1",
-            "run_id": 29576568819,
-            "head": "00e3c4b164709d1b1148676131f4aacaba84a46c",
-            "disposition": "2nd-obs ESCALATED-TO-PO"
-          },
-          {
-            "n": 3,
-            "tick": "0859Z",
-            "ci_run": "de0e0399",
-            "run_id": 31087179442,
-            "head": "de0e03995",
-            "disposition": "3rd-obs 2026-08-06 — co-failed with 167-prediction-market-job.test.ts (2 fail in one run)"
-          },
-          {
-            "n": 4,
-            "tick": "0944Z",
-            "ci_run": "f1fddde0",
-            "run_id": 31090381761,
-            "head": "f1fddde0d",
-            "disposition": "4th-obs 2026-08-06 — SOLE failing file. Preceding SHA 92ff5fb43 was FULLY GREEN and the intervening commit f1fddde0d is DOCS-ONLY (agent-father notebook+journal): a docs-only commit cannot deterministically break this test file. Strongest same-code-green-then-red evidence yet."
-          }
-        ],
-        "source": "recurring CI-flaky escalation (2+ obs) routed by dev-team-router; scoped PO triage 2026-07-17",
-        "created_at": "2026-07-17T11:54:54Z",
-        "created_by": "po-scoped-triage-20260717",
-        "baseline_pass": true,
-        "dedup_key": "ci_job:bun test|file:apps/mcp-server/src/__tests__/vnstock-3statement.test.ts",
-        "dedup_key_ci_relative": "ci_job:bun test|file:src/__tests__/vnstock-3statement.test.ts",
-        "updated_at": "2026-08-06T16:22:38Z",
-        "updated_by": "po (triage 2026-08-06T09:55:23Z — obs 3 + obs 4, priority low->P2)",
-        "promoted_at": "2026-08-06T16:22:38Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)"
-      },
-      {
         "id": "FIX-PO-MINT-ACTUATOR-REGRESSION-VERIFIER-SCRIPT",
         "type": "FIX",
         "title": "Author scripts/audits/po-mint-orchapply-actuator-verify.sh per the spec inline in docs/agents/po/flow/main.md § Regression verifier",
@@ -15152,6 +15117,24 @@
         "updated_at": "2026-08-06T16:43:21Z",
         "updated_by": "dev-team (router)",
         "promoted_at": "2026-08-06T16:43:20Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)"
+      },
+      {
+        "id": "FIX-JANITOR-HEALTHRECHECK-IDEMPOTENCY-GUARD-MISSES-PROCESSED-DIR",
+        "type": "FIX",
+        "title": "memory-prune-sweep.sh idempotency guard for janitor-health-recheck-writer-retired-*.json only scans docs/signals/, never docs/signals/processed/ — re-fires every 6h forever",
+        "desc": "scripts/agents-flow/memory-prune-sweep.sh:109 uses find \"$SIGNALS_DIR\" -maxdepth 1 -name \"janitor-health-recheck-writer-retired-*.json\" to decide whether to write a fresh PO-decision signal. Once drain-signals.js processes and moves that marker file to docs/signals/processed/ (normal, expected drain behavior), the guard can never see it again — confirmed live 2nd occurrence, 13 days apart (2026-07-23 original, 2026-08-05 duplicate), both times PO already answered RETIRE. Fix: widen the find to also check docs/signals/processed/, or better, use a durable state marker independent of the signals inbox lifecycle (e.g. a dedicated docs/data/janitor-*-done marker file) so the guard survives normal signal drain/archival.",
+        "priority": "P2",
+        "size": "S",
+        "zone": "cross-service/",
+        "next_agent": "developer",
+        "status": "READY",
+        "created_at": "2026-08-05T10:33:32Z",
+        "created_by": "router",
+        "updated_at": "2026-08-06T17:15:29Z",
+        "updated_by": "router",
+        "promoted_at": "2026-08-06T17:15:28Z",
         "promoted_by": "dev-team (bounded-1 auto-pickup)",
         "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)"
       }
@@ -22300,34 +22283,6 @@
         "reviewed_at": "2026-07-25T12:06:39Z",
         "reviewed_by": "dev-mcp-server",
         "review_note": "Ungated creation_price capture in evidenceTools.ts create_prediction_claim (was conditional on optional direction+expected_move_pct -> now unconditional; ticker with no daily_ohlcv data is REJECTED outright, target_price stays the only thing those two optional params gate). Added .strict() Zod write-door to predictionClaimStore.ts::insertPredictionClaim (creation_price + stock/agent_id/claim_text/direction/resolution_date/confidence required) throwing a blueprint-§2-aligned descriptive rejection (docs/architecture-briefs/2026-07-25-input-validation-coverage-blueprint.md) + fire-and-forget sendTelegramBug fail-loud alert (not awaited -- ~30 sync call sites incl. tests; sendTelegramBug already never-throws by its own contract). Fixed the dormant sibling defect intelligenceCycleJob.ts chain-synthesizer hardcoded creation_price:null. Deliverable (c) update-path: NOT a second Zod layer -- resolveClaim/excludeClaim UPDATE statements structurally never touch the required fields, so the acceptance criterion holds by construction. Deliverable (e) grandfather: verified -- gate lives only on the write path, read path (mapRow/getAllClaimsForTracker/serve handler) untouched, existing NULL rows still read correctly (tests updated to seed legacy rows via raw SQL, the only way to simulate them post-gate). Deliverable (g) docs synced: docs/agents/tools/list/create_prediction_claim.md + docs/agents/digest-predict/flow/daily-predict.md:110 (both L1/L2 of the board root_cause 4-layer chain). Deliverable (h) false comments corrected in predictionClaimsHandler.ts (stale 2026-06-11 9-claim/hitRate-0.50 worked example + false legacy-claims framing, replaced with the board-cited live 2026-07-25T07:11:04Z 17-claim/hitRate-0.6667 probe). NOT done by design: backfilling the 11 existing NULL rows -- separate BACKLOG row FIX-PREDCLAIM-BACKFILL-NULL-CREATIONPRICE (owner dev-mcp-server, depends on this row) already exists and is TIME-CRITICAL (5 pending claims ids 13-17 auto-convert to permanently-excluded starting the 2026-07-28T16:35Z resolution tick -- 3 days out -- flagging for prompt pickup, not silently done here per this row own BACKFILL SCOPE note). Evidence: bun tsc --noEmit clean. Targeted suite (every file touching insertPredictionClaim/create_prediction_claim, 8 files incl. new FIX-PREDCLAIM-CREATIONPRICE-UNGATE-ZOD-CONTRACT.test.ts): 114/114 pass, 356 expect() calls, re-confirmed clean after the telegram-alert addition. Full bun test run twice (pre-deliverable-gap-fixes): 14822 pass/40 skip/55 fail/2 errors/47023 expect (509.37s) and 14827 pass/40 skip/50 fail/47029 expect (464.99s) -- zero (fail) lines matching predict/evidence/creation in either full log; visible failures are the same pre-existing documented 5000ms-timeout/network flaky class (SLA-monitor, OHLCV-aggregator-seed, _deprecated/1302-technical-indicators, insider-transactions, foreign-holding-ratio). Board own regression floor (>= 9408 pass / <= 348 fail) cleared with large margin both runs. gen-project-stats.ts --dry-run: toolCount 184/cronJobCount 88 unaffected. PENDING-REBUILD: live gateway acceptance (board AC-1, re-read through the LIVE served endpoint) NOT claimed -- running container predates this commit; rebuild is USER-GATED, not authorized this session. Decision journal: docs/agent-memory/decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-dev-mcp-server.md STEP dev-mcp-server-S9."
-      },
-      {
-        "id": "FE-PG-QUALITY-AUDIT-LASTVERIFIED-RENDER-FIX",
-        "type": "FIX",
-        "status": "QA",
-        "priority": "P1",
-        "size": "S",
-        "zone": "apps/frontend/",
-        "owner": "dev-frontend",
-        "next_agent": "qa",
-        "created_by": "po",
-        "source": "user-demand-20260725-quality-audit-verified-at",
-        "baseline_pass": true,
-        "title": "/dashboard/quality-audit renders every check identically regardless of how long ago it was verified — surface per-check last_verified + staleness marker (user demand: 'need update at for know when verify is done')",
-        "note": "GAP (RAW-verified 2026-07-25T08:00Z): apps/frontend/app/routes/dashboard.quality-audit.tsx renders check.check_id / dimension / question / severity / status / evidence (lines ~234-255) and NOTHING else — grep for last_verified|lastVerified|_updated_at|updatedAt returns ZERO matches; the AuditCheck interface (line 55-62) has no last_verified field, though parseQualityChecklistDto is a pass-through cast (`raw as QualityChecklist`) so the value IS present in the served payload at runtime. LIVE DATA: docs/data/quality-checklist.json holds 442 checks with last_verified; age split 264 @ 2026-06-10 (45d stale) / 178 @ 2026-07-25. Today all 442 render identically — a 45-day-stale check is visually indistinguishable from one verified this morning; that IS the defect. This is also the concrete instance of the masking already flagged by the page's own checks FE-PG-QUALITY-AUDIT-FRESH (INFO: data_asof = request time, always ~0 age by compute-on-read design, NOT a recency signal) and FE-PG-QUALITY-AUDIT-CONTENT-REGEN-CORR (WARN: generated_at 44.9d old behind an always-green badge). SCOPE: (1) render last_verified per check on dashboard.quality-audit.tsx (add to AuditCheck type + the check row/card); (2) staleness marker when last_verified is older than the D-PAGE re-verification window (7-day full rotation — docs/agents/system-auditor/flow/page-freshness.md Step 2 'not re-probed within the 7-day window'); (3) TOLERATE ALL FOUR timestamp shapes present in the live file — bare date `2026-06-10` (4 rows), second precision `...THH:MM:SSZ` (413), millisecond `...THH:MM:SS.mmmZ` (24), microsecond `...THH:MM:SS.ffffffZ` (1, check FR-FRESH-02 = `2026-06-10T09:18:46.945489Z`; router brief said 3 formats, RAW says 4). Bare dates break naive ISO string comparison and Date-based age arithmetic must not NaN/crash or silently mis-bucket; an unparseable/missing last_verified must render an explicit UNKNOWN marker, never a silent fresh-looking blank (empty-read-is-not-evidence). AC: (a) each check row on /dashboard/quality-audit shows its own last_verified; (b) a check with last_verified older than 7d is visually distinguishable from a fresh one WITHOUT hovering (the 264 @ 2026-06-10 must all be marked stale, the 178 @ 2026-07-25 must not); (c) all four timestamp shapes above render correctly — playwright/render-check proves no crash and correct stale/fresh bucketing on a fixture containing all four; (d) missing/unparseable last_verified renders UNKNOWN, not fresh. OUT OF SCOPE (do NOT fold in): rewriting/mass-stamping the 264 stale last_verified values — they are honest and destroying them destroys exactly the signal the user asked for; docs/data/quality-checklist.json is qa-owned (docs/agents/qa/flow/quality-audit.md) and MUST NOT be touched by this row. ALSO OUT OF SCOPE: the system-auditor's own `verified_at` (docs/data/auditor-page-reverify-ledger.json — internal telemetry, ledger-only, not served by any endpoint; page-freshness.md explicitly forbids conflating the two fields). DISTINCT FROM: FIX-QUALITY-CHECKLIST-GENERATOR-FABRICATED-PASS-EVIDENCE (generator-side evidence fabrication, cross-service/architect) and the FE-PG-{_INDEX,BCTC,INTEL}-FRESH-FIX family (page-level freshness badge on OTHER dashboard pages). Prior-art scan 2026-07-25: zero board rows in any lane touch quality-audit render / last_verified display.",
-        "files": [
-          "apps/frontend/app/routes/dashboard.quality-audit.tsx"
-        ],
-        "created_at": "2026-07-25T08:01:26Z",
-        "updated_at": "2026-08-06T17:02:27Z",
-        "promoted_at": "2026-07-25T13:47:58Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
-        "claimed_at": "2026-08-06T17:02:18Z",
-        "claimed_by": "dev-team (review-lane qa-drain)",
-        "reviewed_at": "2026-07-25T14:08:07Z",
-        "reviewed_by": "dev-frontend",
-        "review_note": "Every check on /dashboard/quality-audit rendered identically regardless of last_verified age (264/442 checks 45d stale @2026-06-10, 178 fresh @2026-07-25 -- indistinguishable). Delivered AC (a)-(d): (a) new \"Last Verified\" column on ChecksTable shows each check's own last_verified. (b) LastVerifiedBadge: green+date (fresh, <=7d) / red+date+explicit \"stale\" text label (stale, >7d -- color is never the only signal) / grey \"UNKNOWN\" badge (missing/unparseable -- never a silent fresh-looking blank, AC d). (c) new app/domain/formatters/check-verification.ts: classifyCheckVerification(rawLastVerified: unknown, now: Date) wraps the pre-existing, already-tested classifyStaleBadge (app/domain/formatters/stale-badge.ts, UNCHANGED) with a typeof===\"string\" runtime guard -- AuditCheck.last_verified is typed unknown on purpose because parseQualityChecklistDto is a pass-through cast (raw as QualityChecklist), so the DTO type is not runtime-enforced. Fixed CHECK_VERIFICATION_WINDOW_MINUTES=10080 (7 days, matches docs/agents/system-auditor/flow/page-freshness.md Step 2 \"not re-probed within the 7-day window\" D-PAGE rotation). classifyStaleBadge already tolerated all 4 live timestamp shapes (bare date \"2026-06-10\", second/ms/microsecond-precision ISO) because it feeds the raw string into new Date(...), confirmed via a node probe BEFORE writing any code (none produced NaN, including the microsecond row FR-FRESH-02 = \"2026-06-10T09:18:46.945489Z\", which truncates cleanly to ms). now is threaded from the loader's pre-existing fetchedAt (never new Date() inside render -- avoids SSR/hydration mismatch).\n\nEvidence: tsc --noEmit clean. app/domain/formatters/check-verification.test.ts: 16/16 pass (all 4 shapes stale+fresh, exact-7d boundary fresh / 7d+1min stale, undefined/null/empty/garbage-string/number/object/array all -> unknown, none throw). Full vitest: 2166 pass / 2 fail (97 files) -- the 2 fails are the pre-existing QUE_DESCRIPTIONS/Kinh Dich tooltip codegen schema mismatches, unrelated, confirmed identical with this change git-stashed out (A/B). Playwright: ran with PLAYWRIGHT_PORT=3011 FRONTEND_ORIGIN=http://localhost:3011 (fresh npm run dev), NOT the default :3001, because :3001 is the LIVE DOCKER CONTAINER (image predates this commit) and reuseExistingServer would have false-greened against stale code (documented gotcha, notebook dev-frontend.md, reconfirmed a 3rd time). New tests/e2e/quality-audit-lastverified.spec.ts (3 tests) run against that fresh dev server talking to the REAL, UNMODIFIED mcp-server on :3000 -- its live docs/data/quality-checklist.json ALREADY contains all 4 timestamp shapes naturally, so no synthetic fixture was needed to satisfy AC(c)'s \"fixture containing all four\" requirement: (1) no-crash / no Application Error text; (2) all 4 shapes (FR-FUNC-01 second/stale, FR-FRESH-02 microsecond/stale, MAC-CONSIST-01 bare-date/stale, STOCK-PRICE-FUNC-01 millisecond/stale) show the \"stale\" text label in their Last Verified cell (assertions scoped to td:nth(5), NOT the whole row -- FR-FRESH-04's free-text Evidence column legitimately contains the word \"stale\" in unrelated prose and would have false-positived a whole-row match, caught and fixed during this task); (3) FR-FRESH-04 (fresh, 2026-07-25T06:46:06Z) shows no stale marker. 7/7 e2e green total (3 new + existing render-check.spec.ts 3/3 + smoke.spec.ts 1/1) -- G12 gate intact, no regression.\n\nPENDING-REBUILD: the code and behavior are proven against the real served path (real Remix SSR loader + real mcp-server :3000 data) via a throwaway dev-server instance, NOT against the actual named :3001 Docker container the real user hits -- that container still serves the pre-this-commit image. Rebuild is USER-GATED and was NOT performed (not dev-frontend's zone/authority). No AC is unproven; the deploy of the proven code to the live container is what remains pending.\n\nAside (found, NOT fixed, out of scope for this row): AuditCapability.capability_id is dead at runtime -- the served field is cap_id, not capability_id (confirmed via curl :3000/api/quality-checklist), so every CapabilitySection key={cap.capability_id} is undefined (React key-warning only, no functional break, pre-existing since before this task). Documented in domain-model.md for whoever picks it up; not a duplicate of this row's scope (last_verified vs capability_id are unrelated fields).\n\nFiles: apps/frontend/app/routes/dashboard.quality-audit.tsx, apps/frontend/app/domain/formatters/check-verification.ts (new), apps/frontend/app/domain/formatters/check-verification.test.ts (new), apps/frontend/tests/e2e/quality-audit-lastverified.spec.ts (new), docs/architecture/microservice/frontend/domain-model.md, docs/architecture/microservice/frontend/api-reference.md. Commits: 3a9803677 (code+tests+docs), 866e15920 (notebook+journal). Decision journal: docs/agent-memory/decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-dev-frontend.md STEP dev-frontend-S3."
       }
     ],
     "_closed_signals_20260614": {
@@ -22346,9 +22301,78 @@
         }
       ]
     },
-    "last_triaged_at": "2026-08-06T16:43:20Z",
+    "last_triaged_at": "2026-08-06T17:15:28Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": []
+    "in_progress": [
+      {
+        "id": "DEFLAKE-VNSTOCK-3STATEMENT",
+        "type": "FIX",
+        "status": "IN_PROGRESS",
+        "priority": "P2",
+        "size": "S",
+        "zone": "apps/mcp-server/",
+        "next_agent": "dev-mcp-server",
+        "title": "De-flake vnstock-3statement.test.ts — CI per-file-isolation transient (2+ obs recurring-bug escalation): same-code green→red twice, never a regression",
+        "desc": "apps/mcp-server/src/__tests__/vnstock-3statement.test.ts intermittently fails under CI per-file-isolation `bun test` while passing locally/full-suite. TWICE the failing HEAD was byte-identical in non-test code to a GREEN baseline (range diffs were docs/notebook/orch-state/signal only, ZERO non-test code) => same-code-green-then-red = per-file-isolation non-determinism, NOT a regression. Suspected shared-state root: the file mutates the global DB_PATH env at module-load time (lines 16-17), drives a process-global DB singleton via closeDb()/initDatabase() in beforeEach, and carries an `?isolate=vnstock3stmt` query-bust import to dodge the mock.module cache poison stubbed by test 1466 (in-file comment lines 20-24). Any of these leaking across the isolate/worker boundary can flip pass<->fail depending on file order / worker assignment. Router already ran `gh run rerun --failed 29576568819` to restore the transient green; THIS row is the DURABLE fix so the rerun toil stops.",
+        "ac": "AC-1 Root-cause: identify the exact shared-state / order / timing dependency that makes this file non-deterministic in per-file-isolation `bun test` — candidates: (a) module-load-time DB_PATH env mutation (lines 16-17) leaking to sibling files that share the Bun worker, (b) the closeDb()/initDatabase() process-global DB singleton lifecycle, (c) the mock.module cache poison from test 1466 that the `?isolate=vnstock3stmt` query-bust currently papers over. State which interleaving/worker-assignment reproduces the flake. AC-2 Fix determinism at the source: isolate this file's DB state so it neither depends on nor leaks global/module-load state (e.g. per-test fresh DB + env scoped and restored in teardown that cannot poison siblings). Do NOT merely add retries / test.retry / rerun-on-fail. AC-3 If the 1466 mock.module cache poison is the shared cause, fix it at source so the `?isolate=` query-bust workaround is no longer load-bearing. AC-4 RAW-verify: run the file in per-file-isolation mode >=20x (and interleaved with the sibling that shares its worker) with 0 failures, and confirm the full `bun test` suite stays green — attach run output. Prior-art: no existing backlog/ready/in_progress/review/qa row for vnstock-3statement (router-checked 2026-07-17). Follow the established DEFLAKE-* de-flake convention (cf. DEFLAKE-1187-POLLNEWS-DEAD-PATH).",
+        "evidence": [
+          "docs/signals/processed/ci-red-c2893251-20260717064818.json",
+          "docs/signals/processed/ci-red-00e3c4b1-20260717114821.json"
+        ],
+        "code_under_test": [
+          "apps/mcp-server/src/__tests__/vnstock-3statement.test.ts",
+          "apps/mcp-server/src/infrastructure/db/vnstockStore.js",
+          "apps/mcp-server/src/infrastructure/db/schema.js"
+        ],
+        "obs": [
+          {
+            "n": 1,
+            "tick": "0637Z",
+            "ci_run": "c2893251",
+            "run_id": 29559748162,
+            "head": "c28932513c491d5eb5765a2c4469c426eba9b81c",
+            "disposition": "1st-obs classified-flaky-not-escalated"
+          },
+          {
+            "n": 2,
+            "tick": "1137Z",
+            "ci_run": "00e3c4b1",
+            "run_id": 29576568819,
+            "head": "00e3c4b164709d1b1148676131f4aacaba84a46c",
+            "disposition": "2nd-obs ESCALATED-TO-PO"
+          },
+          {
+            "n": 3,
+            "tick": "0859Z",
+            "ci_run": "de0e0399",
+            "run_id": 31087179442,
+            "head": "de0e03995",
+            "disposition": "3rd-obs 2026-08-06 — co-failed with 167-prediction-market-job.test.ts (2 fail in one run)"
+          },
+          {
+            "n": 4,
+            "tick": "0944Z",
+            "ci_run": "f1fddde0",
+            "run_id": 31090381761,
+            "head": "f1fddde0d",
+            "disposition": "4th-obs 2026-08-06 — SOLE failing file. Preceding SHA 92ff5fb43 was FULLY GREEN and the intervening commit f1fddde0d is DOCS-ONLY (agent-father notebook+journal): a docs-only commit cannot deterministically break this test file. Strongest same-code-green-then-red evidence yet."
+          }
+        ],
+        "source": "recurring CI-flaky escalation (2+ obs) routed by dev-team-router; scoped PO triage 2026-07-17",
+        "created_at": "2026-07-17T11:54:54Z",
+        "created_by": "po-scoped-triage-20260717",
+        "baseline_pass": true,
+        "dedup_key": "ci_job:bun test|file:apps/mcp-server/src/__tests__/vnstock-3statement.test.ts",
+        "dedup_key_ci_relative": "ci_job:bun test|file:src/__tests__/vnstock-3statement.test.ts",
+        "updated_at": "2026-08-06T17:15:37Z",
+        "updated_by": "po (triage 2026-08-06T09:55:23Z — obs 3 + obs 4, priority low->P2)",
+        "promoted_at": "2026-08-06T16:22:38Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
+        "claimed_at": "2026-08-06T17:15:36Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)"
+      }
+    ]
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
