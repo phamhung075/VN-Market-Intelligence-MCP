@@ -16,3 +16,13 @@
 - DJ-GATE-1: confirmed developer's own journal entry present (`sprint-COWORK-GUARANTEED-SLOT-CATCHUP-developer.md` line 30, `task-id:** FIX-DEVTEAM-BOUNDED1-PROSE-SEQUENCING-UNBACKED-GATE`) before flipping DONE_VERIFIED.
 **why-decision:** APPROVED, DONE_VERIFIED. The task's own scoped regression verifier is 5/5 green on independent re-run; the 2 unrelated pre-existing audit failures are outside this row's file/gate scope and cannot be caused by an ADD-only eligibility conjunct.
 **why-change:** none — verified exactly what the row scoped. Journal file rolled qa-2→qa-3 this entry (byte-cap breach, see qa-2's own CAP-REACHED sentinel).
+
+### STEP qa-S39 · qa · 2026-08-06T16:07:00Z
+**task-id:** BCTC-REPORT-ID-LOOKUP-TOOL
+**what-done:** Direct-commit verify (Review-Lane QA-Drain, `qa[]` row, `branch:null`). Commit `7a9eea6bd` confirmed on main ancestry; `git show --stat` matches all claimed files, `registry.ts` diff is 2-line pure-additive.
+**what-considered:**
+- Row's own test (5/5 PASS), `tsc --noEmit` clean, DDD/security/mock-guard clean — satisfies verify-committed's documented scope (touched-test-file, not full suite).
+- Ran full `bun test` twice anyway as due-diligence (row's AC references a 30-cycle production dark-escalation): both runs contended by a concurrent peer session's own full-suite run (up to 4 `bun test` procs observed); failures were timeout-pattern on unrelated tools, zero grep hits for the reviewed files.
+- AC "ESC-5 fires on known-escalation case" — verified via LIVE production evidence in `bctc-analyst.md` notebook (FPT ESC-5 TRUE, report_id resolved), not just the unit test — stronger than prose trust alone.
+**why-decision:** APPROVED, DONE_VERIFIED. Isolated additive change, clean typecheck/DDD/security, dedicated test green, AND independently corroborated live in production — highest-confidence verify-committed case this batch.
+**why-change:** none — row's own "not yet deployed" note (2026-07-23) is stale, superseded by 2026-07-24/08-06 live evidence; flagged in status_note, not treated as a blocker.
