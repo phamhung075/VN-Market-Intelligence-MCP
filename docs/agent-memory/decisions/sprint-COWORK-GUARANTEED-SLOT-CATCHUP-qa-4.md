@@ -135,3 +135,15 @@
 - Did not run the full 15k-test monorepo suite (developer's self-reported 14897/54, pre-existing per their own spot-check) — targeted zone suite (above) is the verify-committed sub-flow's explicit alternative to `.files[]`-inferred scope and is fully green; full-suite non-determinism under host load is a standing, previously-corroborated non-blocker (qa-S3/S4 precedent).
 **why-decision:** APPROVED, DONE_VERIFIED. All 4 ACs independently re-derived from source diff + live control-flow trace + fresh test runs (not the row's own `review_note` prose alone) — genuine fix, zero regression in every targeted suite, docs/journal both present.
 **why-change:** none — verified exactly what the row scoped; sibling `FIX-AUDITOR-DASHBOARD-APPEND-NO-ACTUATOR-CONTRACT-COUNT-NARRATED` correctly left untouched (batch, not merged) per commit message.
+
+### STEP qa-S63 · qa · 2026-08-06T20:57:37Z
+**task-id:** TE-T08
+**what-done:** Direct-commit verify (`qa[]` row, `branch:null`, `commit_sha`=`af63043ae` present on row, no `.files[]`) — confirmed ancestor of main, zero later edits.
+**what-considered:**
+- Read the full diff myself: `commit-mutex/SKILL.md` 235L→82L (current `wc -l`=82 exact) + new `reference.md`=79L exact, hot card retains INV-GATEWAY-1/C-2/C-2b/foreign-restore/pathspec-scoped-commit gates verbatim (grep-confirmed `-- <path1> <path2>` still on `git commit` line, per po's landmine).
+- Verified the 2 cross-ref fixes (`commit-boundary`, `commit/SKILL.md`) against current 3-step structure — accurate.
+- Repo-wide grep restricted to LIVE wiring surfaces (`docs/agents/**`,`.claude/skills/**`,`.claude/commands/**`) for stale `3d-PUSH`/old-step refs → zero hits, no other live doc broken.
+- `pre-commit:38` stale comment correctly left unfixed (outside agent-father commit_zone), correctly flagged non-blocking.
+- All touched files `.md` → bun test/tsc/DDD-secret-grep N/A; `mock-guard.sh` → PASS (no production source). DJ-GATE-1: `sprint-TOKEN-ECONOMY-AUDIT-agent-father.md` task-id:TE-T08 present.
+**why-decision:** APPROVED, DONE_VERIFIED. Diff+current-file-state independently match every claim in `return_summary`; no stale/broken cross-ref survives.
+**why-change:** none — verified exactly what the row scoped.
