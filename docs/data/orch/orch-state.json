@@ -93,12 +93,11 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "FIX-PO-MINT-ACTUATOR-REGRESSION-VERIFIER-SCRIPT",
-    "next_agent": "developer",
-    "next_action": "BOUNDED-1 auto-pickup claim of FIX-PO-MINT-ACTUATOR-REGRESSION-VERIFIER-SCRIPT — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
-    "updated_at": "2026-08-06T17:58:40Z",
-    "updated_by": "dev-team (bounded-1 auto-pickup)"
+    "status": "idle",
+    "active_task_id": null,
+    "next_agent": "router",
+    "updated_at": "2026-08-06T18:24:52Z",
+    "updated_by": "developer"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -6133,11 +6132,11 @@
         ],
         "next_agent": "agent-father",
         "po_routing_ruling_20260721": "PO ARTIFACT-CLASS ROUTING RULING 2026-07-21T18:42Z. Rule: routing follows ARTIFACT CLASS, not directory. Any row whose deliverable is instruction-prose that an agent LOADS AND EXECUTES — .claude/agents/**, docs/agents/** (init/flow/knowledge/tools-package), .claude/skills/**/SKILL.md — routes to agent-father. Executable code (apps/**, scripts/**), codegen-from-registry, and data/root-config (docs/data/**, CLAUDE.md) route to zone-matched dev-* or developer. Rationale: for this system a flow doc IS the executable source; agent-father is already sole owner of agent-file lifecycle (dispatch/SKILL.md:48) and of NEW cron skill files (:50), and board precedent has 5/5 pre-existing docs/agents/ rows routed to agent-father/agents-architect/po and 0 to developer. Precedent for SKILL.md specifically: docs/signals/processed/dev-team-20260716T102429Z-autolaunch-safety-hold-uc-asl-p6.json already routed a signal-dashboard SKILL.md edit to agent-father as 'the factory rule'. ROOT CAUSE this closes: .claude/skills/zone-detect/SKILL.md resolves ONLY dev-<service> (Tier-1/2, needs apps/<service>/-shaped zone) or generic developer (Tier-3 fallback) — it has NO path to agent-father, so any docs/agents/ or .claude/skills/ row reaching execute-tier with next_agent unset gets the 'developer' placeholder and mis-routes. EXPECTED SIDE EFFECT (do NOT 'fix' this): next_agent=agent-father does not match the dev-role pattern ^dev(-|$)|^developer$, so the BOUNDED-1 NON-DEV-NEXT_AGENT gate (dev-team/flow/main.md:518) now WITHHOLDS these rows from unattended idle auto-pickup. That is the intended outcome — they require deliberate router dispatch to agent-father, not silent promotion to a generic developer.",
-        "updated_at": "2026-08-06T07:12:45Z",
-        "po_manual_dispatch_flagged_at": "2026-08-06T07:09:22Z",
+        "updated_at": "2026-08-06T18:23:56Z",
+        "po_manual_dispatch_flagged_at": "2026-08-06T18:21:44Z",
         "po_manual_dispatch_flagged_by": "po (manual-dispatch-sweep)",
         "po_manual_dispatch_class": "DRS-STRANDED-OFF-ALLOWLIST",
-        "po_manual_dispatch_note": "po (manual-dispatch-sweep) surfaced DRS-STRANDED-OFF-ALLOWLIST candidate -- folding into this tick's BATCH. Re-admitted under flag_reentrant: prior stamp 2026-08-01T02:28:56Z is older than the 4h staleness window, i.e. it was flagged and then never dispatched (the FIX-PO-MANUAL-DISPATCH-SWEEP-FLAG-WITHOUT-DISPATCH-STRANDS-ROW shape). 40 eligible candidates this tick; TE-T03 top by [priority_rank, idx]."
+        "po_manual_dispatch_note": "po (manual-dispatch-sweep) surfaced DRS-STRANDED-OFF-ALLOWLIST candidate — folding into BATCH at 2026-08-06T18:21:44Z. 43 eligible candidates this tick; TE-T03 top by [priority_rank, idx=28]. Re-admitted under flag_reentrant: prior stamp 2026-08-06T07:09:22Z is older than the 4h staleness window (flagged then never dispatched — the FIX-PO-MANUAL-DISPATCH-SWEEP-FLAG-WITHOUT-DISPATCH-STRANDS-ROW shape). DEPENDENCY VERIFIED THIS TICK: depends_on TE-T01 is SATISFIED — TE-T01 is in docs/data/orch/archive/2026-07.json (shipped), so the SEQUENCING note on this row no longer blocks it."
       },
       {
         "id": "TE-T05",
@@ -11888,13 +11887,14 @@
           "AC-5 Sweep for further drift while in there: diff the live distinct to=po type set against the union of both tables and report any other gaps found.",
           "AC-6 Add db_anomaly_illiquid_ohlcv as well (2nd unrouted type, observed 2026-08-06T07:21:27Z mid-triage). Route: dedup-check then FOLD onto the OHLCV integrity family (CLEAN-OHLCV-INTEGRITY-RESIDUE-REPAIR) — a WARN whose count is stable against the prior day is residue, not a regression; do not mint per fire."
         ],
-        "updated_at": "2026-08-06T11:37:16Z",
+        "updated_at": "2026-08-06T18:23:56Z",
         "po_corroboration_20260806T0721": "SECOND unrouted type observed 14 minutes into the very tick that minted this row: sys-20260806T072127-34b3, type=db_anomaly_illiquid_ohlcv, from=system-auditor, to=po, WARN. Also absent from all three routing tables AND from the guard $routed array. This upgrades the finding from a single missing row to demonstrated ONGOING drift at ~2 new types/hour during an active audit sweep, and is the strongest available argument for AC-4 (wire the guard to a caller that actually runs) over merely adding the missing rows by hand.",
         "status_note": "Re-run of guard_signal_type_coverage at 2026-08-06T10:00:33Z returns FAIL with TWO unrouted to=po types, not one: [\"agent_flow_defect\",\"db_anomaly_illiquid_ohlcv\"]. THIRD gap found this tick on the OTHER pipeline: `cowork-fire` (from cowork-team) has no row in the Pipeline-A table either — it is addressed to=dev-team so it is correctly routed at source, but the Step 0a drain hands every signal to PO regardless, so it lands on the `any unknown type` catch-all EVERY tick (recurring triage friction, benign content: FIRE/spawned/no errors). FIX SCOPE: add all three rows to the two tables in docs/agents/po/flow/triage-signals.md AND add the two Pipeline-B types to the guard's own $routed array (the doc already warns that array is the single point of drift the guard exists to catch — it drifted). db_anomaly_illiquid_ohlcv CONTENT needs no new work: the one live row (sys-20260806T072127-34b3, WARN, `daily_ohlcv: 336 rows with incomplete H/L/V data (illiquid tickers)`) is already status=triaged and the substance is covered by the existing OHLCV family (CLEAN-OHLCV-INTEGRITY-RESIDUE-REPAIR et al) — this row is about TABLE COVERAGE only.",
         "po_scope_widened_20260806T0935": "covers db_anomaly_illiquid_ohlcv in addition to agent_flow_defect",
-        "updated_by": "po (triage 2026-08-06T10:00:33Z — scope widened, 2 more unrouted types found by the same guard)",
+        "updated_by": "po (triage 2026-08-06T18:21Z)",
         "po_corroboration_20260806": "Still open and still FAILING. po re-ran this doc's OWN regression verifier (guard_signal_type_coverage, docs/agents/po/flow/triage-signals.md § Regression verifier) against the live board at 2026-08-06T11:37Z: rc=1, unrouted to=po types = [\"agent_flow_defect\",\"db_anomaly_illiquid_ohlcv\"] — both named verbatim in this row's own title, so the row's premise is confirmed live, not stale. Volume since: 5 agent_flow_defect rows landed on 2026-08-06 alone (from cowork-team x2, router, dev-team x2) plus 1 db_anomaly_illiquid_ohlcv; all 6 reached a disposition only because a PO hand-triaged them off-table. The third type in this row's title, cowork-fire (Pipeline A), also fired this tick (docs/signals/processed/cowork-team-2026-08-06T11:06:18Z.json) and again had no table row — po disposed of it under the 'any unknown type' catch-all. NOTE for whoever takes this: fixing the two tables is only half — the guard's own $routed array is a hardcoded literal inside the verifier and must be updated in the same commit, or the guard will keep failing on types that ARE routed.",
-        "po_dispatch_blocker_note": "Not dispatched this tick (BATCH already carries 4 entries). next_agent=agent-father is OFF the DRS allowlist, so this row has no automated picker and is reachable only via PO's manual-dispatch sweep — it ranks P1/idx=346 there, behind ~15 other P1s. Candidate for the next sweep tick."
+        "po_dispatch_blocker_note": "Not dispatched this tick (BATCH already carries 4 entries). next_agent=agent-father is OFF the DRS allowlist, so this row has no automated picker and is reachable only via PO's manual-dispatch sweep — it ranks P1/idx=346 there, behind ~15 other P1s. Candidate for the next sweep tick.",
+        "po_corroboration_20260806T1821": "5th and 6th unrouted to=po types found by re-running this row's OWN guard_signal_type_coverage against the live hot file at 2026-08-06T18:21Z. Full unrouted set is now [\"agent_flow_defect\",\"bug-escalation\",\"db_anomaly_illiquid_ohlcv\",\"notebook_concurrency_gap\",\"recurring-bug-corroboration\",\"recurring_defect_unfixed\"] — SIX types, up from the two named in this row's title. Restricted to rows still NEW/READ (i.e. actually awaiting triage, not historical), the unrouted set is [\"recurring-bug-corroboration\",\"recurring_defect_unfixed\"] and covers 3 of the 7 live unresolved po rows this tick: sys-20260806T150842-a4th, dev-20260806T175500-orphterm, cmh-20260806T180630-dochealpartial. All 3 were dispositioned by PO off-table again. NOTE on `bug-escalation`: it IS routed in the Pipeline-A table but NOT in the Pipeline-B $routed array — so the guard flags it as a false positive. Whoever takes this must fix the guard's array to be the union of BOTH tables, or it will keep crying wolf on an already-routed type and get ignored. That is a 3rd failure mode on top of AC-4's 'no caller' and the tables' 'missing rows'."
       },
       {
         "id": "FIX-BOARD-ZONE-TOKEN-OFF-CONTRACT-35PCT-DISPATCHABLE-ROWS",
@@ -12089,10 +12089,10 @@
       {
         "id": "FIX-DEVTEAM-BOUNDED1-CLAIM-NO-OWN-WIP-RECHECK",
         "type": "FIX",
-        "title": "scripts/devteam-backlog-claim-bounded1.jq has no own WIP re-check — re-claims any ready[] row still stamped promoted_by=\"dev-team (bounded-1 auto-pickup)\" even while a different row holds the WIP slot",
+        "title": "scripts/devteam-backlog-claim-bounded1.jq: (a) no own WIP re-check — re-claims a ready[] row still stamped promoted_by=\"dev-team (bounded-1 auto-pickup)\" while a different row holds the WIP slot; (b) its selector is $auto_promoted[0] = ARRAY POSITION, not priority — starves every higher-priority ready[] row",
         "desc": "RAW-VERIFIED AT SOURCE (scripts/devteam-backlog-claim-bounded1.jq, 82L). The claim selector is lines 39-42: `[ (.task_board.ready // [])[] | select(.promoted_by == \"dev-team (bounded-1 auto-pickup)\") ]` — a pure stamp match, with ZERO reference to .task_board.in_progress length anywhere in the file (grep: the only in_progress touches are the line-49 append and the line-58/63 head fields). The file states its own load-bearing assumption in its header comment at lines 13-14: \"Under the BOUNDED-1 gate (promote only fires when WIP==0, i.e. ready[] was already empty) there is at most one such row.\" That assumption holds only while the promote script is the sole writer of the stamp AND nothing ever returns a stamped row to ready[]. It is violated when PO (or any evictor) moves a promoted row back to ready[] WITHOUT clearing promoted_by: the stale stamp then makes the row re-claimable on any later tick regardless of current WIP. The claim trusts the stamp as a proxy for WIP instead of measuring WIP itself. NOTE ON SCOPE — the head-clobber half is already fixed and must not be re-fixed: lines 57-59 compute $head_free and lines 71-79 deliberately preserve a live .head (FIX-DEVTEAM-CLAIM-SCRIPTS-UNCONDITIONAL-HEAD-OVERWRITE, PO ratification ruling-20260730T0906Z STEP po-4). But that guard only protects .head — the row is STILL appended to in_progress[] at line 49 before the head branch is evaluated, so a second concurrent row lands in in_progress[] with no head pointing at it. This is the actual leak. LIVE OBSERVATION 2026-08-06T10:13Z: BOUNDED-1 re-claimed FIX-DEPTHTHIN-B-GATEWAY-TA-PATH-REWRITE via a 2026-08-01 promoted_by stamp. That particular outcome was CORRECT by policy (WIP was <2, re-promotion is intended) — the row is not filed against that dispatch; it is filed against the mechanism, which arrived at a correct answer for the wrong reason and will arrive at a wrong answer when WIP is saturated.",
         "status": "BACKLOG",
-        "priority": "P2",
+        "priority": "P1",
         "size": "S",
         "owner": "po",
         "zone": "cross-service/",
@@ -12108,7 +12108,19 @@
         "source": "telegram report id=4495 message_id=4784 from qa (2026-08-06), live-reproduced in scripts/audits/devteam-dispatch-gate-satisfiability.sh case \"BOUNDED-1 correctly no-ops when in_progress>=1\"",
         "verification_gate": "devteam_dispatch_gate_satisfiability_bounded1_wip_case_passes",
         "status_note": "AC1: the claim script measures WIP ITSELF — add an `(.task_board.in_progress // []) | length` guard so the claim is a no-op when WIP is already at cap, independent of any promoted_by stamp. Do NOT implement this as \"clear the stamp on eviction\" only: that fixes the one known producer of stale stamps and leaves the claim still trusting a field it does not own (feedback_reader_writes_its_own_trigger_field_check_is_vacuous). Stamp-clearing on eviction is a fine ADDITIONAL hardening, not the fix. AC2: the existing live case in scripts/audits/devteam-dispatch-gate-satisfiability.sh titled \"BOUNDED-1 correctly no-ops when in_progress>=1\" must pass — it currently FAILS, which is how qa found this. AC3: negative control — a fixture with WIP=0 and one stale-stamped ready[] row must still claim normally (do not over-tighten into never claiming). AC4: the header comment at lines 13-14 must be corrected; it currently documents the unsound assumption as if it were an invariant.",
-        "updated_at": "2026-08-06T10:25:43Z"
+        "updated_at": "2026-08-06T18:23:56Z",
+        "root_cause": "Both defects are the same 3 lines of scripts/devteam-backlog-claim-bounded1.jq:39-46. The file's own header comment states the invariant it relies on: 'Under the BOUNDED-1 gate (promote only fires when WIP==0, i.e. ready[] was already empty) there is at most one such row.' That invariant is FALSE on the live board — ready[] holds 62 rows and TWO of them carry the promoted_by stamp simultaneously. Once the 'at most one' premise fails, `$auto_promoted[0]` silently degrades from 'the one promoted row' to 'whichever promoted row happens to sit at the lowest array index', which is insertion order and carries no priority information at all. There is no sort_by(priority_rank) anywhere in the file (grep-verified: zero sort_by / priority_rank / limit occurrences).",
+        "evidence": "PO measured this live at 2026-08-06T18:21Z, not inferred. (1) TWO stale bounded-1 stamps are resident in ready[] right now: idx=57 FIX-JANITOR-HEALTHRECHECK-IDEMPOTENCY-GUARD-MISSES-PROCESSED-DIR (P2, promoted_at 2026-08-06T17:15:28Z) and idx=61 FIX-NEWSVPS-OVERNIGHT-PUSH-OUTAGE-663M-SILENT (P1, promoted_at 2026-08-06T17:58:35Z) — independently corroborated the same tick by qa via Telegram report 4467, which named both rows unprompted. (2) Replaying the script's own selector against the live file: `[.task_board.ready[]|select(.promoted_by==\"dev-team (bounded-1 auto-pickup)\")][0]` returns the P2 janitor row — so the NEXT idle-chain tick will claim a P2 ahead of the P1 sibling AND ahead of all 21 P0 rows currently sitting in ready[]. (3) The already-realised instance: .head's current active_task_id is FIX-PO-MINT-ACTUATOR-REGRESSION-VERIFIER-SCRIPT, priority P2, claimed_by 'dev-team (bounded-1 auto-pickup)' at 2026-08-06T17:58:40Z — a P2 dispatched while 21 P0s waited. (4) WIP re-check axis: in_progress=1 right now, yet both stamps survive in ready[], so the next tick claims a SECOND concurrent row with no WIP gate.",
+        "ac": [
+          "AC-1 (WIP) claim-bounded1.jq must re-check its own WIP before claiming: if .task_board.in_progress already holds a row, the script is a NO-OP. Today it has no such check and the header's 'promote only fires when WIP==0' premise is the only thing standing in for one — a premise about a DIFFERENT script, which the live board disproves.",
+          "AC-2 (PRIORITY) replace `$auto_promoted[0]` with a priority-ordered pick: sort_by([priority_rank, idx]) using the SHARED priority_rank def already in scripts/lib/devteam-eligibility.jq — do NOT reimplement the rank mapping locally (that shared def is the SSOT every other picker composes).",
+          "AC-3 (STALE-STAMP DRAIN) decide and implement what happens to leftover promoted_by stamps: either the claim clears the stamp on every non-selected row, or promote refuses to stamp a second row while any stamp is outstanding. Leaving them resident is what converts a one-shot selector into a permanent mis-ordering. Name which of the two you chose and why.",
+          "AC-4 (REGRESSION GATE, not a fixture) the verifier must replay the REAL selector against a fixture whose ready[] holds >=2 stamped rows at mixed priorities with the P0 at a HIGHER array index than the P2 — i.e. a fixture on which the CURRENT code provably picks wrong. A fixture with one stamped row passes today and proves nothing (feedback_fleetwide_gate_validated_on_one_file_optout_allowlist).",
+          "AC-5 (LIVE PROOF) after the fix, re-run the selector against the live orch-state.json and paste the output showing it now returns a P0 row, not FIX-JANITOR-HEALTHRECHECK-IDEMPOTENCY-GUARD-MISSES-PROCESSED-DIR."
+        ],
+        "po_escalation_20260806T1821": "P2 -> P1. Escalated on measured blast radius, not on report volume: 21 P0 rows are in ready[] and the live selector demonstrably prefers a P2. This is a dispatch-ordering defect that silently caps the throughput of every other fix on this board, so it gates them all. qa independently found the same file the same tick (report 4467) without seeing this row — two planes, one mechanism.",
+        "po_scope_widened_20260806T1821": "Original row covered only the WIP re-check (axis a). PO added axis (b), the $auto_promoted[0] array-position selector, after reading scripts/devteam-backlog-claim-bounded1.jq:39-46 directly. Kept as ONE row rather than a sibling mint: same file, same 3 lines, same fix session, and splitting would let a fixer close (a) while leaving the P0 starvation live.",
+        "updated_by": "po (triage 2026-08-06T18:21Z)"
       },
       {
         "id": "FIX-WF2-PREDICATE-MIRROR-NO-DRIFT-VERIFIER",
@@ -12511,6 +12523,113 @@
         "created_by": "po (dev-team Step 1 triage 2026-08-06, session f298ccf7-8cf4-452d-9a5a-57dcb47e65ac)",
         "updated_at": "2026-08-06T17:39:34Z",
         "updated_by": "po (dev-team Step 1 triage 2026-08-06)"
+      },
+      {
+        "id": "FIX-CRON-DST-LOCAL-EVAL-MOMENT-ANCHORED-EXPRESSIONS",
+        "type": "FIX",
+        "title": "5 standalone CronCreate expressions are moment-anchored but written as if evaluated in UTC — CronCreate evaluates Europe/Paris-local, so db-data-integrity Job A currently fires 2h early and misses the exact settlement window CADRAT-2 shipped 2 days ago to cover",
+        "zone": "cross-service/",
+        "priority": "P1",
+        "status": "BACKLOG",
+        "size": "S",
+        "next_agent": "agent-father",
+        "supervised": false,
+        "plan_only": false,
+        "baseline_pass": true,
+        "owner": "po",
+        "source": "docs/architecture-briefs/2026-08-06-cadence-reanalysis-v2.md (agents-architect, PLAN-ONLY) §3a-3c — greenlit by PO 2026-08-06T18:21Z after independent source verification",
+        "created_at": "2026-08-06T18:21:44Z",
+        "created_by": "po",
+        "root_cause": "CronCreate's `cron:` field is evaluated in the session/server LOCAL timezone (Europe/Paris, currently CEST=UTC+2), not UTC. Any standalone .claude/commands/crons/*.md expression that targets a specific VN-market MOMENT (H M * * DOW) therefore fires at the wrong instant, and drifts another hour at each DST changeover. Pure-INTERVAL expressions (*/15, 0 */4) are unaffected — cadence is invariant under a clock shift. The cowork-schedule.json family (22 slots) is likewise unaffected and needs NO change.",
+        "evidence": "PO verified the brief's two load-bearing claims at source rather than accepting its prose (supervised-goahead.md § Step 2 discipline). (1) DEFECT CONFIRMED: .claude/commands/crons/cron-db-data-integrity.md:27 reads `- **cron**: `15,45 2-9 * * 1-5`` and its OWN inline comment on the same line claims '09:00-16:59 VN Mon-Fri, covers the trading' — but local-hours 2-9 in CEST is 00:00-07:59 UTC = 07:00-14:59 ICT, so the doc's stated intent and its expression disagree by 2h and the 15:00-17:00 ICT settlement window is entirely uncovered. Line 33 confirms Job B `15 22 * * *` with the same class of error. (2) SCOPE-LIMITING CLAIM CONFIRMED (this is what keeps the fix small): scripts/agents-flow/cowork-match-slots.js:135 uses now.getUTCHours() and :138 uses now.getUTCDay() — pure UTC arithmetic, so all 22 cowork slots are DST-immune by construction and are correctly EXCLUDED from this fix.",
+        "files": [
+          ".claude/commands/crons/cron-db-data-integrity.md",
+          ".claude/commands/crons/cron-system-auditor.md",
+          ".claude/commands/crons/cron-orch-sentinel.md",
+          ".claude/skills/cron-standalone-team/SKILL.md",
+          ".claude/skills/cron-detect-loop/SKILL.md"
+        ],
+        "ac": [
+          "AC-1 db-data-integrity Job A (HIGH, live-wrong now): CEST `15,45 4-11 * * 1-5` / CET `15,45 3-10 * * 1-5`. This is the only item with live functional impact — do it first and independently of the rest.",
+          "AC-2 db-data-integrity Job B: CEST `0 0 * * *` / CET `0 23 * * *`.",
+          "AC-3 system-auditor Tier-3: CEST `0 4 * * *` / CET `0 3 * * *`. Also fix the hardcoded FIRE_TICK literal `...T02:00Z` that stamps a tick-id 2h after the sweep actually ran.",
+          "AC-4 orch-sentinel FULL `18 5 * * 0` CEST / `18 4 * * 0` CET and LITE `48 3 * * *` CEST / `48 2 * * *` CET. These two are NOT armed — fix before arming. They must be fixed in the SAME change as AC-3: LITE's rationale is '12min before Tier-3', and correcting Tier-3 alone would break that relative spacing.",
+          "AC-5 Use the dual-CEST/CET-expression + explicit changeover-note convention ALREADY PROVEN in this repo — cron-claude-manager-helper.md and cron-auditor-page-reverify.md both carry it correctly today. Do not invent a new mechanism.",
+          "AC-6 Whichever re-arm skill owns each cron must be updated in the SAME commit, or the next session restart re-arms the OLD expression and silently reverts the fix. Verify by grepping the skills for each literal expression before and after.",
+          "AC-7 NOT IN SCOPE (explicitly): migrating moment-anchored crons onto the UTC-native JS matcher (brief §3f option b). Recorded as the strategically-correct end state — it removes the semiannual manual-flip ritual entirely — but it is a real migration and must not be smuggled into this correction pass."
+        ],
+        "po_ruling_20260806T1821": "GREENLIT. The brief was filed status=AWAITING_USER_CONFIRMATION / 'do NOT auto-implement'. PO overrides that hold under full_autonomy (CLAUDE.md: never ask user — spawn po for decisions, continue). Justification for overriding rather than deferring: AC-1 is a live correctness regression that silently defeats a fix which shipped 2 days ago, the corrections are mechanical, and they mirror a convention already proven twice in-repo. Deferring a known-wrong live cron for a confirmation round-trip has a real cost and no upside.",
+        "updated_at": "2026-08-06T18:23:56Z"
+      },
+      {
+        "id": "CLEAN-CRON-STANDALONE-DOCS-SUPERSEDED-BY-COWORK",
+        "type": "CLEAN",
+        "title": "Mark 6 standalone .claude/commands/crons/*.md docs DEPRECATED — all superseded by cowork-schedule.json and unreachable from any of the 3 re-arm skills; includes retiring market-watcher's now-dead mode=market/mode=prepost fallback branches per PO product ruling",
+        "zone": "cross-service/",
+        "priority": "P2",
+        "status": "BACKLOG",
+        "size": "S",
+        "next_agent": "agent-father",
+        "supervised": false,
+        "plan_only": false,
+        "baseline_pass": true,
+        "owner": "po",
+        "source": "docs/architecture-briefs/2026-08-06-cadence-reanalysis-v2.md §4 — 4 REMOVE + 2 HOLD; PO ruled on both HOLDs 2026-08-06T18:21Z so all 6 now proceed",
+        "created_at": "2026-08-06T18:21:44Z",
+        "created_by": "po",
+        "root_cause": "Six standalone cron authoring docs describe CronCreate registrations for agents that are ALSO — and in practice, only — dispatched through cowork-schedule.json. None of the 3 sanctioned re-arm skills (cron-cowork-team, cron-detect-loop, cron-standalone-team) registers any of them, so even a manual arm evaporates on the next session restart with no recovery path. They are structurally orphaned specs that read as live and mislead every future cadence audit.",
+        "evidence": "Architect brief §4 evidence table, plus PO source-verification of the strongest claim: .claude/commands/crons/cron-unified-agent.md:5 declares `- **cron**: `29 * * * *``, while docs/agents/unified-agent/flow/main.md:11-14 lists every dispatch window it can match — 05:23, 02:13-08:13, 08:37, 19:37 — and :29 matches NONE of them. main.md:23 even documents the consequence ('Any other time -> EXIT'). So this cron is dead by construction, not merely redundant: if armed it would spawn 24 real subagent sessions/day for provably zero possible output.",
+        "files": [
+          ".claude/commands/crons/cron-tran-ngoc-bau.md",
+          ".claude/commands/crons/cron-digest-predict.md",
+          ".claude/commands/crons/cron-refine-bctc.md",
+          ".claude/commands/crons/cron-unified-agent.md",
+          ".claude/commands/crons/cron-news-scout.md",
+          ".claude/commands/crons/cron-market-watcher.md",
+          "docs/agents/market-watcher/flow/main.md"
+        ],
+        "ac": [
+          "AC-1 Mark all 6 DEPRECATED using the pattern already applied to cron-fb-market-poster.md (deprecated 2026-06-28) — header note + pointer to the live cowork-schedule.json slot that supersedes it. Do NOT delete the files; the deprecation note is the artifact that stops the next audit re-discovering them.",
+          "AC-2 cron-unified-agent.md additionally carries a P0-DELETE-ON-SIGHT note: if a future CronList audit ever finds it armed, delete immediately — 24 zero-value subagent spawns/day.",
+          "AC-3 Per PO product ruling (below), retire the now-unreachable mode=market and mode=prepost branches from docs/agents/market-watcher/flow/main.md's 'Fallback — UTC clock window' table. Retiring dead-but-reachable branches is the point of this row; leaving them is the debt CLAUDE.md § Detect then reduce debt names.",
+          "AC-4 Before touching market-watcher/flow/main.md, re-verify that no live cowork slot dispatches it WITHOUT a slot= param (the fallback table is reachable only in that case). If any does, STOP and re-raise to PO — the ruling's premise would be wrong.",
+          "AC-5 Confirm by grep that none of the 3 re-arm skills references any of the 6 files, so deprecating them cannot break a re-arm path."
+        ],
+        "po_product_ruling_20260806T1821": "The brief escalated ONE open product question to PO/architect (§4 HOLD): market-watcher-market / market-watcher-prepost / news-scout-market were designed, shipped and QA-passed in May 2026, then pruned from cowork-schedule.json in commit 3b956dd7e (2026-05-30) as 'dead API_MIN_INTERVAL stubs' — a mechanical prune, never a product decision. RULING: RETIRE, do not restore. Four reasons. (1) news-scout has no mode dispatch in its flow at all, so nothing is at stake there — it deprecates with the other 4 unconditionally. (2) market-watcher does still carry live coded mode=market/mode=prepost branches, but 2+ months have passed with zero restoration requests on the board or in the signal queue — absence of demand across that span is weak evidence, but it is the only evidence pointing either way. (3) DECISIVE: the host is memory-constrained right now — rag-service is at 97.76% of its 1GiB cap this very tick and the Docker host runs an 8GB ceiling (project_host_memory_panic). A */15-during-market-hours slot buys unproven densification at real, immediate cost. (4) Retiring costs nothing optional: the brief itself states that if densification is ever wanted the correct mechanism is a NEW cowork slot dispatched with slot= through the modern fire-elected collision-safe path — never a revival of the old standalone CronCreate registration. So retiring the dead path forecloses nothing. This ruling closes the brief's only PO-blocking question; the brief needs no further PO input.",
+        "updated_at": "2026-08-06T18:23:56Z"
+      },
+      {
+        "id": "FIX-CMH-PASS9B-DOCHEAL-DISCOVERY-ONLY-NO-AUTOFIX-REPORT",
+        "type": "FIX",
+        "title": "claude-manager-helper Pass 9b invokes doc-heal-system for DISCOVERY only and never runs its mandated Phase 4 auto-fix / Phase 7 report+commit — size-cap violations accumulate every Mon/Thu cycle with no report trail",
+        "zone": "cross-service/",
+        "priority": "P2",
+        "status": "BACKLOG",
+        "size": "S",
+        "next_agent": "agent-father",
+        "supervised": false,
+        "plan_only": false,
+        "baseline_pass": true,
+        "owner": "po",
+        "source": "signal_queue row cmh-20260806T180630-dochealpartial (claude-manager-helper self-report, 2026-08-06T18:06:30Z)",
+        "created_at": "2026-08-06T18:21:44Z",
+        "created_by": "po",
+        "root_cause": "docs/agents/claude-manager-helper/flow/main.md Pass 9b calls the doc-heal-system skill but stops after its discovery phase, never invoking Phase 4 (auto-fix: extract reusable rules to knowledge, per .claude/skills/doc-heal-system/phases.md Size Caps — the SKILL.md cap is 200L and the documented disposition is auto-fix, NOT escalate) or Phase 7 (write reports/DOC_HEAL_YYYY-MM-DD.md + a dedicated docs(heal) commit). The skill's own contract mandates both.",
+        "evidence": "Self-reported by claude-manager-helper on its 2026-08-06 18:06Z cron cycle (commit 5024251f8) and confirmed by the reporter's own falsifiable checks: reports/DOC_HEAL_2026-08-06.md does not exist anywhere in the repo, and the only commit that cycle was chore(memory/claude-manager-helper) — no docs(heal) commit. Discovery itself worked correctly: 4115 files scanned, found code-janitor.md notebook at 224L (>200 cap) and 6 oversized SKILL.md files (dispatch-claim 497L, docx 590L, skill-creator 485L, pdf 314L, mcp-builder 236L, xlsx 291L). NOT a self-report confabulation — the agent's notebook and self-report both describe the gap accurately and consistently, which is the opposite of the feedback_leaf_agent_analysis_only_exit_recurring_pattern_20260806 shape; the defect is in the flow doc's wiring, not in the agent's honesty.",
+        "files": [
+          "docs/agents/claude-manager-helper/flow/main.md",
+          ".claude/skills/doc-heal-system/SKILL.md",
+          ".claude/skills/doc-heal-system/phases.md"
+        ],
+        "ac": [
+          "AC-1 Pass 9b must invoke doc-heal-system Phase 4 and Phase 7, not just discovery. Read the skill's own phases.md contract and wire every phase it mandates.",
+          "AC-2 The 7 already-discovered violations are the acceptance fixture — after the fix, one cycle must actually shrink code-janitor.md below 200L and produce reports/DOC_HEAL_<date>.md plus a docs(heal) commit.",
+          "AC-3 Phase 4's disposition for an oversized SKILL.md is AUTO-FIX (extract to knowledge), not escalate. Do not 'fix' this by converting the finding into a signal — that reproduces the same no-actuator defect one layer out.",
+          "AC-4 Fail-loud if a mandated phase is skipped: a discovery-only run must not report success. Silent partial execution is what let this accumulate unnoticed across every Mon/Thu cycle.",
+          "AC-5 Backfill check: report how many Mon/Thu cycles ran discovery-only before this fix, so the accumulated violation backlog is sized rather than assumed."
+        ],
+        "po_note_20260806T1821": "Minted despite severity=INFO and a single fire. Justification for overriding the WARN/INFO single-fire hold in triage-signals.md: that hold exists to suppress unreproducible auditor noise (feedback_auditor_mcpserver_a21_a30_memory_fp_reemit_churn), and this finding is the opposite of unreproducible — it carries a falsifiable negative (a named file that provably does not exist) that PO confirmed, and the defect is structural, so it recurs deterministically on EVERY Mon/Thu cycle rather than probabilistically. Waiting for a second fire would only add a week of accumulation.",
+        "updated_at": "2026-08-06T18:23:56Z"
       }
     ],
     "closed_sprints": [
@@ -21758,6 +21877,27 @@
         "claimed_by": "dev-team (bounded-1 auto-pickup)",
         "commit_sha": "8931e47c7",
         "status_note": "Root-caused + fixed at source (3 files, commit 8931e47c7). AC-1: two independent live-reproduced defects -- (a) schema.ts getDb() set PRAGMA busy_timeout LAST instead of first, turning transient lock contention into an immediate SQLITE_BUSY instead of a 5s retry; (b) test file overrode DB_PATH to a real on-disk temp file keyed only by Date.now() (ms resolution, no PID) -- 20 concurrent copies produced 3 exact path collisions out of 20 samples, one throwing the exact SQLITE_BUSY stack at getDb -> journal_mode. Per SPIKE_CI-PERFILE-ISOLATION-FLAKE.md finding #1, CI per-file-isolation runs each file as a separate OS process, so these are the defensible root cause for the per-file-isolation obs 1-4 (same-file-own-process timing/lock hazard), not the mock.module theory. AC-2: fixed at source -- busy_timeout reordered to first pragma (schema.ts); test switched to a true :memory: DB (matches the file's own stated intent, eliminates the on-disk-file class entirely) -- no retries/test.retry added. AC-3: separately found and fixed a REAL (but CI-per-file-isolation-inapplicable, shared-process-only) mock.module cache poison -- 1466-sync-db-corruption-bail.test.ts's afterAll re-registered its OWN stub instead of the true original vnstockStore module, permanently poisoning any later same-process import (including the ?isolate= query-bust). Fixed by capturing and restoring the true module (spread into a plain object, since mock.module rebinds live-binding export slots in place). ?isolate= workaround is no longer load-bearing. AC-4: 50x solo per-file-isolation self-contention runs = 0 fail (repro pattern previously hit 1/20); 15+15 interleaved with 167-prediction-market-job.test.ts (obs-3 co-failing sibling) = 0/30 fail; minimal 3-file repro for the mock.module defect = 0/18 fail (was 8/18); 25-file vnstock/foreign-flow/schema zone sweep = 282/282 pass (was 274/282); full bun test = 15144 pass/40 skip/48 fail/2 err (663s), zero vnstock-3statement/1466-related failures (grep-confirmed), within the documented pre-existing flaky floor; tsc clean."
+      },
+      {
+        "id": "FIX-PO-MINT-ACTUATOR-REGRESSION-VERIFIER-SCRIPT",
+        "type": "FIX",
+        "title": "Author scripts/audits/po-mint-orchapply-actuator-verify.sh per the spec inline in docs/agents/po/flow/main.md § Regression verifier",
+        "desc": "Follow-up from FIX-PO-BATCH-MINT-NO-WRITE-ACTUATOR (commit 3ce726a6e) — agent-father wired PO's BATCH-mint sub-flows (sprint-kickoff/channel-audit/market-group/telegram-reports) to a real orch-apply.sh actuator and widened its commit-mutex to include orch-state.json, but the regression-verifier script itself is out of agent-father's commit_zone (scripts/). Spec is already written inline in main.md, ready to implement.",
+        "priority": "P2",
+        "size": "S",
+        "zone": "cross-service/",
+        "next_agent": "qa",
+        "status": "REVIEW",
+        "created_at": "2026-08-05T09:35:52Z",
+        "created_by": "dev-team (router)",
+        "updated_at": "2026-08-06T18:24:52Z",
+        "updated_by": "developer",
+        "promoted_at": "2026-08-06T16:43:20Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
+        "claimed_at": "2026-08-06T17:58:40Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "status_note": "developer implemented scripts/audits/po-mint-orchapply-actuator-verify.sh + .test.sh per po/flow/main.md:173 spec (follow-up from FIX-PO-BATCH-MINT-NO-WRITE-ACTUATOR 3ce726a6e), commit f9e5113534a65e456886e230c223acdb6cbbbd57. Fleet-wide scan of all 15 docs/agents/po/flow/*.md (not just the 4 files 3ce726a6e fixed) via 2 complementary checks (per-fenced-block jq-mutation-operator + per-markdown-section prose-anchor). 13/15 PASS clean incl. the 4 originally-fixed sub-flows (verified together via PO_MINT_ACTUATOR_VERIFY_INCLUDE_OVERRIDE, matching this task's own closure ask). 2/15 genuinely FAIL: triage-signals.md + triage-signals-longtail.md carry 8 board-mutation instances (table-cell mint rows) with zero orch-apply.sh pipe anywhere in either file -- same defect class, not yet fixed, documented in the script's own header comment and left failing deliberately per feedback_fleetwide_gate_validated_on_one_file_optout_allowlist rather than tuned away. Filed as a follow-up finding for agent-father (zone docs/agents/, out of this P2 S/M task's scope) -- NOT actioned here. Tests: po-mint-orchapply-actuator-verify.test.sh 7/7 (synthetic before/after fixtures proving real detection of both historical bug shapes + no false positive on the correct shape and on sprint-signoff.md's legitimate cross-reference idiom + generalization to the table-cell doc shape). shellcheck clean on both files. No apps/ TS/JS touched -- bun test/tsc structurally N/A."
       }
     ],
     "qa": [
@@ -21907,28 +22047,7 @@
     },
     "last_triaged_at": "2026-08-06T17:58:35Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": [
-      {
-        "id": "FIX-PO-MINT-ACTUATOR-REGRESSION-VERIFIER-SCRIPT",
-        "type": "FIX",
-        "title": "Author scripts/audits/po-mint-orchapply-actuator-verify.sh per the spec inline in docs/agents/po/flow/main.md § Regression verifier",
-        "desc": "Follow-up from FIX-PO-BATCH-MINT-NO-WRITE-ACTUATOR (commit 3ce726a6e) — agent-father wired PO's BATCH-mint sub-flows (sprint-kickoff/channel-audit/market-group/telegram-reports) to a real orch-apply.sh actuator and widened its commit-mutex to include orch-state.json, but the regression-verifier script itself is out of agent-father's commit_zone (scripts/). Spec is already written inline in main.md, ready to implement.",
-        "priority": "P2",
-        "size": "S",
-        "zone": "cross-service/",
-        "next_agent": "developer",
-        "status": "IN_PROGRESS",
-        "created_at": "2026-08-05T09:35:52Z",
-        "created_by": "dev-team (router)",
-        "updated_at": "2026-08-06T17:58:40Z",
-        "updated_by": "dev-team (router)",
-        "promoted_at": "2026-08-06T16:43:20Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
-        "claimed_at": "2026-08-06T17:58:40Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)"
-      }
-    ]
+    "in_progress": []
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
