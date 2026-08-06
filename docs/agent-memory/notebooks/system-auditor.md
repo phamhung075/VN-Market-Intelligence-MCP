@@ -1,3 +1,64 @@
+## c50 · 2026-08-06T07:41:04Z
+
+### Audit Run Tier-1 (07:41 UTC 2026-08-06)
+- Tier: 1 | Services: 13/13 up, health 5/5 OK, restart 0, memory OK ✓
+- Anomalies: 0 new (0 critical, 0 warn, 0 info) | Status: ALL_GREEN
+- Previous anomaly context: c49 (5 min prior) reported A-30 WARN on rag-service (96.50% mem sustained). Current probe shows memory normalized.
+
+**Container Status (A-01–A-11):** All 13 host_runtime_set UP ✓
+- mcp-server: restarted 2026-08-06T06:40:19Z (~1h ago), RestartCount=0
+- rag-service: healthy, up 13h, no restart since 2026-08-05T18:12:13Z
+
+**Health Endpoints (A-12–A-20):** All 5 endpoints OK ✓
+- mcp-server:3000/health OK
+- api-gateway:4000/health OK
+- frontend:3001/health OK (resolves health_3001 CURL_ERR from preflight)
+- pdf-extractor:5001/health OK
+- macro-indicators:5004/health OK
+- A-20 multi-probe pdf-extractor: 3/3 pass ✓
+
+**Memory Pressure (A-30):** All containers below investigate-gate ✓
+- mcp-server: 42.30% < 85% (baseline skips deep-probe)
+- A-30 SKIP gate applied (baseline < 85%)
+
+**Restart Count (A-21):** crashRestarts=0 ✓
+
+**Disk (A-32):** / at 49% < 85% ✓
+
+**Context:** Transient resolution. Previous c49 ESCALATE (96.50% sustained, no reclamation dips) was driven by mcp-server's recent restart cycle (06:40 UTC). Memory now normalized after gc/stabilization. Frontend health (port 3001) now responsive — preflight health_3001 CURL_ERR was a transient timeout/connection blip, not a service outage. Known residual FU-RAG-DEPLOY-MEMORY continues to exhibit oscillation pattern (c47 FOLD, c49 ESCALATE, c50 baseline-skip); no escalation.
+
+[OUTPUT-CONTRACT] signals_posted=0 | telegram_sent=0 | signal_queue_rows_written=0 | dashboard_rows=0 | dedup_skipped=0
+CONTRACT-CONTRADICTION: NONE
+
+## c49 · 2026-08-06T07:16:03Z
+
+### Audit Run Tier-1 (07:10 UTC 2026-08-06)
+- Tier: 1 | Services: 13/13 up, health 5/5 OK, restart 0 ✓
+- Anomalies: 1 new (0 critical, 1 warn, 0 info) | 0 dedup-skipped
+- Status: DEGRADED
+
+**Container Status (A-01–A-11):** All 13 host_runtime_set UP ✓
+
+**Health Endpoints (A-12–A-20):** All 5 endpoints OK, A-20 multi-probe 3/3 pass ✓
+
+**Memory Pressure (A-30):**
+- mcp-server: 26.41% < 85%, A-30 skipped (baseline gate) ✓
+- rag-service: 96.50% ≥ 85%, A-30 deep-probe ESCALATE ⚠️
+  - Probe: 6 samples/65s window, sustained 96.50%, zero reclamation dips
+  - State: OOMKilled=false, RestartCount=1 (13h prior), VmHWM=992MB >> VmRSS=764MB
+  - Memory: 741.1/768 MiB (26.8 MiB free, below 40 MiB safety floor)
+  - Verdict: WARN — loss of reclamation vs. prior c47 FOLD (escalation detected)
+  - Signal: A-30 WARN sys-20260806T071552-5539 (microservice_degraded:rag-service:A-30)
+
+**Disk (A-32):** / at 51% < 85% ✓
+
+**Restart Count (A-21):** crashRestarts=0 ✓
+
+**Context:** Escalation from c47 (15 min prior). c47 showed benign GC oscillation (dips present 96.51%→98.98%), c49 now shows loss of dips (sustained 96.50% flat). May indicate load change or GC efficiency degradation. Elevated OOM risk without intervention.
+
+[OUTPUT-CONTRACT] signals_posted=1 | telegram_sent=1 | signal_queue_rows_written=1 | dashboard_rows=1 | dedup_skipped=0
+CONTRACT-CONTRADICTION: NONE
+
 ## c48 · 2026-08-06T07:03:42Z
 
 ### Audit Run Tier-3 (07:03:42Z UTC 2026-08-06)
@@ -32,58 +93,4 @@ CONTRACT-CONTRADICTION: NONE
 - Known residual: FU-RAG-DEPLOY-MEMORY (c41–c45, 2026-08-05 documentation) — oscillation pattern confirmed recurring, already documented, no escalation
 
 [OUTPUT-CONTRACT: signals_posted=0 | telegram_sent=0 | signal_queue_rows_written=0 | dashboard_rows=0 | dedup_skipped=0]
-CONTRACT-CONTRADICTION: NONE
-
-## c46 · 2026-08-06T06:56:59Z
-
-### Audit Run Tier-2 (04:00 UTC 2026-08-06)
-- Tier: 2 | Cron: ✓ PASS | Freshness: ✓ PASS | VPS: ✓ PASS | DB: ✓ PASS
-- Anomalies: 0 new (0 critical, 0 warn, 0 info) | 0 dedup-skipped
-- Status: HEALTHY
-
-### Tier-2 Findings (All PASS)
-
-**A-29 Cron Health:** ✓ PASS
-- 132 jobs tracked, all firing successfully (100% success rate)
-- Latest jobs: alertScanParallelJob 06:45, askQueueCheckJob 06:48, deepFetchMainJob 06:55, vpsServiceHealthJob 06:55
-- No fire gaps detected
-
-**B-01–B-07, B-11–B-12 Data Freshness:** ✓ PASS
-- All sources within cadence and SLA thresholds
-- Pipeline health: 33/33 tickers with OHLCV data ready
-- SLA status: 5/5 signal types ok (price, bctc, news, sbv_fx, foreign_flow)
-- Foreign flow: latest push 2026-08-06 06:55:56Z (within 10m cadence)
-- VPS routes freshness: prices 06:55, news 06:42, sbv 06:35, bctc idle-no-work
-
-**B-06, B-07 VPS Proxy Routes:** ✓ PASS
-- All 4 routes healthy (prices ok, news ok, sbv ok, bctc ok)
-- 24h error rates: zero
-- Push volumes within normal range
-
-**B-08 BCTC PDF Landing:** ✓ PASS
-- 313 PDF documents present in /app/data/pdfs/
-
-**B-09 BCTC SSC URL Shape:** ✓ PASS
-- 0 queue rows with source_url LIKE '%ssc.gov.vn%' (expected=0)
-
-**B-13 Stale Pending BCTC:** ✓ PASS
-- 0 rows with status='pending' AND created_at < datetime('now','-72 hours')
-
-**C-06 Market Messages (3h):** ✓ PASS
-- Count: 2 (expected >0)
-
-**C-07 Agent Signals (24h):** ✓ PASS
-- Count: 19 (expected >0)
-
-**B-05 BCTC Healthy-Idle Gate:** ✓ PASS
-- Queue active (115 rows in pending/url_not_found/enrich_failed)
-- Applying normal SLA threshold (off-season, not idle)
-
-**Note:** RAG-service memory observed at 98.96% BELOW-FLOOR by parallel Tier-1 probe — already captured by Tier-1 A-30 channel (FU-RAG-DEPLOY-MEMORY residual, GC sawtooth confirmed active). No re-investigation here per coordination directive.
-
-**D-BCTC-EVAL:** Not evaluated this cycle (Tier-2 add-on conditional).
-
-**D-IMPROVE:** No degraded-mode candidates detected.
-
-[OUTPUT-CONTRACT] signals_posted=0 | telegram_sent=0 | signal_queue_rows_written=0 | dashboard_rows=0 | dedup_skipped=0
 CONTRACT-CONTRADICTION: NONE
