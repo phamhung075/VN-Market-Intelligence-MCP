@@ -92,3 +92,23 @@
 - This row's OWN verification_gate is a live tool call, not a test — went beyond dev's REBUILD_REQUIRED flag rather than trusting it: mcp-server image already rebuilt 2026-08-06T08:41Z (after the 08-05T09:50Z fix commit), running container's src grep-confirms the fix code is live. Gateway-blind sub-session (no mcp__gateway__call_tool) — worked around via direct JSON-RPC POST to the live production MCP endpoint. Called get_bctc_full(FPT|HPG|VCB) live: all 3 now return real 2026-Q1 structured data + honest fallback note + fallback_from_newest_sort_key="2026-Q2", zero "Chưa có dữ liệu BCTC" hits (AC-1/AC-2 pass, live not just unit-tested). Negative control also live-verified: explicit {FPT,2026,Q2} still correctly returns the bare rejection — zero silent substitution (AC-3).
 **why-decision:** APPROVED, DONE_VERIFIED. All 3 ACs independently RAW-verified against the live production endpoint itself (P0 user-facing outage), not the row's own dev_note prose or a self-reported REBUILD_REQUIRED blocker that turned out already resolved.
 **why-change:** none — verified exactly what the row scoped; found the REBUILD_REQUIRED flag stale (already satisfied) rather than blocking on it.
+
+### STEP qa-S25 · qa · 2026-08-06T15:35:00Z
+**task-id:** FIX-CI-PARITY-CLAUDEMD-CRON-LITERAL-EXEMPTION-SHAPE
+**what-done:** Direct-commit verify (Review-Lane QA-Drain, `qa[]` row, `branch:null`) of `c3c5d63d2`, on main ancestry. `git show --stat` matches both `files[]` entries exactly (2 files, 8 ins/3 del). Read the full diff myself, not the status_note prose.
+**what-considered:**
+- AC4: CLAUDE.md:48 diff is genuinely punctuation-only — "the 4 standalone crons (db-...)" → "the (4 standalone crons) (db-...)", zero word add/remove/reorder, confirmed live on disk == commit content. `findCronCountLiterals` regex untouched (AC3) — read the function body directly, only the T-U3-7 assertion changed.
+- Re-ran myself: `bun test tool-registry-parity.test.ts` 17/17 pass exact match. `bun tsc --noEmit` (mcp-server) 0 errors. `mock-guard.sh` PASS (no production source in scope, CLAUDE.md + test file only).
+- CI-plane RAW-verified beyond status_note: `gh run view 31098224312` (headSha `4408c9283`, the run right after the fix landed) — job "bun test" conclusion=success. Went further: freshest main CI run (`31106283894`, headSha `1ff241d2e`, 2026-08-06T13:31Z) still shows "bun test" success — gate durable, no regression since.
+**why-decision:** APPROVED, DONE_VERIFIED. All 4 ACs independently reproduced against live diff/tests/CI, not trusted from the row's own status_note.
+**why-change:** none — verified exactly what the row scoped.
+
+### STEP qa-S26 · qa · 2026-08-06T15:33:04Z
+**task-id:** FIX-CI-SIZELINT-BCTC-1345B-PARSE-VALIDATOR-PAIR
+**what-done:** Direct-commit verify (Review-Lane QA-Drain, `qa[]` row, `branch:null`) of `b56dc6cc2`, on main ancestry, `git show --stat` matches both `files[]` entries + 2 new domain modules (confidenceFinancialReasonBuilder.ts 79L, financialFiguresRules.ts 300L w/ own size-justification header).
+**what-considered:**
+- Re-measured line counts myself, not trusted from status_note: parseBctcReport.ts=916L (<=944L upper), financialFiguresValidator.ts=162L (<=337L upper) — exact match. `size-lint-justification.sh --check` PASS 0 offenders. `docs/data/size-lint-baseline.json` untouched (git status clean + `git diff 7ac55adc8..b56dc6cc2` empty on that path).
+- Re-ran myself: tsc --noEmit clean; DDD grep clean (3 domain files zero infra imports; parseBctcReport.ts's infra imports are application-layer, golden-rule-permitted, not a violation); secrets grep clean; mock-guard PASS. 21 test files referencing changed/extracted symbols: 160 pass/0 fail/399 expect() — exact match to status_note's claim.
+- Row's own `verification_gate: ci_green_on_subsequent_push` re-verified RAW: `1ff241d2e` (freshest main CI, 2026-08-06T13:31Z) is a confirmed descendant of `b56dc6cc2`, `size-lint` job conclusion=success.
+**why-decision:** APPROVED, DONE_VERIFIED. All checks independently reproduced, zero ISSUE found.
+**why-change:** none — verified exactly what the row scoped.
