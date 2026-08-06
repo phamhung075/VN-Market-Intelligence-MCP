@@ -1,0 +1,55 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-08-06T07:36:41Z",
+    "matched_slots": [
+      "alert-commander-market"
+    ],
+    "won_slots": [
+      "alert-commander-market"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/alert-commander/flow/main.md"
+    ],
+    "silent": false,
+    "drift_min": 3,
+    "errors": [],
+    "pressure_mode": "adaptive",
+    "calendar_status": "open",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "chef_mutex_applied": false,
+    "due_reasons": {
+      "alert-commander-market": "cron"
+    },
+    "cadence_minutes": {
+      "alert-commander-market": null
+    },
+    "last_fired_timestamp": "2026-08-06T07:36:14Z",
+    "last_fired_slots": [
+      "alert-commander-market"
+    ],
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "07:30",
+    "leader_lock": "acquired",
+    "dev_head": "unknown",
+    "devq": 5,
+    "signal_backlog": 0,
+    "note": "single-slot tick (cron-due alert-commander-market only, no cadence-due CHEF slot this fire); to:po signal_queue rows left at NEW per feedback_cowork_step0a_blanket_ack_buries_other_agents_signals.md — none present this tick anyway (0 NEW rows)"
+  },
+  "priority": "low",
+  "createdAt": "2026-08-06T07:36:41Z",
+  "_processed": {
+    "fingerprint": "841bfe96f864010333a82a0d88ed34e2215491506a2c9113bc23707677220a98",
+    "processedAt": "2026-08-06T07:42:19Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
