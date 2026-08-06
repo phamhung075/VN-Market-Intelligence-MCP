@@ -1,0 +1,73 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-08-06T08:08:09Z",
+    "matched_slots": [
+      "news-scout-offhours",
+      "market-watcher-offhours",
+      "alert-commander-market",
+      "alert-commander-critical"
+    ],
+    "won_slots": [
+      "news-scout-offhours",
+      "market-watcher-offhours",
+      "alert-commander-market",
+      "alert-commander-critical"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/news-scout/flow/main.md",
+      "docs/agents/market-watcher/flow/main.md",
+      "docs/agents/alert-commander/flow/main.md",
+      "docs/agents/alert-commander/flow/main.md"
+    ],
+    "silent": false,
+    "drift_min": 3,
+    "errors": [],
+    "pressure_mode": "adaptive",
+    "calendar_status": "unknown",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "chef_mutex_applied": false,
+    "due_reasons": {
+      "news-scout-offhours": "cadence",
+      "market-watcher-offhours": "cadence",
+      "alert-commander-market": "cron",
+      "alert-commander-critical": "cron"
+    },
+    "cadence_minutes": {
+      "news-scout-offhours": 240,
+      "market-watcher-offhours": 240,
+      "alert-commander-market": null,
+      "alert-commander-critical": null
+    },
+    "last_fired_timestamp": "2026-08-06T08:07:18Z",
+    "last_fired_slots": [
+      "news-scout-offhours",
+      "market-watcher-offhours",
+      "alert-commander-market",
+      "alert-commander-critical"
+    ],
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "08:00",
+    "leader_lock": "acquired",
+    "dev_head": "unknown",
+    "devq": 5,
+    "signal_backlog": 18,
+    "note": "4-slot fire (alert-commander matched 2 slots this tick — WARN collision telegram sent per Step 4b, both spawned per R3). 1 NEW signal_queue row (sys-20260806T075345-3802, A-30 rag-service memory WARN, addressed to po) left untouched — not routed to a firing cowork slot this tick, cowork-team has no standing to ACK PO's own inbox; already probed FOLD (benign GC sawtooth) in a prior cycle."
+  },
+  "priority": "low",
+  "createdAt": "2026-08-06T08:08:09Z",
+  "_processed": {
+    "fingerprint": "7bb6717091153177e1be4aa37b7314108031d06b8043a64ab1fdba16c5b66f47",
+    "processedAt": "2026-08-06T08:10:46Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

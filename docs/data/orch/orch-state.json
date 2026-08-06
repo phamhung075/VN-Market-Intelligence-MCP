@@ -5,8 +5,8 @@
     "last_linecount": 151,
     "po": {
       "section_name": "po",
-      "last_mtime": 1786001419,
-      "last_linecount": 168
+      "last_mtime": 1786003902,
+      "last_linecount": 167
     }
   },
   "decision_journal": [
@@ -2093,18 +2093,6 @@
         "po_note": "PO RAW-verified 2026-08-05T07:0xZ against the LIVE host-bind DB (data/live/market.db, file:?immutable=1 — NOT the named volume). THREE corrections to the record, in order of how wrong they were:\n(a) ROUTING (auditor defect): row was written to=\"po\" with payload_ref=null. Spec (.claude/skills/cron-standalone-team/register.md:132-135) requires to=\"dev-team\", payload_ref=\"docs/data/db-integrity-history.json\". Fixed here. Wrong routing meant dev-team's drain would never have seen it.\n(b) ROOT CAUSE — the auditor's notebook (c17, commit 35104ef89) said 'Data extraction/load bug on 2026-05-15 ... All 336 violations are from 2026-05-15 (concentrated date)'. WRONG: SELECT date,COUNT(*) ... GROUP BY date returns 20 distinct business dates 2026-05-15..2026-06-12. The router's re-reading ('RECURRING extraction defect across ~a month of trading sessions') is ALSO wrong, and is the more dangerous error because it would have sent dev-team hunting a live recurring writer bug. GROUND TRUTH: every one of the 336 rows carries updated_at='2026-06-14' — a SINGLE write batch on 2026-06-14 that backfilled 20 business dates at once. The 20 `date` values are the batch's COVERAGE, not 20 incidents. Zero violations with date>2026-06-12; MAX(updated_at) over the whole table is TODAY (2026-08-05 07:03) because the nightly backfill actively rewrites ~97% of rows (memory: reference_daily_ohlcv_updated_at_is_mutation_not_arrival) — and in 52 days of those active rewrites it has NOT reintroduced a single zero. The writer is NOT currently defective.\n(c) DEDUP (auditor defect): total constraint violations across ALL classes (high<low OR high<open OR high<close OR low>open OR low>close) is exactly 336 — the same rows. This is the residue already tracked by CLEAN-OHLCV-INTEGRITY-RESIDUE-REPAIR (which recorded 835; partial repair has since landed) with the writer root tracked by FIX-OHLCV-WRITER-INTEGRITY-CONSTRAINT-SCALE-P0 (REVIEW). The auditor's own DEDUP-ENFORCEMENT clause (register.md:144-150) says an anomaly is ALREADY-OPEN and must NOT be re-signalled when a .task_board FIX-* tracks its root. It did not run that check. Board gap filed as FIX-AUDITOR-DEDUP-TASKBOARD-PRECHECK-NOT-ENFORCED.\nNET: no new data-quality task minted; the residue-repair row carries the corrected scope. Not closed outright so dev-team's drain sees the corrected record rather than the auditor's wrong one."
       },
       {
-        "id": "sys-20260805T081125-5e0d",
-        "ts": "2026-08-05T08:11:25Z",
-        "from": "system-auditor",
-        "to": "po",
-        "type": "signal_feedback",
-        "summary": "A-30 FAIL: rag-service — memory 99.81% BELOW 40MiB floor",
-        "severity": "WARN",
-        "status": "READ",
-        "payload_ref": null,
-        "provenance": "detector"
-      },
-      {
         "id": "sys-20260805T081846-1853",
         "ts": "2026-08-05T08:18:46Z",
         "from": "system-auditor",
@@ -2551,10 +2539,23 @@
         "type": "signal_feedback",
         "summary": "A-30 WARN: rag-service sustained 96.66% memory, zero GC reclamation dips",
         "severity": "WARN",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": null,
         "provenance": "detector",
         "audit_cycle_tag": "cron:auditor-t1:2026-08-06T07:10Z"
+      },
+      {
+        "id": "sys-20260806T081141-4071",
+        "ts": "2026-08-06T08:11:41Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "signal_feedback",
+        "summary": "A-30 WARN: rag-service sustained 96.97% memory, zero GC reclamation dips (22.8MiB free, BELOW-FLOOR)",
+        "severity": "WARN",
+        "status": "NEW",
+        "payload_ref": null,
+        "provenance": "detector",
+        "audit_cycle_tag": "cron:auditor-t1:2026-08-06T08:00Z"
       }
     ],
     "last_triaged_at": "2026-07-29T06:25:00Z",
