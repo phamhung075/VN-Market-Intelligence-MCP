@@ -96,3 +96,19 @@ Basic verification before commit:
 **Blocks:** TASK_603 (must have both code changes before testing)
 
 This is the first half of the code changes. TASK_602 must land alongside this for the fix to be complete.
+
+---
+
+## [Developer] Implementation Record
+- **Service:** mcp-server
+- **Zone:** apps/mcp-server/
+- **Files modified:** `apps/mcp-server/src/infrastructure/db/coordinationStore.ts` — Phase-1 SELECT WHERE clause (~line 532) gains `AND task_id NOT LIKE 'cron-registration:%'`; block comment above `ORPHAN_EMIT_ALLOW_LIST` (~452-458) and inline Phase-1 comment (~515-517) document the new exclusion. Phase-2 DELETE (line ~587) untouched — verified no task_id filter present there at all, so expired `cron-registration:*` rows still GC normally.
+- **Tests written:** none (AC-3a/AC-3b coverage is TASK_602/TASK_603 per this task's own scope) — ran existing suite scoped to this file instead, see below.
+- **Git commits:** `951ddfdba` fix(mcp-server): exclude cron-registration:* from gcExpiredLocks orphan-emit scan
+- **Type check:** clean (`bun tsc --noEmit`, 0 errors)
+- **bun test (scoped):** `src/__tests__/FU-LOCKSTORE-EXPIRED-GC.test.ts` + `src/__tests__/task-lock-coordination-store.test.ts` — 54 pass / 0 fail / 163 expect() calls. Full suite intentionally NOT run (TASK_603's job per dispatch instructions).
+- **Tool count:** 183 (matches pre-task baseline, unchanged — no tool touched)
+- **Scheduler count:** 88 (matches pre-task baseline, unchanged — no cron touched)
+- **Docs updated:** NONE — `docs/architecture/microservice/` has no existing reference to `gcExpiredLocks`/the exclusion mechanism to update (grep-confirmed before deciding to skip).
+- **Graphify:** skipped (no docs impacted)
+- **Simplicity gate:** PASS — Q1 scope clean (exactly the one WHERE-clause line + matching comments, nothing beyond AC), Q2 no new abstractions, Q3 senior-test clean, Q4 ratio N/A (100% of the diff directly satisfies the AC).
