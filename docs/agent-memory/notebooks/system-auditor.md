@@ -1,3 +1,41 @@
+## c52 · 2026-08-06T08:11:50Z
+
+### Audit Run Tier-1 (08:00 UTC trigger → 08:08-08:10Z extended probe FIRE_TASK_ID: cron:auditor-t1:2026-08-06T08:00Z)
+- Trigger: auditor-tier1-probe.sh verdict=FAILURE — rag-service mem_creep 96.91% (prior c51 at 07:53Z)
+- Tier: 1 | Services: 13/13 up, health 5/5 OK, restart 0 ✓
+- Anomalies: 1 continued (1 warn via dedup) | Status: DEGRADED
+
+**Container Status (A-01–A-11):** All 13 host_runtime_set UP ✓
+- mcp-server: RestartCount=0
+- rag-service: up 14h from 2026-08-05T18:12:13Z, RestartCount=1 (no new crash)
+
+**Health Endpoints (A-12–A-20):** All 5 endpoints OK ✓
+- A-20 multi-probe pdf-extractor: 3/3 pass ✓
+
+**Memory Pressure (A-30) — Extended Multi-Probe:**
+- mcp-server: baseline ~42.71% < 85% investigate-gate, A-30 SKIP ✓
+- rag-service: extended probe 08:08-08:10Z (FIRE_TASK_ID window)
+  - 8 samples over ~105s (15s intervals)
+  - **Memory band: 96.89–96.97% sustained** (all 8 samples within 0.08% band, exactly flat)
+  - Reclamation dips: **0 detected** (same loss-of-reclamation pattern as c51)
+  - OOMKilled: false
+  - Memory usage: 745.2MiB / 768MiB (22.8 MiB free, below 40 MiB safety floor)
+  - **Worsening trend:** c49 (96.50%) → c51 (96.66%) → c52 (96.97% peak)
+  - Verdict: **ESCALATE → WARN severity** (A-30 override §4 line 185: >93% sustained + zero reclamation dips → WARN)
+  - Signal: A-30 WARN sys-20260806T081141-4071 (microservice_degraded:rag-service:A-30)
+  - **Dedup result: SKIP-dedup** — same dedup_key active since c49 (07:15:51Z), 7d window still open
+
+**Disk (A-32):** / at 49% < 85% ✓
+
+**Restart Count (A-21):** crashRestarts=0 ✓
+
+**RAW-PROBE:** (standard Tier-1 probe at start of cycle — mcp-server OK, all endpoints OK)
+
+**Context:** Continued memory degradation. c52 shows worsening trend (peak now 96.97%, up from 96.66% at c51) with sustained loss of GC relief cycles. Memory remains statically high at the >96% band without reclamation. Free headroom (22.8MiB) continues to slip below the 40MiB safety floor, indicating sustained load above GC capacity. No OOMKilled event yet; container is stable. Known residual FU-RAG-DEPLOY-MEMORY issue identified; no remediation proposed by auditor (policy: detection only). **Note:** If peak exceeds 97% sustained with zero dips in a future cycle, escalation to CRITICAL should be reconsidered per A-30 override §4 line 184 (peak >97% → CRITICAL).
+
+[OUTPUT-CONTRACT] signals_posted=1 | telegram_sent=0 | signal_queue_rows_written=1 | dashboard_rows=0 | dedup_skipped=1
+CONTRACT-CONTRADICTION: NONE
+
 ## c51 · 2026-08-06T07:54:02Z
 
 ### Audit Run Tier-1 (07:10 UTC trigger → 07:48-07:53Z extended probe FIRE_TASK_ID: cron:auditor-t1:2026-08-06T07:10Z)
