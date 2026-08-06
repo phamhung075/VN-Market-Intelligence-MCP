@@ -1,6 +1,6 @@
 # QA — Notebook
 
-## cycle-542 · 2026-08-06 · FIX-NOTEBOOK-AUTOPRUNE-DIRECTION-UNRESOLVABLE-ZERO-TS-NOTEBOOKS — APPROVED, DONE_VERIFIED (direct-commit verify, `qa[]` row, `branch:null`, `.commit` sourced from `status_note` prose: "fix commit 9b0764631")
+## cycle-545 · 2026-08-06 · FIX-NOTEBOOK-AUTOPRUNE-DIRECTION-UNRESOLVABLE-ZERO-TS-NOTEBOOKS — APPROVED, DONE_VERIFIED (direct-commit verify, `qa[]` row, `branch:null`, `.commit` sourced from `status_note` prose: "fix commit 9b0764631")
 
 Commit `9b0764631` confirmed real + on main ancestry, `git show --stat` matches all 3 claimed `.files[]` exactly. Re-ran REAL verification myself, not trusted from prose: `notebook-direction-corpus-replay.sh` live over the CURRENT 46-file corpus → 0/46 unresolved (AC-1 confirmed, matches claim). AC-3's core hardening (bash-`[`-only `\>` → POSIX `-gt`) confirmed intact post-refactor at `scripts/agents-flow/lib/notebook-section-direction.sh:96`.
 
