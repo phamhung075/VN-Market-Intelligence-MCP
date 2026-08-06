@@ -4,11 +4,17 @@
   "type": "cowork-fire",
   "payload": {
     "fire_time": "2026-08-06T16:36:27Z",
-    "matched_slots": ["refine-bctc-slot-4"],
-    "won_slots": ["refine-bctc-slot-4"],
+    "matched_slots": [
+      "refine-bctc-slot-4"
+    ],
+    "won_slots": [
+      "refine-bctc-slot-4"
+    ],
     "held_by_other": [],
     "all_held": false,
-    "spawned": ["docs/agents/refine_bctc_md/flow/main.md"],
+    "spawned": [
+      "docs/agents/refine_bctc_md/flow/main.md"
+    ],
     "silent": false,
     "drift_min": 2,
     "errors": [],
@@ -18,10 +24,16 @@
     "suppressed_cadence": [],
     "downgraded": [],
     "chef_mutex_applied": false,
-    "due_reasons": { "refine-bctc-slot-4": "cron" },
-    "cadence_minutes": { "refine-bctc-slot-4": null },
+    "due_reasons": {
+      "refine-bctc-slot-4": "cron"
+    },
+    "cadence_minutes": {
+      "refine-bctc-slot-4": null
+    },
     "last_fired_timestamp": "2026-08-06T16:36:27Z",
-    "last_fired_slots": ["refine-bctc-slot-4"],
+    "last_fired_slots": [
+      "refine-bctc-slot-4"
+    ],
     "last_fired_write_errors": null,
     "classification": "FIRE",
     "reason": "spawned",
@@ -33,5 +45,11 @@
     "note": "single-slot fire, one_shots empty, 1 cowork-addressed signal drained (cj-20260806T163127, to:po)"
   },
   "priority": "low",
-  "createdAt": "2026-08-06T16:36:27Z"
+  "createdAt": "2026-08-06T16:36:27Z",
+  "_processed": {
+    "fingerprint": "94d5ce28aa0e91cb47e36187a737dfbaa53e7ac150072bf0d1df89cfc38a0569",
+    "processedAt": "2026-08-06T16:39:58Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
 }

@@ -2975,7 +2975,7 @@
         "summary": "team-tool-recheck writer dead since 06-23 — replace-vs-retire decision needed",
         "severity": "LOW",
         "status": "READ",
-        "payload_ref": "docs/signals/janitor-health-recheck-writer-retired-2026-08-06.json"
+        "payload_ref": "docs/signals/processed/janitor-health-recheck-writer-retired-2026-08-06.json"
       }
     ],
     "last_triaged_at": "2026-07-29T06:25:00Z",
