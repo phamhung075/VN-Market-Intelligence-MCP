@@ -1,4 +1,4 @@
-<!-- size-justification: ~793L — three-tier dispatcher; Tier-1 detail extracted to tier1-probe.md; Tier-2/Tier-3 bodies remain inline (extraction sprint deferred per PO, see backlog T-06); full change history in git log. +2L: TIER=4 PILOT row added to AUDIT_TIER extraction + Tier Dispatch tables (2026-07-18), per brief docs/architecture-briefs/2026-07-18-cron-workflow-optimize-tier4-fleet-audit.md §8 EDIT-2 — dispatches to handlers.md §Step D-FLEET, own one-off claim, bypasses §Step 0d tick-boundary election. +6L (2026-07-25): TIER=5 row added to AUDIT_TIER extraction + Tier Dispatch tables + Step 0d fire-election branch — dispatches to flow/page-freshness.md (D-PAGE, kept fully out of this file per lazy-load discipline, unlike Tier-2/3's still-deferred inline extraction). +7L (2026-07-25, coordinator review #2): Step 0d TIER=5 FIRE_TICK comment expanded — CronCreate fires machine-local not UTC, the literal cron expression must not be hardcoded here (drifts at DST changeover); Tier-3's own 02:00Z label (line ~111) carries the same unverified-against-that-defect risk, flagged but NOT fixed here — out of scope, that cron is already live-armed. FIX-AUDITOR-HEARTBEAT-OUT-OF-CONTRACT-AGENT-WRITE-TIER1 2026-07-29: Tier-2/3 Heartbeat Write section — added SOLE-WRITER + SHAPE CONTRACT callout (cites `docs/policies/dev-standards.md` CANONICAL:SSOT-AUDITOR-HEARTBEAT-SOLE-WRITER, states the tier-1-vs-tier-2/3 semantic split, points at the new `scripts/git-hooks/pre-commit` enforcement) (+6L). FIX-AUDITOR-DASHBOARD-APPEND-NO-ACTUATOR-CONTRACT-COUNT-NARRATED 2026-07-29 (+~50L): DASHBOARD.md append is now a script actuator (`scripts/emit-dashboard-row.sh`, write+read-back, wired into the Tier-2/Tier-3 emit sites) instead of unscripted prose; OUTPUT-CONTRACT counters (`signals_posted`/`telegram_sent`/`signal_queue_rows_written`/`dashboard_rows`) are now mechanically parsed from a per-cycle marker log by `scripts/audit-output-contract.sh` instead of hand-composed, with an independent `.signal_queue` cross-check and a symmetric RETURN-headline consistency check; corrects the stale `signal-dashboard` skill pointer (that skill governs `.signal_queue`, not DASHBOARD.md, and was never a real write path for this artifact). FIX-AUDITOR-CALLER-PROSE-OVERRIDES-DOCUMENTED-DETECTOR-THRESHOLD 2026-07-30 (+~18L): new §CALLER-INSTRUCTION PRECEDENCE (AUD-CP-1) block before Tier Dispatch + mandatory RETURN-block CONTRACT-CONTRADICTION line. UC-ASL-P6 2026-07-31 (0 new lines): RETURN-block `NEXT: po (via DASHBOARD.md)` corrected to `NEXT: po (via orch-state.json .signal_queue row)` — grep confirmed no po flow file ever reads DASHBOARD.md; po's real consumer path is the `.signal_queue` row per this file's own §Anomaly Reporting → DASHBOARD Append (721-723) and the agent's `inter_agent.sends_to`. Rest of this file's DASHBOARD.md mentions were already correctly disambiguated by the prior FIX-AUDITOR-DASHBOARD-APPEND fix, verified live, no further edits needed here. FIX-AUDIT-OUTPUT-CONTRACT-SIGNALQUEUE-ROWS-WRITTEN-SELFREPORT-MISMATCH 2026-08-05 (+5L): all 5 `emit-audit-signal.sh`/`audit-output-contract.sh` call sites in this file now pass `--cycle-tag "$FIRE_TASK_ID"` — closes the V1 cross-check's two structural bugs (minute-vs-second `.ts` compare; shared default `from="system-auditor"` picking up a peer tier's row), see `docs/policies/dev-standards.md` CANONICAL "Audit OUTPUT-CONTRACT parser" entry. FIX-SYSAUDITOR-NOTEBOOK-COMPOSE-ACTUATOR 2026-08-06 (+~40L): commit `0fcc6a5d2` deleted a retained `## c44` heading and never wrote the claimed `c45` section (real data loss, hand-repaired `7628a878d`) — added Step 1a deterministic PRE-write heading-count snapshot + new Step 2a POST-write heading-count corruption check (BLOCKING, reverts via `git checkout --` on mismatch, independent of the compose step's own narration) as an interim backstop pending `scripts/notebook-compose.sh` (out of agent-father's `commit_zone`, flagged to developer via `docs/signals/2026-08-06-fix-system-auditor-notebook-compose-actuator-handoff.json`); added an explicit MANDATORY/NEVER-raw-git-commit callout at the Commit step (a bare `git commit` bypassing `auditor-notebook-commit.sh` tripped sweep-guard 3s before the corrupting commit, same cycle). Full analysis: `docs/architecture-briefs/2026-08-06-fix-system-auditor-notebook-compose-actuator-and-immutability-blindspot.md`. FIX-AUDITOR-EMPTYTABLE-CHECK-NO-WRITER-DISCRIMINATOR 2026-08-06 (+1L): AUDIT_TIER extraction list gets one new bullet cross-referencing the new writer-provenance discriminator spec (`flow/data-writer-provenance.md`) for the previously-undocumented `AUDIT_TIER=DATA` cron family — policy-only pointer, no dispatch-table rewire (the actual actuator lives out-of-zone in `cron-db-data-integrity.md`, see that new file §4). -->
+<!-- size-justification: ~793L — three-tier dispatcher; Tier-1 detail extracted to tier1-probe.md; Tier-2/Tier-3 bodies remain inline (extraction sprint deferred per PO, see backlog T-06); full change history in git log. +2L: TIER=4 PILOT row added to AUDIT_TIER extraction + Tier Dispatch tables (2026-07-18), per brief docs/architecture-briefs/2026-07-18-cron-workflow-optimize-tier4-fleet-audit.md §8 EDIT-2 — dispatches to handlers.md §Step D-FLEET, own one-off claim, bypasses §Step 0d tick-boundary election. +6L (2026-07-25): TIER=5 row added to AUDIT_TIER extraction + Tier Dispatch tables + Step 0d fire-election branch — dispatches to flow/page-freshness.md (D-PAGE, kept fully out of this file per lazy-load discipline, unlike Tier-2/3's still-deferred inline extraction). +7L (2026-07-25, coordinator review #2): Step 0d TIER=5 FIRE_TICK comment expanded — CronCreate fires machine-local not UTC, the literal cron expression must not be hardcoded here (drifts at DST changeover); Tier-3's own 02:00Z label (line ~111) carries the same unverified-against-that-defect risk, flagged but NOT fixed here — out of scope, that cron is already live-armed. FIX-AUDITOR-HEARTBEAT-OUT-OF-CONTRACT-AGENT-WRITE-TIER1 2026-07-29: Tier-2/3 Heartbeat Write section — added SOLE-WRITER + SHAPE CONTRACT callout (cites `docs/policies/dev-standards.md` CANONICAL:SSOT-AUDITOR-HEARTBEAT-SOLE-WRITER, states the tier-1-vs-tier-2/3 semantic split, points at the new `scripts/git-hooks/pre-commit` enforcement) (+6L). FIX-AUDITOR-DASHBOARD-APPEND-NO-ACTUATOR-CONTRACT-COUNT-NARRATED 2026-07-29 (+~50L): DASHBOARD.md append is now a script actuator (`scripts/emit-dashboard-row.sh`, write+read-back, wired into the Tier-2/Tier-3 emit sites) instead of unscripted prose; OUTPUT-CONTRACT counters (`signals_posted`/`telegram_sent`/`signal_queue_rows_written`/`dashboard_rows`) are now mechanically parsed from a per-cycle marker log by `scripts/audit-output-contract.sh` instead of hand-composed, with an independent `.signal_queue` cross-check and a symmetric RETURN-headline consistency check; corrects the stale `signal-dashboard` skill pointer (that skill governs `.signal_queue`, not DASHBOARD.md, and was never a real write path for this artifact). FIX-AUDITOR-CALLER-PROSE-OVERRIDES-DOCUMENTED-DETECTOR-THRESHOLD 2026-07-30 (+~18L): new §CALLER-INSTRUCTION PRECEDENCE (AUD-CP-1) block before Tier Dispatch + mandatory RETURN-block CONTRACT-CONTRADICTION line. UC-ASL-P6 2026-07-31 (0 new lines): RETURN-block `NEXT: po (via DASHBOARD.md)` corrected to `NEXT: po (via orch-state.json .signal_queue row)` — grep confirmed no po flow file ever reads DASHBOARD.md; po's real consumer path is the `.signal_queue` row per this file's own §Anomaly Reporting → DASHBOARD Append (721-723) and the agent's `inter_agent.sends_to`. Rest of this file's DASHBOARD.md mentions were already correctly disambiguated by the prior FIX-AUDITOR-DASHBOARD-APPEND fix, verified live, no further edits needed here. FIX-AUDIT-OUTPUT-CONTRACT-SIGNALQUEUE-ROWS-WRITTEN-SELFREPORT-MISMATCH 2026-08-05 (+5L): all 5 `emit-audit-signal.sh`/`audit-output-contract.sh` call sites in this file now pass `--cycle-tag "$FIRE_TASK_ID"` — closes the V1 cross-check's two structural bugs (minute-vs-second `.ts` compare; shared default `from="system-auditor"` picking up a peer tier's row), see `docs/policies/dev-standards.md` CANONICAL "Audit OUTPUT-CONTRACT parser" entry. FIX-SYSAUDITOR-NOTEBOOK-COMPOSE-ACTUATOR 2026-08-06 (+~40L): commit `0fcc6a5d2` deleted a retained `## c44` heading and never wrote the claimed `c45` section (real data loss, hand-repaired `7628a878d`) — added Step 1a deterministic PRE-write heading-count snapshot + new Step 2a POST-write heading-count corruption check (BLOCKING, reverts via `git checkout --` on mismatch, independent of the compose step's own narration) as an interim backstop pending `scripts/notebook-compose.sh` (out of agent-father's `commit_zone`, flagged to developer via `docs/signals/2026-08-06-fix-system-auditor-notebook-compose-actuator-handoff.json`); added an explicit MANDATORY/NEVER-raw-git-commit callout at the Commit step (a bare `git commit` bypassing `auditor-notebook-commit.sh` tripped sweep-guard 3s before the corrupting commit, same cycle). Full analysis: `docs/architecture-briefs/2026-08-06-fix-system-auditor-notebook-compose-actuator-and-immutability-blindspot.md`. FIX-AUDITOR-EMPTYTABLE-CHECK-NO-WRITER-DISCRIMINATOR 2026-08-06 (+1L): AUDIT_TIER extraction list gets one new bullet cross-referencing the new writer-provenance discriminator spec (`flow/data-writer-provenance.md`) for the previously-undocumented `AUDIT_TIER=DATA` cron family — policy-only pointer, no dispatch-table rewire (the actual actuator lives out-of-zone in `cron-db-data-integrity.md`, see that new file §4). FIX-AUDITOR-DURABILITY-STEP0B-DETECTION 2026-08-06 (+~72L net, actual total 1058L — base "~793L" figure above has drifted across many prior deltas and is NOT renumbered here, same accepted convention as this header's own precedent): po_occurrence_7 correction — Step 0b gains Step 0b.1 (stale `.auditor-cycle-markers-*.tmp` orphan sweep, mtime>20min, reuses `scripts/emit-audit-signal.sh`'s existing 7-day dedup ledger, catches "won fire-election then died mid-run") + Step 0b.2 (schedule-based missing-cycle detection via `auditor-tier{2,3}-last-healthy.json` staleness for Tier-2/3, a conservative WARN-only OR'd heartbeat/notebook-heading check for Tier-1 with an explicitly documented residual gap on isolated single-tick Tier-1 losses, catches "died before the fire-election ever completed") + Step 0b.3 (stub sweep for the not-yet-existent `.auditor-cycle-draft-*.md` self-heal file, structure only, actuator lands in `FIX-AUDITOR-DURABILITY-FLOW-DRAFT-HEAL`). Also relocates the entire Notebook Write/Commit block (timestamp guard, Notebook Append Gate, compose Steps 1/2/2a, commit script call) from after OUTPUT-CONTRACT/Anomaly-Reporting to immediately after Tier-3 WORK Notification (§3b.1 of `docs/architecture-briefs/2026-08-06-fix-system-auditor-cycle-notebook-persistence-lifecycle.md`) — pure reorder, EXCEPT Notebook Append Gate condition (b) was rewired from reading the (now-later-running) OUTPUT-CONTRACT line to a direct `$MARKERS_FILE` grep, an unavoidable consequence of the reorder, not a scope change. -->
 # System Auditor — Main Flow
 
 ## PLAN-ONLY INVARIANT — NO DESTRUCTIVE OPS (AUD-ND-1)
@@ -47,6 +47,68 @@ AUD-ND-1 regression history:
 **Step 0a — Resolve project root** → run skill: `.claude/skills/project-root/SKILL.md`
 
 **Step 0b — Read notebook** → skill: `.claude/skills/notebook-read/SKILL.md` (replace `<agent-id>` with `system-auditor`)
+
+**Step 0b.1 — Stale-marker orphan sweep (FIX-AUDITOR-DURABILITY-STEP0B-DETECTION §3a — D-CYCLE-1, catches "won fire-election, then died mid-run"):**
+Runs on EVERY tier's EVERY cycle, before any tier-specific work, mechanically, independent of which tier this invocation itself is running as. `$MARKERS_FILE` for THIS cycle does not exist yet at this point (created only after Step 0d below wins its own election) — this sweep only ever finds a PRIOR cycle's abandoned scratch file:
+```bash
+STALE_MARKERS=$(find "$PROJECT_ROOT/docs/agent-memory" -maxdepth 1 \
+  -name '.auditor-cycle-markers-*.tmp' -mmin +20 2>/dev/null)
+```
+`+20` minutes comfortably exceeds Tier-1's own normal cycle time (observed: single-digit minutes even for extended multi-probes) while staying well under Tier-2's 4h gap — never fires on an in-progress sibling tier's cycle. Each `FIRE_TICK` is parsed directly from the filename `.auditor-cycle-markers-<FIRE_TICK>.tmp` — no reconstruction needed. For each hit:
+```bash
+bash scripts/emit-audit-signal.sh \
+  --check-id "D-CYCLE-1" \
+  --category-type "auditor_cycle_loss" \
+  --severity "WARN" \
+  --summary "auditor cycle lost tick=<FIRE_TICK> — orphaned marker, mid-run death" \
+  --detail-json '{"title":"auditor_cycle_loss: <FIRE_TICK>","detail":"orphaned .auditor-cycle-markers-<FIRE_TICK>.tmp found stale (mtime > 20min) — a prior cycle won its fire-election and never reached its own final step","fire_tick":"<FIRE_TICK>","dedup_key":"auditor-cycle-loss:<FIRE_TICK>"}'
+```
+Reuses the SAME `docs/data/auditor-dedup-ledger.json` 7-day ledger every other check in this flow already goes through — a retried sweep on the same orphaned tick within 7 days is a `SKIP-dedup`, not a re-alert (no new dedup bookkeeping invented here). On any non-`ABORT` marker outcome (`OK`/`SKIP-dedup`/`OK-escalation-bypass`) → `rm -f` the stale marker file (the loss is now durably recorded in the signal_queue row; safe to reclaim the scratch file). On `ABORT` → leave the file in place for the next cycle's sweep to retry — never delete the only evidence of a loss on a failed emit. This sweep is NOT itself an entry in THIS cycle's own `$MARKERS_FILE` and does not count toward this cycle's own `signals_posted` in §OUTPUT-CONTRACT below (it is bookkeeping about a PAST cycle) — paste its `[emit-signal]` marker into THIS cycle's notebook entry only if one gets written anyway.
+
+**Step 0b.2 — Schedule-based missing-cycle detection (po_occurrence_7 correction — D-CYCLE-2, catches "died before the fire-election ever completed"):**
+This is the shape Step 0b.1's marker sweep is structurally blind to, since a cycle that dies before Step 0d ever runs never creates a marker file at all — confirmed live 2026-08-06: a 7th occurrence did 233s of real Tier-1 probe work and reached a correct verdict, then died leaving ZERO artifact of any kind, not even an orphaned marker.
+
+For Tier-2 and Tier-3, `docs/data/auditor-tier{2,3}-last-healthy.json`'s `last_healthy_at` is a reliable "a real cycle completed" signal — per §Tier-2/3 Heartbeat Write below it advances on EVERY Tier-2/3 cycle regardless of HEALTHY/DEGRADED/CRITICAL verdict, so its staleness is unambiguous evidence of a gap:
+```bash
+NOW_EPOCH=$(date -u +%s)
+for N in 2 3; do
+  HB_FILE="$PROJECT_ROOT/docs/data/auditor-tier${N}-last-healthy.json"
+  HB_EPOCH=$(jq -r 'try (.last_healthy_at | fromdateiso8601) catch empty' "$HB_FILE" 2>/dev/null)
+  [ -z "$HB_EPOCH" ] && continue   # no baseline file yet — never alarm on a missing file
+  CADENCE=14400; [ "$N" = "3" ] && CADENCE=86400   # tier-2: 0 */4 * * * ; tier-3: 0 2 * * * (fixed daily)
+  GAP=$(( NOW_EPOCH - HB_EPOCH ))
+  [ "$GAP" -gt $(( CADENCE * 2 )) ] && echo "[SCHEDULE-GAP] tier-${N} last_healthy_at stale by ${GAP}s (cadence ${CADENCE}s) — flag D-CYCLE-2"
+done
+```
+For Tier-1, no equivalent UNCONDITIONAL per-cycle marker exists yet — `docs/data/auditor-tier1-last-healthy.json` is written exclusively by `scripts/agents-flow/auditor-tier1-probe.sh`'s pre-spawn gate and ONLY on its own `ALL_GREEN` verdict (§Tier-2/3 Heartbeat Write SOLE-WRITER contract below); a sustained-but-alive DEGRADED streak legitimately leaves it stale for hours without any cycle ever having been lost. Treat it as a wide, conservative, WARN-only secondary signal, OR'd with the most recent `### Audit Run Tier-1` entry already loaded from the notebook at Step 0b above (also legitimately silent on ALL_GREEN, per §Notebook Append Gate) — take its paired `## c<NNN> · <YYYY-MM-DDThh:mmZ>` heading timestamp, convert via the same `fromdateiso8601` idiom, and use whichever of the two sources is MORE RECENT as `T1_LAST_EPOCH` (either source refreshing suppresses the alarm; BOTH absent → no baseline yet, skip, never alarm):
+```bash
+T1_HB_EPOCH=$(jq -r 'try (.last_healthy_at | fromdateiso8601) catch empty' "$PROJECT_ROOT/docs/data/auditor-tier1-last-healthy.json" 2>/dev/null)
+# T1_NB_EPOCH: parse the most recent "## c<NNN> · <ts>" heading paired with a "### Audit Run Tier-1"
+# sub-heading in the notebook text already read at Step 0b — same fromdateiso8601 idiom, empty if none.
+T1_LAST_EPOCH="${T1_NB_EPOCH:-}"
+[ -n "${T1_HB_EPOCH:-}" ] && { [ -z "$T1_LAST_EPOCH" ] || [ "$T1_HB_EPOCH" -gt "$T1_LAST_EPOCH" ]; } && T1_LAST_EPOCH="$T1_HB_EPOCH"
+[ -n "$T1_LAST_EPOCH" ] && [ $(( NOW_EPOCH - T1_LAST_EPOCH )) -gt 10800 ] && echo "[SCHEDULE-GAP] tier-1 stale by $(( NOW_EPOCH - T1_LAST_EPOCH ))s (6x 30min cadence = 3h) — flag D-CYCLE-2"
+```
+**Known, accepted limitation (do not silently over-claim coverage):** this Tier-1 check only reliably catches a SUSTAINED gap (multiple consecutive dead ticks, ~3h+). An ISOLATED single lost Tier-1 tick sandwiched between two healthy neighbours — the exact po_occurrence_7 shape — is NOT detectable from state alone: no per-tick append-only log exists, only overwriting heartbeat/notebook snapshots, so the immediately-following healthy tick erases the only evidence a gap existed. Closing that residual gap needs a per-tick append-only attempt log — out of scope for this task, flagged as a candidate follow-on, not implemented here.
+
+**Emit (one call per flagged tier — reuses the SAME dedup-ledger as Step 0b.1 above):**
+```bash
+bash scripts/emit-audit-signal.sh \
+  --check-id "D-CYCLE-2" \
+  --category-type "auditor_cycle_missing" \
+  --severity "WARN" \
+  --summary "auditor tier-<N> cycle possibly missing — no completion evidence in <gap_hours>h (cadence <cadence_hours>h)" \
+  --detail-json '{"title":"auditor_cycle_missing: tier-<N>","detail":"no auditor-tier<N>-last-healthy.json / notebook evidence of a completed tier-<N> cycle in <gap_hours>h (expected cadence <cadence_hours>h)","tier":"<N>","dedup_key":"auditor-cycle-missing:tier<N>:<current-expected-tick-boundary-per-Step-0d-formula>"}'
+```
+`dedup_key` is rounded to the CURRENT expected tick boundary for tier N (same `*/30` / `0 */4` / fixed-`02:00`-daily arithmetic already defined in §Step 0d below — reused here, not a new mechanism) so a persisting gap re-alerts once per newly-missed tick, never every single Step 0b invocation within the same tick.
+
+**Step 0b.3 — Stale-draft-file sweep (STRUCTURE ONLY, D-CYCLE-3 reserved — actuator lands in `FIX-AUDITOR-DURABILITY-FLOW-DRAFT-HEAL`):**
+Scaffolds the sweep for the future `.auditor-cycle-draft-<FIRE_TICK>.md` self-heal scratch file (§3b.2 of `docs/architecture-briefs/2026-08-06-fix-system-auditor-cycle-notebook-persistence-lifecycle.md`, written by `.claude/skills/notebook-write/SKILL.md` once `FIX-AUDITOR-DURABILITY-SKILL-DRAFT-PERSIST` lands). That write path does not exist yet, so this is currently a guaranteed no-op:
+```bash
+STALE_DRAFTS=$(find "$PROJECT_ROOT/docs/agent-memory" -maxdepth 1 -name '.auditor-cycle-draft-*.md' -mmin +20 2>/dev/null)
+[ -n "$STALE_DRAFTS" ] && echo "[STALE-DRAFT] found (no actuator yet, logged only): $STALE_DRAFTS"
+```
+`FIX-AUDITOR-DURABILITY-FLOW-DRAFT-HEAL` fills in the actual self-heal here (compose the already-written draft into the real notebook via the notebook-write skill + `scripts/auditor-notebook-commit.sh`, then `rm -f` the draft) — until it lands, this block only logs.
 
 **Step 0c — Load system-map.json** — lazy-load trigger: `runtime_or_fetch_or_db_audit`. Do NOT full-read `docs/data/system-map.json` (1757L / ~50.6KB, ~12.7k tok) — this agent only ever consumes 6 key-paths out of it. `jq`-project just those (~2k tok), same read-only SSOT, per `.claude/skills/system-map-query/SKILL.md`:
 
@@ -742,50 +804,14 @@ call_tool(server="vn-market", tool="send_telegram", arguments={channel: "work", 
 
 ---
 
-## Anomaly Reporting (all tiers)
+## Notebook Write — Durable Checkpoint (FIX-AUDITOR-DURABILITY-STEP0B-DETECTION §3b.1)
 
-Known (dedup_key seen in past 7 days for BUG channel) → skip BUG write, always append DASHBOARD.md (see DASHBOARD Append below — "always append" includes `SKIP-dedup` outcomes, never just `OK`).
-New:
-```
-## Anomaly: [check_id] [Name]
-Severity: info | warn | critical | Date: YYYY-MM-DD
-Location: [service/table/source] | Details: [wrong] | Impact: [why] | Root cause: [guess]
-```
-severity ≥ warn → run **Emit Sequence** (E-1 post_agent_signal + E-2 send_telegram + **E-3 signal_queue row**).
-The signal_queue row write (Step E-3) is embedded in the per-tier emit blocks above — it is NOT a trailing optional step. This section is a reminder, not the definition. The definition is at each emit block.
-
-> Invariant: timestamp = current UTC, never future, never speculative.
-
-### DASHBOARD Append (FIX-AUDITOR-DASHBOARD-APPEND-NO-ACTUATOR-CONTRACT-COUNT-NARRATED)
-
-**Target file: `docs/data/DASHBOARD.md`** — the LIVE, git-tracked dashboard (most recent commit: `chore(system-auditor): append ... DASHBOARD row`). Two things this is explicitly NOT:
-- **NOT `docs/handoffs/DASHBOARD.md`** — a stale 650-byte phantom untouched since 2026-07-20, chartered for removal under `UC-ASL-P6`. Never write there.
-- **NOT `.claude/skills/signal-dashboard/`** — despite the name, that skill governs `.signal_queue.rows[]` in `orch-state.json` (a completely different artifact, already covered by the E-3 step inside `scripts/emit-audit-signal.sh`). It has no DASHBOARD.md write path at all; a prior version of this flow pointed at it for "per signal-dashboard skill" and that pointer was itself part of this defect (no script, no path, no read-back existed anywhere in the chain).
-
-**Actuator:** `scripts/emit-dashboard-row.sh` — a script actuator with a MANDATORY POST-WRITE read-back assert (re-reads the file and asserts the new row's `--signal-id` anchor is present), failing loud to the BUG channel otherwise. This is the exact same anti-false-green shape as `scripts/emit-audit-signal.sh`'s E-3 step, applied to this artifact — see that script's own header comment if you need the general pattern explained; this one does not repeat it.
-
-**When to call it:** immediately after ANY non-ABORT `[emit-signal]` marker from a CRITICAL/WARN/INFO finding emitted via the per-tier `scripts/emit-audit-signal.sh` call sites above (Tier-2 B-xx, Tier-3 C-xx, Tier-1 A-xx/A-20) — including `SKIP-dedup` outcomes (a known/repeated finding still gets a fresh DASHBOARD row; only the BUG Telegram is dedup-gated). Pass the paired call's `id=` value as `--signal-id` — this ties the DASHBOARD row to the exact signal_queue row it documents and is what makes the row's presence independently verifiable. D-BCTC-EVAL and D-IMPROVE (`--e3-only`, HIGH/MED/INFO severities) are explicitly OUT of this bucket — unchanged scope, see their own call sites.
-
-Paste the verbatim `[emit-dashboard] OK|ABORT|WARN ...` marker into the notebook AND append it to `$MARKERS_FILE` — `dashboard_rows` is counted from this marker by `scripts/audit-output-contract.sh`, never narrated.
-
-### OUTPUT-CONTRACT (echo in RETURN — MANDATORY)
-At the end of every cycle, before writing the RETURN block, run the parser on this cycle's accumulated marker log — do NOT hand-compose the counts:
-```bash
-bash scripts/audit-output-contract.sh \
-  --markers-file "$MARKERS_FILE" \
-  --cycle-start-ts "$FIRE_TICK" \
-  --cycle-tag "$FIRE_TASK_ID" \
-  --anomalies-count "<N you are about to write into the RETURN headline>" \
-  --next-token "<the literal NEXT: token you are about to write, e.g. clean|po|ops|user>"
-```
-Paste the script's `[OUTPUT-CONTRACT] ...` line **verbatim** into both the notebook and the RETURN block — this is the MANDATORY line, and it is no longer something the agent composes by hand. Any `[OUTPUT-CONTRACT] VIOLATION: ...` line(s) the script prints are ALSO pasted verbatim into the notebook; the script has already sent the BUG-channel Telegram for each — do not send a second one, and do NOT let a violation abort the cycle (this is a self-diagnostic on the auditor's own counters, not a reason to skip finishing the audit). After this call, `rm -f "$MARKERS_FILE"` (scratch only, never itself an artifact).
-
-The previous form of this check (`signal_queue_rows_written = 0 AND signals_posted > 0` → violation) was vacuous by construction: both operands were narrated by the same agent from the same marker set, so a single misreading produced 0 and 0 and the check passed on a cycle where a row WAS written (confirmed occurrence, 2026-07-29T08:38:34Z). The script above keeps that check (now on marker-parsed, trustworthy operands) AND adds an independent cross-check against `.signal_queue.rows[]` itself when `--cycle-start-ts`/`--orch-state-file` resolve, AND extends the same symmetric-violation treatment to `dashboard_rows` and to the RETURN headline/`NEXT` token — see the script's own header comment for the full V1–V5 list.
-
-### RAW-CITE GATE (rtr-confab2-202606060515 — occ#2; c019 invented config value; c026 cited "system-map lists 4001" for mcp-gateway port, value absent, live port 4040)
-Any config/file value cited in a finding or return (port, path, threshold, mapping) MUST be backed by a `grep -n` line captured THIS cycle (file + line number + matched text). No raw line captured → DROP the claim, do NOT report it. NEVER cite `orch-state.json .head.next_action` text as evidence — it is router-authored narrative, not a config value.
-- **Return summary extension (rtr-confab3-202606060720 — occ#3; c030 fabricated file/line cite in return channel):** The gate above applies equally to the final message returned to the router. A file/line pointer (e.g. "flow line 57") may appear in a return summary ONLY if that exact cite was already written verbatim to the notebook THIS cycle. If no such notebook line exists, OMIT the pointer — the substantive claim (e.g. "frontend classified INFO, no data impact") may remain, but without the fabricated reference.
-- **Sandbox-error quarantine (FIX-AUDITOR-EVIDENCE-INTEGRITY — occ#4; c040 conflated `/private/tmp/claude-501 full` with host ENOSPC):** Any bash exit whose stderr/stdout contains text matching `/private/tmp/claude-501|tasks is full|ENOSPC.*claude/` MUST be classified as `TOOL-UNAVAILABLE / NOT-RUN` for that check — log `"[TOOL-UNAVAILABLE] <check_id>: bash sandbox error — skip, NOT an infra signal"` and continue. NEVER escalate a sandbox-internal error as a host infra finding. Infra criticals require probe.sh `--- disk df -h / ---` raw output as evidence.
+**Repositioned (2026-08-06) to run IMMEDIATELY after tier checks conclude, ahead of Anomaly Reporting/
+DASHBOARD-append/OUTPUT-CONTRACT below** — this shortens the at-risk span between "findings known" and
+"findings durably landed" per `docs/architecture-briefs/2026-08-06-fix-system-auditor-cycle-notebook-
+persistence-lifecycle.md` §3b.1. Signals/DASHBOARD rows are already emitted INLINE during the tier
+checks themselves (not deferred to the section below), so this reorder does not touch that
+already-durable path — only the composing-and-committing of the notebook narrative moves earlier.
 
 ### Notebook timestamp guard
 - Before writing `docs/agent-memory/notebooks/system-auditor.md`, ALWAYS get current UTC via:
@@ -798,7 +824,7 @@ Any config/file value cited in a finding or return (port, path, threshold, mappi
 ### Notebook Append Gate (P1-IDLE-AUDITOR-NOTEBOOK-GATE, 2026-07-04 — RC-IDLE-LOOPS)
 Decide BEFORE Step 1 whether this cycle writes the notebook at all. Check the three counters already produced this cycle:
 - (a) new-finding: the `N` in "Anomalies: N new (C/W/I)" above is > 0 (dedup-skipped known anomalies do NOT count — they are not new).
-- (b) new-signal: `signal_queue_rows_written` from the OUTPUT-CONTRACT line above is > 0.
+- (b) new-signal: at least one non-`ABORT` `[emit-signal]` line already appended to `$MARKERS_FILE` this cycle — `grep -cE '^\[emit-signal\] (OK|OK-escalation-bypass|SKIP-dedup|OK e3-only|OK no-telegram) ' "$MARKERS_FILE"` > 0. Computed DIRECTLY from this cycle's marker log (same set `scripts/audit-output-contract.sh`'s `signal_queue_rows_written` counter parses later) rather than from the OUTPUT-CONTRACT line, since OUTPUT-CONTRACT now runs AFTER this gate (§3b.1 reorder above) instead of before it.
 - (c) state-change: this cycle's overall Status (HEALTHY|DEGRADED|CRITICAL) differs from the `Status:` line of the most-recent same-tier entry already loaded in memory at Step 0b.
 (a) OR (b) OR (c) true → proceed to Step 1 below exactly as written (happy path, unchanged).
 All three false → genuine ALL_GREEN cycle: SKIP Step 1 and Step 2 below only — no `Write()` call, notebook file stays byte-identical to HEAD. Log `"[NOTEBOOK-GATE] SKIP no-new-finding/signal/state-change"`, then fall through unchanged to the **Commit** call below (still runs every cycle): with nothing written to disk, `git add` stages nothing for the notebook path, so the script's own no-staged-changes check (L196-197) is what performs the final no-op (`[auditor-commit] SKIP no-staged-changes`) — zero notebook diff, zero commit.
@@ -929,6 +955,53 @@ can never be skipped by construction — and stages/commits ONLY the explicit pa
 
 Convention: `docs/policies/commit-convention.md` § Notebook Commits
 Script: `scripts/auditor-notebook-commit.sh` (pointer per `docs/policies/dev-standards.md` § Script Persistence).
+
+---
+
+## Anomaly Reporting (all tiers)
+
+Known (dedup_key seen in past 7 days for BUG channel) → skip BUG write, always append DASHBOARD.md (see DASHBOARD Append below — "always append" includes `SKIP-dedup` outcomes, never just `OK`).
+New:
+```
+## Anomaly: [check_id] [Name]
+Severity: info | warn | critical | Date: YYYY-MM-DD
+Location: [service/table/source] | Details: [wrong] | Impact: [why] | Root cause: [guess]
+```
+severity ≥ warn → run **Emit Sequence** (E-1 post_agent_signal + E-2 send_telegram + **E-3 signal_queue row**).
+The signal_queue row write (Step E-3) is embedded in the per-tier emit blocks above — it is NOT a trailing optional step. This section is a reminder, not the definition. The definition is at each emit block.
+
+> Invariant: timestamp = current UTC, never future, never speculative.
+
+### DASHBOARD Append (FIX-AUDITOR-DASHBOARD-APPEND-NO-ACTUATOR-CONTRACT-COUNT-NARRATED)
+
+**Target file: `docs/data/DASHBOARD.md`** — the LIVE, git-tracked dashboard (most recent commit: `chore(system-auditor): append ... DASHBOARD row`). Two things this is explicitly NOT:
+- **NOT `docs/handoffs/DASHBOARD.md`** — a stale 650-byte phantom untouched since 2026-07-20, chartered for removal under `UC-ASL-P6`. Never write there.
+- **NOT `.claude/skills/signal-dashboard/`** — despite the name, that skill governs `.signal_queue.rows[]` in `orch-state.json` (a completely different artifact, already covered by the E-3 step inside `scripts/emit-audit-signal.sh`). It has no DASHBOARD.md write path at all; a prior version of this flow pointed at it for "per signal-dashboard skill" and that pointer was itself part of this defect (no script, no path, no read-back existed anywhere in the chain).
+
+**Actuator:** `scripts/emit-dashboard-row.sh` — a script actuator with a MANDATORY POST-WRITE read-back assert (re-reads the file and asserts the new row's `--signal-id` anchor is present), failing loud to the BUG channel otherwise. This is the exact same anti-false-green shape as `scripts/emit-audit-signal.sh`'s E-3 step, applied to this artifact — see that script's own header comment if you need the general pattern explained; this one does not repeat it.
+
+**When to call it:** immediately after ANY non-ABORT `[emit-signal]` marker from a CRITICAL/WARN/INFO finding emitted via the per-tier `scripts/emit-audit-signal.sh` call sites above (Tier-2 B-xx, Tier-3 C-xx, Tier-1 A-xx/A-20) — including `SKIP-dedup` outcomes (a known/repeated finding still gets a fresh DASHBOARD row; only the BUG Telegram is dedup-gated). Pass the paired call's `id=` value as `--signal-id` — this ties the DASHBOARD row to the exact signal_queue row it documents and is what makes the row's presence independently verifiable. D-BCTC-EVAL and D-IMPROVE (`--e3-only`, HIGH/MED/INFO severities) are explicitly OUT of this bucket — unchanged scope, see their own call sites.
+
+Paste the verbatim `[emit-dashboard] OK|ABORT|WARN ...` marker into the notebook AND append it to `$MARKERS_FILE` — `dashboard_rows` is counted from this marker by `scripts/audit-output-contract.sh`, never narrated.
+
+### OUTPUT-CONTRACT (echo in RETURN — MANDATORY)
+At the end of every cycle, before writing the RETURN block, run the parser on this cycle's accumulated marker log — do NOT hand-compose the counts:
+```bash
+bash scripts/audit-output-contract.sh \
+  --markers-file "$MARKERS_FILE" \
+  --cycle-start-ts "$FIRE_TICK" \
+  --cycle-tag "$FIRE_TASK_ID" \
+  --anomalies-count "<N you are about to write into the RETURN headline>" \
+  --next-token "<the literal NEXT: token you are about to write, e.g. clean|po|ops|user>"
+```
+Paste the script's `[OUTPUT-CONTRACT] ...` line **verbatim** into both the notebook and the RETURN block — this is the MANDATORY line, and it is no longer something the agent composes by hand. Any `[OUTPUT-CONTRACT] VIOLATION: ...` line(s) the script prints are ALSO pasted verbatim into the notebook; the script has already sent the BUG-channel Telegram for each — do not send a second one, and do NOT let a violation abort the cycle (this is a self-diagnostic on the auditor's own counters, not a reason to skip finishing the audit). After this call, `rm -f "$MARKERS_FILE"` (scratch only, never itself an artifact).
+
+The previous form of this check (`signal_queue_rows_written = 0 AND signals_posted > 0` → violation) was vacuous by construction: both operands were narrated by the same agent from the same marker set, so a single misreading produced 0 and 0 and the check passed on a cycle where a row WAS written (confirmed occurrence, 2026-07-29T08:38:34Z). The script above keeps that check (now on marker-parsed, trustworthy operands) AND adds an independent cross-check against `.signal_queue.rows[]` itself when `--cycle-start-ts`/`--orch-state-file` resolve, AND extends the same symmetric-violation treatment to `dashboard_rows` and to the RETURN headline/`NEXT` token — see the script's own header comment for the full V1–V5 list.
+
+### RAW-CITE GATE (rtr-confab2-202606060515 — occ#2; c019 invented config value; c026 cited "system-map lists 4001" for mcp-gateway port, value absent, live port 4040)
+Any config/file value cited in a finding or return (port, path, threshold, mapping) MUST be backed by a `grep -n` line captured THIS cycle (file + line number + matched text). No raw line captured → DROP the claim, do NOT report it. NEVER cite `orch-state.json .head.next_action` text as evidence — it is router-authored narrative, not a config value.
+- **Return summary extension (rtr-confab3-202606060720 — occ#3; c030 fabricated file/line cite in return channel):** The gate above applies equally to the final message returned to the router. A file/line pointer (e.g. "flow line 57") may appear in a return summary ONLY if that exact cite was already written verbatim to the notebook THIS cycle. If no such notebook line exists, OMIT the pointer — the substantive claim (e.g. "frontend classified INFO, no data impact") may remain, but without the fabricated reference.
+- **Sandbox-error quarantine (FIX-AUDITOR-EVIDENCE-INTEGRITY — occ#4; c040 conflated `/private/tmp/claude-501 full` with host ENOSPC):** Any bash exit whose stderr/stdout contains text matching `/private/tmp/claude-501|tasks is full|ENOSPC.*claude/` MUST be classified as `TOOL-UNAVAILABLE / NOT-RUN` for that check — log `"[TOOL-UNAVAILABLE] <check_id>: bash sandbox error — skip, NOT an infra signal"` and continue. NEVER escalate a sandbox-internal error as a host infra finding. Infra criticals require probe.sh `--- disk df -h / ---` raw output as evidence.
 
 **Tier-2/3 Heartbeat Write (auditor-signal-loop-P1, 2026-07-16 — closes the self-defeating T2/T3 SKIP-SPAWN gate):**
 
