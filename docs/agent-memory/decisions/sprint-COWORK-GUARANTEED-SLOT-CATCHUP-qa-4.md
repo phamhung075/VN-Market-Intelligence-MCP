@@ -180,3 +180,29 @@
 - **Found + corrected a false citation:** dev's note attributes the live AC-1 `.head` repair to "adjacent peer commit b5f2e9c8b" — RAW-verified that commit's diff touches ZERO `.head` content (its own message says ".head untouched"). Real repair commit is `7552eda7f` (`updated_by:"developer"`, real `date -u` stamp) — confirmed via targeted git-log walk. Outcome claim (AC-1 landed) is TRUE, citation was wrong; corrected in row `status_note`. Sampled 12 commits since across 378 touching orch-state.json — `.head` retains stamp fields throughout, no regression.
 **why-decision:** APPROVED, DONE_VERIFIED. All 6 ACs independently RAW-verified (AC-5 closed by me, not dev); the one prose inaccuracy found is a citation error, not a functional defect — corrected in the record rather than blocking.
 **why-change:** none — verified exactly what the row scoped; citation fix is additive to status_note.
+
+### STEP qa-S66 · qa · 2026-08-06T21:22:21Z
+**task-id:** FIX-COWORK-SPAWNFANOUT-NO-SESSION-ID-IN-LEAF-ENTRY-PROMPT
+**what-done:** Direct-commit verify (`qa[]` row, `branch:null`, `.commit` on row: `0d16f28ce`), ancestor-confirmed on main.
+**what-considered:**
+- `git show --stat` matches 2/4 claimed `.files[]` exactly; other 2 (`cowork-schedule-consistency.test.js`, `cowork-match-slots.js`) legitimately absent from diff per AC-4 (must stay byte-identical) — verified by re-running both myself instead of trusting the diff-presence heuristic blindly.
+- Re-ran all 3 claimed suites myself: `cowork-spawn-entry-prompt-session-id.test.js` 7/7, `cowork-schedule-consistency.test.js` 9/9, `cowork-match-slots.test.js` 43/43 — matches status_note exactly. Read both diffs myself (SESSION_ID_LINE both branches, guard names extraction line). mock-guard PASS, tsc/DDD/secret N/A (docs+test only).
+- AC-6 ("doc diff alone does NOT close this row") independently closed: zero notebook recurrence of the guard-EXIT/schema-error since 07-31; stronger positive control in agent-father's unrelated RAW-verify (2026-08-06T19:12Z) showing slot-4 cleared task_claim and pushed a real 12-unit chunk to KBC_2026_Q1 days after the fix — not a doc diff.
+- DJ-GATE-1: `sprint-COWORK-GUARANTEED-SLOT-CATCHUP-agent-father.md` §agent-father-S13 present, predates this verify.
+**why-decision:** APPROVED, DONE_VERIFIED. All 6 ACs independently RAW-verified, including the live-fire AC-6 gate via an independent unrelated agent's own DB-level corroboration, not self-report.
+**why-change:** none — verified exactly what the row scoped.
+
+### STEP qa-S67 · qa · 2026-08-06T21:35:00Z
+**task-id:** FIX-PO-MANUAL-DISPATCH-SWEEP-FLAG-WITHOUT-DISPATCH-STRANDS-ROW
+**what-done:** Direct-commit verify of `qa[]` row (`branch:null`, `.commit_sha: 64d132e43`).
+**what-considered:**
+- Row's cited `commit_sha` (`64d132e43`) is a real commit object but `git merge-base --is-ancestor`/`git fsck --unreachable` prove it is NOT on main's ancestry — an orphaned worktree-local commit (agent-father's isolated worktree, parent `581519c05`), never merged as-is.
+- Found the REAL landed commit by `git log -S flag_reentrant`: `05e5823d0` (same author/timestamp/message, parent `e52cd469f` — main's live tip at cherry-pick time), confirmed ancestor of main. `git diff` of the 3 claimed files between the two commits (against their respective parents) is byte-identical — same task content, just re-committed onto main's real tip instead of the stale worktree parent (dev-team's own S77-documented cherry-pick pattern for worktree isolation).
+- `git show --stat 05e5823d0` matches `files[]` exactly (manual-dispatch-sweep.md, dev-standards.md, po-manual-dispatch-sweep-verify.sh), `Task:` trailer correct.
+- Re-ran `po-manual-dispatch-sweep-verify.sh` myself: 15 checks incl. new `M-STALE-FLAGGED-REENTRANT` positive control and refreshed `G-ALREADY-FLAGGED` negative control, exit 0. `mock-guard.sh` — no production TS/Go source (bash+md), N/A/PASS. `flag_reentrant`/`STALE_SECONDS=14400` present live in all 3 files, dev-standards mirror byte-consistent.
+- DJ-GATE-1: `sprint-COWORK-GUARANTEED-SLOT-CATCHUP-agent-father.md` task-id-stamped entry present, commit `61fe79797` (ancestor-confirmed).
+**why-decision:** APPROVED, DONE_VERIFIED. Underlying fix verifiably landed and correct; the row's `commit_sha` field is a stale/orphaned citation (worktree-hash not main-hash) — corrected in `status_note` to the real ancestor commit `05e5823d0` rather than blocking on a citation-only defect (mirrors qa-S65 precedent).
+**why-change:** none — verified exactly what the row scoped; citation fix is additive to status_note.
+### CAP-REACHED · 2026-08-06T21:24:14Z
+
+### CAP-REACHED · 2026-08-06T21:24:23Z
