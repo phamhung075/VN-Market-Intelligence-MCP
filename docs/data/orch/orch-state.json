@@ -88,11 +88,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "active_task_id": null,
-    "next_agent": "router",
-    "updated_at": "2026-08-06T13:37:53Z",
-    "updated_by": "orch-apply (Stage 1.5 auto-stamp — caller omitted updated_by)"
+    "status": "in_progress",
+    "active_task_id": "FIX-DB-INTEGRITY-SIDECAR-NAMED-VOLUME-DRIFT",
+    "next_agent": "developer",
+    "next_action": "BOUNDED-1 auto-pickup claim of FIX-DB-INTEGRITY-SIDECAR-NAMED-VOLUME-DRIFT — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
+    "updated_at": "2026-08-06T13:44:00Z",
+    "updated_by": "dev-team (bounded-1 auto-pickup)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -12038,31 +12039,6 @@
         "updated_at": "2026-08-06T10:25:43Z"
       },
       {
-        "id": "FIX-AUDITOR-DURABILITY-STEP0B-DETECTION",
-        "type": "FIX",
-        "title": "system-auditor Step 0b: Detection and reordering durability fixes",
-        "desc": "Enhance Step 0b with schedule-based missing-cycle detection + stale-marker orphan sweep (3a). Reorder Notebook Write to run after tier checks (3b.1). Addresses po_occurrence_7 correction: detector must catch both [won election then died] and [died before election].",
-        "status": "BACKLOG",
-        "priority": "P1",
-        "size": "M",
-        "sprint": "BACKLOG",
-        "zone": "cross-service/",
-        "owner": "developer",
-        "next_agent": "developer",
-        "depends_on": [],
-        "blocks": [
-          "FIX-AUDITOR-DURABILITY-SKILL-DRAFT-PERSIST",
-          "FIX-AUDITOR-DURABILITY-FLOW-DRAFT-HEAL"
-        ],
-        "files": [
-          "docs/agents/system-auditor/flow/main.md"
-        ],
-        "created_at": "2026-08-06T10:41:17.873278Z",
-        "created_by": "pm",
-        "updated_at": "2026-08-06T10:46:06Z",
-        "updated_by": "pm"
-      },
-      {
         "id": "FIX-AUDITOR-DURABILITY-SKILL-DRAFT-PERSIST",
         "type": "FIX",
         "title": "notebook-write skill: Add draft-scratch-file persistence variant",
@@ -14876,66 +14852,6 @@
         "architect_review_note": "2026-08-06T10:49Z architect (plan_only brief per PO explicit ask -- adjudicate a/b/c, no code shipped). Brief: docs/architecture-briefs/2026-08-06-guard-notebook-concurrent-write-mutex.md. DECISIVE EVIDENCE READ RAW (not POs summary): 11 notebook-direction-defaulted signals on qa.md (10:00:46Z-10:08:36Z) show a non-monotone retained-section set AND 3 simultaneous duplicate ## cycle-504 headings with different content -- proves concurrent lost-update + stale c<NNN> counter allocation, not a pruning-order bug. Ruled out the suspected 3rd-writer formatter hook: context-bloat-backstop.sh read in full, only ever writes its OWN signal file, never the notebook -- confirmed no 3rd mutator exists (only the writing agent Write/Edit + notebook-auto-prune.sh PostToolUse hook touch notebook content). ADJUDICATION: (b) append-only cannot work standalone (AC-2 retention/AC-5 cap both require removing content, no true append primitive exists on native Write/Edit); (c) fan-out cap alone independently disproven -- the ORIGINAL tran-ngoc-bau.md c113 incident was N=2 writers, no fan-out involved, so a lower cap only narrows frequency, never closes the class; (a) task_claim mutex is the right direction but NOT a drop-in -- task_kind is a closed 7-value Zod enum (coordinationTools.ts) with no fitting kind, needs an additive notebook-write value (companion dev-mcp-server row, blocking prereq). RECOMMENDATION: task_claim(task_kind=notebook-write) mutex bracketing ONLY the mechanical fresh-read-merge-write span (LLM authoring stays OUTSIDE the held window, explicit ttl_seconds=120 not the 3600s default -- avoids this repos own corroborated TTL-hazard lesson) as new SKILL.md AC-7; PostToolUse hook (cannot call task_claim, no MCP-from-bash bridge exists) hardened instead with a stat-based staleness recheck immediately before its own mv, deliberately NOT a new mkdir/flock lock file since docs/agent-memory is a named, still-unexcluded VirtioFS bind-mount race hazard per docs/protocols/head-lock-self-cure.md (H4, confirmed not hypothesized) -- reusing task_claims server-side SQLite lock state sidesteps that hazard entirely. Files split across 3 owner zones (mixed-zone flag for PM, same class already resolved for FIX-DEVTEAM-QADRAIN-THROUGHPUT-CAP): agent-father (.claude/skills/notebook-write/SKILL.md AC-7 + docs/agents/dev-team/flow/main.md 1-sentence note), developer (scripts/agents-flow/notebook-auto-prune.sh staleness guard), dev-mcp-server (task_kind enum +1, companion row, blocks agent-father row). Acceptance test extends the EXISTING apps/mcp-server/src/__tests__/task-lock-coordination-store.test.ts harness (new AC-12 describe block, N-concurrent-writer negative/positive control on a fixture notebook) rather than a new shell script -- satisfies this rows own verification_gate directly. Sequencing: dev-mcp-server row first (blocking), developer row independent/ships anytime, agent-father row last. Zone cross-service/. BUILD-STANDARD: not-applicable."
       },
       {
-        "id": "FIX-DB-INTEGRITY-SIDECAR-NAMED-VOLUME-DRIFT",
-        "type": "FIX",
-        "title": "db-integrity observer tooling still mounts the named volume commit 5ba622eca retired on 2026-07-15 — counts helper returns null, probe fail-opens every tick",
-        "zone": "cross-service/",
-        "priority": "P1",
-        "status": "READY",
-        "size": "S",
-        "next_agent": "developer",
-        "supervised": false,
-        "plan_only": false,
-        "baseline_pass": true,
-        "source": "PO triage of system-auditor Tier-DATA sweep 2026-08-05T06:47Z (router escalation, telegram bug msg_id 4703)",
-        "created_at": "2026-08-05T07:06:06Z",
-        "created_by": "po",
-        "updated_at": "2026-08-06T12:28:58Z",
-        "root_cause": "2026-07-15 commit 5ba622eca ('fix(infra): bind-mount market data to host disk instead of Docker named volume') moved the live DB off the named volume `vn-market-intelligence-mcp_market_data` and onto a HOST BIND MOUNT `./data/live:/app/data` across all 9 dependent services, because the 2026-07-15 hypervisor VM rebuild had destroyed the named volume. docker-compose.yml now declares only pek_model_cache + bctc-page-images under `volumes:` — market_data is gone entirely. The RUNTIME was migrated; the READ-ONLY OBSERVER tooling was not. Every observer still runs `docker run --rm -v vn-market-intelligence-mcp_market_data:/data keinos/sqlite3 ...`, which makes Docker AUTO-CREATE an empty volume and then fail to open /data/market.db. Confirmed live: `docker volume inspect vn-market-intelligence-mcp_market_data` shows CreatedAt=2026-08-05T06:47:24Z (auto-created by the auditor's own failing probe today) and `docker run -v <vol>:/data alpine ls -la /data` shows an empty dir, while `docker inspect vn-market-intelligence-mcp-mcp-server-1` shows `bind .../data/live -> /app/data` and the real market.db is 425MB with an mtime of seconds ago.",
-        "evidence": "PO ran both failing commands directly. `bash scripts/db-integrity-counts.sh` -> '[DB-INTEGRITY-COUNTS] PROBE FAILURE (exit 1): Error: unable to open database \"file:/data/market.db?immutable=1\": unable to open database file'. `bash scripts/agents-flow/db-integrity-probe.sh` -> {\"verdict\":\"SPAWN\",\"detail\":\"sidecar query failed (docker unreachable, non-zero exit, or output did not parse into 1 line per watched table) — snapshot left untouched\",\"tables_changed\":-1}. Both fail-open rather than fail-loud, so the degradation is SILENT: the probe's whole purpose is skip-if-unchanged idempotency and it now votes SPAWN unconditionally, and the counts helper's null propagates into every history entry. The same query against the correct path succeeds immediately: `sqlite3 \"file:data/live/market.db?immutable=1\" \"SELECT COUNT(*) FROM daily_ohlcv WHERE high=0 AND low=0;\"` -> 336.",
-        "blast_radius": "docs/data/db-integrity-history.json holds 138 entries; the last one with non-null `counts` is 2026-06-25T19:25:41Z, then a 41-day gap, then today's 2026-08-05T06:51:39Z entry with counts=NULL. The gap is because the db-data-integrity cron had NO re-arm coverage until /cron-standalone-team was built on 2026-08-04 — so today was the FIRST sweep since the 07-15 bind-mount switch, and it broke immediately. Correct framing: broken for 21 days (since 5ba622eca), first OBSERVED today — not '6 weeks of silent nulls'. The deterministic counts trail that register.md:108-113 explicitly relies on to stop the LLM inventing trends is dead until this lands.",
-        "files": [
-          "scripts/db-integrity-counts.sh",
-          "scripts/agents-flow/db-integrity-probe.sh",
-          "scripts/db-integrity-history-append.sh",
-          "scripts/ops-bctc-enrich-reverify-pulljob.sh",
-          ".claude/skills/cron-standalone-team/register.md",
-          ".claude/commands/crons/cron-db-data-integrity.md",
-          "docs/agents/system-auditor/flow/main.md"
-        ],
-        "ac": [
-          "AC-1 DECIDE THE CANONICAL PATH FIRST, then change code. Two candidates: (i) host bind `data/live/market.db` read directly with `sqlite3 \"file:<path>?immutable=1\"` (no docker at all — PO confirmed this works today and is strictly simpler), or (ii) keep a sidecar but mount the host dir: `docker run --rm -v \"$PWD/data/live:/data:ro\" keinos/sqlite3 ...`. Record the choice + rationale in the decision journal. Do NOT re-create the named volume — 5ba622eca retired it deliberately so the DB survives VM rebuilds.",
-          "AC-2 scripts/db-integrity-counts.sh returns real non-null counts for every watched table. Verify by running it and diffing at least 3 table counts against the same query run through a second independent access path (e.g. the mcp-server container's own reader) — two planes, per memory feedback_same_db_tools_diverge_rowcount.",
-          "AC-3 scripts/agents-flow/db-integrity-probe.sh emits verdict=SKIP-SPAWN on an unchanged DB. This is the actual proof the pre-gate works — today it CANNOT emit SKIP-SPAWN at all. Run it twice with no intervening writes and assert the second call skips.",
-          "AC-4 Both scripts FAIL LOUD (non-zero exit + bug-channel-worthy stderr) when the DB is genuinely unreachable, instead of silently returning null / voting SPAWN. The current fail-open is what let this hide for 21 days.",
-          "AC-5 Update every doc/prompt that still teaches the named-volume pattern: .claude/skills/cron-standalone-team/register.md Job 1 AND Job 2 prompt bodies (both currently paste the 'DB ACCESS — the live DB is the named volume, NOT host ./data' block verbatim, and both are LIVE — the router registered them at 06:18Z today), .claude/commands/crons/cron-db-data-integrity.md, and the system-auditor flow. grep -rn 'vn-market-intelligence-mcp_market_data' across scripts/ .claude/ docs/ and triage every hit — several scripts/*.jq audit artifacts also assert it, though those are historical records and should be left alone.",
-          "AC-6 The memory note reference_live_db_is_named_volume_not_host_data.md is now STALE and actively harmful — it says the named volume is authoritative and host ./data is a 'decoy'. That was true before 5ba622eca and is inverted now. Route a correction so agents stop being taught the wrong path.",
-          "AC-7 Regression guard: something must fail when the runtime DB location and the observer DB location diverge again. A test or CI check that resolves the mcp-server container's /app/data mount source and asserts the observer scripts target the same inode/path is the minimum bar."
-        ],
-        "owner": "developer",
-        "updated_by": "po",
-        "po_corroboration_20260806T0833": "THIRD INDEPENDENT CORROBORATION + PROMOTION TO A BLOCKING DEPENDENCY (priority normalised 'high' -> P1 to match the board's P-scale; no scope change). This row was minted 2026-08-05 on a single finding. Two more landed today from unrelated sources: (a) the developer working FIX-AUDITOR-EMPTYTABLE-CHECK-NO-WRITER-DISCRIMINATOR hit the same dead mount and documented it in commit d16b7c212 (comment in scripts/db-integrity-counts.sh naming the ./data/live -> /app/data bind mount that superseded the named volume at 5ba622eca, 2026-07-15), explicitly scoping the fix out of that task; (b) signal dev-team-20260806T082420Z-auditor-data-guard-noncompliance (08:24:20Z, audit_cycle_tag cron:db-data-integrity:2026-08-06T08:16Z) reports the DATA sweep ran an ad-hoc /tmp script and labelled it scripts/db-integrity-counts.sh, with the registered script 'confirmed broken, stale sidecar mount'. WHY THIS NOW MATTERS MORE THAN ITS OWN SEVERITY SUGGESTS: FIX-AUDITOR-EMPTYTABLE-CHECK-NO-WRITER-DISCRIMINATOR is in review[] awaiting a qa replay whose AC is 'the two CRITICALs must not re-fire'. A probe that fail-opens on a dead mount satisfies that AC by seeing nothing, so THIS row is a de-facto gate on THAT sign-off (see po_QA_GATE_WARNING_20260806T0833 there). SECONDARY EFFECT worth naming: agents are working around the broken helper with ad-hoc /tmp scripts and then reporting the registered path's name, which both violates the standing scripts/-not-/tmp rule (feedback_scripts_persist_not_tmp) and makes every number the sweep emits unattributable to a reproducible source -- PO already saw the symptom at 07:17Z as C-04 reporting financial_reports=30 against a live raw count of 257 and C-08 reporting alerts=42 against 144, and wrongly guessed 'undocumented window predicate'. The likelier explanation is that those numbers never came from the registered script at all. Fixing the mount plausibly resolves that anomaly too -- verify, do not assume.",
-        "promoted_at": "2026-08-06T11:44:04Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
-        "claimed_at": "2026-08-06T11:54:44Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)",
-        "branch": null,
-        "dev_disposition_20260806T1214Z": "AC-1 direct host-bind sqlite3 read (no docker), AC-2 two-plane live diff 6/6 match, AC-3 SKIP-SPAWN live-verified on repeat, AC-4 both scripts fail loud (probe.sh keeps documented FAIL-OPEN/SPAWN + adds loud stderr), AC-5 3 cron/register docs + bctc-extraction-runbook.md + db-empty-table-classify.sh comment corrected, AC-6 system-auditor/flow/main.md corrected (in-repo equivalent; private router memory note flagged, out of repo scope), AC-7 new scripts/db-integrity-mount-drift-check.sh(+test) regression guard, LIVE-verified PASS against the running stack today. New tests db-integrity-counts.test.sh 18/18 + db-integrity-mount-drift-check.test.sh 12/12; db-integrity-probe.test.sh updated 27/27; zero regressions across 4 sibling suites (150/150). Decision journal sprint-COWORK-GUARANTEED-SLOT-CATCHUP-developer-3.md STEP developer-S61.",
-        "po_qa_block_note": "PO 2026-08-06T12:2xZ — NOT signed off; returned to developer for one added AC. The named-volume migration itself is CORRECT and is a strict improvement (21 days of fail-open observer output ended), so PO is deliberately NOT reverting it. But AC-1 canonised `sqlite3 \"file:...?immutable=1\"` as the read pattern for three observer scripts on the claim that immutable=1 'bypasses WAL/-shm entirely and is always safe here'. That claim is FALSE, and PO measured it false on the live DB this tick — this is not a style nit and not an inference from memory.\n\nRAW MEASUREMENT, live market.db, 2026-08-06T12:2xZ, with data/live/market.db-wal at 1,545,032 bytes of pending un-checkpointed writes:\n  sqlite3 'file:data/live/market.db?immutable=1' -> daily_ohlcv=775891 , pragma_journal_mode='delete'\n  sqlite3 'file:data/live/market.db?mode=ro'     -> daily_ohlcv=775912 , pragma_journal_mode='wal'\nTwo distinct defects in one measurement: (a) 21 rows silently missing, no error, no warning, no signal — the probe cannot tell a stale read from a fresh one; (b) far worse, immutable=1 reported journal_mode='delete' (the persisted header value) while the DB is actually in WAL. So the integrity probe reports the DB is in the SAFE journal mode at the exact moment it is in the DANGEROUS one. The observer whose entire purpose is catching DB drift would have certified as clean the precise condition that has now corrupted this database five times. A silently-blind integrity probe is worse than no probe, because it reads as clean telemetry.\n\nCorroboration that this is a general rule and not a one-off: scripts/audits/verify-market-db-journal-mode.sh, which opens through the container's normal readonly path (NOT immutable=1), correctly returns journal_mode=wal at the same instant. Two observer tools on the same DB disagree right now, and the disagreement is exactly this defect.\n\nThe unifying rule to encode: immutable=1 is safe IFF -wal is 0 bytes / absent at read time, and silently wrong otherwise. Prior evidence gave contradictory unconditional verdicts (2026-06-25 'immutable=1 correct' — measured when -wal was 0 bytes, so bypassing WAL cost nothing; 2026-07-31 'immutable=1 silently stale' — measured with pending WAL). Both observations are consistent under the conditional rule; neither supports an unconditional one. The developer's AC-2 evidence ('byte-identical counts, 6/6 columns') is a single-snapshot check that almost certainly landed in a checkpointed moment and does not establish general safety.\n\nCOUPLING (why this is urgent now, not later): FIX-STOCKPRICE-PRICEHISTORY-RO-WAL-DSN-... proves market.db's journal_mode actively oscillates DELETE->WAL from four live Go re-armers. Every oscillation opens a window with pending WAL — exactly when immutable=1 goes blind. Fixing the stock-price row removes most windows but does NOT fix this: WAL can be legitimately entered again for other reasons, and an observer that is only correct when the thing it observes is already healthy is not an observer.",
-        "acceptance_added_by_po": [
-          "AC-5 NEW (QA-BLOCKING) — every immutable=1 open in scripts/db-integrity-counts.sh, scripts/agents-flow/db-integrity-probe.sh and scripts/db-empty-table-classify.sh must be guarded by a -wal size check at read time. Contract: -wal absent or 0 bytes -> proceed with immutable=1; -wal non-empty -> do NOT emit a clean reading. Either checkpoint-then-retry, or fall back to a normal read-only open, or emit an explicit UNKNOWN/DEGRADED verdict. The one forbidden outcome is emitting a number that looks clean. Fail-loud beats fail-open here — the 21-day fail-open silence this very row was minted to fix is the same failure mode in a different costume.",
-          "AC-6 NEW — delete the three source comments asserting immutable=1 'bypasses WAL/-shm entirely and is always safe here' (db-integrity-probe.sh:17, db-empty-table-classify.sh:93, db-integrity-counts.sh:53) and replace with the conditional rule. A wrong comment asserting unconditional safety is exactly the artifact that propagated the stock-price WAL bug across four call sites; do not leave a second copy of that pattern in the tree.",
-          "AC-7 NEW — never read journal_mode through immutable=1 anywhere. Measured this tick to return the stale header value ('delete') while live state was 'wal'. If any observer reports journal_mode, it must use the same open path as scripts/audits/verify-market-db-journal-mode.sh."
-        ],
-        "verification_gate": "Evidence must be taken with a NON-EMPTY -wal present (create the condition deliberately; do not wait for it) and must show the guarded scripts refusing to emit a clean reading. A PASS captured during a checkpointed moment is the exact non-evidence that produced this gap.",
-        "related": [
-          "FIX-STOCKPRICE-PRICEHISTORY-RO-WAL-DSN-SWALLOWED-EMPTY-KILLS-KINHDICH",
-          "FIX-MARKETDB-JOURNALMODE-GUARD-SHIPPED-BUT-NEVER-ARMED"
-        ],
-        "po_do_not_conflate": "This row is observer-tooling correctness. It is NOT the 2026-08-06 SQLITE_CORRUPT incident and must not be deduped into it (alert-commander already made that error once — see the incident doc's 'Critical Misattribution' section). The link is one-directional and mechanical: the corruption row creates the WAL windows in which THIS row's defect goes blind."
-      },
-      {
         "id": "FIX-NOTEBOOK-COMPOSE-SCRIPT-ACTUATOR",
         "type": "FIX",
         "title": "notebook compose has no mechanical actuator — retention/prune arithmetic runs inside an LLM-narrated flow step and silently orphans section bodies",
@@ -14973,6 +14889,34 @@
         ],
         "updated_at": "2026-08-06T13:23:22Z",
         "promoted_at": "2026-08-06T13:23:21Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)"
+      },
+      {
+        "id": "FIX-AUDITOR-DURABILITY-STEP0B-DETECTION",
+        "type": "FIX",
+        "title": "system-auditor Step 0b: Detection and reordering durability fixes",
+        "desc": "Enhance Step 0b with schedule-based missing-cycle detection + stale-marker orphan sweep (3a). Reorder Notebook Write to run after tier checks (3b.1). Addresses po_occurrence_7 correction: detector must catch both [won election then died] and [died before election].",
+        "status": "READY",
+        "priority": "P1",
+        "size": "M",
+        "sprint": "BACKLOG",
+        "zone": "cross-service/",
+        "owner": "developer",
+        "next_agent": "developer",
+        "depends_on": [],
+        "blocks": [
+          "FIX-AUDITOR-DURABILITY-SKILL-DRAFT-PERSIST",
+          "FIX-AUDITOR-DURABILITY-FLOW-DRAFT-HEAL"
+        ],
+        "files": [
+          "docs/agents/system-auditor/flow/main.md"
+        ],
+        "created_at": "2026-08-06T10:41:17.873278Z",
+        "created_by": "pm",
+        "updated_at": "2026-08-06T13:43:47Z",
+        "updated_by": "pm",
+        "promoted_at": "2026-08-06T13:43:47Z",
         "promoted_by": "dev-team (bounded-1 auto-pickup)",
         "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)"
       }
@@ -22504,9 +22448,70 @@
         }
       ]
     },
-    "last_triaged_at": "2026-08-06T13:23:21Z",
+    "last_triaged_at": "2026-08-06T13:43:47Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": []
+    "in_progress": [
+      {
+        "id": "FIX-DB-INTEGRITY-SIDECAR-NAMED-VOLUME-DRIFT",
+        "type": "FIX",
+        "title": "db-integrity observer tooling still mounts the named volume commit 5ba622eca retired on 2026-07-15 — counts helper returns null, probe fail-opens every tick",
+        "zone": "cross-service/",
+        "priority": "P1",
+        "status": "IN_PROGRESS",
+        "size": "S",
+        "next_agent": "developer",
+        "supervised": false,
+        "plan_only": false,
+        "baseline_pass": true,
+        "source": "PO triage of system-auditor Tier-DATA sweep 2026-08-05T06:47Z (router escalation, telegram bug msg_id 4703)",
+        "created_at": "2026-08-05T07:06:06Z",
+        "created_by": "po",
+        "updated_at": "2026-08-06T13:44:00Z",
+        "root_cause": "2026-07-15 commit 5ba622eca ('fix(infra): bind-mount market data to host disk instead of Docker named volume') moved the live DB off the named volume `vn-market-intelligence-mcp_market_data` and onto a HOST BIND MOUNT `./data/live:/app/data` across all 9 dependent services, because the 2026-07-15 hypervisor VM rebuild had destroyed the named volume. docker-compose.yml now declares only pek_model_cache + bctc-page-images under `volumes:` — market_data is gone entirely. The RUNTIME was migrated; the READ-ONLY OBSERVER tooling was not. Every observer still runs `docker run --rm -v vn-market-intelligence-mcp_market_data:/data keinos/sqlite3 ...`, which makes Docker AUTO-CREATE an empty volume and then fail to open /data/market.db. Confirmed live: `docker volume inspect vn-market-intelligence-mcp_market_data` shows CreatedAt=2026-08-05T06:47:24Z (auto-created by the auditor's own failing probe today) and `docker run -v <vol>:/data alpine ls -la /data` shows an empty dir, while `docker inspect vn-market-intelligence-mcp-mcp-server-1` shows `bind .../data/live -> /app/data` and the real market.db is 425MB with an mtime of seconds ago.",
+        "evidence": "PO ran both failing commands directly. `bash scripts/db-integrity-counts.sh` -> '[DB-INTEGRITY-COUNTS] PROBE FAILURE (exit 1): Error: unable to open database \"file:/data/market.db?immutable=1\": unable to open database file'. `bash scripts/agents-flow/db-integrity-probe.sh` -> {\"verdict\":\"SPAWN\",\"detail\":\"sidecar query failed (docker unreachable, non-zero exit, or output did not parse into 1 line per watched table) — snapshot left untouched\",\"tables_changed\":-1}. Both fail-open rather than fail-loud, so the degradation is SILENT: the probe's whole purpose is skip-if-unchanged idempotency and it now votes SPAWN unconditionally, and the counts helper's null propagates into every history entry. The same query against the correct path succeeds immediately: `sqlite3 \"file:data/live/market.db?immutable=1\" \"SELECT COUNT(*) FROM daily_ohlcv WHERE high=0 AND low=0;\"` -> 336.",
+        "blast_radius": "docs/data/db-integrity-history.json holds 138 entries; the last one with non-null `counts` is 2026-06-25T19:25:41Z, then a 41-day gap, then today's 2026-08-05T06:51:39Z entry with counts=NULL. The gap is because the db-data-integrity cron had NO re-arm coverage until /cron-standalone-team was built on 2026-08-04 — so today was the FIRST sweep since the 07-15 bind-mount switch, and it broke immediately. Correct framing: broken for 21 days (since 5ba622eca), first OBSERVED today — not '6 weeks of silent nulls'. The deterministic counts trail that register.md:108-113 explicitly relies on to stop the LLM inventing trends is dead until this lands.",
+        "files": [
+          "scripts/db-integrity-counts.sh",
+          "scripts/agents-flow/db-integrity-probe.sh",
+          "scripts/db-integrity-history-append.sh",
+          "scripts/ops-bctc-enrich-reverify-pulljob.sh",
+          ".claude/skills/cron-standalone-team/register.md",
+          ".claude/commands/crons/cron-db-data-integrity.md",
+          "docs/agents/system-auditor/flow/main.md"
+        ],
+        "ac": [
+          "AC-1 DECIDE THE CANONICAL PATH FIRST, then change code. Two candidates: (i) host bind `data/live/market.db` read directly with `sqlite3 \"file:<path>?immutable=1\"` (no docker at all — PO confirmed this works today and is strictly simpler), or (ii) keep a sidecar but mount the host dir: `docker run --rm -v \"$PWD/data/live:/data:ro\" keinos/sqlite3 ...`. Record the choice + rationale in the decision journal. Do NOT re-create the named volume — 5ba622eca retired it deliberately so the DB survives VM rebuilds.",
+          "AC-2 scripts/db-integrity-counts.sh returns real non-null counts for every watched table. Verify by running it and diffing at least 3 table counts against the same query run through a second independent access path (e.g. the mcp-server container's own reader) — two planes, per memory feedback_same_db_tools_diverge_rowcount.",
+          "AC-3 scripts/agents-flow/db-integrity-probe.sh emits verdict=SKIP-SPAWN on an unchanged DB. This is the actual proof the pre-gate works — today it CANNOT emit SKIP-SPAWN at all. Run it twice with no intervening writes and assert the second call skips.",
+          "AC-4 Both scripts FAIL LOUD (non-zero exit + bug-channel-worthy stderr) when the DB is genuinely unreachable, instead of silently returning null / voting SPAWN. The current fail-open is what let this hide for 21 days.",
+          "AC-5 Update every doc/prompt that still teaches the named-volume pattern: .claude/skills/cron-standalone-team/register.md Job 1 AND Job 2 prompt bodies (both currently paste the 'DB ACCESS — the live DB is the named volume, NOT host ./data' block verbatim, and both are LIVE — the router registered them at 06:18Z today), .claude/commands/crons/cron-db-data-integrity.md, and the system-auditor flow. grep -rn 'vn-market-intelligence-mcp_market_data' across scripts/ .claude/ docs/ and triage every hit — several scripts/*.jq audit artifacts also assert it, though those are historical records and should be left alone.",
+          "AC-6 The memory note reference_live_db_is_named_volume_not_host_data.md is now STALE and actively harmful — it says the named volume is authoritative and host ./data is a 'decoy'. That was true before 5ba622eca and is inverted now. Route a correction so agents stop being taught the wrong path.",
+          "AC-7 Regression guard: something must fail when the runtime DB location and the observer DB location diverge again. A test or CI check that resolves the mcp-server container's /app/data mount source and asserts the observer scripts target the same inode/path is the minimum bar."
+        ],
+        "owner": "developer",
+        "updated_by": "po",
+        "po_corroboration_20260806T0833": "THIRD INDEPENDENT CORROBORATION + PROMOTION TO A BLOCKING DEPENDENCY (priority normalised 'high' -> P1 to match the board's P-scale; no scope change). This row was minted 2026-08-05 on a single finding. Two more landed today from unrelated sources: (a) the developer working FIX-AUDITOR-EMPTYTABLE-CHECK-NO-WRITER-DISCRIMINATOR hit the same dead mount and documented it in commit d16b7c212 (comment in scripts/db-integrity-counts.sh naming the ./data/live -> /app/data bind mount that superseded the named volume at 5ba622eca, 2026-07-15), explicitly scoping the fix out of that task; (b) signal dev-team-20260806T082420Z-auditor-data-guard-noncompliance (08:24:20Z, audit_cycle_tag cron:db-data-integrity:2026-08-06T08:16Z) reports the DATA sweep ran an ad-hoc /tmp script and labelled it scripts/db-integrity-counts.sh, with the registered script 'confirmed broken, stale sidecar mount'. WHY THIS NOW MATTERS MORE THAN ITS OWN SEVERITY SUGGESTS: FIX-AUDITOR-EMPTYTABLE-CHECK-NO-WRITER-DISCRIMINATOR is in review[] awaiting a qa replay whose AC is 'the two CRITICALs must not re-fire'. A probe that fail-opens on a dead mount satisfies that AC by seeing nothing, so THIS row is a de-facto gate on THAT sign-off (see po_QA_GATE_WARNING_20260806T0833 there). SECONDARY EFFECT worth naming: agents are working around the broken helper with ad-hoc /tmp scripts and then reporting the registered path's name, which both violates the standing scripts/-not-/tmp rule (feedback_scripts_persist_not_tmp) and makes every number the sweep emits unattributable to a reproducible source -- PO already saw the symptom at 07:17Z as C-04 reporting financial_reports=30 against a live raw count of 257 and C-08 reporting alerts=42 against 144, and wrongly guessed 'undocumented window predicate'. The likelier explanation is that those numbers never came from the registered script at all. Fixing the mount plausibly resolves that anomaly too -- verify, do not assume.",
+        "promoted_at": "2026-08-06T11:44:04Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
+        "claimed_at": "2026-08-06T13:43:59Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "branch": null,
+        "dev_disposition_20260806T1214Z": "AC-1 direct host-bind sqlite3 read (no docker), AC-2 two-plane live diff 6/6 match, AC-3 SKIP-SPAWN live-verified on repeat, AC-4 both scripts fail loud (probe.sh keeps documented FAIL-OPEN/SPAWN + adds loud stderr), AC-5 3 cron/register docs + bctc-extraction-runbook.md + db-empty-table-classify.sh comment corrected, AC-6 system-auditor/flow/main.md corrected (in-repo equivalent; private router memory note flagged, out of repo scope), AC-7 new scripts/db-integrity-mount-drift-check.sh(+test) regression guard, LIVE-verified PASS against the running stack today. New tests db-integrity-counts.test.sh 18/18 + db-integrity-mount-drift-check.test.sh 12/12; db-integrity-probe.test.sh updated 27/27; zero regressions across 4 sibling suites (150/150). Decision journal sprint-COWORK-GUARANTEED-SLOT-CATCHUP-developer-3.md STEP developer-S61.",
+        "po_qa_block_note": "PO 2026-08-06T12:2xZ — NOT signed off; returned to developer for one added AC. The named-volume migration itself is CORRECT and is a strict improvement (21 days of fail-open observer output ended), so PO is deliberately NOT reverting it. But AC-1 canonised `sqlite3 \"file:...?immutable=1\"` as the read pattern for three observer scripts on the claim that immutable=1 'bypasses WAL/-shm entirely and is always safe here'. That claim is FALSE, and PO measured it false on the live DB this tick — this is not a style nit and not an inference from memory.\n\nRAW MEASUREMENT, live market.db, 2026-08-06T12:2xZ, with data/live/market.db-wal at 1,545,032 bytes of pending un-checkpointed writes:\n  sqlite3 'file:data/live/market.db?immutable=1' -> daily_ohlcv=775891 , pragma_journal_mode='delete'\n  sqlite3 'file:data/live/market.db?mode=ro'     -> daily_ohlcv=775912 , pragma_journal_mode='wal'\nTwo distinct defects in one measurement: (a) 21 rows silently missing, no error, no warning, no signal — the probe cannot tell a stale read from a fresh one; (b) far worse, immutable=1 reported journal_mode='delete' (the persisted header value) while the DB is actually in WAL. So the integrity probe reports the DB is in the SAFE journal mode at the exact moment it is in the DANGEROUS one. The observer whose entire purpose is catching DB drift would have certified as clean the precise condition that has now corrupted this database five times. A silently-blind integrity probe is worse than no probe, because it reads as clean telemetry.\n\nCorroboration that this is a general rule and not a one-off: scripts/audits/verify-market-db-journal-mode.sh, which opens through the container's normal readonly path (NOT immutable=1), correctly returns journal_mode=wal at the same instant. Two observer tools on the same DB disagree right now, and the disagreement is exactly this defect.\n\nThe unifying rule to encode: immutable=1 is safe IFF -wal is 0 bytes / absent at read time, and silently wrong otherwise. Prior evidence gave contradictory unconditional verdicts (2026-06-25 'immutable=1 correct' — measured when -wal was 0 bytes, so bypassing WAL cost nothing; 2026-07-31 'immutable=1 silently stale' — measured with pending WAL). Both observations are consistent under the conditional rule; neither supports an unconditional one. The developer's AC-2 evidence ('byte-identical counts, 6/6 columns') is a single-snapshot check that almost certainly landed in a checkpointed moment and does not establish general safety.\n\nCOUPLING (why this is urgent now, not later): FIX-STOCKPRICE-PRICEHISTORY-RO-WAL-DSN-... proves market.db's journal_mode actively oscillates DELETE->WAL from four live Go re-armers. Every oscillation opens a window with pending WAL — exactly when immutable=1 goes blind. Fixing the stock-price row removes most windows but does NOT fix this: WAL can be legitimately entered again for other reasons, and an observer that is only correct when the thing it observes is already healthy is not an observer.",
+        "acceptance_added_by_po": [
+          "AC-5 NEW (QA-BLOCKING) — every immutable=1 open in scripts/db-integrity-counts.sh, scripts/agents-flow/db-integrity-probe.sh and scripts/db-empty-table-classify.sh must be guarded by a -wal size check at read time. Contract: -wal absent or 0 bytes -> proceed with immutable=1; -wal non-empty -> do NOT emit a clean reading. Either checkpoint-then-retry, or fall back to a normal read-only open, or emit an explicit UNKNOWN/DEGRADED verdict. The one forbidden outcome is emitting a number that looks clean. Fail-loud beats fail-open here — the 21-day fail-open silence this very row was minted to fix is the same failure mode in a different costume.",
+          "AC-6 NEW — delete the three source comments asserting immutable=1 'bypasses WAL/-shm entirely and is always safe here' (db-integrity-probe.sh:17, db-empty-table-classify.sh:93, db-integrity-counts.sh:53) and replace with the conditional rule. A wrong comment asserting unconditional safety is exactly the artifact that propagated the stock-price WAL bug across four call sites; do not leave a second copy of that pattern in the tree.",
+          "AC-7 NEW — never read journal_mode through immutable=1 anywhere. Measured this tick to return the stale header value ('delete') while live state was 'wal'. If any observer reports journal_mode, it must use the same open path as scripts/audits/verify-market-db-journal-mode.sh."
+        ],
+        "verification_gate": "Evidence must be taken with a NON-EMPTY -wal present (create the condition deliberately; do not wait for it) and must show the guarded scripts refusing to emit a clean reading. A PASS captured during a checkpointed moment is the exact non-evidence that produced this gap.",
+        "related": [
+          "FIX-STOCKPRICE-PRICEHISTORY-RO-WAL-DSN-SWALLOWED-EMPTY-KILLS-KINHDICH",
+          "FIX-MARKETDB-JOURNALMODE-GUARD-SHIPPED-BUT-NEVER-ARMED"
+        ],
+        "po_do_not_conflate": "This row is observer-tooling correctness. It is NOT the 2026-08-06 SQLITE_CORRUPT incident and must not be deduped into it (alert-commander already made that error once — see the incident doc's 'Critical Misattribution' section). The link is one-directional and mechanical: the corruption row creates the WAL windows in which THIS row's defect goes blind."
+      }
+    ]
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
