@@ -494,3 +494,20 @@ edit, a peer `git reset` wiped 3 of 4 uncommitted Edit calls; re-applied and
 verified via git diff before commit (`92ff5fb43`). Left `orch-state.json` row
 flip to router/PO per `commit_zone.excluded` (FU-AGENT-FATHER-ORCH-SCOPE, no
 signal_queue exception here — router-direct dispatch, no linked signal row).
+
+### STEP agent-father-S24 · agent-father · 2026-08-06T15:20:00Z
+**task-id:** FIX-REFINE-SUBFLOW-OPTIONC-CONTRACT-DRIFT
+**what-done:** Shipped AC-1..AC-6 (`da489f36f`): main.md Phase 2 rewritten
+inline (Read step + anti-confab + 4-value STATUS enum, PARTIAL requires ≥1
+push); 4 sub-flow RETURN sections de-Option-B'd; `.claude/agents/` chunk-size
+7→12; cowork-schedule slots 1-3 paused, slot-4 sole canary.
+**what-considered:** close row now (router holds lock, said it will
+release) vs decline-and-supply pending AC-7 — chose decline-and-supply.
+**why-decision:** AC-7 requires a live post-fix cron fire (slot-4, next
+2026-08-06T16:30Z) + RAW `get_bctc_refined` count >12 on a3a41225 — I hold
+no MCP tool in this session to observe either; S22's flip-it-myself carve-out
+applied to an already-complete task, not one with a genuinely open AC.
+**why-change:** did NOT flip status or lane-move (no signal_queue row either
+— nothing new to add beyond this journal + the commit itself); returning
+PIPELINE: blocked-pending-live-verification to router/PO with the exact
+re-check for AC-7 instead of guessing DONE.

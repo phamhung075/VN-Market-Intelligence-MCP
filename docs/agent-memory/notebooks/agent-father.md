@@ -1,5 +1,33 @@
 # Agent Father — Notebook
 
+## Fix (router-direct dispatch, P0) 2026-08-06T15:19Z FIX-REFINE-SUBFLOW-OPTIONC-CONTRACT-DRIFT
+- **Root cause confirmed exactly as PO's escalation stated:** `refine_bctc_md/flow/main.md:94`
+  called `execute_sub_flow_logic(window)` — zero definitions repo-wide — while all 4 sub-flow
+  docs still carried Option-B "Task return value"/"the orchestrator collects" language, never
+  rewritten when the agent converted to Option-C inline. Shipped AC-1..AC-6 (`da489f36f`):
+  Phase 2 rewritten as literal inline steps (explicit per-page_type `Read` instruction, an
+  ANTI-CONFABULATION line telling the model it IS the parser, and the 4-value STATUS enum
+  — DONE/PARTIAL/FAILED/SKIPPED — restated at the loop site with PARTIAL now explicitly
+  requiring `pushed_this_fire >= 1`, closing the exact gap that let a live agent invent
+  `PARTIAL_EXIT` on a 0/12-push fire); 4 sub-flow docs' RETURN sections + stray "orchestrator"
+  mentions reworded to inline-result language; `.claude/agents/refine_bctc_md.md` chunk-size
+  doc corrected 7→12 (drifted since commit `524a87cc`, docs/ copy fixed then, `.claude/` never
+  was); `cowork-schedule.json` slots 1-3 `enabled:false`, slot-4 (last good fire
+  2026-08-05T16:40Z) kept as sole canary.
+- **main.md grew 139L→182L, over the 120L flow-file cap** — added a `size-justification` header
+  (established convention already used by this same agent's `disagreement-verify.md`) rather
+  than trim: the added content (explicit Read step, anti-confab guard, restated enum) directly
+  closes this task's root cause; compressing it back down would re-introduce the ambiguity.
+- **AC-7 (re-enable slots 1-3 + close the board row) intentionally NOT done this cycle:** it
+  requires slot-4's next live cron fire (2026-08-06T16:30Z) to RAW-confirm via `get_bctc_refined`
+  that report `a3a41225` gained pushed units — I hold no MCP tool binding in this session
+  (`Read, Edit, Write, Bash` only) to observe that live signal, and the fix landing does not
+  itself prove the fix works. Did not flip board status or lane-move, and did not write a
+  signal_queue row (the "DONE-mark" carve-out is for an actually-done task; this one has a
+  standing, verifiable-only-later AC) — returned `PIPELINE: blocked-pending-live-verification`
+  to router/PO with the exact re-check spelled out instead. Full rationale:
+  `docs/agent-memory/decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-agent-father.md` STEP S24.
+
 ## Keep (maintenance) 2026-08-06T13:18Z — scheduled (cron-agent-father 23:14 UTC slot)
 - Trigger: scheduled. Pre-Check gate (`git diff --name-only HEAD~3..HEAD`) hit only
   `docs/data/orch/*` — zero `.claude/agents/*.md`/`docs/agents/*/flow/*.md` matches → Steps 1-2
@@ -74,54 +102,3 @@
   stands regardless. Doc commit (`main.md`, `daily.md`, `weekly-recap.md`,
   `weekly-prediction.md`, `init.md`, `fb-jargon-gate/SKILL.md`, `dev-standards.md`) done
   and pushed within my own zone.
-
-## Fix (router-direct dispatch, P1) 2026-08-06T10:16Z FIX-DEVTEAM-RESUME-GATES-OMIT-READY-LANE
-- **Root cause:** Step 0b's 3 resume gates (WF-1 task_status lookup, WF-1b terminal-lane,
-  WF-2 should_hold) all scanned `[in_progress, active_sprints, done, done_verified]` (WF-1/
-  WF-1b) / `[in_progress, review, qa, done, done_verified]` (WF-2) — neither included `ready[]`.
-  A row handed off into `ready[]` while `.head` still names it `in_progress` (measured live
-  2026-08-06T09:48Z on `UC-CRITIC-HOOKS-ENFORCEMENT`: architect finished, wrote
-  `next_agent=developer` on row + `.head`, left the row `ready[]`-resident) is invisible to
-  every carve-out and falls through to a duplicate S2 spawn. 5th instance of the
-  pipeline-resume duplicate-spawn family (`feedback_pipeline_resume_stale_placeholder_duplicate_spawn_risk`).
-  Live board had already self-healed by the time I read it (`.head` back to idle) — reproduced
-  the exact scenario with synthetic scratch fixtures instead (positive: `ready[]`-resident
-  head-pin correctly short-circuits before S2; negative: genuine `in_progress[]` row still
-  resolves to normal resume) run against the real jq filters before committing.
-- **`docs/agents/dev-team/flow/main.md` (AC-1 + AC-2):** WF-1's `task_status` array and WF-2's
-  `$row` array both gained `(.task_board.ready // [])[]`, APPENDED LAST (after
-  done/done_verified) to preserve the `first`-prefers-live-copy STATUSFLIP-LANEMOVE ordering
-  discipline. New **WF-1c READY-LANE check** inserted between WF-1b (terminal-lane) and WF-2
-  (supervised-hold) — mirrors WF-1b's shape: `task_status == "READY"` → idle-reset `.head`, NO
-  lane-move (row already correctly resident in `ready[]`), JUMP TO drain-signals, **before**
-  WF-2 ever evaluates `should_hold` on it (a `ready[]`-resident row is staged, not "held" —
-  WF-2's hold/resume contract doesn't apply). Chose this disposition over the alternative
-  (folding `ready[]` into WF-2's hold semantics) because a staged row was never resumed in the
-  first place, so "hold until po_goahead" is the wrong mental model for it — explicitly stated
-  per PO's AC-2 requirement, not left implied by the array widening alone. WF-2's ordinal
-  retitled BLOCKED→TERMINAL-LANE→READY-LANE→WF-2; S2 fall-through summary line corrected to
-  name all three carve-outs; top-of-file changelog + Reusable Scripts section updated in place.
-- **`docs/agents/po/flow/supervised-goahead.md` (AC-3):** re-synced Step 1's `should_hold` jq
-  to be byte-identical to `main.md`'s corrected block — the file had drifted on TWO axes: (1)
-  its `$row` array was still 3 lanes against `main.md`'s already-widened 5 (from the
-  same-day `FIX-DEVTEAM-PIPELINE-RESUME-TERMINAL-LANE-BLIND`, never mirrored here), (2) it used
-  a `-L scripts/lib` + bare `include "devteam-eligibility"` mechanism instead of `main.md`'s own
-  `include "scripts/lib/devteam-eligibility";` — two working-but-textually-different ways to
-  load the same library, which defeats a literal byte-diff drift guard. Fixed both; diffed the
-  two files' jq program text (normalized only for the per-file `--arg tid` bash variable name)
-  to confirm byte-identical. Fixed the stale `469-478`/`467-483` line references (also stale in
-  `docs/agents/po/flow/main.md`'s own pointer) — switched both to a named-section pointer
-  (`§ WF-2 SUPERVISED-HOLD check`) with an explicit "line numbers drift, re-read live" caveat
-  rather than a hardcoded number, since this exact file has now drifted from `main.md` twice.
-- **AC-4/AC-5 (verifier extension + drift guard, `scripts/`) — NOT implemented, flagged as a
-  companion developer row** per PO's own split precedent (TE-T02/TE-T12, `scripts/` outside
-  `commit_zone.allowed`): documented the exact spec as a new Reusable Scripts PENDING bullet in
-  `main.md` (positive/negative control for WF-1c + a mechanical byte-diff drift guard between
-  the two `should_hold` copies) and dropped `signal_queue` row `age-20260806T101656` (`to: po`)
-  — read-back confirmed present. Did NOT mint the board row myself (`commit_zone.excluded`
-  covers `orch-state.json` structurally, not just commits).
-- **Board:** lane-moved `backlog[]→review[]`, `status=REVIEW`, `next_agent=qa` via
-  `orch-apply.sh` (router explicitly directed this in the dispatch prompt, same precedent as
-  TE-T16 below). **Did NOT commit** `orch-state.json` myself — flagged via the same signal row
-  above. Verified both pre-existing regression verifiers still PASS after the widening:
-  `devteam-pipeline-resume-terminal-lane-verify.sh` and `po-goahead-producer-verify.sh`.
