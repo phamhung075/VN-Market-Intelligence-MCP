@@ -1,4 +1,29 @@
+## c45 · 2026-08-06T06:41:47Z
 
+### Audit Run Tier-2 (04:00 UTC 2026-08-06)
+- Tier: 2 | Cron: ✓ PASS | Freshness: ✗ FAIL (news source stale) | VPS: ✓ PASS | DB: ✓ PASS
+- Anomalies: 1 new (1 critical, 0 warn, 0 info) | 0 dedup-skipped
+- Status: DEGRADED
+
+### Tier-2 Findings (1 CRITICAL anomaly)
+**Data Freshness (B-01—B-07, B-11, B-12):**
+- B-01 News source: CRITICAL — 790 min stale vs 30 min SLA (last fetch 2026-08-05T19:38:29Z)
+  Signal posted (id=sys-20260806T064127-78c1) to PO, Telegram sent, DASHBOARD row appended
+
+**Cron Health (A-29):** ✓ PASS (all 132 jobs firing successfully)
+
+**VPS Routes:** ✓ PASS (all 4 routes healthy)
+
+**DB Spot Checks:**
+- C-06 market_messages (3h): ✓ PASS
+- C-07 agent_signals (24h): ✓ PASS
+- B-08 BCTC PDFs: ✓ PASS
+- B-09 SSC URLs: ✓ PASS
+- B-13 Stale pending: ✓ PASS
+
+[OUTPUT-CONTRACT: signals_posted=1 | telegram_sent=1 | signal_queue_rows_written=1 | dashboard_rows=1 | dedup_skipped=0]
+
+## c44 · 2026-08-05T19:13:03Z
 
 ### Audit Run Tier-1 (pre-gate FAILURE 19:08:42Z) — A-30 mcp-server investigate-gate
 - Tier: 1 | Focus: A-30 mcp-server-1 mem_creep FAILURE (92.57%, first time crossing 85% investigate-gate this session — prior readings all 62-67%, deep-probe skipped)
