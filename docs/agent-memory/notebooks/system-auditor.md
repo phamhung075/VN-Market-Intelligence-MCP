@@ -1,4 +1,28 @@
 
+## c67 · 2026-08-06T17:35Z
+### Audit Run Tier-1 (17:30–17:35 UTC 2026-08-06)
+- Tier: 1 | Services: 13 checked | Sources: 0 | DB checks: 0
+- Anomalies: 0 new (C 0, W 0, I 0) | 1 dedup-skipped
+- Status: DEGRADED
+
+### Findings:
+**A-01 to A-11 (Container Status):** All 13 host_runtime_set services UP ✓
+**A-12 to A-20 (Health Endpoints):** All 5 endpoints OK ✓
+**A-20 pdf-extractor multi-probe:** 3/3 pass ✓
+**A-21 (Restart Count):** mcp-server RestartCount=4, no new crashes in 4h window ✓
+**A-30 (Memory Pressure - DEDUP-SKIP):**
+- rag-service: 97.76% of 1024 MiB (22.9 MiB free) → WARN floor-breach (dedup-skipped)
+  - Same condition as c66 (ts=2026-08-06T17:15:06Z) within 7-day window
+  - Dedup key: mem_pressure:rag-service:A-30-floor-breach
+**A-32 (Disk):** < 85% → PASS ✓
+
+**Signal:**
+[emit-signal] SKIP-dedup dedup_key=mem_pressure:rag-service:A-30-floor-breach last_sent=2026-08-06T17:15:06Z id=sys-20260806T174128-477d
+[emit-dashboard] ABORT mutex-claim-failed (po holds commit-mutex)
+
+[OUTPUT-CONTRACT] signals_posted=0 | telegram_sent=0 | signal_queue_rows_written=0 | dashboard_rows=0 | dedup_skipped=1
+CONTRACT-CONTRADICTION: NONE
+
 ## c66 · 2026-08-06T17:16Z
 ### Audit Run Tier-1 (17:12–17:16 UTC 2026-08-06)
 - Tier: 1 | Services: 13 checked | Sources: 0 | DB checks: 0
@@ -84,30 +108,6 @@ Signal: sys-20260806T154111-1649
 **A-30 (Memory Pressure):** mcp-server 49.33% < 85% → PASS ✓
 
 **A-32 (Disk):** 54% capacity < 85% → PASS ✓
-
-[OUTPUT-CONTRACT] signals_posted=1 | telegram_sent=0 | signal_queue_rows_written=1 | dashboard_rows=1 | dedup_skipped=1
-CONTRACT-CONTRADICTION: NONE
-
-## c64 · 2026-08-06T15:11:23Z
-### Audit Run Tier-1 (15:00–15:10 UTC 2026-08-06)
-- Tier: 1 | Services: 13 checked | Sources: 0 | DB checks: 0
-- Anomalies: 1 dedup-skipped (0 new, 1 known)
-- Status: DEGRADED
-
-### Findings:
-**A-01 to A-11 (Container Status):** All 13 host_runtime_set services UP ✓
-
-**A-12 to A-20 (Health Endpoints):** All 5 OK ✓
-
-**A-20 pdf-extractor multi-probe:** 3/3 pass ✓
-
-**A-30 (Memory Pressure):**
-- rag-service: 96.56% of 1GiB → WARN (persistent high baseline, no reclamation dips)
-- mcp-server: 39.32% → PASS
-Signal emitted (dedup-skipped, last sent 2026-08-06T08:16:21Z, occurrence 5-6 in FIX-RAG-EMBEDDER-IDLE-UNLOAD-PATH) | id=sys-20260806T151042-6d28
-
-[emit-signal] SKIP-dedup dedup_key=microservice_degraded:rag-service:A-30 last_sent=2026-08-06T08:16:21Z id=sys-20260806T151042-6d28
-[emit-dashboard] OK id=sys-20260806T151042-6d28 check_id=A-30
 
 [OUTPUT-CONTRACT] signals_posted=1 | telegram_sent=0 | signal_queue_rows_written=1 | dashboard_rows=1 | dedup_skipped=1
 CONTRACT-CONTRADICTION: NONE
