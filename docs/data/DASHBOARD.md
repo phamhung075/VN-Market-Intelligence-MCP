@@ -658,3 +658,15 @@
 **Mitigation:** No immediate action beyond signal routing.
 
 ---
+
+## Anomaly: A-30 · rag-service memory floor-breach: 98.79% (12 MiB free)
+**Severity:** WARN | **Date:** 2026-08-06 | **Status:** OPEN
+**Location:** rag-service container (1024 MiB cap)
+**Details:** rag-service: 98.79% memory usage (1012 MiB / 1024 MiB) — only 12 MiB free headroom remaining
+**Impact:** rag-service nearing OOM kill; any additional memory allocation may trigger restart. Absolute headroom floor of 40 MiB breached per FIX-AUDITOR-MEMACK-HEADROOM-FLOOR-AND-DEAD-TRACKEDBY.
+**Root cause:** Embedder model singleton at ~700 MiB baseline (no release path); compaction/optimize() burst can consume ~20 MiB. Tracked by FU-RAG-DEPLOY-MEMORY (capacity/cap decision) and FIX-RAG-SERVICE-CLEAN-EXIT-RESTART-LOOP (compaction failure path).
+**Zone owner:** dev-mcp-server
+**Last reported:** 2026-08-06T17:15:20Z (signal sys-20260806T171507-1243, system-auditor -> po, dedup_key=mem_pressure:rag-service:A-30-floor-breach, WARN Telegram sent)
+**Mitigation:** No immediate action beyond signal routing.
+
+---
