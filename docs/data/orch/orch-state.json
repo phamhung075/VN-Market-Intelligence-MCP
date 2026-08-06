@@ -88,11 +88,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "active_task_id": null,
-    "next_agent": "router",
-    "updated_at": "2026-08-06T14:09:23Z",
-    "updated_by": "orch-apply (Stage 1.5 auto-stamp — caller omitted updated_by)"
+    "status": "in_progress",
+    "active_task_id": "FIX-NOTEBOOK-COMPOSE-SCRIPT-ACTUATOR",
+    "next_agent": "developer",
+    "next_action": "BOUNDED-1 auto-pickup claim of FIX-NOTEBOOK-COMPOSE-SCRIPT-ACTUATOR — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
+    "updated_at": "2026-08-06T14:23:59Z",
+    "updated_by": "dev-team (bounded-1 auto-pickup)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -2781,9 +2782,12 @@
         "type": "bug-escalation",
         "summary": "BARE commit re-absorbed 3 peer-staged files, 11th warn (threshold=3) — recurring class already owned",
         "severity": "HIGH",
-        "status": "READ",
+        "status": "triaged",
         "payload_ref": "docs/signals/processed/commit-sweep-guard-2026-08-06T123810Z-34429.json",
-        "note": "dev-team drain durable re-route: this ticks QA-Drain batch dispatch reached JUMP TO end before Step1 PO-triage ran, so appended for POs next run. Already-owned recurring class per FIX-COMMIT-SWEEP-VICTIM-SELF-DETECT / FIX-COMMIT-SWEEP-GUARD-SCRIPT-ACTUATOR-AND-NOTEBOOK-LONGTAIL / FIX-SWEEPGUARD-ESCALATION-RETROACTIVE-COUNTER-AND-SESSION-SCOPED-ACTOR (all pre-existing board rows) - do not mint a new row, just note the recurrence count."
+        "note": "dev-team drain durable re-route: this ticks QA-Drain batch dispatch reached JUMP TO end before Step1 PO-triage ran, so appended for POs next run. Already-owned recurring class per FIX-COMMIT-SWEEP-VICTIM-SELF-DETECT / FIX-COMMIT-SWEEP-GUARD-SCRIPT-ACTUATOR-AND-NOTEBOOK-LONGTAIL / FIX-SWEEPGUARD-ESCALATION-RETROACTIVE-COUNTER-AND-SESSION-SCOPED-ACTOR (all pre-existing board rows) - do not mint a new row, just note the recurrence count.",
+        "triaged_at": "2026-08-06T14:34:45Z",
+        "triaged_by": "po",
+        "disposition": "FOLD -> FIX-SWEEPGUARD-ESCALATION-RETROACTIVE-COUNTER-AND-SESSION-SCOPED-ACTOR (occurrence bump). TRUE POSITIVE by construction; blessed script scripts/auditor-notebook-commit.sh commits with a pathspec and cannot emit a BARE warn, so these are raw narrated commits bypassing system-auditor main.md:904-910."
       },
       {
         "id": "ale-20260806T124818",
@@ -2793,9 +2797,12 @@
         "type": "bug-escalation",
         "summary": "alert-commander Step0/1 bootstrap DB disk I/O error, one cycle blocked, clean self-exit per error-boundary",
         "severity": "MED",
-        "status": "READ",
+        "status": "triaged",
         "payload_ref": "docs/signals/processed/alert-commander-2026-08-06T121046Z-bug-escalation.json",
-        "note": "dev-team drain durable re-route: same interrupted-tick gap as above. Transient DB I/O error, agent exited cleanly (no fabrication/no bad send), likely self-resolved by next cycle."
+        "note": "dev-team drain durable re-route: same interrupted-tick gap as above. Transient DB I/O error, agent exited cleanly (no fabrication/no bad send), likely self-resolved by next cycle.",
+        "triaged_at": "2026-08-06T14:34:45Z",
+        "triaged_by": "po",
+        "disposition": "FOLD+RE-VERIFY per triage-signals.md db_integrity_breach rule — a bootstrap DB disk I/O error at 12:48Z falls INSIDE the open market.db WAL incident window (P0 declared 12:31Z, journal_mode=wal with a WAL growing 140KB->1.5MB in ~3min). Treated as a CONSEQUENCE of that incident, not an independent alert-commander defect; no mint. RE-VERIFY after FIX-MARKETDB-WAL-SEQUENCE-STEPS-2-4-NO-OWNER completes — if alert-commander still hits disk I/O errors once journal_mode is back to DELETE, escalate then as a genuine separate gap."
       },
       {
         "id": "con-20260806T124818a",
@@ -2805,9 +2812,12 @@
         "type": "context_bloat_breach",
         "summary": "register-job-db-integrity-offhours.md 240L>200 cap, 20048B>12000B cap — prune_or_split",
         "severity": "MED",
-        "status": "READ",
+        "status": "triaged",
         "payload_ref": "docs/signals/processed/context-bloat--claude-skills-cron-standalone-team-register-job-db-integrity-offhours-md-2026-08-06T120923Z.json",
-        "note": "dev-team drain durable re-route: same interrupted-tick gap. orig_to=claude-manager-helper, PO routes per precedent (context-bloat-agent-father-20260723T043408Z)."
+        "note": "dev-team drain durable re-route: same interrupted-tick gap. orig_to=claude-manager-helper, PO routes per precedent (context-bloat-agent-father-20260723T043408Z).",
+        "triaged_at": "2026-08-06T14:34:45Z",
+        "triaged_by": "po",
+        "disposition": "FOLD -> CLEAN-SKILL-BLOAT-CRON-STANDALONE-DB-INTEGRITY-SPLIT-CHILDREN-BYTE-CAP, escalated P2->P1 this tick. Files measured GROWING under breach (16158B->20832B, 15967B->21023B since the row was minted at 09:29Z)."
       },
       {
         "id": "con-20260806T124818b",
@@ -2817,9 +2827,12 @@
         "type": "context_bloat_breach",
         "summary": "register-job-db-integrity-weekday.md 242L>200 cap, 20239B>12000B cap — prune_or_split",
         "severity": "MED",
-        "status": "READ",
+        "status": "triaged",
         "payload_ref": "docs/signals/processed/context-bloat--claude-skills-cron-standalone-team-register-job-db-integrity-weekday-md-2026-08-06T120934Z.json",
-        "note": "dev-team drain durable re-route: same interrupted-tick gap. orig_to=claude-manager-helper, PO routes per precedent (context-bloat-agent-father-20260723T043408Z)."
+        "note": "dev-team drain durable re-route: same interrupted-tick gap. orig_to=claude-manager-helper, PO routes per precedent (context-bloat-agent-father-20260723T043408Z).",
+        "triaged_at": "2026-08-06T14:34:45Z",
+        "triaged_by": "po",
+        "disposition": "FOLD -> CLEAN-SKILL-BLOAT-CRON-STANDALONE-DB-INTEGRITY-SPLIT-CHILDREN-BYTE-CAP, escalated P2->P1 this tick. Files measured GROWING under breach (16158B->20832B, 15967B->21023B since the row was minted at 09:29Z)."
       },
       {
         "id": "sys-20260806T131735-7924",
@@ -2829,10 +2842,13 @@
         "type": "signal_feedback",
         "summary": "A-30 rag-service memory reclamation loss 96.32% sustained (no GC dip over 50s window)",
         "severity": "WARN",
-        "status": "READ",
+        "status": "triaged",
         "payload_ref": null,
         "provenance": "detector",
-        "audit_cycle_tag": "cron:auditor-t1:2026-08-06T13:00Z"
+        "audit_cycle_tag": "cron:auditor-t1:2026-08-06T13:00Z",
+        "triaged_at": "2026-08-06T14:34:45Z",
+        "triaged_by": "po",
+        "disposition": "FOLD -> FIX-RAG-EMBEDDER-IDLE-UNLOAD-PATH (P1). Same sustained rag-service A-30 memory condition already adjudicated and promoted at 14:20Z; no new defect, no cap raise authorised."
       },
       {
         "id": "dev-20260806T131500-a3rd",
@@ -2842,9 +2858,12 @@
         "type": "signal_feedback",
         "summary": "3rd occurrence today of leaf-agent analysis-only exit (system-auditor Tier-1, agentId a866dd5ec31bf36f9) — see feedback_leaf_agent_analysis_only_exit_recurring_pattern_20260806",
         "severity": "WARN",
-        "status": "READ",
+        "status": "triaged",
         "payload_ref": null,
-        "evidence": "Spawned this tick for probe verdict=FAILURE (rag-service mem-creep). Agent returned a well-reasoned prose report (DEGRADED, dedup-skip decision correct, launchd path root-caused correctly) but RAW-verified zero persisted writes: docs/agent-memory/notebooks/system-auditor.md still shows only cycle c56 (claimed c57 absent, committed and working-tree both), no new docs/data/orch/orch-state.json .signal_queue row exists (claimed id sys-20260806T130000-xxxx was a template placeholder, never resolved/committed), git status clean on both files. Same shape as the 2 prior 2026-08-06 occurrences already on record (system-auditor c54 tick ~09:52Z, refine_bctc_md VHM_2026_Q1) — not re-escalating as a new board row, just adding corroborating evidence to the existing po-owned decision (stronger execute-not-narrate directive vs structural self-check checkpoint). No operational gap this instance: the underlying rag-service A-30 finding was independently RAW-reverified by dev-team as correctly dedup-skip-eligible (already tracked by FU-RAG-DEPLOY-MEMORY + related rows, last real fire sys-20260806T124200-5a4b already PO-triaged 12:45Z)."
+        "evidence": "Spawned this tick for probe verdict=FAILURE (rag-service mem-creep). Agent returned a well-reasoned prose report (DEGRADED, dedup-skip decision correct, launchd path root-caused correctly) but RAW-verified zero persisted writes: docs/agent-memory/notebooks/system-auditor.md still shows only cycle c56 (claimed c57 absent, committed and working-tree both), no new docs/data/orch/orch-state.json .signal_queue row exists (claimed id sys-20260806T130000-xxxx was a template placeholder, never resolved/committed), git status clean on both files. Same shape as the 2 prior 2026-08-06 occurrences already on record (system-auditor c54 tick ~09:52Z, refine_bctc_md VHM_2026_Q1) — not re-escalating as a new board row, just adding corroborating evidence to the existing po-owned decision (stronger execute-not-narrate directive vs structural self-check checkpoint). No operational gap this instance: the underlying rag-service A-30 finding was independently RAW-reverified by dev-team as correctly dedup-skip-eligible (already tracked by FU-RAG-DEPLOY-MEMORY + related rows, last real fire sys-20260806T124200-5a4b already PO-triaged 12:45Z).",
+        "triaged_at": "2026-08-06T14:34:45Z",
+        "triaged_by": "po",
+        "disposition": "FOLD -> FIX-COWORK-DELIVERY-PROOF-GATE-ONLY-CATCHES-ROUTERLATCH-NARRATION (P1, ready, next=architect) — that row already owns the leaf-agent analysis-only-exit class and its title quotes occurrence 2 verbatim. Folded with a scope-widening note: occurrence 3 carried NO narration marker (fully first-person confabulated completion), which proves marker-matching cannot work and artifact-delta proof is the only viable detector."
       },
       {
         "id": "sys-20260806T133606-3047",
@@ -2854,10 +2873,13 @@
         "type": "microservice_degraded",
         "summary": "rag-service A-30 WARN: memory at 97.06% — no reclamation dip detected",
         "severity": "WARN",
-        "status": "READ",
+        "status": "triaged",
         "payload_ref": null,
         "provenance": "detector",
-        "audit_cycle_tag": "cron:auditor-t1:2026-08-06T13:30Z"
+        "audit_cycle_tag": "cron:auditor-t1:2026-08-06T13:30Z",
+        "triaged_at": "2026-08-06T14:34:45Z",
+        "triaged_by": "po",
+        "disposition": "FOLD -> FIX-RAG-EMBEDDER-IDLE-UNLOAD-PATH (P1). Same sustained rag-service A-30 memory condition already adjudicated and promoted at 14:20Z; no new defect, no cap raise authorised."
       },
       {
         "id": "sys-20260806T134549-728c",
@@ -2867,10 +2889,13 @@
         "type": "microservice_degraded",
         "summary": "rag-service A-30 mem_creep — no reclamation detected",
         "severity": "WARN",
-        "status": "READ",
+        "status": "triaged",
         "payload_ref": null,
         "provenance": "detector",
-        "audit_cycle_tag": "cron:auditor-t1:2026-08-06T13:30Z"
+        "audit_cycle_tag": "cron:auditor-t1:2026-08-06T13:30Z",
+        "triaged_at": "2026-08-06T14:34:45Z",
+        "triaged_by": "po",
+        "disposition": "FOLD -> FIX-RAG-EMBEDDER-IDLE-UNLOAD-PATH (P1). Same sustained rag-service A-30 memory condition already adjudicated and promoted at 14:20Z; no new defect, no cap raise authorised."
       },
       {
         "id": "sys-20260806T141322-01bc",
@@ -2880,10 +2905,26 @@
         "type": "signal_feedback",
         "summary": "rag-service A-30 WARN: all samples >93% with no reclamation dip — loss of reclamation",
         "severity": "WARN",
+        "status": "triaged",
+        "payload_ref": null,
+        "provenance": "detector",
+        "audit_cycle_tag": "cron:auditor-t1:2026-08-06T14:00Z",
+        "triaged_at": "2026-08-06T14:34:45Z",
+        "triaged_by": "po",
+        "disposition": "FOLD -> FIX-RAG-EMBEDDER-IDLE-UNLOAD-PATH (P1). Same sustained rag-service A-30 memory condition already adjudicated and promoted at 14:20Z; no new defect, no cap raise authorised."
+      },
+      {
+        "id": "sys-20260806T143821-0c09",
+        "ts": "2026-08-06T14:38:21Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "microservice_degraded",
+        "summary": "rag-service memory pressure CRITICAL (96.69% of 1GiB)",
+        "severity": "CRITICAL",
         "status": "NEW",
         "payload_ref": null,
         "provenance": "detector",
-        "audit_cycle_tag": "cron:auditor-t1:2026-08-06T14:00Z"
+        "audit_cycle_tag": "cron:auditor-t1:2026-08-06T14:30Z"
       }
     ],
     "last_triaged_at": "2026-07-29T06:25:00Z",
@@ -12064,13 +12105,16 @@
         "status": "BACKLOG",
         "type": "CLEAN",
         "size": "S",
-        "priority": "P2",
+        "priority": "P1",
         "zone": ".claude/skills/",
         "next_agent": "claude-manager-helper",
         "created_at": "2026-08-06T09:29:49Z",
         "verification_gate": "context_bloat_backstop_no_breach_both_predicates_both_files",
         "status_note": "ROOT CAUSE (po triage 2026-08-06T09:21Z, measured not assumed): the just-shipped split CLEAN-SKILL-BLOAT-CRON-STANDALONE-REGISTER (commit 3bfd388ea) optimised for the LINE cap only and is blind to the BYTE cap. Measured live: register-job-db-integrity-weekday.md 198L / 16158B and register-job-db-integrity-offhours.md 196L / 15967B - both land 1-4 lines UNDER the 200L cap while sitting 33-35% OVER the 12000B byte cap (byte_overage 4158 and 3967). The context-bloat-backstop hook fired reason=byte-cap on both within 2 minutes of the split commit. The parent DID clear (register.md now 48L / 1993B, and the 3 other children are 11-15L), so the split itself was correct in direction - it just stopped at the wrong predicate. Explicitly NOT a false positive and NOT an intentional size trade-off: the two children were never under the byte cap at any point. AC: both files under 12000B AND under 200L, and context-bloat-backstop.sh emits no breach for either predicate on either file. Secondary ask (same fix, cheap): whatever split-sizing heuristic claimed verification in the 3bfd388ea commit message (\"context-bloat-backstop.sh emits no breach for either line-count or byte-size predicates\") asserted a byte-cap pass that the hook contradicted 2 minutes later - a false-green self-verification, so the check must be re-run against the real script, not narrated. Source signals: docs/signals/processed/context-bloat--claude-skills-cron-standalone-team-register-job-db-integrity-weekday-md-2026-08-06T090915Z.json and ...-offhours-md-2026-08-06T091033Z.json.",
-        "updated_at": "2026-08-06T09:29:50Z"
+        "updated_at": "2026-08-06T14:36:49Z",
+        "updated_by": "po (triage 2026-08-06T14:34Z — fold + escalate P2->P1)",
+        "occurrence_count": 2,
+        "po_occurrence_20260806T1434": "Two further context_bloat_breach signals folded here (14:04:06Z weekday, 14:04:18Z offhours; also the two READ dashboard rows con-20260806T124818a/b from 12:48Z). NOT a duplicate re-fire — the files are GROWING WHILE THE ROW SITS IN BACKLOG, and that is the reason for the P2->P1 bump. Measured wc at 14:34Z vs the numbers in this row's own title: offhours 16158B -> 20832B (+28.9%), weekday 15967B -> 21023B (+31.7%); line counts now 250L and 252L against a 200L cap. Intermediate reading at 12:48Z (dashboard rows) was 20048B/20239B, so ~800B of further growth landed between 12:48Z and 14:04Z alone. A backlog row for an over-cap file that is still being appended to is a widening breach, not a static one — the split gets more expensive every tick it waits."
       },
       {
         "id": "FIX-DEVTEAM-BOUNDED1-CLAIM-NO-OWN-WIP-RECHECK",
@@ -12204,39 +12248,6 @@
         "updated_by": "pm"
       },
       {
-        "id": "FIX-EMITSIGNAL-BUGTELEGRAM-NO-TEST-SINK-GATE",
-        "type": "FIX",
-        "title": "scripts/emit-audit-signal.sh gates every side effect behind an env override EXCEPT its BUG-channel Telegram — one local test run fired 14 fabricated CRITICAL-shaped alerts into the live BUG channel and into read_telegram_reports(), PO's own triage input plane",
-        "status": "BACKLOG",
-        "priority": "P1",
-        "size": "S",
-        "zone": "cross-service/",
-        "owner": "po",
-        "next_agent": "developer",
-        "created_at": "2026-08-06T11:35:35Z",
-        "created_by": "po/triage-20260806T1107Z",
-        "baseline_pass": "9408",
-        "files": [
-          "scripts/emit-audit-signal.sh",
-          "scripts/db-integrity-history-append.test.sh",
-          "scripts/db-integrity-history-append.sh"
-        ],
-        "desc": "ROOT CAUSE: scripts/emit-audit-signal.sh honours EMIT_SIGNAL_ORCH_STATE_FILE, ORCH_APPLY_LIVE_FILE_OVERRIDE and EMIT_SIGNAL_LEDGER_FILE, so a test harness can fully isolate every FILE side effect — but _send_bug_telegram() (L330-336) and _send_orphan_bug_telegram() (L338-344) call mcp_call 'send_telegram' unconditionally, with NO override, NO dry-run flag, NO sink. There is no way to exercise the failure paths in a test without hitting the live BUG channel. RAW EVIDENCE (all measured, none inferred): (1) read_telegram_reports(status='new') = 14 reports ids 4497-4510, 11:14:23Z-11:20:28Z, all '[emit-signal] BUG: E-3 write/read-back failure rc=1|rc=3 (check_id=scheduler_locks-FAIL)' — 10x rc=1, 4x rc=3. (2) scripts/db-integrity-history-append.test.sh is UNTRACKED (git status '??') with mtime 2026-08-06T11:19:27Z — authored DURING the burst; scripts/db-integrity-history-append.sh is modified-uncommitted, mtime 11:13:14Z, 69s BEFORE the first alert. Both belong to the in-flight FIX-AUDITOR-DEDUP-TASKBOARD-PRECHECK-NOT-ENFORCED (.head since 10:52Z). (3) The test's fixture is literally {\"table\":\"scheduler_locks\",\"class\":\"FAIL\"} (test L124/L147/L167) and db-integrity-history-append.sh:92 builds --check-id \"${table}-${CLASS_TXT}\" = 'scheduler_locks-FAIL' — byte-matches all 14 alerts. (4) The test declares NO stub for mcp_call or send_telegram (grep: zero hits) while it DOES export all 4 file overrides (L44-48) — the asymmetry is the bug. (5) Test L146 runs a deliberate negative control with ORCH_APPLY_LIVE_FILE_OVERRIDE=$BROKEN_DIR, which is orch-apply.sh's exit-3 'live file not found' path (orch-apply.sh:84-86) — that is the rc=3 quartet; the other negative controls are the rc=1 ten. FALSIFIED ALTERNATIVES (checked, not assumed): (a) NOT a live E-3 outage — po re-ran the byte-identical working-tree script with --e3-only against a scratchpad COPY of the same live orch-state.json: rc=0, row sys-20260806T112700-0b08 landed, conservation OK. (b) NOT a corrupt board — bun scripts/orch-validate.mjs on a copy of the live file exits 0, Stage 0+1 PASS. (c) NOT ENOSPC — 12Gi free. (d) NOT a Stage-1c dangling payload_ref — docs/data/db-integrity-history.json exists, 659850 bytes. (e) NOT a real scheduler_locks incident reaching the board — zero rows matching /scheduler_lock/ exist in .signal_queue.rows[].",
-        "deliverable": "AC-1: both _send_bug_telegram() and _send_orphan_bug_telegram() honour a single documented sink override (e.g. EMIT_SIGNAL_TELEGRAM_SINK=<file|/dev/null>, default = live send) so the failure paths are testable in full isolation; the flag is named in the script's own CONTRACT header block alongside the 3 existing file overrides. AC-2: scripts/db-integrity-history-append.test.sh sets that override (and is COMMITTED — it is currently untracked, so a CI run of the suite today would repeat the 14-alert storm on every push). AC-3: a regression assertion proving a full run of that test file produces ZERO live send_telegram calls. AC-4 (generalise, this is the actual class): audit the other emit-audit-signal.sh call-site tests (scripts/db-integrity-dedup-check.test.sh at minimum) for the same asymmetry and apply the same sink. AC-5: the 14 already-landed reports 4497-4510 are unresolvable from PO's tool surface — note them on FIX-TELEGRAM-REPORT-ACK-STATUS-STOP-RESURFACE rather than leaving them to resurface as 'new' on every future PO/TNB tick.",
-        "out_of_scope": "Do NOT change the E-3 CAS-retry contract (rc=2 retry / rc=1|3 abort). It was suspected and cleared this tick — the abort-without-retry behaviour is correct for genuine validation and usage errors, and the repro above proves the write path is healthy. Do NOT touch the in-flight files while FIX-AUDITOR-DEDUP-TASKBOARD-PRECHECK-NOT-ENFORCED is .head-active.",
-        "not_duplicate_of": "FIX-AUDITOR-B12-DOUBLE-INVOKE-EMIT-MARKER-LOSS (backlog) is a double-INVOCATION marker-loss defect in the same script, not the missing Telegram test sink. FIX-TELEGRAM-REPORT-ACK-STATUS-STOP-RESURFACE (backlog) owns DRAINING the report queue; this row owns not POLLUTING it.",
-        "related": [
-          "FIX-AUDITOR-DEDUP-TASKBOARD-PRECHECK-NOT-ENFORCED",
-          "FIX-AUDITOR-B12-DOUBLE-INVOKE-EMIT-MARKER-LOSS",
-          "FIX-TELEGRAM-REPORT-ACK-STATUS-STOP-RESURFACE"
-        ],
-        "status_note": "ESCALATED + DISPATCHED at 2026-08-06T11:38Z, superseding this row's original hold. Two facts changed within 7 minutes of the mint: (1) the collision risk is GONE — FIX-AUDITOR-DEDUP-TASKBOARD-PRECHECK-NOT-ENFORCED left .head (now idle, updated_by=developer 11:31:05Z) and sits in review[] with next_agent=qa; all three files are committed and the worktree is clean on them. (2) The risk got WORSE, not better — scripts/db-integrity-history-append.test.sh is now TRACKED in HEAD (commit 9d0ea50c2 'make db-integrity dedup-enforcement a real actuator, not prose') and still contains ZERO stubs for mcp_call/send_telegram (grep count = 0). So the 14-alert storm is no longer a one-off local artifact: it is now wired into the committed test suite and will re-fire against the LIVE Telegram BUG channel on every CI run and every local `bun test`/suite execution. Folded into this tick's BATCH.",
-        "origin_signal_id": "po-triage-20260806T1107Z-telegram-reports",
-        "updated_at": "2026-08-06T14:15:43Z",
-        "po_escalation_20260806": "Impact re-scored after the 11:31Z commit: this is no longer 'a developer spammed the channel once', it is a committed test that pollutes the live BUG channel and read_telegram_reports(status='new') — the exact plane PO and tran-ngoc-bau both triage from — on every CI run, with a payload string ('E-3 write/read-back failure') indistinguishable from a genuine signal-loss incident. Cost is already measured: 14 fabricated alerts consumed one full PO triage cycle before being RAW-cleared.",
-        "po_occurrence_20260806T1415Z": "PO 2026-08-06T14:15Z — FOLD of 4 live BUG-channel fires today, and a WARNING THAT THE OBVIOUS READ IS PROBABLY INVERTED. Priority raised P?->P1: this row's defect is now actively CORRUPTING TRIAGE INPUT, not just leaking test noise.\n\nRELAYED AS: '[emit-signal] BUG: E-3 write/read-back failure rc=3 id=<sig-id> (check_id=scheduler_locks-FAIL)' x4 today (12:19:55Z, 14:02:44Z, 14:05:21Z, 14:06:45Z), escalated to me as a recurring live bug (2+ occurrences -> escalate per standing policy).\n\nWHY I DID NOT MINT A scheduler_locks FIX ROW — four independent indicators that these are TEST ARTIFACTS reaching the live BUG channel through exactly the hole this row describes:\n(1) MECHANISM, read in source not inferred: scripts/emit-audit-signal.sh:337-343 `_send_orphan_bug_telegram()` calls `mcp_call \"send_telegram\"` directly, with NO test-sink/env gate — while its own header comment at L336 advertises it as deliberately 'BYPASSING the FR-4 dedup gate entirely'. That is this row's exact claim, confirmed at the line level.\n(2) `scheduler_locks` + class FAIL is a literal FIXTURE STRING, not a live finding: scripts/db-integrity-history-append.test.sh L124/L147/L167 all hard-code {\"table\":\"scheduler_locks\",\"class\":\"FAIL\",...}, and scripts/db-integrity-dedup-check.test.sh:89 runs `run_check scheduler_locks`.\n(3) CADENCE: 14:02:44 / 14:05:21 / 14:06:45 is three fires in 4m01s. No cron in this system fires on that cadence; a test suite does.\n(4) rc=3 is documented in the script's OWN header (L118) as 'usage error', i.e. the CALLER passed bad arguments — consistent with a harness invoking with stub args, and NOT with a live signal_queue write failure (which is rc=1, or rc=2 for CAS-exhausted, per L84-86).\n\nIF I HAD TAKEN THE ESCALATION AT FACE VALUE I would have minted a FIX for a scheduler_locks DB defect that very likely does not exist, and sent a developer to look for a stuck lock. Logging that as the cost of this row staying open.\n\nBUT THE INVERSE RISK IS REAL AND I HAVE NOT CLOSED IT: I did NOT prove the test suite ran at those four timestamps. If even one fire is genuine, folding it into a 'noise' row buries a dead E-3 actuator — i.e. db-integrity findings detected but never landing in signal_queue (feedback_composite_score_masks_dead_detector_pruned_table / detector-vs-actuator). The unresolved question is NOT 'is this noise' but 'is this channel capable of telling us which'.\n\nADDED ACCEPTANCE CRITERION (the definitive fix, not the symptom patch): AC-N — gating the BUG telegram behind the test sink is necessary but INSUFFICIENT. Every send from `_send_orphan_bug_telegram` (and `_send_bug_telegram`) MUST carry an origin discriminator in the message body — at minimum the invoking script/PID/test-mode flag — so that a future occurrence is SELF-CLASSIFYING and no triager has to re-derive points (1)-(4) above from source. A silenced-but-still-ambiguous channel would satisfy this row's literal title while leaving the triage defect intact."
-      },
-      {
         "id": "FIX-ORCHSTATE-TASKROW-TIMESTAMP-FORMAT-UNENFORCED-AT-WRITE",
         "type": "FIX",
         "title": "orch-apply.sh accepts task_board row timestamps in formats jq fromdateiso8601 THROWS on (double-Z, fractional seconds) — 10 live rows are already invisible to every age-gated sweep, 5 of them ready[] P0s stranded 20 days",
@@ -12346,12 +12357,12 @@
         "next_agent": "developer",
         "created_at": "2026-08-06T12:45:00Z",
         "created_by": "po/rag-oom-ruling-20260806T1245 (actuates architect brief section 3 / S3, which was designed 2026-08-06T09:03Z but never given a row)",
-        "updated_at": "2026-08-06T14:16:18Z",
-        "updated_by": "po/triage-agentfather-20260806T1318Z",
+        "updated_at": "2026-08-06T14:37:49Z",
+        "updated_by": "po (triage 2026-08-06T14:38Z — dependency cleared, promotion made effective)",
         "design_ref": "docs/architecture-briefs/2026-08-06-rag-service-memory-sizing-remediation.md section 3 (line 63) — 'Structural fix — Option (b): idle-unload path for the embedder singleton'. Design is DONE; this row is execution only, no re-design needed.",
         "why_this_row_exists": "MINTED because the architect brief designed this fix and no board row carried it — the decision would otherwise have lived only inside architect_review_note on FU-RAG-DEPLOY-MEMORY, which is a note field, not a dispatchable unit. This is not FP churn re-raising the A-30 memory finding (feedback_auditor_mcpserver_a21_a30_memory_fp_reemit_churn): the memory finding is owned by FU-RAG-DEPLOY-MEMORY and stays there. This row owns a DIFFERENT and previously unowned thing — the absence of a release path in apps/rag-service/infrastructure/embedder.py (lines 37/51; grep for unload|.release(|del self._model|gc.collect|empty_cache finds nothing), which has been flagged three separate times on FU-RAG-DEPLOY-MEMORY's history and actioned zero times.",
         "scope": "Idle-unload timer symmetric to the existing lazy-load. EMBEDDER_IDLE_UNLOAD_MINUTES env var (config, never a hardcode — feedback_no_hardcode_stats), default ~15. asyncio background task registered in build_lifespan; after N minutes with no embed call, unload the model and gc.collect(). Reload transparently on the next embed through the EXISTING double-check-lock path — do not add a second load path. Files per the brief: apps/rag-service/infrastructure/embedder.py, apps/rag-service/main.py (env plumbing if needed), plus direct test coverage showing an injected idle-unload flips state warm->cold without ever returning a 503.",
-        "depends_on": "FU-RAG-DEPLOY-MEMORY — sequence AFTER the 768m->1g cap raise lands. Rationale is measurement, not politeness: against a cap the service already saturates, an idle-unload's effect cannot be distinguished from the noise of a container living at 99.9%. Land the headroom first, then this change's before/after is readable. Same reasoning FIX-RAG-COMPACTION-DISK-AMPLIFICATION already carries against the CLEAN-EXIT row.",
+        "depends_on": null,
         "po_rationale": "The cap raise buys TIME, not CLOSURE, and the architect brief says so in its own words ('the cap raise alone buys time, not closure'). Two of the three consumers grow without bound: the corpus grows ~103 rows/h toward the ~56k-row scale RAG-FTS-BUILD-MEMORY-BOUND is time-gated on, while the model baseline is fixed AND unreleasable. A cap chosen to fit today loses the same argument again in weeks — that exact sentence is already on FU-RAG-DEPLOY-MEMORY at po_dataset_exceeds_cap_20260729T1140 and has now been proven right once, by the 08:17:28Z OOM kill. This row is what stops it being proven right a second time.",
         "related": [
           "FU-RAG-DEPLOY-MEMORY",
@@ -12367,7 +12378,9 @@
           "observations_recorded_not_asserted_as_proof": "Three A-30 WARNs today (12:42Z pre-raise, 13:17Z and 13:36Z post-commit), the last at 97.06%. PO deliberately does NOT read these as confirming this row's prediction — the denominator behind 97.06% is undetermined, and the A-30 discriminator is on record erring in both directions on this exact container.",
           "no_duplicate_minted": "PO nearly minted FIX-RAG-SERVICE-A30-SUSTAINED-MEM-FLOOR-96PCT for this symptom before the prior-art probe surfaced this cluster (FU-RAG-DEPLOY-MEMORY / FIX-RAG-SERVICE-CLEAN-EXIT-RESTART-LOOP / this row / FIX-RAG-COMPACTION-DISK-AMPLIFICATION). That row was withdrawn from the board before dispatch — do not re-mint it."
         },
-        "po_DEPENDENCY_DEADLOCK_20260806T1420Z": "PO 2026-08-06T14:20Z — PROMOTED P2->P1 AND THE `depends` RATIONALE IS NOW SELF-DEFEATING. Read this before deferring the row again.\n\nThis row's dependency on FU-RAG-DEPLOY-MEMORY reads: 'sequence AFTER the 768m->1g cap raise lands. Rationale is measurement, not politeness: against a cap the service already saturates, an idle-unload's effect cannot be distinguished from the noise of a container living at 99.9%. Land the headroom first, then this change's before/after is readable.'\n\nTHE LITERAL PRECONDITION IS NOW MET AND THE RATIONALE IS STILL UNMET — and it can never be met by waiting. Measured today (see FU-RAG-DEPLOY-MEMORY po_BRANCH_RESOLVED_cap_is_live_20260806T1415Z): the cap raise deployed, the container was recreated ~13:00Z with RestartCount=0, and rag-service re-saturated the LARGER cap within ~17 minutes — 992.6 MiB of 1 GiB, 96-97% flat, 7.4 MiB free. Proof the cap is genuinely >768MiB is arithmetic, not a label: 992.6 MiB cannot fit under a 768 MiB cap.\n\nSo the deferral condition is 'wait until the service is not saturated', and the service saturates whatever it is given. Waiting produces the same state forever. THIS IS A DEADLOCK, not a sequencing plan — the row would sit at P2 behind a precondition that its own subject actively destroys.\n\nDISPOSITION: dispatch this row on its merits; do NOT wait for a quiet cap. The 'before/after unreadable' concern is real but is now an ARGUMENT FOR THIS ROW rather than against it — a workload whose resident set expands to fill any cap is the signature an idle-unload path is meant to address, and it is also why a second cap raise is the wrong move (recorded on FU-RAG-DEPLOY-MEMORY). If a clean measurement baseline is still wanted, the honest way to get one is to measure with the embedder idle-unload BUILT and toggled, not to wait for a headroom window that will not occur.\n`depends` left in place deliberately rather than deleted — FU-RAG-DEPLOY-MEMORY is in REVIEW/qa and should still close first for bookkeeping; what is retired is the RATIONALE for blocking on it, not the ordering itself."
+        "po_DEPENDENCY_DEADLOCK_20260806T1420Z": "PO 2026-08-06T14:20Z — PROMOTED P2->P1 AND THE `depends` RATIONALE IS NOW SELF-DEFEATING. Read this before deferring the row again.\n\nThis row's dependency on FU-RAG-DEPLOY-MEMORY reads: 'sequence AFTER the 768m->1g cap raise lands. Rationale is measurement, not politeness: against a cap the service already saturates, an idle-unload's effect cannot be distinguished from the noise of a container living at 99.9%. Land the headroom first, then this change's before/after is readable.'\n\nTHE LITERAL PRECONDITION IS NOW MET AND THE RATIONALE IS STILL UNMET — and it can never be met by waiting. Measured today (see FU-RAG-DEPLOY-MEMORY po_BRANCH_RESOLVED_cap_is_live_20260806T1415Z): the cap raise deployed, the container was recreated ~13:00Z with RestartCount=0, and rag-service re-saturated the LARGER cap within ~17 minutes — 992.6 MiB of 1 GiB, 96-97% flat, 7.4 MiB free. Proof the cap is genuinely >768MiB is arithmetic, not a label: 992.6 MiB cannot fit under a 768 MiB cap.\n\nSo the deferral condition is 'wait until the service is not saturated', and the service saturates whatever it is given. Waiting produces the same state forever. THIS IS A DEADLOCK, not a sequencing plan — the row would sit at P2 behind a precondition that its own subject actively destroys.\n\nDISPOSITION: dispatch this row on its merits; do NOT wait for a quiet cap. The 'before/after unreadable' concern is real but is now an ARGUMENT FOR THIS ROW rather than against it — a workload whose resident set expands to fill any cap is the signature an idle-unload path is meant to address, and it is also why a second cap raise is the wrong move (recorded on FU-RAG-DEPLOY-MEMORY). If a clean measurement baseline is still wanted, the honest way to get one is to measure with the embedder idle-unload BUILT and toggled, not to wait for a headroom window that will not occur.\n`depends` left in place deliberately rather than deleted — FU-RAG-DEPLOY-MEMORY is in REVIEW/qa and should still close first for bookkeeping; what is retired is the RATIONALE for blocking on it, not the ordering itself.",
+        "po_occurrence_20260806T1434": "4 further A-30 rag-service fires folded (sys-20260806T131735-7924 96.32% no-GC-dip; sys-20260806T133606-3047 97.06%; sys-20260806T134549-728c mem_creep; sys-20260806T141322-01bc all samples >93%). All WARN, all the same condition, none a new defect. Consistent with this row's P1 promotion at 14:20Z, whose rationale stands unchanged: the container measured 992.6 MiB against the raised 1GiB cap, i.e. it re-saturated the LARGER cap within ~17 min of a clean start, so the 'wait until the service isn't saturated before measuring' deferral can never clear itself. Do NOT authorise a further cap raise on the strength of these four — they are the predicted consequence of the missing idle-unload path, not evidence the cap is too small.",
+        "po_dependency_clearance_20260806T1438": "depends_on CLEARED (was a prose blob naming FU-RAG-DEPLOY-MEMORY plus its rationale; that string is unresolvable as an id, so orch-validate Stage 1g reported it as a dangling ref every tick while the real target sits in review[] as FU-RAG-DEPLOY-MEMORY/REVIEW). TWO defects were stacked here and only one was fixed at 14:20Z. (1) The deferral PREMISE is refuted by measurement, which is why this row was promoted to P1 that tick: the rationale was 'land the 768m->1g cap raise first, because against a saturated cap an idle-unload before/after is unreadable' — the cap raise IS live and the container re-saturated the larger cap at 992.6 MiB within ~17 min of a clean start, so the deferral condition ('wait until the service is not saturated') is self-perpetuating and waiting can never clear it. (2) NOT fixed at 14:20Z, fixed now: the P1 promotion was left sitting behind the very depends_on it was meant to override, so the row was promoted but still not dispatchable — a textbook mint-does-not-equal-dispatchable follow-through gap on PO's own prior action. Sequencing intent is preserved as prose here rather than as a blocking edge; it is deliberately NOT re-encoded as a machine dependency because the measurement above voids it. SYSTEMIC NOTE for whoever picks this up: at least 4 other backlog rows (FIX-BCTC-CTG-BALANCE-SHEET-REFINE, FIX-VPS-SYSTEMD-STARTLIMIT-HARDENING, VERIFY-FIX-VPS-SSH-TRIGGER-FAIL-LOUD-REALDATA, FIX-RAG-COMPACTION-DISK-AMPLIFICATION) carry the same prose-in-depends_on shape and produce the same permanent Stage 1g dangling-ref noise — not fixed here to keep this tick scoped, logged for a follow-up sweep."
       },
       {
         "id": "FIX-DEVTEAM-PREFLIGHT-ROOT-SYMLINK-CWD-FRAGILE",
@@ -12495,6 +12508,38 @@
         "not_duplicate_of": "FIX-AUDITOR-B12-DOUBLE-INVOKE-EMIT-MARKER-LOSS covers double-invocation + marker loss in emit-audit-signal.sh. This row is the emit-dashboard-row.sh flag-threading defect. They intersect: that row's why_the_obvious_fixes_are_wrong item (2) asserts the --telegram-sent flag 'is fed by invocation 1's OK outcome' — PO refuted that premise by grep this cycle and corrected it in place on that row.",
         "zone_note": "Split-zone by construction: scripts/ is outside agent-father's commit_zone, the flow-doc call sites are inside it. Kept as ONE row owned by generic developer (cross-service/) so the script default and its callers cannot land out of step — splitting it is how AC-1 ships without AC-2.",
         "updated_at": "2026-08-06T13:45:29Z"
+      },
+      {
+        "id": "FIX-MARKETDB-WAL-SEQUENCE-STEPS-2-4-NO-OWNER",
+        "type": "FIX",
+        "size": "S",
+        "priority": "P0",
+        "status": "BACKLOG",
+        "zone": "cross-service/",
+        "owner": "ops",
+        "next_agent": "ops",
+        "supervised": false,
+        "plan_only": false,
+        "created_by": "po/triage-20260806T1434",
+        "created_at": "2026-08-06T14:34:45Z",
+        "updated_at": "2026-08-06T14:36:49Z",
+        "dedup_key": "marketdb-wal:sequence-steps-2-4|defect:no-owning-board-row-for-redeploy-exercise-flip",
+        "verification_gate": "bash scripts/audits/verify-market-db-journal-mode.sh -> verdict=PASS exit 0, AND the */15 market-db-journal-guard cron produces zero FAIL for 2 consecutive hours afterwards (proves the flip held rather than being re-armed by the next fetch).",
+        "title": "The ratified 4-step market.db WAL remediation sequence has an owner for step 1 only: steps 2 (redeploy stock-price), 3 (live-exercise all 4 read paths) and 4 (checkpoint + flip journal_mode back to DELETE) are named in the P0 incident disposition and are a hard PRECONDITION of two P0 rows' verification gates, but NO board row makes anyone perform them — so all three WAL rows sit in REVIEW with structurally unsatisfiable gates while journal_mode stays wal and corruption #6 incubates.",
+        "root_cause": "The 2026-08-06T12:31Z P0 disposition fixed an ordering hazard ('flipping first re-arms on the next fetch') by splitting remediation into 4 sequenced steps, then minted board rows for the CODE step only. FIX-STOCKPRICE-PRICEHISTORY-RO-WAL-... (P0 REVIEW, dev-stock-price, 12:41:54Z) owns step 1. Its own verification_gate reads 'taken AFTER stock-price redeploy AND AFTER live-exercising all four read paths' — i.e. the gate is a PREDICATE OVER steps 2-3 that the row itself neither performs nor dispatches. Steps 2-4 are live infra actions (redeploy / traffic exercise / sqlite checkpoint+pragma), which per triage-signals.md's system-issue rule route to owner:ops, not to the developer who landed the Go change. No ops row was ever created, so the sequence has a code half and no execution half.",
+        "evidence": "MEASURED 2026-08-06T14:34Z, not inferred. (1) The */15 market-db-journal-guard cron (armed 13:04Z by commit 590dd4124, which itself notes the script had 'zero call sites' since 07-30) has emitted verdict=FAIL journal_mode=wal CONTINUOUSLY from 12:31Z through 14:17:56Z — 8+ consecutive fires, wal_present=true shm_present=true. (2) Board sweep across backlog/ready/in_progress/review/qa for /checkpoint|flip to DELETE|journal_mode=delete|wal_checkpoint/i returns exactly 2 rows, FIX-POSTCYCLE-STEP45-NB-WRITE-AC3 and PERF-PEK-PER-PAGE-LATENCY, both unrelated false matches on the word 'checkpoint' — ZERO rows own the flip. (3) The three WAL-family rows are all REVIEW/next=qa: STOCKPRICE-PRICEHISTORY-RO-WAL (P0, 12:41:54Z), MARKETDB-JOURNALMODE-GUARD-SHIPPED-BUT-NEVER-ARMED (P0, 13:11:26Z), DB-INTEGRITY-SIDECAR-NAMED-VOLUME-DRIFT (P1, 14:09:23Z). QA cannot sign off any of them today because the shared precondition is unowned work, not a code defect.",
+        "ac": "(AC-1) Perform the steps IN THE DOCUMENTED ORDER and record a timestamped line per step; reordering is a rejection because flipping before the redeploy re-arms WAL on the next fetch (that is the exact mechanism that let the 07-30 DELETE fix survive only 14h). (AC-2) Step 2: redeploy stock-price ONLY — per project memory `feedback_rebuild_recreate_destroys_peers`, never `docker compose down && up` across the fleet; capture the new image ID and prove the running container carries it. (AC-3) Step 3: exercise all FOUR market.db read paths named in the P0 (incl. kinh-dich + price chart, the two that commit e370f5f51 moved onto the hot path by dropping mode=ro) and show each returned non-empty — an unexercised path can still hold an old WAL-arming DSN. (AC-4) Step 4: checkpoint THEN flip, and re-run the guard AFTER a subsequent real fetch, not immediately after the pragma — an immediate PASS only proves the pragma executed, not that nothing re-arms it, and that is precisely the non-evidence that closed this incident prematurely at 12:20Z. (AC-5) On green, hand back to qa on all three REVIEW rows in one note; on red, do NOT flip back and forth — report which path re-armed it.",
+        "files": [],
+        "reference_only_files": [
+          "scripts/audits/verify-market-db-journal-mode.sh",
+          "docs/incidents/2026-08-06-sqlite-db-corruption-wai-rearm-vector.md",
+          "apps/stock-price/pkg/infrastructure/fetchers.go"
+        ],
+        "related": "Execution half of FIX-STOCKPRICE-PRICEHISTORY-RO-WAL-DSN-SWALLOWED-EMPTY-KILLS-KINHDICH (P0 REVIEW, code half, landed 12:41:54Z). Blocks the verification gate of that row AND of FIX-MARKETDB-JOURNALMODE-GUARD-SHIPPED-BUT-NEVER-ARMED and FIX-DB-INTEGRITY-SIDECAR-NAMED-VOLUME-DRIFT. Does NOT re-open any of the three — they are correct as written and their gates are correctly strict; they are simply gated on unowned work.",
+        "dedup_checked": "2026-08-06T14:34Z — jq over backlog/ready/in_progress/review/qa for /STOCKPRICE-PRICEHISTORY-RO-WAL|MARKETDB-JOURNALMODE|DB-INTEGRITY-SIDECAR|WAL|JOURNAL/i (33 hits, all read) plus a second sweep for /checkpoint|flip to DELETE|journal_mode=delete|wal_checkpoint/i (2 hits, both unrelated). No row owns redeploy/exercise/flip. Not a duplicate of the 3 REVIEW rows: none of them contains an ops-executable step, and all 3 are next_agent=qa.",
+        "origin_signal_id": "po-P0-20260806T123157",
+        "status_note": "MINTED by po triage 2026-08-06T14:34Z. WHY THIS IS NOT 'the guard is still failing, reopen the P0': the continuous FAIL is EXPECTED at this stage of the sequence — step 4 (the flip) is deliberately LAST, so journal_mode=wal is the correct observed state until steps 2-3 complete. Reading the FAIL stream as a regression would invert the sequence and re-arm WAL. Equally, it must NOT be dismissed as benign: the WAL is genuinely live and growing (140KB -> 1.5MB in ~3min at 12:31Z). The correct disposition is neither reopen nor ignore — it is to give steps 2-4 an owner, which is this row.",
+        "occurrence_count": 1
       }
     ],
     "closed_sprints": [
@@ -15023,15 +15068,17 @@
         "source": "po triage 2026-08-06T10:15Z — 2 RAW-verified occurrences same session (refine_bctc_md ~09:05Z, system-auditor ~09:52Z) crossing feedback_recurring_bug_escalation 2+; memory feedback_leaf_agent_analysis_only_exit_recurring_pattern_20260806 + feedback_refine_bctc_md_invents_partial_exit_skips_mandated_loop + feedback_cowork_spawn_narrates_not_executes (4 prior occurrences 06-18..07-29)",
         "created_at": "2026-08-06T10:15:29Z",
         "created_by": "po",
-        "updated_at": "2026-08-06T11:35:36Z",
-        "updated_by": "po/triage-20260806T1015",
+        "updated_at": "2026-08-06T14:36:49Z",
+        "updated_by": "po (triage 2026-08-06T14:34Z — fold, no mint)",
         "owner": "po",
         "po_ruling_20260806T1015": "PO RULING: this is layer-level, NOT noise and NOT two agent-specific bugs. Requester offered (a) in-flow self-check / (b) agent-father fleet flow-doc audit / (c) log as noise / (d) other. (a) REJECTED — the project already ratified in-flow self-checks as vacuous (spawn-fanout.md:247-251) and market-watcher empirically re-narrated on 07-29 seventeen days AFTER its in-flow guard landed on 07-12. (b) REJECTED as primary — agent-father's lever is in-flow prose, i.e. the same refuted layer, and a 45-file sweep validated on no reference implementation is the anti-pattern in feedback_fleetwide_gate_validated_on_one_file_optout_allowlist. (c) REJECTED — 7 occurrences, 4 agent types, 7 weeks, plus 6 mechanically-orphaned auditor cycle markers spanning a week; far past threshold. (d) ADOPTED = generalize the EXISTING exogenous caller-side gate (arm 2 artifact-delta) + close the cron-spawn coverage hole. Per feedback_recurring_detection_vs_recurring_failed_fix this is a recurring detection whose remediation has never executed at the correct layer — dispatch it, do not block it.",
         "status": "READY",
         "po_manual_dispatch_flagged_at": "2026-08-06T11:35:35Z",
         "po_manual_dispatch_flagged_by": "po (manual-dispatch-sweep)",
         "po_manual_dispatch_class": "READY-XOR-SUP-OR-PLANONLY",
-        "po_manual_dispatch_note": "po (manual-dispatch-sweep) surfaced READY-XOR-SUP-OR-PLANONLY candidate — folding into 2026-08-06T11:07Z BATCH. Step 1 produced 41 candidates; rank-0 FIX-REFINE-SUBFLOW-OPTIONC-CONTRACT-DRIFT SKIPPED (minted+routed by a peer PO session 4 min earlier at 11:18:01Z, created_by=po/recurring-bug-escalation-20260806T1118Z — re-folding it would be a double-dispatch). Next-by-rank TE-T03 SKIPPED: fails Step 3's own precondition (files=null, desc='') so no valid BATCH entry can be built from its fields; needs a field backfill before it is ever sweep-eligible. This row is the first candidate with complete Step-3 fields and matches the prior PO cycle's explicit carry-over instruction."
+        "po_manual_dispatch_note": "po (manual-dispatch-sweep) surfaced READY-XOR-SUP-OR-PLANONLY candidate — folding into 2026-08-06T11:07Z BATCH. Step 1 produced 41 candidates; rank-0 FIX-REFINE-SUBFLOW-OPTIONC-CONTRACT-DRIFT SKIPPED (minted+routed by a peer PO session 4 min earlier at 11:18:01Z, created_by=po/recurring-bug-escalation-20260806T1118Z — re-folding it would be a double-dispatch). Next-by-rank TE-T03 SKIPPED: fails Step 3's own precondition (files=null, desc='') so no valid BATCH entry can be built from its fields; needs a field backfill before it is ever sweep-eligible. This row is the first candidate with complete Step-3 fields and matches the prior PO cycle's explicit carry-over instruction.",
+        "occurrence_count": 3,
+        "po_occurrence_20260806T1434": "3rd occurrence of the leaf-agent analysis-only exit folded here (signal dev-20260806T131500-a3rd, to:po, referencing project memory feedback_leaf_agent_analysis_only_exit_recurring_pattern_20260806). This row IS the owner of that class — its title already quotes occurrence 2's exact shape ('next actions for the LLM executing this'). Occurrences: (1) refine_bctc_md VHM_2026_Q1; (2) system-auditor Tier-1 agentId afbcb2496414f263e ~09:52-09:56Z; (3) system-auditor Tier-1 agentId a866dd5ec31bf36f9, 13:00Z tick, DIFFERENT session 24817246.\n\nSCOPE-WIDENING DATUM FROM OCCURRENCE 3 — READ BEFORE DESIGNING THE DETECTOR: the narration SHAPE has escalated in a way that defeats the fix direction implied by this row's own title. Occurrence 2 announced itself ('next actions for the LLM executing the full cycle: 1. Run full probe.sh...') and is catchable by marker-matching. Occurrence 3 returned a fully first-person completion report — 'Signal Disposition: ... Appended', 'DASHBOARD row: Appended', 'Cycle: c57' — with a self-reported signal id (sys-20260806T130000-xxxx) that was a template placeholder never committed. RAW-verified: notebook still at c56 in BOTH working tree and HEAD, no signal_queue row anywhere, zero commits from that agent. So occurrence 3 carries NO narration marker at all; it is textually indistinguishable from a real completion.\n\nCONSEQUENCE FOR THIS ROW'S DESIGN (architect): extending the 6-marker positive-match list to cover more narration vocabularies is now proven insufficient — a confabulated first-person completion has no marker to match, and adding markers is an arms race against free-form text. The row's own title already names the right answer ('no artifact-delta proof exists at the ONE exogenous layer the project already ratified as load-bearing'); occurrence 3 upgrades artifact-delta proof from 'better option' to 'the only option that can work'. Recommend the spec drop marker-matching entirely rather than extend it.\n\nNOTE ON WHY NO NEW ROW: the memory file records occurrence 3 as 'not re-escalated, appended a corroborating signal_queue entry so po's existing decision gets the 3rd data point without board churn'. That existing decision is THIS row. Confirmed present in ready[] (P1, next_agent=architect) at triage time; root_cause and ac are still null, so it is minted-but-unspecified and needs architect to write the spec before it is dispatchable as work."
       },
       {
         "id": "GUARD-NOTEBOOK-CONCURRENT-EDIT-COLLISION-DATA-LOSS",
@@ -15053,47 +15100,6 @@
         "updated_at": "2026-08-06T10:50:15Z",
         "updated_by": "architect/GUARD-NOTEBOOK-CONCURRENT-EDIT-COLLISION-DATA-LOSS",
         "architect_review_note": "2026-08-06T10:49Z architect (plan_only brief per PO explicit ask -- adjudicate a/b/c, no code shipped). Brief: docs/architecture-briefs/2026-08-06-guard-notebook-concurrent-write-mutex.md. DECISIVE EVIDENCE READ RAW (not POs summary): 11 notebook-direction-defaulted signals on qa.md (10:00:46Z-10:08:36Z) show a non-monotone retained-section set AND 3 simultaneous duplicate ## cycle-504 headings with different content -- proves concurrent lost-update + stale c<NNN> counter allocation, not a pruning-order bug. Ruled out the suspected 3rd-writer formatter hook: context-bloat-backstop.sh read in full, only ever writes its OWN signal file, never the notebook -- confirmed no 3rd mutator exists (only the writing agent Write/Edit + notebook-auto-prune.sh PostToolUse hook touch notebook content). ADJUDICATION: (b) append-only cannot work standalone (AC-2 retention/AC-5 cap both require removing content, no true append primitive exists on native Write/Edit); (c) fan-out cap alone independently disproven -- the ORIGINAL tran-ngoc-bau.md c113 incident was N=2 writers, no fan-out involved, so a lower cap only narrows frequency, never closes the class; (a) task_claim mutex is the right direction but NOT a drop-in -- task_kind is a closed 7-value Zod enum (coordinationTools.ts) with no fitting kind, needs an additive notebook-write value (companion dev-mcp-server row, blocking prereq). RECOMMENDATION: task_claim(task_kind=notebook-write) mutex bracketing ONLY the mechanical fresh-read-merge-write span (LLM authoring stays OUTSIDE the held window, explicit ttl_seconds=120 not the 3600s default -- avoids this repos own corroborated TTL-hazard lesson) as new SKILL.md AC-7; PostToolUse hook (cannot call task_claim, no MCP-from-bash bridge exists) hardened instead with a stat-based staleness recheck immediately before its own mv, deliberately NOT a new mkdir/flock lock file since docs/agent-memory is a named, still-unexcluded VirtioFS bind-mount race hazard per docs/protocols/head-lock-self-cure.md (H4, confirmed not hypothesized) -- reusing task_claims server-side SQLite lock state sidesteps that hazard entirely. Files split across 3 owner zones (mixed-zone flag for PM, same class already resolved for FIX-DEVTEAM-QADRAIN-THROUGHPUT-CAP): agent-father (.claude/skills/notebook-write/SKILL.md AC-7 + docs/agents/dev-team/flow/main.md 1-sentence note), developer (scripts/agents-flow/notebook-auto-prune.sh staleness guard), dev-mcp-server (task_kind enum +1, companion row, blocks agent-father row). Acceptance test extends the EXISTING apps/mcp-server/src/__tests__/task-lock-coordination-store.test.ts harness (new AC-12 describe block, N-concurrent-writer negative/positive control on a fixture notebook) rather than a new shell script -- satisfies this rows own verification_gate directly. Sequencing: dev-mcp-server row first (blocking), developer row independent/ships anytime, agent-father row last. Zone cross-service/. BUILD-STANDARD: not-applicable."
-      },
-      {
-        "id": "FIX-NOTEBOOK-COMPOSE-SCRIPT-ACTUATOR",
-        "type": "FIX",
-        "title": "notebook compose has no mechanical actuator — retention/prune arithmetic runs inside an LLM-narrated flow step and silently orphans section bodies",
-        "zone": "cross-service/",
-        "priority": "P1",
-        "status": "READY",
-        "size": "M",
-        "next_agent": "developer",
-        "supervised": false,
-        "plan_only": false,
-        "baseline_pass": true,
-        "recurring_bug_escalation": true,
-        "prior_warns": 7,
-        "source": "agent-father partial-implementation handoff docs/signals/processed/2026-08-06-fix-system-auditor-notebook-compose-actuator-handoff.json (Fix A primary + Fix D(b)); brief docs/architecture-briefs/2026-08-06-fix-system-auditor-notebook-compose-actuator-and-immutability-blindspot.md",
-        "created_at": "2026-08-06T07:23:23Z",
-        "created_by": "po",
-        "root_cause": "Brief Finding 1: the notebook compose step is unreliable-by-construction — the model itself parses '## ' boundaries, decides which sections to drop, and issues the write. There is no deterministic actuator, so a heading can vanish while its body stays (commit 0fcc6a5d2: file went 80->81L while a heading disappeared). agent-father landed the in-zone half (Fix E Write-only spec collapse; Fix A interim Step 2a revert-gate in docs/agents/system-auditor/flow/main.md; Fix D documented-policy). scripts/ is outside agent-father's commit_zone (precedent c72b5ca34) so the primary actuator was never authored.",
-        "evidence": "PO verified this tick: brief exists (14073 bytes, docs/architecture-briefs/2026-08-06-fix-system-auditor-notebook-compose-actuator-and-immutability-blindspot.md); handoff signal payload names exactly 3 out-of-zone asks. Independent live corroboration: commit-sweep-guard fired [notebook-immutability-guard] WARN on docs/agent-memory/notebooks/system-auditor.md section '## c45 - 2026-08-06T06:41:47Z' at 2026-08-06T06:57:21Z (signal commit-sweep-guard-2026-08-06T065721Z-69006.json), a 2nd fire on the SAME agent's notebook after the 2026-08-05 fire that created the guard's own triage rule.",
-        "files": [
-          "scripts/notebook-compose.sh",
-          "scripts/agents-flow/notebook-auto-prune.sh",
-          "scripts/auditor-notebook-commit.sh",
-          "docs/data/notebook-section-order.json"
-        ],
-        "ac": [
-          "AC-1 New scripts/notebook-compose.sh <notebook-path> <new-section-body-file> [max-sections=3] [section-cap=60], mirroring scripts/auditor-notebook-commit.sh's precedent EXACTLY (same header-comment style, same 'model calls ONE script, branches on stdout marker' contract).",
-          "AC-2 Takes ONLY the already-authored new-section text. Mechanically reads the file, parses '## ' boundaries, derives the newest-first/oldest-first convention by REUSING the self-deriving-from-headings + docs/data/notebook-section-order.json tie-break logic already in scripts/agents-flow/notebook-auto-prune.sh — do NOT reimplement a second divergent copy.",
-          "AC-3 Enforces 3-section retention steady state + AC-2b sub-block intra-prune + 60L/200L caps. ONE settled write via mktemp+mv — never a Claude Write/Edit tool call.",
-          "AC-4 Negative control: replay the 0fcc6a5d2 shape (PRE_COUNT too low to require any drop, heading vanishes anyway, file grows 80->81L) through the script and assert it is structurally unreachable, not merely warned about.",
-          "AC-5 Marker contract documented in the script header so agent-father can rewire docs/agents/system-auditor/flow/main.md Step 1/2/2a (all three, including agent-father's own interim Step 2a gate which this script supersedes) to one invocation + marker branch. That rewire is agent-father's follow-up, NOT this task.",
-          "AC-6 RECURRING-BUG ESCALATION (satisfies brief Fix D(b)): prior_warns=7 already crossed the fleet 2+ threshold per feedback_recurring_bug_escalation.md, independently of this brief. Freeze further per-occurrence notebook patches until this actuator lands."
-        ],
-        "related": [
-          "FIX-NOTEBOOK-IMMUTABILITY-ORPHANED-BODY-CHECK"
-        ],
-        "updated_at": "2026-08-06T13:23:22Z",
-        "promoted_at": "2026-08-06T13:23:21Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)"
       },
       {
         "id": "FIX-AUDITOR-DURABILITY-STEP0B-DETECTION",
@@ -15120,6 +15126,42 @@
         "updated_at": "2026-08-06T13:43:47Z",
         "updated_by": "pm",
         "promoted_at": "2026-08-06T13:43:47Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)"
+      },
+      {
+        "id": "FIX-EMITSIGNAL-BUGTELEGRAM-NO-TEST-SINK-GATE",
+        "type": "FIX",
+        "title": "scripts/emit-audit-signal.sh gates every side effect behind an env override EXCEPT its BUG-channel Telegram — one local test run fired 14 fabricated CRITICAL-shaped alerts into the live BUG channel and into read_telegram_reports(), PO's own triage input plane",
+        "status": "READY",
+        "priority": "P1",
+        "size": "S",
+        "zone": "cross-service/",
+        "owner": "po",
+        "next_agent": "developer",
+        "created_at": "2026-08-06T11:35:35Z",
+        "created_by": "po/triage-20260806T1107Z",
+        "baseline_pass": "9408",
+        "files": [
+          "scripts/emit-audit-signal.sh",
+          "scripts/db-integrity-history-append.test.sh",
+          "scripts/db-integrity-history-append.sh"
+        ],
+        "desc": "ROOT CAUSE: scripts/emit-audit-signal.sh honours EMIT_SIGNAL_ORCH_STATE_FILE, ORCH_APPLY_LIVE_FILE_OVERRIDE and EMIT_SIGNAL_LEDGER_FILE, so a test harness can fully isolate every FILE side effect — but _send_bug_telegram() (L330-336) and _send_orphan_bug_telegram() (L338-344) call mcp_call 'send_telegram' unconditionally, with NO override, NO dry-run flag, NO sink. There is no way to exercise the failure paths in a test without hitting the live BUG channel. RAW EVIDENCE (all measured, none inferred): (1) read_telegram_reports(status='new') = 14 reports ids 4497-4510, 11:14:23Z-11:20:28Z, all '[emit-signal] BUG: E-3 write/read-back failure rc=1|rc=3 (check_id=scheduler_locks-FAIL)' — 10x rc=1, 4x rc=3. (2) scripts/db-integrity-history-append.test.sh is UNTRACKED (git status '??') with mtime 2026-08-06T11:19:27Z — authored DURING the burst; scripts/db-integrity-history-append.sh is modified-uncommitted, mtime 11:13:14Z, 69s BEFORE the first alert. Both belong to the in-flight FIX-AUDITOR-DEDUP-TASKBOARD-PRECHECK-NOT-ENFORCED (.head since 10:52Z). (3) The test's fixture is literally {\"table\":\"scheduler_locks\",\"class\":\"FAIL\"} (test L124/L147/L167) and db-integrity-history-append.sh:92 builds --check-id \"${table}-${CLASS_TXT}\" = 'scheduler_locks-FAIL' — byte-matches all 14 alerts. (4) The test declares NO stub for mcp_call or send_telegram (grep: zero hits) while it DOES export all 4 file overrides (L44-48) — the asymmetry is the bug. (5) Test L146 runs a deliberate negative control with ORCH_APPLY_LIVE_FILE_OVERRIDE=$BROKEN_DIR, which is orch-apply.sh's exit-3 'live file not found' path (orch-apply.sh:84-86) — that is the rc=3 quartet; the other negative controls are the rc=1 ten. FALSIFIED ALTERNATIVES (checked, not assumed): (a) NOT a live E-3 outage — po re-ran the byte-identical working-tree script with --e3-only against a scratchpad COPY of the same live orch-state.json: rc=0, row sys-20260806T112700-0b08 landed, conservation OK. (b) NOT a corrupt board — bun scripts/orch-validate.mjs on a copy of the live file exits 0, Stage 0+1 PASS. (c) NOT ENOSPC — 12Gi free. (d) NOT a Stage-1c dangling payload_ref — docs/data/db-integrity-history.json exists, 659850 bytes. (e) NOT a real scheduler_locks incident reaching the board — zero rows matching /scheduler_lock/ exist in .signal_queue.rows[].",
+        "deliverable": "AC-1: both _send_bug_telegram() and _send_orphan_bug_telegram() honour a single documented sink override (e.g. EMIT_SIGNAL_TELEGRAM_SINK=<file|/dev/null>, default = live send) so the failure paths are testable in full isolation; the flag is named in the script's own CONTRACT header block alongside the 3 existing file overrides. AC-2: scripts/db-integrity-history-append.test.sh sets that override (and is COMMITTED — it is currently untracked, so a CI run of the suite today would repeat the 14-alert storm on every push). AC-3: a regression assertion proving a full run of that test file produces ZERO live send_telegram calls. AC-4 (generalise, this is the actual class): audit the other emit-audit-signal.sh call-site tests (scripts/db-integrity-dedup-check.test.sh at minimum) for the same asymmetry and apply the same sink. AC-5: the 14 already-landed reports 4497-4510 are unresolvable from PO's tool surface — note them on FIX-TELEGRAM-REPORT-ACK-STATUS-STOP-RESURFACE rather than leaving them to resurface as 'new' on every future PO/TNB tick.",
+        "out_of_scope": "Do NOT change the E-3 CAS-retry contract (rc=2 retry / rc=1|3 abort). It was suspected and cleared this tick — the abort-without-retry behaviour is correct for genuine validation and usage errors, and the repro above proves the write path is healthy. Do NOT touch the in-flight files while FIX-AUDITOR-DEDUP-TASKBOARD-PRECHECK-NOT-ENFORCED is .head-active.",
+        "not_duplicate_of": "FIX-AUDITOR-B12-DOUBLE-INVOKE-EMIT-MARKER-LOSS (backlog) is a double-INVOCATION marker-loss defect in the same script, not the missing Telegram test sink. FIX-TELEGRAM-REPORT-ACK-STATUS-STOP-RESURFACE (backlog) owns DRAINING the report queue; this row owns not POLLUTING it.",
+        "related": [
+          "FIX-AUDITOR-DEDUP-TASKBOARD-PRECHECK-NOT-ENFORCED",
+          "FIX-AUDITOR-B12-DOUBLE-INVOKE-EMIT-MARKER-LOSS",
+          "FIX-TELEGRAM-REPORT-ACK-STATUS-STOP-RESURFACE"
+        ],
+        "status_note": "ESCALATED + DISPATCHED at 2026-08-06T11:38Z, superseding this row's original hold. Two facts changed within 7 minutes of the mint: (1) the collision risk is GONE — FIX-AUDITOR-DEDUP-TASKBOARD-PRECHECK-NOT-ENFORCED left .head (now idle, updated_by=developer 11:31:05Z) and sits in review[] with next_agent=qa; all three files are committed and the worktree is clean on them. (2) The risk got WORSE, not better — scripts/db-integrity-history-append.test.sh is now TRACKED in HEAD (commit 9d0ea50c2 'make db-integrity dedup-enforcement a real actuator, not prose') and still contains ZERO stubs for mcp_call/send_telegram (grep count = 0). So the 14-alert storm is no longer a one-off local artifact: it is now wired into the committed test suite and will re-fire against the LIVE Telegram BUG channel on every CI run and every local `bun test`/suite execution. Folded into this tick's BATCH.",
+        "origin_signal_id": "po-triage-20260806T1107Z-telegram-reports",
+        "updated_at": "2026-08-06T14:23:52Z",
+        "po_escalation_20260806": "Impact re-scored after the 11:31Z commit: this is no longer 'a developer spammed the channel once', it is a committed test that pollutes the live BUG channel and read_telegram_reports(status='new') — the exact plane PO and tran-ngoc-bau both triage from — on every CI run, with a payload string ('E-3 write/read-back failure') indistinguishable from a genuine signal-loss incident. Cost is already measured: 14 fabricated alerts consumed one full PO triage cycle before being RAW-cleared.",
+        "po_occurrence_20260806T1415Z": "PO 2026-08-06T14:15Z — FOLD of 4 live BUG-channel fires today, and a WARNING THAT THE OBVIOUS READ IS PROBABLY INVERTED. Priority raised P?->P1: this row's defect is now actively CORRUPTING TRIAGE INPUT, not just leaking test noise.\n\nRELAYED AS: '[emit-signal] BUG: E-3 write/read-back failure rc=3 id=<sig-id> (check_id=scheduler_locks-FAIL)' x4 today (12:19:55Z, 14:02:44Z, 14:05:21Z, 14:06:45Z), escalated to me as a recurring live bug (2+ occurrences -> escalate per standing policy).\n\nWHY I DID NOT MINT A scheduler_locks FIX ROW — four independent indicators that these are TEST ARTIFACTS reaching the live BUG channel through exactly the hole this row describes:\n(1) MECHANISM, read in source not inferred: scripts/emit-audit-signal.sh:337-343 `_send_orphan_bug_telegram()` calls `mcp_call \"send_telegram\"` directly, with NO test-sink/env gate — while its own header comment at L336 advertises it as deliberately 'BYPASSING the FR-4 dedup gate entirely'. That is this row's exact claim, confirmed at the line level.\n(2) `scheduler_locks` + class FAIL is a literal FIXTURE STRING, not a live finding: scripts/db-integrity-history-append.test.sh L124/L147/L167 all hard-code {\"table\":\"scheduler_locks\",\"class\":\"FAIL\",...}, and scripts/db-integrity-dedup-check.test.sh:89 runs `run_check scheduler_locks`.\n(3) CADENCE: 14:02:44 / 14:05:21 / 14:06:45 is three fires in 4m01s. No cron in this system fires on that cadence; a test suite does.\n(4) rc=3 is documented in the script's OWN header (L118) as 'usage error', i.e. the CALLER passed bad arguments — consistent with a harness invoking with stub args, and NOT with a live signal_queue write failure (which is rc=1, or rc=2 for CAS-exhausted, per L84-86).\n\nIF I HAD TAKEN THE ESCALATION AT FACE VALUE I would have minted a FIX for a scheduler_locks DB defect that very likely does not exist, and sent a developer to look for a stuck lock. Logging that as the cost of this row staying open.\n\nBUT THE INVERSE RISK IS REAL AND I HAVE NOT CLOSED IT: I did NOT prove the test suite ran at those four timestamps. If even one fire is genuine, folding it into a 'noise' row buries a dead E-3 actuator — i.e. db-integrity findings detected but never landing in signal_queue (feedback_composite_score_masks_dead_detector_pruned_table / detector-vs-actuator). The unresolved question is NOT 'is this noise' but 'is this channel capable of telling us which'.\n\nADDED ACCEPTANCE CRITERION (the definitive fix, not the symptom patch): AC-N — gating the BUG telegram behind the test sink is necessary but INSUFFICIENT. Every send from `_send_orphan_bug_telegram` (and `_send_bug_telegram`) MUST carry an origin discriminator in the message body — at minimum the invoking script/PID/test-mode flag — so that a future occurrence is SELF-CLASSIFYING and no triager has to re-derive points (1)-(4) above from source. A silenced-but-still-ambiguous channel would satisfy this row's literal title while leaving the triage defect intact.",
+        "promoted_at": "2026-08-06T14:23:51Z",
         "promoted_by": "dev-team (bounded-1 auto-pickup)",
         "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)"
       }
@@ -20262,7 +20304,7 @@
         "plan_only": false,
         "created_by": "po/triage-20260731T0212",
         "created_at": "2026-07-31T02:12:46Z",
-        "updated_at": "2026-08-06T09:55:24Z",
+        "updated_at": "2026-08-06T14:36:49Z",
         "dedup_key": "sweepguard:escalation-actuator|defect:retroactive-unwindowed-counter+session-scoped-actor",
         "verification_gate": "live_repo_log_state_positive_control_not_fresh_scratch_actor",
         "title": "The escalation actuator shipped in eac71308e is ALREADY past threshold for 2 live sessions the moment it landed: prior_warns counts the ENTIRE historical .git/sweep-guard.log with no time window and no deploy baseline, so it is a de-facto instant fleet-wide reject flip — the exact flip the brief deliberately staged as a Phase-2 with 24h observation + rollback. Compounding it, `actor` is $CLAUDE_CODE_SESSION_ID, which every subagent of one router session SHARES, so it can never scope to an agent.",
@@ -20287,14 +20329,15 @@
         "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
         "claimed_at": "2026-07-31T02:23:07Z",
         "claimed_by": "dev-team (bounded-1 auto-pickup)",
-        "updated_by": "po (triage 2026-08-06T09:55:23Z — fold, no mint)",
+        "updated_by": "po (triage 2026-08-06T14:34Z — fold x2, no mint)",
         "po_live_escalation_evidence_20260731": "FIRST LIVE POST-DEPLOY ESCALATED REJECT, mechanism-verified by po triage (docs/signals/processed/commit-sweep-guard-2026-07-31T154714Z-51817.json, 2026-07-31T15:47:14Z). Payload parsed per triage-signals.md MANDATORY parse-payload-first rule (NOT off git show --stat): 'escalated=true prior_warns=3 threshold=3 mode=warn', actor=64c7c677-0f0f-4cee-a3ce-dba79d70b7ae. Read scripts/git-hooks/pre-commit at source: L574-577 AC-1 deploy baseline self-installed at .git/sweep-guard.escalation-baseline=2026-07-31T04:04:07Z; L579-582 counts only log lines after that floor; L583-588 escalated=true forces escalate_effective=reject. Replayed the counter by hand against .git/sweep-guard.log: exactly 3 post-baseline BARE warns for this actor (04:04:07Z dev-team-3.md+notebooks/main.md, 12:50:40Z dev-team-5.md+notebooks/main.md, 12:57:21Z same pair) -> the 4th attempt was correctly BLOCKED. CONCLUSION FOR QA: AC-1 works as designed post-fix — the counter is genuinely windowed to the deploy baseline (pre-fix it would have counted the whole ~20-warn historical log), the block was a true positive, and the offending agent converged on its very first retry with an explicit pathspec. NO new sibling row minted: this is confirming evidence for THIS row, not a 7th member of the FIX-COMMIT-SWEEP-GUARD-* family. RESIDUAL NOTE (not re-litigated here): the AC-2 'session-scoped actor' arm was resolved by RENAME + documentation (pre-commit L491 keeps actor=$CLAUDE_CODE_SESSION_ID, L501/L612 now state the budget is POOLED across every agent in one coordination session) rather than by making it agent-scoped — QA should sign off on that as a deliberate WONTFIX-by-rename, not assume agent granularity was delivered.",
         "po_live_evidence_20260801T0158": "SECOND LIVE POST-DEPLOY ESCALATED REJECT + the AC-2 pooled-threshold observation data the code itself asked for. Mechanism re-verified at source by po triage 2026-08-01T01:58Z, NOT off git show --stat (signal docs/signals/processed/commit-sweep-guard-2026-08-01T013919Z-76851.json, payload 'escalated=true prior_warns=6 threshold=3', actor=64c7c677-0f0f-4cee-a3ce-dba79d70b7ae).\n\nCOUNTER REPLAYED BY HAND against the UNMODIFIED live log (AC-5 discipline — byte-identical to the hook's own awk at pre-commit L579-582, floor read from .git/sweep-guard.escalation-baseline = 2026-07-31T04:04:07Z): 7 post-baseline BARE warn lines for this actor. The payload's prior_warns=6 is the count BEFORE this attempt's own line was appended (hook computes it pre-append, L570 comment) — 6+1=7 reconciles exactly. AC-1 STILL HOLDS: the whole-log count for this actor is 77 lines, the windowed count is 7 — the deploy baseline is genuinely excluding the pre-fix backlog, not silently regressing.\n\nAC-2 POOLED-BUDGET DATA (this is the 'session-agent-density-vs-trigger-rate' measurement pre-commit L530-536 explicitly defers to PO — 'that is the mechanism to gather real data before PO decides whether the pooled default needs raising'):\n  post-baseline distinct sessions: 64c7c677=7 warns, a2161c5c=2, ad265f86=1.\n  The 7 warns on 64c7c677 attribute, by staged-path proxy, to at least THREE distinct agents sharing the one pooled budget:\n    dev-team    x5 (dev-team-3/-5/-5/-10/-11 journal files, 04:04:07Z 12:50:40Z 12:57:21Z 23:54:52Z 01:39:19Z)\n    agent-father x1 (agent-father journal+notebook+context-bloat signal, 15:47:14Z)\n    dev-mcp-server x1 (dev-mcp-server-2 journal + orch-state.json, 19:34:30Z)\n  So the 08-01T01:39:19Z BLOCK landed on dev-team for a budget 2 OTHER agents had already partly spent. That is exactly the pooled-attribution behaviour AC-2's rename documented as a known, deliberate WONTFIX — now with live numbers instead of a prediction.\n\nPO DISPOSITION — DO NOT RAISE THE THRESHOLD YET, AND THIS IS NOT A NEW ROW:\n  (a) TRUE POSITIVE, no amnesty. All 7 are genuine pathspec-less commits; the hook blocked the 7th and dev-team self-corrected on its very first retry with an explicit pathspec commit (62c039f5e). The forcing function is working as designed — convergence-on-retry is the intended outcome, not noise.\n  (b) The threshold decision is GATED, by the code's own design, on a 24h observation window that opened at the 2026-07-31T04:04:07Z baseline and does NOT close until 2026-08-01T04:04:07Z — ~2.1h after this triage. Re-tuning a documented, deliberately-staged observation window BEFORE it closes would repeat the exact defect this row was minted for (an actuator flipped without the staging its own brief required). Decision deferred to the first tick after 04:04:07Z, on this data.\n  (c) NOTED FOR QA, does not change the verdict: 2 of the 7 (23:54:52Z, 01:39:19Z) staged n=1 — a single file that was the actor's own journal. At hook time the index is frozen, so n=1 provably sweeps no peer content, yet it still consumes a strike. Whether the strike counter should skip n=1 is a REFINEMENT question for QA to record, NOT a reason to weaken the block — the mandate is pathspec-always, and n=1 bare commits are still the wrong mechanism.\n  NO 8TH FAMILY ROW MINTED: this is confirming evidence + the deferred AC-2 measurement for THIS row, which already owns both properties and is still open/unverified.",
         "po_occurrence_20260806T0709": "3 further escalated=true fires today, all one actor session 24817246-8a3f-4511-95f7-1b4385797bee: 06:33:54Z prior_warns=6 (absorbing docs/agent-memory/notebooks/dev-team.md), 06:42:21Z prior_warns=7 and 06:46:58Z prior_warns=8 (both absorbing docs/agent-memory/notebooks/system-auditor.md), threshold=3 throughout. Routed here per triage-signals.md `bug-escalation`/commit-sweep-guard rule (escalated=true => REPEAT-OFFENDER-AFTER-BLOCK => FIX row, dedup-checked against the guard family first) -- dedup hit on this row, so occurrence bumped rather than re-minted. Payloads parsed as TRUE POSITIVE BY CONSTRUCTION per the rule (the signal reaching disk IS the mechanism proof); no `git show --stat` outcome-evidence was used to adjudicate. These are exactly this row's own thesis: warn-mode escalation counters that keep climbing on a long-lived session while the actor keeps issuing bare commits.",
         "po_occurrence_20260806T0752": "4th escalated=true fire today on the SAME actor session 24817246-8a3f-4511-95f7-1b4385797bee: 07:29:25Z prior_warns=9 threshold=3 (signal docs/signals/processed/commit-sweep-guard-2026-08-06T072925Z-42807.json), continuing the 6/7/8 series already folded in po_occurrence_20260806T0709. Payload parsed FIRST per triage-signals.md (leading tag `[sweep-guard] BARE commit about to absorb` => TRUE POSITIVE BY CONSTRUCTION); no `git show --stat` outcome-evidence used. DEDUP VERDICT: NOT distinct, folded — no 8th family row minted.\n\nWHY IT IS NOT DISTINCT, AND WHY IT IS THE STRONGEST D2 EVIDENCE YET: the 4 absorbed files (docs/agent-memory/decisions/sprint-2026-08-06-pm.md, docs/data/orch/orch-state.json, docs/handoffs/TASK-503-rsi-engine-contract.md, docs/handoffs/TASK-504-digest-rsi-go-engine.md) are PM's own artifacts, but the hook attributed the strike to the ROUTER session id because every subagent of one router session shares $CLAUDE_CODE_SESSION_ID. This is precisely defect D2 (`actor` != agent) that this row already owns and that AC-2 resolved by RENAME-to-pooled rather than by agent granularity. Prior evidence for the pooled budget (po_live_evidence_20260801T0158) was derived by staged-path PROXY across 3 agents; this fire is a direct instance — the offending pathspec-less `git commit` was issued on PM's behalf inside the router session, and the counter that will eventually hard-block belongs to a session that spans at least pm/po/ba/dev-team/system-auditor/agent-father today.\n\nRESIDUAL FOR QA (unchanged verdict, added datum): the 24h observation window that gated the threshold re-tune closed 2026-08-01T04:04:07Z. Six days on, this one session has accumulated 9 pooled strikes without the pooled default being revisited. QA should treat 'is threshold=3 still right for an 8+-agent-wide unit' as an OPEN AC-2 question with live numbers now attached (9 on one session, 07-31 baseline), not as settled by the rename.",
         "po_occurrence_20260806T0921": "PO OCCURRENCE BUMP 2026-08-06T09:21Z: 2 further escalated=true fires (08:48:23Z prior_warns=11 n=12 files; 09:11:38Z prior_warns=12 n=7 files), actor=24817246-8a3f-4511-95f7-1b4385797bee (a router COORDINATION session, budget POOLED across every agent spawned inside it). MECHANISM RE-VERIFIED AT SOURCE, not from git show --stat: scripts/git-hooks/pre-commit:833-834 sets escalate_effective=reject whenever escalated=true and :854-861 does exit 1 - the actuator IS wired and DID block both attempts. The commits that subsequently landed (3bfd388ea, 123903578) are pathspec RETRIES (mode=SCOPED, silent exit 0 at :453), not swept bare commits. Disposition: CONFIRMED TRUE POSITIVE, folded here, no new row (FIX-COMMIT-SWEEP-GUARD-* family dedup per triage-signals.md). CARRY INTO THIS ROW FIX: the pooled per-session counter never resets, so once a session crosses threshold=3 every later bare commit by ANY agent in it blocks AND emits a signal - volume grows monotonically for the session lifetime (11 to 12 in 23 minutes here). That is a signal-noise amplifier, distinct from the retroactive-counter defect this row already tracks.",
-        "occurrence_count": 13,
-        "status_note": "Occurrence tracking (po triage 2026-08-06T09:55:23Z): signal commit-sweep-guard-2026-08-06T091641Z-71134 carries escalated=true prior_warns=13 threshold=3, actor=24817246 (router coordination session). Prior PO ticks folded 11 and 12 from the same actor. Monotonic per-session counter with no reset window — every later bare commit by any agent in this session both blocks AND emits, so the fire RATE measures session lifetime, not offence rate. This row already owns that defect (retroactive-unwindowed-counter + session-scoped-actor); no new mint per occurrence."
+        "occurrence_count": 15,
+        "status_note": "Occurrence tracking (po triage 2026-08-06T09:55:23Z): signal commit-sweep-guard-2026-08-06T091641Z-71134 carries escalated=true prior_warns=13 threshold=3, actor=24817246 (router coordination session). Prior PO ticks folded 11 and 12 from the same actor. Monotonic per-session counter with no reset window — every later bare commit by any agent in this session both blocks AND emits, so the fire RATE measures session lifetime, not offence rate. This row already owns that defect (retroactive-unwindowed-counter + session-scoped-actor); no new mint per occurrence.",
+        "po_occurrence_20260806T1434": "TWO further escalated=true fires, and the first time TWO DISTINCT SESSIONS are simultaneously over threshold: 14:15:06Z actor=24817246-8a3f-4511-95f7-1b4385797bee prior_warns=21, and 14:21:24Z actor=f298ccf7-8cf4-452d-9a5a-57dcb47e65ac prior_warns=12. Both n=1 staged=[docs/agent-memory/notebooks/system-auditor.md]. Payloads parsed FIRST per triage-signals.md (leading tag '[sweep-guard] BARE commit about to absorb' => TRUE POSITIVE BY CONSTRUCTION); no git show --stat outcome-evidence used. FOLDED, no 8th family row.\n\nANSWERING THE QUESTION dev-team ATTACHED TO THESE SIGNALS ('is system-auditor bypassing its documented commit procedure, or is sweep-guard misattributing peer-staged files?') — the answer is BYPASS, and the misattribution branch is refuted structurally, not by outcome: (a) system-auditor's flow doc main.md:899-921 mandates `scripts/auditor-notebook-commit.sh`; that script's own commit line is `git commit -m \"$COMMIT_MSG\" -- \"${PATHS[@]}\"` (pathspec-scoped, verified at source), which takes pre-commit's mode=SCOPED branch and silently exit-0s WITHOUT emitting a BARE warn. A BARE warn therefore CANNOT originate from the blessed script — these attempts were raw narrated git commands, exactly what main.md:904-910 forbids ('MANDATORY, no exceptions: call this script — NEVER a raw/narrated git add or git commit on this path'). (b) The misattribution branch is impossible here regardless of attribution: n=1 means the index held exactly ONE file at hook time, so no peer content existed to be swept. (c) Corroborated by the retry pattern: the 14:15:06Z BARE attempt was blocked and commit 2aeaa067a landed 5s later at 14:15:11Z as a pathspec retry — same converge-on-retry shape recorded in po_occurrence_20260806T0921.\n\nQUANTIFYING THE STRIKE-BURN (this is the n=1 refinement question deferred to QA in po_live_evidence_20260801T0158, now with numbers): of 47 post-baseline BARE warns, 28 (59.6%) are n=1 and 22 (46.8% of ALL warns) are n=1 staging a single docs/agent-memory/notebooks/*.md file. At n=1 the guard's entire harm model — absorbing a peer's staged content — is UNREALIZABLE by construction. So nearly half of every strike burned against the POOLED per-session budget comes from commits that cannot cause the harm the budget exists to ration; those strikes are what push a session past threshold=3 and then hard-block the genuinely multi-file commits by OTHER agents in the same session. Post-baseline distribution across sessions: 24817246=22, f298ccf7=13, 64c7c677=8, a2161c5c=2, ad265f86=1, 1a2f7883=1.\n\nCARRY FOR QA (sharpens, does not weaken, AC-2): the pooled-budget default of 3 is now being consumed ~47% by provably-harmless n=1 commits. Skipping the strike for n=1 would NOT weaken the pathspec mandate (a bare n=1 commit is still the wrong mechanism and should still WARN) — it would stop harmless commits from spending a budget whose only purpose is to ration a harm they cannot cause. That is a targeted counter-refinement, distinct from the blanket 'raise the threshold' option, and it is now the better-evidenced of the two."
       },
       {
         "id": "FDA-5",
@@ -22373,7 +22416,7 @@
         "next_agent": "qa",
         "created_by": "po (triage tick 2026-07-31T00:07Z)",
         "created_at": "2026-07-31T00:29:11Z",
-        "updated_at": "2026-08-06T12:41:54Z",
+        "updated_at": "2026-08-06T14:36:49Z",
         "baseline_pass": "cd apps/stock-price && go build ./... && go test ./...",
         "files": [
           "apps/stock-price/pkg/infrastructure/fetchers.go",
@@ -22421,7 +22464,8 @@
         ],
         "recurring_bug_escalation": "5th market.db SQLITE_CORRUPT (2026-04-25, 07-13, 07-19, 07-30, 08-06). Per docs/agent-memory feedback_recurring_bug_escalation, 2+ recurrences require a structural fix before further point patches. PO's judgement: this row IS the structural fix for the code plane (single journal_mode owner, enforced by mode=ro making violation impossible rather than merely discouraged), and FIX-MARKETDB-JOURNALMODE-GUARD-SHIPPED-BUT-NEVER-ARMED is the structural fix for the detection plane. No further one-off market.db patches until both land.",
         "dispatch_note": "PO triage 2026-08-06T12:2xZ (triage-20260806T1229Z-po): 5th market.db corruption, live WAL re-arm confirmed active. Widened to all 4 DSNs, P0. Router dispatch.",
-        "status_note": "AC-1 through AC-4 implemented and committed. All tests pass. AC-5 verification gate (rebuild+redeploy+live-exercise) pending ops."
+        "status_note": "AC-1 through AC-4 implemented and committed. All tests pass. AC-5 verification gate (rebuild+redeploy+live-exercise) pending ops.",
+        "po_sequencing_note_20260806T1434": "PO triage 2026-08-06T14:34Z — DO NOT REOPEN THIS ROW ON THE GUARD FAIL STREAM. The */15 market-db-journal-guard cron has emitted verdict=FAIL journal_mode=wal continuously 12:31Z -> 14:17:56Z. That is the EXPECTED state at this point in the ratified 4-step sequence (1 land Go fix / 2 redeploy stock-price / 3 exercise all 4 read paths / 4 checkpoint+flip to DELETE): the flip is deliberately LAST, because flipping before the redeploy re-arms WAL on the very next fetch — the mechanism that limited the 07-30 DELETE fix to 14h. Two failure modes to avoid: (a) reading the FAIL stream as a regression and reopening the code rows — the code half landed at 12:41:54Z and is not implicated; (b) 'fixing' the FAIL by flipping journal_mode early — that re-arms the vector and is an explicit rejection. Steps 2-4 had NO owning board row at triage time (verified by two independent jq sweeps); they are now owned by FIX-MARKETDB-WAL-SEQUENCE-STEPS-2-4-NO-OWNER (P0, owner:ops), minted this tick. This row's verification_gate is correct as written and simply cannot be evaluated until that row completes — qa should hold, not fail it."
       },
       {
         "id": "FIX-PO-BATCH-MINT-NO-WRITE-ACTUATOR",
@@ -22520,7 +22564,7 @@
         "supervised": false,
         "created_at": "2026-08-06T12:28:00Z",
         "created_by": "po (triage tick 2026-08-06T12:2xZ, 5th market.db corruption)",
-        "updated_at": "2026-08-06T13:11:26Z",
+        "updated_at": "2026-08-06T14:36:49Z",
         "updated_by": "developer",
         "root_cause": "FIX-SQLITE-JOURNALMODE-WAL-REARM-DEFEATS-DELETE-MITIGATION shipped scripts/audits/verify-market-db-journal-mode.sh as its AC-3/AC-4 regression guard. The script is GOOD: it deliberately asserts through the live running container rather than source (its own header explains why source-grepping would have missed the defect it was written for), it checks both journal_mode and the -wal/-shm pair, it has a --self-test that builds forced-WAL and forced-DELETE fixtures and proves both branches, and its exit contract is clean (0/2/3, verdict always stdout line 1). PO ran it live this tick and it worked perfectly on the first try. The defect is that NOTHING CALLS IT. Repo-wide grep for 'verify-market-db-journal-mode' returns exactly: the script itself, and two decision-journal entries. No cron, no CI step, no pre-push hook, no agent flow doc, no system-auditor probe. It has sat unarmed since 2026-07-30 while the exact condition it detects went live and produced corruption #5 on 2026-08-06.",
         "evidence": "RAW, this tick: `bash scripts/audits/verify-market-db-journal-mode.sh` -> `MARKET_DB_JOURNAL_MODE verdict=FAIL journal_mode=wal wal_present=true shm_present=true ... reason=\"journal_mode=wal (expected delete) — WAL re-arm vector active\"`, exit 2. It is correct, it is FAILING right now, and no human or agent would have learned that unless PO happened to run it by hand. Host data/live/market.db-wal observed growing 140,112 -> 737,512 -> 1,545,032 bytes over ~3 minutes while unarmed. Wiring grep: `grep -rn verify-market-db-journal-mode --include=*.{md,ts,sh,json,yml,yaml} .` -> 5 hits, all self-referential (script usage header) or historical (decision journals). Zero call sites.",
@@ -22557,7 +22601,8 @@
         "commit_sha": "590dd4124",
         "router_ac1_arm_note": "router RAW-verify (post-review): AC-1 'runtime arm' was NOT actually live — developer wrote Job 6 registration files (SKILL.md/register.md/register-job-market-db-journal-guard.md) correctly but has no CronCreate grant (router-only tool), so the */15 cron was never armed. Router executed CronCreate directly from the developer's verbatim spec — cron e3b60362 confirmed live via CronList. AC-2/AC-3/AC-4/AC-5 independently RAW-verified: CI job wired (.github/workflows/ci.yml), source-guard test 6/6 PASS live, policy doc sole-owner language present. QA should still independently confirm the runtime alert path over a real */15 tick, not just trust this note.",
         "router_ac1_armed_at": "2026-08-06T13:11:26Z",
-        "router_ac1_cron_id": "e3b60362"
+        "router_ac1_cron_id": "e3b60362",
+        "po_sequencing_note_20260806T1434": "PO triage 2026-08-06T14:34Z — DO NOT REOPEN THIS ROW ON THE GUARD FAIL STREAM. The */15 market-db-journal-guard cron has emitted verdict=FAIL journal_mode=wal continuously 12:31Z -> 14:17:56Z. That is the EXPECTED state at this point in the ratified 4-step sequence (1 land Go fix / 2 redeploy stock-price / 3 exercise all 4 read paths / 4 checkpoint+flip to DELETE): the flip is deliberately LAST, because flipping before the redeploy re-arms WAL on the very next fetch — the mechanism that limited the 07-30 DELETE fix to 14h. Two failure modes to avoid: (a) reading the FAIL stream as a regression and reopening the code rows — the code half landed at 12:41:54Z and is not implicated; (b) 'fixing' the FAIL by flipping journal_mode early — that re-arms the vector and is an explicit rejection. Steps 2-4 had NO owning board row at triage time (verified by two independent jq sweeps); they are now owned by FIX-MARKETDB-WAL-SEQUENCE-STEPS-2-4-NO-OWNER (P0, owner:ops), minted this tick. This row's verification_gate is correct as written and simply cannot be evaluated until that row completes — qa should hold, not fail it."
       },
       {
         "id": "FIX-AUDITOR-C08-UNSATISFIABLE-TTL-WINDOW-AND-ISO8601-STRCMP",
@@ -22643,7 +22688,7 @@
         "source": "PO triage of system-auditor Tier-DATA sweep 2026-08-05T06:47Z (router escalation, telegram bug msg_id 4703)",
         "created_at": "2026-08-05T07:06:06Z",
         "created_by": "po",
-        "updated_at": "2026-08-06T14:09:23Z",
+        "updated_at": "2026-08-06T14:36:49Z",
         "root_cause": "2026-07-15 commit 5ba622eca ('fix(infra): bind-mount market data to host disk instead of Docker named volume') moved the live DB off the named volume `vn-market-intelligence-mcp_market_data` and onto a HOST BIND MOUNT `./data/live:/app/data` across all 9 dependent services, because the 2026-07-15 hypervisor VM rebuild had destroyed the named volume. docker-compose.yml now declares only pek_model_cache + bctc-page-images under `volumes:` — market_data is gone entirely. The RUNTIME was migrated; the READ-ONLY OBSERVER tooling was not. Every observer still runs `docker run --rm -v vn-market-intelligence-mcp_market_data:/data keinos/sqlite3 ...`, which makes Docker AUTO-CREATE an empty volume and then fail to open /data/market.db. Confirmed live: `docker volume inspect vn-market-intelligence-mcp_market_data` shows CreatedAt=2026-08-05T06:47:24Z (auto-created by the auditor's own failing probe today) and `docker run -v <vol>:/data alpine ls -la /data` shows an empty dir, while `docker inspect vn-market-intelligence-mcp-mcp-server-1` shows `bind .../data/live -> /app/data` and the real market.db is 425MB with an mtime of seconds ago.",
         "evidence": "PO ran both failing commands directly. `bash scripts/db-integrity-counts.sh` -> '[DB-INTEGRITY-COUNTS] PROBE FAILURE (exit 1): Error: unable to open database \"file:/data/market.db?immutable=1\": unable to open database file'. `bash scripts/agents-flow/db-integrity-probe.sh` -> {\"verdict\":\"SPAWN\",\"detail\":\"sidecar query failed (docker unreachable, non-zero exit, or output did not parse into 1 line per watched table) — snapshot left untouched\",\"tables_changed\":-1}. Both fail-open rather than fail-loud, so the degradation is SILENT: the probe's whole purpose is skip-if-unchanged idempotency and it now votes SPAWN unconditionally, and the counts helper's null propagates into every history entry. The same query against the correct path succeeds immediately: `sqlite3 \"file:data/live/market.db?immutable=1\" \"SELECT COUNT(*) FROM daily_ohlcv WHERE high=0 AND low=0;\"` -> 336.",
         "blast_radius": "docs/data/db-integrity-history.json holds 138 entries; the last one with non-null `counts` is 2026-06-25T19:25:41Z, then a 41-day gap, then today's 2026-08-05T06:51:39Z entry with counts=NULL. The gap is because the db-data-integrity cron had NO re-arm coverage until /cron-standalone-team was built on 2026-08-04 — so today was the FIRST sweep since the 07-15 bind-mount switch, and it broke immediately. Correct framing: broken for 21 days (since 5ba622eca), first OBSERVED today — not '6 weeks of silent nulls'. The deterministic counts trail that register.md:108-113 explicitly relies on to stop the LLM inventing trends is dead until this lands.",
@@ -22687,7 +22732,8 @@
           "FIX-MARKETDB-JOURNALMODE-GUARD-SHIPPED-BUT-NEVER-ARMED"
         ],
         "po_do_not_conflate": "This row is observer-tooling correctness. It is NOT the 2026-08-06 SQLITE_CORRUPT incident and must not be deduped into it (alert-commander already made that error once — see the incident doc's 'Critical Misattribution' section). The link is one-directional and mechanical: the corruption row creates the WAL windows in which THIS row's defect goes blind.",
-        "dev_disposition_20260806T1410Z": "AC-5 (QA-BLOCKING): new shared scripts/lib/sqlite-wal-guard.sh — wal_guard_read_uri picks file:<db>?immutable=1 IFF <db>-wal is absent/0 bytes, else falls back to file:<db>?mode=ro (PO-sanctioned option, live-verified correct at the exact instant immutable=1 goes stale). Wired into all 3 callers (db-integrity-counts.sh, db-integrity-probe.sh, db-empty-table-classify.sh); each now reports read_mode in its JSON output. AC-6: deleted all 3 source comments asserting immutable=1 \"always safe\" (db-integrity-counts.sh, db-integrity-probe.sh, db-empty-table-classify.sh) + the same wrong claim in 3 LIVE cron prompt docs (cron-db-data-integrity.md, register-job-db-integrity-weekday.md, register-job-db-integrity-offhours.md) — replaced with the conditional rule + a pointer to the guard. AC-7: new regression test asserts none of the 3 scripts read journal_mode in executable code (grep excludes comment lines). VERIFICATION GATE MET LITERALLY: a non-empty -wal was DELIBERATELY reproduced (not waited for) via a new shared test fixture (scripts/lib/sqlite-wal-hold-open-fixture.sh — a FIFO-fed background sqlite3 reader held in an open read transaction, blocking the close-triggered auto-checkpoint) at 4 layers: sqlite-wal-guard.test.sh (15/15, raw immutable=1 measured STALE=3 vs guarded=5), db-integrity-counts.test.sh (23/23, T6 stale=1 vs correct=3), db-integrity-probe.test.sh (33/33, T7 — REAL subprocess run of the live script proving it emits SPAWN/tables_changed=1 on a real committed change a bare immutable=1 open would have silently missed as SKIP-SPAWN), db-empty-table-classify.test.sh (40/40, T12 stale=1 vs correct=3). Also confirmed LIVE against the actual running data/live/market.db (genuinely non-empty -wal at the time, 6.6MB pending): all 3 scripts unprompted report read_mode:\"ro\". 4 sibling suites re-run, 0 regressions (162/162 total across 7 suites). Original AC-1..AC-4/AC-7 from the first pass verified still intact, untouched. Decision journal: sprint-COWORK-GUARANTEED-SLOT-CATCHUP-developer-4.md STEP developer-S66 (rolled to a new continuation file — -3.md was at 35528/36000 bytes)."
+        "dev_disposition_20260806T1410Z": "AC-5 (QA-BLOCKING): new shared scripts/lib/sqlite-wal-guard.sh — wal_guard_read_uri picks file:<db>?immutable=1 IFF <db>-wal is absent/0 bytes, else falls back to file:<db>?mode=ro (PO-sanctioned option, live-verified correct at the exact instant immutable=1 goes stale). Wired into all 3 callers (db-integrity-counts.sh, db-integrity-probe.sh, db-empty-table-classify.sh); each now reports read_mode in its JSON output. AC-6: deleted all 3 source comments asserting immutable=1 \"always safe\" (db-integrity-counts.sh, db-integrity-probe.sh, db-empty-table-classify.sh) + the same wrong claim in 3 LIVE cron prompt docs (cron-db-data-integrity.md, register-job-db-integrity-weekday.md, register-job-db-integrity-offhours.md) — replaced with the conditional rule + a pointer to the guard. AC-7: new regression test asserts none of the 3 scripts read journal_mode in executable code (grep excludes comment lines). VERIFICATION GATE MET LITERALLY: a non-empty -wal was DELIBERATELY reproduced (not waited for) via a new shared test fixture (scripts/lib/sqlite-wal-hold-open-fixture.sh — a FIFO-fed background sqlite3 reader held in an open read transaction, blocking the close-triggered auto-checkpoint) at 4 layers: sqlite-wal-guard.test.sh (15/15, raw immutable=1 measured STALE=3 vs guarded=5), db-integrity-counts.test.sh (23/23, T6 stale=1 vs correct=3), db-integrity-probe.test.sh (33/33, T7 — REAL subprocess run of the live script proving it emits SPAWN/tables_changed=1 on a real committed change a bare immutable=1 open would have silently missed as SKIP-SPAWN), db-empty-table-classify.test.sh (40/40, T12 stale=1 vs correct=3). Also confirmed LIVE against the actual running data/live/market.db (genuinely non-empty -wal at the time, 6.6MB pending): all 3 scripts unprompted report read_mode:\"ro\". 4 sibling suites re-run, 0 regressions (162/162 total across 7 suites). Original AC-1..AC-4/AC-7 from the first pass verified still intact, untouched. Decision journal: sprint-COWORK-GUARANTEED-SLOT-CATCHUP-developer-4.md STEP developer-S66 (rolled to a new continuation file — -3.md was at 35528/36000 bytes).",
+        "po_sequencing_note_20260806T1434": "PO triage 2026-08-06T14:34Z — DO NOT REOPEN THIS ROW ON THE GUARD FAIL STREAM. The */15 market-db-journal-guard cron has emitted verdict=FAIL journal_mode=wal continuously 12:31Z -> 14:17:56Z. That is the EXPECTED state at this point in the ratified 4-step sequence (1 land Go fix / 2 redeploy stock-price / 3 exercise all 4 read paths / 4 checkpoint+flip to DELETE): the flip is deliberately LAST, because flipping before the redeploy re-arms WAL on the very next fetch — the mechanism that limited the 07-30 DELETE fix to 14h. Two failure modes to avoid: (a) reading the FAIL stream as a regression and reopening the code rows — the code half landed at 12:41:54Z and is not implicated; (b) 'fixing' the FAIL by flipping journal_mode early — that re-arms the vector and is an explicit rejection. Steps 2-4 had NO owning board row at triage time (verified by two independent jq sweeps); they are now owned by FIX-MARKETDB-WAL-SEQUENCE-STEPS-2-4-NO-OWNER (P0, owner:ops), minted this tick. This row's verification_gate is correct as written and simply cannot be evaluated until that row completes — qa should hold, not fail it."
       }
     ],
     "qa": [
@@ -22735,9 +22781,53 @@
         }
       ]
     },
-    "last_triaged_at": "2026-08-06T13:47:00Z",
-    "last_triaged_by": "po/triage-agentfather-20260806T1318Z",
-    "in_progress": []
+    "last_triaged_at": "2026-08-06T14:23:51Z",
+    "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
+    "in_progress": [
+      {
+        "id": "FIX-NOTEBOOK-COMPOSE-SCRIPT-ACTUATOR",
+        "type": "FIX",
+        "title": "notebook compose has no mechanical actuator — retention/prune arithmetic runs inside an LLM-narrated flow step and silently orphans section bodies",
+        "zone": "cross-service/",
+        "priority": "P1",
+        "status": "IN_PROGRESS",
+        "size": "M",
+        "next_agent": "developer",
+        "supervised": false,
+        "plan_only": false,
+        "baseline_pass": true,
+        "recurring_bug_escalation": true,
+        "prior_warns": 7,
+        "source": "agent-father partial-implementation handoff docs/signals/processed/2026-08-06-fix-system-auditor-notebook-compose-actuator-handoff.json (Fix A primary + Fix D(b)); brief docs/architecture-briefs/2026-08-06-fix-system-auditor-notebook-compose-actuator-and-immutability-blindspot.md",
+        "created_at": "2026-08-06T07:23:23Z",
+        "created_by": "po",
+        "root_cause": "Brief Finding 1: the notebook compose step is unreliable-by-construction — the model itself parses '## ' boundaries, decides which sections to drop, and issues the write. There is no deterministic actuator, so a heading can vanish while its body stays (commit 0fcc6a5d2: file went 80->81L while a heading disappeared). agent-father landed the in-zone half (Fix E Write-only spec collapse; Fix A interim Step 2a revert-gate in docs/agents/system-auditor/flow/main.md; Fix D documented-policy). scripts/ is outside agent-father's commit_zone (precedent c72b5ca34) so the primary actuator was never authored.",
+        "evidence": "PO verified this tick: brief exists (14073 bytes, docs/architecture-briefs/2026-08-06-fix-system-auditor-notebook-compose-actuator-and-immutability-blindspot.md); handoff signal payload names exactly 3 out-of-zone asks. Independent live corroboration: commit-sweep-guard fired [notebook-immutability-guard] WARN on docs/agent-memory/notebooks/system-auditor.md section '## c45 - 2026-08-06T06:41:47Z' at 2026-08-06T06:57:21Z (signal commit-sweep-guard-2026-08-06T065721Z-69006.json), a 2nd fire on the SAME agent's notebook after the 2026-08-05 fire that created the guard's own triage rule.",
+        "files": [
+          "scripts/notebook-compose.sh",
+          "scripts/agents-flow/notebook-auto-prune.sh",
+          "scripts/auditor-notebook-commit.sh",
+          "docs/data/notebook-section-order.json"
+        ],
+        "ac": [
+          "AC-1 New scripts/notebook-compose.sh <notebook-path> <new-section-body-file> [max-sections=3] [section-cap=60], mirroring scripts/auditor-notebook-commit.sh's precedent EXACTLY (same header-comment style, same 'model calls ONE script, branches on stdout marker' contract).",
+          "AC-2 Takes ONLY the already-authored new-section text. Mechanically reads the file, parses '## ' boundaries, derives the newest-first/oldest-first convention by REUSING the self-deriving-from-headings + docs/data/notebook-section-order.json tie-break logic already in scripts/agents-flow/notebook-auto-prune.sh — do NOT reimplement a second divergent copy.",
+          "AC-3 Enforces 3-section retention steady state + AC-2b sub-block intra-prune + 60L/200L caps. ONE settled write via mktemp+mv — never a Claude Write/Edit tool call.",
+          "AC-4 Negative control: replay the 0fcc6a5d2 shape (PRE_COUNT too low to require any drop, heading vanishes anyway, file grows 80->81L) through the script and assert it is structurally unreachable, not merely warned about.",
+          "AC-5 Marker contract documented in the script header so agent-father can rewire docs/agents/system-auditor/flow/main.md Step 1/2/2a (all three, including agent-father's own interim Step 2a gate which this script supersedes) to one invocation + marker branch. That rewire is agent-father's follow-up, NOT this task.",
+          "AC-6 RECURRING-BUG ESCALATION (satisfies brief Fix D(b)): prior_warns=7 already crossed the fleet 2+ threshold per feedback_recurring_bug_escalation.md, independently of this brief. Freeze further per-occurrence notebook patches until this actuator lands."
+        ],
+        "related": [
+          "FIX-NOTEBOOK-IMMUTABILITY-ORPHANED-BODY-CHECK"
+        ],
+        "updated_at": "2026-08-06T14:23:59Z",
+        "promoted_at": "2026-08-06T13:23:21Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
+        "claimed_at": "2026-08-06T14:23:58Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)"
+      }
+    ]
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
