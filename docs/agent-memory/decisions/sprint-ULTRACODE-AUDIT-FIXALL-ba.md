@@ -32,3 +32,12 @@
 - Fold FR-5 (fix the adjacent always-broken board-flip write) into this ticket's mandatory scope vs leave as a pure architect option → left as architect-decidable bundle recommendation: AC1 only covers the SKIP path, not the write-half, but flagged the marginal-cost case clearly since it's the same file/step.
 **why-decision:** Both live-code bugs are directly load-bearing for guard correctness (a guard that inherits the same prefix/lane blindness would fail on the exact incident class this ticket exists to fix — 95%+ flat-lane, matching the 07-03/07-04 real incidents), so they had to be surfaced as mandatory FR content, not footnotes.
 **why-change:** No change from the dispatched scope — added 1 PO blocker (ticket closure sequencing across the deliberate (a)+(c)-now/(b)-residual split) per explicit dispatch instruction not to silently fold fix_spec(b)/AC2.
+
+### STEP ba-S4 · ba · 2026-08-06T09:26:25Z
+**task-id:** UC-CRITIC-HOOKS-ENFORCEMENT
+**what-done:** Read all 7 PO-confirmed swallowing hook invocations end-to-end (not just wrapper), wrote FR-1..FR-6 fail-loud/backstop spec with risk tiers, zero PO blockers. Root-cause history noted: task sat 24h with zero live lock before this dispatch.
+**what-considered:**
+- Treat all 7 invocations uniformly vs risk-tier them → tiered: 3/7 (tmux status, tmux set-option, graphify) are cosmetic/informational, not validators; forcing full redesign parity onto them is scope-inflation the finding never asked for.
+- Scope FR-2 discriminator to only the outer settings.local.json wrapper vs also flag internal script guards → found swallowing happens at BOTH layers (outer 2>/dev/null||true AND some scripts' own early exit-0 guards conflate "nothing to check" with "prerequisite crashed") — flagged both, outer wrapper is the actual gap since inner validator-call capture is already partially correct.
+**why-decision:** Live-reading the scripts (not just the audit brief's summary) surfaced that orch-state-hook-bash-backstop.sh already captures ITS OWN validator's exit code correctly — the brief's "6/6 swallow" framing is about the outer settings.json wrapper, not proof the scripts are all equally naive inside.
+**why-change:** No change from PO's ratified scope. Added FR-6 risk-tiering as BA's own recommendation (not requested by dispatch) since uniform treatment of 7 invocations with wildly different blast radii would waste architect/dev cycles on cosmetic tmux/graphify hooks.

@@ -1,6 +1,20 @@
 # BA — Notebook
 
-**Last updated:** 2026-08-06 | **Sprint:** COWORK-GUARANTEED-SLOT-CATCHUP
+**Last updated:** 2026-08-06 | **Sprint:** ULTRACODE-AUDIT-FIXALL
+
+## UC-CRITIC-HOOKS-ENFORCEMENT · 2026-08-06
+
+Spec complete. REQ file: `docs/handoffs/UC-CRITIC-HOOKS-ENFORCEMENT-BA-spec.md`. Zero PO blockers. NEXT: architect.
+
+Root-cause note: this row sat `IN_PROGRESS` ~24h with zero live task-lock (SLS-promoted 08-05 06:45, PO-ratified 09:06, never actually dispatched until this cycle) — the exact "broken enforcement produces zero live signal" failure class this SPIKE exists to close already happened one layer up in the dispatch pipeline, not in the hooks themselves. Worth a memory note for router/PO: SLS-promotion + PO-ratification are necessary but not sufficient — neither one actually spawns the agent.
+
+Read all 7 PO-confirmed swallowing hook invocations end-to-end (not just the `|| true` wrapper) before writing FRs. Two findings the wrapper-level framing alone would have missed: (1) swallowing happens at TWO layers — the outer `.claude/settings.local.json`/`settings.json` invocation wrapper (`2>/dev/null || true`), AND some scripts' own internal early-`exit 0` guards conflate "legitimately nothing to check" with "a prerequisite (jq/bun/git) itself crashed"; `orch-state-hook-bash-backstop.sh` already captures its OWN inner validator's exit code correctly (`VALIDATE_OUT=$(bun ... 2>&1) || VALIDATE_EXIT=$?`), so the brief's "6/6 swallow" framing is really about the outer wrapper, not proof every script is naive inside. (2) Only 4 of the 7 invocations are load-bearing validators with no other structural backstop (`orch-state-hook-bash-backstop.sh`=CRITICAL — sole guard for the SSOT hot file against shell-path writes; `context-bloat-backstop.sh`/`notebook-auto-prune.sh`/`branch-hygiene-stop.sh`=HIGH); the other 3 (`tmux-agent.sh status`, `tmux set-option`, graphify PreToolUse) are cosmetic/informational with zero enforcement function — recommended architect NOT force uniform fail-loud redesign parity onto these 3 (scope-inflation the finding never asked for).
+
+PO ratification (`po_goahead_20260805T090611`) had already corrected the brief's attribution error: `orch-state-hook-prewrite.mjs` is the ONE fail-closed hook (no `|| true`), re-confirmed live-read this cycle at `.claude/settings.local.json:31` — explicit FR-5 non-goal in the spec, do not touch.
+
+MCP gateway binding note: this session's tool grant was Read/Edit/Write/Bash only — no `mcp__gateway__call_tool` function available despite the MCP server instructions being injected (matches the documented dev-star-gateway-binding gap, apparently also live for a router-dispatched BA sub-agent this cycle, not just dev-* zone specialists). Could not `task_claim`/`task_heartbeat`/`task_release` the inner `task:UC-CRITIC-HOOKS-ENFORCEMENT` sprint-task lock or `send_telegram`; all board/`.head`/notebook/journal writes done via Bash+jq+`orch-apply.sh` (no MCP needed for those). Router should be aware release/heartbeat of any outer intent-claim it holds is its own responsibility, per the standing dispatcher-finally-block convention.
+
+Decision journal (task_id: UC-CRITIC-HOOKS-ENFORCEMENT): see `docs/agent-memory/decisions/sprint-ULTRACODE-AUDIT-FIXALL-ba.md`.
 
 ## FIX-VNINDEX-CROSS-PLANE-PLAUSIBILITY-GATE · 2026-08-06
 
@@ -17,14 +31,6 @@ Resolved a 3-way naming collision on `market_context (tier-2)`: neither `get_mar
 Dedup: `FIX-VNINDEX-ESTIMATE-IMPLAUSIBLE-DELTA-GATE` (P2, `apps/macro-indicators/`, BACKLOG) is a narrower prior sibling in the wrong zone (producer, not consumer) — flagged to fold in on completion.
 
 Decision journal (task_id: FIX-VNINDEX-CROSS-PLANE-PLAUSIBILITY-GATE): see `docs/agent-memory/decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-ba.md`.
-
-## FIX-COWORK-FIRE-ELECTION-TICK-TOMBSTONE · 2026-07-31
-
-Spec complete. REQ file: `docs/handoffs/FIX-COWORK-FIRE-ELECTION-TICK-TOMBSTONE-ba-spec.md`. Zero PO blockers. NEXT: architect.
-
-Router dispatch offered BA a direct-implementation path ("implement directly if your flow permits"); started one (Step 2.5 tombstone check in `cowork-tick-preflight.sh` + LLM-fallback mirror in `leader-lock.md`, verdict-table update in `main.md`, ordering-invariant comment in `telemetry.md`, 40/40 tests green including 2 production-incident positive controls) then caught it against my own `init.md` `forbidden_outputs` ("NEVER write production code", "NEVER modify agent files, flow files, or knowledge files") — those are absolute identity constraints, not something a dispatching prompt's "use your own judgment" can waive. Reverted cleanly via `git checkout --` (files were clean before I touched them, confirmed via `git status --porcelain` both before and after) and wrote the spec instead — the analysis survived the revert, only the code did not. Spec: 3 FRs (pre-election tombstone check on BOTH the deterministic script AND the ERROR-fallback LLM path, new `TOMBSTONED` verdict, suppression-before-claim-attempt not just before success) + 5 NFRs, centered on PO's own landmine: `pressure-state.json.tick_id` is second-precision, the nominal `TICK` used for election is minute-precision — a literal string compare is provably always-false, must normalize one side. Flagged an additional rollout risk PO/architect had not surfaced: the live `*/15` cron is armed via a static `CronCreate` prompt string (`.claude/skills/cron-cowork-team/SKILL.md`), and that skill's own idempotency guard means a bare `/cron-cowork-team` re-run will NOT propagate the new verdict text to the already-armed job — needs an explicit `CronDelete`+`CronCreate`. Carried as NFR-5, not a PO blocker (technical/deployment question, not a priority/VN-term/data-source/historical-vs-realtime one). Board row: status stayed `IN_PROGRESS` in `in_progress[]` (updated `next_agent` in place — not a terminal/review-token flip, so `CANONICAL:SSOT-STATUSFLIP-LANEMOVE` does not apply); `.head` verified live (`active_task_id:null`) before writing, confirmed no head-sync needed.
-
-Decision journal (task_id: FIX-COWORK-FIRE-ELECTION-TICK-TOMBSTONE): see `docs/agent-memory/decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-ba.md`.
 
 ## Archive
 
