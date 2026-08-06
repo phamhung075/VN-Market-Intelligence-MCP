@@ -3112,6 +3112,19 @@
         "payload_ref": null,
         "provenance": "detector",
         "audit_cycle_tag": "cron:auditor-t1:2026-08-06T20:30Z"
+      },
+      {
+        "id": "sys-20260806T211009-070b",
+        "ts": "2026-08-06T21:10:09Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "microservice_degraded",
+        "summary": "rag-service A-30 memory floor breach (98.20%, 18.4MiB-free, floor=40MiB)",
+        "severity": "WARN",
+        "status": "READ",
+        "payload_ref": null,
+        "provenance": "detector",
+        "audit_cycle_tag": "cron:auditor-t1:2026-08-06T21:00Z"
       }
     ],
     "last_triaged_at": "2026-07-29T06:25:00Z",
