@@ -1,0 +1,14 @@
+{
+  "from": "commit-sweep-guard",
+  "to": "po",
+  "type": "bug-escalation",
+  "priority": "high",
+  "createdAt": "2026-08-06T09:11:38Z",
+  "payload": "[sweep-guard] BARE commit about to absorb 7 staged file(s) not necessarily this actor's own: .claude/skills/cron-standalone-team/register-job-agent-father.md .claude/skills/cron-standalone-team/register-job-claude-manager-helper.md .claude/skills/cron-standalone-team/register-job-code-janitor.md .claude/skills/cron-standalone-team/register-job-db-integrity-offhours.md .claude/skills/cron-standalone-team/register-job-db-integrity-weekday.md .claude/skills/cron-standalone-team/register.md docs/data/orch/orch-state.json. actor=24817246-8a3f-4511-95f7-1b4385797bee mode=warn escalated=true prior_warns=12 threshold=3. Fix: git commit -m \"<msg>\" -- <own-files-only>.",
+  "_processed": {
+    "fingerprint": "118b3b01f037364cbcde3b07f2249d497d217e55c0f5ef86295511fc916a6f18",
+    "processedAt": "2026-08-06T09:15:50Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

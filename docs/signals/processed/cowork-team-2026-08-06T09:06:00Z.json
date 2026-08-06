@@ -1,0 +1,55 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-08-06T09:06:00Z",
+    "matched_slots": [
+      "refine-bctc-slot-1"
+    ],
+    "won_slots": [
+      "refine-bctc-slot-1"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/refine_bctc_md/flow/main.md"
+    ],
+    "silent": false,
+    "drift_min": 3,
+    "errors": [],
+    "pressure_mode": "adaptive",
+    "calendar_status": "unknown",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "chef_mutex_applied": false,
+    "due_reasons": {
+      "refine-bctc-slot-1": "cron"
+    },
+    "cadence_minutes": {
+      "refine-bctc-slot-1": null
+    },
+    "last_fired_timestamp": "2026-08-06T09:05:45Z",
+    "last_fired_slots": [
+      "refine-bctc-slot-1"
+    ],
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "09:00",
+    "leader_lock": "acquired",
+    "dev_head": "unknown",
+    "devq": 5,
+    "signal_backlog": 21,
+    "note": "tick-snapshot write skipped this tick (minute-boundary drift 09:04->09:05); refine_bctc_md falls back to direct get_cycle_bootstrap"
+  },
+  "priority": "low",
+  "createdAt": "2026-08-06T09:06:00Z",
+  "_processed": {
+    "fingerprint": "7d165b987f550c589cf3b94dda7b9741db829d03c13b27e4f8d14f27b7b4e569",
+    "processedAt": "2026-08-06T09:15:50Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
