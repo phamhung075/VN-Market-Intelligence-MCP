@@ -88,12 +88,11 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "FIX-GET-BCTC-REFINED-NO-PROJECTION-PARAM",
-    "next_agent": "dev-mcp-server",
-    "next_action": "BOUNDED-1 auto-pickup claim of FIX-GET-BCTC-REFINED-NO-PROJECTION-PARAM — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
-    "updated_at": "2026-08-06T16:43:28Z",
-    "updated_by": "dev-team (bounded-1 auto-pickup)"
+    "status": "idle",
+    "active_task_id": null,
+    "next_agent": "router",
+    "updated_at": "2026-08-06T17:09:40Z",
+    "updated_by": "dev-mcp-server (self-closeout branch:null REVIEW flip, CANONICAL:SSOT-STATUSFLIP-LANEMOVE)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -22030,6 +22029,44 @@
         ],
         "status_note": "[QA] Direct-Commit Verify FAILED 2026-08-06 — CHANGES_REQUESTED, per this row's OWN po_transport_ruling_20260725T1735 QA CLOSE-GATE (G1/G2/G3), RAW re-verified against the live repo this tick, not trusted from review_note prose alone.\n\nG1 TRANSPORT (Bash grant): HOLDS. `grep -m1 '^tools:' .claude/agents/news-scout.md` / `.../market-watcher.md` both = \"Read, Write, Edit, Bash, mcp__gateway__call_tool\" (commit 610110e16, 2026-07-30). Flow-doc stale-caveat also already repaired (FIX-COWORK-FLOWDOC-STALE-TRANSPORT-GAP-CAVEAT, landed 2026-08-01) — cycle.md:71/267, stage-sentiment.md:18, stage-log-notify.md:82 correctly instruct direct Bash invocation of coverage-stamp.sh, caveat demoted to genuine-error-only fallback.\n\nG2 LIVE INVOCATION: FAILS, live, this tick. docs/data/coverage-state.json is IDENTICAL to the exact frozen state po measured 2026-07-25T17:32Z, 12 days ago: `_updated_at`=2026-07-25T16:14:39Z; `jq '[.tickers[].last_covered_news_scout]|group_by(.)|length'`=1; same for last_covered_market_watcher=1; 57/57 tickers still byte-identical on both fields; sweep_config still absent. The exact same 58-ins/58-del uncommitted working-tree diff the developer described on 2026-07-25 is STILL sitting uncommitted today, byte-for-byte, untouched for 12 days. market-watcher's OWN notebook self-admits the write is still being skipped, AFTER transport landed: commit 10aa0da9c \"coverage-write-skipped:mutex-ttl\" (2026-08-06 16:06Z, TODAY) and 09beb0997 \"coverage-write-skipped\" (2026-08-05 16:06Z). news-scout's OWN notebook prose (e.g. c235 2026-08-06, and several priors) claims \"Coverage-state write via coverage-stamp.sh\" succeeded each cycle — that claim is NOT corroborated by the live artifact, which shows zero advancement since 07-25; either the write is silently fail-closing (mutex/session loss, matches script's own T7 behaviour) or the notebook is confabulating a step never actually completed — either way it is not evidence of G2.\n\nG3 sweep_config: FAILS. `jq 'has(\"sweep_config\")' docs/data/coverage-state.json` = false, unchanged since 07-25.\n\nIndependently re-ran scripts/agents-flow/coverage-stamp.test.sh directly this tick: 29/29 PASS — confirms the developer's script-level claim is real. But per this row's own close-gate, \"DO NOT APPROVE THIS ROW ON THE 29/29 SCRIPT TESTS ALONE... the executable is proven, the CALL PATH is not.\" The script/tests/flow-doc rewiring are genuine and not in question; NOT rejecting on artifact quality. Rejecting because the row's own PO-authored acceptance bar (G2 live invocation, G3 sweep_config self-heal) is unmet 12 days after G1 landed — the defect this row exists to fix (STALE_TICKERS permanently empty, sweep dead) is still fully live in production today.\n\nThis is now an operational/runtime gap, not a design question: market-watcher's mutex-ttl skip (task_claim TTL=30s on \"coverage-state:main\" vs actual cron cycle latency, and/or CLAUDE_CODE_SESSION_ID propagation into the cowork cron invocation env) needs live diagnosis, plus reconciling news-scout's notebook success-claims against the file's non-movement. Recommend owner re-open live diagnosis of the coverage-stamp.sh invocation path (both agents) before re-submitting to QA. blocked_by=[FIX-COWORK-BASH-GRANT-COVERAGE-STAMP-TRANSPORT] left untouched on purpose — that grant itself (G1) has landed; clearing blocked_by / re-lane is a board-hygiene call for this row's owner (po), out of QA scope.\n\nHeld: .task_board.qa[] -> .task_board.review[], status QA -> REVIEW, redispatch_count 0 -> 1.",
         "redispatch_count": 1
+      },
+      {
+        "id": "FIX-GET-BCTC-REFINED-NO-PROJECTION-PARAM",
+        "type": "FIX",
+        "title": "get_bctc_refined has no projection param and SELECTs full markdown for every prior unit, so refine_bctc_md's resume skip-set read grows with every chunk -- and flow/main.md documents the return shape as { units: [{ unit_id }] }, which the tool has never returned",
+        "status": "REVIEW",
+        "priority": "P2",
+        "size": "XS",
+        "zone": "apps/mcp-server/",
+        "owner": "po",
+        "next_agent": "qa",
+        "supervised": false,
+        "plan_only": false,
+        "created_at": "2026-08-06T11:18:01Z",
+        "created_by": "po/recurring-bug-escalation-20260806T1118Z",
+        "updated_at": "2026-08-06T17:09:40Z",
+        "source": "po recurring-bug escalation 2026-08-06T11:18Z -- found while root-causing FIX-REFINE-SUBFLOW-OPTIONC-CONTRACT-DRIFT. Filed separately and at P2 BECAUSE IT WAS MEASURED AND IS NOT THE CAUSE OF THAT INCIDENT: honest sizing below.",
+        "desc": "apps/mcp-server/src/interface/mcp/tools/financial-reports/getBctcRefinedTool.ts:82 SELECTs `unit_id, page_numbers_json, markdown, flags, confidence, window_status, refined_at` for every row of the report and returns JSON.stringify(output, null, 2) -- there is no projection/limit/skip-set-only argument. refine_bctc_md's Phase 0 step 5 calls it purely to build a skip-set of unit_ids, and docs/agents/refine_bctc_md/flow/main.md:63 documents the response as `-> { units: [{ unit_id }] }` -- a shape the tool has never produced. Every resume fire therefore reads back all previously refined markdown it has no use for, and the read grows monotonically with each completed chunk. MEASURED, DO NOT OVERSTATE: for report a3a41225 (12 units) the real response is 25,316 bytes ~= 7k tokens -- material but far too small to have caused the two zero-push fires of 2026-08-06, so this row is explicitly NOT the root cause of those. Worst live case measured across the whole bctc_refined_units table: report b061d92b = 77 units / 103,606 markdown bytes, i.e. ~30k tokens returned to a caller that wants a list of ids. Same overflow family as FIX-PENDING-REFINE-OUTPUT-235K-OVERFLOW (review[], sibling tool get_bctc_pending_refine, 235K chars).",
+        "files": [
+          "apps/mcp-server/src/interface/mcp/tools/financial-reports/getBctcRefinedTool.ts",
+          "docs/agents/refine_bctc_md/flow/main.md"
+        ],
+        "deliverable": "AC-1: get_bctc_refined accepts an optional projection argument (e.g. fields:'ids'|'full', default 'full' so existing callers bctc-analyst / ESC-5 gate are unaffected) that when set to ids returns only { report_id, total_units, units:[{unit_id, window_status}] }. AC-2: refine_bctc_md flow/main.md Phase 0 step 5 passes it and its documented return shape matches what the tool actually returns. AC-3: a test asserting the ids projection response for a >=12-unit report is under 4KB.",
+        "out_of_scope": "Do not change the default response shape -- bctc-analyst and the ESC-5 confidence gate both consume the full markdown.",
+        "not_duplicate_of": "FIX-PENDING-REFINE-OUTPUT-235K-OVERFLOW (review[]) is the same defect class in the sibling tool get_bctc_pending_refine; this row is get_bctc_refined, a different tool and a different caller path.",
+        "related": [
+          "FIX-REFINE-SUBFLOW-OPTIONC-CONTRACT-DRIFT",
+          "FIX-PENDING-REFINE-OUTPUT-235K-OVERFLOW"
+        ],
+        "baseline_pass": "9408",
+        "promoted_at": "2026-08-06T15:58:02Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
+        "claimed_at": "2026-08-06T16:43:27Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "updated_by": "dev-mcp-server",
+        "commit_sha": "ff36391dc",
+        "note": "AC-1: optional fields:\"ids\"|\"full\" (default full, unchanged) added to get_bctc_refined. ids SELECTs only unit_id,window_status (no markdown read from DB) -> {report_id,total_units,units:[{unit_id,window_status}]}, empty units:[] on zero pushed units (never the full path's {error} shape). AC-2: refine_bctc_md/flow/main.md Phase 0 step 5 now calls fields:\"ids\" and documents the actual served shape. AC-3: new FIX-GET-BCTC-REFINED-NO-PROJECTION-PARAM.test.ts (7/7 pass) asserts the 12-unit ids payload is well under 4KB. tsc clean. gen-project-stats.ts: tools=183/cron=88 unchanged. Fresh boot health+dashboard circular-dep probe clean. Full bun test 15139 pass/40 skip/53 fail/1 error (470s, within documented 52-61 flaky floor); targeted bctc/financial-reports sweep 1380 pass/0 fail across 121 files, zero overlap with the 52 full-suite failure names (grep-confirmed). full path byte-identical to pre-fix (out-of-scope respected)."
       }
     ],
     "qa": [
@@ -22327,43 +22364,7 @@
     },
     "last_triaged_at": "2026-08-06T16:43:20Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": [
-      {
-        "id": "FIX-GET-BCTC-REFINED-NO-PROJECTION-PARAM",
-        "type": "FIX",
-        "title": "get_bctc_refined has no projection param and SELECTs full markdown for every prior unit, so refine_bctc_md's resume skip-set read grows with every chunk -- and flow/main.md documents the return shape as { units: [{ unit_id }] }, which the tool has never returned",
-        "status": "IN_PROGRESS",
-        "priority": "P2",
-        "size": "XS",
-        "zone": "apps/mcp-server/",
-        "owner": "po",
-        "next_agent": "dev-mcp-server",
-        "supervised": false,
-        "plan_only": false,
-        "created_at": "2026-08-06T11:18:01Z",
-        "created_by": "po/recurring-bug-escalation-20260806T1118Z",
-        "updated_at": "2026-08-06T16:43:28Z",
-        "source": "po recurring-bug escalation 2026-08-06T11:18Z -- found while root-causing FIX-REFINE-SUBFLOW-OPTIONC-CONTRACT-DRIFT. Filed separately and at P2 BECAUSE IT WAS MEASURED AND IS NOT THE CAUSE OF THAT INCIDENT: honest sizing below.",
-        "desc": "apps/mcp-server/src/interface/mcp/tools/financial-reports/getBctcRefinedTool.ts:82 SELECTs `unit_id, page_numbers_json, markdown, flags, confidence, window_status, refined_at` for every row of the report and returns JSON.stringify(output, null, 2) -- there is no projection/limit/skip-set-only argument. refine_bctc_md's Phase 0 step 5 calls it purely to build a skip-set of unit_ids, and docs/agents/refine_bctc_md/flow/main.md:63 documents the response as `-> { units: [{ unit_id }] }` -- a shape the tool has never produced. Every resume fire therefore reads back all previously refined markdown it has no use for, and the read grows monotonically with each completed chunk. MEASURED, DO NOT OVERSTATE: for report a3a41225 (12 units) the real response is 25,316 bytes ~= 7k tokens -- material but far too small to have caused the two zero-push fires of 2026-08-06, so this row is explicitly NOT the root cause of those. Worst live case measured across the whole bctc_refined_units table: report b061d92b = 77 units / 103,606 markdown bytes, i.e. ~30k tokens returned to a caller that wants a list of ids. Same overflow family as FIX-PENDING-REFINE-OUTPUT-235K-OVERFLOW (review[], sibling tool get_bctc_pending_refine, 235K chars).",
-        "files": [
-          "apps/mcp-server/src/interface/mcp/tools/financial-reports/getBctcRefinedTool.ts",
-          "docs/agents/refine_bctc_md/flow/main.md"
-        ],
-        "deliverable": "AC-1: get_bctc_refined accepts an optional projection argument (e.g. fields:'ids'|'full', default 'full' so existing callers bctc-analyst / ESC-5 gate are unaffected) that when set to ids returns only { report_id, total_units, units:[{unit_id, window_status}] }. AC-2: refine_bctc_md flow/main.md Phase 0 step 5 passes it and its documented return shape matches what the tool actually returns. AC-3: a test asserting the ids projection response for a >=12-unit report is under 4KB.",
-        "out_of_scope": "Do not change the default response shape -- bctc-analyst and the ESC-5 confidence gate both consume the full markdown.",
-        "not_duplicate_of": "FIX-PENDING-REFINE-OUTPUT-235K-OVERFLOW (review[]) is the same defect class in the sibling tool get_bctc_pending_refine; this row is get_bctc_refined, a different tool and a different caller path.",
-        "related": [
-          "FIX-REFINE-SUBFLOW-OPTIONC-CONTRACT-DRIFT",
-          "FIX-PENDING-REFINE-OUTPUT-235K-OVERFLOW"
-        ],
-        "baseline_pass": "9408",
-        "promoted_at": "2026-08-06T15:58:02Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
-        "claimed_at": "2026-08-06T16:43:27Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)"
-      }
-    ]
+    "in_progress": []
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
