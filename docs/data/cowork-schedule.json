@@ -342,11 +342,11 @@
       "dish_type": "bctc_refine",
       "guaranteed": false,
       "depends_on": null,
-      "enabled": true,
+      "enabled": false,
       "policy_id": "bctc-offmarket",
       "last_fired": "2026-08-06T09:05:45Z",
       "trigger_id": null,
-      "_note": "Slot 1 of 2. Off-market confirmed (09:00 UTC = 16:00 ICT, 1h after 15:00 close). Outside OFF-HOSE window (02:00-08:59 UTC). Drains backlog + steady-state ~1/day."
+      "_note": "Slot 1 of 4. PAUSED FIX-REFINE-SUBFLOW-OPTIONC-CONTRACT-DRIFT 2026-08-06: Option-C contract drift (execute_sub_flow_logic() non-existent function + Option-B RETURN-value language in the 4 sub-flow docs) caused 2 consecutive zero-push fires on VHM_2026_Q1 (a3a41225). Fix landed same commit. Slot-4 (cron 30 16, last successful fire 2026-08-05T16:40Z) is the sole canary while the fix is validated live. Re-enable once canary confirms >=1 unit pushed (RAW get_bctc_refined, never self-report)."
     },
     {
       "slot_id": "refine-bctc-slot-2",
@@ -361,11 +361,11 @@
       "dish_type": "bctc_refine",
       "guaranteed": false,
       "depends_on": null,
-      "enabled": true,
+      "enabled": false,
       "policy_id": "bctc-offmarket",
       "last_fired": "2026-08-06T14:06:27Z",
       "trigger_id": null,
-      "_note": "Slot 2 of 2. Off-market confirmed (14:00 UTC = 21:00 ICT). Outside OFF-HOSE window. Clear of bctc-analyst (15:00/18:00/21:00/00:00 UTC) and chef-evening (19:45 UTC). Drains backlog second window of day."
+      "_note": "Slot 2 of 4. PAUSED FIX-REFINE-SUBFLOW-OPTIONC-CONTRACT-DRIFT 2026-08-06 — see slot-1 note for root cause. Re-enable once canary (slot-4) confirms fix live."
     },
     {
       "slot_id": "refine-bctc-slot-3",
@@ -380,11 +380,11 @@
       "dish_type": "bctc_refine",
       "guaranteed": false,
       "depends_on": null,
-      "enabled": true,
+      "enabled": false,
       "policy_id": "bctc-offmarket",
       "last_fired": "2026-08-06T11:06:07Z",
       "trigger_id": null,
-      "_note": "Slot 3 of 4. Off-market confirmed (11:00 UTC = 18:00 ICT, 2h after 15:00 close). Outside OFF-HOSE window (02:00-08:59 UTC). Clear of bctc-analyst + chef-evening. T2 throughput addition."
+      "_note": "Slot 3 of 4. PAUSED FIX-REFINE-SUBFLOW-OPTIONC-CONTRACT-DRIFT 2026-08-06 — see slot-1 note for root cause. Re-enable once canary (slot-4) confirms fix live."
     },
     {
       "slot_id": "refine-bctc-slot-4",

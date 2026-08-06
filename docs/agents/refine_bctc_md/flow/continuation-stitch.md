@@ -3,7 +3,7 @@ agent:
   id: refine_bctc_md
   model: haiku
   authored_by: claude-opus-4
-  description: Sub-flow C — Multi-page continuation table (pages N to N+k, max 3). ONE unified pipe-table. Returns result JSON inline to main.md (Option-C).
+  description: Sub-flow C — Multi-page continuation table (pages N to N+k, max 3). ONE unified pipe-table. Read and applied inline by main.md's Phase 2 loop (Option-C, same execution context — not a separate return).
   tools: [get_bctc_page_text, get_bctc_page_image]
 ---
 
@@ -63,12 +63,15 @@ Bất đồng số liệu: `| 120 | Đầu tư | [ĐỘ TIN CẬY THẤP — OCR
 4. Stitch: header from N + separator + data rows N + data rows N+1 [+ N+2]. No mid-table header.
 5. Confidence: 1.0 − 0.15×red − 0.05×yellow; cap 0.6 if image unavailable; min 0.1.
 
-## RETURN (Task return value — NOT a file write)
+## RESULT SHAPE (values you build inline — NOT a file write; nothing returns them to you)
 
-Return the following JSON object as the Task return value.
+You (the leaf worker, inside main.md's Phase 2 loop) construct these fields directly in your own
+reasoning while processing this window — nothing "returns" them to you and there is no separate
+agent collecting them. Use them straight away as the `push_bctc_refined_unit` call arguments
+(`markdown`, `confidence`, `flags`, `window_status`).
 **DO NOT write to docs/refine-output/ or any filesystem path.**
-The orchestrator (main.md) collects this return value directly.
 
+DONE shape:
 ```json
 {
   "unit_id": "<unit_id>",
@@ -81,7 +84,7 @@ The orchestrator (main.md) collects this return value directly.
 }
 ```
 
-FAILED return value:
+FAILED shape:
 ```json
 {
   "unit_id": "<unit_id>",
@@ -94,10 +97,9 @@ FAILED return value:
 }
 ```
 
-Final response line (for orchestrator log):
+Log line (this fire's session log only — not a return value):
 ```
 STATUS: DONE | FAILED  |  UNIT_ID: <id>  |  PAGES: N, N+1 [, N+2]
 CONFIDENCE: <score>    |  FLAGS: <flags or none>
-RETURN: JSON Task return value (no disk write)
 NOTE: Stitched <k> pages. Header from page N only.
 ```

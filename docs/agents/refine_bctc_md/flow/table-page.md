@@ -3,7 +3,7 @@ agent:
   id: refine_bctc_md
   model: haiku
   authored_by: claude-opus-4
-  description: Sub-flow A — One table-dense BCTC page → trusted pipe-table markdown. Returns result JSON inline to main.md (Option-C).
+  description: Sub-flow A — One table-dense BCTC page → trusted pipe-table markdown. Read and applied inline by main.md's Phase 2 loop (Option-C, same execution context — not a separate return).
   tools: [get_bctc_page_text, get_bctc_page_image]
 ---
 
@@ -59,12 +59,15 @@ Balance PASSED không xóa cờ đỏ đã ghi. Cờ vẫn giữ nguyên.
 6. Balance check if balance-sheet page → record `balance_check:PASSED|FAILED|N/A` in flags.
 7. Confidence: start 1.0; red flag −0.15; yellow flag −0.05; min 0.1.
 
-## RETURN (Task return value — NOT a file write)
+## RESULT SHAPE (values you build inline — NOT a file write; nothing returns them to you)
 
-Return the following JSON object as the Task return value.
+You (the leaf worker, inside main.md's Phase 2 loop) construct these fields directly in your own
+reasoning while processing this window — nothing "returns" them to you and there is no separate
+agent collecting them. Use them straight away as the `push_bctc_refined_unit` call arguments
+(`markdown`, `confidence`, `flags`, `window_status`).
 **DO NOT write to docs/refine-output/ or any filesystem path.**
-The orchestrator (main.md) collects this return value directly.
 
+DONE shape:
 ```json
 {
   "unit_id": "<unit_id>",
@@ -77,7 +80,7 @@ The orchestrator (main.md) collects this return value directly.
 }
 ```
 
-FAILED return value:
+FAILED shape:
 ```json
 {
   "unit_id": "<unit_id>",
@@ -90,9 +93,8 @@ FAILED return value:
 }
 ```
 
-Final response line (for orchestrator log):
+Log line (this fire's session log only — not a return value):
 ```
 STATUS: DONE | FAILED  |  UNIT_ID: <id>  |  PAGE: <N>
 CONFIDENCE: <score>    |  FLAGS: <flags or none>
-RETURN: JSON Task return value (no disk write)
 ```

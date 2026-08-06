@@ -4,13 +4,13 @@ agent:
   id: refine_bctc_md
   model: haiku
   authored_by: claude-opus-4
-  description: Sub-flow D — Re-examine one flagged cell. Orchestrator second-look. Returns result JSON inline to main.md (Option-C).
+  description: Sub-flow D — Re-examine one flagged cell, a second look within the same fire. Read and applied inline by main.md's Phase 2 loop (Option-C, same execution context — not a separate return).
   tools: [get_bctc_page_text, get_bctc_page_image]
 ---
 
 # Refine BCTC — Sub-Flow D: Disagreement Verify
 
-Re-examine **one previously flagged cell** on orchestrator request (AC-FR13-2 cross-check).
+Re-examine **one previously flagged cell**, applied by you inline within main.md's own flow (AC-FR13-2 cross-check) — not a separate agent request.
 
 ## Guidance (system prompt; send once, cached)
 
@@ -26,7 +26,7 @@ You are re-examining a cell flagged during the main refine pass (text ≠ image 
 
 ## Input / Output Contracts
 
-Orchestrator supplies:
+Already in scope from main.md's own state (this window's fields, not supplied by anything external):
 `{ report_id, unit_id, page_number, flagged_cell: { row_code, row_label, column, ocr_value, image_value, original_flag } }`
 
 Output fields:
@@ -79,12 +79,15 @@ If the page is NOT in any marker, proceed with Steps 1-4 unchanged (VALUE disagr
 3. Locate same cell in `page_image` by code/label/grid position. Read value.
 4. Verdict: both agree → `confirmed=false, best_value=<value>, flag="", confidence=0.85`. Still disagree → `confirmed=true, best_value=null`. Discrepancy larger → escalate, `confidence < original`.
 
-## RETURN (Task return value — NOT a file write)
+## RESULT SHAPE (values you build inline — NOT a file write; nothing returns them to you)
 
-Return the following JSON object as the Task return value.
+You (the leaf worker, inside main.md's Phase 2 loop) construct these fields directly in your own
+reasoning while re-examining this cell — nothing "returns" them to you and there is no separate
+agent collecting them. Use them straight away as the `push_bctc_refined_unit` call arguments
+(`markdown`, `confidence`, `flags`, `window_status`).
 **DO NOT write to docs/refine-output/ or any filesystem path.**
-The orchestrator (main.md) collects this return value directly.
 
+DONE shape:
 ```json
 {
   "unit_id": "<unit_id>",
@@ -104,7 +107,7 @@ The orchestrator (main.md) collects this return value directly.
 }
 ```
 
-FAILED return value (tool failure):
+FAILED shape (tool failure):
 ```json
 {
   "unit_id": "<unit_id>",
@@ -118,10 +121,9 @@ FAILED return value (tool failure):
 }
 ```
 
-Final response line (for orchestrator log):
+Log line (this fire's session log only — not a return value):
 ```
 STATUS: DONE | FAILED  |  UNIT_ID: <id>  |  PAGE: <N>  |  CELL: <row_code>/<column>
 CONFIRMED: true (flag stands) | false (refuted)  |  BEST_VALUE: <num> | null
 CONFIDENCE: <score>
-RETURN: JSON Task return value (no disk write)
 ```

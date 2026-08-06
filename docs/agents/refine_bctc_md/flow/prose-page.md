@@ -3,7 +3,7 @@ agent:
   id: refine_bctc_md
   model: haiku
   authored_by: claude-opus-4
-  description: Sub-flow B — Prose/notes BCTC page. Text-only (no image). Returns result JSON inline to main.md (Option-C).
+  description: Sub-flow B — Prose/notes BCTC page. Text-only (no image). Read and applied inline by main.md's Phase 2 loop (Option-C, same execution context — not a separate return).
   tools: [get_bctc_page_text]
 ---
 
@@ -20,8 +20,10 @@ PROSE REFINE GUIDANCE — MANDATORY:
 2. OCR text is the only source. No image fetched (cost optimization).
 3. Extract key numerical disclosures as **Label:** value pairs.
 4. Preserve narrative context (dates, counterparty names, legal references).
-5. If table-like content detected (| separators or column headers), return
-   page_type_mismatch flag — orchestrator will re-route to table-page.md.
+5. If table-like content detected (| separators or column headers), this window was
+   misclassified upstream — return status="FAILED" with page_type_mismatch flag (see
+   RESULT SHAPE below). Do not attempt table parsing here — you were not given
+   table-page.md's contract for this window.
 ```
 
 ## Worked Examples (Vietnamese)
@@ -64,12 +66,15 @@ OCR chứa: "| Mã số | Chỉ tiêu |" → flags: ["page_type_mismatch"] → F
 4. Construct output: leading narrative paragraphs + `**label:** value` pairs + sub-section headers.
 5. Confidence: default 0.85; garbled OCR (random symbols > 5%) → 0.5.
 
-## RETURN (Task return value — NOT a file write)
+## RESULT SHAPE (values you build inline — NOT a file write; nothing returns them to you)
 
-Return the following JSON object as the Task return value.
+You (the leaf worker, inside main.md's Phase 2 loop) construct these fields directly in your own
+reasoning while processing this window — nothing "returns" them to you and there is no separate
+agent collecting them. Use them straight away as the `push_bctc_refined_unit` call arguments
+(`markdown`, `confidence`, `flags`, `window_status`).
 **DO NOT write to docs/refine-output/ or any filesystem path.**
-The orchestrator (main.md) collects this return value directly.
 
+DONE shape:
 ```json
 {
   "unit_id": "<unit_id>",
@@ -82,7 +87,7 @@ The orchestrator (main.md) collects this return value directly.
 }
 ```
 
-FAILED return value (table mismatch or tool failure):
+FAILED shape (table mismatch or tool failure):
 ```json
 {
   "unit_id": "<unit_id>",
@@ -95,10 +100,9 @@ FAILED return value (table mismatch or tool failure):
 }
 ```
 
-Final response line (for orchestrator log):
+Log line (this fire's session log only — not a return value):
 ```
 STATUS: DONE | FAILED  |  UNIT_ID: <id>  |  PAGE: <N>
 CONFIDENCE: <score>    |  FLAGS: <flags or none>
-RETURN: JSON Task return value (no disk write)
 NOTE: Text-only (no image fetched)
 ```

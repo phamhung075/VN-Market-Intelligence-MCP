@@ -1,4 +1,5 @@
 ---
+<!-- size-justification: 181L (FIX-REFINE-SUBFLOW-OPTIONC-CONTRACT-DRIFT 2026-08-06, +42L from 139L pre-fix) — thin Option-C dispatcher for a Haiku-model leaf worker; Phase 2's inline loop (explicit per-page_type Read step + anti-confabulation guard + the 4-value STATUS enum restated at the loop site) closes the exact contract-drift root cause (non-existent execute_sub_flow_logic() call + invented PARTIAL_EXIT status on 2 consecutive zero-push fires); trimming it back down would re-introduce the ambiguity this fix removes. -->
 agent:
   id: refine_bctc_md
   model: haiku
@@ -79,27 +80,52 @@ enforced server-side). Each: `{ unit_id, page_numbers, page_type, needs_image }`
 
 ## Phase 2 — Sequential Inline Loop (NO spawn_agent — Option-C)
 
-Sub-flow logic (inline, not spawned — select by `window.page_type`):
-- `table` → apply `docs/agents/refine_bctc_md/flow/table-page.md` logic
-- `prose` → apply `docs/agents/refine_bctc_md/flow/prose-page.md` logic
-- `continuation` → apply `docs/agents/refine_bctc_md/flow/continuation-stitch.md` logic
-- `verify` → apply `docs/agents/refine_bctc_md/flow/disagreement-verify.md` logic
+**ANTI-CONFABULATION (read before starting the loop):** You ARE the parser. Reading `ocr_text`
+(from `get_bctc_page_text`) plus looking at the page image (from `get_bctc_page_image`) and
+writing the resulting markdown IS the job — you perform every numbered step below yourself, in
+your own reasoning, in this same turn. There is no `execute_sub_flow_logic()` function (it does
+not exist anywhere in this repo), no external parsing tool, no sub-agent, and no separate
+orchestrator waiting for a return value. The four docs listed in step 1 are instructions for YOU,
+the leaf worker, to follow inline — not another executor's contract. If a window cannot be
+parsed, that is a `FAILED` window per that window's own doc (Steps → RETURN shape) — never
+report a missing tool, a missing executor, or "not executable with current tool grant" for this
+step; that reading is always wrong.
+
+For each `window` in `chunk`, run this loop body **yourself, inline** (no function call, no spawn):
 
 ```
 is_first = (pushed_ids.size == 0 AND NOT has_done_units)
 // reset:true on fresh PENDING start only — never on reports with prior DONE units (RESET-GUARD T0)
 // Note: if has_done_units is true, log "[RESET-GUARD] Protecting N DONE units — forcing is_first=false (reset=false)" and continue
 
-for window in chunk:
-  result = execute_sub_flow_logic(window)   // inline per page_type above
+pushed_this_fire = 0   // count of push_bctc_refined_unit calls that SUCCEEDED this fire — drives the STATUS enum below
 
-  call_tool("push_bctc_refined_unit", {
-    report_id: report.id, unit_id: result.unit_id,
-    page_numbers: result.page_numbers, markdown: result.markdown,
-    confidence: result.confidence, flags: result.flags,
-    window_status: result.status, reset: is_first
-  })
-  is_first = false
+for window in chunk:
+  1. Read the sub-flow doc matching window.page_type (once per page_type per fire — cache its
+     contract/examples in context; re-read only if page_type changes mid-chunk):
+       table        -> Read docs/agents/refine_bctc_md/flow/table-page.md
+       prose        -> Read docs/agents/refine_bctc_md/flow/prose-page.md
+       continuation -> Read docs/agents/refine_bctc_md/flow/continuation-stitch.md
+       verify       -> Read docs/agents/refine_bctc_md/flow/disagreement-verify.md
+
+  2. For each page_number in window.page_numbers:
+       call_tool("get_bctc_page_text", { report_id: report.id, page_number }) -> ocr_text
+       if window.needs_image:
+         call_tool("get_bctc_page_image", { report_id: report.id, pages: [page_number] }) -> page_image
+
+  3. Apply that doc's REFINE CONTRACT + Steps to ocr_text (+ page_image, when fetched) YOURSELF —
+     produce markdown, confidence, flags, status ("DONE" or "FAILED" for this window) matching
+     that doc's RETURN shape field names. You are constructing these values directly in your own
+     reasoning; nothing "returns" them to you.
+
+  4. call_tool("push_bctc_refined_unit", {
+       report_id: report.id, unit_id: window.unit_id,
+       page_numbers: window.page_numbers, markdown: markdown,
+       confidence: confidence, flags: flags,
+       window_status: status, reset: is_first
+     })
+     pushed_this_fire += 1   // increment on every push call that succeeds, regardless of window_status DONE/FAILED
+     is_first = false
 end
 ```
 
@@ -107,15 +133,30 @@ Heartbeat every 5 min: `call_tool(server="vn-market", tool="task_heartbeat", arg
   task_id: "bctc-refine:"+report.id, owner_client_session: "<same literal session id as Step 3 claim>" })`
 `ok=false` → lock stolen → EXIT (partial progress in DB; next fire resumes).
 
+**RETURN status enum for THIS fire (restated here at the loop site — DONE | PARTIAL | FAILED |
+SKIPPED only; no other value is valid, e.g. `PARTIAL_EXIT` is NOT a status):**
+- `SKIPPED` — chunk was empty, nothing assigned this fire (see Phase 0 early-exit paths above).
+- `DONE` — every window in `chunk` pushed AND `all_pushed >= windows.length` (Phase 3 ran finalize).
+- `PARTIAL` — **requires `pushed_this_fire >= 1`.** At least one window pushed this fire, but not
+  all report windows are pushed yet (chunk partially pushed, or fully pushed with more chunks
+  remaining next fire). Resumable — never a terminal failure.
+- `FAILED` — `pushed_this_fire == 0` even though a full chunk was assigned. Zero pushes is ALWAYS
+  `FAILED`, never `PARTIAL` — a full assigned chunk with zero successful pushes is a hard failure,
+  not partial progress.
+
 ## Phase 3 — Finalize (only when ALL windows pushed)
+
+`report_status` below is the persisted DB field (`finalize_bctc_refine` arg) — a different value
+from this fire's own `STATUS` (Phase 2, RETURN block): `report_status` summarizes the WHOLE
+report across every chunk ever pushed; `STATUS` summarizes only this fire.
 
 ```
 all_pushed = pushed_ids.size + chunk.length
 if all_pushed >= windows.length:
-  done_ct   = count(pushed units window_status==DONE)
-  failed_ct = count(pushed units window_status==FAILED)
-  status    = failed_ct==0 ? "DONE" : done_ct>0 ? "PARTIAL" : "FAILED"
-  call_tool("finalize_bctc_refine", { report_id: report.id, report_status: status })
+  done_ct        = count(pushed units window_status==DONE)
+  failed_ct      = count(pushed units window_status==FAILED)
+  report_status  = failed_ct==0 ? "DONE" : done_ct>0 ? "PARTIAL" : "FAILED"
+  call_tool("finalize_bctc_refine", { report_id: report.id, report_status: report_status })
 // else: leave refine_status=PARTIAL — next fire resumes remaining windows
 ```
 
@@ -128,6 +169,9 @@ Exception → `finalize_bctc_refine(report_status="FAILED")` → `call_tool(serv
 Never leave report in `IN_PROGRESS` without finalize.
 
 ## RETURN
+
+`STATUS` derivation is defined in Phase 2 (§ "RETURN status enum for THIS fire") — do not derive
+it ad hoc here or invent a value outside the 4-value enum.
 
 ```
 STATUS: DONE | PARTIAL | FAILED | SKIPPED
