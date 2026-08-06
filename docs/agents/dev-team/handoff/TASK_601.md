@@ -112,3 +112,19 @@ This is the first half of the code changes. TASK_602 must land alongside this fo
 - **Docs updated:** NONE — `docs/architecture/microservice/` has no existing reference to `gcExpiredLocks`/the exclusion mechanism to update (grep-confirmed before deciding to skip).
 - **Graphify:** skipped (no docs impacted)
 - **Simplicity gate:** PASS — Q1 scope clean (exactly the one WHERE-clause line + matching comments, nothing beyond AC), Q2 no new abstractions, Q3 senior-test clean, Q4 ratio N/A (100% of the diff directly satisfies the AC).
+
+## [QA] Review Record
+QA agent: qa | Date: 2026-08-07 | Round: 1 | Verdict: APPROVED (direct-commit verify — 951ddfdba already on main, no branch)
+
+- [x] Diff scope: `git show --stat 951ddfdba` — 1 file, 11 insertions, 0 deletions. No unrelated changes.
+- [x] Phase-1 SELECT (coordinationStore.ts:532) gains `AND task_id NOT LIKE 'cron-registration:%'` — confirmed at source.
+- [x] Phase-2 DELETE (lines 590-601) read directly: no task_id filter at all (unconditional `WHERE expires_at + ? < unixepoch('now')`) — an expired `cron-registration:*` row still GCs, just without orphan-signal emission. AC-3a test correctly deferred to TASK_603 per this task's own declared scope.
+- [x] Doc comments updated at both sites: ORPHAN_EMIT_ALLOW_LIST block comment (~452-458) and inline Phase-1 comment (~515-517), same rationale style as `cron:*`/`dev-team-cron-singleton`.
+- [x] tsc: 0 errors (independently re-run). mock-guard: PASS. DDD/secret/process.env greps: clean.
+- [x] Scoped tests independently re-run: `FU-LOCKSTORE-EXPIRED-GC.test.ts` + `task-lock-coordination-store.test.ts` — 54 pass / 0 fail / 163 expect() — matches handoff claim exactly.
+- [x] `docs/agents/system-auditor/handlers.md` / `audit-dimensions.md` — grep-confirmed untouched by this commit (agent-father's zone, correctly out of scope).
+
+smart_skip: NO — production SQL change, ran full checklist.
+Report: reports/TASK_REPORT_601.md
+
+---

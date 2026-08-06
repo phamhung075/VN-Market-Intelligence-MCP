@@ -138,3 +138,17 @@ Both TASK_601 and TASK_602 must land together in the same deploy cycle. Deployin
 - **Full suite / deploy:** deliberately NOT run — out of scope per TASK_602 instructions (TASK_603's job once TASK_601 also lands)
 - **Docs updated:** NONE — `docs/agents/system-auditor/handlers.md` and `docs/agents/system-auditor/audit-dimensions.md` prose mirrors are explicitly out of scope for this task (agent-father's zone, separate task)
 - **Graphify:** skipped (no docs impacted)
+
+## [QA] Review Record
+QA agent: qa | Date: 2026-08-07 | Round: 1 | Verdict: APPROVED (direct-commit verify — 86b31eccd + a5fa7bf7c already on main, no branch)
+
+- [x] Diff scope: `git show --stat` on both commits — `86b31eccd` touches exactly the 2 claimed files (18+1 insertions), `a5fa7bf7c` is the orch-state/handoff board-bookkeeping commit only. No unrelated changes.
+- [x] `isKnownLegitPattern` read at source (tasksMdJanitorJob.ts:208-211): `-singleton` suffix is a separate `endsWith` check; `"cron-registration:"` landed in `KNOWN_LEGIT_PREFIXES` (the `startsWith` prefix array, line 199) — correct branch confirmed by reading, not by trusting prose.
+- [x] Non-vacuousness independently reproduced (did not trust the stash-claim in prose): scoped revert of just the one array line (not full `git stash` — repo has unrelated dirty files elsewhere), ran the test file myself → 27 pass / 3 fail RED, exact match to claim; restored, re-ran → 30 pass / 0 fail GREEN, exact match. Also confirmed by direct simulation that `"cron:"` alone does NOT match `cron-registration:*` (5th byte differs, `-` vs `:`) — the 3 positive assertions are genuinely load-bearing, not coincidentally already-true. Negative control (`some-random-id`) correctly stays `false` in both RED and GREEN states.
+- [x] tsc: 0 errors (independently re-run). mock-guard: PASS.
+- [x] Hard constraint: `docs/agents/system-auditor/handlers.md` / `audit-dimensions.md` — grep-confirmed NOT touched by either commit (`--name-only` on both), and `git log -1` shows both files' last touch predates this row entirely. Agent-father's zone correctly left alone.
+
+smart_skip: NO — production array-literal change + test-file change, ran full checklist.
+Report: reports/TASK_REPORT_602.md
+
+---
