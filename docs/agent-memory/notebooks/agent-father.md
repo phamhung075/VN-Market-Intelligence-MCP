@@ -100,34 +100,32 @@
   (commit-mutex tool-access gap) + 1 policy question (semble-search exception class, LOW) →
   folding into Step 7 PO handoff.
 
-## Split (router-direct dispatch, P1) 2026-08-06T10:22Z TE-T26 (TOKEN-ECONOMY-AUDIT wave 3)
-- Split `docs/agents/fb-market-poster/flow/main.md` (994L) at the MODE ROUTER, per
-  `docs/architecture-briefs/2026-07-12-token-economy-lazyload-audit.md#T-26`. New
-  `docs/agents/fb-market-poster/flow/daily.md` (902L) holds STEP 0-8 of the DAILY pipeline
-  (TNB 6-layer walk, T-45 gate, compose, 4 pre-write gates, write, notebook) — pure
-  relocation, diff-verified byte-identical to the pre-split content outside the 2
-  brief-authorized deletions. `main.md` slimmed to 88L: SELF-IDENTITY GUARD + PRIVACY
-  GUARD (unchanged, stays SSOT) + MODE ROUTER (now JUMPs all 3 modes, DAILY included) +
-  new `## SHARED OUTPUT SSOT` section (disclaimer block verbatim + hashtag composition
-  rule + jargon-pointer, relocated out of daily.md's STEP 3 so weekly-recap.md/
-  weekly-prediction.md keep pointing at the still-loaded slim main.md — no duplication).
-- Deleted the 29L forbidden-English jargon table (dup of `scripts/fb-jargon-gate.sh`,
-  known false-green/drift class) → 1-line pointer. Trimmed daily.md's 26L hashtag
-  composition-rule prose → pointer at main.md § SHARED OUTPUT SSOT + kept only the
-  DAILY-specific dynamic-tag derivation note.
-- Repointed every `main.md STEP X` cross-ref in weekly-recap.md/weekly-prediction.md
-  (STEP 0/1b/2b/2c/3/4/4a/4b/4c/4d/5/6, ~20 sites total) to `daily.md`, since those STEPs
-  moved out of main.md; PRIVACY GUARD/SELF-IDENTITY GUARD/MODE ROUTER pointers unchanged
-  (those stayed in main.md). Also updated `.claude/skills/fb-jargon-gate/SKILL.md`'s
-  invocation heading and `docs/policies/dev-standards.md`'s STEP 4b owning-flow comment.
-- Registered `daily.md` in `init.md` document_registry + Extensions — and, while touching
-  that exact table, also registered the 2 pre-existing unregistered weekly siblings
-  (weekly-recap.md/weekly-prediction.md were live MODE ROUTER JUMP targets but never in
-  document_registry — anti-ghost gap closed as a small adjacent fix, same duty this split
-  itself triggers).
-- **Board:** TE-T26 lane-moved `backlog[]→review[]`, `status=REVIEW`, `next_agent=qa` via
-  `orch-apply.sh` (router explicitly directed this write). **Did NOT commit**
-  `docs/data/orch/orch-state.json` myself — `commit_zone.excluded` (`FU-AGENT-FATHER-ORCH-SCOPE`)
-  stands regardless. Doc commit (`main.md`, `daily.md`, `weekly-recap.md`,
-  `weekly-prediction.md`, `init.md`, `fb-jargon-gate/SKILL.md`, `dev-standards.md`) done
-  and pushed within my own zone.
+## FIX-CRON-DST-LOCAL-EVAL-MOMENT-ANCHORED-EXPRESSIONS (PO, P1) 2026-08-06T18:52Z
+- Corrected 5 moment-anchored `CronCreate` cron expressions that were authored as if
+  evaluated in UTC when the tool actually evaluates `cron:` Europe/Paris-LOCAL: db-data-
+  integrity Job A/B, system-auditor Tier-3, orch-sentinel FULL/LITE — all converted to the
+  dual-CEST/CET-expression + explicit changeover-note convention already proven in
+  `cron-claude-manager-helper.md`/`cron-auditor-page-reverify.md` (AC-5, no new mechanism).
+  AC-1 (db-data-integrity Job A) was the only live-impact item — was silently missing the
+  15:00-17:00 ICT settlement window a fix shipped 2 days ago exists to cover.
+- AC-6 re-arm sync: both owning skills (`cron-standalone-team`, `cron-detect-loop`) updated
+  in the SAME change — idempotency-guard literals AND the actual `CronCreate` actuators in
+  `register.md`/`register-job-*.md` (guard-only would have falsely read "missing" post-fix
+  and Step 2 would then have re-armed the STALE literal straight out of the actuator file).
+  Grep-verified zero residual stale literals anywhere in the re-arm surface.
+  `docs/agents/system-auditor/flow/main.md` Tier-3 `FIRE_TICK` comment corrected in step (was
+  mislabeling the armed cron; the `T02:00Z` VALUE itself was already correct — only the
+  cron expression that was supposed to land on it was wrong).
+- Independently re-derived the CEST/CET math for all 5 corrected pairs (both season variants
+  must land on the identical UTC instant) before trusting the already-landed fix — confirmed
+  clean. Shipped one small follow-on: fixed `cron-auditor-page-reverify.md`'s own stale
+  cross-reference ("Tier-3... not fixed here, out of scope") which this exact task just made
+  false — a precedent doc asserting a defect is unfixed right next to the commit that fixed
+  it is exactly the staleness class worth closing while touching the file family anyway.
+- AC-7 (migrate to the UTC-native JS matcher `cowork-schedule.json` already solved this with)
+  explicitly NOT done — recorded future direction, not smuggled into this correction pass.
+- Commits: `36e109170` (5 corrections + re-arm sync), `dd7a036b6` (cross-ref follow-on). Both
+  pushed clean, `git show --name-only` self-verified. Decision journal: sprint-COWORK-
+  GUARANTEED-SLOT-CATCHUP-agent-father.md STEP agent-father-S25/S26. Board: lane-move
+  `in_progress[]→review[]`, `next_agent=qa`, `.head` idle-sync — via router/PO per
+  `commit_zone.excluded` (orch-state.json is not this agent's commit surface).

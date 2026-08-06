@@ -530,3 +530,29 @@ expression silently reverts the fix on next restart — register.md/
 register-job files are the actual CronCreate call, not just the guard.
 **why-change:** AC-7 (UTC-native JS matcher migration) explicitly NOT done,
 recorded as future improvement per task instruction — no change from plan.
+
+### STEP agent-father-S26 · agent-father · 2026-08-06T18:51:00Z
+**task-id:** FIX-CRON-DST-LOCAL-EVAL-MOMENT-ANCHORED-EXPRESSIONS
+**what-done:** Verified S25's landed fix (`36e109170`) against all 7 ACs —
+math re-derived independently for every CEST/CET pair, confirmed both
+variants of each land on the identical target UTC instant; grep-confirmed
+zero residual stale literals in any re-arm skill/actuator. Then shipped one
+small follow-on (`dd7a036b6`): fixed cron-auditor-page-reverify.md's own
+"Offset rationale" cross-reference, which S25 deliberately left saying
+Tier-3's DST bug was "a separate, not-yet-filed issue — out of scope here"
+— now false, since this exact task filed and fixed Tier-3 in the same
+session.
+**what-considered:**
+- leave the stale cross-ref (S25's original call, "task said copy not edit")
+  vs fix it — chose fix; AC-5 governs not inventing a NEW mechanism, it does
+  not protect an existing file's factual claims from going stale
+- re-do the whole fix from scratch vs verify+extend — chose verify+extend,
+  redoing already-correct, already-pushed work would risk a conflicting
+  second commit for zero benefit
+**why-decision:** A precedent doc asserting "not fixed, out of scope" right
+next to the commit that fixed it is exactly the kind of stale cross-reference
+this task exists to prevent recurring — cheap, in the same doc family,
+zero mechanism change.
+**why-change:** No change to S25's substantive fix — this is a documentation-
+accuracy addendum only. Proceeding to STATUSFLIP-LANEMOVE (review[] + head
+idle-sync) since both commits are pushed and self-verified clean.
