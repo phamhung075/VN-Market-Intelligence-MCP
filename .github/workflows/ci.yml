@@ -45,10 +45,18 @@ jobs:
       # bun 1.3.13 does not accept --coverage=false (parse error); bunfig setting is the only
       # verified mechanism to suppress the OOM-crashing coverage table on CI runners.
       # Local dev coverage: bun run test:cov (see scripts/test-coverage.sh).
-      # Per-file isolation script runs each test file in its own bun process (P=16 parallelism),
+      # Per-file isolation script runs each test file in its own bun process,
       # eliminating ESM cache contamination. The script writes summary to $GITHUB_STEP_SUMMARY.
+      # Parallelism: no arg -> the script auto-detects THIS runner's own vCPU count
+      # (nproc/sysctl) instead of a hardcoded literal. CI-PERFILE-STRUCTURAL-MITIGATION
+      # (2026-08-06): a fixed P=16 was 4x-8x oversubscribed on ubuntu-latest's actual
+      # vCPU count, which amplified scheduler-delay-sensitive tests (unawaited-
+      # background-write races, real subprocess/network calls with fixed wall-clock
+      # budgets) into a ROTATING set of failing files uncorrelated with commit content
+      # (measured across 6 consecutive main pushes: 4 distinct failing files + 1 clean
+      # green + 1 docs-only-commit failure). See docs/spikes/SPIKE_CI-PERFILE-ISOLATION-FLAKE.md.
       - name: Run tests (per-file isolation)
-        run: bash ../../scripts/ci-per-file-isolation.sh 16
+        run: bash ../../scripts/ci-per-file-isolation.sh
 
   mcp-server-eslint:
     name: mcp-server-eslint

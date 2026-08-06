@@ -1,13 +1,25 @@
 #!/usr/bin/env bash
 # ci-per-file-isolation.sh — per-file process isolation runner for bun test
 # Usage: cd apps/mcp-server && bash ../../scripts/ci-per-file-isolation.sh [P]
-# P = parallelism (default 16)
+# P = parallelism (default: auto-detect this runner's own logical CPU count via
+#     nproc/sysctl, NOT a hardcoded literal — CI-PERFILE-STRUCTURAL-MITIGATION
+#     AC-3: a fixed P=16 was 4x-8x oversubscribed on GitHub-hosted `ubuntu-latest`
+#     runners (2-4 vCPU per SPIKE_CI-PERFILE-ISOLATION-FLAKE.md), which amplifies
+#     scheduler-delay-sensitive tests (unawaited-background-write races, real
+#     subprocess/network calls with fixed wall-clock budgets close to their
+#     per-test timeout) into a ROTATING set of failing files with no relation to
+#     commit content — reproduced live 2026-08-06 (rotating identity across
+#     identical-code runs; see docs/spikes/SPIKE_CI-PERFILE-ISOLATION-FLAKE.md and
+#     the CI-PERFILE-STRUCTURAL-MITIGATION board row for full evidence). Matching
+#     parallelism to actual cores removes the oversubscription amplifier at its
+#     source; an explicit numeric override is still honored (e.g. deliberate local
+#     stress-testing).
 # Outputs: aggregated pass/skip/fail to stdout + $GITHUB_STEP_SUMMARY (if set)
 # Per-file results: /tmp/ci-isolation-<PID>/<file-slug>.json
 # Host-safety: NEVER runs bare `bun test` (no file arg) — only per-file invocations
 
 set -euo pipefail
-P=${1:-16}
+P=${1:-$(nproc 2>/dev/null || sysctl -n hw.ncpu 2>/dev/null || echo 4)}
 TESTDIR="src/__tests__"
 RESULT_DIR="/tmp/ci-isolation-$$"
 mkdir -p "$RESULT_DIR"
@@ -68,12 +80,21 @@ for f in "$RESULT_DIR"/*.json; do
     FAILED_FILES+=("$f")
     continue
   fi
-  p=$(jq -r '.pass' "$f"); s=$(jq -r '.skip' "$f"); fl=$(jq -r '.fail' "$f")
+  p=$(jq -r '.pass' "$f"); s=$(jq -r '.skip' "$f"); fl=$(jq -r '.fail' "$f"); rc=$(jq -r '.rc' "$f")
   TOTAL_PASS=$((TOTAL_PASS + p))
   TOTAL_SKIP=$((TOTAL_SKIP + s))
   TOTAL_FAIL=$((TOTAL_FAIL + fl))
   if [ "$fl" -gt 0 ]; then
     FAILED_FILES+=("$(jq -r '.file' "$f")")
+  elif [ "$rc" -ne 0 ]; then
+    # rc-fail-loud (CI-PERFILE-STRUCTURAL-MITIGATION AC-4): rc was captured
+    # per-file since the extractor fix but never checked here — a killed/crashed
+    # process (OOM-kill, segfault, uncaught exception before bun prints its
+    # summary) exits nonzero yet parses to 0/0/0, making it INVISIBLE to the
+    # gate. Count it as a nominal 1 failure (the true count is unknowable from a
+    # process that never got to summarize) rather than silently dropping it.
+    TOTAL_FAIL=$((TOTAL_FAIL + 1))
+    FAILED_FILES+=("$(jq -r '.file' "$f") (rc=$rc, crashed/killed — 0 parsed fail)")
   fi
 done
 
