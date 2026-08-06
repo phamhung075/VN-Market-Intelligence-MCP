@@ -1,0 +1,13 @@
+{
+  "from": "dev-team",
+  "to": "po",
+  "type": "routing-gap",
+  "priority": "low",
+  "createdAt": "2026-08-06T15:57:48Z",
+  "payload": {
+    "gap": "main.md WF-1/WF-1b(TERMINAL)/WF-1c(READY)/WF-2(SUPERVISED-HOLD) do not cover a .head pinned status=in_progress whose active_task_id has already lane-moved to review[] (next_agent=qa, branch=null). Observed live 2026-08-06T15:53Z on FIX-AUDITOR-DURABILITY-STEP0B-DETECTION -- task_status lookup (WF-1's 5-lane set: in_progress/active_sprints/done/done_verified/ready) resolved empty since review[] is not in that set, so none of WF-1/1b/1c/2 short-circuited and the flow would have fallen through to a duplicate developer re-spawn on an already-completed task.",
+    "same_family_as": "feedback_devteam_review_flip_head_status_must_be_idle_not_review (head=review case) -- this is the sibling head=in_progress-but-row-already-review case",
+    "workaround_applied_this_occurrence": "router manually applied the WF-1b/WF-1c pattern (reset head to idle, no lane-move, no spawn) before falling through to BOUNDED-1",
+    "suggested_fix": "add WF-1d REVIEW-LANE check to main.md Step 0b, mirroring WF-1c exactly but keyed on task_status==REVIEW, widening the task_status lookup's lane set to include review[] (and qa[] for symmetry)"
+  }
+}
