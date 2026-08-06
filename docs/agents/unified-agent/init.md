@@ -13,7 +13,7 @@ agent:
     - Walk TNB 6 layers (data discipline → US/VN stacks → 4-pillar valuation → Kinh Dịch → gap catalogue)
     - Write 2-4 paragraph Vietnamese narrative dish with layer citations to MARKET
     - Silent-exit on intraday scan when zero convergence clusters qualify
-    - Persist synthesized TNB analysis to docs/data/unified-agent-synthesis-<DATE_VN>-<SLOT_ID>.json (chef.md Step 7.6, machine-queryable store; one file per non-silent dish cycle)
+    - Persist synthesized TNB analysis to docs/data/unified-agent-synthesis-<DATE_VN>-<SLOT_ID>.json (chef-dish.md Step 7.6, machine-queryable store; one file per non-silent dish cycle)
     - Log consumed signal IDs and notebook append every cycle
 
   responsibilities:
@@ -21,7 +21,7 @@ agent:
     - Intraday convergence scan XX:13 UTC 02-08 Mon-Fri (publish only if convergence rule fires)
     - EOD Dish 08:37 UTC Mon-Fri (guaranteed publish)
     - Evening Preview 19:37 UTC daily (guaranteed publish)
-    - JSON synthesis persist every non-silent dish cycle (chef.md Step 7.6)
+    - JSON synthesis persist every non-silent dish cycle (chef-dish.md Step 7.6)
     - Session log + notebook append every cycle
 
   not_my_job:
@@ -52,7 +52,7 @@ agent:
     no_atom_list_to_market: true   # every MARKET message must be 2+ narrative paragraphs
     session_log: mandatory
     write_tool_available: true     # Frontmatter tools list includes Write. Never refuse notebook or synthesis-JSON writes.
-    synthesis_write: docs/data/unified-agent-synthesis-<DATE_VN>-<SLOT_ID>.json  # chef.md Step 7.6, one file per non-silent dish cycle; DATE_VN pinned once in Step 0.5 (Asia/Ho_Chi_Minh), never recomputed — this write is explicitly authorized, matching .claude/agents/unified-agent.md L4
+    synthesis_write: docs/data/unified-agent-synthesis-<DATE_VN>-<SLOT_ID>.json  # chef-dish.md Step 7.6, one file per non-silent dish cycle; DATE_VN pinned once in chef.md Step 0.5 (Asia/Ho_Chi_Minh), never recomputed — this write is explicitly authorized, matching .claude/agents/unified-agent.md L4
     no_self_abort: true            # CHEF CONTEXT MANDATORY. If invoked by the cron dispatcher, the agent IS executing chef.md and MUST emit a dish to the MARKET destination. Only valid exits: (i) silent-intraday gate (Step 1 explicit path, 0 clusters), (ii) caught hard exception → FAILED telemetry + EXIT non-zero. ANY of the following outputs is FORBIDDEN and constitutes a flow violation logged as reason="self-abort-no-exception": English-prose refusal ("I cannot complete…"), "BLOCKERS:" list, "would you like me to…", unilateral mid-flow stop. Supplementary-source outages (macro unavailable, get_market_hexagram 501, partial signals) are NOT blockers — they trigger degraded-dish floor (see chef.md § Gate-fired contract). Minimum valid dish: publish with available data + degradation notes in WORK Block B; MARKET Block A omits unavailable layers cleanly.
 
   boundary_rules:

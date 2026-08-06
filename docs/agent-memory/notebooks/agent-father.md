@@ -1,5 +1,32 @@
 # Agent Father — Notebook
 
+## Split (router-direct dispatch, P1) 2026-08-06T09:45Z TE-T16 (TOKEN-ECONOMY-AUDIT wave 3)
+- Split `docs/agents/unified-agent/flow/chef.md` at its existing Step-1 intraday silent-exit
+  gate, per `docs/architecture-briefs/2026-07-12-token-economy-lazyload-audit.md#T-16`.
+  `chef.md` (893L→206L) keeps ONLY Step 0.5 (published-marker gate) + Step 0 (GATHER) +
+  Step 1 (CLUSTER/intraday-gate). New `docs/agents/unified-agent/flow/chef-dish.md` (731L)
+  holds Steps 1.5-8 (macro-health read, 6-layer walk, dual-output WRITE DISH, quality-verdict
+  gate, JSON persist, log/RETURN) — entered via "Run sub-flow" only when the gate fires or
+  `$DISH_TYPE` is a guaranteed window. The 5-file TNB knowledge lazy-load block (was declared
+  "before Step 0", unconditionally) moved with the body to chef-dish.md, header retitled
+  "before Step 1.5" — confirmed via grep that none of those 5 files are referenced anywhere
+  in Steps 0.5/0/1, only in Steps 2/6/7.5. Pure relocation, verified byte-identical (Python
+  string-containment check both ways) — no logic changed, no step renumbered.
+- Repointed 3 stale `chef.md Step 7.6` cross-refs in `docs/agents/unified-agent/init.md`
+  (capabilities/responsibilities/constraints.synthesis_write) to `chef-dish.md Step 7.6`
+  since the JSON-persist step moved. `chef.md § Gate-fired contract` refs elsewhere
+  (`.claude/agents/unified-agent.md`, init.md `no_self_abort`) needed no change — Step 1
+  stays in chef.md. `main.md` needed no edit (dispatches `chef.md` unconditionally; internal
+  step structure is chef.md's own concern).
+- **Board:** TE-T16 moved `backlog[]→review[]`, `status=REVIEW`, `next_agent=qa` via
+  `orch-apply.sh` (router explicitly directed this write in the dispatch prompt — status-flip
+  = lane-move in one write, per its instruction). **Did NOT commit** `docs/data/orch/orch-state.json`
+  myself — `commit_zone.excluded` (`FU-AGENT-FATHER-ORCH-SCOPE`) stands regardless of the
+  write being directed; dropped `signal_queue` row `to: router` flagging the pending commit
+  (same shape as the prior `FIX-DEVTEAM-QADRAIN-INVOCATION-HEAD-DECOUPLED` entry below).
+  Doc commit (`docs/agents/unified-agent/flow/chef.md` + `chef-dish.md` + `init.md`) done
+  and pushed within my own zone.
+
 ## Fix (router-direct dispatch, P2) 2026-08-06T07:39Z FIX-AUDITOR-EMPTYTABLE-CHECK-NO-WRITER-DISCRIMINATOR + CHORE-TEAM-TOOL-RECHECK-LOCAL-CRON
 - **Row 1 (empty-table discriminator):** `docs/agents/system-auditor/audit-dimensions.md` is already at its own 200L hard cap (header says split, not grow) and the `AUDIT_TIER=DATA` check family (`.claude/commands/crons/cron-db-data-integrity.md`) had ZERO registry entry anywhere — new `docs/agents/system-auditor/flow/data-writer-provenance.md` fills both gaps: writer-provenance discriminator (class (a) scheduled-pipeline may stay CRITICAL / (b) test-only-writer INFO ceiling / (c) on-demand-tool-writer INFO-WARN ceiling), a missing-table-vs-empty-table split (fixes the `pdf_documents` rendered-identically finding), a seeded table classification (price_alerts=c, alert_engine_records=b, deep_fetch_stats=a-adjacent unresolved), and an explicit negative-control requirement so class (a) tables (`daily_ohlcv`) can't be silenced. `flow/main.md` gets a 1-line changelog + 1 new `AUDIT_TIER` extraction bullet cross-referencing it — no dispatch rewire (still falls through to the tier-3 default, unchanged behavior).
 - **Row 1 out-of-zone:** the actual actuator is inline free text in `.claude/commands/crons/cron-db-data-integrity.md` — outside `commit_zone.allowed`. Flagged via `docs/signals/2026-08-06-fix-auditor-emptytable-writer-discriminator-handoff.json` (left uncommitted for dev-team's drain, same pattern as the prior notebook-compose-actuator handoff) recommending either a direct transcription or, better, a deterministic `scripts/db-empty-table-classify.sh` (developer scope).
