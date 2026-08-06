@@ -2351,7 +2351,7 @@
         "type": "agent_flow_defect",
         "summary": "chef-evening RETRY (re-dispatched 2026-08-05 ~19:52Z after original session death/marker-leak) actually executed ~10h43m later, at 2026-08-06T06:34-06:37Z. chef.md pins publish-date from wall-clock-at-execution (publish_date_basis=utc_date), so the retry targeted TODAY (2026-08-06) instead of backfilling the missed day (2026-08-05). Result: (1) 2026-08-05 evening dish permanently unfilled -- never published, confirmed via get_market_message_digest, no mcp-user chef post in the 08-05 evening window; (2) a premature, degraded-quality (0 clusters, 5 gap tokens) dish posted to MARKET under marker published:chef-evening:2026-08-06 at 06:37Z, 13h before the real 19:45 UTC scheduled fire; that marker is now a TOMBSTONE (publish confirmed, msg id 1129, per feedback_chef_leaks_published_marker_on_silent_exit invariant it must NOT be released) and will suppress tonight legitimate higher-quality scheduled chef-evening dispatch for 08-06 unless someone intervenes before 19:45 UTC today. Root cause is 2-fold: (a) chef.md / cowork-slot marker scheme has no way to target a specific backfill date on manual retry -- it always derives date from actual wall-clock; (b) the background Agent() retry itself sat queued roughly 10h43m before actually starting execution (the agent own runtime was only 175909ms) -- a possible session/scheduler stall during the same auth-outage window this session already hit 3x, worth checking separately. Recommend: po decide whether to manually release published:chef-evening:2026-08-06 before 19:45Z today to let the real slot fire (risk: near-duplicate post) vs accept this as the day dish (risk: degraded content stands, 08-05 gap stays permanent) -- and route the structural date-pinning gap to architect for a chef.md backfill-target-date parameter, or a router-side guard that refuses/relabels a retry once 2-3h have elapsed since the original intended slot.",
         "severity": "HIGH",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": null,
         "provenance": "router",
         "audit_cycle_tag": null
@@ -2364,10 +2364,21 @@
         "type": "agent_flow_defect",
         "summary": "scripts/agents-flow/db-integrity-probe.sh (and cron-db-data-integrity.md's embedded DB ACCESS instructions handed to system-auditor AUDIT_TIER=DATA) still target the sidecar-mounted named volume vn-market-intelligence-mcp_market_data. That volume has been empty/unused since commit 5ba622eca (2026-07-15) replaced it with a host bind-mount (./data/live -> /app/data, MARKET_DB_PATH=/app/data/market.db per docker-compose.yml) so the DB survives VM rebuilds; feedback_live_db_is_named_volume_not_host_data.md was already corrected for this on 2026-07-30 but the probe script + cron template were never updated to match. Effect: db-integrity-probe.sh's sidecar query fails every tick (confirmed today, exit 1, \"sidecar query failed (docker unreachable...)\") and FAIL-OPENs to verdict=SPAWN every single time regardless of whether tables actually changed -- meaning the change-detection gate this script exists for has been silently defeated since 07-15/07-30, and every AUDIT_TIER=DATA spawn that inherits the same stale instructions would hit an empty volume too (unless the router manually overrides the DB ACCESS block per-spawn, as done this cycle). Root-cause tracked-fix needed: update db-integrity-probe.sh's sidecar call and the cron-db-data-integrity.md / cron-standalone-team register.md DB ACCESS prose to query the host bind-mount path directly (host sqlite3 \"file:./data/live/market.db?immutable=1\", verified working today -- daily_ohlcv=775599 rows) instead of the defunct named-volume sidecar. Recommend routing to dev-mcp-server (owns market data orchestration + the probe script) via the normal po triage -> dev-team chain.",
         "severity": "MED",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": null,
         "provenance": "router",
         "audit_cycle_tag": null
+      },
+      {
+        "id": "cj-20260806T085500",
+        "ts": "2026-08-06T08:55:00Z",
+        "from": "code-janitor",
+        "to": "po",
+        "type": "system-issue",
+        "summary": "team-tool-recheck writer dead since 06-23 — replace-vs-retire decision needed",
+        "severity": "LOW",
+        "status": "NEW",
+        "payload_ref": "docs/signals/janitor-health-recheck-writer-retired-2026-08-06.json"
       }
     ],
     "last_triaged_at": "2026-07-29T06:25:00Z",
