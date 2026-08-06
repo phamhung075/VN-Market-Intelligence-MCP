@@ -30,7 +30,15 @@ Batches of type SPIKE carry `mode: "spike"` — the spawned developer (or dev-* 
 
 ## Per-Tier Parallel Spawn
 
-**Dispatcher-wrap (Phase 3.5):** Before spawning any agent in a tier batch, claim each task first. Spawn only claimed tasks. Release all after the batch returns.
+**Dispatcher-wrap (Phase 3.5):** Before spawning any agent in a tier batch, claim each task first. Spawn only claimed tasks. Release ONLY the specific task_id whose own spawn call threw — never on the success path, never a batch-wide release bound to "the fan-out calls returned."
+
+**LOCK-LIFETIME (FIX-EXECUTETIER-PHASE35-RESUME-LOCK-RELEASED-AT-SPAWN-NOT-COMPLETION, architect, 2026-08-06):** `run_in_background=true` returns in milliseconds while the spawned agent runs far longer — a release bound to "the batch of spawn calls returned" (the pre-fix shape below `finally: for each ... release`) frees every `task:<id>` in `spawned_batch` while every one of those agents is still live, letting the NEXT read of the SAME key (a later tick's S2/SLS/RLC/DRS resume, or a peer session) re-claim and duplicate-spawn onto a task that already has a live agent working it. This is the IDENTICAL class main.md's own S2/SLS/RLC/DRS/QA-Drain/SECONDARY-Drain/Wrapper-Autoclose dispatcher-wraps already fix (grep `LOCK-LIFETIME` in `docs/agents/dev-team/flow/main.md` and `post-cycle.md`) — no release on success, `ttl_seconds:3600` IS the lock's lifetime bound, release only on the per-item exception path.
+
+**Adjudication (does the fix apply to every claim in `spawned_batch`, or only the single-task case where the claimed id equals `.head.active_task_id`?):** EVERY claim, unconditionally — there is no different-correctness case for a genuine multi-task PM-tier batch. `task:<id>` is a per-task_id mutex answering "does this specific task already have a live spawn" — it has no relationship to `.head` at all (`.head` is a single-slot resume POINTER used only by the idle-fallthrough chain; most of this file's own callers, e.g. main.md's Epic-Wrapper Autoclose Sweep and Review-Lane QA-Drain/SECONDARY-Drain, already claim+spawn MULTIPLE independent `task:<id>` rows per tick with NO `.head` write at all, and already carry this exact "no release on success, per-item exception-only release" shape — see `docs/agents/dev-team/flow/post-cycle.md` § Step 4.4, explicit: "this dispatch is independent of the head-idle fall-through's own single resume-pointer... NOT `.head`... so parallel closeouts never collide with each other or with `.head`"). Conflating the lock's scope with `.head`'s scope was the root confusion in the original board note; once untangled there is no design question left — this is a straight port of the already-validated pattern, per-task, regardless of batch width.
+
+**Rejected alternative (`po_scope_widen_20260806` candidate (b) — a Step-0b short-circuit in main.md keyed on `head.updated_by` prefix, treated like WF-2's supervised-hold):** rejected, not adopted. WF-2 gates on CONTENT (does this row need a human `po_goahead_*` stamp) — static and correctly inert until an explicit stamp lands. `head.updated_by`'s provenance is IDENTICAL whether Phase-3.5 already spawned successfully (should hold), skipped via an `outer_claim` peer-collision (should legitimately retry), or crashed outright — a prefix check cannot distinguish those three, so it either wrongly blocks a legitimate S2 retry forever (no other lane exists to re-pick a BOUNDED-1-origin head once this short-circuit holds it) or provides no real protection once the string persists past the lock's own TTL. It also does nothing for the `po_occurrence_3_20260806` "COMPOUNDING" finding (`head.next_agent` left as the literal, non-spawnable string `"dev-team"`) — a distinct defect in the BOUNDED-1 claim script, not remedied by either candidate design, and out of scope here (not yet tracked as its own row as of this adjudication). A second, weaker mechanism solving the same liveness question `task_claim`/`task_release` already answers correctly (once this fix lands) is exactly the "two divergent mechanisms for the same lane" anti-pattern this codebase already flagged-and-rejected once (`docs/architecture-briefs/2026-08-06-review-lane-qadrain-throughput-unblock.md` §1b, re QA-Drain's batch shape). Fixing the lock's own hold-duration (adopted, above) closes the gap for every caller of `task:<id>` uniformly; a Step-0b provenance check would not.
+
+**Regression fixture:** `scripts/audits/execute-tier-phase35-locklifetime-verify.sh` — live-drives the real `task_claim`/`task_release` MCP primitives (mirrors how the original S2 fix, commit `adb426877`, was itself "Live-proved against the real task_claim/task_release MCP primitives ... not flow-doc prose") against a throwaway `task:<id>`: proves a 2nd claim from a different session FAILS while the 1st claim is unreleased (the fixed, "spawned agent still live" state), and — negative control — that the SAME 2nd claim only succeeds once the 1st is explicitly released (the exact pre-fix counterfactual this row closes).
 
 ```
 # Step 1 — Claim each task in the tier batch:
@@ -43,6 +51,7 @@ for each (agent, task_id) in tier_batch:
     task_id:     "task:" + task_id,
     task_kind:   "sprint-task",
     owner_agent: "dev-team",
+    owner_client_session: $CLAUDE_CODE_SESSION_ID,   // REQUIRED — P1-FINAL (TASK_1980); was missing pre-fix
     ttl_seconds: 3600,
     payload:     JSON.stringify({site: "S1", spawning: agent})   // live schema requires a SERIALIZED JSON STRING (verified 2026-06-05); build object with bound params, stringify last — never shell-concatenate
   })
@@ -52,17 +61,22 @@ for each (agent, task_id) in tier_batch:
   else:
     spawned_batch.append((agent, task_id))
 
-# Step 2 + 3 — Spawn claimed tasks; release in finally (reachable on ALL exit paths):
-try:
-  # DJ-GATE-1: append to EVERY worker spawn-prompt: "Before returning, run skill .claude/skills/decision-journal/SKILL.md § Write Entry [task_id: <TASK_ID>] — DONE/REVIEW flip is INVALID without it." (canonical rule → docs/protocols/agent-chaining-protocol.md § Journal-before-DONE Gate)
-  → Agent(dev-stock-price, taskA, run_in_background=true) + Agent(dev-alert-engine, taskB, run_in_background=true)   # (background) devs parallel — BGFAN-1
-  → Agent(qa, taskA, run_in_background=true) + Agent(qa, taskB, run_in_background=true)                               # (background) QA parallel (different branches)
-  → Agent(fixer, taskA, run_in_background=true) + Agent(fixer, taskB, run_in_background=true)                         # (background) fixer if needed
-  # (only tasks in spawned_batch are included)
-finally:
-  for each (agent, task_id) in spawned_batch:
-    call_tool(server="vn-market", tool="task_release", arguments={ task_id: "task:" + task_id })
-    # ok=false is acceptable (TTL expired or inner self-claim already released)
+# Step 2 + 3 — Spawn claimed tasks, per-task try/except (never a batch-wide `finally`):
+# DJ-GATE-1: append to EVERY worker spawn-prompt: "Before returning, run skill .claude/skills/decision-journal/SKILL.md § Write Entry [task_id: <TASK_ID>] — DONE/REVIEW flip is INVALID without it." (canonical rule → docs/protocols/agent-chaining-protocol.md § Journal-before-DONE Gate)
+for stage_calls in [devs, qa, fixer_if_needed]:        # e.g. devs = [(dev-stock-price,taskA),(dev-alert-engine,taskB)]
+  for (agent, task_id) in stage_calls ∩ spawned_batch: # still issued as ONE parallel message per stage — BGFAN-1
+    try:
+      Agent(agent, task_id, run_in_background=true)    # (background)
+      # LOCK-LIFETIME: NO release here on success — see note above. ttl_seconds:3600 (Step 1) is
+      # this task_id's lock lifetime bound; the lock clears naturally once the Merge Gate/
+      # DJ-GATE-1 flip moves the task out of in_progress[], or on TTL lapse (crash backstop) —
+      # never via a release bound to "this stage's spawn call returned."
+    except:
+      # Release ONLY this task_id's own claim — its OWN spawn threw (Agent() never handed off).
+      # Never touch a sibling task_id's still-good claim; never re-release a task_id an earlier
+      # stage's exception already released.
+      call_tool(server="vn-market", tool="task_release", arguments={ task_id: "task:" + task_id, owner_client_session: $CLAUDE_CODE_SESSION_ID })
+      raise
 ```
 
 **Worktree isolation:** add `isolation: "worktree"` to each Agent call. Main terminal merges worktree branches (fast-forward if disjoint) after tier returns. See `docs/architecture-briefs/2026-05-12-sprint-parallel-isolation.md`. Sequential MANDATORY until c44 pass (Phase 3); Phase 4 relaxes after c44+c45.
