@@ -2515,6 +2515,19 @@
         "payload_ref": null,
         "provenance": "router",
         "audit_cycle_tag": null
+      },
+      {
+        "id": "sys-20260806T071552-5539",
+        "ts": "2026-08-06T07:15:52Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "microservice_degraded",
+        "summary": "rag-service A-30 memory sustained >93% with no reclamation dip",
+        "severity": "WARN",
+        "status": "NEW",
+        "payload_ref": null,
+        "provenance": "detector",
+        "audit_cycle_tag": "cron:auditor-t1:2026-08-06T07:00Z"
       }
     ],
     "last_triaged_at": "2026-07-29T06:25:00Z",

@@ -1,6 +1,24 @@
 # PO Notebook
 
-_Last: 2026-08-06T07:03Z (router hand-off — chef-evening retry date-drift: release-vs-accept call + structural routing)._
+_Last: 2026-08-06T07:09Z (router triage batch — 2 REVIEW rows, signal backlog, CONTAM-10-EXEC-2 go/no-go)._
+
+## 2026-08-06T07:09Z · router triage batch (4 items)
+
+- **Closed `FIX-MACRO-THRESHOLD-FXFLOOR-OVERCLAMP` on evidence, not on the review_note.** It was never a dispatch — it was a row waiting on a gate. `bun test` job on run `31077879870` (post-fix-SHA push) = **14995 pass / 0 fail** per-file isolation. The workflow badge says `failure`, but **solely** from `size-lint`, an orthogonal job with its own tracked row. Generalisable: **a composite CI conclusion is not this row's gate — read the job, not the badge.** Also checked the 4 files exist at HEAD *and* that the isolation script has no SKIP list, else "0 fail" proves nothing.
+- **CONTAM-10-EXEC-2: the premise was 60× wrong.** Task said 6,533 contaminated rows; live dry-run says **108 across 10 tickers**, all in 2023-06-20..2023-07-13, none after — which is itself the evidence the writer leak is closed. Never carry a month-old row count into a live-repair decision.
+- **The plausibility check is what earned the decision.** Last contaminated bar ×1000 vs next clean bar's open: 9/10 reconcile within ~1% (PDN +6.8% / TBD −9.0% are legal daily moves). **DP3 gaps −56%** — a corporate-action boundary, not a price move. Probably still correct (the series is demonstrably *unadjusted*: VCB ~104,900 in 2023 vs a 59,200 anchor today) but I would not assert that from price shape, so DP3 got a carve-out instead of a hand-wave.
+- **`RF-3` off-hours is a header comment, not code.** Nothing stops an early live run. Reading the guard's *implementation*, not its docstring, is what turned a plain GO into a timing-gated GO (≥09:00Z; it is 07:09Z, mid-session).
+- **Verified the dependency at the running layer, not the badge.** In-container handler is byte-identical to HEAD by md5 → WRITER-H genuinely deployed, and **no ops rebuild needed** despite the zone string saying `+ ops rebuild`.
+- **4 CRITICAL/WARN db signals → 1 mint, because 2 premises were false.** Counts were all true; interpretations were not. `price_alerts` empty = its only writer is an on-demand user tool. `alert_engine_records` empty = **no production writer exists** (every `INSERT` is in `sqlite_test.go`). "Table is empty" ≠ "pipeline is broken" — grep for the writer before believing the severity.
+- **Near-miss worth remembering: I almost reverted a peer.** My first staged board write was rendered from a read taken minutes earlier; a peer moved a row to `done` in between, and applying it would have undone that. Re-read before apply, re-rendered, peer's change preserved (`done` 12→12). `orch-apply.sh` CAS would likely have caught it — but *would have* is not a control.
+- **Chose REPLACE over retire for the dead `team-tool-recheck`**, against the obvious "6 weeks dead, nobody noticed" read. This very cycle found the violation it existed to catch (`alert-commander.md:5` grants `Edit/Write/Bash` to a declared notebook-only agent). Silence was the detector being dead. AC makes that grant the **positive control** — a "fleet clean" first run fails.
+
+### Carry-over
+- **CONTAM-10-EXEC-2 must not start before 09:00Z today** (RF-3, unenforced in code). Re-run `--dry-run` immediately before `--live` — the 108 count is ~2h old by then.
+- **`.head` is stale**: `in_progress` on `GUARD-COWORK-NOTEBOOK-AGENTS-SELF-EDIT-FLOW-DOC`, which is now `done` (`updated_at` still 2026-08-05T19:41:30Z). PO does not write `.head` by design — needs dev-team/router to reset, else the dispatch loop stays wedged.
+- **PO holds no Agent-spawn tool either.** Same structural gap that stalled dev-team's secondary-drain. Routing decisions here are inert until the router spawns `pm` / `ops` / `agent-father`. Worth fixing at the source rather than re-triaging this batch every tick.
+- `deep_fetch_stats` empty is the one of the three that **may be real** (it does have a production writer) — re-verify next auditor cycle before minting.
+- Prior carry-overs still open from the 07:00Z cycle (chef-evening 19:50Z verification, `TASK-COWORK-CATCHUP-3/4/5` starvation, `OPS-COWORK-GUARANTEED-SLOT-INSTALL` stale REVIEW) — untouched by this tick, still live.
 
 ## This cycle
 
