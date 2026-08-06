@@ -25,6 +25,7 @@ import { logger } from "../../../../infrastructure/logger.js";
 import { getMacroBaseUrl } from "./macroHttpClient.js";
 import { macroFetch } from "../../../../infrastructure/fetchers/fetchDeadline.js";
 import { buildMacroSnapshotText } from "./macroSnapshotText.js";
+import { applyVnIndexPlausibilityGate } from "./macroVnIndexGate.js";
 
 // Re-exported for backward compatibility with existing test imports
 // (FIX-MACRO-SNAPSHOT-HUMANIZE-TEXT.test.ts imports buildMacroSnapshotText
@@ -481,6 +482,15 @@ export function registerMacroTools(server: McpServer): void {
       }
 
       const data = result.data;
+
+      // FIX-VNINDEX-CROSS-PLANE-PLAUSIBILITY-GATE: MUST run before both
+      // downstream reads of `data` below — buildMacroSnapshotText (prose) and
+      // the raw `data` field in the returned JSON envelope — see
+      // macroVnIndexGate.ts for the full incident context, guard wiring, and
+      // gap-token contract (extracted per the FIX-CI-SIZELINT-MACROTOOLS-
+      // HUMANIZE-618L precedent — this file's own established convention for
+      // self-contained blocks that push it over the size-lint baseline).
+      applyVnIndexPlausibilityGate(data);
 
       // DSI-INV-1 (FU-MACRO-SNAPSHOT-TIER-WORSTOF): derive source_tier honestly as the
       // WORST (max) tier across every signal component actually PRESENT in the response

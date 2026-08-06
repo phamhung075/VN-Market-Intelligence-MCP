@@ -67,6 +67,7 @@ export * from "./sectorValuationComparator.js";
 export * from "./macroIndicatorScorer.js";
 export * from "./macroOutlierGuard.js";
 export * from "./macroThresholds.js";
+export * from "./vnIndexPlausibilityGuard.js";
 export * from "./predictionCascadeMapper.js";
 export * from "./predictionSignalDetector.js";
 export * from "./forecastConfidenceScore.js";

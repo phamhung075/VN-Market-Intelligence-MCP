@@ -84,6 +84,7 @@
 | `macro/carryTradeSignal.ts` | Carry trade spread signals |
 | `macro/yieldSpreadSignal.ts` | US 10Y-2Y spread tracking |
 | `macro/macroCalendar.ts` | Economic event calendar |
+| `vnIndexPlausibilityGuard.ts` (`evaluateVnIndexPlausibility()`, FIX-VNINDEX-CROSS-PLANE-PLAUSIBILITY-GATE) | Pure guard comparing macro-indicators' reported `vnIndex` against the local `vn_index_cache` reference. Fail-closed (gap-token) only when the local reference is untrustworthy AND macro reports estimate/tier>=3; fail-open when local ref is untrustworthy but macro is tier-1; unconditional >=5% divergence check (`VNINDEX_CROSS_PLANE_DIVERGENCE_THRESHOLD_PCT`, local-denominator, inclusive) whenever the local reference is fresh, regardless of tier. Structural limit (documented in the file's own doc-comment): on macro-indicators' tier-1 happy path both planes read the SAME physical `market_prices.VNINDEX` row — catches the fixture-fallback/mislabeling incident class, cannot catch a corrupted-but-honestly-tier1-reported value (would need a live re-fetch — out of scope). |
 
 ### Specialized
 | Service | Key Logic |
