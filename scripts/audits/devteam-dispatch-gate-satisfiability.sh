@@ -181,6 +181,117 @@ else
   assert "BOUNDED-1 correctly no-ops when in_progress>=1 (own WIP<1 cap, independent of ready[] depth)" "$([ "$B1_MOVED" = "false" ] && echo true || echo false)"
 fi
 
+# ---- BOUNDED-1 OWN-WIP-RECHECK + PRIORITY-ORDERED PICK + STALE-STAMP DRAIN
+# (FIX-DEVTEAM-BOUNDED1-CLAIM-NO-OWN-WIP-RECHECK, 2026-08-06) ----
+# The block above already exercises the own-WIP-recheck fix against the
+# LIVE-shaped fixture (which, as of this fix, itself carries 2 live stale
+# stamps — see AC-4 below), but that alone is not a REGRESSION gate: it can
+# pass vacuously if the live board later drains those stamps. This section
+# adds ISOLATED single-invocation fixtures (same discipline as every other
+# AC block in this file) that are deterministic regardless of live-board
+# drift and that PROVABLY distinguish the fixed selector from the pre-fix
+# `$auto_promoted[0]` array-position one.
+echo ""
+echo "=== BOUNDED-1 OWN-WIP-RECHECK + PRIORITY-ORDERED PICK (FIX-DEVTEAM-BOUNDED1-CLAIM-NO-OWN-WIP-RECHECK) ==="
+
+# AC-1 negative control (own WIP recheck, isolated): WIP=1 (a DIFFERENT row
+# already holds the slot) + one stamped ready[] row — must NOT claim, even
+# though the stamp alone used to be trusted as "WIP was 0 when this was
+# promoted". This isolates AC-1 from AC-4's shared padded-fixture instance.
+B1_WIPCHECK_BLOCKED_FIXTURE=$(jq -n --arg now "$NOW" '
+  { task_board: {
+      backlog: [], ready: [ { id: "GATESAT-B1-WIPCHECK-BLOCKED", status: "READY", priority: "P0",
+        type: "FIX", zone: "cross-service/", next_agent: "developer",
+        promoted_by: "dev-team (bounded-1 auto-pickup)", promoted_at: $now } ],
+      in_progress: [ { id: "GATESAT-B1-WIPCHECK-OTHER-LIVE", status: "IN_PROGRESS", priority: "P1",
+        type: "FIX", zone: "cross-service/", next_agent: "developer", claimed_at: $now } ],
+      qa: [], review: [], done: [], done_verified: []
+    } }')
+echo "$B1_WIPCHECK_BLOCKED_FIXTURE" > "$WORK/b1-wipcheck-blocked.json"
+jq --arg now "$NOW" -f scripts/devteam-backlog-claim-bounded1.jq "$WORK/b1-wipcheck-blocked.json" > "$WORK/b1-wipcheck-blocked-out.json"
+B1_WIPCHECK_BLOCKED_CLAIMED=$(jq -r '[.task_board.in_progress[] | select(.id=="GATESAT-B1-WIPCHECK-BLOCKED")] | length' "$WORK/b1-wipcheck-blocked-out.json")
+assert "AC-BOUNDED1-WIPCHECK (negative, isolated): a stamped ready[] row is NOT claimed when a DIFFERENT row already holds the WIP slot — own WIP recheck fires independent of the stamp" \
+  "$([ "$B1_WIPCHECK_BLOCKED_CLAIMED" -eq 0 ] && echo true || echo false)"
+
+# AC-3 negative control (required, per this row's verification_gate note):
+# WIP=0 + ONE stale-stamped ready[] row must still claim normally — the fix
+# must not over-tighten into never claiming.
+B1_WIPCHECK_FREE_FIXTURE=$(jq -n --arg now "$NOW" '
+  { task_board: {
+      backlog: [], ready: [ { id: "GATESAT-B1-WIPCHECK-FREE", status: "READY", priority: "P2",
+        type: "FIX", zone: "cross-service/", next_agent: "developer",
+        promoted_by: "dev-team (bounded-1 auto-pickup)", promoted_at: $now } ],
+      in_progress: [], qa: [], review: [], done: [], done_verified: []
+    } }')
+echo "$B1_WIPCHECK_FREE_FIXTURE" > "$WORK/b1-wipcheck-free.json"
+jq --arg now "$NOW" -f scripts/devteam-backlog-claim-bounded1.jq "$WORK/b1-wipcheck-free.json" > "$WORK/b1-wipcheck-free-out.json"
+B1_WIPCHECK_FREE_CLAIMED=$(jq -r '[.task_board.in_progress[] | select(.id=="GATESAT-B1-WIPCHECK-FREE")] | length' "$WORK/b1-wipcheck-free-out.json")
+assert "AC-BOUNDED1-WIPCHECK-NEG-CONTROL: at WIP=0, a single stale-stamped ready[] row STILL claims normally (fix is not over-tightened)" \
+  "$([ "$B1_WIPCHECK_FREE_CLAIMED" -eq 1 ] && echo true || echo false)"
+
+# AC-2/AC-4 (REGRESSION GATE, not a fixture the current code already passes):
+# TWO stamped rows at mixed priority, P0 at a HIGHER array index than P2 —
+# the pre-fix `$auto_promoted[0]` array-position selector provably picks the
+# P2 (lower index); the fixed [priority_rank, idx]-sorted selector must pick
+# the P0 instead.
+B1_PRIO_FIXTURE=$(jq -n --arg now "$NOW" '
+  { task_board: {
+      backlog: [],
+      ready: [
+        { id: "GATESAT-B1-PRIO-P2-LOWER-IDX", status: "READY", priority: "P2",
+          type: "FIX", zone: "cross-service/", next_agent: "developer",
+          promoted_by: "dev-team (bounded-1 auto-pickup)", promoted_at: $now },
+        { id: "GATESAT-B1-PRIO-P0-HIGHER-IDX", status: "READY", priority: "P0",
+          type: "FIX", zone: "cross-service/", next_agent: "developer",
+          promoted_by: "dev-team (bounded-1 auto-pickup)", promoted_at: $now }
+      ],
+      in_progress: [], qa: [], review: [], done: [], done_verified: []
+    } }')
+echo "$B1_PRIO_FIXTURE" > "$WORK/b1-prio.json"
+jq --arg now "$NOW" -f scripts/devteam-backlog-claim-bounded1.jq "$WORK/b1-prio.json" > "$WORK/b1-prio-out.json"
+B1_PRIO_PICKED=$(jq -r '.task_board.in_progress[0].id // empty' "$WORK/b1-prio-out.json")
+assert "AC-BOUNDED1-PRIORITY-ORDER (regression gate): P0 at the HIGHER array index is claimed, not the P2 at the lower index — proves priority_rank now outranks array position (picked='${B1_PRIO_PICKED:-<none>}')" \
+  "$([ "$B1_PRIO_PICKED" = "GATESAT-B1-PRIO-P0-HIGHER-IDX" ] && echo true || echo false)"
+
+# AC-3 (STALE-STAMP DRAIN, positive proof): the non-selected P2 candidate
+# from the SAME invocation above must have its promoted_by cleared (not left
+# stamped to mis-order a future tick) while staying resident in ready[].
+B1_PRIO_LEFTOVER_STAMP=$(jq -r '.task_board.ready[] | select(.id=="GATESAT-B1-PRIO-P2-LOWER-IDX") | .promoted_by' "$WORK/b1-prio-out.json")
+B1_PRIO_LEFTOVER_STILL_READY=$(jq -r '[.task_board.ready[] | select(.id=="GATESAT-B1-PRIO-P2-LOWER-IDX")] | length' "$WORK/b1-prio-out.json")
+assert "AC-BOUNDED1-STALE-STAMP-DRAIN: the non-selected P2 row's promoted_by is cleared to null in the SAME write (got '${B1_PRIO_LEFTOVER_STAMP}') so it can never mis-order a later tick" \
+  "$([ "$B1_PRIO_LEFTOVER_STAMP" = "null" ] && echo true || echo false)"
+assert "AC-BOUNDED1-STALE-STAMP-DRAIN (row not lost): the non-selected P2 row stays resident in ready[] (only the stamp is cleared, the row is not dropped)" \
+  "$([ "$B1_PRIO_LEFTOVER_STILL_READY" -eq 1 ] && echo true || echo false)"
+
+# AC-5 (LIVE PROOF): re-run the fixed selector's OWN ranking against the
+# LIVE ready[]'s real stamped candidates (never writes to $STATE — scratch
+# copy only, in_progress zeroed to observe the selector's ranking in
+# isolation from whatever WIP happens to be live right now). Expected pick
+# is computed DYNAMICALLY (sort_by([priority_rank, idx]), same contract the
+# fixed script itself uses) — never a hardcoded task id — so this stays
+# meaningful no matter which/how many rows are stamped live at run time.
+LIVE_B1_SCRATCH="$WORK/b1-live-proof.json"
+jq '.task_board.in_progress = []' "$STATE" > "$LIVE_B1_SCRATCH"
+LIVE_B1_STAMPED_N=$(jq '[.task_board.ready[] | select(.promoted_by == "dev-team (bounded-1 auto-pickup)")] | length' "$LIVE_B1_SCRATCH")
+if [ "$LIVE_B1_STAMPED_N" -ge 1 ]; then
+  jq --arg now "$NOW" -f scripts/devteam-backlog-claim-bounded1.jq "$LIVE_B1_SCRATCH" > "$WORK/b1-live-proof-out.json"
+  LIVE_B1_PICKED=$(jq -r '.task_board.in_progress[-1].id // empty' "$WORK/b1-live-proof-out.json")
+  LIVE_B1_ARRAYPOS_PICK=$(jq -r '[.task_board.ready[]|select(.promoted_by=="dev-team (bounded-1 auto-pickup)")][0].id // empty' "$LIVE_B1_SCRATCH")
+  LIVE_B1_EXPECTED_PICK=$(jq -r 'include "scripts/lib/devteam-eligibility";
+    [ .task_board.ready | to_entries[] | select(.value.promoted_by == "dev-team (bounded-1 auto-pickup)")
+      | { idx: .key, id: .value.id, rank: (.value | priority_rank) } ]
+    | sort_by([.rank, .idx]) | .[0].id // empty' "$LIVE_B1_SCRATCH")
+  echo "  [INFO] AC-5 LIVE PROOF: pre-fix array-position selector would have picked '${LIVE_B1_ARRAYPOS_PICK}'; fixed priority-ordered selector against the SAME live ready[] candidates picked '${LIVE_B1_PICKED}' (expected top-ranked id '${LIVE_B1_EXPECTED_PICK}'; WIP hypothetically zeroed to isolate the ranking from live WIP saturation)."
+  assert "AC-BOUNDED1-LIVE-PROOF: the fixed selector, replayed against the live ready[]'s real stamped candidates, picks the DYNAMICALLY-computed top-[priority_rank,idx] row (got '${LIVE_B1_PICKED}', expected '${LIVE_B1_EXPECTED_PICK}')" \
+    "$([ "$LIVE_B1_PICKED" = "$LIVE_B1_EXPECTED_PICK" ] && echo true || echo false)"
+  if [ "$LIVE_B1_STAMPED_N" -ge 2 ]; then
+    assert "AC-BOUNDED1-LIVE-PROOF (non-vacuous): >=2 live stamped candidates exist AND the array-position pick differs from the priority-ranked pick — this run actually exercises the regression, not a single-candidate no-op (array-pos='${LIVE_B1_ARRAYPOS_PICK}', ranked='${LIVE_B1_EXPECTED_PICK}')" \
+      "$([ "$LIVE_B1_ARRAYPOS_PICK" != "$LIVE_B1_EXPECTED_PICK" ] && echo true || echo false)"
+  fi
+else
+  echo "  [INFO] AC-5 LIVE PROOF: live ready[] currently carries 0 bounded-1-stamped rows (already drained) — selector has nothing to rank; regression coverage is carried by the isolated AC-BOUNDED1-PRIORITY-ORDER fixture above instead."
+fi
+
 cp "$WORK/fixture.json" "$WORK/t2.json"
 jq --arg now "$NOW" --slurpfile detail "$DETAIL" --slurpfile archive "$ARCHIVE" -f scripts/devteam-backlog-promote-supervised-lane-sweep.jq "$WORK/t2.json" > "$WORK/t2b.json"
 # FIX-DEVTEAM-READY-REVIEW-LANE-SUPERVISED-PLANONLY-NO-PICKER (2026-07-30):
