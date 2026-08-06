@@ -514,3 +514,15 @@
 **Mitigation:** No immediate action beyond signal routing.
 
 ---
+
+## Anomaly: A-30 · rag-service sustained 96.97% memory, zero GC reclamation dips
+**Severity:** WARN | **Date:** 2026-08-06 | **Status:** OPEN
+**Location:** rag-service container
+**Details:** Memory sustained 96.89-96.97% across 105s window with zero reclamation dips, indicating loss of GC relief behavior. Free headroom 22.8MiB below 40MiB floor.
+**Impact:** Sustained high memory without GC relief cycles indicates memory pressure. Continued worsening trend (96.50%→96.66%→96.97%) suggests approaching OOM threshold.
+**Root cause:** rag-service load exceeds GC efficiency. Known issue: FU-RAG-DEPLOY-MEMORY.
+**Zone owner:** dev-mcp-server
+**Last reported:** 2026-08-06T08:12:38Z (signal sys-20260806T081141-4071, system-auditor -> po, dedup_key=microservice_degraded:rag-service:A-30, WARN Telegram sent)
+**Mitigation:** No immediate action beyond signal routing.
+
+---
