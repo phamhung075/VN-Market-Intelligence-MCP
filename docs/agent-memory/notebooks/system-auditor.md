@@ -26,7 +26,7 @@
 
 **Disk (A-32):** / at 55% < 85% ✓
 
-[OUTPUT-CONTRACT] signals_posted=1 | telegram_sent=0 | signal_queue_rows_written=0 | dashboard_rows=1 | dedup_skipped=1
+[OUTPUT-CONTRACT] signals_posted=1 | telegram_sent=0 | signal_queue_rows_written=1 | dashboard_rows=1 | dedup_skipped=1
 CONTRACT-CONTRADICTION: NONE
 
 ## c57 · 2026-08-06T13:18:03Z
