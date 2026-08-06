@@ -2781,7 +2781,7 @@
         "type": "bug-escalation",
         "summary": "BARE commit re-absorbed 3 peer-staged files, 11th warn (threshold=3) — recurring class already owned",
         "severity": "HIGH",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": "docs/signals/processed/commit-sweep-guard-2026-08-06T123810Z-34429.json",
         "note": "dev-team drain durable re-route: this ticks QA-Drain batch dispatch reached JUMP TO end before Step1 PO-triage ran, so appended for POs next run. Already-owned recurring class per FIX-COMMIT-SWEEP-VICTIM-SELF-DETECT / FIX-COMMIT-SWEEP-GUARD-SCRIPT-ACTUATOR-AND-NOTEBOOK-LONGTAIL / FIX-SWEEPGUARD-ESCALATION-RETROACTIVE-COUNTER-AND-SESSION-SCOPED-ACTOR (all pre-existing board rows) - do not mint a new row, just note the recurrence count."
       },
@@ -2793,7 +2793,7 @@
         "type": "bug-escalation",
         "summary": "alert-commander Step0/1 bootstrap DB disk I/O error, one cycle blocked, clean self-exit per error-boundary",
         "severity": "MED",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": "docs/signals/processed/alert-commander-2026-08-06T121046Z-bug-escalation.json",
         "note": "dev-team drain durable re-route: same interrupted-tick gap as above. Transient DB I/O error, agent exited cleanly (no fabrication/no bad send), likely self-resolved by next cycle."
       },
@@ -2805,7 +2805,7 @@
         "type": "context_bloat_breach",
         "summary": "register-job-db-integrity-offhours.md 240L>200 cap, 20048B>12000B cap — prune_or_split",
         "severity": "MED",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": "docs/signals/processed/context-bloat--claude-skills-cron-standalone-team-register-job-db-integrity-offhours-md-2026-08-06T120923Z.json",
         "note": "dev-team drain durable re-route: same interrupted-tick gap. orig_to=claude-manager-helper, PO routes per precedent (context-bloat-agent-father-20260723T043408Z)."
       },
@@ -2817,9 +2817,34 @@
         "type": "context_bloat_breach",
         "summary": "register-job-db-integrity-weekday.md 242L>200 cap, 20239B>12000B cap — prune_or_split",
         "severity": "MED",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": "docs/signals/processed/context-bloat--claude-skills-cron-standalone-team-register-job-db-integrity-weekday-md-2026-08-06T120934Z.json",
         "note": "dev-team drain durable re-route: same interrupted-tick gap. orig_to=claude-manager-helper, PO routes per precedent (context-bloat-agent-father-20260723T043408Z)."
+      },
+      {
+        "id": "sys-20260806T131735-7924",
+        "ts": "2026-08-06T13:17:35Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "signal_feedback",
+        "summary": "A-30 rag-service memory reclamation loss 96.32% sustained (no GC dip over 50s window)",
+        "severity": "WARN",
+        "status": "NEW",
+        "payload_ref": null,
+        "provenance": "detector",
+        "audit_cycle_tag": "cron:auditor-t1:2026-08-06T13:00Z"
+      },
+      {
+        "id": "dev-20260806T131500-a3rd",
+        "ts": "2026-08-06T13:15:00Z",
+        "from": "dev-team",
+        "to": "po",
+        "type": "signal_feedback",
+        "summary": "3rd occurrence today of leaf-agent analysis-only exit (system-auditor Tier-1, agentId a866dd5ec31bf36f9) — see feedback_leaf_agent_analysis_only_exit_recurring_pattern_20260806",
+        "severity": "WARN",
+        "status": "NEW",
+        "payload_ref": null,
+        "evidence": "Spawned this tick for probe verdict=FAILURE (rag-service mem-creep). Agent returned a well-reasoned prose report (DEGRADED, dedup-skip decision correct, launchd path root-caused correctly) but RAW-verified zero persisted writes: docs/agent-memory/notebooks/system-auditor.md still shows only cycle c56 (claimed c57 absent, committed and working-tree both), no new docs/data/orch/orch-state.json .signal_queue row exists (claimed id sys-20260806T130000-xxxx was a template placeholder, never resolved/committed), git status clean on both files. Same shape as the 2 prior 2026-08-06 occurrences already on record (system-auditor c54 tick ~09:52Z, refine_bctc_md VHM_2026_Q1) — not re-escalating as a new board row, just adding corroborating evidence to the existing po-owned decision (stronger execute-not-narrate directive vs structural self-check checkpoint). No operational gap this instance: the underlying rag-service A-30 finding was independently RAW-reverified by dev-team as correctly dedup-skip-eligible (already tracked by FU-RAG-DEPLOY-MEMORY + related rows, last real fire sys-20260806T124200-5a4b already PO-triaged 12:45Z)."
       }
     ],
     "last_triaged_at": "2026-07-29T06:25:00Z",
