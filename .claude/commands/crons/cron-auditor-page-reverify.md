@@ -52,16 +52,17 @@ reaches a qa re-sync.
 hardcoded `03:30Z` literal — that part is trustworthy regardless of scheduler mechanics,
 because it's UTC-native code, not a cron expression. The cron expression above independently
 achieves that real 03:30 UTC fire time via the CEST/CET conversion. Tier-3's cron
-(`cron-system-auditor.md`, `0 2 * * *`, labeled "daily 02:00 UTC") and the D4/D-N `03:00Z`
-label derived from it carry **no MACHINE-LOCAL disclaimer** and almost certainly exhibit the
-same defect this file just fixed — `0 2 * * *` most likely fires ~00:00 UTC (CEST) / ~01:00
-UTC (CET), not the stated 02:00 UTC, since D4/D-N run inside the same Tier-3 process rather
-than on their own cron. That means the *relative* spacing this dimension was originally
-justified on ("90min after Tier-3, 30min after D4/D-N") is NOT a claim this file can verify —
-it reasons across two different, unverified time frames. What IS verified: this dimension's
-own 03:30 UTC / 10:30 VN fire time, independent of whether Tier-3 actually fires when it says
-it does. Fixing `cron-system-auditor.md` is a separate, not-yet-filed issue — out of scope
-here (that cron is already live-armed; this file only documents its own).
+(`cron-system-auditor.md`) carried the exact same undisclaimed defect this file already fixed
+for its own D-PAGE cron — a bare `0 2 * * *` literal fires ~00:00 UTC (CEST) / ~01:00 UTC
+(CET), not the stated 02:00 UTC — and has now ALSO been fixed
+(FIX-CRON-DST-LOCAL-EVAL-MOMENT-ANCHORED-EXPRESSIONS, 2026-08-06: `cron-system-auditor.md`
+Tier-3 is now CEST `0 4 * * *` / CET `0 3 * * *`, both landing on the real 02:00 UTC target;
+`docs/agents/system-auditor/flow/main.md`'s Tier-3 `FIRE_TICK` comment updated in the same
+change). The D4/D-N `03:00Z` label derived from Tier-3's process inherits that same fix,
+not independently re-verified here. The *relative* spacing this dimension was originally
+justified on ("90min after Tier-3, 30min after D4/D-N") is therefore now a claim both sides of
+which are individually DST-correct — this dimension's own 03:30 UTC / 10:30 VN fire time, and
+Tier-3's real 02:00 UTC fire time.
 
 **Prerequisite before arming:** confirm (1) `.claude/agents/system-auditor.md` frontmatter
 write-contract lists `docs/data/auditor-page-reverify-ledger.json` and explicitly states
