@@ -93,12 +93,11 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "FIX-DEPTHTHIN-B-GATEWAY-TA-PATH-REWRITE",
-    "next_agent": "developer",
-    "next_action": "BOUNDED-1 auto-pickup claim of FIX-DEPTHTHIN-B-GATEWAY-TA-PATH-REWRITE — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
-    "updated_at": "2026-08-06T10:13:13Z",
-    "updated_by": "dev-team (bounded-1 auto-pickup)"
+    "status": "idle",
+    "updated_at": "2026-08-06T10:24:28Z",
+    "updated_by": "developer",
+    "active_task_id": null,
+    "next_agent": "router"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -5050,6 +5049,27 @@
         "superseded_by": "FIX-VNINDEX-CROSS-PLANE-PLAUSIBILITY-GATE",
         "updated_by": "dev-mcp-server",
         "dev_ruling_fold_20260806": "FOLDED/SUPERSEDED on completion of FIX-VNINDEX-CROSS-PLANE-PLAUSIBILITY-GATE per that row's own BA spec S7 + architect fold_note (2026-08-06T08:05Z): same underlying plausibility-bound fix, correct zone (apps/mcp-server/ consumer-side cross-plane guard) landed instead of this row's producer-zone (apps/macro-indicators/) scope. evaluateVnIndexPlausibility() + macroVnIndexGate.ts wired into get_macro_snapshot now gap-tokens vnIndex/vnIndexDelta/vnIndexDirection on >=5% cross-plane divergence or both-sides-untrustworthy, closing the exact -526.13/tier-4/1280.5 scenario this row was minted for. No separate implementation needed here."
+      },
+      {
+        "id": "FIX-DEPTHTHIN-B-GATEWAY-TA-PATH-REWRITE",
+        "title": "DEPTH_THIN (b): dashboard.technical OHLCV candles render but TA indicators (MA/RSI/MACD) are MISSING — the api-gateway /ta path-rewrite is a TODO so technical-analysis indicators never reach the frontend. Wire the gateway /ta path-rewrite; also add generatedAt to /api/price-history.",
+        "type": "FIX",
+        "priority": "P3",
+        "status": "CANCELLED",
+        "zone": "multi",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-DEPTHTHIN-B-GATEWAY-TA-PATH-REWRITE",
+        "promoted_at": "2026-08-01T13:18:33Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=3)",
+        "updated_at": "2026-08-06T10:24:28Z",
+        "updated_by": "developer",
+        "po_wip_eviction_20260805T1037": "EVICTED in_progress -> ready by PO triage 2026-08-05T10:58:29Z to free a WIP slot for FIX-RAG-SERVICE-CLEAN-EXIT-RESTART-LOOP (P1 live incident). BASIS, MEASURED not assumed: this row was claimed 2026-08-01T13:18:38Z by BOUNDED-1 and held a WIP slot for 3.9 days; `git log --since=2026-08-01T13:18:00Z -- apps/api-gateway/` returns ZERO commits and `git log --all --grep=DEPTHTHIN` shows no commit for the -B row (only the sibling -A row and the original mint). No work was in flight to interrupt. Priority is P3 (dashboard TA indicators missing) against a P1 container restart loop at 5.17 restarts/day. NOT a cancellation and NOT a de-prioritization on merit: the row keeps its P3 priority, its zone and its full detail_ref, and it is first in line for the next free slot via the Ready-Lane Consumer. Re-promote whenever WIP < 2.",
+        "claimed_at": "2026-08-06T10:13:13Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "status_note": "SUPERSEDED — premise falsified by RAW live-code + live-container verification (developer, dev-team BOUNDED-1 pickup). All 3 literal sub-asks were already satisfied before or independent of this task, by prior unrelated commits: (1) gateway /ta PreservePath routing (apps/api-gateway/pkg/infrastructure/registry.go:42) was fixed in commit 854fe7ba0 (2026-06-11, 'fix(api-gateway/F2): preserve /ta/* prefix') — PREDATES this row's mint (2026-06-25); confirmed still live today. (2) dashboard.technical's MA/RSI/MACD/BB indicators are NOT missing and were NEVER blocked by the gateway /ta path — apps/frontend/app/components/charts/StockChart.tsx client-computes MA20/MA50/BB/RSI14/MACD(12,26,9) from /api/price-history OHLCV candles (shipped 2026-05-17, commit 9f1b53929), an intentional architecture boundary explicitly documented in apps/frontend/app/components/analysis/TechnicalZone.tsx:22-23,430-431 ('client-computed... do NOT add server-side TA value display here'). The /dashboard/technical route itself was deleted 2026-06-28 (commit 87871e06e, FE-AHUB-INT-INTEGRATE) — its content now lives in /dashboard/analysis via TechnicalZone. Live docker curl of /api/price-history/FPT confirms real candles + working chart data path today. (3) /api/price-history has served a generated_at ISO8601 timestamp since its creation (commit b1b7394ce, 2026-06-11, TASK-17-P2-1a) — predates mint; live curl confirms; frontend (TechnicalZone.tsx) already consumes dto.generated_at for the freshness badge. snake_case generated_at matches every sibling field in the same envelope (data_source, stale_served, change_abs) — a literal camelCase 'generatedAt' rename was not warranted (would break the project's consistent naming convention for zero functional gain). NET: zero code changes needed in any of the 3 candidate zones (api-gateway, technical-analysis, mcp-server). Sibling ticket FIX-TA-INDICATORS-TIER3-ROUTING (get_technical_indicators MCP tool returns source_tier:3 ALL-N/A) remains genuinely open and separate — confirmed still TODO/unpromoted in backlog-detail.json, NOT duplicated by this closure; it concerns the agent-facing MCP tool, not this dashboard rendering pipeline, which never calls it. Precedent: FIX-ALERT-CASCADE-OUTCOME-DEAD (same disposition shape, PO ruling 2026-07-31). Decision journal: docs/agent-memory/decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-developer-3.md STEP developer-S4.",
+        "cancelled_at": "2026-08-06T10:24:04Z",
+        "cancelled_by": "developer",
+        "verify_note": "prior_status=IN_PROGRESS"
       }
     ],
     "backlog": [
@@ -5757,29 +5777,6 @@
         "po_manual_dispatch_note": "po (manual-dispatch-sweep) surfaced DRS-STRANDED-OFF-ALLOWLIST candidate — folding into this tick's BATCH. Top of 41 eligible (rank 1 / idx 29, sort_by([rank,idx])).",
         "po_size_recheck_20260806T0752": "TITLE LINE COUNT IS STALE AND UNDERSTATED. Title says 787L; live `wc -l docs/agents/system-auditor/flow/main.md` = 965L as of 2026-08-06T07:52Z. Corroborated same-tick and independently: agent-father had to create docs/agents/system-auditor/flow/data-writer-provenance.md as a NEW sibling specifically because docs/agents/system-auditor/flow/audit-dimensions.md is already at its own 200L hard cap and could not absorb the D-DATA dimension. The split is no longer 'scheduled-later, low urgency' — file growth is now actively displacing new dimension content into ad-hoc siblings with no registry entry.",
         "po_dedup_note_20260806T0752": "DUPLICATE FOUND: NB-AUDITOR-MAIN-SPLIT (backlog, priority low) targets the SAME file and the SAME Tier-2/Tier-3 extraction, quoting 627L. Both line counts are stale against the live 965L. TE-T06 is the surviving row (P1, owner+next_agent set, dispatched this tick); NB-AUDITOR-MAIN-SPLIT is marked superseded_by TE-T06 — do not work both."
-      },
-      {
-        "id": "TE-T26",
-        "title": "T-26 fb-market-poster main.md 946L: MODE ROUTER before daily body; extract daily body so weekend fires skip 880L [~3.4k tok/day avg + governance]",
-        "owner": "agent-father",
-        "status": "BACKLOG",
-        "type": "SPRINT-M",
-        "size": "M",
-        "priority": "P1",
-        "wave": 3,
-        "est_saving": "~3.4k tok/day avg + brings fleet's largest flow under governance",
-        "zone": "docs/agents/",
-        "sprint": "TOKEN-ECONOMY-AUDIT",
-        "depends": [],
-        "detail_ref": "docs/architecture-briefs/2026-07-12-token-economy-lazyload-audit.md#T-26",
-        "note": "QA-GATED. Weekend fires read all 946L then route to weekly-*.md (880L wasted). main.md -> <=120L (guards + MODE ROUTER + SSOT block); new daily.md holds STEP 0-8. Weekly sub-flows re-point SSOT refs to slim main.md. Delete L442-468 jargon table (SSOT is scripts/fb-jargon-gate.sh) -> kills known false-green drift class.",
-        "next_agent": "agent-father",
-        "po_routing_ruling_20260721": "PO ARTIFACT-CLASS ROUTING RULING 2026-07-21T18:42Z. Rule: routing follows ARTIFACT CLASS, not directory. Any row whose deliverable is instruction-prose that an agent LOADS AND EXECUTES — .claude/agents/**, docs/agents/** (init/flow/knowledge/tools-package), .claude/skills/**/SKILL.md — routes to agent-father. Executable code (apps/**, scripts/**), codegen-from-registry, and data/root-config (docs/data/**, CLAUDE.md) route to zone-matched dev-* or developer. Rationale: for this system a flow doc IS the executable source; agent-father is already sole owner of agent-file lifecycle (dispatch/SKILL.md:48) and of NEW cron skill files (:50), and board precedent has 5/5 pre-existing docs/agents/ rows routed to agent-father/agents-architect/po and 0 to developer. Precedent for SKILL.md specifically: docs/signals/processed/dev-team-20260716T102429Z-autolaunch-safety-hold-uc-asl-p6.json already routed a signal-dashboard SKILL.md edit to agent-father as 'the factory rule'. ROOT CAUSE this closes: .claude/skills/zone-detect/SKILL.md resolves ONLY dev-<service> (Tier-1/2, needs apps/<service>/-shaped zone) or generic developer (Tier-3 fallback) — it has NO path to agent-father, so any docs/agents/ or .claude/skills/ row reaching execute-tier with next_agent unset gets the 'developer' placeholder and mis-routes. EXPECTED SIDE EFFECT (do NOT 'fix' this): next_agent=agent-father does not match the dev-role pattern ^dev(-|$)|^developer$, so the BOUNDED-1 NON-DEV-NEXT_AGENT gate (dev-team/flow/main.md:518) now WITHHOLDS these rows from unattended idle auto-pickup. That is the intended outcome — they require deliberate router dispatch to agent-father, not silent promotion to a generic developer.",
-        "updated_at": "2026-08-06T09:55:24Z",
-        "po_manual_dispatch_flagged_at": "2026-08-06T09:55:23Z",
-        "po_manual_dispatch_flagged_by": "po (manual-dispatch-sweep)",
-        "po_manual_dispatch_class": "DRS-STRANDED-OFF-ALLOWLIST",
-        "po_manual_dispatch_note": "po (manual-dispatch-sweep) surfaced DRS-STRANDED-OFF-ALLOWLIST candidate — folding into this tick's BATCH"
       },
       {
         "id": "TE-T25",
@@ -21949,6 +21946,30 @@
         "architect_completed_at": "2026-08-06T09:41:51Z",
         "updated_by": "developer",
         "developer_completed_at": "2026-08-06T10:21:17Z"
+      },
+      {
+        "id": "TE-T26",
+        "title": "T-26 fb-market-poster main.md 946L: MODE ROUTER before daily body; extract daily body so weekend fires skip 880L [~3.4k tok/day avg + governance]",
+        "owner": "agent-father",
+        "status": "REVIEW",
+        "type": "SPRINT-M",
+        "size": "M",
+        "priority": "P1",
+        "wave": 3,
+        "est_saving": "~3.4k tok/day avg + brings fleet's largest flow under governance",
+        "zone": "docs/agents/",
+        "sprint": "TOKEN-ECONOMY-AUDIT",
+        "depends": [],
+        "detail_ref": "docs/architecture-briefs/2026-07-12-token-economy-lazyload-audit.md#T-26",
+        "note": "QA-GATED. Weekend fires read all 946L then route to weekly-*.md (880L wasted). main.md -> <=120L (guards + MODE ROUTER + SSOT block); new daily.md holds STEP 0-8. Weekly sub-flows re-point SSOT refs to slim main.md. Delete L442-468 jargon table (SSOT is scripts/fb-jargon-gate.sh) -> kills known false-green drift class. DONE by agent-father 2026-08-06: split at MODE ROUTER -> main.md (88L, guards + MODE ROUTER + new SHARED OUTPUT SSOT) + new daily.md (902L, STEP 0-8, pure relocation, byte-diff verified). Jargon table deleted (1-line pointer); hashtag composition prose trimmed to SSOT pointer. weekly-recap.md/weekly-prediction.md cross-refs repointed to daily.md. init.md document_registry/Extensions updated (daily.md + 2 pre-existing unregistered weekly siblings). Awaiting QA.",
+        "next_agent": "qa",
+        "po_routing_ruling_20260721": "PO ARTIFACT-CLASS ROUTING RULING 2026-07-21T18:42Z. Rule: routing follows ARTIFACT CLASS, not directory. Any row whose deliverable is instruction-prose that an agent LOADS AND EXECUTES — .claude/agents/**, docs/agents/** (init/flow/knowledge/tools-package), .claude/skills/**/SKILL.md — routes to agent-father. Executable code (apps/**, scripts/**), codegen-from-registry, and data/root-config (docs/data/**, CLAUDE.md) route to zone-matched dev-* or developer. Rationale: for this system a flow doc IS the executable source; agent-father is already sole owner of agent-file lifecycle (dispatch/SKILL.md:48) and of NEW cron skill files (:50), and board precedent has 5/5 pre-existing docs/agents/ rows routed to agent-father/agents-architect/po and 0 to developer. Precedent for SKILL.md specifically: docs/signals/processed/dev-team-20260716T102429Z-autolaunch-safety-hold-uc-asl-p6.json already routed a signal-dashboard SKILL.md edit to agent-father as 'the factory rule'. ROOT CAUSE this closes: .claude/skills/zone-detect/SKILL.md resolves ONLY dev-<service> (Tier-1/2, needs apps/<service>/-shaped zone) or generic developer (Tier-3 fallback) — it has NO path to agent-father, so any docs/agents/ or .claude/skills/ row reaching execute-tier with next_agent unset gets the 'developer' placeholder and mis-routes. EXPECTED SIDE EFFECT (do NOT 'fix' this): next_agent=agent-father does not match the dev-role pattern ^dev(-|$)|^developer$, so the BOUNDED-1 NON-DEV-NEXT_AGENT gate (dev-team/flow/main.md:518) now WITHHOLDS these rows from unattended idle auto-pickup. That is the intended outcome — they require deliberate router dispatch to agent-father, not silent promotion to a generic developer.",
+        "updated_at": "2026-08-06T10:25:10Z",
+        "po_manual_dispatch_flagged_at": "2026-08-06T09:55:23Z",
+        "po_manual_dispatch_flagged_by": "po (manual-dispatch-sweep)",
+        "po_manual_dispatch_class": "DRS-STRANDED-OFF-ALLOWLIST",
+        "po_manual_dispatch_note": "po (manual-dispatch-sweep) surfaced DRS-STRANDED-OFF-ALLOWLIST candidate — folding into this tick's BATCH",
+        "agent_father_completed_at": "2026-08-06T10:25:10Z"
       }
     ],
     "qa": [
@@ -22047,25 +22068,7 @@
     },
     "last_triaged_at": "2026-08-06T10:13:04Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": [
-      {
-        "id": "FIX-DEPTHTHIN-B-GATEWAY-TA-PATH-REWRITE",
-        "title": "DEPTH_THIN (b): dashboard.technical OHLCV candles render but TA indicators (MA/RSI/MACD) are MISSING — the api-gateway /ta path-rewrite is a TODO so technical-analysis indicators never reach the frontend. Wire the gateway /ta path-rewrite; also add generatedAt to /api/price-history.",
-        "type": "FIX",
-        "priority": "P3",
-        "status": "IN_PROGRESS",
-        "zone": "multi",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-DEPTHTHIN-B-GATEWAY-TA-PATH-REWRITE",
-        "promoted_at": "2026-08-01T13:18:33Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=3)",
-        "updated_at": "2026-08-06T10:13:13Z",
-        "updated_by": "po/triage-20260805T1058",
-        "po_wip_eviction_20260805T1037": "EVICTED in_progress -> ready by PO triage 2026-08-05T10:58:29Z to free a WIP slot for FIX-RAG-SERVICE-CLEAN-EXIT-RESTART-LOOP (P1 live incident). BASIS, MEASURED not assumed: this row was claimed 2026-08-01T13:18:38Z by BOUNDED-1 and held a WIP slot for 3.9 days; `git log --since=2026-08-01T13:18:00Z -- apps/api-gateway/` returns ZERO commits and `git log --all --grep=DEPTHTHIN` shows no commit for the -B row (only the sibling -A row and the original mint). No work was in flight to interrupt. Priority is P3 (dashboard TA indicators missing) against a P1 container restart loop at 5.17 restarts/day. NOT a cancellation and NOT a de-prioritization on merit: the row keeps its P3 priority, its zone and its full detail_ref, and it is first in line for the next free slot via the Ready-Lane Consumer. Re-promote whenever WIP < 2.",
-        "claimed_at": "2026-08-06T10:13:13Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)"
-      }
-    ]
+    "in_progress": []
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
