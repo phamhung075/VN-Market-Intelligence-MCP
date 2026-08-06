@@ -4,6 +4,20 @@ Zone: `apps/rag-service/` | Stack: Python/FastAPI | DB: rag_service.db (write)
 
 ## Working Memory
 
+### 2026-08-06 — FIX-RAG-EMBEDDER-IDLE-UNLOAD-PATH (P1, BOUNDED-1 auto-pickup)
+
+**Task:** design was DONE (`docs/architecture-briefs/2026-08-06-rag-service-memory-sizing-remediation.md` §3), execution-only. `embedder.py`'s lazy-load singleton (GFD-13) had no release path — once warmed, the ~600-700MiB model stayed resident for the container's whole life regardless of traffic, pinning it near its cap forever after the first request.
+
+**Fix:** `_maybe_unload_idle(idle_threshold_s)` in `embedder.py` — same `_load_lock`/double-check pattern as `_ensure_model_loaded()` (outer cheap check, re-check inside the lock); unloads `_model`+`gc.collect()` once idle past threshold. `_raw_embed()` now stamps `_last_used_monotonic = time.monotonic()` (covers both `embed()`/`embed_batch()`). New `_idle_unload_loop()` in `app_factory.py`, duck-typed (`getattr(embedder, "_maybe_unload_idle", None)` → permanent no-op for sandbox fakes, zero determinism impact), started via `asyncio.create_task` in `build_lifespan()`, cancelled+awaited in a `finally:` around the existing `yield`. New `Config.embedder_idle_unload_minutes` (env `EMBEDDER_IDLE_UNLOAD_MINUTES`, default 15) — same `os.environ.get()` pattern as `EMBEDDING_CACHE_DIR`. Reload on next embed is fully transparent via the EXISTING `_ensure_model_loaded()` lock — no second load path added. `main.py` untouched (cfg already flows through unchanged).
+
+**Tests:** new `__tests__/unit/test_embedder_idle_unload.py` (12 tests) — unload after threshold (`gc.collect` spied), no-op paths, double-check-lock race guard, transparent reload (asserts `_load_model` called exactly once via a fake that mirrors the real early-return guard), `/embed/health` `warm→cold` flip staying 200 both sides (never 503), concurrent `embed()`/unload race via `asyncio.gather()` never raising, `_idle_unload_loop()` duck-type no-op for fakes, `Config` env default/override. Fakes use real `numpy.ndarray` for `encode()` returns (matches `_raw_embed()`'s real `.tolist()` call).
+
+**Verified:** pytest 175/175 (163 baseline + 12 new), reproduced across 2 different `pytest-randomly` seeds including one right after a `git stash`/`pop` round-trip. mypy: 20→20 errors (byte-identical set, 0 new, confirmed via stash A/B). Sandbox primitive+module tiers both exit 0 (env-audit-empty implied by that exit 0). Docs: `infrastructure.md` updated (also fixed a stale pre-existing "eagerly loads" line in the same subsection).
+
+**DJ:** `docs/agent-memory/decisions/sprint-FIX-RAG-EMBEDDER-IDLE-UNLOAD-PATH-dev-rag-service.md`
+
+---
+
 ### 2026-08-05 — FIX-RAG-SERVICE-CLEAN-EXIT-RESTART-LOOP (P1 LIVE INCIDENT)
 
 **Task:** compact() failure-path never reset `_insert_count` — PO already root-caused at source (repositories.py:251 reset was inside the `try`, right after `optimize()`); the `except:` block only warned and returned normally, so ANY optimize() failure left the counter stuck `>= _COMPACT_EVERY` and every following insert re-fired a full-table optimize() — burst rewrites inside the 768MiB cap, matching the OOMKilled=false crash pattern. Scope held to this one file per PO directive; 768MiB cap sizing (FU-RAG-DEPLOY-MEMORY) and on-disk amplification (FIX-RAG-COMPACTION-DISK-AMPLIFICATION) explicitly out of scope.
