@@ -1,0 +1,35 @@
+{
+  "from": "agent-father",
+  "to": "po",
+  "type": "scope-split-request",
+  "priority": "medium",
+  "createdAt": "2026-08-06T19:15:00Z",
+  "summary": "TE-T05 done: end-0-cowork composite shipped. B2 split out (not bundled) + 1 non-blocking out-of-zone fence flag.",
+  "payload": {
+    "origin_task_id": "TE-T05",
+    "origin_sprint": "TOKEN-ECONOMY-AUDIT",
+    "items": [
+      {
+        "id": "B2-SPLIT-COWORK-BOUNDARY-DEDUP",
+        "class": "new-backlog-candidate",
+        "decision": "SPLIT (not bundled into TE-T05's commit)",
+        "what": "Dedup .claude/skills/cowork-boundary/SKILL.md (29L) vs .claude/skills/cowork-error-boundary/SKILL.md (78L) — two overlapping boundary files both loaded every cowork cycle. Overlap confirmed live: cowork-boundary's on_error line + forbidden_outputs partially duplicate cowork-error-boundary's more detailed Error Boundary / FORBIDDEN sections; each file also carries unique content (cowork-boundary: KLFL; cowork-error-boundary: Memory-as-Truth Prohibition, MCP Call Pattern, BUG Telegram Dedup) that must survive any merge.",
+        "why_split_not_bundled": [
+          "File pair is unrelated to the end-of-cycle chain TE-T05 actually merged (different call graph, different consumers) — BA's own spec (docs/handoffs/TE-T05-BA-spec.md B2) flagged it as 'unrelated scope riding along in the same row', not part of FR-1..5.",
+          "A correct dedup needs its own full consumer grep across every cowork flow file (which flows call cowork-boundary vs cowork-error-boundary vs both) before any merge is safe — the same class of diligence FR-4 needed for the 29-consumer cowork-end-cycle repoint. Coupling two independent consumer-audits into one diff raises review surface exactly when TE-T05's own diff needs focused scrutiny on the notebook-write pointer-vs-copy boundary (3 hardened invariants live there: AC-2a immutability, AC-5 line-cap, c<NNN> UUID-provenance).",
+          "Savings disparity: ~20k tok/day (dedup) vs ~130-165k tok/day (TE-T05 main deliverable) — small side benefit not worth the coupled blast-radius increase on a QA-gated composite-skill commit.",
+          "Precedent inside this same row: FR-7 already carved the DEPRECATED append-session-record deletion OUT of TE-T05 for the identical reason (separately-scoped row UC-MDH-P2 owns it) — same principle applied here."
+        ],
+        "recommendation": "Mint a new P2/P3 backlog row (any sprint) for the cowork-boundary/cowork-error-boundary dedup. Artifact-class routing (po_routing_ruling_20260721) applies — deliverable is .claude/skills/**/SKILL.md, so owner/next_agent = agent-father, no ba->architect->pm relay needed, same as TE-T05 itself."
+      },
+      {
+        "id": "FENCE-SCRIPT-STALE-SCAN-PATTERN",
+        "class": "non-blocking-out-of-zone-flag",
+        "what": "scripts/audits/notebook-class-fence.sh:34-35 SCAN_SET greps docs/agents/*/flow/ for the literal pattern \"cowork-end-cycle\\|notebook-write\" to build FENCE-A's agent scan set. TE-T05 repointed all 29 live consumers from cowork-end-cycle/SKILL.md to end-0-cowork/SKILL.md and deleted cowork-end-cycle/SKILL.md outright (0 remaining live consumers). Any agent whose flow file matched ONLY via the old \"cowork-end-cycle\" token (not also via a literal \"notebook-write\" string elsewhere in the same file) now silently drops out of SCAN_SET — degrades FENCE-A into an under-scan / false-green, not a hard break (script still runs, just checks fewer agents than before).",
+        "fix": "Update the grep pattern on notebook-class-fence.sh:35 from \"cowork-end-cycle\\|notebook-write\" to \"end-0-cowork\\|notebook-write\".",
+        "why_not_fixed_here": "scripts/ is outside agent-father's commit_zone (docs/agents/, docs/agent-memory/, .claude/skills/, .claude/agents/ only) and forbidden_outputs bars agent-father from writing scripts — same precedent as TE-T08's 2026-07-31 self-report (commit af63043ae) flagging a stale scripts/git-hooks/pre-commit comment for developer/dev-team follow-up instead of self-fixing.",
+        "recommendation": "Route to developer or dev-team maintenance lane as a 1-line fix, non-blocking to TE-T05's own REVIEW/QA handoff."
+      }
+    ]
+  }
+}
