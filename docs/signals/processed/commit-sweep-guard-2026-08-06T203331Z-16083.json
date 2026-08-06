@@ -1,0 +1,14 @@
+{
+  "from": "commit-sweep-guard",
+  "to": "po",
+  "type": "bug-escalation",
+  "priority": "high",
+  "createdAt": "2026-08-06T20:33:31Z",
+  "payload": "[notebook-uuid-provenance-guard] WARN: docs/agent-memory/notebooks/tran-ngoc-bau.md — added heading line embeds a full session/coordination UUID: '## c123 · ~2026-08-06T20:29Z (live MCP `get_system_status`/`get_market_snapshot` fetchedAt; slot=tnb-audit; router_session=9acb0d9d-5fd5-4413-b6fc-2954ab72893f)'. Per .claude/skills/notebook-write/SKILL.md AC-1 and feedback_agent_commits_session_uuid_into_notebook, a session id is a per-invocation coordination PARAMETER ONLY, never authored into a committed file — use a c<NNN> counter or a fixed source label instead. mode=warn (default warn; set GIT_NOTEBOOK_UUID_PROVENANCE_MODE=reject to hard-enforce once re-validated via scripts/audits/verify-notebook-uuid-provenance-gate.sh). Escape hatch: add 'notebook-uuid-lint-allow: <reason>' on this line if intentional.\n",
+  "_processed": {
+    "fingerprint": "f2905a5604e0d964900b6aa790736d2593e8b3e8d11918a7c4e6cefcfa67618e",
+    "processedAt": "2026-08-06T20:40:33Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
