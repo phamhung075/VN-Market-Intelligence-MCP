@@ -10,11 +10,20 @@
 #
 # WHAT IT CHECKS: COUNT(*) on the SAME 17 tables already named in
 # .claude/commands/crons/cron-db-data-integrity.md's prompt, against the SAME
-# read-only sidecar that cron prompt already documents:
-#   docker run --rm -v <volume>:/data keinos/sqlite3 sqlite3 "file:/data/market.db?immutable=1" "<SQL>"
+# direct host-bind sqlite3 read that cron prompt already documents:
+#   sqlite3 "file:<repo>/data/live/market.db?immutable=1" "<SQL>"
 # (file:?immutable=1, NEVER sqlite3 -readonly — see that cron doc's own DB ACCESS note:
-# a different-uid sidecar can't attach a writer-recreated -shm file under -readonly
-# after a restart; immutable=1 bypasses WAL/-shm entirely and is always safe here.)
+# a foreign process can't attach a writer-recreated -shm file under -readonly after a
+# restart; immutable=1 bypasses WAL/-shm entirely and is always safe here.)
+#
+# DB ACCESS (FIX-DB-INTEGRITY-SIDECAR-NAMED-VOLUME-DRIFT, 2026-08-06, AC-1): direct
+# host-bind read — NO docker sidecar. 2026-07-15 commit 5ba622eca retired the docker
+# named volume `vn-market-intelligence-mcp_market_data` in favour of a host bind mount
+# (`./data/live:/app/data`). The old `docker run --rm -v <named-volume>:/data
+# keinos/sqlite3 ...` call here made docker silently AUTO-CREATE a fresh empty volume on
+# every invocation, so this probe could never emit SKIP-SPAWN (voted SPAWN unconditionally
+# for 21 days, unnoticed). Same decision + rationale as db-integrity-counts.sh (see that
+# script's header) — do NOT re-create the named volume.
 #
 # v1 SCOPE NOTE (be honest, don't guess): COUNT(*)-diff ONLY — schema-agnostic, catches
 # the dominant "new rows arrived" case, safe without live schema access. This
@@ -54,14 +63,14 @@
 #       watched table, in order) — tables_changed = -1 (sentinel "unknown": the live
 #       counts themselves could not be read this tick, distinct from a confirmed 0)
 #
-# Env overrides (test seam — db-integrity-probe.test.sh mocks `docker` as a function
+# Env overrides (test seam — db-integrity-probe.test.sh mocks `sqlite3` as a function
 # after sourcing, same pattern as auditor-tier1-probe.test.sh's docker/curl/df stubs):
 #   SNAPSHOT_FILE_PATH   — snapshot output path (default: repo docs/data/db-integrity-probe-last-snapshot.json)
-#   DB_INTEGRITY_VOLUME  — docker named volume (default: vn-market-intelligence-mcp_market_data)
-#   DB_INTEGRITY_IMAGE   — sqlite3 sidecar image (default: keinos/sqlite3)
+#   MARKET_DB_HOST_PATH  — host-bind DB file path (default: <repo>/data/live/market.db — same
+#                          env var name as db-integrity-counts.sh / db-empty-table-classify.sh)
 #
 # HARD CONSTRAINT: read-only. This script NEVER runs an INSERT/UPDATE/DELETE or any
-# docker mutation — sqlite3 is invoked with "file:...?immutable=1" only, same as the
+# mutation — sqlite3 is invoked with "file:...?immutable=1" only, same as the
 # cron prompt this gates.
 
 set -u
@@ -69,8 +78,7 @@ set -u
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 SNAPSHOT_FILE="${SNAPSHOT_FILE_PATH:-$REPO_ROOT/docs/data/db-integrity-probe-last-snapshot.json}"
-DB_INTEGRITY_VOLUME="${DB_INTEGRITY_VOLUME:-vn-market-intelligence-mcp_market_data}"
-DB_INTEGRITY_IMAGE="${DB_INTEGRITY_IMAGE:-keinos/sqlite3}"
+MARKET_DB_HOST_PATH="${MARKET_DB_HOST_PATH:-$REPO_ROOT/data/live/market.db}"
 
 # Same 17 tables already named in cron-db-data-integrity.md's own prompt — keep in
 # sync with that doc if the watched-table list ever changes there.
@@ -83,18 +91,18 @@ TABLES=(
 
 _now_iso() { date -u +"%Y-%m-%dT%H:%M:%SZ"; }
 
-# ── Live counts via the read-only sidecar (ONE docker invocation, 17-statement SQL) ──
+# ── Live counts via a direct host-bind sqlite3 read (ONE invocation, 17-statement SQL) ──
 # Prints "<table>|<count>" one per line, in TABLES order, on success (stdout, rc=0).
-# Prints nothing and returns 1 on ANY failure: docker unreachable / non-zero exit /
-# output did not parse into exactly len(TABLES) valid "<table>|<count>" lines in order.
+# Prints nothing and returns 1 on ANY failure: sqlite3 unreachable / DB file missing /
+# non-zero exit / output did not parse into exactly len(TABLES) valid "<table>|<count>"
+# lines in order.
 _query_live_counts() {
   local sql t out rc tbl cnt i=0
   sql=""
   for t in "${TABLES[@]}"; do
     sql="${sql}SELECT '${t}', COUNT(*) FROM ${t};"
   done
-  out=$(docker run --rm -v "${DB_INTEGRITY_VOLUME}:/data" "$DB_INTEGRITY_IMAGE" \
-    sqlite3 "file:/data/market.db?immutable=1" "$sql" 2>/dev/null)
+  out=$(sqlite3 "file:${MARKET_DB_HOST_PATH}?immutable=1" "$sql" 2>/dev/null)
   rc=$?
   [ "$rc" -ne 0 ] && return 1
   [ -z "$out" ] && return 1
@@ -148,8 +156,16 @@ run_probe() {
 
   live_out=$(_query_live_counts); rc=$?
   if [ "$rc" -ne 0 ]; then
+    # AC-4 (FIX-DB-INTEGRITY-SIDECAR-NAMED-VOLUME-DRIFT): FAIL-OPEN (exit 1, verdict=SPAWN)
+    # is the CORRECT, documented CADRAT-2 contract here — never suppress a legitimate sweep
+    # on a probe fault. What was missing was LOUDNESS: this branch used to emit ONLY the
+    # stdout JSON, so a genuinely-broken DB access path (e.g. the 21-day named-volume drift)
+    # was indistinguishable in logs from the routine "counts changed" SPAWN case. Add a
+    # bug-channel-worthy stderr line so a live access defect is visible on its own, even
+    # though the verdict/exit code contract itself is unchanged.
+    echo "[DB-INTEGRITY-PROBE] QUERY FAILURE — live DB unreachable (sqlite3 non-zero exit, empty output, or malformed row-count for one or more of the ${#TABLES[@]} watched tables) DB=${MARKET_DB_HOST_PATH} — falling open to SPAWN; the full sweep's own db-integrity-counts.sh call will fail loud if the DB is still unreachable" >&2
     jq -nc --arg v "SPAWN" \
-      --arg d "sidecar query failed (docker unreachable, non-zero exit, or output did not parse into 1 line per watched table) — snapshot left untouched" \
+      --arg d "live DB query failed (sqlite3 unreachable, DB file missing, non-zero exit, or output did not parse into 1 line per watched table) — snapshot left untouched" \
       --argjson tc -1 --arg ts "$ts" \
       '{verdict:$v, detail:$d, tables_changed:$tc, checked_at:$ts}'
     return 1

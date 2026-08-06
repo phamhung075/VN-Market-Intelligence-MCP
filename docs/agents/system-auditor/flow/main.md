@@ -608,7 +608,7 @@ docker exec "$MCP_CTR" ls /app/data/pdfs/ | wc -l
 - > 0 → PASS; 0 → WARN
 
 ### DB Write Integrity Checks (C-01 through C-16)
-Read DB paths from system-map.json infrastructure.databases. The LIVE DB lives in named volume `vn-market-intelligence-mcp_market_data` mounted at `/app/data` in the container — NOT at `apps/mcp-server/data/` on the host (that path is a stale orphan test-fixture with 0-row tables).
+Read DB paths from system-map.json infrastructure.databases. The LIVE DB is bind-mounted from host `data/live/` to `/app/data` in the container (commit 5ba622eca, 2026-07-15 — retired the earlier docker named volume `vn-market-intelligence-mcp_market_data` so the DB survives VM rebuilds; do NOT re-create that named volume). This is NOT at `apps/mcp-server/data/` on the host (that path is a stale orphan test-fixture with 0-row tables). The `docker exec` invocation pattern below always resolves the correct in-container path regardless of the host mount mechanism — corrected 2026-08-06 (FIX-DB-INTEGRITY-SIDECAR-NAMED-VOLUME-DRIFT AC-6); this section's own query mechanism was never affected, only the prose description of the mount was stale.
 Resolve container name once at the top of this section: `MCP_CTR=$(docker ps --format '{{.Names}}' | grep mcp-server | head -1)`
 Run all queries via bun:sqlite readonly exec — NEVER host-side sqlite3, NEVER open DB in write mode, NEVER stop/start containers:
 ```bash

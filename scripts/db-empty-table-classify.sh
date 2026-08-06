@@ -84,16 +84,16 @@
 # same empirical DSN-topology check, never as a blanket guess.
 #
 # DB ACCESS — direct host-bind sqlite3 (NOT the docker keinos/sqlite3
-# sidecar db-integrity-counts.sh still mounts against the named volume).
+# sidecar db-integrity-counts.sh used to mount against the named volume).
 # The named volume (vn-market-intelligence-mcp_market_data) was retired by
 # commit 5ba622eca (2026-07-15) in favour of a host bind mount (./data/live
-# -> /app/data in every service, see docker-compose.yml) — that sidecar
-# path is currently non-functional and tracked separately
-# (FIX-DB-INTEGRITY-SIDECAR-NAMED-VOLUME-DRIFT, not this task's scope: this
-# task does not touch db-integrity-counts.sh's DB ACCESS block). This is
-# NEW code, so it is not built on the known-broken default: it reads the
-# host-bind file directly with the SAME file:...?immutable=1 safety flag
-# (bypasses WAL/-shm, always safe for a read-only observer). Override via
+# -> /app/data in every service, see docker-compose.yml). This script was
+# NEW code at authoring time, so it was not built on the then-known-broken
+# default: it reads the host-bind file directly with the SAME
+# file:...?immutable=1 safety flag (bypasses WAL/-shm, always safe for a
+# read-only observer). db-integrity-counts.sh + db-integrity-probe.sh were
+# migrated to this SAME pattern by FIX-DB-INTEGRITY-SIDECAR-NAMED-VOLUME-
+# DRIFT (2026-08-06) — this script was simply first. Override via
 # MARKET_DB_HOST_PATH (tests / a future path change).
 #
 # Shell: bash 3.2+ (macOS system /bin/bash) — NO mapfile, NO associative

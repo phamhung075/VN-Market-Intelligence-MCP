@@ -18,13 +18,24 @@
 # Flow-doc pointer: docs/agents/ops/flow/bctc.md (manual enrich re-verify) and
 # docs/policies/dev-standards.md § Script Persistence.
 #
+# DB ACCESS (FIX-DB-INTEGRITY-SIDECAR-NAMED-VOLUME-DRIFT, 2026-08-06): the BEFORE/AFTER
+# read-only display queries below use a direct host-bind sqlite3 read — NO docker
+# sidecar. 2026-07-15 commit 5ba622eca retired the docker named volume
+# `vn-market-intelligence-mcp_market_data` in favour of a host bind mount
+# (`./data/live:/app/data`); the old `docker run --rm -v <named-volume>:/data
+# keinos/sqlite3 ...` calls here silently queried an auto-created empty volume. The
+# RESET+RUN step below is unaffected — it already goes through the mcp-server
+# container's own DB handle via `docker exec`, never the sidecar.
+#
 # Usage:
 #   scripts/ops-bctc-enrich-reverify-pulljob.sh "292117 224 292097"
 # Args: space-separated bctc_vps_queue ids to reset->pending and re-drive.
 set -euo pipefail
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 MCP_CONTAINER="vn-market-intelligence-mcp-mcp-server-1"
-VOL="vn-market-intelligence-mcp_market_data"
+DB="${MARKET_DB_HOST_PATH:-$REPO_ROOT/data/live/market.db}"
 IDS="${1:?usage: $0 \"<id> <id> ...\"}"
 
 sqlite_rw() { docker exec "$MCP_CONTAINER" sh -c "command -v sqlite3 >/dev/null 2>&1"; }
@@ -34,7 +45,7 @@ INLIST="$(echo "$IDS" | tr ' ' ',' )"
 echo "$INLIST" | grep -Eq '^[0-9]+(,[0-9]+)*$' || { echo "ERR: ids must be integers"; exit 2; }
 
 echo "=== BEFORE: queue rows to re-drive ==="
-docker run --rm -v "${VOL}:/data" keinos/sqlite3 sqlite3 -header -column /data/market.db \
+sqlite3 -header -column "$DB" \
   "SELECT id, action_code, period_year, period_quarter, status FROM bctc_vps_queue WHERE id IN (${INLIST});"
 
 # RESET + RUN happen IN-CONTAINER via the mcp-server's own DB handle.
@@ -55,7 +66,7 @@ console.log('PULLJOB_RESULT='+JSON.stringify(r));
 "
 
 echo "=== AFTER: queue status + actual table-row counts ==="
-docker run --rm -v "${VOL}:/data" keinos/sqlite3 sqlite3 -header -column /data/market.db "
+sqlite3 -header -column "$DB" "
 SELECT q.id, q.action_code AS tk, q.period_year AS yr, q.period_quarter AS qq, q.status,
   (SELECT COUNT(*) FROM bctc_table_rows tr JOIN financial_reports fr
      ON fr.id=tr.report_id WHERE fr.action_code=q.action_code

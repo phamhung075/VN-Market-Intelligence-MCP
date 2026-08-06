@@ -2,10 +2,11 @@
 # scripts/agents-flow/db-integrity-probe.test.sh
 #
 # Regression test for CADRAT-2 — exercises the SKIP-SPAWN / SPAWN verdict paths of
-# db-integrity-probe.sh via a stubbed `docker` (function-override after sourcing,
+# db-integrity-probe.sh via a stubbed `sqlite3` (function-override after sourcing,
 # same pattern as auditor-tier1-probe.test.sh's docker/curl/df stubs), so NO real
-# docker/DB call is made. The real script's DB access is READ-ONLY
-# (file:...?immutable=1) — this test never runs a real docker/sqlite3 invocation.
+# DB call is made. The real script's DB access is READ-ONLY, direct host-bind
+# (file:...?immutable=1, FIX-DB-INTEGRITY-SIDECAR-NAMED-VOLUME-DRIFT) — this test
+# never runs a real sqlite3 invocation against a live file.
 #
 # Run:
 #   bash scripts/agents-flow/db-integrity-probe.test.sh
@@ -44,25 +45,23 @@ trap cleanup EXIT
 export SNAPSHOT_FILE_PATH="$TMPDIR_TEST/db-integrity-probe-last-snapshot.json"
 
 # The 17 watched tables, in the SAME order the real script queries them (mirrors
-# cron-db-data-integrity.md's own prompt list) — used to build stub sidecar output.
+# cron-db-data-integrity.md's own prompt list) — used to build stubbed sqlite3 output.
 TABLES_LIST="daily_ohlcv market_prices market_prices_history vn_index_cache alerts price_alerts alert_engine_records agent_signals signal_outcomes financial_reports macro_indicators sbv_rates fred_series_daily deep_fetch_queue deep_fetch_stats cron_job_runs scheduler_locks"
 
 # ── Source the script under test (guard prevents auto-exec: $0 != BASH_SOURCE) ──
 # shellcheck source=./db-integrity-probe.sh
 source "$PROBE_SH"
 
-# ── Stub docker — override the real command pulled in by the script ──────────
-# STUB_SIDECAR controls the canned sidecar response:
+# ── Stub sqlite3 — override the real command pulled in by the script ─────────
+# STUB_SIDECAR controls the canned live-query response:
 #   ok          — all 17 tables, counts from $STUB_COUNTS (space-separated, same
 #                 order as TABLES_LIST; default all "100")
 #   short       — only 5 of 17 lines returned (parse-mismatch fault)
 #   bad_order   — tables out of order (parse-mismatch fault)
 #   garbage     — non-numeric count on one line (parse-mismatch fault)
-#   fail        — docker itself returns non-zero (sidecar/docker-unreachable fault)
-#   empty       — docker returns rc=0 but empty stdout (sidecar fault)
-docker() {
-  local sub="$1"
-  [ "$sub" != "run" ] && return 1
+#   fail        — sqlite3 itself returns non-zero (DB-unreachable fault)
+#   empty       — sqlite3 returns rc=0 but empty stdout (DB-unreachable fault)
+sqlite3() {
   case "${STUB_SIDECAR:-ok}" in
     fail) return 7 ;;
     empty) return 0 ;;
@@ -175,7 +174,7 @@ OUT=$(run_probe); RC=$?
 VERDICT=$(printf '%s' "$OUT" | jq -r '.verdict')
 check "T4b SPAWN verdict on snapshot missing .tables key" "$([ "$VERDICT" = "SPAWN" ] && echo true || echo false)"
 
-# ── T5: SPAWN trigger #4 — sidecar-failure (docker returns non-zero) ─────────
+# ── T5: SPAWN trigger #4 — live-query-failure (sqlite3 returns non-zero) ─────────
 run_case
 _seed_snapshot
 BEFORE_MTIME=$(stat -f '%m' "$SNAPSHOT_FILE_PATH" 2>/dev/null || stat -c '%Y' "$SNAPSHOT_FILE_PATH" 2>/dev/null)
@@ -184,42 +183,42 @@ OUT=$(run_probe); RC=$?
 VERDICT=$(printf '%s' "$OUT" | jq -r '.verdict')
 CHANGED=$(printf '%s' "$OUT" | jq -r '.tables_changed')
 AFTER_MTIME=$(stat -f '%m' "$SNAPSHOT_FILE_PATH" 2>/dev/null || stat -c '%Y' "$SNAPSHOT_FILE_PATH" 2>/dev/null)
-check "T5 SPAWN verdict on sidecar-failure (docker non-zero exit)" "$([ "$VERDICT" = "SPAWN" ] && echo true || echo false)"
+check "T5 SPAWN verdict on live-query-failure (sqlite3 non-zero exit)" "$([ "$VERDICT" = "SPAWN" ] && echo true || echo false)"
 check "T5 exit=1" "$([ "$RC" -eq 1 ] && echo true || echo false)"
 check "T5 tables_changed=-1 (unknown sentinel)" "$([ "$CHANGED" = "-1" ] && echo true || echo false)"
 check "T5 snapshot LEFT UNTOUCHED (mtime unchanged)" "$([ "$BEFORE_MTIME" = "$AFTER_MTIME" ] && echo true || echo false)"
 
-# ── T5b: SPAWN trigger #4b — sidecar-failure (docker rc=0 but empty stdout) ──
+# ── T5b: SPAWN trigger #4b — live-query-failure (sqlite3 rc=0 but empty stdout) ──
 run_case
 _seed_snapshot
 STUB_SIDECAR="empty"
 OUT=$(run_probe); RC=$?
 VERDICT=$(printf '%s' "$OUT" | jq -r '.verdict')
-check "T5b SPAWN verdict on sidecar-failure (empty output)" "$([ "$VERDICT" = "SPAWN" ] && echo true || echo false)"
+check "T5b SPAWN verdict on live-query-failure (empty output)" "$([ "$VERDICT" = "SPAWN" ] && echo true || echo false)"
 
-# ── T5c: SPAWN trigger #4c — sidecar-failure (parse mismatch: too few lines) ──
+# ── T5c: SPAWN trigger #4c — live-query-failure (parse mismatch: too few lines) ──
 run_case
 _seed_snapshot
 STUB_SIDECAR="short"
 OUT=$(run_probe); RC=$?
 VERDICT=$(printf '%s' "$OUT" | jq -r '.verdict')
-check "T5c SPAWN verdict on sidecar-failure (only 5/17 lines returned)" "$([ "$VERDICT" = "SPAWN" ] && echo true || echo false)"
+check "T5c SPAWN verdict on live-query-failure (only 5/17 lines returned)" "$([ "$VERDICT" = "SPAWN" ] && echo true || echo false)"
 
-# ── T5d: SPAWN trigger #4d — sidecar-failure (parse mismatch: out-of-order tables) ──
+# ── T5d: SPAWN trigger #4d — live-query-failure (parse mismatch: out-of-order tables) ──
 run_case
 _seed_snapshot
 STUB_SIDECAR="bad_order"
 OUT=$(run_probe); RC=$?
 VERDICT=$(printf '%s' "$OUT" | jq -r '.verdict')
-check "T5d SPAWN verdict on sidecar-failure (tables out of order)" "$([ "$VERDICT" = "SPAWN" ] && echo true || echo false)"
+check "T5d SPAWN verdict on live-query-failure (tables out of order)" "$([ "$VERDICT" = "SPAWN" ] && echo true || echo false)"
 
-# ── T5e: SPAWN trigger #4e — sidecar-failure (parse mismatch: non-numeric count) ──
+# ── T5e: SPAWN trigger #4e — live-query-failure (parse mismatch: non-numeric count) ──
 run_case
 _seed_snapshot
 STUB_SIDECAR="garbage"
 OUT=$(run_probe); RC=$?
 VERDICT=$(printf '%s' "$OUT" | jq -r '.verdict')
-check "T5e SPAWN verdict on sidecar-failure (non-numeric count)" "$([ "$VERDICT" = "SPAWN" ] && echo true || echo false)"
+check "T5e SPAWN verdict on live-query-failure (non-numeric count)" "$([ "$VERDICT" = "SPAWN" ] && echo true || echo false)"
 
 # ── T6: multi-table change count is accurate (3 of 17 changed) ───────────────
 run_case

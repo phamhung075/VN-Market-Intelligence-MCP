@@ -2,7 +2,23 @@
 # db-integrity-counts.sh — DETERMINISTIC live-DB anomaly counts for the DB-data-integrity sweep.
 # Removes LLM hallucination from the regression monitor: the cron-db-data-integrity sweep MUST
 # use THIS script's JSON output verbatim for the history counts, never an LLM-recalled number.
-# Read-only sidecar; never mutates the DB. Pointer: .claude/commands/crons/cron-db-data-integrity.md
+# Read-only, direct host-bind sqlite3; never mutates the DB. Pointer: .claude/commands/crons/cron-db-data-integrity.md
+#
+# DB ACCESS (FIX-DB-INTEGRITY-SIDECAR-NAMED-VOLUME-DRIFT, 2026-08-06, AC-1): direct host-bind
+# read — NO docker. 2026-07-15 commit 5ba622eca retired the docker named volume
+# `vn-market-intelligence-mcp_market_data` in favour of a host bind mount (`./data/live:/app/data`
+# in every service). This script's old `docker run --rm -v <named-volume>:/data keinos/sqlite3 ...`
+# call was never migrated: docker silently AUTO-CREATED a fresh empty volume on every invocation
+# and the query failed to open /data/market.db — PROBE FAILURE on every real invocation for 21 days,
+# unnoticed because the failure fail-opened (see git history pre-2026-08-06 of this file). Candidate
+# (ii) (re-mount the sidecar against the host dir, `-v "$PWD/data/live:/data:ro"`) was rejected —
+# candidate (i) below removes docker entirely, which is strictly simpler and already the SHIPPED,
+# empirically-verified pattern in scripts/db-empty-table-classify.sh (this repo's own most recent
+# precedent, added the SAME day this bug was first reported). Verified 2026-08-06: a direct host
+# read via `sqlite3 "file:data/live/market.db?immutable=1"` returns BYTE-IDENTICAL counts (6/6
+# spot-checked columns) to the mcp-server container's own `bun:sqlite` reader on `/app/data/market.db`
+# — two independent planes agree (memory: feedback_same_db_tools_diverge_rowcount). Do NOT
+# re-create the named volume.
 #
 # FIELD-NAME NOTE (FIX-AUDITOR-EMPTYTABLE-CHECK-NO-WRITER-DISCRIMINATOR item 3,
 # docs/agents/system-auditor/flow/data-writer-provenance.md §3): the `counts` keys below were
@@ -30,24 +46,25 @@
 # "all from one date", etc.) instead of eyeballing a sampled row.
 #
 # OPEN PATTERN: file:?immutable=1 (NOT sqlite3 -readonly).
-# Rationale: after the mcp-server writer restarts and recreates market.db-shm with its uid,
-# a sidecar with a different uid cannot attach the writer-owned -shm to build the WAL index
-# -> SQLITE_READONLY(8) -> query returns NOTHING -> all counts silently null.
-# file:?immutable=1 bypasses WAL/-shm entirely and reads the main DB file directly, which is
-# always safe for a read-only observer that never needs to see in-flight WAL pages.
+# Rationale: a foreign process attaching a writer-owned -shm under -readonly can hit
+# SQLITE_READONLY(8) -> query returns NOTHING -> all counts silently null (originally written
+# for the docker sidecar's cross-uid case; kept because it's still the safest read-only-observer
+# posture even for a same-uid direct host read — never needs to see in-flight WAL pages).
+# file:?immutable=1 bypasses WAL/-shm entirely and reads the main DB file directly.
 set -euo pipefail
 
-VOL="${MARKET_DB_VOLUME:-vn-market-intelligence-mcp_market_data}"
-DB="${MARKET_DB_PATH:-/data/market.db}"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+DB="${MARKET_DB_HOST_PATH:-$REPO_ROOT/data/live/market.db}"
 TS="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 
-# One sidecar invocation, all canonical anomaly COUNT(*)s, pipe-separated row.
-# immutable=1: bypass WAL/-shm (safe for read-only observer; avoids uid mismatch on -shm).
+# One sqlite3 invocation, all canonical anomaly COUNT(*)s, pipe-separated row.
+# immutable=1: bypass WAL/-shm (safe for read-only observer).
 # PROBE-FAILURE GUARD: capture exit code explicitly; disable set -e around the probe so we can
 # emit a loud diagnostic instead of a silent exit-1 (set -e exits before we can store $?).
 PROBE_STDERR="$(mktemp)"
 set +e
-ROW="$(docker run --rm -v "${VOL}":/data keinos/sqlite3 sqlite3 "file:${DB}?immutable=1" "
+ROW="$(sqlite3 "file:${DB}?immutable=1" "
 SELECT
   (SELECT count(*) FROM daily_ohlcv WHERE high<open OR high<close OR high<low OR low>open OR low>close),
   (SELECT count(*) FROM daily_ohlcv WHERE open>0 AND close>0 AND (close/open>100.0 OR open/close>100.0)),
@@ -62,17 +79,17 @@ SELECT
 PROBE_EXIT=$?
 set -e
 
-# PROBE-FAILURE GUARD: if the docker/sqlite command failed OR the row is empty, exit loud.
+# PROBE-FAILURE GUARD: if the sqlite3 command failed OR the row is empty, exit loud.
 # Previously '|| true' + num() silently coerced probe failures to null — that masked outages.
 if [ $PROBE_EXIT -ne 0 ]; then
   STDERR_MSG="$(cat "${PROBE_STDERR}" 2>/dev/null || true)"
   rm -f "${PROBE_STDERR}"
-  echo "[DB-INTEGRITY-COUNTS] PROBE FAILURE (exit ${PROBE_EXIT}): ${STDERR_MSG}" >&2
+  echo "[DB-INTEGRITY-COUNTS] PROBE FAILURE (exit ${PROBE_EXIT}, DB=${DB}): ${STDERR_MSG}" >&2
   exit 1
 fi
 rm -f "${PROBE_STDERR}"
 if [ -z "${ROW// }" ]; then
-  echo "[DB-INTEGRITY-COUNTS] PROBE FAILURE: sqlite returned empty result — DB path wrong or volume not mounted" >&2
+  echo "[DB-INTEGRITY-COUNTS] PROBE FAILURE: sqlite returned empty result — DB path wrong (${DB})" >&2
   exit 1
 fi
 

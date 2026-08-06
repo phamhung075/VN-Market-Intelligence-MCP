@@ -51,16 +51,22 @@ lower spawn-rate-per-fire (the pre-gate) compounds; both ship together.
 
   DB DATA-ANOMALY SWEEP (detection only — do NOT fix the DB; report to dev-team via signal).
 
-  DB ACCESS — the live DB is the named volume, NOT host ./data and NOT the mcp-server
-  container (it has no sqlite3). Query read-only via the keinos/sqlite3 sidecar:
-    docker run --rm -v vn-market-intelligence-mcp_market_data:/data keinos/sqlite3 \
-      sqlite3 "file:/data/market.db?immutable=1" "<SQL>"
-  Note: use file:?immutable=1, NOT sqlite3 -readonly. After the mcp-server writer restarts and
-  recreates market.db-shm with its uid, a different-uid sidecar cannot attach that -shm to build
-  the WAL index -> SQLITE_READONLY(8) -> empty result -> all counts null. immutable=1 bypasses
-  WAL/-shm entirely and is always safe for a read-only observer.
-  Canonical DB = /data/market.db (≈300MB). Ignore the 0-byte legacy decoys
-  (market_data.db, market_intelligence.db, main.db).
+  DB ACCESS — the live DB is the HOST BIND MOUNT `./data/live/market.db` (repo root),
+  bind-mounted read/write into the mcp-server container at /app/data (commit 5ba622eca,
+  2026-07-15 — retired the earlier docker named volume `vn-market-intelligence-mcp_
+  market_data` so the DB survives VM rebuilds; do NOT re-create that named volume).
+  Query read-only DIRECTLY on the host — NO docker, NO sidecar:
+    sqlite3 "file:data/live/market.db?immutable=1" "<SQL>"
+  (run from repo root, or use an absolute path — scripts/db-integrity-counts.sh and
+  scripts/agents-flow/db-integrity-probe.sh already default to this path via
+  MARKET_DB_HOST_PATH). Note: use file:?immutable=1, NOT sqlite3 -readonly — a foreign
+  process attaching a writer-recreated -shm under -readonly can hit SQLITE_READONLY(8) ->
+  empty result -> all counts null; immutable=1 bypasses WAL/-shm entirely and is always
+  safe for a read-only observer (verified 2026-08-06: byte-identical counts vs the
+  mcp-server container's own bun:sqlite reader on /app/data/market.db).
+  Canonical DB = data/live/market.db (≈400MB). Ignore the 0-byte legacy decoys
+  (market_data.db, market_intelligence.db, main.db) and apps/mcp-server/data/ (stale
+  orphan test-fixture, 0-row tables — NOT the live DB).
 
   CHECK these high-value tables for the 4 anomaly classes (use cheap AGGREGATE queries —
   COUNT/MIN/MAX/GROUP BY — not full-table dumps):
@@ -281,6 +287,14 @@ either cron takes over.
   mutates the DB; all fixes flow through dev-team. This honours the router/agent "detect ≠ fix"
   boundary. The immutable=1 URI flag bypasses WAL/-shm and avoids uid-mismatch failures after the
   writer restarts (see DB ACCESS note above).
+- **Mount-drift regression guard** (AC-7, FIX-DB-INTEGRITY-SIDECAR-NAMED-VOLUME-DRIFT, 2026-08-06):
+  `scripts/db-integrity-mount-drift-check.sh` resolves the mcp-server container's LIVE `/app/data`
+  bind-mount source and asserts it matches the observer scripts' configured
+  `MARKET_DB_HOST_PATH` — FAILS LOUD (exit 1) if the runtime and the observer diverge again (e.g.
+  a re-introduced named volume, or the bind mount moving). Requires the live docker stack to
+  assert anything meaningful, so it is NOT a CI job (GitHub Actions has no repo containers
+  running) — run it locally/by ops against the live stack. Test coverage (pure bash, stubbed
+  `docker`, runs anywhere): `bash scripts/db-integrity-mount-drift-check.test.sh`.
 - **Schedule split (CADRAT-2)** already narrows raw fires from 336/wk to 87/wk (see Create with
   CronCreate above); the `db-integrity-probe.sh` pre-gate additionally narrows spawn-rate-per-fire
   on top of that — the two are additive, not substitutes for each other (docs/architecture-briefs/

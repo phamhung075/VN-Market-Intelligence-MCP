@@ -129,9 +129,10 @@ console.log(JSON.stringify(r));
 
 **Verification:**
 ```bash
-# RAW check vs named volume after container rebuild + reparse
-docker run --rm -v vn-market-intelligence-mcp_market_data:/db keinos/sqlite3 \
-  sqlite3 /db/market.db "SELECT COUNT(*) FROM bctc_table_rows WHERE report_id IN (SELECT id FROM financial_reports WHERE action_code='VCB');"
+# RAW check via direct host-bind read after container rebuild + reparse (FIX-DB-INTEGRITY-
+# SIDECAR-NAMED-VOLUME-DRIFT, 2026-08-06: the docker named volume was retired 2026-07-15 —
+# the live DB is now the host bind mount data/live/market.db)
+sqlite3 "file:data/live/market.db?immutable=1" "SELECT COUNT(*) FROM bctc_table_rows WHERE report_id IN (SELECT id FROM financial_reports WHERE action_code='VCB');"
 # Expected: > 0 rows (was 0 before this fix)
 ```
 
@@ -153,9 +154,10 @@ docker run --rm -v vn-market-intelligence-mcp_market_data:/db keinos/sqlite3 \
 
 **Verification:**
 ```bash
-# RAW check vs named volume after container rebuild + reparse
-docker run --rm -v vn-market-intelligence-mcp_market_data:/db keinos/sqlite3 \
-  sqlite3 /db/market.db "SELECT COUNT(*) FROM bctc_table_rows WHERE report_id IN (SELECT id FROM financial_reports WHERE action_code='VCB');"
+# RAW check via direct host-bind read after container rebuild + reparse (FIX-DB-INTEGRITY-
+# SIDECAR-NAMED-VOLUME-DRIFT, 2026-08-06: the docker named volume was retired 2026-07-15 —
+# the live DB is now the host bind mount data/live/market.db)
+sqlite3 "file:data/live/market.db?immutable=1" "SELECT COUNT(*) FROM bctc_table_rows WHERE report_id IN (SELECT id FROM financial_reports WHERE action_code='VCB');"
 ```
 Expected: > 0 rows per report.
 
