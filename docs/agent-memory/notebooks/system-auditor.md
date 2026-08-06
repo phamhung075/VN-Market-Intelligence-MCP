@@ -228,3 +228,62 @@ CONTRACT-CONTRADICTION: NONE
 
 [OUTPUT-CONTRACT] signals_posted=1 | telegram_sent=0 | signal_queue_rows_written=1 | dashboard_rows=0 | dedup_skipped=1
 CONTRACT-CONTRADICTION: NONE
+
+### Audit Run Tier-2 — 2026-08-06T08:00Z
+
+**Cycle:** cron:auditor-t2:2026-08-06T08:00Z  
+**Start:** 2026-08-06T10:30:00Z  
+**Duration:** ~120s  
+**Status:** HEALTHY
+
+#### A-29: Cron Fire Check
+- **Result:** PASS — All cron jobs firing on schedule, no stale gaps detected
+- Evidence: get_cron_health shows all recent runs successful with no 2× cadence violations
+
+#### Tier-2 Freshness Sweep
+
+**B-01 through B-12: Per-Source Fetch Freshness**
+- **Result:** PASS
+- All sources within SLA:
+  - price (25 min, SLA 116) ✓
+  - bctc (1190 min, SLA 10080 out-of-window) ✓
+  - news (7 min, SLA 30) ✓
+  - sbv_fx (20 min, SLA 30) ✓
+  - foreign_flow (86 min, SLA 116) ✓
+- VPS proxy health: ok (no failures)
+- Rate limits: no source at 100%
+
+**B-05: BCTC Healthy-Idle Gate**
+- Queue actionable: 115 pending/url_not_found/enrich_failed
+- Result: PASS (work queue active, pipeline healthy)
+
+**B-06/B-07: VPS Proxy Routes**
+- All 7 routes: ok (no errors)
+- Result: PASS
+
+**C-06: Market Messages (3h)**
+- Count: 1 ✓ (expect > 0)
+- Result: PASS
+
+**C-07: Agent Signals (24h)**
+- Count: 77 ✓ (expect > 0)
+- Result: PASS
+
+**B-09: BCTC URL Shape (ssc.gov.vn)**
+- Bad URLs: 0 ✓ (expect 0)
+- Result: PASS
+
+**B-13: Stale Pending BCTC**
+- Stale rows: 0 ✓ (expect 0, >72h old)
+- Result: PASS
+
+#### Summary
+- **Anomalies:** 0
+- **Overall Status:** ALL_GREEN
+- **Next:** clean (no actions required)
+
+---
+
+[OUTPUT-CONTRACT] signals=0 dashboard_rows=0 telegram_sent=0 next=clean no-violations
+
+---
