@@ -694,3 +694,15 @@
 **Mitigation:** No immediate action beyond signal routing.
 
 ---
+
+## Anomaly: A-30 · rag-service memory 98.83% — below floor (11.8 MiB free)
+**Severity:** WARN | **Date:** 2026-08-06 | **Status:** OPEN
+**Location:** rag-service container
+**Details:** Memory usage at 98.83% of 1GiB cap with only 11.8 MiB free, below the 40 MiB enforced floor threshold
+**Impact:** Risk of OOM if memory usage increases; container may crash if allocation burst occurs
+**Root cause:** Embedder model singleton with no release path occupies ~700 MiB baseline; compaction failure-path documented at ~20 MiB burst
+**Zone owner:** dev-mcp-server
+**Last reported:** 2026-08-06T23:35:39Z (signal sys-20260806T233530-1713, system-auditor -> po, dedup_key=microservice_degraded:rag-service:A-30, WARN Telegram sent)
+**Mitigation:** No immediate action beyond signal routing.
+
+---
