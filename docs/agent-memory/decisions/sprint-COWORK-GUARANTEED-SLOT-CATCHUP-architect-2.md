@@ -135,3 +135,4 @@
 - Escalate BLOCKED — rejected: nothing blocking; the 27-day staleness was a review-lane drain-throughput gap (now closed by this sweep), not a work-quality defect.
 **why-decision:** DONE_VERIFIED sign-off is the only option matching the evidence — commit message + git history + live re-run all corroborate the split is complete, correct, and undrifted; also confirmed (beyond dev-stock-price's original scope) that `cmd/sandbox/` is never baked into the Docker image (Dockerfile builds only `./cmd/server/`), so the backlog-detail.json `rebuild_required:true` flag was a generic audit-batch default, not applicable here — no ops/rebuild gate needed.
 **why-change:** No change from plan; this agent lacked gateway MCP tool access this session (Read/Edit/Write/Bash only) so `task_release` for the PRE-CLAIM lock is deferred to the spawning dev-team session per its own fallback instruction.
+### CAP-REACHED · 2026-08-06T07:01:55Z
