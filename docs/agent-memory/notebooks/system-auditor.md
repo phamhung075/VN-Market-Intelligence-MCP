@@ -1,4 +1,43 @@
-## c69 · 2026-08-06T20:33:43Z
+## c71 · 2026-08-06T21:11:06Z
+### Audit Run Tier-1 (21:10 UTC 2026-08-06)
+- Tier: 1 | Services: 13 checked | Sources: 0 | DB checks: 0
+- Anomalies: 0 new (C 0, W 1-dedup-skip, I 0) | Status: DEGRADED (floor breach — acknowledged, tracked by FU-RAG-DEPLOY-MEMORY)
+
+### Findings:
+**A-01 to A-11 (Container Status):** All 13 host_runtime_set services UP ✓
+
+**A-12 to A-20 (Health Endpoints):** All 5 endpoints OK (HTTP 200) ✓
+
+**A-20 pdf-extractor multi-probe:** 3/3 probes pass ✓
+
+**A-21 (Restart Count):** mcp-server RestartCount=0, no crashes in 4h window ✓
+
+**A-30 (Memory Pressure):**
+- mcp-server: ~29% (< 85%) → PASS ✓
+- **rag-service: 98.20% (18.4 MiB free, below 40 MiB floor) → WARN (FLOOR BREACH)**
+  - Absolute floor threshold: 40 MiB
+  - Current headroom: 18.4 MiB (BELOW FLOOR)
+  - Tracked by: FU-RAG-DEPLOY-MEMORY (open, capacity planning)
+  - Signal: mem_pressure:rag-service:A-30-floor-breach (SKIP-dedup, within 7d window from 2026-08-06T17:15:06Z)
+  - Signal ID: sys-20260806T211009-070b
+
+**A-32 (Disk):** ~60% < 85% → PASS ✓
+
+**A-33 (Hook Enforcement):** INFO/grey (expected scripts not deployed)
+
+### Notes:
+- Spawn verdict: FAILURE (mem_creep, rag-service floor-breach flagged in pre-gate)
+- Recurring condition (4th occurrence this session) — acknowledged-degraded
+- Dedup status: Same dedup key as c70, c69 (within 7-day window from first occurrence at 17:15:06Z)
+- Current floor breach (18.4 MiB < 40 MiB floor) but suppressed from duplicate alert per dedup ledger
+
+[emit-signal] SKIP-dedup dedup_key=mem_pressure:rag-service:A-30-floor-breach last_sent=2026-08-06T17:15:06Z id=sys-20260806T211009-070b
+[emit-dashboard] OK id=sys-20260806T211009-070b check_id=A-30
+
+[OUTPUT-CONTRACT] signals_posted=0 | telegram_sent=0 | signal_queue_rows_written=1 (via E-3 SKIP-dedup) | dashboard_rows=1 | dedup_skipped=1
+CONTRACT-CONTRADICTION: NONE
+
+---## c69 · 2026-08-06T20:33:43Z
 ### Audit Run Tier-1 (20:33 UTC 2026-08-06)
 - Tier: 1 | Services: 13 checked | Sources: 0 | DB checks: 0
 - Anomalies: 0 new (C 0, W 1-dedup-skip, I 0) | Status: DEGRADED (floor breach)
