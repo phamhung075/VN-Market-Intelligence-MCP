@@ -1,5 +1,5 @@
 ---
-<!-- size-justification: 181L (FIX-REFINE-SUBFLOW-OPTIONC-CONTRACT-DRIFT 2026-08-06, +42L from 139L pre-fix) — thin Option-C dispatcher for a Haiku-model leaf worker; Phase 2's inline loop (explicit per-page_type Read step + anti-confabulation guard + the 4-value STATUS enum restated at the loop site) closes the exact contract-drift root cause (non-existent execute_sub_flow_logic() call + invented PARTIAL_EXIT status on 2 consecutive zero-push fires); trimming it back down would re-introduce the ambiguity this fix removes. -->
+<!-- size-justification: 187L (FIX-GET-BCTC-REFINED-NO-PROJECTION-PARAM 2026-08-06, +6L from 181L — Phase 0 step 5 now documents the actual served fields="ids" projection shape and warns against omitting it) — thin Option-C dispatcher for a Haiku-model leaf worker; Phase 2's inline loop (explicit per-page_type Read step + anti-confabulation guard + the 4-value STATUS enum restated at the loop site) closes the exact contract-drift root cause (non-existent execute_sub_flow_logic() call + invented PARTIAL_EXIT status on 2 consecutive zero-push fires); trimming it back down would re-introduce the ambiguity this fix removes. -->
 agent:
   id: refine_bctc_md
   model: haiku
@@ -60,8 +60,13 @@ UTC Mon–Fri 02:00–08:59 → log `[refine-orchestrator] OFF-HOSE active` → 
 4. `text_status != "COMPLETE"` → release → EXIT. `windows` empty → release → EXIT.
 
 5. Enumerate pushed units (resume contract C2):
-   `call_tool("get_bctc_refined", { report_id: report.id })`
-   → `{ units: [{ unit_id }] }`
+   `call_tool("get_bctc_refined", { report_id: report.id, fields: "ids" })`
+   → `{ report_id, total_units, units: [{ unit_id, window_status }] }` — this is the
+   actual served shape (FIX-GET-BCTC-REFINED-NO-PROJECTION-PARAM); `units: []` on a
+   fresh report with zero pushed units yet, never an error object. Do NOT omit
+   `fields: "ids"` here — the default (`fields` omitted) returns every column
+   including full `markdown` per unit, which grows unboundedly with each resumed
+   chunk and is not needed for this skip-set build.
    `pushed_ids = Set(units.map(u => u.unit_id))`
 
    **RESET-GUARD (T0):** Check if ANY prior unit is DONE:
