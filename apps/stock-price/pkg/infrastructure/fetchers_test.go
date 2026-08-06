@@ -21,14 +21,21 @@ import (
 // createTempDB creates a temp SQLite file with market_prices and daily_ohlcv tables seeded.
 // FIX-HNX-UPCOM-PRICE-SOURCES-DEAD: Updated schema to match production market.db
 // (updated_at instead of fetched_at, added change_amt, change_pct, exchange columns).
+// FIX-STOCKPRICE-PRICEHISTORY-RO-WAL-DSN: Uses journal_mode=DELETE to match production
+// market.db setting (critical regression test — WAL fixtures mask the exact failure mode).
 func createTempMarketDB(t *testing.T) (path string, cleanup func()) {
 	t.Helper()
 	dir := t.TempDir()
 	dbPath := filepath.Join(dir, "market.db")
 
-	db, err := sql.Open("sqlite3", dbPath+"?_journal_mode=WAL")
+	db, err := sql.Open("sqlite3", dbPath)
 	if err != nil {
 		t.Fatalf("open temp market.db: %v", err)
+	}
+	// Set journal_mode=DELETE to match production market.db (critical for mode=ro DSN tests)
+	if _, err := db.Exec("PRAGMA journal_mode=DELETE"); err != nil {
+		db.Close()
+		t.Fatalf("set journal_mode=DELETE: %v", err)
 	}
 	// Match production schema: code is PRIMARY KEY, uses updated_at, has change columns
 	_, err = db.Exec(`CREATE TABLE market_prices (
@@ -143,7 +150,7 @@ func TestSQLiteRepo_GetHistory_HitsMarketDB(t *testing.T) {
 	defer mCleanup()
 
 	// Seed 3 days of OHLCV history into daily_ohlcv (source of truth for history)
-	db, _ := sql.Open("sqlite3", marketDB+"?_journal_mode=WAL")
+	db, _ := sql.Open("sqlite3", marketDB)
 	now := time.Now().UTC()
 	for i := 1; i <= 3; i++ {
 		day := now.Add(-time.Duration(i) * 24 * time.Hour).Format("2006-01-02")
@@ -194,7 +201,7 @@ func TestSQLiteRepo_GetHistory_OHLCFieldParity(t *testing.T) {
 	// Seed one row with asymmetric OHLCV values directly into daily_ohlcv.
 	// Derive seedDate relative to now so it always lands inside GetHistory's
 	// date >= date('now','-7 days') window. Yesterday is safe: within [now-7d, now].
-	db, err := sql.Open("sqlite3", marketDB+"?_journal_mode=WAL")
+	db, err := sql.Open("sqlite3", marketDB)
 	if err != nil {
 		t.Fatalf("open market.db for seeding: %v", err)
 	}
@@ -250,7 +257,61 @@ func TestSQLiteRepo_GetHistory_OHLCFieldParity(t *testing.T) {
 	}
 }
 
-// ── AC-8: Concurrent R/W safety — 100-iteration WAL test ─────────────────────
+// ── AC-3 Regression: GetHistory with DELETE-mode DB must return non-empty ────
+// FIX-STOCKPRICE-PRICEHISTORY-RO-WAL-DSN: This test asserts the exact failure mode
+// that was swallowed pre-fix: mode=ro + journal_mode=WAL pragma on a DELETE-mode DB
+// fails SQLITE_READONLY, returning empty. With mode=ro&_busy_timeout=5000 (no pragma),
+// a properly seeded DELETE-mode DB must return non-empty history.
+
+func TestSQLiteRepo_GetHistory_DeleteModeNonEmpty(t *testing.T) {
+	marketDB, mCleanup := createTempMarketDB(t)
+	defer mCleanup()
+
+	// Verify the fixture is actually journal_mode=delete (the condition under test)
+	db, err := sql.Open("sqlite3", marketDB)
+	if err != nil {
+		t.Fatalf("open market.db for verification: %v", err)
+	}
+	var journalMode string
+	if err := db.QueryRow("PRAGMA journal_mode").Scan(&journalMode); err != nil {
+		db.Close()
+		t.Fatalf("query journal_mode: %v", err)
+	}
+	if journalMode != "delete" {
+		db.Close()
+		t.Fatalf("fixture journal_mode=%s, expected delete — test setup wrong", journalMode)
+	}
+
+	// Seed 2 days of OHLCV history
+	now := time.Now().UTC()
+	for i := 1; i <= 2; i++ {
+		day := now.Add(-time.Duration(i) * 24 * time.Hour).Format("2006-01-02")
+		_, err := db.Exec(
+			`INSERT OR REPLACE INTO daily_ohlcv (code, date, open, high, low, close, volume, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+			"FPT", day, 85000.0, 86000.0, 84000.0, 85500.0+float64(i)*100, 500000.0, now.Format(time.RFC3339),
+		)
+		if err != nil {
+			db.Close()
+			t.Fatalf("seed daily_ohlcv: %v", err)
+		}
+	}
+	db.Close()
+
+	// Now test: GetHistory on a DELETE-mode DB MUST return non-empty
+	repo := infrastructure.NewSQLitePriceHistoryRepository(marketDB)
+	history, err := repo.GetHistory("FPT", 7)
+	if err != nil {
+		t.Fatalf("GetHistory error (mode=ro on DELETE-mode DB should work): %v", err)
+	}
+	if len(history) == 0 {
+		t.Fatal("AC-3 REGRESSION: GetHistory returned empty on DELETE-mode DB — the DSN fix is broken")
+	}
+	if len(history) != 2 {
+		t.Errorf("expected 2 rows, got %d", len(history))
+	}
+}
+
+// ── AC-8: Concurrent R/W safety ─────────────────────────────────────────────
 
 func TestTier3Fetcher_ConcurrentReadWrite_NoLock(t *testing.T) {
 	if testing.Short() {
@@ -266,11 +327,11 @@ func TestTier3Fetcher_ConcurrentReadWrite_NoLock(t *testing.T) {
 	var mu sync.Mutex
 	var wg sync.WaitGroup
 
-	// Goroutine 1: concurrent writer on marketDB
+	// Goroutine 1: concurrent writer on marketDB (uses busy_timeout only, no journal_mode pragma)
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		db, err := sql.Open("sqlite3", marketDB+"?_journal_mode=WAL&_busy_timeout=5000")
+		db, err := sql.Open("sqlite3", marketDB+"?_busy_timeout=5000")
 		if err != nil {
 			mu.Lock()
 			writeErrors++

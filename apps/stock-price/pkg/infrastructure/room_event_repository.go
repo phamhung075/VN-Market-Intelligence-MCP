@@ -29,10 +29,8 @@ func NewSQLiteRoomEventRepository(marketDBPath string) *SQLiteRoomEventRepositor
 //
 // Returns (nil, err) only on infrastructure failure.
 func (r *SQLiteRoomEventRepository) GetLatestRoomEvent(code string) (*domain.RoomEvent, error) {
-	// Note: readonly mode (mode=ro) conflicts with WAL journal mode creation.
-	// Use immutable=1 for truly readonly access, or skip mode=ro for test scenarios.
-	// For production: market.db is expected to have WAL already enabled.
-	dsn := fmt.Sprintf("file:%s?_journal_mode=WAL&_busy_timeout=5000", r.dbPath)
+	// FIX-STOCKPRICE-PRICEHISTORY-RO-WAL-DSN: no _journal_mode pragma (market.db is journal_mode=delete).
+	dsn := fmt.Sprintf("file:%s?mode=ro&_busy_timeout=5000", r.dbPath)
 	db, err := sql.Open("sqlite3", dsn)
 	if err != nil {
 		return nil, fmt.Errorf("failed to open market.db: %w", err)

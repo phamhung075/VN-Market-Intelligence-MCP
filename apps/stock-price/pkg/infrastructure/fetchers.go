@@ -225,7 +225,8 @@ func (f *Tier2VnDirectLegacyFetcher) FetchPrice(code string) (*domain.PriceQuote
 // ── Tier 3: SQLite cache (readonly market.db) ────────────────────────────────
 
 // Tier3CacheFetcher reads market_prices from market.db in readonly mode.
-// DSN: file:path?mode=ro&_journal_mode=WAL&_busy_timeout=5000 (NF-2 / AC-7).
+// DSN: file:path?mode=ro&_busy_timeout=5000 (NF-2 / AC-7).
+// FIX-STOCKPRICE-PRICEHISTORY-RO-WAL-DSN: no _journal_mode pragma (market.db is journal_mode=delete).
 type Tier3CacheFetcher struct {
 	dbPath string
 }
@@ -237,10 +238,7 @@ func NewTier3Fetcher(dbPath string) *Tier3CacheFetcher {
 
 func (f *Tier3CacheFetcher) FetchPrice(code string) (*domain.PriceQuote, error) {
 	start := time.Now()
-	// Note: readonly mode (mode=ro) conflicts with WAL journal mode creation.
-	// Use immutable=1 for truly readonly access, or skip mode=ro for test scenarios.
-	// For production: market.db is expected to have WAL already enabled.
-	dsn := fmt.Sprintf("file:%s?_journal_mode=WAL&_busy_timeout=5000", f.dbPath)
+	dsn := fmt.Sprintf("file:%s?mode=ro&_busy_timeout=5000", f.dbPath)
 	db, err := sql.Open("sqlite3", dsn)
 	if err != nil {
 		slog.Warn("tier3: failed to open market.db", "error", err)
@@ -302,14 +300,12 @@ func NewSQLitePriceHistoryRepository(marketDBPath string) *SQLitePriceHistoryRep
 }
 
 // GetHistory reads OHLCV aggregates from market.db (readonly).
+// FIX-STOCKPRICE-PRICEHISTORY-RO-WAL-DSN: no _journal_mode pragma (market.db is journal_mode=delete).
 func (r *SQLitePriceHistoryRepository) GetHistory(code string, days int) ([]domain.DailyOHLCV, error) {
-	// Note: readonly mode (mode=ro) conflicts with WAL journal mode creation.
-	// Use immutable=1 for truly readonly access, or skip mode=ro for test scenarios.
-	// For production: market.db is expected to have WAL already enabled.
-	dsn := fmt.Sprintf("file:%s?_journal_mode=WAL&_busy_timeout=5000", r.marketDBPath)
+	dsn := fmt.Sprintf("file:%s?mode=ro&_busy_timeout=5000", r.marketDBPath)
 	db, err := sql.Open("sqlite3", dsn)
 	if err != nil {
-		return []domain.DailyOHLCV{}, nil //nolint:nilerr
+		return nil, fmt.Errorf("failed to open market.db: %w", err)
 	}
 	defer db.Close()
 
@@ -322,7 +318,7 @@ func (r *SQLitePriceHistoryRepository) GetHistory(code string, days int) ([]doma
 		code, fmt.Sprintf("-%d", days),
 	)
 	if err != nil {
-		return []domain.DailyOHLCV{}, nil //nolint:nilerr
+		return nil, fmt.Errorf("failed to query daily_ohlcv: %w", err)
 	}
 	defer rows.Close()
 
