@@ -3309,8 +3309,8 @@
     ]
   },
   "task_board": {
-    "_updated_at": "2026-08-06T21:22:45Z",
-    "_updated_by": "po (review-lane secondary-drain triage — FACTORY-ALERT-split-sandbox DONE_VERIFIED)",
+    "_updated_at": "2026-08-06T21:30:43Z",
+    "_updated_by": "po (review-lane secondary-drain sign-off, session f298ccf7)",
     "active_sprints": [
       {
         "evidence": "Router raw-verified (get_bctc_full live, post-rebuild) after BEQ-9/10 refine. Core extraction incident RESOLVED, but populating real scalars exposed a SEPARATE pre-existing analytics/serving layer with 4 defect clusters: (a) RATIO-COMPUTE — VNM ROE=0/ROA=0/EPS=12VND/NetDebt-EBITDA=-7.5e13x; DHG ROA=7,891,932.0% (analyst falsely claimed fixed). Ratios emit 0 or astronomically wrong. (b) BANK-B02-TCTD-SERVING — SHB + EIB get_bctc_full returns 'balance sheet has no decomposition — forced-zero pass suspected'; banks UNSERVABLE despite DONE + committed scalars. (c) PERIOD-SEMANTICS — FPT 2025-Q4 rev=70112.8/NP=11225.5 are FULL-YEAR cumulative labeled 'Q4'; buildComparisonSection then compares cumulative-FY vs next-quarter -> false -82.2% mislabeled 'YoY'. (d) ENTITY-SCOPE — HPG 2025-Q4 is parent-only B01a (rev=0, conf44%) served as the canonical/headline HPG vs consolidated ~140k rev; misleading. PUBLISH-INTEGRITY GAP: NO semantic-sanity publish guard exists in orch-state (the triage-referenced 'Task #13' is NOT present). The BEQ-9/10 reports are now DONE -> flow into chef docs/agents/unified-agent/flow/market-analysis.md + market-analyst -> ROA 7.8M% / false YoY -82% / parent-only-headline CAN reach MARKET unattended. recurring-bug-escalation: BCTC area has >2 fix cycles -> architect root-cause SPIKE, not point-patch. | [dev-team 2026-06-03T11:44Z observation feeding BAL-0/BAL-1] After LF-SERVE-REFLOW recovered FPT Q1 absolute scalars (op_profit/ebitda/cash live-correct), get_bctc_full(FPT) STILL serves garbage DERIVED ratios: current_ratio=41527873060120x (denominator ~0), operating_margin_pct=0.0% (not recomputed from now-correct operating_profit). Confirms the analytics/serving derived-ratio layer is a distinct defect from scalar extraction. BAL-0 publish semantic-sanity gate MUST block current_ratio out-of-range before MARKET/FB; BAL-1 spike should pin the ratio recompute module. Repro: get_bctc_full(code=FPT).",
@@ -12348,42 +12348,6 @@
         "updated_at": "2026-08-06T13:45:29Z"
       },
       {
-        "id": "FIX-DASHBOARD-TELEGRAM-SENT-DEFAULT-YES-NEVER-THREADED",
-        "type": "FIX",
-        "title": "emit-dashboard-row.sh defaults --telegram-sent to 'yes' and ZERO callers repo-wide ever pass it, so every dedup-skipped WARN/CRITICAL row in DASHBOARD.md falsely claims a Telegram fired",
-        "status": "BACKLOG",
-        "priority": "P2",
-        "size": "S",
-        "zone": "cross-service/",
-        "next_agent": "developer",
-        "supervised": false,
-        "plan_only": false,
-        "created_at": "2026-08-06T13:45:00Z",
-        "created_by": "po/triage-agentfather-20260806T1318Z",
-        "updated_by": "po/triage-agentfather-20260806T1318Z",
-        "source": "Coordinator relay to PO 2026-08-06T13:40Z (system-auditor Tier-1 c58, signal sys-20260806T133606-3047); memory feedback_auditor_dashboard_row_telegram_sent_text_ignores_dedup_skip. ROOT CAUSE RE-DIAGNOSED BY PO — see desc, the relayed mechanism was wrong.",
-        "desc": "SYMPTOM (as relayed, confirmed): docs/data/DASHBOARD.md's row for signal sys-20260806T133606-3047 reads '... dedup_key=microservice_degraded:rag-service:A-30, WARN Telegram sent' although that cycle's OUTPUT-CONTRACT was telegram_sent=0, dedup_skipped=1. MECHANISM — the relayed read ('row-append text is copy-pasted fixed text, interpolate the real outcome instead') is WRONG and would send the implementer to a layer that is already correct. scripts/emit-dashboard-row.sh:207-211 ALREADY branches on a $telegram_sent variable and already omits the suffix when it is not 'yes'. The actual defect is two-part: (a) line 130 initialises telegram_sent='yes' — a fail-OPEN default, so an unset flag asserts a page that never happened; (b) grep -rn -- '--telegram-sent' across all *.md/*.sh/*.ts repo-wide returns exactly TWO hits, both inside emit-dashboard-row.sh itself (its usage comment line 35 and its arg-parse line 146) — NO call site anywhere passes it. Meanwhile both documented call sites (docs/agents/system-auditor/flow/main.md:378 and :706) are explicitly instructed 'DASHBOARD append (on any non-ABORT marker — always, even SKIP-dedup)'. So the flow MANDATES a row on dedup-skip and the unpassed default then stamps 'Telegram sent' on it. This is systematic across every dedup-skipped WARN/CRITICAL row written since the actuator landed 2026-07-29, not a one-off.",
-        "acceptance": [
-          "AC-1 Flip the default: scripts/emit-dashboard-row.sh:130 telegram_sent='no'. Fail-closed — never assert a page fired unless the caller proves it.",
-          "AC-2 Thread --telegram-sent at every emit-dashboard-row.sh call site (docs/agents/system-auditor/flow/main.md:378, :706, plus the tier1-probe.md / page-freshness.md sites that reference the same contract), derived from the [emit-signal] marker the flow ALREADY parses at those exact points: OK / OK-escalation-bypass -> yes, SKIP-dedup -> no. Zero new plumbing — the marker is already in hand (the flow says 'using the id= value parsed from this call's own [emit-signal] marker above').",
-          "AC-3 scripts/emit-dashboard-row.test.sh (32 tests today) has ZERO coverage of the telegram_sent rendering — verified by grep. Add both polarities: a SKIP-dedup/no call MUST NOT emit 'Telegram sent', an OK/yes call MUST. Without AC-3 this regresses the moment a new call site is added.",
-          "AC-4 Do NOT rewrite historical DASHBOARD.md rows. Note the contamination window (2026-07-29 to fix date) in the commit body so nobody later cites an old row as evidence a page fired."
-        ],
-        "files": [
-          "scripts/emit-dashboard-row.sh",
-          "scripts/emit-dashboard-row.test.sh",
-          "docs/agents/system-auditor/flow/main.md",
-          "docs/agents/system-auditor/flow/tier1-probe.md"
-        ],
-        "related": [
-          "FIX-AUDITOR-B12-DOUBLE-INVOKE-EMIT-MARKER-LOSS",
-          "FIX-AUDITOR-COMMIT-NONEXPLICIT-PATHSPEC"
-        ],
-        "not_duplicate_of": "FIX-AUDITOR-B12-DOUBLE-INVOKE-EMIT-MARKER-LOSS covers double-invocation + marker loss in emit-audit-signal.sh. This row is the emit-dashboard-row.sh flag-threading defect. They intersect: that row's why_the_obvious_fixes_are_wrong item (2) asserts the --telegram-sent flag 'is fed by invocation 1's OK outcome' — PO refuted that premise by grep this cycle and corrected it in place on that row.",
-        "zone_note": "Split-zone by construction: scripts/ is outside agent-father's commit_zone, the flow-doc call sites are inside it. Kept as ONE row owned by generic developer (cross-service/) so the script default and its callers cannot land out of step — splitting it is how AC-1 ships without AC-2.",
-        "updated_at": "2026-08-06T13:45:29Z"
-      },
-      {
         "id": "FIX-DRAIN-HARNESS-DERIVED-HELPERLIST-PARTIAL-DRIFT-BLIND",
         "type": "FIX",
         "title": "deriveOrchApplyHelpers() in drain-signals.test.js only throws when it matches ZERO helpers, so PARTIAL regex drift (3 of 4 matched) silently reproduces the exact sandbox crash it was built to prevent",
@@ -12708,6 +12672,83 @@
         "created_at": "2026-08-06T20:59:20Z",
         "created_by": "po/ruling-20260806T2059Z (review-lane secondary-drain triage of FACTORY-STOCK-vndirect-mapper-tests)",
         "updated_at": "2026-08-06T21:01:41Z"
+      },
+      {
+        "id": "FIX-AUDITOR-NOTEBOOK-SECOND-COMMIT-RETRO-REWRITES-PUBLISHED-OUTPUT-CONTRACT",
+        "type": "FIX",
+        "title": "system-auditor committed cycle c71 TWICE 36s apart and the second commit retroactively rewrote the first commit's already-published OUTPUT-CONTRACT counters (signals_posted 0->1) on a dedup-SKIP cycle — the immutability guard caught it but is mode=warn so nothing blocked",
+        "status": "BACKLOG",
+        "priority": "P1",
+        "size": "S",
+        "zone": "cross-service/",
+        "owner": "developer",
+        "next_agent": "developer",
+        "supervised": false,
+        "plan_only": false,
+        "created_at": "2026-08-06T21:30:43Z",
+        "created_by": "po (review-lane secondary-drain sign-off, session f298ccf7)",
+        "source": "dev-team Step-0a signal drain -> po. Signal file docs/signals/processed/commit-sweep-guard-2026-08-06T211217Z-31335.json (type=bug-escalation, priority=high, from=commit-sweep-guard, createdAt 2026-08-06T21:12:17Z).",
+        "desc": "TRUE POSITIVE, and the guard's own wording UNDERSTATES it — this is not a formatting nit, it is a retroactive falsification of a published audit record. MECHANISM (PO traced it; the relaying dev-team had RAW-verified commit 18a3e2399 and found it clean, which is correct but is the WRONG commit): `git log -- docs/agent-memory/notebooks/system-auditor.md` shows TWO commits for the SAME cycle c71 — 18a3e2399 at 2026-08-06T21:11:41Z (the one that was checked, genuinely clean) and 95c1ffb01 at 2026-08-06T21:12:17Z. The signal's createdAt is 21:12:17Z — it fired on 95c1ffb01, the LATER commit, 36s after the one that was verified. So the answer to the relayer's own question ('did a LATER commit alter that section?') is yes. WHAT THE SECOND COMMIT DID (`git diff 18a3e2399 95c1ffb01 -- docs/agent-memory/notebooks/system-auditor.md`): it edited two factual counters INSIDE the already-committed '## c71' section — `Anomalies: 0 new (C 0, W 1-dedup-skip, I 0)` -> `Anomalies: 1 (C 0, W 1-dedup-skip, I 0)`, and `[OUTPUT-CONTRACT] signals_posted=0 | telegram_sent=0 | signal_queue_rows_written=1 (via E-3 SKIP-dedup) | dashboard_rows=1 | dedup_skipped=1` -> `signals_posted=1 | telegram_sent=0 | signal_queue_rows_written=1 | dashboard_rows=1 | dedup_skipped=1`. It also dropped the whole c68 section, which IS an authorized whole-section drop and is not the complaint. WHY THE REWRITE IS WRONG ON ITS OWN EVIDENCE: the amended `signals_posted=1` sits 3 lines below that same section's own probe line `[emit-signal] SKIP-dedup dedup_key=mem_pressure:rag-service:A-30-floor-breach last_sent=2026-08-06T17:15:06Z id=sys-20260806T211009-070b`, and it left `dedup_skipped=1` and `telegram_sent=0` untouched — a cycle cannot both SKIP-dedup and post the signal. The section nonetheless still asserts `CONTRACT-CONTRADICTION: NONE`. So the permanent record now claims a signal was posted on a cycle that provably skipped. NOTE THE DIRECTION: 0 -> 1 is 'trust the higher value', which is exactly the unsound reconciliation rule already flagged by FIX-AUDIT-OUTPUT-CONTRACT-SIGNALQUEUE-ROWS-WRITTEN-SELFREPORT-MISMATCH — the implementer should check whether the audit-output-contract self-check is the actuator that performed this rewrite before assuming the agent hand-edited it. WHY NOTHING STOPPED IT: the notebook-immutability guard fired correctly but runs mode=warn (never blocks) per scripts/audits/verify-notebook-immutability-gate.sh; its warn text also mis-frames a counter falsification as a section-retention style violation, which is why it reads as ignorable.",
+        "acceptance": [
+          "AC-1 ROOT CAUSE FIRST — determine WHO wrote 95c1ffb01: the audit-output-contract self-check reconciliation ('trust the higher value'), or the agent re-running its own notebook-write step. Do not fix a symptom layer before this is answered; the two have different fixes and only one of them is a script.",
+          "AC-2 One notebook cycle = exactly ONE commit. The cycle boundary IS the commit (memory: feedback_notebook_cycle_boundary_is_commit_not_session). Make a second commit that touches an already-published '## c<N>' section for a cycle id already present at HEAD fail loud rather than silently amend.",
+          "AC-3 If a cycle's counters genuinely need correcting after publication, the correction MUST be an additive new section (or an explicit amendment block) that states the prior value, the corrected value and why — never an in-place overwrite of the published numbers. Reference-correct pattern: docs/agent-memory/notebooks/architect.md.",
+          "AC-4 CONTRACT-CONTRADICTION must not be able to read NONE while signals_posted>=1 coexists with dedup_skipped>=1 and telegram_sent=0 in the same OUTPUT-CONTRACT line. Add that cross-field predicate to the contract self-check with both polarities tested.",
+          "AC-5 Re-validate the immutability gate then flip GIT_NOTEBOOK_IMMUTABILITY_MODE from warn to reject (the script's own header already names this as the intended end state). Ship a corroborating test first — a warn-only guard is why this landed.",
+          "AC-6 Do NOT rewrite the c71 section again to 'fix' it. Append a correction and note the contaminated commit shas (18a3e2399 superseded by 95c1ffb01) so no later reader cites the amended counters as evidence a signal was posted."
+        ],
+        "files": [
+          "docs/agent-memory/notebooks/system-auditor.md",
+          "scripts/audits/verify-notebook-immutability-gate.sh",
+          ".claude/skills/notebook-write/SKILL.md",
+          "docs/agents/system-auditor/flow/main.md"
+        ],
+        "related": [
+          "FIX-AUDIT-OUTPUT-CONTRACT-SIGNALQUEUE-ROWS-WRITTEN-SELFREPORT-MISMATCH",
+          "FIX-DASHBOARD-TELEGRAM-SENT-DEFAULT-YES-NEVER-THREADED",
+          "FIX-NOTEBOOK-IMMUTABILITY-ORPHANED-BODY-CHECK",
+          "FIX-AUDITOR-B12-DOUBLE-INVOKE-EMIT-MARKER-LOSS"
+        ],
+        "not_duplicate_of": "FIX-NOTEBOOK-IMMUTABILITY-ORPHANED-BODY-CHECK is the inverse guard hole (HEAD-present/staged-absent heading waved through as an authorized drop). This row is the opposite case: the heading is present on BOTH sides and its BODY was rewritten. FIX-AUDIT-OUTPUT-CONTRACT-...-MISMATCH covers the signal_queue_rows_written field's unsound reconciliation rule; this row covers a different field (signals_posted) mutated by a SECOND COMMIT after publication — but see AC-1, they may share one actuator, in which case fold this row into that one rather than shipping two fixes.",
+        "theme_link": "Same failure THEME as FIX-DASHBOARD-TELEGRAM-SENT-DEFAULT-YES-NEVER-THREADED, discovered in the same tick from a different signal: a dedup-SKIP cycle gets written into a PERMANENT record (there DASHBOARD.md, here the notebook OUTPUT-CONTRACT line) as though it had emitted. Both inflate apparent alerting coverage and both would mask a real paging gap. Worth one architect look at whether the dedup-SKIP outcome is threaded into ANY of the auditor's post-cycle bookkeeping sinks.",
+        "updated_at": "2026-08-06T21:34:09Z"
+      },
+      {
+        "id": "OPS-ALERT-ENGINE-REBUILD-STALE-IMAGE-5-COMMITS-BEHIND",
+        "type": "OPS",
+        "title": "alert-engine running image predates 5 landed commits (built 2026-07-15, incl. behaviour-changing 43f4e3add DedupWindowMinutes) — container never rebuilt, so the dedup-window fix has never executed",
+        "status": "BACKLOG",
+        "priority": "P2",
+        "size": "S",
+        "zone": "apps/alert-engine/",
+        "owner": "ops",
+        "next_agent": "ops",
+        "supervised": false,
+        "plan_only": false,
+        "created_at": "2026-08-06T21:30:43Z",
+        "created_by": "po (review-lane secondary-drain sign-off, session f298ccf7)",
+        "source": "Discovered by PO while RAW-verifying FACTORY-ALERT-router-cleanups for sign-off on 2026-08-06. Carved out deliberately so a real fleet deploy gap is not silently absorbed into an unrelated row's sign-off.",
+        "desc": "MEASURED, not inferred. `docker inspect vn-market-intelligence-mcp-alert-engine-1` -> Created=2026-07-15T15:16:47Z, image sha256:e24163c1342869fd136a619ca327323a701ca692d3a3fa55b8bea87d6649e6c6, status 'Up 3 weeks (healthy)'. `git log --since=2026-07-15 -- apps/alert-engine/` returns 5 commits that the running image therefore cannot contain: 314461cbd (delete dead _deprecated domain package), 9d91af5bb (FACTORY-ALERT-shared-vocab-package), 0a961e255 (FACTORY-ALERT-split-sandbox), fb5fc9d4c (FACTORY-ALERT-router-cleanups), 43f4e3add (DedupWindowMinutes). FOUR of the five are refactors with no runtime delta. THE FIFTH IS NOT: 43f4e3add changed pkg/module/alert_pipeline/pipeline.go so HasDuplicateFingerprint is called with the new CooldownConfig.DedupWindowMinutes (default 60) instead of CooldownConfig.CooldownMinutes (30). The deployed binary is therefore still deduplicating alert fingerprints over a 30-minute window where the shipped-and-reviewed intent is 60, and still emitting the old static suppressed-reason string. That is a live alerting-behaviour divergence between main and production, not cosmetic. NOTE this is the SAME shape as the already-tracked OPS-MCPSERVER-REBUILD-STALE-IMAGE-PREDATES-MEMLEAK-FIX (shipped fix never executed because the container was never rebuilt) and it is the concrete cost of the READY row FIX-DEVTEAM-REBUILD-REQUIRED-MARKER-NO-CONSUMER (dev-* writes rebuild_required=true into prose that no gate reads). Fixing that READY row is what stops this recurring; this row just clears the current debt.",
+        "acceptance": [
+          "AC-1 Single-service rebuild ONLY: `docker compose up -d --build alert-engine`. NEVER `docker compose down` / `up` fleet-wide — that destroys peer containers (memory: feedback_rebuild_recreate_destroys_peers, feedback_preserve_multi_container_microservice_architecture).",
+          "AC-2 Pass --build-arg GIT_SHA so the image carries the vn.market.git_sha label. Do not repeat the omission recorded in OPS-MCP-SERVER-REACQUIRE-GIT-SHA-LABEL.",
+          "AC-3 RAW-verify the new image ID actually changed (docker inspect --format '{{.Image}}' before vs after) — a rebuild that silently reused cache is the known false-green (memory: feedback_docker_rebuild_race_pgrep_deadlock).",
+          "AC-4 Post-rebuild /health returns 200 with {\"status\":\"ok\",\"service\":\"alert-engine\",\"port\":5006} and the container reaches (healthy). Port MUST still read 5006 — fb5fc9d4c made it reflect cfg.Port and compose sets PORT=5006, so any other value means the env did not thread.",
+          "AC-5 Confirm the dedup window is live at 60min post-rebuild (that is the only user-visible reason this rebuild matters) — read it back from the running service rather than from the source.",
+          "AC-6 alert_engine.db lives on the ./data/live:/app/data bind mount; confirm it survives the rebuild with a row count before/after."
+        ],
+        "files": [
+          "docker-compose.yml",
+          "apps/alert-engine/Dockerfile"
+        ],
+        "related": [
+          "FACTORY-ALERT-router-cleanups",
+          "FIX-DEVTEAM-REBUILD-REQUIRED-MARKER-NO-CONSUMER",
+          "OPS-MCPSERVER-REBUILD-STALE-IMAGE-PREDATES-MEMLEAK-FIX",
+          "OPS-MCP-SERVER-REACQUIRE-GIT-SHA-LABEL"
+        ],
+        "po_note": "PO authorised this rebuild under the standing PO-deploy-rebuild-full-autonomy policy — NO user gate, do not wait for one. It is P2 not P1 only because the divergence is a dedup window widening (30->60min), which over-alerts rather than under-alerts and so fails safe.",
+        "updated_at": "2026-08-06T21:34:09Z"
       }
     ],
     "closed_sprints": [
@@ -13887,6 +13928,119 @@
         "commit": "d1bb1140f (corrected from stale worktree-orphan citation 63f90ed7a -- see status_note)",
         "qa_verified_at": "2026-08-06T21:27:44Z",
         "qa_verified_by": "qa"
+      },
+      {
+        "id": "FIX-CI-SIZELINT-TECHANALYSIS-ROUTER-NEW-OFFENDER-143L",
+        "type": "FIX",
+        "size": "S",
+        "priority": "P1",
+        "status": "DONE_VERIFIED",
+        "zone": "apps/technical-analysis/",
+        "owner": "po",
+        "supervised": false,
+        "plan_only": false,
+        "created_by": "po/triage-20260731T2249",
+        "created_at": "2026-07-31T22:56:53Z",
+        "updated_at": "2026-08-06T21:33:58Z",
+        "origin_signal_id": "CI-RED-39abd150",
+        "check_id": "CI-RED-39abd150",
+        "ci_fingerprint": "ci_red:39abd150dc551e1544e8eac35115dadf61031322:size-lint",
+        "dedup_key": "ci_job:size-lint|file:apps/technical-analysis/pkg/interface/http/router.go",
+        "verification_gate": "ci_green_on_subsequent_push",
+        "title": "CI job `size-lint` RED on origin/main for 3 consecutive runs — apps/technical-analysis/pkg/interface/http/router.go is 143L > 120L, classified `new-offender` (no baseline entry, no justification header). Sole offender in the job (scanned 1354). Introduced by 39fbec098 (FACTORY-TECHANALYSIS-fix-discarded-service-and-port), which grew the file 112L -> 143L.",
+        "root_cause": "Read at source this tick. (1) `git show 39fbec098^:<file> | wc -l` = 112, `git show 39fbec098:<file> | wc -l` = 143 — the /health real-port change inlined a NEW handler (const defaultPort, type healthResponse, func handleHealth) plus ~20L of doc comments directly into router.go, pushing it 23L past the 120L cap. (2) Same structural class as FIX-CI-SIZELINT-VPSPROXYSTALENESS-REGRESSION-123L two hours earlier: 39fbec098 was verified on the go build/vet/test/golangci-lint + sandbox planes only (per its own commit message), and size-lint was not in that verification set — so a green-verified merge shipped a guaranteed-RED gate. The guard is CORRECT and did its job; the gap is that this file`s cap-compliance was an invariant nobody re-asserted while editing it.",
+        "evidence": "Local replay of the exact CI command: `bash scripts/audits/size-lint-justification.sh --check` => RC=1, `[size-lint] FAIL — 1 offending file(s) (scanned 1354): apps/technical-analysis/pkg/interface/http/router.go — new-offender (143L > 120L, no baseline entry, no current justification header)`. CI plane read verbatim from the failing step (NOT inferred from the job name): `gh run view 30669964532 --log-failed` emits that same line; the grep for `FAILEDFILE` returns EMPTY (this is the size-lint lint tool, not the bun-test per-file-isolation runner), so FAILING_FILES was taken from the failing step`s own error line per the ci_red spec. Cross-run persistence — the SAME single file is the sole offender in three consecutive runs on three advancing SHAs: 30662758810 (20:24Z, 11677b75), 30664924688 (20:59Z, 18db3e63), 30669964532 (22:27Z, 39abd150). `wc -l` on the live file = 143.",
+        "ac": "(AC-1) Bring the file back to <=120L by EXTRACTING the health handler into a sibling file, NOT by adding a size-justification header and NOT by running --update. The package already has an established file-per-handler convention (momentum_handler.go, money_flow_handler.go, proximity_handler.go, relative_strength_handler.go, volatility_handler.go); `const defaultPort` + `type healthResponse` + `func handleHealth` are the only handler still inlined in router.go and belong in a new `health_handler.go` by that same convention. (AC-2) DO NOT change /health behaviour. The response must stay {status,service,port} marshalled from the real bound port, with the empty/unparseable-Port fallback to 5003 intact — 39fbec098 shipped TestHealth_ReflectsConfiguredPort + a default-port assertion on TestHealth_Returns200 and both must still pass unmodified. (AC-3) `go build ./... && go vet ./... && go test ./...` clean in apps/technical-analysis, plus golangci-lint clean. (AC-4) Local gate: `bash scripts/audits/size-lint-justification.sh --check` exits 0 with 0 offenders. (AC-5) VERIFY ON THE CI PLANE, not locally: `gh run view <run whose headSha is AFTER this fix> --json jobs -q `.jobs[]|select(.name==\"size-lint\")|.conclusion`` == success. Record run id + headSha on this row BEFORE flipping it — a ci_red close without a recorded fingerprint re-drains next tick. (AC-6) LANDMINE — do NOT close by running `size-lint-justification.sh --update`. That regenerates docs/data/size-lint-baseline.json and would GRANDFATHER the 143L regression into the baseline, permanently disarming the guard for this file and silently widening the whole repo`s debt snapshot to whatever else is over-cap at that moment.",
+        "files": [
+          "apps/technical-analysis/pkg/interface/http/router.go"
+        ],
+        "reference_only_files": [
+          "scripts/audits/size-lint-justification.sh",
+          "docs/data/size-lint-baseline.json",
+          "apps/technical-analysis/pkg/interface/http/router_test.go",
+          "apps/technical-analysis/pkg/interface/http/volatility_handler.go",
+          "apps/technical-analysis/cmd/server/main.go"
+        ],
+        "related": "Introduced by FACTORY-TECHANALYSIS-fix-discarded-service-and-port (review[], commit 39fbec098). DISTINCT from every other open FIX-CI-SIZELINT-* row — each names a different file (vpsProxyStaleness.ts, energyTools.ts, extraction_engine.py, usecases_vmt_liquidity_resolvers.go, the mcp-server six-offender parent) and none names router.go or any apps/technical-analysis/ path. Do NOT merge into FACTORY-XZONE-size-justification-sweep (backlog): that row is a debt sweep over pre-existing grandfathered offenders; this is a NEW offender blocking main`s CI right now.",
+        "dedup_checked": "2026-07-31T22:49Z — FILE-SCOPED per triage-signals.md ci_red spec, across all 5 NON-TERMINAL LANES BY NAME (backlog+ready+in_progress+review+qa), never a status-token enum. (1) PRIMARY: zero rows carry dedup_key == `ci_job:size-lint|file:apps/technical-analysis/pkg/interface/http/router.go`; zero rows carry any dedup_key matching /router\\.go|technical-analysis/. (2) SECONDARY: zero rows contain `39abd150` or `CI-RED-39abd150` in id/title/status_note/check_id. (3) BROAD: 17 open rows match /technical-analysis/i and 18 match /SIZELINT|size-lint/i — all read; the technical-analysis matches are indicator/factory/gateway-path rows, the size-lint matches are guard implementations or other files. ZERO cover this file. ANTI-AMNESTY FENCE honoured: not deduped into FIX-MCP-SUITE-HEALTH-BASELINE or any LOCAL-full-suite row. Third consecutive tick this defect fired a ci_red (20:46Z, 21:18Z, 22:46Z drains) with no board row minted — per the fence, `pre-existing` with no matched row is a fabricated disposition, so the row is minted here.",
+        "baseline_pass": "gh run view <post-fix run> --json jobs => size-lint conclusion == success on origin/main",
+        "status_note": "AC: gh run view <databaseId with headSha AFTER 39abd150dc551e1544e8eac35115dadf61031322> --json jobs -q `.jobs[]|select(.name==\"size-lint\")|.conclusion` == success (verification_gate=ci_green_on_subsequent_push). Priority: high. Failing job: size-lint. Failing file: apps/technical-analysis/pkg/interface/http/router.go. Observed SHAs (3 consecutive, same sole offender): 11677b75 run 30662758810, 18db3e63 run 30664924688, 39abd150 run 30669964532. | CLOSE: code commit 969b5d96b (router.go 143L->114L, new health_handler.go 41L), memory commit d93e4fbc1, pushed to origin/main. CI run 30672400942 headSha d93e4fbc17862f9d65720fe1bc6424b5913c8369 -- size-lint job conclusion=success (gh run view 30672400942 --json jobs -q .jobs[]|select(.name==\"size-lint\")|.conclusion). Local: go build/vet/test + golangci-lint clean, size-lint-justification.sh --check RC=0 0 offenders, G12 sandbox 35/35 green + render-check PASS. Decision journal STEP dev-technical-analysis-S3 (sprint-COWORK-GUARANTEED-SLOT-CATCHUP). | [QA] Review Record (direct-commit verify) — 2026-08-06T21:30:56Z. Commit 969b5d96b confirmed real + on main ancestry (git merge-base --is-ancestor). git show --stat matches files[] exactly: router.go -29L, new health_handler.go +41L, no other files touched. Read both files live, not trusted from commit prose: health_handler.go contains defaultPort/healthResponse/handleHealth exactly as claimed, mirrors sibling *_handler.go file-per-handler convention (AC-1); router.go still calls handleHealth(port) at the same call site with the defaultPort fallback via strconv.Atoi(cfg.Port) unchanged (AC-2 confirmed by source read, not prose). go build/go vet clean; go test ./... all 12 packages pass; TestHealth_Returns200+TestHealth_ReflectsConfiguredPort re-run fresh (-count=1, non-cached) PASS; golangci-lint run ./... 0 issues (AC-3). router.go absent from size-lint-justification.sh --check offender list, confirmed twice (AC-4 for this row's own file scope) — repo-wide --check still fails on 4 UNRELATED offenders (schema.ts/getBctcRefinedTool.ts/app_factory.py/embedder.py, mcp-server+rag-service) that this cycle's own qa-6.md STEP qa-S1 already independently flagged as pre-existing drift from other work landed after this fix (2026-07-31) — out of this row's files[] scope, not a regression of this commit, not blocking. No size-lint-baseline.json grandfather entry added for router.go, no --update run, no justification header (AC-6 landmine avoided, confirmed via git show --stat showing only 2 files changed). AC-5 independently re-verified on the CI plane myself: gh run view 30672400942 -> headSha d93e4fbc17862f9d65720fe1bc6424b5913c8369 (exact match to this row's own status_note claim), size-lint job conclusion=success; confirmed 969b5d96b is an ancestor of that headSha, and that headSha is an ancestor of main. mock-guard.sh --files (router.go + health_handler.go) -> PASS. DJ-GATE-1: sprint-COWORK-GUARANTEED-SLOT-CATCHUP-dev-technical-analysis.md STEP dev-technical-analysis-S3, task-id FIX-CI-SIZELINT-TECHANALYSIS-ROUTER-NEW-OFFENDER-143L present (2026-08-01T01:15:00Z), predates this verify. VERDICT: APPROVED, DONE_VERIFIED. No gateway/MCP tool grant this sub-session (Read/Edit/Write/Bash only, INV-GATEWAY-1) — flagging to the calling dispatcher (dev-team, session f298ccf7-8cf4-452d-9a5a-57dcb47e65ac) to release task:FIX-CI-SIZELINT-TECHANALYSIS-ROUTER-NEW-OFFENDER-143L itself.",
+        "next_agent": "pm",
+        "updated_by": "qa",
+        "claimed_at": "2026-08-06T21:26:17Z",
+        "claimed_by": "dev-team (review-lane qa-drain)",
+        "commit_sha": "969b5d96b",
+        "qa_verified_at": "2026-08-06T21:33:58Z",
+        "qa_verified_by": "qa"
+      },
+      {
+        "title": "Delete dead UseCaseExecutor, inject real port into /health, reuse domain severity validation, simplify substring search",
+        "priority": "P2",
+        "zone": "alert-engine",
+        "type": "FACTORY",
+        "status": "DONE_VERIFIED",
+        "id": "FACTORY-ALERT-router-cleanups",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-ALERT-router-cleanups",
+        "promoted_at": "2026-07-24T14:14:41Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
+        "updated_at": "2026-08-06T21:34:09Z",
+        "claimed_at": "2026-07-24T14:14:41Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "entered_review_at": "2026-07-24T14:23:53Z",
+        "dev_result": "DONE-CODE: 4 small cleanups in router.go+sqlite.go. (1) Deleted orphaned UseCaseExecutor interface, zero refs confirmed via repo-wide grep. (2) INTENTIONAL FIX: threaded cfg.Port into NewRouter(uc,port) -> handleHealth(port), cmd/server/main.go now passes cfg.Port instead of hardcoded 5006; added TestHealth_ReflectsConfiguredPort (port=6123) as regression lock. (3) Replaced inline validSeverities map with domain.AlertSeverity(body.Severity).IsValid() -- proved set equality first (IsValid accepts exactly low/medium/high/critical, identical to inline map); 400 message text byte-identical. (4) Replaced hand-rolled containsStr/findSubstr with strings.Contains -- proved old scanner was CASE-SENSITIVE (no ToLower anywhere) so strings.Contains is exact semantic match; hoisted outcomeLookbackDays=90/defaultPendingLimit=100 to named consts. Verify: go build/vet/test ./... green, golangci-lint 0 issues, sandbox harness 11/11 PASS. Docs: api-reference.md /health note updated (graphify --update attempted, structurally unavailable -- no LLM API key in shell env, logged not silently skipped). Journal: docs/agent-memory/decisions/sprint-FACTORY-ALERT-router-cleanups-dev-alert-engine.md. Commits: fb5fc9d4c code, a3bc53270 journal. rebuild_required=true but PENDING-USER-GATED (code-only landed, no docker rebuild performed per task constraint).",
+        "updated_by": "po (review-lane secondary-drain sign-off, session f298ccf7)",
+        "po_signed_off_at": "2026-08-06T21:30:43Z",
+        "po_signed_off_by": "po",
+        "review_note": "[PO] DONE_VERIFIED — direct-commit sign-off, every dev claim RAW-re-run by PO on 2026-08-06T21:30:43Z, NOT accepted on self-report. (1) COMMITS: fb5fc9d4c + a3bc53270 both exist, both `git merge-base --is-ancestor <sha> HEAD` = TRUE, `git branch --contains` = main only, `git branch -r --contains` = origin/main (pushed, not local-only). (2) DIFF vs CLAIMS, item-for-item: UseCaseExecutor interface deleted from router.go; NewRouter(uc) -> NewRouter(uc, port) with handleHealth(port) closure and cmd/server/main.go:69 passing cfg.Port; inline validSeverities map replaced by domain.AlertSeverity(body.Severity).IsValid(); containsStr/findSubstr replaced by strings.Contains in sqlite.go; outcomeLookbackDays=90 / defaultPendingLimit=100 hoisted to named consts. All four match. (3) SET-EQUALITY INDEPENDENTLY CONFIRMED (not taken from the dev note): pkg/domain/models.go:9-22 — IsValid() switches on exactly SeverityLow|SeverityMedium|SeverityHigh|SeverityCritical = {low,medium,high,critical}, byte-identical to the deleted inline map; empty string falls through to `return false` so the empty-severity 400 path is preserved. (4) CALLSITE SWEEP: repo-wide `grep -rn 'NewRouter('` — all 4 alert-engine callsites (main.go:69, router_test.go:64/101/192) carry the new 2-arg signature; no stale callsite anywhere; `git status --porcelain apps/alert-engine/` clean. (5) TESTS RE-RUN BY PO, UNCACHED: `go build ./...` rc=0; `go vet ./...` rc=0; `go test -count=1 ./...` all 8 packages ok (no cache); `go test -count=1 -run TestHealth -v` shows TestHealth_ReflectsConfiguredPort PASS — the regression lock is real and executes, not just declared. (6) LINT: golangci-lint run ./... -> `0 issues.` (7) SANDBOX: `go run ./cmd/sandbox -tier=all -module=alert-engine -scenario=all` -> total=11 pass=11 fail=0 status=OK — matches the claimed 11/11 exactly. ALL SIX PREDICATES GREEN INDEPENDENTLY.",
+        "reviewed_at": "2026-08-06T21:30:43Z",
+        "reviewed_by": "po",
+        "rebuild_disposition": {
+          "decided_by": "po",
+          "decided_at": "2026-08-06T21:30:43Z",
+          "verdict": "NOT-A-BLOCKER-FOR-THIS-ROW",
+          "prior_label_corrected": "dev_result carried rebuild_required=true flagged 'PENDING-USER-GATED'. That label is WRONG and is hereby cleared: per the standing PO-deploy-rebuild-full-autonomy policy there is NO user gate on rebuilds — the decision is PO's. Nothing was ever waiting on a human here.",
+          "rationale": "This row's runtime delta is provably NIL under the deployed configuration, so a rebuild would change no observable behaviour. Proof: (a) three of the four changes are semantics-preserving by construction and were proven so above — dead-interface deletion is compile-time only, IsValid is set-equal to the map it replaced, strings.Contains is exact-equal to the case-sensitive hand scanner, named consts carry the same 90/100 values; (b) the ONLY runtime-visible change is the /health `port` field, and docker-compose.yml sets `PORT=5006` for alert-engine while pkg/infrastructure/config.go:23 defaults to 5006 — so cfg.Port == 5006 == the previously-hardcoded literal; (c) LIVE PROBE: `docker exec vn-market-intelligence-mcp-alert-engine-1 wget -qO- localhost:5006/health` returns {\"port\":5006,\"service\":\"alert-engine\",\"status\":\"ok\"} — byte-identical to what the new code emits. A rebuild for THIS row would be a no-op deploy.",
+          "deploy_gap_carved_out": "SEPARATE and REAL: the running image was created 2026-07-15T15:16:47Z but 5 commits have landed under apps/alert-engine/ since (314461cbd, 9d91af5bb, 0a961e255, fb5fc9d4c, 43f4e3add). At least one — 43f4e3add — IS a genuine behaviour change (DedupWindowMinutes 60 no longer reuses CooldownMinutes 30 for the fingerprint dedup window). That gap is a FLEET-level deploy debt, not this row's debt, and is tracked by the new OPS-ALERT-ENGINE-REBUILD-STALE-IMAGE-5-COMMITS-BEHIND row rather than being smuggled into this sign-off."
+        }
+      },
+      {
+        "id": "FIX-COWORK-FLOWDOC-STALE-TRANSPORT-GAP-CAVEAT",
+        "type": "FIX",
+        "size": "S",
+        "priority": "P1",
+        "status": "DONE_VERIFIED",
+        "zone": "docs/agents/",
+        "owner": "po",
+        "next_agent": "pm",
+        "plan_only": false,
+        "supervised": false,
+        "sprint": "COWORK-RELIABILITY",
+        "created_at": "2026-08-01T01:25:12Z",
+        "created_by": "po/triage-20260801T0125",
+        "origin_signal_id": "cow-20260801T010430",
+        "unblocks": [
+          "FIX-COWORK-BASH-GRANT-COVERAGE-STAMP-TRANSPORT",
+          "FIX-COVERAGE-SWEEP-BLANKET-STAMP-DEAD-TRIGGER",
+          "FIX-COVERAGE-STATE-CROSS-AGENT-LOST-UPDATE"
+        ],
+        "baseline_pass": true,
+        "rebuild_required": false,
+        "title": "Flow docs still tell news-scout + market-watcher they hold no Bash — the stale TRANSPORT GAP caveat makes both agents SKIP every coverage-state write, freezing docs/data/coverage-state.json for 6.4 days AFTER the Bash grant already landed",
+        "files": [
+          "docs/agents/market-watcher/flow/cycle.md (L71-76 list-stale caveat, L265-270 Step 5c write caveat)",
+          "docs/agents/news-scout/flow/stage-log-notify.md (L81-85 write caveat)",
+          "docs/agents/news-scout/flow/stage-sentiment.md (L18 list-stale caveat)"
+        ],
+        "status_note": "AC-1 RAW: zero occurrences of TRANSPORT GAP / [coverage-write-skipped: no-transport] remain as a NORMAL-operation instruction in the 4 sections above (demote to a genuine error path only). AC-2 RAW: after one live news-scout AND one live market-watcher cycle, jq [.tickers|to_entries[]|.value.last_covered_news_scout]|group_by(.)|length > 1 (it is 1 today) and the same for last_covered_market_watcher (also 1 today). AC-3 RAW: jq has(sweep_config) on docs/data/coverage-state.json == true (false today; the script self-repairs it). AC-4 NEGATIVE CONTROL: no change to any .claude/agents/*.md in this row — the tool grant is already correct and must not be touched.\n\nqa[dev-team-drain 2026-08-06T22:05Z]: DONE_VERIFIED. Commit 438e66958 confirmed real+main-ancestor, touches exactly the 4 claimed files. AC-1 RAW re-grepped repo-wide (zero TRANSPORT GAP/no-transport/holds-no-Bash) — clean. AC-4 RAW re-checked (git show --stat on .claude/agents/*.md empty) — clean. Cited grant lines (.claude/agents/market-watcher.md:5, news-scout.md:5) live-read, both confirm Bash present — citations accurate. mock-guard/bun-test/tsc N/A (docs+journal only, no production TS/Go). DJ-GATE-1 satisfied (sprint-COWORK-GUARANTEED-SLOT-CATCHUP-agent-father.md:374). INDEPENDENT FINDING (not in this row scope, flagging not blocking): AC-2/AC-3 still false today — live-reproduced root cause myself via bash scripts/agents-flow/coverage-stamp.sh: task_claim ttl_seconds=30 violates tool schema minimum:60, fail-CLOSED every invocation, matching market-watcher notebook TODAY 20:06Z [script-transport-error]. This is the ALREADY-TRACKED sibling FIX-COVERAGE-STATE-CROSS-AGENT-LOST-UPDATE (P1 BACKLOG/next_agent=ba since 2026-07-16, scope widened 2026-08-01 for this exact TTL-validation mode per memory project_stale_transport_gap_note_blocks_coverage_state_writes.md) — not a regression of this commit (diff never touches the mutex/ttl text), not this row to fix. coverage-state.json remains frozen pending that sibling row.",
+        "po_ruling_20260801T0125": "ROOT CAUSE PROVEN AT SOURCE, NOT RELAYED. (1) docs/agents/market-watcher/flow/cycle.md:265 asserts >this agent holds no Bash (.claude/agents/market-watcher.md:5)< — that very line ACTUALLY reads >tools: Read, Write, Edit, Bash, mcp__gateway__call_tool<. The doc cites a line that now refutes it. Same contradiction at docs/agents/news-scout/flow/stage-log-notify.md:81 and stage-sentiment.md:18. (2) Bash was granted 2026-07-30T23:18Z by commit 610110e16 (grant Bash to alert-commander, news-scout, market-watcher). (3) TRANSPORT PROVEN LIVE, not assumed: PO ran `bash scripts/agents-flow/coverage-stamp.sh --agent market-watcher --list-stale --watchlist FPT,VNM,HPG,VCB` this tick and it returned [FPT,VNM,HPG] — a correct <=3 oldest-first list, clean exit. The script works; only the doc claims it cannot. (4) The caveat is not passive prose, it is an executable instruction: >if this step cannot execute, SKIP the coverage-state write entirely this cycle and log [coverage-write-skipped: no-transport]<. The agents obey it and skip. coverage-state.json _updated_at is still 2026-07-25T16:14:39Z = 6.4 days frozen, ~26h of which are AFTER the grant landed. (5) THIS WAS ALREADY ESCALATED TO PO AND LOST: the review_note that agent-father wrote on FIX-COWORK-BASH-GRANT-COVERAGE-STAMP-TRANSPORT (2026-07-30T23:16:56Z) states ACCEPTANCE 4 ... still present in docs/agents/market-watcher/flow/cycle.md and docs/agents/news-scout/flow/stage-log-notify.md ... flagging item 4 to po as a possible separate follow-up row rather than silently claiming it in scope. PO never minted that row. THIS row is that row, 26h late. (6) DEADLOCK NOTE for whoever closes the parent: parent AC-2/AC-3 were deemed to self-heal once a live cycle runs the script — they CANNOT, because the AC-4 caveat is precisely what stops any cycle from running it. The parent stays in REVIEW until this ships. Do NOT close the parent on its grep-only AC-1.",
+        "po_origin_note": "Minted from HIGH signal_queue row cow-20260801T010430, itself a re-file of cow-20260731T201100 which was cold-evicted status:READ / triaged_by:null before any PO triage (2nd confirmed feedback_coldevict_no_age_gate_orphans_unread_po_escalation). LANE CHOICE: ready[] not backlog[] — next_agent=agent-father is non-dev, and a backlog row with a non-dev next_agent and no plan_only+supervised pair matches NO automated sweep lane (BOUNDED-1 requires a dev-prefixed next_agent; SLS requires both flags true). Same lane reasoning the parent row recorded. Also returned in this tick BATCH so it has a real dispatch path and does not repeat the strand.",
+        "updated_at": "2026-08-06T21:34:34Z",
+        "branch": "438e66958f9853d95d2120890d0abf029928e5fe",
+        "review_note": "dev-team RAW-verified agent-father's return: commit 438e66958 contains exactly the 4 claimed files (3 flow docs + agent-father journal), grep for TRANSPORT GAP/no-transport/holds-no-Bash across all 3 sections returns zero matches (AC-1 confirmed), git diff --stat .claude/agents/*.md is empty (AC-4 negative control confirmed). Board flip applied by dev-team on agent-father's behalf per its own commit-zone exclusion of orch-state.json (docs/agents/, docs/agent-memory/, .claude/skills/, .claude/agents/ only).",
+        "claimed_at": "2026-08-06T21:26:17Z",
+        "claimed_by": "dev-team (review-lane qa-drain)",
+        "updated_by": "qa/verify-committed"
       }
     ],
     "head": {
@@ -15392,15 +15546,27 @@
         "created_by": "po (triage 2026-08-01T02:22Z)",
         "origin_signal_id": "dev-20260801T015751",
         "note": "ROOT CAUSE: a dev-<service> agent that lands an apps/<service>/ code fix has no way to make the required container rebuild a GATE. dev-mcp-server recorded `REBUILD_REQUIRED=true` in FIX-AGENTSIGNALS-EXPIRED-GC-CRON's free-text `note` and flipped next_agent=qa; `grep -rn 'REBUILD_REQUIRED|rebuild' docs/agents/dev-team/flow/*.md docs/agents/qa/flow/*.md` returns exactly ONE hit and it is an unrelated comment about lock TTL surviving a restart (main.md:149). There is NO consumer. qa would therefore run its live-verify against the image built BEFORE commit f5698cb76 — the GC predicates under test do not exist in that running container — and a passing verify would be structurally false-green. This is the DUAL of the class this codebase has already recorded 5 times (documented consumer with no producer — see supervised-goahead.md header for the 3rd instance, manual-dispatch-sweep.md header for the 4th and 5th): here a producer emits a marker with no consumer. The only reason it was visible at all is that dev-mcp-server ALSO hand-escalated a signal to PO; that escalation is discretionary, so every dev-<service> fix that does not hand-escalate reaches qa silently un-deployed. MEMORY: feedback_host_cli_integrity_check_false_ok_verify_through_runtime, feedback_passive_health_masks_dead_data, feedback_mcp_server_stale_image_mem_leak_rebuild_fixes, feedback_rebuild_after_dev_change (single-service rebuild, never down&&up — feedback_rebuild_recreate_destroys_peers). AC-1: a machine-readable row field (e.g. `rebuild_required: true`) replaces the prose marker, written by dev-<service> at status-flip time whenever the diff touches apps/<service>/ non-test source. AC-2: dev-team's review/qa routing refuses to set next_agent=qa while rebuild_required is true and unsatisfied — it routes to ops first, then qa; the ops rebuild stamps a satisfied marker carrying the rebuilt image ID (verify image ID, not just exit code — feedback_docker_rebuild_race_pgrep_deadlock). AC-3: regression verifier under scripts/audits/ replays the routing predicate against a synthetic fixture with positive and negative controls (rebuild_required true+unsatisfied must NOT route to qa; false or satisfied must). IMMEDIATE ACTION ALREADY TAKEN THIS TICK (not part of the AC): FIX-AGENTSIGNALS-EXPIRED-GC-CRON repointed next_agent qa -> ops by hand so this one row is not verified against a stale image while the general fix is built. ZONE-ENUM NOTE: same `docs/agents/` vs main.md:30 enum conflict as FIX-PO-BATCH-MINT-NO-WRITE-ACTUATOR — surfaced, not silently rewritten.",
-        "updated_at": "2026-08-06T21:25:22Z",
-        "updated_by": "po",
+        "updated_at": "2026-08-06T21:35:07Z",
+        "updated_by": "po (review-lane secondary-drain, session f298ccf7 — occ-5 append)",
         "po_lane_fix_20260806": "[po 2026-08-06T17:38Z] LANE FIX, moved backlog[] -> ready[] with status READY. This row was in the exact NO-LANE hole its own sibling doc names (po/flow/zone-routing.md Step A2): backlog + non-dev next_agent + plan_only unset. Predicates run live before the move (VERIFY BY EXECUTION, never by reading the row): {supervised:false, plan_only:false, next_agent:'agent-father', non_dev_unrouted:TRUE, deps:true} -- BOUNDED-1 gates it out on non_dev_unrouted, SLS needs supervised AND plan_only both true, so NOTHING would ever have picked it up. It sat 5 days on that hole. Step A2's stated fix is the ready lane (RLC has no dev/non-dev gate), not plan_only. SECOND CONFIRMED OCCURRENCE of the defect this row describes, and it is the direct cause of the strand this tick just cleared: FACTORY-MACRO-split-or-justify-over-cap carried rebuild_required=true in backlog-detail.json, no gate read it, dev-macro-indicators fell back to prose 'PENDING-USER-GATED', and the row then sat in review[] for 13 days (2026-07-24 -> 2026-08-06) while the rebuild it was waiting for had in fact already landed on 2026-07-29. Occurrence 1 was PDF-AVAIL-02-FIX (7 days of A-20 signal spam re-detecting an already-fixed bug). Recurrence 2+ -> priority raised P2 -> P1 per feedback_recurring_bug_escalation. Add to AC-2: the ops rebuild-satisfied stamp must also close the reverse case this tick hit -- a rebuild that already landed incidentally must be DETECTABLE (image build ts > commit ts AND deployed-binary marker present), so a row is never held on a gate that is de-facto already satisfied.",
         "po_escalation_20260806T1732": "P2 -> P1 by PO, recurring-bug 2+ threshold met (3 live occurrences, 2 of them today). OCC-1 OPS-MCPSERVER-REBUILD-STALE-IMAGE-PREDATES-MEMLEAK-FIX (BLOCKED, mcp-server memleak fix never built). OCC-2 2026-08-06 FIX-MARKETDB-WAL-SEQUENCE-STEPS-2-4-NO-OWNER: fix 31d691d52 was on main but never built; stock-price container StartedAt 2026-07-31T00:41:51Z RestartCount=0 => kinh-dich served 'insufficient price data' for EVERY ticker for 6 days, and the row carried a DONE claim resting on notebook-only commit 70584ca3b (telegram 4459/4461). OCC-3 2026-08-06 FIX-RAG-EMBEDDER-IDLE-UNLOAD-PATH: fix 0308514f5 (16:33:53Z) moved to review[]/qa at 16:35Z while rag-service container StartedAt=2026-08-06T12:57:42Z RestartCount=0 — QA is about to verify a runtime-memory AC against a binary that does not contain the fix.",
         "po_scope_note_20260806T1732": "PO scope ruling: the gate must be a HARD, machine-checked precondition on the review->qa transition for any row whose zone is apps/<svc>/ and whose AC asserts RUNTIME behavior — not a prose marker. Minimum discriminant: the deployed image's build/StartedAt must be NEWER than the fix commit's committer-date, asserted from `docker inspect`, never from an agent's own claim. Prose REBUILD_REQUIRED=true has now failed silently 3 times.",
         "occurrence_count": 4,
         "po_triaged_by": "po (dev-team Step 1 triage 2026-08-06)",
         "po_occurrence4_20260806T2122": "[po 2026-08-06T21:22Z] OCCURRENCE 4 -- AND IT IS THE INVERSE SHAPE OF 1-3, WHICH CHANGES THE FIX'S DESIGN. Row: FACTORY-ALERT-split-sandbox (review[] 13 days, 2026-07-24 -> 2026-08-06, cleared this tick, ruling ruling-20260806T2122Z-alert-split-sandbox-po.md). In occurrences 1-3 the marker was TRUE BUT UNREAD: a rebuild was genuinely owed, never happened, and QA was about to live-verify against a stale image (false-green). Here the marker was UNREAD **AND FALSE**: no rebuild was ever owed. dev-alert-engine stamped rebuild_required=true then fell back to prose 'PENDING-USER-GATED' for a change confined to apps/alert-engine/cmd/sandbox/ -- a documented NEVER-DEPLOYED scenario runner. Dockerfile:21 builds only ./cmd/server/; stage 2 copies only /out/server; cmd/sandbox is a separate package main and is therefore unreachable from the server binary even transitively; codebase-analysis-docs/sections/go-analytics-plane.md:182 states 'cmd/sandbox is NOT a server ... don't deploy it or expect a port'. AC-1 REFINEMENT (this is the actionable part): AC-1 as currently written says the marker is set 'whenever the diff touches apps/<service>/ non-test source'. Implemented literally that predicate is OVER-BROAD and would have fired true on this very row. An always-on gate that routinely demands needless rebuilds is the standard path to agents learning to wave it through -- which would reintroduce exactly the false-green class occurrences 1-3 exist to close. The marker MUST be computed from INTERSECTION WITH THE IMAGE'S ACTUAL BUILD GRAPH (the Dockerfile's build targets plus the artifacts the runtime stage copies), NOT from the apps/<svc>/ path prefix. AC-3 NEGATIVE CONTROL (concrete, reusable): apps/alert-engine/cmd/sandbox/ and its peer never-deployed harnesses (api-gateway, stock-price, kinh-dich-service, macro-indicators all ship a cmd/sandbox) are the standing negative-control fixture -- a diff confined to cmd/sandbox MUST yield rebuild_required=false, while a diff in pkg/ or cmd/server/ MUST yield true. SCOPE UNCHANGED: still P1, still ready[], still owner/next_agent agent-father. Nothing minted; this is an append to the row that already owns the class (prior-art check per feedback_file_prior_art_check_before_minting_row).",
-        "po_surfaced_usergated_20260806": "[po 2026-08-06T21:22Z] 6 further review[] rows still carry the retired USER-GATED / PENDING-USER framing and are candidates for the same treatment, deliberately NOT batch-approved this tick (each needs its own RAW verification; approving them on the strength of one verified sibling is the rubber-stamp failure): FACTORY-FRONTEND-split-market-summaries, FACTORY-FRONTEND-split-orchestration, FACTORY-APIGW-split-capability-prober (already PO-triaged today -> next_agent=ops), FACTORY-ALERT-router-cleanups, FACTORY-NEWS-fix-source-logging, FACTORY-NEWS-go-server-tier-split. DISCRIMINATOR: a frontend or server-tier split very likely DOES sit inside the shipped build graph, so those are the inverse of FACTORY-ALERT-split-sandbox and may owe a genuine rebuild. Do NOT generalise that row's rebuild_required=false verdict to them -- re-run the Dockerfile build-graph check per row."
+        "po_surfaced_usergated_20260806": "[po 2026-08-06T21:22Z] 6 further review[] rows still carry the retired USER-GATED / PENDING-USER framing and are candidates for the same treatment, deliberately NOT batch-approved this tick (each needs its own RAW verification; approving them on the strength of one verified sibling is the rubber-stamp failure): FACTORY-FRONTEND-split-market-summaries, FACTORY-FRONTEND-split-orchestration, FACTORY-APIGW-split-capability-prober (already PO-triaged today -> next_agent=ops), FACTORY-ALERT-router-cleanups, FACTORY-NEWS-fix-source-logging, FACTORY-NEWS-go-server-tier-split. DISCRIMINATOR: a frontend or server-tier split very likely DOES sit inside the shipped build graph, so those are the inverse of FACTORY-ALERT-split-sandbox and may owe a genuine rebuild. Do NOT generalise that row's rebuild_required=false verdict to them -- re-run the Dockerfile build-graph check per row.",
+        "po_occurrences": [
+          {
+            "occ": 5,
+            "observed_at": "2026-08-06T21:30:43Z",
+            "source_row": "FACTORY-ALERT-router-cleanups",
+            "shape": "THIRD distinct shape — build-graph-TRUE but behaviourally-NULL. Distinct from occ 1-3 (marker true-but-unread -> real rebuild skipped -> false-green QA) AND from occ-4 (marker unread AND false -> no rebuild ever owed).",
+            "finding": "This row's own carry-over (po notebook 2026-08-06T21:22Z, Decisions bullet 6) proposed refining AC-1's over-broad predicate from 'diff touches apps/<svc>/ non-test source' to 'intersection with the image build graph'. FACTORY-ALERT-router-cleanups FALSIFIES that refinement as sufficient. Its changed files (pkg/interface/http/router.go, pkg/infrastructure/sqlite.go, cmd/server/main.go) ARE unambiguously in the cmd/server build graph — unlike occ-4's cmd/sandbox — so a build-graph predicate returns TRUE and demands a rebuild. But the rebuild is still needless: PO proved the runtime delta is NIL because the only runtime-visible change (the /health `port` field, previously the literal 5006, now cfg.Port) resolves to the SAME 5006 under the deployed env (docker-compose.yml sets PORT=5006; pkg/infrastructure/config.go:23 defaults to 5006), and the live container already returns {\"port\":5006,...}. The other three changes were independently proven semantics-preserving. So build-graph intersection is NECESSARY but NOT SUFFICIENT.",
+            "ac1_refinement": "A binary rebuild_required marker cannot carry this. It needs TWO fields the consumer can act on differently: (a) in_build_graph — mechanically derivable from the Dockerfile build target, cheap, no judgement; (b) observable_delta — whether any runtime-visible behaviour actually changes, which requires the implementer to state it and a reviewer to check it. Route: in_build_graph=false -> no rebuild (occ-4 class, cmd/sandbox is the standing negative control). in_build_graph=true AND observable_delta=false -> no rebuild NEEDED but the image now lags main, so it must accrue to a per-service deploy-debt counter instead of silently evaporating (THIS occurrence's class). in_build_graph=true AND observable_delta=true -> rebuild REQUIRED, and this is the only branch where a QA live-verify against the running image is meaningful at all (occ 1-3 class).",
+            "why_the_debt_counter_matters": "Concrete cost, measured this tick, of letting the behaviourally-null branch evaporate: alert-engine's running image was built 2026-07-15 and FIVE commits have since landed under apps/alert-engine/. Four are behaviourally null exactly like this row, so each was individually correct to skip. But their accumulation hid the fifth — 43f4e3add, a REAL behaviour change (fingerprint dedup window 30min -> 60min) that has therefore never executed in production. Nobody made a wrong call on any single row; the class is only visible in aggregate. That is precisely what a per-service deploy-debt counter surfaces and what per-row judgement structurally cannot. Carved out as OPS-ALERT-ENGINE-REBUILD-STALE-IMAGE-5-COMMITS-BEHIND.",
+            "negative_controls": "occ-4 supplies the in_build_graph=false control (apps/alert-engine/cmd/sandbox). THIS occurrence supplies the in_build_graph=true / observable_delta=false control (fb5fc9d4c). A fix that cannot distinguish these two from each other, and both from occ 1-3, is not done."
+          }
+        ]
       },
       {
         "id": "FIX-ACTIVE-READPATH-LIVENESS-PROBE-NO-DETECTOR",
@@ -15452,6 +15618,62 @@
         "promoted_at": "2026-08-06T17:58:35Z",
         "promoted_by": "dev-team (bounded-1 auto-pickup)",
         "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)"
+      },
+      {
+        "id": "FIX-DASHBOARD-TELEGRAM-SENT-DEFAULT-YES-NEVER-THREADED",
+        "type": "FIX",
+        "title": "emit-dashboard-row.sh defaults --telegram-sent to 'yes' and ZERO callers repo-wide ever pass it, so every dedup-skipped WARN/CRITICAL row in DASHBOARD.md falsely claims a Telegram fired",
+        "status": "READY",
+        "priority": "P1",
+        "size": "S",
+        "zone": "cross-service/",
+        "next_agent": "developer",
+        "supervised": false,
+        "plan_only": false,
+        "created_at": "2026-08-06T13:45:00Z",
+        "created_by": "po/triage-agentfather-20260806T1318Z",
+        "updated_by": "po (review-lane secondary-drain sign-off, session f298ccf7)",
+        "source": "Coordinator relay to PO 2026-08-06T13:40Z (system-auditor Tier-1 c58, signal sys-20260806T133606-3047); memory feedback_auditor_dashboard_row_telegram_sent_text_ignores_dedup_skip. ROOT CAUSE RE-DIAGNOSED BY PO — see desc, the relayed mechanism was wrong.",
+        "desc": "SYMPTOM (as relayed, confirmed): docs/data/DASHBOARD.md's row for signal sys-20260806T133606-3047 reads '... dedup_key=microservice_degraded:rag-service:A-30, WARN Telegram sent' although that cycle's OUTPUT-CONTRACT was telegram_sent=0, dedup_skipped=1. MECHANISM — the relayed read ('row-append text is copy-pasted fixed text, interpolate the real outcome instead') is WRONG and would send the implementer to a layer that is already correct. scripts/emit-dashboard-row.sh:207-211 ALREADY branches on a $telegram_sent variable and already omits the suffix when it is not 'yes'. The actual defect is two-part: (a) line 130 initialises telegram_sent='yes' — a fail-OPEN default, so an unset flag asserts a page that never happened; (b) grep -rn -- '--telegram-sent' across all *.md/*.sh/*.ts repo-wide returns exactly TWO hits, both inside emit-dashboard-row.sh itself (its usage comment line 35 and its arg-parse line 146) — NO call site anywhere passes it. Meanwhile both documented call sites (docs/agents/system-auditor/flow/main.md:378 and :706) are explicitly instructed 'DASHBOARD append (on any non-ABORT marker — always, even SKIP-dedup)'. So the flow MANDATES a row on dedup-skip and the unpassed default then stamps 'Telegram sent' on it. This is systematic across every dedup-skipped WARN/CRITICAL row written since the actuator landed 2026-07-29, not a one-off.",
+        "acceptance": [
+          "AC-1 Flip the default: scripts/emit-dashboard-row.sh:130 telegram_sent='no'. Fail-closed — never assert a page fired unless the caller proves it.",
+          "AC-2 Thread --telegram-sent at every emit-dashboard-row.sh call site (docs/agents/system-auditor/flow/main.md:378, :706, plus the tier1-probe.md / page-freshness.md sites that reference the same contract), derived from the [emit-signal] marker the flow ALREADY parses at those exact points: OK / OK-escalation-bypass -> yes, SKIP-dedup -> no. Zero new plumbing — the marker is already in hand (the flow says 'using the id= value parsed from this call's own [emit-signal] marker above').",
+          "AC-3 scripts/emit-dashboard-row.test.sh (32 tests today) has ZERO coverage of the telegram_sent rendering — verified by grep. Add both polarities: a SKIP-dedup/no call MUST NOT emit 'Telegram sent', an OK/yes call MUST. Without AC-3 this regresses the moment a new call site is added.",
+          "AC-4 Do NOT rewrite historical DASHBOARD.md rows. Note the contamination window (2026-07-29 to fix date) in the commit body so nobody later cites an old row as evidence a page fired."
+        ],
+        "files": [
+          "scripts/emit-dashboard-row.sh",
+          "scripts/emit-dashboard-row.test.sh",
+          "docs/agents/system-auditor/flow/main.md",
+          "docs/agents/system-auditor/flow/tier1-probe.md"
+        ],
+        "related": [
+          "FIX-AUDITOR-B12-DOUBLE-INVOKE-EMIT-MARKER-LOSS",
+          "FIX-AUDITOR-COMMIT-NONEXPLICIT-PATHSPEC"
+        ],
+        "not_duplicate_of": "FIX-AUDITOR-B12-DOUBLE-INVOKE-EMIT-MARKER-LOSS covers double-invocation + marker loss in emit-audit-signal.sh. This row is the emit-dashboard-row.sh flag-threading defect. They intersect: that row's why_the_obvious_fixes_are_wrong item (2) asserts the --telegram-sent flag 'is fed by invocation 1's OK outcome' — PO refuted that premise by grep this cycle and corrected it in place on that row.",
+        "zone_note": "Split-zone by construction: scripts/ is outside agent-father's commit_zone, the flow-doc call sites are inside it. Kept as ONE row owned by generic developer (cross-service/) so the script default and its callers cannot land out of step — splitting it is how AC-1 ships without AC-2.",
+        "updated_at": "2026-08-06T21:34:09Z",
+        "escalated_at": "2026-08-06T21:30:43Z",
+        "escalation_note": "P2->P1 + BACKLOG->READY on 2026-08-06T21:30:43Z. NOT a re-litigation and NOT a new row: dev-team relayed signal `emit-dashboard-row-telegramsent-default-yes-false-claim-20260806T2115Z` (type=repair_task_request, from=router) describing this exact defect at this exact line, and its payload asserts `Not yet tracked in memory under any existing feedback file (new finding)`. That assertion is FALSE on both counts — PO minted THIS row for the identical mechanism at 2026-08-06T13:45Z, and it is tracked in memory as feedback_auditor_dashboard_row_telegram_sent_text_ignores_dedup_skip. Dup-mint refused; the signal is folded in as CORROBORATION instead. Its requested_action (`flip the default to no`) is already verbatim AC-1 here, so no acceptance change was needed. WHAT THE SIGNAL DOES ADD is the escalation trigger: 2 fresh instances that both post-date this row's creation — c67 commit 7458bc2c7 (signal sys-20260806T174128-477d, 17:41Z) and c71 commit 424d8a2d6 (signal sys-20260806T211009-070b, 21:10Z). So the defect kept minting permanently-false 'WARN Telegram sent' DASHBOARD.md rows roughly every 3h while the fix sat unclaimed in backlog. That satisfies the standing recurring-bug 2+ escalation rule (feedback_recurring_bug_escalation), and this is the detection-already-landed / fix-not-landed shape from feedback_recurring_detection_vs_recurring_failed_fix — the correct actuation is priority + lane, not another row. Moved to ready[] so dev-team BOUNDED-1 idle-capacity pickup can actually claim it; supervised=false and plan_only=false are BOTH already present on this row, so it does not trip the ready[]-lane READY-XOR stranding trap.",
+        "corroborating_instances": [
+          {
+            "cycle": "c67",
+            "commit": "7458bc2c7",
+            "signal_id": "sys-20260806T174128-477d",
+            "observed_at": "2026-08-06T17:41:28Z",
+            "false_claim": "WARN Telegram sent",
+            "ground_truth": "dedup-SKIP cycle, no BUG-channel alert fired"
+          },
+          {
+            "cycle": "c71",
+            "commit": "424d8a2d6",
+            "signal_id": "sys-20260806T211009-070b",
+            "observed_at": "2026-08-06T21:10:09Z",
+            "false_claim": "WARN Telegram sent",
+            "ground_truth": "agent's own OUTPUT-CONTRACT states telegram_sent=0 and its prose states 'No BUG channel alert sent (dedup-gated)'"
+          }
+        ]
       }
     ],
     "review": [
@@ -16661,26 +16883,6 @@
         "next_agent": "qa",
         "reviewed_at": "2026-07-24T13:22:00Z",
         "reviewed_by": "dev-alert-engine"
-      },
-      {
-        "title": "Delete dead UseCaseExecutor, inject real port into /health, reuse domain severity validation, simplify substring search",
-        "priority": "P2",
-        "zone": "alert-engine",
-        "type": "FACTORY",
-        "status": "REVIEW",
-        "id": "FACTORY-ALERT-router-cleanups",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-ALERT-router-cleanups",
-        "promoted_at": "2026-07-24T14:14:41Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
-        "updated_at": "2026-08-06T21:25:07Z",
-        "claimed_at": "2026-07-24T14:14:41Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)",
-        "entered_review_at": "2026-07-24T14:23:53Z",
-        "dev_result": "DONE-CODE: 4 small cleanups in router.go+sqlite.go. (1) Deleted orphaned UseCaseExecutor interface, zero refs confirmed via repo-wide grep. (2) INTENTIONAL FIX: threaded cfg.Port into NewRouter(uc,port) -> handleHealth(port), cmd/server/main.go now passes cfg.Port instead of hardcoded 5006; added TestHealth_ReflectsConfiguredPort (port=6123) as regression lock. (3) Replaced inline validSeverities map with domain.AlertSeverity(body.Severity).IsValid() -- proved set equality first (IsValid accepts exactly low/medium/high/critical, identical to inline map); 400 message text byte-identical. (4) Replaced hand-rolled containsStr/findSubstr with strings.Contains -- proved old scanner was CASE-SENSITIVE (no ToLower anywhere) so strings.Contains is exact semantic match; hoisted outcomeLookbackDays=90/defaultPendingLimit=100 to named consts. Verify: go build/vet/test ./... green, golangci-lint 0 issues, sandbox harness 11/11 PASS. Docs: api-reference.md /health note updated (graphify --update attempted, structurally unavailable -- no LLM API key in shell env, logged not silently skipped). Journal: docs/agent-memory/decisions/sprint-FACTORY-ALERT-router-cleanups-dev-alert-engine.md. Commits: fb5fc9d4c code, a3bc53270 journal. rebuild_required=true but PENDING-USER-GATED (code-only landed, no docker rebuild performed per task constraint).",
-        "secondary_claimed_at": "2026-08-06T21:25:07Z",
-        "secondary_claimed_by": "dev-team (review-lane secondary-drain)",
-        "secondary_dispatch_target": "po"
       },
       {
         "title": "Fix composeNewsIngest logging both sources per call",
@@ -21256,6 +21458,66 @@
         "owner": "agent-father",
         "redispatch_count": 1,
         "status_note": "[QA] Direct-Commit Verify FAILED 2026-08-06 — CHANGES_REQUESTED, RAW re-verified against the live repo this tick, not trusted from agent-father's own commit-message self-report. Commit 2728636fd confirmed real, on main ancestry, touches exactly the 5 files claimed. init.md's 3 bare DASHBOARD.md mentions now correctly name docs/data/DASHBOARD.md + scripts/emit-dashboard-row.sh (live lines ~49/95/142); flow/main.md's RETURN \"NEXT: po (via DASHBOARD.md)\" corrected to \"po (via orch-state.json .signal_queue row)\" (live line 17 area) — both confirmed live and durable through 6 days of later edits (2026-08-05/06), no regression. tier1-probe.md correctly needed no change (confirmed no live DASHBOARD.md phantom mandate there).\n\nBUT: the task's own cited architecture brief (docs/architecture-briefs/2026-07-12-ultracode-workflow-improvement-audit.md#auditor-signal-loop-P6) Change item (2) specifies TWO edits to .claude/skills/signal-dashboard/SKILL.md: (a) line 11 Write-protocol text -> orch-apply.sh [DONE, confirmed live] AND (b) trim the :22-24 manual-CAS instruction to \"orch-apply.sh provides the CAS guard; TS code uses appendSignalQueueRow()\" [NOT DONE — git blame confirms lines 22-24 unchanged since 2026-06-07 commit 8a46965519, untouched by 2728636fd or any later commit]. Live text today still reads \"Shell/flow code MUST record mtime before read, check mtime again before rename, retry up to 3 times if changed. Never use bare temp→rename without the CAS guard\" (SKILL.md:22-24) — this instructs shell/flow code to hand-roll its own manual mtime-CAS loop as an alternative to orch-apply.sh, directly contradicting line 11's own absolute mandate 2 lines above (\"MUST route through ... orch-apply.sh ... NEVER a raw temp-file-then-rename\", no manual-CAS exception) and the project's CANONICAL SSOT-W1-ORCH-APPLY-WRAPPER rule (no raw writes, ever, always via the wrapper). This is the exact SKILL.md hot-path/orch-apply-contract misalignment class this row exists to close — partially fixed, not fully.\n\nFIX NEEDED (small, doc-only, no re-test needed): .claude/skills/signal-dashboard/SKILL.md:22-24 — replace the \"Shell/flow code MUST record mtime...\" sentence with text naming orch-apply.sh as the sole CAS-guard provider, removing the manual mtime-record/check/retry instruction. Not routing to fixer — no task branch exists (direct-commit row, branch:null). Held: .task_board.qa[] -> .task_board.review[], status QA -> REVIEW, owner/next_agent=agent-father, redispatch_count 0 -> 1."
+      },
+      {
+        "id": "FIX-CHEF-EVENING-L5-KINHDICH-SILENT-OMISSION",
+        "type": "FIX",
+        "title": "chef.md silently omits the entire Kinh Dich / Layer-5 block when get_portfolio_conviction/kinhdich errors, and emits NO gap token — dish self-certifies complete while a whole methodology layer is missing (2nd occurrence, live 503 corroboration)",
+        "status": "REVIEW",
+        "priority": "P1",
+        "size": "S",
+        "zone": "cross-service/",
+        "owner": "po",
+        "next_agent": "po",
+        "created_at": "2026-07-28T22:52:38Z",
+        "created_by": "po-triage-tnb-c119-20260728",
+        "source": "docs/handoffs/tnb-audit-latest.md#F-CHEF-EVENING-L5-SILENT-OMISSION (c119)",
+        "verdict": "CONFIRMED",
+        "occurrence_count": 2,
+        "root_cause": "chef.md Layer-5 step treats a kinhdich/get_portfolio_conviction error as 'nothing to say' and falls through silently, instead of emitting a [gap:L5_*] token into BOTH metadata.layers_walked_summary AND known_gaps[]. Silent omission is indistinguishable from 'layer walked, nothing notable' to every downstream reader and to the dish's own quality_verdict gate.",
+        "note": "PO triage TNB-c119. 2nd occurrence — crosses the feedback_recurring_bug_escalation 2+ bar, so this gets a tracked row rather than another audit-note. EVIDENCE: the 2026-07-28 19:53Z evening dish (the 'extra' one from the same-day double-publish, date_vn-mislabelled 2026-07-29) has ZERO hexagram/Kinh Dich content anywhere — not in conviction rationales, not in causal_chains, not in known_gaps[] — and no L5 gap token. Identical shape to F-CHEF-EVENING-L5-SILENT-OMISSION-0723 (c117, 1st occurrence, was rated MED and left below threshold). NEW THIS CYCLE — FIRST LIVE MECHANISM CORROBORATION: get_system_status() shows 7 identical entries at 2026-07-28 20:09:46, same evening, '[WARN] kinhdich: service unreachable - omitting hexagram block - 503: {\"error\":\"insufficient price data for market reading - requires at least 7...' . c117's occurrence had no such corroboration; this one does, so the mechanism is no longer hypothetical: kinhdich returns 503 on thin price data, chef swallows it. SAME DISH is also silently missing + untokened on business-context (new facet, not seen in c117). RELATED BUT DISTINCT — do not merge: FIX-CHEF-QUALITY-VERDICT-FALSE-FULL-NO-LAYER-ASSERTION (READY, P1, docs/agents/unified-agent/) makes the VERDICT assert over the payload; THIS row makes the LAYER emit a token when its data source errors. The verdict-assertion fix alone would flip these dishes to 'degraded' without ever saying WHICH layer died or WHY; this fix alone would token the gap but leave the verdict free to still claim full. Ship both — agent-father should batch them, same file. Also related: FIX-CHEF-L6-TOKEN-PERSISTENCE-RECURRING (P3 BLOCKED) covers tokens that ARE generated but fail to PERSIST; here no token is generated at all.",
+        "acceptance": "(1) chef.md Layer-5 step wraps its kinhdich/get_portfolio_conviction call so that ANY error or empty return emits a [gap:L5_kinhdich_unavailable] token into BOTH metadata.layers_walked_summary AND the known_gaps[] array, with the upstream error text carried; (2) the same error-to-gap-token discipline is stated once as a reusable rule covering every layer's data source, not patched only at L5 — business-context absence from the same dish is the second instance; (3) RAW-VERIFY: force or await a kinhdich 503 and confirm the resulting synthesis JSON on disk carries the L5 token in both surfaces (a green self-report in the notebook is NOT acceptable evidence).",
+        "files_hint": "docs/agents/unified-agent/ (chef.md Layer-5 step + the layers_walked_summary/known_gaps writer)",
+        "verification_gate": "done_verified requires a synthesis JSON on disk produced during a real kinhdich error window that carries [gap:L5_*] in BOTH layers_walked_summary and known_gaps[].",
+        "updated_at": "2026-08-06T21:31:50Z",
+        "entered_review_at": "2026-07-28T23:57:07Z",
+        "review_note": "[agent-father 2026-07-28T23:57:07Z] chef.md Step 5 now wraps get_portfolio_conviction: any error/empty return sets $L5_GAP_TOKEN = [gap:L5_kinhdich_unavailable: <verbatim upstream error text>]. Step 7.5 appends it to $LAYERS_WALKED_SUMMARY on both full/degraded branches (does NOT touch $QUALITY_VERDICT computation -- that assertion is the sibling row FIX-CHEF-QUALITY-VERDICT-FALSE-FULL-NO-LAYER-ASSERTION job). Step 7.6 known_gaps[] now unions Step 6 L6-gap tokens + Step 7.5 $FAILED_CHECKS (L2/L3/L4/business_context/gap-catalogue -- these were previously computed but silently stopped at $LAYERS_WALKED_SUMMARY and never reached known_gaps[], the business-context instance of the same pattern) + $L5_GAP_TOKEN, stated once as a reusable rule per AC(2). AC(3) NOT verifiable this session -- requires a synthesis JSON produced during a real kinhdich error window. REVIEW not DONE_VERIFIED.",
+        "updated_by": "agent-father",
+        "status_note": " [router 2026-07-29T00:03:46Z] next_agent corrected agent-father->qa: QA-Drain requires status==REVIEW && next_agent==qa to pick a row; agent-father left self-reference, stranding this row from automated QA pickup.\n[qa 2026-08-06T21:31:09Z] CHANGES_REQUESTED (verify-committed). Landing commit 8cb767471 confirmed on main -- chef-dish.md:159-173 (Step 5 wrap), :526-527 (Step 7.5 append), :650 (Step 7.6 union) -- AC(1)/(2) mechanism live and matches review_note. BLOCKING: row's own po_adjudication_20260731T2257 'AC REFINEMENT for qa' (token SCOPE must match what failed) is unmet -- re-verified myself against disk, not trusted from prose. Evidence: docs/data/unified-agent-synthesis-2026-07-31-evening.json known_gaps[3] + metadata.layers_walked_summary both carry the SAME unscoped '[gap:L5_kinhdich_unavailable:insufficient price data for market_hexagram]' token declaring the whole L5 layer unavailable, while conviction_calls[VIC].rationale_one_liner ('Kinh Dich reversal risk') and conviction_calls[NVL].rationale_one_liner ('Kinh Dich Tap Kham reversal -100% contradicts') prove get_portfolio_conviction succeeded for 2/5 tickers that SAME cycle -- the exact self-contradiction PO's adjudication describes, independently reproduced. Root cause unaddressed on main: chef-dish.md:159-173's rule ('L5_GAP_TOKEN set for ANY ticker -> carry it') has no partial-vs-whole-layer distinction, no success/fail count. git log confirms zero chef.md/chef-dish.md commits since 2026-07-31 touch this section. FIX NEEDED: scope the token to what actually failed (count of calls errored vs succeeded) before injecting into layers_walked_summary/known_gaps[]. AC(3) raw-verify partially holds (token present in both surfaces from a real error window) but PO's scope-correctness refinement does not. Routing to owner (po) per verify-committed flow -- no task branch exists for a fixer.",
+        "po_adjudication_20260731T2257": "PO ADJUDICATION 2026-07-31T22:57:35Z (TNB c121 asked PO/architect to decide fold-vs-new-row for F-CHEF-EVENING-L5-CONTENT-GAPTOKEN-CONTRADICTION-0731). VERDICT: FOLD HERE, no new row — and TNB's stated premise is CORRECTED at source. TNB wrote 'the JSON tnb_synthesis and conviction_calls blocks contain ZERO Kinh Dich/hexagram fields anywhere' and that the notebook's per-ticker hexagram content 'appears NOWHERE in the persisted JSON'. Both are FALSE. docs/data/unified-agent-synthesis-2026-07-31-evening.json (89L, read in full this tick) carries Kinh Dich content in FOUR places: conviction_calls[VIC].rationale_one_liner 'Kinh Dich reversal risk' (:31); conviction_calls[NVL].rationale_one_liner 'Kinh Dich Tap Kham reversal -100% contradicts' (:52) — verbatim the exact per-ticker claim TNB cites as unbacked; known_gaps L6-gap VIC 'Kinh Dich buy contradicts technical/macro pressure' (:76); known_gaps L6-gap NVL 'Kinh Dich reversal contradicts earnings positivity' (:79). CONSEQUENCE: TNB's explanation (b) — notebook hexagram claims authored with no backing live call, a no_fake_data_real_fetch breach — is REFUTED. Per-ticker kinhdich data demonstrably reached the synthesis and drove 2 of 5 conviction calls. Explanation (a) is also mis-scoped: this is not L6 token persistence, so it does NOT belong in FIX-CHEF-L6-TOKEN-PERSISTENCE-RECURRING (P3/BLOCKED, a different token family). THE REAL RESIDUAL DEFECT is gap-token OVER-SCOPING and it is squarely this row's subject matter: the emitted token '[gap:L5_kinhdich_unavailable:insufficient price data for market_hexagram]' declares the WHOLE L5 layer unavailable, while its own parenthetical names only the MARKET-level market_hexagram calc as the thing that 503'd, and the same JSON's conviction_calls prove the PER-TICKER readings landed. The token contradicts its own document. AC REFINEMENT for qa on this row: verifying that a gap token is merely PRESENT is insufficient — the token's SCOPE must match what actually failed. A partial-failure L5 (market hexagram down, per-ticker readings up) must emit a partial token, not a whole-layer-unavailable token; a whole-layer token while conviction_calls still cite hexagram data is a false-negative-shaped self-contradiction that makes downstream audits (this one) chase a fabrication that did not occur. SECOND RESIDUAL, lower severity, for the same fix: per-ticker hexagram data reaches the JSON only as free prose inside rationale_one_liner — there are no structured hexagram_number/hexagram_name fields, which is why a text-level audit could not corroborate VCB Ham(31)/HPG Su(7)/EIB Khon(2) even though NVL/VIC corroborated.",
+        "claimed_at": "2026-08-06T21:26:17Z",
+        "claimed_by": "dev-team (review-lane qa-drain)",
+        "redispatch_count": 1
+      },
+      {
+        "id": "TE-T14",
+        "title": "T-14 system-auditor Step 0c: jq-project 6 key-paths instead of full-reading 50.6KB system-map.json [~75k tok/day]",
+        "owner": "agent-father",
+        "status": "REVIEW",
+        "type": "CLEAN",
+        "size": "S",
+        "priority": "P1",
+        "wave": 2,
+        "est_saving": "~75k tok/day",
+        "zone": "docs/agents/",
+        "sprint": "TOKEN-ECONOMY-AUDIT",
+        "depends": [],
+        "detail_ref": "docs/architecture-briefs/2026-07-12-token-economy-lazyload-audit.md#T-14",
+        "note": "Step 0c lists 6 exact key-paths then full-reads 1733L file. Rewrite as single jq projection (~2k tokens vs ~12.7k). CLAUDE.md + system-map-query SKILL already mandate jq-only. Read-only projection of same SSOT, no semantic change.",
+        "next_agent": "agent-father",
+        "po_routing_ruling_20260721": "PO ARTIFACT-CLASS ROUTING RULING 2026-07-21T18:42Z. Rule: routing follows ARTIFACT CLASS, not directory. Any row whose deliverable is instruction-prose that an agent LOADS AND EXECUTES — .claude/agents/**, docs/agents/** (init/flow/knowledge/tools-package), .claude/skills/**/SKILL.md — routes to agent-father. Executable code (apps/**, scripts/**), codegen-from-registry, and data/root-config (docs/data/**, CLAUDE.md) route to zone-matched dev-* or developer. Rationale: for this system a flow doc IS the executable source; agent-father is already sole owner of agent-file lifecycle (dispatch/SKILL.md:48) and of NEW cron skill files (:50), and board precedent has 5/5 pre-existing docs/agents/ rows routed to agent-father/agents-architect/po and 0 to developer. Precedent for SKILL.md specifically: docs/signals/processed/dev-team-20260716T102429Z-autolaunch-safety-hold-uc-asl-p6.json already routed a signal-dashboard SKILL.md edit to agent-father as 'the factory rule'. ROOT CAUSE this closes: .claude/skills/zone-detect/SKILL.md resolves ONLY dev-<service> (Tier-1/2, needs apps/<service>/-shaped zone) or generic developer (Tier-3 fallback) — it has NO path to agent-father, so any docs/agents/ or .claude/skills/ row reaching execute-tier with next_agent unset gets the 'developer' placeholder and mis-routes. EXPECTED SIDE EFFECT (do NOT 'fix' this): next_agent=agent-father does not match the dev-role pattern ^dev(-|$)|^developer$, so the BOUNDED-1 NON-DEV-NEXT_AGENT gate (dev-team/flow/main.md:518) now WITHHOLDS these rows from unattended idle auto-pickup. That is the intended outcome — they require deliberate router dispatch to agent-father, not silent promotion to a generic developer.",
+        "updated_at": "2026-08-06T21:33:15Z",
+        "po_manual_dispatch_flagged_at": "2026-07-31T22:57:13Z",
+        "po_manual_dispatch_flagged_by": "po (manual-dispatch-sweep)",
+        "po_manual_dispatch_class": "DRS-STRANDED-OFF-ALLOWLIST",
+        "po_manual_dispatch_note": "po (manual-dispatch-sweep) surfaced DRS-STRANDED-OFF-ALLOWLIST candidate — folding into this tick's BATCH (re-admitted: prior stamp 2026-07-31T16:04:37Z aged past the 4h staleness window without reaching dispatch)",
+        "updated_by": "qa",
+        "claimed_at": "2026-08-06T21:26:17Z",
+        "claimed_by": "dev-team (review-lane qa-drain)",
+        "commit_sha": "013c90710f491899840437e66de3aeadf96275ae",
+        "review_note": "agent-father: Step 0c rewritten as single jq -c projection over the 6 documented key-paths (was prose full-read). Verified live: jq exit 0, all 6 arrays populated (microservices=11, host_runtime_set=12, not_deployed_by_design=0, data_sources=28, databases=7, zones=12). No cascade -- grepped fleet-wide for Step 0c / jq.*system-map.json callers, none reference the old prose shape. Journal: sprint-COWORK-GUARANTEED-SLOT-CATCHUP-agent-father.md S17.",
+        "status_note": "[QA] Direct-Commit Verify FAILED 2026-08-06 — CHANGES_REQUESTED, RAW re-verified against live repo (not trusted from review_note prose alone). Commit 013c90710 confirmed on main ancestry (git merge-base --is-ancestor), git show --stat matches docs/agents/system-auditor/flow/main.md only. Live-ran the exact Step 0c jq projection (main.md:116-123) against docs/data/system-map.json: exit 0, counts 11/12/0/28/7/12 match review_note's claim.\n\nBUT review_note's central claim \"no semantic change to what system-auditor consumes\" is FALSE. review_note's own audit method (\"grepped fleet-wide for Step 0c / jq.*system-map.json callers\") only checked OTHER files for dependence on the old prose shape — it never checked THIS file's own downstream consumption of system-map.json beyond the 6 bulleted key-paths. Grepping main.md itself for every system-map.json reference surfaces 2 real consumption sites the new projection silently drops:\n\n(1) main.md:297 Cron Fire Check (A-29): \"For each cron in system-map.json microservices[0].crons\" — a live ~70-entry array (verified: jq '.project.microservices[0].crons|length'). New projection at main.md:117 selects only {id, external_port, zone} per microservice — crons is entirely absent from the loaded object. A-29 has nothing to iterate after this change.\n\n(2) main.md:325-339 SLA Resolver (SSOT: system-map.json .project.data_sources[].sla, FIX-BCTC-SLA-THRESHOLD-360) needs .sla.mode / .sla.earnings_window.{trigger_months,window_days_after_quarter_end,stale_threshold_hours} / .sla.default_stale_threshold_hours per source. New projection at main.md:120 selects only {id, expected_cadence_hours, stale_threshold_hours, geo_blocked} — sla dropped entirely. Live-verified: 2/28 data_sources (bctc-discover, bctc-push) carry an sla block; their flat stale_threshold_hours=168h vs the sla-resolved out-of-window effective threshold runs up to ~1714h (per this file's own worked examples, lines 344-349). If the agent treats the Step 0c jq output as its sole in-cycle view of system-map.json — exactly the step's stated purpose, \"never full-read\" — SLA Resolver branch 1 (\"no sla block -> use stale_threshold_hours directly\", line 329) misfires on these 2 sources during the inter-quarter quiet period, re-flattening to 168h and reintroducing the exact false-CRITICAL B-05 bug FIX-BCTC-SLA-THRESHOLD-360 already fixed.\n\nRoot cause: the OLD step did an imperative full Read of the whole file, so crons/sla stayed implicitly present in context even though the 6-bullet list never named them. The NEW jq projection actively strips anything not explicitly selected — a real behavior change, not a documentation nit.\n\nFIX NEEDED: add crons to the microservices projection (main.md:117) and sla to the data_sources projection (main.md:120) — OR explicitly scope Step 0c's \"only 6 key-paths\" claim down and document that A-29 / SLA Resolver each run their OWN separate targeted jq call at point-of-use (fine re: token budget, but current text does not say this and flatly claims \"6 key-paths\" + \"no semantic change to what system-auditor consumes\").\n\nNo application code touched (docs/agents/ + docs/agent-memory/ only) — bun test / tsc / mock-guard structurally N/A (Smart-Skip, doc-only diff).\n\nHeld: .task_board.qa[] -> .task_board.review[], status QA -> REVIEW, owner/next_agent=agent-father, redispatch_count 0 -> 1.",
+        "redispatch_count": 1
       }
     ],
     "qa": [
@@ -21387,105 +21649,6 @@
         ]
       },
       {
-        "id": "FIX-CHEF-EVENING-L5-KINHDICH-SILENT-OMISSION",
-        "type": "FIX",
-        "title": "chef.md silently omits the entire Kinh Dich / Layer-5 block when get_portfolio_conviction/kinhdich errors, and emits NO gap token — dish self-certifies complete while a whole methodology layer is missing (2nd occurrence, live 503 corroboration)",
-        "status": "QA",
-        "priority": "P1",
-        "size": "S",
-        "zone": "cross-service/",
-        "owner": "po",
-        "next_agent": "qa",
-        "created_at": "2026-07-28T22:52:38Z",
-        "created_by": "po-triage-tnb-c119-20260728",
-        "source": "docs/handoffs/tnb-audit-latest.md#F-CHEF-EVENING-L5-SILENT-OMISSION (c119)",
-        "verdict": "CONFIRMED",
-        "occurrence_count": 2,
-        "root_cause": "chef.md Layer-5 step treats a kinhdich/get_portfolio_conviction error as 'nothing to say' and falls through silently, instead of emitting a [gap:L5_*] token into BOTH metadata.layers_walked_summary AND known_gaps[]. Silent omission is indistinguishable from 'layer walked, nothing notable' to every downstream reader and to the dish's own quality_verdict gate.",
-        "note": "PO triage TNB-c119. 2nd occurrence — crosses the feedback_recurring_bug_escalation 2+ bar, so this gets a tracked row rather than another audit-note. EVIDENCE: the 2026-07-28 19:53Z evening dish (the 'extra' one from the same-day double-publish, date_vn-mislabelled 2026-07-29) has ZERO hexagram/Kinh Dich content anywhere — not in conviction rationales, not in causal_chains, not in known_gaps[] — and no L5 gap token. Identical shape to F-CHEF-EVENING-L5-SILENT-OMISSION-0723 (c117, 1st occurrence, was rated MED and left below threshold). NEW THIS CYCLE — FIRST LIVE MECHANISM CORROBORATION: get_system_status() shows 7 identical entries at 2026-07-28 20:09:46, same evening, '[WARN] kinhdich: service unreachable - omitting hexagram block - 503: {\"error\":\"insufficient price data for market reading - requires at least 7...' . c117's occurrence had no such corroboration; this one does, so the mechanism is no longer hypothetical: kinhdich returns 503 on thin price data, chef swallows it. SAME DISH is also silently missing + untokened on business-context (new facet, not seen in c117). RELATED BUT DISTINCT — do not merge: FIX-CHEF-QUALITY-VERDICT-FALSE-FULL-NO-LAYER-ASSERTION (READY, P1, docs/agents/unified-agent/) makes the VERDICT assert over the payload; THIS row makes the LAYER emit a token when its data source errors. The verdict-assertion fix alone would flip these dishes to 'degraded' without ever saying WHICH layer died or WHY; this fix alone would token the gap but leave the verdict free to still claim full. Ship both — agent-father should batch them, same file. Also related: FIX-CHEF-L6-TOKEN-PERSISTENCE-RECURRING (P3 BLOCKED) covers tokens that ARE generated but fail to PERSIST; here no token is generated at all.",
-        "acceptance": "(1) chef.md Layer-5 step wraps its kinhdich/get_portfolio_conviction call so that ANY error or empty return emits a [gap:L5_kinhdich_unavailable] token into BOTH metadata.layers_walked_summary AND the known_gaps[] array, with the upstream error text carried; (2) the same error-to-gap-token discipline is stated once as a reusable rule covering every layer's data source, not patched only at L5 — business-context absence from the same dish is the second instance; (3) RAW-VERIFY: force or await a kinhdich 503 and confirm the resulting synthesis JSON on disk carries the L5 token in both surfaces (a green self-report in the notebook is NOT acceptable evidence).",
-        "files_hint": "docs/agents/unified-agent/ (chef.md Layer-5 step + the layers_walked_summary/known_gaps writer)",
-        "verification_gate": "done_verified requires a synthesis JSON on disk produced during a real kinhdich error window that carries [gap:L5_*] in BOTH layers_walked_summary and known_gaps[].",
-        "updated_at": "2026-08-06T21:26:18Z",
-        "entered_review_at": "2026-07-28T23:57:07Z",
-        "review_note": "[agent-father 2026-07-28T23:57:07Z] chef.md Step 5 now wraps get_portfolio_conviction: any error/empty return sets $L5_GAP_TOKEN = [gap:L5_kinhdich_unavailable: <verbatim upstream error text>]. Step 7.5 appends it to $LAYERS_WALKED_SUMMARY on both full/degraded branches (does NOT touch $QUALITY_VERDICT computation -- that assertion is the sibling row FIX-CHEF-QUALITY-VERDICT-FALSE-FULL-NO-LAYER-ASSERTION job). Step 7.6 known_gaps[] now unions Step 6 L6-gap tokens + Step 7.5 $FAILED_CHECKS (L2/L3/L4/business_context/gap-catalogue -- these were previously computed but silently stopped at $LAYERS_WALKED_SUMMARY and never reached known_gaps[], the business-context instance of the same pattern) + $L5_GAP_TOKEN, stated once as a reusable rule per AC(2). AC(3) NOT verifiable this session -- requires a synthesis JSON produced during a real kinhdich error window. REVIEW not DONE_VERIFIED.",
-        "updated_by": "agent-father",
-        "status_note": " [router 2026-07-29T00:03:46Z] next_agent corrected agent-father->qa: QA-Drain requires status==REVIEW && next_agent==qa to pick a row; agent-father left self-reference, stranding this row from automated QA pickup.",
-        "po_adjudication_20260731T2257": "PO ADJUDICATION 2026-07-31T22:57:35Z (TNB c121 asked PO/architect to decide fold-vs-new-row for F-CHEF-EVENING-L5-CONTENT-GAPTOKEN-CONTRADICTION-0731). VERDICT: FOLD HERE, no new row — and TNB's stated premise is CORRECTED at source. TNB wrote 'the JSON tnb_synthesis and conviction_calls blocks contain ZERO Kinh Dich/hexagram fields anywhere' and that the notebook's per-ticker hexagram content 'appears NOWHERE in the persisted JSON'. Both are FALSE. docs/data/unified-agent-synthesis-2026-07-31-evening.json (89L, read in full this tick) carries Kinh Dich content in FOUR places: conviction_calls[VIC].rationale_one_liner 'Kinh Dich reversal risk' (:31); conviction_calls[NVL].rationale_one_liner 'Kinh Dich Tap Kham reversal -100% contradicts' (:52) — verbatim the exact per-ticker claim TNB cites as unbacked; known_gaps L6-gap VIC 'Kinh Dich buy contradicts technical/macro pressure' (:76); known_gaps L6-gap NVL 'Kinh Dich reversal contradicts earnings positivity' (:79). CONSEQUENCE: TNB's explanation (b) — notebook hexagram claims authored with no backing live call, a no_fake_data_real_fetch breach — is REFUTED. Per-ticker kinhdich data demonstrably reached the synthesis and drove 2 of 5 conviction calls. Explanation (a) is also mis-scoped: this is not L6 token persistence, so it does NOT belong in FIX-CHEF-L6-TOKEN-PERSISTENCE-RECURRING (P3/BLOCKED, a different token family). THE REAL RESIDUAL DEFECT is gap-token OVER-SCOPING and it is squarely this row's subject matter: the emitted token '[gap:L5_kinhdich_unavailable:insufficient price data for market_hexagram]' declares the WHOLE L5 layer unavailable, while its own parenthetical names only the MARKET-level market_hexagram calc as the thing that 503'd, and the same JSON's conviction_calls prove the PER-TICKER readings landed. The token contradicts its own document. AC REFINEMENT for qa on this row: verifying that a gap token is merely PRESENT is insufficient — the token's SCOPE must match what actually failed. A partial-failure L5 (market hexagram down, per-ticker readings up) must emit a partial token, not a whole-layer-unavailable token; a whole-layer token while conviction_calls still cite hexagram data is a false-negative-shaped self-contradiction that makes downstream audits (this one) chase a fabrication that did not occur. SECOND RESIDUAL, lower severity, for the same fix: per-ticker hexagram data reaches the JSON only as free prose inside rationale_one_liner — there are no structured hexagram_number/hexagram_name fields, which is why a text-level audit could not corroborate VCB Ham(31)/HPG Su(7)/EIB Khon(2) even though NVL/VIC corroborated.",
-        "claimed_at": "2026-08-06T21:26:17Z",
-        "claimed_by": "dev-team (review-lane qa-drain)"
-      },
-      {
-        "id": "FIX-CI-SIZELINT-TECHANALYSIS-ROUTER-NEW-OFFENDER-143L",
-        "type": "FIX",
-        "size": "S",
-        "priority": "P1",
-        "status": "QA",
-        "zone": "apps/technical-analysis/",
-        "owner": "po",
-        "supervised": false,
-        "plan_only": false,
-        "created_by": "po/triage-20260731T2249",
-        "created_at": "2026-07-31T22:56:53Z",
-        "updated_at": "2026-08-06T21:26:18Z",
-        "origin_signal_id": "CI-RED-39abd150",
-        "check_id": "CI-RED-39abd150",
-        "ci_fingerprint": "ci_red:39abd150dc551e1544e8eac35115dadf61031322:size-lint",
-        "dedup_key": "ci_job:size-lint|file:apps/technical-analysis/pkg/interface/http/router.go",
-        "verification_gate": "ci_green_on_subsequent_push",
-        "title": "CI job `size-lint` RED on origin/main for 3 consecutive runs — apps/technical-analysis/pkg/interface/http/router.go is 143L > 120L, classified `new-offender` (no baseline entry, no justification header). Sole offender in the job (scanned 1354). Introduced by 39fbec098 (FACTORY-TECHANALYSIS-fix-discarded-service-and-port), which grew the file 112L -> 143L.",
-        "root_cause": "Read at source this tick. (1) `git show 39fbec098^:<file> | wc -l` = 112, `git show 39fbec098:<file> | wc -l` = 143 — the /health real-port change inlined a NEW handler (const defaultPort, type healthResponse, func handleHealth) plus ~20L of doc comments directly into router.go, pushing it 23L past the 120L cap. (2) Same structural class as FIX-CI-SIZELINT-VPSPROXYSTALENESS-REGRESSION-123L two hours earlier: 39fbec098 was verified on the go build/vet/test/golangci-lint + sandbox planes only (per its own commit message), and size-lint was not in that verification set — so a green-verified merge shipped a guaranteed-RED gate. The guard is CORRECT and did its job; the gap is that this file`s cap-compliance was an invariant nobody re-asserted while editing it.",
-        "evidence": "Local replay of the exact CI command: `bash scripts/audits/size-lint-justification.sh --check` => RC=1, `[size-lint] FAIL — 1 offending file(s) (scanned 1354): apps/technical-analysis/pkg/interface/http/router.go — new-offender (143L > 120L, no baseline entry, no current justification header)`. CI plane read verbatim from the failing step (NOT inferred from the job name): `gh run view 30669964532 --log-failed` emits that same line; the grep for `FAILEDFILE` returns EMPTY (this is the size-lint lint tool, not the bun-test per-file-isolation runner), so FAILING_FILES was taken from the failing step`s own error line per the ci_red spec. Cross-run persistence — the SAME single file is the sole offender in three consecutive runs on three advancing SHAs: 30662758810 (20:24Z, 11677b75), 30664924688 (20:59Z, 18db3e63), 30669964532 (22:27Z, 39abd150). `wc -l` on the live file = 143.",
-        "ac": "(AC-1) Bring the file back to <=120L by EXTRACTING the health handler into a sibling file, NOT by adding a size-justification header and NOT by running --update. The package already has an established file-per-handler convention (momentum_handler.go, money_flow_handler.go, proximity_handler.go, relative_strength_handler.go, volatility_handler.go); `const defaultPort` + `type healthResponse` + `func handleHealth` are the only handler still inlined in router.go and belong in a new `health_handler.go` by that same convention. (AC-2) DO NOT change /health behaviour. The response must stay {status,service,port} marshalled from the real bound port, with the empty/unparseable-Port fallback to 5003 intact — 39fbec098 shipped TestHealth_ReflectsConfiguredPort + a default-port assertion on TestHealth_Returns200 and both must still pass unmodified. (AC-3) `go build ./... && go vet ./... && go test ./...` clean in apps/technical-analysis, plus golangci-lint clean. (AC-4) Local gate: `bash scripts/audits/size-lint-justification.sh --check` exits 0 with 0 offenders. (AC-5) VERIFY ON THE CI PLANE, not locally: `gh run view <run whose headSha is AFTER this fix> --json jobs -q `.jobs[]|select(.name==\"size-lint\")|.conclusion`` == success. Record run id + headSha on this row BEFORE flipping it — a ci_red close without a recorded fingerprint re-drains next tick. (AC-6) LANDMINE — do NOT close by running `size-lint-justification.sh --update`. That regenerates docs/data/size-lint-baseline.json and would GRANDFATHER the 143L regression into the baseline, permanently disarming the guard for this file and silently widening the whole repo`s debt snapshot to whatever else is over-cap at that moment.",
-        "files": [
-          "apps/technical-analysis/pkg/interface/http/router.go"
-        ],
-        "reference_only_files": [
-          "scripts/audits/size-lint-justification.sh",
-          "docs/data/size-lint-baseline.json",
-          "apps/technical-analysis/pkg/interface/http/router_test.go",
-          "apps/technical-analysis/pkg/interface/http/volatility_handler.go",
-          "apps/technical-analysis/cmd/server/main.go"
-        ],
-        "related": "Introduced by FACTORY-TECHANALYSIS-fix-discarded-service-and-port (review[], commit 39fbec098). DISTINCT from every other open FIX-CI-SIZELINT-* row — each names a different file (vpsProxyStaleness.ts, energyTools.ts, extraction_engine.py, usecases_vmt_liquidity_resolvers.go, the mcp-server six-offender parent) and none names router.go or any apps/technical-analysis/ path. Do NOT merge into FACTORY-XZONE-size-justification-sweep (backlog): that row is a debt sweep over pre-existing grandfathered offenders; this is a NEW offender blocking main`s CI right now.",
-        "dedup_checked": "2026-07-31T22:49Z — FILE-SCOPED per triage-signals.md ci_red spec, across all 5 NON-TERMINAL LANES BY NAME (backlog+ready+in_progress+review+qa), never a status-token enum. (1) PRIMARY: zero rows carry dedup_key == `ci_job:size-lint|file:apps/technical-analysis/pkg/interface/http/router.go`; zero rows carry any dedup_key matching /router\\.go|technical-analysis/. (2) SECONDARY: zero rows contain `39abd150` or `CI-RED-39abd150` in id/title/status_note/check_id. (3) BROAD: 17 open rows match /technical-analysis/i and 18 match /SIZELINT|size-lint/i — all read; the technical-analysis matches are indicator/factory/gateway-path rows, the size-lint matches are guard implementations or other files. ZERO cover this file. ANTI-AMNESTY FENCE honoured: not deduped into FIX-MCP-SUITE-HEALTH-BASELINE or any LOCAL-full-suite row. Third consecutive tick this defect fired a ci_red (20:46Z, 21:18Z, 22:46Z drains) with no board row minted — per the fence, `pre-existing` with no matched row is a fabricated disposition, so the row is minted here.",
-        "baseline_pass": "gh run view <post-fix run> --json jobs => size-lint conclusion == success on origin/main",
-        "status_note": "AC: gh run view <databaseId with headSha AFTER 39abd150dc551e1544e8eac35115dadf61031322> --json jobs -q `.jobs[]|select(.name==\"size-lint\")|.conclusion` == success (verification_gate=ci_green_on_subsequent_push). Priority: high. Failing job: size-lint. Failing file: apps/technical-analysis/pkg/interface/http/router.go. Observed SHAs (3 consecutive, same sole offender): 11677b75 run 30662758810, 18db3e63 run 30664924688, 39abd150 run 30669964532. | CLOSE: code commit 969b5d96b (router.go 143L->114L, new health_handler.go 41L), memory commit d93e4fbc1, pushed to origin/main. CI run 30672400942 headSha d93e4fbc17862f9d65720fe1bc6424b5913c8369 -- size-lint job conclusion=success (gh run view 30672400942 --json jobs -q .jobs[]|select(.name==\"size-lint\")|.conclusion). Local: go build/vet/test + golangci-lint clean, size-lint-justification.sh --check RC=0 0 offenders, G12 sandbox 35/35 green + render-check PASS. Decision journal STEP dev-technical-analysis-S3 (sprint-COWORK-GUARANTEED-SLOT-CATCHUP).",
-        "next_agent": "qa",
-        "updated_by": "dev-technical-analysis",
-        "claimed_at": "2026-08-06T21:26:17Z",
-        "claimed_by": "dev-team (review-lane qa-drain)",
-        "commit_sha": "969b5d96b"
-      },
-      {
-        "id": "TE-T14",
-        "title": "T-14 system-auditor Step 0c: jq-project 6 key-paths instead of full-reading 50.6KB system-map.json [~75k tok/day]",
-        "owner": "agent-father",
-        "status": "QA",
-        "type": "CLEAN",
-        "size": "S",
-        "priority": "P1",
-        "wave": 2,
-        "est_saving": "~75k tok/day",
-        "zone": "docs/agents/",
-        "sprint": "TOKEN-ECONOMY-AUDIT",
-        "depends": [],
-        "detail_ref": "docs/architecture-briefs/2026-07-12-token-economy-lazyload-audit.md#T-14",
-        "note": "Step 0c lists 6 exact key-paths then full-reads 1733L file. Rewrite as single jq projection (~2k tokens vs ~12.7k). CLAUDE.md + system-map-query SKILL already mandate jq-only. Read-only projection of same SSOT, no semantic change.",
-        "next_agent": "qa",
-        "po_routing_ruling_20260721": "PO ARTIFACT-CLASS ROUTING RULING 2026-07-21T18:42Z. Rule: routing follows ARTIFACT CLASS, not directory. Any row whose deliverable is instruction-prose that an agent LOADS AND EXECUTES — .claude/agents/**, docs/agents/** (init/flow/knowledge/tools-package), .claude/skills/**/SKILL.md — routes to agent-father. Executable code (apps/**, scripts/**), codegen-from-registry, and data/root-config (docs/data/**, CLAUDE.md) route to zone-matched dev-* or developer. Rationale: for this system a flow doc IS the executable source; agent-father is already sole owner of agent-file lifecycle (dispatch/SKILL.md:48) and of NEW cron skill files (:50), and board precedent has 5/5 pre-existing docs/agents/ rows routed to agent-father/agents-architect/po and 0 to developer. Precedent for SKILL.md specifically: docs/signals/processed/dev-team-20260716T102429Z-autolaunch-safety-hold-uc-asl-p6.json already routed a signal-dashboard SKILL.md edit to agent-father as 'the factory rule'. ROOT CAUSE this closes: .claude/skills/zone-detect/SKILL.md resolves ONLY dev-<service> (Tier-1/2, needs apps/<service>/-shaped zone) or generic developer (Tier-3 fallback) — it has NO path to agent-father, so any docs/agents/ or .claude/skills/ row reaching execute-tier with next_agent unset gets the 'developer' placeholder and mis-routes. EXPECTED SIDE EFFECT (do NOT 'fix' this): next_agent=agent-father does not match the dev-role pattern ^dev(-|$)|^developer$, so the BOUNDED-1 NON-DEV-NEXT_AGENT gate (dev-team/flow/main.md:518) now WITHHOLDS these rows from unattended idle auto-pickup. That is the intended outcome — they require deliberate router dispatch to agent-father, not silent promotion to a generic developer.",
-        "updated_at": "2026-08-06T21:26:18Z",
-        "po_manual_dispatch_flagged_at": "2026-07-31T22:57:13Z",
-        "po_manual_dispatch_flagged_by": "po (manual-dispatch-sweep)",
-        "po_manual_dispatch_class": "DRS-STRANDED-OFF-ALLOWLIST",
-        "po_manual_dispatch_note": "po (manual-dispatch-sweep) surfaced DRS-STRANDED-OFF-ALLOWLIST candidate — folding into this tick's BATCH (re-admitted: prior stamp 2026-07-31T16:04:37Z aged past the 4h staleness window without reaching dispatch)",
-        "updated_by": "dev-team/po-batch-dispatch-20260731T2257Z",
-        "claimed_at": "2026-08-06T21:26:17Z",
-        "claimed_by": "dev-team (review-lane qa-drain)",
-        "commit_sha": "013c90710f491899840437e66de3aeadf96275ae",
-        "review_note": "agent-father: Step 0c rewritten as single jq -c projection over the 6 documented key-paths (was prose full-read). Verified live: jq exit 0, all 6 arrays populated (microservices=11, host_runtime_set=12, not_deployed_by_design=0, data_sources=28, databases=7, zones=12). No cascade -- grepped fleet-wide for Step 0c / jq.*system-map.json callers, none reference the old prose shape. Journal: sprint-COWORK-GUARANTEED-SLOT-CATCHUP-agent-father.md S17."
-      },
-      {
         "id": "FIX-BCTC-REPARSE-BATCH-CORRUPTION-NGAYNOP-FLIP",
         "type": "FIX",
         "status": "QA",
@@ -21543,43 +21706,6 @@
         "po_live_evidence_20260801T0047": "PO LIVE EVIDENCE 2026-08-01T00:47Z — read from list_unresolved_reports() this tick, NOT relayed. This row has been in review[]/next_agent=qa since 2026-07-21T17:35:01Z = 10.3 days unverified. Tonight it produced BOTH a strong close-signal AND a residual that blocks closing it.\n\nCLOSE-SIGNAL — BOTH ARMS OF THE SHIPPED GUARD FIRED IN PRODUCTION, EXACTLY AS THIS ROW'S OWN review_note PREDICTED. That note says storeReport() (parseBctcReport.ts) now evaluates report.balanceSheet.totalAssets<=0 UNCONDITIONALLY: arm (b1) refuse to overwrite a good row, arm (b2) refuse to create a fresh corrupt row where none existed. Live instances tonight:\n  - ARM (b1), report id 4263, 23:09:34Z: 'Reparse write BLOCKED for VJC 2025-Q1: new extraction total_assets=0 would overwrite a previously-good stored report (total_assets=127684178.83214). Existing row preserved untouched.' A real good row was protected from a real zeroing write.\n  - ARM (b2), report id 4261, 23:07:29Z (CTG 2026-Q1) and report id 4266, 23:12:31Z (GEX 2025-Q3): 'extraction total_assets=0 and no prior stored report exists — refusing to CREATE a new corrupt row.'\nThat is independent production confirmation of both acceptance arms on three separate documents, on tickers inside this row's own named cohort. QA should weigh this as real evidence rather than re-deriving it from tests.\n\nRESIDUAL THAT BLOCKS A CLEAN CLOSE — THE GUARD IS CONTAINMENT, NOT CURE, AND THE SOURCE IS STILL FIRING. The guard stops corrupt rows from landing; it does NOT stop the reparse batch from producing total_assets=0 extractions in the first place. Twelve days after this row was opened, the batch still emitted three zero-extraction attempts in five minutes, one of them aimed at a known-good row. Two further reports the same night (id 4247 HPG 2025-Q4, id 4262 VJC 2025-Q1) show composite=0.00/financial=0.00 low-confidence conviction skips — the same zero-extraction signature reaching the serve layer as silently-degraded output rather than as a blocked write. So the blast radius is contained but the generator is untouched. Closing on the guard alone would close a containment and leave the cause live.\n\nCROSS-LINK — DO NOT VERIFY THIS ROW IN ISOLATION. The same batch window (22:33Z-23:16Z) produced 23 period-mismatch quarantines across 13 tickers, 11 of them members of this row's own 15-ticker cohort. Full analysis on FIX-BCTC-INGEST-PERIOD-IDENTITY-UNVALIDATED-VS-CONTENT (review[]/qa) as po_live_evidence_20260801T0047, including a refutation of that row's earlier opening-balance-column hypothesis. Working read: tonight was the reparse/recovery sweep of THIS row's corrupted cohort, and the 07-28 period guard refused it. If that is right, these two rows are one incident and verifying either alone will produce a misleading verdict.",
         "claimed_at": "2026-08-06T21:26:17Z",
         "claimed_by": "dev-team (review-lane qa-drain)"
-      },
-      {
-        "id": "FIX-COWORK-FLOWDOC-STALE-TRANSPORT-GAP-CAVEAT",
-        "type": "FIX",
-        "size": "S",
-        "priority": "P1",
-        "status": "QA",
-        "zone": "docs/agents/",
-        "owner": "po",
-        "next_agent": "qa",
-        "plan_only": false,
-        "supervised": false,
-        "sprint": "COWORK-RELIABILITY",
-        "created_at": "2026-08-01T01:25:12Z",
-        "created_by": "po/triage-20260801T0125",
-        "origin_signal_id": "cow-20260801T010430",
-        "unblocks": [
-          "FIX-COWORK-BASH-GRANT-COVERAGE-STAMP-TRANSPORT",
-          "FIX-COVERAGE-SWEEP-BLANKET-STAMP-DEAD-TRIGGER",
-          "FIX-COVERAGE-STATE-CROSS-AGENT-LOST-UPDATE"
-        ],
-        "baseline_pass": true,
-        "rebuild_required": false,
-        "title": "Flow docs still tell news-scout + market-watcher they hold no Bash — the stale TRANSPORT GAP caveat makes both agents SKIP every coverage-state write, freezing docs/data/coverage-state.json for 6.4 days AFTER the Bash grant already landed",
-        "files": [
-          "docs/agents/market-watcher/flow/cycle.md (L71-76 list-stale caveat, L265-270 Step 5c write caveat)",
-          "docs/agents/news-scout/flow/stage-log-notify.md (L81-85 write caveat)",
-          "docs/agents/news-scout/flow/stage-sentiment.md (L18 list-stale caveat)"
-        ],
-        "status_note": "AC-1 RAW: zero occurrences of TRANSPORT GAP / [coverage-write-skipped: no-transport] remain as a NORMAL-operation instruction in the 4 sections above (demote to a genuine error path only). AC-2 RAW: after one live news-scout AND one live market-watcher cycle, jq [.tickers|to_entries[]|.value.last_covered_news_scout]|group_by(.)|length > 1 (it is 1 today) and the same for last_covered_market_watcher (also 1 today). AC-3 RAW: jq has(sweep_config) on docs/data/coverage-state.json == true (false today; the script self-repairs it). AC-4 NEGATIVE CONTROL: no change to any .claude/agents/*.md in this row — the tool grant is already correct and must not be touched.",
-        "po_ruling_20260801T0125": "ROOT CAUSE PROVEN AT SOURCE, NOT RELAYED. (1) docs/agents/market-watcher/flow/cycle.md:265 asserts >this agent holds no Bash (.claude/agents/market-watcher.md:5)< — that very line ACTUALLY reads >tools: Read, Write, Edit, Bash, mcp__gateway__call_tool<. The doc cites a line that now refutes it. Same contradiction at docs/agents/news-scout/flow/stage-log-notify.md:81 and stage-sentiment.md:18. (2) Bash was granted 2026-07-30T23:18Z by commit 610110e16 (grant Bash to alert-commander, news-scout, market-watcher). (3) TRANSPORT PROVEN LIVE, not assumed: PO ran `bash scripts/agents-flow/coverage-stamp.sh --agent market-watcher --list-stale --watchlist FPT,VNM,HPG,VCB` this tick and it returned [FPT,VNM,HPG] — a correct <=3 oldest-first list, clean exit. The script works; only the doc claims it cannot. (4) The caveat is not passive prose, it is an executable instruction: >if this step cannot execute, SKIP the coverage-state write entirely this cycle and log [coverage-write-skipped: no-transport]<. The agents obey it and skip. coverage-state.json _updated_at is still 2026-07-25T16:14:39Z = 6.4 days frozen, ~26h of which are AFTER the grant landed. (5) THIS WAS ALREADY ESCALATED TO PO AND LOST: the review_note that agent-father wrote on FIX-COWORK-BASH-GRANT-COVERAGE-STAMP-TRANSPORT (2026-07-30T23:16:56Z) states ACCEPTANCE 4 ... still present in docs/agents/market-watcher/flow/cycle.md and docs/agents/news-scout/flow/stage-log-notify.md ... flagging item 4 to po as a possible separate follow-up row rather than silently claiming it in scope. PO never minted that row. THIS row is that row, 26h late. (6) DEADLOCK NOTE for whoever closes the parent: parent AC-2/AC-3 were deemed to self-heal once a live cycle runs the script — they CANNOT, because the AC-4 caveat is precisely what stops any cycle from running it. The parent stays in REVIEW until this ships. Do NOT close the parent on its grep-only AC-1.",
-        "po_origin_note": "Minted from HIGH signal_queue row cow-20260801T010430, itself a re-file of cow-20260731T201100 which was cold-evicted status:READ / triaged_by:null before any PO triage (2nd confirmed feedback_coldevict_no_age_gate_orphans_unread_po_escalation). LANE CHOICE: ready[] not backlog[] — next_agent=agent-father is non-dev, and a backlog row with a non-dev next_agent and no plan_only+supervised pair matches NO automated sweep lane (BOUNDED-1 requires a dev-prefixed next_agent; SLS requires both flags true). Same lane reasoning the parent row recorded. Also returned in this tick BATCH so it has a real dispatch path and does not repeat the strand.",
-        "updated_at": "2026-08-06T21:26:18Z",
-        "branch": "438e66958f9853d95d2120890d0abf029928e5fe",
-        "review_note": "dev-team RAW-verified agent-father's return: commit 438e66958 contains exactly the 4 claimed files (3 flow docs + agent-father journal), grep for TRANSPORT GAP/no-transport/holds-no-Bash across all 3 sections returns zero matches (AC-1 confirmed), git diff --stat .claude/agents/*.md is empty (AC-4 negative control confirmed). Board flip applied by dev-team on agent-father's behalf per its own commit-zone exclusion of orch-state.json (docs/agents/, docs/agent-memory/, .claude/skills/, .claude/agents/ only).",
-        "claimed_at": "2026-08-06T21:26:17Z",
-        "claimed_by": "dev-team (review-lane qa-drain)"
       }
     ],
     "_closed_signals_20260614": {
@@ -21598,8 +21724,8 @@
         }
       ]
     },
-    "last_triaged_at": "2026-08-06T19:38:00Z",
-    "last_triaged_by": "po/triage-20260806T1929Z",
+    "last_triaged_at": "2026-08-06T21:30:43Z",
+    "last_triaged_by": "po (review-lane secondary-drain sign-off, session f298ccf7)",
     "in_progress": [
       {
         "id": "FIX-REFINE-SUBFLOW-OPTIONC-CONTRACT-DRIFT",
