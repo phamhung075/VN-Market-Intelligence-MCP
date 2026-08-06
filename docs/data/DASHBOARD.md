@@ -646,3 +646,15 @@
 **Mitigation:** No immediate action beyond signal routing.
 
 ---
+
+## Anomaly: A-21 · mcp-server crash restarts detected (4 in 4h)
+**Severity:** WARN | **Date:** 2026-08-06 | **Status:** OPEN
+**Location:** mcp-server/restart
+**Details:** 4 crash restarts within 4-hour window (2026-08-06 12:17-12:25 UTC)
+**Impact:** Service instability, potential data loss or incomplete processing
+**Root cause:** Likely memory pressure or resource exhaustion in mcp-server
+**Zone owner:** dev-mcp-server
+**Last reported:** 2026-08-06T15:41:20Z (signal sys-20260806T154111-1649, system-auditor -> po, dedup_key=microservice_degraded:mcp-server:A-21, WARN Telegram sent)
+**Mitigation:** No immediate action beyond signal routing.
+
+---
