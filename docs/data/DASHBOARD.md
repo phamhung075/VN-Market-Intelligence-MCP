@@ -490,3 +490,15 @@
 **Mitigation:** No immediate action beyond signal routing.
 
 ---
+
+## Anomaly: DATA-01 · daily_ohlcv: 336 incomplete OHLCV rows (illiquid)
+**Severity:** WARN | **Date:** 2026-08-06 | **Status:** OPEN
+**Location:** market.db/daily_ohlcv
+**Details:** 336 rows with high=0, low=0, volume=0 from 34 illiquid tickers (2026-05-15 to 2026-06-12)
+**Impact:** Data quality issue affects analytics on illiquid securities; OHLCV calculations may fail or produce invalid results
+**Root cause:** Incomplete market data aggregation for HOSE side-listed fund shares; data source provided O/C but not H/L/V
+**Zone owner:** dev-mcp-server
+**Last reported:** 2026-08-06T07:21:41Z (signal sys-20260806T072127-34b3, system-auditor -> po, dedup_key=db_anomaly:daily_ohlcv:illiquid_ohlcv_incomplete, WARN Telegram sent)
+**Mitigation:** No immediate action beyond signal routing.
+
+---
