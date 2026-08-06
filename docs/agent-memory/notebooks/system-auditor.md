@@ -1,83 +1,27 @@
-## c62 · 2026-08-06T14:38:59Z
-### Audit Run Tier-1 (14:30–14:40 UTC 2026-08-06)
+
+
+## c63 · 2026-08-06T14:43:48Z
+### Audit Run Tier-1 (14:30–14:42 UTC 2026-08-06)
 - Tier: 1 | Services: 13 checked | Sources: 0 | DB checks: 0
-- Anomalies: 1 new (C 1, W 0, I 0) | 1 dedup-skipped
+- Anomalies: 1 CRITICAL (rag-service A-30) | 1 dedup-skipped
 - Status: DEGRADED
 
-### RAW-PROBE:
-```
-=== AUDITOR PROBE 2026-08-06T14:36:11Z ===
-
---- docker ps -a (all 13 services UP) ---
-vn-market-intelligence-mcp-rag-service-1: Up 2 hours (healthy)
-vn-market-intelligence-mcp-mcp-server-1: Up 2 hours (healthy)
-vn-market-intelligence-mcp-stock-price-1: Up 6 days (healthy)
-vn-market-intelligence-mcp-macro-indicators-1: Up 7 days (healthy)
-vn-market-intelligence-mcp-pdf-extractor-1: Up 2 days (healthy)
-vn-market-intelligence-mcp-frontend-1: Up 12 days (healthy)
-mcp-gateway: Up 3 weeks (healthy)
-vn-market-intelligence-mcp-api-gateway-1: Up 3 weeks (healthy)
-vn-market-intelligence-mcp-flaresolverr-1: Up 3 weeks (healthy)
-vn-market-intelligence-mcp-news-fetch-1: Up 3 weeks (healthy)
-vn-market-intelligence-mcp-technical-analysis-1: Up 3 weeks (healthy)
-vn-market-intelligence-mcp-alert-engine-1: Up 3 weeks (healthy)
-vn-market-intelligence-mcp-kinh-dich-service-1: Up 3 weeks (healthy)
-
---- health endpoints ---
-[health] mcp-server:3000/health OK (HTTP 200)
-[health] api-gateway:4000/health OK (HTTP 200)
-[health] macro-indicators:5004/health OK (HTTP 200)
-[health] pdf-extractor:5001/health OK (HTTP 200)
-[health] frontend:3001/ OK (HTTP 200)
-
---- memory pressure full-scan ---
-vn-market-intelligence-mcp-rag-service-1: 96.69% of 1GiB (990.2MiB) → CRITICAL
-vn-market-intelligence-mcp-mcp-server-1: 32.37% of 3GiB (994.4MiB) → PASS
-vn-market-intelligence-mcp-pdf-extractor-1: 70.46% of 2.5GiB (1.762GiB) → PASS
-
---- A-30 Memory Reclamation (rag-service) ---
-Baseline: 96.69% (>= 95%) → deep-probe engaged
-Verdict: ESCALATE — CRITICAL severity (persistent >96% memory)
-
---- disk df -h / ---
-Filesystem /dev/disk1s4s1: 55% capacity < 85% → PASS
-
---- pdf-extractor multi-probe (A-20) ---
-[A-20-PROBE-1] in-container HTTP 200
-[A-20-PROBE-2] in-container HTTP 200
-[A-20-PROBE-3] in-container HTTP 200
-[A-20] pass_count=3/3 → PASS
-
-=== PROBE DONE ===
-```
-
 ### Findings:
-**A-01 to A-11 (Container Status):** All 13 host_runtime_set services UP ✓
+**A-01 to A-11 (Container Status):** All 13 services UP ✓
 
-**A-12 to A-20 (Health Endpoints):** All 5 endpoints OK ✓
+**A-12 to A-20 (Health Endpoints):** All 5 OK ✓
 
-**A-20 (pdf-extractor multi-probe):** 3/3 pass ✓
+**A-20 pdf-extractor multi-probe:** 3/3 pass ✓
 
-**A-21 (Restart Count):** mcp-server RestartCount=4, no crashes in 4h window ✓
+**A-30 (Memory Pressure):**
+- rag-service: 96.69% of 1GiB → CRITICAL (persistent >96% memory)
+- mcp-server: 32.54% → PASS
+- pdf-extractor: 70.43% → PASS
+Signal emitted (dedup-skipped, last sent 2026-08-06T08:16:21Z) | id=sys-20260806T144250-77d3
 
-**A-30 (Memory Pressure):** 
-- rag-service: 96.69% of 1GiB → **CRITICAL** (escalation detected)
-- mcp-server: 32.37% → PASS
-- pdf-extractor: 70.46% → PASS
-Signal emitted (id=sys-20260806T143821-0c09) — DEDUP-SKIPPED (prior: 2026-08-06T08:16:21Z)
+[emit-signal] SKIP-dedup dedup_key=microservice_degraded:rag-service:A-30 id=sys-20260806T144250-77d3
+[emit-dashboard] OK id=sys-20260806T144250-77d3 check_id=A-30
 
-**A-32 (Disk):** 55% capacity < 85% → PASS ✓
-
-**Summary:** A-30 memory reclamation finding for rag-service CRITICAL. Status degraded due to persistent memory pressure on rag-service.
-
-[emit-signal] SKIP-dedup dedup_key=microservice_degraded:rag-service:A-30 id=sys-20260806T143821-0c09
-[emit-dashboard] OK id=sys-20260806T143821-0c09 check_id=A-30
-
-[OUTPUT-CONTRACT] signals_posted=1 | telegram_sent=0 | signal_queue_rows_written=1 | dashboard_rows=1 | dedup_skipped=1
-CONTRACT-CONTRADICTION: NONE
-
-
-## c61 · 2026-08-06T14:19:41Z
 ### Audit Run Tier-1 (14:19–14:20 UTC 2026-08-06)
 - Tier: 1 | Services: 13/13 up | Health: 5/5 OK
 - Anomalies: 0 new (0 critical, 0 warn, 0 info) | 0 dedup-skipped
