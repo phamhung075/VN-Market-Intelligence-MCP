@@ -2790,8 +2790,8 @@
     ]
   },
   "task_board": {
-    "_updated_at": "2026-08-06T07:48:00Z",
-    "_updated_by": "po (mint FIX-PM-DECOMPOSE-NO-PRIOR-ART-PROBE)",
+    "_updated_at": "2026-08-06T08:58:01Z",
+    "_updated_by": "po (triage-20260806T0849Z: mint CI-RED schema.ts P0 + skill-bloat register.md P3, manual-dispatch stamp)",
     "active_sprints": [
       {
         "evidence": "Router raw-verified (get_bctc_full live, post-rebuild) after BEQ-9/10 refine. Core extraction incident RESOLVED, but populating real scalars exposed a SEPARATE pre-existing analytics/serving layer with 4 defect clusters: (a) RATIO-COMPUTE — VNM ROE=0/ROA=0/EPS=12VND/NetDebt-EBITDA=-7.5e13x; DHG ROA=7,891,932.0% (analyst falsely claimed fixed). Ratios emit 0 or astronomically wrong. (b) BANK-B02-TCTD-SERVING — SHB + EIB get_bctc_full returns 'balance sheet has no decomposition — forced-zero pass suspected'; banks UNSERVABLE despite DONE + committed scalars. (c) PERIOD-SEMANTICS — FPT 2025-Q4 rev=70112.8/NP=11225.5 are FULL-YEAR cumulative labeled 'Q4'; buildComparisonSection then compares cumulative-FY vs next-quarter -> false -82.2% mislabeled 'YoY'. (d) ENTITY-SCOPE — HPG 2025-Q4 is parent-only B01a (rev=0, conf44%) served as the canonical/headline HPG vs consolidated ~140k rev; misleading. PUBLISH-INTEGRITY GAP: NO semantic-sanity publish guard exists in orch-state (the triage-referenced 'Task #13' is NOT present). The BEQ-9/10 reports are now DONE -> flow into chef docs/agents/unified-agent/flow/market-analysis.md + market-analyst -> ROA 7.8M% / false YoY -82% / parent-only-headline CAN reach MARKET unattended. recurring-bug-escalation: BCTC area has >2 fix cycles -> architect root-cause SPIKE, not point-patch. | [dev-team 2026-06-03T11:44Z observation feeding BAL-0/BAL-1] After LF-SERVE-REFLOW recovered FPT Q1 absolute scalars (op_profit/ebitda/cash live-correct), get_bctc_full(FPT) STILL serves garbage DERIVED ratios: current_ratio=41527873060120x (denominator ~0), operating_margin_pct=0.0% (not recomputed from now-correct operating_profit). Confirms the analytics/serving derived-ratio layer is a distinct defect from scalar extraction. BAL-0 publish semantic-sanity gate MUST block current_ratio out-of-range before MARKET/FB; BAL-1 spike should pin the ratio recompute module. Repro: get_bctc_full(code=FPT).",
@@ -11947,6 +11947,76 @@
           "OPS-MCP-RESTART-CHURN-UNCLEAN-SHUTDOWN"
         ],
         "updated_at": "2026-08-06T08:47:49Z"
+      },
+      {
+        "id": "FIX-NEWSVPS-OVERNIGHT-PUSH-OUTAGE-663M-SILENT",
+        "title": "news-vps push transport went silent 663 min overnight (2026-08-05T19:38:29Z -> 2026-08-06T06:42:25Z), self-recovered with a 50-item backlog flush; alarm (B-01) fired 11h into the outage, ~1 min before recovery",
+        "owner": "po",
+        "status": "BLOCKED",
+        "type": "FIX",
+        "priority": "P1",
+        "zone": "cross-service/",
+        "next_agent": "po",
+        "created_at": "2026-08-06T08:24:43Z",
+        "created_by": "po (dev-team Step 1 triage, cron:dev-team:2026-08-06T08:07Z, session 24817246-8a3f-4511-95f7-1b4385797bee)",
+        "origin_signal_id": "telegram-report-4474",
+        "po_live_evidence_20260806T0824": "B-01 CRITICAL (telegram id 4474, 2026-08-06T06:41:27Z, 'news source stale 790m') is a TRUE POSITIVE and is NOT the known FIX-VPS-NEWS-STALE-FALSEPOS / B-11 two-layer class. PO verified DIRECTLY against the live host bind-mount DB (sqlite3 'file:./data/live/market.db?immutable=1', vps_push_log): service='news' pushed continuously every ~15-30 min through 2026-08-05 19:38:29, then ZERO pushes until 2026-08-06 06:42:25 -- an 11h04m (663 min) hard gap. The recovery push carried items_count=50 (vs the normal 1/2/3/10/15 per push), i.e. the VPS buffered ~50 articles during the outage and flushed them on reconnect: the source kept producing, the TRANSPORT stopped. CONTROL (this is what rules out 'expected overnight quiet'): a LAG() gap scan over the whole service='news' series since 2026-07-29 returns exactly TWO gaps >120 min in 8 days -- 288 min on 2026-07-30 03:48-08:37, and this 663 min one. Every other night has NO gap over 2 hours; news pushes round the clock. This gap is 2.3x the next-worst in 8 days and unique in kind. Peer control same window: service='prices' and service='foreign-flow' both pushed normally (last 2026-08-06 08:21), so this is news-route-specific, not a whole-VPS or whole-host outage.",
+        "status_note": "OPS RECON COMPLETE (2026-08-06T10:48Z, commit edeba6cd9 — router restored this row after ops's own commit accidentally deleted it instead of marking BLOCKED; diagnostic content below is ops's real work, preserved verbatim).\n\nAC-1 (recon): root cause is the mcp-server-side /api/push-news endpoint, NOT a VPS-side fetch/process defect. VPS log evidence (/var/log/vn-news-fetch.log): cycle 2376 completed normally at 19:38:29Z; cycle 2377 started 19:53:29Z but never completed; cycles 2378-2416 produced no log output (hung/timed out silently); cycle 2417 recovered at 06:39:57Z, pushed the 50-item backlog successfully (http=200). VPS fetch logic and buffering both worked correctly throughout — the remote push endpoint was unresponsive for ~11h and self-recovered.\n\nAC-2 (detection latency): NO detector defect. Tier-2 auditor runs on a 4h cadence (00/04/08/12/16/20 UTC) and correctly did not fire overnight — expected behavior, not a gap. Tier-1 (30-min cadence, runs overnight too) detected the stale data and fired B-01 at 06:41:27Z, ~1 min before the transport self-recovered — working as designed given a threshold gate, not a missed check.\n\nOPEN — new recommendation from this recon, needs disposition: harden mcp-server's push-endpoint (connection pooling / retry / independent health probe) so an 11h silent hang can't recur undetected in real time. Router flagged next_agent=po to decide whether this becomes its own FIX row or folds into an existing mcp-server hardening track — do not close this row on the recon alone.",
+        "files": [],
+        "reference_only_files": [
+          "docs/data/system-map.json",
+          "docs/agents/system-auditor/flow/main.md"
+        ],
+        "updated_at": "2026-08-06T08:51:16Z",
+        "router_restore_note": "Restored by router 2026-08-06T08:51Z — ops's commit edeba6cd9 deleted this row from backlog[] instead of updating it to BLOCKED (confirmed via git show --stat/full-diff, no re-addition anywhere in the commit or the live file). This is the only textual/status change from the original row; ops's diagnostic findings are folded into status_note above, unaltered in substance."
+      },
+      {
+        "id": "FIX-FFLOW-BULLETIN-OUTAGE-SILENT-OMISSION",
+        "status": "BACKLOG",
+        "type": "FIX",
+        "priority": "P2",
+        "size": "S",
+        "zone": "apps/mcp-server/",
+        "owner": "dev-mcp-server",
+        "next_agent": "dev-mcp-server",
+        "created_at": "2026-08-06T08:54:34Z",
+        "created_by": "po",
+        "title": "Foreign-flow pipeline outage renders NO bulletin section at all — the canonical \"Du lieu khong kha dung (pipeline tam dung)\" copy sits behind a branch the production SQL can never reach",
+        "files": [
+          "apps/mcp-server/src/scheduler/briefings/format/foreignFlowSection.ts",
+          "apps/mcp-server/src/application/usecases/assembleEveningSummary.ts",
+          "apps/mcp-server/src/scheduler/briefings/franceSummaryJob.ts"
+        ],
+        "root_cause": "Verified at CODE level, not from comments. assembleEveningSummary.ts:571-580 selects foreign flow with `WHERE date = (SELECT MAX(date) FROM daily_ohlcv) AND foreign_net_vol IS NOT NULL AND foreign_net_vol <> 0`. Zero rows is therefore the ONLY shape a real outage (or a genuine all-zero session) can produce — and the surrounding try/catch also leaves foreignFlowMovers=[] on any DB error. foreignFlowSection.ts:21 answers that shape with `if (movers.length === 0) return []`, and eveningSummaryJob.ts:191 splats the result unguarded (`lines.push(...formatForeignFlowSection(...))`), so the entire \"Khoi ngoai\" section vanishes silently with no notice. The canonical unavailable copy lives one branch lower, at foreignFlowSection.ts:26-29, gated on movers.length > 0 AND every entry netVol === 0 — a set the `<> 0` SQL predicate cannot emit. franceSummaryJob.ts:434 is worse: it wraps the call in `if (foreignFlowMovers.length > 0)`, so even a future empty-path message would be suppressed there. INVERTS THE CLOSED ROW'S RESIDUAL FLAG: FIX-FOREIGN-FLOW-BULLETIN-UNAVAIL-STRING's router_note worried the unavailable copy could MISLABEL a genuine zero-net-flow day as an outage. Reading the query shows the opposite is what actually ships — a genuine outage is labelled as nothing at all, and the misleading branch is unreachable. LIVE CORROBORATION, not hypothetical: the board's own user-escalated FFLOW-STALE-0723-A-VPS-FIX records foreign flow stalled 2026-07-21 to 2026-07-23 (Vinahost VPS suspended). Throughout that window every evening bulletin would have omitted the section in silence rather than saying the pipeline was down.",
+        "fix_spec": "Make the empty case the one that speaks. Emit the canonical \"Khoi ngoai: Du lieu khong kha dung (pipeline tam dung)\" line on movers.length === 0, and drop or invert the unreachable all-zero branch (keep it only if a caller can still supply raw unfiltered rows via the injected getForeignFlowMoversFn path — decide from the call sites, do not guess). Remove the redundant `foreignFlowMovers.length > 0` outer guard at franceSummaryJob.ts:434 so both jobs share one policy. DISTINGUISH THE TWO CAUSES IF CHEAP: pipeline stale/absent vs. a real all-flat session are different user messages; if the freshness of daily_foreign_flow is already available at the call site, say which one it is rather than asserting \"pipeline tam dung\" unconditionally — asserting an infra cause from a data-shape observation is the same misattribution class this row exists to fix. If it is not cheaply available, ship the neutral wording and say so.",
+        "verification_gate": "New test in apps/mcp-server/src/__tests__/ covering (a) movers=[] renders the unavailable line, (b) franceSummaryJob path renders it too, (c) a normal nonempty set is byte-unchanged. Existing 1783-foreign-flow-bulletin.test.ts and FIX-DIGEST-FOREIGN-FLOW-ZERO-PAD-TOPN.test.ts MUST stay green (both assert the current copy) — if either must change, that is a copy-SSOT decision, escalate to PO first. Full CI green on the pushed SHA, not subset-verify.",
+        "po_provenance": "[po 2026-08-06T08:52Z] Minted from the RESIDUAL PO-flag left inside FIX-FOREIGN-FLOW-BULLETIN-UNAVAIL-STRING's router_note when that row was signed off DONE_VERIFIED this tick. Not a re-open of the CI-red row (that fix is verified landed); this is the product-judgment remainder the note explicitly deferred to PO. Cross-link, do NOT merge: FIX-FOREIGN-FLOW-COVERAGE (review, ops) widens WHICH codes are fetched; FFLOW-STALE-0723-B-RECHECK-HARNESS (review, qa) detects staleness OUTSIDE the bulletin. This row is only about what the bulletin TELLS THE READER when the data is not there.",
+        "updated_at": "2026-08-06T08:54:34Z"
+      },
+      {
+        "id": "CLEAN-SKILL-BLOAT-CRON-STANDALONE-REGISTER",
+        "type": "CLEAN",
+        "status": "BACKLOG",
+        "priority": "P3",
+        "size": "S",
+        "zone": ".claude/skills/",
+        "owner": "claude-manager-helper",
+        "next_agent": "claude-manager-helper",
+        "baseline_pass": "bash scripts/agents-flow/context-bloat-backstop.sh emits no breach for this path",
+        "files": [
+          ".claude/skills/cron-standalone-team/register.md"
+        ],
+        "title": "context-bloat (skill-file class): .claude/skills/cron-standalone-team/register.md 462L vs cap 200 (overage 254) AND 34906B vs cap 12000 (overage 22194) - byte half is NON-JUSTIFIABLE by design, so a size-justification header cannot silence this one",
+        "created_at": "2026-08-06T08:58:01Z",
+        "created_by": "po/triage-20260806T0849Z",
+        "updated_at": "2026-08-06T08:58:59Z",
+        "updated_by": "po",
+        "status_note": "SOURCE: docs/signals/processed/context-bloat--claude-skills-cron-standalone-team-register-md-2026-08-06T082429Z.json (first and only emission for this path - no dedup history).\n\nWHY A HEADER WILL NOT WORK (checked the hook source, not the row title): scripts/agents-flow/context-bloat-backstop.sh DOES honour `<!-- size-justification: -->`, but its own TE-T24 note at :167-169 restricts that to the LINE predicate only - deliberately, so a file cannot paste a header and keep evading governance under the byte cap. This breach fires on BOTH predicates (reason: line-cap,byte-cap). The byte overage is 2.9x the cap. Therefore prune/split is the ONLY disposition; do not close this by adding a header. (Corollary: the open row FIX-BLOAT-HOOK-JUSTIFY-SUPPRESS, BACKLOG/low, describes behaviour that is already partly implemented - re-scope or close it, do not implement it as written.)\n\nSUGGESTED REMEDY - SPLIT, NOT TRIM. The file's own header says it is loaded from SKILL.md Step 1 'ONLY when at least one of the 5 entries is missing'. Today one missing entry forces a load of all five (~8.7k tokens). Splitting into five per-cron register fragments makes the lazy-load actually lazy - you load the one you need - and each fragment lands comfortably under both caps without deleting any content. A flat trim would have to delete real command bodies to hit 200L.\n\nPAIRING: same skill-file class as CLEAN-SKILL-BLOAT-TASK-LOCK (backlog/P3, 204L, overage 4). That row has not shipped; magnitudes differ by ~60x, so they are NOT merged, but whoever drains one should drain both.\n\nAC: context-bloat-backstop.sh emits no breach for this path on either predicate; SKILL.md Step 1 still resolves every one of the 5 entries; no register content deleted (moved only).",
+        "related": [
+          "CLEAN-SKILL-BLOAT-TASK-LOCK",
+          "FIX-BLOAT-HOOK-JUSTIFY-SUPPRESS",
+          "TE-T24"
+        ]
       }
     ],
     "closed_sprints": [
@@ -12899,6 +12969,20 @@
         "secondary_dispatch_target": "pm",
         "verify_note": "SUPERSEDED by CONTAM-10-WRITER-H. Original P0 WIC-1/WIC-2 decomposition (2026-06-20) was code-complete & QA-approved, awaiting Monday 2026-06-22 live verification. During concurrent testing, CONTAM-10 discovered different Writer H gap: active bypass via handlePushOhlcvHistory not yet migrated to writeOhlcvBatch. CONTAM-10 shipped & verified live 2026-07-08 (commit d8e768b04 qa-DONE_VERIFIED, e2bac5b0a ops-Deploy). CONTAM-10-WRITER-H now DONE_VERIFIED; CONTAM-10-EXEC-2 (residue repair) awaits dispatch.",
         "updated_by": "pm"
+      },
+      {
+        "id": "FIX-FOREIGN-FLOW-BULLETIN-UNAVAIL-STRING",
+        "title": "FIX CI-RED 1783 — foreign-flow bulletin all-zero/empty emits wrong unavailable string (expects Du lieu khong kha dung)",
+        "status": "DONE_VERIFIED",
+        "priority": "P2",
+        "type": "FIX",
+        "zone": "apps/mcp-server/",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-FOREIGN-FLOW-BULLETIN-UNAVAIL-STRING",
+        "po_triage_20260722": "Owner assigned (was null next_agent) so no row is ownerless (PO AC1). Remains in REVIEW, deferred-behind the review-lane sweeper FIX-DEVTEAM-REVIEW-LANE-QA-DRAIN + FIX-BOUNDED1-SUPERVISED-LANE-NO-SWEEPER (both activated -> backlog this tick). Not silently dropped; the sweeper routes it to next_agent once built.",
+        "updated_at": "2026-08-06T08:54:34Z",
+        "owner": "dev-mcp-server",
+        "closed_at": "2026-08-06T08:54:34Z",
+        "po_signoff_20260806": "[po 2026-08-06T08:52Z] DONE_VERIFIED. Verification gate met on all three planes. (a) CODE: canonical copy \"Khoi ngoai: Du lieu khong kha dung (pipeline tam dung)\" is live at apps/mcp-server/src/scheduler/briefings/format/foreignFlowSection.ts:28 — the formatter was extracted out of eveningSummaryJob.ts by FACTORY-SCHEDULER-dedup-briefing-formatters after the fix landed, so the detail_ref's file list (eveningSummaryJob.ts:228) is stale-by-refactor, not unfixed. (b) TEST RAW: bun test src/__tests__/1783-foreign-flow-bulletin.test.ts re-run 2026-08-06 => 7 pass / 0 fail, 16 expect() calls. (c) CI GREEN ON SUBSEQUENT PUSH (the row's own explicit done_verified precondition): gh run 31034705151, workflow CI, headSha 9cc6771e, conclusion=success, 2026-08-05T18:26:07Z, `bun test` job success; `git merge-base --is-ancestor 37ac9a52 9cc6771e` confirms the test-fix SHA is contained. NOTE ON TODAY'S RED: CI on main is red as of 2026-08-06T08:41Z (run 31085916894) but the ONLY failing job is size-lint (1 offending doc, 1362 scanned) — `bun test` = success in that same run. Unrelated to 1783; NOT a re-open reason. ROW WAS STRUCTURALLY UNDISPATCHABLE, not merely slow: next_agent was \"dev-team\", a self-reference that no picker can spawn. Deleted on close so the shape is not inherited. RESIDUAL PO-FLAG RESOLVED, NOT DROPPED — re-minted as FIX-FFLOW-BULLETIN-OUTAGE-SILENT-OMISSION (see that row; the original flag was aimed at the wrong branch)."
       }
     ],
     "head": {
@@ -13874,13 +13958,17 @@
         "next_agent": "architect",
         "po_promoted_at": "2026-08-01T01:25:12Z",
         "po_promoted_by": "po/triage-20260801T0125",
-        "updated_at": "2026-08-01T01:27:57Z",
+        "updated_at": "2026-08-06T08:58:59Z",
         "updated_by": "po",
         "router_source_verified_20260722": "Router source-verified the keystone code layer at 2026-07-21T22:41Z (commit b787e9a5d clean, .head intact, satisfiability instrument EXIT=0) — full record on FIX-BOUNDED1-SUPERVISED-LANE-NO-SWEEPER.router_source_verified_20260722. Remaining DoD = live-tick AC(3) only; do NOT flip to DONE_VERIFIED on the unit instrument alone.",
         "sprint": "BACKLOG",
         "po_triage_20260722": "Bootstrap-deadlock break (PO triage 2026-07-22): this review-lane sweeper FIX was itself stranded in REVIEW because no review-lane sweeper exists (the very bug it fixes -- recursive deadlock). Moved REVIEW->BACKLOG so BOUNDED-1/RLC promote it via the existing backlog machinery when a WIP slot frees. Once built, this + its sibling sweeper drain the ~20 other owner-stranded REVIEW rows. PLAN-ONLY design: architect.",
         "po_triage_20260728": "[po 2026-07-28T16:59Z] Re-promoted BACKLOG->READY on fresh evidence, AC(3)-adjacent but not yet DONE_VERIFIED. Mechanism confirmed LIVE this tick: dev-team's own devteam-review-claim-qa-drain.jq fired and claimed UC-GCP-P8 (oldest PRIMARY row) per scripts/audits/devteam-review-lane-drain-report.sh, matching this row's SUGGESTED REMEDY exactly. So the drain STEP works. What it does NOT do is keep pace: PRIMARY (status==REVIEW && next_agent=='qa') was 32 at this row's 2026-07-21/22 baseline, is 83 today (ages 3-5d), net +51 in 6 days against a 1-row/tick drain that (per dev-team's own report) sits LAST in the head-idle fall-through chain (after BOUNDED-1/SLS/RLC) and therefore does not even fire every tick. This is a throughput/capacity gap in an already-shipped mechanism, not a re-open of the original \"no drain exists\" defect — do not conflate the two when scoping.\nSECONDARY set (status==REVIEW && next_agent!='qa', i.e. the null-next_agent subset this row's own 2026-07-21 AC-addition(1) flagged plus non-null non-qa owners like po/architect/dev-team/ba/ops) is now ~17-33 rows depending on exact predicate (dev-team counted 17+ excl. some; PO's own group_by this tick counted null=11 + agent-father=2 + architect=2 + ba=1 + dev-kinh-dich=1 + dev-team=8 + developer=1 + ops=4 + po=2 + router=1 = 33 non-qa review rows total), ages up to 18d (FIX-FOREIGN-FLOW-COVERAGE, OPS-BCTC-BANK-2025Q4-ENRICH-0ROW-REPARSE, RAG-FTS-BUILD-MEMORY-BOUND cited by dev-team). AC-addition(1) from 2026-07-21 asked for \"a defined destination\" for this subset — it still has NONE. This is the worse gap: zero automated sweep of any kind, not merely a slow one.\nDECISION FOR ARCHITECT (2 candidate remedy shapes, PO does not pick — architecture call): (a) raise the PRIMARY drain's per-tick cap (parallel-claim N-oldest instead of 1) and/or move it earlier in the head-idle fall-through chain so it fires more reliably; (b) build an equivalent age-ordered sweep for the SECONDARY set, routing each row to its own next_agent's normal triage surface (or to po/architect stale-review triage if next_agent is null) rather than to qa. Do NOT let (b) silently piggyback on the qa-drain script's qa[] destination — SECONDARY rows are not qa-ready by definition (next_agent says so).\nDoD: review[] PRIMARY count trending down (not just non-increasing) across 5 consecutive dev-team ticks with drained ids named, AND a SECONDARY drain step exists and has drained >=1 row with the same evidence standard. Source: scripts/audits/devteam-review-lane-drain-report.sh (already exists, PRIMARY/SECONDARY split) — reuse, do not re-invent.\n",
-        "po_triage_20260801": "MANUAL-DISPATCH SWEEP PICK FOR THIS TICK — folded into the BATCH returned to dev-team, not merely re-stamped. This is a REFLAG case: po_promoted_at was already set 2026-07-28T17:00:37Z and no dispatch ever followed, so the 07-28 stamp alone has now failed for 4 days. The prior PO tick (00:37Z) recorded in its own carry-over that this row and TE-T21 tied at P1/rank-1 and were separated only by array index, that TE-T21 won on index alone, and that a rank tie is a genuine PO judgement call rather than a resolved ordering. TE-T21 shipped (commit ee9db20ab, RAW-verified clean, BACKLOG->DONE_VERIFIED at f9e229f13), so the tie is now resolved in this row favour. Independent reason to pick it over the other candidate: it is the structural cause of the board saturation the last two ticks both flagged as the binding constraint — 244 review rows against an empty qa[] lane. It is also the reason the HIGH escalation triaged this same tick (FIX-COWORK-BASH-GRANT-COVERAGE-STAMP-TRANSPORT) has sat in REVIEW since 2026-07-30 with an unread PO ask inside its review_note. Lane status confirmed RAW this tick via scripts/audits/bounded1-supervised-lane-report.sh: READY-XOR section, supervised=true / plan_only=false, P1, age 19d, dispatch-lane=architect, explicitly documented there as informational-only with NO automated picker. Manual/PO dispatch is the only path. Scope unchanged — the two candidate remedy shapes in po_triage_20260728 stand and PO still does not pick between them; that is the architect call."
+        "po_triage_20260801": "MANUAL-DISPATCH SWEEP PICK FOR THIS TICK — folded into the BATCH returned to dev-team, not merely re-stamped. This is a REFLAG case: po_promoted_at was already set 2026-07-28T17:00:37Z and no dispatch ever followed, so the 07-28 stamp alone has now failed for 4 days. The prior PO tick (00:37Z) recorded in its own carry-over that this row and TE-T21 tied at P1/rank-1 and were separated only by array index, that TE-T21 won on index alone, and that a rank tie is a genuine PO judgement call rather than a resolved ordering. TE-T21 shipped (commit ee9db20ab, RAW-verified clean, BACKLOG->DONE_VERIFIED at f9e229f13), so the tie is now resolved in this row favour. Independent reason to pick it over the other candidate: it is the structural cause of the board saturation the last two ticks both flagged as the binding constraint — 244 review rows against an empty qa[] lane. It is also the reason the HIGH escalation triaged this same tick (FIX-COWORK-BASH-GRANT-COVERAGE-STAMP-TRANSPORT) has sat in REVIEW since 2026-07-30 with an unread PO ask inside its review_note. Lane status confirmed RAW this tick via scripts/audits/bounded1-supervised-lane-report.sh: READY-XOR section, supervised=true / plan_only=false, P1, age 19d, dispatch-lane=architect, explicitly documented there as informational-only with NO automated picker. Manual/PO dispatch is the only path. Scope unchanged — the two candidate remedy shapes in po_triage_20260728 stand and PO still does not pick between them; that is the architect call.",
+        "po_manual_dispatch_flagged_at": "2026-08-06T08:58:01Z",
+        "po_manual_dispatch_flagged_by": "po (manual-dispatch-sweep)",
+        "po_manual_dispatch_class": "READY-XOR-SUP-OR-PLANONLY",
+        "po_manual_dispatch_note": "po (manual-dispatch-sweep) surfaced READY-XOR-SUP-OR-PLANONLY candidate - folding into 2026-08-06T08:49Z BATCH. NOTE: this row's own po_triage_20260801 narrates a manual-dispatch sweep pick, but po_manual_dispatch_flagged_at was ABSENT from the row until now - the 08-01 Step 2 stamp was narrated and never written (same narrate-vs-persist class as FIX-PO-BATCH-MINT-NO-WRITE-ACTUATOR). Effect was fail-safe (no stamp = always re-eligible), but it means this is the 3rd PO pick (07-28 promote, 08-01 sweep, 08-06 sweep) with ZERO dispatches. Per feedback_recurring_bug_escalation, repeating the pick a 3rd time without escalating the dispatch path would be theatre: the binding constraint is that architect spawns are router-selected and this row has never been chosen, not that PO failed to surface it."
       },
       {
         "id": "FIX-SIGNAL-ROUTING-ROWS-COVERAGE-GAP-DEEPDIVE",
@@ -14358,6 +14446,34 @@
         "owner": "po",
         "po_ESCALATION_first_confirmed_oomkill_20260806T0824": "STATE CHANGE ON THIS ROW: the predicted failure has MATERIALISED. Promoted backlog -> ready[], P1, next_agent=architect. Until today every A-30 fire on this row (auditor cycles c47/c49/c50/c51/c52) was WARN-level oscillation or sustained-flat with OOMKilled=false and NO kill -- which is why the correct disposition each time was observation, and why re-minting was refused as FP churn (feedback_auditor_mcpserver_a21_a30_memory_fp_reemit_churn). THAT PREMISE IS NOW DEAD. CORROBORATED CRASH, router RAW-verified against live `docker events` for vn-market-intelligence-mcp-rag-service-1 in the 08:16-08:19Z window: 08:17:28.68Z `container oom`; 08:17:30.29Z `container die` exitCode=137 (SIGKILL, OOM signature); 08:17:30.93Z `container start` (Docker restart policy auto-recovered); 08:17:36Z embedding model reloaded, health_status:healthy. RestartCount 1 -> 2 -- the FIRST new restart in ~14h (previous was 2026-08-05T18:12:13Z). Memory was already back to 95.09% (730.3MiB/768MiB) post-restart, i.e. the restart buys minutes, not a fix. THREE THINGS THIS CHANGES. (1) 'detection-only, no remediation needed yet' is no longer available as a disposition -- it has now killed the container twice (18:12:13Z yesterday + 08:17:30Z today), not zero times. (2) The auditor's own signal text and DASHBOARD row for sys-20260806T081622-11ba still say the OOM is 'likely'/'imminent'; they are STALE -- the kill had already completed and auto-recovered before this triage ran. Do not re-derive urgency from the auditor's wording, use the docker events above. (3) Nothing about the SIZING analysis already on this row is invalidated -- po_GATE_DISCHARGED_anon_dominant_20260729T1148 stands (anon ~95%, ~726 MiB process-resident against a 768 MiB cap, so option (a) raise-the-cap is load-bearing and option (c) dataset shrink is demoted as a memory remedy). WHAT ARCHITECT OWES: pick between (a) raise the 768m cap against the 16GB host budget this row owns -- and say what it is cut FROM, because 2dc1d8c4e (2026-06-10) cut it to 768m in answer to a REAL host panic and a blind revert to 1.5g does not respect that -- or (b) shrink the fixed baseline (embedder release path, or a smaller/quantised model; apps/rag-service/infrastructure/embedder.py:37/:51 has no unload path at all). The measurement gate was discharged 2026-07-29T11:48Z; there is nothing left to measure before deciding. NO USER GATE: retired on this row 2026-08-05T16:30Z, see po_usergate_language_RETIRED_20260805T1630 -- do not re-assert it.",
         "po_related_detector_defect_20260806T0824": "SEPARATE, do not merge into the sizing decision: `verify-a30-mcp-memory-reclamation.sh`'s dip-counter scored the mcp-server crash-cliff (a restart-to-near-zero) as a GC reclamation dip and produced a stale FOLD -- a crash and a reclamation are indistinguishable to it, so the discriminator inverts on exactly the event it exists to catch (feedback_a30_discriminator_crash_cliff_misscored_as_reclamation_dip). Same script now governs the rag-service readings on this row, so its verdicts here inherit the same doubt. Named for cross-reference only; this row does not own the fix."
+      },
+      {
+        "id": "FIX-CI-SIZELINT-SCHEMA-TS-BASELINE-TOLERANCE-377L",
+        "type": "FIX",
+        "status": "READY",
+        "priority": "P0",
+        "size": "S",
+        "zone": "apps/mcp-server/",
+        "owner": "dev-mcp-server",
+        "next_agent": "dev-mcp-server",
+        "baseline_pass": "bash scripts/audits/size-lint-justification.sh --check  # must exit 0",
+        "files": [
+          "apps/mcp-server/src/infrastructure/db/schema.ts"
+        ],
+        "title": "CI RED ~14h (job size-lint, SOLE offender) - apps/mcp-server/src/infrastructure/db/schema.ts baseline-tolerance-exceeded (baseline=336L actual=377L upper=369L). Introduced by 609f62800 (FIX-MCP-MEMORY-CODE-LEAK initDatabase identity-keyed init guard).",
+        "created_at": "2026-08-06T08:58:01Z",
+        "created_by": "po/triage-20260806T0849Z",
+        "updated_at": "2026-08-06T08:58:59Z",
+        "updated_by": "po",
+        "status_note": "BISECTED AT SOURCE (po, this tick, not relayed): last GREEN CI run on main was 9cc6771e at 2026-08-05T18:26:07Z; commit 609f62800 landed 2026-08-05T18:26:47Z; the very next run (9d64befb, 19:03:41Z) went RED and every run since has been RED. `git log -- apps/mcp-server/src/infrastructure/db/schema.ts` confirms 609f62800 is the most recent commit touching the file. wc -l on live HEAD = 377. So the attribution is one commit wide, not a guess.\n\nWHY IT WAS INVISIBLE: 609f62800 is a functionally-correct memory-leak fix that is itself blocked on OPS-MCPSERVER-REBUILD-STALE-IMAGE-PREDATES-MEMLEAK-FIX (the running image predates it by 5 days, so its own AC is unrunnable). Its CI side-effect went unattributed for 14h because ci_red triage keyed on the failing JOB, never on the failing FILE's git history.\n\nDO NOT FIX WITH `--update`. scripts/audits/size-lint-justification.sh --update regenerates docs/data/size-lint-baseline.json WHOLESALE (the script's own _note says so) across all 666 entries, re-snapshotting EVERY currently-over-cap file at its CURRENT line count. That would silently bless every unreviewed growth accumulated across 666 files in one commit to fix a single 41-line delta. This is a gate-relaxing action disguised as a build fix.\n\nTWO ACCEPTABLE PATHS (dev-mcp-server picks):\n(a) Add a current `size-justification:` header to schema.ts declaring 377L with a real reason - is_justified_now() then skips the file entirely and the baseline entry drops on the NEXT legitimate --update. Per-file, reviewable, no collateral.\n(b) Shrink schema.ts back to <=369L (extract the added init-guard block). Preferred if the 41 lines are separable without touching the fix's semantics - do NOT regress the memory-leak fix to satisfy a line count.\n\nAC:\n(1) `bash scripts/audits/size-lint-justification.sh --check` exits 0 on a clean tree.\n(2) docs/data/size-lint-baseline.json count stays 666 or DECREASES - a diff that rewrites many entries means --update was run; reject.\n(3) Next CI run on main is GREEN on job size-lint (verification_gate: ci_green_on_subsequent_push).\n(4) The FIX-MCP-MEMORY-CODE-LEAK behaviour is unchanged - name the mechanism preserved, do not just assert it.\n\nSOURCE: docs/signals/ci-red-f22225f2-20260806084355.json, fingerprint d66130a0addd333e0b9ca401a17e96070ba325beddc6400cbac724cfb3b05c2e, run 31085916894. Record this fingerprint on close (feedback_ci_red_close_must_record_fingerprint_else_redrain).",
+        "ci_red_fingerprint": "d66130a0addd333e0b9ca401a17e96070ba325beddc6400cbac724cfb3b05c2e",
+        "ci_red_head_sha": "f22225f2a853b1d57f507b6c3d490cacb3b07453",
+        "related": [
+          "FIX-MCP-MEMORY-CODE-LEAK",
+          "OPS-MCPSERVER-REBUILD-STALE-IMAGE-PREDATES-MEMLEAK-FIX",
+          "FIX-CI-SIZELINT-BCTC-1345B-PARSE-VALIDATOR-PAIR",
+          "FIX-CIRED-TRIAGE-WRONG-PLANE-DEDUP-AMNESTY"
+        ]
       }
     ],
     "review": [
@@ -14649,21 +14765,6 @@
         "secondary_claimed_at": "2026-08-05T08:57:06Z",
         "secondary_claimed_by": "dev-team (review-lane secondary-drain)",
         "secondary_dispatch_target": "architect"
-      },
-      {
-        "id": "FIX-FOREIGN-FLOW-BULLETIN-UNAVAIL-STRING",
-        "title": "FIX CI-RED 1783 — foreign-flow bulletin all-zero/empty emits wrong unavailable string (expects Du lieu khong kha dung)",
-        "status": "REVIEW",
-        "priority": "P2",
-        "type": "FIX",
-        "zone": "apps/mcp-server/",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-FOREIGN-FLOW-BULLETIN-UNAVAIL-STRING",
-        "next_agent": "dev-team",
-        "po_triage_20260722": "Owner assigned (was null next_agent) so no row is ownerless (PO AC1). Remains in REVIEW, deferred-behind the review-lane sweeper FIX-DEVTEAM-REVIEW-LANE-QA-DRAIN + FIX-BOUNDED1-SUPERVISED-LANE-NO-SWEEPER (both activated -> backlog this tick). Not silently dropped; the sweeper routes it to next_agent once built.",
-        "updated_at": "2026-08-06T08:47:05Z",
-        "secondary_claimed_at": "2026-08-06T08:47:04Z",
-        "secondary_claimed_by": "dev-team (review-lane secondary-drain)",
-        "secondary_dispatch_target": "po"
       },
       {
         "id": "FIX-FB-WEEKEND-DEDUP-GATE",
@@ -21949,7 +22050,7 @@
         }
       ]
     },
-    "last_triaged_at": "2026-08-06T08:24:43Z",
+    "last_triaged_at": "2026-08-06T08:58:01Z",
     "last_triaged_by": "po",
     "in_progress": [
       {
