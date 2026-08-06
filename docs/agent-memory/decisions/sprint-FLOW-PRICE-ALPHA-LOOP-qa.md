@@ -280,3 +280,12 @@
 - `git status --porcelain` on the 3 files post-test-run confirmed zero stray writes from the test run itself.
 **why-decision:** Commit real+on-main+scope-matched, diff matches the exact bug spec (idle-queue-0-running was misread as CRASH via push-age alone; now gated on live service-state+queue-depth), test suite green, tsc/mock-guard/DDD/secrets all clean. APPROVED.
 **why-change:** No change from plan — followed `verify-committed` JUMP-TO exactly.
+
+### STEP qa-S32 · qa · 2026-08-06T20:20:00Z
+**task-id:** ALPHA-S2-SUB5-WATCHDOG-STRETCH
+**what-done:** Direct-Commit Verify (branch:null, dev-team Review-Lane QA-Drain). Commit `17a906143` real, on main ancestry, `git show --stat` matches review-note claims exactly (schedulerWatchdogJob.ts WATCHDOG_MANIFEST+CANONICAL_WATCHDOG_JOB_NAMES entry, schedulerJobTable.ts selfHealFn wiring, cronStatusCompute.ts CN-1 pair, 3 updated+1 new test file, 2 docs). RAW re-ran myself (not trusted): 8 targeted suites 90/90 pass (matches claimed 90/90 exactly); `bun tsc --noEmit` exit 0; `mock-guard.sh --files` on the 3 touched production files → CAUTION (exit 2) on a pre-existing unrelated TODO comment (git log -S proves it predates this commit, in morningBriefingJob code, untouched by this diff) — non-blocking per Smart-Skip/mock-guard contract.
+**what-considered:**
+- DDD grep `from.*infrastructure` flags both cronStatusCompute.ts (infra import) and schedulerJobTable.ts (checkpoint.ts import) vs treat as violation — read: both import lines pre-exist this commit's diff (git show confirms this commit's cronStatusCompute.ts delta is 2 lines, the STATIC_JOB_NAME_MAP entry only; schedulerJobTable.ts's infra import is its established composition-root pattern, same as the 3 prior self-heal jobs) — not a new domain→infra edge, no new violation introduced.
+- Trust the row's claimed AC text verbatim vs re-read the actual code — re-read: `intraday5mCompactorJob: { cadenceMs:300_000, thresholdMultiplier:3, action:'self-heal' }` present in both schedulerWatchdogJob.ts's WATCHDOG_MANIFEST and schedulerJobTable.ts's liveManifest w/ selfHealFn calling jobRunRepo.wrapRun — matches AC text exactly, not paraphrase-only.
+**why-decision:** No `ISSUE` set, all checks pass (tests/tsc/mock-guard-non-blocking-caution/DDD/secrets), doc updates (usecases.md/testing.md 16→26 pair-count) consistent with the code delta. APPROVED — verify-committed-approved.
+**why-change:** No change from plan — followed `verify-committed` JUMP-TO exactly.
