@@ -93,11 +93,11 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "active_task_id": null,
-    "next_agent": "router",
-    "updated_at": "2026-08-06T18:47:45Z",
-    "updated_by": "developer (self-closeout FIX-DEVTEAM-BOUNDED1-CLAIM-NO-OWN-WIP-RECHECK)"
+    "status": "in_progress",
+    "active_task_id": "TE-T05",
+    "next_agent": "agent-father",
+    "updated_at": "2026-08-06T19:00:31Z",
+    "updated_by": "router (TE-T05 direct-dispatch per artifact-class ruling)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -3072,6 +3072,20 @@
         "triaged_at": "2026-08-06T18:21:44Z",
         "triaged_by": "po",
         "disposition": "MINTED FIX-CMH-PASS9B-DOCHEAL-DISCOVERY-ONLY-NO-AUTOFIX-REPORT (P2, backlog, zone cross-service/, next_agent agent-father). Minted on a single INFO fire, overriding the WARN/INFO single-fire hold: that hold targets unreproducible auditor noise, whereas this carries a falsifiable negative PO confirmed (reports/DOC_HEAL_2026-08-06.md exists nowhere in the repo) and is structural, so it recurs deterministically every Mon/Thu rather than probabilistically. Explicitly NOT a self-report confabulation — the agent's notebook and self-report describe the gap accurately and agree with each other; the defect is in Pass 9b's wiring, not the agent's honesty."
+      },
+      {
+        "id": "router-20260806T1852-dupdispatch",
+        "ts": "2026-08-06T18:55:18Z",
+        "from": "router",
+        "to": "po",
+        "type": "dispatch-race-observation",
+        "severity": "INFO",
+        "summary": "Router (session 24817246-...) claimed+dispatched FIX-CRON-DST-LOCAL-EVAL-MOMENT-ANCHORED-EXPRESSIONS to agent-father (agentId a123b11a6d69e3d1a) at 18:36:53Z via manual WIP-slot occupation, board-flipped to in_progress BEFORE spawning. Agent's own completion report states a DIFFERENT concurrent agent-father session (peer router, unknown session id) independently picked up the SAME task_id in an overlapping window, made a legitimate non-conflicting follow-up commit (dd7a036b6, doc cross-ref fix) + its own journal entry (674a7a961, agent-father-S26), and stated intent to perform the same board flip the primary agent had already applied. Primary agent committed its own orch-apply.sh board flip first (0c9a40946) to close the race. RAW-verified: final board state is coherent — exactly 1 row for this task_id, correctly in review[] with next_agent:qa, .head correctly untouched, no duplicate/conflicting writes, no lost work. All 6 commits (36e109170, 419cdb804, dd7a036b6, 674a7a961, 0c9a40946, plus the DEVTEAM-BOUNDED1 flip 3a4825aab from the concurrent sibling dispatch) confirmed genuinely present in git log. Grep-verified zero remaining live-actuator hits of the 5 old cron literals; AC-1..AC-6 genuinely shipped.",
+        "status": "new",
+        "payload_ref": null,
+        "provenance": "router-raw-verify",
+        "audit_cycle_tag": "dev-team-tick:2026-08-06T18:37Z",
+        "mechanism_hypothesis": "This is distinct from the already-tracked feedback_preclaim_ttl_600s_expires_under_long_agent_runs.md mechanism (TTL expiring mid-run) and from feedback_pipeline_resume_stale_placeholder_duplicate_spawn_risk.md (PO's own triage_key). Here the board row already showed claimed_at/claimed_by IN_PROGRESS stamps (written by router at 18:36:54Z, BEFORE agent-father was even spawned) yet a peer session still dispatched its own agent-father onto the identical task_id shortly after — meaning either (a) the peer's dispatch path does not board-status-check a manually-router-claimed task before spawning, checking only its own PRE-CLAIM intent-key lock (which is scoped per-agent+intent, not per-task_id, so two peers each doing 'router manual dispatch' under different intent-keys would never collide on the lock itself), or (b) an extremely narrow TOCTOU window between the write and the peer's read. (a) is the more actionable hypothesis: PRE-CLAIM's task_id namespace is 'intent:<agent>:<intent-key>', which does not encode the specific task_id being dispatched, so it cannot prevent two different router sessions from both manually-dispatching the SAME underlying task_id under two DIFFERENT intent-keys (e.g. one from a PO-BATCH pass, one from a peer's own independent BOUNDED-1/triage pass) — only same-intent-key collisions are caught. Worth a root-cause check: should manual dev-team dispatch also claim a task-level lock keyed literally to the task_id (task:<task_id>), not just the intent-key, before spawning? Self-resolved with zero harm this occurrence (complementary work, no duplicate final state) but is architecturally reproducible any time two peer sessions independently decide to manually-dispatch the same backlog/ready row within the same short window."
       }
     ],
     "last_triaged_at": "2026-07-29T06:25:00Z",
@@ -5481,7 +5495,7 @@
         "plan_only": false,
         "created_at": "2026-08-06T11:18:01Z",
         "created_by": "po/recurring-bug-escalation-20260806T1118Z",
-        "updated_at": "2026-08-06T14:55:19Z",
+        "updated_at": "2026-08-06T18:57:47Z",
         "source": "po recurring-bug escalation 2026-08-06T11:18Z. 2 occurrences crossing feedback_recurring_bug_escalation threshold: 2026-08-06T09:05Z (slot refine-bctc-slot-1, invented status PARTIAL_EXIT, 0 pushes) and 2026-08-06T11:06Z (slot refine-bctc-slot-3, STATUS PARTIAL, 0/12 windows pushed). Both on report_id a3a41225-3491-4b4f-b4d0-3b80a989b76a (VHM_2026_Q1, 43 windows). RAW-verified by po at source, not from agent self-report.",
         "desc": "ROOT CAUSE (doc contract defect, agent-side behavior is downstream of it): docs/agents/refine_bctc_md/flow/main.md:94 writes the Phase-2 loop body as `result = execute_sub_flow_logic(window)`. That identifier exists NOWHERE -- grep across docs/ apps/ scripts/ .claude/ returns exactly ONE hit, the call site itself. The four docs it dispatches into (table-page.md, prose-page.md, continuation-stitch.md, disagreement-verify.md) all still carry Option-B spawned-subagent language that the Option-C conversion labelled but never rewrote: each has a `## RETURN (Task return value -- NOT a file write)` section saying `Return the following JSON object as the Task return value` and `The orchestrator (main.md) collects this return value directly`, and each frontmatter description ends `Returns result JSON inline to main.md (Option-C)`. So main.md simultaneously asserts SELF-IDENTITY GUARD (`You are a leaf worker... Do NOT delegate`) AND writes its only substantive step as a call into an executor that returns to an orchestrator. The 11:06Z agent's verbatim complaint -- 'Sub-flow logic implementation (OCR->markdown with image validation) not executable with current tool grant' -- names `sub-flow logic` exactly: it is a literal read of main.md:94, not free-floating confabulation. FALSIFIED ALTERNATIVE (a) payload-size: RAW windows from get_bctc_pending_refine show the successfully-processed chunk unit-0000..0011 = 21 pages / 20 images / 4x three-page continuation windows, and the twice-abandoned chunk unit-0012..0023 = 22 pages / 22 images / 4x three-page continuation windows. The two chunks are the same shape; the prior memory note claiming the resume chunk is 'unusually continuation-heavy' is factually wrong. FALSE CLAIM by the agent: the tool grant (Read, Write, mcp__gateway__call_tool -> get_bctc_page_text/get_bctc_page_image/push_bctc_refined_unit/finalize_bctc_refine) is unchanged from the 2026-08-05T16:41-16:44Z fire that pushed 12 units (11 DONE conf 0.75-0.95 + unit-0000 FAILED) on this same report. Grant is proven sufficient; do NOT change it. NOTE this is a LATENT ambiguity, not a deterministic halt -- the same doc executed correctly on 08-05 -- so the fix is to remove the ambiguity so the working reading is the only available reading, not to add another guard on top of a contradiction. SECONDARY DRIFT found in same zone: .claude/agents/refine_bctc_md.md description still says 'Processes one CHUNK (<=7 windows) per invocation' while flow/main.md:72 and init.md:55 both say REFINE_CHUNK_SIZE=12 (raised 7->12 by DONE task BCTC-REFINE-T1-CHUNKSIZE, commit 524a87cc 2026-06-27, which updated the docs/ copy but never the .claude/ copy).",
         "files": [
@@ -5502,10 +5516,10 @@
           "FIX-BCTC-REFINE-RESOURCE-EXCEEDED-STATUS"
         ],
         "baseline_pass": "9408",
-        "po_manual_dispatch_flagged_at": "2026-08-06T14:53:40Z",
+        "po_manual_dispatch_flagged_at": "2026-08-06T18:57:46Z",
         "po_manual_dispatch_flagged_by": "po (manual-dispatch-sweep)",
         "po_manual_dispatch_class": "DRS-STRANDED-OFF-ALLOWLIST",
-        "po_manual_dispatch_note": "po (manual-dispatch-sweep) surfaced DRS-STRANDED-OFF-ALLOWLIST candidate — folding into this tick's BATCH. Top of a 45-row candidate list, the ONLY P0 in it (rank 0, idx 0) and never previously flagged (reflag=false), i.e. it has been dispatchable-in-principle since 2026-08-06T11:18Z and no mechanism has ever reached it: next_agent=agent-father is off the DRS ratified allowlist, so BOUNDED-1/SLS/RLC/DRS all structurally skip it. Live impact is not hypothetical — 2 consecutive zero-push fires on VHM_2026_Q1."
+        "po_manual_dispatch_note": "po (manual-dispatch-sweep) surfaced DRS-STRANDED-OFF-ALLOWLIST candidate - folding into this tick BATCH. Re-admission #2: prior stamp 2026-08-06T14:53:40Z aged 14464s past the 14400s staleness window without ever being dispatched (TE-T12 shape). Top of 44 candidates, only P0 in the set."
       },
       {
         "id": "FIX-EXECUTETIER-PHASE35-RESUME-LOCK-RELEASED-AT-SPAWN-NOT-COMPLETION",
@@ -5584,7 +5598,12 @@
         ],
         "created_at": "2026-07-30T19:27:33Z",
         "created_by": "po/triage-20260730T1907Z",
-        "updated_at": "2026-07-30T19:27:33Z"
+        "updated_at": "2026-08-06T18:59:37Z",
+        "desc": "STUB SINCE MINT 2026-07-30T19:27:33Z (desc was empty string, files null, baseline_pass null) - PO triage 2026-08-06T18:57Z is filling it with a live re-measurement rather than re-minting a duplicate. RE-MEASURED LIVE THIS TICK via the SAME shared predicate the sweep and the audit script both call (scripts/lib/po-manual-dispatch-eligibility.jq is_drs_stranded_off_allowlist, DRS_ALLOWLIST=[architect,ba,pm,po,agents-architect]): 44 backlog rows are DRS-STRANDED-OFF-ALLOWLIST, i.e. have zero eligible automated picker. The distribution is NOT flat and that is the actionable finding the original stub lacked - 37 of 44 (84%) resolve to next_agent=agent-father; the remaining 7 are ops 3, ops-mainserver-fetch 2, code-janitor 1, ops-vps-fetch 1. THROUGHPUT ARITHMETIC (why priority-bumping individual rows provably cannot work): the only mechanism that reaches this class is docs/agents/po/flow/manual-dispatch-sweep.md, which by its own Step 2 design stamps and folds EXACTLY ONE row per PO tick. At a handful of PO ticks per day against a 44-row queue that is still being minted into, the drain rate is at or below the mint rate, so the queue is non-decreasing regardless of any row's priority. Live proof of the failure mode this tick: FIX-REFINE-SUBFLOW-OPTIONC-CONTRACT-DRIFT is P0, the ONLY P0 in the whole candidate set, and is on its SECOND re-admission (first stamp 2026-08-06T14:53:40Z aged 14464s past the 14400s window without ever dispatching). A P0 that the single documented mechanism cannot clear in 4h is a capacity defect, not a prioritisation one. RELATED, NOT DUPLICATE: FIX-DEVTEAM-BOUNDED1-MAINTLANE-NEXTAGENT-GATE (backlog) proposes WITHHOLDING maintenance-lane next_agent rows from BOUNDED-1 - the opposite direction; if that ships without this one, the stranded population grows. FIX-PO-NO-PRODUCER-FOR-MANUAL-DISPATCH-ESCAPE-HATCH (review) built the 1-per-tick producer; FIX-PO-MANUAL-DISPATCH-SWEEP-FLAG-WITHOUT-DISPATCH-STRANDS-ROW (review) added the 4h re-admission window. Both raise the CEILING on a 1-row-per-tick pipe; neither widens the pipe. This row is the widening. DIRECTION FOR THE ARCHITECT (scope this, do not assume it): the 84% concentration means the decisive question is narrow - does agent-father's own standalone cron consume its own 37-row board queue, or does it only act on freshly-spawned intents? If the former, the defect is that the queue is invisible to it; if the latter, the choice is between adding agent-father to the DRS allowlist and giving its cron a board-drain step. Answer that from agent-father's own flow docs before designing anything. A worked precedent for the per-row escape hatch exists and was exercised this same tick: CLEAN-SKILL-BLOAT-CRON-STANDALONE-DB-INTEGRITY-SPLIT-CHILDREN-BYTE-CAP was stranded on next_agent=claude-manager-helper for 9.4h across 3 breach occurrences; re-pointing it to the agent that empirically edits those files (developer/cross-service, established from git log on the files themselves) made is_bounded1_eligible flip to true and removed it from the stranded set - verified both ways. That is a per-row manual remedy, NOT a fix for the class.",
+        "baseline_pass": true,
+        "occurrence_count": 2,
+        "po_occurrence_20260806T1857": "po (triage 2026-08-06T18:57Z): filled empty stub desc with live 44-row re-measurement + 84% agent-father concentration + throughput arithmetic. No new row minted - prior-art grep found this row already owns the class.",
+        "updated_by": "po (triage 2026-08-06T18:57Z - stub desc filled from live measurement)"
       },
       {
         "id": "FU-CNYVND-DEAD-FIELD-REMOVE",
@@ -6158,38 +6177,6 @@
         "po_manual_dispatch_flagged_by": "po (manual-dispatch-sweep)",
         "po_manual_dispatch_class": "DRS-STRANDED-OFF-ALLOWLIST",
         "po_manual_dispatch_note": "po (manual-dispatch-sweep) surfaced DRS-STRANDED-OFF-ALLOWLIST candidate — folding into BATCH at 2026-08-06T18:21:44Z. 43 eligible candidates this tick; TE-T03 top by [priority_rank, idx=28]. Re-admitted under flag_reentrant: prior stamp 2026-08-06T07:09:22Z is older than the 4h staleness window (flagged then never dispatched — the FIX-PO-MANUAL-DISPATCH-SWEEP-FLAG-WITHOUT-DISPATCH-STRANDS-ROW shape). DEPENDENCY VERIFIED THIS TICK: depends_on TE-T01 is SATISFIED — TE-T01 is in docs/data/orch/archive/2026-07.json (shipped), so the SEQUENCING note on this row no longer blocks it."
-      },
-      {
-        "id": "TE-T05",
-        "title": "T-05 cowork-end-cycle: merge 6-file/385L end-of-cycle skill chain into one composite end-0-cowork [~130-165k tok/day]",
-        "owner": "agent-father",
-        "status": "BACKLOG",
-        "type": "SPRINT-M",
-        "size": "M",
-        "priority": "P1",
-        "wave": 3,
-        "est_saving": "~130-165k tok/day",
-        "zone": ".claude/skills/",
-        "sprint": "TOKEN-ECONOMY-AUDIT",
-        "depends": [],
-        "detail_ref": "docs/architecture-briefs/2026-07-12-token-economy-lazyload-audit.md#T-05",
-        "note": "QA-GATED. Build composite end-0-cowork (~110L) mirroring step-0-cowork: fold session-log-cowork INTO notebook-write (one write/commit), condense doc-self-heal, self-critique TRIGGER-CHECK only (lazy-load full on trigger). Keep notebook-write/doc-self-heal standalone for dev-team; delete session-log-cowork (0 direct refs) + DEPRECATED append-session-record; dedup cowork-boundary vs cowork-error-boundary.",
-        "audit_ref": {
-          "audit": "ultracode-2026-07-12",
-          "verdict": "amend DoD from cowork-cycle-agents-P6 (Piece2) + memory-docs-hygiene-P2",
-          "note": "P6 Piece2: append NO-OP rule (notebook write+session summary are ONE write; skip when flow already landed its settled write), delete the 3 skip-parentheticals once composite ships, add fb cowork-end-cycle parity. P2: this row must DROP its 'DEPRECATED append-session-record' deletion clause (UC-MDH-P2 absorbs it) — amend via orch-apply, never raw-edit.",
-          "refs": [
-            "docs/architecture-briefs/2026-07-12-ultracode-workflow-improvement-audit.md#cowork-cycle-agents-P6",
-            "docs/architecture-briefs/2026-07-12-ultracode-workflow-improvement-audit.md#memory-docs-hygiene-P2"
-          ]
-        },
-        "next_agent": "agent-father",
-        "po_routing_ruling_20260721": "PO ARTIFACT-CLASS ROUTING RULING 2026-07-21T18:42Z. Rule: routing follows ARTIFACT CLASS, not directory. Any row whose deliverable is instruction-prose that an agent LOADS AND EXECUTES — .claude/agents/**, docs/agents/** (init/flow/knowledge/tools-package), .claude/skills/**/SKILL.md — routes to agent-father. Executable code (apps/**, scripts/**), codegen-from-registry, and data/root-config (docs/data/**, CLAUDE.md) route to zone-matched dev-* or developer. Rationale: for this system a flow doc IS the executable source; agent-father is already sole owner of agent-file lifecycle (dispatch/SKILL.md:48) and of NEW cron skill files (:50), and board precedent has 5/5 pre-existing docs/agents/ rows routed to agent-father/agents-architect/po and 0 to developer. Precedent for SKILL.md specifically: docs/signals/processed/dev-team-20260716T102429Z-autolaunch-safety-hold-uc-asl-p6.json already routed a signal-dashboard SKILL.md edit to agent-father as 'the factory rule'. ROOT CAUSE this closes: .claude/skills/zone-detect/SKILL.md resolves ONLY dev-<service> (Tier-1/2, needs apps/<service>/-shaped zone) or generic developer (Tier-3 fallback) — it has NO path to agent-father, so any docs/agents/ or .claude/skills/ row reaching execute-tier with next_agent unset gets the 'developer' placeholder and mis-routes. EXPECTED SIDE EFFECT (do NOT 'fix' this): next_agent=agent-father does not match the dev-role pattern ^dev(-|$)|^developer$, so the BOUNDED-1 NON-DEV-NEXT_AGENT gate (dev-team/flow/main.md:518) now WITHHOLDS these rows from unattended idle auto-pickup. That is the intended outcome — they require deliberate router dispatch to agent-father, not silent promotion to a generic developer.",
-        "updated_at": "2026-08-06T18:29:48Z",
-        "po_manual_dispatch_flagged_at": "2026-08-06T18:29:47Z",
-        "po_manual_dispatch_flagged_by": "po (manual-dispatch-sweep)",
-        "po_manual_dispatch_class": "DRS-STRANDED-OFF-ALLOWLIST",
-        "po_manual_dispatch_note": "po (manual-dispatch-sweep) surfaced DRS-STRANDED-OFF-ALLOWLIST candidate — folding into this tick BATCH"
       },
       {
         "id": "TE-T06",
@@ -12082,20 +12069,22 @@
       {
         "id": "CLEAN-SKILL-BLOAT-CRON-STANDALONE-DB-INTEGRITY-SPLIT-CHILDREN-BYTE-CAP",
         "title": "context-bloat (skill-file class, byte-cap): register-job-db-integrity-{weekday,offhours}.md are 16158B/15967B vs 12000B cap - the CLEAN-SKILL-BLOAT-CRON-STANDALONE-REGISTER split optimised line-count only and is byte-cap blind",
-        "owner": "claude-manager-helper",
+        "owner": "developer",
         "status": "BACKLOG",
         "type": "CLEAN",
         "size": "S",
         "priority": "P1",
-        "zone": ".claude/skills/",
-        "next_agent": "claude-manager-helper",
+        "zone": "cross-service/",
+        "next_agent": "developer",
         "created_at": "2026-08-06T09:29:49Z",
         "verification_gate": "context_bloat_backstop_no_breach_both_predicates_both_files",
         "status_note": "ROOT CAUSE (po triage 2026-08-06T09:21Z, measured not assumed): the just-shipped split CLEAN-SKILL-BLOAT-CRON-STANDALONE-REGISTER (commit 3bfd388ea) optimised for the LINE cap only and is blind to the BYTE cap. Measured live: register-job-db-integrity-weekday.md 198L / 16158B and register-job-db-integrity-offhours.md 196L / 15967B - both land 1-4 lines UNDER the 200L cap while sitting 33-35% OVER the 12000B byte cap (byte_overage 4158 and 3967). The context-bloat-backstop hook fired reason=byte-cap on both within 2 minutes of the split commit. The parent DID clear (register.md now 48L / 1993B, and the 3 other children are 11-15L), so the split itself was correct in direction - it just stopped at the wrong predicate. Explicitly NOT a false positive and NOT an intentional size trade-off: the two children were never under the byte cap at any point. AC: both files under 12000B AND under 200L, and context-bloat-backstop.sh emits no breach for either predicate on either file. Secondary ask (same fix, cheap): whatever split-sizing heuristic claimed verification in the 3bfd388ea commit message (\"context-bloat-backstop.sh emits no breach for either line-count or byte-size predicates\") asserted a byte-cap pass that the hook contradicted 2 minutes later - a false-green self-verification, so the check must be re-run against the real script, not narrated. Source signals: docs/signals/processed/context-bloat--claude-skills-cron-standalone-team-register-job-db-integrity-weekday-md-2026-08-06T090915Z.json and ...-offhours-md-2026-08-06T091033Z.json.",
-        "updated_at": "2026-08-06T14:36:49Z",
-        "updated_by": "po (triage 2026-08-06T14:34Z — fold + escalate P2->P1)",
-        "occurrence_count": 2,
-        "po_occurrence_20260806T1434": "Two further context_bloat_breach signals folded here (14:04:06Z weekday, 14:04:18Z offhours; also the two READ dashboard rows con-20260806T124818a/b from 12:48Z). NOT a duplicate re-fire — the files are GROWING WHILE THE ROW SITS IN BACKLOG, and that is the reason for the P2->P1 bump. Measured wc at 14:34Z vs the numbers in this row's own title: offhours 16158B -> 20832B (+28.9%), weekday 15967B -> 21023B (+31.7%); line counts now 250L and 252L against a 200L cap. Intermediate reading at 12:48Z (dashboard rows) was 20048B/20239B, so ~800B of further growth landed between 12:48Z and 14:04Z alone. A backlog row for an over-cap file that is still being appended to is a widening breach, not a static one — the split gets more expensive every tick it waits."
+        "updated_at": "2026-08-06T18:57:47Z",
+        "updated_by": "po (triage 2026-08-06T18:55Z - occ3 fold + dispatch-lane repoint + revised fix spec)",
+        "occurrence_count": 3,
+        "po_occurrence_20260806T1434": "Two further context_bloat_breach signals folded here (14:04:06Z weekday, 14:04:18Z offhours; also the two READ dashboard rows con-20260806T124818a/b from 12:48Z). NOT a duplicate re-fire — the files are GROWING WHILE THE ROW SITS IN BACKLOG, and that is the reason for the P2->P1 bump. Measured wc at 14:34Z vs the numbers in this row's own title: offhours 16158B -> 20832B (+28.9%), weekday 15967B -> 21023B (+31.7%); line counts now 250L and 252L against a 200L cap. Intermediate reading at 12:48Z (dashboard rows) was 20048B/20239B, so ~800B of further growth landed between 12:48Z and 14:04Z alone. A backlog row for an over-cap file that is still being appended to is a widening breach, not a static one — the split gets more expensive every tick it waits.",
+        "baseline_pass": true,
+        "po_occurrence_20260806T1855": "OCCURRENCE 3 (po triage 2026-08-06T18:55Z dev-team tick; signals context-bloat--claude-skills-cron-standalone-team-register-job-db-integrity-offhours-md-2026-08-06T184444Z.json + ...-weekday-md-2026-08-06T184441Z.json folded here). STILL GROWING, measured live via wc this tick: offhours 250L/20832B -> 255L/21159B, weekday 252L/21023B -> 21361B/257L since the 14:34Z reading; versus this row's own title numbers (09:29Z) that is +32.5% and +32.2% bytes in 9.4h while the row sat undispatched. GROWTH MECHANISM NOW IDENTIFIED (was unknown at mint; git diffstat, not inference): four commits landed content INTO the pair AFTER the split - 9d0ea50c2 (+146L net across both), 656a63821 (+32), 74a1df441 (+26), 36e109170 (+12) - every one a developer-lane fix(cross-service)/fix(db-integrity) cron-content change. AND the two children are a DUPLICATED PAIR: the split commit 3bfd388ea's own message records offhours as 'same prompt as Job 1', so every db-integrity cron fix is applied TWICE, doubling the growth rate and guaranteeing re-breach after any line-only prune. REVISED FIX (supersedes plain re-prune): extract the ONE shared db-integrity CronCreate prompt body into a single lazily-loaded file that BOTH register-job-db-integrity-{weekday,offhours}.md reference, leaving only the schedule-specific delta inline. That halves the bytes at a stroke and removes the double-append, so the cap holds under future cron fixes instead of being reset every few commits. DISPATCH-LANE ROOT CAUSE (why this recurred rather than shipped): next_agent was claude-manager-helper - off every dev-team dispatch allowlist - so the row was DRS-STRANDED and reachable only by PO manual dispatch, where it ranked 15th of 44 candidates and was never selected. claude-manager-helper itself ran at 18:06Z (commit 5024251f8) and did not touch it. Empirically the agent that edits these files is the generic developer under cross-service. Re-pointed next_agent/owner=developer, zone=cross-service/ this tick so the row becomes BOUNDED-1-eligible and can self-dispatch; sanctioned remedy per docs/agents/po/flow/manual-dispatch-sweep.md Step 1 note (a row drops out of the stranded predicate once reassigned to a dev-role next_agent)."
       },
       {
         "id": "FIX-WF2-PREDICATE-MIRROR-NO-DRIFT-VERIFIER",
@@ -19127,7 +19116,7 @@
         "plan_only": false,
         "created_at": "2026-07-30T23:08:20Z",
         "created_by": "dev-team/po-batch-20260730T2307Z",
-        "updated_at": "2026-07-30T23:26:56Z",
+        "updated_at": "2026-08-06T18:57:47Z",
         "source": "po triage 2026-07-30T22:59Z tick (6th pass today)",
         "desc": "Root cause of the recurring context_bloat_breach signal (2 fired 16 min apart this tick). .claude/skills/decision-journal/SKILL.md:62 Cap Check tests only `[ \"$LINES\" -gt 600 ]`, confirmed by direct read (not a grepped comment) -- no byte-based branch exists anywhere in the file. NATURAL EXPERIMENT, not inference (po's own observation, dev-team did not re-derive): in sprint COWORK-GUARANTEED-SLOT-CATCHUP the ONLY journal that rolled to -2.md is po.md -- the ONLY one that crossed the LINE cap (625L). architect 211L/51,945B, dev-mcp-server 312L/79,545B, developer 488L/156,774B all sit under 600 lines, so their rollover never fires while the byte detector fires every cycle. Fleet-wide 10 journals are over 36000B and under 600L. THIRD actuator in a known family, and the only unblocked one: FIX-NOTEBOOK-PRUNER-LINE-ONLY-SETPOINT-BYTE-CAP-NEVER-CONVERGES (review) owns notebook-auto-prune.sh; FIX-DECISION-JOURNAL-BYTECAP-NO-ACTUATOR (P1 backlog) owns decision-journal-archive.sh and is blocked behind FIX-SPRINT-REGISTRY-DANGLING-IDS (supervised+plan_only). Derive the byte cap from the same MATCHED_CAP*60 source context-bloat-backstop.sh uses -- do not hardcode 36000 twice. Also handle -2.md itself breaching (no -3 rollover exists today).",
         "files": [
@@ -19148,7 +19137,8 @@
         "reviewed_at": "2026-07-30T23:26:52Z",
         "reviewed_by": "developer",
         "qa_verify_mode": "verify-committed",
-        "review_note": "Cap Check now trips on LINES>LINE_CAP OR BYTES>BYTE_CAP. LINE_CAP read at runtime from docs/data/file-size-caps.json (pattern docs/agent-memory/decisions/sprint-*.md, cap=600) — same SSOT context-bloat-backstop.sh reads; BYTE_CAP=LINE_CAP*60 (=36000), never a 2nd hardcoded 36000 (TE-T24 derivation, mirrors the already-QA-approved sibling fix FIX-NOTEBOOK-PRUNER-LINE-ONLY-SETPOINT-BYTE-CAP-NEVER-CONVERGES for notebook-auto-prune.sh). Rollover target generalized from a hardcoded -2.md to a numeric-suffix increment parsed off the current JOURNAL_PATH (base=implicit index 1) — closes AC(5): a breaching -2.md now rolls to -3.md, unbounded. Verified by extracting the patched bash verbatim and running it against synthetic fixtures using the REAL file-size-caps.json: 300L/79800B rolls (byte axis, LINE_CAP=600/BYTE_CAP=36000 confirmed derived not hand-typed); 650L/19500B rolls (line axis not regressed); 300L/19800B untouched (both caps clear); synthetic -2.md@620L rolls to -3.md; -3.md@620L rolls to -4.md (confirms unbounded suffix). Applied live to this cycle own decision journal (499L/159,241B pre-fix — exactly the blind-spot shape the task cites as example 3 of 3) as an additional dogfood check: CAP-REACHED sentinel appended per fixed logic; the mandatory send_telegram bug notification could NOT be sent this session (no MCP/gateway tool grant in this spawn — Read/Edit/Write/Bash only), flagged for QA/PO follow-up. Automated fleet-wide sweep of the other ~10 over-cap journals is explicitly out of this row scope (owned by separate blocked P1 row FIX-DECISION-JOURNAL-BYTECAP-NO-ACTUATOR). No apps/ TS/Go touched (zone cross-service/, pure .claude/skills/ md) — bun test/tsc N/A. File itself 99L/4349B, well under its own governed .claude/skills/**/*.md cap (200L/12000B) — no size-justification header needed."
+        "review_note": "Cap Check now trips on LINES>LINE_CAP OR BYTES>BYTE_CAP. LINE_CAP read at runtime from docs/data/file-size-caps.json (pattern docs/agent-memory/decisions/sprint-*.md, cap=600) — same SSOT context-bloat-backstop.sh reads; BYTE_CAP=LINE_CAP*60 (=36000), never a 2nd hardcoded 36000 (TE-T24 derivation, mirrors the already-QA-approved sibling fix FIX-NOTEBOOK-PRUNER-LINE-ONLY-SETPOINT-BYTE-CAP-NEVER-CONVERGES for notebook-auto-prune.sh). Rollover target generalized from a hardcoded -2.md to a numeric-suffix increment parsed off the current JOURNAL_PATH (base=implicit index 1) — closes AC(5): a breaching -2.md now rolls to -3.md, unbounded. Verified by extracting the patched bash verbatim and running it against synthetic fixtures using the REAL file-size-caps.json: 300L/79800B rolls (byte axis, LINE_CAP=600/BYTE_CAP=36000 confirmed derived not hand-typed); 650L/19500B rolls (line axis not regressed); 300L/19800B untouched (both caps clear); synthetic -2.md@620L rolls to -3.md; -3.md@620L rolls to -4.md (confirms unbounded suffix). Applied live to this cycle own decision journal (499L/159,241B pre-fix — exactly the blind-spot shape the task cites as example 3 of 3) as an additional dogfood check: CAP-REACHED sentinel appended per fixed logic; the mandatory send_telegram bug notification could NOT be sent this session (no MCP/gateway tool grant in this spawn — Read/Edit/Write/Bash only), flagged for QA/PO follow-up. Automated fleet-wide sweep of the other ~10 over-cap journals is explicitly out of this row scope (owned by separate blocked P1 row FIX-DECISION-JOURNAL-BYTECAP-NO-ACTUATOR). No apps/ TS/Go touched (zone cross-service/, pure .claude/skills/ md) — bun test/tsc N/A. File itself 99L/4349B, well under its own governed .claude/skills/**/*.md cap (200L/12000B) — no size-justification header needed.",
+        "po_occurrence_20260806T1855": "LIVE OCCURRENCE 2026-08-06T18:47:31Z (po triage 2026-08-06T18:55Z): signal context-bloat-docs-agent-memory-decisions-sprint-COWORK-GUARANTEED-SLOT-CATCHUP-agent-father-md-2026-08-06T184731Z.json reports docs/agent-memory/decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-agent-father.md at 532L / 36224B - reason=byte-cap ONLY, overage 0 lines / 224 bytes. This is a textbook confirmation of THIS row's own natural experiment, in the SAME sprint it cites: 532L is under the 600L rollover trigger so Cap Check never fires, while 36224B is over the 36000B cap so the detector fires every cycle. The agent-father journal is a NEW file joining the architect/dev-mcp-server/developer trio already named in this row's desc. NO NEW ROW MINTED - this is evidence, not a distinct defect. FLAG FOR ROUTER/QA: this row has sat in review[] with next_agent=qa since 2026-07-30T23:26:56Z (7 days) while the defect keeps firing; the fix is unverified, not unwritten."
       },
       {
         "id": "FIX-SIGNAL-OUTCOMES-LIVENESS-GUARD-COUNTS-STRUCTURALLY-UNRESOLVABLE-ROWS",
@@ -22154,9 +22144,44 @@
         }
       ]
     },
-    "last_triaged_at": "2026-08-06T17:58:35Z",
-    "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": []
+    "last_triaged_at": "2026-08-06T18:57:46Z",
+    "last_triaged_by": "po (triage 2026-08-06T18:55Z dev-team tick)",
+    "in_progress": [
+      {
+        "id": "TE-T05",
+        "title": "T-05 cowork-end-cycle: merge 6-file/385L end-of-cycle skill chain into one composite end-0-cowork [~130-165k tok/day]",
+        "owner": "agent-father",
+        "status": "IN_PROGRESS",
+        "type": "SPRINT-M",
+        "size": "M",
+        "priority": "P1",
+        "wave": 3,
+        "est_saving": "~130-165k tok/day",
+        "zone": ".claude/skills/",
+        "sprint": "TOKEN-ECONOMY-AUDIT",
+        "depends": [],
+        "detail_ref": "docs/architecture-briefs/2026-07-12-token-economy-lazyload-audit.md#T-05",
+        "note": "QA-GATED. Build composite end-0-cowork (~110L) mirroring step-0-cowork: fold session-log-cowork INTO notebook-write (one write/commit), condense doc-self-heal, self-critique TRIGGER-CHECK only (lazy-load full on trigger). Keep notebook-write/doc-self-heal standalone for dev-team; delete session-log-cowork (0 direct refs); dedup cowork-boundary vs cowork-error-boundary.",
+        "audit_ref": {
+          "audit": "ultracode-2026-07-12",
+          "verdict": "amend DoD from cowork-cycle-agents-P6 (Piece2) + memory-docs-hygiene-P2",
+          "note": "P6 Piece2: append NO-OP rule (notebook write+session summary are ONE write; skip when flow already landed its settled write), delete the 3 skip-parentheticals once composite ships, add fb cowork-end-cycle parity. P2: this row must DROP its 'DEPRECATED append-session-record' deletion clause (UC-MDH-P2 absorbs it) — amend via orch-apply, never raw-edit.",
+          "refs": [
+            "docs/architecture-briefs/2026-07-12-ultracode-workflow-improvement-audit.md#cowork-cycle-agents-P6",
+            "docs/architecture-briefs/2026-07-12-ultracode-workflow-improvement-audit.md#memory-docs-hygiene-P2"
+          ]
+        },
+        "next_agent": "agent-father",
+        "po_routing_ruling_20260721": "PO ARTIFACT-CLASS ROUTING RULING 2026-07-21T18:42Z. Rule: routing follows ARTIFACT CLASS, not directory. Any row whose deliverable is instruction-prose that an agent LOADS AND EXECUTES — .claude/agents/**, docs/agents/** (init/flow/knowledge/tools-package), .claude/skills/**/SKILL.md — routes to agent-father. Executable code (apps/**, scripts/**), codegen-from-registry, and data/root-config (docs/data/**, CLAUDE.md) route to zone-matched dev-* or developer. Rationale: for this system a flow doc IS the executable source; agent-father is already sole owner of agent-file lifecycle (dispatch/SKILL.md:48) and of NEW cron skill files (:50), and board precedent has 5/5 pre-existing docs/agents/ rows routed to agent-father/agents-architect/po and 0 to developer. Precedent for SKILL.md specifically: docs/signals/processed/dev-team-20260716T102429Z-autolaunch-safety-hold-uc-asl-p6.json already routed a signal-dashboard SKILL.md edit to agent-father as 'the factory rule'. ROOT CAUSE this closes: .claude/skills/zone-detect/SKILL.md resolves ONLY dev-<service> (Tier-1/2, needs apps/<service>/-shaped zone) or generic developer (Tier-3 fallback) — it has NO path to agent-father, so any docs/agents/ or .claude/skills/ row reaching execute-tier with next_agent unset gets the 'developer' placeholder and mis-routes. EXPECTED SIDE EFFECT (do NOT 'fix' this): next_agent=agent-father does not match the dev-role pattern ^dev(-|$)|^developer$, so the BOUNDED-1 NON-DEV-NEXT_AGENT gate (dev-team/flow/main.md:518) now WITHHOLDS these rows from unattended idle auto-pickup. That is the intended outcome — they require deliberate router dispatch to agent-father, not silent promotion to a generic developer.",
+        "updated_at": "2026-08-06T19:00:31Z",
+        "po_manual_dispatch_flagged_at": "2026-08-06T18:29:47Z",
+        "po_manual_dispatch_flagged_by": "po (manual-dispatch-sweep)",
+        "po_manual_dispatch_class": "DRS-STRANDED-OFF-ALLOWLIST",
+        "po_manual_dispatch_note": "po (manual-dispatch-sweep) surfaced DRS-STRANDED-OFF-ALLOWLIST candidate — folding into this tick BATCH",
+        "claimed_by": "agent-father (router direct-dispatch — TE-T05 artifact-class, per po_routing_ruling_20260721, bypasses ba->architect->pm relay; ba B1/B2/B3 handoff docs/handoffs/TE-T05-BA-spec.md)",
+        "claimed_at": "2026-08-06T19:00:10Z"
+      }
+    ]
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
