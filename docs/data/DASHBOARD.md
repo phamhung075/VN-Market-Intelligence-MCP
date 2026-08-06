@@ -562,3 +562,15 @@
 **Mitigation:** No immediate action beyond signal routing.
 
 ---
+
+## Anomaly: A-30 · rag-service memory reclamation loss 96.32%
+**Severity:** WARN | **Date:** 2026-08-06 | **Status:** OPEN
+**Location:** rag-service container (1GiB cap)
+**Details:** 6 samples over 50s, all at 96.32% with ZERO reclamation dips. GC relief pattern stalled.
+**Impact:** Sustained high memory pressure on RAG service; risk of OOM if memory-consuming operation occurs
+**Root cause:** rag-service embedder model baseline consuming full 1GiB cap; no GC relief pattern detected
+**Zone owner:** dev-rag-service
+**Last reported:** 2026-08-06T13:17:44Z (signal sys-20260806T131735-7924, system-auditor -> po, dedup_key=microservice_degraded:rag-service:A-30, WARN Telegram sent)
+**Mitigation:** No immediate action beyond signal routing.
+
+---
