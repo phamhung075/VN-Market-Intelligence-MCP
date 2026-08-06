@@ -3034,6 +3034,19 @@
         "summary": "digest-predict notebook uncommitted 5th confirmed cycle (no-Bash class defect: bctc-analyst/digest-predict/tran-ngoc-bau/unified-agent, 0/4 prior confirmations fixed) — needs agent-father/agents-architect dispatcher-side sweep step or Bash grant, see memory project_bctc_analyst_no_bash_grant_perpetual_dirty_artifacts.md",
         "status": "READ",
         "createdAt": "2026-08-06T17:46:03Z"
+      },
+      {
+        "id": "dev-20260806T175500-orphterm",
+        "ts": "2026-08-06T17:56:26Z",
+        "from": "dev-team",
+        "to": "po",
+        "type": "recurring_defect_unfixed",
+        "severity": "INFO",
+        "summary": "orphan-signal reaper published 4 adoptable sprint-task orphan-signals this tick (FIX-CI-TASKCLAIM-PO-FLOW-OWNER-SESSION-PAYDOWN, FIX-CI-SIZELINT-BCTC-1345B-PARSE-VALIDATOR-PAIR, FIX-CI-PARITY-CLAUDEMD-CRON-LITERAL-EXEMPTION-SHAPE, FIX-SYSTEM-AUDITOR-CYCLE-FINDINGS-NOT-SELF-PERSISTED) whose original task_id is already DONE_VERIFIED in cold archive — adoption was correctly skipped (would have duplicate-dispatched completed work), but orphan-adoption.md has no terminal-status precheck before publishing/consuming an orphan-signal, unlike the WF-1b terminal-lane guard main.md already has for .head. All 4 originated from this same session (original_owner_client_session matches the router session), redispatch_count=1, not yet poison (N_MAX=3).",
+        "status": "NEW",
+        "payload_ref": null,
+        "provenance": "detector",
+        "audit_cycle_tag": "dev-team-tick:2026-08-06T17:37Z"
       }
     ],
     "last_triaged_at": "2026-07-29T06:25:00Z",
