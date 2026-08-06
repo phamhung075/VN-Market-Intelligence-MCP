@@ -12297,6 +12297,25 @@
           "RAG-FTS-BUILD-MEMORY-BOUND",
           "FIX-RAG-SERVICE-CLEAN-EXIT-RESTART-LOOP"
         ]
+      },
+      {
+        "id": "FIX-DEVTEAM-PREFLIGHT-ROOT-SYMLINK-CWD-FRAGILE",
+        "type": "FIX",
+        "title": "dev-team-tick-preflight.sh DEFAULT_ROOT resolution is CWD-dependent through the apps/mcp-server/{docs,scripts} symlinks — wrong invocation cwd silently redirects git commit to a nested path and fails",
+        "status": "BACKLOG",
+        "priority": "P3",
+        "size": "S",
+        "zone": "scripts/agents-flow/",
+        "next_agent": "developer",
+        "created_at": "2026-08-06T13:20:00Z",
+        "created_by": "dev-team/tick-20260806T1307Z",
+        "updated_at": "2026-08-06T13:14:00Z",
+        "updated_by": "dev-team/tick-20260806T1307Z",
+        "why_this_row_exists": "Live-reproduced this tick, not theoretical. dev-team-tick-preflight.sh:170-171 computes DEFAULT_ROOT via `cd \"$SCRIPT_DIR/../..\" && pwd` — bash's cd/pwd are logical (symlink-preserving) by default. apps/mcp-server/docs and apps/mcp-server/scripts are both symlinks to the repo-root docs/ and scripts/ dirs. If the script is invoked (BASH_SOURCE relative) from a cwd under apps/mcp-server, dirname-walking two levels up lands on apps/mcp-server itself instead of the true repo root. Step 5.5's _step55_git_commit_evict then built its pathspec against apps/mcp-server/docs/data/orch/orch-state.json, and git refused it: \"fatal: le chemin ... est au-dela d'un lien symbolique\" (path is beyond a symbolic link) — the cold-evict write succeeded on disk (both paths resolve to the same physical file) but the commit step failed, leaving 2 files uncommitted in the working tree until manually caught and committed this tick (commit 4db659e30).",
+        "trigger_this_time": "This session's Bash tool keeps one persistent shell across turns; an earlier unrelated turn left cwd at apps/mcp-server (via a bare `cd apps/mcp-server && ...` with no return-to-root), and the next dev-team cron tick's preflight inherited that stale cwd. Not yet confirmed whether any non-interactive/fresh-shell cron path can independently reach the same cwd, but the underlying resolution logic is wrong regardless of trigger: it silently produces a different ROOT depending on caller cwd, which a repo-root-anchored script never should.",
+        "scope": "Make SCRIPT_DIR/DEFAULT_ROOT resolution symlink- and cwd-invariant, e.g. `cd -P \"$(dirname \"${BASH_SOURCE[0]}\")\" && pwd -P` (physical) instead of logical cd/pwd, so it always resolves through the symlink to the canonical repo root regardless of invocation cwd. Audit other scripts sharing the same `$SCRIPT_DIR/../..`-style idiom under scripts/agents-flow/ for the same fragility while in the zone.",
+        "acceptance": "Script invoked from repo root, from apps/mcp-server, and from apps/mcp-server/scripts/agents-flow all resolve ROOT to the same canonical repo-root path (verify via `pwd -P` comparison in a test). Existing dev-team-tick-preflight.test.sh suite still green.",
+        "evidence": "git commit failure text this tick: \"fatal : le chemin '/Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/apps/mcp-server/docs/data/orch/orch-state.json' est au-dela d'un lien symbolique\"; ls -la apps/mcp-server/docs -> symlink to ../../docs; realpath of both the symlinked and canonical orch-state.json paths match (no content divergence, no data loss — recovered via manual commit 4db659e30)."
       }
     ],
     "closed_sprints": [
@@ -22351,6 +22370,48 @@
         "router_ac1_arm_note": "router RAW-verify (post-review): AC-1 'runtime arm' was NOT actually live — developer wrote Job 6 registration files (SKILL.md/register.md/register-job-market-db-journal-guard.md) correctly but has no CronCreate grant (router-only tool), so the */15 cron was never armed. Router executed CronCreate directly from the developer's verbatim spec — cron e3b60362 confirmed live via CronList. AC-2/AC-3/AC-4/AC-5 independently RAW-verified: CI job wired (.github/workflows/ci.yml), source-guard test 6/6 PASS live, policy doc sole-owner language present. QA should still independently confirm the runtime alert path over a real */15 tick, not just trust this note.",
         "router_ac1_armed_at": "2026-08-06T13:11:26Z",
         "router_ac1_cron_id": "e3b60362"
+      },
+      {
+        "id": "FIX-AUDITOR-C08-UNSATISFIABLE-TTL-WINDOW-AND-ISO8601-STRCMP",
+        "type": "FIX",
+        "title": "system-auditor C-08 is a broken detector, not a real defect: its expected=0 threshold is mathematically unsatisfiable (24h alerts window vs 2h-TTL agent_signals stubs) AND its window over-captures via the ISO8601 strcmp bypass already fixed in the code-plane twin",
+        "zone": "cross-service/",
+        "priority": "high",
+        "status": "REVIEW",
+        "size": "S",
+        "next_agent": "qa",
+        "supervised": false,
+        "plan_only": false,
+        "baseline_pass": true,
+        "source": "PO triage of system-auditor Tier-DATA sweep c20 2026-08-05T08:18:46Z - signal sys-20260805T081846-1853. Root-caused live against the named-volume market.db (readonly) 2026-08-05T08:23-08:27Z.",
+        "created_at": "2026-08-05T08:28:16Z",
+        "created_by": "po",
+        "updated_at": "2026-08-06T13:13:40Z",
+        "root_cause": "C-08 (docs/agents/system-auditor/flow/main.md:649) is `SELECT count(*) FROM alerts a LEFT JOIN agent_signals s ON a.id = s.alert_id WHERE s.id IS NULL AND a.triggered_at > datetime('now','-24 hours')` with expected=0. TWO independent faults compound, and the reported anomaly is a FALSE POSITIVE - the alert-engine write path is HEALTHY. (A) UNSATISFIABLE THRESHOLD: agent_signals alert-correlation stubs are TTL-bound at 2h (`expiresAt(ttlMinutes ?? 120)`, agentSignalStore.ts:570/604/634/661/688/715) and hard-purged by cleanExpired() on the daily off-hours dataAuditJob cron, while `alerts` rows are retained ~30d (checkStaleAlerts.ts D-4 is UPDATE-only, never deletes). So every alert older than the last GC sweep NECESSARILY has no surviving correlation row. expected=0 can only be met if zero alerts fired in the whole stale band. The check's own code-plane inverse (checkOrphanAgentSignalsAlertId.ts:15-16) already states this in prose: 'agent_signals correlation stubs are TTL-bound, ~2h, and purged by cleanExpired(), so any historical debt self-expires' - C-08 was never re-derived against that fact. (B) ISO8601 STRCMP BYPASS: `alerts.triggered_at` is a raw JS toISOString() string ('2026-08-04T01:21:58.806Z') while `datetime('now','-24 hours')` renders space-separated ('2026-08-04 08:26:52'). At index 10 'T'(0x54) > ' '(0x20), so every row sharing the bound's date-part compares greater and the window over-captures. LIVE PROOF 2026-08-05T08:26Z: as-written window = 40 alerts / 22 orphans; TRUE 24h window (julianday) = 28 alerts / 10 orphans; the oldest row the as-written window admitted was 31 HOURS old. This is the known recurring class feedback_sqlite_iso8601_datetime_strcompare_bypass, and it was ALREADY FIXED in the code-plane twin on 2026-08-01 (checkStaleAlerts.ts:23-30 wraps both sides as `datetime(triggered_at) < datetime('now',...)` and cites the same lesson by name) - the remedy simply never propagated to the flow-doc SQL the agent actually executes. That is memory feedback_fix_landed_in_the_pregate_not_the_probe_the_agent_actually_runs.",
+        "evidence_write_path_is_healthy": "Age-bucketed LEFT JOIN on the live DB gives a perfectly clean split with NO overlap: alerts <=17h old = 18 linked / 0 orphaned; alerts >=18h old = 22 orphaned / 0 linked. The 18h boundary equals the last cleanExpired() sweep (oldest surviving correlation stub = 2026-08-04T14:29:22Z, 17h old; 131 of 144 agent_signals rows are already past expires_at and awaiting the next sweep). Orphan status is therefore a pure function of GC timing x alert volume and carries ZERO information about write-path health. Producer-family breakdown confirms no producer-specific gap - EVERY family appears on BOTH sides (news 7 orphan/9 linked, price 9/1, ta 3/3, other 2/3, macro 1/2); a genuine co-write gap would concentrate in one family. fingerprint-null does not correlate either (21/16 vs 1/2). The brief's hypothesis that 'alert-engine writes alerts/price_alerts but not agent_signals' is DISCONFIRMED: `price_alerts` and `alert_engine_records` both hold 0 rows, and the prior co-write gap FU-ALERT-COWRITE-SCHEDULER-JOBS (2026-06 archive) is DONE and holding.",
+        "growth_claim_is_false": "The escalating brief framed this as monotonic 1->22 growth over 15 days implying a worsening defect. RAW-verified FALSE. True firing history: 1 orphan (sys-20260721T003810-2b02, 07-21) -> 121 orphans (sys-20260730T003538-10ba, 07-30, recorded in docs/data/DASHBOARD.md:242-249 and MISSING from both the live .signal_queue and the archives) -> 22 orphans (08-05). Non-monotonic, and it tracks alert volume: alerts/day = 8 (07-31), 11 (08-01), 7 (08-02), 42 (08-03), 26 (08-04). The 22 orphans are exactly the 08-04 alerts that fired before the 14:29Z GC horizon. There is no regression to chase.",
+        "files": [
+          "docs/agents/system-auditor/flow/main.md",
+          "apps/mcp-server/src/scheduler/news-analysis/audit-checks/checkOrphanAgentSignalsAlertId.ts",
+          "apps/mcp-server/src/scheduler/news-analysis/audit-checks/checkStaleAlerts.ts",
+          "docs/data/DASHBOARD.md",
+          "docs/protocols/system-audit-runbook.md"
+        ],
+        "ac": [
+          "AC-1 Make C-08 satisfiable or delete it. The threshold must be derivable from the data model: either (i) bound the alerts window to the agent_signals correlation-stub TTL horizon rather than 24h, or (ii) join only alerts whose paired stub could still be alive, or (iii) retire C-08 outright and rely on the code-plane inverse checkOrphanAgentSignalsAlertId (D-NEW2), which is TTL-aware by construction. Do NOT keep expected=0 against a 24h window - state explicitly in the flow doc WHY the chosen bound is satisfiable.",
+          "AC-2 Fix the ISO8601 strcmp bypass in the C-08 predicate by wrapping BOTH sides in datetime(), copying the already-proven pattern and rationale comment from checkStaleAlerts.ts:23-30 verbatim rather than reinventing it.",
+          "AC-3 FLEET REPLAY, not one line. Per memory feedback_fleetwide_gate_validated_on_one_file_optout_allowlist, audit EVERY C-xx/B-xx check in docs/agents/system-auditor/flow/main.md that compares a timestamp column against datetime('now',...) and report per-check whether the column is T-format. Already measured and CONFIRMED AFFECTED: financial_reports.parsed_at is 100% T-format (C-04, 7-day window) and agent_signals.created_at is MIXED 13% T / 87% space (C-07, 24h window - heterogeneous is the worst case because the same query silently applies two different semantics). Confirmed NOT affected: market_messages.sent_at 0% T (C-06), daily_ohlcv.updated_at 2% T. Fix every affected check in one pass.",
+          "AC-4 Regression test: seed an alerts row older than the correlation-stub TTL with its stub already purged, and assert C-08 (or its replacement) does NOT flag it. Also assert a row whose date-part matches the bound but which is genuinely outside the window is EXCLUDED - that is the strcmp bypass, and it must fail loudly if reintroduced.",
+          "AC-5 Retract the fabricated root causes already published. docs/data/DASHBOARD.md:246 asserts 'Signal processing pipeline may be delayed or alert-signal mapping broken' and :330 asserts 'Alerts created by alert-engine but not propagated to agent_signals table'. Both are agent-narrated, unmeasured, and now DISCONFIRMED. :243 also names the wrong table ('no matching signal_queue rows' - the join is on agent_signals). This is the confabulation class feedback_agent_selfreport_metalayer_confabulation; correct or withdraw both entries.",
+          "AC-6 Do not silently drop coverage. If AC-1 retires C-08, confirm in writing that checkOrphanAgentSignalsAlertId (D-NEW2) plus the storeAlerts/storeAlertsFromCommander writer guard genuinely cover the co-write-gap failure mode that C-08 was introduced to catch, so this fix does not trade a false positive for a blind spot."
+        ],
+        "promoted_at": "2026-08-06T11:54:38Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
+        "claimed_at": "2026-08-06T12:27:30Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "updated_by": "developer",
+        "review_note": "Implementation Record: AC-1 rebound C-08 alerts window 24h->2h (alertStore.ts:223 co-write TTL literal), kept active (not retired) — D-NEW2 only covers inverse FK direction. AC-2 wrapped both sides datetime(), copied checkStaleAlerts.ts:19-30 pattern verbatim. AC-3 fleet-measured every C-xx datetime('now',...) check live against data/live/{market,pdf_extractor}.db: fixed C-04/C-07/C-08/C-10/C-11 (T-format confirmed), left C-06/C-09/C-16 unwrapped (0% T-format measured, no mixed-writer exposure). AC-4 new doc-driven regression test FIX-AUDITOR-C08-UNSATISFIABLE-TTL-WINDOW-AND-ISO8601-STRCMP.test.ts (5/5 pass, 9 expect) — reads live SQL out of flow doc via regex (not hardcoded copy), T1 source-contract/T2 satisfiability/T3 strcmp-bypass-exclusion-with-contrast/T4-T5 detection-preserved. AC-5 retracted both fabricated DASHBOARD.md C-08 entries (wrong table name + unmeasured root causes, now DISCONFIRMED with real GC-timing explanation) — landed via peer-commit sweep (system-auditor routine append, commit 28d4512aa), content verified present on HEAD. AC-6 confirmed in writing (flow doc + checkOrphanAgentSignalsAlertId.ts doc-comment): D-NEW2 covers inverse direction only, does not catch a writer bypassing the co-write entirely — C-08 fixed not retired preserves both directions. Verify: bun tsc --noEmit clean; bun test (naive single-process) 15130/15225 pass with 55 fails all pre-existing test-isolation cross-contamination (none touch alertStore/agentSignalStore/audit-checks — confirmed via isolated single-file rerun, 5/5 pass); scripts/ci-per-file-isolation.sh (CI-matching runner) 15021 pass/40 skip/8 fail across 6 files, all pre-existing documented rotating-flake class (SPIKE_CI-PERFILE-ISOLATION-FLAKE.md, news-poll/circuit-breaker/bootstrap — zero overlap with this task files). Commit 8f6f30f41. Simplicity gate: PASS (Q1 no excess scope, Q2 doc-driven-extraction helpers each multi-called not single-use, Q3 no over-abstraction, Q4 test file overhead is documentation comments matching repo FIX-* convention)."
       }
     ],
     "qa": [
@@ -22400,48 +22461,7 @@
     },
     "last_triaged_at": "2026-08-06T12:28:00Z",
     "last_triaged_by": "po",
-    "in_progress": [
-      {
-        "id": "FIX-AUDITOR-C08-UNSATISFIABLE-TTL-WINDOW-AND-ISO8601-STRCMP",
-        "type": "FIX",
-        "title": "system-auditor C-08 is a broken detector, not a real defect: its expected=0 threshold is mathematically unsatisfiable (24h alerts window vs 2h-TTL agent_signals stubs) AND its window over-captures via the ISO8601 strcmp bypass already fixed in the code-plane twin",
-        "zone": "cross-service/",
-        "priority": "high",
-        "status": "IN_PROGRESS",
-        "size": "S",
-        "next_agent": "dev-team",
-        "supervised": false,
-        "plan_only": false,
-        "baseline_pass": true,
-        "source": "PO triage of system-auditor Tier-DATA sweep c20 2026-08-05T08:18:46Z - signal sys-20260805T081846-1853. Root-caused live against the named-volume market.db (readonly) 2026-08-05T08:23-08:27Z.",
-        "created_at": "2026-08-05T08:28:16Z",
-        "created_by": "po",
-        "updated_at": "2026-08-06T12:27:30Z",
-        "root_cause": "C-08 (docs/agents/system-auditor/flow/main.md:649) is `SELECT count(*) FROM alerts a LEFT JOIN agent_signals s ON a.id = s.alert_id WHERE s.id IS NULL AND a.triggered_at > datetime('now','-24 hours')` with expected=0. TWO independent faults compound, and the reported anomaly is a FALSE POSITIVE - the alert-engine write path is HEALTHY. (A) UNSATISFIABLE THRESHOLD: agent_signals alert-correlation stubs are TTL-bound at 2h (`expiresAt(ttlMinutes ?? 120)`, agentSignalStore.ts:570/604/634/661/688/715) and hard-purged by cleanExpired() on the daily off-hours dataAuditJob cron, while `alerts` rows are retained ~30d (checkStaleAlerts.ts D-4 is UPDATE-only, never deletes). So every alert older than the last GC sweep NECESSARILY has no surviving correlation row. expected=0 can only be met if zero alerts fired in the whole stale band. The check's own code-plane inverse (checkOrphanAgentSignalsAlertId.ts:15-16) already states this in prose: 'agent_signals correlation stubs are TTL-bound, ~2h, and purged by cleanExpired(), so any historical debt self-expires' - C-08 was never re-derived against that fact. (B) ISO8601 STRCMP BYPASS: `alerts.triggered_at` is a raw JS toISOString() string ('2026-08-04T01:21:58.806Z') while `datetime('now','-24 hours')` renders space-separated ('2026-08-04 08:26:52'). At index 10 'T'(0x54) > ' '(0x20), so every row sharing the bound's date-part compares greater and the window over-captures. LIVE PROOF 2026-08-05T08:26Z: as-written window = 40 alerts / 22 orphans; TRUE 24h window (julianday) = 28 alerts / 10 orphans; the oldest row the as-written window admitted was 31 HOURS old. This is the known recurring class feedback_sqlite_iso8601_datetime_strcompare_bypass, and it was ALREADY FIXED in the code-plane twin on 2026-08-01 (checkStaleAlerts.ts:23-30 wraps both sides as `datetime(triggered_at) < datetime('now',...)` and cites the same lesson by name) - the remedy simply never propagated to the flow-doc SQL the agent actually executes. That is memory feedback_fix_landed_in_the_pregate_not_the_probe_the_agent_actually_runs.",
-        "evidence_write_path_is_healthy": "Age-bucketed LEFT JOIN on the live DB gives a perfectly clean split with NO overlap: alerts <=17h old = 18 linked / 0 orphaned; alerts >=18h old = 22 orphaned / 0 linked. The 18h boundary equals the last cleanExpired() sweep (oldest surviving correlation stub = 2026-08-04T14:29:22Z, 17h old; 131 of 144 agent_signals rows are already past expires_at and awaiting the next sweep). Orphan status is therefore a pure function of GC timing x alert volume and carries ZERO information about write-path health. Producer-family breakdown confirms no producer-specific gap - EVERY family appears on BOTH sides (news 7 orphan/9 linked, price 9/1, ta 3/3, other 2/3, macro 1/2); a genuine co-write gap would concentrate in one family. fingerprint-null does not correlate either (21/16 vs 1/2). The brief's hypothesis that 'alert-engine writes alerts/price_alerts but not agent_signals' is DISCONFIRMED: `price_alerts` and `alert_engine_records` both hold 0 rows, and the prior co-write gap FU-ALERT-COWRITE-SCHEDULER-JOBS (2026-06 archive) is DONE and holding.",
-        "growth_claim_is_false": "The escalating brief framed this as monotonic 1->22 growth over 15 days implying a worsening defect. RAW-verified FALSE. True firing history: 1 orphan (sys-20260721T003810-2b02, 07-21) -> 121 orphans (sys-20260730T003538-10ba, 07-30, recorded in docs/data/DASHBOARD.md:242-249 and MISSING from both the live .signal_queue and the archives) -> 22 orphans (08-05). Non-monotonic, and it tracks alert volume: alerts/day = 8 (07-31), 11 (08-01), 7 (08-02), 42 (08-03), 26 (08-04). The 22 orphans are exactly the 08-04 alerts that fired before the 14:29Z GC horizon. There is no regression to chase.",
-        "files": [
-          "docs/agents/system-auditor/flow/main.md",
-          "apps/mcp-server/src/scheduler/news-analysis/audit-checks/checkOrphanAgentSignalsAlertId.ts",
-          "apps/mcp-server/src/scheduler/news-analysis/audit-checks/checkStaleAlerts.ts",
-          "docs/data/DASHBOARD.md",
-          "docs/protocols/system-audit-runbook.md"
-        ],
-        "ac": [
-          "AC-1 Make C-08 satisfiable or delete it. The threshold must be derivable from the data model: either (i) bound the alerts window to the agent_signals correlation-stub TTL horizon rather than 24h, or (ii) join only alerts whose paired stub could still be alive, or (iii) retire C-08 outright and rely on the code-plane inverse checkOrphanAgentSignalsAlertId (D-NEW2), which is TTL-aware by construction. Do NOT keep expected=0 against a 24h window - state explicitly in the flow doc WHY the chosen bound is satisfiable.",
-          "AC-2 Fix the ISO8601 strcmp bypass in the C-08 predicate by wrapping BOTH sides in datetime(), copying the already-proven pattern and rationale comment from checkStaleAlerts.ts:23-30 verbatim rather than reinventing it.",
-          "AC-3 FLEET REPLAY, not one line. Per memory feedback_fleetwide_gate_validated_on_one_file_optout_allowlist, audit EVERY C-xx/B-xx check in docs/agents/system-auditor/flow/main.md that compares a timestamp column against datetime('now',...) and report per-check whether the column is T-format. Already measured and CONFIRMED AFFECTED: financial_reports.parsed_at is 100% T-format (C-04, 7-day window) and agent_signals.created_at is MIXED 13% T / 87% space (C-07, 24h window - heterogeneous is the worst case because the same query silently applies two different semantics). Confirmed NOT affected: market_messages.sent_at 0% T (C-06), daily_ohlcv.updated_at 2% T. Fix every affected check in one pass.",
-          "AC-4 Regression test: seed an alerts row older than the correlation-stub TTL with its stub already purged, and assert C-08 (or its replacement) does NOT flag it. Also assert a row whose date-part matches the bound but which is genuinely outside the window is EXCLUDED - that is the strcmp bypass, and it must fail loudly if reintroduced.",
-          "AC-5 Retract the fabricated root causes already published. docs/data/DASHBOARD.md:246 asserts 'Signal processing pipeline may be delayed or alert-signal mapping broken' and :330 asserts 'Alerts created by alert-engine but not propagated to agent_signals table'. Both are agent-narrated, unmeasured, and now DISCONFIRMED. :243 also names the wrong table ('no matching signal_queue rows' - the join is on agent_signals). This is the confabulation class feedback_agent_selfreport_metalayer_confabulation; correct or withdraw both entries.",
-          "AC-6 Do not silently drop coverage. If AC-1 retires C-08, confirm in writing that checkOrphanAgentSignalsAlertId (D-NEW2) plus the storeAlerts/storeAlertsFromCommander writer guard genuinely cover the co-write-gap failure mode that C-08 was introduced to catch, so this fix does not trade a false positive for a blind spot."
-        ],
-        "promoted_at": "2026-08-06T11:54:38Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
-        "claimed_at": "2026-08-06T12:27:30Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)"
-      }
-    ]
+    "in_progress": []
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
