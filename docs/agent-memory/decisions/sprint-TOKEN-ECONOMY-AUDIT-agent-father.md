@@ -25,3 +25,12 @@ row's own declared sprint, matching the sibling po/qa/developer journal files fo
 - Rewrite inline fallback/shape-validation prose (news-scout, alert-commander) vs. pointer-only swap — chose pointer-only: savings come from eliminating the separate SKILL.md file reads, not inline prose; touching prose = behavior-change risk, zero extra saving.
 **why-decision:** Per audit_ref correction, every new line reads "→ skill: step-0-cowork § 0b[-0c]" — never restates "embeds GATEWAY-BLIND/regime-fallback boundaries".
 **why-change:** Scope closed at 10 files not 11 — `tick-snapshot.md` deviation justified above.
+
+### STEP agent-father-S3 · agent-father · 2026-08-06T09:58:00Z
+**task-id:** TE-T26
+**what-done:** Split `fb-market-poster/flow/main.md` (994L) at the MODE ROUTER: new `flow/daily.md` (902L, pure relocation of STEP 0-8) + main.md slimmed to 88L (guards + MODE ROUTER + new SHARED OUTPUT SSOT block). Deleted the 29L jargon table (dup of `fb-jargon-gate.sh`) → 1-line pointer; trimmed the 26L hashtag-composition prose in daily.md to a pointer at main.md § SHARED OUTPUT SSOT. Repointed all `main.md STEP X` cross-refs in weekly-recap.md/weekly-prediction.md to `daily.md`; registered daily.md (+ the 2 pre-existing unregistered weekly siblings) in init.md document_registry/Extensions.
+**what-considered:**
+- Relocate disclaimer/hashtag rule text into main.md as real SSOT (brief's explicit instruction) vs. leave a full second copy in daily.md — chose SSOT-in-main.md + pointer from daily.md, matching what weekly-recap/weekly-prediction already did for other STEPs.
+- Fix the 2 unregistered weekly flow files in init.md while touching that exact table vs. leave as pre-existing gap — chose fix (same document-registry anti-ghost duty this split itself triggers).
+**why-decision:** diff-verified both relocated halves (STEP0-jargon-table and hashtag-section-to-STEP4) are byte-identical to the pre-split file outside the 2 brief-authorized deletions — zero logic change, same class as TE-T16.
+**why-change:** none — matches brief `docs/architecture-briefs/2026-07-12-token-economy-lazyload-audit.md#T-26` exactly.

@@ -70,6 +70,12 @@ agent:
         type: definition
       - path: docs/agents/fb-market-poster/flow/main.md
         type: flow
+      - path: docs/agents/fb-market-poster/flow/daily.md
+        type: flow
+      - path: docs/agents/fb-market-poster/flow/weekly-recap.md
+        type: flow
+      - path: docs/agents/fb-market-poster/flow/weekly-prediction.md
+        type: flow
       - path: docs/agents/tools/package/fb-market-poster.md
         type: tool-package
       - path: docs/agent-memory/notebooks/fb-market-poster.md
@@ -185,4 +191,7 @@ If any Read of `docs/{policies,protocols,standards,references}/*.md` fails (file
 
 | Child | Trigger | Path |
 |---|---|---|
-| flow/main.md | every invocation | `docs/agents/fb-market-poster/flow/main.md` |
+| flow/main.md | every invocation (MODE ROUTER dispatcher) | `docs/agents/fb-market-poster/flow/main.md` |
+| flow/daily.md | MODE ROUTER: VN_DOW 1-5 (Mon-Fri, DAILY) | `docs/agents/fb-market-poster/flow/daily.md` |
+| flow/weekly-recap.md | MODE ROUTER: VN_DOW=6 (Sat, WEEKLY_RECAP) | `docs/agents/fb-market-poster/flow/weekly-recap.md` |
+| flow/weekly-prediction.md | MODE ROUTER: VN_DOW=0 (Sun, WEEKLY_PREDICTION) | `docs/agents/fb-market-poster/flow/weekly-prediction.md` |

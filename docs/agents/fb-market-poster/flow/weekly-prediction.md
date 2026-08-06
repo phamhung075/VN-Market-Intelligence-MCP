@@ -1,4 +1,4 @@
-<!-- size-justification: ~200L — WEEKLY_PREDICTION Sunday sub-flow; main.md MODE ROUTER JUMPs here; +25L: PRIVACY GUARD pointer + digest-predict extraction filter + STEP 4d privacy gate; TNB 6-layer walk + T-45 gate + two-bucket conviction list + scenario framing + gate override all mandate the length. UC-CCA-P4 2026-07-23: +7L STEP 4e CLAIM-TRUTH GATE pointer (was ungated). FIX-FB-GATE-WEEKLY-FRAME-MODE 2026-07-25: STEP 4b replaced the manual "WEEKLY MODE OVERRIDE" procedure with a concrete --frame=weekly gate invocation (+8L net). FIX-FB-GATE-CHECKD2-NONWAIVABLE-NUMERIC-BLOCK 2026-07-25: STEP 4b +6L — replaced ambiguous "EXIT-only-on-real-fabrication posture" pointer with explicit per-check waivability (Check-C only; Check-D2 non-waivable, fix protocol pointer to main.md). -->
+<!-- size-justification: ~200L — WEEKLY_PREDICTION sub-flow; main.md MODE ROUTER JUMPs here; TNB 6-layer walk + T-45 gate + two-bucket conviction list mandate the length. TE-T26 2026-08-06: main.md cross-refs repointed to daily.md; disclaimer/hashtag cites main.md § SHARED OUTPUT SSOT. -->
 # FB Market Poster — Weekly Prediction Flow (Sunday / WEEKLY_PREDICTION)
 
 ## SELF-IDENTITY GUARD
@@ -114,10 +114,10 @@ For each high-conviction ticker candidate (from $prediction_inputs + watchlist t
 ticker_intel = call_tool(server="vn-market", tool="get_ticker_intelligence",  arguments={"code": ticker})
 tech_ind     = call_tool(server="vn-market", tool="get_technical_indicators", arguments={"code": ticker})
 ```
-Per-call errors: mark that ticker `data_quality = NO_TA` (same rule as `main.md` STEP 1b).
+Per-call errors: mark that ticker `data_quality = NO_TA` (same rule as `daily.md` STEP 1b).
 **data_quality=NO_TA ⇒ verdict MUST be QUAN_SAT only** (never MUA_TICH_LUY or GIAM_TY_TRONG without TA).
 
-**is_estimate / null rules (same as `main.md` STEP 1b):**
+**is_estimate / null rules (same as `daily.md` STEP 1b):**
 - `foreign_flow.net_bn = null` → direction only, NO tỷ đồng amount.
 - `macro.usdVndDelta = null` → "tỷ giá USD/VND đi ngang quanh {value}" — NOT "unfetchable".
 - Store `$carry_usable = (macro.carry.is_estimate==false AND macro.carry.carrySpread != null)`.
@@ -126,7 +126,7 @@ Per-call errors: mark that ticker `data_quality = NO_TA` (same rule as `main.md`
 
 ## STEP 2 — TNB 6-Layer Walk + T-45 Adversarial Gate
 
-**Reference:** Execute the TNB 6-Layer Walk as defined in `main.md` STEP 2b, and the T-45 Adversarial Gate as defined in `main.md` STEP 2c. Store results as `$tnb_synthesis` and `$t45_audit[]`.
+**Reference:** Execute the TNB 6-Layer Walk as defined in `daily.md` STEP 2b, and the T-45 Adversarial Gate as defined in `daily.md` STEP 2c. Store results as `$tnb_synthesis` and `$t45_audit[]`.
 
 **WEEKLY_PREDICTION adaptations to the standard walk:**
 - Layer 1 (clock): orient to incoming week macro events + macro calendar if available.
@@ -144,7 +144,7 @@ All 5 T-45 hard-fail rules apply identically (cross-ticker contamination, false-
 
 ## STEP 3 — Compose weekly prediction post
 
-**Language:** Plain everyday Vietnamese. Same jargon rules as `main.md` STEP 3 (forbidden English terms table applies; jargon gate enforced at STEP 4a).
+**Language:** Plain everyday Vietnamese. Same jargon rules enforced by `scripts/fb-jargon-gate.sh` (SSOT: `main.md` § SHARED OUTPUT SSOT; jargon gate run at STEP 4a).
 
 **Section structure (MANDATORY order — Dự đoán is THE main section):**
 
@@ -160,7 +160,7 @@ Regime narrative + what creates the coming week's setup. Source: `$tnb_synthesis
 
 **Required content:**
 
-1. **Market direction call** for the coming week: tăng / giảm / tích lũy / đi ngang. Must trace to Phân tích reasoning (earned-prediction rule from `main.md` STEP 4 check 7).
+1. **Market direction call** for the coming week: tăng / giảm / tích lũy / đi ngang. Must trace to Phân tích reasoning (earned-prediction rule from `daily.md` STEP 4 check 7).
 
 2. **VN-Index key levels** to watch — only levels traceable to `get_technical_indicators` or `get_market_context` from this run. No carry-forward from prior sessions (T-45 Rule T2).
 
@@ -177,14 +177,12 @@ Regime narrative + what creates the coming week's setup. Source: `$tnb_synthesis
 
 4. **≥1 if-then scenario** for the week (bull and/or bear): "Nếu {X} thì {outcome A}; nếu {Y} thì {outcome B}." Must be grounded in today's Phân tích.
 
-**Known-gaps pass-through (same as `main.md` STEP 3 Section 3):**
+**Known-gaps pass-through (same as `daily.md` STEP 3 Section 3):**
 - `foreign_net_tybillion = null` → direction only, no tỷ đồng amount.
 - `carry_usable = false` → NO carry/FII spread thesis in prediction.
 - `breadth = null` → acknowledge explicitly, never fabricate.
 
-**Shared output rules (same as `main.md` STEP 3):**
-- Disclaimer block verbatim at end (Vietnamese AI disclaimer).
-- Hashtag block: 5 mandatory tags (`#chungkhoan #chungkhoanvietnam #vnindex #dautu #thitruongchungkhoan`), space-separated, lowercase, no diacritics, immediately after closing `---`.
+**Shared output rules — SSOT: `main.md` § SHARED OUTPUT SSOT** (disclaimer block verbatim + hashtag composition rule).
 - 150–1300 words. Dự đoán must be LONGEST section. Trim Tóm tắt if needed, never Dự đoán.
 
 **Post title line:** `# Thị trường chứng khoán Việt Nam — Dự đoán tuần tới {DATE}`
@@ -194,7 +192,7 @@ Regime narrative + what creates the coming week's setup. Source: `$tnb_synthesis
 ## STEP 4 — Pre-write validation
 
 ### STEP 4a — Jargon gate (HARD-FAIL, REAL EXECUTION MANDATORY)
-→ Execute identically to `main.md` STEP 4a (skill: `.claude/skills/fb-jargon-gate/SKILL.md`). Must run as real shell command; paste verbatim stdout in RETURN. Gate exit non-zero → block write, fix all [FAIL] lines, re-run.
+→ Execute identically to `daily.md` STEP 4a (skill: `.claude/skills/fb-jargon-gate/SKILL.md`). Must run as real shell command; paste verbatim stdout in RETURN. Gate exit non-zero → block write, fix all [FAIL] lines, re-run.
 
 ### STEP 4b — Data-integrity gate — WEEKLY FRAME (FIX-FB-GATE-WEEKLY-FRAME-MODE)
 
@@ -215,10 +213,10 @@ rm -f "$TMPFILE"
 Paste the VERBATIM one-line gate stdout into the RETURN block.
 
 Same bounded-retry (max 2 fix rounds) and Check-C "bán tháo" negation-blind false-positive
-handling as `main.md` STEP 4b. **Waivability is per-check, not gate-wide**
+handling as `daily.md` STEP 4b. **Waivability is per-check, not gate-wide**
 (FIX-FB-GATE-CHECKD2-NONWAIVABLE-NUMERIC-BLOCK, 2026-07-25): only Check-C's prose pattern may
 honest-gap-and-PROCEED — every numeric check, most commonly **Check-D2** (period %-vs-live
-mismatch under this `--frame=weekly` call), is NON-WAIVABLE. On Check-D2 BLOCK, apply `main.md`
+mismatch under this `--frame=weekly` call), is NON-WAIVABLE. On Check-D2 BLOCK, apply `daily.md`
 STEP 4b's Check-D2 fix protocol (recompute the baseline as the PRIOR period's close, never the
 first session's own close inside this period, then re-derive every dependent figure) and re-run;
 still BLOCKing after 2 rounds → send_telegram(bug) + EXIT, never PROCEED with a known-wrong number.
@@ -233,7 +231,7 @@ still BLOCKing after 2 rounds → send_telegram(bug) + EXIT, never PROCEED with 
 - 150–1300 words.
 
 ### STEP 4d — Privacy leakage gate (HARD-FAIL — extra emphasis on this mode)
-→ Rule SSOT and full forbidden-token list: `main.md` § PRIVACY GUARD + STEP 4c.
+→ Rule SSOT and full forbidden-token list: `main.md` § PRIVACY GUARD. Gate procedure: `daily.md` STEP 4c.
 → Extraction filter at STEP 1 already stripped holdings from $prediction_inputs. This gate confirms nothing leaked through into the composed post body.
 
 LLM semantic scan of the FULL post body. Pay special attention to the Dự đoán conviction buckets — personal position framing is most likely to leak there from digest-predict.md portfolio thesis language.
@@ -252,7 +250,7 @@ LLM semantic scan of the FULL post body. Pay special attention to the Dự đoá
 Log "PRIVACY GATE: PASS" in RETURN block after clean scan.
 
 ### STEP 4e — CLAIM-TRUTH GATE (hard gate — last pre-write check)
-→ Execute identically to `main.md` STEP 4d (skill: `.claude/skills/claim-truth-gate/SKILL.md`; `post_body` = composed weekly-prediction post body from STEP 3; `agent_id` = "fb-market-poster"; non-real-time semantics per SKILL.md — persistent second-pass FAIL blocks the write; exit 2 = config-error → `send_telegram(channel="bug", message="[fb-market-poster] claim-truth-gate CONFIG ERROR")` + EXIT, never treat as PASS).
+→ Execute identically to `daily.md` STEP 4d (skill: `.claude/skills/claim-truth-gate/SKILL.md`; `post_body` = composed weekly-prediction post body from STEP 3; `agent_id` = "fb-market-poster"; non-real-time semantics per SKILL.md — persistent second-pass FAIL blocks the write; exit 2 = config-error → `send_telegram(channel="bug", message="[fb-market-poster] claim-truth-gate CONFIG ERROR")` + EXIT, never treat as PASS).
 
 Log "CLAIM-TRUTH GATE: PASS" in RETURN block after clean pass (or "FAIL-corrected" / "BLOCKED" per outcome).
 
@@ -261,8 +259,8 @@ Log "CLAIM-TRUTH GATE: PASS" in RETURN block after clean pass (or "FAIL-correcte
 ## STEP 5 — Write deliverable
 
 DATE = Sunday VN date (UTC+7), YYYY-MM-DD.
-Write to `docs/social/fb-post-{DATE}.md` using the file format in `main.md` STEP 5.
-Verify/create `docs/social/fb-feedback.md` (same as `main.md` STEP 6).
+Write to `docs/social/fb-post-{DATE}.md` using the file format in `daily.md` STEP 5.
+Verify/create `docs/social/fb-feedback.md` (same as `daily.md` STEP 6).
 
 ---
 

@@ -11,7 +11,7 @@ description: >
 Deterministic pre-publish gate for fb-market-poster. Runs the jargon/typo/hexagram/calendar
 check script and returns pasted output to the calling flow.
 
-## Invocation (called from STEP 4a of fb-market-poster/flow/main.md)
+## Invocation (called from the jargon-gate STEP of each fb-market-poster flow: `daily.md` STEP 4a, `weekly-recap.md` STEP 3a, `weekly-prediction.md` STEP 4a — TE-T26 2026-08-06 moved the DAILY caller from main.md to daily.md)
 
 1. Write the composed post body to a temp file:
    ```bash

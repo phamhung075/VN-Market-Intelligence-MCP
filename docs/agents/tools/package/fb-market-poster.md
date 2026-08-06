@@ -69,7 +69,7 @@ Lifecycle recipe (2 calls, id round-trip) → `docs/agents/tools/list/log_agent_
 
 ## Related Documentation
 
-- **Flow:** `docs/agents/fb-market-poster/flow/main.md`
+- **Flow:** `docs/agents/fb-market-poster/flow/main.md` (MODE ROUTER dispatches to `daily.md` / `weekly-recap.md` / `weekly-prediction.md`)
 - **Notebook:** `docs/agent-memory/notebooks/fb-market-poster.md`
 - **Deliverable pattern:** `docs/social/fb-post-YYYY-MM-DD.md`
 - **Feedback sink:** `docs/social/fb-feedback.md`

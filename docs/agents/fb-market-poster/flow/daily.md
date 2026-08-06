@@ -1,0 +1,902 @@
+<!-- size-justification: ~900L — DAILY pipeline (STEP 0-8): TNB 6-layer synthesis, T-45 gate, 3-section compose, 4 pre-write gates, notebook write. Split from main.md (TE-T26, 2026-08-06); guards/MODE ROUTER/output SSOT stay there. Full history in git log. -->
+# FB Market Poster — Daily Flow (Mon–Fri / DAILY)
+
+## SELF-IDENTITY GUARD
+
+You are `fb-market-poster` executing **DAILY** mode. Execute this flow end-to-end.
+→ General rule: `docs/agents/fb-market-poster/flow/main.md` § SELF-IDENTITY GUARD (same override: you are a spawned subagent, not the router; execute your flow directly).
+
+→ **PRIVACY GUARD (SSOT: `main.md` § PRIVACY GUARD):** post is PUBLIC — no portfolio holdings, no personal positions, no PII. Pre-write gate enforced at STEP 4c below.
+
+> Error boundary → skill: `.claude/skills/cowork-error-boundary/SKILL.md`
+
+**Tools:** `docs/agents/tools/package/fb-market-poster.md`
+
+## Input
+
+Mon–Fri cron fires: 09:15 UTC = 16:15 VN — 1h after the 15:00 VN close, 30-min buffer after the EOD CHEF dish (08:45 UTC / 15:45 VN). `main.md` MODE ROUTER (VN_DOW 1-5) routes here.
+
+## Output
+
+`docs/social/fb-post-YYYY-MM-DD.md` — dated Facebook draft post in plain Vietnamese.
+`docs/agent-memory/notebooks/fb-market-poster.md` — cycle log (APPEND class, last-3 sections; per notebook-write AC-6).
+
+---
+
+## STEP 0 — Bootstrap
+
+<!-- FIX-CYCLE-BOOTSTRAP-AGENT-ENUM-SSOT: fb-market-poster is NOT a signal-producing cycle
+     participant — it is a downstream notebook-only consumer of already-synthesized intelligence.
+     get_cycle_bootstrap rejects agent_name="fb-market-poster" with a Zod invalid_enum_value error.
+     The cycle-bootstrap skill MUST NOT be used here. Market/system context is fully covered by
+     the live tool calls in STEP 1b (get_market_snapshot, get_market_context, get_market_foreign_flow).
+     Decision path B: correct the caller, do NOT widen the Zod schema. -->
+
+Capture cycle start anchor:
+```
+CYCLE_START_UTC = date -u +"%Y-%m-%dT%H:%M:%SZ"
+```
+
+**STEP 0a — Publish-once dedup gate (DAILY path)**
+
+Before starting expensive data-gathering, claim a date-keyed published marker. Guards against double-fire when standalone crons and cowork slots (`fb-daily`) briefly overlap, and ensures any re-spawn of the same tick is a no-op.
+
+```
+# VN_DATE = today's calendar date in VN timezone (UTC+7).
+# Derive from CYCLE_START_UTC: add 7 hours, take the YYYY-MM-DD date part.
+# e.g. CYCLE_START_UTC="2026-06-29T02:15:00Z" → VN="2026-06-29T09:15:00+07" → VN_DATE="2026-06-29"
+VN_DATE   = date part of (CYCLE_START_UTC + 7h)          # YYYY-MM-DD in UTC+7
+DEDUP_KEY = "published:fb-daily:" + VN_DATE              # e.g. "published:fb-daily:2026-06-29"
+
+DEDUP_CLAIM = call_tool(server="vn-market", tool="task_claim", arguments={
+  "task_id":              DEDUP_KEY,
+  "task_kind":            "cowork-slot",
+  "owner_agent":          "fb-market-poster",
+  "owner_client_session": $CLAUDE_CODE_SESSION_ID,
+  "ttl_seconds":          100800
+})
+```
+
+- `claimed: true` → first run for this VN date → proceed to `Log cycle start` below.
+- `claimed: false` → already published today → send WORK notification and EXIT cleanly (no re-post, no data gathering):
+
+```
+if DEDUP_CLAIM.claimed != true:
+  call_tool(server="vn-market", tool="send_telegram", arguments={
+    "channel": "work",
+    "message": "[fb-market-poster] dedup: already published for " + VN_DATE + " (slot=fb-daily) — skipping re-run"
+  })
+  EXIT with: "DONE: duplicate-daily-fb-post blocked | already published for date=" + VN_DATE + " | PIPELINE: no-op"
+```
+
+**Weekend note:** WEEKLY_RECAP and WEEKLY_PREDICTION modes jump to their sub-flows via the MODE ROUTER BEFORE reaching STEP 0. Their equivalent dedup gate (STEP 0a) uses a period-keyed task_claim (`published:fb-weekend:<PERIOD_SAT>`, same kind/ttl as daily) and is implemented in both sub-flows' STEP 0a sections. Both Saturday and Sunday of the same weekend share the same Saturday-date key to prevent double-posting within the weekend window.
+
+Log cycle start:
+```
+call_tool(server="vn-market", tool="log_agent_work", arguments={
+  "agent_name": "fb-market-poster",
+  "status": "running"
+})
+```
+Store returned `id` as `$logId`.
+
+---
+
+## STEP 1 — Read synthesized sources (L1 — primary)
+
+Read the following files. Each read is guarded: if file missing or <50 chars → log + skip (do NOT fail cycle, this source is unavailable):
+
+1. `docs/agent-memory/notebooks/unified-agent.md` — CHEF dishes. Extract:
+   - Today's MARKET dishes (morning + EOD at minimum). Look for the `[LATEST]` entry.
+   - VN-Index level and % change for the day.
+   - Key sector moves with direction + delta%.
+   - Notable tickers with direction + delta%.
+   - Macro context summary (USD/VND, Gold, macro regime in plain terms).
+
+2. `docs/agent-memory/notebooks/news-scout.md` — News findings. Extract:
+   - Top 1-2 news items of the day with impact direction.
+   - Any legal/crisis signals relevant to watchlist.
+
+3. `docs/agent-memory/notebooks/market-watcher.md` — Anomalies. Extract:
+   - Any price anomalies fired today (ticker, direction, magnitude).
+
+**Grounding check:** At least the unified-agent notebook must yield usable data (VN-Index reading + at least 1 sector or ticker move). If not → send_telegram(bug, "[fb-market-poster] No usable CHEF data found for today — cycle aborted") → EXIT.
+
+---
+
+## STEP 1b — Live enrichment via vn-market tools (HARD-REQUIRED for recap spine — ALL tiers)
+
+**Purpose:** ALL per-ticker % moves and numeric market figures for the Tóm tắt nhanh recap spine MUST come from live tool calls made THIS cycle. Notebooks and CHEF dishes may inform NARRATIVE and CONTEXT only — they are FORBIDDEN as the numeric source for any per-ticker price change, index level, breadth count, or liquidity figure in the recap.
+
+**ANTI-FABRICATION RULE (failure mode: feedback_fb_poster_fabricates_when_data_thin):**
+- CHEF EOD/morning notebooks may be stale or blocked. When they are, the poster MUST NOT use any per-ticker % or index level from a CHEF notebook entry as if it were current session data.
+- A per-ticker move figure (e.g. "VIC −6.6%, VHM −8.5%") MUST trace to a live `get_market_snapshot` or `get_ticker_intelligence` call in THIS cycle. If the tool call fails or returns no data for a ticker → write an honest gap: "công cụ chưa trả số cho [TICKER] phiên này" — NEVER invent or carry a stale figure.
+- Any per-ticker % that exceeds ±7% on HOSE (the daily price limit) is physically impossible and is a fabrication signal. If a CHEF source or working-memory figure would produce such a value, DISCARD it and write an honest gap.
+
+**HARD-REQUIRED-LIVE TIER (same hard requirement as get_market_snapshot — NOT optional):**
+
+The following three tool calls are HARD-REQUIRED-LIVE, on equal footing with the price spine:
+
+1. `get_market_foreign_flow(arguments={})` — **MARKET-WIDE foreign flow for the "Khối ngoại" recap line.**
+   - **TOOL DISAMBIGUATION (failure mode: notebook logged "get_foreign_flow=skipped (requires code param)"):**
+     - `get_market_foreign_flow` = market-wide aggregated flow; NO `code` argument; call with `arguments={}`. Use this for the Tóm tắt nhanh "Khối ngoại" recap line.
+     - `get_foreign_flow(arguments={"code": ticker})` = per-ticker flow; requires a ticker code. Use ONLY for ticker-specific deep dives in Phân tích/Dự đoán, NOT for the recap aggregate.
+     - NEVER substitute per-ticker `get_foreign_flow` for the market-wide recap. If confused, call `get_market_foreign_flow(arguments={})` first.
+   - If this call errors: retry ONCE. If still fails → write per-field honest gap: "dữ liệu dòng vốn ngoại phiên này công cụ chưa trả được" for ONLY the foreign-flow field. NEVER bundle with FX/TA into a blanket gap.
+
+2. `get_macro_snapshot(arguments={})` — **FX + macro figures including usdVnd.**
+   - FX stale/flat handling: if `usdVndDelta=null` or `fetched_at_source` is not today → this is NOT unfetchable; it means the rate is flat/unchanged. Report as: "tỷ giá USD/VND đi ngang quanh {usdVnd value}" — NOT "công cụ chưa lấy được tỷ giá".
+   - If this call errors entirely: retry ONCE. If still fails → write per-field honest gap: "tỷ giá phiên này công cụ chưa trả được" for ONLY the FX field.
+
+3. `get_technical_indicators(arguments={"code": ticker})` — **TA for named tickers (≥15 tickers).**
+   - Call for all tickers flagged as potential post subjects (top movers + unusual foreign flow).
+   - If a per-ticker TA call errors: mark that ticker `data_quality = NO_TA` and append "(không có dữ liệu kỹ thuật phiên này)" to its verdict. NEVER skip TA wholesale.
+   - If >80% of TA calls error: write honest gap for TA section: "dữ liệu kỹ thuật đa số mã chưa lấy được phiên này". Do NOT omit silently.
+
+**GATEWAY-BLIND PREMISE — REMOVED (failure mode: notebook logged "Live tools called: None (gateway-blind this run per instruction)"):**
+- fb-market-poster MUST execute STEP 1b live every run. There is NO "accept partial pre-fetched spine" path.
+- Agent-spawned fb-poster inherits live gateway access (verified: news-scout/chef/ops all use call_tool).
+- If genuinely gateway-blind at runtime (mcpServers count = 0 confirmed): for EACH of the three hard-required fields, write a SPECIFIC per-field honest gap stating the field name and reason. NEVER silently omit all three fields with a blanket "dữ liệu dòng vốn ngoại, tỷ giá và các chỉ báo kỹ thuật phiên này công cụ chưa lấy được".
+
+**BLANKET-GAP FORBIDDEN:** The phrase "dữ liệu dòng vốn ngoại, tỷ giá và các chỉ báo kỹ thuật phiên này công cụ chưa lấy được" (or any equivalent bundling all three into one omission) is FORBIDDEN. Each field's gap must be stated individually with its own tool name.
+
+Run ALL calls in this step. For the three hard-required tools above, retry once on error before writing a per-field honest gap. For all other tools (legal_risk, sentiment, earnings, ticker_intel), skip individual call if it errors (log + continue).
+
+```
+# Indices + snapshot
+snapshot = call_tool(server="vn-market", tool="get_market_snapshot", arguments={})
+
+# Market context (includes breadth via market_context)
+market_context = call_tool(server="vn-market", tool="get_market_context", arguments={})
+
+# Foreign flow — MARKET-WIDE (no code argument)
+foreign_flow = call_tool(server="vn-market", tool="get_market_foreign_flow", arguments={})
+
+# Ticker intelligence — ALL active watchlist tickers (NOT just top 5-10)
+# ALGORITHM: Query ALL active watchlist tickers from system-map.json:
+#   jq '[.project.watchlist[] | select(.active==true) | .ticker]' docs/data/system-map.json
+# For EACH ticker in the full active watchlist, call:
+#   ticker_intel_{ticker} = call_tool(server="vn-market", tool="get_ticker_intelligence", arguments={"code": ticker})
+# Extract signals from ALL watchlist calls; if a ticker call errors, log and skip that ticker (do not fail cycle).
+# Hold results in working memory keyed by ticker.
+# If >50% of ticker_intel calls error, set data_quality_flag = "PARTIAL" in working memory.
+
+# Technical indicators — pull for tickers flagged as potential post subjects (≥15 tickers)
+# Prioritise: top movers from ticker_intel results + any ticker with unusual foreign flow.
+# For each selected ticker, call:
+#   tech_indicators_{ticker} = call_tool(server="vn-market", tool="get_technical_indicators", arguments={"code": ticker})
+# If a call errors, log and mark that ticker data_quality = NO_TA.
+# IMPORTANT: Flag any returned field that looks corrupted (e.g. MA20 = 3.68M for a stock priced at thousands)
+# as is_estimate=true; do NOT use corrupted indicator values in Layer-5 conviction calls.
+
+# Legal risk signals — required for T-45 adversarial governance checks
+legal_risk = call_tool(server="vn-market", tool="get_legal_risk_signals", arguments={})
+
+# Sentiment trend — 7-day slope; is_estimate varies per ticker
+sentiment = call_tool(server="vn-market", tool="get_sentiment_trend", arguments={})
+
+# Earnings calendar — filing deadlines only; do NOT use as beat/miss signal
+earnings = call_tool(server="vn-market", tool="get_earnings_calendar", arguments={})
+```
+
+From results, extract and hold in working memory:
+- All indices present in `snapshot`: VN-Index, VN30, HNX-Index, UPCOM — each with `value`, `point_change`, `pct_change`.
+- Breadth from `market_context`: `advancers`, `decliners`, `unchanged`, `ceiling` (tăng trần), `floor` (giảm sàn). If unavailable via this tool, breadth details may be omitted (log data unavailability).
+- Liquidity: `total_matched_value` (tỷ đồng) and `avg_value_recent` if available from snapshot or market_context.
+- Foreign flow: `net_value`, `most_bought` tickers (top 3), `most_sold` tickers (top 3) from `get_market_foreign_flow` result.
+- Top movers: from watchlist ticker intelligence calls — winners and losers by price change % (extract from individual `get_ticker_intelligence` results; if insufficient movers available, omit this field and log in QUALITY section).
+- Technical indicators: per-ticker RSI, MACD, Bollinger Band positions held in working memory keyed by ticker. Flag corrupted fields (e.g. MA20 implausibly large/small) as is_estimate=true.
+- Legal risk: dated legal signals from `legal_risk` — relevant watchlist tickers, governance flags. Required for T-45 adversarial check (STEP 2c hard-fail rule 1).
+- Sentiment trend: 7-day slope from `sentiment` — note is_estimate flag per ticker.
+- Earnings calendar: BCTC overdue tickers from `earnings` — use only as "filing overdue" flag; NOT as earnings beat/miss signal.
+
+**Merge rule:** Live tool data is authoritative over notebook data for quantitative fields. If a live tool errors → fall back to notebook value. Log which source was used for each field.
+
+**Macro snapshot + carry provenance (DSI-CONSUMER-HONORS-ISESTIMATE):**
+```
+macro = call_tool(server="vn-market", tool="get_macro_snapshot", arguments={})
+```
+From the result, read `macro.carry` and store `$carry_usable = (macro.carry.is_estimate == false AND macro.carry.carrySpread != null)`.
+If the call errors or `macro` is unavailable, set `$carry_usable = false`.
+This flag governs carry/FII narrative eligibility throughout STEP 3 (see carry hard rule below).
+
+**Macro provenance marker (FIX-FB-GATE-STALE-MACRO-GUARD — required for STEP 4b Check-I):**
+
+STEP 4b's gate Check-I rejects any macro/FX figure in the post that has no proof it was
+fetched THIS cycle (lesson L3: 06-19 USD/VND carried stale; 06-21 unverified prior level).
+The gate cannot see tool calls — it can only see files. This flow step is where the
+"fetched-this-cycle" proof is produced: build `$macro_provenance`, one entry per macro/FX
+class, from the `macro` result above (GENERIC — every macro/FX class, not just USD/VND):
+
+```
+$macro_provenance = {
+  "usdVnd":    { "fetched_this_cycle": <bool>, "value": <number|null>, "source": "get_macro_snapshot", "fetched_at": <ISO8601 now> },
+  "gold":      { "fetched_this_cycle": <bool>, "value": <number|null>, "source": "get_macro_snapshot", "fetched_at": <ISO8601 now> },
+  "brent":     { "fetched_this_cycle": <bool>, "value": <number|null>, "source": "get_macro_snapshot", "fetched_at": <ISO8601 now> },
+  "fedRate":   { "fetched_this_cycle": <bool>, "value": <number|null>, "source": "get_macro_snapshot", "fetched_at": <ISO8601 now> },
+  "bondYield": { "fetched_this_cycle": <bool>, "value": <number|null>, "source": "get_macro_snapshot", "fetched_at": <ISO8601 now> }
+}
+```
+
+Per-class rule: `fetched_this_cycle = true` ONLY if `macro` returned a genuine value for that
+class this cycle with `is_estimate == false` (reuse the SAME provenance discipline as the
+generalised is-estimate rule in Layer 6 above — do NOT invent a second concept). If the call
+errored, the field is missing, or `is_estimate == true` → `fetched_this_cycle = false, value:
+null` and the post MUST use the honest-gap phrasing for that class (e.g. "tỷ giá phiên này
+công cụ chưa trả được") — never assert a number for a class marked `fetched_this_cycle:false`.
+**Fed rate note:** `fedFundsRate`/`vndDepositRate` are documented stale fixtures (see carry
+hard rule below) — mark `fedRate.fetched_this_cycle = false` unless a genuinely live-tagged
+field is available this cycle; default to the honest gap for Fed rate.
+
+Hold `$macro_provenance` in working memory — STEP 4b writes it to a temp file and passes it
+as the gate's 4th argument.
+
+---
+
+## STEP 2 — Read forward-looking sources (L2 — mandatory for Dự đoán)
+
+These feeds the **Dự đoán** section. Read ALL that exist — guard each: if file missing or <50 chars → skip and log. Do NOT skip this entire step.
+
+4. `docs/agent-memory/notebooks/digest-predict.md` — Digest-predict signals and weekly outlook. Extract:
+   - Any forward-looking signals (predicted direction, key levels, scenarios) for the next session or week.
+   - Weekly outlook if present (sector rotation, regime call).
+
+5. `docs/agent-memory/notebooks/unified-agent.md` (already read in STEP 1 — do NOT re-read; use working memory) — re-check for:
+   - CHEF outlook / conviction section (look for keywords: "dự báo", "tuần tới", "kỳ vọng", "nhìn về", "outlook", "conviction").
+   - Any regime call (risk-on / risk-off / carry / FII pressure language).
+
+6. Read up to 2 relevant `docs/analysis-briefs/*.md` — only tickers explicitly flagged in CHEF as key movers. Extract any forward call or price target.
+
+Hold all extracted forward signals in working memory under the label `$prediction_inputs`.
+
+---
+
+## STEP 2b — TNB 6-Layer Top-Down Walk (mandatory synthesis gate)
+
+**Purpose:** Produce a structured intermediate object `$tnb_synthesis` that STEP 3 compose reads instead of raw data. Every future run must walk all 6 layers — the flow may NOT skip this step or degrade to a raw-data recap.
+
+**CHEF shortcut — evaluate first:**
+```
+$chef_dish_available = (
+  unified-agent.md[LATEST].date == TODAY (VN date)
+  AND unified-agent.md[LATEST].layers_walked == true
+  AND unified-agent.md[LATEST].clusters > 0
+)
+```
+- If `$chef_dish_available = true`: seed Layer 1 clock_phase and Layer 3 regime from CHEF's published phase declarations; use CHEF's cluster map as the starting Layer-4 sector records, then update each with fresh STEP 1b flow data. Each CHEF-seeded input still carries its is_estimate provenance.
+- If `$chef_dish_available = false` (CHEF silent or thin): walk ALL 6 layers from STEP 1b live data. No reduced path. Fewer high-conviction outputs from this walk is correct and expected — do NOT pad.
+
+Store the completed walk as `$tnb_synthesis` in working memory.
+
+---
+
+### Layer 1 — Macro momentum (investment clock)
+
+Inputs (from STEP 1b `macro` + `market_context`): CPI YTD % with is_estimate flag, IIP manufacturing YTD % with is_estimate flag, VND/USD, DXY, Brent, gold, trade balance.
+
+Output field: `clock_phase` — one of: Recovery / Overheat / Stagflation / Slowdown.
+Derivation: Growth direction (IIP) × Inflation direction (CPI). Attach is_estimate flag to each input used.
+
+**Rule:** NEVER use a figure marked is_estimate=true as a hard clock classifier. If the decisive input is estimated, record clock_phase as "unconfirmed / lean {X}" not "{X}".
+
+**CPI source discipline:** Use only the NSO YTD figure from `get_macro_snapshot` as delivered in this run. Do NOT carry forward a CPI number from a prior session or notebook. Re-read each cycle.
+
+---
+
+### Layer 2 — FX / capital flow pressure
+
+Inputs: usdvnd, DXY, carry spread from `$carry_usable` (STEP 1b already computed).
+
+Output fields:
+- `FX_regime`: Appreciation / Depreciation / Neutral
+- `carry_verdict`: Tight / Neutral / Loose — if `$carry_usable = false`, set carry_verdict = "unavailable"
+
+**Coherence check:** If foreign flow direction and FX direction conflict (e.g. VND weaker but foreigners net-buying VND-denominated equities), flag as: "FX thesis weakened — flow data contradicts blanket FX exit narrative." Do NOT assert FX depreciation as the cause of foreign selling when same-session foreign buys are present on the same VND-denominated assets.
+
+---
+
+### Layer 3 — Regime label
+
+Combine Layer 1 + Layer 2 + foreign flow net direction + liquidity signal.
+
+Output field: `regime` — a descriptive string naming the market phase (e.g. "SELECTIVE / LATE-CYCLE — cheap equities, money not tight, inflation above threshold, foreign net sell concentrated in banks").
+Output field: `regime_confidence` — HIGH (all inputs is_estimate=false) / MEDIUM / LOW.
+
+---
+
+### Layer 4 — Sector rotation map
+
+For EACH sector with watchlist coverage, produce one record:
+```
+{
+  sector: string,
+  phase: Recovery | Expansion | Slowdown | Contraction,
+  direction: up | flat | down,
+  thesis: "2-3 sentences naming specific tickers + flow evidence + macro linkage",
+  where_money_rotates: "INTO {sector} — {reason}" | "OUT OF {sector} — {reason}" | "NEUTRAL",
+  is_estimate_flags: [list of estimated inputs used in thesis]
+}
+```
+**Rule:** A thesis may NOT assert a directional rotation claim if the only supporting flow figure is is_estimate=true AND net_bn=null. Downgrade assertion to "suggestive" in that case.
+
+Store as `$tnb_synthesis.sectors[]`.
+
+---
+
+### Layer 5 — Per-ticker conviction
+
+For EACH ticker to be named in the post, produce one record:
+```
+{
+  ticker: string,
+  verdict: MUA_TICH_LUY | GIU | GIAM_TY_TRONG | TRANH | QUAN_SAT,
+  watch_zone: string (price range or condition — OMIT if no verified TA data from this run),
+  condition: string ("nếu X thì Y — ngược lại nếu Z thì W"),
+  reason: [
+    { point: string, is_estimate: true | false }
+    // 3-5 bullet points of evidence, each tagged
+  ],
+  risk: string (single most important thesis-breaker),
+  conviction: cao | trung_binh | thap,
+  data_quality: FULL | PARTIAL | NO_TA
+}
+```
+
+**Rules:**
+- If `data_quality = NO_TA`, verdict MUST be QUAN_SAT or GIU. NEVER assign MUA_TICH_LUY or GIAM_TY_TRONG when TA data was not fetched this run.
+- If TA was fetched but a specific field (support/resistance level) has no traceable source in the tool output from this session, OMIT that field. Do NOT synthesize or carry-forward support/resistance levels.
+- Attribution discipline: before using a score, news item, or flow figure for a ticker, verify it belongs to THAT ticker. Cross-ticker contamination (e.g. citing VNM's reputation score as GAS's) is a hard-fail in STEP 2c.
+
+Store as `$tnb_synthesis.conviction.calls[]`.
+
+---
+
+### Layer 6 — Valuation + uncertainty caveats
+
+Inputs:
+- EY spread: from `get_macro_snapshot` — cite is_estimate flag and the value verbatim.
+- Carry spread: from `$carry_usable` — if false, record carry as "unavailable" and omit from all post claims.
+- Named estimation gaps: record each null/missing field explicitly so STEP 3 compose never fabricates them.
+
+**Standard known_gaps entries (record even if not null — state actual value or "null"):**
+```
+{
+  known_gaps: [
+    { field: "breadth_counts",       value: null | <number>, source: "market_context" },
+    { field: "liquidity_tybillion",  value: null | <number>, source: "snapshot or market_context" },
+    { field: "foreign_net_tybillion",value: null | <number>, source: "get_market_foreign_flow net_bn" }
+  ]
+}
+```
+
+Store as `$tnb_synthesis.layer6` including EY spread, carry verdict, and `known_gaps[]`.
+
+**Generalised is-estimate provenance rule (DSI-CONSUMER-HONORS-ISESTIMATE — extended to all numbers):**
+Any number used in the post body must carry an is_estimate flag from its source tool.
+- is_estimate=true → frame as directional/estimated, not as fact.
+- net_bn=null → may state direction (buy/sell) but NOT a VND amount.
+- breadth=null → explicitly acknowledge unavailability; never silently omit.
+
+---
+
+## STEP 2c — T-45 Adversarial Gate (mandatory pre-compose)
+
+**Purpose:** Attempt independent refutation of each high-conviction claim in `$tnb_synthesis` before it reaches the compose step. Claims that fail must be softened or dropped. This gate mirrors the T-45 adversarial phase of the expert roundtable methodology.
+
+**Scope:**
+- Run on EVERY ticker verdict where `conviction = cao`.
+- Run on the top-level regime call.
+- For `conviction = trung_binh` or `thap`: run if evidence is sparse; log skip if time budget exhausted.
+
+**For each checked claim, produce a check record:**
+```
+{
+  claim: string,
+  holds: true | false,
+  severity: confirm | soften | drop,
+  refutation: string ("specific counter-evidence found" or "none found — claim survives"),
+  corrected_note: string (what to say instead if holds=false),
+  estimate_flag: bool (true if ANY input to the claim was is_estimate=true)
+}
+```
+
+**Hard-fail rules — severity=drop triggers immediate claim removal:**
+
+**Rule T1 — Cross-ticker contamination:** If a piece of evidence (score, news item, flow figure) is attributed to the wrong ticker, severity=drop that claim. Re-verify: does this evidence explicitly name THIS ticker in the tool output? Example class: a reputation score belonging to VNM cited as GAS's evidence.
+
+**Rule T2 — False-precision levels:** If a support/resistance level is cited to sub-VND precision (e.g. 22.918, 79.597) and CANNOT be traced to a specific field in `get_technical_indicators` or `get_ticker_intelligence` output from THIS run, severity=drop the level. Replace with a round-number approximation or omit entirely. No carry-forward from prior sessions.
+
+**Rule T3 — is_estimate=true cited as fact:** If a claim makes a hard assertion (e.g. "+515k net buy = cleanest flow signal") when the underlying figure is is_estimate=true OR net_bn=null, severity=soften at minimum. If the ENTIRE conviction call rests on a single estimated figure with no corroboration, severity=drop.
+
+**Rule T4 — Noise-scale foreign flow:** If a per-ticker foreign flow figure (in shares) is less than 5% of the ticker's own daily volume as returned by `get_ticker_intelligence`, it is noise-scale. Do NOT present noise-scale flow as directional conviction. Downgrade to "đáng theo dõi" or omit from verdict reasoning.
+
+**Rule T5 — Internal contradiction:** If the claim simultaneously cites a news headline AND a tool data point that contradict each other on the same ticker (e.g. flow tool shows net-buy, headline says net-sell for same name in same session), severity=soften minimum. The post must surface the contradiction explicitly rather than silently picking one side.
+
+**Gate outcome:**
+- Claims with severity=drop are REMOVED from `$tnb_synthesis.conviction.calls[]` before STEP 3.
+- Claims with severity=soften have their `conviction` downgraded one step (cao→trung_binh, trung_binh→thap) and `corrected_note` appended to the reason field.
+- The gate does NOT block the cycle — only individual claims are affected.
+- If ALL MUA_TICH_LUY verdicts are dropped by T-45: the post has no buy calls for this session. This is **correct behavior**. Do NOT manufacture buy calls to fill the Dự đoán section.
+- Log all dropped/softened claims in working memory under `$t45_audit[]` for STEP 8 notebook entry.
+
+---
+
+## STEP 3 — Compose the Facebook post
+
+**Language rule:** Plain, everyday Vietnamese. No analyst jargon. No citations (Layer #, σ, bp). No hexagram terms. No ticker codes without context. Use common names where helpful (e.g., "cổ phiếu Vingroup" alongside VHM/VIC if needed for clarity). Write as if explaining to a friend over coffee.
+
+**Forbidden English terms:** Use Vietnamese equivalents only — no English analyst jargon (bullish/bearish/breadth/momentum/etc.) in the post body, except inside quoted company names or ticker codes. SSOT for the full forbidden-term list + enforcement: `scripts/fb-jargon-gate.sh` (gate run at STEP 4a below; see `docs/agents/fb-market-poster/flow/main.md` § SHARED OUTPUT SSOT).
+
+---
+
+### Section ordering (MANDATORY — never change this order)
+
+The post has exactly THREE sections, in this order:
+
+```
+1. Tóm tắt nhanh   ← shortest; context only
+2. Phân tích       ← bridge; causal interpretation
+3. Dự đoán         ← LONGEST; the main value of the post
+```
+
+The **Dự đoán** section is THE point of the post. It must be the most prominent, most detailed section. The recap is secondary — keep it concise.
+
+---
+
+### Section 1 — Tóm tắt nhanh (brief recap)
+
+**Purpose:** Quick orientation — the factual context. Keep SHORT. Do NOT editorialize here.
+
+**Detail floor (mandatory — all quantitative data goes here):**
+
+**1. Multiple indices** — VN-Index, VN30, HNX-Index, UPCOM, each with: current value (điểm), point change (±x điểm), percentage change (±x%). Example: "VN-Index đóng cửa ở 1.285 điểm, giảm 12 điểm (−0,9%)".
+
+**2. Market breadth** — advancers (tăng), decliners (giảm), unchanged (đứng giá), ceiling hits (tăng trần), floor hits (giảm sàn) as plain counts. Example: "320 mã tăng, 410 mã giảm, 85 đứng giá; 18 trần, 22 sàn."
+
+**3. Liquidity** — total matched value in tỷ đồng; compare to recent average if available.
+
+**4. Foreign flows** — UNIT CRITICAL: The tool `get_market_foreign_flow` returns SHARE VOLUMES (not currency). Render as: Net direction + volume in native units: "Mua ròng +{net} {unit cổ phiếu}" where unit={k→"nghìn", M→"triệu"}. Example: "+651,2 nghìn cổ phiếu" (NOT "+651.200 tỷ đồng"). Coverage: label as "rổ theo dõi" (watchlist-only, not full exchange) and cite session date (latest_date from tool output). Per-ticker top bought/sold: cite as "POW +509,7 nghìn" (preserve tool format with comma, NOT "+509.700k" which is 1000x error). PLAUSIBILITY GATE: any rendered foreign net figure that would exceed the day's total session turnover (total_matched_value) is a unit error → STOP, re-derive, never publish currency-scaled figures.
+
+**5. Named movers (≥5 tickers, across multiple sectors)** — winners and losers; each with ticker + company name + % change + price. Spread across ≥2–3 sectors.
+
+**6. Named news / events / companies / policies** — at least 2 specific named items (not generic placeholders). From news-scout notebook.
+
+**7. Macro figures (if in scope)** — USD/VND, gold, oil each with direction. Mention impact only if direct.
+
+---
+
+### Section 2 — Phân tích (analysis)
+
+**Purpose:** Interpret the day causally. Connect the data from the recap to meaning. This is the bridge between facts and prediction.
+
+**Source for this section: `$tnb_synthesis` (from STEP 2b).**
+
+**Required content:**
+- **Regime narrative** — state `$tnb_synthesis.regime` in plain Vietnamese. Example: "Thị trường đang ở chế độ chọn lọc giai đoạn cuối chu kỳ — cổ phiếu rẻ, tiền không quá chặt, nhưng lạm phát trên ngưỡng." Do NOT paraphrase regime in generic terms.
+- **WHY did the market move today?** Name the causal driver(s) — policy, earnings, foreign selling, macro shift, sector rotation. Link to named events from Section 1 AND to the Layer-4 sector rotation thesis in `$tnb_synthesis.sectors[]`.
+- **Breadth and liquidity signals** — if `known_gaps.breadth_counts = null`, explicitly state "hôm nay công cụ không trả số mã tăng/giảm, nên xin phép không nêu để tránh đoán." Never fabricate a breadth count.
+- **Foreign flow interpretation** — apply Layer-2 coherence check result. If FX and flow directions conflict, surface the conflict; do NOT assert a single directional FX narrative.
+- **Sector rotation** — use Layer-4 `where_money_rotates` records; name specific sectors and tickers.
+
+**Style:** 3–5 sentences of plain causal reasoning. Every claim must name something specific. No generic filler.
+
+---
+
+### Section 3 — Dự đoán (prediction) — THE main section
+
+**Purpose:** Deliver the forward value. This is what readers come for. Must be EARNED — every prediction claim must follow from something stated in Section 2 (Phân tích). No bare assertions.
+
+**Primary source for this section: `$tnb_synthesis.conviction.calls[]` (T-45 survivors from STEP 2c).**
+Secondary source: `$prediction_inputs` from STEP 2 (digest-predict signals, CHEF outlook).
+
+**Per-ticker verdict rendering (map from Layer-5 schema):**
+- `verdict` → action label (use Vietnamese: MUA TÍCH LŨY / GIỮ / GIẢM TỶ TRỌNG / TRÁNH / QUAN SÁT)
+- `watch_zone` → "canh vùng {range}" — ONLY if field is present (not synthesized)
+- `condition` → render as the "nếu ... thì ..." sentence verbatim
+- `risk` → render as explicit caveat ("Rủi ro: ...")
+- `conviction` level governs phrasing:
+  - cao = firm recommendation ("nên MUA TÍCH LŨY")
+  - trung_binh = suggest/watch ("có thể cân nhắc")
+  - thap = observe only ("theo dõi, chưa hành động")
+- `data_quality = NO_TA` → append "(không có dữ liệu kỹ thuật phiên này)" after the ticker call. NEVER omit this caveat silently.
+
+**Known-gaps pass-through (from `$tnb_synthesis.layer6.known_gaps`):**
+- If `liquidity_tybillion = null`: do NOT state a tỷ đồng liquidity figure. Say "thanh khoản không có con số cụ thể" or cite only qualitative signals.
+- If `foreign_net_tybillion = null` (net_bn=null): state direction only ("nghiêng bán ra" / "nghiêng mua vào"), NOT a tỷ đồng amount.
+- If `breadth_counts = null`: acknowledge explicitly ("độ rộng hôm nay công cụ không trả về"). Never fabricate.
+
+**If ALL MUA_TICH_LUY verdicts were dropped by T-45:** the Dự đoán section contains only QUAN_SAT / GIU / TRANH calls. State honestly: "Phiên này chưa có tín hiệu mua tích lũy rõ ràng — đây là phiên quan sát và giữ." Do NOT manufacture buy calls.
+
+**Additional prediction inputs (supplement, not replace):**
+- digest-predict signals: predicted direction, key levels, scenarios for next session/week (from `$prediction_inputs`).
+- CHEF outlook conviction section if present.
+- Regime call from `$tnb_synthesis.regime`.
+- If NO fleet prediction AND no surviving conviction calls → derive from Phân tích section, but reason through it explicitly. Do not assert without reasoning.
+
+**Required content:**
+- **Direction call** — likely direction for next session and/or week (tăng / giảm / tích lũy / đi ngang), traced to Phân tích.
+- **Key levels or zones to watch** — at least 1 specific VN-Index level or range. Only cite levels traceable to `get_technical_indicators` or `get_market_context` output from this run.
+- **Per-ticker calls** — from `$tnb_synthesis.conviction.calls[]` (T-45 survivors only); each with verdict + condition + risk caveat.
+- **Scenario framing (if-then)** — at least 1 bull and/or bear "nếu ... thì ..." scenario grounded in today's analysis.
+
+**Tone:** Calm and reasoned. Not overconfident. Use hedged language naturally: "có khả năng", "nếu", "theo quan sát", "tuy nhiên cần theo dõi". No exaggerated certainty.
+
+---
+
+### Detail Floor — data availability rules
+
+Do NOT pad with generic vague sentences where data is missing — if a field is genuinely unavailable after tool calls, omit that field entirely. Do not fabricate numbers.
+
+---
+
+### Hard rules
+
+- ALWAYS include direction + delta% for VN-Index and any named ticker (memory: feedback_market_data_direction). Never write a bare price without change.
+- **Carry/FII provenance rule (DSI-CONSUMER-HONORS-ISESTIMATE):** Use `$carry_usable` from STEP 1b. If `$carry_usable=false` (macro is_estimate=true or carrySpread=null): the Phân tích and Dự đoán sections MUST NOT state a US-VN rate differential, a carry spread number, or any "khối ngoại rút / FII outflow do chênh lệch lãi suất" thesis. Do NOT compute a spread from the raw `fedFundsRate` / `vndDepositRate` fields — those are stale fixtures. The USD/VND rate and commodity prices (vàng/dầu) may still be reported if their own `is_estimate` flags are false. If `$carry_usable=true`, the served `carry.carrySpread` value may be cited verbatim.
+- Total post length: 150–1300 words. The 3-section structure naturally requires more space — do NOT truncate the Dự đoán section to meet a word target. Trim the recap if needed. Long-form is fine; the ceiling is generous by design.
+- No markdown formatting in the post body (no `**bold**`, no `#headers`). Plain prose + the disclaimer separator. Section headings may be written as plain Vietnamese labels if helpful for readability (e.g., "Tóm tắt:" or "Dự đoán:") but no markdown.
+- The disclaimer block MUST appear verbatim at the end, inside `---` separators.
+- The hashtag block MUST appear as the very last element, immediately after the closing `---` of the disclaimer block (no blank line between).
+- **Anti-filler rule:** Forbidden generic phrases: "tin tức trong nước", "thông tin tích cực", "yếu tố bên ngoài", "thị trường biến động" (alone, without specifics). Every explanatory sentence must name something concrete.
+
+---
+
+### Post template
+
+```
+[Hook — 1 sentence: bức tranh tổng thể ngày hôm nay với số liệu chính]
+
+Tóm tắt nhanh:
+[4 chỉ số với điểm + % thay đổi]
+[Độ rộng: số mã tăng/giảm/đứng/trần/sàn]
+[Thanh khoản tỷ đồng]
+[Khối ngoại: mua/bán ròng tỷ đồng; mã được mua/bán nhất]
+[≥5 cổ phiếu nổi bật từ nhiều ngành, mỗi mã kèm % và giá]
+[≥2 tin tức/sự kiện/chính sách có tên cụ thể]
+[Macro: tỷ giá / vàng / dầu nếu có tác động]
+
+Phân tích:
+[Lý giải nhân quả: tại sao thị trường diễn biến như vậy hôm nay]
+[Ý nghĩa của breadth, thanh khoản, dòng ngoại]
+[Chế độ thị trường hiện tại (risk-on/off, áp lực tỷ giá, v.v.)]
+[Câu chuyện ngành đang diễn ra]
+
+Dự đoán:
+[Hướng kỳ vọng cho phiên tiếp theo / tuần tới + lý do từ phân tích]
+[Mức hỗ trợ/kháng cự VN-Index cần theo dõi]
+[1-2 cổ phiếu/nhóm ngành cụ thể + điều kiện ("nếu ... thì ...")]
+[Ít nhất 1 kịch bản if-then: bull và/hoặc bear]
+
+---
+⚠️ Nội dung được tạo tự động bởi bot AI, chưa được kiểm chứng. Tôi không chịu trách nhiệm về tính chính xác của thông tin. Nếu nội dung có sai sót hoặc cần chỉnh sửa, mọi góp ý của bạn sẽ được ghi nhận lại để giúp bot hoạt động và phục vụ bạn tốt hơn.
+---
+[HASHTAG BLOCK — see composition rule below]
+```
+
+---
+
+### Hashtag block
+
+Composition rule (mandatory 5 tags verbatim, diacritics rule, format, disclaimer text) — SSOT: `docs/agents/fb-market-poster/flow/main.md` § SHARED OUTPUT SSOT.
+
+**DAILY-specific dynamic-tag derivation:** pull 2–3 sector tags + 1–3 ticker tags from the same movers/sector data used in STEP 1b (top_movers + snapshot) — the sectors and tickers that appear in the Tóm tắt nhanh and Phân tích sections.
+
+---
+
+## STEP 4 — Pre-write validation
+
+Before writing the file, verify ALL checks. Fix inline where possible; log and accept partial if a field was genuinely unavailable from all tools.
+
+**Structural checks (must pass — fix inline if failing):**
+1. VN-Index appears with both level AND % change.
+2. Disclaimer block present verbatim at the end.
+3. **STEP 4a — JARGON GATE (hard-fail, REAL EXECUTION MANDATORY)**
+
+   → skill: `.claude/skills/fb-jargon-gate/SKILL.md`
+
+   **Bash is available in this agent. The gate MUST be run as a real shell command — no
+   manual scan, no "equivalent review", no paraphrased PASS. A PASS reported without
+   verbatim stdout from the script is a process violation.**
+
+   Required execution sequence (follow SKILL.md exactly):
+   ```bash
+   TMPFILE=$(mktemp /tmp/fb-post-gate-XXXXXX.txt)
+   printf '%s' "$POST_BODY" > "$TMPFILE"
+   bash scripts/fb-jargon-gate.sh "$TMPFILE" "$POST_DATE"
+   GATE_EXIT=$?
+   rm -f "$TMPFILE"
+   ```
+   Paste the VERBATIM one-line stdout into the RETURN block:
+   - Pass: `[PASS] fb-jargon-gate: 0 violations`
+   - Fail: `[FAIL] ...` lines followed by `[BLOCK] Post write suppressed`
+
+   HARD-FAIL: gate exit non-zero = block STEP 5. Fix every [FAIL] line in the post body.
+   Re-run the gate. Proceed to STEP 5 ONLY when gate exits 0 with pasted verbatim output in hand.
+   If violations cannot be resolved after one fix round:
+   `send_telegram(channel="bug", message="[fb-market-poster] JARGON GATE: unresolvable — post NOT written")` and EXIT.
+
+   **Smoke-test requirement (run whenever gate script is changed):** Insert a deliberate
+   forbidden token (e.g. `sentiment`) into a temp file → gate MUST exit 1 and print [FAIL].
+   A gate that exits 0 on a planted violation is a false-green and must be fixed before use.
+
+**STEP 4b — DATA-INTEGRITY PLAUSIBILITY GATE (bounded retry — max 2 fix rounds)**
+
+This gate runs IN ADDITION to the jargon gate. It checks numeric plausibility — the jargon gate passes both fabricated and real numbers equally (known failure: feedback_fb_poster_fabricates_when_data_thin, feedback_fb_poster_gate_false_green).
+
+The gate script is `scripts/fb-data-integrity-gate.sh` (authored by sibling task FIX-FB-POST-DATA-INTEGRITY-GATE).
+
+**FRAME MODE (FIX-FB-GATE-WEEKLY-FRAME-MODE):** this STEP 4b is the DAILY caller — the
+invocation below runs with the gate's default `--frame=daily` (no flag needed, unchanged
+behavior). WEEKLY_RECAP / WEEKLY_PREDICTION posts (`docs/agents/fb-market-poster/flow/
+weekly-recap.md` / `weekly-prediction.md`) MUST instead invoke the gate with
+`--frame=weekly`, which compares stated index moves against a WEEKLY close series
+(`get_price_history` REST mirror) instead of the latest daily snapshot — closes lesson
+L5 (2026-06-21 weekly "+1,84% w/w" false-blocked against that day's daily −0,32%
+snapshot). This superseded the former "WEEKLY MODE OVERRIDE" manual-router-override
+procedure in those two files.
+
+**GATE-LOOP HARDENING (failure mode: regen attempt wedged ~4.5h on Check-C "bán tháo" negation-blind false-positive):**
+- Maximum fix rounds: **2**. On each BLOCK, fix ALL flagged violations, then re-run the gate ONCE.
+- **WAIVABILITY IS PER-CHECK, NOT GATE-WIDE (FIX-FB-GATE-CHECKD2-NONWAIVABLE-NUMERIC-BLOCK, 2026-07-25):** the honest-gap-and-PROCEED fallback two bullets below applies ONLY to Check-C's negation-blind prose pattern. Every numeric check (Check-A, B, D/D1/D2, E, F, H, J) compares two computed numbers, has no equivalent false-positive class, and is NON-WAIVABLE — a caveat sentence elsewhere in the post does not remove a false number still published in the body. LIVE MISS 2026-07-25: a WEEKLY_RECAP post hit Check-D2 BLOCK 2/2 rounds (post -3,29% vs live -5,67%) and PROCEEDED anyway under the old gate-wide reading of this posture — shipped `docs/social/fb-post-2026-07-25.md` with the wrong weekly baseline (Monday's own close used as "lúc đầu tuần" instead of the PRIOR week's close), cascading into a mislabelled "-101,47 điểm một ngày" (that number is the FULL-WEEK decline, not one session) and an understated "dao động 75 điểm" range (true range ≈118 points).
+- Check-D2 fix protocol (numeric — never softened by prose): on Check-D2 BLOCK in `--frame=weekly`/`--frame=monthly`, recompute the period baseline as the PRIOR period's closing value (last session dated BEFORE this period, per `get_price_history`), never the first session's own close WITHIN the reported period — then re-derive every dependent figure in the post (point change, % change, stated range, any single-session "một ngày"/"một phiên" claim) from the corrected baseline before re-running.
+- After 2 fix rounds, ONLY for Check-C's negation-blind pattern (see special case below): if gate still exits non-zero → write a SPECIFIC honest gap for each remaining flagged field (e.g. "số liệu thanh khoản chưa thể xác minh phiên này") and PROCEED to check 4. Do NOT loop further.
+- Special case — Check-C negation-blind false-positive: if the gate blocks on "bán tháo"-class language AND breadth data confirms orderly decline (e.g. ≤2 sàn, net-positive or small-negative advancers), AND the phrase includes a negation prefix ("chưa", "không", "chưa có dấu hiệu"), this is a known false-positive. Apply fix: replace "bán tháo" / "tháo chạy" / "hoảng loạn" with neutral language ("áp lực bán chưa lan rộng", "chốt lời nhẹ", "lực bán chưa quá lớn") and re-run once. If that one re-run passes: proceed. If still fails: write honest gap + proceed (do NOT EXIT on known false-positive).
+  - FIX-FB-GATE-CHECKC-NEGATION-LEXICON (2026-07-25): the gate itself now strips "chưa"-prefixed negation ("chưa hoảng loạn", "chưa phải bán tháo", "chưa từng ...") from its affirmative selloff match set — a correctly-negated "chưa" statement now PASSes on the first gate run without needing this bounded-retry rewrite. This retry path remains as defense-in-depth for negation forms outside the gate's strip set (e.g. a bare "không" not followed by phải/có/bán).
+- EXIT path: any numeric check (Check-A, B, D/D1/D2, E, F, H, J — includes but is not limited to Check-A per-ticker move >±7%) still BLOCKing after 2 fix rounds → send_telegram(bug) + EXIT cleanly. Never proceed with a known-wrong number. Never infinite-loop.
+
+Required execution sequence — writes `$macro_provenance` (STEP 1b) to a temp file and
+passes it as the gate's 4th argument, so Check-I (macro/FX stale-as-current +
+unverified-comparison-level guard, FIX-FB-GATE-STALE-MACRO-GUARD) can verify it:
+```bash
+GATE_4B_ROUNDS=0
+INTEGRITY_EXIT=1
+while [ $INTEGRITY_EXIT -ne 0 ] && [ $GATE_4B_ROUNDS -lt 2 ]; do
+  if [ -f "scripts/fb-data-integrity-gate.sh" ]; then
+    TMPFILE=$(mktemp /tmp/fb-post-integrity-XXXXXX.txt)
+    printf '%s' "$POST_BODY" > "$TMPFILE"
+    PROVFILE=$(mktemp /tmp/fb-post-macro-prov-XXXXXX.json)
+    printf '%s' "$macro_provenance_json" > "$PROVFILE"   # $macro_provenance from STEP 1b, JSON-serialised
+    bash scripts/fb-data-integrity-gate.sh "$TMPFILE" "$POST_DATE" "" "$PROVFILE"
+    INTEGRITY_EXIT=$?
+    rm -f "$TMPFILE" "$PROVFILE"
+    GATE_4B_ROUNDS=$((GATE_4B_ROUNDS + 1))
+    if [ $INTEGRITY_EXIT -ne 0 ] && [ $GATE_4B_ROUNDS -lt 2 ]; then
+      # Fix all flagged violations inline, then loop
+      echo "[fb-market-poster] STEP 4b round $GATE_4B_ROUNDS: BLOCK — applying fixes, will re-run"
+    fi
+  else
+    INTEGRITY_EXIT=0  # gate not yet deployed — log unavailability, proceed
+    echo "[fb-market-poster] STEP 4b: scripts/fb-data-integrity-gate.sh not found — skipping plausibility gate this cycle (deploy pending FIX-FB-POST-DATA-INTEGRITY-GATE)"
+    break
+  fi
+done
+# After loop: if INTEGRITY_EXIT still non-zero → write honest gap per blocked field + proceed (DO NOT EXIT unless real fabrication)
+```
+- Gate exit 0 = PASS → proceed to check 4 (post length).
+- Gate exits non-zero after 2 rounds:
+  - Check-C negation-blind pattern (described above) → write per-field honest gap + PROCEED. This is the ONLY waivable check (FIX-FB-GATE-CHECKD2-NONWAIVABLE-NUMERIC-BLOCK).
+  - Any other check — Check-A/B/D/D1/D2/E/F/H/J (per-ticker move >±7%, VN-Index level/pct mismatch, genuine unprovable breadth claim, etc.) → NON-WAIVABLE: send_telegram(bug, "[fb-market-poster] DATA-INTEGRITY GATE: unresolvable numeric BLOCK after 2 rounds — post NOT written") + EXIT. For Check-D2 specifically, apply the fix protocol above BEFORE concluding unresolvable.
+  - **Check-I violation (macro/FX stale-as-current or unverified-comparison-level, FIX-FB-GATE-STALE-MACRO-GUARD):** fix inline — either (a) replace the offending figure with the honest-gap phrasing for that macro/FX class, or (b) if `$macro_provenance` shows the class WAS fetched this cycle but the post cited a different (stale/carried) number, correct the post to the live-fetched value. NEVER assert a comparison/prior-level number ("vẫn ở mức X", "từ mức Y") that has no live-fetch provenance this cycle — drop the comparison framing or write the honest gap instead. This is a fixable-inline violation, not an EXIT condition.
+- If gate script missing → log warning, treat as PASS for this cycle only (gate pending deploy).
+- Violations the gate checks (reference — gate script is authoritative):
+  - Any per-ticker HOSE move > ±7% (above daily price limit = impossible = fabrication)
+  - Any "bán tháo / selloff" narrative when same-session breadth shows net-positive advancers and zero floor hits [NOTE: negation prefix "chưa/không" may trigger false-positive — see bounded retry handling above]
+  - Foreign flow rendered in tỷ đồ (currency) instead of share volume: any "Khối ngoại: ... tỷ đồng" figure where the numeric magnitude > session total_matched_value tỷ đồng is a 1000x scale error (unit confusion: volumes→currency). Catch "+651.200 tỷ đồng" pattern when session turnover is ~16 tỷ đồng. Fix: re-derive as share volume "+651,2 nghìn cổ phiếu" (NOT currency-scaled). Cite coverage "rổ theo dõi" (watchlist-only) and session date.
+  - Check-I (FIX-FB-GATE-STALE-MACRO-GUARD): any macro/FX figure (USD/VND, gold, Brent, Fed rate, bond yield) present in the post with no `fetched_this_cycle=true` entry in `$macro_provenance`, or an unverified comparison/prior-level figure ("vẫn ở mức X", "từ mức Y", "vượt ngưỡng Z") that does not match this cycle's live-fetched value.
+  - If gate BLOCKS but violation is a live tool value (not a CHEF carry-forward): override is permitted with a note in RETURN explaining the anomaly and its live source.
+
+Paste the VERBATIM one-line gate stdout into the RETURN block (INTEGRITY GATE field).
+
+**STEP 4c — PRIVACY LEAKAGE GATE (hard-fail — no bypass, no honest-gap fallback)**
+
+→ Rule SSOT: `main.md` § PRIVACY GUARD above.
+
+Scan the FULL composed post body for personal portfolio leakage. This is an LLM semantic scan (no shell script required) — catch both literal tokens and paraphrased personal-position framing.
+
+**Forbidden tokens to scan for:**
+- `danh mục` (portfolio reference — "danh mục của tôi", "danh mục đầu tư" in first-person)
+- `tôi đang nắm`, `tôi đang giữ`, `tôi đang mua`, `tôi đang bán` (first-person position language)
+- `vị thế của tôi`, `vị thế cá nhân`, `vị thế của chúng tôi`
+- `tỷ trọng` + a personal percentage (portfolio weight — e.g. "tỷ trọng 30% danh mục")
+- `chi phí vốn`, `giá vốn`, `giá mua trung bình`, `giá vốn bình quân` (cost basis)
+- `lãi của tôi`, `lỗ của tôi`, `tôi lãi`, `tôi lỗ`, personal P&L framing
+- English leakage: `P&L`, `cost basis`, `position size`, `portfolio thesis` in the post body
+
+**On violation:**
+1. Fix inline: replace with public-market framing ("cổ phiếu đáng chú ý", "có thể tăng", "cần thận trọng", "thị trường đang theo dõi").
+2. Re-scan the full post body.
+3. If a claim CANNOT be rephrased without personal context → remove the claim entirely.
+4. WRITE IS HARD-BLOCKED until no forbidden tokens remain. No honest-gap fallback applies — private data must not appear in the published post.
+5. Unresolvable after one inline fix → send_telegram(bug, "[fb-market-poster] PRIVACY GATE: personal portfolio language detected — post NOT written") + EXIT.
+
+After clean scan → log "PRIVACY GATE: PASS" in RETURN block.
+
+4. Post length: minimum 150 words, maximum 1300 words.
+   - Count words in the post body (exclude the file header line and the disclaimer separator lines from the count).
+   - If word count < 150 → composition failed (EXIT with bug: "[fb-market-poster] Post too short: {N} words").
+   - If word count > 1300 → trim recap section (Tóm tắt nhanh) first; never trim Dự đoán.
+   - Long-form is encouraged — do NOT compress Dự đoán to fit a low ceiling.
+
+**Section-order checks (must pass — fix inline if failing):**
+5. All three sections are present in the post, in the mandatory order: Tóm tắt nhanh → Phân tích → Dự đoán. Missing any section → fix inline.
+6. Dự đoán section exists and contains at least ONE concrete forward call: a direction call (tăng/giảm/tích lũy/đi ngang), a key level or zone, a named ticker/sector with condition, or an if-then scenario. If Dự đoán is absent or contains only generic statements → mandatory fix inline.
+7. Earned-prediction check — every prediction claim in the Dự đoán section must trace to a specific fact or interpretation stated in the Phân tích section. Scan: if a forward claim appears in Dự đoán that has no anchor in Phân tích → add the missing reasoning to Phân tích, or remove the unsupported claim. No orphan forecasts.
+8. Recap must not dominate — the combined word count of Phân tích + Dự đoán must exceed the word count of Tóm tắt nhanh. If Tóm tắt nhanh is longer → trim it (remove less-important detail-floor items before trimming analysis or prediction).
+
+**Detail-floor checks (each field: pass if present with data, skip if genuinely no data available from any source including live tools):**
+9. ≥2 indices present with numeric value + change (VN-Index minimum; VN30/HNX/UPCOM additional).
+10. Market breadth: at least advancers + decliners count present.
+11. Liquidity: total matched value figure present (tỷ đồng).
+12. Foreign flow: net value figure present (tỷ đồng buy/sell).
+13. ≥5 named tickers with direction + % change each.
+14. ≥2 named news items or events/companies/policies (not generic placeholders).
+
+**Filler check (must pass):**
+15. Draft does NOT contain any of the forbidden generic phrases: "tin tức trong nước", "thông tin tích cực", "yếu tố bên ngoài", "thị trường biến động" used without a named specific following them.
+
+**Hashtag block check (must pass — fix inline if failing):**
+16. Hashtag block is present as the LAST element of the post, immediately after the closing `---` of the disclaimer block. Verify ALL of the following sub-checks; any failure is a mandatory fix inline before file write:
+    - **Position:** hashtag block appears after the disclaimer `---`, not before it and not before the disclaimer text.
+    - **Mandatory set complete (verbatim, lowercase):** all 5 mandatory tags present exactly as written: `#chungkhoan`, `#chungkhoanvietnam`, `#vnindex`, `#dautu`, `#thitruongchungkhoan`. Case mismatch (e.g. `#ChungKhoan`) is a failure — tags must be lowercase.
+    - **Dynamic tags:** optional but encouraged — sector or ticker tags derived from today's content. No minimum count required.
+    - **No diacritics:** scan every hashtag token (word starting with `#`) for Vietnamese diacritics characters (à á â ã ä å è é ê ì í ò ó ô õ ù ú ý and their tone-marked variants: ă ắ ặ ằ ẳ ẵ â ấ ầ ẩ ẫ ậ đ ê ế ề ể ễ ệ ô ố ồ ổ ỗ ộ ơ ớ ờ ở ỡ ợ ư ứ ừ ử ữ ự). Any diacritic inside a hashtag token is a hard-fail — remove by stripping to plain ASCII equivalent.
+
+**On failure:**
+- Check 3 (STEP 4a jargon gate) fails: **block STEP 5 — fix every [FAIL] line, re-run the gate skill. Do NOT write the file while gate exits non-zero.**
+- Checks 1–2, 4–8 fail: fix inline, re-verify.
+- Checks 9–14 fail because data genuinely unavailable after live tools + notebook: log which field is missing in RETURN QUALITY field; proceed (do NOT pad).
+- Check 15 fails: mandatory fix inline before writing.
+- Check 16 fails: mandatory fix inline before writing — correct position, add missing mandatory tags (must be lowercase verbatim), strip diacritics from all hashtag tokens.
+- Any check cannot be resolved after one fix attempt → send_telegram(bug, "[fb-market-poster] Post validation failed: <which check>") and EXIT.
+
+---
+
+## STEP 4d — CLAIM-TRUTH GATE (hard gate — last pre-write check)
+
+→ skill: `.claude/skills/claim-truth-gate/SKILL.md`
+
+Before STEP 5 write, run the claim-truth-gate on the composed post body to detect CCATO (Claim Contradicts Authorized Tool Output): the post asserts absence/unavailability of a dimension while the live tool would populate it.
+
+Invoke:
+```
+GATE_EXIT = skill `.claude/skills/claim-truth-gate/SKILL.md`
+  post_body = <composed narrative text from STEP 3 output>
+  agent_id  = "fb-market-poster"
+  cache     = <this cycle's working-memory tool-call results, or null>
+```
+
+**Exit-code handling:**
+- `0` = PASS → proceed to STEP 5 write.
+- `1` = FAIL — contradiction detected; signal emitted by script to `po` channel. Self-correct:
+  1. Read the script's stdout: `[FAIL] dimension=... tool=... ticker=... claim="..." returned="..."`
+  2. Call the named tool directly: `call_tool(server="vn-market", tool=<name>, arguments=...)`
+  3. Rewrite the offending sentence using the real returned values.
+  4. Re-run this skill with the corrected `post_body`.
+  5. On second-pass PASS → proceed to STEP 5.
+  6. On second-pass FAIL (tool genuinely errors) → write honest gap per flow's no-data protocol instead; do NOT re-assert false claim.
+- `2` = config-error (infra fault, not verdict) → fail-loud: `send_telegram(channel="bug", message="[fb-market-poster] claim-truth-gate CONFIG ERROR")` and EXIT. Do NOT treat as PASS.
+
+**Signal emission:** The script emits `narrative_contradiction` signal on FAIL. Do NOT suppress it even if self-correction succeeds — it records the contradiction was detected.
+
+---
+
+## STEP 5 — Write deliverable
+
+Compute today's date in VN timezone (UTC+7):
+```
+DATE = today's date in YYYY-MM-DD format (VN time)
+FILEPATH = docs/social/fb-post-{DATE}.md
+```
+
+Write the post to `FILEPATH`. File format:
+```markdown
+# Thị trường chứng khoán Việt Nam — {DATE}
+
+_Được tạo bởi bot AI lúc {HH:MM} giờ Việt Nam_
+
+{POST BODY — plain prose, no markdown formatting in body}
+
+---
+⚠️ Nội dung được tạo tự động bởi bot AI, chưa được kiểm chứng. Tôi không chịu trách nhiệm về tính chính xác của thông tin. Nếu nội dung có sai sót hoặc cần chỉnh sửa, mọi góp ý của bạn sẽ được ghi nhận lại để giúp bot hoạt động và phục vụ bạn tốt hơn.
+---
+{HASHTAG BLOCK — 5 mandatory lowercase + optional dynamic, no diacritics, space-separated}
+```
+
+---
+
+## STEP 6 — Feedback sink (v1 minimal)
+
+The disclaimer promises feedback will be recorded. The feedback sink is `docs/social/fb-feedback.md`.
+This file is user-appendable. The agent does NOT write to it during the cycle (no Facebook comments to read in v1).
+After writing the post, verify `docs/social/fb-feedback.md` exists. If not, create it with this header:
+```markdown
+# FB Market Poster — Feedback Log
+
+User corrections and feedback on published posts. Append manually below.
+
+Format: YYYY-MM-DD | [post file] | [correction or comment]
+```
+
+---
+
+## STEP 7 — WORK notification
+
+```
+send_telegram(channel="work", message="[fb-market-poster] Post written: docs/social/fb-post-{DATE}.md — ready for copy-paste to Facebook Page")
+```
+
+---
+
+## STEP 8 — Session log + notebook write
+
+Call tool to close log:
+```
+call_tool(server="vn-market", tool="log_agent_work", arguments={
+  "agent_name": "fb-market-poster",
+  "id": $logId,
+  "status": "completed",
+  "summary": "FB post written: docs/social/fb-post-{DATE}.md",
+  "findings": "Sources read: unified-agent={yes/no}, news-scout={yes/no}, market-watcher={yes/no}",
+  "actions": ["wrote docs/social/fb-post-{DATE}.md"]
+})
+```
+
+**Notebook write** — APPEND class per notebook-write AC-6 → skill: `.claude/skills/notebook-write/SKILL.md` (AC-3 settled-write; AC-5 gate; last-3 `## c<NNN>` sections retained)
+
+Preamble (never pruned — edit only to record a genuinely new lesson/pattern, NOT part of the per-cycle write):
+```markdown
+# FB Market Poster — Notebook
+
+## Lessons learned
+- (append any new tool-behavior lessons here)
+
+## Known patterns
+- unified-agent notebook LATEST entry = today's EOD dish (read [This session] section)
+- DAILY: post writes at 16:15 VN (09:15 UTC) — 30 min after EOD CHEF dish (08:45 UTC / 15:45 VN)
+```
+
+Per-cycle section (≤60L — was "## Last cycle" full-overwrite body, now rolls as `## c<NNN>` instead of wiping Lessons/Known patterns):
+```markdown
+## c<NNN> · {DATETIME} UTC
+- Date: {DATE} | Mode: DAILY | Post file: docs/social/fb-post-{DATE}.md
+- VN-Index: {level} ({+/-delta}%)
+- Sources read: unified-agent={yes/no}, news-scout={yes/no}, market-watcher={yes/no}
+- chef_dish_available: {true/false} — CHEF shortcut used: {yes/no}
+- TNB synthesis: clock_phase={value}, regime={value}, regime_confidence={HIGH/MEDIUM/LOW}
+- Conviction calls: {N} total; dropped by T-45: {N} (list tickers); softened: {N} (list tickers)
+- known_gaps: breadth={null/value}, liquidity_tybillion={null/value}, foreign_net_tybillion={null/value}
+- Validation: passed {N}/16 checks (section-order: {pass/fail}, earned-prediction: {pass/fail}, recap-not-dominant: {pass/fail}, hashtag-block: {pass/fail}, detail-floor fields available: {list})
+- Live data spine: per-ticker moves from live get_market_snapshot={yes/no}; honest-gap tickers: {list or none}
+- Jargon gate: PASS (0 violations) | BLOCKED (N violations, post not written)
+- Data-integrity gate: PASS | BLOCK (violations: ...) | SKIP (gate script pending deploy)
+- Status: {published/failed}
+```
+
+**Skills available to this agent (lazy-load — load only when the task requires it):**
+- Word document (docx) deliverable → skill: `.claude/skills/docx/SKILL.md` (trigger: user asks for the post formatted as a .docx report rather than the standard .md file)
+
+---
+
+## RETURN
+
+```
+DONE: FB post written for {DATE} (DAILY) → docs/social/fb-post-{DATE}.md
+NEXT: idle (user copy-pastes to Facebook Page manually)
+PIPELINE: complete
+MODE: DAILY
+QUALITY: full | partial
+SYNTHESIS: clock_phase={value} / regime={value} / regime_confidence={HIGH/MEDIUM/LOW} / chef_shortcut={yes/no}
+T45_AUDIT: {N} claims checked; {N} dropped; {N} softened
+LIVE_DATA_SPINE: per-ticker moves sourced from live get_market_snapshot={yes/no} | tickers with honest-gap fallback: {list or none}
+JARGON GATE: [paste full stdout of fb-jargon-gate.sh here — zero-violations line required]
+INTEGRITY GATE: [PASS | BLOCK — violations: ... | SKIP — gate script not yet deployed]
+PRIVACY GATE: [PASS | BLOCK — violations found and fixed: {detail}]
+```
+
+If any step failed gracefully (skipped source, etc.):
+```
+DONE: FB post written for {DATE} with partial data → docs/social/fb-post-{DATE}.md
+NEXT: idle
+PIPELINE: complete
+QUALITY: partial — sources missing: [list]
+```

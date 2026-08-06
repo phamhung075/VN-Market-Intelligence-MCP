@@ -1,4 +1,4 @@
-<!-- size-justification: ~167L — WEEKLY_RECAP Saturday sub-flow; main.md MODE ROUTER JUMPs here; +12L: PRIVACY GUARD pointer + STEP 3d privacy gate; three-section composition + gate-override docs + notebook format mandate the length; no prediction section. UC-CCA-P4 2026-07-23: +7L STEP 3e CLAIM-TRUTH GATE pointer (was ungated). FIX-FB-GATE-WEEKLY-FRAME-MODE 2026-07-25: STEP 3b replaced the manual "WEEKLY MODE OVERRIDE" procedure with a concrete --frame=weekly gate invocation (+8L net). FIX-FB-GATE-CHECKD2-NONWAIVABLE-NUMERIC-BLOCK 2026-07-25: STEP 3b +6L — replaced ambiguous "EXIT-only-on-real-fabrication posture" pointer with explicit per-check waivability (Check-C only; Check-D2 non-waivable, fix protocol pointer to main.md). -->
+<!-- size-justification: ~167L — WEEKLY_RECAP sub-flow; main.md MODE ROUTER JUMPs here; composition + gate-override + notebook format mandate the length; no prediction section. TE-T26 2026-08-06: main.md cross-refs repointed to daily.md; disclaimer/hashtag cites main.md § SHARED OUTPUT SSOT. -->
 # FB Market Poster — Weekly Recap Flow (Saturday / WEEKLY_RECAP)
 
 ## SELF-IDENTITY GUARD
@@ -11,7 +11,7 @@ You are `fb-market-poster` executing **WEEKLY_RECAP** mode. Execute this flow en
 → **PRIVACY GUARD (SSOT: `main.md` § PRIVACY GUARD):** post is PUBLIC — no portfolio holdings, no personal positions, no PII. Pre-write gate enforced at STEP 3d below.
 
 > Error boundary → skill: `.claude/skills/cowork-error-boundary/SKILL.md`
-> get_cycle_bootstrap exemption: fb-market-poster is rejected by that enum — use live tools only (same as `main.md` STEP 0 note).
+> get_cycle_bootstrap exemption: fb-market-poster is rejected by that enum — use live tools only (same as `daily.md` STEP 0 note).
 
 ## Input
 Saturday cron fires: 13:07 UTC = 20:07 VN. `main.md` MODE ROUTER (VN_DOW=6) routes here.
@@ -99,7 +99,7 @@ macro        = call_tool(server="vn-market", tool="get_macro_snapshot",      arg
 
 **Date handling:** If snapshot dated Friday → authoritative week-end figure. If dated Saturday (weekend stale) → use Friday daily post as primary; note discrepancy.
 
-**is_estimate / null rules (same as `main.md` STEP 1b):**
+**is_estimate / null rules (same as `daily.md` STEP 1b):**
 - `foreign_flow.net_bn = null` → state direction only, NO tỷ đồng amount.
 - `macro.usdVndDelta = null` → "tỷ giá USD/VND đi ngang quanh {value}" — NOT "unfetchable".
 
@@ -109,7 +109,7 @@ Derive: week-end VN-Index + weekly delta vs prior Friday (if derivable from Mond
 
 ## STEP 2 — Compose weekly recap post
 
-**Language:** Plain everyday Vietnamese. Same jargon rules as `main.md` STEP 3 (forbidden English terms table applies). Anti-filler rule applies: every sentence must name something specific.
+**Language:** Plain everyday Vietnamese. Same jargon rules enforced by `scripts/fb-jargon-gate.sh` (SSOT: `main.md` § SHARED OUTPUT SSOT). Anti-filler rule applies: every sentence must name something specific.
 
 **Section structure (MANDATORY order):**
 
@@ -130,9 +130,7 @@ One paragraph ≤5 sentences: what changed vs last week — regime shift, sector
 ≤3 sentences: what the week showed, overall market tone, what to watch as an observation only.
 **Forbidden in this section:** "tuần tới dự đoán", "kỳ vọng tuần sau", "dự báo" — any forward-looking phrasing must be reframed as observation ("thị trường đang theo dõi X" ok; "tuần tới sẽ tăng" forbidden).
 
-**Shared output rules (same as `main.md` STEP 3):**
-- Disclaimer block verbatim at end (Vietnamese AI disclaimer — see `main.md` STEP 3 post template).
-- Hashtag block: 5 mandatory tags exactly (`#chungkhoan #chungkhoanvietnam #vnindex #dautu #thitruongchungkhoan`), lowercase, no diacritics, immediately after closing `---`.
+**Shared output rules — SSOT: `main.md` § SHARED OUTPUT SSOT** (disclaimer block verbatim + hashtag composition rule).
 - 150–1300 words (body only, exclude header + separator lines).
 
 **File header:**
@@ -147,7 +145,7 @@ _Được tạo bởi bot AI lúc {HH:MM} giờ Việt Nam_
 ## STEP 3 — Pre-write validation
 
 ### STEP 3a — Jargon gate (HARD-FAIL, REAL EXECUTION MANDATORY)
-→ Execute identically to `main.md` STEP 4a (skill: `.claude/skills/fb-jargon-gate/SKILL.md`). Must run as real shell command; paste verbatim stdout in RETURN. Gate exit non-zero → block write, fix all [FAIL] lines, re-run.
+→ Execute identically to `daily.md` STEP 4a (skill: `.claude/skills/fb-jargon-gate/SKILL.md`). Must run as real shell command; paste verbatim stdout in RETURN. Gate exit non-zero → block write, fix all [FAIL] lines, re-run.
 
 ### STEP 3b — Data-integrity gate — WEEKLY FRAME (FIX-FB-GATE-WEEKLY-FRAME-MODE)
 
@@ -169,10 +167,10 @@ rm -f "$TMPFILE"
 Paste the VERBATIM one-line gate stdout into the RETURN block.
 
 Same bounded-retry (max 2 fix rounds) and Check-C "bán tháo" negation-blind false-positive
-handling as `main.md` STEP 4b. **Waivability is per-check, not gate-wide**
+handling as `daily.md` STEP 4b. **Waivability is per-check, not gate-wide**
 (FIX-FB-GATE-CHECKD2-NONWAIVABLE-NUMERIC-BLOCK, 2026-07-25): only Check-C's prose pattern may
 honest-gap-and-PROCEED — every numeric check, most commonly **Check-D2** (period %-vs-live
-mismatch under this `--frame=weekly` call), is NON-WAIVABLE. On Check-D2 BLOCK, apply `main.md`
+mismatch under this `--frame=weekly` call), is NON-WAIVABLE. On Check-D2 BLOCK, apply `daily.md`
 STEP 4b's Check-D2 fix protocol (recompute the baseline as the PRIOR period's close, never the
 first session's own close inside this period, then re-derive every dependent figure) and re-run;
 still BLOCKing after 2 rounds → send_telegram(bug) + EXIT, never PROCEED with a known-wrong number.
@@ -184,7 +182,7 @@ still BLOCKing after 2 rounds → send_telegram(bug) + EXIT, never PROCEED with 
 - 150–1300 words.
 
 ### STEP 3d — Privacy leakage gate (HARD-FAIL — no bypass)
-→ Rule SSOT and full forbidden-token list: `main.md` § PRIVACY GUARD + STEP 4c.
+→ Rule SSOT and full forbidden-token list: `main.md` § PRIVACY GUARD. Gate procedure: `daily.md` STEP 4c.
 
 LLM semantic scan of the full post body for personal portfolio language. WEEKLY_RECAP reads unified-agent and market-watcher notebooks — these may contain analyst context with personal framing.
 
@@ -196,7 +194,7 @@ LLM semantic scan of the full post body for personal portfolio language. WEEKLY_
 Log "PRIVACY GATE: PASS" in RETURN block after clean scan.
 
 ### STEP 3e — CLAIM-TRUTH GATE (hard gate — last pre-write check)
-→ Execute identically to `main.md` STEP 4d (skill: `.claude/skills/claim-truth-gate/SKILL.md`; `post_body` = composed weekly-recap post body from STEP 2; `agent_id` = "fb-market-poster"; non-real-time semantics per SKILL.md — persistent second-pass FAIL blocks the write; exit 2 = config-error → `send_telegram(channel="bug", message="[fb-market-poster] claim-truth-gate CONFIG ERROR")` + EXIT, never treat as PASS).
+→ Execute identically to `daily.md` STEP 4d (skill: `.claude/skills/claim-truth-gate/SKILL.md`; `post_body` = composed weekly-recap post body from STEP 2; `agent_id` = "fb-market-poster"; non-real-time semantics per SKILL.md — persistent second-pass FAIL blocks the write; exit 2 = config-error → `send_telegram(channel="bug", message="[fb-market-poster] claim-truth-gate CONFIG ERROR")` + EXIT, never treat as PASS).
 
 Log "CLAIM-TRUTH GATE: PASS" in RETURN block after clean pass (or "FAIL-corrected" / "BLOCKED" per outcome).
 
@@ -205,8 +203,8 @@ Log "CLAIM-TRUTH GATE: PASS" in RETURN block after clean pass (or "FAIL-correcte
 ## STEP 4 — Write deliverable
 
 DATE = Saturday VN date (UTC+7), YYYY-MM-DD.
-Write to `docs/social/fb-post-{DATE}.md` using the file format in `main.md` STEP 5.
-Verify/create `docs/social/fb-feedback.md` (same as `main.md` STEP 6).
+Write to `docs/social/fb-post-{DATE}.md` using the file format in `daily.md` STEP 5.
+Verify/create `docs/social/fb-feedback.md` (same as `daily.md` STEP 6).
 
 ---
 

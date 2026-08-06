@@ -1,5 +1,37 @@
 # Agent Father — Notebook
 
+## Split (router-direct dispatch, P1) 2026-08-06T10:22Z TE-T26 (TOKEN-ECONOMY-AUDIT wave 3)
+- Split `docs/agents/fb-market-poster/flow/main.md` (994L) at the MODE ROUTER, per
+  `docs/architecture-briefs/2026-07-12-token-economy-lazyload-audit.md#T-26`. New
+  `docs/agents/fb-market-poster/flow/daily.md` (902L) holds STEP 0-8 of the DAILY pipeline
+  (TNB 6-layer walk, T-45 gate, compose, 4 pre-write gates, write, notebook) — pure
+  relocation, diff-verified byte-identical to the pre-split content outside the 2
+  brief-authorized deletions. `main.md` slimmed to 88L: SELF-IDENTITY GUARD + PRIVACY
+  GUARD (unchanged, stays SSOT) + MODE ROUTER (now JUMPs all 3 modes, DAILY included) +
+  new `## SHARED OUTPUT SSOT` section (disclaimer block verbatim + hashtag composition
+  rule + jargon-pointer, relocated out of daily.md's STEP 3 so weekly-recap.md/
+  weekly-prediction.md keep pointing at the still-loaded slim main.md — no duplication).
+- Deleted the 29L forbidden-English jargon table (dup of `scripts/fb-jargon-gate.sh`,
+  known false-green/drift class) → 1-line pointer. Trimmed daily.md's 26L hashtag
+  composition-rule prose → pointer at main.md § SHARED OUTPUT SSOT + kept only the
+  DAILY-specific dynamic-tag derivation note.
+- Repointed every `main.md STEP X` cross-ref in weekly-recap.md/weekly-prediction.md
+  (STEP 0/1b/2b/2c/3/4/4a/4b/4c/4d/5/6, ~20 sites total) to `daily.md`, since those STEPs
+  moved out of main.md; PRIVACY GUARD/SELF-IDENTITY GUARD/MODE ROUTER pointers unchanged
+  (those stayed in main.md). Also updated `.claude/skills/fb-jargon-gate/SKILL.md`'s
+  invocation heading and `docs/policies/dev-standards.md`'s STEP 4b owning-flow comment.
+- Registered `daily.md` in `init.md` document_registry + Extensions — and, while touching
+  that exact table, also registered the 2 pre-existing unregistered weekly siblings
+  (weekly-recap.md/weekly-prediction.md were live MODE ROUTER JUMP targets but never in
+  document_registry — anti-ghost gap closed as a small adjacent fix, same duty this split
+  itself triggers).
+- **Board:** TE-T26 lane-moved `backlog[]→review[]`, `status=REVIEW`, `next_agent=qa` via
+  `orch-apply.sh` (router explicitly directed this write). **Did NOT commit**
+  `docs/data/orch/orch-state.json` myself — `commit_zone.excluded` (`FU-AGENT-FATHER-ORCH-SCOPE`)
+  stands regardless. Doc commit (`main.md`, `daily.md`, `weekly-recap.md`,
+  `weekly-prediction.md`, `init.md`, `fb-jargon-gate/SKILL.md`, `dev-standards.md`) done
+  and pushed within my own zone.
+
 ## Fix (router-direct dispatch, P1) 2026-08-06T10:16Z FIX-DEVTEAM-RESUME-GATES-OMIT-READY-LANE
 - **Root cause:** Step 0b's 3 resume gates (WF-1 task_status lookup, WF-1b terminal-lane,
   WF-2 should_hold) all scanned `[in_progress, active_sprints, done, done_verified]` (WF-1/
