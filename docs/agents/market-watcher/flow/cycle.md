@@ -1,4 +1,4 @@
-<!-- size-justification: 309L — atomic price-monitoring flow; sigma-threshold logic, channel routing, coverage-rotation floor, and execution-contract guard are step-by-step coupled; exceeds 200L cap (pre-existing debt, split out of scope); history in git log. FIX-COVERAGE-SWEEP-BLANKET-STAMP-DEAD-TRIGGER 2026-07-25: replaced prose read-modify-write (Step 0-sweep + Step 5c) with calls to the deterministic scripts/agents-flow/coverage-stamp.sh, +18L incl. a documented transport caveat. FIX-COWORK-FLOWDOC-STALE-TRANSPORT-GAP-CAVEAT 2026-08-01: Bash grant landed 2026-07-30T23:18Z (commit 610110e16) — caveat demoted to a genuine invocation-error fallback only, see inline. -->
+<!-- size-justification: 332L — atomic price-monitoring flow; sigma-threshold logic, channel routing, coverage-rotation floor, and execution-contract guard are step-by-step coupled; exceeds 200L cap (pre-existing debt, split out of scope); history in git log. FIX-COVERAGE-SWEEP-BLANKET-STAMP-DEAD-TRIGGER 2026-07-25: replaced prose read-modify-write (Step 0-sweep + Step 5c) with calls to the deterministic scripts/agents-flow/coverage-stamp.sh, +18L incl. a documented transport caveat. FIX-COWORK-FLOWDOC-STALE-TRANSPORT-GAP-CAVEAT 2026-08-01: Bash grant landed 2026-07-30T23:18Z (commit 610110e16) — caveat demoted to a genuine invocation-error fallback only, see inline. FIX-MARKETWATCHER-EODMD-STALE-NOBASH-CAVEAT-SKIPS-COMMIT-LOSES-NOTEBOOK 2026-08-06: mirrored eod.md's caveat fix; added explicit offhours self-commit + `market-watcher-notebook:main` task_claim mutex guarding the eod/offhours same-16:00Z-tick collision (co-ships with eod.md Step D), +20L. -->
 # Market Watcher — Cycle Flow
 
 **Tools:** `docs/agents/tools/package/market-watcher.md`
@@ -280,8 +280,28 @@ if [ "$NB_LINES" -gt 80 ]; then
 fi
 ```
 
-> Notebook written to disk every cycle. Git commit deferred to eod.md (market close batch). Off-hours cycles retain per-cycle commit.
+> Notebook written to disk every cycle. Git commit deferred to eod.md (market close batch) for `mode=market`/`mode=prepost`. `mode=offhours` retains its own per-cycle commit — see explicit guarded commit below.
 > If EOD flow fails before commit → recovery: `docs/protocols/head-lock-self-cure.md`.
+
+**Offhours self-commit** (`mode=offhours` only — `mode=market`/`mode=prepost` stay deferred to eod.md above) — FIX-MARKETWATCHER-EODMD-STALE-NOBASH-CAVEAT-SKIPS-COMMIT-LOSES-NOTEBOOK, 2026-08-06:
+
+`market-watcher-offhours` (`0 */4 * * *`) shares an identical 16:00 UTC Mon-Fri tick with `market-watcher-eod` (`0 16 * * 1-5`, `docs/data/cowork-schedule.json`) — both are expected to co-fire (match-slots.md Step 4b WARN-only, brief §5 R3). Guard this commit with the SAME `market-watcher-notebook:main` task_claim mutex eod.md Step D uses, so the two sibling slots never interleave writes to this file:
+
+```
+LOCK = call_tool(server="vn-market", tool="task_claim", arguments={
+  task_id: "market-watcher-notebook:main", task_kind: "sprint-task",
+  owner_agent: "market-watcher", owner_client_session: $CLAUDE_CODE_SESSION_ID,
+  ttl_seconds: 60
+})
+```
+If `claimed:false`: retry up to 2 more times (5s apart, same bounded-retry style as `git_commit_retry`); if still held after 3 attempts, proceed unguarded and log `[market-watcher] notebook-lock contended 3x — proceeding unguarded`.
+
+```bash
+git add docs/agent-memory/notebooks/market-watcher.md
+git_commit_retry -m "chore(memory/market-watcher): offhours cycle YYYY-MM-DD HH:MM UTC"
+```
+`task_release(task_id="market-watcher-notebook:main")` in a finally, regardless of commit outcome.
+> If commit fails after retries: log to BUG channel + `send_telegram(channel="bug", message="[market-watcher] offhours notebook commit failed — manual recovery needed: docs/protocols/head-lock-self-cure.md")`.
 
 **Step 4e — Exec-proof gate** → skill: `.claude/skills/exec-proof-gate/SKILL.md`
 

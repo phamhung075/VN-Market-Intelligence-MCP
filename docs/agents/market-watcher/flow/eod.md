@@ -67,6 +67,16 @@ Rules:
 
 **D. Notebook batch commit** (L-7, 1968b2) — Commit all in-session notebook writes for market-watcher AND news-scout in a single EOD commit:
 
+> **Same-agent multi-slot mutex** (FIX-MARKETWATCHER-EODMD-STALE-NOBASH-CAVEAT-SKIPS-COMMIT-LOSES-NOTEBOOK, 2026-08-06): `market-watcher-eod` (`0 16 * * 1-5`) and `market-watcher-offhours` (`0 */4 * * *`) share an identical 16:00 UTC Mon-Fri tick (`docs/data/cowork-schedule.json`) — both are expected to co-fire (match-slots.md Step 4b WARN-only, brief §5 R3: two genuinely different sub-flows, not a bug). Without mutual exclusion, offhours' cycle.md Step 5 notebook OVERWRITE can clobber `market-watcher.md` on disk between this step's read and its `git add`, silently losing whatever intraday-cycle content was pending commit. Guard with the same task_claim mutex idiom already used for the analogous coverage-state.json cross-writer race (cycle.md Step 5c, FIX-COVERAGE-STATE-CROSS-AGENT-LOST-UPDATE):
+> ```
+> LOCK = call_tool(server="vn-market", tool="task_claim", arguments={
+>   task_id: "market-watcher-notebook:main", task_kind: "sprint-task",
+>   owner_agent: "market-watcher", owner_client_session: $CLAUDE_CODE_SESSION_ID,
+>   ttl_seconds: 60
+> })
+> ```
+> Same bounded-retry style as `git_commit_retry` below: if `claimed:false`, retry up to 2 more times (5s apart); if still held after 3 attempts, proceed unguarded and log `[market-watcher] notebook-lock contended 3x — proceeding unguarded` (best-effort — never a hard block, consistent with WARN-not-BLOCK multi-slot policy). On success, hold through the commit below, then `task_release(task_id="market-watcher-notebook:main")` in a finally regardless of outcome.
+
 ```bash
 git add docs/agent-memory/notebooks/market-watcher.md docs/agent-memory/notebooks/news-scout.md
 git_commit_retry -m "chore(memory/market-session-eod): notebook YYYY-MM-DD cycles N"
@@ -75,6 +85,6 @@ git_commit_retry -m "chore(memory/market-session-eod): notebook YYYY-MM-DD cycle
 > `git_commit_retry` idiom: retry up to 3× on `HEAD.lock` / `index.lock` only — see `docs/protocols/head-lock-self-cure.md` § F4.
 > If commit fails after retries: log to BUG channel + `send_telegram(channel="bug", message="[eod] notebook batch commit failed — manual recovery needed: docs/protocols/head-lock-self-cure.md")`. Notebook writes are on disk; git loss window is bounded to this market session.
 
-> ⚠ TRANSPORT GAP (open 2026-07-25, same root cause as cycle.md Step 0-sweep/5c — see `.claude/agents/market-watcher.md:5`): this agent holds no Bash and cannot run `git add`/`git_commit_retry` directly. Until a Bash-capable caller wires this in (governance decision pending), SKIP this step entirely and log `[git-commit-skipped: no-transport]` on the Step C WORK ping — do NOT fabricate the commit or silently drop the note. Ledger + signal file writes (Steps A/B) are unaffected; only the git-commit bookkeeping is deferred.
+> Invoke directly via Bash (this agent holds Bash — `.claude/agents/market-watcher.md:5` — granted 2026-07-30T23:18Z, commit 610110e16). If the Bash invocation itself errors (`git add`/`git_commit_retry` genuinely fails after the retry protocol above — a genuine transport failure, not a tool-grant gap): that is already covered by the BUG-channel escalation above — do NOT additionally SKIP this step, fabricate the commit, or silently drop the note. Ledger + signal file writes (Steps A/B) are unaffected either way.
 
 **End of cycle** → skill: `.claude/skills/cowork-end-cycle/SKILL.md`
