@@ -1,7 +1,40 @@
 
 ## c58 · 2026-08-06T13:36:07Z
+## c59 · 2026-08-06T13:46:00Z
 
-### Audit Run Tier-1 (13:30 UTC trigger FIRE_TICK: cron:auditor-t1:2026-08-06T13:30Z)
+### Audit Run Tier-1 (13:43–13:46 UTC 2026-08-06)
+- Tier: 1 | Services: 13 checked | Sources: 0 | DB checks: 0
+- Anomalies: 1 new (C 0, W 1, I 0) | M 0 dedup-skipped
+- Status: DEGRADED
+
+### RAW-PROBE snippet:
+```
+--- docker ps -a ---
+[13 containers all Up]
+
+--- health endpoints ---
+[health] mcp-server:3000/health OK (HTTP 200)
+[health] api-gateway:4000/health OK (HTTP 200)
+[health] macro-indicators:5004/health OK (HTTP 200)
+[health] pdf-extractor:5001/health OK (HTTP 200)
+[health] frontend:3001/ OK (HTTP 200)
+
+--- memory pressure ---
+[A-30] rag-service: 97.09% memory, no reclamation dips (ESCALATE → WARN)
+[A-30] mcp-server: 21.00% memory (PASS)
+
+--- disk df -h / ---
+55% capacity (PASS)
+```
+
+### Findings:
+- [A-30] rag-service WARN: 97.09% memory with no reclamation dips (all 6 samples steady, VmHWM shows prior dip available, current locked at high)
+  - Signal: sys-20260806T134549-728c (microservice_degraded:rag-service:A-30)
+  - Dedup: SKIP (known, last 2026-08-06T08:16:21Z)
+  - Action: already tracked FU-RAG-DEPLOY-MEMORY, awaiting 768m→1g cap raise
+
+### All other A-xx checks: PASS
+
 - Tier: 1 | Services: 13/13 up, health 5/5 OK, restart 0 ✓
 - Anomalies: 1 recurrence (1 warn via dedup) | Status: DEGRADED
 
