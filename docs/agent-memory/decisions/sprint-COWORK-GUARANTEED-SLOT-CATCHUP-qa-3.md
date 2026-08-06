@@ -155,3 +155,26 @@
 - Minor non-blocking finding, not held against row: docs/agents/system-auditor/flow/data-writer-provenance.md:18 captions the pre-fix literals but explicitly defers to the cron file as live spec host — cosmetic, outside AC-6 scope.
 **why-decision:** APPROVED, DONE_VERIFIED. All 7 ACs independently hold on current main HEAD; self-report note cross-checked with no mismatch; journal commits 419cdb804/674a7a961 confirmed real, DJ-GATE-1 satisfied.
 **why-change:** none — verified exactly what the row scoped.
+
+### STEP qa-S53 · qa · 2026-08-06T20:20:00Z
+**task-id:** FIX-COWORK-SPAWNFANOUT-FLOWPATH-BYPASSES-DIGEST-DAILY-DEDUP-GATE
+**what-done:** Direct-commit verify (branch:null). Confirmed 3caf5f0c1+8452cd5c8 on main ancestry, touch the row's own claimed files. Re-ran (not trusted) cowork-schedule-consistency.test.js live: 9/9 GREEN. RED-reproduced by swapping in git-show'd pre-fix cowork-schedule.json content — TC-7 FAILs exactly on digest-daily (8/9), confirming the test actually discriminates; restored working tree byte-identical after (diffed against a pre-experiment copy).
+**what-considered:**
+- Sibling suites unaffected: cowork-match-slots.test.js 43/43, cowork-catchup-predicate.test.js 34/34, both live-run not just cited.
+- bun tsc --noEmit clean; grepped commit stat — zero apps/mcp-server/ files touched, so no bun test delta possible (structural claim verified, not assumed).
+- mock-guard.sh --files on the 4 touched non-memory files: PASS.
+- Fix mechanism traced end-to-end: spawn-fanout.md Step 5.2 ENTRY_PROMPT now = slot.trigger_prompt (digest-daily's = "run .../main.md"), main.md's Step pre-D DAILY-PREDICT DEDUP GATE confirmed still gates entry into daily-predict.md; later 07-29/07-31 commits (IDENTITY_PREAMBLE, SESSION_ID_LINE) layer cleanly on top, don't clobber the ENTRY_PROMPT fix. launchd Layer-B firer independently confirmed reading trigger_prompt verbatim (grep, not cited).
+- Did not copy dedup gate into daily-predict.md, per row's explicit prohibition — confirmed by reading daily-predict.md (still only 1 task_claim, the commit-mutex).
+**why-decision:** APPROVED, DONE_VERIFIED. All 4 AC clauses hold: static assertion fails-before/passes-after on digest-daily specifically (reproduced live), fix is the general trigger_prompt-dispatch form not the acute mitigation alone, negative-control (first-fire-still-runs) preserved since gate logic itself untouched, shared-predicate anti-duplication honored (extractPromptFlowPath/slotEntryPathsAgree used by both runtime prose and test). DJ-GATE-1: developer journal entry present (sprint-COWORK-GUARANTEED-SLOT-CATCHUP-developer.md STEP developer-S21).
+**why-change:** none — verified exactly what the row scoped.
+
+### STEP qa-S53 · qa · 2026-08-06T21:15:00Z
+**task-id:** TASK-DEVTEAM-IDLE-CHAIN-1-SCHEMA-UTILITIES
+**what-done:** Direct-commit verify (dev-team Review-Lane QA-Drain, `qa[]` row, `branch:null`, no `.commit` field). Derived commit `589224138` via `git log --all -- <files[]>`, cross-checked date (2026-07-29T06:13:34Z) against `reviewed_at` (06:12:50Z) — consistent. `git show --stat` matches all 3 claimed files exactly (orchStateSchema.ts, devteam-eligibility.jq, devteam-idle-chain-stamp.jq), plus the handoff doc; no other files.
+**what-considered:**
+- Re-ran independently, not trusting review_note prose: `bun tsc --noEmit` clean; `orchStateSchema.test.ts` 104/104 pass; mock-guard PASS on orchStateSchema.ts; DDD/secret greps clean (both "token" hits are unrelated status-token prose).
+- jq probes reproduced verbatim: bootstrap-absent-key -> "bounded1"; stamp-writer qa_drain -> correct nested write; unrecognized-id -> exact no-op. Went further than the row's own evidence: ran my own full 5-tick simulation (not shown in review_note) -> all 5 ids (bounded1/sls/rlc/qa_drain/step1_triage) selected exactly once, confirming the fairness invariant, not just spot probes.
+- PLAN-ONLY constraint verified live: `git status` on `docs/agents/dev-team/flow/main.md`/`drain-signals.md` clean, and commit `589224138`'s own diff touches neither — held.
+- `orch-validate.mjs` Stage 0+1 PASS on live doc (schema loads without error post-change). DJ-GATE-1: implementer's journal entry confirmed at `sprint-COWORK-GUARANTEED-SLOT-CATCHUP-dev-mcp-server.md:194`.
+**why-decision:** APPROVED, DONE_VERIFIED. All claimed deliverables independently RAW-verified against current main HEAD; no adjacent defects found in scope.
+**why-change:** none — verified exactly what the row scoped.
