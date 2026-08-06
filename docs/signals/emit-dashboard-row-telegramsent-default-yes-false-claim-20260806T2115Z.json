@@ -1,0 +1,31 @@
+{
+  "from": "router",
+  "to": "po",
+  "type": "repair_task_request",
+  "createdAt": "2026-08-06T21:15:00Z",
+  "payload": {
+    "check_id": "emit-dashboard-row-telegramsent-default-bug",
+    "issue": "scripts/emit-dashboard-row.sh:130 defaults telegram_sent=\"yes\" unless the caller explicitly passes --telegram-sent no. Any dedup-SKIP cycle whose caller omits the flag gets a DASHBOARD.md row that permanently and falsely claims a Telegram alert was sent, when none was.",
+    "evidence": {
+      "script_defect": "scripts/emit-dashboard-row.sh line 130: local ... telegram_sent=\"yes\" (default) ; line 146: --telegram-sent flag overrides it ; line 207: if telegram_sent=yes, appends ', WARN Telegram sent)' to the permanent DASHBOARD.md row",
+      "instance_1": {
+        "commit": "7458bc2c7",
+        "signal_id": "sys-20260806T174128-477d",
+        "notebook_cycle": "c67 (dedup-SKIP against c66 ledger entry, per this session's own memory record)",
+        "dashboard_claim": "WARN Telegram sent",
+        "ground_truth": "dedup-skip cycle, no BUG-channel alert should have fired"
+      },
+      "instance_2": {
+        "commit": "424d8a2d6",
+        "signal_id": "sys-20260806T211009-070b",
+        "notebook_cycle": "c71 (this tick's spawn, dedup-SKIP against the same c66 ledger entry)",
+        "dashboard_claim": "WARN Telegram sent",
+        "ground_truth": "agent's own [OUTPUT-CONTRACT] explicitly states telegram_sent=0, and its report prose states 'No BUG channel alert sent (dedup-gated)' -- directly contradicts the permanent DASHBOARD.md record written moments later"
+      },
+      "likely_correct_baseline": "de7663377 / sys-20260806T171507-1243 / c66 -- the genuinely NEW (non-dedup) occurrence -- telegram_sent=yes is plausibly correct there since a real WARN alert would fire on first detection"
+    },
+    "impact": "DASHBOARD.md is meant to be a human-readable operational record; anyone reading it believes a human/on-call got paged for every dedup-skipped recurrence of this signal, when in fact only the first occurrence paged. Misleads incident-response expectations and could mask actual paging gaps on other checks that share this same script.",
+    "requested_action": "fix scripts/emit-dashboard-row.sh: either flip the default to telegram_sent=\"no\" (safer default, matching the majority dedup-skip case) and require callers to explicitly pass --telegram-sent yes when a real alert fires, OR require all callers to explicitly pass the flag (fail loud if omitted). Also worth a broader sweep of DASHBOARD.md for other check_ids that may carry the same false claim from other callers of this script.",
+    "occurrence_note": "2 confirmed instances this session (c67, c71), same script default, same false claim shape -- crosses recurring-bug 2+ threshold on first investigation. Not yet tracked in memory under any existing feedback file (new finding, not a re-litigation of an owned decision)."
+  }
+}
