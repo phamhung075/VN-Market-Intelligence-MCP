@@ -1,4 +1,62 @@
 
+## c65 · 2026-08-06T15:41:26Z
+### Audit Run Tier-1 (15:30–15:41 UTC 2026-08-06)
+- Tier: 1 | Services: 13 checked | Sources: 0 | DB checks: 0
+- Anomalies: 0 new (C 0, W 0, I 0) | 1 dedup-skipped
+- Status: DEGRADED
+
+### RAW-PROBE:
+```
+=== AUDITOR PROBE 2026-08-06T15:40:22Z ===
+
+--- docker ps -a ---
+All 13 services UP (healthy)
+
+--- health endpoints ---
+[health] mcp-server:3000/health OK (HTTP 200)
+[health] api-gateway:4000/health OK (HTTP 200)
+[health] macro-indicators:5004/health OK (HTTP 200)
+[health] pdf-extractor:5001/health OK (HTTP 200)
+[health] frontend:3001/ OK (HTTP 200)
+
+--- restart count ---
+Container=/vn-market-intelligence-mcp-mcp-server-1 RestartCount=4
+
+--- memory pressure ---
+Container=vn-market-intelligence-mcp-mcp-server-1 MemPerc=49.33% MemUsage=1.48GiB / 3GiB
+
+--- memory pressure multi-probe reclamation (A-30) ---
+[A-30] SKIP deep-probe — baseline 49.33% < 85% investigate-gate
+
+--- disk df -h / ---
+Capacity: 54% < 85% PASS
+
+--- pdf-extractor in-container multi-probe (A-20) ---
+[A-20] pass_count=3/3
+
+=== PROBE DONE ===
+```
+
+### Findings:
+**A-01 to A-11 (Container Status):** All 13 host_runtime_set services UP ✓
+
+**A-12 to A-20 (Health Endpoints):** All 5 endpoints OK ✓
+
+**A-20 pdf-extractor multi-probe:** 3/3 pass ✓
+
+**A-21 (Restart Count - Crash Detection):** mcp-server 4 crash restarts in 4h window (2026-08-06 12:17-12:25 UTC) → WARN (dedup-skipped, known issue from 2026-08-05T10:34:34Z)
+Signal: sys-20260806T154111-1649
+
+[emit-signal] SKIP-dedup dedup_key=microservice_degraded:mcp-server:A-21 last_sent=2026-08-05T10:34:34Z id=sys-20260806T154111-1649
+[emit-dashboard] OK id=sys-20260806T154111-1649 check_id=A-21
+
+**A-30 (Memory Pressure):** mcp-server 49.33% < 85% → PASS ✓
+
+**A-32 (Disk):** 54% capacity < 85% → PASS ✓
+
+[OUTPUT-CONTRACT] signals_posted=1 | telegram_sent=0 | signal_queue_rows_written=1 | dashboard_rows=1 | dedup_skipped=1
+CONTRACT-CONTRADICTION: NONE
+
 ## c64 · 2026-08-06T15:11:23Z
 ### Audit Run Tier-1 (15:00–15:10 UTC 2026-08-06)
 - Tier: 1 | Services: 13 checked | Sources: 0 | DB checks: 0
@@ -116,52 +174,3 @@ Filesystem        Size    Used   Avail Capacity iused ifree %iused  Mounted on
 
 [OUTPUT-CONTRACT] signals_posted=0 | telegram_sent=0 | signal_queue_rows_written=0 | dashboard_rows=0 | dedup_skipped=0
 CONTRACT-CONTRADICTION: NONE
-
-## c60 · 2026-08-06T14:13:24Z
-### Audit Run Tier-1 (14:10-14:13 UTC 2026-08-06)
-- Tier: 1 | Services: 13 checked | Sources: 0 | DB checks: 0
-- Anomalies: 1 new (C 0, W 1, I 0) | M 1 dedup-skipped
-- Status: DEGRADED
-
-### RAW-PROBE:
-```
-=== AUDITOR PROBE 2026-08-06T14:10:14Z ===
---- docker ps (all 13 services UP) ---
---- health endpoints ---
-[health] mcp-server:3000/health FAIL (CLIENT_TIMEOUT, curl_exit=28, budget=5000ms)
-[health] api-gateway:4000/health OK (HTTP 200)
-[health] macro-indicators:5004/health OK (HTTP 200)
-[health] pdf-extractor:5001/health OK (HTTP 200)
-[health] frontend:3001/ OK (HTTP 200)
---- memory pressure (mcp-server) ---
-MemPerc=30.75% < 85% PASS
---- A-30 deep-probe (rag-service) ---
-Baseline: 96.44% (>= 85%) → deep-probe engaged
-Samples: 6 probes over 65s, all 97.18%-97.56% (min=97.18%, max=97.56%)
-Reclamation dips: 0 detected — FLAT
-OOMKilled: false
-Verdict: ESCALATE (all >93% + no dips) → WARN severity
---- disk df -h / ---
-Capacity 49% < 85% PASS
---- A-20 pdf-extractor multi-probe ---
-3/3 pass ✓
-```
-
-### A-30 rag-service WARN (SUSTAINED CONDITION)
-- Current reading: 96.44% (987.6 MiB / 1 GiB, 12.4 MiB free = BELOW 40 MiB floor)
-- Deep-probe verdict: ESCALATE → WARN (all samples >93%, zero reclamation dips, loss of reclamation)
-- Signal: sys-20260806T141322-01bc (microservice_degraded:rag-service:A-30)
-- Dedup: SKIP-dedup (known issue, last 2026-08-06T08:16:21Z, within 7d window)
-- History: c54 97.52%, c56-c59 in 97-99% band, c59 97.09%, c60 97.56% (regression)
-- Root cause: Memory leak in rag-service; awaiting FU-RAG-DEPLOY-MEMORY (cap raise 768m→1g)
-
-### All Other A-xx: PASS
-- A-01–A-11: 13/13 host_runtime_set UP ✓
-- A-12: mcp-server health timeout (CLIENT_TIMEOUT, pending debounce gate evaluation)
-- A-20: pdf-extractor multi-probe 3/3 ✓
-- A-21: RestartCount=4, no crashes in 4h window ✓
-- A-32: Disk 49% PASS ✓
-
-### Output Summary
-- Signals: 1 new (A-30 WARN) | Dedup-skipped: 1 | Dashboard rows: 1 | BUG telegrams: 0
-- Status: DEGRADED (persistent rag-service A-30 condition)
