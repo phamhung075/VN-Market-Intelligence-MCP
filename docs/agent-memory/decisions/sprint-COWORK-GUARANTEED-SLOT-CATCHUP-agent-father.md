@@ -556,3 +556,49 @@ zero mechanism change.
 **why-change:** No change to S25's substantive fix — this is a documentation-
 accuracy addendum only. Proceeding to STATUSFLIP-LANEMOVE (review[] + head
 idle-sync) since both commits are pushed and self-verified clean.
+
+### STEP agent-father-S27 · agent-father · 2026-08-06T19:20:00Z
+**task-id:** FIX-REFINE-SUBFLOW-OPTIONC-CONTRACT-DRIFT
+**what-done:** Re-claimed the same row S22-S24 (this session's history) shipped
+AC-1..AC-6 for. Independently re-verified all 6 (grep for every named drift
+string across `docs/agents/refine_bctc_md/` + `.claude/agents/refine_bctc_md.md`
+— zero live hits, only explanatory prose naming the fixed defect; explicit
+per-page_type `Read` step confirmed present at main.md:111-114) rather than
+trusting S24's self-report. Then chased AC-7: no `mcp__gateway__call_tool`
+binding this session either (same gap S24 hit) — RAW-verified via
+`docker exec` into the live `vn-market-intelligence-mcp-mcp-server-1`
+container + `bun:sqlite` against `/app/data/market.db` (the actual runtime
+volume, not a host copy), schema read from `sqlite_master` first (no guessed
+columns). Found: `a3a41225` has 0 `bctc_refined_units` rows, `refine_status
+PENDING`, unchanged since before the fix. Slot-4's post-fix fire
+(`last_fired=2026-08-06T16:36:27Z`, after fix commit `15:17:45Z` UTC) DID
+push a full 12-unit chunk with zero invented status — but to a DIFFERENT
+report, `76129128` (KBC_2026_Q1), not `a3a41225`. Traced why: KBC
+(`parsed_at=2026-06-07T18:56:06.899Z`) and HSG (`ae1f30bf...`,
+`parsed_at=2026-06-07T19:03:52.763Z`) both precede VHM
+(`parsed_at=2026-06-07T19:03:53.332Z`) in `get_bctc_pending_refine`'s own
+`ORDER BY parsed_at ASC` queue and neither has finished — the `limit:1`
+oldest-row fetch every slot's `trigger_prompt` uses has no report_id/ticker
+targeting, so it structurally cannot reach VHM until both clear. Checked the
+8 other older PARTIAL/FAILED reports for head-of-line blocking too — all
+correctly excluded by the tool's own remaining-window-count SQL.
+**what-considered:** re-enable slots 1-3 now (general contract-fix evidence
+already exists from KBC's clean 12/12 push) vs leave paused pending the
+literal a3a41225-specific confirmation AC-7 names — chose leave paused.
+**why-decision:** AC-7's own text ties "re-enable slots 1-3" to "record the
+first fire that pushes to a3a41225" as one unit — the pause's whole purpose
+was canary validation before wide re-exposure; treating "fix looks generically
+correct" as equivalent to "the named target report was confirmed" is exactly
+the self-report-substitutes-for-RAW-observation failure mode this task's own
+instructions warn against. Leaving slots 1-3 paused preserves the option to
+force-target a3a41225 (e.g. a future report_id-aware fire) without having
+already re-exposed 3 more slots to the same untested path.
+**why-change:** Zero code diff this cycle (AC-1..AC-6 already correct on
+disk from `da489f36f`) — this is a verification-only cycle. No commit to
+`docs/agents/`/`.claude/agents/`/`docs/data/cowork-schedule.json`. Notebook
+entry is the only write, staged+committed alone under RULE 1-3 (2.5).
+Returning `PIPELINE: blocked-pending-live-verification` to router/PO — this
+row is QA-gated per dispatch, handing to `qa`/`po`, not self-closing. Next
+observer: RAW-check `bctc_refined_units WHERE report_id='a3a41225-3491-4b4f-
+b4d0-3b80a989b76a'` for `total_units > 0` (currently 0) — never a fired
+agent's self-report.
