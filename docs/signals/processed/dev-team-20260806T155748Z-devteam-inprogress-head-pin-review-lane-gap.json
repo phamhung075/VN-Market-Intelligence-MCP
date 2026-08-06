@@ -9,5 +9,11 @@
     "same_family_as": "feedback_devteam_review_flip_head_status_must_be_idle_not_review (head=review case) -- this is the sibling head=in_progress-but-row-already-review case",
     "workaround_applied_this_occurrence": "router manually applied the WF-1b/WF-1c pattern (reset head to idle, no lane-move, no spawn) before falling through to BOUNDED-1",
     "suggested_fix": "add WF-1d REVIEW-LANE check to main.md Step 0b, mirroring WF-1c exactly but keyed on task_status==REVIEW, widening the task_status lookup's lane set to include review[] (and qa[] for symmetry)"
+  },
+  "_processed": {
+    "fingerprint": "d4209f64c58d5efc5e41fd22bdeca8a5be364da5f707ac7ae18f715b2970682c",
+    "processedAt": "2026-08-06T16:20:39Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
   }
 }
