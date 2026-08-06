@@ -68,12 +68,10 @@ export function ensureCustomAlertRulesTable(db: Database): void {
 let _db: Database | null = null;
 let _dbStat: ReturnType<typeof statSync> | null = null;
 
-// FIX-MCP-MEMORY-CODE-LEAK: tracks which Database objects have already run
-// initDatabase()'s expensive domain-slice DDL sweep + seed/backfill block
-// (NOT its always-run "Post-init migrations" tail), keyed by object identity
-// (not a bare boolean -- see the guard inside initDatabase() for why). WeakSet
-// lets a test-scoped, no-longer-referenced Database be garbage-collected
-// normally.
+// FIX-MCP-MEMORY-CODE-LEAK: identity-keyed (not boolean) guard for
+// initDatabase()'s one-time DDL sweep + seed/backfill block — see the guard
+// site below for the full rationale. WeakSet lets a test-scoped Database be
+// GC'd normally.
 const _initializedDbs = new WeakSet<Database>();
 
 /**
@@ -164,25 +162,11 @@ export function closeDb(): void {
 export async function initDatabase(dbArg?: import("bun:sqlite").Database): Promise<void> {
   const db = dbArg ?? getDb();
 
-  // FIX-MCP-MEMORY-CODE-LEAK: identity-keyed guard (WeakSet, not a bare boolean)
-  // around the EXPENSIVE, safe-to-run-once section only (domain-slice DDL sweep +
-  // the seed/backfill block below) — NOT the whole function body. Production call
-  // sites (117, all bare `await initDatabase()`) always resolve through getDb()'s
-  // own singleton, so this is the same `db` object for the whole process lifetime
-  // -- the guard fires once, eliminating the redundant ~3300-line DDL sweep + the
-  // unconditional backfillBctcQ4/Q1_2026/Historical re-run (seedWatchlist.ts) on
-  // every tool invocation. A bare module boolean would instead break the ~15+
-  // test files that pass a fresh, distinct `Database` as `dbArg` per test/
-  // beforeEach -- WeakSet keys on that object's own identity, so a genuinely new
-  // Database is never short-circuited, only a repeat call against an
-  // already-seen one. WeakSet (not Set) so a test-scoped Database can still be
-  // GC'd once its test ends -- this guard must not become a leak of its own.
-  // Scoped to stop BEFORE "Post-init migrations" below (deliberately, not an
-  // oversight): those statements are cheap single-row DELETE/UPDATE/UPSERTs, not
-  // the brief's identified cost, and two tests (Task 1489, TASK_2001) explicitly
-  // re-run initDatabase() against the SAME db after seeding new rows and assert
-  // the cleanup/backfill re-fires — guarding them too would be a real regression,
-  // not just a test-suite technicality. See
+  // FIX-MCP-MEMORY-CODE-LEAK: identity-keyed guard (WeakSet, not a bare
+  // boolean — see _initializedDbs above) around the EXPENSIVE, safe-to-run-
+  // once section only (domain-slice DDL sweep + seed/backfill below), NOT
+  // "Post-init migrations" below (Task 1489 / TASK_2001 depend on that tail
+  // re-running every call). Full rationale:
   // docs/architecture-briefs/2026-08-05-fix-mcp-memory-code-leak-initdatabase-guard.md
   const currentDbPath = Bun.env["DB_PATH"] ?? DEFAULT_DB_PATH;
   const isTestEnv =
