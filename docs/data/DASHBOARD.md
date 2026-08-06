@@ -574,3 +574,15 @@
 **Mitigation:** No immediate action beyond signal routing.
 
 ---
+
+## Anomaly: A-30 · rag-service memory at 97.06% — no reclamation dip
+**Severity:** WARN | **Date:** 2026-08-06 | **Status:** OPEN
+**Location:** rag-service
+**Details:** Memory sustained at 97.06% across 6 probes (65s window) with zero reclamation dips — loss of garbage collection relief
+**Impact:** Persistent high memory limits ability to handle memory spikes; may lead to OOMKill if workload increases
+**Root cause:** rag-service memory cap at 1GiB insufficient for current workload; VmHWM/VmRSS indicate historical GC, now stalled
+**Zone owner:** dev-core
+**Last reported:** 2026-08-06T13:36:17Z (signal sys-20260806T133606-3047, system-auditor -> po, dedup_key=microservice_degraded:rag-service:A-30, WARN Telegram sent)
+**Mitigation:** No immediate action beyond signal routing.
+
+---
