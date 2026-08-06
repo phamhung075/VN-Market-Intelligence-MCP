@@ -1,12 +1,12 @@
 {
   "dashboard_section_cache": {
     "section_name": "po",
-    "last_mtime": 1785998539,
-    "last_linecount": 154,
+    "last_mtime": 1785998786,
+    "last_linecount": 151,
     "po": {
       "section_name": "po",
-      "last_mtime": 1785998539,
-      "last_linecount": 154
+      "last_mtime": 1785998786,
+      "last_linecount": 151
     }
   },
   "decision_journal": [
@@ -2338,7 +2338,7 @@
         "type": "data_stale",
         "summary": "news source stale 790m (check B-01)",
         "severity": "CRITICAL",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": null,
         "provenance": "detector",
         "audit_cycle_tag": "cron:auditor-t2:2026-08-06T04:00Z"
