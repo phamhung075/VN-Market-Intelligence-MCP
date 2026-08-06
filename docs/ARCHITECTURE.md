@@ -40,7 +40,7 @@ jq '[.project.microservices[] | {id, port, language, runtime}]' docs/data/system
 ```
 
 **Database isolation (single-writer):**
-- `market.db` — WRITE: mcp-server only | READ: technical-analysis, macro-indicators, kinh-dich-service (readonly:true)
+- `market.db` — WRITE: mcp-server only | READ: technical-analysis, macro-indicators, kinh-dich-service (readonly:true). Journal-mode policy (DELETE + synchronous=FULL, sole-owner `schema.ts`, WHY + enforcement) → `docs/policies/market-db-journal-mode-policy.md`
 - `alert_engine.db` — WRITE: alert-engine only (local alert cache; results POST to mcp-server)
 - `stock_price.db` — WRITE: stock-price Tier3 cache only (results POST to mcp-server /api/push-prices)
 - `pdf_extractor.db` — WRITE: pdf-extractor only (isolated, no sharing)

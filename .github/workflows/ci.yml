@@ -455,6 +455,29 @@ jobs:
       - name: Run no-hardcode-allowlist-scan --check
         run: bash scripts/audits/no-hardcode-allowlist-scan.sh --check
 
+  verify-market-db-journal-source-guard:
+    name: verify-market-db-journal-source-guard
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # Pure bash/git ls-files/grep — no bun/go/python toolchain needed,
+      # cheapest job in the pipeline. Zero-tolerance CI guardrail (AC-2 of
+      # FIX-MARKETDB-JOURNALMODE-GUARD-SHIPPED-BUT-NEVER-ARMED): FAILS if any
+      # source file outside the sole sanctioned owner
+      # (apps/mcp-server/src/infrastructure/db/schema.ts) sets journal_mode
+      # against market.db — covers both TS/JS `PRAGMA journal_mode =` and Go
+      # `_journal_mode=` DSN tokens (the Go DSN gap is precisely how
+      # apps/stock-price's re-armer survived a TS-only sweep undetected).
+      # Complementary to, never a substitute for, the RUNTIME guard
+      # (scripts/audits/verify-market-db-journal-mode.sh, wired via the
+      # cron-standalone-team lane) — see docs/policies/
+      # market-db-journal-mode-policy.md. 0 offenders at authoring time.
+      - name: Run verify-market-db-journal-source-guard --check
+        run: bash scripts/audits/verify-market-db-journal-source-guard.sh --check
+
   shared-package-import-check:
     name: shared-package-import-check
     runs-on: ubuntu-latest

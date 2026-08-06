@@ -37,6 +37,12 @@ See `.claude/skills/cron-standalone-team/register-job-claude-manager-helper.md` 
 
 See `.claude/skills/cron-standalone-team/register-job-code-janitor.md` for full `CronCreate` definition.
 
+**Job 6 — market-db-journal-guard, every-15-min WAL re-arm runtime detector**
+
+See `.claude/skills/cron-standalone-team/register-job-market-db-journal-guard.md` for full
+`CronCreate` definition. AC-1 of `FIX-MARKETDB-JOURNALMODE-GUARD-SHIPPED-BUT-NEVER-ARMED`
+(2026-08-06) — no subagent spawn, prompt runs the probe script directly and branches on exit code.
+
 ---
 
 ## Execution

@@ -1,5 +1,38 @@
 
 ---
+## [Developer] 2026-08-06 — FIX-MARKETDB-JOURNALMODE-GUARD-SHIPPED-BUT-NEVER-ARMED
+
+`scripts/audits/verify-market-db-journal-mode.sh` (the market.db WAL re-arm runtime guard, shipped
+2026-07-30) had zero call sites — no cron, no CI, no flow doc, no auditor probe — while the exact
+condition it detects went live and produced the 5th market.db corruption on 2026-08-06. Armed it:
+AC-1 new `*/15 * * * *` standalone cron (`market-db-journal-guard`, via the existing
+`cron-standalone-team` lane, no subagent spawn) that alerts `send_telegram(channel="bug", ...)`
+verbatim on FAIL/ERROR — proven live against a genuine (not synthetic) FAIL verdict at authoring
+time. AC-2 new sibling `scripts/audits/verify-market-db-journal-source-guard.sh` (opt-IN allowlist —
+sole owner `schema.ts`), covering both TS/JS `PRAGMA journal_mode=` and the Go `_journal_mode=` DSN
+token (the exact gap that let `apps/stock-price`'s re-armer, `e370f5f51`, survive a TS-only sweep),
+wired into CI. AC-4 new policy SSOT `docs/policies/market-db-journal-mode-policy.md` (DELETE +
+synchronous=FULL, sole owner, WHY, durability trade-off, the `e370f5f51` cautionary example),
+referenced from `docs/ARCHITECTURE.md`. Did not touch the pre-existing guard script itself.
+
+---
+## [Developer] 2026-08-06 — FIX-AUDITOR-C08-UNSATISFIABLE-TTL-WINDOW-AND-ISO8601-STRCMP
+
+system-auditor's C-08 (orphaned alerts) checked a 24h alerts window against an `agent_signals`
+correlation stub with a fixed 2h TTL (purged only once daily) — `expected=0` was mathematically
+unsatisfiable, and an ISO8601 strcmp bypass (`alerts.triggered_at` T-format vs `datetime('now',...)`
+space-format) independently over-captured rows. Rebound the window to 2h (the exact co-write TTL
+literal, `alertStore.ts:223`) and wrapped both sides in `datetime()`, copying `checkStaleAlerts.ts`'s
+already-proven pattern. Fleet-audited every C-xx timestamp-vs-`datetime('now',...)` check in
+`docs/agents/system-auditor/flow/main.md`; also fixed C-04/C-07/C-10/C-11 (same T-format class),
+left C-06/C-09/C-16 unwrapped (measured 0% T-format, no mixed-writer exposure). Retracted two
+fabricated root-cause entries in `docs/data/DASHBOARD.md` (unmeasured "pipeline delayed"/"not
+propagated" narration, now DISCONFIRMED — the alert-engine write path is healthy). Kept C-08 active
+rather than retiring it in favor of `checkOrphanAgentSignalsAlertId` (D-NEW2), which only covers the
+inverse FK direction. New doc-driven regression test (reads the live SQL out of the flow doc, not a
+hardcoded copy) — `FIX-AUDITOR-C08-UNSATISFIABLE-TTL-WINDOW-AND-ISO8601-STRCMP.test.ts`, 5/5 pass.
+
+---
 ## [Developer] 2026-08-01 — FIX-COLDEVICT-SIGNALQUEUE-NO-AGE-GATE-ORPHANS-READ-ROWS
 
 `scripts/orch-cold-evict.sh`'s `signal_queue.rows[]` eviction selected on `TERMINAL_SIGNAL_STATUSES`
