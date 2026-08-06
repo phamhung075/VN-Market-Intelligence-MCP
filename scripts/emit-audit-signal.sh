@@ -81,7 +81,12 @@
 #     rc=0 from mcp_call is NOT sufficient)    AC-1/AC-2 — never trust rc alone)
 #   E-1 write claimed but read-back of      -> "[emit-signal] ABORT e1-readback-failed id=<id>"
 #     agent_signals found no matching row      (AC-2/AC-3 — mandatory read-back, mirrors E-3)
-#   E-3 write failure (rc=1|3, no retry)   -> "[emit-signal] ABORT e3-write-failed rc=<n>"
+#   E-3 write failure (rc=1, or a genuine  -> "[emit-signal] ABORT e3-write-failed rc=<n>"
+#     rc=3 usage error from a NON-empty       (an empty-candidate read — a transient race with
+#     candidate, e.g. live file missing;      a concurrent peer rename of $ORCH_STATE_FILE —
+#     no retry)                               is retried instead, see CAS-RETRY below,
+#                                              FIX-EMITSIGNAL-E3-RC3-FATAL-NORETRY-DROPS-
+#                                              DETECTOR-FINDING)
 #   E-3 CAS-retry exhausted (3x rc=2)      -> "[emit-signal] ABORT e3-cas-exhausted rc=2"
 #   E-3 POST-WRITE read-back failure       -> "[emit-signal] ABORT e3-readback-failed <id>"
 #   bad usage / malformed args             -> "[emit-signal] ABORT <reason>" (exit 2)
@@ -115,10 +120,27 @@
 # apply.sh` pipe each iteration — jq re-reads the live file fresh from disk
 # every time, so no special "rebuild" logic is needed. rc=0 -> success.
 # rc=2 (CAS mtime mismatch) -> retry (up to 3 total attempts). rc=1
-# (validation/conservation failure) or rc=3 (usage error) -> immediate abort,
-# NO retry. 3x rc=2 -> distinct "e3-cas-exhausted" marker (kept distinct from
-# "e3-write-failed" so QA/dev can tell CAS-contention-exhaustion apart from a
-# genuine schema/conservation validation failure).
+# (validation/conservation failure) or a rc=3 surfaced from a REAL
+# orch-apply.sh invocation on a non-empty candidate (genuine usage error,
+# e.g. live file missing) -> immediate abort, NO retry. 3x rc=2 -> distinct
+# "e3-cas-exhausted" marker (kept distinct from "e3-write-failed" so QA/dev
+# can tell CAS-contention-exhaustion apart from a genuine schema/
+# conservation validation failure).
+#
+# EMPTY-CANDIDATE PRE-CHECK (FIX-EMITSIGNAL-E3-RC3-FATAL-NORETRY-DROPS-
+# DETECTOR-FINDING): `_e3_read_candidate()` (below) can itself yield an
+# EMPTY string when its jq read of $ORCH_STATE_FILE races a concurrent
+# peer's atomic rename of that same file (or hits an equivalent transient
+# I/O hiccup) — orch-apply.sh's own exit-code contract (line 48) would
+# surface exactly that as its rc=3 "empty stdin" usage-error branch
+# (scripts/orch-apply.sh:118-121) if the empty candidate were piped through
+# unchecked. `_e3_write_row()` checks candidate non-emptiness BEFORE ever
+# invoking `_orch_apply_invoke`, and treats an empty read as retryable —
+# same lane as rc=2 — so this transient race can never be misclassified as
+# a fatal usage error. A GENUINE usage error (e.g. the live file itself is
+# actually missing) can still only ever be observed from a REAL
+# `_orch_apply_invoke` call on a non-empty candidate, and that path is
+# untouched: it still aborts fatally with zero retry.
 #
 # TESTABILITY HOOKS (env overrides, production defaults shown):
 #   EMIT_SIGNAL_LEDGER_FILE       default: $REPO_ROOT/docs/data/auditor-dedup-ledger.json
@@ -141,6 +163,15 @@
 #                                 mcp-call.sh (below) — tests may redefine
 #                                 this after sourcing to stub E-1/E-2
 #                                 transport outcomes per tool name ($1).
+#   _e3_read_candidate()          a plain bash function (APPLICATION section
+#                                 below, sibling seam to _orch_apply_invoke())
+#                                 — tests may redefine it after sourcing to
+#                                 script a transient-empty-then-recovers read
+#                                 sequence (same counter-persists-across-loop-
+#                                 iterations idiom as _orch_apply_invoke()),
+#                                 covering the empty-candidate retry lane
+#                                 (FIX-EMITSIGNAL-E3-RC3-FATAL-NORETRY-DROPS-
+#                                 DETECTOR-FINDING).
 #
 # Injection-safety (Hard Constraint 8): every mcp_call/orch-apply.sh JSON
 # body is built via jq -n --arg/--argjson bound params ONLY — never string-
@@ -422,6 +453,15 @@ _build_row_json() {
     '{id:$id, ts:$ts, from:$from, to:$to, type:$type, summary:$summary, severity:$severity, status:"NEW", payload_ref: (if $payload_ref == "" then null else $payload_ref end), provenance:"detector", audit_cycle_tag: (if $cycle_tag == "" then null else $cycle_tag end)}'
 }
 
+# Reads the live orch-state file and builds this attempt's CAS-retry
+# candidate. Factored into its own function (sibling seam to
+# _orch_apply_invoke() below) purely so tests can script a transient-empty-
+# then-recovers read sequence — see scripts/emit-audit-signal.test.sh
+# T25/T26 (FIX-EMITSIGNAL-E3-RC3-FATAL-NORETRY-DROPS-DETECTOR-FINDING).
+_e3_read_candidate() {
+  jq --argjson row "$1" '.signal_queue.rows += [$row]' "$ORCH_STATE_FILE"
+}
+
 # Step E-3: signal-row append via orch-apply.sh + POST-WRITE read-back.
 # CAS-retry contract per FR-5 / architect design decision 3.
 _e3_write_row() {
@@ -430,7 +470,22 @@ _e3_write_row() {
   rc=1
   # shellcheck disable=SC2034  # loop var unused in body — only iteration count matters
   for attempt in 1 2 3; do
-    candidate=$(jq --argjson row "$row_json" '.signal_queue.rows += [$row]' "$ORCH_STATE_FILE")
+    candidate=$(_e3_read_candidate "$row_json")
+    if [ -z "$candidate" ]; then
+      # FIX-EMITSIGNAL-E3-RC3-FATAL-NORETRY-DROPS-DETECTOR-FINDING: an empty
+      # read here means this attempt raced a concurrent peer rename of
+      # $ORCH_STATE_FILE (or hit an equivalent transient I/O hiccup) — NOT a
+      # genuine usage error. Piping this through to orch-apply.sh would
+      # surface as ITS OWN rc=3 "empty stdin" usage-error branch
+      # (scripts/orch-apply.sh:118-121); short-circuiting here instead means
+      # this transient race is never misclassified as a fatal usage error —
+      # same retry lane as rc=2 (CAS mismatch). A GENUINE usage error (e.g.
+      # the live file is actually missing) can still only ever surface below
+      # from a REAL _orch_apply_invoke call on a non-empty candidate, and
+      # that branch is untouched: still fatal, zero retry.
+      rc=2
+      continue
+    fi
     _orch_apply_invoke <<< "$candidate"
     rc=$?
     if [ "$rc" -eq 0 ]; then

@@ -134,6 +134,8 @@ reset_case() {
   rm -f "$SCRATCH_LEDGER"
   # restore default (real) _orch_apply_invoke in case a prior case stubbed it
   _orch_apply_invoke() { bash "$ORCH_APPLY_SH"; }
+  # restore default (real) _e3_read_candidate in case a prior case stubbed it
+  _e3_read_candidate() { jq --argjson row "$1" '.signal_queue.rows += [$row]' "$ORCH_STATE_FILE"; }
 }
 
 row_present() {
@@ -482,6 +484,59 @@ RC24=$?
 ROW_ID24=$(printf '%s' "$OUT24" | grep -o 'id=[^ ]*$' | cut -d= -f2)
 check "T24 no-payload-ref exit=0" "$([ "$RC24" -eq 0 ] && echo true || echo false)"
 check "T24 no-payload-ref row's payload_ref is null" "$([ "$(row_payload_ref "$ROW_ID24")" = "null" ] && echo true || echo false)"
+
+# ── T25/T26: FIX-EMITSIGNAL-E3-RC3-FATAL-NORETRY-DROPS-DETECTOR-FINDING —
+# _e3_write_row() must distinguish a transient empty-candidate read (raced a
+# concurrent peer rename of $ORCH_STATE_FILE — retryable, same lane as rc=2)
+# from a GENUINE orch-apply.sh usage error on a non-empty candidate (e.g.
+# live file actually missing — must stay fatal, zero retry). Both branches
+# tested explicitly per feedback_fleetwide_gate_validated_on_one_file_
+# optout_allowlist — do not validate on only one. ──────────────────────────
+
+# T25: empty-candidate on attempt 1 (simulated raced read) — RETRY and
+# succeed once the read recovers on attempt 2. No ABORT marker, row lands.
+reset_case
+EMPTY_CANDIDATE_ATTEMPT_FILE="$TMPDIR_TEST/empty-candidate-attempt.count"
+: > "$EMPTY_CANDIDATE_ATTEMPT_FILE"
+_e3_read_candidate() {
+  local row_json="$1" attempt_n
+  echo x >> "$EMPTY_CANDIDATE_ATTEMPT_FILE"
+  attempt_n=$(wc -l < "$EMPTY_CANDIDATE_ATTEMPT_FILE" | tr -d ' ')
+  if [ "$attempt_n" -lt 2 ]; then
+    printf ''   # simulated transient empty read (raced a peer rename)
+    return 0
+  fi
+  jq --argjson row "$row_json" '.signal_queue.rows += [$row]' "$SCRATCH_ORCH"
+}
+OUT25=$(run_emit_signal --check-id A-30 --category-type scheduler_locks --severity CRITICAL \
+  --summary "empty candidate retry probe" --detail-json '{"dedup_key":"scheduler_locks:T25:A-30"}')
+RC25=$?
+ROW_ID25=$(printf '%s' "$OUT25" | grep -o 'id=[^ ]*$' | cut -d= -f2)
+EMPTY_CANDIDATE_ATTEMPTS=$(wc -l < "$EMPTY_CANDIDATE_ATTEMPT_FILE" | tr -d ' ')
+check "T25 empty-candidate-then-recovers exit=0" "$([ "$RC25" -eq 0 ] && echo true || echo false)"
+check "T25 empty-candidate-then-recovers retried (2 read attempts)" "$([ "$EMPTY_CANDIDATE_ATTEMPTS" -eq 2 ] && echo true || echo false)"
+check "T25 empty-candidate-then-recovers no ABORT marker on eventual success" "$(! printf '%s' "$OUT25" | grep -q 'ABORT' && echo true || echo false)"
+check "T25 empty-candidate-then-recovers row present in signal_queue" "$([ "$(row_present "$ROW_ID25")" -eq 1 ] && echo true || echo false)"
+
+# T26: sibling fatal branch — orch-apply.sh returns rc=3 for a NON-empty
+# candidate (e.g. its own genuine "live file missing" usage-error guard,
+# scripts/orch-apply.sh:84-87) — must still abort loud, NO retry. Proves the
+# fix does not blanket-retry every rc=3, only the empty-candidate lane (T25).
+reset_case
+WRITE_FAIL_RC3_CALLS_FILE="$TMPDIR_TEST/write-fail-rc3-calls.count"
+: > "$WRITE_FAIL_RC3_CALLS_FILE"
+_orch_apply_invoke() { cat >/dev/null; echo x >> "$WRITE_FAIL_RC3_CALLS_FILE"; return 3; }
+BEFORE_COUNT26=$(jq '.signal_queue.rows | length' "$SCRATCH_ORCH")
+OUT26=$(run_emit_signal --check-id A-30 --category-type scheduler_locks --severity CRITICAL \
+  --summary "write-fail rc3 probe (genuine usage error)" --detail-json '{"dedup_key":"scheduler_locks:T26:A-30"}')
+RC26=$?
+WRITE_FAIL_RC3_CALLS=$(wc -l < "$WRITE_FAIL_RC3_CALLS_FILE" | tr -d ' ')
+AFTER_COUNT26=$(jq '.signal_queue.rows | length' "$SCRATCH_ORCH")
+check "T26 write-failure-rc3 non-zero exit" "$([ "$RC26" -ne 0 ] && echo true || echo false)"
+check "T26 write-failure-rc3 marker ABORT e3-write-failed rc=3" "$(printf '%s' "$OUT26" | grep -q '^\[emit-signal\] ABORT e3-write-failed rc=3' && echo true || echo false)"
+check "T26 write-failure-rc3 NO retry (invoked exactly once)" "$([ "$WRITE_FAIL_RC3_CALLS" -eq 1 ] && echo true || echo false)"
+check "T26 write-failure-rc3 row never appended (BEFORE==AFTER)" "$([ "$BEFORE_COUNT26" -eq "$AFTER_COUNT26" ] && echo true || echo false)"
+check "T26 write-failure-rc3 triggers non-dedup BUG telegram" "$(grep -q '^CALL: send_telegram' "$CALL_LOG" && echo true || echo false)"
 
 # ── Summary ──────────────────────────────────────────────────────────────────
 echo ""
