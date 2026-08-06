@@ -2859,6 +2859,19 @@
         "payload_ref": null,
         "provenance": "detector",
         "audit_cycle_tag": "cron:auditor-t1:2026-08-06T13:30Z"
+      },
+      {
+        "id": "sys-20260806T134549-728c",
+        "ts": "2026-08-06T13:45:49Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "microservice_degraded",
+        "summary": "rag-service A-30 mem_creep — no reclamation detected",
+        "severity": "WARN",
+        "status": "NEW",
+        "payload_ref": null,
+        "provenance": "detector",
+        "audit_cycle_tag": "cron:auditor-t1:2026-08-06T13:30Z"
       }
     ],
     "last_triaged_at": "2026-07-29T06:25:00Z",
@@ -6618,14 +6631,40 @@
       },
       {
         "id": "AF-SEMBLE-INIT-DEF",
-        "priority": "low",
+        "priority": "P3",
         "size": "S",
         "status": "BACKLOG",
         "title": "semble-search agent-def structural gap: docs/agents/semble-search/init.md is a pure markdown skill-pointer (no agent: block, no flow pointer). Decide pattern: delete init.md + point .claude/agents/semble-search.md straight at .claude/skills/semble-search/SKILL.md, OR rewrite init.md as a real agent def. agents-architect picks pattern (consistency with other agent bootstraps); agent-father implements.",
         "type": "SPIKE",
         "zone": "docs/agents/",
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#AF-SEMBLE-INIT-DEF",
-        "verify_note": "prior_status=TODO"
+        "verify_note": "prior_status=TODO",
+        "next_agent": "agent-father",
+        "updated_by": "po/triage-agentfather-20260806T1318Z",
+        "po_ruling_20260806T1345Z": {
+          "by": "po/triage-agentfather-20260806T1318Z",
+          "source": "agent-father keep sweep 2026-08-06T13:18Z, Checks #1/#3 escalation (LOW) — docs/agent-memory/notebooks/agent-father.md",
+          "decision": "FORMALIZE the exception class. Do NOT force full compliance. Do NOT delete init.md. This ruling closes the row's original open question, so its SPIKE framing is now over-spec — implementable directly, no agents-architect pre-step.",
+          "rejected_option_delete": "Deleting docs/agents/semble-search/init.md and pointing .claude/agents/semble-search.md straight at the skill (this row's original option B) is REJECTED: .claude/agents/semble-search.md:9 says 'Read docs/agents/semble-search/init.md immediately', and read-init-first is a shared invariant across all 42 agents plus every agent-father check that resolves an agent through it. Trading one lint failure for a structural exception to the bootstrap contract is a net loss.",
+          "rejected_option_full_compliance": "Full compliance (agent: YAML block + fail-loud-protocol.md in always_load) is REJECTED: semble-search is a haiku read-only single-shot search wrapper (tools: Bash, Read) invoked on the hot path by CLAUDE.md's global 'Semble First' rule. Loading a 108L protocol per invocation is exactly the ceremony the live TE-T* token-economy program exists to remove.",
+          "exception_class": "tool-style agent — opt-IN named allowlist only, never inferred from tool count (per feedback_fleetwide_gate_validated_on_one_file_optout_allowlist).",
+          "qualifying_criteria_ALL_must_hold": [
+            "1. No write grant — tools: contains no Write, no Edit, no MCP write tool.",
+            "2. No persistent artifact — no notebook, no memory.append_every_cycle, no channel write.",
+            "3. Single-shot — flow self-declares no multi-step pipeline and spawns no sub-agent.",
+            "4. Not cron-scheduled and not a dev-team pipeline participant — never holds a task lock, never writes .head.",
+            "5. Explicitly listed in the named exception table."
+          ],
+          "waived": "sweep-fixes.md Check #1 (fail-loud-protocol ref) and Check #3 (boundary_rules) are waived for listed agents. Check #5 (version) is NOT waived.",
+          "minimal_floor_still_required": "A full waiver is NOT granted. In place of the waived checks, init.md MUST carry ONE boundary line. Rationale: leaf agents with no stated on_error contract invent one (feedback_refine_bctc_md_invents_partial_exit_skips_mandated_loop, feedback_leaf_agent_analysis_only_exit_recurring_pattern_20260806). One line is cheap insurance; a 108L protocol load is not. Suggested text: '**Boundary:** read-only, single-shot. Tool fails after 1 retry -> return the failure text to the caller and RETURN. No notebook, no channel, no filesystem write.'",
+          "acceptance": [
+            "AC-1 docs/agents/agent-father/flow/sweep-fixes.md Step 3 gains the tool-style exception note, the named list (currently exactly one entry: semble-search), and the 5 qualifying criteria — so Checks #1/#3 stop re-firing daily.",
+            "AC-2 docs/agents/semble-search/init.md gains exactly two additions: a version: field (keeps Check #5 meaningful) and the one-line boundary contract above. Nothing else — no agent: YAML block.",
+            "AC-3 Next keep sweep reports semble-search CLEAN on Checks #1/#3/#5 with no hand-verification step."
+          ],
+          "doctrine_sync_deferred_to": "FIX-AGENT-GUIDE-SSOT-NO-AUTHORIZED-WRITER — the carve-out belongs in docs/AGENT_CREATION_GUIDE.md Section 5 as doctrine, but NO agent is authorized to write that file today (agent-father's forbidden_outputs bans it explicitly; agents-architect cannot write outside docs/architecture-briefs/). It lands in sweep-fixes.md — agent-father's own zone, and where the check actually executes — so this row is landable NOW; the guide sync rides the ownership row."
+        },
+        "updated_at": "2026-08-06T13:45:29Z"
       },
       {
         "id": "AF-DISAGREEMENT-VERIFY-OVERAGE",
@@ -7765,7 +7804,29 @@
           "stale": "promoted 2026-07-08, still BACKLOG 6 days / 13+ cycles. supervised handling applies (bounded-1 5th-hole class); promotion left to router/dev-team adjudication — PLAN-ONLY triage does not self-promote.",
           "source": "docs/handoffs/tnb-audit-latest.md"
         },
-        "toolset_partition_corroboration_20260715T2056Z": "[po 2026-07-15T20:56Z, corroboration from cow-20260715T203953] TOOLSET PARTITION — do NOT close as done without it. The prescribed remedy (scripts/agents-flow/mcp-call.sh curl-bypass) is a BASH script, but tran-ngoc-bau frontmatter grants Read,Edit,Write,Glob,Grep — NO Bash and NO MCP. The curl-bypass is UNEXECUTABLE for the very agent that has filed F-MCP-SUBAGENT-SYSTEMIC 14 consecutive cycles (c97-c110). Whoever picks this up MUST partition affected cowork agents by what they actually hold: (a) has Bash, no MCP -> mcp-call.sh works as specced; (b) has NEITHER (tran-ngoc-bau) -> needs a frontmatter grant (mcp__gateway__call_tool and/or Bash) from AGENT-FATHER, or the flow re-specced to its real toolset, or the dispatcher claims the published marker on its behalf pre-spawn. Consequence now confirmed CONCURRENCY-SAFETY not just data-access: tnb main.md:39-41 published-marker gate (its ONLY dedup) has NEVER executed => it silently disarmed the guard that would have blocked today's tnb-audit double-dispatch."
+        "toolset_partition_corroboration_20260715T2056Z": "[po 2026-07-15T20:56Z, corroboration from cow-20260715T203953] TOOLSET PARTITION — do NOT close as done without it. The prescribed remedy (scripts/agents-flow/mcp-call.sh curl-bypass) is a BASH script, but tran-ngoc-bau frontmatter grants Read,Edit,Write,Glob,Grep — NO Bash and NO MCP. The curl-bypass is UNEXECUTABLE for the very agent that has filed F-MCP-SUBAGENT-SYSTEMIC 14 consecutive cycles (c97-c110). Whoever picks this up MUST partition affected cowork agents by what they actually hold: (a) has Bash, no MCP -> mcp-call.sh works as specced; (b) has NEITHER (tran-ngoc-bau) -> needs a frontmatter grant (mcp__gateway__call_tool and/or Bash) from AGENT-FATHER, or the flow re-specced to its real toolset, or the dispatcher claims the published marker on its behalf pre-spawn. Consequence now confirmed CONCURRENCY-SAFETY not just data-access: tnb main.md:39-41 published-marker gate (its ONLY dedup) has NEVER executed => it silently disarmed the guard that would have blocked today's tnb-audit double-dispatch.",
+        "next_agent": "architect",
+        "updated_by": "po/triage-agentfather-20260806T1318Z",
+        "po_scope_widening_20260806T1345Z": {
+          "by": "po/triage-agentfather-20260806T1318Z",
+          "why": "Title and scope say 'cowork agent flows', but PO measured the identical defect across the DEV and META lanes today. This row's own toolset_partition_corroboration_20260715T2056Z annotation already prescribes the right method (partition affected agents by what they actually hold); the partition was simply never run outside cowork. Widening rather than minting a 4th row, per file-prior-art discipline.",
+          "measured_20260806T1337Z": {
+            "agents_without_mcp_gateway_call_tool_grant": 27,
+            "of_those_owning_docs_that_prescribe_MCP_calls": 25,
+            "candidate_docs": 40,
+            "method": "for each .claude/agents/*.md whose tools: line lacks mcp__gateway__call_tool, grep -rlE 'call_tool\\(server=|task_claim\\(|task_heartbeat\\(|task_release\\(|send_telegram\\(|post_agent_signal\\(' over docs/agents/<id>/",
+            "honesty_caveat": "40 is an UPPER-BOUND candidate set, NOT 40 confirmed defects. Triage must classify each hit as (a) live-and-unexecutable, (b) an INV-GATEWAY-1-style comment stating the DISPATCHER makes the call (correct as written, no action), or (c) already covered by the scripts/agents-flow/mcp-call.sh bypass. Do not report the raw count as a defect count."
+          },
+          "confirmed_live_instances_this_cycle": [
+            "docs/agents/developer/flow/microservice-main.md:90-94 instructs call_tool(server='vn-market', tool='task_heartbeat') after every Python/FastAPI TDD loop. All 11 dev-* agents (10 zone + generic developer) have tools: Read, Edit, Write, Glob, Grep, Bash — no gateway grant. The instruction is unexecutable, so its 'if hb.ok == false -> stolen-lock protocol' branch is dead prose and stolen-lock detection has never run for any dev-* agent.",
+            "dev-mcp-server/flow/main.md:18 and dev-frontend/flow/main.md:17 point at .claude/skills/cowork-error-boundary/SKILL.md, whose 'MCP Call Pattern' section and get_recent_fixes BUG-dedup are likewise unexecutable for them. Repoint tracked as AC-3 of FIX-DEVFLOW-MICROSERVICE-MAIN-NO-ERROR-BOUNDARY.",
+            "agent-father self-reported the same shape 2026-08-06T13:18Z: its keep.md Commit step prescribes commit-mutex/SKILL.md (task_claim over the gateway) while it holds no MCP grant — confirmed live, 'No such tool available'."
+          ],
+          "partition_result_dev_and_meta_lane": "ALL dev-* agents and agent-father fall in partition (a) of this row's own annotation — they HOLD Bash and lack only MCP. scripts/agents-flow/mcp-call.sh therefore works for them as-specced, unlike the tran-ngoc-bau partition-(b) case that has blocked this row since 2026-07-15. The dev/meta subset is the cheap half and can ship first.",
+          "po_ruling": "Do NOT widen tool grants agent-by-agent as the default remedy — that reintroduces the fleet-wide blast radius the DRS allowlist exists to contain. Default remedy is the bypass (partition a) or deleting/reassigning the instruction to the dispatcher that already owns the call (INV-GATEWAY-1). A frontmatter grant is the exception and needs an explicit per-agent justification.",
+          "unstranded": "next_agent was absent; row inert in backlog since 2026-07-08 (~13 cycles). Set to architect — on the DRS ratified allowlist, so now auto-dispatchable."
+        },
+        "updated_at": "2026-08-06T13:45:29Z"
       },
       {
         "id": "FIX-VERIFY-DEPLOY-SHA-BENIGN-DRIFT",
@@ -10653,7 +10714,7 @@
         "plan_only": true,
         "created_at": "2026-07-29T10:49:19Z",
         "created_by": "po",
-        "updated_at": "2026-07-29T10:52:11Z",
+        "updated_at": "2026-08-06T13:45:29Z",
         "title": "scripts/emit-audit-signal.sh was invoked TWICE for one B-12 finding (10:33:36Z + 10:33:38Z), and only the SECOND invocation's marker reached $MARKERS_FILE — so the OUTPUT-CONTRACT reported telegram_sent=0 for a BUG Telegram that DID fire, and the contract script's own V1 VIOLATION line (which caught the discrepancy) was never pasted into the notebook",
         "root_cause": "TWO SEPARATE INVOCATIONS, NOT A CAS RETRY. Corroborated on three independent planes: (1) E-1 plane — get_agent_signals(from_agent=system-auditor) returns TWO rows, #9885 (expiry 2026-07-29T12:33:36) and #9886 (expiry 12:33:38); expiry = created+2h, so E-1 fired at 10:33:36Z and 10:33:38Z. _run_e1 is called exactly once per run_emit_signal (scripts/emit-audit-signal.sh:457-459), so two E-1 rows CANNOT be produced by one invocation. (2) E-3 plane — two signal_queue rows, sys-20260729T103337-13e5 and sys-20260729T103338-7f95, with DISTINCT ids and DISTINCT ts. _gen_row_id/_build_row_json run ONCE per invocation at lines 466-468, BEFORE _e3_write_row; an intra-loop CAS retry re-applies the SAME row_json and would therefore produce two rows sharing an IDENTICAL id and ts. Distinct ids falsify the retry hypothesis. (3) Ledger plane — docs/data/auditor-dedup-ledger.json holds data_stale:sbv_fx:B-12 = {ts:2026-07-29T10:33:36Z, sev:2}, exactly matching invocation 1's E-1 timestamp. SECOND DEFECT (the reporting arm): scripts/audit-output-contract.sh:153-169 increments telegram_sent on an [emit-signal] OK marker and dedup_skipped on a SKIP-dedup marker. The reported line was signals_posted=1 | telegram_sent=0 | ... | dedup_skipped=1 — i.e. exactly ONE marker was parsed and it was the SKIP-dedup one. Invocation 1's OK marker never reached $MARKERS_FILE (docs/agents/system-auditor/flow/main.md:162). THIRD DEFECT (the suppression): marker-derived signal_queue_rows_written would then be 1, but the line reported 3. Per audit-output-contract.sh:201-207 the V1 guard fires when the independent re-read exceeds the marker count, prints a VIOLATION line and BUG-Telegrams it, then substitutes the higher value. main.md:875 REQUIRES that VIOLATION line be pasted into the RETURN block. It appears nowhere in docs/agent-memory/notebooks/system-auditor.md — the one artifact that would have surfaced all of this was dropped. FOURTH (likely enabler, unproven path): B-12 is DOUBLE-ASSIGNED as a check-id in the flow doc — main.md:192 puts B-12 in the Per-Source Fetch Freshness (B-01 through B-07, B-11, B-12) per-source loop, while main.md:212 separately defines B-12 as 'Rate limits: no source at 100%'. One check-id, two checks, one shared dedup_key namespace.",
         "evidence": "PO-MEASURED 2026-07-29T10:40-10:49Z, live artifacts + live read-only tool calls, none taken from the auditor's self-report. get_agent_signals(from_agent=system-auditor) -> ids 9885/9886, identical title 'data_stale: sbv_fx (B-12)' and identical detail, expiries 12:33:36 / 12:33:38. jq over docs/data/orch/orch-state.json .signal_queue.rows[] -> the two sbv_fx rows, both status=NEW (deliberately left untriaged — they are live findings for normal triage). docs/data/auditor-dedup-ledger.json -> ts 10:33:36Z sev 2. docs/agent-memory/notebooks/system-auditor.md:12 -> the OUTPUT-CONTRACT line. Notebook contains ZERO [emit-signal] markers despite main.md:333 mandating a verbatim paste of every one.",
@@ -10667,7 +10728,18 @@
           "FIX-AUDITOR-DASHBOARD-APPEND-NO-ACTUATOR-CONTRACT-COUNT-NARRATED",
           "FIX-NOTEBOOK-COMPOSE-REWRITES-RETAINED-PRIOR-SECTIONS"
         ],
-        "constraint": "FIX-SIGNALQUEUE-DUP-ID-GUARD (BACKLOG, cross-service/) does NOT cover this: it guards id-UNIQUENESS in signal_queue.rows[], and the two rows here already have distinct ids. An id-uniqueness guard would pass both. Do not close this row by pointing at it."
+        "constraint": "FIX-SIGNALQUEUE-DUP-ID-GUARD (BACKLOG, cross-service/) does NOT cover this: it guards id-UNIQUENESS in signal_queue.rows[], and the two rows here already have distinct ids. An id-uniqueness guard would pass both. Do not close this row by pointing at it.",
+        "next_agent": "developer",
+        "updated_by": "po/triage-agentfather-20260806T1318Z",
+        "po_premise_correction_20260806T1345Z": {
+          "by": "po/triage-agentfather-20260806T1318Z",
+          "severity": "MUST-READ before implementing this row — one of its own guard-rails is built on a refuted premise and will steer the implementer away from a real, separate defect.",
+          "refuted": "This row's why_the_obvious_fixes_are_wrong item (2) states: 'scripts/emit-dashboard-row.sh:207-208 renders that string from the --telegram-sent flag, which is fed by invocation 1's OK outcome.' The clause 'which is fed by invocation 1's OK outcome' is FALSE. PO grep 2026-08-06T13:42Z: `grep -rn -- '--telegram-sent'` across all *.md/*.sh/*.ts repo-wide returns exactly TWO hits, BOTH inside scripts/emit-dashboard-row.sh itself (usage comment line 35, arg-parse line 146). NO call site anywhere passes the flag. The rendered 'Telegram sent' text comes from the script's own fail-OPEN initialiser at line 130 (telegram_sent='yes'), not from any caller outcome.",
+          "what_still_stands": "Item (2)'s CONCLUSION for THIS row is unaffected — the B-12 DASHBOARD row at docs/data/DASHBOARD.md:129 did coincide with a real send, so 'the WARN paged nobody' remains a wrong premise for the B-12 incident specifically, and this row's scope is still emit-audit-signal.sh double-invocation + marker loss. Only the stated MECHANISM was wrong.",
+          "why_it_matters": "As written, item (2) tells any future implementer 'DO NOT treat the DASHBOARD row as the lying artifact'. Generalised beyond B-12, that instruction is now actively harmful: the DASHBOARD row IS the lying artifact on every dedup-skipped cycle, because the unpassed flag defaults to yes. Observed live 2026-08-06T13:36Z (signal sys-20260806T133606-3047: OUTPUT-CONTRACT telegram_sent=0, dedup_skipped=1, DASHBOARD row still reads 'WARN Telegram sent').",
+          "routed_to": "FIX-DASHBOARD-TELEGRAM-SENT-DEFAULT-YES-NEVER-THREADED (minted this cycle) — do not fold it in here, and do not close that row against this one's item (2).",
+          "unstranded": "next_agent was absent. Set to developer (zone cross-service/, scripts/ work)."
+        }
       },
       {
         "id": "FIX-AUDITOR-VPS-ROUTE-COUNT-HARDCODE-UNSATISFIABLE",
@@ -12260,8 +12332,8 @@
         "next_agent": "developer",
         "created_at": "2026-08-06T12:45:00Z",
         "created_by": "po/rag-oom-ruling-20260806T1245 (actuates architect brief section 3 / S3, which was designed 2026-08-06T09:03Z but never given a row)",
-        "updated_at": "2026-08-06T12:47:16Z",
-        "updated_by": "po/rag-oom-ruling-20260806T1245",
+        "updated_at": "2026-08-06T13:48:25Z",
+        "updated_by": "po/triage-agentfather-20260806T1318Z",
         "design_ref": "docs/architecture-briefs/2026-08-06-rag-service-memory-sizing-remediation.md section 3 (line 63) — 'Structural fix — Option (b): idle-unload path for the embedder singleton'. Design is DONE; this row is execution only, no re-design needed.",
         "why_this_row_exists": "MINTED because the architect brief designed this fix and no board row carried it — the decision would otherwise have lived only inside architect_review_note on FU-RAG-DEPLOY-MEMORY, which is a note field, not a dispatchable unit. This is not FP churn re-raising the A-30 memory finding (feedback_auditor_mcpserver_a21_a30_memory_fp_reemit_churn): the memory finding is owned by FU-RAG-DEPLOY-MEMORY and stays there. This row owns a DIFFERENT and previously unowned thing — the absence of a release path in apps/rag-service/infrastructure/embedder.py (lines 37/51; grep for unload|.release(|del self._model|gc.collect|empty_cache finds nothing), which has been flagged three separate times on FU-RAG-DEPLOY-MEMORY's history and actioned zero times.",
         "scope": "Idle-unload timer symmetric to the existing lazy-load. EMBEDDER_IDLE_UNLOAD_MINUTES env var (config, never a hardcode — feedback_no_hardcode_stats), default ~15. asyncio background task registered in build_lifespan; after N minutes with no embed call, unload the model and gc.collect(). Reload transparently on the next embed through the EXISTING double-check-lock path — do not add a second load path. Files per the brief: apps/rag-service/infrastructure/embedder.py, apps/rag-service/main.py (env plumbing if needed), plus direct test coverage showing an injected idle-unload flips state warm->cold without ever returning a 503.",
@@ -12272,7 +12344,15 @@
           "FIX-RAG-COMPACTION-DISK-AMPLIFICATION",
           "RAG-FTS-BUILD-MEMORY-BOUND",
           "FIX-RAG-SERVICE-CLEAN-EXIT-RESTART-LOOP"
-        ]
+        ],
+        "po_live_corroboration_20260806T1350Z": "SUPERSEDED AND WITHDRAWN by po_DEPENDENCY_STILL_UNSATISFIED_20260806T1355Z below. The withdrawn text claimed this row's blocking dependency was 'satisfied by a post-raise measurement'. There was no post-raise measurement — PO had the cap-raise timing wrong. Stub retained so the retracted claim is not inherited from a cached copy.",
+        "po_DEPENDENCY_STILL_UNSATISFIED_20260806T1355Z": {
+          "by": "po/triage-agentfather-20260806T1318Z",
+          "ruling": "This row's dependency on FU-RAG-DEPLOY-MEMORY ('sequence AFTER the 768m->1g cap raise lands') is NOT yet discharged. The compose edit was committed at 2026-08-06T13:00:35Z (2f835ec63) but it is UNVERIFIED whether the running container was ever recreated onto the new limit — see po_POSTRAISE_WARNS_UNRESOLVED_20260806T1355Z on FU-RAG-DEPLOY-MEMORY for the decisive `docker inspect` check and the two branches. Until that is answered, this row's own stated rationale holds verbatim: against a cap the service already saturates, an idle-unload's effect cannot be distinguished from noise.",
+          "why_this_row_may_become_the_canonical_owner": "If the check lands on branch B (container recreated near 13:00Z, back to ~97% of 1GiB by 13:36Z), the fixed baseline — not the ceiling — is the binding constraint, and this row becomes the primary remedy rather than a follow-up. FU-RAG-DEPLOY-MEMORY already names the same target: 'apps/rag-service/infrastructure/embedder.py:37/:51 has no unload path at all' (po_ESCALATION_first_confirmed_oomkill_20260806T0824).",
+          "observations_recorded_not_asserted_as_proof": "Three A-30 WARNs today (12:42Z pre-raise, 13:17Z and 13:36Z post-commit), the last at 97.06%. PO deliberately does NOT read these as confirming this row's prediction — the denominator behind 97.06% is undetermined, and the A-30 discriminator is on record erring in both directions on this exact container.",
+          "no_duplicate_minted": "PO nearly minted FIX-RAG-SERVICE-A30-SUSTAINED-MEM-FLOOR-96PCT for this symptom before the prior-art probe surfaced this cluster (FU-RAG-DEPLOY-MEMORY / FIX-RAG-SERVICE-CLEAN-EXIT-RESTART-LOOP / this row / FIX-RAG-COMPACTION-DISK-AMPLIFICATION). That row was withdrawn from the board before dispatch — do not re-mint it."
+        }
       },
       {
         "id": "FIX-DEVTEAM-PREFLIGHT-ROOT-SYMLINK-CWD-FRAGILE",
@@ -12292,6 +12372,114 @@
         "scope": "Make SCRIPT_DIR/DEFAULT_ROOT resolution symlink- and cwd-invariant, e.g. `cd -P \"$(dirname \"${BASH_SOURCE[0]}\")\" && pwd -P` (physical) instead of logical cd/pwd, so it always resolves through the symlink to the canonical repo root regardless of invocation cwd. Audit other scripts sharing the same `$SCRIPT_DIR/../..`-style idiom under scripts/agents-flow/ for the same fragility while in the zone.",
         "acceptance": "Script invoked from repo root, from apps/mcp-server, and from apps/mcp-server/scripts/agents-flow all resolve ROOT to the same canonical repo-root path (verify via `pwd -P` comparison in a test). Existing dev-team-tick-preflight.test.sh suite still green.",
         "evidence": "git commit failure text this tick: \"fatal : le chemin '/Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/apps/mcp-server/docs/data/orch/orch-state.json' est au-dela d'un lien symbolique\"; ls -la apps/mcp-server/docs -> symlink to ../../docs; realpath of both the symlinked and canonical orch-state.json paths match (no content divergence, no data loss — recovered via manual commit 4db659e30)."
+      },
+      {
+        "id": "FIX-DEVFLOW-MICROSERVICE-MAIN-NO-ERROR-BOUNDARY",
+        "type": "FIX",
+        "title": "Shared microservice dev flow declares NO Error Boundary — 8 dev-* zone agents resolve no on-failure contract at all, and the 2 that pass the check do so against the cowork SSOT, which omits the .head idle-reset",
+        "status": "BACKLOG",
+        "priority": "P1",
+        "size": "S",
+        "zone": "docs/agents/",
+        "next_agent": "agent-father",
+        "supervised": false,
+        "plan_only": false,
+        "created_at": "2026-08-06T13:45:00Z",
+        "created_by": "po/triage-agentfather-20260806T1318Z",
+        "updated_by": "po/triage-agentfather-20260806T1318Z",
+        "source": "agent-father keep sweep 2026-08-06T13:18Z Check #2 (notebook docs/agent-memory/notebooks/agent-father.md, commits bbe732740/6f549ffcf); independently re-verified by PO 2026-08-06T13:37Z",
+        "desc": "docs/agents/developer/flow/microservice-main.md contains zero 'Error Boundary' text. All 8 of dev-alert-engine, dev-api-gateway, dev-kinh-dich, dev-macro-indicators, dev-pdf-extractor, dev-rag-service, dev-stock-price, dev-technical-analysis reach it through a thin <id>/flow/main.md that also carries none, so their entire resolved flow chain has no on-failure contract. PO-measured: grep over all 10 dev-*/flow/main.md returns 1 hit for dev-mcp-server (line 18) and dev-frontend (line 17), 0 for the other 8. WHY THIS IS NOT DOC-LINT: docs/protocols/fail-loud-protocol.md Error Boundary Step 0 (STOP-RELEASE) is the step that atomically resets .head to idle on a failed spawn, and that protocol explicitly notes the .head reset IS executable by every agent regardless of MCP binding. A dev-* agent dying mid-task with no such instruction strands .head non-idle — the documented recurring duplicate-spawn family (feedback_pipeline_resume_stale_placeholder_duplicate_spawn_risk, 5th instance logged by agent-father itself at 2026-08-06T10:16Z; also feedback_pm_closeout_leaves_head_non_idle).",
+        "acceptance": [
+          "AC-1 docs/agents/developer/flow/microservice-main.md gains an Error Boundary block ABOVE the first flow step (mirror the placement at dev-mcp-server/flow/main.md:18 and dev-frontend/flow/main.md:17), naming docs/protocols/fail-loud-protocol.md section 'Error Boundary — Blocked Flow = EXIT' as the dev-pipeline SSOT and calling out its Step 0 STOP-RELEASE .head idle-reset as mandatory-FIRST, before the BUG telegram.",
+          "AC-2 docs/agents/agent-father/flow/sweep-fixes.md Check #2 method changes to follow a one-hop delegation pointer ('-> Run shared flow: <path>' / '-> Run sub-flow: <path>') before returning FAIL. WITHOUT THIS AC THE FIX DOES NOT LAND: Check #2 greps only <id>/flow/main.md, so an edit confined to the shared file still reports 8 FAILs next sweep — the 'fix landed in the pre-gate, not the probe the agent actually runs' shape. This also mechanizes the 9 cowork thin-dispatcher false positives agent-father re-verifies BY HAND every cycle (its own notebook, this cycle and prior).",
+          "AC-3 dev-mcp-server/flow/main.md:18 and dev-frontend/flow/main.md:17 are repointed from .claude/skills/cowork-error-boundary/SKILL.md to the same dev-pipeline SSOT. They pass the grep today against a COWORK contract that omits the .head idle-reset entirely and whose 'MCP Call Pattern' + get_recent_fixes dedup prescribe gateway calls no dev-* agent holds a grant for. Passing a check against the wrong content is a false green, not a clean bill.",
+          "AC-4 Verify: re-run Check #2 over all 10 dev-* agents; all 10 must resolve the SAME Error Boundary SSOT. Record the before/after count in the next keep report."
+        ],
+        "files": [
+          "docs/agents/developer/flow/microservice-main.md",
+          "docs/agents/agent-father/flow/sweep-fixes.md",
+          "docs/agents/dev-mcp-server/flow/main.md",
+          "docs/agents/dev-frontend/flow/main.md"
+        ],
+        "out_of_scope": "Do NOT resolve the INV-GATEWAY-1 contradiction inside microservice-main.md here (Step 6b comment says this specialist does NOT call task_claim and the dispatcher holds the lock, while lines 90-94 instruct a direct call_tool(server='vn-market', tool='task_heartbeat') after every Python TDD loop, which no dev-* agent can execute — none holds mcp__gateway__call_tool). Real and PO-verified, but it belongs to FIX-COWORK-FLOWS-GATEWAY-BLIND-BRIDGE-FALLBACK, whose scope PO widened in this same triage.",
+        "related": [
+          "FIX-COWORK-FLOWS-GATEWAY-BLIND-BRIDGE-FALLBACK",
+          "AF-SEMBLE-INIT-DEF"
+        ],
+        "not_duplicate_of": "No prior board row mentions microservice-main.md, dev-* error boundary, or fail-loud STOP-RELEASE for the dev lane (probed across backlog/ready/in_progress/review/qa/blocked 2026-08-06T13:35Z).",
+        "dispatch_note": "next_agent=agent-father is deliberately OFF the DRS ratified allowlist (fleet-wide blast radius) — DRS-STRANDED-OFF-ALLOWLIST by design, reachable via PO/router manual dispatch (docs/agents/po/flow/manual-dispatch-sweep.md). Not expected to self-promote.",
+        "updated_at": "2026-08-06T13:45:29Z"
+      },
+      {
+        "id": "FIX-AGENT-GUIDE-SSOT-NO-AUTHORIZED-WRITER",
+        "type": "FIX",
+        "title": "docs/AGENT_CREATION_GUIDE.md governs 42 agents but NO agent is authorized to write it — agent-father is explicitly banned, agents-architect cannot write outside briefs, so every doctrine change is structurally un-landable",
+        "status": "BACKLOG",
+        "priority": "P2",
+        "size": "S",
+        "zone": "docs/agents/",
+        "next_agent": "architect",
+        "supervised": false,
+        "plan_only": false,
+        "created_at": "2026-08-06T13:45:00Z",
+        "created_by": "po/triage-agentfather-20260806T1318Z",
+        "updated_by": "po/triage-agentfather-20260806T1318Z",
+        "source": "PO triage 2026-08-06T13:37Z — surfaced while routing agent-father's semble-search policy escalation (AF-SEMBLE-INIT-DEF), which could not be landed in its correct home.",
+        "desc": "PO-verified two independent ways. (1) Permission grep: docs/agents/agent-father/init.md:69 forbidden_outputs contains 'NEVER modify docs/AGENT_CREATION_GUIDE.md (read-only reference)', and agent-father is the ONLY agent whose definition references the guide at all; docs/agents/agents-architect/init.md:60 forbidden_outputs contains 'NEVER create files outside docs/architecture-briefs/ and docs/signals/'. No third claimant exists. (2) git log corroboration: docs/AGENT_CREATION_GUIDE.md last substantive change 2026-05-27 (dc430566c, a repo-wide consolidation sweep); docs/guides/ last touched 2026-07-16 by a global prefix rename — the doctrine layer has had no owner-driven edit in ~2.5 months. LIVE CONSEQUENCE THIS CYCLE: agent-father's Check #1/#3 escalation asks for a guide carve-out that literally nobody can write, so the carve-out has to be parked in sweep-fixes.md instead, splitting doctrine from enforcement — the drift shape behind feedback_auditor_predicate_drift_false_regression.",
+        "acceptance": [
+          "AC-1 Rule on the owner of docs/AGENT_CREATION_GUIDE.md + docs/guides/guide-*.md and record it in that agent's init.md document_zone/commit_zone.",
+          "AC-2 PO's proposal to evaluate (not a mandate): grant agent-father write access, GATED — it may edit the guide ONLY when the commit body cites an explicit PO ruling or an agents-architect brief, and NEVER self-initiated during a keep sweep. Rationale: agent-father is already declared the 'sole authority for agent lifecycle', and the gate preserves the original ban's real intent, which is to stop an agent from rewriting the rulebook to silence a check it keeps failing. If architect judges the self-reference risk too high, name a different owner instead.",
+          "AC-3 Whichever owner is chosen, the enabling edit is to an agent init.md — agent-father is the only agent that can make it. Sequence accordingly.",
+          "AC-4 Once an owner exists, land the tool-style exception class from AF-SEMBLE-INIT-DEF into AGENT_CREATION_GUIDE.md Section 5 as doctrine, and make sweep-fixes.md point at it rather than restate it."
+        ],
+        "files": [
+          "docs/AGENT_CREATION_GUIDE.md",
+          "docs/guides/guide-agent-definition.md",
+          "docs/agents/agent-father/init.md"
+        ],
+        "related": [
+          "AF-SEMBLE-INIT-DEF",
+          "FIX-DEVFLOW-MICROSERVICE-MAIN-NO-ERROR-BOUNDARY"
+        ],
+        "not_duplicate_of": "No prior row covers guide/doctrine write-ownership (probed 2026-08-06T13:35Z).",
+        "dispatch_note": "next_agent=architect is on the DRS ratified allowlist — auto-dispatchable, no manual gate required.",
+        "updated_at": "2026-08-06T13:45:29Z"
+      },
+      {
+        "id": "FIX-DASHBOARD-TELEGRAM-SENT-DEFAULT-YES-NEVER-THREADED",
+        "type": "FIX",
+        "title": "emit-dashboard-row.sh defaults --telegram-sent to 'yes' and ZERO callers repo-wide ever pass it, so every dedup-skipped WARN/CRITICAL row in DASHBOARD.md falsely claims a Telegram fired",
+        "status": "BACKLOG",
+        "priority": "P2",
+        "size": "S",
+        "zone": "cross-service/",
+        "next_agent": "developer",
+        "supervised": false,
+        "plan_only": false,
+        "created_at": "2026-08-06T13:45:00Z",
+        "created_by": "po/triage-agentfather-20260806T1318Z",
+        "updated_by": "po/triage-agentfather-20260806T1318Z",
+        "source": "Coordinator relay to PO 2026-08-06T13:40Z (system-auditor Tier-1 c58, signal sys-20260806T133606-3047); memory feedback_auditor_dashboard_row_telegram_sent_text_ignores_dedup_skip. ROOT CAUSE RE-DIAGNOSED BY PO — see desc, the relayed mechanism was wrong.",
+        "desc": "SYMPTOM (as relayed, confirmed): docs/data/DASHBOARD.md's row for signal sys-20260806T133606-3047 reads '... dedup_key=microservice_degraded:rag-service:A-30, WARN Telegram sent' although that cycle's OUTPUT-CONTRACT was telegram_sent=0, dedup_skipped=1. MECHANISM — the relayed read ('row-append text is copy-pasted fixed text, interpolate the real outcome instead') is WRONG and would send the implementer to a layer that is already correct. scripts/emit-dashboard-row.sh:207-211 ALREADY branches on a $telegram_sent variable and already omits the suffix when it is not 'yes'. The actual defect is two-part: (a) line 130 initialises telegram_sent='yes' — a fail-OPEN default, so an unset flag asserts a page that never happened; (b) grep -rn -- '--telegram-sent' across all *.md/*.sh/*.ts repo-wide returns exactly TWO hits, both inside emit-dashboard-row.sh itself (its usage comment line 35 and its arg-parse line 146) — NO call site anywhere passes it. Meanwhile both documented call sites (docs/agents/system-auditor/flow/main.md:378 and :706) are explicitly instructed 'DASHBOARD append (on any non-ABORT marker — always, even SKIP-dedup)'. So the flow MANDATES a row on dedup-skip and the unpassed default then stamps 'Telegram sent' on it. This is systematic across every dedup-skipped WARN/CRITICAL row written since the actuator landed 2026-07-29, not a one-off.",
+        "acceptance": [
+          "AC-1 Flip the default: scripts/emit-dashboard-row.sh:130 telegram_sent='no'. Fail-closed — never assert a page fired unless the caller proves it.",
+          "AC-2 Thread --telegram-sent at every emit-dashboard-row.sh call site (docs/agents/system-auditor/flow/main.md:378, :706, plus the tier1-probe.md / page-freshness.md sites that reference the same contract), derived from the [emit-signal] marker the flow ALREADY parses at those exact points: OK / OK-escalation-bypass -> yes, SKIP-dedup -> no. Zero new plumbing — the marker is already in hand (the flow says 'using the id= value parsed from this call's own [emit-signal] marker above').",
+          "AC-3 scripts/emit-dashboard-row.test.sh (32 tests today) has ZERO coverage of the telegram_sent rendering — verified by grep. Add both polarities: a SKIP-dedup/no call MUST NOT emit 'Telegram sent', an OK/yes call MUST. Without AC-3 this regresses the moment a new call site is added.",
+          "AC-4 Do NOT rewrite historical DASHBOARD.md rows. Note the contamination window (2026-07-29 to fix date) in the commit body so nobody later cites an old row as evidence a page fired."
+        ],
+        "files": [
+          "scripts/emit-dashboard-row.sh",
+          "scripts/emit-dashboard-row.test.sh",
+          "docs/agents/system-auditor/flow/main.md",
+          "docs/agents/system-auditor/flow/tier1-probe.md"
+        ],
+        "related": [
+          "FIX-AUDITOR-B12-DOUBLE-INVOKE-EMIT-MARKER-LOSS",
+          "FIX-AUDITOR-COMMIT-NONEXPLICIT-PATHSPEC"
+        ],
+        "not_duplicate_of": "FIX-AUDITOR-B12-DOUBLE-INVOKE-EMIT-MARKER-LOSS covers double-invocation + marker loss in emit-audit-signal.sh. This row is the emit-dashboard-row.sh flag-threading defect. They intersect: that row's why_the_obvious_fixes_are_wrong item (2) asserts the --telegram-sent flag 'is fed by invocation 1's OK outcome' — PO refuted that premise by grep this cycle and corrected it in place on that row.",
+        "zone_note": "Split-zone by construction: scripts/ is outside agent-father's commit_zone, the flow-doc call sites are inside it. Kept as ONE row owned by generic developer (cross-service/) so the script default and its callers cannot land out of step — splitting it is how AC-1 ships without AC-2.",
+        "updated_at": "2026-08-06T13:45:29Z"
       }
     ],
     "closed_sprints": [
@@ -22256,8 +22444,8 @@
         "type": "INFRA",
         "zone": "ops/infra",
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#FU-RAG-DEPLOY-MEMORY",
-        "updated_at": "2026-08-06T13:02:51Z",
-        "updated_by": "developer",
+        "updated_at": "2026-08-06T13:48:25Z",
+        "updated_by": "po/triage-agentfather-20260806T1318Z",
         "po_measured_input_20260729": "DECISION INPUT for the resident-set trade, measured 2026-07-29T10:25Z, no action requested. rag-service warm RSS is 749.9 MiB against a 768 MiB cap = 97.65%, leaving 18.1 MiB of headroom, and it reaches that after a SINGLE embed because the sentence-transformers model is a lazy singleton with NO release path (apps/rag-service/infrastructure/embedder.py:37/:51 — grep for unload|.release(|del self._model|gc.collect|empty_cache finds nothing). So 768m is not a budget the service lives inside; it is a budget the service fully consumes at idle-warm. The 768m came from 2dc1d8c4e (Wed Jun 10 2026, -memory:1.5g/+memory:768m) which was a legitimate response to the 16GB host panic — a blind revert is NOT available and that trade is exactly what this row owns. Note the coupling: RAG-FTS-BUILD-MEMORY-BOUND is time-gated until the corpus reaches ~56k rows (projected ~2026-08-16) and its AC1 requires an FTS rebuild to stay under this same cap; if the cap decision lands first it changes that AC's target.",
         "po_ack_retarget_20260729T1126": "THIS ROW IS NOW THE tracked_by FOR THE rag-service MEMORY ACK (docs/data/auditor-launchd-ack.json .acked_memory[0]), re-pointed from RAG-FTS-BUILD-MEMORY-BOUND by PO 2026-07-29T11:26Z. Rationale: the ACK suppresses a MEMORY breach, so its tracked_by must be the row whose completion would actually clear that breach. RAG-FTS-BUILD-MEMORY-BOUND bounds an FTS rebuild that is not running and is not the driver (see its po_ack_scope_correction_20260729T1126); FIX-RAG-SERVICE-CLEAN-EXIT-RESTART-LOOP explicitly disclaims closing it (its AC6: 'Does NOT claim to close the restart loop... the residual belongs to FU-RAG-DEPLOY-MEMORY'). That leaves this row. CONSEQUENCE YOU SHOULD KNOW ABOUT, not a new obligation: while this row is open, Tier-1's memory check does not fire on rag-service. TWO THINGS DO NOT CHANGE. (1) No status/priority change is made here — this is an INFRA row owning a user-gated 16GB host trade and PO is not self-approving a cap change. (2) The re-point is DOCUMENTARY ONLY at the code level: scripts/agents-flow/auditor-tier1-probe.sh:275 reads ONLY `.acked_memory[].container` and never reads tracked_by, so no probe behaviour changes today in either direction. Making tracked_by load-bearing is FIX-AUDITOR-MEMACK-HEADROOM-FLOOR-AND-DEAD-TRACKEDBY (minted this tick, P1). FRESH MEASUREMENT for the resident-set trade, 2026-07-29T11:19Z: 745.8 MiB / 768 MiB = 97.11%, 22.2 MiB absolute headroom, CPU 0.13% at rest, RestartCount 22, StartedAt 2026-07-29T10:12:01Z, OOMKilled=false ExitCode=0. Consistent with the 749.9 MiB @10:25Z already on this row (memory is flat-to-slightly-down under ~199 index writes, i.e. a fixed baseline, not a leak).",
         "po_dataset_exceeds_cap_20260729T1140": "DECISION INPUT for the resident-set trade, measured 2026-07-29T11:40Z, no action requested — but this one materially changes the shape of the trade, so read it before sizing anything. THE ON-DISK DATASET IS ALREADY LARGER THAN THE MEMORY CAP: data/live/lancedb = 785 MiB versus a 768 MiB cgroup limit (rag_entries.lance/data 596 MiB / 3137 fragments, _indices 145 MiB / 745 files, _versions 32 MiB, _transactions 12 MiB). Combined with the fixed ~700 MiB embedder singleton already recorded on this row at po_measured_input_20260729, the cap is being asked to hold a fixed model baseline AND the working set of a corpus that already exceeds the whole limit on its own, while the corpus grows ~103 rows/h and RAG-FTS-BUILD-MEMORY-BOUND is time-gated until it reaches ~56254 rows (~5x today). SO THE QUESTION THIS ROW OWNS IS NOT ONLY how many MiB to grant. A cap chosen to fit today loses the same argument again in weeks, because two of the three consumers grow without bound. The options worth costing are at least: (a) raise the cap against the 16GB host budget this row already owns, (b) shrink the fixed baseline (a model release path — embedder.py has none, which is the finding on FIX-RAG-SERVICE-CLEAN-EXIT-RESTART-LOOP, or a smaller/quantised model), (c) shrink the dataset footprint so the working set is bounded (compaction and version retention — FIX-RAG-COMPACTION-DISK-AMPLIFICATION, raised to P2 this tick on this evidence). NOT ESTABLISHED, and it gates option (a): whether the charged memory is reclaimable file-backed cache or anonymous allocation. Nobody has read the container cgroup memory.stat anon/file split — see the same caveat on the CLEAN-EXIT row. If it is mostly file cache then raising the cap buys throughput, not safety, and the real fix is (b) or (c); if it is anonymous then (a) is genuinely load-bearing. Do not size a cap change before that split is measured. PO is NOT authorising a cap change or a rebuild — user-gated infra.",
@@ -22278,7 +22466,27 @@
         "claimed_by": "router",
         "dispatch_note": "PO ruling triage-20260806T1245Z-po: architect decision (09:04Z) sat unexecuted 3h40m due to broken ready-lane pickup (FIX-DEVTEAM-RESUME-GATES-OMIT-READY-LANE). Manual dispatch mandatory per PO. Router dispatch.",
         "commit_sha": "2f835ec63",
-        "review_note": "developer 2026-08-06: applied architect-decided fix — docker-compose.yml rag-service deploy.resources.limits.memory 768m->1g, reservations.memory 256m->512m (lines 165-172), recreated single-service via docker compose up -d --no-deps rag-service. RAW-verified: docker inspect Created=2026-08-06T12:57:38Z (new, was 2026-08-05T16:49:10Z), RestartCount=0, Status=running, OOMKilled=false, Health=healthy within seconds; MemoryLimit=1073741824B(1g)/MemoryReservation=536870912B(512m) confirmed changed from 805306368/268435456. docker stats immediately post-start: 322.3MiB/1GiB=31.47% (cold, lazy-load embedder not yet warmed). docker compose ps: all 12 sibling containers untouched (uptimes intact, all healthy) — --no-deps confirmed peer-safe, no down/stop/kill/rm/--force-recreate used. Logs clean: startup + /health 200 OK, zero error/OOM signature. Out-of-scope untouched: FIX-RAG-EMBEDDER-IDLE-UNLOAD-PATH (P2, sequenced after), FIX-RAG-SERVICE-CLEAN-EXIT-RESTART-LOOP (separate row in review[], not re-touched). Commit 2f835ec63. qa: re-verify docker inspect memory limit + no OOM in a subsequent observation window (compaction burst / corpus growth); this row does NOT close the structural embedder idle-unload follow-up (separate P2 row)."
+        "review_note": "developer 2026-08-06: applied architect-decided fix — docker-compose.yml rag-service deploy.resources.limits.memory 768m->1g, reservations.memory 256m->512m (lines 165-172), recreated single-service via docker compose up -d --no-deps rag-service. RAW-verified: docker inspect Created=2026-08-06T12:57:38Z (new, was 2026-08-05T16:49:10Z), RestartCount=0, Status=running, OOMKilled=false, Health=healthy within seconds; MemoryLimit=1073741824B(1g)/MemoryReservation=536870912B(512m) confirmed changed from 805306368/268435456. docker stats immediately post-start: 322.3MiB/1GiB=31.47% (cold, lazy-load embedder not yet warmed). docker compose ps: all 12 sibling containers untouched (uptimes intact, all healthy) — --no-deps confirmed peer-safe, no down/stop/kill/rm/--force-recreate used. Logs clean: startup + /health 200 OK, zero error/OOM signature. Out-of-scope untouched: FIX-RAG-EMBEDDER-IDLE-UNLOAD-PATH (P2, sequenced after), FIX-RAG-SERVICE-CLEAN-EXIT-RESTART-LOOP (separate row in review[], not re-touched). Commit 2f835ec63. qa: re-verify docker inspect memory limit + no OOM in a subsequent observation window (compaction burst / corpus growth); this row does NOT close the structural embedder idle-unload follow-up (separate P2 row).",
+        "po_signoff_caution_20260806T1350Z": "SUPERSEDED AND WITHDRAWN by po_POSTRAISE_WARNS_UNRESOLVED_20260806T1355Z on this same row. The withdrawn text asserted 'the 1GiB cap raise did not hold'. That was built on a relayed premise PO failed to verify before writing it, and it is wrong on timing — see the corrected entry. Left in place as a stub rather than deleted so no reader inherits the retracted claim from a cached copy.",
+        "po_POSTRAISE_WARNS_UNRESOLVED_20260806T1355Z": {
+          "by": "po/triage-agentfather-20260806T1318Z",
+          "status": "OPEN QUESTION — one cheap check decides whether this is a deploy gap or an escalation. Do not sign off until it is answered.",
+          "corrected_premise": "A coordinator relay into this triage stated 'memory cap raise already applied to 1GiB, evidently still insufficient'. PO initially propagated that. It is WRONG ON TIMING and the correction matters: git shows the compose edit landed at commit 2f835ec63, 2026-08-06T13:00:35Z ('chore(rag-service): raise memory cap 768m->1g, reservation 256m->512m'), and docker-compose.yml lines 167-171 now read limits.memory: 1g / reservations.memory: 512m. Before that commit the cap was still 768m — which is exactly what po_RULING_fix_is_deployed_dispatch_now_20260806T1245 recorded at 12:45Z and what po_CORRECTION_reclamation_dip_observed_20260806T1252's own 658.5MiB/768MiB denominator confirms at 12:52Z.",
+          "timeline_UTC_2026_08_06": [
+            "12:42Z A-30 WARN — 767.3MiB/768MiB = 99.91% (PRE-raise)",
+            "12:45Z PO authorises the raise (po_RULING_fix_is_deployed_dispatch_now_20260806T1245)",
+            "12:50-12:52Z PO measures 658.5MiB/768MiB = 85.74%, ~109MiB reclaimed with RestartCount unchanged (PRE-raise; po_CORRECTION_reclamation_dip_observed_20260806T1252)",
+            "13:00:35Z compose edit COMMITTED — 2f835ec63, 768m -> 1g",
+            "13:17Z A-30 WARN",
+            "13:36Z A-30 WARN — 97.06% (signal sys-20260806T133606-3047, docs/data/DASHBOARD.md 13:36:17Z)"
+          ],
+          "the_decisive_unknown": "Two A-30 WARNs fired AFTER the cap-raise commit landed, and it is UNDETERMINED whether the running container was ever recreated. A compose edit is inert until `docker compose up -d --no-deps rag-service` runs. This is not a detail — it flips the disposition entirely, and 97.06% is ambiguous without the denominator: 97.06% of 768MiB = ~745MiB, of 1024MiB = ~994MiB.",
+          "branch_A_container_NOT_recreated": "The 13:17Z/13:36Z WARNs are still 768m readings and prove nothing new about the raise. Disposition = deploy gap: run the single-service recreate this row already authorises (NEVER down/stop/kill/rm/--force-recreate, per feedback_preserve_multi_container_microservice_architecture), then re-measure. This is the same committed-but-unapplied shape po_RECURRING_dispatch_gap_20260806T1245 already records on this row, one layer later — decision applied to the file, file not applied to the runtime.",
+          "branch_B_container_WAS_recreated_near_1300Z": "The container reached ~97% of 1GiB within ~36 minutes of getting +256MiB. That is an ESCALATION: the sizing premise on this row (~726-750MiB resident + ~20MiB compaction burst, po_GATE_DISCHARGED_anon_dominant_20260729T1148) would be refuted by measurement, a second cap raise would be the wrong move, and the residual shifts decisively to the fixed baseline — FIX-RAG-EMBEDDER-IDLE-UNLOAD-PATH (embedder singleton with no unload path, apps/rag-service/infrastructure/embedder.py:37/:51).",
+          "first_acceptance_criterion": "BEFORE any sign-off or further code: `docker inspect` the running rag-service for HostConfig.Memory and State.StartedAt. If Memory is 805306368 (768MiB) -> branch A. If 1073741824 (1GiB) and StartedAt >= 13:00:35Z -> branch B. PO did not run this itself — infrastructure probing is outside PO's boundary (boundary_rules: infra diagnosis is ops/developer's job); it is one command for whoever owns the row.",
+          "detector_caveat_do_not_skip": "Do NOT re-derive urgency from the A-30 verdict text alone. This row already documents the discriminator erring in BOTH directions on THIS container: it scored a crash-cliff as a benign reclamation dip (feedback_a30_discriminator_crash_cliff_misscored_as_reclamation_dip, 2026-08-05) and it MISSED a real ~109MiB no-restart reclamation because its sampling window closed too early (po_CORRECTION_reclamation_dip_observed_20260806T1252, 12:52Z). Its verdicts are corroborating evidence at best. Also confirm the percentage denominator is the cgroup limit, not host RAM (feedback_auditor_memory_pct_denominator_falsespike).",
+          "unchanged": "The 08:17:28Z OOM kill (docker events: container oom -> die exitCode=137) is not a dip-counter inference and still stands. Nothing here re-asserts a user gate — retired on this row 2026-08-05T16:30Z."
+        }
       },
       {
         "id": "FIX-MARKETDB-JOURNALMODE-GUARD-SHIPPED-BUT-NEVER-ARMED",
@@ -22448,8 +22656,8 @@
         }
       ]
     },
-    "last_triaged_at": "2026-08-06T13:43:47Z",
-    "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
+    "last_triaged_at": "2026-08-06T13:47:00Z",
+    "last_triaged_by": "po/triage-agentfather-20260806T1318Z",
     "in_progress": [
       {
         "id": "FIX-DB-INTEGRITY-SIDECAR-NAMED-VOLUME-DRIFT",
