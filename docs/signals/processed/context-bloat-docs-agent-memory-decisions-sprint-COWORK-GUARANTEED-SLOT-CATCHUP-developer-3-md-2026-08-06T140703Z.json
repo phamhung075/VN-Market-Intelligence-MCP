@@ -3,22 +3,22 @@
   "to": "claude-manager-helper",
   "type": "context_bloat_breach",
   "priority": "high",
-  "createdAt": "2026-07-30T13:54:07Z",
+  "createdAt": "2026-08-06T14:07:03Z",
   "payload": {
-    "file": "docs/agent-memory/decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-developer.md",
-    "line_count": 448,
+    "file": "docs/agent-memory/decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-developer-3.md",
+    "line_count": 132,
     "cap": 600,
-    "byte_count": 145673,
+    "byte_count": 38506,
     "byte_cap": 36000,
     "class": "sprint-decision-journal",
     "reason": "byte-cap",
     "overage": 0,
-    "byte_overage": 109673,
+    "byte_overage": 2506,
     "action_required": "prune_or_split"
   },
   "_processed": {
-    "fingerprint": "023c99fb16ab0cd999580b4d99e088bd3ce056b0cf543c00087e928893e9727a",
-    "processedAt": "2026-07-30T14:16:18Z",
+    "fingerprint": "310e548458fa28f12ed90f80f1b0e0450df427b3c737e60c9f67ab3c3ed2f455",
+    "processedAt": "2026-08-06T14:21:49Z",
     "processedBy": "dev-team",
     "result": "routed-to-po"
   }
