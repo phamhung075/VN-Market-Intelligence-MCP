@@ -1,0 +1,91 @@
+{
+  "metadata": {
+    "cycle_id": "eod-2026-08-06T08:50:20Z",
+    "dish_type": "eod",
+    "date_vn": "2026-08-06",
+    "timestamp_utc": "2026-08-06T08:50:20Z",
+    "quality_verdict": "degraded",
+    "layers_walked_summary": "partial — [gap:L3_VN_macro_incomplete] [gap:L4_partial_pillar_coverage] [gap:business_context_absent]"
+  },
+
+  "tnb_synthesis": {
+    "clock_phase": "slowdown",
+    "regime_state": "risk-off-rotate",
+    "regime_confidence": "MEDIUM",
+    "us_macro_layer": "Investment clock tier VN_DIRECT (score 8), yield FAIRLY_VALUED (6.70% earning yield vs 5.00% deposit rate spread 1.70pp). Carry regime NEUTRAL (1.37pp). Gold surge +$66.80/oz signals safe-haven demand (bullish structural macro shift). [gap: geopolitical_event_absent]",
+    "vn_macro_layer": "USD/VND 26,040 exceeds 25k threshold (VND depreciation pressure). Carry spread 1.37pp NEUTRAL (no strong FII pull). [gap: CPI_trend_unavailable]. [gap: VIRA_FX_reserves_unavailable]. Banking sector alert convergence (8 major banks, net-sell by foreigners).",
+    "valuation_layer": "Real Estate: SLOWDOWN phase (M2 neutral, COC headwind, EPS mixed) → FIXED_INCOME tier, MEDIUM conviction (single-pillar constraint VRE 1/4). Banking: SLOWDOWN/transition (M2 neutral, COC headwind, EPS tailwind fees) → FIXED_INCOME tier; Kinh Dịch Tập Khảm (bearish, 100% conf VCB/BID). Agriculture: RECOVERY phase (commodity-linked EPS) → EQUITY tier, MEDIUM conviction."
+  },
+
+  "conviction_calls": [
+    {
+      "ticker": "VRE",
+      "conviction_level": "MEDIUM",
+      "direction": "SELL",
+      "pillars_aligned_count": 1,
+      "rationale_one_liner": "Real estate macro-technical divergence: Kinh Dịch Sư positive (83% conf) contradicts -4.35% price action under VND carry pressure; single-pillar thesis (commodity/housing demand only, no macro validation)."
+    },
+    {
+      "ticker": "VCB",
+      "conviction_level": "MEDIUM",
+      "direction": "HOLD",
+      "pillars_aligned_count": 2,
+      "rationale_one_liner": "Banking sector under FII sell pressure (8-ticker alert convergence) despite fair valuation; Kinh Dịch Tập Khảm (negative, 100% conf) signals continued weakness; hold pending rate/FX stabilization."
+    },
+    {
+      "ticker": "KDH",
+      "conviction_level": "MEDIUM",
+      "direction": "HOLD",
+      "pillars_aligned_count": 2,
+      "rationale_one_liner": "Real estate -1.93% but Kinh Dịch Sư GIU (100% conf) suggests reversal opportunity pending macro clarity; waitlist pending CPI/VIRA data."
+    },
+    {
+      "ticker": "DGC",
+      "conviction_level": "MEDIUM",
+      "direction": "HOLD",
+      "pillars_aligned_count": 2,
+      "rationale_one_liner": "Chemical sector +2.92%, DGC +6.91% on isolated strength (industrial demand context); Kinh Dịch Kiển Ban (negative signal despite price surge) suggests caution; hold for sector rebalance."
+    }
+  ],
+
+  "sector_phases": [
+    {
+      "sector_vn": "bất động sản",
+      "investment_phase": "slowdown",
+      "pyramid_tier": "fixed_income",
+      "direction_this_cycle": "negative"
+    },
+    {
+      "sector_vn": "ngân hàng",
+      "investment_phase": "slowdown",
+      "pyramid_tier": "fixed_income",
+      "direction_this_cycle": "negative"
+    },
+    {
+      "sector_vn": "nông nghiệp",
+      "investment_phase": "recovery",
+      "pyramid_tier": "equity",
+      "direction_this_cycle": "mixed"
+    }
+  ],
+
+  "known_gaps": [
+    "[L6-gap: gold >$4,300 active — regime-drift risk: gold-driven safe-haven premium may lag actual risk-off reversal; flag until gold retraces below $4,300]",
+    "[gap:L3_VN_macro_incomplete]",
+    "[gap:L4_partial_pillar_coverage]",
+    "[gap:business_context_unavailable]",
+    "[gap:geopolitical_event_absent]",
+    "[gap:CPI_trend_unavailable]",
+    "[gap:VIRA_FX_reserves_unavailable]"
+  ],
+
+  "causal_chains": [
+    "Gold surge (+$66.80/oz, safe-haven demand) → USD/VND pressure (26,040, VND weak) → Real Estate/Banking sector net-sell (-0.91%/-0.99% avg) → VRE -4.35% contradicts Kinh Dịch Sư positive signal (macro-technical divergence)."
+  ],
+
+  "clusters_summary": {
+    "qualified": 5,
+    "tickers_covered": ["VRE", "KDH", "PDR", "KBC", "NVL", "VCB", "BID", "EIB", "DGC"],
+    "sectors_covered": ["real_estate", "banking", "agriculture", "chemicals"]
+  }
+}
