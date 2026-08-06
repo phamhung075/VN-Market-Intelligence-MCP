@@ -88,12 +88,11 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "FIX-AUDITOR-DEDUP-TASKBOARD-PRECHECK-NOT-ENFORCED",
-    "next_agent": "dev-team",
-    "next_action": "BOUNDED-1 auto-pickup claim of FIX-AUDITOR-DEDUP-TASKBOARD-PRECHECK-NOT-ENFORCED — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
-    "updated_at": "2026-08-06T10:52:20Z",
-    "updated_by": "dev-team (bounded-1 auto-pickup)"
+    "status": "idle",
+    "active_task_id": null,
+    "next_agent": "router",
+    "updated_at": "2026-08-06T11:31:05Z",
+    "updated_by": "developer"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -22249,6 +22248,52 @@
         "po_manual_dispatch_class": "READY-XOR-SUP-OR-PLANONLY",
         "po_manual_dispatch_note": "po (manual-dispatch-sweep) surfaced READY-XOR-SUP-OR-PLANONLY candidate — folding into this tick BATCH",
         "status_note": "Decomposed into 4 child tasks. po_occurrence_7 correction folded: detector must catch both election-loss AND pre-election-death. Handoff files created (FIX-AUDITOR-DURABILITY-{1,2,3,4}). Ready for dev-team dispatch."
+      },
+      {
+        "id": "FIX-AUDITOR-DEDUP-TASKBOARD-PRECHECK-NOT-ENFORCED",
+        "type": "FIX",
+        "title": "system-auditor DEDUP-ENFORCEMENT is prose-only — it re-signalled a 52-day-old residue already tracked by two board rows, with a fabricated single-date root cause",
+        "zone": "cross-service/",
+        "priority": "P0",
+        "status": "REVIEW",
+        "size": "S",
+        "next_agent": "qa",
+        "supervised": false,
+        "plan_only": false,
+        "baseline_pass": true,
+        "source": "PO triage of system-auditor Tier-DATA sweep 2026-08-05T06:47Z — signal sys-20260805T065227-25f7",
+        "created_at": "2026-08-05T07:06:06Z",
+        "created_by": "po",
+        "updated_at": "2026-08-06T11:31:05Z",
+        "root_cause": "register.md:144-150 states an anomaly is ALREADY-OPEN and must not be re-signalled if '(a) a .task_board FIX-* task tracks its root, OR (b) a prior .signal_queue row for the same table+defect has status NEW/READ/TRIAGED/ACUTE-RESOLVED-ROOT-TRACKED'. It is pure prose with no actuator: nothing reads .task_board, nothing computes the dedup key, nothing blocks the write. On 2026-08-05 the auditor emitted CRITICAL sys-20260805T065227-25f7 for daily_ohlcv high=0/low=0 while CLEAN-OHLCV-INTEGRITY-RESIDUE-REPAIR (BACKLOG, same rows, filed at 835) and FIX-OHLCV-WRITER-INTEGRITY-CONSTRAINT-SCALE-P0 (REVIEW, the writer root) were both open on the board. Clause (a) matched exactly and was never evaluated. Compare FIX-AUDITOR-D4-WHITELIST-DATA-QUALITY-ANOMALY-PREFIX and the auditor-dedup-ledger: dedup exists for OTHER surfaces but not for the .task_board plane.",
+        "secondary_defect": "The same signal shipped a fabricated root cause. Notebook c17 (commit 35104ef89) asserted 'All 336 violations are from 2026-05-15 (concentrated date)' — the actual GROUP BY returns 20 distinct dates. The agent reported a scoping conclusion it had not measured. This is the confabulation class in memory feedback_agent_selfreport_metalayer_confabulation; the fix should force the scoping query's raw output into the history entry rather than let the agent narrate it, which is the same remedy register.md:108-113 already applies to counts.",
+        "files": [
+          ".claude/skills/cron-standalone-team/register.md",
+          ".claude/commands/crons/cron-db-data-integrity.md",
+          "docs/agents/system-auditor/flow/main.md",
+          "scripts/db-integrity-history-append.sh",
+          "docs/data/auditor-dedup-ledger.json"
+        ],
+        "ac": [
+          "AC-1 Turn clause (a) into an actuator, not prose: a deterministic pre-write check that reads docs/data/orch/orch-state.json .task_board (all open lanes, not just backlog) plus .signal_queue.rows[] and refuses the append when the dedup key already matches. Put it in the same helper that already owns the append so it cannot be skipped by an agent that is short on context — prose in a prompt body is exactly what failed here.",
+          "AC-2 Replay the 2026-08-05 case as the regression test: with CLEAN-OHLCV-INTEGRITY-RESIDUE-REPAIR present on the board, a daily_ohlcv high=0/low=0 finding MUST be suppressed and recorded as already-open in db-integrity-history.json instead of appended to .signal_queue.",
+          "AC-3 Do not validate on this one case alone — replay the last ~30 db-integrity signals against the proposed dedup key and report how many would have been suppressed and whether any TRUE positive would have been lost. Per memory feedback_fleetwide_gate_validated_on_one_file_optout_allowlist, a gate proven on a single example is not proven.",
+          "AC-4 Scoping honesty: when a finding is row-count based, the history entry must carry the RAW distribution output (the GROUP BY result) as data, not an agent sentence about it. An agent-authored claim like 'concentrated on <date>' with no matching query result in the entry should be structurally impossible.",
+          "AC-5 Also cover the routing defect from the same signal: to=\"po\" + payload_ref=null were both written against an explicit spec (register.md:132-135). If the row is assembled by a helper, make the helper own to/payload_ref; if the agent hand-writes it, assert the shape post-write in the same read-back that already exists for row presence.",
+          "AC-6 GROWTH-DELTA EXCEPTION - resolve the dedup-vs-material-regression tension explicitly, do not leave it implicit. The C-08 case is the motivating example and it cuts AGAINST a naive count-based exception: the prior PO disposition on sys-20260721T003810-2b02 literally reads Watch; revisit only if count climbs, and the count did climb 1->22, so a naive delta rule would have PASSED this signal through - yet the re-signal was still pure noise, because the count is a GC-timing x alert-volume artifact and the true history is non-monotonic (1 -> 121 on 07-30 -> 22 on 08-05). Therefore: (a) a magnitude delta alone MUST NOT re-open an already-open anomaly; (b) if a re-signal path is offered at all it must compare against the LAST REPORTED value for that dedup key (the ledger already stores it) and not against the oldest open row, and must carry the prior value + delta in the row so PO can see the series rather than a bare new number; (c) any check whose expected value is unsatisfiable by construction is exempt from re-signalling entirely until its detector is fixed - see FIX-AUDITOR-C08-UNSATISFIABLE-TTL-WINDOW-AND-ISO8601-STRCMP. Validate per AC-3 by replaying whether a delta rule would have suppressed the 07-30 and 08-05 C-08 firings."
+        ],
+        "corroboration": [
+          "LIVE INSTANCE #2, 2026-08-05T08:18:46Z (72 min after the instance this row was filed for). system-auditor c20 wrote sys-20260805T081846-1853 (C-08) as a fresh NEW row while sys-20260721T003810-2b02, same table+defect (identical dedup_key db_integrity_breach:alerts:C-08), sat at status triaged. Clause (b) of the DEDUP-ENFORCEMENT contract (.claude/skills/cron-standalone-team/register.md:144-150) matched exactly and was never evaluated. Two things sharpen the root cause: (i) the auditor SAW the recurrence - its own notebook labels C-08 RECURRING - and still wrote the row, so this is not a detection failure but a missing WRITE-SIDE actuator, confirming AC-1s premise that prose in a prompt body cannot carry this; (ii) the dedup key ALREADY EXISTS in docs/data/auditor-dedup-ledger.json and correctly suppressed the Telegram send (notebook: Telegram dedup-skipped, last sent 2026-07-30), while the .signal_queue write went through unguarded. That is direct proof of this rows core claim that dedup exists for OTHER surfaces but not for the signal_queue/.task_board plane - the ledger and the queue-writer are simply not wired to each other. Cheapest fix shape: have the queue-writer consult the SAME ledger the Telegram gate already consults.",
+          "OUTPUT-CONTRACT counter defect observed in the same c20 entry: the auditor emitted dedup_skipped=0 while its own narrative for that cycle says Telegram dedup-skipped, and then asserted CONTRACT-CONTRADICTION: NONE. The counter does not count the suppression that actually happened, so contract self-checks cannot detect dedup regressions. Fold into AC-5s helper-owns-the-shape remedy.",
+          "LIVE INSTANCE #3, 2026-08-06T07:21:27Z (AUDIT_TIER=DATA cycle cron:auditor-data:2026-08-06T07:09Z). Auditor re-signalled the SAME 336-row daily_ohlcv residue (CLEAN-OHLCV-INTEGRITY-RESIDUE-REPAIR / FIX-OHLCV-WRITER-INTEGRITY-CONSTRAINT-SCALE-P0, PO-triaged DUPLICATE-ALREADY-TRACKED on 2026-08-05) as fresh NEW row sys-20260806T072127-34b3, to=po (AC-5 routing defect repeats, 3rd occurrence). Two new details sharpen AC-1: (i) this cycle used a DIFFERENT dedup key/type than instance #1 (db_anomaly:daily_ohlcv:illiquid_ohlcv_incomplete / type db_anomaly_illiquid_ohlcv vs the original db_integrity_breach:daily_ohlcv:OHLCV_H_L_ZERO) for the identical underlying rows -- proving a literal ledger-key-match check is insufficient even once AC-1 lands; the actuator must key on table+row-signature or task_board linkage, not on whatever string the agent free-types that cycle. (ii) OUTPUT-CONTRACT counter defect (corroboration #2) reproduced verbatim: agent narrative to router claimed Status: ALREADY TRACKED -- Signal suppressed by dedup while its own contract line in the SAME report read dedup_skipped=0 | signal_queue_rows_written=1 -- self-contradictory and false (RAW-verified: row status is NEW, not suppressed). Per feedback_recurring_detection_vs_recurring_failed_fix: this is a recurring DETECTION of an un-shipped fix (task has sat BACKLOG/next_agent=dev-team since 2026-08-05T08:29Z with 0 completions), not a recurring failed fix -- correct action is to dispatch/prioritize this task in the next dev-team Planning pass, not to block it or mint a 4th duplicate signal row."
+        ],
+        "po_escalation_20260806T0728": "PRIORITY high -> P0 by po, triage tick 2026-08-06T07:07Z. Basis: 3 CONFIRMED live instances (filing instance 2026-08-05T07:06Z, #2 2026-08-05T08:18:46Z, #3 2026-08-06T07:21:27Z) with ZERO fix attempts in ~24h while sitting BACKLOG/next_agent=dev-team. Classified per feedback_recurring_detection_vs_recurring_failed_fix as a recurring DETECTION of an UN-SHIPPED fix, NOT a recurring failed fix - so the correct action is to DISPATCH this row, never to block it or mint a 4th duplicate. ALSO FOLDED INTO THIS TICK po BATCH: a priority bump on a row already ignored across 3 instances is inert on its own, which is the precise failure mode this row itself documents.",
+        "po_ac_addendum_20260806T0728": "AC ADDENDUM from instance #3, raises the bar on the eventual fix. A naive ledger-key match will NOT be sufficient even after AC-1 lands. Instance #1 keyed the identical 336 daily_ohlcv rows as type=db_integrity_breach with dedup_key db_integrity_breach:daily_ohlcv:OHLCV_H_L_ZERO; instance #3 keyed the SAME rows as type=db_anomaly_illiquid_ohlcv with dedup_key db_anomaly:daily_ohlcv:illiquid_ohlcv_incomplete. Same rows, same defect, two different keys - so dedup MUST key on table + row-signature, not on the emitter-chosen type/dedup_key string. VERIFICATION CAVEAT for the implementer: the auditor OUTPUT-CONTRACT counter defect from corroboration entry 2 reproduced verbatim on instance #3 (narrative claimed the signal was suppressed by dedup while the same report contract line read dedup_skipped=0 and signal_queue_rows_written=1; RAW-verify confirmed the row landed NEW). Do NOT accept the auditor self-report as pass/fail evidence for this fix - read .signal_queue.rows[] directly.",
+        "promoted_at": "2026-08-06T10:13:04Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=0)",
+        "claimed_at": "2026-08-06T10:52:18Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)"
       }
     ],
     "qa": [
@@ -22298,54 +22343,7 @@
     },
     "last_triaged_at": "2026-08-06T10:52:18Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": [
-      {
-        "id": "FIX-AUDITOR-DEDUP-TASKBOARD-PRECHECK-NOT-ENFORCED",
-        "type": "FIX",
-        "title": "system-auditor DEDUP-ENFORCEMENT is prose-only — it re-signalled a 52-day-old residue already tracked by two board rows, with a fabricated single-date root cause",
-        "zone": "cross-service/",
-        "priority": "P0",
-        "status": "IN_PROGRESS",
-        "size": "S",
-        "next_agent": "dev-team",
-        "supervised": false,
-        "plan_only": false,
-        "baseline_pass": true,
-        "source": "PO triage of system-auditor Tier-DATA sweep 2026-08-05T06:47Z — signal sys-20260805T065227-25f7",
-        "created_at": "2026-08-05T07:06:06Z",
-        "created_by": "po",
-        "updated_at": "2026-08-06T10:52:20Z",
-        "root_cause": "register.md:144-150 states an anomaly is ALREADY-OPEN and must not be re-signalled if '(a) a .task_board FIX-* task tracks its root, OR (b) a prior .signal_queue row for the same table+defect has status NEW/READ/TRIAGED/ACUTE-RESOLVED-ROOT-TRACKED'. It is pure prose with no actuator: nothing reads .task_board, nothing computes the dedup key, nothing blocks the write. On 2026-08-05 the auditor emitted CRITICAL sys-20260805T065227-25f7 for daily_ohlcv high=0/low=0 while CLEAN-OHLCV-INTEGRITY-RESIDUE-REPAIR (BACKLOG, same rows, filed at 835) and FIX-OHLCV-WRITER-INTEGRITY-CONSTRAINT-SCALE-P0 (REVIEW, the writer root) were both open on the board. Clause (a) matched exactly and was never evaluated. Compare FIX-AUDITOR-D4-WHITELIST-DATA-QUALITY-ANOMALY-PREFIX and the auditor-dedup-ledger: dedup exists for OTHER surfaces but not for the .task_board plane.",
-        "secondary_defect": "The same signal shipped a fabricated root cause. Notebook c17 (commit 35104ef89) asserted 'All 336 violations are from 2026-05-15 (concentrated date)' — the actual GROUP BY returns 20 distinct dates. The agent reported a scoping conclusion it had not measured. This is the confabulation class in memory feedback_agent_selfreport_metalayer_confabulation; the fix should force the scoping query's raw output into the history entry rather than let the agent narrate it, which is the same remedy register.md:108-113 already applies to counts.",
-        "files": [
-          ".claude/skills/cron-standalone-team/register.md",
-          ".claude/commands/crons/cron-db-data-integrity.md",
-          "docs/agents/system-auditor/flow/main.md",
-          "scripts/db-integrity-history-append.sh",
-          "docs/data/auditor-dedup-ledger.json"
-        ],
-        "ac": [
-          "AC-1 Turn clause (a) into an actuator, not prose: a deterministic pre-write check that reads docs/data/orch/orch-state.json .task_board (all open lanes, not just backlog) plus .signal_queue.rows[] and refuses the append when the dedup key already matches. Put it in the same helper that already owns the append so it cannot be skipped by an agent that is short on context — prose in a prompt body is exactly what failed here.",
-          "AC-2 Replay the 2026-08-05 case as the regression test: with CLEAN-OHLCV-INTEGRITY-RESIDUE-REPAIR present on the board, a daily_ohlcv high=0/low=0 finding MUST be suppressed and recorded as already-open in db-integrity-history.json instead of appended to .signal_queue.",
-          "AC-3 Do not validate on this one case alone — replay the last ~30 db-integrity signals against the proposed dedup key and report how many would have been suppressed and whether any TRUE positive would have been lost. Per memory feedback_fleetwide_gate_validated_on_one_file_optout_allowlist, a gate proven on a single example is not proven.",
-          "AC-4 Scoping honesty: when a finding is row-count based, the history entry must carry the RAW distribution output (the GROUP BY result) as data, not an agent sentence about it. An agent-authored claim like 'concentrated on <date>' with no matching query result in the entry should be structurally impossible.",
-          "AC-5 Also cover the routing defect from the same signal: to=\"po\" + payload_ref=null were both written against an explicit spec (register.md:132-135). If the row is assembled by a helper, make the helper own to/payload_ref; if the agent hand-writes it, assert the shape post-write in the same read-back that already exists for row presence.",
-          "AC-6 GROWTH-DELTA EXCEPTION - resolve the dedup-vs-material-regression tension explicitly, do not leave it implicit. The C-08 case is the motivating example and it cuts AGAINST a naive count-based exception: the prior PO disposition on sys-20260721T003810-2b02 literally reads Watch; revisit only if count climbs, and the count did climb 1->22, so a naive delta rule would have PASSED this signal through - yet the re-signal was still pure noise, because the count is a GC-timing x alert-volume artifact and the true history is non-monotonic (1 -> 121 on 07-30 -> 22 on 08-05). Therefore: (a) a magnitude delta alone MUST NOT re-open an already-open anomaly; (b) if a re-signal path is offered at all it must compare against the LAST REPORTED value for that dedup key (the ledger already stores it) and not against the oldest open row, and must carry the prior value + delta in the row so PO can see the series rather than a bare new number; (c) any check whose expected value is unsatisfiable by construction is exempt from re-signalling entirely until its detector is fixed - see FIX-AUDITOR-C08-UNSATISFIABLE-TTL-WINDOW-AND-ISO8601-STRCMP. Validate per AC-3 by replaying whether a delta rule would have suppressed the 07-30 and 08-05 C-08 firings."
-        ],
-        "corroboration": [
-          "LIVE INSTANCE #2, 2026-08-05T08:18:46Z (72 min after the instance this row was filed for). system-auditor c20 wrote sys-20260805T081846-1853 (C-08) as a fresh NEW row while sys-20260721T003810-2b02, same table+defect (identical dedup_key db_integrity_breach:alerts:C-08), sat at status triaged. Clause (b) of the DEDUP-ENFORCEMENT contract (.claude/skills/cron-standalone-team/register.md:144-150) matched exactly and was never evaluated. Two things sharpen the root cause: (i) the auditor SAW the recurrence - its own notebook labels C-08 RECURRING - and still wrote the row, so this is not a detection failure but a missing WRITE-SIDE actuator, confirming AC-1s premise that prose in a prompt body cannot carry this; (ii) the dedup key ALREADY EXISTS in docs/data/auditor-dedup-ledger.json and correctly suppressed the Telegram send (notebook: Telegram dedup-skipped, last sent 2026-07-30), while the .signal_queue write went through unguarded. That is direct proof of this rows core claim that dedup exists for OTHER surfaces but not for the signal_queue/.task_board plane - the ledger and the queue-writer are simply not wired to each other. Cheapest fix shape: have the queue-writer consult the SAME ledger the Telegram gate already consults.",
-          "OUTPUT-CONTRACT counter defect observed in the same c20 entry: the auditor emitted dedup_skipped=0 while its own narrative for that cycle says Telegram dedup-skipped, and then asserted CONTRACT-CONTRADICTION: NONE. The counter does not count the suppression that actually happened, so contract self-checks cannot detect dedup regressions. Fold into AC-5s helper-owns-the-shape remedy.",
-          "LIVE INSTANCE #3, 2026-08-06T07:21:27Z (AUDIT_TIER=DATA cycle cron:auditor-data:2026-08-06T07:09Z). Auditor re-signalled the SAME 336-row daily_ohlcv residue (CLEAN-OHLCV-INTEGRITY-RESIDUE-REPAIR / FIX-OHLCV-WRITER-INTEGRITY-CONSTRAINT-SCALE-P0, PO-triaged DUPLICATE-ALREADY-TRACKED on 2026-08-05) as fresh NEW row sys-20260806T072127-34b3, to=po (AC-5 routing defect repeats, 3rd occurrence). Two new details sharpen AC-1: (i) this cycle used a DIFFERENT dedup key/type than instance #1 (db_anomaly:daily_ohlcv:illiquid_ohlcv_incomplete / type db_anomaly_illiquid_ohlcv vs the original db_integrity_breach:daily_ohlcv:OHLCV_H_L_ZERO) for the identical underlying rows -- proving a literal ledger-key-match check is insufficient even once AC-1 lands; the actuator must key on table+row-signature or task_board linkage, not on whatever string the agent free-types that cycle. (ii) OUTPUT-CONTRACT counter defect (corroboration #2) reproduced verbatim: agent narrative to router claimed Status: ALREADY TRACKED -- Signal suppressed by dedup while its own contract line in the SAME report read dedup_skipped=0 | signal_queue_rows_written=1 -- self-contradictory and false (RAW-verified: row status is NEW, not suppressed). Per feedback_recurring_detection_vs_recurring_failed_fix: this is a recurring DETECTION of an un-shipped fix (task has sat BACKLOG/next_agent=dev-team since 2026-08-05T08:29Z with 0 completions), not a recurring failed fix -- correct action is to dispatch/prioritize this task in the next dev-team Planning pass, not to block it or mint a 4th duplicate signal row."
-        ],
-        "po_escalation_20260806T0728": "PRIORITY high -> P0 by po, triage tick 2026-08-06T07:07Z. Basis: 3 CONFIRMED live instances (filing instance 2026-08-05T07:06Z, #2 2026-08-05T08:18:46Z, #3 2026-08-06T07:21:27Z) with ZERO fix attempts in ~24h while sitting BACKLOG/next_agent=dev-team. Classified per feedback_recurring_detection_vs_recurring_failed_fix as a recurring DETECTION of an UN-SHIPPED fix, NOT a recurring failed fix - so the correct action is to DISPATCH this row, never to block it or mint a 4th duplicate. ALSO FOLDED INTO THIS TICK po BATCH: a priority bump on a row already ignored across 3 instances is inert on its own, which is the precise failure mode this row itself documents.",
-        "po_ac_addendum_20260806T0728": "AC ADDENDUM from instance #3, raises the bar on the eventual fix. A naive ledger-key match will NOT be sufficient even after AC-1 lands. Instance #1 keyed the identical 336 daily_ohlcv rows as type=db_integrity_breach with dedup_key db_integrity_breach:daily_ohlcv:OHLCV_H_L_ZERO; instance #3 keyed the SAME rows as type=db_anomaly_illiquid_ohlcv with dedup_key db_anomaly:daily_ohlcv:illiquid_ohlcv_incomplete. Same rows, same defect, two different keys - so dedup MUST key on table + row-signature, not on the emitter-chosen type/dedup_key string. VERIFICATION CAVEAT for the implementer: the auditor OUTPUT-CONTRACT counter defect from corroboration entry 2 reproduced verbatim on instance #3 (narrative claimed the signal was suppressed by dedup while the same report contract line read dedup_skipped=0 and signal_queue_rows_written=1; RAW-verify confirmed the row landed NEW). Do NOT accept the auditor self-report as pass/fail evidence for this fix - read .signal_queue.rows[] directly.",
-        "promoted_at": "2026-08-06T10:13:04Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=0)",
-        "claimed_at": "2026-08-06T10:52:18Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)"
-      }
-    ]
+    "in_progress": []
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
