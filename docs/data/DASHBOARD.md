@@ -526,3 +526,15 @@
 **Mitigation:** No immediate action beyond signal routing.
 
 ---
+
+## Anomaly: A-30 · rag-service A-30 CRITICAL memory escalation 99.73%
+**Severity:** CRITICAL | **Date:** 2026-08-06 | **Status:** OPEN
+**Location:** rag-service container (768 MiB cap)
+**Details:** Memory jumped from 96.97% to 99.73% in 5 minutes. Free headroom 2.1 MiB (below 40 MiB safety floor). Meets CRITICAL threshold (>97%). Imminent OOMKill risk.
+**Impact:** Service likely to be OOMKilled within minutes. Will cause data pipeline interruption.
+**Root cause:** Embedder memory pattern (FU-RAG-DEPLOY-MEMORY). Known residual with no fix yet deployed.
+**Zone owner:** ops
+**Last reported:** 2026-08-06T08:16:33Z (signal sys-20260806T081622-11ba, system-auditor -> po, dedup_key=microservice_degraded:rag-service:A-30, CRITICAL Telegram sent)
+**Mitigation:** No immediate action beyond signal routing.
+
+---
