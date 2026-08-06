@@ -129,8 +129,8 @@
     "does_not_consume_wip": true
   },
   "signal_queue": {
-    "_updated_at": "2026-08-06T15:08:42Z",
-    "_updated_by": "router",
+    "_updated_at": "2026-08-06T16:33:03Z",
+    "_updated_by": "cowork-team",
     "archive": [],
     "rows": [
       {
@@ -2974,7 +2974,7 @@
         "type": "system-issue",
         "summary": "team-tool-recheck writer dead since 06-23 — replace-vs-retire decision needed",
         "severity": "LOW",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": "docs/signals/janitor-health-recheck-writer-retired-2026-08-06.json"
       }
     ],
