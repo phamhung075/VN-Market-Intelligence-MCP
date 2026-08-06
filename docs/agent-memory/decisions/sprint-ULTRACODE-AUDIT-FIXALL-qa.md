@@ -554,3 +554,5 @@ blocking issues found.
 **why-change:** No change from plan — verify-committed JUMP-TO, zero blocking issues, APPROVED.
 Non-blocking out-of-scope observation recorded (bundle-developer.md stale hardcode) for PO triage,
 not this row's problem.
+
+### CAP-REACHED · 2026-08-06T21:01:23Z
