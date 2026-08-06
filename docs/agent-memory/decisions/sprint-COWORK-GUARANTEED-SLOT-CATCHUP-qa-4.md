@@ -51,3 +51,48 @@
 - Full local per-file-isolation re-run: 15034/40/5 fail; target file NOT in failed list; the 5 failing files (rotated vs review_note's 3, per script's own documented CPU-oversubscription flake) grep-confirmed to NOT import alertStore/alertOutcomeJob.
 **why-decision:** APPROVED, DONE_VERIFIED. Commit real, on-main, exact file-scope match; AC-1/AC-2/AC-3 all independently reproduced live (not read from review_note/ci_plane_verified prose alone).
 **why-change:** none — verified exactly what the row scoped.
+
+### STEP qa-S59 · qa · 2026-08-06T20:49:41Z
+**task-id:** FIX-SCRIPTS-MIGRATIONS-MARKETDB-WAL-REARM-SAME-DEFECT
+**what-done:** Direct-commit verify (`qa[]` row, `branch:null`, dev-team RAW-verify prose present but not trusted alone) of `3bc8c9d55`, on main ancestry.
+**what-considered:**
+- `git show --stat`/full diff matches claimed 4-file scope exactly (run-finalize-bctc-refine.ts:36, dedupe-mislabeled-bctc-period.ts:368, resync-watchlist-sysmap-2026-07-11.ts:266, carry-forward-bctc-orphaned-rows.ts:361) — each `db.exec("PRAGMA journal_mode = WAL")` line replaced by a comment only, `foreign_keys=ON` preserved, no other PRAGMA touched.
+- AC-2 scope-completeness NOT trusted from prose: repo-wide `grep "journal_mode.*WAL"` — remaining live sites are `coordinationStore.ts` (coordination.db, explicitly out of scope) and 4 `scripts/smoke-task-lock*.ts` (all `new Database(":memory:")`) — confirms these 4 files were genuinely the only market.db WAL-rearm sites left.
+- AC-3: re-ran `scripts/audits/verify-market-db-journal-mode.sh` myself against the live container → `verdict=PASS journal_mode=delete wal_present=false shm_present=false`.
+- Re-ran the 3 existing migration test suites with dedicated coverage (dedupe/carry-forward/resync): 32 pass/0 fail. `run-finalize-bctc-refine.ts` has no dedicated test (pre-existing gap, unrelated) — same mechanical line-removal+comment pattern, zero logic delta. `mock-guard.sh` PASS on all 4 files. `apps/mcp-server` `bun tsc --noEmit` 0 errors (root `tsconfig.json` excludes `scripts/`, N/A for that zone — pure deletion+comment, zero type-risk).
+**why-decision:** APPROVED, DONE_VERIFIED. AC-1/AC-2/AC-3 all independently reproduced live, not read from `reviewed_note` prose alone.
+**why-change:** none — verified exactly what the row scoped.
+
+### STEP qa-S59 · qa · 2026-08-06T20:48:04Z
+**task-id:** FIX-DEVTEAM-CLAIM-SCRIPTS-UNCONDITIONAL-HEAD-OVERWRITE
+**what-done:** Direct-commit verify (`qa[]` row, no `.commit`/`.files[]` — fallback). Derived commit `3519a09e4` from `review_note` prose (all 3 filenames + "3519a09e4"), confirmed on main ancestry.
+**what-considered:**
+- `git show --stat` matches: `devteam-backlog-claim-bounded1.jq`, `devteam-backlog-claim-supervised-lane-sweep.jq` (both PRIMARY+FALLBACK write sites), `devteam-backlog-claim-ready-lane-consumer.jq`, plus the audit-script extension — diffed each: `$head_free` guard byte-identical shape to cited `devteam-backlog-claim-design-router-sweep.jq` precedent (idle/done/active_task_id-null → write, else preserve `.head` untouched).
+- Re-ran `bash scripts/audits/devteam-dispatch-gate-satisfiability.sh` myself, not trusted from review_note's "48/48": 71/71 PASS, 0 FAIL, exit 0 (count grew from 48 due to unrelated later harness growth — all 8 AC-BOUNDED1/SLS/RLC-HEAD-GUARD assertions present+green); confirmed live `orch-state.json` untouched by the run (pre-existing dirty diff unrelated).
+- `mock-guard.sh --files` (3 jq files) → PASS (no production TS/Go source, N/A, consistent with pure jq+bash zone `cross-service/`) — `bun test`/`tsc` structurally N/A.
+- Journal cross-check: `sprint-COWORK-GUARANTEED-SLOT-CATCHUP-developer.md` STEP developer-S41 present, task-id matches verbatim.
+**why-decision:** APPROVED, DONE_VERIFIED. Fix matches AC exactly on all 3 named scripts (4 write sites); re-run of the row's own cited harness reproduces the claim live, not read from prose alone.
+**why-change:** none — verified exactly what the row scoped.
+
+### STEP qa-S59 · qa · 2026-08-06T20:49:00Z
+**task-id:** FIX-SQLITE-JOURNALMODE-WAL-REARM-DEFEATS-DELETE-MITIGATION
+**what-done:** Direct-commit verify (`qa[]` row, `branch:null`, no `commit`/`files` fields — used fallback derivation) of `a7e437e16` (runner fix) + `a365b6455` (guard script), both on main ancestry.
+**what-considered:**
+- Derived commit via `git log -- <file>` since row had no `.commit`/`.files`; date (07-30 13:58 CEST) matches `reviewed_at`. Diff confirms AC-1: `bctcEvalBackfillRunner.ts` no longer opens own `Database`+`PRAGMA WAL`, now imports/uses `schema.ts`'s shared `getDb()/closeDb()` singleton — sole journal_mode owner confirmed live in schema.ts:133 (`PRAGMA journal_mode=DELETE`).
+- AC-2 gap self-disclosed by dev-mcp-server (4 `scripts/migrations/*.ts` WAL-setters out of its zone) — verified NOT abandoned: those 4 files now carry `NOTE: journal_mode is NOT set here (FIX-SCRIPTS-MIGRATIONS-MARKETDB-WAL-REARM-SAME-DEFECT...)`, a real follow-up task was minted+implemented (`3bc8c9d55`), confirming the disclosed gap was actioned, not silently dropped.
+- AC-3/AC-4: ran `verify-market-db-journal-mode.sh` live (not trusted from prose) → PASS, journal_mode=delete, no -wal/-shm. `--self-test` → both WAL(FAIL,exit2)/DELETE(PASS,exit0) branches proven live against the running container.
+- `bun tsc --noEmit` 0 errors; targeted zone suite (bctc-eval-routes/detectors/integration + 002-db-schema) 68/0 fail; `mock-guard.sh --files bctcEvalBackfillRunner.ts` PASS; no DDD violation (interface/routes layer legitimately imports application+infrastructure, pre-existing pattern, not this fix's concern).
+**why-decision:** APPROVED, DONE_VERIFIED. AC-1/AC-3/AC-4 independently reproduced live; AC-2's disclosed gap confirmed actioned via a real, already-implemented follow-up task, not just promised.
+**why-change:** none — verified exactly what the row scoped; follow-up task's own QA is a separate row, not folded into this verdict.
+
+### STEP qa-S60 · qa · 2026-08-06T20:55:00Z
+**task-id:** FIX-DEVTEAM-WIP-BUDGET-COUNTS-BLOCKED-INPROGRESS-ROWS
+**what-done:** Direct-commit verify (`qa[]` row, `branch:null`, no `.commit`/`.files[]` — fallback derivation via `git log -- scripts/lib/devteam-eligibility.jq`): `6e1125251`, dated 2026-07-30, `Task:`/`AC:` trailers match verbatim, on main ancestry.
+**what-considered:**
+- AC-1: `wip_in_progress` now excludes BLOCKED + `TERMINAL_SET` rows, reusing (not re-deriving) `is_terminal_task_status`/`normalize_task_status` (relocated up-file so it can be called) — matches SSOT `orchStateSchema.ts` TERMINAL_SET verbatim (DONE/DONE_VERIFIED/CANCELLED/DEFERRED/SKIPPED).
+- AC-2 (no per-caller copy): grepped every WIP≤2 caller — main.md's WIP/WIP2/WIP3/WIP4 gates were bare `.task_board.in_progress|length` pre-fix (never actually called the shared lib — a lib-only fix would've been dead code); all 4 now `include`+call `wip_in_progress`. `devteam-backlog-claim-bounded1.jq`/`promote-bounded1.jq` already called the shared def pre-existing — confirmed no duplicate arithmetic anywhere in the WIP-gate call graph (unrelated `in_progress|length` hits elsewhere in the repo are one-off conservation-guard/HNX-claim scripts, not WIP-budget gates).
+- AC-3: ran `devteam-dispatch-gate-satisfiability.sh` myself — 71/71 PASS incl. 6 new `AC-WIP-BLOCKED-*`: BLOCKED+IN_PROGRESS mix fixture reads `wip_in_progress=1` (not raw len 2), gate satisfiable, SLS non-vacuously fires; 2x-IN_PROGRESS fixture still reads 2, gate saturated (no false relief).
+- AC-4 (write-side lane-move): `execute-tier.md` STATUSFLIP-LANEMOVE gained bullet (c) — IN_PROGRESS→BLOCKED must lane-move to `backlog[]`, not just idle `.head`; `main.md` WF-1 BLOCKED-check does the same as self-healing backstop, status-lookup widened flat-lane+active_sprints (was active_sprints-only). Live-verified the actual incident row: `FU-CNYVND-DEAD-FIELD-REMOVE` (still `status:BLOCKED`) sits in `.task_board.backlog[]` today, NOT `in_progress[]` — confirms the fix's real-world effect, not just prose.
+- No `apps/` TS/Go touched (zone `cross-service/`, pure jq+bash+md) — `bun test`/`tsc` structurally N/A; `mock-guard.sh` N/A (no production non-test source). Sibling `devteam-eligibility-resolved-secondary-dispatch-target.test.sh` re-run clean (5/5, no regression).
+**why-decision:** APPROVED, DONE_VERIFIED. All 4 ACs independently reproduced live (SSOT-derived exclusion, no dead-code lib fix, regression suite green, and the live incident row's own current lane confirms the write-side fix actually fired) — not the row's own `review_note` prose alone.
+**why-change:** none — verified exactly what the row scoped.
