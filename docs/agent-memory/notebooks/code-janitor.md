@@ -1,10 +1,27 @@
 # Code Janitor Notebook
 
-**Last updated:** 2026-08-05 (scan-22 Memory+State sweep cycle — no source changes)
+**Last updated:** 2026-08-06 (scan-23 Memory+State sweep cycle — no source changes)
 
 > Archive: docs/archive/notebooks/code-janitor-2026-05-21.md (pre-trim history)
 
 ## State summary
+
+### Session 28 (2026-08-06 08:55Z — 6-hourly scheduled sweep cycle)
+
+**Scope:** Scheduled 6-hourly maintenance sweep. No source code changes in last 3 commits (pre-check gate active).
+
+**Checks:** DRY scan skipped (zero `src/` or `apps/*/src/` changes). Three unconditional sweeps executed:
+- Memory Prune Sweep: 0 sessions archived, 0 old health checks deleted, 1 signal written (janitor-health-recheck-writer-retired)
+- Notebook Line-Cap Sweep: 46 notebooks checked; 1 pruned (ops.md 133L→104L); 1 safe-fail skip (digest-predict.md 37L no sections)
+- Cold Archive Sweep: Skipped (not 1st of month)
+
+**Escalations:** SIGNAL-WRITTEN for team-tool-recheck writer dead since 06-23 (recurrent) → new row appended to signal queue.
+
+**Backlog:** Unchanged at 9 items (JANITOR-034, JANITOR-028 to JANITOR-032, JANITOR-011, -013, -017, -020, -027).
+
+**Quality:** Full. All sweeps executed nominally. No knowledge load failures.
+
+---
 
 ### Session 27 (2026-08-05 04:30Z — 6-hourly scheduled sweep cycle)
 
@@ -171,29 +188,3 @@
 **Quality:** Full — all 5 checks executed; no knowledge load failures.
 
 ---
-
-## Open backlog
-
-| ID | Description | Blocker |
-|----|-------------|---------|
-| JANITOR-034 | Overlapping large-cap ticker lists (cascadeExecutor.ts vs priceSourceRouter.ts) | Domain design decision |
-| JANITOR-028 | Dev MCP Server agent .md: remove "112 tools" from lines 4, 13 | Requires agent-father approval |
-| JANITOR-029 | Cloudflare ops flow: remove "Full 112 tools available" from lines 13, 29 | Requires ops/developer approval |
-| JANITOR-030 | Agent Models README: replace "All 13 agents" (lines 15, 28) with unquantified wording | Requires agent-father approval |
-| JANITOR-031 | Agent Roster: fix line 5 "7 agents" → "8 agents" (line 102 is correct) | Requires agent-father approval |
-| JANITOR-032 | Alert Commander: max_alerts_per_day duplicates alert-policy.md threshold | Requires agent-father approval |
-| JANITOR-011 | Puppeteer launch config dup in tradingEconomicsChromium.ts | No test coverage on affected paths |
-| JANITOR-013 | SignalTypeEnum re-lists SignalType union (two-file change) | Two-file change |
-| JANITOR-017 | BROWSER_UA string in 18 source files (18-file fan-out) | 18-file fan-out across 3 layers |
-| JANITOR-020 | MACRO_CODES + section-builder logic parallel impl in marketContextBuilder.ts vs marketContextTools.ts | Two-file change; marketContextTools.ts must delegate to domain builder |
-
-### Managed (monitored by tests)
-
-| ID | Description |
-|----|-------------|
-| mcp.config.json:referenceStocks | Duplicate of SECTOR_PEERS — guarded by 1252 + 1282 tests |
-
-## Notes for next scan
-
-- CLEAN-c81: Housekeeping completed 2026-05-13 (stale 1899a-gateway Todo row removed + 2 merged worktree-agent branches pruned). No DRY violations found. Backlog stable at 9 items.
-- Next scheduled DRY scan: 2026-05-13 or on developer commit to signal-related/DRY-sensitive files.
