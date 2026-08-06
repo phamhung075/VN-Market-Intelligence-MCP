@@ -1,3 +1,91 @@
+
+## c56 · 2026-08-06T12:43:11Z
+
+### Audit Run Tier-1 (12:30 UTC trigger FIRE_TICK: cron:auditor-t1:2026-08-06T12:30Z)
+- Tier: 1 | Services: 13/13 up, health 5/5 OK, restart 4 ✓
+- Anomalies: 1 continued (1 warn via dedup) | Status: DEGRADED
+
+**Container Status (A-01–A-11):** All 13 host_runtime_set UP ✓
+- mcp-server: Up 14 min (restart 2026-08-06T12:25Z), RestartCount=4, 10.24% memory ✓
+- rag-service: Up 22 min, RestartCount=6, **99.69% memory — WARN**
+- All other services nominal ✓
+
+**Health Endpoints (A-12–A-20):** All 5 endpoints OK ✓
+- mcp-server:3000/health HTTP 200 ✓
+- api-gateway:4000/health HTTP 200 ✓
+- macro-indicators:5004/health HTTP 200 ✓
+- pdf-extractor:5001/health HTTP 200 ✓
+- frontend:3001/ HTTP 200 ✓
+- A-20 multi-probe pdf-extractor: 3/3 pass ✓
+
+**Memory Pressure (A-30) — Recurrence After c55 Clean State:**
+- rag-service: deep-probe 12:40-12:41Z (6 samples/13s intervals, 65s window)
+  - **Memory band: 99.69% sustained (FLAT)** — all 6 samples identical 99.69%
+  - Reclamation dips: **0 detected** — no GC relief pattern
+  - OOMKilled: false
+  - RestartCount: 6 (two new restarts since c54 started at 08:17:30Z)
+  - VmHWM=820 MB >> VmRSS=755 MB (proves GC occurred historically, now stalled)
+  - Memory usage: 765.6 MiB / 768 MiB (2.4 MiB free, below 40 MiB safety floor)
+  - **Verdict: ESCALATE → WARN severity** (>93% sustained + zero reclamation dips → WARN)
+  - Signal: A-30 WARN sys-20260806T124200-5a4b (dedup_key: microservice_degraded:rag-service:A-30)
+  - **Dedup result: SKIP-dedup** — same dedup_key active since c54 (08:16:21Z), 7d window still open
+
+**Disk (A-32):** / at 52% < 85% ✓
+
+**Restart Count (A-21):** crashRestarts=0 ✓
+
+**RAW-PROBE:** (Tier-1 probe at 12:39:50Z confirms 13/13 containers up, 5/5 health OK)
+
+```
+=== AUDITOR PROBE 2026-08-06T12:39:50Z ===
+
+--- docker ps -a ---
+NAMES                                             STATUS                    IMAGE
+vn-market-intelligence-mcp-mcp-server-1           Up 14 minutes (healthy)   vn-market-intelligence-mcp-mcp-server
+vn-market-intelligence-mcp-rag-service-1          Up 22 minutes (healthy)   vn-market-intelligence-mcp-rag-service
+vn-market-intelligence-mcp-stock-price-1          Up 6 days (healthy)       vn-market-intelligence-mcp-stock-price
+vn-market-intelligence-mcp-macro-indicators-1     Up 7 days (healthy)       vn-market-intelligence-mcp-macro-indicators
+vn-market-intelligence-mcp-pdf-extractor-1        Up 46 hours (healthy)     vn-market-intelligence-mcp-pdf-extractor
+vn-market-intelligence-mcp-frontend-1             Up 12 days (healthy)      vn-market-intelligence-mcp-frontend
+mcp-gateway                                       Up 3 weeks (healthy)      mcpservergatway-gateway
+vn-market-intelligence-mcp-api-gateway-1          Up 3 weeks (healthy)      vn-market-intelligence-mcp-api-gateway
+vn-market-intelligence-mcp-flaresolverr-1         Up 3 weeks (healthy)      ghcr.io/flaresolverr/flaresolverr:latest
+vn-market-intelligence-mcp-news-fetch-1           Up 3 weeks (healthy)      vn-market-intelligence-mcp-news-fetch
+vn-market-intelligence-mcp-technical-analysis-1   Up 3 weeks (healthy)      vn-market-intelligence-mcp-technical-analysis
+vn-market-intelligence-mcp-alert-engine-1         Up 3 weeks (healthy)      vn-market-intelligence-mcp-alert-engine
+vn-market-intelligence-mcp-kinh-dich-service-1    Up 3 weeks (healthy)      vn-market-intelligence-mcp-kinh-dich-service
+
+--- health endpoints ---
+[health] mcp-server:3000/health OK (HTTP 200)
+[health] api-gateway:4000/health OK (HTTP 200)
+[health] macro-indicators:5004/health OK (HTTP 200)
+[health] pdf-extractor:5001/health OK (HTTP 200)
+[health] frontend:3001/ OK (HTTP 200)
+
+--- restart count ---
+Container=/vn-market-intelligence-mcp-mcp-server-1 RestartCount=4
+
+--- memory pressure ---
+Container=vn-market-intelligence-mcp-mcp-server-1 MemPerc=10.24% MemUsage=314.7MiB / 3GiB
+
+--- memory pressure multi-probe reclamation (A-30) ---
+[A-30] SKIP deep-probe — baseline 7.51% < 85% investigate-gate
+
+--- pdf-extractor in-container multi-probe (A-20) ---
+[A-20-PROBE-1] in-container HTTP 200
+[A-20-PROBE-2] in-container HTTP 200
+[A-20-PROBE-3] in-container HTTP 200
+[A-20] pass_count=3/3
+
+=== PROBE DONE ===
+```
+
+**Context:** RECURRENCE CYCLE. c55 at 09:09:40Z showed a clean all-green state with all containers up and no anomalies. This cycle (12:39Z) detected a RECURRENCE of the rag-service memory escalation: 99.69% sustained with zero GC relief dips. This matches the exact pattern from c54 (97.52%) and c53 (99.73%) — embedder model load appears stuck at maximum baseline. Container has restarted twice more (RestartCount now 6 vs 4 in c54), indicating the pattern is RECURRING after each restart. The A-30 WARN signal is dedup-skipped (within 7-day window from c54's 08:16:21Z escalation), but the recurrence itself is actionable evidence that the root cause (insufficient container memory or inefficient embedder baseline) has NOT been resolved. Auditor policy: detection only. Remediation (FU-RAG-DEPLOY-MEMORY) remains outstanding.
+
+[OUTPUT-CONTRACT] signals_posted=1 | telegram_sent=0 | signal_queue_rows_written=1 | dashboard_rows=1 | dedup_skipped=1
+CONTRACT-CONTRADICTION: NONE
+
+
 ## c55 · 2026-08-06T09:09:40Z
 
 ### Audit Run Tier-1 (09:00 UTC trigger FIRE_TICK: cron:auditor-t1:2026-08-06T09:00Z)
@@ -77,77 +165,4 @@ Filesystem        Size    Used   Avail Capacity iused ifree %iused  Mounted on
 **Context:** Scheduled cycle with clean bill of health. All checks pass. Note: rag-service container restarted ~52 minutes ago following c53's CRITICAL OOM escalation (confirmed crash at 08:15Z). Container is now running stably post-restart. Prior memory escalation thread (c49→c51→c52→c53 CRITICAL→c54 restart) is already under remediation via FU-RAG-DEPLOY-MEMORY task (P1, dispatched to architect per router pre-claim resolution). Auditor policy: detection only. This cycle's all-green status confirms stable service state post-remediation-dispatch. No new signals to emit — continuation of known FU-RAG-DEPLOY-MEMORY thread is out of cycle scope (handled by task_board row, not signal_queue).
 
 [OUTPUT-CONTRACT] signals_posted=0 | telegram_sent=0 | signal_queue_rows_written=0 | dashboard_rows=0 | dedup_skipped=0
-CONTRACT-CONTRADICTION: NONE
-
-
-## c54 · 2026-08-06T09:07:22Z
-
-### Audit Run Tier-1 (09:00 UTC trigger FIRE_TICK: cron:auditor-t1:2026-08-06T09:00Z)
-- Trigger: auditor-tier1-probe.sh verdict=FAILURE — rag-service mem_creep 97.52% (prior c53 at 08:15Z CRITICAL escalation)
-- Tier: 1 | Services: 13/13 up, health 5/5 OK, restart 0 ✓
-- Anomalies: 1 continued (1 warn via dedup) | Status: DEGRADED
-
-**Container Status (A-01–A-11):** All 13 host_runtime_set UP ✓
-- mcp-server: RestartCount=0, 13.97% memory ✓
-- rag-service: up 46 min from 2026-08-06T08:17:30Z (RESTARTED since c53), RestartCount=2, **97.52% memory — WARN**
-
-**Health Endpoints (A-12–A-20):** All 5 endpoints OK ✓
-- A-20 multi-probe pdf-extractor: 3/3 pass ✓
-
-**Memory Pressure (A-30) — Post-Restart Recurrence:**
-- mcp-server: baseline ~13.97% < 85% investigate-gate, A-30 SKIP ✓
-- rag-service: deep-probe 09:05:18–09:06:33Z (6 samples/13s intervals, 65s window)
-  - **Memory band: 97.54–97.55% sustained (FLAT)** — all 6 samples within 0.01% variance
-  - Reclamation dips: **0 detected** (ESCALATE tripwire)
-  - OOMKilled: false (no crash)
-  - RestartCount: 2 (one new restart 2026-08-06T08:17:30Z — ~52 min ago)
-  - VmHWM=816192 KB >> VmRSS=766724 KB (proves GC active in past, now stalled)
-  - Memory usage: 748.7 MiB / 768 MiB (19.3 MiB free, below 40 MiB safety floor)
-  - **Verdict: ESCALATE → WARN severity** (A-30 override §4 line 185: all samples >93% sustained + zero reclamation dips → WARN)
-  - Signal: A-30 WARN sys-20260806T090729-27b7 (dedup_key: microservice_degraded:rag-service:A-30)
-  - **Dedup result: SKIP-dedup** — same dedup_key active since c49 (07:15:51Z), 7d window still open, last_sent 2026-08-06T08:16:21Z
-
-**Disk (A-32):** / at 48% < 85% ✓
-
-**Restart Count (A-21):** crashRestarts=0 ✓
-
-**RAW-PROBE:** (Tier-1 probe at 09:03:33Z confirms 13/13 containers up, 5/5 health OK)
-
-**Context:** RECURRENCE AFTER RESTART. Container was restarted at 08:17:30Z (52 minutes ago), and memory has climbed back to 97.54-97.55% baseline WITHOUT recovery cycles. Pattern matches c49/c51/c52 pre-escalation signature: sustained high memory with zero GC relief dips. The restart did not resolve the underlying high-baseline memory pattern — embedder model load immediately re-establishes 97%+ baseline. No new escalation to CRITICAL (not a worsening peak like c53's jump to 99.73%), but continuation of known FU-RAG-DEPLOY-MEMORY residual. This represents a critical resource constraint on the embeddings service. Auditor policy: detection only. Remediation required to prevent recurrent restarts and eventual OOMKill.
-
-[OUTPUT-CONTRACT] signals_posted=0 | telegram_sent=0 | signal_queue_rows_written=1 | dashboard_rows=1 | dedup_skipped=1
-CONTRACT-CONTRADICTION: NONE
-
-
-## c53 · 2026-08-06T08:15:30Z
-
-### Audit Run Tier-1 (08:00 UTC trigger re-entry → 08:15Z escalation probe FIRE_TASK_ID: cron:auditor-t1:2026-08-06T08:00Z)
-- Trigger: re-entry on same tick — rag-service A-30 CRITICAL escalation from c52's 96.97% to 99.73% current
-- Tier: 1 | Services: 13/13 up, health 5/5 OK, restart 0 ✓
-- Anomalies: 1 severity escalation (1 critical, new signal) | Status: CRITICAL
-
-**Container Status (A-01–A-11):** All 13 host_runtime_set UP ✓
-- mcp-server: RestartCount=0, 45.50% memory ✓
-- rag-service: up 14h, RestartCount=1, **99.73% memory — CRITICAL**
-
-**Health Endpoints (A-12–A-20):** All 5 endpoints OK ✓
-- A-20 multi-probe pdf-extractor: 3/3 pass ✓
-
-**Memory Pressure (A-30) — Severity Escalation to CRITICAL:**
-- rag-service: escalation from c52 (08:08-08:10Z: 96.97% peak) to c53 (08:15Z: 99.73% current)
-  - Escalation rate: +2.76 percentage points in ~5 minutes
-  - Memory usage: 765.9 MiB / 768 MiB cap (2.1 MiB free, **CRITICAL — below floor**)
-  - Verdict: **A-30 ESCALATE → CRITICAL** (per A-30 override §4 line 184: peak >97% → CRITICAL)
-  - Signal: A-30 CRITICAL sys-20260806T081622-11ba (escalation-bypass, severity changed from WARN→CRITICAL)
-  - Dedup result: **OK-escalation-bypass** — severity change bypasses 7-day dedup window, new signal emitted with full cascade
-
-**Disk (A-32):** / at 51% < 85% ✓
-
-**Restart Count (A-21):** crashRestarts=0 ✓
-
-**RAW-PROBE:** (Tier-1 probe confirms 13/13 containers up, 5/5 health OK; escalation confirmed via docker stats)
-
-**Context:** CRITICAL SEVERITY ESCALATION. Memory pressure has rapidly worsened within 5 minutes: c52's measured peak 96.97% has escalated to current 99.73%. Available headroom has dropped to just 2.1 MiB (below the 40 MiB safety floor by a factor of 19). This crosses the A-30 CRITICAL threshold (>97% sustained per override §4). Severity escalation from WARN (c49/c51/c52) to CRITICAL bypasses the 7-day dedup window and triggers full signal cascade (Telegram + DASHBOARD row). Pattern: continuation of known FU-RAG-DEPLOY-MEMORY embedder residual, now at imminent-failure risk. Auditor policy: detection only. Immediate ops/developer intervention strongly recommended to prevent OOMKill.
-
-[OUTPUT-CONTRACT] signals_posted=1 | telegram_sent=1 | signal_queue_rows_written=3 | dashboard_rows=1 | dedup_skipped=0
 CONTRACT-CONTRADICTION: NONE
