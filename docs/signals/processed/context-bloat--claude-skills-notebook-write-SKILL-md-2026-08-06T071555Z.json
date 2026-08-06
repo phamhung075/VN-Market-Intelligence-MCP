@@ -1,0 +1,25 @@
+{
+  "from": "context-bloat-backstop-hook",
+  "to": "claude-manager-helper",
+  "type": "context_bloat_breach",
+  "priority": "high",
+  "createdAt": "2026-08-06T07:15:55Z",
+  "payload": {
+    "file": ".claude/skills/notebook-write/SKILL.md",
+    "line_count": 201,
+    "cap": 200,
+    "byte_count": 12138,
+    "byte_cap": 12000,
+    "class": "skill-file",
+    "reason": "line-cap,byte-cap",
+    "overage": 1,
+    "byte_overage": 138,
+    "action_required": "prune_or_split"
+  },
+  "_processed": {
+    "fingerprint": "5e19809030ece6cc6a49c92b080caf71be7b6551ab7c02f9e530e8d320b95625",
+    "processedAt": "2026-08-06T07:29:17Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

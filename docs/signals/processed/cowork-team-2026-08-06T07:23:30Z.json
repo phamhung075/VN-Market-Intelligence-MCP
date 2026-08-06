@@ -1,0 +1,61 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-08-06T07:23:30Z",
+    "matched_slots": [
+      "chef-intraday",
+      "alert-commander-market"
+    ],
+    "won_slots": [
+      "chef-intraday",
+      "alert-commander-market"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/unified-agent/flow/chef.md",
+      "docs/agents/alert-commander/flow/main.md"
+    ],
+    "silent": false,
+    "drift_min": 3,
+    "errors": [],
+    "pressure_mode": "adaptive",
+    "calendar_status": "open",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "chef_mutex_applied": false,
+    "due_reasons": {
+      "chef-intraday": "cadence",
+      "alert-commander-market": "cron"
+    },
+    "cadence_minutes": {
+      "chef-intraday": "60",
+      "alert-commander-market": null
+    },
+    "last_fired_timestamp": "2026-08-06T07:23:12Z",
+    "last_fired_slots": [
+      "chef-intraday",
+      "alert-commander-market"
+    ],
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "07:15",
+    "leader_lock": "acquired",
+    "dev_head": "unknown",
+    "devq": 5,
+    "signal_backlog": 1,
+    "note": "2 slots fired: chef-intraday (cadence-due, 60min) + alert-commander-market (cron). Both to:po signal_queue rows left NEW (not cowork-consumed) per feedback_cowork_step0a_blanket_ack_buries_other_agents_signals."
+  },
+  "priority": "low",
+  "createdAt": "2026-08-06T07:23:30Z",
+  "_processed": {
+    "fingerprint": "e583adf274d38f8c010c8676b0692e51bce6b7bef522272887c5d07b1748d143",
+    "processedAt": "2026-08-06T07:29:17Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

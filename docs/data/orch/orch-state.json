@@ -5,8 +5,8 @@
     "last_linecount": 151,
     "po": {
       "section_name": "po",
-      "last_mtime": 1786000502,
-      "last_linecount": 166
+      "last_mtime": 1786001419,
+      "last_linecount": 168
     }
   },
   "decision_journal": [
@@ -145,7 +145,7 @@
         "type": "WAL_ESCALATION",
         "summary": "WAL file exceeded 10MB (15.7 MB); investigate checkpoint stall",
         "severity": "HIGH",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": null
       },
       {
