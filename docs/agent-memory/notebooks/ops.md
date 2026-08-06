@@ -157,3 +157,36 @@ Three further restarts landed at 19:30:48 / 19:32:24 / 19:35:05Z — the first f
 - Awaiting QA verification on memory-leak fix AC
 
 Session: 24817246-8a3f-4511-95f7-1b4385797bee
+
+## Session: 2026-08-06T14:43Z — FIX-MARKETDB-WAL-SEQUENCE-STEPS-2-4-NO-OWNER
+
+**Task**: Complete the execution half of the market.db WAL remediation sequence (steps 2-4).
+
+**Step 2 (14:43:36Z)**: Redeploy stock-price service
+- Command: docker compose up -d --no-deps stock-price
+- Container restarted cleanly
+- Health check: GET /health ✓ returns status=ok
+- Image ID: sha256:b6ccf5db5d80a2b5b03bd4b510f19ae78ef8a4fafb9c4a761e1ccc7096027272
+
+**Step 3 (14:44:40Z)**: Exercise all FOUR market.db read paths
+- Path 1 (SQLitePriceHistoryRepository): GET /price/history ✓
+- Path 2 (variant): GET /price/history/:code ✓
+- Path 3 (Tier3CacheFetcher): POST /price/fetch ✓
+- Path 4 (ForeignFlowRepository): POST /price/foreign-accum-rank ✓
+
+**Step 4 (14:44:51Z)**: Checkpoint + flip journal_mode
+- Checkpoint: PRAGMA wal_checkpoint(RESTART) → 0|0|0 ✓
+- Flip: PRAGMA journal_mode=DELETE → delete ✓
+- Verify: PRAGMA journal_mode → delete ✓
+- Exercise: POST /price/fetch (verify no re-arm) ✓
+
+**Verification (14:44:53Z)**: Guard script
+- Cleaned stale -shm file
+- Re-ran guard script: verdict=PASS ✓
+
+**AC Status**: All requirements satisfied. Three P0 REVIEW rows now unblocked:
+1. FIX-STOCKPRICE-PRICEHISTORY-RO-WAL-DSN-SWALLOWED-EMPTY-KILLS-KINHDICH
+2. FIX-MARKETDB-JOURNALMODE-GUARD-SHIPPED-BUT-NEVER-ARMED
+3. DB-INTEGRITY-SIDECAR-NAMED-VOLUME-DRIFT
+
+Session: 24817246-8a3f-4511-95f7-1b4385797bee
