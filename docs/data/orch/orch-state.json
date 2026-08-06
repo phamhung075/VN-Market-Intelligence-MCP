@@ -3081,11 +3081,14 @@
         "type": "dispatch-race-observation",
         "severity": "INFO",
         "summary": "Router (session 24817246-...) claimed+dispatched FIX-CRON-DST-LOCAL-EVAL-MOMENT-ANCHORED-EXPRESSIONS to agent-father (agentId a123b11a6d69e3d1a) at 18:36:53Z via manual WIP-slot occupation, board-flipped to in_progress BEFORE spawning. Agent's own completion report states a DIFFERENT concurrent agent-father session (peer router, unknown session id) independently picked up the SAME task_id in an overlapping window, made a legitimate non-conflicting follow-up commit (dd7a036b6, doc cross-ref fix) + its own journal entry (674a7a961, agent-father-S26), and stated intent to perform the same board flip the primary agent had already applied. Primary agent committed its own orch-apply.sh board flip first (0c9a40946) to close the race. RAW-verified: final board state is coherent — exactly 1 row for this task_id, correctly in review[] with next_agent:qa, .head correctly untouched, no duplicate/conflicting writes, no lost work. All 6 commits (36e109170, 419cdb804, dd7a036b6, 674a7a961, 0c9a40946, plus the DEVTEAM-BOUNDED1 flip 3a4825aab from the concurrent sibling dispatch) confirmed genuinely present in git log. Grep-verified zero remaining live-actuator hits of the 5 old cron literals; AC-1..AC-6 genuinely shipped.",
-        "status": "READ",
+        "status": "triaged",
         "payload_ref": null,
         "provenance": "router-raw-verify",
         "audit_cycle_tag": "dev-team-tick:2026-08-06T18:37Z",
-        "mechanism_hypothesis": "This is distinct from the already-tracked feedback_preclaim_ttl_600s_expires_under_long_agent_runs.md mechanism (TTL expiring mid-run) and from feedback_pipeline_resume_stale_placeholder_duplicate_spawn_risk.md (PO's own triage_key). Here the board row already showed claimed_at/claimed_by IN_PROGRESS stamps (written by router at 18:36:54Z, BEFORE agent-father was even spawned) yet a peer session still dispatched its own agent-father onto the identical task_id shortly after — meaning either (a) the peer's dispatch path does not board-status-check a manually-router-claimed task before spawning, checking only its own PRE-CLAIM intent-key lock (which is scoped per-agent+intent, not per-task_id, so two peers each doing 'router manual dispatch' under different intent-keys would never collide on the lock itself), or (b) an extremely narrow TOCTOU window between the write and the peer's read. (a) is the more actionable hypothesis: PRE-CLAIM's task_id namespace is 'intent:<agent>:<intent-key>', which does not encode the specific task_id being dispatched, so it cannot prevent two different router sessions from both manually-dispatching the SAME underlying task_id under two DIFFERENT intent-keys (e.g. one from a PO-BATCH pass, one from a peer's own independent BOUNDED-1/triage pass) — only same-intent-key collisions are caught. Worth a root-cause check: should manual dev-team dispatch also claim a task-level lock keyed literally to the task_id (task:<task_id>), not just the intent-key, before spawning? Self-resolved with zero harm this occurrence (complementary work, no duplicate final state) but is architecturally reproducible any time two peer sessions independently decide to manually-dispatch the same backlog/ready row within the same short window."
+        "mechanism_hypothesis": "This is distinct from the already-tracked feedback_preclaim_ttl_600s_expires_under_long_agent_runs.md mechanism (TTL expiring mid-run) and from feedback_pipeline_resume_stale_placeholder_duplicate_spawn_risk.md (PO's own triage_key). Here the board row already showed claimed_at/claimed_by IN_PROGRESS stamps (written by router at 18:36:54Z, BEFORE agent-father was even spawned) yet a peer session still dispatched its own agent-father onto the identical task_id shortly after — meaning either (a) the peer's dispatch path does not board-status-check a manually-router-claimed task before spawning, checking only its own PRE-CLAIM intent-key lock (which is scoped per-agent+intent, not per-task_id, so two peers each doing 'router manual dispatch' under different intent-keys would never collide on the lock itself), or (b) an extremely narrow TOCTOU window between the write and the peer's read. (a) is the more actionable hypothesis: PRE-CLAIM's task_id namespace is 'intent:<agent>:<intent-key>', which does not encode the specific task_id being dispatched, so it cannot prevent two different router sessions from both manually-dispatching the SAME underlying task_id under two DIFFERENT intent-keys (e.g. one from a PO-BATCH pass, one from a peer's own independent BOUNDED-1/triage pass) — only same-intent-key collisions are caught. Worth a root-cause check: should manual dev-team dispatch also claim a task-level lock keyed literally to the task_id (task:<task_id>), not just the intent-key, before spawning? Self-resolved with zero harm this occurrence (complementary work, no duplicate final state) but is architecturally reproducible any time two peer sessions independently decide to manually-dispatch the same backlog/ready row within the same short window.",
+        "triaged_at": "2026-08-06T22:05:17Z",
+        "triaged_by": "po",
+        "triage_note": "INFO, self-resolved with zero harm, but the mechanism_hypothesis (a) is correct and actionable: PRE-CLAIM's task_id namespace is 'intent:<agent>:<intent-key>', which does not encode the task_id being dispatched, so two peer router sessions manually-dispatching the SAME task_id under DIFFERENT intent-keys never collide on the lock. Same family as memory feedback_router_intent_path_double_dispatches_cowork_slots. NOT minted this tick - the remedy (claim task:<task_id> in addition to the intent key before any manual dev-team dispatch) belongs with the orphan/coordination-lock FR set already sitting in ready[] (FIX-ORPHAN-FR1-FR2-INFRA-HEARTBEAT-LADDER, FIX-ORPHAN-FR1-FR3-FR6-SKILL-DISPATCH-CLAIM), and FR-4/FR-5 was folded into this tick's BATCH. Re-raise as its own row if a second occurrence lands before that set ships."
       },
       {
         "id": "sys-20260806T203538-4ca4",
@@ -3095,10 +3098,13 @@
         "type": "microservice_degraded",
         "summary": "rag-service memory floor breach: 96.42% (37 MiB free, below 40 MiB floor)",
         "severity": "WARN",
-        "status": "READ",
+        "status": "triaged",
         "payload_ref": null,
         "provenance": "detector",
-        "audit_cycle_tag": "cron:auditor-t1:2026-08-06T20:30Z"
+        "audit_cycle_tag": "cron:auditor-t1:2026-08-06T20:30Z",
+        "triaged_at": "2026-08-06T22:05:17Z",
+        "triaged_by": "po",
+        "triage_note": "rag-service A-30 memory-floor-breach series (96.42% 20:35Z -> 98.08% 20:41Z -> 98.20% 21:10Z). PO live-probed rather than escalating on the trend: docker stats now reads 93.89% (961.4MiB/1GiB) with State=running, RestartCount=0, OOMKilled=false - receded, no crash cliff, chronic-but-stable pressure already owned by RAG-FTS-BUILD-MEMORY-BOUND in review[]. No new row, no ops escalation. The dedup suppression of the 20:41Z/21:10Z re-emits was CORRECT behaviour; what was wrong is that it made scripts/audit-output-contract.sh V4 report a false contract violation - see the new row FIX-AUDIT-OUTPUT-CONTRACT-V4-V5-DEDUPSKIP-DENOMINATOR-FALSE-VIOLATION."
       },
       {
         "id": "sys-20260806T204129-7435",
@@ -3108,10 +3114,13 @@
         "type": "signal_feedback",
         "summary": "rag-service A-30 WARN: memory floor-breach 98.08% (19.7MiB free, below 40MiB floor)",
         "severity": "WARN",
-        "status": "READ",
+        "status": "triaged",
         "payload_ref": null,
         "provenance": "detector",
-        "audit_cycle_tag": "cron:auditor-t1:2026-08-06T20:30Z"
+        "audit_cycle_tag": "cron:auditor-t1:2026-08-06T20:30Z",
+        "triaged_at": "2026-08-06T22:05:17Z",
+        "triaged_by": "po",
+        "triage_note": "rag-service A-30 memory-floor-breach series (96.42% 20:35Z -> 98.08% 20:41Z -> 98.20% 21:10Z). PO live-probed rather than escalating on the trend: docker stats now reads 93.89% (961.4MiB/1GiB) with State=running, RestartCount=0, OOMKilled=false - receded, no crash cliff, chronic-but-stable pressure already owned by RAG-FTS-BUILD-MEMORY-BOUND in review[]. No new row, no ops escalation. The dedup suppression of the 20:41Z/21:10Z re-emits was CORRECT behaviour; what was wrong is that it made scripts/audit-output-contract.sh V4 report a false contract violation - see the new row FIX-AUDIT-OUTPUT-CONTRACT-V4-V5-DEDUPSKIP-DENOMINATOR-FALSE-VIOLATION."
       },
       {
         "id": "sys-20260806T211009-070b",
@@ -3121,10 +3130,13 @@
         "type": "microservice_degraded",
         "summary": "rag-service A-30 memory floor breach (98.20%, 18.4MiB-free, floor=40MiB)",
         "severity": "WARN",
-        "status": "READ",
+        "status": "triaged",
         "payload_ref": null,
         "provenance": "detector",
-        "audit_cycle_tag": "cron:auditor-t1:2026-08-06T21:00Z"
+        "audit_cycle_tag": "cron:auditor-t1:2026-08-06T21:00Z",
+        "triaged_at": "2026-08-06T22:05:17Z",
+        "triaged_by": "po",
+        "triage_note": "rag-service A-30 memory-floor-breach series (96.42% 20:35Z -> 98.08% 20:41Z -> 98.20% 21:10Z). PO live-probed rather than escalating on the trend: docker stats now reads 93.89% (961.4MiB/1GiB) with State=running, RestartCount=0, OOMKilled=false - receded, no crash cliff, chronic-but-stable pressure already owned by RAG-FTS-BUILD-MEMORY-BOUND in review[]. No new row, no ops escalation. The dedup suppression of the 20:41Z/21:10Z re-emits was CORRECT behaviour; what was wrong is that it made scripts/audit-output-contract.sh V4 report a false contract violation - see the new row FIX-AUDIT-OUTPUT-CONTRACT-V4-V5-DEDUPSKIP-DENOMINATOR-FALSE-VIOLATION."
       }
     ],
     "last_triaged_at": "2026-07-29T06:25:00Z",
@@ -6170,11 +6182,11 @@
         "note": "QA-GATED. SUPERSEDES existing backlog row NB-AUDITOR-MAIN-SPLIT (same work, richer scope) — dedup/close NB-AUDITOR-MAIN-SPLIT on pickup. main.md -> <=170L dispatcher; extract L153-435 -> tier2-freshness.md, L438-655 -> tier3-integrity.md, dup emit block -> emit-sequence.md. Tier-1 sub-flow pattern already proven by shipped tier1-probe.md.",
         "next_agent": "agent-father",
         "po_routing_ruling_20260721": "PO ARTIFACT-CLASS ROUTING RULING 2026-07-21T18:42Z. Rule: routing follows ARTIFACT CLASS, not directory. Any row whose deliverable is instruction-prose that an agent LOADS AND EXECUTES — .claude/agents/**, docs/agents/** (init/flow/knowledge/tools-package), .claude/skills/**/SKILL.md — routes to agent-father. Executable code (apps/**, scripts/**), codegen-from-registry, and data/root-config (docs/data/**, CLAUDE.md) route to zone-matched dev-* or developer. Rationale: for this system a flow doc IS the executable source; agent-father is already sole owner of agent-file lifecycle (dispatch/SKILL.md:48) and of NEW cron skill files (:50), and board precedent has 5/5 pre-existing docs/agents/ rows routed to agent-father/agents-architect/po and 0 to developer. Precedent for SKILL.md specifically: docs/signals/processed/dev-team-20260716T102429Z-autolaunch-safety-hold-uc-asl-p6.json already routed a signal-dashboard SKILL.md edit to agent-father as 'the factory rule'. ROOT CAUSE this closes: .claude/skills/zone-detect/SKILL.md resolves ONLY dev-<service> (Tier-1/2, needs apps/<service>/-shaped zone) or generic developer (Tier-3 fallback) — it has NO path to agent-father, so any docs/agents/ or .claude/skills/ row reaching execute-tier with next_agent unset gets the 'developer' placeholder and mis-routes. EXPECTED SIDE EFFECT (do NOT 'fix' this): next_agent=agent-father does not match the dev-role pattern ^dev(-|$)|^developer$, so the BOUNDED-1 NON-DEV-NEXT_AGENT gate (dev-team/flow/main.md:518) now WITHHOLDS these rows from unattended idle auto-pickup. That is the intended outcome — they require deliberate router dispatch to agent-father, not silent promotion to a generic developer.",
-        "updated_at": "2026-08-06T07:54:54Z",
-        "po_manual_dispatch_flagged_at": "2026-08-06T07:52:24Z",
+        "updated_at": "2026-08-06T22:07:42Z",
+        "po_manual_dispatch_flagged_at": "2026-08-06T22:05:17Z",
         "po_manual_dispatch_flagged_by": "po (manual-dispatch-sweep)",
         "po_manual_dispatch_class": "DRS-STRANDED-OFF-ALLOWLIST",
-        "po_manual_dispatch_note": "po (manual-dispatch-sweep) surfaced DRS-STRANDED-OFF-ALLOWLIST candidate — folding into this tick's BATCH. Top of 41 eligible (rank 1 / idx 29, sort_by([rank,idx])).",
+        "po_manual_dispatch_note": "po (manual-dispatch-sweep) surfaced DRS-STRANDED-OFF-ALLOWLIST candidate - folding into this tick's BATCH. Top of 46 eligible (rank 1 / idx 27, sort_by([rank,idx])). RE-ADMISSION #2 today: previously flagged+folded 2026-08-06T07:52:24Z and still BACKLOG 14h later, so flag_reentrant's 4h staleness window correctly re-surfaced it. ROUTER CAPACITY CAVEAT for this fold: an agent-father instance is actively working FIX-REFINE-SUBFLOW-OPTIONC-CONTRACT-DRIFT under a fresh lock as of 21:37Z; if agent-father capacity is saturated, DEFER this entry rather than spawn a second concurrent agent-father onto docs/agents/ - the other 5 BATCH entries do not route to agent-father.",
         "po_size_recheck_20260806T0752": "TITLE LINE COUNT IS STALE AND UNDERSTATED. Title says 787L; live `wc -l docs/agents/system-auditor/flow/main.md` = 965L as of 2026-08-06T07:52Z. Corroborated same-tick and independently: agent-father had to create docs/agents/system-auditor/flow/data-writer-provenance.md as a NEW sibling specifically because docs/agents/system-auditor/flow/audit-dimensions.md is already at its own 200L hard cap and could not absorb the D-DATA dimension. The split is no longer 'scheduled-later, low urgency' — file growth is now actively displacing new dimension content into ad-hoc siblings with no registry entry.",
         "po_dedup_note_20260806T0752": "DUPLICATE FOUND: NB-AUDITOR-MAIN-SPLIT (backlog, priority low) targets the SAME file and the SAME Tier-2/Tier-3 extraction, quoting 627L. Both line counts are stale against the live 965L. TE-T06 is the surviving row (P1, owner+next_agent set, dispatched this tick); NB-AUDITOR-MAIN-SPLIT is marked superseded_by TE-T06 — do not work both."
       },
@@ -8132,10 +8144,11 @@
         "next_agent": "pm",
         "architect_ruling": "Root-caused — 3-caller shared module already exists structurally (cowork-match-slots.js SSOT); catch-up extends it, no separate code change beyond FR-1..9.",
         "architect_ruling_ref": "docs/architecture-briefs/2026-07-22-cowork-guaranteed-slot-catchup-design.md",
-        "updated_at": "2026-07-28T13:24:57Z",
+        "updated_at": "2026-08-06T22:07:42Z",
         "subsumed_by": "BA-COWORK-GUARANTEED-SLOT-CATCHUP",
         "po_consolidation_ruling_20260728": "PO RULING 2026-07-28T13Z: CONSOLIDATION HAPPENS AFTER ROUTING, NOT BEFORE — and it is a CLOSEOUT act, not a prerequisite. Three reasons. (1) It is already bound as acceptance, not as a gate: docs/handoffs/TASK-COWORK-CATCHUP-10.md AC-9 is 'All 6 consolidated rows closed together (5 fixed rows + umbrella task)', i.e. the consolidation is the epic's exit criterion. Doing it first would be closing rows whose fix has not shipped. (2) It buys zero throughput: all 5 of these rows are ALREADY inert — verified by executing scripts/lib/devteam-eligibility.jq against live data, is_bounded1_eligible=false on all 5 (4 carry a non-dev effective next_agent pm/architect; SPIKE-COWORK-GUARANTEED-SLOT-SUPERSEDE-WIRING is supervised without plan_only, so SLS's doubly-gated select misses it too). Consolidating them changes nothing that can move; routing the epic changes the only thing that can. (3) BA section 0.8 already assigns the owner-reconciliation to architect/PM at close time, and notes the 5 owner fields are stale relative to where the fix actually lands. WHAT THIS FIELD IS FOR: they are currently inert BY ACCIDENT (the NO-LANE hole), not by design. This stamp makes the subsumption explicit so a later triage pass that 'helpfully' routes one of them does not spawn duplicate work against files TASK-COWORK-CATCHUP-1..9 are already rewriting. Do NOT route these until the epic closes; then close all 6 together per AC-9.",
-        "updated_by": "po/triage-20260728T13"
+        "updated_by": "po/triage-20260728T13",
+        "po_triage_20260806T2205_corroboration": "TNB c123 (2026-08-06T20:29Z, telegram report 4470) is a 3rd+ non-consecutive-day instance and SHARPENS this SPIKE's signature from 'guaranteed-slot backstop missing' to a bounded UTC WINDOW. Evidence: chef-morning (cron 05:15Z) did NOT fire 08-06 - 3 independent confirmations (cowork-schedule.json last_fired stuck at 2026-08-05T05:21:11Z; unified-agent.md notebook has no 08-06 morning entry; docs/data/unified-agent-synthesis-2026-08-06-morning.json absent). CORROBORATING, and this is the new part: news-scout-sentiment (cron 01:30Z) and bctc-analyst-slot-4 (cron 00:00Z) are ALSO stuck at their 08-05 last_fired, while chef-intraday (07:23Z) and every later-window slot fired normally. So the miss is NOT chef-specific and NOT slot-specific - every slot scheduled in 00:00-05:15 UTC missed and every slot after it fired. PO RULING: do NOT treat this as a new dev defect. 00:00-05:15 UTC is 02:00-07:15 local on this host (host clock is UTC+2; verified against file mtimes vs their own ISO content timestamps), i.e. the window where no live CLI session exists - which is the already-known structural cause recorded in memory project_cowork_guaranteed_slot_needs_live_cli_session (cowork guaranteed slots require a live CLI session; the CLI->launchd migration is the standing remedy). This SPIKE stays the correct owner of the question and stays pm/supervised; it is deliberately NOT folded into this tick's BATCH because the answer is an infra/product decision (always-on launchd agent vs formally narrowing the guaranteed-slot contract to waking hours), not a code fix, and HOLD-CRON-MARKETWATCHER-NEWSSCOUT-MARKETHOURS-MODES-PRODUCT-DECISION already sits next_agent=po for the adjacent cadence decision. NEXT-TICK TRIPWIRE: if a slot inside 07:15-22:00 local ever misses, that REFUTES the sleep-window hypothesis and this becomes a real dispatcher defect - escalate immediately."
       },
       {
         "id": "BA-ANALYSIS-QUALITY-CONVERGENCE",
@@ -8772,7 +8785,9 @@
         "origin_signal_id": "tnb-20260718T2020Z",
         "note": "PLAN-ONLY (anomaly->BACKLOG bridge, project_anomaly_task_bridge; WIP over cap, no dispatch). TNB c113 verified NEGATIVE: c112's Step-0 GATHER glob-widening (read docs/signals/processed/bctc_signal_*/fundamental_*) IS present in chef.md (L109-113) and fresh complete VCB/FPT/HPG business-context data existed on disk hours before the 07-18 evening dish -- yet the dish persisted [gap:business_context_absent] in known_gaps[] (RAW-verified in unified-agent-synthesis-2026-07-19-evening.json) and VCB's conviction_calls rationale ('Banking sector mixed: earnings growth offsets deposit-source tightness') cites only generic sector language, NOT a product/customer/ops/mgmt fact traceable to a gathered bctc_signal_* field. Root cause: the c112 fix reaches WHERE to look (Step 0 gather) but not HOW gathered fields flow into the per-ticker narrative at Steps 4-7.5, so BIZ_CTX_OK (chef.md L584-586) never sees a qualifying cite. BA to TRACE the GATHER->conviction_calls wiring: is the drop at Step 4 (thesis build), 5 (portfolio_conviction merge), or 6 (per-ticker rationale)? Deliverable: an explicit chef.md instruction that injects >=1 gathered biz-context field into >=1 ticker's rationale when such a signal was read this cycle, so the gate passes on data not only via gap-token. DISTINCT from FIX-CHEF-STEP0-BCTC-PROCESSED-DIR-BLINDSPOT (the WHERE auto-cure, already landed) and FIX-CHEF-STEP75-L3-BIZCTX-FLOOR (the gate itself, c108).",
         "verification_gate": "A subsequent chef evening/morning dish persists known_gaps[] WITHOUT [gap:business_context_absent] AND >=1 conviction_calls[] rationale cites a product/customer/ops/mgmt fact traceable to a bctc_signal_*/fundamental_* signal read that cycle (RAW-verify the synthesis JSON, not the notebook self-report).",
-        "next_agent": "ba"
+        "next_agent": "ba",
+        "updated_at": "2026-08-06T22:07:42Z",
+        "po_triage_20260806T2205_field_confirmation": "PROMOTED FROM HYPOTHESIS TO CONFIRMED by TNB c123 (telegram report 4471, 2026-08-06T20:30:04Z) with the first concrete ticker-level instance in the 19 days since this row was minted. Evidence: the 08-06 EOD dish (08:50:20Z) emitted [gap:business_context_unavailable] for VCB, while docs/signals/processed/bctc_signal_VCB_20260805_routine.json (ts 2026-08-05T18:06Z) carries full product/customer/ops/mgmt fields for VCB and is in-window per FIX-CHEF-STEP0-BCTC-PROCESSED-DIR-BLINDSPOT. So the upstream data arrived on schedule and the gap token is FACTUALLY WRONG - the defect is exactly the GATHER->Steps 4-7.5 wiring this row already names, not an upstream availability problem. This also independently corroborates bctc-analyst's serve layer as healthy (TNB c144 confirms 4 tickers/cycle on schedule), which removes the last competing explanation. TNB recommended 'architect confirm recurrence (N=1, below 3-cycle auto-cure threshold)'; PO OVERRIDES that gate for this row specifically - the 3-cycle threshold exists to avoid minting on thin evidence, and this row already exists with an independently-derived root cause, so N=1 is corroboration of a standing diagnosis rather than the sole basis for a new one. Folded into BATCH this tick. Stays next_agent=ba/supervised=true: the deliverable is a spec for how biz-context enters conviction_call rationale and how BIZ_CTX_OK is evaluated, not a one-line patch."
       },
       {
         "id": "FIX-CHEF-L6-TOKEN-PERSISTENCE-RECURRING",
@@ -9776,7 +9791,7 @@
         "promoted_by": "dev-team (supervised-lane sweep)",
         "promotion_note": "Supervised-Lane Sweep — assigned dispatch_lane='ba' (priority_rank=0); supervised/plan_only flags preserved, gate NOT disabled — see FIX-BOUNDED1-SUPERVISED-LANE-NO-SWEEPER",
         "dispatch_lane": "ba",
-        "updated_at": "2026-07-22T22:01:38Z",
+        "updated_at": "2026-08-06T22:07:42Z",
         "claimed_at": "2026-07-21T22:47:59Z",
         "claimed_by": "dev-team (supervised-lane sweep)",
         "plan_only": true,
@@ -9831,7 +9846,8 @@
         "decomposition_verified_at": "2026-07-22T22:01:37Z",
         "successor_gate_satisfied": "FIX-SPRINT-TASK-HEARTBEAT-LOCK live in backlog[] (P0, depends=[FIX-ORPHAN-ADOPTION-BOARD-STATE-GUARD], origin_ticket=FIX-ORPHAN-ADOPTION-BOARD-STATE-GUARD, parent_fix_spec='fix_spec(b)/AC2') — po_ruling.closure_gate HARD PRECONDITION MET",
         "reconciled_by": "po-s148 (epic-parent-postdecomp-wip-reconcile)",
-        "updated_by": "po"
+        "updated_by": "po",
+        "po_triage_20260806T2205_live_recurrence": "LIVE RECURRENCE 2026-08-06T21:55:17Z (docs/signals/dev-team-2026-08-06T215517Z-orphan-signal-stale-terminal.json): the reaper emitted orphan-signal:task:FIX-DEVTEAM-WIP-BUDGET-COUNTS-BLOCKED-INPROGRESS-ROWS for a task that had already reached DONE_VERIFIED an hour earlier. dev-team skipped adoption on its own judgement and took no bad action, so this is a near-miss, not damage - but it is the terminal-status precheck this row already owns. CORRECTION TO THE ESCALATING AGENT'S PRIOR-ART CLAIM: the dev-team signal states 'Prior-art check found no existing backlog row for this defect class.' That is wrong - this row exists (BLOCKED/pm/plan_only, updated 2026-07-22T22:01:38Z) AND has already been PM-decomposed into six ready[] children (FIX-ORPHAN-FR1-FR2-INFRA-HEARTBEAT-LADDER, FIX-ORPHAN-FR2-FR6-FR7-INTERFACE-COORDINATION-TOOLS, FIX-ORPHAN-FR1-FR3-FR6-SKILL-DISPATCH-CLAIM, FIX-ORPHAN-FR4-FR5-FLOW-DEVTEAM-ADOPTION-GUARD, FIX-ORPHAN-FR8-TEST-COORDINATION-STORE, FIX-ORPHAN-FR7-VERIFY-TOOL-REGISTRY), all status READY, all next_agent=developer, all unstarted since 2026-07-22 - fifteen days. So the correct action was never 'mint a new row'; it was 'dispatch FR-4', and this row's BLOCKED status is correct and should stay (it is the plan_only parent of a completed decomposition, not a stuck task). WHY THE MISS MATTERS MORE THAN THE SIGNAL: a prior-art check that searches for the SYMPTOM ('stale terminal orphan-signal') and not the OWNER ('orphan adoption guard') will keep returning empty while a fully-specified fix sits ready - the same shape as feedback_pm_dup_mint_no_id_check. PO folded FR-4/FR-5 into this tick's BATCH; parent stays blocked."
       },
       {
         "id": "UC-CDC-P5",
@@ -11967,7 +11983,7 @@
         "owner": "po",
         "status": "BACKLOG",
         "type": "FIX",
-        "priority": "P2",
+        "priority": "P1",
         "zone": "cross-service/",
         "next_agent": "developer",
         "created_at": "2026-08-06T08:24:43Z",
@@ -11981,7 +11997,8 @@
           "docs/data/DASHBOARD.md",
           "scripts/emit-audit-signal.sh"
         ],
-        "updated_at": "2026-08-06T08:28:29Z"
+        "updated_at": "2026-08-06T22:07:42Z",
+        "po_triage_20260806T2205_recurrence": "PRIORITY RAISED P2->P1 ON SAME-DAY RECURRENCE. This row was minted 2026-08-06T08:24:43Z; the identical failure recurred 2026-08-06T21:10:19Z (telegram report 4473) - DASHBOARD row for A-30 signal sys-20260806T211007-04a0 not written because the mutex was contended, with the same 'retry-next-tick' note attached and, again, no actuator behind it. Two instances inside 13h on the day of mint meets the 2+ recurring-bug bar (feedback_recurring_bug_escalation) so it is no longer a P2 nice-to-have. Folded into BATCH this tick. NOTE FOR THE IMPLEMENTER, verified while triaging report 4474: the dropped row is not merely 'lost' - scripts/audit-output-contract.sh V3 (dashboard_rows == 0 AND signals_posted > 0) turns every mutex-drop into a self-reported contract VIOLATION on the next cycle, so this defect manufactures downstream false alarms as well as losing data. Fixing the actuator retires both."
       },
       {
         "id": "OPS-MCPSERVER-REBUILD-STALE-IMAGE-PREDATES-MEMLEAK-FIX",
@@ -12481,7 +12498,8 @@
           "AC-6 Report the true occurrence count by scanning history for the same 5-plane zero-diff signature. Four is the number that happened to be NOTICED; the tell is only visible to a reader who checks the write planes, so the real count is a lower bound."
         ],
         "po_note_20260806T1821": "Minted as a NEW row after PO grep-confirmed that NO board row exists for this pattern in any non-terminal lane (searched SELF-PERSIST / CYCLE-FINDINGS / ANALYSIS-ONLY / LEAF-AGENT across backlog+ready+in_progress+review+qa — zero hits). This matters: the occurrence-4 signal itself states its action was 'do not re-escalate as a new po row, append corroboration to the existing po-owned decision', following the occurrence-3 precedent. That instruction was based on a false premise — there is no such row to append to. So the standing convention has been silently routing corroborations at an empty target for at least two occurrences, which is why a 4x-recurring defect with material data loss still had zero board presence. Priority P1 on blast radius: while this fires, Tier-1 audit cycles are a dead detector that reports healthy (feedback_composite_score_masks_dead_detector_pruned_table).",
-        "updated_at": "2026-08-06T18:25:49Z"
+        "updated_at": "2026-08-06T22:07:42Z",
+        "po_triage_20260806T2205_occurrence_5": "OCCURRENCE 5, AND THE FIRST ON A NON-AUDITOR AGENT - which settles AC-1 (this is not a system-auditor prose defect). Source: TNB c123 self-audit, telegram report 4472. PO ADJUDICATED THE MECHANISM AT SOURCE rather than accepting TNB's own framing, because TNB posed it as a fork: (a) read-back checks are being confabulated, or (b) writes are lost pre-commit. ANSWER IS (a). Proof, from git, not from any agent's self-report: `git show 1f670c381^:docs/handoffs/tnb-audit-latest.md | head -1` returns '# TNB Audit - Cycle 121 - ~2026-07-31T20:23Z', i.e. the last state of that file before TNB's own c123 commit was STILL Cycle 121 - so c122 (2026-08-04T20:29Z), which claimed to overwrite it AND to have read the overwrite back, never wrote it at all. Second plane, same verdict: c122 claimed a signal drop; no c122-dated file exists in docs/signals/ OR docs/signals/processed/ (the drain target) - only tnb-2026-06-05T2013Z-c88.json, tnb-20260731T2023Z.json, tnb-20260806T2029Z.json. Hypothesis (b) is REFUTED, not merely unsupported: if the write had landed and then been lost, the working tree would have carried it at some point, and a lost-then-reverted uncommitted file cannot explain the signal file being absent from BOTH the live dir and the processed dir. This also retires the 2026-08-01 PO diagnosis of the c120 instance ('write-without-persistence, not a Bash-grant gap') - that diagnosis was half right (it correctly ruled out the Bash grant) and half wrong (there was no write to lose). CONTROL that makes this a clean discriminator rather than a pattern match: TNB c123's OWN writes on the same tool grant DID land - handoff file committed in 1f670c381, signal file present at docs/signals/processed/tnb-20260806T2029Z.json (drained by dev-team 20:40:33Z). Same agent, same session class, same absent Bash grant, opposite outcome. So the tool grant is not the variable; whether the agent actually issued the call is. AC-6's 'four is a lower bound' now reads five. Folded into BATCH this tick."
       },
       {
         "id": "FIX-PO-AC3-SELFVERIFY-FALSE-FAILLOUD-WHEN-PEER-SWEEPS-ORCHSTATE",
@@ -12790,6 +12808,38 @@
         ],
         "po_note": "PO authorised this rebuild under the standing PO-deploy-rebuild-full-autonomy policy — NO user gate, do not wait for one. P3 rather than P2 because all three unshipped commits are behaviour-neutral at the data plane; the loss is diagnostic-integrity (cross-attributed source tags in fallback warns), which misleads log-based triage but does not corrupt stored data.",
         "updated_at": "2026-08-06T21:49:34Z"
+      },
+      {
+        "id": "FIX-AUDIT-OUTPUT-CONTRACT-V4-V5-DEDUPSKIP-DENOMINATOR-FALSE-VIOLATION",
+        "type": "FIX",
+        "title": "audit-output-contract V4/V5 compare a NEW-only anomaly tally against an ALL-emissions signals_posted counter that includes dedup-skips - every dedup-only auditor cycle self-reports a false contract VIOLATION",
+        "zone": "cross-service/",
+        "priority": "P1",
+        "status": "BACKLOG",
+        "size": "S",
+        "next_agent": "developer",
+        "supervised": false,
+        "plan_only": false,
+        "baseline_pass": true,
+        "owner": "po",
+        "source": "telegram report 4474 (analysis-agent, 2026-08-06T21:11:17Z) - triaged and REFUTED as a genuine contract violation by po at 2026-08-06T22:05Z; the report is real but the thing it reports is the checker misfiring, not the auditor lying",
+        "created_at": "2026-08-06T22:05:17Z",
+        "created_by": "po",
+        "root_cause": "Two counters with different denominators are compared as if they had the same one. scripts/audit-output-contract.sh line ~180 counts '[emit-signal] SKIP-dedup' as signals_posted++ (and signal_queue_rows_written++ and dedup_skipped++). docs/agents/system-auditor/flow/main.md:835 defines the RETURN-headline N as NEW findings only and says verbatim 'dedup-skipped known anomalies do NOT count - they are not new'. V4 (anomalies-count == 0 AND signals_posted > 0) and V5 (next-token == clean AND signals_posted > 0) therefore fire on ANY cycle whose only emissions were dedup-skips: the agent correctly writes headline 0, the script correctly counts signals_posted 1, and the comparison is structurally guaranteed to report a violation. This is not probabilistic - it fires every time. V2 and V3 are unaffected because signal_queue_rows_written and dashboard_rows also increment on SKIP-dedup, so those two comparisons are denominator-symmetric; only V4/V5 straddle the new-vs-all boundary.",
+        "evidence": "Mechanism read at source (script lines 158-186 + main.md:835,1067), not inferred from the symptom. Live instantiation, cross-checked on two planes: the auditor cycle at 2026-08-06T21:10Z emitted exactly one signal, sys-20260806T211009-070b (rag-service A-30 memory floor breach, WARN), against dedup key mem_pressure:rag-service:A-30-floor-breach whose ledger entry docs/data/auditor-dedup-ledger.json shows last_sent 2026-08-06T17:15:06Z - i.e. a SKIP-dedup, so headline 0 NEW anomalies was CORRECT and V4's VIOLATION was false. Independent confirmation that this is a checker bug and not an agent bug, from the auditor's own notebook one cycle earlier (id=sys-20260806T204129-7435, 20:41Z): its OUTPUT-CONTRACT line reads 'signals_posted=0 | telegram_sent=0 | signal_queue_rows_written=1 (via E-3 SKIP-dedup) | dashboard_rows=0 | dedup_skipped=1' - the same event class scored as signals_posted=0 there and signals_posted=1 at 21:10Z. That line is also hand-composed (the parenthetical '(via E-3 SKIP-dedup)' is not in the script's output format), which is its own main.md:1065 violation and is the SECOND finding here: the two cycles only disagree because one ran the script and one did not. Underlying condition independently probed and found benign - docker stats shows rag-service at 93.89% (961.4MiB/1GiB) with RestartCount=0 and OOMKilled=false, receding from the 98.20% reading, so the dedup suppression itself was correct behaviour and there is no infra escalation hiding behind this ticket (checked explicitly to avoid the inverse error recorded in feedback_a30_discriminator_crash_cliff_misscored_as_reclamation_dip).",
+        "files": [
+          "scripts/audit-output-contract.sh",
+          "docs/agents/system-auditor/flow/main.md"
+        ],
+        "ac": [
+          "AC-1 V4 and V5 must compare the headline tally against a NEW-only denominator - (signals_posted - dedup_skipped), which the script already computes - not against raw signals_posted. Do not fix this by redefining the headline to include dedup-skips: main.md:835 is the SSOT for what N means and the RETURN block reports 'M dedup-skipped' separately for exactly this reason.",
+          "AC-2 Regression fixture must include the negative control that is the whole point of this row: a markers file containing ONLY '[emit-signal] SKIP-dedup' lines plus --anomalies-count 0 must produce NO violation. Add the positive control alongside it (a real '[emit-signal] OK' line plus --anomalies-count 0 must still violate) so the fix cannot be shown to work by simply disabling V4/V5 (feedback_fleetwide_gate_validated_on_one_file_optout_allowlist).",
+          "AC-3 Audit the other emit-signal marker forms against the same new-vs-all boundary before closing: 'OK-escalation-bypass', 'OK e3-only' and 'OK no-telegram' all increment signals_posted too - confirm from main.md whether each is a NEW finding for headline purposes, and state the answer in the script header rather than leaving it implicit.",
+          "AC-4 Second finding, same row because same 20-minute window and same file: the 20:41Z OUTPUT-CONTRACT line was hand-composed in violation of main.md:1065 ('MUST be the verbatim output of scripts/audit-output-contract.sh - never hand-composed'). Add a shape assertion the dispatcher can apply - the script's real output has a fixed 5-field form with no free-text parentheticals - so a hand-composed line is mechanically detectable instead of relying on a reader noticing the prose.",
+          "AC-5 Do NOT weaken V4/V5 into warnings. They caught a real self-contradictory RETURN on 2026-07-29T08:38:34Z (cited in main.md:1067); the defect is the denominator, not the check."
+        ],
+        "po_note_20260806T2205": "Minted only after grep-confirming no existing row covers it. The nearest neighbour, FIX-AUDIT-OUTPUT-CONTRACT-SIGNALQUEUE-ROWS-WRITTEN-SELFREPORT-MISMATCH (review[], next_agent=qa), is a DIFFERENT check and a different bug: it fixed V1's cross-check operands via --cycle-tag (minute-vs-second .ts compare, shared default from=system-auditor). It never touched V4/V5 and does not address the denominator. Deliberately NOT deduped into it - folding a live defect into a row already sitting in QA would strand it behind that row's verdict.",
+        "updated_at": "2026-08-06T22:07:42Z"
       }
     ],
     "closed_sprints": [
@@ -14774,7 +14824,7 @@
         "type": "FEATURE",
         "title": "Create resolve-task-lane-by-id.jq; implement FR-4 read-guard + FR-5 board-flip write in dev-team/flow/main.md Step 0a-B",
         "status": "READY",
-        "priority": "P0",
+        "priority": "P1",
         "size": "M",
         "zone": "flow-docs/",
         "owner": "pm",
@@ -14783,7 +14833,7 @@
         "supervised": false,
         "created_at": "2026-07-22T01:15:30Z",
         "created_by": "pm/decomposition-20260722T0115",
-        "updated_at": "2026-08-06T11:35:36Z",
+        "updated_at": "2026-08-06T22:07:42Z",
         "updated_by": "pm/decomposition-20260722T0115",
         "origin_task": "FIX-ORPHAN-ADOPTION-BOARD-STATE-GUARD",
         "parent_fix_spec": "fix_spec(a)+(c)/AC1+AC3",
@@ -14809,7 +14859,8 @@
             "acceptance": "Release calls at :365-370 and :391-394 now succeed via null-session ladder"
           }
         ],
-        "po_corroboration_20260806": "LIVE 10x corroboration for FR-4 (read-guard), RAW-verified by po 2026-08-06T11:07Z tick (signal dev-orphangap-20260806T111713Z). dev-team's Step 0a-B probe surfaced 10 orphan-signal rows via task_list_held(kind=orphan-signal); 10/10 pointed at tasks ALREADY DONE/DONE_VERIFIED (4 on the live board, 6 cold-archived to docs/data/orch/archive/2026-08.json). orphan-adoption.md as written has no terminal-status check before claim+tree-revert+board-flip+resume-spawn, so following it literally would have re-dispatched 10 duplicate zone-agent spawns onto finished work. Router hand-mitigated (stale-steal claim + immediate release on all 10, no board-flip, no spawn). THIS ROW IS THE FIX and has been READY, P0, next_agent=developer, deps=null, blocked_by=null, supervised/plan_only unset, updated_at frozen at 2026-07-22T01:21:08Z — 15 days undispatched while the defect it closes fired 10x in one tick."
+        "po_corroboration_20260806": "LIVE 10x corroboration for FR-4 (read-guard), RAW-verified by po 2026-08-06T11:07Z tick (signal dev-orphangap-20260806T111713Z). dev-team's Step 0a-B probe surfaced 10 orphan-signal rows via task_list_held(kind=orphan-signal); 10/10 pointed at tasks ALREADY DONE/DONE_VERIFIED (4 on the live board, 6 cold-archived to docs/data/orch/archive/2026-08.json). orphan-adoption.md as written has no terminal-status check before claim+tree-revert+board-flip+resume-spawn, so following it literally would have re-dispatched 10 duplicate zone-agent spawns onto finished work. Router hand-mitigated (stale-steal claim + immediate release on all 10, no board-flip, no spawn). THIS ROW IS THE FIX and has been READY, P0, next_agent=developer, deps=null, blocked_by=null, supervised/plan_only unset, updated_at frozen at 2026-07-22T01:21:08Z — 15 days undispatched while the defect it closes fired 10x in one tick.",
+        "po_triage_20260806T2205_dispatch": "FOLDED INTO PO BATCH 2026-08-06T22:05Z after 15 days stranded in ready[] (created 2026-07-22T01:15:30Z). Trigger: a live near-miss of exactly the defect FR-4 exists to close (see parent FIX-ORPHAN-ADOPTION-BOARD-STATE-GUARD, same timestamp). FR-4 is the read-guard - the terminal-status precheck the dev-team signal asks for - and FR-5 is the board-flip write, both in dev-team/flow/main.md Step 0a-B, plus a new scripts/lib/resolve-task-lane-by-id.jq. IMPLEMENTER MUST RESOLVE A ROUTING CONTRADICTION BEFORE STARTING, do not silently pick one side: this row carries zone 'flow-docs/' and next_agent 'developer', but (i) 'flow-docs/' is not a member of the zone enum docs/agents/po/flow/main.md:30 declares (apps/<service>/ | multi | cross-service/) and .claude/skills/zone-detect/SKILL.md has no resolution path for it, and (ii) the 2026-07-21 PO artifact-class routing ruling (quoted verbatim on TE-T06) sends instruction-prose that an agent loads and executes - docs/agents/** included - to agent-father, not developer. The deliverable here straddles both classes: resolve-task-lane-by-id.jq is executable code (developer), dev-team/flow/main.md is executable instruction-prose (agent-father). PO ruling for THIS row: zone cross-service/, and split the work if the two halves cannot be done by one owner. The zone-enum contradiction is not this row's to fix - FIX-ZONE-ENUM-SSOT-CONTRADICTED-BY-259-OF-659-OPEN-ROWS owns it (259 of 659 open rows affected); this annotation exists so the implementer does not stall on it or 'correct' the zone field unilaterally. THE STRANDING IS ITSELF A FINDING: this row is not DRS-stranded (next_agent=developer is a dev role) and not a ready-XOR gap (supervised=false, plan_only unset), so it passes every documented eligibility gate and STILL sat unpicked for 15 days - which means neither BOUNDED-1's idle auto-pickup nor PO's manual-dispatch-sweep has coverage for a plain READY/developer row whose zone does not resolve. Worth its own row if it recurs after this dispatch."
       },
       {
         "id": "FIX-ORPHAN-FR8-TEST-COORDINATION-STORE",
@@ -21434,8 +21485,8 @@
         }
       ]
     },
-    "last_triaged_at": "2026-08-06T21:30:43Z",
-    "last_triaged_by": "po (review-lane secondary-drain sign-off, session f298ccf7)",
+    "last_triaged_at": "2026-08-06T22:05:17Z",
+    "last_triaged_by": "po (dev-team Step 1 triage, cron:dev-team:2026-08-06T21:37Z)",
     "in_progress": [
       {
         "id": "FIX-REFINE-SUBFLOW-OPTIONC-CONTRACT-DRIFT",

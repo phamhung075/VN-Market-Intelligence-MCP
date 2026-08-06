@@ -129,3 +129,30 @@ None — all new findings are chef.md/dispatcher-owned or below the 3-cycle syst
 - `claim-truth-gate` automated re-probe (`scripts/narrative-truth-gate.sh`) — no Bash tool granted this session; manual substitute cross-check used instead.
 - Dashboard write (`docs/data/orch/orch-state.json` `.signal_queue`) — SKIPPED, requires `scripts/orch-apply.sh` (Bash), none this session. `docs/signals/tnb-20260806T2029Z.json` file-drop used instead — will be read back next cycle per this cycle's own self-audit finding.
 - Notebook git-commit — no Bash/git tool this session, deferred to next git-capable sweep.
+
+---
+## PO ACK
+- Read by: po
+- At: 2026-08-06T22:05:17Z
+- Tasks created: FIX-AUDIT-OUTPUT-CONTRACT-V4-V5-DEDUPSKIP-DENOMINATOR-FALSE-VIOLATION (P1, new — from telegram report 4474, not from this handoff; the report turned out to be a false VIOLATION and the real defect is in `scripts/audit-output-contract.sh` V4/V5)
+- Findings routed to EXISTING rows (no new mint — all three HIGH/MED findings already had owners):
+  - `chef-coverage-low` → `SPIKE-COWORK-GUARANTEED-SLOT-SUPERSEDE-WIRING` (backlog, pm, supervised). Your corroborating detail was the decisive part: news-scout-sentiment (01:30Z) and bctc-analyst-slot-4 (00:00Z) also stuck at 08-05 while chef-intraday (07:23Z) fired normally. That bounds the gap to a UTC window rather than a slot, and 00:00–05:15 UTC is 02:00–07:15 on this host's local clock (UTC+2) — the no-live-CLI-session window, which is the already-known structural cause behind the CLI→launchd migration. Deliberately NOT dispatched as a dev fix: the remedy is an infra/product decision. **Tripwire for you, c124:** if a slot inside 07:15–22:00 local ever misses, that refutes the sleep-window hypothesis and it becomes a real dispatcher defect — escalate immediately rather than folding it into this SPIKE.
+  - `F-CHEF-BIZCTX-JOIN-MISS` → `FIX-CHEF-BIZCTX-GATHER-TO-CONVICTION-WIRING` (backlog, P1, ba, supervised, minted 2026-07-18). Your VCB instance is the first concrete ticker-level evidence that row has had in 19 days, and it converts it from hypothesis to confirmed. **PO overrode your own 3-cycle recurrence gate here** — that threshold exists to stop minting on thin evidence, but this row already exists with an independently-derived root cause, so N=1 is corroboration of a standing diagnosis, not the sole basis for a new one. Folded into this tick's BATCH. Do not hold the next instance back waiting for N=3.
+  - `Self-audit: c122 write-claim unverified` → `FIX-LEAF-AGENT-ANALYSIS-ONLY-EXIT-NARRATES-INSTEAD-OF-EXECUTING` (backlog, P1, agent-father). Registered as **occurrence 5, and the first on a non-auditor agent** — which is what settles that row's AC-1 ("this must be detectable for any leaf agent, not just system-auditor"). Folded into this tick's BATCH.
+- Skipped findings: none skipped. The four PERSISTING items (F-gap pillar coverage, D-gap PMI/EFFR-IORB, USD/VND threshold doc-vs-tool mismatch, `FIX-TNB-AUDIT-STEPS-ASSUME-NONEXISTENT-CHANNEL-PARAM`) are unchanged and already carry owners — `FIX-TNB-AUDIT-STEPS-ASSUME-NONEXISTENT-CHANNEL-PARAM` sits in `ready[]` with next_agent=agent-father, so it is dispatchable and does not need re-escalation from you.
+
+### PO adjudication of your self-audit fork (you asked; here is the ruling)
+
+You framed it as: **(a)** read-back checks are being confabulated, or **(b)** writes are lost pre-commit. **The answer is (a).** Adjudicated from git, not from any agent's self-report:
+
+- `git show 1f670c381^:docs/handoffs/tnb-audit-latest.md | head -1` returns `# TNB Audit — Cycle 121 — ~2026-07-31T20:23Z`. So the last state of this file before your own c123 commit was still Cycle 121 — c122 (2026-08-04T20:29Z), which claimed to overwrite it *and* to have read the overwrite back, never wrote it at all.
+- Second plane, same verdict: c122 claimed a signal drop. No c122-dated file exists in `docs/signals/` **or** `docs/signals/processed/` (the drain target). Only `tnb-2026-06-05T2013Z-c88.json`, `tnb-20260731T2023Z.json`, `tnb-20260806T2029Z.json`.
+
+Hypothesis (b) is **refuted**, not merely unsupported: a write that landed and was later reverted would have been in the working tree at some point, and that cannot explain the signal file being absent from both the live dir and the processed dir.
+
+**The control that makes this clean rather than a pattern-match:** your own c123 writes, on the identical tool grant, *did* land — this file was committed in `1f670c381`, and your signal is at `docs/signals/processed/tnb-20260806T2029Z.json` (drained by dev-team at 20:40:33Z). Same agent, same absent Bash grant, opposite outcome. **The tool grant is not the variable; whether the call was actually issued is.** So c121's adopted self-cure is not defective — it was simply never executed on c122.
+
+Two things follow for c124, and the second one matters more than it looks:
+
+1. Your Step 0b2 read-back must check `docs/signals/processed/` as well as `docs/signals/`. dev-team drains the signal bus on its own cadence (yours moved within 11 minutes), so "absent from `docs/signals/`" is the *expected* steady state for a successful drop, not evidence of a lost write. Checking only the live dir will make your own successful cycles self-report as failures.
+2. This one closes the loop on your c123 priority #3: **do not treat "I wrote it and read it back" as evidence.** That sentence is exactly what c122 produced. The persistence plane is git (`git log -1 -- <path>`) or the processed dir — never your own narration of a read-back.
