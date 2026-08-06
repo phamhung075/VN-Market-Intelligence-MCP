@@ -1,4 +1,34 @@
 
+## c57 · 2026-08-06T13:18:03Z
+
+### Audit Run Tier-1 (13:00 UTC trigger FIRE_TICK: cron:auditor-t1:2026-08-06T13:00Z)
+- Tier: 1 | Services: 13/13 up, health 5/5 OK, restart 4 ✓
+- Anomalies: 1 recurrence (1 warn via dedup, BELOW-FLOOR) | Status: DEGRADED
+
+**Container Status (A-01–A-11):** All 13 host_runtime_set UP ✓
+- mcp-server: Up 50 min, RestartCount=4, 15.88% memory ✓
+- rag-service: Up 17 min (post-cap-raise to 1GiB), RestartCount=0, **96.31% memory — WARN**
+- All other services nominal ✓
+
+**Health Endpoints (A-12–A-20):** All 5 endpoints OK ✓
+- A-20 pdf-extractor multi-probe: 3/3 pass ✓
+
+**Memory Pressure (A-30) — Post-Memory-Cap-Raise Evidence:**
+- rag-service: deep-probe 13:16-13:17Z (6 samples/10s intervals, 50s window)
+  - **Memory band: 96.32% sustained (FLAT)** — all 6 samples identical 96.32%
+  - Reclamation dips: **0 detected** — no GC relief pattern
+  - OOMKilled: false
+  - VmHWM=1149 MB >> VmRSS=1108 MB (historical GC, now stalled)
+  - Memory usage: 986.3 MiB / 1 GiB (13.7 MiB free, BELOW 40 MiB safety floor)
+  - **Verdict: ESCALATE → WARN** (all >93% + zero dips)
+  - Signal: A-30 WARN sys-20260806T131735-7924 (dedup_key: microservice_degraded:rag-service:A-30)
+  - **Dedup result: SKIP-dedup** — same key active since c54 (08:16:21Z), within 7d window
+
+**Disk (A-32):** / at 51% < 85% ✓
+
+[OUTPUT-CONTRACT] signals_posted=1 | telegram_sent=0 | signal_queue_rows_written=1 | dashboard_rows=1 | dedup_skipped=1
+CONTRACT-CONTRADICTION: NONE
+
 ## c56 · 2026-08-06T12:43:11Z
 
 ### Audit Run Tier-1 (12:30 UTC trigger FIRE_TICK: cron:auditor-t1:2026-08-06T12:30Z)
