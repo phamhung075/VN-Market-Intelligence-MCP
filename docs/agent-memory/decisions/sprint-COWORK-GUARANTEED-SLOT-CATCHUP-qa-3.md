@@ -143,3 +143,15 @@
 - Not re-litigating: the 07-29-evening.json artifact (cycle_id evening-2026-07-28T19:53:00Z) is the OLD pre-fix c119 artifact already documented in the row, not new evidence. Marker release/immunity (UC-CCA-P3) and dispatch-spawn-cause (FIX-COWORK-DISPATCH-ROUTER-INTENT-MUTEX-BYPASS) correctly stayed untouched by this commit and are not blamed here.
 **why-decision:** CHANGES_REQUESTED, bounce to REVIEW (owner: po). The specific VN-local-date-leak defect (Component 1) is genuinely and durably fixed — credited. But the row's own AC(3) and its P1-escalation purpose (eliminate chef-evening double-MARKET-publish) are empirically still failing post-fix via two new/adjacent mechanisms (SLOT_ID not canonicalized in the same Step 0.5 marker-key derivation; wall-clock date-pinning has no backfill-target concept) — flipping DONE_VERIFIED now would be a false-green on the row's stated business invariant.
 **why-change:** disposition differs from the implementer's self-assessed "AC(2) NOT verifiable this session" (honest, appropriately humble) — I had the subsequent-dish evidence available and it surfaces a real, still-open gap, not a clean pass.
+
+### STEP qa-S52 · qa · 2026-08-06T19:16:00Z
+**task-id:** FIX-CRON-DST-LOCAL-EVAL-MOMENT-ANCHORED-EXPRESSIONS
+**what-done:** Direct-commit verify (review[] row, router-scoped single-row spawn, branch:null). Confirmed commits 36e109170 + dd7a036b6 on main ancestry; read all 5 corrected files live via git show HEAD:<path>, never trusting the row's own note prose.
+**what-considered:**
+- AC-1..AC-4 literal pairs: all 4 exact-matched (db-data-integrity Job A/B, system-auditor Tier-3 incl. FIRE_TICK comment fix, orch-sentinel FULL/LITE both still unarmed as required).
+- AC-5 structural match diffed against both precedent files (cron-claude-manager-helper.md, cron-auditor-page-reverify.md) — same blockquote+inline-CEST/CET shape, not just presence.
+- AC-6 (flagged most-likely-gap): checked BOTH layers separately — SKILL.md idempotency guards AND the register*.md CronCreate actuator prompts — both updated in both cron-standalone-team and cron-detect-loop. Grepped all 5 old literals across .claude/skills/+.claude/commands/crons/: zero live-actuator hits, only historical prose + one unrelated dispatch-claim/SKILL.md TICK-computation example.
+- AC-7 confirmed correctly NOT attempted (no JS-matcher migration in either commit diff).
+- Minor non-blocking finding, not held against row: docs/agents/system-auditor/flow/data-writer-provenance.md:18 captions the pre-fix literals but explicitly defers to the cron file as live spec host — cosmetic, outside AC-6 scope.
+**why-decision:** APPROVED, DONE_VERIFIED. All 7 ACs independently hold on current main HEAD; self-report note cross-checked with no mismatch; journal commits 419cdb804/674a7a961 confirmed real, DJ-GATE-1 satisfied.
+**why-change:** none — verified exactly what the row scoped.
