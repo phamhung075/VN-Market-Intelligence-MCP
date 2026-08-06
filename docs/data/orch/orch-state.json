@@ -93,11 +93,11 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "UC-CRITIC-HOOKS-ENFORCEMENT",
-    "next_agent": "developer",
-    "updated_at": "2026-08-06T09:41:52Z",
-    "updated_by": "architect"
+    "status": "idle",
+    "updated_at": "2026-08-06T10:10:38Z",
+    "updated_by": "dev-team",
+    "active_task_id": null,
+    "next_agent": null
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
