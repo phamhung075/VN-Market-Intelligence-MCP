@@ -2750,8 +2750,8 @@
     ]
   },
   "task_board": {
-    "_updated_at": "2026-08-05T17:40:15Z",
-    "_updated_by": "dev-mcp-server",
+    "_updated_at": "2026-08-06T07:45:22Z",
+    "_updated_by": "po (FIX-DIGEST-RSI-DUAL-ENGINE-DIVERGE duplicate closure)",
     "active_sprints": [
       {
         "evidence": "Router raw-verified (get_bctc_full live, post-rebuild) after BEQ-9/10 refine. Core extraction incident RESOLVED, but populating real scalars exposed a SEPARATE pre-existing analytics/serving layer with 4 defect clusters: (a) RATIO-COMPUTE — VNM ROE=0/ROA=0/EPS=12VND/NetDebt-EBITDA=-7.5e13x; DHG ROA=7,891,932.0% (analyst falsely claimed fixed). Ratios emit 0 or astronomically wrong. (b) BANK-B02-TCTD-SERVING — SHB + EIB get_bctc_full returns 'balance sheet has no decomposition — forced-zero pass suspected'; banks UNSERVABLE despite DONE + committed scalars. (c) PERIOD-SEMANTICS — FPT 2025-Q4 rev=70112.8/NP=11225.5 are FULL-YEAR cumulative labeled 'Q4'; buildComparisonSection then compares cumulative-FY vs next-quarter -> false -82.2% mislabeled 'YoY'. (d) ENTITY-SCOPE — HPG 2025-Q4 is parent-only B01a (rev=0, conf44%) served as the canonical/headline HPG vs consolidated ~140k rev; misleading. PUBLISH-INTEGRITY GAP: NO semantic-sanity publish guard exists in orch-state (the triage-referenced 'Task #13' is NOT present). The BEQ-9/10 reports are now DONE -> flow into chef docs/agents/unified-agent/flow/market-analysis.md + market-analyst -> ROA 7.8M% / false YoY -82% / parent-only-headline CAN reach MARKET unattended. recurring-bug-escalation: BCTC area has >2 fix cycles -> architect root-cause SPIKE, not point-patch. | [dev-team 2026-06-03T11:44Z observation feeding BAL-0/BAL-1] After LF-SERVE-REFLOW recovered FPT Q1 absolute scalars (op_profit/ebitda/cash live-correct), get_bctc_full(FPT) STILL serves garbage DERIVED ratios: current_ratio=41527873060120x (denominator ~0), operating_margin_pct=0.0% (not recomputed from now-correct operating_profit). Confirms the analytics/serving derived-ratio layer is a distinct defect from scalar extraction. BAL-0 publish semantic-sanity gate MUST block current_ratio out-of-range before MARKET/FB; BAL-1 spike should pin the ratio recompute module. Repro: get_bctc_full(code=FPT).",
@@ -4693,58 +4693,6 @@
           "SYSREMAKE-P2-T7-TASK-SCHEMA-DOC-SYNC",
           "SYSREMAKE-P2-T8-FLOW-DOC-WIRING",
           "SYSREMAKE-P2-T9-QA-GATE"
-        ]
-      },
-      {
-        "id": "FIX-DIGEST-RSI-DUAL-ENGINE-DIVERGE",
-        "label": "Evening digest RSI dual-engine divergence — Go/alert path (35-candle) vs TS/digest path (15-candle + fallback)",
-        "opened_at": "2026-08-06T07:29:06Z",
-        "priority": "high",
-        "status": "ACTIVE",
-        "evidence": "Architect brief docs/architecture-briefs/2026-06-21-digest-rsi-dual-engine-diverge.md (verified present 2026-08-06, decomposition-ready); NVL example: alert RSI=29.7 vs digest RSI=27.6 (2026-06-19); root cause: candle window + min-candle gate + fallback mismatch",
-        "tasks": [
-          {
-            "id": "503",
-            "type": "CONTRACT",
-            "title": "Write canonical Go RSI engine contract documentation (pure-compute path, Wilder params, 35-candle gate)",
-            "zone": "apps/technical-analysis/",
-            "size": "S",
-            "status": "DONE",
-            "owner": "dev-technical-analysis",
-            "priority": "high",
-            "depends": [],
-            "created_at": "2026-08-06T07:29:06Z",
-            "files": [
-              "docs/standards/ta-engine-contract.md"
-            ],
-            "note": "Contract doc only (no Go code changes). Freezes interface so dev-mcp-server can rely on Go service contract without re-reading source. Blocking task for TASK-504.",
-            "updated_at": "2026-08-06T07:36:06Z",
-            "closed_at": "2026-08-06T07:35:46Z",
-            "commit": "60891f75c",
-            "status_note": "Prior-art discovery: docs/standards/ta-engine-contract.md already existed, committed 2026-06-21 (60891f75c, TASK-RSIFIX-1) as part of the original FIX-DIGEST-RSI-DUAL-ENGINE-DIVERGE fix; the downstream consumer (TASK-RSIFIX-2, commit 3e5a5a5a6) was also already shipped the same day — defaultComputeTa() already calls the Go engine with the 35-candle gate. Re-verified every constant against current Go source 2026-08-06 (all match, no drift). Added doc addendum: TS caller-wrapper contract (computeTAIndicators field mapping + fail-closed pattern) + prior-art trace section. TASK-504 is almost certainly ALSO already satisfied by existing code — see docs/standards/ta-engine-contract.md §12 — recommend architect/PM verify via git log before dispatching dev-mcp-server for fresh implementation."
-          },
-          {
-            "id": "504",
-            "type": "FIX",
-            "title": "Rewire defaultComputeTa() to use Go computeTAIndicators engine; align candle window; raise min-candle to 35; remove market_prices_history fallback; make async; add stub-bar guard",
-            "zone": "apps/mcp-server/",
-            "size": "M",
-            "status": "TODO",
-            "owner": "dev-mcp-server",
-            "priority": "high",
-            "depends": [
-              "503"
-            ],
-            "created_at": "2026-08-06T07:29:06Z",
-            "files": [
-              "apps/mcp-server/src/application/usecases/assembleBriefing.ts",
-              "apps/mcp-server/src/application/usecases/assembleEveningSummary.ts",
-              "apps/mcp-server/src/__tests__/assembleBriefing.test.ts",
-              "apps/mcp-server/src/__tests__/assembleEveningSummary.test.ts"
-            ],
-            "note": "Async refactor; replaces TS-local RSI with Go service call; LIVE verification gate required (evening cycle, RSI agreement ≤0.1 across ≥3 tickers). Rebuild required. Completion unblocks verification (not QA, not developer — PM runs LIVE-plane gate post-rebuild).",
-            "updated_at": "2026-08-06T07:29:07Z"
-          }
         ]
       }
     ],
@@ -12366,6 +12314,66 @@
         "closed_at": "2026-07-10T00:45:00Z",
         "closed_by": "pm",
         "closed_note": "Dedup reconciliation per AC-14: Twin task FIX-BCTC-BANK-SUMMARY-MAPPING (minted 06-16, W1-W4 done_verified) is canonical; this near-duplicate (minted 06-16 21h later, same defect/ticker/numbers) merged onto single thread. Track 1 (CTG carry-forward) created as W5 replacement."
+      },
+      {
+        "id": "FIX-DIGEST-RSI-DUAL-ENGINE-DIVERGE",
+        "label": "Evening digest RSI dual-engine divergence — Go/alert path (35-candle) vs TS/digest path (15-candle + fallback)",
+        "opened_at": "2026-08-06T07:29:06Z",
+        "priority": "high",
+        "status": "closed",
+        "evidence": "Architect brief docs/architecture-briefs/2026-06-21-digest-rsi-dual-engine-diverge.md (verified present 2026-08-06, decomposition-ready); NVL example: alert RSI=29.7 vs digest RSI=27.6 (2026-06-19); root cause: candle window + min-candle gate + fallback mismatch",
+        "tasks": [
+          {
+            "id": "503",
+            "type": "CONTRACT",
+            "title": "Write canonical Go RSI engine contract documentation (pure-compute path, Wilder params, 35-candle gate)",
+            "zone": "apps/technical-analysis/",
+            "size": "S",
+            "status": "DONE",
+            "owner": "dev-technical-analysis",
+            "priority": "high",
+            "depends": [],
+            "created_at": "2026-08-06T07:29:06Z",
+            "files": [
+              "docs/standards/ta-engine-contract.md"
+            ],
+            "note": "Contract doc only (no Go code changes). Freezes interface so dev-mcp-server can rely on Go service contract without re-reading source. Blocking task for TASK-504.",
+            "updated_at": "2026-08-06T07:36:06Z",
+            "closed_at": "2026-08-06T07:35:46Z",
+            "commit": "60891f75c",
+            "status_note": "Prior-art discovery: docs/standards/ta-engine-contract.md already existed, committed 2026-06-21 (60891f75c, TASK-RSIFIX-1) as part of the original FIX-DIGEST-RSI-DUAL-ENGINE-DIVERGE fix; the downstream consumer (TASK-RSIFIX-2, commit 3e5a5a5a6) was also already shipped the same day — defaultComputeTa() already calls the Go engine with the 35-candle gate. Re-verified every constant against current Go source 2026-08-06 (all match, no drift). Added doc addendum: TS caller-wrapper contract (computeTAIndicators field mapping + fail-closed pattern) + prior-art trace section. TASK-504 is almost certainly ALSO already satisfied by existing code — see docs/standards/ta-engine-contract.md §12 — recommend architect/PM verify via git log before dispatching dev-mcp-server for fresh implementation."
+          },
+          {
+            "id": "504",
+            "type": "FIX",
+            "title": "Rewire defaultComputeTa() to use Go computeTAIndicators engine; align candle window; raise min-candle to 35; remove market_prices_history fallback; make async; add stub-bar guard",
+            "zone": "apps/mcp-server/",
+            "size": "M",
+            "status": "DONE",
+            "owner": "dev-mcp-server",
+            "priority": "high",
+            "depends": [
+              "503"
+            ],
+            "created_at": "2026-08-06T07:29:06Z",
+            "files": [
+              "apps/mcp-server/src/application/usecases/assembleBriefing.ts",
+              "apps/mcp-server/src/application/usecases/assembleEveningSummary.ts",
+              "apps/mcp-server/src/__tests__/assembleBriefing.test.ts",
+              "apps/mcp-server/src/__tests__/assembleEveningSummary.test.ts"
+            ],
+            "note": "Async refactor; replaces TS-local RSI with Go service call; LIVE verification gate required (evening cycle, RSI agreement ≤0.1 across ≥3 tickers). Rebuild required. Completion unblocks verification (not QA, not developer — PM runs LIVE-plane gate post-rebuild).",
+            "updated_at": "2026-08-06T07:46:49Z",
+            "closed_at": "2026-08-06T07:45:22Z",
+            "commit": "3e5a5a5a6",
+            "status_note": "DUPLICATE — already shipped 2026-06-21 by TASK-RSIFIX-2 (commit 3e5a5a5a6). PO independently RAW-verified at HEAD 2026-08-06, not taken on faith from TASK-503: (1) commit 3e5a5a5a6 rewired the defaultComputeTa FUNCTION while it still lived in assembleBriefing.ts — the file apps/mcp-server/src/application/usecases/briefing/defaultComputeTa.ts did not exist until the 2026-07-28 extraction refactor 4744b0792, which carried the rewiring over intact and additionally deleted the now-dead computeRSILocal (zero call sites repo-wide, re-confirmed by grep 2026-08-06). (2) Every one of TASK-504's six scoped changes is live at HEAD in briefing/defaultComputeTa.ts: calls Go computeTAIndicators; candle window date >= date('now','-60 days'); min-candle gate `if (rows.length < 35) return null`; market_prices_history fallback absent (fail-closed); `export async function`; stub-bar guard close<=0||volume<=0. (3) The second scoped file assembleEveningSummary.ts is ALSO covered and intact at HEAD — line 23 imports defaultComputeTa, line 170 computeTaFn type admits Promise, line 506 `taFn = options.computeTaFn ?? defaultComputeTa`, line 523 `await Promise.resolve(taFn(code, db))`; the three commits that touched this file after 3e5a5a5a6 (069a15014, dbb87db26, b1d32758a) left the TA wiring untouched. (4) Tests RSIFIX-2-assembleBriefing.test.ts + RSIFIX-2-assembleEveningSummary.test.ts both present at HEAD. NO fresh implementation dispatched to dev-mcp-server."
+          }
+        ],
+        "closed_at": "2026-08-06T07:45:22Z",
+        "closed_by": "po",
+        "closure_reason": "duplicate-remint-prior-art-already-shipped",
+        "closure_note": "CLOSED AS DUPLICATE RE-MINT (PO 2026-08-06). Mint-time prior-art gap, not an active bug: the architect brief docs/architecture-briefs/2026-06-21-digest-rsi-dual-engine-diverge.md was committed 2026-06-21 (8a8d7b994) and BOTH its subtasks shipped the same day — TASK-RSIFIX-1 (60891f75c, ta-engine-contract.md) and TASK-RSIFIX-2 (3e5a5a5a6, digest rewire). The 2026-08-06 decomposition verified the brief EXISTED but never checked whether its subtasks had already SHIPPED, so TASK-503/504 re-minted finished work. Both closed as prior art. Recurring-class: mint-time dedup gap — decomposition-readiness check asserts brief presence without a git-log prior-art probe on the brief's own named files.",
+        "verification": "LIVE-plane gate DISCHARGED BY STRUCTURAL IDENTITY, not by an evening_summary cycle run — recorded honestly. The original gate demanded 'identical RSI to 1dp in alert-block vs TA/sector-block across >=3 tickers in a real evening cycle'. PO instead proved divergence is structurally impossible at HEAD: the alert-block (scheduler/market-data/taAlertScanJob.ts CANDLE_SQL, MIN_CANDLES=35 at line 104) and the digest TA-block (briefing/defaultComputeTa.ts) now issue byte-equivalent queries — same table daily_ohlcv, same columns date/close/volume, same window date >= date('now','-60 days'), same ORDER BY ASC — and both feed closes[] to the same Go computeTAIndicators engine behind the same 35-candle gate and the same stub-bar guard, with no TS-local RSI and no fallback on either side. Two callers of one engine over one candle set cannot disagree. Corroborating live probe: get_technical_indicators(NVL) 2026-08-06T07:42:54Z returned RSI(14)=61.6 from the Go engine. The sprint's cited symptom (NVL alert 29.7 vs digest 27.6, 2026-06-19) is PRE-FIX evidence — it predates the 2026-06-21 fix by two days and is quoted verbatim in commit 3e5a5a5a6's own message as the divergence that commit eliminates. Not a still-reproducing bug."
       }
     ],
     "done": [
@@ -12702,6 +12710,23 @@
         "closed_at": "2026-07-30T09:05:59Z",
         "po_closure_20260730": "CLOSED by po 2026-07-30. All ACs RAW-verified at source, not from the row prose: AC(1) all 4 skill sites now carry explicit pathspecs (session-log-cowork:28, append-session-record:15, signal-dashboard/dashboard-protocol:127 inline `-- <path>`; decision-journal:76-77 pathspec on the continuation line). AC(2) all 3 init.md commit_discipline lines now read 'RULE 1-3 (incl. 2.5)' (pm:85, agents-architect:58, agent-father:61). Commit aa6c044ba confirmed in git log. THIS ROW IS DONE. IT DOES NOT CLOSE ITS PARENT — see parent's po_rescope_20260730.",
         "po_status_token_correction_20260730T2148": "STATUS TOKEN DONE -> DONE_VERIFIED. Not new work and not a fresh verification: this row was already closed by PO at 2026-07-30T09:05:59Z with every AC RAW-verified AT SOURCE and recorded file:line-precise in its own po_closure_20260730 field (4 skill sites carrying explicit pathspecs; 3 init.md commit_discipline lines reading 'RULE 1-3 (incl. 2.5)'; commit aa6c044ba confirmed in git log). PO re-read that field at source this tick before stamping. The ONLY thing that was wrong was the token: scripts/lib/devteam-eligibility.jq deps_satisfied() requires EVERY dep to resolve to the exact string DONE_VERIFIED and states verbatim 'plain DONE is NOT sufficient', so a PO-verified closure recorded as DONE starves every successor forever. MEASURED CONSEQUENCE of this one token, live this tick: FIX-COMMIT-SWEEP-GUARD-SCRIPT-ACTUATOR-AND-NOTEBOOK-LONGTAIL (P0) returned is_bounded1_eligible=false with deps_satisfied=false as its SOLE failing predicate (supervised/epic_wrapper/detail_deferred/nondev_owner/plan_only/nondev_next_agent/unbacked_prose ALL passed) - and that P0 is the sole unblock condition of the 5x-recurring P0 parent. Predicate must return true after this flip. The systemic gap (nothing ever PRODUCES this token) is minted separately as FIX-DONELANE-NO-DONEVERIFIED-PRODUCER-DEP-STARVATION - this flip fixes one row, not the class."
+      },
+      {
+        "id": "FIX-DIGEST-RSI-DUAL-ENGINE-DIVERGE",
+        "type": "FIX",
+        "title": "Evening digest: same-ticker RSI diverges between alert-block (Go svc, 35-candle) and TA/sector-block (TS local computeRSILocal, 15-candle + market_prices_history fallback)",
+        "priority": "P1",
+        "zone": "multi",
+        "status": "DONE",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-DIGEST-RSI-DUAL-ENGINE-DIVERGE",
+        "po_triage_20260722": "Owner assigned (was null next_agent) so no row is ownerless (PO AC1). Remains in REVIEW, deferred-behind the review-lane sweeper FIX-DEVTEAM-REVIEW-LANE-QA-DRAIN + FIX-BOUNDED1-SUPERVISED-LANE-NO-SWEEPER (both activated -> backlog this tick). Not silently dropped; the sweeper routes it to next_agent once built.",
+        "updated_at": "2026-08-06T07:46:49Z",
+        "updated_by": "po (duplicate-closure raw-verify 2026-08-06)",
+        "po_triage_20260806": "TRIAGED + ROUTED TO PM. dev-team's review-lane secondary-drain stamped secondary_dispatch_target=pm at 06:50:19Z but could not spawn (subagents cannot spawn Agents) -- stale claim fields cleared so the row is not read as in-flight. Upstream gate is SATISFIED: architect brief docs/architecture-briefs/2026-06-21-digest-rsi-dual-engine-diverge.md verified present (14894 bytes, 2026-06-21), and backlog-detail carries a complete fix_spec + verification_gate + files[] -- so this is decomposition-ready, NOT design-ready. zone=multi means PM must split across the 3 named files (taAlertScanJob.ts / assembleBriefing.ts / assembleEveningSummary.ts). rebuild_required=true. Verification gate is LIVE-plane (same ticker, identical RSI to 1dp in alert-block vs TA/sector-block across >=3 tickers in a real evening_summary cycle) -- a unit-test-only green does NOT close this row. NOT dispatched by po: po holds no Agent-spawn tool either; returned to router in BATCH for a pm spawn.",
+        "status_note": "PM DECOMPOSED: TASK-503 (contract doc, blocks) + TASK-504 (impl, blocked by 503). Both assigned to task_board.active_sprints. Rebuild required=true. Verification gate is LIVE-plane (RSI agreement test in evening cycle, not unit tests only).",
+        "closed_at": "2026-08-06T07:45:22Z",
+        "po_closure_20260806": "CLOSED AS DUPLICATE RE-MINT (PO 2026-08-06). Mint-time prior-art gap, not an active bug: the architect brief docs/architecture-briefs/2026-06-21-digest-rsi-dual-engine-diverge.md was committed 2026-06-21 (8a8d7b994) and BOTH its subtasks shipped the same day — TASK-RSIFIX-1 (60891f75c, ta-engine-contract.md) and TASK-RSIFIX-2 (3e5a5a5a6, digest rewire). The 2026-08-06 decomposition verified the brief EXISTED but never checked whether its subtasks had already SHIPPED, so TASK-503/504 re-minted finished work. Both closed as prior art. Recurring-class: mint-time dedup gap — decomposition-readiness check asserts brief presence without a git-log prior-art probe on the brief's own named files.",
+        "po_verification_20260806": "LIVE-plane gate DISCHARGED BY STRUCTURAL IDENTITY, not by an evening_summary cycle run — recorded honestly. The original gate demanded 'identical RSI to 1dp in alert-block vs TA/sector-block across >=3 tickers in a real evening cycle'. PO instead proved divergence is structurally impossible at HEAD: the alert-block (scheduler/market-data/taAlertScanJob.ts CANDLE_SQL, MIN_CANDLES=35 at line 104) and the digest TA-block (briefing/defaultComputeTa.ts) now issue byte-equivalent queries — same table daily_ohlcv, same columns date/close/volume, same window date >= date('now','-60 days'), same ORDER BY ASC — and both feed closes[] to the same Go computeTAIndicators engine behind the same 35-candle gate and the same stub-bar guard, with no TS-local RSI and no fallback on either side. Two callers of one engine over one candle set cannot disagree. Corroborating live probe: get_technical_indicators(NVL) 2026-08-06T07:42:54Z returned RSI(14)=61.6 from the Go engine. The sprint's cited symptom (NVL alert 29.7 vs digest 27.6, 2026-06-19) is PRE-FIX evidence — it predates the 2026-06-21 fix by two days and is quoted verbatim in commit 3e5a5a5a6's own message as the divergence that commit eliminates. Not a still-reproducing bug."
       }
     ],
     "done_verified": [
@@ -14563,21 +14588,6 @@
         "secondary_claimed_at": "2026-08-05T08:57:06Z",
         "secondary_claimed_by": "dev-team (review-lane secondary-drain)",
         "secondary_dispatch_target": "architect"
-      },
-      {
-        "id": "FIX-DIGEST-RSI-DUAL-ENGINE-DIVERGE",
-        "type": "FIX",
-        "title": "Evening digest: same-ticker RSI diverges between alert-block (Go svc, 35-candle) and TA/sector-block (TS local computeRSILocal, 15-candle + market_prices_history fallback)",
-        "priority": "P1",
-        "zone": "multi",
-        "status": "REVIEW",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-DIGEST-RSI-DUAL-ENGINE-DIVERGE",
-        "next_agent": "pm",
-        "po_triage_20260722": "Owner assigned (was null next_agent) so no row is ownerless (PO AC1). Remains in REVIEW, deferred-behind the review-lane sweeper FIX-DEVTEAM-REVIEW-LANE-QA-DRAIN + FIX-BOUNDED1-SUPERVISED-LANE-NO-SWEEPER (both activated -> backlog this tick). Not silently dropped; the sweeper routes it to next_agent once built.",
-        "updated_at": "2026-08-06T07:29:07Z",
-        "updated_by": "pm (decomposition 2026-08-06)",
-        "po_triage_20260806": "TRIAGED + ROUTED TO PM. dev-team's review-lane secondary-drain stamped secondary_dispatch_target=pm at 06:50:19Z but could not spawn (subagents cannot spawn Agents) -- stale claim fields cleared so the row is not read as in-flight. Upstream gate is SATISFIED: architect brief docs/architecture-briefs/2026-06-21-digest-rsi-dual-engine-diverge.md verified present (14894 bytes, 2026-06-21), and backlog-detail carries a complete fix_spec + verification_gate + files[] -- so this is decomposition-ready, NOT design-ready. zone=multi means PM must split across the 3 named files (taAlertScanJob.ts / assembleBriefing.ts / assembleEveningSummary.ts). rebuild_required=true. Verification gate is LIVE-plane (same ticker, identical RSI to 1dp in alert-block vs TA/sector-block across >=3 tickers in a real evening_summary cycle) -- a unit-test-only green does NOT close this row. NOT dispatched by po: po holds no Agent-spawn tool either; returned to router in BATCH for a pm spawn.",
-        "status_note": "PM DECOMPOSED: TASK-503 (contract doc, blocks) + TASK-504 (impl, blocked by 503). Both assigned to task_board.active_sprints. Rebuild required=true. Verification gate is LIVE-plane (RSI agreement test in evening cycle, not unit tests only)."
       },
       {
         "id": "FIX-FOREIGN-FLOW-BULLETIN-UNAVAIL-STRING",
