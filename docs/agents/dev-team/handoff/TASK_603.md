@@ -242,3 +242,22 @@ After developer completes this task:
 - **Simplicity gate:** PASS — Q1 scope clean (2 tests, exactly the AC-3a spec, no source touched since TASK_601 was already complete), Q2 no new abstractions (reused existing `setExpired`/`allRows` helpers already in the describe block), Q3 senior-test clean (mirrors the immediately-preceding `cron:*`/`dev-team-cron-singleton` sibling tests byte-for-byte in structure), Q4 ratio N/A (100% of the diff satisfies AC-3a).
 
 **Sequencing gate status: MET.** TASK_603 is now `REVIEW`/`next_agent=qa` with both AC-4 (full suite, 0 net-new failures) and AC-6 (image-ID diff confirmed real deploy) evidence attached. Once QA verifies and flips the parent row (`FIX-CRON-REGISTRATION-PREFIX-NOT-EXCLUDED-ORPHANEMIT-AND-D4-R1B`) to `done_verified`, the router's held agent-father Lane-1 dispatch (cron-rearm skill-file fix) is unblocked.
+
+---
+
+## [QA] Review Record
+QA agent: qa | Date: 2026-08-07 | Round: 1 | Verdict: APPROVED (direct-commit verify — 814182608 already on main, no branch)
+
+- [x] Diff scope: `git show --stat 814182608` — 1 file (`task-lock-coordination-store.test.ts`), 62 insertions only. No unrelated/source changes (matches TASK_601's `coordinationStore.ts` fix already being complete).
+- [x] AC-3a tests read at source (lines 1141-1191): negative control asserts BOTH halves (no orphan-signal minted AND marker row deleted from `task_locks`) in one test; positive control asserts an ordinary expired sprint-task still emits its signal. Not the handoff's illustrative pseudo-ORM shape — real repo convention (raw SQL `INSERT INTO task_locks`), matching sibling `cron:*`/`dev-team-cron-singleton` tests structurally.
+- [x] **Independent RED/GREEN reproduction** (did not trust developer's manual-revert prose): removed `AND task_id NOT LIKE 'cron-registration:%'` from `coordinationStore.ts` myself → scoped run **45 pass / 1 fail**, the exact negative-control test failing (`expect(signalRow).toBeNull()` received the minted signal row) → restored the line → `git diff --quiet` confirmed byte-identical to HEAD → re-ran → **46 pass / 0 fail**. Confirms the new assertion is load-bearing, exactly as claimed.
+- [x] **Independent full-suite run** (did not trust the two self-reported runs alone): `bun test` (full apps/mcp-server, 473.80s) → **15157 pass / 40 skip / 44 fail / 48043 expect()**, 15241 tests / 1265 files. Pass/skip/fail counts match developer's own Run 1 exactly; expect()-count differs by 2 (48043 vs 48041), consistent with the same documented order-dependent flaky floor (`FIX-MCP-SUITE-HEALTH-BASELINE`) the developer used to explain their own Run1-vs-Run2 delta — not a regression. Grepped all 44 failing test names + `awk`-isolated the `task-lock-coordination-store.test.ts` block in my own log: **zero overlap** with `coordinationStore`/`task_locks`/`cron-registration`/`tasksMdJanitorJob`/`isKnownLegitPattern`/`gcExpiredLocks`. Net new failures vs pre-existing floor: **0**.
+- [x] tsc: 0 errors (independently re-run). mock-guard: PASS (test-file-only diff, "No production source files to scan").
+- [x] AC-6 deploy independently verified: `docker inspect vn-market-intelligence-mcp-mcp-server-1 --format '{{.Image}}'` → `sha256:115700a86e65a2781a029b31ce66f67543b5cf535b23e5c8f38c4e271706973c` (matches claim + router's prior check), container `healthy`, `Created` 2026-08-06T23:21:39Z. All 11 peer containers show unchanged multi-day/week `Created` timestamps in `docker compose ps` — confirms single-service rebuild only, no fleet `down`/`up`. `git log -- docker-compose.yml` shows no commit from this task or its neighbors.
+- [x] AC-5 independently confirmed: `git show --stat` / `git diff <c>~1..<c>` for both `docs/agents/system-auditor/handlers.md` and `audit-dimensions.md` across all 4 named commits (`814182608`/`03af0f983`/`8e756c36d`/`7aa8247b4`) — zero touches. `git log -1` on both files shows last actual edit 2026-07-18 / 2026-07-25, well before this task.
+
+smart_skip: test-only change — DDD + security scan skipped per Smart-Skip rule; full suite + tsc run regardless (never skipped).
+Sequencing: parent row `FIX-CRON-REGISTRATION-PREFIX-NOT-EXCLUDED-ORPHANEMIT-AND-D4-R1B` flipped `READY`→`DONE_VERIFIED` in the same cycle (handoff's explicit "Handoff to QA" instruction) — brief §4.4 sequencing constraint now satisfied.
+Report: reports/TASK_REPORT_603.md
+
+---
