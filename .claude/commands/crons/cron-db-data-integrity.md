@@ -61,9 +61,19 @@ lower spawn-rate-per-fire (the pre-gate) compounds; both ship together.
   scripts/agents-flow/db-integrity-probe.sh already default to this path via
   MARKET_DB_HOST_PATH). Note: use file:?immutable=1, NOT sqlite3 -readonly — a foreign
   process attaching a writer-recreated -shm under -readonly can hit SQLITE_READONLY(8) ->
-  empty result -> all counts null; immutable=1 bypasses WAL/-shm entirely and is always
-  safe for a read-only observer (verified 2026-08-06: byte-identical counts vs the
-  mcp-server container's own bun:sqlite reader on /app/data/market.db).
+  empty result -> all counts null.
+  WAL-CONDITIONAL SAFETY (FIX-DB-INTEGRITY-SIDECAR-NAMED-VOLUME-DRIFT, 2026-08-06, PO
+  QA-BLOCKING): immutable=1 bypasses WAL/-shm ENTIRELY, so it is safe ONLY when
+  `data/live/market.db-wal` is absent or 0 bytes AT READ TIME — NOT unconditionally
+  ("always safe" was measured FALSE live: with a pending WAL, immutable=1 silently
+  returned a stale row count AND a stale journal_mode while the DB was genuinely in
+  WAL). If you run an AD-HOC query by hand, `ls -la data/live/market.db-wal` first —
+  non-empty means use `file:data/live/market.db?mode=ro` instead. The 3 registered
+  scripts (db-integrity-counts.sh / db-integrity-probe.sh / db-empty-table-classify.sh)
+  already do this automatically via scripts/lib/sqlite-wal-guard.sh and report which
+  mode they used in their own JSON output (`read_mode`) — prefer those over a hand-run
+  query whenever possible. NEVER read journal_mode via immutable=1 (see
+  scripts/audits/verify-market-db-journal-mode.sh for the only safe path to that value).
   Canonical DB = data/live/market.db (≈400MB). Ignore the 0-byte legacy decoys
   (market_data.db, market_intelligence.db, main.db) and apps/mcp-server/data/ (stale
   orphan test-fixture, 0-row tables — NOT the live DB).
@@ -283,10 +293,12 @@ either cron takes over.
 `CronList` | `CronDelete <id>`
 
 ## Notes
-- **Read-only DB access** (`sqlite3 "file:...?immutable=1"`, NOT `-readonly`) — the sweep never
-  mutates the DB; all fixes flow through dev-team. This honours the router/agent "detect ≠ fix"
-  boundary. The immutable=1 URI flag bypasses WAL/-shm and avoids uid-mismatch failures after the
-  writer restarts (see DB ACCESS note above).
+- **Read-only DB access** (`sqlite3 "file:...?immutable=1"` when `-wal` is 0 bytes, else
+  `file:...?mode=ro` — NOT `-readonly`) — the sweep never mutates the DB; all fixes flow through
+  dev-team. This honours the router/agent "detect ≠ fix" boundary. The immutable=1 URI flag
+  bypasses WAL/-shm and avoids uid-mismatch failures after the writer restarts, but is safe ONLY
+  when `-wal` is absent/0 bytes at read time — see the WAL-CONDITIONAL SAFETY note above and
+  `scripts/lib/sqlite-wal-guard.sh`.
 - **Mount-drift regression guard** (AC-7, FIX-DB-INTEGRITY-SIDECAR-NAMED-VOLUME-DRIFT, 2026-08-06):
   `scripts/db-integrity-mount-drift-check.sh` resolves the mcp-server container's LIVE `/app/data`
   bind-mount source and asserts it matches the observer scripts' configured

@@ -18,7 +18,10 @@
 # read via `sqlite3 "file:data/live/market.db?immutable=1"` returns BYTE-IDENTICAL counts (6/6
 # spot-checked columns) to the mcp-server container's own `bun:sqlite` reader on `/app/data/market.db`
 # — two independent planes agree (memory: feedback_same_db_tools_diverge_rowcount). Do NOT
-# re-create the named volume.
+# re-create the named volume. CAUTION (see WAL-CONDITIONAL SAFETY note below, added
+# 2026-08-06 PO QA-BLOCKING pass): that byte-identical measurement was a single
+# snapshot taken when `-wal` happened to be 0 bytes — it proves this open pattern
+# CAN be correct, not that it always is; do not re-cite it as general proof.
 #
 # FIELD-NAME NOTE (FIX-AUDITOR-EMPTYTABLE-CHECK-NO-WRITER-DISCRIMINATOR item 3,
 # docs/agents/system-auditor/flow/data-writer-provenance.md §3): the `counts` keys below were
@@ -45,12 +48,20 @@
 # field verbatim for any date-scoping claim ("concentrated", "single date",
 # "all from one date", etc.) instead of eyeballing a sampled row.
 #
-# OPEN PATTERN: file:?immutable=1 (NOT sqlite3 -readonly).
-# Rationale: a foreign process attaching a writer-owned -shm under -readonly can hit
-# SQLITE_READONLY(8) -> query returns NOTHING -> all counts silently null (originally written
-# for the docker sidecar's cross-uid case; kept because it's still the safest read-only-observer
-# posture even for a same-uid direct host read — never needs to see in-flight WAL pages).
-# file:?immutable=1 bypasses WAL/-shm entirely and reads the main DB file directly.
+# OPEN PATTERN: file:?immutable=1 IFF -wal is absent/0 bytes, else file:?mode=ro
+# (NEVER sqlite3 -readonly — a foreign process attaching a writer-owned -shm under
+# -readonly can hit SQLITE_READONLY(8) -> query returns NOTHING -> all counts
+# silently null).
+#
+# WAL-CONDITIONAL SAFETY (FIX-DB-INTEGRITY-SIDECAR-NAMED-VOLUME-DRIFT, 2026-08-06,
+# PO QA-BLOCKING AC-5/AC-6): `immutable=1` bypasses WAL/-shm ENTIRELY, so it is
+# safe ONLY when `<db>-wal` is absent or 0 bytes at read time. Measured FALSE live
+# with -wal at 1.5MB pending: immutable=1 returned daily_ohlcv=775891 (21 rows
+# short, no error) AND journal_mode='delete' (stale header) while the DB was
+# actually 'wal' and the true count was 775912 — a second reader on
+# `file:...?mode=ro` at the SAME instant read both correctly. See
+# scripts/lib/sqlite-wal-guard.sh for the full measurement + the guard this
+# script now sources; never re-introduce a bare hardcoded `?immutable=1` here.
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -58,13 +69,18 @@ REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 DB="${MARKET_DB_HOST_PATH:-$REPO_ROOT/data/live/market.db}"
 TS="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 
+# shellcheck source=./lib/sqlite-wal-guard.sh
+source "$REPO_ROOT/scripts/lib/sqlite-wal-guard.sh"
+READ_URI="$(wal_guard_read_uri "$DB")"
+READ_MODE="$(wal_guard_read_mode "$DB")"
+
 # One sqlite3 invocation, all canonical anomaly COUNT(*)s, pipe-separated row.
-# immutable=1: bypass WAL/-shm (safe for read-only observer).
+# READ_URI: immutable=1 fast path, or mode=ro WAL-safe fallback (see guard above).
 # PROBE-FAILURE GUARD: capture exit code explicitly; disable set -e around the probe so we can
 # emit a loud diagnostic instead of a silent exit-1 (set -e exits before we can store $?).
 PROBE_STDERR="$(mktemp)"
 set +e
-ROW="$(sqlite3 "file:${DB}?immutable=1" "
+ROW="$(sqlite3 "$READ_URI" "
 SELECT
   (SELECT count(*) FROM daily_ohlcv WHERE high<open OR high<close OR high<low OR low>open OR low>close),
   (SELECT count(*) FROM daily_ohlcv WHERE open>0 AND close>0 AND (close/open>100.0 OR open/close>100.0)),
@@ -84,12 +100,12 @@ set -e
 if [ $PROBE_EXIT -ne 0 ]; then
   STDERR_MSG="$(cat "${PROBE_STDERR}" 2>/dev/null || true)"
   rm -f "${PROBE_STDERR}"
-  echo "[DB-INTEGRITY-COUNTS] PROBE FAILURE (exit ${PROBE_EXIT}, DB=${DB}): ${STDERR_MSG}" >&2
+  echo "[DB-INTEGRITY-COUNTS] PROBE FAILURE (exit ${PROBE_EXIT}, DB=${DB}, read_mode=${READ_MODE}): ${STDERR_MSG}" >&2
   exit 1
 fi
 rm -f "${PROBE_STDERR}"
 if [ -z "${ROW// }" ]; then
-  echo "[DB-INTEGRITY-COUNTS] PROBE FAILURE: sqlite returned empty result — DB path wrong (${DB})" >&2
+  echo "[DB-INTEGRITY-COUNTS] PROBE FAILURE: sqlite returned empty result — DB path wrong (${DB}, read_mode=${READ_MODE})" >&2
   exit 1
 fi
 
@@ -116,6 +132,7 @@ cat <<JSON
 {
   "scan_ts": "${TS}",
   "source": "scripts/db-integrity-counts.sh (deterministic — verbatim sqlite output)",
+  "read_mode": "${READ_MODE}",
   "counts": {
     "ohlc_violations_count": $(num "${OHLC:-}"),
     "scale_gt100x_count": $(num "${SCALE:-}"),

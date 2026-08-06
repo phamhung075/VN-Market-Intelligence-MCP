@@ -30,9 +30,19 @@ Query read-only DIRECTLY on the host — NO docker, NO sidecar:
 scripts/agents-flow/db-integrity-probe.sh already default to this path via
 MARKET_DB_HOST_PATH). Note: use file:?immutable=1, NOT sqlite3 -readonly — a foreign
 process attaching a writer-recreated -shm under -readonly can hit SQLITE_READONLY(8) ->
-empty result -> all counts null; immutable=1 bypasses WAL/-shm entirely and is always
-safe for a read-only observer (verified 2026-08-06: byte-identical counts vs the
-mcp-server container's own bun:sqlite reader on /app/data/market.db).
+empty result -> all counts null.
+WAL-CONDITIONAL SAFETY (FIX-DB-INTEGRITY-SIDECAR-NAMED-VOLUME-DRIFT, 2026-08-06, PO
+QA-BLOCKING): immutable=1 bypasses WAL/-shm ENTIRELY, so it is safe ONLY when
+`data/live/market.db-wal` is absent or 0 bytes AT READ TIME — NOT unconditionally
+("always safe" was measured FALSE live: with a pending WAL, immutable=1 silently
+returned a stale row count AND a stale journal_mode while the DB was genuinely in
+WAL). If you run an AD-HOC query by hand, `ls -la data/live/market.db-wal` first —
+non-empty means use `file:data/live/market.db?mode=ro` instead. The 3 registered
+scripts (db-integrity-counts.sh / db-integrity-probe.sh / db-empty-table-classify.sh)
+already do this automatically via scripts/lib/sqlite-wal-guard.sh and report which
+mode they used in their own JSON output (`read_mode`) — prefer those over a hand-run
+query whenever possible. NEVER read journal_mode via immutable=1 (see
+scripts/audits/verify-market-db-journal-mode.sh for the only safe path to that value).
 Canonical DB = data/live/market.db (≈400MB). Ignore the 0-byte legacy decoys
 (market_data.db, market_intelligence.db, main.db) and apps/mcp-server/data/ (stale
 orphan test-fixture, 0-row tables — NOT the live DB).

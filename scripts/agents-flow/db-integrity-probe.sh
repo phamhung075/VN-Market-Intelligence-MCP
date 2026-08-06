@@ -11,10 +11,19 @@
 # WHAT IT CHECKS: COUNT(*) on the SAME 17 tables already named in
 # .claude/commands/crons/cron-db-data-integrity.md's prompt, against the SAME
 # direct host-bind sqlite3 read that cron prompt already documents:
-#   sqlite3 "file:<repo>/data/live/market.db?immutable=1" "<SQL>"
-# (file:?immutable=1, NEVER sqlite3 -readonly — see that cron doc's own DB ACCESS note:
-# a foreign process can't attach a writer-recreated -shm file under -readonly after a
-# restart; immutable=1 bypasses WAL/-shm entirely and is always safe here.)
+#   sqlite3 "file:<repo>/data/live/market.db?immutable=1" "<SQL>"   (fast path)
+# (file:?immutable=1, NEVER sqlite3 -readonly — a foreign process can't attach a
+# writer-recreated -shm file under -readonly after a restart.)
+#
+# WAL-CONDITIONAL SAFETY (FIX-DB-INTEGRITY-SIDECAR-NAMED-VOLUME-DRIFT, 2026-08-06,
+# PO QA-BLOCKING AC-5/AC-6): immutable=1 bypasses WAL/-shm ENTIRELY and is safe
+# ONLY when `<db>-wal` is absent or 0 bytes at read time — NOT unconditionally, as
+# an earlier version of this comment claimed. Measured FALSE live: with a pending
+# 1.5MB -wal, immutable=1 silently returned a stale row count (21 short) with no
+# error, and separately reported the persisted-header journal_mode ('delete')
+# while the DB was actually live in 'wal'. See scripts/lib/sqlite-wal-guard.sh for
+# the full measurement + the guard `_query_live_counts` below sources — never
+# re-introduce a bare hardcoded `?immutable=1` here.
 #
 # DB ACCESS (FIX-DB-INTEGRITY-SIDECAR-NAMED-VOLUME-DRIFT, 2026-08-06, AC-1): direct
 # host-bind read — NO docker sidecar. 2026-07-15 commit 5ba622eca retired the docker
@@ -70,8 +79,9 @@
 #                          env var name as db-integrity-counts.sh / db-empty-table-classify.sh)
 #
 # HARD CONSTRAINT: read-only. This script NEVER runs an INSERT/UPDATE/DELETE or any
-# mutation — sqlite3 is invoked with "file:...?immutable=1" only, same as the
-# cron prompt this gates.
+# mutation — sqlite3 is invoked with "file:...?immutable=1" or "file:...?mode=ro"
+# only (see scripts/lib/sqlite-wal-guard.sh), same set of read-only opens the cron
+# prompt this gates documents.
 
 set -u
 
@@ -79,6 +89,9 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 SNAPSHOT_FILE="${SNAPSHOT_FILE_PATH:-$REPO_ROOT/docs/data/db-integrity-probe-last-snapshot.json}"
 MARKET_DB_HOST_PATH="${MARKET_DB_HOST_PATH:-$REPO_ROOT/data/live/market.db}"
+
+# shellcheck source=./lib/sqlite-wal-guard.sh
+source "$REPO_ROOT/scripts/lib/sqlite-wal-guard.sh"
 
 # Same 17 tables already named in cron-db-data-integrity.md's own prompt — keep in
 # sync with that doc if the watched-table list ever changes there.
@@ -97,12 +110,16 @@ _now_iso() { date -u +"%Y-%m-%dT%H:%M:%SZ"; }
 # non-zero exit / output did not parse into exactly len(TABLES) valid "<table>|<count>"
 # lines in order.
 _query_live_counts() {
-  local sql t out rc tbl cnt i=0
+  local sql t out rc tbl cnt i=0 read_uri
   sql=""
   for t in "${TABLES[@]}"; do
     sql="${sql}SELECT '${t}', COUNT(*) FROM ${t};"
   done
-  out=$(sqlite3 "file:${MARKET_DB_HOST_PATH}?immutable=1" "$sql" 2>/dev/null)
+  # WAL-CONDITIONAL SAFETY (AC-5/AC-6): immutable=1 fast path unless -wal has
+  # pending content, in which case fall back to mode=ro — see
+  # scripts/lib/sqlite-wal-guard.sh header for the measured defect this closes.
+  read_uri="$(wal_guard_read_uri "$MARKET_DB_HOST_PATH")"
+  out=$(sqlite3 "$read_uri" "$sql" 2>/dev/null)
   rc=$?
   [ "$rc" -ne 0 ] && return 1
   [ -z "$out" ] && return 1
@@ -150,9 +167,14 @@ _write_snapshot() {
 }
 
 run_probe() {
-  local ts live_out rc snapshot_json changed=0 table cnt prev
+  local ts live_out rc snapshot_json changed=0 table cnt prev read_mode
 
   ts=$(_now_iso)
+  # Computed once per tick, purely from the -wal file size at this instant — see
+  # scripts/lib/sqlite-wal-guard.sh. Reported in every verdict for traceability
+  # (AC-5): a reader can tell, from the output alone, whether a given tick's
+  # counts came from the immutable=1 fast path or the WAL-safe mode=ro fallback.
+  read_mode="$(wal_guard_read_mode "$MARKET_DB_HOST_PATH")"
 
   live_out=$(_query_live_counts); rc=$?
   if [ "$rc" -ne 0 ]; then
@@ -163,11 +185,11 @@ run_probe() {
     # was indistinguishable in logs from the routine "counts changed" SPAWN case. Add a
     # bug-channel-worthy stderr line so a live access defect is visible on its own, even
     # though the verdict/exit code contract itself is unchanged.
-    echo "[DB-INTEGRITY-PROBE] QUERY FAILURE — live DB unreachable (sqlite3 non-zero exit, empty output, or malformed row-count for one or more of the ${#TABLES[@]} watched tables) DB=${MARKET_DB_HOST_PATH} — falling open to SPAWN; the full sweep's own db-integrity-counts.sh call will fail loud if the DB is still unreachable" >&2
+    echo "[DB-INTEGRITY-PROBE] QUERY FAILURE — live DB unreachable (sqlite3 non-zero exit, empty output, or malformed row-count for one or more of the ${#TABLES[@]} watched tables) DB=${MARKET_DB_HOST_PATH} read_mode=${read_mode} — falling open to SPAWN; the full sweep's own db-integrity-counts.sh call will fail loud if the DB is still unreachable" >&2
     jq -nc --arg v "SPAWN" \
       --arg d "live DB query failed (sqlite3 unreachable, DB file missing, non-zero exit, or output did not parse into 1 line per watched table) — snapshot left untouched" \
-      --argjson tc -1 --arg ts "$ts" \
-      '{verdict:$v, detail:$d, tables_changed:$tc, checked_at:$ts}'
+      --argjson tc -1 --arg ts "$ts" --arg rm "$read_mode" \
+      '{verdict:$v, detail:$d, tables_changed:$tc, checked_at:$ts, read_mode:$rm}'
     return 1
   fi
 
@@ -176,8 +198,8 @@ run_probe() {
     _write_snapshot "$ts" "$live_out"
     jq -nc --arg v "SPAWN" \
       --arg d "snapshot missing or malformed (first-run) — seeded fresh snapshot from this tick's live counts" \
-      --argjson tc "${#TABLES[@]}" --arg ts "$ts" \
-      '{verdict:$v, detail:$d, tables_changed:$tc, checked_at:$ts}'
+      --argjson tc "${#TABLES[@]}" --arg ts "$ts" --arg rm "$read_mode" \
+      '{verdict:$v, detail:$d, tables_changed:$tc, checked_at:$ts, read_mode:$rm}'
     return 1
   fi
 
@@ -190,16 +212,16 @@ run_probe() {
   if [ "$changed" -eq 0 ]; then
     jq -nc --arg v "SKIP-SPAWN" \
       --arg d "all ${#TABLES[@]} watched tables' COUNT(*) match the last snapshot exactly" \
-      --argjson tc 0 --arg ts "$ts" \
-      '{verdict:$v, detail:$d, tables_changed:$tc, checked_at:$ts}'
+      --argjson tc 0 --arg ts "$ts" --arg rm "$read_mode" \
+      '{verdict:$v, detail:$d, tables_changed:$tc, checked_at:$ts, read_mode:$rm}'
     return 0
   fi
 
   _write_snapshot "$ts" "$live_out"
   jq -nc --arg v "SPAWN" \
     --arg d "${changed} of ${#TABLES[@]} watched table(s) changed COUNT(*) since last snapshot — refreshed snapshot" \
-    --argjson tc "$changed" --arg ts "$ts" \
-    '{verdict:$v, detail:$d, tables_changed:$tc, checked_at:$ts}'
+    --argjson tc "$changed" --arg ts "$ts" --arg rm "$read_mode" \
+    '{verdict:$v, detail:$d, tables_changed:$tc, checked_at:$ts, read_mode:$rm}'
   return 1
 }
 

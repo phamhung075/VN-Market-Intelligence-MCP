@@ -23,6 +23,9 @@ if [ ! -f "$PROBE_SH" ]; then
   exit 1
 fi
 
+# shellcheck source=../lib/sqlite-wal-hold-open-fixture.sh
+source "$SCRIPT_DIR/../lib/sqlite-wal-hold-open-fixture.sh"
+
 PASS=0
 FAIL=0
 
@@ -39,7 +42,7 @@ check() {
 
 # ── Isolated tmp fixture (snapshot output path) ───────────────────────────────
 TMPDIR_TEST=$(mktemp -d /private/tmp/db-integrity-probe-test-XXXXXX)
-cleanup() { rm -rf "$TMPDIR_TEST"; }
+cleanup() { wal_fixture_release; rm -rf "$TMPDIR_TEST"; }
 trap cleanup EXIT
 
 export SNAPSHOT_FILE_PATH="$TMPDIR_TEST/db-integrity-probe-last-snapshot.json"
@@ -227,6 +230,60 @@ STUB_COUNTS="101 100 100 102 100 100 100 100 100 100 100 100 100 100 100 100 103
 OUT=$(run_probe); RC=$?
 CHANGED=$(printf '%s' "$OUT" | jq -r '.tables_changed')
 check "T6 tables_changed=3 (multi-table diff counted accurately)" "$([ "$CHANGED" = "3" ] && echo true || echo false)"
+
+# ── T7 (AC-5, QA-BLOCKING, verification-gate evidence): REAL subprocess
+# invocation (bash "$PROBE_SH", NOT the sourced/mocked `sqlite3` function
+# above — a fresh `bash <file>` process never inherits this shell's function
+# overrides) against a genuine fixture DB with a NON-EMPTY -wal, DELIBERATELY
+# created via the held-open-reader fixture. Proves the live script detects a
+# real committed change that a bare `immutable=1` open would have silently
+# missed (the exact "voted SKIP-SPAWN on real drift" failure mode this
+# script exists to prevent). ─────────────────────────────────────────────────
+# NOTE: every direct sqlite3 call in this T7 block uses `command sqlite3` —
+# T1-T6 above defined a shell FUNCTION named sqlite3() to stub the real
+# binary; `command` bypasses it so this fixture setup hits the real sqlite3.
+WAL_FIXTURE_DB="$TMPDIR_TEST/wal-fixture.db"
+WAL_SNAPSHOT="$TMPDIR_TEST/wal-fixture-snapshot.json"
+{
+  echo "PRAGMA journal_mode=WAL;"
+  for t in $TABLES_LIST; do
+    echo "CREATE TABLE ${t} (x INTEGER); INSERT INTO ${t} VALUES (1);"
+  done
+} | command sqlite3 "$WAL_FIXTURE_DB" >/dev/null
+
+jq -n --arg ts "2026-08-01T00:00:00Z" --arg tables_list "$TABLES_LIST" '
+  { checked_at: $ts,
+    tables: ($tables_list | split(" ") | map({key: ., value: {rowcount: 1}}) | from_entries)
+  }' > "$WAL_SNAPSHOT"
+
+wal_fixture_hold_open "$WAL_FIXTURE_DB" "$TMPDIR_TEST/probe-wal.fifo" "$TMPDIR_TEST/probe-wal-holder.out"
+# Separate connection commits a real change to daily_ohlcv (rowcount 1 -> 2) —
+# lands in -wal, checkpoint blocked by the held-open reader above.
+command sqlite3 "$WAL_FIXTURE_DB" "INSERT INTO daily_ohlcv VALUES (2);" >/dev/null
+
+WAL_BYTES_T7="$(wc -c < "${WAL_FIXTURE_DB}-wal" 2>/dev/null | tr -d ' ')"
+check "T7 -wal is NON-EMPTY at read time (deliberately reproduced, not waited for)" \
+  "$([ -n "$WAL_BYTES_T7" ] && [ "$WAL_BYTES_T7" -gt 0 ] && echo true || echo false)"
+
+RAW_IMMUTABLE_DOHLCV="$(command sqlite3 "file:${WAL_FIXTURE_DB}?immutable=1" "SELECT count(*) FROM daily_ohlcv;")"
+check "T7 raw immutable=1 is STALE (1, blind to the pending-WAL insert)" \
+  "$([ "$RAW_IMMUTABLE_DOHLCV" = "1" ] && echo true || echo false)"
+
+OUT7=$(MARKET_DB_HOST_PATH="$WAL_FIXTURE_DB" SNAPSHOT_FILE_PATH="$WAL_SNAPSHOT" bash "$PROBE_SH")
+RC7=$?
+VERDICT7=$(printf '%s' "$OUT7" | jq -r '.verdict')
+CHANGED7=$(printf '%s' "$OUT7" | jq -r '.tables_changed')
+READ_MODE7=$(printf '%s' "$OUT7" | jq -r '.read_mode')
+
+check "T7 live script reports read_mode=ro (fell back off immutable=1)" \
+  "$([ "$READ_MODE7" = "ro" ] && echo true || echo false)"
+check "T7 live script correctly detects the real change (verdict=SPAWN, NOT SKIP-SPAWN)" \
+  "$([ "$VERDICT7" = "SPAWN" ] && echo true || echo false)"
+check "T7 live script tables_changed=1 (daily_ohlcv only — the WAL-blind bug would report 0)" \
+  "$([ "$CHANGED7" = "1" ] && echo true || echo false)"
+check "T7 exit=1 (SPAWN contract, unchanged)" "$([ "$RC7" -eq 1 ] && echo true || echo false)"
+
+wal_fixture_release
 
 # ── Summary ────────────────────────────────────────────────────────────────────
 echo ""

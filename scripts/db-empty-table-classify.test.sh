@@ -47,11 +47,13 @@ skip() {
 }
 
 TMPDIR_TEST=$(mktemp -d /private/tmp/db-empty-table-classify-test-XXXXXX)
-cleanup() { rm -rf "$TMPDIR_TEST"; }
+cleanup() { wal_fixture_release; rm -rf "$TMPDIR_TEST"; }
 trap cleanup EXIT
 
 # shellcheck source=./db-empty-table-classify.sh
 source "$CLASSIFY_SH"
+# shellcheck source=./lib/sqlite-wal-hold-open-fixture.sh
+source "$SCRIPT_DIR/lib/sqlite-wal-hold-open-fixture.sh"
 
 # ── Fixture DB + fixture source tree (shared, unique table name per case) ──
 FIXTURE_DB="$TMPDIR_TEST/fixture.db"
@@ -192,6 +194,35 @@ if [ -f "$LIVE_DB" ]; then
 else
   skip "T11 LIVE replay — $LIVE_DB not present on this host"
 fi
+
+# ── T12 (AC-5, QA-BLOCKING, verification-gate evidence): a NON-EMPTY -wal is
+# created DELIBERATELY (held-open reader, scripts/lib/sqlite-wal-hold-open-
+# fixture.sh) against a fresh fixture DB, and the classifier is proven to
+# report the CORRECT, live-committed row_count via the WAL-safe mode=ro
+# fallback — NEVER the stale count a bare `immutable=1` open would silently
+# return. A raw immutable=1 query against the SAME db at the SAME instant is
+# run alongside for direct comparison. ──────────────────────────────────────
+WAL_DB="$TMPDIR_TEST/wal-fixture.db"
+sqlite3 "$WAL_DB" "PRAGMA journal_mode=WAL; CREATE TABLE t12_table_wal (id INTEGER); INSERT INTO t12_table_wal VALUES (1);" >/dev/null
+
+wal_fixture_hold_open "$WAL_DB" "$TMPDIR_TEST/classify-wal.fifo" "$TMPDIR_TEST/classify-wal-holder.out"
+sqlite3 "$WAL_DB" "INSERT INTO t12_table_wal VALUES (2),(3);" >/dev/null
+
+WAL_BYTES_T12="$(wc -c < "${WAL_DB}-wal" 2>/dev/null | tr -d ' ')"
+check "T12 -wal is NON-EMPTY at read time (deliberately reproduced, not waited for)" \
+  "$([ -n "$WAL_BYTES_T12" ] && [ "$WAL_BYTES_T12" -gt 0 ] && echo true || echo false)"
+
+RAW_IMMUTABLE_T12="$(sqlite3 "file:${WAL_DB}?immutable=1" "SELECT count(*) FROM t12_table_wal;")"
+check "T12 raw immutable=1 is STALE (1, blind to the 2 pending-WAL rows)" \
+  "$([ "$RAW_IMMUTABLE_T12" = "1" ] && echo true || echo false)"
+
+OUT12=$(MARKET_DB_HOST_PATH="$WAL_DB" DB_CLASSIFY_SEARCH_ROOT="$FIXTURE_SRC/apps" run_db_empty_table_classify t12_table_wal)
+check "T12 classifier reports read_mode=ro (fell back off immutable=1)" \
+  "$(printf '%s' "$OUT12" | jq -e '.read_mode == "ro"' >/dev/null && echo true || echo false)"
+check "T12 classifier row_count is CORRECT (3), NOT the stale immutable=1 value (1)" \
+  "$(printf '%s' "$OUT12" | jq -e '.row_count == 3' >/dev/null && echo true || echo false)"
+
+wal_fixture_release
 
 # ── Summary ──────────────────────────────────────────────────────────────
 echo ""

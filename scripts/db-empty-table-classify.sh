@@ -87,14 +87,22 @@
 # sidecar db-integrity-counts.sh used to mount against the named volume).
 # The named volume (vn-market-intelligence-mcp_market_data) was retired by
 # commit 5ba622eca (2026-07-15) in favour of a host bind mount (./data/live
-# -> /app/data in every service, see docker-compose.yml). This script was
-# NEW code at authoring time, so it was not built on the then-known-broken
-# default: it reads the host-bind file directly with the SAME
-# file:...?immutable=1 safety flag (bypasses WAL/-shm, always safe for a
-# read-only observer). db-integrity-counts.sh + db-integrity-probe.sh were
-# migrated to this SAME pattern by FIX-DB-INTEGRITY-SIDECAR-NAMED-VOLUME-
+# -> /app/data in every service, see docker-compose.yml). This script reads
+# the host-bind file directly. db-integrity-counts.sh + db-integrity-probe.sh
+# were migrated to this SAME pattern by FIX-DB-INTEGRITY-SIDECAR-NAMED-VOLUME-
 # DRIFT (2026-08-06) — this script was simply first. Override via
 # MARKET_DB_HOST_PATH (tests / a future path change).
+#
+# WAL-CONDITIONAL SAFETY (FIX-DB-INTEGRITY-SIDECAR-NAMED-VOLUME-DRIFT,
+# 2026-08-06, PO QA-BLOCKING AC-5/AC-6): the `file:...?immutable=1` safety
+# flag bypasses WAL/-shm ENTIRELY, so it is safe ONLY when `<db>-wal` is
+# absent or 0 bytes at read time — an earlier version of this comment claimed
+# it was "always safe", which was measured FALSE live (immutable=1 silently
+# returned a stale row count AND a stale journal_mode while the DB was
+# genuinely in WAL with pending writes; a mode=ro reader at the same instant
+# was correct). Both queries below go through scripts/lib/sqlite-wal-guard.sh,
+# which picks immutable=1 or falls back to mode=ro per that measurement —
+# never re-introduce a bare hardcoded `?immutable=1` here.
 #
 # Shell: bash 3.2+ (macOS system /bin/bash) — NO mapfile, NO associative
 # arrays. Only plain indexed vars / while-read loops / case statements.
@@ -102,6 +110,9 @@ set -uo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+
+# shellcheck source=./lib/sqlite-wal-guard.sh
+source "$REPO_ROOT/scripts/lib/sqlite-wal-guard.sh"
 
 # _classify_site_kind <path> <exclude_dirs_space_separated>
 _classify_site_kind() {
@@ -153,6 +164,13 @@ run_db_empty_table_classify() {
     return 1
   fi
 
+  # WAL-CONDITIONAL SAFETY (AC-5/AC-6): immutable=1 fast path unless -wal has
+  # pending content, in which case fall back to mode=ro — see
+  # scripts/lib/sqlite-wal-guard.sh header for the measured defect this closes.
+  local read_uri read_mode
+  read_uri="$(wal_guard_read_uri "$db_host_path")"
+  read_mode="$(wal_guard_read_mode "$db_host_path")"
+
   # ── Step 1: SCHEMA-MISSING vs EMPTY-TABLE (run BEFORE any COUNT/severity) ──
   # NOTE: this script's top-level never sets `-e` (errexit) — deliberately.
   # Every risky command below is run bare and its exit status captured
@@ -163,14 +181,14 @@ run_db_empty_table_classify() {
   # authoring — see negative-control test T-SCHEMAMISS).
   local probe_stderr exists_raw probe_exit
   probe_stderr="$(mktemp)"
-  exists_raw="$(sqlite3 "file:${db_host_path}?immutable=1" \
+  exists_raw="$(sqlite3 "$read_uri" \
     "SELECT 1 FROM sqlite_master WHERE type='table' AND name='${table}' LIMIT 1;" 2>"$probe_stderr")"
   probe_exit=$?
   if [ $probe_exit -ne 0 ]; then
     local err_msg
     err_msg="$(cat "$probe_stderr" 2>/dev/null || true)"
     rm -f "$probe_stderr"
-    echo "[db-empty-table-classify] PROBE FAILURE (sqlite_master, exit ${probe_exit}): ${err_msg}" >&2
+    echo "[db-empty-table-classify] PROBE FAILURE (sqlite_master, exit ${probe_exit}, read_mode=${read_mode}): ${err_msg}" >&2
     return 1
   fi
   rm -f "$probe_stderr"
@@ -180,12 +198,12 @@ run_db_empty_table_classify() {
     exists="true"
     probe_stderr="$(mktemp)"
     local rc_raw
-    rc_raw="$(sqlite3 "file:${db_host_path}?immutable=1" "SELECT count(*) FROM \"${table}\";" 2>"$probe_stderr")"
+    rc_raw="$(sqlite3 "$read_uri" "SELECT count(*) FROM \"${table}\";" 2>"$probe_stderr")"
     probe_exit=$?
     if [ $probe_exit -ne 0 ]; then
       err_msg="$(cat "$probe_stderr" 2>/dev/null || true)"
       rm -f "$probe_stderr"
-      echo "[db-empty-table-classify] PROBE FAILURE (row-count, exit ${probe_exit}): ${err_msg}" >&2
+      echo "[db-empty-table-classify] PROBE FAILURE (row-count, exit ${probe_exit}, read_mode=${read_mode}): ${err_msg}" >&2
       return 1
     fi
     rm -f "$probe_stderr"
@@ -256,7 +274,8 @@ run_db_empty_table_classify() {
     --arg class "$class" \
     --arg severity_ceiling "$severity_ceiling" \
     --argjson writer_sites "$sites_json" \
-    '{table: $table, exists: $exists, row_count: $row_count, class: $class, severity_ceiling: $severity_ceiling, writer_sites: $writer_sites}'
+    --arg read_mode "$read_mode" \
+    '{table: $table, exists: $exists, row_count: $row_count, class: $class, severity_ceiling: $severity_ceiling, writer_sites: $writer_sites, read_mode: $read_mode}'
   return 0
 }
 

@@ -32,6 +32,9 @@ if [ ! -f "$COUNTS_SH" ]; then
   exit 1
 fi
 
+# shellcheck source=./lib/sqlite-wal-hold-open-fixture.sh
+source "$REPO_ROOT/scripts/lib/sqlite-wal-hold-open-fixture.sh"
+
 PASS=0
 FAIL=0
 SKIP=0
@@ -53,7 +56,7 @@ skip() {
 }
 
 TMPDIR_TEST=$(mktemp -d /private/tmp/db-integrity-counts-test-XXXXXX)
-cleanup() { rm -rf "$TMPDIR_TEST"; }
+cleanup() { wal_fixture_release; rm -rf "$TMPDIR_TEST"; }
 trap cleanup EXIT
 
 FIXTURE_DB="$TMPDIR_TEST/fixture.db"
@@ -146,6 +149,39 @@ if [ -f "$LIVE_DB" ]; then
 else
   skip "T5 LIVE replay — $LIVE_DB not present on this host"
 fi
+
+# ── T6 (AC-5, QA-BLOCKING, verification-gate evidence): a NON-EMPTY -wal is
+# created DELIBERATELY (held-open reader, scripts/lib/sqlite-wal-hold-open-
+# fixture.sh) against a fresh fixture DB, and the script is proven to return
+# the CORRECT, live-committed count via the WAL-safe mode=ro fallback —
+# NEVER the stale count a bare `immutable=1` open would silently return. A
+# raw immutable=1 query against the SAME db at the SAME instant is run
+# alongside for direct comparison, reproducing the exact po_qa_block_note
+# defect and proving this script no longer exhibits it. ─────────────────────
+WAL_DB="$TMPDIR_TEST/wal-fixture.db"
+sqlite3 "$WAL_DB" "PRAGMA journal_mode=WAL; CREATE TABLE daily_ohlcv (code TEXT, date TEXT, open REAL, high REAL, low REAL, close REAL); CREATE TABLE vn_index_cache (id INTEGER); CREATE TABLE financial_reports (id INTEGER, extraction_confidence REAL); CREATE TABLE market_prices (code TEXT, updated_at TEXT); INSERT INTO daily_ohlcv VALUES ('AAA','2026-08-01',10,12,9,11);" >/dev/null
+
+wal_fixture_hold_open "$WAL_DB" "$TMPDIR_TEST/wal.fifo" "$TMPDIR_TEST/wal-holder.out"
+sqlite3 "$WAL_DB" "INSERT INTO daily_ohlcv VALUES ('BBB','2026-08-02',20,22,19,21),('CCC','2026-08-03',30,32,29,31);" >/dev/null
+
+WAL_BYTES="$(wc -c < "${WAL_DB}-wal" 2>/dev/null | tr -d ' ')"
+check "T6 -wal is NON-EMPTY at read time (deliberately reproduced, not waited for)" \
+  "$([ -n "$WAL_BYTES" ] && [ "$WAL_BYTES" -gt 0 ] && echo true || echo false)"
+
+RAW_IMMUTABLE_TOTAL="$(sqlite3 "file:${WAL_DB}?immutable=1" "SELECT count(*) FROM daily_ohlcv;")"
+OUT6=$(MARKET_DB_HOST_PATH="$WAL_DB" bash "$COUNTS_SH")
+RC6=$?
+
+check "T6 raw immutable=1 is STALE (1, blind to the 2 pending-WAL rows)" \
+  "$([ "$RAW_IMMUTABLE_TOTAL" = "1" ] && echo true || echo false)"
+check "T6 exit=0 (script itself still succeeds via fallback, not a probe failure)" \
+  "$([ "$RC6" -eq 0 ] && echo true || echo false)"
+check "T6 script reports read_mode=ro (fell back off immutable=1)" \
+  "$(printf '%s' "$OUT6" | jq -e '.read_mode == "ro"' >/dev/null && echo true || echo false)"
+check "T6 script's daily_ohlcv_total is CORRECT (3), NOT the stale immutable=1 value (1)" \
+  "$(printf '%s' "$OUT6" | jq -e '.context.daily_ohlcv_total == 3' >/dev/null && echo true || echo false)"
+
+wal_fixture_release
 
 # ── Summary ──────────────────────────────────────────────────────────────
 echo ""
