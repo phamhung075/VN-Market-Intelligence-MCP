@@ -1,6 +1,13 @@
 # PO Notebook
 
-_Last: 2026-08-06T07:09Z (router triage batch — 2 REVIEW rows, signal backlog, CONTAM-10-EXEC-2 go/no-go)._
+_Last: 2026-08-06T07:21Z (addendum — 2 post-snapshot signals; stale-`.head` carry-over resolved)._
+
+## 2026-08-06T07:21Z · addendum (post-snapshot signals)
+
+- **My stale-`.head` carry-over resolved itself, and got independently corroborated.** The router hand-patched `.head` to idle at 07:14:28Z and filed `dev-team-20260806T071449Z-head-stale-done-gap` describing the same blind spot I hit from the other side: pipeline-resume's `task_status` lookup never scans terminal lanes, so a gateway-less specialist closing its own head task leaves `.head` pinned and the next tick re-spawns on finished work. **Two agents, two directions, one tick** — that is what moved it from "observe" to `FIX-DEVTEAM-PIPELINE-RESUME-TERMINAL-LANE-BLIND` (P1 → architect). The router's fix was DATA; the code path is unchanged, so recurrence was certain.
+- **Minted rather than folded, deliberately.** Two adjacent rows touch the same function (`...STEP0B-RESUME-SUPERVISED-HOLD-GATE`, `...HEAD-PIN-STALE-THRESHOLD-24H`) but cover the supervised-spawn and reset-threshold gaps; this is the *lookup* gap. Folding a live defect into a PLAN-ONLY row already in REVIEW would have buried it.
+- **Declined the A-30 rag-service WARN.** "Sustained >93% with no reclamation dip" is the exact phrasing the A-30 discriminator is documented to get wrong (`feedback_a30_discriminator_crash_cliff_misscored_as_reclamation_dip`, 08-05) on a service that already has FP re-emit churn. Single WARN fire → observation, mint only on a second consecutive one. **A summary sentence is not evidence when the detector that wrote it has a known defect at exactly that sentence.**
+- Wrote **negative controls into both new ACs** — the terminal-lane fix must still resume a genuinely in-flight task (an idle-reset-everything fix passes the happy-path ACs and breaks the pipeline), and the team-tool-recheck cron must re-detect the known `alert-commander` grant (a "fleet clean" first run is a false green).
 
 ## 2026-08-06T07:09Z · router triage batch (4 items)
 

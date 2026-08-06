@@ -133,8 +133,8 @@
     "does_not_consume_wip": true
   },
   "signal_queue": {
-    "_updated_at": "2026-08-06T07:09:22Z",
-    "_updated_by": "po (triage 2026-08-06)",
+    "_updated_at": "2026-08-06T07:21:17Z",
+    "_updated_by": "po (triage 2026-08-06 addendum)",
     "archive": [],
     "rows": [
       {
@@ -2511,10 +2511,13 @@
         "type": "agent_flow_defect",
         "summary": "main.md pipeline-resume's task_status lookup (line ~263) only queries in_progress[]+active_sprints[].tasks[], never done[]/review[]/qa[]/ready[]/backlog[]. When architect closed GUARD-COWORK-NOTEBOOK-AGENTS-SELF-EDIT-FLOW-DOC to done[] (no gateway access to flip .head itself, per INV-GATEWAY-1), head.active_task_id stayed pointed at it with status=in_progress. Next tick's pipeline-resume would have found task_status=empty (not BLOCKED), fallen through the WF-2 supervised check (also blind to done[]), and re-spawned architect on an already-finished task via S2 dispatcher-wrap. Router caught it this tick via manual RAW-verify (task_board.done[] lookup) and reset head to idle before it could fire; not a code fix, a live data patch. Root cause: task_status/should_hold lookups need a terminal-lane check (done[]/done_verified[]) that short-circuits to idle-reset, mirroring the existing BLOCKED carve-out's self-heal shape, so this doesn't require a router catching it by hand every time a gateway-less specialist closes its own head task.",
         "severity": "MED",
-        "status": "NEW",
+        "status": "triaged",
         "payload_ref": null,
         "provenance": "router",
-        "audit_cycle_tag": null
+        "audit_cycle_tag": null,
+        "triaged_at": "2026-08-06T07:21:17Z",
+        "triaged_by": "po",
+        "disposition": "MINTED FIX-DEVTEAM-PIPELINE-RESUME-TERMINAL-LANE-BLIND. Not folded: the two adjacent rows cover different gaps in the same function -- FIX-DEVTEAM-STEP0B-RESUME-SUPERVISED-HOLD-GATE is the supervised-spawn gap (and is PLAN-ONLY/REVIEW, folding a second defect in would muddy it), FIX-DEVTEAM-HEAD-PIN-STALE-THRESHOLD-24H-VS-TICK-CADENCE is the reset-threshold gap. This one is terminal-lane blindness in the lookup itself. INDEPENDENTLY CORROBORATED by po this same cycle from the other direction: po's own WF-2 supervised-hold pre-check read should_hold=true on GUARD-COWORK-NOTEBOOK-AGENTS-SELF-EDIT-FLOW-DOC while the task had already been closed to done[], and .head sat in_progress on it with updated_at 2026-08-05T19:41:30Z. Two independent agents hit the same blind spot within one tick, which is why this is minted rather than observed."
       },
       {
         "id": "sys-20260806T071552-5539",
@@ -2524,10 +2527,26 @@
         "type": "microservice_degraded",
         "summary": "rag-service A-30 memory sustained >93% with no reclamation dip",
         "severity": "WARN",
+        "status": "triaged",
+        "payload_ref": null,
+        "provenance": "detector",
+        "audit_cycle_tag": "cron:auditor-t1:2026-08-06T07:00Z",
+        "triaged_at": "2026-08-06T07:21:17Z",
+        "triaged_by": "po",
+        "disposition": "pendingObservations, NO MINT. microservice_degraded WARN, single fire. A-30 on this service carries a documented false-positive/re-emit-churn history (feedback_auditor_mcpserver_a21_a30_memory_fp_reemit_churn) AND a documented scoring defect (feedback_a30_discriminator_crash_cliff_misscored_as_reclamation_dip, 2026-08-05) -- 'sustained >93% with no reclamation dip' is the exact phrasing that discriminator gets wrong, so the summary is not trustworthy as-stated. Per the microservice_degraded rule a single WARN blip with no fresh corroboration does not mint. RAG-SERVICE-AVAIL-01-FIX already tracks this service's availability class if it escalates. Re-check next auditor cycle; mint only on a second consecutive fire."
+      },
+      {
+        "id": "sys-20260806T072127-34b3",
+        "ts": "2026-08-06T07:21:27Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "db_anomaly_illiquid_ohlcv",
+        "summary": "daily_ohlcv: 336 rows with incomplete H/L/V data (illiquid tickers)",
+        "severity": "WARN",
         "status": "NEW",
         "payload_ref": null,
         "provenance": "detector",
-        "audit_cycle_tag": "cron:auditor-t1:2026-08-06T07:00Z"
+        "audit_cycle_tag": "cron:auditor-data:2026-08-06T07:09Z"
       }
     ],
     "last_triaged_at": "2026-07-29T06:25:00Z",
@@ -11694,6 +11713,26 @@
         "origin_signal_id": "cj-20260806T085500",
         "status_note": "PO DECISION = REPLACE, not retire (see signal cj-20260806T085500 disposition for the full basis). Writer docs/agent-memory/health/team-tool-recheck-*.md silent since 2026-06-23; source was RemoteTrigger trig_019Q8D5xttjZn6iytx2Ld9dW, killed by feedback_no_remote_trigger_all_local.md, whose migration rule mandates a local replacement. Urgency evidence from the 2026-08-06 PO cycle: a live tool-grant boundary violation (.claude/agents/alert-commander.md:5 grants Read/Write/Edit/Bash to a declared notebook-only-write agent) went unflagged for the whole 6-week silent window — the recheck's absence is actively masking drift. AC: a LOCAL cron re-establishes the docs/agent-memory/health/team-tool-recheck-*.md writer on a documented cadence; first run must re-detect the alert-commander grant/boundary mismatch as a positive control (a run that reports the fleet clean is a false green and fails this AC). Note memory-prune-sweep.sh drains this family at 30d, so the cadence must be < 30d or the directory re-empties. detail_ref docs/architecture-briefs/2026-07-12-ultracode-workflow-improvement-audit.md#memory-docs-hygiene-P3.",
         "updated_at": "2026-08-06T07:14:42Z"
+      },
+      {
+        "id": "FIX-DEVTEAM-PIPELINE-RESUME-TERMINAL-LANE-BLIND",
+        "title": "dev-team pipeline-resume task_status/should_hold lookups are blind to terminal lanes — head stays in_progress on a done[] task and re-spawns the agent on finished work",
+        "owner": "po",
+        "status": "BACKLOG",
+        "type": "FIX",
+        "priority": "P1",
+        "zone": "docs/agents/",
+        "next_agent": "architect",
+        "created_at": "2026-08-06T07:21:17Z",
+        "created_by": "po (triage 2026-08-06)",
+        "origin_signal_id": "dev-team-20260806T071449Z-head-stale-done-gap",
+        "related_rows": [
+          "FIX-DEVTEAM-STEP0B-RESUME-SUPERVISED-HOLD-GATE",
+          "FIX-DEVTEAM-HEAD-PIN-STALE-THRESHOLD-24H-VS-TICK-CADENCE",
+          "FIX-WF2-SUPERVISED-HOLD-NO-PO-SIDE-GOAHEAD-PRODUCER"
+        ],
+        "status_note": "ROOT CAUSE (from signal): docs/agents/dev-team/flow/main.md pipeline-resume task_status lookup (~line 263) queries only in_progress[] + active_sprints[].tasks[] — never done[]/done_verified[]/review[]/qa[]/ready[]/backlog[]. A gateway-less specialist closing its own head task can only write the lane, not .head (INV-GATEWAY-1), so .head stays {status:in_progress, active_task_id:<now-done task>}. Next tick's resume then reads task_status=empty (NOT 'BLOCKED', so the existing carve-out misses it), falls through the WF-2 supervised check (also terminal-lane-blind), and re-spawns the agent on already-finished work via the S2 dispatcher-wrap. LIVE INSTANCE 2026-08-06: architect closed GUARD-COWORK-NOTEBOOK-AGENTS-SELF-EDIT-FLOW-DOC to done[] (commit 336228ebe); .head stayed pinned at updated_at 2026-08-05T19:41:30Z until the router hand-patched it to idle at 07:14:28Z. That hand-patch is a DATA fix, not a code fix — recurrence is certain without this row. AC: (1) task_status resolution scans terminal lanes and short-circuits to an idle-reset, mirroring the existing BLOCKED carve-out's self-heal shape; (2) the WF-2 should_hold predicate gets the same terminal-lane guard (po hit this independently the same tick — should_hold returned true for a task already in done[]); (3) regression fixture replays the live shape: head pinned in_progress at a done[]-lane task id => resume must idle-reset, NOT re-spawn. NEGATIVE CONTROL REQUIRED: a genuinely in-flight in_progress task must still resume normally — a fix that idle-resets everything trivially passes (1)-(3) and breaks the pipeline.",
+        "updated_at": "2026-08-06T07:21:18Z"
       }
     ],
     "closed_sprints": [
@@ -21510,6 +21549,6 @@
     "ssot": true
   },
   "last_tick": "20260622T2215Z",
-  "_updated_at": "2026-08-06T07:09:22Z",
-  "_updated_by": "po (triage 2026-08-06T07:09:22Z)"
+  "_updated_at": "2026-08-06T07:21:17Z",
+  "_updated_by": "po (triage 2026-08-06 addendum)"
 }
