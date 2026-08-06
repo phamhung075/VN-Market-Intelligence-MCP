@@ -121,3 +121,20 @@ This proves the fix is not vacuous (the test actually depends on the code change
 **Blocks:** TASK_603 (must have both code changes before full testing)
 
 Both TASK_601 and TASK_602 must land together in the same deploy cycle. Deploying TASK_601 alone without TASK_602 leaves a daily false-positive generator live and is worse than deploying neither.
+
+---
+
+## [Developer] Implementation Record
+- **Service:** mcp-server
+- **Zone:** apps/mcp-server/
+- **Files modified:**
+  - `apps/mcp-server/src/scheduler/system/tasksMdJanitorJob.ts:199` — added `"cron-registration:"` to `KNOWN_LEGIT_PREFIXES` array (prefix branch, not the `-singleton` suffix branch — verified by construction, no `-singleton` string appended)
+  - `apps/mcp-server/src/__tests__/FIX-D4-HELD-LOCK-NO-BOARD-ROW-RECONCILE.test.ts:153-169` — new `describe("isKnownLegitPattern cron-registration:* handling")` block, 4 assertions (3 positive families: `cowork-team`/`detect-loop`/`standalone-team` + 1 negative control `some-random-id`)
+- **Tests written:** `apps/mcp-server/src/__tests__/FIX-D4-HELD-LOCK-NO-BOARD-ROW-RECONCILE.test.ts` — 4 new assertions, GREEN
+- **Non-vacuousness (mandatory, per AC-3b):** `git stash push --keep-index -- tasksMdJanitorJob.ts` (source-only, test kept) → `bun test FIX-D4-HELD-LOCK-NO-BOARD-ROW-RECONCILE.test.ts` = **27 pass / 3 fail (RED)** → `git stash pop` → re-run = **30 pass / 0 fail (GREEN)**. Confirms the new assertions actually depend on the code change.
+- **Git commits:** `86b31eccd` fix(mcp-server): tasksMdJanitorJob KNOWN_LEGIT_PREFIXES += cron-registration:
+- **Type check:** clean (`bun tsc --noEmit` — 0 errors)
+- **Scoped test run:** `FIX-D4-HELD-LOCK-NO-BOARD-ROW-RECONCILE.test.ts` — 30 pass / 0 fail (69 expect() calls)
+- **Full suite / deploy:** deliberately NOT run — out of scope per TASK_602 instructions (TASK_603's job once TASK_601 also lands)
+- **Docs updated:** NONE — `docs/agents/system-auditor/handlers.md` and `docs/agents/system-auditor/audit-dimensions.md` prose mirrors are explicitly out of scope for this task (agent-father's zone, separate task)
+- **Graphify:** skipped (no docs impacted)
