@@ -93,11 +93,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "active_task_id": null,
-    "next_agent": "router",
-    "updated_at": "2026-08-06T17:48:51Z",
-    "updated_by": "dev-mcp-server"
+    "status": "in_progress",
+    "active_task_id": "FIX-PO-MINT-ACTUATOR-REGRESSION-VERIFIER-SCRIPT",
+    "next_agent": "developer",
+    "next_action": "BOUNDED-1 auto-pickup claim of FIX-PO-MINT-ACTUATOR-REGRESSION-VERIFIER-SCRIPT — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
+    "updated_at": "2026-08-06T17:58:40Z",
+    "updated_by": "dev-team (bounded-1 auto-pickup)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -12021,31 +12022,6 @@
         "updated_at": "2026-08-06T08:47:49Z"
       },
       {
-        "id": "FIX-NEWSVPS-OVERNIGHT-PUSH-OUTAGE-663M-SILENT",
-        "title": "news-vps push transport went silent 663 min overnight (2026-08-05T19:38:29Z -> 2026-08-06T06:42:25Z), self-recovered with a 50-item backlog flush; alarm (B-01) fired 11h into the outage, ~1 min before recovery",
-        "owner": "dev-mcp-server",
-        "status": "BACKLOG",
-        "type": "FIX",
-        "priority": "P1",
-        "zone": "apps/mcp-server/",
-        "next_agent": "dev-mcp-server",
-        "created_at": "2026-08-06T08:24:43Z",
-        "created_by": "po (dev-team Step 1 triage, cron:dev-team:2026-08-06T08:07Z, session 24817246-8a3f-4511-95f7-1b4385797bee)",
-        "origin_signal_id": "telegram-report-4474",
-        "po_live_evidence_20260806T0824": "B-01 CRITICAL (telegram id 4474, 2026-08-06T06:41:27Z, 'news source stale 790m') is a TRUE POSITIVE and is NOT the known FIX-VPS-NEWS-STALE-FALSEPOS / B-11 two-layer class. PO verified DIRECTLY against the live host bind-mount DB (sqlite3 'file:./data/live/market.db?immutable=1', vps_push_log): service='news' pushed continuously every ~15-30 min through 2026-08-05 19:38:29, then ZERO pushes until 2026-08-06 06:42:25 -- an 11h04m (663 min) hard gap. The recovery push carried items_count=50 (vs the normal 1/2/3/10/15 per push), i.e. the VPS buffered ~50 articles during the outage and flushed them on reconnect: the source kept producing, the TRANSPORT stopped. CONTROL (this is what rules out 'expected overnight quiet'): a LAG() gap scan over the whole service='news' series since 2026-07-29 returns exactly TWO gaps >120 min in 8 days -- 288 min on 2026-07-30 03:48-08:37, and this 663 min one. Every other night has NO gap over 2 hours; news pushes round the clock. This gap is 2.3x the next-worst in 8 days and unique in kind. Peer control same window: service='prices' and service='foreign-flow' both pushed normally (last 2026-08-06 08:21), so this is news-route-specific, not a whole-VPS or whole-host outage.",
-        "status_note": "OPS RECON COMPLETE (2026-08-06T10:48Z, commit edeba6cd9 — router restored this row after ops's own commit accidentally deleted it instead of marking BLOCKED; diagnostic content below is ops's real work, preserved verbatim).\n\nAC-1 (recon): root cause is the mcp-server-side /api/push-news endpoint, NOT a VPS-side fetch/process defect. VPS log evidence (/var/log/vn-news-fetch.log): cycle 2376 completed normally at 19:38:29Z; cycle 2377 started 19:53:29Z but never completed; cycles 2378-2416 produced no log output (hung/timed out silently); cycle 2417 recovered at 06:39:57Z, pushed the 50-item backlog successfully (http=200). VPS fetch logic and buffering both worked correctly throughout — the remote push endpoint was unresponsive for ~11h and self-recovered.\n\nAC-2 (detection latency): NO detector defect. Tier-2 auditor runs on a 4h cadence (00/04/08/12/16/20 UTC) and correctly did not fire overnight — expected behavior, not a gap. Tier-1 (30-min cadence, runs overnight too) detected the stale data and fired B-01 at 06:41:27Z, ~1 min before the transport self-recovered — working as designed given a threshold gate, not a missed check.\n\nOPEN — new recommendation from this recon, needs disposition: harden mcp-server's push-endpoint (connection pooling / retry / independent health probe) so an 11h silent hang can't recur undetected in real time. Router flagged next_agent=po to decide whether this becomes its own FIX row or folds into an existing mcp-server hardening track — do not close this row on the recon alone.",
-        "files": [],
-        "reference_only_files": [
-          "docs/data/system-map.json",
-          "docs/agents/system-auditor/flow/main.md"
-        ],
-        "updated_at": "2026-08-06T17:39:34Z",
-        "router_restore_note": "Restored by router 2026-08-06T08:51Z — ops's commit edeba6cd9 deleted this row from backlog[] instead of updating it to BLOCKED (confirmed via git show --stat/full-diff, no re-addition anywhere in the commit or the live file). This is the only textual/status change from the original row; ops's diagnostic findings are folded into status_note above, unaltered in substance.",
-        "po_disposition_20260806T1732": "PO DISPOSITION of the status_note OPEN item ('harden mcp-server push-endpoint ... / independent health probe ... own FIX row or fold?'). SPLIT, and this row is UNBLOCKED to carry half (a) only. (a) STAYS HERE — harden the mcp-server-side /api/push-news endpoint so an ~11h silent hang cannot recur: this is a code fix in apps/mcp-server/, so next_agent flips po -> dev-mcp-server and zone cross-service/ -> apps/mcp-server/ (ops's AC-1 recon already pinned the endpoint as root cause; recon is COMPLETE, nothing further is owed by ops or PO). (b) MOVES OUT — 'independent health probe so it cannot recur UNDETECTED in real time' is a detector-plane gap, not an mcp-server code change, and it is the SAME gap that let kinh-dich sit dark 6 days (telegram 4461 OPEN item: 'no detector fired for 6 days ... needs an active read-path probe, not a DB-file probe'). Folding (b) into this mcp-server row would bury a cross-service detector defect inside a single-service hardening task. (b) is now tracked as FIX-ACTIVE-READPATH-LIVENESS-PROBE-NO-DETECTOR (minted this tick). NOTE ops's AC-2 finding is accepted verbatim and NOT reopened: Tier-1/Tier-2 auditor cadence behaved as designed here; the gap is the ABSENCE of an active probe class, not a mis-tuned existing one.",
-        "po_ac_scope_20260806T1732": "AC for this row, post-split: (AC-1) reproduce or characterise the /api/push-news unresponsiveness mode from the 2026-08-05T19:38Z->2026-08-06T06:42Z window (VPS cycles 2377-2416 hung with no log output, cycle 2417 recovered with items_count=50). (AC-2) add server-side bounded timeout + connection handling so a hung push returns/errors rather than hanging the caller for hours. (AC-3) RAW-verify with a fault-injected slow/hung backend that the endpoint now fails fast instead of hanging. Detection/alerting is explicitly OUT of scope — owned by FIX-ACTIVE-READPATH-LIVENESS-PROBE-NO-DETECTOR.",
-        "po_triaged_by": "po (dev-team Step 1 triage 2026-08-06)"
-      },
-      {
         "id": "FIX-DEVTEAM-REVIEW-LANE-QA-DRAIN",
         "type": "FIX",
         "status": "BLOCKED",
@@ -14803,24 +14779,6 @@
         "po_manual_dispatch_note": "po (manual-dispatch-sweep) surfaced READY-XOR-SUP-OR-PLANONLY candidate — folding into this tick's BATCH. Selected over the [rank,idx] head (TE-T03, equal rank P1, reflag=true) on PO judgment: idx is an arbitrary array-position tiebreak, and this row took a fresh 2nd live occurrence THIS tick (realized peer data loss in qa.md), which main.md's own priority order puts first ('recurring bugs -> UNBLOCK -> FIX -> ...'). Deviation recorded deliberately, not accidental."
       },
       {
-        "id": "FIX-PO-MINT-ACTUATOR-REGRESSION-VERIFIER-SCRIPT",
-        "type": "FIX",
-        "title": "Author scripts/audits/po-mint-orchapply-actuator-verify.sh per the spec inline in docs/agents/po/flow/main.md § Regression verifier",
-        "desc": "Follow-up from FIX-PO-BATCH-MINT-NO-WRITE-ACTUATOR (commit 3ce726a6e) — agent-father wired PO's BATCH-mint sub-flows (sprint-kickoff/channel-audit/market-group/telegram-reports) to a real orch-apply.sh actuator and widened its commit-mutex to include orch-state.json, but the regression-verifier script itself is out of agent-father's commit_zone (scripts/). Spec is already written inline in main.md, ready to implement.",
-        "priority": "P2",
-        "size": "S",
-        "zone": "cross-service/",
-        "next_agent": "developer",
-        "status": "READY",
-        "created_at": "2026-08-05T09:35:52Z",
-        "created_by": "dev-team (router)",
-        "updated_at": "2026-08-06T16:43:21Z",
-        "updated_by": "dev-team (router)",
-        "promoted_at": "2026-08-06T16:43:20Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)"
-      },
-      {
         "id": "FIX-JANITOR-HEALTHRECHECK-IDEMPOTENCY-GUARD-MISSES-PROCESSED-DIR",
         "type": "FIX",
         "title": "memory-prune-sweep.sh idempotency guard for janitor-health-recheck-writer-retired-*.json only scans docs/signals/, never docs/signals/processed/ — re-fires every 6h forever",
@@ -14880,7 +14838,36 @@
         "zone": "apps/mcp-server/",
         "status": "READY",
         "created_at": "2026-08-06T00:00:00Z",
-        "note": "UNBLOCKED this tick. Detection split to FIX-ACTIVE-READPATH-LIVENESS-PROBE-NO-DETECTOR."
+        "note": "UNBLOCKED this tick. Detection split to FIX-ACTIVE-READPATH-LIVENESS-PROBE-NO-DETECTOR.",
+        "updated_at": "2026-08-06T17:58:36Z"
+      },
+      {
+        "id": "FIX-NEWSVPS-OVERNIGHT-PUSH-OUTAGE-663M-SILENT",
+        "title": "news-vps push transport went silent 663 min overnight (2026-08-05T19:38:29Z -> 2026-08-06T06:42:25Z), self-recovered with a 50-item backlog flush; alarm (B-01) fired 11h into the outage, ~1 min before recovery",
+        "owner": "dev-mcp-server",
+        "status": "READY",
+        "type": "FIX",
+        "priority": "P1",
+        "zone": "apps/mcp-server/",
+        "next_agent": "dev-mcp-server",
+        "created_at": "2026-08-06T08:24:43Z",
+        "created_by": "po (dev-team Step 1 triage, cron:dev-team:2026-08-06T08:07Z, session 24817246-8a3f-4511-95f7-1b4385797bee)",
+        "origin_signal_id": "telegram-report-4474",
+        "po_live_evidence_20260806T0824": "B-01 CRITICAL (telegram id 4474, 2026-08-06T06:41:27Z, 'news source stale 790m') is a TRUE POSITIVE and is NOT the known FIX-VPS-NEWS-STALE-FALSEPOS / B-11 two-layer class. PO verified DIRECTLY against the live host bind-mount DB (sqlite3 'file:./data/live/market.db?immutable=1', vps_push_log): service='news' pushed continuously every ~15-30 min through 2026-08-05 19:38:29, then ZERO pushes until 2026-08-06 06:42:25 -- an 11h04m (663 min) hard gap. The recovery push carried items_count=50 (vs the normal 1/2/3/10/15 per push), i.e. the VPS buffered ~50 articles during the outage and flushed them on reconnect: the source kept producing, the TRANSPORT stopped. CONTROL (this is what rules out 'expected overnight quiet'): a LAG() gap scan over the whole service='news' series since 2026-07-29 returns exactly TWO gaps >120 min in 8 days -- 288 min on 2026-07-30 03:48-08:37, and this 663 min one. Every other night has NO gap over 2 hours; news pushes round the clock. This gap is 2.3x the next-worst in 8 days and unique in kind. Peer control same window: service='prices' and service='foreign-flow' both pushed normally (last 2026-08-06 08:21), so this is news-route-specific, not a whole-VPS or whole-host outage.",
+        "status_note": "OPS RECON COMPLETE (2026-08-06T10:48Z, commit edeba6cd9 — router restored this row after ops's own commit accidentally deleted it instead of marking BLOCKED; diagnostic content below is ops's real work, preserved verbatim).\n\nAC-1 (recon): root cause is the mcp-server-side /api/push-news endpoint, NOT a VPS-side fetch/process defect. VPS log evidence (/var/log/vn-news-fetch.log): cycle 2376 completed normally at 19:38:29Z; cycle 2377 started 19:53:29Z but never completed; cycles 2378-2416 produced no log output (hung/timed out silently); cycle 2417 recovered at 06:39:57Z, pushed the 50-item backlog successfully (http=200). VPS fetch logic and buffering both worked correctly throughout — the remote push endpoint was unresponsive for ~11h and self-recovered.\n\nAC-2 (detection latency): NO detector defect. Tier-2 auditor runs on a 4h cadence (00/04/08/12/16/20 UTC) and correctly did not fire overnight — expected behavior, not a gap. Tier-1 (30-min cadence, runs overnight too) detected the stale data and fired B-01 at 06:41:27Z, ~1 min before the transport self-recovered — working as designed given a threshold gate, not a missed check.\n\nOPEN — new recommendation from this recon, needs disposition: harden mcp-server's push-endpoint (connection pooling / retry / independent health probe) so an 11h silent hang can't recur undetected in real time. Router flagged next_agent=po to decide whether this becomes its own FIX row or folds into an existing mcp-server hardening track — do not close this row on the recon alone.",
+        "files": [],
+        "reference_only_files": [
+          "docs/data/system-map.json",
+          "docs/agents/system-auditor/flow/main.md"
+        ],
+        "updated_at": "2026-08-06T17:39:34Z",
+        "router_restore_note": "Restored by router 2026-08-06T08:51Z — ops's commit edeba6cd9 deleted this row from backlog[] instead of updating it to BLOCKED (confirmed via git show --stat/full-diff, no re-addition anywhere in the commit or the live file). This is the only textual/status change from the original row; ops's diagnostic findings are folded into status_note above, unaltered in substance.",
+        "po_disposition_20260806T1732": "PO DISPOSITION of the status_note OPEN item ('harden mcp-server push-endpoint ... / independent health probe ... own FIX row or fold?'). SPLIT, and this row is UNBLOCKED to carry half (a) only. (a) STAYS HERE — harden the mcp-server-side /api/push-news endpoint so an ~11h silent hang cannot recur: this is a code fix in apps/mcp-server/, so next_agent flips po -> dev-mcp-server and zone cross-service/ -> apps/mcp-server/ (ops's AC-1 recon already pinned the endpoint as root cause; recon is COMPLETE, nothing further is owed by ops or PO). (b) MOVES OUT — 'independent health probe so it cannot recur UNDETECTED in real time' is a detector-plane gap, not an mcp-server code change, and it is the SAME gap that let kinh-dich sit dark 6 days (telegram 4461 OPEN item: 'no detector fired for 6 days ... needs an active read-path probe, not a DB-file probe'). Folding (b) into this mcp-server row would bury a cross-service detector defect inside a single-service hardening task. (b) is now tracked as FIX-ACTIVE-READPATH-LIVENESS-PROBE-NO-DETECTOR (minted this tick). NOTE ops's AC-2 finding is accepted verbatim and NOT reopened: Tier-1/Tier-2 auditor cadence behaved as designed here; the gap is the ABSENCE of an active probe class, not a mis-tuned existing one.",
+        "po_ac_scope_20260806T1732": "AC for this row, post-split: (AC-1) reproduce or characterise the /api/push-news unresponsiveness mode from the 2026-08-05T19:38Z->2026-08-06T06:42Z window (VPS cycles 2377-2416 hung with no log output, cycle 2417 recovered with items_count=50). (AC-2) add server-side bounded timeout + connection handling so a hung push returns/errors rather than hanging the caller for hours. (AC-3) RAW-verify with a fault-injected slow/hung backend that the endpoint now fails fast instead of hanging. Detection/alerting is explicitly OUT of scope — owned by FIX-ACTIVE-READPATH-LIVENESS-PROBE-NO-DETECTOR.",
+        "po_triaged_by": "po (dev-team Step 1 triage 2026-08-06)",
+        "promoted_at": "2026-08-06T17:58:35Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)"
       }
     ],
     "review": [
@@ -21914,9 +21901,30 @@
         }
       ]
     },
-    "last_triaged_at": "2026-08-06T17:39:33Z",
-    "last_triaged_by": "po (dev-team Step 1 triage)",
-    "in_progress": []
+    "last_triaged_at": "2026-08-06T17:58:35Z",
+    "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
+    "in_progress": [
+      {
+        "id": "FIX-PO-MINT-ACTUATOR-REGRESSION-VERIFIER-SCRIPT",
+        "type": "FIX",
+        "title": "Author scripts/audits/po-mint-orchapply-actuator-verify.sh per the spec inline in docs/agents/po/flow/main.md § Regression verifier",
+        "desc": "Follow-up from FIX-PO-BATCH-MINT-NO-WRITE-ACTUATOR (commit 3ce726a6e) — agent-father wired PO's BATCH-mint sub-flows (sprint-kickoff/channel-audit/market-group/telegram-reports) to a real orch-apply.sh actuator and widened its commit-mutex to include orch-state.json, but the regression-verifier script itself is out of agent-father's commit_zone (scripts/). Spec is already written inline in main.md, ready to implement.",
+        "priority": "P2",
+        "size": "S",
+        "zone": "cross-service/",
+        "next_agent": "developer",
+        "status": "IN_PROGRESS",
+        "created_at": "2026-08-05T09:35:52Z",
+        "created_by": "dev-team (router)",
+        "updated_at": "2026-08-06T17:58:40Z",
+        "updated_by": "dev-team (router)",
+        "promoted_at": "2026-08-06T16:43:20Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
+        "claimed_at": "2026-08-06T17:58:40Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)"
+      }
+    ]
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
