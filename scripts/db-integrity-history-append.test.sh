@@ -40,12 +40,25 @@ trap cleanup EXIT
 HIST_FILE="$TMPDIR_TEST/db-integrity-history.json"
 ORCH_FILE="$TMPDIR_TEST/orch-state.json"
 LEDGER_FILE="$TMPDIR_TEST/auditor-dedup-ledger.json"
+# FIX-EMITSIGNAL-BUGTELEGRAM-NO-TEST-SINK-GATE (AC-1/AC-2/AC-3): this suite
+# subprocess-invokes the REAL scripts/emit-audit-signal.sh via
+# db-integrity-history-append.sh's `bash "$EMIT_SH" --e3-only ...` call — a
+# bare subprocess, never sourced, so the mcp_call()-function-redefinition
+# testability hook (used by scripts/emit-audit-signal.test.sh) never applies
+# here. Before this override existed, this file's own T4 (deliberate E-3
+# write-failure negative control, below) fired 14 real CRITICAL-shaped
+# BUG-channel Telegram alerts off local test runs — confirmed live 2026-08-06
+# (read_telegram_reports ids 4497-4510). EMIT_SIGNAL_TELEGRAM_SINK redirects
+# both _send_bug_telegram and _send_orphan_bug_telegram to this file instead
+# of the live transport; mcp_call is never invoked on that path.
+TELEGRAM_SINK_FILE="$TMPDIR_TEST/telegram-sink.log"
 
 export DB_INTEGRITY_HISTORY="$HIST_FILE"
 export DB_INTEGRITY_DEDUP_ORCH_STATE_FILE="$ORCH_FILE"
 export EMIT_SIGNAL_ORCH_STATE_FILE="$ORCH_FILE"
 export ORCH_APPLY_LIVE_FILE_OVERRIDE="$ORCH_FILE"
 export EMIT_SIGNAL_LEDGER_FILE="$LEDGER_FILE"
+export EMIT_SIGNAL_TELEGRAM_SINK="$TELEGRAM_SINK_FILE"
 
 # real scripts/orch-apply.sh runs the FULL Zod schema validator
 # (apps/mcp-server/src/infrastructure/orchStateSchema.ts) — head (required),
@@ -70,6 +83,7 @@ reset_case() {
   printf '[]\n' > "$HIST_FILE"
   printf '%s' "$MINIMAL_BASE" > "$ORCH_FILE"
   rm -f "$LEDGER_FILE"
+  rm -f "$TELEGRAM_SINK_FILE"
 }
 
 write_orch_fixture() {
@@ -150,6 +164,17 @@ check "T4 write-failure exit=4" "$([ "$RC4" -eq 4 ] && echo true || echo false)"
 check "T4 write-failure signal_id is WRITE-FAILED" "$(bash -c "jq -c '.[-1].findings[0]' '$HIST_FILE'" | jq -r .signal_id | grep -q '^WRITE-FAILED$' && echo true || echo false)"
 check "T4 write-failure history STILL appended (never lost)" "$([ "$(history_len)" -eq $((BEFORE_HIST4 + 1)) ] && echo true || echo false)"
 check "T4 write-failure OUTPUT signal_write_failed=true" "$(echo "$OUT4" | jq -e '.signal_write_failed==true' >/dev/null 2>&1 && echo true || echo false)"
+# FIX-EMITSIGNAL-BUGTELEGRAM-NO-TEST-SINK-GATE (AC-3): this is the ONE path
+# in this suite that reaches _send_orphan_bug_telegram (db-integrity-history-
+# append.sh always calls emit-audit-signal.sh with --e3-only, which skips
+# E-1/E-2 entirely — the anti-false-green orphan send is the sole Telegram-
+# shaped side effect this suite can trigger). EMIT_SIGNAL_TELEGRAM_SINK
+# (exported above, inherited by the `bash -c` env-prefixed subshell) must
+# have redirected it to the sink file — proving zero live send_telegram
+# calls were made, where before this fix each run of this exact assertion
+# fired a real CRITICAL-shaped alert into the live BUG channel.
+check "T4 write-failure Telegram redirected to sink file, not the live channel" "$(grep -q 'E-3 write/read-back failure' "$TELEGRAM_SINK_FILE" 2>/dev/null && echo true || echo false)"
+check "T4 write-failure sink file has exactly 1 line (single fire, no duplicate/live-channel leak)" "$([ "$(wc -l < "$TELEGRAM_SINK_FILE" 2>/dev/null | tr -d ' ')" = "1" ] && echo true || echo false)"
 
 # ── T5: malformed stdin — pre-existing contract unchanged (exit 2). ────────
 reset_case

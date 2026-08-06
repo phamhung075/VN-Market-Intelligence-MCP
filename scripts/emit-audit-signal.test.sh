@@ -136,6 +136,11 @@ reset_case() {
   _orch_apply_invoke() { bash "$ORCH_APPLY_SH"; }
   # restore default (real) _e3_read_candidate in case a prior case stubbed it
   _e3_read_candidate() { jq --argjson row "$1" '.signal_queue.rows += [$row]' "$ORCH_STATE_FILE"; }
+  # FIX-EMITSIGNAL-BUGTELEGRAM-NO-TEST-SINK-GATE: restore the live-send
+  # default in case a prior case set TELEGRAM_SINK directly (this script-
+  # global is read once at source time from EMIT_SIGNAL_TELEGRAM_SINK, not
+  # re-read per call — tests toggle it by assigning the bash var directly).
+  TELEGRAM_SINK=""
 }
 
 row_present() {
@@ -537,6 +542,72 @@ check "T26 write-failure-rc3 marker ABORT e3-write-failed rc=3" "$(printf '%s' "
 check "T26 write-failure-rc3 NO retry (invoked exactly once)" "$([ "$WRITE_FAIL_RC3_CALLS" -eq 1 ] && echo true || echo false)"
 check "T26 write-failure-rc3 row never appended (BEFORE==AFTER)" "$([ "$BEFORE_COUNT26" -eq "$AFTER_COUNT26" ] && echo true || echo false)"
 check "T26 write-failure-rc3 triggers non-dedup BUG telegram" "$(grep -q '^CALL: send_telegram' "$CALL_LOG" && echo true || echo false)"
+
+# ── T27-T31: FIX-EMITSIGNAL-BUGTELEGRAM-NO-TEST-SINK-GATE — EMIT_SIGNAL_
+# TELEGRAM_SINK gates BOTH _send_bug_telegram (E-2, dedup-gated) AND
+# _send_orphan_bug_telegram (E-3 anti-false-green, non-dedup-gated) BEFORE
+# mcp_call is ever reached. T1/T7/T10 above already establish the default
+# (TELEGRAM_SINK unset) still calls mcp_call live — those are this block's
+# negative control, not repeated here. ──────────────────────────────────────
+
+# T27: sink=file, E-2 fresh-key dedup path (mirrors T1's call shape) — sink
+# file receives the message, mcp_call "send_telegram" is NEVER invoked, and
+# the dedup ledger is STILL updated (sink only redirects the Telegram send,
+# no other side effect is touched).
+reset_case
+SINK_FILE_T27="$TMPDIR_TEST/telegram-sink-t27.log"
+TELEGRAM_SINK="$SINK_FILE_T27"
+OUT27=$(run_emit_signal --check-id B-16 --category-type data_stale --severity WARN \
+  --summary "sink-gated E-2 probe" \
+  --detail-json '{"dedup_key":"data_stale:T27:B-16"}')
+RC27=$?
+check "T27 sink=file E-2 exit=0" "$([ "$RC27" -eq 0 ] && echo true || echo false)"
+check "T27 sink=file E-2 marker still OK (sink is Telegram-only, not a fail-loud gate)" "$(printf '%s' "$OUT27" | grep -q '^\[emit-signal\] OK dedup_key=' && echo true || echo false)"
+check "T27 sink=file E-2 mcp_call send_telegram NEVER invoked" "$([ "$(call_count_for send_telegram)" -eq 0 ] && echo true || echo false)"
+check "T27 sink=file E-2 sink file received the message" "$(grep -q 'sink-gated E-2 probe' "$SINK_FILE_T27" && echo true || echo false)"
+check "T27 sink=file E-2 dedup ledger STILL updated (only Telegram redirected)" "$(jq -e '."data_stale:T27:B-16".ts' "$SCRATCH_LEDGER" >/dev/null 2>&1 && echo true || echo false)"
+
+# T28: sink=file, E-3 orphan-bug anti-false-green path (mirrors T7's
+# readback-failure shape) — the ONE path that used to bypass every flag
+# (--e3-only/--no-telegram) and fire unconditionally; must now also honour
+# the sink.
+reset_case
+SINK_FILE_T28="$TMPDIR_TEST/telegram-sink-t28.log"
+TELEGRAM_SINK="$SINK_FILE_T28"
+_orch_apply_invoke() { cat >/dev/null; return 0; }  # discard candidate, never persist it (readback miss)
+OUT28=$(run_emit_signal --check-id C-09 --category-type db_integrity_breach --severity HIGH \
+  --summary "sink-gated E-3 orphan probe" --detail-json '{"dedup_key":"db_integrity_breach:t:C-09"}')
+RC28=$?
+check "T28 sink=file E-3 orphan non-zero exit (unchanged ABORT contract)" "$([ "$RC28" -ne 0 ] && echo true || echo false)"
+check "T28 sink=file E-3 orphan marker ABORT e3-readback-failed" "$(printf '%s' "$OUT28" | grep -q '^\[emit-signal\] ABORT e3-readback-failed' && echo true || echo false)"
+check "T28 sink=file E-3 orphan mcp_call send_telegram NEVER invoked" "$([ "$(call_count_for send_telegram)" -eq 0 ] && echo true || echo false)"
+check "T28 sink=file E-3 orphan sink file received the anti-false-green message" "$(grep -q 'E-3 write/read-back failure' "$SINK_FILE_T28" && echo true || echo false)"
+
+# T29: sink=/dev/null, E-3 cas-exhausted path (mirrors T10) — discard branch,
+# no file to check, only asserts mcp_call is never invoked.
+reset_case
+TELEGRAM_SINK="/dev/null"
+_orch_apply_invoke() { cat >/dev/null; return 2; }
+OUT29=$(run_emit_signal --check-id A-22 --category-type signal_feedback --severity WARN \
+  --summary "sink=/dev/null cas exhausted probe" --detail-json '{"dedup_key":"microservice_degraded:x:A-22"}')
+RC29=$?
+check "T29 sink=/dev/null cas-exhausted non-zero exit (unchanged)" "$([ "$RC29" -ne 0 ] && echo true || echo false)"
+check "T29 sink=/dev/null cas-exhausted marker e3-cas-exhausted" "$(printf '%s' "$OUT29" | grep -q '^\[emit-signal\] ABORT e3-cas-exhausted' && echo true || echo false)"
+check "T29 sink=/dev/null cas-exhausted mcp_call send_telegram NEVER invoked" "$([ "$(call_count_for send_telegram)" -eq 0 ] && echo true || echo false)"
+
+# T30/T31: origin discriminator (PO AC-N, po_occurrence_20260806T1415Z) — every
+# sink-redirected message is self-classifying: carries the invoking script,
+# PID, from-agent and sink value in the message body, so a future occurrence
+# never again needs source-level forensics (mtimes/fixture-greps/cadence
+# math) to tell a real fire apart from a test artifact.
+row_origin_ok() {
+  local file="$1"
+  grep -q 'origin=emit-audit-signal\.sh pid=[0-9][0-9]*' "$file" \
+    && grep -q 'sink=' "$file" \
+    && grep -q 'from=' "$file"
+}
+check "T30 origin discriminator present on E-2 sink message (T27's file)" "$(row_origin_ok "$SINK_FILE_T27" && echo true || echo false)"
+check "T31 origin discriminator present on E-3 orphan sink message (T28's file), sink value is the redirected path not literal 'live'" "$(grep -q "sink=${SINK_FILE_T28}" "$SINK_FILE_T28" && echo true || echo false)"
 
 # ── Summary ──────────────────────────────────────────────────────────────────
 echo ""

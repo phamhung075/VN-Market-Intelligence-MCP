@@ -151,6 +151,36 @@
 #                                 CAS-guard path). Point BOTH envs at the same
 #                                 scratch fixture for a real, non-mocked
 #                                 integration test — never the live file.
+#   EMIT_SIGNAL_TELEGRAM_SINK     default: unset -> send_telegram fires for
+#                                 real via mcp_call, exactly as before this
+#                                 override existed. Set to a file path to
+#                                 redirect BOTH BUG-channel sends
+#                                 (_send_bug_telegram's dedup-gated E-2 AND
+#                                 _send_orphan_bug_telegram's non-dedup-gated
+#                                 anti-false-green send, see _telegram_send()
+#                                 below) to an append-only file instead —
+#                                 mcp_call is never invoked on this path. Set
+#                                 to "/dev/null" to discard silently. Same
+#                                 file-redirect / live-by-default / opt-in-
+#                                 override contract as EMIT_SIGNAL_LEDGER_FILE
+#                                 / EMIT_SIGNAL_ORCH_STATE_FILE above — reads
+#                                 as a plain env var at script top-level, so
+#                                 (unlike the mcp_call()/_orch_apply_invoke()
+#                                 function-redefinition hooks below, which only
+#                                 take effect when this script is SOURCED) it
+#                                 works identically whether this script is
+#                                 sourced OR run as a bare subprocess (`bash
+#                                 emit-audit-signal.sh ...`). FIX-EMITSIGNAL-
+#                                 BUGTELEGRAM-NO-TEST-SINK-GATE: closes the
+#                                 exact gap that let a subprocess test run
+#                                 (scripts/db-integrity-history-append.test.sh,
+#                                 which invokes this script as `bash
+#                                 emit-audit-signal.sh --e3-only ...`, never
+#                                 sourced) fire 14 real CRITICAL-shaped BUG-
+#                                 channel Telegram alerts live off one local
+#                                 test run — every OTHER side effect in this
+#                                 script already had a file-redirect override,
+#                                 the Telegram send did not.
 #   _orch_apply_invoke()          a plain bash function (INFRASTRUCTURE
 #                                 section below) — tests may redefine it
 #                                 after `source`-ing this script to script a
@@ -198,6 +228,7 @@ source "$SCRIPT_DIR/agents-flow/mcp-call.sh"
 LEDGER_FILE="${EMIT_SIGNAL_LEDGER_FILE:-$REPO_ROOT/docs/data/auditor-dedup-ledger.json}"
 ORCH_STATE_FILE="${EMIT_SIGNAL_ORCH_STATE_FILE:-$REPO_ROOT/docs/data/orch/orch-state.json}"
 ORCH_APPLY_SH="$REPO_ROOT/scripts/orch-apply.sh"
+TELEGRAM_SINK="${EMIT_SIGNAL_TELEGRAM_SINK:-}"
 
 SEVEN_DAYS_SECONDS=$((7 * 24 * 3600))
 
@@ -353,24 +384,48 @@ _run_e1() {
   return 0
 }
 
-# BUG-channel Telegram used by both the dedup-gated E-2 send AND the
-# non-dedup-gated anti-false-green sends (FR-4/FR-5). Never fail loud on
-# send_telegram failure itself — Telegram is best-effort; only E-1/E-3 are
-# the fail-loud contract (Hard Constraint 4/5).
-_send_bug_telegram() {
-  local msg args
-  msg="[system-auditor] ${SEVERITY}: ${SUMMARY} (check ${CHECK_ID})"
-  args=$(jq -n --arg channel "bug" --arg message "$msg" '{channel:$channel, message:$message}')
+# Single seam for BOTH BUG-channel Telegram sends below (FIX-EMITSIGNAL-
+# BUGTELEGRAM-NO-TEST-SINK-GATE). $TELEGRAM_SINK unset (default) -> unchanged
+# live send via mcp_call. $TELEGRAM_SINK set -> the message is appended to
+# that file (or discarded if "/dev/null") and mcp_call is NEVER invoked — see
+# EMIT_SIGNAL_TELEGRAM_SINK in the TESTABILITY HOOKS header comment above.
+#
+# Every message carries an origin discriminator (PO-added AC-N,
+# po_occurrence_20260806T1415Z on this task's board row): silencing the send
+# in test mode is necessary but not sufficient — a REAL production fire and a
+# test artifact that leaked past a missing/misconfigured sink must both be
+# self-classifying from the message body alone, without a triager having to
+# re-derive source-level forensics (mtimes, fixture greps, cadence math) per
+# occurrence the way this defect originally required.
+_telegram_send() {
+  local msg="$1" origin full_msg args
+  origin="origin=emit-audit-signal.sh pid=$$ from=${FROM_AGENT:-unknown} sink=${TELEGRAM_SINK:-live}"
+  full_msg="${msg} (${origin})"
+
+  if [ -n "$TELEGRAM_SINK" ]; then
+    [ "$TELEGRAM_SINK" != "/dev/null" ] && printf '%s\n' "$full_msg" >> "$TELEGRAM_SINK"
+    return 0
+  fi
+
+  args=$(jq -n --arg channel "bug" --arg message "$full_msg" '{channel:$channel, message:$message}')
   mcp_call "send_telegram" "$args" >/dev/null 2>&1
+}
+
+# BUG-channel Telegram used for the dedup-gated E-2 send (FR-4/FR-5). Never
+# fail loud on send_telegram failure itself — Telegram is best-effort; only
+# E-1/E-3 are the fail-loud contract (Hard Constraint 4/5).
+_send_bug_telegram() {
+  local msg
+  msg="[system-auditor] ${SEVERITY}: ${SUMMARY} (check ${CHECK_ID})"
+  _telegram_send "$msg"
 }
 
 # Anti-false-green: fires on E-3 write/read-back failure, BYPASSING the FR-4
 # dedup gate entirely — an orphan-key bug is never itself dedup-suppressed.
 _send_orphan_bug_telegram() {
-  local detail="$1" msg args
+  local detail="$1" msg
   msg="[emit-signal] BUG: E-3 write/read-back failure ${detail} (check_id=${CHECK_ID})"
-  args=$(jq -n --arg channel "bug" --arg message "$msg" '{channel:$channel, message:$message}')
-  mcp_call "send_telegram" "$args" >/dev/null 2>&1
+  _telegram_send "$msg"
 }
 
 # FR-4 + ARCH-RATIFY-2: dedup-gates Telegram only. Sets globals DEDUP_OUTCOME
