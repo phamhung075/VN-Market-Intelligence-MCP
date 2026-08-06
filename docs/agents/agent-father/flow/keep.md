@@ -1,4 +1,4 @@
-<!-- size-justification: 145L — atomic maintenance flow with inline 15-check audit table + 5-check sweep matrix; splitting individual check rows yields no token benefit. CADRAT-3 2026-08-04: added Pre-Check gate (git diff --name-only HEAD~3..HEAD, ~10L) before Steps 1-2 — skips the orphan+roster sweep on cycles with zero .claude/agents/*.md or docs/agents/*/flow/*.md changes, mirroring claude-manager-helper/flow/main.md's precedent; Steps 3-5 stay reachable and run with empty scan-orphans output. CHORE-TEAM-TOOL-RECHECK-LOCAL-CRON 2026-08-06 (+4L): new Step 5b dispatches to `flow/team-tool-recheck.md` (own artifact family, `docs/agent-memory/health/team-tool-recheck-*.md`) — re-establishes the dead cloud-RemoteTrigger writer's static, gateway-free subset on this file's existing daily cron cadence; runs unconditionally, independent of the Pre-Check gate above. -->
+<!-- size-justification: 152L — atomic maintenance flow with inline 15-check audit table + 5-check sweep matrix; splitting individual check rows yields no token benefit. CADRAT-3 2026-08-04: added Pre-Check gate (git diff --name-only HEAD~3..HEAD, ~10L) before Steps 1-2 — skips the orphan+roster sweep on cycles with zero .claude/agents/*.md or docs/agents/*/flow/*.md changes, mirroring claude-manager-helper/flow/main.md's precedent; Steps 3-5 stay reachable and run with empty scan-orphans output. CHORE-TEAM-TOOL-RECHECK-LOCAL-CRON 2026-08-06 (+4L): new Step 5b dispatches to `flow/team-tool-recheck.md` (own artifact family, `docs/agent-memory/health/team-tool-recheck-*.md`) — re-establishes the dead cloud-RemoteTrigger writer's static, gateway-free subset on this file's existing daily cron cadence; runs unconditionally, independent of the Pre-Check gate above. Doc self-heal 2026-08-06T13:18Z keep cycle (+7L): the "Commit (mutex-guarded)" step prescribed `task_claim` via `mcp__gateway__call_tool`, a tool agent-father's own grant (`Read, Edit, Write, Glob, Grep, Bash`) does not include — confirmed live, call errored "No such tool available". Added a documented direct-pathspec-commit fallback (same `INV-GATEWAY-1` precedent commit-mutex/SKILL.md already carves out for gateway-less specialists) so this step matches what actually happens instead of prescribing an unreachable protocol. -->
 # Agent Father — Keep (Maintenance) Flow — Thin Dispatcher
 
 **Tools:** `docs/agents/tools/package/agent-father.md`
@@ -109,6 +109,13 @@ Writes `docs/agent-memory/health/team-tool-recheck-<date>-<time>.md` (own artifa
 git add docs/agent-memory/notebooks/agent-father.md
 git commit -m "chore(memory/agent-father): notebook YYYY-MM-DD" -- docs/agent-memory/notebooks/agent-father.md
 ```
+**Gateway-less exception (confirmed live 2026-08-06):** `.claude/agents/agent-father.md`'s tool
+grant is `Read, Edit, Write, Glob, Grep, Bash` — no `mcp__gateway__call_tool` binding, so
+`task_claim`/`task_release` above are unreachable (same gap `team-tool-recheck.md` already names
+for its own live-probe subset). Fall back to a direct pathspec-scoped commit — no `task_claim`
+wrapper, no bare/`-A` add — same `git add <own_paths>` → verify staged paths → `git commit --
+<own_paths>` sequence, just without the lock. Same precedent as `commit-mutex/SKILL.md`'s own
+`INV-GATEWAY-1` note ("specialists commit directly" for agents that lack the gateway binding).
 
 **Notebook write** → skill: `.claude/skills/notebook-write/SKILL.md`
 
