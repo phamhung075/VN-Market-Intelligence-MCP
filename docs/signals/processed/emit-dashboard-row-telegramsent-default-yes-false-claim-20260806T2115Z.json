@@ -27,5 +27,11 @@
     "impact": "DASHBOARD.md is meant to be a human-readable operational record; anyone reading it believes a human/on-call got paged for every dedup-skipped recurrence of this signal, when in fact only the first occurrence paged. Misleads incident-response expectations and could mask actual paging gaps on other checks that share this same script.",
     "requested_action": "fix scripts/emit-dashboard-row.sh: either flip the default to telegram_sent=\"no\" (safer default, matching the majority dedup-skip case) and require callers to explicitly pass --telegram-sent yes when a real alert fires, OR require all callers to explicitly pass the flag (fail loud if omitted). Also worth a broader sweep of DASHBOARD.md for other check_ids that may carry the same false claim from other callers of this script.",
     "occurrence_note": "2 confirmed instances this session (c67, c71), same script default, same false claim shape -- crosses recurring-bug 2+ threshold on first investigation. Not yet tracked in memory under any existing feedback file (new finding, not a re-litigation of an owned decision)."
+  },
+  "_processed": {
+    "fingerprint": "8b7155c4a63278f79a4d24cac7222de302536cf6ae55e8d60f9c96065b92886e",
+    "processedAt": "2026-08-06T21:20:55Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
   }
 }
