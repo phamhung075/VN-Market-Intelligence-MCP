@@ -13604,6 +13604,43 @@
         "claimed_at": "2026-08-06T20:10:42Z",
         "claimed_by": "dev-team (review-lane qa-drain)",
         "commit": "0a4010b92 (main fix, +479c62613 follow-up hardening same mechanism, separate task)"
+      },
+      {
+        "id": "ALPHA-S2-SUB5-WATCHDOG-STRETCH",
+        "type": "subtask",
+        "title": "[OPTIONAL STRETCH] WATCHDOG_MANIFEST self-heal entry for intraday5mCompactor (schedulerJobTable.ts)",
+        "status": "DONE_VERIFIED",
+        "priority": "P1",
+        "size": "XS",
+        "zone": "apps/mcp-server/",
+        "owner": "developer",
+        "next_agent": "pm",
+        "sprint": "FLOW-PRICE-ALPHA-LOOP",
+        "parent": "ALPHA-S2-TICK-DOWNSAMPLE-5MIN",
+        "depends": [
+          "ALPHA-S2-SUB2-JOB-CRON"
+        ],
+        "blocks": [],
+        "supervised": false,
+        "created_at": "2026-07-14T21:40:00Z",
+        "created_by": "pm (ALPHA-S2 decomposition)",
+        "note": "OPTIONAL HARDENING (brief § 4): Add entry to schedulerWatchdogJob.ts WATCHDOG_MANIFEST mirroring ohlcv-daily-aggregator/reputationComputeJob/ta-ohlcv-backfill (cadence 300_000ms, thresholdMultiplier: 3, action: 'self-heal'). Defense-in-depth against residual risk (§2: if compactor is down ≥24h, underlying ticks are purged before any cron can rescue). Optional — does not block task closure; may defer to post-launch ops tuning.",
+        "acceptance_criteria": "WATCHDOG entry added to schedulerJobTable.ts; registers intraday5mCompactor with 5-min health cadence",
+        "epic_closed_note": "ALPHA-S2 core epic (SUB1-SUB4) CLOSED done_verified 2026-07-14T23:23:17Z without SUB5. SUB5-WATCHDOG-STRETCH was optional/stretch (depends SUB2, now on trunk); de-gated from the epic close, remains a standalone optional hardening backlog row for PO triage (freshness watchdog on intraday_ohlcv_5m compactor). Not blocking; pick up separately if prioritized.",
+        "promoted_at": "2026-07-28T23:50:56Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
+        "updated_at": "2026-08-06T20:17:23Z",
+        "claimed_at": "2026-08-06T20:10:42Z",
+        "claimed_by": "dev-team (review-lane qa-drain)",
+        "branch": null,
+        "entered_review_at": "2026-07-29T00:13:32Z",
+        "commit": "17a906143",
+        "dev_mcp_server_review_note": "dev-mcp-server COMPLETE (session 64c7c677-0f0f-4cee-a3ce-dba79d70b7ae, commit 17a906143): added intraday5mCompactorJob to schedulerWatchdogJob.ts's WATCHDOG_MANIFEST (cadenceMs=300_000, thresholdMultiplier=3, action='self-heal'), mirroring ohlcv-daily-aggregator/reputationComputeJob/ta-ohlcv-backfill. selfHealFn wired in schedulerJobTable.ts's liveManifest (same composition-root DDD pattern as the 3 existing self-heal jobs, calling jobRunRepo.wrapRun('intraday5mCompactorJob', runIntraday5mCompactor)). CANONICAL_WATCHDOG_JOB_NAMES updated in lockstep for WD-10 manifest-integrity guard. Also added the missing CN-1 tier-1 STATIC_JOB_NAME_MAP pair (cronStatusCompute.ts, intraday5mCompactor -> intraday5mCompactorJob) so /api/cron-status dashboard resolution does not fall through to the cache-unsafe tier-2/3 path -- live-verified end-to-end against a real server boot (PORT=3097, cwd=project root matching prod): job row present, job_name_db=intraday5mCompactorJob, correctly classified STALE against the dev DB's real last-run age.\n\nFixed 3 pre-existing hardcoded manifest-size invariants (25 -> 26) across FIX-CRON-WATCHDOG-COVERAGE-2026-07-22.test.ts / cronStatusHandler.test.ts / cronStatusCompute.test.ts -- an expected, direct consequence of the new entry (confirmed RED before the fix, GREEN after), not scope creep; each prior task's own historical delta claim (e.g. FIX-CRON-WATCHDOG-COVERAGE-2026-07-22's 16->25 AC-4) preserved via an explanatory note rather than rewritten. New dedicated test file ALPHA-S2-SUB5-WATCHDOG-STRETCH.test.ts (4 tests) proves manifest-entry shape, canonical registration, and stale/healthy alert behavior at the 3x/5min threshold.\n\nEvidence: targeted suites (ARCH-CRON-watchdog, FIX-CRON-WATCHDOG-COVERAGE-2026-07-22, ALPHA-S2-SUB5-WATCHDOG-STRETCH, cronStatusHandler, cronStatusCompute, FIX-CRON-SSCCHECKERJOB-DEAD-87D-classfix-registry-invariant, ALPHA-S2-intraday-5m-compactor, ALPHA-S2-FF-intraday-5m-compactor) 90/90 pass, 0 fail. tsc --noEmit clean. gen-project-stats --dry-run: toolCount=184/cronJobCount=88 unchanged (manifest-only change, no new tool/cron registered). Full bun test (608s, 1235 files): 14855 pass/40 skip/57 fail/1 error -- within the standing FIX-MCP-SUITE-HEALTH-BASELINE order-dependent band (56-59 across recent dev-mcp-server cycles this same sprint); the 2 fail details visible in the captured tail are both from unrelated src/_deprecated/1302-technical-indicators.test.ts. Live boot (PORT=3097, cwd=project root): /health toolCount=184, /api/bctc-inspect 200, /dashboards/news-fetch/ 200, /api/cron-status 200 (previously 503 only when boot cwd was wrongly apps/mcp-server -- a pre-existing local-dev-only cwd quirk documented in cronStatusHandler.test.ts's own header comment, unrelated to this change; confirmed by re-testing with the correct project-root cwd matching docker production).\n\nDoc-review: usecases.md (CN-1 tier-1 pair count 16->26) + testing.md (WATCHDOG_MANIFEST job counts + test counts corrected to current live values) -- both directly tied to the application-layer file (cronStatusCompute.ts) this task modified.\n\nNOT pushed by this agent per PUSH-AUTONOMY-1 (chain-mutex-holding session pushes). Decision journal: sprint-<TBD> per decision-journal skill (see notebook entry same session). Ready for qa.",
+        "status_note": "[QA] Review Record (direct-commit verify) 2026-08-06: Verified commit 17a906143 on main ancestry, scope tight (git show --stat matches the review note exactly: schedulerWatchdogJob.ts WATCHDOG_MANIFEST+CANONICAL_WATCHDOG_JOB_NAMES entry, schedulerJobTable.ts selfHealFn wiring, cronStatusCompute.ts CN-1 STATIC_JOB_NAME_MAP pair, 3 updated + 1 new test file, 2 doc files). RAW re-ran myself (not trusted from prose): 8 targeted suites (ALPHA-S2-SUB5-WATCHDOG-STRETCH, FIX-CRON-WATCHDOG-COVERAGE-2026-07-22, cronStatusCompute, cronStatusHandler, FIX-CRON-SSCCHECKERJOB-DEAD-87D-classfix-registry-invariant, ALPHA-S2-intraday-5m-compactor, ALPHA-S2-FF-intraday-5m-compactor, ARCH-CRON-watchdog) 90/90 pass -- matches the cited 90/90 exactly. bun tsc --noEmit clean. mock-guard.sh --files on the 3 touched production files: CAUTION (exit 2) on one pre-existing unrelated TODO comment in schedulerWatchdogJob.ts (git log -S proves it predates this commit) -- non-blocking. DDD grep flags both cronStatusCompute.ts and schedulerJobTable.ts importing infrastructure/ -- read: both import lines pre-exist this diff (cronStatusCompute.ts delta is 2 lines, the STATIC_JOB_NAME_MAP entry only; schedulerJobTable.ts already imports infra at its established composition-root, same pattern as the 3 prior self-heal jobs), no new domain-to-infrastructure edge introduced. process.env/secrets grep clean. Code read confirms AC verbatim: intraday5mCompactorJob registered in WATCHDOG_MANIFEST (cadenceMs=300_000, thresholdMultiplier=3, action=self-heal) AND wired with selfHealFn in schedulerJobTable.ts liveManifest via jobRunRepo.wrapRun. Doc updates (usecases.md/testing.md 16->26 static-pair count) consistent with the code delta. All checks pass, no ISSUE. Verdict: APPROVED, DONE_VERIFIED.",
+        "qa_verify_mode": "verify-committed",
+        "qa_commit": "17a906143",
+        "updated_by": "qa"
       }
     ],
     "head": {
@@ -22156,39 +22193,6 @@
         "depends": [
           "FIX-MARKETDB-WAL-SEQUENCE-STEPS-2-4-NO-OWNER"
         ]
-      },
-      {
-        "id": "ALPHA-S2-SUB5-WATCHDOG-STRETCH",
-        "type": "subtask",
-        "title": "[OPTIONAL STRETCH] WATCHDOG_MANIFEST self-heal entry for intraday5mCompactor (schedulerJobTable.ts)",
-        "status": "QA",
-        "priority": "P1",
-        "size": "XS",
-        "zone": "apps/mcp-server/",
-        "owner": "developer",
-        "next_agent": "qa",
-        "sprint": "FLOW-PRICE-ALPHA-LOOP",
-        "parent": "ALPHA-S2-TICK-DOWNSAMPLE-5MIN",
-        "depends": [
-          "ALPHA-S2-SUB2-JOB-CRON"
-        ],
-        "blocks": [],
-        "supervised": false,
-        "created_at": "2026-07-14T21:40:00Z",
-        "created_by": "pm (ALPHA-S2 decomposition)",
-        "note": "OPTIONAL HARDENING (brief § 4): Add entry to schedulerWatchdogJob.ts WATCHDOG_MANIFEST mirroring ohlcv-daily-aggregator/reputationComputeJob/ta-ohlcv-backfill (cadence 300_000ms, thresholdMultiplier: 3, action: 'self-heal'). Defense-in-depth against residual risk (§2: if compactor is down ≥24h, underlying ticks are purged before any cron can rescue). Optional — does not block task closure; may defer to post-launch ops tuning.",
-        "acceptance_criteria": "WATCHDOG entry added to schedulerJobTable.ts; registers intraday5mCompactor with 5-min health cadence",
-        "epic_closed_note": "ALPHA-S2 core epic (SUB1-SUB4) CLOSED done_verified 2026-07-14T23:23:17Z without SUB5. SUB5-WATCHDOG-STRETCH was optional/stretch (depends SUB2, now on trunk); de-gated from the epic close, remains a standalone optional hardening backlog row for PO triage (freshness watchdog on intraday_ohlcv_5m compactor). Not blocking; pick up separately if prioritized.",
-        "promoted_at": "2026-07-28T23:50:56Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
-        "updated_at": "2026-08-06T20:10:42Z",
-        "claimed_at": "2026-08-06T20:10:42Z",
-        "claimed_by": "dev-team (review-lane qa-drain)",
-        "branch": null,
-        "entered_review_at": "2026-07-29T00:13:32Z",
-        "commit": "17a906143",
-        "dev_mcp_server_review_note": "dev-mcp-server COMPLETE (session 64c7c677-0f0f-4cee-a3ce-dba79d70b7ae, commit 17a906143): added intraday5mCompactorJob to schedulerWatchdogJob.ts's WATCHDOG_MANIFEST (cadenceMs=300_000, thresholdMultiplier=3, action='self-heal'), mirroring ohlcv-daily-aggregator/reputationComputeJob/ta-ohlcv-backfill. selfHealFn wired in schedulerJobTable.ts's liveManifest (same composition-root DDD pattern as the 3 existing self-heal jobs, calling jobRunRepo.wrapRun('intraday5mCompactorJob', runIntraday5mCompactor)). CANONICAL_WATCHDOG_JOB_NAMES updated in lockstep for WD-10 manifest-integrity guard. Also added the missing CN-1 tier-1 STATIC_JOB_NAME_MAP pair (cronStatusCompute.ts, intraday5mCompactor -> intraday5mCompactorJob) so /api/cron-status dashboard resolution does not fall through to the cache-unsafe tier-2/3 path -- live-verified end-to-end against a real server boot (PORT=3097, cwd=project root matching prod): job row present, job_name_db=intraday5mCompactorJob, correctly classified STALE against the dev DB's real last-run age.\n\nFixed 3 pre-existing hardcoded manifest-size invariants (25 -> 26) across FIX-CRON-WATCHDOG-COVERAGE-2026-07-22.test.ts / cronStatusHandler.test.ts / cronStatusCompute.test.ts -- an expected, direct consequence of the new entry (confirmed RED before the fix, GREEN after), not scope creep; each prior task's own historical delta claim (e.g. FIX-CRON-WATCHDOG-COVERAGE-2026-07-22's 16->25 AC-4) preserved via an explanatory note rather than rewritten. New dedicated test file ALPHA-S2-SUB5-WATCHDOG-STRETCH.test.ts (4 tests) proves manifest-entry shape, canonical registration, and stale/healthy alert behavior at the 3x/5min threshold.\n\nEvidence: targeted suites (ARCH-CRON-watchdog, FIX-CRON-WATCHDOG-COVERAGE-2026-07-22, ALPHA-S2-SUB5-WATCHDOG-STRETCH, cronStatusHandler, cronStatusCompute, FIX-CRON-SSCCHECKERJOB-DEAD-87D-classfix-registry-invariant, ALPHA-S2-intraday-5m-compactor, ALPHA-S2-FF-intraday-5m-compactor) 90/90 pass, 0 fail. tsc --noEmit clean. gen-project-stats --dry-run: toolCount=184/cronJobCount=88 unchanged (manifest-only change, no new tool/cron registered). Full bun test (608s, 1235 files): 14855 pass/40 skip/57 fail/1 error -- within the standing FIX-MCP-SUITE-HEALTH-BASELINE order-dependent band (56-59 across recent dev-mcp-server cycles this same sprint); the 2 fail details visible in the captured tail are both from unrelated src/_deprecated/1302-technical-indicators.test.ts. Live boot (PORT=3097, cwd=project root): /health toolCount=184, /api/bctc-inspect 200, /dashboards/news-fetch/ 200, /api/cron-status 200 (previously 503 only when boot cwd was wrongly apps/mcp-server -- a pre-existing local-dev-only cwd quirk documented in cronStatusHandler.test.ts's own header comment, unrelated to this change; confirmed by re-testing with the correct project-root cwd matching docker production).\n\nDoc-review: usecases.md (CN-1 tier-1 pair count 16->26) + testing.md (WATCHDOG_MANIFEST job counts + test counts corrected to current live values) -- both directly tied to the application-layer file (cronStatusCompute.ts) this task modified.\n\nNOT pushed by this agent per PUSH-AUTONOMY-1 (chain-mutex-holding session pushes). Decision journal: sprint-<TBD> per decision-journal skill (see notebook entry same session). Ready for qa."
       },
       {
         "id": "FIX-NOTEBOOK-LINECAP-SWEEP-BYTE-BLIND-BACKSTOP",
