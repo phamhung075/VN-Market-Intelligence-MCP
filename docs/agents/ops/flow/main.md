@@ -82,7 +82,7 @@ sqlite3 apps/mcp-server/data/db.sqlite "PRAGMA integrity_check;"  # must = "ok"
 
 **DJ-GATE-1** (before any task DONE/REVIEW flip): run skill `.claude/skills/decision-journal/SKILL.md` § Write Entry — gate: `docs/protocols/agent-chaining-protocol.md` § Journal-before-DONE Gate.
 
-**End of cycle** → skill: `.claude/skills/cowork-end-cycle/SKILL.md`
+**End of cycle** → skill: `.claude/skills/end-0-cowork/SKILL.md`
 
 **Commit notebook** (mutex-guarded) → skill: `.claude/skills/commit-mutex/SKILL.md`:
 ```bash

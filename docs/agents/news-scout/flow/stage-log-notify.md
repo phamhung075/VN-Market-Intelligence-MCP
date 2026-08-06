@@ -97,8 +97,7 @@ call_tool(server="vn-market", tool="send_telegram", arguments={
 
 > Tier: ULTRA. Cycle-status pings are inter-agent state changes — not user-facing. Drop articles, labels, full sentences. Arrows for causality. ≤80 chars target.
 
-**End of cycle** → skill: `.claude/skills/cowork-end-cycle/SKILL.md`
-(skip notebook-write step — already written above; keep session-log + doc-self-heal + self-critique)
+**End of cycle** → skill: `.claude/skills/end-0-cowork/SKILL.md`
 
 ---
 

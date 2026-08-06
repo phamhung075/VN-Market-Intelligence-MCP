@@ -160,6 +160,6 @@ Covers tool failure handling, signal drop, forbidden outputs, BUG telegram dedup
 
 ## End of Cycle
 
-→ skill: `.claude/skills/cowork-end-cycle/SKILL.md`
+→ skill: `.claude/skills/end-0-cowork/SKILL.md`
 
-Session log + notebook write + doc self-heal.
+Decision-journal flush + one settled notebook write (absorbs the old session-log step) + doc self-heal + self-critique trigger-check.

@@ -102,4 +102,4 @@ New issues → `submit_feedback(agent="digest-predict")`. Zero → exit silently
   Stocks: N | Chains: X complete, Y partial, Z failed | Predictions: N (Mon) | Nhân Hòa: {score}/5 | Next: TIME
 ```
 
-**End of cycle** → skill: `.claude/skills/cowork-end-cycle/SKILL.md`
+**End of cycle** → skill: `.claude/skills/end-0-cowork/SKILL.md`

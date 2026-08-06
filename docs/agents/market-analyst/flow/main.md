@@ -116,7 +116,7 @@ Stock moves significantly → `get_sector_comparison(code)` peers
 ## Agent-Specific Error Cases
 - Regime data unavailable → state "Thiên thời không rõ — không khuyến nghị" → JUMP TO `end`.
 
-**End of cycle** → skill: `.claude/skills/cowork-end-cycle/SKILL.md`
+**End of cycle** → skill: `.claude/skills/end-0-cowork/SKILL.md`
 
 ## Notebook Write (end of cycle)
 → skill: `.claude/skills/notebook-write/SKILL.md` (overwrite, NEVER append). Body template for this agent:

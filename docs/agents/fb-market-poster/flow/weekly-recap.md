@@ -220,7 +220,7 @@ call_tool(server="vn-market", tool="log_agent_work", arguments={
 })
 ```
 
-Write notebook (full overwrite) → skill: `.claude/skills/notebook-write/SKILL.md`
+**End of cycle** → skill: `.claude/skills/end-0-cowork/SKILL.md` (TE-T05 net-new: gives fb-market-poster doc-self-heal + self-critique parity with other cowork agents; Step 1 notebook write below is APPEND class per notebook-write AC-6; Step 0 decision-journal is a no-op here — no sprint task_id in scope for an ambient posting cycle)
 
 Notebook entry:
 ```markdown

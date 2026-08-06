@@ -77,7 +77,7 @@ Canonical shape per `docs/standards/task-schema.md`:
 → skill: `.claude/skills/decision-journal/SKILL.md` § Write Entry [task_id: "<active BA task_id, e.g. BA-NNN>"]
 Write at minimum ONE entry stamped with the task-id. Routine work: `what-considered: "only path: <reason>"`, `why-change: "no change from plan"`.
 
-**End of cycle** → skill: `.claude/skills/cowork-end-cycle/SKILL.md`
+**End of cycle** → skill: `.claude/skills/end-0-cowork/SKILL.md`
 
 PO approves → BA Done → update `.task_board` task status (atomic write per §2.3) → return:
 ```

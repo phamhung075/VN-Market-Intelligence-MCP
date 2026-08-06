@@ -199,7 +199,7 @@ Convention: `docs/policies/commit-convention.md` § Notebook Commits
 
 **DJ-GATE-1** (before any task DONE/REVIEW flip): run skill `.claude/skills/decision-journal/SKILL.md` § Write Entry — gate: `docs/protocols/agent-chaining-protocol.md` § Journal-before-DONE Gate.
 
-**End of cycle** → skill: `.claude/skills/cowork-end-cycle/SKILL.md`
+**End of cycle** → skill: `.claude/skills/end-0-cowork/SKILL.md`
 
 > Error boundary → skill: `.claude/skills/cowork-error-boundary/SKILL.md`
 

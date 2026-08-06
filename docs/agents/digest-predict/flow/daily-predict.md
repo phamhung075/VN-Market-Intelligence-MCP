@@ -136,4 +136,4 @@ git commit -m "chore(memory/digest-predict): notebook YYYY-MM-DD" -- docs/agent-
 **P-8. WORK**: `send_telegram(channel="work", message="[digest-predict] Daily claims {DATE}: {N}\n- {TICKER}: {claim_text} (p={prob}, {horizon}d)\n...")`
 `DAMPENING_ACTIVE` → append "Self-correction: confidence -10%."
 
-**End of cycle** → skill: `.claude/skills/cowork-end-cycle/SKILL.md`
+**End of cycle** → skill: `.claude/skills/end-0-cowork/SKILL.md`

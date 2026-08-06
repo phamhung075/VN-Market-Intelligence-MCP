@@ -39,4 +39,4 @@ git add docs/agent-memory/notebooks/unified-agent.md
 git commit -m "chore(memory/unified-agent): notebook YYYY-MM-DD" -- docs/agent-memory/notebooks/unified-agent.md
 ```
 
-**End of cycle** → skill: `.claude/skills/cowork-end-cycle/SKILL.md`
+**End of cycle** → skill: `.claude/skills/end-0-cowork/SKILL.md`

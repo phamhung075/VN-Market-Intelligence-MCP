@@ -1030,7 +1030,7 @@ fi
 ```
 Note: this block's own `if` gate already restricts `$AUDIT_TIER` to the literal strings `2`/`3` before `HB_FILE` is ever built, so it cannot mechanically target the tier-1 filename when followed as written — the 2026-07-29T06:08:22Z violation did not go through this exact snippet at all (no authorizing step anywhere in the flow produced it). The pre-commit guard above is the backstop for exactly that class of drift: an out-of-contract write that never went through this documented gate in the first place.
 
-**End of cycle** → skill: `.claude/skills/cowork-end-cycle/SKILL.md`
+**End of cycle** → skill: `.claude/skills/end-0-cowork/SKILL.md`
 
 **P3 Fire-Election Release (TASK_1994 — mandatory, runs here after notebook write + commit):**
 ```

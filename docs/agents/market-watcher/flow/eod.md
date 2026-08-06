@@ -87,4 +87,4 @@ git_commit_retry -m "chore(memory/market-session-eod): notebook YYYY-MM-DD cycle
 
 > Invoke directly via Bash (this agent holds Bash — `.claude/agents/market-watcher.md:5` — granted 2026-07-30T23:18Z, commit 610110e16). If the Bash invocation itself errors (`git add`/`git_commit_retry` genuinely fails after the retry protocol above — a genuine transport failure, not a tool-grant gap): that is already covered by the BUG-channel escalation above — do NOT additionally SKIP this step, fabricate the commit, or silently drop the note. Ledger + signal file writes (Steps A/B) are unaffected either way.
 
-**End of cycle** → skill: `.claude/skills/cowork-end-cycle/SKILL.md`
+**End of cycle** → skill: `.claude/skills/end-0-cowork/SKILL.md`

@@ -106,7 +106,7 @@ git commit -m "chore(memory/qa-responder): notebook YYYY-MM-DD" -- docs/agent-me
 ```
 > "Next:" time MUST be computed as `date -u` result + 12 min arithmetic. NEVER write a round or guessed time.
 
-**End of cycle** → skill: `.claude/skills/cowork-end-cycle/SKILL.md`
+**End of cycle** → skill: `.claude/skills/end-0-cowork/SKILL.md`
 
 ## Escalation
 Reasoning > 10 min → escalate, never block queue. Log reason.

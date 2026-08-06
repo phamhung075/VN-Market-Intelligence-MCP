@@ -146,7 +146,7 @@ git commit -m "chore(memory/developer): notebook YYYY-MM-DD" -- docs/agent-memor
 ```
 Convention: `docs/policies/commit-convention.md` § Notebook Commits
 
-**End of cycle** → skill: `.claude/skills/cowork-end-cycle/SKILL.md` (chains session-log + notebook-write + doc-self-heal)
+**End of cycle** → skill: `.claude/skills/end-0-cowork/SKILL.md` (decision-journal flush + one settled notebook write (absorbs session-log) + doc-self-heal + self-critique trigger-check)
 
 **Update `docs/data/orch/orch-state.json` `.task_board`**: task status IN_PROGRESS → REVIEW (atomic write per §2.3) → return:
 ```

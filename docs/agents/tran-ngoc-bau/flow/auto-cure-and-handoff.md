@@ -53,7 +53,7 @@ git commit -m "chore(memory/tran-ngoc-bau): notebook YYYY-MM-DD" -- docs/agent-m
 ```
 Convention: `docs/policies/commit-convention.md` § Notebook Commits
 
-**End of cycle** → skill: `.claude/skills/cowork-end-cycle/SKILL.md`
+**End of cycle** → skill: `.claude/skills/end-0-cowork/SKILL.md`
 
 ---
 

@@ -29,77 +29,6 @@
   Commit `36e109170`. Full rationale: `sprint-COWORK-GUARANTEED-SLOT-CATCHUP-
   agent-father.md` STEP S25.
 
-## Fix (router-direct dispatch, P0) 2026-08-06T15:19Z FIX-REFINE-SUBFLOW-OPTIONC-CONTRACT-DRIFT
-- **Root cause confirmed exactly as PO's escalation stated:** `refine_bctc_md/flow/main.md:94`
-  called `execute_sub_flow_logic(window)` — zero definitions repo-wide — while all 4 sub-flow
-  docs still carried Option-B "Task return value"/"the orchestrator collects" language, never
-  rewritten when the agent converted to Option-C inline. Shipped AC-1..AC-6 (`da489f36f`):
-  Phase 2 rewritten as literal inline steps (explicit per-page_type `Read` instruction, an
-  ANTI-CONFABULATION line telling the model it IS the parser, and the 4-value STATUS enum
-  — DONE/PARTIAL/FAILED/SKIPPED — restated at the loop site with PARTIAL now explicitly
-  requiring `pushed_this_fire >= 1`, closing the exact gap that let a live agent invent
-  `PARTIAL_EXIT` on a 0/12-push fire); 4 sub-flow docs' RETURN sections + stray "orchestrator"
-  mentions reworded to inline-result language; `.claude/agents/refine_bctc_md.md` chunk-size
-  doc corrected 7→12 (drifted since commit `524a87cc`, docs/ copy fixed then, `.claude/` never
-  was); `cowork-schedule.json` slots 1-3 `enabled:false`, slot-4 (last good fire
-  2026-08-05T16:40Z) kept as sole canary.
-- **main.md grew 139L→182L, over the 120L flow-file cap** — added a `size-justification` header
-  (established convention already used by this same agent's `disagreement-verify.md`) rather
-  than trim: the added content (explicit Read step, anti-confab guard, restated enum) directly
-  closes this task's root cause; compressing it back down would re-introduce the ambiguity.
-- **AC-7 (re-enable slots 1-3 + close the board row) intentionally NOT done this cycle:** it
-  requires slot-4's next live cron fire (2026-08-06T16:30Z) to RAW-confirm via `get_bctc_refined`
-  that report `a3a41225` gained pushed units — I hold no MCP tool binding in this session
-  (`Read, Edit, Write, Bash` only) to observe that live signal, and the fix landing does not
-  itself prove the fix works. Did not flip board status or lane-move, and did not write a
-  signal_queue row (the "DONE-mark" carve-out is for an actually-done task; this one has a
-  standing, verifiable-only-later AC) — returned `PIPELINE: blocked-pending-live-verification`
-  to router/PO with the exact re-check spelled out instead. Full rationale:
-  `docs/agent-memory/decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-agent-father.md` STEP S24.
-
-## Keep (maintenance) 2026-08-06T13:18Z — scheduled (cron-agent-father 23:14 UTC slot)
-- Trigger: scheduled. Pre-Check gate (`git diff --name-only HEAD~3..HEAD`) hit only
-  `docs/data/orch/*` — zero `.claude/agents/*.md`/`docs/agents/*/flow/*.md` matches → Steps 1-2
-  (orphan+roster scan) skipped per CADRAT-3, straight to Steps 3-5 with empty scan-orphans output.
-- Top-5 sweep, all 42 agents (`.claude/agents/*.md` × `docs/agents/<id>/init.md`): Check #1
-  (fail-loud-protocol) + #3 (boundary_rules) fail ONLY for `semble-search` (minimal tool-style
-  single-shot search wrapper, own flow/main.md self-declares "No multi-step flow", no notebook
-  writes, `tools: Bash, Read` — reads as an intentional exception never written into the guide).
-  Check #4 (flow path resolves) clean for all 42 (initial hits were a BSD-sed `\s` false positive
-  in my own grep, re-verified with `[[:space:]]`). Check #5 (version >90d stale): agent-father's
-  own `init.md` was 91d stale (2026-05-07) — **auto-fixed** to 2026-08-06 (mechanical rule).
-- Check #2 (Error Boundary in flow): 17 raw grep hits on `<id>/flow/main.md`, 9 false positives —
-  thin-dispatcher `main.md` routes to a sub-flow (`cycle.md`/`weekly.md`/`daily-predict.md`/
-  `chef.md`/`keep.md`) that DOES carry the line; verified all 9 individually (agent-father,
-  alert-commander, bctc-analyst, digest-predict, market-watcher, news-scout, qa-responder,
-  unified-agent). **Real finding (escalated, not auto-fixed — Step 4 forbids):** 8 microservice
-  dev-* agents (dev-alert-engine, dev-api-gateway, dev-kinh-dich, dev-macro-indicators,
-  dev-pdf-extractor, dev-rag-service, dev-stock-price, dev-technical-analysis) all dispatch to
-  the shared `docs/agents/developer/flow/microservice-main.md`, which itself has zero "Error
-  Boundary" mentions — single-file fix closes all 8 (dev-mcp-server/dev-frontend declare their
-  own Error Boundary line before delegating, so they're clean).
-- Step 5 stale-notebook report (>30d): 4/46 — idea-forge.md (95d), market-analyst.md (95d),
-  qa-responder.md (70d), semble-search.md (95d). Info only.
-- Step 5b team-tool-recheck: wrote `team-tool-recheck-2026-08-06-1318.md`. Findings identical to
-  same-day 07:39Z run — 3 CRITICAL unchanged (alert-commander/market-watcher/news-scout: `Bash`
-  granted vs unqualified "No other filesystem writes permitted", origin `610110e16`, already
-  handed off to po). Mechanical-enforcement status unchanged: prose-only.
-- **Structural finding (escalated):** this flow's Commit step prescribes `commit-mutex/SKILL.md`
-  (`task_claim` via `mcp__gateway__call_tool`), but agent-father's tool grant (`Read, Edit, Write,
-  Glob, Grep, Bash`) has no MCP binding — confirmed live, call errored "No such tool available".
-  Same gap `team-tool-recheck.md` already names for its live-probe subset. Committed directly with
-  explicit pathspec (no `-A`/bare), `INV-GATEWAY-1` "specialists commit directly" precedent — no
-  lock acquired, tool doesn't exist for this agent. Recommend keep.md's Commit step get corrected.
-- Self-caught bug: first notebook-write attempt used a malformed heading (`13:18Z 2026-08-06`,
-  time-before-date) — the auto-prune hook's date regex only captures date-only when no T-time
-  immediately follows, defaulted my new section's sort-key to midnight, mis-ranked it OLDEST, and
-  silently dropped it (file reverted byte-identical to pre-edit HEAD). Re-wrote with proper
-  ISO8601 (`2026-08-06T13:18Z`) matching this file's own convention.
-- Committed `bbe732740` (init.md version fix + health report), pushed clean (tsc PASS).
-- Escalations: N=1 substantive (microservice-main.md Error Boundary gap, 8 agents) + 1 structural
-  (commit-mutex tool-access gap) + 1 policy question (semble-search exception class, LOW) →
-  folding into Step 7 PO handoff.
-
 ## FIX-CRON-DST-LOCAL-EVAL-MOMENT-ANCHORED-EXPRESSIONS (PO, P1) 2026-08-06T18:52Z
 - Corrected 5 moment-anchored `CronCreate` cron expressions that were authored as if
   evaluated in UTC when the tool actually evaluates `cron:` Europe/Paris-LOCAL: db-data-
@@ -129,3 +58,36 @@
   GUARANTEED-SLOT-CATCHUP-agent-father.md STEP agent-father-S25/S26. Board: lane-move
   `in_progress[]→review[]`, `next_agent=qa`, `.head` idle-sync — via router/PO per
   `commit_zone.excluded` (orch-state.json is not this agent's commit surface).
+
+## TE-T05 (router-direct dispatch, P1) 2026-08-06T19:25Z — end-0-cowork composite shipped
+- Built `.claude/skills/end-0-cowork/SKILL.md` (87L, target ~110L) mirroring `step-0-cowork`'s
+  shape: Step 0 decision-journal pointer, Step 1 notebook-write pointer carrying a new NO-OP
+  rule (notebook write + session summary = ONE write; skip if already settled this cycle —
+  absorbs the deleted `session-log-cowork`), Step 2 condensed doc-self-heal, Step 3
+  self-critique TRIGGER-CHECK-only (T1-T5 + SC-0 pilot-scope gate inline, full 118L flow
+  lazy-loads only on fire). `decision-journal`/`notebook-write`/`doc-self-heal`/`self-critique`
+  verified byte-identical after (`git diff --stat` clean) — pointer-only, no forked copies
+  (NFR-1: this is the exact SSOT-drift class AC-2a exists to prevent).
+- Repointed all 29 live flow-file consumers (re-grepped live, matches ba's 29 not the brief's
+  stale 30) from `cowork-end-cycle/SKILL.md` to the composite. Deleted `session-log-cowork/
+  SKILL.md` (0 direct refs, ba-reconfirmed) AND `cowork-end-cycle/SKILL.md` itself (0 consumers
+  left post-repoint — this row's own title says "6-file chain into ONE composite", not 5+1
+  orphan; only remaining ref was the already-DEPRECATED `append-session-record` redirect,
+  left untouched, out of scope per FR-7/UC-MDH-P2). Deleted the 3 ratified skip-parentheticals
+  (news-scout + bctc-analyst `stage-log-notify.md`, unified-agent `chef-dish.md`) — content-grep
+  located them (line numbers had drifted from the 07-12 brief, exactly as ba's spec flagged).
+  Gave fb-market-poster net-new end-0-cowork parity (doc-self-heal + self-critique) across its
+  3 posting sub-flows — 0 prior invocations confirmed live, matching ba's finding.
+- Fixed 2 stale cross-refs my own repoint would otherwise have left stranded:
+  `developer/flow/main.md`'s "(chains session-log...)" annotation and `cycle-bootstrap/
+  SKILL.md`'s informational End-of-Cycle pointer (outside the 29-file flow-dir grep scope,
+  found by a repo-wide follow-up grep before declaring done).
+- B2 (cowork-boundary vs cowork-error-boundary dedup, ~20k tok/day, unrelated file pair) —
+  SPLIT, not bundled: filed `docs/signals/po-20260806T191500Z.json` as a new-backlog-candidate
+  (needs its own consumer-audit; bundling would muddy this row's higher-risk notebook-write
+  pointer diff). Same signal also flags `scripts/audits/notebook-class-fence.sh:35`'s SCAN_SET
+  grep (`"cowork-end-cycle\|notebook-write"`) as now under-scanning post-repoint — out-of-zone
+  (scripts/), routed to developer/dev-team, non-blocking.
+- Commit(s): see RETURN. Board is QA-GATED per the row's own `note` — did not self-close;
+  lane-move `in_progress[]→review[]`/`next_agent:qa` left to router/PO per `commit_zone.excluded`
+  (orch-state.json not this agent's commit surface), same as every prior TE-T## agent-father row.

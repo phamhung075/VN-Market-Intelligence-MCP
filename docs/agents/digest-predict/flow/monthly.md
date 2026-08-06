@@ -99,4 +99,4 @@ Strong Buy: {list} | Buy: {list} | Neutral: {list} | Reduce: {list}
 ```
 `send_telegram(channel="work", message="[Unified] Q{N} {YEAR} synthesis — {N} tickers | Strong Buy: {list} | Buy: {list} | Neutral: {list} | Reduce: {list}")`
 
-**End of cycle** → skill: `.claude/skills/cowork-end-cycle/SKILL.md`
+**End of cycle** → skill: `.claude/skills/end-0-cowork/SKILL.md`

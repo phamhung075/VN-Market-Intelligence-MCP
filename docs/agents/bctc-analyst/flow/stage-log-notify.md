@@ -13,6 +13,7 @@
   date -u +"%Y-%m-%dT%H:%M:%SZ"
   ```
 - Use the returned value verbatim — NEVER speculate, NEVER round to a future minute
+- **No-Bash fallback (this agent has no Bash tool grant, per `project_bctc_analyst_no_bash_grant_perpetual_dirty_artifacts`):** use the `fetchedAt`/`computedAt` timestamp from the most recent live MCP tool response this cycle (e.g. `get_macro_snapshot`, `get_cycle_bootstrap`) instead of shelling out — established practice across prior cycles, now documented here.
 
 **5a. Notebook write** — APPEND class → skill: `.claude/skills/notebook-write/SKILL.md` (AC-3 settled-write; AC-5 gate)
 
@@ -63,8 +64,7 @@ Release or mixed format:
   Beat: X | Miss: Y | In-line: Z | Signals: P fundamental_validation | Next: TIME
 ```
 
-**End of cycle** → skill: `.claude/skills/cowork-end-cycle/SKILL.md`
-(skip notebook-write AND session-log steps — both would duplicate the notebook composition already done in 5a-5e above and violate the AC-3 single-settled-write invariant; keep doc-self-heal + self-critique only)
+**End of cycle** → skill: `.claude/skills/end-0-cowork/SKILL.md`
 
 ## Deadline Watch
 7 days before + missing → flag in session log

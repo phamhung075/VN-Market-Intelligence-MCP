@@ -255,7 +255,7 @@ HANDOFF: docs/handoffs/TASK_NNN.md
 PIPELINE: continue
 ```
 
-**End of cycle** → skill: `.claude/skills/cowork-end-cycle/SKILL.md`
+**End of cycle** → skill: `.claude/skills/end-0-cowork/SKILL.md`
   Notebook-write class: **APPEND** (AC-6) — compose settled ≤200L body in memory (AC-3 drop-oldest loop if > 200L) before single Write. SSOT: `.claude/skills/notebook-write/SKILL.md`.
 
 **Skills available to this agent (lazy-load — load only when the task requires it):**

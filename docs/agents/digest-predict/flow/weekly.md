@@ -78,7 +78,7 @@ GATE_EXIT = skill `.claude/skills/claim-truth-gate/SKILL.md`
 `send_telegram(channel="market", message=<weekly_digest_text>)`
 `send_telegram(channel="work", message="[Digest & Predict] HH:MM UTC — WEEKLY sent. Next: TIME")`
 
-**End of cycle** → skill: `.claude/skills/cowork-end-cycle/SKILL.md`
+**End of cycle** → skill: `.claude/skills/end-0-cowork/SKILL.md`
 
 **Skills available to this agent (lazy-load — load only when the task requires it):**
 - Word document (docx) deliverable → skill: `.claude/skills/docx/SKILL.md` (trigger: user asks for a weekly digest report formatted as a .docx file)

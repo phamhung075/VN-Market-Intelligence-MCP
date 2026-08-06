@@ -827,7 +827,7 @@ send_telegram(channel="work", message="[fb-market-poster] Post written: docs/soc
 
 ---
 
-## STEP 8 — Session log + notebook write
+## STEP 8 — End of cycle
 
 Call tool to close log:
 ```
@@ -841,7 +841,7 @@ call_tool(server="vn-market", tool="log_agent_work", arguments={
 })
 ```
 
-**Notebook write** — APPEND class per notebook-write AC-6 → skill: `.claude/skills/notebook-write/SKILL.md` (AC-3 settled-write; AC-5 gate; last-3 `## c<NNN>` sections retained)
+**End of cycle** → skill: `.claude/skills/end-0-cowork/SKILL.md` (TE-T05 net-new: gives fb-market-poster doc-self-heal + self-critique parity with other cowork agents; Step 1 notebook write is APPEND class per notebook-write AC-6 — AC-3 settled-write, AC-5 gate, last-3 `## c<NNN>` sections retained; Step 0 decision-journal is a no-op here — no sprint task_id in scope for an ambient posting cycle)
 
 Preamble (never pruned — edit only to record a genuinely new lesson/pattern, NOT part of the per-cycle write):
 ```markdown

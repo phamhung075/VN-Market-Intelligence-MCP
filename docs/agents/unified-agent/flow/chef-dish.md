@@ -700,8 +700,7 @@ git commit -m "chore(memory/unified-agent): chef <DISH_TYPE> <YYYY-MM-DD>" \
   -- docs/agent-memory/notebooks/unified-agent.md docs/signals/processed/*
 ```
 
-**End of cycle** → skill: `.claude/skills/cowork-end-cycle/SKILL.md`
-(skip the notebook-write step in cowork-end-cycle — notebook already written above; keep session-log + doc-self-heal + self-critique steps)
+**End of cycle** → skill: `.claude/skills/end-0-cowork/SKILL.md`
 
 → After notebook commit: emit CLOSE Telemetry per `docs/agents/unified-agent/flow/chef-telemetry.md § CLOSE Telemetry`
 → On exception (Steps 0–7): emit FAILED Telemetry per `docs/agents/unified-agent/flow/chef-telemetry.md § FAILED Telemetry`

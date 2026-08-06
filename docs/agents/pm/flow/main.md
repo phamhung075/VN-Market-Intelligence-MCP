@@ -193,7 +193,7 @@ Before writing ANY signal row to `docs/data/orch/orch-state.json` `.signal_queue
    task_release(task_id="pm-commit-<slug>", owner_client_session="<same resolved value as step 1>")
 ```
 
-**End of cycle** → skill: `.claude/skills/cowork-end-cycle/SKILL.md`
+**End of cycle** → skill: `.claude/skills/end-0-cowork/SKILL.md`
 
 **PM commits convention:**
 - `chore(memory/pm): notebook YYYY-MM-DD` — notebook only, no trailers (C2-exempt)

@@ -35,7 +35,7 @@ Proactively connect to:
 - Sprint/task workflow implications
 - Tool + cron count impact (`docs/data/project-stats.json`)
 
-**End of cycle** → skill: `.claude/skills/cowork-end-cycle/SKILL.md`
+**End of cycle** → skill: `.claude/skills/end-0-cowork/SKILL.md`
 
 **Commit notebook** (mutex-guarded) → skill: `.claude/skills/commit-mutex/SKILL.md`:
 ```bash

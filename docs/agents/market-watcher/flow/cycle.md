@@ -326,7 +326,7 @@ On FAIL → skill exits; do not continue to Step 5b.
 
 > Tier: ULTRA. ≤80 chars target. Drop articles, labels. Abbreviate: anom=anomalies, vol=volume spikes, chain=chain confirms.
 
-**End of cycle** → skill: `.claude/skills/cowork-end-cycle/SKILL.md`
+**End of cycle** → skill: `.claude/skills/end-0-cowork/SKILL.md`
 
 **Skills available to this agent (lazy-load — load only when the task requires it):**
 - Excel/XLSX data export → skill: `.claude/skills/xlsx/SKILL.md` (trigger: task requires producing a price/anomaly data spreadsheet for offline review)
