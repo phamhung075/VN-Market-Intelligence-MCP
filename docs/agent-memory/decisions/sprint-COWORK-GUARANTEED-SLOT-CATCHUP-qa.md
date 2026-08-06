@@ -180,3 +180,13 @@
 - Python zone, no bun/tsc: ran `mock-guard.sh --files extraction_engine.py` → PASS. Targeted regression (`test_extraction_engine_nonblocking.py`+`test_extraction_engine_ocr_failure_swallow.py`) → 14/14 pass. Full `pytest -q` (apps/pdf-extractor, 226s) → 1058 passed/1 failed, exact match to dev's claimed count. Independently traced the 1 failure myself rather than accepting "pre-existing env-only" at face value: `test_bt3_fix3_real_ocr_fidelity` hardcodes container path `/app/data/pdfs/...`; file exists on host only at `data/pdfs/...` — confirmed `/app/data/pdfs` absent on host. Different test file entirely, unrelated to this diff's docstring-only hunks.
 **why-decision:** APPROVED, DONE_VERIFIED. AC-1 (file-level, verified beyond spec at job-level), AC-2 (baseline untouched, 2 independent signals), AC-3 (genuine trim not re-baseline) all hold under my own re-run. Lane-moved `task_board.qa[]`→`task_board.done_verified[]` via jq+`scripts/orch-apply.sh`. `.head.active_task_id` was `UC-CRITIC-HOOKS-ENFORCEMENT` (unrelated) — left `.head` untouched.
 **why-change:** none — router's verify-committed dispatch followed exactly.
+
+### STEP qa-S16 · qa · 2026-08-06T10:02:00Z
+**task-id:** FIX-DEVTEAM-READY-REVIEW-LANE-SUPERVISED-PLANONLY-NO-PICKER
+**what-done:** Direct-commit verify (dev-team Review-Lane QA-Drain, `qa[]` row, `branch:null`) of `52baf3f31`(+`830d82727` memory), on main ancestry, `git show --stat` matches the claimed 6-file set exactly. Router flagged `main.md` rewritten twice more today (`dcbae13e9`, `92ff5fb43`) — read the CURRENT live file, not stale line-refs.
+**what-considered:**
+- AC-1..AC-4 (Lane×Gate matrix, SLS-claim FALLBACK, review[]/epic-wrapper prose) all intact + kept in sync post-rewrites; AC-4 cross-checked live against `FIX-COWORK-DISPATCH-ROUTER-INTENT-MUTEX-BYPASS` (now a real epic-wrapper, correctly informational not gating).
+- Re-ran both audit scripts live myself: `bounded1-supervised-lane-report.sh` READY-PRIMARY=0 unresolved (AC-5); `devteam-dispatch-gate-satisfiability.sh` — every AC-6 FALLBACK assertion PASSES. Both scripts' overall exit=1 traced to 2 UNRELATED live-drift bugs in files this commit never touched (stale `promoted_by` stamp bypassing BOUNDED-1-claim's WIP gate; 5 unrelated backlog rows) — flagged to bug channel, not blocking.
+- No TS touched — bun test/tsc N/A (Smart-Skip); mock-guard PASS (no production source).
+**why-decision:** APPROVED, DONE_VERIFIED. All 6 ACs independently RAW-verified against the live, twice-rewritten file plus a live re-run of both acceptance instruments — not the row's own review_note prose.
+**why-change:** none — verified exactly what the row scoped; 2 adjacent findings flagged separately, not folded into this verdict.
