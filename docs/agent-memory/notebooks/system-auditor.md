@@ -1,7 +1,38 @@
-## c45 · 2026-08-06T06:41:47Z
+## c48 · 2026-08-06T07:03:42Z
 
-## c45 · 2026-08-06T06:41:47Z
+### Audit Run Tier-3 (07:03:42Z UTC 2026-08-06)
+- Tier: 3 | Doc audit: ✓ PASS (6 steps) | Services: ✓ PASS (4/4 up) | DB checks: 13/16 PASS
+- Anomalies: 3 dedup-skipped (2 critical, 1 warn) | Status: DEGRADED
 
+**Doc/Memory Audit (steps 1–6):** MEMORY.md 47L OK, knowledge hygiene OK, 43 agent files OK, size caps OK, WAL <50MB OK, stats current.
+
+**Services & Tooling (A-22–A-31):** pdftoppm ✓ | tesseract ✓ | vie lang ✓ | all 4 services /health ✓ | EPIPE 0/30m ✓ | BCTC PDFs 313 ✓
+
+**DB Integrity (C-01–C-16):** Daily OHLCV 96 ✓ | rows 192 ✓ | Q1 45 ✓ | low-conf 30 ✗ | SSC 0 ✓ | msgs 2 ✓ | signals 23 ✓ | orphaned 42 ✗ | macro 3 ✓ | failed 0 ✓ | done 0 ✗ | integrity ok ✓ | WAL ok ✓ | concentration 3.1% ✓ | schema ok ✓ | stale 0 ✓
+
+**Context:** C-04/C-08/C-11 recurring issues (all dedup-skipped). Rag-service memory FU-RAG-DEPLOY-MEMORY.
+
+[OUTPUT-CONTRACT] signals_posted=1 | telegram_sent=1 | signal_queue_rows_written=3 | dashboard_rows=0 | dedup_skipped=3
+CONTRACT-CONTRADICTION: NONE
+
+## c47 · 2026-08-06T07:01:20Z
+
+### Audit Run Tier-1 (06:33 UTC FAILURE gate → 07:01 UTC extended probe) — A-30 rag-service memory reclamation FOLD
+- Tier: 1 | Focus: A-30 rag-service-1 mem_creep FAILURE (06:33:17Z trigger: 98.96%, 8.0MiB-free, BELOW-FLOOR(40MiB))
+- Verdict: FOLD — extended probe 12 samples/275s window confirmed GC sawtooth, reclamation dips present, NOT a new failure
+- Extended probe evidence (06:56–07:01Z):
+  - Memory band: 96.51%–98.98% (within known 95–99% embedder baseline)
+  - Reclamation dips: 1 detected (98.98→96.51%, 2.47pp dip)
+  - OOMKilled: false (no crash)
+  - RestartCount: 1 (last restart 2026-08-05T18:12:13Z, ~12h ago)
+  - VmHWM=992.4 MB >> VmRSS=776.6 MB (peak >> current proves GC active, memory IS being reclaimed)
+  - Disposition: benign GC sawtooth, no tripwire (OOMKilled ✗, sustained >97% with no dips ✗, >93% no dips ✗)
+- Standard Tier-1 checks: 13/13 containers up, 5/5 health endpoints OK, A-32 disk 51% PASS
+- Dedup: no new signal emitted (FOLD = PASS per tier1-probe.md A-30 override §4)
+- Known residual: FU-RAG-DEPLOY-MEMORY (c41–c45, 2026-08-05 documentation) — oscillation pattern confirmed recurring, already documented, no escalation
+
+[OUTPUT-CONTRACT: signals_posted=0 | telegram_sent=0 | signal_queue_rows_written=0 | dashboard_rows=0 | dedup_skipped=0]
+CONTRACT-CONTRADICTION: NONE
 
 ## c46 · 2026-08-06T06:56:59Z
 
@@ -56,29 +87,3 @@
 
 [OUTPUT-CONTRACT] signals_posted=0 | telegram_sent=0 | signal_queue_rows_written=0 | dashboard_rows=0 | dedup_skipped=0
 CONTRACT-CONTRADICTION: NONE
-
-
-## c45 · 2026-08-06T06:41:47Z
-
-### Audit Run Tier-2 (04:00 UTC 2026-08-06)
-- Tier: 2 | Cron: ✓ PASS | Freshness: ✗ FAIL (news source stale) | VPS: ✓ PASS | DB: ✓ PASS
-- Anomalies: 1 new (1 critical, 0 warn, 0 info) | 0 dedup-skipped
-- Status: DEGRADED
-
-### Tier-2 Findings (1 CRITICAL anomaly)
-**Data Freshness (B-01—B-07, B-11, B-12):**
-- B-01 News source: CRITICAL — 790 min stale vs 30 min SLA (last fetch 2026-08-05T19:38:29Z)
-  Signal posted (id=sys-20260806T064127-78c1) to PO, Telegram sent, DASHBOARD row appended
-
-**Cron Health (A-29):** ✓ PASS (all 132 jobs firing successfully)
-
-**VPS Routes:** ✓ PASS (all 4 routes healthy)
-
-**DB Spot Checks:**
-- C-06 market_messages (3h): ✓ PASS
-- C-07 agent_signals (24h): ✓ PASS
-- B-08 BCTC PDFs: ✓ PASS
-- B-09 SSC URLs: ✓ PASS
-- B-13 Stale pending: ✓ PASS
-
-[OUTPUT-CONTRACT: signals_posted=1 | telegram_sent=1 | signal_queue_rows_written=1 | dashboard_rows=1 | dedup_skipped=0]
