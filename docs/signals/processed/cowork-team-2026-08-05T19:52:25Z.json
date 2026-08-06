@@ -3,7 +3,7 @@
   "to": "dev-team",
   "type": "cowork-fire",
   "payload": {
-    "fire_time": "2026-07-29T19:53:26Z",
+    "fire_time": "2026-08-05T19:52:25Z",
     "matched_slots": [
       "chef-evening"
     ],
@@ -16,10 +16,10 @@
       "docs/agents/unified-agent/flow/chef.md"
     ],
     "silent": false,
-    "drift_min": 5,
+    "drift_min": 2,
     "errors": [],
     "pressure_mode": "adaptive",
-    "calendar_status": "unknown",
+    "calendar_status": "open",
     "suppressed_calendar": [],
     "suppressed_cadence": [],
     "downgraded": [],
@@ -30,7 +30,7 @@
     "cadence_minutes": {
       "chef-evening": null
     },
-    "last_fired_timestamp": "2026-07-29T19:53:26Z",
+    "last_fired_timestamp": "2026-08-05T19:51:57Z",
     "last_fired_slots": [
       "chef-evening"
     ],
@@ -39,16 +39,16 @@
     "reason": "spawned",
     "nominal_tick": "19:45",
     "leader_lock": "acquired",
-    "dev_head": "unknown",
-    "devq": 5,
-    "signal_backlog": 15,
-    "note": "chef-evening spawn completed cleanly (off-flow check PASS, no OFFFLOW_MARKERS) but did NOT publish new content — its own Step 0.5 published-marker gate found the slot already published at 19:52:16Z by peer session 52b1a3c3-393c-4f6d-82fd-8553fdc6137d, exited via the legitimate dedup EXIT path. Belt-and-suspenders design worked as intended (no duplicate MARKET post). last_fired stamped per AC-P1-7-1 (tracks spawn success, not publish outcome)."
+    "dev_head": "active",
+    "devq": 1,
+    "signal_backlog": 0,
+    "note": "single guaranteed slot chef-evening; unified-agent spawned in background"
   },
   "priority": "low",
-  "createdAt": "2026-07-29T19:54:10Z",
+  "createdAt": "2026-08-05T19:52:25Z",
   "_processed": {
-    "fingerprint": "105941df2290ad6b1bea51abe39d8c750af45a6ddff4a6d6217ccaf08a698d32",
-    "processedAt": "2026-07-29T21:19:55Z",
+    "fingerprint": "bf6acbc7da427a9bf362e3b70ad27037b18391bace42d4fc41b9a0f6a83d3ed7",
+    "processedAt": "2026-08-06T06:40:38Z",
     "processedBy": "dev-team",
     "result": "routed-to-po"
   }

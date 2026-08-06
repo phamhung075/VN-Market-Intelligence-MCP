@@ -1,0 +1,55 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-08-06T06:34:00Z",
+    "matched_slots": [
+      "alert-commander-market"
+    ],
+    "won_slots": [
+      "alert-commander-market"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/alert-commander/flow/main.md"
+    ],
+    "silent": false,
+    "drift_min": 1,
+    "errors": [],
+    "pressure_mode": "legacy",
+    "calendar_status": "open",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "chef_mutex_applied": false,
+    "due_reasons": {
+      "alert-commander-market": "cron"
+    },
+    "cadence_minutes": {
+      "alert-commander-market": null
+    },
+    "last_fired_timestamp": "2026-08-06T06:33:42Z",
+    "last_fired_slots": [
+      "alert-commander-market"
+    ],
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "06:30",
+    "leader_lock": "acquired",
+    "dev_head": "unknown",
+    "devq": 5,
+    "signal_backlog": 18,
+    "note": "first market-hours tick of new trading day (2026-08-06). pressure-state.json was ~10.5h stale at Step 4.2 (last emit 2026-08-05T19:52Z prior day, likely overnight session gap since dispatcher is session-scoped) -> fell back to legacy cadence mode (CADENCE_MATCHES=raw MATCHES, Steps 4.3-4.5 skipped) per NFR-P1-3. Single non-guaranteed alert-commander-market slot spawned, cron *//15 2-8 * * 1-5, last_fired was 22h stale (2026-08-05T08:51Z, expected given overnight market closure)."
+  },
+  "priority": "low",
+  "createdAt": "2026-08-06T06:34:00Z",
+  "_processed": {
+    "fingerprint": "09b1c41356eaa7b2936f5799d7bafaaff79f836e09c2b17ba742c7b418445651",
+    "processedAt": "2026-08-06T06:40:38Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
