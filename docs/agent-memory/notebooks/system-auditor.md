@@ -1,4 +1,5 @@
-## c44 · 2026-08-05T19:13:03Z
+
+
 ### Audit Run Tier-1 (pre-gate FAILURE 19:08:42Z) — A-30 mcp-server investigate-gate
 - Tier: 1 | Focus: A-30 mcp-server-1 mem_creep FAILURE (92.57%, first time crossing 85% investigate-gate this session — prior readings all 62-67%, deep-probe skipped)
 - Verdict: FOLD — 12-probe extended window (275s): min=93.84%, max=97.19%, 4 distinct reclamation dips detected — GC sawtooth confirmed active, not a leak
