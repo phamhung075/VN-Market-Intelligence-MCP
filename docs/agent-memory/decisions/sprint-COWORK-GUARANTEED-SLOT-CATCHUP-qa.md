@@ -190,3 +190,16 @@
 - No TS touched — bun test/tsc N/A (Smart-Skip); mock-guard PASS (no production source).
 **why-decision:** APPROVED, DONE_VERIFIED. All 6 ACs independently RAW-verified against the live, twice-rewritten file plus a live re-run of both acceptance instruments — not the row's own review_note prose.
 **why-change:** none — verified exactly what the row scoped; 2 adjacent findings flagged separately, not folded into this verdict.
+
+### STEP qa-S17 · qa · 2026-08-06T10:26:40Z
+**task-id:** FIX-CI-SIZELINT-MCPSERVER-SIX-UNCOVERED-OFFENDERS
+**what-done:** Direct-commit verify (dev-team Review-Lane QA-Drain, `qa[]` row, `branch:null`) of `e2502b98f`, on main ancestry, `git show --stat` matches all 6 claimed files exactly. Did NOT trust dev-team's own prior RAW-verify prose in the row's `review_note` — re-ran everything myself.
+**what-considered:**
+- `size-lint-justification.sh --check` (mine, not dev's) → PASS 0 offenders (scanned 1364). `wc -l` NOW (not at commit-time): claimCandidateScanner 116, vpsPushLogStore 160, signalValidator 177, vpsProxyTools 87, polymarket 462 — all under baseline+tol; `baseline.json` byte-identical to pre-fix (215/152/447/664/233) — AC-2 landmine avoided.
+- orchStateSchema.ts now 1082L (header declares 1074L, tol=107 → within). Grown further since e2502b98f's 839L via a SEPARATE later task (§13/14, dated 2026-08-01, named in header) — not scope creep, and its 2 named consumers (`scripts/orch-validate.mjs`, `drain-signals.test.js`) grep-confirmed as real live imports, not fabricated justification (AC-3 held).
+- Ran full mcp-server suite (15220 tests, 71 fail) then diagnosed rather than trusting either signal blind: isolated re-run of a sample of the 71 (1146/vnstock-3statement/1844-backtest) → 0 fail — mega-run resource-contention artifact, not a regression. Targeted batch of 21 files covering every touched/consumer module: 205/0 fail (batch1) + 166/4 fail (batch2); the 4 confirmed BYTE-IDENTICAL on a parent-commit worktree (`df3044237`) — pre-existing, unrelated to this diff. tsc clean, mock-guard PASS, DDD/secret greps clean, all 5 new sibling files ≤115L (genuine splits).
+- CI corroboration: latest `size-lint` job on run 31090723923 = `success` (siblings PDFX/MACRO already landed per qa-S15 and board).
+**why-decision:** APPROVED, DONE_VERIFIED. AC-1..AC-5 hold under independent re-run; job-level bonus-confirmed green (AC-6 satisfied network-wide, not just this row's file-level gate).
+**why-change:** none — verified exactly what the row scoped.
+
+### CAP-REACHED · 2026-08-06T10:27:09Z
