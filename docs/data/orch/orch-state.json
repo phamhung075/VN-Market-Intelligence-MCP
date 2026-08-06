@@ -14861,20 +14861,6 @@
         "po_triaged_by": "po (dev-team Step 1 triage 2026-08-06)"
       },
       {
-        "id": "FIX-BCTC-SSC-DOC-SELECTION-QUARTER-BLIND-ALWAYS-LATEST",
-        "title": "BCTC acquisition is structurally quarter-blind: listSscDocuments() has no quarter param",
-        "type": "FIX",
-        "size": "M",
-        "priority": "P0",
-        "zone": "apps/mcp-server/",
-        "status": "READY",
-        "created_at": "2026-08-05T00:00:00Z",
-        "files": [
-          "apps/mcp-server/src/infrastructure/fetchers/ssc.ts"
-        ],
-        "note": "30+ period-mismatch refusals, carried 3 PO cycles, baseline_pass:true"
-      },
-      {
         "id": "FIX-ACTIVE-READPATH-LIVENESS-PROBE-NO-DETECTOR",
         "title": "No detector exercises actual data-serving read path - services can fail silently",
         "type": "FIX",
@@ -14884,28 +14870,6 @@
         "status": "READY",
         "created_at": "2026-08-06T00:00:00Z",
         "note": "NEW MINT. 2 live occurrences: kinh-dich dark 6d, news 663m. AC-3 requires probe RED against pre-fix state."
-      },
-      {
-        "id": "GUARD-NOTEBOOK-CONCURRENT-EDIT-COLLISION-DATA-LOSS",
-        "title": "Concurrent notebook writes destroy peer sections - collision-safe append primitive",
-        "type": "FIX",
-        "size": "S",
-        "priority": "P1",
-        "zone": "cross-service/",
-        "status": "READY",
-        "created_at": "2026-08-06T00:00:00Z",
-        "note": "Occurrence 2 this tick, widened scope. next_agent: pm"
-      },
-      {
-        "id": "FIX-DEVTEAM-REBUILD-REQUIRED-MARKER-NO-CONSUMER",
-        "title": "dev-* writes REBUILD_REQUIRED but no gate reads it - compare image build-time vs fix commit",
-        "type": "FIX",
-        "size": "S",
-        "priority": "P1",
-        "zone": "docs/agents/",
-        "status": "READY",
-        "created_at": "2026-08-06T00:00:00Z",
-        "note": "occurrence_count=3, escalated P2→P1. next_agent: agent-father"
       },
       {
         "id": "FIX-NEWSVPS-OVERNIGHT-PUSH-OUTAGE-663M-SILENT",
