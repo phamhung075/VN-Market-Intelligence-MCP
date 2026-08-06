@@ -31,3 +31,19 @@ TASK_602: `isKnownLegitPattern` read at source — `cron-registration:` landed i
 Hard constraint checked for both: `docs/agents/system-auditor/handlers.md` + `audit-dimensions.md` (agent-father's zone) grep-confirmed untouched by any of the 3 commits (`--name-only` on each + `git log -1` shows both files' last touch predates this row).
 
 VERDICT: both APPROVED, DONE_VERIFIED. Moved `task_board.review[]`→`task_board.done_verified[]` via `jq`+`scripts/orch-apply.sh` (conservation OK, task_total 755→755, signal_total 203→203). `next_agent: pm` both rows. QA Review Record appended to each handoff (`docs/agents/dev-team/handoff/TASK_601.md`/`TASK_602.md`); reports `reports/TASK_REPORT_601.md`/`_602.md`. DJ: `sprint-COWORK-GUARANTEED-SLOT-CATCHUP-qa-8.md` §qa-S2/S3. TASK_603 (full suite + deploy) intentionally NOT run — separately dispatched, was blocked on this done_verified.
+
+## cycle-557 · 2026-08-07 · TASK_603 (final gate) + PARENT FIX-CRON-REGISTRATION-PREFIX-NOT-EXCLUDED-ORPHANEMIT-AND-D4-R1B — APPROVED, both DONE_VERIFIED (direct-commit verify, commit `814182608` already on main)
+
+Router explicitly instructed independent reproduction, not trust of self-report. Did all 4 independently:
+
+AC-3a: reverted `AND task_id NOT LIKE 'cron-registration:%'` myself from `coordinationStore.ts` → scoped run **45 pass/1 fail RED**, exact negative-control test failing → restored → `git diff --quiet` confirmed byte-identical to HEAD → re-ran → **46 pass/0 fail GREEN**. Both halves of the negative control (no signal + row still deleted) asserted in one test at source (lines 1141-1165); positive control at 1167-1191.
+
+AC-4: ran the FULL suite myself (`bun test`, 473.80s, not trusting either of the developer's 2 runs) → **15157 pass/40 skip/44 fail/48043 expect()**, 15241 tests/1265 files. Pass/skip/fail counts exact match to developer's own Run 1; expect()-count off by 2 (48043 vs claimed 48041) — same order-dependent flaky-floor class the developer used to explain their own Run1↔Run2 delta, not a regression (flagged in report/handoff as minor discrepancy, non-blocking). Grepped all 44 failing test names + `awk`-isolated the `task-lock-coordination-store.test.ts` block: zero overlap with coordinationStore/task_locks/cron-registration/tasksMdJanitorJob/isKnownLegitPattern/gcExpiredLocks. Net-new-failures = 0.
+
+AC-6: `docker inspect vn-market-intelligence-mcp-mcp-server-1 --format '{{.Image}}'` → `sha256:115700a86e65...` — matches claim + router's own prior independent check. `Created` 2026-08-06T23:21:39Z, `healthy`. All 11 peer containers in `docker compose ps` show unchanged multi-day/week `Created` timestamps — single-service rebuild confirmed, no fleet `down`/`up`. `docker-compose.yml` git log shows no touch by this task or neighbors.
+
+AC-5: grep/diff-checked both agent-father files (`handlers.md`, `audit-dimensions.md`) across all 4 named commits (`814182608`/`03af0f983`/`8e756c36d`/`7aa8247b4`) — zero touches in any. `git log -1` confirms last actual edit predates this task by weeks (2026-07-18/2026-07-25).
+
+tsc 0 errors, mock-guard PASS (test-only diff, Smart-Skip DDD/security).
+
+VERDICT: TASK_603 APPROVED, DONE_VERIFIED. Parent row also flipped `READY`→`DONE_VERIFIED` in the SAME `orch-apply.sh` write per handoff's explicit "Handoff to QA" instruction (this is QA's responsibility, not developer's) — conservation OK (task_total 757→757, signal_total 204→204), 2 rows stamped. `next_agent: pm` both. Sequencing constraint (brief §4.4) now satisfied — router's held agent-father Lane-1 dispatch unblocked. QA Review Record appended to `docs/agents/dev-team/handoff/TASK_603.md`; report `reports/TASK_REPORT_603.md`. DJ: `sprint-COWORK-GUARANTEED-SLOT-CATCHUP-qa-8.md` §qa-S4.
