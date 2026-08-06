@@ -598,3 +598,15 @@
 **Mitigation:** No immediate action beyond signal routing.
 
 ---
+
+## Anomaly: A-30 · rag-service memory loss of reclamation (97.56% peak)
+**Severity:** WARN | **Date:** 2026-08-06 | **Status:** OPEN
+**Location:** container/rag-service
+**Details:** All samples >93% with no reclamation dips — loss of reclamation detected
+**Impact:** Service running at sustained high memory, unable to reclaim. Risk of OOM.
+**Root cause:** Memory leak or inefficient memory usage in rag-service
+**Zone owner:** dev-mcp-server
+**Last reported:** 2026-08-06T14:13:33Z (signal sys-20260806T141322-01bc, system-auditor -> po, dedup_key=microservice_degraded:rag-service:A-30, WARN Telegram sent)
+**Mitigation:** No immediate action beyond signal routing.
+
+---
