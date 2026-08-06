@@ -60,3 +60,25 @@
 - Ran live `orch-validate.mjs` myself: Stage 1f = 0 divergence (no regression 5 days post-land), Stage 1g prints 10 rows now (was 8 at land time — expected drift from new backlog adds, mechanism intact, still NON-FATAL exit 0).
 **why-decision:** APPROVED, DONE_VERIFIED. AC-1..AC-4 all independently confirmed against real diffs/tests, not self-report.
 **why-change:** none — verified exactly what the row scoped.
+
+### STEP qa-S23 · qa · 2026-08-06T12:57:21Z
+**task-id:** FIX-CI-FRONTEND-ESLINT-BUNLOCK-DUAL-LOCKFILE-DRIFT
+**what-done:** Direct-commit verify (Review-Lane QA-Drain, `qa[]` row, `branch:null`) of `8c45fc1a0`, on main ancestry. `git show --stat` touches ONLY `apps/frontend/bun.lock`, not the other 2 `files[]` entries (package.json/package-lock.json) — flagged, then independently confirmed non-issue: both already carried `tailwindcss-animate` since `48eb49a0c` (2026-06-11), byte-unchanged since, matching status_note's "0 diff" claim.
+**what-considered:**
+- Ran AC-1/AC-3 myself, not trusted from prose: `bun install --frozen-lockfile` exit 0 no-changes; `bun run lint:fence` exit 0 (only eslint-plugin-boundaries deprecation warnings, 0 rule violations).
+- AC-2 Dockerfile consumer claim verified at source: `apps/frontend/Dockerfile:12` genuinely runs `npm ci --ignore-scripts`, `docker-compose.yml:417-420` confirms live build context — not fabricated.
+- AC-4 CI-plane re-pulled via `gh run view 30611681976`: headSha==commit exactly, `frontend-eslint`=success, all 20/20 jobs green (row said 19, off-by-1, immaterial). Re-checked freshest main run (31100419277, 12:12Z, 6d after land) — still success, gate durable.
+- tsc clean; mock-guard N/A/PASS (lockfile-only). Full vitest 2183/2 matches claim exactly; independently confirmed the 2 QUE_DESCRIPTIONS fails are pre-existing (diffed the source+2 test files across `8c45fc1a0~1`→HEAD, byte-identical) AND structurally CI-inert (frontend vitest has no CI job at all — only `frontend-eslint`/lint:fence runs there; `bun test` job is mcp-server-only).
+- Self-inflicted incident during verification: an unnecessary `git stash -u` briefly stashed the live shared working tree (unrelated peer-agent uncommitted edits); caught immediately, `git stash pop` restored cleanly (verified via `git status` diff + `jq empty orch-state.json`), zero data loss, no peer commit landed during the ~1min window.
+**why-decision:** APPROVED, DONE_VERIFIED. All 4 ACs independently reproduced against live artifacts, not the row's own review_note.
+**why-change:** none — verified exactly what the row scoped.
+
+### STEP qa-S23 · qa · 2026-08-06T12:57:17Z
+**task-id:** FIX-CI-SIZELINT-MCPSERVER-ENERGYTOOLS-NEW-OFFENDER
+**what-done:** Direct-commit verify (Review-Lane QA-Drain, `qa[]` row, `branch:null`) of `f4feb65517e`, on main ancestry. `git show --stat` matches the row's sole `files[]` entry exactly; diff is 9 insertions/0 deletions, all inside the top-of-file JSDoc block — read the full diff myself, not the status_note prose.
+**what-considered:**
+- Live `wc -l` = 224, exact match to the declared `size-justification: 224L` header token. Ran `size-lint-justification.sh --check` myself: PASS, 0 offenders (1364 scanned). AC-2: `baseline.json` entry still 152, last-touch commit still `22cd084d4` (predates fix) — 2-signal confirmation, not trusting "no --update" claim. AC-3: `git diff 22cd084d4..HEAD` on the script itself is empty — byte-identical, unweakened.
+- AC-4 RAW-verified on raw `gh run` logs, not self-report: run 30608934628 (headSha = this exact commit) — size-lint FAIL, sole offender is the sibling macro file, energyTools.ts absent (grep confirmed). Went further: latest main CI run (headSha `d0eb118ab`, confirmed descendant via merge-base) shows the size-lint JOB itself green — both this fix and the macro sibling have landed.
+- Targeted regression (4 files referencing EnergyGrid): 80 pass/0 fail. tsc clean. mock-guard PASS. DDD grep flagged pre-existing infrastructure imports — legitimate (interface layer, not domain/), unchanged by this diff.
+**why-decision:** APPROVED, DONE_VERIFIED. All 4 ACs independently reproduced against live artifacts + raw CI logs, exceeding the row's own AC-4 ask (job-level green, not just file absent from one red run).
+**why-change:** none — verified exactly what the row scoped.
