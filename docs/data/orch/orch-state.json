@@ -13848,6 +13848,45 @@
           "FIX-STOCK-PRICE-VNDIRECT-DSI-INV-1-NULL-CHANGE-SERVED-AS-ZERO"
         ],
         "verified_note": "[PO] Sign-off 2026-08-06T20:59Z (direct-commit verify, ruling docs/agent-memory/decisions/ruling-20260806T2059Z-vndirect-mapper-tests-po.md). SCOPED DoD MET, RAW-re-derived not banked from the self-report: commit 49bc309a3 ancestor-confirmed on HEAD; tree clean under apps/stock-price/; re-ran `go test ./pkg/primitive/vndirect-quote-mapper/... -count=1` myself -> ok, 13/13 subtests, and every DoD case-class present BY NAME (scale HOSE/HNX/UPCOM, no-scale INDEX x2 + non-VN floor, empty->nil-not-error, malformed x2, null/partial-null/omitted -> nil, zero-change NOT nil). CAVEAT CONFIRMED: grep for MapPayload|MapItem across apps/stock-price returns hits ONLY inside the primitive package -- zero consumers; fetchers.go still carries the inline *1000 twice (Tier1 :106, Tier2 :210). Served path remains uncovered and duplicated. NEW -- EQUIVALENCE IS DISPROVEN, NOT MERELY UNPROVEN (this inverts part of the closeout caveat): mapper.go != fetchers.go. fetchers.go's inline payload struct declares Change/PctChange as NON-pointer float64 (:78-79 Tier1, :182-183 Tier2); JSON null into a non-pointer float is a documented encoding/json no-op, so the field keeps zero, and `change := item.Change; ... Change: &change` takes the address of a local -> STRUCTURALLY NEVER NIL. mapper.go (:30-31) declares them *float64. Measured both shapes on identical input: `\"change\":null` -> SERVED &0 vs PRIMITIVE nil (DIVERGE); field omitted -> &0 vs nil (DIVERGE); `\"change\":0` -> &0 vs &0 (agree). CONSEQUENCE, AND IT IS FAVOURABLE TO THE DEV: the tests do NOT enshrine the copy's arbitrary behaviour -- they encode the DOCUMENTED contract (pkg/domain/models.go:22-23, `Change *float64 // nil = unavailable, 0 = genuine flat day`, invariant DSI-INV-1). The primitive is RIGHT; the SERVED path is WRONG and violates DSI-INV-1 in production today. WHY DONE_VERIFIED RATHER THAN HOLD: orchStateSchema.ts §13 records deps_satisfied() requires ALL deps DONE_VERIFIED fail-CLOSED, and FACTORY-STOCK-extract-vndirect-mapper (P1) depends_on THIS row -- holding it in review[] is exactly what kept that P1 structurally un-dispatchable for 13 days, i.e. blocking the fix for the duplication this caveat complains about. FOLLOW-UPS LANDED THIS TICK: (a) paired task's dispatch_precondition REWRITTEN in backlog-detail.json -- its old text ordered a golden-diff proving mapper.go==fetchers.go EXACTLY, which will now fail and would most likely be 'resolved' by reverting the primitive to the buggy non-pointer shape (enshrining the DSI-INV-1 violation and breaking 3 of the 13 green tests); (b) minted FIX-STOCK-PRICE-VNDIRECT-DSI-INV-1-NULL-CHANGE-SERVED-AS-ZERO (P1, backlog) for the served-path defect, which exists independently of whether the FACTORY refactor ever runs. DEPLOY GATE: none -- mapper.go has zero importers so it is linked into no binary; rebuild_required:false is correct here. VERDICT: APPROVED / DONE_VERIFIED."
+      },
+      {
+        "id": "FIX-ALERT-COMMANDER-NO-BASH-GRANT-NOTEBOOK-UNCOMMITTABLE",
+        "type": "FIX",
+        "title": "alert-commander holds no Bash tool, so commit-mutex cannot run -- notebook uncommittable across 3 consecutive cycles",
+        "status": "DONE_VERIFIED",
+        "priority": "P1",
+        "size": "S",
+        "zone": "cross-service/",
+        "owner": "po",
+        "next_agent": "pm",
+        "supervised": false,
+        "plan_only": false,
+        "created_at": "2026-07-29T12:32:22Z",
+        "created_by": "dev-team/po-batch-20260729T1207Z",
+        "updated_at": "2026-08-06T21:02:26Z",
+        "source": "po triage 2026-07-29T12:07Z tick",
+        "desc": "Frontmatter is 'tools: Read, Write, Edit, mcp__gateway__call_tool' -- a structural tool-grant gap, not agent laziness. Self-reported by alert-commander at 06:11Z, 08:13Z, 12:10Z. Notebook is dirty right now. Compounding: uncommitted content parked in the shared tree IS the commit-sweep-guard exposure surface this session has been tracking all day (FIX-COMMIT-PATH-PEER-INDEX-SWEEP-GUARD-LAYER2, dispatched this same tick).",
+        "files": [
+          ".claude/agents/alert-commander.md"
+        ],
+        "deliverable": "Grant Bash to alert-commander. CO-DISPATCH alongside the existing READY row FIX-COWORK-BASH-GRANT-COVERAGE-STAMP-TRANSPORT (also next_agent=agent-father, same actuator -- news-scout + market-watcher frontmatter Bash grants) so both land in one edit pass rather than two separate agent-father cycles.",
+        "baseline_pass": "alert-commander completes a cycle with its notebook committed",
+        "related": [
+          "FIX-ALERT-COMMANDER-NOTEBOOK-SINGLE-BLOB-UNPRUNABLE",
+          "FIX-COWORK-BASH-GRANT-COVERAGE-STAMP-TRANSPORT",
+          "FIX-DEVTEAM-READY-REVIEW-LANE-SUPERVISED-PLANONLY-NO-PICKER"
+        ],
+        "status_note": "PO 2026-07-30T09:43Z ESCALATED P2->P1 + scope widened, from two unresolved reports read this tick. (1) RECURRENCE DOUBLED: report 4189 (2026-07-30T02:12:57Z, addressed @po, MEDIUM) says notebook commits are now blocked SIX consecutive cycles; this row recorded three. (2) NEW AND MORE SEVERE CONSEQUENCE this row does not mention — report 4180 (2026-07-30T00:12:55Z): with no Bash, alert-commander cannot derive a session id, so `task_claim` for its published-marker was REJECTED (owner_client_session required by schema) and it fired that cycle's verified CRITICAL signal WITHOUT the tombstone lock. So the missing grant is not only a memory-hygiene issue, it removes the duplicate-publish mutex from the live alert path — the same double-publish family already at occurrence #4 on this board. (3) ROOT CAUSE RAW-VERIFIED, not taken from the self-report: `.claude/agents/alert-commander.md:5` reads `tools: Read, Write, Edit, mcp__gateway__call_tool` — Bash is absent. Structural tool-grant gap, not agent laziness (feedback_agent_reported_limitation_may_be_structural_check_the_tool_grant). (4) THREE CANDIDATE FIXES, the agent named the first two itself: grant Bash; OR router passes $CLAUDE_CODE_SESSION_ID at spawn (fixes the lock, not the notebook commit); OR the published-marker gate gets an explicit no-session fallback. Prefer whichever also leaves the notebook committable, and check it against the sibling row FIX-ALERT-COMMANDER-NOTEBOOK-SINGLE-BLOB-UNPRUNABLE (REVIEW) — a committable notebook that is one 119KB blob is only half a fix. (5) STRANDED, measured with the canonical predicates at 09:42Z, not inferred: eff_next_agent=agent-father, BOUNDED1=false (non-dev next_agent), SLS=false (supervised=false, plan_only=false) — no automated lane can pick this up, it moves only by deliberate router/PO dispatch. Deliberately NOT setting supervised=true alone (that pairing is strictly worse — it buys the BOUNDED-1 exclusion without buying the SLS lane) and NOT setting plan_only=true (the fix is a known one-line grant, quarantining it to planning adds a hop). Returned to dev-team as an UNBLOCK for direct agent-father dispatch instead. If that dispatch does not happen this tick, this row is a live instance of P0 FIX-DEVTEAM-READY-REVIEW-LANE-SUPERVISED-PLANONLY-NO-PICKER and should be counted as one in its blast radius.\n\n[QA] Review Record (direct-commit verify) — 2026-08-06T21:00Z. Verified commit 610110e16 (2026-07-31T01:18:10+02:00, on main ancestry): tools: line gains Bash (Read, Write, Edit, Bash, mcp__gateway__call_tool), 1-line change, co-dispatched with market-watcher.md/news-scout.md per FIX-COWORK-BASH-GRANT-COVERAGE-STAMP-TRANSPORT — diff matches claim exactly. Re-verified review_note's own 2 explicit asks against LIVE git/notebook history, not trusted from prose: (1) notebook commits cleanly — 36 clean commits to docs/agent-memory/notebooks/alert-commander.md since the fix (2026-07-31 through today's c59), zero \"No Bash tool\"/\"commit blocked\" lines in any post-fix cycle; the 2 backlogged pre-fix cycles (c12/c13, both self-logging the failure) were cleared in the very next commit (de4367f9e, 51min after the Bash grant) — working tree clean now. (2) task_claim on the published-marker no longer rejects for missing owner_client_session — post-fix cycle c23 (2026-07-31T20:14:13Z, commit 58e20a971) fired 1 MARKET alert (chain_catalyst 10219) and recorded \"claim-truth-gate PASS, published-marker claimed\" — confirms task_claim succeeded with Bash now available to derive/expand the session id. Touched file is agent frontmatter only — zero .ts files in commit 610110e16, so bun test/DDD/security/mock-guard are structurally N/A; ran bun tsc --noEmit (apps/mcp-server) as a main-branch sanity check — 0 errors. baseline_pass (\"alert-commander completes a cycle with its notebook committed\") CONFIRMED across 6+ days of live post-fix cycles, not a single sample. Decision journal: sprint-COWORK-GUARANTEED-SLOT-CATCHUP-qa-4.md STEP qa-S64. VERDICT: APPROVED, DONE_VERIFIED.\n",
+        "po_manual_dispatch_flagged_at": "2026-07-30T22:59:44Z",
+        "po_manual_dispatch_flagged_by": "po (manual-dispatch-sweep)",
+        "po_manual_dispatch_class": "DRS-STRANDED-OFF-ALLOWLIST",
+        "po_manual_dispatch_note": "po (manual-dispatch-sweep) surfaced DRS-STRANDED-OFF-ALLOWLIST candidate — folding into this tick's BATCH",
+        "updated_by": "qa",
+        "review_note": "AGENT-FATHER IMPLEMENTATION 2026-07-30T23:16:56Z — added Bash to .claude/agents/alert-commander.md tools: line (1 line, matches deliverable). Co-dispatched in the same edit pass as FIX-COWORK-BASH-GRANT-COVERAGE-STAMP-TRANSPORT per that row's own CO-DISPATCH instruction. RAW pre-edit verify: tools: line still 'Read, Write, Edit, mcp__gateway__call_tool' (Bash absent); git log --since=2026-07-29T12:32:22Z -- .claude/agents/alert-commander.md was empty — matches row's own claim. RAW post-edit verify: tools: line now 'Read, Write, Edit, Bash, mcp__gateway__call_tool'. NOT self-certified DONE: baseline_pass ('alert-commander completes a cycle with its notebook committed') and the task_claim session-id-derivation fix both require alert-commander's NEXT live cowork cycle to run and be observed — agent-father cannot force or observe that from this dispatch. Routing to qa to confirm on the next live cycle: (1) notebook commits cleanly, (2) task_claim on the published-marker no longer rejects for missing owner_client_session — then flip DONE.",
+        "claimed_at": "2026-08-06T20:54:27Z",
+        "claimed_by": "dev-team (review-lane qa-drain)",
+        "verified_at": "2026-08-06T21:02:26Z",
+        "verified_by": "qa"
       }
     ],
     "head": {
@@ -21784,43 +21823,6 @@
         "depends": [
           "FIX-MARKETDB-WAL-SEQUENCE-STEPS-2-4-NO-OWNER"
         ]
-      },
-      {
-        "id": "FIX-ALERT-COMMANDER-NO-BASH-GRANT-NOTEBOOK-UNCOMMITTABLE",
-        "type": "FIX",
-        "title": "alert-commander holds no Bash tool, so commit-mutex cannot run -- notebook uncommittable across 3 consecutive cycles",
-        "status": "QA",
-        "priority": "P1",
-        "size": "S",
-        "zone": "cross-service/",
-        "owner": "po",
-        "next_agent": "qa",
-        "supervised": false,
-        "plan_only": false,
-        "created_at": "2026-07-29T12:32:22Z",
-        "created_by": "dev-team/po-batch-20260729T1207Z",
-        "updated_at": "2026-08-06T20:54:28Z",
-        "source": "po triage 2026-07-29T12:07Z tick",
-        "desc": "Frontmatter is 'tools: Read, Write, Edit, mcp__gateway__call_tool' -- a structural tool-grant gap, not agent laziness. Self-reported by alert-commander at 06:11Z, 08:13Z, 12:10Z. Notebook is dirty right now. Compounding: uncommitted content parked in the shared tree IS the commit-sweep-guard exposure surface this session has been tracking all day (FIX-COMMIT-PATH-PEER-INDEX-SWEEP-GUARD-LAYER2, dispatched this same tick).",
-        "files": [
-          ".claude/agents/alert-commander.md"
-        ],
-        "deliverable": "Grant Bash to alert-commander. CO-DISPATCH alongside the existing READY row FIX-COWORK-BASH-GRANT-COVERAGE-STAMP-TRANSPORT (also next_agent=agent-father, same actuator -- news-scout + market-watcher frontmatter Bash grants) so both land in one edit pass rather than two separate agent-father cycles.",
-        "baseline_pass": "alert-commander completes a cycle with its notebook committed",
-        "related": [
-          "FIX-ALERT-COMMANDER-NOTEBOOK-SINGLE-BLOB-UNPRUNABLE",
-          "FIX-COWORK-BASH-GRANT-COVERAGE-STAMP-TRANSPORT",
-          "FIX-DEVTEAM-READY-REVIEW-LANE-SUPERVISED-PLANONLY-NO-PICKER"
-        ],
-        "status_note": "PO 2026-07-30T09:43Z ESCALATED P2->P1 + scope widened, from two unresolved reports read this tick. (1) RECURRENCE DOUBLED: report 4189 (2026-07-30T02:12:57Z, addressed @po, MEDIUM) says notebook commits are now blocked SIX consecutive cycles; this row recorded three. (2) NEW AND MORE SEVERE CONSEQUENCE this row does not mention — report 4180 (2026-07-30T00:12:55Z): with no Bash, alert-commander cannot derive a session id, so `task_claim` for its published-marker was REJECTED (owner_client_session required by schema) and it fired that cycle's verified CRITICAL signal WITHOUT the tombstone lock. So the missing grant is not only a memory-hygiene issue, it removes the duplicate-publish mutex from the live alert path — the same double-publish family already at occurrence #4 on this board. (3) ROOT CAUSE RAW-VERIFIED, not taken from the self-report: `.claude/agents/alert-commander.md:5` reads `tools: Read, Write, Edit, mcp__gateway__call_tool` — Bash is absent. Structural tool-grant gap, not agent laziness (feedback_agent_reported_limitation_may_be_structural_check_the_tool_grant). (4) THREE CANDIDATE FIXES, the agent named the first two itself: grant Bash; OR router passes $CLAUDE_CODE_SESSION_ID at spawn (fixes the lock, not the notebook commit); OR the published-marker gate gets an explicit no-session fallback. Prefer whichever also leaves the notebook committable, and check it against the sibling row FIX-ALERT-COMMANDER-NOTEBOOK-SINGLE-BLOB-UNPRUNABLE (REVIEW) — a committable notebook that is one 119KB blob is only half a fix. (5) STRANDED, measured with the canonical predicates at 09:42Z, not inferred: eff_next_agent=agent-father, BOUNDED1=false (non-dev next_agent), SLS=false (supervised=false, plan_only=false) — no automated lane can pick this up, it moves only by deliberate router/PO dispatch. Deliberately NOT setting supervised=true alone (that pairing is strictly worse — it buys the BOUNDED-1 exclusion without buying the SLS lane) and NOT setting plan_only=true (the fix is a known one-line grant, quarantining it to planning adds a hop). Returned to dev-team as an UNBLOCK for direct agent-father dispatch instead. If that dispatch does not happen this tick, this row is a live instance of P0 FIX-DEVTEAM-READY-REVIEW-LANE-SUPERVISED-PLANONLY-NO-PICKER and should be counted as one in its blast radius.",
-        "po_manual_dispatch_flagged_at": "2026-07-30T22:59:44Z",
-        "po_manual_dispatch_flagged_by": "po (manual-dispatch-sweep)",
-        "po_manual_dispatch_class": "DRS-STRANDED-OFF-ALLOWLIST",
-        "po_manual_dispatch_note": "po (manual-dispatch-sweep) surfaced DRS-STRANDED-OFF-ALLOWLIST candidate — folding into this tick's BATCH",
-        "updated_by": "agent-father",
-        "review_note": "AGENT-FATHER IMPLEMENTATION 2026-07-30T23:16:56Z — added Bash to .claude/agents/alert-commander.md tools: line (1 line, matches deliverable). Co-dispatched in the same edit pass as FIX-COWORK-BASH-GRANT-COVERAGE-STAMP-TRANSPORT per that row's own CO-DISPATCH instruction. RAW pre-edit verify: tools: line still 'Read, Write, Edit, mcp__gateway__call_tool' (Bash absent); git log --since=2026-07-29T12:32:22Z -- .claude/agents/alert-commander.md was empty — matches row's own claim. RAW post-edit verify: tools: line now 'Read, Write, Edit, Bash, mcp__gateway__call_tool'. NOT self-certified DONE: baseline_pass ('alert-commander completes a cycle with its notebook committed') and the task_claim session-id-derivation fix both require alert-commander's NEXT live cowork cycle to run and be observed — agent-father cannot force or observe that from this dispatch. Routing to qa to confirm on the next live cycle: (1) notebook commits cleanly, (2) task_claim on the published-marker no longer rejects for missing owner_client_session — then flip DONE.",
-        "claimed_at": "2026-08-06T20:54:27Z",
-        "claimed_by": "dev-team (review-lane qa-drain)"
       },
       {
         "id": "FIX-COWORK-FIRE-ELECTION-TICK-TOMBSTONE",

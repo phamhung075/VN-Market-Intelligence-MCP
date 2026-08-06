@@ -147,3 +147,25 @@
 - All touched files `.md` → bun test/tsc/DDD-secret-grep N/A; `mock-guard.sh` → PASS (no production source). DJ-GATE-1: `sprint-TOKEN-ECONOMY-AUDIT-agent-father.md` task-id:TE-T08 present.
 **why-decision:** APPROVED, DONE_VERIFIED. Diff+current-file-state independently match every claim in `return_summary`; no stale/broken cross-ref survives.
 **why-change:** none — verified exactly what the row scoped.
+
+### STEP qa-S64 · qa · 2026-08-06T21:00:00Z
+**task-id:** FIX-ALERT-COMMANDER-NO-BASH-GRANT-NOTEBOOK-UNCOMMITTABLE
+**what-done:** Direct-commit verify (`qa[]` row, `branch:null`, no `.commit`/`.files[]` on row — derived `610110e16` via `git log -- .claude/agents/alert-commander.md`), ancestor-confirmed on main; diff matches claim exactly (tools: line gains Bash, 1-line, co-dispatched w/ market-watcher.md+news-scout.md).
+**what-considered:**
+- review_note asked qa to confirm 2 things on a LIVE cycle, not trust prose: (1) notebook commits cleanly — confirmed: 36 clean commits to alert-commander.md notebook since the fix landed (2026-07-31→08-06 c59 today), zero new "No Bash tool"/"commit blocked" lines post-fix; the 2 pre-fix backlogged cycles (c12/c13) were cleared in the very next commit (`de4367f9e`, 51min after the fix).
+- (2) task_claim on published-marker no longer rejects for missing owner_client_session — confirmed: post-fix cycle c23 (2026-07-31T20:14Z, commit `58e20a971`) fired 1 MARKET alert and logged "claim-truth-gate PASS, published-marker claimed".
+- All touched files `.md` (agent frontmatter) — zero `.ts` in commit, bun test/DDD/security/mock-guard structurally N/A; ran `bun tsc --noEmit` (apps/mcp-server) as main-branch sanity — 0 errors.
+**why-decision:** APPROVED, DONE_VERIFIED. Both explicit review_note asks independently reproduced from live git/notebook history (not the row's own prose), across 6 days of post-fix cycles, not a single sample.
+**why-change:** none — verified exactly what the row scoped.
+
+### STEP qa-S64 · qa · 2026-08-06T20:59:21Z
+**task-id:** FIX-SIGNAL-OUTCOMES-LIVENESS-GUARD-COUNTS-STRUCTURALLY-UNRESOLVABLE-ROWS
+**what-done:** Direct-commit verify (`qa[]` row, `branch:null`, no `.commit`/`.files[]` — derived commits 314e70718(fix+test)/333eabfe5(memory) from review_note, both ancestor-confirmed on main.
+**what-considered:**
+- Read the diff myself: WHERE clause gains `AND stock_code GLOB '[A-Z][A-Z][A-Z]'` only — no import/logic change elsewhere, DDD/security surface unaffected.
+- Re-ran target file 11/11 pass; related-module sweep (2 files importing checkStalledResolutionLiveness) 34/34 pass — matches claimed counts. tsc 0 errors. mock-guard PASS.
+- `rebuild_required=true` satisfied: mcp-server image rebuilt 2026-08-06T19:45Z (after the commit) — docker exec confirmed live container source has the GLOB clause.
+- Verified LIVE against prod market.db: id49(MACRO)/id74(MULTI) still checked_at=NULL as the row claims; guarded query returns stuckCount=0 against real data — the false alert is suppressed. Cross-checked stock_code shape claim directly on live agent_signals/signal_outcomes.
+- DJ-GATE-1: `sprint-COWORK-GUARANTEED-SLOT-CATCHUP-dev-mcp-server.md` §dev-mcp-server-S34 present, predates this verify.
+**why-decision:** APPROVED, DONE_VERIFIED. Fix + both live-data claims (rebuild landed, guard suppresses the exact 2 rows) independently reproduced, not trusted from prose.
+**why-change:** none — verified exactly what the row scoped.
