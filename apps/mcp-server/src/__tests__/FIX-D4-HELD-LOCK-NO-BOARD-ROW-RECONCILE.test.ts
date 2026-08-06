@@ -150,6 +150,24 @@ describe("FIX-D4-HELD-LOCK-NO-BOARD-ROW-RECONCILE", () => {
     });
   });
 
+  describe("isKnownLegitPattern cron-registration:* handling", () => {
+    it("should recognize cron-registration:cowork-team as known-legit", () => {
+      expect(isKnownLegitPattern("cron-registration:cowork-team")).toBe(true);
+    });
+
+    it("should recognize cron-registration:detect-loop as known-legit", () => {
+      expect(isKnownLegitPattern("cron-registration:detect-loop")).toBe(true);
+    });
+
+    it("should recognize cron-registration:standalone-team as known-legit", () => {
+      expect(isKnownLegitPattern("cron-registration:standalone-team")).toBe(true);
+    });
+
+    it("should still reject unrelated task_id families", () => {
+      expect(isKnownLegitPattern("some-random-id")).toBe(false);
+    });
+  });
+
   describe("Step R-1b — isLiveConcurrentSession (live-concurrent-session guard)", () => {
     const nowEpoch = 2000;
 

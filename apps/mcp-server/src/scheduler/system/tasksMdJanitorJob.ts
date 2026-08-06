@@ -196,6 +196,7 @@ export function bareTaskId(taskId: string): string {
  */
 const KNOWN_LEGIT_PREFIXES: readonly string[] = [
   "cron:",
+  "cron-registration:",
   "po-triage-",
   "esc-datacov:",
   "esc-deepdive:",
