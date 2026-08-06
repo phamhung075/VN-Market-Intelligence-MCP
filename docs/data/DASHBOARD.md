@@ -634,3 +634,15 @@
 **Mitigation:** No immediate action beyond signal routing.
 
 ---
+
+## Anomaly: A-30 · rag-service memory pressure 96.56% — critical load, no reclamation
+**Severity:** WARN | **Date:** 2026-08-06 | **Status:** OPEN
+**Location:** rag-service container
+**Details:** Memory usage 96.56% of 1GiB cap (988.8MiB / 1024MiB), only 35.2MiB free — below 40MiB safety floor. Sustained high memory with zero reclamation dips detected. Repeated occurrence over multiple cycles.
+**Impact:** Service at critical memory pressure; approaching OOMKill risk. Continued high load without reclamation cycles indicates potential memory leak or inefficient resource management.
+**Root cause:** Known residual FU-RAG-DEPLOY-MEMORY: sentence-transformers embedder model singleton with no release path. Awaiting container rebuild with fix (commit 22232ad2b).
+**Zone owner:** dev-rag-service
+**Last reported:** 2026-08-06T15:10:52Z (signal sys-20260806T151042-6d28, system-auditor -> po, dedup_key=microservice_degraded:rag-service:A-30, WARN Telegram sent)
+**Mitigation:** No immediate action beyond signal routing.
+
+---
