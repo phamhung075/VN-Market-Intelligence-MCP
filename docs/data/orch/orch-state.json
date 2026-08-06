@@ -89,10 +89,10 @@
   ],
   "head": {
     "status": "idle",
+    "updated_at": "2026-08-06T11:50:18Z",
+    "updated_by": "developer",
     "active_task_id": null,
-    "next_agent": "router",
-    "updated_at": "2026-08-06T11:31:05Z",
-    "updated_by": "developer"
+    "next_agent": null
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -11408,47 +11408,6 @@
         "decision_journal": "docs/agent-memory/decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-dev-macro-indicators.md STEP dev-macro-indicators-S3"
       },
       {
-        "id": "FIX-DB-INTEGRITY-SIDECAR-NAMED-VOLUME-DRIFT",
-        "type": "FIX",
-        "title": "db-integrity observer tooling still mounts the named volume commit 5ba622eca retired on 2026-07-15 — counts helper returns null, probe fail-opens every tick",
-        "zone": "cross-service/",
-        "priority": "P1",
-        "status": "BACKLOG",
-        "size": "S",
-        "next_agent": "dev-team",
-        "supervised": false,
-        "plan_only": false,
-        "baseline_pass": true,
-        "source": "PO triage of system-auditor Tier-DATA sweep 2026-08-05T06:47Z (router escalation, telegram bug msg_id 4703)",
-        "created_at": "2026-08-05T07:06:06Z",
-        "created_by": "po",
-        "updated_at": "2026-08-06T08:33:18Z",
-        "root_cause": "2026-07-15 commit 5ba622eca ('fix(infra): bind-mount market data to host disk instead of Docker named volume') moved the live DB off the named volume `vn-market-intelligence-mcp_market_data` and onto a HOST BIND MOUNT `./data/live:/app/data` across all 9 dependent services, because the 2026-07-15 hypervisor VM rebuild had destroyed the named volume. docker-compose.yml now declares only pek_model_cache + bctc-page-images under `volumes:` — market_data is gone entirely. The RUNTIME was migrated; the READ-ONLY OBSERVER tooling was not. Every observer still runs `docker run --rm -v vn-market-intelligence-mcp_market_data:/data keinos/sqlite3 ...`, which makes Docker AUTO-CREATE an empty volume and then fail to open /data/market.db. Confirmed live: `docker volume inspect vn-market-intelligence-mcp_market_data` shows CreatedAt=2026-08-05T06:47:24Z (auto-created by the auditor's own failing probe today) and `docker run -v <vol>:/data alpine ls -la /data` shows an empty dir, while `docker inspect vn-market-intelligence-mcp-mcp-server-1` shows `bind .../data/live -> /app/data` and the real market.db is 425MB with an mtime of seconds ago.",
-        "evidence": "PO ran both failing commands directly. `bash scripts/db-integrity-counts.sh` -> '[DB-INTEGRITY-COUNTS] PROBE FAILURE (exit 1): Error: unable to open database \"file:/data/market.db?immutable=1\": unable to open database file'. `bash scripts/agents-flow/db-integrity-probe.sh` -> {\"verdict\":\"SPAWN\",\"detail\":\"sidecar query failed (docker unreachable, non-zero exit, or output did not parse into 1 line per watched table) — snapshot left untouched\",\"tables_changed\":-1}. Both fail-open rather than fail-loud, so the degradation is SILENT: the probe's whole purpose is skip-if-unchanged idempotency and it now votes SPAWN unconditionally, and the counts helper's null propagates into every history entry. The same query against the correct path succeeds immediately: `sqlite3 \"file:data/live/market.db?immutable=1\" \"SELECT COUNT(*) FROM daily_ohlcv WHERE high=0 AND low=0;\"` -> 336.",
-        "blast_radius": "docs/data/db-integrity-history.json holds 138 entries; the last one with non-null `counts` is 2026-06-25T19:25:41Z, then a 41-day gap, then today's 2026-08-05T06:51:39Z entry with counts=NULL. The gap is because the db-data-integrity cron had NO re-arm coverage until /cron-standalone-team was built on 2026-08-04 — so today was the FIRST sweep since the 07-15 bind-mount switch, and it broke immediately. Correct framing: broken for 21 days (since 5ba622eca), first OBSERVED today — not '6 weeks of silent nulls'. The deterministic counts trail that register.md:108-113 explicitly relies on to stop the LLM inventing trends is dead until this lands.",
-        "files": [
-          "scripts/db-integrity-counts.sh",
-          "scripts/agents-flow/db-integrity-probe.sh",
-          "scripts/db-integrity-history-append.sh",
-          "scripts/ops-bctc-enrich-reverify-pulljob.sh",
-          ".claude/skills/cron-standalone-team/register.md",
-          ".claude/commands/crons/cron-db-data-integrity.md",
-          "docs/agents/system-auditor/flow/main.md"
-        ],
-        "ac": [
-          "AC-1 DECIDE THE CANONICAL PATH FIRST, then change code. Two candidates: (i) host bind `data/live/market.db` read directly with `sqlite3 \"file:<path>?immutable=1\"` (no docker at all — PO confirmed this works today and is strictly simpler), or (ii) keep a sidecar but mount the host dir: `docker run --rm -v \"$PWD/data/live:/data:ro\" keinos/sqlite3 ...`. Record the choice + rationale in the decision journal. Do NOT re-create the named volume — 5ba622eca retired it deliberately so the DB survives VM rebuilds.",
-          "AC-2 scripts/db-integrity-counts.sh returns real non-null counts for every watched table. Verify by running it and diffing at least 3 table counts against the same query run through a second independent access path (e.g. the mcp-server container's own reader) — two planes, per memory feedback_same_db_tools_diverge_rowcount.",
-          "AC-3 scripts/agents-flow/db-integrity-probe.sh emits verdict=SKIP-SPAWN on an unchanged DB. This is the actual proof the pre-gate works — today it CANNOT emit SKIP-SPAWN at all. Run it twice with no intervening writes and assert the second call skips.",
-          "AC-4 Both scripts FAIL LOUD (non-zero exit + bug-channel-worthy stderr) when the DB is genuinely unreachable, instead of silently returning null / voting SPAWN. The current fail-open is what let this hide for 21 days.",
-          "AC-5 Update every doc/prompt that still teaches the named-volume pattern: .claude/skills/cron-standalone-team/register.md Job 1 AND Job 2 prompt bodies (both currently paste the 'DB ACCESS — the live DB is the named volume, NOT host ./data' block verbatim, and both are LIVE — the router registered them at 06:18Z today), .claude/commands/crons/cron-db-data-integrity.md, and the system-auditor flow. grep -rn 'vn-market-intelligence-mcp_market_data' across scripts/ .claude/ docs/ and triage every hit — several scripts/*.jq audit artifacts also assert it, though those are historical records and should be left alone.",
-          "AC-6 The memory note reference_live_db_is_named_volume_not_host_data.md is now STALE and actively harmful — it says the named volume is authoritative and host ./data is a 'decoy'. That was true before 5ba622eca and is inverted now. Route a correction so agents stop being taught the wrong path.",
-          "AC-7 Regression guard: something must fail when the runtime DB location and the observer DB location diverge again. A test or CI check that resolves the mcp-server container's /app/data mount source and asserts the observer scripts target the same inode/path is the minimum bar."
-        ],
-        "owner": "po",
-        "updated_by": "po/triage-2026-08-06T08:24Z",
-        "po_corroboration_20260806T0833": "THIRD INDEPENDENT CORROBORATION + PROMOTION TO A BLOCKING DEPENDENCY (priority normalised 'high' -> P1 to match the board's P-scale; no scope change). This row was minted 2026-08-05 on a single finding. Two more landed today from unrelated sources: (a) the developer working FIX-AUDITOR-EMPTYTABLE-CHECK-NO-WRITER-DISCRIMINATOR hit the same dead mount and documented it in commit d16b7c212 (comment in scripts/db-integrity-counts.sh naming the ./data/live -> /app/data bind mount that superseded the named volume at 5ba622eca, 2026-07-15), explicitly scoping the fix out of that task; (b) signal dev-team-20260806T082420Z-auditor-data-guard-noncompliance (08:24:20Z, audit_cycle_tag cron:db-data-integrity:2026-08-06T08:16Z) reports the DATA sweep ran an ad-hoc /tmp script and labelled it scripts/db-integrity-counts.sh, with the registered script 'confirmed broken, stale sidecar mount'. WHY THIS NOW MATTERS MORE THAN ITS OWN SEVERITY SUGGESTS: FIX-AUDITOR-EMPTYTABLE-CHECK-NO-WRITER-DISCRIMINATOR is in review[] awaiting a qa replay whose AC is 'the two CRITICALs must not re-fire'. A probe that fail-opens on a dead mount satisfies that AC by seeing nothing, so THIS row is a de-facto gate on THAT sign-off (see po_QA_GATE_WARNING_20260806T0833 there). SECONDARY EFFECT worth naming: agents are working around the broken helper with ad-hoc /tmp scripts and then reporting the registered path's name, which both violates the standing scripts/-not-/tmp rule (feedback_scripts_persist_not_tmp) and makes every number the sweep emits unattributable to a reproducible source -- PO already saw the symptom at 07:17Z as C-04 reporting financial_reports=30 against a live raw count of 257 and C-08 reporting alerts=42 against 144, and wrongly guessed 'undocumented window predicate'. The likelier explanation is that those numbers never came from the registered script at all. Fixing the mount plausibly resolves that anomaly too -- verify, do not assume."
-      },
-      {
         "id": "OPS-MCPSERVER-RESTART-FLUSH-LAYERB-CRON-MEMO",
         "type": "FIX",
         "title": "Live /api/cron-status serves a stale 4-file layer_b view — process-lifetime memo with no TTL cached the deleted-cron-docs window",
@@ -14818,39 +14777,48 @@
         "architect_review_note": "2026-08-06T10:49Z architect (plan_only brief per PO explicit ask -- adjudicate a/b/c, no code shipped). Brief: docs/architecture-briefs/2026-08-06-guard-notebook-concurrent-write-mutex.md. DECISIVE EVIDENCE READ RAW (not POs summary): 11 notebook-direction-defaulted signals on qa.md (10:00:46Z-10:08:36Z) show a non-monotone retained-section set AND 3 simultaneous duplicate ## cycle-504 headings with different content -- proves concurrent lost-update + stale c<NNN> counter allocation, not a pruning-order bug. Ruled out the suspected 3rd-writer formatter hook: context-bloat-backstop.sh read in full, only ever writes its OWN signal file, never the notebook -- confirmed no 3rd mutator exists (only the writing agent Write/Edit + notebook-auto-prune.sh PostToolUse hook touch notebook content). ADJUDICATION: (b) append-only cannot work standalone (AC-2 retention/AC-5 cap both require removing content, no true append primitive exists on native Write/Edit); (c) fan-out cap alone independently disproven -- the ORIGINAL tran-ngoc-bau.md c113 incident was N=2 writers, no fan-out involved, so a lower cap only narrows frequency, never closes the class; (a) task_claim mutex is the right direction but NOT a drop-in -- task_kind is a closed 7-value Zod enum (coordinationTools.ts) with no fitting kind, needs an additive notebook-write value (companion dev-mcp-server row, blocking prereq). RECOMMENDATION: task_claim(task_kind=notebook-write) mutex bracketing ONLY the mechanical fresh-read-merge-write span (LLM authoring stays OUTSIDE the held window, explicit ttl_seconds=120 not the 3600s default -- avoids this repos own corroborated TTL-hazard lesson) as new SKILL.md AC-7; PostToolUse hook (cannot call task_claim, no MCP-from-bash bridge exists) hardened instead with a stat-based staleness recheck immediately before its own mv, deliberately NOT a new mkdir/flock lock file since docs/agent-memory is a named, still-unexcluded VirtioFS bind-mount race hazard per docs/protocols/head-lock-self-cure.md (H4, confirmed not hypothesized) -- reusing task_claims server-side SQLite lock state sidesteps that hazard entirely. Files split across 3 owner zones (mixed-zone flag for PM, same class already resolved for FIX-DEVTEAM-QADRAIN-THROUGHPUT-CAP): agent-father (.claude/skills/notebook-write/SKILL.md AC-7 + docs/agents/dev-team/flow/main.md 1-sentence note), developer (scripts/agents-flow/notebook-auto-prune.sh staleness guard), dev-mcp-server (task_kind enum +1, companion row, blocks agent-father row). Acceptance test extends the EXISTING apps/mcp-server/src/__tests__/task-lock-coordination-store.test.ts harness (new AC-12 describe block, N-concurrent-writer negative/positive control on a fixture notebook) rather than a new shell script -- satisfies this rows own verification_gate directly. Sequencing: dev-mcp-server row first (blocking), developer row independent/ships anytime, agent-father row last. Zone cross-service/. BUILD-STANDARD: not-applicable."
       },
       {
-        "id": "FIX-CI-PARITY-CLAUDEMD-CRON-LITERAL-EXEMPTION-SHAPE",
+        "id": "FIX-DB-INTEGRITY-SIDECAR-NAMED-VOLUME-DRIFT",
         "type": "FIX",
-        "size": "S",
-        "priority": "P0",
-        "status": "READY",
+        "title": "db-integrity observer tooling still mounts the named volume commit 5ba622eca retired on 2026-07-15 — counts helper returns null, probe fail-opens every tick",
         "zone": "cross-service/",
-        "owner": "po",
-        "next_agent": "developer",
-        "plan_only": false,
+        "priority": "P1",
+        "status": "READY",
+        "size": "S",
+        "next_agent": "dev-team",
         "supervised": false,
-        "created_at": "2026-08-05T17:30:42Z",
-        "created_by": "po/triage-20260805T1730Z",
-        "check_id": "CI-RED-f080fbc0",
-        "dedup_key": "ci_job:bun-test|test:tool-registry-parity T-U3-4/T-U3-7|file:CLAUDE.md",
-        "origin_signal_id": "CI-RED-f080fbc0",
-        "verification_gate": "ci_green_on_subsequent_push",
+        "plan_only": false,
         "baseline_pass": true,
-        "rebuild_required": false,
-        "caused_by_commit": "9af50bb26",
-        "title": "CI RED — bun test tool-registry-parity T-U3-4 + T-U3-7 (2/17 fail): CLAUDE.md's /cron-standalone-team bullet writes the per-skill cron count as bare prose 'the 4 standalone crons', which the exemption predicate (whole-match must be paren-wrapped) does not recognise, so 4 is read as a GLOBAL count diverging from project-stats.json cronJobCount=88",
+        "source": "PO triage of system-auditor Tier-DATA sweep 2026-08-05T06:47Z (router escalation, telegram bug msg_id 4703)",
+        "created_at": "2026-08-05T07:06:06Z",
+        "created_by": "po",
+        "updated_at": "2026-08-06T11:44:04Z",
+        "root_cause": "2026-07-15 commit 5ba622eca ('fix(infra): bind-mount market data to host disk instead of Docker named volume') moved the live DB off the named volume `vn-market-intelligence-mcp_market_data` and onto a HOST BIND MOUNT `./data/live:/app/data` across all 9 dependent services, because the 2026-07-15 hypervisor VM rebuild had destroyed the named volume. docker-compose.yml now declares only pek_model_cache + bctc-page-images under `volumes:` — market_data is gone entirely. The RUNTIME was migrated; the READ-ONLY OBSERVER tooling was not. Every observer still runs `docker run --rm -v vn-market-intelligence-mcp_market_data:/data keinos/sqlite3 ...`, which makes Docker AUTO-CREATE an empty volume and then fail to open /data/market.db. Confirmed live: `docker volume inspect vn-market-intelligence-mcp_market_data` shows CreatedAt=2026-08-05T06:47:24Z (auto-created by the auditor's own failing probe today) and `docker run -v <vol>:/data alpine ls -la /data` shows an empty dir, while `docker inspect vn-market-intelligence-mcp-mcp-server-1` shows `bind .../data/live -> /app/data` and the real market.db is 425MB with an mtime of seconds ago.",
+        "evidence": "PO ran both failing commands directly. `bash scripts/db-integrity-counts.sh` -> '[DB-INTEGRITY-COUNTS] PROBE FAILURE (exit 1): Error: unable to open database \"file:/data/market.db?immutable=1\": unable to open database file'. `bash scripts/agents-flow/db-integrity-probe.sh` -> {\"verdict\":\"SPAWN\",\"detail\":\"sidecar query failed (docker unreachable, non-zero exit, or output did not parse into 1 line per watched table) — snapshot left untouched\",\"tables_changed\":-1}. Both fail-open rather than fail-loud, so the degradation is SILENT: the probe's whole purpose is skip-if-unchanged idempotency and it now votes SPAWN unconditionally, and the counts helper's null propagates into every history entry. The same query against the correct path succeeds immediately: `sqlite3 \"file:data/live/market.db?immutable=1\" \"SELECT COUNT(*) FROM daily_ohlcv WHERE high=0 AND low=0;\"` -> 336.",
+        "blast_radius": "docs/data/db-integrity-history.json holds 138 entries; the last one with non-null `counts` is 2026-06-25T19:25:41Z, then a 41-day gap, then today's 2026-08-05T06:51:39Z entry with counts=NULL. The gap is because the db-data-integrity cron had NO re-arm coverage until /cron-standalone-team was built on 2026-08-04 — so today was the FIRST sweep since the 07-15 bind-mount switch, and it broke immediately. Correct framing: broken for 21 days (since 5ba622eca), first OBSERVED today — not '6 weeks of silent nulls'. The deterministic counts trail that register.md:108-113 explicitly relies on to stop the LLM inventing trends is dead until this lands.",
         "files": [
-          "CLAUDE.md",
-          "apps/mcp-server/src/__tests__/tool-registry-parity.test.ts"
+          "scripts/db-integrity-counts.sh",
+          "scripts/agents-flow/db-integrity-probe.sh",
+          "scripts/db-integrity-history-append.sh",
+          "scripts/ops-bctc-enrich-reverify-pulljob.sh",
+          ".claude/skills/cron-standalone-team/register.md",
+          ".claude/commands/crons/cron-db-data-integrity.md",
+          "docs/agents/system-auditor/flow/main.md"
         ],
-        "related": [
-          "P1-DRIFT-PARITY-TEST-EXTEND"
+        "ac": [
+          "AC-1 DECIDE THE CANONICAL PATH FIRST, then change code. Two candidates: (i) host bind `data/live/market.db` read directly with `sqlite3 \"file:<path>?immutable=1\"` (no docker at all — PO confirmed this works today and is strictly simpler), or (ii) keep a sidecar but mount the host dir: `docker run --rm -v \"$PWD/data/live:/data:ro\" keinos/sqlite3 ...`. Record the choice + rationale in the decision journal. Do NOT re-create the named volume — 5ba622eca retired it deliberately so the DB survives VM rebuilds.",
+          "AC-2 scripts/db-integrity-counts.sh returns real non-null counts for every watched table. Verify by running it and diffing at least 3 table counts against the same query run through a second independent access path (e.g. the mcp-server container's own reader) — two planes, per memory feedback_same_db_tools_diverge_rowcount.",
+          "AC-3 scripts/agents-flow/db-integrity-probe.sh emits verdict=SKIP-SPAWN on an unchanged DB. This is the actual proof the pre-gate works — today it CANNOT emit SKIP-SPAWN at all. Run it twice with no intervening writes and assert the second call skips.",
+          "AC-4 Both scripts FAIL LOUD (non-zero exit + bug-channel-worthy stderr) when the DB is genuinely unreachable, instead of silently returning null / voting SPAWN. The current fail-open is what let this hide for 21 days.",
+          "AC-5 Update every doc/prompt that still teaches the named-volume pattern: .claude/skills/cron-standalone-team/register.md Job 1 AND Job 2 prompt bodies (both currently paste the 'DB ACCESS — the live DB is the named volume, NOT host ./data' block verbatim, and both are LIVE — the router registered them at 06:18Z today), .claude/commands/crons/cron-db-data-integrity.md, and the system-auditor flow. grep -rn 'vn-market-intelligence-mcp_market_data' across scripts/ .claude/ docs/ and triage every hit — several scripts/*.jq audit artifacts also assert it, though those are historical records and should be left alone.",
+          "AC-6 The memory note reference_live_db_is_named_volume_not_host_data.md is now STALE and actively harmful — it says the named volume is authoritative and host ./data is a 'decoy'. That was true before 5ba622eca and is inverted now. Route a correction so agents stop being taught the wrong path.",
+          "AC-7 Regression guard: something must fail when the runtime DB location and the observer DB location diverge again. A test or CI check that resolves the mcp-server container's /app/data mount source and asserts the observer scripts target the same inode/path is the minimum bar."
         ],
-        "status_note": "AC1: `bun test src/__tests__/tool-registry-parity.test.ts` = 17/17 pass, and CI job `bun test` conclusion=success on a subsequent push. AC2 (anti-recurrence, do not skip): T-U3-7 currently asserts `hits.every(h => h.exempted)` - i.e. EVERY cron-count literal anywhere in CLAUDE.md must be exempt. That is strictly stronger than its own docstring ('the per-skill (N crons) arming annotation ... is found AND correctly marked exempt') and would ALSO fail on a perfectly legitimate un-parenthesised global literal that MATCHES the SSOT (e.g. 'the scheduler runs 88 crons'). Tighten T-U3-7 to assert that the specific paren-wrapped annotation hits are exempt, without forbidding a correct global literal. AC3: preserve the exemption predicate's narrowness - do NOT widen `findCronCountLiterals`'s exemption to un-parenthesised prose shapes; that would punch a hole through which real global-count drift walks (memory: gate-widening requires an actuator dry-run first). AC4: the CLAUDE.md edit must be PUNCTUATION-ONLY with ZERO change to instruction semantics - CLAUDE.md is the user-owned project instruction file; make the minimal edit and do not restructure, reorder or reword the bullet's meaning.",
-        "po_ruling_20260805T1730Z": "WHICH SIDE IS CORRECT - RULED AFTER READING BOTH, NOT ASSUMED. Read `findCronCountLiterals` (tool-registry-parity.test.ts:223-235): regex /\\b(\\d+)\\b(?:\\s+\\w+){0,3}?\\s+crons?\\b/gi, exemption `wrapped = content[start-1]===\"(\" && content[end]===\")\"` - the ENTIRE match must be immediately paren-wrapped. CLAUDE.md:47 `/cron-detect-loop ... loop (4 crons) after every session restart` -> match '4 crons', preceded by '(' and followed by ')' -> exempted, correct. CLAUDE.md:48 `/cron-standalone-team - re-arm the 4 standalone crons (db-data-integrity, ...)` -> match '4 standalone crons', preceded by a space -> NOT exempted, value 4. THE RELAYED CLAIM THAT project-stats.json cronJobCount 'may actually agree with 4' IS FALSE: cronJobCount=88 (verified). So 4 IS divergent as a global literal and the detector is behaving exactly as designed. The defect is on the CLAUDE.md side: line 48 is semantically a per-skill annotation identical in kind to line 47, but was written without the convention's paren token. Introduced 2026-08-04 by 9af50bb26 (feat(skills/cron-standalone-team)) - the test predates it and was written when only ONE such annotation existed. PRIMARY FIX = conform CLAUDE.md's wording to the existing `(N crons)` convention; the test-side change is the narrow AC2 correction only, NOT a regex widening. NOTE FOR THE IMPLEMENTER: `(4 crons: db-integrity, ...)` will NOT satisfy the predicate - content[end] would be ':' not ')'. The literal token must be exactly `(4 crons)`.",
-        "updated_at": "2026-08-06T10:52:19Z",
-        "promoted_at": "2026-08-06T10:52:18Z",
+        "owner": "po",
+        "updated_by": "po/triage-2026-08-06T08:24Z",
+        "po_corroboration_20260806T0833": "THIRD INDEPENDENT CORROBORATION + PROMOTION TO A BLOCKING DEPENDENCY (priority normalised 'high' -> P1 to match the board's P-scale; no scope change). This row was minted 2026-08-05 on a single finding. Two more landed today from unrelated sources: (a) the developer working FIX-AUDITOR-EMPTYTABLE-CHECK-NO-WRITER-DISCRIMINATOR hit the same dead mount and documented it in commit d16b7c212 (comment in scripts/db-integrity-counts.sh naming the ./data/live -> /app/data bind mount that superseded the named volume at 5ba622eca, 2026-07-15), explicitly scoping the fix out of that task; (b) signal dev-team-20260806T082420Z-auditor-data-guard-noncompliance (08:24:20Z, audit_cycle_tag cron:db-data-integrity:2026-08-06T08:16Z) reports the DATA sweep ran an ad-hoc /tmp script and labelled it scripts/db-integrity-counts.sh, with the registered script 'confirmed broken, stale sidecar mount'. WHY THIS NOW MATTERS MORE THAN ITS OWN SEVERITY SUGGESTS: FIX-AUDITOR-EMPTYTABLE-CHECK-NO-WRITER-DISCRIMINATOR is in review[] awaiting a qa replay whose AC is 'the two CRITICALs must not re-fire'. A probe that fail-opens on a dead mount satisfies that AC by seeing nothing, so THIS row is a de-facto gate on THAT sign-off (see po_QA_GATE_WARNING_20260806T0833 there). SECONDARY EFFECT worth naming: agents are working around the broken helper with ad-hoc /tmp scripts and then reporting the registered path's name, which both violates the standing scripts/-not-/tmp rule (feedback_scripts_persist_not_tmp) and makes every number the sweep emits unattributable to a reproducible source -- PO already saw the symptom at 07:17Z as C-04 reporting financial_reports=30 against a live raw count of 257 and C-08 reporting alerts=42 against 144, and wrongly guessed 'undocumented window predicate'. The likelier explanation is that those numbers never came from the registered script at all. Fixing the mount plausibly resolves that anomaly too -- verify, do not assume.",
+        "promoted_at": "2026-08-06T11:44:04Z",
         "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=0)"
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)"
       }
     ],
     "review": [
@@ -22415,6 +22383,45 @@
         "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=0)",
         "claimed_at": "2026-08-06T10:52:18Z",
         "claimed_by": "dev-team (bounded-1 auto-pickup)"
+      },
+      {
+        "id": "FIX-CI-PARITY-CLAUDEMD-CRON-LITERAL-EXEMPTION-SHAPE",
+        "type": "FIX",
+        "size": "S",
+        "priority": "P0",
+        "status": "REVIEW",
+        "zone": "cross-service/",
+        "owner": "po",
+        "next_agent": "qa",
+        "plan_only": false,
+        "supervised": false,
+        "created_at": "2026-08-05T17:30:42Z",
+        "created_by": "po/triage-20260805T1730Z",
+        "check_id": "CI-RED-f080fbc0",
+        "dedup_key": "ci_job:bun-test|test:tool-registry-parity T-U3-4/T-U3-7|file:CLAUDE.md",
+        "origin_signal_id": "CI-RED-f080fbc0",
+        "verification_gate": "ci_green_on_subsequent_push",
+        "baseline_pass": true,
+        "rebuild_required": false,
+        "caused_by_commit": "9af50bb26",
+        "title": "CI RED — bun test tool-registry-parity T-U3-4 + T-U3-7 (2/17 fail): CLAUDE.md's /cron-standalone-team bullet writes the per-skill cron count as bare prose 'the 4 standalone crons', which the exemption predicate (whole-match must be paren-wrapped) does not recognise, so 4 is read as a GLOBAL count diverging from project-stats.json cronJobCount=88",
+        "files": [
+          "CLAUDE.md",
+          "apps/mcp-server/src/__tests__/tool-registry-parity.test.ts"
+        ],
+        "related": [
+          "P1-DRIFT-PARITY-TEST-EXTEND"
+        ],
+        "status_note": "AC1: `bun test src/__tests__/tool-registry-parity.test.ts` = 17/17 pass, and CI job `bun test` conclusion=success on a subsequent push. AC2 (anti-recurrence, do not skip): T-U3-7 currently asserts `hits.every(h => h.exempted)` - i.e. EVERY cron-count literal anywhere in CLAUDE.md must be exempt. That is strictly stronger than its own docstring ('the per-skill (N crons) arming annotation ... is found AND correctly marked exempt') and would ALSO fail on a perfectly legitimate un-parenthesised global literal that MATCHES the SSOT (e.g. 'the scheduler runs 88 crons'). Tighten T-U3-7 to assert that the specific paren-wrapped annotation hits are exempt, without forbidding a correct global literal. AC3: preserve the exemption predicate's narrowness - do NOT widen `findCronCountLiterals`'s exemption to un-parenthesised prose shapes; that would punch a hole through which real global-count drift walks (memory: gate-widening requires an actuator dry-run first). AC4: the CLAUDE.md edit must be PUNCTUATION-ONLY with ZERO change to instruction semantics - CLAUDE.md is the user-owned project instruction file; make the minimal edit and do not restructure, reorder or reword the bullet's meaning. | Verification-only close (fix already shipped by commit c3c5d63d2, 2026-08-05T19:45:25+02:00, prior developer cycle, board flip never followed). AC1: bun test src/__tests__/tool-registry-parity.test.ts = 17/17 pass (confirmed live). CI evidence: origin RED run 31028825500 (head f080fbc08, ci-red-f080fbc0 signal) confirmed failure pre-fix; f080fbc08 confirmed ancestor of c3c5d63d2 (git merge-base --is-ancestor); next CI run on main after the fix (31098224312, HEAD 4408c9283) shows job \"bun test\" conclusion=success via gh run view --json jobs. AC2: T-U3-7 already tightened from hits.every(h=>h.exempted) to exemptedHits.length>0 (git show c3c5d63d2). AC3: findCronCountLiterals untouched in that diff (confirmed via git show). AC4: CLAUDE.md:48 diff is exactly punctuation-only — \"4 standalone crons\" wrapped as \"(4 standalone crons)\", zero word change (git show c3c5d63d2 -- CLAUDE.md). No further code changes made this cycle.",
+        "po_ruling_20260805T1730Z": "WHICH SIDE IS CORRECT - RULED AFTER READING BOTH, NOT ASSUMED. Read `findCronCountLiterals` (tool-registry-parity.test.ts:223-235): regex /\\b(\\d+)\\b(?:\\s+\\w+){0,3}?\\s+crons?\\b/gi, exemption `wrapped = content[start-1]===\"(\" && content[end]===\")\"` - the ENTIRE match must be immediately paren-wrapped. CLAUDE.md:47 `/cron-detect-loop ... loop (4 crons) after every session restart` -> match '4 crons', preceded by '(' and followed by ')' -> exempted, correct. CLAUDE.md:48 `/cron-standalone-team - re-arm the 4 standalone crons (db-data-integrity, ...)` -> match '4 standalone crons', preceded by a space -> NOT exempted, value 4. THE RELAYED CLAIM THAT project-stats.json cronJobCount 'may actually agree with 4' IS FALSE: cronJobCount=88 (verified). So 4 IS divergent as a global literal and the detector is behaving exactly as designed. The defect is on the CLAUDE.md side: line 48 is semantically a per-skill annotation identical in kind to line 47, but was written without the convention's paren token. Introduced 2026-08-04 by 9af50bb26 (feat(skills/cron-standalone-team)) - the test predates it and was written when only ONE such annotation existed. PRIMARY FIX = conform CLAUDE.md's wording to the existing `(N crons)` convention; the test-side change is the narrow AC2 correction only, NOT a regex widening. NOTE FOR THE IMPLEMENTER: `(4 crons: db-integrity, ...)` will NOT satisfy the predicate - content[end] would be ':' not ')'. The literal token must be exactly `(4 crons)`.",
+        "updated_at": "2026-08-06T11:50:18Z",
+        "promoted_at": "2026-08-06T10:52:18Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=0)",
+        "claimed_at": "2026-08-06T11:44:21Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "verified_commit": "c3c5d63d2",
+        "updated_by": "developer"
       }
     ],
     "qa": [
@@ -22462,7 +22469,7 @@
         }
       ]
     },
-    "last_triaged_at": "2026-08-06T10:52:18Z",
+    "last_triaged_at": "2026-08-06T11:44:04Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
     "in_progress": []
   },
