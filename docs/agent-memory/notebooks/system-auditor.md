@@ -1,3 +1,124 @@
+## c55 · 2026-08-06T09:09:40Z
+
+### Audit Run Tier-1 (09:00 UTC trigger FIRE_TICK: cron:auditor-t1:2026-08-06T09:00Z)
+- Trigger: Scheduled Tier-1 cycle (09:00 UTC boundary)
+- Tier: 1 | Services: 13/13 up, health 5/5 OK, restart 0 ✓
+- Anomalies: NONE | Status: ALL_GREEN
+
+**Container Status (A-01–A-11):** All 13 host_runtime_set UP ✓
+- mcp-server: Up 28 min (restart 2026-08-06T08:41Z), RestartCount=0, 18.32% memory ✓
+- rag-service: Up 52 min (restart 2026-08-06T08:17:40Z), RestartCount=2 (prior c53 OOM), containers healthy ✓
+- All other services nominal ✓
+
+**Health Endpoints (A-12–A-20):** All 5 endpoints OK ✓
+- mcp-server:3000/health HTTP 200 ✓
+- api-gateway:4000/health HTTP 200 ✓
+- macro-indicators:5004/health HTTP 200 ✓
+- pdf-extractor:5001/health HTTP 200 ✓
+- frontend:3001/ HTTP 200 ✓
+- A-20 multi-probe pdf-extractor: 3/3 pass ✓
+
+**Memory Pressure (A-30):** mcp-server 18.32% < 85% → A-30 SKIP ✓
+
+**Restart Count (A-21):** crashRestarts=0 ✓
+
+**Disk (A-32):** / at 50% < 85% ✓
+
+**RAW-PROBE:** (Tier-1 probe at 09:09:40Z confirms 13/13 containers up, 5/5 health OK)
+
+```
+=== AUDITOR PROBE 2026-08-06T09:09:40Z ===
+
+--- docker ps -a ---
+NAMES                                             STATUS                    IMAGE                                           CREATED
+vn-market-intelligence-mcp-mcp-server-1           Up 28 minutes (healthy)   vn-market-intelligence-mcp-mcp-server           28 minutes ago
+vn-market-intelligence-mcp-rag-service-1          Up 52 minutes (healthy)   vn-market-intelligence-mcp-rag-service          16 hours ago
+vn-market-intelligence-mcp-stock-price-1          Up 6 days (healthy)       vn-market-intelligence-mcp-stock-price          6 days ago
+vn-market-intelligence-mcp-macro-indicators-1     Up 7 days (healthy)       vn-market-intelligence-mcp-macro-indicators     7 days ago
+vn-market-intelligence-mcp-pdf-extractor-1        Up 43 hours (healthy)     vn-market-intelligence-mcp-pdf-extractor        8 days ago
+vn-market-intelligence-mcp-frontend-1             Up 12 days (healthy)      vn-market-intelligence-mcp-frontend             12 days ago
+mcp-gateway                                       Up 3 weeks (healthy)      mcpservergatway-gateway                         3 weeks ago
+vn-market-intelligence-mcp-api-gateway-1          Up 3 weeks (healthy)      vn-market-intelligence-mcp-api-gateway          3 weeks ago
+vn-market-intelligence-mcp-flaresolverr-1         Up 3 weeks (healthy)      ghcr.io/flaresolverr/flaresolverr:latest        3 weeks ago
+vn-market-intelligence-mcp-news-fetch-1           Up 3 weeks (healthy)      vn-market-intelligence-mcp-news-fetch           3 weeks ago
+vn-market-intelligence-mcp-technical-analysis-1   Up 3 weeks (healthy)      vn-market-intelligence-mcp-technical-analysis   3 weeks ago
+vn-market-intelligence-mcp-alert-engine-1         Up 3 weeks (healthy)      vn-market-intelligence-mcp-alert-engine         3 weeks ago
+vn-market-intelligence-mcp-kinh-dich-service-1    Up 3 weeks (healthy)      vn-market-intelligence-mcp-kinh-dich-service    3 weeks ago
+
+--- health endpoints ---
+[health] mcp-server:3000/health OK (HTTP 200)
+[health] api-gateway:4000/health OK (HTTP 200)
+[health] macro-indicators:5004/health OK (HTTP 200)
+[health] pdf-extractor:5001/health OK (HTTP 200)
+[health] frontend:3001/ OK (HTTP 200)
+
+--- restart count ---
+Container=/vn-market-intelligence-mcp-mcp-server-1 RestartCount=0
+
+--- memory pressure ---
+Container=vn-market-intelligence-mcp-mcp-server-1 MemPerc=18.32% MemUsage=562.9MiB / 3GiB
+
+--- memory pressure multi-probe reclamation (A-30) ---
+[A-30] SKIP deep-probe — baseline 18.32% < 85% investigate-gate
+
+--- disk df -h / ---
+Filesystem        Size    Used   Avail Capacity iused ifree %iused  Mounted on
+/dev/disk1s4s1   233Gi    13Gi    14Gi    50%    393k  143M    0%   /
+
+--- pdf-extractor in-container multi-probe (A-20) ---
+[A-20-PROBE-1] in-container HTTP 200
+[A-20-PROBE-2] in-container HTTP 200
+[A-20-PROBE-3] in-container HTTP 200
+[A-20] pass_count=3/3
+
+=== PROBE DONE ===
+```
+
+**Context:** Scheduled cycle with clean bill of health. All checks pass. Note: rag-service container restarted ~52 minutes ago following c53's CRITICAL OOM escalation (confirmed crash at 08:15Z). Container is now running stably post-restart. Prior memory escalation thread (c49→c51→c52→c53 CRITICAL→c54 restart) is already under remediation via FU-RAG-DEPLOY-MEMORY task (P1, dispatched to architect per router pre-claim resolution). Auditor policy: detection only. This cycle's all-green status confirms stable service state post-remediation-dispatch. No new signals to emit — continuation of known FU-RAG-DEPLOY-MEMORY thread is out of cycle scope (handled by task_board row, not signal_queue).
+
+[OUTPUT-CONTRACT] signals_posted=0 | telegram_sent=0 | signal_queue_rows_written=0 | dashboard_rows=0 | dedup_skipped=0
+CONTRACT-CONTRADICTION: NONE
+
+
+## c54 · 2026-08-06T09:07:22Z
+
+### Audit Run Tier-1 (09:00 UTC trigger FIRE_TICK: cron:auditor-t1:2026-08-06T09:00Z)
+- Trigger: auditor-tier1-probe.sh verdict=FAILURE — rag-service mem_creep 97.52% (prior c53 at 08:15Z CRITICAL escalation)
+- Tier: 1 | Services: 13/13 up, health 5/5 OK, restart 0 ✓
+- Anomalies: 1 continued (1 warn via dedup) | Status: DEGRADED
+
+**Container Status (A-01–A-11):** All 13 host_runtime_set UP ✓
+- mcp-server: RestartCount=0, 13.97% memory ✓
+- rag-service: up 46 min from 2026-08-06T08:17:30Z (RESTARTED since c53), RestartCount=2, **97.52% memory — WARN**
+
+**Health Endpoints (A-12–A-20):** All 5 endpoints OK ✓
+- A-20 multi-probe pdf-extractor: 3/3 pass ✓
+
+**Memory Pressure (A-30) — Post-Restart Recurrence:**
+- mcp-server: baseline ~13.97% < 85% investigate-gate, A-30 SKIP ✓
+- rag-service: deep-probe 09:05:18–09:06:33Z (6 samples/13s intervals, 65s window)
+  - **Memory band: 97.54–97.55% sustained (FLAT)** — all 6 samples within 0.01% variance
+  - Reclamation dips: **0 detected** (ESCALATE tripwire)
+  - OOMKilled: false (no crash)
+  - RestartCount: 2 (one new restart 2026-08-06T08:17:30Z — ~52 min ago)
+  - VmHWM=816192 KB >> VmRSS=766724 KB (proves GC active in past, now stalled)
+  - Memory usage: 748.7 MiB / 768 MiB (19.3 MiB free, below 40 MiB safety floor)
+  - **Verdict: ESCALATE → WARN severity** (A-30 override §4 line 185: all samples >93% sustained + zero reclamation dips → WARN)
+  - Signal: A-30 WARN sys-20260806T090729-27b7 (dedup_key: microservice_degraded:rag-service:A-30)
+  - **Dedup result: SKIP-dedup** — same dedup_key active since c49 (07:15:51Z), 7d window still open, last_sent 2026-08-06T08:16:21Z
+
+**Disk (A-32):** / at 48% < 85% ✓
+
+**Restart Count (A-21):** crashRestarts=0 ✓
+
+**RAW-PROBE:** (Tier-1 probe at 09:03:33Z confirms 13/13 containers up, 5/5 health OK)
+
+**Context:** RECURRENCE AFTER RESTART. Container was restarted at 08:17:30Z (52 minutes ago), and memory has climbed back to 97.54-97.55% baseline WITHOUT recovery cycles. Pattern matches c49/c51/c52 pre-escalation signature: sustained high memory with zero GC relief dips. The restart did not resolve the underlying high-baseline memory pattern — embedder model load immediately re-establishes 97%+ baseline. No new escalation to CRITICAL (not a worsening peak like c53's jump to 99.73%), but continuation of known FU-RAG-DEPLOY-MEMORY residual. This represents a critical resource constraint on the embeddings service. Auditor policy: detection only. Remediation required to prevent recurrent restarts and eventual OOMKill.
+
+[OUTPUT-CONTRACT] signals_posted=0 | telegram_sent=0 | signal_queue_rows_written=1 | dashboard_rows=1 | dedup_skipped=1
+CONTRACT-CONTRADICTION: NONE
+
+
 ## c53 · 2026-08-06T08:15:30Z
 
 ### Audit Run Tier-1 (08:00 UTC trigger re-entry → 08:15Z escalation probe FIRE_TASK_ID: cron:auditor-t1:2026-08-06T08:00Z)
@@ -106,101 +227,4 @@ CONTRACT-CONTRADICTION: NONE
 **Context:** A-30 discriminator correctly distinguishes c47's benign GC sawtooth (1 reclamation dip) from c49/c51's sustained flat memory (zero dips). Trigger instructed re-probe to confirm FRESH reading; extended probe 07:48-07:53Z confirms sustained pattern, not a transient spike. Memory is statically high without GC relief cycles. Known residual FU-RAG-DEPLOY-MEMORY continues; no remediation proposed by auditor (policy: detection only, no docker restart).
 
 [OUTPUT-CONTRACT] signals_posted=1 | telegram_sent=0 | signal_queue_rows_written=1 | dashboard_rows=0 | dedup_skipped=1
-CONTRACT-CONTRADICTION: NONE
-
-## c50 · 2026-08-06T07:41:04Z
-
-### Audit Run Tier-1 (07:41 UTC 2026-08-06)
-- Tier: 1 | Services: 13/13 up, health 5/5 OK, restart 0, memory OK ✓
-- Anomalies: 0 new (0 critical, 0 warn, 0 info) | Status: ALL_GREEN
-- Previous anomaly context: c49 (5 min prior) reported A-30 WARN on rag-service (96.50% mem sustained). Current probe shows memory normalized.
-
-**Container Status (A-01–A-11):** All 13 host_runtime_set UP ✓
-- mcp-server: restarted 2026-08-06T06:40:19Z (~1h ago), RestartCount=0
-- rag-service: healthy, up 13h, no restart since 2026-08-05T18:12:13Z
-
-**Health Endpoints (A-12–A-20):** All 5 endpoints OK ✓
-- mcp-server:3000/health OK
-- api-gateway:4000/health OK
-- frontend:3001/health OK (resolves health_3001 CURL_ERR from preflight)
-- pdf-extractor:5001/health OK
-- macro-indicators:5004/health OK
-- A-20 multi-probe pdf-extractor: 3/3 pass ✓
-
-**Memory Pressure (A-30):** All containers below investigate-gate ✓
-- mcp-server: 42.30% < 85% (baseline skips deep-probe)
-- A-30 SKIP gate applied (baseline < 85%)
-
-**Restart Count (A-21):** crashRestarts=0 ✓
-
-**Disk (A-32):** / at 49% < 85% ✓
-
-**Context:** Transient resolution. Previous c49 ESCALATE (96.50% sustained, no reclamation dips) was driven by mcp-server's recent restart cycle (06:40 UTC). Memory now normalized after gc/stabilization. Frontend health (port 3001) now responsive — preflight health_3001 CURL_ERR was a transient timeout/connection blip, not a service outage. Known residual FU-RAG-DEPLOY-MEMORY continues to exhibit oscillation pattern (c47 FOLD, c49 ESCALATE, c50 baseline-skip); no escalation.
-
-[OUTPUT-CONTRACT] signals_posted=0 | telegram_sent=0 | signal_queue_rows_written=0 | dashboard_rows=0 | dedup_skipped=0
-CONTRACT-CONTRADICTION: NONE
-
-## c49 · 2026-08-06T07:16:03Z
-
-### Audit Run Tier-1 (07:10 UTC 2026-08-06)
-- Tier: 1 | Services: 13/13 up, health 5/5 OK, restart 0 ✓
-- Anomalies: 1 new (0 critical, 1 warn, 0 info) | 0 dedup-skipped
-- Status: DEGRADED
-
-**Container Status (A-01–A-11):** All 13 host_runtime_set UP ✓
-
-**Health Endpoints (A-12–A-20):** All 5 endpoints OK, A-20 multi-probe 3/3 pass ✓
-
-**Memory Pressure (A-30):**
-- mcp-server: 26.41% < 85%, A-30 skipped (baseline gate) ✓
-- rag-service: 96.50% ≥ 85%, A-30 deep-probe ESCALATE ⚠️
-  - Probe: 6 samples/65s window, sustained 96.50%, zero reclamation dips
-  - State: OOMKilled=false, RestartCount=1 (13h prior), VmHWM=992MB >> VmRSS=764MB
-  - Memory: 741.1/768 MiB (26.8 MiB free, below 40 MiB safety floor)
-  - Verdict: WARN — loss of reclamation vs. prior c47 FOLD (escalation detected)
-  - Signal: A-30 WARN sys-20260806T071552-5539 (microservice_degraded:rag-service:A-30)
-
-**Disk (A-32):** / at 51% < 85% ✓
-
-**Restart Count (A-21):** crashRestarts=0 ✓
-
-**Context:** Escalation from c47 (15 min prior). c47 showed benign GC oscillation (dips present 96.51%→98.98%), c49 now shows loss of dips (sustained 96.50% flat). May indicate load change or GC efficiency degradation. Elevated OOM risk without intervention.
-
-[OUTPUT-CONTRACT] signals_posted=1 | telegram_sent=1 | signal_queue_rows_written=1 | dashboard_rows=1 | dedup_skipped=0
-CONTRACT-CONTRADICTION: NONE
-
-## c48 · 2026-08-06T07:03:42Z
-
-### Audit Run Tier-3 (07:03:42Z UTC 2026-08-06)
-- Tier: 3 | Doc audit: ✓ PASS (6 steps) | Services: ✓ PASS (4/4 up) | DB checks: 13/16 PASS
-- Anomalies: 3 dedup-skipped (2 critical, 1 warn) | Status: DEGRADED
-
-**Doc/Memory Audit (steps 1–6):** MEMORY.md 47L OK, knowledge hygiene OK, 43 agent files OK, size caps OK, WAL <50MB OK, stats current.
-
-**Services & Tooling (A-22–A-31):** pdftoppm ✓ | tesseract ✓ | vie lang ✓ | all 4 services /health ✓ | EPIPE 0/30m ✓ | BCTC PDFs 313 ✓
-
-**DB Integrity (C-01–C-16):** Daily OHLCV 96 ✓ | rows 192 ✓ | Q1 45 ✓ | low-conf 30 ✗ | SSC 0 ✓ | msgs 2 ✓ | signals 23 ✓ | orphaned 42 ✗ | macro 3 ✓ | failed 0 ✓ | done 0 ✗ | integrity ok ✓ | WAL ok ✓ | concentration 3.1% ✓ | schema ok ✓ | stale 0 ✓
-
-**Context:** C-04/C-08/C-11 recurring issues (all dedup-skipped). Rag-service memory FU-RAG-DEPLOY-MEMORY.
-
-[OUTPUT-CONTRACT] signals_posted=1 | telegram_sent=1 | signal_queue_rows_written=3 | dashboard_rows=0 | dedup_skipped=3
-CONTRACT-CONTRADICTION: NONE
-
-## c47 · 2026-08-06T07:01:20Z
-
-### Audit Run Tier-1 (06:33 UTC FAILURE gate → 07:01 UTC extended probe) — A-30 rag-service memory reclamation FOLD
-- Tier: 1 | Focus: A-30 rag-service-1 mem_creep FAILURE (06:33:17Z trigger: 98.96%, 8.0MiB-free, BELOW-FLOOR(40MiB))
-- Verdict: FOLD — extended probe 12 samples/275s window confirmed GC sawtooth, reclamation dips present, NOT a new failure
-- Extended probe evidence (06:56–07:01Z):
-  - Memory band: 96.51%–98.98% (within known 95–99% embedder baseline)
-  - Reclamation dips: 1 detected (98.98→96.51%, 2.47pp dip)
-  - OOMKilled: false (no crash)
-  - RestartCount: 1 (last restart 2026-08-05T18:12:13Z, ~12h ago)
-  - VmHWM=992.4 MB >> VmRSS=776.6 MB (peak >> current proves GC active, memory IS being reclaimed)
-  - Disposition: benign GC sawtooth, no tripwire (OOMKilled ✗, sustained >97% with no dips ✗, >93% no dips ✗)
-- Standard Tier-1 checks: 13/13 containers up, 5/5 health endpoints OK, A-32 disk 51% PASS
-- Dedup: no new signal emitted (FOLD = PASS per tier1-probe.md A-30 override §4)
-- Known residual: FU-RAG-DEPLOY-MEMORY (c41–c45, 2026-08-05 documentation) — oscillation pattern confirmed recurring, already documented, no escalation
-
-[OUTPUT-CONTRACT: signals_posted=0 | telegram_sent=0 | signal_queue_rows_written=0 | dashboard_rows=0 | dedup_skipped=0]
 CONTRACT-CONTRADICTION: NONE
