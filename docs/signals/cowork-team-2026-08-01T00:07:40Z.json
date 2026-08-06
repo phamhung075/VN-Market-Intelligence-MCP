@@ -1,0 +1,27 @@
+{
+  "tick": "2026-08-01T00:00:00Z",
+  "emitted_at": "2026-08-01T00:07:40Z",
+  "matched_slots": ["bctc-analyst-slot-4", "news-scout-offhours", "market-watcher-offhours", "alert-commander-critical"],
+  "won_slots": ["bctc-analyst-slot-4", "news-scout-offhours", "market-watcher-offhours", "alert-commander-critical"],
+  "spawned": ["bctc-analyst-slot-4", "news-scout-offhours", "market-watcher-offhours", "alert-commander-critical"],
+  "silent": false,
+  "due_reasons": {
+    "bctc-analyst-slot-4": "cron",
+    "news-scout-offhours": "cadence",
+    "market-watcher-offhours": "cadence",
+    "alert-commander-critical": "cadence"
+  },
+  "cadence_minutes": {
+    "bctc-analyst-slot-4": null,
+    "news-scout-offhours": 240,
+    "market-watcher-offhours": 240,
+    "alert-commander-critical": 240
+  },
+  "last_fired_timestamp": "2026-08-01T00:07:28Z",
+  "max_parallel": 4,
+  "batch_count": 1,
+  "errors": [],
+  "classification": "FIRE",
+  "reason": "spawned",
+  "note": "4 po-addressed signal_queue rows unactioned since ~19:20-20:11Z 2026-07-31 (now 4+h) — HIGH-severity cow-20260731T201100 oldest at ~4h. cowork-team continues NOT flipping these to READ per standing rule (cold-evict no-age-gate orphan risk)."
+}

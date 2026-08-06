@@ -1,0 +1,22 @@
+{
+  "tick": "2026-07-30T18:00Z",
+  "classification": "FIRE",
+  "reason": "spawned",
+  "won_slots": ["bctc-analyst-slot-2"],
+  "spawned": [{"slot_id":"bctc-analyst-slot-2","agent":"bctc-analyst","flow_path":"docs/agents/bctc-analyst/flow/main.md"}],
+  "errors": [],
+  "collision_warning": null,
+  "pressure_mode": "adaptive",
+  "calendar_status": "unknown",
+  "suppressed_calendar": [],
+  "suppressed_cadence": [],
+  "downgraded": [],
+  "due_reasons": {"bctc-analyst-slot-2":"cron"},
+  "cadence_minutes": {"bctc-analyst-slot-2": null},
+  "chef_mutex_applied": false,
+  "max_parallel": 4,
+  "degraded": false,
+  "headroom_mb": 4352,
+  "load_1min": 4.73,
+  "cores": 12
+}

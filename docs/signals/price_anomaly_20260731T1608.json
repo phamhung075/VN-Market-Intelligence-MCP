@@ -1,0 +1,67 @@
+{
+  "schema": "price_anomaly_v1",
+  "generated_at": "2026-07-31T16:08:00Z",
+  "dish_window": "eod",
+  "tickers": [
+    {
+      "code": "VNH",
+      "price": 800,
+      "daily_change_pct": -11.11,
+      "yoy_change_pct": -35.22,
+      "volume": 92700,
+      "vs_avg_pct": 18.40,
+      "rsi": 39.4,
+      "sentiment": "Bearish momentum (evidence score 0.60)",
+      "insider_activity": "No activity (7d window)",
+      "brief_action": "Watch for support breakdown",
+      "regime_flag": "NEUTRAL",
+      "anomaly": true,
+      "anomaly_reason": "Oversold RSI 39.4 + -11.11% daily decline + extremeweakness (ATR 17.86%, RS composite weakest tier)"
+    },
+    {
+      "code": "FRT",
+      "price": 124400,
+      "daily_change_pct": 6.96,
+      "yoy_change_pct": -19.53,
+      "volume": 1254600,
+      "vs_avg_pct": 490.24,
+      "rsi": 64.3,
+      "sentiment": "Bullish technicals (2/4 indicators positive)",
+      "insider_activity": "No recent activity",
+      "brief_action": "Monitor overbought conditions",
+      "regime_flag": "NEUTRAL",
+      "anomaly": true,
+      "anomaly_reason": "Volume spike: 4.9x average (1.25M vs ~255K daily avg), overbought BB positioning"
+    },
+    {
+      "code": "VCB",
+      "price": 59300,
+      "daily_change_pct": 4.96,
+      "yoy_change_pct": -1.49,
+      "volume": 18314600,
+      "vs_avg_pct": 3150.64,
+      "rsi": 56.3,
+      "sentiment": "Strong institutional buying signal (FII 300B VND allocation)",
+      "insider_activity": "No recent activity",
+      "brief_action": "Hold on foreign inflows",
+      "regime_flag": "NEUTRAL",
+      "anomaly": true,
+      "anomaly_reason": "Extreme volume spike: 18.3M shares (3150% of average 581K), 4.96% daily gain, highest volume day in 60d sample"
+    },
+    {
+      "code": "VNINDEX",
+      "price": 1735.78,
+      "daily_change_pct": -0.51,
+      "yoy_change_pct": -10.89,
+      "volume": null,
+      "vs_avg_pct": null,
+      "rsi": null,
+      "sentiment": "Risk-off: Gold bullish (safe haven), VND weakening (depreciation pressure)",
+      "insider_activity": "VN-Index: 25 new lows, 1 new high (net -24)",
+      "brief_action": "Monitor macro deterioration risk",
+      "regime_flag": "NEUTRAL",
+      "anomaly": true,
+      "anomaly_reason": "Breadth negative (ADL -497 from 2026-07-31 12:11 UTC cycle), 52w low proximity signal stress"
+    }
+  ]
+}

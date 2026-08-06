@@ -1,0 +1,21 @@
+{
+  "tick": "2026-08-01T01:00Z",
+  "verdict": "WORK",
+  "matched_slots": [],
+  "won_slots": [],
+  "spawned": [],
+  "silent": false,
+  "new_signals_drained": 1,
+  "drained_rows": [
+    {"id": "dev-20260801T010302", "to": "po", "severity": "LOW", "action": "left NEW, not flipped (po-addressed row rule)"}
+  ],
+  "recovery_action": {
+    "type": "re-file-lost-escalation",
+    "lost_row_id": "cow-20260731T201100",
+    "new_row_id": "cow-20260801T010430",
+    "reason": "prior 4 po-addressed NEW rows (dev-20260731T192021, cow-20260731T192200, dev-team-20260731T1935-journal-step-collision, cow-20260731T201100) all vanished from hot signal_queue between 00:00Z and 01:00Z ticks; found in docs/data/orch/archive/2026-08.json stamped status:READ triaged_by:null — cold-evicted without po triage, second confirmed occurrence of feedback_coldevict_no_age_gate_orphans_unread_po_escalation. This tick's writer was not cowork-team (held the no-flip rule since 2026-07-31T19:21Z); re-filed only the HIGH-severity transport-gap row since it remains substantively unresolved (news-scout/market-watcher still self-report coverage-write skip as of 2026-08-01T00:08Z)."
+  },
+  "errors": [],
+  "classification": "WORK-NO-SPAWN",
+  "note": "no slots due this tick; work performed was signal-drain + lost-escalation recovery, not agent fan-out"
+}

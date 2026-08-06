@@ -1,0 +1,67 @@
+{
+  "schema": "price_anomaly_v1",
+  "generated_at": "2026-08-05T16:05:40Z",
+  "dish_window": "eod",
+  "tickers": [
+    {
+      "code": "DGC",
+      "price": 40.55,
+      "daily_change_pct": 2.4,
+      "yoy_change_pct": -12.3,
+      "volume": 709700,
+      "vs_avg_pct": 101.4,
+      "rsi": 42.4,
+      "sentiment": "neutral",
+      "insider_activity": "no activity",
+      "brief_action": "Watch",
+      "regime_flag": "NEUTRAL",
+      "anomaly": false,
+      "anomaly_reason": null
+    },
+    {
+      "code": "DPM",
+      "price": 21.8,
+      "daily_change_pct": -1.8,
+      "yoy_change_pct": -47.2,
+      "volume": 4947000,
+      "vs_avg_pct": 196.8,
+      "rsi": 38.2,
+      "sentiment": "bearish",
+      "insider_activity": "no activity",
+      "brief_action": "Reduce",
+      "regime_flag": "NEUTRAL",
+      "anomaly": true,
+      "anomaly_reason": "Volume spike 3.3x avg + RSI oversold + YoY down 47%"
+    },
+    {
+      "code": "DBC",
+      "price": 16.75,
+      "daily_change_pct": 0.9,
+      "yoy_change_pct": -50.52,
+      "volume": 2396500,
+      "vs_avg_pct": 114.0,
+      "rsi": 43.5,
+      "sentiment": "neutral",
+      "insider_activity": "no activity",
+      "brief_action": "Watch",
+      "regime_flag": "NEUTRAL",
+      "anomaly": true,
+      "anomaly_reason": "YoY collapse 50% + sector bearish (agro down 1.65%)"
+    },
+    {
+      "code": "VNM",
+      "price": 58.6,
+      "daily_change_pct": -1.51,
+      "yoy_change_pct": -2.5,
+      "volume": 5288700,
+      "vs_avg_pct": 117.6,
+      "rsi": 50.5,
+      "sentiment": "neutral",
+      "insider_activity": "no activity",
+      "brief_action": "Hold",
+      "regime_flag": "NEUTRAL",
+      "anomaly": true,
+      "anomaly_reason": "Sector bearish (agro down 1.65%) + elevated volume"
+    }
+  ]
+}
