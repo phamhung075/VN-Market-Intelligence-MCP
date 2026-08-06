@@ -1,0 +1,32 @@
+{
+  "from": "cowork-team",
+  "tick": "2026-08-06T21:00Z",
+  "matched_slots": [
+    "bctc-analyst-slot-3"
+  ],
+  "won_slots": [
+    "bctc-analyst-slot-3"
+  ],
+  "collision": null,
+  "spawned": [
+    "docs/agents/bctc-analyst/flow/main.md"
+  ],
+  "silent": false,
+  "errors": [],
+  "drift_min": 3,
+  "pressure_mode": "adaptive",
+  "calendar_status": "unknown",
+  "due_reasons": {
+    "bctc-analyst-slot-3": "cron"
+  },
+  "classification": "FIRE",
+  "signal_backlog": 25,
+  "new_signals_this_tick": 0,
+  "createdAt": "2026-08-06T21:06:35Z",
+  "_processed": {
+    "fingerprint": "15466fad7358a2ca1355f7676570d4fbd0ce70ba3e49d0bfda99b22474e043f8",
+    "processedAt": "2026-08-06T21:11:09Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

@@ -4,38 +4,56 @@
   "quarter": "Q1-2026",
   "mode": "routine",
   "beat_miss": null,
-  "product": "Real estate developer — residential + industrial land bank (Đất Xanh Group)",
-  "customer": "Homebuyers, institutional land-bank investors (sector-peer inference only — no primary BCTC available)",
-  "ops": "DATA-GAP: get_bctc_full returns no data this cycle (4th+ consecutive cycle); Q1/Q2-2026 PDFs on file since 2026-06-13/2026-08-01, extraction never completed. Sector comparison only: ROE 1.9% vs sector median 7.3% (below peers), PE 66.5x vs 16.1x median (+312% premium)",
-  "mgmt": "Cannot assess — no primary financials available this cycle",
-  "valuation_verdict": "AVOID",
-  "ey_spread_pp": -3.5,
-  "pe_sector": 66.5,
-  "roe_sector_pct": 1.9,
-  "kinhdich": {
-    "que": "Bi (22)",
-    "trend": "TRUNG TINH",
-    "signal": "GIU",
-    "confidence_pct": 38,
-    "alignment": "neutral_no_longer_contradicting"
+  "product": "Real estate development — residential projects (HCMC + satellite provinces)",
+  "customer": "Homebuyers (mid-tier residential segment), institutional JV partners",
+  "ops": "ROE 1.9% vs sector median 7.3% — well below peers; PE 66.5x vs sector median 16.1x (+312% premium) — valuation AVOID; Q2-2026 filing overdue (deadline 07-31)",
+  "mgmt": "BCTC extraction persistently absent — get_bctc_full returns \"Chưa có dữ liệu\" 5th+ consecutive cycle; refine_status=PENDING since Q1-2026 PDF filed 06-13 and Q2-2026 PDF filed 08-01, zero extraction progress — flagged as data-quality anomaly to dev-team (guard bctc-dataquality:DXG:persistent-absence, reconfirmed HELD this cycle, no re-emit)",
+  "cycle_id": "20260806-2100",
+  "slot": "bctc-analyst-slot-3",
+  "generated_at": "2026-08-06T21:15:00Z",
+  "data_freshness": {
+    "note": "primary-source get_bctc_full unavailable — all figures peer-reference-only from get_sector_comparison",
+    "latest_period_extracted": "none",
+    "refine_status": "PENDING"
+  },
+  "ey_spread": {
+    "pe": 66.5,
+    "sector_median_pe": 16.1,
+    "earning_yield_pct": 1.504,
+    "max_deposit_rate_pct": 5,
+    "spread_pp": -3.496,
+    "verdict": "AVOID"
   },
   "esc_gate": {
-    "esc1": "UNEVALUABLE_NO_BASH",
-    "esc2": "N/A (no balance sheet data)",
-    "esc3": "N/A (no cash flow data)",
-    "esc4": "N/A (no P&L data)",
-    "esc5": "FALSE (report_id null, refine_status PENDING)"
+    "ESC-1": "unevaluable (no primary BCTC data, no E1 6-pass)",
+    "ESC-2": "unevaluable (no balance-sheet data)",
+    "ESC-3": "unevaluable (no cash-flow data)",
+    "ESC-4": "unevaluable (no P&L data)",
+    "ESC-5": {
+      "result": false,
+      "report_id": null,
+      "existing_refine_status": "PENDING"
+    }
   },
-  "escalation_status": "NONE",
-  "data_quality_note": "Primary source absent — see docs/signals/bctc-analyst-20260806T181200Z.json (bctc-data-quality-anomaly, dev-team)",
-  "trick_summary": null,
-  "trick_confidence": "none",
-  "generated_at": "2026-08-06T18:15:00Z",
-  "cycle_id": "20260806-1800",
-  "slot": "bctc-analyst-slot-2",
+  "kd_reading": {
+    "hexagram": "Bi (22)",
+    "trend": "TRUNG_TINH",
+    "confidence_pct": 38,
+    "alignment_with_ey_verdict": "neutral (no conflict, no confirm)"
+  },
+  "insider": "none significant",
+  "legal_risk": "none",
+  "chain_validation": "1 open finding this cycle (system-auditor, stock_code=unknown) — no overlap with DXG, no fundamental_validation posted",
+  "regime": "NEUTRAL (fallback — macro_snapshot JSON shape has no explicit Global-Liquidity field)",
+  "carry_regime": "NEUTRAL (1.37pp)",
+  "evidence_fragment_ids": [
+    940,
+    941,
+    942
+  ],
   "_processed": {
-    "fingerprint": "d64e3c6596a29dee4ef9894a62f3bdfe2035b0ea7b547425713aebbbe7a53963",
-    "processedAt": "2026-08-06T18:21:01Z",
+    "fingerprint": "943981c5581843505ac342d01375860389629abf2c9611c7455c55631e649764",
+    "processedAt": "2026-08-06T21:11:09Z",
     "processedBy": "dev-team",
     "result": "routed-to-po"
   }

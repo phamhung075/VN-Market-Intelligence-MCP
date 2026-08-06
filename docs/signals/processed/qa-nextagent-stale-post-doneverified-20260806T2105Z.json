@@ -7,12 +7,24 @@
     "task_id": "FIX-NOTEBOOK-DUPHEADING-DETECTOR-NO-DEDUP-NO-ACTUATOR",
     "issue": "next_agent field left stale at 'qa' after QA flipped status to DONE_VERIFIED; QA's own RETURN block and review_note claimed NEXT: pm, but commit 4d3011794's actual diff only changed status (QA->DONE_VERIFIED), never touched next_agent",
     "raw_verify": {
-      "before_commit_4d3011794": {"status": "QA", "next_agent": "qa"},
-      "after_commit_4d3011794": {"status": "DONE_VERIFIED", "next_agent": "qa"},
+      "before_commit_4d3011794": {
+        "status": "QA",
+        "next_agent": "qa"
+      },
+      "after_commit_4d3011794": {
+        "status": "DONE_VERIFIED",
+        "next_agent": "qa"
+      },
       "sibling_rows_same_cycle_for_comparison": "FIX-POLYMARKET-FETCH-DEAD-GEOBLOCK-ACTUATOR and FIX-AUDITOR-OUTPUT-CONTRACT-SIGNALSPOSTED-COUNTS-CALLS-NOT-CONFIRMED-ROWS both correctly show next_agent=pm after their own QA verification commits this same cycle"
     },
     "impact": "row sits in task_board.done_verified[] with status DONE_VERIFIED but next_agent still 'qa' -- structurally invisible to pm's normal next_agent-driven pickup; will silently stall until someone corrects the field by hand",
     "requested_action": "one-field correction via scripts/orch-apply.sh: set next_agent='pm' on this row (status/verified_at/review_note/verified_by all already correct and should be left untouched)",
     "occurrence_note": "first observed instance of this specific shape (self-reported next_agent hop not matching actual committed board write) -- not yet at 2+ recurring threshold, not escalated as a new po-owned defect row, flagged here for pm's direct fix + pattern-tracking visibility"
+  },
+  "_processed": {
+    "fingerprint": "ae2ef7e26b9db2c4c25d770a6c7f8316fb3a40d3be2640e744a3298ddd484ca3",
+    "processedAt": "2026-08-06T21:11:09Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
   }
 }
