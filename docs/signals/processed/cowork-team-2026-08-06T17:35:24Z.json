@@ -1,0 +1,32 @@
+{
+  "from": "cowork-team",
+  "tick": "2026-08-06T17:30Z",
+  "matched_slots": [
+    "digest-daily"
+  ],
+  "won_slots": [
+    "digest-daily"
+  ],
+  "collision": null,
+  "spawned": [
+    "docs/agents/digest-predict/flow/main.md"
+  ],
+  "silent": false,
+  "errors": [],
+  "drift_min": 3,
+  "pressure_mode": "adaptive",
+  "calendar_status": "unknown",
+  "due_reasons": {
+    "digest-daily": "cron"
+  },
+  "classification": "FIRE",
+  "signal_backlog": 23,
+  "new_signals_this_tick": 0,
+  "createdAt": "2026-08-06T17:35:24Z",
+  "_processed": {
+    "fingerprint": "96addbf0bd36aad41fdb4a89a2c22b8010f89d8f9ff4ba2eacb3775e2af918fe",
+    "processedAt": "2026-08-06T17:52:47Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

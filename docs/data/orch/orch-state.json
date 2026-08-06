@@ -3016,7 +3016,7 @@
         "type": "microservice_degraded",
         "summary": "rag-service A-30 floor-breach: 97.76% mem (22.9MiB free, below 40MiB floor)",
         "severity": "WARN",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": null,
         "provenance": "detector",
         "audit_cycle_tag": "cron:auditor-t1:2026-08-06T17:30Z"
@@ -3027,7 +3027,7 @@
         "type": "recurring_defect_unfixed",
         "severity": "WARN",
         "summary": "digest-predict notebook uncommitted 5th confirmed cycle (no-Bash class defect: bctc-analyst/digest-predict/tran-ngoc-bau/unified-agent, 0/4 prior confirmations fixed) — needs agent-father/agents-architect dispatcher-side sweep step or Bash grant, see memory project_bctc_analyst_no_bash_grant_perpetual_dirty_artifacts.md",
-        "status": "NEW",
+        "status": "READ",
         "createdAt": "2026-08-06T17:46:03Z"
       }
     ],
@@ -14841,6 +14841,64 @@
         "po_scope_note_20260806T1732": "PO scope ruling: the gate must be a HARD, machine-checked precondition on the review->qa transition for any row whose zone is apps/<svc>/ and whose AC asserts RUNTIME behavior — not a prose marker. Minimum discriminant: the deployed image's build/StartedAt must be NEWER than the fix commit's committer-date, asserted from `docker inspect`, never from an agent's own claim. Prose REBUILD_REQUIRED=true has now failed silently 3 times.",
         "occurrence_count": 3,
         "po_triaged_by": "po (dev-team Step 1 triage 2026-08-06)"
+      },
+      {
+        "id": "FIX-BCTC-SSC-DOC-SELECTION-QUARTER-BLIND-ALWAYS-LATEST",
+        "title": "BCTC acquisition is structurally quarter-blind: listSscDocuments() has no quarter param",
+        "type": "FIX",
+        "size": "M",
+        "priority": "P0",
+        "zone": "apps/mcp-server/",
+        "status": "READY",
+        "created_at": "2026-08-05T00:00:00Z",
+        "files": [
+          "apps/mcp-server/src/infrastructure/fetchers/ssc.ts"
+        ],
+        "note": "30+ period-mismatch refusals, carried 3 PO cycles, baseline_pass:true"
+      },
+      {
+        "id": "FIX-ACTIVE-READPATH-LIVENESS-PROBE-NO-DETECTOR",
+        "title": "No detector exercises actual data-serving read path - services can fail silently",
+        "type": "FIX",
+        "size": "M",
+        "priority": "P1",
+        "zone": "cross-service/",
+        "status": "READY",
+        "created_at": "2026-08-06T00:00:00Z",
+        "note": "NEW MINT. 2 live occurrences: kinh-dich dark 6d, news 663m. AC-3 requires probe RED against pre-fix state."
+      },
+      {
+        "id": "GUARD-NOTEBOOK-CONCURRENT-EDIT-COLLISION-DATA-LOSS",
+        "title": "Concurrent notebook writes destroy peer sections - collision-safe append primitive",
+        "type": "FIX",
+        "size": "S",
+        "priority": "P1",
+        "zone": "cross-service/",
+        "status": "READY",
+        "created_at": "2026-08-06T00:00:00Z",
+        "note": "Occurrence 2 this tick, widened scope. next_agent: pm"
+      },
+      {
+        "id": "FIX-DEVTEAM-REBUILD-REQUIRED-MARKER-NO-CONSUMER",
+        "title": "dev-* writes REBUILD_REQUIRED but no gate reads it - compare image build-time vs fix commit",
+        "type": "FIX",
+        "size": "S",
+        "priority": "P1",
+        "zone": "docs/agents/",
+        "status": "READY",
+        "created_at": "2026-08-06T00:00:00Z",
+        "note": "occurrence_count=3, escalated P2→P1. next_agent: agent-father"
+      },
+      {
+        "id": "FIX-NEWSVPS-OVERNIGHT-PUSH-OUTAGE-663M-SILENT",
+        "title": "Harden mcp-server /api/push-news against ~11h silent hang",
+        "type": "FIX",
+        "size": "S",
+        "priority": "P2",
+        "zone": "apps/mcp-server/",
+        "status": "READY",
+        "created_at": "2026-08-06T00:00:00Z",
+        "note": "UNBLOCKED this tick. Detection split to FIX-ACTIVE-READPATH-LIVENESS-PROBE-NO-DETECTOR."
       }
     ],
     "review": [

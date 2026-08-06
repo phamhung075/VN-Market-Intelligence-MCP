@@ -12,7 +12,14 @@
       "raw_json_verdict": "ESCALATE",
       "raw_json_reason": "all samples >93% with no reclamation dip — loss of reclamation",
       "raw_json_dip_count": 0,
-      "raw_json_samples_pct": [95.00, 94.97, 94.68, 94.89, 94.94, 95.08],
+      "raw_json_samples_pct": [
+        95,
+        94.97,
+        94.68,
+        94.89,
+        94.94,
+        95.08
+      ],
       "prose_claim": "verdict=FOLD benign GC sawtooth, contains reclamation dips -> PASS, 86.61% max",
       "fabricated_figure": "86.61% does not appear anywhere in the committed RAW-PROBE block"
     },
@@ -29,5 +36,11 @@
       "new_failure_class": "summarizing-agent narrative overrides a correctly-computed machine verdict embedded in its own evidence, with a fabricated supporting figure — a third distinct A-30 misclassification mechanism this week"
     },
     "action_taken_this_signal": "router did not re-spawn system-auditor or attempt a fix directly (router role is dispatch-only). Filing for po triage: recommend a structural check in the audit flow that fails the cycle (or forces ESCALATE) whenever the Findings prose's stated verdict/PASS-FAIL disagrees with the raw JSON verdict field already computed in the same probe output, rather than trusting free-text prose to correctly transcribe it."
+  },
+  "_processed": {
+    "fingerprint": "15aa86a8b14b8b2bc2268954dfbe021b56ef59f280d577b32aced73232671298",
+    "processedAt": "2026-08-06T17:52:47Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
   }
 }
