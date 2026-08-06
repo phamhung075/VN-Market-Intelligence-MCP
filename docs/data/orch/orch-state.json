@@ -128,8 +128,8 @@
     "does_not_consume_wip": true
   },
   "signal_queue": {
-    "_updated_at": "2026-08-06T13:56:01Z",
-    "_updated_by": "dev-team",
+    "_updated_at": "2026-08-06T15:08:42Z",
+    "_updated_by": "router",
     "archive": [],
     "rows": [
       {
@@ -2940,6 +2940,30 @@
         "triaged_at": "2026-08-06T14:53:40Z",
         "triaged_by": "po (triage 2026-08-06T14:53Z)",
         "disposition": "FOLDED, no mint — RAW-verified TRUE (docker stats 990.2MiB/1GiB=96.70% reproduces the 96.69% reading; container healthy, RestartCount=0, no OOM) but the condition is already owned by FIX-RAG-EMBEDDER-IDLE-UNLOAD-PATH (P1, BACKLOG, developer, dependency cleared 14:37:49Z). Recorded there as occurrence 6 of 6 today. Not escalated: flat 96.7% across ~1h56m with zero restarts confirms the owning row's missing-release-path thesis rather than indicating an acute incident, and explicitly does NOT justify a third cap raise."
+      },
+      {
+        "id": "sys-20260806T150842-a4th",
+        "ts": "2026-08-06T15:08:42Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "recurring-bug-corroboration",
+        "summary": "4th analysis-only-exit occ (T1, 0 writes). Orphaned real finding: mcp-server 4 restarts ~12:25Z, docker-verified.",
+        "severity": "MED",
+        "status": "NEW",
+        "payload_ref": "docs/signals/processed/sys-auditor-analysis-only-exit-4th-20260806.json"
+      },
+      {
+        "id": "sys-20260806T151042-6d28",
+        "ts": "2026-08-06T15:10:42Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "microservice_degraded",
+        "summary": "rag-service memory pressure 96.56% (below floor 40MiB)",
+        "severity": "WARN",
+        "status": "NEW",
+        "payload_ref": null,
+        "provenance": "detector",
+        "audit_cycle_tag": "cron:auditor-t1:2026-08-06T15:00Z"
       }
     ],
     "last_triaged_at": "2026-07-29T06:25:00Z",
