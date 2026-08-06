@@ -1,10 +1,27 @@
 # Code Janitor Notebook
 
-**Last updated:** 2026-08-06 (scan-30 Memory+State sweep cycle — no source changes)
+**Last updated:** 2026-08-06 (scan-31 Memory+State sweep cycle — no source changes)
 
 > Archive: docs/archive/notebooks/code-janitor-2026-05-21.md (pre-trim history)
 
 ## State summary
+
+### Session 31 (2026-08-06 22:32Z — 6-hourly scheduled sweep cycle)
+
+**Scope:** Scheduled 6-hourly maintenance sweep. No source code changes in last 3 commits (pre-check gate active).
+
+**Checks:** DRY scan skipped (zero `src/` or `apps/*/src/` changes). Three unconditional sweeps executed:
+- Memory Prune Sweep: 0 sessions archived, 0 old health checks deleted, 0 new signals (existing janitor-health-recheck-writer-retired-2026-08-06 found, SIGNAL-SKIP)
+- Notebook Line-Cap Sweep: 46 notebooks checked; 4 over-cap, 2 pruned (ops.md 258→183L, developer.md 35→27L); 2 safe-fail skips (code-janitor.md 224L single section, digest-predict.md 38L no sections)
+- Cold Archive Sweep: Skipped (not 1st of month)
+
+**Escalations:** None (signal already routed in prior cycle).
+
+**Backlog:** Unchanged at 9 items (JANITOR-034, JANITOR-028 to JANITOR-032, JANITOR-011, -013, -017, -020, -027).
+
+**Quality:** Full. All sweeps executed nominally. No knowledge load failures.
+
+---
 
 ### Session 30 (2026-08-06 16:31Z — 6-hourly scheduled sweep cycle)
 
