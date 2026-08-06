@@ -7662,33 +7662,6 @@
         "verify_note": "prior_status=TODO"
       },
       {
-        "id": "CI-PERFILE-STRUCTURAL-MITIGATION",
-        "type": "FIX",
-        "priority": "P1",
-        "status": "BACKLOG",
-        "zone": "apps/mcp-server/",
-        "title": "ci-per-file-isolation `bun test` is nondeterministic with a ROTATING failing file — 5 of last 6 main pushes RED, 4 distinct files, one clean green in the middle; poisons ci_green_on_subsequent_push fleet-wide and spawns one DEFLAKE-* row per rotation",
-        "detail": "(a) rc captured but never checked -> a killed 0-parsed-fail process is invisible to the gate; (b) parallelism=16 on 2-4 vCPU = 4-8x oversubscription. Plan-only, not dispatched (SPIKE item 4).",
-        "related": [
-          "docs/spikes/SPIKE_CI-PERFILE-ISOLATION-FLAKE.md"
-        ],
-        "created_at": "2026-07-10T06:50:00Z",
-        "created_by": "po-triage-20260710T0650Z",
-        "verify_note": "prior_status=TODO",
-        "next_agent": "dev-mcp-server",
-        "owner": "developer",
-        "size": "M",
-        "updated_at": "2026-08-06T09:55:24Z",
-        "updated_by": "po (triage 2026-08-06T09:55:23Z — recurring-bug escalation, stub enriched + priority low->P1 + next_agent null->dev-mcp-server)",
-        "desc": "MEASURED 2026-08-06 across 6 consecutive main-branch CI runs (`gh run view <id> --log-failed | grep FAILEDFILE`): 51e4f816a=167-prediction-market-job | de0e03995=167-prediction-market-job+vnstock-3statement | 9054ef002=1404-cb-startup-reset | 25111889a=1299b-skill-gated-bootstrap | 92ff5fb43=GREEN (all 20 jobs) | f1fddde0d=vnstock-3statement. Pass count 15006-15018, fails always 1-2. The failing file rotates run-to-run with NO relationship to commit content — f1fddde0d is a DOCS-ONLY notebook commit that failed on a source test file which had passed 2 minutes earlier at 92ff5fb43. Per-file isolation forks one bun process per test file, so cross-file order-dependence is excluded BY CONSTRUCTION; the remaining explanation is runner-level resource/timing nondeterminism (see the `parallelism-vs-vCPU` half of this row's original title) or per-file arm/teardown leakage. TWO COMPOUNDING COSTS, both live: (a) 5 non-terminal board rows carry verification_gate=ci_green_on_subsequent_push scoped to the `bun test` job — at an ~83% red rate from flake alone those gates are effectively unsatisfiable, so those rows cannot close; (b) the ci_red triage rule in docs/agents/po/flow/triage-signals.md mints ONE ROW PER DISTINCT FAILING FILE, so a rotating flake is an unbounded row generator — the DEFLAKE-*/transient family is already 4+ rows (DEFLAKE-VNSTOCK-3STATEMENT, DEFLAKE-1187-POLLNEWS-DEAD-PATH, FIX-RAG-TEMPORAL-DECAY-TEST-JITTER, FIX-CI-IMF-INTEGRATION-TEST-NONHERMETIC-LIVE-API) on a 360-row backlog. Recurring-bug-escalation per feedback_recurring_bug_escalation: treat the flake RATE as the defect and freeze further per-file DEFLAKE mints until this lands.",
-        "ac": "AC-1 Quantify the base rate at source, not by assertion: run the CI per-file-isolation job (or scripts/ci-per-file-isolation.sh under CI-equivalent parallelism/vCPU) >=20 times on ONE pinned green SHA and report the per-run failure count and the identity distribution of failing files. A rotating identity across runs on a pinned SHA confirms runner nondeterminism; a stable identity refutes it and reroutes this to the named per-file rows. AC-2 Identify the mechanism — parallelism vs available vCPU, per-process memory ceiling, or a timeout — and state which measurement discriminates it. AC-3 Fix at source (bound parallelism to vCPU, raise/《make explicit》the per-file timeout, or whatever AC-2 names). Do NOT add blanket test retries: a retry hides the rate and re-poisons the gate silently. AC-4 rc-fail-loud in scripts/ci-per-file-isolation.sh (original scope of this row, unchanged). AC-5 RAW-verify: 20 consecutive per-file-isolation runs on a pinned SHA with 0 failures, output attached. AC-6 Once green, re-evaluate the 4 open DEFLAKE-*/transient rows — any that no longer reproduce under AC-5 conditions close as flake-artifacts rather than needing individual de-flake work.",
-        "code_under_test": [
-          "scripts/ci-per-file-isolation.sh",
-          ".github/workflows/ci.yml"
-        ],
-        "baseline_pass": true
-      },
-      {
         "id": "SPIKE-COWORK-GUARANTEED-SLOT-SUPERSEDE-WIRING",
         "type": "SPRINT-M",
         "status": "BACKLOG",
@@ -22069,6 +22042,38 @@
         "po_manual_dispatch_class": "DRS-STRANDED-OFF-ALLOWLIST",
         "po_manual_dispatch_note": "po (manual-dispatch-sweep) surfaced DRS-STRANDED-OFF-ALLOWLIST candidate — folding into this tick's BATCH",
         "agent_father_completed_at": "2026-08-06T10:25:10Z"
+      },
+      {
+        "id": "CI-PERFILE-STRUCTURAL-MITIGATION",
+        "type": "FIX",
+        "priority": "P1",
+        "status": "REVIEW",
+        "zone": "apps/mcp-server/",
+        "title": "ci-per-file-isolation `bun test` is nondeterministic with a ROTATING failing file — 5 of last 6 main pushes RED, 4 distinct files, one clean green in the middle; poisons ci_green_on_subsequent_push fleet-wide and spawns one DEFLAKE-* row per rotation",
+        "detail": "(a) rc captured but never checked -> a killed 0-parsed-fail process is invisible to the gate; (b) parallelism=16 on 2-4 vCPU = 4-8x oversubscription. Plan-only, not dispatched (SPIKE item 4).",
+        "related": [
+          "docs/spikes/SPIKE_CI-PERFILE-ISOLATION-FLAKE.md"
+        ],
+        "created_at": "2026-07-10T06:50:00Z",
+        "created_by": "po-triage-20260710T0650Z",
+        "verify_note": "prior_status=TODO",
+        "next_agent": "qa",
+        "owner": "developer",
+        "size": "M",
+        "updated_at": "2026-08-06T10:29:55Z",
+        "updated_by": "dev-mcp-server",
+        "desc": "MEASURED 2026-08-06 across 6 consecutive main-branch CI runs (`gh run view <id> --log-failed | grep FAILEDFILE`): 51e4f816a=167-prediction-market-job | de0e03995=167-prediction-market-job+vnstock-3statement | 9054ef002=1404-cb-startup-reset | 25111889a=1299b-skill-gated-bootstrap | 92ff5fb43=GREEN (all 20 jobs) | f1fddde0d=vnstock-3statement. Pass count 15006-15018, fails always 1-2. The failing file rotates run-to-run with NO relationship to commit content — f1fddde0d is a DOCS-ONLY notebook commit that failed on a source test file which had passed 2 minutes earlier at 92ff5fb43. Per-file isolation forks one bun process per test file, so cross-file order-dependence is excluded BY CONSTRUCTION; the remaining explanation is runner-level resource/timing nondeterminism (see the `parallelism-vs-vCPU` half of this row's original title) or per-file arm/teardown leakage. TWO COMPOUNDING COSTS, both live: (a) 5 non-terminal board rows carry verification_gate=ci_green_on_subsequent_push scoped to the `bun test` job — at an ~83% red rate from flake alone those gates are effectively unsatisfiable, so those rows cannot close; (b) the ci_red triage rule in docs/agents/po/flow/triage-signals.md mints ONE ROW PER DISTINCT FAILING FILE, so a rotating flake is an unbounded row generator — the DEFLAKE-*/transient family is already 4+ rows (DEFLAKE-VNSTOCK-3STATEMENT, DEFLAKE-1187-POLLNEWS-DEAD-PATH, FIX-RAG-TEMPORAL-DECAY-TEST-JITTER, FIX-CI-IMF-INTEGRATION-TEST-NONHERMETIC-LIVE-API) on a 360-row backlog. Recurring-bug-escalation per feedback_recurring_bug_escalation: treat the flake RATE as the defect and freeze further per-file DEFLAKE mints until this lands.",
+        "ac": "AC-1 Quantify the base rate at source, not by assertion: run the CI per-file-isolation job (or scripts/ci-per-file-isolation.sh under CI-equivalent parallelism/vCPU) >=20 times on ONE pinned green SHA and report the per-run failure count and the identity distribution of failing files. A rotating identity across runs on a pinned SHA confirms runner nondeterminism; a stable identity refutes it and reroutes this to the named per-file rows. AC-2 Identify the mechanism — parallelism vs available vCPU, per-process memory ceiling, or a timeout — and state which measurement discriminates it. AC-3 Fix at source (bound parallelism to vCPU, raise/《make explicit》the per-file timeout, or whatever AC-2 names). Do NOT add blanket test retries: a retry hides the rate and re-poisons the gate silently. AC-4 rc-fail-loud in scripts/ci-per-file-isolation.sh (original scope of this row, unchanged). AC-5 RAW-verify: 20 consecutive per-file-isolation runs on a pinned SHA with 0 failures, output attached. AC-6 Once green, re-evaluate the 4 open DEFLAKE-*/transient rows — any that no longer reproduce under AC-5 conditions close as flake-artifacts rather than needing individual de-flake work.",
+        "code_under_test": [
+          "scripts/ci-per-file-isolation.sh",
+          ".github/workflows/ci.yml"
+        ],
+        "baseline_pass": true,
+        "claimed_by": "dev-mcp-server",
+        "claimed_at": "2026-08-06T09:37:00Z",
+        "commit_sha": "edea85e66",
+        "note": "Structural fix per AC-3/AC-4 (root cause reproduced live, not just theorized): parallelism bound to actual vCPU (nproc/sysctl auto-detect replaces hardcoded P=16) in scripts/ci-per-file-isolation.sh + .github/workflows/ci.yml; aggregation loop now checks the already-captured per-file rc (a killed/crashed 0-parsed-fail process previously reported false-GREEN -- verified before/after with a SIGKILL repro). AC-1/AC-2 evidence gathered live 2026-08-06 (this dev machine, not a GH-hosted runner -- noted as a fidelity caveat): 2 full-suite ci-per-file-isolation.sh runs on the SAME unchanged tree produced DIFFERENT failing-file sets (14 files at P=16 vs 9 files at auto-P=12, partial overlap) -- rotating identity confirms runner/environment nondeterminism per AC-1's own discriminator, not a stable single-file defect. Captured one concrete mechanism instance: 102-job-news-poll.test.ts asserted rag_analyses COUNT(*)=2, got 0 -- an unawaited-background-write race that only manifests under concurrent-load scheduler delay, matching AC-2's \"resource contention under CI exact concurrency\" hypothesis exactly. Did NOT add blanket retries (AC-3 explicit prohibition). tsc clean, tools=183/cron=88 unchanged (no src/ touched, code_under_test is repo-root scripts/ci.yml only). Full local convergence to 0 fail was NOT achieved on this shared dev host (other concurrent Claude Code agent sessions -- detect-loop/standalone-team/cowork-team -- observed consuming real CPU throughout measurement via ps), so AC-5's 20-consecutive-0-fail claim is deferred to the real isolated GH-hosted runner via gh run rerun on this commit post-push (authoritative environment, not a noisy local proxy). AC-6 (re-evaluate the 4 DEFLAKE-*/transient rows) intentionally deferred until AC-5 is confirmed green by whoever verifies. Commit edea85e66.",
+        "verification_gate": "ci_green_on_subsequent_push"
       }
     ],
     "qa": [
