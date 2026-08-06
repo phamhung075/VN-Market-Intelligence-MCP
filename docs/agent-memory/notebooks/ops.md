@@ -2,32 +2,6 @@
 
 Zone: Docker/VPS/DB operations, incident response, close-gate verification.
 
-## Session: 2026-08-05T18:40Z — UNBLOCK-DEPLOY-RAG-SERVICE
-
-**Dispatch**: dev-team Step 2 S4 UNBLOCK (FIX-RAG-SERVICE-CLEAN-EXIT-RESTART-LOOP deployment)
-
-**Incident Context**: System-auditor Tier-1 cycle c38 (2026-08-05T16:30Z) detected CRITICAL memory escalation: 90.62% → 95.77% → 98.05%, crossed BELOW-FLOOR threshold (15MiB free vs 40MiB floor), OOM-kill risk.
-
-**Actions Taken**:
-1. Built rag-service container with the already-landed fix (commit 22232ad2b) — asyncio.Lock-guarded compact() + unconditional _insert_count reset in finally block
-2. Deployed: `docker compose up -d --no-deps rag-service` at 2026-08-05T18:40:29Z
-3. Post-deploy verification (30s observation window):
-   - Restart count remained stable at 59 (no new restarts)
-   - No repeated-optimize bursts in container logs
-   - Clean health-check responses via /embed/health endpoint
-   - ExitCode=0 (clean operation)
-   - Memory snapshot: 753.1MiB/768MiB (98.05%) — per design, architectural embedder residual baseline ~700MiB; no regression
-4. Updated task_board.review[261] FIX-RAG-SERVICE-CLEAN-EXIT-RESTART-LOOP with deployment details via orch-apply.sh:
-   - deploy_timestamp: 2026-08-05T16:43:47Z
-   - deploy_image_id: sha256:7fd0b53a7787f5ed621a0a8fb2bc2269980f5081e6557d4dd9158f445b01778f
-   - deploy_container_id: f8b55f6eec09
-   - deploy_observation: VERIFIED stable post-deploy, restart-loop pattern eliminated, no regression
-
-**Verification**: FIX SIGNATURE CONFIRMED — asyncio.Lock-guarded compact() successfully eliminated the concurrent access race that was causing the restart loop. Container is now stable and ready for QA sign-off.
-
-**Next**: Task now in review[] with next_agent=qa for live-behavior sign-off.
-
----
 ## Session: 2026-08-05T19:30Z — MCP-SERVER OOM CRASH INCIDENT INVESTIGATION
 
 **Incident Context** (router-dispatched): mcp-server container OOM-crashed at 2026-08-05T19:24:20Z (RestartCount 20→21). Root cause confirmed: running image Created=2026-07-31T14:44:17Z (BEFORE fix-commit 609f62800 landed 2026-08-05T18:26:47Z). Memory history: 97.50% → 99.79% → crash. Post-restart baseline: ~7.2% (healthy). Fix is still in REVIEW/qa queue, NOT yet deployed.

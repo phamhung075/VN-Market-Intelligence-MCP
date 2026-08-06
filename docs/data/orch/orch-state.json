@@ -88,11 +88,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "active_task_id": null,
-    "next_agent": "router",
-    "updated_at": "2026-08-06T16:18:20Z",
-    "updated_by": "developer"
+    "status": "in_progress",
+    "active_task_id": "FIX-RAG-EMBEDDER-IDLE-UNLOAD-PATH",
+    "next_agent": "developer",
+    "next_action": "BOUNDED-1 auto-pickup claim of FIX-RAG-EMBEDDER-IDLE-UNLOAD-PATH — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
+    "updated_at": "2026-08-06T16:22:44Z",
+    "updated_by": "dev-team (bounded-1 auto-pickup)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -2964,6 +2965,17 @@
         "payload_ref": null,
         "provenance": "detector",
         "audit_cycle_tag": "cron:auditor-t1:2026-08-06T15:00Z"
+      },
+      {
+        "id": "cj-20260806T163127",
+        "ts": "2026-08-06T16:31:27Z",
+        "from": "code-janitor",
+        "to": "po",
+        "type": "system-issue",
+        "summary": "team-tool-recheck writer dead since 06-23 — replace-vs-retire decision needed",
+        "severity": "LOW",
+        "status": "NEW",
+        "payload_ref": "docs/signals/janitor-health-recheck-writer-retired-2026-08-06.json"
       }
     ],
     "last_triaged_at": "2026-07-29T06:25:00Z",
@@ -8634,69 +8646,6 @@
         "supervised_by": "po-scoped-triage-20260717",
         "supervised_note": "PLAN-ONLY / anomaly->BACKLOG. ops-owned infra FIX, null next_agent, no backlog-detail entry -> removed from BOUNDED-1 idle auto-pickup (code non-dev-owner gate is detail-blind, would mis-route to a developer placeholder). Do NOT dispatch; groom+schedule after ops confirms PEK re-seed.",
         "plan_only": true
-      },
-      {
-        "id": "DEFLAKE-VNSTOCK-3STATEMENT",
-        "type": "FIX",
-        "status": "BACKLOG",
-        "priority": "P2",
-        "size": "S",
-        "zone": "apps/mcp-server/",
-        "next_agent": "dev-mcp-server",
-        "title": "De-flake vnstock-3statement.test.ts — CI per-file-isolation transient (2+ obs recurring-bug escalation): same-code green→red twice, never a regression",
-        "desc": "apps/mcp-server/src/__tests__/vnstock-3statement.test.ts intermittently fails under CI per-file-isolation `bun test` while passing locally/full-suite. TWICE the failing HEAD was byte-identical in non-test code to a GREEN baseline (range diffs were docs/notebook/orch-state/signal only, ZERO non-test code) => same-code-green-then-red = per-file-isolation non-determinism, NOT a regression. Suspected shared-state root: the file mutates the global DB_PATH env at module-load time (lines 16-17), drives a process-global DB singleton via closeDb()/initDatabase() in beforeEach, and carries an `?isolate=vnstock3stmt` query-bust import to dodge the mock.module cache poison stubbed by test 1466 (in-file comment lines 20-24). Any of these leaking across the isolate/worker boundary can flip pass<->fail depending on file order / worker assignment. Router already ran `gh run rerun --failed 29576568819` to restore the transient green; THIS row is the DURABLE fix so the rerun toil stops.",
-        "ac": "AC-1 Root-cause: identify the exact shared-state / order / timing dependency that makes this file non-deterministic in per-file-isolation `bun test` — candidates: (a) module-load-time DB_PATH env mutation (lines 16-17) leaking to sibling files that share the Bun worker, (b) the closeDb()/initDatabase() process-global DB singleton lifecycle, (c) the mock.module cache poison from test 1466 that the `?isolate=vnstock3stmt` query-bust currently papers over. State which interleaving/worker-assignment reproduces the flake. AC-2 Fix determinism at the source: isolate this file's DB state so it neither depends on nor leaks global/module-load state (e.g. per-test fresh DB + env scoped and restored in teardown that cannot poison siblings). Do NOT merely add retries / test.retry / rerun-on-fail. AC-3 If the 1466 mock.module cache poison is the shared cause, fix it at source so the `?isolate=` query-bust workaround is no longer load-bearing. AC-4 RAW-verify: run the file in per-file-isolation mode >=20x (and interleaved with the sibling that shares its worker) with 0 failures, and confirm the full `bun test` suite stays green — attach run output. Prior-art: no existing backlog/ready/in_progress/review/qa row for vnstock-3statement (router-checked 2026-07-17). Follow the established DEFLAKE-* de-flake convention (cf. DEFLAKE-1187-POLLNEWS-DEAD-PATH).",
-        "evidence": [
-          "docs/signals/processed/ci-red-c2893251-20260717064818.json",
-          "docs/signals/processed/ci-red-00e3c4b1-20260717114821.json"
-        ],
-        "code_under_test": [
-          "apps/mcp-server/src/__tests__/vnstock-3statement.test.ts",
-          "apps/mcp-server/src/infrastructure/db/vnstockStore.js",
-          "apps/mcp-server/src/infrastructure/db/schema.js"
-        ],
-        "obs": [
-          {
-            "n": 1,
-            "tick": "0637Z",
-            "ci_run": "c2893251",
-            "run_id": 29559748162,
-            "head": "c28932513c491d5eb5765a2c4469c426eba9b81c",
-            "disposition": "1st-obs classified-flaky-not-escalated"
-          },
-          {
-            "n": 2,
-            "tick": "1137Z",
-            "ci_run": "00e3c4b1",
-            "run_id": 29576568819,
-            "head": "00e3c4b164709d1b1148676131f4aacaba84a46c",
-            "disposition": "2nd-obs ESCALATED-TO-PO"
-          },
-          {
-            "n": 3,
-            "tick": "0859Z",
-            "ci_run": "de0e0399",
-            "run_id": 31087179442,
-            "head": "de0e03995",
-            "disposition": "3rd-obs 2026-08-06 — co-failed with 167-prediction-market-job.test.ts (2 fail in one run)"
-          },
-          {
-            "n": 4,
-            "tick": "0944Z",
-            "ci_run": "f1fddde0",
-            "run_id": 31090381761,
-            "head": "f1fddde0d",
-            "disposition": "4th-obs 2026-08-06 — SOLE failing file. Preceding SHA 92ff5fb43 was FULLY GREEN and the intervening commit f1fddde0d is DOCS-ONLY (agent-father notebook+journal): a docs-only commit cannot deterministically break this test file. Strongest same-code-green-then-red evidence yet."
-          }
-        ],
-        "source": "recurring CI-flaky escalation (2+ obs) routed by dev-team-router; scoped PO triage 2026-07-17",
-        "created_at": "2026-07-17T11:54:54Z",
-        "created_by": "po-scoped-triage-20260717",
-        "baseline_pass": true,
-        "dedup_key": "ci_job:bun test|file:apps/mcp-server/src/__tests__/vnstock-3statement.test.ts",
-        "dedup_key_ci_relative": "ci_job:bun test|file:src/__tests__/vnstock-3statement.test.ts",
-        "updated_at": "2026-08-06T09:55:24Z",
-        "updated_by": "po (triage 2026-08-06T09:55:23Z — obs 3 + obs 4, priority low->P2)"
       },
       {
         "id": "FIX-REFINE-PAGECOUNT-ZERO-COVERLETTER-MASK",
@@ -15055,46 +15004,6 @@
         "architect_review_note": "2026-08-06T10:49Z architect (plan_only brief per PO explicit ask -- adjudicate a/b/c, no code shipped). Brief: docs/architecture-briefs/2026-08-06-guard-notebook-concurrent-write-mutex.md. DECISIVE EVIDENCE READ RAW (not POs summary): 11 notebook-direction-defaulted signals on qa.md (10:00:46Z-10:08:36Z) show a non-monotone retained-section set AND 3 simultaneous duplicate ## cycle-504 headings with different content -- proves concurrent lost-update + stale c<NNN> counter allocation, not a pruning-order bug. Ruled out the suspected 3rd-writer formatter hook: context-bloat-backstop.sh read in full, only ever writes its OWN signal file, never the notebook -- confirmed no 3rd mutator exists (only the writing agent Write/Edit + notebook-auto-prune.sh PostToolUse hook touch notebook content). ADJUDICATION: (b) append-only cannot work standalone (AC-2 retention/AC-5 cap both require removing content, no true append primitive exists on native Write/Edit); (c) fan-out cap alone independently disproven -- the ORIGINAL tran-ngoc-bau.md c113 incident was N=2 writers, no fan-out involved, so a lower cap only narrows frequency, never closes the class; (a) task_claim mutex is the right direction but NOT a drop-in -- task_kind is a closed 7-value Zod enum (coordinationTools.ts) with no fitting kind, needs an additive notebook-write value (companion dev-mcp-server row, blocking prereq). RECOMMENDATION: task_claim(task_kind=notebook-write) mutex bracketing ONLY the mechanical fresh-read-merge-write span (LLM authoring stays OUTSIDE the held window, explicit ttl_seconds=120 not the 3600s default -- avoids this repos own corroborated TTL-hazard lesson) as new SKILL.md AC-7; PostToolUse hook (cannot call task_claim, no MCP-from-bash bridge exists) hardened instead with a stat-based staleness recheck immediately before its own mv, deliberately NOT a new mkdir/flock lock file since docs/agent-memory is a named, still-unexcluded VirtioFS bind-mount race hazard per docs/protocols/head-lock-self-cure.md (H4, confirmed not hypothesized) -- reusing task_claims server-side SQLite lock state sidesteps that hazard entirely. Files split across 3 owner zones (mixed-zone flag for PM, same class already resolved for FIX-DEVTEAM-QADRAIN-THROUGHPUT-CAP): agent-father (.claude/skills/notebook-write/SKILL.md AC-7 + docs/agents/dev-team/flow/main.md 1-sentence note), developer (scripts/agents-flow/notebook-auto-prune.sh staleness guard), dev-mcp-server (task_kind enum +1, companion row, blocks agent-father row). Acceptance test extends the EXISTING apps/mcp-server/src/__tests__/task-lock-coordination-store.test.ts harness (new AC-12 describe block, N-concurrent-writer negative/positive control on a fixture notebook) rather than a new shell script -- satisfies this rows own verification_gate directly. Sequencing: dev-mcp-server row first (blocking), developer row independent/ships anytime, agent-father row last. Zone cross-service/. BUILD-STANDARD: not-applicable."
       },
       {
-        "id": "FIX-RAG-EMBEDDER-IDLE-UNLOAD-PATH",
-        "type": "FIX",
-        "title": "rag-service embedder singleton has no unload path — container is pinned near its memory cap permanently after the first embed; add an idle-unload timer so the cap raise buys closure, not just time",
-        "status": "READY",
-        "priority": "P1",
-        "size": "S",
-        "zone": "apps/rag-service/",
-        "next_agent": "developer",
-        "created_at": "2026-08-06T12:45:00Z",
-        "created_by": "po/rag-oom-ruling-20260806T1245 (actuates architect brief section 3 / S3, which was designed 2026-08-06T09:03Z but never given a row)",
-        "updated_at": "2026-08-06T15:17:05Z",
-        "updated_by": "po (triage 2026-08-06T14:38Z — dependency cleared, promotion made effective)",
-        "design_ref": "docs/architecture-briefs/2026-08-06-rag-service-memory-sizing-remediation.md section 3 (line 63) — 'Structural fix — Option (b): idle-unload path for the embedder singleton'. Design is DONE; this row is execution only, no re-design needed.",
-        "why_this_row_exists": "MINTED because the architect brief designed this fix and no board row carried it — the decision would otherwise have lived only inside architect_review_note on FU-RAG-DEPLOY-MEMORY, which is a note field, not a dispatchable unit. This is not FP churn re-raising the A-30 memory finding (feedback_auditor_mcpserver_a21_a30_memory_fp_reemit_churn): the memory finding is owned by FU-RAG-DEPLOY-MEMORY and stays there. This row owns a DIFFERENT and previously unowned thing — the absence of a release path in apps/rag-service/infrastructure/embedder.py (lines 37/51; grep for unload|.release(|del self._model|gc.collect|empty_cache finds nothing), which has been flagged three separate times on FU-RAG-DEPLOY-MEMORY's history and actioned zero times.",
-        "scope": "Idle-unload timer symmetric to the existing lazy-load. EMBEDDER_IDLE_UNLOAD_MINUTES env var (config, never a hardcode — feedback_no_hardcode_stats), default ~15. asyncio background task registered in build_lifespan; after N minutes with no embed call, unload the model and gc.collect(). Reload transparently on the next embed through the EXISTING double-check-lock path — do not add a second load path. Files per the brief: apps/rag-service/infrastructure/embedder.py, apps/rag-service/main.py (env plumbing if needed), plus direct test coverage showing an injected idle-unload flips state warm->cold without ever returning a 503.",
-        "depends_on": null,
-        "po_rationale": "The cap raise buys TIME, not CLOSURE, and the architect brief says so in its own words ('the cap raise alone buys time, not closure'). Two of the three consumers grow without bound: the corpus grows ~103 rows/h toward the ~56k-row scale RAG-FTS-BUILD-MEMORY-BOUND is time-gated on, while the model baseline is fixed AND unreleasable. A cap chosen to fit today loses the same argument again in weeks — that exact sentence is already on FU-RAG-DEPLOY-MEMORY at po_dataset_exceeds_cap_20260729T1140 and has now been proven right once, by the 08:17:28Z OOM kill. This row is what stops it being proven right a second time.",
-        "related": [
-          "FU-RAG-DEPLOY-MEMORY",
-          "FIX-RAG-COMPACTION-DISK-AMPLIFICATION",
-          "RAG-FTS-BUILD-MEMORY-BOUND",
-          "FIX-RAG-SERVICE-CLEAN-EXIT-RESTART-LOOP"
-        ],
-        "po_live_corroboration_20260806T1350Z": "SUPERSEDED AND WITHDRAWN by po_DEPENDENCY_STILL_UNSATISFIED_20260806T1355Z below. The withdrawn text claimed this row's blocking dependency was 'satisfied by a post-raise measurement'. There was no post-raise measurement — PO had the cap-raise timing wrong. Stub retained so the retracted claim is not inherited from a cached copy.",
-        "po_DEPENDENCY_STILL_UNSATISFIED_20260806T1355Z": {
-          "by": "po/triage-agentfather-20260806T1318Z",
-          "ruling": "This row's dependency on FU-RAG-DEPLOY-MEMORY ('sequence AFTER the 768m->1g cap raise lands') is NOT yet discharged. The compose edit was committed at 2026-08-06T13:00:35Z (2f835ec63) but it is UNVERIFIED whether the running container was ever recreated onto the new limit — see po_POSTRAISE_WARNS_UNRESOLVED_20260806T1355Z on FU-RAG-DEPLOY-MEMORY for the decisive `docker inspect` check and the two branches. Until that is answered, this row's own stated rationale holds verbatim: against a cap the service already saturates, an idle-unload's effect cannot be distinguished from noise.",
-          "why_this_row_may_become_the_canonical_owner": "If the check lands on branch B (container recreated near 13:00Z, back to ~97% of 1GiB by 13:36Z), the fixed baseline — not the ceiling — is the binding constraint, and this row becomes the primary remedy rather than a follow-up. FU-RAG-DEPLOY-MEMORY already names the same target: 'apps/rag-service/infrastructure/embedder.py:37/:51 has no unload path at all' (po_ESCALATION_first_confirmed_oomkill_20260806T0824).",
-          "observations_recorded_not_asserted_as_proof": "Three A-30 WARNs today (12:42Z pre-raise, 13:17Z and 13:36Z post-commit), the last at 97.06%. PO deliberately does NOT read these as confirming this row's prediction — the denominator behind 97.06% is undetermined, and the A-30 discriminator is on record erring in both directions on this exact container.",
-          "no_duplicate_minted": "PO nearly minted FIX-RAG-SERVICE-A30-SUSTAINED-MEM-FLOOR-96PCT for this symptom before the prior-art probe surfaced this cluster (FU-RAG-DEPLOY-MEMORY / FIX-RAG-SERVICE-CLEAN-EXIT-RESTART-LOOP / this row / FIX-RAG-COMPACTION-DISK-AMPLIFICATION). That row was withdrawn from the board before dispatch — do not re-mint it."
-        },
-        "po_DEPENDENCY_DEADLOCK_20260806T1420Z": "PO 2026-08-06T14:20Z — PROMOTED P2->P1 AND THE `depends` RATIONALE IS NOW SELF-DEFEATING. Read this before deferring the row again.\n\nThis row's dependency on FU-RAG-DEPLOY-MEMORY reads: 'sequence AFTER the 768m->1g cap raise lands. Rationale is measurement, not politeness: against a cap the service already saturates, an idle-unload's effect cannot be distinguished from the noise of a container living at 99.9%. Land the headroom first, then this change's before/after is readable.'\n\nTHE LITERAL PRECONDITION IS NOW MET AND THE RATIONALE IS STILL UNMET — and it can never be met by waiting. Measured today (see FU-RAG-DEPLOY-MEMORY po_BRANCH_RESOLVED_cap_is_live_20260806T1415Z): the cap raise deployed, the container was recreated ~13:00Z with RestartCount=0, and rag-service re-saturated the LARGER cap within ~17 minutes — 992.6 MiB of 1 GiB, 96-97% flat, 7.4 MiB free. Proof the cap is genuinely >768MiB is arithmetic, not a label: 992.6 MiB cannot fit under a 768 MiB cap.\n\nSo the deferral condition is 'wait until the service is not saturated', and the service saturates whatever it is given. Waiting produces the same state forever. THIS IS A DEADLOCK, not a sequencing plan — the row would sit at P2 behind a precondition that its own subject actively destroys.\n\nDISPOSITION: dispatch this row on its merits; do NOT wait for a quiet cap. The 'before/after unreadable' concern is real but is now an ARGUMENT FOR THIS ROW rather than against it — a workload whose resident set expands to fill any cap is the signature an idle-unload path is meant to address, and it is also why a second cap raise is the wrong move (recorded on FU-RAG-DEPLOY-MEMORY). If a clean measurement baseline is still wanted, the honest way to get one is to measure with the embedder idle-unload BUILT and toggled, not to wait for a headroom window that will not occur.\n`depends` left in place deliberately rather than deleted — FU-RAG-DEPLOY-MEMORY is in REVIEW/qa and should still close first for bookkeeping; what is retired is the RATIONALE for blocking on it, not the ordering itself.",
-        "po_occurrence_20260806T1434": "4 further A-30 rag-service fires folded (sys-20260806T131735-7924 96.32% no-GC-dip; sys-20260806T133606-3047 97.06%; sys-20260806T134549-728c mem_creep; sys-20260806T141322-01bc all samples >93%). All WARN, all the same condition, none a new defect. Consistent with this row's P1 promotion at 14:20Z, whose rationale stands unchanged: the container measured 992.6 MiB against the raised 1GiB cap, i.e. it re-saturated the LARGER cap within ~17 min of a clean start, so the 'wait until the service isn't saturated before measuring' deferral can never clear itself. Do NOT authorise a further cap raise on the strength of these four — they are the predicted consequence of the missing idle-unload path, not evidence the cap is too small.",
-        "po_dependency_clearance_20260806T1438": "depends_on CLEARED (was a prose blob naming FU-RAG-DEPLOY-MEMORY plus its rationale; that string is unresolvable as an id, so orch-validate Stage 1g reported it as a dangling ref every tick while the real target sits in review[] as FU-RAG-DEPLOY-MEMORY/REVIEW). TWO defects were stacked here and only one was fixed at 14:20Z. (1) The deferral PREMISE is refuted by measurement, which is why this row was promoted to P1 that tick: the rationale was 'land the 768m->1g cap raise first, because against a saturated cap an idle-unload before/after is unreadable' — the cap raise IS live and the container re-saturated the larger cap at 992.6 MiB within ~17 min of a clean start, so the deferral condition ('wait until the service is not saturated') is self-perpetuating and waiting can never clear it. (2) NOT fixed at 14:20Z, fixed now: the P1 promotion was left sitting behind the very depends_on it was meant to override, so the row was promoted but still not dispatchable — a textbook mint-does-not-equal-dispatchable follow-through gap on PO's own prior action. Sequencing intent is preserved as prose here rather than as a blocking edge; it is deliberately NOT re-encoded as a machine dependency because the measurement above voids it. SYSTEMIC NOTE for whoever picks this up: at least 4 other backlog rows (FIX-BCTC-CTG-BALANCE-SHEET-REFINE, FIX-VPS-SYSTEMD-STARTLIMIT-HARDENING, VERIFY-FIX-VPS-SSH-TRIGGER-FAIL-LOUD-REALDATA, FIX-RAG-COMPACTION-DISK-AMPLIFICATION) carry the same prose-in-depends_on shape and produce the same permanent Stage 1g dangling-ref noise — not fixed here to keep this tick scoped, logged for a follow-up sweep.",
-        "po_occurrence_20260806T1453": "Occurrences 5 and 6 folded (sys-20260806T143821-0c09 c62, sys-20260806T144250-77d3 c63 — dedup-skipped by system-auditor's own ledger, both the identical 96.69% reading). Brings today's A-30 rag-service total to 6. NOT FP and NOT acute — PO measured the container directly this tick rather than reading the badge: `docker stats` 990.2MiB/1GiB = 96.70% (independently reproducing the auditor's 96.69% to within rounding, so the denominator is sound here — cf. feedback_auditor_memory_pct_denominator_falsespike), and `docker inspect` shows status=running, health=healthy, RestartCount=0, ExitCode=0, OOMKilled=false, StartedAt=2026-08-06T12:57:42Z on memlimit=1073741824. So the service has held ~96.7% FLAT for ~1h56m across a clean start with zero restarts. That is the strongest confirmation yet of THIS ROW's thesis and not a reason to escalate: a resident set that expands to fill the cap and then sits there stably is the signature of a missing release path, not of an undersized cap. Do NOT authorise a third cap raise on the strength of occurrences 5-6. This row remains dispatchable (P1, depends_on cleared 14:37:49Z, next_agent=developer, zone=apps/rag-service/) and auto-eligible for BOUNDED-1 — deliberately NOT folded into this tick's BATCH so it is not double-dispatched against the auto-pickup loop; if it is still BACKLOG at the next PO tick, that inaction becomes the finding.",
-        "promoted_at": "2026-08-06T15:17:05Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)"
-      },
-      {
         "id": "FIX-GET-BCTC-REFINED-NO-PROJECTION-PARAM",
         "type": "FIX",
         "title": "get_bctc_refined has no projection param and SELECTs full markdown for every prior unit, so refine_bctc_md's resume skip-set read grows with every chunk -- and flow/main.md documents the return shape as { units: [{ unit_id }] }, which the tool has never returned",
@@ -15124,6 +15033,72 @@
         ],
         "baseline_pass": "9408",
         "promoted_at": "2026-08-06T15:58:02Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)"
+      },
+      {
+        "id": "DEFLAKE-VNSTOCK-3STATEMENT",
+        "type": "FIX",
+        "status": "READY",
+        "priority": "P2",
+        "size": "S",
+        "zone": "apps/mcp-server/",
+        "next_agent": "dev-mcp-server",
+        "title": "De-flake vnstock-3statement.test.ts — CI per-file-isolation transient (2+ obs recurring-bug escalation): same-code green→red twice, never a regression",
+        "desc": "apps/mcp-server/src/__tests__/vnstock-3statement.test.ts intermittently fails under CI per-file-isolation `bun test` while passing locally/full-suite. TWICE the failing HEAD was byte-identical in non-test code to a GREEN baseline (range diffs were docs/notebook/orch-state/signal only, ZERO non-test code) => same-code-green-then-red = per-file-isolation non-determinism, NOT a regression. Suspected shared-state root: the file mutates the global DB_PATH env at module-load time (lines 16-17), drives a process-global DB singleton via closeDb()/initDatabase() in beforeEach, and carries an `?isolate=vnstock3stmt` query-bust import to dodge the mock.module cache poison stubbed by test 1466 (in-file comment lines 20-24). Any of these leaking across the isolate/worker boundary can flip pass<->fail depending on file order / worker assignment. Router already ran `gh run rerun --failed 29576568819` to restore the transient green; THIS row is the DURABLE fix so the rerun toil stops.",
+        "ac": "AC-1 Root-cause: identify the exact shared-state / order / timing dependency that makes this file non-deterministic in per-file-isolation `bun test` — candidates: (a) module-load-time DB_PATH env mutation (lines 16-17) leaking to sibling files that share the Bun worker, (b) the closeDb()/initDatabase() process-global DB singleton lifecycle, (c) the mock.module cache poison from test 1466 that the `?isolate=vnstock3stmt` query-bust currently papers over. State which interleaving/worker-assignment reproduces the flake. AC-2 Fix determinism at the source: isolate this file's DB state so it neither depends on nor leaks global/module-load state (e.g. per-test fresh DB + env scoped and restored in teardown that cannot poison siblings). Do NOT merely add retries / test.retry / rerun-on-fail. AC-3 If the 1466 mock.module cache poison is the shared cause, fix it at source so the `?isolate=` query-bust workaround is no longer load-bearing. AC-4 RAW-verify: run the file in per-file-isolation mode >=20x (and interleaved with the sibling that shares its worker) with 0 failures, and confirm the full `bun test` suite stays green — attach run output. Prior-art: no existing backlog/ready/in_progress/review/qa row for vnstock-3statement (router-checked 2026-07-17). Follow the established DEFLAKE-* de-flake convention (cf. DEFLAKE-1187-POLLNEWS-DEAD-PATH).",
+        "evidence": [
+          "docs/signals/processed/ci-red-c2893251-20260717064818.json",
+          "docs/signals/processed/ci-red-00e3c4b1-20260717114821.json"
+        ],
+        "code_under_test": [
+          "apps/mcp-server/src/__tests__/vnstock-3statement.test.ts",
+          "apps/mcp-server/src/infrastructure/db/vnstockStore.js",
+          "apps/mcp-server/src/infrastructure/db/schema.js"
+        ],
+        "obs": [
+          {
+            "n": 1,
+            "tick": "0637Z",
+            "ci_run": "c2893251",
+            "run_id": 29559748162,
+            "head": "c28932513c491d5eb5765a2c4469c426eba9b81c",
+            "disposition": "1st-obs classified-flaky-not-escalated"
+          },
+          {
+            "n": 2,
+            "tick": "1137Z",
+            "ci_run": "00e3c4b1",
+            "run_id": 29576568819,
+            "head": "00e3c4b164709d1b1148676131f4aacaba84a46c",
+            "disposition": "2nd-obs ESCALATED-TO-PO"
+          },
+          {
+            "n": 3,
+            "tick": "0859Z",
+            "ci_run": "de0e0399",
+            "run_id": 31087179442,
+            "head": "de0e03995",
+            "disposition": "3rd-obs 2026-08-06 — co-failed with 167-prediction-market-job.test.ts (2 fail in one run)"
+          },
+          {
+            "n": 4,
+            "tick": "0944Z",
+            "ci_run": "f1fddde0",
+            "run_id": 31090381761,
+            "head": "f1fddde0d",
+            "disposition": "4th-obs 2026-08-06 — SOLE failing file. Preceding SHA 92ff5fb43 was FULLY GREEN and the intervening commit f1fddde0d is DOCS-ONLY (agent-father notebook+journal): a docs-only commit cannot deterministically break this test file. Strongest same-code-green-then-red evidence yet."
+          }
+        ],
+        "source": "recurring CI-flaky escalation (2+ obs) routed by dev-team-router; scoped PO triage 2026-07-17",
+        "created_at": "2026-07-17T11:54:54Z",
+        "created_by": "po-scoped-triage-20260717",
+        "baseline_pass": true,
+        "dedup_key": "ci_job:bun test|file:apps/mcp-server/src/__tests__/vnstock-3statement.test.ts",
+        "dedup_key_ci_relative": "ci_job:bun test|file:src/__tests__/vnstock-3statement.test.ts",
+        "updated_at": "2026-08-06T16:22:38Z",
+        "updated_by": "po (triage 2026-08-06T09:55:23Z — obs 3 + obs 4, priority low->P2)",
+        "promoted_at": "2026-08-06T16:22:38Z",
         "promoted_by": "dev-team (bounded-1 auto-pickup)",
         "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)"
       }
@@ -22331,9 +22306,52 @@
         }
       ]
     },
-    "last_triaged_at": "2026-08-06T15:58:02Z",
+    "last_triaged_at": "2026-08-06T16:22:38Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": []
+    "in_progress": [
+      {
+        "id": "FIX-RAG-EMBEDDER-IDLE-UNLOAD-PATH",
+        "type": "FIX",
+        "title": "rag-service embedder singleton has no unload path — container is pinned near its memory cap permanently after the first embed; add an idle-unload timer so the cap raise buys closure, not just time",
+        "status": "IN_PROGRESS",
+        "priority": "P1",
+        "size": "S",
+        "zone": "apps/rag-service/",
+        "next_agent": "developer",
+        "created_at": "2026-08-06T12:45:00Z",
+        "created_by": "po/rag-oom-ruling-20260806T1245 (actuates architect brief section 3 / S3, which was designed 2026-08-06T09:03Z but never given a row)",
+        "updated_at": "2026-08-06T16:22:44Z",
+        "updated_by": "po (triage 2026-08-06T14:38Z — dependency cleared, promotion made effective)",
+        "design_ref": "docs/architecture-briefs/2026-08-06-rag-service-memory-sizing-remediation.md section 3 (line 63) — 'Structural fix — Option (b): idle-unload path for the embedder singleton'. Design is DONE; this row is execution only, no re-design needed.",
+        "why_this_row_exists": "MINTED because the architect brief designed this fix and no board row carried it — the decision would otherwise have lived only inside architect_review_note on FU-RAG-DEPLOY-MEMORY, which is a note field, not a dispatchable unit. This is not FP churn re-raising the A-30 memory finding (feedback_auditor_mcpserver_a21_a30_memory_fp_reemit_churn): the memory finding is owned by FU-RAG-DEPLOY-MEMORY and stays there. This row owns a DIFFERENT and previously unowned thing — the absence of a release path in apps/rag-service/infrastructure/embedder.py (lines 37/51; grep for unload|.release(|del self._model|gc.collect|empty_cache finds nothing), which has been flagged three separate times on FU-RAG-DEPLOY-MEMORY's history and actioned zero times.",
+        "scope": "Idle-unload timer symmetric to the existing lazy-load. EMBEDDER_IDLE_UNLOAD_MINUTES env var (config, never a hardcode — feedback_no_hardcode_stats), default ~15. asyncio background task registered in build_lifespan; after N minutes with no embed call, unload the model and gc.collect(). Reload transparently on the next embed through the EXISTING double-check-lock path — do not add a second load path. Files per the brief: apps/rag-service/infrastructure/embedder.py, apps/rag-service/main.py (env plumbing if needed), plus direct test coverage showing an injected idle-unload flips state warm->cold without ever returning a 503.",
+        "depends_on": null,
+        "po_rationale": "The cap raise buys TIME, not CLOSURE, and the architect brief says so in its own words ('the cap raise alone buys time, not closure'). Two of the three consumers grow without bound: the corpus grows ~103 rows/h toward the ~56k-row scale RAG-FTS-BUILD-MEMORY-BOUND is time-gated on, while the model baseline is fixed AND unreleasable. A cap chosen to fit today loses the same argument again in weeks — that exact sentence is already on FU-RAG-DEPLOY-MEMORY at po_dataset_exceeds_cap_20260729T1140 and has now been proven right once, by the 08:17:28Z OOM kill. This row is what stops it being proven right a second time.",
+        "related": [
+          "FU-RAG-DEPLOY-MEMORY",
+          "FIX-RAG-COMPACTION-DISK-AMPLIFICATION",
+          "RAG-FTS-BUILD-MEMORY-BOUND",
+          "FIX-RAG-SERVICE-CLEAN-EXIT-RESTART-LOOP"
+        ],
+        "po_live_corroboration_20260806T1350Z": "SUPERSEDED AND WITHDRAWN by po_DEPENDENCY_STILL_UNSATISFIED_20260806T1355Z below. The withdrawn text claimed this row's blocking dependency was 'satisfied by a post-raise measurement'. There was no post-raise measurement — PO had the cap-raise timing wrong. Stub retained so the retracted claim is not inherited from a cached copy.",
+        "po_DEPENDENCY_STILL_UNSATISFIED_20260806T1355Z": {
+          "by": "po/triage-agentfather-20260806T1318Z",
+          "ruling": "This row's dependency on FU-RAG-DEPLOY-MEMORY ('sequence AFTER the 768m->1g cap raise lands') is NOT yet discharged. The compose edit was committed at 2026-08-06T13:00:35Z (2f835ec63) but it is UNVERIFIED whether the running container was ever recreated onto the new limit — see po_POSTRAISE_WARNS_UNRESOLVED_20260806T1355Z on FU-RAG-DEPLOY-MEMORY for the decisive `docker inspect` check and the two branches. Until that is answered, this row's own stated rationale holds verbatim: against a cap the service already saturates, an idle-unload's effect cannot be distinguished from noise.",
+          "why_this_row_may_become_the_canonical_owner": "If the check lands on branch B (container recreated near 13:00Z, back to ~97% of 1GiB by 13:36Z), the fixed baseline — not the ceiling — is the binding constraint, and this row becomes the primary remedy rather than a follow-up. FU-RAG-DEPLOY-MEMORY already names the same target: 'apps/rag-service/infrastructure/embedder.py:37/:51 has no unload path at all' (po_ESCALATION_first_confirmed_oomkill_20260806T0824).",
+          "observations_recorded_not_asserted_as_proof": "Three A-30 WARNs today (12:42Z pre-raise, 13:17Z and 13:36Z post-commit), the last at 97.06%. PO deliberately does NOT read these as confirming this row's prediction — the denominator behind 97.06% is undetermined, and the A-30 discriminator is on record erring in both directions on this exact container.",
+          "no_duplicate_minted": "PO nearly minted FIX-RAG-SERVICE-A30-SUSTAINED-MEM-FLOOR-96PCT for this symptom before the prior-art probe surfaced this cluster (FU-RAG-DEPLOY-MEMORY / FIX-RAG-SERVICE-CLEAN-EXIT-RESTART-LOOP / this row / FIX-RAG-COMPACTION-DISK-AMPLIFICATION). That row was withdrawn from the board before dispatch — do not re-mint it."
+        },
+        "po_DEPENDENCY_DEADLOCK_20260806T1420Z": "PO 2026-08-06T14:20Z — PROMOTED P2->P1 AND THE `depends` RATIONALE IS NOW SELF-DEFEATING. Read this before deferring the row again.\n\nThis row's dependency on FU-RAG-DEPLOY-MEMORY reads: 'sequence AFTER the 768m->1g cap raise lands. Rationale is measurement, not politeness: against a cap the service already saturates, an idle-unload's effect cannot be distinguished from the noise of a container living at 99.9%. Land the headroom first, then this change's before/after is readable.'\n\nTHE LITERAL PRECONDITION IS NOW MET AND THE RATIONALE IS STILL UNMET — and it can never be met by waiting. Measured today (see FU-RAG-DEPLOY-MEMORY po_BRANCH_RESOLVED_cap_is_live_20260806T1415Z): the cap raise deployed, the container was recreated ~13:00Z with RestartCount=0, and rag-service re-saturated the LARGER cap within ~17 minutes — 992.6 MiB of 1 GiB, 96-97% flat, 7.4 MiB free. Proof the cap is genuinely >768MiB is arithmetic, not a label: 992.6 MiB cannot fit under a 768 MiB cap.\n\nSo the deferral condition is 'wait until the service is not saturated', and the service saturates whatever it is given. Waiting produces the same state forever. THIS IS A DEADLOCK, not a sequencing plan — the row would sit at P2 behind a precondition that its own subject actively destroys.\n\nDISPOSITION: dispatch this row on its merits; do NOT wait for a quiet cap. The 'before/after unreadable' concern is real but is now an ARGUMENT FOR THIS ROW rather than against it — a workload whose resident set expands to fill any cap is the signature an idle-unload path is meant to address, and it is also why a second cap raise is the wrong move (recorded on FU-RAG-DEPLOY-MEMORY). If a clean measurement baseline is still wanted, the honest way to get one is to measure with the embedder idle-unload BUILT and toggled, not to wait for a headroom window that will not occur.\n`depends` left in place deliberately rather than deleted — FU-RAG-DEPLOY-MEMORY is in REVIEW/qa and should still close first for bookkeeping; what is retired is the RATIONALE for blocking on it, not the ordering itself.",
+        "po_occurrence_20260806T1434": "4 further A-30 rag-service fires folded (sys-20260806T131735-7924 96.32% no-GC-dip; sys-20260806T133606-3047 97.06%; sys-20260806T134549-728c mem_creep; sys-20260806T141322-01bc all samples >93%). All WARN, all the same condition, none a new defect. Consistent with this row's P1 promotion at 14:20Z, whose rationale stands unchanged: the container measured 992.6 MiB against the raised 1GiB cap, i.e. it re-saturated the LARGER cap within ~17 min of a clean start, so the 'wait until the service isn't saturated before measuring' deferral can never clear itself. Do NOT authorise a further cap raise on the strength of these four — they are the predicted consequence of the missing idle-unload path, not evidence the cap is too small.",
+        "po_dependency_clearance_20260806T1438": "depends_on CLEARED (was a prose blob naming FU-RAG-DEPLOY-MEMORY plus its rationale; that string is unresolvable as an id, so orch-validate Stage 1g reported it as a dangling ref every tick while the real target sits in review[] as FU-RAG-DEPLOY-MEMORY/REVIEW). TWO defects were stacked here and only one was fixed at 14:20Z. (1) The deferral PREMISE is refuted by measurement, which is why this row was promoted to P1 that tick: the rationale was 'land the 768m->1g cap raise first, because against a saturated cap an idle-unload before/after is unreadable' — the cap raise IS live and the container re-saturated the larger cap at 992.6 MiB within ~17 min of a clean start, so the deferral condition ('wait until the service is not saturated') is self-perpetuating and waiting can never clear it. (2) NOT fixed at 14:20Z, fixed now: the P1 promotion was left sitting behind the very depends_on it was meant to override, so the row was promoted but still not dispatchable — a textbook mint-does-not-equal-dispatchable follow-through gap on PO's own prior action. Sequencing intent is preserved as prose here rather than as a blocking edge; it is deliberately NOT re-encoded as a machine dependency because the measurement above voids it. SYSTEMIC NOTE for whoever picks this up: at least 4 other backlog rows (FIX-BCTC-CTG-BALANCE-SHEET-REFINE, FIX-VPS-SYSTEMD-STARTLIMIT-HARDENING, VERIFY-FIX-VPS-SSH-TRIGGER-FAIL-LOUD-REALDATA, FIX-RAG-COMPACTION-DISK-AMPLIFICATION) carry the same prose-in-depends_on shape and produce the same permanent Stage 1g dangling-ref noise — not fixed here to keep this tick scoped, logged for a follow-up sweep.",
+        "po_occurrence_20260806T1453": "Occurrences 5 and 6 folded (sys-20260806T143821-0c09 c62, sys-20260806T144250-77d3 c63 — dedup-skipped by system-auditor's own ledger, both the identical 96.69% reading). Brings today's A-30 rag-service total to 6. NOT FP and NOT acute — PO measured the container directly this tick rather than reading the badge: `docker stats` 990.2MiB/1GiB = 96.70% (independently reproducing the auditor's 96.69% to within rounding, so the denominator is sound here — cf. feedback_auditor_memory_pct_denominator_falsespike), and `docker inspect` shows status=running, health=healthy, RestartCount=0, ExitCode=0, OOMKilled=false, StartedAt=2026-08-06T12:57:42Z on memlimit=1073741824. So the service has held ~96.7% FLAT for ~1h56m across a clean start with zero restarts. That is the strongest confirmation yet of THIS ROW's thesis and not a reason to escalate: a resident set that expands to fill the cap and then sits there stably is the signature of a missing release path, not of an undersized cap. Do NOT authorise a third cap raise on the strength of occurrences 5-6. This row remains dispatchable (P1, depends_on cleared 14:37:49Z, next_agent=developer, zone=apps/rag-service/) and auto-eligible for BOUNDED-1 — deliberately NOT folded into this tick's BATCH so it is not double-dispatched against the auto-pickup loop; if it is still BACKLOG at the next PO tick, that inaction becomes the finding.",
+        "promoted_at": "2026-08-06T15:17:05Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
+        "claimed_at": "2026-08-06T16:22:43Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)"
+      }
+    ]
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
