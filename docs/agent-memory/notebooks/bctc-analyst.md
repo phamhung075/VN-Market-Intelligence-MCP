@@ -1,6 +1,6 @@
 # BCTC Analyst — Notebook
 
-**Last updated:** 2026-08-06T15:10:46Z | **Sprint:** BCTC-EXTRACT-QUALITY
+**Last updated:** 2026-08-06T18:10:06Z | **Sprint:** BCTC-EXTRACT-QUALITY
 
 ## c142 · 2026-08-05T18:06:18Z
 ### Analysis Cycle (18:06 UTC) — mode: routine — slot=bctc-analyst-slot-2, cycle_id 20260805-1800
@@ -30,3 +30,17 @@
 - Published-marker claimed (published:bctc-analyst-slot-1:2026-08-06T15:00:00Z, no peer collision) — WORK telegram sent. log_agent_work id=1755.
 - Session note: no Bash tool this session — notebook git-commit deferred to next Bash-capable process (c078-c142 precedent continues).
 - Carry-over to next slot (~18:00Z): PRIORITY 1 — confirm get_bctc_full recovery holds (re-test FPT/HPG/VCB) — 1 cycle isn't proof against flapping. DXG's data-absence now confirmed separate from the general outage — if still PENDING next cycle, consider a dedicated dev-team signal (4th+ consecutive touch). Q2-2026 mass-filing wave (30 tickers, PDFs on file since 08-01) still QUÁ HẠN calendar-side — watch for flip. HPG operating_profit=0: judgment call not to file a signal this cycle (treated as known-defect-adjacent) — revisit if it recurs with a plausible-looking value that could mask real manipulation.
+
+## c144 · 2026-08-06T18:10:06Z
+### Analysis Cycle (18:05–18:20 UTC) — mode: routine — slot=bctc-analyst-slot-2, cycle_id 20260806-1800
+- E2 guard: PASS (18:05Z via get_market_snapshot fetchedAt). Calendar unchanged: EIB/SHB/VCB ĐÃ NỘP (Q1-2026), none newly filed → MODE_RELEASE=false. get_bctc_full recovery HOLDS 2nd consecutive cycle (FPT/HPG/VCB all live, still stale last-known-good, VPS push 2026-08-04T08:34Z, SLA now ~65h breached).
+- **DXG persistent-absence now 4th+ consecutive cycle (c141-c144) — filed dedicated bctc-data-quality-anomaly signal to dev-team** (docs/signals/bctc-analyst-20260806T181200Z.json, severity MEDIUM, guard bctc-dataquality:DXG:persistent-absence claimed 8d TTL, no peer collision): Q1/Q2-2026 PDFs on file since 06-13/08-01, refine_status still PENDING, zero extraction progress — confirmed via list_stored_pdfs, distinct from general outage (recovered) and Q2 mass-backlog (expected-pending, landed 08-01).
+- ESC gate: ESC-1 unevaluable (no Bash, unchanged). ESC-2 FPT/HPG 0%, VCB 0.37% → FALSE. ESC-3 FPT/HPG quarters_returned=3/4 → DATA-COVERAGE-LIMITED, guards reconfirmed HELD (no re-emit); VCB 4/4, divergence 0.37<0.40 → FALSE. ESC-4 FPT 2.0% FALSE; HPG operating_profit=0 recurred 2nd cycle unchanged (still implausible not plausible-looking) → discarded again per c143 carry-over rule; VCB N/A (bank). ESC-5 FPT guard reconfirmed HELD (claim attempt claimed:false, holder=c143 session, expires ~2026-08-07T15:13Z, no re-emit); HPG/VCB report_id=null(PARTIAL)/DXG null(PENDING) → FALSE/skip.
+- KD 503 gap RESOLVED this cycle (real readings returned): FPT Bi(22) TRUNG TINH 38%; HPG Minh Di(36) BAT LOI 25% (low-conf, mild conflict vs FAIR); VCB Thai(11) THUAN LOI 100% — price flat today, now ALIGNED (2-cycle BAT LOI↔THUAN LOI oscillation not repeated); DXG Bi(22) TRUNG TINH 38% — no longer contradicting AVOID (was Quẻ 40 Giải THUAN LOI 63% in c143).
+- EY_SPREAD unchanged: FPT FAIR(+2.25pp), HPG FAIR(+2.04pp), VCB FAIR(+2.09pp), DXG AVOID(-3.5pp) — no bullish signal DXG. Legal: zero. Chain findings: 1 (system-auditor, stock_code=unknown) — no overlap → no fundamental_validation posted. Insider: none significant (4 tickers).
+- 8 evidence fragments recorded (ids 922-929): FPT roe_strong+report_overdue; HPG roe_ratio+report_overdue; VCB roe_strong; DXG roe_ratio+valuation_premium+report_overdue. 4 bctc_signal_*_20260806_routine.json emitted (FPT/HPG/VCB/DXG) with business-context fields.
+- REGIME=NEUTRAL fallback (macro_snapshot JSON shape, no REGIME field — persistent known gap). CARRY_REGIME=NEUTRAL(1.37pp). MAX_DEPOSIT_RATE=5%. VN-Index 1764.78(-0.66%). USD/VND 26,040. Gold $4,300.8 BULLISH. G-Bond SEED DATA only (unchanged). Investment Clock=Overheat(CPI5.46%) unchanged. Insider sentiment INSUFFICIENT_DATA unchanged.
+- Doc self-heal: fixed stage-analyze.md Step 4c — clarified `roe` field must be `get_sector_comparison`'s annualized ROE, not `get_bctc_full(code).roe` (raw quarterly, e.g. FPT 6.2% vs sector 28.3% — floors magnitude/misses "strong" threshold). Commit deferred (no Bash).
+- Published-marker claimed (published:bctc-analyst-slot-2:2026-08-06T18:00:00Z, no peer collision) — WORK telegram sent.
+- Session note: no Bash tool this session — notebook git-commit + doc-self-heal commit deferred to next Bash-capable process (c078-c143 precedent continues).
+- Carry-over to next slot (~21:00Z): PRIORITY 1 — watch for dev-team response to DXG data-quality signal (guard valid 8d). FPT ESC-5 guard expires ~2026-08-07T15:13Z — re-verify then, not before. HPG operating_profit=0 now 2 consecutive cycles unchanged — still discard, escalate if it ever returns a plausible non-zero value. VCB KD now aligned (not oscillating) — stop flagging unless it flips again.

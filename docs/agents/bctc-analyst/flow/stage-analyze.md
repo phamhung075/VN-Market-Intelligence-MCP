@@ -62,7 +62,7 @@ G-Bond regime check (Pillar 5.2):
 
 Per ROUTINE_TICKER:
 - `valuation_verdict` (Step 2 EY_SPREAD classify) `EXPENSIVE`/`AVOID` → `evidence_type="bctc_valuation_premium"`, `direction="bearish"`, `magnitude=clamp(abs(EY_SPREAD)/3, 0.3, 1.0)`, `confidence=0.6` (`CHEAP`/`FAIR` → skip; seeded type is bearish-only, do not force a mismatched direction)
-- `roe` (Step 2 `get_bctc_full(code).roe`) `> 15%` → `evidence_type="bctc_roe_strong"`; `0% < roe <= 15%` → `evidence_type="bctc_roe_ratio"`; both `direction="bullish"`, `magnitude=clamp(roe/25, 0.3, 1.0)`, `confidence=0.6` (`roe <= 0%` → skip; both seeded types are bullish-only)
+- `roe` — use `get_sector_comparison(code)`'s annualized ROE field, NOT `get_bctc_full(code).roe` (live-verified 2026-08-06: the latter is a raw single-quarter, non-annualized ratio — e.g. FPT Q1-2026 showed 6.2% vs sector-comparison's 28.3% — which floors nearly every ticker's `magnitude` at 0.3 and almost never crosses the 15% "strong" threshold the formula below assumes). `> 15%` → `evidence_type="bctc_roe_strong"`; `0% < roe <= 15%` → `evidence_type="bctc_roe_ratio"`; both `direction="bullish"`, `magnitude=clamp(roe/25, 0.3, 1.0)`, `confidence=0.6` (`roe <= 0%` → skip; both seeded types are bullish-only)
 - `get_legal_risk_signals()` (Step 3) flags any legal/regulatory risk → `evidence_type="bctc_regulatory_compliance"`, `direction="bearish"`, `magnitude=0.7`, `confidence=0.65`
 - overdue ticker per Step 1 (`get_earnings_calendar()` / `list_stored_pdfs()` missing-reports) → `evidence_type="bctc_report_overdue"`, `direction="bearish"`, `magnitude=0.5`, `confidence=0.55`
 
