@@ -25,3 +25,12 @@
 - `verification_gate: ci_green_on_subsequent_push` satisfied: run `31106283894` (headSha `1ff241d2ec1`, confirmed descendant of `d1bb1140f`, itself a descendant of red commit `a26653ff2`) job `bun test` = success.
 **why-decision:** APPROVED, DONE_VERIFIED. Underlying fix verifiably landed and correct on main; `commit_sha` field is a stale/orphaned worktree-hash citation — corrected in `status_note` to the real ancestor `d1bb1140f` rather than blocking on a citation-only defect (mirrors qa-S65/qa-S67 precedent, same cherry-pick mechanism).
 **why-change:** none — verified exactly what the row scoped; citation fix is additive to status_note.
+
+### STEP qa-S3 · qa · 2026-08-06T21:31:00Z
+**task-id:** FIX-CHEF-EVENING-L5-KINHDICH-SILENT-OMISSION
+**what-done:** Direct-commit verify. Landing commit `8cb767471` confirmed live on main (chef-dish.md:159-173,526-527,650 — AC1/2 wrap+union mechanism matches review_note). Re-derived the row's own `po_adjudication_20260731T2257` "AC REFINEMENT for qa" myself against disk: `docs/data/unified-agent-synthesis-2026-07-31-evening.json` `known_gaps[3]`+`layers_walked_summary` both carry an unscoped `[gap:L5_kinhdich_unavailable:...market_hexagram calc]` token while `conviction_calls[VIC]`/`[NVL]` cite live per-ticker Kinh Dịch content — same self-contradiction PO flagged, still unfixed (git log confirms zero chef.md/chef-dish.md commits since 07-31 touch Step 5 scope logic).
+**what-considered:**
+- Accept AC(1)-(3) literal text as satisfied (token present in both surfaces, real 503 window) → DONE_VERIFIED
+- Honor the embedded PO scope-refinement, independently reproduced against live JSON not trusted from prose → CHANGES_REQUESTED
+**why-decision:** Reproduced the contradiction myself (VIC/NVL rationale text vs the unscoped token) rather than trust either party's prose; an unconditional whole-layer token co-existing with proof 2/5 tickers succeeded is exactly the "green self-report ≠ evidence" trap AC(3) warns against — token-presence alone is not enough when its scope misrepresents what happened.
+**why-change:** CHANGES_REQUESTED not DONE_VERIFIED — review_note (07-28) predates PO's scope-refinement (07-31); dev never revisited Step 5 after it landed.
