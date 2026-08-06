@@ -14097,7 +14097,10 @@
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-DIGEST-RSI-DUAL-ENGINE-DIVERGE",
         "next_agent": "dev-team",
         "po_triage_20260722": "Owner assigned (was null next_agent) so no row is ownerless (PO AC1). Remains in REVIEW, deferred-behind the review-lane sweeper FIX-DEVTEAM-REVIEW-LANE-QA-DRAIN + FIX-BOUNDED1-SUPERVISED-LANE-NO-SWEEPER (both activated -> backlog this tick). Not silently dropped; the sweeper routes it to next_agent once built.",
-        "updated_at": "2026-07-22T15:14:41Z"
+        "updated_at": "2026-08-06T06:50:20Z",
+        "secondary_claimed_at": "2026-08-06T06:50:19Z",
+        "secondary_claimed_by": "dev-team (review-lane secondary-drain)",
+        "secondary_dispatch_target": "pm"
       },
       {
         "id": "FIX-MACRO-THRESHOLD-FXFLOOR-OVERCLAMP",
@@ -14109,7 +14112,10 @@
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-MACRO-THRESHOLD-FXFLOOR-OVERCLAMP",
         "next_agent": "dev-team",
         "po_triage_20260722": "Owner assigned (was null next_agent) so no row is ownerless (PO AC1). Remains in REVIEW, deferred-behind the review-lane sweeper FIX-DEVTEAM-REVIEW-LANE-QA-DRAIN + FIX-BOUNDED1-SUPERVISED-LANE-NO-SWEEPER (both activated -> backlog this tick). Not silently dropped; the sweeper routes it to next_agent once built.",
-        "updated_at": "2026-07-22T15:14:41Z"
+        "updated_at": "2026-08-06T06:51:12Z",
+        "secondary_claimed_at": "2026-08-06T06:51:11Z",
+        "secondary_claimed_by": "dev-team (review-lane secondary-drain)",
+        "secondary_dispatch_target": "po"
       },
       {
         "id": "FIX-FOREIGN-FLOW-BULLETIN-UNAVAIL-STRING",
