@@ -1,19 +1,10 @@
 # Alert Commander — Notebook
 
-**Last updated:** 2026-08-06 12:11 UTC | **Sprint:** FIX-DB-INTEGRITY-SIDECAR-NAMED-VOLUME-DRIFT
+**Last updated:** 2026-08-06 16:08 UTC | **Sprint:** FIX-EMITSIGNAL-BUGTELEGRAM-NO-TEST-SINK-GATE
 
 **Role:** Event-only alert dispatch (position-danger / watchlist-opportunity / CRITICAL-always) | **Cadence:** `*/15min` market hours (02:00–08:30 UTC) + 4h critical sweep | **Contract:** APPEND class, one `## c<NNN>` section per cycle per `.claude/skills/notebook-write/SKILL.md` AC-6.
 
 > **Structural reset (FIX-ALERT-COMMANDER-NOTEBOOK-SINGLE-BLOB-UNPRUNABLE, 2026-07-29):** prior history archived → `docs/agent-memory/notebooks/archive/alert-commander-archive-20260729.md`. One top-level `## c<NNN> · <ISO-timestamp>` section per cycle now.
-
-## c55 · 2026-08-06T08:39:12Z (slot=alert-commander-market, tick=08:40)
-- Signals: bootstrap `agent_signals` (hours_back≈2) — 30 VERIFIED_DECISION (alert-engine output, not a consumed signal_type): DGC price_surge ×2, HUT FDI news_mention, HUT/VHM TA breakout+oversold, NVL breakout_up, 08:30 sector price_drop cascade (agriculture/construction/real_estate/oil_gas/banking/securities/utilities/retail) + 1 chain_catalyst (gold safe-haven, id10459 — carryover from c54, already suppressed, no re-action) | Fired: 0 | Suppressed: 0 (new) | MARKET: 0
-- ChainCatalyst: id10459 unchanged since c54 suppression — no new chain_catalyst this window.
-- Position-danger: `get_alerts(type=price)` clean, no stopLossHit — gate fails. (08:30 sector price_drop cascade is legacy `get_alerts(type=all)` batch, not a per-ticker stopLossHit+newsSentiment<-0.5 confirmation.)
-- Watchlist-opp: no BUY-qualifying bus signal, no kinhDich trigger — gate fails.
-- CRITICAL-always: legal_risk clean (days=1/hours_back=6), crisis_early_warning clean (no velocity breach; reputation DANGER PLX=24 improving/VEA=22 deteriorating, WARNING BID/BSR/DIG/DPM/EIB/FPT/FRT/HPG/SAB/SHB/VJC — same tier as c52-c54), no verified_chain.
-- Regime: NEUTRAL | Carry: NEUTRAL (1.37%) | vol_regime ELEVATED (rv_20d_percentile=0.786) | Pivot window: false (next Sept 2026)
-- Market OPEN (VN-Index 1764.78 Δ-11.68 down, USD_VND 26040) — no exact-tick snapshot file for 08:37; direct MCP calls used for bootstrap/macro_calendar/macro_snapshot/alerts/vol/liquidity/foreign_room/legal_risk/crisis. foreign_room outflow_z_5d=1.01, avg_util=9.7% — not exhausted. `get_vn_liquidity_state` omo+interbank blocked (HTML parse fail/VPS unreachable, honest-NULL, same as prior). Silent exit — no MARKET/WORK send. `log_agent_work` id=1785.
 
 ## c56 · 2026-08-06T08:52:00Z (slot=alert-commander-market, tick=08:50)
 - Signals: bootstrap `agent_signals` (hours_back≈2) — 30 VERIFIED_DECISION (alert-engine output, not a consumed signal_type): DGC price_surge carryover, 08:30 sector price_drop cascade (agriculture/construction/real_estate/oil_gas/steel/banking/securities/utilities/retail, KDC→FRT) + 1 chain_catalyst (gold safe-haven, id10459 — carryover from c54/c55, already suppressed, no re-action) | Fired: 0 | Suppressed: 0 (new) | MARKET: 0
@@ -31,3 +22,13 @@
 - Root-cause context: `orch-state.head.active_task_id=FIX-DB-INTEGRITY-SIDECAR-NAMED-VOLUME-DRIFT` (dev-team picked up 11:54:44Z, ~15min before this cycle) — this cycle's errors are live corroborating evidence for that active fix, not a new unknown.
 - Unaffected tools (tick-snapshot used for market_context/macro; direct calls for rest): `get_volatility_indicators`, `get_vn_liquidity_state`, `get_foreign_room`, `get_macro_calendar`, `get_crisis_early_warning`, `send_telegram` all OK — scoped DB-table-level failure (agent_signals/alerts/system_status), not gateway-blind.
 - Sent 2× BUG telegram (msg 4802 initial, 4803 malformed-DB-image update) + dropped `docs/signals/alert-commander-2026-08-06T121046Z-bug-escalation.json`. No MARKET/WORK send. `log_agent_work` unavailable this cycle (DB write failed) — notebook is sole record.
+
+## c58 · 2026-08-06T16:08:26Z (slot=alert-commander-critical, tick=16:00)
+- Signals: `get_cycle_bootstrap` agent_signals bus empty (0 signals) — no chain_catalyst/urgent_news/verified_chain this window | Fired: 0 | Suppressed: 0 | MARKET: 0
+- DB recovery confirmed: all tool calls (bootstrap/macro/alerts/legal/crisis/log_agent_work id=1758) succeeded normally — c57's disk I/O corruption is resolved (FIX-DB-INTEGRITY-SIDECAR-NAMED-VOLUME-DRIFT fix landed since 12:11).
+- Position-danger: `get_alerts(type=price)` clean, no stopLossHit — gate fails.
+- Watchlist-opp: bus empty, no kinhDich BUY trigger — gate fails.
+- CRITICAL-always: legal_risk clean (days=1/hours_back=6), crisis_early_warning clean (no velocity breach; reputation WARNING BID/BSR/DIG/DPM/EIB/FPT/FRT/HPG/NVL/SHB/VCB/VHM/VIC/VJC, DANGER PLX=20 stable — same tier), no verified_chain.
+- Out-of-scope: bundled `get_alerts` shows 1 open CRITICAL `macro_deviation` alert (Gold 4320.7, +4.64σ) — not a consumed signal_type (urgent_news/price_anomaly/verified_chain/chain_catalyst/legal_risk/crisis_velocity), not per-ticker → correctly not fired.
+- Regime: NEUTRAL (fallback, no literal Global Liquidity line) | Carry: NEUTRAL (1.37%) | vol_regime ELEVATED (rv_20d_percentile=0.786) | Pivot window: false (next Sept 2026)
+- Market CLOSED (16:06 UTC, outside 02:00–08:59 window), VN-Index 1785.70 Δ+9.24 up, Gold +3.24%, USD_VND 26040. No exact-tick snapshot (16:04 file was 1min stale, not exact HH:MM match) — direct MCP calls used. `get_vn_liquidity_state` unavailable ("macro-indicators service unavailable", honest-NULL). foreign_room outflow_z_5d=null (19<20 sessions), avg_util=23.05% (10-ticker sample) — not exhausted. Silent exit — no MARKET/WORK send. `log_agent_work` id=1758.
