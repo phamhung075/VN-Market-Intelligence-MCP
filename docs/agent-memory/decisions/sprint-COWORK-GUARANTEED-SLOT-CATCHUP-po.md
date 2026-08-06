@@ -623,3 +623,14 @@
 **why-change:** no change from plan.
 
 ### CAP-REACHED · 2026-07-30T04:57:52Z
+
+### STEP po-S63 · po · 2026-08-06T22:20:56Z
+**task-id:** FIX-CRON-REGISTRATION-PREFIX-NOT-EXCLUDED-ORPHANEMIT-AND-D4-R1B
+**what-done:** Ratified Lane 2 of the cron-rearm brief APPROVED-WITH-SCOPE-WIDENING; minted the board row at `next_agent=pm` carrying an explicit Lane-1-blocking sequencing note.
+**what-considered:**
+- Approve the brief's 1-line `coordinationStore.ts` change exactly as specified
+- Approve but widen to the second `cron:`-keyed consumer the sweep found (`tasksMdJanitorJob.ts`)
+- Reject the code change entirely and rename the marker `cron:registration:<family>` so both existing filters catch it free
+- Bundle the 4-predicate exclusion list into a named constant while in there
+**why-decision:** Sweeping `apps/*/src` for the `cron:` prefix returned exactly TWO sites, not one — `coordinationStore.ts:521` (brief-identified) and `tasksMdJanitorJob.ts:198`, the compiled executor of audit dimension D4, whose `KNOWN_LEGIT_PREFIXES` + `kind:"sprint-task"` scan would flag every dead-session marker as held-lock-with-no-board-row daily. Shipping AC-1 alone would close one FP source and open another. The rename alternative was cheapest (zero code, zero rebuild, dissolves the sequencing constraint) but buys correctness by accident: `cron:<flow>:<tick>` is documented as a 600s per-tick election marker and this is an 8-day registration marker — opposite lifecycle in one namespace, invisible at both enforcement points, silently lost if either predicate is narrowed.
+**why-change:** Brief §5 asked only for a go/no-go on its single line. The blast-radius sweep it invited is what surfaced site 2, so the row ships both. Constant-extraction refactor deliberately excluded — bundling it with a functional fix on always-hot infra is the exact QA-attribution risk §5 flagged.
