@@ -682,3 +682,15 @@
 **Mitigation:** No immediate action beyond signal routing.
 
 ---
+
+## Anomaly: A-30 · rag-service memory floor breach (98.20%, 18.4MiB-free)
+**Severity:** WARN | **Date:** 2026-08-06 | **Status:** OPEN
+**Location:** rag-service
+**Details:** Memory pressure at 98.20% with only 18.4MiB free, below floor threshold of 40MiB
+**Impact:** High memory pressure may trigger OOM events or service degradation
+**Root cause:** RAG service memory growth / insufficient allocation
+**Zone owner:** dev-mcp-server
+**Last reported:** 2026-08-06T21:10:19Z (signal sys-20260806T211009-070b, system-auditor -> po, dedup_key=mem_pressure:rag-service:A-30-floor-breach, WARN Telegram sent)
+**Mitigation:** No immediate action beyond signal routing.
+
+---
