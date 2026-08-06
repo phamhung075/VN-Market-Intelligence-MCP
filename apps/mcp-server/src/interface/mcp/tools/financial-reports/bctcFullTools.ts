@@ -20,6 +20,7 @@ import { z } from "zod";
 import { Database } from "bun:sqlite";
 
 import { getDb } from "../../../../infrastructure/db/schema.js";
+import { getDemandQueueDepth } from "../../../../infrastructure/db/vpsPushLogStore.js";
 import { computePeriodDelta } from "../../../../domain/services/financial-reports/periodDeltaComputer.js";
 import { computeSentimentTrend } from "../../../../domain/services/sentimentTrend.js";
 import { logger } from "../../../../infrastructure/logger.js";
@@ -1018,7 +1019,21 @@ export function registerBctcFullTools(
 
         if (!latestRow) {
           // FR-DEGRADE-01 FIX: when no data found, signal stale/unavailable with reason.
-          if (bctcVpsStaleSince !== null) {
+          //
+          // FIX-BCTC-SERVING-GATE-VPSSTALE-IGNORES-DEMAND-QUEUE-DEPTH: bctc is a
+          // demand-driven route (see infrastructure/db/vpsDemandQueue.ts) — it
+          // only pushes when its own queue holds actionable work, so a large
+          // last-push age is normal-by-design whenever that queue is drained.
+          // Mirror the health-plane's idle-no-work inference (formatHealth() in
+          // system/vpsProxyHealthFormat.ts, wired via getDemandQueueDepth()):
+          // push-age is only evidence of a proxy fault when the queue actually
+          // holds actionable rows that aren't being pushed. depth === null (not
+          // a demand-driven route, or the queue table is absent) fails OPEN to
+          // the pre-fix behavior below — never fabricate a verdict from a
+          // missing table.
+          const bctcDemandQueueDepth = getDemandQueueDepth(db, "bctc");
+          const bctcQueueIdleNoWork = bctcDemandQueueDepth === 0;
+          if (bctcVpsStaleSince !== null && !bctcQueueIdleNoWork) {
             return {
               content: [
                 {
