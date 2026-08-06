@@ -16,3 +16,24 @@
 - `git show --stat` confirms 2/4 claimed files touched; other 2 (preflight.sh, SKILL.md) correctly untouched — grep-confirmed no other `TERMINAL_SIGNAL_STATUSES` call site, SKILL.md's 24h already correct pre-fix (HSC-7 2026-06-26).
 **why-decision:** APPROVED, DONE_VERIFIED. PO hold independently verified satisfied against live main HEAD (not trusted from either row's prose); full regression suite + live dry-run both green.
 **why-change:** none — verdict matches scope. Flagged (not fixed, out of scope) for next reviewer: sibling child row itself still sits `status=REVIEW`/`next_agent=qa` on the board — separate task-id, board bookkeeping only, its code is already live and re-verified working here.
+
+### STEP qa-S2 · qa · 2026-08-07T00:00:00Z
+**task-id:** TASK_601
+**what-done:** Reviewed `951ddfdba` (already on main, no branch) — coordinationStore.ts gcExpiredLocks Phase-1 SELECT gains `AND task_id NOT LIKE 'cron-registration:%'`.
+**what-considered:**
+- Read Phase-2 DELETE (lines 590-601) directly: no task_id filter at all — deletes ALL expired rows unconditionally, so an expired cron-registration:* row still GCs, just silently. No AC-3a test exists yet (correctly deferred to TASK_603 per handoff scope).
+- Both doc comments (ORPHAN_EMIT_ALLOW_LIST block ~449-458, inline Phase-1 ~512-517) updated with matching rationale to cron:*/dev-team-cron-singleton.
+- `git show --stat`: 1 file, 11 insertions only — no unrelated changes. tsc clean (0 errors), mock-guard PASS, DDD/secret greps clean. Independently re-ran claimed scoped tests (FU-LOCKSTORE-EXPIRED-GC + task-lock-coordination-store): 54 pass/0 fail/163 expect(), matches handoff exactly.
+**why-decision:** APPROVED, DONE_VERIFIED. AC-1 holds under direct code read + independent re-run, not trusted from handoff prose.
+**why-change:** none — verified exactly what the row scoped.
+
+### STEP qa-S3 · qa · 2026-08-07T00:00:00Z
+**task-id:** TASK_602
+**what-done:** Reviewed `86b31eccd`+`a5fa7bf7c` (already on main) — tasksMdJanitorJob.ts KNOWN_LEGIT_PREFIXES += "cron-registration:"; FIX-D4-HELD-LOCK-NO-BOARD-ROW-RECONCILE.test.ts +4 assertions.
+**what-considered:**
+- Read `isKnownLegitPattern`: `-singleton` suffix branch is a separate `endsWith` check (line 209); "cron-registration:" landed in KNOWN_LEGIT_PREFIXES (the `startsWith` prefix array, line 199) — correct branch confirmed by reading, not trusting prose.
+- Did NOT trust the stash-claim in prose: independently reverted just the one array line (scoped edit, not full `git stash` — repo has unrelated dirty files), ran the test file myself → reproduced 27 pass/3 fail RED exactly; restored, re-ran → 30 pass/0 fail GREEN exactly. Also confirmed `"cron:"` alone does NOT match `cron-registration:*` (5th byte differs) so the 3 positive assertions are genuinely load-bearing, not coincidentally already-true.
+- `git show --stat` on both commits: only the 2 claimed files (+ orch-state/handoff bookkeeping in a5fa). tsc clean, mock-guard PASS.
+- Hard constraint: grepped both commits' `--name-only` — no touch to `docs/agents/system-auditor/handlers.md` or `audit-dimensions.md` (agent-father's zone); confirmed via `git log -1` those files' last touch predates this row.
+**why-decision:** APPROVED, DONE_VERIFIED. AC-2 (prefix branch) + AC-3b (non-vacuous, empirically reproduced RED/GREEN myself) hold.
+**why-change:** none — verified exactly what the row scoped.
