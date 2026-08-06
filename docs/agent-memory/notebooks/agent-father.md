@@ -1,5 +1,34 @@
 # Agent Father — Notebook
 
+## Fix (router-direct dispatch, P1) 2026-08-06T18:50Z FIX-CRON-DST-LOCAL-EVAL-MOMENT-ANCHORED-EXPRESSIONS
+- CronCreate evaluates `cron:` machine-local (Europe/Paris), not UTC — 5 moment-anchored
+  expressions (db-data-integrity Job A/B, system-auditor Tier-3, orch-sentinel FULL/LITE)
+  authored as-if-UTC fired 2h off. Fixed all 5 to the dual-CEST/CET + changeover-note
+  convention already proven in `cron-claude-manager-helper.md`/`cron-auditor-page-
+  reverify.md` — copied the pattern, did not invent a new one (AC-5). AC-1 (db-data-
+  integrity Job A, live-impact) done first: was silently missing the 15:00-17:00 ICT
+  settlement window CADRAT-2 shipped 2 days ago to cover.
+- **AC-6 caught a real actuator gap:** the re-arm skills' idempotency-guard literals
+  (`SKILL.md`) are a SEPARATE artifact from the actual `CronCreate` call
+  (`register.md`/`register-job-*.md`) — fixing only the guard would have made Step 1
+  correctly report "missing" post-fix, then Step 2 would re-arm the OLD stale literal
+  straight out of `register.md`, silently reverting the whole fix on next session
+  restart. Updated both layers for db-data-integrity (cron-standalone-team) and
+  system-auditor Tier-3 (cron-detect-loop); orch-sentinel isn't armed by any skill yet
+  (confirmed by grep), so no register-side fix needed there.
+- Also corrected `docs/agents/system-auditor/flow/main.md`'s Step 0d Tier-3 comment,
+  which mislabeled the armed cron as a bare `0 2 * * *` UTC literal (it never was —
+  that's the exact defect), and closed the adjacent Tier-5 comment's stale "not fixed
+  here, out of scope" cross-reference now that Tier-3 is fixed in the same commit.
+  Deliberately left `cron-auditor-page-reverify.md`'s own historical narrative
+  untouched — it's the proven-convention reference file, not an edit target.
+- Grep-verified zero remaining live-actuator hits of any of the 5 old literals across
+  `.claude/` (only explanatory prose about the historical defect remains). AC-7
+  (migrate to the UTC-native JS matcher, like `cowork-match-slots.js` already does)
+  explicitly NOT done — recorded as a future improvement, not smuggled into this pass.
+  Commit `36e109170`. Full rationale: `sprint-COWORK-GUARANTEED-SLOT-CATCHUP-
+  agent-father.md` STEP S25.
+
 ## Fix (router-direct dispatch, P0) 2026-08-06T15:19Z FIX-REFINE-SUBFLOW-OPTIONC-CONTRACT-DRIFT
 - **Root cause confirmed exactly as PO's escalation stated:** `refine_bctc_md/flow/main.md:94`
   called `execute_sub_flow_logic(window)` — zero definitions repo-wide — while all 4 sub-flow

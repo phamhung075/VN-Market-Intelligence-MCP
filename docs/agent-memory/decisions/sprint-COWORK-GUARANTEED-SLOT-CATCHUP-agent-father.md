@@ -511,3 +511,22 @@ applied to an already-complete task, not one with a genuinely open AC.
 — nothing new to add beyond this journal + the commit itself); returning
 PIPELINE: blocked-pending-live-verification to router/PO with the exact
 re-check for AC-7 instead of guessing DONE.
+
+### STEP agent-father-S25 · agent-father · 2026-08-06T18:50:00Z
+**task-id:** FIX-CRON-DST-LOCAL-EVAL-MOMENT-ANCHORED-EXPRESSIONS
+**what-done:** Shipped AC-1..AC-6 (`36e109170`): 5 moment-anchored cron
+literals corrected to CEST/CET dual form (db-data-integrity Job A/B,
+system-auditor Tier-3, orch-sentinel FULL/LITE) + both re-arm skills'
+idempotency guards AND their actual CronCreate actuators (register.md /
+register-job-*.md), grep-verified zero remaining stale literals.
+**what-considered:**
+- fix SKILL.md guard literals only vs also the register.md/register-job
+  actuators — chose both, since the guard alone would falsely report
+  "missing" post-fix and Step 2 would re-arm the OLD literal from register.md
+- edit cron-auditor-page-reverify.md's stale "not fixed here" cross-ref too
+  vs leave it — left it (reference/precedent file, task said copy not edit)
+**why-decision:** AC-6 explicitly warns a skill re-arming the stale
+expression silently reverts the fix on next restart — register.md/
+register-job files are the actual CronCreate call, not just the guard.
+**why-change:** AC-7 (UTC-native JS matcher migration) explicitly NOT done,
+recorded as future improvement per task instruction — no change from plan.
