@@ -88,12 +88,11 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "FIX-MARKETWATCHER-EODMD-STALE-NOBASH-CAVEAT-SKIPS-COMMIT-LOSES-NOTEBOOK",
-    "next_agent": "developer",
-    "next_action": "BOUNDED-1 auto-pickup claim of FIX-MARKETWATCHER-EODMD-STALE-NOBASH-CAVEAT-SKIPS-COMMIT-LOSES-NOTEBOOK — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
-    "updated_at": "2026-08-06T13:23:27Z",
-    "updated_by": "dev-team (bounded-1 auto-pickup)"
+    "status": "idle",
+    "active_task_id": null,
+    "next_agent": "router",
+    "updated_at": "2026-08-06T13:37:53Z",
+    "updated_by": "orch-apply (Stage 1.5 auto-stamp — caller omitted updated_by)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -2846,6 +2845,19 @@
         "status": "NEW",
         "payload_ref": null,
         "evidence": "Spawned this tick for probe verdict=FAILURE (rag-service mem-creep). Agent returned a well-reasoned prose report (DEGRADED, dedup-skip decision correct, launchd path root-caused correctly) but RAW-verified zero persisted writes: docs/agent-memory/notebooks/system-auditor.md still shows only cycle c56 (claimed c57 absent, committed and working-tree both), no new docs/data/orch/orch-state.json .signal_queue row exists (claimed id sys-20260806T130000-xxxx was a template placeholder, never resolved/committed), git status clean on both files. Same shape as the 2 prior 2026-08-06 occurrences already on record (system-auditor c54 tick ~09:52Z, refine_bctc_md VHM_2026_Q1) — not re-escalating as a new board row, just adding corroborating evidence to the existing po-owned decision (stronger execute-not-narrate directive vs structural self-check checkpoint). No operational gap this instance: the underlying rag-service A-30 finding was independently RAW-reverified by dev-team as correctly dedup-skip-eligible (already tracked by FU-RAG-DEPLOY-MEMORY + related rows, last real fire sys-20260806T124200-5a4b already PO-triaged 12:45Z)."
+      },
+      {
+        "id": "sys-20260806T133606-3047",
+        "ts": "2026-08-06T13:36:06Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "microservice_degraded",
+        "summary": "rag-service A-30 WARN: memory at 97.06% — no reclamation dip detected",
+        "severity": "WARN",
+        "status": "NEW",
+        "payload_ref": null,
+        "provenance": "detector",
+        "audit_cycle_tag": "cron:auditor-t1:2026-08-06T13:30Z"
       }
     ],
     "last_triaged_at": "2026-07-29T06:25:00Z",
@@ -22418,6 +22430,33 @@
         "claimed_by": "dev-team (bounded-1 auto-pickup)",
         "updated_by": "developer",
         "review_note": "Implementation Record: AC-1 rebound C-08 alerts window 24h->2h (alertStore.ts:223 co-write TTL literal), kept active (not retired) — D-NEW2 only covers inverse FK direction. AC-2 wrapped both sides datetime(), copied checkStaleAlerts.ts:19-30 pattern verbatim. AC-3 fleet-measured every C-xx datetime('now',...) check live against data/live/{market,pdf_extractor}.db: fixed C-04/C-07/C-08/C-10/C-11 (T-format confirmed), left C-06/C-09/C-16 unwrapped (0% T-format measured, no mixed-writer exposure). AC-4 new doc-driven regression test FIX-AUDITOR-C08-UNSATISFIABLE-TTL-WINDOW-AND-ISO8601-STRCMP.test.ts (5/5 pass, 9 expect) — reads live SQL out of flow doc via regex (not hardcoded copy), T1 source-contract/T2 satisfiability/T3 strcmp-bypass-exclusion-with-contrast/T4-T5 detection-preserved. AC-5 retracted both fabricated DASHBOARD.md C-08 entries (wrong table name + unmeasured root causes, now DISCONFIRMED with real GC-timing explanation) — landed via peer-commit sweep (system-auditor routine append, commit 28d4512aa), content verified present on HEAD. AC-6 confirmed in writing (flow doc + checkOrphanAgentSignalsAlertId.ts doc-comment): D-NEW2 covers inverse direction only, does not catch a writer bypassing the co-write entirely — C-08 fixed not retired preserves both directions. Verify: bun tsc --noEmit clean; bun test (naive single-process) 15130/15225 pass with 55 fails all pre-existing test-isolation cross-contamination (none touch alertStore/agentSignalStore/audit-checks — confirmed via isolated single-file rerun, 5/5 pass); scripts/ci-per-file-isolation.sh (CI-matching runner) 15021 pass/40 skip/8 fail across 6 files, all pre-existing documented rotating-flake class (SPIKE_CI-PERFILE-ISOLATION-FLAKE.md, news-poll/circuit-breaker/bootstrap — zero overlap with this task files). Commit 8f6f30f41. Simplicity gate: PASS (Q1 no excess scope, Q2 doc-driven-extraction helpers each multi-called not single-use, Q3 no over-abstraction, Q4 test file overhead is documentation comments matching repo FIX-* convention)."
+      },
+      {
+        "id": "FIX-MARKETWATCHER-EODMD-STALE-NOBASH-CAVEAT-SKIPS-COMMIT-LOSES-NOTEBOOK",
+        "type": "FIX",
+        "title": "eod.md:78 still carries the pre-2026-07-31 no-Bash caveat that cycle.md already fixed -- market-watcher-eod skips its notebook commit every fire, loses the EOD cycle entry to the next same-agent overwrite, and strands news-scouts L-7-deferred commit",
+        "desc": "VERIFIED live 2026-08-05T16:00Z EOD fire (agent a0df2bd1afc971ce7). Chain: (1) .claude/agents/market-watcher.md granted Bash 2026-07-31 commit 610110e16b. (2) cycle.md carried an identical no-Bash transport-gap caveat and was fixed 2026-08-01 (FIX-COWORK-FLOWDOC-STALE-TRANSPORT-GAP-CAVEAT, see cycle.md own header comment) -- caveat demoted to a genuine invocation-error fallback only. (3) eod.md:78 was never touched by that fix -- still reads verbatim this agent holds no Bash and cannot run git add/git_commit_retry directly ... SKIP this step entirely. (4) Todays EOD fire followed eod.md literally: wrote all 4 ledger entries (analysis-briefs DGC/DPM/DBC/VNM) + docs/signals/price_anomaly_20260805T1605.json correctly (Steps A/B unaffected per the docs own text) but skipped Step D (notebook write/commit), citing the docs own stale line as its reason -- not a fabrication, a propagated stale doc. (5) DISPROOF same day, same batch: market-watcher-offhours fired 2 min later (a1f7356854a55a25f) and committed cleanly with Bash (09beb0997) -- direct proof the grant is live and eod.md is simply wrong. (6) Net effect: market-watcher.md notebook has NO Cycle (EOD) section anywhere post-16:06Z -- the EOD narrative was never durably captured, either never written or clobbered when the offhours slot did its own full-overwrite write+commit right after. (7) news-scout.md c233 entry was left dangling uncommitted -- its own flow (docs/agents/news-scout/flow/stage-log-notify.md:14, L-7) explicitly defers its git commit to market-watchers EOD batch commit at market close; that EOD-side half of the contract never fires while eod.md:78 stands. Router committed the stranded news-scout.md manually this cycle as a workaround; the underlying skip will repeat every weekday 16:00 UTC fire until eod.md is fixed.",
+        "ac": "1. Update docs/agents/market-watcher/flow/eod.md:78 to match cycle.mds already-fixed prose (Bash grant live since 2026-07-31 commit 610110e16b -- demote to a genuine invocation-error fallback, not an unconditional skip). 2. Separately decide and fix the lost-update exposure: the per-cycle full-overwrite notebook model has no protection when EOD and a same-agent sibling slot (e.g. offhours) both match in the same cowork-tick batch and fire minutes apart -- either preserve/merge the EOD section across the next overwrite, or serialize same-agent multi-slot fires so one cannot clobber the others uncommitted work. 3. Confirm news-scouts L-7 dependency (stage-log-notify.md:14) resumes working end-to-end on the next weekday EOD fire (its notebook commits without router intervention).",
+        "priority": "P1",
+        "size": "S",
+        "zone": "cross-service/",
+        "next_agent": "qa",
+        "status": "REVIEW",
+        "created_at": "2026-08-05T16:10:00Z",
+        "created_by": "router",
+        "updated_at": "2026-08-06T13:37:53Z",
+        "updated_by": "router (RAW-verify closeout — developer completed+committed real work, decision journal STEP developer-S65 written, but self-report never performed the CANONICAL:SSOT-STATUSFLIP-LANEMOVE lane-move; closing out in-line per established convention)",
+        "related": [
+          "FIX-COWORK-BATCH-COVERAGESTATE-CONTENTION-CORRELATES-WITH-MISSED-NOTEBOOK-COMMIT"
+        ],
+        "not_duplicate_of": "FIX-COWORK-BATCH-COVERAGESTATE-CONTENTION-CORRELATES-WITH-MISSED-NOTEBOOK-COMMIT -- that row is a contention HYPOTHESIS on coverage-state:main mutex; this row is a DIRECTLY VERIFIED stale-doc root cause, distinct mechanism, same symptom family.",
+        "promoted_at": "2026-08-06T12:27:24Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
+        "claimed_at": "2026-08-06T13:23:26Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "commit_sha": "a71cc0df1",
+        "review_note": "RAW-verified developer completion for a71cc0df1: commit confirmed ancestor of HEAD, diff read in full — eod.md:78 caveat replaced with cycle.mds already-fixed genuine-invocation-error prose (verbatim mirror, not invented); market-watcher-notebook:main task_claim mutex added to BOTH eod.md Step D and a new explicit offhours self-commit block in cycle.md, correctly closing the same-16:00Z-tick clobber race (AC-2); AC-3 confirmed as a real no-op — news-scout git add line was already present, L-7 resumes automatically. cycle.md size-justification header updated 309L->332L, exact match to new line count. Decision journal entry (sprint-COWORK-GUARANTEED-SLOT-CATCHUP-developer-3.md STEP developer-S65) present and substantive (what-considered includes 2 rejected alternatives with reasons, why-decision, why-change, verify). mock-guard.sh PASS noted (doc-only). Board lane-move + head-sync had been skipped by the agent itself -- performed here by the RAW-verifying router session, consistent with prior sessions self-closeout convention for this exact gap shape."
       }
     ],
     "qa": [
@@ -22467,33 +22506,7 @@
     },
     "last_triaged_at": "2026-08-06T13:23:21Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": [
-      {
-        "id": "FIX-MARKETWATCHER-EODMD-STALE-NOBASH-CAVEAT-SKIPS-COMMIT-LOSES-NOTEBOOK",
-        "type": "FIX",
-        "title": "eod.md:78 still carries the pre-2026-07-31 no-Bash caveat that cycle.md already fixed -- market-watcher-eod skips its notebook commit every fire, loses the EOD cycle entry to the next same-agent overwrite, and strands news-scouts L-7-deferred commit",
-        "desc": "VERIFIED live 2026-08-05T16:00Z EOD fire (agent a0df2bd1afc971ce7). Chain: (1) .claude/agents/market-watcher.md granted Bash 2026-07-31 commit 610110e16b. (2) cycle.md carried an identical no-Bash transport-gap caveat and was fixed 2026-08-01 (FIX-COWORK-FLOWDOC-STALE-TRANSPORT-GAP-CAVEAT, see cycle.md own header comment) -- caveat demoted to a genuine invocation-error fallback only. (3) eod.md:78 was never touched by that fix -- still reads verbatim this agent holds no Bash and cannot run git add/git_commit_retry directly ... SKIP this step entirely. (4) Todays EOD fire followed eod.md literally: wrote all 4 ledger entries (analysis-briefs DGC/DPM/DBC/VNM) + docs/signals/price_anomaly_20260805T1605.json correctly (Steps A/B unaffected per the docs own text) but skipped Step D (notebook write/commit), citing the docs own stale line as its reason -- not a fabrication, a propagated stale doc. (5) DISPROOF same day, same batch: market-watcher-offhours fired 2 min later (a1f7356854a55a25f) and committed cleanly with Bash (09beb0997) -- direct proof the grant is live and eod.md is simply wrong. (6) Net effect: market-watcher.md notebook has NO Cycle (EOD) section anywhere post-16:06Z -- the EOD narrative was never durably captured, either never written or clobbered when the offhours slot did its own full-overwrite write+commit right after. (7) news-scout.md c233 entry was left dangling uncommitted -- its own flow (docs/agents/news-scout/flow/stage-log-notify.md:14, L-7) explicitly defers its git commit to market-watchers EOD batch commit at market close; that EOD-side half of the contract never fires while eod.md:78 stands. Router committed the stranded news-scout.md manually this cycle as a workaround; the underlying skip will repeat every weekday 16:00 UTC fire until eod.md is fixed.",
-        "ac": "1. Update docs/agents/market-watcher/flow/eod.md:78 to match cycle.mds already-fixed prose (Bash grant live since 2026-07-31 commit 610110e16b -- demote to a genuine invocation-error fallback, not an unconditional skip). 2. Separately decide and fix the lost-update exposure: the per-cycle full-overwrite notebook model has no protection when EOD and a same-agent sibling slot (e.g. offhours) both match in the same cowork-tick batch and fire minutes apart -- either preserve/merge the EOD section across the next overwrite, or serialize same-agent multi-slot fires so one cannot clobber the others uncommitted work. 3. Confirm news-scouts L-7 dependency (stage-log-notify.md:14) resumes working end-to-end on the next weekday EOD fire (its notebook commits without router intervention).",
-        "priority": "P1",
-        "size": "S",
-        "zone": "cross-service/",
-        "next_agent": "developer",
-        "status": "IN_PROGRESS",
-        "created_at": "2026-08-05T16:10:00Z",
-        "created_by": "router",
-        "updated_at": "2026-08-06T13:23:27Z",
-        "updated_by": "router",
-        "related": [
-          "FIX-COWORK-BATCH-COVERAGESTATE-CONTENTION-CORRELATES-WITH-MISSED-NOTEBOOK-COMMIT"
-        ],
-        "not_duplicate_of": "FIX-COWORK-BATCH-COVERAGESTATE-CONTENTION-CORRELATES-WITH-MISSED-NOTEBOOK-COMMIT -- that row is a contention HYPOTHESIS on coverage-state:main mutex; this row is a DIRECTLY VERIFIED stale-doc root cause, distinct mechanism, same symptom family.",
-        "promoted_at": "2026-08-06T12:27:24Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
-        "claimed_at": "2026-08-06T13:23:26Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)"
-      }
-    ]
+    "in_progress": []
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
