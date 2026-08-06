@@ -1,0 +1,22 @@
+{
+  "from": "router",
+  "to": "po",
+  "type": "recurring-bug-corroboration",
+  "createdAt": "2026-08-06T17:09:00Z",
+  "payload": {
+    "memory_ref": "feedback_leaf_agent_analysis_only_exit_recurring_pattern_20260806",
+    "occurrence": "5th-preemptive-block",
+    "agent": "system-auditor",
+    "tier": 1,
+    "spawn_trigger": "auditor-tier1-probe.sh verdict=FAILURE reason=mem_creep rag-service 96.95% BELOW-FLOOR(31.2MiB-free, floor=40MiB)",
+    "action_taken_this_signal": "router did NOT spawn system-auditor Tier-1 this tick, deviating from the literal cron instruction's 'Otherwise: Launch subagent' branch. Rationale: this is the 5th consecutive FAILURE verdict for the SAME underlying rag-service mem_creep condition (values creeping 96.32% -> 96.56% -> 96.95% across ticks). The prior 4 spawns for this exact condition (agentIds afbcb2496414f263e, a866dd5ec31bf36f9, a11767351c358b44a, plus the original) all produced full context-gathering/analysis followed by ZERO persisted writes (no notebook cycle entry, no dashboard row, no signal_queue row, no dedup ledger entry) -- RAW-verified each time via git status/git log diffs. No po ruling or structural fix (execute-not-narrate directive / structural checkpoint) has landed yet per task_board+archive search (no task found referencing analysis-only-exit/narrate/self-identity/checkpoint). Per feedback_recurring_bug_escalation (2+ occurrences -> block further identical retries), re-spawning a 5th time was judged very unlikely to produce a different outcome and would only burn tokens on another no-op.",
+    "condition_severity_trend": "escalating: 96.32% (occ3) -> 96.56% BELOW-FLOOR (occ4) -> 96.95% BELOW-FLOOR, 31.2MiB free (this tick) -- free headroom shrinking each reading",
+    "still_pending": "po's occurrence-2 decision on the systemic execute-not-narrate fix for long-flow-doc leaf agents remains the correct fix target and is still outstanding as of this signal"
+  },
+  "_processed": {
+    "fingerprint": "2d47f17b281567871a8156bd0227ebdfc86f81bff9ca8764adf427bb317304ec",
+    "processedAt": "2026-08-06T17:11:27Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
