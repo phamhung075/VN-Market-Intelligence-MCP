@@ -1,0 +1,55 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "20260806T195134Z",
+    "matched_slots": [
+      "chef-evening"
+    ],
+    "won_slots": [
+      "chef-evening"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/unified-agent/flow/chef.md"
+    ],
+    "silent": false,
+    "drift_min": 2,
+    "errors": [],
+    "pressure_mode": "adaptive",
+    "calendar_status": "unknown",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "chef_mutex_applied": false,
+    "due_reasons": {
+      "chef-evening": "cron"
+    },
+    "cadence_minutes": {
+      "chef-evening": null
+    },
+    "last_fired_timestamp": "2026-08-06T19:51:07Z",
+    "last_fired_slots": [
+      "chef-evening"
+    ],
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "19:45",
+    "leader_lock": "acquired",
+    "dev_head": "active",
+    "devq": 2,
+    "signal_backlog": 0,
+    "note": "single guaranteed slot chef-evening, agent a878f6fe5b5d39e7b spawned run_in_background=true"
+  },
+  "priority": "low",
+  "createdAt": "2026-08-06T19:51:34Z",
+  "_processed": {
+    "fingerprint": "69b7261ae6051ec109605ce4ed91d476c58db0745d14f3a00375a58135cf84e0",
+    "processedAt": "2026-08-06T20:01:54Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

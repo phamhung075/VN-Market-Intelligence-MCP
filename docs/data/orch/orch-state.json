@@ -1,12 +1,12 @@
 {
   "dashboard_section_cache": {
     "section_name": "po",
-    "last_mtime": 1786024561.797975,
-    "last_linecount": 188,
+    "last_mtime": 1786046600,
+    "last_linecount": 200,
     "po": {
       "section_name": "po",
-      "last_mtime": 1786038806,
-      "last_linecount": 198
+      "last_mtime": 1786046600,
+      "last_linecount": 200
     }
   },
   "decision_journal": [
@@ -3081,7 +3081,7 @@
         "type": "dispatch-race-observation",
         "severity": "INFO",
         "summary": "Router (session 24817246-...) claimed+dispatched FIX-CRON-DST-LOCAL-EVAL-MOMENT-ANCHORED-EXPRESSIONS to agent-father (agentId a123b11a6d69e3d1a) at 18:36:53Z via manual WIP-slot occupation, board-flipped to in_progress BEFORE spawning. Agent's own completion report states a DIFFERENT concurrent agent-father session (peer router, unknown session id) independently picked up the SAME task_id in an overlapping window, made a legitimate non-conflicting follow-up commit (dd7a036b6, doc cross-ref fix) + its own journal entry (674a7a961, agent-father-S26), and stated intent to perform the same board flip the primary agent had already applied. Primary agent committed its own orch-apply.sh board flip first (0c9a40946) to close the race. RAW-verified: final board state is coherent — exactly 1 row for this task_id, correctly in review[] with next_agent:qa, .head correctly untouched, no duplicate/conflicting writes, no lost work. All 6 commits (36e109170, 419cdb804, dd7a036b6, 674a7a961, 0c9a40946, plus the DEVTEAM-BOUNDED1 flip 3a4825aab from the concurrent sibling dispatch) confirmed genuinely present in git log. Grep-verified zero remaining live-actuator hits of the 5 old cron literals; AC-1..AC-6 genuinely shipped.",
-        "status": "new",
+        "status": "READ",
         "payload_ref": null,
         "provenance": "router-raw-verify",
         "audit_cycle_tag": "dev-team-tick:2026-08-06T18:37Z",
