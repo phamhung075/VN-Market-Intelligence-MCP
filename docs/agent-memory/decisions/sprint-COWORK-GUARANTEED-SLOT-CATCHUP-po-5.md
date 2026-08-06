@@ -179,3 +179,14 @@
 - only path: index-top ordering per the sub-flow, after last cycle's selection-order experiment falsified itself
 **why-decision:** TE-T16 (last tick's index-top pick) reached review this tick, so the documented ordering does dispatch — my prior "4 picks, 0 dispatches" pessimism is now falsified and needed recording.
 **why-change:** no change from plan.
+
+### STEP po-S139 · po · 2026-08-06T10:15:29Z
+**task-id:** FIX-COWORK-DELIVERY-PROOF-GATE-ONLY-CATCHES-ROUTERLATCH-NARRATION
+**what-done:** Ruled on the narrate-not-execute escalation (refine_bctc_md 09:05Z + system-auditor 09:52Z): minted one layer-scoped row to architect (plan_only) and enriched the existing auditor row with occurrence 7 + a blind-spot finding against its already-written brief; minted NO duplicate for the auditor half.
+**what-considered:**
+- (a) in-flow self-check "confirm you made N tool calls before returning" — REJECTED: reader-is-writer, already ratified vacuous at spawn-fanout.md:247-251 and again at system-auditor/flow/main.md:763
+- (b) agent-father fleet audit of 45 flow main.md files — REJECTED as primary: same in-flow layer, and market-watcher narrated again on 07-29 seventeen days after its 07-12 in-flow guard landed
+- (c) noise/insufficient sample — REJECTED: 7 occurrences, 4 agent types, 7 weeks, + 6 mechanically-orphaned auditor markers
+- (d) generalize the EXISTING exogenous spawner-side gate (Step 5.3) with an artifact-delta arm + close the cron-spawn coverage hole — ADOPTED
+**why-decision:** The one gate the project already ratified as load-bearing is exogenous, and its predicate is a 6-string positive match on the router-latch shape only; both of today's returns contained zero of those strings, so both passed clean. Fixing the predicate at the observer is one edit that covers every agent; fixing the narrator is N edits that already demonstrably do not hold.
+**why-change:** Requester framed this as possibly-new and offered an in-flow remedy; prior art (feedback_cowork_spawn_narrates_not_executes, 4 occurrences from 06-18) shows it is neither new nor in-flow-fixable. Also deviates from a pure mint: occurrence 2 already had a READY row with an architect brief written 49min before it happened, so per feedback_recurring_detection_vs_recurring_failed_fix + feedback_file_prior_art_check_before_minting_row I enriched instead of minting.
