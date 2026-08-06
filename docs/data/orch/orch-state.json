@@ -2342,6 +2342,19 @@
         "payload_ref": null,
         "provenance": "detector",
         "audit_cycle_tag": "cron:auditor-t2:2026-08-06T04:00Z"
+      },
+      {
+        "id": "cowork-20260806T064440Z-chef-evening-retry-date-drift",
+        "ts": "2026-08-06T06:44:40Z",
+        "from": "cowork-team",
+        "to": "po",
+        "type": "agent_flow_defect",
+        "summary": "chef-evening RETRY (re-dispatched 2026-08-05 ~19:52Z after original session death/marker-leak) actually executed ~10h43m later, at 2026-08-06T06:34-06:37Z. chef.md pins publish-date from wall-clock-at-execution (publish_date_basis=utc_date), so the retry targeted TODAY (2026-08-06) instead of backfilling the missed day (2026-08-05). Result: (1) 2026-08-05 evening dish permanently unfilled -- never published, confirmed via get_market_message_digest, no mcp-user chef post in the 08-05 evening window; (2) a premature, degraded-quality (0 clusters, 5 gap tokens) dish posted to MARKET under marker published:chef-evening:2026-08-06 at 06:37Z, 13h before the real 19:45 UTC scheduled fire; that marker is now a TOMBSTONE (publish confirmed, msg id 1129, per feedback_chef_leaks_published_marker_on_silent_exit invariant it must NOT be released) and will suppress tonight legitimate higher-quality scheduled chef-evening dispatch for 08-06 unless someone intervenes before 19:45 UTC today. Root cause is 2-fold: (a) chef.md / cowork-slot marker scheme has no way to target a specific backfill date on manual retry -- it always derives date from actual wall-clock; (b) the background Agent() retry itself sat queued roughly 10h43m before actually starting execution (the agent own runtime was only 175909ms) -- a possible session/scheduler stall during the same auth-outage window this session already hit 3x, worth checking separately. Recommend: po decide whether to manually release published:chef-evening:2026-08-06 before 19:45Z today to let the real slot fire (risk: near-duplicate post) vs accept this as the day dish (risk: degraded content stands, 08-05 gap stays permanent) -- and route the structural date-pinning gap to architect for a chef.md backfill-target-date parameter, or a router-side guard that refuses/relabels a retry once 2-3h have elapsed since the original intended slot.",
+        "severity": "HIGH",
+        "status": "NEW",
+        "payload_ref": null,
+        "provenance": "router",
+        "audit_cycle_tag": null
       }
     ],
     "last_triaged_at": "2026-07-29T06:25:00Z",
