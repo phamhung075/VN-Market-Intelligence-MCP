@@ -18,20 +18,30 @@ system-auditor `*/30` (:00/:30) and dev-team `:07` crons.
 
 ## Create with CronCreate
 
+> ⚠️ **CronCreate fires at MACHINE-LOCAL time (France), NOT UTC.** Host = France (CEST=UTC+2
+> summer / CET=UTC+1 winter); VN is fixed UTC+7. Both jobs below are corrected to their CEST
+> value (current season) with the CET value alongside — switch at DST changeover
+> (FIX-CRON-DST-LOCAL-EVAL-MOMENT-ANCHORED-EXPRESSIONS, 2026-08-06: both expressions were
+> originally authored as if evaluated in UTC, so Job A silently missed the 15:00-17:00 ICT
+> settlement window it exists to cover — same defect class `cron-claude-manager-helper.md` /
+> `cron-auditor-page-reverify.md` already document and correct).
+
 **CADRAT-2 schedule split (docs/architecture-briefs/2026-08-04-cadence-rationalization.md §9 row 13):**
 the watched tables cannot change outside trading hours + a short settlement window by construction,
 so checking them every 30min around the clock was checking something provably unchanged most ticks.
 TWO registrations now share the SAME prompt below (only the `cron` expression differs):
 
 ### Job A — Weekday session + settlement window
-- **cron**: `15,45 2-9 * * 1-5`   (16 fires/weekday = 80/wk; 09:00-16:59 VN Mon-Fri, covers the trading
-  session + ~2h settlement)
+- **cron**: `15,45 4-11 * * 1-5`   (summer/CEST: 04:00-11:59 local = 02:00-09:59 UTC = 09:00-16:59
+  VN Mon-Fri, covers the trading session + ~2h settlement. Winter/CET: `15,45 3-10 * * 1-5` — same
+  UTC/VN target. 16 fires/weekday = 80/wk.)
 - **recurring**: true
 - **durable**: true
 
 ### Job B — Daily off-hours backstop
-- **cron**: `15 22 * * *`   (1 fire/day = 7/wk; 05:00 VN daily, still catches a stuck pipeline/overnight
-  macro-feed failure outside Job A's window)
+- **cron**: `0 0 * * *`   (summer/CEST: 00:00 local = 22:00 UTC prev-day = 05:00 VN daily, still
+  catches a stuck pipeline/overnight macro-feed failure outside Job A's window. Winter/CET:
+  `0 23 * * *` — same UTC/VN target. 1 fire/day = 7/wk.)
 - **recurring**: true
 - **durable**: true
 

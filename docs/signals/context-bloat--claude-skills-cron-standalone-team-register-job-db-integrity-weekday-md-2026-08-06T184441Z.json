@@ -1,0 +1,19 @@
+{
+  "from": "context-bloat-backstop-hook",
+  "to": "claude-manager-helper",
+  "type": "context_bloat_breach",
+  "priority": "high",
+  "createdAt": "2026-08-06T18:44:41Z",
+  "payload": {
+    "file": ".claude/skills/cron-standalone-team/register-job-db-integrity-weekday.md",
+    "line_count": 257,
+    "cap": 200,
+    "byte_count": 21361,
+    "byte_cap": 12000,
+    "class": "skill-file",
+    "reason": "line-cap,byte-cap",
+    "overage": 57,
+    "byte_overage": 9361,
+    "action_required": "prune_or_split"
+  }
+}

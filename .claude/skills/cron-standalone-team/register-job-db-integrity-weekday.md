@@ -4,11 +4,16 @@
 > `.claude/commands/crons/cron-db-data-integrity.md` Job A. If CADRAT-2 has not landed on the live
 > authoring doc yet, this row BLOCKS — do NOT register the stale pre-CADRAT-2 `15,45 * * * *`
 > single-job shape instead.
+>
+> ⚠️ FIX-CRON-DST-LOCAL-EVAL-MOMENT-ANCHORED-EXPRESSIONS (2026-08-06): CronCreate fires
+> MACHINE-LOCAL (France), not UTC — `cron` below is the CEST (current-season) value ported
+> verbatim from the authoring doc; switch to CET `15,45 3-10 * * 1-5` at DST changeover (re-sync
+> from `cron-db-data-integrity.md` Job A, the SSOT).
 
 ```
 CronCreate(
   description : "db-data-integrity — weekday session+settlement window (CADRAT-2 Job A)",
-  cron        : "15,45 2-9 * * 1-5",
+  cron        : "15,45 4-11 * * 1-5",
   recurring   : true,
   durable     : true,
   prompt      : <<'PROMPT_EOF'

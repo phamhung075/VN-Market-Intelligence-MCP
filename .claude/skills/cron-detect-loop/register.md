@@ -108,11 +108,17 @@ CronCreate(
 > P1-IDLE-AUDITOR-CRON-WIRING (2026-07-04): same pre-gate shape as Job 3, `--tier=3` (own heartbeat
 > file + 2880min/2x24h threshold, computed inside the script). Same FAIL-OPEN contract: SKIP ONLY
 > on exit 0 (SKIP-SPAWN); spawn on exit 1 (SPAWN), exit 2 (ERROR), or any other nonzero/unreadable.
+>
+> ⚠️ FIX-CRON-DST-LOCAL-EVAL-MOMENT-ANCHORED-EXPRESSIONS (2026-08-06): CronCreate fires
+> MACHINE-LOCAL (France), not UTC — `cron` below is the CEST (current-season) value ported
+> verbatim from `cron-system-auditor.md` Tier-3 (the SSOT); switch to CET `0 3 * * *` at DST
+> changeover. Target stays 02:00 UTC daily either way (see `docs/agents/system-auditor/flow/
+> main.md` Step 0d `FIRE_TICK` for AUDIT_TIER=3, UTC-native and unaffected by this literal).
 
 ```
 CronCreate(
   description : "system-auditor Tier-3 deep DB integrity",
-  cron        : "0 2 * * *",
+  cron        : "0 4 * * *",
   recurring   : true,
   durable     : true,
   prompt      : "Run: bash scripts/agents-flow/auditor-tier1-probe.sh --tier=3 and read its exit code + one-line JSON verdict (fields: tier, checks_verdict, verdict, detail, last_healthy_at, fresh_threshold_minutes, heartbeat_age_minutes). If exit code = 0 (verdict=SKIP-SPAWN, meaning checks_verdict=ALL_GREEN AND heartbeat fresh): done, log '[cron-detect-loop] T3 SKIP-SPAWN (ALL_GREEN + fresh heartbeat)', do NOT spawn a subagent. FAIL-OPEN on everything else — exit code 1 (verdict=SPAWN), OR exit code 2 (verdict=ERROR), OR any other non-zero exit / unreadable output (never suppress a legitimate run on a probe fault): Launch subagent (subagent_type=system-auditor). Read and execute docs/agents/system-auditor/flow/main.md\nAUDIT_TIER=3\nMCP: https://zenmidi.com/vn-market/mcp"
@@ -151,6 +157,7 @@ Example: fire at 14:09Z → TICK = "2026-06-28T14:07Z" (±2min jitter absorbed).
 ```
 Tier-1 (*/30): floor(minute/30)*30 → YYYY-MM-DDTHH:MMZ
 Tier-2 (0 */4): floor(hour/4)*4 → YYYY-MM-DDTHH:00Z
-Tier-3 (0 2 *): fixed YYYY-MM-DDT02:00Z
+Tier-3 (fixed daily, 02:00 UTC target — armed cron is machine-local CEST/CET dual `0 4|3 * * *`,
+  see `cron-system-auditor.md`): fixed YYYY-MM-DDT02:00Z
 ```
 See `docs/architecture-briefs/2026-06-28-fire-time-leader-election-P3-addendum.md` §A for full spec.

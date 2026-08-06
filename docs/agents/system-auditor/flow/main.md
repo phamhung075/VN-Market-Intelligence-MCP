@@ -211,7 +211,15 @@ elif AUDIT_TIER == 2:
   FIRE_TASK_ID = "cron:auditor-t2:" + FIRE_TICK
 
 elif AUDIT_TIER == 3:
-  # cron expression: 0 2 * * * (fixed: 02:00 UTC daily)
+  # FIRE_TICK target: fixed 02:00 UTC daily (this line is UTC-native, trustworthy
+  # regardless of scheduler mechanics — same pattern as Tier-5 below). The underlying cron
+  # expression that achieves this real UTC time is machine-local (⚠️ CronCreate fires local,
+  # NOT UTC) and lives in .claude/commands/crons/cron-system-auditor.md (CEST/CET dual form,
+  # switches at DST changeover) — do not hardcode a bare "H M * * *" here, it would silently
+  # go stale twice a year. FIX-CRON-DST-LOCAL-EVAL-MOMENT-ANCHORED-EXPRESSIONS (2026-08-06):
+  # before this fix a bare `0 2 * * *` cron literal fired ~00:00 UTC (CEST) / ~01:00 UTC (CET),
+  # so this FIRE_TICK stamped a tick-id 2h AFTER the sweep actually ran — now corrected, the
+  # cron and this literal are in sync.
   FIRE_TICK=$(date -u +"%Y-%m-%dT02:00Z")
   FIRE_TASK_ID = "cron:auditor-t3:" + FIRE_TICK
 
@@ -222,9 +230,10 @@ elif AUDIT_TIER == 5:
   # in .claude/commands/crons/cron-auditor-page-reverify.md (CEST/CET dual form,
   # switches at DST changeover) — do not hardcode a bare "H M * * *" here, it would
   # silently go stale twice a year. Offset-from-Tier-3/D4-N framing was dropped:
-  # those siblings' 02:00Z/03:00Z labels carry no machine-local disclaimer and are
-  # unverified against the same defect this comment used to have (see cron file
-  # Offset rationale for the full finding — not fixed here, out of scope).
+  # those siblings' 02:00Z/03:00Z labels originally carried no machine-local disclaimer;
+  # Tier-3's own has since been fixed (FIX-CRON-DST-LOCAL-EVAL-MOMENT-ANCHORED-EXPRESSIONS,
+  # 2026-08-06, see the Tier-3 branch above) — D4/D-N's 03:00Z label is derived from Tier-3's
+  # process and inherits that same fix; not independently re-verified here.
   FIRE_TICK=$(date -u +"%Y-%m-%dT03:30Z")
   FIRE_TASK_ID = "cron:auditor-t5:" + FIRE_TICK
 

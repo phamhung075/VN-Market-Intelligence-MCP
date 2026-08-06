@@ -39,7 +39,17 @@ Create system-auditor crons with CronCreate (three tiers). Run all three.
 
 ## Tier-3 — Deep DB Integrity (daily 02:00 UTC)
 
-- **cron**: `0 2 * * *`
+> ⚠️ **CronCreate fires at MACHINE-LOCAL time (France), NOT UTC.** Host = France (CEST=UTC+2
+> summer / CET=UTC+1 winter); VN is fixed UTC+7. Target 02:00 UTC (this is `docs/agents/
+> system-auditor/flow/main.md` Step 0d's own `FIRE_TICK` for AUDIT_TIER=3 — UTC-native,
+> trustworthy independent of this cron's local-time drift). FIX-CRON-DST-LOCAL-EVAL-MOMENT-
+> ANCHORED-EXPRESSIONS, 2026-08-06: a bare `0 2 * * *` literal actually fires ~00:00 UTC (CEST) /
+> ~01:00 UTC (CET), 2h before the intended 02:00 UTC — the same defect class
+> `cron-auditor-page-reverify.md` already flagged for this exact cron (its own "Offset
+> rationale" section) and corrected for its own D-PAGE cron.
+
+- **cron**: `0 4 * * *` (summer/CEST: 04:00 local = 02:00 UTC. Winter/CET: `0 3 * * *` — same
+  02:00 UTC target, switch at DST changeover)
 - **recurring**: true
 - **durable**: true
 - **prompt**:

@@ -16,11 +16,20 @@ mandatory-critique pass before these crons go live, per the Host-Load Budget Rul
 documents the cron shape only — agent-father does NOT arm/register any `CronCreate` itself; that is a
 router/PO-gated action, reported as PENDING in agent-father's RETURN block.**
 
+> ⚠️ **CronCreate fires at MACHINE-LOCAL time (France), NOT UTC.** Host = France (CEST=UTC+2
+> summer / CET=UTC+1 winter); VN is fixed UTC+7. Both cron expressions below are corrected to
+> their CEST value (current season) with the CET value alongside — switch at DST changeover
+> (FIX-CRON-DST-LOCAL-EVAL-MOMENT-ANCHORED-EXPRESSIONS, 2026-08-06; originally authored as if
+> evaluated in UTC — same defect class `cron-claude-manager-helper.md` / `cron-auditor-page-
+> reverify.md` already document and correct). Neither cron is armed yet — fix landed before
+> arming, per AC-4 of that task.
+
 ---
 
 ## MODE=FULL — Weekly Deep Sweep (Sunday, VN market fully closed)
 
-- **cron**: `18 3 * * 0` (03:18 UTC Sunday = 10:18 VN Sunday)
+- **cron**: `18 5 * * 0` (summer/CEST: 05:18 local = 03:18 UTC = 10:18 VN Sunday. Winter/CET:
+  `18 4 * * 0` — same UTC/VN target)
 - **recurring**: true
 - **durable**: true
 - **prompt**:
@@ -44,7 +53,8 @@ gives LITE the SAME `ALL_GREEN` + fresh-heartbeat shell pre-gate pattern system-
 Tier-1/2/3 already use, via `scripts/agents-flow/orch-sentinel-lite-probe.sh`. MODE=FULL (below)
 is deliberately NOT gated.
 
-- **cron**: `48 1 * * *` (01:48 UTC daily = 08:48 VN, before 09:00 VN market open)
+- **cron**: `48 3 * * *` (summer/CEST: 03:48 local = 01:48 UTC = 08:48 VN daily, before 09:00 VN
+  market open. Winter/CET: `48 2 * * *` — same UTC/VN target)
 - **recurring**: true
 - **durable**: true
 - **prompt**:
@@ -58,7 +68,8 @@ is deliberately NOT gated.
 - **Dimensions run:** OH-1 only (fastest-moving dimension — signal_queue/task_board plumbing; OH-2/3/4
   track doc/code/registry state that changes on a weekly-or-slower cadence, so running them daily is
   pure token cost with zero new signal)
-- **Rationale:** Scheduled 12min before system-auditor Tier-3 (`0 2 * * *`) and off the
+- **Rationale:** Scheduled 12min before system-auditor Tier-3 (02:00 UTC target — see
+  `cron-system-auditor.md`, itself now CEST/CET dual for the same DST reason) and off the
   `15,45 * * * *` db-data-integrity slots (that cron spawns its own system-auditor Claude subagent),
   avoiding host-load stacking at either boundary.
 

@@ -43,8 +43,8 @@ CronList
 ```
 
 Scan output for existing entries. Check for ALL 6 of:
-1. `cron_expression` = `15,45 2-9 * * 1-5` AND prompt contains `db-integrity-probe.sh`
-2. `cron_expression` = `15 22 * * *`      AND prompt contains `db-integrity-probe.sh`
+1. `cron_expression` = `15,45 4-11 * * 1-5` AND prompt contains `db-integrity-probe.sh`
+2. `cron_expression` = `0 0 * * *`         AND prompt contains `db-integrity-probe.sh`
 3. `cron_expression` = `23 14 * * *`      AND prompt contains `agent-father/flow/main.md`
 4. `cron_expression` = `30 19 * * 1,4`    AND prompt contains `claude-manager-helper/flow/main.md`
 5. `cron_expression` = `0 */6 * * *`      AND prompt contains `code-janitor/flow/main.md`

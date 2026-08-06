@@ -2,11 +2,16 @@
 
 > Same prompt as Job 1 (byte-identical, per `cron-db-data-integrity.md`'s own "both jobs,
 > byte-identical" note) — only the `cron` expression differs.
+>
+> ⚠️ FIX-CRON-DST-LOCAL-EVAL-MOMENT-ANCHORED-EXPRESSIONS (2026-08-06): CronCreate fires
+> MACHINE-LOCAL (France), not UTC — `cron` below is the CEST (current-season) value ported
+> verbatim from the authoring doc; switch to CET `0 23 * * *` at DST changeover (re-sync from
+> `cron-db-data-integrity.md` Job B, the SSOT).
 
 ```
 CronCreate(
   description : "db-data-integrity — daily off-hours backstop (CADRAT-2 Job B)",
-  cron        : "15 22 * * *",
+  cron        : "0 0 * * *",
   recurring   : true,
   durable     : true,
   prompt      : <<'PROMPT_EOF'

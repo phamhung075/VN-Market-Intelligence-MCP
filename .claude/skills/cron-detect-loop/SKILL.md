@@ -28,7 +28,7 @@ Scan output for existing entries. Check for ALL 4 of:
 1. `cron_expression` = `7,37 * * * *`  AND prompt contains `dev-team/flow/main.md`
 2. `cron_expression` = `*/30 * * * *` AND prompt contains `AUDIT_TIER=1`
 3. `cron_expression` = `0 */4 * * *`  AND prompt contains `AUDIT_TIER=2`
-4. `cron_expression` = `0 2 * * *`    AND prompt contains `AUDIT_TIER=3`
+4. `cron_expression` = `0 4 * * *`    AND prompt contains `AUDIT_TIER=3`
 
 **If ALL 4 found → STOP. Log:**
 `[cron-detect-loop] All 4 crons already registered. No-op.`
