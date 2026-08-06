@@ -1,5 +1,19 @@
 # PM — Notebook
 
+## ERROR-CORRECTION · FIX-SYSTEM-AUDITOR-CYCLE-FINDINGS-NOT-SELF-PERSISTED · review-triage · 2026-08-06T15:35Z
+
+**INCIDENT:** PM review-triage for FIX-SYSTEM-AUDITOR-CYCLE-FINDINGS-NOT-SELF-PERSISTED (parent task, plan_only decomposed into 4 child tasks) detected what appeared to be a missing child task (FIX-AUDITOR-DURABILITY-STEP0B-DETECTION) from task_board and added a fresh backlog[] entry.
+
+**ROOT CAUSE OF ERROR:** Board-existence check only scanned backlog[], ready[], and todo[] lanes — did NOT scan in_progress[]. The task was actually already resident in in_progress[] (status=IN_PROGRESS, owner=developer), actively claimed+resumed by a peer dev-team session (session 24817246-8a3f-4511-95f7-1b4385797bee, resume lock, claimed ~15:11Z). 
+
+**CONSEQUENCE:** Created a genuine duplicate key: FIX-AUDITOR-DURABILITY-STEP0B-DETECTION now existed in BOTH backlog[] (fresh, status=BACKLOG) AND in_progress[] (pre-existing, status=IN_PROGRESS, live, peer-owned). Double-dispatch risk: BOUNDED-1 auto-pickup on next tick could scan backlog[] and spawn a second developer onto already-in-flight work.
+
+**REMEDIATION:** (1) Removed the backlog[] duplicate immediately (orch-apply.sh applied, 2026-08-06T15:35:15Z). (2) Verified in_progress[] copy remains intact, peer session unaffected. (3) Recording this error here for future decompose cycles.
+
+**LESSON:** Board-existence verification MUST scan ALL task_board lanes (backlog, ready, in_progress, qa, review, done) before concluding "missing" and minting a fresh entry. A single-lane scan is insufficient and risks collision with actively in-flight work from peer sessions. Recommend: future PM decompose cycles should use a full-board search (`jq '.task_board | to_entries[] | .value[]? | select(.id == "<id>")'`) to verify non-existence across all lanes before adding.
+
+---
+
 ## c332 COWORK-GUARANTEED-SLOT-CATCHUP · Decomposition + Board Setup · 2026-07-22T22:12Z
 
 **MANDATE:** Decompose architect brief (10 FR) into atomic dev tasks. Sequence 5 consolidated board rows. True up row types. Set up developer handoff.
@@ -114,23 +128,6 @@
 **BOARD MUTATIONS:** task_board.backlog→ready move (backlog=315→314, ready=0→1, in_progress=1 stable). Task conservation check PASSED (task_total=458 maintained). Terminal-lane bloat noted (done[]=22 > 10 threshold HSC-3); deferred to next PM cycle.
 
 **NEXT:** dev-cross-service to pick up WATCHLIST-DB-SYSMAP-DRIFT-FIX from ready[]. Router routes next.
-
----
-
-## c328 BACKLOG-HYGIENE-VERIFY-PRUNE-SWEEP · Epic Wrapper Closeout · 2026-07-10T21:50Z
-
-**MANDATE:** Close epic wrapper row after all 11 sub-tasks (D0, D0B, D1, D2.5, D3, D4, D5, SHG-2, SHG-3, SHG-4, SHG-5) verified DONE_VERIFIED. Flip row status from ready[] to done_verified[], flag open follow-up.
-
-**OUTPUT:** 
-1. BACKLOG-HYGIENE-VERIFY-PRUNE-SWEEP row moved ready[]→done_verified[], status READY→DONE_VERIFIED (via jq + orch-apply.sh, atomic).
-2. Open follow-up FIX-COLD-EVICT-EXCLUDE-IDS-VS-HARD-COHERENCE flagged in backlog[] (genuine loose-end: latent conflict between orch-cold-evict.sh --exclude-ids flag and the now-hardened lane-coherence gate in D2.5/D5; mirrors ADD-1 READY precedent for LANE_ALLOWED_STATUSES design debt).
-3. Decision journal STEP pm-S3 added documenting closeout rationale.
-
-**BOARD MUTATIONS:** Epic wrapper row: ready[]→done_verified[], status flip. No new backlog row minted (FIX-COLD-EVICT-EXCLUDE-IDS-VS-HARD-COHERENCE already exists, status backlog[], priority P2, owner developer).
-
-**VERIFICATION:** All 11 children confirmed DONE_VERIFIED (8 in live board, 3 in archive/2026-07.json). Epic decomposition complete per architect brief. No regressions: coherence validator unchanged since D3+D5 landing.
-
-**NEXT:** Head yields to main terminal. FIX-COLD-EVICT-EXCLUDE-IDS-VS-HARD-COHERENCE queued for next developer/architect cycle (depends on orch-cold-evict.sh redesign + LANE_ALLOWED_STATUSES schema decision).
 
 ---
 
