@@ -586,3 +586,15 @@
 **Mitigation:** No immediate action beyond signal routing.
 
 ---
+
+## Anomaly: A-30 · rag-service memory pressure (97.06% — no reclamation)
+**Severity:** WARN | **Date:** 2026-08-06 | **Status:** OPEN
+**Location:** rag-service
+**Details:** All 6 samples at 97.06% with zero reclamation dips — memory not being freed
+**Impact:** Service may OOM if load increases
+**Root cause:** Memory leak in rag-service or inefficient embedding model loading
+**Zone owner:** dev-rag-service
+**Last reported:** 2026-08-06T13:45:51Z (signal unknown, system-auditor -> po, dedup_key=microservice_degraded:rag-service:A-30, WARN Telegram sent)
+**Mitigation:** No immediate action beyond signal routing.
+
+---
