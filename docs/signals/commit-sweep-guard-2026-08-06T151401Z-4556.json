@@ -1,8 +1,0 @@
-{
-  "from": "commit-sweep-guard",
-  "to": "po",
-  "type": "bug-escalation",
-  "priority": "high",
-  "createdAt": "2026-08-06T15:14:01Z",
-  "payload": "[sweep-guard] BARE commit about to absorb 6 staged file(s) not necessarily this actor's own: docs/data/orch/orch-state.json docs/signals/processed/bctc-analyst-20260806T151300Z.json docs/signals/processed/bctc_signal_DXG_20260806_routine.json docs/signals/processed/bctc_signal_FPT_20260806_routine.json docs/signals/processed/bctc_signal_HPG_20260806_routine.json docs/signals/processed/bctc_signal_VCB_20260806_routine.json. actor=24817246-8a3f-4511-95f7-1b4385797bee mode=warn escalated=true prior_warns=22 threshold=3. Fix: git commit -m \"<msg>\" -- <own-files-only>."
-}
