@@ -1,0 +1,55 @@
+{
+  "from": "cowork-team",
+  "to": "system",
+  "type": "cowork_tick_telemetry",
+  "priority": "info",
+  "createdAt": "2026-08-06T08:20:23Z",
+  "payload": {
+    "tick": "2026-08-06T08:15Z",
+    "nominal_tick": "08:15",
+    "matched_slots": [
+      "alert-commander-market"
+    ],
+    "won_slots": [
+      "alert-commander-market"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/alert-commander/flow/main.md"
+    ],
+    "silent": false,
+    "drift_min": 3,
+    "errors": [],
+    "pressure_mode": "adaptive",
+    "calendar_status": "unknown",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "chef_mutex_applied": false,
+    "due_reasons": {
+      "alert-commander-market": "cron"
+    },
+    "cadence_minutes": {
+      "alert-commander-market": null
+    },
+    "last_fired_timestamp": "2026-08-06T08:20:09Z",
+    "last_fired_slots": [
+      "alert-commander-market"
+    ],
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "leader_lock": "acquired",
+    "dev_head": "unknown",
+    "devq": null,
+    "signal_backlog": 18,
+    "note": "3 NEW signal_queue rows this tick (sys-20260806T081141-4071, sys-20260806T081427-057b, sys-20260806T081622-11ba) all addressed to po (A-30 rag-service memory escalation WARN->CRITICAL 99.73%), not routed to any firing slot — left untouched (status stays NEW), cowork-team has no standing to ACK PO's own inbox. No same-agent collision this tick (single slot matched)."
+  },
+  "_processed": {
+    "fingerprint": "a73df2b5c158b6b2114f103ac1d8914ced5173086c83ee0de920dd8ab1ac6798",
+    "processedAt": "2026-08-06T08:42:18Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
