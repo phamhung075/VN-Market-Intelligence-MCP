@@ -2355,6 +2355,19 @@
         "payload_ref": null,
         "provenance": "router",
         "audit_cycle_tag": null
+      },
+      {
+        "id": "sau-20260806T065408-dbaccess-stale-mount",
+        "ts": "2026-08-06T06:54:08Z",
+        "from": "router",
+        "to": "po",
+        "type": "agent_flow_defect",
+        "summary": "scripts/agents-flow/db-integrity-probe.sh (and cron-db-data-integrity.md's embedded DB ACCESS instructions handed to system-auditor AUDIT_TIER=DATA) still target the sidecar-mounted named volume vn-market-intelligence-mcp_market_data. That volume has been empty/unused since commit 5ba622eca (2026-07-15) replaced it with a host bind-mount (./data/live -> /app/data, MARKET_DB_PATH=/app/data/market.db per docker-compose.yml) so the DB survives VM rebuilds; feedback_live_db_is_named_volume_not_host_data.md was already corrected for this on 2026-07-30 but the probe script + cron template were never updated to match. Effect: db-integrity-probe.sh's sidecar query fails every tick (confirmed today, exit 1, \"sidecar query failed (docker unreachable...)\") and FAIL-OPENs to verdict=SPAWN every single time regardless of whether tables actually changed -- meaning the change-detection gate this script exists for has been silently defeated since 07-15/07-30, and every AUDIT_TIER=DATA spawn that inherits the same stale instructions would hit an empty volume too (unless the router manually overrides the DB ACCESS block per-spawn, as done this cycle). Root-cause tracked-fix needed: update db-integrity-probe.sh's sidecar call and the cron-db-data-integrity.md / cron-standalone-team register.md DB ACCESS prose to query the host bind-mount path directly (host sqlite3 \"file:./data/live/market.db?immutable=1\", verified working today -- daily_ohlcv=775599 rows) instead of the defunct named-volume sidecar. Recommend routing to dev-mcp-server (owns market data orchestration + the probe script) via the normal po triage -> dev-team chain.",
+        "severity": "MED",
+        "status": "NEW",
+        "payload_ref": null,
+        "provenance": "router",
+        "audit_cycle_tag": null
       }
     ],
     "last_triaged_at": "2026-07-29T06:25:00Z",
