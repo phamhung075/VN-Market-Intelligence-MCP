@@ -4,13 +4,37 @@
   "quarter": "Q1-2026",
   "mode": "routine",
   "beat_miss": null,
-  "product": "IT services, software exports (offshore dev for Japan/US/EU), telecom (FPT Telecom — switched full-consolidation to equity-method from 2026-01-01), education (FPT Edu)",
-  "customer": "Enterprise IT buyers (offshore Japan/US/EU + domestic), telecom subscribers, students across FPT's education system",
-  "ops": "Q1-2026 (get_bctc_full RECOVERED this cycle after 5-day outage, data unchanged/stale since 2026-05-24 push, VPS SLA breached 54.5h): revenue 12,480bn VND (-22.3% headline YoY, +8.7% YoY adjusted for FTEL equity-method switch), NI 2,477bn (+13.8% adjusted YoY). OCF -2,848bn this quarter vs Q4-2025 +4,108bn — single-quarter swing, only 3/4 quarters of coverage available so ESC-3 held at DATA-COVERAGE-LIMITED (guard esc-datacov:FPT:Q1-2026:ESC-3 still held, valid ~2026-08-09). ESC-5 refine-confidence gate RE-FIRED this cycle: 7 of 15 refine units (footnote-only: PP&E schedule, related-party, borrowings schedule, subsidiary registry, equity movements, commitments) score confidence 0.45 (<0.50 bar); core statements B01/B02/B03 score 0.55-0.85 with balance_check:PASSED. Deep-dive request re-emitted (prior 24h guard had expired).",
-  "mgmt": "FTEL consolidation-method switch (full to equity) disclosed and consistently applied; adjusted YoY growth positive despite headline decline. Management track-record not independently re-verified this cycle (no governance YELLOW trigger observed).",
+  "product": "IT services, software exports, telecom (FPT Telecom), education (FPT Edu)",
+  "customer": "Enterprise IT buyers (VN + offshore), SME telecom subscribers, students",
+  "ops": "Operating margin 22.0% Q1-2026 (last-known-good, stale 57.5h past 48h SLA); OCF -2,847.8 tỷ vs net profit +2,476.8 tỷ this quarter (working-capital-driven per get_cash_flow, quarters_returned=3/4 — DATA-COVERAGE-LIMITED, cannot decompose further)",
+  "mgmt": "Q2-2026 filing overdue past 07-31 deadline; PDF landed on VPS 2026-08-01, extraction still stuck on Q1-2026",
+  "valuation_verdict": "FAIR",
+  "ey_spread_pp": 2.25,
+  "pe_sector": 13.8,
+  "roe_sector_pct": 28.3,
+  "kinhdich": {
+    "que": "Bi (22)",
+    "trend": "TRUNG TINH",
+    "signal": "GIU",
+    "confidence_pct": 38,
+    "alignment": "neutral"
+  },
+  "esc_gate": {
+    "esc1": "UNEVALUABLE_NO_BASH",
+    "esc2": "FALSE (imbalance 0%)",
+    "esc3": "DATA-COVERAGE-LIMITED (3/4 quarters, guard HELD)",
+    "esc4": "FALSE (non_operating_share 2.0%)",
+    "esc5": "TRUE (7/15 footnote units confidence<0.50, guard HELD, no re-emit)"
+  },
+  "escalation_status": "GUARD-HELD",
+  "trick_summary": null,
+  "trick_confidence": "none",
+  "generated_at": "2026-08-06T18:15:00Z",
+  "cycle_id": "20260806-1800",
+  "slot": "bctc-analyst-slot-2",
   "_processed": {
-    "fingerprint": "111bf7a157efb6edf6c9eeca23743adb65f76429fbf6ef8c3e1bbc568b152754",
-    "processedAt": "2026-08-06T15:13:52Z",
+    "fingerprint": "fb66c36e8d76cd26be37c81ae0c62ffcb42c51da994a92e6c82b3a63fb0ad110",
+    "processedAt": "2026-08-06T18:21:01Z",
     "processedBy": "dev-team",
     "result": "routed-to-po"
   }

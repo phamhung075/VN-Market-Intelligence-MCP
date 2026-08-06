@@ -4,13 +4,37 @@
   "quarter": "Q1-2026",
   "mode": "routine",
   "beat_miss": null,
-  "product": "Retail and corporate banking, bancassurance, FX/trade finance",
-  "customer": "Retail depositors, corporate borrowers, SOE and large-enterprise clients",
-  "ops": "Q1-2026 (get_bctc_full RECOVERED this cycle): net interest income 17,421bn VND, NI 9,462bn, ROE 4.2% (quarterly, get_bctc_full) / 16.7% (sector-comparison annualized basis, PE 14.1 vs sector median 9.0 = +57% premium, PB +45% premium, ROE below sector median 17.6%). OCF/NI ratio 1.37x this quarter, full 4/4-quarter cash-flow coverage this cycle (up from 3/4 in prior cycles) — ratio stable vs Q4-2025 (1.15x); divergence_ratio 0.37 < 0.40 threshold, ESC-3 FALSE, no forensic flag.",
-  "mgmt": "Chủ tịch VCB publicly stated crypto-asset risk cannot be managed via traditional methods (2026-08-06 news, banking-sector context, not a financial-statement item — noted for narrative context only).",
+  "product": "State-owned commercial bank — corporate/retail lending, trade finance, bancassurance",
+  "customer": "Corporate borrowers, retail depositors, SOE relationship banking",
+  "ops": "Net interest income 17,421 tỷ, operating margin 80.9% Q1-2026; ROE quarterly 4.2% (annualized ~16.7% vs sector median 17.6%, slightly below peers); OCF/NI ratio 1.37x — clean cash conversion, ESC-3 FALSE (divergence 0.37<0.40, 4/4 quarters returned)",
+  "mgmt": "Q1-2026 filed on time 2026-07-19; Chairman public commentary this week on crypto-asset risk management — no governance red flags",
+  "valuation_verdict": "FAIR",
+  "ey_spread_pp": 2.09,
+  "pe_sector": 14.1,
+  "roe_sector_pct": 16.7,
+  "kinhdich": {
+    "que": "Thai (11)",
+    "trend": "THUAN LOI manh",
+    "signal": "GIU",
+    "confidence_pct": 100,
+    "alignment": "aligned_flat_price"
+  },
+  "esc_gate": {
+    "esc1": "UNEVALUABLE_NO_BASH",
+    "esc2": "FALSE (imbalance 0.37%)",
+    "esc3": "FALSE (divergence 0.37, 4/4 quarters)",
+    "esc4": "N/A (bank P&L doesn't map to AC-1 codes 30/50)",
+    "esc5": "FALSE (report_id null, refine_status PARTIAL)"
+  },
+  "escalation_status": "NONE",
+  "trick_summary": null,
+  "trick_confidence": "none",
+  "generated_at": "2026-08-06T18:15:00Z",
+  "cycle_id": "20260806-1800",
+  "slot": "bctc-analyst-slot-2",
   "_processed": {
-    "fingerprint": "9785b853c3fcb2634922731b2f566a7afaa1d361e4f1f3c61b18f585e6e1326c",
-    "processedAt": "2026-08-06T15:13:52Z",
+    "fingerprint": "434c7152a6c0403bb66a9124932a64fb923abc720b0cfcf3023d746266daba08",
+    "processedAt": "2026-08-06T18:21:01Z",
     "processedBy": "dev-team",
     "result": "routed-to-po"
   }
