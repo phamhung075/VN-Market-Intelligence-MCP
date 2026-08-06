@@ -512,6 +512,76 @@ QADRAIN_HEADFREE_HEAD_TASK=$(jq -r '.head.active_task_id // empty' "$WORK/qadrai
 assert "AC-QADRAIN-HEAD-GUARD (positive): .head IS written with the picked row when .head was idle before invocation (regression-guards the original call site's existing behavior stays intact after the conditional guard landed; got active_task_id='${QADRAIN_HEADFREE_HEAD_TASK:-<none>}')" \
   "$([ "$QADRAIN_HEADFREE_HEAD_TASK" = "GATESAT-QADRAIN-HEADFREE" ] && echo true || echo false)"
 
+# ---- AC-QADRAIN-PRIORITY-ORDER / AC-QADRAIN-TAKE-BUDGET ----
+# FIX-DEVTEAM-QADRAIN-THROUGHPUT-CAP (architect brief docs/architecture-
+# briefs/2026-08-06-review-lane-qadrain-throughput-unblock.md §2/§3): QA-Drain
+# was the one lane in the idle-fallthrough chain still sort_by(.age) with NO
+# priority term — a same-day P0 could queue behind a 13-14d-old P2/P3 wall.
+# Positive control (PO/architect AC(c)): seed a same-day P0 row BEHIND an
+# older P2 row in review[] (P2 appears FIRST in the array / has the older
+# timestamp), assert the P0 is claimed FIRST within the batch despite being
+# younger. Isolated single-invocation fixture (same discipline as every other
+# HEAD-GUARD/AC block above) — never the shared padded fixture.
+echo ""
+echo "=== PRIORITY ORDER + TAKE_BUDGET (FIX-DEVTEAM-QADRAIN-THROUGHPUT-CAP) ==="
+
+QADRAIN_PRIO_FIXTURE=$(jq -n --arg now "$NOW" '
+  { task_board: {
+      backlog: [], ready: [], in_progress: [], qa: [],
+      review: [
+        { id: "GATESAT-QADRAIN-OLDER-P2", status: "REVIEW", priority: "P2",
+          type: "FIX", zone: "cross-service/", next_agent: "qa",
+          updated_at: "2026-07-20T00:00:00Z", created_at: "2026-07-20T00:00:00Z" },
+        { id: "GATESAT-QADRAIN-SAMEDAY-P0", status: "REVIEW", priority: "P0",
+          type: "FIX", zone: "cross-service/", next_agent: "qa",
+          updated_at: $now, created_at: $now }
+      ],
+      done: [], done_verified: []
+    },
+    head: { status: "idle", active_task_id: null, next_agent: "router",
+            updated_at: $now, updated_by: "test" }
+  }')
+echo "$QADRAIN_PRIO_FIXTURE" > "$WORK/qadrain-prio.json"
+
+# Default take_budget (--argjson OMITTED entirely — AC-QADRAIN-TAKE-BUDGET-
+# DEFAULT: backward-safe for any caller, e.g. the pre-existing main.md idle-
+# tick site before its own QA_CAP rewrite lands, that never passes it): only
+# ONE row is claimed, and it MUST be the same-day P0, not the older P2 — this
+# is only possible if priority_rank now outranks raw age in the sort.
+jq --arg now "$NOW" --slurpfile detail "$DETAIL" -f scripts/devteam-review-claim-qa-drain.jq "$WORK/qadrain-prio.json" > "$WORK/qadrain-prio-default.json"
+QADRAIN_PRIO_DEFAULT_QA=$(jq -r '[.task_board.qa[].id] | join(",")' "$WORK/qadrain-prio-default.json")
+assert "AC-QADRAIN-PRIORITY-ORDER (default take_budget=1, omitted --argjson): same-day P0 claimed FIRST despite an older P2 sitting ahead of it — priority_rank now outranks raw age (qa[]=[${QADRAIN_PRIO_DEFAULT_QA}])" \
+  "$([ "$QADRAIN_PRIO_DEFAULT_QA" = "GATESAT-QADRAIN-SAMEDAY-P0" ] && echo true || echo false)"
+QADRAIN_PRIO_DEFAULT_REVIEW=$(jq -r '[.task_board.review[].id] | join(",")' "$WORK/qadrain-prio-default.json")
+assert "AC-QADRAIN-TAKE-BUDGET-DEFAULT: with --argjson take_budget omitted, only ONE row is claimed (older P2 stays staged in review[]=[${QADRAIN_PRIO_DEFAULT_REVIEW}] for a later tick)" \
+  "$([ "$QADRAIN_PRIO_DEFAULT_REVIEW" = "GATESAT-QADRAIN-OLDER-P2" ] && echo true || echo false)"
+
+# take_budget=2 (explicit batch >1): BOTH rows claimed in the SAME invocation,
+# sharing one claimed_at/claimed_by stamp (batch-correlation idiom), and the
+# batch's own [rank, age]-highest-ranked row (the P0) is what .head narrates —
+# cosmetic only, does not gate the P2's own claim.
+jq --arg now "$NOW" --argjson take_budget 2 --slurpfile detail "$DETAIL" -f scripts/devteam-review-claim-qa-drain.jq "$WORK/qadrain-prio.json" > "$WORK/qadrain-prio-batch2.json"
+QADRAIN_BATCH2_QA_IDS=$(jq -r '[.task_board.qa[].id] | join(",")' "$WORK/qadrain-prio-batch2.json")
+assert "AC-QADRAIN-TAKE-BUDGET-BATCH: --argjson take_budget 2 claims BOTH rows in one invocation, P0 ordered first (qa[]=[${QADRAIN_BATCH2_QA_IDS}])" \
+  "$([ "$QADRAIN_BATCH2_QA_IDS" = "GATESAT-QADRAIN-SAMEDAY-P0,GATESAT-QADRAIN-OLDER-P2" ] && echo true || echo false)"
+QADRAIN_BATCH2_REVIEW_EMPTY=$(jq '.task_board.review | length' "$WORK/qadrain-prio-batch2.json")
+assert "AC-QADRAIN-TAKE-BUDGET-BATCH (review drained): review[] is empty after both eligible rows are claimed in the same batch" \
+  "$([ "$QADRAIN_BATCH2_REVIEW_EMPTY" -eq 0 ] && echo true || echo false)"
+QADRAIN_BATCH2_CLAIMED_AT_A=$(jq -r '.task_board.qa[0].claimed_at' "$WORK/qadrain-prio-batch2.json")
+QADRAIN_BATCH2_CLAIMED_AT_B=$(jq -r '.task_board.qa[1].claimed_at' "$WORK/qadrain-prio-batch2.json")
+assert "AC-QADRAIN-TAKE-BUDGET-BATCH (correlation): both batch rows share the identical claimed_at stamp ('${QADRAIN_BATCH2_CLAIMED_AT_A}' == '${QADRAIN_BATCH2_CLAIMED_AT_B}')" \
+  "$([ "$QADRAIN_BATCH2_CLAIMED_AT_A" = "$QADRAIN_BATCH2_CLAIMED_AT_B" ] && [ -n "$QADRAIN_BATCH2_CLAIMED_AT_A" ] && echo true || echo false)"
+QADRAIN_BATCH2_HEAD_TASK=$(jq -r '.head.active_task_id // empty' "$WORK/qadrain-prio-batch2.json")
+assert "AC-QADRAIN-TAKE-BUDGET-BATCH (.head narration): .head.active_task_id narrates the batch's own highest-priority row (the P0), not the older P2 (got '${QADRAIN_BATCH2_HEAD_TASK:-<none>}')" \
+  "$([ "$QADRAIN_BATCH2_HEAD_TASK" = "GATESAT-QADRAIN-SAMEDAY-P0" ] && echo true || echo false)"
+
+# take_budget larger than the eligible pool (3, only 2 rows exist): must NOT
+# error or pad — same $take = min(take_budget, candidates length) contract.
+jq --arg now "$NOW" --argjson take_budget 3 --slurpfile detail "$DETAIL" -f scripts/devteam-review-claim-qa-drain.jq "$WORK/qadrain-prio.json" > "$WORK/qadrain-prio-overbudget.json"
+QADRAIN_OVERBUDGET_QA_N=$(jq '.task_board.qa | length' "$WORK/qadrain-prio-overbudget.json")
+assert "AC-QADRAIN-TAKE-BUDGET-OVERBUDGET: take_budget=3 against only 2 eligible rows claims exactly 2 (min(take_budget, candidates length)) — no error, no padding" \
+  "$([ "$QADRAIN_OVERBUDGET_QA_N" -eq 2 ] && echo true || echo false)"
+
 for f in t1c t2c t3c t4c t5c; do
   jq -e . "$WORK/$f.json" >/dev/null 2>&1 || { echo "  [FAIL] $f.json is not even valid JSON"; FAIL=1; continue; }
   bun scripts/orch-validate.mjs "$WORK/$f.json" >/dev/null 2>&1 \

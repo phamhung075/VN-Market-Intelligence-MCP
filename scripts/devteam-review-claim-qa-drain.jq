@@ -30,9 +30,14 @@
 # `review_note` fields directly against current `main` HEAD — spawn THIS
 # script's claimed rows with that mode, never the normal `pipeline` mode.
 #
-# Selection (AGE-ordered, not priority-ordered — mirrors the row's own
-# 2026-07-12 SUGGESTED REMEDY verbatim: "pick oldest by (updated_at //
-# reviewed_at // created_at)"):
+# Selection (PRIORITY-ordered, age tiebreak — FIX-DEVTEAM-QADRAIN-
+# THROUGHPUT-CAP, architect brief docs/architecture-briefs/2026-08-06-
+# review-lane-qadrain-throughput-unblock.md §2/§3: this was the one lane in
+# the entire idle-fallthrough chain still sort_by(.age) with NO priority
+# term — BOUNDED-1/SLS/RLC/DRS all already order by [priority_rank, ...].
+# Live-demonstrated need: 27 P0 rows in review[], 7 arrived same-day
+# (age=0d), would otherwise queue behind a ~226-row FIFO wall (oldest 14d)
+# dominated by P2/P3 FACTORY-* cleanup rows under pure age-order):
 #   - candidate lane: .task_board.review[]
 #   - status == "REVIEW" (excludes BLOCKED rows — a BLOCKED review row is
 #     NOT ready for sign-off by construction; negative control, PO AC(4):
@@ -47,14 +52,33 @@
 #     auto-dispatch (their correct destination is deliberate owner
 #     assignment, not a blind qa spawn against a row that was never even
 #     ROUTED to qa in the first place).
-#   - age key: the first present-and-non-null of `updated_at`, then
-#     `reviewed_at`, then `created_at`, parsed as epoch seconds. A row
-#     carrying NONE of the three is treated as the OLDEST possible
-#     (epoch 0 / 1970-01-01) — conservative toward surfacing an
+#   - priority key: `priority_rank` (0=P0/critical ... 9=unset), imported
+#     from the already-`include`-d scripts/lib/devteam-eligibility.jq — no
+#     new predicate file, same shared def BOUNDED-1/SLS/RLC/DRS already use.
+#   - age key (tiebreak within the same priority_rank, unchanged from the
+#     original single-priority design): the first present-and-non-null of
+#     `updated_at`, then `reviewed_at`, then `created_at`, parsed as epoch
+#     seconds. A row carrying NONE of the three is treated as the OLDEST
+#     possible (epoch 0 / 1970-01-01) — conservative toward surfacing an
 #     indeterminately-stale row rather than silently deprioritizing it
 #     behind timestamped peers.
-#   - exactly ONE row claimed per invocation (mirrors BOUNDED-1/SLS/RLC's
-#     one-at-a-time discipline)
+#   - candidates sorted by `sort_by([rank, age])` — full ascending order,
+#     not just the head element, since a batch (see below) can now take
+#     more than one.
+#   - BATCH claim, up to `$take_budget` rows per invocation (was: exactly
+#     ONE row, mirroring BOUNDED-1/SLS/RLC's one-at-a-time discipline —
+#     superseded here by the same brief's §1/§3: one-row-per-tick throughput
+#     cannot drain a ~120+-row backlog faster than it refills).
+#     `$take_budget` is read via `$ARGS.named.take_budget` (NOT a bound
+#     `--argjson` variable referenced directly) so the script compiles and
+#     runs identically whether or not the caller passes it — defaults to
+#     `1` (`$ARGS.named.take_budget // 1`) when omitted, which is BOTH the
+#     original single-claim behavior AND backward-safe for the pre-existing
+#     `docs/agents/dev-team/flow/main.md` call site until its own
+#     head-decoupled rewrite (FIX-DEVTEAM-QADRAIN-INVOCATION-HEAD-DECOUPLED,
+#     agent-father) starts passing a real `QA_CAP`/`TAKE_BUDGET` value.
+#     Actual take = `min($take_budget, candidates length)` — never errors or
+#     pads when fewer than `$take_budget` rows are eligible.
 #
 # DISPATCH: mirrors SLS/RLC — direct-dispatch `qa`, no zone-detect
 # indirection (this lane's next_agent is always literally "qa" by
@@ -69,15 +93,21 @@
 # in_progress-budget lanes. The caller gates on `.task_board.qa|length < 1`
 # read immediately before invoking this script.
 #
-# Mutation (single row only): review[] -> qa[] ; status REVIEW -> QA ;
-# stamp claimed_at/claimed_by ; CONDITIONALLY set .head (see HEAD-SAFE CLAIM
-# below). Never touches backlog[]/ready[]/in_progress[] — orthogonal lane,
+# Mutation (batch of up to $take_budget rows, was single-row only): each
+# candidate in the batch moves review[] -> qa[] ; status REVIEW -> QA ;
+# ALL rows in the batch share the SAME claimed_at/claimed_by stamp
+# (batch-correlation idiom, architect brief §3/08-01 brief §1a — lets a
+# downstream consumer group them by that stamp) ; CONDITIONALLY set .head
+# to the batch's own [rank, age]-highest-ranked row only (see HEAD-SAFE
+# CLAIM below — cosmetic narration, does not gate the other rows' move).
+# Never touches backlog[]/ready[]/in_progress[] — orthogonal lane,
 # orthogonal budget.
 #
 # HEAD-SAFE CLAIM (FIX-DEVTEAM-QADRAIN-HEAD-WRITE-CONDITIONAL,
 # docs/architecture-briefs/2026-07-29-qadrain-head-slot-decouple.md §3):
-# the review[]->qa[] lane move above ALWAYS happens (selection/lane-move
-# logic is unchanged) but the `.head` write is now CONDITIONAL on
+# the review[]->qa[] lane move above ALWAYS happens for every row in the
+# batch (selection/lane-move logic is unchanged, just widened from 1 row to
+# up to $take_budget) but the `.head` write is now CONDITIONAL on
 # `.head` being free ($hs in {idle,done} or $ha == null). PO's live
 # dry-run 2026-07-29T19:2xZ against the real board proved the prior
 # unconditional `.head = {...}` clobbered a genuinely-running developer
@@ -100,9 +130,11 @@
 # NO hardcoded task-id literals anywhere in this file (grep-verified).
 #
 # Usage (ALWAYS through the orch-apply.sh gate — never raw mv/cp/>; ALWAYS
-# invoked from the project root):
+# invoked from the project root). `--argjson take_budget` is OPTIONAL — omit
+# it entirely for the original single-claim behavior (defaults to 1):
 #   NOW=$(date -u +%Y-%m-%dT%H:%M:%SZ)
 #   jq --arg now "$NOW" \
+#     --argjson take_budget 10 \
 #     --slurpfile detail docs/data/orch/archive/backlog-detail.json \
 #     -f scripts/devteam-review-claim-qa-drain.jq \
 #     docs/data/orch/orch-state.json | bash scripts/orch-apply.sh
@@ -119,27 +151,31 @@ def age_epoch:
     else ( try ($ts | fromdateiso8601) catch 0 )
     end;
 
-(detail_items_from($detail)) as $detail_items
+($ARGS.named.take_budget // 1) as $take_budget
+| (detail_items_from($detail)) as $detail_items
 | ( [ .task_board.review
     | to_entries[]
     | select(.value.status == "REVIEW")
     | select((.value | effective_next_agent($detail_items)) == "qa")
-    | { idx: .key, row: .value, age: (.value | age_epoch) }
-  ] | sort_by(.age)
+    | { idx: .key, row: .value, rank: (.value | priority_rank), age: (.value | age_epoch) }
+  ] | sort_by([.rank, .age])
 ) as $candidates
 | if ($candidates | length) == 0 then
     .   # nothing REVIEW+next_agent==qa waiting — no-op
   else
-    ($candidates[0]) as $picked
-    | ($picked.row.id) as $picked_id
+    ([$take_budget, ($candidates | length)] | min) as $take
+    | ($candidates[0:$take]) as $batch
+    | ($batch[0]) as $head_picked
+    | ($head_picked.row.id) as $picked_id
+    | ([$batch[].idx]) as $batch_idx
     | .task_board.qa = ((.task_board.qa // []) + [
-        ($picked.row + {
+        $batch[] | (.row + {
             status: "QA",
             claimed_at: $now,
             claimed_by: "dev-team (review-lane qa-drain)"
           })
       ])
-    | .task_board.review = [ .task_board.review | to_entries[] | select(.key != $picked.idx) | .value ]
+    | .task_board.review = [ .task_board.review | to_entries[] | select((.key as $k | $batch_idx | index($k)) == null) | .value ]
     | ((.head.status // "idle") as $hs
        | (.head.active_task_id // null) as $ha
        | ($hs == "idle" or $hs == "done" or $ha == null)) as $head_free
@@ -149,9 +185,10 @@ def age_epoch:
             status: "in_progress",
             active_task_id: $picked_id,
             next_agent: "qa",
-            next_action: ("Review-Lane QA-Drain claim of " + $picked_id
+            next_action: ("Review-Lane QA-Drain claim of " + ($batch | length | tostring) + " row(s), highest-ranked " + $picked_id
               + " — spawn qa in verify-committed mode (branch:null direct-commit row, no task branch/handoff — "
-              + "see docs/agents/qa/flow/main.md § Direct-Commit Verify; do NOT use the normal pipeline JUMP-TO, it requires a branch this row does not have)."),
+              + "see docs/agents/qa/flow/main.md § Direct-Commit Verify; do NOT use the normal pipeline JUMP-TO, it requires a branch this row does not have). "
+              + "Batch of " + ($batch | length | tostring) + " row(s) share this claimed_at stamp in .task_board.qa[] — correlate by claimed_at to dispatch the rest."),
             updated_at: $now,
             updated_by: "dev-team (review-lane qa-drain)"
           }
