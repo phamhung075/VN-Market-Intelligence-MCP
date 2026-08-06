@@ -1,4 +1,4 @@
-<!-- size-justification: 141L — atomic maintenance flow with inline 15-check audit table + 5-check sweep matrix; splitting individual check rows yields no token benefit. CADRAT-3 2026-08-04: added Pre-Check gate (git diff --name-only HEAD~3..HEAD, ~10L) before Steps 1-2 — skips the orphan+roster sweep on cycles with zero .claude/agents/*.md or docs/agents/*/flow/*.md changes, mirroring claude-manager-helper/flow/main.md's precedent; Steps 3-5 stay reachable and run with empty scan-orphans output. -->
+<!-- size-justification: 145L — atomic maintenance flow with inline 15-check audit table + 5-check sweep matrix; splitting individual check rows yields no token benefit. CADRAT-3 2026-08-04: added Pre-Check gate (git diff --name-only HEAD~3..HEAD, ~10L) before Steps 1-2 — skips the orphan+roster sweep on cycles with zero .claude/agents/*.md or docs/agents/*/flow/*.md changes, mirroring claude-manager-helper/flow/main.md's precedent; Steps 3-5 stay reachable and run with empty scan-orphans output. CHORE-TEAM-TOOL-RECHECK-LOCAL-CRON 2026-08-06 (+4L): new Step 5b dispatches to `flow/team-tool-recheck.md` (own artifact family, `docs/agent-memory/health/team-tool-recheck-*.md`) — re-establishes the dead cloud-RemoteTrigger writer's static, gateway-free subset on this file's existing daily cron cadence; runs unconditionally, independent of the Pre-Check gate above. -->
 # Agent Father — Keep (Maintenance) Flow — Thin Dispatcher
 
 **Tools:** `docs/agents/tools/package/agent-father.md`
@@ -43,6 +43,10 @@ Output: ORPHAN_FLOW / ORPHAN_NOTEBOOK / ORPHAN_PACKAGE / MISSING_FLOW / MISSING_
 **3-5. Top-5 checks + auto-fix + stale notebook report** → run sub-flow: `docs/agents/agent-father/flow/sweep-fixes.md`
 
 Output: auto-fix log (mechanical/cosmetic only); escalation list (anything requiring manual authoring); stale notebook counts.
+
+**5b. Team tool-grant vs declared-boundary recheck (CHORE-TEAM-TOOL-RECHECK-LOCAL-CRON)** → run sub-flow: `docs/agents/agent-father/flow/team-tool-recheck.md`
+
+Writes `docs/agent-memory/health/team-tool-recheck-<date>-<time>.md` (own artifact family, separate from this agent's notebook). Runs every cycle (daily, this cron) — do not skip even when Steps 1-2 were skipped by the Pre-Check gate above, since a tool-grant drift is independent of `.claude/agents/*.md`/flow-file changes in the last 3 commits.
 
 **6. Generate maintenance report**
 

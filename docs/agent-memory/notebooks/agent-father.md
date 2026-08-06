@@ -1,5 +1,13 @@
 # Agent Father — Notebook
 
+## Fix (router-direct dispatch, P2) 2026-08-06T07:39Z FIX-AUDITOR-EMPTYTABLE-CHECK-NO-WRITER-DISCRIMINATOR + CHORE-TEAM-TOOL-RECHECK-LOCAL-CRON
+- **Row 1 (empty-table discriminator):** `docs/agents/system-auditor/audit-dimensions.md` is already at its own 200L hard cap (header says split, not grow) and the `AUDIT_TIER=DATA` check family (`.claude/commands/crons/cron-db-data-integrity.md`) had ZERO registry entry anywhere — new `docs/agents/system-auditor/flow/data-writer-provenance.md` fills both gaps: writer-provenance discriminator (class (a) scheduled-pipeline may stay CRITICAL / (b) test-only-writer INFO ceiling / (c) on-demand-tool-writer INFO-WARN ceiling), a missing-table-vs-empty-table split (fixes the `pdf_documents` rendered-identically finding), a seeded table classification (price_alerts=c, alert_engine_records=b, deep_fetch_stats=a-adjacent unresolved), and an explicit negative-control requirement so class (a) tables (`daily_ohlcv`) can't be silenced. `flow/main.md` gets a 1-line changelog + 1 new `AUDIT_TIER` extraction bullet cross-referencing it — no dispatch rewire (still falls through to the tier-3 default, unchanged behavior).
+- **Row 1 out-of-zone:** the actual actuator is inline free text in `.claude/commands/crons/cron-db-data-integrity.md` — outside `commit_zone.allowed`. Flagged via `docs/signals/2026-08-06-fix-auditor-emptytable-writer-discriminator-handoff.json` (left uncommitted for dev-team's drain, same pattern as the prior notebook-compose-actuator handoff) recommending either a direct transcription or, better, a deterministic `scripts/db-empty-table-classify.sh` (developer scope).
+- **Row 2 (team-tool-recheck):** historical writer (122 files, 2026-06-13→06-23, ~every 2h) was a cloud-RemoteTrigger-driven LIVE MCP-probe sweep (tool param-name drift, cron/VPS health) — `agent-father` holds no `mcp__gateway__call_tool` grant (confirmed tools line) and cannot reproduce that. Re-established the STATIC subset instead: new `docs/agents/agent-father/flow/team-tool-recheck.md`, wired into `keep.md` as Step 5b, runs on the EXISTING daily `cron-agent-father.md` cadence (`23 14 * * *`, already <30d — no new cron registration, no `.claude/commands/crons/` edit needed). Checks tool-grant vs declared-write-boundary consistency across the 7 boundary-declared cowork agents (per `docs/architecture-briefs/2026-08-06-guard-cowork-notebook-agent-write-boundary.md` §1), explicitly excluding `fb-market-poster`/`orch-sentinel`/`system-auditor` (different class, reasoned in the flow doc).
+- **Row 2 positive control (AC requirement) — RAN LIVE, not just designed:** wrote `docs/agent-memory/health/team-tool-recheck-2026-08-06-0739.md`, first run since 2026-06-23. Correctly flags alert-commander/market-watcher/news-scout CRITICAL (`Bash` granted by commit `610110e16` 2026-07-31 for commit-mutex/coverage-stamp.sh, description text never updated — still reads "No other filesystem writes permitted" unqualified); correctly leaves bctc-analyst/digest-predict/unified-agent/qa-responder CLEAN (no `Bash`). `write_boundary` field confirmed absent from `system-map.json` (0 matches) and no `agent-write-boundary-guard` hook registered in either settings file — mechanical-enforcement status recorded as prose-only.
+- **Row 2 out-of-zone:** the live-MCP-probe remainder (tool schema drift, cron/VPS health) flagged via `docs/signals/2026-08-06-chore-team-tool-recheck-livescope-handoff.json` — recommends po assign a gateway-bound owner (system-auditor extension candidate), not a revival of the old ~2h cadence (that granularity was for live-incident response; the now-separated static check doesn't need it).
+- **Not implemented (adjacent but distinct, not this task's scope):** `GUARD-COWORK-NOTEBOOK-AGENTS-SELF-EDIT-FLOW-DOC` closed to `done[]` by architect (brief complete) but its actual mechanism (§4.1 `system-map.json write_boundary` + §4.2 PreToolUse hook) is NOT implemented — confirmed live (0 `write_boundary` keys, no hook file). This is why Row 2's fallback uses the brief's hardcoded 7-agent list instead of reading the (not-yet-existing) authoritative field; noted, not fixed here — out of these two rows' scope.
+
 ## Fix (router-direct dispatch, P1) 2026-08-06T07:11:10Z FIX-SYSAUDITOR-NOTEBOOK-COMPOSE-ACTUATOR
 - **Scope call:** brief (docs/architecture-briefs/2026-08-06-fix-system-auditor-notebook-compose-actuator-and-immutability-blindspot.md) named fixes A-E "for agent-father", but A/B/C/D's actual actuators/hooks live under `scripts/` — outside `commit_zone.allowed` (same precedent as TE-T02/TE-T12/TE-T14/TE-T21, `c72b5ca34`). Split each fix into its in-zone doc/spec half (done below) vs out-of-zone code half (flagged via signal).
 - **E (done):** `.claude/skills/notebook-write/SKILL.md` AC-3 Step 2 collapsed the Edit(whole-file `old_string`)/Write conflict to Write-only, matching `docs/agents/system-auditor/flow/main.md`. First cut breached cap (201L/12138B vs 200L/12000B — live `context_bloat_breach` signal fired, routed-to-po); trimmed rationale prose instead of adding a justification header — final 198L/11926B, both under cap, signal left for po as the accurate record.
@@ -54,28 +62,3 @@
   unrelated, unreviewed peer content under my authorship. Router (file owner,
   already directly monitoring this exact task) should verify/commit via the
   live file directly, not via git log.
-
-## Fix (dev-team Step 3, CI-red P0) 2026-08-05T17:54:35Z FIX-CI-TASKCLAIM-PO-FLOW-OWNER-SESSION-PAYDOWN
-- Added `owner_client_session` to `sprint-kickoff.md:44` (`task_claim`) and `sprint-signoff.md`
-  `:28`+`:42` (both `task_release`) — the 3 PO-flow sites the row scoped, re-derived param
-  names/lines from `coordinationTools.ts:104-110,199-205` (both non-optional `z.string()`), not
-  copied from a sibling doc. Substitution instruction mirrors `pm/flow/main.md:127` /
-  `commit-mutex/SKILL.md:36`. `scripts/audits/task-claim-owner-session-lint.sh --check` → PASS
-  RC=0, 0 new offenders (270 files) on the actual committed working tree.
-- Did NOT commit AC2 (baseline trim, drop `docs/agents/po/flow/**` from
-  `task-claim-owner-session-baseline.json`) or AC5 (lint FAIL message distinguishes
-  line-moved-grandfathered from genuinely-new call sites, implemented + 2 new tests added,
-  9/9 suite green): both files sit in `scripts/`/`docs/data/`, outside `commit_zone.allowed`
-  even though the row's own scope note names them — same precedent as this file's TE-T02 entry
-  today (S1-S20/TE-T12/TE-T14/TE-T21). Built + fully verified locally, then reverted
-  (`git checkout --`) to keep the commit zone-clean; exact diff supplied in RETURN for a
-  developer to land in one commit.
-- Confirmed live (not assumed) that `mcp__gateway__call_tool` / `mcp__gateway__list_servers` /
-  `mcp__gateway__search_tools` / bare `mcp__vn-market__task_release` all error "No such tool
-  available" — matches `commit-mutex/SKILL.md`'s own documented statement that agent-father has
-  "no gateway binding — mutex physically unreachable" (not a bug, the designed architecture).
-  Could not self-`task_release` `task:FIX-CI-TASKCLAIM-PO-FLOW-OWNER-SESSION-PAYDOWN`; router/
-  dev-team holds gateway access and releases on my behalf, per the dispatch note.
-- Sibling row `FIX-TASKCLAIM-OWNER-CLIENT-SESSION-MISSING-FLEET-FLOW-DOCS` (review[]/next_agent
-  =qa) untouched — its own PO scope-fence note already states `sprint-kickoff.md:44` is not its
-  defect; did not add/alter any field on it.
