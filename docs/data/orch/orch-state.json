@@ -2316,6 +2316,19 @@
         "payload_ref": null,
         "provenance": "detector",
         "audit_cycle_tag": "cron:auditor-t1:2026-08-05T16:30Z"
+      },
+      {
+        "id": "cowork-20260806T063614Z-chef-evening-marker-leak",
+        "ts": "2026-08-06T06:36:14Z",
+        "from": "cowork-team",
+        "to": "po",
+        "type": "agent_flow_defect",
+        "summary": "chef-evening (2026-08-05) leaked published:chef-evening:2026-08-05 marker on agent death mid-composition (session-level API error, not a designed silent-exit or token-budget exhaustion — new trigger variant of feedback_chef_leaks_published_marker_on_silent_exit). RAW-verified via get_market_message_digest: no mcp-user post landed for the evening slot. Router released the marker (matched actual owner_client_session) and re-dispatched unified-agent for chef-evening. 3rd+ documented instance of this leak class (07-03 designed-exit, 07-29 token-budget, 08-05 this one) — chef.md still claims the marker ~650L before send_telegram per the memory's root-cause note (UC-CCA-P3 late-claim redesign still not shipped).",
+        "severity": "MED",
+        "status": "NEW",
+        "payload_ref": null,
+        "provenance": "router",
+        "audit_cycle_tag": null
       }
     ],
     "last_triaged_at": "2026-07-29T06:25:00Z",
