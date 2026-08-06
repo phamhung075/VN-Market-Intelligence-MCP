@@ -1,0 +1,40 @@
+{
+  "id": "bca-20260806T151300Z",
+  "ts": "2026-08-06T15:13:00Z",
+  "from": "bctc-analyst",
+  "to": "dev-team",
+  "type": "esc-deep-dive-request",
+  "summary": "ESC deep-dive: FPT Q1-2026 ESC-5",
+  "severity": "HIGH",
+  "status": "NEW",
+  "payload_ref": null,
+  "payload": {
+    "trigger_id": "ESC-5",
+    "ticker": "FPT",
+    "quarter": "Q1-2026",
+    "report_id": "e8ea3df5-3f32-413d-a3eb-c71634c0438d",
+    "guard_key": "esc-deepdive:FPT:Q1-2026:ESC-5",
+    "context": {
+      "low_confidence_unit_ids": [
+        "unit-0008",
+        "unit-0009",
+        "unit-0010",
+        "unit-0011",
+        "unit-0012",
+        "unit-0013",
+        "unit-0014"
+      ],
+      "min_confidence": 0.45
+    },
+    "all_esc_fired": [
+      "ESC-5"
+    ],
+    "note": "Re-fire, not new: same 15-unit refine (refined_at 2026-05-31, unchanged since c141 2026-08-05) — prior guard TTL (24h from c141 claim 2026-08-05T00:11Z) expired ~2026-08-06T00:11Z; this cycle (15:00Z slot) live-rechecked per carry-over and re-claimed a fresh guard. Core statements (B01/B02/B03, unit-0000..0007) confidence 0.55-0.85, balance_check:PASSED. Only footnote-only units (11-33: PP&E schedule, related-party, borrowings schedule, subsidiary registry, equity movements, commitments) score <0.50."
+  },
+  "_processed": {
+    "fingerprint": "799eb44de08627009931690d6ec466bbaec6471c01d059f8eaac6399fb08134e",
+    "processedAt": "2026-08-06T15:13:52Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

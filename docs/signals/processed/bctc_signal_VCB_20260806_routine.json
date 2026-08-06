@@ -1,0 +1,17 @@
+{
+  "ticker": "VCB",
+  "signal_type": "bctc_signal",
+  "quarter": "Q1-2026",
+  "mode": "routine",
+  "beat_miss": null,
+  "product": "Retail and corporate banking, bancassurance, FX/trade finance",
+  "customer": "Retail depositors, corporate borrowers, SOE and large-enterprise clients",
+  "ops": "Q1-2026 (get_bctc_full RECOVERED this cycle): net interest income 17,421bn VND, NI 9,462bn, ROE 4.2% (quarterly, get_bctc_full) / 16.7% (sector-comparison annualized basis, PE 14.1 vs sector median 9.0 = +57% premium, PB +45% premium, ROE below sector median 17.6%). OCF/NI ratio 1.37x this quarter, full 4/4-quarter cash-flow coverage this cycle (up from 3/4 in prior cycles) — ratio stable vs Q4-2025 (1.15x); divergence_ratio 0.37 < 0.40 threshold, ESC-3 FALSE, no forensic flag.",
+  "mgmt": "Chủ tịch VCB publicly stated crypto-asset risk cannot be managed via traditional methods (2026-08-06 news, banking-sector context, not a financial-statement item — noted for narrative context only).",
+  "_processed": {
+    "fingerprint": "9785b853c3fcb2634922731b2f566a7afaa1d361e4f1f3c61b18f585e6e1326c",
+    "processedAt": "2026-08-06T15:13:52Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

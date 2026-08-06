@@ -1,0 +1,17 @@
+{
+  "ticker": "HPG",
+  "signal_type": "bctc_signal",
+  "quarter": "Q1-2026",
+  "mode": "routine",
+  "beat_miss": null,
+  "product": "Steel manufacturing (long/flat steel, HRC), construction materials",
+  "customer": "Construction/infrastructure contractors, downstream manufacturers, export markets",
+  "ops": "Q1-2026 (get_bctc_full RECOVERED this cycle): revenue 52,901bn VND, gross margin 15.8%, NI 9,056bn, ROE 6.5% (quarterly, get_bctc_full) / 12.7% (sector-comparison annualized basis, PE 14.2 vs sector median 32.6 = -57% discount). Operating_cf AND operating_profit fields both read 0 this cycle — same known 0/0/0 extraction defect flagged in prior cycles, discarded as implausible (validation warning: 'Net profit exceeds gross profit — possible non-operating income' corroborates the extraction gap, not a real signal). Only 3/4 quarters of cash-flow coverage available — ESC-3 held at DATA-COVERAGE-LIMITED (guard esc-datacov:HPG:Q1-2026:ESC-3 still held).",
+  "mgmt": "Not independently re-verified this cycle. Q2-2026 report QUÁ HẠN on the filing calendar despite the PDF (HPG_2026_Q2.pdf) already on file since 2026-08-01 — extraction/calendar-flip lag, not a management filing failure.",
+  "_processed": {
+    "fingerprint": "50ce3d8f1b9aca9b9c938a1acbbbe45906ab0f53c385d71f02962202a1d836e1",
+    "processedAt": "2026-08-06T15:13:52Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

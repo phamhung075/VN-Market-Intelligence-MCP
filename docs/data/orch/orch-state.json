@@ -2949,7 +2949,7 @@
         "type": "recurring-bug-corroboration",
         "summary": "4th analysis-only-exit occ (T1, 0 writes). Orphaned real finding: mcp-server 4 restarts ~12:25Z, docker-verified.",
         "severity": "MED",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": "docs/signals/processed/sys-auditor-analysis-only-exit-4th-20260806.json"
       },
       {
@@ -2960,7 +2960,7 @@
         "type": "microservice_degraded",
         "summary": "rag-service memory pressure 96.56% (below floor 40MiB)",
         "severity": "WARN",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": null,
         "provenance": "detector",
         "audit_cycle_tag": "cron:auditor-t1:2026-08-06T15:00Z"
@@ -12552,31 +12552,6 @@
         "not_duplicate_of": "FIX-AUDITOR-B12-DOUBLE-INVOKE-EMIT-MARKER-LOSS covers double-invocation + marker loss in emit-audit-signal.sh. This row is the emit-dashboard-row.sh flag-threading defect. They intersect: that row's why_the_obvious_fixes_are_wrong item (2) asserts the --telegram-sent flag 'is fed by invocation 1's OK outcome' — PO refuted that premise by grep this cycle and corrected it in place on that row.",
         "zone_note": "Split-zone by construction: scripts/ is outside agent-father's commit_zone, the flow-doc call sites are inside it. Kept as ONE row owned by generic developer (cross-service/) so the script default and its callers cannot land out of step — splitting it is how AC-1 ships without AC-2.",
         "updated_at": "2026-08-06T13:45:29Z"
-      },
-      {
-        "id": "FIX-EMITSIGNAL-E3-RC3-FATAL-NORETRY-DROPS-DETECTOR-FINDING",
-        "type": "FIX",
-        "title": "emit-audit-signal.sh treats orch-apply rc=3 as fatal-no-retry while rc=2 retries — a raced/empty candidate silently drops the finding off the board plane entirely (scheduler_locks-FAIL: 5 fires today, 0 signal_queue rows ever written)",
-        "status": "BACKLOG",
-        "priority": "P1",
-        "size": "S",
-        "zone": "cross-service/",
-        "next_agent": "developer",
-        "created_at": "2026-08-06T14:53:40Z",
-        "created_by": "po (triage 2026-08-06T14:53Z)",
-        "updated_at": "2026-08-06T14:55:19Z",
-        "updated_by": "po (triage 2026-08-06T14:53Z)",
-        "baseline_pass": "9408",
-        "files": [
-          "scripts/emit-audit-signal.sh",
-          "scripts/orch-apply.sh",
-          "scripts/emit-audit-signal.test.sh"
-        ],
-        "scope": "In scripts/emit-audit-signal.sh _e3_write_row() (lines 427-461): the retry loop treats rc=2 (CAS mismatch) as retryable via `continue`, and EVERYTHING else — including rc=3 — as fatal via the `else` branch (line 440-444, `ABORT e3-write-failed rc=$rc`, return 1, no retry). Per scripts/orch-apply.sh's own exit-code contract (line 48) rc=3 = 'usage error (empty stdin, live file missing, I/O error)'. Two of those three are TRANSIENT under peer write pressure, not usage errors: `candidate=$(jq ... \"$ORCH_STATE_FILE\")` on line 433 yields an EMPTY string when that read races a concurrent peer rename, and empty stdin is exactly what orch-apply.sh exits 3 on. So a transient race is classified as a permanent usage error and the row is dropped with no retry. Fix direction (developer to confirm): distinguish empty-candidate (retryable, same lane as rc=2) from genuine usage error, OR assert `[ -n \"$candidate\" ]` before invoking and retry when it is empty. Do NOT blanket-retry rc=3 — a genuinely missing live file must still fail loud.",
-        "evidence": "RAW, this tick. (a) 5 BUG-channel telegrams today, ALL check_id=scheduler_locks-FAIL, ids sys-20260806T121955-7ca0 / T140244-4c82 / T140520-303c / T140645-1028 / T141055-7db6 (report ids 4411, 4419, 4422, 4424, 4428). (b) Decisive: `jq '[.signal_queue.rows[] | select((.summary//\"\")|test(\"scheduler_lock\";\"i\"))] | length'` on the live hot file returns 0 — not one of the 5 findings ever reached the board. (c) 4 of the 5 cluster inside 14:02-14:11Z, the tick's heaviest orch-state write window (dev-team drain + auditor c62/c63 + PO board mint all writing), which is what a read-side race predicts and what a genuine usage error does not. (d) Other checks in the SAME cycles emitted fine (A-30 rows sys-20260806T143821-0c09 and T144250-77d3 both landed), so this is not a blanket emitter outage.",
-        "why_this_row_exists": "MINTED after a prior-art probe returned no owner. The nearest 9 candidates were read and all own a DIFFERENT mechanism: FIX-ORCHSTATE-SIGNALQUEUE-UNCOMMITTED-ROWS-LOST-TO-PEER-FULLDOC-WRITE is a row that WAS written then clobbered by a peer full-doc write; this row is a signal NEVER written at all. FIX-EMITSIGNAL-BUGTELEGRAM-NO-TEST-SINK-GATE owns the bug-telegram sink, not the E-3 write path. FIX-AUDITOR-B12-DOUBLE-INVOKE-EMIT-MARKER-LOSS owns marker loss on double-invoke. FIX-SIGNALQUEUE-DUP-ID-GUARD owns id collision. None covers rc=3 classification.",
-        "po_rationale": "P1 not P0: the finding is not fully lost — the anti-false-green BUG telegram still fires (line 336-340), which is the only reason this was detectable at all. So the detector plane degrades to telegram-only rather than going dark. But that is precisely the failure shape feedback_auditor_signalqueue_append_always_telegram_only_dedup already names, and the E-3 append-always contract (system-auditor/init.md:38) exists specifically so findings survive on the BOARD plane where PO triage reads them — a contract this rc=3 branch silently voids. Note the dropped check is itself an anomaly (scheduler_locks-FAIL), so the class of finding being lost is not benign.",
-        "test_note": "scripts/emit-audit-signal.test.sh already has T7 (E-3 read-back failure) and T8 (E-3 write failure rc=1, no retry). Add the missing sibling: rc=3-from-empty-candidate must RETRY and succeed on a later attempt, while rc=3-from-missing-live-file must still abort loud. Both branches, per feedback_fleetwide_gate_validated_on_one_file_optout_allowlist — do not validate on one."
       }
     ],
     "closed_sprints": [
@@ -22805,6 +22780,35 @@
         "updated_by": "developer",
         "commit_sha": "7552421bc",
         "note": "scripts/notebook-compose.sh landed (mktemp+mv actuator, mirrors auditor-notebook-commit.sh's marker contract) + shared scripts/agents-flow/lib/notebook-section-direction.sh (notebook-auto-prune.sh re-wired to source it, 8/8 unchanged) + scripts/notebook-compose.test.sh 9/9 (T1 = AC-4 negative-control replay of the 0fcc6a5d2 shape, proves it structurally unreachable) + CANONICAL pointer docs/policies/dev-standards.md. Does NOT rewire docs/agents/system-auditor/flow/main.md (agent-father's zone/follow-up, flagged via docs/signals/2026-08-06-notebook-compose-script-actuator-landed.json)."
+      },
+      {
+        "id": "FIX-EMITSIGNAL-E3-RC3-FATAL-NORETRY-DROPS-DETECTOR-FINDING",
+        "type": "FIX",
+        "title": "emit-audit-signal.sh treats orch-apply rc=3 as fatal-no-retry while rc=2 retries — a raced/empty candidate silently drops the finding off the board plane entirely (scheduler_locks-FAIL: 5 fires today, 0 signal_queue rows ever written)",
+        "status": "REVIEW",
+        "priority": "P1",
+        "size": "S",
+        "zone": "cross-service/",
+        "next_agent": "qa",
+        "created_at": "2026-08-06T14:53:40Z",
+        "created_by": "po (triage 2026-08-06T14:53Z)",
+        "updated_at": "2026-08-06T15:15:14Z",
+        "updated_by": "developer",
+        "baseline_pass": "9408",
+        "files": [
+          "scripts/emit-audit-signal.sh",
+          "scripts/orch-apply.sh",
+          "scripts/emit-audit-signal.test.sh"
+        ],
+        "scope": "In scripts/emit-audit-signal.sh _e3_write_row() (lines 427-461): the retry loop treats rc=2 (CAS mismatch) as retryable via `continue`, and EVERYTHING else — including rc=3 — as fatal via the `else` branch (line 440-444, `ABORT e3-write-failed rc=$rc`, return 1, no retry). Per scripts/orch-apply.sh's own exit-code contract (line 48) rc=3 = 'usage error (empty stdin, live file missing, I/O error)'. Two of those three are TRANSIENT under peer write pressure, not usage errors: `candidate=$(jq ... \"$ORCH_STATE_FILE\")` on line 433 yields an EMPTY string when that read races a concurrent peer rename, and empty stdin is exactly what orch-apply.sh exits 3 on. So a transient race is classified as a permanent usage error and the row is dropped with no retry. Fix direction (developer to confirm): distinguish empty-candidate (retryable, same lane as rc=2) from genuine usage error, OR assert `[ -n \"$candidate\" ]` before invoking and retry when it is empty. Do NOT blanket-retry rc=3 — a genuinely missing live file must still fail loud.",
+        "evidence": "RAW, this tick. (a) 5 BUG-channel telegrams today, ALL check_id=scheduler_locks-FAIL, ids sys-20260806T121955-7ca0 / T140244-4c82 / T140520-303c / T140645-1028 / T141055-7db6 (report ids 4411, 4419, 4422, 4424, 4428). (b) Decisive: `jq '[.signal_queue.rows[] | select((.summary//\"\")|test(\"scheduler_lock\";\"i\"))] | length'` on the live hot file returns 0 — not one of the 5 findings ever reached the board. (c) 4 of the 5 cluster inside 14:02-14:11Z, the tick's heaviest orch-state write window (dev-team drain + auditor c62/c63 + PO board mint all writing), which is what a read-side race predicts and what a genuine usage error does not. (d) Other checks in the SAME cycles emitted fine (A-30 rows sys-20260806T143821-0c09 and T144250-77d3 both landed), so this is not a blanket emitter outage.",
+        "why_this_row_exists": "MINTED after a prior-art probe returned no owner. The nearest 9 candidates were read and all own a DIFFERENT mechanism: FIX-ORCHSTATE-SIGNALQUEUE-UNCOMMITTED-ROWS-LOST-TO-PEER-FULLDOC-WRITE is a row that WAS written then clobbered by a peer full-doc write; this row is a signal NEVER written at all. FIX-EMITSIGNAL-BUGTELEGRAM-NO-TEST-SINK-GATE owns the bug-telegram sink, not the E-3 write path. FIX-AUDITOR-B12-DOUBLE-INVOKE-EMIT-MARKER-LOSS owns marker loss on double-invoke. FIX-SIGNALQUEUE-DUP-ID-GUARD owns id collision. None covers rc=3 classification.",
+        "po_rationale": "P1 not P0: the finding is not fully lost — the anti-false-green BUG telegram still fires (line 336-340), which is the only reason this was detectable at all. So the detector plane degrades to telegram-only rather than going dark. But that is precisely the failure shape feedback_auditor_signalqueue_append_always_telegram_only_dedup already names, and the E-3 append-always contract (system-auditor/init.md:38) exists specifically so findings survive on the BOARD plane where PO triage reads them — a contract this rc=3 branch silently voids. Note the dropped check is itself an anomaly (scheduler_locks-FAIL), so the class of finding being lost is not benign.",
+        "test_note": "scripts/emit-audit-signal.test.sh already has T7 (E-3 read-back failure) and T8 (E-3 write failure rc=1, no retry). Add the missing sibling: rc=3-from-empty-candidate must RETRY and succeed on a later attempt, while rc=3-from-missing-live-file must still abort loud. Both branches, per feedback_fleetwide_gate_validated_on_one_file_optout_allowlist — do not validate on one.",
+        "claimed_at": "2026-08-06T15:15:13Z",
+        "claimed_by": "developer",
+        "commit_sha": "7cc052083",
+        "note": "Fixed: _e3_write_row() now checks candidate non-emptiness (via new _e3_read_candidate() seam) BEFORE invoking orch-apply.sh — an empty read (raced peer rename of ORCH_STATE_FILE) retries in the same lane as rc=2, never reaching orch-apply.sh's own rc=3 usage-error branch. A genuine rc=3 (e.g. live file actually missing) still surfaces from a real invoke on a non-empty candidate and stays fatal/no-retry, unchanged. New tests T25 (empty-candidate retries, succeeds) / T26 (genuine rc=3 stays fatal, no retry) — both branches explicit. emit-audit-signal.test.sh 84/84, zero regressions on 3 sibling suites. orch-apply.sh left untouched (approach a). No apps/ TS/Go touched — bun test/tsc N/A."
       }
     ],
     "qa": [

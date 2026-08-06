@@ -1,0 +1,17 @@
+{
+  "ticker": "DXG",
+  "signal_type": "bctc_signal",
+  "quarter": "Q1-2026",
+  "mode": "routine",
+  "beat_miss": null,
+  "product": "Real estate development (residential projects, HCMC region)",
+  "customer": "Homebuyers/investors in DXG-developed residential projects",
+  "ops": "get_bctc_full still returns 'Chưa có dữ liệu BCTC' for DXG specifically this cycle — DIFFERS from FPT/HPG/VCB which all recovered this cycle after the 5-day outage; DXG's gap looks like a separate/persistent data-absence issue, not the general outage. Peer-reference-only via sector-comparison: PE 66.5 vs sector median 16.1 (+312% premium), PB near sector median, ROE 1.9% vs 7.3% sector median (below median). Refine report_id status still PENDING (unchanged 4+ cycles) — ESC-5 not evaluable.",
+  "mgmt": "Not independently verifiable this cycle — no primary-source BCTC data available; valuation_verdict=AVOID (EY_SPREAD -3.5pp), no bullish signal posted.",
+  "_processed": {
+    "fingerprint": "1056507221043c206b5b25c631eedcbdf65aa1aef9fb6fae6c68644fff971238",
+    "processedAt": "2026-08-06T15:13:52Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

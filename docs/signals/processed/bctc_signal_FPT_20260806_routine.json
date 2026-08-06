@@ -1,0 +1,17 @@
+{
+  "ticker": "FPT",
+  "signal_type": "bctc_signal",
+  "quarter": "Q1-2026",
+  "mode": "routine",
+  "beat_miss": null,
+  "product": "IT services, software exports (offshore dev for Japan/US/EU), telecom (FPT Telecom — switched full-consolidation to equity-method from 2026-01-01), education (FPT Edu)",
+  "customer": "Enterprise IT buyers (offshore Japan/US/EU + domestic), telecom subscribers, students across FPT's education system",
+  "ops": "Q1-2026 (get_bctc_full RECOVERED this cycle after 5-day outage, data unchanged/stale since 2026-05-24 push, VPS SLA breached 54.5h): revenue 12,480bn VND (-22.3% headline YoY, +8.7% YoY adjusted for FTEL equity-method switch), NI 2,477bn (+13.8% adjusted YoY). OCF -2,848bn this quarter vs Q4-2025 +4,108bn — single-quarter swing, only 3/4 quarters of coverage available so ESC-3 held at DATA-COVERAGE-LIMITED (guard esc-datacov:FPT:Q1-2026:ESC-3 still held, valid ~2026-08-09). ESC-5 refine-confidence gate RE-FIRED this cycle: 7 of 15 refine units (footnote-only: PP&E schedule, related-party, borrowings schedule, subsidiary registry, equity movements, commitments) score confidence 0.45 (<0.50 bar); core statements B01/B02/B03 score 0.55-0.85 with balance_check:PASSED. Deep-dive request re-emitted (prior 24h guard had expired).",
+  "mgmt": "FTEL consolidation-method switch (full to equity) disclosed and consistently applied; adjusted YoY growth positive despite headline decline. Management track-record not independently re-verified this cycle (no governance YELLOW trigger observed).",
+  "_processed": {
+    "fingerprint": "111bf7a157efb6edf6c9eeca23743adb65f76429fbf6ef8c3e1bbc568b152754",
+    "processedAt": "2026-08-06T15:13:52Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
