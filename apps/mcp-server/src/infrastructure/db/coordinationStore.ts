@@ -449,6 +449,13 @@ export interface ListResult {
  *                                   Excluded by task_id prefix scan guard (NOT by kind — kind is
  *                                   intentionally reused to avoid enum-drift).
  *   - 'dev-team-cron-singleton'   : SF-1 leader-election singleton — same class as cron:* above.
+ *   - 'cron-registration:*' ids   : cross-session cron dedup markers, same class as cron:* above.
+ *                                   Designed to outlive the session that registered them (8-day
+ *                                   backstop TTL) — a marker surviving past session-presence expiry
+ *                                   (<=30 min) is expected steady-state, not an orphan; it must
+ *                                   still GC silently on expiry (Phase 2 DELETE still applies),
+ *                                   just without minting adoption work. Excluded by task_id prefix
+ *                                   scan guard, same mechanism as cron:*.
  */
 const ORPHAN_EMIT_ALLOW_LIST = [
   "sprint-task",
@@ -505,6 +512,9 @@ export function gcExpiredLocks(db: Database, graceSeconds = 300, excludeTaskId?:
       //   - 'cron:*' task_ids        : fire-election coordination markers (cron:dev-team:<TICK>)
       //                                — NOT adoptable work; would cause bogus zone-agent spawns
       //   - 'dev-team-cron-singleton': SF-1 singleton coordination marker — same class
+      //   - 'cron-registration:*'    : cross-session cron dedup markers (8-day backstop TTL,
+      //                                designed to outlive their registering session) — same
+      //                                class as cron:*; still GC'd silently by Phase 2 below.
       // and the excludeTaskId row being claimed right now (stale-steal path handles it).
       const kindPlaceholders = ORPHAN_EMIT_ALLOW_LIST.map(() => "?").join(",");
       const excludeClause = excludeTaskId !== undefined ? " AND task_id != ?" : "";
@@ -519,6 +529,7 @@ export function gcExpiredLocks(db: Database, graceSeconds = 300, excludeTaskId?:
              AND task_kind IN (${kindPlaceholders})
              AND task_id NOT LIKE 'published:%'
              AND task_id NOT LIKE 'cron:%'
+             AND task_id NOT LIKE 'cron-registration:%'
              AND task_id != 'dev-team-cron-singleton'
              ${excludeClause}`,
         )
