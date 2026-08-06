@@ -21965,6 +21965,48 @@
         "implemented_by": "developer",
         "implemented_at": "2026-08-06T18:47:44Z",
         "verify_note": "AC-1: added own wip_in_progress>=1 no-op recheck (shared scripts/lib/devteam-eligibility.jq include, no reimplementation). AC-2: candidates now sort_by([priority_rank, idx]) instead of $auto_promoted[0] array position. AC-3: chose CLAIM-side stale-stamp drain (clear promoted_by + audit stamp on every non-selected candidate when a claim fires) over promote-side refusal, reasoned in the file header — promote's own WIP==0 gate already prevents intentional double-stamping in one tick. AC-4: extended scripts/audits/devteam-dispatch-gate-satisfiability.sh with an isolated P0-at-higher-index-than-P2 regression fixture the pre-fix code provably fails, plus own-WIP negative/positive controls and stale-stamp-drain proof. AC-5: live-data replay (WIP hypothetically zeroed in a scratch-only copy, never written back) confirms the fixed selector now picks FIX-NEWSVPS-OVERNIGHT-PUSH-OUTAGE-663M-SILENT (P1) instead of FIX-JANITOR-HEALTHRECHECK-IDEMPOTENCY-GUARD-MISSES-PROCESSED-DIR (P2). Full instrument: bash scripts/audits/devteam-dispatch-gate-satisfiability.sh = 71/71 PASS exit 0, including the named verification_gate case (previously FAILING, now green). Did NOT touch devteam-backlog-promote-bounded1.jq (its WIP==0 gate already correct; root_cause + all 5 ACs scope to the claim script's own 3 lines). Commit ab681bb7b (code) + b3bc55fab (memory). Decision journal sprint-COWORK-GUARANTEED-SLOT-CATCHUP-developer-4.md STEP developer-S72."
+      },
+      {
+        "id": "FIX-CRON-DST-LOCAL-EVAL-MOMENT-ANCHORED-EXPRESSIONS",
+        "type": "FIX",
+        "title": "5 standalone CronCreate expressions are moment-anchored but written as if evaluated in UTC — CronCreate evaluates Europe/Paris-local, so db-data-integrity Job A currently fires 2h early and misses the exact settlement window CADRAT-2 shipped 2 days ago to cover",
+        "zone": "cross-service/",
+        "priority": "P1",
+        "status": "REVIEW",
+        "size": "S",
+        "next_agent": "qa",
+        "supervised": false,
+        "plan_only": false,
+        "baseline_pass": true,
+        "owner": "po",
+        "source": "docs/architecture-briefs/2026-08-06-cadence-reanalysis-v2.md (agents-architect, PLAN-ONLY) §3a-3c — greenlit by PO 2026-08-06T18:21Z after independent source verification",
+        "created_at": "2026-08-06T18:21:44Z",
+        "created_by": "po",
+        "root_cause": "CronCreate's `cron:` field is evaluated in the session/server LOCAL timezone (Europe/Paris, currently CEST=UTC+2), not UTC. Any standalone .claude/commands/crons/*.md expression that targets a specific VN-market MOMENT (H M * * DOW) therefore fires at the wrong instant, and drifts another hour at each DST changeover. Pure-INTERVAL expressions (*/15, 0 */4) are unaffected — cadence is invariant under a clock shift. The cowork-schedule.json family (22 slots) is likewise unaffected and needs NO change.",
+        "evidence": "PO verified the brief's two load-bearing claims at source rather than accepting its prose (supervised-goahead.md § Step 2 discipline). (1) DEFECT CONFIRMED: .claude/commands/crons/cron-db-data-integrity.md:27 reads `- **cron**: `15,45 2-9 * * 1-5`` and its OWN inline comment on the same line claims '09:00-16:59 VN Mon-Fri, covers the trading' — but local-hours 2-9 in CEST is 00:00-07:59 UTC = 07:00-14:59 ICT, so the doc's stated intent and its expression disagree by 2h and the 15:00-17:00 ICT settlement window is entirely uncovered. Line 33 confirms Job B `15 22 * * *` with the same class of error. (2) SCOPE-LIMITING CLAIM CONFIRMED (this is what keeps the fix small): scripts/agents-flow/cowork-match-slots.js:135 uses now.getUTCHours() and :138 uses now.getUTCDay() — pure UTC arithmetic, so all 22 cowork slots are DST-immune by construction and are correctly EXCLUDED from this fix.",
+        "files": [
+          ".claude/commands/crons/cron-db-data-integrity.md",
+          ".claude/commands/crons/cron-system-auditor.md",
+          ".claude/commands/crons/cron-orch-sentinel.md",
+          ".claude/skills/cron-standalone-team/SKILL.md",
+          ".claude/skills/cron-detect-loop/SKILL.md"
+        ],
+        "ac": [
+          "AC-1 db-data-integrity Job A (HIGH, live-wrong now): CEST `15,45 4-11 * * 1-5` / CET `15,45 3-10 * * 1-5`. This is the only item with live functional impact — do it first and independently of the rest.",
+          "AC-2 db-data-integrity Job B: CEST `0 0 * * *` / CET `0 23 * * *`.",
+          "AC-3 system-auditor Tier-3: CEST `0 4 * * *` / CET `0 3 * * *`. Also fix the hardcoded FIRE_TICK literal `...T02:00Z` that stamps a tick-id 2h after the sweep actually ran.",
+          "AC-4 orch-sentinel FULL `18 5 * * 0` CEST / `18 4 * * 0` CET and LITE `48 3 * * *` CEST / `48 2 * * *` CET. These two are NOT armed — fix before arming. They must be fixed in the SAME change as AC-3: LITE's rationale is '12min before Tier-3', and correcting Tier-3 alone would break that relative spacing.",
+          "AC-5 Use the dual-CEST/CET-expression + explicit changeover-note convention ALREADY PROVEN in this repo — cron-claude-manager-helper.md and cron-auditor-page-reverify.md both carry it correctly today. Do not invent a new mechanism.",
+          "AC-6 Whichever re-arm skill owns each cron must be updated in the SAME commit, or the next session restart re-arms the OLD expression and silently reverts the fix. Verify by grepping the skills for each literal expression before and after.",
+          "AC-7 NOT IN SCOPE (explicitly): migrating moment-anchored crons onto the UTC-native JS matcher (brief §3f option b). Recorded as the strategically-correct end state — it removes the semiannual manual-flip ritual entirely — but it is a real migration and must not be smuggled into this correction pass."
+        ],
+        "po_ruling_20260806T1821": "GREENLIT. The brief was filed status=AWAITING_USER_CONFIRMATION / 'do NOT auto-implement'. PO overrides that hold under full_autonomy (CLAUDE.md: never ask user — spawn po for decisions, continue). Justification for overriding rather than deferring: AC-1 is a live correctness regression that silently defeats a fix which shipped 2 days ago, the corrections are mechanical, and they mirror a convention already proven twice in-repo. Deferring a known-wrong live cron for a confirmation round-trip has a real cost and no upside.",
+        "updated_at": "2026-08-06T18:52:03Z",
+        "claimed_at": "2026-08-06T18:36:53Z",
+        "claimed_by": "dev-team (router manual dispatch — PO BATCH 2026-08-06T18:07Z)",
+        "updated_by": "agent-father",
+        "commit_sha": "36e109170",
+        "note": "AC-1..AC-6 shipped (commit 36e109170): 5 moment-anchored cron literals corrected to CEST/CET dual form (db-data-integrity Job A/B, system-auditor Tier-3, orch-sentinel FULL/LITE) using the proven convention from cron-claude-manager-helper.md/cron-auditor-page-reverify.md (AC-5). AC-6 (the hard one): updated BOTH the re-arm skills idempotency-guard literals (SKILL.md) AND the actual CronCreate actuators (register.md / register-job-db-integrity-{weekday,offhours}.md for db-data-integrity via cron-standalone-team; register.md Job 4 for system-auditor Tier-3 via cron-detect-loop) — a guard-only fix would have let register.md silently re-arm the OLD stale literal on next session restart. orch-sentinel not armed by any skill (confirmed by grep), no register-side fix needed there. Also corrected system-auditor/flow/main.md Step 0d Tier-3 comment (mislabeled armed cron) + closed the adjacent Tier-5 cross-reference. Grep-verified zero remaining live-actuator hits of the 5 old literals. AC-7 (UTC-native JS matcher migration) explicitly NOT done, recorded as future improvement per task scope. Journal: sprint-COWORK-GUARANTEED-SLOT-CATCHUP-agent-father.md STEP S25 (commit 419cdb804). .head untouched per router instruction (was not pointing at this task). VERIFICATION PASS (agent-father, this same task, independent of the S25 author): re-derived the CEST/CET UTC-arithmetic for all 5 corrected pairs by hand (confirmed both season variants land on the identical UTC instant for every one) and re-grepped the full re-arm surface — clean, nothing to add to the fix itself. Shipped one small doc-consistency follow-on in commit dd7a036b6: cron-auditor-page-reverify.md's own \"Offset rationale\" section still asserted Tier-3'\\''s DST bug was \"a separate, not-yet-filed issue — out of scope here\", which this task'\\''s own AC-3 fix made false in the same session; corrected the cross-reference. Journal: STEP agent-father-S26 (commit 674a7a961)."
       }
     ],
     "qa": [
@@ -22114,47 +22156,7 @@
     },
     "last_triaged_at": "2026-08-06T17:58:35Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": [
-      {
-        "id": "FIX-CRON-DST-LOCAL-EVAL-MOMENT-ANCHORED-EXPRESSIONS",
-        "type": "FIX",
-        "title": "5 standalone CronCreate expressions are moment-anchored but written as if evaluated in UTC — CronCreate evaluates Europe/Paris-local, so db-data-integrity Job A currently fires 2h early and misses the exact settlement window CADRAT-2 shipped 2 days ago to cover",
-        "zone": "cross-service/",
-        "priority": "P1",
-        "status": "IN_PROGRESS",
-        "size": "S",
-        "next_agent": "agent-father",
-        "supervised": false,
-        "plan_only": false,
-        "baseline_pass": true,
-        "owner": "po",
-        "source": "docs/architecture-briefs/2026-08-06-cadence-reanalysis-v2.md (agents-architect, PLAN-ONLY) §3a-3c — greenlit by PO 2026-08-06T18:21Z after independent source verification",
-        "created_at": "2026-08-06T18:21:44Z",
-        "created_by": "po",
-        "root_cause": "CronCreate's `cron:` field is evaluated in the session/server LOCAL timezone (Europe/Paris, currently CEST=UTC+2), not UTC. Any standalone .claude/commands/crons/*.md expression that targets a specific VN-market MOMENT (H M * * DOW) therefore fires at the wrong instant, and drifts another hour at each DST changeover. Pure-INTERVAL expressions (*/15, 0 */4) are unaffected — cadence is invariant under a clock shift. The cowork-schedule.json family (22 slots) is likewise unaffected and needs NO change.",
-        "evidence": "PO verified the brief's two load-bearing claims at source rather than accepting its prose (supervised-goahead.md § Step 2 discipline). (1) DEFECT CONFIRMED: .claude/commands/crons/cron-db-data-integrity.md:27 reads `- **cron**: `15,45 2-9 * * 1-5`` and its OWN inline comment on the same line claims '09:00-16:59 VN Mon-Fri, covers the trading' — but local-hours 2-9 in CEST is 00:00-07:59 UTC = 07:00-14:59 ICT, so the doc's stated intent and its expression disagree by 2h and the 15:00-17:00 ICT settlement window is entirely uncovered. Line 33 confirms Job B `15 22 * * *` with the same class of error. (2) SCOPE-LIMITING CLAIM CONFIRMED (this is what keeps the fix small): scripts/agents-flow/cowork-match-slots.js:135 uses now.getUTCHours() and :138 uses now.getUTCDay() — pure UTC arithmetic, so all 22 cowork slots are DST-immune by construction and are correctly EXCLUDED from this fix.",
-        "files": [
-          ".claude/commands/crons/cron-db-data-integrity.md",
-          ".claude/commands/crons/cron-system-auditor.md",
-          ".claude/commands/crons/cron-orch-sentinel.md",
-          ".claude/skills/cron-standalone-team/SKILL.md",
-          ".claude/skills/cron-detect-loop/SKILL.md"
-        ],
-        "ac": [
-          "AC-1 db-data-integrity Job A (HIGH, live-wrong now): CEST `15,45 4-11 * * 1-5` / CET `15,45 3-10 * * 1-5`. This is the only item with live functional impact — do it first and independently of the rest.",
-          "AC-2 db-data-integrity Job B: CEST `0 0 * * *` / CET `0 23 * * *`.",
-          "AC-3 system-auditor Tier-3: CEST `0 4 * * *` / CET `0 3 * * *`. Also fix the hardcoded FIRE_TICK literal `...T02:00Z` that stamps a tick-id 2h after the sweep actually ran.",
-          "AC-4 orch-sentinel FULL `18 5 * * 0` CEST / `18 4 * * 0` CET and LITE `48 3 * * *` CEST / `48 2 * * *` CET. These two are NOT armed — fix before arming. They must be fixed in the SAME change as AC-3: LITE's rationale is '12min before Tier-3', and correcting Tier-3 alone would break that relative spacing.",
-          "AC-5 Use the dual-CEST/CET-expression + explicit changeover-note convention ALREADY PROVEN in this repo — cron-claude-manager-helper.md and cron-auditor-page-reverify.md both carry it correctly today. Do not invent a new mechanism.",
-          "AC-6 Whichever re-arm skill owns each cron must be updated in the SAME commit, or the next session restart re-arms the OLD expression and silently reverts the fix. Verify by grepping the skills for each literal expression before and after.",
-          "AC-7 NOT IN SCOPE (explicitly): migrating moment-anchored crons onto the UTC-native JS matcher (brief §3f option b). Recorded as the strategically-correct end state — it removes the semiannual manual-flip ritual entirely — but it is a real migration and must not be smuggled into this correction pass."
-        ],
-        "po_ruling_20260806T1821": "GREENLIT. The brief was filed status=AWAITING_USER_CONFIRMATION / 'do NOT auto-implement'. PO overrides that hold under full_autonomy (CLAUDE.md: never ask user — spawn po for decisions, continue). Justification for overriding rather than deferring: AC-1 is a live correctness regression that silently defeats a fix which shipped 2 days ago, the corrections are mechanical, and they mirror a convention already proven twice in-repo. Deferring a known-wrong live cron for a confirmation round-trip has a real cost and no upside.",
-        "updated_at": "2026-08-06T18:36:54Z",
-        "claimed_at": "2026-08-06T18:36:53Z",
-        "claimed_by": "dev-team (router manual dispatch — PO BATCH 2026-08-06T18:07Z)"
-      }
-    ]
+    "in_progress": []
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
