@@ -104,3 +104,39 @@
 - Move to ready[] (Step A2 fix) + raise priority on recurrence
 **why-decision:** Prior-art grep found this row already owns the exact mechanism (rebuild_required marker with no consumer) — minting a sibling would duplicate. But it sat 5 days in the NO-LANE hole its own zone-routing.md Step A2 names: predicates run live returned non_dev_unrouted=true, supervised=false, plan_only=false → BOUNDED-1 gates it out, SLS needs both flags. ready[] is Step A2's stated fix; post-move RLC predicates confirm resolved_lane=agent-father, priority_rank=1, deps=true, epic_wrapper=false.
 **why-change:** no change from plan
+
+### STEP po-S153 · po · 2026-08-06T18:21:44Z
+**task-id:** FIX-DEVTEAM-BOUNDED1-CLAIM-NO-OWN-WIP-RECHECK
+**what-done:** Escalated P2→P1 and widened scope with a 2nd axis after replaying the script's own selector live.
+**what-considered:**
+- Mint a sibling row for the priority-ordering axis
+- Widen this row (same file, same 3 lines, same fix session)
+**why-decision:** Splitting would let a fixer close the WIP axis and leave the P0 starvation live; 21 P0 rows in ready[] while the live selector returns a P2.
+**why-change:** qa report 4467 corroborated the WIP axis independently; PO found axis (b) by reading scripts/devteam-backlog-claim-bounded1.jq:39-46.
+
+### STEP po-S154 · po · 2026-08-06T18:21:44Z
+**task-id:** FIX-CRON-DST-LOCAL-EVAL-MOMENT-ANCHORED-EXPRESSIONS
+**what-done:** Greenlit the architect's PLAN-ONLY cadence-reanalysis-v2 DST corrections over its own AWAITING_USER_CONFIRMATION hold.
+**what-considered:**
+- Honour the brief's hold, defer to a user confirmation round-trip
+- Override under full_autonomy and mint now
+**why-decision:** Job A is live-wrong right now and silently defeats CADRAT-2 which shipped 2 days ago; fixes are mechanical and mirror a convention already proven twice in-repo.
+**why-change:** Verified both load-bearing claims at source first (cron doc line 27; cowork-match-slots.js getUTCHours at :135) rather than trusting brief prose.
+
+### STEP po-S155 · po · 2026-08-06T18:21:44Z
+**task-id:** CLEAN-CRON-STANDALONE-DOCS-SUPERSEDED-BY-COWORK
+**what-done:** Ruled RETIRE (not restore) on market-watcher-market/prepost + news-scout-market — the brief's only PO-blocking question.
+**what-considered:**
+- Restore as new cowork slots (original May design intent, QA-passed)
+- Retire the dead code paths and deprecate all 6 docs
+**why-decision:** Host is memory-constrained now (rag-service 97.76% of 1GiB, 8GB Docker ceiling); densification is unproven and costly, and the brief itself says any future restore must be a NEW cowork slot — so retiring forecloses nothing.
+**why-change:** Brief left it open; PO is the named decision authority.
+
+### STEP po-S156 · po · 2026-08-06T18:21:44Z
+**task-id:** FIX-LEAF-AGENT-ANALYSIS-ONLY-EXIT-NARRATES-INSTEAD-OF-EXECUTING
+**what-done:** Minted the 4x-recurring analysis-only-exit defect as a NEW P1 row.
+**what-considered:**
+- Follow the signal's instruction to append corroboration to "the existing po-owned decision"
+- Mint new after verifying that row exists
+**why-decision:** Grep across all 5 non-terminal lanes found ZERO board row — the standing convention has been appending corroborations to nothing for at least 2 occurrences.
+**why-change:** Signal's stated action rested on a false premise; PO checked before complying.

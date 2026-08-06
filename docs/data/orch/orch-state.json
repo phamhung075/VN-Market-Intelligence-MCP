@@ -2925,10 +2925,13 @@
         "type": "microservice_degraded",
         "summary": "rag-service memory pressure CRITICAL (96.69% of 1GiB)",
         "severity": "CRITICAL",
-        "status": "READ",
+        "status": "triaged",
         "payload_ref": null,
         "provenance": "detector",
-        "audit_cycle_tag": "cron:auditor-t1:2026-08-06T14:30Z"
+        "audit_cycle_tag": "cron:auditor-t1:2026-08-06T14:30Z",
+        "triaged_at": "2026-08-06T18:21:44Z",
+        "triaged_by": "po",
+        "disposition": "FOLD — rag-service memory pressure (96.69% CRITICAL 14:38Z, 96.56% 15:10Z, 97.76% floor-breach 17:41Z) is three fires of ONE condition, not three findings. Root cause is already tracked and in REVIEW: FIX-RAG-EMBEDDER-IDLE-UNLOAD-PATH (P1) — the embedder singleton has no unload path, so the container is pinned near its memory cap by construction; a percentage that stays high is the EXPECTED signature of that defect, not new information. Siblings FIX-RAG-SERVICE-CLEAN-EXIT-RESTART-LOOP (P1) and FU-RAG-DEPLOY-MEMORY (P1) are also in REVIEW. No mint — per triage-signals.md microservice_degraded, a persistent condition with an open root-cause row FOLDs. Escalate only if rag-service actually OOM-kills or restarts, which none of these three rows reports."
       },
       {
         "id": "sys-20260806T144250-77d3",
@@ -2954,8 +2957,11 @@
         "type": "recurring-bug-corroboration",
         "summary": "4th analysis-only-exit occ (T1, 0 writes). Orphaned real finding: mcp-server 4 restarts ~12:25Z, docker-verified.",
         "severity": "MED",
-        "status": "READ",
-        "payload_ref": "docs/signals/processed/sys-auditor-analysis-only-exit-4th-20260806.json"
+        "status": "triaged",
+        "payload_ref": "docs/signals/processed/sys-auditor-analysis-only-exit-4th-20260806.json",
+        "triaged_at": "2026-08-06T18:21:44Z",
+        "triaged_by": "po",
+        "disposition": "MINTED FIX-LEAF-AGENT-ANALYSIS-ONLY-EXIT-NARRATES-INSTEAD-OF-EXECUTING (P1, backlog, zone cross-service/, next_agent agent-father). Corrects this signal's own stated action: it said to append corroboration to 'the existing po-owned decision' per the occurrence-3 precedent, but PO grep-confirmed no such board row exists in any non-terminal lane — the convention has been appending to nothing. Orphaned A-21 finding (mcp-server RestartCount=4, docker-verified) carried onto the new row as AC-4."
       },
       {
         "id": "sys-20260806T151042-6d28",
@@ -2965,10 +2971,13 @@
         "type": "microservice_degraded",
         "summary": "rag-service memory pressure 96.56% (below floor 40MiB)",
         "severity": "WARN",
-        "status": "READ",
+        "status": "triaged",
         "payload_ref": null,
         "provenance": "detector",
-        "audit_cycle_tag": "cron:auditor-t1:2026-08-06T15:00Z"
+        "audit_cycle_tag": "cron:auditor-t1:2026-08-06T15:00Z",
+        "triaged_at": "2026-08-06T18:21:44Z",
+        "triaged_by": "po",
+        "disposition": "FOLD — rag-service memory pressure (96.69% CRITICAL 14:38Z, 96.56% 15:10Z, 97.76% floor-breach 17:41Z) is three fires of ONE condition, not three findings. Root cause is already tracked and in REVIEW: FIX-RAG-EMBEDDER-IDLE-UNLOAD-PATH (P1) — the embedder singleton has no unload path, so the container is pinned near its memory cap by construction; a percentage that stays high is the EXPECTED signature of that defect, not new information. Siblings FIX-RAG-SERVICE-CLEAN-EXIT-RESTART-LOOP (P1) and FU-RAG-DEPLOY-MEMORY (P1) are also in REVIEW. No mint — per triage-signals.md microservice_degraded, a persistent condition with an open root-cause row FOLDs. Escalate only if rag-service actually OOM-kills or restarts, which none of these three rows reports."
       },
       {
         "id": "cj-20260806T163127",
@@ -2978,8 +2987,11 @@
         "type": "system-issue",
         "summary": "team-tool-recheck writer dead since 06-23 — replace-vs-retire decision needed",
         "severity": "LOW",
-        "status": "READ",
-        "payload_ref": "docs/signals/processed/janitor-health-recheck-writer-retired-2026-08-06.json"
+        "status": "triaged",
+        "payload_ref": "docs/signals/processed/janitor-health-recheck-writer-retired-2026-08-06.json",
+        "triaged_at": "2026-08-06T18:21:44Z",
+        "triaged_by": "po",
+        "disposition": "PO DECISION: RETIRE, do not replace. code-janitor asked replace-vs-retire for the team-tool-recheck writer (dead since 2026-06-23, killed by the standing no-RemoteTrigger directive). Retire, for three reasons: (1) six weeks elapsed with nothing consuming the artifact and no agent flagging its absence; (2) replacing it means adding a local cron in the same tick this system is deprecating 6 superseded cron docs for token economy — the direction of travel is fewer scheduled jobs, and re-adding one for an output nobody read is the wrong trade; (3) retire is zero-work — memory-prune-sweep.sh's existing 30d rule drains docs/agent-memory/health/ to empty on its own. No board row needed for the decision itself. NOTE: the 6-hourly re-fire of this signal is a SEPARATE mechanical defect already tracked as FIX-JANITOR-HEALTHRECHECK-IDEMPOTENCY-GUARD-MISSES-PROCESSED-DIR (READY, P2) — the guard scans docs/signals/ but not docs/signals/processed/. That row is already dispatchable; this decision does not depend on it."
       },
       {
         "id": "sys-20260806T171507-1243",
@@ -3021,10 +3033,13 @@
         "type": "microservice_degraded",
         "summary": "rag-service A-30 floor-breach: 97.76% mem (22.9MiB free, below 40MiB floor)",
         "severity": "WARN",
-        "status": "READ",
+        "status": "triaged",
         "payload_ref": null,
         "provenance": "detector",
-        "audit_cycle_tag": "cron:auditor-t1:2026-08-06T17:30Z"
+        "audit_cycle_tag": "cron:auditor-t1:2026-08-06T17:30Z",
+        "triaged_at": "2026-08-06T18:21:44Z",
+        "triaged_by": "po",
+        "disposition": "FOLD — rag-service memory pressure (96.69% CRITICAL 14:38Z, 96.56% 15:10Z, 97.76% floor-breach 17:41Z) is three fires of ONE condition, not three findings. Root cause is already tracked and in REVIEW: FIX-RAG-EMBEDDER-IDLE-UNLOAD-PATH (P1) — the embedder singleton has no unload path, so the container is pinned near its memory cap by construction; a percentage that stays high is the EXPECTED signature of that defect, not new information. Siblings FIX-RAG-SERVICE-CLEAN-EXIT-RESTART-LOOP (P1) and FU-RAG-DEPLOY-MEMORY (P1) are also in REVIEW. No mint — per triage-signals.md microservice_degraded, a persistent condition with an open root-cause row FOLDs. Escalate only if rag-service actually OOM-kills or restarts, which none of these three rows reports."
       },
       {
         "id": "dev-20260806T175500-orphterm",
@@ -3034,10 +3049,13 @@
         "type": "recurring_defect_unfixed",
         "severity": "INFO",
         "summary": "orphan-signal reaper published 4 adoptable sprint-task orphan-signals this tick (FIX-CI-TASKCLAIM-PO-FLOW-OWNER-SESSION-PAYDOWN, FIX-CI-SIZELINT-BCTC-1345B-PARSE-VALIDATOR-PAIR, FIX-CI-PARITY-CLAUDEMD-CRON-LITERAL-EXEMPTION-SHAPE, FIX-SYSTEM-AUDITOR-CYCLE-FINDINGS-NOT-SELF-PERSISTED) whose original task_id is already DONE_VERIFIED in cold archive — adoption was correctly skipped (would have duplicate-dispatched completed work), but orphan-adoption.md has no terminal-status precheck before publishing/consuming an orphan-signal, unlike the WF-1b terminal-lane guard main.md already has for .head. All 4 originated from this same session (original_owner_client_session matches the router session), redispatch_count=1, not yet poison (N_MAX=3).",
-        "status": "READ",
+        "status": "triaged",
         "payload_ref": null,
         "provenance": "detector",
-        "audit_cycle_tag": "dev-team-tick:2026-08-06T17:37Z"
+        "audit_cycle_tag": "dev-team-tick:2026-08-06T17:37Z",
+        "triaged_at": "2026-08-06T18:21:44Z",
+        "triaged_by": "po",
+        "disposition": "FOLD into FIX-ORPHAN-FR4-FR5-FLOW-DEVTEAM-ADOPTION-GUARD (READY, P0, next_agent developer, zone flow-docs/) — that row's FR-4 read-guard IS the terminal-status precheck this signal reports missing. No mint. Correct call by the reaper this tick: adoption was skipped, so no completed work was re-dispatched and there is no live damage; redispatch_count=1, well under N_MAX=3. The umbrella epic FIX-ORPHAN-ADOPTION-BOARD-STATE-GUARD (P0) is BLOCKED by design as an epic-hold with all 6 FR children already decomposed into ready[]. DISPATCH NOTE: all 6 FR children are P0, dev-role next_agent, unsupervised, no deps and no blockers — they are fully eligible and are being starved by the bounded-1 selector defect escalated to P1 this same tick (FIX-DEVTEAM-BOUNDED1-CLAIM-NO-OWN-WIP-RECHECK). Fixing that selector is the unblock for this row."
       },
       {
         "id": "cmh-20260806T180630-dochealpartial",
@@ -3047,10 +3065,13 @@
         "type": "recurring_defect_unfixed",
         "severity": "INFO",
         "summary": "claude-manager-helper Thu 18:06Z cron cycle (commit 5024251f8): Pass 9b ran doc-heal-system discovery only (4115 files scanned, correctly found code-janitor.md notebook 224L>200 and 6 oversized SKILL.md files: dispatch-claim 497L, docx 590L, skill-creator 485L, pdf 314L, mcp-builder 236L, xlsx 291L) but skipped the skills own mandated Phase 4 auto-fix (extract reusable rules to knowledge, per .claude/skills/doc-heal-system/phases.md Size Caps table — SKILL.md cap IS 200L, auto-fix not escalate) and Phase 7 (write reports/DOC_HEAL_2026-08-06.md + dedicated docs(heal) commit) entirely — verified reports/DOC_HEAL_2026-08-06.md does not exist anywhere in the repo, and the only commit this cycle was the notebook-append (chore(memory/claude-manager-helper)), not a docs(heal) commit. Self-report and notebook entry both accurately describe this as noted for next cycle / non-critical, so this is not a self-report confabulation (contrast feedback_leaf_agent_analysis_only_exit_recurring_pattern_20260806) — it is main.md Pass 9b invoking doc-heal-system for discovery only and never running its auto-fix/report/commit phases, so violations found on Mon/Thu accumulate indefinitely with no report trail unless a human or another agent notices.",
-        "status": "READ",
+        "status": "triaged",
         "payload_ref": null,
         "provenance": "detector",
-        "audit_cycle_tag": "claude-manager-helper-cron:2026-08-06T18:06Z"
+        "audit_cycle_tag": "claude-manager-helper-cron:2026-08-06T18:06Z",
+        "triaged_at": "2026-08-06T18:21:44Z",
+        "triaged_by": "po",
+        "disposition": "MINTED FIX-CMH-PASS9B-DOCHEAL-DISCOVERY-ONLY-NO-AUTOFIX-REPORT (P2, backlog, zone cross-service/, next_agent agent-father). Minted on a single INFO fire, overriding the WARN/INFO single-fire hold: that hold targets unreproducible auditor noise, whereas this carries a falsifiable negative PO confirmed (reports/DOC_HEAL_2026-08-06.md exists nowhere in the repo) and is structural, so it recurs deterministically every Mon/Thu rather than probabilistically. Explicitly NOT a self-report confabulation — the agent's notebook and self-report describe the gap accurately and agree with each other; the defect is in Pass 9b's wiring, not the agent's honesty."
       }
     ],
     "last_triaged_at": "2026-07-29T06:25:00Z",
@@ -11583,9 +11604,18 @@
         "source": "po triage tick 2026-08-01T03:37Z — reports 4271/4272 dispositioned in prose but never resolved; caught by dev-team RAW-verify",
         "created_at": "2026-08-01T04:12:02Z",
         "created_by": "po",
-        "updated_at": "2026-08-05T18:53:08Z",
+        "updated_at": "2026-08-06T18:27:28Z",
         "po_evidence_20260805": "PO REPORT-QUEUE TRIAGE 2026-08-05T18:1xZ (3rd recurrence, dev-team tick 18:07Z): queue re-accumulated to 131 unresolved rows (ALL status=new/resolution=none, oldest 2026-08-03T16:05Z) after being driven 179->0 on 07-30 and 9->0 on 07-31. Both ACs re-verified UNSHIPPED live this tick, not inferred: AC-1 -- docs/agents/tools/list/process_telegram_report.md line 16 STILL documents param 'delete_message' (real name: delete_telegram_message) and STILL has zero mention of 'resolution', unchanged since the 07-30 retarget (6 days). AC-2 -- grep -rn 'telegram-reports' docs/agents/po/ .claude/ returns exactly 2 hits: the sub-flow's own size-justification header, and ONE passing mention inside main.md:170's 'Reusable triage scripts' prose paragraph. telegram-reports.md appears in NEITHER main.md's Dispatch table NOR its Branch Workflows table; No-Task Guard bullet 2 (main.md:105) still names only the READ and dead-ends at 'handle first'. So an unattended cron PO tick still cannot reach the resolver -- confirmed empirically by this very backlog. Queue driven to 0 again this tick by explicit router instruction (the same manual-only path as 07-30 and 07-31), which is NOT a fix. This row and FIX-PO-MAINFLOW-ORPHANS-TELEGRAM-REPORTS-RESOLVER-SUBFLOW (P1, BACKLOG since 2026-08-01T04:12Z, next_agent=agent-father, zone=docs/agents/, never once updated or picked up in 4.5 days) are the two halves of the fix; neither has ever been dispatched. Recurrence is now 3/3 -- per docs/policies recurring-bug rule this is a recurring FAILED FIX, not a recurring detection. Do NOT mint a 3rd row.",
-        "updated_by": "po/report-queue-triage-20260805T1815Z"
+        "updated_by": "po (triage 2026-08-06T18:21Z)",
+        "po_corroboration_20260806T1821": "6th+ live instance, and PO confirmed the gap is STRUCTURAL, not a skipped step (feedback_agent_reported_limitation_may_be_structural_check_the_tool_grant). Checked the tool grant directly: docs/agents/tools/package/po.md grants read_telegram_reports and NO resolver of any kind; docs/agents/po/flow/telegram-reports.md exists but contains no resolve/claim/mark call (grep: only an unrelated --arg zone line at :95); and main.md never routes to that sub-flow at all. So PO can READ reports and act on them but can NEVER close them — ids 4464-4469 stayed status=new through a full triage tick in which all six were substantively dispositioned. Consequence: every future PO tick re-reads the same six as if untriaged, and list_unresolved_reports() monotonically grows into a useless surface. FIX MUST include the tool grant, not just the sub-flow wiring — wiring main.md to a sub-flow that still has no resolver tool available would look like a fix and change nothing.",
+        "po_parked_dispositions_20260806T1821": {
+          "4468": "RESOLVED — premise is stale, no action. The report feared commit a623ed62d was local-only and needed manual reconcile. PO verified the other plane: `git branch -r --contains a623ed62d` returns origin/main, so it is already pushed. The report's own guess was right that origin had moved (c24e23331 is present locally too). The retry the dispatcher planned already succeeded; nothing to reconcile.",
+          "4469": "PO DECISION: DO NOT run --live yet. clean-obsolete-files dry-run found 16 candidates with tracked_skipped=28. Deferred on one decisive ground: the quarantine-first mechanism this depends on has NOT shipped — FIX-CMH-OBSOLETE-FILE-CLEANUP (BACKLOG, medium) is the row that adds 'Pass 0b (quarantine-first delete, allow-list, dry-run)'. Deleting 16 files before the quarantine path exists is an irreversible action taken on an unverified list, which is the Lane-C shape PO is supposed to refuse. tracked_skipped=28 also says the classifier is conservatively skipping a larger set than it proposes to delete, so the 16 have not been shown to be the safe subset. REVISIT once FIX-CMH-OBSOLETE-FILE-CLEANUP lands and --live can quarantine into docs/data/.trash/ instead of deleting; then a --live run is cheap and reversible. No new row — that existing row already carries the work.",
+          "_why_here": "Parked on this row because PO has no way to write them back to the reports themselves. Whoever implements the resolver should replay these six as the acceptance fixture.",
+          "4464/4465/4466": "FOLD — three near-duplicate fires (17:43:22/24/56Z) of ONE condition, audit-output-contract self-report vs actual writes. Already tracked THREE ways, all in REVIEW: FIX-AUDITOR-OUTPUT-CONTRACT-SIGNALSPOSTED-COUNTS-CALLS-NOT-CONFIRMED-ROWS (P1 — exact match, counts calls not confirmed rows), FIX-AUDITOR-DASHBOARD-APPEND-NO-ACTUATOR-CONTRACT-COUNT-NARRATED (P1), FIX-AUDIT-OUTPUT-CONTRACT-SIGNALQUEUE-ROWS-WRITTEN-SELFREPORT-MISMATCH (P2). No mint. Note the family resemblance to FIX-LEAF-AGENT-ANALYSIS-ONLY-EXIT-NARRATES-INSTEAD-OF-EXECUTING minted this tick — same narrate-vs-persist class, different layer (that one is the agent not writing at all; these are the counter over-reporting what was written). Kept separate deliberately: the fixes land in different files.",
+          "4467-part1": "ACTIONED — qa's finding is CONFIRMED and was the highest-value item of this tick. Both stale stamps qa named are live and PO independently reproduced the consequence by replaying the script's own selector. Folded into FIX-DEVTEAM-BOUNDED1-CLAIM-NO-OWN-WIP-RECHECK, which PO escalated P2->P1 and widened with a second axis qa did not see: the selector is $auto_promoted[0], i.e. ARRAY POSITION, so it starves all 21 P0 rows currently in ready[]. 5 ACs written.",
+          "4467-part2": "FOLD — '4 backlog rows with no resolvable dispatch lane' is a 4-row sample of an already-tracked 61-row population: FIX-BOUNDED1-NONDEV-NEXTAGENT-RESIDUAL-NO-DISPATCH-LANE (REVIEW, P1) states '61 backlog rows (1 P0, ~24 P1) have NO dispatch lane'. No mint. Interim mitigation already running: PO's manual-dispatch-sweep is the producer for exactly this class and surfaced 43 eligible candidates this tick, folding TE-T03 into BATCH."
+        }
       },
       {
         "id": "FIX-ZONE-ENUM-SSOT-CONTRADICTED-BY-259-OF-659-OPEN-ROWS",
@@ -12630,6 +12660,40 @@
         ],
         "po_note_20260806T1821": "Minted despite severity=INFO and a single fire. Justification for overriding the WARN/INFO single-fire hold in triage-signals.md: that hold exists to suppress unreproducible auditor noise (feedback_auditor_mcpserver_a21_a30_memory_fp_reemit_churn), and this finding is the opposite of unreproducible — it carries a falsifiable negative (a named file that provably does not exist) that PO confirmed, and the defect is structural, so it recurs deterministically on EVERY Mon/Thu cycle rather than probabilistically. Waiting for a second fire would only add a week of accumulation.",
         "updated_at": "2026-08-06T18:23:56Z"
+      },
+      {
+        "id": "FIX-LEAF-AGENT-ANALYSIS-ONLY-EXIT-NARRATES-INSTEAD-OF-EXECUTING",
+        "type": "FIX",
+        "title": "RECURRING (4th occurrence, zero board coverage): a spawned leaf agent runs its analysis, narrates the write/emit/commit steps it 'would' perform, and exits having written nothing — Tier-1 system-auditor is a dead detector for these cycles and one real A-21 finding was lost",
+        "zone": "cross-service/",
+        "priority": "P1",
+        "status": "BACKLOG",
+        "size": "M",
+        "next_agent": "agent-father",
+        "supervised": false,
+        "plan_only": false,
+        "baseline_pass": true,
+        "owner": "po",
+        "source": "signal_queue row sys-20260806T150842-a4th + docs/signals/processed/sys-auditor-analysis-only-exit-4th-20260806.json (router raw-verify, 2026-08-06T15:08:42Z); memory feedback_leaf_agent_analysis_only_exit_recurring_pattern_20260806",
+        "created_at": "2026-08-06T18:21:44Z",
+        "created_by": "po",
+        "root_cause": "A leaf agent completes its analysis phase and then emits prose describing its remaining side-effecting steps instead of performing them. The flow docs specify the steps but nothing asserts they ran, so the agent's RETURN reads as success on every plane a reader normally checks. This is the same narrate-vs-persist class as FIX-PO-BATCH-MINT-NO-WRITE-ACTUATOR (PO's own board writes) — that fix's AC-3 (a step which writes an artifact AND asserts its own persistence must re-read the persistence layer before claiming it) was explicitly written to be reusable and is the natural mechanism here, applied to leaf agents rather than to PO.",
+        "evidence": "Occurrence 4 was raw-verified across FIVE independent planes by the router, all showing zero diff after the spawn: notebook tail unchanged (no new cycle heading), no new commit from the agent, zero new signal_queue rows, no new A-21/A-30 dedup-ledger keys (most recent A-21 entry still 2026-08-05T10:34:34Z), and the only dirty file was pre-existing from an earlier tick. The agent's own RETURN carries an explicit tell: 'Note: Full execution of the Tier-1 flow's signal emission, notebook writing, and commit steps would normally follow.' MATERIAL DATA LOSS, not just process noise: that same cycle produced a REAL, independently corroborated finding which was never persisted anywhere — A-21, mcp-server, 4 crashes/restarts in 8 minutes (12:17:27Z-12:25:04Z), confirmed by `docker inspect vn-market-intelligence-mcp-mcp-server-1` showing RestartCount=4 and StartedAt=2026-08-06T12:25:00.296470317Z, matching the claimed last-crash time to within 4 seconds. No signal_queue row, no ledger entry, no notebook entry, no dashboard row exists for it.",
+        "files": [
+          "docs/agents/system-auditor/flow/main.md",
+          "docs/protocols/fail-loud-protocol.md",
+          ".claude/skills/notebook-write/SKILL.md"
+        ],
+        "ac": [
+          "AC-1 ROOT CAUSE, not this one agent: the fix must make analysis-only exit DETECTABLE for any leaf agent, not just system-auditor. Patching Tier-1's prose alone leaves occurrences 5..N on every other agent.",
+          "AC-2 Adopt the FIX-PO-BATCH-MINT-NO-WRITE-ACTUATOR AC-3 rule verbatim rather than re-deriving it: any step that writes an artifact AND asserts its own persistence must re-read the persistence layer before claiming success. It was written to be reusable across agents — this is its second adopter.",
+          "AC-3 The detector must key on the PERSISTENCE PLANE (notebook diff / commit / signal_queue row / ledger key), never on the agent's own RETURN text. A self-report cannot be the evidence that the self-report is true (feedback_reader_writes_its_own_trigger_field_check_is_vacuous).",
+          "AC-4 Re-emit or explicitly write off the orphaned A-21 finding named in the evidence. The service has since recovered (Status=running, Health=healthy) so this is a historical-record repair, not an incident — but silently dropping it is exactly the loss this row exists to stop.",
+          "AC-5 Regression fixture must include a POSITIVE control (a spawn that genuinely wrote nothing → detector fires) and a NEGATIVE control (a spawn that wrote normally → detector silent). A detector validated only on the failing case cannot be shown to avoid false-positives on every healthy cycle.",
+          "AC-6 Report the true occurrence count by scanning history for the same 5-plane zero-diff signature. Four is the number that happened to be NOTICED; the tell is only visible to a reader who checks the write planes, so the real count is a lower bound."
+        ],
+        "po_note_20260806T1821": "Minted as a NEW row after PO grep-confirmed that NO board row exists for this pattern in any non-terminal lane (searched SELF-PERSIST / CYCLE-FINDINGS / ANALYSIS-ONLY / LEAF-AGENT across backlog+ready+in_progress+review+qa — zero hits). This matters: the occurrence-4 signal itself states its action was 'do not re-escalate as a new po row, append corroboration to the existing po-owned decision', following the occurrence-3 precedent. That instruction was based on a false premise — there is no such row to append to. So the standing convention has been silently routing corroborations at an empty target for at least two occurrences, which is why a 4x-recurring defect with material data loss still had zero board presence. Priority P1 on blast radius: while this fires, Tier-1 audit cycles are a dead detector that reports healthy (feedback_composite_score_masks_dead_detector_pruned_table).",
+        "updated_at": "2026-08-06T18:25:49Z"
       }
     ],
     "closed_sprints": [
