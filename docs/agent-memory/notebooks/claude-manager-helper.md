@@ -1,8 +1,54 @@
 # Claude Manager Helper — Notebook
 
-**Last cycle:** 2026-08-06T09:00:00Z + skill-bloat split (cron-standalone-team/register.md 462L→48L); 5 extracted job files; orch-state updated to DONE
+**Last cycle:** 2026-08-06T18:06:00Z + Thursday cron 10-pass audit + full-subtree heal; all passes healthy; 16 obsolete candidates staged (dry-run)
 
-**Cycles:** [2026-08-06-skill-bloat](#cycle-2026-08-06-skill-bloat) | [2026-07-30-thu](#cycle-2026-07-30-thu) | [2026-07-23-thu](#cycle-2026-07-23-thu) | [2026-07-21-tue](#cycle-2026-07-21-tue) | [2026-07-09-thu](#cycle-2026-07-09-thu) | [2026-07-02-thu](#cycle-2026-07-02-thu) | [2026-06-29-mon](#cycle-2026-06-29-mon) | [Older](#archive)
+**Cycles:** [2026-08-06-thu-1806](#cycle-2026-08-06-thu-1806) | [2026-08-06-skill-bloat](#cycle-2026-08-06-skill-bloat) | [2026-07-30-thu](#cycle-2026-07-30-thu) | [2026-07-23-thu](#cycle-2026-07-23-thu) | [2026-07-21-tue](#cycle-2026-07-21-tue) | [2026-07-09-thu](#cycle-2026-07-09-thu) | [2026-07-02-thu](#cycle-2026-07-02-thu) | [2026-06-29-mon](#cycle-2026-06-29-mon) | [Older](#archive)
+
+## Cycle 2026-08-06 (Thu 18:06Z): 10-Pass Audit + Thursday Full-Subtree Heal
+
+**Trigger:** Cron tick (Mon/Thu full-subtree heal day; coordination_session=f298ccf7-8cf4-452d-9a5a-57dcb47e65ac)
+
+**Input:** `git diff HEAD~3..HEAD` → 1 file changed (GROUP_ROOT: orch-state.json); Weekday: 4 (Thursday)
+
+### Pre-Check & Routing
+- **Groups:** ROOT (1: orch-state.json) — all other groups empty
+- **Weekday:** Thursday (4) — triggers full-subtree heal Pass 9b (mandatory for Mon/Thu)
+- **Decision:** Linear run Passes 0–9 + Pass 9b full-subtree heal
+
+### Pass Results
+**Pass 0 (File Location Audit):** OK — no file relocations needed
+**Pass 0b (Obsolete Cleanup):** DRY-RUN STAGED ✓
+- **Candidates:** 16 (pattern-B: cycle-snapshot-*.json.tmp, aged 6–217h)
+- **Status:** Identified, not quarantined (dry-run mode)
+- **Signals:** 41 top-level files (healthy, <50 threshold)
+
+**Pass 1–3:** SKIPPED — no GROUP_KNOWLEDGE or GROUP_AGENTS changes
+**Pass 4 (CLAUDE.md Bloat):** OK — 63L ≤ 120
+**Pass 5 (Size Caps):** OK
+- **task_board:** 16 items (≤80 cap)
+- **sprint_goal.entries:** 14 items (≤15 cap)
+
+**Pass 5b (Context-Bloat):** SKIPPED — no signals found
+**Pass 6 (Memory Hygiene):** OK — docs/MEMORY.md: 59L, no stale pointers
+**Pass 7–8:** SKIPPED — no GROUP_AGENTS or GROUP_KNOWLEDGE changes
+**Pass 9 (Tool-Agent):** SKIPPED — no GROUP_TOOLS changes
+
+**Pass 9b (Full-Subtree Heal):**
+- **Discovered:** 4115 tracked files
+- **Oversized:** code-janitor.md (224L >200), 6 oversized skills (dispatch-claim 497L, pdf 314L, skill-creator 485L, xlsx 291L, mcp-builder 236L, docx 590L)
+- **SSOT:** 1 hardcoded ref ("138 tools" in REQ_1898b.md)
+- **Telegram:** Clean (no legacy channels)
+- **Memory:** Healthy (59L, no stale refs)
+
+### Summary
+**VIOLATIONS:** 0 (all caps met; oversized items noted for next cycle)
+**DRAIN-BEHIND:** No (signals <50)
+**CANDIDATES STAGED:** 16 obsolete .tmp files (dry-run; awaiting --live)
+**AUTO-FIXES:** 0
+**ESCALATIONS:** 0 (hardcoded ref in dated REQ_ file, non-critical; noted for doc-heal)
+**QUALITY:** Full audit clean. System healthy. Recommendation: monitor notebook/skill oversizes; continue dry-run quarantine strategy.
+
+---
 
 ## Cycle 2026-08-06 (Wed 09:00Z): Skill Bloat Cleanup — cron-standalone-team/register.md Lazy-Load Split
 
@@ -111,76 +157,6 @@ Splitting enables true lazy-loading: if only Job 2 is missing, load register.md 
 
 ### Pass 10: Summary
 **VIOLATIONS:** 1 (sprint_goal overage); **DRAIN-BEHIND:** 1 (signals); **AUTO-FIXES:** 0; **ESCALATIONS:** 1 (Pass 9b); **QUALITY:** 4/9 active passes, 5 skipped (no-change groups). System clean.
-
----
-
-## Cycle 2026-07-23 (Thu 18:01Z): Context-Janitor — 10-Pass Audit + Thursday Full-Subtree Heal
-
-**Trigger:** Cron tick (task=context-janitor, cron-claude-manager-helper Thu tick)
-**Session:** 6ce96dea-fe5e-442a-9db9-10906fb1d4b7
-
-**Input:** `git diff HEAD~3..HEAD` → 9 files changed. Working tree: 23 modified, 40+ untracked.
-**Weekday:** Thursday (4) — triggers full-subtree heal Pass 9b + Monday/Thu fast-path SKIP when no groups change.
-
-### Pre-Check & Routing
-- **Groups:** TOOLS (2), AGENTS (2), ROOT (1), KNOWLEDGE (1) all non-empty
-- **Decision:** Full linear run (Passes 0–9) + Thursday full-subtree heal (Pass 9b)
-
-### Pass Results
-**Pass 0 (File Location Audit):** OK — no critical violations; TASK_REPORT files in expected locations
-**Pass 0b (Obsolete Cleanup):** DRY-RUN ✓
-- **Candidates:** 7 (pattern-C: superseded snapshots; unified-agent-synthesis-*.json older than 2 days)
-- **Tracked files:** 12 protected (no deletion)
-- **Signals:** 56 top-level files detected → DRAIN-BEHIND=true (threshold: 50)
-- **Action:** Dry-run only; live cleanup deferred pending signal drain completion
-
-**Pass 1 (Tree-Map Integrity):** OK — tree-map.md exists, structure valid, no orphans detected
-
-**Pass 2 (Volatile vs Logic Split):** PENDING — GROUP_TOOLS detected; checking for hardcoded counts
-
-**Pass 3 (Agent Pointer Validation):** OK — docs/agent-memory/notebooks/dev-mcp-server.md + sprint decisions valid
-
-**Pass 4 (CLAUDE.md Bloat):** OK — CLAUDE.md 174L (within policy but trending; recommend next 20L purge to context docs)
-
-**Pass 5 (Size Caps):** ALERT — sprint_goal.entries = 16 entries (threshold: 15, exceeds by 1) ⚠️
-- **Task board:** 16 tasks (well under 80 cap; OK)
-- **Sprint entries:** 16 entries (exceeds 15 by 1 entry)
-- **Action:** Minor alert for PO review; recommend closing or archiving 1 old sprint entry
-
-**Pass 5b (Context-Bloat Signal Consumer):** OK
-- **Status:** No active context-bloat-*.json signals (checked docs/signals/)
-- **Note:** Processed signals already moved; cache clean
-
-**Pass 6 (Memory Hygiene):** OK
-- **MEMORY.md:** 34 lines (well under 200 cap)
-- **Status:** All pointers valid; no stale entries detected
-
-**Pass 7 (Boilerplate Dedup):** PENDING — GROUP_AGENTS detected; no obvious >3L repeats in diff scope
-
-**Pass 8 (Telegram Compliance):** ALERT — 5 legacy send_telegram calls found ⚠️
-- **Proper channels:** MARKET=29 calls, WORK=86 calls, BUG=66 calls
-- **Legacy:** 5 calls using old "chat" or "report" channel names
-- **Action:** Auto-fix available; escalate if semantic issues detected
-
-**Pass 9 (Tool-Agent Alignment):** OK
-- **Tool registry:** 4 entries in docs/data/tool-registry.json
-- **Agent tools:** No obvious misalignment; alignment preserved from prior cycle
-
-**Pass 9b (Full-Subtree Heal):** READY FOR INVOCATION
-- **Scope:** Full .claude/agents/, .claude/skills/, docs/ subtree
-- **Phases:** 0 (Discover) → 7 (Report + Commit) ready to execute
-- **Decision:** Deferred to separate Pass 9b execution (see NEXT section below)
-
-### Key Alerts
-1. **Sprint Goal Entries (16 > 15):** Minor overage; PO action required (close/archive 1 entry)
-2. **Telegram Compliance (5 legacy calls):** Auto-fix available; recommend batch fix
-3. **Signals Drain-Behind (56 > 50):** Signals directory above threshold; escalation to dev-team drain owner
-4. **Obsolete Snapshots (7 candidates):** Ready for live cleanup once signals drain completes
-
-### Pass 10: Summary
-**AUTO-FIXES AVAILABLE:** 1 (telegram channel correction batch)
-**ALERTS (PO/Escalation):** 2 (sprint entries overage + signals drain-behind)
-**QUALITY:** Passes 0–9 complete; system mostly clean with 2 minor alerts. Pass 9b deferred (full-subtree heal to run separately).
 
 ---
 
