@@ -89,10 +89,10 @@
   ],
   "head": {
     "status": "idle",
-    "updated_at": "2026-08-06T11:50:18Z",
+    "updated_at": "2026-08-06T12:19:01Z",
     "updated_by": "developer",
     "active_task_id": null,
-    "next_agent": null
+    "next_agent": "router"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -2744,6 +2744,17 @@
         "triaged_at": "2026-08-06T11:35:35Z",
         "triaged_by": "po",
         "disposition": "FOLD + ESCALATE (no mint) — root cause already owned by FIX-EXECUTETIER-PHASE35-RESUME-LOCK-RELEASED-AT-SPAWN-NOT-COMPLETION (backlog, next_agent=architect, created 2026-07-30T23:20Z), whose desc names the exact mechanism: execute-tier.md Phase-3.5 (BOUNDED-1's own documented JUMP-TO target) releases task:<id> in a finally bound to a background Agent() call that returns in ms while the agent runs on. This tick is occurrence 3 of 3, all recorded on the row. Actions: priority P1->P0, occurrence-3 evidence + the head.next_agent='dev-team' invalid-agent-type compounding factor + the 4-lane scope widening (BOUNDED-1/SLS/RLC/DRS not individually verified) appended, row folded into this tick's BATCH as the top entry for architect adjudication of option (a) vs (b)."
+      },
+      {
+        "id": "dev-20260806T115859",
+        "ts": "2026-08-06T11:58:59Z",
+        "from": "dev-team",
+        "to": "po",
+        "type": "system-issue",
+        "summary": "stranded-state sweep: unknown paths need owner (5)",
+        "severity": "LOW",
+        "status": "NEW",
+        "payload_ref": null
       }
     ],
     "last_triaged_at": "2026-07-29T06:25:00Z",
@@ -11432,41 +11443,6 @@
         ]
       },
       {
-        "id": "FIX-AUDITOR-C08-UNSATISFIABLE-TTL-WINDOW-AND-ISO8601-STRCMP",
-        "type": "FIX",
-        "title": "system-auditor C-08 is a broken detector, not a real defect: its expected=0 threshold is mathematically unsatisfiable (24h alerts window vs 2h-TTL agent_signals stubs) AND its window over-captures via the ISO8601 strcmp bypass already fixed in the code-plane twin",
-        "zone": "cross-service/",
-        "priority": "high",
-        "status": "BACKLOG",
-        "size": "S",
-        "next_agent": "dev-team",
-        "supervised": false,
-        "plan_only": false,
-        "baseline_pass": true,
-        "source": "PO triage of system-auditor Tier-DATA sweep c20 2026-08-05T08:18:46Z - signal sys-20260805T081846-1853. Root-caused live against the named-volume market.db (readonly) 2026-08-05T08:23-08:27Z.",
-        "created_at": "2026-08-05T08:28:16Z",
-        "created_by": "po",
-        "updated_at": "2026-08-05T08:29:43Z",
-        "root_cause": "C-08 (docs/agents/system-auditor/flow/main.md:649) is `SELECT count(*) FROM alerts a LEFT JOIN agent_signals s ON a.id = s.alert_id WHERE s.id IS NULL AND a.triggered_at > datetime('now','-24 hours')` with expected=0. TWO independent faults compound, and the reported anomaly is a FALSE POSITIVE - the alert-engine write path is HEALTHY. (A) UNSATISFIABLE THRESHOLD: agent_signals alert-correlation stubs are TTL-bound at 2h (`expiresAt(ttlMinutes ?? 120)`, agentSignalStore.ts:570/604/634/661/688/715) and hard-purged by cleanExpired() on the daily off-hours dataAuditJob cron, while `alerts` rows are retained ~30d (checkStaleAlerts.ts D-4 is UPDATE-only, never deletes). So every alert older than the last GC sweep NECESSARILY has no surviving correlation row. expected=0 can only be met if zero alerts fired in the whole stale band. The check's own code-plane inverse (checkOrphanAgentSignalsAlertId.ts:15-16) already states this in prose: 'agent_signals correlation stubs are TTL-bound, ~2h, and purged by cleanExpired(), so any historical debt self-expires' - C-08 was never re-derived against that fact. (B) ISO8601 STRCMP BYPASS: `alerts.triggered_at` is a raw JS toISOString() string ('2026-08-04T01:21:58.806Z') while `datetime('now','-24 hours')` renders space-separated ('2026-08-04 08:26:52'). At index 10 'T'(0x54) > ' '(0x20), so every row sharing the bound's date-part compares greater and the window over-captures. LIVE PROOF 2026-08-05T08:26Z: as-written window = 40 alerts / 22 orphans; TRUE 24h window (julianday) = 28 alerts / 10 orphans; the oldest row the as-written window admitted was 31 HOURS old. This is the known recurring class feedback_sqlite_iso8601_datetime_strcompare_bypass, and it was ALREADY FIXED in the code-plane twin on 2026-08-01 (checkStaleAlerts.ts:23-30 wraps both sides as `datetime(triggered_at) < datetime('now',...)` and cites the same lesson by name) - the remedy simply never propagated to the flow-doc SQL the agent actually executes. That is memory feedback_fix_landed_in_the_pregate_not_the_probe_the_agent_actually_runs.",
-        "evidence_write_path_is_healthy": "Age-bucketed LEFT JOIN on the live DB gives a perfectly clean split with NO overlap: alerts <=17h old = 18 linked / 0 orphaned; alerts >=18h old = 22 orphaned / 0 linked. The 18h boundary equals the last cleanExpired() sweep (oldest surviving correlation stub = 2026-08-04T14:29:22Z, 17h old; 131 of 144 agent_signals rows are already past expires_at and awaiting the next sweep). Orphan status is therefore a pure function of GC timing x alert volume and carries ZERO information about write-path health. Producer-family breakdown confirms no producer-specific gap - EVERY family appears on BOTH sides (news 7 orphan/9 linked, price 9/1, ta 3/3, other 2/3, macro 1/2); a genuine co-write gap would concentrate in one family. fingerprint-null does not correlate either (21/16 vs 1/2). The brief's hypothesis that 'alert-engine writes alerts/price_alerts but not agent_signals' is DISCONFIRMED: `price_alerts` and `alert_engine_records` both hold 0 rows, and the prior co-write gap FU-ALERT-COWRITE-SCHEDULER-JOBS (2026-06 archive) is DONE and holding.",
-        "growth_claim_is_false": "The escalating brief framed this as monotonic 1->22 growth over 15 days implying a worsening defect. RAW-verified FALSE. True firing history: 1 orphan (sys-20260721T003810-2b02, 07-21) -> 121 orphans (sys-20260730T003538-10ba, 07-30, recorded in docs/data/DASHBOARD.md:242-249 and MISSING from both the live .signal_queue and the archives) -> 22 orphans (08-05). Non-monotonic, and it tracks alert volume: alerts/day = 8 (07-31), 11 (08-01), 7 (08-02), 42 (08-03), 26 (08-04). The 22 orphans are exactly the 08-04 alerts that fired before the 14:29Z GC horizon. There is no regression to chase.",
-        "files": [
-          "docs/agents/system-auditor/flow/main.md",
-          "apps/mcp-server/src/scheduler/news-analysis/audit-checks/checkOrphanAgentSignalsAlertId.ts",
-          "apps/mcp-server/src/scheduler/news-analysis/audit-checks/checkStaleAlerts.ts",
-          "docs/data/DASHBOARD.md",
-          "docs/protocols/system-audit-runbook.md"
-        ],
-        "ac": [
-          "AC-1 Make C-08 satisfiable or delete it. The threshold must be derivable from the data model: either (i) bound the alerts window to the agent_signals correlation-stub TTL horizon rather than 24h, or (ii) join only alerts whose paired stub could still be alive, or (iii) retire C-08 outright and rely on the code-plane inverse checkOrphanAgentSignalsAlertId (D-NEW2), which is TTL-aware by construction. Do NOT keep expected=0 against a 24h window - state explicitly in the flow doc WHY the chosen bound is satisfiable.",
-          "AC-2 Fix the ISO8601 strcmp bypass in the C-08 predicate by wrapping BOTH sides in datetime(), copying the already-proven pattern and rationale comment from checkStaleAlerts.ts:23-30 verbatim rather than reinventing it.",
-          "AC-3 FLEET REPLAY, not one line. Per memory feedback_fleetwide_gate_validated_on_one_file_optout_allowlist, audit EVERY C-xx/B-xx check in docs/agents/system-auditor/flow/main.md that compares a timestamp column against datetime('now',...) and report per-check whether the column is T-format. Already measured and CONFIRMED AFFECTED: financial_reports.parsed_at is 100% T-format (C-04, 7-day window) and agent_signals.created_at is MIXED 13% T / 87% space (C-07, 24h window - heterogeneous is the worst case because the same query silently applies two different semantics). Confirmed NOT affected: market_messages.sent_at 0% T (C-06), daily_ohlcv.updated_at 2% T. Fix every affected check in one pass.",
-          "AC-4 Regression test: seed an alerts row older than the correlation-stub TTL with its stub already purged, and assert C-08 (or its replacement) does NOT flag it. Also assert a row whose date-part matches the bound but which is genuinely outside the window is EXCLUDED - that is the strcmp bypass, and it must fail loudly if reintroduced.",
-          "AC-5 Retract the fabricated root causes already published. docs/data/DASHBOARD.md:246 asserts 'Signal processing pipeline may be delayed or alert-signal mapping broken' and :330 asserts 'Alerts created by alert-engine but not propagated to agent_signals table'. Both are agent-narrated, unmeasured, and now DISCONFIRMED. :243 also names the wrong table ('no matching signal_queue rows' - the join is on agent_signals). This is the confabulation class feedback_agent_selfreport_metalayer_confabulation; correct or withdraw both entries.",
-          "AC-6 Do not silently drop coverage. If AC-1 retires C-08, confirm in writing that checkOrphanAgentSignalsAlertId (D-NEW2) plus the storeAlerts/storeAlertsFromCommander writer guard genuinely cover the co-write-gap failure mode that C-08 was introduced to catch, so this fix does not trade a false positive for a blind spot."
-        ]
-      },
-      {
         "id": "FIX-PO-MINT-ACTUATOR-REGRESSION-VERIFIER-SCRIPT",
         "type": "FIX",
         "title": "Author scripts/audits/po-mint-orchapply-actuator-verify.sh per the spec inline in docs/agents/po/flow/main.md § Regression verifier",
@@ -14777,46 +14753,40 @@
         "architect_review_note": "2026-08-06T10:49Z architect (plan_only brief per PO explicit ask -- adjudicate a/b/c, no code shipped). Brief: docs/architecture-briefs/2026-08-06-guard-notebook-concurrent-write-mutex.md. DECISIVE EVIDENCE READ RAW (not POs summary): 11 notebook-direction-defaulted signals on qa.md (10:00:46Z-10:08:36Z) show a non-monotone retained-section set AND 3 simultaneous duplicate ## cycle-504 headings with different content -- proves concurrent lost-update + stale c<NNN> counter allocation, not a pruning-order bug. Ruled out the suspected 3rd-writer formatter hook: context-bloat-backstop.sh read in full, only ever writes its OWN signal file, never the notebook -- confirmed no 3rd mutator exists (only the writing agent Write/Edit + notebook-auto-prune.sh PostToolUse hook touch notebook content). ADJUDICATION: (b) append-only cannot work standalone (AC-2 retention/AC-5 cap both require removing content, no true append primitive exists on native Write/Edit); (c) fan-out cap alone independently disproven -- the ORIGINAL tran-ngoc-bau.md c113 incident was N=2 writers, no fan-out involved, so a lower cap only narrows frequency, never closes the class; (a) task_claim mutex is the right direction but NOT a drop-in -- task_kind is a closed 7-value Zod enum (coordinationTools.ts) with no fitting kind, needs an additive notebook-write value (companion dev-mcp-server row, blocking prereq). RECOMMENDATION: task_claim(task_kind=notebook-write) mutex bracketing ONLY the mechanical fresh-read-merge-write span (LLM authoring stays OUTSIDE the held window, explicit ttl_seconds=120 not the 3600s default -- avoids this repos own corroborated TTL-hazard lesson) as new SKILL.md AC-7; PostToolUse hook (cannot call task_claim, no MCP-from-bash bridge exists) hardened instead with a stat-based staleness recheck immediately before its own mv, deliberately NOT a new mkdir/flock lock file since docs/agent-memory is a named, still-unexcluded VirtioFS bind-mount race hazard per docs/protocols/head-lock-self-cure.md (H4, confirmed not hypothesized) -- reusing task_claims server-side SQLite lock state sidesteps that hazard entirely. Files split across 3 owner zones (mixed-zone flag for PM, same class already resolved for FIX-DEVTEAM-QADRAIN-THROUGHPUT-CAP): agent-father (.claude/skills/notebook-write/SKILL.md AC-7 + docs/agents/dev-team/flow/main.md 1-sentence note), developer (scripts/agents-flow/notebook-auto-prune.sh staleness guard), dev-mcp-server (task_kind enum +1, companion row, blocks agent-father row). Acceptance test extends the EXISTING apps/mcp-server/src/__tests__/task-lock-coordination-store.test.ts harness (new AC-12 describe block, N-concurrent-writer negative/positive control on a fixture notebook) rather than a new shell script -- satisfies this rows own verification_gate directly. Sequencing: dev-mcp-server row first (blocking), developer row independent/ships anytime, agent-father row last. Zone cross-service/. BUILD-STANDARD: not-applicable."
       },
       {
-        "id": "FIX-DB-INTEGRITY-SIDECAR-NAMED-VOLUME-DRIFT",
+        "id": "FIX-AUDITOR-C08-UNSATISFIABLE-TTL-WINDOW-AND-ISO8601-STRCMP",
         "type": "FIX",
-        "title": "db-integrity observer tooling still mounts the named volume commit 5ba622eca retired on 2026-07-15 — counts helper returns null, probe fail-opens every tick",
+        "title": "system-auditor C-08 is a broken detector, not a real defect: its expected=0 threshold is mathematically unsatisfiable (24h alerts window vs 2h-TTL agent_signals stubs) AND its window over-captures via the ISO8601 strcmp bypass already fixed in the code-plane twin",
         "zone": "cross-service/",
-        "priority": "P1",
+        "priority": "high",
         "status": "READY",
         "size": "S",
         "next_agent": "dev-team",
         "supervised": false,
         "plan_only": false,
         "baseline_pass": true,
-        "source": "PO triage of system-auditor Tier-DATA sweep 2026-08-05T06:47Z (router escalation, telegram bug msg_id 4703)",
-        "created_at": "2026-08-05T07:06:06Z",
+        "source": "PO triage of system-auditor Tier-DATA sweep c20 2026-08-05T08:18:46Z - signal sys-20260805T081846-1853. Root-caused live against the named-volume market.db (readonly) 2026-08-05T08:23-08:27Z.",
+        "created_at": "2026-08-05T08:28:16Z",
         "created_by": "po",
-        "updated_at": "2026-08-06T11:44:04Z",
-        "root_cause": "2026-07-15 commit 5ba622eca ('fix(infra): bind-mount market data to host disk instead of Docker named volume') moved the live DB off the named volume `vn-market-intelligence-mcp_market_data` and onto a HOST BIND MOUNT `./data/live:/app/data` across all 9 dependent services, because the 2026-07-15 hypervisor VM rebuild had destroyed the named volume. docker-compose.yml now declares only pek_model_cache + bctc-page-images under `volumes:` — market_data is gone entirely. The RUNTIME was migrated; the READ-ONLY OBSERVER tooling was not. Every observer still runs `docker run --rm -v vn-market-intelligence-mcp_market_data:/data keinos/sqlite3 ...`, which makes Docker AUTO-CREATE an empty volume and then fail to open /data/market.db. Confirmed live: `docker volume inspect vn-market-intelligence-mcp_market_data` shows CreatedAt=2026-08-05T06:47:24Z (auto-created by the auditor's own failing probe today) and `docker run -v <vol>:/data alpine ls -la /data` shows an empty dir, while `docker inspect vn-market-intelligence-mcp-mcp-server-1` shows `bind .../data/live -> /app/data` and the real market.db is 425MB with an mtime of seconds ago.",
-        "evidence": "PO ran both failing commands directly. `bash scripts/db-integrity-counts.sh` -> '[DB-INTEGRITY-COUNTS] PROBE FAILURE (exit 1): Error: unable to open database \"file:/data/market.db?immutable=1\": unable to open database file'. `bash scripts/agents-flow/db-integrity-probe.sh` -> {\"verdict\":\"SPAWN\",\"detail\":\"sidecar query failed (docker unreachable, non-zero exit, or output did not parse into 1 line per watched table) — snapshot left untouched\",\"tables_changed\":-1}. Both fail-open rather than fail-loud, so the degradation is SILENT: the probe's whole purpose is skip-if-unchanged idempotency and it now votes SPAWN unconditionally, and the counts helper's null propagates into every history entry. The same query against the correct path succeeds immediately: `sqlite3 \"file:data/live/market.db?immutable=1\" \"SELECT COUNT(*) FROM daily_ohlcv WHERE high=0 AND low=0;\"` -> 336.",
-        "blast_radius": "docs/data/db-integrity-history.json holds 138 entries; the last one with non-null `counts` is 2026-06-25T19:25:41Z, then a 41-day gap, then today's 2026-08-05T06:51:39Z entry with counts=NULL. The gap is because the db-data-integrity cron had NO re-arm coverage until /cron-standalone-team was built on 2026-08-04 — so today was the FIRST sweep since the 07-15 bind-mount switch, and it broke immediately. Correct framing: broken for 21 days (since 5ba622eca), first OBSERVED today — not '6 weeks of silent nulls'. The deterministic counts trail that register.md:108-113 explicitly relies on to stop the LLM inventing trends is dead until this lands.",
+        "updated_at": "2026-08-06T11:54:38Z",
+        "root_cause": "C-08 (docs/agents/system-auditor/flow/main.md:649) is `SELECT count(*) FROM alerts a LEFT JOIN agent_signals s ON a.id = s.alert_id WHERE s.id IS NULL AND a.triggered_at > datetime('now','-24 hours')` with expected=0. TWO independent faults compound, and the reported anomaly is a FALSE POSITIVE - the alert-engine write path is HEALTHY. (A) UNSATISFIABLE THRESHOLD: agent_signals alert-correlation stubs are TTL-bound at 2h (`expiresAt(ttlMinutes ?? 120)`, agentSignalStore.ts:570/604/634/661/688/715) and hard-purged by cleanExpired() on the daily off-hours dataAuditJob cron, while `alerts` rows are retained ~30d (checkStaleAlerts.ts D-4 is UPDATE-only, never deletes). So every alert older than the last GC sweep NECESSARILY has no surviving correlation row. expected=0 can only be met if zero alerts fired in the whole stale band. The check's own code-plane inverse (checkOrphanAgentSignalsAlertId.ts:15-16) already states this in prose: 'agent_signals correlation stubs are TTL-bound, ~2h, and purged by cleanExpired(), so any historical debt self-expires' - C-08 was never re-derived against that fact. (B) ISO8601 STRCMP BYPASS: `alerts.triggered_at` is a raw JS toISOString() string ('2026-08-04T01:21:58.806Z') while `datetime('now','-24 hours')` renders space-separated ('2026-08-04 08:26:52'). At index 10 'T'(0x54) > ' '(0x20), so every row sharing the bound's date-part compares greater and the window over-captures. LIVE PROOF 2026-08-05T08:26Z: as-written window = 40 alerts / 22 orphans; TRUE 24h window (julianday) = 28 alerts / 10 orphans; the oldest row the as-written window admitted was 31 HOURS old. This is the known recurring class feedback_sqlite_iso8601_datetime_strcompare_bypass, and it was ALREADY FIXED in the code-plane twin on 2026-08-01 (checkStaleAlerts.ts:23-30 wraps both sides as `datetime(triggered_at) < datetime('now',...)` and cites the same lesson by name) - the remedy simply never propagated to the flow-doc SQL the agent actually executes. That is memory feedback_fix_landed_in_the_pregate_not_the_probe_the_agent_actually_runs.",
+        "evidence_write_path_is_healthy": "Age-bucketed LEFT JOIN on the live DB gives a perfectly clean split with NO overlap: alerts <=17h old = 18 linked / 0 orphaned; alerts >=18h old = 22 orphaned / 0 linked. The 18h boundary equals the last cleanExpired() sweep (oldest surviving correlation stub = 2026-08-04T14:29:22Z, 17h old; 131 of 144 agent_signals rows are already past expires_at and awaiting the next sweep). Orphan status is therefore a pure function of GC timing x alert volume and carries ZERO information about write-path health. Producer-family breakdown confirms no producer-specific gap - EVERY family appears on BOTH sides (news 7 orphan/9 linked, price 9/1, ta 3/3, other 2/3, macro 1/2); a genuine co-write gap would concentrate in one family. fingerprint-null does not correlate either (21/16 vs 1/2). The brief's hypothesis that 'alert-engine writes alerts/price_alerts but not agent_signals' is DISCONFIRMED: `price_alerts` and `alert_engine_records` both hold 0 rows, and the prior co-write gap FU-ALERT-COWRITE-SCHEDULER-JOBS (2026-06 archive) is DONE and holding.",
+        "growth_claim_is_false": "The escalating brief framed this as monotonic 1->22 growth over 15 days implying a worsening defect. RAW-verified FALSE. True firing history: 1 orphan (sys-20260721T003810-2b02, 07-21) -> 121 orphans (sys-20260730T003538-10ba, 07-30, recorded in docs/data/DASHBOARD.md:242-249 and MISSING from both the live .signal_queue and the archives) -> 22 orphans (08-05). Non-monotonic, and it tracks alert volume: alerts/day = 8 (07-31), 11 (08-01), 7 (08-02), 42 (08-03), 26 (08-04). The 22 orphans are exactly the 08-04 alerts that fired before the 14:29Z GC horizon. There is no regression to chase.",
         "files": [
-          "scripts/db-integrity-counts.sh",
-          "scripts/agents-flow/db-integrity-probe.sh",
-          "scripts/db-integrity-history-append.sh",
-          "scripts/ops-bctc-enrich-reverify-pulljob.sh",
-          ".claude/skills/cron-standalone-team/register.md",
-          ".claude/commands/crons/cron-db-data-integrity.md",
-          "docs/agents/system-auditor/flow/main.md"
+          "docs/agents/system-auditor/flow/main.md",
+          "apps/mcp-server/src/scheduler/news-analysis/audit-checks/checkOrphanAgentSignalsAlertId.ts",
+          "apps/mcp-server/src/scheduler/news-analysis/audit-checks/checkStaleAlerts.ts",
+          "docs/data/DASHBOARD.md",
+          "docs/protocols/system-audit-runbook.md"
         ],
         "ac": [
-          "AC-1 DECIDE THE CANONICAL PATH FIRST, then change code. Two candidates: (i) host bind `data/live/market.db` read directly with `sqlite3 \"file:<path>?immutable=1\"` (no docker at all — PO confirmed this works today and is strictly simpler), or (ii) keep a sidecar but mount the host dir: `docker run --rm -v \"$PWD/data/live:/data:ro\" keinos/sqlite3 ...`. Record the choice + rationale in the decision journal. Do NOT re-create the named volume — 5ba622eca retired it deliberately so the DB survives VM rebuilds.",
-          "AC-2 scripts/db-integrity-counts.sh returns real non-null counts for every watched table. Verify by running it and diffing at least 3 table counts against the same query run through a second independent access path (e.g. the mcp-server container's own reader) — two planes, per memory feedback_same_db_tools_diverge_rowcount.",
-          "AC-3 scripts/agents-flow/db-integrity-probe.sh emits verdict=SKIP-SPAWN on an unchanged DB. This is the actual proof the pre-gate works — today it CANNOT emit SKIP-SPAWN at all. Run it twice with no intervening writes and assert the second call skips.",
-          "AC-4 Both scripts FAIL LOUD (non-zero exit + bug-channel-worthy stderr) when the DB is genuinely unreachable, instead of silently returning null / voting SPAWN. The current fail-open is what let this hide for 21 days.",
-          "AC-5 Update every doc/prompt that still teaches the named-volume pattern: .claude/skills/cron-standalone-team/register.md Job 1 AND Job 2 prompt bodies (both currently paste the 'DB ACCESS — the live DB is the named volume, NOT host ./data' block verbatim, and both are LIVE — the router registered them at 06:18Z today), .claude/commands/crons/cron-db-data-integrity.md, and the system-auditor flow. grep -rn 'vn-market-intelligence-mcp_market_data' across scripts/ .claude/ docs/ and triage every hit — several scripts/*.jq audit artifacts also assert it, though those are historical records and should be left alone.",
-          "AC-6 The memory note reference_live_db_is_named_volume_not_host_data.md is now STALE and actively harmful — it says the named volume is authoritative and host ./data is a 'decoy'. That was true before 5ba622eca and is inverted now. Route a correction so agents stop being taught the wrong path.",
-          "AC-7 Regression guard: something must fail when the runtime DB location and the observer DB location diverge again. A test or CI check that resolves the mcp-server container's /app/data mount source and asserts the observer scripts target the same inode/path is the minimum bar."
+          "AC-1 Make C-08 satisfiable or delete it. The threshold must be derivable from the data model: either (i) bound the alerts window to the agent_signals correlation-stub TTL horizon rather than 24h, or (ii) join only alerts whose paired stub could still be alive, or (iii) retire C-08 outright and rely on the code-plane inverse checkOrphanAgentSignalsAlertId (D-NEW2), which is TTL-aware by construction. Do NOT keep expected=0 against a 24h window - state explicitly in the flow doc WHY the chosen bound is satisfiable.",
+          "AC-2 Fix the ISO8601 strcmp bypass in the C-08 predicate by wrapping BOTH sides in datetime(), copying the already-proven pattern and rationale comment from checkStaleAlerts.ts:23-30 verbatim rather than reinventing it.",
+          "AC-3 FLEET REPLAY, not one line. Per memory feedback_fleetwide_gate_validated_on_one_file_optout_allowlist, audit EVERY C-xx/B-xx check in docs/agents/system-auditor/flow/main.md that compares a timestamp column against datetime('now',...) and report per-check whether the column is T-format. Already measured and CONFIRMED AFFECTED: financial_reports.parsed_at is 100% T-format (C-04, 7-day window) and agent_signals.created_at is MIXED 13% T / 87% space (C-07, 24h window - heterogeneous is the worst case because the same query silently applies two different semantics). Confirmed NOT affected: market_messages.sent_at 0% T (C-06), daily_ohlcv.updated_at 2% T. Fix every affected check in one pass.",
+          "AC-4 Regression test: seed an alerts row older than the correlation-stub TTL with its stub already purged, and assert C-08 (or its replacement) does NOT flag it. Also assert a row whose date-part matches the bound but which is genuinely outside the window is EXCLUDED - that is the strcmp bypass, and it must fail loudly if reintroduced.",
+          "AC-5 Retract the fabricated root causes already published. docs/data/DASHBOARD.md:246 asserts 'Signal processing pipeline may be delayed or alert-signal mapping broken' and :330 asserts 'Alerts created by alert-engine but not propagated to agent_signals table'. Both are agent-narrated, unmeasured, and now DISCONFIRMED. :243 also names the wrong table ('no matching signal_queue rows' - the join is on agent_signals). This is the confabulation class feedback_agent_selfreport_metalayer_confabulation; correct or withdraw both entries.",
+          "AC-6 Do not silently drop coverage. If AC-1 retires C-08, confirm in writing that checkOrphanAgentSignalsAlertId (D-NEW2) plus the storeAlerts/storeAlertsFromCommander writer guard genuinely cover the co-write-gap failure mode that C-08 was introduced to catch, so this fix does not trade a false positive for a blind spot."
         ],
-        "owner": "po",
-        "updated_by": "po/triage-2026-08-06T08:24Z",
-        "po_corroboration_20260806T0833": "THIRD INDEPENDENT CORROBORATION + PROMOTION TO A BLOCKING DEPENDENCY (priority normalised 'high' -> P1 to match the board's P-scale; no scope change). This row was minted 2026-08-05 on a single finding. Two more landed today from unrelated sources: (a) the developer working FIX-AUDITOR-EMPTYTABLE-CHECK-NO-WRITER-DISCRIMINATOR hit the same dead mount and documented it in commit d16b7c212 (comment in scripts/db-integrity-counts.sh naming the ./data/live -> /app/data bind mount that superseded the named volume at 5ba622eca, 2026-07-15), explicitly scoping the fix out of that task; (b) signal dev-team-20260806T082420Z-auditor-data-guard-noncompliance (08:24:20Z, audit_cycle_tag cron:db-data-integrity:2026-08-06T08:16Z) reports the DATA sweep ran an ad-hoc /tmp script and labelled it scripts/db-integrity-counts.sh, with the registered script 'confirmed broken, stale sidecar mount'. WHY THIS NOW MATTERS MORE THAN ITS OWN SEVERITY SUGGESTS: FIX-AUDITOR-EMPTYTABLE-CHECK-NO-WRITER-DISCRIMINATOR is in review[] awaiting a qa replay whose AC is 'the two CRITICALs must not re-fire'. A probe that fail-opens on a dead mount satisfies that AC by seeing nothing, so THIS row is a de-facto gate on THAT sign-off (see po_QA_GATE_WARNING_20260806T0833 there). SECONDARY EFFECT worth naming: agents are working around the broken helper with ad-hoc /tmp scripts and then reporting the registered path's name, which both violates the standing scripts/-not-/tmp rule (feedback_scripts_persist_not_tmp) and makes every number the sweep emits unattributable to a reproducible source -- PO already saw the symptom at 07:17Z as C-04 reporting financial_reports=30 against a live raw count of 257 and C-08 reporting alerts=42 against 144, and wrongly guessed 'undocumented window predicate'. The likelier explanation is that those numbers never came from the registered script at all. Fixing the mount plausibly resolves that anomaly too -- verify, do not assume.",
-        "promoted_at": "2026-08-06T11:44:04Z",
+        "promoted_at": "2026-08-06T11:54:38Z",
         "promoted_by": "dev-team (bounded-1 auto-pickup)",
         "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)"
       }
@@ -22422,6 +22392,54 @@
         "claimed_by": "dev-team (bounded-1 auto-pickup)",
         "verified_commit": "c3c5d63d2",
         "updated_by": "developer"
+      },
+      {
+        "id": "FIX-DB-INTEGRITY-SIDECAR-NAMED-VOLUME-DRIFT",
+        "type": "FIX",
+        "title": "db-integrity observer tooling still mounts the named volume commit 5ba622eca retired on 2026-07-15 — counts helper returns null, probe fail-opens every tick",
+        "zone": "cross-service/",
+        "priority": "P1",
+        "status": "REVIEW",
+        "size": "S",
+        "next_agent": "qa",
+        "supervised": false,
+        "plan_only": false,
+        "baseline_pass": true,
+        "source": "PO triage of system-auditor Tier-DATA sweep 2026-08-05T06:47Z (router escalation, telegram bug msg_id 4703)",
+        "created_at": "2026-08-05T07:06:06Z",
+        "created_by": "po",
+        "updated_at": "2026-08-06T12:19:01Z",
+        "root_cause": "2026-07-15 commit 5ba622eca ('fix(infra): bind-mount market data to host disk instead of Docker named volume') moved the live DB off the named volume `vn-market-intelligence-mcp_market_data` and onto a HOST BIND MOUNT `./data/live:/app/data` across all 9 dependent services, because the 2026-07-15 hypervisor VM rebuild had destroyed the named volume. docker-compose.yml now declares only pek_model_cache + bctc-page-images under `volumes:` — market_data is gone entirely. The RUNTIME was migrated; the READ-ONLY OBSERVER tooling was not. Every observer still runs `docker run --rm -v vn-market-intelligence-mcp_market_data:/data keinos/sqlite3 ...`, which makes Docker AUTO-CREATE an empty volume and then fail to open /data/market.db. Confirmed live: `docker volume inspect vn-market-intelligence-mcp_market_data` shows CreatedAt=2026-08-05T06:47:24Z (auto-created by the auditor's own failing probe today) and `docker run -v <vol>:/data alpine ls -la /data` shows an empty dir, while `docker inspect vn-market-intelligence-mcp-mcp-server-1` shows `bind .../data/live -> /app/data` and the real market.db is 425MB with an mtime of seconds ago.",
+        "evidence": "PO ran both failing commands directly. `bash scripts/db-integrity-counts.sh` -> '[DB-INTEGRITY-COUNTS] PROBE FAILURE (exit 1): Error: unable to open database \"file:/data/market.db?immutable=1\": unable to open database file'. `bash scripts/agents-flow/db-integrity-probe.sh` -> {\"verdict\":\"SPAWN\",\"detail\":\"sidecar query failed (docker unreachable, non-zero exit, or output did not parse into 1 line per watched table) — snapshot left untouched\",\"tables_changed\":-1}. Both fail-open rather than fail-loud, so the degradation is SILENT: the probe's whole purpose is skip-if-unchanged idempotency and it now votes SPAWN unconditionally, and the counts helper's null propagates into every history entry. The same query against the correct path succeeds immediately: `sqlite3 \"file:data/live/market.db?immutable=1\" \"SELECT COUNT(*) FROM daily_ohlcv WHERE high=0 AND low=0;\"` -> 336.",
+        "blast_radius": "docs/data/db-integrity-history.json holds 138 entries; the last one with non-null `counts` is 2026-06-25T19:25:41Z, then a 41-day gap, then today's 2026-08-05T06:51:39Z entry with counts=NULL. The gap is because the db-data-integrity cron had NO re-arm coverage until /cron-standalone-team was built on 2026-08-04 — so today was the FIRST sweep since the 07-15 bind-mount switch, and it broke immediately. Correct framing: broken for 21 days (since 5ba622eca), first OBSERVED today — not '6 weeks of silent nulls'. The deterministic counts trail that register.md:108-113 explicitly relies on to stop the LLM inventing trends is dead until this lands.",
+        "files": [
+          "scripts/db-integrity-counts.sh",
+          "scripts/agents-flow/db-integrity-probe.sh",
+          "scripts/db-integrity-history-append.sh",
+          "scripts/ops-bctc-enrich-reverify-pulljob.sh",
+          ".claude/skills/cron-standalone-team/register.md",
+          ".claude/commands/crons/cron-db-data-integrity.md",
+          "docs/agents/system-auditor/flow/main.md"
+        ],
+        "ac": [
+          "AC-1 DECIDE THE CANONICAL PATH FIRST, then change code. Two candidates: (i) host bind `data/live/market.db` read directly with `sqlite3 \"file:<path>?immutable=1\"` (no docker at all — PO confirmed this works today and is strictly simpler), or (ii) keep a sidecar but mount the host dir: `docker run --rm -v \"$PWD/data/live:/data:ro\" keinos/sqlite3 ...`. Record the choice + rationale in the decision journal. Do NOT re-create the named volume — 5ba622eca retired it deliberately so the DB survives VM rebuilds.",
+          "AC-2 scripts/db-integrity-counts.sh returns real non-null counts for every watched table. Verify by running it and diffing at least 3 table counts against the same query run through a second independent access path (e.g. the mcp-server container's own reader) — two planes, per memory feedback_same_db_tools_diverge_rowcount.",
+          "AC-3 scripts/agents-flow/db-integrity-probe.sh emits verdict=SKIP-SPAWN on an unchanged DB. This is the actual proof the pre-gate works — today it CANNOT emit SKIP-SPAWN at all. Run it twice with no intervening writes and assert the second call skips.",
+          "AC-4 Both scripts FAIL LOUD (non-zero exit + bug-channel-worthy stderr) when the DB is genuinely unreachable, instead of silently returning null / voting SPAWN. The current fail-open is what let this hide for 21 days.",
+          "AC-5 Update every doc/prompt that still teaches the named-volume pattern: .claude/skills/cron-standalone-team/register.md Job 1 AND Job 2 prompt bodies (both currently paste the 'DB ACCESS — the live DB is the named volume, NOT host ./data' block verbatim, and both are LIVE — the router registered them at 06:18Z today), .claude/commands/crons/cron-db-data-integrity.md, and the system-auditor flow. grep -rn 'vn-market-intelligence-mcp_market_data' across scripts/ .claude/ docs/ and triage every hit — several scripts/*.jq audit artifacts also assert it, though those are historical records and should be left alone.",
+          "AC-6 The memory note reference_live_db_is_named_volume_not_host_data.md is now STALE and actively harmful — it says the named volume is authoritative and host ./data is a 'decoy'. That was true before 5ba622eca and is inverted now. Route a correction so agents stop being taught the wrong path.",
+          "AC-7 Regression guard: something must fail when the runtime DB location and the observer DB location diverge again. A test or CI check that resolves the mcp-server container's /app/data mount source and asserts the observer scripts target the same inode/path is the minimum bar."
+        ],
+        "owner": "po",
+        "updated_by": "developer",
+        "po_corroboration_20260806T0833": "THIRD INDEPENDENT CORROBORATION + PROMOTION TO A BLOCKING DEPENDENCY (priority normalised 'high' -> P1 to match the board's P-scale; no scope change). This row was minted 2026-08-05 on a single finding. Two more landed today from unrelated sources: (a) the developer working FIX-AUDITOR-EMPTYTABLE-CHECK-NO-WRITER-DISCRIMINATOR hit the same dead mount and documented it in commit d16b7c212 (comment in scripts/db-integrity-counts.sh naming the ./data/live -> /app/data bind mount that superseded the named volume at 5ba622eca, 2026-07-15), explicitly scoping the fix out of that task; (b) signal dev-team-20260806T082420Z-auditor-data-guard-noncompliance (08:24:20Z, audit_cycle_tag cron:db-data-integrity:2026-08-06T08:16Z) reports the DATA sweep ran an ad-hoc /tmp script and labelled it scripts/db-integrity-counts.sh, with the registered script 'confirmed broken, stale sidecar mount'. WHY THIS NOW MATTERS MORE THAN ITS OWN SEVERITY SUGGESTS: FIX-AUDITOR-EMPTYTABLE-CHECK-NO-WRITER-DISCRIMINATOR is in review[] awaiting a qa replay whose AC is 'the two CRITICALs must not re-fire'. A probe that fail-opens on a dead mount satisfies that AC by seeing nothing, so THIS row is a de-facto gate on THAT sign-off (see po_QA_GATE_WARNING_20260806T0833 there). SECONDARY EFFECT worth naming: agents are working around the broken helper with ad-hoc /tmp scripts and then reporting the registered path's name, which both violates the standing scripts/-not-/tmp rule (feedback_scripts_persist_not_tmp) and makes every number the sweep emits unattributable to a reproducible source -- PO already saw the symptom at 07:17Z as C-04 reporting financial_reports=30 against a live raw count of 257 and C-08 reporting alerts=42 against 144, and wrongly guessed 'undocumented window predicate'. The likelier explanation is that those numbers never came from the registered script at all. Fixing the mount plausibly resolves that anomaly too -- verify, do not assume.",
+        "promoted_at": "2026-08-06T11:44:04Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
+        "claimed_at": "2026-08-06T11:54:44Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "branch": null,
+        "dev_disposition_20260806T1214Z": "AC-1 direct host-bind sqlite3 read (no docker), AC-2 two-plane live diff 6/6 match, AC-3 SKIP-SPAWN live-verified on repeat, AC-4 both scripts fail loud (probe.sh keeps documented FAIL-OPEN/SPAWN + adds loud stderr), AC-5 3 cron/register docs + bctc-extraction-runbook.md + db-empty-table-classify.sh comment corrected, AC-6 system-auditor/flow/main.md corrected (in-repo equivalent; private router memory note flagged, out of repo scope), AC-7 new scripts/db-integrity-mount-drift-check.sh(+test) regression guard, LIVE-verified PASS against the running stack today. New tests db-integrity-counts.test.sh 18/18 + db-integrity-mount-drift-check.test.sh 12/12; db-integrity-probe.test.sh updated 27/27; zero regressions across 4 sibling suites (150/150). Decision journal sprint-COWORK-GUARANTEED-SLOT-CATCHUP-developer-3.md STEP developer-S61."
       }
     ],
     "qa": [
@@ -22469,7 +22487,7 @@
         }
       ]
     },
-    "last_triaged_at": "2026-08-06T11:44:04Z",
+    "last_triaged_at": "2026-08-06T11:54:38Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
     "in_progress": []
   },
