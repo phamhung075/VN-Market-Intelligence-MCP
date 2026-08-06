@@ -478,3 +478,15 @@
 **Mitigation:** No immediate action beyond signal routing.
 
 ---
+
+## Anomaly: A-30 · rag-service memory sustained high (96.50%)
+**Severity:** WARN | **Date:** 2026-08-06 | **Status:** OPEN
+**Location:** rag-service container
+**Details:** Memory sustained at 96.50% (741.1/768 MiB) across 6 probes with zero reclamation dips
+**Impact:** Potential memory pressure; limited headroom for traffic spikes
+**Root cause:** rag-service embedder model load with insufficient GC dip intervals
+**Zone owner:** apps/rag-service
+**Last reported:** 2026-08-06T07:15:59Z (signal sys-20260806T071552-5539, system-auditor -> po, dedup_key=microservice_degraded:rag-service:A-30, WARN Telegram sent)
+**Mitigation:** No immediate action beyond signal routing.
+
+---
