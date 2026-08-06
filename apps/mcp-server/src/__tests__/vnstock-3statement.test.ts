@@ -6,15 +6,24 @@ Bun.env["DB_PATH"] = ":memory:";
  */
 
 import { describe, it, expect, beforeEach, afterAll } from "bun:test";
-import { Database } from "bun:sqlite";
-import { tmpdir } from "os";
-import { join } from "path";
 
-// We test the store functions directly with an in-memory DB
-// by overriding DB_PATH before importing
-
-const testDbPath = join(tmpdir(), `vnstock-3stmt-test-${Date.now()}.db`);
-Bun.env["DB_PATH"] = testDbPath;
+// We test the store functions directly with an in-memory DB by overriding
+// DB_PATH before importing.
+//
+// DEFLAKE-VNSTOCK-3STATEMENT (2026-08-06): this file used to override DB_PATH
+// to a REAL on-disk temp file keyed only by `Date.now()` (millisecond
+// resolution, no PID/random component) — directly contradicting this file's
+// own "in-memory DB" comment above. Reproduced live: launching 20 copies of
+// this file's own beforeEach/getDb() path concurrently produced 3 exact
+// Date.now() collisions (2+ processes computing the SAME path) out of just 20
+// samples, and one of those collisions threw
+// `SQLiteError: database is locked (SQLITE_BUSY)` at getDb()'s
+// `PRAGMA journal_mode = DELETE` (schema.ts) — a real cross-process file-lock
+// race, not a mock/env-leak issue. Bun's `:memory:` databases are
+// per-connection and never touch disk, so they cannot collide across
+// processes (or even within one) — every `closeDb()` + `getDb()` pair in the
+// beforeEach below now gets a genuinely fresh, private, on-heap database.
+// This also removed the now-unused `os`/`path` imports.
 
 // Import after setting env.
 // Use absolute-path+query-bust to bypass Bun mock.module cache poison from 1466
@@ -235,7 +244,10 @@ describe("vnstock cash flow store", () => {
 
 afterAll(() => {
   closeDb();
-  // Restore DB_PATH to :memory: so subsequent test files in the same Bun worker
-  // are not contaminated by the temp-file path set at module load (line 17).
+  // Belt-and-suspenders: re-assert DB_PATH=":memory:" (already set at module
+  // load, line 1) in case a full-suite (shared-process) run interleaves this
+  // file with another that mutated DB_PATH without restoring it — keeps any
+  // sibling file that runs after this one in the SAME process from seeing a
+  // leaked real path.
   Bun.env["DB_PATH"] = ":memory:";
 });

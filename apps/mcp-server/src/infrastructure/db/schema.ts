@@ -110,6 +110,18 @@ export function getDb(): Database {
   }
 
   _db = new Database(dbPath);
+  // DEFLAKE-VNSTOCK-3STATEMENT (2026-08-06): busy_timeout MUST be the FIRST
+  // pragma executed on a freshly-opened connection — it was previously set
+  // LAST (after journal_mode/synchronous/foreign_keys), so any lock held by
+  // another connection to the SAME path (a concurrent process, or a prior
+  // connection whose OS-level lock hadn't fully released yet) made the very
+  // next statement (journal_mode) throw SQLITE_BUSY ("database is locked")
+  // immediately instead of retrying for up to 5s. Reproduced live: 20
+  // concurrent `bun test` processes opening the same on-disk sqlite path hit
+  // this exact stack (getDb -> journal_mode PRAGMA -> SQLITE_BUSY) in ~1/20
+  // runs. Setting busy_timeout first makes every subsequent statement on this
+  // connection — including this one — honor the retry window.
+  _db.exec("PRAGMA busy_timeout=5000");
   // FIX-SQLITE-DOCKER-VIRT-CORRUPTION-RECUR (2026-07-30): Docker Desktop on macOS
   // virtualization layer can corrupt WAL SHM files during container stop/restart.
   // Root cause: macOS Virtualization.VirtualMachine process holds fd on SHM during
@@ -121,7 +133,6 @@ export function getDb(): Database {
   _db.exec("PRAGMA journal_mode = DELETE");     // Eliminate WAL SHM corruption vector
   _db.exec("PRAGMA synchronous = FULL");         // Ensure every COMMIT hits disk
   _db.exec("PRAGMA foreign_keys = ON");
-  _db.exec("PRAGMA busy_timeout=5000");
   _dbStat = statSync(dbPath, { throwIfNoEntry: false });
   return _db;
 }

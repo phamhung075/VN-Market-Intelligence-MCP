@@ -17,6 +17,34 @@ const warnMessages: string[] = [];
 let staleCalls = 0;
 let staleThrowAt = new Map<number, string>(); // call index → error message
 
+// DEFLAKE-VNSTOCK-3STATEMENT (2026-08-06): capture the TRUE real module
+// BEFORE registering any mock below. `mock.module()` patches the shared
+// Bun module record for this specifier's exported bindings in place — it is
+// NOT scoped to this file's own import, and (reproduced live) it ALSO poisons
+// any OTHER file's import of the SAME path using a `?query`-string cache-bust
+// suffix (e.g. vnstock-3statement.test.ts's `?isolate=vnstock3stmt` bypass),
+// if that import first evaluates AFTER this mock.module() call runs in the
+// same process (full-suite `bun test`, not per-file-isolation CI — each file
+// there is a separate OS process). The PRE-EXISTING `afterAll` below re-
+// registered the mock.module call with THIS FILE'S OWN STUB object (named
+// "_real..." but actually a hand-written no-op stub) — that is not a
+// restoration at all, so any sibling file evaluated later in the same
+// process kept seeing storeBalanceSheet/storeCashFlow/etc. as permanent
+// no-ops. Capturing the genuine module here and restoring THAT in afterAll
+// makes the mock fully reversible for the rest of the process.
+//
+// Snapshot into a PLAIN object (spread), not a bare reference to the ES
+// module namespace object: Bun's mock.module() rebinds the module's own
+// internal export slots in place, and a namespace object's properties are
+// live bindings onto those slots — holding only a reference (no spread)
+// would keep reflecting whatever is CURRENTLY registered (i.e. the mock),
+// not the pristine functions present at capture time. Reproduced live:
+// without the spread, this "restore" was a no-op.
+const _realVnstockStoreModuleNamespace = await import(
+  "../infrastructure/db/vnstockStore.js"
+);
+const _trueVnstockStoreModule = { ..._realVnstockStoreModuleNamespace };
+
 // ── Mocks ────────────────────────────────────────────────────────────────────
 // C5-CURE: capture stub references before registering; used in afterAll restore
 // so stubs do not bleed into sibling files in the same Bun ESM worker.
@@ -141,8 +169,15 @@ describe("Task 1466: syncVnstockData bail on DB corruption", () => {
 
 // C5-CURE: restore stubs after all tests complete so downstream files in the
 // same Bun process do not inherit stale ESM entries.
+//
+// DEFLAKE-VNSTOCK-3STATEMENT (2026-08-06): vnstockStore.js is restored to the
+// GENUINE module captured at file-load time (`_trueVnstockStoreModule`), not
+// re-registered with this file's own stub — see the capture comment above for
+// why re-registering the stub was not actually a restoration and left every
+// vnstockStore.js consumer evaluated later in the same process (including a
+// `?query`-string cache-busted import) permanently seeing no-op stores.
 afterAll(() => {
   mock.module("../infrastructure/logger.js", () => _realLogger1466);
-  mock.module("../infrastructure/db/vnstockStore.js", () => _realVnstockStore1466);
+  mock.module("../infrastructure/db/vnstockStore.js", () => _trueVnstockStoreModule);
   mock.module("../infrastructure/fetchers/vnstockBridge.js", () => _realVnstockBridge1466);
 });
