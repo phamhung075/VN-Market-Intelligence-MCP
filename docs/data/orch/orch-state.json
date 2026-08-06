@@ -88,12 +88,11 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "DEFLAKE-VNSTOCK-3STATEMENT",
-    "next_agent": "dev-mcp-server",
-    "next_action": "BOUNDED-1 auto-pickup claim of DEFLAKE-VNSTOCK-3STATEMENT — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
-    "updated_at": "2026-08-06T17:15:37Z",
-    "updated_by": "dev-team (bounded-1 auto-pickup)"
+    "status": "idle",
+    "active_task_id": null,
+    "next_agent": "router",
+    "updated_at": "2026-08-06T17:48:51Z",
+    "updated_by": "dev-mcp-server"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -22149,6 +22148,76 @@
         "redispatch_count": 1,
         "updated_by": "qa",
         "status_note": "[QA] Direct-Commit Verify (2026-08-06T17:45Z) — CODE INDEPENDENTLY RE-VERIFIED CORRECT, all checks re-run this tick, not trusted from review_note prose: commit 43f4e3add confirmed real, on main ancestry, touches exactly the claimed files (apps/alert-engine/pkg/domain/models.go, apps/alert-engine/pkg/module/alert_pipeline/pipeline.go) plus models_test.go/pipeline_test.go and 4 docs. Read the actual diff: CooldownConfig.DedupWindowMinutes (new named field, default 60) wired into pipeline.go's HasDuplicateFingerprint(fingerprint, p.cfg.DedupWindowMinutes) call (was p.cfg.CooldownMinutes=30), dedup reason string rebuilt via fmt.Sprintf(\"duplicate: fingerprint seen within %dmin\", ...). Default 60 cross-checked against mcp.config.json:215 alertQuality.dedupWindowMinutes=60 and apps/mcp-server/src/infrastructure/config.ts:663 numVal(aq,\"dedupWindowMinutes\",60) — matches, not invented. go build ./... clean, go vet ./... clean, go test ./... 8/8 packages pass (60 top-level RUN / 70 incl. subtests PASS — matches claimed count exactly), golangci-lint run ./... 0 issues, mock-guard.sh --files PASS, zero domain->infrastructure import / process.env / secret-literal hits in touched files. All 4 docs (domain-model.md/usecases.md/api-reference.md/testing.md) read and consistent with the code. DJ-GATE-1 satisfied (sprint-FACTORY-ALERT-dedup-window-config-dev-alert-engine.md carries task-id).\n\nCHANGES_REQUESTED anyway — NOT a code defect, a RUNTIME AC gap this row's own DoD explicitly names (\"RAW-verify the served suppression decision after rebuild uses the configured window\", rebuild_required:true in backlog-detail.json, never carried onto this board row). RAW-verified the LIVE SERVICE, not the source: `docker inspect vn-market-intelligence-mcp-alert-engine-1` -> image sha256:e24163c13428 created 2026-07-15T15:13:50Z, container StartedAt 2026-07-15T15:16:48Z — both 13 DAYS BEFORE this fix commit (2026-07-28T21:25:42+02:00). Binary marker check on the running container (`docker exec ... grep -a` on /app/server): 1 hit for the OLD pre-fix string \"duplicate: fingerprint seen recently\", 0 hits for the new \"duplicate: fingerprint seen within\" — definitive proof the deployed binary predates this fix (and also predates 4 sibling alert-engine FACTORY commits landed since 07-24: 314461cbd/9d91af5bb/0a961e255/fb5fc9d4c — same gap, not unique to this row). Live /health confirms the container is up and serving (port 5006, status ok) — it is simply running stale code. The suppression decision served today still passes CooldownMinutes=30 into the dedup check, not the new named DedupWindowMinutes=60 — exactly the defect this task exists to close, still live in production.\n\nThis is the same systemic defect class PO escalated TODAY P2->P1 as FIX-DEVTEAM-REBUILD-REQUIRED-MARKER-NO-CONSUMER (occurrence_count:3 per po_escalation_20260806T1732: mcp-server memleak / stock-price WAL / rag-embedder idle-unload) — \"qa live-verifies apps/<svc>/ code fixes against the un-rebuilt running image\"; that row's own AC-2 states the routing fix is \"ops first, then qa\". Applying that here rather than routing to developer — no code fix is needed, routing to developer/fixer for \"a new direct commit\" would misdirect (the defect is undeployed, not unwritten). rebuild_required:true added to this row (was missing), machine-readable per PO's own po_scope_note_20260806T1732 discriminant (image build/StartedAt ts vs commit committer-date).\n\nNEXT ACTION: ops rebuild+redeploy single-service alert-engine only (docker compose build alert-engine && docker compose up -d --no-deps alert-engine — no user gate per feedback_po_deploy_rebuild_full_autonomy_no_user_gate, single-service only, never down/stop/kill/rm/--force-recreate), then RAW re-verify (image build ts > 43f4e3add commit ts AND grep -a 'seen within' /app/server present, grep -a 'seen recently' absent) before re-submitting to qa. Held: .task_board.qa[] -> .task_board.review[], status QA -> REVIEW, owner/next_agent=ops, redispatch_count 0 -> 1, rebuild_required (missing) -> true."
+      },
+      {
+        "id": "DEFLAKE-VNSTOCK-3STATEMENT",
+        "type": "FIX",
+        "status": "REVIEW",
+        "priority": "P2",
+        "size": "S",
+        "zone": "apps/mcp-server/",
+        "next_agent": "qa",
+        "title": "De-flake vnstock-3statement.test.ts — CI per-file-isolation transient (2+ obs recurring-bug escalation): same-code green→red twice, never a regression",
+        "desc": "apps/mcp-server/src/__tests__/vnstock-3statement.test.ts intermittently fails under CI per-file-isolation `bun test` while passing locally/full-suite. TWICE the failing HEAD was byte-identical in non-test code to a GREEN baseline (range diffs were docs/notebook/orch-state/signal only, ZERO non-test code) => same-code-green-then-red = per-file-isolation non-determinism, NOT a regression. Suspected shared-state root: the file mutates the global DB_PATH env at module-load time (lines 16-17), drives a process-global DB singleton via closeDb()/initDatabase() in beforeEach, and carries an `?isolate=vnstock3stmt` query-bust import to dodge the mock.module cache poison stubbed by test 1466 (in-file comment lines 20-24). Any of these leaking across the isolate/worker boundary can flip pass<->fail depending on file order / worker assignment. Router already ran `gh run rerun --failed 29576568819` to restore the transient green; THIS row is the DURABLE fix so the rerun toil stops.",
+        "ac": "AC-1 Root-cause: identify the exact shared-state / order / timing dependency that makes this file non-deterministic in per-file-isolation `bun test` — candidates: (a) module-load-time DB_PATH env mutation (lines 16-17) leaking to sibling files that share the Bun worker, (b) the closeDb()/initDatabase() process-global DB singleton lifecycle, (c) the mock.module cache poison from test 1466 that the `?isolate=vnstock3stmt` query-bust currently papers over. State which interleaving/worker-assignment reproduces the flake. AC-2 Fix determinism at the source: isolate this file's DB state so it neither depends on nor leaks global/module-load state (e.g. per-test fresh DB + env scoped and restored in teardown that cannot poison siblings). Do NOT merely add retries / test.retry / rerun-on-fail. AC-3 If the 1466 mock.module cache poison is the shared cause, fix it at source so the `?isolate=` query-bust workaround is no longer load-bearing. AC-4 RAW-verify: run the file in per-file-isolation mode >=20x (and interleaved with the sibling that shares its worker) with 0 failures, and confirm the full `bun test` suite stays green — attach run output. Prior-art: no existing backlog/ready/in_progress/review/qa row for vnstock-3statement (router-checked 2026-07-17). Follow the established DEFLAKE-* de-flake convention (cf. DEFLAKE-1187-POLLNEWS-DEAD-PATH).",
+        "evidence": [
+          "docs/signals/processed/ci-red-c2893251-20260717064818.json",
+          "docs/signals/processed/ci-red-00e3c4b1-20260717114821.json"
+        ],
+        "code_under_test": [
+          "apps/mcp-server/src/__tests__/vnstock-3statement.test.ts",
+          "apps/mcp-server/src/infrastructure/db/vnstockStore.js",
+          "apps/mcp-server/src/infrastructure/db/schema.js"
+        ],
+        "obs": [
+          {
+            "n": 1,
+            "tick": "0637Z",
+            "ci_run": "c2893251",
+            "run_id": 29559748162,
+            "head": "c28932513c491d5eb5765a2c4469c426eba9b81c",
+            "disposition": "1st-obs classified-flaky-not-escalated"
+          },
+          {
+            "n": 2,
+            "tick": "1137Z",
+            "ci_run": "00e3c4b1",
+            "run_id": 29576568819,
+            "head": "00e3c4b164709d1b1148676131f4aacaba84a46c",
+            "disposition": "2nd-obs ESCALATED-TO-PO"
+          },
+          {
+            "n": 3,
+            "tick": "0859Z",
+            "ci_run": "de0e0399",
+            "run_id": 31087179442,
+            "head": "de0e03995",
+            "disposition": "3rd-obs 2026-08-06 — co-failed with 167-prediction-market-job.test.ts (2 fail in one run)"
+          },
+          {
+            "n": 4,
+            "tick": "0944Z",
+            "ci_run": "f1fddde0",
+            "run_id": 31090381761,
+            "head": "f1fddde0d",
+            "disposition": "4th-obs 2026-08-06 — SOLE failing file. Preceding SHA 92ff5fb43 was FULLY GREEN and the intervening commit f1fddde0d is DOCS-ONLY (agent-father notebook+journal): a docs-only commit cannot deterministically break this test file. Strongest same-code-green-then-red evidence yet."
+          }
+        ],
+        "source": "recurring CI-flaky escalation (2+ obs) routed by dev-team-router; scoped PO triage 2026-07-17",
+        "created_at": "2026-07-17T11:54:54Z",
+        "created_by": "po-scoped-triage-20260717",
+        "baseline_pass": true,
+        "dedup_key": "ci_job:bun test|file:apps/mcp-server/src/__tests__/vnstock-3statement.test.ts",
+        "dedup_key_ci_relative": "ci_job:bun test|file:src/__tests__/vnstock-3statement.test.ts",
+        "updated_at": "2026-08-06T17:48:51Z",
+        "updated_by": "dev-mcp-server",
+        "promoted_at": "2026-08-06T16:22:38Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
+        "claimed_at": "2026-08-06T17:15:36Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "commit_sha": "8931e47c7",
+        "status_note": "Root-caused + fixed at source (3 files, commit 8931e47c7). AC-1: two independent live-reproduced defects -- (a) schema.ts getDb() set PRAGMA busy_timeout LAST instead of first, turning transient lock contention into an immediate SQLITE_BUSY instead of a 5s retry; (b) test file overrode DB_PATH to a real on-disk temp file keyed only by Date.now() (ms resolution, no PID) -- 20 concurrent copies produced 3 exact path collisions out of 20 samples, one throwing the exact SQLITE_BUSY stack at getDb -> journal_mode. Per SPIKE_CI-PERFILE-ISOLATION-FLAKE.md finding #1, CI per-file-isolation runs each file as a separate OS process, so these are the defensible root cause for the per-file-isolation obs 1-4 (same-file-own-process timing/lock hazard), not the mock.module theory. AC-2: fixed at source -- busy_timeout reordered to first pragma (schema.ts); test switched to a true :memory: DB (matches the file's own stated intent, eliminates the on-disk-file class entirely) -- no retries/test.retry added. AC-3: separately found and fixed a REAL (but CI-per-file-isolation-inapplicable, shared-process-only) mock.module cache poison -- 1466-sync-db-corruption-bail.test.ts's afterAll re-registered its OWN stub instead of the true original vnstockStore module, permanently poisoning any later same-process import (including the ?isolate= query-bust). Fixed by capturing and restoring the true module (spread into a plain object, since mock.module rebinds live-binding export slots in place). ?isolate= workaround is no longer load-bearing. AC-4: 50x solo per-file-isolation self-contention runs = 0 fail (repro pattern previously hit 1/20); 15+15 interleaved with 167-prediction-market-job.test.ts (obs-3 co-failing sibling) = 0/30 fail; minimal 3-file repro for the mock.module defect = 0/18 fail (was 8/18); 25-file vnstock/foreign-flow/schema zone sweep = 282/282 pass (was 274/282); full bun test = 15144 pass/40 skip/48 fail/2 err (663s), zero vnstock-3statement/1466-related failures (grep-confirmed), within the documented pre-existing flaky floor; tsc clean."
       }
     ],
     "qa": [
@@ -22298,76 +22367,7 @@
     },
     "last_triaged_at": "2026-08-06T17:39:33Z",
     "last_triaged_by": "po (dev-team Step 1 triage)",
-    "in_progress": [
-      {
-        "id": "DEFLAKE-VNSTOCK-3STATEMENT",
-        "type": "FIX",
-        "status": "IN_PROGRESS",
-        "priority": "P2",
-        "size": "S",
-        "zone": "apps/mcp-server/",
-        "next_agent": "dev-mcp-server",
-        "title": "De-flake vnstock-3statement.test.ts — CI per-file-isolation transient (2+ obs recurring-bug escalation): same-code green→red twice, never a regression",
-        "desc": "apps/mcp-server/src/__tests__/vnstock-3statement.test.ts intermittently fails under CI per-file-isolation `bun test` while passing locally/full-suite. TWICE the failing HEAD was byte-identical in non-test code to a GREEN baseline (range diffs were docs/notebook/orch-state/signal only, ZERO non-test code) => same-code-green-then-red = per-file-isolation non-determinism, NOT a regression. Suspected shared-state root: the file mutates the global DB_PATH env at module-load time (lines 16-17), drives a process-global DB singleton via closeDb()/initDatabase() in beforeEach, and carries an `?isolate=vnstock3stmt` query-bust import to dodge the mock.module cache poison stubbed by test 1466 (in-file comment lines 20-24). Any of these leaking across the isolate/worker boundary can flip pass<->fail depending on file order / worker assignment. Router already ran `gh run rerun --failed 29576568819` to restore the transient green; THIS row is the DURABLE fix so the rerun toil stops.",
-        "ac": "AC-1 Root-cause: identify the exact shared-state / order / timing dependency that makes this file non-deterministic in per-file-isolation `bun test` — candidates: (a) module-load-time DB_PATH env mutation (lines 16-17) leaking to sibling files that share the Bun worker, (b) the closeDb()/initDatabase() process-global DB singleton lifecycle, (c) the mock.module cache poison from test 1466 that the `?isolate=vnstock3stmt` query-bust currently papers over. State which interleaving/worker-assignment reproduces the flake. AC-2 Fix determinism at the source: isolate this file's DB state so it neither depends on nor leaks global/module-load state (e.g. per-test fresh DB + env scoped and restored in teardown that cannot poison siblings). Do NOT merely add retries / test.retry / rerun-on-fail. AC-3 If the 1466 mock.module cache poison is the shared cause, fix it at source so the `?isolate=` query-bust workaround is no longer load-bearing. AC-4 RAW-verify: run the file in per-file-isolation mode >=20x (and interleaved with the sibling that shares its worker) with 0 failures, and confirm the full `bun test` suite stays green — attach run output. Prior-art: no existing backlog/ready/in_progress/review/qa row for vnstock-3statement (router-checked 2026-07-17). Follow the established DEFLAKE-* de-flake convention (cf. DEFLAKE-1187-POLLNEWS-DEAD-PATH).",
-        "evidence": [
-          "docs/signals/processed/ci-red-c2893251-20260717064818.json",
-          "docs/signals/processed/ci-red-00e3c4b1-20260717114821.json"
-        ],
-        "code_under_test": [
-          "apps/mcp-server/src/__tests__/vnstock-3statement.test.ts",
-          "apps/mcp-server/src/infrastructure/db/vnstockStore.js",
-          "apps/mcp-server/src/infrastructure/db/schema.js"
-        ],
-        "obs": [
-          {
-            "n": 1,
-            "tick": "0637Z",
-            "ci_run": "c2893251",
-            "run_id": 29559748162,
-            "head": "c28932513c491d5eb5765a2c4469c426eba9b81c",
-            "disposition": "1st-obs classified-flaky-not-escalated"
-          },
-          {
-            "n": 2,
-            "tick": "1137Z",
-            "ci_run": "00e3c4b1",
-            "run_id": 29576568819,
-            "head": "00e3c4b164709d1b1148676131f4aacaba84a46c",
-            "disposition": "2nd-obs ESCALATED-TO-PO"
-          },
-          {
-            "n": 3,
-            "tick": "0859Z",
-            "ci_run": "de0e0399",
-            "run_id": 31087179442,
-            "head": "de0e03995",
-            "disposition": "3rd-obs 2026-08-06 — co-failed with 167-prediction-market-job.test.ts (2 fail in one run)"
-          },
-          {
-            "n": 4,
-            "tick": "0944Z",
-            "ci_run": "f1fddde0",
-            "run_id": 31090381761,
-            "head": "f1fddde0d",
-            "disposition": "4th-obs 2026-08-06 — SOLE failing file. Preceding SHA 92ff5fb43 was FULLY GREEN and the intervening commit f1fddde0d is DOCS-ONLY (agent-father notebook+journal): a docs-only commit cannot deterministically break this test file. Strongest same-code-green-then-red evidence yet."
-          }
-        ],
-        "source": "recurring CI-flaky escalation (2+ obs) routed by dev-team-router; scoped PO triage 2026-07-17",
-        "created_at": "2026-07-17T11:54:54Z",
-        "created_by": "po-scoped-triage-20260717",
-        "baseline_pass": true,
-        "dedup_key": "ci_job:bun test|file:apps/mcp-server/src/__tests__/vnstock-3statement.test.ts",
-        "dedup_key_ci_relative": "ci_job:bun test|file:src/__tests__/vnstock-3statement.test.ts",
-        "updated_at": "2026-08-06T17:15:37Z",
-        "updated_by": "po (triage 2026-08-06T09:55:23Z — obs 3 + obs 4, priority low->P2)",
-        "promoted_at": "2026-08-06T16:22:38Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
-        "claimed_at": "2026-08-06T17:15:36Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)"
-      }
-    ]
+    "in_progress": []
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
