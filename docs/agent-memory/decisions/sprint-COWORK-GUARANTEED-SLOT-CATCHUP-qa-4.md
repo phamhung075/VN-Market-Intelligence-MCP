@@ -169,3 +169,14 @@
 - DJ-GATE-1: `sprint-COWORK-GUARANTEED-SLOT-CATCHUP-dev-mcp-server.md` §dev-mcp-server-S34 present, predates this verify.
 **why-decision:** APPROVED, DONE_VERIFIED. Fix + both live-data claims (rebuild landed, guard suppresses the exact 2 rows) independently reproduced, not trusted from prose.
 **why-change:** none — verified exactly what the row scoped.
+
+### STEP qa-S65 · qa · 2026-08-06T21:02:35Z
+**task-id:** FIX-ORCHSTATE-HEAD-STAMP-DROPPED-CI-RED-1837A
+**what-done:** Direct-commit verify (`qa[]` row, `branch:null`) of commit `8f2aa59d7` (actuator+tests, ancestor-confirmed on main, touches `scripts/orch-stamp-updated-at.mjs`+wrapper-tests.sh exactly as claimed).
+**what-considered:**
+- Re-ran locally: `1837a-pipeline-state.test.ts` 5/0 (was 3/2); `orch-apply-wrapper-tests.sh` 60/60 incl. 3 new HEAD-STAMP-CHANGED/BACKFILL/IDEMPOTENT groups; tsc 0 errors; mock-guard PASS (scripts/ not production src); grep DDD/secret clean.
+- AC-3/AC-4 landmines independently confirmed avoided: commit touches neither the test file nor `orchStateSchema.ts` (still `.optional()`).
+- **AC-5 (developer flagged "not yet observed, for QA"):** I closed it — `gh run view 31106283894` (headSha `1ff241d2ec1`, confirmed descendant of `8f2aa59d7`) job `bun test`=success.
+- **Found + corrected a false citation:** dev's note attributes the live AC-1 `.head` repair to "adjacent peer commit b5f2e9c8b" — RAW-verified that commit's diff touches ZERO `.head` content (its own message says ".head untouched"). Real repair commit is `7552eda7f` (`updated_by:"developer"`, real `date -u` stamp) — confirmed via targeted git-log walk. Outcome claim (AC-1 landed) is TRUE, citation was wrong; corrected in row `status_note`. Sampled 12 commits since across 378 touching orch-state.json — `.head` retains stamp fields throughout, no regression.
+**why-decision:** APPROVED, DONE_VERIFIED. All 6 ACs independently RAW-verified (AC-5 closed by me, not dev); the one prose inaccuracy found is a citation error, not a functional defect — corrected in the record rather than blocking.
+**why-change:** none — verified exactly what the row scoped; citation fix is additive to status_note.
