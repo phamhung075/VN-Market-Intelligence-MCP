@@ -4,6 +4,19 @@
 # use THIS script's JSON output verbatim for the history counts, never an LLM-recalled number.
 # Read-only sidecar; never mutates the DB. Pointer: .claude/commands/crons/cron-db-data-integrity.md
 #
+# FIELD-NAME NOTE (FIX-AUDITOR-EMPTYTABLE-CHECK-NO-WRITER-DISCRIMINATOR item 3,
+# docs/agents/system-auditor/flow/data-writer-provenance.md §3): the `counts` keys below were
+# renamed FROM the informal `db1_ohlc_violations` / `db2_scale_gt100x` / `db3_vnindex_cache_rows`
+# / `c04_low_confidence_reports` labels — `c04` in particular visually collided with
+# system-auditor's OFFICIAL Tier-3 `C-04`/`C-08` checks (a DIFFERENT check family entirely; those
+# reported financial_reports actual=30 / alerts actual=42 against live raw counts of 257 / 144 —
+# an unrelated, still-open predicate issue tracked by FIX-AUDITOR-C04-PARSEDAT-RECENCY-PREDICATE,
+# NOT touched here). Rename ONLY — no predicate/threshold/query logic changed by this pass.
+# Any caller keyed on the OLD field names must be updated to the new ones (repo-wide grep at
+# rename time found exactly 2 consumers, both prose docs, both updated in the same commit:
+# .claude/commands/crons/cron-db-data-integrity.md, .claude/skills/cron-standalone-team/register.md.
+# scripts/db-integrity-history-append.sh embeds `$counts.counts` generically — unaffected).
+#
 # OPEN PATTERN: file:?immutable=1 (NOT sqlite3 -readonly).
 # Rationale: after the mcp-server writer restarts and recreates market.db-shm with its uid,
 # a sidecar with a different uid cannot attach the writer-owned -shm to build the WAL index
@@ -74,10 +87,10 @@ cat <<JSON
   "scan_ts": "${TS}",
   "source": "scripts/db-integrity-counts.sh (deterministic — verbatim sqlite output)",
   "counts": {
-    "db1_ohlc_violations": $(num "${OHLC:-}"),
-    "db2_scale_gt100x": $(num "${SCALE:-}"),
-    "db3_vnindex_cache_rows": $(num "${VNIDX:-}"),
-    "c04_low_confidence_reports": $(num "${LOWCONF:-}")
+    "ohlc_violations_count": $(num "${OHLC:-}"),
+    "scale_gt100x_count": $(num "${SCALE:-}"),
+    "vnindex_cache_rows_count": $(num "${VNIDX:-}"),
+    "low_confidence_reports_count": $(num "${LOWCONF:-}")
   },
   "context": {
     "daily_ohlcv_total": $(num "${TOTAL:-}"),

@@ -63,6 +63,41 @@ ANOMALY CLASSES:
   1. FAIL/MISSING   — a table that should have rows is empty/0; NULL in a NOT-NULL-intent
                       column; failed/stuck rows (e.g. deep_fetch_queue status='failed' or
                       rows stuck 'pending' > N hours; cron_job_runs last run errored).
+
+                      WRITER-PROVENANCE DISCRIMINATOR (MANDATORY, run BEFORE assigning
+                      severity to ANY 0-row table this cycle — FIX-AUDITOR-EMPTYTABLE-CHECK-
+                      NO-WRITER-DISCRIMINATOR; full policy: docs/agents/system-auditor/flow/
+                      data-writer-provenance.md §1-2). Confirmed false positives 2026-08-06
+                      (price_alerts, alert_engine_records) shipped CRITICAL "pipeline
+                      non-functional" with no check of WHETHER the table has a production
+                      writer at all, and pdf_documents was reported "failed, actual=0" when
+                      the table does not exist as a table at all — SCHEMA-MISSING and
+                      EMPTY-TABLE are DISTINCT findings, never render them identically.
+                      For EVERY watched table that reads 0 rows this cycle, run the
+                      DETERMINISTIC classifier and use its output verbatim — do NOT hand-judge
+                      writer provenance or missing-vs-empty yourself:
+                          bash scripts/db-empty-table-classify.sh <table>
+                      It runs `SELECT 1 FROM sqlite_master WHERE type='table' AND
+                      name=<table>` BEFORE any COUNT(*) (so a genuinely missing table can
+                      never be scored as "empty"), then classifies writer provenance by
+                      walking `INSERT INTO <table>` sites in source, and emits ONE JSON
+                      object: `{table, exists, row_count, class, severity_ceiling,
+                      writer_sites[]}`. Map `class`/`severity_ceiling` straight onto this
+                      cycle's verdict — zero further LLM judgment required:
+                        | class          | severity_ceiling                      | meaning -> verdict |
+                        |----------------|----------------------------------------|---------------------|
+                        | SCHEMA-MISSING | always_report                          | table does not exist at all (migration/schema gap) -> ALWAYS report, never silenced by this discriminator |
+                        | a              | may_stay_critical                      | >=1 non-test writer site NOT exclusively an on-demand tool (scheduler job, application usecase, ingest route, etc.) -> 0 rows here MAY be CRITICAL, a real outage. NEGATIVE CONTROL: daily_ohlcv / market_prices classify "a" — verify they still fire before trusting any "quiet" result from this discriminator |
+                        | b              | info_at_most_never_critical            | zero non-test writer sites exist against THIS db (every site found, if any, is test-only or targets a documented separate db file) -> INFO at most, NEVER CRITICAL/WARN — table is expected empty by construction |
+                        | c              | info_or_warn_corroborate_to_escalate   | the only writer(s) are an on-demand MCP tool (path under apps/**/interface/mcp/tools/**) -> INFO/WARN — "nobody used the feature yet" != "pipeline broken"; only escalate with a corroborating signal (e.g. a related table shows activity) |
+                      If the script exits non-zero (PROBE FAILURE, printed to stderr), record
+                      that failure verbatim — never guess a class or fall back to free-text
+                      judgment. Confirmed FPs this closes: price_alerts -> class c (sole
+                      writer `priceAlertTools.ts` is on-demand); alert_engine_records ->
+                      class b (market.db's copy has zero production writers — the one Go
+                      writer that exists, `apps/alert-engine/pkg/infrastructure/sqlite.go`,
+                      writes to a SEPARATE `alert_engine.db` file, confirmed empirically:
+                      that file has no `alert_engine_records` table at all).
   2. STALE/UNAVAIL  — newest timestamp far older than expected (e.g. daily_ohlcv / market_prices
                       not updated within the last trading session; sbv_rates / macro_indicators
                       > 48h old; a feed's max(updated_at) implausibly old).
@@ -89,11 +124,15 @@ COUNT-NOISE TOLERANCE (regression monitor): live-DB counts wobble by ±1-2 under
   a drop toward 0 (a fix landed), a jump of ≥~5, or a fresh recent-dated violating row.
 
 ⚠ NO HALLUCINATED COUNTS (mandatory — confabulation guard):
-  For the canonical anomaly COUNTS (db1 OHLC-violations, db2 scale, db3 vnindex-cache, c04
-  low-confidence) you MUST run the DETERMINISTIC helper and copy its numbers VERBATIM:
+  For the canonical anomaly COUNTS (OHLC violations, scale anomalies, vnindex-cache rows,
+  low-confidence reports) you MUST run the DETERMINISTIC helper and copy its numbers VERBATIM:
       bash scripts/db-integrity-counts.sh
-  It emits JSON `{ "scan_ts", "counts": {db1_ohlc_violations, db2_scale_gt100x,
-  db3_vnindex_cache_rows, c04_low_confidence_reports}, "context": {...} }` straight from sqlite.
+  It emits JSON `{ "scan_ts", "counts": {ohlc_violations_count, scale_gt100x_count,
+  vnindex_cache_rows_count, low_confidence_reports_count}, "context": {...} }` straight from
+  sqlite. (Renamed 2026-08-06, FIX-AUDITOR-EMPTYTABLE-CHECK-NO-WRITER-DISCRIMINATOR item 3 —
+  formerly `db1_ohlc_violations`/`db2_scale_gt100x`/`db3_vnindex_cache_rows`/
+  `c04_low_confidence_reports`; `c04` visually collided with system-auditor's OFFICIAL Tier-3
+  `C-04`/`C-08` checks, a different check family. Rename only, no query changed.)
   Use those exact numbers in the history entry + the regression check — NEVER a number you
   recalled/estimated/expected, and NEVER invent a narrative for a change the script didn't show.
   Use your own ad-hoc sidecar queries ONLY for discovering NEW anomalies + classification, not
@@ -221,6 +260,41 @@ ANOMALY CLASSES:
   1. FAIL/MISSING   — a table that should have rows is empty/0; NULL in a NOT-NULL-intent
                       column; failed/stuck rows (e.g. deep_fetch_queue status='failed' or
                       rows stuck 'pending' > N hours; cron_job_runs last run errored).
+
+                      WRITER-PROVENANCE DISCRIMINATOR (MANDATORY, run BEFORE assigning
+                      severity to ANY 0-row table this cycle — FIX-AUDITOR-EMPTYTABLE-CHECK-
+                      NO-WRITER-DISCRIMINATOR; full policy: docs/agents/system-auditor/flow/
+                      data-writer-provenance.md §1-2). Confirmed false positives 2026-08-06
+                      (price_alerts, alert_engine_records) shipped CRITICAL "pipeline
+                      non-functional" with no check of WHETHER the table has a production
+                      writer at all, and pdf_documents was reported "failed, actual=0" when
+                      the table does not exist as a table at all — SCHEMA-MISSING and
+                      EMPTY-TABLE are DISTINCT findings, never render them identically.
+                      For EVERY watched table that reads 0 rows this cycle, run the
+                      DETERMINISTIC classifier and use its output verbatim — do NOT hand-judge
+                      writer provenance or missing-vs-empty yourself:
+                          bash scripts/db-empty-table-classify.sh <table>
+                      It runs `SELECT 1 FROM sqlite_master WHERE type='table' AND
+                      name=<table>` BEFORE any COUNT(*) (so a genuinely missing table can
+                      never be scored as "empty"), then classifies writer provenance by
+                      walking `INSERT INTO <table>` sites in source, and emits ONE JSON
+                      object: `{table, exists, row_count, class, severity_ceiling,
+                      writer_sites[]}`. Map `class`/`severity_ceiling` straight onto this
+                      cycle's verdict — zero further LLM judgment required:
+                        | class          | severity_ceiling                      | meaning -> verdict |
+                        |----------------|----------------------------------------|---------------------|
+                        | SCHEMA-MISSING | always_report                          | table does not exist at all (migration/schema gap) -> ALWAYS report, never silenced by this discriminator |
+                        | a              | may_stay_critical                      | >=1 non-test writer site NOT exclusively an on-demand tool (scheduler job, application usecase, ingest route, etc.) -> 0 rows here MAY be CRITICAL, a real outage. NEGATIVE CONTROL: daily_ohlcv / market_prices classify "a" — verify they still fire before trusting any "quiet" result from this discriminator |
+                        | b              | info_at_most_never_critical            | zero non-test writer sites exist against THIS db (every site found, if any, is test-only or targets a documented separate db file) -> INFO at most, NEVER CRITICAL/WARN — table is expected empty by construction |
+                        | c              | info_or_warn_corroborate_to_escalate   | the only writer(s) are an on-demand MCP tool (path under apps/**/interface/mcp/tools/**) -> INFO/WARN — "nobody used the feature yet" != "pipeline broken"; only escalate with a corroborating signal (e.g. a related table shows activity) |
+                      If the script exits non-zero (PROBE FAILURE, printed to stderr), record
+                      that failure verbatim — never guess a class or fall back to free-text
+                      judgment. Confirmed FPs this closes: price_alerts -> class c (sole
+                      writer `priceAlertTools.ts` is on-demand); alert_engine_records ->
+                      class b (market.db's copy has zero production writers — the one Go
+                      writer that exists, `apps/alert-engine/pkg/infrastructure/sqlite.go`,
+                      writes to a SEPARATE `alert_engine.db` file, confirmed empirically:
+                      that file has no `alert_engine_records` table at all).
   2. STALE/UNAVAIL  — newest timestamp far older than expected (e.g. daily_ohlcv / market_prices
                       not updated within the last trading session; sbv_rates / macro_indicators
                       > 48h old; a feed's max(updated_at) implausibly old).
@@ -247,11 +321,15 @@ COUNT-NOISE TOLERANCE (regression monitor): live-DB counts wobble by ±1-2 under
   a drop toward 0 (a fix landed), a jump of ≥~5, or a fresh recent-dated violating row.
 
 ⚠ NO HALLUCINATED COUNTS (mandatory — confabulation guard):
-  For the canonical anomaly COUNTS (db1 OHLC-violations, db2 scale, db3 vnindex-cache, c04
-  low-confidence) you MUST run the DETERMINISTIC helper and copy its numbers VERBATIM:
+  For the canonical anomaly COUNTS (OHLC violations, scale anomalies, vnindex-cache rows,
+  low-confidence reports) you MUST run the DETERMINISTIC helper and copy its numbers VERBATIM:
       bash scripts/db-integrity-counts.sh
-  It emits JSON `{ "scan_ts", "counts": {db1_ohlc_violations, db2_scale_gt100x,
-  db3_vnindex_cache_rows, c04_low_confidence_reports}, "context": {...} }` straight from sqlite.
+  It emits JSON `{ "scan_ts", "counts": {ohlc_violations_count, scale_gt100x_count,
+  vnindex_cache_rows_count, low_confidence_reports_count}, "context": {...} }` straight from
+  sqlite. (Renamed 2026-08-06, FIX-AUDITOR-EMPTYTABLE-CHECK-NO-WRITER-DISCRIMINATOR item 3 —
+  formerly `db1_ohlc_violations`/`db2_scale_gt100x`/`db3_vnindex_cache_rows`/
+  `c04_low_confidence_reports`; `c04` visually collided with system-auditor's OFFICIAL Tier-3
+  `C-04`/`C-08` checks, a different check family. Rename only, no query changed.)
   Use those exact numbers in the history entry + the regression check — NEVER a number you
   recalled/estimated/expected, and NEVER invent a narrative for a change the script didn't show.
   Use your own ad-hoc sidecar queries ONLY for discovering NEW anomalies + classification, not
