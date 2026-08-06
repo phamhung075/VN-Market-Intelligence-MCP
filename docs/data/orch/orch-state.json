@@ -22603,6 +22603,56 @@
         "dispatch_note": "PO ruling triage-20260806T1245Z-po: architect decision (09:04Z) sat unexecuted 3h40m due to broken ready-lane pickup (FIX-DEVTEAM-RESUME-GATES-OMIT-READY-LANE). Manual dispatch mandatory per PO. Router dispatch.",
         "commit_sha": "2f835ec63",
         "review_note": "developer 2026-08-06: applied architect-decided fix — docker-compose.yml rag-service deploy.resources.limits.memory 768m->1g, reservations.memory 256m->512m (lines 165-172), recreated single-service via docker compose up -d --no-deps rag-service. RAW-verified: docker inspect Created=2026-08-06T12:57:38Z (new, was 2026-08-05T16:49:10Z), RestartCount=0, Status=running, OOMKilled=false, Health=healthy within seconds; MemoryLimit=1073741824B(1g)/MemoryReservation=536870912B(512m) confirmed changed from 805306368/268435456. docker stats immediately post-start: 322.3MiB/1GiB=31.47% (cold, lazy-load embedder not yet warmed). docker compose ps: all 12 sibling containers untouched (uptimes intact, all healthy) — --no-deps confirmed peer-safe, no down/stop/kill/rm/--force-recreate used. Logs clean: startup + /health 200 OK, zero error/OOM signature. Out-of-scope untouched: FIX-RAG-EMBEDDER-IDLE-UNLOAD-PATH (P2, sequenced after), FIX-RAG-SERVICE-CLEAN-EXIT-RESTART-LOOP (separate row in review[], not re-touched). Commit 2f835ec63. qa: re-verify docker inspect memory limit + no OOM in a subsequent observation window (compaction burst / corpus growth); this row does NOT close the structural embedder idle-unload follow-up (separate P2 row)."
+      },
+      {
+        "id": "FIX-MARKETDB-JOURNALMODE-GUARD-SHIPPED-BUT-NEVER-ARMED",
+        "type": "FIX",
+        "title": "scripts/audits/verify-market-db-journal-mode.sh works, self-tests green, and is wired to NOTHING — it would have caught the 5th corruption 6 days early. Arm it (cron + pre-push/CI + a source-grep sibling) so a WAL re-arm is detected in minutes, not at the next SQLITE_CORRUPT.",
+        "status": "REVIEW",
+        "priority": "P0",
+        "size": "S",
+        "zone": "cross-service/",
+        "owner": "developer",
+        "next_agent": "qa",
+        "plan_only": false,
+        "supervised": false,
+        "created_at": "2026-08-06T12:28:00Z",
+        "created_by": "po (triage tick 2026-08-06T12:2xZ, 5th market.db corruption)",
+        "updated_at": "2026-08-06T13:04:27Z",
+        "updated_by": "developer",
+        "root_cause": "FIX-SQLITE-JOURNALMODE-WAL-REARM-DEFEATS-DELETE-MITIGATION shipped scripts/audits/verify-market-db-journal-mode.sh as its AC-3/AC-4 regression guard. The script is GOOD: it deliberately asserts through the live running container rather than source (its own header explains why source-grepping would have missed the defect it was written for), it checks both journal_mode and the -wal/-shm pair, it has a --self-test that builds forced-WAL and forced-DELETE fixtures and proves both branches, and its exit contract is clean (0/2/3, verdict always stdout line 1). PO ran it live this tick and it worked perfectly on the first try. The defect is that NOTHING CALLS IT. Repo-wide grep for 'verify-market-db-journal-mode' returns exactly: the script itself, and two decision-journal entries. No cron, no CI step, no pre-push hook, no agent flow doc, no system-auditor probe. It has sat unarmed since 2026-07-30 while the exact condition it detects went live and produced corruption #5 on 2026-08-06.",
+        "evidence": "RAW, this tick: `bash scripts/audits/verify-market-db-journal-mode.sh` -> `MARKET_DB_JOURNAL_MODE verdict=FAIL journal_mode=wal wal_present=true shm_present=true ... reason=\"journal_mode=wal (expected delete) — WAL re-arm vector active\"`, exit 2. It is correct, it is FAILING right now, and no human or agent would have learned that unless PO happened to run it by hand. Host data/live/market.db-wal observed growing 140,112 -> 737,512 -> 1,545,032 bytes over ~3 minutes while unarmed. Wiring grep: `grep -rn verify-market-db-journal-mode --include=*.{md,ts,sh,json,yml,yaml} .` -> 5 hits, all self-referential (script usage header) or historical (decision journals). Zero call sites.",
+        "impact": "This is the detection-plane root cause of the recurrence, and it is a higher-leverage fix than any individual re-armer patch. Four re-armers were patched or found across three services and two languages in the last week; a fifth will be written by someone who has not read the brief. An armed guard converts that from 'silent corruption in N days' into 'red build / #bug alert in minutes'. The code-plane fix (mode=ro) makes violation impossible in stock-price; this makes violation VISIBLE everywhere else.",
+        "acceptance": [
+          "AC-1 RUNTIME ARM — the guard runs on a schedule against the live container and routes a FAIL to the BUG channel with the verdict line verbatim. Reuse the existing standalone-cron lane (.claude/skills/cron-standalone-team/) rather than inventing a new mechanism. Cadence: PO sets a floor of every 15 minutes — the 2026-07-30 fix survived ~14h before being re-armed and the corruption took 6 days to surface, so an hourly probe is a 60x improvement and a 15-min probe costs nothing (two docker execs, read-only by construction).",
+          "AC-2 SOURCE ARM (sibling script, NEW) — a static guard that FAILS if any source file outside the single sanctioned owner (apps/mcp-server/src/infrastructure/db/schema.ts) sets journal_mode on market.db. Must cover Go DSN strings (`_journal_mode=` in a `file:` DSN) as well as TS/JS `PRAGMA journal_mode`, because the TypeScript-only sweep is precisely how the Go re-armers survived. Wire into the pre-push/CI lane. MUST be opt-IN allowlist (list the sanctioned owner explicitly), never an opt-OUT ignore list — see feedback_fleetwide_gate_validated_on_one_file_optout_allowlist.",
+          "AC-3 the runtime guard and the source guard are complementary and BOTH required — do not substitute one for the other. The runtime guard alone cannot say which code path re-armed WAL; the source guard alone cannot catch a runtime PRAGMA (that exact gap is documented in the existing script's own header, re: bctcEvalBackfillRunner.ts). Prove both fire: source guard against a deliberately re-armed fixture file, runtime guard via its existing --self-test.",
+          "AC-4 POLICY SSOT — record the settled market.db journal-mode policy in one durable, discoverable place (docs/policies/ or docs/standards/, referenced from docs/ARCHITECTURE.md): market.db is journal_mode=DELETE + synchronous=FULL; apps/mcp-server/src/infrastructure/db/schema.ts is the SOLE owner; every other consumer opens `mode=ro` with NO journal_mode token. Include the WHY (macOS-Docker-virt torn -shm write on a bind mount, 5 corruptions) and the durability trade-off from brief §2.4 (bind-mount survives VM rebuild, named volume does not), so the next engineer who hits SQLITE_READONLY and is tempted to 'just go back to WAL' finds the reasoning instead of re-deriving it. Brief §2.4 explicitly called out that 157335892's commit trail lacks this record — that omission is what let e370f5f51 be written 14h later.",
+          "AC-5 the guard's own FAIL must not be swallowed by the caller. Its exit contract is 0=PASS/2=FAIL/3=ERROR with the verdict as stdout line 1; callers must not `&&`-chain it (see feedback_verdict_exit_code_gated_by_and_chain_swallows_actionable_output) and must not `tail` its output (see feedback_tick_preflight_verdict_is_first_json_key_tail_always_drops_it)."
+        ],
+        "files_hint": [
+          "scripts/audits/verify-market-db-journal-mode.sh (exists, do not rewrite — only wire it)",
+          ".claude/skills/cron-standalone-team/register.md",
+          ".claude/commands/crons/",
+          "scripts/audits/ (new source-grep sibling)",
+          "docs/policies/ or docs/standards/ (new policy SSOT)"
+        ],
+        "verification_gate": "Both guards demonstrated firing on a deliberately-broken fixture AND passing on a clean one, plus proof the runtime guard's FAIL actually reaches the BUG channel (a scheduled job whose alert path is untested is the same unarmed-guard defect one layer up).",
+        "related": [
+          "FIX-STOCKPRICE-PRICEHISTORY-RO-WAL-DSN-SWALLOWED-EMPTY-KILLS-KINHDICH",
+          "FIX-SQLITE-JOURNALMODE-WAL-REARM-DEFEATS-DELETE-MITIGATION",
+          "FIX-SCRIPTS-MIGRATIONS-MARKETDB-WAL-REARM-SAME-DEFECT",
+          "FIX-DB-INTEGRITY-SIDECAR-NAMED-VOLUME-DRIFT"
+        ],
+        "context_refs": [
+          "docs/incidents/2026-08-06-sqlite-db-corruption-wai-rearm-vector.md",
+          "docs/architecture-briefs/2026-07-30-sqlite-docker-virt-corruption-hardening.md"
+        ],
+        "note": "PO ANSWERS THE DEFERRED POLICY QUESTION HERE — no new spike needed. The framing that SPIKE-SQLITE-DOCKER-VIRT-CORRUPTION-HARDENING AC-B ('DELETE-vs-WAL policy per DB') is unresolved is out of date: the architect ANSWERED AC-A through AC-D in §4 of the 2026-07-30 brief. For market.db the verdict is settled (DELETE, single owner, §2.4 reasoning). The only part of AC-B still genuinely open concerns coordination.db, where the brief's verdict is 'do NOT blanket-convert — measure lock-hold duration under DELETE in a non-prod fixture first', because synchronous=FULL on every task_claim/heartbeat would lengthen the fleet mutex's lock window and a stuck mutex has worse blast radius (silent fleet-wide double-dispatch) than the corruption it avoids. That measurement is a separate, lower-priority row and is explicitly NOT a blocker for anything here. So the answer to 'should we finally resolve DELETE-vs-WAL policy given the 5th recurrence' is: the policy was never the missing piece — it was decided a week ago and simply had no enforcement and no discoverable home. That is what AC-2 and AC-4 above supply. Resolving it 'again' via a fresh spike would have burned a cycle re-deriving a settled answer while the vector stayed live. | RESOLVED (developer, 2026-08-06T13:04:26Z): AC-1 armed via new */15 cron-standalone-team Job 6 (market-db-journal-guard, no subagent spawn, alerts bug channel on FAIL/ERROR — alert path proven live via mcp_call bridge, message_id 4809). AC-2 new sibling scripts/audits/verify-market-db-journal-source-guard.sh (opt-IN allowlist=schema.ts, TS proximity-window WINDOW=20 + Go _journal_mode= DSN token), wired into CI. AC-3 both guards proven firing (source-guard 6/6 test, runtime --self-test + live proof). AC-4 new docs/policies/market-db-journal-mode-policy.md, referenced from ARCHITECTURE.md. AC-5 exit contract preserved (no &&-chain, no tail). Did NOT rewrite verify-market-db-journal-mode.sh. .head untouched — active_task_id is FU-RAG-DEPLOY-MEMORY (parallel claim), not this task, per router note.",
+        "claimed_at": "2026-08-06T12:35:34Z",
+        "claimed_by": "router",
+        "dispatch_note": "PO triage 2026-08-06T12:2xZ (triage-20260806T1229Z-po): detection-plane structural fix, guard script exists but wired to nothing. P0, parallel-safe with FIX-STOCKPRICE dispatch (different zone). Router dispatch.",
+        "commit_sha": "590dd4124"
       }
     ],
     "qa": [
@@ -22692,55 +22742,6 @@
         "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
         "claimed_at": "2026-08-06T12:27:30Z",
         "claimed_by": "dev-team (bounded-1 auto-pickup)"
-      },
-      {
-        "id": "FIX-MARKETDB-JOURNALMODE-GUARD-SHIPPED-BUT-NEVER-ARMED",
-        "type": "FIX",
-        "title": "scripts/audits/verify-market-db-journal-mode.sh works, self-tests green, and is wired to NOTHING — it would have caught the 5th corruption 6 days early. Arm it (cron + pre-push/CI + a source-grep sibling) so a WAL re-arm is detected in minutes, not at the next SQLITE_CORRUPT.",
-        "status": "IN_PROGRESS",
-        "priority": "P0",
-        "size": "S",
-        "zone": "cross-service/",
-        "owner": "developer",
-        "next_agent": "developer",
-        "plan_only": false,
-        "supervised": false,
-        "created_at": "2026-08-06T12:28:00Z",
-        "created_by": "po (triage tick 2026-08-06T12:2xZ, 5th market.db corruption)",
-        "updated_at": "2026-08-06T12:35:35Z",
-        "updated_by": "po",
-        "root_cause": "FIX-SQLITE-JOURNALMODE-WAL-REARM-DEFEATS-DELETE-MITIGATION shipped scripts/audits/verify-market-db-journal-mode.sh as its AC-3/AC-4 regression guard. The script is GOOD: it deliberately asserts through the live running container rather than source (its own header explains why source-grepping would have missed the defect it was written for), it checks both journal_mode and the -wal/-shm pair, it has a --self-test that builds forced-WAL and forced-DELETE fixtures and proves both branches, and its exit contract is clean (0/2/3, verdict always stdout line 1). PO ran it live this tick and it worked perfectly on the first try. The defect is that NOTHING CALLS IT. Repo-wide grep for 'verify-market-db-journal-mode' returns exactly: the script itself, and two decision-journal entries. No cron, no CI step, no pre-push hook, no agent flow doc, no system-auditor probe. It has sat unarmed since 2026-07-30 while the exact condition it detects went live and produced corruption #5 on 2026-08-06.",
-        "evidence": "RAW, this tick: `bash scripts/audits/verify-market-db-journal-mode.sh` -> `MARKET_DB_JOURNAL_MODE verdict=FAIL journal_mode=wal wal_present=true shm_present=true ... reason=\"journal_mode=wal (expected delete) — WAL re-arm vector active\"`, exit 2. It is correct, it is FAILING right now, and no human or agent would have learned that unless PO happened to run it by hand. Host data/live/market.db-wal observed growing 140,112 -> 737,512 -> 1,545,032 bytes over ~3 minutes while unarmed. Wiring grep: `grep -rn verify-market-db-journal-mode --include=*.{md,ts,sh,json,yml,yaml} .` -> 5 hits, all self-referential (script usage header) or historical (decision journals). Zero call sites.",
-        "impact": "This is the detection-plane root cause of the recurrence, and it is a higher-leverage fix than any individual re-armer patch. Four re-armers were patched or found across three services and two languages in the last week; a fifth will be written by someone who has not read the brief. An armed guard converts that from 'silent corruption in N days' into 'red build / #bug alert in minutes'. The code-plane fix (mode=ro) makes violation impossible in stock-price; this makes violation VISIBLE everywhere else.",
-        "acceptance": [
-          "AC-1 RUNTIME ARM — the guard runs on a schedule against the live container and routes a FAIL to the BUG channel with the verdict line verbatim. Reuse the existing standalone-cron lane (.claude/skills/cron-standalone-team/) rather than inventing a new mechanism. Cadence: PO sets a floor of every 15 minutes — the 2026-07-30 fix survived ~14h before being re-armed and the corruption took 6 days to surface, so an hourly probe is a 60x improvement and a 15-min probe costs nothing (two docker execs, read-only by construction).",
-          "AC-2 SOURCE ARM (sibling script, NEW) — a static guard that FAILS if any source file outside the single sanctioned owner (apps/mcp-server/src/infrastructure/db/schema.ts) sets journal_mode on market.db. Must cover Go DSN strings (`_journal_mode=` in a `file:` DSN) as well as TS/JS `PRAGMA journal_mode`, because the TypeScript-only sweep is precisely how the Go re-armers survived. Wire into the pre-push/CI lane. MUST be opt-IN allowlist (list the sanctioned owner explicitly), never an opt-OUT ignore list — see feedback_fleetwide_gate_validated_on_one_file_optout_allowlist.",
-          "AC-3 the runtime guard and the source guard are complementary and BOTH required — do not substitute one for the other. The runtime guard alone cannot say which code path re-armed WAL; the source guard alone cannot catch a runtime PRAGMA (that exact gap is documented in the existing script's own header, re: bctcEvalBackfillRunner.ts). Prove both fire: source guard against a deliberately re-armed fixture file, runtime guard via its existing --self-test.",
-          "AC-4 POLICY SSOT — record the settled market.db journal-mode policy in one durable, discoverable place (docs/policies/ or docs/standards/, referenced from docs/ARCHITECTURE.md): market.db is journal_mode=DELETE + synchronous=FULL; apps/mcp-server/src/infrastructure/db/schema.ts is the SOLE owner; every other consumer opens `mode=ro` with NO journal_mode token. Include the WHY (macOS-Docker-virt torn -shm write on a bind mount, 5 corruptions) and the durability trade-off from brief §2.4 (bind-mount survives VM rebuild, named volume does not), so the next engineer who hits SQLITE_READONLY and is tempted to 'just go back to WAL' finds the reasoning instead of re-deriving it. Brief §2.4 explicitly called out that 157335892's commit trail lacks this record — that omission is what let e370f5f51 be written 14h later.",
-          "AC-5 the guard's own FAIL must not be swallowed by the caller. Its exit contract is 0=PASS/2=FAIL/3=ERROR with the verdict as stdout line 1; callers must not `&&`-chain it (see feedback_verdict_exit_code_gated_by_and_chain_swallows_actionable_output) and must not `tail` its output (see feedback_tick_preflight_verdict_is_first_json_key_tail_always_drops_it)."
-        ],
-        "files_hint": [
-          "scripts/audits/verify-market-db-journal-mode.sh (exists, do not rewrite — only wire it)",
-          ".claude/skills/cron-standalone-team/register.md",
-          ".claude/commands/crons/",
-          "scripts/audits/ (new source-grep sibling)",
-          "docs/policies/ or docs/standards/ (new policy SSOT)"
-        ],
-        "verification_gate": "Both guards demonstrated firing on a deliberately-broken fixture AND passing on a clean one, plus proof the runtime guard's FAIL actually reaches the BUG channel (a scheduled job whose alert path is untested is the same unarmed-guard defect one layer up).",
-        "related": [
-          "FIX-STOCKPRICE-PRICEHISTORY-RO-WAL-DSN-SWALLOWED-EMPTY-KILLS-KINHDICH",
-          "FIX-SQLITE-JOURNALMODE-WAL-REARM-DEFEATS-DELETE-MITIGATION",
-          "FIX-SCRIPTS-MIGRATIONS-MARKETDB-WAL-REARM-SAME-DEFECT",
-          "FIX-DB-INTEGRITY-SIDECAR-NAMED-VOLUME-DRIFT"
-        ],
-        "context_refs": [
-          "docs/incidents/2026-08-06-sqlite-db-corruption-wai-rearm-vector.md",
-          "docs/architecture-briefs/2026-07-30-sqlite-docker-virt-corruption-hardening.md"
-        ],
-        "note": "PO ANSWERS THE DEFERRED POLICY QUESTION HERE — no new spike needed. The framing that SPIKE-SQLITE-DOCKER-VIRT-CORRUPTION-HARDENING AC-B ('DELETE-vs-WAL policy per DB') is unresolved is out of date: the architect ANSWERED AC-A through AC-D in §4 of the 2026-07-30 brief. For market.db the verdict is settled (DELETE, single owner, §2.4 reasoning). The only part of AC-B still genuinely open concerns coordination.db, where the brief's verdict is 'do NOT blanket-convert — measure lock-hold duration under DELETE in a non-prod fixture first', because synchronous=FULL on every task_claim/heartbeat would lengthen the fleet mutex's lock window and a stuck mutex has worse blast radius (silent fleet-wide double-dispatch) than the corruption it avoids. That measurement is a separate, lower-priority row and is explicitly NOT a blocker for anything here. So the answer to 'should we finally resolve DELETE-vs-WAL policy given the 5th recurrence' is: the policy was never the missing piece — it was decided a week ago and simply had no enforcement and no discoverable home. That is what AC-2 and AC-4 above supply. Resolving it 'again' via a fresh spike would have burned a cycle re-deriving a settled answer while the vector stayed live.",
-        "claimed_at": "2026-08-06T12:35:34Z",
-        "claimed_by": "router",
-        "dispatch_note": "PO triage 2026-08-06T12:2xZ (triage-20260806T1229Z-po): detection-plane structural fix, guard script exists but wired to nothing. P0, parallel-safe with FIX-STOCKPRICE dispatch (different zone). Router dispatch."
       }
     ]
   },
