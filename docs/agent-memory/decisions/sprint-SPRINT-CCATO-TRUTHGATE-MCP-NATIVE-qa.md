@@ -23,3 +23,12 @@
 - Full 15085-test suite vs targeted — grep-confirmed zero production consumers of the 2 new modules (only the new test file imports them; 1 unrelated comment-only string hit) → full-suite regression structurally impossible, same class as T1; skipped full run.
 **why-decision:** bun test CCATO-MCP-T2-CLAIM-MAP-LOADER.test.ts → 14 pass/0 fail/25 expect() exact match; tsc --noEmit 0 errors; DDD grep clean (type-only domain import, correct direction); security grep clean ("non_ticker_tokens" substring hits only, no real secrets); mock-guard PASS; size-lint PASS 0 offenders (row claimed "2 pre-existing" — since fixed by later size-lint tasks, not a regression); read both new files' full diff — fail-loud on all 4 malformed-shape paths, additive fields tolerated, getProjectRoot() used correctly (not brief's unsafe hop-count pattern, flagged deviation is legitimate) → APPROVE, QA→DONE_VERIFIED lane-move.
 **why-change:** no change from plan.
+
+### STEP qa-S3 · qa · 2026-08-06T15:45:00Z
+**task-id:** CCATO-MCP-T4-SIGNAL-WRITER
+**what-done:** verify-committed (dev-team review-lane, row `commit`/`files[]` absent — derived commit `154180ebd` from review_note prose): main-ancestor confirmed, `git show --stat` matches all 6 claimed files exactly (2 new infra files, new test, 3 doc files, zero existing prod files touched).
+**what-considered:**
+- Trust review_note's "9/9 pass"/tsc-clean/183-88-count self-report vs re-run — re-ran independently (never trust prose alone).
+- Full ~15k-test suite vs targeted — grep-confirmed zero production consumers of the 2 new modules repo-wide (only own test file imports them, T5-USECASE not landed) → full-suite regression structurally impossible; skipped, same class as T1/T2.
+**why-decision:** bun test CCATO-MCP-T4-SIGNAL-WRITER.test.ts → 9 pass/0 fail/26 expect() exact match; tsc --noEmit 0 errors; DDD/security greps clean; mock-guard PASS; size-lint PASS 0 offenders (both files ≤120L); cross-checked row dict field-by-field vs `scripts/narrative-truth-gate.sh` L417-437 — byte-faithful (id/ts/from/to/type/summary/severity/status/payload{...}); `payload_ref:null` addition confirmed schema-safe (`SignalRowSchema.passthrough()`, `checkRefIntegrity` skips non-string payload_ref); re-ran `gen-project-stats.ts --dry-run` live → toolCount=183/cronJobCount=88 exact match, confirms zero registration touched → APPROVE, QA→DONE_VERIFIED lane-move.
+**why-change:** no change from plan.
