@@ -4709,7 +4709,7 @@
             "title": "Write canonical Go RSI engine contract documentation (pure-compute path, Wilder params, 35-candle gate)",
             "zone": "apps/technical-analysis/",
             "size": "S",
-            "status": "TODO",
+            "status": "DONE",
             "owner": "dev-technical-analysis",
             "priority": "high",
             "depends": [],
@@ -4718,7 +4718,10 @@
               "docs/standards/ta-engine-contract.md"
             ],
             "note": "Contract doc only (no Go code changes). Freezes interface so dev-mcp-server can rely on Go service contract without re-reading source. Blocking task for TASK-504.",
-            "updated_at": "2026-08-06T07:29:07Z"
+            "updated_at": "2026-08-06T07:36:06Z",
+            "closed_at": "2026-08-06T07:35:46Z",
+            "commit": "60891f75c",
+            "status_note": "Prior-art discovery: docs/standards/ta-engine-contract.md already existed, committed 2026-06-21 (60891f75c, TASK-RSIFIX-1) as part of the original FIX-DIGEST-RSI-DUAL-ENGINE-DIVERGE fix; the downstream consumer (TASK-RSIFIX-2, commit 3e5a5a5a6) was also already shipped the same day — defaultComputeTa() already calls the Go engine with the 35-candle gate. Re-verified every constant against current Go source 2026-08-06 (all match, no drift). Added doc addendum: TS caller-wrapper contract (computeTAIndicators field mapping + fail-closed pattern) + prior-art trace section. TASK-504 is almost certainly ALSO already satisfied by existing code — see docs/standards/ta-engine-contract.md §12 — recommend architect/PM verify via git log before dispatching dev-mcp-server for fresh implementation."
           },
           {
             "id": "504",
@@ -11754,42 +11757,6 @@
         "updated_at": "2026-08-06T07:14:42Z"
       },
       {
-        "id": "FIX-DEVTEAM-PIPELINE-RESUME-TERMINAL-LANE-BLIND",
-        "title": "dev-team pipeline-resume task_status/should_hold lookups are blind to terminal lanes — head stays in_progress on a done[] task and re-spawns the agent on finished work",
-        "owner": "po",
-        "status": "BACKLOG",
-        "type": "FIX",
-        "priority": "P1",
-        "zone": "cross-service/",
-        "next_agent": "architect",
-        "created_at": "2026-08-06T07:21:17Z",
-        "created_by": "po (triage 2026-08-06)",
-        "origin_signal_id": "dev-team-20260806T071449Z-head-stale-done-gap",
-        "related_rows": [
-          "FIX-DEVTEAM-STEP0B-RESUME-SUPERVISED-HOLD-GATE",
-          "FIX-DEVTEAM-HEAD-PIN-STALE-THRESHOLD-24H-VS-TICK-CADENCE",
-          "FIX-WF2-SUPERVISED-HOLD-NO-PO-SIDE-GOAHEAD-PRODUCER"
-        ],
-        "status_note": "ROOT CAUSE (from signal): docs/agents/dev-team/flow/main.md pipeline-resume task_status lookup (~line 263) queries only in_progress[] + active_sprints[].tasks[] — never done[]/done_verified[]/review[]/qa[]/ready[]/backlog[]. A gateway-less specialist closing its own head task can only write the lane, not .head (INV-GATEWAY-1), so .head stays {status:in_progress, active_task_id:<now-done task>}. Next tick's resume then reads task_status=empty (NOT 'BLOCKED', so the existing carve-out misses it), falls through the WF-2 supervised check (also terminal-lane-blind), and re-spawns the agent on already-finished work via the S2 dispatcher-wrap. LIVE INSTANCE 2026-08-06: architect closed GUARD-COWORK-NOTEBOOK-AGENTS-SELF-EDIT-FLOW-DOC to done[] (commit 336228ebe); .head stayed pinned at updated_at 2026-08-05T19:41:30Z until the router hand-patched it to idle at 07:14:28Z. That hand-patch is a DATA fix, not a code fix — recurrence is certain without this row. AC: (1) task_status resolution scans terminal lanes and short-circuits to an idle-reset, mirroring the existing BLOCKED carve-out's self-heal shape; (2) the WF-2 should_hold predicate gets the same terminal-lane guard (po hit this independently the same tick — should_hold returned true for a task already in done[]); (3) regression fixture replays the live shape: head pinned in_progress at a done[]-lane task id => resume must idle-reset, NOT re-spawn. NEGATIVE CONTROL REQUIRED: a genuinely in-flight in_progress task must still resume normally — a fix that idle-resets everything trivially passes (1)-(3) and breaks the pipeline.",
-        "updated_at": "2026-08-06T07:26:12Z",
-        "size": "S",
-        "supervised": false,
-        "plan_only": false,
-        "baseline_pass": true,
-        "ac": [
-          "AC-1 Add a terminal-lane check (done[] + done_verified[]) to BOTH the task_status lookup and the should_hold lookup, mirroring the shape of the existing BLOCKED carve-out's self-heal (~lines 267-285) rather than inventing a new control-flow branch.",
-          "AC-2 On a terminal-lane hit, short-circuit to an idle .head reset — never fall through to S2 dispatcher-wrap. Write via scripts/orch-apply.sh per the hot-file write contract.",
-          "AC-3 Negative control: a head naming a row that is genuinely in_progress must still resume exactly as today. A head naming a BLOCKED row must still take the existing BLOCKED carve-out, unchanged.",
-          "AC-4 Positive control: replay this tick's exact shape (head.active_task_id = a done[] row, head.status=in_progress) and assert the resume path idles the head instead of spawning next_agent.",
-          "AC-5 Root-cause framing to preserve in the fix: the trigger is a gateway-less specialist closing its own head task (INV-GATEWAY-1), which is a NORMAL, supported condition — not an error path. The fix must not require the specialist to gain gateway access."
-        ],
-        "evidence": "Live instance this tick: architect closed GUARD-COWORK-NOTEBOOK-AGENTS-SELF-EDIT-FLOW-DOC to done[] but .head still named it with status=in_progress. Router caught it by hand via a task_board.done[] lookup and reset .head to idle (updated_by='dev-team (head-idle-repair, task confirmed DONE 2026-08-06)', updated_at 2026-08-06T07:14:28Z) BEFORE the next tick could fire the duplicate spawn. That was a live-data patch, not a code fix — the flow doc is unchanged and will re-strand on the next gateway-less close.",
-        "files": [
-          "docs/agents/dev-team/flow/main.md"
-        ],
-        "po_dedup_fold_20260806T0726": "DUPLICATE-MINT RESOLVED. A second copy of this row was minted at 07:23:23Z by a concurrently-spawned po (router dispatched a fresh triage tick for 2026-08-06T07:07Z while this row was landing at 07:21:17Z, commit ffc58145d). The later copy has been DELETED and its unique content folded here: the 5 explicit ac[] entries, evidence[], files[], and zone corrected docs/agents/ -> cross-service/ (docs/agents/ is not one of the three zone tokens dev-team Step 3 accepts: apps/<service>/, multi, cross-service/ — an invalid zone would have bounced this row back to po). Provenance of the FIRST-LANDED row preserved per normal dedup discipline (fold into existing, never keep the newer mint)."
-      },
-      {
         "id": "FIX-NOTEBOOK-COMPOSE-SCRIPT-ACTUATOR",
         "type": "FIX",
         "title": "notebook compose has no mechanical actuator — retention/prune arithmetic runs inside an LLM-narrated flow step and silently orphans section bodies",
@@ -14267,6 +14234,44 @@
         "promoted_by": "dev-team (supervised-lane sweep)",
         "promotion_note": "Supervised-Lane Sweep — assigned dispatch_lane='ba' (priority_rank=1); supervised/plan_only flags preserved, gate NOT disabled — see FIX-BOUNDED1-SUPERVISED-LANE-NO-SWEEPER",
         "dispatch_lane": "ba"
+      },
+      {
+        "id": "FIX-DEVTEAM-PIPELINE-RESUME-TERMINAL-LANE-BLIND",
+        "title": "dev-team pipeline-resume task_status/should_hold lookups are blind to terminal lanes — head stays in_progress on a done[] task and re-spawns the agent on finished work",
+        "owner": "po",
+        "status": "READY",
+        "type": "FIX",
+        "priority": "P1",
+        "zone": "cross-service/",
+        "next_agent": "developer",
+        "created_at": "2026-08-06T07:21:17Z",
+        "created_by": "po (triage 2026-08-06)",
+        "origin_signal_id": "dev-team-20260806T071449Z-head-stale-done-gap",
+        "related_rows": [
+          "FIX-DEVTEAM-STEP0B-RESUME-SUPERVISED-HOLD-GATE",
+          "FIX-DEVTEAM-HEAD-PIN-STALE-THRESHOLD-24H-VS-TICK-CADENCE",
+          "FIX-WF2-SUPERVISED-HOLD-NO-PO-SIDE-GOAHEAD-PRODUCER"
+        ],
+        "status_note": "ROOT CAUSE (from signal): docs/agents/dev-team/flow/main.md pipeline-resume task_status lookup (~line 263) queries only in_progress[] + active_sprints[].tasks[] — never done[]/done_verified[]/review[]/qa[]/ready[]/backlog[]. A gateway-less specialist closing its own head task can only write the lane, not .head (INV-GATEWAY-1), so .head stays {status:in_progress, active_task_id:<now-done task>}. Next tick's resume then reads task_status=empty (NOT 'BLOCKED', so the existing carve-out misses it), falls through the WF-2 supervised check (also terminal-lane-blind), and re-spawns the agent on already-finished work via the S2 dispatcher-wrap. LIVE INSTANCE 2026-08-06: architect closed GUARD-COWORK-NOTEBOOK-AGENTS-SELF-EDIT-FLOW-DOC to done[] (commit 336228ebe); .head stayed pinned at updated_at 2026-08-05T19:41:30Z until the router hand-patched it to idle at 07:14:28Z. That hand-patch is a DATA fix, not a code fix — recurrence is certain without this row. AC: (1) task_status resolution scans terminal lanes and short-circuits to an idle-reset, mirroring the existing BLOCKED carve-out's self-heal shape; (2) the WF-2 should_hold predicate gets the same terminal-lane guard (po hit this independently the same tick — should_hold returned true for a task already in done[]); (3) regression fixture replays the live shape: head pinned in_progress at a done[]-lane task id => resume must idle-reset, NOT re-spawn. NEGATIVE CONTROL REQUIRED: a genuinely in-flight in_progress task must still resume normally — a fix that idle-resets everything trivially passes (1)-(3) and breaks the pipeline.",
+        "updated_at": "2026-08-06T07:36:18Z",
+        "size": "S",
+        "supervised": false,
+        "plan_only": false,
+        "baseline_pass": true,
+        "ac": [
+          "AC-1 Add a terminal-lane check (done[] + done_verified[]) to BOTH the task_status lookup and the should_hold lookup, mirroring the shape of the existing BLOCKED carve-out's self-heal (~lines 267-285) rather than inventing a new control-flow branch.",
+          "AC-2 On a terminal-lane hit, short-circuit to an idle .head reset — never fall through to S2 dispatcher-wrap. Write via scripts/orch-apply.sh per the hot-file write contract.",
+          "AC-3 Negative control: a head naming a row that is genuinely in_progress must still resume exactly as today. A head naming a BLOCKED row must still take the existing BLOCKED carve-out, unchanged.",
+          "AC-4 Positive control: replay this tick's exact shape (head.active_task_id = a done[] row, head.status=in_progress) and assert the resume path idles the head instead of spawning next_agent.",
+          "AC-5 Root-cause framing to preserve in the fix: the trigger is a gateway-less specialist closing its own head task (INV-GATEWAY-1), which is a NORMAL, supported condition — not an error path. The fix must not require the specialist to gain gateway access."
+        ],
+        "evidence": "Live instance this tick: architect closed GUARD-COWORK-NOTEBOOK-AGENTS-SELF-EDIT-FLOW-DOC to done[] but .head still named it with status=in_progress. Router caught it by hand via a task_board.done[] lookup and reset .head to idle (updated_by='dev-team (head-idle-repair, task confirmed DONE 2026-08-06)', updated_at 2026-08-06T07:14:28Z) BEFORE the next tick could fire the duplicate spawn. That was a live-data patch, not a code fix — the flow doc is unchanged and will re-strand on the next gateway-less close.",
+        "files": [
+          "docs/agents/dev-team/flow/main.md"
+        ],
+        "po_dedup_fold_20260806T0726": "DUPLICATE-MINT RESOLVED. A second copy of this row was minted at 07:23:23Z by a concurrently-spawned po (router dispatched a fresh triage tick for 2026-08-06T07:07Z while this row was landing at 07:21:17Z, commit ffc58145d). The later copy has been DELETED and its unique content folded here: the 5 explicit ac[] entries, evidence[], files[], and zone corrected docs/agents/ -> cross-service/ (docs/agents/ is not one of the three zone tokens dev-team Step 3 accepts: apps/<service>/, multi, cross-service/ — an invalid zone would have bounced this row back to po). Provenance of the FIRST-LANDED row preserved per normal dedup discipline (fold into existing, never keep the newer mint).",
+        "architect_review_note": "ZONE: cross-service/ (docs/agents/dev-team/flow/main.md — orchestration flow doc; no apps/<service>/ DDD layer touched). BUILD-STANDARD: not-applicable (BUG-FIX, in-zone, no new primitives).\n\nVERIFIED PATHS: main.md Step 0b pipeline-resume — WF-1 BLOCKED-task check task_status lookup (L263-266 live-verified, concatenates task_board.in_progress[]+active_sprints[].tasks[], never done[]/done_verified[]) + its BLOCKED self-heal branch (L267-285, shape to mirror); WF-2 SUPERVISED-HOLD should_hold lookup (L289-298, $row sourced from in_progress[]/review[]/qa[] only). scripts/lib/devteam-eligibility.jq already defines is_terminal_task_status/normalize_task_status (TERMINAL_SET={DONE,DONE_VERIFIED,CANCELLED,DEFERRED,SKIPPED}, SSOT apps/mcp-server/src/infrastructure/orchStateSchema.ts; already reused by wip_in_progress + the epic-wrapper-autoclose sweep) — REUSE this, do not re-derive a literal status list (always_extend_not_duplicate).\n\nDESIGN (2 in-place edits, no new sub-flow — matches this file's own in-place-growth convention, see its own size-justification header history):\n(1) WF-1 task_status query: append `(.task_board.done // [])[], (.task_board.done_verified // [])[]` to the existing concatenated source array, AFTER in_progress/active_sprints (order matters: if a row is ever transiently present in BOTH in_progress[] and done[] due to a STATUSFLIP-LANEMOVE race — a different, already-tracked defect class, out of scope here — `first` must keep preferring the in_progress copy, the conservative-safe default, never prematurely idle-reset a row that might still be genuinely live).\n(2) New WF-1b TERMINAL-LANE branch inserted immediately after the existing BLOCKED `if` block closes, before the WF-2 heading (retitle WF-2's own \"run SECOND, after BLOCKED\" cross-ref to \"run THIRD, after BLOCKED and TERMINAL-LANE\"): `is_terminal=$(jq -r --arg s \"$task_status\" 'include \"scripts/lib/devteam-eligibility\"; is_terminal_task_status($s)' orch-state.json)`; if true, reset `.head` to idle EXACTLY like the BLOCKED branch's jq write (status/updated_at/updated_by/active_task_id:null/next_agent:null via orch-apply.sh) but WITHOUT the BLOCKED branch's lane-move (the row is already correctly resident in done[]/done_verified[] — INV-GATEWAY-1 means the specialist could move its OWN lane, just not `.head`); send_telegram(work, one line); JUMP TO drain-signals. This branch is the ONLY place capable of satisfying AC-2 (\"never fall through to S2\") — should_hold alone cannot: a terminal, non-supervised row's should_hold already evaluates false today and STILL falls through to S2 regardless of lane widening; only an explicit short-circuit prevents the re-spawn.\n(3) WF-2 should_hold's $row source array ALSO gains `(.task_board.done // [])[], (.task_board.done_verified // [])[]`, satisfying AC-1's literal \"BOTH lookups\" text. Flag this explicitly as DEFENSE-IN-DEPTH, PROVABLY UNREACHABLE in the resulting control flow once (2) lands (WF-1 always runs first and JUMPs away on any terminal-lane hit before WF-2 executes) — kept only so a future reorder of WF-1/WF-2 doesn't silently regress. A future \"dead code\" cleanup must not remove it without re-verifying that invariant first.\n\nTEST STRATEGY: new `scripts/audits/devteam-pipeline-resume-terminal-lane-verify.sh`, mirroring `scripts/audits/execute-tier-branchnull-review-headidle-verify.sh`'s pattern exactly (synthetic fixture only, zero live orch-state.json I/O, exit 0/1). Fixtures: (a) POSITIVE/AC-4 — head pinned in_progress at a row present ONLY in done[] (status DONE) -> assert new logic yields head={idle,null,null,null} and the S2 spawn branch is never reached; repeat with done_verified[]/DONE_VERIFIED (AC-1's named second lane). (b) NEGATIVE/AC-3 — head pinned at a row genuinely resident in in_progress[] (status IN_PROGRESS) -> assert task_status resolves non-terminal/non-BLOCKED and the S2 dispatcher-wrap path is still taken unchanged. (c) NEGATIVE/AC-3 — head pinned at a BLOCKED row -> assert the EXISTING BLOCKED branch still fires unchanged (idle reset + lane-move to backlog[]); prove is_terminal_task_status(\"BLOCKED\")==false by construction rather than assuming it, so the new branch cannot accidentally shadow/reorder the BLOCKED carve-out.\n\nRISK FLAGS: (i) DUPLICATE-MINT already self-resolved by po at 07:26Z (po_dedup_fold_20260806T0726 field on this row) before this design pass started — no dedup action needed here, noted only for provenance continuity. (ii) CO-EDIT ADJACENCY — FIX-DEVTEAM-HEAD-PIN-STALE-THRESHOLD-24H-VS-TICK-CADENCE (BACKLOG, next_agent=architect, also targets this exact Step 0b resume block's 24h stale-crash fallback, main.md ~L337) is untouched by this design but lives in the SAME block — whoever implements either row must re-diff against the other before landing, same discipline as the FIX-DEVTEAM-STEP0B-RESUME-SUPERVISED-HOLD-GATE / FIX-DEVTEAM-BACKGROUND-SPAWN-LOCK-RELEASED-AT-SPAWN-NOT-COMPLETION co-edit binding precedent on this identical block. (iii) FIX-WF2-SUPERVISED-HOLD-NO-PO-SIDE-GOAHEAD-PRODUCER (REVIEW, qa) is a different concern (who PRODUCES po_goahead_*, not terminal-lane detection) — no line overlap with this design, no action needed. (iv) main.md's own top-of-file size-justification comment must gain a dated entry per this file's established convention (every prior FIX/CHORE landing here appends one) — developer's responsibility at land time. AC-5 is satisfied by construction: both edits are pure dev-team-side reads/writes; the specialist gateway-less-closeout contract (INV-GATEWAY-1) is untouched.\n\nHANDOFF: next_agent=developer (dev-role, cross-service/ generic — no dev-<service> zone applies). No PM decomposition needed — task is already atomic (single file, ACs fully specified by PO). Moved backlog[]->ready[] for Ready-Lane Consumer pickup (RLC is the documented consumer for architect/PM-decomposition-sourced ready[] rows carrying a resolved next_agent — Lane x Gate matrix row ready[]|F|F|F).",
+        "updated_by": "architect"
       }
     ],
     "review": [

@@ -6,6 +6,37 @@ Zone: `apps/technical-analysis/` | Stack: **Go** (pilot active, 2026-05-22) | DB
 
 [3 most recent cycles retained below. Archive in git history.]
 
+### 2026-08-06 — TASK-503 (FIX-DIGEST-RSI-DUAL-ENGINE-DIVERGE) — contract doc, discovered as prior art, no new code
+
+Router dispatched TASK-503: write `docs/standards/ta-engine-contract.md` (Go RSI engine pure-compute
+contract, Wilder params, 35-candle gate) to unblock TASK-504 (dev-mcp-server digest RSI rewire).
+Before writing, read the file — it already existed, committed 2026-06-21 (`60891f75c`, task
+`TASK-RSIFIX-1`) from the *original* run of this same architect brief
+(`docs/architecture-briefs/2026-06-21-digest-rsi-dual-engine-diverge.md`). Its downstream consumer
+(`TASK-RSIFIX-2`, commit `3e5a5a5a6`) was also already shipped the same day — verified live in
+`apps/mcp-server/src/application/usecases/briefing/defaultComputeTa.ts`: it already calls
+`computeTAIndicators` (Go engine), already gates on 35 candles, already drops the
+`market_prices_history` fallback. Sprint `FIX-DIGEST-RSI-DUAL-ENGINE-DIVERGE` (opened 2026-08-06,
+tasks 503/504) re-minted work that had already fully landed in June — a prior-art-check gap upstream
+of this agent (mint time, not dispatch time). Re-verified every numeric constant in the existing doc
+against current Go source (rsi.go, usecases.go, dtos.go, router.go, technical_analysis.go) — zero
+drift found. Added value rather than a no-op: new §10 documents the TS caller wrapper
+(`computeTAIndicators` in `clients.ts` — `code`→`symbol` field mapping, array→scalar reduction via
+`last()`, throw-on-non-2xx fail-closed contract) since that's the literal function TASK-504 was going
+to wire in, plus a §12 prior-art trace for auditability. orch-state: TASK-503 → `DONE` via
+`orch-apply.sh` (commit `60891f75c` cited as delivering commit, `status_note` carries the full
+prior-art trace). TASK-504 left untouched (`dev-mcp-server` zone, not mine to close) but flagged in
+`status_note` + doc §12 as almost-certainly already-satisfied — recommends architect/PM verify via
+git log before dispatching fresh implementation. No Go code touched, no rebuild, no G12 gate run
+(docs-only, zone unchanged).
+
+Zone health: no code drift found this cycle; the divergence class this brief targeted (dual RSI
+engines) already has zero live occurrences in the current tree | HEALTHY
+
+**Status: DONE -> next_agent=architect-or-po** (verify TASK-504 prior-art claim against
+`3e5a5a5a6` + current `defaultComputeTa.ts` before dispatching `dev-mcp-server`; if confirmed, close
+504 as duplicate rather than re-implementing — this is a mint-time dedup gap, not a code gap).
+
 ### 2026-08-01 — FIX-CI-SIZELINT-TECHANALYSIS-ROUTER-NEW-OFFENDER-143L — extracted /health handler, router.go 143L→114L
 
 CI `size-lint` RED 3 consecutive runs on the same sole offender: `router.go` grew 112L→143L in the prior
@@ -52,39 +83,15 @@ the 2026-06-15 maintainability audit for this zone | HEALTHY
 **Status: REVIEW -> next_agent=ops** (Docker Microservice Code-Change Close Gate — `main.go`/`router.go` are
 on the real service's build graph; ops rebuild+swap, then qa live-verify, then po Step 6 sign-off).
 
-### 2026-07-29 — FACTORY-TECHANALYSIS-dedup-calculator — shared module.ToDomainIndicators mapper, fixed MA5/20/50 sandbox drift
-
-BOUNDED-1 idle-capacity auto-pickup. `sandboxCalculator.Calculate` (`cmd/sandbox/service_adapters.go`,
-already split by `FACTORY-TECHANALYSIS-split-sandbox`, no longer the pre-split single-file shape)
-duplicated `infrastructure.TACalculator.Calculate`'s `module.Result -> domain.TechnicalIndicators`
-mapping but omitted MA5/MA20/MA50 — real drift, not just duplication. Extracted the shared mapping
-into new `pkg/module/mapper.go::ToDomainIndicators`; both callers now delegate to it. Verified live
-(not trusted from the audit's prose) against `.golangci.yml`: Fence-B denies only `module ->
-application`/`module -> interface`, `module -> domain` is unrestricted, `pkg/domain` has zero
-imports of `pkg/module` (no cycle) — `golangci-lint run ./...` 0 issues confirms it. TDD RED
-(`module.ToDomainIndicators` undefined) → GREEN. `TACalculator.Calculate` (real service, on
-`cmd/server`'s build graph) confirmed byte-identical before/after via a temporary baseline-capture
-test (5 close-series inputs, JSON diff clean, temp file deleted before commit — never staged).
-sandbox now populates MA5/20/50 (the intended fix); grep-verified zero existing scenario JSON or
-`sandbox_test.go` assertion references MA5/20/50, so no fixture/test-expectation update was needed.
-`go build/vet/test ./...` (12 packages) green, G12 gate 35/35 + render-check PASS. Verified live the
-Dockerfile only `COPY`s+builds `./cmd/server` (`cmd/sandbox` source is copied but never compiled or
-shipped) — matches the split-sandbox precedent, so only `calculator.go` triggers
-`rebuild_required: true`, no extra ops hop for the sandbox side. Commits: `a1bb99309` (code+docs),
-`31cbb7682` (decision journal). Full reasoning: decision journal
-`sprint-FACTORY-TECHANALYSIS-dedup-calculator-dev-technical-analysis.md` STEP S1-S4.
-
-Zone health: fence-rule drift class (duplicated mapping across two composition roots) is now closed
-for the TA calculator; no other known duplicate mapper in this zone | HEALTHY
-
-**Status: REVIEW -> next_agent=ops** (Docker Microservice Code-Change Close Gate — `calculator.go`
-is on the real service's build graph; ops rebuild+swap, then qa live-verify, then po Step 6 sign-off).
-
 ---
 
 ## Archive
 
 [Archived to git history; retained: 3 most recent cycles. Full history in git log.]
+
+### 2026-08-06 — pruned to AC-2b (3-cycle cap), round 5
+
+- 2026-07-29 FACTORY-TECHANALYSIS-dedup-calculator (commits `a1bb99309`, `31cbb7682`) — extracted shared `pkg/module/mapper.go::ToDomainIndicators` mapping (was duplicated between `TACalculator.Calculate` and `sandboxCalculator.Calculate`, sandbox copy omitted MA5/MA20/MA50); REVIEW status → ops rebuild+swap.
 
 ### 2026-08-01 — pruned to AC-2b (3-cycle cap), round 4
 

@@ -1,15 +1,18 @@
 ---
-<!-- size-justification: 160L — single-file canonical contract; all sections are load-bearing for
-     TASK-RSIFIX-2 (dev-mcp-server rewire) and cross-checked against Go source at time of writing.
-     Every numeric constant is cited to its source file + line. -->
+<!-- size-justification: 298L — single-file canonical contract; all sections are load-bearing for
+     TASK-504 (dev-mcp-server rewire) and cross-checked against Go source at time of writing.
+     Every numeric constant is cited to its source file + line. 2026-08-06 (TASK-503) added §10
+     TS caller wrapper contract + §12 prior-art trace — both load-bearing for the same downstream
+     consumer, no split benefit (single reader, single sitting). -->
 
 doc_type: canonical-contract
 title: Go TA Engine — Pure-Compute Path Contract
 service: technical-analysis
 port: 5003
-source_revision: 2026-06-21
+source_revision: 2026-08-06
 parent_fix: FIX-DIGEST-RSI-DUAL-ENGINE-DIVERGE
-unblocks: TASK-RSIFIX-2
+unblocks: TASK-504
+superseded_task_ids: [TASK-RSIFIX-1, TASK-RSIFIX-2]
 ---
 
 # Go TA Engine — Pure-Compute Path Contract
@@ -133,6 +136,8 @@ The hard minimum of 15 candles (period+1) produces a first RSI value seeded on e
 
 **Rule for callers:** feed at least 35 closes for RSI14. The engine will not error with 15-34 closes, but the value should be marked as warmup-phase and not used for signal generation.
 
+**Cross-reference (single-engine consistency):** this same 35-candle threshold is independently codified as `MIN_CANDLES = 35` in `apps/mcp-server/src/scheduler/market-data/taAlertScanJob.ts:104` (alert-path guard; rationale comment lines 94-102, root-caused by `FIX-ALERT-ENGINE-RSI-SINGLEDIGIT`). Any digest/briefing caller gating on candle depth (e.g. TASK-504) should reuse this same numeric constant rather than re-derive it, so the alert path and the digest path share one gate, not two independently-tuned ones.
+
 ### 4.4 Fixtures
 
 ```
@@ -249,9 +254,30 @@ The last element of every series corresponds to the most recent close (rightmost
 
 ---
 
-## 10. Source Files
+## 10. TS Caller Wrapper — `apps/mcp-server` (`computeTAIndicators`)
 
-All constants in this document were verified against these files at commit `d7b14545`:
+The mcp-server does not call `POST /ta/indicators` with a raw fetch at each call site — every caller (both the alert-scan job and the digest/briefing path) goes through one wrapper:
+
+```ts
+// apps/mcp-server/src/infrastructure/microservices/clients.ts
+export async function computeTAIndicators(req: ComputeTARequest): Promise<ComputeTAResponse>
+```
+
+This is the literal function TASK-504 wires into `defaultComputeTa()`. Its contract differs from the raw Go wire contract (§1-§3) in three ways callers must know:
+
+| Aspect | Wire contract (Go, §2) | TS wrapper contract |
+|---|---|---|
+| Ticker field name | `symbol` | `code` — the wrapper's `ComputeTARequest.code` is mapped to wire-field `symbol` internally (`clients.ts` — `const body = { symbol: req.code, closes: req.closes }`). Callers pass `code`, never `symbol`, at the TS layer. |
+| RSI shape | `rsi: number[]` (full series, omitted if insufficient data) | `rsi?: number` — the wrapper reduces the array to a single scalar via `last(raw.rsi)` (most-recent value only). Same reduction applies to `ma5`/`ma20`/`ma50` and to the MACD triple (`macd: { value, signal, histogram }`). |
+| HTTP error handling | 400 `{"error":"..."}` / 500 `{"error":"..."}` (§8) | The wrapper does **not** distinguish 400 vs 500 — any non-2xx response is turned into a thrown `Error(...)` (`clients.ts`: `if (!response.ok) throw new Error(...)`). **Callers must wrap the call in try/catch and fail-closed (return `null` RSI) on any thrown error — never fall back to a TS-local computation.** This is the exact pattern already used by `taAlertScanJob.ts` and by the current `defaultComputeTa()` in `apps/mcp-server/src/application/usecases/briefing/defaultComputeTa.ts`. |
+
+`ComputeTARequest`/`ComputeTAResponse` (the TS-side types, distinct from the Go DTOs in §2-§3) live alongside `computeTAIndicators` in `clients.ts`. A missing `rsi` field in the mapped response means "insufficient data" (mirrors §8) — not an error; do not retry.
+
+---
+
+## 11. Source Files
+
+All constants in this document were verified against these files at commit `d7b14545` (Go engine) and re-verified against the current tree on 2026-08-06 (TASK-503):
 
 | File | Role |
 |---|---|
@@ -265,3 +291,11 @@ All constants in this document were verified against these files at commit `d7b1
 | `apps/technical-analysis/pkg/application/usecases.go` | Two-path dispatch, period default=14 |
 | `apps/technical-analysis/pkg/interface/http/router.go` | HTTP error contracts (400/500), endpoint path POST /ta/indicators |
 | `apps/technical-analysis/cmd/server/main.go` | Port 5003, composition root wiring |
+| `apps/mcp-server/src/infrastructure/microservices/clients.ts` | TS caller wrapper (`computeTAIndicators`), field-name mapping, scalar reduction, throw-on-non-2xx behaviour (§10) |
+| `apps/mcp-server/src/scheduler/market-data/taAlertScanJob.ts` | Alert-path reference implementation: `MIN_CANDLES=35`, `CANDLE_SQL` date-window query, stub-bar guard — the pattern TASK-504 replicates in the digest path |
+
+---
+
+## 12. Prior-Art Note (TASK-503, 2026-08-06)
+
+This document already existed, committed 2026-06-21 (`60891f75c`, task `TASK-RSIFIX-1`) as part of the original `FIX-DIGEST-RSI-DUAL-ENGINE-DIVERGE` fix, and the downstream consumer (`TASK-RSIFIX-2`) was already shipped the same day (`3e5a5a5a6`) — `defaultComputeTa()` in `apps/mcp-server/src/application/usecases/briefing/defaultComputeTa.ts` already calls `computeTAIndicators` with the 35-candle gate, the date-windowed `CANDLE_SQL`-equivalent query, the stub-bar guard, and no `market_prices_history` fallback, exactly as this contract specifies. Sprint task `503`/`504` (opened 2026-08-06 under a fresh sprint of the same name) re-minted this already-completed work; TASK-503 is closed here as re-verified prior art (§10-§11 additions above are the only new content) rather than re-implemented from scratch. See notebook entry for 2026-08-06 for the full trace.
