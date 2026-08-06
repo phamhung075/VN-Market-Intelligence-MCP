@@ -2711,6 +2711,17 @@
         "severity": "LOW",
         "status": "READ",
         "payload_ref": "docs/signals/stranded-state-sweep-scripts-pointer-20260806T105540Z.json"
+      },
+      {
+        "id": "dev-orphangap-20260806T111713Z",
+        "ts": "2026-08-06T11:17:13Z",
+        "from": "dev-team",
+        "to": "po",
+        "type": "system-issue",
+        "summary": "orphan-adoption: 10 stale signals all pre-terminal (no guard); release ownership also broken",
+        "severity": "MEDIUM",
+        "status": "NEW",
+        "payload_ref": "docs/signals/dev-team-orphan-adoption-terminal-guard-and-release-ownership-gap-20260806T111500Z.json"
       }
     ],
     "last_triaged_at": "2026-07-29T06:25:00Z",
