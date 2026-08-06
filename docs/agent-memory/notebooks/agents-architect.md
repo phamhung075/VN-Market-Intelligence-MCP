@@ -1,15 +1,5 @@
 # agents-architect — Notebook
 
-## 2026-08-04T19:41:52Z
-
-**Brief:** `docs/architecture-briefs/2026-08-04-cadence-rationalization.md` (updated in place, no new file)
-
-User re-scoped again (via coordinator): raw cron SCHEDULES themselves, not just runtime pre-gates — "cron run all time on all day, is not need for do like this... replan correct time for cron run." Added §9 (Schedule Re-Timing): for all 18 inventoried crons (38 individual cron-expressions once multi-slot rows are expanded), computed exact fires/24h + fires/7d arithmetic, converted UTC→ICT against real VN market hours (09:00–11:30/13:00–15:00 ICT Mon-Fri), and assessed market-hours-awareness at the cron-expression level (not runtime gate). Found current total ≈2,187 fires/wk vs proposed ≈1,938 fires/wk (−249/wk, ≈−11.4%) — nearly the entire delta from ONE concrete fix: `cron-db-data-integrity.md` (336→87/wk, proposed `15,45 2-9 * * 1-5` weekday session+settlement window + `15 22 * * *` daily off-hours backstop — watched tables provably can't change outside trading hours). Also found `news-scout-sentiment` mislabeled ("pre-market batch" but fires 05:00 UTC=12:00 ICT, 3h after open, during lunch closure — proposed shift to 01:30 UTC=08:30 ICT, frequency unchanged). Flagged (not fixed, insufficient evidence) `chef-evening` (2/7 weekly fires preview non-trading Sat/Sun mornings) and `market-watcher-eod` (fires 8h after close, purpose unverified). Explicitly held the line on NOT changing cowork heartbeat/dev-team/auditor Tier-1-2-3/alert-commander — all individually justified as "fires often because it needs to" (off-hours guaranteed-slot wakeup, infra can crash any hour per existing memory lesson, live position monitoring, 24/7 legal/crisis coverage) — reconciled explicitly that §8's pre-gates and §9's re-timing are additive not substitutable for db-data-integrity (pre-gate cuts spawn-per-fire; re-timing cuts fire-count itself; compounds). §8's ordering constraint (corrections before re-arm) left unchanged, still governs §9's findings too.
-
-**Signal dropped:** `docs/signals/cadence-rationalization-20260804T181613Z.json` (updated, same file) → po (cc agent-father) — AWAITING_USER_CONFIRMATION, informational only
-
----
-
 ## 2026-08-06T06:55:08Z
 
 **Brief:** `docs/architecture-briefs/2026-08-06-fix-system-auditor-notebook-compose-actuator-and-immutability-blindspot.md`
@@ -26,4 +16,14 @@ Dispatched to investigate system-auditor's recurring notebook-commit self-report
 
 Second, deeper pass per user follow-up (economy + DST math). Re-verified live that ALL of CADRAT-1..7 already shipped on `main` — nothing re-proposed. New: (1) confirmed `CronCreate`'s `cron:` field evaluates Europe/Paris-local, not UTC; raw-code-verified `cowork-schedule.json`'s whole 22-slot family is DST-IMMUNE (`getUTCHours()`/`getUTCDay()` in `cowork-match-slots.js`) — so the DST hypothesis is REJECTED for CADRAT-1's open `chef-evening`/`market-watcher-eod` questions, both of which have real unrelated already-tracked root causes instead (chef-evening: `FIX-CHEF-EVENING-DUP-DATE-MISLABEL-INVESTIGATE`, live in QA cycle-525 today). Found 5 concrete DST fixes among the DST-vulnerable standalone-`CronCreate` family: `cron-db-data-integrity` Job A is HIGH severity — shipped 2 days ago, currently fires 2h early in CEST and misses the settlement window it was built to cover; plus Job B, system-auditor Tier-3 (self-flagged in-repo, unfixed), orch-sentinel FULL+LITE (not armed). (2) Found 6 standalone cron docs superseded by `cowork-schedule.json`, unreachable via any of the 3 re-arm skills: 4 safe to mark DEPRECATED (tran-ngoc-bau, digest-predict, refine-bctc, unified-agent — the last provably dead-by-construction, its `:29` minute never matches its own dispatcher's window table); 2 held OPEN pending a PO/architect product decision (market-watcher/news-scout — live coded market-hours modes designed+shipped+QA'd in May, pruned as dead stubs 2026-05-30, never restored — explicitly NOT recommended for deletion).
 
-**Signal dropped:** `docs/signals/cadence-reanalysis-v2-20260806T180427Z.json` → po (cc agent-father) — AWAITING_USER_CONFIRMATION, informational only
+**Signal dropped:** `docs/signals/cadence-reanalysis-v2-20260806T180427Z.json` (updated, same file) → po (cc agent-father) — AWAITING_USER_CONFIRMATION, informational only
+
+---
+
+## 2026-08-06T22:12:10Z
+
+**Brief:** `docs/architecture-briefs/2026-08-06-cron-rearm-cross-session-dedup.md`
+
+User observed live cross-session cron duplication (4 confirmed duplicate pairs + 3 stale-valued live entries) across 3 concurrent CLI sessions. Root cause: `Cron*` tools are strictly per-session, so each of the 3 re-arm skills' Step-1 guard is blind to peer sessions. Designed a marker (`task_kind` reused as `sprint-task`, `task_id=cron-registration:<family>`, same precedent already used for `cron:<flow>:<TICK>` fire-election markers) gated primarily by `session-presence` liveness cross-check (fast, ≤30min) + `task_force_release_orphan` as the mechanical steal gate — explicitly does not reintroduce the guaranteed-slot-missed regression, since staleness is detected via presence-expiry, not by waiting out the marker's own long TTL. Also fixed the guard's identity+value binary match into an explicit 2-phase classify so a live-but-wrong-valued entry gets replaced in place, not duplicated (closes an already self-flagged-but-unfixed gap in `cron-cowork-team/SKILL.md`'s own rollout note). Split implementation into 2 gated lanes (agent-father direct-implement vs PM→dev-team for a 1-line shared-infra `coordinationStore.ts` change) + a 3rd lane (user-run one-time remediation, zero agent involvement by design).
+
+**Signal dropped:** `docs/signals/2026-08-06-cron-rearm-cross-session-dedup.json` → po (cc agent-father)
