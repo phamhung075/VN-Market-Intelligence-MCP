@@ -134,10 +134,21 @@
     "does_not_consume_wip": true
   },
   "signal_queue": {
-    "_updated_at": "2026-08-05T16:49:08Z",
-    "_updated_by": "cowork-team/step0a",
+    "_updated_at": "2026-08-06T07:00:06.773Z",
+    "_updated_by": "mcp-server",
     "archive": [],
     "rows": [
+      {
+        "id": "wal-escalation-1785999606773",
+        "ts": "2026-08-06T07:00:06.773Z",
+        "from": "mcp-server/walCheckpointJob",
+        "to": "ops",
+        "type": "WAL_ESCALATION",
+        "summary": "WAL file exceeded 10MB (15.7 MB); investigate checkpoint stall",
+        "severity": "HIGH",
+        "status": "NEW",
+        "payload_ref": null
+      },
       {
         "id": "po-20260720T052606",
         "ts": "2026-07-20T05:26:06Z",
@@ -2325,10 +2336,11 @@
         "type": "agent_flow_defect",
         "summary": "chef-evening (2026-08-05) leaked published:chef-evening:2026-08-05 marker on agent death mid-composition (session-level API error, not a designed silent-exit or token-budget exhaustion — new trigger variant of feedback_chef_leaks_published_marker_on_silent_exit). RAW-verified via get_market_message_digest: no mcp-user post landed for the evening slot. Router released the marker (matched actual owner_client_session) and re-dispatched unified-agent for chef-evening. 3rd+ documented instance of this leak class (07-03 designed-exit, 07-29 token-budget, 08-05 this one) — chef.md still claims the marker ~650L before send_telegram per the memory's root-cause note (UC-CCA-P3 late-claim redesign still not shipped).",
         "severity": "MED",
-        "status": "READ",
+        "status": "triaged",
         "payload_ref": null,
         "provenance": "router",
-        "audit_cycle_tag": null
+        "audit_cycle_tag": null,
+        "po_disposition": "PO 2026-08-06T06:54Z -- same incident as cowork-20260806T064440Z, routed together. The marker-leak half (chef.md claims the published marker ~650L before send_telegram, so any mid-flow death strands it) remains covered by the existing UC-CCA-P3 late-claim redesign referenced in feedback_chef_leaks_published_marker_on_silent_exit; the date-derivation half is now carried by FIX-CHEF-MARKER-KEY-WINDOW-ANCHOR, promoted to READY -> architect this tick. No new row minted for either -- both already have owners. 4th documented instance of the leak class (07-03 designed-exit, 07-29 token-budget, 08-05 session death, and note the 08-05 death was followed by a retry that failed a SECOND way)."
       },
       {
         "id": "sys-20260806T064127-78c1",
@@ -2351,10 +2363,11 @@
         "type": "agent_flow_defect",
         "summary": "chef-evening RETRY (re-dispatched 2026-08-05 ~19:52Z after original session death/marker-leak) actually executed ~10h43m later, at 2026-08-06T06:34-06:37Z. chef.md pins publish-date from wall-clock-at-execution (publish_date_basis=utc_date), so the retry targeted TODAY (2026-08-06) instead of backfilling the missed day (2026-08-05). Result: (1) 2026-08-05 evening dish permanently unfilled -- never published, confirmed via get_market_message_digest, no mcp-user chef post in the 08-05 evening window; (2) a premature, degraded-quality (0 clusters, 5 gap tokens) dish posted to MARKET under marker published:chef-evening:2026-08-06 at 06:37Z, 13h before the real 19:45 UTC scheduled fire; that marker is now a TOMBSTONE (publish confirmed, msg id 1129, per feedback_chef_leaks_published_marker_on_silent_exit invariant it must NOT be released) and will suppress tonight legitimate higher-quality scheduled chef-evening dispatch for 08-06 unless someone intervenes before 19:45 UTC today. Root cause is 2-fold: (a) chef.md / cowork-slot marker scheme has no way to target a specific backfill date on manual retry -- it always derives date from actual wall-clock; (b) the background Agent() retry itself sat queued roughly 10h43m before actually starting execution (the agent own runtime was only 175909ms) -- a possible session/scheduler stall during the same auth-outage window this session already hit 3x, worth checking separately. Recommend: po decide whether to manually release published:chef-evening:2026-08-06 before 19:45Z today to let the real slot fire (risk: near-duplicate post) vs accept this as the day dish (risk: degraded content stands, 08-05 gap stays permanent) -- and route the structural date-pinning gap to architect for a chef.md backfill-target-date parameter, or a router-side guard that refuses/relabels a retry once 2-3h have elapsed since the original intended slot.",
         "severity": "HIGH",
-        "status": "READ",
+        "status": "triaged",
         "payload_ref": null,
         "provenance": "router",
-        "audit_cycle_tag": null
+        "audit_cycle_tag": null,
+        "po_disposition": "PO 2026-08-06T06:54Z (corrected 07:02Z). (a) ACTED: released published:chef-evening:2026-08-06 at 06:53Z (RAW-verified gone from task_list_held) so tonight's real 19:45Z fire can run on fresh end-of-day data. Justified against feedback_chef_leaks_published_marker_on_silent_exit: the tombstone rule protects a marker whose KEY matches the content window it published. The date-drift defect broke exactly that binding -- msg 1129 carries 2026-08-05 session data under the 2026-08-06 key -- so the marker asserted a 08-06 evening publication that never happened, which is the lesson's OWN stated harm condition (\"a published marker asserts a publication that never occurred -> it lies to the next tick's dedup gate and silently suppresses a legitimate later dish\"). Double-publish exposure assessed ~0: catchup_raw has no consumer, chef-evening's cron \"45 19 * * *\" cannot re-match before 19:45Z, and tonight's dish will carry 08-06 session content, not a duplicate of 1129. Reader-facing collision nil -- 1129 landed 13:37 ICT 06 Aug, tonight's lands ~02:50 ICT 07 Aug, different VN-local days.\n(b) ROUTED WITHOUT MINTING A NEW ROW -- prior art already existed and the correct action was to unstrand it, not duplicate it. FIX-CHEF-MARKER-KEY-WINDOW-ANCHOR (P0, open since 2026-07-22, whose own title literally predicted this failure: \"the same defect will FALSELY SUPPRESS the [next] 19:45Z dish\") promoted BACKLOG -> READY -> architect with full evidence and a concrete fix shape. TASK-COWORK-CATCHUP-3 (the stranded catchup_raw consumer) annotated with today's measured cost.\n(c) FIELD CHANGE THAT MATTERS: the anchor row's inline `supervised:true` was REMOVED on promotion, deliberately. scripts/devteam-backlog-claim-ready-lane-consumer.jq:124-125 rejects any ready[] row whose effective_supervised is true, so promoting it with that flag intact would have re-stranded it in ready[] instead of backlog[] -- a strictly worse outcome, since it would then look dispatchable while being unreachable. PO grants the supervision go-ahead up front instead (feedback_po_autonomy); the row has been P0 for 15 days and has now cost a real MARKET dish, so no extra gate is warranted.\n(d) CORRECTED THIS ROW'S OWN PREMISE: the ~10h43m retry stall was macOS HOST SLEEP, not a session/scheduler stall inside the auth-outage window as this signal speculated. pmset -g log shows MAGICWAKE at 2026-08-06 08:34 CEST = 06:34Z, matching the retry's start instant exactly, and the agent's own runtime was only 175909ms. Do NOT open a scheduler/auth investigation on that basis.\n(e) NOT FIXED, STILL OPEN: today's chef-morning (05:15Z) was also lost to the same sleep window and is still recoverable per catchup_raw but nothing consumes it; and the 2026-08-05 evening dish was never published as such -- msg 1129 carries its data but is labelled and keyed as 08-06."
       },
       {
         "id": "sau-20260806T065408-dbaccess-stale-mount",
@@ -2379,6 +2392,110 @@
         "severity": "LOW",
         "status": "NEW",
         "payload_ref": "docs/signals/janitor-health-recheck-writer-retired-2026-08-06.json"
+      },
+      {
+        "id": "sys-20260806T065701-7915",
+        "ts": "2026-08-06T06:57:01Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "db_integrity_breach",
+        "summary": "price_alerts table completely empty (alert pipeline non-functional)",
+        "severity": "CRITICAL",
+        "status": "NEW",
+        "payload_ref": null,
+        "provenance": "detector",
+        "audit_cycle_tag": "cron:auditor-data:2026-08-06T06:55:15Z"
+      },
+      {
+        "id": "sys-20260806T065704-55e4",
+        "ts": "2026-08-06T06:57:04Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "db_integrity_breach",
+        "summary": "alert_engine_records table completely empty (alert audit trail non-functional)",
+        "severity": "CRITICAL",
+        "status": "NEW",
+        "payload_ref": null,
+        "provenance": "detector",
+        "audit_cycle_tag": "cron:auditor-data:2026-08-06T06:55:15Z"
+      },
+      {
+        "id": "sys-20260806T065709-49e3",
+        "ts": "2026-08-06T06:57:09Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "db_integrity_breach",
+        "summary": "deep_fetch_stats table empty (fetch statistics not being recorded)",
+        "severity": "WARN",
+        "status": "NEW",
+        "payload_ref": null,
+        "provenance": "detector",
+        "audit_cycle_tag": "cron:auditor-data:2026-08-06T06:55:15Z"
+      },
+      {
+        "id": "sys-20260806T065711-589d",
+        "ts": "2026-08-06T06:57:11Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "db_integrity_breach",
+        "summary": "financial_reports: 43 very-low-confidence extractions (threshold: <5)",
+        "severity": "WARN",
+        "status": "NEW",
+        "payload_ref": null,
+        "provenance": "detector",
+        "audit_cycle_tag": "cron:auditor-data:2026-08-06T06:55:15Z"
+      },
+      {
+        "id": "sys-20260806T070045-3355",
+        "ts": "2026-08-06T07:00:45Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "db_integrity_breach",
+        "summary": "financial_reports check C-04 failed (actual=30)",
+        "severity": "CRITICAL",
+        "status": "NEW",
+        "payload_ref": null,
+        "provenance": "detector",
+        "audit_cycle_tag": "cron:auditor-t3:2026-08-06T02:00Z"
+      },
+      {
+        "id": "sys-20260806T070116-0c12",
+        "ts": "2026-08-06T07:01:16Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "db_integrity_breach",
+        "summary": "alerts check C-08 failed (actual=42)",
+        "severity": "CRITICAL",
+        "status": "NEW",
+        "payload_ref": null,
+        "provenance": "detector",
+        "audit_cycle_tag": "cron:auditor-t3:2026-08-06T02:00Z"
+      },
+      {
+        "id": "sys-20260806T070131-0ecb",
+        "ts": "2026-08-06T07:01:31Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "db_integrity_breach",
+        "summary": "financial_reports check C-04 failed (actual=30)",
+        "severity": "CRITICAL",
+        "status": "NEW",
+        "payload_ref": null,
+        "provenance": "detector",
+        "audit_cycle_tag": "cron:auditor-t3:2026-08-06T02:00Z"
+      },
+      {
+        "id": "sys-20260806T070136-7959",
+        "ts": "2026-08-06T07:01:36Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "db_integrity_breach",
+        "summary": "pdf_documents check C-11 failed (actual=0)",
+        "severity": "WARN",
+        "status": "NEW",
+        "payload_ref": null,
+        "provenance": "detector",
+        "audit_cycle_tag": "cron:auditor-t3:2026-08-06T02:00Z"
       }
     ],
     "last_triaged_at": "2026-07-29T06:25:00Z",
@@ -9054,33 +9171,6 @@
         "updated_at": "2026-07-22T17:23:09Z"
       },
       {
-        "id": "FIX-CHEF-MARKER-KEY-WINDOW-ANCHOR",
-        "title": "PUBLISHED-MARKER KEY AGREEMENT — derive the dedup key from the scheduled UTC fire-window, never from a wall-clock date read (P0: chef-evening double-published 2026-07-22 19:56Z + 20:00Z on keys :2026-07-22 vs :2026-07-23 derived from ONE instant; the same defect will FALSELY SUPPRESS the 2026-07-23 19:45Z dish)",
-        "type": "FIX",
-        "size": "M",
-        "status": "BACKLOG",
-        "priority": "P0",
-        "zone": "cross-service/",
-        "owner": "po",
-        "next_agent": "architect",
-        "sprint": "COWORK-RELIABILITY",
-        "supervised": true,
-        "created_at": "2026-07-22T20:14:06Z",
-        "created_by": "po-s140-chef-evening-double-publish-triage",
-        "related": [
-          "UC-CCA-P3",
-          "FIX-CHEF-PUBLISHED-MARKER-RELEASE",
-          "FU-CHEF-MARKER-INFLOW",
-          "FIX-COWORK-SIGNAL-FILENAME-CYCLEID-KEYING",
-          "FIX-CHEF-EVENING-DUP-DATE-MISLABEL-INVESTIGATE",
-          "DESIGN-COWORK-FANOUT-T1-TICK-SNAPSHOT-WON-SLOTS"
-        ],
-        "note": "ROOT CAUSE (RAW-verified 2026-07-22T20:00-20:10Z, router + po). chef-evening cron is `45 19 * * *` = 19:45 UTC = 02:45 VN of D+1 — cowork-schedule.json chef-evening.vn_description literally reads '02:45 VN next day (GMT+7)'. chef.md Step 0.5 L48 computes WORK_DATE = TZ=\"Asia/Ho_Chi_Minh\" date +%Y-%m-%d and L70 builds MARKER_KEY = published:<slot>:<WORK_DATE>. Because this slot fires AFTER VN midnight, the key straddles a date boundary: two peers reading the SAME wall-clock instant derive DIFFERENT keys. EVIDENCE — task_list_held(task_kind=cowork-slot) shows BOTH published:chef-evening:2026-07-22 (owner_client_session 9f4a6bfc-b001-4349-8a44-545f24c1b0ac, claimed_at 1784750141 = 19:55:41Z) AND published:chef-evening:2026-07-23 (owner_client_session ab870ed6-0502-4e49-811a-8e7c90aff1ef, claimed_at 1784750490 = 20:01:30Z) HELD SIMULTANEOUSLY, ttl_seconds 100800 each. Both runs therefore claimed successfully, both passed the gate, both published. Artifacts on disk, both dish_type=evening + quality_verdict=degraded, overlapping conviction VHM+VIC: docs/data/unified-agent-synthesis-2026-07-22-evening.json (date_vn 2026-07-22, timestamp_utc 19:56:15Z, EIB/VIC/VHM/VJC, regime risk-off) and docs/data/unified-agent-synthesis-2026-07-23-evening.json (date_vn 2026-07-23, timestamp_utc 20:00:37Z, VHM/VIC/VCB, regime carry-unwind-risk-off). NOTE the historical convention was the UTC/trading-day label — published:chef-evening:2026-07-21 was claimed 2026-07-21T19:51:10Z i.e. VN 07-22 — so the 19:55Z run followed PRECEDENT while the 20:01Z run followed the SPEC AS WRITTEN. Neither agent misbehaved. The spec is ambiguous exactly at the boundary it is supposed to defend.\n\nWHY THIS IS **NOT** UC-CCA-P3 — DO NOT FOLD AND CLOSE. UC-CCA-P3 fixes marker LIFECYCLE (claim timing + release immunity). Its design recommendation (early read-only probe + late task_claim immediately before send_telegram + never release) would NOT have prevented this incident: both peers would still compute DIFFERENT keys, both probes would read free, both late claims would succeed, both would publish. Key AGREEMENT is orthogonal to key LIFECYCLE. A mutex whose key depends on which timezone the reader happens to consult is not a mutex. If UC-CCA-P3 ships alone, this defect survives and the umbrella closes green — the recurring-detection-vs-recurring-FAILED-FIX class (feedback_recurring_detection_vs_recurring_failed_fix).\n\nPO RULING (product decision, po-owned, decided 2026-07-22 — DO NOT re-litigate; architect/ba own the HOW, not the WHAT). The dedup key and the human-readable date label are TWO DIFFERENT VALUES and MUST NOT be derived from one expression. chef.md L654 (CYCLE_DATE = WORK_DATE verbatim) deliberately couples them; that coupling IS the defect, not the fix — it was introduced by GAP-CHEF-SYNTHESIS-A-FLOW-PERSIST to make the FILENAME deterministic and it silently made the MUTEX KEY timezone-dependent. (1) MUTEX KEY = window-anchored and timezone-free: derived from the scheduled cron fire-window expressed in UTC (shape e.g. published:<slot_id>:2026-07-22T19:45Z), NOT from any `date` call made by the executing agent. Two peers executing the same scheduled window MUST derive byte-identical keys with zero shared state beyond the cron expression. This is invariant to timezone, to VN/UTC midnight straddle, to DST, to host clock skew, and to run-start jitter within the window (19:55 vs 20:01). It needs NO trading-calendar lookup. NEVER put a trading-calendar / holiday lookup on the mutex path. (2) DISPLAY LABEL (metadata.date_vn, synthesis filename, prose) = the VN trading session the dish INFORMS. chef-evening fires after the prior VN close (08:00Z) and before the next VN open (02:00Z of D+1) and gates on macroIndicatorRefreshJob US macro data — it is a FORWARD preview; the slot's own dish_type is literally `evening_preview`. Therefore the correct label for a 19:45Z fire is the NEXT VN session = the VN wall date at fire time. Tonight's correct label is 2026-07-23; the 19:55Z run's date_vn=2026-07-22 is WRONG. Weekend/holiday note for ba: the cron is daily including weekends, so 'next VN session' is not the next calendar day on Fri/Sat/Sun fires — the LABEL MAY remain the plain VN wall date (simple, calendar-free); if a true session label is ever wanted it belongs in a SEPARATE display-only field and never in the key.\n\nCAUTION for architect/ba: metadata.cycle_id is NOT a ready-made substitute — today's two runs emitted cycle_id evening-2026-07-22T19:56:00Z and evening-2026-07-22T20:00:37Z, i.e. cycle_id is keyed to RUN-START and diverges exactly like WORK_DATE does. RECOMMENDED PLUMBING (non-binding): the cowork dispatcher ALREADY holds the canonical window value — the fire-election lock cron:cowork:2026-07-22T20:00Z carries payload.tick — so pass the tick DOWN to the spawned agent instead of having the agent re-derive it; DESIGN-COWORK-FANOUT-T1-TICK-SNAPSHOT-WON-SLOTS (tick-snapshot.md Step 4.7, already in ready[]) is the natural carrier. Deriving-at-the-leaf is what created this bug class.\n\nLIVE FORWARD HAZARD (self-healing — do NOT 'fix' it with lock surgery): published:chef-evening:2026-07-23 expires 2026-07-24T00:01:30Z, which is AFTER tomorrow's 2026-07-23T19:45Z fire. If tomorrow's run uses the UTC-date convention it derives :2026-07-23, finds it HELD, and SILENTLY SKIPS — a MISSED evening dish. If it uses the VN convention it derives :2026-07-24 and publishes. Tomorrow's outcome is a coin flip on which convention the spawned agent picks. So this ONE defect produces BOTH double-publish AND missed-publish. Both markers are deliberately LEFT IN PLACE: they are the evidence, and releasing published: markers is the known-wrong direction (feedback_chef_releases_published_marker_enables_peer_double_publish). Hazard self-clears 2026-07-24T00:01:30Z.\n\nAC: (1) two peers spawned for the SAME scheduled window derive byte-identical MARKER_KEY regardless of host timezone, of VN-vs-UTC midnight straddle, and of run-start offset within the window; (2) the key contains NO value obtained from a `date` call made by the executing agent; (3) mutex key and display label are SEPARATE named values with separate derivations, and no later step re-derives either; (4) chef-evening's synthesis date_vn + filename carry the NEXT-VN-session label per the PO ruling above; (5) the fix applies to ALL cowork published: gates (chef-morning/intraday/eod/evening, digest-daily, digest-sunday, fb, market-watcher, news-scout, tnb-audit) — not chef-evening alone; the same straddle hits ANY slot whose UTC fire hour maps across VN midnight, and single-fire slots carry a 100800s TTL that outlives the next window; (6) RAW-verify by executing two same-window runs: exactly ONE claim succeeds, exactly ONE synthesis artifact exists for the window, exactly ONE MARKET post is emitted.\n\nSEQUENCING: ships WITH UC-CCA-P3, not before and not after — lifecycle-without-key-agreement is defeated by divergent keys, key-agreement-without-lifecycle is defeated by leaked or released markers. architect should treat UC-CCA-P3 + this row as ONE design.\n\nRECURRENCE LEDGER (marker-gate cluster): 2026-07-02 x2 (chef-morning + chef-evening, release-after-publish), 07-03 (release-on-no-post remediation -> leak-on-silent-exit), 07-14 (chef-evening dup + date mislabel), 07-15 (MARKET ids 932+933; the dup published a FALSE ~29% index move), 07-16 (chef-eod abort-after-claim false tombstone), 07-17 (chef-eod 2nd false tombstone), 07-22 (THIS — key divergence, NEW root cause). 8th event, 3rd distinct root cause. Recurring-bug-escalation applies (feedback_recurring_bug_escalation): no further point-patches to Step 0.5 until this + UC-CCA-P3 land as one design.",
-        "verification_gate": "RAW, not prose: run two chef-evening peers against the SAME scheduled window -> task_list_held(task_kind=\"cowork-slot\") shows EXACTLY ONE published:chef-evening:<window> row for that window, EXACTLY ONE docs/data/unified-agent-synthesis-*-evening.json exists for it, and EXACTLY ONE MARKET post is emitted. Additionally assert a no-false-suppression case: the NEXT scheduled window's key is free at fire time (a 100800s TTL from window N must not cover window N+1).",
-        "updated_at": "2026-07-24T21:28:43Z",
-        "status_note": "TNB c118 supp 07-24 (PO RAW-verified via get_unreviewed_market_messages 2026-07-24T21:27Z): 2nd distinct chef double-publish, DISTINCT MECHANISM from midnight-straddle. TWO eod-window MARKET dishes for same VN close: id=1016@08:53:02Z (FULL 5-part dish — Kinh Dich Ty(8)+watchlist+'khang cu 26.500') is UNTRACKED; id=1017@09:02:31Z (macro-only) is the ONLY one traced in unified-agent-synthesis-2026-07-24-eod.json (cycle_id eod-2026-07-24T09:02:02Z) + unified-agent notebook. chef-eod cron=08:45 UTC=15:45 VN -> NO midnight crossing, so key-window-anchor (AC5 straddle-universality) alone CANNOT explain it. task_list_held(cowork-slot) showed NO published:chef-eod:2026-07-24 marker (morning+evening markers present) -> gate not engaged or early-released on this slot. BROADEN AC: marker gate must (1) ENGAGE on EVERY dispatch path incl the independent cron/RemoteTrigger backstop, and (2) stay HELD post-publish. Recurrence ledger: 9th event / 4th distinct manifestation. Exact mechanism isolation blocked by FIX-CHEF-LOG-AGENT-WORK-MISSING (zero agent_work_log rows). PO decision: EXTENDED this umbrella row rather than mint a competing double-publish ticket (unstarted P0, scope already 'ALL cowork published gates')."
-      },
-      {
         "id": "FIX-CHEF-LOG-AGENT-WORK-MISSING",
         "title": "chef.md cycles never call log_agent_work — unified-agent has ZERO agent_work_log rows over 3 days while the store is LIVE; the 07-22 double-publish was invisible to every log-based observability path",
         "type": "FIX",
@@ -13456,10 +13546,11 @@
         ],
         "created_at": "2026-07-22T22:12:59Z",
         "created_by": "pm",
-        "updated_at": "2026-07-28T20:39:16Z",
+        "updated_at": "2026-08-06T07:00:36Z",
         "next_agent": "developer",
         "po_routing_20260728": "PO 2026-07-28T13Z lane routing. pm's decomposition minted this row with next_agent unset, which no dispatch lane resolves (verified by executing scripts/lib/devteam-eligibility.jq predicates, not by reading the row). Handler = developer per docs/handoffs/TASK-COWORK-CATCHUP-10.md ('developer completes code TASK-1..9, then agent-father integrates this doc-only subtask') + docs/data/system-map.json scripts/ zone. dev-role next_agent + backlog lane = BOUNDED-1, per docs/agents/po/flow/zone-routing.md Step A2.",
-        "updated_by": "po/route-20260728T13"
+        "updated_by": "po/chef-evening-retry-date-drift-20260806",
+        "po_note_20260806": "PO 2026-08-06T07:02Z -- LIVE COST EVIDENCE, plus one hypothesis I raised and then FALSIFIED myself. Read part (2) before spending any time on dependency plumbing.\n\n(1) COST, measured today: catchup_raw has been correctly computed since TASK-COWORK-CATCHUP-2 shipped and is consumed by NOTHING. docs/agents/cowork-team/flow/main.md's step table runs 0a -> 6 with no Step 4.55 / catchup-check stage, and match-slots.md:30 still reads \"Not yet consumed here\". Executed live 2026-08-06T06:52Z the predicate reported chef-morning catchup_eligible=true, scheduled_utc_time=2026-08-06T05:15:00.000Z, expected_publish_task_id=published:chef-morning:2026-08-06 -- today's morning dish was MISSED (host asleep, pmset MAGICWAKE 06:34Z) and is recoverable RIGHT NOW, and nothing will recover it. The same host-sleep window cost the 2026-08-05 evening dish and drove the FIX-CHEF-MARKER-KEY-WINDOW-ANCHOR recurrence (degraded MARKET msg 1129, PO had to hand-release a tombstoned marker at 06:53Z to save tonight's dish). This is the producer-shipped / consumer-stranded half of a P0 fix, open since 2026-07-22. Host sleep is a routine nightly condition on this laptop, so this consumer is not a nice-to-have.\n\n(2) FALSIFIED HYPOTHESIS -- DO NOT CHASE IT. I first suspected the strand was a cold-archive dependency-visibility bug, because TASK-COWORK-CATCHUP-1 is DONE_VERIFIED but lives ONLY in docs/data/orch/archive/2026-07.json (the hot orch-state.json names that id 8 times as a dependency and contains it as a row 0 times). That hypothesis is WRONG. Checked directly: scripts/lib/devteam-eligibility.jq section \"cold-archive dep status ingest\" (FIX-DEPSSATISFIED-COLD-ARCHIVED-DEP-RESOLVES-MISSING, landed 2026-07-28) already seeds dep_status_map from the archive; all 7 real callers thread --slurpfile archive via scripts/lib/archive-glob-cat.sh; and orch-validate Stage 1g -- which DOES resolve against the cold archive -- did not flag TASK-COWORK-CATCHUP-1 on this tick's write, while it did flag 8 genuinely-missing deps. Deps therefore resolve SATISFIED. Also checked and excluded: OPS-COWORK-GUARANTEED-SLOT-INSTALL (stale in REVIEW since 2026-07-22T16:02Z, next_agent=ops, and the work is demonstrably already done -- launchctl reports com.vn-market.cowork-guaranteed-slot-firer loaded with runs=2044) blocks only QA-COWORK-SLOT-SESSION-DOWN-SURVIVAL, not this cluster.\n\n(3) SO THE STRAND CAUSE IS STILL UNKNOWN -- MEASURE IT, DO NOT GUESS. Against scripts/devteam-backlog-claim-ready-lane-consumer.jq:123-130 this row appears RLC-eligible on every clause: status READY, effective_supervised != true, effective_plan_only != true, not an epic-wrapper, deps satisfied, and an inline next_agent=\"developer\" which RLC explicitly accepts when the row itself asks for it (it only refuses the fabricated \"developer\" fallback). It is P0, so priority ordering should favour it. It still has not dispatched in 9 days. STARTING POINT for whoever takes this: run scripts/audits/devteam-dispatch-gate-satisfiability.sh -- on this tick it reported that BOUNDED-1 no-ops whenever in_progress>=1, and live in_progress=2. If developer-owned ready[] rows are in practice reachable only through BOUNDED-1, that WIP<1 cap starves them permanently, which fits the observed 9-day silence far better than anything in the dependency layer. Confirm that before changing code."
       },
       {
         "id": "TASK-COWORK-CATCHUP-4",
@@ -13819,6 +13910,45 @@
         "promoted_by": "dev-team (supervised-lane sweep)",
         "promotion_note": "Supervised-Lane Sweep — assigned dispatch_lane='ba' (priority_rank=1); supervised/plan_only flags preserved, gate NOT disabled — see FIX-BOUNDED1-SUPERVISED-LANE-NO-SWEEPER",
         "dispatch_lane": "ba"
+      },
+      {
+        "id": "FIX-CHEF-MARKER-KEY-WINDOW-ANCHOR",
+        "title": "PUBLISHED-MARKER KEY AGREEMENT — derive the dedup key from the scheduled UTC fire-window, never from a wall-clock date read (P0: chef-evening double-published 2026-07-22 19:56Z + 20:00Z on keys :2026-07-22 vs :2026-07-23 derived from ONE instant; the same defect will FALSELY SUPPRESS the 2026-07-23 19:45Z dish)",
+        "type": "FIX",
+        "size": "M",
+        "status": "READY",
+        "priority": "P0",
+        "zone": "cross-service/",
+        "owner": "po",
+        "next_agent": "architect",
+        "sprint": "COWORK-RELIABILITY",
+        "created_at": "2026-07-22T20:14:06Z",
+        "created_by": "po-s140-chef-evening-double-publish-triage",
+        "related": [
+          "ARCH-CRON-THREE-TIME-BASES-UNIFY",
+          "DESIGN-COWORK-FANOUT-T1-TICK-SNAPSHOT-WON-SLOTS",
+          "FIX-CHEF-EVENING-DUP-DATE-MISLABEL-INVESTIGATE",
+          "FIX-CHEF-PUBLISHED-MARKER-RELEASE",
+          "FIX-COWORK-SIGNAL-FILENAME-CYCLEID-KEYING",
+          "FU-CHEF-MARKER-INFLOW",
+          "TASK-COWORK-CATCHUP-3",
+          "UC-CCA-P3"
+        ],
+        "note": "ROOT CAUSE (RAW-verified 2026-07-22T20:00-20:10Z, router + po). chef-evening cron is `45 19 * * *` = 19:45 UTC = 02:45 VN of D+1 — cowork-schedule.json chef-evening.vn_description literally reads '02:45 VN next day (GMT+7)'. chef.md Step 0.5 L48 computes WORK_DATE = TZ=\"Asia/Ho_Chi_Minh\" date +%Y-%m-%d and L70 builds MARKER_KEY = published:<slot>:<WORK_DATE>. Because this slot fires AFTER VN midnight, the key straddles a date boundary: two peers reading the SAME wall-clock instant derive DIFFERENT keys. EVIDENCE — task_list_held(task_kind=cowork-slot) shows BOTH published:chef-evening:2026-07-22 (owner_client_session 9f4a6bfc-b001-4349-8a44-545f24c1b0ac, claimed_at 1784750141 = 19:55:41Z) AND published:chef-evening:2026-07-23 (owner_client_session ab870ed6-0502-4e49-811a-8e7c90aff1ef, claimed_at 1784750490 = 20:01:30Z) HELD SIMULTANEOUSLY, ttl_seconds 100800 each. Both runs therefore claimed successfully, both passed the gate, both published. Artifacts on disk, both dish_type=evening + quality_verdict=degraded, overlapping conviction VHM+VIC: docs/data/unified-agent-synthesis-2026-07-22-evening.json (date_vn 2026-07-22, timestamp_utc 19:56:15Z, EIB/VIC/VHM/VJC, regime risk-off) and docs/data/unified-agent-synthesis-2026-07-23-evening.json (date_vn 2026-07-23, timestamp_utc 20:00:37Z, VHM/VIC/VCB, regime carry-unwind-risk-off). NOTE the historical convention was the UTC/trading-day label — published:chef-evening:2026-07-21 was claimed 2026-07-21T19:51:10Z i.e. VN 07-22 — so the 19:55Z run followed PRECEDENT while the 20:01Z run followed the SPEC AS WRITTEN. Neither agent misbehaved. The spec is ambiguous exactly at the boundary it is supposed to defend.\n\nWHY THIS IS **NOT** UC-CCA-P3 — DO NOT FOLD AND CLOSE. UC-CCA-P3 fixes marker LIFECYCLE (claim timing + release immunity). Its design recommendation (early read-only probe + late task_claim immediately before send_telegram + never release) would NOT have prevented this incident: both peers would still compute DIFFERENT keys, both probes would read free, both late claims would succeed, both would publish. Key AGREEMENT is orthogonal to key LIFECYCLE. A mutex whose key depends on which timezone the reader happens to consult is not a mutex. If UC-CCA-P3 ships alone, this defect survives and the umbrella closes green — the recurring-detection-vs-recurring-FAILED-FIX class (feedback_recurring_detection_vs_recurring_failed_fix).\n\nPO RULING (product decision, po-owned, decided 2026-07-22 — DO NOT re-litigate; architect/ba own the HOW, not the WHAT). The dedup key and the human-readable date label are TWO DIFFERENT VALUES and MUST NOT be derived from one expression. chef.md L654 (CYCLE_DATE = WORK_DATE verbatim) deliberately couples them; that coupling IS the defect, not the fix — it was introduced by GAP-CHEF-SYNTHESIS-A-FLOW-PERSIST to make the FILENAME deterministic and it silently made the MUTEX KEY timezone-dependent. (1) MUTEX KEY = window-anchored and timezone-free: derived from the scheduled cron fire-window expressed in UTC (shape e.g. published:<slot_id>:2026-07-22T19:45Z), NOT from any `date` call made by the executing agent. Two peers executing the same scheduled window MUST derive byte-identical keys with zero shared state beyond the cron expression. This is invariant to timezone, to VN/UTC midnight straddle, to DST, to host clock skew, and to run-start jitter within the window (19:55 vs 20:01). It needs NO trading-calendar lookup. NEVER put a trading-calendar / holiday lookup on the mutex path. (2) DISPLAY LABEL (metadata.date_vn, synthesis filename, prose) = the VN trading session the dish INFORMS. chef-evening fires after the prior VN close (08:00Z) and before the next VN open (02:00Z of D+1) and gates on macroIndicatorRefreshJob US macro data — it is a FORWARD preview; the slot's own dish_type is literally `evening_preview`. Therefore the correct label for a 19:45Z fire is the NEXT VN session = the VN wall date at fire time. Tonight's correct label is 2026-07-23; the 19:55Z run's date_vn=2026-07-22 is WRONG. Weekend/holiday note for ba: the cron is daily including weekends, so 'next VN session' is not the next calendar day on Fri/Sat/Sun fires — the LABEL MAY remain the plain VN wall date (simple, calendar-free); if a true session label is ever wanted it belongs in a SEPARATE display-only field and never in the key.\n\nCAUTION for architect/ba: metadata.cycle_id is NOT a ready-made substitute — today's two runs emitted cycle_id evening-2026-07-22T19:56:00Z and evening-2026-07-22T20:00:37Z, i.e. cycle_id is keyed to RUN-START and diverges exactly like WORK_DATE does. RECOMMENDED PLUMBING (non-binding): the cowork dispatcher ALREADY holds the canonical window value — the fire-election lock cron:cowork:2026-07-22T20:00Z carries payload.tick — so pass the tick DOWN to the spawned agent instead of having the agent re-derive it; DESIGN-COWORK-FANOUT-T1-TICK-SNAPSHOT-WON-SLOTS (tick-snapshot.md Step 4.7, already in ready[]) is the natural carrier. Deriving-at-the-leaf is what created this bug class.\n\nLIVE FORWARD HAZARD (self-healing — do NOT 'fix' it with lock surgery): published:chef-evening:2026-07-23 expires 2026-07-24T00:01:30Z, which is AFTER tomorrow's 2026-07-23T19:45Z fire. If tomorrow's run uses the UTC-date convention it derives :2026-07-23, finds it HELD, and SILENTLY SKIPS — a MISSED evening dish. If it uses the VN convention it derives :2026-07-24 and publishes. Tomorrow's outcome is a coin flip on which convention the spawned agent picks. So this ONE defect produces BOTH double-publish AND missed-publish. Both markers are deliberately LEFT IN PLACE: they are the evidence, and releasing published: markers is the known-wrong direction (feedback_chef_releases_published_marker_enables_peer_double_publish). Hazard self-clears 2026-07-24T00:01:30Z.\n\nAC: (1) two peers spawned for the SAME scheduled window derive byte-identical MARKER_KEY regardless of host timezone, of VN-vs-UTC midnight straddle, and of run-start offset within the window; (2) the key contains NO value obtained from a `date` call made by the executing agent; (3) mutex key and display label are SEPARATE named values with separate derivations, and no later step re-derives either; (4) chef-evening's synthesis date_vn + filename carry the NEXT-VN-session label per the PO ruling above; (5) the fix applies to ALL cowork published: gates (chef-morning/intraday/eod/evening, digest-daily, digest-sunday, fb, market-watcher, news-scout, tnb-audit) — not chef-evening alone; the same straddle hits ANY slot whose UTC fire hour maps across VN midnight, and single-fire slots carry a 100800s TTL that outlives the next window; (6) RAW-verify by executing two same-window runs: exactly ONE claim succeeds, exactly ONE synthesis artifact exists for the window, exactly ONE MARKET post is emitted.\n\nSEQUENCING: ships WITH UC-CCA-P3, not before and not after — lifecycle-without-key-agreement is defeated by divergent keys, key-agreement-without-lifecycle is defeated by leaked or released markers. architect should treat UC-CCA-P3 + this row as ONE design.\n\nRECURRENCE LEDGER (marker-gate cluster): 2026-07-02 x2 (chef-morning + chef-evening, release-after-publish), 07-03 (release-on-no-post remediation -> leak-on-silent-exit), 07-14 (chef-evening dup + date mislabel), 07-15 (MARKET ids 932+933; the dup published a FALSE ~29% index move), 07-16 (chef-eod abort-after-claim false tombstone), 07-17 (chef-eod 2nd false tombstone), 07-22 (THIS — key divergence, NEW root cause). 8th event, 3rd distinct root cause. Recurring-bug-escalation applies (feedback_recurring_bug_escalation): no further point-patches to Step 0.5 until this + UC-CCA-P3 land as one design.",
+        "verification_gate": "RAW, not prose: run two chef-evening peers against the SAME scheduled window -> task_list_held(task_kind=\"cowork-slot\") shows EXACTLY ONE published:chef-evening:<window> row for that window, EXACTLY ONE docs/data/unified-agent-synthesis-*-evening.json exists for it, and EXACTLY ONE MARKET post is emitted. Additionally assert a no-false-suppression case: the NEXT scheduled window's key is free at fire time (a 100800s TTL from window N must not cover window N+1).",
+        "updated_at": "2026-08-06T06:56:54Z",
+        "status_note": "TNB c118 supp 07-24 (PO RAW-verified via get_unreviewed_market_messages 2026-07-24T21:27Z): 2nd distinct chef double-publish, DISTINCT MECHANISM from midnight-straddle. TWO eod-window MARKET dishes for same VN close: id=1016@08:53:02Z (FULL 5-part dish — Kinh Dich Ty(8)+watchlist+'khang cu 26.500') is UNTRACKED; id=1017@09:02:31Z (macro-only) is the ONLY one traced in unified-agent-synthesis-2026-07-24-eod.json (cycle_id eod-2026-07-24T09:02:02Z) + unified-agent notebook. chef-eod cron=08:45 UTC=15:45 VN -> NO midnight crossing, so key-window-anchor (AC5 straddle-universality) alone CANNOT explain it. task_list_held(cowork-slot) showed NO published:chef-eod:2026-07-24 marker (morning+evening markers present) -> gate not engaged or early-released on this slot. BROADEN AC: marker gate must (1) ENGAGE on EVERY dispatch path incl the independent cron/RemoteTrigger backstop, and (2) stay HELD post-publish. Recurrence ledger: 9th event / 4th distinct manifestation. Exact mechanism isolation blocked by FIX-CHEF-LOG-AGENT-WORK-MISSING (zero agent_work_log rows). PO decision: EXTENDED this umbrella row rather than mint a competing double-publish ticket (unstarted P0, scope already 'ALL cowork published gates').",
+        "desc": "RECURRENCE 2026-08-06 (PO triage, 3rd+ confirmed instance of this key-derivation class). This row's own 2026-07-22 title predicted today verbatim: \"the same defect will FALSELY SUPPRESS the [next day's] 19:45Z dish\". It did, 15 days later, while the row sat in BACKLOG.\n\nSEQUENCE (every step RAW-verified, not agent self-report):\n(1) 2026-08-05T19:51:57Z the scheduled chef-evening fired (cowork-schedule.json .slots[chef-evening].last_fired) and the session died mid-composition AFTER claiming published:chef-evening:2026-08-05 and BEFORE send_telegram. Router released that marker and re-dispatched a retry at ~19:52Z.\n(2) The retry did not begin executing until 2026-08-06T06:34Z. THE 10h42m GAP IS NOT AN AUTH OUTAGE AND NOT A SCHEDULER STALL -- that was the initial triage hypothesis and it is wrong. It is macOS host sleep: `pmset -g log` shows a MAGICWAKE at 2026-08-06 08:34 CEST = 06:34Z, matching the retry's start instant exactly, and the agent's own runtime was only 175909ms (~2m56s). Do not design against a phantom auth/scheduler bug.\n(3) On wake, chef.md Step 0.5 recomputed CYCLE_DATE_UTC = `date -u +%Y-%m-%d` = 2026-08-06, so the retry keyed published:chef-evening:2026-08-06 and published a degraded dish to MARKET at 06:37:25Z (msg id 1129, headline \"Thi truong 5-6 thang 8\"). docs/data/unified-agent-synthesis-2026-08-06-evening.json records quality_verdict=\"degraded\", 0 clusters, gaps [gap:L2_US_macro_absent_no_gap_token] [gap:L3_VN_macro_incomplete] [gap:business_context_unavailable]. It landed 13h before its real 19:45Z window and while the VN session was still OPEN (06:37Z = 13:37 ICT, close is 15:00 ICT) -- an \"evening\" dish published mid-session.\n(4) That marker then tombstoned tonight's legitimate 19:45Z fire (28h TTL, expiry 2026-08-07T10:37:25Z). PO manually released published:chef-evening:2026-08-06 at 2026-08-06T06:53Z to unblock it, RAW-verified absent from task_list_held afterwards. THAT MANUAL RELEASE IS THE THING THIS ROW MUST MAKE UNNECESSARY.\n\nDECISIVE DESIGN INPUT -- THE CORRECT KEY IS ALREADY COMPUTED AND SITTING UNUSED. scripts/agents-flow/cowork-catchup-predicate.js (shipped under TASK-COWORK-CATCHUP-1/-2) already emits per slot exactly the fields this row needs: scheduled_utc_time, scheduled_key_part, expected_publish_task_id. Executed live 2026-08-06T06:52Z it returned for chef-evening: scheduled_utc_time=2026-08-05T19:45:00.000Z, expected_publish_task_id=published:chef-evening:2026-08-05 -- i.e. the predicate ALREADY identifies the missed window as 08-05, which is precisely the key the retry should have used and did not. So the fix is not new date logic. It is:\n  (a) propagate the nominal scheduled tick into the slot trigger_prompt (e.g. `slot=<id> scheduled_utc=<ISO8601>`), sourced from the values the predicate already produces;\n  (b) make chef.md Step 0.5 derive CYCLE_DATE_UTC from that scheduled_utc when present, falling back to wall-clock ONLY for genuine ad-hoc runs. Because CYCLE_DATE_UTC is already the single canonical date-derivation point (chef.md:73 -- pinned once, reused verbatim at Step 7.6 synthesis filepath + metadata.date_vn and Step 8b notebook header), this lands in ONE place and simultaneously fixes the marker key, the synthesis filename and the dish's own date label;\n  (c) add a lateness guard: when now - scheduled_utc exceeds the slot's freshness window, the run must publish under an explicit backfill label or abort -- never silently retarget to the current day. The predicate ALREADY implements this notion (catchup_eligible:false with reason \"rolled_past_vn_date\" / \"freshness_window_exceeded\"); reuse it, do not reinvent it.\n\nGENERALITY -- DO NOT SCOPE THIS TO CHEF. Every guaranteed slot derives its published-marker key the same wall-clock way, so any delayed, retried or post-sleep execution of digest-daily, tnb-audit, fb-daily, digest-sunday has the identical failure. On this host (laptop, France) sleep is a routine nightly condition, so \"execution delayed hours past the nominal tick\" is the NORMAL case, not an edge case. Any fix that assumes prompt execution is already wrong.\n\nRELATED: TASK-COWORK-CATCHUP-3 is the stranded consumer half of the same problem (catchup_raw computed, never consumed) -- see its po_note_20260806. ARCH-CRON-THREE-TIME-BASES-UNIFY covers the wider three-time-base mess this sits inside.",
+        "files": [
+          "docs/agents/unified-agent/flow/chef.md",
+          "docs/data/cowork-schedule.json",
+          "scripts/agents-flow/cowork-catchup-predicate.js",
+          "scripts/agents-flow/cowork-match-slots.js",
+          "scripts/agents-flow/cowork-guaranteed-slot-firer.sh",
+          "docs/agents/cowork-team/flow/spawn-fanout.md"
+        ],
+        "po_routing_20260806": "PO 2026-08-06T06:54Z lane routing, full autonomy (feedback_po_autonomy). Promoted BACKLOG -> READY on live recurrence (see desc). Field changes made deliberately: dropped `supervised:true` and did NOT add `plan_only` -- a ready[] row carrying EXACTLY ONE of supervised/plan_only is the documented DRS-STRANDED READY-XOR shape (docs/agents/po/flow/manual-dispatch-sweep.md), which is how this row would have been re-stranded a second time. All 6 sampled ready[] rows carry neither field, so neither is set here. PO is the producer of the supervised go-ahead this row would otherwise wait on and grants it up front: the row has been open at P0 since 2026-07-22 and has now cost a real MARKET dish, so no additional gate is warranted. next_agent=architect (design-first: the change spans chef.md, the trigger_prompt contract and the dispatcher, so it needs a design before code).",
+        "updated_by": "po/chef-evening-retry-date-drift-20260806"
       }
     ],
     "review": [
@@ -21359,6 +21489,6 @@
     "ssot": true
   },
   "last_tick": "20260622T2215Z",
-  "_updated_at": "2026-08-05T19:45:37Z",
-  "_updated_by": "po"
+  "_updated_at": "2026-08-06T07:00:35Z",
+  "_updated_by": "po/chef-evening-retry-date-drift-20260806"
 }
