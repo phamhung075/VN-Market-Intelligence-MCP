@@ -178,3 +178,16 @@
 - `orch-validate.mjs` Stage 0+1 PASS on live doc (schema loads without error post-change). DJ-GATE-1: implementer's journal entry confirmed at `sprint-COWORK-GUARANTEED-SLOT-CATCHUP-dev-mcp-server.md:194`.
 **why-decision:** APPROVED, DONE_VERIFIED. All claimed deliverables independently RAW-verified against current main HEAD; no adjacent defects found in scope.
 **why-change:** none — verified exactly what the row scoped.
+
+### STEP qa-S54 · qa · 2026-08-06T20:16:27Z
+**task-id:** FIX-AUDITOR-DASHBOARD-APPEND-NO-ACTUATOR-CONTRACT-COUNT-NARRATED
+**what-done:** Direct-commit verify (branch:null, no `.commit`/`.files[]` field — derived commit via files named in `developer_review_note`). Confirmed `0a4010b92` on main ancestry, touches all 11 named files exactly.
+**what-considered:**
+- Read both new scripts in full: `emit-dashboard-row.sh` has a real commit-mutex claim, tmp+mv atomic write, MANDATORY post-write read-back (`grep -qF "signal <id>"`) with ABORT+BUG-telegram on miss; `audit-output-contract.sh` mechanically parses `$MARKERS_FILE` markers (never narrated) for all 4 counters + V1-V5 symmetric violation checks.
+- Re-ran live (not trusted from prose): emit-dashboard-row.test.sh 32/32, audit-output-contract.test.sh 42/42 (grown from 35 via 08-05 follow-up 479c62613, zero regressions), emit-audit-signal.test.sh 98/98 (regression, grown from 49). AC-4 negative-control confirmed exercised (T6-T8, T9).
+- AC-5 backfill-or-state-why cross-checked across 3 independent artifacts (signal row sys-20260729T060929-39de status=RETRACTED, PO triage note, dev journal) — consistent, not single self-report. No apps/ TS/Go/py touched — bun test/tsc N/A; mock-guard PASS (scope correctly excludes bash scripts).
+**why-decision:** APPROVED, DONE_VERIFIED. All 5 acceptance clauses independently hold against live main HEAD; wiring into flow/main.md+tier1-probe.md+page-freshness.md+init.md confirmed via grep, not cited from commit message alone. DJ-GATE-1: developer journal present at sprint-2026-07-29-developer.md STEP developer-S1.
+**why-change:** none — verified exactly what the row scoped.
+
+### CAP-REACHED · 2026-08-06T20:16:27Z
+(byte-axis: 37233B > 36000B cap, line-axis 190L under 600L cap — dual-axis Cap Check, FIX-DECISION-JOURNAL-SKILL-CAPCHECK-LINE-ONLY-NO-BYTE-ROLLOVER. Rolling to sprint-COWORK-GUARANTEED-SLOT-CATCHUP-qa-4.md.)
