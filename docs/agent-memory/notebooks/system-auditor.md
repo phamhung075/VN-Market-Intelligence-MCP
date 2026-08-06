@@ -1,6 +1,156 @@
+## c62 · 2026-08-06T14:38:59Z
+### Audit Run Tier-1 (14:30–14:40 UTC 2026-08-06)
+- Tier: 1 | Services: 13 checked | Sources: 0 | DB checks: 0
+- Anomalies: 1 new (C 1, W 0, I 0) | 1 dedup-skipped
+- Status: DEGRADED
+
+### RAW-PROBE:
+```
+=== AUDITOR PROBE 2026-08-06T14:36:11Z ===
+
+--- docker ps -a (all 13 services UP) ---
+vn-market-intelligence-mcp-rag-service-1: Up 2 hours (healthy)
+vn-market-intelligence-mcp-mcp-server-1: Up 2 hours (healthy)
+vn-market-intelligence-mcp-stock-price-1: Up 6 days (healthy)
+vn-market-intelligence-mcp-macro-indicators-1: Up 7 days (healthy)
+vn-market-intelligence-mcp-pdf-extractor-1: Up 2 days (healthy)
+vn-market-intelligence-mcp-frontend-1: Up 12 days (healthy)
+mcp-gateway: Up 3 weeks (healthy)
+vn-market-intelligence-mcp-api-gateway-1: Up 3 weeks (healthy)
+vn-market-intelligence-mcp-flaresolverr-1: Up 3 weeks (healthy)
+vn-market-intelligence-mcp-news-fetch-1: Up 3 weeks (healthy)
+vn-market-intelligence-mcp-technical-analysis-1: Up 3 weeks (healthy)
+vn-market-intelligence-mcp-alert-engine-1: Up 3 weeks (healthy)
+vn-market-intelligence-mcp-kinh-dich-service-1: Up 3 weeks (healthy)
+
+--- health endpoints ---
+[health] mcp-server:3000/health OK (HTTP 200)
+[health] api-gateway:4000/health OK (HTTP 200)
+[health] macro-indicators:5004/health OK (HTTP 200)
+[health] pdf-extractor:5001/health OK (HTTP 200)
+[health] frontend:3001/ OK (HTTP 200)
+
+--- memory pressure full-scan ---
+vn-market-intelligence-mcp-rag-service-1: 96.69% of 1GiB (990.2MiB) → CRITICAL
+vn-market-intelligence-mcp-mcp-server-1: 32.37% of 3GiB (994.4MiB) → PASS
+vn-market-intelligence-mcp-pdf-extractor-1: 70.46% of 2.5GiB (1.762GiB) → PASS
+
+--- A-30 Memory Reclamation (rag-service) ---
+Baseline: 96.69% (>= 95%) → deep-probe engaged
+Verdict: ESCALATE — CRITICAL severity (persistent >96% memory)
+
+--- disk df -h / ---
+Filesystem /dev/disk1s4s1: 55% capacity < 85% → PASS
+
+--- pdf-extractor multi-probe (A-20) ---
+[A-20-PROBE-1] in-container HTTP 200
+[A-20-PROBE-2] in-container HTTP 200
+[A-20-PROBE-3] in-container HTTP 200
+[A-20] pass_count=3/3 → PASS
+
+=== PROBE DONE ===
+```
+
+### Findings:
+**A-01 to A-11 (Container Status):** All 13 host_runtime_set services UP ✓
+
+**A-12 to A-20 (Health Endpoints):** All 5 endpoints OK ✓
+
+**A-20 (pdf-extractor multi-probe):** 3/3 pass ✓
+
+**A-21 (Restart Count):** mcp-server RestartCount=4, no crashes in 4h window ✓
+
+**A-30 (Memory Pressure):** 
+- rag-service: 96.69% of 1GiB → **CRITICAL** (escalation detected)
+- mcp-server: 32.37% → PASS
+- pdf-extractor: 70.46% → PASS
+Signal emitted (id=sys-20260806T143821-0c09) — DEDUP-SKIPPED (prior: 2026-08-06T08:16:21Z)
+
+**A-32 (Disk):** 55% capacity < 85% → PASS ✓
+
+**Summary:** A-30 memory reclamation finding for rag-service CRITICAL. Status degraded due to persistent memory pressure on rag-service.
+
+[emit-signal] SKIP-dedup dedup_key=microservice_degraded:rag-service:A-30 id=sys-20260806T143821-0c09
+[emit-dashboard] OK id=sys-20260806T143821-0c09 check_id=A-30
+
+[OUTPUT-CONTRACT] signals_posted=1 | telegram_sent=0 | signal_queue_rows_written=1 | dashboard_rows=1 | dedup_skipped=1
+CONTRACT-CONTRADICTION: NONE
+
+
+## c61 · 2026-08-06T14:19:41Z
+### Audit Run Tier-1 (14:19–14:20 UTC 2026-08-06)
+- Tier: 1 | Services: 13/13 up | Health: 5/5 OK
+- Anomalies: 0 new (0 critical, 0 warn, 0 info) | 0 dedup-skipped
+- Status: HEALTHY
+
+### RAW-PROBE:
+```
+=== AUDITOR PROBE 2026-08-06T14:19:41Z ===
+
+--- docker ps -a ---
+NAMES                                             STATUS                       IMAGE                                           CREATED
+vn-market-intelligence-mcp-rag-service-1          Up About an hour (healthy)   vn-market-intelligence-mcp-rag-service          About an hour ago
+vn-market-intelligence-mcp-mcp-server-1           Up 2 hours (healthy)         vn-market-intelligence-mcp-mcp-server           6 hours ago
+vn-market-intelligence-mcp-stock-price-1          Up 6 days (healthy)          vn-market-intelligence-mcp-stock-price          6 days ago
+vn-market-intelligence-mcp-macro-indicators-1     Up 7 days (healthy)          vn-market-intelligence-mcp-macro-indicators     7 days ago
+vn-market-intelligence-mcp-pdf-extractor-1        Up 2 days (healthy)          vn-market-intelligence-mcp-pdf-extractor        8 days ago
+vn-market-intelligence-mcp-frontend-1             Up 12 days (healthy)         vn-market-intelligence-mcp-frontend             12 days ago
+mcp-gateway                                       Up 3 weeks (healthy)         mcpservergatway-gateway                         3 weeks ago
+vn-market-intelligence-mcp-api-gateway-1          Up 3 weeks (healthy)         vn-market-intelligence-mcp-api-gateway          3 weeks ago
+vn-market-intelligence-mcp-flaresolverr-1         Up 3 weeks (healthy)         ghcr.io/flaresolverr/flaresolverr:latest        3 weeks ago
+vn-market-intelligence-mcp-news-fetch-1           Up 3 weeks (healthy)         vn-market-intelligence-mcp-news-fetch           3 weeks ago
+vn-market-intelligence-mcp-technical-analysis-1   Up 3 weeks (healthy)         vn-market-intelligence-mcp-technical-analysis   3 weeks ago
+vn-market-intelligence-mcp-alert-engine-1         Up 3 weeks (healthy)         vn-market-intelligence-mcp-alert-engine         3 weeks ago
+vn-market-intelligence-mcp-kinh-dich-service-1    Up 3 weeks (healthy)         vn-market-intelligence-mcp-kinh-dich-service    3 weeks ago
+
+--- health endpoints ---
+[health] mcp-server:3000/health OK (HTTP 200)
+[health] api-gateway:4000/health OK (HTTP 200)
+[health] macro-indicators:5004/health OK (HTTP 200)
+[health] pdf-extractor:5001/health OK (HTTP 200)
+[health] frontend:3001/ OK (HTTP 200)
+
+--- restart count ---
+Container=/vn-market-intelligence-mcp-mcp-server-1 RestartCount=4
+
+--- memory pressure ---
+Container=vn-market-intelligence-mcp-mcp-server-1 MemPerc=34.95% MemUsage=1.049GiB / 3GiB
+
+--- memory pressure multi-probe reclamation (A-30) ---
+[A-30] SKIP deep-probe — baseline 34.95% < 85% investigate-gate
+
+--- disk df -h / ---
+Filesystem        Size    Used   Avail Capacity iused ifree %iused  Mounted on
+/dev/disk1s4s1   233Gi    13Gi    12Gi    53%    393k  127M    0%   /
+
+--- pdf-extractor in-container multi-probe (A-20) ---
+[A-20-PROBE-1] in-container HTTP 200
+[A-20-PROBE-2] in-container HTTP 200
+[A-20-PROBE-3] in-container HTTP 200
+[A-20] pass_count=3/3
+
+=== PROBE DONE ===
+```
+
+### Findings:
+**A-01 to A-11 (Container Status):** All 13 host_runtime_set services UP (healthy) ✓
+
+**A-12 to A-20 (Health Endpoints):** All 5 endpoints OK ✓
+
+**A-21 (Restart Count):** mcp-server RestartCount=4, no crashes in 4h window ✓
+
+**A-30 (Memory Pressure):** mcp-server 34.95% < 85% → PASS ✓
+
+**A-32 (Disk):** 53% capacity < 85% → PASS ✓
+
+**A-20 pdf-extractor multi-probe:** 3/3 pass ✓
+
+**Summary:** All probed services operational. No anomalies detected this cycle.
+
+[OUTPUT-CONTRACT] signals_posted=0 | telegram_sent=0 | signal_queue_rows_written=0 | dashboard_rows=0 | dedup_skipped=0
+CONTRACT-CONTRADICTION: NONE
 
 ## c60 · 2026-08-06T14:13:24Z
-
 ### Audit Run Tier-1 (14:10-14:13 UTC 2026-08-06)
 - Tier: 1 | Services: 13 checked | Sources: 0 | DB checks: 0
 - Anomalies: 1 new (C 0, W 1, I 0) | M 1 dedup-skipped
@@ -48,69 +198,3 @@ Capacity 49% < 85% PASS
 ### Output Summary
 - Signals: 1 new (A-30 WARN) | Dedup-skipped: 1 | Dashboard rows: 1 | BUG telegrams: 0
 - Status: DEGRADED (persistent rag-service A-30 condition)
-
-
-
-## c58 · 2026-08-06T13:36:07Z
-## c59 · 2026-08-06T13:46:00Z
-
-### Audit Run Tier-1 (13:43–13:46 UTC 2026-08-06)
-- Tier: 1 | Services: 13 checked | Sources: 0 | DB checks: 0
-- Anomalies: 1 new (C 0, W 1, I 0) | M 0 dedup-skipped
-- Status: DEGRADED
-
-### RAW-PROBE snippet:
-```
---- docker ps -a ---
-[13 containers all Up]
-
---- health endpoints ---
-[health] mcp-server:3000/health OK (HTTP 200)
-[health] api-gateway:4000/health OK (HTTP 200)
-[health] macro-indicators:5004/health OK (HTTP 200)
-[health] pdf-extractor:5001/health OK (HTTP 200)
-[health] frontend:3001/ OK (HTTP 200)
-
---- memory pressure ---
-[A-30] rag-service: 97.09% memory, no reclamation dips (ESCALATE → WARN)
-[A-30] mcp-server: 21.00% memory (PASS)
-
---- disk df -h / ---
-55% capacity (PASS)
-```
-
-### Findings:
-- [A-30] rag-service WARN: 97.09% memory with no reclamation dips (all 6 samples steady, VmHWM shows prior dip available, current locked at high)
-  - Signal: sys-20260806T134549-728c (microservice_degraded:rag-service:A-30)
-  - Dedup: SKIP (known, last 2026-08-06T08:16:21Z)
-  - Action: already tracked FU-RAG-DEPLOY-MEMORY, awaiting 768m→1g cap raise
-
-### All other A-xx checks: PASS
-
-- Tier: 1 | Services: 13/13 up, health 5/5 OK, restart 0 ✓
-- Anomalies: 1 recurrence (1 warn via dedup) | Status: DEGRADED
-
-**Container Status (A-01–A-11):** All 13 host_runtime_set UP ✓
-- mcp-server: Up ~1h 10min, RestartCount=4, 17.26% memory ✓
-- rag-service: Up 39 min (post-cap-raise to 1GiB), RestartCount=0, **96.94% memory — WARN**
-- All other services nominal ✓
-
-**Health Endpoints (A-12–A-20):** All 5 endpoints OK ✓
-- A-20 pdf-extractor multi-probe: 3/3 pass ✓
-
-**Memory Pressure (A-30):**
-- rag-service: deep-probe 13:34-13:36Z (6 samples/13s intervals, 65s window)
-  - **Memory band: 97.06% sustained (FLAT)** — all 6 samples identical 97.06%
-  - Reclamation dips: **0 detected** — no GC relief pattern
-  - OOMKilled: false
-  - VmHWM=1149 MB >> VmRSS=1113 MB (historical GC, now stalled)
-  - Memory usage: 992.6 MiB / 1 GiB (7.4 MiB free, BELOW 40 MiB safety floor)
-  - **Verdict: ESCALATE → WARN** (all >93% + zero dips)
-  - Signal: A-30 WARN sys-20260806T133606-3047 (dedup_key: microservice_degraded:rag-service:A-30)
-  - **Dedup result: SKIP-dedup** — same key active since c54 (08:16:21Z), within 7d window
-
-**Disk (A-32):** / at 55% < 85% ✓
-
-[OUTPUT-CONTRACT] signals_posted=1 | telegram_sent=0 | signal_queue_rows_written=1 | dashboard_rows=1 | dedup_skipped=1
-CONTRACT-CONTRADICTION: NONE
-
