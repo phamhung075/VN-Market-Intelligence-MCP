@@ -1,0 +1,98 @@
+{
+  "from": "ci-health-probe",
+  "to": "po",
+  "type": "ci_red",
+  "priority": "high",
+  "createdAt": "2026-08-06T16:42:35Z",
+  "dedup_key": "ci_red:0cad5b36d1d65e4fd821350af6ba7b5809282486:API Gateway Go Lint,Alert Engine Go Lint,Kinh Dich Go Lint,Macro Indicators Go Lint,News Fetch Go Lint,Stock Price Go Lint,bun test,composition-root-logic-gate,dead-code-gate,go-lint,news-fetch-eslint,size-lint,task-claim-owner-session-lint,verify-market-db-journal-source-guard",
+  "payload": {
+    "check_id": "CI-RED-0cad5b36",
+    "head_sha": "0cad5b36d1d65e4fd821350af6ba7b5809282486",
+    "run_id": 31118798491,
+    "run_url": "https://github.com/phamhung075/VN-Market-Intelligence-MCP/actions/runs/31118798491",
+    "conclusion": "failure",
+    "failing_jobs": [
+      {
+        "name": "news-fetch-eslint",
+        "conclusion": "cancelled",
+        "jobId": 92674717981
+      },
+      {
+        "name": "Macro Indicators Go Lint",
+        "conclusion": "failure",
+        "jobId": 92674718036
+      },
+      {
+        "name": "Stock Price Go Lint",
+        "conclusion": "failure",
+        "jobId": 92674718048
+      },
+      {
+        "name": "go-lint",
+        "conclusion": "cancelled",
+        "jobId": 92674718074
+      },
+      {
+        "name": "size-lint",
+        "conclusion": "failure",
+        "jobId": 92674718084
+      },
+      {
+        "name": "API Gateway Go Lint",
+        "conclusion": "failure",
+        "jobId": 92674718093
+      },
+      {
+        "name": "bun test",
+        "conclusion": "failure",
+        "jobId": 92674718103
+      },
+      {
+        "name": "News Fetch Go Lint",
+        "conclusion": "cancelled",
+        "jobId": 92674718138
+      },
+      {
+        "name": "dead-code-gate",
+        "conclusion": "cancelled",
+        "jobId": 92674718184
+      },
+      {
+        "name": "task-claim-owner-session-lint",
+        "conclusion": "cancelled",
+        "jobId": 92674718187
+      },
+      {
+        "name": "Alert Engine Go Lint",
+        "conclusion": "cancelled",
+        "jobId": 92674718208
+      },
+      {
+        "name": "composition-root-logic-gate",
+        "conclusion": "cancelled",
+        "jobId": 92674718215
+      },
+      {
+        "name": "verify-market-db-journal-source-guard",
+        "conclusion": "failure",
+        "jobId": 92674718216
+      },
+      {
+        "name": "Kinh Dich Go Lint",
+        "conclusion": "failure",
+        "jobId": 92674718358
+      }
+    ],
+    "fingerprint": "e649b4d7350a0d8d6f36508110d6270e2e6da73e91f81b17135bd3039c40304f",
+    "zone_owner": "dev-team (CI fix)",
+    "summary": "CI RED on main HEAD 0cad5b36d1d65e4fd821350af6ba7b5809282486: API Gateway Go Lint,Alert Engine Go Lint,Kinh Dich Go Lint,Macro Indicators Go Lint,News Fetch Go Lint,Stock Price Go Lint,bun test,composition-root-logic-gate,dead-code-gate,go-lint,news-fetch-eslint,size-lint,task-claim-owner-session-lint,verify-market-db-journal-source-guard",
+    "suggested_sprint_class": "FIX",
+    "verification_gate": "ci_green_on_subsequent_push"
+  },
+  "_processed": {
+    "fingerprint": "46558bea4f6720a7ac318b3e8bbb2c9f4f3c616f549a556b9126786aaeca4a76",
+    "processedAt": "2026-08-06T16:50:53Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
