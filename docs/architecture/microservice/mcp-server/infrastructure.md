@@ -537,8 +537,10 @@ confirmed byte-identical.
   `application/usecases/runNarrativeTruthGate.ts` (CCATO-MCP-T5, not yet landed).
 
 ## Key Infrastructure Patterns
-- **`initDatabase()` identity-keyed init guard (FIX-MCP-MEMORY-CODE-LEAK, 2026-08-05):**
-  `infrastructure/db/schema.ts:156` memoizes on a module-level `WeakSet<Database>`
+- **`initDatabase()` identity-keyed init guard (FIX-MCP-MEMORY-CODE-LEAK, 2026-08-05;
+  comments condensed 2026-08-06 for FIX-CI-SIZELINT-SCHEMA-TS-BASELINE-TOLERANCE-377L,
+  zero behaviour change):**
+  `infrastructure/db/schema.ts:162` memoizes on a module-level `WeakSet<Database>`
   (`_initializedDbs`) so the ~3300-line domain-slice DDL sweep + the unconditional
   `backfillBctcQ4`/`backfillBctcQ1_2026`/`backfillBctcHistorical` calls
   (`seedWatchlist.ts`) only execute once per resolved `db` object, not on every one
