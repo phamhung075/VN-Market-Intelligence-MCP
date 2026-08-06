@@ -68,6 +68,12 @@ set -u
 
 # FR-2 (UC-CRITIC-HOOKS-ENFORCEMENT): shared crash-vs-clean-pass discriminator.
 source "$(dirname "${BASH_SOURCE[0]}")/lib/hook-guard.sh"
+# FIX-NOTEBOOK-COMPOSE-SCRIPT-ACTUATOR (2026-08-06): shared "## " timestamp-key +
+# newest-first/oldest-first direction derivation, now also used by
+# scripts/notebook-compose.sh — this is the ONE implementation (see that lib's
+# own header comment for why the inline copy that used to live below was
+# extracted, not duplicated).
+source "$(dirname "${BASH_SOURCE[0]}")/lib/notebook-section-direction.sh"
 
 # --- Resolve project root ---
 if ! PROJECT_ROOT=$(hg_resolve_project_root); then
@@ -327,11 +333,14 @@ case "$LINE_CAP" in ''|*[!0-9]*) LINE_CAP=200 ;; esac  # SSOT unreadable/malform
 BYTE_CAP=$((LINE_CAP * 60))  # same 60-bytes/line derivation as context-bloat-backstop.sh (TE-T24)
 
 # 17-char zero-padded MAX sentinel assigned to any "## " heading with no parseable
-# timestamp (see ts_key derivation in the drop-oldest loop below) — a single named
-# constant so it is never a second hand-typed literal (FIX-NOTEBOOK-AUTOPRUNE-
-# DIRECTION-UNRESOLVABLE-ZERO-TS-NOTEBOOKS: also used to EXCLUDE sentinel-vs-real
-# comparisons from the direction vote — see that fix's tertiary hardening below).
-SENTINEL_KEY="99999999999999999"
+# timestamp — a single named constant so it is never a second hand-typed literal
+# (FIX-NOTEBOOK-AUTOPRUNE-DIRECTION-UNRESOLVABLE-ZERO-TS-NOTEBOOKS: also used to
+# EXCLUDE sentinel-vs-real comparisons from the direction vote). FIX-NOTEBOOK-
+# COMPOSE-SCRIPT-ACTUATOR (2026-08-06): now lives solely in
+# lib/notebook-section-direction.sh as $NSO_SENTINEL_KEY (sourced above) — the
+# script-local $SENTINEL_KEY alias this comment used to introduce was removed
+# (dead after the refactor moved every consumer into the lib; shellcheck SC2034
+# confirmed zero remaining references in this file).
 
 # --- Count lines AND bytes (dual-axis) ---
 LINE_COUNT=$(wc -l < "$FILE_PATH" 2>/dev/null | tr -d ' ' || true)
@@ -431,18 +440,10 @@ EOF
   # fixed 17-char width = YYYYMMDDHHMMSSfff) so formats with different precision still compare
   # correctly against each other as plain numeric strings.
 
-  # First, extract all section lines with their timestamps
-  SECTIONS_WITH_TS="$(echo "$FILE_CONTENT" | grep -n "^## " | while IFS=: read -r line_num heading; do
-    ts_raw=$(echo "$heading" | grep -oE '[0-9]{4}-?[0-9]{2}-?[0-9]{2}(T[0-9]{2}:?[0-9]{2}(:?[0-9]{2}(\.[0-9]+)?)?Z)?' | tail -1)
-    if [ -n "$ts_raw" ]; then
-      ts_digits=$(echo "$ts_raw" | tr -dc '0-9')
-      ts_key=$(printf '%-17s' "$ts_digits" | tr ' ' '0' | cut -c1-17)
-      echo "$line_num:$ts_key:$heading"
-    else
-      # No timestamp found (e.g., "## Archive") — treat as max (SENTINEL_KEY) to sort last
-      echo "$line_num:${SENTINEL_KEY}:$heading"
-    fi
-  done)"
+  # First, extract all section lines with their timestamps (shared lib —
+  # FIX-NOTEBOOK-COMPOSE-SCRIPT-ACTUATOR: see lib/notebook-section-direction.sh
+  # header for why this is no longer an inline block).
+  SECTIONS_WITH_TS="$(echo "$FILE_CONTENT" | nso_sections_with_ts)"
 
   # Find the oldest timestamp (minimum key), then resolve WHICH physical section that is.
   #
@@ -463,63 +464,17 @@ EOF
     # No ambiguity — exactly one section has the minimum key. Unchanged from before.
     OLDEST_LINE="$(echo "$TIE_GROUP" | head -1 | cut -d: -f1)"
   else
-    # 2+ sections tie for oldest. Resolve direction-aware: derive the file's OWN
-    # newest-first(prepend)/oldest-first(append) convention from ITS OWN distinguishable
-    # (non-tied) section timestamps first (self-describing, no maintenance for the common
-    # case) — walk physical top-to-bottom order, vote decreasing-key vs increasing-key on
-    # every adjacent pair that actually differs.
-    DIRECTION=""
-    prev_key=""
-    dec_votes=0
-    inc_votes=0
-    while IFS=: read -r _sec_line cur_key _sec_heading; do
-      # FIX-NOTEBOOK-AUTOPRUNE-DIRECTION-UNRESOLVABLE-ZERO-TS-NOTEBOOKS (tertiary
-      # hardening): never cast a vote when EITHER side of the pair is SENTINEL_KEY.
-      # Comparing a real timestamp against the untimestamped-sentinel is not evidence
-      # of the file's prepend/append convention — a single trailing untimestamped
-      # section (e.g. "## Prior cycles") always sorts as "increasing" against the
-      # real timestamp immediately before it, which is a PHANTOM vote, not a real one
-      # (observed live: unified-agent.md section-pair 136->150). Only vote when BOTH
-      # sides carry a real parsed timestamp.
-      if [ -n "$prev_key" ] && [ "$prev_key" != "$cur_key" ] \
-         && [ "$prev_key" != "$SENTINEL_KEY" ] && [ "$cur_key" != "$SENTINEL_KEY" ]; then
-        # AC-3 hardening (FIX-NOTEBOOK-AUTOPRUNE-DIRECTION-UNRESOLVABLE-ZERO-TS-
-        # NOTEBOOKS): both keys are fixed-width (17-char), zero-padded, all-digit
-        # strings by construction (ts_key derivation above) — a POSIX numeric `-gt`
-        # test gives IDENTICAL ordering to bash `[`'s dictionary `\>` operator for
-        # this exact shape, but (unlike `\>`) is portable across bash/zsh/dash/ksh.
-        # `\>` is a bash-`[`-builtin extension: under zsh's `[`, it is a hard error
-        # ("condition expected: >") and every differing pair silently falls to the
-        # else branch, producing the INVERSE direction — silent data loss of the
-        # newest tied section. This numeric form cannot invert regardless of
-        # interpreter (regression test: scripts/agents-flow/test-notebook-auto-
-        # prune.sh Test 9, bash-vs-zsh identical-outcome assertion).
-        if [ "$prev_key" -gt "$cur_key" ]; then
-          dec_votes=$((dec_votes + 1))
-        else
-          inc_votes=$((inc_votes + 1))
-        fi
-      fi
-      prev_key="$cur_key"
-    done <<SECEOF
-$SECTIONS_WITH_TS
-SECEOF
-
-    if [ "$dec_votes" -gt "$inc_votes" ]; then
-      DIRECTION="newest_first"
-    elif [ "$inc_votes" -gt "$dec_votes" ]; then
-      DIRECTION="oldest_first"
-    fi
-
-    # The file's own headings gave no distinguishing signal at all (every section in the
-    # WHOLE file normalizes to the same key — e.g. a notebook whose heading format never
-    # carries sub-day precision) — consult the declared-convention override instead of
-    # guessing (see docs/data/notebook-section-order.json for why this table is optional,
-    # never required, and how the case-statement default arm below covers everything it
-    # does not — FIX-NOTEBOOK-AUTOPRUNE-DIRECTION-UNRESOLVABLE-ZERO-TS-NOTEBOOKS AC-2).
-    if [ -z "$DIRECTION" ]; then
-      DIRECTION="$(jq -r --arg f "$(basename "$REL_PATH")" '.overrides[$f] // empty' "$ORDER_FILE" 2>/dev/null || true)"
-    fi
+    # 2+ sections tie for oldest. Resolve direction-aware via the shared lib: derive the
+    # file's OWN newest-first(prepend)/oldest-first(append) convention from ITS OWN
+    # distinguishable (non-tied) section timestamps first (self-describing, no maintenance
+    # for the common case — nso_vote_direction walks the FULL $SECTIONS_WITH_TS, not just
+    # the tied group, exactly as this call site always fed it), falling back to the
+    # declared-convention override table, then the documented default — see
+    # docs/data/notebook-section-order.json for why that table is optional, never required
+    # (FIX-NOTEBOOK-AUTOPRUNE-DIRECTION-UNRESOLVABLE-ZERO-TS-NOTEBOOKS AC-2).
+    RESOLVED_DIRECTION="$(nso_resolve_direction "$SECTIONS_WITH_TS" "$(basename "$REL_PATH")" "$ORDER_FILE")"
+    DIRECTION="${RESOLVED_DIRECTION%% *}"
+    DIRECTION_SOURCE="${RESOLVED_DIRECTION##* }"
 
     case "$DIRECTION" in
       newest_first)
@@ -531,30 +486,26 @@ SECEOF
         # Physically-first among the tied group IS the true oldest (append convention).
         OLDEST_LINE="$(echo "$TIE_GROUP" | head -1 | cut -d: -f1)"
         ;;
-      *)
-        # PRIMARY fix (AC-1, FIX-NOTEBOOK-AUTOPRUNE-DIRECTION-UNRESOLVABLE-ZERO-TS-
-        # NOTEBOOKS): neither this file's own timestamps NOR the declared override table
-        # give ANY signal. This happens precisely when EVERY retained "## " section lacks
-        # a parseable timestamp (MIN_KEY == SENTINEL_KEY — logically equivalent to "every
-        # adjacent pair in the whole file compares equal", so dec_votes==inc_votes==0
-        # above is guaranteed here). These are non-chronological/rolling sections by
-        # construction (e.g. "## Known patterns / preferences", "## Identity" — see
-        # .claude/skills/notebook-write/SKILL.md's own "stable ROLLING heading" concept),
-        # not per-cycle dated journal entries — there is NO evidence-based way to rank
-        # them by age, ever, for a file shaped like this (corpus replay: 11 confirmed
-        # live files — code-janitor, cowork-refactory-expert x2, digest-predict,
-        # idea-forge, market-analyst, ops-mainserver-fetch,
-        # pm-alpha-s2-rag-fts-rebuild-cron, po, semble-search, dev-technical-analysis).
-        # Refusing to prune here FOREVER (the prior contract) is worse than a documented,
-        # deterministic, always-safe-to-repeat default: apply newest_first (drop
-        # physically-LAST) and proceed. Still bounded by every other existing safety
-        # invariant below (single-section safe-fail, atomic write) — only INFORMATIONAL,
-        # not a blocking breach, since the prune is no longer refused.
-        DIRECTION="newest_first"
-        OLDEST_LINE="$(echo "$TIE_GROUP" | tail -1 | cut -d: -f1)"
-        emit_direction_defaulted_signal "$TIE_GROUP"
-        ;;
     esac
+
+    if [ "$DIRECTION_SOURCE" = "default" ]; then
+      # PRIMARY fix (AC-1, FIX-NOTEBOOK-AUTOPRUNE-DIRECTION-UNRESOLVABLE-ZERO-TS-
+      # NOTEBOOKS): neither this file's own timestamps NOR the declared override table
+      # gave ANY signal (nso_resolve_direction's own default arm, always "newest_first"
+      # in this case). This happens precisely when EVERY retained "## " section lacks a
+      # parseable timestamp — non-chronological/rolling sections by construction (e.g.
+      # "## Known patterns / preferences", "## Identity" — see .claude/skills/notebook-
+      # write/SKILL.md's own "stable ROLLING heading" concept), not per-cycle dated
+      # journal entries — there is NO evidence-based way to rank them by age, ever, for
+      # a file shaped like this (corpus replay: 11 confirmed live files — code-janitor,
+      # cowork-refactory-expert x2, digest-predict, idea-forge, market-analyst,
+      # ops-mainserver-fetch, pm-alpha-s2-rag-fts-rebuild-cron, po, semble-search,
+      # dev-technical-analysis). Refusing to prune here FOREVER (the prior contract) is
+      # worse than a documented, deterministic, always-safe-to-repeat default. Still
+      # bounded by every other existing safety invariant below (single-section
+      # safe-fail, atomic write) — only INFORMATIONAL, not a blocking breach.
+      emit_direction_defaulted_signal "$TIE_GROUP"
+    fi
   fi
 
   if [ -z "$OLDEST_LINE" ]; then
