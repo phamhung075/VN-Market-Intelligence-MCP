@@ -456,6 +456,33 @@ ROW_ID22=$(printf '%s' "$OUT22" | grep -o 'id=[^ ]*$' | cut -d= -f2)
 check "T22 no-cycle-tag exit=0" "$([ "$RC22" -eq 0 ] && echo true || echo false)"
 check "T22 no-cycle-tag row's audit_cycle_tag is null" "$([ "$(row_cycle_tag "$ROW_ID22")" = "null" ] && echo true || echo false)"
 
+# ── T23/T24: FIX-AUDITOR-DEDUP-TASKBOARD-PRECHECK-NOT-ENFORCED (AC-5) —
+# --payload-ref threads through _build_row_json() into the row's payload_ref
+# field (was UNCONDITIONALLY null before this flag existed); omitted → still
+# null (backward-compat — T1-T22 never pass --payload-ref and stay green). ──
+row_payload_ref() {
+  jq -r --arg id "$1" '[.signal_queue.rows[] | select(.id==$id)][0].payload_ref' "$SCRATCH_ORCH"
+}
+
+# T23: --payload-ref supplied — row carries it verbatim
+reset_case
+OUT23=$(run_emit_signal --check-id B-14 --category-type db_integrity_breach --severity WARN \
+  --summary "payload-ref probe" --detail-json '{"dedup_key":"db_integrity_breach:T23:B-14"}' \
+  --payload-ref "docs/data/db-integrity-history.json")
+RC23=$?
+ROW_ID23=$(printf '%s' "$OUT23" | grep -o 'id=[^ ]*$' | cut -d= -f2)
+check "T23 payload-ref exit=0" "$([ "$RC23" -eq 0 ] && echo true || echo false)"
+check "T23 payload-ref row carries payload_ref verbatim" "$([ "$(row_payload_ref "$ROW_ID23")" = "docs/data/db-integrity-history.json" ] && echo true || echo false)"
+
+# T24: --payload-ref omitted — field is null, not a missing key or empty string
+reset_case
+OUT24=$(run_emit_signal --check-id B-15 --category-type data_stale --severity WARN \
+  --summary "no payload-ref probe" --detail-json '{"dedup_key":"data_stale:T24:B-15"}')
+RC24=$?
+ROW_ID24=$(printf '%s' "$OUT24" | grep -o 'id=[^ ]*$' | cut -d= -f2)
+check "T24 no-payload-ref exit=0" "$([ "$RC24" -eq 0 ] && echo true || echo false)"
+check "T24 no-payload-ref row's payload_ref is null" "$([ "$(row_payload_ref "$ROW_ID24")" = "null" ] && echo true || echo false)"
+
 # ── Summary ──────────────────────────────────────────────────────────────────
 echo ""
 echo "Results: $PASS passed, $FAIL failed"

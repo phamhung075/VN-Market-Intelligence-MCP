@@ -17,6 +17,18 @@
 # .claude/commands/crons/cron-db-data-integrity.md, .claude/skills/cron-standalone-team/register.md.
 # scripts/db-integrity-history-append.sh embeds `$counts.counts` generically — unaffected).
 #
+# SCOPING-HONESTY FIELD (FIX-AUDITOR-DEDUP-TASKBOARD-PRECHECK-NOT-ENFORCED,
+# AC-4): `context.ohlc_violation_distinct_dates` added below — a deterministic
+# COUNT(DISTINCT date) over the exact same OHLC-violation predicate as
+# `ohlc_violations_count`. This exists because a 2026-08-05 sweep (notebook
+# c17, commit 35104ef89) narrated "All 336 violations are from 2026-05-15
+# (concentrated date)" when the real GROUP BY spans 20 distinct dates — an
+# agent-authored scoping claim with no matching query result anywhere in the
+# record. Same remedy as the pre-existing "NO HALLUCINATED COUNTS" rule
+# (.claude/commands/crons/cron-db-data-integrity.md): the sweep MUST use this
+# field verbatim for any date-scoping claim ("concentrated", "single date",
+# "all from one date", etc.) instead of eyeballing a sampled row.
+#
 # OPEN PATTERN: file:?immutable=1 (NOT sqlite3 -readonly).
 # Rationale: after the mcp-server writer restarts and recreates market.db-shm with its uid,
 # a sidecar with a different uid cannot attach the writer-owned -shm to build the WAL index
@@ -44,7 +56,8 @@ SELECT
   (SELECT count(*) FROM daily_ohlcv),
   (SELECT COALESCE(max(date),'')  FROM daily_ohlcv),
   (SELECT COALESCE(max(updated_at),'') FROM market_prices),
-  (SELECT count(*) FROM daily_ohlcv WHERE (high<open OR high<close OR low>open OR low>close) AND date >= date('now','-2 day'));
+  (SELECT count(*) FROM daily_ohlcv WHERE (high<open OR high<close OR low>open OR low>close) AND date >= date('now','-2 day')),
+  (SELECT count(DISTINCT date) FROM daily_ohlcv WHERE high<open OR high<close OR high<low OR low>open OR low>close);
 " 2>"${PROBE_STDERR}")"
 PROBE_EXIT=$?
 set -e
@@ -63,7 +76,7 @@ if [ -z "${ROW// }" ]; then
   exit 1
 fi
 
-IFS='|' read -r OHLC SCALE VNIDX LOWCONF TOTAL NEWEST MPFRESH FRESHVIOL <<EOF
+IFS='|' read -r OHLC SCALE VNIDX LOWCONF TOTAL NEWEST MPFRESH FRESHVIOL VIOLDATES <<EOF
 ${ROW}
 EOF
 
@@ -96,7 +109,8 @@ cat <<JSON
     "daily_ohlcv_total": $(num "${TOTAL:-}"),
     "daily_ohlcv_newest_date": "${NEWEST:-}",
     "market_prices_freshness": "${MPFRESH:-}",
-    "fresh_ohlc_violations_last_2d": $(num "${FRESHVIOL:-}")
+    "fresh_ohlc_violations_last_2d": $(num "${FRESHVIOL:-}"),
+    "ohlc_violation_distinct_dates": $(num "${VIOLDATES:-}")
   }
 }
 JSON

@@ -107,11 +107,13 @@ COUNT-NOISE TOLERANCE (regression monitor): live-DB counts wobble by ±1-2 under
   low-confidence reports) you MUST run the DETERMINISTIC helper and copy its numbers VERBATIM:
       bash scripts/db-integrity-counts.sh
   It emits JSON `{ "scan_ts", "counts": {ohlc_violations_count, scale_gt100x_count,
-  vnindex_cache_rows_count, low_confidence_reports_count}, "context": {...} }` straight from
-  sqlite. (Renamed 2026-08-06, FIX-AUDITOR-EMPTYTABLE-CHECK-NO-WRITER-DISCRIMINATOR item 3 —
-  formerly `db1_ohlc_violations`/`db2_scale_gt100x`/`db3_vnindex_cache_rows`/
-  `c04_low_confidence_reports`; `c04` visually collided with system-auditor's OFFICIAL Tier-3
-  `C-04`/`C-08` checks, a different check family. Rename only, no query changed.)
+  vnindex_cache_rows_count, low_confidence_reports_count}, "context": {..., ohlc_violation_
+  distinct_dates} }` straight from sqlite. (Renamed 2026-08-06, FIX-AUDITOR-EMPTYTABLE-CHECK-
+  NO-WRITER-DISCRIMINATOR item 3 — formerly `db1_ohlc_violations`/`db2_scale_gt100x`/
+  `db3_vnindex_cache_rows`/`c04_low_confidence_reports`; `c04` visually collided with
+  system-auditor's OFFICIAL Tier-3 `C-04`/`C-08` checks, a different check family. Rename only,
+  no query changed. `ohlc_violation_distinct_dates` added FIX-AUDITOR-DEDUP-TASKBOARD-PRECHECK-
+  NOT-ENFORCED AC-4 — see NO FABRICATED SCOPE CLAIMS below.)
   Use those exact numbers in the history entry + the regression check — NEVER a number you
   recalled/estimated/expected, and NEVER invent a narrative for a change the script didn't show.
   Use your own ad-hoc sidecar queries ONLY for discovering NEW anomalies + classification, not
@@ -120,6 +122,17 @@ COUNT-NOISE TOLERANCE (regression monitor): live-DB counts wobble by ±1-2 under
   (2026-06-20: an LLM-counted sweep hallucinated 836→661 "-175 fix deployed" — real count 835,
   fix not deployed, nothing cleaned. This helper + the router's material-change raw-verify exist
   precisely to kill that confabulation class.)
+
+⚠ NO FABRICATED SCOPE CLAIMS (mandatory — FIX-AUDITOR-DEDUP-TASKBOARD-PRECHECK-NOT-ENFORCED
+  AC-4): a date/scope-narrowing claim about the OHLC-violation residue ("concentrated on one
+  date", "all from a single date", "isolated to <date>", etc.) is ONLY permitted when it is
+  IDENTICAL to `context.ohlc_violation_distinct_dates` from the SAME `db-integrity-counts.sh`
+  call above (value 1 makes a "single/concentrated date" claim TRUE; any value >1 makes it
+  FALSE). (2026-08-05, notebook c17, commit 35104ef89: a sweep asserted "All 336 violations are
+  from 2026-05-15 (concentrated date)" — the real GROUP BY spans 20 distinct dates. This field
+  makes that class of claim falsifiable against a number in the SAME record instead of only
+  against a human's later re-query. Same remedy class as NO HALLUCINATED COUNTS above — use the
+  field, do not eyeball a sampled row.)
 
 ⚠ NO TREND NARRATION (record, don't editorialize): your job is to RECORD the helper's exact
   count + discover NEW anomalies. Do NOT narrate "regression / improvement / +N / -N / re-entry"
@@ -132,40 +145,65 @@ COUNT-NOISE TOLERANCE (regression monitor): live-DB counts wobble by ±1-2 under
 
 RECORD — append THIS scan to docs/data/db-integrity-history.json via the DETERMINISTIC
   helper (do NOT hand-write the file — the LLM kept OVERWRITING it to 1 entry). Build ONLY the
-  entry BODY you discover (tables_checked + findings) as a JSON object and pipe it to the helper:
+  entry BODY you discover (tables_checked + findings) as a JSON object and pipe it to the helper —
+  every verdict="REAL" finding MUST also carry a `severity` (CRITICAL|HIGH|MED|WARN — defaults to
+  MED if omitted) so the helper can build a signal row itself; leave `signal_id` null, the helper
+  fills it in (see SIGNAL WRITE + DEDUP-ENFORCEMENT below — there is no separate REPORT step
+  anymore, this ONE call now owns both the history record AND the signal write):
       echo '{ "tables_checked": N, "findings": [
         { "table": "...", "class": "FAIL|STALE|DUP|INCORRECT", "detail": "<what + the query result>",
-          "verdict": "REAL|BY-DESIGN|NOISE", "root_cause_hypothesis": "...",
-          "signal_id": "<id if reported, else null>" } ] }' | bash scripts/db-integrity-history-append.sh
+          "verdict": "REAL|BY-DESIGN|NOISE", "severity": "CRITICAL|HIGH|MED|WARN",
+          "root_cause_hypothesis": "...", "signal_id": null } ] }' | bash scripts/db-integrity-history-append.sh
   The helper STAMPS scan_ts (real `date -u`), EMBEDS the deterministic counts (from
   db-integrity-counts.sh), reads the existing ARRAY, appends ONE entry, caps at 200, atomic-writes,
-  and HARD-ASSERTS length grew (prints {"ok":true,"history_len_before":B,"history_len_after":B+1}).
-  Do NOT author scan_ts or counts yourself — the helper owns them. Copy the helper's before→after
-  numbers into your report; if it exits non-zero (rc 2/3) the append FAILED — say so, never claim
-  "appended". This is the historic trail (every scan logged, real + checked-clean) so dev-team and
-  you can see recurrence; it only works as a trail if it APPENDS — never overwrite it by hand.
+  and HARD-ASSERTS length grew (prints {"ok":true,"history_len_before":B,"history_len_after":B+1,
+  "signals_written":[...],"signal_write_failed":false}). Do NOT author scan_ts or counts yourself —
+  the helper owns them. Copy the helper's before→after numbers into your report; exit 2/3 means the
+  append FAILED — say so, never claim "appended"; exit 4 means history appended OK but >=1 signal
+  write failed (that finding's own `signal_id` reads "WRITE-FAILED" — say so). This is the historic
+  trail (every scan logged, real + checked-clean) so dev-team and you can see recurrence; it only
+  works as a trail if it APPENDS — never overwrite it by hand.
 
-REPORT (genuine issues only → dev-team) — for each finding verdict=REAL, write ONE row to
-  docs/data/orch/orch-state.json .signal_queue.rows[] per .claude/skills/signal-dashboard/SKILL.md:
-    id: "sau-<YYYYMMDDTHHmmss>-dbN"   from: "system-auditor"   to: "dev-team"
-    summary: "<≤120 chars: table + class + the specific defect>"   (NO raw payload)
-    severity: CRITICAL (serving wrong data to users) | HIGH | MED | LOW
-    status: "NEW"   payload_ref: "docs/data/db-integrity-history.json"
-  MANDATORY post-write read-back assert: confirm the new id is in .signal_queue.rows[];
-  if absent → FAIL LOUD ([SIGNAL-ROW-ASSERT] FAIL) + BUG-channel Telegram. DRAIN-INJECTION-SAFE:
-  never shell-interpolate any finding/value into a command line — use bound params / a SQL file.
+⚠ SIGNAL WRITE + DEDUP-ENFORCEMENT ARE A SCRIPT ACTUATOR, NOT YOUR JUDGMENT CALL
+  (FIX-AUDITOR-DEDUP-TASKBOARD-PRECHECK-NOT-ENFORCED — this clause used to be pure prose and the
+  SAME 336-row daily_ohlcv residue got re-signalled 3x, twice under a DIFFERENT dedup_key/type
+  string for the identical rows, because nothing ever evaluated it). The RECORD call above, for
+  EVERY finding you mark verdict="REAL", now internally: (1) runs `bash scripts/db-integrity-
+  dedup-check.sh --table <table>` — a DETERMINISTIC classifier reading ALL open `.task_board`
+  lanes (backlog/ready/in_progress/review/qa — not just backlog) PLUS `.signal_queue.rows[]`
+  (status new/read/triaged/acute-resolved-root-tracked, case-insensitive), matching on the TABLE
+  NAME plus a small curated-synonym list (see that script's own header for why a generic
+  keyword-token match was tried and rejected, live, before this shipped — it over-matched
+  constantly on generic words like "price"/"reports"/"records"); (2) if already-open, sets that
+  finding's `signal_id` to `"already-open:<matched task/signal id>"` and embeds the RAW dedup-check
+  JSON as `dedup_check` — NO .signal_queue write happens, and you must NOT hand-judge or narrate
+  "already-open" yourself anymore; (3) if NOT already-open, writes the ONE genuine new row itself
+  via `scripts/emit-audit-signal.sh --e3-only` with `to`/`payload_ref` HARDCODED to `dev-team` /
+  `docs/data/db-integrity-history.json` — you no longer compose the row by hand (closes the
+  to="po"+payload_ref=null routing defect observed 3x). You do NOT run `db-integrity-dedup-
+  check.sh` or `emit-audit-signal.sh` yourself, and there is no separate REPORT step or DEDUP
+  judgment call left to perform — the RECORD call already does all of this, for every finding,
+  every cycle, unconditionally. MANDATORY: after RECORD returns, read each finding's own
+  `signal_id` for your report — do not narrate "written"/"suppressed"/"already tracked" from
+  memory; the field IS the raw evidence (mirrors the "RAW-verify .signal_queue.rows[] directly,
+  never trust the agent's own self-report" rule already in force for this exact defect class).
 
-DEDUP (do NOT spam dev-team): before writing a signal, check the history file + the open
-  .signal_queue rows — if the SAME table+class+defect is already NEW/READ (open) or was reported
-  unchanged in the last scan, do NOT write a duplicate; note "already-open" in the history entry.
-
-⚠ DEDUP-ENFORCEMENT — an anomaly is ALREADY-OPEN (do NOT write a new signal) if EITHER
-  (a) a .task_board FIX-* task tracks its root, OR (b) a prior .signal_queue row for the same
-  table+defect has status NEW / READ / TRIAGED / ACUTE-RESOLVED-ROOT-TRACKED.
-  Canonical recurring example: the held scheduler_locks weeklyPortfolioReport lock is
-  board-tracked by FIX-SCHEDULER-LOCK-NO-RELEASE-TTL — RECORD-AND-LEAVE, never re-signal,
-  regardless of lock age or weekly re-acquisition. Once FIX-SCHEDULER-LOCK-NO-RELEASE-TTL ships
-  the example self-resolves, but this generic guard stays valid for any future board-tracked root.
+⚠ GROWTH-DELTA EXCEPTION — a magnitude/count delta is NEVER, on its own, grounds to re-signal an
+  already-open table (FIX-AUDITOR-DEDUP-TASKBOARD-PRECHECK-NOT-ENFORCED AC-6). The C-08 orphaned-
+  alerts check is the motivating, cautionary example: its true history is 1 (2026-07-21) -> 121
+  (2026-07-30) -> 22 (2026-08-05) -> 42 (2026-08-06) — wildly non-monotonic, a GC-timing x
+  alert-volume artifact, NOT a real regression — yet a prior disposition literally said "Watch;
+  revisit only if count climbs", and the count DID climb (1->22, 22->42), so a naive delta rule
+  would have PASSED every one of those re-fires through as "material" and re-signalled noise each
+  time. Therefore: (a) the table+task-board/signal-queue linkage check above is BINARY (open or
+  not) and is NEVER overridden by a count delta of any size, in either direction; (b) this cron
+  prompt does not offer ANY count-delta-based re-signal path — if one is ever added, it MUST
+  compare the new count against the LAST REPORTED value for that same dedup key (not the oldest
+  open row) and carry both the prior value and the delta in the row, never a bare new number; (c) a
+  check whose expected value is unsatisfiable BY CONSTRUCTION (e.g. C-08's expected=0 against a
+  24h alerts window vs 2h-TTL agent_signals correlation stubs — see FIX-AUDITOR-C08-UNSATISFIABLE-
+  TTL-WINDOW-AND-ISO8601-STRCMP) is exempt from re-signalling entirely until its detector itself
+  is fixed, independent of any count it reports meanwhile.
 
 ⚠ DETECTION-ONLY — NEVER RESOLVE, NEVER CLAIM A FIX (mandatory boundary):
   You ONLY ever write a NEW row, or leave an existing open row untouched. You MUST NOT flip

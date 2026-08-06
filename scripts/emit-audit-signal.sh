@@ -47,6 +47,17 @@
 #                        # shared from+ts-window (every tier defaults to the
 #                        # same from="system-auditor"). Omitted -> field is
 #                        # null (backward-compatible).
+#     [--payload-ref <value>]  # FIX-AUDITOR-DEDUP-TASKBOARD-PRECHECK-NOT-
+#                        # ENFORCED (AC-5): stored verbatim as the row's
+#                        # payload_ref field (was UNCONDITIONALLY null before
+#                        # this flag existed — every call site got null with
+#                        # no override, which was itself part of the AC-5
+#                        # routing defect for the DB-integrity DATA-tier sweep:
+#                        # its own spec, .claude/commands/crons/cron-db-data-
+#                        # integrity.md, requires payload_ref="docs/data/db-
+#                        # integrity-history.json" on every row it writes).
+#                        # Omitted -> field is null (backward-compatible,
+#                        # matches every pre-existing call site's behavior).
 #
 # DDD LAYER SPLIT (bash has no module system — layers are function-naming/
 # ordering, not file separation, per architect design decision 1):
@@ -175,6 +186,7 @@ _parse_args() {
   NO_TELEGRAM="false"
   DEDUP_KEY=""
   CYCLE_TAG=""
+  PAYLOAD_REF=""
 
   while [ $# -gt 0 ]; do
     case "$1" in
@@ -188,6 +200,7 @@ _parse_args() {
       --e3-only) E3_ONLY="true"; shift ;;
       --no-telegram) NO_TELEGRAM="true"; shift ;;
       --cycle-tag) CYCLE_TAG="${2:-}"; shift 2 ;;
+      --payload-ref) PAYLOAD_REF="${2:-}"; shift 2 ;;
       *)
         echo "[emit-signal] ABORT unknown-arg $1"
         return 2
@@ -405,7 +418,8 @@ _build_row_json() {
     --arg summary "$SUMMARY" \
     --arg severity "$SEVERITY" \
     --arg cycle_tag "$CYCLE_TAG" \
-    '{id:$id, ts:$ts, from:$from, to:$to, type:$type, summary:$summary, severity:$severity, status:"NEW", payload_ref:null, provenance:"detector", audit_cycle_tag: (if $cycle_tag == "" then null else $cycle_tag end)}'
+    --arg payload_ref "$PAYLOAD_REF" \
+    '{id:$id, ts:$ts, from:$from, to:$to, type:$type, summary:$summary, severity:$severity, status:"NEW", payload_ref: (if $payload_ref == "" then null else $payload_ref end), provenance:"detector", audit_cycle_tag: (if $cycle_tag == "" then null else $cycle_tag end)}'
 }
 
 # Step E-3: signal-row append via orch-apply.sh + POST-WRITE read-back.
