@@ -127,7 +127,7 @@ docker exec mcp-server sqlite3 /app/data/<db>.db "<query>"
 | C-03 | < 26 tickers with Q1-2026 BCTC | dev-pdf-extractor | Earnings window check — run `get_bctc_full` |
 | C-04 | > 5 low-confidence BCTC rows | dev-pdf-extractor | OCR extraction quality issue — check pdf-extractor logs |
 | C-05 | SSC portal URLs in bctc_queue | dev-mcp-server | URL-filter bug — `bctc_skip_queue_item` for SSC URLs |
-| C-08 | Orphaned alerts (no parent signal) | dev-alert-engine | Cross-table join broken — check alert-engine signal linkage |
+| C-08 | Orphaned alerts (no parent signal) within the 2h agent_signals correlation-stub TTL — window is TTL-bound (FIX-AUDITOR-C08-UNSATISFIABLE-TTL-WINDOW-AND-ISO8601-STRCMP, 2026-08-06), so a real hit means the co-write genuinely failed, not a GC-timing artifact | dev-mcp-server | Check `alertStore.ts` storeAlerts()/storeAlertsFromCommander() co-write guard, or look for a NEW alerts writer that bypasses those functions entirely |
 | C-09 | < 8 macro indicators updated last 26h | dev-macro-indicators | `macroIndicatorRefreshJob` may have failed |
 | C-10 | > 2 failed pdf_extractions last 24h | dev-pdf-extractor | EPIPE crashes or OCR failures — check pdf-extractor logs |
 | C-12 | PRAGMA integrity_check ≠ ok | zone owner per DB | DB corruption — do NOT restart; escalate to PM immediately |

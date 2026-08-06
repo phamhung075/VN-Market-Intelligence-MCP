@@ -324,7 +324,7 @@ db.close();
 docker exec "$MCP_CTR" bun -e "
 import { Database } from 'bun:sqlite';
 const db = new Database('/app/data/market.db', {readonly: true});
-const r = db.query(\"SELECT count(*) as cnt FROM agent_signals WHERE created_at > datetime('now','-24 hours')\").get();
+const r = db.query(\"SELECT count(*) as cnt FROM agent_signals WHERE datetime(created_at) > datetime('now','-24 hours')\").get();
 console.log(r.cnt);
 db.close();
 "
@@ -641,19 +641,39 @@ Instead: emit WARN signal via `post_agent_signal` (signal_type: signal_feedback,
 send BUG-channel Telegram, mark check as INVALID-SQL in notebook, and continue to next check.
 Long-form modifiers are REQUIRED: `'-N hours'` / `'-N days'` — NEVER `'-Nh'` or `'-Nd'` (short form returns NULL in SQLite).
 
+**ISO8601 format-safety wrap + C-08 TTL rebound (FIX-AUDITOR-C08-UNSATISFIABLE-TTL-WINDOW-AND-ISO8601-STRCMP, 2026-08-06):**
+Some timestamp columns are written as a raw JS `.toISOString()` string (`"...T...Z"`), which sorts LEXICOGRAPHICALLY GREATER than SQLite's own `datetime('now', ...)` space-separated render at the very first differing byte ('T'=0x54 vs ' '=0x20) — an unwrapped `col > datetime('now', ...)` predicate then over-captures every row sharing the bound's date-part, regardless of the actual time-of-day digits that follow. `checkStaleAlerts.ts:19-30` already proved the fix (D-3/D-4) and confirmed SQLite's `datetime()` parses BOTH on-disk forms correctly — copy that pattern verbatim: wrap BOTH sides, `datetime(col) <op> datetime('now', ...)`.
+Fleet audit (measured live against `data/live/market.db` / `data/live/pdf_extractor.db`, 2026-08-06, `sum(instr(col,'T')>0)/count(*)`) of every C-xx/B-xx check comparing a timestamp column to `datetime('now', ...)`:
+
+| Column | Check(s) | T-format % | Verdict | Action |
+|---|---|---|---|---|
+| `financial_reports.parsed_at` | C-04 | 100% (257/257) | AFFECTED | wrapped |
+| `market_messages.sent_at` | C-06 (+ dup snippet above) | 0% (0/1121) — schema `DEFAULT (datetime('now'))`, no app writer overrides it | NOT affected | unchanged |
+| `agent_signals.created_at` | C-07 (+ dup snippet above) | mixed, single-digit-to-low-teens % T (app-set via JS `.toISOString()` at most insert sites, no schema default) | AFFECTED — worst case: same query silently applies two different comparison semantics across rows | wrapped |
+| `alerts.triggered_at` | C-08 | 100% (107/107) — `alertStore.ts` sets `alert.createdAt` (`.toISOString()`) | AFFECTED | wrapped + window rebound (below) |
+| `macro_indicators.fetched_at` | C-09 | 0% (0/1; n=1, `UNIQUE(country)` single row) — live writer `macroIndicatorRefreshJob.ts` uses the SQL literal `datetime('now')`; dormant writers (`push-tradingeconomics`/`push-gso` handlers, `tradingEconomics.ts` direct fetcher) use JS `.toISOString()` but are not today's source (`TRADING_ECONOMICS_API_KEY` unset) | NOT affected today — LATENT multi-writer risk noted for a future pass if the dormant writers activate; not fixed now (no live row to fix against, would be an unverifiable no-op diff) | unchanged |
+| `bctc_vps_queue.created_at` | C-16 (+ B-13 dup) | 0% (0/614) — schema `DEFAULT (datetime('now'))`, no app writer overrides it | NOT affected | unchanged |
+| `pdf_documents.extracted_at` | C-10, C-11 | 100% of populated rows (79/79 `success`-status rows; Python `.isoformat()` writer, microsecond precision) | AFFECTED | wrapped — SEPARATE pre-existing defect discovered in passing (NOT fixed here, out of this task's files/zone — pdf-extractor service): live `pdf_documents.status` values are `failed`/`processing`/`success`, never `'done'` — C-11's `status = 'done'` filter can never match any row (structural false-negative, unrelated to the ISO8601 class); C-10's `status = 'failed'` rows always have `extracted_at IS NULL` (extraction never completed), so its predicate is inert regardless of format. Flagged for a follow-up ticket. |
+| `daily_ohlcv` (C-01/C-02/C-14) | — | N/A | out of this bug class — uses `date('now', ...)` against a DATE-only column (`date`), a different SQLite function family than `datetime('now', ...)`; `daily_ohlcv.updated_at` (2% T, separately measured) is not referenced by any check | unchanged |
+
+**C-08 window bound (AC-1 — bounded to the agent_signals correlation-stub TTL, not 24h):**
+`alerts` retention is ~30 days (`checkStaleAlerts.ts` D-4, UPDATE-only, never deletes) but the `agent_signals` correlation-stub co-write in `alertStore.ts`'s `storeAlerts()`/`storeAlertsFromCommander()` carries a FIXED 2-hour TTL (`datetime(alert.createdAt, '+2 hours')`, `alertStore.ts:223`) and is hard-purged by `cleanExpired()`, invoked from exactly ONE call site (`dataAuditJob.ts:274`, the once-daily off-hours `dataAuditJob:daily` cron). A 24h alerts window is therefore mathematically unsatisfiable for `expected=0`: any alert older than the 2h TTL necessarily has an `expires_at` already in the past, and once the daily GC sweep has run since, a physically-purged row — `expected=0` could only ever hold if zero alerts fired in the entire trailing 24h.
+Fix: bound the alerts window to 2h — the SAME literal as the co-write TTL. Within this window, if the writer worked, the correlation stub CANNOT yet be expired (its own `expires_at` is `triggered_at + 2h`) and therefore cannot yet have been purged by the once-daily sweep — so any LEFT JOIN miss inside the 2h window is a genuine writer-guard failure, not a GC-timing artifact. This makes `expected=0` satisfiable by construction, independent of alert volume or GC cadence.
+**AC-6 coverage confirmation — C-08 is fixed, NOT retired:** `checkOrphanAgentSignalsAlertId` (D-NEW2) checks the INVERSE direction only (`agent_signals.alert_id` set, no matching `alerts.id` — a dangling FK). It would NOT catch a NEW alerts-writer that bypasses `storeAlerts()`/`storeAlertsFromCommander()`'s co-write entirely (that failure mode produces zero `agent_signals` rows, not a dangling FK — nothing for D-NEW2 to join against). Retiring C-08 in favor of D-NEW2 alone would therefore trade this false positive for a real coverage blind spot. Keeping C-08 (fixed, satisfiable, format-safe) preserves both write-gap directions: C-08 = alerts→missing signal, D-NEW2 = signal→missing alert.
+
 | check_id | DB | Query (run via `docker exec "$MCP_CTR" bun -e ...` — see invocation pattern above) | Pass |
 |---|---|---|---|
 | C-01 | market.db | `SELECT count(DISTINCT code) FROM daily_ohlcv WHERE date >= date('now',<WINDOW>)` — use `<WINDOW>` = `'-3 day'` on Sat/Sun, `'-1 day'` Mon–Fri | ≥ 25 |
 | C-02 | market.db | `SELECT count(*) FROM daily_ohlcv WHERE date >= date('now',<WINDOW>)` — same weekend window as C-01 | > 0 |
 | C-03 | market.db | `SELECT count(DISTINCT action_code) FROM financial_reports WHERE period_year=2026 AND period_quarter=1` | ≥ 26 (in Q1 window Apr–May) |
-| C-04 | market.db | `SELECT count(*) FROM financial_reports WHERE parsed_at > datetime('now','-7 days') AND extraction_confidence < 0.2` | ≤ 5 |
+| C-04 | market.db | `SELECT count(*) FROM financial_reports WHERE datetime(parsed_at) > datetime('now','-7 days') AND extraction_confidence < 0.2` | ≤ 5 |
 | C-05 | market.db | `SELECT count(*) FROM bctc_vps_queue WHERE source_url LIKE '%ssc.gov.vn%' AND status != 'skipped'` | 0 |
 | C-06 | market.db | `SELECT count(*) FROM market_messages WHERE sent_at > datetime('now','-3 hours')` | > 0 |
-| C-07 | market.db | `SELECT count(*) FROM agent_signals WHERE created_at > datetime('now','-24 hours')` | > 0 |
-| C-08 | market.db | `SELECT count(*) FROM alerts a LEFT JOIN agent_signals s ON a.id = s.alert_id WHERE s.id IS NULL AND a.triggered_at > datetime('now','-24 hours')` | 0 |
+| C-07 | market.db | `SELECT count(*) FROM agent_signals WHERE datetime(created_at) > datetime('now','-24 hours')` | > 0 |
+| C-08 | market.db | `SELECT count(*) FROM alerts a LEFT JOIN agent_signals s ON a.id = s.alert_id WHERE s.id IS NULL AND datetime(a.triggered_at) > datetime('now','-2 hours')` | 0 — window bound to the agent_signals correlation-stub TTL (2h), NOT 24h; see "C-08 window bound" rationale above table (AC-1) |
 | C-09 | market.db | `SELECT (CASE WHEN cpi IS NOT NULL THEN 1 ELSE 0 END + CASE WHEN gdp_growth IS NOT NULL THEN 1 ELSE 0 END + CASE WHEN interest_rate IS NOT NULL THEN 1 ELSE 0 END + CASE WHEN unemployment_rate IS NOT NULL THEN 1 ELSE 0 END + CASE WHEN inflation_rate IS NOT NULL THEN 1 ELSE 0 END + CASE WHEN trade_balance IS NOT NULL THEN 1 ELSE 0 END + CASE WHEN current_account IS NOT NULL THEN 1 ELSE 0 END + CASE WHEN government_debt IS NOT NULL THEN 1 ELSE 0 END + CASE WHEN budget_deficit IS NOT NULL THEN 1 ELSE 0 END + CASE WHEN manufacturing_pmi IS NOT NULL THEN 1 ELSE 0 END + CASE WHEN consumer_confidence IS NOT NULL THEN 1 ELSE 0 END + CASE WHEN retail_sales IS NOT NULL THEN 1 ELSE 0 END) as indicator_count FROM macro_indicators WHERE country='vietnam' AND fetched_at > datetime('now','-26 hours')` — NOTE: macro_indicators is country-keyed (UNIQUE(country)); ≥8 threshold was from old indicator-row design (a95c514a schema mismatch). Current active fetcher (TradingEconomics VPS, no API key required) writes cpi+gdp_growth+interest_rate. Threshold = 3 until TRADING_ECONOMICS_API_KEY wires all 12 cols. | ≥ 3 |
-| C-10 | pdf_extractor.db | `SELECT count(*) FROM pdf_documents WHERE status = 'failed' AND extracted_at > datetime('now','-24 hours')` | ≤ 2 |
-| C-11 | pdf_extractor.db | `SELECT count(*) FROM pdf_documents WHERE status = 'done' AND extracted_at > datetime('now','-48 hours')` | > 0 (earnings window) |
+| C-10 | pdf_extractor.db | `SELECT count(*) FROM pdf_documents WHERE status = 'failed' AND datetime(extracted_at) > datetime('now','-24 hours')` | ≤ 2 |
+| C-11 | pdf_extractor.db | `SELECT count(*) FROM pdf_documents WHERE status = 'done' AND datetime(extracted_at) > datetime('now','-48 hours')` | > 0 (earnings window) |
 | C-12 | all non-empty DBs | `PRAGMA integrity_check` — skip DBs with 0-byte file (alert_engine.db, stock_price.db when empty) | `ok` |
 | C-13 | container /app/data | via bun `statSync('/app/data/market.db-wal')` etc inside `docker exec "$MCP_CTR" bun -e ...` — check each WAL size | < 52428800 bytes (50MB) each |
 | C-14 | market.db | top-3 `code` row share of `daily_ohlcv` using same `<WINDOW>` as C-01: `WITH t AS (SELECT code,count(*) c FROM daily_ohlcv WHERE date>=date('now',<WINDOW>) GROUP BY code ORDER BY c DESC LIMIT 3) SELECT round(100.0*sum(c)/(SELECT count(*) FROM daily_ohlcv WHERE date>=date('now',<WINDOW>)),1) FROM t` — skip (NULL result) if C-01 returns 0 (no data in window) | < 60% |

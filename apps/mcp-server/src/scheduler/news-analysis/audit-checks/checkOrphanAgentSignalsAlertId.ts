@@ -16,6 +16,17 @@
  * by cleanExpired(), so any historical debt self-expires; a non-zero count
  * here means the writer guard was bypassed or a NEW writer was added
  * elsewhere without routing through storeAlerts).
+ *
+ * FIX-AUDITOR-C08-UNSATISFIABLE-TTL-WINDOW-AND-ISO8601-STRCMP (2026-08-06,
+ * AC-6): this check does NOT substitute for C-08 (system-auditor flow doc) —
+ * it covers the INVERSE direction only (agent_signals.alert_id set, no
+ * matching alerts row). A writer that skips the alertStore.ts co-write
+ * entirely (bypasses storeAlerts()/storeAlertsFromCommander()) produces zero
+ * agent_signals rows, not a dangling FK, so it is invisible to this check —
+ * C-08 (alerts row exists, correlation row missing) is what catches that
+ * failure mode. C-08 was fixed (TTL-bound 2h window + datetime() wrap), not
+ * retired, specifically so the two checks keep covering both write-gap
+ * directions together.
  */
 
 import { Database } from "bun:sqlite";
