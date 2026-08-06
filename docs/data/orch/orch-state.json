@@ -2,7 +2,12 @@
   "dashboard_section_cache": {
     "section_name": "po",
     "last_mtime": 1786024561.797975,
-    "last_linecount": 188
+    "last_linecount": 188,
+    "po": {
+      "section_name": "po",
+      "last_mtime": 1786038806,
+      "last_linecount": 198
+    }
   },
   "decision_journal": [
     {
@@ -128,8 +133,8 @@
     "does_not_consume_wip": true
   },
   "signal_queue": {
-    "_updated_at": "2026-08-06T16:33:03Z",
-    "_updated_by": "cowork-team",
+    "_updated_at": "2026-08-06T17:54:36Z",
+    "_updated_by": "dev-team",
     "archive": [],
     "rows": [
       {
