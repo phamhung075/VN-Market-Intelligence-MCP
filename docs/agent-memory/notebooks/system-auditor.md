@@ -1,3 +1,41 @@
+## c51 · 2026-08-06T07:54:02Z
+
+### Audit Run Tier-1 (07:10 UTC trigger → 07:48-07:53Z extended probe FIRE_TASK_ID: cron:auditor-t1:2026-08-06T07:10Z)
+- Trigger: auditor-tier1-probe.sh verdict=FAILURE — rag-service mem_creep 96.50% (prior c49 at 07:16Z)
+- Tier: 1 | Services: 13/13 up, health 5/5 OK, restart 0 ✓
+- Anomalies: 1 reconfirmed (1 warn via dedup) | Status: DEGRADED
+
+**Container Status (A-01–A-11):** All 13 host_runtime_set UP ✓
+- mcp-server: RestartCount=0
+- rag-service: up 13h from 2026-08-05T18:12:13Z, RestartCount=1 (no new crash)
+
+**Health Endpoints (A-12–A-20):** All 5 endpoints OK ✓
+- A-20 multi-probe pdf-extractor: 3/3 pass ✓
+
+**Memory Pressure (A-30) — Extended Multi-Probe:**
+- mcp-server: baseline ~34% < 85% investigate-gate, A-30 SKIP ✓
+- rag-service: extended probe 07:48-07:53Z (FIRE_TASK_ID window)
+  - 12 samples over ~5 min (25s intervals)
+  - **Memory band: 96.66% sustained** (all 12 samples: 96.66%, exactly flat)
+  - Reclamation dips: **0 detected** (vs c47's 1 dip benign GC sawtooth)
+  - OOMKilled: false
+  - Memory usage: 742.4MiB / 768MiB (25.6 MiB free, below 40 MiB safety floor)
+  - Verdict: **ESCALATE → WARN severity** (A-30 override §4 line 185: >93% sustained + zero reclamation dips → WARN)
+  - Distinction: **Different from c47/c49** — sustained flat vs oscillating; loss of GC behavior (may indicate load shift or GC efficiency change)
+  - Signal: A-30 WARN sys-20260806T075345-3802 (dedup_key: microservice_degraded:rag-service:A-30)
+  - **Dedup result: SKIP-dedup** — same dedup_key active since c49 (07:15:51Z), 7d window still open
+
+**Disk (A-32):** / at 51% < 85% ✓
+
+**Restart Count (A-21):** crashRestarts=0 ✓
+
+**RAW-PROBE:** (standard Tier-1 probe at start of cycle — all OK except rag-service flagged above)
+
+**Context:** A-30 discriminator correctly distinguishes c47's benign GC sawtooth (1 reclamation dip) from c49/c51's sustained flat memory (zero dips). Trigger instructed re-probe to confirm FRESH reading; extended probe 07:48-07:53Z confirms sustained pattern, not a transient spike. Memory is statically high without GC relief cycles. Known residual FU-RAG-DEPLOY-MEMORY continues; no remediation proposed by auditor (policy: detection only, no docker restart).
+
+[OUTPUT-CONTRACT] signals_posted=1 | telegram_sent=0 | signal_queue_rows_written=1 | dashboard_rows=0 | dedup_skipped=1
+CONTRACT-CONTRADICTION: NONE
+
 ## c50 · 2026-08-06T07:41:04Z
 
 ### Audit Run Tier-1 (07:41 UTC 2026-08-06)
