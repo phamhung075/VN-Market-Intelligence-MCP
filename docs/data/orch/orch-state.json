@@ -2114,9 +2114,12 @@
         "type": "signal_feedback",
         "summary": "A-30 WARN: mcp-server memory sustained >93% with no reclamation dips (94.50% max, 65s window)",
         "severity": "WARN",
-        "status": "READ",
+        "status": "triaged",
         "payload_ref": null,
-        "provenance": "detector"
+        "provenance": "detector",
+        "triaged_at": "2026-08-06T09:04:53Z",
+        "triaged_by": "po/triage-20260806T0849Z",
+        "triage_note": "mcp-server (NOT rag-service) A-30 94.50%. Covered by FIX-MCP-MEMORY-CODE-LEAK (review[]) whose AC is unrunnable until OPS-MCPSERVER-REBUILD-STALE-IMAGE-PREDATES-MEMLEAK-FIX (P1/ops, dispatched 08:37Z tick) rebuilds the image — it predates fix commit 609f62800 by 5 days, so the code under test has never executed."
       },
       {
         "id": "sys-20260805T100834-7723",
@@ -2126,10 +2129,13 @@
         "type": "signal_feedback",
         "summary": "rag-service-1 A-30 WARN: memory 96.91% sustained with no reclamation dips (23.7MiB free — BELOW 40MiB floor)",
         "severity": "WARN",
-        "status": "READ",
+        "status": "triaged",
         "payload_ref": null,
         "provenance": "detector",
-        "audit_cycle_tag": "cron:auditor-t1:2026-08-05T10:00Z"
+        "audit_cycle_tag": "cron:auditor-t1:2026-08-05T10:00Z",
+        "triaged_at": "2026-08-06T09:04:53Z",
+        "triaged_by": "po/triage-20260806T0849Z",
+        "triage_note": "A-30 rag-service memory series — dispositioned by FU-RAG-DEPLOY-MEMORY (ready/P1/architect, dispatched 2026-08-06T08:37Z tick) on the first confirmed OOM kill (docker events: container oom 08:17:28.68Z, die exitCode=137, RestartCount 1->2). CORRECTION to the 08:24Z ruling, which stated 'every prior fire was WARN-level': sys-20260805T163415-6b8c was CRITICAL 98.05% (15MiB free, below-floor) at 2026-08-05T16:34Z, ~16h before the kill. The ruling stands (no kill occurred until today, so the promote trigger is unchanged) but the escalation to CRITICAL was NOT first-seen today."
       },
       {
         "id": "cj-20260805T103243Z",
@@ -2185,10 +2191,13 @@
         "type": "microservice_degraded",
         "summary": "rag-service memory pressure 95.05% (A-30)",
         "severity": "WARN",
-        "status": "READ",
+        "status": "triaged",
         "payload_ref": null,
         "provenance": "detector",
-        "audit_cycle_tag": "cron:auditor-t1:2026-08-05T11:00Z"
+        "audit_cycle_tag": "cron:auditor-t1:2026-08-05T11:00Z",
+        "triaged_at": "2026-08-06T09:04:53Z",
+        "triaged_by": "po/triage-20260806T0849Z",
+        "triage_note": "A-30 rag-service memory series — dispositioned by FU-RAG-DEPLOY-MEMORY (ready/P1/architect, dispatched 2026-08-06T08:37Z tick) on the first confirmed OOM kill (docker events: container oom 08:17:28.68Z, die exitCode=137, RestartCount 1->2). CORRECTION to the 08:24Z ruling, which stated 'every prior fire was WARN-level': sys-20260805T163415-6b8c was CRITICAL 98.05% (15MiB free, below-floor) at 2026-08-05T16:34Z, ~16h before the kill. The ruling stands (no kill occurred until today, so the promote trigger is unchanged) but the escalation to CRITICAL was NOT first-seen today."
       },
       {
         "id": "sys-20260805T114039-2c07",
@@ -2198,10 +2207,13 @@
         "type": "signal_feedback",
         "summary": "rag-service A-30: memory 97.81% (16.8MiB free, below 40MiB floor)",
         "severity": "WARN",
-        "status": "READ",
+        "status": "triaged",
         "payload_ref": null,
         "provenance": "detector",
-        "audit_cycle_tag": null
+        "audit_cycle_tag": null,
+        "triaged_at": "2026-08-06T09:04:53Z",
+        "triaged_by": "po/triage-20260806T0849Z",
+        "triage_note": "A-30 rag-service memory series — dispositioned by FU-RAG-DEPLOY-MEMORY (ready/P1/architect, dispatched 2026-08-06T08:37Z tick) on the first confirmed OOM kill (docker events: container oom 08:17:28.68Z, die exitCode=137, RestartCount 1->2). CORRECTION to the 08:24Z ruling, which stated 'every prior fire was WARN-level': sys-20260805T163415-6b8c was CRITICAL 98.05% (15MiB free, below-floor) at 2026-08-05T16:34Z, ~16h before the kill. The ruling stands (no kill occurred until today, so the promote trigger is unchanged) but the escalation to CRITICAL was NOT first-seen today."
       },
       {
         "id": "sys-20260805T121137-606d",
@@ -2211,10 +2223,13 @@
         "type": "signal_feedback",
         "summary": "A-30 WARN: rag-service memory 92.07% (above 85% threshold, recurring)",
         "severity": "WARN",
-        "status": "READ",
+        "status": "triaged",
         "payload_ref": null,
         "provenance": "detector",
-        "audit_cycle_tag": "cron:auditor-t1:2026-08-05T12:00Z"
+        "audit_cycle_tag": "cron:auditor-t1:2026-08-05T12:00Z",
+        "triaged_at": "2026-08-06T09:04:53Z",
+        "triaged_by": "po/triage-20260806T0849Z",
+        "triage_note": "A-30 rag-service memory series — dispositioned by FU-RAG-DEPLOY-MEMORY (ready/P1/architect, dispatched 2026-08-06T08:37Z tick) on the first confirmed OOM kill (docker events: container oom 08:17:28.68Z, die exitCode=137, RestartCount 1->2). CORRECTION to the 08:24Z ruling, which stated 'every prior fire was WARN-level': sys-20260805T163415-6b8c was CRITICAL 98.05% (15MiB free, below-floor) at 2026-08-05T16:34Z, ~16h before the kill. The ruling stands (no kill occurred until today, so the promote trigger is unchanged) but the escalation to CRITICAL was NOT first-seen today."
       },
       {
         "id": "sys-20260805T130258-af01",
@@ -2224,9 +2239,12 @@
         "type": "system-issue",
         "summary": "semble-search init.md fails compliance checks #1/#3 (fail-loud-protocol, boundary_rules) — architecturally a Task-tool utility wrapper, not Cowork/Dev-Team; guide has no carve-out",
         "severity": "LOW",
-        "status": "READ",
+        "status": "triaged",
         "payload_ref": null,
-        "note": "Relayed by router — agent-father lacks mcp__gateway__call_tool in its own tool grant (confirmed against agent roster) so could not write this to signal_queue itself; full finding in docs/agent-memory/notebooks/agent-father.md commit 61f0a22de. Decision needed: bring semble-search into full lifecycle compliance vs. document an explicit utility/tool-wrapper exception class in docs/AGENT_CREATION_GUIDE.md."
+        "note": "Relayed by router — agent-father lacks mcp__gateway__call_tool in its own tool grant (confirmed against agent roster) so could not write this to signal_queue itself; full finding in docs/agent-memory/notebooks/agent-father.md commit 61f0a22de. Decision needed: bring semble-search into full lifecycle compliance vs. document an explicit utility/tool-wrapper exception class in docs/AGENT_CREATION_GUIDE.md.",
+        "triaged_at": "2026-08-06T09:04:53Z",
+        "triaged_by": "po/triage-20260806T0849Z",
+        "triage_note": "LOW, no row. semble-search init.md fails compliance checks #1/#3 (fail-loud-protocol, boundary_rules). The signal itself supplies the correct disposition: semble-search is architecturally a Task-tool utility wrapper, not a Cowork/Dev-Team agent, so those two checks do not apply to it — the defect is the compliance guide having no carve-out for the wrapper class, not the file. Folding rather than minting: a guide carve-out is agent-father zone and a single LOW fire does not justify a row. Re-raise if a 2nd wrapper-class agent trips the same two checks, which would make it a guide-scope defect rather than a one-off."
       },
       {
         "id": "sys-20260805T143448-6948",
@@ -2236,10 +2254,13 @@
         "type": "signal_feedback",
         "summary": "pdf-extractor A-30 memory pressure — 89-96% (no reclamation, rapid growth)",
         "severity": "WARN",
-        "status": "READ",
+        "status": "triaged",
         "payload_ref": null,
         "provenance": "detector",
-        "audit_cycle_tag": null
+        "audit_cycle_tag": null,
+        "triaged_at": "2026-08-06T09:04:53Z",
+        "triaged_by": "po/triage-20260806T0849Z",
+        "triage_note": "pdf-extractor (a THIRD service, distinct from the rag-service and mcp-server series it was filed alongside) A-30 89-96% with rapid growth. Already owned by FIX-PDFX-PARENT-PROCESS-MEMORY-BURST-HEADROOM (backlog/P1 — uvicorn PARENT PID 1, not tesseract concurrency which is already fixed). No new row. Severity-labelling of this same service is separately tracked by FIX-AUDITOR-EMIT-SEVERITY-LABEL-FLAT-ESCALATION-BYPASS-NEVER-FIRES."
       },
       {
         "id": "sys-20260805T161834-0151",
@@ -2249,10 +2270,13 @@
         "type": "signal_feedback",
         "summary": "rag-service A-30 memory pressure 95.77% — no reclamation dip, loss of reclamation",
         "severity": "WARN",
-        "status": "READ",
+        "status": "triaged",
         "payload_ref": null,
         "provenance": "detector",
-        "audit_cycle_tag": "cron:auditor-t1:2026-08-05T16:00Z"
+        "audit_cycle_tag": "cron:auditor-t1:2026-08-05T16:00Z",
+        "triaged_at": "2026-08-06T09:04:53Z",
+        "triaged_by": "po/triage-20260806T0849Z",
+        "triage_note": "A-30 rag-service memory series — dispositioned by FU-RAG-DEPLOY-MEMORY (ready/P1/architect, dispatched 2026-08-06T08:37Z tick) on the first confirmed OOM kill (docker events: container oom 08:17:28.68Z, die exitCode=137, RestartCount 1->2). CORRECTION to the 08:24Z ruling, which stated 'every prior fire was WARN-level': sys-20260805T163415-6b8c was CRITICAL 98.05% (15MiB free, below-floor) at 2026-08-05T16:34Z, ~16h before the kill. The ruling stands (no kill occurred until today, so the promote trigger is unchanged) but the escalation to CRITICAL was NOT first-seen today."
       },
       {
         "id": "sys-20260805T163415-6b8c",
@@ -2262,10 +2286,13 @@
         "type": "signal_feedback",
         "summary": "A-30 CRITICAL: rag-service memory 98.05% (15MiB free, below-floor)",
         "severity": "CRITICAL",
-        "status": "READ",
+        "status": "triaged",
         "payload_ref": null,
         "provenance": "detector",
-        "audit_cycle_tag": "cron:auditor-t1:2026-08-05T16:30Z"
+        "audit_cycle_tag": "cron:auditor-t1:2026-08-05T16:30Z",
+        "triaged_at": "2026-08-06T09:04:53Z",
+        "triaged_by": "po/triage-20260806T0849Z",
+        "triage_note": "A-30 rag-service memory series — dispositioned by FU-RAG-DEPLOY-MEMORY (ready/P1/architect, dispatched 2026-08-06T08:37Z tick) on the first confirmed OOM kill (docker events: container oom 08:17:28.68Z, die exitCode=137, RestartCount 1->2). CORRECTION to the 08:24Z ruling, which stated 'every prior fire was WARN-level': sys-20260805T163415-6b8c was CRITICAL 98.05% (15MiB free, below-floor) at 2026-08-05T16:34Z, ~16h before the kill. The ruling stands (no kill occurred until today, so the promote trigger is unchanged) but the escalation to CRITICAL was NOT first-seen today."
       },
       {
         "id": "sys-20260805T164347-372c",
@@ -2275,10 +2302,13 @@
         "type": "signal_feedback",
         "summary": "rag-service A-30 memory pressure 95.74–96.55% — sustained high with no reclamation dips",
         "severity": "WARN",
-        "status": "READ",
+        "status": "triaged",
         "payload_ref": null,
         "provenance": "detector",
-        "audit_cycle_tag": "cron:auditor-t1:2026-08-05T16:30Z"
+        "audit_cycle_tag": "cron:auditor-t1:2026-08-05T16:30Z",
+        "triaged_at": "2026-08-06T09:04:53Z",
+        "triaged_by": "po/triage-20260806T0849Z",
+        "triage_note": "A-30 rag-service memory series — dispositioned by FU-RAG-DEPLOY-MEMORY (ready/P1/architect, dispatched 2026-08-06T08:37Z tick) on the first confirmed OOM kill (docker events: container oom 08:17:28.68Z, die exitCode=137, RestartCount 1->2). CORRECTION to the 08:24Z ruling, which stated 'every prior fire was WARN-level': sys-20260805T163415-6b8c was CRITICAL 98.05% (15MiB free, below-floor) at 2026-08-05T16:34Z, ~16h before the kill. The ruling stands (no kill occurred until today, so the promote trigger is unchanged) but the escalation to CRITICAL was NOT first-seen today."
       },
       {
         "id": "cowork-20260806T063614Z-chef-evening-marker-leak",
@@ -2538,10 +2568,13 @@
         "type": "signal_feedback",
         "summary": "A-30 WARN: rag-service sustained 96.66% memory, zero GC reclamation dips",
         "severity": "WARN",
-        "status": "READ",
+        "status": "triaged",
         "payload_ref": null,
         "provenance": "detector",
-        "audit_cycle_tag": "cron:auditor-t1:2026-08-06T07:10Z"
+        "audit_cycle_tag": "cron:auditor-t1:2026-08-06T07:10Z",
+        "triaged_at": "2026-08-06T09:04:53Z",
+        "triaged_by": "po/triage-20260806T0849Z",
+        "triage_note": "A-30 rag-service memory series — dispositioned by FU-RAG-DEPLOY-MEMORY (ready/P1/architect, dispatched 2026-08-06T08:37Z tick) on the first confirmed OOM kill (docker events: container oom 08:17:28.68Z, die exitCode=137, RestartCount 1->2). CORRECTION to the 08:24Z ruling, which stated 'every prior fire was WARN-level': sys-20260805T163415-6b8c was CRITICAL 98.05% (15MiB free, below-floor) at 2026-08-05T16:34Z, ~16h before the kill. The ruling stands (no kill occurred until today, so the promote trigger is unchanged) but the escalation to CRITICAL was NOT first-seen today."
       },
       {
         "id": "sys-20260806T081141-4071",
@@ -14434,8 +14467,8 @@
         "type": "INFRA",
         "zone": "ops/infra",
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#FU-RAG-DEPLOY-MEMORY",
-        "updated_at": "2026-08-06T08:28:29Z",
-        "updated_by": "po/triage-2026-08-06T08:24:43Z session 24817246-8a3f-4511-95f7-1b4385797bee",
+        "updated_at": "2026-08-06T09:04:56Z",
+        "updated_by": "architect/2026-08-06-po-triage",
         "po_measured_input_20260729": "DECISION INPUT for the resident-set trade, measured 2026-07-29T10:25Z, no action requested. rag-service warm RSS is 749.9 MiB against a 768 MiB cap = 97.65%, leaving 18.1 MiB of headroom, and it reaches that after a SINGLE embed because the sentence-transformers model is a lazy singleton with NO release path (apps/rag-service/infrastructure/embedder.py:37/:51 — grep for unload|.release(|del self._model|gc.collect|empty_cache finds nothing). So 768m is not a budget the service lives inside; it is a budget the service fully consumes at idle-warm. The 768m came from 2dc1d8c4e (Wed Jun 10 2026, -memory:1.5g/+memory:768m) which was a legitimate response to the 16GB host panic — a blind revert is NOT available and that trade is exactly what this row owns. Note the coupling: RAG-FTS-BUILD-MEMORY-BOUND is time-gated until the corpus reaches ~56k rows (projected ~2026-08-16) and its AC1 requires an FTS rebuild to stay under this same cap; if the cap decision lands first it changes that AC's target.",
         "po_ack_retarget_20260729T1126": "THIS ROW IS NOW THE tracked_by FOR THE rag-service MEMORY ACK (docs/data/auditor-launchd-ack.json .acked_memory[0]), re-pointed from RAG-FTS-BUILD-MEMORY-BOUND by PO 2026-07-29T11:26Z. Rationale: the ACK suppresses a MEMORY breach, so its tracked_by must be the row whose completion would actually clear that breach. RAG-FTS-BUILD-MEMORY-BOUND bounds an FTS rebuild that is not running and is not the driver (see its po_ack_scope_correction_20260729T1126); FIX-RAG-SERVICE-CLEAN-EXIT-RESTART-LOOP explicitly disclaims closing it (its AC6: 'Does NOT claim to close the restart loop... the residual belongs to FU-RAG-DEPLOY-MEMORY'). That leaves this row. CONSEQUENCE YOU SHOULD KNOW ABOUT, not a new obligation: while this row is open, Tier-1's memory check does not fire on rag-service. TWO THINGS DO NOT CHANGE. (1) No status/priority change is made here — this is an INFRA row owning a user-gated 16GB host trade and PO is not self-approving a cap change. (2) The re-point is DOCUMENTARY ONLY at the code level: scripts/agents-flow/auditor-tier1-probe.sh:275 reads ONLY `.acked_memory[].container` and never reads tracked_by, so no probe behaviour changes today in either direction. Making tracked_by load-bearing is FIX-AUDITOR-MEMACK-HEADROOM-FLOOR-AND-DEAD-TRACKEDBY (minted this tick, P1). FRESH MEASUREMENT for the resident-set trade, 2026-07-29T11:19Z: 745.8 MiB / 768 MiB = 97.11%, 22.2 MiB absolute headroom, CPU 0.13% at rest, RestartCount 22, StartedAt 2026-07-29T10:12:01Z, OOMKilled=false ExitCode=0. Consistent with the 749.9 MiB @10:25Z already on this row (memory is flat-to-slightly-down under ~199 index writes, i.e. a fixed baseline, not a leak).",
         "po_dataset_exceeds_cap_20260729T1140": "DECISION INPUT for the resident-set trade, measured 2026-07-29T11:40Z, no action requested — but this one materially changes the shape of the trade, so read it before sizing anything. THE ON-DISK DATASET IS ALREADY LARGER THAN THE MEMORY CAP: data/live/lancedb = 785 MiB versus a 768 MiB cgroup limit (rag_entries.lance/data 596 MiB / 3137 fragments, _indices 145 MiB / 745 files, _versions 32 MiB, _transactions 12 MiB). Combined with the fixed ~700 MiB embedder singleton already recorded on this row at po_measured_input_20260729, the cap is being asked to hold a fixed model baseline AND the working set of a corpus that already exceeds the whole limit on its own, while the corpus grows ~103 rows/h and RAG-FTS-BUILD-MEMORY-BOUND is time-gated until it reaches ~56254 rows (~5x today). SO THE QUESTION THIS ROW OWNS IS NOT ONLY how many MiB to grant. A cap chosen to fit today loses the same argument again in weeks, because two of the three consumers grow without bound. The options worth costing are at least: (a) raise the cap against the 16GB host budget this row already owns, (b) shrink the fixed baseline (a model release path — embedder.py has none, which is the finding on FIX-RAG-SERVICE-CLEAN-EXIT-RESTART-LOOP, or a smaller/quantised model), (c) shrink the dataset footprint so the working set is bounded (compaction and version retention — FIX-RAG-COMPACTION-DISK-AMPLIFICATION, raised to P2 this tick on this evidence). NOT ESTABLISHED, and it gates option (a): whether the charged memory is reclaimable file-backed cache or anonymous allocation. Nobody has read the container cgroup memory.stat anon/file split — see the same caveat on the CLEAN-EXIT row. If it is mostly file cache then raising the cap buys throughput, not safety, and the real fix is (b) or (c); if it is anonymous then (a) is genuinely load-bearing. Do not size a cap change before that split is measured. PO is NOT authorising a cap change or a rebuild — user-gated infra.",
@@ -14443,10 +14476,11 @@
         "po_usergate_language_RETIRED_20260805T1630": "PO RULING, po triage 2026-08-05T16:30:13Z - THE 'user-gated infra' LANGUAGE ON THIS ROW IS RETIRED AND MUST NOT BE RE-ASSERTED. Three fields on this row (po_ack_retarget_20260729T1126, po_dataset_exceeds_cap_20260729T1140, po_GATE_DISCHARGED_anon_dominant_20260729T1148) each state some variant of 'STILL NOT AUTHORISED BY PO: the cap change itself and any rebuild - user-gated infra'. All three predate the PERMANENT user directive of 2026-08-01 (memory feedback_po_deploy_rebuild_full_autonomy_no_user_gate, verbatim: 'PO can demande ops rebuild container if need, no need ask or wait user, full autonome and permission for PO'), which is unconditional and explicitly retires the phrases 'user-gated' / 'PO cannot authorize' / 'recommend router surface to user' from board rows and notebooks. That directive was itself issued as a correction to PO's own PDF-AVAIL-02-FIX narrative, which cost 7 days of pure signal spam on an already-committed fix. This row was reproducing the identical belief. WHAT DOES *NOT* CHANGE: (1) the resident-set/cap-sizing trade this row owns is still a genuine ARCHITECT decision on a real 16GB host budget - retiring the user-gate is not PO approving a specific cap number, and a blind revert to 1.5g still does not respect the 2026-06-10 host panic that produced 2dc1d8c4e; (2) peer-safety guardrails are untouched - single-service 'docker compose build <svc> && docker compose up -d --no-deps <svc>' only, never down/stop/kill/rm/--force-recreate (feedback_preserve_multi_container_microservice_architecture); (3) a real tool-layer permission DENIAL is still a real, recorded blocker - it is just never to be assumed in advance. WHAT CHANGES: this row no longer blocks on a user gate. Its remaining blocker is the architect sizing decision, which is dispatchable now - the measurement gate it was waiting on was already discharged 2026-07-29T11:48Z (anon ~95%, ~726 MiB process-resident on a 768 MiB cap, so option (a) raise-the-cap is load-bearing and option (c) dataset shrink is demoted as a memory remedy).",
         "router_verified_headroom_20260805T1735": "system-auditor Tier-1 cycle 2026-08-05T17:31:46Z (relayed by router -- agent's own claimed board/notebook writes for this cycle never actually landed, 2nd instance this session of an agent claiming a persisted write that did not happen; underlying verification itself is genuine and independently corroborated by router's own direct docker check ~17:31Z, both readings agree). CONFIRMED via docker inspect/stats/logs: RestartCount=0 (no restart-loop recurrence, deploy fix from FIX-RAG-SERVICE-CLEAN-EXIT-RESTART-LOOP holding), zero optimize/error/crash signatures in 30min of logs, OOMKilled=false, /health 200. This IS the known residual (~700MiB embedder singleton baseline in a 768MiB cap), not the fixed bug returning. NEW DATA POINT, more urgent than the row's own prior framing: memory measured at 764.7MiB/768MiB (99.57%), headroom down to ~3.3MiB -- compare to the 22.2MiB headroom measured 2026-07-29. Margin has shrunk roughly 7x and is now razor-thin: the row's own prior note says peak compaction burst historically needed ~20MiB of headroom to land safely -- 3.3MiB is well below that. Sizing decision (raise the 768MiB cap, or reduce the fixed baseline via a smaller/quantized embedder model or a release path) is now urgent, not just a scheduling nicety.",
         "priority": "P1",
-        "next_agent": "architect",
+        "next_agent": "developer",
         "owner": "po",
         "po_ESCALATION_first_confirmed_oomkill_20260806T0824": "STATE CHANGE ON THIS ROW: the predicted failure has MATERIALISED. Promoted backlog -> ready[], P1, next_agent=architect. Until today every A-30 fire on this row (auditor cycles c47/c49/c50/c51/c52) was WARN-level oscillation or sustained-flat with OOMKilled=false and NO kill -- which is why the correct disposition each time was observation, and why re-minting was refused as FP churn (feedback_auditor_mcpserver_a21_a30_memory_fp_reemit_churn). THAT PREMISE IS NOW DEAD. CORROBORATED CRASH, router RAW-verified against live `docker events` for vn-market-intelligence-mcp-rag-service-1 in the 08:16-08:19Z window: 08:17:28.68Z `container oom`; 08:17:30.29Z `container die` exitCode=137 (SIGKILL, OOM signature); 08:17:30.93Z `container start` (Docker restart policy auto-recovered); 08:17:36Z embedding model reloaded, health_status:healthy. RestartCount 1 -> 2 -- the FIRST new restart in ~14h (previous was 2026-08-05T18:12:13Z). Memory was already back to 95.09% (730.3MiB/768MiB) post-restart, i.e. the restart buys minutes, not a fix. THREE THINGS THIS CHANGES. (1) 'detection-only, no remediation needed yet' is no longer available as a disposition -- it has now killed the container twice (18:12:13Z yesterday + 08:17:30Z today), not zero times. (2) The auditor's own signal text and DASHBOARD row for sys-20260806T081622-11ba still say the OOM is 'likely'/'imminent'; they are STALE -- the kill had already completed and auto-recovered before this triage ran. Do not re-derive urgency from the auditor's wording, use the docker events above. (3) Nothing about the SIZING analysis already on this row is invalidated -- po_GATE_DISCHARGED_anon_dominant_20260729T1148 stands (anon ~95%, ~726 MiB process-resident against a 768 MiB cap, so option (a) raise-the-cap is load-bearing and option (c) dataset shrink is demoted as a memory remedy). WHAT ARCHITECT OWES: pick between (a) raise the 768m cap against the 16GB host budget this row owns -- and say what it is cut FROM, because 2dc1d8c4e (2026-06-10) cut it to 768m in answer to a REAL host panic and a blind revert to 1.5g does not respect that -- or (b) shrink the fixed baseline (embedder release path, or a smaller/quantised model; apps/rag-service/infrastructure/embedder.py:37/:51 has no unload path at all). The measurement gate was discharged 2026-07-29T11:48Z; there is nothing left to measure before deciding. NO USER GATE: retired on this row 2026-08-05T16:30Z, see po_usergate_language_RETIRED_20260805T1630 -- do not re-assert it.",
-        "po_related_detector_defect_20260806T0824": "SEPARATE, do not merge into the sizing decision: `verify-a30-mcp-memory-reclamation.sh`'s dip-counter scored the mcp-server crash-cliff (a restart-to-near-zero) as a GC reclamation dip and produced a stale FOLD -- a crash and a reclamation are indistinguishable to it, so the discriminator inverts on exactly the event it exists to catch (feedback_a30_discriminator_crash_cliff_misscored_as_reclamation_dip). Same script now governs the rag-service readings on this row, so its verdicts here inherit the same doubt. Named for cross-reference only; this row does not own the fix."
+        "po_related_detector_defect_20260806T0824": "SEPARATE, do not merge into the sizing decision: `verify-a30-mcp-memory-reclamation.sh`'s dip-counter scored the mcp-server crash-cliff (a restart-to-near-zero) as a GC reclamation dip and produced a stale FOLD -- a crash and a reclamation are indistinguishable to it, so the discriminator inverts on exactly the event it exists to catch (feedback_a30_discriminator_crash_cliff_misscored_as_reclamation_dip). Same script now governs the rag-service readings on this row, so its verdicts here inherit the same doubt. Named for cross-reference only; this row does not own the fix.",
+        "architect_review_note": "2026-08-06T09:03Z architect (design brief, no code/container action). Brief: docs/architecture-briefs/2026-08-06-rag-service-memory-sizing-remediation.md. Measurement gate already discharged 2026-07-29T11:48Z (anon~95%) -- nothing left to measure, this is the remediation. DECISION: raise docker-compose.yml rag-service deploy.resources.limits.memory 768m->1g and reservations.memory 256m->512m (measured need ~726-750MiB anon resident + ~20MiB historical compaction burst + slack; 1g leaves ~270-300MiB headroom vs today's 2-20MiB that already proved insufficient -- confirmed OOMKilled 08:17:28Z, then CRITICAL 99.73% at c53 08:15:30Z). VERIFIED LIVE HEADROOM: Docker Desktop VM is 8192MiB total (7.75GiB -- NOT the full 16GB host); docker stats sums ~2.74GiB actual usage across all 13 containers against 7.75GiB VM, ~4.1GiB available inside the VM per a live `docker run --rm alpine free -h`. Sum of ALL container memory LIMITS is already ~12.25GiB (1.58x over-commit today, unchanged in kind by this +256MiB raise). Host macOS swap is separately at 86% (sysctl vm.swapusage) -- an existing, independent host-pressure risk (project_host_memory_panic lineage) NOT worsened by this raise, since a container LIMIT is a ceiling not a reservation and actual usage is what drives host pressure. Single-service rebuild only (docker compose build rag-service && up -d --no-deps rag-service), no user gate per the 2026-08-01 permanent directive. STRUCTURAL FOLLOW-UP (option b, brief S3): embedder.py has NO unload path for the lazy-loaded sentence-transformers singleton (flagged 3x on this row's own history, never actioned) -- designed an idle-unload timer (EMBEDDER_IDLE_UNLOAD_MINUTES env, asyncio background task in build_lifespan, unload+gc.collect after N min idle, transparent reload on next embed via the EXISTING double-check-lock path) so the container stops being pinned near-cap permanently after the very first request; this is the actual fix to the growing-corpus/growing-need argument on this row, the cap raise alone buys time, not closure. Zone apps/rag-service/ + root docker-compose.yml. BUILD-STANDARD: not-applicable."
       },
       {
         "id": "FIX-CI-SIZELINT-SCHEMA-TS-BASELINE-TOLERANCE-377L",
