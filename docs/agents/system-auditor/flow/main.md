@@ -1,4 +1,4 @@
-<!-- size-justification: ~793L — three-tier dispatcher; Tier-1 detail extracted to tier1-probe.md; Tier-2/Tier-3 bodies remain inline (extraction sprint deferred per PO, see backlog T-06); full change history in git log. +2L: TIER=4 PILOT row added to AUDIT_TIER extraction + Tier Dispatch tables (2026-07-18), per brief docs/architecture-briefs/2026-07-18-cron-workflow-optimize-tier4-fleet-audit.md §8 EDIT-2 — dispatches to handlers.md §Step D-FLEET, own one-off claim, bypasses §Step 0d tick-boundary election. +6L (2026-07-25): TIER=5 row added to AUDIT_TIER extraction + Tier Dispatch tables + Step 0d fire-election branch — dispatches to flow/page-freshness.md (D-PAGE, kept fully out of this file per lazy-load discipline, unlike Tier-2/3's still-deferred inline extraction). +7L (2026-07-25, coordinator review #2): Step 0d TIER=5 FIRE_TICK comment expanded — CronCreate fires machine-local not UTC, the literal cron expression must not be hardcoded here (drifts at DST changeover); Tier-3's own 02:00Z label (line ~111) carries the same unverified-against-that-defect risk, flagged but NOT fixed here — out of scope, that cron is already live-armed. FIX-AUDITOR-HEARTBEAT-OUT-OF-CONTRACT-AGENT-WRITE-TIER1 2026-07-29: Tier-2/3 Heartbeat Write section — added SOLE-WRITER + SHAPE CONTRACT callout (cites `docs/policies/dev-standards.md` CANONICAL:SSOT-AUDITOR-HEARTBEAT-SOLE-WRITER, states the tier-1-vs-tier-2/3 semantic split, points at the new `scripts/git-hooks/pre-commit` enforcement) (+6L). FIX-AUDITOR-DASHBOARD-APPEND-NO-ACTUATOR-CONTRACT-COUNT-NARRATED 2026-07-29 (+~50L): DASHBOARD.md append is now a script actuator (`scripts/emit-dashboard-row.sh`, write+read-back, wired into the Tier-2/Tier-3 emit sites) instead of unscripted prose; OUTPUT-CONTRACT counters (`signals_posted`/`telegram_sent`/`signal_queue_rows_written`/`dashboard_rows`) are now mechanically parsed from a per-cycle marker log by `scripts/audit-output-contract.sh` instead of hand-composed, with an independent `.signal_queue` cross-check and a symmetric RETURN-headline consistency check; corrects the stale `signal-dashboard` skill pointer (that skill governs `.signal_queue`, not DASHBOARD.md, and was never a real write path for this artifact). FIX-AUDITOR-CALLER-PROSE-OVERRIDES-DOCUMENTED-DETECTOR-THRESHOLD 2026-07-30 (+~18L): new §CALLER-INSTRUCTION PRECEDENCE (AUD-CP-1) block before Tier Dispatch + mandatory RETURN-block CONTRACT-CONTRADICTION line. UC-ASL-P6 2026-07-31 (0 new lines): RETURN-block `NEXT: po (via DASHBOARD.md)` corrected to `NEXT: po (via orch-state.json .signal_queue row)` — grep confirmed no po flow file ever reads DASHBOARD.md; po's real consumer path is the `.signal_queue` row per this file's own §Anomaly Reporting → DASHBOARD Append (721-723) and the agent's `inter_agent.sends_to`. Rest of this file's DASHBOARD.md mentions were already correctly disambiguated by the prior FIX-AUDITOR-DASHBOARD-APPEND fix, verified live, no further edits needed here. FIX-AUDIT-OUTPUT-CONTRACT-SIGNALQUEUE-ROWS-WRITTEN-SELFREPORT-MISMATCH 2026-08-05 (+5L): all 5 `emit-audit-signal.sh`/`audit-output-contract.sh` call sites in this file now pass `--cycle-tag "$FIRE_TASK_ID"` — closes the V1 cross-check's two structural bugs (minute-vs-second `.ts` compare; shared default `from="system-auditor"` picking up a peer tier's row), see `docs/policies/dev-standards.md` CANONICAL "Audit OUTPUT-CONTRACT parser" entry. -->
+<!-- size-justification: ~793L — three-tier dispatcher; Tier-1 detail extracted to tier1-probe.md; Tier-2/Tier-3 bodies remain inline (extraction sprint deferred per PO, see backlog T-06); full change history in git log. +2L: TIER=4 PILOT row added to AUDIT_TIER extraction + Tier Dispatch tables (2026-07-18), per brief docs/architecture-briefs/2026-07-18-cron-workflow-optimize-tier4-fleet-audit.md §8 EDIT-2 — dispatches to handlers.md §Step D-FLEET, own one-off claim, bypasses §Step 0d tick-boundary election. +6L (2026-07-25): TIER=5 row added to AUDIT_TIER extraction + Tier Dispatch tables + Step 0d fire-election branch — dispatches to flow/page-freshness.md (D-PAGE, kept fully out of this file per lazy-load discipline, unlike Tier-2/3's still-deferred inline extraction). +7L (2026-07-25, coordinator review #2): Step 0d TIER=5 FIRE_TICK comment expanded — CronCreate fires machine-local not UTC, the literal cron expression must not be hardcoded here (drifts at DST changeover); Tier-3's own 02:00Z label (line ~111) carries the same unverified-against-that-defect risk, flagged but NOT fixed here — out of scope, that cron is already live-armed. FIX-AUDITOR-HEARTBEAT-OUT-OF-CONTRACT-AGENT-WRITE-TIER1 2026-07-29: Tier-2/3 Heartbeat Write section — added SOLE-WRITER + SHAPE CONTRACT callout (cites `docs/policies/dev-standards.md` CANONICAL:SSOT-AUDITOR-HEARTBEAT-SOLE-WRITER, states the tier-1-vs-tier-2/3 semantic split, points at the new `scripts/git-hooks/pre-commit` enforcement) (+6L). FIX-AUDITOR-DASHBOARD-APPEND-NO-ACTUATOR-CONTRACT-COUNT-NARRATED 2026-07-29 (+~50L): DASHBOARD.md append is now a script actuator (`scripts/emit-dashboard-row.sh`, write+read-back, wired into the Tier-2/Tier-3 emit sites) instead of unscripted prose; OUTPUT-CONTRACT counters (`signals_posted`/`telegram_sent`/`signal_queue_rows_written`/`dashboard_rows`) are now mechanically parsed from a per-cycle marker log by `scripts/audit-output-contract.sh` instead of hand-composed, with an independent `.signal_queue` cross-check and a symmetric RETURN-headline consistency check; corrects the stale `signal-dashboard` skill pointer (that skill governs `.signal_queue`, not DASHBOARD.md, and was never a real write path for this artifact). FIX-AUDITOR-CALLER-PROSE-OVERRIDES-DOCUMENTED-DETECTOR-THRESHOLD 2026-07-30 (+~18L): new §CALLER-INSTRUCTION PRECEDENCE (AUD-CP-1) block before Tier Dispatch + mandatory RETURN-block CONTRACT-CONTRADICTION line. UC-ASL-P6 2026-07-31 (0 new lines): RETURN-block `NEXT: po (via DASHBOARD.md)` corrected to `NEXT: po (via orch-state.json .signal_queue row)` — grep confirmed no po flow file ever reads DASHBOARD.md; po's real consumer path is the `.signal_queue` row per this file's own §Anomaly Reporting → DASHBOARD Append (721-723) and the agent's `inter_agent.sends_to`. Rest of this file's DASHBOARD.md mentions were already correctly disambiguated by the prior FIX-AUDITOR-DASHBOARD-APPEND fix, verified live, no further edits needed here. FIX-AUDIT-OUTPUT-CONTRACT-SIGNALQUEUE-ROWS-WRITTEN-SELFREPORT-MISMATCH 2026-08-05 (+5L): all 5 `emit-audit-signal.sh`/`audit-output-contract.sh` call sites in this file now pass `--cycle-tag "$FIRE_TASK_ID"` — closes the V1 cross-check's two structural bugs (minute-vs-second `.ts` compare; shared default `from="system-auditor"` picking up a peer tier's row), see `docs/policies/dev-standards.md` CANONICAL "Audit OUTPUT-CONTRACT parser" entry. FIX-SYSAUDITOR-NOTEBOOK-COMPOSE-ACTUATOR 2026-08-06 (+~40L): commit `0fcc6a5d2` deleted a retained `## c44` heading and never wrote the claimed `c45` section (real data loss, hand-repaired `7628a878d`) — added Step 1a deterministic PRE-write heading-count snapshot + new Step 2a POST-write heading-count corruption check (BLOCKING, reverts via `git checkout --` on mismatch, independent of the compose step's own narration) as an interim backstop pending `scripts/notebook-compose.sh` (out of agent-father's `commit_zone`, flagged to developer via `docs/signals/2026-08-06-fix-system-auditor-notebook-compose-actuator-handoff.json`); added an explicit MANDATORY/NEVER-raw-git-commit callout at the Commit step (a bare `git commit` bypassing `auditor-notebook-commit.sh` tripped sweep-guard 3s before the corrupting commit, same cycle). Full analysis: `docs/architecture-briefs/2026-08-06-fix-system-auditor-notebook-compose-actuator-and-immutability-blindspot.md`. -->
 # System Auditor — Main Flow
 
 ## PLAN-ONLY INVARIANT — NO DESTRUCTIVE OPS (AUD-ND-1)
@@ -793,7 +793,15 @@ RETAINED prior section's content to pay for cap pressure (AC-2a immutability
 invariant) — every section that survives this cycle must be byte-identical
 before and after, or the pre-commit hook `_check_notebook_immutability` will
 reject the commit.
-a. Read `docs/agent-memory/notebooks/system-auditor.md` fully into memory.
+a. Capture a deterministic PRE-write snapshot via bash FIRST (a real tool
+   call, not narrated — Step 2a below diffs against this, independent of
+   whatever the compose step claims it did):
+   ```bash
+   NB_PATH="docs/agent-memory/notebooks/system-auditor.md"
+   PRE_HEADINGS="$(grep '^## ' "$NB_PATH")"
+   PRE_COUNT=$(printf '%s\n' "$PRE_HEADINGS" | grep -c '^## ' || true)
+   ```
+   Then read `docs/agent-memory/notebooks/system-auditor.md` fully into memory.
 b. Identify preamble (before first `## `) and all `^## ` section boundaries.
 c. Build the new section (≤60L, trimmed to this cap BEFORE anything else below runs):
    ```
@@ -836,13 +844,49 @@ Write(path="docs/agent-memory/notebooks/system-auditor.md", content=<settled bod
 AC-5 gate after write: `wc -l < notebook.md` → if >200: fix Step 1 and re-write once.
 
 <!-- NB-AUDITOR-SETTLED-WRITE: replaced two-write pattern (append then trim) with AC-3 single settled write. BCTC-EVAL-SNAPSHOT folded into this write (was a separate early write in D-BCTC-EVAL — now held in memory until here). PostToolUse hook sees ≤200L exactly once. -->
+
+**Step 2a — Deterministic post-write corruption check (MANDATORY, BLOCKING).**
+Interim backstop for `FIX-SYSAUDITOR-NOTEBOOK-COMPOSE-ACTUATOR` (2026-08-06)
+until `scripts/notebook-compose.sh` lands (pending, flagged to developer —
+see `docs/architecture-briefs/2026-08-06-fix-system-auditor-notebook-
+compose-actuator-and-immutability-blindspot.md`). Catches the exact
+`0fcc6a5d2` shape — a retained heading vanishing from staged content with NO
+corresponding line-count shrink, self-reported as success — BEFORE any
+commit is attempted, using a count derived from `PRE_COUNT` (Step 1a), never
+from the compose step's own narration of what it dropped:
+```bash
+POST_HEADINGS="$(grep '^## ' "$NB_PATH")"
+EXPECTED_DROPS=$(( PRE_COUNT + 1 - 3 )); [ "$EXPECTED_DROPS" -lt 0 ] && EXPECTED_DROPS=0
+ACTUAL_DROPS=$(comm -23 <(printf '%s\n' "$PRE_HEADINGS" | sort -u) <(printf '%s\n' "$POST_HEADINGS" | sort -u) | grep -c '^## ' || true)
+if [ "$ACTUAL_DROPS" -lt "$EXPECTED_DROPS" ] || [ "$ACTUAL_DROPS" -gt "$((EXPECTED_DROPS + 1))" ]; then
+  echo "[notebook-compose-guard] ABORT: pre=$PRE_COUNT expected_drops=$EXPECTED_DROPS actual_drops=$ACTUAL_DROPS — heading-count mismatch, corruption suspected. Reverting."
+  git checkout -- "$NB_PATH"
+fi
+```
+(`+1` tolerance on the upper bound covers the rare Step 1f 200L-backstop
+dropping one extra oldest section.) If `[notebook-compose-guard] ABORT`
+printed: the working tree is ALREADY reverted to HEAD — do NOT proceed to
+Commit below this cycle (nothing was ever staged, so there is nothing to
+un-stage). Send BUG-channel Telegram (`[system-auditor] notebook-compose-
+guard ABORT — heading-count mismatch pre=<n> expected=<n> actual=<n>,
+reverted; this cycle's notebook entry was skipped`); log
+`[NOTEBOOK-GATE-ABORT]` on the NEXT cycle's write. Continue the rest of this
+flow unaffected — a caught-and-reverted mismatch is not a fatal error. If no
+ABORT line printed, continue to Commit below as normal.
+
 Then:
 **Commit (mutex-paired blessed script — FIX-AUDITOR-COMMIT-MUTEX-SKIP, 2026-07-03):** the previous
 narrated claim/add/verify/commit/release sequence was non-deterministically SKIPPING the mutex
 claim (flow-step drift on prose is unreliable for a hard invariant) and, separately, was folding a
 concurrent peer's working-tree edits into the notebook commit (non-explicit pathspec, f05795c3).
 Both are now executed bash, not narrated steps — the model calls ONE script and branches on its
-marker output:
+marker output. **MANDATORY, no exceptions: call this script — NEVER a raw/narrated `git add` or
+`git commit` on this path.** A bare `git commit` bypassing this script tripped the sweep-guard
+hook's escalated-reject 3 seconds before the `0fcc6a5d2` corruption landed via a retried,
+pathspec-scoped commit (2026-08-06, `prior_warns=7` already in-session that cycle) — independent
+evidence this step's own contract had already been drifted from before the compose defect above
+even mattered. If this script errors or is unavailable, STOP and bug-telegram; do not improvise a
+raw git command as a fallback.
 
 ```bash
 bash scripts/auditor-notebook-commit.sh \

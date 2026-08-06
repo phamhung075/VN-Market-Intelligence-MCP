@@ -150,15 +150,15 @@ h. In-memory body is now the final settled content (≤200L guaranteed, and
 **Step 2 — Single settled write:**
 
 ```
-Edit(file=<notebook_path>,
-     old_string=<entire current file content verbatim>,
-     new_string=<final settled body from Step 1>)
+Write(path=<notebook_path>, content=<final settled body from Step 1>)
 ```
 
-One Edit call. PostToolUse fires exactly once, sees ≤200L.
-Alternative: `Write(path=<notebook_path>, content=<final settled body>)` — same guarantee.
+ONE `Write` full-overwrite call — the SOLE documented form (2026-08-06). The
+prior `Edit(old_string=<entire file verbatim>, ...)` form is REMOVED (not
+demoted): it needed a byte-exact whole-file match and had already diverged
+from `docs/agents/system-auditor/flow/main.md`, the flow actually run.
 
-**Forbidden:** any 2-Edit sequence where the file exceeds 200L after the first Edit.
+**Forbidden:** any 2-Write sequence where the file exceeds 200L after the first call.
 **Forbidden (AC-2a):** landing a Step 2 write where any retained section's text
 differs from its Step 1a pre-write form for a reason other than the 3
 authorized mutations listed in AC-2a above.
