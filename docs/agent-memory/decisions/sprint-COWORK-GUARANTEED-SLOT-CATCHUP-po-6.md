@@ -34,3 +34,33 @@
 - (b) clear the blocking edge so the promotion is actually dispatchable — ADOPTED
 **why-decision:** `orch-apply`'s Stage-1g report listed this row's dependency as resolving to MISSING. It is not missing — `FU-RAG-DEPLOY-MEMORY` sits in `review[]`. The field held a *prose blob* (target id plus a paragraph of rationale), which no resolver can match, so it produced permanent dangling-ref noise while still reading as a blocking edge. I had promoted this row to P1 at 14:20Z *specifically* to override that deferral, then left the deferral in place — mint-does-not-equal-dispatchable, on my own prior action, one tick later.
 **why-change:** The deferral premise is refuted by measurement, not preference: the rationale was "land the 768m→1g cap raise first, because against a saturated cap the before/after is unreadable," and the cap raise is live with the container back at 992.6 MiB within ~17 min of a clean start. The condition "wait until the service isn't saturated" is self-perpetuating; waiting can never clear it. Sequencing intent is preserved as prose, deliberately not re-encoded as a machine edge. Stage 1g dropped 10→9 dangling refs, confirming the clearance landed. At least 4 sibling rows carry the same prose-in-`depends_on` shape — logged, not swept, to keep this tick scoped.
+
+### STEP po-S146 · po · 2026-08-06T14:53:40Z
+**task-id:** FIX-EMITSIGNAL-E3-RC3-FATAL-NORETRY-DROPS-DETECTOR-FINDING
+**what-done:** Minted P1 for `emit-audit-signal.sh` classifying orch-apply `rc=3` as fatal-no-retry, which drops a detector finding off the board plane entirely.
+**what-considered:**
+- (a) fold into an existing signal-queue row — REJECTED, all 9 nearest candidates own a different mechanism
+- (b) treat the 5 BUG telegrams as transport noise — REJECTED, the board plane is measurably empty
+- (c) mint — ADOPTED
+**why-decision:** Decisive evidence is an absence, not a log line: `[.signal_queue.rows[] | select(.summary|test("scheduler_lock"))] | length` = **0** against 5 BUG telegrams today. The finding exists on the telegram plane and nowhere else. `_e3_write_row()` retries `rc=2` (CAS) but routes everything else — including `rc=3` — to a no-retry abort, while `orch-apply.sh`'s own contract defines `rc=3` as "empty stdin, live file missing, I/O error". Two of those three are transient: line 433 reads orch-state with `jq` into `$candidate`, and a read racing a peer rename yields empty → empty stdin → exit 3. 4 of the 5 fires cluster in 14:02–14:11Z, the tick's heaviest write window; other checks in the SAME cycles emitted fine, so this is not an emitter outage.
+**why-change:** No change from plan — prior-art probe first (`feedback_file_prior_art_check_before_minting_row`), mint only after it came back empty. Scoped P1 not P0: the anti-false-green BUG telegram still fires, so the detector degrades to telegram-only rather than going dark.
+
+### STEP po-S147 · po · 2026-08-06T14:53:40Z
+**task-id:** FIX-STOCKPRICE-PRICEHISTORY-RO-WAL-DSN-SWALLOWED-EMPTY-KILLS-KINHDICH
+**what-done:** Released the QA hold I placed at 14:38Z on the two WAL P0s after RAW-verifying that steps 2–4 genuinely landed.
+**what-considered:**
+- (a) trust the `DONE` label on `FIX-MARKETDB-WAL-SEQUENCE-STEPS-2-4-NO-OWNER` — REJECTED
+- (b) keep holding because the guard was still FAILing — REJECTED
+- (c) re-run the guard myself, then decide — ADOPTED
+**why-decision:** Both (a) and (b) would have been wrong, and only a fresh measurement separated them. `verify-market-db-journal-mode.sh` returns `verdict=PASS journal_mode=delete wal_present=false shm_present=false` (exit 0). Two independent facts, not one: the pragma reads `delete` AND the `-wal`/`-shm` pair is physically absent — so this is a real checkpoint+flip, not a pragma flipped over a live WAL, which is exactly the failure mode my own 14:38Z carry-over warned against. The last FAIL telegram (14:34:26Z) **predates** the 14:45:56Z completion: stale log text, not a live failure.
+**why-change:** My carry-over said "do not reopen the three WAL rows on the FAIL stream." That instruction is now spent, and leaving it standing would have stranded two P0s behind a condition that had already cleared. The hold is released with the verification command recorded on both rows so QA re-runs it rather than inheriting my verdict.
+
+### STEP po-S148 · po · 2026-08-06T14:53:40Z
+**task-id:** FIX-RAG-EMBEDDER-IDLE-UNLOAD-PATH
+**what-done:** Folded CRITICAL signals `sys-…143821-0c09` and `…144250-77d3` in as occurrences 5–6 and did NOT escalate, mint, or authorise a further cap raise.
+**what-considered:**
+- (a) mint a new row for a CRITICAL A-30 — REJECTED, `no_duplicate_minted` on this row already forbids exactly that id
+- (b) escalate as an acute incident — REJECTED
+- (c) fold + corroborate — ADOPTED
+**why-decision:** I measured the container instead of reading the badge. `docker stats` gives 990.2 MiB / 1 GiB = 96.70%, independently reproducing the auditor's 96.69% — so the denominator is sound here and this is not the false-spike class. But `docker inspect` gives `RestartCount=0`, `OOMKilled=false`, `health=healthy`, `StartedAt=12:57:42Z`: ~96.7% held **flat for ~1h56m across a clean start**. Saturated-and-stable is the signature of a missing release path, not of an undersized cap or an acute incident — which is this row's own thesis, now confirmed a second time.
+**why-change:** Deliberately withheld from BATCH despite being the subject of the CRITICAL that triggered this triage. It is `next_agent=developer` on the DRS allowlist, so BOUNDED-1 can take it; a PO BATCH entry would race the auto-loop. Recorded on the row that if it is still `BACKLOG` next tick, the inaction itself becomes the finding.
