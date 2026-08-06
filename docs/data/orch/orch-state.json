@@ -3270,8 +3270,8 @@
     ]
   },
   "task_board": {
-    "_updated_at": "2026-08-06T17:40:02Z",
-    "_updated_by": "qa",
+    "_updated_at": "2026-08-06T19:03:45Z",
+    "_updated_by": "po",
     "active_sprints": [
       {
         "evidence": "Router raw-verified (get_bctc_full live, post-rebuild) after BEQ-9/10 refine. Core extraction incident RESOLVED, but populating real scalars exposed a SEPARATE pre-existing analytics/serving layer with 4 defect clusters: (a) RATIO-COMPUTE — VNM ROE=0/ROA=0/EPS=12VND/NetDebt-EBITDA=-7.5e13x; DHG ROA=7,891,932.0% (analyst falsely claimed fixed). Ratios emit 0 or astronomically wrong. (b) BANK-B02-TCTD-SERVING — SHB + EIB get_bctc_full returns 'balance sheet has no decomposition — forced-zero pass suspected'; banks UNSERVABLE despite DONE + committed scalars. (c) PERIOD-SEMANTICS — FPT 2025-Q4 rev=70112.8/NP=11225.5 are FULL-YEAR cumulative labeled 'Q4'; buildComparisonSection then compares cumulative-FY vs next-quarter -> false -82.2% mislabeled 'YoY'. (d) ENTITY-SCOPE — HPG 2025-Q4 is parent-only B01a (rev=0, conf44%) served as the canonical/headline HPG vs consolidated ~140k rev; misleading. PUBLISH-INTEGRITY GAP: NO semantic-sanity publish guard exists in orch-state (the triage-referenced 'Task #13' is NOT present). The BEQ-9/10 reports are now DONE -> flow into chef docs/agents/unified-agent/flow/market-analysis.md + market-analyst -> ROA 7.8M% / false YoY -82% / parent-only-headline CAN reach MARKET unattended. recurring-bug-escalation: BCTC area has >2 fix cycles -> architect root-cause SPIKE, not point-patch. | [dev-team 2026-06-03T11:44Z observation feeding BAL-0/BAL-1] After LF-SERVE-REFLOW recovered FPT Q1 absolute scalars (op_profit/ebitda/cash live-correct), get_bctc_full(FPT) STILL serves garbage DERIVED ratios: current_ratio=41527873060120x (denominator ~0), operating_margin_pct=0.0% (not recomputed from now-correct operating_profit). Confirms the analytics/serving derived-ratio layer is a distinct defect from scalar extraction. BAL-0 publish semantic-sanity gate MUST block current_ratio out-of-range before MARKET/FB; BAL-1 spike should pin the ratio recompute module. Repro: get_bctc_full(code=FPT).",
@@ -12501,43 +12501,6 @@
         "updated_by": "po (dev-team Step 1 triage 2026-08-06)"
       },
       {
-        "id": "CLEAN-CRON-STANDALONE-DOCS-SUPERSEDED-BY-COWORK",
-        "type": "CLEAN",
-        "title": "Mark 6 standalone .claude/commands/crons/*.md docs DEPRECATED — all superseded by cowork-schedule.json and unreachable from any of the 3 re-arm skills; includes retiring market-watcher's now-dead mode=market/mode=prepost fallback branches per PO product ruling",
-        "zone": "cross-service/",
-        "priority": "P2",
-        "status": "BACKLOG",
-        "size": "S",
-        "next_agent": "agent-father",
-        "supervised": false,
-        "plan_only": false,
-        "baseline_pass": true,
-        "owner": "po",
-        "source": "docs/architecture-briefs/2026-08-06-cadence-reanalysis-v2.md §4 — 4 REMOVE + 2 HOLD; PO ruled on both HOLDs 2026-08-06T18:21Z so all 6 now proceed",
-        "created_at": "2026-08-06T18:21:44Z",
-        "created_by": "po",
-        "root_cause": "Six standalone cron authoring docs describe CronCreate registrations for agents that are ALSO — and in practice, only — dispatched through cowork-schedule.json. None of the 3 sanctioned re-arm skills (cron-cowork-team, cron-detect-loop, cron-standalone-team) registers any of them, so even a manual arm evaporates on the next session restart with no recovery path. They are structurally orphaned specs that read as live and mislead every future cadence audit.",
-        "evidence": "Architect brief §4 evidence table, plus PO source-verification of the strongest claim: .claude/commands/crons/cron-unified-agent.md:5 declares `- **cron**: `29 * * * *``, while docs/agents/unified-agent/flow/main.md:11-14 lists every dispatch window it can match — 05:23, 02:13-08:13, 08:37, 19:37 — and :29 matches NONE of them. main.md:23 even documents the consequence ('Any other time -> EXIT'). So this cron is dead by construction, not merely redundant: if armed it would spawn 24 real subagent sessions/day for provably zero possible output.",
-        "files": [
-          ".claude/commands/crons/cron-tran-ngoc-bau.md",
-          ".claude/commands/crons/cron-digest-predict.md",
-          ".claude/commands/crons/cron-refine-bctc.md",
-          ".claude/commands/crons/cron-unified-agent.md",
-          ".claude/commands/crons/cron-news-scout.md",
-          ".claude/commands/crons/cron-market-watcher.md",
-          "docs/agents/market-watcher/flow/main.md"
-        ],
-        "ac": [
-          "AC-1 Mark all 6 DEPRECATED using the pattern already applied to cron-fb-market-poster.md (deprecated 2026-06-28) — header note + pointer to the live cowork-schedule.json slot that supersedes it. Do NOT delete the files; the deprecation note is the artifact that stops the next audit re-discovering them.",
-          "AC-2 cron-unified-agent.md additionally carries a P0-DELETE-ON-SIGHT note: if a future CronList audit ever finds it armed, delete immediately — 24 zero-value subagent spawns/day.",
-          "AC-3 Per PO product ruling (below), retire the now-unreachable mode=market and mode=prepost branches from docs/agents/market-watcher/flow/main.md's 'Fallback — UTC clock window' table. Retiring dead-but-reachable branches is the point of this row; leaving them is the debt CLAUDE.md § Detect then reduce debt names.",
-          "AC-4 Before touching market-watcher/flow/main.md, re-verify that no live cowork slot dispatches it WITHOUT a slot= param (the fallback table is reachable only in that case). If any does, STOP and re-raise to PO — the ruling's premise would be wrong.",
-          "AC-5 Confirm by grep that none of the 3 re-arm skills references any of the 6 files, so deprecating them cannot break a re-arm path."
-        ],
-        "po_product_ruling_20260806T1821": "The brief escalated ONE open product question to PO/architect (§4 HOLD): market-watcher-market / market-watcher-prepost / news-scout-market were designed, shipped and QA-passed in May 2026, then pruned from cowork-schedule.json in commit 3b956dd7e (2026-05-30) as 'dead API_MIN_INTERVAL stubs' — a mechanical prune, never a product decision. RULING: RETIRE, do not restore. Four reasons. (1) news-scout has no mode dispatch in its flow at all, so nothing is at stake there — it deprecates with the other 4 unconditionally. (2) market-watcher does still carry live coded mode=market/mode=prepost branches, but 2+ months have passed with zero restoration requests on the board or in the signal queue — absence of demand across that span is weak evidence, but it is the only evidence pointing either way. (3) DECISIVE: the host is memory-constrained right now — rag-service is at 97.76% of its 1GiB cap this very tick and the Docker host runs an 8GB ceiling (project_host_memory_panic). A */15-during-market-hours slot buys unproven densification at real, immediate cost. (4) Retiring costs nothing optional: the brief itself states that if densification is ever wanted the correct mechanism is a NEW cowork slot dispatched with slot= through the modern fire-elected collision-safe path — never a revival of the old standalone CronCreate registration. So retiring the dead path forecloses nothing. This ruling closes the brief's only PO-blocking question; the brief needs no further PO input.",
-        "updated_at": "2026-08-06T18:23:56Z"
-      },
-      {
         "id": "FIX-CMH-PASS9B-DOCHEAL-DISCOVERY-ONLY-NO-AUTOFIX-REPORT",
         "type": "FIX",
         "title": "claude-manager-helper Pass 9b invokes doc-heal-system for DISCOVERY only and never runs its mandated Phase 4 auto-fix / Phase 7 report+commit — size-cap violations accumulate every Mon/Thu cycle with no report trail",
@@ -12658,6 +12621,36 @@
         "dedup_checked": "Full-text board grep on the mechanism (ac-3 / own commit / git show --stat / self-verif+head / peer+swept+commit / persistence+head), not just the id. Nearest neighbours are NOT covers: FIX-PO-BATCH-MINT-NO-WRITE-ACTUATOR (review[]) is the PARENT that introduced this AC-3 block - it fixed the missing write actuator, this is the defect in the verification it added, same parent/fast-follow relationship the BCTC serving-gate row bears to its health-plane sibling. FIX-POSTCYCLE-STEP45-NB-WRITE-AC3 (backlog) is post-cycle.md notebook writes, different file and different AC. No row covers docs/agents/po/flow/main.md AC-3.",
         "lane_note": "next_agent=developer / zone=cross-service/ deliberately, NOT agent-father: this tick measured 37 of 44 DRS-stranded backlog rows already pointing at agent-father with no draining lane (see FIX-DEVTEAM-NONDEV-NEXTAGENT-RESIDUAL-NO-DISPATCH-DESTINATION). Precedent that developer edits docs/agents/po/ flow docs: commit fix(agents/po): triage-signals.md routing table matched 0/16 live to=po signal types. Minting into the stranded pile would have guaranteed this row never ships.",
         "updated_at": "2026-08-06T19:03:13Z"
+      },
+      {
+        "id": "HOLD-CRON-MARKETWATCHER-NEWSSCOUT-MARKETHOURS-MODES-PRODUCT-DECISION",
+        "type": "SPIKE",
+        "title": "PRODUCT DECISION (HOLD, not dispatchable): restore vs formally retire market-watcher's live-coded mode=market/mode=prepost fallback branches + the news-scout-market slot — designed, shipped and QA-passed May 2026, then mechanically pruned from cowork-schedule.json as 'dead API_MIN_INTERVAL stubs', never as a product decision",
+        "zone": "cross-service/",
+        "priority": "P3",
+        "status": "BLOCKED",
+        "size": "S",
+        "next_agent": "po",
+        "supervised": false,
+        "plan_only": true,
+        "baseline_pass": true,
+        "owner": "po",
+        "blocked_by": "Awaiting an explicit product decision. DELIBERATELY NOT DISPATCHABLE — the user greenlight of 2026-08-06T19:00Z named this out of scope: 'brief §4 HOLD, genuine product question, not part of this greenlight. Leave both files exactly as-is.' Do NOT auto-promote, do NOT sweep into a backlog batch, do NOT route to any implementer. Unblock requires a fresh explicit product ruling.",
+        "source": "docs/architecture-briefs/2026-08-06-cadence-reanalysis-v2.md §4 HOLD + §5 rows 11-12. Split off CLEAN-CRON-STANDALONE-DOCS-SUPERSEDED-BY-COWORK when the user greenlight narrowed that row 6 files -> 4.",
+        "created_at": "2026-08-06T19:03:45Z",
+        "created_by": "po",
+        "question": "Should market-watcher's market-hours density monitoring (mode=market Mon-Fri 02:00-08:30 UTC, mode=prepost) and the news-scout-market slot be RESTORED as new cowork-schedule.json slots, or formally RETIRED by deleting the now-unreachable fallback branches from docs/agents/market-watcher/flow/main.md?",
+        "evidence": "market-watcher/flow/main.md still carries LIVE CODED mode=market and mode=prepost branches in its 'Fallback — UTC clock window' table, reachable only when no slot= param is passed. These were first-class designed slots (docs/architecture-briefs/2026-05-18-cowork-master-scheduler.md) that demonstrably fired and passed QA (docs/handoffs/sprint-1951-cowork-team-qa-report.md AC-4, 2026-05-21). They were removed in commit 3b956dd7e (2026-05-30) as part of a mechanical 12-dead-slot prune labelled 'permanently-disabled (API_MIN_INTERVAL) / superseded' — NOT a documented product decision to drop market-hours-density monitoring. alert-commander-market was the only one of the 4 originally API_MIN_INTERVAL-blocked slots later resurrected once the */15 cowork dispatcher resolved that platform constraint; the other 3 never were. news-scout differs: its main.md has NO mode dispatch at all, so no live coded capability is at stake there — only multi-agent design symmetry argues for deciding both together.",
+        "po_standing_recommendation_20260806T1821": "PRESERVED VERBATIM from the superseded ruling on CLEAN-CRON-STANDALONE-DOCS-SUPERSEDED-BY-COWORK, so the analysis is not lost while the row is blocked. RETIRE, do not restore. Four reasons. (1) news-scout has no mode dispatch in its flow at all, so nothing is at stake there. (2) market-watcher does still carry live coded mode=market/mode=prepost branches, but 2+ months have passed with zero restoration requests on the board or in the signal queue — absence of demand across that span is weak evidence, but it is the only evidence pointing either way. (3) DECISIVE: the host is memory-constrained — rag-service was at 97.76% of its 1GiB cap and the Docker host runs an 8GB ceiling (project_host_memory_panic). A */15-during-market-hours slot buys unproven densification at real, immediate cost. (4) Retiring forecloses nothing: the brief itself states that if densification is ever wanted, the correct mechanism is a NEW cowork slot dispatched with slot= through the modern fire-elected collision-safe path — never a revival of the old standalone CronCreate registration, which predates fire-election/collision-safety. NOTE: this recommendation is NOT authority to act — the user re-opened the question after it was made.",
+        "constraint": "If ever unblocked and actioned: (a) verify FIRST that no live cowork slot dispatches market-watcher WITHOUT a slot= param, since the fallback table is reachable only in that case — if one does, the retire premise is wrong; (b) if restoring instead, the mechanism is a NEW cowork-schedule.json slot with slot=, NEVER a revived standalone CronCreate registration; (c) zero CronCreate/CronDelete/CronList calls either way.",
+        "files": [
+          ".claude/commands/crons/cron-market-watcher.md",
+          ".claude/commands/crons/cron-news-scout.md",
+          "docs/agents/market-watcher/flow/main.md",
+          "docs/data/cowork-schedule.json"
+        ],
+        "updated_at": "2026-08-06T19:05:35Z",
+        "updated_by": "po"
       }
     ],
     "closed_sprints": [
@@ -15019,6 +15012,46 @@
         "promoted_at": "2026-08-06T17:58:35Z",
         "promoted_by": "dev-team (bounded-1 auto-pickup)",
         "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)"
+      },
+      {
+        "id": "CLEAN-CRON-STANDALONE-DOCS-SUPERSEDED-BY-COWORK",
+        "type": "CLEAN",
+        "title": "Mark 4 dead standalone .claude/commands/crons/*.md docs DEPRECATED (tran-ngoc-bau, digest-predict, refine-bctc, unified-agent) — superseded by cowork-schedule.json, unreachable from any of the 3 re-arm skills. SCOPE NARROWED 6->4 by user greenlight: market-watcher/news-scout are now explicitly HOLD, do NOT touch.",
+        "zone": "cross-service/",
+        "priority": "P2",
+        "status": "READY",
+        "size": "S",
+        "next_agent": "pm",
+        "supervised": false,
+        "plan_only": false,
+        "baseline_pass": true,
+        "owner": "po",
+        "source": "docs/architecture-briefs/2026-08-06-cadence-reanalysis-v2.md §4 REMOVE-4 + §5 rows 7-10 — USER-GREENLIT 2026-08-06T19:00Z via router session 085954f2-75fe-44ef-8fbe-c550db2da453. Greenlight text: 'Exact scope greenlit — nothing more, nothing less.'",
+        "created_at": "2026-08-06T18:21:44Z",
+        "created_by": "po",
+        "root_cause": "Six standalone cron authoring docs describe CronCreate registrations for agents that are ALSO — and in practice, only — dispatched through cowork-schedule.json. None of the 3 sanctioned re-arm skills (cron-cowork-team, cron-detect-loop, cron-standalone-team) registers any of them, so even a manual arm evaporates on the next session restart with no recovery path. They are structurally orphaned specs that read as live and mislead every future cadence audit.",
+        "evidence": "Architect brief §4 evidence table, plus PO source-verification of the strongest claim: .claude/commands/crons/cron-unified-agent.md:5 declares `- **cron**: `29 * * * *``, while docs/agents/unified-agent/flow/main.md:11-14 lists every dispatch window it can match — 05:23, 02:13-08:13, 08:37, 19:37 — and :29 matches NONE of them. main.md:23 even documents the consequence ('Any other time -> EXIT'). So this cron is dead by construction, not merely redundant: if armed it would spawn 24 real subagent sessions/day for provably zero possible output.",
+        "files": [
+          ".claude/commands/crons/cron-tran-ngoc-bau.md",
+          ".claude/commands/crons/cron-digest-predict.md",
+          ".claude/commands/crons/cron-refine-bctc.md",
+          ".claude/commands/crons/cron-unified-agent.md"
+        ],
+        "ac": [
+          "AC-1 Mark all FOUR files DEPRECATED using the pattern already applied to cron-fb-market-poster.md (deprecated 2026-06-28): header `# <name> Cron — DEPRECATED` + blockquote note + explicit pointer to the live cowork-schedule.json slot(s) that supersede it + the `/cron-cowork-team` re-arm path. Do NOT delete the files — the deprecation note IS the artifact that stops the next cadence audit re-discovering them as live.",
+          "AC-2 Each notice names its superseding cowork slot(s) EXACTLY: cron-tran-ngoc-bau.md -> slot `tnb-audit`; cron-digest-predict.md -> slots `digest-daily` AND `digest-sunday` (the old doc only ever documented the Sunday leg, so it is factually incomplete as well as redundant — say so); cron-refine-bctc.md -> slots `refine-bctc-slot-1`/`-2`/etc; cron-unified-agent.md -> the cowork `chef-*` slots.",
+          "AC-3 cron-unified-agent.md additionally carries a P0-DELETE-ON-SIGHT note: it is dead BY CONSTRUCTION, not merely redundant — its `29 * * * *` minute never matches any window in its own dispatcher's table (docs/agents/unified-agent/flow/main.md matches :23/:13/:37 only, and main.md:23 documents 'Any other time -> EXIT'). If a future CronList audit ever finds it armed, delete immediately: 24 real subagent spawns/day for provably zero possible output.",
+          "AC-4 SCOPE FENCE — do NOT touch .claude/commands/crons/cron-market-watcher.md or cron-news-scout.md, and do NOT touch docs/agents/market-watcher/flow/main.md. Both are HOLD per user greenlight (see HOLD-CRON-MARKETWATCHER-NEWSSCOUT-MARKETHOURS-MODES-PRODUCT-DECISION). Touching either is a SCOPE VIOLATION and QA must reject on it. This supersedes the prior PO product ruling recorded on this row (see po_ruling_superseded_20260806T1903).",
+          "AC-5 SCOPE FENCE — this task is plain-markdown doc edits ONLY. ZERO scheduler-tool calls by ANYONE in the chain: no CronCreate, no CronDelete, no CronList, and no invocation of /cron-cowork-team, /cron-detect-loop, /cron-standalone-team or any crons:cron-* skill. These files are authoring docs read by those skills later; editing them arms nothing. QA must grep-confirm zero such calls were made.",
+          "AC-6 Confirm by grep that none of the 3 re-arm skills (.claude/skills/cron-cowork-team, cron-detect-loop, cron-standalone-team) references any of the 4 files, so deprecating them cannot break a re-arm path. If any reference IS found, STOP and re-raise to PO — the brief's structural-orphan premise would be wrong for that file.",
+          "AC-7 COMMIT-ZONE BACKSTOP (closes feedback_commit_zone_excluded_agent_ships_board_stays_stale): .claude/commands/ is NOT in agent-father's declared commit_zone allowlist (docs/agents/agent-father/init.md:63 lists docs/agents/, docs/agent-memory/, .claude/skills/, .claude/agents/) yet agent-father DID successfully commit this exact file class in 36e109170 two hours ago. Whoever implements MUST land a real commit touching all 4 files and record its SHA on this row. Do not leave the edits uncommitted and self-report DONE — verify via `git show --stat <sha>`, not board status."
+        ],
+        "po_product_ruling_20260806T1821": "The brief escalated ONE open product question to PO/architect (§4 HOLD): market-watcher-market / market-watcher-prepost / news-scout-market were designed, shipped and QA-passed in May 2026, then pruned from cowork-schedule.json in commit 3b956dd7e (2026-05-30) as 'dead API_MIN_INTERVAL stubs' — a mechanical prune, never a product decision. RULING: RETIRE, do not restore. Four reasons. (1) news-scout has no mode dispatch in its flow at all, so nothing is at stake there — it deprecates with the other 4 unconditionally. (2) market-watcher does still carry live coded mode=market/mode=prepost branches, but 2+ months have passed with zero restoration requests on the board or in the signal queue — absence of demand across that span is weak evidence, but it is the only evidence pointing either way. (3) DECISIVE: the host is memory-constrained right now — rag-service is at 97.76% of its 1GiB cap this very tick and the Docker host runs an 8GB ceiling (project_host_memory_panic). A */15-during-market-hours slot buys unproven densification at real, immediate cost. (4) Retiring costs nothing optional: the brief itself states that if densification is ever wanted the correct mechanism is a NEW cowork slot dispatched with slot= through the modern fire-elected collision-safe path — never a revival of the old standalone CronCreate registration. So retiring the dead path forecloses nothing. This ruling closes the brief's only PO-blocking question; the brief needs no further PO input.",
+        "updated_at": "2026-08-06T19:05:35Z",
+        "po_ruling_superseded_20260806T1903": "SUPERSEDES this row's own po_product_ruling_20260806T1821 (RETIRE market-watcher/news-scout, 6 files). The user greenlight received 2026-08-06T19:00Z scoped implementation to exactly 4 files and re-opened market-watcher/news-scout as a genuine product question (brief §4 HOLD) explicitly excluded from this sprint. User scope beats PO autonomous ruling. The retired-vs-restore question is NOT dropped — it is carried on a dedicated BLOCKED row so it cannot evaporate. The prior ruling's reasoning (host memory pressure, no restoration demand in 2mo, correct-mechanism-is-a-new-cowork-slot) is preserved verbatim on that row as PO's standing recommendation for whenever it is unblocked.",
+        "pm_routing_note": "S-size, 4 files, exact before/after already specified by the brief + greenlight. Do NOT re-decompose and do NOT route to BA or architect — the brief IS the technical spec (user's explicit instruction). Hand straight to the implementer. Router dispatch named `developer`; note that the proven-working actuator for this exact file class as of 36e109170 (2h ago) was agent-father — if developer cannot commit .claude/commands/, hand to agent-father rather than leaving the edits uncommitted (AC-7).",
+        "qa_gate_note": "QA must verify: (a) all 4 deprecation notices exist and name the correct superseding cowork slot per AC-2; (b) grep-confirm ZERO CronCreate/CronDelete/CronList calls and zero /cron-* skill invocations anywhere in the implementation chain (AC-5); (c) cron-market-watcher.md, cron-news-scout.md and docs/agents/market-watcher/flow/main.md are byte-identical to their pre-task state — any diff is a scope violation, reject (AC-4); (d) the commit SHA on this row really contains all 4 files (AC-7).",
+        "updated_by": "po (scope narrowed 6->4 + promoted BACKLOG->READY on user greenlight)"
       }
     ],
     "review": [
@@ -22029,12 +22062,13 @@
           "AC-7 NOT IN SCOPE (explicitly): migrating moment-anchored crons onto the UTC-native JS matcher (brief §3f option b). Recorded as the strategically-correct end state — it removes the semiannual manual-flip ritual entirely — but it is a real migration and must not be smuggled into this correction pass."
         ],
         "po_ruling_20260806T1821": "GREENLIT. The brief was filed status=AWAITING_USER_CONFIRMATION / 'do NOT auto-implement'. PO overrides that hold under full_autonomy (CLAUDE.md: never ask user — spawn po for decisions, continue). Justification for overriding rather than deferring: AC-1 is a live correctness regression that silently defeats a fix which shipped 2 days ago, the corrections are mechanical, and they mirror a convention already proven twice in-repo. Deferring a known-wrong live cron for a confirmation round-trip has a real cost and no upside.",
-        "updated_at": "2026-08-06T18:52:03Z",
+        "updated_at": "2026-08-06T19:05:35Z",
         "claimed_at": "2026-08-06T18:36:53Z",
         "claimed_by": "dev-team (router manual dispatch — PO BATCH 2026-08-06T18:07Z)",
-        "updated_by": "agent-father",
+        "updated_by": "po (user-greenlight ratification, no disposition change)",
         "commit_sha": "36e109170",
-        "note": "AC-1..AC-6 shipped (commit 36e109170): 5 moment-anchored cron literals corrected to CEST/CET dual form (db-data-integrity Job A/B, system-auditor Tier-3, orch-sentinel FULL/LITE) using the proven convention from cron-claude-manager-helper.md/cron-auditor-page-reverify.md (AC-5). AC-6 (the hard one): updated BOTH the re-arm skills idempotency-guard literals (SKILL.md) AND the actual CronCreate actuators (register.md / register-job-db-integrity-{weekday,offhours}.md for db-data-integrity via cron-standalone-team; register.md Job 4 for system-auditor Tier-3 via cron-detect-loop) — a guard-only fix would have let register.md silently re-arm the OLD stale literal on next session restart. orch-sentinel not armed by any skill (confirmed by grep), no register-side fix needed there. Also corrected system-auditor/flow/main.md Step 0d Tier-3 comment (mislabeled armed cron) + closed the adjacent Tier-5 cross-reference. Grep-verified zero remaining live-actuator hits of the 5 old literals. AC-7 (UTC-native JS matcher migration) explicitly NOT done, recorded as future improvement per task scope. Journal: sprint-COWORK-GUARANTEED-SLOT-CATCHUP-agent-father.md STEP S25 (commit 419cdb804). .head untouched per router instruction (was not pointing at this task). VERIFICATION PASS (agent-father, this same task, independent of the S25 author): re-derived the CEST/CET UTC-arithmetic for all 5 corrected pairs by hand (confirmed both season variants land on the identical UTC instant for every one) and re-grepped the full re-arm surface — clean, nothing to add to the fix itself. Shipped one small doc-consistency follow-on in commit dd7a036b6: cron-auditor-page-reverify.md's own \"Offset rationale\" section still asserted Tier-3'\\''s DST bug was \"a separate, not-yet-filed issue — out of scope here\", which this task'\\''s own AC-3 fix made false in the same session; corrected the cross-reference. Journal: STEP agent-father-S26 (commit 674a7a961)."
+        "note": "AC-1..AC-6 shipped (commit 36e109170): 5 moment-anchored cron literals corrected to CEST/CET dual form (db-data-integrity Job A/B, system-auditor Tier-3, orch-sentinel FULL/LITE) using the proven convention from cron-claude-manager-helper.md/cron-auditor-page-reverify.md (AC-5). AC-6 (the hard one): updated BOTH the re-arm skills idempotency-guard literals (SKILL.md) AND the actual CronCreate actuators (register.md / register-job-db-integrity-{weekday,offhours}.md for db-data-integrity via cron-standalone-team; register.md Job 4 for system-auditor Tier-3 via cron-detect-loop) — a guard-only fix would have let register.md silently re-arm the OLD stale literal on next session restart. orch-sentinel not armed by any skill (confirmed by grep), no register-side fix needed there. Also corrected system-auditor/flow/main.md Step 0d Tier-3 comment (mislabeled armed cron) + closed the adjacent Tier-5 cross-reference. Grep-verified zero remaining live-actuator hits of the 5 old literals. AC-7 (UTC-native JS matcher migration) explicitly NOT done, recorded as future improvement per task scope. Journal: sprint-COWORK-GUARANTEED-SLOT-CATCHUP-agent-father.md STEP S25 (commit 419cdb804). .head untouched per router instruction (was not pointing at this task). VERIFICATION PASS (agent-father, this same task, independent of the S25 author): re-derived the CEST/CET UTC-arithmetic for all 5 corrected pairs by hand (confirmed both season variants land on the identical UTC instant for every one) and re-grepped the full re-arm surface — clean, nothing to add to the fix itself. Shipped one small doc-consistency follow-on in commit dd7a036b6: cron-auditor-page-reverify.md's own \"Offset rationale\" section still asserted Tier-3'\\''s DST bug was \"a separate, not-yet-filed issue — out of scope here\", which this task'\\''s own AC-3 fix made false in the same session; corrected the cross-reference. Journal: STEP agent-father-S26 (commit 674a7a961).",
+        "po_user_ratification_20260806T1903": "User greenlight received 2026-08-06T19:00Z (router session 085954f2-75fe-44ef-8fbe-c550db2da453) for items 1-5 of the cadence-reanalysis-v2 brief — i.e. exactly this row's AC-1..AC-5. NO NEW ROW MINTED: PO verified at source that all 5 corrections are ALREADY SHIPPED and in git HEAD lineage (commit 36e109170, + doc-consistency follow-on dd7a036b6), and re-read all 5 live literals against the brief's exact proposed expressions — db-data-integrity Job A `15,45 4-11 * * 1-5` CEST / `15,45 3-10 * * 1-5` CET, Job B `0 0 * * *` / `0 23 * * *`, system-auditor Tier-3 `0 4 * * *` / `0 3 * * *`, orch-sentinel FULL `18 5 * * 0` / `18 4 * * 0`, LITE `48 3 * * *` / `48 2 * * *` — 5/5 exact match, all carrying the dual-expression + DST-changeover disclaimer. Worktree clean on .claude/commands/crons/. This ratifies PO's earlier full-autonomy override (po_ruling_20260806T1821) after the fact; it changes nothing about this row's disposition. Row stays in review[] -> qa. Minting a duplicate row for already-shipped work is the failure feedback_file_prior_art_check_before_minting_row and feedback_bounded1_spawns_health_recheck_stale_duplicate_fix_rows both name."
       }
     ],
     "qa": [
@@ -22182,8 +22216,8 @@
         }
       ]
     },
-    "last_triaged_at": "2026-08-06T19:03:12Z",
-    "last_triaged_by": "po (triage 2026-08-06T18:57Z - AC-3 predicate mint)",
+    "last_triaged_at": "2026-08-06T19:03:45Z",
+    "last_triaged_by": "po (cadence-reanalysis-v2 user-greenlight routing 2026-08-06T19:03Z)",
     "in_progress": [
       {
         "id": "TE-T05",
@@ -22228,6 +22262,6 @@
     "ssot": true
   },
   "last_tick": "20260622T2215Z",
-  "_updated_at": "2026-08-06T13:11:26Z",
-  "_updated_by": "router"
+  "_updated_at": "2026-08-06T19:03:45Z",
+  "_updated_by": "po"
 }
