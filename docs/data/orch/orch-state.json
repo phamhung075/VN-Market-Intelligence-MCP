@@ -89,11 +89,12 @@
   ],
   "head": {
     "status": "in_progress",
-    "active_task_id": "FIX-AUDITOR-C08-UNSATISFIABLE-TTL-WINDOW-AND-ISO8601-STRCMP",
-    "next_agent": "dev-team",
+    "active_task_id": "FIX-STOCKPRICE-PRICEHISTORY-RO-WAL-DSN-SWALLOWED-EMPTY-KILLS-KINHDICH",
+    "next_agent": "dev-stock-price",
     "next_action": "BOUNDED-1 auto-pickup claim of FIX-AUDITOR-C08-UNSATISFIABLE-TTL-WINDOW-AND-ISO8601-STRCMP — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
-    "updated_at": "2026-08-06T12:27:30Z",
-    "updated_by": "dev-team (bounded-1 auto-pickup)"
+    "updated_at": "2026-08-06T12:35:34Z",
+    "updated_by": "dev-team",
+    "note": "PO triage 2026-08-06T12:2xZ (triage-20260806T1229Z-po): 5th market.db corruption, live WAL re-arm confirmed active. Widened to all 4 DSNs, P0. Router dispatch."
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -14796,66 +14797,6 @@
         "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)"
       },
       {
-        "id": "FIX-STOCKPRICE-PRICEHISTORY-RO-WAL-DSN-SWALLOWED-EMPTY-KILLS-KINHDICH",
-        "title": "REOPENED+WIDENED (P0, 5th market.db corruption): ALL FOUR stock-price market.db DSNs must drop _journal_mode=WAL and open mode=ro. The 2026-07-31 'fix' for /price/history landed the WRONG pattern — it removed mode=ro so the WAL pragma would succeed, adding 2 MORE WAL re-armers on the hottest read path. Also un-swallow the nilerr and add DELETE-mode fixtures (AC-2/AC-3 of the original row were never implemented).",
-        "type": "FIX",
-        "priority": "P0",
-        "status": "READY",
-        "zone": "apps/stock-price/",
-        "size": "S",
-        "owner": "dev-stock-price",
-        "next_agent": "dev-stock-price",
-        "created_by": "po (triage tick 2026-07-31T00:07Z)",
-        "created_at": "2026-07-31T00:29:11Z",
-        "updated_at": "2026-08-06T12:28:58Z",
-        "baseline_pass": "cd apps/stock-price && go build ./... && go test ./...",
-        "files": [
-          "apps/stock-price/pkg/infrastructure/fetchers.go",
-          "apps/stock-price/pkg/infrastructure/foreign_flow_repository.go",
-          "apps/stock-price/pkg/infrastructure/room_event_repository.go",
-          "apps/stock-price/pkg/infrastructure/fetchers_test.go",
-          "apps/stock-price/pkg/infrastructure/foreign_flow_repository_test.go",
-          "apps/stock-price/pkg/infrastructure/room_event_repository_test.go"
-        ],
-        "source": "telegram report id 4227 — [kinh-dich] get_kinhdich_reading failed for HVN with 503 'insufficient price data ... requires at least 7 price points'",
-        "root_cause": "apps/stock-price/pkg/infrastructure/fetchers.go:303 (SQLitePriceHistoryRepository.GetHistory) and :240 (Tier3Fetcher) build the DSN 'file:%s?mode=ro&_journal_mode=WAL&_busy_timeout=5000'. The live market.db has PRAGMA journal_mode=delete, so the driver issuing PRAGMA journal_mode=WAL over a mode=ro connection fails with SQLITE_READONLY(8) 'attempt to write a readonly database'. The resulting db.Query error is then discarded at fetchers.go:318-320 ('return []domain.DailyOHLCV{}, nil //nolint:nilerr'), with the same swallow at :305-307 for sql.Open — so the handler emits HTTP 200 with an empty history and logs nothing. The two SIBLING repositories in this same package already fixed exactly this: foreign_flow_repository.go:33 and room_event_repository.go:32 both carry the comment 'Note: readonly mode (mode=ro) conflicts with WAL journal mode creation.' and dropped mode=ro from their DSN. The correction was applied to 2 of 4 call sites; fetchers.go:240 and :303 were missed.",
-        "evidence": "RAW-VERIFIED LIVE 2026-07-31T00:25Z — every hop measured, not inferred. (1) The data EXISTS: sqlite3 on data/live/market.db (the bind-mount source of the container's /app/data) gives daily_ohlcv HVN = 775 rows spanning 2023-06-27..2026-07-30, and the handler's exact query (WHERE code='HVN' AND date >= date('now','-30 days')) returns 22. This is NOT the thin-ticker / new-listing data gap the alert text implies. (2) Outage reproduced: curl localhost:5005/reading/HVN -> 503 'insufficient price data ... requires at least 7 price points'; curl localhost:5005/market (VNINDEX) -> the same 503. BOTH kinh-dich routes are dead. (3) Failing hop isolated: gateway localhost:4000/stock/price/history?code=HVN&days=30 -> {code:HVN,history:[]}, identically empty for FPT/VNM/VCB and for days=30/365/3650 (universal and parameter-independent); but mcp-server's own localhost:3000/api/prices/history?code=HVN&days=30 -> count:22 with full rows. Same DB, same window, opposite result => the defect is in stock-price, not in the data. (4) stock-price direct: localhost:5010/price/history?code=HVN&days=30 -> {code:HVN,history:[]} while /health returns {status:ok} — passive health masking dead data. (5) Root cause reproduced in isolation: sqlite3 'file:data/live/market.db?mode=ro' 'PRAGMA journal_mode=WAL;' -> 'Error: stepping, attempt to write a readonly database (8)', and a SELECT appended after that PRAGMA never executes; the same SELECT on a mode=ro connection WITHOUT the WAL pragma returns 22. PRAGMA journal_mode on the live DB = delete. (6) Alternatives ruled out at source: container clocks are exact (stock-price, mcp-server, kinh-dich and api-gateway all match the host to the second, so no date('now') drift); DB_PATH=/app/data/market.db resolves to a present 401MB file inside the container; and only 3 commits touched apps/stock-price since its image was built, none of them on the read path — so this is a live SOURCE defect, NOT a stale-image/deploy-lane problem. Rebuilding will not fix it.",
-        "blast_radius": "P1 — total loss of two product surfaces, not one ticker. (a) kinh-dich-service reads PRICE_HISTORY_URL -> api-gateway -> stock-price, so ComputeScores() receives nil for every code: get_kinhdich_reading 503s for ALL tickers and for the VNINDEX /market reading. (b) apps/frontend/app/lib/api/client.ts:245 calls the same /stock/price/history endpoint, so the frontend price-history chart renders empty. (c) fetchers.go:240 Tier3Fetcher carries the identical broken DSN, exposing the tier-3 price path to the same silent-empty failure.",
-        "recommended_action": "1) Drop 'mode=ro&' from the DSN at fetchers.go:240 and :303 so all four call sites in this package match the already-corrected foreign_flow_repository.go:36 / room_event_repository.go:35 form ('file:%s?_journal_mode=WAL&_busy_timeout=5000'). 2) Stop swallowing: fetchers.go:305-307 and :318-320 must return the error — the HTTP layer at router.go:111-116 already has a correct 500 path with slog.Error, and the silent nilerr is precisely what let a total outage present as a per-ticker 503 for an unknown duration. 3) Regression test: assert GetHistory returns a non-empty slice against a fixture DB whose journal_mode is 'delete' — that is the exact condition that fails today and that a WAL-mode fixture would mask.",
-        "misleading_alert_note": "The kinh-dich 503 text is itself a defect amplifier and deserves a fix in the same pass or an immediate follow-up: price_score.go:32-41 collapses BOTH 'source fetch errored' and 'genuinely fewer than 7 points' into one nil return, which usecases.go:80/85/124/129 convert to ErrInsufficientData and router.go renders as 503 'requires at least 7 price points'. A total upstream outage is therefore reported as a thin-data condition — which is what steered this incident toward a per-ticker data-gap reading instead of a service outage.",
-        "out_of_scope": "Do NOT re-point kinh-dich at the mcp-server fallback endpoint. The not-deployed-rerouter (apps/api-gateway/pkg/primitive/not-deployed-rerouter/reroute.go) is correct and deliberately fires only for NOT-deployed services; stock-price IS deployed, so routing to it is intended behaviour. Fix stock-price, not the routing.",
-        "related": [
-          "FIX-PRICEHISTORY-DATAASOF-STOCKPRICE-SERVING",
-          "FIX-CHEF-EVENING-L5-KINHDICH-SILENT-OMISSION",
-          "FIX-SQLITE-JOURNALMODE-WAL-REARM-DEFEATS-DELETE-MITIGATION",
-          "FIX-SCRIPTS-MIGRATIONS-MARKETDB-WAL-REARM-SAME-DEFECT",
-          "FIX-MARKETDB-JOURNALMODE-GUARD-SHIPPED-BUT-NEVER-ARMED",
-          "SPIKE-SQLITE-DOCKER-VIRT-CORRUPTION-HARDENING"
-        ],
-        "supervised": false,
-        "plan_only": false,
-        "updated_by": "po",
-        "claimed_at": null,
-        "claimed_by": null,
-        "po_reopen_note": "PO TRIAGE 2026-08-06T12:2xZ — this row was NOT ready for QA sign-off. Three independent reasons, all raw-verified this tick:\n\n(1) THE CODE ALREADY LANDED, AND IT LANDED WRONG. Commit e370f5f51 (2026-07-31T00:45Z, matching this row's updated_at 00:44:56Z) is already on main. `git show HEAD:apps/stock-price/pkg/infrastructure/fetchers.go` -> lines 243 and 309 both read `file:%s?_journal_mode=WAL&_busy_timeout=5000`. So the framing 'block this before QA merges it' is 6 days late: there is nothing to block, there is something to REVERT FORWARD. The fleet is ALREADY at 4 active WAL re-armers, not 2 — and the two added by e370f5f51 (Tier3CacheFetcher.FetchPrice, SQLitePriceHistoryRepository.GetHistory) sit on the kinh-dich + frontend price-chart path, i.e. FAR higher call frequency than the foreign_flow/room_event pair the incident doc names. This is why the 2026-07-30 'permanent fix' (journal_mode=DELETE, commit 157335892 at 10:26Z) survived only ~6 days: 14h after it landed, e370f5f51 armed two hot-path re-armers against it.\n\n(2) THE FIX DIRECTION WAS INVERTED BY MISREADING A LANDMINE AS PRIOR ART. This row's own root_cause text says the sibling repos 'already fixed exactly this ... dropped mode=ro from their DSN' and calls them 'the correction ... applied to 2 of 4 call sites'. That reading is backwards. `docs/architecture-briefs/2026-07-30-sqlite-docker-virt-corruption-hardening.md` §3, published the day before, names those exact two files as 'a live landmine — a second, unaudited WAL re-armer, wired into production today' and calls it 'the single most actionable, time-sensitive finding in this brief'. The brief's prescribed fix shape is the OPPOSITE of what shipped: 'drop _journal_mode=WAL from both DSNs ... keep _busy_timeout=5000, and add mode=ro now that there is no longer a reason to omit it'. PO owns this defect: PO minted this row at 2026-07-31T00:07Z citing the landmine as prior art without reading the brief that had condemned it 14h earlier.\n\n(3) TWO OF THIS ROW'S OWN THREE ACs WERE NEVER IMPLEMENTED. recommended_action item 2 ('Stop swallowing: must return the error') — fetchers.go:312 and :325 still read `return []domain.DailyOHLCV{}, nil //nolint:nilerr`. Item 3 ('regression test against a fixture DB whose journal_mode is delete ... a WAL-mode fixture would mask it') — fetchers_test.go:29/:146/:197/:273 all open with `?_journal_mode=WAL`, i.e. precisely the masking fixture the row warned against. QA would have had to fail this on its own acceptance text even with no corruption argument at all.\n\nLIVE STATE AT TRIAGE (raw, not inferred): `bash scripts/audits/verify-market-db-journal-mode.sh` -> verdict=FAIL journal_mode=wal wal_present=true shm_present=true, exit 2. Host `data/live/market.db-wal` grew 140,112 -> 737,512 -> 1,545,032 bytes across ~3 minutes of observation. market.db is in WAL mode with megabytes of pending un-checkpointed writes on the bind-mounted virt layer RIGHT NOW, ~10 min after ops declared the incident resolved. Corruption #6 is actively incubating. 'get_alerts returns 20 real alerts' is true and is not evidence of health — it is the passive-health-masks-dead-data shape.",
-        "acceptance": [
-          "AC-1 ALL FOUR market.db DSNs in apps/stock-price/pkg/infrastructure/ use the form `file:%s?mode=ro&_busy_timeout=5000` — no `_journal_mode` token anywhere: foreign_flow_repository.go:36, room_event_repository.go:35, fetchers.go:243 (Tier3CacheFetcher.FetchPrice), fetchers.go:309 (SQLitePriceHistoryRepository.GetHistory). Delete the stale 3-line comment ('For production: market.db is expected to have WAL already enabled') at all four sites — that assumption became false at 2026-07-30T10:26Z and leaving it is how this bug propagated.",
-          "AC-2 (carried from the original row, never implemented) fetchers.go:312 and :325 stop swallowing: return the error instead of `[]domain.DailyOHLCV{}, nil //nolint:nilerr`. router.go:111-116 already has the 500 + slog.Error path. With mode=ro this is load-bearing, not cosmetic: mode=ro makes any future journal_mode write FAIL rather than silently succeed, so the un-swallow is what converts a re-arm attempt into a loud error instead of a silent file-header mutation.",
-          "AC-3 (carried, never implemented) regression test asserting GetHistory returns a NON-EMPTY slice against a fixture DB whose journal_mode is `delete`. Convert fetchers_test.go:29/:146/:197/:273 off `?_journal_mode=WAL` fixtures — a WAL fixture masks the exact condition under test.",
-          "AC-4 NEW — no `_journal_mode` may be set on market.db from any Go service. Grep-clean across apps/stock-price/, apps/alert-engine/, apps/macro-indicators/ for market.db openers. Per brief §4 AC-B, alert-engine's ServiceConfig.DBPath market.db field is loaded but never opened (dead config) — confirm still dead or remove it.",
-          "AC-5 NEW verification gate — after rebuilding+redeploying stock-price, `bash scripts/audits/verify-market-db-journal-mode.sh` must return verdict=PASS exit 0, AND still PASS after exercising all four paths live (curl /price/history, /reading/<code> via kinh-dich, the foreign-flow and room-event endpoints). A PASS taken before the endpoints are hit proves nothing — dormant is not fixed. Sequencing: land the Go fix and redeploy stock-price FIRST, then checkpoint+flip market.db back to DELETE. Flipping first re-arms on the next fetch."
-        ],
-        "verification_gate": "bash scripts/audits/verify-market-db-journal-mode.sh -> verdict=PASS exit 0, taken AFTER stock-price redeploy AND AFTER live-exercising all four read paths.",
-        "po_sequencing_decision": "PO considered and REJECTED stopping the stock-price container as an interim WAL-re-arm mitigation. It would restore the exact outage this row was originally minted to fix (kinh-dich 503 on every ticker + empty frontend price chart), trading a probabilistic corruption risk for a certain product outage. The change is 4 one-line DSN edits; the fast path out is to ship it, not to degrade the product while it waits. ops does NOT need to gate on a PO decision to checkpoint market.db — but a checkpoint+DELETE flip before this row deploys is wasted work, since the next stock-price fetch re-arms WAL.",
-        "context_refs": [
-          "docs/incidents/2026-08-06-sqlite-db-corruption-wai-rearm-vector.md",
-          "docs/architecture-briefs/2026-07-30-sqlite-docker-virt-corruption-hardening.md#3-live-landmine",
-          "commit e370f5f51 (the change to revert forward)",
-          "commit 157335892 (journal_mode=DELETE, the fix being defeated)"
-        ],
-        "recurring_bug_escalation": "5th market.db SQLITE_CORRUPT (2026-04-25, 07-13, 07-19, 07-30, 08-06). Per docs/agent-memory feedback_recurring_bug_escalation, 2+ recurrences require a structural fix before further point patches. PO's judgement: this row IS the structural fix for the code plane (single journal_mode owner, enforced by mode=ro making violation impossible rather than merely discouraged), and FIX-MARKETDB-JOURNALMODE-GUARD-SHIPPED-BUT-NEVER-ARMED is the structural fix for the detection plane. No further one-off market.db patches until both land."
-      },
-      {
         "id": "FIX-DB-INTEGRITY-SIDECAR-NAMED-VOLUME-DRIFT",
         "type": "FIX",
         "title": "db-integrity observer tooling still mounts the named volume commit 5ba622eca retired on 2026-07-15 — counts helper returns null, probe fail-opens every tick",
@@ -14914,52 +14855,6 @@
           "FIX-MARKETDB-JOURNALMODE-GUARD-SHIPPED-BUT-NEVER-ARMED"
         ],
         "po_do_not_conflate": "This row is observer-tooling correctness. It is NOT the 2026-08-06 SQLITE_CORRUPT incident and must not be deduped into it (alert-commander already made that error once — see the incident doc's 'Critical Misattribution' section). The link is one-directional and mechanical: the corruption row creates the WAL windows in which THIS row's defect goes blind."
-      },
-      {
-        "id": "FIX-MARKETDB-JOURNALMODE-GUARD-SHIPPED-BUT-NEVER-ARMED",
-        "type": "FIX",
-        "title": "scripts/audits/verify-market-db-journal-mode.sh works, self-tests green, and is wired to NOTHING — it would have caught the 5th corruption 6 days early. Arm it (cron + pre-push/CI + a source-grep sibling) so a WAL re-arm is detected in minutes, not at the next SQLITE_CORRUPT.",
-        "status": "READY",
-        "priority": "P0",
-        "size": "S",
-        "zone": "cross-service/",
-        "owner": "developer",
-        "next_agent": "developer",
-        "plan_only": false,
-        "supervised": false,
-        "created_at": "2026-08-06T12:28:00Z",
-        "created_by": "po (triage tick 2026-08-06T12:2xZ, 5th market.db corruption)",
-        "updated_at": "2026-08-06T12:28:58Z",
-        "updated_by": "po",
-        "root_cause": "FIX-SQLITE-JOURNALMODE-WAL-REARM-DEFEATS-DELETE-MITIGATION shipped scripts/audits/verify-market-db-journal-mode.sh as its AC-3/AC-4 regression guard. The script is GOOD: it deliberately asserts through the live running container rather than source (its own header explains why source-grepping would have missed the defect it was written for), it checks both journal_mode and the -wal/-shm pair, it has a --self-test that builds forced-WAL and forced-DELETE fixtures and proves both branches, and its exit contract is clean (0/2/3, verdict always stdout line 1). PO ran it live this tick and it worked perfectly on the first try. The defect is that NOTHING CALLS IT. Repo-wide grep for 'verify-market-db-journal-mode' returns exactly: the script itself, and two decision-journal entries. No cron, no CI step, no pre-push hook, no agent flow doc, no system-auditor probe. It has sat unarmed since 2026-07-30 while the exact condition it detects went live and produced corruption #5 on 2026-08-06.",
-        "evidence": "RAW, this tick: `bash scripts/audits/verify-market-db-journal-mode.sh` -> `MARKET_DB_JOURNAL_MODE verdict=FAIL journal_mode=wal wal_present=true shm_present=true ... reason=\"journal_mode=wal (expected delete) — WAL re-arm vector active\"`, exit 2. It is correct, it is FAILING right now, and no human or agent would have learned that unless PO happened to run it by hand. Host data/live/market.db-wal observed growing 140,112 -> 737,512 -> 1,545,032 bytes over ~3 minutes while unarmed. Wiring grep: `grep -rn verify-market-db-journal-mode --include=*.{md,ts,sh,json,yml,yaml} .` -> 5 hits, all self-referential (script usage header) or historical (decision journals). Zero call sites.",
-        "impact": "This is the detection-plane root cause of the recurrence, and it is a higher-leverage fix than any individual re-armer patch. Four re-armers were patched or found across three services and two languages in the last week; a fifth will be written by someone who has not read the brief. An armed guard converts that from 'silent corruption in N days' into 'red build / #bug alert in minutes'. The code-plane fix (mode=ro) makes violation impossible in stock-price; this makes violation VISIBLE everywhere else.",
-        "acceptance": [
-          "AC-1 RUNTIME ARM — the guard runs on a schedule against the live container and routes a FAIL to the BUG channel with the verdict line verbatim. Reuse the existing standalone-cron lane (.claude/skills/cron-standalone-team/) rather than inventing a new mechanism. Cadence: PO sets a floor of every 15 minutes — the 2026-07-30 fix survived ~14h before being re-armed and the corruption took 6 days to surface, so an hourly probe is a 60x improvement and a 15-min probe costs nothing (two docker execs, read-only by construction).",
-          "AC-2 SOURCE ARM (sibling script, NEW) — a static guard that FAILS if any source file outside the single sanctioned owner (apps/mcp-server/src/infrastructure/db/schema.ts) sets journal_mode on market.db. Must cover Go DSN strings (`_journal_mode=` in a `file:` DSN) as well as TS/JS `PRAGMA journal_mode`, because the TypeScript-only sweep is precisely how the Go re-armers survived. Wire into the pre-push/CI lane. MUST be opt-IN allowlist (list the sanctioned owner explicitly), never an opt-OUT ignore list — see feedback_fleetwide_gate_validated_on_one_file_optout_allowlist.",
-          "AC-3 the runtime guard and the source guard are complementary and BOTH required — do not substitute one for the other. The runtime guard alone cannot say which code path re-armed WAL; the source guard alone cannot catch a runtime PRAGMA (that exact gap is documented in the existing script's own header, re: bctcEvalBackfillRunner.ts). Prove both fire: source guard against a deliberately re-armed fixture file, runtime guard via its existing --self-test.",
-          "AC-4 POLICY SSOT — record the settled market.db journal-mode policy in one durable, discoverable place (docs/policies/ or docs/standards/, referenced from docs/ARCHITECTURE.md): market.db is journal_mode=DELETE + synchronous=FULL; apps/mcp-server/src/infrastructure/db/schema.ts is the SOLE owner; every other consumer opens `mode=ro` with NO journal_mode token. Include the WHY (macOS-Docker-virt torn -shm write on a bind mount, 5 corruptions) and the durability trade-off from brief §2.4 (bind-mount survives VM rebuild, named volume does not), so the next engineer who hits SQLITE_READONLY and is tempted to 'just go back to WAL' finds the reasoning instead of re-deriving it. Brief §2.4 explicitly called out that 157335892's commit trail lacks this record — that omission is what let e370f5f51 be written 14h later.",
-          "AC-5 the guard's own FAIL must not be swallowed by the caller. Its exit contract is 0=PASS/2=FAIL/3=ERROR with the verdict as stdout line 1; callers must not `&&`-chain it (see feedback_verdict_exit_code_gated_by_and_chain_swallows_actionable_output) and must not `tail` its output (see feedback_tick_preflight_verdict_is_first_json_key_tail_always_drops_it)."
-        ],
-        "files_hint": [
-          "scripts/audits/verify-market-db-journal-mode.sh (exists, do not rewrite — only wire it)",
-          ".claude/skills/cron-standalone-team/register.md",
-          ".claude/commands/crons/",
-          "scripts/audits/ (new source-grep sibling)",
-          "docs/policies/ or docs/standards/ (new policy SSOT)"
-        ],
-        "verification_gate": "Both guards demonstrated firing on a deliberately-broken fixture AND passing on a clean one, plus proof the runtime guard's FAIL actually reaches the BUG channel (a scheduled job whose alert path is untested is the same unarmed-guard defect one layer up).",
-        "related": [
-          "FIX-STOCKPRICE-PRICEHISTORY-RO-WAL-DSN-SWALLOWED-EMPTY-KILLS-KINHDICH",
-          "FIX-SQLITE-JOURNALMODE-WAL-REARM-DEFEATS-DELETE-MITIGATION",
-          "FIX-SCRIPTS-MIGRATIONS-MARKETDB-WAL-REARM-SAME-DEFECT",
-          "FIX-DB-INTEGRITY-SIDECAR-NAMED-VOLUME-DRIFT"
-        ],
-        "context_refs": [
-          "docs/incidents/2026-08-06-sqlite-db-corruption-wai-rearm-vector.md",
-          "docs/architecture-briefs/2026-07-30-sqlite-docker-virt-corruption-hardening.md"
-        ],
-        "note": "PO ANSWERS THE DEFERRED POLICY QUESTION HERE — no new spike needed. The framing that SPIKE-SQLITE-DOCKER-VIRT-CORRUPTION-HARDENING AC-B ('DELETE-vs-WAL policy per DB') is unresolved is out of date: the architect ANSWERED AC-A through AC-D in §4 of the 2026-07-30 brief. For market.db the verdict is settled (DELETE, single owner, §2.4 reasoning). The only part of AC-B still genuinely open concerns coordination.db, where the brief's verdict is 'do NOT blanket-convert — measure lock-hold duration under DELETE in a non-prod fixture first', because synchronous=FULL on every task_claim/heartbeat would lengthen the fleet mutex's lock window and a stuck mutex has worse blast radius (silent fleet-wide double-dispatch) than the corruption it avoids. That measurement is a separate, lower-priority row and is explicitly NOT a blocker for anything here. So the answer to 'should we finally resolve DELETE-vs-WAL policy given the 5th recurrence' is: the policy was never the missing piece — it was decided a week ago and simply had no enforcement and no discoverable home. That is what AC-2 and AC-4 above supply. Resolving it 'again' via a fresh spike would have burned a cycle re-deriving a settled answer while the vector stayed live."
       }
     ],
     "review": [
@@ -22618,6 +22513,116 @@
         "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
         "claimed_at": "2026-08-06T12:27:30Z",
         "claimed_by": "dev-team (bounded-1 auto-pickup)"
+      },
+      {
+        "id": "FIX-STOCKPRICE-PRICEHISTORY-RO-WAL-DSN-SWALLOWED-EMPTY-KILLS-KINHDICH",
+        "title": "REOPENED+WIDENED (P0, 5th market.db corruption): ALL FOUR stock-price market.db DSNs must drop _journal_mode=WAL and open mode=ro. The 2026-07-31 'fix' for /price/history landed the WRONG pattern — it removed mode=ro so the WAL pragma would succeed, adding 2 MORE WAL re-armers on the hottest read path. Also un-swallow the nilerr and add DELETE-mode fixtures (AC-2/AC-3 of the original row were never implemented).",
+        "type": "FIX",
+        "priority": "P0",
+        "status": "IN_PROGRESS",
+        "zone": "apps/stock-price/",
+        "size": "S",
+        "owner": "dev-stock-price",
+        "next_agent": "dev-stock-price",
+        "created_by": "po (triage tick 2026-07-31T00:07Z)",
+        "created_at": "2026-07-31T00:29:11Z",
+        "updated_at": "2026-08-06T12:35:34Z",
+        "baseline_pass": "cd apps/stock-price && go build ./... && go test ./...",
+        "files": [
+          "apps/stock-price/pkg/infrastructure/fetchers.go",
+          "apps/stock-price/pkg/infrastructure/foreign_flow_repository.go",
+          "apps/stock-price/pkg/infrastructure/room_event_repository.go",
+          "apps/stock-price/pkg/infrastructure/fetchers_test.go",
+          "apps/stock-price/pkg/infrastructure/foreign_flow_repository_test.go",
+          "apps/stock-price/pkg/infrastructure/room_event_repository_test.go"
+        ],
+        "source": "telegram report id 4227 — [kinh-dich] get_kinhdich_reading failed for HVN with 503 'insufficient price data ... requires at least 7 price points'",
+        "root_cause": "apps/stock-price/pkg/infrastructure/fetchers.go:303 (SQLitePriceHistoryRepository.GetHistory) and :240 (Tier3Fetcher) build the DSN 'file:%s?mode=ro&_journal_mode=WAL&_busy_timeout=5000'. The live market.db has PRAGMA journal_mode=delete, so the driver issuing PRAGMA journal_mode=WAL over a mode=ro connection fails with SQLITE_READONLY(8) 'attempt to write a readonly database'. The resulting db.Query error is then discarded at fetchers.go:318-320 ('return []domain.DailyOHLCV{}, nil //nolint:nilerr'), with the same swallow at :305-307 for sql.Open — so the handler emits HTTP 200 with an empty history and logs nothing. The two SIBLING repositories in this same package already fixed exactly this: foreign_flow_repository.go:33 and room_event_repository.go:32 both carry the comment 'Note: readonly mode (mode=ro) conflicts with WAL journal mode creation.' and dropped mode=ro from their DSN. The correction was applied to 2 of 4 call sites; fetchers.go:240 and :303 were missed.",
+        "evidence": "RAW-VERIFIED LIVE 2026-07-31T00:25Z — every hop measured, not inferred. (1) The data EXISTS: sqlite3 on data/live/market.db (the bind-mount source of the container's /app/data) gives daily_ohlcv HVN = 775 rows spanning 2023-06-27..2026-07-30, and the handler's exact query (WHERE code='HVN' AND date >= date('now','-30 days')) returns 22. This is NOT the thin-ticker / new-listing data gap the alert text implies. (2) Outage reproduced: curl localhost:5005/reading/HVN -> 503 'insufficient price data ... requires at least 7 price points'; curl localhost:5005/market (VNINDEX) -> the same 503. BOTH kinh-dich routes are dead. (3) Failing hop isolated: gateway localhost:4000/stock/price/history?code=HVN&days=30 -> {code:HVN,history:[]}, identically empty for FPT/VNM/VCB and for days=30/365/3650 (universal and parameter-independent); but mcp-server's own localhost:3000/api/prices/history?code=HVN&days=30 -> count:22 with full rows. Same DB, same window, opposite result => the defect is in stock-price, not in the data. (4) stock-price direct: localhost:5010/price/history?code=HVN&days=30 -> {code:HVN,history:[]} while /health returns {status:ok} — passive health masking dead data. (5) Root cause reproduced in isolation: sqlite3 'file:data/live/market.db?mode=ro' 'PRAGMA journal_mode=WAL;' -> 'Error: stepping, attempt to write a readonly database (8)', and a SELECT appended after that PRAGMA never executes; the same SELECT on a mode=ro connection WITHOUT the WAL pragma returns 22. PRAGMA journal_mode on the live DB = delete. (6) Alternatives ruled out at source: container clocks are exact (stock-price, mcp-server, kinh-dich and api-gateway all match the host to the second, so no date('now') drift); DB_PATH=/app/data/market.db resolves to a present 401MB file inside the container; and only 3 commits touched apps/stock-price since its image was built, none of them on the read path — so this is a live SOURCE defect, NOT a stale-image/deploy-lane problem. Rebuilding will not fix it.",
+        "blast_radius": "P1 — total loss of two product surfaces, not one ticker. (a) kinh-dich-service reads PRICE_HISTORY_URL -> api-gateway -> stock-price, so ComputeScores() receives nil for every code: get_kinhdich_reading 503s for ALL tickers and for the VNINDEX /market reading. (b) apps/frontend/app/lib/api/client.ts:245 calls the same /stock/price/history endpoint, so the frontend price-history chart renders empty. (c) fetchers.go:240 Tier3Fetcher carries the identical broken DSN, exposing the tier-3 price path to the same silent-empty failure.",
+        "recommended_action": "1) Drop 'mode=ro&' from the DSN at fetchers.go:240 and :303 so all four call sites in this package match the already-corrected foreign_flow_repository.go:36 / room_event_repository.go:35 form ('file:%s?_journal_mode=WAL&_busy_timeout=5000'). 2) Stop swallowing: fetchers.go:305-307 and :318-320 must return the error — the HTTP layer at router.go:111-116 already has a correct 500 path with slog.Error, and the silent nilerr is precisely what let a total outage present as a per-ticker 503 for an unknown duration. 3) Regression test: assert GetHistory returns a non-empty slice against a fixture DB whose journal_mode is 'delete' — that is the exact condition that fails today and that a WAL-mode fixture would mask.",
+        "misleading_alert_note": "The kinh-dich 503 text is itself a defect amplifier and deserves a fix in the same pass or an immediate follow-up: price_score.go:32-41 collapses BOTH 'source fetch errored' and 'genuinely fewer than 7 points' into one nil return, which usecases.go:80/85/124/129 convert to ErrInsufficientData and router.go renders as 503 'requires at least 7 price points'. A total upstream outage is therefore reported as a thin-data condition — which is what steered this incident toward a per-ticker data-gap reading instead of a service outage.",
+        "out_of_scope": "Do NOT re-point kinh-dich at the mcp-server fallback endpoint. The not-deployed-rerouter (apps/api-gateway/pkg/primitive/not-deployed-rerouter/reroute.go) is correct and deliberately fires only for NOT-deployed services; stock-price IS deployed, so routing to it is intended behaviour. Fix stock-price, not the routing.",
+        "related": [
+          "FIX-PRICEHISTORY-DATAASOF-STOCKPRICE-SERVING",
+          "FIX-CHEF-EVENING-L5-KINHDICH-SILENT-OMISSION",
+          "FIX-SQLITE-JOURNALMODE-WAL-REARM-DEFEATS-DELETE-MITIGATION",
+          "FIX-SCRIPTS-MIGRATIONS-MARKETDB-WAL-REARM-SAME-DEFECT",
+          "FIX-MARKETDB-JOURNALMODE-GUARD-SHIPPED-BUT-NEVER-ARMED",
+          "SPIKE-SQLITE-DOCKER-VIRT-CORRUPTION-HARDENING"
+        ],
+        "supervised": false,
+        "plan_only": false,
+        "updated_by": "po",
+        "claimed_at": "2026-08-06T12:35:33Z",
+        "claimed_by": "router",
+        "po_reopen_note": "PO TRIAGE 2026-08-06T12:2xZ — this row was NOT ready for QA sign-off. Three independent reasons, all raw-verified this tick:\n\n(1) THE CODE ALREADY LANDED, AND IT LANDED WRONG. Commit e370f5f51 (2026-07-31T00:45Z, matching this row's updated_at 00:44:56Z) is already on main. `git show HEAD:apps/stock-price/pkg/infrastructure/fetchers.go` -> lines 243 and 309 both read `file:%s?_journal_mode=WAL&_busy_timeout=5000`. So the framing 'block this before QA merges it' is 6 days late: there is nothing to block, there is something to REVERT FORWARD. The fleet is ALREADY at 4 active WAL re-armers, not 2 — and the two added by e370f5f51 (Tier3CacheFetcher.FetchPrice, SQLitePriceHistoryRepository.GetHistory) sit on the kinh-dich + frontend price-chart path, i.e. FAR higher call frequency than the foreign_flow/room_event pair the incident doc names. This is why the 2026-07-30 'permanent fix' (journal_mode=DELETE, commit 157335892 at 10:26Z) survived only ~6 days: 14h after it landed, e370f5f51 armed two hot-path re-armers against it.\n\n(2) THE FIX DIRECTION WAS INVERTED BY MISREADING A LANDMINE AS PRIOR ART. This row's own root_cause text says the sibling repos 'already fixed exactly this ... dropped mode=ro from their DSN' and calls them 'the correction ... applied to 2 of 4 call sites'. That reading is backwards. `docs/architecture-briefs/2026-07-30-sqlite-docker-virt-corruption-hardening.md` §3, published the day before, names those exact two files as 'a live landmine — a second, unaudited WAL re-armer, wired into production today' and calls it 'the single most actionable, time-sensitive finding in this brief'. The brief's prescribed fix shape is the OPPOSITE of what shipped: 'drop _journal_mode=WAL from both DSNs ... keep _busy_timeout=5000, and add mode=ro now that there is no longer a reason to omit it'. PO owns this defect: PO minted this row at 2026-07-31T00:07Z citing the landmine as prior art without reading the brief that had condemned it 14h earlier.\n\n(3) TWO OF THIS ROW'S OWN THREE ACs WERE NEVER IMPLEMENTED. recommended_action item 2 ('Stop swallowing: must return the error') — fetchers.go:312 and :325 still read `return []domain.DailyOHLCV{}, nil //nolint:nilerr`. Item 3 ('regression test against a fixture DB whose journal_mode is delete ... a WAL-mode fixture would mask it') — fetchers_test.go:29/:146/:197/:273 all open with `?_journal_mode=WAL`, i.e. precisely the masking fixture the row warned against. QA would have had to fail this on its own acceptance text even with no corruption argument at all.\n\nLIVE STATE AT TRIAGE (raw, not inferred): `bash scripts/audits/verify-market-db-journal-mode.sh` -> verdict=FAIL journal_mode=wal wal_present=true shm_present=true, exit 2. Host `data/live/market.db-wal` grew 140,112 -> 737,512 -> 1,545,032 bytes across ~3 minutes of observation. market.db is in WAL mode with megabytes of pending un-checkpointed writes on the bind-mounted virt layer RIGHT NOW, ~10 min after ops declared the incident resolved. Corruption #6 is actively incubating. 'get_alerts returns 20 real alerts' is true and is not evidence of health — it is the passive-health-masks-dead-data shape.",
+        "acceptance": [
+          "AC-1 ALL FOUR market.db DSNs in apps/stock-price/pkg/infrastructure/ use the form `file:%s?mode=ro&_busy_timeout=5000` — no `_journal_mode` token anywhere: foreign_flow_repository.go:36, room_event_repository.go:35, fetchers.go:243 (Tier3CacheFetcher.FetchPrice), fetchers.go:309 (SQLitePriceHistoryRepository.GetHistory). Delete the stale 3-line comment ('For production: market.db is expected to have WAL already enabled') at all four sites — that assumption became false at 2026-07-30T10:26Z and leaving it is how this bug propagated.",
+          "AC-2 (carried from the original row, never implemented) fetchers.go:312 and :325 stop swallowing: return the error instead of `[]domain.DailyOHLCV{}, nil //nolint:nilerr`. router.go:111-116 already has the 500 + slog.Error path. With mode=ro this is load-bearing, not cosmetic: mode=ro makes any future journal_mode write FAIL rather than silently succeed, so the un-swallow is what converts a re-arm attempt into a loud error instead of a silent file-header mutation.",
+          "AC-3 (carried, never implemented) regression test asserting GetHistory returns a NON-EMPTY slice against a fixture DB whose journal_mode is `delete`. Convert fetchers_test.go:29/:146/:197/:273 off `?_journal_mode=WAL` fixtures — a WAL fixture masks the exact condition under test.",
+          "AC-4 NEW — no `_journal_mode` may be set on market.db from any Go service. Grep-clean across apps/stock-price/, apps/alert-engine/, apps/macro-indicators/ for market.db openers. Per brief §4 AC-B, alert-engine's ServiceConfig.DBPath market.db field is loaded but never opened (dead config) — confirm still dead or remove it.",
+          "AC-5 NEW verification gate — after rebuilding+redeploying stock-price, `bash scripts/audits/verify-market-db-journal-mode.sh` must return verdict=PASS exit 0, AND still PASS after exercising all four paths live (curl /price/history, /reading/<code> via kinh-dich, the foreign-flow and room-event endpoints). A PASS taken before the endpoints are hit proves nothing — dormant is not fixed. Sequencing: land the Go fix and redeploy stock-price FIRST, then checkpoint+flip market.db back to DELETE. Flipping first re-arms on the next fetch."
+        ],
+        "verification_gate": "bash scripts/audits/verify-market-db-journal-mode.sh -> verdict=PASS exit 0, taken AFTER stock-price redeploy AND AFTER live-exercising all four read paths.",
+        "po_sequencing_decision": "PO considered and REJECTED stopping the stock-price container as an interim WAL-re-arm mitigation. It would restore the exact outage this row was originally minted to fix (kinh-dich 503 on every ticker + empty frontend price chart), trading a probabilistic corruption risk for a certain product outage. The change is 4 one-line DSN edits; the fast path out is to ship it, not to degrade the product while it waits. ops does NOT need to gate on a PO decision to checkpoint market.db — but a checkpoint+DELETE flip before this row deploys is wasted work, since the next stock-price fetch re-arms WAL.",
+        "context_refs": [
+          "docs/incidents/2026-08-06-sqlite-db-corruption-wai-rearm-vector.md",
+          "docs/architecture-briefs/2026-07-30-sqlite-docker-virt-corruption-hardening.md#3-live-landmine",
+          "commit e370f5f51 (the change to revert forward)",
+          "commit 157335892 (journal_mode=DELETE, the fix being defeated)"
+        ],
+        "recurring_bug_escalation": "5th market.db SQLITE_CORRUPT (2026-04-25, 07-13, 07-19, 07-30, 08-06). Per docs/agent-memory feedback_recurring_bug_escalation, 2+ recurrences require a structural fix before further point patches. PO's judgement: this row IS the structural fix for the code plane (single journal_mode owner, enforced by mode=ro making violation impossible rather than merely discouraged), and FIX-MARKETDB-JOURNALMODE-GUARD-SHIPPED-BUT-NEVER-ARMED is the structural fix for the detection plane. No further one-off market.db patches until both land.",
+        "dispatch_note": "PO triage 2026-08-06T12:2xZ (triage-20260806T1229Z-po): 5th market.db corruption, live WAL re-arm confirmed active. Widened to all 4 DSNs, P0. Router dispatch."
+      },
+      {
+        "id": "FIX-MARKETDB-JOURNALMODE-GUARD-SHIPPED-BUT-NEVER-ARMED",
+        "type": "FIX",
+        "title": "scripts/audits/verify-market-db-journal-mode.sh works, self-tests green, and is wired to NOTHING — it would have caught the 5th corruption 6 days early. Arm it (cron + pre-push/CI + a source-grep sibling) so a WAL re-arm is detected in minutes, not at the next SQLITE_CORRUPT.",
+        "status": "IN_PROGRESS",
+        "priority": "P0",
+        "size": "S",
+        "zone": "cross-service/",
+        "owner": "developer",
+        "next_agent": "developer",
+        "plan_only": false,
+        "supervised": false,
+        "created_at": "2026-08-06T12:28:00Z",
+        "created_by": "po (triage tick 2026-08-06T12:2xZ, 5th market.db corruption)",
+        "updated_at": "2026-08-06T12:35:35Z",
+        "updated_by": "po",
+        "root_cause": "FIX-SQLITE-JOURNALMODE-WAL-REARM-DEFEATS-DELETE-MITIGATION shipped scripts/audits/verify-market-db-journal-mode.sh as its AC-3/AC-4 regression guard. The script is GOOD: it deliberately asserts through the live running container rather than source (its own header explains why source-grepping would have missed the defect it was written for), it checks both journal_mode and the -wal/-shm pair, it has a --self-test that builds forced-WAL and forced-DELETE fixtures and proves both branches, and its exit contract is clean (0/2/3, verdict always stdout line 1). PO ran it live this tick and it worked perfectly on the first try. The defect is that NOTHING CALLS IT. Repo-wide grep for 'verify-market-db-journal-mode' returns exactly: the script itself, and two decision-journal entries. No cron, no CI step, no pre-push hook, no agent flow doc, no system-auditor probe. It has sat unarmed since 2026-07-30 while the exact condition it detects went live and produced corruption #5 on 2026-08-06.",
+        "evidence": "RAW, this tick: `bash scripts/audits/verify-market-db-journal-mode.sh` -> `MARKET_DB_JOURNAL_MODE verdict=FAIL journal_mode=wal wal_present=true shm_present=true ... reason=\"journal_mode=wal (expected delete) — WAL re-arm vector active\"`, exit 2. It is correct, it is FAILING right now, and no human or agent would have learned that unless PO happened to run it by hand. Host data/live/market.db-wal observed growing 140,112 -> 737,512 -> 1,545,032 bytes over ~3 minutes while unarmed. Wiring grep: `grep -rn verify-market-db-journal-mode --include=*.{md,ts,sh,json,yml,yaml} .` -> 5 hits, all self-referential (script usage header) or historical (decision journals). Zero call sites.",
+        "impact": "This is the detection-plane root cause of the recurrence, and it is a higher-leverage fix than any individual re-armer patch. Four re-armers were patched or found across three services and two languages in the last week; a fifth will be written by someone who has not read the brief. An armed guard converts that from 'silent corruption in N days' into 'red build / #bug alert in minutes'. The code-plane fix (mode=ro) makes violation impossible in stock-price; this makes violation VISIBLE everywhere else.",
+        "acceptance": [
+          "AC-1 RUNTIME ARM — the guard runs on a schedule against the live container and routes a FAIL to the BUG channel with the verdict line verbatim. Reuse the existing standalone-cron lane (.claude/skills/cron-standalone-team/) rather than inventing a new mechanism. Cadence: PO sets a floor of every 15 minutes — the 2026-07-30 fix survived ~14h before being re-armed and the corruption took 6 days to surface, so an hourly probe is a 60x improvement and a 15-min probe costs nothing (two docker execs, read-only by construction).",
+          "AC-2 SOURCE ARM (sibling script, NEW) — a static guard that FAILS if any source file outside the single sanctioned owner (apps/mcp-server/src/infrastructure/db/schema.ts) sets journal_mode on market.db. Must cover Go DSN strings (`_journal_mode=` in a `file:` DSN) as well as TS/JS `PRAGMA journal_mode`, because the TypeScript-only sweep is precisely how the Go re-armers survived. Wire into the pre-push/CI lane. MUST be opt-IN allowlist (list the sanctioned owner explicitly), never an opt-OUT ignore list — see feedback_fleetwide_gate_validated_on_one_file_optout_allowlist.",
+          "AC-3 the runtime guard and the source guard are complementary and BOTH required — do not substitute one for the other. The runtime guard alone cannot say which code path re-armed WAL; the source guard alone cannot catch a runtime PRAGMA (that exact gap is documented in the existing script's own header, re: bctcEvalBackfillRunner.ts). Prove both fire: source guard against a deliberately re-armed fixture file, runtime guard via its existing --self-test.",
+          "AC-4 POLICY SSOT — record the settled market.db journal-mode policy in one durable, discoverable place (docs/policies/ or docs/standards/, referenced from docs/ARCHITECTURE.md): market.db is journal_mode=DELETE + synchronous=FULL; apps/mcp-server/src/infrastructure/db/schema.ts is the SOLE owner; every other consumer opens `mode=ro` with NO journal_mode token. Include the WHY (macOS-Docker-virt torn -shm write on a bind mount, 5 corruptions) and the durability trade-off from brief §2.4 (bind-mount survives VM rebuild, named volume does not), so the next engineer who hits SQLITE_READONLY and is tempted to 'just go back to WAL' finds the reasoning instead of re-deriving it. Brief §2.4 explicitly called out that 157335892's commit trail lacks this record — that omission is what let e370f5f51 be written 14h later.",
+          "AC-5 the guard's own FAIL must not be swallowed by the caller. Its exit contract is 0=PASS/2=FAIL/3=ERROR with the verdict as stdout line 1; callers must not `&&`-chain it (see feedback_verdict_exit_code_gated_by_and_chain_swallows_actionable_output) and must not `tail` its output (see feedback_tick_preflight_verdict_is_first_json_key_tail_always_drops_it)."
+        ],
+        "files_hint": [
+          "scripts/audits/verify-market-db-journal-mode.sh (exists, do not rewrite — only wire it)",
+          ".claude/skills/cron-standalone-team/register.md",
+          ".claude/commands/crons/",
+          "scripts/audits/ (new source-grep sibling)",
+          "docs/policies/ or docs/standards/ (new policy SSOT)"
+        ],
+        "verification_gate": "Both guards demonstrated firing on a deliberately-broken fixture AND passing on a clean one, plus proof the runtime guard's FAIL actually reaches the BUG channel (a scheduled job whose alert path is untested is the same unarmed-guard defect one layer up).",
+        "related": [
+          "FIX-STOCKPRICE-PRICEHISTORY-RO-WAL-DSN-SWALLOWED-EMPTY-KILLS-KINHDICH",
+          "FIX-SQLITE-JOURNALMODE-WAL-REARM-DEFEATS-DELETE-MITIGATION",
+          "FIX-SCRIPTS-MIGRATIONS-MARKETDB-WAL-REARM-SAME-DEFECT",
+          "FIX-DB-INTEGRITY-SIDECAR-NAMED-VOLUME-DRIFT"
+        ],
+        "context_refs": [
+          "docs/incidents/2026-08-06-sqlite-db-corruption-wai-rearm-vector.md",
+          "docs/architecture-briefs/2026-07-30-sqlite-docker-virt-corruption-hardening.md"
+        ],
+        "note": "PO ANSWERS THE DEFERRED POLICY QUESTION HERE — no new spike needed. The framing that SPIKE-SQLITE-DOCKER-VIRT-CORRUPTION-HARDENING AC-B ('DELETE-vs-WAL policy per DB') is unresolved is out of date: the architect ANSWERED AC-A through AC-D in §4 of the 2026-07-30 brief. For market.db the verdict is settled (DELETE, single owner, §2.4 reasoning). The only part of AC-B still genuinely open concerns coordination.db, where the brief's verdict is 'do NOT blanket-convert — measure lock-hold duration under DELETE in a non-prod fixture first', because synchronous=FULL on every task_claim/heartbeat would lengthen the fleet mutex's lock window and a stuck mutex has worse blast radius (silent fleet-wide double-dispatch) than the corruption it avoids. That measurement is a separate, lower-priority row and is explicitly NOT a blocker for anything here. So the answer to 'should we finally resolve DELETE-vs-WAL policy given the 5th recurrence' is: the policy was never the missing piece — it was decided a week ago and simply had no enforcement and no discoverable home. That is what AC-2 and AC-4 above supply. Resolving it 'again' via a fresh spike would have burned a cycle re-deriving a settled answer while the vector stayed live.",
+        "claimed_at": "2026-08-06T12:35:34Z",
+        "claimed_by": "router",
+        "dispatch_note": "PO triage 2026-08-06T12:2xZ (triage-20260806T1229Z-po): detection-plane structural fix, guard script exists but wired to nothing. P0, parallel-safe with FIX-STOCKPRICE dispatch (different zone). Router dispatch."
       }
     ]
   },
@@ -22628,6 +22633,6 @@
     "ssot": true
   },
   "last_tick": "20260622T2215Z",
-  "_updated_at": "2026-08-06T10:15:29Z",
-  "_updated_by": "po/triage-20260806T1015"
+  "_updated_at": "2026-08-06T12:35:34Z",
+  "_updated_by": "dev-team"
 }
