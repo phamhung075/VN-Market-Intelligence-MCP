@@ -1128,6 +1128,68 @@ describe("AC-11: gcExpiredLocks — orphan-signal emission (TASK_1983 / DoD-P15-
     expect(payload["redispatch_count"]).toBe(1);
   });
 
+  // ---------------------------------------------------------------------------
+  // AC-3a (TASK_603 / FIX-CRON-REGISTRATION-PREFIX-NOT-EXCLUDED-ORPHANEMIT-AND-D4-R1B):
+  // cron-registration:* is a NEW marker namespace (8-day backstop TTL, designed to
+  // outlive the <=30 min session-presence expiry). Same guard class as cron:* and
+  // dev-team-cron-singleton above: excluded from Phase-1 orphan-emit, but Phase-2
+  // DELETE must still run (silent GC, not a permanent leak). Both halves asserted
+  // in one test so an over-broad fix that also skips Phase-2 deletion is caught.
+  // Positive control proves the fix is not a wholesale emission kill.
+  // ---------------------------------------------------------------------------
+
+  it("does NOT emit orphan-signal for expired 'cron-registration:cowork-team' (task_kind=sprint-task) AND the marker IS still deleted (AC-3a)", () => {
+    const cronRegistrationId = "cron-registration:cowork-team";
+    testDb.prepare(`
+      INSERT INTO task_locks
+        (task_id, task_kind, owner_session, owner_agent, owner_client_session,
+         claimed_at, expires_at, heartbeat_at, ttl_seconds, payload, redispatch_count)
+      VALUES
+        (?, 'sprint-task', 'sess-cronreg', 'cron-cowork-team', 'test-session-123',
+         unixepoch('now'), unixepoch('now') + 600, unixepoch('now'), 600,
+         '{"jobs":[]}', 0)
+    `).run(cronRegistrationId);
+    setExpired(testDb, cronRegistrationId, 400);
+
+    gcExpiredLocks(testDb, 300);
+
+    // Assert 1 (Phase-2 still runs): the marker itself was deleted from task_locks.
+    const origRow = testDb.prepare("SELECT * FROM task_locks WHERE task_id = ?").get(cronRegistrationId);
+    expect(origRow).toBeNull();
+
+    // Assert 2 (Phase-1 exclusion holds): no orphan-signal was minted for it.
+    const signalRow = testDb.prepare(
+      "SELECT * FROM task_locks WHERE task_id = ?"
+    ).get(`orphan-signal:${cronRegistrationId}`);
+    expect(signalRow).toBeNull();
+  });
+
+  it("positive control: STILL emits orphan-signal for an ordinary expired sprint-task (proves AC-3a fix is not a wholesale emission kill)", () => {
+    const ordinaryId = "some-ordinary-task-id";
+    testDb.prepare(`
+      INSERT INTO task_locks
+        (task_id, task_kind, owner_session, owner_agent, owner_client_session,
+         claimed_at, expires_at, heartbeat_at, ttl_seconds, payload, redispatch_count)
+      VALUES
+        (?, 'sprint-task', 'sess-ordinary', 'some-agent', 'test-session-456',
+         unixepoch('now'), unixepoch('now') + 600, unixepoch('now'), 600,
+         '{"work":"data"}', 0)
+    `).run(ordinaryId);
+    setExpired(testDb, ordinaryId, 400);
+
+    gcExpiredLocks(testDb, 300);
+
+    // Marker deleted (normal GC)
+    const origRow = testDb.prepare("SELECT * FROM task_locks WHERE task_id = ?").get(ordinaryId);
+    expect(origRow).toBeNull();
+
+    // Orphan-signal WAS minted — proves the exclusion is task_id-prefix-scoped only
+    const signalRow = testDb.prepare(
+      "SELECT * FROM task_locks WHERE task_id = ?"
+    ).get(`orphan-signal:${ordinaryId}`);
+    expect(signalRow).not.toBeNull();
+  });
+
   it("INSERT OR REPLACE: second GC cycle overwrites stale orphan-signal with fresh one", () => {
     testDb.prepare(`
       INSERT INTO task_locks
