@@ -1,5 +1,48 @@
 # Agent Father — Notebook
 
+## Keep (maintenance) 2026-08-06T13:18Z — scheduled (cron-agent-father 23:14 UTC slot)
+- Trigger: scheduled. Pre-Check gate (`git diff --name-only HEAD~3..HEAD`) hit only
+  `docs/data/orch/*` — zero `.claude/agents/*.md`/`docs/agents/*/flow/*.md` matches → Steps 1-2
+  (orphan+roster scan) skipped per CADRAT-3, straight to Steps 3-5 with empty scan-orphans output.
+- Top-5 sweep, all 42 agents (`.claude/agents/*.md` × `docs/agents/<id>/init.md`): Check #1
+  (fail-loud-protocol) + #3 (boundary_rules) fail ONLY for `semble-search` (minimal tool-style
+  single-shot search wrapper, own flow/main.md self-declares "No multi-step flow", no notebook
+  writes, `tools: Bash, Read` — reads as an intentional exception never written into the guide).
+  Check #4 (flow path resolves) clean for all 42 (initial hits were a BSD-sed `\s` false positive
+  in my own grep, re-verified with `[[:space:]]`). Check #5 (version >90d stale): agent-father's
+  own `init.md` was 91d stale (2026-05-07) — **auto-fixed** to 2026-08-06 (mechanical rule).
+- Check #2 (Error Boundary in flow): 17 raw grep hits on `<id>/flow/main.md`, 9 false positives —
+  thin-dispatcher `main.md` routes to a sub-flow (`cycle.md`/`weekly.md`/`daily-predict.md`/
+  `chef.md`/`keep.md`) that DOES carry the line; verified all 9 individually (agent-father,
+  alert-commander, bctc-analyst, digest-predict, market-watcher, news-scout, qa-responder,
+  unified-agent). **Real finding (escalated, not auto-fixed — Step 4 forbids):** 8 microservice
+  dev-* agents (dev-alert-engine, dev-api-gateway, dev-kinh-dich, dev-macro-indicators,
+  dev-pdf-extractor, dev-rag-service, dev-stock-price, dev-technical-analysis) all dispatch to
+  the shared `docs/agents/developer/flow/microservice-main.md`, which itself has zero "Error
+  Boundary" mentions — single-file fix closes all 8 (dev-mcp-server/dev-frontend declare their
+  own Error Boundary line before delegating, so they're clean).
+- Step 5 stale-notebook report (>30d): 4/46 — idea-forge.md (95d), market-analyst.md (95d),
+  qa-responder.md (70d), semble-search.md (95d). Info only.
+- Step 5b team-tool-recheck: wrote `team-tool-recheck-2026-08-06-1318.md`. Findings identical to
+  same-day 07:39Z run — 3 CRITICAL unchanged (alert-commander/market-watcher/news-scout: `Bash`
+  granted vs unqualified "No other filesystem writes permitted", origin `610110e16`, already
+  handed off to po). Mechanical-enforcement status unchanged: prose-only.
+- **Structural finding (escalated):** this flow's Commit step prescribes `commit-mutex/SKILL.md`
+  (`task_claim` via `mcp__gateway__call_tool`), but agent-father's tool grant (`Read, Edit, Write,
+  Glob, Grep, Bash`) has no MCP binding — confirmed live, call errored "No such tool available".
+  Same gap `team-tool-recheck.md` already names for its live-probe subset. Committed directly with
+  explicit pathspec (no `-A`/bare), `INV-GATEWAY-1` "specialists commit directly" precedent — no
+  lock acquired, tool doesn't exist for this agent. Recommend keep.md's Commit step get corrected.
+- Self-caught bug: first notebook-write attempt used a malformed heading (`13:18Z 2026-08-06`,
+  time-before-date) — the auto-prune hook's date regex only captures date-only when no T-time
+  immediately follows, defaulted my new section's sort-key to midnight, mis-ranked it OLDEST, and
+  silently dropped it (file reverted byte-identical to pre-edit HEAD). Re-wrote with proper
+  ISO8601 (`2026-08-06T13:18Z`) matching this file's own convention.
+- Committed `bbe732740` (init.md version fix + health report), pushed clean (tsc PASS).
+- Escalations: N=1 substantive (microservice-main.md Error Boundary gap, 8 agents) + 1 structural
+  (commit-mutex tool-access gap) + 1 policy question (semble-search exception class, LOW) →
+  folding into Step 7 PO handoff.
+
 ## Split (router-direct dispatch, P1) 2026-08-06T10:22Z TE-T26 (TOKEN-ECONOMY-AUDIT wave 3)
 - Split `docs/agents/fb-market-poster/flow/main.md` (994L) at the MODE ROUTER, per
   `docs/architecture-briefs/2026-07-12-token-economy-lazyload-audit.md#T-26`. New
@@ -82,55 +125,3 @@
   TE-T16 below). **Did NOT commit** `orch-state.json` myself — flagged via the same signal row
   above. Verified both pre-existing regression verifiers still PASS after the widening:
   `devteam-pipeline-resume-terminal-lane-verify.sh` and `po-goahead-producer-verify.sh`.
-
-## Split (router-direct dispatch, P1) 2026-08-06T09:45Z TE-T16 (TOKEN-ECONOMY-AUDIT wave 3)
-- Split `docs/agents/unified-agent/flow/chef.md` at its existing Step-1 intraday silent-exit
-  gate, per `docs/architecture-briefs/2026-07-12-token-economy-lazyload-audit.md#T-16`.
-  `chef.md` (893L→206L) keeps ONLY Step 0.5 (published-marker gate) + Step 0 (GATHER) +
-  Step 1 (CLUSTER/intraday-gate). New `docs/agents/unified-agent/flow/chef-dish.md` (731L)
-  holds Steps 1.5-8 (macro-health read, 6-layer walk, dual-output WRITE DISH, quality-verdict
-  gate, JSON persist, log/RETURN) — entered via "Run sub-flow" only when the gate fires or
-  `$DISH_TYPE` is a guaranteed window. The 5-file TNB knowledge lazy-load block (was declared
-  "before Step 0", unconditionally) moved with the body to chef-dish.md, header retitled
-  "before Step 1.5" — confirmed via grep that none of those 5 files are referenced anywhere
-  in Steps 0.5/0/1, only in Steps 2/6/7.5. Pure relocation, verified byte-identical (Python
-  string-containment check both ways) — no logic changed, no step renumbered.
-- Repointed 3 stale `chef.md Step 7.6` cross-refs in `docs/agents/unified-agent/init.md`
-  (capabilities/responsibilities/constraints.synthesis_write) to `chef-dish.md Step 7.6`
-  since the JSON-persist step moved. `chef.md § Gate-fired contract` refs elsewhere
-  (`.claude/agents/unified-agent.md`, init.md `no_self_abort`) needed no change — Step 1
-  stays in chef.md. `main.md` needed no edit (dispatches `chef.md` unconditionally; internal
-  step structure is chef.md's own concern).
-- **Board:** TE-T16 moved `backlog[]→review[]`, `status=REVIEW`, `next_agent=qa` via
-  `orch-apply.sh` (router explicitly directed this write in the dispatch prompt — status-flip
-  = lane-move in one write, per its instruction). **Did NOT commit** `docs/data/orch/orch-state.json`
-  myself — `commit_zone.excluded` (`FU-AGENT-FATHER-ORCH-SCOPE`) stands regardless of the
-  write being directed; dropped `signal_queue` row `to: router` flagging the pending commit
-  (same shape as the prior `FIX-DEVTEAM-QADRAIN-INVOCATION-HEAD-DECOUPLED` entry below).
-  Doc commit (`docs/agents/unified-agent/flow/chef.md` + `chef-dish.md` + `init.md`) done
-  and pushed within my own zone.
-
-## Fix (router-direct dispatch, P1) 2026-08-06T09:41Z FIX-DEVTEAM-QADRAIN-INVOCATION-HEAD-DECOUPLED
-- Edited `docs/agents/dev-team/flow/main.md` per architect's `architect_review_note`
-  (brief `docs/architecture-briefs/2026-08-06-review-lane-qadrain-throughput-unblock.md`):
-  rewrote idle-tick Review-Lane QA-Drain from hardcoded `qa[]<1` single-claim to
-  `QA_CAP=10`/`TAKE_BUDGET` batch-claim (absorbs `FIX-DEVTEAM-QADRAIN-THROUGHPUT-CAP`'s
-  main.md half, zone-correct per `po_routing_ruling_20260721`), and inserted a new
-  head-decoupled invocation section at the Session-Gate→Step-1 anchor (after
-  SECONDARY-Drain, before Step 1) using the identical batch shape — reachable on busy
-  ticks, closing the gap where QA-Drain's independent `qa[]` budget was never evaluated
-  outside the head-idle fall-through. Updated SECONDARY-Drain's cross-refs + the Lane ×
-  Gate Coverage Matrix `review[]` row + 2 stale `qa[]<1` numeric mentions elsewhere in
-  the file (DRS budget note, AC-3 bullet) for consistency. `scripts/devteam-review-claim-qa-drain.jq`
-  (developer's parallel `FIX-DEVTEAM-QADRAIN-THROUGHPUT-CAP` row, uncommitted mid-edit
-  at time of writing) already implements the matching `--argjson take_budget`/
-  `sort_by([priority_rank,age])`/batch shape — confirmed compatible before writing the
-  caller side. Committed `92ff5fb43`, pushed clean (size-lint PASS, tsc PASS).
-- **Mid-task incident:** a peer `git reset` on the shared working tree wiped 3 of 4
-  uncommitted `Edit` calls (only the last-applied insertion survived) — caught via the
-  Edit tool's "modified on disk" warning + `git diff --stat` mismatch, re-applied all 3
-  lost edits, re-verified full diff before committing. No data loss, but flags the
-  shared-working-tree collision risk class again (see `feedback_subagent_branch_checkout_hijacks_shared_working_dir.md`).
-- **Left for router/PO:** `docs/data/orch/orch-state.json` board flip (`ready[]→review[]`
-  or `done[]`) — no signal_queue-linked exception applies to this router-direct
-  dispatch, so `commit_zone.excluded` stands; doc work is complete and pushed.
