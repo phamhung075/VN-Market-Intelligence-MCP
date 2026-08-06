@@ -93,12 +93,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "active_task_id": null,
-    "next_agent": null,
-    "next_action": "FIX-VNINDEX-CROSS-PLANE-PLAUSIBILITY-GATE BA spec complete (zero PO blockers) -> backlog[], next_agent=architect. supervised:true holds it from BOUNDED-1 auto-pickup -- dispatch architect deliberately via router/po.",
-    "updated_at": "2026-08-06T07:47:29Z",
-    "updated_by": "ba"
+    "status": "in_progress",
+    "active_task_id": "CCATO-MCP-T4-SIGNAL-WRITER",
+    "next_agent": "dev-mcp-server",
+    "next_action": "Ready-Lane Consumer claim of CCATO-MCP-T4-SIGNAL-WRITER — spawn dev-mcp-server DIRECTLY (no zone-detect indirection; row already carried a resolved next_agent/owner).",
+    "updated_at": "2026-08-06T07:57:11Z",
+    "updated_by": "dev-team (ready-lane consumer)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -2542,6 +2542,19 @@
         "triaged_at": "2026-08-06T07:24:21Z",
         "triaged_by": "po",
         "disposition": "FOLD, no mint. PO re-verified the premise directly against the live host DB this tick: sqlite3 \"file:./data/live/market.db?immutable=1\" \"SELECT COUNT(*) FROM daily_ohlcv WHERE high=0 AND low=0;\" -> 336, EXACTLY the count already recorded as evidence on FIX-DB-INTEGRITY-SIDECAR-NAMED-VOLUME-DRIFT on 2026-08-05. Identical value a day apart = a stable known illiquid-ticker residue, NOT a new regression or a growing gap. Natural home is CLEAN-OHLCV-INTEGRITY-RESIDUE-REPAIR (backlog). Single WARN with no corroborating prior fire -> no mint on one tick per the signal_feedback rule.  ADDENDUM (coordinator cross-check, PO-verified live, not relayed): this is LIVE INSTANCE #3 of the auditor dedup-precheck defect, not merely an OHLCV residue re-fire. The same 336 rows were already dispositioned DUPLICATE-ALREADY-TRACKED on 2026-08-05 (sys-20260805T065227-25f7). It re-fired because FIX-AUDITOR-DEDUP-TASKBOARD-PRECHECK-NOT-ENFORCED is still unactioned. PO read that row's corroboration[] live from the hot file (3 entries confirmed, NOT taken from the relay) and escalated it high -> P0 plus folded it into this tick's BATCH. The residue itself remains tracked by CLEAN-OHLCV-INTEGRITY-RESIDUE-REPAIR (backlog/P1); FIX-OHLCV-WRITER-INTEGRITY-CONSTRAINT-SCALE-P0 is already DONE_VERIFIED (terminal) and is therefore NOT a live dedup target."
+      },
+      {
+        "id": "sys-20260806T075345-3802",
+        "ts": "2026-08-06T07:53:45Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "signal_feedback",
+        "summary": "A-30 WARN: rag-service sustained 96.66% memory, zero GC reclamation dips",
+        "severity": "WARN",
+        "status": "NEW",
+        "payload_ref": null,
+        "provenance": "detector",
+        "audit_cycle_tag": "cron:auditor-t1:2026-08-06T07:10Z"
       }
     ],
     "last_triaged_at": "2026-07-29T06:25:00Z",
@@ -5595,7 +5608,13 @@
         "note": "QA-GATED. SUPERSEDES existing backlog row NB-AUDITOR-MAIN-SPLIT (same work, richer scope) — dedup/close NB-AUDITOR-MAIN-SPLIT on pickup. main.md -> <=170L dispatcher; extract L153-435 -> tier2-freshness.md, L438-655 -> tier3-integrity.md, dup emit block -> emit-sequence.md. Tier-1 sub-flow pattern already proven by shipped tier1-probe.md.",
         "next_agent": "agent-father",
         "po_routing_ruling_20260721": "PO ARTIFACT-CLASS ROUTING RULING 2026-07-21T18:42Z. Rule: routing follows ARTIFACT CLASS, not directory. Any row whose deliverable is instruction-prose that an agent LOADS AND EXECUTES — .claude/agents/**, docs/agents/** (init/flow/knowledge/tools-package), .claude/skills/**/SKILL.md — routes to agent-father. Executable code (apps/**, scripts/**), codegen-from-registry, and data/root-config (docs/data/**, CLAUDE.md) route to zone-matched dev-* or developer. Rationale: for this system a flow doc IS the executable source; agent-father is already sole owner of agent-file lifecycle (dispatch/SKILL.md:48) and of NEW cron skill files (:50), and board precedent has 5/5 pre-existing docs/agents/ rows routed to agent-father/agents-architect/po and 0 to developer. Precedent for SKILL.md specifically: docs/signals/processed/dev-team-20260716T102429Z-autolaunch-safety-hold-uc-asl-p6.json already routed a signal-dashboard SKILL.md edit to agent-father as 'the factory rule'. ROOT CAUSE this closes: .claude/skills/zone-detect/SKILL.md resolves ONLY dev-<service> (Tier-1/2, needs apps/<service>/-shaped zone) or generic developer (Tier-3 fallback) — it has NO path to agent-father, so any docs/agents/ or .claude/skills/ row reaching execute-tier with next_agent unset gets the 'developer' placeholder and mis-routes. EXPECTED SIDE EFFECT (do NOT 'fix' this): next_agent=agent-father does not match the dev-role pattern ^dev(-|$)|^developer$, so the BOUNDED-1 NON-DEV-NEXT_AGENT gate (dev-team/flow/main.md:518) now WITHHOLDS these rows from unattended idle auto-pickup. That is the intended outcome — they require deliberate router dispatch to agent-father, not silent promotion to a generic developer.",
-        "updated_at": "2026-07-21T18:44:02Z"
+        "updated_at": "2026-08-06T07:54:54Z",
+        "po_manual_dispatch_flagged_at": "2026-08-06T07:52:24Z",
+        "po_manual_dispatch_flagged_by": "po (manual-dispatch-sweep)",
+        "po_manual_dispatch_class": "DRS-STRANDED-OFF-ALLOWLIST",
+        "po_manual_dispatch_note": "po (manual-dispatch-sweep) surfaced DRS-STRANDED-OFF-ALLOWLIST candidate — folding into this tick's BATCH. Top of 41 eligible (rank 1 / idx 29, sort_by([rank,idx])).",
+        "po_size_recheck_20260806T0752": "TITLE LINE COUNT IS STALE AND UNDERSTATED. Title says 787L; live `wc -l docs/agents/system-auditor/flow/main.md` = 965L as of 2026-08-06T07:52Z. Corroborated same-tick and independently: agent-father had to create docs/agents/system-auditor/flow/data-writer-provenance.md as a NEW sibling specifically because docs/agents/system-auditor/flow/audit-dimensions.md is already at its own 200L hard cap and could not absorb the D-DATA dimension. The split is no longer 'scheduled-later, low urgency' — file growth is now actively displacing new dimension content into ad-hoc siblings with no registry entry.",
+        "po_dedup_note_20260806T0752": "DUPLICATE FOUND: NB-AUDITOR-MAIN-SPLIT (backlog, priority low) targets the SAME file and the SAME Tier-2/Tier-3 extraction, quoting 627L. Both line counts are stale against the live 965L. TE-T06 is the surviving row (P1, owner+next_agent set, dispatched this tick); NB-AUDITOR-MAIN-SPLIT is marked superseded_by TE-T06 — do not work both."
       },
       {
         "id": "TE-T16",
@@ -6284,7 +6303,9 @@
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#NB-AUDITOR-MAIN-SPLIT",
         "verify_note": "prior_status=DEFERRED",
         "superseded_by": "TE-T06",
-        "note": " [SUPERSEDED by TE-T06 (system-auditor main.md Tier-2/3 split, richer scope) — PO rerank 2026-07-17; dev-team: close as dup when TE-T06 is picked, do NOT dispatch independently.]"
+        "note": " [SUPERSEDED by TE-T06 (system-auditor main.md Tier-2/3 split, richer scope) — PO rerank 2026-07-17; dev-team: close as dup when TE-T06 is picked, do NOT dispatch independently.]",
+        "updated_at": "2026-08-06T07:54:54Z",
+        "po_dedup_note_20260806T0752": "SUPERSEDED by TE-T06 (P1, same file docs/agents/system-auditor/flow/main.md, same Tier-2/Tier-3 extraction scope, owner+next_agent=agent-father, dispatched via manual-dispatch-sweep 2026-08-06T07:52Z). This row's 627L and TE-T06's 787L are BOTH stale — live count is 965L. Do NOT dispatch this row; close it out when TE-T06 lands. Kept (not deleted) so the dedup decision stays auditable."
       },
       {
         "id": "ARCH-WATCHDOG-WEEKDAY-AWARE-THRESHOLD",
@@ -11118,7 +11139,7 @@
         "plan_only": false,
         "created_by": "po/triage-20260731T1752",
         "created_at": "2026-07-31T17:52:41Z",
-        "updated_at": "2026-07-31T17:54:20Z",
+        "updated_at": "2026-08-06T07:54:54Z",
         "origin_report_id": 4241,
         "dedup_key": "agent_tool_grant|bash|coverage-gate",
         "title": "Agent flow docs mandate Bash-only steps (commit-mutex git add/commit, bash scripts/*.sh) that the agent's own .claude/agents/<id>.md `tools:` line does not grant — a structural contradiction that has now produced 4 separate point-fix rows and is still open for digest-predict. Close it at the root with an opt-IN coverage gate (flow demands Bash => frontmatter must grant Bash) instead of a 5th per-agent patch.",
@@ -11141,7 +11162,8 @@
         "related": "Root-cause parent of FIX-ALERT-COMMANDER-NO-BASH-GRANT-NOTEBOOK-UNCOMMITTABLE (review/qa), FIX-COWORK-BASH-GRANT-COVERAGE-STAMP-TRANSPORT (review/qa) and FIX-BCTC-ANALYST-STAGELOG-NOTIFY-NO-BASH (backlog). Do NOT merge or close those three into this one — two are already implemented and awaiting live-cycle qa confirmation, and the bctc row is a flow-doc rewrite (remove the Bash step) not a grant. This row owns only the GATE + the residual uncovered agents. DISTINCT from DESIGN-COWORK-FANOUT-T3-ALERT-COMMANDER-SCHEDULE-TASK-GRANT (ready), which grants a different tool (schedule_task) to a covered agent.",
         "dedup_checked": "2026-07-31T17:51Z — jq over every lane matching id/title/note against /BASH|TOOL-?GRANT|no Bash|tool grant|GRANT/i => 5 rows, all read: 3 are the per-agent point fixes named in `related` (none covers digest-predict), 1 is the schedule_task grant, 1 is FIX-ROUTER-COWORK-SLOT-DEMAND-DISPATCH-BLIND (matched on 'grants false exclusivity' prose, unrelated). `ls scripts/audits/ | grep -i grant` => no existing coverage script. Zero rows own the gate.",
         "baseline_pass": "scripts/audits/agent-bash-grant-coverage.sh exits 0 across all 22 agents AND a live digest-predict cycle commits docs/agent-memory/notebooks/digest-predict.md",
-        "desc": null
+        "desc": null,
+        "po_scope_addendum_20260806T0752": "AC-8 ADDED (second axis, same gate, same script — deliberately folded here rather than minted as a 6th point-fix row, which is this row's own stated thesis).\n\nAC-8: scripts/audits/agent-bash-grant-coverage.sh must ALSO assert INTERNAL consistency of each .claude/agents/<id>.md — the frontmatter `description:` prose must not contradict the frontmatter `tools:` line of the SAME file. Exit non-zero naming agent + both line numbers. AC-2's opt-IN rule applies unchanged: derive the contradiction from the file's own two lines, never from an allowlist.\n\nLIVE POSITIVE CONTROL, PO-VERIFIED BY DIRECT READ (not relayed): 3 agents currently self-contradict.\n  .claude/agents/alert-commander.md L4 'No other filesystem writes permitted' vs L5 `tools: Read, Write, Edit, Bash, mcp__gateway__call_tool`\n  .claude/agents/market-watcher.md  same pair\n  .claude/agents/news-scout.md      same pair\nAll three gained Bash in commit 610110e16 (2026-07-31) for documented, legitimate needs (commit-mutex + task_claim session-id derivation; coverage-stamp.sh transport); only the description text was never updated. Stale for 6 days.\n\nWHY THIS AXIS IS NOT ALREADY COVERED — dedup was run, three neighbours were read and all three genuinely miss it:\n  FIX-COWORK-FLOWDOC-STALE-TRANSPORT-GAP-CAVEAT (review/qa) targets FLOW DOCS and carries an explicit AC-4 NEGATIVE CONTROL: 'no change to any .claude/agents/*.md in this row'. It is fenced OUT of this surface by design.\n  FIX-COWORK-BASH-GRANT-COVERAGE-STAMP-TRANSPORT and FIX-ALERT-COMMANDER-NO-BASH-GRANT-NOTEBOOK-UNCOMMITTABLE (both review/qa) are the rows that GRANTED the Bash — they are the cause of the drift, not its detector.\n  This row's own AC-1 checks flow-corpus-demand vs tools-line, i.e. tools-line-vs-ELSEWHERE. AC-8 is tools-line-vs-ITSELF. Adjacent axis, same file set, same script, one dispatch.\n\nPROVENANCE: surfaced by agent-father's re-established team-tool-recheck writer on its very first run (docs/agent-memory/health/team-tool-recheck-2026-08-06-0739.md, CRITICAL-01/02/03) — the positive control CHORE-TEAM-TOOL-RECHECK-LOCAL-CRON's AC demanded. That writer also reports mechanical enforcement is currently ZERO: docs/data/system-map.json has 0 `write_boundary` keys and neither .claude/settings.json nor settings.local.json registers a write-boundary PreToolUse hook, so every boundary claim in the fleet is prose-only today. That is context for sizing this gate, not a scope expansion of it."
       },
       {
         "id": "FIX-DEVTEAM-REBUILD-REQUIRED-MARKER-NO-CONSUMER",
@@ -11651,8 +11673,8 @@
         "status": "BACKLOG",
         "type": "FIX",
         "priority": "P2",
-        "zone": "docs/agents/",
-        "next_agent": "agent-father",
+        "zone": "cross-service/",
+        "next_agent": "developer",
         "created_at": "2026-08-06T07:09:22Z",
         "created_by": "po (triage 2026-08-06)",
         "origin_signal_id": "sys-20260806T065701-7915",
@@ -11662,23 +11684,18 @@
           "sys-20260806T065709-49e3"
         ],
         "status_note": "AC: the empty-table check classifies a 0-row table by WRITER PROVENANCE before assigning severity — (a) table with >=1 production INSERT site on a scheduled/pipeline path => may stay CRITICAL; (b) table whose only writers are tests (alert_engine_records: every INSERT INTO is in apps/alert-engine/pkg/infrastructure/sqlite_test.go) => never emits, or emits INFO at most; (c) table written only by an on-demand user-facing tool (price_alerts: sole writer priceAlertTools.ts:148) => emptiness is the expected steady state, must not be reported as a broken pipeline. Verified by replaying the 2026-08-06T06:57Z auditor cycle: the two CRITICALs must not re-fire, while a genuinely-broken pipeline table still does (negative control required — do NOT let this fix silence class (a)). Evidence: po independently confirmed all three tables are 0 rows, so the COUNTS were right and only the severity/interpretation was wrong.",
-        "updated_at": "2026-08-06T07:23:23Z",
-        "po_live_evidence_20260806T0717": "PO verified the 2026-08-06T06:57Z Tier-DATA sweep's three empty-table CRITICALs/WARN DIRECTLY against the live host bind-mount DB (sqlite3 'file:./data/live/market.db?immutable=1', 426135552 bytes, mtime 2026-08-06 09:19): price_alerts=0 CONFIRMED, alert_engine_records=0 CONFIRMED, deep_fetch_stats=0 CONFIRMED. These are REAL, not stale-named-volume artifacts — control: daily_ohlcv=775599, alerts=144, financial_reports=257 in the same query session. NEW FINDING for this row's own thesis: pdf_documents DOES NOT EXIST as a table at all ('Error: in prepare, no such table: pdf_documents') yet the auditor reported check C-11 as 'failed (actual=0)' — the detector renders a MISSING TABLE and an EMPTY TABLE identically, which is a strictly stronger form of the missing writer-discriminator this row already tracks. Also note C-04 reported financial_reports actual=30 against a live raw count of 257 and C-08 reported alerts actual=42 against 144, so both checks carry an undocumented window/predicate — worth naming in the fix so the numbers stop reading as raw row counts."
-      },
-      {
-        "id": "CHORE-TEAM-TOOL-RECHECK-LOCAL-CRON",
-        "title": "Replace dead team-tool-recheck writer (cloud RemoteTrigger, killed 2026-06-22 by no-RemoteTrigger directive) with a local cron — do not retire",
-        "owner": "po",
-        "status": "BACKLOG",
-        "type": "CLEAN",
-        "priority": "P2",
-        "zone": "docs/agents/",
-        "next_agent": "agent-father",
-        "created_at": "2026-08-06T07:09:22Z",
-        "created_by": "po (triage 2026-08-06)",
-        "origin_signal_id": "cj-20260806T085500",
-        "status_note": "PO DECISION = REPLACE, not retire (see signal cj-20260806T085500 disposition for the full basis). Writer docs/agent-memory/health/team-tool-recheck-*.md silent since 2026-06-23; source was RemoteTrigger trig_019Q8D5xttjZn6iytx2Ld9dW, killed by feedback_no_remote_trigger_all_local.md, whose migration rule mandates a local replacement. Urgency evidence from the 2026-08-06 PO cycle: a live tool-grant boundary violation (.claude/agents/alert-commander.md:5 grants Read/Write/Edit/Bash to a declared notebook-only-write agent) went unflagged for the whole 6-week silent window — the recheck's absence is actively masking drift. AC: a LOCAL cron re-establishes the docs/agent-memory/health/team-tool-recheck-*.md writer on a documented cadence; first run must re-detect the alert-commander grant/boundary mismatch as a positive control (a run that reports the fleet clean is a false green and fails this AC). Note memory-prune-sweep.sh drains this family at 30d, so the cadence must be < 30d or the directory re-empties. detail_ref docs/architecture-briefs/2026-07-12-ultracode-workflow-improvement-audit.md#memory-docs-hygiene-P3.",
-        "updated_at": "2026-08-06T07:14:42Z"
+        "updated_at": "2026-08-06T07:54:54Z",
+        "po_live_evidence_20260806T0717": "PO verified the 2026-08-06T06:57Z Tier-DATA sweep's three empty-table CRITICALs/WARN DIRECTLY against the live host bind-mount DB (sqlite3 'file:./data/live/market.db?immutable=1', 426135552 bytes, mtime 2026-08-06 09:19): price_alerts=0 CONFIRMED, alert_engine_records=0 CONFIRMED, deep_fetch_stats=0 CONFIRMED. These are REAL, not stale-named-volume artifacts — control: daily_ohlcv=775599, alerts=144, financial_reports=257 in the same query session. NEW FINDING for this row's own thesis: pdf_documents DOES NOT EXIST as a table at all ('Error: in prepare, no such table: pdf_documents') yet the auditor reported check C-11 as 'failed (actual=0)' — the detector renders a MISSING TABLE and an EMPTY TABLE identically, which is a strictly stronger form of the missing writer-discriminator this row already tracks. Also note C-04 reported financial_reports actual=30 against a live raw count of 257 and C-08 reported alerts actual=42 against 144, so both checks carry an undocumented window/predicate — worth naming in the fix so the numbers stop reading as raw row counts.",
+        "files": [
+          ".claude/commands/crons/cron-db-data-integrity.md",
+          "scripts/db-empty-table-classify.sh",
+          "scripts/db-integrity-counts.sh"
+        ],
+        "reference_only_files": [
+          "docs/agents/system-auditor/flow/data-writer-provenance.md",
+          "docs/agents/system-auditor/flow/main.md"
+        ],
+        "po_disposition_20260806T0752": "REWIRED agent-father -> developer. agent-father's in-zone half is DELIVERED and PO-VERIFIED AT SOURCE (not on self-report): docs/agents/system-auditor/flow/data-writer-provenance.md exists, 6376 bytes, mtime 2026-08-06 09:34 local; it carries the 3-class writer-provenance discriminator (a scheduled/pipeline writer / b no production writer / c on-demand user-tool-only), the SCHEMA-MISSING-vs-EMPTY-TABLE split that fixes the pdf_documents finding, a seeded known-table classification, and an explicit negative-control requirement. Signal: docs/signals/processed/2026-08-06-fix-auditor-emptytable-writer-discriminator-handoff.json.\n\nWHY THE ROW IS NOT CLOSABLE: the policy is INERT until an actuator applies it. `.claude/commands/crons/cron-db-data-integrity.md` is outside agent-father's commit_zone (zone table in .claude/skills/commit-boundary/SKILL.md), so this half needs a developer/cross-service dispatch — same class as the scripts/-zone handoff precedent c72b5ca34. The row's own AC (replay the 2026-08-06T06:57Z cycle; the two CRITICALs must not re-fire; a genuinely-broken pipeline table still must) is unrunnable until then.\n\nDEVELOPER SCOPE, 3 items, PREFERRED ordering (2) then (1) then (3):\n(1) MINIMUM VIABLE — transcribe data-writer-provenance.md sections 1-2 into cron-db-data-integrity.md's ANOMALY CLASSES point 1 (FAIL/MISSING): the 3-class table plus an explicit `SELECT 1 FROM sqlite_master WHERE name=<table>` missing-vs-empty step, both run BEFORE any severity is assigned.\n(2) PREFERRED — do NOT leave this as free-text an LLM subagent must re-apply correctly every cycle. Author scripts/db-empty-table-classify.sh <table> mirroring scripts/db-integrity-counts.sh's pattern: run once, emit JSON {table, exists, class, writer_sites[]}, zero LLM judgment. This removes the FP class at the source. PO PREFERS (2); (1) alone is acceptable only as a same-day stopgap.\n(3) RENAME the informal c04/db1/db2/db3 labels emitted by scripts/db-integrity-counts.sh — they collide in appearance with system-auditor flow/main.md's OFFICIAL Tier-3 C-04/C-08 checks, which mean something entirely different. PO's own live evidence is the proof this misleads: C-04 reported financial_reports actual=30 against a live raw count of 257, C-08 reported alerts actual=42 against 144. Both carry an undocumented window/predicate; name it so the numbers stop reading as raw row counts. (Related but separate row for the C-04 predicate itself: FIX-AUDITOR-C04-PARSEDAT-RECENCY-PREDICATE, backlog/next=architect — do not merge, just cross-check.)\n\nNEGATIVE CONTROL IS NOT OPTIONAL: ship a fixture where a class-(a) table is forced empty and MUST still fire CRITICAL. A fix that only proves the two FPs went quiet is a false green — it is indistinguishable from disabling the check."
       },
       {
         "id": "FIX-NOTEBOOK-COMPOSE-SCRIPT-ACTUATOR",
@@ -11876,6 +11893,27 @@
         ],
         "note": "Recurring class: readiness gates check that the DESIGN exists, never that the IMPLEMENTATION does not. Distinct from the known file-prior-art-before-minting lesson (which covers PO/auditor row minting) — this is the PM brief-decomposition path, which has its own readiness predicate. Related but NOT duplicate: FIX-AUDITOR-DEDUP-TASKBOARD-PRECHECK-NOT-ENFORCED (auditor signal dedup), FIX-CIRED-TRIAGE-WRONG-PLANE-DEDUP-AMNESTY (ci_red plane). Board searched for prior-art/dedup/decomposition/brief-staleness rows before minting — none cover this path. Size S: the probe is a git-log call plus a readiness-predicate edit; architect to confirm whether it belongs in the pm flow doc or a shared script.",
         "updated_at": "2026-08-06T07:50:06Z"
+      },
+      {
+        "id": "CHECK-TOOL-INTERFACE-SCHEMA-DRIFT-DOC-VS-LIVE",
+        "title": "No fleet check compares a DOCUMENTED tool param name against the LIVE MCP schema — the pre-2026-06-23 team-tool-recheck was the only probe of this class and died with the RemoteTrigger; agent-father cannot revive it (no gateway grant)",
+        "type": "FIX",
+        "owner": "po",
+        "status": "BACKLOG",
+        "priority": "P2",
+        "zone": "docs/agents/",
+        "next_agent": "agent-father",
+        "created_at": "2026-08-06T07:52:24Z",
+        "created_by": "po (triage 2026-08-06T07:52Z)",
+        "origin_signal_id": "2026-08-06-chore-team-tool-recheck-livescope-handoff",
+        "parent_row": "CHORE-TEAM-TOOL-RECHECK-LOCAL-CRON",
+        "dedup_key": "toolcheck:interface-schema-drift|axis:documented-param-vs-live-schema",
+        "files": [
+          "docs/agents/system-auditor/flow/audit-dimensions.md",
+          "docs/agents/system-auditor/flow/main.md"
+        ],
+        "status_note": "SPLIT OUT of CHORE-TEAM-TOOL-RECHECK-LOCAL-CRON (now REVIEW/qa — its static half shipped). agent-father re-established the STATIC subset of the dead writer but structurally cannot run the LIVE-MCP-PROBE subset: .claude/agents/agent-father.md grants no mcp__gateway__call_tool. It asked PO to assign a gateway-bound owner instead of reviving the ~2h cloud-RemoteTrigger cadence. PO agrees and has narrowed the scope first.\n\nSCOPE NARROWED BY PO — most of the dead writer's live-probe surface is ALREADY COVERED and must NOT be rebuilt: get_cron_health, get_vps_proxy_health/get_vps_service_health and get_system_status all duplicate system-auditor Tier-1 (A-01..A-31 runtime health) and Tier-2 (B-01..B-13 freshness/VPS). Rebuilding them would add cost and a second, divergent source of truth for the same signal. The genuinely uncovered remainder is ONE axis: TOOL-INTERFACE SCHEMA DRIFT — a param name a flow doc / skill / agent-md tells an agent to send vs the param name the live tool actually requires.\n\nWHY THIS IS REAL AND NOT HYPOTHETICAL — three independent live instances:\n  (a) commit 06ade9683 TODAY, 'docs: self-heal kinh-dich-layer — get_kinhdich_reading param is code not ticker'. Caught by an agent tripping over it mid-flow, not by any check.\n  (b) FIX-MARKET-WATCHER-DOC-PARAM-DRIFT (backlog, unowned): 'market-watcher docs: 3 example params use ticker/tickers[] instead of live API code field'. Same defect, different agent, still open — evidence the class recurs and that per-agent point-fixes are not converging it.\n  (c) the ticker-vs-code pattern agent-father reconstructed from git history of the pre-2026-06-23 recheck files across get_technical_indicators / get_price_history / get_foreign_flow / get_ticker_intelligence.\nFailure mode is silent-at-write-time and only surfaces as a runtime tool error inside a live cycle, which is the worst place to find it.\n\nAC-1 A new lightweight system-auditor dimension (system-auditor HOLDS the gateway grant; agent-father authors the doc, which is why next_agent=agent-father) that, for a bounded set of tools, diffs the param NAMES named in the fleet's own docs against the live schema returned by the gateway (list_server_tools('vn-market') / search_tools), and emits a signal_queue row on mismatch. Note docs/agents/system-auditor/flow/audit-dimensions.md is AT its 200L hard cap — expect a sibling file, same pattern as data-writer-provenance.md; register it so it does not become another unregistered orphan.\nAC-2 POSITIVE CONTROL, MANDATORY: seed the check against instance (a) or (b) above at a commit BEFORE the fix and confirm it FAILS. A first run that reports the fleet clean is a false green and fails this AC — the same bar CHORE-TEAM-TOOL-RECHECK-LOCAL-CRON was held to, and the same bar its own first run cleared.\nAC-3 NEGATIVE CONTROL: a tool whose doc and live schema agree must not fire. Do not ship a checker that flags every tool.\nAC-4 CADENCE — PO decision: do NOT restore ~2h. Start at the same daily cadence as the static recheck. Schema drift is introduced by commits, not by market hours; if AC-2's replay shows drift landing and biting inside one day, escalate to per-commit CI instead of a shorter poll — a cheap grep-class CI job is strictly better than a 2h poll for a commit-triggered defect.\nAC-5 DEDUP ON LANDING: fold FIX-MARKET-WATCHER-DOC-PARAM-DRIFT into this row's first run rather than fixing it separately — it is the natural first true positive.",
+        "updated_at": "2026-08-06T07:54:54Z"
       }
     ],
     "closed_sprints": [
@@ -12891,20 +12929,6 @@
         "depends": [
           "CCATO-MCP-T1-DOMAIN-ENGINE"
         ],
-        "next_agent": "dev-mcp-server",
-        "supervised": false,
-        "updated_at": "2026-07-17T04:53:14ZZ",
-        "updated_by": "pm (decompose SPRINT-CCATO-TRUTHGATE-MCP-NATIVE)"
-      },
-      {
-        "id": "CCATO-MCP-T4-SIGNAL-WRITER",
-        "type": "IMPL-XS",
-        "status": "READY",
-        "size": "XS",
-        "zone": "mcp-server",
-        "priority": "P0",
-        "title": "infrastructure/signals/narrativeContradictionSignalWriter.ts",
-        "depends": [],
         "next_agent": "dev-mcp-server",
         "supervised": false,
         "updated_at": "2026-07-17T04:53:14ZZ",
@@ -19732,7 +19756,7 @@
         "plan_only": false,
         "created_by": "po/triage-20260731T0212",
         "created_at": "2026-07-31T02:12:46Z",
-        "updated_at": "2026-08-06T07:12:45Z",
+        "updated_at": "2026-08-06T07:54:54Z",
         "dedup_key": "sweepguard:escalation-actuator|defect:retroactive-unwindowed-counter+session-scoped-actor",
         "verification_gate": "live_repo_log_state_positive_control_not_fresh_scratch_actor",
         "title": "The escalation actuator shipped in eac71308e is ALREADY past threshold for 2 live sessions the moment it landed: prior_warns counts the ENTIRE historical .git/sweep-guard.log with no time window and no deploy baseline, so it is a de-facto instant fleet-wide reject flip — the exact flip the brief deliberately staged as a Phase-2 with 24h observation + rollback. Compounding it, `actor` is $CLAUDE_CODE_SESSION_ID, which every subagent of one router session SHARES, so it can never scope to an agent.",
@@ -19760,7 +19784,8 @@
         "updated_by": "developer",
         "po_live_escalation_evidence_20260731": "FIRST LIVE POST-DEPLOY ESCALATED REJECT, mechanism-verified by po triage (docs/signals/processed/commit-sweep-guard-2026-07-31T154714Z-51817.json, 2026-07-31T15:47:14Z). Payload parsed per triage-signals.md MANDATORY parse-payload-first rule (NOT off git show --stat): 'escalated=true prior_warns=3 threshold=3 mode=warn', actor=64c7c677-0f0f-4cee-a3ce-dba79d70b7ae. Read scripts/git-hooks/pre-commit at source: L574-577 AC-1 deploy baseline self-installed at .git/sweep-guard.escalation-baseline=2026-07-31T04:04:07Z; L579-582 counts only log lines after that floor; L583-588 escalated=true forces escalate_effective=reject. Replayed the counter by hand against .git/sweep-guard.log: exactly 3 post-baseline BARE warns for this actor (04:04:07Z dev-team-3.md+notebooks/main.md, 12:50:40Z dev-team-5.md+notebooks/main.md, 12:57:21Z same pair) -> the 4th attempt was correctly BLOCKED. CONCLUSION FOR QA: AC-1 works as designed post-fix — the counter is genuinely windowed to the deploy baseline (pre-fix it would have counted the whole ~20-warn historical log), the block was a true positive, and the offending agent converged on its very first retry with an explicit pathspec. NO new sibling row minted: this is confirming evidence for THIS row, not a 7th member of the FIX-COMMIT-SWEEP-GUARD-* family. RESIDUAL NOTE (not re-litigated here): the AC-2 'session-scoped actor' arm was resolved by RENAME + documentation (pre-commit L491 keeps actor=$CLAUDE_CODE_SESSION_ID, L501/L612 now state the budget is POOLED across every agent in one coordination session) rather than by making it agent-scoped — QA should sign off on that as a deliberate WONTFIX-by-rename, not assume agent granularity was delivered.",
         "po_live_evidence_20260801T0158": "SECOND LIVE POST-DEPLOY ESCALATED REJECT + the AC-2 pooled-threshold observation data the code itself asked for. Mechanism re-verified at source by po triage 2026-08-01T01:58Z, NOT off git show --stat (signal docs/signals/processed/commit-sweep-guard-2026-08-01T013919Z-76851.json, payload 'escalated=true prior_warns=6 threshold=3', actor=64c7c677-0f0f-4cee-a3ce-dba79d70b7ae).\n\nCOUNTER REPLAYED BY HAND against the UNMODIFIED live log (AC-5 discipline — byte-identical to the hook's own awk at pre-commit L579-582, floor read from .git/sweep-guard.escalation-baseline = 2026-07-31T04:04:07Z): 7 post-baseline BARE warn lines for this actor. The payload's prior_warns=6 is the count BEFORE this attempt's own line was appended (hook computes it pre-append, L570 comment) — 6+1=7 reconciles exactly. AC-1 STILL HOLDS: the whole-log count for this actor is 77 lines, the windowed count is 7 — the deploy baseline is genuinely excluding the pre-fix backlog, not silently regressing.\n\nAC-2 POOLED-BUDGET DATA (this is the 'session-agent-density-vs-trigger-rate' measurement pre-commit L530-536 explicitly defers to PO — 'that is the mechanism to gather real data before PO decides whether the pooled default needs raising'):\n  post-baseline distinct sessions: 64c7c677=7 warns, a2161c5c=2, ad265f86=1.\n  The 7 warns on 64c7c677 attribute, by staged-path proxy, to at least THREE distinct agents sharing the one pooled budget:\n    dev-team    x5 (dev-team-3/-5/-5/-10/-11 journal files, 04:04:07Z 12:50:40Z 12:57:21Z 23:54:52Z 01:39:19Z)\n    agent-father x1 (agent-father journal+notebook+context-bloat signal, 15:47:14Z)\n    dev-mcp-server x1 (dev-mcp-server-2 journal + orch-state.json, 19:34:30Z)\n  So the 08-01T01:39:19Z BLOCK landed on dev-team for a budget 2 OTHER agents had already partly spent. That is exactly the pooled-attribution behaviour AC-2's rename documented as a known, deliberate WONTFIX — now with live numbers instead of a prediction.\n\nPO DISPOSITION — DO NOT RAISE THE THRESHOLD YET, AND THIS IS NOT A NEW ROW:\n  (a) TRUE POSITIVE, no amnesty. All 7 are genuine pathspec-less commits; the hook blocked the 7th and dev-team self-corrected on its very first retry with an explicit pathspec commit (62c039f5e). The forcing function is working as designed — convergence-on-retry is the intended outcome, not noise.\n  (b) The threshold decision is GATED, by the code's own design, on a 24h observation window that opened at the 2026-07-31T04:04:07Z baseline and does NOT close until 2026-08-01T04:04:07Z — ~2.1h after this triage. Re-tuning a documented, deliberately-staged observation window BEFORE it closes would repeat the exact defect this row was minted for (an actuator flipped without the staging its own brief required). Decision deferred to the first tick after 04:04:07Z, on this data.\n  (c) NOTED FOR QA, does not change the verdict: 2 of the 7 (23:54:52Z, 01:39:19Z) staged n=1 — a single file that was the actor's own journal. At hook time the index is frozen, so n=1 provably sweeps no peer content, yet it still consumes a strike. Whether the strike counter should skip n=1 is a REFINEMENT question for QA to record, NOT a reason to weaken the block — the mandate is pathspec-always, and n=1 bare commits are still the wrong mechanism.\n  NO 8TH FAMILY ROW MINTED: this is confirming evidence + the deferred AC-2 measurement for THIS row, which already owns both properties and is still open/unverified.",
-        "po_occurrence_20260806T0709": "3 further escalated=true fires today, all one actor session 24817246-8a3f-4511-95f7-1b4385797bee: 06:33:54Z prior_warns=6 (absorbing docs/agent-memory/notebooks/dev-team.md), 06:42:21Z prior_warns=7 and 06:46:58Z prior_warns=8 (both absorbing docs/agent-memory/notebooks/system-auditor.md), threshold=3 throughout. Routed here per triage-signals.md `bug-escalation`/commit-sweep-guard rule (escalated=true => REPEAT-OFFENDER-AFTER-BLOCK => FIX row, dedup-checked against the guard family first) -- dedup hit on this row, so occurrence bumped rather than re-minted. Payloads parsed as TRUE POSITIVE BY CONSTRUCTION per the rule (the signal reaching disk IS the mechanism proof); no `git show --stat` outcome-evidence was used to adjudicate. These are exactly this row's own thesis: warn-mode escalation counters that keep climbing on a long-lived session while the actor keeps issuing bare commits."
+        "po_occurrence_20260806T0709": "3 further escalated=true fires today, all one actor session 24817246-8a3f-4511-95f7-1b4385797bee: 06:33:54Z prior_warns=6 (absorbing docs/agent-memory/notebooks/dev-team.md), 06:42:21Z prior_warns=7 and 06:46:58Z prior_warns=8 (both absorbing docs/agent-memory/notebooks/system-auditor.md), threshold=3 throughout. Routed here per triage-signals.md `bug-escalation`/commit-sweep-guard rule (escalated=true => REPEAT-OFFENDER-AFTER-BLOCK => FIX row, dedup-checked against the guard family first) -- dedup hit on this row, so occurrence bumped rather than re-minted. Payloads parsed as TRUE POSITIVE BY CONSTRUCTION per the rule (the signal reaching disk IS the mechanism proof); no `git show --stat` outcome-evidence was used to adjudicate. These are exactly this row's own thesis: warn-mode escalation counters that keep climbing on a long-lived session while the actor keeps issuing bare commits.",
+        "po_occurrence_20260806T0752": "4th escalated=true fire today on the SAME actor session 24817246-8a3f-4511-95f7-1b4385797bee: 07:29:25Z prior_warns=9 threshold=3 (signal docs/signals/processed/commit-sweep-guard-2026-08-06T072925Z-42807.json), continuing the 6/7/8 series already folded in po_occurrence_20260806T0709. Payload parsed FIRST per triage-signals.md (leading tag `[sweep-guard] BARE commit about to absorb` => TRUE POSITIVE BY CONSTRUCTION); no `git show --stat` outcome-evidence used. DEDUP VERDICT: NOT distinct, folded — no 8th family row minted.\n\nWHY IT IS NOT DISTINCT, AND WHY IT IS THE STRONGEST D2 EVIDENCE YET: the 4 absorbed files (docs/agent-memory/decisions/sprint-2026-08-06-pm.md, docs/data/orch/orch-state.json, docs/handoffs/TASK-503-rsi-engine-contract.md, docs/handoffs/TASK-504-digest-rsi-go-engine.md) are PM's own artifacts, but the hook attributed the strike to the ROUTER session id because every subagent of one router session shares $CLAUDE_CODE_SESSION_ID. This is precisely defect D2 (`actor` != agent) that this row already owns and that AC-2 resolved by RENAME-to-pooled rather than by agent granularity. Prior evidence for the pooled budget (po_live_evidence_20260801T0158) was derived by staged-path PROXY across 3 agents; this fire is a direct instance — the offending pathspec-less `git commit` was issued on PM's behalf inside the router session, and the counter that will eventually hard-block belongs to a session that spans at least pm/po/ba/dev-team/system-auditor/agent-father today.\n\nRESIDUAL FOR QA (unchanged verdict, added datum): the 24h observation window that gated the threshold re-tune closed 2026-08-01T04:04:07Z. Six days on, this one session has accumulated 9 pooled strikes without the pooled default being revisited. QA should treat 'is threshold=3 still right for an 8+-agent-wide unit' as an OPEN AC-2 question with live numbers now attached (9 on one session, 07-31 baseline), not as settled by the rename."
       },
       {
         "id": "FIX-CI-SIZELINT-MCPSERVER-SIX-UNCOVERED-OFFENDERS",
@@ -21700,6 +21725,24 @@
         "updated_by": "developer",
         "entered_review_at": "2026-08-06T07:49:12Z",
         "review_note": "[developer] WF-1 task_status source array widened to done[]/done_verified[]. New WF-1b TERMINAL-LANE branch (reuses is_terminal_task_status, scripts/lib/devteam-eligibility.jq) idle-resets .head with no lane-move on a terminal hit and jumps straight to drain-signals, skipping S2 dispatcher-wrap entirely. WF-2 should_hold row source array also widened, flagged defense-in-depth/provably-unreachable once WF-1b lands. New regression verifier scripts/audits/devteam-pipeline-resume-terminal-lane-verify.sh: 4/4 PASS (AC-4 done[]+done_verified[] idle-reset; AC-3 genuinely-live in_progress[] and BLOCKED unaffected). Re-diffed against FIX-DEVTEAM-HEAD-PIN-STALE-THRESHOLD-24H-VS-TICK-CADENCE's target block (~L337 24h stale-crash fallback, untouched) -- no collision. Commit ec320db52."
+      },
+      {
+        "id": "CHORE-TEAM-TOOL-RECHECK-LOCAL-CRON",
+        "title": "Replace dead team-tool-recheck writer (cloud RemoteTrigger, killed 2026-06-22 by no-RemoteTrigger directive) with a local cron — do not retire",
+        "owner": "po",
+        "status": "REVIEW",
+        "type": "CLEAN",
+        "priority": "P2",
+        "zone": "docs/agents/",
+        "next_agent": "qa",
+        "created_at": "2026-08-06T07:09:22Z",
+        "created_by": "po (triage 2026-08-06)",
+        "origin_signal_id": "cj-20260806T085500",
+        "status_note": "PO DECISION = REPLACE, not retire (see signal cj-20260806T085500 disposition for the full basis). Writer docs/agent-memory/health/team-tool-recheck-*.md silent since 2026-06-23; source was RemoteTrigger trig_019Q8D5xttjZn6iytx2Ld9dW, killed by feedback_no_remote_trigger_all_local.md, whose migration rule mandates a local replacement. Urgency evidence from the 2026-08-06 PO cycle: a live tool-grant boundary violation (.claude/agents/alert-commander.md:5 grants Read/Write/Edit/Bash to a declared notebook-only-write agent) went unflagged for the whole 6-week silent window — the recheck's absence is actively masking drift. AC: a LOCAL cron re-establishes the docs/agent-memory/health/team-tool-recheck-*.md writer on a documented cadence; first run must re-detect the alert-commander grant/boundary mismatch as a positive control (a run that reports the fleet clean is a false green and fails this AC). Note memory-prune-sweep.sh drains this family at 30d, so the cadence must be < 30d or the directory re-empties. detail_ref docs/architecture-briefs/2026-07-12-ultracode-workflow-improvement-audit.md#memory-docs-hygiene-P3.",
+        "updated_at": "2026-08-06T07:54:54Z",
+        "updated_by": "po (triage 2026-08-06T07:52Z)",
+        "po_ac_verification_20260806T0752": "AC MET — PROMOTED BACKLOG -> REVIEW, next_agent=qa. Verified AT SOURCE by PO, not on agent-father's self-report.\n\nAC text was: 'a LOCAL cron re-establishes the docs/agent-memory/health/team-tool-recheck-*.md writer on a documented cadence; first run must re-detect the alert-commander grant/boundary mismatch as a positive control (a run that reports the fleet clean is a false green and fails this AC)'.\n\nEVIDENCE PO CHECKED DIRECTLY:\n  1. WRITER EXISTS — docs/agents/agent-father/flow/team-tool-recheck.md, 5857 bytes, mtime 2026-08-06 09:38 local.\n  2. IT PRODUCED OUTPUT — docs/agent-memory/health/team-tool-recheck-2026-08-06-0739.md, 4817 bytes. First file in that directory since 2026-06-23; the 6-week silent window is closed.\n  3. POSITIVE CONTROL GENUINELY FIRES, NOT A FALSE GREEN — the report opens with three ACTIVE FINDINGS (CRITICAL-01 alert-commander, CRITICAL-02 market-watcher, CRITICAL-03 news-scout) and PO re-derived all three independently from the live files rather than accepting the table: each of .claude/agents/{alert-commander,market-watcher,news-scout}.md has L4 asserting 'No other filesystem writes permitted' while L5 reads `tools: Read, Write, Edit, Bash, mcp__gateway__call_tool`. The AC named alert-commander specifically; the run found it plus two siblings.\n  4. CADENCE IS LOCAL AND UNDER THE 30d PRUNE FLOOR — wired into docs/agents/agent-father/flow/keep.md Step 5b on the existing daily cron-agent-father.md fire (`23 14 * * *`). The AC's own caveat was that memory-prune-sweep.sh drains this family at 30d so cadence must be <30d; daily clears that by a wide margin, and no new cron registration was needed (satisfies the no-RemoteTrigger directive that killed the original writer).\n\nQA SHOULD VERIFY ONE THING PO COULD NOT: that the SECOND run actually fires unattended on the 14:23 UTC cron and writes a second dated file. Item 2 proves the writer works when invoked; only a live unattended fire proves the CADENCE is real. Do not sign off on the single first-run artifact alone.\n\nRESIDUAL IS SPLIT OUT, NOT DROPPED — the live-MCP-probe subset agent-father structurally cannot run (no gateway grant) is now tracked as CHECK-TOOL-INTERFACE-SCHEMA-DRIFT-DOC-VS-LIVE. This row's AC never covered it; do not hold this row open for it.",
+        "po_scope_split_note": "PO REJECTED reviving the ~2h cloud-RemoteTrigger cadence verbatim (agent-father's own recommendation, and PO concurs): that cadence was sized for live-incident response, which system-auditor Tier-1/Tier-2 now covers. Static compliance is a daily-cadence concern; the genuinely-uncovered schema-drift class gets its own row and its own cadence decision."
       }
     ],
     "qa": [
@@ -21747,8 +21790,8 @@
         }
       ]
     },
-    "last_triaged_at": "2026-08-06T07:33:37Z",
-    "last_triaged_by": "dev-team (supervised-lane sweep)",
+    "last_triaged_at": "2026-08-06T07:52:24Z",
+    "last_triaged_by": "po",
     "in_progress": [
       {
         "id": "UC-CRITIC-HOOKS-ENFORCEMENT",
@@ -21778,6 +21821,23 @@
         "claimed_at": "2026-08-05T06:45:34Z",
         "claimed_by": "dev-team (supervised-lane sweep)",
         "po_goahead_20260805T090611": "RATIFIED by po 2026-08-05T09:06:11Z at source, not on relay. (1) Deliverable EXISTS: docs/architecture-briefs/2026-07-12-ultracode-workflow-improvement-audit.md, 382391B, anchor '## Completeness critic — lanes not audited' present at L1973. (2) Load-bearing claim RE-DERIVED FROM LIVE CONFIG (not brief prose): .claude/settings.local.json contains EXACTLY 6 hook commands terminating in '2>/dev/null || true' (tmux-agent.sh status, tmux set-option, branch-hygiene-stop.sh, notebook-auto-prune.sh, context-bloat-backstop.sh, orch-state-hook-bash-backstop.sh) + 1 more '|| true' in .claude/settings.json (graphify PreToolUse) = 7 of 8 hook invocations swallow failure. Claim CONFIRMED, count exact, still true 24 days after the brief was written. (3) ATTRIBUTION CORRECTION for BA: the brief names the 'orch-state prewrite Zod gate' among the swallowing hooks — that is WRONG on live config. orch-state-hook-prewrite.mjs is the ONE fail-closed hook (no || true, no 2>/dev/null); the swallowing orch-state hook is orch-state-hook-bash-backstop.sh (PostToolUse). BA must scope the fix to the bash-backstop, and must NOT 'fix' the prewrite gate, which is already correct. Plan-only SPIKE, timebox 180 — safe to resume."
+      },
+      {
+        "id": "CCATO-MCP-T4-SIGNAL-WRITER",
+        "type": "IMPL-XS",
+        "status": "IN_PROGRESS",
+        "size": "XS",
+        "zone": "mcp-server",
+        "priority": "P0",
+        "title": "infrastructure/signals/narrativeContradictionSignalWriter.ts",
+        "depends": [],
+        "next_agent": "dev-mcp-server",
+        "supervised": false,
+        "updated_at": "2026-08-06T07:57:11Z",
+        "updated_by": "pm (decompose SPRINT-CCATO-TRUTHGATE-MCP-NATIVE)",
+        "claimed_at": "2026-08-06T07:57:10Z",
+        "claimed_by": "dev-team (ready-lane consumer)",
+        "dispatch_lane": "dev-mcp-server"
       }
     ]
   },
@@ -21788,6 +21848,6 @@
     "ssot": true
   },
   "last_tick": "20260622T2215Z",
-  "_updated_at": "2026-08-06T07:21:17Z",
-  "_updated_by": "po (triage 2026-08-06 addendum)"
+  "_updated_at": "2026-08-06T07:52:24Z",
+  "_updated_by": "po (triage 2026-08-06T07:52Z — dev-team Step 1, 4 signals + manual-dispatch sweep)"
 }
