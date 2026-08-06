@@ -240,14 +240,14 @@
 ---
 
 ## Anomaly: C-08 · alerts table check C-08 failed
-**Severity:** WARN | **Date:** 2026-07-30 | **Status:** OPEN
+**Severity:** WARN | **Date:** 2026-07-30 | **Status:** RETRACTED (2026-08-06 — see FIX-AUDITOR-C08-UNSATISFIABLE-TTL-WINDOW-AND-ISO8601-STRCMP)
 **Location:** market.db/alerts
-**Details:** 121 alerts triggered in last 24h have no matching signal_queue rows — orphaned alerts may indicate broken feedback loop or delayed signal processing
-**Impact:** Missing signals may prevent proper alert routing and status tracking
-**Root cause:** Signal processing pipeline may be delayed or alert-signal mapping broken
+**Details:** 121 alerts triggered in last 24h have no matching `agent_signals` rows (originally mis-stated as "signal_queue" — wrong table name; C-08's join is on `agent_signals.alert_id`, not `signal_queue`).
+**Impact:** ~~Missing signals may prevent proper alert routing and status tracking~~ — DISCONFIRMED. RAW-verified 2026-08-05/06 against the live named-volume DB: the orphan count is a pure function of `agent_signals` correlation-stub GC timing (2h TTL, purged only once daily by `cleanExpired()`) crossed with a 24h check window that was mathematically unsatisfiable for `expected=0` — it carries ZERO information about write-path health. Producer-family breakdown showed no producer-specific gap.
+**Root cause:** ~~Signal processing pipeline may be delayed or alert-signal mapping broken~~ — this was an agent-narrated, unmeasured hypothesis (confabulation class `feedback_agent_selfreport_metalayer_confabulation`), now DISCONFIRMED. Actual root cause: C-08's 24h alerts window vs the 2h `agent_signals` correlation-stub TTL made `expected=0` unsatisfiable by construction; ALSO an ISO8601 strcmp bypass (`alerts.triggered_at` is T-format, an unwrapped `> datetime('now',...)` over-captured). Fixed in FIX-AUDITOR-C08-UNSATISFIABLE-TTL-WINDOW-AND-ISO8601-STRCMP (window rebound to the 2h TTL + `datetime()` wrap on both sides).
 **Zone owner:** dev-mcp-server
 **Last reported:** 2026-07-30T00:35:44Z (signal sys-20260730T003538-10ba, system-auditor -> po, dedup_key=db_integrity_breach:alerts:C-08, WARN Telegram sent)
-**Mitigation:** No immediate action beyond signal routing.
+**Mitigation:** No action required — false positive, detector fixed at source.
 
 ---
 
@@ -324,14 +324,14 @@
 ---
 
 ## Anomaly: C-08 · alerts: 22 orphaned (no agent_signals)
-**Severity:** WARN | **Date:** 2026-08-05 | **Status:** OPEN
+**Severity:** WARN | **Date:** 2026-08-05 | **Status:** RETRACTED (2026-08-06 — see FIX-AUDITOR-C08-UNSATISFIABLE-TTL-WINDOW-AND-ISO8601-STRCMP)
 **Location:** market.db/alerts
 **Details:** 22 alerts triggered in last 24h with no corresponding agent_signals (expected 0). Severity: 1 high, 2 low, 14 medium, 5 warning. Examples: FPT news mention, FRT overbought, price surge alerts.
-**Impact:** Orphaned alerts may not trigger proper downstream signal routing or system response
-**Root cause:** Alerts created by alert-engine but not propagated to agent_signals table
+**Impact:** ~~Orphaned alerts may not trigger proper downstream signal routing or system response~~ — DISCONFIRMED. Age-bucketed LEFT JOIN on the live DB gave a clean split with NO overlap: alerts <=17h old = 18 linked / 0 orphaned; alerts >=18h old = 22 orphaned / 0 linked — the 18h boundary exactly equals the last `cleanExpired()` GC sweep. Orphan status is a pure function of GC timing x alert volume, not write-path health. Producer-family breakdown showed every family present on both sides (no producer-specific gap); `price_alerts`/`alert_engine_records` both hold 0 rows, ruling out an "alert-engine bypasses agent_signals" writer gap.
+**Root cause:** ~~Alerts created by alert-engine but not propagated to agent_signals table~~ — this was an agent-narrated, unmeasured hypothesis (confabulation class `feedback_agent_selfreport_metalayer_confabulation`), now DISCONFIRMED. `storeAlerts`/`storeAlertsFromCommander` co-write `agent_signals` synchronously in the same transaction (alertStore.ts) — the write path is healthy. Actual root cause: C-08's 24h alerts window vs the 2h `agent_signals` correlation-stub TTL made `expected=0` unsatisfiable by construction; ALSO an ISO8601 strcmp bypass. Fixed in FIX-AUDITOR-C08-UNSATISFIABLE-TTL-WINDOW-AND-ISO8601-STRCMP.
 **Zone owner:** dev-mcp-server
 **Last reported:** 2026-08-05T08:19:15Z (signal sys-20260805T081846-1853, system-auditor -> po, dedup_key=db_integrity_breach:alerts:C-08, WARN Telegram sent)
-**Mitigation:** No immediate action beyond signal routing.
+**Mitigation:** No action required — false positive, detector fixed at source.
 
 ---
 
@@ -547,6 +547,18 @@
 **Root cause:** Known residual FU-RAG-DEPLOY-MEMORY: embedder model load pattern causes persistent high baseline memory without GC relief cycles
 **Zone owner:** dev-rag-service
 **Last reported:** 2026-08-06T09:07:38Z (signal sys-20260806T090729-27b7, system-auditor -> po, dedup_key=microservice_degraded:rag-service:A-30, WARN Telegram sent)
+**Mitigation:** No immediate action beyond signal routing.
+
+---
+
+## Anomaly: A-30 · rag-service memory pressure 99.69% sustained
+**Severity:** WARN | **Date:** 2026-08-06 | **Status:** OPEN
+**Location:** docker/rag-service
+**Details:** Memory at 99.69% across 6 probes (65s window), zero reclamation dips detected. VmHWM >> VmRSS pattern indicates loss of GC relief.
+**Impact:** Sustained high memory with no reclamation = imminent OOMKill risk. Service may restart unexpectedly.
+**Root cause:** Embedder model baseline load appears to occupy nearly full 768 MiB container memory allocation. No efficient GC recovery pattern available.
+**Zone owner:** dev-rag-service
+**Last reported:** 2026-08-06T12:42:13Z (signal sys-20260806T124200-5a4b, system-auditor -> po, dedup_key=microservice_degraded:rag-service:A-30, WARN Telegram sent)
 **Mitigation:** No immediate action beyond signal routing.
 
 ---
