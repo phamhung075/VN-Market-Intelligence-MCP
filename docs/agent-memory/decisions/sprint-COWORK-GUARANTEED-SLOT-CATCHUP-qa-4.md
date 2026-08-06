@@ -39,3 +39,15 @@
 - No `apps/` TS touched (docs/flow-doc only) — bun test/tsc N/A; `mock-guard.sh --files docs/agents/dev-team/flow/main.md` → PASS (no production source).
 **why-decision:** APPROVED, DONE_VERIFIED. All 4 claimed sites verified against live code + re-run regression, not the note's prose; the still-reproducing signal is explained (adherence gap, not a doc defect) and does not implicate this row's actual deliverable. Flagged the S4 UNBLOCK/CLEAN gap as a distinct, uncovered 6th site for follow-up.
 **why-change:** none — verified exactly what the row scoped; S4 UNBLOCK/CLEAN gap flagged separately, not folded into this verdict (mirrors this sprint's own execute-tier.md precedent).
+
+### STEP qa-S58 · qa · 2026-08-06T23:10:00Z
+**task-id:** FIX-CI-RED-ALERTOUTCOME-CLOCK-SEAM
+**what-done:** Direct-commit verify (`qa[]` row, `branch:null`) of `760498706` on main ancestry, `--name-only` diff matches claimed `.files[]` exactly (alertStore.ts, alertOutcomeJob.ts, 1847d-C test).
+**what-considered:**
+- Read diff myself: `readPendingOutcomeAlerts(windowDays, db, now=new Date())` — default preserves prod (1 call site, alertOutcomeJob.ts now passes its own `now`). Genuine clock-seam fix, not cosmetic.
+- Live A/B proof, not trusted from prose: git-worktree'd pre-fix prod files + post-fix test file → TEST-10 FAILS pre-fix (`evaluated`=0, expected >0), PASSES post-fix. Full pre-fix file today (2026-08-06, past predicted 08-02 rot date) = 2 pass/8 fail (degraded further, confirms time-bomb was real); post-fix = 10/10 pass live, right now — fix durably removes the rot, doesn't defer it.
+- `bun tsc --noEmit` 0 errors; `mock-guard.sh` PASS; no `any`/`process.env`/unguarded `!` introduced (diffed).
+- AC-3 gate: `gh run list` raw (not prose) — latest CI run 31106283894 (2026-08-06T13:31Z, SHA≠4381b08b1) = `bun test` job "15029 pass / 40 skip / 0 fail". Two `failure` runs today (16:09/15:45Z) independently confirmed via `--log-failed` = GH Actions "Service Unavailable" infra outage, unrelated.
+- Full local per-file-isolation re-run: 15034/40/5 fail; target file NOT in failed list; the 5 failing files (rotated vs review_note's 3, per script's own documented CPU-oversubscription flake) grep-confirmed to NOT import alertStore/alertOutcomeJob.
+**why-decision:** APPROVED, DONE_VERIFIED. Commit real, on-main, exact file-scope match; AC-1/AC-2/AC-3 all independently reproduced live (not read from review_note/ci_plane_verified prose alone).
+**why-change:** none — verified exactly what the row scoped.
