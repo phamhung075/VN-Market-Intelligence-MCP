@@ -106,10 +106,12 @@ else:
   MARKER_TTL    = 100800   # 28h
 
 PUBLISH_CLAIM = call_tool(server="vn-market", tool="task_claim", arguments={
-  task_id:     MARKER_KEY,
-  task_kind:   "cowork-slot",
-  owner_agent: "unified-agent",
-  ttl_seconds: MARKER_TTL
+  task_id:              MARKER_KEY,
+  task_kind:            "cowork-slot",
+  owner_agent:          "unified-agent",
+  owner_client_session: "<resolved CLAUDE_CODE_SESSION_ID — REQUIRED, coordinationTools.ts:104-110;
+    substitute the real value, NEVER write the literal text "$CLAUDE_CODE_SESSION_ID">",
+  ttl_seconds:          MARKER_TTL
 })
 
 if PUBLISH_CLAIM.claimed != true:
