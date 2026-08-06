@@ -670,3 +670,15 @@
 **Mitigation:** No immediate action beyond signal routing.
 
 ---
+
+## Anomaly: A-30 · rag-service floor-breach: 97.76% mem
+**Severity:** WARN | **Date:** 2026-08-06 | **Status:** OPEN
+**Location:** rag-service container
+**Details:** Memory 97.76% of 1024MiB (22.9MiB free) breaches 40MiB absolute floor
+**Impact:** Service at risk of OOMKill if additional memory pressure occurs
+**Root cause:** Persistent high memory footprint, insufficient headroom for buffer/cache
+**Zone owner:** dev-ml-service
+**Last reported:** 2026-08-06T17:43:46Z (signal sys-20260806T174128-477d, system-auditor -> po, dedup_key=mem_pressure:rag-service:A-30-floor-breach, WARN Telegram sent)
+**Mitigation:** No immediate action beyond signal routing.
+
+---
