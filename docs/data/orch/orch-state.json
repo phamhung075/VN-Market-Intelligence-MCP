@@ -12620,6 +12620,32 @@
         "ac": "AC (verification_gate=live_tool_reconcile, RAW-verified on raw tool output through the rebuilt runtime, never fixtures or badges): with the bctc demand queue holding zero actionable rows AND get_vps_proxy_health reporting bctc as idle-no-work/healthy, get_bctc_full(<any ticker with no stored report>, 2026, Q1) MUST NOT return reason=\"vps_stale\" and MUST NOT assert the proxy is stale; it must return the plain honest-absence string. Negative control (guards against fixing it by simply deleting the gate): with the queue holding >=1 actionable row and last push older than the SLA, the vps_stale envelope MUST still fire. Both directions required; PLX is the natural probe ticker since it is one of the two cohort members the reparse never touched. Cross-plane invariant to assert: get_bctc_full and get_vps_proxy_health must never disagree about whether the bctc route is stale at the same instant.",
         "dedup_checked": "Full-text board grep on the root cause, not just the id (per triage-signals-longtail tool_contract_gap discipline - a live \"no prior art\" claim was previously proven wrong here). DISTINCT FROM: FIX-VPSHEALTH-DEMANDROUTE-EMPTYQUEUE-MISREPORTS-PROXY-UNREACHABLE (review[]) - same root concept, but its scope, files and raw_verify_note are confined to get_vps_proxy_health/formatHealth() and it explicitly records isStale() as untouched; this is its unshipped read-side/serving-plane fast-follow, same relationship as FIX-BCTC-FALLBACK-SHELL-REPORTS-READ-SIDE-FAST-FOLLOW bears to its own write-side row. FIX-SLA-BCTC-THRESHOLD-TRACKS-STALENESS-NOT-CONSTANT (review[]) - sla-monitor component, threshold drifts with measured staleness; different component, different mechanism. FIX-BCTC-SLA-FRESHNESS-EXCLUDE-TERMINAL (review[]) - freshness METRIC excluding url_not_found rows, not the serving gate. FIX-VPS-NEWS-STALE-FALSEPOS (review[]) - news route, health plane. FIX-AUDITOR-B05-BCTC-FRESHNESS-LAYER-SPLIT (backlog[]) - auditor predicate applying a 24h SLA to the raw PDF push layer, an audit-side predicate, not the serve-side gate. No existing row covers bctcFullTools.ts:1019-1036.",
         "updated_at": "2026-08-06T18:29:48Z"
+      },
+      {
+        "id": "FIX-PO-AC3-SELFVERIFY-FALSE-FAILLOUD-WHEN-PEER-SWEEPS-ORCHSTATE",
+        "type": "FIX",
+        "title": "PO main.md AC-3 self-verification asserts persistence by grepping its OWN commit stat for orch-state.json, so it fires a false FAIL-LOUD bug-telegram whenever a peer commit sweeps the file first - which is the normal case on shared main, and is what happened live at 18:59Z",
+        "status": "BACKLOG",
+        "priority": "P2",
+        "size": "S",
+        "zone": "cross-service/",
+        "owner": "po",
+        "next_agent": "developer",
+        "baseline_pass": true,
+        "files": [
+          "docs/agents/po/flow/main.md"
+        ],
+        "created_at": "2026-08-06T19:03:12Z",
+        "created_by": "po (triage 2026-08-06T18:57Z - observed live in its own flow this tick)",
+        "verification_gate": "replay_both_branches_on_fixture",
+        "desc": "OBSERVED LIVE THIS TICK, not derived. docs/agents/po/flow/main.md AC-3 (added by FIX-PO-BATCH-MINT-NO-WRITE-ACTUATOR, currently review[]) instructs: SHA=$(git rev-parse HEAD); git show --stat \"$SHA\" | grep -q docs/data/orch/orch-state.json || send_telegram(channel=bug, FAIL-LOUD: orch-state.json NOT in own commit ...). At 18:59Z this PO tick ran two orch-apply.sh pipes, both OK, then staged its own paths - and git diff --cached showed orch-state.json absent because peer commit 414da5ba2 (chore(orch-state): TE-T05 direct-dispatch to agent-father) had already swept the file into ITS commit seconds earlier. The file was therefore clean vs HEAD and unstageable. Running AC-3 as written would have emitted a bug-telegram asserting the writes had NOT landed, while all four mutations were provably present in HEAD tree: git show HEAD:docs/data/orch/orch-state.json | jq confirmed po_manual_dispatch_flagged_at=2026-08-06T18:57:46Z, occurrence_count=3 + next_agent=developer on the CLEAN row, the decision-journal evidence key, and desc_len=3145 on the filled stub.",
+        "root_cause": "The predicate tests the WRONG object. AC-3 exists to prove the writes reached the persistence layer, and its own generic rule states that correctly (any step that writes an artifact AND asserts its own persistence must re-read the persistence layer (git HEAD) before claiming it). But the implementation re-reads the COMMIT AUTHORSHIP (is this path in the stat of the commit I just made) rather than the persistence layer (are my mutations in HEAD tree). Those coincide only when no peer committed the shared hot file between the orch-apply write and this agent commit. On shared main with multiple concurrent sessions that window is routinely lost - see feedback_shared_main_peer_push_sweeps_held_data_commits and feedback_coldevict_bare_commit_sweeps_worker_staged_index for the same sweep behaviour observed from the other side.",
+        "user_impact": "False FAIL-LOUD on the bug channel from a routine, correct PO cycle. Two compounding costs: (1) it trains readers to discount AC-3 bug-telegrams, which defeats the gate the parent fix was built to install; (2) the inverse error is worse and also live - a PO tick whose orch-apply genuinely failed but whose commit happened to include an orch-state.json change made by a PEER would PASS the grep and be reported as confirmed. So the predicate is both false-positive and false-negative prone. Every PO tick that mutates the board is exposed.",
+        "fix_spec": "Replace the authorship grep with a content assertion against HEAD tree. After the commit, re-read the persistence layer and assert the specific mutation this cycle made is present, e.g. git show HEAD:docs/data/orch/orch-state.json piped to a jq predicate over the id(s) and field(s) this cycle wrote (the same ids already named in the cycle RETURN/journal), not a filename grep. Pass when the mutation is found in HEAD tree regardless of WHICH commit carried it; FAIL-LOUD only when it is genuinely absent. Keep AC-3 mandatory and keep the generic rule prose - only the predicate changes. Note the parent row FIX-PO-BATCH-MINT-NO-WRITE-ACTUATOR is still in review[]: this is its read-side fast-follow, so land it before that row is signed off or the sign-off ratifies a predicate that does not hold.",
+        "ac": "AC (replay both branches, no live writes): POSITIVE - fixture where the agent own commit does NOT contain orch-state.json but HEAD tree DOES contain the named mutation, new predicate must PASS and emit no telegram (current predicate FAILS here - this is the live 18:59Z case). NEGATIVE - fixture where the agent own commit DOES contain orch-state.json but the named mutation is absent from HEAD tree (simulating an orch-apply that silently did not land the field), new predicate must FAIL-LOUD (current predicate PASSES here - the dangerous inverse). Both required; a fix that only flips the first branch reintroduces the second.",
+        "dedup_checked": "Full-text board grep on the mechanism (ac-3 / own commit / git show --stat / self-verif+head / peer+swept+commit / persistence+head), not just the id. Nearest neighbours are NOT covers: FIX-PO-BATCH-MINT-NO-WRITE-ACTUATOR (review[]) is the PARENT that introduced this AC-3 block - it fixed the missing write actuator, this is the defect in the verification it added, same parent/fast-follow relationship the BCTC serving-gate row bears to its health-plane sibling. FIX-POSTCYCLE-STEP45-NB-WRITE-AC3 (backlog) is post-cycle.md notebook writes, different file and different AC. No row covers docs/agents/po/flow/main.md AC-3.",
+        "lane_note": "next_agent=developer / zone=cross-service/ deliberately, NOT agent-father: this tick measured 37 of 44 DRS-stranded backlog rows already pointing at agent-father with no draining lane (see FIX-DEVTEAM-NONDEV-NEXTAGENT-RESIDUAL-NO-DISPATCH-DESTINATION). Precedent that developer edits docs/agents/po/ flow docs: commit fix(agents/po): triage-signals.md routing table matched 0/16 live to=po signal types. Minting into the stranded pile would have guaranteed this row never ships.",
+        "updated_at": "2026-08-06T19:03:13Z"
       }
     ],
     "closed_sprints": [
@@ -22144,8 +22170,8 @@
         }
       ]
     },
-    "last_triaged_at": "2026-08-06T18:57:46Z",
-    "last_triaged_by": "po (triage 2026-08-06T18:55Z dev-team tick)",
+    "last_triaged_at": "2026-08-06T19:03:12Z",
+    "last_triaged_by": "po (triage 2026-08-06T18:57Z - AC-3 predicate mint)",
     "in_progress": [
       {
         "id": "TE-T05",
