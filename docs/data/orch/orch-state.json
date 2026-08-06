@@ -2829,7 +2829,7 @@
         "type": "signal_feedback",
         "summary": "A-30 rag-service memory reclamation loss 96.32% sustained (no GC dip over 50s window)",
         "severity": "WARN",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": null,
         "provenance": "detector",
         "audit_cycle_tag": "cron:auditor-t1:2026-08-06T13:00Z"
@@ -2842,7 +2842,7 @@
         "type": "signal_feedback",
         "summary": "3rd occurrence today of leaf-agent analysis-only exit (system-auditor Tier-1, agentId a866dd5ec31bf36f9) — see feedback_leaf_agent_analysis_only_exit_recurring_pattern_20260806",
         "severity": "WARN",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": null,
         "evidence": "Spawned this tick for probe verdict=FAILURE (rag-service mem-creep). Agent returned a well-reasoned prose report (DEGRADED, dedup-skip decision correct, launchd path root-caused correctly) but RAW-verified zero persisted writes: docs/agent-memory/notebooks/system-auditor.md still shows only cycle c56 (claimed c57 absent, committed and working-tree both), no new docs/data/orch/orch-state.json .signal_queue row exists (claimed id sys-20260806T130000-xxxx was a template placeholder, never resolved/committed), git status clean on both files. Same shape as the 2 prior 2026-08-06 occurrences already on record (system-auditor c54 tick ~09:52Z, refine_bctc_md VHM_2026_Q1) — not re-escalating as a new board row, just adding corroborating evidence to the existing po-owned decision (stronger execute-not-narrate directive vs structural self-check checkpoint). No operational gap this instance: the underlying rag-service A-30 finding was independently RAW-reverified by dev-team as correctly dedup-skip-eligible (already tracked by FU-RAG-DEPLOY-MEMORY + related rows, last real fire sys-20260806T124200-5a4b already PO-triaged 12:45Z)."
       },
@@ -2854,7 +2854,7 @@
         "type": "microservice_degraded",
         "summary": "rag-service A-30 WARN: memory at 97.06% — no reclamation dip detected",
         "severity": "WARN",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": null,
         "provenance": "detector",
         "audit_cycle_tag": "cron:auditor-t1:2026-08-06T13:30Z"
