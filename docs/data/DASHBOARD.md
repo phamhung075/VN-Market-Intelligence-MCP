@@ -466,3 +466,15 @@
 **Mitigation:** No immediate action beyond signal routing.
 
 ---
+
+## Anomaly: B-01 · news source stale 790m
+**Severity:** CRITICAL | **Date:** 2026-08-06 | **Status:** OPEN
+**Location:** data/news
+**Details:** news source stale 790 minutes (expected cadence 30 minutes, last fetch 2026-08-05T19:38:29Z)
+**Impact:** Market news updates not refreshing — critical real-time information gap
+**Root cause:** News fetch pipeline halted or VPS route unreachable
+**Zone owner:** dev-mcp-server
+**Last reported:** 2026-08-06T06:41:35Z (signal sys-20260806T064127-78c1, system-auditor -> po, dedup_key=data_stale:news:B-01, CRITICAL Telegram sent)
+**Mitigation:** No immediate action beyond signal routing.
+
+---
