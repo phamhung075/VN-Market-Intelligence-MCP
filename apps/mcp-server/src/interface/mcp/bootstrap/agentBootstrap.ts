@@ -6,10 +6,35 @@
  *
  * Design:
  *   - SKILL_MANIFEST maps skill name → MCP tool names (string[])
- *   - At module init, probe each registration fn against a mock server
- *     to build toolName → registrationFn map (O(n) once at startup)
+ *   - getToolNameMap() lazily probes each registration fn against a mock
+ *     server (on first call only, memoized) to build toolName →
+ *     registrationFn map (O(n) once, NOT at module load — see
+ *     FIX-AGENTBOOTSTRAP-EAGER-EXECSYNC-COLDSTART)
  *   - getToolsForSkills() resolves skill → tool names → registration fns
  *     in O(k) where k = tools in skill
+ *
+ * FIX-AGENTBOOTSTRAP-EAGER-EXECSYNC-COLDSTART (2026-08-06): the ~107-fn
+ * registry probe used to run eagerly and synchronously as a bare top-level
+ * `const toolNameMap = buildToolNameMap()` statement, i.e. on every import
+ * of this module — including the live MCP server cold-start path
+ * (server.ts imports getToolsForSkills) and ~30 test files that transitively
+ * import this module for unrelated reasons. Any one of the probed
+ * registryFns doing slow/blocking work at registration time (historically:
+ * registerAgentMemoryTools -> getProjectRoot() -> execSync('git rev-parse'),
+ * fixed separately in FIX-MCP-BOOTSTRAP-BLOCKING-EXECSYNC-PROJECTROOT) put
+ * the ENTIRE module's ES-module Evaluate() step at risk: if that top-level
+ * evaluation is aborted (e.g. by bun's per-test timeout under CI CPU
+ * contention) partway through, the module is left permanently in an
+ * errored/half-initialized state for the rest of that process — every
+ * later `import`/`require` of this module in the same process re-observes
+ * the same broken state ("Cannot access 'toolNameMap' before
+ * initialization"), cascading failures to every other test in the file
+ * (and, without per-file process isolation, to every other importer).
+ * The probe is now deferred to first actual use (getToolNameMap(),
+ * memoized) so merely importing this module is O(1) and side-effect-free —
+ * a slow/blocking registryFn can no longer poison module linkage, and cold
+ * boot no longer pays the ~107-fn probe cost until a tool list is actually
+ * requested.
  */
 
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
@@ -299,11 +324,15 @@ const ALWAYS_ON_TOOLS: string[] = [
 export const ALWAYS_ON_TOOL_COUNT = ALWAYS_ON_TOOLS.length; // 7
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Probe: build toolName → registryFn map at module load (O(n) once)
+// Probe: build toolName → registryFn map lazily, on first use (O(n) once)
 //
 // Strategy: run each registryFn against a minimal fake McpServer that
 // intercepts server.tool() calls and records the tool name.
 // This stays 100% in the interface layer — no domain/infra imports needed.
+//
+// FIX-AGENTBOOTSTRAP-EAGER-EXECSYNC-COLDSTART: deliberately NOT invoked at
+// module top level. See file-header comment for the module-linkage-poisoning
+// risk this avoids. getToolNameMap() below is the only call site.
 // ─────────────────────────────────────────────────────────────────────────────
 
 function buildToolNameMap(): Map<string, ToolRegistryFn> {
@@ -352,8 +381,19 @@ function buildToolNameMap(): Map<string, ToolRegistryFn> {
   return map;
 }
 
-// Built once at module load — O(1) per lookup after this
-const toolNameMap: Map<string, ToolRegistryFn> = buildToolNameMap();
+// Lazily built on first call, memoized thereafter — O(1) per lookup after
+// the first. A plain module-scope `let` (not a top-level `const = fn()`
+// initializer) so a mid-flight failure inside buildToolNameMap() cannot
+// leave this module's ES-module Evaluate() step half-finished: the module
+// itself finishes loading instantly regardless of how long the probe takes.
+let _toolNameMap: Map<string, ToolRegistryFn> | undefined;
+
+function getToolNameMap(): Map<string, ToolRegistryFn> {
+  if (!_toolNameMap) {
+    _toolNameMap = buildToolNameMap();
+  }
+  return _toolNameMap;
+}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Public API
@@ -418,14 +458,16 @@ export function getToolsForSkills(skills: string[]): ToolRegistryFn[] {
  * Deduplicates: if two tool names map to same registryFn (1 fn registers N tools),
  * the fn appears only once.
  *
- * Warn (not throw) when a name from the SKILL_MANIFEST has no entry in toolNameMap.
- * This means the skill references a tool that was never registered in the toolRegistry —
- * a configuration drift that would cause the tool to be silently absent from
- * skill-gated sessions (symptom: "tool not found" in agent logs).
+ * Warn (not throw) when a name from the SKILL_MANIFEST has no entry in the
+ * toolName → registryFn map. This means the skill references a tool that was
+ * never registered in the toolRegistry — a configuration drift that would
+ * cause the tool to be silently absent from skill-gated sessions (symptom:
+ * "tool not found" in agent logs).
  */
 function resolveToolNames(toolNames: string[]): ToolRegistryFn[] {
   const seen = new Set<ToolRegistryFn>();
   const result: ToolRegistryFn[] = [];
+  const toolNameMap = getToolNameMap();
 
   for (const name of toolNames) {
     const fn = toolNameMap.get(name);
