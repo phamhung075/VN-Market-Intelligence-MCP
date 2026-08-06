@@ -5482,46 +5482,6 @@
     ],
     "backlog": [
       {
-        "id": "FIX-REFINE-SUBFLOW-OPTIONC-CONTRACT-DRIFT",
-        "type": "FIX",
-        "title": "refine_bctc_md Phase 2 loop body calls execute_sub_flow_logic() -- a function that exists nowhere -- and all 4 sub-flow docs still describe themselves as spawned Task sub-agents returning to an orchestrator; 2 consecutive zero-push fires on VHM_2026_Q1",
-        "status": "BACKLOG",
-        "priority": "P0",
-        "size": "S",
-        "zone": "docs/agents/",
-        "owner": "po",
-        "next_agent": "agent-father",
-        "supervised": false,
-        "plan_only": false,
-        "created_at": "2026-08-06T11:18:01Z",
-        "created_by": "po/recurring-bug-escalation-20260806T1118Z",
-        "updated_at": "2026-08-06T18:57:47Z",
-        "source": "po recurring-bug escalation 2026-08-06T11:18Z. 2 occurrences crossing feedback_recurring_bug_escalation threshold: 2026-08-06T09:05Z (slot refine-bctc-slot-1, invented status PARTIAL_EXIT, 0 pushes) and 2026-08-06T11:06Z (slot refine-bctc-slot-3, STATUS PARTIAL, 0/12 windows pushed). Both on report_id a3a41225-3491-4b4f-b4d0-3b80a989b76a (VHM_2026_Q1, 43 windows). RAW-verified by po at source, not from agent self-report.",
-        "desc": "ROOT CAUSE (doc contract defect, agent-side behavior is downstream of it): docs/agents/refine_bctc_md/flow/main.md:94 writes the Phase-2 loop body as `result = execute_sub_flow_logic(window)`. That identifier exists NOWHERE -- grep across docs/ apps/ scripts/ .claude/ returns exactly ONE hit, the call site itself. The four docs it dispatches into (table-page.md, prose-page.md, continuation-stitch.md, disagreement-verify.md) all still carry Option-B spawned-subagent language that the Option-C conversion labelled but never rewrote: each has a `## RETURN (Task return value -- NOT a file write)` section saying `Return the following JSON object as the Task return value` and `The orchestrator (main.md) collects this return value directly`, and each frontmatter description ends `Returns result JSON inline to main.md (Option-C)`. So main.md simultaneously asserts SELF-IDENTITY GUARD (`You are a leaf worker... Do NOT delegate`) AND writes its only substantive step as a call into an executor that returns to an orchestrator. The 11:06Z agent's verbatim complaint -- 'Sub-flow logic implementation (OCR->markdown with image validation) not executable with current tool grant' -- names `sub-flow logic` exactly: it is a literal read of main.md:94, not free-floating confabulation. FALSIFIED ALTERNATIVE (a) payload-size: RAW windows from get_bctc_pending_refine show the successfully-processed chunk unit-0000..0011 = 21 pages / 20 images / 4x three-page continuation windows, and the twice-abandoned chunk unit-0012..0023 = 22 pages / 22 images / 4x three-page continuation windows. The two chunks are the same shape; the prior memory note claiming the resume chunk is 'unusually continuation-heavy' is factually wrong. FALSE CLAIM by the agent: the tool grant (Read, Write, mcp__gateway__call_tool -> get_bctc_page_text/get_bctc_page_image/push_bctc_refined_unit/finalize_bctc_refine) is unchanged from the 2026-08-05T16:41-16:44Z fire that pushed 12 units (11 DONE conf 0.75-0.95 + unit-0000 FAILED) on this same report. Grant is proven sufficient; do NOT change it. NOTE this is a LATENT ambiguity, not a deterministic halt -- the same doc executed correctly on 08-05 -- so the fix is to remove the ambiguity so the working reading is the only available reading, not to add another guard on top of a contradiction. SECONDARY DRIFT found in same zone: .claude/agents/refine_bctc_md.md description still says 'Processes one CHUNK (<=7 windows) per invocation' while flow/main.md:72 and init.md:55 both say REFINE_CHUNK_SIZE=12 (raised 7->12 by DONE task BCTC-REFINE-T1-CHUNKSIZE, commit 524a87cc 2026-06-27, which updated the docs/ copy but never the .claude/ copy).",
-        "files": [
-          "docs/agents/refine_bctc_md/flow/main.md",
-          "docs/agents/refine_bctc_md/flow/table-page.md",
-          "docs/agents/refine_bctc_md/flow/prose-page.md",
-          "docs/agents/refine_bctc_md/flow/continuation-stitch.md",
-          "docs/agents/refine_bctc_md/flow/disagreement-verify.md",
-          ".claude/agents/refine_bctc_md.md",
-          "docs/data/cowork-schedule.json"
-        ],
-        "deliverable": "AC-1: main.md:94 no longer names a non-existent function -- Phase 2's loop body is rewritten as literal inline instructions the model performs itself (read the matching sub-flow doc, then for each page call get_bctc_page_text + get_bctc_page_image, produce the markdown, call push_bctc_refined_unit), with an explicit `Read docs/agents/refine_bctc_md/flow/<page_type>.md` step -- main.md currently only says 'apply <file> logic' and never instructs a Read. AC-2: all four sub-flow docs' `## RETURN (Task return value...)` sections rewritten to inline-result language -- no 'Task return value', no 'the orchestrator collects', no wording implying a separate agent. AC-3: an explicit anti-confabulation line in Phase 2 -- you ARE the parser; reading OCR text plus looking at the page image and writing markdown IS the job; there is no external parsing tool to be missing; never report a missing tool for this step. AC-4: the RETURN status enum is restated at the loop site (DONE|PARTIAL|FAILED|SKIPPED only) and PARTIAL is defined as requiring >=1 push -- zero pushes with a full chunk assigned is FAILED, never PARTIAL. AC-5: .claude/agents/refine_bctc_md.md '<=7 windows' corrected to 12. AC-6 (slot pause, same commit): set enabled=false on refine-bctc-slot-1/-2/-3 in docs/data/cowork-schedule.json, leave refine-bctc-slot-4 (cron 30 16) ENABLED as the single canary -- it is the slot that last succeeded. AC-7: re-enable slots 1/2/3 in the SAME commit that closes this row, and record in the row note the first post-fix fire that pushes >=1 unit to report a3a41225 (RAW via get_bctc_refined total_units > 12), never a self-report.",
-        "out_of_scope": "Do NOT change the agent tool grant -- it is proven sufficient by the 08-05 run on this same report. Do NOT change REFINE_CHUNK_SIZE=12 -- the payload hypothesis is falsified above. Do NOT touch apps/mcp-server (see sibling row FIX-GET-BCTC-REFINED-NO-PROJECTION-PARAM).",
-        "not_duplicate_of": "AF-DISAGREEMENT-VERIFY-OVERAGE (backlog) is a 6-line size-cap overage on one of the same files, not the Option-C contract drift. FIX-BCTC-REFINE-RESOURCE-EXCEEDED-STATUS (backlog, dev-mcp-server) owns 'context-budget limit written into report state as a data failure' -- a status-semantics bug in apps/mcp-server, and its premise (a real context limit) is the hypothesis THIS row falsifies for this incident.",
-        "related": [
-          "BCTC-REFINE-STALL-RETRIGGER",
-          "BCTC-REFINE-T1-CHUNKSIZE",
-          "FIX-BCTC-REFINE-RESOURCE-EXCEEDED-STATUS"
-        ],
-        "baseline_pass": "9408",
-        "po_manual_dispatch_flagged_at": "2026-08-06T18:57:46Z",
-        "po_manual_dispatch_flagged_by": "po (manual-dispatch-sweep)",
-        "po_manual_dispatch_class": "DRS-STRANDED-OFF-ALLOWLIST",
-        "po_manual_dispatch_note": "po (manual-dispatch-sweep) surfaced DRS-STRANDED-OFF-ALLOWLIST candidate - folding into this tick BATCH. Re-admission #2: prior stamp 2026-08-06T14:53:40Z aged 14464s past the 14400s staleness window without ever being dispatched (TE-T12 shape). Top of 44 candidates, only P0 in the set."
-      },
-      {
         "id": "FIX-EXECUTETIER-PHASE35-RESUME-LOCK-RELEASED-AT-SPAWN-NOT-COMPLETION",
         "type": "FIX",
         "title": "execute-tier.md Phase-3.5 dispatcher-wrap releases the resume lock immediately after a background spawn -- main.md's own S2/SLS/RLC/DRS/QA-Drain resume-dispatchers already carry the LOCK-LIFETIME fix for the identical task:<id> key; Phase-3.5 (BOUNDED-1's own documented JUMP-TO target) does not",
@@ -22252,6 +22212,48 @@
         "po_manual_dispatch_note": "po (manual-dispatch-sweep) surfaced DRS-STRANDED-OFF-ALLOWLIST candidate — folding into this tick BATCH",
         "claimed_by": "agent-father (router direct-dispatch — TE-T05 artifact-class, per po_routing_ruling_20260721, bypasses ba->architect->pm relay; ba B1/B2/B3 handoff docs/handoffs/TE-T05-BA-spec.md)",
         "claimed_at": "2026-08-06T19:00:10Z"
+      },
+      {
+        "id": "FIX-REFINE-SUBFLOW-OPTIONC-CONTRACT-DRIFT",
+        "type": "FIX",
+        "title": "refine_bctc_md Phase 2 loop body calls execute_sub_flow_logic() -- a function that exists nowhere -- and all 4 sub-flow docs still describe themselves as spawned Task sub-agents returning to an orchestrator; 2 consecutive zero-push fires on VHM_2026_Q1",
+        "status": "IN_PROGRESS",
+        "priority": "P0",
+        "size": "S",
+        "zone": "docs/agents/",
+        "owner": "po",
+        "next_agent": "agent-father",
+        "supervised": false,
+        "plan_only": false,
+        "created_at": "2026-08-06T11:18:01Z",
+        "created_by": "po/recurring-bug-escalation-20260806T1118Z",
+        "updated_at": "2026-08-06T19:08:15Z",
+        "source": "po recurring-bug escalation 2026-08-06T11:18Z. 2 occurrences crossing feedback_recurring_bug_escalation threshold: 2026-08-06T09:05Z (slot refine-bctc-slot-1, invented status PARTIAL_EXIT, 0 pushes) and 2026-08-06T11:06Z (slot refine-bctc-slot-3, STATUS PARTIAL, 0/12 windows pushed). Both on report_id a3a41225-3491-4b4f-b4d0-3b80a989b76a (VHM_2026_Q1, 43 windows). RAW-verified by po at source, not from agent self-report.",
+        "desc": "ROOT CAUSE (doc contract defect, agent-side behavior is downstream of it): docs/agents/refine_bctc_md/flow/main.md:94 writes the Phase-2 loop body as `result = execute_sub_flow_logic(window)`. That identifier exists NOWHERE -- grep across docs/ apps/ scripts/ .claude/ returns exactly ONE hit, the call site itself. The four docs it dispatches into (table-page.md, prose-page.md, continuation-stitch.md, disagreement-verify.md) all still carry Option-B spawned-subagent language that the Option-C conversion labelled but never rewrote: each has a `## RETURN (Task return value -- NOT a file write)` section saying `Return the following JSON object as the Task return value` and `The orchestrator (main.md) collects this return value directly`, and each frontmatter description ends `Returns result JSON inline to main.md (Option-C)`. So main.md simultaneously asserts SELF-IDENTITY GUARD (`You are a leaf worker... Do NOT delegate`) AND writes its only substantive step as a call into an executor that returns to an orchestrator. The 11:06Z agent's verbatim complaint -- 'Sub-flow logic implementation (OCR->markdown with image validation) not executable with current tool grant' -- names `sub-flow logic` exactly: it is a literal read of main.md:94, not free-floating confabulation. FALSIFIED ALTERNATIVE (a) payload-size: RAW windows from get_bctc_pending_refine show the successfully-processed chunk unit-0000..0011 = 21 pages / 20 images / 4x three-page continuation windows, and the twice-abandoned chunk unit-0012..0023 = 22 pages / 22 images / 4x three-page continuation windows. The two chunks are the same shape; the prior memory note claiming the resume chunk is 'unusually continuation-heavy' is factually wrong. FALSE CLAIM by the agent: the tool grant (Read, Write, mcp__gateway__call_tool -> get_bctc_page_text/get_bctc_page_image/push_bctc_refined_unit/finalize_bctc_refine) is unchanged from the 2026-08-05T16:41-16:44Z fire that pushed 12 units (11 DONE conf 0.75-0.95 + unit-0000 FAILED) on this same report. Grant is proven sufficient; do NOT change it. NOTE this is a LATENT ambiguity, not a deterministic halt -- the same doc executed correctly on 08-05 -- so the fix is to remove the ambiguity so the working reading is the only available reading, not to add another guard on top of a contradiction. SECONDARY DRIFT found in same zone: .claude/agents/refine_bctc_md.md description still says 'Processes one CHUNK (<=7 windows) per invocation' while flow/main.md:72 and init.md:55 both say REFINE_CHUNK_SIZE=12 (raised 7->12 by DONE task BCTC-REFINE-T1-CHUNKSIZE, commit 524a87cc 2026-06-27, which updated the docs/ copy but never the .claude/ copy).",
+        "files": [
+          "docs/agents/refine_bctc_md/flow/main.md",
+          "docs/agents/refine_bctc_md/flow/table-page.md",
+          "docs/agents/refine_bctc_md/flow/prose-page.md",
+          "docs/agents/refine_bctc_md/flow/continuation-stitch.md",
+          "docs/agents/refine_bctc_md/flow/disagreement-verify.md",
+          ".claude/agents/refine_bctc_md.md",
+          "docs/data/cowork-schedule.json"
+        ],
+        "deliverable": "AC-1: main.md:94 no longer names a non-existent function -- Phase 2's loop body is rewritten as literal inline instructions the model performs itself (read the matching sub-flow doc, then for each page call get_bctc_page_text + get_bctc_page_image, produce the markdown, call push_bctc_refined_unit), with an explicit `Read docs/agents/refine_bctc_md/flow/<page_type>.md` step -- main.md currently only says 'apply <file> logic' and never instructs a Read. AC-2: all four sub-flow docs' `## RETURN (Task return value...)` sections rewritten to inline-result language -- no 'Task return value', no 'the orchestrator collects', no wording implying a separate agent. AC-3: an explicit anti-confabulation line in Phase 2 -- you ARE the parser; reading OCR text plus looking at the page image and writing markdown IS the job; there is no external parsing tool to be missing; never report a missing tool for this step. AC-4: the RETURN status enum is restated at the loop site (DONE|PARTIAL|FAILED|SKIPPED only) and PARTIAL is defined as requiring >=1 push -- zero pushes with a full chunk assigned is FAILED, never PARTIAL. AC-5: .claude/agents/refine_bctc_md.md '<=7 windows' corrected to 12. AC-6 (slot pause, same commit): set enabled=false on refine-bctc-slot-1/-2/-3 in docs/data/cowork-schedule.json, leave refine-bctc-slot-4 (cron 30 16) ENABLED as the single canary -- it is the slot that last succeeded. AC-7: re-enable slots 1/2/3 in the SAME commit that closes this row, and record in the row note the first post-fix fire that pushes >=1 unit to report a3a41225 (RAW via get_bctc_refined total_units > 12), never a self-report.",
+        "out_of_scope": "Do NOT change the agent tool grant -- it is proven sufficient by the 08-05 run on this same report. Do NOT change REFINE_CHUNK_SIZE=12 -- the payload hypothesis is falsified above. Do NOT touch apps/mcp-server (see sibling row FIX-GET-BCTC-REFINED-NO-PROJECTION-PARAM).",
+        "not_duplicate_of": "AF-DISAGREEMENT-VERIFY-OVERAGE (backlog) is a 6-line size-cap overage on one of the same files, not the Option-C contract drift. FIX-BCTC-REFINE-RESOURCE-EXCEEDED-STATUS (backlog, dev-mcp-server) owns 'context-budget limit written into report state as a data failure' -- a status-semantics bug in apps/mcp-server, and its premise (a real context limit) is the hypothesis THIS row falsifies for this incident.",
+        "related": [
+          "BCTC-REFINE-STALL-RETRIGGER",
+          "BCTC-REFINE-T1-CHUNKSIZE",
+          "FIX-BCTC-REFINE-RESOURCE-EXCEEDED-STATUS"
+        ],
+        "baseline_pass": "9408",
+        "po_manual_dispatch_flagged_at": "2026-08-06T18:57:46Z",
+        "po_manual_dispatch_flagged_by": "po (manual-dispatch-sweep)",
+        "po_manual_dispatch_class": "DRS-STRANDED-OFF-ALLOWLIST",
+        "po_manual_dispatch_note": "po (manual-dispatch-sweep) surfaced DRS-STRANDED-OFF-ALLOWLIST candidate - folding into this tick BATCH. Re-admission #2: prior stamp 2026-08-06T14:53:40Z aged 14464s past the 14400s staleness window without ever being dispatched (TE-T12 shape). Top of 44 candidates, only P0 in the set.",
+        "claimed_by": "agent-father (router direct-dispatch — po BATCH item 1, P0, dev-team tick 18:37Z)",
+        "claimed_at": "2026-08-06T19:08:09Z"
       }
     ]
   },
