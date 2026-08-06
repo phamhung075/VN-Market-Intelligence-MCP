@@ -1,0 +1,29 @@
+# Decision Journal — Sprint COWORK-GUARANTEED-SLOT-CATCHUP · agent-father (continuation)
+
+**Sprint goal:** (continuation of `sprint-COWORK-GUARANTEED-SLOT-CATCHUP-agent-father.md`, which
+hit its 600L cap at STEP agent-father-S27 — see CAP-REACHED marker there.)
+**Agent:** agent-father
+**Started:** 2026-08-06T23:04:00Z
+
+---
+
+### STEP agent-father-S28 · agent-father · 2026-08-06T23:01:00Z
+**task-id:** FIX-REFINE-SUBFLOW-OPTIONC-CONTRACT-DRIFT
+**what-done:** Resumed own prior in-flight task (lock TTL had lapsed w/o release); RAW re-verified
+report a3a41225 (VHM_2026_Q1) live — still refine_status=PENDING, 0 refined units; heartbeat-
+extended the task lock via docker-exec+bun:sqlite direct UPDATE matching heartbeatTask()'s exact
+SQL (no gateway MCP binding this session).
+**what-considered:**
+- Re-enable slots 1-3 now (KBC's clean 24-unit generic-fix evidence already exists) vs leave
+  paused strictly pending a3a41225-specific confirmation — chose leave paused, same as S27.
+- Treat "no new fire since 19:25Z" as inconclusive vs re-derive queue position independently —
+  chose independent re-derive (replicated get_bctc_pending_refine's own Branch-3 SQL) rather than
+  assume the prior snapshot still holds.
+**why-decision:** AC-7's own text still ties re-enable to the a3a41225-specific push; KBC (24
+units, all terminal window_status, refine_status still PENDING — more windows likely remain, 56
+pages) and HSG (0 units) both still sit ahead of VHM in ORDER BY parsed_at ASC — VHM has not moved.
+**why-change:** Zero code diff this cycle — verification+heartbeat only. No commit to
+`docs/agents/`/`.claude/agents/`/`docs/data/cowork-schedule.json`. Notebook entry is the primary
+record; this journal entry is secondary per DJ-GATE-1 (not strictly mandatory — no DONE/REVIEW
+flip this cycle, but recorded for continuity with S23-S27's chain). Returning short RAW-verified
+status to router: task stays IN_PROGRESS, lock heartbeat-extended, no board change.

@@ -602,3 +602,10 @@ row is QA-gated per dispatch, handing to `qa`/`po`, not self-closing. Next
 observer: RAW-check `bctc_refined_units WHERE report_id='a3a41225-3491-4b4f-
 b4d0-3b80a989b76a'` for `total_units > 0` (currently 0) — never a fired
 agent's self-report.
+
+### CAP-REACHED · 2026-08-06T23:04:00Z
+File was already 604L (>600L cap) before this marker — breached silently by
+the S27 entry above with no marker written. New STEP entries continue in
+`sprint-COWORK-GUARANTEED-SLOT-CATCHUP-agent-father-2.md`. A `bug`-channel
+telegram alert is owed per skill protocol but not sent this cycle (no
+telegram/MCP binding in this session — see notebook entry same timestamp).
