@@ -12669,6 +12669,32 @@
         "ac": "AC-1: state the actual overlap measured line-by-line BEFORE proposing a merge — if the overlap is small, the correct outcome is WONTFIX-with-reason, not a forced merge. AC-2: if merged, every referencing flow doc pointer is updated in the same change (both skills are referenced from agent flow docs, including po/flow/main.md which points at cowork-error-boundary and po/init.md which points at cowork-boundary). AC-3: no net line growth across the fleet.",
         "origin_signal_id": "po-20260806T191500Z",
         "updated_at": "2026-08-06T19:39:40Z"
+      },
+      {
+        "id": "FIX-STOCK-PRICE-VNDIRECT-DSI-INV-1-NULL-CHANGE-SERVED-AS-ZERO",
+        "type": "FIX",
+        "priority": "P1",
+        "size": "S",
+        "zone": "apps/stock-price/",
+        "status": "BACKLOG",
+        "next_agent": "developer",
+        "owner": "po",
+        "title": "VnDirect Tier1+Tier2 served path structurally cannot emit a nil Change/ChangePercent -- an unavailable change is served as 0 (\"genuine flat day\"), violating DSI-INV-1",
+        "desc": "PROVEN 2026-08-06 during PO sign-off of FACTORY-STOCK-vndirect-mapper-tests (ruling: docs/agent-memory/decisions/ruling-20260806T2059Z-vndirect-mapper-tests-po.md).\n\nMECHANISM. apps/stock-price/pkg/infrastructure/fetchers.go declares its inline VnDirect payload struct with Change/PctChange as NON-pointer `float64` -- Tier1 :78-79, Tier2 :182-183. Unmarshalling JSON `null` into a non-pointer float is a documented no-op in encoding/json (\"unmarshaling a JSON null into any other Go type has no effect on the value\"), so the field silently keeps its zero value. The code then does `change := item.Change` (:89, :193) and returns `Change: &change` (:113-114, :214-215) -- the address of a local, which is structurally NEVER nil. An omitted field behaves identically.\n\nThe comment sitting directly above that code at :88 and :192 reads `// DSI-INV-1: use pointers so 0 is distinguishable from nil (unavailable)`. It is false with respect to its own code -- the pointer exists but can never be nil. Classic comment-not-code; do not let the comment convince a reviewer the invariant holds.\n\nCONTRACT BREACHED. pkg/domain/models.go:22-23 -- `Change *float64` with tag json:\"change\" and the comment `// nil = unavailable, 0 = genuine flat day` (named invariant DSI-INV-1, org-wide, see docs/architecture-briefs/2026-06-05-carry-yield-single-signal-fixture.md). The pointer propagates untouched through pkg/application/usecases.go:76-77 into the served FetchPriceResponse, so the wire response emits `change: 0` where the contract says `change: null`. A consumer cannot distinguish \"VnDirect had no change data\" from \"the stock genuinely closed flat\".\n\nMEASURED, not inferred (stdlib-only harness, both struct shapes copied verbatim from the two files, identical input):\n  `\"change\":null`  -> SERVED &0  |  PRIMITIVE nil  -> DIVERGE\n  field omitted    -> SERVED &0  |  PRIMITIVE nil  -> DIVERGE\n  `\"change\":0`     -> SERVED &0  |  PRIMITIVE &0   -> agree\nReproduce by unmarshalling those three payloads into (a) the fetchers.go inline struct and (b) the mapper.go struct, then comparing nil-ness of the resulting pointers. The correct shape already exists and is already tested: apps/stock-price/pkg/primitive/vndirect-quote-mapper/mapper.go:30-31 + :116-124, guarded by mapper_test.go cases `null_change_and_pctChange_maps_to_nil_pointers`, `omitted_change_fields_treated_as_nil`, `partial_null_-_only_change_is_null` (all green).\n\nAC-1 ESTABLISH REACHABILITY BEFORE ASSUMING SEVERITY. This row proves the code path cannot emit nil; it does NOT prove VnDirect ever actually sends null or omits the field. Capture real api-finfo.vndirect.com.vn/v4/stock_prices payloads (illiquid/halted/newly-listed tickers and pre-open are the likely shapes) and state with evidence whether null/omitted change occurs live. If it never occurs, say so plainly and downgrade to P3 -- do not quietly close, the struct shape is still wrong and the comment is still false.\nAC-2 Fix the served shape so an unavailable change reaches the wire as null, not 0. Preferred: rewire Tier1/Tier2 to call the existing primitive (see FACTORY-STOCK-extract-vndirect-mapper -- ONE rewire closes BOTH rows; do not bill this twice and do not re-create mapper.go). Fallback if that refactor is not taken: change the two inline structs to *float64 and copy-when-non-nil.\nAC-3 This is a BEHAVIOUR CHANGE on a served endpoint, not a pure refactor -- an unavailable change flips from `0` to `null` on the wire. Do NOT ship it as invisible. Check every consumer of FetchPriceResponse.Change / .ChangePercent for a bare dereference or a formatter that assumes non-nil, across the Go plane AND any TS/frontend consumer of the JSON, and state what you checked. rebuild_required: a served-path change to a shipped binary -- rebuild stock-price and RAW-verify sample tickers after.\nAC-4 Delete or correct the false `// DSI-INV-1: use pointers so 0 is distinguishable from nil` comment at fetchers.go:88 and :192 in the same change.\nAC-5 Regression guard on the SERVED path, not on a copy -- the whole point of the row that produced this finding. A test that would have failed before this fix and passes after, exercising the fetcher's own mapping.\n\nDO NOT close by making the primitive match the served path. The primitive is the correct one; models.go documents the contract; reverting it would enshrine the violation and break 3 currently-green tests.",
+        "files": [
+          "apps/stock-price/pkg/infrastructure/fetchers.go",
+          "apps/stock-price/pkg/primitive/vndirect-quote-mapper/mapper.go",
+          "apps/stock-price/pkg/domain/models.go"
+        ],
+        "rebuild_required": true,
+        "baseline_pass": false,
+        "related": [
+          "FACTORY-STOCK-extract-vndirect-mapper",
+          "FACTORY-STOCK-vndirect-mapper-tests"
+        ],
+        "created_at": "2026-08-06T20:59:20Z",
+        "created_by": "po/ruling-20260806T2059Z (review-lane secondary-drain triage of FACTORY-STOCK-vndirect-mapper-tests)",
+        "updated_at": "2026-08-06T21:01:41Z"
       }
     ],
     "closed_sprints": [
@@ -13791,6 +13817,37 @@
         "qa_verified_by": "qa",
         "commit": "eac71308e",
         "notebook_commit": "7428b28a5"
+      },
+      {
+        "title": "Backfill Tier1/Tier2 VnDirect mapper unit tests (guards the dedup)",
+        "priority": "P2",
+        "zone": "stock-price",
+        "type": "FACTORY",
+        "status": "DONE_VERIFIED",
+        "id": "FACTORY-STOCK-vndirect-mapper-tests",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-STOCK-vndirect-mapper-tests",
+        "promoted_at": "2026-07-24T12:44:38Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
+        "updated_at": "2026-08-06T21:01:41Z",
+        "claimed_at": "2026-07-24T12:44:38Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "completed_at": "2026-07-24T12:50:34Z",
+        "completed_by": "dev-stock-price",
+        "review_note": "CLOSEOUT CAVEAT (dispatcher): literal DoD met — mapper_test.go 13/13 green (indep re-verified). BUT scope front-loaded: dev created a NEW primitive apps/stock-price/pkg/primitive/vndirect-quote-mapper/mapper.go (MapPayload/MapItem) — that is the paired FACTORY-STOCK-extract-vndirect-mapper deliverable, not this test-only task. fetchers.go is NOT rewired: its inline *1000/floor mapping still serves the live Price and remains UNTESTED; mapping logic is now DUPLICATED (mapper.go copy vs fetchers.go inline). Tests guard the COPY, not the served path. mapper.go==fetchers.go equivalence is dev-ASSERTED, not test-proven. Served-path coverage + dedup complete ONLY after FACTORY-STOCK-extract-vndirect-mapper rewires fetchers.go->mapper.go (must golden-diff equivalence first).",
+        "review_note_by": "dev-team",
+        "review_note_at": "2026-07-24T12:55:51Z",
+        "secondary_claimed_at": "2026-08-06T20:53:51Z",
+        "secondary_claimed_by": "dev-team (review-lane secondary-drain)",
+        "secondary_dispatch_target": "po",
+        "updated_by": "po (review-lane secondary-drain triage)",
+        "verified_at": "2026-08-06T20:59:20Z",
+        "verified_by": "po",
+        "related": [
+          "FACTORY-STOCK-extract-vndirect-mapper",
+          "FIX-STOCK-PRICE-VNDIRECT-DSI-INV-1-NULL-CHANGE-SERVED-AS-ZERO"
+        ],
+        "verified_note": "[PO] Sign-off 2026-08-06T20:59Z (direct-commit verify, ruling docs/agent-memory/decisions/ruling-20260806T2059Z-vndirect-mapper-tests-po.md). SCOPED DoD MET, RAW-re-derived not banked from the self-report: commit 49bc309a3 ancestor-confirmed on HEAD; tree clean under apps/stock-price/; re-ran `go test ./pkg/primitive/vndirect-quote-mapper/... -count=1` myself -> ok, 13/13 subtests, and every DoD case-class present BY NAME (scale HOSE/HNX/UPCOM, no-scale INDEX x2 + non-VN floor, empty->nil-not-error, malformed x2, null/partial-null/omitted -> nil, zero-change NOT nil). CAVEAT CONFIRMED: grep for MapPayload|MapItem across apps/stock-price returns hits ONLY inside the primitive package -- zero consumers; fetchers.go still carries the inline *1000 twice (Tier1 :106, Tier2 :210). Served path remains uncovered and duplicated. NEW -- EQUIVALENCE IS DISPROVEN, NOT MERELY UNPROVEN (this inverts part of the closeout caveat): mapper.go != fetchers.go. fetchers.go's inline payload struct declares Change/PctChange as NON-pointer float64 (:78-79 Tier1, :182-183 Tier2); JSON null into a non-pointer float is a documented encoding/json no-op, so the field keeps zero, and `change := item.Change; ... Change: &change` takes the address of a local -> STRUCTURALLY NEVER NIL. mapper.go (:30-31) declares them *float64. Measured both shapes on identical input: `\"change\":null` -> SERVED &0 vs PRIMITIVE nil (DIVERGE); field omitted -> &0 vs nil (DIVERGE); `\"change\":0` -> &0 vs &0 (agree). CONSEQUENCE, AND IT IS FAVOURABLE TO THE DEV: the tests do NOT enshrine the copy's arbitrary behaviour -- they encode the DOCUMENTED contract (pkg/domain/models.go:22-23, `Change *float64 // nil = unavailable, 0 = genuine flat day`, invariant DSI-INV-1). The primitive is RIGHT; the SERVED path is WRONG and violates DSI-INV-1 in production today. WHY DONE_VERIFIED RATHER THAN HOLD: orchStateSchema.ts §13 records deps_satisfied() requires ALL deps DONE_VERIFIED fail-CLOSED, and FACTORY-STOCK-extract-vndirect-mapper (P1) depends_on THIS row -- holding it in review[] is exactly what kept that P1 structurally un-dispatchable for 13 days, i.e. blocking the fix for the duplication this caveat complains about. FOLLOW-UPS LANDED THIS TICK: (a) paired task's dispatch_precondition REWRITTEN in backlog-detail.json -- its old text ordered a golden-diff proving mapper.go==fetchers.go EXACTLY, which will now fail and would most likely be 'resolved' by reverting the primitive to the buggy non-pointer shape (enshrining the DSI-INV-1 violation and breaking 3 of the 13 green tests); (b) minted FIX-STOCK-PRICE-VNDIRECT-DSI-INV-1-NULL-CHANGE-SERVED-AS-ZERO (P1, backlog) for the served-path defect, which exists independently of whether the FACTORY refactor ever runs. DEPLOY GATE: none -- mapper.go has zero importers so it is linked into no binary; rebuild_required:false is correct here. VERDICT: APPROVED / DONE_VERIFIED."
       }
     ],
     "head": {
@@ -16602,29 +16659,6 @@
         "rebuild_required": true,
         "status_note": "PO triage 2026-08-06: code work ACCEPTED — independently re-verified, not taken on self-report: commit 9fad8d4ad IS an ancestor of HEAD; capability_manifest.go 104L / capability_probe.go 130L / capability_prober.go 191L match claimed sizes; `go build ./...` + `go vet ./...` in apps/api-gateway exit 0 at current HEAD; decision journal present. NOT signed DONE_VERIFIED: docker-deployment-runbook.md § Microservice Code-Change Close Gate Step 6 forbids PO marking DONE until Steps 1-5 pass, and they have not — running image vn-market-intelligence-mcp-api-gateway:latest was built 2026-07-15 17:05 CEST, the commit is 2026-07-24 14:24 CEST, so the split code is NOT in the live container. Root cause of the 13-day strand: next_agent was null, so no lane owned the row. ACTION FOR OPS: single-service rebuild only — `docker compose build --build-arg GIT_SHA=\"$(git rev-parse HEAD)\" api-gateway && docker compose up -d --no-deps api-gateway && bash scripts/verify-deploy-sha.sh api-gateway` (MUST exit 0). NEVER down/stop/kill/rm/--force-recreate — peer-killing. Then hand to qa via `scripts/ops-closegate-handoff.jq` with from_lane=review. NOTE: this one rebuild also ships 3 peer api-gateway commits undeployed since 2026-07-15 (251cda70e, 868bf8d1d, b184dde9f) — see zone-wide finding on FACTORY-APIGW-dedup-default-urls and FACTORY-APIGW-split-sandbox.",
         "deploy_gate_discriminator": "REAL gate, NOT the phantom class. Do not over-generalise the FACTORY-APIGW-split-sandbox finding (PO 2026-08-06T20:33Z: rebuild_required was phantom there because apps/api-gateway/Dockerfile:12 builds `-o gateway ./cmd/server/` only and cmd/sandbox never enters the image). Discriminator run RAW here: `go list -deps ./cmd/server/` DOES return pkg/infrastructure, which is the package holding capability_manifest.go/capability_probe.go/capability_prober.go. This code therefore IS compiled into the shipped gateway binary, and the strings.HasPrefix SSE content-type hardening is a real behaviour change that is NOT running in the live container. Rebuild is required for real."
-      },
-      {
-        "title": "Backfill Tier1/Tier2 VnDirect mapper unit tests (guards the dedup)",
-        "priority": "P2",
-        "zone": "stock-price",
-        "type": "FACTORY",
-        "status": "REVIEW",
-        "id": "FACTORY-STOCK-vndirect-mapper-tests",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-STOCK-vndirect-mapper-tests",
-        "promoted_at": "2026-07-24T12:44:38Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
-        "updated_at": "2026-08-06T20:53:51Z",
-        "claimed_at": "2026-07-24T12:44:38Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)",
-        "completed_at": "2026-07-24T12:50:34Z",
-        "completed_by": "dev-stock-price",
-        "review_note": "CLOSEOUT CAVEAT (dispatcher): literal DoD met — mapper_test.go 13/13 green (indep re-verified). BUT scope front-loaded: dev created a NEW primitive apps/stock-price/pkg/primitive/vndirect-quote-mapper/mapper.go (MapPayload/MapItem) — that is the paired FACTORY-STOCK-extract-vndirect-mapper deliverable, not this test-only task. fetchers.go is NOT rewired: its inline *1000/floor mapping still serves the live Price and remains UNTESTED; mapping logic is now DUPLICATED (mapper.go copy vs fetchers.go inline). Tests guard the COPY, not the served path. mapper.go==fetchers.go equivalence is dev-ASSERTED, not test-proven. Served-path coverage + dedup complete ONLY after FACTORY-STOCK-extract-vndirect-mapper rewires fetchers.go->mapper.go (must golden-diff equivalence first).",
-        "review_note_by": "dev-team",
-        "review_note_at": "2026-07-24T12:55:51Z",
-        "secondary_claimed_at": "2026-08-06T20:53:51Z",
-        "secondary_claimed_by": "dev-team (review-lane secondary-drain)",
-        "secondary_dispatch_target": "po"
       },
       {
         "title": "Collapse triple-declared severity/channel constants (Fence-aware)",
