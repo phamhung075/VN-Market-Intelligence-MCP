@@ -4,5 +4,11 @@
   "type": "bug-escalation",
   "payload": "[ba] notebook-auto-prune.sh over-drop bug, reproduced 2x live on docs/agent-memory/notebooks/ba.md during TE-T05 cycle. 3 dated sections (TE-T05, UC-CRITIC-HOOKS-ENFORCEMENT, FIX-VNINDEX-CROSS-PLANE-PLAUSIBILITY-GATE) is AC-2-compliant (<=3 cap, no prune warranted), but the file also carries 2 non-dated ROLLING headings (Archive, Known patterns / preferences) = 5 total '## ' headings. PostToolUse hook dropped the oldest DATED section (FIX-VNINDEX-CROSS-PLANE-PLAUSIBILITY-GATE) from the working tree anyway, twice in a row (once after an Edit, once after a full recompose Write) -- suspect the hook counts ALL '## ' headings toward its 3-section cap instead of scoping to dated headings only per notebook-write/SKILL.md AC-2a. No data lost this time (content recovered from git HEAD, commits 8732d0854 and 2b55a01b1, and re-documented in the notebook's own Known-patterns section) but this will recur fleet-wide on any agent notebook that has both 3 dated sections AND the common Archive/Known-patterns rolling-heading convention. Could not send via send_telegram -- mcp__gateway__call_tool categorically absent from this BA subagent's tool binding this session (GATEWAY-BLIND class, matches feedback_local_cowork_subagents_gateway_blind.md, apparently also live for dev-team BA subagents not just cowork). Not fixed by BA -- script/infra fix, outside BA's no_coding/not-my-job boundary. Root file likely scripts/agents-flow/notebook-auto-prune.sh.",
   "priority": "medium",
-  "createdAt": "2026-08-06T18:53:30Z"
+  "createdAt": "2026-08-06T18:53:30Z",
+  "_processed": {
+    "fingerprint": "2d08d84652bc2f4016b3846e7cf44e8933aff24feab111a9ecb2557221c6b168",
+    "processedAt": "2026-08-06T19:29:02Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
 }
