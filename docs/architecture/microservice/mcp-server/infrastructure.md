@@ -512,6 +512,30 @@ confirmed byte-identical.
   Returns the exact `ClaimToolMap` type domain's `claimCandidateScanner.ts` consumes with
   zero transformation (verified in `CCATO-MCP-T2-CLAIM-MAP-LOADER.test.ts`).
 
+## Signal Writers (`infrastructure/signals/`)
+- `improvementSignalWriter.ts` — writes `docs/improvement-proposals/{id}.md` DRAFT docs +
+  appends an `improvement_proposal` row to `.signal_queue.rows[]` via `appendSignalQueueRow()`
+  (system-auditor caller).
+- `narrativeContradictionSignalWriter.ts` (CCATO-MCP-T4-SIGNAL-WRITER) —
+  `writeNarrativeContradictionSignals(findings[], agentId, orchStatePath?, now?)` appends one
+  `narrative_contradiction` row per FAIL finding to `.signal_queue.rows[]`, byte-faithful to
+  `scripts/narrative-truth-gate.sh`'s FAIL-path signal-emit block (script L417-437's row dict).
+  Server-side write is structurally required (`.claude/skills/cowork-boundary/SKILL.md` forbids
+  cowork agents from writing `orch-state.json` themselves) — thin wrapper over
+  `appendSignalQueueRow()`/`writeOrchStateAtomic()`, zero bespoke fs I/O. Deviation flagged: the
+  base `OrchStateSignalRow` TS type only declares `payload_ref: string|null` (a file-reference
+  convention); the bash engine's row carries an object-shaped `payload` instead. Extended the
+  interface (`NarrativeContradictionSignalRow extends OrchStateSignalRow { payload: {...} }`,
+  `payload_ref: null` to satisfy the base required field) rather than modifying
+  `orchStateStore.ts` (out of this task's file list) — `SignalRowSchema` is `.passthrough()` so
+  the extra `payload` key validates cleanly (confirmed via `OrchStateSchema.safeParse` in tests).
+  `.signal_queue._updated_by` is set to the fixed writer identity `SIGNAL_WRITER_ID =
+  "narrative-truth-gate"` (byte-faithful to script L445's `--arg who "narrative-truth-gate"`) —
+  NOT the calling agent's id, which only appears in the row's own `from`/`payload.agent_id`.
+  Types split to sibling `narrativeContradictionSignalTypes.ts` (size-lint <=120L, same
+  new-file-prefers-split precedent T1/T2 established this sprint). Consumed by
+  `application/usecases/runNarrativeTruthGate.ts` (CCATO-MCP-T5, not yet landed).
+
 ## Key Infrastructure Patterns
 - **`initDatabase()` identity-keyed init guard (FIX-MCP-MEMORY-CODE-LEAK, 2026-08-05):**
   `infrastructure/db/schema.ts:156` memoizes on a module-level `WeakSet<Database>`

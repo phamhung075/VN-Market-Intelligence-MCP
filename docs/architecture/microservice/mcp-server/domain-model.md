@@ -121,9 +121,12 @@ Input SSOT (loaded by the caller, not this layer): `docs/data/claim-tool-map.jso
 `claimCandidateScanner.ts` (re-exported from `claimToolMapTypes.ts`). SSOT loader landed:
 `infrastructure/fileStore/claimToolMapLoader.ts`'s `loadClaimToolMap()` — see
 `docs/architecture/microservice/mcp-server/infrastructure.md` § File Store Readers
-(CCATO-MCP-T2-CLAIM-MAP-LOADER). Live re-probe adapters, signal-emit writer, use-case
-orchestration, and MCP tool registration are separate, not-yet-landed sub-tasks
-(CCATO-MCP-T3..T8) of the same sprint (`SPRINT-CCATO-TRUTHGATE-MCP-NATIVE`).
+(CCATO-MCP-T2-CLAIM-MAP-LOADER). Signal-emit writer also landed:
+`infrastructure/signals/narrativeContradictionSignalWriter.ts` — see
+`docs/architecture/microservice/mcp-server/infrastructure.md` § Signal Writers
+(CCATO-MCP-T4-SIGNAL-WRITER). Live re-probe adapters, use-case orchestration, and MCP tool
+registration are separate, not-yet-landed sub-tasks (CCATO-MCP-T3, T5-T8) of the same sprint
+(`SPRINT-CCATO-TRUTHGATE-MCP-NATIVE`).
 
 ## Repository Interfaces
 - `IWatchlistRepository`, `IMarketPriceRepository`
