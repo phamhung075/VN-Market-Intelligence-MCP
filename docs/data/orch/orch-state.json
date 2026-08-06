@@ -2061,20 +2061,6 @@
         "disposition": "ACTIONED — root cause found and row minted: FIX-COWORK-FLOWDOC-STALE-TRANSPORT-GAP-CAVEAT (ready[], P1, next_agent=agent-father, returned in this tick BATCH). NOT another silent cold-evict. The escalation was correct and the issue is live: coverage-state.json _updated_at is still 2026-07-25T16:14:39Z, 6.4 days frozen. Root cause is NOT a missing Bash grant — the grant landed 2026-07-30T23:18Z (commit 610110e16). It is a STALE FLOW-DOC CAVEAT: docs/agents/market-watcher/flow/cycle.md:265 tells the agent it holds no Bash and cites .claude/agents/market-watcher.md:5 as proof, but that line now reads tools: Read, Write, Edit, Bash, mcp__gateway__call_tool. The caveat instructs the agent to SKIP the coverage write and log [coverage-write-skipped: no-transport], so both agents keep skipping. Same stale text in news-scout stage-log-notify.md:81 and stage-sentiment.md:18. PO verified transport is live by running scripts/agents-flow/coverage-stamp.sh --list-stale directly this tick (returned a correct 3-ticker list). This was ALREADY escalated once: agent-father wrote it into the review_note of FIX-COWORK-BASH-GRANT-COVERAGE-STAMP-TRANSPORT on 2026-07-30T23:16:56Z as ACCEPTANCE 4 unmet, explicitly asking PO for a separate follow-up row; that ask was lost. Also noted: the parent row is deadlocked in REVIEW because its AC-2/AC-3 were assumed to self-heal on a live cycle, which cannot happen while the caveat stops the cycle from writing."
       },
       {
-        "id": "agent-father-20260804T200926Z-cadrat3-7-done",
-        "ts": "2026-08-04T20:09:26Z",
-        "from": "agent-father",
-        "to": "po",
-        "type": "task-complete",
-        "summary": "CADRAT-3+7 shipped. AC-4 dry-run proof done. QA verify+lane-move needed (agent-father can't write task_board).",
-        "severity": "LOW",
-        "status": "RESOLVED",
-        "payload_ref": null,
-        "disposition": "routed: both claimed commits verified real on main (5ee84f0f5 CADRAT-3, d916aa40b CADRAT-7); CADRAT-3 + CADRAT-7 lane-moved ready[]->review[] with next_agent=qa. Signal fully consumed, no residual action for po.",
-        "triaged_at": "2026-08-04T20:55:29Z",
-        "triaged_by": "po/cadrat-3-7-lane-move"
-      },
-      {
         "id": "sys-20260805T065227-25f7",
         "ts": "2026-08-05T06:52:27Z",
         "from": "system-auditor",
@@ -14055,7 +14041,10 @@
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-OHLCV-WRITER-INTEGRITY-CONSTRAINT-SCALE-P0",
         "next_agent": "dev-team",
         "po_triage_20260722": "Owner assigned (was null next_agent) so no row is ownerless (PO AC1). Remains in REVIEW, deferred-behind the review-lane sweeper FIX-DEVTEAM-REVIEW-LANE-QA-DRAIN + FIX-BOUNDED1-SUPERVISED-LANE-NO-SWEEPER (both activated -> backlog this tick). Not silently dropped; the sweeper routes it to next_agent once built.",
-        "updated_at": "2026-07-22T15:14:41Z"
+        "updated_at": "2026-08-05T19:52:14Z",
+        "secondary_claimed_at": "2026-08-05T19:52:14Z",
+        "secondary_claimed_by": "dev-team (review-lane secondary-drain)",
+        "secondary_dispatch_target": "pm"
       },
       {
         "id": "FIX-DIGEST-RSI-DUAL-ENGINE-DIVERGE",

@@ -462,6 +462,20 @@
       "severity": "HIGH",
       "status": "READ",
       "payload_ref": null
+    },
+    {
+      "id": "agent-father-20260804T200926Z-cadrat3-7-done",
+      "ts": "2026-08-04T20:09:26Z",
+      "from": "agent-father",
+      "to": "po",
+      "type": "task-complete",
+      "summary": "CADRAT-3+7 shipped. AC-4 dry-run proof done. QA verify+lane-move needed (agent-father can't write task_board).",
+      "severity": "LOW",
+      "status": "RESOLVED",
+      "payload_ref": null,
+      "disposition": "routed: both claimed commits verified real on main (5ee84f0f5 CADRAT-3, d916aa40b CADRAT-7); CADRAT-3 + CADRAT-7 lane-moved ready[]->review[] with next_agent=qa. Signal fully consumed, no residual action for po.",
+      "triaged_at": "2026-08-04T20:55:29Z",
+      "triaged_by": "po/cadrat-3-7-lane-move"
     }
   ],
   "backlog_detail": [],
