@@ -190,4 +190,6 @@
 **why-change:** none — verified exactly what the row scoped.
 
 ### CAP-REACHED · 2026-08-06T20:16:27Z
-(byte-axis: 37233B > 36000B cap, line-axis 190L under 600L cap — dual-axis Cap Check, FIX-DECISION-JOURNAL-SKILL-CAPCHECK-LINE-ONLY-NO-BYTE-ROLLOVER. Rolling to sprint-COWORK-GUARANTEED-SLOT-CATCHUP-qa-4.md.)
+(byte-axis: 37233B > 36000B cap, line-axis 190L under 600L cap — dual-axis Cap Check, FIX-DECISION-JOURNAL-SKILL-CAPCHECK-LINE-ONLY-NO-BYTE-ROLLOVER. Rolling to sprint-COWORK-GUARANTEED-SLOT-CATCHUP-qa-4.md. send_telegram(bug) attempted, failed: "No such tool available: mcp__gateway__call_tool" — no gateway/MCP tool grant this qa sub-session, Read/Edit/Write/Bash only, same constraint as qa-2's own CAP-REACHED sentinel.)
+
+### CAP-REACHED · 2026-08-06T20:18:18Z
