@@ -11991,31 +11991,6 @@
         "verification_gate": "New test in apps/mcp-server/src/__tests__/ covering (a) movers=[] renders the unavailable line, (b) franceSummaryJob path renders it too, (c) a normal nonempty set is byte-unchanged. Existing 1783-foreign-flow-bulletin.test.ts and FIX-DIGEST-FOREIGN-FLOW-ZERO-PAD-TOPN.test.ts MUST stay green (both assert the current copy) — if either must change, that is a copy-SSOT decision, escalate to PO first. Full CI green on the pushed SHA, not subset-verify.",
         "po_provenance": "[po 2026-08-06T08:52Z] Minted from the RESIDUAL PO-flag left inside FIX-FOREIGN-FLOW-BULLETIN-UNAVAIL-STRING's router_note when that row was signed off DONE_VERIFIED this tick. Not a re-open of the CI-red row (that fix is verified landed); this is the product-judgment remainder the note explicitly deferred to PO. Cross-link, do NOT merge: FIX-FOREIGN-FLOW-COVERAGE (review, ops) widens WHICH codes are fetched; FFLOW-STALE-0723-B-RECHECK-HARNESS (review, qa) detects staleness OUTSIDE the bulletin. This row is only about what the bulletin TELLS THE READER when the data is not there.",
         "updated_at": "2026-08-06T08:54:34Z"
-      },
-      {
-        "id": "CLEAN-SKILL-BLOAT-CRON-STANDALONE-REGISTER",
-        "type": "CLEAN",
-        "status": "BACKLOG",
-        "priority": "P3",
-        "size": "S",
-        "zone": ".claude/skills/",
-        "owner": "claude-manager-helper",
-        "next_agent": "claude-manager-helper",
-        "baseline_pass": "bash scripts/agents-flow/context-bloat-backstop.sh emits no breach for this path",
-        "files": [
-          ".claude/skills/cron-standalone-team/register.md"
-        ],
-        "title": "context-bloat (skill-file class): .claude/skills/cron-standalone-team/register.md 462L vs cap 200 (overage 254) AND 34906B vs cap 12000 (overage 22194) - byte half is NON-JUSTIFIABLE by design, so a size-justification header cannot silence this one",
-        "created_at": "2026-08-06T08:58:01Z",
-        "created_by": "po/triage-20260806T0849Z",
-        "updated_at": "2026-08-06T08:58:59Z",
-        "updated_by": "po",
-        "status_note": "SOURCE: docs/signals/processed/context-bloat--claude-skills-cron-standalone-team-register-md-2026-08-06T082429Z.json (first and only emission for this path - no dedup history).\n\nWHY A HEADER WILL NOT WORK (checked the hook source, not the row title): scripts/agents-flow/context-bloat-backstop.sh DOES honour `<!-- size-justification: -->`, but its own TE-T24 note at :167-169 restricts that to the LINE predicate only - deliberately, so a file cannot paste a header and keep evading governance under the byte cap. This breach fires on BOTH predicates (reason: line-cap,byte-cap). The byte overage is 2.9x the cap. Therefore prune/split is the ONLY disposition; do not close this by adding a header. (Corollary: the open row FIX-BLOAT-HOOK-JUSTIFY-SUPPRESS, BACKLOG/low, describes behaviour that is already partly implemented - re-scope or close it, do not implement it as written.)\n\nSUGGESTED REMEDY - SPLIT, NOT TRIM. The file's own header says it is loaded from SKILL.md Step 1 'ONLY when at least one of the 5 entries is missing'. Today one missing entry forces a load of all five (~8.7k tokens). Splitting into five per-cron register fragments makes the lazy-load actually lazy - you load the one you need - and each fragment lands comfortably under both caps without deleting any content. A flat trim would have to delete real command bodies to hit 200L.\n\nPAIRING: same skill-file class as CLEAN-SKILL-BLOAT-TASK-LOCK (backlog/P3, 204L, overage 4). That row has not shipped; magnitudes differ by ~60x, so they are NOT merged, but whoever drains one should drain both.\n\nAC: context-bloat-backstop.sh emits no breach for this path on either predicate; SKILL.md Step 1 still resolves every one of the 5 entries; no register content deleted (moved only).",
-        "related": [
-          "CLEAN-SKILL-BLOAT-TASK-LOCK",
-          "FIX-BLOAT-HOOK-JUSTIFY-SUPPRESS",
-          "TE-T24"
-        ]
       }
     ],
     "closed_sprints": [
@@ -12884,6 +12859,31 @@
         "closed_at": "2026-07-30T09:05:59Z",
         "po_closure_20260730": "CLOSED by po 2026-07-30. All ACs RAW-verified at source, not from the row prose: AC(1) all 4 skill sites now carry explicit pathspecs (session-log-cowork:28, append-session-record:15, signal-dashboard/dashboard-protocol:127 inline `-- <path>`; decision-journal:76-77 pathspec on the continuation line). AC(2) all 3 init.md commit_discipline lines now read 'RULE 1-3 (incl. 2.5)' (pm:85, agents-architect:58, agent-father:61). Commit aa6c044ba confirmed in git log. THIS ROW IS DONE. IT DOES NOT CLOSE ITS PARENT — see parent's po_rescope_20260730.",
         "po_status_token_correction_20260730T2148": "STATUS TOKEN DONE -> DONE_VERIFIED. Not new work and not a fresh verification: this row was already closed by PO at 2026-07-30T09:05:59Z with every AC RAW-verified AT SOURCE and recorded file:line-precise in its own po_closure_20260730 field (4 skill sites carrying explicit pathspecs; 3 init.md commit_discipline lines reading 'RULE 1-3 (incl. 2.5)'; commit aa6c044ba confirmed in git log). PO re-read that field at source this tick before stamping. The ONLY thing that was wrong was the token: scripts/lib/devteam-eligibility.jq deps_satisfied() requires EVERY dep to resolve to the exact string DONE_VERIFIED and states verbatim 'plain DONE is NOT sufficient', so a PO-verified closure recorded as DONE starves every successor forever. MEASURED CONSEQUENCE of this one token, live this tick: FIX-COMMIT-SWEEP-GUARD-SCRIPT-ACTUATOR-AND-NOTEBOOK-LONGTAIL (P0) returned is_bounded1_eligible=false with deps_satisfied=false as its SOLE failing predicate (supervised/epic_wrapper/detail_deferred/nondev_owner/plan_only/nondev_next_agent/unbacked_prose ALL passed) - and that P0 is the sole unblock condition of the 5x-recurring P0 parent. Predicate must return true after this flip. The systemic gap (nothing ever PRODUCES this token) is minted separately as FIX-DONELANE-NO-DONEVERIFIED-PRODUCER-DEP-STARVATION - this flip fixes one row, not the class."
+      },
+      {
+        "id": "CLEAN-SKILL-BLOAT-CRON-STANDALONE-REGISTER",
+        "type": "CLEAN",
+        "status": "DONE",
+        "priority": "P3",
+        "size": "S",
+        "zone": ".claude/skills/",
+        "owner": "claude-manager-helper",
+        "next_agent": "claude-manager-helper",
+        "baseline_pass": "bash scripts/agents-flow/context-bloat-backstop.sh emits no breach for this path",
+        "files": [
+          ".claude/skills/cron-standalone-team/register.md"
+        ],
+        "title": "context-bloat (skill-file class): .claude/skills/cron-standalone-team/register.md 462L vs cap 200 (overage 254) AND 34906B vs cap 12000 (overage 22194) - byte half is NON-JUSTIFIABLE by design, so a size-justification header cannot silence this one",
+        "created_at": "2026-08-06T08:58:01Z",
+        "created_by": "po/triage-20260806T0849Z",
+        "updated_at": "2026-08-06T09:11:25Z",
+        "updated_by": "claude-manager-helper",
+        "status_note": "SOURCE: docs/signals/processed/context-bloat--claude-skills-cron-standalone-team-register-md-2026-08-06T082429Z.json (first and only emission for this path - no dedup history).\n\nWHY A HEADER WILL NOT WORK (checked the hook source, not the row title): scripts/agents-flow/context-bloat-backstop.sh DOES honour `<!-- size-justification: -->`, but its own TE-T24 note at :167-169 restricts that to the LINE predicate only - deliberately, so a file cannot paste a header and keep evading governance under the byte cap. This breach fires on BOTH predicates (reason: line-cap,byte-cap). The byte overage is 2.9x the cap. Therefore prune/split is the ONLY disposition; do not close this by adding a header. (Corollary: the open row FIX-BLOAT-HOOK-JUSTIFY-SUPPRESS, BACKLOG/low, describes behaviour that is already partly implemented - re-scope or close it, do not implement it as written.)\n\nSUGGESTED REMEDY - SPLIT, NOT TRIM. The file's own header says it is loaded from SKILL.md Step 1 'ONLY when at least one of the 5 entries is missing'. Today one missing entry forces a load of all five (~8.7k tokens). Splitting into five per-cron register fragments makes the lazy-load actually lazy - you load the one you need - and each fragment lands comfortably under both caps without deleting any content. A flat trim would have to delete real command bodies to hit 200L.\n\nPAIRING: same skill-file class as CLEAN-SKILL-BLOAT-TASK-LOCK (backlog/P3, 204L, overage 4). That row has not shipped; magnitudes differ by ~60x, so they are NOT merged, but whoever drains one should drain both.\n\nAC: context-bloat-backstop.sh emits no breach for this path on either predicate; SKILL.md Step 1 still resolves every one of the 5 entries; no register content deleted (moved only).",
+        "related": [
+          "CLEAN-SKILL-BLOAT-TASK-LOCK",
+          "FIX-BLOAT-HOOK-JUSTIFY-SUPPRESS",
+          "TE-T24"
+        ]
       }
     ],
     "done_verified": [
