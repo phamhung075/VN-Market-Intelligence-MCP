@@ -88,11 +88,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "updated_at": "2026-08-06T13:02:51Z",
-    "updated_by": "developer",
-    "active_task_id": null,
-    "next_agent": "router"
+    "status": "in_progress",
+    "active_task_id": "FIX-MARKETWATCHER-EODMD-STALE-NOBASH-CAVEAT-SKIPS-COMMIT-LOSES-NOTEBOOK",
+    "next_agent": "developer",
+    "next_action": "BOUNDED-1 auto-pickup claim of FIX-MARKETWATCHER-EODMD-STALE-NOBASH-CAVEAT-SKIPS-COMMIT-LOSES-NOTEBOOK — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
+    "updated_at": "2026-08-06T13:23:27Z",
+    "updated_by": "dev-team (bounded-1 auto-pickup)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -11695,44 +11696,6 @@
         "updated_at": "2026-08-05T19:45:38Z"
       },
       {
-        "id": "FIX-NOTEBOOK-COMPOSE-SCRIPT-ACTUATOR",
-        "type": "FIX",
-        "title": "notebook compose has no mechanical actuator — retention/prune arithmetic runs inside an LLM-narrated flow step and silently orphans section bodies",
-        "zone": "cross-service/",
-        "priority": "P1",
-        "status": "BACKLOG",
-        "size": "M",
-        "next_agent": "developer",
-        "supervised": false,
-        "plan_only": false,
-        "baseline_pass": true,
-        "recurring_bug_escalation": true,
-        "prior_warns": 7,
-        "source": "agent-father partial-implementation handoff docs/signals/processed/2026-08-06-fix-system-auditor-notebook-compose-actuator-handoff.json (Fix A primary + Fix D(b)); brief docs/architecture-briefs/2026-08-06-fix-system-auditor-notebook-compose-actuator-and-immutability-blindspot.md",
-        "created_at": "2026-08-06T07:23:23Z",
-        "created_by": "po",
-        "root_cause": "Brief Finding 1: the notebook compose step is unreliable-by-construction — the model itself parses '## ' boundaries, decides which sections to drop, and issues the write. There is no deterministic actuator, so a heading can vanish while its body stays (commit 0fcc6a5d2: file went 80->81L while a heading disappeared). agent-father landed the in-zone half (Fix E Write-only spec collapse; Fix A interim Step 2a revert-gate in docs/agents/system-auditor/flow/main.md; Fix D documented-policy). scripts/ is outside agent-father's commit_zone (precedent c72b5ca34) so the primary actuator was never authored.",
-        "evidence": "PO verified this tick: brief exists (14073 bytes, docs/architecture-briefs/2026-08-06-fix-system-auditor-notebook-compose-actuator-and-immutability-blindspot.md); handoff signal payload names exactly 3 out-of-zone asks. Independent live corroboration: commit-sweep-guard fired [notebook-immutability-guard] WARN on docs/agent-memory/notebooks/system-auditor.md section '## c45 - 2026-08-06T06:41:47Z' at 2026-08-06T06:57:21Z (signal commit-sweep-guard-2026-08-06T065721Z-69006.json), a 2nd fire on the SAME agent's notebook after the 2026-08-05 fire that created the guard's own triage rule.",
-        "files": [
-          "scripts/notebook-compose.sh",
-          "scripts/agents-flow/notebook-auto-prune.sh",
-          "scripts/auditor-notebook-commit.sh",
-          "docs/data/notebook-section-order.json"
-        ],
-        "ac": [
-          "AC-1 New scripts/notebook-compose.sh <notebook-path> <new-section-body-file> [max-sections=3] [section-cap=60], mirroring scripts/auditor-notebook-commit.sh's precedent EXACTLY (same header-comment style, same 'model calls ONE script, branches on stdout marker' contract).",
-          "AC-2 Takes ONLY the already-authored new-section text. Mechanically reads the file, parses '## ' boundaries, derives the newest-first/oldest-first convention by REUSING the self-deriving-from-headings + docs/data/notebook-section-order.json tie-break logic already in scripts/agents-flow/notebook-auto-prune.sh — do NOT reimplement a second divergent copy.",
-          "AC-3 Enforces 3-section retention steady state + AC-2b sub-block intra-prune + 60L/200L caps. ONE settled write via mktemp+mv — never a Claude Write/Edit tool call.",
-          "AC-4 Negative control: replay the 0fcc6a5d2 shape (PRE_COUNT too low to require any drop, heading vanishes anyway, file grows 80->81L) through the script and assert it is structurally unreachable, not merely warned about.",
-          "AC-5 Marker contract documented in the script header so agent-father can rewire docs/agents/system-auditor/flow/main.md Step 1/2/2a (all three, including agent-father's own interim Step 2a gate which this script supersedes) to one invocation + marker branch. That rewire is agent-father's follow-up, NOT this task.",
-          "AC-6 RECURRING-BUG ESCALATION (satisfies brief Fix D(b)): prior_warns=7 already crossed the fleet 2+ threshold per feedback_recurring_bug_escalation.md, independently of this brief. Freeze further per-occurrence notebook patches until this actuator lands."
-        ],
-        "related": [
-          "FIX-NOTEBOOK-IMMUTABILITY-ORPHANED-BODY-CHECK"
-        ],
-        "updated_at": "2026-08-06T07:23:23Z"
-      },
-      {
         "id": "FIX-NOTEBOOK-IMMUTABILITY-ORPHANED-BODY-CHECK",
         "type": "FIX",
         "title": "pre-commit _check_notebook_immutability treats any HEAD-present/staged-absent heading as an authorized whole-section drop with zero corroboration",
@@ -14901,29 +14864,6 @@
         "architect_review_note": "2026-08-06T10:49Z architect (plan_only brief per PO explicit ask -- adjudicate a/b/c, no code shipped). Brief: docs/architecture-briefs/2026-08-06-guard-notebook-concurrent-write-mutex.md. DECISIVE EVIDENCE READ RAW (not POs summary): 11 notebook-direction-defaulted signals on qa.md (10:00:46Z-10:08:36Z) show a non-monotone retained-section set AND 3 simultaneous duplicate ## cycle-504 headings with different content -- proves concurrent lost-update + stale c<NNN> counter allocation, not a pruning-order bug. Ruled out the suspected 3rd-writer formatter hook: context-bloat-backstop.sh read in full, only ever writes its OWN signal file, never the notebook -- confirmed no 3rd mutator exists (only the writing agent Write/Edit + notebook-auto-prune.sh PostToolUse hook touch notebook content). ADJUDICATION: (b) append-only cannot work standalone (AC-2 retention/AC-5 cap both require removing content, no true append primitive exists on native Write/Edit); (c) fan-out cap alone independently disproven -- the ORIGINAL tran-ngoc-bau.md c113 incident was N=2 writers, no fan-out involved, so a lower cap only narrows frequency, never closes the class; (a) task_claim mutex is the right direction but NOT a drop-in -- task_kind is a closed 7-value Zod enum (coordinationTools.ts) with no fitting kind, needs an additive notebook-write value (companion dev-mcp-server row, blocking prereq). RECOMMENDATION: task_claim(task_kind=notebook-write) mutex bracketing ONLY the mechanical fresh-read-merge-write span (LLM authoring stays OUTSIDE the held window, explicit ttl_seconds=120 not the 3600s default -- avoids this repos own corroborated TTL-hazard lesson) as new SKILL.md AC-7; PostToolUse hook (cannot call task_claim, no MCP-from-bash bridge exists) hardened instead with a stat-based staleness recheck immediately before its own mv, deliberately NOT a new mkdir/flock lock file since docs/agent-memory is a named, still-unexcluded VirtioFS bind-mount race hazard per docs/protocols/head-lock-self-cure.md (H4, confirmed not hypothesized) -- reusing task_claims server-side SQLite lock state sidesteps that hazard entirely. Files split across 3 owner zones (mixed-zone flag for PM, same class already resolved for FIX-DEVTEAM-QADRAIN-THROUGHPUT-CAP): agent-father (.claude/skills/notebook-write/SKILL.md AC-7 + docs/agents/dev-team/flow/main.md 1-sentence note), developer (scripts/agents-flow/notebook-auto-prune.sh staleness guard), dev-mcp-server (task_kind enum +1, companion row, blocks agent-father row). Acceptance test extends the EXISTING apps/mcp-server/src/__tests__/task-lock-coordination-store.test.ts harness (new AC-12 describe block, N-concurrent-writer negative/positive control on a fixture notebook) rather than a new shell script -- satisfies this rows own verification_gate directly. Sequencing: dev-mcp-server row first (blocking), developer row independent/ships anytime, agent-father row last. Zone cross-service/. BUILD-STANDARD: not-applicable."
       },
       {
-        "id": "FIX-MARKETWATCHER-EODMD-STALE-NOBASH-CAVEAT-SKIPS-COMMIT-LOSES-NOTEBOOK",
-        "type": "FIX",
-        "title": "eod.md:78 still carries the pre-2026-07-31 no-Bash caveat that cycle.md already fixed -- market-watcher-eod skips its notebook commit every fire, loses the EOD cycle entry to the next same-agent overwrite, and strands news-scouts L-7-deferred commit",
-        "desc": "VERIFIED live 2026-08-05T16:00Z EOD fire (agent a0df2bd1afc971ce7). Chain: (1) .claude/agents/market-watcher.md granted Bash 2026-07-31 commit 610110e16b. (2) cycle.md carried an identical no-Bash transport-gap caveat and was fixed 2026-08-01 (FIX-COWORK-FLOWDOC-STALE-TRANSPORT-GAP-CAVEAT, see cycle.md own header comment) -- caveat demoted to a genuine invocation-error fallback only. (3) eod.md:78 was never touched by that fix -- still reads verbatim this agent holds no Bash and cannot run git add/git_commit_retry directly ... SKIP this step entirely. (4) Todays EOD fire followed eod.md literally: wrote all 4 ledger entries (analysis-briefs DGC/DPM/DBC/VNM) + docs/signals/price_anomaly_20260805T1605.json correctly (Steps A/B unaffected per the docs own text) but skipped Step D (notebook write/commit), citing the docs own stale line as its reason -- not a fabrication, a propagated stale doc. (5) DISPROOF same day, same batch: market-watcher-offhours fired 2 min later (a1f7356854a55a25f) and committed cleanly with Bash (09beb0997) -- direct proof the grant is live and eod.md is simply wrong. (6) Net effect: market-watcher.md notebook has NO Cycle (EOD) section anywhere post-16:06Z -- the EOD narrative was never durably captured, either never written or clobbered when the offhours slot did its own full-overwrite write+commit right after. (7) news-scout.md c233 entry was left dangling uncommitted -- its own flow (docs/agents/news-scout/flow/stage-log-notify.md:14, L-7) explicitly defers its git commit to market-watchers EOD batch commit at market close; that EOD-side half of the contract never fires while eod.md:78 stands. Router committed the stranded news-scout.md manually this cycle as a workaround; the underlying skip will repeat every weekday 16:00 UTC fire until eod.md is fixed.",
-        "ac": "1. Update docs/agents/market-watcher/flow/eod.md:78 to match cycle.mds already-fixed prose (Bash grant live since 2026-07-31 commit 610110e16b -- demote to a genuine invocation-error fallback, not an unconditional skip). 2. Separately decide and fix the lost-update exposure: the per-cycle full-overwrite notebook model has no protection when EOD and a same-agent sibling slot (e.g. offhours) both match in the same cowork-tick batch and fire minutes apart -- either preserve/merge the EOD section across the next overwrite, or serialize same-agent multi-slot fires so one cannot clobber the others uncommitted work. 3. Confirm news-scouts L-7 dependency (stage-log-notify.md:14) resumes working end-to-end on the next weekday EOD fire (its notebook commits without router intervention).",
-        "priority": "P1",
-        "size": "S",
-        "zone": "cross-service/",
-        "next_agent": "developer",
-        "status": "READY",
-        "created_at": "2026-08-05T16:10:00Z",
-        "created_by": "router",
-        "updated_at": "2026-08-06T12:27:24Z",
-        "updated_by": "router",
-        "related": [
-          "FIX-COWORK-BATCH-COVERAGESTATE-CONTENTION-CORRELATES-WITH-MISSED-NOTEBOOK-COMMIT"
-        ],
-        "not_duplicate_of": "FIX-COWORK-BATCH-COVERAGESTATE-CONTENTION-CORRELATES-WITH-MISSED-NOTEBOOK-COMMIT -- that row is a contention HYPOTHESIS on coverage-state:main mutex; this row is a DIRECTLY VERIFIED stale-doc root cause, distinct mechanism, same symptom family.",
-        "promoted_at": "2026-08-06T12:27:24Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)"
-      },
-      {
         "id": "FIX-DB-INTEGRITY-SIDECAR-NAMED-VOLUME-DRIFT",
         "type": "FIX",
         "title": "db-integrity observer tooling still mounts the named volume commit 5ba622eca retired on 2026-07-15 — counts helper returns null, probe fail-opens every tick",
@@ -14982,6 +14922,47 @@
           "FIX-MARKETDB-JOURNALMODE-GUARD-SHIPPED-BUT-NEVER-ARMED"
         ],
         "po_do_not_conflate": "This row is observer-tooling correctness. It is NOT the 2026-08-06 SQLITE_CORRUPT incident and must not be deduped into it (alert-commander already made that error once — see the incident doc's 'Critical Misattribution' section). The link is one-directional and mechanical: the corruption row creates the WAL windows in which THIS row's defect goes blind."
+      },
+      {
+        "id": "FIX-NOTEBOOK-COMPOSE-SCRIPT-ACTUATOR",
+        "type": "FIX",
+        "title": "notebook compose has no mechanical actuator — retention/prune arithmetic runs inside an LLM-narrated flow step and silently orphans section bodies",
+        "zone": "cross-service/",
+        "priority": "P1",
+        "status": "READY",
+        "size": "M",
+        "next_agent": "developer",
+        "supervised": false,
+        "plan_only": false,
+        "baseline_pass": true,
+        "recurring_bug_escalation": true,
+        "prior_warns": 7,
+        "source": "agent-father partial-implementation handoff docs/signals/processed/2026-08-06-fix-system-auditor-notebook-compose-actuator-handoff.json (Fix A primary + Fix D(b)); brief docs/architecture-briefs/2026-08-06-fix-system-auditor-notebook-compose-actuator-and-immutability-blindspot.md",
+        "created_at": "2026-08-06T07:23:23Z",
+        "created_by": "po",
+        "root_cause": "Brief Finding 1: the notebook compose step is unreliable-by-construction — the model itself parses '## ' boundaries, decides which sections to drop, and issues the write. There is no deterministic actuator, so a heading can vanish while its body stays (commit 0fcc6a5d2: file went 80->81L while a heading disappeared). agent-father landed the in-zone half (Fix E Write-only spec collapse; Fix A interim Step 2a revert-gate in docs/agents/system-auditor/flow/main.md; Fix D documented-policy). scripts/ is outside agent-father's commit_zone (precedent c72b5ca34) so the primary actuator was never authored.",
+        "evidence": "PO verified this tick: brief exists (14073 bytes, docs/architecture-briefs/2026-08-06-fix-system-auditor-notebook-compose-actuator-and-immutability-blindspot.md); handoff signal payload names exactly 3 out-of-zone asks. Independent live corroboration: commit-sweep-guard fired [notebook-immutability-guard] WARN on docs/agent-memory/notebooks/system-auditor.md section '## c45 - 2026-08-06T06:41:47Z' at 2026-08-06T06:57:21Z (signal commit-sweep-guard-2026-08-06T065721Z-69006.json), a 2nd fire on the SAME agent's notebook after the 2026-08-05 fire that created the guard's own triage rule.",
+        "files": [
+          "scripts/notebook-compose.sh",
+          "scripts/agents-flow/notebook-auto-prune.sh",
+          "scripts/auditor-notebook-commit.sh",
+          "docs/data/notebook-section-order.json"
+        ],
+        "ac": [
+          "AC-1 New scripts/notebook-compose.sh <notebook-path> <new-section-body-file> [max-sections=3] [section-cap=60], mirroring scripts/auditor-notebook-commit.sh's precedent EXACTLY (same header-comment style, same 'model calls ONE script, branches on stdout marker' contract).",
+          "AC-2 Takes ONLY the already-authored new-section text. Mechanically reads the file, parses '## ' boundaries, derives the newest-first/oldest-first convention by REUSING the self-deriving-from-headings + docs/data/notebook-section-order.json tie-break logic already in scripts/agents-flow/notebook-auto-prune.sh — do NOT reimplement a second divergent copy.",
+          "AC-3 Enforces 3-section retention steady state + AC-2b sub-block intra-prune + 60L/200L caps. ONE settled write via mktemp+mv — never a Claude Write/Edit tool call.",
+          "AC-4 Negative control: replay the 0fcc6a5d2 shape (PRE_COUNT too low to require any drop, heading vanishes anyway, file grows 80->81L) through the script and assert it is structurally unreachable, not merely warned about.",
+          "AC-5 Marker contract documented in the script header so agent-father can rewire docs/agents/system-auditor/flow/main.md Step 1/2/2a (all three, including agent-father's own interim Step 2a gate which this script supersedes) to one invocation + marker branch. That rewire is agent-father's follow-up, NOT this task.",
+          "AC-6 RECURRING-BUG ESCALATION (satisfies brief Fix D(b)): prior_warns=7 already crossed the fleet 2+ threshold per feedback_recurring_bug_escalation.md, independently of this brief. Freeze further per-occurrence notebook patches until this actuator lands."
+        ],
+        "related": [
+          "FIX-NOTEBOOK-IMMUTABILITY-ORPHANED-BODY-CHECK"
+        ],
+        "updated_at": "2026-08-06T13:23:22Z",
+        "promoted_at": "2026-08-06T13:23:21Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)"
       }
     ],
     "review": [
@@ -22484,9 +22465,35 @@
         }
       ]
     },
-    "last_triaged_at": "2026-08-06T12:28:00Z",
-    "last_triaged_by": "po",
-    "in_progress": []
+    "last_triaged_at": "2026-08-06T13:23:21Z",
+    "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
+    "in_progress": [
+      {
+        "id": "FIX-MARKETWATCHER-EODMD-STALE-NOBASH-CAVEAT-SKIPS-COMMIT-LOSES-NOTEBOOK",
+        "type": "FIX",
+        "title": "eod.md:78 still carries the pre-2026-07-31 no-Bash caveat that cycle.md already fixed -- market-watcher-eod skips its notebook commit every fire, loses the EOD cycle entry to the next same-agent overwrite, and strands news-scouts L-7-deferred commit",
+        "desc": "VERIFIED live 2026-08-05T16:00Z EOD fire (agent a0df2bd1afc971ce7). Chain: (1) .claude/agents/market-watcher.md granted Bash 2026-07-31 commit 610110e16b. (2) cycle.md carried an identical no-Bash transport-gap caveat and was fixed 2026-08-01 (FIX-COWORK-FLOWDOC-STALE-TRANSPORT-GAP-CAVEAT, see cycle.md own header comment) -- caveat demoted to a genuine invocation-error fallback only. (3) eod.md:78 was never touched by that fix -- still reads verbatim this agent holds no Bash and cannot run git add/git_commit_retry directly ... SKIP this step entirely. (4) Todays EOD fire followed eod.md literally: wrote all 4 ledger entries (analysis-briefs DGC/DPM/DBC/VNM) + docs/signals/price_anomaly_20260805T1605.json correctly (Steps A/B unaffected per the docs own text) but skipped Step D (notebook write/commit), citing the docs own stale line as its reason -- not a fabrication, a propagated stale doc. (5) DISPROOF same day, same batch: market-watcher-offhours fired 2 min later (a1f7356854a55a25f) and committed cleanly with Bash (09beb0997) -- direct proof the grant is live and eod.md is simply wrong. (6) Net effect: market-watcher.md notebook has NO Cycle (EOD) section anywhere post-16:06Z -- the EOD narrative was never durably captured, either never written or clobbered when the offhours slot did its own full-overwrite write+commit right after. (7) news-scout.md c233 entry was left dangling uncommitted -- its own flow (docs/agents/news-scout/flow/stage-log-notify.md:14, L-7) explicitly defers its git commit to market-watchers EOD batch commit at market close; that EOD-side half of the contract never fires while eod.md:78 stands. Router committed the stranded news-scout.md manually this cycle as a workaround; the underlying skip will repeat every weekday 16:00 UTC fire until eod.md is fixed.",
+        "ac": "1. Update docs/agents/market-watcher/flow/eod.md:78 to match cycle.mds already-fixed prose (Bash grant live since 2026-07-31 commit 610110e16b -- demote to a genuine invocation-error fallback, not an unconditional skip). 2. Separately decide and fix the lost-update exposure: the per-cycle full-overwrite notebook model has no protection when EOD and a same-agent sibling slot (e.g. offhours) both match in the same cowork-tick batch and fire minutes apart -- either preserve/merge the EOD section across the next overwrite, or serialize same-agent multi-slot fires so one cannot clobber the others uncommitted work. 3. Confirm news-scouts L-7 dependency (stage-log-notify.md:14) resumes working end-to-end on the next weekday EOD fire (its notebook commits without router intervention).",
+        "priority": "P1",
+        "size": "S",
+        "zone": "cross-service/",
+        "next_agent": "developer",
+        "status": "IN_PROGRESS",
+        "created_at": "2026-08-05T16:10:00Z",
+        "created_by": "router",
+        "updated_at": "2026-08-06T13:23:27Z",
+        "updated_by": "router",
+        "related": [
+          "FIX-COWORK-BATCH-COVERAGESTATE-CONTENTION-CORRELATES-WITH-MISSED-NOTEBOOK-COMMIT"
+        ],
+        "not_duplicate_of": "FIX-COWORK-BATCH-COVERAGESTATE-CONTENTION-CORRELATES-WITH-MISSED-NOTEBOOK-COMMIT -- that row is a contention HYPOTHESIS on coverage-state:main mutex; this row is a DIRECTLY VERIFIED stale-doc root cause, distinct mechanism, same symptom family.",
+        "promoted_at": "2026-08-06T12:27:24Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
+        "claimed_at": "2026-08-06T13:23:26Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)"
+      }
+    ]
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
