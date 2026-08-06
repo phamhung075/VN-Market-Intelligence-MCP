@@ -1,0 +1,21 @@
+{
+  "from": "notebook-auto-prune-hook",
+  "to": "claude-manager-helper",
+  "type": "notebook_duplicate_heading_detected",
+  "priority": "normal",
+  "createdAt": "2026-08-06T07:02:06Z",
+  "payload": {
+    "file": "docs/agent-memory/notebooks/system-auditor.md",
+    "stage": "pre-cap-scan",
+    "duplicate_heading": "## c45 · 2026-08-06T06:41:47Z",
+    "reason": "identical ## heading found twice back-to-back (no non-blank content between) — corruption signature; auto-repaired by this hook per PO adjudication FIX-NOTEBOOK-DUPHEADING-DETECTOR-NO-DEDUP-NO-ACTUATOR (this ONE signature is provably lossless to collapse, first occurrence deleted). Every OTHER duplicate-heading shape remains detection-only/unfixed.",
+    "auto_repaired": true,
+    "action_required": "informational_no_action_needed"
+  },
+  "_processed": {
+    "fingerprint": "35e47ea4c953d7f748950f2b50d0ad3ac8763553de749df079ba19eee4c8a71a",
+    "processedAt": "2026-08-06T07:12:05Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

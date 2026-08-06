@@ -1,0 +1,15 @@
+{
+  "from": "architect",
+  "to": "po",
+  "type": "brief_complete",
+  "payload": "docs/architecture-briefs/2026-08-06-guard-cowork-notebook-agent-write-boundary.md",
+  "priority": "high",
+  "createdAt": "2026-08-06T07:03:33Z",
+  "note": "GUARD-COWORK-NOTEBOOK-AGENTS-SELF-EDIT-FLOW-DOC — brief targets .claude/agents/*, docs/agents/*, .claude/skills/* — per triage-signals.md brief_complete row, route_to: agent-father. Board row moved task_board.in_progress->done, status DONE, next_agent/routed_to=agent-father.",
+  "_processed": {
+    "fingerprint": "bd36f0fbe9f6b30a2534f7b18d2ae457f6ceb1d4f09efcbffa83c26174322a17",
+    "processedAt": "2026-08-06T07:12:05Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

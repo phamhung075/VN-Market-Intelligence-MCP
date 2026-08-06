@@ -4,5 +4,11 @@
   "type": "bug-escalation",
   "payload": "[decision-journal] sprint-COWORK-GUARANTEED-SLOT-CATCHUP-architect-2.md CAP-REACHED (lines=138/600 bytes=37871/36000) — mandatory entries would silently drop; rolled to sprint-COWORK-GUARANTEED-SLOT-CATCHUP-architect-3.md per skill's own roll rule. Filed as a signal, not a Telegram send: this architect spawn holds no mcp__gateway__call_tool grant this session (tools: Read, Edit, Write, Glob, Grep, Bash only) so send_telegram was structurally unavailable (cf. feedback_agent_reported_limitation_may_be_structural_check_the_tool_grant).",
   "priority": "low",
-  "createdAt": "2026-08-06T07:03:33Z"
+  "createdAt": "2026-08-06T07:03:33Z",
+  "_processed": {
+    "fingerprint": "dde8fc6e08634254138ff9c261b98c771f5fc65aa5e6446b7b7c2e25e638ce03",
+    "processedAt": "2026-08-06T07:12:05Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
 }

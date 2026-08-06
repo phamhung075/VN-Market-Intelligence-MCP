@@ -1,0 +1,55 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-08-06T07:01:22Z",
+    "matched_slots": [
+      "alert-commander-market"
+    ],
+    "won_slots": [
+      "alert-commander-market"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/alert-commander/flow/main.md"
+    ],
+    "silent": false,
+    "drift_min": 2,
+    "errors": [],
+    "pressure_mode": "legacy",
+    "calendar_status": "open",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "chef_mutex_applied": false,
+    "due_reasons": {
+      "alert-commander-market": "cron"
+    },
+    "cadence_minutes": {
+      "alert-commander-market": null
+    },
+    "last_fired_timestamp": "2026-08-06T06:59:49Z",
+    "last_fired_slots": [
+      "alert-commander-market"
+    ],
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "06:45",
+    "leader_lock": "acquired",
+    "dev_head": "in_progress",
+    "devq": 2,
+    "signal_backlog": 7,
+    "note": "pressure-state.json stale (~27min > 20min threshold) -- legacy cron fallback, no suppression; single slot alert-commander-market spawned normally."
+  },
+  "priority": "low",
+  "createdAt": "2026-08-06T07:01:22Z",
+  "_processed": {
+    "fingerprint": "b2dce41998e96a8a77076edc81e8d22fe044aef88c49a6ae09cb398661541e6b",
+    "processedAt": "2026-08-06T07:12:05Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
