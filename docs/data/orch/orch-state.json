@@ -2697,8 +2697,11 @@
         "type": "system-issue",
         "summary": "stranded-state sweep: 5 unknown paths need owner",
         "severity": "LOW",
-        "status": "READ",
-        "payload_ref": "docs/signals/stranded-state-sweep-unknown-20260806T105540Z.json"
+        "status": "triaged",
+        "payload_ref": "docs/signals/stranded-state-sweep-unknown-20260806T105540Z.json",
+        "triaged_at": "2026-08-06T11:35:35Z",
+        "triaged_by": "po",
+        "disposition": "ACK-WITH-CORRECTION -> CLEAN-STRANDED-REPO-STATE-20260806. All 5 paths verified real at source. Correction to the sweep: it reported 3 auditor cycle-marker .tmp files; there are 6 on disk (3 more from 2026-08-05), all zero bytes — the sweep under-counts and the real defect is that system-auditor never reaps its own marker. Second correction: docs/analysis-briefs/FRT.md is NOT junk (1076 bytes of real content, untracked 6 days) and must be committed, not deleted."
       },
       {
         "id": "dv2-20260806T105650",
@@ -2708,8 +2711,11 @@
         "type": "system-issue",
         "summary": "stranded-state sweep: 2 scripts auto-committed, verify persistence pointer",
         "severity": "LOW",
-        "status": "READ",
-        "payload_ref": "docs/signals/stranded-state-sweep-scripts-pointer-20260806T105540Z.json"
+        "status": "triaged",
+        "payload_ref": "docs/signals/stranded-state-sweep-scripts-pointer-20260806T105540Z.json",
+        "triaged_at": "2026-08-06T11:35:35Z",
+        "triaged_by": "po",
+        "disposition": "CONFIRMED -> CLEAN-STRANDED-REPO-STATE-20260806 AC-5. po grepped docs/ and .claude/ for both filenames: NEITHER has an owning-flow-doc pointer, so the payload's concern is a true positive. Both names are single-use/date-stamped, so deletion is the more likely correct disposition than retrofitting a pointer — decided per script by the janitor from actual content."
       },
       {
         "id": "dev-orphangap-20260806T111713Z",
@@ -2719,8 +2725,11 @@
         "type": "system-issue",
         "summary": "orphan-adoption: 10 stale signals all pre-terminal (no guard); release ownership also broken",
         "severity": "MEDIUM",
-        "status": "NEW",
-        "payload_ref": "docs/signals/dev-team-orphan-adoption-terminal-guard-and-release-ownership-gap-20260806T111500Z.json"
+        "status": "triaged",
+        "payload_ref": "docs/signals/dev-team-orphan-adoption-terminal-guard-and-release-ownership-gap-20260806T111500Z.json",
+        "triaged_at": "2026-08-06T11:35:35Z",
+        "triaged_by": "po",
+        "disposition": "FOLD (no mint) — both findings are already owned by open P0 rows minted 2026-07-22. finding_1 (terminal-status guard) = FIX-ORPHAN-FR4-FR5-FLOW-DEVTEAM-ADOPTION-GUARD (ready[], FR-4 read-guard). finding_2 (null-session release no-op) = FIX-ORPHAN-FR1-FR2-INFRA-HEARTBEAT-LADDER (ready[], FR-2 null-session ladder). Parent design row FIX-ORPHAN-ADOPTION-BOARD-STATE-GUARD is BLOCKED/supervised/plan_only at P0. 10x live corroboration appended to both FR rows as po_corroboration_20260806. Minting a 3rd row would be board debt. REAL blocker surfaced instead: 6 dispatchable P0 rows frozen in ready[] for 15 days — measurement folded onto FIX-DEVTEAM-IDLE-CHAIN-STEP1-TRIAGE-STARVATION."
       },
       {
         "id": "dev-s2gap-20260806T112047Z",
@@ -2730,8 +2739,11 @@
         "type": "system-issue",
         "summary": "BOUNDED-1 dispatch leaves no S2-visible lock — pipeline-resume would duplicate-spawn",
         "severity": "HIGH",
-        "status": "NEW",
-        "payload_ref": "docs/signals/dev-team-bounded1-no-s2-visible-lock-20260806T111900Z.json"
+        "status": "triaged",
+        "payload_ref": "docs/signals/dev-team-bounded1-no-s2-visible-lock-20260806T111900Z.json",
+        "triaged_at": "2026-08-06T11:35:35Z",
+        "triaged_by": "po",
+        "disposition": "FOLD + ESCALATE (no mint) — root cause already owned by FIX-EXECUTETIER-PHASE35-RESUME-LOCK-RELEASED-AT-SPAWN-NOT-COMPLETION (backlog, next_agent=architect, created 2026-07-30T23:20Z), whose desc names the exact mechanism: execute-tier.md Phase-3.5 (BOUNDED-1's own documented JUMP-TO target) releases task:<id> in a finally bound to a background Agent() call that returns in ms while the agent runs on. This tick is occurrence 3 of 3, all recorded on the row. Actions: priority P1->P0, occurrence-3 evidence + the head.next_agent='dev-team' invalid-agent-type compounding factor + the 4-lane scope widening (BOUNDED-1/SLS/RLC/DRS not individually verified) appended, row folded into this tick's BATCH as the top entry for architect adjudication of option (a) vs (b)."
       }
     ],
     "last_triaged_at": "2026-07-29T06:25:00Z",
@@ -5198,7 +5210,7 @@
         "type": "FIX",
         "title": "execute-tier.md Phase-3.5 dispatcher-wrap releases the resume lock immediately after a background spawn -- main.md's own S2/SLS/RLC/DRS/QA-Drain resume-dispatchers already carry the LOCK-LIFETIME fix for the identical task:<id> key; Phase-3.5 (BOUNDED-1's own documented JUMP-TO target) does not",
         "status": "BACKLOG",
-        "priority": "P1",
+        "priority": "P0",
         "size": "S",
         "zone": "cross-service/",
         "owner": "dev-team",
@@ -5207,7 +5219,7 @@
         "plan_only": false,
         "created_at": "2026-07-30T23:20:07Z",
         "created_by": "dev-team/self-caught-20260730T2319Z",
-        "updated_at": "2026-07-30T23:20:07Z",
+        "updated_at": "2026-08-06T11:35:36Z",
         "source": "dev-team self-caught, 2nd occurrence, tick 2026-07-30T23:07Z",
         "desc": "docs/agents/dev-team/flow/execute-tier.md:33-66 (Phase 3.5, the ONLY documented target of BOUNDED-1's own 'JUMP TO execute' comment at main.md:558) claims task:<id> then releases it in a `finally` bound to the same background Agent() call -- run_in_background=true returns in milliseconds while the spawned agent runs far longer, so the lock frees while the agent is still live. The IDENTICAL class was already fixed for main.md's own S2/SLS-resume/RLC-resume/DRS-resume/QA-Drain-resume dispatcher-wraps (FIX-DEVTEAM-BACKGROUND-SPAWN-LOCK-RELEASED-AT-SPAWN-NOT-COMPLETION -- grep 'LOCK-LIFETIME' in main.md, 5 occurrences, all fixed: no release on success, ttl_seconds:3600 IS the lock's lifetime bound, release only on the exception path). Phase-3.5 was never touched by that fix. 1st occurrence: self-caught manually 2026-07-30T22:37Z tick (decision-journal STEP dev-team-S8, notebook cycle-20260730T2237Z-tick) -- I had used the S4/Phase-3.5-style release-immediately convention for a Step-3 FIX dispatch that ALSO set .head, and the NEXT tick's S2 resume-path successfully re-claimed the freed lock, which would have re-spawned the same live agent a 2nd time had I not caught it by direct out-of-band session knowledge. 2nd occurrence (this tick): ran BOUNDED-1's own promote+claim scripts (which correctly set .head.active_task_id per main.md:555-561), then had to consciously deviate from execute-tier.md's own documented Phase-3.5 semantics and hand-apply main.md's S2 pattern instead to avoid reproducing the same bug within the same tick I was diagnosing it in.",
         "files": [
@@ -5218,7 +5230,11 @@
         "baseline_pass": "9408",
         "related": [
           "FIX-DEVTEAM-BACKGROUND-SPAWN-LOCK-RELEASED-AT-SPAWN-NOT-COMPLETION"
-        ]
+        ],
+        "po_occurrence_3_20260806": "3rd occurrence, RAW-verified by po 2026-08-06T11:07Z tick (signal dev-s2gap-20260806T112047Z, payload docs/signals/dev-team-bounded1-no-s2-visible-lock-20260806T111900Z.json). .head was in_progress on FIX-AUDITOR-DEDUP-TASKBOARD-PRECHECK-NOT-ENFORCED (BOUNDED-1 auto-pickup 10:52:20Z, developer agent adeb194ad9fffeb25 independently confirmed ALIVE by the harness background-task tracker). Step 0b WF-1/WF-1b/WF-1c/WF-2 all correctly fell through; S2's task_claim on task:<id> SUCCEEDED (claimed:true) — proving the lock this row says Phase-3.5 frees at spawn was indeed not held. Only out-of-band liveness knowledge stopped a genuine duplicate developer spawn. COMPOUNDING (new, not in the original desc): head.next_agent was left as the literal string 'dev-team' — BOUNDED-1's own bookkeeping placeholder, NOT a spawnable agent type (CLAUDE.md: 'There is no dev-team agent type'), so the literal S2 spawn would ALSO have failed on an invalid agent type. Both defects are on the same dispatch path.",
+        "po_escalation_20260806": "P1->P0 by po. feedback_recurring_bug_escalation threshold crossed: 3 occurrences (2026-07-30T22:37Z self-caught, 2026-07-30T23:20Z diagnosing tick, 2026-08-06T11:07Z live near-miss), ZERO fixes attempted, row idle in BACKLOG 7 days with next_agent=architect (an allowlisted DRS destination that never picked it up). Architect adjudication is the blocker, not the analysis.",
+        "po_scope_widen_20260806": "Widen the AC beyond execute-tier.md Phase-3.5 alone: the 11:07Z signal notes BOUNDED-1/SLS/RLC/DRS all share the identical idle-capacity-pickup shape and were NOT individually verified this tick. Architect must state, per lane, whether each takes a task:<id> lock S2 can see. The signal's own option (b) — a BOUNDED-1-origin short-circuit in Step 0b keyed on head.updated_by prefix, treated exactly like WF-2's supervised-hold — is a second candidate design; adjudicate (a) vs (b) vs both, do not blind-copy.",
+        "po_dispatch_20260806": "Folded into po BATCH 2026-08-06T11:07Z tick as the top-priority entry."
       },
       {
         "id": "CLEAN-NOTEBOOK-AC2A-CYCLE-BOUNDARY-DEFINITION",
@@ -7141,12 +7157,13 @@
         "next_agent": "dev-mcp-server",
         "owner": "dev-mcp-server",
         "po_correction_20260730": "PREMISE REFUTED — do NOT build the capability described in the original title; it already shipped.\n\nREAD AT SOURCE: process_telegram_report (interface/mcp/tools/briefings/telegramReportTools.ts:160-242) takes resolution: z.enum([\"none\",\"fixed\",\"wontfix\",\"duplicate\",\"monitoring\"]). \"monitoring\" IS the dispositioned-but-deferred ack this row asks for; \"duplicate\" IS the tracked-elsewhere ack. Step 4 calls markProcessed(db,id) UNCONDITIONALLY, setting status=processed. read_telegram_reports filters WHERE status='new' (telegramReportStore.ts:108); listUnresolvedReports filters \"resolution NOT IN ('fixed','wontfix','duplicate') AND status != 'processed'\" (:391-401). So ANY process_telegram_report call drops the row out of BOTH polls.\n\nPROVEN END-TO-END, not inferred: PO acked report 4039, re-read list_unresolved_reports -> 179 dropped to 178 with 4039 absent; then acked the remaining 178 and both planes returned empty. 179 -> 0 in a single pass. The queue was never unclearable — it was uncleared.\n\nRETARGETED SCOPE (cheap, and this is the actual root cause):\n(1) Fix docs/agents/tools/list/process_telegram_report.md — it documents the parameter as `delete_message` (actual: `delete_telegram_message`) and does not mention `resolution` AT ALL. That doc drift is precisely why 179 reports sat at resolution=none: every agent reading the tool doc literally could not see the disposition values.\n(2) Wire an explicit ack step into whichever flow reads this queue (dev-team Step 4.1 / the PO report-queue pass) carrying the resolution decision table: fixed = the fix shipped; duplicate = root cause already has a board row; monitoring = real and tracked but not yet fixed; wontfix = detector/actuator mismatch that will never be actioned.\n(3) OPTIONAL follow-on ONLY if (1)+(2) prove insufficient: a report -> backlog-row link field. Do not start at (3).\n\nOBSERVED SIDE EFFECT — benign, documented here so nobody re-files it as a bug: delete_success=false for every Telegram message older than ~48h (bot deletion window), and delete_success=null when message_id=0 (dashboard-routed rows). The SQLite row is marked processed in all three cases. The DB is authoritative; the Telegram deletion is best-effort.\n",
-        "updated_at": "2026-08-05T18:53:08Z",
+        "updated_at": "2026-08-06T11:35:36Z",
         "updated_by": "po/report-queue-triage-20260805T1815Z",
         "po_second_root_cause_2026-07-31": "SECOND ROOT CAUSE FOUND + RE-ESCALATED P2->P1 2026-07-31T00:37Z by po (daily triage). The 07-30 retarget blamed the tool doc alone. That is necessary but NOT sufficient, and the sufficiency gap is why this recurred within 24h. REFUTATION OF THE REMAINING PREMISE: this row still implied PO lacks/does not know the ack capability. FALSE, re-proven live this tick -- po called process_telegram_report(resolution=...,delete_telegram_message=true) 9/9 times successfully and took BOTH planes to empty (read_telegram_reports(status=new) => \"Khong co bao cao moi\", list_unresolved_reports() => []). Dispositions used: 4221/4223 wontfix (Polymarket deliberately retired, enabled:false verified live at apps/mcp-server/mcp.config.json:96), 4222/4228 fixed (314e70718), 4224/4226 duplicate (FIX-SIGNALQUALITYAUDIT-WRITE-GATE-UNREACHABLE-BY-EMITTER-CONTRACT owns it), 4225 fixed, 4227 fixed (e370f5f51), 4229 monitoring (FIX-COWORK-FIRE-ELECTION-TICK-TOMBSTONE owns it). THE REAL DURABLE CAUSE (grep-verified this tick, not inferred): docs/agents/po/flow/telegram-reports.md is a 131-line ORPHANED SUB-FLOW. It already contains the correct drain step -- Step 2f `process_telegram_report(id=..., delete_telegram_message=true)` -- and has since it was written. But NOTHING ROUTES TO IT: `grep -rn \"telegram-reports\" docs/agents/po/ .claude/` returns exactly ONE hit, the files own size-justification header comment. po/flow/main.md has a 5-row Dispatch table and a Branch-Workflows table and telegram-reports.md appears in NEITHER; the only nod to it is No-Task Guard bullet 2 (main.md:105) which says `read_telegram_reports(status=\"new\")` -- any user requests? -> handle first, naming the READ but never the ACK and never pointing at the sub-flow that performs it. Net effect: the queue is drained ONLY when a human or the router explicitly tells PO to drain it (07-30 by hand, 07-31 by an explicit router instruction in the spawn prompt). On an ordinary unattended cron tick PO reads the reports, triages them into its BATCH, and leaves every row status=new/resolution=none -- so the same reports resurface every single tick forever. This is the 5th instance of the documented-consumer-with-no-documented-producer class already catalogued in po/flow/supervised-goahead.md and po/flow/manual-dispatch-sweep.md headers, except here it is inverted: the PRODUCER (telegram-reports.md) exists and is correct, and the ROUTE to it is what is missing. AC-1 (tool doc, dev-mcp-server, apps/mcp-server zone): docs/agents/tools/list/process_telegram_report.md still documents param `delete_message` (line 16, line 74) which is NOT the real param name, and still omits `resolution` entirely -- re-verified live this tick, unchanged since the 07-30 retarget. Document all 5 enum values none|fixed|wontfix|duplicate|monitoring and rename to delete_telegram_message. AC-2 (the fix that actually stops the recurrence): add telegram-reports.md to po/flow/main.md so an unattended tick reaches it -- one row in the Dispatch table and/or the Branch Workflows table, plus make No-Task Guard bullet 2 route there instead of dead-ending at \"handle first\". Pointer-line edit only, no agent-definition/factory work. AC-3: after both, a cron PO tick with >=1 status=new report must leave 0 rows in BOTH read_telegram_reports(status=new) AND list_unresolved_reports() -- assert on both planes, not one (single-plane assertion is how the 07-30 fix looked complete while the route stayed dead).",
         "plan_only": true,
         "plan_only_mirrored_20260731b": "Mirrored from backlog-detail.json plan_only:true by po/ruling-20260731b. Board-level gates (BOUNDED-1) read this field on the BOARD row, not in detail — 31 of 34 live plan-only rows were structurally invisible to them. Durable mechanism tracked as FIX-BOARD-ROW-PLAN-ONLY-NOT-MIRRORED-FROM-DETAIL.",
-        "po_evidence_20260805": "PO REPORT-QUEUE TRIAGE 2026-08-05T18:1xZ (3rd recurrence, dev-team tick 18:07Z): queue re-accumulated to 131 unresolved rows (ALL status=new/resolution=none, oldest 2026-08-03T16:05Z) after being driven 179->0 on 07-30 and 9->0 on 07-31. Both ACs re-verified UNSHIPPED live this tick, not inferred: AC-1 -- docs/agents/tools/list/process_telegram_report.md line 16 STILL documents param 'delete_message' (real name: delete_telegram_message) and STILL has zero mention of 'resolution', unchanged since the 07-30 retarget (6 days). AC-2 -- grep -rn 'telegram-reports' docs/agents/po/ .claude/ returns exactly 2 hits: the sub-flow's own size-justification header, and ONE passing mention inside main.md:170's 'Reusable triage scripts' prose paragraph. telegram-reports.md appears in NEITHER main.md's Dispatch table NOR its Branch Workflows table; No-Task Guard bullet 2 (main.md:105) still names only the READ and dead-ends at 'handle first'. So an unattended cron PO tick still cannot reach the resolver -- confirmed empirically by this very backlog. Queue driven to 0 again this tick by explicit router instruction (the same manual-only path as 07-30 and 07-31), which is NOT a fix. This row and FIX-PO-MAINFLOW-ORPHANS-TELEGRAM-REPORTS-RESOLVER-SUBFLOW (P1, BACKLOG since 2026-08-01T04:12Z, next_agent=agent-father, zone=docs/agents/, never once updated or picked up in 4.5 days) are the two halves of the fix; neither has ever been dispatched. Recurrence is now 3/3 -- per docs/policies recurring-bug rule this is a recurring FAILED FIX, not a recurring detection. Do NOT mint a 3rd row."
+        "po_evidence_20260805": "PO REPORT-QUEUE TRIAGE 2026-08-05T18:1xZ (3rd recurrence, dev-team tick 18:07Z): queue re-accumulated to 131 unresolved rows (ALL status=new/resolution=none, oldest 2026-08-03T16:05Z) after being driven 179->0 on 07-30 and 9->0 on 07-31. Both ACs re-verified UNSHIPPED live this tick, not inferred: AC-1 -- docs/agents/tools/list/process_telegram_report.md line 16 STILL documents param 'delete_message' (real name: delete_telegram_message) and STILL has zero mention of 'resolution', unchanged since the 07-30 retarget (6 days). AC-2 -- grep -rn 'telegram-reports' docs/agents/po/ .claude/ returns exactly 2 hits: the sub-flow's own size-justification header, and ONE passing mention inside main.md:170's 'Reusable triage scripts' prose paragraph. telegram-reports.md appears in NEITHER main.md's Dispatch table NOR its Branch Workflows table; No-Task Guard bullet 2 (main.md:105) still names only the READ and dead-ends at 'handle first'. So an unattended cron PO tick still cannot reach the resolver -- confirmed empirically by this very backlog. Queue driven to 0 again this tick by explicit router instruction (the same manual-only path as 07-30 and 07-31), which is NOT a fix. This row and FIX-PO-MAINFLOW-ORPHANS-TELEGRAM-REPORTS-RESOLVER-SUBFLOW (P1, BACKLOG since 2026-08-01T04:12Z, next_agent=agent-father, zone=docs/agents/, never once updated or picked up in 4.5 days) are the two halves of the fix; neither has ever been dispatched. Recurrence is now 3/3 -- per docs/policies recurring-bug rule this is a recurring FAILED FIX, not a recurring detection. Do NOT mint a 3rd row.",
+        "po_corroboration_20260806": "po 2026-08-06T11:07Z tick: read_telegram_reports(status='new') returned 14 reports (ids 4497-4510), ALL emitted 11:14:23Z-11:20:28Z, ALL the same string '[emit-signal] BUG: E-3 write/read-back failure rc=1|rc=3 (check_id=scheduler_locks-FAIL)'. RAW-traced to a local test run, not a live failure (see FIX-EMITSIGNAL-BUGTELEGRAM-NO-TEST-SINK-GATE). They are unresolvable from PO's own tool surface and will resurface on every subsequent PO/TNB tick as 'new' — direct evidence for this row's premise, and a measure of its cost: 14 fabricated alerts consumed a full PO triage cycle."
       },
       {
         "id": "FU-FPT-2025Q4-STAGE4-DUP",
@@ -11772,11 +11789,13 @@
           "AC-5 Sweep for further drift while in there: diff the live distinct to=po type set against the union of both tables and report any other gaps found.",
           "AC-6 Add db_anomaly_illiquid_ohlcv as well (2nd unrouted type, observed 2026-08-06T07:21:27Z mid-triage). Route: dedup-check then FOLD onto the OHLCV integrity family (CLEAN-OHLCV-INTEGRITY-RESIDUE-REPAIR) — a WARN whose count is stable against the prior day is residue, not a regression; do not mint per fire."
         ],
-        "updated_at": "2026-08-06T10:00:34Z",
+        "updated_at": "2026-08-06T11:37:16Z",
         "po_corroboration_20260806T0721": "SECOND unrouted type observed 14 minutes into the very tick that minted this row: sys-20260806T072127-34b3, type=db_anomaly_illiquid_ohlcv, from=system-auditor, to=po, WARN. Also absent from all three routing tables AND from the guard $routed array. This upgrades the finding from a single missing row to demonstrated ONGOING drift at ~2 new types/hour during an active audit sweep, and is the strongest available argument for AC-4 (wire the guard to a caller that actually runs) over merely adding the missing rows by hand.",
         "status_note": "Re-run of guard_signal_type_coverage at 2026-08-06T10:00:33Z returns FAIL with TWO unrouted to=po types, not one: [\"agent_flow_defect\",\"db_anomaly_illiquid_ohlcv\"]. THIRD gap found this tick on the OTHER pipeline: `cowork-fire` (from cowork-team) has no row in the Pipeline-A table either — it is addressed to=dev-team so it is correctly routed at source, but the Step 0a drain hands every signal to PO regardless, so it lands on the `any unknown type` catch-all EVERY tick (recurring triage friction, benign content: FIRE/spawned/no errors). FIX SCOPE: add all three rows to the two tables in docs/agents/po/flow/triage-signals.md AND add the two Pipeline-B types to the guard's own $routed array (the doc already warns that array is the single point of drift the guard exists to catch — it drifted). db_anomaly_illiquid_ohlcv CONTENT needs no new work: the one live row (sys-20260806T072127-34b3, WARN, `daily_ohlcv: 336 rows with incomplete H/L/V data (illiquid tickers)`) is already status=triaged and the substance is covered by the existing OHLCV family (CLEAN-OHLCV-INTEGRITY-RESIDUE-REPAIR et al) — this row is about TABLE COVERAGE only.",
         "po_scope_widened_20260806T0935": "covers db_anomaly_illiquid_ohlcv in addition to agent_flow_defect",
-        "updated_by": "po (triage 2026-08-06T10:00:33Z — scope widened, 2 more unrouted types found by the same guard)"
+        "updated_by": "po (triage 2026-08-06T10:00:33Z — scope widened, 2 more unrouted types found by the same guard)",
+        "po_corroboration_20260806": "Still open and still FAILING. po re-ran this doc's OWN regression verifier (guard_signal_type_coverage, docs/agents/po/flow/triage-signals.md § Regression verifier) against the live board at 2026-08-06T11:37Z: rc=1, unrouted to=po types = [\"agent_flow_defect\",\"db_anomaly_illiquid_ohlcv\"] — both named verbatim in this row's own title, so the row's premise is confirmed live, not stale. Volume since: 5 agent_flow_defect rows landed on 2026-08-06 alone (from cowork-team x2, router, dev-team x2) plus 1 db_anomaly_illiquid_ohlcv; all 6 reached a disposition only because a PO hand-triaged them off-table. The third type in this row's title, cowork-fire (Pipeline A), also fired this tick (docs/signals/processed/cowork-team-2026-08-06T11:06:18Z.json) and again had no table row — po disposed of it under the 'any unknown type' catch-all. NOTE for whoever takes this: fixing the two tables is only half — the guard's own $routed array is a hardcoded literal inside the verifier and must be updated in the same commit, or the guard will keep failing on types that ARE routed.",
+        "po_dispatch_blocker_note": "Not dispatched this tick (BATCH already carries 4 entries). next_agent=agent-father is OFF the DRS allowlist, so this row has no automated picker and is reachable only via PO's manual-dispatch sweep — it ranks P1/idx=346 there, behind ~15 other P1s. Candidate for the next sweep tick."
       },
       {
         "id": "FIX-BOARD-ZONE-TOKEN-OFF-CONTRACT-35PCT-DISPATCHABLE-ROWS",
@@ -12142,6 +12161,101 @@
         "created_by": "pm",
         "updated_at": "2026-08-06T10:46:06Z",
         "updated_by": "pm"
+      },
+      {
+        "id": "FIX-EMITSIGNAL-BUGTELEGRAM-NO-TEST-SINK-GATE",
+        "type": "FIX",
+        "title": "scripts/emit-audit-signal.sh gates every side effect behind an env override EXCEPT its BUG-channel Telegram — one local test run fired 14 fabricated CRITICAL-shaped alerts into the live BUG channel and into read_telegram_reports(), PO's own triage input plane",
+        "status": "BACKLOG",
+        "priority": "P1",
+        "size": "S",
+        "zone": "cross-service/",
+        "owner": "po",
+        "next_agent": "developer",
+        "created_at": "2026-08-06T11:35:35Z",
+        "created_by": "po/triage-20260806T1107Z",
+        "baseline_pass": "9408",
+        "files": [
+          "scripts/emit-audit-signal.sh",
+          "scripts/db-integrity-history-append.test.sh",
+          "scripts/db-integrity-history-append.sh"
+        ],
+        "desc": "ROOT CAUSE: scripts/emit-audit-signal.sh honours EMIT_SIGNAL_ORCH_STATE_FILE, ORCH_APPLY_LIVE_FILE_OVERRIDE and EMIT_SIGNAL_LEDGER_FILE, so a test harness can fully isolate every FILE side effect — but _send_bug_telegram() (L330-336) and _send_orphan_bug_telegram() (L338-344) call mcp_call 'send_telegram' unconditionally, with NO override, NO dry-run flag, NO sink. There is no way to exercise the failure paths in a test without hitting the live BUG channel. RAW EVIDENCE (all measured, none inferred): (1) read_telegram_reports(status='new') = 14 reports ids 4497-4510, 11:14:23Z-11:20:28Z, all '[emit-signal] BUG: E-3 write/read-back failure rc=1|rc=3 (check_id=scheduler_locks-FAIL)' — 10x rc=1, 4x rc=3. (2) scripts/db-integrity-history-append.test.sh is UNTRACKED (git status '??') with mtime 2026-08-06T11:19:27Z — authored DURING the burst; scripts/db-integrity-history-append.sh is modified-uncommitted, mtime 11:13:14Z, 69s BEFORE the first alert. Both belong to the in-flight FIX-AUDITOR-DEDUP-TASKBOARD-PRECHECK-NOT-ENFORCED (.head since 10:52Z). (3) The test's fixture is literally {\"table\":\"scheduler_locks\",\"class\":\"FAIL\"} (test L124/L147/L167) and db-integrity-history-append.sh:92 builds --check-id \"${table}-${CLASS_TXT}\" = 'scheduler_locks-FAIL' — byte-matches all 14 alerts. (4) The test declares NO stub for mcp_call or send_telegram (grep: zero hits) while it DOES export all 4 file overrides (L44-48) — the asymmetry is the bug. (5) Test L146 runs a deliberate negative control with ORCH_APPLY_LIVE_FILE_OVERRIDE=$BROKEN_DIR, which is orch-apply.sh's exit-3 'live file not found' path (orch-apply.sh:84-86) — that is the rc=3 quartet; the other negative controls are the rc=1 ten. FALSIFIED ALTERNATIVES (checked, not assumed): (a) NOT a live E-3 outage — po re-ran the byte-identical working-tree script with --e3-only against a scratchpad COPY of the same live orch-state.json: rc=0, row sys-20260806T112700-0b08 landed, conservation OK. (b) NOT a corrupt board — bun scripts/orch-validate.mjs on a copy of the live file exits 0, Stage 0+1 PASS. (c) NOT ENOSPC — 12Gi free. (d) NOT a Stage-1c dangling payload_ref — docs/data/db-integrity-history.json exists, 659850 bytes. (e) NOT a real scheduler_locks incident reaching the board — zero rows matching /scheduler_lock/ exist in .signal_queue.rows[].",
+        "deliverable": "AC-1: both _send_bug_telegram() and _send_orphan_bug_telegram() honour a single documented sink override (e.g. EMIT_SIGNAL_TELEGRAM_SINK=<file|/dev/null>, default = live send) so the failure paths are testable in full isolation; the flag is named in the script's own CONTRACT header block alongside the 3 existing file overrides. AC-2: scripts/db-integrity-history-append.test.sh sets that override (and is COMMITTED — it is currently untracked, so a CI run of the suite today would repeat the 14-alert storm on every push). AC-3: a regression assertion proving a full run of that test file produces ZERO live send_telegram calls. AC-4 (generalise, this is the actual class): audit the other emit-audit-signal.sh call-site tests (scripts/db-integrity-dedup-check.test.sh at minimum) for the same asymmetry and apply the same sink. AC-5: the 14 already-landed reports 4497-4510 are unresolvable from PO's tool surface — note them on FIX-TELEGRAM-REPORT-ACK-STATUS-STOP-RESURFACE rather than leaving them to resurface as 'new' on every future PO/TNB tick.",
+        "out_of_scope": "Do NOT change the E-3 CAS-retry contract (rc=2 retry / rc=1|3 abort). It was suspected and cleared this tick — the abort-without-retry behaviour is correct for genuine validation and usage errors, and the repro above proves the write path is healthy. Do NOT touch the in-flight files while FIX-AUDITOR-DEDUP-TASKBOARD-PRECHECK-NOT-ENFORCED is .head-active.",
+        "not_duplicate_of": "FIX-AUDITOR-B12-DOUBLE-INVOKE-EMIT-MARKER-LOSS (backlog) is a double-INVOCATION marker-loss defect in the same script, not the missing Telegram test sink. FIX-TELEGRAM-REPORT-ACK-STATUS-STOP-RESURFACE (backlog) owns DRAINING the report queue; this row owns not POLLUTING it.",
+        "related": [
+          "FIX-AUDITOR-DEDUP-TASKBOARD-PRECHECK-NOT-ENFORCED",
+          "FIX-AUDITOR-B12-DOUBLE-INVOKE-EMIT-MARKER-LOSS",
+          "FIX-TELEGRAM-REPORT-ACK-STATUS-STOP-RESURFACE"
+        ],
+        "status_note": "ESCALATED + DISPATCHED at 2026-08-06T11:38Z, superseding this row's original hold. Two facts changed within 7 minutes of the mint: (1) the collision risk is GONE — FIX-AUDITOR-DEDUP-TASKBOARD-PRECHECK-NOT-ENFORCED left .head (now idle, updated_by=developer 11:31:05Z) and sits in review[] with next_agent=qa; all three files are committed and the worktree is clean on them. (2) The risk got WORSE, not better — scripts/db-integrity-history-append.test.sh is now TRACKED in HEAD (commit 9d0ea50c2 'make db-integrity dedup-enforcement a real actuator, not prose') and still contains ZERO stubs for mcp_call/send_telegram (grep count = 0). So the 14-alert storm is no longer a one-off local artifact: it is now wired into the committed test suite and will re-fire against the LIVE Telegram BUG channel on every CI run and every local `bun test`/suite execution. Folded into this tick's BATCH.",
+        "origin_signal_id": "po-triage-20260806T1107Z-telegram-reports",
+        "updated_at": "2026-08-06T11:37:16Z",
+        "po_escalation_20260806": "Impact re-scored after the 11:31Z commit: this is no longer 'a developer spammed the channel once', it is a committed test that pollutes the live BUG channel and read_telegram_reports(status='new') — the exact plane PO and tran-ngoc-bau both triage from — on every CI run, with a payload string ('E-3 write/read-back failure') indistinguishable from a genuine signal-loss incident. Cost is already measured: 14 fabricated alerts consumed one full PO triage cycle before being RAW-cleared."
+      },
+      {
+        "id": "FIX-ORCHSTATE-TASKROW-TIMESTAMP-FORMAT-UNENFORCED-AT-WRITE",
+        "type": "FIX",
+        "title": "orch-apply.sh accepts task_board row timestamps in formats jq fromdateiso8601 THROWS on (double-Z, fractional seconds) — 10 live rows are already invisible to every age-gated sweep, 5 of them ready[] P0s stranded 20 days",
+        "status": "BACKLOG",
+        "priority": "P1",
+        "size": "S",
+        "zone": "cross-service/",
+        "owner": "po",
+        "next_agent": "architect",
+        "created_at": "2026-08-06T11:35:35Z",
+        "created_by": "po/triage-20260806T1107Z",
+        "baseline_pass": "9408",
+        "files": [
+          "scripts/orch-apply.sh",
+          "scripts/orch-validate.mjs",
+          "scripts/orch-stamp-updated-at.mjs",
+          "scripts/lib/po-manual-dispatch-eligibility.jq",
+          "scripts/lib/devteam-eligibility.jq"
+        ],
+        "desc": "MEASURED LIVE by po 2026-08-06T11:29Z against docs/data/orch/orch-state.json: 10 task_board rows carry a created_at or updated_at that jq fromdateiso8601 cannot parse. TWO distinct malformations, both currently accepted by orch-apply.sh: (1) DOUBLE-Z '2026-07-17T04:53:14ZZ' on CCATO-MCP-T3-PROBE-ADAPTERS, -T5-USECASE, -T6-TOOL-REGISTRATION, -T7-SKILL-DUAL-PATH, -T8-DOD-HARNESS — all 5 are ready[], P0, next_agent=dev-mcp-server, and are the OLDEST rows in the lane (20 days). (2) FRACTIONAL SECONDS '2026-08-06T10:41:17.873278Z' on FIX-AUDITOR-DURABILITY-STEP0B-DETECTION, -SKILL-DRAFT-PERSIST, -FLOW-DRAFT-HEAL, -VERIFY (created_at) and FIX-SYSTEM-AUDITOR-CYCLE-FINDINGS-NOT-SELF-PERSISTED (updated_at) — minted ~4h ago by the PM decomposition in commit 6fbbd7340, i.e. this is ACTIVELY BEING REINTRODUCED, not a historical artifact. WHY IT MATTERS (mechanism, not theory): every age gate in this repo is built on fromdateiso8601. scripts/lib/po-manual-dispatch-eligibility.jq's flag_reentrant wraps it in `try ... catch false` — and `false` there means NOT re-admitted, so a malformed stamp makes a row PERMANENTLY invisible to the manual-dispatch sweep, failing CLOSED in the worst direction. scripts/orch-cold-evict.sh's age gate has the same dependency. RECURRENCE: this is occurrence 2 of the same class. FIX-COLDEVICT-MALFORMED-TS-CATCH0-EVICTS-FRESH-SIGNAL-ROWS (2026-08-01, now in REVIEW) fixed the SIGNAL-row plane by pinning the format in PROSE in .claude/skills/signal-dashboard/SKILL.md — a doc-only fix with no mechanical enforcement, which is exactly why the identical shape reappeared 5 days later on the TASK-row plane AND why one signal row (wal-escalation-1785999606773, ts='2026-08-06T07:00:06.773Z') still slipped through on the supposedly-fixed plane. Per feedback_recurring_detection_vs_recurring_failed_fix: the second occurrence of a failed fix is the signal that the fix was at the wrong layer.",
+        "deliverable": "AC-1 (architect call, do NOT blind-pick): decide between (a) NORMALISE-ON-WRITE — orch-stamp-updated-at.mjs (already the sole write-time timestamp actuator in orch-apply.sh Stage 1.5) coerces every task_board and signal_queue timestamp to strict %Y-%m-%dT%H:%M:%SZ; or (b) REJECT-AT-VALIDATE — a new orch-validate.mjs stage hard-fails any unparseable timestamp; or (c) both (normalise, then assert). (b) alone will hard-fail every current writer that emits fractional seconds, so the migration order is load-bearing and is part of this AC. AC-2: backfill the 10 named task rows + the 1 named signal row to strict second precision, in the same commit as the enforcement, so the guard ships with a clean board. AC-3: a regression fixture replaying BOTH malformations through the real orch-apply.sh — BEFORE reproduces acceptance, AFTER reproduces rejection-or-normalisation. AC-4: identify the writer that emitted the fractional-second stamps in commit 6fbbd7340 (PM decomposition path) and fix it at source — normalisation downstream without fixing the producer just moves the defect.",
+        "out_of_scope": "Do NOT re-open FIX-COLDEVICT-MALFORMED-TS-CATCH0-EVICTS-FRESH-SIGNAL-ROWS (in REVIEW) — that row's consumer-side age-gate fix stands. This row is the write-side producer gate it needs to stop depending on prose.",
+        "not_duplicate_of": "FIX-COLDEVICT-MALFORMED-TS-CATCH0-EVICTS-FRESH-SIGNAL-ROWS (REVIEW) is signal_queue.rows[].ts on ONE consumer (orch-cold-evict.sh age gate), fixed by a doc-level write-format pin. This row is the task_board plane + a MECHANICAL write-time gate covering all consumers. FIX-MARKET-MESSAGES-TIMESTAMP-FORMAT (backlog) is market.db TEXT timestamps, a different store entirely.",
+        "related": [
+          "FIX-COLDEVICT-MALFORMED-TS-CATCH0-EVICTS-FRESH-SIGNAL-ROWS",
+          "FIX-DEVTEAM-IDLE-CHAIN-STEP1-TRIAGE-STARVATION",
+          "FIX-SIGNALQUEUE-DUP-ID-GUARD"
+        ],
+        "origin_signal_id": "po-triage-20260806T1107Z-boardscan",
+        "updated_at": "2026-08-06T11:35:36Z"
+      },
+      {
+        "id": "CLEAN-STRANDED-REPO-STATE-20260806",
+        "type": "CLEAN",
+        "title": "Stranded-state sweep 2026-08-06: delete 2 classes of zero-byte leaked artifacts (6 auditor cycle-markers + 1 root-level typo file), commit 1 real orphaned analysis brief, and resolve 2 pointer-less auto-committed one-off scripts",
+        "status": "BACKLOG",
+        "priority": "P3",
+        "size": "S",
+        "zone": "cross-service/",
+        "owner": "po",
+        "next_agent": "code-janitor",
+        "created_at": "2026-08-06T11:35:35Z",
+        "created_by": "po/triage-20260806T1107Z",
+        "baseline_pass": "9408",
+        "files": [
+          "docs/agent-memory/.auditor-cycle-markers-2026-07-30T16:00Z.tmp",
+          "docs/agent-memory/.auditor-cycle-markers-2026-07-31T00:00Z.tmp",
+          "docs/agent-memory/.auditor-cycle-markers-2026-08-01T04:00Z.tmp",
+          "docs/analysis-briefs/FRT.md",
+          "eekly_recap_draft.md",
+          "scripts/dev-team-drain-0aD-mark-read-20260731-0217.jq",
+          "scripts/po-s153-pdfavail02-close-deploygate-lifecycle-mint.jq"
+        ],
+        "desc": "Two dev-team stranded-state-sweep signals, both LOW, both premise-verified individually by po at source rather than trusted from the sweep (FIX-STRANDED-SWEEP-CLASSIFY-AGENT-MODEL-SWITCH, in REVIEW, documents that the sweep's UNKNOWN bucket mis-classifies ~40%). SIGNAL dev-20260806T105639 (payload docs/signals/stranded-state-sweep-unknown-20260806T105540Z.json), 5 paths, ALL CONFIRMED REAL: (1-3) three .auditor-cycle-markers-*.tmp in docs/agent-memory/, ALL ZERO BYTES — and po found the sweep UNDER-reported: there are 6 on disk, not 3 (three more dated 2026-08-05T17:30Z/18:00Z/19:00Z, also zero bytes), so system-auditor leaks a marker per cycle and never reaps it. That LEAK is the root cause; deleting the 6 files without fixing the reaper just resets the counter. (4) docs/analysis-briefs/FRT.md — NOT junk: 1076 bytes of real content ('# FRT — Analysis Ledger 2026', Exchange HOSE), untracked since 2026-07-31, i.e. 6 days of legitimate cowork output that no commit path ever picked up. Commit it, do not delete it. (5) 'eekly_recap_draft.md' at REPO ROOT — ZERO bytes, dated 2026-08-01: an obvious truncated shell redirect ('w' eaten from 'weekly_recap_draft.md'). Root-level *.md is explicitly FORBIDDEN by docs/protocols/fail-loud-protocol.md § Output Boundary. Delete. SIGNAL dv2-20260806T105650 (payload docs/signals/stranded-state-sweep-scripts-pointer-20260806T105540Z.json), 2 scripts auto-committed as c5175e984: po grepped docs/ and .claude/ for both filenames — NEITHER has an owning-flow-doc pointer, confirming the payload's own concern. Both names are single-use and date/task-stamped ('-20260731-0217', 's153-pdfavail02-close-deploygate-lifecycle-mint'), which is the signature of one-off jq snippets that were already executed, NOT reusable tooling — so the correct disposition is most likely deletion, not retrofitting a pointer.",
+        "deliverable": "AC-1: delete all 6 (not 3) docs/agent-memory/.auditor-cycle-markers-*.tmp zero-byte files. AC-2: fix the LEAK at source — system-auditor must reap its own cycle marker at cycle end; without this, AC-1 is a one-shot cleanup of a recurring leak. AC-3: commit docs/analysis-briefs/FRT.md (real content, do not delete) and state which commit path should have caught it 6 days ago. AC-4: delete the zero-byte root-level 'eekly_recap_draft.md'. AC-5: for each of the 2 auto-committed scripts, either git-rm it as a spent one-off OR add the owning-flow-doc pointer required by docs/policies/dev-standards.md § Script Persistence — decide per script, from its actual content, and record which and why.",
+        "not_duplicate_of": "FIX-STRANDED-SWEEP-CLASSIFY-AGENT-MODEL-SWITCH (REVIEW) fixes the SWEEP's classifier. This row disposes of the concrete artifacts this particular sweep found, and fixes the auditor marker leak that keeps feeding it.",
+        "related": [
+          "FIX-STRANDED-SWEEP-CLASSIFY-AGENT-MODEL-SWITCH"
+        ],
+        "origin_signal_id": "dev-20260806T105639,dv2-20260806T105650",
+        "updated_at": "2026-08-06T11:35:36Z"
       }
     ],
     "closed_sprints": [
@@ -13836,7 +13950,7 @@
         "supervised": false,
         "created_at": "2026-07-22T01:15:30Z",
         "created_by": "pm/decomposition-20260722T0115",
-        "updated_at": "2026-07-22T01:21:08Z",
+        "updated_at": "2026-08-06T11:35:36Z",
         "updated_by": "pm/decomposition-20260722T0115",
         "origin_task": "FIX-ORPHAN-ADOPTION-BOARD-STATE-GUARD",
         "parent_fix_spec": "fix_spec(a)+(c)/AC1+AC3",
@@ -13856,7 +13970,8 @@
             "title": "Implement two-statement UPDATE pattern (not CTE) per FR-1 file-level design",
             "acceptance": "First UPDATE: ttl_seconds if supplied. Second UPDATE: payload_patch merge. Both preserve unpatched fields."
           }
-        ]
+        ],
+        "po_corroboration_20260806": "LIVE 10x corroboration for the FR-2 null-session release ladder, RAW-verified by po 2026-08-06T11:07Z tick (signal dev-orphangap-20260806T111713Z, finding_2). task_release(task_id='orphan-signal:'+id, owner_client_session=$SESSION) returned {ok:true, released:0} on all 10 attempts — the orphan-signal lock's owner_client_session is null (server-reaper owned), so NO client session can ever match it. Both call sites in docs/agents/dev-team/flow/orphan-adoption.md (happy-path ~L94-98 and git_sha-invalid dead-end ~L69-74) are therefore unreachable no-ops as written. Note the ok:true/released:0 shape: the call reports success while releasing nothing — the exact 'ok+released=wrong' false-green class. Practical blast radius is bounded by the 7200s TTL self-clear, but during that window a re-probe can still attempt duplicate adoption if FR-4's terminal guard is not also live. Same 15-day READY stall as its FR-4 sibling."
       },
       {
         "id": "FIX-ORPHAN-FR2-FR6-FR7-INTERFACE-COORDINATION-TOOLS",
@@ -13946,7 +14061,7 @@
         "supervised": false,
         "created_at": "2026-07-22T01:15:30Z",
         "created_by": "pm/decomposition-20260722T0115",
-        "updated_at": "2026-07-22T01:21:08Z",
+        "updated_at": "2026-08-06T11:35:36Z",
         "updated_by": "pm/decomposition-20260722T0115",
         "origin_task": "FIX-ORPHAN-ADOPTION-BOARD-STATE-GUARD",
         "parent_fix_spec": "fix_spec(a)+(c)/AC1+AC3",
@@ -13971,7 +14086,8 @@
             "title": "Update task_release call sites in dev-team/flow/main.md for orphan-signal cleanup (FR-2)",
             "acceptance": "Release calls at :365-370 and :391-394 now succeed via null-session ladder"
           }
-        ]
+        ],
+        "po_corroboration_20260806": "LIVE 10x corroboration for FR-4 (read-guard), RAW-verified by po 2026-08-06T11:07Z tick (signal dev-orphangap-20260806T111713Z). dev-team's Step 0a-B probe surfaced 10 orphan-signal rows via task_list_held(kind=orphan-signal); 10/10 pointed at tasks ALREADY DONE/DONE_VERIFIED (4 on the live board, 6 cold-archived to docs/data/orch/archive/2026-08.json). orphan-adoption.md as written has no terminal-status check before claim+tree-revert+board-flip+resume-spawn, so following it literally would have re-dispatched 10 duplicate zone-agent spawns onto finished work. Router hand-mitigated (stale-steal claim + immediate release on all 10, no board-flip, no spawn). THIS ROW IS THE FIX and has been READY, P0, next_agent=developer, deps=null, blocked_by=null, supervised/plan_only unset, updated_at frozen at 2026-07-22T01:21:08Z — 15 days undispatched while the defect it closes fired 10x in one tick."
       },
       {
         "id": "FIX-ORPHAN-FR8-TEST-COORDINATION-STORE",
@@ -14273,7 +14389,7 @@
           "FIX-DRAIN-PERSIST-GUARD-COUNT-DRAINABLE-ONLY"
         ],
         "note": "Router SURFACED; PO source-verified the JUMP-to-end placements before minting (grep-confirmed distinct from the QA-Drain row which adds the drain). Sequence AFTER the SLS/QA-Drain/RLC live-tick AC(3) verification lands so the two do not race the same flow file. | 2026-07-22 SHARPER FACET (from dev-team-20260722T054244Z-triage-batch-wip-deadlock): even when Step-1 triage SUCCEEDS under WIP saturation, its direct-FIX output (Step2 FIX->skip->Step3 has NO WIP gate) still requires a free WIP slot to LAND, so a successfully-triaged BATCH is silently lost if the board is saturated and it is not persisted. dev-team could neither dispatch nor persist its 07-22T05:42Z BATCH; PO minted the 2 FIXes (FIX-DRAIN-PERSIST-GUARD-COUNT-DRAINABLE-ONLY P1, FIX-ORCHSTATE-CONSERVATION-GUARD-QA-LANE-BLIND P2) to backlog[] as the workaround. Architect: the fairness fix must ALSO guarantee triaged direct-FIX output is DURABLY PERSISTED, not merely that Step-1 runs.",
-        "updated_at": "2026-07-30T09:21:52Z",
+        "updated_at": "2026-08-06T11:35:36Z",
         "updated_by": "dev-team/tick-20260725T1351Z",
         "po_evidence_20260725T0948": "LIVE EVIDENCE + PREMISE CORRECTION (folded from signal cwk-20260725T093521-b3d1's starvation leg; no new row minted — same defect class, same zone, same architect owner). PREMISE CORRECTION: this row's title asserts 'with review[] holding qa-eligible rows the QA-Drain fires every idle tick'. The live board REFUTES that — qa[] is EMPTY (0 rows) while review[] holds 105 rows, 73 of them carrying next_agent=qa, some stamped explicitly 'branch:null for QA-Drain'. QA-Drain has effectively never fired. The lane that actually wins the head-idle chain is BOUNDED-1, which is FIRST in it and draws from a 390-row backlog[], so it finds an eligible row on essentially every idle tick and JUMPs to execute — leaving SLS, RLC and QA-Drain unreachable behind it. Measured cadence 2026-07-25: seven BOUNDED-1 claim commits between 02:17Z and 05:18Z, one every ~30min (8e062bbd6, 4ba46273b, 941c3b829, 525a82e14, a87975d9d, a44ac38aa, 9f2ae6865), against ZERO RLC or QA-Drain dispatches in the same window. CONSEQUENCE: ready[] (45 rows, 18 of them P0) and review[] (105 rows) are both structurally undrainable while backlog[] is non-empty. Concrete cost: P0 FIX-BCTC-PENDING-REFINE-HEAD-OF-LINE-FAILED-ROW sat READY and undispatched from 2026-07-21 through 2026-07-25 across three independent correct detections, purely because nothing consumes ready[]; PO has re-routed that one row to backlog[] this tick as an ACUTE workaround, which does not fix the lane. So the fairness fix must cover lane ORDERING/starvation between the four dispatch lanes, not only the Step-1 PO-triage preemption this row was originally minted for. Note the chain-ordering defect is CHRONIC and independent of the ACUTE head-pin outage recorded in FIX-DEVTEAM-HEAD-PIN-STALE-THRESHOLD-24H-VS-TICK-CADENCE — the P0s were already starving for 4 days before today's pin.",
         "po_ruling_20260725T1059": "PO RULING 2026-07-25T10:59Z (po, router-referred throughput decision). DISPOSITION: FIX + RAISE P1->P0, design PRE-SELECTED (this row previously said 'PO has NOT pre-selected'; leaving the design open is part of why it sat). NOT accepted-as-is.\n\nWHY P0: this row is the only defect on the board that STRUCTURALLY BLOCKS ITS OWN REMEDIATION. It is supervised:true + plan_only:true, which routes it to the Supervised-Lane Sweep — and SLS is 2nd in the very chain this row describes, permanently unreachable behind BOUNDED-1. A defect that prevents its own fix from ever being dispatched outranks each individual row it starves. It also gates the drain rate of three whole lanes at once (ready 44 incl. 18 P0, review 105, Step-1 triage), so its priority must dominate theirs.\n\nSELECTED DESIGN (supersedes options a/b/c in .deliverable — architect may refine the mechanism, NOT re-open the choice): AGED ROUND-ROBIN over the five idle-path consumers, plus DURABLE signal handoff. Two parts, both required; part 2 is NOT optional and NOT separable.\n\nPART 1 — replace the fixed-priority chain with aged round-robin. Today BOUNDED-1 -> SLS -> RLC -> QA-Drain -> Step 1 is a FIXED-PRIORITY chain in which every lane JUMPs to a terminal on dispatch, so the first eligible lane wins every idle tick and the other four are unreachable whenever backlog[] is non-empty (it is: 391). Fix: stamp each of the five consumers with last_served_tick; on each idle tick serve the ELIGIBLE consumer with the OLDEST last_served_tick. Rationale for preferring this over the row's own option (a) 'force Step 1 every Nth idle tick': option (a) special-cases ONE victim and leaves ready[]/review[] starved by the same mechanism. Live evidence says all four non-winners starve, not just Step 1 — so the fix must be lane-generic. One mechanism, four victims.\n\nPART 2 — make the drain->triage handoff DURABLE (folds FIX-DEVTEAM-BOUNDED1-PENDINGSIGNALS-EMPTY-GUARD, now CANCELLED). Rotation alone bounds triage LATENCY but does not stop signal LOSS. Step 0a is DESTRUCTIVE-BEFORE-DELIVERY: it moves docs/signals/*.json to processed/, writes the fingerprint into signals_processed (so the next drain dedups it to skipped-duplicate and never re-routes it), and marks signal_queue rows NEW->READ — then hands the result to Step 1 via pendingSignals[], which is an IN-MEMORY per-tick variable, never persisted (grep-confirmed: pendingSignals appears only in dev-team/flow/main.md + drain-signals.md, in no script and in no orch-state key). Step 1 is its ONLY consumer. Therefore every tick that short-circuits before Step 1 CONSUMES its drained signals and DISCARDS them; recovery is possible only by hand-reading processed/ and only until the 7-day prune. Required: Step 0a persists the drained batch to a durable inbox, Step 1 consumes-and-clears it, so a short-circuited tick loses nothing and the next tick that reaches Step 1 drains the accumulation. Under rotation, triage loses 4 of every 5 idle ticks, so WITHOUT part 2 rotation would still drop ~80% of drained signals — that is why these ship together.\n\nEXPLICIT NON-CHANGE — BOUNDED-1 cap stays 1. The selected design needs no cap change: BOUNDED-1 keeps its WIP<1 gate and its 1-task-in-flight lane, it simply stops winning every idle tick. The cap is user-gated (2026-07-04) and is NOT touched. If architect's refinement turns out to require raising it, STOP and escalate to the user — do not raise it.\n\nEVIDENCE (verified live this session, not inferred): (i) Fixed-priority starvation is provable by control-flow inspection of docs/agents/dev-team/flow/main.md alone — BOUNDED-1 :514 JUMP TO execute, SLS :575 JUMP TO end, RLC :628 JUMP TO end, QA-Drain :679 JUMP TO end, Step 1 at :695 reachable only if all four decline. (ii) Measured 7/7 wins to BOUNDED-1, 0/7 to the other four, 02:17Z-05:18Z 2026-07-25 (per this row's own po_evidence_20260725T0948). (iii) Lane consequence live: qa[]=0 against review[]=105 with 73 rows carrying next_agent=qa — QA-Drain has effectively never fired. (iv) Signal-plane consequence: signals.db signals_processed holds 363 rows in the 7d window, ALL result='routed-to-po' (2026-07-18..25), across 141 drain commits — against exactly ONE dev-team Step-1 PO triage record in that same window (docs/agent-memory/decisions/triage-20260725T0948Z-po.md, and that one was spawned OUT-OF-BAND by the router as the acknowledged workaround; the prior triage-* journal is triage-20260711T0053Z-po.md, 14 days earlier). PO itself ran 62 cycles in the window, so PO is NOT idle — what is starved is specifically the dev-team Step-1 path, the only consumer of pendingSignals[]. The persistent planes (signal_queue rows, Telegram) are covered by those out-of-band router-driven PO runs; the docs/signals/ FILE plane is not, because the drain already moved and fingerprinted it. Net: the system is currently running on a live-router workaround for a broken unattended path — precisely the path the 7,37 * * * * cron exists to cover.\n\nPREMISE NOTE for architect (do not re-litigate, recorded for accuracy): the 4-day non-dispatch of P0 FIX-BCTC-PENDING-REFINE-HEAD-OF-LINE-FAILED-ROW had TWO independent causes, not one. It sat in ready[] where no lane could reach it (this row's chronic defect); PO re-routed it ready->backlog at ~09:51Z as an acute workaround, which made it BOUNDED-1-eligible; separately the tick plane was dead 05:18Z-10:37Z and was re-armed ~10:10Z. BOUNDED-1 then claimed it at priority_rank=0 on the first tick after re-arm (10:37Z, head.updated_at 2026-07-25T10:45:02Z). The tick-plane fault is REAL and is CLOSED. It does not explain the preceding ~4 days, during which the row was in a lane with no reachable consumer — that remains this row's defect and is the reason ready[] must be covered by PART 1.",
@@ -14301,7 +14417,8 @@
         ],
         "dev_team_note_20260729T1420": "Epic-wrapper convention applied by dev-team router (docs/agents/dev-team/flow/post-cycle.md Step 4.4): children[] stamped, moved in_progress[]->ready[] per the documented wrapper-lives-in-ready[] convention (status IN_PROGRESS->READY per Stage-1b lane-coherence validator), .head reset to idle. Was incorrectly left in in_progress[] pinning WIP=1 after pm decomposition (2 rounds, both incomplete — see notebook cycle-20260729T1412Z-verify / cycle-20260729T1355Z-verify).",
         "dev_team_note_20260729T1421": "Self-inflicted collision fixed: moving this row to ready[] at 14:17Z carried over its STALE promoted_by/claimed_by=\"dev-team (supervised-lane sweep)\" markers from the 13:37Z claim, making it match scripts/devteam-backlog-claim-supervised-lane-sweep.jq's claim signature again — the claim script re-claimed THIS row instead of the freshly-promoted FIX-COWORK-DISPATCH-ROUTER-INTENT-MUTEX-BYPASS, undoing the WIP fix. Stale promote/claim stamps stripped so this epic-wrapper row can never again be mistaken for an unclaimed SLS candidate.",
-        "po_strand_note_20260730": "STRANDED, DELIBERATELY NOT MOVED (po 2026-07-30). Same ready[]+supervised+plan_only+promoted_by=null shape as the two rows moved to backlog this tick and equally invisible to all four pickers, BUT this row carries 6 `children`, so SLS-promote's EPIC-WRAPPER gate would reject it in backlog[] too — moving it would have looked like a fix and changed nothing. Decomposition containers are never auto-promoted by design; its CHILDREN are the dispatchable unit. Left for FIX-DEVTEAM-READY-REVIEW-LANE-SUPERVISED-PLANONLY-NO-PICKER to handle as part of the class, which must state where epic children in a gated lane get swept."
+        "po_strand_note_20260730": "STRANDED, DELIBERATELY NOT MOVED (po 2026-07-30). Same ready[]+supervised+plan_only+promoted_by=null shape as the two rows moved to backlog this tick and equally invisible to all four pickers, BUT this row carries 6 `children`, so SLS-promote's EPIC-WRAPPER gate would reject it in backlog[] too — moving it would have looked like a fix and changed nothing. Decomposition containers are never auto-promoted by design; its CHILDREN are the dispatchable unit. Left for FIX-DEVTEAM-READY-REVIEW-LANE-SUPERVISED-PLANONLY-NO-PICKER to handle as part of the class, which must state where epic children in a gated lane get swept.",
+        "po_measurement_20260806": "po measured the ready[] lane RAW 2026-08-06T11:29Z: 59 rows, 22 at P0, oldest updated_at 2026-07-17 (20 days). Sampled 6 (FIX-ORPHAN-FR1..FR8): all P0, next_agent=developer (a real dev agent, so NOT covered by FIX-BOUNDED1-NONDEV-NEXTAGENT-RESIDUAL-NO-DISPATCH-LANE), deps=null, blocked_by=null, no supervised/plan_only flag — structurally dispatchable, never dispatched, updated_at frozen 15 days. Separately, 5 of the oldest ready[] P0s (CCATO-MCP-T3/T5/T6/T7/T8) carry updated_at='2026-07-17T04:53:14ZZ' (DOUBLE Z), which jq fromdateiso8601 THROWS on — any age-ranked picker built on that function silently skips them forever (tracked as FIX-ORCHSTATE-TASKROW-TIMESTAMP-FORMAT-UNENFORCED-AT-WRITE). Measurement only, no disposition change."
       },
       {
         "id": "FIX-COWORK-DISPATCH-ROUTER-INTENT-MUTEX-BYPASS",
@@ -14669,11 +14786,15 @@
         "source": "po triage 2026-08-06T10:15Z — 2 RAW-verified occurrences same session (refine_bctc_md ~09:05Z, system-auditor ~09:52Z) crossing feedback_recurring_bug_escalation 2+; memory feedback_leaf_agent_analysis_only_exit_recurring_pattern_20260806 + feedback_refine_bctc_md_invents_partial_exit_skips_mandated_loop + feedback_cowork_spawn_narrates_not_executes (4 prior occurrences 06-18..07-29)",
         "created_at": "2026-08-06T10:15:29Z",
         "created_by": "po",
-        "updated_at": "2026-08-06T10:17:30Z",
+        "updated_at": "2026-08-06T11:35:36Z",
         "updated_by": "po/triage-20260806T1015",
         "owner": "po",
         "po_ruling_20260806T1015": "PO RULING: this is layer-level, NOT noise and NOT two agent-specific bugs. Requester offered (a) in-flow self-check / (b) agent-father fleet flow-doc audit / (c) log as noise / (d) other. (a) REJECTED — the project already ratified in-flow self-checks as vacuous (spawn-fanout.md:247-251) and market-watcher empirically re-narrated on 07-29 seventeen days AFTER its in-flow guard landed on 07-12. (b) REJECTED as primary — agent-father's lever is in-flow prose, i.e. the same refuted layer, and a 45-file sweep validated on no reference implementation is the anti-pattern in feedback_fleetwide_gate_validated_on_one_file_optout_allowlist. (c) REJECTED — 7 occurrences, 4 agent types, 7 weeks, plus 6 mechanically-orphaned auditor cycle markers spanning a week; far past threshold. (d) ADOPTED = generalize the EXISTING exogenous caller-side gate (arm 2 artifact-delta) + close the cron-spawn coverage hole. Per feedback_recurring_detection_vs_recurring_failed_fix this is a recurring detection whose remediation has never executed at the correct layer — dispatch it, do not block it.",
-        "status": "READY"
+        "status": "READY",
+        "po_manual_dispatch_flagged_at": "2026-08-06T11:35:35Z",
+        "po_manual_dispatch_flagged_by": "po (manual-dispatch-sweep)",
+        "po_manual_dispatch_class": "READY-XOR-SUP-OR-PLANONLY",
+        "po_manual_dispatch_note": "po (manual-dispatch-sweep) surfaced READY-XOR-SUP-OR-PLANONLY candidate — folding into 2026-08-06T11:07Z BATCH. Step 1 produced 41 candidates; rank-0 FIX-REFINE-SUBFLOW-OPTIONC-CONTRACT-DRIFT SKIPPED (minted+routed by a peer PO session 4 min earlier at 11:18:01Z, created_by=po/recurring-bug-escalation-20260806T1118Z — re-folding it would be a double-dispatch). Next-by-rank TE-T03 SKIPPED: fails Step 3's own precondition (files=null, desc='') so no valid BATCH entry can be built from its fields; needs a field backfill before it is ever sweep-eligible. This row is the first candidate with complete Step-3 fields and matches the prior PO cycle's explicit carry-over instruction."
       },
       {
         "id": "GUARD-NOTEBOOK-CONCURRENT-EDIT-COLLISION-DATA-LOSS",

@@ -201,3 +201,24 @@
 - (d) doc-contract defect: loop body names a non-existent executor — ADOPTED
 **why-decision:** Only (d) explains the agent's verbatim complaint ("**sub-flow logic** implementation ... not executable with current tool grant") as a literal read of a real line rather than free confabulation. (a) died on RAW window data: success chunk unit-0000..0011 = 21p/20img/4x 3-page continuation vs abandoned chunk unit-0012..0023 = 22p/22img/4x 3-page continuation — same shape, so the prior memory's "unusually continuation-heavy" premise is factually wrong. Grant is proven sufficient by this agent's own 08-05T16:41Z run on this same report, so no grant change.
 **why-change:** Escalation asked for architect-vs-agent-father routing; feedback_recurring_bug_escalation targets patch LOOPS (>=2 prior fixes) and here zero fixes were ever attempted, so a first concrete fix is correct and an architect design cycle would be over-escalation — the architect-grade analysis is in the row itself. Slot pause is partial (3 of 4) not total, keeping slot-4 as canary so throughput is not zeroed and re-arm cannot be silently forgotten.
+
+### STEP po-S141 · po · 2026-08-06T11:38:22Z
+**task-id:** FIX-EXECUTETIER-PHASE35-RESUME-LOCK-RELEASED-AT-SPAWN-NOT-COMPLETION
+**what-done:** Triaged 5 pendingSignals; both dev-team "structural finding" signals (HIGH S2-lock gap, MEDIUM orphan-adoption gap) resolved to FOLD-not-mint — root causes already owned by open rows. Escalated the S2 root-cause row P1→P0 with occurrence-3 evidence + 4-lane scope widening, folded into BATCH for architect.
+**what-considered:**
+- (a) mint 2 new FIX rows as the signals recommended — REJECTED
+- (b) mint 1 combined architect SPIKE for the dispatch loop — REJECTED
+- (c) FOLD both onto existing rows, escalate + dispatch the blocker — ADOPTED
+**why-decision:** Grep of the 5 non-terminal lanes found exact owners: FIX-EXECUTETIER-PHASE35-... (created 07-30) already names Phase-3.5's finally-release-at-background-spawn as the mechanism, and FIX-ORPHAN-FR4-FR5/FR1-FR2 (created 07-22) already specify the terminal read-guard and the null-session release ladder. Nothing was undiagnosed; all three were undispatched. Minting would have added board debt without adding a picker.
+**why-change:** Router asked for "high-priority architect review" of a new finding. It is not new — it is occurrence 3 of a row that has sat 7 days with next_agent=architect. Per feedback_file_prior_art_check_before_minting_row + feedback_recurring_detection_vs_recurring_failed_fix, the lever is dispatch, not analysis.
+
+### STEP po-S142 · po · 2026-08-06T11:38:22Z
+**task-id:** FIX-EMITSIGNAL-BUGTELEGRAM-NO-TEST-SINK-GATE
+**what-done:** Traced 14 new BUG-channel telegrams (11:14-11:20Z, all "E-3 write/read-back failure ... check_id=scheduler_locks-FAIL") to an unstubbed send_telegram in a peer's test file, not a live signal-loss incident; minted the missing-test-sink FIX and dispatched it after the collision cleared.
+**what-considered:**
+- (a) live E-3 outage / orch-state corruption — FALSIFIED
+- (b) Stage-1c dangling payload_ref on the new --payload-ref flag — FALSIFIED
+- (c) ENOSPC / disk pressure — FALSIFIED
+- (d) test harness isolates files but not Telegram — ADOPTED
+**why-decision:** Re-ran the byte-identical working-tree script --e3-only against a scratchpad COPY of the same live board: rc=0, row landed, conservation OK — so the write path is healthy. orch-validate on a copy exits 0; db-integrity-history.json exists (659KB); 12Gi free. Positive proof for (d): the test's fixture {"table":"scheduler_locks","class":"FAIL"} + append.sh:92 --check-id "${table}-${CLASS_TXT}" reproduces the alert string byte-for-byte, the test exports all 4 file overrides but declares zero mcp_call/send_telegram stubs, and its $BROKEN_DIR negative control is exactly orch-apply's exit-3 path (the rc=3 quartet).
+**why-change:** Minted with a do-not-dispatch hold for file collision with the live developer; 7 min later that task hit review[] and its test file was COMMITTED still unstubbed, converting a one-off local nuisance into per-CI-run live-channel spam — so I lifted the hold and dispatched in the same tick.
