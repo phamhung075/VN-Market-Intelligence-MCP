@@ -1,0 +1,25 @@
+{
+  "from": "context-bloat-backstop-hook",
+  "to": "claude-manager-helper",
+  "type": "context_bloat_breach",
+  "priority": "high",
+  "createdAt": "2026-08-06T12:09:23Z",
+  "payload": {
+    "file": ".claude/skills/cron-standalone-team/register-job-db-integrity-offhours.md",
+    "line_count": 240,
+    "cap": 200,
+    "byte_count": 20048,
+    "byte_cap": 12000,
+    "class": "skill-file",
+    "reason": "line-cap,byte-cap",
+    "overage": 40,
+    "byte_overage": 8048,
+    "action_required": "prune_or_split"
+  },
+  "_processed": {
+    "fingerprint": "9330f111232ffb596a83c24472fdd8441ffdc2291ef04f0a87e5647c61a04e9b",
+    "processedAt": "2026-08-06T12:26:30Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

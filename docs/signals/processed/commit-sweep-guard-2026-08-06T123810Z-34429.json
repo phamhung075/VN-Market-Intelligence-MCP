@@ -1,0 +1,14 @@
+{
+  "from": "commit-sweep-guard",
+  "to": "po",
+  "type": "bug-escalation",
+  "priority": "high",
+  "createdAt": "2026-08-06T12:38:10Z",
+  "payload": "[sweep-guard] BARE commit about to absorb 3 staged file(s) not necessarily this actor's own: docs/data/orch/orch-state.json docs/incidents/2026-08-06-sqlite-db-corruption-wai-rearm-vector.md scripts/router-claim-ready-to-inprogress-headguard.jq. actor=f298ccf7-8cf4-452d-9a5a-57dcb47e65ac mode=warn escalated=true prior_warns=10 threshold=3. Fix: git commit -m \"<msg>\" -- <own-files-only>.",
+  "_processed": {
+    "fingerprint": "99dc41785c46bfe8884894fb2190a9278457c9312a39737d839c88b286b1e8e3",
+    "processedAt": "2026-08-06T12:39:55Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

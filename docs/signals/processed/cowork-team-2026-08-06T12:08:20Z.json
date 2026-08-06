@@ -1,0 +1,67 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-08-06T12:08:20Z",
+    "matched_slots": [
+      "news-scout-offhours",
+      "market-watcher-offhours",
+      "alert-commander-critical"
+    ],
+    "won_slots": [
+      "news-scout-offhours",
+      "market-watcher-offhours",
+      "alert-commander-critical"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/news-scout/flow/main.md",
+      "docs/agents/market-watcher/flow/main.md",
+      "docs/agents/alert-commander/flow/main.md"
+    ],
+    "silent": false,
+    "drift_min": 3,
+    "errors": [],
+    "pressure_mode": "adaptive",
+    "calendar_status": "unknown",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "chef_mutex_applied": false,
+    "due_reasons": {
+      "news-scout-offhours": "cadence",
+      "market-watcher-offhours": "cadence",
+      "alert-commander-critical": "cron"
+    },
+    "cadence_minutes": {
+      "news-scout-offhours": "240",
+      "market-watcher-offhours": "240",
+      "alert-commander-critical": "null"
+    },
+    "last_fired_timestamp": "2026-08-06T12:08:11Z",
+    "last_fired_slots": [
+      "news-scout-offhours",
+      "market-watcher-offhours",
+      "alert-commander-critical"
+    ],
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "12:00",
+    "leader_lock": "acquired",
+    "dev_head": "unknown",
+    "devq": 5,
+    "signal_backlog": 22,
+    "note": "3 slots fired (news-scout-offhours, market-watcher-offhours, alert-commander-critical); 1 signal_queue row left NEW (to:po, per feedback_cowork_step0a_blanket_ack_buries_other_agents_signals — not dispatcher-consumed)"
+  },
+  "priority": "low",
+  "createdAt": "2026-08-06T12:08:20Z",
+  "_processed": {
+    "fingerprint": "3c9877bb2d049126a1f094094c7126502e9e1360640d4a5af508b30916886cc3",
+    "processedAt": "2026-08-06T12:26:30Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

@@ -4,5 +4,11 @@
   "type": "bug-escalation",
   "payload": "[alert-commander] Step 0/1 bootstrap failed: DB disk I/O error — get_agent_signals, get_market_context, get_alerts(type=price), get_system_status (DB STATUS + DATA FRESHNESS sections), get_recent_fixes all return 'disk I/O error' (retried once, identical failure). get_legal_risk_signals returned a clean 'no risk' result but the server's own Recent Errors log shows legalRiskTools' internal agent_signals sub-query hit the SAME disk I/O error at the same timestamp (2026-08-06T12:09:25Z / 19:09:25 VN) — its clean verdict is unverifiable/possibly a swallowed-error false-clean this cycle. Unaffected: get_volatility_indicators, get_vn_liquidity_state, get_foreign_room, get_macro_calendar, get_crisis_early_warning, send_telegram all succeeded — not a gateway-blind session gap, a scoped DB-table-level disk I/O error (likely the agent_signals / alerts tables specifically). Signal Matrix, position-danger gate (stopLossHit needs get_alerts), watchlist-opportunity gate (agentSignalsMajority needs get_agent_signals), and the bus-based legal_risk CRITICAL-always path are all blocked this cycle. No fabrication, no MARKET/WORK send — silent EXIT per cowork-error-boundary. slot=alert-commander-critical tick=12:00.",
   "priority": "high",
-  "createdAt": "2026-08-06T12:10:46Z"
+  "createdAt": "2026-08-06T12:10:46Z",
+  "_processed": {
+    "fingerprint": "ba2a650aaca9531bcb71bf4c1d80c5b60d96f3150064ba0b1b9fb262975e9676",
+    "processedAt": "2026-08-06T12:26:30Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
 }
