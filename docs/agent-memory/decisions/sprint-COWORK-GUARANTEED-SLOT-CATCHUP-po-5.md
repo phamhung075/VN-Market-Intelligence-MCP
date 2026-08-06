@@ -151,3 +151,31 @@
 - Root-cause the detector itself before accepting that the measured quantity means anything
 **why-decision:** The age-bucketed LEFT JOIN split with zero overlap — alerts ≤17h old 18/18 LINKED, ≥18h old 22/22 orphaned — is only producible by GC timing, never by a write-path gap, which would concentrate in one producer family; instead all five families (news/price/ta/other/macro) appear on BOTH sides. That killed the brief's hypothesis outright, and `checkOrphanAgentSignalsAlertId.ts:15-16` already states the mechanism in prose ("stubs are TTL-bound, ~2h, purged by cleanExpired") — C-08's expected=0 against a 24h window was never re-derived against it and is unsatisfiable by construction.
 **why-change:** Brief asserted "seen at least twice, 1→22 growth, no prior row". All three wrong. C-08 fired a THIRD time on 07-30 at **121** orphans (DASHBOARD.md:242-249, absent from both live queue and archives), so the series is 1→121→22 — non-monotonic and volume-tracking, not a worsening defect. A prior row DID exist (FIX-ALERT-ORPHAN-CORRELATION, 2026-06) and its D-1 reached my identical conclusion — "the regression is alert volume growth, not a new code bug" — yet the detector was still left unsatisfiable, which is why this keeps re-firing. Also found a second fault the brief never suspected: the ISO8601 strcmp bypass inflates the window (as-written 40 alerts/22 orphans vs TRUE 24h 28/10; oldest admitted row 31h old), already fixed in the code-plane twin `checkStaleAlerts.ts:23-30` on 2026-08-01 and never propagated to the flow-doc SQL the agent actually runs.
+
+### STEP po-S136 · po · 2026-08-06T09:56:00Z
+**task-id:** CI-PERFILE-STRUCTURAL-MITIGATION
+**what-done:** Read FAILEDFILE across 6 consecutive main CI runs; found `bun test` fails on a ROTATING file (5 of 6 red, 4 distinct files, one clean green mid-sequence) — enriched this empty stub, low→P1, next_agent null→dev-mcp-server.
+**what-considered:**
+- Mint a per-file FIX row for `vnstock-3statement` (what the ci_red rule literally prescribes)
+- Fold onto the existing DEFLAKE-VNSTOCK-3STATEMENT row and stop there
+- Treat the flake RATE as the defect and escalate the existing structural stub
+**why-decision:** A docs-only commit (f1fddde0d) failed a source test that passed 2 min earlier at 92ff5fb43 — that cannot be a per-file bug. Per-file minting turns a rotating flake into an unbounded row generator; the DEFLAKE-* family is already 4 rows on a 360-row backlog. Escalating the stub was free (it already existed, unowned since 2026-07-10).
+**why-change:** Deviates from the ci_red rule's one-row-per-failing-file instruction — that rule assumes the file identifies a stable defect, which measurement here refutes.
+
+### STEP po-S137 · po · 2026-08-06T09:56:30Z
+**task-id:** FIX-DEVTEAM-RESUME-GATES-OMIT-READY-LANE
+**what-done:** Minted P1 after verifying at source that WF-1/WF-1b/WF-2 all omit `ready[]`; ran WF-2's own predicate on the live file → should_hold=false, row_found=false for UC-CRITIC-HOOKS-ENFORCEMENT.
+**what-considered:**
+- Accept the router's relayed diagnosis and mint on it
+- Fold onto FIX-DEVTEAM-STEP0B-RESUME-SUPERVISED-HOLD-GATE (already in review)
+- Verify independently, then mint only if genuinely uncovered
+**why-decision:** The existing review row installed WF-2 because the gate was ABSENT; this is a false-negative INSIDE that shipped gate — different defect, not a fold. Independent verification also surfaced a second finding the relay did not have: po/flow/supervised-goahead.md's copy of the WF-2 predicate claims to be byte-identical to main.md but is now 3 lanes vs 5, drifted by today's own terminal-lane fix.
+**why-change:** no change from plan — flow mandates ratifying at source, never on a relayed verdict.
+
+### STEP po-S138 · po · 2026-08-06T09:57:00Z
+**task-id:** TE-T26
+**what-done:** Folded 3 drained signals with ZERO mints (ci_red ×2 files, sweep-guard prior_warns=13, cowork-fire skip) and took the index-top manual-dispatch candidate TE-T26.
+**what-considered:**
+- only path: index-top ordering per the sub-flow, after last cycle's selection-order experiment falsified itself
+**why-decision:** TE-T16 (last tick's index-top pick) reached review this tick, so the documented ordering does dispatch — my prior "4 picks, 0 dispatches" pessimism is now falsified and needed recording.
+**why-change:** no change from plan.
