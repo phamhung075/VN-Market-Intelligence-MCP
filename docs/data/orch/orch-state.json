@@ -88,11 +88,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "updated_at": "2026-08-06T12:19:01Z",
-    "updated_by": "developer",
-    "active_task_id": null,
-    "next_agent": "router"
+    "status": "in_progress",
+    "active_task_id": "FIX-AUDITOR-C08-UNSATISFIABLE-TTL-WINDOW-AND-ISO8601-STRCMP",
+    "next_agent": "dev-team",
+    "next_action": "BOUNDED-1 auto-pickup claim of FIX-AUDITOR-C08-UNSATISFIABLE-TTL-WINDOW-AND-ISO8601-STRCMP — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
+    "updated_at": "2026-08-06T12:27:30Z",
+    "updated_by": "dev-team (bounded-1 auto-pickup)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -2753,8 +2754,11 @@
         "type": "system-issue",
         "summary": "stranded-state sweep: unknown paths need owner (5)",
         "severity": "LOW",
-        "status": "NEW",
-        "payload_ref": null
+        "status": "triaged",
+        "payload_ref": null,
+        "triaged_at": "2026-08-06T12:30:00Z",
+        "triaged_by": "po",
+        "disposition": "ACK, no row minted. LOW-severity stranded-state sweep (5 unknown paths need owner) is board hygiene, deliberately deferred this tick: PO was triaging an ACTIVE P0 (market.db live in WAL mode accumulating pending writes, 5th corruption, 6th incubating). Re-surface on the next ambient tick — if it re-appears with the same count it is stable and can be batched then."
       }
     ],
     "last_triaged_at": "2026-07-29T06:25:00Z",
@@ -2939,8 +2943,8 @@
     ]
   },
   "task_board": {
-    "_updated_at": "2026-08-06T08:58:01Z",
-    "_updated_by": "po (triage-20260806T0849Z: mint CI-RED schema.ts P0 + skill-bloat register.md P3, manual-dispatch stamp)",
+    "_updated_at": "2026-08-06T12:28:00Z",
+    "_updated_by": "po",
     "active_sprints": [
       {
         "evidence": "Router raw-verified (get_bctc_full live, post-rebuild) after BEQ-9/10 refine. Core extraction incident RESOLVED, but populating real scalars exposed a SEPARATE pre-existing analytics/serving layer with 4 defect clusters: (a) RATIO-COMPUTE — VNM ROE=0/ROA=0/EPS=12VND/NetDebt-EBITDA=-7.5e13x; DHG ROA=7,891,932.0% (analyst falsely claimed fixed). Ratios emit 0 or astronomically wrong. (b) BANK-B02-TCTD-SERVING — SHB + EIB get_bctc_full returns 'balance sheet has no decomposition — forced-zero pass suspected'; banks UNSERVABLE despite DONE + committed scalars. (c) PERIOD-SEMANTICS — FPT 2025-Q4 rev=70112.8/NP=11225.5 are FULL-YEAR cumulative labeled 'Q4'; buildComparisonSection then compares cumulative-FY vs next-quarter -> false -82.2% mislabeled 'YoY'. (d) ENTITY-SCOPE — HPG 2025-Q4 is parent-only B01a (rev=0, conf44%) served as the canonical/headline HPG vs consolidated ~140k rev; misleading. PUBLISH-INTEGRITY GAP: NO semantic-sanity publish guard exists in orch-state (the triage-referenced 'Task #13' is NOT present). The BEQ-9/10 reports are now DONE -> flow into chef docs/agents/unified-agent/flow/market-analysis.md + market-analyst -> ROA 7.8M% / false YoY -82% / parent-only-headline CAN reach MARKET unattended. recurring-bug-escalation: BCTC area has >2 fix cycles -> architect root-cause SPIKE, not point-patch. | [dev-team 2026-06-03T11:44Z observation feeding BAL-0/BAL-1] After LF-SERVE-REFLOW recovered FPT Q1 absolute scalars (op_profit/ebitda/cash live-correct), get_bctc_full(FPT) STILL serves garbage DERIVED ratios: current_ratio=41527873060120x (denominator ~0), operating_margin_pct=0.0% (not recomputed from now-correct operating_profit). Confirms the analytics/serving derived-ratio layer is a distinct defect from scalar extraction. BAL-0 publish semantic-sanity gate MUST block current_ratio out-of-range before MARKET/FB; BAL-1 spike should pin the ratio recompute module. Repro: get_bctc_full(code=FPT).",
@@ -11524,26 +11528,6 @@
         "updated_by": "router"
       },
       {
-        "id": "FIX-MARKETWATCHER-EODMD-STALE-NOBASH-CAVEAT-SKIPS-COMMIT-LOSES-NOTEBOOK",
-        "type": "FIX",
-        "title": "eod.md:78 still carries the pre-2026-07-31 no-Bash caveat that cycle.md already fixed -- market-watcher-eod skips its notebook commit every fire, loses the EOD cycle entry to the next same-agent overwrite, and strands news-scouts L-7-deferred commit",
-        "desc": "VERIFIED live 2026-08-05T16:00Z EOD fire (agent a0df2bd1afc971ce7). Chain: (1) .claude/agents/market-watcher.md granted Bash 2026-07-31 commit 610110e16b. (2) cycle.md carried an identical no-Bash transport-gap caveat and was fixed 2026-08-01 (FIX-COWORK-FLOWDOC-STALE-TRANSPORT-GAP-CAVEAT, see cycle.md own header comment) -- caveat demoted to a genuine invocation-error fallback only. (3) eod.md:78 was never touched by that fix -- still reads verbatim this agent holds no Bash and cannot run git add/git_commit_retry directly ... SKIP this step entirely. (4) Todays EOD fire followed eod.md literally: wrote all 4 ledger entries (analysis-briefs DGC/DPM/DBC/VNM) + docs/signals/price_anomaly_20260805T1605.json correctly (Steps A/B unaffected per the docs own text) but skipped Step D (notebook write/commit), citing the docs own stale line as its reason -- not a fabrication, a propagated stale doc. (5) DISPROOF same day, same batch: market-watcher-offhours fired 2 min later (a1f7356854a55a25f) and committed cleanly with Bash (09beb0997) -- direct proof the grant is live and eod.md is simply wrong. (6) Net effect: market-watcher.md notebook has NO Cycle (EOD) section anywhere post-16:06Z -- the EOD narrative was never durably captured, either never written or clobbered when the offhours slot did its own full-overwrite write+commit right after. (7) news-scout.md c233 entry was left dangling uncommitted -- its own flow (docs/agents/news-scout/flow/stage-log-notify.md:14, L-7) explicitly defers its git commit to market-watchers EOD batch commit at market close; that EOD-side half of the contract never fires while eod.md:78 stands. Router committed the stranded news-scout.md manually this cycle as a workaround; the underlying skip will repeat every weekday 16:00 UTC fire until eod.md is fixed.",
-        "ac": "1. Update docs/agents/market-watcher/flow/eod.md:78 to match cycle.mds already-fixed prose (Bash grant live since 2026-07-31 commit 610110e16b -- demote to a genuine invocation-error fallback, not an unconditional skip). 2. Separately decide and fix the lost-update exposure: the per-cycle full-overwrite notebook model has no protection when EOD and a same-agent sibling slot (e.g. offhours) both match in the same cowork-tick batch and fire minutes apart -- either preserve/merge the EOD section across the next overwrite, or serialize same-agent multi-slot fires so one cannot clobber the others uncommitted work. 3. Confirm news-scouts L-7 dependency (stage-log-notify.md:14) resumes working end-to-end on the next weekday EOD fire (its notebook commits without router intervention).",
-        "priority": "P1",
-        "size": "S",
-        "zone": "cross-service/",
-        "next_agent": "developer",
-        "status": "BACKLOG",
-        "created_at": "2026-08-05T16:10:00Z",
-        "created_by": "router",
-        "updated_at": "2026-08-05T16:15:51Z",
-        "updated_by": "router",
-        "related": [
-          "FIX-COWORK-BATCH-COVERAGESTATE-CONTENTION-CORRELATES-WITH-MISSED-NOTEBOOK-COMMIT"
-        ],
-        "not_duplicate_of": "FIX-COWORK-BATCH-COVERAGESTATE-CONTENTION-CORRELATES-WITH-MISSED-NOTEBOOK-COMMIT -- that row is a contention HYPOTHESIS on coverage-state:main mutex; this row is a DIRECTLY VERIFIED stale-doc root cause, distinct mechanism, same symptom family."
-      },
-      {
         "id": "FIX-ARCHITECT-AGENTFATHER-NO-GATEWAY-TOOL-GRANT-FLOWDOC-MISMATCH",
         "type": "FIX",
         "title": "architect and agent-father agent frontmatter grants no mcp__gateway__call_tool, but their own flow docs (and agent-father's own tool-package doc) assume task_claim/task_release/send_telegram are available -- confirmed 4x this session across both agent types",
@@ -12191,6 +12175,42 @@
         ],
         "origin_signal_id": "dev-20260806T105639,dv2-20260806T105650",
         "updated_at": "2026-08-06T11:35:36Z"
+      },
+      {
+        "id": "FIX-MARKETDB-BACKUP-NO-INTEGRITY-GATE-SINGLE-GENERATION",
+        "type": "FIX",
+        "title": "backupDatabase() overwrites the ONLY market.db backup with an unconditional copy and zero pre-copy integrity check — one rotation over an already-corrupting file destroys the last known-good state. Add a quick_check gate + 3-generation rotation.",
+        "status": "BACKLOG",
+        "priority": "P2",
+        "size": "S",
+        "zone": "apps/mcp-server/",
+        "owner": "dev-mcp-server",
+        "next_agent": "dev-mcp-server",
+        "plan_only": false,
+        "supervised": false,
+        "created_at": "2026-08-06T12:28:00Z",
+        "created_by": "po (triage tick 2026-08-06T12:2xZ — routed from ops's P2 flag in the 2026-08-06 incident report)",
+        "updated_at": "2026-08-06T12:28:58Z",
+        "updated_by": "po",
+        "root_cause": "backupDatabase() performs an unconditional `Bun.write(dst, src)` onto a single rotating market.db.backup file, with no integrity check on the SOURCE before copying and no generational history. A rotation that happens to run while the live DB is already corrupting silently overwrites the last clean snapshot with a corrupt one. Flagged as §5.4 of the 2026-07-30 architecture brief and re-flagged by ops in the 2026-08-06 incident report; never scoped as a task until now.",
+        "evidence": "Near-miss already realised once: the 2026-07-30 incident required a `.recover` salvage precisely because the only backup had already been overwritten (see market.db.impoverished-backup-2026-07-30T08:33:51Z, 16.9MB — a salvage remnant of a 400MB DB). The 2026-08-06 recovery got lucky in the other direction: market.db.backup happened to be clean (quick_check=ok) so a straight restore worked. Luck is the current control.",
+        "impact": "P2 — secondary. It did not cause any of the 5 corruptions and did not block this recovery, but it is the difference between 'restore from backup' (2026-08-06, ~6.4h of regenerable telemetry lost) and 'salvage a 400MB DB down to 17MB' (2026-07-30). Given the corruption class is demonstrably recurrent, the backup path is the last line of defence and is currently ungated. PO keeps this at P2 rather than promoting it: it reduces blast radius but does not reduce recurrence, and the two P0 rows do. Deliberately NOT bundled into either P0 — different zone, different owner, and folding a defence-in-depth item into an active-incident fix is how P0s slip.",
+        "acceptance": [
+          "AC-1 pre-copy gate: run a cheap integrity check (PRAGMA quick_check) on the SOURCE before any overwrite. Source fails -> ABORT the rotation, keep the existing backup, and alert the BUG channel. Never overwrite a good backup with a bad source.",
+          "AC-2 generational rotation: keep at least 3 generations (market.db.backup.0/.1/.2) instead of one, so a single bad cycle cannot erase all known-good state even if AC-1's check is somehow bypassed.",
+          "AC-3 the abort path must be loud, not silent — a backup that silently stops rotating is indistinguishable from one that is working, which is the same unarmed-observer failure as FIX-MARKETDB-JOURNALMODE-GUARD-SHIPPED-BUT-NEVER-ARMED. Emit on both success (with generation + source verdict) and abort.",
+          "AC-4 prove it: fixture test with a deliberately corrupted source proving the rotation ABORTS and the prior generation survives byte-identical."
+        ],
+        "verification_gate": "Fixture run with a corrupt source: rotation aborts, prior generation byte-identical, BUG alert emitted.",
+        "related": [
+          "FIX-STOCKPRICE-PRICEHISTORY-RO-WAL-DSN-SWALLOWED-EMPTY-KILLS-KINHDICH",
+          "FIX-MARKETDB-JOURNALMODE-GUARD-SHIPPED-BUT-NEVER-ARMED"
+        ],
+        "context_refs": [
+          "docs/incidents/2026-08-06-sqlite-db-corruption-wai-rearm-vector.md (Residual Vulnerabilities #3)",
+          "docs/architecture-briefs/2026-07-30-sqlite-docker-virt-corruption-hardening.md §5.4"
+        ],
+        "note": "Housekeeping observed while triaging, NOT part of this row's scope: /app/data now holds ~14 market.db.* forensic artifacts (corrupt snapshots, pre-salvage copies, impoverished-backup) totalling well over 1.5GB on the same bind mount as the live DB. Prior ENOSPC history (project_enospc_blocker) makes that worth a janitor sweep with an explicit retention policy — route separately, do not absorb here."
       }
     ],
     "closed_sprints": [
@@ -14753,42 +14773,193 @@
         "architect_review_note": "2026-08-06T10:49Z architect (plan_only brief per PO explicit ask -- adjudicate a/b/c, no code shipped). Brief: docs/architecture-briefs/2026-08-06-guard-notebook-concurrent-write-mutex.md. DECISIVE EVIDENCE READ RAW (not POs summary): 11 notebook-direction-defaulted signals on qa.md (10:00:46Z-10:08:36Z) show a non-monotone retained-section set AND 3 simultaneous duplicate ## cycle-504 headings with different content -- proves concurrent lost-update + stale c<NNN> counter allocation, not a pruning-order bug. Ruled out the suspected 3rd-writer formatter hook: context-bloat-backstop.sh read in full, only ever writes its OWN signal file, never the notebook -- confirmed no 3rd mutator exists (only the writing agent Write/Edit + notebook-auto-prune.sh PostToolUse hook touch notebook content). ADJUDICATION: (b) append-only cannot work standalone (AC-2 retention/AC-5 cap both require removing content, no true append primitive exists on native Write/Edit); (c) fan-out cap alone independently disproven -- the ORIGINAL tran-ngoc-bau.md c113 incident was N=2 writers, no fan-out involved, so a lower cap only narrows frequency, never closes the class; (a) task_claim mutex is the right direction but NOT a drop-in -- task_kind is a closed 7-value Zod enum (coordinationTools.ts) with no fitting kind, needs an additive notebook-write value (companion dev-mcp-server row, blocking prereq). RECOMMENDATION: task_claim(task_kind=notebook-write) mutex bracketing ONLY the mechanical fresh-read-merge-write span (LLM authoring stays OUTSIDE the held window, explicit ttl_seconds=120 not the 3600s default -- avoids this repos own corroborated TTL-hazard lesson) as new SKILL.md AC-7; PostToolUse hook (cannot call task_claim, no MCP-from-bash bridge exists) hardened instead with a stat-based staleness recheck immediately before its own mv, deliberately NOT a new mkdir/flock lock file since docs/agent-memory is a named, still-unexcluded VirtioFS bind-mount race hazard per docs/protocols/head-lock-self-cure.md (H4, confirmed not hypothesized) -- reusing task_claims server-side SQLite lock state sidesteps that hazard entirely. Files split across 3 owner zones (mixed-zone flag for PM, same class already resolved for FIX-DEVTEAM-QADRAIN-THROUGHPUT-CAP): agent-father (.claude/skills/notebook-write/SKILL.md AC-7 + docs/agents/dev-team/flow/main.md 1-sentence note), developer (scripts/agents-flow/notebook-auto-prune.sh staleness guard), dev-mcp-server (task_kind enum +1, companion row, blocks agent-father row). Acceptance test extends the EXISTING apps/mcp-server/src/__tests__/task-lock-coordination-store.test.ts harness (new AC-12 describe block, N-concurrent-writer negative/positive control on a fixture notebook) rather than a new shell script -- satisfies this rows own verification_gate directly. Sequencing: dev-mcp-server row first (blocking), developer row independent/ships anytime, agent-father row last. Zone cross-service/. BUILD-STANDARD: not-applicable."
       },
       {
-        "id": "FIX-AUDITOR-C08-UNSATISFIABLE-TTL-WINDOW-AND-ISO8601-STRCMP",
+        "id": "FIX-MARKETWATCHER-EODMD-STALE-NOBASH-CAVEAT-SKIPS-COMMIT-LOSES-NOTEBOOK",
         "type": "FIX",
-        "title": "system-auditor C-08 is a broken detector, not a real defect: its expected=0 threshold is mathematically unsatisfiable (24h alerts window vs 2h-TTL agent_signals stubs) AND its window over-captures via the ISO8601 strcmp bypass already fixed in the code-plane twin",
+        "title": "eod.md:78 still carries the pre-2026-07-31 no-Bash caveat that cycle.md already fixed -- market-watcher-eod skips its notebook commit every fire, loses the EOD cycle entry to the next same-agent overwrite, and strands news-scouts L-7-deferred commit",
+        "desc": "VERIFIED live 2026-08-05T16:00Z EOD fire (agent a0df2bd1afc971ce7). Chain: (1) .claude/agents/market-watcher.md granted Bash 2026-07-31 commit 610110e16b. (2) cycle.md carried an identical no-Bash transport-gap caveat and was fixed 2026-08-01 (FIX-COWORK-FLOWDOC-STALE-TRANSPORT-GAP-CAVEAT, see cycle.md own header comment) -- caveat demoted to a genuine invocation-error fallback only. (3) eod.md:78 was never touched by that fix -- still reads verbatim this agent holds no Bash and cannot run git add/git_commit_retry directly ... SKIP this step entirely. (4) Todays EOD fire followed eod.md literally: wrote all 4 ledger entries (analysis-briefs DGC/DPM/DBC/VNM) + docs/signals/price_anomaly_20260805T1605.json correctly (Steps A/B unaffected per the docs own text) but skipped Step D (notebook write/commit), citing the docs own stale line as its reason -- not a fabrication, a propagated stale doc. (5) DISPROOF same day, same batch: market-watcher-offhours fired 2 min later (a1f7356854a55a25f) and committed cleanly with Bash (09beb0997) -- direct proof the grant is live and eod.md is simply wrong. (6) Net effect: market-watcher.md notebook has NO Cycle (EOD) section anywhere post-16:06Z -- the EOD narrative was never durably captured, either never written or clobbered when the offhours slot did its own full-overwrite write+commit right after. (7) news-scout.md c233 entry was left dangling uncommitted -- its own flow (docs/agents/news-scout/flow/stage-log-notify.md:14, L-7) explicitly defers its git commit to market-watchers EOD batch commit at market close; that EOD-side half of the contract never fires while eod.md:78 stands. Router committed the stranded news-scout.md manually this cycle as a workaround; the underlying skip will repeat every weekday 16:00 UTC fire until eod.md is fixed.",
+        "ac": "1. Update docs/agents/market-watcher/flow/eod.md:78 to match cycle.mds already-fixed prose (Bash grant live since 2026-07-31 commit 610110e16b -- demote to a genuine invocation-error fallback, not an unconditional skip). 2. Separately decide and fix the lost-update exposure: the per-cycle full-overwrite notebook model has no protection when EOD and a same-agent sibling slot (e.g. offhours) both match in the same cowork-tick batch and fire minutes apart -- either preserve/merge the EOD section across the next overwrite, or serialize same-agent multi-slot fires so one cannot clobber the others uncommitted work. 3. Confirm news-scouts L-7 dependency (stage-log-notify.md:14) resumes working end-to-end on the next weekday EOD fire (its notebook commits without router intervention).",
+        "priority": "P1",
+        "size": "S",
         "zone": "cross-service/",
-        "priority": "high",
+        "next_agent": "developer",
+        "status": "READY",
+        "created_at": "2026-08-05T16:10:00Z",
+        "created_by": "router",
+        "updated_at": "2026-08-06T12:27:24Z",
+        "updated_by": "router",
+        "related": [
+          "FIX-COWORK-BATCH-COVERAGESTATE-CONTENTION-CORRELATES-WITH-MISSED-NOTEBOOK-COMMIT"
+        ],
+        "not_duplicate_of": "FIX-COWORK-BATCH-COVERAGESTATE-CONTENTION-CORRELATES-WITH-MISSED-NOTEBOOK-COMMIT -- that row is a contention HYPOTHESIS on coverage-state:main mutex; this row is a DIRECTLY VERIFIED stale-doc root cause, distinct mechanism, same symptom family.",
+        "promoted_at": "2026-08-06T12:27:24Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)"
+      },
+      {
+        "id": "FIX-STOCKPRICE-PRICEHISTORY-RO-WAL-DSN-SWALLOWED-EMPTY-KILLS-KINHDICH",
+        "title": "REOPENED+WIDENED (P0, 5th market.db corruption): ALL FOUR stock-price market.db DSNs must drop _journal_mode=WAL and open mode=ro. The 2026-07-31 'fix' for /price/history landed the WRONG pattern — it removed mode=ro so the WAL pragma would succeed, adding 2 MORE WAL re-armers on the hottest read path. Also un-swallow the nilerr and add DELETE-mode fixtures (AC-2/AC-3 of the original row were never implemented).",
+        "type": "FIX",
+        "priority": "P0",
+        "status": "READY",
+        "zone": "apps/stock-price/",
+        "size": "S",
+        "owner": "dev-stock-price",
+        "next_agent": "dev-stock-price",
+        "created_by": "po (triage tick 2026-07-31T00:07Z)",
+        "created_at": "2026-07-31T00:29:11Z",
+        "updated_at": "2026-08-06T12:28:58Z",
+        "baseline_pass": "cd apps/stock-price && go build ./... && go test ./...",
+        "files": [
+          "apps/stock-price/pkg/infrastructure/fetchers.go",
+          "apps/stock-price/pkg/infrastructure/foreign_flow_repository.go",
+          "apps/stock-price/pkg/infrastructure/room_event_repository.go",
+          "apps/stock-price/pkg/infrastructure/fetchers_test.go",
+          "apps/stock-price/pkg/infrastructure/foreign_flow_repository_test.go",
+          "apps/stock-price/pkg/infrastructure/room_event_repository_test.go"
+        ],
+        "source": "telegram report id 4227 — [kinh-dich] get_kinhdich_reading failed for HVN with 503 'insufficient price data ... requires at least 7 price points'",
+        "root_cause": "apps/stock-price/pkg/infrastructure/fetchers.go:303 (SQLitePriceHistoryRepository.GetHistory) and :240 (Tier3Fetcher) build the DSN 'file:%s?mode=ro&_journal_mode=WAL&_busy_timeout=5000'. The live market.db has PRAGMA journal_mode=delete, so the driver issuing PRAGMA journal_mode=WAL over a mode=ro connection fails with SQLITE_READONLY(8) 'attempt to write a readonly database'. The resulting db.Query error is then discarded at fetchers.go:318-320 ('return []domain.DailyOHLCV{}, nil //nolint:nilerr'), with the same swallow at :305-307 for sql.Open — so the handler emits HTTP 200 with an empty history and logs nothing. The two SIBLING repositories in this same package already fixed exactly this: foreign_flow_repository.go:33 and room_event_repository.go:32 both carry the comment 'Note: readonly mode (mode=ro) conflicts with WAL journal mode creation.' and dropped mode=ro from their DSN. The correction was applied to 2 of 4 call sites; fetchers.go:240 and :303 were missed.",
+        "evidence": "RAW-VERIFIED LIVE 2026-07-31T00:25Z — every hop measured, not inferred. (1) The data EXISTS: sqlite3 on data/live/market.db (the bind-mount source of the container's /app/data) gives daily_ohlcv HVN = 775 rows spanning 2023-06-27..2026-07-30, and the handler's exact query (WHERE code='HVN' AND date >= date('now','-30 days')) returns 22. This is NOT the thin-ticker / new-listing data gap the alert text implies. (2) Outage reproduced: curl localhost:5005/reading/HVN -> 503 'insufficient price data ... requires at least 7 price points'; curl localhost:5005/market (VNINDEX) -> the same 503. BOTH kinh-dich routes are dead. (3) Failing hop isolated: gateway localhost:4000/stock/price/history?code=HVN&days=30 -> {code:HVN,history:[]}, identically empty for FPT/VNM/VCB and for days=30/365/3650 (universal and parameter-independent); but mcp-server's own localhost:3000/api/prices/history?code=HVN&days=30 -> count:22 with full rows. Same DB, same window, opposite result => the defect is in stock-price, not in the data. (4) stock-price direct: localhost:5010/price/history?code=HVN&days=30 -> {code:HVN,history:[]} while /health returns {status:ok} — passive health masking dead data. (5) Root cause reproduced in isolation: sqlite3 'file:data/live/market.db?mode=ro' 'PRAGMA journal_mode=WAL;' -> 'Error: stepping, attempt to write a readonly database (8)', and a SELECT appended after that PRAGMA never executes; the same SELECT on a mode=ro connection WITHOUT the WAL pragma returns 22. PRAGMA journal_mode on the live DB = delete. (6) Alternatives ruled out at source: container clocks are exact (stock-price, mcp-server, kinh-dich and api-gateway all match the host to the second, so no date('now') drift); DB_PATH=/app/data/market.db resolves to a present 401MB file inside the container; and only 3 commits touched apps/stock-price since its image was built, none of them on the read path — so this is a live SOURCE defect, NOT a stale-image/deploy-lane problem. Rebuilding will not fix it.",
+        "blast_radius": "P1 — total loss of two product surfaces, not one ticker. (a) kinh-dich-service reads PRICE_HISTORY_URL -> api-gateway -> stock-price, so ComputeScores() receives nil for every code: get_kinhdich_reading 503s for ALL tickers and for the VNINDEX /market reading. (b) apps/frontend/app/lib/api/client.ts:245 calls the same /stock/price/history endpoint, so the frontend price-history chart renders empty. (c) fetchers.go:240 Tier3Fetcher carries the identical broken DSN, exposing the tier-3 price path to the same silent-empty failure.",
+        "recommended_action": "1) Drop 'mode=ro&' from the DSN at fetchers.go:240 and :303 so all four call sites in this package match the already-corrected foreign_flow_repository.go:36 / room_event_repository.go:35 form ('file:%s?_journal_mode=WAL&_busy_timeout=5000'). 2) Stop swallowing: fetchers.go:305-307 and :318-320 must return the error — the HTTP layer at router.go:111-116 already has a correct 500 path with slog.Error, and the silent nilerr is precisely what let a total outage present as a per-ticker 503 for an unknown duration. 3) Regression test: assert GetHistory returns a non-empty slice against a fixture DB whose journal_mode is 'delete' — that is the exact condition that fails today and that a WAL-mode fixture would mask.",
+        "misleading_alert_note": "The kinh-dich 503 text is itself a defect amplifier and deserves a fix in the same pass or an immediate follow-up: price_score.go:32-41 collapses BOTH 'source fetch errored' and 'genuinely fewer than 7 points' into one nil return, which usecases.go:80/85/124/129 convert to ErrInsufficientData and router.go renders as 503 'requires at least 7 price points'. A total upstream outage is therefore reported as a thin-data condition — which is what steered this incident toward a per-ticker data-gap reading instead of a service outage.",
+        "out_of_scope": "Do NOT re-point kinh-dich at the mcp-server fallback endpoint. The not-deployed-rerouter (apps/api-gateway/pkg/primitive/not-deployed-rerouter/reroute.go) is correct and deliberately fires only for NOT-deployed services; stock-price IS deployed, so routing to it is intended behaviour. Fix stock-price, not the routing.",
+        "related": [
+          "FIX-PRICEHISTORY-DATAASOF-STOCKPRICE-SERVING",
+          "FIX-CHEF-EVENING-L5-KINHDICH-SILENT-OMISSION",
+          "FIX-SQLITE-JOURNALMODE-WAL-REARM-DEFEATS-DELETE-MITIGATION",
+          "FIX-SCRIPTS-MIGRATIONS-MARKETDB-WAL-REARM-SAME-DEFECT",
+          "FIX-MARKETDB-JOURNALMODE-GUARD-SHIPPED-BUT-NEVER-ARMED",
+          "SPIKE-SQLITE-DOCKER-VIRT-CORRUPTION-HARDENING"
+        ],
+        "supervised": false,
+        "plan_only": false,
+        "updated_by": "po",
+        "claimed_at": null,
+        "claimed_by": null,
+        "po_reopen_note": "PO TRIAGE 2026-08-06T12:2xZ — this row was NOT ready for QA sign-off. Three independent reasons, all raw-verified this tick:\n\n(1) THE CODE ALREADY LANDED, AND IT LANDED WRONG. Commit e370f5f51 (2026-07-31T00:45Z, matching this row's updated_at 00:44:56Z) is already on main. `git show HEAD:apps/stock-price/pkg/infrastructure/fetchers.go` -> lines 243 and 309 both read `file:%s?_journal_mode=WAL&_busy_timeout=5000`. So the framing 'block this before QA merges it' is 6 days late: there is nothing to block, there is something to REVERT FORWARD. The fleet is ALREADY at 4 active WAL re-armers, not 2 — and the two added by e370f5f51 (Tier3CacheFetcher.FetchPrice, SQLitePriceHistoryRepository.GetHistory) sit on the kinh-dich + frontend price-chart path, i.e. FAR higher call frequency than the foreign_flow/room_event pair the incident doc names. This is why the 2026-07-30 'permanent fix' (journal_mode=DELETE, commit 157335892 at 10:26Z) survived only ~6 days: 14h after it landed, e370f5f51 armed two hot-path re-armers against it.\n\n(2) THE FIX DIRECTION WAS INVERTED BY MISREADING A LANDMINE AS PRIOR ART. This row's own root_cause text says the sibling repos 'already fixed exactly this ... dropped mode=ro from their DSN' and calls them 'the correction ... applied to 2 of 4 call sites'. That reading is backwards. `docs/architecture-briefs/2026-07-30-sqlite-docker-virt-corruption-hardening.md` §3, published the day before, names those exact two files as 'a live landmine — a second, unaudited WAL re-armer, wired into production today' and calls it 'the single most actionable, time-sensitive finding in this brief'. The brief's prescribed fix shape is the OPPOSITE of what shipped: 'drop _journal_mode=WAL from both DSNs ... keep _busy_timeout=5000, and add mode=ro now that there is no longer a reason to omit it'. PO owns this defect: PO minted this row at 2026-07-31T00:07Z citing the landmine as prior art without reading the brief that had condemned it 14h earlier.\n\n(3) TWO OF THIS ROW'S OWN THREE ACs WERE NEVER IMPLEMENTED. recommended_action item 2 ('Stop swallowing: must return the error') — fetchers.go:312 and :325 still read `return []domain.DailyOHLCV{}, nil //nolint:nilerr`. Item 3 ('regression test against a fixture DB whose journal_mode is delete ... a WAL-mode fixture would mask it') — fetchers_test.go:29/:146/:197/:273 all open with `?_journal_mode=WAL`, i.e. precisely the masking fixture the row warned against. QA would have had to fail this on its own acceptance text even with no corruption argument at all.\n\nLIVE STATE AT TRIAGE (raw, not inferred): `bash scripts/audits/verify-market-db-journal-mode.sh` -> verdict=FAIL journal_mode=wal wal_present=true shm_present=true, exit 2. Host `data/live/market.db-wal` grew 140,112 -> 737,512 -> 1,545,032 bytes across ~3 minutes of observation. market.db is in WAL mode with megabytes of pending un-checkpointed writes on the bind-mounted virt layer RIGHT NOW, ~10 min after ops declared the incident resolved. Corruption #6 is actively incubating. 'get_alerts returns 20 real alerts' is true and is not evidence of health — it is the passive-health-masks-dead-data shape.",
+        "acceptance": [
+          "AC-1 ALL FOUR market.db DSNs in apps/stock-price/pkg/infrastructure/ use the form `file:%s?mode=ro&_busy_timeout=5000` — no `_journal_mode` token anywhere: foreign_flow_repository.go:36, room_event_repository.go:35, fetchers.go:243 (Tier3CacheFetcher.FetchPrice), fetchers.go:309 (SQLitePriceHistoryRepository.GetHistory). Delete the stale 3-line comment ('For production: market.db is expected to have WAL already enabled') at all four sites — that assumption became false at 2026-07-30T10:26Z and leaving it is how this bug propagated.",
+          "AC-2 (carried from the original row, never implemented) fetchers.go:312 and :325 stop swallowing: return the error instead of `[]domain.DailyOHLCV{}, nil //nolint:nilerr`. router.go:111-116 already has the 500 + slog.Error path. With mode=ro this is load-bearing, not cosmetic: mode=ro makes any future journal_mode write FAIL rather than silently succeed, so the un-swallow is what converts a re-arm attempt into a loud error instead of a silent file-header mutation.",
+          "AC-3 (carried, never implemented) regression test asserting GetHistory returns a NON-EMPTY slice against a fixture DB whose journal_mode is `delete`. Convert fetchers_test.go:29/:146/:197/:273 off `?_journal_mode=WAL` fixtures — a WAL fixture masks the exact condition under test.",
+          "AC-4 NEW — no `_journal_mode` may be set on market.db from any Go service. Grep-clean across apps/stock-price/, apps/alert-engine/, apps/macro-indicators/ for market.db openers. Per brief §4 AC-B, alert-engine's ServiceConfig.DBPath market.db field is loaded but never opened (dead config) — confirm still dead or remove it.",
+          "AC-5 NEW verification gate — after rebuilding+redeploying stock-price, `bash scripts/audits/verify-market-db-journal-mode.sh` must return verdict=PASS exit 0, AND still PASS after exercising all four paths live (curl /price/history, /reading/<code> via kinh-dich, the foreign-flow and room-event endpoints). A PASS taken before the endpoints are hit proves nothing — dormant is not fixed. Sequencing: land the Go fix and redeploy stock-price FIRST, then checkpoint+flip market.db back to DELETE. Flipping first re-arms on the next fetch."
+        ],
+        "verification_gate": "bash scripts/audits/verify-market-db-journal-mode.sh -> verdict=PASS exit 0, taken AFTER stock-price redeploy AND AFTER live-exercising all four read paths.",
+        "po_sequencing_decision": "PO considered and REJECTED stopping the stock-price container as an interim WAL-re-arm mitigation. It would restore the exact outage this row was originally minted to fix (kinh-dich 503 on every ticker + empty frontend price chart), trading a probabilistic corruption risk for a certain product outage. The change is 4 one-line DSN edits; the fast path out is to ship it, not to degrade the product while it waits. ops does NOT need to gate on a PO decision to checkpoint market.db — but a checkpoint+DELETE flip before this row deploys is wasted work, since the next stock-price fetch re-arms WAL.",
+        "context_refs": [
+          "docs/incidents/2026-08-06-sqlite-db-corruption-wai-rearm-vector.md",
+          "docs/architecture-briefs/2026-07-30-sqlite-docker-virt-corruption-hardening.md#3-live-landmine",
+          "commit e370f5f51 (the change to revert forward)",
+          "commit 157335892 (journal_mode=DELETE, the fix being defeated)"
+        ],
+        "recurring_bug_escalation": "5th market.db SQLITE_CORRUPT (2026-04-25, 07-13, 07-19, 07-30, 08-06). Per docs/agent-memory feedback_recurring_bug_escalation, 2+ recurrences require a structural fix before further point patches. PO's judgement: this row IS the structural fix for the code plane (single journal_mode owner, enforced by mode=ro making violation impossible rather than merely discouraged), and FIX-MARKETDB-JOURNALMODE-GUARD-SHIPPED-BUT-NEVER-ARMED is the structural fix for the detection plane. No further one-off market.db patches until both land."
+      },
+      {
+        "id": "FIX-DB-INTEGRITY-SIDECAR-NAMED-VOLUME-DRIFT",
+        "type": "FIX",
+        "title": "db-integrity observer tooling still mounts the named volume commit 5ba622eca retired on 2026-07-15 — counts helper returns null, probe fail-opens every tick",
+        "zone": "cross-service/",
+        "priority": "P1",
         "status": "READY",
         "size": "S",
-        "next_agent": "dev-team",
+        "next_agent": "developer",
         "supervised": false,
         "plan_only": false,
         "baseline_pass": true,
-        "source": "PO triage of system-auditor Tier-DATA sweep c20 2026-08-05T08:18:46Z - signal sys-20260805T081846-1853. Root-caused live against the named-volume market.db (readonly) 2026-08-05T08:23-08:27Z.",
-        "created_at": "2026-08-05T08:28:16Z",
+        "source": "PO triage of system-auditor Tier-DATA sweep 2026-08-05T06:47Z (router escalation, telegram bug msg_id 4703)",
+        "created_at": "2026-08-05T07:06:06Z",
         "created_by": "po",
-        "updated_at": "2026-08-06T11:54:38Z",
-        "root_cause": "C-08 (docs/agents/system-auditor/flow/main.md:649) is `SELECT count(*) FROM alerts a LEFT JOIN agent_signals s ON a.id = s.alert_id WHERE s.id IS NULL AND a.triggered_at > datetime('now','-24 hours')` with expected=0. TWO independent faults compound, and the reported anomaly is a FALSE POSITIVE - the alert-engine write path is HEALTHY. (A) UNSATISFIABLE THRESHOLD: agent_signals alert-correlation stubs are TTL-bound at 2h (`expiresAt(ttlMinutes ?? 120)`, agentSignalStore.ts:570/604/634/661/688/715) and hard-purged by cleanExpired() on the daily off-hours dataAuditJob cron, while `alerts` rows are retained ~30d (checkStaleAlerts.ts D-4 is UPDATE-only, never deletes). So every alert older than the last GC sweep NECESSARILY has no surviving correlation row. expected=0 can only be met if zero alerts fired in the whole stale band. The check's own code-plane inverse (checkOrphanAgentSignalsAlertId.ts:15-16) already states this in prose: 'agent_signals correlation stubs are TTL-bound, ~2h, and purged by cleanExpired(), so any historical debt self-expires' - C-08 was never re-derived against that fact. (B) ISO8601 STRCMP BYPASS: `alerts.triggered_at` is a raw JS toISOString() string ('2026-08-04T01:21:58.806Z') while `datetime('now','-24 hours')` renders space-separated ('2026-08-04 08:26:52'). At index 10 'T'(0x54) > ' '(0x20), so every row sharing the bound's date-part compares greater and the window over-captures. LIVE PROOF 2026-08-05T08:26Z: as-written window = 40 alerts / 22 orphans; TRUE 24h window (julianday) = 28 alerts / 10 orphans; the oldest row the as-written window admitted was 31 HOURS old. This is the known recurring class feedback_sqlite_iso8601_datetime_strcompare_bypass, and it was ALREADY FIXED in the code-plane twin on 2026-08-01 (checkStaleAlerts.ts:23-30 wraps both sides as `datetime(triggered_at) < datetime('now',...)` and cites the same lesson by name) - the remedy simply never propagated to the flow-doc SQL the agent actually executes. That is memory feedback_fix_landed_in_the_pregate_not_the_probe_the_agent_actually_runs.",
-        "evidence_write_path_is_healthy": "Age-bucketed LEFT JOIN on the live DB gives a perfectly clean split with NO overlap: alerts <=17h old = 18 linked / 0 orphaned; alerts >=18h old = 22 orphaned / 0 linked. The 18h boundary equals the last cleanExpired() sweep (oldest surviving correlation stub = 2026-08-04T14:29:22Z, 17h old; 131 of 144 agent_signals rows are already past expires_at and awaiting the next sweep). Orphan status is therefore a pure function of GC timing x alert volume and carries ZERO information about write-path health. Producer-family breakdown confirms no producer-specific gap - EVERY family appears on BOTH sides (news 7 orphan/9 linked, price 9/1, ta 3/3, other 2/3, macro 1/2); a genuine co-write gap would concentrate in one family. fingerprint-null does not correlate either (21/16 vs 1/2). The brief's hypothesis that 'alert-engine writes alerts/price_alerts but not agent_signals' is DISCONFIRMED: `price_alerts` and `alert_engine_records` both hold 0 rows, and the prior co-write gap FU-ALERT-COWRITE-SCHEDULER-JOBS (2026-06 archive) is DONE and holding.",
-        "growth_claim_is_false": "The escalating brief framed this as monotonic 1->22 growth over 15 days implying a worsening defect. RAW-verified FALSE. True firing history: 1 orphan (sys-20260721T003810-2b02, 07-21) -> 121 orphans (sys-20260730T003538-10ba, 07-30, recorded in docs/data/DASHBOARD.md:242-249 and MISSING from both the live .signal_queue and the archives) -> 22 orphans (08-05). Non-monotonic, and it tracks alert volume: alerts/day = 8 (07-31), 11 (08-01), 7 (08-02), 42 (08-03), 26 (08-04). The 22 orphans are exactly the 08-04 alerts that fired before the 14:29Z GC horizon. There is no regression to chase.",
+        "updated_at": "2026-08-06T12:28:58Z",
+        "root_cause": "2026-07-15 commit 5ba622eca ('fix(infra): bind-mount market data to host disk instead of Docker named volume') moved the live DB off the named volume `vn-market-intelligence-mcp_market_data` and onto a HOST BIND MOUNT `./data/live:/app/data` across all 9 dependent services, because the 2026-07-15 hypervisor VM rebuild had destroyed the named volume. docker-compose.yml now declares only pek_model_cache + bctc-page-images under `volumes:` — market_data is gone entirely. The RUNTIME was migrated; the READ-ONLY OBSERVER tooling was not. Every observer still runs `docker run --rm -v vn-market-intelligence-mcp_market_data:/data keinos/sqlite3 ...`, which makes Docker AUTO-CREATE an empty volume and then fail to open /data/market.db. Confirmed live: `docker volume inspect vn-market-intelligence-mcp_market_data` shows CreatedAt=2026-08-05T06:47:24Z (auto-created by the auditor's own failing probe today) and `docker run -v <vol>:/data alpine ls -la /data` shows an empty dir, while `docker inspect vn-market-intelligence-mcp-mcp-server-1` shows `bind .../data/live -> /app/data` and the real market.db is 425MB with an mtime of seconds ago.",
+        "evidence": "PO ran both failing commands directly. `bash scripts/db-integrity-counts.sh` -> '[DB-INTEGRITY-COUNTS] PROBE FAILURE (exit 1): Error: unable to open database \"file:/data/market.db?immutable=1\": unable to open database file'. `bash scripts/agents-flow/db-integrity-probe.sh` -> {\"verdict\":\"SPAWN\",\"detail\":\"sidecar query failed (docker unreachable, non-zero exit, or output did not parse into 1 line per watched table) — snapshot left untouched\",\"tables_changed\":-1}. Both fail-open rather than fail-loud, so the degradation is SILENT: the probe's whole purpose is skip-if-unchanged idempotency and it now votes SPAWN unconditionally, and the counts helper's null propagates into every history entry. The same query against the correct path succeeds immediately: `sqlite3 \"file:data/live/market.db?immutable=1\" \"SELECT COUNT(*) FROM daily_ohlcv WHERE high=0 AND low=0;\"` -> 336.",
+        "blast_radius": "docs/data/db-integrity-history.json holds 138 entries; the last one with non-null `counts` is 2026-06-25T19:25:41Z, then a 41-day gap, then today's 2026-08-05T06:51:39Z entry with counts=NULL. The gap is because the db-data-integrity cron had NO re-arm coverage until /cron-standalone-team was built on 2026-08-04 — so today was the FIRST sweep since the 07-15 bind-mount switch, and it broke immediately. Correct framing: broken for 21 days (since 5ba622eca), first OBSERVED today — not '6 weeks of silent nulls'. The deterministic counts trail that register.md:108-113 explicitly relies on to stop the LLM inventing trends is dead until this lands.",
         "files": [
-          "docs/agents/system-auditor/flow/main.md",
-          "apps/mcp-server/src/scheduler/news-analysis/audit-checks/checkOrphanAgentSignalsAlertId.ts",
-          "apps/mcp-server/src/scheduler/news-analysis/audit-checks/checkStaleAlerts.ts",
-          "docs/data/DASHBOARD.md",
-          "docs/protocols/system-audit-runbook.md"
+          "scripts/db-integrity-counts.sh",
+          "scripts/agents-flow/db-integrity-probe.sh",
+          "scripts/db-integrity-history-append.sh",
+          "scripts/ops-bctc-enrich-reverify-pulljob.sh",
+          ".claude/skills/cron-standalone-team/register.md",
+          ".claude/commands/crons/cron-db-data-integrity.md",
+          "docs/agents/system-auditor/flow/main.md"
         ],
         "ac": [
-          "AC-1 Make C-08 satisfiable or delete it. The threshold must be derivable from the data model: either (i) bound the alerts window to the agent_signals correlation-stub TTL horizon rather than 24h, or (ii) join only alerts whose paired stub could still be alive, or (iii) retire C-08 outright and rely on the code-plane inverse checkOrphanAgentSignalsAlertId (D-NEW2), which is TTL-aware by construction. Do NOT keep expected=0 against a 24h window - state explicitly in the flow doc WHY the chosen bound is satisfiable.",
-          "AC-2 Fix the ISO8601 strcmp bypass in the C-08 predicate by wrapping BOTH sides in datetime(), copying the already-proven pattern and rationale comment from checkStaleAlerts.ts:23-30 verbatim rather than reinventing it.",
-          "AC-3 FLEET REPLAY, not one line. Per memory feedback_fleetwide_gate_validated_on_one_file_optout_allowlist, audit EVERY C-xx/B-xx check in docs/agents/system-auditor/flow/main.md that compares a timestamp column against datetime('now',...) and report per-check whether the column is T-format. Already measured and CONFIRMED AFFECTED: financial_reports.parsed_at is 100% T-format (C-04, 7-day window) and agent_signals.created_at is MIXED 13% T / 87% space (C-07, 24h window - heterogeneous is the worst case because the same query silently applies two different semantics). Confirmed NOT affected: market_messages.sent_at 0% T (C-06), daily_ohlcv.updated_at 2% T. Fix every affected check in one pass.",
-          "AC-4 Regression test: seed an alerts row older than the correlation-stub TTL with its stub already purged, and assert C-08 (or its replacement) does NOT flag it. Also assert a row whose date-part matches the bound but which is genuinely outside the window is EXCLUDED - that is the strcmp bypass, and it must fail loudly if reintroduced.",
-          "AC-5 Retract the fabricated root causes already published. docs/data/DASHBOARD.md:246 asserts 'Signal processing pipeline may be delayed or alert-signal mapping broken' and :330 asserts 'Alerts created by alert-engine but not propagated to agent_signals table'. Both are agent-narrated, unmeasured, and now DISCONFIRMED. :243 also names the wrong table ('no matching signal_queue rows' - the join is on agent_signals). This is the confabulation class feedback_agent_selfreport_metalayer_confabulation; correct or withdraw both entries.",
-          "AC-6 Do not silently drop coverage. If AC-1 retires C-08, confirm in writing that checkOrphanAgentSignalsAlertId (D-NEW2) plus the storeAlerts/storeAlertsFromCommander writer guard genuinely cover the co-write-gap failure mode that C-08 was introduced to catch, so this fix does not trade a false positive for a blind spot."
+          "AC-1 DECIDE THE CANONICAL PATH FIRST, then change code. Two candidates: (i) host bind `data/live/market.db` read directly with `sqlite3 \"file:<path>?immutable=1\"` (no docker at all — PO confirmed this works today and is strictly simpler), or (ii) keep a sidecar but mount the host dir: `docker run --rm -v \"$PWD/data/live:/data:ro\" keinos/sqlite3 ...`. Record the choice + rationale in the decision journal. Do NOT re-create the named volume — 5ba622eca retired it deliberately so the DB survives VM rebuilds.",
+          "AC-2 scripts/db-integrity-counts.sh returns real non-null counts for every watched table. Verify by running it and diffing at least 3 table counts against the same query run through a second independent access path (e.g. the mcp-server container's own reader) — two planes, per memory feedback_same_db_tools_diverge_rowcount.",
+          "AC-3 scripts/agents-flow/db-integrity-probe.sh emits verdict=SKIP-SPAWN on an unchanged DB. This is the actual proof the pre-gate works — today it CANNOT emit SKIP-SPAWN at all. Run it twice with no intervening writes and assert the second call skips.",
+          "AC-4 Both scripts FAIL LOUD (non-zero exit + bug-channel-worthy stderr) when the DB is genuinely unreachable, instead of silently returning null / voting SPAWN. The current fail-open is what let this hide for 21 days.",
+          "AC-5 Update every doc/prompt that still teaches the named-volume pattern: .claude/skills/cron-standalone-team/register.md Job 1 AND Job 2 prompt bodies (both currently paste the 'DB ACCESS — the live DB is the named volume, NOT host ./data' block verbatim, and both are LIVE — the router registered them at 06:18Z today), .claude/commands/crons/cron-db-data-integrity.md, and the system-auditor flow. grep -rn 'vn-market-intelligence-mcp_market_data' across scripts/ .claude/ docs/ and triage every hit — several scripts/*.jq audit artifacts also assert it, though those are historical records and should be left alone.",
+          "AC-6 The memory note reference_live_db_is_named_volume_not_host_data.md is now STALE and actively harmful — it says the named volume is authoritative and host ./data is a 'decoy'. That was true before 5ba622eca and is inverted now. Route a correction so agents stop being taught the wrong path.",
+          "AC-7 Regression guard: something must fail when the runtime DB location and the observer DB location diverge again. A test or CI check that resolves the mcp-server container's /app/data mount source and asserts the observer scripts target the same inode/path is the minimum bar."
         ],
-        "promoted_at": "2026-08-06T11:54:38Z",
+        "owner": "developer",
+        "updated_by": "po",
+        "po_corroboration_20260806T0833": "THIRD INDEPENDENT CORROBORATION + PROMOTION TO A BLOCKING DEPENDENCY (priority normalised 'high' -> P1 to match the board's P-scale; no scope change). This row was minted 2026-08-05 on a single finding. Two more landed today from unrelated sources: (a) the developer working FIX-AUDITOR-EMPTYTABLE-CHECK-NO-WRITER-DISCRIMINATOR hit the same dead mount and documented it in commit d16b7c212 (comment in scripts/db-integrity-counts.sh naming the ./data/live -> /app/data bind mount that superseded the named volume at 5ba622eca, 2026-07-15), explicitly scoping the fix out of that task; (b) signal dev-team-20260806T082420Z-auditor-data-guard-noncompliance (08:24:20Z, audit_cycle_tag cron:db-data-integrity:2026-08-06T08:16Z) reports the DATA sweep ran an ad-hoc /tmp script and labelled it scripts/db-integrity-counts.sh, with the registered script 'confirmed broken, stale sidecar mount'. WHY THIS NOW MATTERS MORE THAN ITS OWN SEVERITY SUGGESTS: FIX-AUDITOR-EMPTYTABLE-CHECK-NO-WRITER-DISCRIMINATOR is in review[] awaiting a qa replay whose AC is 'the two CRITICALs must not re-fire'. A probe that fail-opens on a dead mount satisfies that AC by seeing nothing, so THIS row is a de-facto gate on THAT sign-off (see po_QA_GATE_WARNING_20260806T0833 there). SECONDARY EFFECT worth naming: agents are working around the broken helper with ad-hoc /tmp scripts and then reporting the registered path's name, which both violates the standing scripts/-not-/tmp rule (feedback_scripts_persist_not_tmp) and makes every number the sweep emits unattributable to a reproducible source -- PO already saw the symptom at 07:17Z as C-04 reporting financial_reports=30 against a live raw count of 257 and C-08 reporting alerts=42 against 144, and wrongly guessed 'undocumented window predicate'. The likelier explanation is that those numbers never came from the registered script at all. Fixing the mount plausibly resolves that anomaly too -- verify, do not assume.",
+        "promoted_at": "2026-08-06T11:44:04Z",
         "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)"
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
+        "claimed_at": "2026-08-06T11:54:44Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "branch": null,
+        "dev_disposition_20260806T1214Z": "AC-1 direct host-bind sqlite3 read (no docker), AC-2 two-plane live diff 6/6 match, AC-3 SKIP-SPAWN live-verified on repeat, AC-4 both scripts fail loud (probe.sh keeps documented FAIL-OPEN/SPAWN + adds loud stderr), AC-5 3 cron/register docs + bctc-extraction-runbook.md + db-empty-table-classify.sh comment corrected, AC-6 system-auditor/flow/main.md corrected (in-repo equivalent; private router memory note flagged, out of repo scope), AC-7 new scripts/db-integrity-mount-drift-check.sh(+test) regression guard, LIVE-verified PASS against the running stack today. New tests db-integrity-counts.test.sh 18/18 + db-integrity-mount-drift-check.test.sh 12/12; db-integrity-probe.test.sh updated 27/27; zero regressions across 4 sibling suites (150/150). Decision journal sprint-COWORK-GUARANTEED-SLOT-CATCHUP-developer-3.md STEP developer-S61.",
+        "po_qa_block_note": "PO 2026-08-06T12:2xZ — NOT signed off; returned to developer for one added AC. The named-volume migration itself is CORRECT and is a strict improvement (21 days of fail-open observer output ended), so PO is deliberately NOT reverting it. But AC-1 canonised `sqlite3 \"file:...?immutable=1\"` as the read pattern for three observer scripts on the claim that immutable=1 'bypasses WAL/-shm entirely and is always safe here'. That claim is FALSE, and PO measured it false on the live DB this tick — this is not a style nit and not an inference from memory.\n\nRAW MEASUREMENT, live market.db, 2026-08-06T12:2xZ, with data/live/market.db-wal at 1,545,032 bytes of pending un-checkpointed writes:\n  sqlite3 'file:data/live/market.db?immutable=1' -> daily_ohlcv=775891 , pragma_journal_mode='delete'\n  sqlite3 'file:data/live/market.db?mode=ro'     -> daily_ohlcv=775912 , pragma_journal_mode='wal'\nTwo distinct defects in one measurement: (a) 21 rows silently missing, no error, no warning, no signal — the probe cannot tell a stale read from a fresh one; (b) far worse, immutable=1 reported journal_mode='delete' (the persisted header value) while the DB is actually in WAL. So the integrity probe reports the DB is in the SAFE journal mode at the exact moment it is in the DANGEROUS one. The observer whose entire purpose is catching DB drift would have certified as clean the precise condition that has now corrupted this database five times. A silently-blind integrity probe is worse than no probe, because it reads as clean telemetry.\n\nCorroboration that this is a general rule and not a one-off: scripts/audits/verify-market-db-journal-mode.sh, which opens through the container's normal readonly path (NOT immutable=1), correctly returns journal_mode=wal at the same instant. Two observer tools on the same DB disagree right now, and the disagreement is exactly this defect.\n\nThe unifying rule to encode: immutable=1 is safe IFF -wal is 0 bytes / absent at read time, and silently wrong otherwise. Prior evidence gave contradictory unconditional verdicts (2026-06-25 'immutable=1 correct' — measured when -wal was 0 bytes, so bypassing WAL cost nothing; 2026-07-31 'immutable=1 silently stale' — measured with pending WAL). Both observations are consistent under the conditional rule; neither supports an unconditional one. The developer's AC-2 evidence ('byte-identical counts, 6/6 columns') is a single-snapshot check that almost certainly landed in a checkpointed moment and does not establish general safety.\n\nCOUPLING (why this is urgent now, not later): FIX-STOCKPRICE-PRICEHISTORY-RO-WAL-DSN-... proves market.db's journal_mode actively oscillates DELETE->WAL from four live Go re-armers. Every oscillation opens a window with pending WAL — exactly when immutable=1 goes blind. Fixing the stock-price row removes most windows but does NOT fix this: WAL can be legitimately entered again for other reasons, and an observer that is only correct when the thing it observes is already healthy is not an observer.",
+        "acceptance_added_by_po": [
+          "AC-5 NEW (QA-BLOCKING) — every immutable=1 open in scripts/db-integrity-counts.sh, scripts/agents-flow/db-integrity-probe.sh and scripts/db-empty-table-classify.sh must be guarded by a -wal size check at read time. Contract: -wal absent or 0 bytes -> proceed with immutable=1; -wal non-empty -> do NOT emit a clean reading. Either checkpoint-then-retry, or fall back to a normal read-only open, or emit an explicit UNKNOWN/DEGRADED verdict. The one forbidden outcome is emitting a number that looks clean. Fail-loud beats fail-open here — the 21-day fail-open silence this very row was minted to fix is the same failure mode in a different costume.",
+          "AC-6 NEW — delete the three source comments asserting immutable=1 'bypasses WAL/-shm entirely and is always safe here' (db-integrity-probe.sh:17, db-empty-table-classify.sh:93, db-integrity-counts.sh:53) and replace with the conditional rule. A wrong comment asserting unconditional safety is exactly the artifact that propagated the stock-price WAL bug across four call sites; do not leave a second copy of that pattern in the tree.",
+          "AC-7 NEW — never read journal_mode through immutable=1 anywhere. Measured this tick to return the stale header value ('delete') while live state was 'wal'. If any observer reports journal_mode, it must use the same open path as scripts/audits/verify-market-db-journal-mode.sh."
+        ],
+        "verification_gate": "Evidence must be taken with a NON-EMPTY -wal present (create the condition deliberately; do not wait for it) and must show the guarded scripts refusing to emit a clean reading. A PASS captured during a checkpointed moment is the exact non-evidence that produced this gap.",
+        "related": [
+          "FIX-STOCKPRICE-PRICEHISTORY-RO-WAL-DSN-SWALLOWED-EMPTY-KILLS-KINHDICH",
+          "FIX-MARKETDB-JOURNALMODE-GUARD-SHIPPED-BUT-NEVER-ARMED"
+        ],
+        "po_do_not_conflate": "This row is observer-tooling correctness. It is NOT the 2026-08-06 SQLITE_CORRUPT incident and must not be deduped into it (alert-commander already made that error once — see the incident doc's 'Critical Misattribution' section). The link is one-directional and mechanical: the corruption row creates the WAL windows in which THIS row's defect goes blind."
+      },
+      {
+        "id": "FIX-MARKETDB-JOURNALMODE-GUARD-SHIPPED-BUT-NEVER-ARMED",
+        "type": "FIX",
+        "title": "scripts/audits/verify-market-db-journal-mode.sh works, self-tests green, and is wired to NOTHING — it would have caught the 5th corruption 6 days early. Arm it (cron + pre-push/CI + a source-grep sibling) so a WAL re-arm is detected in minutes, not at the next SQLITE_CORRUPT.",
+        "status": "READY",
+        "priority": "P0",
+        "size": "S",
+        "zone": "cross-service/",
+        "owner": "developer",
+        "next_agent": "developer",
+        "plan_only": false,
+        "supervised": false,
+        "created_at": "2026-08-06T12:28:00Z",
+        "created_by": "po (triage tick 2026-08-06T12:2xZ, 5th market.db corruption)",
+        "updated_at": "2026-08-06T12:28:58Z",
+        "updated_by": "po",
+        "root_cause": "FIX-SQLITE-JOURNALMODE-WAL-REARM-DEFEATS-DELETE-MITIGATION shipped scripts/audits/verify-market-db-journal-mode.sh as its AC-3/AC-4 regression guard. The script is GOOD: it deliberately asserts through the live running container rather than source (its own header explains why source-grepping would have missed the defect it was written for), it checks both journal_mode and the -wal/-shm pair, it has a --self-test that builds forced-WAL and forced-DELETE fixtures and proves both branches, and its exit contract is clean (0/2/3, verdict always stdout line 1). PO ran it live this tick and it worked perfectly on the first try. The defect is that NOTHING CALLS IT. Repo-wide grep for 'verify-market-db-journal-mode' returns exactly: the script itself, and two decision-journal entries. No cron, no CI step, no pre-push hook, no agent flow doc, no system-auditor probe. It has sat unarmed since 2026-07-30 while the exact condition it detects went live and produced corruption #5 on 2026-08-06.",
+        "evidence": "RAW, this tick: `bash scripts/audits/verify-market-db-journal-mode.sh` -> `MARKET_DB_JOURNAL_MODE verdict=FAIL journal_mode=wal wal_present=true shm_present=true ... reason=\"journal_mode=wal (expected delete) — WAL re-arm vector active\"`, exit 2. It is correct, it is FAILING right now, and no human or agent would have learned that unless PO happened to run it by hand. Host data/live/market.db-wal observed growing 140,112 -> 737,512 -> 1,545,032 bytes over ~3 minutes while unarmed. Wiring grep: `grep -rn verify-market-db-journal-mode --include=*.{md,ts,sh,json,yml,yaml} .` -> 5 hits, all self-referential (script usage header) or historical (decision journals). Zero call sites.",
+        "impact": "This is the detection-plane root cause of the recurrence, and it is a higher-leverage fix than any individual re-armer patch. Four re-armers were patched or found across three services and two languages in the last week; a fifth will be written by someone who has not read the brief. An armed guard converts that from 'silent corruption in N days' into 'red build / #bug alert in minutes'. The code-plane fix (mode=ro) makes violation impossible in stock-price; this makes violation VISIBLE everywhere else.",
+        "acceptance": [
+          "AC-1 RUNTIME ARM — the guard runs on a schedule against the live container and routes a FAIL to the BUG channel with the verdict line verbatim. Reuse the existing standalone-cron lane (.claude/skills/cron-standalone-team/) rather than inventing a new mechanism. Cadence: PO sets a floor of every 15 minutes — the 2026-07-30 fix survived ~14h before being re-armed and the corruption took 6 days to surface, so an hourly probe is a 60x improvement and a 15-min probe costs nothing (two docker execs, read-only by construction).",
+          "AC-2 SOURCE ARM (sibling script, NEW) — a static guard that FAILS if any source file outside the single sanctioned owner (apps/mcp-server/src/infrastructure/db/schema.ts) sets journal_mode on market.db. Must cover Go DSN strings (`_journal_mode=` in a `file:` DSN) as well as TS/JS `PRAGMA journal_mode`, because the TypeScript-only sweep is precisely how the Go re-armers survived. Wire into the pre-push/CI lane. MUST be opt-IN allowlist (list the sanctioned owner explicitly), never an opt-OUT ignore list — see feedback_fleetwide_gate_validated_on_one_file_optout_allowlist.",
+          "AC-3 the runtime guard and the source guard are complementary and BOTH required — do not substitute one for the other. The runtime guard alone cannot say which code path re-armed WAL; the source guard alone cannot catch a runtime PRAGMA (that exact gap is documented in the existing script's own header, re: bctcEvalBackfillRunner.ts). Prove both fire: source guard against a deliberately re-armed fixture file, runtime guard via its existing --self-test.",
+          "AC-4 POLICY SSOT — record the settled market.db journal-mode policy in one durable, discoverable place (docs/policies/ or docs/standards/, referenced from docs/ARCHITECTURE.md): market.db is journal_mode=DELETE + synchronous=FULL; apps/mcp-server/src/infrastructure/db/schema.ts is the SOLE owner; every other consumer opens `mode=ro` with NO journal_mode token. Include the WHY (macOS-Docker-virt torn -shm write on a bind mount, 5 corruptions) and the durability trade-off from brief §2.4 (bind-mount survives VM rebuild, named volume does not), so the next engineer who hits SQLITE_READONLY and is tempted to 'just go back to WAL' finds the reasoning instead of re-deriving it. Brief §2.4 explicitly called out that 157335892's commit trail lacks this record — that omission is what let e370f5f51 be written 14h later.",
+          "AC-5 the guard's own FAIL must not be swallowed by the caller. Its exit contract is 0=PASS/2=FAIL/3=ERROR with the verdict as stdout line 1; callers must not `&&`-chain it (see feedback_verdict_exit_code_gated_by_and_chain_swallows_actionable_output) and must not `tail` its output (see feedback_tick_preflight_verdict_is_first_json_key_tail_always_drops_it)."
+        ],
+        "files_hint": [
+          "scripts/audits/verify-market-db-journal-mode.sh (exists, do not rewrite — only wire it)",
+          ".claude/skills/cron-standalone-team/register.md",
+          ".claude/commands/crons/",
+          "scripts/audits/ (new source-grep sibling)",
+          "docs/policies/ or docs/standards/ (new policy SSOT)"
+        ],
+        "verification_gate": "Both guards demonstrated firing on a deliberately-broken fixture AND passing on a clean one, plus proof the runtime guard's FAIL actually reaches the BUG channel (a scheduled job whose alert path is untested is the same unarmed-guard defect one layer up).",
+        "related": [
+          "FIX-STOCKPRICE-PRICEHISTORY-RO-WAL-DSN-SWALLOWED-EMPTY-KILLS-KINHDICH",
+          "FIX-SQLITE-JOURNALMODE-WAL-REARM-DEFEATS-DELETE-MITIGATION",
+          "FIX-SCRIPTS-MIGRATIONS-MARKETDB-WAL-REARM-SAME-DEFECT",
+          "FIX-DB-INTEGRITY-SIDECAR-NAMED-VOLUME-DRIFT"
+        ],
+        "context_refs": [
+          "docs/incidents/2026-08-06-sqlite-db-corruption-wai-rearm-vector.md",
+          "docs/architecture-briefs/2026-07-30-sqlite-docker-virt-corruption-hardening.md"
+        ],
+        "note": "PO ANSWERS THE DEFERRED POLICY QUESTION HERE — no new spike needed. The framing that SPIKE-SQLITE-DOCKER-VIRT-CORRUPTION-HARDENING AC-B ('DELETE-vs-WAL policy per DB') is unresolved is out of date: the architect ANSWERED AC-A through AC-D in §4 of the 2026-07-30 brief. For market.db the verdict is settled (DELETE, single owner, §2.4 reasoning). The only part of AC-B still genuinely open concerns coordination.db, where the brief's verdict is 'do NOT blanket-convert — measure lock-hold duration under DELETE in a non-prod fixture first', because synchronous=FULL on every task_claim/heartbeat would lengthen the fleet mutex's lock window and a stuck mutex has worse blast radius (silent fleet-wide double-dispatch) than the corruption it avoids. That measurement is a separate, lower-priority row and is explicitly NOT a blocker for anything here. So the answer to 'should we finally resolve DELETE-vs-WAL policy given the 5th recurrence' is: the policy was never the missing piece — it was decided a week ago and simply had no enforcement and no discoverable home. That is what AC-2 and AC-4 above supply. Resolving it 'again' via a fresh spike would have burned a cycle re-deriving a settled answer while the vector stayed live."
       }
     ],
     "review": [
@@ -19741,40 +19912,6 @@
         "review_note": "dev-mcp-server: root cause RAW-verified by dev-team/po before dispatch (not re-derived) — checkStalledResolutionLiveness() WHERE clause had no stock_code exclusion, so signal_outcomes id 49 (MACRO, 2026-06-06) + id 74 (MULTI, 2026-06-25) — non-ticker pseudo-codes, no price series can ever exist, checked_at never advances by design — count as \"stuck\" forever, firing a false daily BUG alert while the resolver is healthy (103/105 resolved). Fix: WHERE clause gains AND stock_code GLOB '[A-Z][A-Z][A-Z]' — verified live (docker exec readonly bun:sqlite, prod market.db) every real ticker across watchlist/agent_signals/signal_outcomes/vnstock_financials is exactly 3 uppercase letters; MACRO/MULTI (5 chars) are the only anomalies. Checked for an existing \"is this a real ticker\" utility first per AC-1: isValidTicker (commandHandlers.ts, bare /^[A-Za-z]{2,10}$/) does not discriminate (MACRO/MULTI both pass); KNOWN_VN_TICKERS (vnRelevanceFilter.ts) is explicitly doc-commented \"kept minimal,\" would blind the guard on real tickers outside its ~45-code list, violating AC-2. Extended FIX-SIGNAL-OUTCOMES-RESOLUTION-STALLED.test.ts (+2 tests, 11/11 pass): MACRO+MULTI-only stuck rows -> stuckCount=0 (matches the 2 live rows exactly); real ticker VNM stuck >72h mixed with MACRO/MULTI noise -> stuckCount=1, alert still fires (positive control, guard not blinded). Secondary note (_lastStalledAlertDate module-level, re-arms on restart) left untouched per dispatch guidance — already documented as an accepted tradeoff mirroring freshnessSlaMonitorJob.ts sibling pattern, disproportionate scope for this P1/S task. Evidence: tsc clean, target file 11/11, related-module sweep 34/34, toolCount=183/cronJobCount=88 unchanged. Full bun test: baseline (clean main) 14941 pass/56 fail/1 error/40 skip vs post-fix 14947 pass/52 fail/40 skip — diffed named-fail lists directly: vnstock-3statement.test.ts (the CI-red this task flagged) byte-identical in both runs (8 failures, pre-existing, unrelated); the 4 tests differing between runs (pollNews-Reuters-mock timing, PDF-timeout circuit-breaker, push-news-9-sources) match this sprints documented pre-existing-flake band, zero named fails reference signalOutcome/checkStalledResolutionLiveness/MACRO/MULTI in either run. rebuild_required=true — signalOutcomeResolutionJob.ts is baked into the mcp-server image at build time; QA needs a container rebuild to verify the live guard against the real MACRO(id49)/MULTI(id74) prod rows before closing. Commit 314e70718 (code+test) + 333eabfe5 (memory). QA: after rebuild, verify live container no longer emits the daily BUG alert (or emits 0 stuckCount) with those 2 rows still checked_at=NULL, and that a genuinely-stalled real ticker (if any) would still alert."
       },
       {
-        "id": "FIX-STOCKPRICE-PRICEHISTORY-RO-WAL-DSN-SWALLOWED-EMPTY-KILLS-KINHDICH",
-        "title": "stock-price /price/history returns {history:[]} for EVERY ticker — DSN mode=ro + _journal_mode=WAL against a journal_mode=delete market.db raises SQLITE_READONLY(8); the error is swallowed by //nolint:nilerr into an empty array + HTTP 200. Kills 100% of kinh-dich readings and the frontend price chart.",
-        "type": "FIX",
-        "priority": "P1",
-        "status": "REVIEW",
-        "zone": "apps/stock-price/",
-        "size": "S",
-        "owner": "dev-stock-price",
-        "next_agent": "qa",
-        "created_by": "po (triage tick 2026-07-31T00:07Z)",
-        "created_at": "2026-07-31T00:29:11Z",
-        "updated_at": "2026-07-31T00:44:56Z",
-        "baseline_pass": "cd apps/stock-price && go build ./... && go test ./...",
-        "files": [
-          "apps/stock-price/pkg/infrastructure/fetchers.go"
-        ],
-        "source": "telegram report id 4227 — [kinh-dich] get_kinhdich_reading failed for HVN with 503 'insufficient price data ... requires at least 7 price points'",
-        "root_cause": "apps/stock-price/pkg/infrastructure/fetchers.go:303 (SQLitePriceHistoryRepository.GetHistory) and :240 (Tier3Fetcher) build the DSN 'file:%s?mode=ro&_journal_mode=WAL&_busy_timeout=5000'. The live market.db has PRAGMA journal_mode=delete, so the driver issuing PRAGMA journal_mode=WAL over a mode=ro connection fails with SQLITE_READONLY(8) 'attempt to write a readonly database'. The resulting db.Query error is then discarded at fetchers.go:318-320 ('return []domain.DailyOHLCV{}, nil //nolint:nilerr'), with the same swallow at :305-307 for sql.Open — so the handler emits HTTP 200 with an empty history and logs nothing. The two SIBLING repositories in this same package already fixed exactly this: foreign_flow_repository.go:33 and room_event_repository.go:32 both carry the comment 'Note: readonly mode (mode=ro) conflicts with WAL journal mode creation.' and dropped mode=ro from their DSN. The correction was applied to 2 of 4 call sites; fetchers.go:240 and :303 were missed.",
-        "evidence": "RAW-VERIFIED LIVE 2026-07-31T00:25Z — every hop measured, not inferred. (1) The data EXISTS: sqlite3 on data/live/market.db (the bind-mount source of the container's /app/data) gives daily_ohlcv HVN = 775 rows spanning 2023-06-27..2026-07-30, and the handler's exact query (WHERE code='HVN' AND date >= date('now','-30 days')) returns 22. This is NOT the thin-ticker / new-listing data gap the alert text implies. (2) Outage reproduced: curl localhost:5005/reading/HVN -> 503 'insufficient price data ... requires at least 7 price points'; curl localhost:5005/market (VNINDEX) -> the same 503. BOTH kinh-dich routes are dead. (3) Failing hop isolated: gateway localhost:4000/stock/price/history?code=HVN&days=30 -> {code:HVN,history:[]}, identically empty for FPT/VNM/VCB and for days=30/365/3650 (universal and parameter-independent); but mcp-server's own localhost:3000/api/prices/history?code=HVN&days=30 -> count:22 with full rows. Same DB, same window, opposite result => the defect is in stock-price, not in the data. (4) stock-price direct: localhost:5010/price/history?code=HVN&days=30 -> {code:HVN,history:[]} while /health returns {status:ok} — passive health masking dead data. (5) Root cause reproduced in isolation: sqlite3 'file:data/live/market.db?mode=ro' 'PRAGMA journal_mode=WAL;' -> 'Error: stepping, attempt to write a readonly database (8)', and a SELECT appended after that PRAGMA never executes; the same SELECT on a mode=ro connection WITHOUT the WAL pragma returns 22. PRAGMA journal_mode on the live DB = delete. (6) Alternatives ruled out at source: container clocks are exact (stock-price, mcp-server, kinh-dich and api-gateway all match the host to the second, so no date('now') drift); DB_PATH=/app/data/market.db resolves to a present 401MB file inside the container; and only 3 commits touched apps/stock-price since its image was built, none of them on the read path — so this is a live SOURCE defect, NOT a stale-image/deploy-lane problem. Rebuilding will not fix it.",
-        "blast_radius": "P1 — total loss of two product surfaces, not one ticker. (a) kinh-dich-service reads PRICE_HISTORY_URL -> api-gateway -> stock-price, so ComputeScores() receives nil for every code: get_kinhdich_reading 503s for ALL tickers and for the VNINDEX /market reading. (b) apps/frontend/app/lib/api/client.ts:245 calls the same /stock/price/history endpoint, so the frontend price-history chart renders empty. (c) fetchers.go:240 Tier3Fetcher carries the identical broken DSN, exposing the tier-3 price path to the same silent-empty failure.",
-        "recommended_action": "1) Drop 'mode=ro&' from the DSN at fetchers.go:240 and :303 so all four call sites in this package match the already-corrected foreign_flow_repository.go:36 / room_event_repository.go:35 form ('file:%s?_journal_mode=WAL&_busy_timeout=5000'). 2) Stop swallowing: fetchers.go:305-307 and :318-320 must return the error — the HTTP layer at router.go:111-116 already has a correct 500 path with slog.Error, and the silent nilerr is precisely what let a total outage present as a per-ticker 503 for an unknown duration. 3) Regression test: assert GetHistory returns a non-empty slice against a fixture DB whose journal_mode is 'delete' — that is the exact condition that fails today and that a WAL-mode fixture would mask.",
-        "misleading_alert_note": "The kinh-dich 503 text is itself a defect amplifier and deserves a fix in the same pass or an immediate follow-up: price_score.go:32-41 collapses BOTH 'source fetch errored' and 'genuinely fewer than 7 points' into one nil return, which usecases.go:80/85/124/129 convert to ErrInsufficientData and router.go renders as 503 'requires at least 7 price points'. A total upstream outage is therefore reported as a thin-data condition — which is what steered this incident toward a per-ticker data-gap reading instead of a service outage.",
-        "out_of_scope": "Do NOT re-point kinh-dich at the mcp-server fallback endpoint. The not-deployed-rerouter (apps/api-gateway/pkg/primitive/not-deployed-rerouter/reroute.go) is correct and deliberately fires only for NOT-deployed services; stock-price IS deployed, so routing to it is intended behaviour. Fix stock-price, not the routing.",
-        "related": [
-          "FIX-PRICEHISTORY-DATAASOF-STOCKPRICE-SERVING",
-          "FIX-CHEF-EVENING-L5-KINHDICH-SILENT-OMISSION"
-        ],
-        "supervised": false,
-        "plan_only": false,
-        "updated_by": "dev-stock-price",
-        "claimed_at": "2026-07-31T00:37:41Z",
-        "claimed_by": "dev-team (step 3 direct dispatch)"
-      },
-      {
         "id": "FU-MACRO-SNAPSHOT-TIER-WORSTOF",
         "priority": "P3",
         "size": "XS",
@@ -22392,54 +22529,6 @@
         "claimed_by": "dev-team (bounded-1 auto-pickup)",
         "verified_commit": "c3c5d63d2",
         "updated_by": "developer"
-      },
-      {
-        "id": "FIX-DB-INTEGRITY-SIDECAR-NAMED-VOLUME-DRIFT",
-        "type": "FIX",
-        "title": "db-integrity observer tooling still mounts the named volume commit 5ba622eca retired on 2026-07-15 — counts helper returns null, probe fail-opens every tick",
-        "zone": "cross-service/",
-        "priority": "P1",
-        "status": "REVIEW",
-        "size": "S",
-        "next_agent": "qa",
-        "supervised": false,
-        "plan_only": false,
-        "baseline_pass": true,
-        "source": "PO triage of system-auditor Tier-DATA sweep 2026-08-05T06:47Z (router escalation, telegram bug msg_id 4703)",
-        "created_at": "2026-08-05T07:06:06Z",
-        "created_by": "po",
-        "updated_at": "2026-08-06T12:19:01Z",
-        "root_cause": "2026-07-15 commit 5ba622eca ('fix(infra): bind-mount market data to host disk instead of Docker named volume') moved the live DB off the named volume `vn-market-intelligence-mcp_market_data` and onto a HOST BIND MOUNT `./data/live:/app/data` across all 9 dependent services, because the 2026-07-15 hypervisor VM rebuild had destroyed the named volume. docker-compose.yml now declares only pek_model_cache + bctc-page-images under `volumes:` — market_data is gone entirely. The RUNTIME was migrated; the READ-ONLY OBSERVER tooling was not. Every observer still runs `docker run --rm -v vn-market-intelligence-mcp_market_data:/data keinos/sqlite3 ...`, which makes Docker AUTO-CREATE an empty volume and then fail to open /data/market.db. Confirmed live: `docker volume inspect vn-market-intelligence-mcp_market_data` shows CreatedAt=2026-08-05T06:47:24Z (auto-created by the auditor's own failing probe today) and `docker run -v <vol>:/data alpine ls -la /data` shows an empty dir, while `docker inspect vn-market-intelligence-mcp-mcp-server-1` shows `bind .../data/live -> /app/data` and the real market.db is 425MB with an mtime of seconds ago.",
-        "evidence": "PO ran both failing commands directly. `bash scripts/db-integrity-counts.sh` -> '[DB-INTEGRITY-COUNTS] PROBE FAILURE (exit 1): Error: unable to open database \"file:/data/market.db?immutable=1\": unable to open database file'. `bash scripts/agents-flow/db-integrity-probe.sh` -> {\"verdict\":\"SPAWN\",\"detail\":\"sidecar query failed (docker unreachable, non-zero exit, or output did not parse into 1 line per watched table) — snapshot left untouched\",\"tables_changed\":-1}. Both fail-open rather than fail-loud, so the degradation is SILENT: the probe's whole purpose is skip-if-unchanged idempotency and it now votes SPAWN unconditionally, and the counts helper's null propagates into every history entry. The same query against the correct path succeeds immediately: `sqlite3 \"file:data/live/market.db?immutable=1\" \"SELECT COUNT(*) FROM daily_ohlcv WHERE high=0 AND low=0;\"` -> 336.",
-        "blast_radius": "docs/data/db-integrity-history.json holds 138 entries; the last one with non-null `counts` is 2026-06-25T19:25:41Z, then a 41-day gap, then today's 2026-08-05T06:51:39Z entry with counts=NULL. The gap is because the db-data-integrity cron had NO re-arm coverage until /cron-standalone-team was built on 2026-08-04 — so today was the FIRST sweep since the 07-15 bind-mount switch, and it broke immediately. Correct framing: broken for 21 days (since 5ba622eca), first OBSERVED today — not '6 weeks of silent nulls'. The deterministic counts trail that register.md:108-113 explicitly relies on to stop the LLM inventing trends is dead until this lands.",
-        "files": [
-          "scripts/db-integrity-counts.sh",
-          "scripts/agents-flow/db-integrity-probe.sh",
-          "scripts/db-integrity-history-append.sh",
-          "scripts/ops-bctc-enrich-reverify-pulljob.sh",
-          ".claude/skills/cron-standalone-team/register.md",
-          ".claude/commands/crons/cron-db-data-integrity.md",
-          "docs/agents/system-auditor/flow/main.md"
-        ],
-        "ac": [
-          "AC-1 DECIDE THE CANONICAL PATH FIRST, then change code. Two candidates: (i) host bind `data/live/market.db` read directly with `sqlite3 \"file:<path>?immutable=1\"` (no docker at all — PO confirmed this works today and is strictly simpler), or (ii) keep a sidecar but mount the host dir: `docker run --rm -v \"$PWD/data/live:/data:ro\" keinos/sqlite3 ...`. Record the choice + rationale in the decision journal. Do NOT re-create the named volume — 5ba622eca retired it deliberately so the DB survives VM rebuilds.",
-          "AC-2 scripts/db-integrity-counts.sh returns real non-null counts for every watched table. Verify by running it and diffing at least 3 table counts against the same query run through a second independent access path (e.g. the mcp-server container's own reader) — two planes, per memory feedback_same_db_tools_diverge_rowcount.",
-          "AC-3 scripts/agents-flow/db-integrity-probe.sh emits verdict=SKIP-SPAWN on an unchanged DB. This is the actual proof the pre-gate works — today it CANNOT emit SKIP-SPAWN at all. Run it twice with no intervening writes and assert the second call skips.",
-          "AC-4 Both scripts FAIL LOUD (non-zero exit + bug-channel-worthy stderr) when the DB is genuinely unreachable, instead of silently returning null / voting SPAWN. The current fail-open is what let this hide for 21 days.",
-          "AC-5 Update every doc/prompt that still teaches the named-volume pattern: .claude/skills/cron-standalone-team/register.md Job 1 AND Job 2 prompt bodies (both currently paste the 'DB ACCESS — the live DB is the named volume, NOT host ./data' block verbatim, and both are LIVE — the router registered them at 06:18Z today), .claude/commands/crons/cron-db-data-integrity.md, and the system-auditor flow. grep -rn 'vn-market-intelligence-mcp_market_data' across scripts/ .claude/ docs/ and triage every hit — several scripts/*.jq audit artifacts also assert it, though those are historical records and should be left alone.",
-          "AC-6 The memory note reference_live_db_is_named_volume_not_host_data.md is now STALE and actively harmful — it says the named volume is authoritative and host ./data is a 'decoy'. That was true before 5ba622eca and is inverted now. Route a correction so agents stop being taught the wrong path.",
-          "AC-7 Regression guard: something must fail when the runtime DB location and the observer DB location diverge again. A test or CI check that resolves the mcp-server container's /app/data mount source and asserts the observer scripts target the same inode/path is the minimum bar."
-        ],
-        "owner": "po",
-        "updated_by": "developer",
-        "po_corroboration_20260806T0833": "THIRD INDEPENDENT CORROBORATION + PROMOTION TO A BLOCKING DEPENDENCY (priority normalised 'high' -> P1 to match the board's P-scale; no scope change). This row was minted 2026-08-05 on a single finding. Two more landed today from unrelated sources: (a) the developer working FIX-AUDITOR-EMPTYTABLE-CHECK-NO-WRITER-DISCRIMINATOR hit the same dead mount and documented it in commit d16b7c212 (comment in scripts/db-integrity-counts.sh naming the ./data/live -> /app/data bind mount that superseded the named volume at 5ba622eca, 2026-07-15), explicitly scoping the fix out of that task; (b) signal dev-team-20260806T082420Z-auditor-data-guard-noncompliance (08:24:20Z, audit_cycle_tag cron:db-data-integrity:2026-08-06T08:16Z) reports the DATA sweep ran an ad-hoc /tmp script and labelled it scripts/db-integrity-counts.sh, with the registered script 'confirmed broken, stale sidecar mount'. WHY THIS NOW MATTERS MORE THAN ITS OWN SEVERITY SUGGESTS: FIX-AUDITOR-EMPTYTABLE-CHECK-NO-WRITER-DISCRIMINATOR is in review[] awaiting a qa replay whose AC is 'the two CRITICALs must not re-fire'. A probe that fail-opens on a dead mount satisfies that AC by seeing nothing, so THIS row is a de-facto gate on THAT sign-off (see po_QA_GATE_WARNING_20260806T0833 there). SECONDARY EFFECT worth naming: agents are working around the broken helper with ad-hoc /tmp scripts and then reporting the registered path's name, which both violates the standing scripts/-not-/tmp rule (feedback_scripts_persist_not_tmp) and makes every number the sweep emits unattributable to a reproducible source -- PO already saw the symptom at 07:17Z as C-04 reporting financial_reports=30 against a live raw count of 257 and C-08 reporting alerts=42 against 144, and wrongly guessed 'undocumented window predicate'. The likelier explanation is that those numbers never came from the registered script at all. Fixing the mount plausibly resolves that anomaly too -- verify, do not assume.",
-        "promoted_at": "2026-08-06T11:44:04Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
-        "claimed_at": "2026-08-06T11:54:44Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)",
-        "branch": null,
-        "dev_disposition_20260806T1214Z": "AC-1 direct host-bind sqlite3 read (no docker), AC-2 two-plane live diff 6/6 match, AC-3 SKIP-SPAWN live-verified on repeat, AC-4 both scripts fail loud (probe.sh keeps documented FAIL-OPEN/SPAWN + adds loud stderr), AC-5 3 cron/register docs + bctc-extraction-runbook.md + db-empty-table-classify.sh comment corrected, AC-6 system-auditor/flow/main.md corrected (in-repo equivalent; private router memory note flagged, out of repo scope), AC-7 new scripts/db-integrity-mount-drift-check.sh(+test) regression guard, LIVE-verified PASS against the running stack today. New tests db-integrity-counts.test.sh 18/18 + db-integrity-mount-drift-check.test.sh 12/12; db-integrity-probe.test.sh updated 27/27; zero regressions across 4 sibling suites (150/150). Decision journal sprint-COWORK-GUARANTEED-SLOT-CATCHUP-developer-3.md STEP developer-S61."
       }
     ],
     "qa": [
@@ -22487,9 +22576,50 @@
         }
       ]
     },
-    "last_triaged_at": "2026-08-06T11:54:38Z",
-    "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": []
+    "last_triaged_at": "2026-08-06T12:28:00Z",
+    "last_triaged_by": "po",
+    "in_progress": [
+      {
+        "id": "FIX-AUDITOR-C08-UNSATISFIABLE-TTL-WINDOW-AND-ISO8601-STRCMP",
+        "type": "FIX",
+        "title": "system-auditor C-08 is a broken detector, not a real defect: its expected=0 threshold is mathematically unsatisfiable (24h alerts window vs 2h-TTL agent_signals stubs) AND its window over-captures via the ISO8601 strcmp bypass already fixed in the code-plane twin",
+        "zone": "cross-service/",
+        "priority": "high",
+        "status": "IN_PROGRESS",
+        "size": "S",
+        "next_agent": "dev-team",
+        "supervised": false,
+        "plan_only": false,
+        "baseline_pass": true,
+        "source": "PO triage of system-auditor Tier-DATA sweep c20 2026-08-05T08:18:46Z - signal sys-20260805T081846-1853. Root-caused live against the named-volume market.db (readonly) 2026-08-05T08:23-08:27Z.",
+        "created_at": "2026-08-05T08:28:16Z",
+        "created_by": "po",
+        "updated_at": "2026-08-06T12:27:30Z",
+        "root_cause": "C-08 (docs/agents/system-auditor/flow/main.md:649) is `SELECT count(*) FROM alerts a LEFT JOIN agent_signals s ON a.id = s.alert_id WHERE s.id IS NULL AND a.triggered_at > datetime('now','-24 hours')` with expected=0. TWO independent faults compound, and the reported anomaly is a FALSE POSITIVE - the alert-engine write path is HEALTHY. (A) UNSATISFIABLE THRESHOLD: agent_signals alert-correlation stubs are TTL-bound at 2h (`expiresAt(ttlMinutes ?? 120)`, agentSignalStore.ts:570/604/634/661/688/715) and hard-purged by cleanExpired() on the daily off-hours dataAuditJob cron, while `alerts` rows are retained ~30d (checkStaleAlerts.ts D-4 is UPDATE-only, never deletes). So every alert older than the last GC sweep NECESSARILY has no surviving correlation row. expected=0 can only be met if zero alerts fired in the whole stale band. The check's own code-plane inverse (checkOrphanAgentSignalsAlertId.ts:15-16) already states this in prose: 'agent_signals correlation stubs are TTL-bound, ~2h, and purged by cleanExpired(), so any historical debt self-expires' - C-08 was never re-derived against that fact. (B) ISO8601 STRCMP BYPASS: `alerts.triggered_at` is a raw JS toISOString() string ('2026-08-04T01:21:58.806Z') while `datetime('now','-24 hours')` renders space-separated ('2026-08-04 08:26:52'). At index 10 'T'(0x54) > ' '(0x20), so every row sharing the bound's date-part compares greater and the window over-captures. LIVE PROOF 2026-08-05T08:26Z: as-written window = 40 alerts / 22 orphans; TRUE 24h window (julianday) = 28 alerts / 10 orphans; the oldest row the as-written window admitted was 31 HOURS old. This is the known recurring class feedback_sqlite_iso8601_datetime_strcompare_bypass, and it was ALREADY FIXED in the code-plane twin on 2026-08-01 (checkStaleAlerts.ts:23-30 wraps both sides as `datetime(triggered_at) < datetime('now',...)` and cites the same lesson by name) - the remedy simply never propagated to the flow-doc SQL the agent actually executes. That is memory feedback_fix_landed_in_the_pregate_not_the_probe_the_agent_actually_runs.",
+        "evidence_write_path_is_healthy": "Age-bucketed LEFT JOIN on the live DB gives a perfectly clean split with NO overlap: alerts <=17h old = 18 linked / 0 orphaned; alerts >=18h old = 22 orphaned / 0 linked. The 18h boundary equals the last cleanExpired() sweep (oldest surviving correlation stub = 2026-08-04T14:29:22Z, 17h old; 131 of 144 agent_signals rows are already past expires_at and awaiting the next sweep). Orphan status is therefore a pure function of GC timing x alert volume and carries ZERO information about write-path health. Producer-family breakdown confirms no producer-specific gap - EVERY family appears on BOTH sides (news 7 orphan/9 linked, price 9/1, ta 3/3, other 2/3, macro 1/2); a genuine co-write gap would concentrate in one family. fingerprint-null does not correlate either (21/16 vs 1/2). The brief's hypothesis that 'alert-engine writes alerts/price_alerts but not agent_signals' is DISCONFIRMED: `price_alerts` and `alert_engine_records` both hold 0 rows, and the prior co-write gap FU-ALERT-COWRITE-SCHEDULER-JOBS (2026-06 archive) is DONE and holding.",
+        "growth_claim_is_false": "The escalating brief framed this as monotonic 1->22 growth over 15 days implying a worsening defect. RAW-verified FALSE. True firing history: 1 orphan (sys-20260721T003810-2b02, 07-21) -> 121 orphans (sys-20260730T003538-10ba, 07-30, recorded in docs/data/DASHBOARD.md:242-249 and MISSING from both the live .signal_queue and the archives) -> 22 orphans (08-05). Non-monotonic, and it tracks alert volume: alerts/day = 8 (07-31), 11 (08-01), 7 (08-02), 42 (08-03), 26 (08-04). The 22 orphans are exactly the 08-04 alerts that fired before the 14:29Z GC horizon. There is no regression to chase.",
+        "files": [
+          "docs/agents/system-auditor/flow/main.md",
+          "apps/mcp-server/src/scheduler/news-analysis/audit-checks/checkOrphanAgentSignalsAlertId.ts",
+          "apps/mcp-server/src/scheduler/news-analysis/audit-checks/checkStaleAlerts.ts",
+          "docs/data/DASHBOARD.md",
+          "docs/protocols/system-audit-runbook.md"
+        ],
+        "ac": [
+          "AC-1 Make C-08 satisfiable or delete it. The threshold must be derivable from the data model: either (i) bound the alerts window to the agent_signals correlation-stub TTL horizon rather than 24h, or (ii) join only alerts whose paired stub could still be alive, or (iii) retire C-08 outright and rely on the code-plane inverse checkOrphanAgentSignalsAlertId (D-NEW2), which is TTL-aware by construction. Do NOT keep expected=0 against a 24h window - state explicitly in the flow doc WHY the chosen bound is satisfiable.",
+          "AC-2 Fix the ISO8601 strcmp bypass in the C-08 predicate by wrapping BOTH sides in datetime(), copying the already-proven pattern and rationale comment from checkStaleAlerts.ts:23-30 verbatim rather than reinventing it.",
+          "AC-3 FLEET REPLAY, not one line. Per memory feedback_fleetwide_gate_validated_on_one_file_optout_allowlist, audit EVERY C-xx/B-xx check in docs/agents/system-auditor/flow/main.md that compares a timestamp column against datetime('now',...) and report per-check whether the column is T-format. Already measured and CONFIRMED AFFECTED: financial_reports.parsed_at is 100% T-format (C-04, 7-day window) and agent_signals.created_at is MIXED 13% T / 87% space (C-07, 24h window - heterogeneous is the worst case because the same query silently applies two different semantics). Confirmed NOT affected: market_messages.sent_at 0% T (C-06), daily_ohlcv.updated_at 2% T. Fix every affected check in one pass.",
+          "AC-4 Regression test: seed an alerts row older than the correlation-stub TTL with its stub already purged, and assert C-08 (or its replacement) does NOT flag it. Also assert a row whose date-part matches the bound but which is genuinely outside the window is EXCLUDED - that is the strcmp bypass, and it must fail loudly if reintroduced.",
+          "AC-5 Retract the fabricated root causes already published. docs/data/DASHBOARD.md:246 asserts 'Signal processing pipeline may be delayed or alert-signal mapping broken' and :330 asserts 'Alerts created by alert-engine but not propagated to agent_signals table'. Both are agent-narrated, unmeasured, and now DISCONFIRMED. :243 also names the wrong table ('no matching signal_queue rows' - the join is on agent_signals). This is the confabulation class feedback_agent_selfreport_metalayer_confabulation; correct or withdraw both entries.",
+          "AC-6 Do not silently drop coverage. If AC-1 retires C-08, confirm in writing that checkOrphanAgentSignalsAlertId (D-NEW2) plus the storeAlerts/storeAlertsFromCommander writer guard genuinely cover the co-write-gap failure mode that C-08 was introduced to catch, so this fix does not trade a false positive for a blind spot."
+        ],
+        "promoted_at": "2026-08-06T11:54:38Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
+        "claimed_at": "2026-08-06T12:27:30Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)"
+      }
+    ]
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
