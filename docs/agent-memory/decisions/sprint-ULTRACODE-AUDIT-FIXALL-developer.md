@@ -379,3 +379,18 @@ commit-convention.md); reduced `.claude/commands/commit.md` to a one-line pointe
 changes); per-category mutex scoping matches commit-mutex's own No-Heartbeat Rule
 sizing (TTL=90s, seconds-long critical section only).
 **why-change:** No change from plan.
+
+### STEP developer-S23 · developer · 2026-08-06T10:15:00Z
+**task-id:** UC-CRITIC-HOOKS-ENFORCEMENT
+**what-done:** Implemented FR-1 (live-only settings.local.json edit, 4 invocations),
+FR-2 (`hook-guard.sh` + 4 scripts, named guards only), FR-3 (A-33 in tier1-probe.md).
+**what-considered:**
+- hg_run: temp-file stderr capture vs merged-stream — merged wins (NFR-3: zero new forks).
+- wc -l/-c calls in context-bloat-backstop.sh: wrap vs skip — skipped (not a BA-named
+  dependency-removal risk; wrapping risks a pipefail regression for negligible gain).
+- Test-scope "zero-coverage for orch-state-hook-bash-backstop.sh" vs existing AC-3 block
+  — resolved as ONE action (retitle+extend AC-3), not a redundant parallel test file.
+**why-decision:** Architect's canonical pattern + BA's named edge cases (git/jq/bun
+removal) bound scope; deviations recorded in handoff Implementation Record.
+**why-change:** Found+fixed 1 incidental bug (BSD mktemp suffix-after-X non-random
+template) surfaced only once the swallowing wrapper was removed — root cause, in scope.
