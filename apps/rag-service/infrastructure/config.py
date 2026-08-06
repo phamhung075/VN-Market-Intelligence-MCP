@@ -17,6 +17,7 @@ class Config:
     host: str
     port: int
     log_level: str
+    embedder_idle_unload_minutes: int
 
     @classmethod
     def from_env(cls) -> "Config":
@@ -33,4 +34,9 @@ class Config:
             host=os.environ.get("HOST", "0.0.0.0"),
             port=int(os.environ.get("PORT", "5002")),
             log_level=os.environ.get("LOG_LEVEL", "INFO"),
+            # FIX-RAG-EMBEDDER-IDLE-UNLOAD-PATH: idle-unload threshold, minutes.
+            # Never hardcode — config, same pattern as EMBEDDING_CACHE_DIR/LOG_LEVEL.
+            embedder_idle_unload_minutes=int(
+                os.environ.get("EMBEDDER_IDLE_UNLOAD_MINUTES", "15")
+            ),
         )

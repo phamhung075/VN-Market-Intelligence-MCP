@@ -132,10 +132,39 @@ see task notebook).
 - Languages: Vietnamese, French, English, multilingual
 
 ### Methods
-- `initialize()`: Eagerly loads model from FastAPI lifespan
-- `_raw_embed(texts)`: `model.encode(texts, normalize_embeddings=True, show_progress_bar=False)` → numpy→list
+- `initialize()`: no-op called from FastAPI lifespan — model does NOT load here (GFD-13
+  lazy-load; see below). Kept only for interface-contract compatibility.
+- `_ensure_model_loaded()`: lazy-init the model exactly once, thread-safe via
+  `asyncio.Lock` (double-check-lock pattern) — created lazily inside the first async call.
+- `_raw_embed(texts)`: sets `_last_used_monotonic = time.monotonic()`, then
+  `model.encode(texts, normalize_embeddings=True, show_progress_bar=False)` → numpy→list
 - `embed(text)`: Single text → `EmbeddingVector(dims=384, values=...)`
 - `embed_batch(texts)`: Multiple texts → list of EmbeddingVector
+- `_maybe_unload_idle(idle_threshold_s)`: FIX-RAG-EMBEDDER-IDLE-UNLOAD-PATH — under the
+  SAME `_load_lock` used for loading, if the model is loaded and idle longer than
+  `idle_threshold_s`, sets `_model = None` and calls `gc.collect()`. Returns whether it
+  unloaded. Never raises.
+
+#### GFD-13 lazy-load / FIX-RAG-EMBEDDER-IDLE-UNLOAD-PATH idle-unload
+The model is NOT loaded at container startup (`initialize()` is a no-op) — it loads on
+the first `embed()`/`embed_batch()` call via `_ensure_model_loaded()`'s double-check-lock.
+Originally this load had **no release path**: once warmed, the ~600-700 MiB model stayed
+resident for the container's entire remaining lifetime, regardless of traffic, pinning the
+container near its memory cap indefinitely after the very first request.
+
+`_maybe_unload_idle()` closes that gap, symmetrically: a background `asyncio.create_task`
+loop in `app_factory.build_lifespan()` polls every 60s (fixed internal cadence, not
+env-configurable) and calls `_maybe_unload_idle(idle_threshold_s)`, where
+`idle_threshold_s = EMBEDDER_IDLE_UNLOAD_MINUTES * 60`. The loop is cancelled cleanly in
+the lifespan's shutdown path. Reload on the next `embed()`/`embed_batch()` call is fully
+transparent — it goes through the SAME `_ensure_model_loaded()` lock path used for the
+original lazy-load; no second load path exists. `/embed/health` truthfully reports the
+resulting `state` flip `"warm" → "cold" → "warm"` (GFD-7, unchanged) — cold is a state the
+service can now return to, not only start in.
+
+Duck-typed for the service-tier sandbox: fake embedders injected via `create_app()` do not
+implement `_maybe_unload_idle()`, so the background loop is a permanent no-op for them —
+zero sandbox/determinism impact.
 
 ### Configuration
 ```python
@@ -146,4 +175,5 @@ class Config:
     embedding_cache_dir: str = "./data/models"
     host: str = "0.0.0.0"
     port: int = 5002
+    embedder_idle_unload_minutes: int = 15  # env: EMBEDDER_IDLE_UNLOAD_MINUTES
 ```

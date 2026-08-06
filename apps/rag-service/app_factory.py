@@ -15,6 +15,8 @@ P3-A (service-tier injection): build_real_adapters() accepts optional overrides 
 
 from __future__ import annotations
 
+import asyncio
+import contextlib
 import logging
 import os
 from contextlib import asynccontextmanager
@@ -27,6 +29,38 @@ if TYPE_CHECKING:
     from domain.repositories import EmbedderPort, VectorStorePort
     from infrastructure.config import Config
 
+logger = logging.getLogger(__name__)
+
+# Bounded poll interval for the idle-unload background loop. Not env-configurable
+# on purpose — it is an internal check cadence, not a user-facing knob (the knob
+# is EMBEDDER_IDLE_UNLOAD_MINUTES, which controls the actual idle threshold).
+_IDLE_UNLOAD_CHECK_INTERVAL_S = 60.0
+
+
+async def _idle_unload_loop(embedder: Any, idle_threshold_s: float) -> None:
+    """
+    Background loop (FIX-RAG-EMBEDDER-IDLE-UNLOAD-PATH): every
+    _IDLE_UNLOAD_CHECK_INTERVAL_S, ask the embedder to unload itself if it has
+    sat idle longer than idle_threshold_s.
+
+    Duck-typed: sandbox/fake embedders (service-tier injection) do not implement
+    _maybe_unload_idle(), so this loop is a permanent no-op for them — zero
+    behaviour change to the deterministic sandbox path.
+
+    Runs until cancelled (build_lifespan cancels it on shutdown). Never lets an
+    exception escape — a broken idle-unload check must never take the service
+    down; it just logs and keeps polling.
+    """
+    maybe_unload = getattr(embedder, "_maybe_unload_idle", None)
+    if not callable(maybe_unload):
+        return  # embedder does not support idle-unload — nothing to do, ever
+    while True:
+        await asyncio.sleep(_IDLE_UNLOAD_CHECK_INTERVAL_S)
+        try:
+            await maybe_unload(idle_threshold_s)
+        except Exception:
+            logger.exception("idle-unload check failed (embedder stays as-is)")
+
 
 def build_lifespan(
     embedder: Any,
@@ -35,9 +69,13 @@ def build_lifespan(
     """
     Return a FastAPI-compatible lifespan async context manager factory.
 
-    In production (real SentenceTransformersEmbedder), calls embedder.initialize().
-    In service-tier sandbox (fake adapter), duck-types: if no initialize(), skips.
+    In production (real SentenceTransformersEmbedder), calls embedder.initialize()
+    and starts the idle-unload background loop (FIX-RAG-EMBEDDER-IDLE-UNLOAD-PATH),
+    cancelled cleanly on shutdown.
+    In service-tier sandbox (fake adapter), duck-types: if no initialize()/
+    _maybe_unload_idle(), both are skipped — zero sandbox behaviour change.
     """
+    idle_unload_minutes = getattr(cfg, "embedder_idle_unload_minutes", 15)
 
     @asynccontextmanager
     async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
@@ -58,8 +96,17 @@ def build_lifespan(
                     exc,
                 )
 
-        yield
-        log.info("rag-service shutting down")
+        idle_unload_task = asyncio.create_task(
+            _idle_unload_loop(embedder, idle_threshold_s=idle_unload_minutes * 60.0)
+        )
+
+        try:
+            yield
+        finally:
+            idle_unload_task.cancel()
+            with contextlib.suppress(asyncio.CancelledError):
+                await idle_unload_task
+            log.info("rag-service shutting down")
 
     return lifespan
 
