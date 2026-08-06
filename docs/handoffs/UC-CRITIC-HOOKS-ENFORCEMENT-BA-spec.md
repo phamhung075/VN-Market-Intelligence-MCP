@@ -124,3 +124,63 @@ DONE: BA spec complete, requirements + risk-tiered fix scope written, zero PO bl
 NEXT: architect — technical blueprint for fail-loud exit-code propagation (FR-1/FR-2) + secondary liveness backstop (FR-3/FR-4) across the 4 Tier-CRITICAL/HIGH hook invocations, per fix table above. Do not touch `orch-state-hook-prewrite.mjs` (FR-5).
 HANDOFF: docs/handoffs/UC-CRITIC-HOOKS-ENFORCEMENT-BA-spec.md
 PIPELINE: continue
+
+---
+
+## [Architect] Brownfield Findings
+
+- **Zone:** cross-service/ (confirmed via `system-map.json` `.project.zones[] | select(.id=="cross-service")` → `path: scripts/`, `specialist: developer`). Single zone, no split — matches BA's own header.
+- **BUILD-STANDARD: not-applicable** — bug-fix/hardening of existing hook infrastructure; `hook-guard.sh` (below) is a shared shell utility, not a new architectural primitive/service.
+
+### Verified paths (read end-to-end this cycle)
+- `.claude/settings.local.json:20,40` — `tmux-agent.sh status` / `tmux set-option` — LOW, FR-6 exempt from FR-1/FR-2, FR-3 registration-presence only.
+- `.claude/settings.local.json:31` — `orch-state-hook-prewrite.mjs` — **confirmed untouched, FR-5 respected.**
+- `.claude/settings.local.json:51,62,71,80` — `branch-hygiene-stop.sh` (Stop) / `notebook-auto-prune.sh` / `context-bloat-backstop.sh` / `orch-state-hook-bash-backstop.sh` (all PostToolUse) — FR-1 targets.
+- `.claude/settings.json:9` — graphify `PreToolUse` — LOW, FR-6 exempt (the `|| true` here guards a shell `&&/||` idiom, not a validator; leave untouched).
+- `scripts/agents-flow/orch-state-hook-bash-backstop.sh:35-36,45,48-49,60` — ambiguous guards (PROJECT_ROOT fallback, stdin-tmp write, **L48-49 the exact jq/BASH_CMD example BA cited**, validator-missing check).
+- `scripts/agents-flow/context-bloat-backstop.sh:48-49,58-62,97,117-120,146-150` — same shape; **L97's `jq` read of `file-size-caps.json` is the highest-value target** — a corrupted SSOT here today falls through as "non-governed path" (silent no-op), the worst instance of this whole defect class because it's an SSOT-corruption event, not a per-call fluke.
+- `scripts/agents-flow/notebook-auto-prune.sh:60-61,248-252` — same STDIN/file_path shape. `:306` (`LINE_CAP` from the same caps SSOT) already has a safe fallback (`case ... ''|*[!0-9]*) LINE_CAP=200`) — lower priority, optional, note only (falls back to the documented default rather than mutating on bad input, unlike the other guards which no-op entirely with zero visibility).
+- `scripts/agents-flow/branch-hygiene-stop.sh:19,24,30` — **opposite failure polarity**: `git rev-parse`/`git status`/`git worktree list` failures fall through as `""`/`true`, which reads as "clean" — a crash here is silently indistinguishable from "nothing wrong" (backwards from the other 3, same root defect).
+- `scripts/agents-flow/orch-state-hook.test.mjs:219-252` — `describe('AC-3 — PostToolUse Bash backstop is non-blocking (always exits 0)')`. None of its 3 cases exercise a crash path (unrelated cmd, orch-mentioning-pass, empty stdin) so none break under this design — but the title's blanket claim goes stale; retitle + extend (NFR-5).
+- `scripts/agents-flow/orch-state-hook.test.mjs:325-` `WEDGE-GUARD` describe block — confirms `orch-state-hook-prewrite.mjs`'s fail-**open** design is deliberate (blocking on infra failure would wedge every future Write/Edit). Correctly opposite polarity from this fix's fail-**loud** (non-blocking) design — the two hooks have different platform capabilities (PreToolUse can block; PostToolUse cannot), which is NFR-1's own point, now cross-confirmed against a second file.
+- `docs/agents/system-auditor/flow/tier1-probe.md:1-224` — table tops out at **A-32** (Disk); **A-33 confirmed free**, extension point for FR-3. `scripts/emit-audit-signal.sh` (UC-ASL-P2) — blessed, already dedup(`dedup_key`)+telegram+signal-row+dashboard-wired single script — stronger reuse target than hand-rolling a new dedup pattern (FR-4/NFR-2/NFR-4 for free).
+
+### Design decisions
+
+**FR-1 (invocation boundary, 4 scripts only — CRITICAL+HIGH tier):** drop the outer `2>/dev/null || true` entirely from the 4 `.claude/settings.local.json` command strings (lines above). Un-swallows both bash-interpreter-level failures (deleted/chmod'd script → exit 126/127 + stderr) and the script's own exit code. Exit-code convention, uniform across all 4 (NFR-1: none can block an already-done action or an in-progress session in a way this fix should introduce): `0` = clean pass or legitimate no-op (unchanged); `1` = FR-2 discriminator detected a prerequisite crash (non-blocking, stderr visible to the agent). Considered giving `branch-hygiene-stop.sh` (a Stop hook) exit `2` on crash — Claude Code's Stop-hook contract can legitimately delay session end, a capability PostToolUse lacks — but that introduces a NEW blocking behavior this SPIKE never asked for; **not adopted**, flagged as a future option only, not implemented.
+
+**FR-2 (crash discriminator, shared helper — extend not duplicate):** new `scripts/agents-flow/lib/hook-guard.sh`, one function `hg_run <label> <cmd...>` — captures the wrapped command's real stderr + exit code (instead of `2>/dev/null || true` discarding both), prints stdout only on success, else writes `[<label>] PREREQUISITE-FAILURE: exited <n>: <stderr>` to stderr and returns 1. Sourced by all 4 scripts. Applied ONLY at the input-boundary guards listed in Verified Paths above (not retroactively to every `exit 0` in `notebook-auto-prune.sh` — 21 sites total, most are internal prune-loop mechanics already covered by existing `notebook_unparseable_breach`/`notebook_single_section_overage_breach` signals; scoping the retrofit to input-boundary guards matches BA's own example and the SPIKE timebox). Pattern (canonical, `orch-state-hook-bash-backstop.sh:48-49`):
+  ```bash
+  # BEFORE: BASH_CMD=$(jq -r '...' "$STDIN_TMP" 2>/dev/null || true); [ -z "$BASH_CMD" ] && exit 0
+  if ! BASH_CMD=$(hg_run "jq:tool_input.command" jq -r '.tool_input.command // empty' "$STDIN_TMP"); then
+    exit 1   # jq itself crashed — NOT the same as "no command field"
+  fi
+  [ -z "$BASH_CMD" ] && exit 0   # jq succeeded, field genuinely absent — unchanged no-op
+  ```
+  `branch-hygiene-stop.sh` needs the same wrap but must flip a `problems+=(...)` entry on failure (forces the FAIL branch) rather than `exit 1` directly — its 3 `git` calls feed a report, not an early exit.
+  NFR-3 compliance: `hg_run` adds zero NEW subprocess calls vs. today (same commands, stderr now goes to a tempfile instead of `/dev/null`, exit code is checked instead of discarded) — no new `wc -l`/`wc -c` on the hot/no-op path, unchanged.
+
+**FR-3 (liveness backstop → fold into system-auditor, per BA Blockers item 1):** new check **A-33 "Hook Enforcement Liveness"** in `docs/agents/system-auditor/flow/tier1-probe.md` (Tier-1, cheap). For the 4 load-bearing scripts: (a) `[ -f "$SCRIPT" ]`, (b) `[ -x "$SCRIPT" ]`, (c) `jq` presence-check against `.hooks.<Event>[].hooks[].command` in the owning settings file for the exact matcher/command substring. For the 3 LOW-tier scripts: (c) only, per FR-6. BA's "(d) evidence it fired" is explicitly **descoped** — no fire-log plumbing exists today and building one is new infrastructure, which would violate FR-4 ("reuse existing, don't invent") and NFR-4 (no new dependency stack); (a)+(b)+(c) alone already close the two edge cases BA names in §5 (file deleted/renamed, chmod non-executable). Emit via `scripts/emit-audit-signal.sh --check-id "A-33" --severity WARN --detail-json '{"dedup_key":"hook_enforcement_liveness:<script-basename>", ...}'` — dedup scoped per-script (NFR-2).
+
+**FR-4 (telemetry reuse):** fully satisfied by FR-2 (Claude-Code-native stderr surfacing, zero new channel) + FR-3 (`scripts/emit-audit-signal.sh`, zero new channel/schema/dashboard).
+
+### Test strategy (NFR-5 — architect's call per BA Blockers item 2)
+- Extend `orch-state-hook.test.mjs`'s AC-3 block (retitle to reflect exit 0 vs exit 1) + 2 new crash-injection cases (STDIN_TMP write into a read-only `TMPDIR`; jq unavailable via a `PATH` override, mirroring the file's own existing `ORCH_HOOK_BUN_BIN`-style override convention).
+- Extend `context-bloat-backstop.test.sh` / `notebook-auto-prune.test.sh` with a malformed-`file-size-caps.json` case → expect exit 1, not silent "non-governed" exit 0.
+- **IN SCOPE for this same FIX** (BA's open question, decided): minimal new test scaffolding for `branch-hygiene-stop.sh` and `orch-state-hook-bash-backstop.sh` — both currently zero-coverage AND both receive an FR-1+FR-2 behavior change in this fix (highest-risk combination: untested + changing). `tmux-agent.sh` stays out (LOW tier, FR-6 exempt, no code change here).
+
+### Risk flags
+1. `notebook-auto-prune.sh:306` already has a safe hardcoded fallback (`LINE_CAP=200`) on SSOT-read failure — correctly conservative, just silent; optional/non-gating follow-up only.
+2. Dropping `2>/dev/null || true` surfaces crash stderr to the CURRENT agent session only (Claude-Code-local) — no Telegram/push path added by FR-1/FR-2, so no spam risk; the only durable/pushed telemetry is FR-3, which already has NFR-2 dedup.
+3. Confirmed FR-5 boundary respected end-to-end — zero edits proposed to `orch-state-hook-prewrite.mjs` or its test file.
+4. **CRITICAL delivery-mechanism finding (live-verified this cycle, not in BA's spec):** `.claude/settings.local.json` is machine-local and **untracked** — `git check-ignore -v .claude/settings.local.json` → matched by `~/.config/git/ignore:1` (`**/.claude/settings.local.json`); `git ls-files` confirms zero commit surface. Cross-confirmed by a prior developer decision (`sprint-SSOT-INTEGRITY-PERIMETER-developer.md:78`, same fact) and a prior PO decision (`sprint-HARDEN-NOTEBOOK-WRITE-GATE-AC5-BLOCKING-po.md` STEP po-S2, 2026-06-30) documenting a related **session-restart ACTIVATION GAP**: Claude Code loads `settings.local.json` into a session's process only at session start, so any FR-1 edit here takes effect for NEW sessions only — already-running sessions keep swallowing until their next natural restart (self-resolving, not a defect, per that precedent — same applies here, no forced-restart action needed). Consequence for delivery: the FR-1 edit to the 4 invocation strings is a **direct live-file edit on this machine, not a git-committed change** — "developer" cannot ship it via a normal commit/PR for that specific file (the 4 target scripts themselves, `hook-guard.sh`, and the `tier1-probe.md` A-33 addition ARE tracked and commit normally). No generator/bootstrap script writes this file today (checked: none exists) — it is hand-maintained with zero tracked source of truth, meaning a future accidental revert/regeneration of `settings.local.json` would silently regress FR-1 with no tracked diff to catch it. **Recommendation (not gating, flagged for developer/PM judgment):** consider a follow-on to have FR-3's A-33 check diff the live invocation strings against a small tracked "expected hook config" snapshot (e.g. `docs/data/hooks-registry.json`) rather than only checking script existence/executable/registration-presence — closes the "someone silently re-added `|| true`" regression class this untracked-file fact newly exposes. Left as a recommendation, not added to this fix's scope (would expand FR-3 beyond BA's tier-ordered table without a new BA/PO scoping pass).
+- **Scan clean:** true ✓
+
+→ journal: `docs/agent-memory/decisions/sprint-ULTRACODE-AUDIT-FIXALL-architect.md` [task_id: UC-CRITIC-HOOKS-ENFORCEMENT]
+
+## RETURN (architect)
+DONE: Technical blueprint complete — FR-1 (exit-code fidelity, 4 invocation strings), FR-2 (shared `hook-guard.sh` crash discriminator, applied at named input-boundary guards), FR-3 (new A-33 system-auditor check, reuses `emit-audit-signal.sh`), FR-4 (zero new plumbing) fully specified. FR-5 respected (zero touch on `orch-state-hook-prewrite.mjs`). Test scope decided (NFR-5): add coverage for the 2 zero-coverage scripts receiving behavior changes; extend the 2 existing suites; `tmux-agent.sh` out.
+ZONE: cross-service/
+NEXT: developer — atomic, single-zone, fully specified (no PM decomposition needed).
+HANDOFF: docs/handoffs/UC-CRITIC-HOOKS-ENFORCEMENT-BA-spec.md
+PIPELINE: continue
