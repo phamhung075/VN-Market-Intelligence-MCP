@@ -128,3 +128,59 @@ the gate for docs-only changes with no test surface).
 **why-change:** No change from plan — router's disposition instructions matched what RAW
 verification found. Added one non-blocking PO follow-up (pre-existing line-count drift on 3
 markers) not present in the router's dispatch prompt, surfaced from my own independent read.
+
+### STEP qa-S7 · qa · 2026-08-06T21:21:49Z
+**task-id:** TE-T12
+**what-done:** Direct-commit verify (dev-team Review-Lane QA-Drain, `qa[]` row, `branch:null`)
+of the dispatch-claim SKILL.md → CARD.md hot-path split. Flipped QA→DONE_VERIFIED, moved
+`task_board.qa[]`→`task_board.done_verified[]` via `jq`+`scripts/orch-apply.sh` (conservation OK
+task_total 761→761, signal_total 203→203).
+**what-considered:**
+- Trust the row's `.commit_sha` field (`b164e37781f0...`) and dev-team's own RAW-verify prose —
+  rejected. Ran `git show --stat` on it myself: it is a LATER notebook/journal merge commit
+  ("merge S15/S16 journal + notebook"), touches zero dispatch-claim/CLAUDE.md content. False
+  citation (mirrors cycle-541 pattern, `feedback_router_verify_raw_not_badges`).
+- Traced the real implementation commit `fd000eca4` (correctly named in dev-team's review_note)
+  — found it is NOT itself on `main` ancestry (`git merge-base --is-ancestor` fails). Searched
+  `git log --all -- CARD.md`, found the actual cherry-pick landed as `92ba46360f80...`; confirmed
+  identical patch-id (`d9e015a8df7d...`) between the two and confirmed `92ba46360` IS a main
+  ancestor. The code genuinely landed — only the row's citation was wrong.
+- Independently re-verified all 3 ACs on live main HEAD (not the commit diff, not prose):
+  CARD.md 38L (`wc -l`) with all 4 required sections; SKILL.md 497L with `size-justification`
+  header + "Reference Commits" trimmed to one-line pointer; CLAUDE.md step 2.5 grep-confirmed
+  pointing at CARD.md.
+- `mock-guard.sh --files CARD.md SKILL.md CLAUDE.md` → PASS (no production TS/Go source, N/A).
+  `bun test`/`tsc`/DDD → N/A (docs/skill/config-only change; grepped fleet-wide, zero test files
+  reference `dispatch-claim`).
+**why-decision:** All 3 AC RAW-true on live main, code genuinely shipped. Recorded the
+`.commit_sha` false-citation correction in the row's own `status_note` for audit-trail accuracy
+(pointing at the real `92ba46360`) rather than silently accepting the wrong sha or blocking the
+gate over a citation error when the underlying outcome is verified true — same disposition as
+cycle-541.
+**why-change:** No change from plan — found and corrected one citation error along the way,
+non-blocking (mirrors cycle-541 precedent, not a new class).
+
+### STEP qa-S8 · qa · 2026-08-06T21:22:18Z
+**task-id:** TE-T11
+**what-done:** Direct-commit verify (dev-team Review-Lane QA-Drain, `qa[]` row, `branch:null`)
+of step-0-cowork wiring into 10 flows. Flipped QA→DONE_VERIFIED, moved `task_board.qa[]`→
+`task_board.done_verified[]` via `jq`+`scripts/orch-apply.sh`.
+**what-considered:**
+- Trust `return_summary` prose claim of "10 real flow files wired" — rejected, ran
+  `git show --stat` on `commit_sha` myself: exactly 10 `docs/agents/*/flow/*.md` files touched,
+  matching the claim file-for-file.
+- Verify the row's exclusion of `cowork-team/flow/tick-snapshot.md` (audit's 11th file) —
+  read it directly: it calls `get_cycle_bootstrap`/`get_macro_snapshot` via raw MCP to PRODUCE
+  the shared snapshot, never consumes cycle-bootstrap/regime-extraction as a skill reader —
+  confirms grep-false-positive claim, not a real gap.
+- Found one un-migrated direct `regime-extraction/SKILL.md` pointer fleet-wide
+  (`digest-predict/flow/weekly.md`) — cross-checked against the audit brief's own 11-file
+  evidence list (`2026-07-12-token-economy-lazyload-audit.md#T-11`): `weekly.md` is NOT among
+  the 11 named files, so this is a pre-existing out-of-scope gap, not a defect in this row.
+**why-decision:** All 10 files carry exactly one `step-0-cowork/SKILL.md` reference (§0b or
+§0b-0c per flow), zero remaining direct cycle-bootstrap/regime-extraction pointers among the
+10, flow-specific fallback/shape-validation prose left byte-for-byte untouched. Zero apps/
+or scripts/ source touched — bun test/tsc/DDD/mock-guard structurally N/A. DJ-GATE-1:
+`sprint-TOKEN-ECONOMY-AUDIT-agent-father.md` STEP agent-father-S2, task-id TE-T11, predates
+this verify.
+**why-change:** No change from plan.
