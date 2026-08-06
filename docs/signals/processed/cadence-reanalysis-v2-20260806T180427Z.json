@@ -11,5 +11,11 @@
   "action": "NONE — informational only. Do NOT auto-implement. PLAN-ONLY second pass (ad-hoc user request via coordinator: reanalyze cron cadence again for economy+quality, remove crons not needed, fix VN-market-time<->server-local DST math). No cron/flow/config file touched, no CronCreate/CronDelete/CronList called.",
   "summary": "Re-verified all of CADRAT-1..7 (prior brief docs/architecture-briefs/2026-08-04-cadence-rationalization.md) already shipped on main — nothing re-proposed. New this pass: (1) DST/timezone — confirmed CronCreate evaluates cron: Europe/Paris-local not UTC; confirmed cowork-schedule.json's whole 22-slot family is architecturally DST-immune (raw-code-verified getUTCHours()/getUTCDay() in cowork-match-slots.js), so the DST hypothesis for CADRAT-1's open chef-evening/market-watcher-eod questions is REJECTED with evidence (both have real, already-tracked, unrelated root causes). Found 5 concrete DST-correctness fixes among the standalone-CronCreate family: cron-db-data-integrity Job A (HIGH severity — live, shipped 2 days ago, currently fires 2h early in CEST and misses the settlement window it was built to cover), Job B, system-auditor Tier-3 (self-flagged in-repo, unfixed), orch-sentinel FULL+LITE (not armed, fix-before-arm). (2) Token economy — found 6 standalone cron docs superseded by cowork-schedule.json, unreachable via any of the 3 re-arm skills: 4 confirmed safe to mark DEPRECATED (tran-ngoc-bau, digest-predict, refine-bctc, unified-agent — the last provably dead-by-construction, its :29 minute never matches its own dispatcher window table), 2 held open pending a PO/architect product decision (market-watcher/news-scout — live coded market-hours modes designed+shipped+QA'd in May, pruned as dead stubs 2026-05-30, never restored, no live ticket found — explicitly NOT recommended for deletion).",
   "createdAt": "2026-08-06T18:04:27Z",
-  "updatedAt": "2026-08-06T18:04:27Z"
+  "updatedAt": "2026-08-06T18:04:27Z",
+  "_processed": {
+    "fingerprint": "532be0f429910d4bfd07053e99389091c6b3afa49250bd8b21f4c5549e24189e",
+    "processedAt": "2026-08-06T18:10:11Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
 }

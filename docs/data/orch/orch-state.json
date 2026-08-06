@@ -3035,7 +3035,7 @@
         "type": "recurring_defect_unfixed",
         "severity": "INFO",
         "summary": "orphan-signal reaper published 4 adoptable sprint-task orphan-signals this tick (FIX-CI-TASKCLAIM-PO-FLOW-OWNER-SESSION-PAYDOWN, FIX-CI-SIZELINT-BCTC-1345B-PARSE-VALIDATOR-PAIR, FIX-CI-PARITY-CLAUDEMD-CRON-LITERAL-EXEMPTION-SHAPE, FIX-SYSTEM-AUDITOR-CYCLE-FINDINGS-NOT-SELF-PERSISTED) whose original task_id is already DONE_VERIFIED in cold archive — adoption was correctly skipped (would have duplicate-dispatched completed work), but orphan-adoption.md has no terminal-status precheck before publishing/consuming an orphan-signal, unlike the WF-1b terminal-lane guard main.md already has for .head. All 4 originated from this same session (original_owner_client_session matches the router session), redispatch_count=1, not yet poison (N_MAX=3).",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": null,
         "provenance": "detector",
         "audit_cycle_tag": "dev-team-tick:2026-08-06T17:37Z"
@@ -3048,7 +3048,7 @@
         "type": "recurring_defect_unfixed",
         "severity": "INFO",
         "summary": "claude-manager-helper Thu 18:06Z cron cycle (commit 5024251f8): Pass 9b ran doc-heal-system discovery only (4115 files scanned, correctly found code-janitor.md notebook 224L>200 and 6 oversized SKILL.md files: dispatch-claim 497L, docx 590L, skill-creator 485L, pdf 314L, mcp-builder 236L, xlsx 291L) but skipped the skills own mandated Phase 4 auto-fix (extract reusable rules to knowledge, per .claude/skills/doc-heal-system/phases.md Size Caps table — SKILL.md cap IS 200L, auto-fix not escalate) and Phase 7 (write reports/DOC_HEAL_2026-08-06.md + dedicated docs(heal) commit) entirely — verified reports/DOC_HEAL_2026-08-06.md does not exist anywhere in the repo, and the only commit this cycle was the notebook-append (chore(memory/claude-manager-helper)), not a docs(heal) commit. Self-report and notebook entry both accurately describe this as noted for next cycle / non-critical, so this is not a self-report confabulation (contrast feedback_leaf_agent_analysis_only_exit_recurring_pattern_20260806) — it is main.md Pass 9b invoking doc-heal-system for discovery only and never running its auto-fix/report/commit phases, so violations found on Mon/Thu accumulate indefinitely with no report trail unless a human or another agent notices.",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": null,
         "provenance": "detector",
         "audit_cycle_tag": "claude-manager-helper-cron:2026-08-06T18:06Z"
