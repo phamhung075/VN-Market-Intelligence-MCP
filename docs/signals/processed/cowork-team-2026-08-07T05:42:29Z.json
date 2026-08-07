@@ -1,0 +1,55 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-08-07T05:42:29Z",
+    "matched_slots": [
+      "alert-commander-market"
+    ],
+    "won_slots": [
+      "alert-commander-market"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/alert-commander/flow/main.md"
+    ],
+    "silent": false,
+    "drift_min": 10,
+    "errors": [],
+    "pressure_mode": "adaptive",
+    "calendar_status": "unknown",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "chef_mutex_applied": false,
+    "due_reasons": {
+      "alert-commander-market": "cron"
+    },
+    "cadence_minutes": {
+      "alert-commander-market": null
+    },
+    "last_fired_timestamp": "2026-08-07T05:42:29Z",
+    "last_fired_slots": [
+      "alert-commander-market"
+    ],
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "05:30",
+    "leader_lock": "acquired",
+    "dev_head": "unknown",
+    "devq": 0,
+    "signal_backlog": 0,
+    "note": "single-slot tick, drift_min=10 (safe envelope ceiling), degraded fanout (container_vm_headroom_mb=1303 < 1500 floor, corroborates this tick own auditor-tier1 FAILURE on mcp-server 96.14%), max_parallel=2, no cowork-addressed signal_queue rows, no one-shots, gateway not blind"
+  },
+  "priority": "low",
+  "createdAt": "2026-08-07T05:42:29Z",
+  "_processed": {
+    "fingerprint": "eebf9f17a1b589b8c23ee25b32a463f23e828647c7f6708af73f80bd90a21e45",
+    "processedAt": "2026-08-07T05:56:26Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
