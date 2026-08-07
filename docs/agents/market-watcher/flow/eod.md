@@ -71,11 +71,15 @@ Rules:
 > ```
 > LOCK = call_tool(server="vn-market", tool="task_claim", arguments={
 >   task_id: "market-watcher-notebook:main", task_kind: "sprint-task",
->   owner_agent: "market-watcher", owner_client_session: $CLAUDE_CODE_SESSION_ID,
+>   owner_agent: "market-watcher",
+>   owner_client_session: "<resolved CLAUDE_CODE_SESSION_ID — REQUIRED, coordinationTools.ts:104-110;
+>     substitute the ACTUAL resolved value, NEVER write the literal text "$CLAUDE_CODE_SESSION_ID" —
+>     an LLM-issued call_tool is a direct function call, not a shell command, so the variable is NOT
+>     expanded (session memory: feedback_llm_issued_call_tool_does_not_expand_session_id_variable)>",
 >   ttl_seconds: 60
 > })
 > ```
-> Same bounded-retry style as `git_commit_retry` below: if `claimed:false`, retry up to 2 more times (5s apart); if still held after 3 attempts, proceed unguarded and log `[market-watcher] notebook-lock contended 3x — proceeding unguarded` (best-effort — never a hard block, consistent with WARN-not-BLOCK multi-slot policy). On success, hold through the commit below, then `task_release(task_id="market-watcher-notebook:main")` in a finally regardless of outcome.
+> Same bounded-retry style as `git_commit_retry` below: if `claimed:false`, retry up to 2 more times (5s apart); if still held after 3 attempts, proceed unguarded and log `[market-watcher] notebook-lock contended 3x — proceeding unguarded` (best-effort — never a hard block, consistent with WARN-not-BLOCK multi-slot policy). On success, hold through the commit below, then `task_release(task_id="market-watcher-notebook:main", owner_client_session="<same resolved value as above>")` in a finally regardless of outcome.
 
 ```bash
 git add docs/agent-memory/notebooks/market-watcher.md docs/agent-memory/notebooks/news-scout.md

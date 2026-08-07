@@ -12966,39 +12966,6 @@
         "updated_at": "2026-08-07T01:14:01Z"
       },
       {
-        "id": "FIX-CI-TASKCLAIM-MARKETWATCHER-EOD-MD",
-        "type": "FIX",
-        "title": "CI-RED-417573d7-FIX-5 — CI RED: task-claim-owner-session-lint — docs/agents/market-watcher/flow/eod.md",
-        "desc": "task-claim-owner-session-lint RED: eod.md:78 `task_release(task_id=\"market-watcher-notebook:main\")` inside the bounded-retry notebook-lock prose — flagged [NEW call site — no baseline entry for this file+snippet under any line]. Sibling of FIX-CI-TASKCLAIM-MARKETWATCHER-CYCLE-MD (same lint job, same agent, same missing param, different file — minted as separate rows so each carries its own file-scoped dedup_key). Still RED at HEAD 70ae0d9ae (run 31136642246).",
-        "status": "BACKLOG",
-        "priority": "high",
-        "size": "XS",
-        "owner": "po",
-        "zone": "cross-service/",
-        "next_agent": "developer",
-        "supervised": false,
-        "plan_only": false,
-        "check_id": "CI-RED-417573d7",
-        "dedup_key": "ci_job:task-claim-owner-session-lint|file:docs/agents/market-watcher/flow/eod.md",
-        "ci_fingerprint": "76565852f4c3009c704d4a2e8fdc7d588525e0a837b92ff3449d0ff183f51b2d",
-        "origin_signal_id": "CI-RED-417573d7",
-        "created_at": "2026-08-07T01:11:28Z",
-        "created_by": "po/triage-20260807T0104Z",
-        "baseline_pass": true,
-        "rebuild_required": false,
-        "files": [
-          "docs/agents/market-watcher/flow/eod.md"
-        ],
-        "related": [
-          "FIX-CI-TASKCLAIM-MARKETWATCHER-CYCLE-MD",
-          "FIX-CI-TASKCLAIM-CHEF-MD-OWNER-SESSION-PAYDOWN",
-          "FIX-CI-GATES-INVISIBLE-TO-PREPUSH-DOCS-PATH-FILTER"
-        ],
-        "verification_gate": "ci_green_on_subsequent_push",
-        "status_note": "AC1: add owner_client_session to the task_claim/task_release pair at docs/agents/market-watcher/flow/eod.md:78. AC2: substitution-instruction pattern per feedback_llm_issued_call_tool_does_not_expand_session_id_variable (mirror pm/flow/main.md + commit-mutex/SKILL.md). AC3: do NOT `--update`-grandfather a NEW call site. AC4: `bash scripts/audits/task-claim-owner-session-lint.sh --check` RC=0. AC5: `gh run view <databaseId with headSha AFTER 70ae0d9ae4a4c3df3be7d723d2b153633ebea0fd> --json jobs -q '.jobs[]|select(.name==\"task-claim-owner-session-lint\")|.conclusion'` == success. NOTE: AC4/AC5 for this row and its cycle.md sibling can only both be green once BOTH files are fixed — the lint reports all offenders in one job. Close them together or the second one's AC5 will read as still-red. Failing job: task-claim-owner-session-lint. Failing file: docs/agents/market-watcher/flow/eod.md. Head SHAs observed: 417573d71 (run 31136261063), 70ae0d9ae (run 31136642246).",
-        "updated_at": "2026-08-07T01:14:01Z"
-      },
-      {
         "id": "FIX-CI-SIZELINT-SCHEMA-TS-DEFLAKE-REGRESSION-372L",
         "type": "FIX",
         "title": "CI-RED-70ae0d9a-FIX — CI RED: size-lint — apps/mcp-server/src/infrastructure/db/schema.ts (baseline-tolerance-exceeded, baseline=336L actual=372L upper=369L) — 2nd RED on this file in 2 days, recurring",
@@ -21497,6 +21464,39 @@
         "updated_by": "router/merge-gate",
         "dev_implementation_note": "Added `# size-justification: 175L` header (first 8 lines) to embedder.py — lazy-load (`_ensure_model_loaded`/`_load_model`, GFD-13) and idle-unload (`_maybe_unload_idle`) share the SAME `asyncio.Lock` double-check pattern and SAME `_model`/`_last_used_monotonic` state on one singleton; a split would duplicate the lock or force tight cross-file coupling for zero benefit. Comment-only, no behavior change. Declared count (175L) matches post-edit `wc -l` exactly. Did NOT touch docs/data/size-lint-baseline.json, did NOT run --update (AC2 — would launder the 3 other unrelated current offenders repo-wide). Verified in the source worktree: scoped SIZE_LINT_INCLUDE_OVERRIDE=embedder.py --check RC=0; full-repo --check offender count 4->3 (embedder.py cleared; remaining 3 belong to sibling tasks, sequenced separately). pytest -k embedder: 17/17 passed. Board flip performed by router at Merge Gate (agent aa79e0a60034da7fc's own attempt hit Stage 1c on the pre-existing sys-20260805T065227-25f7 dangling ref, since resolved on main by an earlier reapply this same Merge Gate).",
         "decision_journal_ref": "docs/agent-memory/decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-dev-rag-service.md"
+      },
+      {
+        "id": "FIX-CI-TASKCLAIM-MARKETWATCHER-EOD-MD",
+        "type": "FIX",
+        "title": "CI-RED-417573d7-FIX-5 — CI RED: task-claim-owner-session-lint — docs/agents/market-watcher/flow/eod.md",
+        "desc": "task-claim-owner-session-lint RED: eod.md:78 `task_release(task_id=\"market-watcher-notebook:main\")` inside the bounded-retry notebook-lock prose — flagged [NEW call site — no baseline entry for this file+snippet under any line]. Sibling of FIX-CI-TASKCLAIM-MARKETWATCHER-CYCLE-MD (same lint job, same agent, same missing param, different file — minted as separate rows so each carries its own file-scoped dedup_key). Still RED at HEAD 70ae0d9ae (run 31136642246).",
+        "status": "REVIEW",
+        "priority": "high",
+        "size": "XS",
+        "owner": "po",
+        "zone": "cross-service/",
+        "next_agent": "developer",
+        "supervised": false,
+        "plan_only": false,
+        "check_id": "CI-RED-417573d7",
+        "dedup_key": "ci_job:task-claim-owner-session-lint|file:docs/agents/market-watcher/flow/eod.md",
+        "ci_fingerprint": "76565852f4c3009c704d4a2e8fdc7d588525e0a837b92ff3449d0ff183f51b2d",
+        "origin_signal_id": "CI-RED-417573d7",
+        "created_at": "2026-08-07T01:11:28Z",
+        "created_by": "po/triage-20260807T0104Z",
+        "baseline_pass": true,
+        "rebuild_required": false,
+        "files": [
+          "docs/agents/market-watcher/flow/eod.md"
+        ],
+        "related": [
+          "FIX-CI-TASKCLAIM-MARKETWATCHER-CYCLE-MD",
+          "FIX-CI-TASKCLAIM-CHEF-MD-OWNER-SESSION-PAYDOWN",
+          "FIX-CI-GATES-INVISIBLE-TO-PREPUSH-DOCS-PATH-FILTER"
+        ],
+        "verification_gate": "ci_green_on_subsequent_push",
+        "status_note": "AC1: add owner_client_session to the task_claim/task_release pair at docs/agents/market-watcher/flow/eod.md:78. AC2: substitution-instruction pattern per feedback_llm_issued_call_tool_does_not_expand_session_id_variable (mirror pm/flow/main.md + commit-mutex/SKILL.md). AC3: do NOT `--update`-grandfather a NEW call site. AC4: `bash scripts/audits/task-claim-owner-session-lint.sh --check` RC=0. AC5: `gh run view <databaseId with headSha AFTER 70ae0d9ae4a4c3df3be7d723d2b153633ebea0fd> --json jobs -q '.jobs[]|select(.name==\"task-claim-owner-session-lint\")|.conclusion'` == success. NOTE: AC4/AC5 for this row and its cycle.md sibling can only both be green once BOTH files are fixed — the lint reports all offenders in one job. Close them together or the second one's AC5 will read as still-red. Failing job: task-claim-owner-session-lint. Failing file: docs/agents/market-watcher/flow/eod.md. Head SHAs observed: 417573d71 (run 31136261063), 70ae0d9ae (run 31136642246).",
+        "updated_at": "2026-08-07T02:28:56Z"
       }
     ],
     "qa": [
