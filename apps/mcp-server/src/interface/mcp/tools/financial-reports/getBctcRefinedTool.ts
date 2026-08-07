@@ -1,5 +1,13 @@
 /**
  * MCP Tool: get_bctc_refined — FR-11
+ * size-justification: 242L — FIX-GET-BCTC-REFINED-NO-PROJECTION-PARAM (below) added a
+ *   second SQL projection ('ids') with its own row/output types (RefinedUnitIdRow,
+ *   RefinedIdsOutput) and a registration description covering both projections'
+ *   contracts (needed by MCP clients to pick the right one — ESC-5 gate callers must
+ *   stay on 'full'). One-file-per-MCP-tool is this dir's established pattern: siblings
+ *   getBctcOcfTool.ts (220L), pushBctcRefinedUnitTool.ts (227L), agmPlanTools.ts (234L)
+ *   are the same size class; splitting the projection branch out would duplicate the
+ *   db handle + report_id validation across two files for no net LOC reduction.
  *
  * Sprint BCTC-AGENTIC-REFINE
  * DDD layer: interface (read-only, no DB writes)
