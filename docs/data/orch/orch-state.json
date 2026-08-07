@@ -93,12 +93,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "active_task_id": null,
-    "next_agent": null,
-    "next_action": "FIX-COWORK-SIGNAL-FILENAME-CYCLEID-KEYING is BLOCKED/next_agent=po (PM decomposition awaiting PO re-review, commit 2f2e90ab7) -- not dev-team-actionable; WF-1 short-circuit reset .head to idle so a genuinely in_progress task can claim the pointer next.",
-    "updated_at": "2026-08-07T06:26:26Z",
-    "updated_by": "dev-team (WF-1 BLOCKED-task short-circuit, .head was stale at next_agent=pm/05:42:39Z)"
+    "status": "in_progress",
+    "active_task_id": "FIX-ORPHAN-FR1-FR2-INFRA-HEARTBEAT-LADDER",
+    "next_agent": "developer",
+    "next_action": "Ready-Lane Consumer claim of FIX-ORPHAN-FR1-FR2-INFRA-HEARTBEAT-LADDER — spawn developer DIRECTLY (no zone-detect indirection; row already carried a resolved next_agent/owner).",
+    "updated_at": "2026-08-07T18:25:24Z",
+    "updated_by": "dev-team (ready-lane consumer)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -9243,30 +9243,6 @@
         "note": "supervised:true blocks BOUNDED-1 idle auto-pickup. Detection-only this triage — PO ran read-only tool calls, touched no data. Gates the indicator program (project_indicator_program_gated_on_ohlcv_depth depends on OHLCV depth), so this blocks more than it appears to on its own."
       },
       {
-        "id": "FIX-SIGNALQUEUE-RECEIVER-DELIVERY-CONTRACT",
-        "title": "PLAN-ONLY: signal-dashboard receivers-table lists unified-agent + alert-commander as valid 'to' targets but NEITHER flow has an inbox/signal-dashboard READ step -> rows addressed to them are structurally undeliverable (dark); spawn-fanout.md Step 5 spawn prompt carries no signal payload. Architect decide: (a) add inbox READ step to both flows, (b) make spawn-fanout deliver matched NEW rows, or (c) remove both from the receivers table.",
-        "status": "BACKLOG",
-        "owner": "po",
-        "zone": "cross-service/",
-        "next_agent": "architect",
-        "priority": "P1",
-        "plan_only": true,
-        "created_at": "2026-07-21T15:28:00Z",
-        "created_by": "po-signalqueue-triage-20260721",
-        "origin_signal_id": "cow-20260721T144500",
-        "sibling_of": "FIX-COWORK-STEP0A-TOPO-DRAIN-STATUS-CONTRACT",
-        "status_note": "AC: every receiver in .claude/skills/signal-dashboard/SKILL.md Receivers table either (1) has a live inbox drain step in its flow OR (2) is removed from the table - no 'to' value may be a structural no-op. Evidence: docs/signals/cowork-team-20260721T144500-inbox-gap.json. Live casualty: po-20260720T052606 (HIGH CHEF-L6-GOLD-FALSE-PREDICATE, to=unified-agent, dark 33h+, LEFT NEW deliberately). Sibling FIX-COWORK-STEP0A-TOPO-DRAIN-STATUS-CONTRACT covers the po->dev-team NEW/READ filter mismatch - design the full receiver-delivery contract together. The casualty's false gold predicate is separately tracked by SPIKE-CTG-FALSE-PRESENCE-BLINDSPOT.",
-        "po_ordering_ruling": "LANDS FIRST of the pair. Ruling by po 2026-07-21T19:29:49Z on cowork escalation cow-20260721T172415, which asked for the ORDERING of the two existing rows to be graded and explicitly asked that no new row be minted. Honoured: no row minted. Rationale: a terminal signal_queue status (READ/DONE) is only safe once a defined receiver consumes the row. Defining the status contract first would mark rows terminal while they are still structurally undeliverable — the exact strand this escalation is objecting to. Delivery capability must precede status semantics.",
-        "po_repro_case": "po-20260720T052606 (from=po, to=unified-agent, methodology-flag, HIGH) is the canonical live reproduction and MUST be used as the acceptance fixture. It has sat status=NEW since 2026-07-20 addressed to a COWORK agent. dev-team drain 0a-D (docs/agents/dev-team/flow/drain-signals.md) collects only rows whose 'to' matches po or a dev-team-addressed agent, so no drain will ever pick it up. It is not backlogged — it is undeliverable. Its content is a live methodology correction for unified-agent (stop pasting the literal gold >$4,300 L6 token, compute from live gold instead), so the cost of the missing delivery path is ongoing wrong output, not merely a stuck row.",
-        "po_status_decision": "This row is DELIBERATELY LEFT status=NEW by po. Marking it READ would destroy the only record that a message was never delivered, and NEW costs nothing here precisely because no drain matches a cowork-addressed row — zero churn. It must stay NEW until a delivery path exists.",
-        "updated_at": "2026-07-28T13:30:55Z",
-        "updated_by": "po/triage-20260728T13",
-        "router_fileplane_lock_asymmetry_20260721T1946": "ROUTER — RELATED GAP ON THE FILE PLANE, UNROUTED ACROSS SEVERAL TICKS, RECORDED HERE BECAUSE THIS ROW OWNS DELIVERY SEMANTICS. docs/agents/dev-team/flow/drain-signals.md step 0a-D claims a per-row `dashboard-row` lock (row_key = 'dash:signal_queue:' + row.id, ttl 1800) and SKIPS on collision, so the DB plane is guarded against a concurrent peer. The file plane at step 0a-1 has NO equivalent peer-collision guard: it can `mv` a signal file out of docs/signals/ while a live peer is mid-read on that exact path. The two planes of one drain therefore run at different isolation levels, and the unguarded one is the one that mutates the filesystem. This is adjacent to but distinct from the undeliverable-orphan problem this row already covers — same subsystem, and a receiver contract that does not state which plane holds what lock will not close it. PO to decide whether it folds here or needs its own row; router did not mint.",
-        "po_ruling_fileplane_split_20260721T2011": "RULING 4 — DOES NOT FOLD HERE; OWN ROW MINTED AS FIX-DRAIN-FILEPLANE-PEER-COLLISION-GUARD (backlog, P1). This row is PLAN-ONLY and asks an ARCHITECT to decide a receiver-contract question: whether undeliverable 'to' targets get an inbox step, get delivery pushed to them, or get removed from the table. The file-plane lock asymmetry is a concrete concurrency defect in an existing drain step with a known shape and a developer owner. Different question, different agent, different definition of done — and this row's own status is PLAN-ONLY, so folding an implementable defect into it would strand the defect behind an architecture decision that has not been scheduled. Router was right that they are adjacent and right not to merge them. CROSS-LINK IS RETAINED IN BOTH DIRECTIONS: whatever receiver contract this row settles on MUST state which plane holds which lock, and the new row must not be closed in a way that contradicts the contract this row produces.",
-        "supervised": true,
-        "po_lane_repair_20260728": "LANE REPAIR — acute, chain-motivated. Verified by execution: P1, plan_only:true, supervised absent, next_agent architect, depends_on empty and satisfied => is_bounded1_eligible false AND SLS-select false, i.e. no lane. It is ALSO the sole blocking dependency of FIX-COWORK-STEP0A-TOPO-DRAIN-STATUS-CONTRACT, which PO lane-repaired earlier in this same tick — repairing the dependent alone would have been useless, since deps_satisfied() would have held it behind a predecessor that itself could never dispatch. Set supervised:true (the missing half of the pair) so the whole two-row chain can move. This is one of the 48 plan_only-without-supervised rows censused on FIX-BOUNDED1-SUPERVISED-LANE-NO-SWEEPER; the other 47 are deliberately left untouched as that row's acceptance evidence."
-      },
-      {
         "id": "CLEAN-REGISTER-ORCH-SENTINEL-TREEMAP-SYSMAP",
         "type": "CLEAN",
         "title": "Register orch-sentinel in the 2 remaining SSOT files: docs/references/tree-map.md Write-Ownership (2 rows) + docs/data/system-map.json project.agents[] entry (dispatch table + roster already landed in dd9e38a52)",
@@ -15054,43 +15030,6 @@
         "po_recurrence_20260801T0125": "3rd live-confirmed occurrence, fresh RAW evidence from TNB audit cycle 121 (docs/handoffs/tnb-audit-latest.md, ~2026-07-31T20:23Z) — the 07-31 morning dish. unified-agent notebook self-reports Layers walked: 1-6 (full) and QUALITY: full, while the persisted docs/data/unified-agent-synthesis-2026-07-31-morning.json for the SAME cycle carries quality_verdict: degraded plus four explicit gap tokens ([gap:L2_US_macro_carry_only], [gap:L3_VN_macro_incomplete], [gap:L4_partial_pillar_coverage], [gap:business_context_absent]). TNB independently re-scored the dish at 5/8 = NEEDS_ATTENTION on its own 9-step methodology, corroborating the JSON and not the notebook prose. occurrence_count raised 1 -> 3 (was stale at 1 since 2026-07-21; c118 had already measured 2). Row remains READY/next_agent=agent-father, unshipped for 10 days. NOT dispatched this tick — it was the runner-up manual-dispatch candidate behind FIX-DEVTEAM-REVIEW-LANE-QA-DRAIN, which was picked because it unblocks the lane this row is also waiting on. Carry to next tick as the leading candidate if the drain row is in flight."
       },
       {
-        "id": "FIX-ORPHAN-FR1-FR2-INFRA-HEARTBEAT-LADDER",
-        "type": "FEATURE",
-        "title": "Implement FR-1/FR-2: extend task_heartbeat with ttl_seconds/payload_patch + null-session ladder for task_release",
-        "status": "READY",
-        "priority": "P0",
-        "size": "M",
-        "zone": "apps/mcp-server/",
-        "owner": "pm",
-        "next_agent": "developer",
-        "depends": [],
-        "supervised": false,
-        "created_at": "2026-07-22T01:15:30Z",
-        "created_by": "pm/decomposition-20260722T0115",
-        "updated_at": "2026-08-06T11:35:36Z",
-        "updated_by": "pm/decomposition-20260722T0115",
-        "origin_task": "FIX-ORPHAN-ADOPTION-BOARD-STATE-GUARD",
-        "parent_fix_spec": "fix_spec(a)+(c)/AC1+AC3",
-        "subtasks": [
-          {
-            "seq": 1,
-            "title": "Add ttl_seconds + payload_patch optional params to heartbeatTask()",
-            "acceptance": "heartbeatTask accepts optional ttl_seconds (60-691200), updates row.ttl_seconds when supplied; payload_patch shallow-merges into payload JSON when supplied"
-          },
-          {
-            "seq": 2,
-            "title": "Add null-session ladder to heartbeatTask/releaseTask for orphan-signal rows",
-            "acceptance": "orphan-signal:* rows with owner_client_session=NULL match on (owner_agent + original_owner_client_session echo); live-session rows (owner_client_session IS NOT NULL) never match via new params"
-          },
-          {
-            "seq": 3,
-            "title": "Implement two-statement UPDATE pattern (not CTE) per FR-1 file-level design",
-            "acceptance": "First UPDATE: ttl_seconds if supplied. Second UPDATE: payload_patch merge. Both preserve unpatched fields."
-          }
-        ],
-        "po_corroboration_20260806": "LIVE 10x corroboration for the FR-2 null-session release ladder, RAW-verified by po 2026-08-06T11:07Z tick (signal dev-orphangap-20260806T111713Z, finding_2). task_release(task_id='orphan-signal:'+id, owner_client_session=$SESSION) returned {ok:true, released:0} on all 10 attempts — the orphan-signal lock's owner_client_session is null (server-reaper owned), so NO client session can ever match it. Both call sites in docs/agents/dev-team/flow/orphan-adoption.md (happy-path ~L94-98 and git_sha-invalid dead-end ~L69-74) are therefore unreachable no-ops as written. Note the ok:true/released:0 shape: the call reports success while releasing nothing — the exact 'ok+released=wrong' false-green class. Practical blast radius is bounded by the 7200s TTL self-clear, but during that window a re-probe can still attempt duplicate adoption if FR-4's terminal guard is not also live. Same 15-day READY stall as its FR-4 sibling."
-      },
-      {
         "id": "FIX-ORPHAN-FR2-FR6-FR7-INTERFACE-COORDINATION-TOOLS",
         "type": "FEATURE",
         "title": "Add Zod schemas for FR-1/FR-2 optional params; update task_heartbeat/task_release registration per FR-6/FR-7",
@@ -16114,33 +16053,6 @@
         "updated_at": "2026-08-06T23:35:45Z"
       },
       {
-        "id": "FIX-INFRA-CRITICAL-VOLUME-PRESENCE-HEALTHCHECK",
-        "title": "Post-rebuild critical-volume PRESENCE healthcheck: fail-loud (and where safe auto-reseed) when a producer-critical named/model-cache volume is empty, so a VM-rebuild cannot silently re-empty pek_model_cache (or any manifest volume) without alerting — the 2026-07-15 rebuild wiped TWO volumes (market_data + pek_model_cache) and only market_data was caught",
-        "owner": "ops",
-        "status": "READY",
-        "zone": "infra",
-        "priority": "high",
-        "type": "FIX",
-        "depends": [],
-        "note": "Filed from SPIKE-BCTC-EXTRACTION-DORMANT-MASS-ENRICHFAIL-FLOOD (AC-1+AC-2, 2026-07-17). ROOT GAP: the 2026-07-15 hypervisor VM crash/rebuild destroyed TWO named volumes — market_data AND pek_model_cache. market_data was CAUGHT and recovered same day (commit 5ba622eca: July-1 host backup restored + all 9 services switched to ./data/live bind-mount). pek_model_cache was NOT caught: left EMPTY (du 12K, only stray yolo/settings.yaml; doclayout_yolo_ft.pt gone) and stayed empty ~2 days, silently crashing EVERY /pek-extract call (FileNotFoundError) => PEK-layout producer dormant. Nothing alerted on the empty volume; the gap only surfaced ~2 days later via a downstream 76+ RECONCILE-EXHAUSTED report FLOOD when bctcExtractReconcileJob mass-terminalized the watchlist backlog it could not enrich. Presence must assert CONTENT (the specific required weights), not merely that the mount exists / du>0. AC (proposed, ops/architect to refine): (1) a durable session-independent (launchd-class, mirror com.vn-market.cowork-guaranteed-slot-firer.plist) healthcheck asserts every producer-critical volume/model-cache contains its REQUIRED artifacts — for pek_model_cache: doclayout_yolo_ft.pt (+ PaddleOCR weights) present and loadable, not just non-empty; (2) the critical-volume manifest (volume -> required files -> re-seed script) is enumerated from an SSOT (docs/data/system-map.json or a dedicated manifest), NEVER hardcoded per NO-HARDCODE standing; (3) on missing/empty, emit ONE fail-loud bug-channel alert that NAMES the committed idempotent recovery (scripts/pek-fetch-weights.sh, commit e418d606d, brief docs/architecture-briefs/2026-05-27-pek-weights-provisioning.md) and, where safe+idempotent, auto-invokes it (populate-empty-volume is low-risk, NOT a destructive swap); (4) fire on boot/post-rebuild AND on a periodic cadence so a future silent wipe is caught in minutes not days; (5) RAW-verify by emptying a scratch volume and confirming the alert (and optional auto-reseed) fires. Scope guard: this is the DURABLE cross-cutting infra guard; it does NOT replace the in-flight ops one-shot PEK re-seed (restores current prod) nor the refine-producer durable fix FIX-BCTC-REFINE-DURABLE-TRIGGER-BACKSTOP (a different producer). PLAN-ONLY: do NOT dispatch — schedule after ops confirms /pek-extract resumes.",
-        "created_at": "2026-07-17T03:04:26Z",
-        "created_by": "po-scoped-triage-20260717",
-        "source": "docs/spikes/SPIKE-BCTC-EXTRACTION-DORMANT-MASS-ENRICHFAIL-FLOOD.md",
-        "related": [
-          "SPIKE-BCTC-EXTRACTION-DORMANT-MASS-ENRICHFAIL-FLOOD",
-          "FIX-BCTC-REFINE-DURABLE-TRIGGER-BACKSTOP"
-        ],
-        "supervised": true,
-        "supervised_by": "po-scoped-triage-20260717",
-        "supervised_note": "PLAN-ONLY / anomaly->BACKLOG. ops-owned infra FIX, null next_agent, no backlog-detail entry -> removed from BOUNDED-1 idle auto-pickup (code non-dev-owner gate is detail-blind, would mis-route to a developer placeholder). Do NOT dispatch; groom+schedule after ops confirms PEK re-seed.",
-        "plan_only": true,
-        "promoted_at": "2026-08-07T04:14:43Z",
-        "promoted_by": "dev-team (supervised-lane sweep)",
-        "promotion_note": "Supervised-Lane Sweep — assigned dispatch_lane='ops' (priority_rank=1); supervised/plan_only flags preserved, gate NOT disabled — see FIX-BOUNDED1-SUPERVISED-LANE-NO-SWEEPER",
-        "dispatch_lane": "ops",
-        "updated_at": "2026-08-07T04:14:44Z"
-      },
-      {
         "id": "FIX-MCP-SSE-SESSION-MANAGER-PERCONN-LEAK-NO-REAPER",
         "type": "FIX",
         "title": "SseSessionManager allocates McpServer + 30s heartbeat per /sse connection with no idle/max-age reaper and no DELETE handler — architect fast-follow handed to PO to route",
@@ -16183,6 +16095,62 @@
         "architect_reviewed_by": "architect",
         "build_standard": "not-applicable",
         "design_brief": "docs/architecture-briefs/2026-08-07-fix-mcp-sse-session-manager-reaper.md"
+      },
+      {
+        "id": "FIX-SIGNALQUEUE-RECEIVER-DELIVERY-CONTRACT",
+        "title": "PLAN-ONLY: signal-dashboard receivers-table lists unified-agent + alert-commander as valid 'to' targets but NEITHER flow has an inbox/signal-dashboard READ step -> rows addressed to them are structurally undeliverable (dark); spawn-fanout.md Step 5 spawn prompt carries no signal payload. Architect decide: (a) add inbox READ step to both flows, (b) make spawn-fanout deliver matched NEW rows, or (c) remove both from the receivers table.",
+        "status": "READY",
+        "owner": "po",
+        "zone": "cross-service/",
+        "next_agent": "architect",
+        "priority": "P1",
+        "plan_only": true,
+        "created_at": "2026-07-21T15:28:00Z",
+        "created_by": "po-signalqueue-triage-20260721",
+        "origin_signal_id": "cow-20260721T144500",
+        "sibling_of": "FIX-COWORK-STEP0A-TOPO-DRAIN-STATUS-CONTRACT",
+        "status_note": "AC: every receiver in .claude/skills/signal-dashboard/SKILL.md Receivers table either (1) has a live inbox drain step in its flow OR (2) is removed from the table - no 'to' value may be a structural no-op. Evidence: docs/signals/cowork-team-20260721T144500-inbox-gap.json. Live casualty: po-20260720T052606 (HIGH CHEF-L6-GOLD-FALSE-PREDICATE, to=unified-agent, dark 33h+, LEFT NEW deliberately). Sibling FIX-COWORK-STEP0A-TOPO-DRAIN-STATUS-CONTRACT covers the po->dev-team NEW/READ filter mismatch - design the full receiver-delivery contract together. The casualty's false gold predicate is separately tracked by SPIKE-CTG-FALSE-PRESENCE-BLINDSPOT.",
+        "po_ordering_ruling": "LANDS FIRST of the pair. Ruling by po 2026-07-21T19:29:49Z on cowork escalation cow-20260721T172415, which asked for the ORDERING of the two existing rows to be graded and explicitly asked that no new row be minted. Honoured: no row minted. Rationale: a terminal signal_queue status (READ/DONE) is only safe once a defined receiver consumes the row. Defining the status contract first would mark rows terminal while they are still structurally undeliverable — the exact strand this escalation is objecting to. Delivery capability must precede status semantics.",
+        "po_repro_case": "po-20260720T052606 (from=po, to=unified-agent, methodology-flag, HIGH) is the canonical live reproduction and MUST be used as the acceptance fixture. It has sat status=NEW since 2026-07-20 addressed to a COWORK agent. dev-team drain 0a-D (docs/agents/dev-team/flow/drain-signals.md) collects only rows whose 'to' matches po or a dev-team-addressed agent, so no drain will ever pick it up. It is not backlogged — it is undeliverable. Its content is a live methodology correction for unified-agent (stop pasting the literal gold >$4,300 L6 token, compute from live gold instead), so the cost of the missing delivery path is ongoing wrong output, not merely a stuck row.",
+        "po_status_decision": "This row is DELIBERATELY LEFT status=NEW by po. Marking it READ would destroy the only record that a message was never delivered, and NEW costs nothing here precisely because no drain matches a cowork-addressed row — zero churn. It must stay NEW until a delivery path exists.",
+        "updated_at": "2026-08-07T18:23:30Z",
+        "updated_by": "po/triage-20260728T13",
+        "router_fileplane_lock_asymmetry_20260721T1946": "ROUTER — RELATED GAP ON THE FILE PLANE, UNROUTED ACROSS SEVERAL TICKS, RECORDED HERE BECAUSE THIS ROW OWNS DELIVERY SEMANTICS. docs/agents/dev-team/flow/drain-signals.md step 0a-D claims a per-row `dashboard-row` lock (row_key = 'dash:signal_queue:' + row.id, ttl 1800) and SKIPS on collision, so the DB plane is guarded against a concurrent peer. The file plane at step 0a-1 has NO equivalent peer-collision guard: it can `mv` a signal file out of docs/signals/ while a live peer is mid-read on that exact path. The two planes of one drain therefore run at different isolation levels, and the unguarded one is the one that mutates the filesystem. This is adjacent to but distinct from the undeliverable-orphan problem this row already covers — same subsystem, and a receiver contract that does not state which plane holds what lock will not close it. PO to decide whether it folds here or needs its own row; router did not mint.",
+        "po_ruling_fileplane_split_20260721T2011": "RULING 4 — DOES NOT FOLD HERE; OWN ROW MINTED AS FIX-DRAIN-FILEPLANE-PEER-COLLISION-GUARD (backlog, P1). This row is PLAN-ONLY and asks an ARCHITECT to decide a receiver-contract question: whether undeliverable 'to' targets get an inbox step, get delivery pushed to them, or get removed from the table. The file-plane lock asymmetry is a concrete concurrency defect in an existing drain step with a known shape and a developer owner. Different question, different agent, different definition of done — and this row's own status is PLAN-ONLY, so folding an implementable defect into it would strand the defect behind an architecture decision that has not been scheduled. Router was right that they are adjacent and right not to merge them. CROSS-LINK IS RETAINED IN BOTH DIRECTIONS: whatever receiver contract this row settles on MUST state which plane holds which lock, and the new row must not be closed in a way that contradicts the contract this row produces.",
+        "supervised": true,
+        "po_lane_repair_20260728": "LANE REPAIR — acute, chain-motivated. Verified by execution: P1, plan_only:true, supervised absent, next_agent architect, depends_on empty and satisfied => is_bounded1_eligible false AND SLS-select false, i.e. no lane. It is ALSO the sole blocking dependency of FIX-COWORK-STEP0A-TOPO-DRAIN-STATUS-CONTRACT, which PO lane-repaired earlier in this same tick — repairing the dependent alone would have been useless, since deps_satisfied() would have held it behind a predecessor that itself could never dispatch. Set supervised:true (the missing half of the pair) so the whole two-row chain can move. This is one of the 48 plan_only-without-supervised rows censused on FIX-BOUNDED1-SUPERVISED-LANE-NO-SWEEPER; the other 47 are deliberately left untouched as that row's acceptance evidence.",
+        "promoted_at": "2026-08-07T18:23:29Z",
+        "promoted_by": "dev-team (supervised-lane sweep)",
+        "promotion_note": "Supervised-Lane Sweep — assigned dispatch_lane='architect' (priority_rank=1); supervised/plan_only flags preserved, gate NOT disabled — see FIX-BOUNDED1-SUPERVISED-LANE-NO-SWEEPER",
+        "dispatch_lane": "architect"
+      },
+      {
+        "id": "FIX-INFRA-CRITICAL-VOLUME-PRESENCE-HEALTHCHECK",
+        "title": "Post-rebuild critical-volume PRESENCE healthcheck: fail-loud (and where safe auto-reseed) when a producer-critical named/model-cache volume is empty, so a VM-rebuild cannot silently re-empty pek_model_cache (or any manifest volume) without alerting — the 2026-07-15 rebuild wiped TWO volumes (market_data + pek_model_cache) and only market_data was caught",
+        "owner": "ops",
+        "status": "READY",
+        "zone": "infra",
+        "priority": "high",
+        "type": "FIX",
+        "depends": [],
+        "note": "Filed from SPIKE-BCTC-EXTRACTION-DORMANT-MASS-ENRICHFAIL-FLOOD (AC-1+AC-2, 2026-07-17). ROOT GAP: the 2026-07-15 hypervisor VM crash/rebuild destroyed TWO named volumes — market_data AND pek_model_cache. market_data was CAUGHT and recovered same day (commit 5ba622eca: July-1 host backup restored + all 9 services switched to ./data/live bind-mount). pek_model_cache was NOT caught: left EMPTY (du 12K, only stray yolo/settings.yaml; doclayout_yolo_ft.pt gone) and stayed empty ~2 days, silently crashing EVERY /pek-extract call (FileNotFoundError) => PEK-layout producer dormant. Nothing alerted on the empty volume; the gap only surfaced ~2 days later via a downstream 76+ RECONCILE-EXHAUSTED report FLOOD when bctcExtractReconcileJob mass-terminalized the watchlist backlog it could not enrich. Presence must assert CONTENT (the specific required weights), not merely that the mount exists / du>0. AC (proposed, ops/architect to refine): (1) a durable session-independent (launchd-class, mirror com.vn-market.cowork-guaranteed-slot-firer.plist) healthcheck asserts every producer-critical volume/model-cache contains its REQUIRED artifacts — for pek_model_cache: doclayout_yolo_ft.pt (+ PaddleOCR weights) present and loadable, not just non-empty; (2) the critical-volume manifest (volume -> required files -> re-seed script) is enumerated from an SSOT (docs/data/system-map.json or a dedicated manifest), NEVER hardcoded per NO-HARDCODE standing; (3) on missing/empty, emit ONE fail-loud bug-channel alert that NAMES the committed idempotent recovery (scripts/pek-fetch-weights.sh, commit e418d606d, brief docs/architecture-briefs/2026-05-27-pek-weights-provisioning.md) and, where safe+idempotent, auto-invokes it (populate-empty-volume is low-risk, NOT a destructive swap); (4) fire on boot/post-rebuild AND on a periodic cadence so a future silent wipe is caught in minutes not days; (5) RAW-verify by emptying a scratch volume and confirming the alert (and optional auto-reseed) fires. Scope guard: this is the DURABLE cross-cutting infra guard; it does NOT replace the in-flight ops one-shot PEK re-seed (restores current prod) nor the refine-producer durable fix FIX-BCTC-REFINE-DURABLE-TRIGGER-BACKSTOP (a different producer). PLAN-ONLY: do NOT dispatch — schedule after ops confirms /pek-extract resumes.",
+        "created_at": "2026-07-17T03:04:26Z",
+        "created_by": "po-scoped-triage-20260717",
+        "source": "docs/spikes/SPIKE-BCTC-EXTRACTION-DORMANT-MASS-ENRICHFAIL-FLOOD.md",
+        "related": [
+          "SPIKE-BCTC-EXTRACTION-DORMANT-MASS-ENRICHFAIL-FLOOD",
+          "FIX-BCTC-REFINE-DURABLE-TRIGGER-BACKSTOP"
+        ],
+        "supervised": true,
+        "supervised_by": "po-scoped-triage-20260717",
+        "supervised_note": "PLAN-ONLY / anomaly->BACKLOG. ops-owned infra FIX, null next_agent, no backlog-detail entry -> removed from BOUNDED-1 idle auto-pickup (code non-dev-owner gate is detail-blind, would mis-route to a developer placeholder). Do NOT dispatch; groom+schedule after ops confirms PEK re-seed.",
+        "plan_only": true,
+        "promoted_at": "2026-08-07T04:14:43Z",
+        "promoted_by": "dev-team (supervised-lane sweep)",
+        "promotion_note": "Supervised-Lane Sweep — assigned dispatch_lane='ops' (priority_rank=1); supervised/plan_only flags preserved, gate NOT disabled — see FIX-BOUNDED1-SUPERVISED-LANE-NO-SWEEPER",
+        "dispatch_lane": "ops",
+        "updated_at": "2026-08-07T18:24:50Z",
+        "revert_note": "SLS mechanically claimed this despite the row own plan_only note explicit \"do NOT dispatch\" prose gate (no ops confirmation of PEK re-seed found) -- reverted to ready[] by dev-team, not dispatched. SLS has no prose/precondition gate analogous to BOUNDED-1 PROSE-SEQUENCING GATE; flagged to PO for a real gate fix."
       }
     ],
     "review": [
@@ -22330,8 +22298,8 @@
         }
       ]
     },
-    "last_triaged_at": "2026-08-07T06:05:54Z",
-    "last_triaged_by": "po",
+    "last_triaged_at": "2026-08-07T18:23:29Z",
+    "last_triaged_by": "dev-team (supervised-lane sweep)",
     "in_progress": [
       {
         "id": "GUARD-NOTEBOOK-CONCURRENT-EDIT-COLLISION-DATA-LOSS",
@@ -22434,6 +22402,46 @@
           "TASK-COWORK-SIGNAL-NAMING-CONTRACT"
         ],
         "decomposition_note": "Phase 1 decomposed into 4 atomic tasks per PO amendments (3 binding, 1 correction to FR-1 WINDOWKEY logic per Amendment 3). All inherit plan_only/supervised flags. No developer dispatch until PO adjudication."
+      },
+      {
+        "id": "FIX-ORPHAN-FR1-FR2-INFRA-HEARTBEAT-LADDER",
+        "type": "FEATURE",
+        "title": "Implement FR-1/FR-2: extend task_heartbeat with ttl_seconds/payload_patch + null-session ladder for task_release",
+        "status": "IN_PROGRESS",
+        "priority": "P0",
+        "size": "M",
+        "zone": "apps/mcp-server/",
+        "owner": "pm",
+        "next_agent": "developer",
+        "depends": [],
+        "supervised": false,
+        "created_at": "2026-07-22T01:15:30Z",
+        "created_by": "pm/decomposition-20260722T0115",
+        "updated_at": "2026-08-07T18:25:24Z",
+        "updated_by": "pm/decomposition-20260722T0115",
+        "origin_task": "FIX-ORPHAN-ADOPTION-BOARD-STATE-GUARD",
+        "parent_fix_spec": "fix_spec(a)+(c)/AC1+AC3",
+        "subtasks": [
+          {
+            "seq": 1,
+            "title": "Add ttl_seconds + payload_patch optional params to heartbeatTask()",
+            "acceptance": "heartbeatTask accepts optional ttl_seconds (60-691200), updates row.ttl_seconds when supplied; payload_patch shallow-merges into payload JSON when supplied"
+          },
+          {
+            "seq": 2,
+            "title": "Add null-session ladder to heartbeatTask/releaseTask for orphan-signal rows",
+            "acceptance": "orphan-signal:* rows with owner_client_session=NULL match on (owner_agent + original_owner_client_session echo); live-session rows (owner_client_session IS NOT NULL) never match via new params"
+          },
+          {
+            "seq": 3,
+            "title": "Implement two-statement UPDATE pattern (not CTE) per FR-1 file-level design",
+            "acceptance": "First UPDATE: ttl_seconds if supplied. Second UPDATE: payload_patch merge. Both preserve unpatched fields."
+          }
+        ],
+        "po_corroboration_20260806": "LIVE 10x corroboration for the FR-2 null-session release ladder, RAW-verified by po 2026-08-06T11:07Z tick (signal dev-orphangap-20260806T111713Z, finding_2). task_release(task_id='orphan-signal:'+id, owner_client_session=$SESSION) returned {ok:true, released:0} on all 10 attempts — the orphan-signal lock's owner_client_session is null (server-reaper owned), so NO client session can ever match it. Both call sites in docs/agents/dev-team/flow/orphan-adoption.md (happy-path ~L94-98 and git_sha-invalid dead-end ~L69-74) are therefore unreachable no-ops as written. Note the ok:true/released:0 shape: the call reports success while releasing nothing — the exact 'ok+released=wrong' false-green class. Practical blast radius is bounded by the 7200s TTL self-clear, but during that window a re-probe can still attempt duplicate adoption if FR-4's terminal guard is not also live. Same 15-day READY stall as its FR-4 sibling.",
+        "claimed_at": "2026-08-07T18:25:23Z",
+        "claimed_by": "dev-team (ready-lane consumer)",
+        "dispatch_lane": "developer"
       }
     ]
   },
