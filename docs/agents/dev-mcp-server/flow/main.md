@@ -15,7 +15,7 @@ Code + tests committed | `[Developer] Implementation Record` in handoff | QA not
 
 ---
 
-> Error boundary → skill: `.claude/skills/cowork-error-boundary/SKILL.md`
+> Error boundary → `docs/protocols/fail-loud-protocol.md` § "Error Boundary — Blocked Flow = EXIT" — dev-pipeline SSOT (repointed 2026-08-07, FIX-DEVFLOW-MICROSERVICE-MAIN-NO-ERROR-BOUNDARY AC-3: `.claude/skills/cowork-error-boundary/SKILL.md` prescribes gateway calls this specialist holds no grant for and omits the `.head` idle-reset).
 
 ---
 

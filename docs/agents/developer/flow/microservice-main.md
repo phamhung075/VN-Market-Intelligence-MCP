@@ -1,4 +1,4 @@
-<!-- size-justification: 165L — shared base flow for all 9 dev-* zone agents; carries both TS/Bun and Python/FastAPI TDD workflows, zone-restriction rule, INV-GATEWAY-1 dispatcher-lock comments, doc-review chain, implementation record template, mandatory decision-journal steps, and RETURN schema; splitting would degrade usability for all 9 consumers -->
+<!-- size-justification: 169L (+4L, 2026-08-07 FIX-DEVFLOW-MICROSERVICE-MAIN-NO-ERROR-BOUNDARY AC-1: added missing Error Boundary block pointing to fail-loud-protocol.md dev-pipeline SSOT) — shared base flow for all 9 dev-* zone agents; carries both TS/Bun and Python/FastAPI TDD workflows, zone-restriction rule, INV-GATEWAY-1 dispatcher-lock comments, doc-review chain, implementation record template, mandatory decision-journal steps, and RETURN schema; splitting would degrade usability for all 9 consumers -->
 # Microservice Developer — Main Flow
 
 **Scope:** Any `apps/<service>/` zone (TypeScript/Bun or Python/FastAPI). All 9 dev-* zone agents share this flow. The `apps/mcp-server/` root uses [`main.md`](./main.md) instead.
@@ -10,6 +10,10 @@
 
 ## Output
 Code + tests on `task/NNN-*` branch | `[Developer] Implementation Record` in handoff | PM/QA notified
+
+---
+
+> Error boundary → `docs/protocols/fail-loud-protocol.md` § "Error Boundary — Blocked Flow = EXIT" — the dev-pipeline SSOT for this shared flow (all 8/9 dev-* zone agents resolve here; do NOT use the cowork `.claude/skills/cowork-error-boundary/SKILL.md` contract — it prescribes gateway calls this specialist class holds no grant for and omits the `.head` idle-reset). Step 0 STOP-RELEASE (`.head` idle-reset, plain `jq` + `orch-apply.sh`, no MCP required) is mandatory-FIRST — run it BEFORE the Step 1 BUG telegram.
 
 ---
 
