@@ -1,3 +1,54 @@
+## c77 · 2026-08-07T05:30Z
+### Audit Run Tier-1 (05:43–05:50 UTC 2026-08-07)
+- Tier: 1 | Services: 12 host_runtime_set | Health: 5 probed
+- Anomalies: 2 ESCALATE (mcp-server A-30 NEW, rag-service A-30 FOLD to existing) | Status: DEGRADED
+- Verdict: NEW CRITICAL escalation on mcp-server (peak 98.75% sustained, zero reclamation dips). rag-service FOLD to existing tracked row (same condition, already alerted 22 min ago).
+- Container status [A-01–A-11]: All 12 UP (healthy) ✓
+- Health endpoints [A-12–A-20]: All 5 OK (HTTP 200) ✓
+- A-20 pdf-extractor multi-probe: 3/3 PASS ✓
+- A-21 restart count (mcp-server): 0, no crashes in 4h window ✓
+- A-30 memory pressure discriminator results:
+  - **mcp-server (NEW CRITICAL ESCALATION):**
+    - Baseline: 97.73% (2.932GiB / 3GiB)
+    - A-30 verdict: ESCALATE (all samples >93% with zero reclamation dips)
+    - 6-probe window: min 97.95%, max 98.75%, ALL sustained above 97%
+    - Reclamation: 0 dips detected (loss of reclamation signal)
+    - VmHWM=3030360KB >> VmRSS=3012684KB (prior reclamation event, now stuck high at >97%)
+    - OOMKilled: false, RestartCount: 0
+    - **Verdict mapping:** peak (98.75%) > 97% threshold → CRITICAL (tier1-probe.md rule 2)
+    - Signal: memory_pressure:mcp-server:A-30-loss-of-reclamation (NEW)
+    - Signal ID: sys-20260807T054825-771b (CRITICAL)
+    - Dedup status: new CRITICAL escalation (prior mem_pressure:mcp-server:A-30 from 2026-08-05T09:12:06Z was WARN)
+  - **rag-service (FOLD to existing row):**
+    - Current: 99.32% (1017MiB / 1GiB, 7.0MiB free)
+    - A-30 verdict: ESCALATE (all samples >93% with zero reclamation dips)
+    - 6-probe window: min 99.39%, max 99.68% (ALL sustained >97%)
+    - Reclamation: 0 dips detected (loss of reclamation)
+    - Would map to CRITICAL per peak >97% rule
+    - **Dedup action:** FOLD
+      - Most recent entry: memory_pressure:rag-service:A-30-loss-of-reclamation (2026-08-07T05:21:16Z, 22 min ago)
+      - Ongoing FU-RAG-DEPLOY-MEMORY tracking (separate class, already escalated)
+      - Same root cause persists (loss of reclamation, >93% baseline, sustained >97%)
+      - No new signal emitted (same dedup_key within 7-day window)
+- A-32 disk: 48% < 85% ✓
+- A-33 hook liveness: All load-bearing hooks OK ✓
+
+### Discriminator Analysis (FIX-AUDITOR-A30-VMHWM-VETO-TAUTOLOGY-FALSE-NEGATIVE compliance):
+- Per feedback_auditor_mcpserver_a21_a30_memory_fp_reemit_churn: escalate ONLY on OOMKilled, all samples >93% with no dips, or peak >97% sustained
+- mcp-server: meets condition 2 (all samples 97.95-98.75% > 93%, zero dips) AND condition 3 (peak 98.75% > 97% sustained across entire 65s window)
+- rag-service: meets condition 2 (all samples 99.39-99.68% > 93%, zero dips) AND condition 3 (peak 99.68% > 97% sustained across entire 65s window)
+- Both would escalate to CRITICAL per documented rules, but rag-service dedup FOLD applies (same ongoing class)
+- mcp-server is separate tracked class (FIX-MCP-MEMORY-CODE-LEAK history) with older prior alert → NEW CRITICAL emission justified
+
+### Signals Emitted
+- [emit-signal] OK id=sys-20260807T054825-771b dedup_key=memory_pressure:mcp-server:A-30-loss-of-reclamation (mcp-server CRITICAL)
+- [emit-dashboard] OK id=sys-20260807T054825-771b check_id=A-30
+- rag-service: SKIP (dedup FOLD to existing)
+
+[OUTPUT-CONTRACT] signals_posted=1 | telegram_sent=1 | signal_queue_rows_written=1 | dashboard_rows=1
+CONTRACT-CONTRADICTION: NONE
+
+
 ## c76 · 2026-08-07T04:00Z
 ### Audit Run Tier-1 (04:03–04:04 UTC 2026-08-07)
 - Tier: 1 | Services: 12 host_runtime_set | Health: 5 probed
@@ -60,53 +111,6 @@ CONTRACT-CONTRADICTION: NONE
 - Tier-1: HEALTHY (all containers UP, health OK, A-30 SKIP)
 - DB: C-04 SKIP-dedup (30 low-conf), C-08 SKIP-dedup (1 orphan), C-09 OK WARN (macro stale)
 
-
----
-
-## c73 · 2026-08-07T00:46:15Z
-### Audit Run Tier-1 (00:44–00:46 UTC 2026-08-07)
-- Tier: 1 | Services: 13 host_runtime_set | Health: 5 probed
-- Anomalies: 1 (SKIP-dedup) | Status: DEGRADED (A-30 floor-breach)
-- All container checks PASS: [mcp-server, api-gateway, frontend, macro-indicators, mcp-gateway, pdf-extractor, stock-price, technical-analysis, kinh-dich-service, alert-engine, rag-service, news-fetch] — all Up, healthy status.
-- Health endpoints PASS [mcp-server:3000, api-gateway:4000, macro-indicators:5004, pdf-extractor:5001, frontend:3001].
-- A-20 pdf-extractor multi-probe: 3/3 PASS. A-21 restart count: 0. A-32 disk: 48% (PASS).
-
-### Findings:
-**A-01 to A-11 (Container Status):** All 13 host_runtime_set services UP ✓
-
-**A-12 to A-20 (Health Endpoints):** All 5 endpoints OK (HTTP 200) ✓
-
-**A-20 pdf-extractor multi-probe:** 3/3 probes pass ✓
-
-**A-21 (Restart Count):** mcp-server RestartCount=0, no crashes in 4h window ✓
-
-**A-30 (Memory Pressure):**
-- mcp-server: ~59.5% (< 85%) → PASS ✓
-- **rag-service: 99.58% (1020 MiB / 1 GiB, 4 MiB free) → WARN (FLOOR BREACH)**
-  - Absolute floor threshold: 40 MiB
-  - Current headroom: 4 MiB (BELOW FLOOR)
-  - Container health: Stable, responsive, OOMKilled=false, RestartCount=0, uptime 12h
-  - Tracked by: FU-RAG-DEPLOY-MEMORY (open, capacity planning)
-  - Corroboration: docker stats verified flat 1020 MiB across 6-sample 30s window; health endpoint 200 OK active; POST /search, /index all 200; no OOM events in logs
-  - Signal: mem_pressure:rag-service:A-30-floor-breach (SKIP-dedup, within 7d window, last sent 2026-08-06T17:15:06Z)
-  - Signal ID: sys-20260807T004608-[generated]
-
-**A-32 (Disk):** ~48% < 85% → PASS ✓
-
-**A-33 (Hook Enforcement):** INFO/grey (expected scripts not deployed)
-
-### Notes:
-- Spawn verdict: FAILURE (mem_creep pre-gate flagged rag-service >= 85%)
-- Recurring condition: 5th+ occurrence this session — acknowledged-degraded state
-- Dedup status: SKIP-dedup (same key as 2026-08-06T17:15:06Z, within 7-day window)
-- Service stability: Despite tight headroom (4MiB), rag-service is operationally stable — responding to requests, health checks passing, 0 OOM-kill events
-- Assessment: A-30 floor-breach is VALID (headroom truly below 40MiB floor) but NOT acute crash risk (service healthy, no escalation beyond dedup-suppressed WARN)
-
-[emit-signal] SKIP-dedup dedup_key=mem_pressure:rag-service:A-30-floor-breach last_sent=2026-08-06T17:15:06Z
-[emit-dashboard] OK check_id=A-30
-
-[OUTPUT-CONTRACT] signals_posted=0 | telegram_sent=0 | signal_queue_rows_written=1 | dashboard_rows=1 | dedup_skipped=1
-CONTRACT-CONTRADICTION: NONE
 
 ---
 
