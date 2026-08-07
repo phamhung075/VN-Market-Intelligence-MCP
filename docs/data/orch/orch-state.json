@@ -2079,7 +2079,7 @@
         "summary": "daily_ohlcv: 336 rows high=0/low=0 — FROZEN RESIDUE of ONE 2026-06-14 write batch, already board-tracked (dup)",
         "severity": "CRITICAL",
         "status": "TRIAGED",
-        "payload_ref": "docs/data/db-integrity-history.json",
+        "payload_ref": null,
         "provenance": "detector",
         "triaged_at": "2026-08-05T07:06:06Z",
         "triaged_by": "po",
@@ -13091,34 +13091,6 @@
         "updated_at": "2026-08-07T01:14:01Z"
       },
       {
-        "id": "FIX-BCTC-REFINE-PAGE-IMAGE-UNAVAILABLE-CAPS-CONFIDENCE",
-        "type": "FIX",
-        "title": "get_bctc_page_image failed on 3/3 successful refine windows in the 2026-08-06T16:37Z batch — every DONE unit capped at confidence 0.55 (text-only), vs zero image failures in the 14:07Z batch on the same report",
-        "desc": "PO-ORIGINATED, verified at source (live /app/data/market.db via docker exec + bun:sqlite, 2026-08-07T01:0xZ) while ratifying FIX-REFINE-SUBFLOW-OPTIONC-CONTRACT-DRIFT AC-7. Report 76129128-947c-422b-a591-e1d2b95cbeb8 (KBC), bctc_refined_units: the 14:07:21-14:11:26Z batch (units 0000-0011) has ZERO image_unavailable flags and confidences 0.81-0.98. The 16:37:54-16:40:53Z batch (units 0012-0023) has THREE DONE units (0014/0015/0019) and ALL THREE carry flags [\"image_unavailable:text_only_parse\"] with confidence exactly 0.55. REFUTES the standing hypothesis that 0.55 is a hardcoded/fallback confidence introduced by the Option-C fix: apps/mcp-server/src/domain/services/financial-reports/bctcSanityValidator.ts can only pass confidence through (:134) or clamp it to 0.4 (:149) / 0.1 (:163) — it can never emit 0.55, so 0.55 is the agent's own spec-COMPLIANT value under docs/agents/refine_bctc_md/flow/table-page.md:55 and continuation-stitch.md:60 ('image fail -> proceed text-only, flag image_unavailable, confidence <= 0.6'). The confidence is correct; what is broken is the IMAGE PLANE. Second, weaker observation on the same batch: 6 of the 9 FAILED units are ocr_corruption on a contiguous page-30..41 tail (0016 p30, 0018 p34, 0020 p38, 0021 p39, 0022 p40, 0023 p41) — likely one upstream PDF/OCR condition, not six independent failures.",
-        "status": "BACKLOG",
-        "priority": "P1",
-        "size": "S",
-        "owner": "po",
-        "zone": "apps/mcp-server/",
-        "next_agent": "developer",
-        "supervised": false,
-        "plan_only": false,
-        "created_at": "2026-08-07T01:11:28Z",
-        "created_by": "po/triage-20260807T0104Z (own source verification during WF-2 ratification)",
-        "baseline_pass": true,
-        "rebuild_required": false,
-        "files": [
-          "apps/mcp-server/src/interface/mcp/tools/financial-reports/getBctcPageImageTool.ts",
-          "apps/mcp-server/src/infrastructure/fetchers/pdfExtractorClient.ts"
-        ],
-        "related": [
-          "FIX-REFINE-SUBFLOW-OPTIONC-CONTRACT-DRIFT"
-        ],
-        "verification_gate": "next_refine_batch_has_zero_image_unavailable_flags",
-        "status_note": "AC1: determine why get_bctc_page_image returned unusable for pages in the 16:37Z window but not the 14:07Z window on the SAME report_id — compare pdf-extractor availability/response between the two windows before changing any code (do NOT assume a code regression; a transient pdf-extractor outage is an equally live hypothesis and would route to ops, not developer). AC2: whichever it is, the failure must be VISIBLE — a 100% image-fetch failure that silently degrades every unit to <=0.6 confidence and only surfaces as a flag inside a DB row is an invisible data-quality regression; emit a loud signal (BUG channel or signal_queue) when image fetch fails for a whole window. AC3: re-run one window and confirm zero image_unavailable flags. AC4 (secondary, may split to its own row): investigate the contiguous page-30..41 ocr_corruption block on this report. EVIDENCE QUERY (re-runnable): docker exec vn-market-intelligence-mcp-mcp-server-1 bun -e '...SELECT unit_id,confidence,window_status,flags,refined_at FROM bctc_refined_units WHERE report_id=\"76129128-947c-422b-a591-e1d2b95cbeb8\" ORDER BY refined_at'. DO NOT close this by adjusting the 0.55 value or the <=0.6 cap — those are correct.",
-        "updated_at": "2026-08-07T01:14:01Z"
-      },
-      {
         "id": "FIX-CI-SIZELINT-SCHEMA-TS-DEFLAKE-REGRESSION-372L",
         "type": "FIX",
         "title": "CI-RED-70ae0d9a-FIX — CI RED: size-lint — apps/mcp-server/src/infrastructure/db/schema.ts (baseline-tolerance-exceeded, baseline=336L actual=372L upper=369L) — 2nd RED on this file in 2 days, recurring",
@@ -21470,6 +21442,36 @@
         "po_action_item_1_completed_at": "2026-08-07T01:42:33Z",
         "po_action_item_1_note": "agent-father completed po_decision_refine_cadence_20260807 action item (1): refine-bctc-slot-1 (cron 0 9) enabled=false->true in docs/data/cowork-schedule.json (commit 3bf1fe322). Slots 0 11 (slot-3) and 0 14 (slot-2) left disabled per PO partial-reenable decision; slot-4 (30 16 canary) untouched. Broader AC-1..AC-7 contract-drift fixes on this row remain open/unactioned by this dispatch — row stays IN_PROGRESS.",
         "review_note": "agent-father AC-1..AC-6 verification 2026-08-07T02:04Z (dev-team S2 dispatcher-wrap continuation). RAW-verified (grep against live file bytes, not self-report or the size-justification comment alone): AC-1 (main.md Phase-2 loop is literal inline instructions, explicit per-page_type Read step, zero execute_sub_flow_logic references left live), AC-2 (all 4 sub-flow docs RETURN sections rewritten to inline-result language -- zero hits for \"Task return value\"/\"orchestrator collects\"/\"Returns result JSON inline to main.md\"), AC-3 (anti-confabulation line present in main.md Phase 2), AC-4 (4-value STATUS enum DONE|PARTIAL|FAILED|SKIPPED restated at the loop site, PARTIAL requires >=1 push, 0 pushes on a full chunk = FAILED), AC-5 (.claude/agents/refine_bctc_md.md corrected to <=12 windows/REFINE_CHUNK_SIZE=12, zero <=7 remnants) are ALL already fully implemented -- landed in commit da489f36f (2026-08-06T17:17:45+02:00), predating this dispatch. AC-6 (slot pause) same commit. Made ZERO code edits this cycle -- re-writing already-correct text would be pure churn. QA NOTE: do not re-demand AC-6 (slot pause, commit da489f36f) or AC-7/po_action_item_1 (cadence slot-1 re-enable, commit 3bf1fe322, PO-ratified po_decision_refine_cadence_20260807) -- both were completed by EARLIER, SEPARATE dispatches on this same row, not this one. AC-7 (VHM first push timing) is a throughput observation per the row own po_goahead_20260807T011128 note (\"it must not keep this row held\"), not a fix-correctness gate -- out of scope for this pass by explicit dispatch instruction. DJ-GATE-1: sprint-COWORK-GUARANTEED-SLOT-CATCHUP-agent-father-2.md S31."
+      },
+      {
+        "id": "FIX-BCTC-REFINE-PAGE-IMAGE-UNAVAILABLE-CAPS-CONFIDENCE",
+        "type": "FIX",
+        "title": "get_bctc_page_image failed on 3/3 successful refine windows in the 2026-08-06T16:37Z batch — every DONE unit capped at confidence 0.55 (text-only), vs zero image failures in the 14:07Z batch on the same report",
+        "status": "REVIEW",
+        "priority": "P1",
+        "size": "S",
+        "owner": "po",
+        "zone": "apps/mcp-server/",
+        "next_agent": "qa",
+        "supervised": false,
+        "plan_only": false,
+        "created_at": "2026-08-07T01:11:28Z",
+        "created_by": "po/triage-20260807T0104Z (own source verification during WF-2 ratification)",
+        "baseline_pass": true,
+        "rebuild_required": false,
+        "files": [
+          "apps/mcp-server/src/interface/mcp/tools/financial-reports/pushBctcRefinedUnitTool.ts",
+          "apps/mcp-server/src/infrastructure/signals/bctcImageFetchDegradedSignalWriter.ts",
+          "apps/mcp-server/src/__tests__/FIX-BCTC-REFINE-PAGE-IMAGE-UNAVAILABLE-CAPS-CONFIDENCE.test.ts"
+        ],
+        "related": [
+          "FIX-REFINE-SUBFLOW-OPTIONC-CONTRACT-DRIFT"
+        ],
+        "verification_gate": "next_refine_batch_has_zero_image_unavailable_flags",
+        "root_cause": "AC1 (investigation, not assumption): pdf-extractor was healthy throughout the 16:37Z batch — zero ERROR/WARN log lines, /health 200 OK, all requests that reached it served correctly. mcp-server own data/logs/tool-get_bctc_page_image.log shows unit-0014/page28 rasterize succeeded cleanly (PNG confirmed on the shared bctc-page-images volume, no WARN) yet the pushed unit still carries image_unavailable; units 0015/0019 (pages 29/37) show ZERO tool-log entry — get_bctc_page_image was never invoked for them at all. Neither a pdf-extractor outage NOR a bug in the named files (getBctcPageImageTool.ts/pdfExtractorClient.ts — every traced call that executed completed cleanly) reproduces the symptom. Root cause sits in the untraceable gap between a successful server response and the calling refine_bctc_md subagent under the Option-C shared-execution-context architecture (large base64 image payloads accumulating in one continuous agent turn) — agent-flow/architecture territory outside apps/mcp-server, not a TS defect. 0.55/<=0.6 cap verified spec-compliant and untouched.",
+        "status_note": "AC1 CLOSED: root cause = agent/transport-layer gap, NOT pdf-extractor outage, NOT a code bug in the 2 named files (see root_cause field) — do not re-route to ops, and do not re-open a code-fix attempt on getBctcPageImageTool.ts/pdfExtractorClient.ts without new evidence. AC2 CLOSED: bctcImageFetchDegradedSignalWriter.ts + pushBctcRefinedUnitTool.ts wiring ships a HIGH-severity signal_queue row on the 2nd image_unavailable-flagged push per report (rising-edge, never re-fires) — 18/18 new tests pass, tsc clean, zero regressions in existing bctc push/finalize/signal-writer suites, full local suite 15174 pass/45 fail/1 error (within this repo documented flaky floor, zero bctc-named failures). AC3 NOT CLAIMED: no fetch-plane code changed, so there is nothing to re-run/re-verify — gate next_refine_batch_has_zero_image_unavailable_flags cannot be proven by this commit alone; whoever owns the next live refine batch on this report should confirm organically. AC4 (page 30-41 contiguous ocr_corruption tail) intentionally NOT investigated — recommend PO split to its own row per the task brief own suggestion.",
+        "commit": "73e65eafc",
+        "updated_at": "2026-08-07T02:16:18Z"
       }
     ],
     "qa": [
