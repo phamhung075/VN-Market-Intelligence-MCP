@@ -66,3 +66,33 @@ trail); no other slot, no confidence/cap value, no code under `apps/mcp-server` 
 **why-change:** No change from plan — single-field edit as specified. Broader AC-1..AC-7 contract-
 drift fixes on this same row remain untouched (separate, larger piece of work per dispatch
 instructions); row stays `IN_PROGRESS`, `.head` untouched, status not flipped.
+
+### STEP agent-father-S31 · agent-father · 2026-08-07T02:03:00Z
+**task-id:** FIX-REFINE-SUBFLOW-OPTIONC-CONTRACT-DRIFT
+**what-done:** RAW-verified AC-1..AC-5 (+AC-6) are ALREADY fully implemented on disk — they landed
+in commit `da489f36f` (2026-08-06T17:17:45+02:00), predating this dispatch. Read all 6 files
+fully + grepped for every named defect string: `execute_sub_flow_logic` (0 live hits, only
+negated-in-prose mentions), `PARTIAL_EXIT` (same), `Task return value`/`orchestrator collects`/
+`Returns result JSON inline to main.md` (0 hits across all 4 sub-flow docs), `<=7 windows`/
+`(7 windows)` in `.claude/agents/refine_bctc_md.md` (0 hits — already reads `<=12 windows,
+REFINE_CHUNK_SIZE=12`). Zero code diff needed this cycle — re-editing already-correct text would
+be pure churn. Flipped board row `IN_PROGRESS`→`REVIEW` via `scripts/orch-apply.sh` (lane-move
+`in_progress[]`→`review[]`, `.head` synced to idle per branch:null rule since this task was
+`.head.active_task_id`), `review_note` states AC-1..AC-6 verified-complete-at-source (not
+self-report) and explicitly flags that AC-7 (VHM throughput ETA) and `po_action_item_1` (cadence
+slot-1 enable) were BOTH handled by prior dispatches, not this one, so QA does not re-demand them.
+**what-considered:**
+- Re-touch the 6 files anyway (defensive re-write) vs verify-only and flip — chose verify-only:
+  the files already match every AC's literal wording; a no-op edit has no effect and risks
+  introducing a diff-review burden with zero behavior change.
+- Leave row `IN_PROGRESS` pending AC-7's literal VHM-push confirmation vs flip to `REVIEW` now —
+  chose flip: `po_goahead_20260807T011128` on the row itself already ratified "AC-7 is a
+  THROUGHPUT observation, not a fix-correctness gate — it must not keep this row held", and this
+  dispatch's own instructions confirm AC-7 is out of scope for this pass.
+**why-decision:** Verification must be RAW (grep against live file bytes), not trusted from the
+size-justification comment in `main.md:2` or the commit message alone — both already claimed the
+fix was complete, but claims are not evidence per this fleet's own standing verification rule.
+Grep confirmed byte-for-byte.
+**why-change:** No production/agent-file diff. Sole writes: this journal entry, notebook entry,
+and `docs/data/orch/orch-state.json` (status flip + lane-move + head-sync), all via their
+mandated write paths (`orch-apply.sh` for the hot file, direct Edit for memory files).

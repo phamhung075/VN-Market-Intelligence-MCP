@@ -1,5 +1,33 @@
 # Agent Father — Notebook
 
+## Verify+flip (dev-team S2 dispatcher-wrap) 2026-08-07T02:03Z FIX-REFINE-SUBFLOW-OPTIONC-CONTRACT-DRIFT — AC-1..AC-6 confirmed complete, REVIEW
+- Dispatch scoped to the row's BROADER AC-1..AC-5 deliverable (AC-6 already done, AC-7/
+  `po_action_item_1` explicitly out of scope — both handled by prior dispatches). Read all 6
+  in-scope files fully (`main.md`, `table-page.md`, `prose-page.md`, `continuation-stitch.md`,
+  `disagreement-verify.md`, `.claude/agents/refine_bctc_md.md`) and grepped repo-wide for every
+  literal defect string named in the task: `execute_sub_flow_logic` (only negated/historical
+  mentions remain — main.md's own size-justification comment + a decisions-file postmortem),
+  `PARTIAL_EXIT` (same), `Task return value`/`orchestrator collects`/`Returns result JSON inline
+  to main.md` (zero hits in all 4 sub-flow docs), `<=7 windows` in `.claude/agents/
+  refine_bctc_md.md` (zero hits — already `<=12 windows, REFINE_CHUNK_SIZE=12`).
+- Conclusion: AC-1 through AC-6 are ALREADY fully implemented — landed in commit `da489f36f`
+  (2026-08-06T17:17:45+02:00), which predates this dispatch entirely. Made ZERO code edits this
+  cycle — the files already match every AC's literal wording; re-writing correct text would be
+  pure churn with a false "I fixed this" signal.
+- DJ-GATE-1 entry written (`sprint-COWORK-GUARANTEED-SLOT-CATCHUP-agent-father-2.md` S31) before
+  flip. Board row flipped `IN_PROGRESS`→`REVIEW` via `scripts/orch-apply.sh` (never raw write):
+  lane-move `task_board.in_progress[]`→`task_board.review[]` in the same write per
+  CANONICAL:SSOT-STATUSFLIP-LANEMOVE; `.head` synced to `{status:idle, active_task_id:null,
+  next_agent:router}` since this row WAS `.head.active_task_id` and carries `branch:null`.
+  `review_note` explicitly states AC-6 (slot pause) and AC-7/`po_action_item_1` (cadence
+  slot-1 re-enable) were handled by EARLIER dispatches, not this one — so QA does not re-demand
+  work already done, and does not misread this cycle's zero-diff as a skipped AC.
+- No `mcp__gateway__call_tool` MCP binding in this session (recurring structural gap for this
+  agent identity, already logged S23/S28/S30) — task-lock heartbeat (`task:FIX-REFINE-SUBFLOW-
+  OPTIONC-CONTRACT-DRIFT`) and `commit-mutex:main` claim/release both done via direct
+  `docker exec`+`bun:sqlite` matching `heartbeatTask()`/`claimTask()`/`releaseTask()`'s exact SQL
+  verbatim (not a business-logic bypass — same statements the MCP tools run).
+
 ## Direct-implement 2026-08-07T00:52Z FIX-CRON-REARM-CROSS-SESSION-DEDUP — Lane 1 (guard fix + marker mechanism)
 - Read `docs/architecture-briefs/2026-08-06-cron-rearm-cross-session-dedup.md` §1-2/§4 in full.
   Sequencing gate (dev-team's `coordinationStore.ts`/`tasksMdJanitorJob.ts` `cron-registration:*`
