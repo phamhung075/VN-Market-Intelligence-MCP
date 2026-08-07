@@ -12532,60 +12532,6 @@
         "evidence": "git commit failure text this tick: \"fatal : le chemin '/Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/apps/mcp-server/docs/data/orch/orch-state.json' est au-dela d'un lien symbolique\"; ls -la apps/mcp-server/docs -> symlink to ../../docs; realpath of both the symlinked and canonical orch-state.json paths match (no content divergence, no data loss — recovered via manual commit 4db659e30)."
       },
       {
-        "id": "FIX-DEVFLOW-MICROSERVICE-MAIN-NO-ERROR-BOUNDARY",
-        "type": "FIX",
-        "title": "Shared microservice dev flow declares NO Error Boundary — 8 dev-* zone agents resolve no on-failure contract at all, and the 2 that pass the check do so against the cowork SSOT, which omits the .head idle-reset",
-        "status": "BACKLOG",
-        "priority": "P1",
-        "size": "S",
-        "zone": "docs/agents/",
-        "next_agent": "agent-father",
-        "supervised": false,
-        "plan_only": false,
-        "created_at": "2026-08-06T13:45:00Z",
-        "created_by": "po/triage-agentfather-20260806T1318Z",
-        "updated_by": "po/triage-agentfather-20260807T1303Z",
-        "source": "agent-father keep sweep 2026-08-06T13:18Z Check #2 (notebook docs/agent-memory/notebooks/agent-father.md, commits bbe732740/6f549ffcf); independently re-verified by PO 2026-08-06T13:37Z",
-        "desc": "docs/agents/developer/flow/microservice-main.md contains zero 'Error Boundary' text. All 8 of dev-alert-engine, dev-api-gateway, dev-kinh-dich, dev-macro-indicators, dev-pdf-extractor, dev-rag-service, dev-stock-price, dev-technical-analysis reach it through a thin <id>/flow/main.md that also carries none, so their entire resolved flow chain has no on-failure contract. PO-measured: grep over all 10 dev-*/flow/main.md returns 1 hit for dev-mcp-server (line 18) and dev-frontend (line 17), 0 for the other 8. WHY THIS IS NOT DOC-LINT: docs/protocols/fail-loud-protocol.md Error Boundary Step 0 (STOP-RELEASE) is the step that atomically resets .head to idle on a failed spawn, and that protocol explicitly notes the .head reset IS executable by every agent regardless of MCP binding. A dev-* agent dying mid-task with no such instruction strands .head non-idle — the documented recurring duplicate-spawn family (feedback_pipeline_resume_stale_placeholder_duplicate_spawn_risk, 5th instance logged by agent-father itself at 2026-08-06T10:16Z; also feedback_pm_closeout_leaves_head_non_idle).",
-        "acceptance": [
-          "AC-1 docs/agents/developer/flow/microservice-main.md gains an Error Boundary block ABOVE the first flow step (mirror the placement at dev-mcp-server/flow/main.md:18 and dev-frontend/flow/main.md:17), naming docs/protocols/fail-loud-protocol.md section 'Error Boundary — Blocked Flow = EXIT' as the dev-pipeline SSOT and calling out its Step 0 STOP-RELEASE .head idle-reset as mandatory-FIRST, before the BUG telegram.",
-          "AC-2 docs/agents/agent-father/flow/sweep-fixes.md Check #2 method changes to follow a one-hop delegation pointer ('-> Run shared flow: <path>' / '-> Run sub-flow: <path>') before returning FAIL. WITHOUT THIS AC THE FIX DOES NOT LAND: Check #2 greps only <id>/flow/main.md, so an edit confined to the shared file still reports 8 FAILs next sweep — the 'fix landed in the pre-gate, not the probe the agent actually runs' shape. This also mechanizes the 9 cowork thin-dispatcher false positives agent-father re-verifies BY HAND every cycle (its own notebook, this cycle and prior).",
-          "AC-3 dev-mcp-server/flow/main.md:18 and dev-frontend/flow/main.md:17 are repointed from .claude/skills/cowork-error-boundary/SKILL.md to the same dev-pipeline SSOT. They pass the grep today against a COWORK contract that omits the .head idle-reset entirely and whose 'MCP Call Pattern' + get_recent_fixes dedup prescribe gateway calls no dev-* agent holds a grant for. Passing a check against the wrong content is a false green, not a clean bill.",
-          "AC-4 Verify: re-run Check #2 over all 10 dev-* agents; all 10 must resolve the SAME Error Boundary SSOT. Record the before/after count in the next keep report."
-        ],
-        "files": [
-          "docs/agents/developer/flow/microservice-main.md",
-          "docs/agents/agent-father/flow/sweep-fixes.md",
-          "docs/agents/dev-mcp-server/flow/main.md",
-          "docs/agents/dev-frontend/flow/main.md"
-        ],
-        "out_of_scope": "Do NOT resolve the INV-GATEWAY-1 contradiction inside microservice-main.md here (Step 6b comment says this specialist does NOT call task_claim and the dispatcher holds the lock, while lines 90-94 instruct a direct call_tool(server='vn-market', tool='task_heartbeat') after every Python TDD loop, which no dev-* agent can execute — none holds mcp__gateway__call_tool). Real and PO-verified, but it belongs to FIX-COWORK-FLOWS-GATEWAY-BLIND-BRIDGE-FALLBACK, whose scope PO widened in this same triage.",
-        "related": [
-          "FIX-COWORK-FLOWS-GATEWAY-BLIND-BRIDGE-FALLBACK",
-          "AF-SEMBLE-INIT-DEF"
-        ],
-        "not_duplicate_of": "No prior board row mentions microservice-main.md, dev-* error boundary, or fail-loud STOP-RELEASE for the dev lane (probed across backlog/ready/in_progress/review/qa/blocked 2026-08-06T13:35Z).",
-        "dispatch_note": "next_agent=agent-father is deliberately OFF the DRS ratified allowlist (fleet-wide blast radius) — DRS-STRANDED-OFF-ALLOWLIST by design, reachable via PO/router manual dispatch (docs/agents/po/flow/manual-dispatch-sweep.md). Not expected to self-promote.",
-        "updated_at": "2026-08-07T13:09:54Z",
-        "occurrence_2": {
-          "at": "2026-08-07T13:09:54Z",
-          "by": "po/triage-agentfather-20260807T1303Z",
-          "source": "agent-father maintenance sweep 2026-08-07T12:58Z (commits ac58cf667/df641de4c/e261e01d9), re-reported as Escalation 1 severity MEDIUM",
-          "disposition": "FOLD — no re-mint. Row already minted 2026-08-06T13:45Z from occurrence 1 of the SAME sweep check. Re-fire is CORROBORATION, and a STRONGER one than occurrence 1.",
-          "why_stronger": "Occurrence 1 was measured by a probe that was itself defective. Commit ac58cf667 (2026-08-07) re-targeted sweep-fixes Checks 1/3/5 from the thin .claude/agents/<id>.md stub to docs/agents/<id>/init.md, and widened Check 2 to a case-insensitive grep over docs/agents/<id>/flow/*.md that follows thin-pointer microservice agents to their shared flow file. The finding SURVIVED that probe correction — so it is not an artifact of the wrong-target bug that produced 42/42 false-FAIL on Checks 1/3.",
-          "po_independent_reverify": "PO re-ran Check 2 live over all 14 docs/agents/dev-*/ dirs at 2026-08-07T13:0xZ. Hits: dev-frontend 1, dev-mcp-server 1, dev-mainserver-crawls 1, dev-team 1, dev-vps-crawls 1; ZERO for dev-alert-engine, dev-api-gateway, dev-kinh-dich, dev-macro-indicators, dev-pdf-extractor, dev-rag-service, dev-stock-price, dev-technical-analysis — exactly the 8 agents named. Confirmed at source, not relayed.",
-          "ac_status_reverified_at_source": {
-            "AC-1": "NOT LANDED — grep -ci 'error boundary' docs/agents/developer/flow/microservice-main.md == 0.",
-            "AC-2": "PARTIALLY LANDED by ac58cf667 — Check 2 is now case-insensitive, globs flow/*.md, and carries prose instructing the sweep to follow thin-pointer microservice agents to the shared flow file (e.g. microservice-main.md). NOT yet the generalised one-hop '-> Run shared flow:'/'-> Run sub-flow:' pointer-resolution the AC specifies; the current text names microservice-main.md by example only. Remaining scope: generalise the hop.",
-            "AC-3": "NOT LANDED — dev-frontend/flow/main.md:17 and dev-mcp-server/flow/main.md:18 both still resolve to .claude/skills/cowork-error-boundary/SKILL.md, the cowork SSOT that omits the .head idle-reset. The false-green identified in occurrence 1 stands.",
-            "AC-4": "NOT LANDED — no before/after count recorded in the 2026-08-07 keep report."
-          },
-          "zone_claim_corrected": "The relayed sweep summary classified this as 'needs manual authoring, not agent-father's zone'. The second clause is FALSE — verified at source: docs/agents/agent-father/init.md boundary_rules.commit_zone.allowed == ['docs/agents/','docs/agent-memory/','.claude/skills/','.claude/agents/'], and ALL FOUR files in this row's files[] sit under docs/agents/. agent-father is correctly routed and in-zone. 'Needs manual authoring' (i.e. not auto-fixable by the sweep) is the accurate half and is already reflected by the row being a FIX rather than an auto-fix.",
-          "priority_held": "P1 retained. Sweep re-labelled it MEDIUM, but that is the check's generic severity, not a board priority. PO's occurrence-1 rationale is unchanged and stronger: a dev-* agent dying with no on-failure contract strands .head non-idle, feeding the documented recurring duplicate-spawn family. Do NOT downgrade on a re-report."
-        },
-        "po_dispatch_decision_20260807": "DISPATCH NOW via PO Step-1 BATCH. Root cause of the 23h strand is structural, not neglect: dispatch_note records this row as deliberately DRS-STRANDED-OFF-ALLOWLIST (next_agent=agent-father is off the ratified auto-dispatch allowlist), so no automated lane can ever pick it up — PO/router manual dispatch is its ONLY path. It has now re-fired once. Folding into this tick's BATCH."
-      },
-      {
         "id": "FIX-AGENT-GUIDE-SSOT-NO-AUTHORIZED-WRITER",
         "type": "FIX",
         "title": "docs/AGENT_CREATION_GUIDE.md governs 42 agents but NO agent is authorized to write it — agent-father is explicitly banned, agents-architect cannot write outside briefs, so every doctrine change is structurally un-landable",
@@ -16239,7 +16185,7 @@
         "size": "M",
         "sprint": "BACKLOG",
         "zone": "apps/mcp-server",
-        "next_agent": "architect",
+        "next_agent": "dev-mcp-server",
         "supervised": true,
         "plan_only": false,
         "baseline_pass": false,
@@ -16256,9 +16202,9 @@
         ],
         "created_at": "2026-08-05T19:45:37Z",
         "created_by": "po",
-        "updated_at": "2026-08-07T13:09:54Z",
-        "owner": "architect",
-        "updated_by": "po/triage-a30-20260807T0600Z",
+        "updated_at": "2026-08-07T13:25:26Z",
+        "owner": "dev-mcp-server",
+        "updated_by": "architect",
         "depends_satisfied_at": "2026-08-07T06:05:54Z",
         "depends_satisfied_note": "FIX-MCP-MEMORY-CODE-LEAK is DEPLOYED (image sha256:115700a86e65, backfill-signature probe green) — this rows own sequencing precondition is met, measurement is against the correct post-fix image.",
         "origin_signal_id": "sys-20260807T054825-771b",
@@ -16266,7 +16212,12 @@
         "po_manual_dispatch_flagged_at": "2026-08-07T13:09:54Z",
         "po_manual_dispatch_flagged_by": "po (manual-dispatch-sweep)",
         "po_manual_dispatch_class": "READY-XOR-SUP-OR-PLANONLY",
-        "po_manual_dispatch_note": "po (manual-dispatch-sweep) surfaced READY-XOR-SUP-OR-PLANONLY candidate — folding into this tick's BATCH"
+        "po_manual_dispatch_note": "po (manual-dispatch-sweep) surfaced READY-XOR-SUP-OR-PLANONLY candidate — folding into this tick's BATCH",
+        "architect_review_note": "architect (2026-08-07T13:23Z) — source-verified the mechanism PO's po_rawverify_20260807T0600Z already root-caused: apps/mcp-server/src/interface/mcp/transport.ts:95 mcpServer is a bare local, never .close()d by either existing eviction path (res.on(\"close\") :84-92, heartbeat-write-fail :65-79). Confirmed via installed SDK source (shared/protocol.js:500-502, server/sse.js) that McpServer.close() alone cascades to transport.close() — one call suffices. Design: collapse the 2 parallel Maps (sessions, heartbeatIntervals) + 2 duplicated inline cleanup blocks into 1 SessionRecord map (transport+mcpServer+heartbeatInterval+createdAt+lastActivityAt) + 1 evictSession() every trigger (res.close / heartbeat-fail / idle-reap / max-age-reap / new DELETE route) calls — the duplication is itself why mcpServer.close() went missing from BOTH pre-existing paths, not just the absent-reaper half. handleMessage() bumps lastActivityAt (idle-timeout basis); createdAt drives an independent max-age backstop. New DELETE /sse|/messages?sessionId= route is explicit defense-in-depth NOT the primary fix — the gateway MCP server originating the dominant per-call-dial traffic is out-of-repo (confirmed: no /sse client code exists under the unrelated Go apps/api-gateway/ zone), so it cannot be made to send clean DELETEs; the reaper is what actually bounds the leak. Idle/max-age thresholds (15min/4h) are flagged explicitly as informed-not-derived constructor-param defaults (same override idiom _heartbeatIntervalMs already uses) — recommend the same post-deploy /health sessionCount vs MemPerc correlation PO already ran once as the empirical tuning/confirmation loop, not asserted as final. DDD: entirely interface-layer (apps/mcp-server/src/interface/mcp/), no domain/application touch — scan clean. Full design + line-numbered source citations + 9-case test plan (7 unit extending 1862c-transport-session-eviction.test.ts incl. a negative control proving the activity-bump actually resets the idle clock, not just exists; 2 integration extending 081-bun-mcp-server.test.ts for the DELETE route): docs/architecture-briefs/2026-08-07-fix-mcp-sse-session-manager-reaper.md. Single zone, no BA spec, no new primitives — PM decomposition skipped, matches sibling FIX-MCP-MEMORY-CODE-LEAK's own precedent. Decision journal: sprint-COWORK-GUARANTEED-SLOT-CATCHUP-architect-3.md STEP architect-S10.",
+        "architect_reviewed_at": "2026-08-07T13:25:25Z",
+        "architect_reviewed_by": "architect",
+        "build_standard": "not-applicable",
+        "design_brief": "docs/architecture-briefs/2026-08-07-fix-mcp-sse-session-manager-reaper.md"
       }
     ],
     "review": [
@@ -22212,6 +22163,61 @@
         "entered_review_at": "2026-08-07T03:40:00Z",
         "dev_mcp_server_review_note": "AC-1 RAW-verified live (docker exec named-volume DB + container logs): vps_push_log shows ZERO push rows (not errors) for prices+foreign-flow across the whole 2026-08-05T04:29:40Z..2026-08-07T02:00:11Z window (~46h, all of 08-06) while news/sbv (same mcp-server receiving code path) kept pushing normally throughout — rules out an mcp-server defect/key-rotation/full-VM-outage, DISPROVES the OPS-FFLOW-VPS-CLOCKDRIFT precedent as this incidents mechanism (would have silenced sbv too), confirms runForeignFlowFetcherJobCron is NOT the write path (dead-endpoint, source=none always, live-confirmed via logs). True root cause is VPS-side (ops zone, vps-scripts/), outside apps/mcp-server/ — not fixable in this zone. AC-2: new scripts/migrations/backfill-foreign-flow-gap-2026-08-06.ts live-probes the same upstream (bgapidatafeed.../getliststockdata) — confirmed UNRECOVERABLE live (snapshot-only, no date param), matching the 07-22 precedent; zero rows fabricated; live docker-exec dry-run confirms 08-06 rowCount=0, 08-05 truncatedTail=true. AC-3 (load-bearing): new checkForeignFlowGap (D-NEW4, dataAuditJob.ts) reuses checkConvictionHistoryGap shape but walks the canonical holiday-aware vnTradingCalendar.ts and ALWAYS escalates (flagged/critical) any zero-row trading day since no reconstruction source exists for this table — no action:none unfixable branch. rowsAffected=gap-day count so the dedup title varies with gap-set size (a later independent gap is never swallowed). Evidence: new FIX-FOREIGN-FLOW-MISSING-TRADING-DAY-2026-08-06-NO-BACKFILL.test.ts 9/9 pass + scripts/migrations/__tests__/backfill-foreign-flow-gap-2026-08-06.test.ts 8/8 pass; targeted suites (157-data-audit-job, FACTORY-SCHEDULER-split-dataAuditJob, FIX-CONVICTION-HISTORY-EOD-BACKFILL) 50/50 pass; tsc clean; tools=183/cron=88 unchanged; live boot health 200 toolCount=183, dashboards 200/200. Full bun test 15184 pass/44 fail/1267 files — zero fail lines reference my new files/checkForeignFlowGap/daily_foreign_flow (grep-confirmed); independently re-ran the 5 suspicious foreign_flow/vps_push_log-named fails in isolation, all pass (32/32) confirming pre-existing cross-file test-isolation flakiness under full-parallel load, not a regression. DOES NOT touch or weaken the sibling FIX-SLA-MONITOR-MARKET-OPEN-BOUNDARY-DETERMINISTIC-DAILY-BREACH open-boundary tick — that dependent task must only add nuance on top of this detector, never suppress it. Decision journal: sprint-COWORK-GUARANTEED-SLOT-CATCHUP-dev-mcp-server-4.md STEP dev-mcp-server-S79.",
         "commit_sha": "926d6e779"
+      },
+      {
+        "id": "FIX-DEVFLOW-MICROSERVICE-MAIN-NO-ERROR-BOUNDARY",
+        "type": "FIX",
+        "title": "Shared microservice dev flow declares NO Error Boundary — 8 dev-* zone agents resolve no on-failure contract at all, and the 2 that pass the check do so against the cowork SSOT, which omits the .head idle-reset",
+        "status": "REVIEW",
+        "priority": "P1",
+        "size": "S",
+        "zone": "docs/agents/",
+        "next_agent": "po",
+        "supervised": false,
+        "plan_only": false,
+        "created_at": "2026-08-06T13:45:00Z",
+        "created_by": "po/triage-agentfather-20260806T1318Z",
+        "updated_by": "agent-father/edit-20260807T1322Z",
+        "source": "agent-father keep sweep 2026-08-06T13:18Z Check #2 (notebook docs/agent-memory/notebooks/agent-father.md, commits bbe732740/6f549ffcf); independently re-verified by PO 2026-08-06T13:37Z",
+        "desc": "docs/agents/developer/flow/microservice-main.md contains zero 'Error Boundary' text. All 8 of dev-alert-engine, dev-api-gateway, dev-kinh-dich, dev-macro-indicators, dev-pdf-extractor, dev-rag-service, dev-stock-price, dev-technical-analysis reach it through a thin <id>/flow/main.md that also carries none, so their entire resolved flow chain has no on-failure contract. PO-measured: grep over all 10 dev-*/flow/main.md returns 1 hit for dev-mcp-server (line 18) and dev-frontend (line 17), 0 for the other 8. WHY THIS IS NOT DOC-LINT: docs/protocols/fail-loud-protocol.md Error Boundary Step 0 (STOP-RELEASE) is the step that atomically resets .head to idle on a failed spawn, and that protocol explicitly notes the .head reset IS executable by every agent regardless of MCP binding. A dev-* agent dying mid-task with no such instruction strands .head non-idle — the documented recurring duplicate-spawn family (feedback_pipeline_resume_stale_placeholder_duplicate_spawn_risk, 5th instance logged by agent-father itself at 2026-08-06T10:16Z; also feedback_pm_closeout_leaves_head_non_idle).",
+        "acceptance": [
+          "AC-1 docs/agents/developer/flow/microservice-main.md gains an Error Boundary block ABOVE the first flow step (mirror the placement at dev-mcp-server/flow/main.md:18 and dev-frontend/flow/main.md:17), naming docs/protocols/fail-loud-protocol.md section 'Error Boundary — Blocked Flow = EXIT' as the dev-pipeline SSOT and calling out its Step 0 STOP-RELEASE .head idle-reset as mandatory-FIRST, before the BUG telegram.",
+          "AC-2 docs/agents/agent-father/flow/sweep-fixes.md Check #2 method changes to follow a one-hop delegation pointer ('-> Run shared flow: <path>' / '-> Run sub-flow: <path>') before returning FAIL. WITHOUT THIS AC THE FIX DOES NOT LAND: Check #2 greps only <id>/flow/main.md, so an edit confined to the shared file still reports 8 FAILs next sweep — the 'fix landed in the pre-gate, not the probe the agent actually runs' shape. This also mechanizes the 9 cowork thin-dispatcher false positives agent-father re-verifies BY HAND every cycle (its own notebook, this cycle and prior).",
+          "AC-3 dev-mcp-server/flow/main.md:18 and dev-frontend/flow/main.md:17 are repointed from .claude/skills/cowork-error-boundary/SKILL.md to the same dev-pipeline SSOT. They pass the grep today against a COWORK contract that omits the .head idle-reset entirely and whose 'MCP Call Pattern' + get_recent_fixes dedup prescribe gateway calls no dev-* agent holds a grant for. Passing a check against the wrong content is a false green, not a clean bill.",
+          "AC-4 Verify: re-run Check #2 over all 10 dev-* agents; all 10 must resolve the SAME Error Boundary SSOT. Record the before/after count in the next keep report."
+        ],
+        "files": [
+          "docs/agents/developer/flow/microservice-main.md",
+          "docs/agents/agent-father/flow/sweep-fixes.md",
+          "docs/agents/dev-mcp-server/flow/main.md",
+          "docs/agents/dev-frontend/flow/main.md"
+        ],
+        "out_of_scope": "Do NOT resolve the INV-GATEWAY-1 contradiction inside microservice-main.md here (Step 6b comment says this specialist does NOT call task_claim and the dispatcher holds the lock, while lines 90-94 instruct a direct call_tool(server='vn-market', tool='task_heartbeat') after every Python TDD loop, which no dev-* agent can execute — none holds mcp__gateway__call_tool). Real and PO-verified, but it belongs to FIX-COWORK-FLOWS-GATEWAY-BLIND-BRIDGE-FALLBACK, whose scope PO widened in this same triage.",
+        "related": [
+          "FIX-COWORK-FLOWS-GATEWAY-BLIND-BRIDGE-FALLBACK",
+          "AF-SEMBLE-INIT-DEF"
+        ],
+        "not_duplicate_of": "No prior board row mentions microservice-main.md, dev-* error boundary, or fail-loud STOP-RELEASE for the dev lane (probed across backlog/ready/in_progress/review/qa/blocked 2026-08-06T13:35Z).",
+        "dispatch_note": "next_agent=agent-father is deliberately OFF the DRS ratified allowlist (fleet-wide blast radius) — DRS-STRANDED-OFF-ALLOWLIST by design, reachable via PO/router manual dispatch (docs/agents/po/flow/manual-dispatch-sweep.md). Not expected to self-promote.",
+        "updated_at": "2026-08-07T13:26:39Z",
+        "occurrence_2": {
+          "at": "2026-08-07T13:09:54Z",
+          "by": "po/triage-agentfather-20260807T1303Z",
+          "source": "agent-father maintenance sweep 2026-08-07T12:58Z (commits ac58cf667/df641de4c/e261e01d9), re-reported as Escalation 1 severity MEDIUM",
+          "disposition": "FOLD — no re-mint. Row already minted 2026-08-06T13:45Z from occurrence 1 of the SAME sweep check. Re-fire is CORROBORATION, and a STRONGER one than occurrence 1.",
+          "why_stronger": "Occurrence 1 was measured by a probe that was itself defective. Commit ac58cf667 (2026-08-07) re-targeted sweep-fixes Checks 1/3/5 from the thin .claude/agents/<id>.md stub to docs/agents/<id>/init.md, and widened Check 2 to a case-insensitive grep over docs/agents/<id>/flow/*.md that follows thin-pointer microservice agents to their shared flow file. The finding SURVIVED that probe correction — so it is not an artifact of the wrong-target bug that produced 42/42 false-FAIL on Checks 1/3.",
+          "po_independent_reverify": "PO re-ran Check 2 live over all 14 docs/agents/dev-*/ dirs at 2026-08-07T13:0xZ. Hits: dev-frontend 1, dev-mcp-server 1, dev-mainserver-crawls 1, dev-team 1, dev-vps-crawls 1; ZERO for dev-alert-engine, dev-api-gateway, dev-kinh-dich, dev-macro-indicators, dev-pdf-extractor, dev-rag-service, dev-stock-price, dev-technical-analysis — exactly the 8 agents named. Confirmed at source, not relayed.",
+          "ac_status_reverified_at_source": {
+            "AC-1": "NOT LANDED — grep -ci 'error boundary' docs/agents/developer/flow/microservice-main.md == 0.",
+            "AC-2": "PARTIALLY LANDED by ac58cf667 — Check 2 is now case-insensitive, globs flow/*.md, and carries prose instructing the sweep to follow thin-pointer microservice agents to the shared flow file (e.g. microservice-main.md). NOT yet the generalised one-hop '-> Run shared flow:'/'-> Run sub-flow:' pointer-resolution the AC specifies; the current text names microservice-main.md by example only. Remaining scope: generalise the hop.",
+            "AC-3": "NOT LANDED — dev-frontend/flow/main.md:17 and dev-mcp-server/flow/main.md:18 both still resolve to .claude/skills/cowork-error-boundary/SKILL.md, the cowork SSOT that omits the .head idle-reset. The false-green identified in occurrence 1 stands.",
+            "AC-4": "NOT LANDED — no before/after count recorded in the 2026-08-07 keep report."
+          },
+          "zone_claim_corrected": "The relayed sweep summary classified this as 'needs manual authoring, not agent-father's zone'. The second clause is FALSE — verified at source: docs/agents/agent-father/init.md boundary_rules.commit_zone.allowed == ['docs/agents/','docs/agent-memory/','.claude/skills/','.claude/agents/'], and ALL FOUR files in this row's files[] sit under docs/agents/. agent-father is correctly routed and in-zone. 'Needs manual authoring' (i.e. not auto-fixable by the sweep) is the accurate half and is already reflected by the row being a FIX rather than an auto-fix.",
+          "priority_held": "P1 retained. Sweep re-labelled it MEDIUM, but that is the check's generic severity, not a board priority. PO's occurrence-1 rationale is unchanged and stronger: a dev-* agent dying with no on-failure contract strands .head non-idle, feeding the documented recurring duplicate-spawn family. Do NOT downgrade on a re-report."
+        },
+        "po_dispatch_decision_20260807": "DISPATCH NOW via PO Step-1 BATCH. Root cause of the 23h strand is structural, not neglect: dispatch_note records this row as deliberately DRS-STRANDED-OFF-ALLOWLIST (next_agent=agent-father is off the ratified auto-dispatch allowlist), so no automated lane can ever pick it up — PO/router manual dispatch is its ONLY path. It has now re-fired once. Folding into this tick's BATCH.",
+        "review_note": "AC-1..AC-4 landed and RAW-reverified (not self-report). AC-1: docs/agents/developer/flow/microservice-main.md gained an Error Boundary block above `## Role in dev-team flow` (165L->169L), pointing to docs/protocols/fail-loud-protocol.md sec \"Error Boundary -- Blocked Flow = EXIT\" (dev-pipeline SSOT), Step 0 STOP-RELEASE .head idle-reset called out mandatory-first. AC-3: dev-mcp-server/flow/main.md:18 and dev-frontend/flow/main.md:17 repointed off .claude/skills/cowork-error-boundary/SKILL.md onto the same SSOT -- false-green closed. AC-2: sweep-fixes.md Check#2 generalized to a one-hop delegation-pointer rule -- live re-grep found the actual thin-pointer phrasing is `-> Run flow:` (all 8 named agents), not `Run shared/sub-flow:` as the AC text assumed; check now matches all 3 phrasings. AC-4: live re-ran Check#2 over all 14 docs/agents/dev-*/ dirs -- 10/10 pipeline agents (dev-mcp-server, dev-frontend, dev-alert-engine, dev-api-gateway, dev-kinh-dich, dev-macro-indicators, dev-pdf-extractor, dev-rag-service, dev-stock-price, dev-technical-analysis) now PASS resolving the SAME SSOT text; was 2/10 false-green + 8/10 FAIL before. Bonus: dev-news-fetch (undocumented 9th microservice-main.md consumer) also auto-resolved, zero extra edit. Out-of-scope items correctly untouched: INV-GATEWAY-1 Step 6b contradiction (belongs to FIX-COWORK-FLOWS-GATEWAY-BLIND-BRIDGE-FALLBACK); dev-team/dev-mainserver-crawls/dev-vps-crawls flow/main.md left as-is (out of files[] scope, still resolve cowork-error-boundary/cowork-boundary skills -- candidate for a future row if fleet-wide SSOT unification is wanted). Files changed: docs/agents/developer/flow/microservice-main.md, docs/agents/agent-father/flow/sweep-fixes.md, docs/agents/dev-mcp-server/flow/main.md, docs/agents/dev-frontend/flow/main.md. DJ-GATE-1 entry: sprint-COWORK-GUARANTEED-SLOT-CATCHUP-agent-father-2.md S32. Not self-closed to DONE -- routed to po for independent close-out per this row own dispatch/corroboration ownership."
       }
     ],
     "qa": [
