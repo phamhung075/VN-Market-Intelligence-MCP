@@ -5,8 +5,8 @@
     "last_linecount": 205,
     "po": {
       "section_name": "po",
-      "last_mtime": 1786082229,
-      "last_linecount": 218
+      "last_mtime": 1786083909,
+      "last_linecount": 219
     }
   },
   "decision_journal": [
@@ -3379,7 +3379,7 @@
         "type": "signal_feedback",
         "summary": "rag-service A-30 ESCALATE: loss of reclamation (99.24%, all samples sustained >93% with zero dips)",
         "severity": "CRITICAL",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": null,
         "provenance": "detector",
         "audit_cycle_tag": "cron:auditor-t1:2026-08-07T06:00Z"

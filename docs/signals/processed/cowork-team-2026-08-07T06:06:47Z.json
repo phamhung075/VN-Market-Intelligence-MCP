@@ -3,7 +3,7 @@
   "to": "dev-team",
   "type": "cowork-fire",
   "payload": {
-    "fire_time": "2026-07-31T06:09:16Z",
+    "fire_time": "2026-08-07T06:06:47Z",
     "matched_slots": [
       "alert-commander-market"
     ],
@@ -25,12 +25,12 @@
     "downgraded": [],
     "chef_mutex_applied": false,
     "due_reasons": {
-      "alert-commander-market": "cadence"
+      "alert-commander-market": "cron"
     },
     "cadence_minutes": {
-      "alert-commander-market": 240
+      "alert-commander-market": null
     },
-    "last_fired_timestamp": "2026-07-31T06:08:59Z",
+    "last_fired_timestamp": "2026-08-07T06:06:47Z",
     "last_fired_slots": [
       "alert-commander-market"
     ],
@@ -40,15 +40,15 @@
     "nominal_tick": "06:00",
     "leader_lock": "acquired",
     "dev_head": "unknown",
-    "devq": 5,
-    "signal_backlog": 17,
-    "note": "single-slot tick — alert-commander-market cadence due (240min), no CHEF slots present, no mutex needed"
+    "devq": 0,
+    "signal_backlog": 0,
+    "note": "single-slot tick, degraded fanout (container_vm_headroom_mb=1076 < 1500 floor, headroom continuing downward trend), no cowork-addressed signal_queue rows, no one-shots, gateway not blind"
   },
   "priority": "low",
-  "createdAt": "2026-07-31T06:09:16Z",
+  "createdAt": "2026-08-07T06:06:47Z",
   "_processed": {
-    "fingerprint": "a44f2376350bce8a3c65e409b168dced0531acd994ae42b0111aca9e05369f70",
-    "processedAt": "2026-07-31T06:16:22Z",
+    "fingerprint": "0925817624537cd2660fcf3bb0aec45c82b5c7f7dc23df374c4297404be5ed6c",
+    "processedAt": "2026-08-07T06:24:11Z",
     "processedBy": "dev-team",
     "result": "routed-to-po"
   }
