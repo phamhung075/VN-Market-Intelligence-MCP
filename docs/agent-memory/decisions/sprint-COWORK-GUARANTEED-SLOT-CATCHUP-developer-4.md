@@ -130,3 +130,13 @@ mid-entry CAP-REACHED breach on -3.md).
 **bridge note:** if this cycle's own commit trips this same gate (ironic), will use the "RAW verified" (space) literal bridge phrasing the router used in `1c26af802`, same one-time workaround, documented here per dispatch instruction — NOT a re-fix of the root cause, which is already closed above.
 
 **Merge Gate renumbering note:** authored in its own worktree as S76 (collided with a sibling agent's independent S76 on the same shared journal file — FIX-EMITSIGNAL-E3-RC1's own developer-S76, landed earlier this Merge Gate); renumbered to S77.
+
+### STEP developer-S78 · developer · 2026-08-07T18:46:38Z
+**task-id:** FIX-ORPHAN-FR1-FR2-INFRA-HEARTBEAT-LADDER
+**what-done:** Extended `heartbeatTask()`/`releaseTask()` (coordinationStore.ts) with an optional 3rd `options` param: FR-1 `ttl_seconds` (60-691200 clamp) + `payload_patch` (shallow-merge, two-statement UPDATE, EC-6 non-fatal malformed/absent payload); FR-2 additive null-session ladder Rung B (owner_agent + original_owner_client_session echo), gated strictly on the ROW's own `owner_client_session IS NULL` + `task_kind='orphan-signal'`, never a caller flag (NFR-1).
+**what-considered:**
+- options-object 3rd param vs N positional args — chose options object (claimTask's own precedent, avoids an unreadable 6-arg signature)
+- re-verify original_owner_client_session in raw SQL WHERE vs JS-only check — followed BA's explicit releaseOrphanTask() SELECT-then-conditional-mutate precedent: only SQL-expressible predicates (task_kind, owner_client_session IS NULL, owner_agent) go in the WHERE; payload JSON compare stays JS-side
+**why-decision:** matches architect's ratified file-level design (BA spec §"File-level design (FR-1/FR-2)") verbatim — two-statement UPDATE not CTE, ladder gated on the row's own null column not a caller flag.
+**why-change:** no change from PM decomposition Task 1 scope (this task's 3 subtasks only — FR-2's coordinationTools.ts Zod exposure is the separate, dependent Task 2).
+**verify:** new `coordinationStore.test.ts` 13/13 GREEN, confirmed RED beforehand (7/13 failing pre-implementation). `bun tsc --noEmit` 0 errors, `eslint` clean. Targeted merge-gate suite (18 files touching coordinationStore/lock mechanics) 307/307 pass, 0 regressions. Repo-wide `bun test` 45 fail/1 error of 15281 matches the standing `FIX-MCP-SUITE-HEALTH-BASELINE` (dev-standards.md:1364), not attributable to this change. Commits `d6c4e6006` (code+test), `c4b7b2060` (docs).
