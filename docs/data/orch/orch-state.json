@@ -5,8 +5,8 @@
     "last_linecount": 205,
     "po": {
       "section_name": "po",
-      "last_mtime": 1786083909,
-      "last_linecount": 219
+      "last_mtime": 1786129242,
+      "last_linecount": 220
     }
   },
   "decision_journal": [
@@ -3357,7 +3357,7 @@
         "type": "db_integrity_breach",
         "summary": "low_confidence_financial_reports: 45 reports with extraction_confidence < 0.2 (exceeds C-04 threshold of ≤5); minimum co",
         "severity": "HIGH",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": "docs/data/db-integrity-history.json",
         "provenance": "detector",
         "audit_cycle_tag": null
@@ -3370,7 +3370,7 @@
         "type": "db_integrity_breach",
         "summary": "deep_fetch_queue: 4 rows stuck in vps-failed status: 2026-08-05T04:23:19-20Z (4 URLs from news sites nhandan.vn, vnbusin",
         "severity": "WARN",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": "docs/data/db-integrity-history.json",
         "provenance": "detector",
         "audit_cycle_tag": null
@@ -3383,7 +3383,7 @@
         "type": "db_integrity_breach",
         "summary": "ohlcv_violations: 336 OHLC violations found (O/H/L/C constraints violated). Span 20 distinct dates. Last 2 days = 0 fres",
         "severity": "MED",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": "docs/data/db-integrity-history.json",
         "provenance": "detector",
         "audit_cycle_tag": null

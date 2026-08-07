@@ -16,5 +16,11 @@
     "not_yet_fixed_by": "distinct mechanism from the FIX-NOTEBOOK-AUTO-PRUNE-STALENESS-GUARD backlog row (main.md notebook's occurrence 6 -- a byte-identical single-writer Edit-apply failure with unconfirmed root cause) and from reference_agent_notebook_ordering_convention_not_fleet_uniform (ordering-convention mismatch across the fleet) -- this is a specific, now mechanistically-confirmed sentinel-vs-real-key defect inside the drop-oldest section-selection logic itself, reproducible on a SINGLE file with a SINGLE consistent convention.",
     "affected_file_this_occurrence": "docs/agent-memory/notebooks/dev-team.md",
     "recovery_action_taken": "did not retry a 3rd write against the same hook path (recurring 2/2 same-mechanism failure -> escalate, don't keep fighting it). Load-bearing facts from the lost section (task_release result, .head reset commit aa6eb95f3, developer agent adfd042ed7610db5d RAW-verify results) remain durably recorded in git commit history and docs/data/orch/orch-state.json regardless of notebook prose loss -- no operational data was actually lost, only the narrative summary."
+  },
+  "_processed": {
+    "fingerprint": "caed8d0721609b979103f3e44a385feb9b99cba36fce9d17cc3b23aaf64f6eb1",
+    "processedAt": "2026-08-07T19:00:04Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
   }
 }

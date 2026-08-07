@@ -7,5 +7,11 @@
     "taskId": "FIX-INFRA-CRITICAL-VOLUME-PRESENCE-HEALTHCHECK",
     "summary": "Supervised-Lane Sweep (SLS) claimed a supervised+plan_only row and was about to dispatch ops directly despite the row's own explicit prose gate: supervised_note/note both say 'PLAN-ONLY: do NOT dispatch -- schedule after ops confirms /pek-extract resumes.' No evidence found in notebooks/git-log that this precondition has been met. dev-team reverted the claim (row moved back in_progress -> ready[], .head reset idle) rather than spawn ops against an explicit block. Unlike BOUNDED-1 (which has a dedicated PROSE-SEQUENCING GATE for po_sequencing_* keys), SLS's promote/claim scripts (scripts/devteam-backlog-promote-supervised-lane-sweep.jq, scripts/devteam-backlog-claim-supervised-lane-sweep.jq) have no analogous check for an explicit do-not-dispatch precondition living only in note/supervised_note prose. This is a structural gap in SLS, not a one-off: any supervised+plan_only row authored with a 'wait for X before dispatch' precondition will be mechanically claimed+dispatched by SLS the same way. Suggest routing to architect for a gate design (mirroring BOUNDED-1's prose-sequencing gate, or a structured 'blocked_until' field) so future gate-clearing cycles don't silently spawn against an explicit hold."
   },
-  "createdAt": "2026-08-07T18:25:01Z"
+  "createdAt": "2026-08-07T18:25:01Z",
+  "_processed": {
+    "fingerprint": "a3415ec9c931d8983250f95c1f61b299b3eee784bc30e671df510e8c6c6d9d44",
+    "processedAt": "2026-08-07T19:00:04Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
 }
