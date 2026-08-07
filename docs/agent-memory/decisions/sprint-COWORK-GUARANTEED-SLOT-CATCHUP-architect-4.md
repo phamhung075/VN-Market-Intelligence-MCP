@@ -1,0 +1,17 @@
+# Decision Journal — Sprint COWORK-GUARANTEED-SLOT-CATCHUP · architect
+
+**Sprint goal:** Cowork guaranteed-slot catch-up (rolling sprint)
+**Agent:** architect
+**Started:** 2026-08-07T22:07:18Z (continuation of -3.md, which CAP-REACHED)
+
+---
+
+### STEP architect-S1 · architect · 2026-08-07T22:07:18Z
+**task-id:** FIX-BCTC-NEWSCHAIN-FALLBACK-ZEROS-WRITE-TARGET
+**what-done:** Wrote `docs/architecture-briefs/2026-08-07-fix-bctc-newschain-fallback-zeros-write-target-blueprint.md` — brownfield-reverified every BA-named file byte-exact (all 7 test line citations matched, zero material line-number drift), designed the new `bctc_news_fallback_hints` DDL (placed additively in `schema-financial-reports.ts`'s `initFinancialReportsTables()`, following the live 10+-table precedent, NOT the frozen `bctc-schema.ts` SQLITE_DDL string), the exact `newsChainFallback.ts` rewrite (keep signal-query/hints/confidence-calc/return-contract byte-identical, swap only the persistence target, drop the now-dead id-reuse-across-financial_reports-rows logic since FR-1 makes the PEK-FK concern structurally moot), the full 7-test rewrite plan, 2 new serving-plane regression tests (reusing the existing `callTool`/`_registeredTools` harness from `fix-bctc-identity-serve-guard.test.ts`), and RED-before/grep-verify/full-suite process steps.
+**what-considered:**
+- Table DDL placement: `bctc-schema.ts`'s `SQLITE_DDL` (BA left as architect's call) vs `schema-financial-reports.ts`'s `initFinancialReportsTables()` — chose the latter after confirming via read that zero new tables have landed in the frozen SQLITE_DDL string since Sprint 209 (10+ counter-examples all in the other file), and that string is flagged as covered by an equivalence test (higher risk to touch).
+- Return-contract of `tryNewsChainFallback()`: keep the full in-memory `FinancialReport`-shaped zero object (chosen) vs redesign it to return a lean hints-only shape — chose keep-as-is because BA's own FR-3 explicitly says "no functional change required" on the resolvePdfText/fetchParseAndStoreBctc caller side, and a shape change would ripple into 3+ caller files' type contracts for zero benefit (nothing downstream persists/joins against the in-memory object once the DB write moves off financial_reports).
+- id handling: keep the existing-row id-reuse dance (safer/smaller diff) vs remove it (chosen) — removed because FR-1 makes the original ID-ORPHAN/PEK-FK motivation structurally moot for this write path, and the project's standing rule is to reduce dead code, not preserve it out of caution once its purpose is gone.
+**why-decision:** Live-verified every citation against source rather than trusting BA's line numbers (mandate from the spawn prompt) — found zero material drift, one genuine new finding (the PUB-1/PUB-2/PUB-3 gate gotcha in the extended AC-2 test, §7 task 7 of the blueprint) that would otherwise have cost a developer a debugging cycle discovering their naive `get_bctc_full` extension fails for the wrong reason (PUB-1 refusal, not a real arm-b1 regression proof).
+**why-change:** EC-5 live DB probe (mandatory per the row) executed via a read-write `bun:sqlite` handle inside the running container (per `feedback_integrity_helper_readonly_wal_blinded` — readonly handles risk WAL blind-spots) — result 0 `news_inference` rows in live `market.db` today, reconfirming BA's historical-note claim at implementation-design time rather than trusting it blindly; no data-migration branch needed in the blueprint as a result.
