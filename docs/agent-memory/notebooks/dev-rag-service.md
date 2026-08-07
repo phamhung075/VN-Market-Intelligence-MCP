@@ -4,6 +4,20 @@ Zone: `apps/rag-service/` | Stack: Python/FastAPI | DB: rag_service.db (write)
 
 ## Working Memory
 
+### 2026-08-07 — FIX-CI-SIZELINT-RAG-EMBEDDER-NEW-OFFENDER (dev-team dispatch, size XS)
+
+**Task:** size-lint RED, new-offender: `embedder.py` 167L > 120L cap, no baseline entry, no justification header. Trigger: commit `0308514f5` (FIX-RAG-EMBEDDER-IDLE-UNLOAD-PATH, previous cycle above) added `_maybe_unload_idle()`/`_idle_unload_loop()`/`_last_used_monotonic` to the lazy-load singleton, pushing it past 120L with zero grandfather.
+
+**Fix:** added `# size-justification: 175L — ...` header (first 8 lines) — lazy-load (`_ensure_model_loaded`/`_load_model`, GFD-13) and idle-unload (`_maybe_unload_idle`) share the SAME `asyncio.Lock` double-check pattern and SAME `_model`/`_last_used_monotonic` state on one singleton; a split would duplicate the lock or force tight cross-file coupling for zero benefit. Comment-only, no behavior change. Declared count (175L) matches post-edit `wc -l` exactly. Did NOT touch `docs/data/size-lint-baseline.json`, did NOT run `--update` (AC2 — would launder the 3 other unrelated current offenders repo-wide).
+
+**Verified:** scoped `SIZE_LINT_INCLUDE_OVERRIDE=embedder.py --check` → RC=0. Full-repo `--check` offender count 4→3 (embedder.py cleared; remaining 3 — `schema.ts`, `getBctcRefinedTool.ts`, `app_factory.py` — belong to sibling tasks FIX-CI-SIZELINT-BCTCREFINED-PROJECTION-BASELINE / FIX-CI-SIZELINT-RAG-APP-FACTORY-BASELINE, sequenced separately per task NOTE — full-repo/CI green is a batch-level outcome, not achievable from this single-file commit alone). `pytest -k embedder`: 17/17 passed.
+
+**DJ:** `docs/agent-memory/decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-dev-rag-service.md`
+
+Zone health: HEALTHY (comment-only header, no behavior/test impact) | FIX-CI-SIZELINT-RAG-EMBEDDER-NEW-OFFENDER → REVIEW (next_agent: qa)
+
+---
+
 ### 2026-08-06 — FIX-RAG-EMBEDDER-IDLE-UNLOAD-PATH (P1, BOUNDED-1 auto-pickup)
 
 **Task:** design was DONE (`docs/architecture-briefs/2026-08-06-rag-service-memory-sizing-remediation.md` §3), execution-only. `embedder.py`'s lazy-load singleton (GFD-13) had no release path — once warmed, the ~600-700MiB model stayed resident for the container's whole life regardless of traffic, pinning it near its cap forever after the first request.
@@ -46,40 +60,4 @@ Zone health: `apps/rag-service/` test suite 163/163 green, no other drift observ
 
 ---
 
-### 2026-07-15 — RAG-FTS-BUILD-MEMORY-BOUND (P1 FIX-S)
-
-**Root cause found:** native FTS builder (Rust `lance-index`, `scalar/inverted/builder.rs`)
-fans build across `LANCE_FTS_NUM_SHARDS` workers (default `num_cpus/2`, host-CPU-based, not
-container quota), each buffering up to `LANCE_FTS_PARTITION_SIZE` MiB (**default 2048/worker**)
-before flush. Neither knob is in lancedb's Python `FTS()`/`create_index()` — Rust `LazyLock`
-env vars, cached per-process on first read. Default = many GB, ~10x the 768m ceiling,
-independent of row count → explains 250s+ pin + OOM-restart at 56k rows.
-
-**Rejected:** legacy Tantivy `writer_heap_size` path works on local lancedb 0.25.3 but is
-**hard-removed** in Docker-pinned 0.33.0 (`ValueError("Tantivy-based FTS has been removed")`).
-
-**Fix:** `os.environ.setdefault("LANCE_FTS_NUM_SHARDS","1")` +
-`setdefault("LANCE_FTS_PARTITION_SIZE","32")` at top of `infrastructure/repositories.py`
-(module-import time — must precede first FTS build). `_build_fts_index()` call pattern
-(2 calls, title then summary) unchanged. `setdefault` lets ops override via compose env
-without redeploy.
-
-**Verified:** 160/160 pytest (156 baseline + 4 new in `test_rag_fts_build_memory_bound.py`),
-mypy 15 pre-existing errors unchanged (zero new), import-linter 3/3 fences kept, sandbox
-16/16 + 2/2 GREEN, env audit clean (3 `CTX_ADVISOR_*` harness vars are TOKEN-substring false
-positives, not credentials). Local 60k-row high-cardinality stress test: unbounded default
-3.28GB max RSS / 1.55GB peak footprint → bounded (shards=1, partition=8MiB) 1.37GB / 640MB.
-
-**BLOCKED:** live-container verification (AC#2 hard deliverable — peak-mem+wall-clock on
-real ~56k corpus) could not run — Docker Desktop host outage (`Error response from daemon:
-Docker Desktop is unable to start`) hit mid-session during my own ephemeral verification
-containers, ~30+ min, whole stack unreachable (curl :4000, :5002 both timed out). Likely
-self-triggered by my build/run activity. Flagged to router for ops attention + live re-test
-once recovered — did NOT attempt Docker Desktop recovery myself (infra, not my zone).
-
-**Docs:** `docs/architecture/microservice/rag-service/infrastructure.md` (new FTS +
-bounded-build section), `testing.md` (new test file entry).
-
----
-
-<!-- Entries 2026-06-08 and older split to `docs/agent-memory/notebooks/archive/dev-rag-service-archive-20260805.md` on 2026-08-05 (po triage) — byte cap 13912B/12000B breached with only 1 prunable section left. Nothing deleted; full record in the archive file and git history. -->
+<!-- Entries 2026-07-15 and older split to `docs/agent-memory/notebooks/archive/dev-rag-service-archive-20260805.md` on 2026-08-07 (self-prune, byte cap 12191B/12000B breached: notebook-single-section-breach + context-bloat signals fired on this file after the FIX-CI-SIZELINT-RAG-EMBEDDER-NEW-OFFENDER entry). Nothing deleted; full record in the archive file and git history. -->
