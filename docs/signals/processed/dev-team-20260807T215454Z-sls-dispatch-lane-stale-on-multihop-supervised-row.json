@@ -1,0 +1,21 @@
+{
+  "from": "dev-team",
+  "to": "po",
+  "type": "recurring-bug",
+  "priority": "medium",
+  "createdAt": "2026-08-07T21:54:54Z",
+  "payload": {
+    "module": "scripts/devteam-backlog-claim-supervised-lane-sweep.jq",
+    "mechanism": "PRIMARY claim path uses the row own dispatch_lane field, frozen at the ORIGINAL promote time, without re-validating it against the row CURRENT next_agent -- a multi-hop supervised+plan_only chain (e.g. ba->architect) that cycles back through ready[] for its 2nd hop keeps the STALE 1st-hop dispatch_lane, causing SLS to re-dispatch the wrong (already-completed) agent on its next claim.",
+    "live_incident": "FIX-BCTC-NEWSCHAIN-FALLBACK-ZEROS-WRITE-TARGET: promoted_at=2026-08-07T19:21:36Z stamped dispatch_lane=ba; ba completed at 20:34:58Z (ba_spec_complete=true, ba_handoff=docs/handoffs/FIX-BCTC-NEWSCHAIN-FALLBACK-ZEROS-WRITE-TARGET-BA-spec.md, commit bdaeddb3b) and correctly updated the row own next_agent field to architect, but the row cycled back to ready[] for its next hop; SLS claim at 21:52:22Z used the frozen dispatch_lane=ba instead of the row live next_agent=architect, which would have re-spawned ba on already-finished work had dev-team not caught it via RAW cross-check against ba_completed_at/ba_handoff before dispatching.",
+    "workaround_applied_this_tick": "dev-team corrected dispatch_lane + head.next_agent to architect in-place via orch-apply.sh before spawning; did not re-run ba.",
+    "suggested_fix": "PRIMARY claim path should re-resolve dispatch_lane at claim time (same resolved_dispatch_lane($detail_items) helper the FALLBACK path already uses) whenever the row live next_agent differs from the stamped dispatch_lane -- or simpler: PRIMARY should prefer effective_next_agent over the stale dispatch_lane stamp when they disagree, since next_agent is the more current source of truth once a row has already completed at least one prior dispatch hop.",
+    "count": 1
+  },
+  "_processed": {
+    "fingerprint": "f6b1ef961aeb3eeaed63e298ed5e1523acbc9827963fec679de439fe77324c09",
+    "processedAt": "2026-08-07T22:20:52Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
