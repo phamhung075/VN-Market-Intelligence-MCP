@@ -1,16 +1,6 @@
 # BA — Notebook
 
-**Last updated:** 2026-08-06 | **Sprint:** ULTRACODE-AUDIT-FIXALL
-
-## TE-T05 · 2026-08-06
-
-Spec complete. REQ file: `docs/handoffs/TE-T05-BA-spec.md`. **BLOCKED — did not hand off to architect.**
-
-Live-verified the "6-file/385L" stamp before trusting it: 6 files confirmed, but live total is **511L** (notebook-write 94→198L, decision-journal 77→99L — both grew via real hardened-fix commits since the 07-12 audit, not drift/noise). All 3 cited skip-parenthetical line numbers had also drifted (news-scout:96→101, chef.md:672→chef-dish.md:704 [file renamed], bctc:66→68).
-
-Blocker B1 (routing-class conflict, top priority): live `owner`/`next_agent` on this row = `agent-father`, matching PO's 2026-07-21 artifact-class ruling (`.claude/skills/**/SKILL.md` → agent-father) and **26/26** sibling `TOKEN-ECONOMY-AUDIT` rows with `owner=agent-father` — zero of them route through a ba→architect→pm relay, despite several (incl. this row) tagged `type:SPRINT-M`. The dispatch prompt for this BA pass asked for the relay anyway — a router-level mismatch, not something to paper over. Did not mutate `next_agent`/add `ba_spec_complete` on the live board row; left it exactly as found pending PO's ruling. Also flagged B2 (should the unrelated `cowork-boundary`/`cowork-error-boundary` dedup riding in the same row's `note` ship bundled or split?) and B3 (row's `note` still carries the append-session-record deletion clause its own `audit_ref` already says to drop — UC-MDH-P2 owns that, unapplied via orch-apply so far).
-
-Decision journal (task_id: TE-T05): see `docs/agent-memory/decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-ba.md`.
+**Last updated:** 2026-08-07 | **Sprint:** COWORK-RELIABILITY
 
 ## UC-CRITIC-HOOKS-ENFORCEMENT · 2026-08-06
 
@@ -25,6 +15,18 @@ PO ratification (`po_goahead_20260805T090611`) had already corrected the brief's
 MCP gateway binding note: this session's tool grant was Read/Edit/Write/Bash only — no `mcp__gateway__call_tool` function available despite the MCP server instructions being injected (matches the documented dev-star-gateway-binding gap, apparently also live for a router-dispatched BA sub-agent this cycle, not just dev-* zone specialists). Could not `task_claim`/`task_heartbeat`/`task_release` the inner `task:UC-CRITIC-HOOKS-ENFORCEMENT` sprint-task lock or `send_telegram`; all board/`.head`/notebook/journal writes done via Bash+jq+`orch-apply.sh` (no MCP needed for those). Router should be aware release/heartbeat of any outer intent-claim it holds is its own responsibility, per the standing dispatcher-finally-block convention.
 
 Decision journal (task_id: UC-CRITIC-HOOKS-ENFORCEMENT): see `docs/agent-memory/decisions/sprint-ULTRACODE-AUDIT-FIXALL-ba.md`.
+
+## FIX-COWORK-SIGNAL-FILENAME-CYCLEID-KEYING · 2026-08-07
+
+Spec complete. REQ file: `docs/handoffs/FIX-COWORK-SIGNAL-FILENAME-CYCLEID-KEYING-BA-spec.md`. Zero PO blockers. NEXT: architect.
+
+Split the "one root class" framing the board row shipped with into TWO real mechanisms after reading each writer at source: bctc-analyst + chef/unified-agent are genuine filename collisions (fix = window-anchor the filename, reusing the SAME anchor `FIX-CHEF-MARKER-KEY-WINDOW-ANCHOR` mandates for the publish-mutex — never raw `cycle_id`, PO's 07-22 caution is correct that it's run-start-keyed); tran-ngoc-bau's "notebook collision" is a read-modify-write RACE on a shared mutable `## c<NNN>` counter (notebook-write SKILL already stamps counter+timestamp) — a different defect class, and its 2026-07-15 origin instance may already be closed by the unrelated `FIX-CADENCE-TNB-AUDIT-WEEKLY-MARKER-BLOCKS-DAILY-CRON` fix (07-29, blocks same-day double-dispatch before notebook-write is ever reached) — flagged for architect to RAW-verify before designing a new mechanism rather than assuming.
+
+Live-verified drain-signals.js needs ZERO changes: its fingerprint is `sha256(from+type+payload+createdAt)`, filename-independent — confirmed by reading the script, not assumed from the flow doc's prose. Also live-verified chef-intraday's mutex (`MARKER_KEY`) is ALREADY per-hour (`WORK_DATE+VN_HOUR`) while its synthesis FILEPATH carries only the constant slot_id with no hour — the mutex/filename granularity mismatch IS the tnb-c112 symptom mechanism, concretely. Flagged a NEW edge case (timezone-basis mixing: mutex hour is VN-local, filepath date is UTC — appending the mutex's hour token to a UTC filename verbatim would reproduce the daily midnight-straddle bug at hourly granularity) not on the original board row.
+
+Explicitly did NOT fold the field-schema-instability adjacent finding (PO's 07-30 measurement — same nominal HPG/BID files carry entirely different key sets across cycles) into this row's AC — separable, recommended PO mint a follow-up row once filenames stop colliding.
+
+Decision journal (task_id: FIX-COWORK-SIGNAL-FILENAME-CYCLEID-KEYING): see `docs/agent-memory/decisions/sprint-COWORK-RELIABILITY-ba.md`.
 
 ## Archive
 
@@ -42,4 +44,4 @@ Pre-2026-06-24 specs (FIX-SIGNAL-CONFIDENCE-DEFAULT-50-VERIFIED-DECISION, FIX-CO
 - Frontend route-file precedent: page routes may colocate DTO+parser+formatter+fetcher+component in ONE file (dashboard.momentum.tsx, dashboard.money-radar.tsx) and cross-import from sibling route files (momentum imports formatZScore from dashboard.indicator-gauges.tsx) — no shared lib/ module is required for page-scoped logic.
 - cowork guaranteed-slot crons are ALL "MM H * * *" shape (MM≠0) — `snapToCronBoundary` (cowork-match-slots.js) has no snap branch for this shape; schedule-level `isSuppressedByBoundaryDedup` is provably always-false for these 8 slots. The `published:<slot_id>:<VN-date>` task_claim marker (via `task_list_held`) is the only real dedup/delivery-evidence source — never trust `last_fired` for delivery confirmation (stamped at spawn-dispatch only, cowork-team/flow/last-fired.md Step 5b).
 - macro-indicators `usecases.go`: `vnIndexDelta`'s baseline is `prevVnIndex` (`resolvePrevSessionVnIndex`/`daily_ohlcv`), NOT `prevFetchedAt` — that field is the oil/gold/usdVnd commodity anchor only, name-collision risk. `computeDelta()` already null-guards (returns nil when its own `prev` is nil). `market_context` is a 3-way name collision: the `get_market_context()` MCP tool (no VNINDEX today), chef-synthesis's own field of the same name (shares macro_snapshot's tier-4 pipeline, not independent), and `market_prices.VNINDEX` (the real independent tier-1/2 plane, same value `get_market_snapshot` serves) — always disambiguate which is meant before wiring a cross-plane check.
-- **Notebook-auto-prune hook over-drop (2026-08-06):** adding a 3rd dated section (TE-T05) alongside 2 existing (UC-CRITIC-HOOKS-ENFORCEMENT, FIX-VNINDEX-CROSS-PLANE-PLAUSIBILITY-GATE) — exactly AC-2's 3-section cap, no prune warranted — triggered the `notebook-auto-prune.sh` PostToolUse hook to silently drop FIX-VNINDEX anyway (working-tree only; still intact in git HEAD, commits 8732d0854/2b55a01b1). Suspect the hook's heading-count includes the 2 non-dated ROLLING headings (`Archive`, `Known patterns / preferences`) toward its cap instead of excluding them per AC-2a's dated-heading scope — reconstructed via `git show HEAD` and re-landed with a single settled Write rather than trusting the hook's output. Worth a signal to developer/ops if it recurs on another agent's notebook.
+- **Notebook-auto-prune hook over-drop, CORRECTION to my own 2026-08-06 theory:** reproduced again 2026-08-07 (adding a 3rd dated section dropped TE-T05 from the working tree, recovered via `git show HEAD`). My 2026-08-06 signal (`ba-2026-08-06T18:53:30Z-gateway-blind`, routed-to-po) claimed the hook "counts ALL `## ` headings toward a 3-section cap." **PO already read the script and ruled that theory WRONG** (`FIX-NOTEBOOK-AUTOPRUNE-ROLLING-SECTIONS-BYTE-COUNTED-BUT-UNDROPPABLE`, BACKLOG, owner=po→developer): there is no 3-section cap in `notebook-auto-prune.sh` at all — the real mechanism is the INVERSE: rolling headings (`Archive`/`Known patterns`) carry a MAX sentinel key so they can never be the drop CANDIDATE, yet their bytes still count toward the byte/line-cap overage, so every breach gets paid for by deleting a real dated section while the actual bloat (the rolling headings) is untouched. Do not re-file my debunked theory — the correct root cause + a concurrency-guard remediation (`FIX-NOTEBOOK-WRITE-AC7-SKILL`) are already tracked; nothing new to escalate here, just don't trust my own prior framing.
