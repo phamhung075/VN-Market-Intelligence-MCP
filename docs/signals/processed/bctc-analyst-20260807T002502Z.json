@@ -1,0 +1,33 @@
+{
+  "id": "bca-dataquality-vnindex-20260807T002502Z",
+  "ts": "2026-08-07T00:25:02Z",
+  "from": "bctc-analyst",
+  "to": "dev-team",
+  "type": "bctc-data-quality-anomaly",
+  "summary": "VN-Index cross-tool mismatch persists 2nd consecutive cycle: get_macro_snapshot returns 1785.70 (+9.24, up, dataSource=estimate) vs get_market_snapshot returns 1764.78 (-0.66%, source_tier=2, tied to actual 2026-08-06 HOSE session close) — 20.92pt divergence, opposite direction signs.",
+  "severity": "LOW",
+  "status": "NEW",
+  "payload_ref": null,
+  "payload": {
+    "macro_snapshot_vnindex": 1785.7,
+    "macro_snapshot_direction": "up",
+    "macro_snapshot_delta": 9.24,
+    "macro_snapshot_dataSource": "estimate",
+    "macro_snapshot_vnIndex_is_estimate_flag": false,
+    "get_market_snapshot_vnindex": 1764.78,
+    "get_market_snapshot_change_pct": -0.66,
+    "get_market_snapshot_source_tier": 2,
+    "divergence_points": 20.92,
+    "first_observed_cycle": "c145 (2026-08-06T21:06Z)",
+    "consecutive_cycles_observed": 2,
+    "note": "macro_snapshot top-level dataSource='estimate' contradicts its own per-field vnIndex_is_estimate=false/source_tier=1 flag — self-contradictory metadata. Recommend dev-team check whether get_macro_snapshot's VN-Index field reads a stale/estimated fixture while get_market_snapshot reads the live HOSE close. Observed by bctc-analyst during routine REGIME-extraction cross-check, not a BCTC finding.",
+    "guard_key": "bctc-dataquality:vnindex-crosstool-mismatch",
+    "guard_ttl_days": 8
+  },
+  "_processed": {
+    "fingerprint": "9d502bb0f2ead71b45724b45b49aa48363fce630b75994617dec739049a53c4d",
+    "processedAt": "2026-08-07T00:31:40Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

@@ -1,9 +1,9 @@
 {
   "from": "cowork-team",
-  "to": "orch-sentinel",
-  "type": "cowork-tick-telemetry",
+  "to": "dev-team",
+  "type": "cowork-fire",
   "payload": {
-    "fire_time": "2026-07-31T00:06:50Z",
+    "fire_time": "2026-08-07T00:14:25Z",
     "matched_slots": [
       "bctc-analyst-slot-4",
       "news-scout-offhours",
@@ -19,15 +19,15 @@
     "held_by_other": [],
     "all_held": false,
     "spawned": [
-      "bctc-analyst-slot-4",
-      "news-scout-offhours",
-      "market-watcher-offhours",
-      "alert-commander-critical"
+      "docs/agents/bctc-analyst/flow/main.md",
+      "docs/agents/news-scout/flow/main.md",
+      "docs/agents/market-watcher/flow/main.md",
+      "docs/agents/alert-commander/flow/main.md"
     ],
     "silent": false,
-    "drift_min": 5,
+    "drift_min": 7,
     "errors": [],
-    "pressure_mode": "adaptive",
+    "pressure_mode": "legacy",
     "calendar_status": "unknown",
     "suppressed_calendar": [],
     "suppressed_cadence": [],
@@ -37,36 +37,36 @@
       "bctc-analyst-slot-4": "cron",
       "news-scout-offhours": "cadence",
       "market-watcher-offhours": "cadence",
-      "alert-commander-critical": "cadence"
+      "alert-commander-critical": "cron"
     },
     "cadence_minutes": {
       "bctc-analyst-slot-4": null,
       "news-scout-offhours": 240,
       "market-watcher-offhours": 240,
-      "alert-commander-critical": 240
+      "alert-commander-critical": null
     },
-    "last_fired_timestamp": "2026-07-31T00:06:47Z",
+    "last_fired_timestamp": "2026-08-07T00:14:25Z",
     "last_fired_slots": [
       "bctc-analyst-slot-4",
       "news-scout-offhours",
       "market-watcher-offhours",
       "alert-commander-critical"
     ],
-    "last_fired_write_errors": [],
-    "classification": "WORK",
-    "reason": "1 offmarket cron slot (bctc-analyst-slot-4) + 3 gatherer/critical-class 240min cadence slots due, no CHEF slot present",
-    "nominal_tick": "2026-07-31T00:00Z",
-    "leader_lock": "held",
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "00:00",
+    "leader_lock": "acquired",
     "dev_head": "in_progress",
-    "devq": 5,
-    "signal_backlog": 17,
-    "note": ""
+    "devq": 67,
+    "signal_backlog": 0,
+    "note": "pressure-state stale (age>20min at Step 4.2 eval) -> legacy cadence fallback; calendar unknown -> no suppression; all 4 matched slots won+spawned, none guaranteed, no chef slots this tick"
   },
-  "priority": "INFO",
-  "createdAt": "2026-07-31T00:07:05Z",
+  "priority": "low",
+  "createdAt": "2026-08-07T00:14:25Z",
   "_processed": {
-    "fingerprint": "3dd218e8f203567eed66cf7f01a08987fac75f75547d3779ee8abb4278e98ed5",
-    "processedAt": "2026-07-31T00:15:36Z",
+    "fingerprint": "78a823cf440d27fbdc01ed22dac24e5b4d5ece0b3e77f16f8b011976a960c29f",
+    "processedAt": "2026-08-07T00:31:40Z",
     "processedBy": "dev-team",
     "result": "routed-to-po"
   }

@@ -1,0 +1,37 @@
+{
+  "ticker": "DXG",
+  "signal_type": "bctc_signal",
+  "quarter": "Q1-2026",
+  "mode": "routine",
+  "beat_miss": null,
+  "product": "Residential real estate development — mid-market condominiums, township projects (Southern Vietnam)",
+  "customer": "Middle-income homebuyers, real-estate investors; end-demand exposed to mortgage-rate/liquidity cycle",
+  "ops": "get_bctc_full returns 'Chưa có dữ liệu' — no income-statement data this cycle (6th+ consecutive cycle absence despite Q1/Q2-2026 PDFs on file since 2026-06-13/2026-08-01). get_cash_flow Q1-2026 operating_cf returns an implausible ~4.2e18 VND value (OCR/scale corruption); ocf_ni_ratio suppressed.",
+  "mgmt": "Sector-comparison-only ROE 1.9% vs sector median 7.3% — below peers. Q2-2026 filing overdue. Persistent-absence data-quality signal already open with dev-team (guard bctc-dataquality:DXG:persistent-absence reconfirmed HELD this cycle).",
+  "ey_spread": {
+    "value_pp": -3.5,
+    "verdict": "AVOID",
+    "pe": 66.5,
+    "max_deposit_rate_pct": 5
+  },
+  "esc_gate": {
+    "esc1": "unevaluable (no Bash tool)",
+    "esc2": "unevaluable (no balance-sheet data)",
+    "esc3": "unevaluable (net_profit_total unknown; cash-flow OCF value implausible/corrupt)",
+    "esc4": "unevaluable (no P&L data)",
+    "esc5": "FALSE (report_id null, existing_refine_status=PENDING)"
+  },
+  "kd_reading": {
+    "hexagram": "Bi (22)",
+    "verdict": "TRUNG TINH",
+    "confidence_pct": 38,
+    "alignment": "neutral, no conflict with AVOID"
+  },
+  "data_quality_note": "6th+ consecutive cycle of BCTC absence (c141-c146). Guard reconfirmed HELD, no re-emit this cycle. See prior signal docs/signals/bctc-analyst-20260806T181200Z.json.",
+  "_processed": {
+    "fingerprint": "b4e4073179ebc78c048ee2758ec3101555d951978c7a712866aef1d61803b05a",
+    "processedAt": "2026-08-07T00:31:40Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

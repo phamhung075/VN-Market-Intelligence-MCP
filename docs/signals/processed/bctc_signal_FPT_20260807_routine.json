@@ -1,0 +1,37 @@
+{
+  "ticker": "FPT",
+  "signal_type": "bctc_signal",
+  "quarter": "Q1-2026",
+  "mode": "routine",
+  "beat_miss": null,
+  "product": "IT services and software exports, telecom (FPT Telecom broadband/pay-TV), education (FPT Edu)",
+  "customer": "Enterprise IT buyers (VN + offshore, esp. Japan/US/APAC), retail telecom/broadband subscribers, students",
+  "ops": "Operating margin 22.0% Q1-2026 (gross 34.0%). OCF -2,847.8 tỷ vs net profit +2,476.8 tỷ — accrual gap flagged DATA-COVERAGE-LIMITED (only 3/4 quarters returned by get_cash_flow, cannot confirm as structural).",
+  "mgmt": "ROE 28.3% (sector-annualized) vs sector median 10.6% — well above peers. Q2-2026 filing overdue (deadline 30/07 passed; PDF on file since 2026-08-01, refine pending).",
+  "ey_spread": {
+    "value_pp": 2.25,
+    "verdict": "FAIR",
+    "pe": 13.8,
+    "max_deposit_rate_pct": 5
+  },
+  "esc_gate": {
+    "esc1": "unevaluable (no Bash tool)",
+    "esc2": "FALSE (balance-sheet imbalance 0.0%)",
+    "esc3": "DATA-COVERAGE-LIMITED (3/4 quarters returned; guard esc-datacov:FPT:Q1-2026:ESC-3 HELD)",
+    "esc4": "FALSE (non_operating_share 2.0%, AC-1 pre-tax formula)",
+    "esc5": "PENDING — escalation guard esc-deepdive:FPT:Q1-2026:ESC-5 HELD, expires ~2026-08-07T15:13Z"
+  },
+  "kd_reading": {
+    "hexagram": "Bi (22)",
+    "verdict": "TRUNG TINH",
+    "confidence_pct": 38,
+    "alignment": "neutral, no conflict with FAIR"
+  },
+  "data_quality_note": "get_bctc_full is last-known-good; VPS push 2026-08-04T08:34Z, stale ~63.7h (SLA 48h breached).",
+  "_processed": {
+    "fingerprint": "f5568ff03daf771fd54d6d11698fa41f08dd8843d4629e58307338eeed099b0b",
+    "processedAt": "2026-08-07T00:31:40Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

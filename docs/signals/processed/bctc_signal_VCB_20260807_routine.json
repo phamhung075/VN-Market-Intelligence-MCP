@@ -1,0 +1,37 @@
+{
+  "ticker": "VCB",
+  "signal_type": "bctc_signal",
+  "quarter": "Q1-2026",
+  "mode": "routine",
+  "beat_miss": null,
+  "product": "Retail and corporate banking, trade finance, bancassurance cross-sell — state-controlled tier-1 bank",
+  "customer": "Corporate/SOE lending clients, urban retail depositors/borrowers, trade-finance importers/exporters",
+  "ops": "Operating margin 80.9% (bank, NIM-driven). OCF/NI ratio 1.368x (4/4 quarters returned), divergence 0.368 < 0.40 threshold — clean, no ESC-3 fire.",
+  "mgmt": "ROE 16.7% vs sector median 17.6% — slightly below peer banks (BID 19%, CTG 21%, MBB 21%). Q1-2026 filed on time (ĐÃ NỘP 2026-07-19).",
+  "ey_spread": {
+    "value_pp": 2.09,
+    "verdict": "FAIR",
+    "pe": 14.1,
+    "max_deposit_rate_pct": 5
+  },
+  "esc_gate": {
+    "esc1": "unevaluable (no Bash tool)",
+    "esc2": "FALSE (balance-sheet imbalance 0.37%)",
+    "esc3": "FALSE (divergence 0.368 < 0.40, 4/4 quarters returned)",
+    "esc4": "N/A (bank — AC-1 codes 30/50 do not map to bank P&L structure)",
+    "esc5": "FALSE (report_id null, existing_refine_status=PARTIAL)"
+  },
+  "kd_reading": {
+    "hexagram": "Thai (11)",
+    "verdict": "THUAN LOI",
+    "confidence_pct": 100,
+    "alignment": "aligned with FAIR, no conflict"
+  },
+  "data_quality_note": "get_bctc_full is last-known-good; VPS push 2026-08-04T08:34Z, stale ~63.7h (SLA 48h breached).",
+  "_processed": {
+    "fingerprint": "6304e451c5c7fc27cffb08be987eed5e4d190d850a4ba0258357ff9c7e66f47a",
+    "processedAt": "2026-08-07T00:31:40Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

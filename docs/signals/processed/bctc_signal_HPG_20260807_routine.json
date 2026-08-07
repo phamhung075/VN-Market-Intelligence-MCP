@@ -1,0 +1,37 @@
+{
+  "ticker": "HPG",
+  "signal_type": "bctc_signal",
+  "quarter": "Q1-2026",
+  "mode": "routine",
+  "beat_miss": null,
+  "product": "Steel manufacturing — long steel, HRC (hot-rolled coil), construction materials",
+  "customer": "Construction contractors, steel traders/distributors, downstream fabricators (domestic + export)",
+  "ops": "Gross margin 15.8%. Both operating_profit and operating_cf reported as 0 — flagged as a data-extraction anomaly (4th+ consecutive cycle), not treated as a genuine business event given net_profit (9,055.9 tỷ) exceeds gross_profit (8,365.1 tỷ) — tool itself flags 'possible non-operating income'.",
+  "mgmt": "ROE 12.7% vs sector median 2.9% — above peers. Q2-2026 filing overdue (PDF on file since 2026-08-01, refine pending).",
+  "ey_spread": {
+    "value_pp": 2.04,
+    "verdict": "FAIR",
+    "pe": 14.2,
+    "max_deposit_rate_pct": 5
+  },
+  "esc_gate": {
+    "esc1": "unevaluable (no Bash tool)",
+    "esc2": "FALSE (balance-sheet imbalance 0.0%)",
+    "esc3": "DATA-COVERAGE-LIMITED (3/4 quarters returned; guard esc-datacov:HPG:Q1-2026:ESC-3 HELD)",
+    "esc4": "discarded — non_operating_share formula returns 100% on corrupt operating_profit=0 input; not treated as a genuine one-off/manipulation signal (precedent c143-c145)",
+    "esc5": "FALSE (report_id null, existing_refine_status=PARTIAL)"
+  },
+  "kd_reading": {
+    "hexagram": "Minh Di (36)",
+    "verdict": "BAT LOI",
+    "confidence_pct": 25,
+    "alignment": "low-confidence mild conflict vs FAIR valuation"
+  },
+  "data_quality_note": "operating_profit=0 & operating_cf=0 anomaly filed to dev-team this cycle (guard bctc-dataquality:HPG:operating-profit-zero, claimed, 8d TTL) — 4th+ consecutive occurrence, see docs/signals/bctc-analyst-20260807T002501Z.json.",
+  "_processed": {
+    "fingerprint": "8e4d9b57fdefaaf991ecbc9353ddd7706aef192749e740ddb12c9b693436e7c8",
+    "processedAt": "2026-08-07T00:31:40Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
