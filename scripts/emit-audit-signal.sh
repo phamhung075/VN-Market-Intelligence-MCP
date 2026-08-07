@@ -81,13 +81,17 @@
 #     rc=0 from mcp_call is NOT sufficient)    AC-1/AC-2 — never trust rc alone)
 #   E-1 write claimed but read-back of      -> "[emit-signal] ABORT e1-readback-failed id=<id>"
 #     agent_signals found no matching row      (AC-2/AC-3 — mandatory read-back, mirrors E-3)
-#   E-3 write failure (rc=1, or a genuine  -> "[emit-signal] ABORT e3-write-failed rc=<n>"
-#     rc=3 usage error from a NON-empty       (an empty-candidate read — a transient race with
-#     candidate, e.g. live file missing;      a concurrent peer rename of $ORCH_STATE_FILE —
-#     no retry)                               is retried instead, see CAS-RETRY below,
-#                                              FIX-EMITSIGNAL-E3-RC3-FATAL-NORETRY-DROPS-
-#                                              DETECTOR-FINDING)
-#   E-3 CAS-retry exhausted (3x rc=2)      -> "[emit-signal] ABORT e3-cas-exhausted rc=2"
+#   E-3 write failure — a CONSERVATION/    -> "[emit-signal] ABORT e3-write-failed rc=<n>
+#     stamp-abort rc=1, or a genuine rc=3      [reason="<orch-apply.sh's own ABORTED:/
+#     usage error from a NON-empty candidate,  ERROR: line, if captured>"]"
+#     e.g. live file missing; no retry —         (an empty-candidate read, or a rc=1
+#     a VALIDATOR-abort rc=1 (retryable, see      VALIDATOR-abort, is retried instead —
+#     CAS-RETRY below) is NOT this marker         see CAS-RETRY below, FIX-EMITSIGNAL-
+#     unless all 3 attempts exhaust it            E3-RC3-FATAL-NORETRY-DROPS-DETECTOR-
+#     (then it IS this marker, via the             FINDING / FIX-EMITSIGNAL-E3-RC1-
+#     e3-cas-exhausted marker below)               OPAQUE-FATAL-DROPS-DETECTOR-FINDING)
+#   E-3 CAS-retry exhausted (3x rc=2, or   -> "[emit-signal] ABORT e3-cas-exhausted rc=<n>
+#     3x rc=1 VALIDATOR-abort race)            [reason="<...>"]"
 #   E-3 POST-WRITE read-back failure       -> "[emit-signal] ABORT e3-readback-failed <id>"
 #   bad usage / malformed args             -> "[emit-signal] ABORT <reason>" (exit 2)
 #
@@ -119,13 +123,31 @@
 # loop re-invoking the IDENTICAL `jq '.signal_queue.rows += [$row]' | orch-
 # apply.sh` pipe each iteration — jq re-reads the live file fresh from disk
 # every time, so no special "rebuild" logic is needed. rc=0 -> success.
-# rc=2 (CAS mtime mismatch) -> retry (up to 3 total attempts). rc=1
-# (validation/conservation failure) or a rc=3 surfaced from a REAL
-# orch-apply.sh invocation on a non-empty candidate (genuine usage error,
-# e.g. live file missing) -> immediate abort, NO retry. 3x rc=2 -> distinct
-# "e3-cas-exhausted" marker (kept distinct from "e3-write-failed" so QA/dev
-# can tell CAS-contention-exhaustion apart from a genuine schema/
-# conservation validation failure).
+# rc=2 (CAS mtime mismatch) -> retry (up to 3 total attempts). A rc=3
+# surfaced from a REAL orch-apply.sh invocation on a non-empty candidate
+# (genuine usage error, e.g. live file missing) -> immediate abort, NO retry.
+# 3x rc=2 -> distinct "e3-cas-exhausted" marker (kept distinct from
+# "e3-write-failed" so QA/dev can tell CAS-contention-exhaustion apart from a
+# genuine schema/conservation validation failure).
+#
+# rc=1 IS NOT ONE FAILURE CLASS (FIX-EMITSIGNAL-E3-RC1-OPAQUE-FATAL-DROPS-
+# DETECTOR-FINDING, AC-2): scripts/orch-apply.sh exits 1 from THREE unrelated
+# branches — validator abort (:136-141), updated_at-stamping abort (:159-164),
+# conservation circuit-breaker abort (:179-184). `_e3_write_row()` inspects
+# the captured `$ORCH_APPLY_STDERR` (see `_orch_apply_invoke()` below) to
+# tell them apart:
+#   - VALIDATOR-abort ("[orch-apply] ABORTED: validator exit ...")  -> its
+#     candidate was built from a live-file read that can race a concurrent
+#     peer mid-write (Stage 1b lane-coherence mid-transition, or a Stage 1c
+#     dangling detail_ref before its referenced file lands) -> retryable,
+#     SAME CAS-retry lane as rc=2 (up to 3 total attempts; exhausting all 3
+#     this way still reports via the distinct "e3-cas-exhausted" marker, with
+#     rc left at the true 1, not overwritten to 2).
+#   - CONSERVATION-abort / updated_at-stamp-abort (any other rc=1 reason, or
+#     no reason captured at all) -> its candidate is already
+#     live+exactly-one-appended-row, so totals can only grow; a failure here
+#     is a genuine anomaly, NEVER a race -> immediate abort, NO retry (same
+#     "e3-write-failed" fatal lane as a genuine rc=3 usage error).
 #
 # EMPTY-CANDIDATE PRE-CHECK (FIX-EMITSIGNAL-E3-RC3-FATAL-NORETRY-DROPS-
 # DETECTOR-FINDING): `_e3_read_candidate()` (below) can itself yield an
@@ -188,7 +210,26 @@
 #                                 (plain redirection `<<<`, not a pipe, so no
 #                                 subshell is forked — a bash counter var
 #                                 incremented inside the stub persists across
-#                                 the 3 loop iterations).
+#                                 the 3 loop iterations). The production
+#                                 default also sets the global
+#                                 ORCH_APPLY_STDERR (see below) — a stub that
+#                                 wants a specific "[orch-apply] ABORTED: ..."
+#                                 reason to propagate must set it itself; an
+#                                 untouched stub leaves it at the empty
+#                                 string _e3_write_row() resets every attempt.
+#   ORCH_APPLY_STDERR             global (not a CLI/env override — an
+#                                 in-process seam), set by _orch_apply_invoke()
+#                                 to the captured stderr of the last
+#                                 scripts/orch-apply.sh invocation.
+#                                 FIX-EMITSIGNAL-E3-RC1-OPAQUE-FATAL-DROPS-
+#                                 DETECTOR-FINDING (AC-1): `_e3_write_row()`
+#                                 greps this for the "[orch-apply] ABORTED:
+#                                 ..." / "ERROR: ..." reason line to (a)
+#                                 propagate it into the e3-write-failed /
+#                                 e3-cas-exhausted marker and BUG telegram,
+#                                 and (b) tell a retryable VALIDATOR-abort
+#                                 apart from a fatal CONSERVATION/stamp-abort
+#                                 (AC-2, see CAS-RETRY above).
 #   mcp_call()                   defined by sourcing scripts/agents-flow/
 #                                 mcp-call.sh (below) — tests may redefine
 #                                 this after sourcing to stub E-1/E-2
@@ -520,11 +561,13 @@ _e3_read_candidate() {
 # Step E-3: signal-row append via orch-apply.sh + POST-WRITE read-back.
 # CAS-retry contract per FR-5 / architect design decision 3.
 _e3_write_row() {
-  local row_json="$1" row_id="$2" attempt rc candidate found
+  local row_json="$1" row_id="$2" attempt rc candidate found reason
 
   rc=1
+  ORCH_APPLY_STDERR=""
   # shellcheck disable=SC2034  # loop var unused in body — only iteration count matters
   for attempt in 1 2 3; do
+    ORCH_APPLY_STDERR=""
     candidate=$(_e3_read_candidate "$row_json")
     if [ -z "$candidate" ]; then
       # FIX-EMITSIGNAL-E3-RC3-FATAL-NORETRY-DROPS-DETECTOR-FINDING: an empty
@@ -547,16 +590,32 @@ _e3_write_row() {
       break
     elif [ "$rc" -eq 2 ]; then
       continue
+    elif [ "$rc" -eq 1 ] && printf '%s' "$ORCH_APPLY_STDERR" | grep -q '^\[orch-apply\] ABORTED: validator exit'; then
+      # FIX-EMITSIGNAL-E3-RC1-OPAQUE-FATAL-DROPS-DETECTOR-FINDING (AC-2): a
+      # VALIDATOR-stage abort (scripts/orch-apply.sh:136-141) means THIS
+      # attempt's candidate was built from a live-file read that can race a
+      # concurrent peer mid-write (Stage 1b lane-coherence mid-transition, or
+      # a Stage 1c dangling detail_ref before its referenced file lands) —
+      # NOT a structurally broken board. Same CAS-retry lane as rc=2. `rc` is
+      # deliberately left at 1 (not overwritten to 2) so a final
+      # e3-cas-exhausted marker below still reports the TRUE underlying rc if
+      # all 3 attempts exhaust this way. The CONSERVATION-abort (:179-184)
+      # and updated_at-stamp-abort (:159-164) arms fall through to the fatal
+      # branch below unchanged — their candidates are already
+      # live+exactly-one-appended-row, so a failure there is never a race.
+      continue
     else
-      echo "[emit-signal] ABORT e3-write-failed rc=$rc"
-      _send_orphan_bug_telegram "rc=$rc id=$row_id"
+      reason=$(printf '%s' "$ORCH_APPLY_STDERR" | grep -E '^\[orch-apply\] (ABORTED|ERROR):' | tail -1)
+      echo "[emit-signal] ABORT e3-write-failed rc=$rc${reason:+ reason=\"$reason\"}"
+      _send_orphan_bug_telegram "rc=$rc id=$row_id${reason:+ reason=\"$reason\"}"
       return 1
     fi
   done
 
   if [ "$rc" -ne 0 ]; then
-    echo "[emit-signal] ABORT e3-cas-exhausted rc=$rc"
-    _send_orphan_bug_telegram "cas-exhausted id=$row_id"
+    reason=$(printf '%s' "$ORCH_APPLY_STDERR" | grep -E '^\[orch-apply\] (ABORTED|ERROR):' | tail -1)
+    echo "[emit-signal] ABORT e3-cas-exhausted rc=$rc${reason:+ reason=\"$reason\"}"
+    _send_orphan_bug_telegram "cas-exhausted id=$row_id${reason:+ reason=\"$reason\"}"
     return 1
   fi
 
@@ -641,8 +700,32 @@ _ledger_upsert() {
 # canned rc sequence for CAS-retry coverage. Called with a plain redirection
 # (`<<<`), never a pipe, so no subshell is forked — a counter var a test
 # stub increments persists across the CAS-retry loop's 3 iterations.
+#
+# FIX-EMITSIGNAL-E3-RC1-OPAQUE-FATAL-DROPS-DETECTOR-FINDING (AC-1): captures
+# orch-apply.sh's stderr into the global ORCH_APPLY_STDERR instead of letting
+# it fall through uncaptured to this script's own inherited stderr — orch-
+# apply.sh's stdout is always empty by contract (every diagnostic line it
+# ever prints is a `printf ... >&2`, see scripts/orch-apply.sh), so folding
+# stderr into the captured text with `2>&1` can never swallow real payload
+# bytes. `_e3_write_row()` greps ORCH_APPLY_STDERR for the "[orch-apply]
+# ABORTED: ..." / "ERROR: ..." reason line and threads it into both the
+# e3-write-failed marker and the anti-false-green BUG telegram (AC-1), and
+# also uses the reason text to distinguish the VALIDATOR-abort arm
+# (retryable — its candidate is built from a live-file read that can race a
+# concurrent peer mid-write, e.g. a Stage 1b lane-coherence mid-transition or
+# a Stage 1c dangling detail_ref before its referenced file lands) from the
+# CONSERVATION-abort / updated_at-stamp-abort arms (fatal — their candidates
+# are already live+exactly-one-appended-row, so totals can only grow; a
+# conservation/stamp failure there is a genuine anomaly, never a race —
+# AC-2). Tests that stub this function wholesale (CAS-retry coverage above)
+# must set ORCH_APPLY_STDERR themselves if they want a specific reason to
+# propagate; an untouched stub leaves it at the empty string _e3_write_row()
+# resets per attempt, which correctly falls through to the fatal lane.
 _orch_apply_invoke() {
-  bash "$ORCH_APPLY_SH"
+  local rc
+  ORCH_APPLY_STDERR=$(bash "$ORCH_APPLY_SH" 2>&1)
+  rc=$?
+  return "$rc"
 }
 
 # =============================================================================

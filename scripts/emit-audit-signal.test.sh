@@ -133,7 +133,15 @@ reset_case() {
   cp "$REPO_ROOT/docs/data/orch/orch-state.json" "$SCRATCH_ORCH"
   rm -f "$SCRATCH_LEDGER"
   # restore default (real) _orch_apply_invoke in case a prior case stubbed it
-  _orch_apply_invoke() { bash "$ORCH_APPLY_SH"; }
+  # — mirrors production's own default (FIX-EMITSIGNAL-E3-RC1-OPAQUE-FATAL-
+  # DROPS-DETECTOR-FINDING): captures stderr into ORCH_APPLY_STDERR.
+  _orch_apply_invoke() {
+    local rc
+    ORCH_APPLY_STDERR=$(bash "$ORCH_APPLY_SH" 2>&1)
+    rc=$?
+    return "$rc"
+  }
+  ORCH_APPLY_STDERR=""
   # restore default (real) _e3_read_candidate in case a prior case stubbed it
   _e3_read_candidate() { jq --argjson row "$1" '.signal_queue.rows += [$row]' "$ORCH_STATE_FILE"; }
   # FIX-EMITSIGNAL-BUGTELEGRAM-NO-TEST-SINK-GATE: restore the live-send
@@ -542,6 +550,74 @@ check "T26 write-failure-rc3 marker ABORT e3-write-failed rc=3" "$(printf '%s' "
 check "T26 write-failure-rc3 NO retry (invoked exactly once)" "$([ "$WRITE_FAIL_RC3_CALLS" -eq 1 ] && echo true || echo false)"
 check "T26 write-failure-rc3 row never appended (BEFORE==AFTER)" "$([ "$BEFORE_COUNT26" -eq "$AFTER_COUNT26" ] && echo true || echo false)"
 check "T26 write-failure-rc3 triggers non-dedup BUG telegram" "$(grep -q '^CALL: send_telegram' "$CALL_LOG" && echo true || echo false)"
+
+# ── T32/T33: FIX-EMITSIGNAL-E3-RC1-OPAQUE-FATAL-DROPS-DETECTOR-FINDING —
+# scripts/orch-apply.sh exits 1 from THREE unrelated branches (validator
+# abort, updated_at-stamp abort, conservation-abort). _e3_write_row() must
+# split rc=1 by which branch produced it: a VALIDATOR-abort's candidate was
+# built from a live-file read that can race a concurrent peer mid-write
+# (retryable, same lane as rc=2) but a CONSERVATION-abort's candidate is
+# already live+exactly-one-appended-row, so totals can only grow — a
+# conservation abort there is a genuine anomaly, never a race (stays fatal).
+# Direct siblings of T25/T26 above, per feedback_fleetwide_gate_validated_
+# on_one_file_optout_allowlist — do not validate on only one branch. ───────
+
+# T32: rc=1 VALIDATOR-abort on attempt 1 (simulated raced peer mid-write) —
+# RETRY and succeed once orch-apply.sh recovers on attempt 2. No ABORT
+# marker, row lands.
+reset_case
+VALIDATOR_RACE_ATTEMPT_FILE="$TMPDIR_TEST/validator-race-attempt.count"
+: > "$VALIDATOR_RACE_ATTEMPT_FILE"
+_orch_apply_invoke() {
+  local candidate attempt_n
+  candidate=$(cat)
+  echo x >> "$VALIDATOR_RACE_ATTEMPT_FILE"
+  attempt_n=$(wc -l < "$VALIDATOR_RACE_ATTEMPT_FILE" | tr -d ' ')
+  if [ "$attempt_n" -lt 2 ]; then
+    ORCH_APPLY_STDERR='[orch-apply] ABORTED: validator exit 2 — live file untouched'
+    return 1
+  fi
+  ORCH_APPLY_STDERR=""
+  printf '%s' "$candidate" > "$SCRATCH_ORCH"
+  return 0
+}
+OUT32=$(run_emit_signal --check-id A-21 --category-type scheduler_locks --severity CRITICAL \
+  --summary "validator-abort transient race probe" --detail-json '{"dedup_key":"scheduler_locks:T32:A-21"}')
+RC32=$?
+ROW_ID32=$(printf '%s' "$OUT32" | grep -o 'id=[^ ]*$' | cut -d= -f2)
+VALIDATOR_RACE_ATTEMPTS=$(wc -l < "$VALIDATOR_RACE_ATTEMPT_FILE" | tr -d ' ')
+check "T32 validator-abort-then-recovers exit=0" "$([ "$RC32" -eq 0 ] && echo true || echo false)"
+check "T32 validator-abort-then-recovers retried (2 invoke attempts)" "$([ "$VALIDATOR_RACE_ATTEMPTS" -eq 2 ] && echo true || echo false)"
+check "T32 validator-abort-then-recovers no ABORT marker on eventual success" "$(! printf '%s' "$OUT32" | grep -q 'ABORT' && echo true || echo false)"
+check "T32 validator-abort-then-recovers row present in signal_queue" "$([ "$(row_present "$ROW_ID32")" -eq 1 ] && echo true || echo false)"
+
+# T33: sibling fatal branch — rc=1 CONSERVATION-abort (a different orch-
+# apply.sh stage than T32's validator abort) — must stay fatal, zero retry,
+# AND (AC-1 diagnosability) the specific "[orch-apply] ABORTED: ..." reason
+# line must propagate into both the e3-write-failed marker and the BUG
+# telegram, so triage can tell this genuine anomaly apart from T32's
+# transient race without re-running the validator by hand.
+reset_case
+CONSERVATION_ABORT_CALLS_FILE="$TMPDIR_TEST/conservation-abort-calls.count"
+: > "$CONSERVATION_ABORT_CALLS_FILE"
+_orch_apply_invoke() {
+  cat >/dev/null
+  echo x >> "$CONSERVATION_ABORT_CALLS_FILE"
+  ORCH_APPLY_STDERR='[orch-apply] ABORTED: conservation check exit 1 — live file untouched'
+  return 1
+}
+BEFORE_COUNT33=$(jq '.signal_queue.rows | length' "$SCRATCH_ORCH")
+OUT33=$(run_emit_signal --check-id C-10 --category-type db_integrity_breach --severity CRITICAL \
+  --summary "conservation-abort probe (genuine anomaly)" --detail-json '{"dedup_key":"db_integrity_breach:T33:C-10"}')
+RC33=$?
+AFTER_COUNT33=$(jq '.signal_queue.rows | length' "$SCRATCH_ORCH")
+CONSERVATION_ABORT_CALLS=$(wc -l < "$CONSERVATION_ABORT_CALLS_FILE" | tr -d ' ')
+check "T33 conservation-abort non-zero exit" "$([ "$RC33" -ne 0 ] && echo true || echo false)"
+check "T33 conservation-abort marker ABORT e3-write-failed rc=1" "$(printf '%s' "$OUT33" | grep -q '^\[emit-signal\] ABORT e3-write-failed rc=1' && echo true || echo false)"
+check "T33 conservation-abort marker carries orch-apply reason text (AC-1 diagnosability)" "$(printf '%s' "$OUT33" | grep -q 'reason="\[orch-apply\] ABORTED: conservation check exit 1' && echo true || echo false)"
+check "T33 conservation-abort NO retry (invoked exactly once)" "$([ "$CONSERVATION_ABORT_CALLS" -eq 1 ] && echo true || echo false)"
+check "T33 conservation-abort row never appended (BEFORE==AFTER)" "$([ "$BEFORE_COUNT33" -eq "$AFTER_COUNT33" ] && echo true || echo false)"
+check "T33 conservation-abort BUG telegram carries reason text (AC-1 diagnosability)" "$(grep -q 'conservation check exit 1' "$CALL_LOG" && echo true || echo false)"
 
 # ── T27-T31: FIX-EMITSIGNAL-BUGTELEGRAM-NO-TEST-SINK-GATE — EMIT_SIGNAL_
 # TELEGRAM_SINK gates BOTH _send_bug_telegram (E-2, dedup-gated) AND
