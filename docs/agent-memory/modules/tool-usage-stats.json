@@ -1,5 +1,21 @@
 {
-  "generatedAt": "2026-08-06T22:06:30.157Z",
-  "uniqueTools": 0,
-  "toolCounts": {}
+  "generatedAt": "2026-08-07T00:00:02.079Z",
+  "uniqueTools": 15,
+  "toolCounts": {
+    "get_market_snapshot": 48,
+    "get_agent_signals": 37,
+    "get_macro_snapshot": 45,
+    "get_alerts": 38,
+    "get_portfolio_conviction": 59,
+    "task_claim": 16,
+    "task_release": 12,
+    "read_telegram_reports": 1,
+    "list_unresolved_reports": 1,
+    "task_list_held": 6,
+    "claim_due_scheduled_tasks": 2,
+    "emit_pressure_state": 2,
+    "post_agent_signal": 1,
+    "process_telegram_report": 1,
+    "task_heartbeat": 1
+  }
 }

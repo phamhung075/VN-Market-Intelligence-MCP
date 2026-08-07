@@ -1,8 +1,15 @@
 # news-scout — Notebook
 
-**Role:** Fetch + sentiment analysis of 20 articles → signal generation (urgent_news, chain_catalyst) | **Cadence:** sentiment batch + off-hours cycles | **Status:** 205 cycles complete (c235 shipped)
+**Role:** Fetch + sentiment analysis of 20 articles → signal generation (urgent_news, chain_catalyst) | **Cadence:** sentiment batch + off-hours cycles | **Status:** 206 cycles complete (c236 shipped)
 
 **Runbook:** dedup gate (180min TTL), regime multiplier (NEUTRAL/BULLISH/BEARISH), coverage-state sweep (48h stale check).
+
+---
+
+## c237 · 2026-08-07T00:15:35Z (off-hours, slot=news-scout-offhours)
+
+- Items: 30 fetched (20 domestic cafef/vnexpress/vneconomy + 10 reuters) | Market: CLOSED (00:15 UTC off-hours) | Impacts: Securities market challenges (new account openings falling, liquidity floor, impact=9/10 bearish structural headwind, 5 watchlist affected FPT/SSI/VIX/VND/VCI), FPT tech sector pressure (FII outflow worst July, impact=8/10 bearish), Gold safe-haven spike to $4304/oz (+2.84%, risk-off signal, impact=7/10 bullish hedge demand, 4 watchlist banking affected BID/VCB/EIB/SHB). | Signals: 3 posted (#10402 urgent_news FPT bearish, #10403 chain_catalyst securities_macro bearish, #10404 chain_catalyst gold_macro bullish) | Regime: NEUTRAL (macro_snapshot tier=2 valid, investment-clock CORE_VN=8, oil NEUTRAL $83.40 +6.34%, gold BULLISH $4304.20 +2.84%, USD/VND BEARISH 26040, carry UNKNOWN 5.33pp fed vs 5.00pp sbv, yield CHEAP 3.20pp) | Carry: UNKNOWN
+- Market sentiment ema_5d=1.96 bullish (bull_ratio=37.6%, bear=14.8%, neutral=47.5%, today_score=3.375), insider sentiment INSUFFICIENT_DATA (no 90d transaction window). Evidence: 4 fragments recorded (FPT bearish 0.9/0.7, VCB bearish 0.6/0.5, MARKET macro_bearish 0.8/0.65, MARKET macro_bullish 0.7/0.6). Dedup: SELF_SIGNALS_CACHE=[] (empty, no prior news-scout 6h), SIBLING_WINDOW_CACHE=[6 VERIFIED_DECISION from alert-engine 15min window, all fresh alerts no content-key conflicts], 3 new signals passed dedup gate (no suppression). Impact chains traced (3 articles: securities 5 entries 5 watchlist tech/securities, FPT tech 1 entry 1 watchlist, gold macro 2 entries 4 watchlist banking). Gateway OK (bootstrap 35ms, macro 22ms, sentiment 1ms, fetch 8ms, insider 1ms). Stale sweep: DBC/DPM/KDC listed (48h staleness check completed). Exec-proof gate PASS. Coverage-state write via coverage-stamp.sh. Session log OPEN/CLOSE. WORK ping sent. Cycle SHIPPED (3 signals, critic=0.8, phase=slowdown tier=equity).
 
 ---
 
