@@ -802,3 +802,15 @@
 **Mitigation:** No immediate action beyond signal routing.
 
 ---
+
+## Anomaly: A-30 · mcp-server memory reclamation loss at 98.75% peak
+**Severity:** CRITICAL | **Date:** 2026-08-07 | **Status:** OPEN
+**Location:** mcp-server container
+**Details:** Multi-probe A-30 discriminator: 6 samples over 65s window, all >97.95%, zero reclamation dips. Sustained loss of reclamation at >97% indicates imminent OOM risk.
+**Impact:** Imminent out-of-memory risk on core data pipeline service
+**Root cause:** Memory leak or allocation bloat in mcp-server code (FIX-MCP-MEMORY-CODE-LEAK)
+**Zone owner:** dev-mcp-server
+**Last reported:** 2026-08-07T05:48:32Z (signal sys-20260807T054825-771b, system-auditor -> po, dedup_key=memory_pressure:mcp-server:A-30-loss-of-reclamation, CRITICAL Telegram sent)
+**Mitigation:** No immediate action beyond signal routing.
+
+---
