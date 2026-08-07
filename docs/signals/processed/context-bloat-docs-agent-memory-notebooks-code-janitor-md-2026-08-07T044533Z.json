@@ -1,0 +1,25 @@
+{
+  "from": "context-bloat-backstop-hook",
+  "to": "claude-manager-helper",
+  "type": "context_bloat_breach",
+  "priority": "high",
+  "createdAt": "2026-08-07T04:45:33Z",
+  "payload": {
+    "file": "docs/agent-memory/notebooks/code-janitor.md",
+    "line_count": 258,
+    "cap": 200,
+    "byte_count": 14618,
+    "byte_cap": 12000,
+    "class": "agent-notebook",
+    "reason": "line-cap,byte-cap",
+    "overage": 58,
+    "byte_overage": 2618,
+    "action_required": "prune_or_split"
+  },
+  "_processed": {
+    "fingerprint": "73361adc1698a3e7991658098b7e789d8c844bf09c0782a26d460137b974c5a8",
+    "processedAt": "2026-08-07T04:58:38Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
