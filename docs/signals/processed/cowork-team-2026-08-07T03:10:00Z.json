@@ -3,7 +3,7 @@
   "to": "dev-team",
   "type": "cowork-fire",
   "payload": {
-    "fire_time": "2026-07-31T02:07:26Z",
+    "fire_time": "2026-08-07T03:10:00Z",
     "matched_slots": [
       "alert-commander-market"
     ],
@@ -16,39 +16,39 @@
       "docs/agents/alert-commander/flow/main.md"
     ],
     "silent": false,
-    "drift_min": 5,
+    "drift_min": 25,
     "errors": [],
-    "pressure_mode": "adaptive",
+    "pressure_mode": "legacy",
     "calendar_status": "unknown",
     "suppressed_calendar": [],
     "suppressed_cadence": [],
     "downgraded": [],
     "chef_mutex_applied": false,
     "due_reasons": {
-      "alert-commander-market": "cadence"
+      "alert-commander-market": "cron"
     },
     "cadence_minutes": {
-      "alert-commander-market": 240
+      "alert-commander-market": null
     },
-    "last_fired_timestamp": "2026-07-31T02:07:23Z",
+    "last_fired_timestamp": "2026-08-07T03:09:41Z",
     "last_fired_slots": [
       "alert-commander-market"
     ],
     "last_fired_write_errors": null,
     "classification": "FIRE",
     "reason": "spawned",
-    "nominal_tick": "02:00",
+    "nominal_tick": "02:45",
     "leader_lock": "acquired",
-    "dev_head": "unknown",
+    "dev_head": "idle",
     "devq": 5,
-    "signal_backlog": 20,
-    "note": "market-open tick; alert-commander-market spawned in background (agentId internal)"
+    "signal_backlog": 3,
+    "note": "pressure-state.json stale (58min>20min threshold) at Step 4.2 -> legacy cadence fallback per NFR-P1-3, WORK telegram sent; alert-commander spawned agent a19d6008e00a8caa0, cowork-slot claimed+released"
   },
   "priority": "low",
-  "createdAt": "2026-07-31T02:07:26Z",
+  "createdAt": "2026-08-07T03:10:00Z",
   "_processed": {
-    "fingerprint": "812050f97a62c3a8ee91fb710116a2a20086a469c28ea3486f1c2cc75c0a48d1",
-    "processedAt": "2026-07-31T02:11:02Z",
+    "fingerprint": "93c27fc715e4a0f7f2190e2ecdc8698d07e5b7d42a17a18be029543711d69731",
+    "processedAt": "2026-08-07T03:33:20Z",
     "processedBy": "dev-team",
     "result": "routed-to-po"
   }
