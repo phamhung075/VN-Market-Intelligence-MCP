@@ -718,3 +718,15 @@
 **Mitigation:** No immediate action beyond signal routing.
 
 ---
+
+## Anomaly: A-30 · rag-service memory pressure — 97.90% of cap, 21.5MiB free
+**Severity:** WARN | **Date:** 2026-08-07 | **Status:** OPEN
+**Location:** container/rag-service
+**Details:** rag-service container memory usage at 97.90% of its configured capacity with only 21.5MiB free headroom, below the 40MiB floor threshold
+**Impact:** High memory pressure indicates risk of OOM (Out Of Memory) condition; container may be unable to allocate memory for emergency operations or workload spikes
+**Root cause:** rag-service likely performing extensive embedding model operations or accumulating cached data without sufficient garbage collection
+**Zone owner:** ops
+**Last reported:** 2026-08-07T01:55:34Z (signal sys-20260807T015525-3080, system-auditor -> po, dedup_key=microservice_degraded:rag-service:A-30, WARN Telegram sent)
+**Mitigation:** No immediate action beyond signal routing.
+
+---
