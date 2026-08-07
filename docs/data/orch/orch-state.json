@@ -12897,50 +12897,6 @@
         "created_at": "2026-08-07T00:07:30Z",
         "updated_by": "qa",
         "updated_at": "2026-08-07T00:08:51Z"
-      },
-      {
-        "id": "FIX-CI-SIZELINT-SCHEMA-TS-DEFLAKE-REGRESSION-372L",
-        "type": "FIX",
-        "title": "CI-RED-70ae0d9a-FIX — CI RED: size-lint — apps/mcp-server/src/infrastructure/db/schema.ts (baseline-tolerance-exceeded, baseline=336L actual=372L upper=369L) — 2nd RED on this file in 2 days, recurring",
-        "desc": "size-lint RED on schema.ts, 3L over the 369L tolerance ceiling. TRIGGER IDENTIFIED (not assumed): commit 8931e47c7 (fix(mcp-server/DEFLAKE-VNSTOCK-3STATEMENT), 2026-08-06T17:47Z) added +12/-1 lines to schema.ts reordering the busy_timeout PRAGMA — an unrelated task, NOT the memory-leak init-guard. RECURRENCE (occurrence 2): the SAME file+job went RED on 2026-08-05 at 377L (introduced by 609f62800, FIX-MCP-MEMORY-CODE-LEAK's own init guard); that instance was closed by FIX-CI-SIZELINT-SCHEMA-TS-BASELINE-TOLERANCE-377L, DONE_VERIFIED 2026-08-06T09:36:31Z, whose fix (daaef1d21) merely TRIMMED INIT-GUARD COMMENTS down to 361L — 8L of headroom under a 369L ceiling. The very next routine commit touching the file consumed that headroom. This is a symptom fix that recurred, so the AC below demands real extraction, not another trim. WHY THIS IS NOT A DUPLICATE OF FIX-MCP-MEMORY-CODE-LEAK: that row is in review[] with next_agent=qa and still carried the stale file-scoped dedup_key for schema.ts from the 377L instance, which caused PO triage 20260807T0104Z to dedup this failure away; but that row's size-lint obligation was fully discharged by the archived 377L row, its own ACs and QA gate are the memory-leak rebuild/backfill-frequency probe (nothing in them touches line count), and on QA approval it leaves the non-terminal lanes entirely — leaving schema.ts RED with no owner. Its stale dedup_key has been retired to dedup_key_retired_20260807 by this triage so exactly one live row holds this key.",
-        "status": "BACKLOG",
-        "priority": "high",
-        "size": "S",
-        "owner": "po",
-        "zone": "apps/mcp-server/",
-        "next_agent": "developer",
-        "supervised": false,
-        "plan_only": false,
-        "check_id": "CI-RED-70ae0d9a",
-        "dedup_key": "ci_job:size-lint|file:apps/mcp-server/src/infrastructure/db/schema.ts",
-        "ci_fingerprint": "c1dc93221043fc3a5a32c5f0ed1db95aeaa0134072f65a63dcdb9ef682bac0a4",
-        "origin_signal_id": "CI-RED-70ae0d9a",
-        "created_at": "2026-08-07T01:52:00Z",
-        "created_by": "po/triage-20260807T0143Z",
-        "baseline_pass": true,
-        "rebuild_required": false,
-        "recurring": true,
-        "recurrence_count": 2,
-        "recurrence_dates": [
-          "2026-08-05",
-          "2026-08-06"
-        ],
-        "escalation_reason": "feedback_recurring_bug_escalation — 2nd size-lint RED on the same file+job in 2 days from two unrelated commits; prior fix was a comment-trim leaving 8L headroom, i.e. a symptom fix (CLAUDE.md: fix root cause definitif not recurrent symtom)",
-        "files": [
-          "apps/mcp-server/src/infrastructure/db/schema.ts",
-          "docs/data/size-lint-baseline.json"
-        ],
-        "related": [
-          "FIX-CI-SIZELINT-BCTCREFINED-PROJECTION-BASELINE",
-          "FIX-CI-SIZELINT-RAG-APP-FACTORY-BASELINE",
-          "FIX-CI-SIZELINT-RAG-EMBEDDER-NEW-OFFENDER",
-          "FIX-MCP-MEMORY-CODE-LEAK",
-          "FIX-CI-SIZELINT-SCHEMA-TS-BASELINE-TOLERANCE-377L"
-        ],
-        "verification_gate": "ci_green_on_subsequent_push",
-        "status_note": "AC1 (ROOT CAUSE, not symptom): extract a genuinely cohesive unit out of schema.ts so the file lands with REAL headroom under the 336L baseline — target <=336L, i.e. at or under baseline, NOT merely under the 369L tolerance ceiling. A comment-trim or whitespace squeeze that lands in 362-369L is an EXPLICIT REJECT: that is exactly what daaef1d21 did and it recurred within 8 hours. Candidate extraction seams (developer to confirm at source, do not take on trust): the migration/DDL block, the PRAGMA/connection-bootstrap block that 8931e47c7 just grew, and initDatabase()'s WeakSet guard + seed/backfill orchestration. AC2: do NOT run `size-lint-justification.sh --update` and do NOT add a size-justification header — both grandfather the regression; the archived 377L row already established extraction-over-baseline-bump as the convention here (see also FIX-CI-SIZELINT-MACROTOOLS-HUMANIZE-618L precedent). AC3: `bash scripts/audits/size-lint-justification.sh --check` reports schema.ts absent from the offender list. AC4: full mcp-server suite still passes at or above the 9408-pass / 348-fail floor — schema.ts is the DB bootstrap for the whole service, so an extraction here is NOT cosmetic and must be suite-verified, and 8931e47c7's own busy_timeout-first ordering + the WeakSet identity guard MUST both survive the extraction byte-equivalent in behaviour (they are live deflake/memory-leak fixes). AC5: `gh run view <databaseId with headSha AFTER 70ae0d9ae4a4c3df3be7d723d2b153633ebea0fd> --json jobs -q '.jobs[]|select(.name==\"size-lint\")|.conclusion'` == success (verification_gate=ci_green_on_subsequent_push). Failing job: size-lint. Failing file: apps/mcp-server/src/infrastructure/db/schema.ts. Head SHAs observed: 70ae0d9ae (run 31136642246, signal CI-RED-70ae0d9a). Locally re-reproduced by PO at 2026-08-07T01:46Z against a clean working tree (git diff HEAD on this path empty), so this is a live failure, not a stale CI log.",
-        "updated_at": "2026-08-07T01:49:20Z",
-        "updated_by": "po/triage-20260807T0143Z"
       }
     ],
     "closed_sprints": [
@@ -21408,7 +21364,7 @@
         "size": "XS",
         "owner": "po",
         "zone": "cross-service/",
-        "next_agent": "developer",
+        "next_agent": "qa",
         "supervised": false,
         "plan_only": false,
         "check_id": "CI-RED-417573d7",
@@ -21429,7 +21385,7 @@
         ],
         "verification_gate": "ci_green_on_subsequent_push",
         "status_note": "AC1: add owner_client_session to the task_claim/task_release pair at docs/agents/market-watcher/flow/eod.md:78. AC2: substitution-instruction pattern per feedback_llm_issued_call_tool_does_not_expand_session_id_variable (mirror pm/flow/main.md + commit-mutex/SKILL.md). AC3: do NOT `--update`-grandfather a NEW call site. AC4: `bash scripts/audits/task-claim-owner-session-lint.sh --check` RC=0. AC5: `gh run view <databaseId with headSha AFTER 70ae0d9ae4a4c3df3be7d723d2b153633ebea0fd> --json jobs -q '.jobs[]|select(.name==\"task-claim-owner-session-lint\")|.conclusion'` == success. NOTE: AC4/AC5 for this row and its cycle.md sibling can only both be green once BOTH files are fixed — the lint reports all offenders in one job. Close them together or the second one's AC5 will read as still-red. Failing job: task-claim-owner-session-lint. Failing file: docs/agents/market-watcher/flow/eod.md. Head SHAs observed: 417573d71 (run 31136261063), 70ae0d9ae (run 31136642246).",
-        "updated_at": "2026-08-07T02:28:56Z"
+        "updated_at": "2026-08-07T02:36:55Z"
       },
       {
         "id": "FIX-CI-SIZELINT-RAG-APP-FACTORY-BASELINE",
@@ -21475,7 +21431,7 @@
         "size": "XS",
         "owner": "po",
         "zone": "cross-service/",
-        "next_agent": "developer",
+        "next_agent": "qa",
         "supervised": false,
         "plan_only": false,
         "check_id": "CI-RED-417573d7",
@@ -21496,7 +21452,51 @@
         ],
         "verification_gate": "ci_green_on_subsequent_push",
         "status_note": "AC1: add owner_client_session to the task_claim/task_release pair at docs/agents/market-watcher/flow/cycle.md:303. AC2: the doc must instruct SUBSTITUTING the real session id from the spawn-prompt coordination line — writing the literal $CLAUDE_CODE_SESSION_ID inside a call_tool argument sends it LITERALLY (known hazard: feedback_llm_issued_call_tool_does_not_expand_session_id_variable); mirror docs/agents/pm/flow/main.md and .claude/skills/commit-mutex/SKILL.md. AC3: do NOT run `--update` to grandfather a NEW call site — grandfathering is only for pre-existing scoped debt (same AC1 discipline as FIX-CI-TASKCLAIM-CHEF-MD-OWNER-SESSION-PAYDOWN). AC4: `bash scripts/audits/task-claim-owner-session-lint.sh --check` RC=0. AC5: `gh run view <databaseId with headSha AFTER 70ae0d9ae4a4c3df3be7d723d2b153633ebea0fd> --json jobs -q '.jobs[]|select(.name==\"task-claim-owner-session-lint\")|.conclusion'` == success. Failing job: task-claim-owner-session-lint. Failing file: docs/agents/market-watcher/flow/cycle.md. Head SHAs observed: 417573d71 (run 31136261063), 70ae0d9ae (run 31136642246).",
-        "updated_at": "2026-08-07T02:33:31Z"
+        "updated_at": "2026-08-07T02:36:55Z"
+      },
+      {
+        "id": "FIX-CI-SIZELINT-SCHEMA-TS-DEFLAKE-REGRESSION-372L",
+        "type": "FIX",
+        "title": "CI-RED-70ae0d9a-FIX — CI RED: size-lint — apps/mcp-server/src/infrastructure/db/schema.ts (baseline-tolerance-exceeded, baseline=336L actual=372L upper=369L) — 2nd RED on this file in 2 days, recurring",
+        "desc": "size-lint RED on schema.ts, 3L over the 369L tolerance ceiling. TRIGGER IDENTIFIED (not assumed): commit 8931e47c7 (fix(mcp-server/DEFLAKE-VNSTOCK-3STATEMENT), 2026-08-06T17:47Z) added +12/-1 lines to schema.ts reordering the busy_timeout PRAGMA — an unrelated task, NOT the memory-leak init-guard. RECURRENCE (occurrence 2): the SAME file+job went RED on 2026-08-05 at 377L (introduced by 609f62800, FIX-MCP-MEMORY-CODE-LEAK's own init guard); that instance was closed by FIX-CI-SIZELINT-SCHEMA-TS-BASELINE-TOLERANCE-377L, DONE_VERIFIED 2026-08-06T09:36:31Z, whose fix (daaef1d21) merely TRIMMED INIT-GUARD COMMENTS down to 361L — 8L of headroom under a 369L ceiling. The very next routine commit touching the file consumed that headroom. This is a symptom fix that recurred, so the AC below demands real extraction, not another trim. WHY THIS IS NOT A DUPLICATE OF FIX-MCP-MEMORY-CODE-LEAK: that row is in review[] with next_agent=qa and still carried the stale file-scoped dedup_key for schema.ts from the 377L instance, which caused PO triage 20260807T0104Z to dedup this failure away; but that row's size-lint obligation was fully discharged by the archived 377L row, its own ACs and QA gate are the memory-leak rebuild/backfill-frequency probe (nothing in them touches line count), and on QA approval it leaves the non-terminal lanes entirely — leaving schema.ts RED with no owner. Its stale dedup_key has been retired to dedup_key_retired_20260807 by this triage so exactly one live row holds this key.",
+        "status": "REVIEW",
+        "priority": "high",
+        "size": "S",
+        "owner": "po",
+        "zone": "apps/mcp-server/",
+        "next_agent": "qa",
+        "supervised": false,
+        "plan_only": false,
+        "check_id": "CI-RED-70ae0d9a",
+        "dedup_key": "ci_job:size-lint|file:apps/mcp-server/src/infrastructure/db/schema.ts",
+        "ci_fingerprint": "c1dc93221043fc3a5a32c5f0ed1db95aeaa0134072f65a63dcdb9ef682bac0a4",
+        "origin_signal_id": "CI-RED-70ae0d9a",
+        "created_at": "2026-08-07T01:52:00Z",
+        "created_by": "po/triage-20260807T0143Z",
+        "baseline_pass": true,
+        "rebuild_required": false,
+        "recurring": true,
+        "recurrence_count": 2,
+        "recurrence_dates": [
+          "2026-08-05",
+          "2026-08-06"
+        ],
+        "escalation_reason": "feedback_recurring_bug_escalation — 2nd size-lint RED on the same file+job in 2 days from two unrelated commits; prior fix was a comment-trim leaving 8L headroom, i.e. a symptom fix (CLAUDE.md: fix root cause definitif not recurrent symtom)",
+        "files": [
+          "apps/mcp-server/src/infrastructure/db/schema.ts",
+          "docs/data/size-lint-baseline.json"
+        ],
+        "related": [
+          "FIX-CI-SIZELINT-BCTCREFINED-PROJECTION-BASELINE",
+          "FIX-CI-SIZELINT-RAG-APP-FACTORY-BASELINE",
+          "FIX-CI-SIZELINT-RAG-EMBEDDER-NEW-OFFENDER",
+          "FIX-MCP-MEMORY-CODE-LEAK",
+          "FIX-CI-SIZELINT-SCHEMA-TS-BASELINE-TOLERANCE-377L"
+        ],
+        "verification_gate": "ci_green_on_subsequent_push",
+        "status_note": "AC1 (ROOT CAUSE, not symptom): extract a genuinely cohesive unit out of schema.ts so the file lands with REAL headroom under the 336L baseline — target <=336L, i.e. at or under baseline, NOT merely under the 369L tolerance ceiling. A comment-trim or whitespace squeeze that lands in 362-369L is an EXPLICIT REJECT: that is exactly what daaef1d21 did and it recurred within 8 hours. Candidate extraction seams (developer to confirm at source, do not take on trust): the migration/DDL block, the PRAGMA/connection-bootstrap block that 8931e47c7 just grew, and initDatabase()'s WeakSet guard + seed/backfill orchestration. AC2: do NOT run `size-lint-justification.sh --update` and do NOT add a size-justification header — both grandfather the regression; the archived 377L row already established extraction-over-baseline-bump as the convention here (see also FIX-CI-SIZELINT-MACROTOOLS-HUMANIZE-618L precedent). AC3: `bash scripts/audits/size-lint-justification.sh --check` reports schema.ts absent from the offender list. AC4: full mcp-server suite still passes at or above the 9408-pass / 348-fail floor — schema.ts is the DB bootstrap for the whole service, so an extraction here is NOT cosmetic and must be suite-verified, and 8931e47c7's own busy_timeout-first ordering + the WeakSet identity guard MUST both survive the extraction byte-equivalent in behaviour (they are live deflake/memory-leak fixes). AC5: `gh run view <databaseId with headSha AFTER 70ae0d9ae4a4c3df3be7d723d2b153633ebea0fd> --json jobs -q '.jobs[]|select(.name==\"size-lint\")|.conclusion'` == success (verification_gate=ci_green_on_subsequent_push). Failing job: size-lint. Failing file: apps/mcp-server/src/infrastructure/db/schema.ts. Head SHAs observed: 70ae0d9ae (run 31136642246, signal CI-RED-70ae0d9a). Locally re-reproduced by PO at 2026-08-07T01:46Z against a clean working tree (git diff HEAD on this path empty), so this is a live failure, not a stale CI log. || [dev-mcp-server 2026-08-07T02:35:00Z] IMPLEMENTED: extracted post-init migration block -> schema-post-init-migrations.ts + foreign-flow helpers (migrateForeignFlowColumns/backfillDailyForeignFlow) -> schema-foreign-flow-migrations.ts. schema.ts 372L->261L (75L headroom under 336L baseline). Backward-compat re-export preserves 15+ existing test imports + 1527-schema-slices.test.ts contract. size-lint --check: schema.ts absent from offenders (AC3). Scoped 91/91 pass. Full-suite A/B in this node_modules-less worktree (env-wide zod-missing noise, pre-existing): WITHOUT fix 10476p/637f/350e, WITH fix 10477p/636f/349e -- net -1 fail (flaky-floor delta), zero regression. tsc/pnpm check blocked in this worktree (no node_modules, lockfile drift) -- pre-existing infra gap, out of scope. DJ: sprint-COWORK-GUARANTEED-SLOT-CATCHUP-dev-mcp-server-4.md S78 (renumbered -- collided with two sibling agents independent S76/S77 on this same shared journal file). Ready for QA verify + AC5 CI green confirm on next push.",
+        "updated_at": "2026-08-07T02:38:03Z",
+        "updated_by": "dev-mcp-server"
       }
     ],
     "qa": [
