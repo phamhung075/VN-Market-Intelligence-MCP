@@ -790,3 +790,15 @@
 **Mitigation:** No immediate action beyond signal routing.
 
 ---
+
+## Anomaly: A-30-RAG-SERVICE · rag-service memory: loss of reclamation (99.55%, 4.9MiB free)
+**Severity:** WARN | **Date:** 2026-08-07 | **Status:** OPEN
+**Location:** host/rag-service
+**Details:** All 12 samples over 275s at >99.3% with zero downward reclamation dips — confirms genuine memory pressure, not GC sawtooth. VmHWM >> VmRSS but stuck high.
+**Impact:** Container approaching OOM threshold; further memory allocation bursts could trigger OOMKilled. ACK entry now below 40MiB floor (MEM_FLOOR_MIB threshold).
+**Root cause:** rag-service embedder model singleton holds ~700MiB baseline with no release path; under capacity constraint with FU-RAG-DEPLOY-MEMORY tracking the fix.
+**Zone owner:** dev-rag-service
+**Last reported:** 2026-08-07T05:21:25Z (signal sys-20260807T052117-0aa8, system-auditor -> po, dedup_key=memory_pressure:rag-service:A-30-loss-of-reclamation, WARN Telegram sent)
+**Mitigation:** No immediate action beyond signal routing.
+
+---
