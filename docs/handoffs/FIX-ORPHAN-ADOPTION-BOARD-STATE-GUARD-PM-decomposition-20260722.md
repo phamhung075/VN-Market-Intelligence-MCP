@@ -51,6 +51,18 @@ All tasks created in `.task_board.ready[]` with status=READY, priority=P0, super
 - Malformed/absent existing payload handled non-fatally → build fresh object from patch
 - Backward compatible: existing callers passing neither param reproduce byte-identical behavior
 
+#### [Developer] Implementation Record — 2026-08-07 (dev-team RLC dispatch)
+
+- **Files modified:** `apps/mcp-server/src/infrastructure/db/coordinationStore.ts:723-943` — `heartbeatTask()`/`releaseTask()` gain an additive optional 3rd `options` param (`HeartbeatOptions`/`ReleaseOptions`); new private `parseJsonObject()` helper (EC-6-safe JSON parse, never throws).
+- **Tests written:** `apps/mcp-server/src/infrastructure/__tests__/coordinationStore.test.ts` (new) — 13 tests / 27 `expect()` calls, GREEN. Confirmed RED (7/13 failing) against pre-implementation code.
+- **Git commits:** `d6c4e6006` — feat(mcp-server): FR-1/FR-2 task_heartbeat ttl_seconds/payload_patch + null-session ladder
+- **tsc status:** clean ✓
+- **Full suite:** targeted merge-gate suite (18 files touching coordinationStore/lock mechanics) 307/307 pass, 0 regressions ✓. Repo-wide `bun test`: 15196 pass / 45 fail / 1 error / 40 skip — matches the documented standing baseline (`FIX-MCP-SUITE-HEALTH-BASELINE`, `docs/policies/dev-standards.md:1364`, "drifted 40→42… verify zero NET NEW failures instead"), not a regression from this change.
+- **Docs updated:** `docs/WORK.md` (one-liner summary) | this Implementation Record. `docs/standards/mcp-tools.md`/`docs/agents/tools/package/developer.md` intentionally NOT touched — the MCP-exposed `task_heartbeat`/`task_release` Zod schemas are unchanged (Task 2's scope); those docs describe the currently-live tool surface, which this task does not alter.
+- **Graphify:** NOT run — this session's granted tool set is Read/Edit/Write/Bash only (no Skill-invocation tool), so `/graphify docs --update --no-viz` is structurally unreachable here (same class of tool-grant gap as the earlier 2026-08-07 dev-team RLC session, `feedback_devteam_flow_needs_nested_agent_spawn_subagent_cannot`). Doc changes this cycle are limited to a WORK.md one-liner + this Implementation Record (factual "what was done" entries, not new agent-facing API/schema prose — the Zod-schema-describing docs Task 2 will touch are the ones graphify indexing matters most for).
+- **Simplicity gate:** PASS — Q1 scope clean (every line maps to FR-1 ttl_seconds/payload_patch or FR-2 null-session ladder, no extra flags/branches), Q2 no single-use abstractions (`parseJsonObject`/`applyRenew` each have 2+ call sites), Q3 senior-test clean (no manager/handler/strategy pattern, ≤1 layer of indirection to the SQL), Q4 ratio <50% overhead (158 net new lines, all AC-mapped or doc-comment).
+- **Scope boundary (deliberate):** did NOT touch `coordinationTools.ts` (Zod schema/`.describe()` prose) — that is Task 2 (`FIX-ORPHAN-FR2-FR6-FR7-INTERFACE-COORDINATION-TOOLS`), which `depends_on` this task and is still `READY`/unclaimed as of this cycle. The new `options` param is therefore implemented but NOT YET reachable via any MCP tool call until Task 2 ships + the container rebuilds (NFR-3).
+
 ---
 
 ### Task 2: FIX-ORPHAN-FR2-FR6-FR7-INTERFACE-COORDINATION-TOOLS
