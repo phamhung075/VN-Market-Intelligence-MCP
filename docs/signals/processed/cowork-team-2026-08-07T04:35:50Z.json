@@ -1,0 +1,29 @@
+{
+  "from": "cowork-team",
+  "to": "router",
+  "type": "telemetry",
+  "ts": "2026-08-07T04:35:50Z",
+  "tick": "2026-08-07T04:15Z",
+  "dev_head": "in_progress",
+  "devq": 2,
+  "signal_backlog": 1,
+  "pressure_mode": "legacy",
+  "pressure_stale_reason": "emitted_at age ~27min > 20min threshold",
+  "calendar_status": "unknown",
+  "won_slots": [
+    "chef-intraday",
+    "alert-commander-market"
+  ],
+  "due_reasons": {
+    "chef-intraday": "cron 13 2-8 * * 1-5, last_fired 03:32:53Z, due",
+    "alert-commander-market": "cron */15 2-8 * * 1-5, last_fired 04:07:58Z, due"
+  },
+  "errors": [],
+  "chef_mutex_applied": false,
+  "_processed": {
+    "fingerprint": "6c69fb72374f48f3af058911a88c0a6d2c231b29ad05f868f41b4aeff35cb15f",
+    "processedAt": "2026-08-07T04:36:07Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

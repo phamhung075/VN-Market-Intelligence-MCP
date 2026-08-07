@@ -95,10 +95,10 @@
   "head": {
     "status": "in_progress",
     "active_task_id": "FIX-COWORK-SIGNAL-FILENAME-CYCLEID-KEYING",
-    "next_agent": "ba",
-    "next_action": "Supervised-Lane Sweep claim of FIX-COWORK-SIGNAL-FILENAME-CYCLEID-KEYING — spawn ba DIRECTLY (no zone-detect indirection; lane already resolved at promote time). supervised/plan_only preserved — do not clear.",
-    "updated_at": "2026-08-07T04:14:52Z",
-    "updated_by": "dev-team (supervised-lane sweep)"
+    "next_agent": "architect",
+    "next_action": "ba_spec_complete — architect to design implementation from docs/handoffs/FIX-COWORK-SIGNAL-FILENAME-CYCLEID-KEYING-BA-spec.md. supervised/plan_only preserved — do not clear.",
+    "updated_at": "2026-08-07T04:33:33Z",
+    "updated_by": "router (ba handoff sync, .head was stale after 77b118ee3)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
