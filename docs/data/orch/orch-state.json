@@ -93,12 +93,12 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "FIX-ORPHAN-FR1-FR2-INFRA-HEARTBEAT-LADDER",
-    "next_agent": "developer",
-    "next_action": "Ready-Lane Consumer claim of FIX-ORPHAN-FR1-FR2-INFRA-HEARTBEAT-LADDER — spawn developer DIRECTLY (no zone-detect indirection; row already carried a resolved next_agent/owner).",
-    "updated_at": "2026-08-07T18:25:24Z",
-    "updated_by": "dev-team (ready-lane consumer)"
+    "status": "idle",
+    "active_task_id": null,
+    "next_agent": null,
+    "next_action": "FIX-ORPHAN-FR1-FR2-INFRA-HEARTBEAT-LADDER closed out (developer -> REVIEW, next_agent=qa); outer lock released by router.",
+    "updated_at": "2026-08-07T18:50:32Z",
+    "updated_by": "router (RLC closeout)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
