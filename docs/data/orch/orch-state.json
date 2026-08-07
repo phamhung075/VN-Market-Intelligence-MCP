@@ -12899,39 +12899,6 @@
         "updated_at": "2026-08-07T00:08:51Z"
       },
       {
-        "id": "FIX-CI-TASKCLAIM-MARKETWATCHER-CYCLE-MD",
-        "type": "FIX",
-        "title": "CI-RED-417573d7-FIX-4 — CI RED: task-claim-owner-session-lint — docs/agents/market-watcher/flow/cycle.md",
-        "desc": "task-claim-owner-session-lint RED: cycle.md:303 `task_release(task_id=\"market-watcher-notebook:main\")` — flagged [NEW call site — no baseline entry for this file+snippet under any line]. NEW call site, not a line-shift regrandfather case, so unlike the chef.md/sprint-kickoff.md siblings this is genuinely-new debt introduced by a recent market-watcher flow edit (candidate commits touching these docs: 5bae0a65d TE-T05 composite merge, a71cc0df1 eod stale-caveat fix, 438e66958 transport-gap demote). Still RED at HEAD 70ae0d9ae (run 31136642246).",
-        "status": "BACKLOG",
-        "priority": "high",
-        "size": "XS",
-        "owner": "po",
-        "zone": "cross-service/",
-        "next_agent": "developer",
-        "supervised": false,
-        "plan_only": false,
-        "check_id": "CI-RED-417573d7",
-        "dedup_key": "ci_job:task-claim-owner-session-lint|file:docs/agents/market-watcher/flow/cycle.md",
-        "ci_fingerprint": "76565852f4c3009c704d4a2e8fdc7d588525e0a837b92ff3449d0ff183f51b2d",
-        "origin_signal_id": "CI-RED-417573d7",
-        "created_at": "2026-08-07T01:11:28Z",
-        "created_by": "po/triage-20260807T0104Z",
-        "baseline_pass": true,
-        "rebuild_required": false,
-        "files": [
-          "docs/agents/market-watcher/flow/cycle.md"
-        ],
-        "related": [
-          "FIX-CI-TASKCLAIM-CHEF-MD-OWNER-SESSION-PAYDOWN",
-          "FIX-CI-TASKCLAIM-MARKETWATCHER-EOD-MD",
-          "FIX-CI-GATES-INVISIBLE-TO-PREPUSH-DOCS-PATH-FILTER"
-        ],
-        "verification_gate": "ci_green_on_subsequent_push",
-        "status_note": "AC1: add owner_client_session to the task_claim/task_release pair at docs/agents/market-watcher/flow/cycle.md:303. AC2: the doc must instruct SUBSTITUTING the real session id from the spawn-prompt coordination line — writing the literal $CLAUDE_CODE_SESSION_ID inside a call_tool argument sends it LITERALLY (known hazard: feedback_llm_issued_call_tool_does_not_expand_session_id_variable); mirror docs/agents/pm/flow/main.md and .claude/skills/commit-mutex/SKILL.md. AC3: do NOT run `--update` to grandfather a NEW call site — grandfathering is only for pre-existing scoped debt (same AC1 discipline as FIX-CI-TASKCLAIM-CHEF-MD-OWNER-SESSION-PAYDOWN). AC4: `bash scripts/audits/task-claim-owner-session-lint.sh --check` RC=0. AC5: `gh run view <databaseId with headSha AFTER 70ae0d9ae4a4c3df3be7d723d2b153633ebea0fd> --json jobs -q '.jobs[]|select(.name==\"task-claim-owner-session-lint\")|.conclusion'` == success. Failing job: task-claim-owner-session-lint. Failing file: docs/agents/market-watcher/flow/cycle.md. Head SHAs observed: 417573d71 (run 31136261063), 70ae0d9ae (run 31136642246).",
-        "updated_at": "2026-08-07T01:14:01Z"
-      },
-      {
         "id": "FIX-CI-SIZELINT-SCHEMA-TS-DEFLAKE-REGRESSION-372L",
         "type": "FIX",
         "title": "CI-RED-70ae0d9a-FIX — CI RED: size-lint — apps/mcp-server/src/infrastructure/db/schema.ts (baseline-tolerance-exceeded, baseline=336L actual=372L upper=369L) — 2nd RED on this file in 2 days, recurring",
@@ -21497,6 +21464,39 @@
         "verification_gate": "ci_green_on_subsequent_push",
         "status_note": "AC1: add a `size-justification:` header to app_factory.py, OR move _idle_unload_loop() into its own module so the file drops under its 133L upper bound (the latter is preferred — build_lifespan() is already the service's composition root). AC2: do NOT run `--update` to re-grandfather (baseline regenerates WHOLESALE; would silently grandfather unrelated offenders). AC3: `bash scripts/audits/size-lint-justification.sh --check` RC=0. AC4: `gh run view <databaseId with headSha AFTER 70ae0d9ae4a4c3df3be7d723d2b153633ebea0fd> --json jobs -q '.jobs[]|select(.name==\"size-lint\")|.conclusion'` == success. Failing job: size-lint. Failing file: apps/rag-service/app_factory.py. Head SHAs observed: 417573d71 (run 31136261063), 70ae0d9ae (run 31136642246).",
         "updated_at": "2026-08-07T02:31:00Z"
+      },
+      {
+        "id": "FIX-CI-TASKCLAIM-MARKETWATCHER-CYCLE-MD",
+        "type": "FIX",
+        "title": "CI-RED-417573d7-FIX-4 — CI RED: task-claim-owner-session-lint — docs/agents/market-watcher/flow/cycle.md",
+        "desc": "task-claim-owner-session-lint RED: cycle.md:303 `task_release(task_id=\"market-watcher-notebook:main\")` — flagged [NEW call site — no baseline entry for this file+snippet under any line]. NEW call site, not a line-shift regrandfather case, so unlike the chef.md/sprint-kickoff.md siblings this is genuinely-new debt introduced by a recent market-watcher flow edit (candidate commits touching these docs: 5bae0a65d TE-T05 composite merge, a71cc0df1 eod stale-caveat fix, 438e66958 transport-gap demote). Still RED at HEAD 70ae0d9ae (run 31136642246).",
+        "status": "REVIEW",
+        "priority": "high",
+        "size": "XS",
+        "owner": "po",
+        "zone": "cross-service/",
+        "next_agent": "developer",
+        "supervised": false,
+        "plan_only": false,
+        "check_id": "CI-RED-417573d7",
+        "dedup_key": "ci_job:task-claim-owner-session-lint|file:docs/agents/market-watcher/flow/cycle.md",
+        "ci_fingerprint": "76565852f4c3009c704d4a2e8fdc7d588525e0a837b92ff3449d0ff183f51b2d",
+        "origin_signal_id": "CI-RED-417573d7",
+        "created_at": "2026-08-07T01:11:28Z",
+        "created_by": "po/triage-20260807T0104Z",
+        "baseline_pass": true,
+        "rebuild_required": false,
+        "files": [
+          "docs/agents/market-watcher/flow/cycle.md"
+        ],
+        "related": [
+          "FIX-CI-TASKCLAIM-CHEF-MD-OWNER-SESSION-PAYDOWN",
+          "FIX-CI-TASKCLAIM-MARKETWATCHER-EOD-MD",
+          "FIX-CI-GATES-INVISIBLE-TO-PREPUSH-DOCS-PATH-FILTER"
+        ],
+        "verification_gate": "ci_green_on_subsequent_push",
+        "status_note": "AC1: add owner_client_session to the task_claim/task_release pair at docs/agents/market-watcher/flow/cycle.md:303. AC2: the doc must instruct SUBSTITUTING the real session id from the spawn-prompt coordination line — writing the literal $CLAUDE_CODE_SESSION_ID inside a call_tool argument sends it LITERALLY (known hazard: feedback_llm_issued_call_tool_does_not_expand_session_id_variable); mirror docs/agents/pm/flow/main.md and .claude/skills/commit-mutex/SKILL.md. AC3: do NOT run `--update` to grandfather a NEW call site — grandfathering is only for pre-existing scoped debt (same AC1 discipline as FIX-CI-TASKCLAIM-CHEF-MD-OWNER-SESSION-PAYDOWN). AC4: `bash scripts/audits/task-claim-owner-session-lint.sh --check` RC=0. AC5: `gh run view <databaseId with headSha AFTER 70ae0d9ae4a4c3df3be7d723d2b153633ebea0fd> --json jobs -q '.jobs[]|select(.name==\"task-claim-owner-session-lint\")|.conclusion'` == success. Failing job: task-claim-owner-session-lint. Failing file: docs/agents/market-watcher/flow/cycle.md. Head SHAs observed: 417573d71 (run 31136261063), 70ae0d9ae (run 31136642246).",
+        "updated_at": "2026-08-07T02:33:31Z"
       }
     ],
     "qa": [

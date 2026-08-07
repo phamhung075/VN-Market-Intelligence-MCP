@@ -290,7 +290,11 @@ fi
 ```
 LOCK = call_tool(server="vn-market", tool="task_claim", arguments={
   task_id: "market-watcher-notebook:main", task_kind: "sprint-task",
-  owner_agent: "market-watcher", owner_client_session: $CLAUDE_CODE_SESSION_ID,
+  owner_agent: "market-watcher",
+  owner_client_session: "<resolved CLAUDE_CODE_SESSION_ID — REQUIRED, coordinationTools.ts:104-110;
+    substitute the real value from the spawn-prompt coordination line, NEVER write the literal
+    text "$CLAUDE_CODE_SESSION_ID" — a call_tool argument does not expand shell variables, it
+    sends the token literally>,
   ttl_seconds: 60
 })
 ```
@@ -300,7 +304,7 @@ If `claimed:false`: retry up to 2 more times (5s apart, same bounded-retry style
 git add docs/agent-memory/notebooks/market-watcher.md
 git_commit_retry -m "chore(memory/market-watcher): offhours cycle YYYY-MM-DD HH:MM UTC"
 ```
-`task_release(task_id="market-watcher-notebook:main")` in a finally, regardless of commit outcome.
+`task_release(task_id="market-watcher-notebook:main", owner_client_session="<same resolved value as the task_claim above>")` in a finally, regardless of commit outcome.
 > If commit fails after retries: log to BUG channel + `send_telegram(channel="bug", message="[market-watcher] offhours notebook commit failed — manual recovery needed: docs/protocols/head-lock-self-cure.md")`.
 
 **Step 4e — Exec-proof gate** → skill: `.claude/skills/exec-proof-gate/SKILL.md`
