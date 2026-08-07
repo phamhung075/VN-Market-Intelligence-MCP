@@ -3396,6 +3396,32 @@
         "payload_ref": "docs/data/db-integrity-history.json",
         "provenance": "detector",
         "audit_cycle_tag": null
+      },
+      {
+        "id": "sys-20260807T072347-5358",
+        "ts": "2026-08-07T07:23:47Z",
+        "from": "system-auditor",
+        "to": "dev-team",
+        "type": "db_integrity_breach",
+        "summary": "deep_fetch_queue: 4 rows stuck in vps-failed status: 2026-08-05T04:23:19-20Z (4 URLs from news sites nhandan.vn, vnbusin",
+        "severity": "WARN",
+        "status": "NEW",
+        "payload_ref": "docs/data/db-integrity-history.json",
+        "provenance": "detector",
+        "audit_cycle_tag": null
+      },
+      {
+        "id": "sys-20260807T082310-6ac3",
+        "ts": "2026-08-07T08:23:10Z",
+        "from": "system-auditor",
+        "to": "dev-team",
+        "type": "db_integrity_breach",
+        "summary": "ohlcv_violations: 336 OHLC violations found (O/H/L/C constraints violated). Span 20 distinct dates. Last 2 days = 0 fres",
+        "severity": "MED",
+        "status": "NEW",
+        "payload_ref": "docs/data/db-integrity-history.json",
+        "provenance": "detector",
+        "audit_cycle_tag": null
       }
     ],
     "last_triaged_at": "2026-07-29T06:25:00Z",
@@ -3580,8 +3606,8 @@
     ]
   },
   "task_board": {
-    "_updated_at": "2026-08-07T06:05:54Z",
-    "_updated_by": "po/triage-a30-20260807T0600Z",
+    "_updated_at": "2026-08-07T08:56:03Z",
+    "_updated_by": "po",
     "active_sprints": [
       {
         "evidence": "Router raw-verified (get_bctc_full live, post-rebuild) after BEQ-9/10 refine. Core extraction incident RESOLVED, but populating real scalars exposed a SEPARATE pre-existing analytics/serving layer with 4 defect clusters: (a) RATIO-COMPUTE — VNM ROE=0/ROA=0/EPS=12VND/NetDebt-EBITDA=-7.5e13x; DHG ROA=7,891,932.0% (analyst falsely claimed fixed). Ratios emit 0 or astronomically wrong. (b) BANK-B02-TCTD-SERVING — SHB + EIB get_bctc_full returns 'balance sheet has no decomposition — forced-zero pass suspected'; banks UNSERVABLE despite DONE + committed scalars. (c) PERIOD-SEMANTICS — FPT 2025-Q4 rev=70112.8/NP=11225.5 are FULL-YEAR cumulative labeled 'Q4'; buildComparisonSection then compares cumulative-FY vs next-quarter -> false -82.2% mislabeled 'YoY'. (d) ENTITY-SCOPE — HPG 2025-Q4 is parent-only B01a (rev=0, conf44%) served as the canonical/headline HPG vs consolidated ~140k rev; misleading. PUBLISH-INTEGRITY GAP: NO semantic-sanity publish guard exists in orch-state (the triage-referenced 'Task #13' is NOT present). The BEQ-9/10 reports are now DONE -> flow into chef docs/agents/unified-agent/flow/market-analysis.md + market-analyst -> ROA 7.8M% / false YoY -82% / parent-only-headline CAN reach MARKET unattended. recurring-bug-escalation: BCTC area has >2 fix cycles -> architect root-cause SPIKE, not point-patch. | [dev-team 2026-06-03T11:44Z observation feeding BAL-0/BAL-1] After LF-SERVE-REFLOW recovered FPT Q1 absolute scalars (op_profit/ebitda/cash live-correct), get_bctc_full(FPT) STILL serves garbage DERIVED ratios: current_ratio=41527873060120x (denominator ~0), operating_margin_pct=0.0% (not recomputed from now-correct operating_profit). Confirms the analytics/serving derived-ratio layer is a distinct defect from scalar extraction. BAL-0 publish semantic-sanity gate MUST block current_ratio out-of-range before MARKET/FB; BAL-1 spike should pin the ratio recompute module. Repro: get_bctc_full(code=FPT).",
@@ -13344,6 +13370,25 @@
         "absorbs": [
           "FIX-AUDITOR-A30-VMHWM-VETO-TAUTOLOGY-FALSE-NEGATIVE (phantom id — referenced as depends[] by FIX-AUDITOR-TIER1-A30-MEM-SINGLE-CONTAINER-SCOPE but never existed in any lane or archive)"
         ]
+      },
+      {
+        "id": "FIX-DEDUPCHECK-MATCHEDTASKID-UNANCHORED-SUBSTRING-MISLABEL",
+        "type": "FIX",
+        "status": "BACKLOG",
+        "priority": "P2",
+        "size": "S",
+        "zone": "cross-service/",
+        "next_agent": "developer",
+        "title": "scripts/db-integrity-dedup-check.sh emits WRONG matched_task_id: unanchored jq contains() lets the hyphen literal form of a table name match agent-name/zone-path PROSE inside unrelated task titles, and matched_task_id takes $task_matches[0] in lane-concat order with no relevance ranking — table macro_indicators labels FIX-ORCHSTATE-TASKBOARD-HEAD-REINFLATION-GUARD (zero topical relation) on 2 consecutive DATA-tier sweeps. The already_open suppression verdict itself is CORRECT; this is an audit-trail LABEL defect only.",
+        "why_not_cosmetic": "Deterministic, not flaky: reproduced identically on sweep 1 (agent ac057262e0501e1f5, history #154), sweep 2 (agent a8ec7a7f676706182, history #155, scan_ts 2026-08-07T08:53:05Z), and again by PO at 2026-08-07T08:56Z. Recurring 2+ -> project policy mandates escalation rather than re-flagging. Real cost: the dedup audit trail actively MISDIRECTS — anyone tracing why a macro_indicators staleness finding was suppressed lands on an orch-state .task_board.head schema-guard task with zero relation to macro data, and the auditor history/dashboard rows carry that wrong id permanently.",
+        "po_root_cause_20260807T0856": "VERIFIED IN CODE by PO (scripts/db-integrity-dedup-check.sh L99-124 read directly, not inferred from the escalation brief). Three composing defects. D1-PRECISION: L101 builds literal forms [t, gsub(_ -> -), gsub(_ -> space)], so macro_indicators yields the token 'macro-indicators'; L108 matches via contains() with NO word-boundary anchoring. This repo names an agent dev-macro-indicators (docs/agents/dev-macro-indicators/) and a zone apps/macro-indicators/ — both contain that literal and both appear as ATTRIBUTION PROSE in unrelated task titles. 3 of the 5 live matches are pure prose collisions: FIX-ORCHSTATE-TASKBOARD-HEAD-REINFLATION-GUARD ('dev-macro-indicators 2026-07-28T22:16Z re-inflated .task_board.head'), FIX-SBV-FETCHER-ZERO-VALUE-EMIT ('ZONE-CORRECTED from apps/macro-indicators/'), FACTORY-GUARD-CI-COMPROOT-LOGIC-IMPL ('fix 2 live macro-indicators offenders'). D2-ORDERING: L120 matched_task_id: $task_matches[0].id takes the FIRST row in lane-concat order (backlog+ready+in_progress+review+qa) with zero relevance ranking — the prose collision sits at concat idx 152 while the only genuine subject match FIX-MACRO-INDICATORS-EMPTY-COLUMNS (title literally opens 'macro_indicators latest row (id=675, vietnam)') sits at idx 321, so the false one wins deterministically on every sweep. D3-RECALL (secondary): the task PO actually folded the signal into per sys-20260807T030603-1e90 field po_disposition_20260807T0323, namely FIX-MACRO-TE-CHROMIUM-FETCH-BROKEN, is INVISIBLE to the matcher — its id carries no form of the table name and its title uses camelCase singular 'macroIndicatorRefreshJob'; L102 hardcodes the only curated synonym as daily_ohlcv -> ohlcv. No ranking fix alone can surface it.",
+        "po_evidence_20260807T0856": "Live PO reproduction 2026-08-07T08:56Z: `bash scripts/db-integrity-dedup-check.sh --table macro_indicators` -> {already_open:true, keywords:'macro indicators,macro-indicators,macro_indicators', matched_task_id:'FIX-ORCHSTATE-TASKBOARD-HEAD-REINFLATION-GUARD', matched_signal_id:'sys-20260807T030603-1e90', matched_signal_status:'triaged'}. Full match set with lane-concat index and which keyword form hit: [152 FIX-ORCHSTATE-TASKBOARD-HEAD-REINFLATION-GUARD (hyphen form ONLY), 321 FIX-MACRO-INDICATORS-EMPTY-COLUMNS (hyphen AND underscore — the only true subject match), 503 FIX-DOWJONES-STALE-WRONG-VALUE (hyphen only, via 'zone dev-macro-indicators.'), 516 FIX-SBV-FETCHER-ZERO-VALUE-EMIT (hyphen only), 546 FACTORY-GUARD-CI-COMPROOT-LOGIC-IMPL (hyphen only)]. Key discriminator observed: the UNDERSCORE form is high-precision here and the HYPHEN form is the entire noise source.",
+        "po_ac_20260807T0856": "AC-1: `--table macro_indicators` against the LIVE board must return a topically-correct matched_task_id (FIX-MACRO-INDICATORS-EMPTY-COLUMNS at minimum; FIX-MACRO-TE-CHROMIUM-FETCH-BROKEN also acceptable if D3 is addressed), never FIX-ORCHSTATE-TASKBOARD-HEAD-REINFLATION-GUARD. AC-2: already_open MUST remain true for macro_indicators — suppression behaviour is correct today and changing it is explicitly OUT of scope; add a regression guard asserting it. AC-3: replay across ALL 17 tables the cron sweeps (.claude/commands/crons/cron-db-data-integrity.md L93-96) recording before/after matched_task_id per table; no table may flip already_open true -> false as a side effect of the label fix. PO pre-verified all 17 currently return already_open=true, and for deep_fetch_queue / deep_fetch_stats that is LEGITIMATELY signal-side (real open db_integrity_breach rows sys-20260807T072347-5358 and sys-20260806T065709-49e3) with ZERO task matches — do not 'fix' those two. AC-4: prefer RANKING over blunt filtering — score exact/underscore-form and id-prefix hits above a hyphen-form hit that occurs only in title prose; a blunt 'underscore-only' rule would trade this bug for a recall bug because genuine matches such as FIX-MACRO-INDICATORS-EMPTY-COLUMNS hit BOTH forms. AC-5: emit ALL matches, not just the positional first — add matched_task_ids[] alongside the singular field so the audit trail no longer depends on an arbitrary lane-concat pick; retain matched_task_id for caller back-compat. AC-6: note that naive \\b word-boundary anchoring is INSUFFICIENT on its own — \\bmacro-indicators\\b still matches inside 'dev-macro-indicators' — which is precisely why AC-4 ranking, not anchoring alone, must be the primary mechanism.",
+        "po_scope_guard_20260807T0856": "NOT a live data-integrity finding. Do NOT re-open signal sys-20260807T030603-1e90 (status=triaged, correctly folded into FIX-MACRO-TE-CHROMIUM-FETCH-BROKEN per its own po_disposition_20260807T0323). Do NOT widen or narrow the already_open suppression semantics — the deliberately-coarse table-level match is a documented, previously-accepted trade-off recorded in the script header and in the parent task's AC-3 replay decision doc; this task fixes the LABEL only. The two detection-only DATA-tier sweeps correctly deferred the fix; router escalated under the recurring-bug policy (2+ occurrences of the same defect must be escalated, not re-flagged).",
+        "po_parent_20260807T0856": "Regression against FIX-AUDITOR-DEDUP-TASKBOARD-PRECHECK-NOT-ENFORCED (AC-1), which authored this script on 2026-08-06; that parent is no longer in any live lane (cold-evicted). Its AC-3 replay sampled 9 tables and demonstrably did NOT include macro_indicators — the colliding row FIX-ORCHSTATE-TASKBOARD-HEAD-REINFLATION-GUARD was already on the board when that replay ran (its own title references 2026-07-28), so the sample gap, not a later board change, is why this shipped green.",
+        "po_minted_by": "po",
+        "po_minted_at": "2026-08-07T08:56:03Z",
+        "updated_at": "2026-08-07T09:01:46Z"
       }
     ],
     "closed_sprints": [
