@@ -94,11 +94,10 @@
   ],
   "head": {
     "status": "idle",
+    "updated_at": "2026-08-07T19:11:59Z",
+    "updated_by": "architect",
     "active_task_id": null,
-    "next_agent": null,
-    "next_action": "FIX-ORPHAN-FR1-FR2-INFRA-HEARTBEAT-LADDER closed out (developer -> REVIEW, next_agent=qa); outer lock released by router.",
-    "updated_at": "2026-08-07T18:50:32Z",
-    "updated_by": "router (RLC closeout)"
+    "next_agent": null
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -9259,36 +9258,6 @@
         "acceptance": "grep orch-sentinel docs/references/tree-map.md returns 2 write-ownership rows AND jq .project.agents[]|select(.id==\"orch-sentinel\") docs/data/system-map.json is non-empty."
       },
       {
-        "id": "SPIKE-BCTC-Q1-2026-SERVABILITY-CENSUS",
-        "type": "SPIKE",
-        "status": "BACKLOG",
-        "priority": "high",
-        "size": "M",
-        "zone": "apps/mcp-server",
-        "owner": "po",
-        "next_agent": "architect",
-        "plan_only": true,
-        "supervised": true,
-        "origin_signal_id": "devteam-20260721T152332-bctcscope",
-        "title": "SPIKE: measure the TRUE per-watchlist-ticker Q1-2026 BCTC servability through the SERVING path (get_bctc_full) — ops SERVABLE/UNSERVABLE classification is self-contradictory (29 servable + ~40 unservable of 58) and wrong on 3/4 router-sampled; produce a reliable census + per-ticker 3-mode breakdown to decide whether remediation needs an epic",
-        "question": "For every watchlist ticker, what does get_bctc_full(2026,Q1) actually return, and for each unservable one which of the 3 modes applies: (1) row present total_assets=0 CORRUPT SKIP, (2) row absent entirely, (3) row present non-zero in DB but API-gated by validation-failed/low-confidence? What is the true unservable count vs the ~40/58 estimate? Does the SSI/NVL servable(07-15)->unservable(07-21) regression prove the mode-1 reparse-corruption is spreading beyond the 16 named tickers?",
-        "method": "Probe BOTH planes per ticker: (a) SERVING plane get_bctc_full via gateway call_tool (user-visible truth); (b) DB plane row-existence + total_assets + validation_status/confidence to separate mode-2 (absent) from mode-3 (present-but-gated) which are indistinguishable to any caller. Cross-join to get_earnings_calendar NGAY NOP state. Do NOT trust the ops SERVABLE column as baseline (self-contradictory + wrong on 3/4 sampled).",
-        "deliverable": "findings doc: per-ticker census table (ticker -> serving result -> mode 1/2/3) + true unservable count + explicit epic-vs-fold recommendation routing each mode to its existing home (mode-1 -> FIX-BCTC-REPARSE-BATCH-CORRUPTION-NGAYNOP-FLIP, mode-2 -> FIX-BCTC-Q1-2026-STORED-PDF-INGEST-STALL-15T, mode-3 -> FIX-BCTC-VALIDATION-GATE-NONBANK-ZERO-SCALE) or a NEW row only if the census reveals a 4th mode / genuine uncovered scope gap.",
-        "scope_decision": "The remediation epic-vs-multiple-FIXes decision is DEFERRED to this census output. PO did NOT mint speculative remediation rows on ops's unreliable figures, and did NOT widen the in-flight reparse FIX. This SPIKE is the missing MEASUREMENT the scope decision waits on.",
-        "timebox": 180,
-        "refs": [
-          "feedback_same_db_tools_diverge_rowcount",
-          "feedback_remediation_overclaims_derived_layer",
-          "feedback_empty_read_is_not_evidence_confirm_tool_targets_store",
-          "project_data_serve_integrity"
-        ],
-        "note": "Minted from dev-team scope_escalation devteam-20260721T152332-bctcscope (router-verified through the serving path, live 2026-07-21T15:2xZ). Prior-art checked: the 3 mode-homes already exist (FIX-BCTC-REPARSE / FIX-BCTC-Q1-2026-STORED-PDF-INGEST-STALL-15T / FIX-BCTC-VALIDATION-GATE-NONBANK-ZERO-SCALE); only the cross-watchlist census/measurement was missing — that is all this mints (no over-mint of remediation). supervised:true blocks BOUNDED-1 idle auto-pickup.",
-        "created_at": "2026-07-21T15:45:15Z",
-        "created_by": "po-signaldrain-20260721T1537Z",
-        "router_refinement_20260721T1549": "ROUTER REFINEMENT (scope_correction devteam-20260721T154949-bctcscopecorr, 2026-07-21T15:49Z) — NARROWED FOCUS: the unservable set is NOT one undifferentiated ~40; it decomposes into (1) ~16 mode-1 total_assets=0 -> FIX-BCTC-REPARSE (in flight), (2) 15 stored-PDF-never-ingested {DBC DGC DXG FRT GEX HUT KDC KDH MSN PDR PLX SAB SHB VJC VND} -> FIX-BCTC-Q1-2026-STORED-PDF-INGEST-STALL-15T (already RAW-verified 07-15), (3) {NVL SSI VCI HCM} genuinely unclassified. This SPIKE is therefore narrowed from a full-watchlist census to: classify group (3) into a mode, VERIFY the 16+15+4=35 decomposition is EXHAUSTIVE vs the ~40/58 serving-path estimate (surface any residual unclassified ticker), and resolve the SSI/NVL servable(07-15)->unservable(07-21) contradiction (possible mode-1 spread). SEQUENCING: run this AFTER pdf-extractor recovery — the serving-path (get_bctc_full) probes are unreliable while pdf-extractor is down ~21h (FailingStreak=2544; api-gateway /health reports pdf:down, 2001ms).",
-        "po_decision_a_20260721T16": "PO DECISION (a) — group (3) {NVL SSI VCI HCM} gets NO new row; it FOLDS into this SPIKE (PO signal-drain 2026-07-21T16:xxZ). RAW evidence gathered this tick via gateway get_bctc_full(2026,Q1): NVL, SSI, VCI, HCM all return the literal string 'Chua co du lieu BCTC' — BYTE-IDENTICAL to MSN, which is a confirmed member of the mode-2 cohort FIX-BCTC-Q1-2026-STORED-PDF-INGEST-STALL-15T. By contrast VNM and VIC return '[CORRUPT DATA — SKIP] ... total_assets=0', the mode-1 signature. So the serving plane cleanly separates mode-1 from {mode-2, mode-3} but CANNOT separate mode-2 (row absent) from mode-3 (row present but API-gated) — exactly as this SPIKE's own method section already states. Minting a 4th row for group (3) would therefore mint a row whose failure mode is UNMEASURED and is indistinguishable at the serving layer from an existing row's cohort — the same duplicate-mint class the router self-corrected for. Group (3) is instead added to this SPIKE's census input set; the DB-plane probe this SPIKE already owns is what decides fold-vs-new. A new row is warranted ONLY if the DB plane shows a genuine 4th mode. ALSO NOTE for the census: VNM and VIC carry the mode-1 signature but are not named in the reparse row's 16-ticker title — treat the 16 as a lower bound and re-enumerate mode-1 from the serving plane too. SEQUENCING CORRECTION to router_refinement_20260721T1549: that note says to run this SPIKE AFTER pdf-extractor recovery because serving-path probes are unreliable during the outage. That is NOT correct and would needlessly block the measurement — get_bctc_full SERVES from the database and is demonstrably reliable right now (this tick it returned full servable statements for HPG and FPT, the corrupt-skip banner for VNM/VIC, and the absent banner for NVL/SSI/VCI/HCM/MSN — three cleanly distinguishable outcomes). pdf-extractor is required for INGEST/re-extraction, not for serving. This SPIKE is therefore UNBLOCKED and may run NOW, in parallel with the pdf-extractor deploy gate; only the two remediation FIX rows need pdf-extractor healthy."
-      },
-      {
         "id": "FIX-COMMIT-SWEEP-VICTIM-SELF-DETECT",
         "type": "FIX",
         "status": "BACKLOG",
@@ -16097,34 +16066,6 @@
         "design_brief": "docs/architecture-briefs/2026-08-07-fix-mcp-sse-session-manager-reaper.md"
       },
       {
-        "id": "FIX-SIGNALQUEUE-RECEIVER-DELIVERY-CONTRACT",
-        "title": "PLAN-ONLY: signal-dashboard receivers-table lists unified-agent + alert-commander as valid 'to' targets but NEITHER flow has an inbox/signal-dashboard READ step -> rows addressed to them are structurally undeliverable (dark); spawn-fanout.md Step 5 spawn prompt carries no signal payload. Architect decide: (a) add inbox READ step to both flows, (b) make spawn-fanout deliver matched NEW rows, or (c) remove both from the receivers table.",
-        "status": "READY",
-        "owner": "po",
-        "zone": "cross-service/",
-        "next_agent": "architect",
-        "priority": "P1",
-        "plan_only": true,
-        "created_at": "2026-07-21T15:28:00Z",
-        "created_by": "po-signalqueue-triage-20260721",
-        "origin_signal_id": "cow-20260721T144500",
-        "sibling_of": "FIX-COWORK-STEP0A-TOPO-DRAIN-STATUS-CONTRACT",
-        "status_note": "AC: every receiver in .claude/skills/signal-dashboard/SKILL.md Receivers table either (1) has a live inbox drain step in its flow OR (2) is removed from the table - no 'to' value may be a structural no-op. Evidence: docs/signals/cowork-team-20260721T144500-inbox-gap.json. Live casualty: po-20260720T052606 (HIGH CHEF-L6-GOLD-FALSE-PREDICATE, to=unified-agent, dark 33h+, LEFT NEW deliberately). Sibling FIX-COWORK-STEP0A-TOPO-DRAIN-STATUS-CONTRACT covers the po->dev-team NEW/READ filter mismatch - design the full receiver-delivery contract together. The casualty's false gold predicate is separately tracked by SPIKE-CTG-FALSE-PRESENCE-BLINDSPOT.",
-        "po_ordering_ruling": "LANDS FIRST of the pair. Ruling by po 2026-07-21T19:29:49Z on cowork escalation cow-20260721T172415, which asked for the ORDERING of the two existing rows to be graded and explicitly asked that no new row be minted. Honoured: no row minted. Rationale: a terminal signal_queue status (READ/DONE) is only safe once a defined receiver consumes the row. Defining the status contract first would mark rows terminal while they are still structurally undeliverable — the exact strand this escalation is objecting to. Delivery capability must precede status semantics.",
-        "po_repro_case": "po-20260720T052606 (from=po, to=unified-agent, methodology-flag, HIGH) is the canonical live reproduction and MUST be used as the acceptance fixture. It has sat status=NEW since 2026-07-20 addressed to a COWORK agent. dev-team drain 0a-D (docs/agents/dev-team/flow/drain-signals.md) collects only rows whose 'to' matches po or a dev-team-addressed agent, so no drain will ever pick it up. It is not backlogged — it is undeliverable. Its content is a live methodology correction for unified-agent (stop pasting the literal gold >$4,300 L6 token, compute from live gold instead), so the cost of the missing delivery path is ongoing wrong output, not merely a stuck row.",
-        "po_status_decision": "This row is DELIBERATELY LEFT status=NEW by po. Marking it READ would destroy the only record that a message was never delivered, and NEW costs nothing here precisely because no drain matches a cowork-addressed row — zero churn. It must stay NEW until a delivery path exists.",
-        "updated_at": "2026-08-07T18:23:30Z",
-        "updated_by": "po/triage-20260728T13",
-        "router_fileplane_lock_asymmetry_20260721T1946": "ROUTER — RELATED GAP ON THE FILE PLANE, UNROUTED ACROSS SEVERAL TICKS, RECORDED HERE BECAUSE THIS ROW OWNS DELIVERY SEMANTICS. docs/agents/dev-team/flow/drain-signals.md step 0a-D claims a per-row `dashboard-row` lock (row_key = 'dash:signal_queue:' + row.id, ttl 1800) and SKIPS on collision, so the DB plane is guarded against a concurrent peer. The file plane at step 0a-1 has NO equivalent peer-collision guard: it can `mv` a signal file out of docs/signals/ while a live peer is mid-read on that exact path. The two planes of one drain therefore run at different isolation levels, and the unguarded one is the one that mutates the filesystem. This is adjacent to but distinct from the undeliverable-orphan problem this row already covers — same subsystem, and a receiver contract that does not state which plane holds what lock will not close it. PO to decide whether it folds here or needs its own row; router did not mint.",
-        "po_ruling_fileplane_split_20260721T2011": "RULING 4 — DOES NOT FOLD HERE; OWN ROW MINTED AS FIX-DRAIN-FILEPLANE-PEER-COLLISION-GUARD (backlog, P1). This row is PLAN-ONLY and asks an ARCHITECT to decide a receiver-contract question: whether undeliverable 'to' targets get an inbox step, get delivery pushed to them, or get removed from the table. The file-plane lock asymmetry is a concrete concurrency defect in an existing drain step with a known shape and a developer owner. Different question, different agent, different definition of done — and this row's own status is PLAN-ONLY, so folding an implementable defect into it would strand the defect behind an architecture decision that has not been scheduled. Router was right that they are adjacent and right not to merge them. CROSS-LINK IS RETAINED IN BOTH DIRECTIONS: whatever receiver contract this row settles on MUST state which plane holds which lock, and the new row must not be closed in a way that contradicts the contract this row produces.",
-        "supervised": true,
-        "po_lane_repair_20260728": "LANE REPAIR — acute, chain-motivated. Verified by execution: P1, plan_only:true, supervised absent, next_agent architect, depends_on empty and satisfied => is_bounded1_eligible false AND SLS-select false, i.e. no lane. It is ALSO the sole blocking dependency of FIX-COWORK-STEP0A-TOPO-DRAIN-STATUS-CONTRACT, which PO lane-repaired earlier in this same tick — repairing the dependent alone would have been useless, since deps_satisfied() would have held it behind a predecessor that itself could never dispatch. Set supervised:true (the missing half of the pair) so the whole two-row chain can move. This is one of the 48 plan_only-without-supervised rows censused on FIX-BOUNDED1-SUPERVISED-LANE-NO-SWEEPER; the other 47 are deliberately left untouched as that row's acceptance evidence.",
-        "promoted_at": "2026-08-07T18:23:29Z",
-        "promoted_by": "dev-team (supervised-lane sweep)",
-        "promotion_note": "Supervised-Lane Sweep — assigned dispatch_lane='architect' (priority_rank=1); supervised/plan_only flags preserved, gate NOT disabled — see FIX-BOUNDED1-SUPERVISED-LANE-NO-SWEEPER",
-        "dispatch_lane": "architect"
-      },
-      {
         "id": "FIX-INFRA-CRITICAL-VOLUME-PRESENCE-HEALTHCHECK",
         "title": "Post-rebuild critical-volume PRESENCE healthcheck: fail-loud (and where safe auto-reseed) when a producer-critical named/model-cache volume is empty, so a VM-rebuild cannot silently re-empty pek_model_cache (or any manifest volume) without alerting — the 2026-07-15 rebuild wiped TWO volumes (market_data + pek_model_cache) and only market_data was caught",
         "owner": "ops",
@@ -16151,6 +16092,41 @@
         "dispatch_lane": "ops",
         "updated_at": "2026-08-07T18:24:50Z",
         "revert_note": "SLS mechanically claimed this despite the row own plan_only note explicit \"do NOT dispatch\" prose gate (no ops confirmation of PEK re-seed found) -- reverted to ready[] by dev-team, not dispatched. SLS has no prose/precondition gate analogous to BOUNDED-1 PROSE-SEQUENCING GATE; flagged to PO for a real gate fix."
+      },
+      {
+        "id": "SPIKE-BCTC-Q1-2026-SERVABILITY-CENSUS",
+        "type": "SPIKE",
+        "status": "READY",
+        "priority": "high",
+        "size": "M",
+        "zone": "apps/mcp-server",
+        "owner": "po",
+        "next_agent": "architect",
+        "plan_only": true,
+        "supervised": true,
+        "origin_signal_id": "devteam-20260721T152332-bctcscope",
+        "title": "SPIKE: measure the TRUE per-watchlist-ticker Q1-2026 BCTC servability through the SERVING path (get_bctc_full) — ops SERVABLE/UNSERVABLE classification is self-contradictory (29 servable + ~40 unservable of 58) and wrong on 3/4 router-sampled; produce a reliable census + per-ticker 3-mode breakdown to decide whether remediation needs an epic",
+        "question": "For every watchlist ticker, what does get_bctc_full(2026,Q1) actually return, and for each unservable one which of the 3 modes applies: (1) row present total_assets=0 CORRUPT SKIP, (2) row absent entirely, (3) row present non-zero in DB but API-gated by validation-failed/low-confidence? What is the true unservable count vs the ~40/58 estimate? Does the SSI/NVL servable(07-15)->unservable(07-21) regression prove the mode-1 reparse-corruption is spreading beyond the 16 named tickers?",
+        "method": "Probe BOTH planes per ticker: (a) SERVING plane get_bctc_full via gateway call_tool (user-visible truth); (b) DB plane row-existence + total_assets + validation_status/confidence to separate mode-2 (absent) from mode-3 (present-but-gated) which are indistinguishable to any caller. Cross-join to get_earnings_calendar NGAY NOP state. Do NOT trust the ops SERVABLE column as baseline (self-contradictory + wrong on 3/4 sampled).",
+        "deliverable": "findings doc: per-ticker census table (ticker -> serving result -> mode 1/2/3) + true unservable count + explicit epic-vs-fold recommendation routing each mode to its existing home (mode-1 -> FIX-BCTC-REPARSE-BATCH-CORRUPTION-NGAYNOP-FLIP, mode-2 -> FIX-BCTC-Q1-2026-STORED-PDF-INGEST-STALL-15T, mode-3 -> FIX-BCTC-VALIDATION-GATE-NONBANK-ZERO-SCALE) or a NEW row only if the census reveals a 4th mode / genuine uncovered scope gap.",
+        "scope_decision": "The remediation epic-vs-multiple-FIXes decision is DEFERRED to this census output. PO did NOT mint speculative remediation rows on ops's unreliable figures, and did NOT widen the in-flight reparse FIX. This SPIKE is the missing MEASUREMENT the scope decision waits on.",
+        "timebox": 180,
+        "refs": [
+          "feedback_same_db_tools_diverge_rowcount",
+          "feedback_remediation_overclaims_derived_layer",
+          "feedback_empty_read_is_not_evidence_confirm_tool_targets_store",
+          "project_data_serve_integrity"
+        ],
+        "note": "Minted from dev-team scope_escalation devteam-20260721T152332-bctcscope (router-verified through the serving path, live 2026-07-21T15:2xZ). Prior-art checked: the 3 mode-homes already exist (FIX-BCTC-REPARSE / FIX-BCTC-Q1-2026-STORED-PDF-INGEST-STALL-15T / FIX-BCTC-VALIDATION-GATE-NONBANK-ZERO-SCALE); only the cross-watchlist census/measurement was missing — that is all this mints (no over-mint of remediation). supervised:true blocks BOUNDED-1 idle auto-pickup.",
+        "created_at": "2026-07-21T15:45:15Z",
+        "created_by": "po-signaldrain-20260721T1537Z",
+        "router_refinement_20260721T1549": "ROUTER REFINEMENT (scope_correction devteam-20260721T154949-bctcscopecorr, 2026-07-21T15:49Z) — NARROWED FOCUS: the unservable set is NOT one undifferentiated ~40; it decomposes into (1) ~16 mode-1 total_assets=0 -> FIX-BCTC-REPARSE (in flight), (2) 15 stored-PDF-never-ingested {DBC DGC DXG FRT GEX HUT KDC KDH MSN PDR PLX SAB SHB VJC VND} -> FIX-BCTC-Q1-2026-STORED-PDF-INGEST-STALL-15T (already RAW-verified 07-15), (3) {NVL SSI VCI HCM} genuinely unclassified. This SPIKE is therefore narrowed from a full-watchlist census to: classify group (3) into a mode, VERIFY the 16+15+4=35 decomposition is EXHAUSTIVE vs the ~40/58 serving-path estimate (surface any residual unclassified ticker), and resolve the SSI/NVL servable(07-15)->unservable(07-21) contradiction (possible mode-1 spread). SEQUENCING: run this AFTER pdf-extractor recovery — the serving-path (get_bctc_full) probes are unreliable while pdf-extractor is down ~21h (FailingStreak=2544; api-gateway /health reports pdf:down, 2001ms).",
+        "po_decision_a_20260721T16": "PO DECISION (a) — group (3) {NVL SSI VCI HCM} gets NO new row; it FOLDS into this SPIKE (PO signal-drain 2026-07-21T16:xxZ). RAW evidence gathered this tick via gateway get_bctc_full(2026,Q1): NVL, SSI, VCI, HCM all return the literal string 'Chua co du lieu BCTC' — BYTE-IDENTICAL to MSN, which is a confirmed member of the mode-2 cohort FIX-BCTC-Q1-2026-STORED-PDF-INGEST-STALL-15T. By contrast VNM and VIC return '[CORRUPT DATA — SKIP] ... total_assets=0', the mode-1 signature. So the serving plane cleanly separates mode-1 from {mode-2, mode-3} but CANNOT separate mode-2 (row absent) from mode-3 (row present but API-gated) — exactly as this SPIKE's own method section already states. Minting a 4th row for group (3) would therefore mint a row whose failure mode is UNMEASURED and is indistinguishable at the serving layer from an existing row's cohort — the same duplicate-mint class the router self-corrected for. Group (3) is instead added to this SPIKE's census input set; the DB-plane probe this SPIKE already owns is what decides fold-vs-new. A new row is warranted ONLY if the DB plane shows a genuine 4th mode. ALSO NOTE for the census: VNM and VIC carry the mode-1 signature but are not named in the reparse row's 16-ticker title — treat the 16 as a lower bound and re-enumerate mode-1 from the serving plane too. SEQUENCING CORRECTION to router_refinement_20260721T1549: that note says to run this SPIKE AFTER pdf-extractor recovery because serving-path probes are unreliable during the outage. That is NOT correct and would needlessly block the measurement — get_bctc_full SERVES from the database and is demonstrably reliable right now (this tick it returned full servable statements for HPG and FPT, the corrupt-skip banner for VNM/VIC, and the absent banner for NVL/SSI/VCI/HCM/MSN — three cleanly distinguishable outcomes). pdf-extractor is required for INGEST/re-extraction, not for serving. This SPIKE is therefore UNBLOCKED and may run NOW, in parallel with the pdf-extractor deploy gate; only the two remediation FIX rows need pdf-extractor healthy.",
+        "promoted_at": "2026-08-07T19:01:54Z",
+        "promoted_by": "dev-team (supervised-lane sweep)",
+        "promotion_note": "Supervised-Lane Sweep — assigned dispatch_lane='architect' (priority_rank=1); supervised/plan_only flags preserved, gate NOT disabled — see FIX-BOUNDED1-SUPERVISED-LANE-NO-SWEEPER",
+        "dispatch_lane": "architect",
+        "updated_at": "2026-08-07T19:01:55Z"
       }
     ],
     "review": [
@@ -22192,6 +22168,39 @@
         "claimed_by": "dev-team (ready-lane consumer)",
         "dispatch_lane": "developer",
         "dev_note": "FR-1/FR-2 implemented in coordinationStore.ts (heartbeatTask/releaseTask): ttl_seconds/payload_patch two-statement UPDATE + null-session ladder for orphan-signal rows (NFR-1 regression-tested). coordinationStore.test.ts new, 13/13 GREEN. Scope: coordinationStore.ts only — coordinationTools.ts Zod exposure is Task 2 (FIX-ORPHAN-FR2-FR6-FR7-INTERFACE-COORDINATION-TOOLS), still READY. Commits d6c4e6006/c4b7b2060."
+      },
+      {
+        "id": "FIX-SIGNALQUEUE-RECEIVER-DELIVERY-CONTRACT",
+        "title": "PLAN-ONLY: signal-dashboard receivers-table lists unified-agent + alert-commander as valid 'to' targets but NEITHER flow has an inbox/signal-dashboard READ step -> rows addressed to them are structurally undeliverable (dark); spawn-fanout.md Step 5 spawn prompt carries no signal payload. Architect decide: (a) add inbox READ step to both flows, (b) make spawn-fanout deliver matched NEW rows, or (c) remove both from the receivers table.",
+        "status": "REVIEW",
+        "owner": "po",
+        "zone": "cross-service/",
+        "next_agent": "pm",
+        "priority": "P1",
+        "plan_only": true,
+        "created_at": "2026-07-21T15:28:00Z",
+        "created_by": "po-signalqueue-triage-20260721",
+        "origin_signal_id": "cow-20260721T144500",
+        "sibling_of": "FIX-COWORK-STEP0A-TOPO-DRAIN-STATUS-CONTRACT",
+        "status_note": "AC: every receiver in .claude/skills/signal-dashboard/SKILL.md Receivers table either (1) has a live inbox drain step in its flow OR (2) is removed from the table - no 'to' value may be a structural no-op. Evidence: docs/signals/cowork-team-20260721T144500-inbox-gap.json. Live casualty: po-20260720T052606 (HIGH CHEF-L6-GOLD-FALSE-PREDICATE, to=unified-agent, dark 33h+, LEFT NEW deliberately). Sibling FIX-COWORK-STEP0A-TOPO-DRAIN-STATUS-CONTRACT covers the po->dev-team NEW/READ filter mismatch - design the full receiver-delivery contract together. The casualty's false gold predicate is separately tracked by SPIKE-CTG-FALSE-PRESENCE-BLINDSPOT.",
+        "po_ordering_ruling": "LANDS FIRST of the pair. Ruling by po 2026-07-21T19:29:49Z on cowork escalation cow-20260721T172415, which asked for the ORDERING of the two existing rows to be graded and explicitly asked that no new row be minted. Honoured: no row minted. Rationale: a terminal signal_queue status (READ/DONE) is only safe once a defined receiver consumes the row. Defining the status contract first would mark rows terminal while they are still structurally undeliverable — the exact strand this escalation is objecting to. Delivery capability must precede status semantics.",
+        "po_repro_case": "po-20260720T052606 (from=po, to=unified-agent, methodology-flag, HIGH) is the canonical live reproduction and MUST be used as the acceptance fixture. It has sat status=NEW since 2026-07-20 addressed to a COWORK agent. dev-team drain 0a-D (docs/agents/dev-team/flow/drain-signals.md) collects only rows whose 'to' matches po or a dev-team-addressed agent, so no drain will ever pick it up. It is not backlogged — it is undeliverable. Its content is a live methodology correction for unified-agent (stop pasting the literal gold >$4,300 L6 token, compute from live gold instead), so the cost of the missing delivery path is ongoing wrong output, not merely a stuck row.",
+        "po_status_decision": "This row is DELIBERATELY LEFT status=NEW by po. Marking it READ would destroy the only record that a message was never delivered, and NEW costs nothing here precisely because no drain matches a cowork-addressed row — zero churn. It must stay NEW until a delivery path exists.",
+        "updated_at": "2026-08-07T19:11:59Z",
+        "updated_by": "architect",
+        "router_fileplane_lock_asymmetry_20260721T1946": "ROUTER — RELATED GAP ON THE FILE PLANE, UNROUTED ACROSS SEVERAL TICKS, RECORDED HERE BECAUSE THIS ROW OWNS DELIVERY SEMANTICS. docs/agents/dev-team/flow/drain-signals.md step 0a-D claims a per-row `dashboard-row` lock (row_key = 'dash:signal_queue:' + row.id, ttl 1800) and SKIPS on collision, so the DB plane is guarded against a concurrent peer. The file plane at step 0a-1 has NO equivalent peer-collision guard: it can `mv` a signal file out of docs/signals/ while a live peer is mid-read on that exact path. The two planes of one drain therefore run at different isolation levels, and the unguarded one is the one that mutates the filesystem. This is adjacent to but distinct from the undeliverable-orphan problem this row already covers — same subsystem, and a receiver contract that does not state which plane holds what lock will not close it. PO to decide whether it folds here or needs its own row; router did not mint.",
+        "po_ruling_fileplane_split_20260721T2011": "RULING 4 — DOES NOT FOLD HERE; OWN ROW MINTED AS FIX-DRAIN-FILEPLANE-PEER-COLLISION-GUARD (backlog, P1). This row is PLAN-ONLY and asks an ARCHITECT to decide a receiver-contract question: whether undeliverable 'to' targets get an inbox step, get delivery pushed to them, or get removed from the table. The file-plane lock asymmetry is a concrete concurrency defect in an existing drain step with a known shape and a developer owner. Different question, different agent, different definition of done — and this row's own status is PLAN-ONLY, so folding an implementable defect into it would strand the defect behind an architecture decision that has not been scheduled. Router was right that they are adjacent and right not to merge them. CROSS-LINK IS RETAINED IN BOTH DIRECTIONS: whatever receiver contract this row settles on MUST state which plane holds which lock, and the new row must not be closed in a way that contradicts the contract this row produces.",
+        "supervised": true,
+        "po_lane_repair_20260728": "LANE REPAIR — acute, chain-motivated. Verified by execution: P1, plan_only:true, supervised absent, next_agent architect, depends_on empty and satisfied => is_bounded1_eligible false AND SLS-select false, i.e. no lane. It is ALSO the sole blocking dependency of FIX-COWORK-STEP0A-TOPO-DRAIN-STATUS-CONTRACT, which PO lane-repaired earlier in this same tick — repairing the dependent alone would have been useless, since deps_satisfied() would have held it behind a predecessor that itself could never dispatch. Set supervised:true (the missing half of the pair) so the whole two-row chain can move. This is one of the 48 plan_only-without-supervised rows censused on FIX-BOUNDED1-SUPERVISED-LANE-NO-SWEEPER; the other 47 are deliberately left untouched as that row's acceptance evidence.",
+        "promoted_at": "2026-08-07T18:23:29Z",
+        "promoted_by": "dev-team (supervised-lane sweep)",
+        "promotion_note": "Supervised-Lane Sweep — assigned dispatch_lane='architect' (priority_rank=1); supervised/plan_only flags preserved, gate NOT disabled — see FIX-BOUNDED1-SUPERVISED-LANE-NO-SWEEPER",
+        "dispatch_lane": "architect",
+        "claimed_at": "2026-08-07T19:01:59Z",
+        "claimed_by": "dev-team (supervised-lane sweep)",
+        "architect_review_note": "Decision: HYBRID — SSOT-flagged push (new signal_queue_push flag on 6 cowork-schedule.json slots feeding spawn-fanout.md Step 5.2b, reusing dev-team's existing dash:signal_queue: lock) + minimal no-op-default consumption step added to chef.md/cycle.md. Rejects pure-(a) (task_claim/task_release marked Phase-2-not-active in both tool packages; would duplicate the CAS-guard dance cowork-team already centralizes; tran-ngoc-bau already implements a correct pull independently — generic push would race it) and (c) (both to-values are live multi-sender, removal reproduces the gap one level up). Repro correction: po-20260720T052606 is now status=triaged (PO folded it 2026-07-22 into FIX-CHEF-L6-GOLD-FALSE-PREDICATE/FIX-CHEF-L6-TOKEN-PERSISTENCE-RECURRING), not NEW as the row's stale po_repro_case field states — this corroborates rather than weakens the finding. Lock-plane statement (Sec 6 of brief) confirms DB-plane reuse only, file-plane untouched, no contradiction with FIX-DRAIN-FILEPLANE-PEER-COLLISION-GUARD. Full design: docs/architecture-briefs/2026-08-07-fix-signalqueue-receiver-delivery-contract.md",
+        "brief_ref": "docs/architecture-briefs/2026-08-07-fix-signalqueue-receiver-delivery-contract.md",
+        "architect_reviewed_at": "2026-08-07T19:11:59Z"
       }
     ],
     "qa": [
@@ -22339,7 +22348,7 @@
         }
       ]
     },
-    "last_triaged_at": "2026-08-07T18:23:29Z",
+    "last_triaged_at": "2026-08-07T19:01:54Z",
     "last_triaged_by": "dev-team (supervised-lane sweep)",
     "in_progress": [
       {
