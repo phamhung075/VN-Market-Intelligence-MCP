@@ -3,42 +3,44 @@
   "signal_type": "bctc_signal",
   "quarter": "Q1-2026",
   "mode": "routine",
-  "beat_miss": null,
-  "product": "Real estate development — residential projects and land-bank monetization (Dat Xanh Group)",
-  "customer": "Homebuyers/investors in HCMC and satellite provinces; project joint-venture partners",
-  "ops": "UNAVAILABLE this cycle — get_bctc_full(DXG) returns \"Chua co du lieu BCTC\" (no data), 8th+ consecutive cycle (c141-c148) despite DXG_2026_Q1.pdf (filed 2026-06-13) and DXG_2026_Q2.pdf (filed 2026-08-01) both present on the VPS. Extraction-pipeline gap, not a market event.",
-  "mgmt": "UNAVAILABLE this cycle — same data gap",
-  "data_quality": {
-    "status": "PERSISTENT-ABSENCE",
-    "consecutive_cycles": "8+",
-    "dev_team_signal": "open, guard bctc-dataquality:DXG:persistent-absence held this cycle (no re-emit, guard valid to ~2026-08-14)",
-    "root_task": "extraction pipeline has not parsed DXG_2026_Q1.pdf / DXG_2026_Q2.pdf into financial_reports DB despite both files being present"
-  },
-  "ey_spread": null,
-  "esc_gate": {
-    "esc1_accounting_manipulation": "UNEVALUABLE (no data)",
-    "esc2_balance_sheet": "UNEVALUABLE (no data)",
-    "esc3_ocf_vs_np": "UNEVALUABLE (no data)",
-    "esc4_nonop_share": "UNEVALUABLE (no data)",
-    "esc5_refine_confidence": {
-      "result": false,
-      "report_id": null,
-      "existing_refine_status": "PENDING"
-    }
+  "product": "Real estate development (residential projects), property sales",
+  "customer": "Individual homebuyers, investors — HCMC / southern VN residential market",
+  "ops": "get_bctc_full extraction returns 'Chưa có dữ liệu BCTC' — no structured financials this cycle (9th+ consecutive cycle, standing gap, guard held). get_sector_comparison (independent live-price data source, unaffected by the extraction gap) IS available this cycle: ROE 1.9% vs sector median 7.3% — well below peers, weak profitability",
+  "mgmt": "PE 66.5 vs sector median 16.1 (premium +312%) — richly valued despite weak returns; EY_SPREAD now computable from sector-comparison PE (was UNAVAILABLE in prior cycles): 1/66.5=1.50% EY - 5% deposit = -3.50pp → AVOID, do NOT post bullish. Q2-2026 filing overdue since 30/07/2026. KD Tap Kham(29) BAT LOI 100% (bearish) corroborates. NEW this cycle: get_cash_flow(DXG) returns implausible OCF magnitude (~4.2e18 VND millions, Q1-2026) — flagged as corrupt/unusable, NOT used in any calculation, not escalated (ESC-3 stays unevaluable since net_profit unavailable from the primary BCTC extraction)",
+  "as_of": "2026-08-07T21:11:00Z",
+  "stale_age_hours": null,
+  "ey_spread": {
+    "label": "AVOID",
+    "spread_pp": -3.5,
+    "pe": 66.5,
+    "roe_pct": 1.9,
+    "max_deposit_rate_pct": 5,
+    "note": "newly evaluable this cycle via get_sector_comparison; get_bctc_full itself still returns no data"
   },
   "kd_reading": {
     "hexagram": "Tap Kham (29)",
     "trend": "BAT LOI",
-    "recommendation": "BAN",
-    "confidence_pct": 100,
-    "note": "no conflict with data-gap status — directionally consistent with prior AVOID valuation verdict (last live PE=66.5 vs sector 16.1, ROE 1.9%, stale)"
+    "signal": "BAN",
+    "confidence_pct": 100
   },
-  "insider": "no significant insider activity",
-  "legal_risk": "none",
-  "as_of": "2026-08-07T18:00:00Z",
+  "esc_gate": {
+    "ESC-1": "unevaluable_no_bash",
+    "ESC-2": "unevaluable — no balance sheet data",
+    "ESC-3": "unevaluable — net_profit unavailable; get_cash_flow OCF value implausible/corrupt, discarded not used",
+    "ESC-4": "unevaluable — no P&L data",
+    "ESC-5": "unevaluable — no report_id (get_bctc_full returns no data)"
+  },
+  "insider_signal": "no significant insider activity",
+  "evidence_fragment_ids": [
+    1001,
+    1002,
+    1003
+  ],
+  "sentiment_trend_30d": "unavailable — no BCTC extraction this cycle",
+  "data_quality_note": "9th+ consecutive cycle with get_bctc_full absence for DXG; corrupt/implausible cash-flow magnitude observed this cycle (new detail, not previously logged) — worth a dedicated data-quality signal to dev-team if it recurs next cycle with the same magnitude pattern.",
   "_processed": {
-    "fingerprint": "54a189fc76f25bb89884ff1b433af24da86015e76e4ea89a093f44719eaf077e",
-    "processedAt": "2026-08-07T18:21:38Z",
+    "fingerprint": "4ea0131ad445301956a3f11337ff21dc9fa309a1471c1f46ce4b86dcf5e8f060",
+    "processedAt": "2026-08-07T21:21:49Z",
     "processedBy": "dev-team",
     "result": "routed-to-po"
   }

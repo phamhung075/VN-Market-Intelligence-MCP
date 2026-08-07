@@ -3,77 +3,52 @@
   "signal_type": "bctc_signal",
   "quarter": "Q1-2026",
   "mode": "routine",
-  "beat_miss": null,
-  "product": "IT services & software exports (largest driver), telecom (FPT Telecom), digital content, and education (FPT Edu)",
-  "customer": "Enterprise IT buyers in Japan/US/EU (offshore software exports), VN telecom/broadband subscribers, FPT Edu students",
-  "ops": "Gross margin 34.0%, operating margin 22.0%; net revenue -22.3% YoY headline is a consolidation-method artifact (FTEL moved full-consolidation -> equity-method from 2026-01-01); like-for-like restated comparison shows revenue +8.7% and NPAT +13.8% YoY, driven by Europe (+44.4%) and Japan growth plus associate-company income +36%",
-  "mgmt": "FTEL deconsolidation executed with transparent restated comparatives in the filing; consistent double-digit like-for-like profit growth this quarter",
-  "data_quality": {
-    "stale": true,
-    "vps_last_push": "2026-08-04T08:34:40.000Z",
-    "stale_age_hours": 81.6,
-    "sla_hours": 48,
-    "note": "Q2-2026 PDF on disk since 2026-08-01 (FPT_2026_Q2.pdf) but not yet extracted into DB; showing last-known-good Q1-2026. Data unchanged vs prior cycle (15:00Z) — confirmed by live re-fetch, not carried forward blind."
-  },
+  "product": "IT services, software exports, telecom (FPT Telecom), digital transformation, education (FPT Edu)",
+  "customer": "Enterprise IT buyers (VN + offshore Japan/US/APAC outsourcing), SME/retail telecom subscribers, students",
+  "ops": "Gross margin 34.0%, operating margin 22.0%; ROE 28.3% (sector-comp, annualized) vs sector median 10.6% — well above; OCF/NI ratio -1.15 (negative operating cash flow this quarter vs positive net profit — working-capital drag, not yet escalation-worthy per ESC-3 coverage gate)",
+  "mgmt": "PE 13.8 vs sector median 17.3 (discount -20%) despite PB premium +136%; Q2-2026 filing overdue since 30/07/2026; VPS BCTC data last-known-good since 2026-08-04T08:34:40Z (stale ~84.6h, SLA 48h breached); ESC-5 refine-confidence escalation ACTIVE — 7/15 refine units confidence<50%, esc-deep-dive-request dispatched to dev-team 2026-08-07T15:20Z (guard fresh until ~2026-08-08T15:20Z)",
+  "as_of": "2026-08-07T21:11:00Z",
+  "stale_age_hours": 84.6,
   "ey_spread": {
-    "verdict": "FAIR",
+    "label": "FAIR",
     "spread_pp": 2.25,
     "pe": 13.8,
-    "sector_median_pe": 17.3,
-    "roe_annualized_pct": 28.3,
+    "roe_pct": 28.3,
     "max_deposit_rate_pct": 5
-  },
-  "esc_gate": {
-    "esc1_accounting_manipulation": "UNEVALUABLE (no Bash)",
-    "esc2_balance_sheet": {
-      "result": false,
-      "imbalance_pct": 3e-7
-    },
-    "esc3_ocf_vs_np": {
-      "result": "DATA-COVERAGE-LIMITED",
-      "quarters_returned": 3,
-      "quarters_required": 4,
-      "coverage_guard_held": true
-    },
-    "esc4_nonop_share": {
-      "result": false,
-      "non_operating_share_pct": 2,
-      "pretax_profit_bn": 2803.8,
-      "operating_profit_bn": 2747.8
-    },
-    "esc5_refine_confidence": {
-      "result": true,
-      "report_id": "e8ea3df5-3f32-413d-a3eb-c71634c0438d",
-      "min_confidence": 0.45,
-      "low_confidence_unit_ids": [
-        "unit-0008",
-        "unit-0009",
-        "unit-0010",
-        "unit-0011",
-        "unit-0012",
-        "unit-0013",
-        "unit-0014"
-      ],
-      "total_units": 15,
-      "escalation_status": "PENDING",
-      "guard_key": "esc-deepdive:FPT:Q1-2026:ESC-5",
-      "guard_expires": "2026-08-08T15:20:00Z",
-      "esc_dispatch_signal": "docs/signals/bctc-analyst-20260807T152000Z.json",
-      "note": "24h guard still fresh (dispatched c147 @15:20Z) — no re-dispatch this cycle"
-    }
   },
   "kd_reading": {
     "hexagram": "Tap Kham (29)",
     "trend": "BAT LOI",
-    "recommendation": "BAN",
+    "signal": "BAN",
     "confidence_pct": 100
   },
-  "insider": "no significant insider activity",
-  "legal_risk": "none",
-  "as_of": "2026-08-07T18:00:00Z",
+  "esc_gate": {
+    "ESC-1": "unevaluable_no_bash",
+    "ESC-2": {
+      "result": false,
+      "imbalance_pct": 0
+    },
+    "ESC-3": "DATA-COVERAGE-LIMITED (3/4 quarters, guard held)",
+    "ESC-4": {
+      "result": false,
+      "non_operating_share_pct": 2
+    },
+    "ESC-5": {
+      "result": true,
+      "status": "PENDING",
+      "guard_key": "esc-deepdive:FPT:Q1-2026:ESC-5",
+      "guard_expires": "2026-08-08T15:20:00Z"
+    }
+  },
+  "insider_signal": "no significant insider activity",
+  "evidence_fragment_ids": [
+    996,
+    997
+  ],
+  "sentiment_trend_30d": "GIAM (deteriorating), slope -2.50",
   "_processed": {
-    "fingerprint": "1e43656a7f907bed85fd1ff2782cd0ec43733d51ddb27bed2ea6bd4b4c1af27b",
-    "processedAt": "2026-08-07T18:21:38Z",
+    "fingerprint": "afcf955812c9b2b8b83c8dd0bc20577499a66f1bb5814e644ac20ee0a65de803",
+    "processedAt": "2026-08-07T21:21:49Z",
     "processedBy": "dev-team",
     "result": "routed-to-po"
   }

@@ -3,61 +3,48 @@
   "signal_type": "bctc_signal",
   "quarter": "Q1-2026",
   "mode": "routine",
-  "beat_miss": null,
-  "product": "Steel manufacturing — construction steel (long products), hot-rolled coil (HRC), steel pipe",
-  "customer": "Domestic construction/infrastructure builders and distributors, export steel buyers",
-  "ops": "Gross margin 15.8% (revenue 52,900.8 ty, gross profit 8,365.1 ty); operating_profit and operating_cf both report 0 in the source extraction — a known data-quality defect (net_profit 9,055.9 ty EXCEEDS gross_profit 8,365.1 ty, tool-flagged warning), now 6th+ consecutive cycle, already escalated to dev-team (open ticket, guard held) — do not read this as a genuine 100% non-operating profit share",
-  "mgmt": "Not assessable this cycle — reliable current-period operating/margin commentary is blocked by the same operating_profit=0 extraction defect",
-  "data_quality": {
-    "stale": true,
-    "vps_last_push": "2026-08-04T08:34:40.000Z",
-    "stale_age_hours": 81.6,
-    "sla_hours": 48,
-    "known_defect": "operating_profit=0 AND operating_cf=0, net_profit > gross_profit — extraction anomaly, dev-team signal open (guard bctc-dataquality:HPG:operating-profit-zero, held). Data unchanged vs prior cycle, confirmed by live re-fetch."
-  },
+  "product": "Steel production (long/flat steel, HRC), construction materials, mining",
+  "customer": "Construction/infrastructure contractors, steel distributors, export markets",
+  "ops": "Gross margin 15.8%; reported operating_profit=0 tỷ VND — treated as a data-extraction anomaly (discarded, not escalated): validation warning flags net_profit (9,055.9 tỷ) exceeds gross_profit (8,365.1 tỷ), consistent with misclassified non-operating income rather than a real 0% operating margin; ROE 12.7% (sector-comp) vs sector median 2.9% — well above",
+  "mgmt": "PE 14.2 vs sector median 32.6 (discount -57%); Q2-2026 filing overdue since 30/07/2026; VPS BCTC data last-known-good since 2026-08-04T08:34:40Z (stale ~84.6h, SLA 48h breached); operating_profit=0 corrupt-data discard now 7th+ consecutive cycle — no re-emit per active guard, standing dev-team-visible data-quality gap",
+  "as_of": "2026-08-07T21:11:00Z",
+  "stale_age_hours": 84.6,
   "ey_spread": {
-    "verdict": "FAIR",
+    "label": "FAIR",
     "spread_pp": 2.04,
     "pe": 14.2,
-    "sector_median_pe": 32.6,
-    "roe_annualized_pct": 12.7,
+    "roe_pct": 12.7,
     "max_deposit_rate_pct": 5
   },
+  "kd_reading": {
+    "hexagram": "Mong (4)",
+    "trend": "TRUNG TINH",
+    "signal": "GIU",
+    "confidence_pct": 37
+  },
   "esc_gate": {
-    "esc1_accounting_manipulation": "UNEVALUABLE (no Bash)",
-    "esc2_balance_sheet": {
+    "ESC-1": "unevaluable_no_bash",
+    "ESC-2": {
       "result": false,
       "imbalance_pct": 0
     },
-    "esc3_ocf_vs_np": {
-      "result": "DATA-COVERAGE-LIMITED",
-      "quarters_returned": 3,
-      "quarters_required": 4,
-      "coverage_guard_held": true
-    },
-    "esc4_nonop_share": {
-      "result": "DISCARDED",
-      "reason": "operating_profit=0 is a known extraction corruption, not a genuine 100% non-operating share — discard precedent held across 6+ cycles"
-    },
-    "esc5_refine_confidence": {
+    "ESC-3": "DATA-COVERAGE-LIMITED (3/4 quarters, guard held)",
+    "ESC-4": "discarded — operating_profit=0 corrupt-data precedent (7th+ cycle)",
+    "ESC-5": {
       "result": false,
       "report_id": null,
       "existing_refine_status": "PARTIAL"
     }
   },
-  "kd_reading": {
-    "hexagram": "Mong (4)",
-    "trend": "TRUNG TINH",
-    "recommendation": "GIU",
-    "confidence_pct": 37,
-    "note": "mild conflict vs FAIR valuation verdict, low-confidence — not escalated"
-  },
-  "insider": "no significant insider activity",
-  "legal_risk": "none",
-  "as_of": "2026-08-07T18:00:00Z",
+  "insider_signal": "no significant insider activity",
+  "evidence_fragment_ids": [
+    998,
+    999
+  ],
+  "sentiment_trend_30d": "ON DINH (stable), slope +0.00",
   "_processed": {
-    "fingerprint": "c5ceac341a41ac5159d685a4ea4c7edf32e100aebbd83fe5b18149c35d425093",
-    "processedAt": "2026-08-07T18:21:38Z",
+    "fingerprint": "4673508889194330b67c7caa1937676ad735cc9bc8f16b49c51e5336c800fa70",
+    "processedAt": "2026-08-07T21:21:49Z",
     "processedBy": "dev-team",
     "result": "routed-to-po"
   }
