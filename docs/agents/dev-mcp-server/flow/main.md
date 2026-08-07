@@ -442,6 +442,35 @@ scheduler re-entrancy mechanism (cron_job_runs: 41 distinct job names multi-firi
 within the same scheduled minute over 7d) remains live — see
 `FIX-SCHEDULER-DOUBLE-REGISTRATION` (still BACKLOG, separate board row).
 
+**CANONICAL: Foreign-flow trading-day-gap live re-verification
+(FIX-FOREIGN-FLOW-MISSING-TRADING-DAY-2026-08-06-NO-BACKFILL AC-2, 2026-08-07)**
+```bash
+# Local/CI (Bun.env["DB_PATH"], defaults to /app/data/market.db) — read-only,
+# never writes, regardless of --apply (see script header for why):
+bun scripts/migrations/backfill-foreign-flow-gap-2026-08-06.ts
+bun scripts/migrations/backfill-foreign-flow-gap-2026-08-06.ts --apply
+
+# Against the live named-volume DB (docker exec — matches other CANONICAL scripts):
+docker cp scripts/migrations/backfill-foreign-flow-gap-2026-08-06.ts \
+  vn-market-intelligence-mcp-mcp-server-1:/app/backfill-foreign-flow-gap-2026-08-06.ts
+docker exec vn-market-intelligence-mcp-mcp-server-1 \
+  bun /app/backfill-foreign-flow-gap-2026-08-06.ts
+```
+Reports live `daily_foreign_flow` row-count/truncated-tail status for the
+2026-08-06 zero-row gap + the 2026-08-05T04:29:40Z truncated tail, then
+live-probes the SAME upstream endpoint the VPS push pipeline uses
+(`bgapidatafeed.vps.com.vn/getliststockdata`) for date/range capability.
+**LIVE RESULT (2026-08-07T03:22Z, executed):** 2026-08-06 rowCount=0
+(confirmed zero-row gap); 2026-08-05 rowCount=99 maxUpdatedAt=
+2026-08-05T04:29:40.192Z, truncatedTail=true; upstream probe reachable,
+returns only current-tick fields (`lastPrice`/`fBVol`/`fSVolume`/`fRoom`/
+`g1..g7` bid-ask ladder/etc.), no date field, verdict=UNRECOVERABLE — matches
+the 2026-07-22 precedent for this identical endpoint. Both gaps are
+PERMANENT data loss; the real fix is the D-NEW4 completeness detector
+(`checkForeignFlowGap`, wired into `dataAuditJob` nightly, see
+`infrastructure.md`) so a future occurrence always escalates instead of
+self-clearing silently the moment the next fetch lands.
+
 ---
 
 ## Low-Confidence Reparse Runbook

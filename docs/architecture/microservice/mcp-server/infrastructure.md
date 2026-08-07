@@ -438,6 +438,62 @@ source in `application/usecases/scanMarket.ts` (Step 5c now runs
 unconditionally, see `usecases.md`); this check is the EOD self-heal for the
 pre-existing backlog plus any future write-path failure.
 
+**D-NEW4 `checkForeignFlowGap`** (`audit-checks/checkForeignFlowGap.ts`,
+FIX-FOREIGN-FLOW-MISSING-TRADING-DAY-2026-08-06-NO-BACKFILL, 2026-08-07) —
+per-trading-day COMPLETENESS detector for `daily_foreign_flow`, reusing
+`checkConvictionHistoryGap`'s reconciliation SHAPE (same defect class:
+missing trading days + no backfill path = permanent loss) but a different
+resolution: `findForeignFlowGapDays(db, vnToday)` walks the canonical
+holiday-aware VN trading calendar (`domain/services/vnTradingCalendar.ts` —
+`isVnTradingDay`, NOT a naive weekday check) over
+`[MIN(daily_foreign_flow.date) capped at 60 days, vnToday)` and flags any
+trading day with ZERO rows, capped at 15 gap-days per run. Unlike
+`conviction_history`, `daily_foreign_flow` has NO alternate in-DB
+reconstruction source, and its sole upstream
+(`bgapidatafeed.vps.com.vn/getliststockdata`, see
+`vps-scripts/fetch-foreign-flow.sh`) is LIVE-SNAPSHOT-ONLY — no date/range
+query parameter (RAW-confirmed live 2026-08-07 via
+`scripts/migrations/backfill-foreign-flow-gap-2026-08-06.ts`'s
+`probeUpstreamHistoricalCapability`, same conclusion the 2026-07-22
+precedent already established for this identical endpoint). Every gap day
+found is therefore, by construction, permanently unrecoverable — the
+check's ONLY action is `action:"flagged"`/`severity:"critical"` (never
+`"none"`), so a zero-row trading day always escalates via
+`insertFeedbackIfNew` + `dataAuditJob`'s Telegram send-gate.
+`rowsAffected` is the gap-DAY count (not a backfilled-row count, since
+nothing is ever backfilled) — this deliberately makes the
+`insertFeedbackIfNew` dedup title vary whenever the gap SET changes size,
+so a later, independent gap day is never silently swallowed by an older
+still-open finding for a different day count.
+
+Root cause (RAW-verified live against `vps_push_log`, 2026-08-07): the VPS
+push-only pipelines for `prices` and `foreign-flow` (two SEPARATE systemd
+services on the Vinahost VPS, `vn-price-fetch.service`/
+`vn-foreign-flow.service`) went silent for ~46h
+(2026-08-05T04:29:40Z..2026-08-07T02:00:11Z) — ZERO push attempts logged
+for either service across the whole 2026-08-06 trading day, while `news`/
+`sbv` (separate VPS services, SAME mcp-server receiving code path —
+`requireVpsApiKey()`/`logVpsPush()` shared across all `push*Handler.ts`
+routes) kept pushing normally throughout. This rules out an mcp-server
+receiving-side defect, a `VPS_PUSH_API_KEY` rotation, and a full VM outage.
+It also DISPROVES adopting the documented
+`OPS-FFLOW-VPS-CLOCKDRIFT-PREVENTIVE-RESIDUALS` precedent
+(2026-07-21..23 VM-pause/clock-freeze) as this incident's mechanism: that
+mechanism freezes the WHOLE VM clock, which would have silenced `sbv` too
+— it did not. `runForeignFlowFetcherJobCron` (the mcp-server-side scheduler
+job) is confirmed NOT the write path at all — per
+`FIX-FOREIGN-FLOW-DEAD-ENDPOINT` it only calls
+`fetchForeignFlowWithFallback()` with no injected `fetchFn` in production,
+so `source` is structurally always `'none'`/`'cache'` (live-confirmed via
+container logs during this exact incident:
+`"[foreign-flow-job] fallback activated","source":"none","changes":0`).
+The true VPS-side root cause (why the fetch loops stopped invoking their
+push step) is outside `apps/mcp-server/` (ops zone, `vps-scripts/`) — not
+fixed by this task; see
+`scripts/migrations/backfill-foreign-flow-gap-2026-08-06.ts` for the AC-2
+live re-verification harness that confirms both 2026-08-06 (full session)
+and the post-2026-08-05T04:29:40Z tail are permanently unrecoverable.
+
 ### Intelligence Cycle Job (`scheduler/news-analysis/intelligenceCycleJob.ts` + `intelligenceCycle/`)
 FACTORY-SCHEDULER-split-intelligenceCycleJob extracted the `CycleResult`/
 `CycleDeps` contracts into `intelligenceCycle/types.ts`, `isMarketHours`

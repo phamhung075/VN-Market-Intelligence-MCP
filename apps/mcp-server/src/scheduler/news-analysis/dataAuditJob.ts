@@ -42,6 +42,7 @@ import { checkOldTelegramReports } from "./audit-checks/checkOldTelegramReports.
 import { checkStaleAgentSignals } from "./audit-checks/checkStaleAgentSignals.js";
 import { checkOrphanAgentSignalsAlertId } from "./audit-checks/checkOrphanAgentSignalsAlertId.js";
 import { checkConvictionHistoryGap } from "./audit-checks/checkConvictionHistoryGap.js";
+import { checkForeignFlowGap } from "./audit-checks/checkForeignFlowGap.js";
 import { checkRowCountSnapshot } from "./audit-checks/checkRowCountSnapshot.js";
 import { checkOldCommodityHistory } from "./audit-checks/checkOldCommodityHistory.js";
 import { checkOldSbvHistory } from "./audit-checks/checkOldSbvHistory.js";
@@ -127,6 +128,7 @@ function runDailyChecks(db: Database): AuditFinding[] {
     ...checkStaleAgentSignals(db),      // D-NEW
     ...checkOrphanAgentSignalsAlertId(db), // D-NEW2 (FIX-AGENT-SIGNALS-ORPHAN-ALERT-ID)
     ...checkConvictionHistoryGap(db),   // D-NEW3 (FIX-CONVICTION-HISTORY-EOD-BACKFILL)
+    ...checkForeignFlowGap(db),         // D-NEW4 (FIX-FOREIGN-FLOW-MISSING-TRADING-DAY-2026-08-06-NO-BACKFILL)
     ...checkRowCountSnapshot(db),       // D-11 (+ D-11b row_count_drop)
   ];
 }
