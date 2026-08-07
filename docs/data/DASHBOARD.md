@@ -754,3 +754,15 @@
 **Mitigation:** No immediate action beyond signal routing.
 
 ---
+
+## Anomaly: C-09 · macro_indicators: stale data (last fetch 2026-08-04 12:13)
+**Severity:** WARN | **Date:** 2026-08-07 | **Status:** OPEN
+**Location:** market.db/macro_indicators
+**Details:** No vietnam macro_indicators rows in 26-hour window (expected ≥3 indicators)
+**Impact:** Macro economic data unavailable for signals/analysis
+**Root cause:** TradingEconomics API fetch gap or scheduler miss
+**Zone owner:** dev-mcp-server
+**Last reported:** 2026-08-07T03:06:55Z (signal sys-20260807T030603-1e90, system-auditor -> po, dedup_key=db_integrity_breach:macro_indicators:C-09, WARN Telegram sent)
+**Mitigation:** No immediate action beyond signal routing.
+
+---
