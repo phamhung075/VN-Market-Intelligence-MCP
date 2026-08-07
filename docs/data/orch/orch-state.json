@@ -22151,6 +22151,47 @@
         },
         "po_dispatch_decision_20260807": "DISPATCH NOW via PO Step-1 BATCH. Root cause of the 23h strand is structural, not neglect: dispatch_note records this row as deliberately DRS-STRANDED-OFF-ALLOWLIST (next_agent=agent-father is off the ratified auto-dispatch allowlist), so no automated lane can ever pick it up — PO/router manual dispatch is its ONLY path. It has now re-fired once. Folding into this tick's BATCH.",
         "review_note": "AC-1..AC-4 landed and RAW-reverified (not self-report). AC-1: docs/agents/developer/flow/microservice-main.md gained an Error Boundary block above `## Role in dev-team flow` (165L->169L), pointing to docs/protocols/fail-loud-protocol.md sec \"Error Boundary -- Blocked Flow = EXIT\" (dev-pipeline SSOT), Step 0 STOP-RELEASE .head idle-reset called out mandatory-first. AC-3: dev-mcp-server/flow/main.md:18 and dev-frontend/flow/main.md:17 repointed off .claude/skills/cowork-error-boundary/SKILL.md onto the same SSOT -- false-green closed. AC-2: sweep-fixes.md Check#2 generalized to a one-hop delegation-pointer rule -- live re-grep found the actual thin-pointer phrasing is `-> Run flow:` (all 8 named agents), not `Run shared/sub-flow:` as the AC text assumed; check now matches all 3 phrasings. AC-4: live re-ran Check#2 over all 14 docs/agents/dev-*/ dirs -- 10/10 pipeline agents (dev-mcp-server, dev-frontend, dev-alert-engine, dev-api-gateway, dev-kinh-dich, dev-macro-indicators, dev-pdf-extractor, dev-rag-service, dev-stock-price, dev-technical-analysis) now PASS resolving the SAME SSOT text; was 2/10 false-green + 8/10 FAIL before. Bonus: dev-news-fetch (undocumented 9th microservice-main.md consumer) also auto-resolved, zero extra edit. Out-of-scope items correctly untouched: INV-GATEWAY-1 Step 6b contradiction (belongs to FIX-COWORK-FLOWS-GATEWAY-BLIND-BRIDGE-FALLBACK); dev-team/dev-mainserver-crawls/dev-vps-crawls flow/main.md left as-is (out of files[] scope, still resolve cowork-error-boundary/cowork-boundary skills -- candidate for a future row if fleet-wide SSOT unification is wanted). Files changed: docs/agents/developer/flow/microservice-main.md, docs/agents/agent-father/flow/sweep-fixes.md, docs/agents/dev-mcp-server/flow/main.md, docs/agents/dev-frontend/flow/main.md. DJ-GATE-1 entry: sprint-COWORK-GUARANTEED-SLOT-CATCHUP-agent-father-2.md S32. Not self-closed to DONE -- routed to po for independent close-out per this row own dispatch/corroboration ownership."
+      },
+      {
+        "id": "FIX-ORPHAN-FR1-FR2-INFRA-HEARTBEAT-LADDER",
+        "type": "FEATURE",
+        "title": "Implement FR-1/FR-2: extend task_heartbeat with ttl_seconds/payload_patch + null-session ladder for task_release",
+        "status": "REVIEW",
+        "priority": "P0",
+        "size": "M",
+        "zone": "apps/mcp-server/",
+        "owner": "developer",
+        "next_agent": "qa",
+        "depends": [],
+        "supervised": false,
+        "created_at": "2026-07-22T01:15:30Z",
+        "created_by": "pm/decomposition-20260722T0115",
+        "updated_at": "2026-08-07T18:48:48Z",
+        "updated_by": "developer",
+        "origin_task": "FIX-ORPHAN-ADOPTION-BOARD-STATE-GUARD",
+        "parent_fix_spec": "fix_spec(a)+(c)/AC1+AC3",
+        "subtasks": [
+          {
+            "seq": 1,
+            "title": "Add ttl_seconds + payload_patch optional params to heartbeatTask()",
+            "acceptance": "heartbeatTask accepts optional ttl_seconds (60-691200), updates row.ttl_seconds when supplied; payload_patch shallow-merges into payload JSON when supplied"
+          },
+          {
+            "seq": 2,
+            "title": "Add null-session ladder to heartbeatTask/releaseTask for orphan-signal rows",
+            "acceptance": "orphan-signal:* rows with owner_client_session=NULL match on (owner_agent + original_owner_client_session echo); live-session rows (owner_client_session IS NOT NULL) never match via new params"
+          },
+          {
+            "seq": 3,
+            "title": "Implement two-statement UPDATE pattern (not CTE) per FR-1 file-level design",
+            "acceptance": "First UPDATE: ttl_seconds if supplied. Second UPDATE: payload_patch merge. Both preserve unpatched fields."
+          }
+        ],
+        "po_corroboration_20260806": "LIVE 10x corroboration for the FR-2 null-session release ladder, RAW-verified by po 2026-08-06T11:07Z tick (signal dev-orphangap-20260806T111713Z, finding_2). task_release(task_id='orphan-signal:'+id, owner_client_session=$SESSION) returned {ok:true, released:0} on all 10 attempts — the orphan-signal lock's owner_client_session is null (server-reaper owned), so NO client session can ever match it. Both call sites in docs/agents/dev-team/flow/orphan-adoption.md (happy-path ~L94-98 and git_sha-invalid dead-end ~L69-74) are therefore unreachable no-ops as written. Note the ok:true/released:0 shape: the call reports success while releasing nothing — the exact 'ok+released=wrong' false-green class. Practical blast radius is bounded by the 7200s TTL self-clear, but during that window a re-probe can still attempt duplicate adoption if FR-4's terminal guard is not also live. Same 15-day READY stall as its FR-4 sibling.",
+        "claimed_at": "2026-08-07T18:25:23Z",
+        "claimed_by": "dev-team (ready-lane consumer)",
+        "dispatch_lane": "developer",
+        "dev_note": "FR-1/FR-2 implemented in coordinationStore.ts (heartbeatTask/releaseTask): ttl_seconds/payload_patch two-statement UPDATE + null-session ladder for orphan-signal rows (NFR-1 regression-tested). coordinationStore.test.ts new, 13/13 GREEN. Scope: coordinationStore.ts only — coordinationTools.ts Zod exposure is Task 2 (FIX-ORPHAN-FR2-FR6-FR7-INTERFACE-COORDINATION-TOOLS), still READY. Commits d6c4e6006/c4b7b2060."
       }
     ],
     "qa": [
@@ -22402,46 +22443,6 @@
           "TASK-COWORK-SIGNAL-NAMING-CONTRACT"
         ],
         "decomposition_note": "Phase 1 decomposed into 4 atomic tasks per PO amendments (3 binding, 1 correction to FR-1 WINDOWKEY logic per Amendment 3). All inherit plan_only/supervised flags. No developer dispatch until PO adjudication."
-      },
-      {
-        "id": "FIX-ORPHAN-FR1-FR2-INFRA-HEARTBEAT-LADDER",
-        "type": "FEATURE",
-        "title": "Implement FR-1/FR-2: extend task_heartbeat with ttl_seconds/payload_patch + null-session ladder for task_release",
-        "status": "IN_PROGRESS",
-        "priority": "P0",
-        "size": "M",
-        "zone": "apps/mcp-server/",
-        "owner": "pm",
-        "next_agent": "developer",
-        "depends": [],
-        "supervised": false,
-        "created_at": "2026-07-22T01:15:30Z",
-        "created_by": "pm/decomposition-20260722T0115",
-        "updated_at": "2026-08-07T18:25:24Z",
-        "updated_by": "pm/decomposition-20260722T0115",
-        "origin_task": "FIX-ORPHAN-ADOPTION-BOARD-STATE-GUARD",
-        "parent_fix_spec": "fix_spec(a)+(c)/AC1+AC3",
-        "subtasks": [
-          {
-            "seq": 1,
-            "title": "Add ttl_seconds + payload_patch optional params to heartbeatTask()",
-            "acceptance": "heartbeatTask accepts optional ttl_seconds (60-691200), updates row.ttl_seconds when supplied; payload_patch shallow-merges into payload JSON when supplied"
-          },
-          {
-            "seq": 2,
-            "title": "Add null-session ladder to heartbeatTask/releaseTask for orphan-signal rows",
-            "acceptance": "orphan-signal:* rows with owner_client_session=NULL match on (owner_agent + original_owner_client_session echo); live-session rows (owner_client_session IS NOT NULL) never match via new params"
-          },
-          {
-            "seq": 3,
-            "title": "Implement two-statement UPDATE pattern (not CTE) per FR-1 file-level design",
-            "acceptance": "First UPDATE: ttl_seconds if supplied. Second UPDATE: payload_patch merge. Both preserve unpatched fields."
-          }
-        ],
-        "po_corroboration_20260806": "LIVE 10x corroboration for the FR-2 null-session release ladder, RAW-verified by po 2026-08-06T11:07Z tick (signal dev-orphangap-20260806T111713Z, finding_2). task_release(task_id='orphan-signal:'+id, owner_client_session=$SESSION) returned {ok:true, released:0} on all 10 attempts — the orphan-signal lock's owner_client_session is null (server-reaper owned), so NO client session can ever match it. Both call sites in docs/agents/dev-team/flow/orphan-adoption.md (happy-path ~L94-98 and git_sha-invalid dead-end ~L69-74) are therefore unreachable no-ops as written. Note the ok:true/released:0 shape: the call reports success while releasing nothing — the exact 'ok+released=wrong' false-green class. Practical blast radius is bounded by the 7200s TTL self-clear, but during that window a re-probe can still attempt duplicate adoption if FR-4's terminal guard is not also live. Same 15-day READY stall as its FR-4 sibling.",
-        "claimed_at": "2026-08-07T18:25:23Z",
-        "claimed_by": "dev-team (ready-lane consumer)",
-        "dispatch_lane": "developer"
       }
     ]
   },
