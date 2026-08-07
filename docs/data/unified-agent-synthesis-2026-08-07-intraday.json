@@ -1,0 +1,86 @@
+{
+  "metadata": {
+    "cycle_id": "intraday-2026-08-07T03:15:00Z",
+    "dish_type": "intraday",
+    "date_vn": "2026-08-07",
+    "timestamp_utc": "2026-08-07T03:15:00Z",
+    "quality_verdict": "degraded",
+    "layers_walked_summary": "1-6 (partial) — [gap:business_context_unavailable] [L6-gap: gold >$4,300 active — regime-drift risk]"
+  },
+
+  "tnb_synthesis": {
+    "clock_phase": "transition",
+    "regime_state": "macro-uncertainty + FII reallocation",
+    "regime_confidence": "MEDIUM",
+    "us_macro_layer": "Gold surge +4.64σ ($4,313) + EFFR-IORB spread tight → safe-haven demand, risk-off positioning",
+    "vn_macro_layer": "USD/VND 26,050 (near resistance 26,500) + FII scrutiny on real-estate sector + liquidity tight on construction credit",
+    "valuation_layer": "Sector divergence: construction (credit-sensitive, down) | real-estate (FII-rotated, down) | agriculture (commodity-rally, up)"
+  },
+
+  "conviction_calls": [
+    {
+      "ticker": "HUT",
+      "conviction_level": "LOW",
+      "direction": "SELL",
+      "pillars_aligned_count": 1,
+      "rationale_one_liner": "Extreme oversold (RSI 8.5) driven by macro fear, not fundamental deterioration; Kinh Dịch bearish reversal signal"
+    },
+    {
+      "ticker": "VHM",
+      "conviction_level": "MEDIUM",
+      "direction": "HOLD",
+      "pillars_aligned_count": 2,
+      "rationale_one_liner": "Real-estate sector under FII pressure (BB breakdown), but Kinh Dịch Sư confirms accumulation setup; conflicted signal"
+    },
+    {
+      "ticker": "VNM",
+      "conviction_level": "MEDIUM",
+      "direction": "BUY",
+      "pillars_aligned_count": 3,
+      "rationale_one_liner": "Agricultural momentum sustained (+6.61%), Bollinger breakup + Kinh Dịch MUA alignment; commodity-driven thesis"
+    }
+  ],
+
+  "sector_phases": [
+    {
+      "sector_vn": "xây dựng (construction)",
+      "investment_phase": "contraction",
+      "pyramid_tier": "cash",
+      "direction_this_cycle": "negative"
+    },
+    {
+      "sector_vn": "bất động sản (real_estate)",
+      "investment_phase": "transition",
+      "pyramid_tier": "fixed_income",
+      "direction_this_cycle": "negative"
+    },
+    {
+      "sector_vn": "nông nghiệp (agriculture)",
+      "investment_phase": "expansion",
+      "pyramid_tier": "equity",
+      "direction_this_cycle": "positive"
+    }
+  ],
+
+  "known_gaps": [
+    "[gap:business_context_unavailable]",
+    "[L6-gap: gold >$4,300 active — regime-drift risk: gold-driven phase override may lag actual risk-off reversal; flag as regime-drift until gold retraces below $4,300 or EFFR-IORB confirms liquidity tightening]"
+  ],
+
+  "causal_chains": [
+    "Gold toàn cầu +4.64σ ($4,313, cực cao) → FII reallocation từ tín dụng VN → HUT quá bán kỷ lục (RSI 8.5 < 15) trái chiều ngành +0.52%",
+    "Real-estate sector dưới áp lực FII giải chuyển → VHM phá BB dưới + RSI 21.8 → Kinh Dịch Sư MUA 100% nhưng giá action mâu thuẫn",
+    "Nông sản tích lũy mạnh (Brent +0.20% macro tailwind) → VNM +6.61% + BB breakup → Kinh Dịch Tỉnh MUA xác nhận momentum"
+  ],
+
+  "clusters_summary": {
+    "qualified": 3,
+    "tickers_covered": ["HUT", "VHM", "VNM"],
+    "sectors_covered": ["construction", "real_estate", "agriculture"],
+    "convergence_rules_fired": [
+      "Extreme individual signal (HUT RSI < 15)",
+      "Ticker convergence (VHM: 2 signal types)",
+      "Ticker convergence (VNM: 2 signal types)"
+    ]
+  }
+}
