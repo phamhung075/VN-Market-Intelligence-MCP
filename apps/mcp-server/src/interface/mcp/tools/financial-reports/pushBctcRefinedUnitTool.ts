@@ -1,5 +1,14 @@
 /**
  * MCP Tool: push_bctc_refined_unit — AC-MCP-OPTY-2
+ * size-justification: 292L — FIX-BCTC-REFINE-PAGE-IMAGE-UNAVAILABLE-CAPS-CONFIDENCE
+ *   (AC2, landed via 73e65eafc) wired in the image-fetch-degraded signal fire:
+ *   hasImageUnavailableFlag/shouldSignalImageFetchDegradation checks plus the
+ *   occurrence-counting COUNT(*) and affected-unit_ids SELECT queries, all
+ *   scoped to the same db handle + report_id already in this handler's closure.
+ *   Extracting that branch into a helper would just re-pass db/report_id/flags
+ *   across a file boundary for no net LOC reduction — same one-file-per-MCP-tool
+ *   precedent as getBctcRefinedTool.ts (242L), composition-root.ts,
+ *   orchStateSchema.ts in this same repo.
  *
  * Sprint BCTC-AGENTIC-REFINE (Option-Y, §0.7.4)
  * DDD layer: interface (write to infra via DB)
