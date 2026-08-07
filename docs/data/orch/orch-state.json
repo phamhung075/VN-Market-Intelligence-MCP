@@ -134,8 +134,8 @@
     "does_not_consume_wip": true
   },
   "signal_queue": {
-    "_updated_at": "2026-08-07T02:07:00Z",
-    "_updated_by": "cowork-team/step0a-drain",
+    "_updated_at": "2026-08-07T10:31:55Z",
+    "_updated_by": "code-janitor",
     "archive": [],
     "rows": [
       {
@@ -3422,6 +3422,17 @@
         "payload_ref": "docs/data/db-integrity-history.json",
         "provenance": "detector",
         "audit_cycle_tag": null
+      },
+      {
+        "id": "cja-20260807T103120",
+        "ts": "2026-08-07T10:31:20Z",
+        "from": "code-janitor",
+        "to": "po",
+        "type": "system-issue",
+        "summary": "team-tool-recheck writer dead since 06-23 — replace-vs-retire decision needed",
+        "severity": "LOW",
+        "status": "NEW",
+        "payload_ref": "docs/signals/janitor-health-recheck-writer-retired-2026-08-07.json"
       }
     ],
     "last_triaged_at": "2026-07-29T06:25:00Z",
