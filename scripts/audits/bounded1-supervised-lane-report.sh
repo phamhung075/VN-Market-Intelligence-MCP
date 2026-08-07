@@ -134,13 +134,32 @@
 #     NOT a silent gap for this class; never gates exit code (ownership
 #     belongs to devteam-review-lane-drain-report.sh, not duplicated here).
 #
+# BACKLOG-XOR-GAP section (FIX-BOUNDED1-SUPERVISED-LANE-NO-SWEEPER, architect,
+# 2026-08-07 — po_residual_measurement_20260728's sub-question 1). SECONDARY
+# above already lists every `backlog[]` supervised-XOR-plan_only row, but does
+# not distinguish "already has a mechanism" from "reachable by nothing at
+# all" — this section makes that split explicit, mirroring the DRS-ELIGIBLE
+# vs DRS-STRANDED-OFF-ALLOWLIST split already established above. Calls
+# `is_backlog_xor_gap` (`scripts/lib/po-manual-dispatch-eligibility.jq`,
+# `include`-d, never reimplemented) — true iff the row carries exactly one of
+# `supervised`/`plan_only` AND its resolved `next_agent` is dev-role or
+# absent (i.e. NOT already `DRS-STRANDED-OFF-ALLOWLIST`/DRS-eligible
+# territory, which both require a non-dev `next_agent` — disjoint by
+# construction, verified live below). This is the exact class
+# `docs/agents/po/flow/manual-dispatch-sweep.md` Step 1 now also sweeps (3rd
+# candidate class, added the same task) — informational only here, never
+# gates exit code (same "surfaced, not silently uncovered" discipline as
+# SECONDARY/DRS above); the actual remediation mechanism lives in that PO
+# sub-flow, not in this read-only report.
+#
 # Usage: bash scripts/audits/bounded1-supervised-lane-report.sh
 # Exit 0 = every supervised+plan_only, non-wrapper row — in EITHER
 #          `backlog[]` OR `ready[]` — has a resolved dispatch lane.
 # Exit 1 = at least one such row (backlog OR ready) has dispatch-lane=none.
-# (SECONDARY/TERTIARY/DRS/READY-WRAPPER/READY-XOR/REVIEW-SUP-PO findings
-# never affect the exit code — documented no-picker-by-design or
-# out-of-scope residual classes, per main.md's Lane × Gate Coverage Matrix.)
+# (SECONDARY/TERTIARY/DRS/READY-WRAPPER/READY-XOR/BACKLOG-XOR-GAP/
+# REVIEW-SUP-PO findings never affect the exit code — documented
+# no-picker-by-design or out-of-scope residual classes, per main.md's Lane ×
+# Gate Coverage Matrix.)
 
 set -euo pipefail
 PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
@@ -167,7 +186,7 @@ bash scripts/lib/archive-glob-cat.sh > "$ARCHIVE"
 
 JQ_DEFS='
   include "scripts/lib/devteam-eligibility";
-  include "scripts/lib/po-manual-dispatch-eligibility";
+  include "scripts/lib/po-manual-dispatch-eligibility";  # is_design_router_candidate/is_ready_xor_gap/is_backlog_xor_gap (2026-08-07)
 
   def dispatch_lane($detail_items; $roster_map):
     (effective_next_agent($detail_items)) as $na
@@ -319,6 +338,26 @@ jq -c \
     ] | sort_by([.rank, (.age_days // -1) * -1])
   ' "$STATE" > "$WORK/ready-xor.json"
 
+# BACKLOG-XOR-GAP — FIX-BOUNDED1-SUPERVISED-LANE-NO-SWEEPER (2026-08-07).
+# backlog[] analog of READY-XOR above, restricted to the dev-role-or-absent-
+# next_agent subset NOT already reachable via DRS/DRS-STRANDED-OFF-ALLOWLIST
+# (see is_backlog_xor_gap's own header, scripts/lib/po-manual-dispatch-eligibility.jq).
+jq -c \
+  --argjson now_epoch "$NOW_EPOCH" \
+  --slurpfile detail "$DETAIL" \
+  --slurpfile archive "$ARCHIVE" \
+  --slurpfile roster "$WORK/roster.json" \
+  "$JQ_DEFS"'
+  (detail_items_from($detail)) as $detail_items
+  | dep_status_map($archive) as $status_map
+  | ($roster[0] | map({(.id): .type}) | add) as $roster_map
+  | [ .task_board.backlog[]
+    | select(.status == "BACKLOG" or .status == "TODO")
+    | select(. | is_backlog_xor_gap($detail_items; $status_map))
+    | report_row($detail_items; $roster_map; $now_epoch)
+    ] | sort_by([.rank, (.age_days // -1) * -1])
+  ' "$STATE" > "$WORK/backlog-xor-gap.json"
+
 jq -c \
   --argjson now_epoch "$NOW_EPOCH" \
   --slurpfile detail "$DETAIL" \
@@ -417,6 +456,14 @@ print_table "$WORK/ready-xor.json"
 READY_XOR_TOTAL=$(jq 'length' "$WORK/ready-xor.json")
 echo ""
 echo "Ready-xor (supervised XOR plan_only, non-wrapper) rows: $READY_XOR_TOTAL"
+
+echo ""
+echo "=== BACKLOG-XOR-GAP (informational only, does not gate exit code): task_board.backlog[] supervised XOR plan_only, dev-role-or-absent next_agent, not DRS territory ==="
+echo "  (FIX-BOUNDED1-SUPERVISED-LANE-NO-SWEEPER, 2026-08-07 — answers po_residual_measurement_20260728's 'should SLS's AND become an OR' question: no, this class is folded into docs/agents/po/flow/manual-dispatch-sweep.md's existing human-gated PO sweep instead, as a 3rd candidate class alongside DRS-STRANDED-OFF-ALLOWLIST/READY-XOR above. Disjoint from the DRS-ELIGIBLE/DRS-STRANDED-OFF-ALLOWLIST split above by construction — this section's next_agent is always dev-role or absent, DRS's is always non-dev.)"
+print_table "$WORK/backlog-xor-gap.json"
+BACKLOG_XOR_GAP_TOTAL=$(jq 'length' "$WORK/backlog-xor-gap.json")
+echo ""
+echo "Backlog-xor-gap rows: $BACKLOG_XOR_GAP_TOTAL"
 
 echo ""
 echo "=== REVIEW-SUP-PO (informational only, does not gate exit code — confirms AC-3): task_board.review[] supervised:true AND plan_only:true ==="

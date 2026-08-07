@@ -85,6 +85,70 @@ def is_drs_stranded_off_allowlist($detail_items; $status_map; $allowlist):
   (is_design_router_candidate($detail_items; $status_map))
     and (is_design_router_allowed($detail_items; $allowlist) | not);
 
+# ---- BACKLOG-XOR-GAP (FIX-BOUNDED1-SUPERVISED-LANE-NO-SWEEPER, architect,
+# 2026-08-07 — po_residual_measurement_20260728's sub-question 1: "should
+# SLS's AND become an OR?") ----
+# `.` = candidate backlog[] row. ANSWER: NO for supervised-alone dev-role
+# rows — devteam-eligibility.jq's own `is_design_router_eligible` header and
+# the DRS ratification (docs/agent-memory/decisions/ruling-20260730T0906Z-
+# po-triage-po.md STEP po-4) already decided, for the immediately-adjacent
+# DRS predicate, that "auto-dispatching a supervised:true dev-role row to
+# developer with zero PO/human gate would defeat the exact reason the
+# supervised flag exists" and left that 7-row class explicitly PO-adjudicated
+# row-by-row, NOT folded into any auto-firing predicate. Widening SLS's own
+# AND to an OR would silently re-open exactly that closed question through a
+# different door (SLS's dispatch is the SAME kind of zero-human-gate
+# mechanical spawn DRS was deliberately kept away from) — see main.md's Lane
+# × Gate Coverage Matrix `backlog[] T F F` / `backlog[] F T F` rows for the
+# BOUNDED-1/SLS/DRS non-coverage this predicate closes instead.
+#
+# THE ACTUAL GAP measured live 2026-08-07: BOUNDED-1 excludes a row on
+# EITHER `effective_supervised` OR `effective_plan_only` alone already (see
+# `is_bounded1_eligible` above — both are independent AND-clauses, so
+# PO's "does the second conjunct buy SLS anything BOUNDED-1 doesn't already
+# exclude" question resolves to "no" for the auto-pickup side); the actual
+# hole is that NOTHING assigns these rows a destination once BOUNDED-1
+# excludes them, unless `next_agent` also happens to be non-dev AND
+# allowlisted (DRS/`is_drs_stranded_off_allowlist` above). A row carrying
+# exactly one of `sup`/`po` AND a dev-role (or altogether absent) `next_agent`
+# has ZERO eligible picker: not BOUNDED-1 (excluded by the lone flag), not
+# SLS-promote (requires BOTH true), not DRS/`is_design_router_candidate`
+# (requires `is_non_dev_next_agent_unrouted`, which is false for a dev-role OR
+# an absent `next_agent` by that predicate's own construction). 39 live rows
+# 2026-08-07T21:xxZ (architect brief 2026-08-07-fix-bounded1-supervised-lane-
+# no-sweeper-mechanism-and-answer.md).
+#
+# FIX SHAPE: same as `is_drs_stranded_off_allowlist` above — a HUMAN-GATED
+# recovery net, not a new unattended auto-dispatch predicate. This predicate
+# feeds `manual-dispatch-sweep.md`'s existing PO-ratify-then-BATCH mechanism
+# (Step 2/3, unchanged) as a THIRD candidate class — never `.head`/
+# `in_progress[]`, never BOUNDED-1/SLS/RLC/DRS's own WIP≤2 budget. This is
+# how the "auto-dispatch would defeat supervision" concern and "the census
+# must reach 0 via a MECHANISM, not manual triage" requirement are BOTH
+# satisfied simultaneously: PO's own tick mechanically finds+surfaces the
+# row (no more relying on incidental notice) but a human (PO) still folds it
+# into `BATCH` before anything spawns — exactly the property DRS's ratified
+# allowlist already established as this codebase's compensating control for
+# a flag-gate that can't safely be loosened.
+#
+# `is_non_dev_next_agent_unrouted(...) | not` is the clause that keeps this
+# predicate DISJOINT from `is_design_router_candidate`/
+# `is_drs_stranded_off_allowlist` above (never double-counts a row into two
+# manual-dispatch classes in the same tick — verified by the regression
+# fixture's own negative controls, `scripts/audits/
+# po-manual-dispatch-sweep-verify.sh`). deps_satisfied/is_detail_deferred/
+# has_unbacked_sequencing_prose/is_epic_wrapper gates mirror every other
+# picker in this codebase (conservative-skip until the row is genuinely
+# dispatch-ready) — never forked logic.
+def is_backlog_xor_gap($detail_items; $status_map):
+  ( (effective_supervised($detail_items)) or (effective_plan_only($detail_items)) )
+    and ( (effective_supervised($detail_items) and effective_plan_only($detail_items)) | not )
+    and (is_non_dev_next_agent_unrouted($detail_items) | not)
+    and (is_epic_wrapper($detail_items) | not)
+    and (deps_satisfied($detail_items; $status_map))
+    and (is_detail_deferred($detail_items) | not)
+    and (has_unbacked_sequencing_prose($detail_items) | not);
+
 # ---- READY-XOR (the class THIS task's ready[] producer targets) ----
 # `.` = candidate ready[] row. True iff carrying EXACTLY ONE of
 # `effective_supervised`/`effective_plan_only` (not both — that is SLS-claim

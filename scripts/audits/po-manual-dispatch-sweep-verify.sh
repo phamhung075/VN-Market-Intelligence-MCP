@@ -26,8 +26,8 @@
 #   DOC CHECK      — docs/agents/po/flow/manual-dispatch-sweep.md (the new
 #                    PO-side producer) exists and is routed from main.md.
 #   SHARED-LIB      — scripts/lib/po-manual-dispatch-eligibility.jq exists
-#                    and its two predicates (`is_drs_stranded_off_allowlist`,
-#                    `is_ready_xor_gap`) resolve every named branch of
+#                    and its three predicates (`is_drs_stranded_off_allowlist`,
+#                    `is_backlog_xor_gap`, `is_ready_xor_gap`) resolve every named branch of
 #                    main.md's own Lane × Gate Coverage Matrix correctly on a
 #                    synthetic fixture — positive AND negative controls, so a
 #                    future hand-edit that silently narrows/widens either
@@ -128,7 +128,14 @@ cat > "$WORK/fixture.json" <<JSON
       { "id": "E-EPIC-WRAPPER",       "status": "BACKLOG", "next_agent": "ops", "children": ["E-CHILD-1"] },
       { "id": "F-DEPS-UNSATISFIED",   "status": "BACKLOG", "next_agent": "ops", "depends_on": ["MISSING-DEP-NEVER-DONE"] },
       { "id": "G-ALREADY-FLAGGED",    "status": "BACKLOG", "next_agent": "agent-father", "po_manual_dispatch_flagged_at": "$FRESH_FLAG_ISO" },
-      { "id": "M-STALE-FLAGGED-REENTRANT", "status": "BACKLOG", "next_agent": "agent-father", "po_manual_dispatch_flagged_at": "$STALE_FLAG_ISO" }
+      { "id": "M-STALE-FLAGGED-REENTRANT", "status": "BACKLOG", "next_agent": "agent-father", "po_manual_dispatch_flagged_at": "$STALE_FLAG_ISO" },
+      { "id": "N-BACKLOG-XOR-DEVROLE", "status": "BACKLOG", "next_agent": "developer", "supervised": true, "plan_only": false },
+      { "id": "O-BACKLOG-XOR-NO-NEXTAGENT", "status": "BACKLOG", "owner": "po", "supervised": false, "plan_only": true },
+      { "id": "P-BACKLOG-XOR-NONDEV-ALLOWLISTED", "status": "BACKLOG", "next_agent": "architect", "supervised": true, "plan_only": false },
+      { "id": "Q-BACKLOG-XOR-NONDEV-OFFALLOWLIST", "status": "BACKLOG", "next_agent": "agent-father", "supervised": false, "plan_only": true },
+      { "id": "R-BACKLOG-XOR-WRAPPER", "status": "BACKLOG", "next_agent": "developer", "supervised": true, "plan_only": false, "children": ["R-CHILD-1"] },
+      { "id": "S-BACKLOG-XOR-DEPS-UNSATISFIED", "status": "BACKLOG", "next_agent": "developer", "supervised": true, "plan_only": false, "depends_on": ["MISSING-DEP-NEVER-DONE"] },
+      { "id": "T-BACKLOG-BOTH-FLAGS-DEVROLE", "status": "BACKLOG", "next_agent": "developer", "supervised": true, "plan_only": true }
     ],
     "ready": [
       { "id": "H-SUP-ONLY",           "supervised": true,  "plan_only": false },
@@ -151,7 +158,9 @@ RESULT=$(jq -c \
   'include "devteam-eligibility"; include "po-manual-dispatch-eligibility";
    (detail_items_from($detail)) as $detail_items
    | dep_status_map($archive) as $status_map
-   | { backlog: [ .task_board.backlog[] | {id, stranded: (. | is_drs_stranded_off_allowlist($detail_items; $status_map; $allowlist))} ],
+   | { backlog: [ .task_board.backlog[] | {id,
+         stranded: (. | is_drs_stranded_off_allowlist($detail_items; $status_map; $allowlist)),
+         backlog_xor_gap: (. | is_backlog_xor_gap($detail_items; $status_map))} ],
        ready:   [ .task_board.ready[]   | {id, xor_gap:  (. | is_ready_xor_gap($detail_items))} ] }' \
   "$WORK/fixture.json")
 
@@ -177,6 +186,25 @@ check "E-EPIC-WRAPPER (no-picker-by-design class, closed by autoclose sweep)" \
   "$(echo "$RESULT" | jq -r '.backlog[] | select(.id=="E-EPIC-WRAPPER") | .stranded')" "false"
 check "F-DEPS-UNSATISFIED (conservative-skip until depends_on clears)" \
   "$(echo "$RESULT" | jq -r '.backlog[] | select(.id=="F-DEPS-UNSATISFIED") | .stranded')" "false"
+
+# --- BACKLOG-XOR-GAP (FIX-BOUNDED1-SUPERVISED-LANE-NO-SWEEPER, 2026-08-07) ---
+check "N-BACKLOG-XOR-DEVROLE (sup-only, dev-role next_agent -- zero picker before this fix) is_backlog_xor_gap" \
+  "$(echo "$RESULT" | jq -r '.backlog[] | select(.id=="N-BACKLOG-XOR-DEVROLE") | .backlog_xor_gap')" "true"
+check "O-BACKLOG-XOR-NO-NEXTAGENT (plan_only-only, next_agent absent, owner non-dev -- zero picker) is_backlog_xor_gap" \
+  "$(echo "$RESULT" | jq -r '.backlog[] | select(.id=="O-BACKLOG-XOR-NO-NEXTAGENT") | .backlog_xor_gap')" "true"
+check "P-BACKLOG-XOR-NONDEV-ALLOWLISTED (sup-only, non-dev allowlisted next_agent -- already DRS-eligible, must NOT double-count into backlog_xor_gap)" \
+  "$(echo "$RESULT" | jq -r '.backlog[] | select(.id=="P-BACKLOG-XOR-NONDEV-ALLOWLISTED") | .backlog_xor_gap')" "false"
+check "Q-BACKLOG-XOR-NONDEV-OFFALLOWLIST (plan_only-only, non-dev off-allowlist next_agent -- already DRS-STRANDED-OFF-ALLOWLIST territory, must NOT double-count into backlog_xor_gap)" \
+  "$(echo "$RESULT" | jq -r '.backlog[] | select(.id=="Q-BACKLOG-XOR-NONDEV-OFFALLOWLIST") | .backlog_xor_gap')" "false"
+check "R-BACKLOG-XOR-WRAPPER (sup-only + dev-role but epic wrapper -- no-picker-by-design, not this predicate's)" \
+  "$(echo "$RESULT" | jq -r '.backlog[] | select(.id=="R-BACKLOG-XOR-WRAPPER") | .backlog_xor_gap')" "false"
+check "S-BACKLOG-XOR-DEPS-UNSATISFIED (sup-only + dev-role but depends_on unmet -- conservative-skip)" \
+  "$(echo "$RESULT" | jq -r '.backlog[] | select(.id=="S-BACKLOG-XOR-DEPS-UNSATISFIED") | .backlog_xor_gap')" "false"
+check "T-BACKLOG-BOTH-FLAGS-DEVROLE (both flags true -- SLS-promote's own territory, not the XOR gap)" \
+  "$(echo "$RESULT" | jq -r '.backlog[] | select(.id=="T-BACKLOG-BOTH-FLAGS-DEVROLE") | .backlog_xor_gap')" "false"
+check "C-DEV-ROLE (no sup/po flags at all -- BOUNDED-1's territory, not the XOR gap)" \
+  "$(echo "$RESULT" | jq -r '.backlog[] | select(.id=="C-DEV-ROLE") | .backlog_xor_gap')" "false"
+
 check "H-SUP-ONLY (ready[] sup-only, non-wrapper) is_ready_xor_gap" \
   "$(echo "$RESULT" | jq -r '.ready[] | select(.id=="H-SUP-ONLY") | .xor_gap')" "true"
 check "I-PLANONLY-ONLY (ready[] plan_only-only, non-wrapper)" \
@@ -231,9 +259,40 @@ M_SELECTED=$(manual_dispatch_step1_selected_count "M-STALE-FLAGGED-REENTRANT")
 check "M-STALE-FLAGGED-REENTRANT (stamp older than ${STALE_SECONDS}s, still BACKLOG) RE-ADMITTED by Step 1's flag_reentrant guard — the bounded re-admission positive control" \
   "$M_SELECTED" "1"
 
+# Same end-to-end replay for the 2026-08-07 BACKLOG-XOR-GAP class (Step 1's
+# 2nd backlog[] branch) — unflagged N-BACKLOG-XOR-DEVROLE must be selected.
+manual_dispatch_step1_backlogxor_selected_count() {
+  local id="$1"
+  jq -r \
+    --argjson now_epoch "$NOW_EPOCH" \
+    --argjson stale_seconds "$STALE_SECONDS" \
+    --arg id "$id" \
+    --slurpfile detail "$WORK/detail.json" \
+    --slurpfile archive "$WORK/archive.json" \
+    -L scripts/lib \
+    'include "devteam-eligibility"; include "po-manual-dispatch-eligibility";
+     def flag_reentrant($now_epoch; $stale_seconds):
+       (.po_manual_dispatch_flagged_at // "") as $flagged
+       | ($flagged == "")
+         or (try (($now_epoch - ($flagged | fromdateiso8601)) > $stale_seconds) catch false);
+     (detail_items_from($detail)) as $detail_items
+     | dep_status_map($archive) as $status_map
+     | [ .task_board.backlog[]
+         | select(.id == $id)
+         | select(.status == "BACKLOG" or .status == "TODO")
+         | select(. | is_backlog_xor_gap($detail_items; $status_map))
+         | select(. | flag_reentrant($now_epoch; $stale_seconds))
+       ] | length' \
+    "$WORK/fixture.json"
+}
+
+N_SELECTED=$(manual_dispatch_step1_backlogxor_selected_count "N-BACKLOG-XOR-DEVROLE")
+check "N-BACKLOG-XOR-DEVROLE (unflagged) SELECTED by Step 1's 2nd backlog[] branch (is_backlog_xor_gap + flag_reentrant) end-to-end" \
+  "$N_SELECTED" "1"
+
 echo ""
 if [ "$fail" -eq 0 ]; then
-  echo "PASS: manual-dispatch-sweep producer is documented (routed from main.md), its shared predicates (scripts/lib/po-manual-dispatch-eligibility.jq) resolve every named Lane × Gate Coverage Matrix branch correctly, its bounded re-admission guard (flag_reentrant) excludes fresh-flagged rows, and re-admits stale-flagged-but-still-undispatched rows."
+  echo "PASS: manual-dispatch-sweep producer is documented (routed from main.md), its shared predicates (scripts/lib/po-manual-dispatch-eligibility.jq: is_drs_stranded_off_allowlist, is_backlog_xor_gap, is_ready_xor_gap) resolve every named Lane × Gate Coverage Matrix branch correctly (including the 2026-08-07 BACKLOG-XOR-GAP class and its disjointness from DRS-STRANDED-OFF-ALLOWLIST), its bounded re-admission guard (flag_reentrant) excludes fresh-flagged rows, and re-admits stale-flagged-but-still-undispatched rows."
   exit 0
 else
   echo "FAIL: see above."

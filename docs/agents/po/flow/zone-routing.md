@@ -39,6 +39,8 @@ Zone says WHO does it. Lane says WHAT WILL EVER PICK IT UP. A row can carry a pe
 
 **The fix is the `ready` lane, not `plan_only`.** RLC (`scripts/devteam-backlog-claim-ready-lane-consumer.jq`) deliberately has NO dev/non-dev gate and spawns `next_agent` directly instead of routing through zone-detect's dev-only fallback. It requires only: status READY/TODO, `effective_supervised != true`, `effective_plan_only != true`, not an epic wrapper, `deps_satisfied`, and a resolved `next_agent`. Reaching for `plan_only: true` to escape the hole buys an SLS wait for a row that needs no planning; `ready` moves it now.
 
+**Safety net for rows that still fall in the trap despite this table (FIX-BOUNDED1-SUPERVISED-LANE-NO-SWEEPER, 2026-08-07):** this Step's discipline is asserted, not schema-enforced — 39 live rows measured 2026-08-07 carry exactly one of `supervised`/`plan_only` with a dev-role/absent `next_agent`, matching no automated picker. `docs/agents/po/flow/manual-dispatch-sweep.md`'s `BACKLOG-XOR-GAP` candidate class (`is_backlog_xor_gap`, `scripts/lib/po-manual-dispatch-eligibility.jq`) mechanically sweeps for these and folds the top one into PO's own `BATCH` each tick — a recovery net for a mint-time mistake, not a substitute for getting Step A2 right at mint time.
+
 **VERIFY BY EXECUTION, NEVER BY READING THE ROW.** Prose about which lane "should" pick a row is worthless — run the predicates against live data:
 ```bash
 jq -L scripts/lib --slurpfile detail docs/data/orch/archive/backlog-detail.json \
