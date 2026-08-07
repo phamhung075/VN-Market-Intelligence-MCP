@@ -35,7 +35,8 @@ import { initMacroTables } from "./schema-macro.js";
 import { initSystemTables } from "./schema-system.js";
 import { initBacktestingTables } from "./schema-backtesting.js";
 import { initAgmPlanTables } from "./agmPlanStore.js";
-import { seedWatchlist, backfillBctcQ4, backfillBctcQ1_2026, backfillBctcHistorical, migrateWatchlistThresholds } from "./seedWatchlist.js";
+import { seedWatchlist, backfillBctcQ4, backfillBctcQ1_2026, backfillBctcHistorical } from "./seedWatchlist.js";
+import { runPostInitMigrations } from "./schema-post-init-migrations.js";
 
 /**
  * Default DB path — resolved to absolute path at module load time.
@@ -246,127 +247,15 @@ export async function initDatabase(dbArg?: import("bun:sqlite").Database): Promi
     }
   }
 
-  // ── Post-init migrations (always run — NOT guarded, see note above) ────────
-
-  // Task 1407 — HUT domain migration
-  db.exec(
-    `UPDATE watchlist SET domain = 'construction' WHERE code = 'HUT' AND domain = 'real_estate'`
-  );
-
-  // Task 1869b-seed — populate watchlist alert_drop_pct defaults
-  // Standard tier: -7.0 (replaces old schema default -3 / NULL rows)
-  // High-vol tier: -9.0 (NVL, DPM, REE, VNH, KBC, MWG, TCH)
-  // Idempotent: rows already at correct value are untouched.
-  migrateWatchlistThresholds(db);
-
-  // Sprint 079 / Task 1204: delete corrupted VCB Q1-2025 record
-  db.prepare(`
-    DELETE FROM financial_reports
-    WHERE action_code = 'VCB'
-      AND period_year = 2025
-      AND period_type = 'Q1'
-      AND extraction_confidence < 0.1
-  `).run();
-
-  // Sprint 079 / Task 1201+1202: backfill missing Q4-2025 BCTC queue rows
-  {
-    const BACKFILL_079 = [
-      { code: "BID", year: 2025, quarter: "Q4" },
-      { code: "EIB", year: 2025, quarter: "Q4" },
-      { code: "SHB", year: 2025, quarter: "Q4" },
-      { code: "VCB", year: 2025, quarter: "Q4" },
-      { code: "FPT", year: 2025, quarter: "Q4" },
-      { code: "HPG", year: 2025, quarter: "Q4" },
-      { code: "VCB", year: 2025, quarter: "Q1" },
-    ];
-    const backfillStmt = db.prepare(`
-      INSERT INTO bctc_vps_queue (action_code, period_year, period_quarter, status, attempts)
-      VALUES (?, ?, ?, 'pending', 0)
-      ON CONFLICT(action_code, period_year, period_quarter)
-      DO UPDATE SET status = 'pending', attempts = 0, last_attempt = NULL
-      WHERE status = 'failed' OR attempts >= 5
-    `);
-    for (const entry of BACKFILL_079) {
-      backfillStmt.run(entry.code, entry.year, entry.quarter);
-    }
-  }
-
-  // Task 1489: purge test-contamination rows
-  db.exec(`DELETE FROM tracked_indicators WHERE source = 'test'`);
-  // Task 1490: purge known system_logs test-contamination rows (extended: report #2590)
-  db.exec(`DELETE FROM system_logs WHERE message IN ('only this appears', 'error message', 'check timestamp', 'warning message', 'this should appear')`);
-
-  // Task 198: wire foreign flow column migration so daily_ohlcv always has all 4 columns.
-  await migrateForeignFlowColumns(db);
-
-  // TASK_2001 (SUBTASK-DAILY-FF-2, ARCH-DAILY-FOREIGN-FLOW-TABLE): one-time idempotent
-  // backfill of legacy daily_ohlcv.foreign_* history into daily_foreign_flow. Must run
-  // after migrateForeignFlowColumns (legacy columns guaranteed to exist) and after
-  // initMarketDataTables (daily_foreign_flow table guaranteed to exist). R-6 ordering:
-  // MUST complete before the writer cutover (SUBTASK-DAILY-FF-3) ships.
-  backfillDailyForeignFlow(db);
+  // ── Post-init migrations (always run — NOT guarded, see WeakSet-guard note
+  // above) — extracted to schema-post-init-migrations.ts
+  // (FIX-CI-SIZELINT-SCHEMA-TS-DEFLAKE-REGRESSION-372L, 2026-08-07) to clear
+  // the size-lint baseline via extraction, not a comment-trim/baseline bump.
+  await runPostInitMigrations(db);
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Task 1503 — foreign flow column migration
-// Run after initDatabase() on existing deployments where daily_ohlcv was created
-// without the four foreign flow columns.
-// Safe to call on a fresh DB — ALTER TABLE IF NOT EXISTS is a no-op when col exists.
-// ─────────────────────────────────────────────────────────────────────────────
-
-/**
- * Add foreign flow columns to daily_ohlcv if they do not already exist.
- * Idempotent — safe to call on fresh and existing databases.
- */
-export async function migrateForeignFlowColumns(db: import("bun:sqlite").Database): Promise<void> {
-  const cols = db
-    .prepare<{ name: string }, []>("PRAGMA table_info(daily_ohlcv)")
-    .all()
-    .map((r) => r.name);
-
-  const toAdd: Array<[string, string]> = [
-    ["foreign_buy_vol",   "REAL"],
-    ["foreign_sell_vol",  "REAL"],
-    ["foreign_net_vol",   "REAL"],
-    ["put_through_vol",   "REAL"],
-    // FIX-FOREIGN-FLOW-COVERAGE: VND money-value of foreign buy/sell from bgapidatafeed
-    // fBValue / fSValue. Optional — null when upstream API omits the field.
-    ["foreign_buy_value",  "REAL"],
-    ["foreign_sell_value", "REAL"],
-  ];
-
-  for (const [col, type] of toAdd) {
-    if (!cols.includes(col)) {
-      db.exec(`ALTER TABLE daily_ohlcv ADD COLUMN ${col} ${type}`);
-    }
-  }
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// TASK_2001 (SUBTASK-DAILY-FF-2, ARCH-DAILY-FOREIGN-FLOW-TABLE) — one-time backfill
-// Copies historical foreign-flow data out of the frozen `daily_ohlcv.foreign_*`
-// columns into the new authoritative `daily_foreign_flow` table (SUBTASK-DAILY-FF-1).
-// INSERT OR IGNORE is PK-guarded (code,date) — safe/no-op to run on every boot,
-// same idempotent posture as migrateForeignFlowColumns() above. Additive only:
-// never overwrites or deletes an existing daily_foreign_flow row.
-// R-6 (design doc): this MUST land and complete before the writer cutover
-// (SUBTASK-DAILY-FF-3) ships, or the new table starts with a strict subset of
-// history. See docs/handoffs/ARCH-DAILY-FOREIGN-FLOW-TABLE-architect-design.md § Change 4.
-// ─────────────────────────────────────────────────────────────────────────────
-
-/**
- * One-time idempotent backfill: copy all `daily_ohlcv` rows carrying legacy
- * foreign-flow data into `daily_foreign_flow`. Safe to call on every boot —
- * `INSERT OR IGNORE` is a PK-guarded no-op for rows already present.
- */
-export function backfillDailyForeignFlow(db: import("bun:sqlite").Database): void {
-  db.exec(`
-    INSERT OR IGNORE INTO daily_foreign_flow
-      (code, date, foreign_buy_vol, foreign_sell_vol, foreign_net_vol, put_through_vol,
-       foreign_buy_value, foreign_sell_value, updated_at)
-    SELECT code, date, foreign_buy_vol, foreign_sell_vol, foreign_net_vol, put_through_vol,
-           foreign_buy_value, foreign_sell_value, updated_at
-    FROM daily_ohlcv
-    WHERE foreign_buy_vol IS NOT NULL OR foreign_sell_vol IS NOT NULL;
-  `);
-}
+// Re-exported for backward compat — 15+ existing callers (tests +
+// ohlcvForeignFlowStore.ts doc pointer) import these two directly from
+// schema.js; implementation now lives in schema-foreign-flow-migrations.ts
+// (FIX-CI-SIZELINT-SCHEMA-TS-DEFLAKE-REGRESSION-372L).
+export { migrateForeignFlowColumns, backfillDailyForeignFlow } from "./schema-foreign-flow-migrations.js";
