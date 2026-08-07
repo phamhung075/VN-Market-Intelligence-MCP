@@ -184,3 +184,57 @@ or scripts/ source touched — bun test/tsc/DDD/mock-guard structurally N/A. DJ-
 `sprint-TOKEN-ECONOMY-AUDIT-agent-father.md` STEP agent-father-S2, task-id TE-T11, predates
 this verify.
 **why-change:** No change from plan.
+
+### STEP qa-S9 · qa · 2026-08-07T00:09:05Z
+**task-id:** TE-T02
+**what-done:** Direct-commit verify (dev-team Review-Lane QA-Drain, `qa[]` row, `branch:null`,
+PARTIAL-completion claim) of main.md split (preflight-fallback.md + orphan-adoption.md).
+Flipped QA→DONE_VERIFIED-as-scoped, moved `task_board.qa[]`→`task_board.done_verified[]`,
+`next_agent: pm`, via `jq`+`scripts/orch-apply.sh` (conservation OK, task_total 753→754,
+signal_total 204→204 — +1 for the new follow-up row minted, see below). Minted new
+`task_board.backlog[]` row `TE-T02c` (`owner`/`next_agent: developer`, `zone: scripts/`) for
+the deliberately-deferred 3rd relocation.
+**what-considered:**
+- Trust the completion note's prose (2/3 landed, byte-verified, 1/3 reverted for zone reasons)
+  — rejected default trust. Confirmed commit `dcbae13e9` real + on main ancestry
+  (`git merge-base --is-ancestor`); `git show --stat` matches all 4 claimed files.
+- Trust the claimed `1087L/128392B -> 888L/118924B` shrink at face value — rejected; live
+  `main.md` today is 1054L/144179B because 3 unrelated commits landed on top since 2026-08-05
+  (expected/documented in the file's own size-justification changelog). Instead diffed
+  `dcbae13e9` against its OWN parent (`3b8a36470`) directly: confirmed exactly matches
+  (1087→888L, -199L net, 211 del/12 add hunks) — the right comparison point, not current HEAD.
+- Trust "byte-verified verbatim" — rejected, did it myself: extracted the pre-move sections
+  from the parent blob and diffed against both new files' bodies (excluding the new
+  size-justification/Parent-flow header lines each file legitimately gained) — ZERO diff on
+  preflight-fallback.md's 111L body and ZERO diff on orphan-adoption.md's 101L loop body.
+- Trust "BOUNDED-1 section byte-identical, untouched" — rejected, verified via hunk-boundary
+  inspection: `dcbae13e9`'s 3 diff hunks land at parent lines 1 / ~101-116 / ~296-412; the
+  BOUNDED-1 Promote-bullet + NON-CODE/DESIGN note sit at parent lines 541-570, outside all 3
+  hunks — genuinely untouched, not merely claimed.
+- Trust "8-line probe kept inline" + jump-anchor/fence-parity claims — rejected, grep-confirmed
+  on live main.md: probe (`N_MAX`/`task_list_held`) + `Run sub-flow` pointers to both new files
+  + Scope-note trailer all present (lines 116, 198-213); anchor-definition count 12→12 across
+  the commit (13 now only from a later unrelated commit); code-fence count even both sides.
+- Trust the zone-boundary excuse for the deferred 3rd piece — rejected, read
+  `.claude/skills/commit-boundary/SKILL.md` myself: agent-father's allow-list is exactly
+  `docs/agents/`/`docs/agent-memory/`/`.claude/skills/`/`.claude/agents/` — `scripts/` is
+  genuinely absent. The deferral is a correct zone call, not an excuse.
+- Trust the scratchpad patch fragments (~10.6KB, session-ephemeral path) as the follow-up's
+  source of truth — rejected as a durability risk (scratchpad dirs do not survive across
+  sessions). Cross-checked 2 fragments against LIVE main.md by exact-substring grep (both
+  matched, confirming the saved text is a genuine accurate extraction, not fabricated) but
+  wrote the new `TE-T02c` row's own `note` field to point at the live grep pattern in
+  `main.md` as the authoritative source, naming the scratchpad copy as convenience-only.
+- `mock-guard.sh --files` PASS (doc-only, no production source). `bun tsc --noEmit` N/A —
+  `git show --name-only dcbae13e9` confirms zero `.ts`/`.go` files touched.
+**why-decision:** Genuine PARTIAL-by-design completion, not a defect: 2 of 3 relocations are
+this row's actual, complete, RAW-verified deliverable (WU-2 guarantee holds); the 3rd was
+structurally out of agent-father's commit zone from the start, so leaving it unlanded (with
+main.md's BOUNDED-1 section provably untouched, no half-shrunk state) is the correct terminal
+behavior for THIS row. DONE_VERIFIED-as-scoped + new `TE-T02c` follow-up row (next_agent:
+developer, zone: scripts/) is the right disposition — same shape as the router's own framing,
+verified rather than assumed.
+**why-change:** No change from plan — router asked me to decide DONE_VERIFIED-as-scoped vs.
+stay-open per my own flow's judgment; RAW verification supported DONE_VERIFIED-as-scoped, and
+I minted the follow-up row myself (task_board write is within QA's own remit) rather than
+leaving that as an open action item for another agent.

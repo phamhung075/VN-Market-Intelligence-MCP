@@ -1,17 +1,5 @@
 # QA — Notebook
 
-## cycle-557 · 2026-08-07 · TASK_601 + TASK_602 — APPROVED, DONE_VERIFIED (review[] rows w/ full handoff, both commits already on main: `951ddfdba` / `86b31eccd`+`a5fa7bf7c`)
-
-Router dispatched these two `review[]` rows (parent `FIX-CRON-REGISTRATION-PREFIX-NOT-EXCLUDED-ORPHANEMIT-AND-D4-R1B`) with full Developer Implementation Record handoffs but no branch — both commits already landed on main. Treated as direct-commit verify, no checkout needed.
-
-TASK_601: read Phase-2 DELETE (coordinationStore.ts:590-601) directly — confirmed unconditional, no task_id filter, so an expired `cron-registration:*` row still GCs, just without orphan-signal emission (Phase-1 SELECT alone gets the new exclusion). Doc comments updated at both sites. Re-ran claimed scoped tests myself: 54/0/163, exact match to handoff.
-
-TASK_602: `isKnownLegitPattern` read at source — `cron-registration:` landed in `KNOWN_LEGIT_PREFIXES` (startsWith branch), not the `-singleton` endsWith branch. Did NOT trust the developer's git-stash non-vacuousness claim from prose: reproduced it myself via a scoped single-line revert (not full `git stash` — repo had many unrelated dirty files elsewhere) → 27/3 RED exact match → restored → 30/0 GREEN exact match. Also independently simulated the pre-fix array to confirm `"cron:"` does not already match `cron-registration:*` (5th byte `-` vs `:` differs) — the 3 positive assertions are genuinely load-bearing, not a coincidental pre-existing pass.
-
-Hard constraint checked for both: `docs/agents/system-auditor/handlers.md` + `audit-dimensions.md` (agent-father's zone) grep-confirmed untouched by any of the 3 commits (`--name-only` on each + `git log -1` shows both files' last touch predates this row).
-
-VERDICT: both APPROVED, DONE_VERIFIED. Moved `task_board.review[]`→`task_board.done_verified[]` via `jq`+`scripts/orch-apply.sh` (conservation OK, task_total 755→755, signal_total 203→203). `next_agent: pm` both rows. QA Review Record appended to each handoff (`docs/agents/dev-team/handoff/TASK_601.md`/`TASK_602.md`); reports `reports/TASK_REPORT_601.md`/`_602.md`. DJ: `sprint-COWORK-GUARANTEED-SLOT-CATCHUP-qa-8.md` §qa-S2/S3. TASK_603 (full suite + deploy) intentionally NOT run — separately dispatched, was blocked on this done_verified.
-
 ## cycle-557 · 2026-08-07 · TASK_603 (final gate) + PARENT FIX-CRON-REGISTRATION-PREFIX-NOT-EXCLUDED-ORPHANEMIT-AND-D4-R1B — APPROVED, both DONE_VERIFIED (direct-commit verify, commit `814182608` already on main)
 
 Router explicitly instructed independent reproduction, not trust of self-report. Did all 4 independently:
@@ -27,6 +15,12 @@ AC-5: grep/diff-checked both agent-father files (`handlers.md`, `audit-dimension
 tsc 0 errors, mock-guard PASS (test-only diff, Smart-Skip DDD/security).
 
 VERDICT: TASK_603 APPROVED, DONE_VERIFIED. Parent row also flipped `READY`→`DONE_VERIFIED` in the SAME `orch-apply.sh` write per handoff's explicit "Handoff to QA" instruction (this is QA's responsibility, not developer's) — conservation OK (task_total 757→757, signal_total 204→204), 2 rows stamped. `next_agent: pm` both. Sequencing constraint (brief §4.4) now satisfied — router's held agent-father Lane-1 dispatch unblocked. QA Review Record appended to `docs/agents/dev-team/handoff/TASK_603.md`; report `reports/TASK_REPORT_603.md`. DJ: `sprint-COWORK-GUARANTEED-SLOT-CATCHUP-qa-8.md` §qa-S4.
+
+## cycle-558 · 2026-08-07 · TE-T02 — DONE_VERIFIED-as-scoped (direct-commit verify, `qa[]` row, `branch:null`, PARTIAL completion, commit `dcbae13e9`)
+
+Router-relayed agent-father completion note claimed 2/3 relocations landed (main.md split → preflight-fallback.md + orphan-adoption.md), 3rd (BOUNDED-1 gate prose → `.jq` header) written-then-deliberately-reverted for commit_zone reasons. Did not trust any of it from prose. `dcbae13e9` real + on main ancestry, `git show --stat` matches all 4 claimed files. Diffed the commit against its OWN parent (`3b8a36470`) — not current HEAD, which has since grown via 3 unrelated commits — confirmed the exact claimed `1087L/128392B→888L/118924B` (-199L) shrink. Byte-diffed both relocated bodies against their pre-move inline home in the parent blob (excl. new header lines each file legitimately gained): ZERO diff both files — WU-2 verbatim guarantee holds. Hunk-boundary inspection confirms the BOUNDED-1 section (parent lines 541-570) sits outside all 3 changed hunks — genuinely untouched, not merely claimed. Read `.claude/skills/commit-boundary/SKILL.md` directly: agent-father's zone allow-list genuinely excludes `scripts/` — the deferral is a correct zone call. mock-guard PASS (doc-only), tsc N/A (zero .ts/.go touched).
+
+VERDICT: DONE_VERIFIED-as-scoped — 2/3 is this row's complete, verified deliverable; the 3rd was structurally out-of-zone from the start, not a defect. Moved `task_board.qa[]`→`task_board.done_verified[]`, `next_agent: pm`. Minted new follow-up row `TE-T02c` in `task_board.backlog[]` (`owner`/`next_agent: developer`, `zone: scripts/`) for the 3rd relocation — pointed its `note` field at the LIVE grep pattern in `main.md` as the authoritative source (not the session-ephemeral scratchpad copy, which I verified matches live main.md byte-for-byte but flagged as convenience-only given scratchpad dirs don't survive across sessions). Conservation OK, task_total 753→754 (mint), signal_total 204→204. DJ: `sprint-TOKEN-ECONOMY-AUDIT-qa.md` §qa-S9.
 
 ## cycle-558 · 2026-08-07 · FIX-DEVTEAM-SECONDARY-DRAIN-NO-SELF-TARGET-RESOLVER-CASE — APPROVED, DONE_VERIFIED (direct-commit verify, `qa[]` row, `branch:null`, commit `4a6d53151`)
 
