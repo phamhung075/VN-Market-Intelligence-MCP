@@ -1,3 +1,37 @@
+## c76 · 2026-08-07T04:00Z
+### Audit Run Tier-1 (04:03–04:04 UTC 2026-08-07)
+- Tier: 1 | Services: 12 host_runtime_set | Health: 5 probed
+- Anomalies: 1 ESCALATE (rag-service A-30) | Status: DEGRADED
+- Verdict: STANDARD_GREEN for host_runtime_set, but ESCALATE on rag-service A-30 loss-of-reclamation (separate discriminator probe)
+- Container status [A-01–A-11]: All 12 UP (healthy) ✓
+- Health endpoints [A-12–A-20]: All 5 OK (HTTP 200) ✓
+- A-20 pdf-extractor multi-probe: 3/3 PASS ✓
+- A-21 restart count (mcp-server): 0, no crashes in 4h window ✓
+- A-30 memory pressure:
+  - mcp-server: 63.70% (< 85% deep-probe gate) — SKIP deep probe ✓
+  - **rag-service (separate ESCALATE finding):** verify-a30-mcp-memory-reclamation.sh ESCALATE verdict
+    - All 12 probes: 99.62–99.81% (min=99.62%, max=99.81%)
+    - Reclamation dips: 0 (loss of reclamation tripwire)
+    - VmHWM=1149252KB >> VmRSS=1041844KB (prior reclamation occurred, now stuck high)
+    - OOMKilled: false, RestartCount: 0
+    - **Escalation gate crossed:** all samples >93% with zero reclamation dips → ESCALATE to ops
+    - Signal: mem_pressure:rag-service:A-30-loss-of-reclamation (new dedup_key)
+    - Signal ID: sys-20260807T040402-69e8
+- A-32 disk: 50% < 85% ✓
+- A-33 hook liveness: INFO/grey (expected, scripts not deployed)
+
+### Notes:
+- Spawn verdict: DEGRADED (rag-service A-30 escalation gate crossed during verify-a30 discriminator probe)
+- Context: This cycle's verify-a30-mcp-memory-reclamation.sh probe on rag-service (CONTAINER env var override) returned ESCALATE: all samples >93% with no reclamation dip = loss of reclamation
+- Dedup status: New dedup_key (mem_pressure:rag-service:A-30-loss-of-reclamation) — distinct from prior c73/c75 floor-breach entries. BELOW-FLOOR crossing explicitly recorded per task instructions.
+- Escalation: Routed to ops via DASHBOARD + signal_queue row (CRITICAL severity)
+- Corroboration-gate pass: meets tripwire condition (all samples >93% no dips) without requiring OOMKilled or peak >97% sustained
+- [emit-signal] OK dedup_key=mem_pressure:rag-service:A-30-loss-of-reclamation id=sys-20260807T040402-69e8
+- [emit-dashboard] OK id=sys-20260807T040402-69e8 check_id=A-30-RAG-SERVICE-ESCALATE
+
+[OUTPUT-CONTRACT] signals_posted=1 | telegram_sent=1 | signal_queue_rows_written=1 | dashboard_rows=1
+CONTRACT-CONTRADICTION: NONE
+
 
 
 
