@@ -1,16 +1,16 @@
 # Market Watcher — Notebook
-**Last updated:** 2026-08-06 20:06 UTC | **Sprint:** 2026-Q3
+**Last updated:** 2026-08-07 00:15 UTC | **Sprint:** 2026-Q3
 
 ## Carry-over
 None from prior cycle.
 
-## Cycle (20:06–20:07 UTC offhours)
-- Stocks: 34 | Anomalies: 0 (all <2.5σ offhours floor, stale prices >24h)
+## Cycle (00:15–00:16 UTC offhours)
+- Stocks: 34 | Anomalies: 0 (all <2.5σ offhours floor, prices stale >24h)
 - Sweep-forced: 3 (DBC, DPM, KDC) | Regular analysis: 31
 - Regime: NEUTRAL | DXY: USD STRENGTHENING | US10Y: CHEAP (risk-on)
 - fx_pressure: none | pe_risk: none
 
-## Metrics (cycle 2026-08-06 20:06 UTC)
+## Metrics (cycle 2026-08-07 00:15 UTC)
 | Field | Value |
 |---|---|
 | cycles_run | 1 |
