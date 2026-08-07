@@ -814,3 +814,15 @@
 **Mitigation:** No immediate action beyond signal routing.
 
 ---
+
+## Anomaly: A-30 · rag-service memory reclamation loss (99.24% sustained)
+**Severity:** CRITICAL | **Date:** 2026-08-07 | **Status:** OPEN
+**Location:** rag-service container
+**Details:** Memory pressure sustained at 99.24% (1016MiB / 1GiB) with zero reclamation dips over 30s window — loss-of-reclamation pattern persists, VmHWM indicates prior reclamation possible but currently stuck high
+**Impact:** Service approaching OOM condition; risk of uncontrolled termination; data pipeline continuity at risk
+**Root cause:** rag-service deployed with insufficient memory allocation for current workload; memory not being reclaimed during GC cycles
+**Zone owner:** dev-platform
+**Last reported:** 2026-08-07T06:09:39Z (signal sys-20260807T060932-6536, system-auditor -> po, dedup_key=memory_pressure:rag-service:A-30-loss-of-reclamation, CRITICAL Telegram sent)
+**Mitigation:** No immediate action beyond signal routing.
+
+---
