@@ -42,3 +42,27 @@ live `coordinationTools.ts` Zod schema — exact match, no design deviation, onl
 **why-change:** AC-4 confirmed by reading live source (not re-derived): `gcExpiredLocks` +
 `KNOWN_LEGIT_PREFIXES` both already exclude `cron-registration:*` (`951ddfdba`/`86b31eccd`). No
 `Cron*` tool called; doc-authoring only.
+
+### STEP agent-father-S30 · agent-father · 2026-08-07T01:52:00Z
+**task-id:** FIX-REFINE-SUBFLOW-OPTIONC-CONTRACT-DRIFT
+**what-done:** Per PO decision `po_decision_refine_cadence_20260807` (stamped 2026-08-07T01:11Z),
+executed action item (1) only: set `enabled: true` on `refine-bctc-slot-1` (cron `0 9`, was
+`false`) in `docs/data/cowork-schedule.json`. Slots `0 11` (slot-3) and `0 14` (slot-2) left
+disabled; slot-4 (`30 16` canary) untouched.
+**what-considered:**
+- Full re-enable of all 3 paused slots (4x cadence) vs partial (2x) — PO chose partial: canary
+  proved the Option-C contract fix generically but also exposed a degraded image plane (3/3 DONE
+  units image_unavailable, confidence capped 0.55 correctly), so 4x would bulk-write image-blind
+  units across HSG/VHM before that separate defect (FIX-BCTC-REFINE-PAGE-IMAGE-UNAVAILABLE-CAPS-
+  CONFIDENCE) is fixed.
+- Chasing the flat-confidence-0.55 value as a bug — refuted by PO: `bctcSanityValidator.ts` can
+  only pass-through or clamp to 0.4/0.1, never 0.55; the value is correct behavior under the
+  documented <=0.6 image-degradation cap. Out of scope here by explicit PO instruction.
+**why-decision:** This dispatch was scoped narrowly to the single cadence action item already
+decided by PO at source (RAW-verified against live cowork-schedule.json + market.db) — not a
+re-litigation of the cadence tradeoff. Only field changed: `enabled` (+ its `_note` for audit
+trail); no other slot, no confidence/cap value, no code under `apps/mcp-server` or
+`docs/agents/refine_bctc_md/` touched.
+**why-change:** No change from plan — single-field edit as specified. Broader AC-1..AC-7 contract-
+drift fixes on this same row remain untouched (separate, larger piece of work per dispatch
+instructions); row stays `IN_PROGRESS`, `.head` untouched, status not flipped.
