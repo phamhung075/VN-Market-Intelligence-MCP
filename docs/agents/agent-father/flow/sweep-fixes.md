@@ -6,13 +6,22 @@
 
 Lightweight sweep — Grep-based, no full file reads:
 
+**Target-file note (post-`dc430566c` consolidation):** `<agent>.md` in checks 1/3/5 below means
+`docs/agents/<agent-id>/init.md` — the full Employee Card YAML — NOT the thin
+`.claude/agents/<agent-id>.md` stub (which is now just an 5-9 line frontmatter+pointer file per
+the lazy-load split). Grepping the stub file makes checks 1/3/5 fail 100% of the time by
+construction (confirmed live 2026-08-07 keep cycle — the 100% fail rate was itself the tell, cf.
+`feedback_fleetwide_gate_validated_on_one_file_optout_allowlist`); auto-fixing on that false
+signal would inject churn into all 42 stub files. Check 2 (flow) and Check 4 (flow path) already
+correctly target `docs/agents/<agent-id>/flow/*.md` — unaffected by this note.
+
 | # | Check | Method | Auto-fixable? |
 |---|-------|--------|--------------|
-| 1 | Has `fail-loud-protocol` reference | `Grep "fail-loud-protocol" <agent>.md` | YES — add to always_load |
-| 2 | Has `Error Boundary` in flow | `Grep "Error Boundary" <flow>.md` | NO — needs manual authoring |
-| 3 | Has `boundary_rules` section | `Grep "boundary_rules" <agent>.md` | NO — needs manual authoring |
-| 4 | Flow path resolves | Read first line of flow file | YES — fix path if obvious typo |
-| 5 | Version not >90 days stale | `Grep "version:" <agent>.md`, parse date | YES — update to today |
+| 1 | Has `fail-loud-protocol` reference | `Grep "fail-loud-protocol" docs/agents/<agent-id>/init.md` | YES — add to always_load |
+| 2 | Has `Error Boundary` in flow | `Grep -i "error boundary" docs/agents/<agent-id>/flow/*.md` (case-insensitive — live text uses both cases; for thin-pointer microservice agents, check the shared flow file they point to, e.g. `microservice-main.md`) | NO — needs manual authoring |
+| 3 | Has `boundary_rules` section | `Grep "boundary_rules" docs/agents/<agent-id>/init.md` | NO — needs manual authoring |
+| 4 | Flow path resolves | Verify `flow.default` path in `init.md` exists on disk | YES — fix path if obvious typo |
+| 5 | Version not >90 days stale | `Grep "version:" docs/agents/<agent-id>/init.md`, parse date | YES — update to today |
 
 ## Step 4 — Auto-Fix Safe Violations
 
