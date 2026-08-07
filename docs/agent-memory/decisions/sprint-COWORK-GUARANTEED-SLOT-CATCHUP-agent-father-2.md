@@ -96,3 +96,19 @@ Grep confirmed byte-for-byte.
 **why-change:** No production/agent-file diff. Sole writes: this journal entry, notebook entry,
 and `docs/data/orch/orch-state.json` (status flip + lane-move + head-sync), all via their
 mandated write paths (`orch-apply.sh` for the hot file, direct Edit for memory files).
+
+### STEP agent-father-S32 · agent-father · 2026-08-07T13:22:31Z
+**task-id:** FIX-DEVFLOW-MICROSERVICE-MAIN-NO-ERROR-BOUNDARY
+**what-done:** AC-1 authored Error Boundary block into `microservice-main.md` (+4L, points to
+`fail-loud-protocol.md` SSOT); AC-3 repointed dev-mcp-server+dev-frontend off the wrong cowork
+SSOT; AC-2 generalized `sweep-fixes.md` Check#2 to a one-hop pointer-resolution rule; AC-4 live
+re-ran Check#2 over all 14 `dev-*/` dirs — 10/10 pipeline agents now PASS the same SSOT (was
+2/10 false-green + 8/10 FAIL).
+**what-considered:**
+- Edit only `microservice-main.md` (router paraphrase's framing) vs the full 4-file board scope —
+  chose full scope: AC-2's own text warns a 1-file edit still reports 8 FAILs against the old
+  check method.
+- Self-flip to DONE (self-verified) vs REVIEW — chose REVIEW: self-report is not evidence.
+**why-decision:** Board row `files[]`/`acceptance[]` are the authoritative task scope, not the
+router's paraphrase; `out_of_scope` explicitly fenced off the INV-GATEWAY-1 item — left untouched.
+**why-change:** No change from board plan.
