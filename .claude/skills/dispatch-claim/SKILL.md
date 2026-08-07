@@ -1,12 +1,23 @@
 # Skill: dispatch-claim
 
-<!-- size-justification: ~485L — TE-T12 lazy-load split (2026-07-31). This file is no longer the
+<!-- size-justification: ~593L — TE-T12 lazy-load split (2026-07-31). This file is no longer the
      hot-path read: CLAUDE.md step 2.5 now points at .claude/skills/dispatch-claim/CARD.md (<=40L —
      ownership key, Phase A orphan-probe, Phase A.5 roster, Phase B PRE-CLAIM try/finally). This SKILL.md
      stays large intentionally as the full lazy-loaded reference (namespace spec, Fire-Time Election,
      Step 0a presence self-registration detail, sprint-task task: wrap, session-id passing, two-tier
      model) — read only when CARD.md's edge-path pointers send an agent here for a section, not on
-     every dispatch. Reference Commits (Sprint 1962c SHAs) trimmed to a one-line git-log pointer. -->
+     every dispatch. Reference Commits (Sprint 1962c SHAs) trimmed to a one-line git-log pointer.
+     FIX-ORPHAN-FR1-FR3-FR6-SKILL-DISPATCH-CLAIM 2026-08-07 (+95L, 498→593, incl. this header
+     delta note): (1) fixed the stale "no payload_patch in the current MCP surface" prose under
+     § Updating payload.current_task
+     mid-session — now accurately states payload_patch/ttl_seconds/owner_agent are backend-landed
+     (FIX-ORPHAN-FR1-FR2-INFRA-HEARTBEAT-LADDER) but NOT YET exposed on the live task_heartbeat
+     Zod schema, gated on FIX-ORPHAN-FR2-FR6-FR7-INTERFACE-COORDINATION-TOOLS + NFR-3 container
+     rebuild; (2) implemented the FR-3 board-state guard in § Orphan-Adoption Probe — runs once
+     per sprint-task signal before the redispatch_count>=N_MAX branch, batch-reads .task_board
+     once per tick (both flat lanes and active_sprints nesting), classifies by lane membership
+     per the architect's backlog+BLOCKED=TERMINAL ruling; (3) added owner_agent to the escalation
+     task_heartbeat call (FR-6), annotated NOT-YET-LIVE pending the same interface/rebuild gate. -->
 
 **Trigger:** router (or any dispatcher) about to spawn an agent for sprint-task, intent, or cowork-slot work
 
@@ -187,10 +198,19 @@ else:
 
 ### Updating `payload.current_task` mid-session
 
-`task_heartbeat` renews TTL only — it does **not** update payload fields (no payload_patch
-in the current MCP surface). To refresh `current_task` when the active task changes, use
-the release+reclaim pattern. Since `task_id` embeds `$CLAUDE_CODE_SESSION_ID`, no peer
-can steal it in the race window:
+`task_heartbeat` renews TTL only, by default. FR-1 (`FIX-ORPHAN-FR1-FR2-INFRA-HEARTBEAT-LADDER`,
+landed 2026-08-07) added an optional `payload_patch` (shallow-merge into the existing `payload`
+JSON) at the **backend** layer (`coordinationStore.ts` `heartbeatTask()`), but that param is
+**NOT YET reachable through this MCP tool** — the live `task_heartbeat` Zod schema
+(`coordinationTools.ts`) still only accepts `task_id`/`owner_client_session`. Exposing
+`ttl_seconds`/`payload_patch`/`owner_agent` at the tool-schema layer is
+`FIX-ORPHAN-FR2-FR6-FR7-INTERFACE-COORDINATION-TOOLS` (open, unclaimed as of this write), and
+per NFR-3 the change is not LIVE until the `apps/mcp-server/` container is rebuilt after that
+task ships and its test-before-ship live round-trip gate passes. Until both land, any
+`payload_patch`/`ttl_seconds`/`owner_agent` argument passed to `task_heartbeat` (e.g. the
+escalation call below) is a documented-but-currently-inert no-op at the tool boundary — use
+the release+reclaim pattern to refresh `current_task` today. Since `task_id` embeds
+`$CLAUDE_CODE_SESSION_ID`, no peer can steal it in the race window:
 
 ```
 # Optional advisory update — release then immediately reclaim with new current_task
@@ -344,11 +364,80 @@ orphan_signals = call_tool(server="vn-market", tool="task_list_held", arguments=
 # task_list_held is READ-ONLY — NEVER use task_heartbeat/task_claim to probe published artifacts
 # DoD-P15-2: use task_list_held (read-only) to check published:<kind>:<period> artifacts at adoption time
 
+# --- FR-3 (EC-8): batch-read `.task_board` ONCE per dispatcher tick, BEFORE the signal loop —
+# never per-signal. One jq pass covers every flat lane (EC-2 — 95%+ of the board) AND the nested
+# `active_sprints[].tasks[]` shape in the same read. Only run when orphan_signals is non-empty
+# (the common zero-signal tick pays zero extra board-read cost). ---
+board_snapshot = $(jq -c '{
+  backlog:        [.task_board.backlog[]?        | {id, status}],
+  ready:          [.task_board.ready[]?          | {id, status}],
+  in_progress:    [.task_board.in_progress[]?    | {id, status}],
+  review:         [.task_board.review[]?         | {id, status}],
+  qa:             [.task_board.qa[]?             | {id, status}],
+  done:           [.task_board.done[]?           | {id, status}],
+  done_verified:  [.task_board.done_verified[]?  | {id, status}],
+  active_sprints: [.task_board.active_sprints[]?.tasks[]? | {id, status}]
+}' docs/data/orch/orch-state.json)
+
 for each signal in orphan_signals:
   original_task_id      = signal.payload.original_task_id
   original_task_kind    = signal.payload.original_task_kind
   redispatch_count      = signal.payload.redispatch_count   # DoD-P15-3: must carry forward
   last_payload          = signal.payload.last_payload       # durable checkpoint
+
+  # --- FR-3: Board-State Guard — runs ONCE per signal, BEFORE the redispatch_count >= N_MAX
+  # branch (EC-3: an already-terminal task must skip BOTH escalation and adoption uniformly —
+  # no BUG-telegram noise for a task that's already done, no re-dispatch). Scope:
+  # original_task_kind == "sprint-task" ONLY (EC-4) — `cowork-slot`/`dashboard-row` already have
+  # kind-appropriate completion checks (published:<kind>:<period> probe / idempotent re-run — see
+  # Resume Contract table below) and fall straight through this guard unchanged. ---
+  if original_task_kind == "sprint-task":
+    bare_id = ltrimstr(original_task_id, "task:")   # EC-1 — original_task_id always carries the outer "task:" wrap; bare .task_board ids never do
+
+    # Single pass over the already-fetched board_snapshot (no re-read of orch-state.json per signal, EC-8).
+    lane_hit = null
+    for lane in ["backlog", "ready", "in_progress", "review", "qa", "done", "done_verified", "active_sprints"]:
+      match = board_snapshot[lane] | select(.id == bare_id) | first
+      if match != null:
+        lane_hit = {lane: lane, row: match}
+        break
+
+    if lane_hit == null:
+      board_class = "terminal"   # not found in ANY lane → archived/cold-evicted/detail_ref-only row.
+                                  # NEVER default to "active" on absence — an absent row must never re-dispatch.
+    elif lane_hit.lane in ["ready", "in_progress"]:
+      board_class = "active"
+    elif lane_hit.lane in ["review", "qa", "done", "done_verified"]:
+      board_class = "terminal"
+    elif lane_hit.lane == "backlog":
+      board_class = "terminal"   # not-yet-dispatched. Architect ruling (2026-07-22 design brief §2):
+                                  # backlog+BLOCKED is TERMINAL — no active carve-out (TASK_2005 precedent:
+                                  # "paused pending an external precondition", not "resume automatically").
+    elif lane_hit.lane == "active_sprints":
+      if lane_hit.row.status in ["TODO", "IN_PROGRESS", "READY", "BLOCKED"]:
+        board_class = "active"
+      elif lane_hit.row.status in ["REVIEW", "DONE", "DONE_VERIFIED", "CANCELLED", "DEFERRED", "SKIPPED"]:
+        board_class = "terminal"
+      else:
+        board_class = "terminal"   # unrecognized/corrupt status — never default to active. Defense-in-depth:
+                                    # orch-validate.mjs Stage-1b checkLaneCoherence() is a HARD FAIL going
+                                    # forward, but this guard may still read pre-hard-fail-era corruption
+                                    # or a write that bypassed orch-apply.sh.
+
+    if board_class == "terminal":
+      log "[<dispatcher-role>] orphan-signal:" + original_task_id + " — board-state guard: " +
+          (lane_hit.lane ?? "not-found") + " is terminal, skip (no re-dispatch, no escalation)"
+      call_tool(server="vn-market", tool="task_release", arguments={
+        task_id:              "orphan-signal:" + original_task_id,
+        owner_client_session: $CLAUDE_CODE_SESSION_ID
+      })   # best-effort — pre-FIX-ORPHAN-FR2-FR6-FR7-INTERFACE-COORDINATION-TOOLS + NFR-3 rebuild
+           # this is a documented no-op ({ok:true, released:0}, sole-key match can't hit a NULL
+           # owner_client_session column); becomes a real release via FR-2's null-session ladder
+           # once that task ships and the container rebuilds. See NOT-YET-LIVE note above § "Updating
+           # payload.current_task mid-session".
+      continue   # skip BOTH escalation and adoption branches uniformly for this signal (EC-3)
+  # --- End FR-3 guard. board_class == "active" (or original_task_kind != "sprint-task", EC-4
+  # out-of-scope) falls through to the existing redispatch_count branch below, unchanged. ---
 
   if redispatch_count >= N_MAX:
     # --- Escalation path (idempotent) ---
@@ -362,6 +451,13 @@ for each signal in orphan_signals:
     call_tool(server="vn-market", tool="task_heartbeat", arguments={
       task_id:              "orphan-signal:" + original_task_id,
       owner_client_session: $CLAUDE_CODE_SESSION_ID,
+      owner_agent:          <dispatcher-role>,   # FR-6 — required so FR-2's null-session ladder has
+                                                  # the owner_agent it needs to match this orphan-signal
+                                                  # row (row.owner_agent == the original claim's
+                                                  # owner_agent, i.e. this same dispatcher role — see
+                                                  # coordinationStore.ts gcExpiredLocks orphan-emit).
+                                                  # NOT YET LIVE on this call — see NOT-YET-LIVE note
+                                                  # above § "Updating payload.current_task mid-session".
       ttl_seconds:          86400,       # keep ESCALATED row visible for 24h
       payload_patch:        {"status": "ESCALATED"}   # extend + mark
     })
