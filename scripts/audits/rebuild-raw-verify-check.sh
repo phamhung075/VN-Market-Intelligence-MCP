@@ -45,8 +45,11 @@
 # applies to its OWN field-regex scan, reused here for the identical reason.
 #
 # On trigger, require ONE of (brief §3 / mechanism):
-#   (i)   `git log <base-sha>..<head-sha> --format=%B` contains
-#         `raw-verify|raw verified|realdata` (case-insensitive) — GLOBAL,
+#   (i)   `git log <base-sha>..<head-sha> --format=%B` contains a RAW-verify/
+#         REALDATA attestation token — `raw[- ]verif(y|ied)|realdata`,
+#         case-insensitive (collapsed separator+tense axes so "raw-verify",
+#         "RAW verified", "raw-verified" etc. all match, see FIX-RAWVERIFY-
+#         ATTEST-ERE-HYPHENATED-PAST-TENSE-FALSE-BLOCK below) — GLOBAL,
 #         excuses every trigger point in the range;
 #   (ii)  the range touches `docs/agent-memory/decisions/**` or
 #         `reports/TASK_REPORT_*.md` with an ADDED line matching the SAME
@@ -112,7 +115,20 @@ EXCLUDE_TEST_ERE='(^|/)(__tests__|tests)(/|$)|\.test\.ts$|_test\.go$|(^|/)test_[
 # Field regex — reused VERBATIM from scripts/audits/metric-mask-lint.sh's IDENT_ERE:
 FIELD_ERE='(confidence|score|impact|magnitude|probability)[A-Za-z0-9_]*'
 # Attestation token regex (brief §3(i)/(ii), same token both places):
-ATTEST_ERE='raw-verify|raw verified|realdata'
+# FIX-RAWVERIFY-ATTEST-ERE-HYPHENATED-PAST-TENSE-FALSE-BLOCK: the prior literal-
+# list form (`raw-verify|raw verified|realdata`) enumerated INFINITIVE+hyphen and
+# PAST-TENSE+space but never PAST-TENSE+hyphen ("raw-verified") — this repo's
+# dominant real-world attestation idiom (18/24 = 75% of a 400-commit corpus).
+# A literal list is exactly what shipped that gap: each new tense/separator
+# combination someone actually types ("raw-verifying", "rawverify", ...) would
+# need its own future literal. Collapsed the separator axis (hyphen-or-space,
+# `[- ]`) and the tense axis (infinitive-or-past, `(y|ied)`) into the pattern
+# itself instead of enumerating their product, so every combination on either
+# axis matches without another edit here. Deliberately NOT collapsed into
+# matching bare "verif(y|ied)" alone (no `raw`/`realdata` qualifier) — the
+# token must stay a deliberate attestation, not an accidental word a commit
+# message would contain anyway (e.g. "unit test verified the fix").
+ATTEST_ERE='raw[- ]verif(y|ied)|realdata'
 
 if ! CHANGED_FILES="$(git diff --name-only "$BASE" "$HEAD" 2>/dev/null)"; then
   echo "[rebuild-raw-verify-check] WARN: git diff --name-only ${BASE}..${HEAD} failed (unknown SHA / shallow clone) — fail-open PASS"

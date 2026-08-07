@@ -142,6 +142,40 @@ fi
 rm -rf "$D3"
 
 # ---------------------------------------------------------------------------
+# Case 2b (regression, FIX-RAWVERIFY-ATTEST-ERE-HYPHENATED-PAST-TENSE-FALSE-BLOCK):
+# same trigger shape as Case 1/2, but the commit-message token is the
+# HYPHENATED PAST TENSE ("RAW-verified") — the phrasing the old
+# `raw-verify|raw verified|realdata` ATTEST_ERE could never match (hyphenated
+# infinitive + spaced past tense were covered, hyphenated past tense was not)
+# despite being this repo's dominant real-world attestation idiom. End-to-end
+# reproduction of the false-block bug class through the FULL script pipeline
+# (not just the bare regex) -> must PASS.
+# ---------------------------------------------------------------------------
+D2B="$(new_repo)"
+BASE2B="$(cd "$D2B" && git rev-parse HEAD)"
+(
+  cd "$D2B" || exit 1
+  cat > apps/foo/src/infrastructure/repo.ts <<'EOF'
+export const x = 1;
+export function fetchScore(): number {
+  return 42;
+}
+EOF
+  git add -A
+  git commit -qm "add fetchScore trigger — schema.ts 372L->261L RAW-verified via wc -l"
+)
+HEAD2B="$(cd "$D2B" && git rev-parse HEAD)"
+OUT2B="$(cd "$D2B" && bash "$SCRIPT" "$BASE2B" "$HEAD2B" 2>&1)"
+RC2B=$?
+if [ "$RC2B" -eq 0 ] && printf '%s' "$OUT2B" | grep -q "commit-message attestation"; then
+  ok "regression-hyphenated-past-tense-RAW-verified-passes (rc=${RC2B})"
+else
+  bad "regression-hyphenated-past-tense-RAW-verified-passes (rc=${RC2B})"
+  echo "$OUT2B"
+fi
+rm -rf "$D2B"
+
+# ---------------------------------------------------------------------------
 # Case 4a (DoD): non-trigger-path change only -> PASSes trivially.
 # ---------------------------------------------------------------------------
 D4A="$(new_repo)"
@@ -280,6 +314,58 @@ else
   echo "$OUT7"
 fi
 rm -rf "$D7"
+
+# ---------------------------------------------------------------------------
+# AC-2 (FIX-RAWVERIFY-ATTEST-ERE-HYPHENATED-PAST-TENSE-FALSE-BLOCK): corpus-
+# derived regression, NOT a synthetic fixture — the task's own
+# verification_gate is `corpus_replay_against_real_commit_messages_not_
+# synthetic_fixture`, because a fresh-fixture-only test is exactly what let
+# the original gap ship undetected. DERIVES (never hand-writes) the list of
+# every distinct raw-verify phrasing THIS repo's real commit history actually
+# contains, using the identical `git log | grep -oiE` command the board row's
+# own evidence (b) used, then asserts the live ATTEST_ERE (extracted from the
+# script file itself, not copy-pasted) matches every one of them — plus a
+# negative control proving the fix did NOT widen the token into matching a
+# bare "verified"/"verify" with no raw|realdata qualifier (AC-1's explicit
+# non-goal).
+# ---------------------------------------------------------------------------
+ATTEST_ERE_LIVE="$(grep -m1 '^ATTEST_ERE=' "$SCRIPT" | sed -E "s/^ATTEST_ERE='(.*)'\$/\1/")"
+if [ -z "$ATTEST_ERE_LIVE" ]; then
+  bad "AC2-extract-live-attest-ere (could not extract ATTEST_ERE= from $SCRIPT)"
+else
+  # No mapfile/readarray — macOS system /bin/bash is 3.2 (same portability
+  # constraint documented in detect-analysis-only-exit.sh and siblings).
+  CORPUS_PHRASES_RAW="$(git -C "$PROJECT_ROOT" log -400 --format=%B 2>/dev/null | grep -oiE 'raw[- ]verif(y|ied)' | sort -u)"
+  CORPUS_COUNT=0
+  CORPUS_MISS=0
+  while IFS= read -r phrase; do
+    [ -z "$phrase" ] && continue
+    CORPUS_COUNT=$((CORPUS_COUNT + 1))
+    shopt -s nocasematch
+    if ! [[ "$phrase" =~ $ATTEST_ERE_LIVE ]]; then
+      CORPUS_MISS=$((CORPUS_MISS + 1))
+      echo "  NO-MATCH against live ATTEST_ERE: '$phrase'"
+    fi
+    shopt -u nocasematch
+  done <<< "$CORPUS_PHRASES_RAW"
+
+  if [ "$CORPUS_COUNT" -eq 0 ]; then
+    bad "AC2-corpus-derived-attest-ere-regression (derived 0 phrasings from live history — corpus command or history changed, cannot assert)"
+  elif [ "$CORPUS_MISS" -eq 0 ]; then
+    ok "AC2-corpus-derived-attest-ere-regression (${CORPUS_COUNT} distinct real phrasings, all matched)"
+  else
+    bad "AC2-corpus-derived-attest-ere-regression (${CORPUS_MISS}/${CORPUS_COUNT} distinct real phrasings NOT matched)"
+  fi
+
+  shopt -s nocasematch
+  NEG_BODY="unit test verified the fix; manual QA also verified it works, please verify before merge"
+  if ! [[ "$NEG_BODY" =~ $ATTEST_ERE_LIVE ]]; then
+    ok "AC2-negative-control-bare-verified-verify-no-qualifier-rejected"
+  else
+    bad "AC2-negative-control-bare-verified-verify-no-qualifier-rejected"
+  fi
+  shopt -u nocasematch
+fi
 
 # ── Summary ───────────────────────────────────────────────────────────────────
 echo ""
