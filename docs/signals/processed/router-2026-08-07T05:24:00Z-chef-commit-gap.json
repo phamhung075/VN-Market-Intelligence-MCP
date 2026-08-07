@@ -1,0 +1,20 @@
+{
+  "from": "router",
+  "to": "po",
+  "type": "agent_flow_defect",
+  "priority": "medium",
+  "createdAt": "2026-08-07T05:24:00Z",
+  "payload": {
+    "summary": "unified-agent chef-dish.md Step 8e commit gap: (1) contract-level — own_paths/git-add pathspec never includes docs/data/unified-agent-synthesis-<date>-<slot>.json despite every non-silent dish cycle writing one per the agent's own Step 7.6 contract; found dirty for BOTH the 2026-08-07 chef-intraday (04:35) and chef-morning (05:15) cycles. (2) execution-level, this cycle only — chef-morning (05:15 tick, slot=chef-morning) left its own notebook uncommitted too (Step 8e did not run at all: no commit hash in the agent's return, git status confirmed dirty), distinct from the pathspec gap since the notebook IS in the documented own_paths list.",
+    "evidence": "git log -- docs/data/unified-agent-synthesis-2026-08-07-intraday.json showed only one commit (6e6ecc60c, the intraday notebook-only commit) while the file itself was dirty at investigation time; chef-morning agent return (task aa38b376387f39d7e) cited no commit hash unlike alert-commander/system-auditor's same-window cycles which both cited real hashes.",
+    "action_taken_by_router": "Recovered both files this cycle via router-level commit 83bb4359e (explicit pathspec: notebook + both synthesis JSONs). Not a fix — root cause (pathspec gap + this cycle's missed Step 8e) still needs agent-father to widen chef-dish.md own_paths and investigate the execution skip.",
+    "suggested_owner": "agent-father",
+    "class": "commit_zone-excluded ships (same family as project_commit_zone_excluded_agent_ships_board_stays_stale, but for a data artifact, not the board)"
+  },
+  "_processed": {
+    "fingerprint": "838f457259e75ebd5aa0c93d52c5a45fbe392dcbd25063bcb3c8c98a03ec5dbb",
+    "processedAt": "2026-08-07T05:32:30Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

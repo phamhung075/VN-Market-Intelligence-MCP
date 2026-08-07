@@ -5,8 +5,8 @@
     "last_linecount": 205,
     "po": {
       "section_name": "po",
-      "last_mtime": "2026-08-07T04:59:22Z",
-      "last_linecount": 216
+      "last_mtime": 1786080787,
+      "last_linecount": 217
     }
   },
   "decision_journal": [
@@ -3338,6 +3338,19 @@
         "triaged_at": "2026-08-07T05:04:44Z",
         "triaged_by": "po",
         "disposition": "FOLD onto FIX-RAG-EMBEDDER-IDLE-UNLOAD-PATH (review[], next_agent=qa) — NOT re-minted. Corroborated on the docker plane and root-caused this tick: the running image predates its own fix commit by ~24h, so the A-30 storm measures the PRE-FIX binary. Unblocking action minted as OPS-RAG-SERVICE-REBUILD-STALE-IMAGE-PREDATES-IDLE-UNLOAD-FIX."
+      },
+      {
+        "id": "sys-20260807T052117-0aa8",
+        "ts": "2026-08-07T05:21:17Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "signal_feedback",
+        "summary": "rag-service memory pressure: loss of reclamation (all samples >93%, no dips)",
+        "severity": "WARN",
+        "status": "READ",
+        "payload_ref": null,
+        "provenance": "detector",
+        "audit_cycle_tag": "cron:auditor-t1:2026-08-07T05:00Z"
       }
     ],
     "last_triaged_at": "2026-07-29T06:25:00Z",

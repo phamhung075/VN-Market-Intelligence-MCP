@@ -3,20 +3,20 @@
   "to": "dev-team",
   "type": "cowork-fire",
   "payload": {
-    "fire_time": "2026-07-31T05:06:38Z",
+    "fire_time": "2026-08-07T05:14:02Z",
     "matched_slots": [
-      "news-scout-sentiment"
+      "alert-commander-market"
     ],
     "won_slots": [
-      "news-scout-sentiment"
+      "alert-commander-market"
     ],
     "held_by_other": [],
     "all_held": false,
     "spawned": [
-      "docs/agents/news-scout/flow/main.md"
+      "docs/agents/alert-commander/flow/main.md"
     ],
     "silent": false,
-    "drift_min": 5,
+    "drift_min": 9,
     "errors": [],
     "pressure_mode": "adaptive",
     "calendar_status": "unknown",
@@ -25,14 +25,14 @@
     "downgraded": [],
     "chef_mutex_applied": false,
     "due_reasons": {
-      "news-scout-sentiment": "cadence"
+      "alert-commander-market": "cron"
     },
     "cadence_minutes": {
-      "news-scout-sentiment": "240"
+      "alert-commander-market": null
     },
-    "last_fired_timestamp": "2026-07-31T05:06:29Z",
+    "last_fired_timestamp": "2026-08-07T05:14:02Z",
     "last_fired_slots": [
-      "news-scout-sentiment"
+      "alert-commander-market"
     ],
     "last_fired_write_errors": null,
     "classification": "FIRE",
@@ -40,15 +40,15 @@
     "nominal_tick": "05:00",
     "leader_lock": "acquired",
     "dev_head": "unknown",
-    "devq": 5,
-    "signal_backlog": 17,
-    "note": "single-slot 4h-cadence fire (news-scout-sentiment), single batch, no MAX_PARALLEL chunking needed"
+    "devq": 0,
+    "signal_backlog": 0,
+    "note": "single-slot tick, no signal_queue cowork-addressed rows, no one-shots, gateway not blind, max_parallel=4 (not degraded)"
   },
   "priority": "low",
-  "createdAt": "2026-07-31T05:06:38Z",
+  "createdAt": "2026-08-07T05:14:02Z",
   "_processed": {
-    "fingerprint": "e059a6d11ce7c1973d173095c020fcc7dffa186594f111bd99bc0ea69fa7ccf0",
-    "processedAt": "2026-07-31T05:15:35Z",
+    "fingerprint": "31c1fbd4f2cff7e3d6a7da595c98ffeaf09938951246aaf7eb9cfb3b0c1bfb53",
+    "processedAt": "2026-08-07T05:32:30Z",
     "processedBy": "dev-team",
     "result": "routed-to-po"
   }
