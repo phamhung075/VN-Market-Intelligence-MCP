@@ -133,8 +133,8 @@
     "does_not_consume_wip": true
   },
   "signal_queue": {
-    "_updated_at": "2026-08-07T00:56:45Z",
-    "_updated_by": "cowork-team-dispatcher",
+    "_updated_at": "2026-08-07T02:07:00Z",
+    "_updated_by": "cowork-team/step0a-drain",
     "archive": [],
     "rows": [
       {
@@ -3209,7 +3209,7 @@
         "type": "microservice_degraded",
         "summary": "A-30 FAIL: rag-service memory pressure — 97.90% of cap, 21.5MiB free (BELOW-FLOOR 40MiB)",
         "severity": "WARN",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": null,
         "provenance": "detector",
         "audit_cycle_tag": "cron:auditor-t1:2026-08-07T01:55:00Z"
