@@ -730,3 +730,15 @@
 **Mitigation:** No immediate action beyond signal routing.
 
 ---
+
+## Anomaly: C-04 · financial_reports: 30 low-confidence extractions in 7d (threshold ≤ 5)
+**Severity:** WARN | **Date:** 2026-08-07 | **Status:** OPEN
+**Location:** market.db/financial_reports
+**Details:** 30 records with extraction_confidence < 0.2 in 7-day window
+**Impact:** High noise in extraction pipeline, may require retraining
+**Root cause:** OCR/extraction model degradation or mislabeled documents
+**Zone owner:** dev-mcp-server
+**Last reported:** 2026-08-07T03:06:54Z (signal sys-20260807T030558-798f, system-auditor -> po, dedup_key=db_integrity_breach:financial_reports:C-04, WARN Telegram sent)
+**Mitigation:** No immediate action beyond signal routing.
+
+---
