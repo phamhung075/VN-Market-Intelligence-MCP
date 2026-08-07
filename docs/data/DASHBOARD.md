@@ -742,3 +742,15 @@
 **Mitigation:** No immediate action beyond signal routing.
 
 ---
+
+## Anomaly: C-08 · alerts: 1 orphaned row with no agent_signals (threshold = 0)
+**Severity:** WARN | **Date:** 2026-08-07 | **Status:** OPEN
+**Location:** market.db/alerts
+**Details:** 1 alert with no corresponding agent_signals co-write in 2-hour window
+**Impact:** Alert co-write gap or timing issue, may lose signal context
+**Root cause:** Alert trigger write not paired with signal co-write
+**Zone owner:** dev-mcp-server
+**Last reported:** 2026-08-07T03:06:55Z (signal sys-20260807T030600-3171, system-auditor -> po, dedup_key=db_integrity_breach:alerts:C-08, WARN Telegram sent)
+**Mitigation:** No immediate action beyond signal routing.
+
+---
