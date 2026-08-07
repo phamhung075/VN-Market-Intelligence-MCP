@@ -4,10 +4,10 @@
 ## Carry-over
 Previous cycle 12:13 UTC: sweep DBC, DPM, KDC (0 anomalies emitted, 7 suppressed by AutoCure c47).
 
-## Cycle (16:10 UTC offhours)
-- Status: OFFHOURS (market closed) — no new price data | Stocks: 0 priced | Anomalies: 0 | Volume spikes: 0 | Chain confirms: 0
-- Regime: NEUTRAL | DXY: BEARISH (26030 VND/USD) | US10Y: FAIRLY_VALUED (earn 6.70pp > deposit 5.00pp) | fx_pressure: none | pe_risk: none
-- Macro: Oil NEUTRAL (83.47), Gold BULLISH (+110.5), VN Index +3.28, Carry NEUTRAL (1.37pp)
+## Cycle (16:10 UTC EOD)
+- Status: EOD SUMMARY — market close snapshot processed | Stocks: 35 watchlist tickers analyzed | Anomalies: 9 detected (VHM crash -49.61% oversold, PLX +6.68%, VNM +5.08%, real estate decline -2.68%, banking rotation, energy +4.59%) | Ledgers: 6 written (VHM, PLX, VNM, BID, BSR, DXG)
+- Regime: NEUTRAL | DXY: STABLE (26030 VND/USD) | US10Y: FAIRLY_VALUED | Brent: 83.47 USD support | Gold: +110.5 BULLISH | VN Index: +3.28 | Carry: NEUTRAL
+- Signal file: docs/signals/price_anomaly_20260807T1610.json | Status: complete | Exit: EOD notebook commit locked and committed
 
 ## Metrics (cycle 2026-08-07 16:10 UTC)
 | Field | Value |
