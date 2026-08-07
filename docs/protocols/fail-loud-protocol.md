@@ -58,6 +58,72 @@ FORBIDDEN — NEVER create or modify:
 
 Violation = token waste + contamination of other agents' context.
 
+## Analysis-Only Exit Guard — Persistence-Plane Self-Verification (mandatory)
+
+**ROOT CAUSE, not one agent (FIX-LEAF-AGENT-ANALYSIS-ONLY-EXIT-NARRATES-INSTEAD-OF-EXECUTING):**
+a leaf agent completes real analysis, then emits prose describing the
+write/emit/commit steps it "would" perform next — instead of calling the
+tools — and exits having written nothing. Confirmed on 5+ distinct agent
+types over ~7 weeks (unified-agent, market-watcher-offhours ×3,
+tran-ngoc-bau, refine_bctc_md, system-auditor Tier-1 ×4), at least 10
+defective occurrences total, and it cost a real, corroborated A-21 finding
+that was orphaned with zero persistence anywhere until a human/router
+caught it by hand. Because every agent's RETURN reads as success on the
+one plane a reader normally checks (the RETURN text itself), this is a
+**dead-detector class**, not a single agent's prose bug — patching one
+flow doc leaves every other leaf agent exposed to the same shape.
+
+**The rule (adopted VERBATIM from `docs/agents/po/flow/main.md` AC-3 —
+this protocol is that rule's second adopter, generalized from "PO's own
+board write" to any leaf agent's mandated write loop):**
+
+> Any step that writes an artifact AND asserts its own persistence must
+> re-read the persistence layer before claiming it — never trust the
+> write call's own exit code, and never trust the agent's own RETURN text.
+> A self-report cannot be the evidence that the self-report is true.
+
+**What this means in practice, before your RETURN:**
+- If your flow's contract mandates a write/emit/commit step this cycle
+  (notebook append, `send_telegram`/`post_agent_signal`, a `.signal_queue`
+  row, a DASHBOARD row, a DB push, a git commit), you MUST either (a) have
+  actually called the tool/script and can cite its real result (a marker
+  line, a row id, a commit SHA), or (b) have a genuine reason nothing was
+  due this cycle. **Never** describe those steps as something that
+  "would normally follow," "should be run next," or "the LLM executing
+  the full cycle" will do — a plan for someone else to execute is not a
+  completed cycle, however correct the analysis embedded in it is.
+- A first-person-styled completion claim ("I posted...", "Appended...")
+  is **not more trustworthy** than an honest "next actions" plan — both
+  read as success to a caller who only checks the RETURN text. The only
+  reliable signal is the artifact itself.
+
+**The detector (AC-3 — keys on the PERSISTENCE PLANE, never on the
+agent's own claim):** `scripts/audits/detect-analysis-only-exit.sh` is
+the generic, agent-agnostic mechanization of the rule above. It takes no
+"did you write it" flag from the caller — it independently re-reads the
+notebook file's git history, the repo's commit log, `.signal_queue.rows[]`,
+the dedup-ledger, and any caller-named extra artifact, and reports a
+zero-diff verdict only when every checked plane shows nothing changed.
+Any agent, wrapper, or peer reviewer can run it against a spawn's own
+`--agent-id` and `--since-ts` (the spawn/cron tick time) to verify a cycle
+actually landed something, independent of what that cycle's RETURN says:
+```bash
+bash scripts/audits/detect-analysis-only-exit.sh \
+  --agent-id <agent-id> --since-ts <cycle-start-ISO8601>
+# exit 0 = PASS (something real changed). exit 1 = DETECTED (zero-diff —
+# treat the cycle's RETURN as unverified narration, not completion).
+```
+Regression fixture (positive + negative controls, never against the live
+repo): `scripts/audits/detect-analysis-only-exit.test.sh`.
+
+**Not in scope here:** wiring this detector to run automatically, exogenously,
+on every spawn (i.e. from the SPAWNER's side, immune to the spawned agent
+dying before it ever reaches this protocol) is a separate, larger design
+task — `FIX-COWORK-DELIVERY-PROOF-GATE-ONLY-CATCHES-ROUTERLATCH-NARRATION`
+(architect-owned). This protocol's job is the rule + the reusable mechanism
+every leaf agent and reviewer can invoke; it does not itself guarantee
+invocation on a cycle that skips reading this file entirely.
+
 ## Error Boundary — Blocked Flow = EXIT
 
 If ANY tool call or flow step fails after 1 retry:

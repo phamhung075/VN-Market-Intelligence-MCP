@@ -3213,6 +3213,19 @@
         "payload_ref": null,
         "provenance": "detector",
         "audit_cycle_tag": "cron:auditor-t1:2026-08-07T01:55:00Z"
+      },
+      {
+        "id": "sys-20260807T015218-7a6a",
+        "ts": "2026-08-07T01:52:18Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "signal_feedback",
+        "summary": "A-21 HISTORICAL-RECORD repair: mcp-server 4 crash-restarts in 8min window 2026-08-06T12:17-12:25Z",
+        "severity": "WARN",
+        "status": "NEW",
+        "payload_ref": null,
+        "provenance": "detector",
+        "audit_cycle_tag": null
       }
     ],
     "last_triaged_at": "2026-07-29T06:25:00Z",
