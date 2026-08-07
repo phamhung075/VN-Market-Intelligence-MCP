@@ -22,6 +22,11 @@ import { z } from "zod";
 import { getDb } from "../../../../infrastructure/db/schema.js";
 import { logger } from "../../../../infrastructure/logger.js";
 import { validateBctcUnit } from "../../../../domain/services/financial-reports/bctcSanityValidator.js";
+import {
+  hasImageUnavailableFlag,
+  shouldSignalImageFetchDegradation,
+  writeBctcImageFetchDegradedSignal,
+} from "../../../../infrastructure/signals/bctcImageFetchDegradedSignalWriter.js";
 
 // ── Row count helper ───────────────────────────────────────────────────────────
 
@@ -65,10 +70,23 @@ const InputSchema = z.object({
     .describe("If true, DELETE all prior refined_units for this report before push (clean re-run)"),
 });
 
+// ── Deps (AC2 — injectable signal writer for tests) ────────────────────────────
+
+export interface PushBctcRefinedUnitDeps {
+  /** Best-effort visibility hook — see bctcImageFetchDegradedSignalWriter.ts. */
+  writeImageFetchDegradedSignal: (reportId: string, affectedUnitIds: readonly string[]) => void;
+}
+
+const defaultPushDeps: PushBctcRefinedUnitDeps = {
+  writeImageFetchDegradedSignal: (reportId, affectedUnitIds) =>
+    writeBctcImageFetchDegradedSignal(reportId, affectedUnitIds),
+};
+
 // ── Handler ───────────────────────────────────────────────────────────────────
 
 export function buildPushBctcRefinedUnitHandler(
   dbOverride?: ReturnType<typeof getDb>,
+  deps: PushBctcRefinedUnitDeps = defaultPushDeps,
 ): (input: z.input<typeof InputSchema>) => Promise<{ content: [{ type: "text"; text: string }] }> {
   return async (rawInput) => {
     const parsed = InputSchema.safeParse(rawInput);
@@ -152,6 +170,44 @@ export function buildPushBctcRefinedUnitHandler(
         reset: reset ?? false,
         sanity_block: hasBlock,
       });
+
+      // AC2 (FIX-BCTC-REFINE-PAGE-IMAGE-UNAVAILABLE-CAPS-CONFIDENCE): a 100%
+      // image-fetch-plane failure across a whole refine batch silently degrades
+      // every affected unit to <=0.6 confidence with nothing visible outside this
+      // buried DB flag. Detect repeated `image_unavailable` flags on the SAME
+      // report and surface it via signal_queue — best-effort, never blocks the
+      // primary push response.
+      if (hasImageUnavailableFlag(effectiveFlags)) {
+        try {
+          const occurrence = db
+            .prepare<{ cnt: number }, [string]>(
+              `SELECT COUNT(*) as cnt FROM bctc_refined_units
+               WHERE report_id = ? AND flags LIKE '%image_unavailable%'`,
+            )
+            .get(report_id);
+          const occurrenceCount = occurrence?.cnt ?? 0;
+
+          if (shouldSignalImageFetchDegradation(occurrenceCount)) {
+            const affectedRows = db
+              .prepare<{ unit_id: string }, [string]>(
+                `SELECT unit_id FROM bctc_refined_units
+                 WHERE report_id = ? AND flags LIKE '%image_unavailable%'
+                 ORDER BY unit_id`,
+              )
+              .all(report_id);
+            deps.writeImageFetchDegradedSignal(
+              report_id,
+              affectedRows.map((r) => r.unit_id),
+            );
+          }
+        } catch (signalErr) {
+          logger.warn("[push_bctc_refined_unit] image-fetch-degraded signal failed", {
+            report_id,
+            unit_id,
+            error: signalErr instanceof Error ? signalErr.message : String(signalErr),
+          });
+        }
+      }
 
       if (hasBlock) {
         return {
