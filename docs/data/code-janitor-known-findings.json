@@ -1,6 +1,6 @@
 {
-  "scan_date": "2026-08-06T08:55:00Z",
-  "last_run": "2026-08-06T16:31:27Z",
+  "scan_date": "2026-08-07T16:31:00Z",
+  "last_run": "2026-08-07T16:31:27Z",
   "findings": [
     {
       "fingerprint": "check-5:docs/data/project-stats.json:analysisAgentCount",
