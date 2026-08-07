@@ -5,8 +5,8 @@
     "last_linecount": 205,
     "po": {
       "section_name": "po",
-      "last_mtime": 1786062740,
-      "last_linecount": 205
+      "last_mtime": 1786075884,
+      "last_linecount": 213
     }
   },
   "decision_journal": [
@@ -3274,6 +3274,19 @@
         "provenance": "detector",
         "audit_cycle_tag": "cron:auditor-t3:2026-08-07T02:00Z",
         "po_disposition_20260807T0323": "C-09 macro_indicators stale — TRUE POSITIVE, corroborated live via get_macro_snapshot (tier-4 fixture fallback). Folded into FIX-MACRO-TE-CHROMIUM-FETCH-BROKEN, which this tick unblocked (next_agent=developer, P3->P2). Telegram report 4481 is the E-2 arm of this same emit_audit_signal call (origin=emit-audit-signal.sh, E-1/E-2/E-3 are one unit) — same finding, not a second issue."
+      },
+      {
+        "id": "sys-20260807T040402-69e8",
+        "ts": "2026-08-07T04:04:02Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "mem_pressure",
+        "summary": "rag-service memory loss-of-reclamation — ESCALATE (all probes 99.6-99.8%, no dips)",
+        "severity": "CRITICAL",
+        "status": "READ",
+        "payload_ref": null,
+        "provenance": "detector",
+        "audit_cycle_tag": "cron:auditor-t1:2026-08-07T04:00Z"
       }
     ],
     "last_triaged_at": "2026-07-29T06:25:00Z",
