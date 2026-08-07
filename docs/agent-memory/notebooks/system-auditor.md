@@ -109,3 +109,47 @@ CONTRACT-CONTRADICTION: NONE
 CONTRACT-CONTRADICTION: NONE
 
 ---
+
+## c77 · 2026-08-07T05:00Z
+### Audit Run Tier-1 (05:00–05:21 UTC 2026-08-07)
+- Tier: 1 | Services: 12 host_runtime_set | Health: 5 probed
+- Anomalies: 1 ESCALATE (rag-service A-30) | Status: DEGRADED
+- Spawn trigger: auditor-tier1-probe.sh verdict=FAILURE (mem_creep: rag-service 99.52%, 4.9MiB free BELOW-FLOOR(40MiB))
+- Context: Prior c76 cycle (04:00Z) emitted A-30-RAG-SERVICE ESCALATE; pattern shows sustained loss-of-reclamation
+
+### RAW-PROBE:
+```
+=== A-30 DISCRIMINATOR PROBE (rag-service) ===
+Discriminator Result (verify-a30-mcp-memory-reclamation.sh 12 probes, 25s spacing):
+- Verdict: ESCALATE
+- Reason: all samples >93% with no reclamation dip — loss of reclamation
+- Samples (12): 99.55%, 99.55%, 99.55%, 99.55%, 99.55%, 99.55%, 99.55%, 99.55%, 99.55%, 99.33%, 99.33%, 99.33%
+- Analysis: min_pct=99.33, max_pct=99.55, reclamation_dips=0, dip_detail=none
+- State: OOMKilled=false, RestartCount=0, StartedAt=2026-08-06T12:57:42Z
+- VM: VmHWM=1149252KB (1122MiB peak), VmRSS=1030188KB (1005MiB current)
+- Span: 275 seconds (12 probes × 25s intervals)
+```
+
+### Findings:
+**A-30 (Memory Pressure — rag-service discriminator):**
+- Baseline: 99.52% of 768MiB cap (4.9MiB free)
+- Discriminator gate crossed: all samples >93% with zero reclamation dips
+- Tripwire condition: "loss of reclamation" (no GC progress over ~5min window)
+- VmHWM >> VmRSS: Peak was 1122MiB, current 1005MiB, but stuck high (no reclamation path forward)
+- OOMKilled: false (not yet killed, but margin exhausted)
+- Container stability: Up 18h, RestartCount=0, no recent crashes
+- ACK ledger status: rag-service entry below MEM_FLOOR_MIB=40 threshold → ACK does NOT suppress
+- **Escalation verdict: WARN** (reason="no reclamation dip" → per tier1-probe.md A-30 override §4c)
+- Signal emitted: memory_pressure:rag-service:A-30-loss-of-reclamation (id=sys-20260807T052117-0aa8)
+
+### Disposition:
+- Spawn verdict: DEGRADED (A-30 escalation gate crossed)
+- Escalation path: signal_queue row (WARN) + DASHBOARD.md (WARN) + Telegram to ops
+- Follow-up task: FU-RAG-DEPLOY-MEMORY (capacity planning / embedder model release path)
+- Note: Prior cycles c76 (04:00Z ESCALATE), c75 (03:30Z FOLD recovery), c74 Tier-3. This cycle confirms sustained escalation, not transient spike.
+
+[emit-signal] OK dedup_key=memory_pressure:rag-service:A-30-loss-of-reclamation id=sys-20260807T052117-0aa8
+[emit-dashboard] OK id=sys-20260807T052117-0aa8 check_id=A-30-RAG-SERVICE
+
+[OUTPUT-CONTRACT] signals_posted=1 | telegram_sent=1 | signal_queue_rows_written=1 | dashboard_rows=1
+CONTRACT-CONTRADICTION: NONE
