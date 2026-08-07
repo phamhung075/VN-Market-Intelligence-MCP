@@ -706,3 +706,15 @@
 **Mitigation:** No immediate action beyond signal routing.
 
 ---
+
+## Anomaly: A-30 · rag-service memory floor-breach
+**Severity:** WARN | **Date:** 2026-08-07 | **Status:** OPEN
+**Location:** rag-service container
+**Details:** rag-service at 99.58% of 1GiB cap (1020 MiB), only 4 MiB free; below 40 MiB floor threshold
+**Impact:** Tight memory headroom may constrain growth; no immediate crash risk (OOMKilled=false, service stable)
+**Root cause:** rag-service allocated 1GiB cap at deployment; requires capacity planning/upgrade
+**Zone owner:** dev-rag-service
+**Last reported:** 2026-08-07T00:47:57Z (signal sys-20260807T004739-68e2, system-auditor -> po, dedup_key=mem_pressure:rag-service:A-30-floor-breach, WARN Telegram sent)
+**Mitigation:** No immediate action beyond signal routing.
+
+---
