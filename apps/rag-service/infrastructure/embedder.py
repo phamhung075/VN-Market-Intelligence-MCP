@@ -1,3 +1,11 @@
+# size-justification: 175L — lazy-load + idle-unload is one cohesive lifecycle:
+# _ensure_model_loaded()/_load_model() (GFD-13 lazy singleton) and
+# _maybe_unload_idle() (FIX-RAG-EMBEDDER-IDLE-UNLOAD-PATH) share the SAME
+# asyncio.Lock double-check-lock pattern and the SAME _model /
+# _last_used_monotonic state on this one singleton. Splitting load vs unload
+# into separate files would either duplicate that lock or force tight
+# cross-file coupling to it, for zero token benefit — this file IS the
+# singleton's full state machine, not a bag of unrelated helpers.
 """
 Infrastructure — SentenceTransformersEmbedder.
 
