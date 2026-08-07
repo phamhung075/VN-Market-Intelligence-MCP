@@ -12933,39 +12933,6 @@
         "updated_at": "2026-08-07T01:14:01Z"
       },
       {
-        "id": "FIX-CI-SIZELINT-RAG-EMBEDDER-NEW-OFFENDER",
-        "type": "FIX",
-        "title": "CI-RED-417573d7-FIX-3 — CI RED: size-lint — apps/rag-service/infrastructure/embedder.py (new-offender)",
-        "desc": "size-lint RED: embedder.py new-offender (167L > 120L cap, NO baseline entry and NO current size-justification header — confirmed absent from docs/data/size-lint-baseline.json .entries). TRIGGER IDENTIFIED (not assumed): commit 0308514f5 added _maybe_unload_idle()/_idle_unload_loop()/_last_used_monotonic to the embedder singleton. This is the strictest of the four size-lint offenders — a new-offender has no grandfather at all, so it can only be closed by a justification header or a real split. Still RED at HEAD 70ae0d9ae (run 31136642246).",
-        "status": "BACKLOG",
-        "priority": "high",
-        "size": "XS",
-        "owner": "po",
-        "zone": "apps/rag-service/",
-        "next_agent": "developer",
-        "supervised": false,
-        "plan_only": false,
-        "check_id": "CI-RED-417573d7",
-        "dedup_key": "ci_job:size-lint|file:apps/rag-service/infrastructure/embedder.py",
-        "ci_fingerprint": "76565852f4c3009c704d4a2e8fdc7d588525e0a837b92ff3449d0ff183f51b2d",
-        "origin_signal_id": "CI-RED-417573d7",
-        "created_at": "2026-08-07T01:11:28Z",
-        "created_by": "po/triage-20260807T0104Z",
-        "baseline_pass": true,
-        "rebuild_required": false,
-        "files": [
-          "apps/rag-service/infrastructure/embedder.py"
-        ],
-        "related": [
-          "FIX-RAG-EMBEDDER-IDLE-UNLOAD-PATH",
-          "FIX-CI-SIZELINT-RAG-APP-FACTORY-BASELINE",
-          "FIX-CI-GATES-INVISIBLE-TO-PREPUSH-DOCS-PATH-FILTER"
-        ],
-        "verification_gate": "ci_green_on_subsequent_push",
-        "status_note": "AC1: add a `size-justification:` header to embedder.py justifying 167L (the lazy-load + idle-unload lifecycle is genuinely cohesive — a justification is likely the honest answer here, not a split). AC2: do NOT run `--update` — a new-offender grandfathered by a wholesale --update defeats the guard's entire purpose. AC3: `bash scripts/audits/size-lint-justification.sh --check` RC=0. AC4: `gh run view <databaseId with headSha AFTER 70ae0d9ae4a4c3df3be7d723d2b153633ebea0fd> --json jobs -q '.jobs[]|select(.name==\"size-lint\")|.conclusion'` == success. Failing job: size-lint. Failing file: apps/rag-service/infrastructure/embedder.py. Head SHAs observed: 417573d71 (run 31136261063), 70ae0d9ae (run 31136642246).",
-        "updated_at": "2026-08-07T01:14:01Z"
-      },
-      {
         "id": "FIX-CI-TASKCLAIM-MARKETWATCHER-CYCLE-MD",
         "type": "FIX",
         "title": "CI-RED-417573d7-FIX-4 — CI RED: task-claim-owner-session-lint — docs/agents/market-watcher/flow/cycle.md",
@@ -21493,6 +21460,43 @@
         "updated_by": "dev-mcp-server",
         "dev_implementation_note": "AC1: added `size-justification: 242L` header (within mandatory first-10-lines window) to getBctcRefinedTool.ts explaining the FIX-GET-BCTC-REFINED-NO-PROJECTION-PARAM growth (dedicated ids-projection row/output types + dual-projection registration description), sized in line with this dir's sibling single-tool files (getBctcOcfTool.ts 220L, pushBctcRefinedUnitTool.ts 227L, agmPlanTools.ts 234L) rather than fragmenting one MCP tool across files. AC2: docs/data/size-lint-baseline.json untouched — no --update run; the header alone clears this file from --check regardless of its now-stale baseline entry (162L), same precedent already live in this repo (composition-root.ts, orchStateSchema.ts both carry a header + a stale/mismatched baseline entry and still pass). AC3 (scoped): `bash scripts/audits/size-lint-justification.sh --check` no longer lists this file. Full-repo RC is still 1 — 3 OTHER pre-existing offenders remain, all already tracked by separate owners, not by this row: apps/rag-service/app_factory.py + infrastructure/embedder.py (FIX-CI-SIZELINT-RAG-APP-FACTORY-BASELINE / FIX-CI-SIZELINT-RAG-EMBEDDER-NEW-OFFENDER, both backlog[]), and apps/mcp-server/src/infrastructure/db/schema.ts (tracked inside FIX-MCP-MEMORY-CODE-LEAK's own dedup_key, review[], next_agent=qa, router_sizelint_note already flags it for qa adjudication — not re-flagged here to avoid a duplicate). AC4: CI size-lint job will only go fully green once those 3 sibling rows land too (router-sequenced; FIX-CI-SIZELINT-RAG-APP-FACTORY-BASELINE was deliberately held back pending this row's merge) — qa should verify this row's OWN file is clear (`--check` output no longer names getBctcRefinedTool.ts) rather than wait on the full-repo RC. tsc clean. Targeted test src/__tests__/FIX-GET-BCTC-REFINED-NO-PROJECTION-PARAM.test.ts: 7/7 pass, 50 expect() calls — comment-only diff, zero behavior change. Commit 36fe87c31 (pathspec-scoped, single file).",
         "decision_journal_ref": "docs/agent-memory/decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-dev-mcp-server-4.md#dev-mcp-server-S77"
+      },
+      {
+        "id": "FIX-CI-SIZELINT-RAG-EMBEDDER-NEW-OFFENDER",
+        "type": "FIX",
+        "title": "CI-RED-417573d7-FIX-3 — CI RED: size-lint — apps/rag-service/infrastructure/embedder.py (new-offender)",
+        "desc": "size-lint RED: embedder.py new-offender (167L > 120L cap, NO baseline entry and NO current size-justification header — confirmed absent from docs/data/size-lint-baseline.json .entries). TRIGGER IDENTIFIED (not assumed): commit 0308514f5 added _maybe_unload_idle()/_idle_unload_loop()/_last_used_monotonic to the embedder singleton. This is the strictest of the four size-lint offenders — a new-offender has no grandfather at all, so it can only be closed by a justification header or a real split. Still RED at HEAD 70ae0d9ae (run 31136642246).",
+        "status": "REVIEW",
+        "priority": "high",
+        "size": "XS",
+        "owner": "dev-rag-service",
+        "zone": "apps/rag-service/",
+        "next_agent": "qa",
+        "supervised": false,
+        "plan_only": false,
+        "check_id": "CI-RED-417573d7",
+        "dedup_key": "ci_job:size-lint|file:apps/rag-service/infrastructure/embedder.py",
+        "ci_fingerprint": "76565852f4c3009c704d4a2e8fdc7d588525e0a837b92ff3449d0ff183f51b2d",
+        "origin_signal_id": "CI-RED-417573d7",
+        "created_at": "2026-08-07T01:11:28Z",
+        "created_by": "po/triage-20260807T0104Z",
+        "baseline_pass": true,
+        "rebuild_required": false,
+        "files": [
+          "apps/rag-service/infrastructure/embedder.py"
+        ],
+        "related": [
+          "FIX-RAG-EMBEDDER-IDLE-UNLOAD-PATH",
+          "FIX-CI-SIZELINT-RAG-APP-FACTORY-BASELINE",
+          "FIX-CI-GATES-INVISIBLE-TO-PREPUSH-DOCS-PATH-FILTER"
+        ],
+        "verification_gate": "ci_green_on_subsequent_push",
+        "status_note": "AC1: add a `size-justification:` header to embedder.py justifying 167L (the lazy-load + idle-unload lifecycle is genuinely cohesive — a justification is likely the honest answer here, not a split). AC2: do NOT run `--update` — a new-offender grandfathered by a wholesale --update defeats the guard's entire purpose. AC3: `bash scripts/audits/size-lint-justification.sh --check` RC=0. AC4: `gh run view <databaseId with headSha AFTER 70ae0d9ae4a4c3df3be7d723d2b153633ebea0fd> --json jobs -q '.jobs[]|select(.name==\"size-lint\")|.conclusion'` == success. Failing job: size-lint. Failing file: apps/rag-service/infrastructure/embedder.py. Head SHAs observed: 417573d71 (run 31136261063), 70ae0d9ae (run 31136642246).",
+        "updated_at": "2026-08-07T02:27:29Z",
+        "commit_sha": "8b415f6a2",
+        "updated_by": "router/merge-gate",
+        "dev_implementation_note": "Added `# size-justification: 175L` header (first 8 lines) to embedder.py — lazy-load (`_ensure_model_loaded`/`_load_model`, GFD-13) and idle-unload (`_maybe_unload_idle`) share the SAME `asyncio.Lock` double-check pattern and SAME `_model`/`_last_used_monotonic` state on one singleton; a split would duplicate the lock or force tight cross-file coupling for zero benefit. Comment-only, no behavior change. Declared count (175L) matches post-edit `wc -l` exactly. Did NOT touch docs/data/size-lint-baseline.json, did NOT run --update (AC2 — would launder the 3 other unrelated current offenders repo-wide). Verified in the source worktree: scoped SIZE_LINT_INCLUDE_OVERRIDE=embedder.py --check RC=0; full-repo --check offender count 4->3 (embedder.py cleared; remaining 3 belong to sibling tasks, sequenced separately). pytest -k embedder: 17/17 passed. Board flip performed by router at Merge Gate (agent aa79e0a60034da7fc's own attempt hit Stage 1c on the pre-existing sys-20260805T065227-25f7 dangling ref, since resolved on main by an earlier reapply this same Merge Gate).",
+        "decision_journal_ref": "docs/agent-memory/decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-dev-rag-service.md"
       }
     ],
     "qa": [
