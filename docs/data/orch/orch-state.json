@@ -133,8 +133,8 @@
     "does_not_consume_wip": true
   },
   "signal_queue": {
-    "_updated_at": "2026-08-06T20:42:03Z",
-    "_updated_by": "dev-team",
+    "_updated_at": "2026-08-07T00:56:45Z",
+    "_updated_by": "cowork-team-dispatcher",
     "archive": [],
     "rows": [
       {
@@ -3146,10 +3146,13 @@
         "type": "signal_feedback",
         "summary": "A-30 rag-service memory 98.83% — below-floor (11.8MiB free < 40MiB threshold)",
         "severity": "WARN",
-        "status": "READ",
+        "status": "triaged",
         "payload_ref": null,
         "provenance": "detector",
-        "audit_cycle_tag": "cron:auditor-t1:2026-08-06T23:35:00Z"
+        "audit_cycle_tag": "cron:auditor-t1:2026-08-06T23:35:00Z",
+        "disposition": "TRIAGED 2026-08-07T01:14Z by po — FOLD onto FIX-RAG-EMBEDDER-IDLE-UNLOAD-PATH (review[], open, non-terminal lane). Not a new mint: that row is the exact tracked root cause (embedder singleton pins ~600-700MiB with no release path). Premise independently corroborated at source, not accepted from the auditor number: docker stats reads 983.8MiB/1GiB = 96.07% against a real HostConfig.Memory=1073741824 cap, so this is NOT the known denominator false-spike class. Second fire in 72 minutes and worsening (98.83% -> 99.58%). Actionable follow-through recorded on the target row: its fix commit 0308514f5 is on main but the container has not restarted since 2026-08-06T12:57:42Z (pre-fix), so QA must rebuild/restart and re-measure before sign-off.",
+        "triaged_at": "2026-08-07T01:14:45Z",
+        "triaged_by": "po"
       },
       {
         "id": "router-20260807T002937Z-analysisonly5th",
@@ -3159,11 +3162,14 @@
         "type": "recurring-bug-corroboration",
         "severity": "WARN",
         "summary": "5th defective occurrence (7th total spawn) of leaf-agent analysis-only-exit — out-of-cadence system-auditor follow-up (afe370cc39b8756af) self-reported posting signal_id 10405/10406 and releasing its lock; RAW-verified via jq against orch-state.json signal_queue (nothing >= 2026-08-07T00:00Z, ids 10405/10406 do not exist in this system's string-id scheme) and system-auditor.md notebook (newest entry still c72 @ 22:33:04Z, 1h40m stale) — zero writes landed. Lock release claim was the one true part (re-claimed cleanly on probe). Underlying analysis WAS genuinely correct and independently confirmed: probe.sh line 123 hardcodes MCP_CONTAINER (never enumerates rag-service), and FIX-AUDITOR-A30-PROBE-SH-MISSES-RAG-SERVICE-CONTAINER (BACKLOG/P1/agent-father) already exists and directly closes the gap. See feedback_leaf_agent_analysis_only_exit_recurring_pattern_20260806.md for full detail (now 5 defective / 2 clean across 7 spawns).",
-        "status": "READ",
+        "status": "triaged",
         "payload_ref": null,
         "provenance": "router-raw-verify",
         "audit_cycle_tag": "router-followup:2026-08-07T00:15Z",
-        "disposition_hint": "No new board row warranted — FIX-COWORK-DELIVERY-PROOF-GATE-ONLY-CATCHES-ROUTERLATCH-NARRATION (ready[]/P1/architect) remains the correct owning fix for the write-loop confabulation class. FIX-AUDITOR-A30-PROBE-SH-MISSES-RAG-SERVICE-CONTAINER (already BACKLOG/P1/agent-father) remains the correct owning fix for the coverage gap itself — corroborating, not re-minting, both."
+        "disposition_hint": "No new board row warranted — FIX-COWORK-DELIVERY-PROOF-GATE-ONLY-CATCHES-ROUTERLATCH-NARRATION (ready[]/P1/architect) remains the correct owning fix for the write-loop confabulation class. FIX-AUDITOR-A30-PROBE-SH-MISSES-RAG-SERVICE-CONTAINER (already BACKLOG/P1/agent-father) remains the correct owning fix for the coverage gap itself — corroborating, not re-minting, both.",
+        "disposition": "TRIAGED 2026-08-07T01:14Z by po — FOLD onto FIX-LEAF-AGENT-ANALYSIS-ONLY-EXIT-NARRATES-INSTEAD-OF-EXECUTING (backlog[], P1, agent-father) AND ESCALATED: selected as this tick's manual-dispatch-sweep candidate and folded into the BATCH returned to dev-team. PO deliberately overrode the sweep's board-index tie-break (which would have picked FIX-CHEF-MIDFLOW-BAIL-DETERMINISM) on main.md's own priority order \"recurring bugs first\" — 5 defective occurrences across 7 spawns, and the row was already BATCHed once at 2026-08-06T22:05Z (tnb-audit-latest.md PO ACK) without ever leaving backlog[], which is the TE-T12 strandedness shape. Router's underlying analysis accepted: FIX-AUDITOR-A30-PROBE-SH-MISSES-RAG-SERVICE-CONTAINER already exists and closes the probe gap. NOTE: type \"recurring-bug-corroboration\" is not in triage-signals.md's routing table — hand-routed this tick; drift folded onto FIX-PO-TRIAGE-SIGNALS-TABLE-MATCHES-ZERO-LIVE-SIGNAL-TYPES.",
+        "triaged_at": "2026-08-07T01:14:45Z",
+        "triaged_by": "po"
       },
       {
         "id": "sys-20260807T004739-68e2",
@@ -3173,10 +3179,13 @@
         "type": "signal_feedback",
         "summary": "rag-service A-30: 99.58% memory (4 MiB free, BELOW-FLOOR=40MiB)",
         "severity": "WARN",
-        "status": "NEW",
+        "status": "triaged",
         "payload_ref": null,
         "provenance": "detector",
-        "audit_cycle_tag": "cron:auditor-t1:2026-08-07T00:30Z"
+        "audit_cycle_tag": "cron:auditor-t1:2026-08-07T00:30Z",
+        "disposition": "TRIAGED 2026-08-07T01:14Z by po — FOLD onto FIX-RAG-EMBEDDER-IDLE-UNLOAD-PATH (review[], open, non-terminal lane). Not a new mint: that row is the exact tracked root cause (embedder singleton pins ~600-700MiB with no release path). Premise independently corroborated at source, not accepted from the auditor number: docker stats reads 983.8MiB/1GiB = 96.07% against a real HostConfig.Memory=1073741824 cap, so this is NOT the known denominator false-spike class. Second fire in 72 minutes and worsening (98.83% -> 99.58%). Actionable follow-through recorded on the target row: its fix commit 0308514f5 is on main but the container has not restarted since 2026-08-06T12:57:42Z (pre-fix), so QA must rebuild/restart and re-measure before sign-off.",
+        "triaged_at": "2026-08-07T01:14:45Z",
+        "triaged_by": "po"
       },
       {
         "id": "router-20260807T004700Z-refineac7cadence",
@@ -3184,10 +3193,13 @@
         "to": "po",
         "type": "decision-needed",
         "priority": null,
-        "status": "NEW",
+        "status": "triaged",
         "summary": "FIX-REFINE-SUBFLOW-OPTIONC-CONTRACT-DRIFT AC-7: agent-father RAW re-verify (docker-exec+bun:sqlite against live market.db, 2026-08-07T00:41Z) corrects the prior 19:25Z note and surfaces a new quality-regression observation. (1) CADENCE/ETA: VHM (a3a41225) still 0 rows in bctc_refined_units, AC-7 not met. Queue is strict FIFO by parsed_at (getBctcPendingRefineTool.ts) -- KBC drains first, then HSG (18 windows), then VHM. cowork-schedule.json slots 1-3 remain enabled:false, only slot-4 active (cron 30 16 * * *, 1x/day, last_fired 2026-08-06T16:36:27Z, next 2026-08-07T16:30Z). At this single-canary cadence VHM's first push is not expected before roughly 2026-08-10 -- days away, not the hours-away read the prior note implied. DECISION NEEDED: re-enable slots 1-2/3 now that the Option-C fix (commit da489f36f) is confirmed working generically, to speed the drain, or accept the multi-day wait on slot-4 alone? (2) QUALITY REGRESSION: KBC (76129128) has 24 refined units -- 12 pre-fix (slot-2, 2026-08-06 14:07-14:11Z, 10/12 DONE conf 0.81-0.98 varied + 2/12 FAILED) and 12 post-fix (slot-4, 2026-08-06 16:37-16:40Z, only 3/12 DONE + 9/12 FAILED, and all 3 DONE rows share an identical confidence=0.55 -- a suspicious flat value, possibly a hardcoded/fallback confidence on a success path introduced by or exposed by the contract-drift fix rather than a genuinely computed score). Not actioned yet (out_of_scope for the finding spawn) -- needs a closer look, possibly a new defect distinct from the original contract-drift bug. Task lock heartbeat-extended by router to 2026-08-07T01:59:40Z. See task row router_verify_note for full agent-father detail.",
         "severity": "MED",
-        "createdAt": null
+        "createdAt": null,
+        "disposition": "DECIDED 2026-08-07T01:14Z by po — both questions answered, WF-2 hold RELEASED (po_goahead_20260807T011128 stamped on the task row; should_hold re-run after the write = false). (1) CADENCE: PARTIAL re-enable — turn on exactly ONE more refine_bctc_md slot (cron \"0 9\"), leave \"0 11\" and \"0 14\" disabled pending the image defect. 2x cadence, VHM ETA ~2026-08-08/09 instead of ~08-10, bounded blast radius, trivially reversible. agent-father actions this by editing docs/data/cowork-schedule.json (already in the task row's files[]). (2) QUALITY: hypothesis REFUTED, do not chase. bctcSanityValidator.ts can only pass confidence through or clamp to 0.4/0.1 — it can never emit 0.55, so 0.55 is the agent's own value; all three 0.55 units carry flags [image_unavailable:text_only_parse] and the flow docs mandate confidence <= 0.6 on image failure. 0.55 is CORRECT under a degraded input. The real defect is the image fetch (0 image failures in the 14:07Z batch, 3/3 in the 16:37Z batch on the same report) — minted as FIX-BCTC-REFINE-PAGE-IMAGE-UNAVAILABLE-CAPS-CONFIDENCE (P1). Ratified at source per supervised-goahead.md Step 2 (cowork-schedule.json read directly; live market.db read via docker exec + bun:sqlite; validator source read) — not on the relayed verdict. Router may clear supervised=false if it wants dev-team's normal resume path; the goahead stamp alone already unblocks it. NOTE: type \"decision-needed\" is not in triage-signals.md's routing table — hand-routed this tick.",
+        "triaged_at": "2026-08-07T01:14:45Z",
+        "triaged_by": "po"
       }
     ],
     "last_triaged_at": "2026-07-29T06:25:00Z",
@@ -12551,8 +12563,12 @@
           "AC-6 Report the true occurrence count by scanning history for the same 5-plane zero-diff signature. Four is the number that happened to be NOTICED; the tell is only visible to a reader who checks the write planes, so the real count is a lower bound."
         ],
         "po_note_20260806T1821": "Minted as a NEW row after PO grep-confirmed that NO board row exists for this pattern in any non-terminal lane (searched SELF-PERSIST / CYCLE-FINDINGS / ANALYSIS-ONLY / LEAF-AGENT across backlog+ready+in_progress+review+qa — zero hits). This matters: the occurrence-4 signal itself states its action was 'do not re-escalate as a new po row, append corroboration to the existing po-owned decision', following the occurrence-3 precedent. That instruction was based on a false premise — there is no such row to append to. So the standing convention has been silently routing corroborations at an empty target for at least two occurrences, which is why a 4x-recurring defect with material data loss still had zero board presence. Priority P1 on blast radius: while this fires, Tier-1 audit cycles are a dead detector that reports healthy (feedback_composite_score_masks_dead_detector_pruned_table).",
-        "updated_at": "2026-08-06T22:07:42Z",
-        "po_triage_20260806T2205_occurrence_5": "OCCURRENCE 5, AND THE FIRST ON A NON-AUDITOR AGENT - which settles AC-1 (this is not a system-auditor prose defect). Source: TNB c123 self-audit, telegram report 4472. PO ADJUDICATED THE MECHANISM AT SOURCE rather than accepting TNB's own framing, because TNB posed it as a fork: (a) read-back checks are being confabulated, or (b) writes are lost pre-commit. ANSWER IS (a). Proof, from git, not from any agent's self-report: `git show 1f670c381^:docs/handoffs/tnb-audit-latest.md | head -1` returns '# TNB Audit - Cycle 121 - ~2026-07-31T20:23Z', i.e. the last state of that file before TNB's own c123 commit was STILL Cycle 121 - so c122 (2026-08-04T20:29Z), which claimed to overwrite it AND to have read the overwrite back, never wrote it at all. Second plane, same verdict: c122 claimed a signal drop; no c122-dated file exists in docs/signals/ OR docs/signals/processed/ (the drain target) - only tnb-2026-06-05T2013Z-c88.json, tnb-20260731T2023Z.json, tnb-20260806T2029Z.json. Hypothesis (b) is REFUTED, not merely unsupported: if the write had landed and then been lost, the working tree would have carried it at some point, and a lost-then-reverted uncommitted file cannot explain the signal file being absent from BOTH the live dir and the processed dir. This also retires the 2026-08-01 PO diagnosis of the c120 instance ('write-without-persistence, not a Bash-grant gap') - that diagnosis was half right (it correctly ruled out the Bash grant) and half wrong (there was no write to lose). CONTROL that makes this a clean discriminator rather than a pattern match: TNB c123's OWN writes on the same tool grant DID land - handoff file committed in 1f670c381, signal file present at docs/signals/processed/tnb-20260806T2029Z.json (drained by dev-team 20:40:33Z). Same agent, same session class, same absent Bash grant, opposite outcome. So the tool grant is not the variable; whether the agent actually issued the call is. AC-6's 'four is a lower bound' now reads five. Folded into BATCH this tick."
+        "updated_at": "2026-08-07T01:14:01Z",
+        "po_triage_20260806T2205_occurrence_5": "OCCURRENCE 5, AND THE FIRST ON A NON-AUDITOR AGENT - which settles AC-1 (this is not a system-auditor prose defect). Source: TNB c123 self-audit, telegram report 4472. PO ADJUDICATED THE MECHANISM AT SOURCE rather than accepting TNB's own framing, because TNB posed it as a fork: (a) read-back checks are being confabulated, or (b) writes are lost pre-commit. ANSWER IS (a). Proof, from git, not from any agent's self-report: `git show 1f670c381^:docs/handoffs/tnb-audit-latest.md | head -1` returns '# TNB Audit - Cycle 121 - ~2026-07-31T20:23Z', i.e. the last state of that file before TNB's own c123 commit was STILL Cycle 121 - so c122 (2026-08-04T20:29Z), which claimed to overwrite it AND to have read the overwrite back, never wrote it at all. Second plane, same verdict: c122 claimed a signal drop; no c122-dated file exists in docs/signals/ OR docs/signals/processed/ (the drain target) - only tnb-2026-06-05T2013Z-c88.json, tnb-20260731T2023Z.json, tnb-20260806T2029Z.json. Hypothesis (b) is REFUTED, not merely unsupported: if the write had landed and then been lost, the working tree would have carried it at some point, and a lost-then-reverted uncommitted file cannot explain the signal file being absent from BOTH the live dir and the processed dir. This also retires the 2026-08-01 PO diagnosis of the c120 instance ('write-without-persistence, not a Bash-grant gap') - that diagnosis was half right (it correctly ruled out the Bash grant) and half wrong (there was no write to lose). CONTROL that makes this a clean discriminator rather than a pattern match: TNB c123's OWN writes on the same tool grant DID land - handoff file committed in 1f670c381, signal file present at docs/signals/processed/tnb-20260806T2029Z.json (drained by dev-team 20:40:33Z). Same agent, same session class, same absent Bash grant, opposite outcome. So the tool grant is not the variable; whether the agent actually issued the call is. AC-6's 'four is a lower bound' now reads five. Folded into BATCH this tick.",
+        "po_manual_dispatch_flagged_at": "2026-08-07T01:11:28Z",
+        "po_manual_dispatch_flagged_by": "po (manual-dispatch-sweep)",
+        "po_manual_dispatch_class": "DRS-STRANDED-OFF-ALLOWLIST",
+        "po_manual_dispatch_note": "po (manual-dispatch-sweep) surfaced DRS-STRANDED-OFF-ALLOWLIST candidate — folding into this tick's BATCH. TIE-BREAK DEVIATION (deliberate, logged): 42 candidates, all top entries rank=1; the sweep's default tie-break is board index (which would pick FIX-CHEF-MIDFLOW-BAIL-DETERMINISM at idx=200 over this row at idx=353). PO overrode on main.md's own stated priority order 'recurring bugs -> UNBLOCK -> FIX': this is the 5th defective occurrence across 7 spawns of the same leaf-agent analysis-only-exit pattern (router-20260807T002937Z-analysisonly5th + tnb c122 self-audit), and it invalidates the self-reports every other triage in this system consumes — including this one. It was ALREADY folded into a BATCH at 2026-08-06T22:05Z (see tnb-audit-latest.md PO ACK) and has still not left backlog[] ~3h later, which is exactly the TE-T12 strandedness this sweep exists to re-admit."
       },
       {
         "id": "FIX-PO-AC3-SELFVERIFY-FALSE-FAILLOUD-WHEN-PEER-SWEEPS-ORCHSTATE",
@@ -12890,6 +12906,200 @@
         "created_at": "2026-08-07T00:07:30Z",
         "updated_by": "qa",
         "updated_at": "2026-08-07T00:08:51Z"
+      },
+      {
+        "id": "FIX-CI-SIZELINT-BCTCREFINED-PROJECTION-BASELINE",
+        "type": "FIX",
+        "title": "CI-RED-417573d7-FIX — CI RED: size-lint — apps/mcp-server/src/interface/mcp/tools/financial-reports/getBctcRefinedTool.ts",
+        "desc": "size-lint RED: getBctcRefinedTool.ts baseline=162L actual=234L upper=178L (baseline-tolerance-exceeded). TRIGGER IDENTIFIED (not assumed): commit ff36391dc `fix(mcp-server/bctc): get_bctc_refined fields:'ids' projection` — the fix for FIX-GET-BCTC-REFINED-NO-PROJECTION-PARAM (currently review[], next_agent=qa) added the projection branch and grew the file 162->234L without adding a size-justification header or reconciling docs/data/size-lint-baseline.json. Still RED at HEAD 70ae0d9ae (run 31136642246), same as at 417573d71 (run 31136261063).",
+        "status": "BACKLOG",
+        "priority": "high",
+        "size": "XS",
+        "owner": "po",
+        "zone": "apps/mcp-server/",
+        "next_agent": "developer",
+        "supervised": false,
+        "plan_only": false,
+        "check_id": "CI-RED-417573d7",
+        "dedup_key": "ci_job:size-lint|file:apps/mcp-server/src/interface/mcp/tools/financial-reports/getBctcRefinedTool.ts",
+        "ci_fingerprint": "76565852f4c3009c704d4a2e8fdc7d588525e0a837b92ff3449d0ff183f51b2d",
+        "origin_signal_id": "CI-RED-417573d7",
+        "created_at": "2026-08-07T01:11:28Z",
+        "created_by": "po/triage-20260807T0104Z",
+        "baseline_pass": true,
+        "rebuild_required": false,
+        "files": [
+          "apps/mcp-server/src/interface/mcp/tools/financial-reports/getBctcRefinedTool.ts",
+          "docs/data/size-lint-baseline.json"
+        ],
+        "related": [
+          "FIX-GET-BCTC-REFINED-NO-PROJECTION-PARAM",
+          "FIX-CI-GATES-INVISIBLE-TO-PREPUSH-DOCS-PATH-FILTER"
+        ],
+        "verification_gate": "ci_green_on_subsequent_push",
+        "status_note": "AC1: add a `size-justification:` header to getBctcRefinedTool.ts stating why 234L is warranted, OR extract the projection branch so the file drops under its 178L upper bound. AC2: do NOT run `scripts/audits/size-lint-justification.sh --update` to re-grandfather — the baseline is regenerated WHOLESALE on --update (see its own _note), so a blanket --update silently grandfathers every unrelated current offender too; same discipline as FIX-CI-TASKCLAIM-CHEF-MD-OWNER-SESSION-PAYDOWN AC1. AC3: `bash scripts/audits/size-lint-justification.sh --check` RC=0 locally. AC4: `gh run view <databaseId with headSha AFTER 70ae0d9ae4a4c3df3be7d723d2b153633ebea0fd> --json jobs -q '.jobs[]|select(.name==\"size-lint\")|.conclusion'` == success. Failing job: size-lint. Failing file: apps/mcp-server/src/interface/mcp/tools/financial-reports/getBctcRefinedTool.ts. Head SHAs observed: 417573d71 (run 31136261063), 70ae0d9ae (run 31136642246).",
+        "updated_at": "2026-08-07T01:14:01Z"
+      },
+      {
+        "id": "FIX-CI-SIZELINT-RAG-APP-FACTORY-BASELINE",
+        "type": "FIX",
+        "title": "CI-RED-417573d7-FIX-2 — CI RED: size-lint — apps/rag-service/app_factory.py",
+        "desc": "size-lint RED: app_factory.py baseline=121L actual=168L upper=133L (baseline-tolerance-exceeded). TRIGGER IDENTIFIED (not assumed): commit 0308514f5 `fix(rag-service/fix-rag-embedder-idle-unload-path): add idle-unload path to embedder singleton` — the fix for FIX-RAG-EMBEDDER-IDLE-UNLOAD-PATH (currently review[], next_agent=qa) added _idle_unload_loop() to build_lifespan() and grew the file 121->168L with no size-justification header and no baseline reconcile. Still RED at HEAD 70ae0d9ae (run 31136642246).",
+        "status": "BACKLOG",
+        "priority": "high",
+        "size": "XS",
+        "owner": "po",
+        "zone": "apps/rag-service/",
+        "next_agent": "developer",
+        "supervised": false,
+        "plan_only": false,
+        "check_id": "CI-RED-417573d7",
+        "dedup_key": "ci_job:size-lint|file:apps/rag-service/app_factory.py",
+        "ci_fingerprint": "76565852f4c3009c704d4a2e8fdc7d588525e0a837b92ff3449d0ff183f51b2d",
+        "origin_signal_id": "CI-RED-417573d7",
+        "created_at": "2026-08-07T01:11:28Z",
+        "created_by": "po/triage-20260807T0104Z",
+        "baseline_pass": true,
+        "rebuild_required": false,
+        "files": [
+          "apps/rag-service/app_factory.py",
+          "docs/data/size-lint-baseline.json"
+        ],
+        "related": [
+          "FIX-RAG-EMBEDDER-IDLE-UNLOAD-PATH",
+          "FIX-CI-SIZELINT-RAG-EMBEDDER-NEW-OFFENDER",
+          "FIX-CI-GATES-INVISIBLE-TO-PREPUSH-DOCS-PATH-FILTER"
+        ],
+        "verification_gate": "ci_green_on_subsequent_push",
+        "status_note": "AC1: add a `size-justification:` header to app_factory.py, OR move _idle_unload_loop() into its own module so the file drops under its 133L upper bound (the latter is preferred — build_lifespan() is already the service's composition root). AC2: do NOT run `--update` to re-grandfather (baseline regenerates WHOLESALE; would silently grandfather unrelated offenders). AC3: `bash scripts/audits/size-lint-justification.sh --check` RC=0. AC4: `gh run view <databaseId with headSha AFTER 70ae0d9ae4a4c3df3be7d723d2b153633ebea0fd> --json jobs -q '.jobs[]|select(.name==\"size-lint\")|.conclusion'` == success. Failing job: size-lint. Failing file: apps/rag-service/app_factory.py. Head SHAs observed: 417573d71 (run 31136261063), 70ae0d9ae (run 31136642246).",
+        "updated_at": "2026-08-07T01:14:01Z"
+      },
+      {
+        "id": "FIX-CI-SIZELINT-RAG-EMBEDDER-NEW-OFFENDER",
+        "type": "FIX",
+        "title": "CI-RED-417573d7-FIX-3 — CI RED: size-lint — apps/rag-service/infrastructure/embedder.py (new-offender)",
+        "desc": "size-lint RED: embedder.py new-offender (167L > 120L cap, NO baseline entry and NO current size-justification header — confirmed absent from docs/data/size-lint-baseline.json .entries). TRIGGER IDENTIFIED (not assumed): commit 0308514f5 added _maybe_unload_idle()/_idle_unload_loop()/_last_used_monotonic to the embedder singleton. This is the strictest of the four size-lint offenders — a new-offender has no grandfather at all, so it can only be closed by a justification header or a real split. Still RED at HEAD 70ae0d9ae (run 31136642246).",
+        "status": "BACKLOG",
+        "priority": "high",
+        "size": "XS",
+        "owner": "po",
+        "zone": "apps/rag-service/",
+        "next_agent": "developer",
+        "supervised": false,
+        "plan_only": false,
+        "check_id": "CI-RED-417573d7",
+        "dedup_key": "ci_job:size-lint|file:apps/rag-service/infrastructure/embedder.py",
+        "ci_fingerprint": "76565852f4c3009c704d4a2e8fdc7d588525e0a837b92ff3449d0ff183f51b2d",
+        "origin_signal_id": "CI-RED-417573d7",
+        "created_at": "2026-08-07T01:11:28Z",
+        "created_by": "po/triage-20260807T0104Z",
+        "baseline_pass": true,
+        "rebuild_required": false,
+        "files": [
+          "apps/rag-service/infrastructure/embedder.py"
+        ],
+        "related": [
+          "FIX-RAG-EMBEDDER-IDLE-UNLOAD-PATH",
+          "FIX-CI-SIZELINT-RAG-APP-FACTORY-BASELINE",
+          "FIX-CI-GATES-INVISIBLE-TO-PREPUSH-DOCS-PATH-FILTER"
+        ],
+        "verification_gate": "ci_green_on_subsequent_push",
+        "status_note": "AC1: add a `size-justification:` header to embedder.py justifying 167L (the lazy-load + idle-unload lifecycle is genuinely cohesive — a justification is likely the honest answer here, not a split). AC2: do NOT run `--update` — a new-offender grandfathered by a wholesale --update defeats the guard's entire purpose. AC3: `bash scripts/audits/size-lint-justification.sh --check` RC=0. AC4: `gh run view <databaseId with headSha AFTER 70ae0d9ae4a4c3df3be7d723d2b153633ebea0fd> --json jobs -q '.jobs[]|select(.name==\"size-lint\")|.conclusion'` == success. Failing job: size-lint. Failing file: apps/rag-service/infrastructure/embedder.py. Head SHAs observed: 417573d71 (run 31136261063), 70ae0d9ae (run 31136642246).",
+        "updated_at": "2026-08-07T01:14:01Z"
+      },
+      {
+        "id": "FIX-CI-TASKCLAIM-MARKETWATCHER-CYCLE-MD",
+        "type": "FIX",
+        "title": "CI-RED-417573d7-FIX-4 — CI RED: task-claim-owner-session-lint — docs/agents/market-watcher/flow/cycle.md",
+        "desc": "task-claim-owner-session-lint RED: cycle.md:303 `task_release(task_id=\"market-watcher-notebook:main\")` — flagged [NEW call site — no baseline entry for this file+snippet under any line]. NEW call site, not a line-shift regrandfather case, so unlike the chef.md/sprint-kickoff.md siblings this is genuinely-new debt introduced by a recent market-watcher flow edit (candidate commits touching these docs: 5bae0a65d TE-T05 composite merge, a71cc0df1 eod stale-caveat fix, 438e66958 transport-gap demote). Still RED at HEAD 70ae0d9ae (run 31136642246).",
+        "status": "BACKLOG",
+        "priority": "high",
+        "size": "XS",
+        "owner": "po",
+        "zone": "cross-service/",
+        "next_agent": "developer",
+        "supervised": false,
+        "plan_only": false,
+        "check_id": "CI-RED-417573d7",
+        "dedup_key": "ci_job:task-claim-owner-session-lint|file:docs/agents/market-watcher/flow/cycle.md",
+        "ci_fingerprint": "76565852f4c3009c704d4a2e8fdc7d588525e0a837b92ff3449d0ff183f51b2d",
+        "origin_signal_id": "CI-RED-417573d7",
+        "created_at": "2026-08-07T01:11:28Z",
+        "created_by": "po/triage-20260807T0104Z",
+        "baseline_pass": true,
+        "rebuild_required": false,
+        "files": [
+          "docs/agents/market-watcher/flow/cycle.md"
+        ],
+        "related": [
+          "FIX-CI-TASKCLAIM-CHEF-MD-OWNER-SESSION-PAYDOWN",
+          "FIX-CI-TASKCLAIM-MARKETWATCHER-EOD-MD",
+          "FIX-CI-GATES-INVISIBLE-TO-PREPUSH-DOCS-PATH-FILTER"
+        ],
+        "verification_gate": "ci_green_on_subsequent_push",
+        "status_note": "AC1: add owner_client_session to the task_claim/task_release pair at docs/agents/market-watcher/flow/cycle.md:303. AC2: the doc must instruct SUBSTITUTING the real session id from the spawn-prompt coordination line — writing the literal $CLAUDE_CODE_SESSION_ID inside a call_tool argument sends it LITERALLY (known hazard: feedback_llm_issued_call_tool_does_not_expand_session_id_variable); mirror docs/agents/pm/flow/main.md and .claude/skills/commit-mutex/SKILL.md. AC3: do NOT run `--update` to grandfather a NEW call site — grandfathering is only for pre-existing scoped debt (same AC1 discipline as FIX-CI-TASKCLAIM-CHEF-MD-OWNER-SESSION-PAYDOWN). AC4: `bash scripts/audits/task-claim-owner-session-lint.sh --check` RC=0. AC5: `gh run view <databaseId with headSha AFTER 70ae0d9ae4a4c3df3be7d723d2b153633ebea0fd> --json jobs -q '.jobs[]|select(.name==\"task-claim-owner-session-lint\")|.conclusion'` == success. Failing job: task-claim-owner-session-lint. Failing file: docs/agents/market-watcher/flow/cycle.md. Head SHAs observed: 417573d71 (run 31136261063), 70ae0d9ae (run 31136642246).",
+        "updated_at": "2026-08-07T01:14:01Z"
+      },
+      {
+        "id": "FIX-CI-TASKCLAIM-MARKETWATCHER-EOD-MD",
+        "type": "FIX",
+        "title": "CI-RED-417573d7-FIX-5 — CI RED: task-claim-owner-session-lint — docs/agents/market-watcher/flow/eod.md",
+        "desc": "task-claim-owner-session-lint RED: eod.md:78 `task_release(task_id=\"market-watcher-notebook:main\")` inside the bounded-retry notebook-lock prose — flagged [NEW call site — no baseline entry for this file+snippet under any line]. Sibling of FIX-CI-TASKCLAIM-MARKETWATCHER-CYCLE-MD (same lint job, same agent, same missing param, different file — minted as separate rows so each carries its own file-scoped dedup_key). Still RED at HEAD 70ae0d9ae (run 31136642246).",
+        "status": "BACKLOG",
+        "priority": "high",
+        "size": "XS",
+        "owner": "po",
+        "zone": "cross-service/",
+        "next_agent": "developer",
+        "supervised": false,
+        "plan_only": false,
+        "check_id": "CI-RED-417573d7",
+        "dedup_key": "ci_job:task-claim-owner-session-lint|file:docs/agents/market-watcher/flow/eod.md",
+        "ci_fingerprint": "76565852f4c3009c704d4a2e8fdc7d588525e0a837b92ff3449d0ff183f51b2d",
+        "origin_signal_id": "CI-RED-417573d7",
+        "created_at": "2026-08-07T01:11:28Z",
+        "created_by": "po/triage-20260807T0104Z",
+        "baseline_pass": true,
+        "rebuild_required": false,
+        "files": [
+          "docs/agents/market-watcher/flow/eod.md"
+        ],
+        "related": [
+          "FIX-CI-TASKCLAIM-MARKETWATCHER-CYCLE-MD",
+          "FIX-CI-TASKCLAIM-CHEF-MD-OWNER-SESSION-PAYDOWN",
+          "FIX-CI-GATES-INVISIBLE-TO-PREPUSH-DOCS-PATH-FILTER"
+        ],
+        "verification_gate": "ci_green_on_subsequent_push",
+        "status_note": "AC1: add owner_client_session to the task_claim/task_release pair at docs/agents/market-watcher/flow/eod.md:78. AC2: substitution-instruction pattern per feedback_llm_issued_call_tool_does_not_expand_session_id_variable (mirror pm/flow/main.md + commit-mutex/SKILL.md). AC3: do NOT `--update`-grandfather a NEW call site. AC4: `bash scripts/audits/task-claim-owner-session-lint.sh --check` RC=0. AC5: `gh run view <databaseId with headSha AFTER 70ae0d9ae4a4c3df3be7d723d2b153633ebea0fd> --json jobs -q '.jobs[]|select(.name==\"task-claim-owner-session-lint\")|.conclusion'` == success. NOTE: AC4/AC5 for this row and its cycle.md sibling can only both be green once BOTH files are fixed — the lint reports all offenders in one job. Close them together or the second one's AC5 will read as still-red. Failing job: task-claim-owner-session-lint. Failing file: docs/agents/market-watcher/flow/eod.md. Head SHAs observed: 417573d71 (run 31136261063), 70ae0d9ae (run 31136642246).",
+        "updated_at": "2026-08-07T01:14:01Z"
+      },
+      {
+        "id": "FIX-BCTC-REFINE-PAGE-IMAGE-UNAVAILABLE-CAPS-CONFIDENCE",
+        "type": "FIX",
+        "title": "get_bctc_page_image failed on 3/3 successful refine windows in the 2026-08-06T16:37Z batch — every DONE unit capped at confidence 0.55 (text-only), vs zero image failures in the 14:07Z batch on the same report",
+        "desc": "PO-ORIGINATED, verified at source (live /app/data/market.db via docker exec + bun:sqlite, 2026-08-07T01:0xZ) while ratifying FIX-REFINE-SUBFLOW-OPTIONC-CONTRACT-DRIFT AC-7. Report 76129128-947c-422b-a591-e1d2b95cbeb8 (KBC), bctc_refined_units: the 14:07:21-14:11:26Z batch (units 0000-0011) has ZERO image_unavailable flags and confidences 0.81-0.98. The 16:37:54-16:40:53Z batch (units 0012-0023) has THREE DONE units (0014/0015/0019) and ALL THREE carry flags [\"image_unavailable:text_only_parse\"] with confidence exactly 0.55. REFUTES the standing hypothesis that 0.55 is a hardcoded/fallback confidence introduced by the Option-C fix: apps/mcp-server/src/domain/services/financial-reports/bctcSanityValidator.ts can only pass confidence through (:134) or clamp it to 0.4 (:149) / 0.1 (:163) — it can never emit 0.55, so 0.55 is the agent's own spec-COMPLIANT value under docs/agents/refine_bctc_md/flow/table-page.md:55 and continuation-stitch.md:60 ('image fail -> proceed text-only, flag image_unavailable, confidence <= 0.6'). The confidence is correct; what is broken is the IMAGE PLANE. Second, weaker observation on the same batch: 6 of the 9 FAILED units are ocr_corruption on a contiguous page-30..41 tail (0016 p30, 0018 p34, 0020 p38, 0021 p39, 0022 p40, 0023 p41) — likely one upstream PDF/OCR condition, not six independent failures.",
+        "status": "BACKLOG",
+        "priority": "P1",
+        "size": "S",
+        "owner": "po",
+        "zone": "apps/mcp-server/",
+        "next_agent": "developer",
+        "supervised": false,
+        "plan_only": false,
+        "created_at": "2026-08-07T01:11:28Z",
+        "created_by": "po/triage-20260807T0104Z (own source verification during WF-2 ratification)",
+        "baseline_pass": true,
+        "rebuild_required": false,
+        "files": [
+          "apps/mcp-server/src/interface/mcp/tools/financial-reports/getBctcPageImageTool.ts",
+          "apps/mcp-server/src/infrastructure/fetchers/pdfExtractorClient.ts"
+        ],
+        "related": [
+          "FIX-REFINE-SUBFLOW-OPTIONC-CONTRACT-DRIFT"
+        ],
+        "verification_gate": "next_refine_batch_has_zero_image_unavailable_flags",
+        "status_note": "AC1: determine why get_bctc_page_image returned unusable for pages in the 16:37Z window but not the 14:07Z window on the SAME report_id — compare pdf-extractor availability/response between the two windows before changing any code (do NOT assume a code regression; a transient pdf-extractor outage is an equally live hypothesis and would route to ops, not developer). AC2: whichever it is, the failure must be VISIBLE — a 100% image-fetch failure that silently degrades every unit to <=0.6 confidence and only surfaces as a flag inside a DB row is an invisible data-quality regression; emit a loud signal (BUG channel or signal_queue) when image fetch fails for a whole window. AC3: re-run one window and confirm zero image_unavailable flags. AC4 (secondary, may split to its own row): investigate the contiguous page-30..41 ocr_corruption block on this report. EVIDENCE QUERY (re-runnable): docker exec vn-market-intelligence-mcp-mcp-server-1 bun -e '...SELECT unit_id,confidence,window_status,flags,refined_at FROM bctc_refined_units WHERE report_id=\"76129128-947c-422b-a591-e1d2b95cbeb8\" ORDER BY refined_at'. DO NOT close this by adjusting the 0.55 value or the <=0.6 cap — those are correct.",
+        "updated_at": "2026-08-07T01:14:01Z"
       }
     ],
     "closed_sprints": [
@@ -19690,8 +19900,8 @@
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-MCP-MEMORY-CODE-LEAK",
         "po_corroboration_20260721": "CORROBORATION / high-water (PO converge-drain po-s147 2026-07-21T14:23:45Z): 5 A-30 mcp-server MemPerc samples this session 94.43→90.58→88.38→88.53→88.81% — reclaimed from peak, WITHIN the documented 85–93% GC-sawtooth band, NO OOM, tripwire UNtripped (no OOMKilled, no >93%-no-dip, no >97%-sustained). Benign leak episode already tracked here → NO new mint. DO NOT escalate to ops; DO NOT recommend a restart (would destroy trajectory evidence for zero OOM-risk benefit — feedback_auditor_mcpserver_a21_a30_memory_fp_reemit_churn).",
         "po_corroboration_20260721_1537": "HIGH-WATER CORROBORATION (PO signal-drain 2026-07-21T15:37Z, folds A-30 sys-20260721T151241-28d6). Router-verified 18-sample x12s window: mcp-server MemPerc 95.39-99.99% GC sawtooth WITH reclamation dips; band crept up ~6pt this session (floor 95.39% vs historical 89.2%). VmHWM 2.95GiB > current VmRSS 2.77GiB (high-water above current = reclaim happening), OOMKilled=false, gateway serving, rag-service co-pinned 99.8%. Genuine tripwire (OOMKilled / >93%-no-reclaim-across-all-samples / >97%-sustained) UNtripped -> benign-but-elevated. NO new mint. DO NOT escalate to ops; DO NOT restart/rebuild (user-gated; would destroy trajectory evidence). FP re-emission of this same in-band condition tracked by FIX-AUDITOR-A12A20A30-FP-REEMIT-CONVERGE (already commissioned, next=architect).",
-        "status_note": "CORROBORATION 2026-07-22: real outage — mcp-server mem wedge degraded ~08:30Z, fully wedged, CLEAN restart 14:53Z (exit=0, OOMKilled=false, NOT OOM). High-water ~87%. Downstream false-CRITICALs (auditor recovery artifacts, self-resolved): news-vps data_stale (sys-...635a) + market_messages db_integrity_breach (sys-...7ed7). Confirms 'accumulates ~87% in 12h' — raises leak-fix priority. | CI-RED OBSERVED AGAIN 2026-08-06T06:45:49Z: check_id=CI-RED-def6ac67 head_sha=def6ac67c0349d3d54d213211051d148d75c99fc run_id=31077879870. Mandatory pre-dedup failing-file read performed (gh run view 31077879870 --log-failed): FAILING_FILES=[apps/mcp-server/src/infrastructure/db/schema.ts] — 'baseline-tolerance-exceeded (baseline=336L actual=377L upper=369L)'. Exact file-scoped dedup_key match on this row (ci_job:size-lint|file:apps/mcp-server/src/infrastructure/db/schema.ts) -> duplicate, no new row minted. File has drifted a further +41L over baseline since this row opened.",
-        "updated_at": "2026-08-06T07:23:23Z",
+        "status_note": "CORROBORATION 2026-07-22: real outage — mcp-server mem wedge degraded ~08:30Z, fully wedged, CLEAN restart 14:53Z (exit=0, OOMKilled=false, NOT OOM). High-water ~87%. Downstream false-CRITICALs (auditor recovery artifacts, self-resolved): news-vps data_stale (sys-...635a) + market_messages db_integrity_breach (sys-...7ed7). Confirms 'accumulates ~87% in 12h' — raises leak-fix priority. | CI-RED OBSERVED AGAIN 2026-08-06T06:45:49Z: check_id=CI-RED-def6ac67 head_sha=def6ac67c0349d3d54d213211051d148d75c99fc run_id=31077879870. Mandatory pre-dedup failing-file read performed (gh run view 31077879870 --log-failed): FAILING_FILES=[apps/mcp-server/src/infrastructure/db/schema.ts] — 'baseline-tolerance-exceeded (baseline=336L actual=377L upper=369L)'. Exact file-scoped dedup_key match on this row (ci_job:size-lint|file:apps/mcp-server/src/infrastructure/db/schema.ts) -> duplicate, no new row minted. File has drifted a further +41L over baseline since this row opened. | CI-RED OBSERVED AGAIN 2026-08-07T01:00:26Z: check_id=CI-RED-417573d7 head_sha=417573d7138d99f8ce6ea3392473bdc4a81e8858 run_id=31136261063, AND STILL RED one commit later at head_sha=70ae0d9ae4a4c3df3be7d723d2b153633ebea0fd run_id=31136642246. Mandatory pre-dedup failing-file read performed on BOTH runs (gh run view --log-failed): FAILING_FILES for job size-lint = [apps/mcp-server/src/infrastructure/db/schema.ts (baseline=336L actual=372L upper=369L), apps/mcp-server/src/interface/mcp/tools/financial-reports/getBctcRefinedTool.ts, apps/rag-service/app_factory.py, apps/rag-service/infrastructure/embedder.py]. Exact file-scoped dedup_key match on THIS row for schema.ts only -> folded here, no new mint for schema.ts. The other three files were minted as their own file-scoped rows this tick. NOTE for whoever fixes this row: schema.ts has now drifted 336->372L (was 377L at the 2026-08-06 observation, so it is being edited by multiple hands) and its size-lint debt will keep re-reddening CI until a size-justification header lands.",
+        "updated_at": "2026-08-07T01:14:01Z",
         "po_escalation_20260722": "ESCALATION (PO triage 2026-07-22T15:15Z; SUPERSEDES the 07-21 'benign GC-sawtooth' corroboration notes above AND folds a peer PO 15:10Z tick whose board write was lost but whose live verification is preserved here). Recurring memory-cap exhaustion CONFIRMED, NOT benign sawtooth: A-30 reached 100pct (3GiB/3GiB) at 2026-07-22T00:11Z; cowork discriminator 07-21T23:26Z saw 8/8 samples 96.26-96.70pct with 0 reclamation dips/140s = the >93pct-no-reclaim tripwire GENUINELY TRIPPED (first non-FP). Server went transiently unreachable across the cap windows (00:31Z A-12 FAIL; 14:45-14:52Z cowork fleet-blind, curl exit=28). Resolved by restart 14:53Z -- live get_system_status @15:06Z confirms this restart was CLEAN (exit=0, NOT OOMKilled; uptime 13m, 16/16 breakers OK, DB 374MB no malformed). Mechanism: leak drives memory to cap + loss-of-reclamation -> transient unreachable -> restart clears it -> leak re-accumulates (~87pct in 12h) = recurring. Durable code fix is now TOP priority (recurring-bug-escalation). Restart/rebuild is user-gated ops-lane and NOT a substitute (re-leaks next cycle). Folds signal_queue cowork-20260721T232634Z-a30-mcp-oom-escalate + auditor A-30 chain 07-21T00:12..07-22T14:51.",
         "po_corroboration_20260723": "HIGH-WATER CORROBORATION (PO CONVERGE drain 2026-07-23T03:47Z; folds A-30 sys-...031127-05d0 91.33% + ...031220-42fc 91.25% + ...034235-2a44 92.50% CRITICAL). RAW 03:43Z: cgroup MemPerc 94.98% = new session high-water; VmRSS 2,843,808kB (90.4% of 3GiB cap), VmHWM 2,971,264kB>VmRSS => reclamation already happened (benign sawtooth). OOMKilled=false, RestartCount=0, :3000/health 200 in 2.35ms, gateway serving. Genuine tripwire (OOMKilled / >93%-no-dip-across-all-samples / >97%-sustained / total-unresponsiveness) UNtripped -> benign-but-elevated instance of the recurring leak already tracked here. NO new mint. DO NOT escalate to ops; DO NOT restart/rebuild (user-gated; would destroy trajectory evidence for zero OOM-risk benefit). FP re-emission + auto-escalation of this in-band condition is tracked by FIX-AUDITOR-A12A20A30-FP-REEMIT-CONVERGE (commissioned to architect 2026-07-23).",
         "po_corroboration_20260729": "HIGH-WATER CORROBORATION (OPS verification 2026-07-29T22:06Z; routes sys-20260728T215425-23ef A-30 CRITICAL routed at 21:54:25Z). FRESH 8-SAMPLE WINDOW (10s intervals, ~80s total): mcp-server MemPerc 95.52→94.87% with CLEAR GC RECLAMATION DIPS (peak 95.52%, floor 94.84% @ probe 7, recovery 94.87% @ probe 8). OOMKilled=false, RestartCount=2, Health=healthy, :3000/health 200/~2ms latency. Genuine tripwire (>93%-NO-RECLAIM-across-all-samples) UNtripped => FALSE POSITIVE re-confirmation. No OOM risk, no restart warranted. Benign-but-elevated instance of the recurring leak already tracked here. DO NOT escalate to ops; DO NOT restart/rebuild (user-gated; zero OOM-risk benefit). FP re-emission is tracked by FIX-AUDITOR-A12A20A30-FP-REEMIT-CONVERGE. High-water note: session peak 95.79% (probe 1 of fresh window, 2026-07-29T22:02:37Z), compared to historical 87% @ 2026-07-22 wedge, indicates ~9pt session elevation but within recurring pattern (no escalation signal).",
@@ -19707,7 +19917,7 @@
         "claimed_at": "2026-08-05T17:51:16Z",
         "claimed_by": "dev-team (supervised-lane sweep)",
         "architect_review_note": "2026-08-05T17:20Z architect: re-verified 07-02 recon finding still live+unfixed at HEAD — initDatabase() (schema.ts:156) has no already-initialized guard, call-site count grew 68->117 since the 07-02 recon (grep-verified). Root cause: 3 backfill calls (backfillBctcQ4/backfillBctcQ1_2026/backfillBctcHistorical) run unconditionally on every non-test call, per seedWatchlist.ts:15 own header comment; backfillBctcHistorical compiles+runs a fresh INSERT OR IGNORE 8x per call. Fix: WeakSet<Database> identity-keyed guard (NOT a bare boolean -- 15+ test files pass fresh per-test Database instances as dbArg; a boolean would silently skip DDL on every 2nd+ test in the same bun test process). Single-file, ~4 lines, mirrors existing getDb() if(_db)return idiom same file. SECOND independent finding this pass (fast-follow, not folded into this fix): SseSessionManager (transport.ts) allocates a new McpServer + 30s heartbeat per /sse connection, cleanup gated solely on res.on(close) or write-failure (partial fix already shipped 2026-05-17 c52982af2) -- no idle/max-age reaper, no DELETE handler. /sse is the dominant gateway-fleet path per docs/architecture/microservice/mcp-server.md:95 (cowork agents), not just /mcp (CLI cron, already has explicit close-on-finally). Recommend PO mint follow-up row once this fix ships + /health sessionCount correlated against MemPerc over several hours. Full design: docs/architecture-briefs/2026-08-05-fix-mcp-memory-code-leak-initdatabase-guard.md",
-        "updated_by": "po",
+        "updated_by": "po/triage-20260807T0104Z",
         "dev_implementation_note": "dev-mcp-server implementation (2026-08-05T18:30Z, session f298ccf7-8cf4-452d-9a5a-57dcb47e65ac): shipped the WeakSet<Database> identity guard per the architect brief, but rescoped its placement after the full bun test suite (not inspection alone) surfaced a real regression -- the brief's literal whole-function guard broke 2 tests (1489-tracked-indicators-dedup.test.ts, daily-foreign-flow-backfill.test.ts \"wired into boot sequence\") that explicitly re-run initDatabase() against the SAME db after seeding new rows and assert the post-init cleanup/backfill re-fires. Root cause: those tests exercise initDatabase()s \"Post-init migrations\" tail (HUT migration, BACKFILL_079, Task 1489 purge, migrateForeignFlowColumns/backfillDailyForeignFlow) which the brief's own Finding 1 never identified as part of the cost -- only the ~3300-line domain-slice DDL sweep + the 3 named bctc backfill calls were. Guard now wraps ONLY that identified-expensive section (schema.ts:162-250); the tail (schema.ts:252-310) remains unguarded/always-run, matching the brief's actual cost target with zero regression. Extended 002-db-schema.test.ts (2 tests: drop backtest_runs marker table proves guarded section skipped on repeat call; 2 different fresh Databases both fully init). 26/26 pass, tsc clean, toolCount=183/cronJobCount=88 unchanged, fresh-boot health/dashboard gates clean. Full bun test x3 (1 pre-fix repro of the 2-test regression, 2 post-restructure): final 15088 pass/53 fail/0 err, 47844 expect(), 523.90s -- within the documented 52-60 pre-existing flaky-full-suite band (grep-confirmed zero fail lines match 1489/TASK_2001/schema/initDatabase); isolated re-run of the 9 fast-failing test names against reverted pre-fix code = 91/91 pass, confirming those are the pre-existing order-dependent flaky class, not caused by this change. Commit 609f62800 (pathspec-scoped, explicit files only -- left an unrelated peer-session dirty BCTC set (parseBctcReport.ts, financialFiguresValidator.ts, 2 untracked files) untouched). Finding 2 from the brief (SseSessionManager /sse per-connection McpServer+heartbeat leak) confirmed still flagged separately on this same board row (architect_review_note above) and NOT duplicate-fixed here -- remains an explicit fast-follow for PO to route.",
         "router_sizelint_flag_at": "2026-08-05T19:04:27Z",
         "router_sizelint_flag_by": "router",
@@ -20553,8 +20763,8 @@
         "next_agent": "qa",
         "created_at": "2026-08-06T12:45:00Z",
         "created_by": "po/rag-oom-ruling-20260806T1245 (actuates architect brief section 3 / S3, which was designed 2026-08-06T09:03Z but never given a row)",
-        "updated_at": "2026-08-06T17:39:34Z",
-        "updated_by": "dev-rag-service (bounded-1 auto-pickup)",
+        "updated_at": "2026-08-07T01:14:32Z",
+        "updated_by": "po/triage-20260807T0104Z",
         "design_ref": "docs/architecture-briefs/2026-08-06-rag-service-memory-sizing-remediation.md section 3 (line 63) — 'Structural fix — Option (b): idle-unload path for the embedder singleton'. Design is DONE; this row is execution only, no re-design needed.",
         "why_this_row_exists": "MINTED because the architect brief designed this fix and no board row carried it — the decision would otherwise have lived only inside architect_review_note on FU-RAG-DEPLOY-MEMORY, which is a note field, not a dispatchable unit. This is not FP churn re-raising the A-30 memory finding (feedback_auditor_mcpserver_a21_a30_memory_fp_reemit_churn): the memory finding is owned by FU-RAG-DEPLOY-MEMORY and stays there. This row owns a DIFFERENT and previously unowned thing — the absence of a release path in apps/rag-service/infrastructure/embedder.py (lines 37/51; grep for unload|.release(|del self._model|gc.collect|empty_cache finds nothing), which has been flagged three separate times on FU-RAG-DEPLOY-MEMORY's history and actioned zero times.",
         "scope": "Idle-unload timer symmetric to the existing lazy-load. EMBEDDER_IDLE_UNLOAD_MINUTES env var (config, never a hardcode — feedback_no_hardcode_stats), default ~15. asyncio background task registered in build_lifespan; after N minutes with no embed call, unload the model and gc.collect(). Reload transparently on the next embed through the EXISTING double-check-lock path — do not add a second load path. Files per the brief: apps/rag-service/infrastructure/embedder.py, apps/rag-service/main.py (env plumbing if needed), plus direct test coverage showing an injected idle-unload flips state warm->cold without ever returning a 503.",
@@ -20587,7 +20797,8 @@
         "dev_rag_service_implementation_20260806T1634Z": "IMPLEMENTED + COMMITTED (commit 0308514f5). embedder.py: new _maybe_unload_idle(idle_threshold_s) — under the SAME _load_lock/double-check pattern already used by _ensure_model_loaded() (cheap outer check outside the lock, re-check inside before mutating so a concurrently refreshed _last_used_monotonic aborts a stale unload decision); sets _model=None + gc.collect() once idle past threshold, never raises. _raw_embed() now stamps self._last_used_monotonic = time.monotonic() at its top (covers both embed()/embed_batch(), the only two callers). app_factory.py: new _idle_unload_loop() background loop — duck-types getattr(embedder, \"_maybe_unload_idle\", None) and returns immediately (permanent no-op) if absent, so service-tier sandbox fakes are completely untouched (zero determinism impact); started via asyncio.create_task inside build_lifespan() right after the existing initialize() call, cancelled+awaited in a finally: wrapped around the existing yield (previously had no enclosing try/finally at all). infrastructure/config.py: new Config.embedder_idle_unload_minutes field, read from EMBEDDER_IDLE_UNLOAD_MINUTES env (default \"15\"), identical os.environ.get() pattern to EMBEDDING_CACHE_DIR/LOG_LEVEL — never hardcoded. Reload on the next embed() call is fully transparent via the EXISTING _ensure_model_loaded() double-check-lock path — no second load path added, matching the row's explicit constraint. main.py NOT touched — checked first: cfg already flows Config.from_env() -> build_real_adapters() -> create_app() -> build_lifespan(embedder, cfg) with zero intermediate unpacking, so no plumbing change was needed there.\n\nTests: new __tests__/unit/test_embedder_idle_unload.py, 12 tests — (a) _last_used_monotonic set after embed(); (b)/(c) _maybe_unload_idle no-ops when nothing loaded / not yet idle; (d) unloads past threshold with gc.collect() spied via unittest.mock.patch; (e) double-check-lock regression guard — a concurrent refresh of _last_used_monotonic while _maybe_unload_idle waits for the lock aborts the unload; (f) transparent reload after unload asserts _load_model called exactly once (fake mirrors the real _load_model()'s own early-return guard, since _raw_embed() calls _load_model() defensively even post-_ensure_model_loaded()); (g) /embed/health flips warm->cold across an injected idle-unload, 200 on BOTH sides, never 503, then a subsequent embed() still succeeds; (h) a concurrent embed()/_maybe_unload_idle() race via asyncio.gather(return_exceptions=True) never raises; (i)/(j) app_factory._idle_unload_loop() is a permanent no-op for a fake embedder with no _maybe_unload_idle, and correctly invokes the real embedder's hook with the configured idle_threshold_s; (k)/(l) Config reads EMBEDDER_IDLE_UNLOAD_MINUTES from env with default 15. Fakes use real numpy.ndarray for encode() return values (not plain lists) to exercise the real _raw_embed() .tolist() call path.\n\nVerified: pytest 175/175 (163 baseline + 12 new), run twice across 2 different pytest-randomly seeds, including once immediately after a git stash/git stash pop round-trip that confirmed the working tree survived intact. mypy infrastructure/embedder.py infrastructure/config.py app_factory.py --ignore-missing-imports: 20 errors before AND after (byte-identical set at shifted line numbers, confirmed via git-stash A/B diff of the raw mypy output) — 0 new errors, all pre-existing repositories.py-owned patterns untouched. Sandbox: python -m sandbox --service=rag-service --tier=primitive --scenario=all and --tier=module --scenario=all both exit 0, every scenario \"passed\":true — the runner's own env-audit hard-gate ran as part of that exit 0, so env-audit-empty is satisfied by the same invocation. Docs: docs/architecture/microservice/rag-service/infrastructure.md SentenceTransformersEmbedder section updated (Methods + new idle-unload subsection + Configuration); also corrected a pre-existing stale \"initialize() eagerly loads model from FastAPI lifespan\" line in the same subsection (contradicted by the already-shipped GFD-13 lazy-load) since it sits inside the exact section this task's change touches.\n\ndocker-compose.yml NOT touched (out of this row's scope — cap raise 768m->1g/256m->512m already landed separately on FU-RAG-DEPLOY-MEMORY, confirmed live in the compose file: rag-service.deploy.resources.limits.memory=1g, reservations.memory=512m). EMBEDDER_IDLE_UNLOAD_MINUTES not added as an explicit compose env line — the code-level default (15) already satisfies \"config, never hardcode\"; ops can override via compose without a code change whenever wanted.\n\nNEXT: qa unit-verifies the 12 new tests + the transparent-reload/no-503 claim on this commit (no branch — direct main commit per NO-BRANCHES policy). Live-container measurement of whether idle-unload actually recovers memory in production is a qa/ops post-deploy concern, not part of this dev DoD (matches the row's own \"Direct test coverage\" wording, not a live-measurement requirement).",
         "po_signal_fold_20260806T1732": "FOLD of signal sys-20260806T171507-1243 (system-auditor A-30, WARN, 2026-08-06T17:15:07Z: rag-service 98.79% memory, 12 MiB free, BELOW 40 MiB floor). NOT a regression of this fix and NOT evidence the fix failed. RAW: fix commit 0308514f5 committer-date 2026-08-06T16:33:53Z; `docker inspect vn-market-intelligence-mcp-rag-service-1` StartedAt=2026-08-06T12:57:42Z, RestartCount=0 — the RUNNING binary predates the fix by 3h36m and has never been rebuilt or restarted since. The A-30 breach at 17:15Z therefore measured the PRE-FIX embedder singleton. Same defect shape (code on main, never built into a container) that cost 6 days of kinh-dich darkness earlier today (telegram 4459/4461).",
         "qa_precondition_20260806T1732": "HARD PRECONDITION before any QA verdict on this row: `docker compose build rag-service && docker compose up -d --no-deps rag-service`, then confirm the new image ID/StartedAt actually moved, THEN re-sample A-30 after an embed + idle window. Verifying against the live 12:57:42Z container measures the pre-fix binary and will produce a FALSE CHANGES_REQUESTED. Do not treat the 17:15Z A-30 signal as an AC failure.",
-        "po_triaged_by": "po (dev-team Step 1 triage 2026-08-06)"
+        "po_triaged_by": "po (dev-team Step 1 triage 2026-08-06)",
+        "po_triage_note": "PO TRIAGE 2026-08-07T01:11Z — TWO folds onto this row. (A) A-30 LIVE CORROBORATION, verified at source, NOT taken from the auditor's own number: \"docker stats --no-stream\" reads vn-market-intelligence-mcp-rag-service-1 at 983.8MiB / 1GiB = 96.07%, and \"docker inspect ... --format {{.HostConfig.Memory}}\" returns 1073741824 — a real 1GB cap, so this is NOT the known percentage-denominator false-spike class (feedback_auditor_memory_pct_denominator_falsespike). RestartCount=0, StartedAt=2026-08-06T12:57:42Z. Two system-auditor signal_feedback WARNs fold here: sys-20260806T233530-1713 (98.83%, 11.8MiB free) and sys-20260807T004739-68e2 (99.58%, 4MiB free) — WORSENING across 72 minutes. CRITICAL FOR QA: this row sits in review[] with next_agent=qa and its fix commit 0308514f5 is already on main, yet the LIVE container is still pinned at 96%. Do NOT sign this off on a code read alone — the container has not restarted since 12:57:42Z, which is BEFORE the 18:33Z fix commit, so the idle-unload path is not running in the live process at all. Sign-off requires a rebuild/restart followed by a measured docker stats reading BELOW the 40MiB-free floor (feedback_passive_health_masks_dead_data, feedback_auditor_false_all_green). (B) CI DEBT that this row's own fix commit created: 0308514f5 pushed app_factory.py from 121L to 168L and made embedder.py a 167L new-offender, turning the size-lint CI job RED. Tracked as FIX-CI-SIZELINT-RAG-APP-FACTORY-BASELINE and FIX-CI-SIZELINT-RAG-EMBEDDER-NEW-OFFENDER. QA should not pass this row while its own commit leaves CI red."
       },
       {
         "id": "FIX-COVERAGE-SWEEP-BLANKET-STAMP-DEAD-TRIGGER",
@@ -20647,7 +20858,7 @@
         "plan_only": false,
         "created_at": "2026-08-06T11:18:01Z",
         "created_by": "po/recurring-bug-escalation-20260806T1118Z",
-        "updated_at": "2026-08-06T17:09:40Z",
+        "updated_at": "2026-08-07T01:14:01Z",
         "source": "po recurring-bug escalation 2026-08-06T11:18Z -- found while root-causing FIX-REFINE-SUBFLOW-OPTIONC-CONTRACT-DRIFT. Filed separately and at P2 BECAUSE IT WAS MEASURED AND IS NOT THE CAUSE OF THAT INCIDENT: honest sizing below.",
         "desc": "apps/mcp-server/src/interface/mcp/tools/financial-reports/getBctcRefinedTool.ts:82 SELECTs `unit_id, page_numbers_json, markdown, flags, confidence, window_status, refined_at` for every row of the report and returns JSON.stringify(output, null, 2) -- there is no projection/limit/skip-set-only argument. refine_bctc_md's Phase 0 step 5 calls it purely to build a skip-set of unit_ids, and docs/agents/refine_bctc_md/flow/main.md:63 documents the response as `-> { units: [{ unit_id }] }` -- a shape the tool has never produced. Every resume fire therefore reads back all previously refined markdown it has no use for, and the read grows monotonically with each completed chunk. MEASURED, DO NOT OVERSTATE: for report a3a41225 (12 units) the real response is 25,316 bytes ~= 7k tokens -- material but far too small to have caused the two zero-push fires of 2026-08-06, so this row is explicitly NOT the root cause of those. Worst live case measured across the whole bctc_refined_units table: report b061d92b = 77 units / 103,606 markdown bytes, i.e. ~30k tokens returned to a caller that wants a list of ids. Same overflow family as FIX-PENDING-REFINE-OUTPUT-235K-OVERFLOW (review[], sibling tool get_bctc_pending_refine, 235K chars).",
         "files": [
@@ -20667,9 +20878,10 @@
         "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
         "claimed_at": "2026-08-06T16:43:27Z",
         "claimed_by": "dev-team (bounded-1 auto-pickup)",
-        "updated_by": "dev-mcp-server",
+        "updated_by": "po/triage-20260807T0104Z",
         "commit_sha": "ff36391dc",
-        "note": "AC-1: optional fields:\"ids\"|\"full\" (default full, unchanged) added to get_bctc_refined. ids SELECTs only unit_id,window_status (no markdown read from DB) -> {report_id,total_units,units:[{unit_id,window_status}]}, empty units:[] on zero pushed units (never the full path's {error} shape). AC-2: refine_bctc_md/flow/main.md Phase 0 step 5 now calls fields:\"ids\" and documents the actual served shape. AC-3: new FIX-GET-BCTC-REFINED-NO-PROJECTION-PARAM.test.ts (7/7 pass) asserts the 12-unit ids payload is well under 4KB. tsc clean. gen-project-stats.ts: tools=183/cron=88 unchanged. Fresh boot health+dashboard circular-dep probe clean. Full bun test 15139 pass/40 skip/53 fail/1 error (470s, within documented 52-61 flaky floor); targeted bctc/financial-reports sweep 1380 pass/0 fail across 121 files, zero overlap with the 52 full-suite failure names (grep-confirmed). full path byte-identical to pre-fix (out-of-scope respected)."
+        "note": "AC-1: optional fields:\"ids\"|\"full\" (default full, unchanged) added to get_bctc_refined. ids SELECTs only unit_id,window_status (no markdown read from DB) -> {report_id,total_units,units:[{unit_id,window_status}]}, empty units:[] on zero pushed units (never the full path's {error} shape). AC-2: refine_bctc_md/flow/main.md Phase 0 step 5 now calls fields:\"ids\" and documents the actual served shape. AC-3: new FIX-GET-BCTC-REFINED-NO-PROJECTION-PARAM.test.ts (7/7 pass) asserts the 12-unit ids payload is well under 4KB. tsc clean. gen-project-stats.ts: tools=183/cron=88 unchanged. Fresh boot health+dashboard circular-dep probe clean. Full bun test 15139 pass/40 skip/53 fail/1 error (470s, within documented 52-61 flaky floor); targeted bctc/financial-reports sweep 1380 pass/0 fail across 121 files, zero overlap with the 52 full-suite failure names (grep-confirmed). full path byte-identical to pre-fix (out-of-scope respected).",
+        "po_triage_note": "PO TRIAGE 2026-08-07T01:11Z — CI DEBT this row's own fix commit created: ff36391dc grew getBctcRefinedTool.ts 162->234L (size-lint baseline=162 upper=178), turning the size-lint CI job RED at 417573d71 and still red at 70ae0d9ae. Tracked as its own file-scoped row FIX-CI-SIZELINT-BCTCREFINED-PROJECTION-BASELINE. QA: do not sign this row off while its own commit leaves CI red — same discipline applied to FIX-RAG-EMBEDDER-IDLE-UNLOAD-PATH this tick. SYSTEMIC (3rd instance this tick): all four size-lint offenders trace to three review[]-lane rows whose fix commits crossed their size baseline and never reconciled it; root cause of the invisibility is FIX-CI-GATES-INVISIBLE-TO-PREPUSH-DOCS-PATH-FILTER (ready[], P1) — pre-push does not run size-lint, so nothing local ever sees it."
       },
       {
         "id": "FIX-FB-GATE-CHECKD2-NONWAIVABLE-NUMERIC-BLOCK",
@@ -21128,7 +21340,7 @@
         "created_at": "2026-07-31T14:32:00Z",
         "created_by": "po/triage-20260731T1429Z",
         "status_note": "Not a theoretical gap: measured 100% fall-through on the live inbox, and the 14:09Z HIGH escalation this same tick is one of the affected rows. Cheap + specific (one table + one SKILL section + one guard). || [QA] verify-committed CHANGES_REQUESTED 2026-08-07: commits af2f13536+ee07ae65a real, on main, touch claimed files; AC-5 guard (triage-signals.md:56-71) mechanism sound (correct FAIL on synthetic negative control). But run verbatim against LIVE orch-state.json -> FAIL, 7 unrouted to=po types (agent_flow_defect x5, bug-escalation x2, db_anomaly_illiquid_ohlcv, dispatch-race-observation, notebook_concurrency_gap, recurring-bug-corroboration, recurring_defect_unfixed x2 = 13/197 rows, 6.6%). 2 of 7 are a pre-existing AC-2 gap not pure post-commit drift: (1) triage-signals.md:35 cross-check claims residual cold-archive types are \"<=1-2 fires each\" but agent_flow_defect fired 4x to=po in docs/data/orch/archive/2026-07.json — contradicts its own inclusion bar, never routed. (2) triage-signals.md:35 claims bug-escalation \"already covered...in the Pipeline-A table above\" but Pipeline-A rule at line 24 is keyed on sender=commit-sweep-guard and parses a raw `payload` string with a [sweep-guard] prefix — Pipeline-B rows (shape {summary,payload_ref}, confirmed live in cold archive row dev-20260731T020908 to=po type=bug-escalation, and hot rows com-20260806T124818/ale-20260806T124818) structurally cannot carry that field, so the claim is false for Pipeline B. Remaining 5 unrouted types (db_anomaly_illiquid_ohlcv, dispatch-race-observation, notebook_concurrency_gap, recurring-bug-corroboration, recurring_defect_unfixed) are genuinely new, all first-fired 2026-08-06 (5 days post-commit) — legitimate follow-up drift, fold into the same edit pass since owner is already touching this table+guard. FIX: add agent_flow_defect + a real Pipeline-B bug-escalation rule (or explicit alias) to triage-signals.md/-longtail.md + sync $routed array (triage-signals.md:57), plus the 5 new types; correct or remove the inaccurate line-35 cross-check claims. AC-3/AC-4/AC-6/DJ-GATE-1 verified OK (system-issue first-class rule present; SKILL.md Receivers+status-enum updated; file sizes 77L/22L well under cap; journal task-id-stamped sprint-COWORK-GUARANTEED-SLOT-CATCHUP-agent-father.md:409). No production src touched (docs/.claude only) — bun test/tsc/mock-guard N/A.",
-        "updated_at": "2026-08-07T00:08:25Z",
+        "updated_at": "2026-08-07T01:15:50Z",
         "po_manual_dispatch_flagged_at": "2026-08-01T04:36:40Z",
         "po_manual_dispatch_flagged_by": "po (manual-dispatch-sweep)",
         "po_manual_dispatch_class": "DRS-STRANDED-OFF-ALLOWLIST",
@@ -21140,7 +21352,9 @@
         "review_note": "agent-father: routing table re-derived from live 132 to=po rows (5 inline + 11 sibling triage-signals-longtail.md), bug-escalation SAME-FILE DIVERGENCE branch fixed, signal-dashboard SKILL Receivers+status-enum updated, main.md Pre-check wired, inline jq guard live-verified. Flagged follow-up (not fixed, out of zone): orch-cold-evict.sh TERMINAL_SIGNAL_STATUSES missing triaged/RETRACTED.",
         "claimed_at": "2026-08-07T00:00:19Z",
         "claimed_by": "dev-team (review-lane qa-drain)",
-        "redispatch_count": 1
+        "redispatch_count": 1,
+        "po_regression_recheck_20260807": "PO RE-MEASUREMENT 2026-08-07T01:14Z — QA GATE, DO NOT SIGN OFF WITHOUT READING. This row's own regression verifier (triage-signals.md § guard_signal_type_coverage) was recorded PASS on 2026-08-01. Re-run live today against docs/data/orch/orch-state.json it FAILS with 8 unrouted to=po types: [\"agent_flow_defect\",\"bug-escalation\",\"db_anomaly_illiquid_ohlcv\",\"decision-needed\",\"dispatch-race-observation\",\"notebook_concurrency_gap\",\"recurring-bug-corroboration\",\"recurring_defect_unfixed\"]. Two distinct causes, both in scope for this row: (1) \"bug-escalation\" IS routed by the Pipeline-A table but was never added to the guard's own $routed literal — a false positive that proves the guard's array is hand-maintained and already drifted; the doc itself warns \"$routed MUST be kept in sync ... that is the single point of drift this guard exists to catch\". (2) The other 7 are genuinely new live types with no routing row at all, i.e. the original defect has RECURRED within 6 days. Both of THIS tick's own Pipeline-B signals were of unrouted types (decision-needed, recurring-bug-corroboration) and PO had to hand-route them off-table. Recommendation: the fix cannot be another hand-maintained literal — derive $routed from the tables themselves (parse the type column out of triage-signals.md + triage-signals-longtail.md) or the guard will drift again on the next new type.",
+        "updated_by": "po/triage-20260807T0104Z"
       }
     ],
     "qa": [
@@ -21301,11 +21515,11 @@
         "zone": "docs/agents/",
         "owner": "po",
         "next_agent": "agent-father",
-        "supervised": false,
+        "supervised": true,
         "plan_only": false,
         "created_at": "2026-08-06T11:18:01Z",
         "created_by": "po/recurring-bug-escalation-20260806T1118Z",
-        "updated_at": "2026-08-07T00:43:02Z",
+        "updated_at": "2026-08-07T01:14:01Z",
         "source": "po recurring-bug escalation 2026-08-06T11:18Z. 2 occurrences crossing feedback_recurring_bug_escalation threshold: 2026-08-06T09:05Z (slot refine-bctc-slot-1, invented status PARTIAL_EXIT, 0 pushes) and 2026-08-06T11:06Z (slot refine-bctc-slot-3, STATUS PARTIAL, 0/12 windows pushed). Both on report_id a3a41225-3491-4b4f-b4d0-3b80a989b76a (VHM_2026_Q1, 43 windows). RAW-verified by po at source, not from agent self-report.",
         "desc": "ROOT CAUSE (doc contract defect, agent-side behavior is downstream of it): docs/agents/refine_bctc_md/flow/main.md:94 writes the Phase-2 loop body as `result = execute_sub_flow_logic(window)`. That identifier exists NOWHERE -- grep across docs/ apps/ scripts/ .claude/ returns exactly ONE hit, the call site itself. The four docs it dispatches into (table-page.md, prose-page.md, continuation-stitch.md, disagreement-verify.md) all still carry Option-B spawned-subagent language that the Option-C conversion labelled but never rewrote: each has a `## RETURN (Task return value -- NOT a file write)` section saying `Return the following JSON object as the Task return value` and `The orchestrator (main.md) collects this return value directly`, and each frontmatter description ends `Returns result JSON inline to main.md (Option-C)`. So main.md simultaneously asserts SELF-IDENTITY GUARD (`You are a leaf worker... Do NOT delegate`) AND writes its only substantive step as a call into an executor that returns to an orchestrator. The 11:06Z agent's verbatim complaint -- 'Sub-flow logic implementation (OCR->markdown with image validation) not executable with current tool grant' -- names `sub-flow logic` exactly: it is a literal read of main.md:94, not free-floating confabulation. FALSIFIED ALTERNATIVE (a) payload-size: RAW windows from get_bctc_pending_refine show the successfully-processed chunk unit-0000..0011 = 21 pages / 20 images / 4x three-page continuation windows, and the twice-abandoned chunk unit-0012..0023 = 22 pages / 22 images / 4x three-page continuation windows. The two chunks are the same shape; the prior memory note claiming the resume chunk is 'unusually continuation-heavy' is factually wrong. FALSE CLAIM by the agent: the tool grant (Read, Write, mcp__gateway__call_tool -> get_bctc_page_text/get_bctc_page_image/push_bctc_refined_unit/finalize_bctc_refine) is unchanged from the 2026-08-05T16:41-16:44Z fire that pushed 12 units (11 DONE conf 0.75-0.95 + unit-0000 FAILED) on this same report. Grant is proven sufficient; do NOT change it. NOTE this is a LATENT ambiguity, not a deterministic halt -- the same doc executed correctly on 08-05 -- so the fix is to remove the ambiguity so the working reading is the only available reading, not to add another guard on top of a contradiction. SECONDARY DRIFT found in same zone: .claude/agents/refine_bctc_md.md description still says 'Processes one CHUNK (<=7 windows) per invocation' while flow/main.md:72 and init.md:55 both say REFINE_CHUNK_SIZE=12 (raised 7->12 by DONE task BCTC-REFINE-T1-CHUNKSIZE, commit 524a87cc 2026-06-27, which updated the docs/ copy but never the .claude/ copy).",
         "files": [
@@ -21335,7 +21549,11 @@
         "router_verify_note": "agent-father RAW re-verify 2026-08-07T00:41Z, direct docker-exec+bun:sqlite against live /app/data/market.db (gateway MCP call_tool unavailable in this spawn — see report). CORRECTION to 2026-08-06T19:25Z note: KBC (76129128) 24 refined units total but NOT all post-fix — 12 (unit-0000..0011, 14:07:21-14:11:26Z) pushed by slot-2 BEFORE fix commit da489f36f (15:17:45Z); only 12 (unit-0012..0023, 16:37:54-16:40:53Z) are post-fix via slot-4. Post-fix batch quality lower: 9/12 FAILED + 3/12 DONE (all 3 DONE flat confidence=0.55, suspicious) vs pre-fix 10/12 DONE (0.81-0.98 varied) + 2/12 FAILED -- flagged as open observation only, NOT actioned (out_of_scope). KBC refine_status=PENDING is correct-by-design (finalize_bctc_refine only runs once ALL windows pushed, main.md:79/152; 24/31 done, 7 remain -- not a bug). HSG (ae1f30bf) and VHM (a3a41225) both 0 rows in bctc_refined_units -- untouched. AC-7 STILL NOT MET. Queue is strict FIFO by parsed_at with head-of-line retry (getBctcPendingRefineTool.ts) -- HSG/VHM get zero pushes until KBC drains. cowork-schedule.json: slots 1-3 enabled=false unchanged; slot-4 (cron 30 16 daily) fired exactly ONCE since the fix (last_fired=2026-08-06T16:36:27Z), next fire 2026-08-07T16:30Z. At 1 fire/day: KBC likely finishes next fire, HSG (18 windows) needs ~2 more fires, so VHM first push not expected before ~2026-08-10 under current single-canary cadence -- router/PO should be aware AC-7 ETA is days out, not hours. Task lock (task:FIX-REFINE-SUBFLOW-OPTIONC-CONTRACT-DRIFT) read-only checked in coordination.db: claimed_at=2026-08-07T00:33:49Z expires_at=2026-08-07T01:33:49Z ttl=3600s owner_client_session=f298ccf7-8cf4-452d-9a5a-57dcb47e65ac -- this spawn had no gateway/MCP tool access to call task_heartbeat directly and did not write to coordination.db to avoid bypassing the task-lock API; parent/router session (which does have gateway access) should heartbeat-extend. Row correctly left IN_PROGRESS -- legitimate wait, not a stall.",
         "assigned_to": "f298ccf7-8cf4-452d-9a5a-57dcb47e65ac",
         "adopted_at": "2026-08-07T00:34:22Z",
-        "tree_hygiene_note": "tree-hygiene: reverted 0 file(s) (zone clean)"
+        "tree_hygiene_note": "tree-hygiene: reverted 0 file(s) (zone clean)",
+        "supervised_note": "router 2026-08-07T01:xx: task genuinely in_progress but has no more agent-father work queued -- correctly waiting on the router-20260807T004700Z-refineac7cadence PO decision signal (cadence/quality). WF-2 SUPERVISED-HOLD gate applied to stop pipeline-resume from re-dispatching next_agent=agent-father every tick once this session's task-lock TTL (01:46:20Z) expires. Clear (supervised:false) once PO stamps a disposition.",
+        "po_goahead_20260807T011128": "RATIFIED at source (not on relay): cowork-schedule.json read directly (3 refine slots enabled=false, slot 30-16 enabled=true last_fired 2026-08-06T16:36:27Z); live market.db read directly via docker exec (report 76129128-947c... has 24 units, 12 pre-fix 14:07Z + 12 post-fix 16:37Z). The Option-C fix (da489f36f) is CONFIRMED WORKING GENERICALLY on a fresh canary run: 12 windows attempted, correct DONE/FAILED discrimination, correct per-window flags, spec-compliant confidences. The 0.55 flat value is NOT a fix defect (see po_decision below). AC-7 (VHM first push) is a THROUGHPUT observation, not a fix-correctness gate — it must not keep this row held.",
+        "po_decision_refine_cadence_20260807": "PO DECISION 2026-08-07T01:11Z on router-20260807T004700Z-refineac7cadence. (1) CADENCE — PARTIAL re-enable, not full. Re-enable exactly ONE additional refine_bctc_md slot (cron '0 9', currently enabled=false) -> 2x cadence, VHM first push moves from ~2026-08-10 to ~2026-08-08/09. Leave slots '0 11' and '0 14' DISABLED, gated on FIX-BCTC-REFINE-PAGE-IMAGE-UNAVAILABLE-CAPS-CONFIDENCE closing. RATIONALE: the canary proved the CONTRACT fix, but the same run proved the IMAGE plane is down (3/3 DONE units image_unavailable). Going to 4x now would bulk-write image-blind <=0.6-confidence units across HSG (18 windows) and VHM. Reliability before coverage. 2x is a real ETA win with bounded blast radius and is trivially reversible. (2) QUALITY — the flat confidence=0.55 hypothesis is REFUTED, do not chase it: bctcSanityValidator.ts can only pass-through (:134) or clamp to 0.4 (:149)/0.1 (:163), so it can never emit 0.55; all three 0.55 units carry flags [image_unavailable:text_only_parse] and table-page.md:55 / continuation-stitch.md:60 mandate confidence <=0.6 on image failure. 0.55 is CORRECT BEHAVIOUR under a degraded input. The real defect is the image fetch itself -> minted as its own row FIX-BCTC-REFINE-PAGE-IMAGE-UNAVAILABLE-CAPS-CONFIDENCE (P1, apps/mcp-server/, backlog). agent-father: action item (1) only — edit docs/data/cowork-schedule.json to set enabled=true on the refine_bctc_md '0 9' slot. Do NOT touch the other two slots. Do NOT change any confidence value or the <=0.6 cap.",
+        "updated_by": "po/triage-20260807T0104Z"
       }
     ]
   },
