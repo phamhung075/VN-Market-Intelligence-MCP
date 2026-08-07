@@ -778,3 +778,15 @@
 **Mitigation:** No immediate action beyond signal routing.
 
 ---
+
+## Anomaly: A-30 · rag-service memory 99.44%–99.64% sustained (loss of reclamation)
+**Severity:** WARN | **Date:** 2026-08-07 | **Status:** OPEN
+**Location:** vn-market-intelligence-mcp-rag-service-1
+**Details:** Memory sustained 99.41%–99.64% across 2×65s windows with ZERO reclamation dips. A-30 discriminator verdict: ESCALATE (loss of reclamation). OOMKilled=false, but container teetering at 1 GiB limit. Previous reclamation proved possible (VmHWM=1121MiB) but currently lost.
+**Impact:** Service memory pressure increasing; risk of OOMKill if workload increases. Affects rag-service embeddings capability.
+**Root cause:** Memory leak or sustained high allocation in rag-service embeddings model. Needs investigation into model loading/usage patterns.
+**Zone owner:** dev-rag-service
+**Last reported:** 2026-08-07T04:50:17Z (signal sys-20260807T044935-3bf0, system-auditor -> po, dedup_key=microservice_degraded:rag-service:A-30, WARN Telegram sent)
+**Mitigation:** No immediate action beyond signal routing.
+
+---
