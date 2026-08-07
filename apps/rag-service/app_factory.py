@@ -1,3 +1,12 @@
+# size-justification: 177L — composition-root app-factory: build_lifespan()
+# (FastAPI lifespan wiring + FIX-RAG-EMBEDDER-IDLE-UNLOAD-PATH background loop),
+# add_cors_middleware(), and build_real_adapters() (service-tier fake injection
+# vs production SentenceTransformers/LanceDB adapter construction) are all the
+# SAME extraction-from-main.py scope (P2-D G3 composition-root trim) — one file
+# holding main.py's app-construction helpers, not unrelated concerns. Splitting
+# further would fragment cohesive composition-root wiring for zero token
+# benefit, mirroring the sibling single-purpose files in this directory
+# (main.py stays the pure wiring-only root; this file is its helper module).
 """
 app_factory.py — FastAPI app construction helpers.
 
