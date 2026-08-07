@@ -12899,39 +12899,6 @@
         "updated_at": "2026-08-07T00:08:51Z"
       },
       {
-        "id": "FIX-CI-SIZELINT-BCTCREFINED-PROJECTION-BASELINE",
-        "type": "FIX",
-        "title": "CI-RED-417573d7-FIX — CI RED: size-lint — apps/mcp-server/src/interface/mcp/tools/financial-reports/getBctcRefinedTool.ts",
-        "desc": "size-lint RED: getBctcRefinedTool.ts baseline=162L actual=234L upper=178L (baseline-tolerance-exceeded). TRIGGER IDENTIFIED (not assumed): commit ff36391dc `fix(mcp-server/bctc): get_bctc_refined fields:'ids' projection` — the fix for FIX-GET-BCTC-REFINED-NO-PROJECTION-PARAM (currently review[], next_agent=qa) added the projection branch and grew the file 162->234L without adding a size-justification header or reconciling docs/data/size-lint-baseline.json. Still RED at HEAD 70ae0d9ae (run 31136642246), same as at 417573d71 (run 31136261063).",
-        "status": "BACKLOG",
-        "priority": "high",
-        "size": "XS",
-        "owner": "po",
-        "zone": "apps/mcp-server/",
-        "next_agent": "developer",
-        "supervised": false,
-        "plan_only": false,
-        "check_id": "CI-RED-417573d7",
-        "dedup_key": "ci_job:size-lint|file:apps/mcp-server/src/interface/mcp/tools/financial-reports/getBctcRefinedTool.ts",
-        "ci_fingerprint": "76565852f4c3009c704d4a2e8fdc7d588525e0a837b92ff3449d0ff183f51b2d",
-        "origin_signal_id": "CI-RED-417573d7",
-        "created_at": "2026-08-07T01:11:28Z",
-        "created_by": "po/triage-20260807T0104Z",
-        "baseline_pass": true,
-        "rebuild_required": false,
-        "files": [
-          "apps/mcp-server/src/interface/mcp/tools/financial-reports/getBctcRefinedTool.ts",
-          "docs/data/size-lint-baseline.json"
-        ],
-        "related": [
-          "FIX-GET-BCTC-REFINED-NO-PROJECTION-PARAM",
-          "FIX-CI-GATES-INVISIBLE-TO-PREPUSH-DOCS-PATH-FILTER"
-        ],
-        "verification_gate": "ci_green_on_subsequent_push",
-        "status_note": "AC1: add a `size-justification:` header to getBctcRefinedTool.ts stating why 234L is warranted, OR extract the projection branch so the file drops under its 178L upper bound. AC2: do NOT run `scripts/audits/size-lint-justification.sh --update` to re-grandfather — the baseline is regenerated WHOLESALE on --update (see its own _note), so a blanket --update silently grandfathers every unrelated current offender too; same discipline as FIX-CI-TASKCLAIM-CHEF-MD-OWNER-SESSION-PAYDOWN AC1. AC3: `bash scripts/audits/size-lint-justification.sh --check` RC=0 locally. AC4: `gh run view <databaseId with headSha AFTER 70ae0d9ae4a4c3df3be7d723d2b153633ebea0fd> --json jobs -q '.jobs[]|select(.name==\"size-lint\")|.conclusion'` == success. Failing job: size-lint. Failing file: apps/mcp-server/src/interface/mcp/tools/financial-reports/getBctcRefinedTool.ts. Head SHAs observed: 417573d71 (run 31136261063), 70ae0d9ae (run 31136642246).",
-        "updated_at": "2026-08-07T01:14:01Z"
-      },
-      {
         "id": "FIX-CI-SIZELINT-RAG-APP-FACTORY-BASELINE",
         "type": "FIX",
         "title": "CI-RED-417573d7-FIX-2 — CI RED: size-lint — apps/rag-service/app_factory.py",
@@ -21489,6 +21456,43 @@
         "developer_completed_at": "2026-08-07T01:59:27Z",
         "developer_completed_by": "developer",
         "review_note": "IMPLEMENTED (developer, commit 0aed78f61). AC-1 (root cause, not one agent): new scripts/audits/detect-analysis-only-exit.sh is agent-agnostic (--agent-id param, no system-auditor hardcode) + wired into docs/protocols/fail-loud-protocol.md (fleet-wide always_load for many agents) and .claude/skills/notebook-write/SKILL.md (used by ~40 agent flows, both OVERWRITE and APPEND classes) — patches the layer, not just system-auditor's own flow. AC-2: adopted docs/agents/po/flow/main.md AC-3's rule VERBATIM (\"any step that writes an artifact AND asserts its own persistence must re-read the persistence layer before claiming it, never trust the write call's own exit code\") in fail-loud-protocol.md § Analysis-Only Exit Guard, explicitly named as that rule's second adopter. AC-3: detector keys ONLY on the persistence plane (git log on the notebook file, git log --grep on the agent's commit-convention prefix, .signal_queue.rows[] via jq, dedup-ledger flat-map, caller-named extra artifacts) — takes no \"did you write it\" argument from the caller at all; --cycle-tag mode (ported from audit-output-contract.sh's V1 exact-tag scoping) avoids same-agent cross-cycle aliasing on a loose ts-window. AC-4: the orphaned A-21 finding (mcp-server 4 restarts 2026-08-06T12:17-12:25Z, docker-verified) is re-emitted via the REAL E-3 actuator (scripts/emit-audit-signal.sh --e3-only, signal sys-20260807T015218-7a6a, historical-record framing, no Telegram by design) — RAW-verified present in .signal_queue.rows[] post-write. Also found+corrected a LIVE SECOND instance of this exact defect discovered while implementing AC-4: docs/data/DASHBOARD.md's prior A-21 row (commit 646229cef0, git-blamed to this same repo identity) cited signal id sys-20260806T154111-1649, which RAW-verified does not exist in .signal_queue.rows[] and has no dedup-ledger entry — a fabricated citation, now corrected in the same commit. AC-5: scripts/audits/detect-analysis-only-exit.test.sh, 7/7 against disposable scratch git repos (never the live repo) — T1 POSITIVE control (wrote nothing -> DETECTED exit 1), T2 NEGATIVE control (one real signal_queue row -> PASS exit 0, silent), T3 notebook-only-write PASS, T4 ledger-only-write PASS, T5 ledger explicitly skipped still DETECTED (skip never manufactures a false PASS), T6 --cycle-tag excludes a same-window wrong-tag row, T7 missing required arg aborts rc=2. AC-6 (true occurrence count, scanned beyond the row's own \"5 defective/7 spawns\" framing): reconciling this row's own history (docs/agent-memory/feedback_leaf_agent_analysis_only_exit_recurring_pattern_20260806.md, 7 spawns: refine_bctc_md x1 + system-auditor Tier-1 x4 defective + x2 clean-after-execute-not-narrate-reminder, 2026-08-06/07) against the sibling design note on FIX-COWORK-DELIVERY-PROOF-GATE-ONLY-CATCHES-ROUTERLATCH-NARRATION (unified-agent chef-morning 2026-06-18; market-watcher-offhours 2026-06-28/07-12/07-29; both already-named \"2026-08-06 refine_bctc_md\"/\"2026-08-06 system-auditor\" overlapping the 7-spawn cluster) PLUS po_triage_20260806T2205's TNB c122 occurrence (2026-08-04T20:29Z, first non-auditor agent) gives a TRUE FLOOR of >= 10 defective occurrences across >= 5 distinct agent types spanning 2026-06-18 to 2026-08-07 -- confirms this row's own \"likely undercounts\" framing; the 5-defective/7-spawn figure was only ever the most recently-instrumented sub-sample. SCOPE BOUNDARY (deliberate, not an omission): did NOT rewrite the cron pre-gate/spawner-side wiring (scripts/agents-flow/auditor-tier1-probe.sh, .claude/skills/cron-detect-loop/SKILL.md) for a fully-exogenous per-spawn auto-check -- that is explicitly the separate, larger, architect-owned plan_only row FIX-COWORK-DELIVERY-PROOF-GATE-ONLY-CATCHES-ROUTERLATCH-NARRATION; this row ships the reusable mechanism + verbatim rule adoption + fleet-wide cross-references + regression fixture + AC-4 repair + AC-6 count, matching its own named files list. Environment note: this worktree lacked apps/mcp-server/node_modules (fresh checkout) and the gitignored docs/data/db-integrity-history.json runtime cache (worktree-isolated, pre-existing in the parent checkout) -- ran pnpm install and copied the gitignored cache file (no tracked-content change) to unblock orch-apply.sh's validator; both are environment-parity actions, not code changes. qa: RAW-verify the 7/7 test run, the signal_queue row's presence, and that fail-loud-protocol.md/notebook-write/SKILL.md stay within their governed line/byte caps (both land exactly at cap: 200L/12000B for notebook-write, confirmed via wc)."
+      },
+      {
+        "id": "FIX-CI-SIZELINT-BCTCREFINED-PROJECTION-BASELINE",
+        "type": "FIX",
+        "title": "CI-RED-417573d7-FIX — CI RED: size-lint — apps/mcp-server/src/interface/mcp/tools/financial-reports/getBctcRefinedTool.ts",
+        "desc": "size-lint RED: getBctcRefinedTool.ts baseline=162L actual=234L upper=178L (baseline-tolerance-exceeded). TRIGGER IDENTIFIED (not assumed): commit ff36391dc `fix(mcp-server/bctc): get_bctc_refined fields:'ids' projection` — the fix for FIX-GET-BCTC-REFINED-NO-PROJECTION-PARAM (currently review[], next_agent=qa) added the projection branch and grew the file 162->234L without adding a size-justification header or reconciling docs/data/size-lint-baseline.json. Still RED at HEAD 70ae0d9ae (run 31136642246), same as at 417573d71 (run 31136261063).",
+        "status": "REVIEW",
+        "priority": "high",
+        "size": "XS",
+        "owner": "dev-mcp-server",
+        "zone": "apps/mcp-server/",
+        "next_agent": "qa",
+        "supervised": false,
+        "plan_only": false,
+        "check_id": "CI-RED-417573d7",
+        "dedup_key": "ci_job:size-lint|file:apps/mcp-server/src/interface/mcp/tools/financial-reports/getBctcRefinedTool.ts",
+        "ci_fingerprint": "76565852f4c3009c704d4a2e8fdc7d588525e0a837b92ff3449d0ff183f51b2d",
+        "origin_signal_id": "CI-RED-417573d7",
+        "created_at": "2026-08-07T01:11:28Z",
+        "created_by": "po/triage-20260807T0104Z",
+        "baseline_pass": true,
+        "rebuild_required": false,
+        "files": [
+          "apps/mcp-server/src/interface/mcp/tools/financial-reports/getBctcRefinedTool.ts",
+          "docs/data/size-lint-baseline.json"
+        ],
+        "related": [
+          "FIX-GET-BCTC-REFINED-NO-PROJECTION-PARAM",
+          "FIX-CI-GATES-INVISIBLE-TO-PREPUSH-DOCS-PATH-FILTER"
+        ],
+        "verification_gate": "ci_green_on_subsequent_push",
+        "status_note": "AC1: add a `size-justification:` header to getBctcRefinedTool.ts stating why 234L is warranted, OR extract the projection branch so the file drops under its 178L upper bound. AC2: do NOT run `scripts/audits/size-lint-justification.sh --update` to re-grandfather — the baseline is regenerated WHOLESALE on --update (see its own _note), so a blanket --update silently grandfathers every unrelated current offender too; same discipline as FIX-CI-TASKCLAIM-CHEF-MD-OWNER-SESSION-PAYDOWN AC1. AC3: `bash scripts/audits/size-lint-justification.sh --check` RC=0 locally. AC4: `gh run view <databaseId with headSha AFTER 70ae0d9ae4a4c3df3be7d723d2b153633ebea0fd> --json jobs -q '.jobs[]|select(.name==\"size-lint\")|.conclusion'` == success. Failing job: size-lint. Failing file: apps/mcp-server/src/interface/mcp/tools/financial-reports/getBctcRefinedTool.ts. Head SHAs observed: 417573d71 (run 31136261063), 70ae0d9ae (run 31136642246).",
+        "updated_at": "2026-08-07T02:23:34Z",
+        "commit_sha": "36fe87c31",
+        "updated_by": "dev-mcp-server",
+        "dev_implementation_note": "AC1: added `size-justification: 242L` header (within mandatory first-10-lines window) to getBctcRefinedTool.ts explaining the FIX-GET-BCTC-REFINED-NO-PROJECTION-PARAM growth (dedicated ids-projection row/output types + dual-projection registration description), sized in line with this dir's sibling single-tool files (getBctcOcfTool.ts 220L, pushBctcRefinedUnitTool.ts 227L, agmPlanTools.ts 234L) rather than fragmenting one MCP tool across files. AC2: docs/data/size-lint-baseline.json untouched — no --update run; the header alone clears this file from --check regardless of its now-stale baseline entry (162L), same precedent already live in this repo (composition-root.ts, orchStateSchema.ts both carry a header + a stale/mismatched baseline entry and still pass). AC3 (scoped): `bash scripts/audits/size-lint-justification.sh --check` no longer lists this file. Full-repo RC is still 1 — 3 OTHER pre-existing offenders remain, all already tracked by separate owners, not by this row: apps/rag-service/app_factory.py + infrastructure/embedder.py (FIX-CI-SIZELINT-RAG-APP-FACTORY-BASELINE / FIX-CI-SIZELINT-RAG-EMBEDDER-NEW-OFFENDER, both backlog[]), and apps/mcp-server/src/infrastructure/db/schema.ts (tracked inside FIX-MCP-MEMORY-CODE-LEAK's own dedup_key, review[], next_agent=qa, router_sizelint_note already flags it for qa adjudication — not re-flagged here to avoid a duplicate). AC4: CI size-lint job will only go fully green once those 3 sibling rows land too (router-sequenced; FIX-CI-SIZELINT-RAG-APP-FACTORY-BASELINE was deliberately held back pending this row's merge) — qa should verify this row's OWN file is clear (`--check` output no longer names getBctcRefinedTool.ts) rather than wait on the full-repo RC. tsc clean. Targeted test src/__tests__/FIX-GET-BCTC-REFINED-NO-PROJECTION-PARAM.test.ts: 7/7 pass, 50 expect() calls — comment-only diff, zero behavior change. Commit 36fe87c31 (pathspec-scoped, single file).",
+        "decision_journal_ref": "docs/agent-memory/decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-dev-mcp-server-4.md#dev-mcp-server-S77"
       }
     ],
     "qa": [
