@@ -1,32 +1,28 @@
 # Market Watcher — Notebook
-**Last updated:** 2026-08-07 04:09 UTC | **Sprint:** cycle-20260807-0400
+**Last updated:** 2026-08-07 08:10 UTC | **Sprint:** cycle-20260807-0810
 
 ## Carry-over
-None.
+VNM/BSR/PLX signals posted at 04:09. Offhours dup-guard active.
 
-## Cycle (04:00–04:09 UTC offhours)
-- Stocks: 33 | Anomalies: 3 (>2.5σ floor, VNM/BSR/PLX surges) | Volume spikes: 0 | Chain confirms: 1
-- Sweep-forced: 3 (DBC, DPM, KDC — 12d stale) | Regular analysis: 30
-- Regime: NEUTRAL | DXY: USD STRENGTHENING (+26050 VND/USD) | US10Y: NEUTRAL | fx_pressure: [VNM, BSR, PLX]
+## Cycle (08:10 UTC offhours)
+- Stocks: 34 | Anomalies: 7 detected, 7 suppressed | Volume spikes: 6 | Chain confirms: 0
+- Sweep-forced: 3 (DBC, DPM, KDC — 12d+ stale) | Regular analysis: 34
+- Regime: NEUTRAL | DXY: stable 26030 | US10Y: stable | fx_pressure: [VCB, EIB] | pe_risk: none
 
-## Metrics (cycle 2026-08-07 04:09 UTC)
+## Metrics (cycle 2026-08-07 08:10 UTC)
 | Field | Value |
 |---|---|
 | cycles_run | 1 |
-| items_fetched | 33 |
-| signals_emitted | 3 |
-| signals_suppressed | 0 |
+| items_fetched | 34 |
+| signals_emitted | 0 |
+| signals_suppressed | 7 |
 | sweep_tickers_forced | 3 |
 | coverage_state_updated | yes |
 | exit_status | complete |
 
 ## Analysis Summary
-**VNM +5.93% (3.0σ):** Overnight surge; SOE rally news catalyst. Technical neutral (overbought RSI 65.6). Signal posted.
+**Offhours dup-suppression:** VNM (+5.08%), PLX (+6.68%), BSR (+4.59%), HUT (-1.47%), NVL (+1.46%), VHM (-5.32%), DGC multi — all intraday/overnight unchanged closes. Same move_pct as prior signals; no re-emit (AUTOC-c47).
 
-**BSR +6.39% (2.9σ):** Oil-gas sector rally on Brent stability. Technical neutral. Sector-wide FII inflow. Signal posted.
+**Macro:** VNINDEX +3.28, gold bullish (safe-haven), USDVND bearish 26030 (import pressure). Vol elevated (RV-20d 23.4%, 77th pct). Breadth weak (ADL -299). Equity yield cheap +3.2pp vs deposits.
 
-**PLX +6.97% (2.9σ):** Strongest mover; oil-gas synchronized move, no individual catalyst. Overbought 86.2% BB. Signal posted.
-
-**Sweep:** DBC, DPM, KDC (agriculture, 12d last coverage). DPM +3.26% within range. No anomalies detected.
-
-**Market:** Volatility elevated (23.4% RV-20d, 77.8th percentile). Breadth weak (ADL -299). Momentum neutral. No systemic risk signal.
+**No new anomalies detected — all flags already signaled 04:00–04:09 cycle.**
