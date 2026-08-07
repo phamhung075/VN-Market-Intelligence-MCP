@@ -93,12 +93,12 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "FIX-COWORK-SIGNAL-FILENAME-CYCLEID-KEYING",
-    "next_agent": "pm",
-    "next_action": "architect brief SIGNED OFF by po 2026-08-07T05:45Z (po_goahead_20260807T054500). pm to decompose docs/architecture-briefs/2026-08-07-cowork-signal-filename-cycleid-keying.md into implementation tasks, carrying ALL THREE binding amendments in the row's po_architect_signoff_20260807T0545 field: (1) FR-4/tran-ngoc-bau DESCOPED — folded onto GUARD-NOTEBOOK-CONCURRENT-EDIT-COLLISION-DATA-LOSS, touch no tnb files; (2) EC-2 Phase 2 split out to FIX-CHEF-INTRADAY-MARKER-KEY-UTC-HOUR-BASIS-MIGRATION (minted BLOCKED this tick) — Phase 1 ships VN_HOUR verbatim; (3) FR-1 fallback branch 2 must snap to the NEAREST CRON_HOUR occurrence, not today's UTC date + cron hour, plus 2 new unit cases. supervised/plan_only PRESERVED — do not clear, no code ships without returning to po.",
-    "updated_at": "2026-08-07T05:42:39Z",
-    "updated_by": "po (architect-brief adjudication)"
+    "status": "idle",
+    "active_task_id": null,
+    "next_agent": null,
+    "next_action": "FIX-COWORK-SIGNAL-FILENAME-CYCLEID-KEYING is BLOCKED/next_agent=po (PM decomposition awaiting PO re-review, commit 2f2e90ab7) -- not dev-team-actionable; WF-1 short-circuit reset .head to idle so a genuinely in_progress task can claim the pointer next.",
+    "updated_at": "2026-08-07T06:26:26Z",
+    "updated_by": "dev-team (WF-1 BLOCKED-task short-circuit, .head was stale at next_agent=pm/05:42:39Z)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -3383,6 +3383,19 @@
         "payload_ref": null,
         "provenance": "detector",
         "audit_cycle_tag": "cron:auditor-t1:2026-08-07T06:00Z"
+      },
+      {
+        "id": "sys-20260807T062620-237e",
+        "ts": "2026-08-07T06:26:20Z",
+        "from": "system-auditor",
+        "to": "dev-team",
+        "type": "db_integrity_breach",
+        "summary": "low_confidence_financial_reports: 45 reports with extraction_confidence < 0.2 (exceeds C-04 threshold of ≤5); minimum co",
+        "severity": "HIGH",
+        "status": "NEW",
+        "payload_ref": "docs/data/db-integrity-history.json",
+        "provenance": "detector",
+        "audit_cycle_tag": null
       }
     ],
     "last_triaged_at": "2026-07-29T06:25:00Z",
