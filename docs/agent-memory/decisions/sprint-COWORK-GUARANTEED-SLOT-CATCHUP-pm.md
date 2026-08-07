@@ -121,5 +121,19 @@ PIPELINE: continue (P0, decomposition-only, no code changes in this cycle)
 
 **why-change:** No change to PM's decision — only the journal's discoverability was corrected.
 
+### STEP pm-S7 · GUARD-NOTEBOOK-CONCURRENT-EDIT-COLLISION-DATA-LOSS Decomposition · pm · 2026-08-07T03:30:00Z
+**task-id:** GUARD-NOTEBOOK-CONCURRENT-EDIT-COLLISION-DATA-LOSS
+**what-done:** Decomposed architect's design brief (docs/architecture-briefs/2026-08-06-guard-notebook-concurrent-write-mutex.md) into 3 zone-owned rows per §7 mixed-zone flag: FIX-NOTEBOOK-WRITE-TASK-KIND-ENUM-EXTENSION (dev-mcp-server, P1, blocking), FIX-NOTEBOOK-AUTO-PRUNE-STALENESS-GUARD (developer, P2, independent), FIX-NOTEBOOK-WRITE-AC7-SKILL (agent-father, P1, depends_on). Parent row status IN_PROGRESS→idle (epic-wrapper convention per post-cycle.md § Step 4.4). Children rows added to backlog[].
+
+**what-considered:**
+- Architect adjudicated three candidate directions: (a) task_claim mutex — SELECTED; (b) append-only format — ruled insufficient; (c) fan-out cap alone — insufficient (proven by N=2 incident pre-QA_CAP era).
+- Zone ownership: MCP server changes (enum+test) belong to dev-mcp-server; bash hook changes to developer; skill + dev-team docs to agent-father. Same split already resolved for FIX-DEVTEAM-QADRAIN-THROUGHPUT-CAP per brief §7.
+- Wrapper convention: post-cycle.md § Step 4.4 shows epic-wrapper rows are NOT closed immediately by PM. Instead, set head.status=idle and let Epic-Wrapper Autoclose Sweep (Step 4.4) close it once all children reach terminal status. Mirrors existing dev-team closure discipline.
+- Blocking dependency: agent-father row (AC-7 SKILL.md) depends on dev-mcp-server row (task_kind enum extension). AC-12 test harness in dev-mcp-server row directly satisfies wrapper's verification_gate (two concurrent writers preserve BOTH sections).
+
+**why-decision:** Architect brief provided full design with clear zone splits and sequencing. PM decomposition respects those splits exactly, with (1) blocking prereq flagged as depends_on, (2) independent row has no constraints, (3) wrapper left idle for autoclose hook to graduate once children are terminal. TTL strategy (120s not 3600s) and claim-window discipline (bracket mechanical write only, LLM authoring outside held window) both follow architect's risk-mitigation guidance (feedback_preclaim_ttl_600s_expires_under_long_agent_runs + VirtioFS H4 hazard avoidance).
+
+**why-change:** No change from architect's brief — only PM's routine decomposition and lane routing per policy.
+
 ---
 
