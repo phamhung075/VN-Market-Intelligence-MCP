@@ -4,33 +4,62 @@
   "quarter": "Q1-2026",
   "mode": "routine",
   "beat_miss": null,
-  "product": "Retail and corporate banking, trade finance, bancassurance cross-sell — state-controlled tier-1 bank",
-  "customer": "Corporate/SOE lending clients, urban retail depositors/borrowers, trade-finance importers/exporters",
-  "ops": "Operating margin 80.9% (bank, NIM-driven). OCF/NI ratio 1.368x (4/4 quarters returned), divergence 0.368 < 0.40 threshold — clean, no ESC-3 fire.",
-  "mgmt": "ROE 16.7% vs sector median 17.6% — slightly below peer banks (BID 19%, CTG 21%, MBB 21%). Q1-2026 filed on time (ĐÃ NỘP 2026-07-19).",
+  "product": "State-owned commercial bank — corporate & retail lending, trade finance, bancassurance cross-sell",
+  "customer": "Corporate borrowers, retail/mass-affluent depositors, SOE-linked relationships",
+  "ops": "Net interest income 17,421 ty; operating margin 80.9% (bank cost structure); OCF/NI ratio 1.37x — healthy operating cash generation relative to net profit",
+  "mgmt": "Q1-2026 report filed on time (2026-07-19); ROE 16.7% (sector-comparison annualized) sits slightly below sector median 17.6%",
+  "data_quality": {
+    "stale": true,
+    "vps_last_push": "2026-08-04T08:34:40.000Z",
+    "stale_age_hours": 81.6,
+    "sla_hours": 48,
+    "note": "Q2-2026 PDF on disk since 2026-08-01 (VCB_2026_Q2.pdf) but not yet extracted; showing last-known-good Q1-2026. Data unchanged vs prior cycle, confirmed by live re-fetch."
+  },
   "ey_spread": {
-    "value_pp": 2.09,
     "verdict": "FAIR",
+    "spread_pp": 2.09,
     "pe": 14.1,
+    "sector_median_pe": 9,
+    "roe_annualized_pct": 16.7,
+    "sector_median_roe_pct": 17.6,
     "max_deposit_rate_pct": 5
   },
   "esc_gate": {
-    "esc1": "unevaluable (no Bash tool)",
-    "esc2": "FALSE (balance-sheet imbalance 0.37%)",
-    "esc3": "FALSE (divergence 0.368 < 0.40, 4/4 quarters returned)",
-    "esc4": "N/A (bank — AC-1 codes 30/50 do not map to bank P&L structure)",
-    "esc5": "FALSE (report_id null, existing_refine_status=PARTIAL)"
+    "esc1_accounting_manipulation": "UNEVALUABLE (no Bash)",
+    "esc2_balance_sheet": {
+      "result": false,
+      "imbalance_pct": 0.37
+    },
+    "esc3_ocf_vs_np": {
+      "result": false,
+      "quarters_returned": 4,
+      "ocf_ni_ratio": 1.368,
+      "divergence_ratio": 0.368,
+      "threshold": 0.4
+    },
+    "esc4_nonop_share": {
+      "result": "N/A",
+      "reason": "bank income-statement structure does not map to AC-1 codes 30/50"
+    },
+    "esc5_refine_confidence": {
+      "result": false,
+      "report_id": null,
+      "existing_refine_status": "PARTIAL"
+    }
   },
   "kd_reading": {
-    "hexagram": "Thai (11)",
-    "verdict": "THUAN LOI",
-    "confidence_pct": 100,
-    "alignment": "aligned with FAIR, no conflict"
+    "hexagram": "Ton (41)",
+    "trend": "TRUNG TINH",
+    "recommendation": "GIU",
+    "confidence_pct": 0,
+    "note": "0% confidence — effectively no usable KD signal this cycle, aligned direction only by default not by strength"
   },
-  "data_quality_note": "get_bctc_full is last-known-good; VPS push 2026-08-04T08:34Z, stale ~63.7h (SLA 48h breached).",
+  "insider": "no significant insider activity",
+  "legal_risk": "none",
+  "as_of": "2026-08-07T18:00:00Z",
   "_processed": {
-    "fingerprint": "6304e451c5c7fc27cffb08be987eed5e4d190d850a4ba0258357ff9c7e66f47a",
-    "processedAt": "2026-08-07T00:31:40Z",
+    "fingerprint": "741972ed12ae45008544c02986890406124b62b26d6bb9d17ee919e07811fe84",
+    "processedAt": "2026-08-07T18:21:38Z",
     "processedBy": "dev-team",
     "result": "routed-to-po"
   }

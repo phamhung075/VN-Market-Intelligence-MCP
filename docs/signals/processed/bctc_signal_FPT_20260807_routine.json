@@ -4,33 +4,76 @@
   "quarter": "Q1-2026",
   "mode": "routine",
   "beat_miss": null,
-  "product": "IT services and software exports, telecom (FPT Telecom broadband/pay-TV), education (FPT Edu)",
-  "customer": "Enterprise IT buyers (VN + offshore, esp. Japan/US/APAC), retail telecom/broadband subscribers, students",
-  "ops": "Operating margin 22.0% Q1-2026 (gross 34.0%). OCF -2,847.8 tỷ vs net profit +2,476.8 tỷ — accrual gap flagged DATA-COVERAGE-LIMITED (only 3/4 quarters returned by get_cash_flow, cannot confirm as structural).",
-  "mgmt": "ROE 28.3% (sector-annualized) vs sector median 10.6% — well above peers. Q2-2026 filing overdue (deadline 30/07 passed; PDF on file since 2026-08-01, refine pending).",
+  "product": "IT services & software exports (largest driver), telecom (FPT Telecom), digital content, and education (FPT Edu)",
+  "customer": "Enterprise IT buyers in Japan/US/EU (offshore software exports), VN telecom/broadband subscribers, FPT Edu students",
+  "ops": "Gross margin 34.0%, operating margin 22.0%; net revenue -22.3% YoY headline is a consolidation-method artifact (FTEL moved full-consolidation -> equity-method from 2026-01-01); like-for-like restated comparison shows revenue +8.7% and NPAT +13.8% YoY, driven by Europe (+44.4%) and Japan growth plus associate-company income +36%",
+  "mgmt": "FTEL deconsolidation executed with transparent restated comparatives in the filing; consistent double-digit like-for-like profit growth this quarter",
+  "data_quality": {
+    "stale": true,
+    "vps_last_push": "2026-08-04T08:34:40.000Z",
+    "stale_age_hours": 81.6,
+    "sla_hours": 48,
+    "note": "Q2-2026 PDF on disk since 2026-08-01 (FPT_2026_Q2.pdf) but not yet extracted into DB; showing last-known-good Q1-2026. Data unchanged vs prior cycle (15:00Z) — confirmed by live re-fetch, not carried forward blind."
+  },
   "ey_spread": {
-    "value_pp": 2.25,
     "verdict": "FAIR",
+    "spread_pp": 2.25,
     "pe": 13.8,
+    "sector_median_pe": 17.3,
+    "roe_annualized_pct": 28.3,
     "max_deposit_rate_pct": 5
   },
   "esc_gate": {
-    "esc1": "unevaluable (no Bash tool)",
-    "esc2": "FALSE (balance-sheet imbalance 0.0%)",
-    "esc3": "DATA-COVERAGE-LIMITED (3/4 quarters returned; guard esc-datacov:FPT:Q1-2026:ESC-3 HELD)",
-    "esc4": "FALSE (non_operating_share 2.0%, AC-1 pre-tax formula)",
-    "esc5": "PENDING — escalation guard esc-deepdive:FPT:Q1-2026:ESC-5 HELD, expires ~2026-08-07T15:13Z"
+    "esc1_accounting_manipulation": "UNEVALUABLE (no Bash)",
+    "esc2_balance_sheet": {
+      "result": false,
+      "imbalance_pct": 3e-7
+    },
+    "esc3_ocf_vs_np": {
+      "result": "DATA-COVERAGE-LIMITED",
+      "quarters_returned": 3,
+      "quarters_required": 4,
+      "coverage_guard_held": true
+    },
+    "esc4_nonop_share": {
+      "result": false,
+      "non_operating_share_pct": 2,
+      "pretax_profit_bn": 2803.8,
+      "operating_profit_bn": 2747.8
+    },
+    "esc5_refine_confidence": {
+      "result": true,
+      "report_id": "e8ea3df5-3f32-413d-a3eb-c71634c0438d",
+      "min_confidence": 0.45,
+      "low_confidence_unit_ids": [
+        "unit-0008",
+        "unit-0009",
+        "unit-0010",
+        "unit-0011",
+        "unit-0012",
+        "unit-0013",
+        "unit-0014"
+      ],
+      "total_units": 15,
+      "escalation_status": "PENDING",
+      "guard_key": "esc-deepdive:FPT:Q1-2026:ESC-5",
+      "guard_expires": "2026-08-08T15:20:00Z",
+      "esc_dispatch_signal": "docs/signals/bctc-analyst-20260807T152000Z.json",
+      "note": "24h guard still fresh (dispatched c147 @15:20Z) — no re-dispatch this cycle"
+    }
   },
   "kd_reading": {
-    "hexagram": "Bi (22)",
-    "verdict": "TRUNG TINH",
-    "confidence_pct": 38,
-    "alignment": "neutral, no conflict with FAIR"
+    "hexagram": "Tap Kham (29)",
+    "trend": "BAT LOI",
+    "recommendation": "BAN",
+    "confidence_pct": 100
   },
-  "data_quality_note": "get_bctc_full is last-known-good; VPS push 2026-08-04T08:34Z, stale ~63.7h (SLA 48h breached).",
+  "insider": "no significant insider activity",
+  "legal_risk": "none",
+  "as_of": "2026-08-07T18:00:00Z",
   "_processed": {
-    "fingerprint": "f5568ff03daf771fd54d6d11698fa41f08dd8843d4629e58307338eeed099b0b",
-    "processedAt": "2026-08-07T00:31:40Z",
+    "fingerprint": "1e43656a7f907bed85fd1ff2782cd0ec43733d51ddb27bed2ea6bd4b4c1af27b",
+    "processedAt": "2026-08-07T18:21:38Z",
     "processedBy": "dev-team",
     "result": "routed-to-po"
   }

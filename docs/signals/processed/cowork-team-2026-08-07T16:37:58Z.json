@@ -1,0 +1,55 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-08-07T16:37:58Z",
+    "matched_slots": [
+      "refine-bctc-slot-4"
+    ],
+    "won_slots": [
+      "refine-bctc-slot-4"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/refine_bctc_md/flow/main.md"
+    ],
+    "silent": false,
+    "drift_min": 6,
+    "errors": [],
+    "pressure_mode": "adaptive",
+    "calendar_status": "unknown",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "chef_mutex_applied": false,
+    "due_reasons": {
+      "refine-bctc-slot-4": "cron"
+    },
+    "cadence_minutes": {
+      "refine-bctc-slot-4": null
+    },
+    "last_fired_timestamp": "2026-08-07T16:37:58Z",
+    "last_fired_slots": [
+      "refine-bctc-slot-4"
+    ],
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "16:30",
+    "leader_lock": "acquired",
+    "dev_head": "unknown",
+    "devq": 5,
+    "signal_backlog": 41,
+    "note": "single-slot batch (MAX_PARALLEL=4, not degraded); no CHEF slot present, no collision; 3 signal_queue NEW rows present but all addressed to dev-team, not cowork-addressed, so drain was a no-op"
+  },
+  "priority": "low",
+  "createdAt": "2026-08-07T16:37:58Z",
+  "_processed": {
+    "fingerprint": "68b4cb530e66f9d4b909e8db7fc7fe8018970f797ffef66ffb1dd4153490b7bf",
+    "processedAt": "2026-08-07T18:21:38Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

@@ -1,0 +1,40 @@
+{
+  "id": "bca-20260807T152000Z",
+  "ts": "2026-08-07T15:20:00Z",
+  "from": "bctc-analyst",
+  "to": "dev-team",
+  "type": "esc-deep-dive-request",
+  "summary": "ESC deep-dive: FPT Q1-2026 ESC-5",
+  "severity": "HIGH",
+  "status": "NEW",
+  "payload_ref": null,
+  "payload": {
+    "trigger_id": "ESC-5",
+    "ticker": "FPT",
+    "quarter": "Q1-2026",
+    "report_id": "e8ea3df5-3f32-413d-a3eb-c71634c0438d",
+    "guard_key": "esc-deepdive:FPT:Q1-2026:ESC-5",
+    "context": {
+      "low_confidence_unit_ids": [
+        "unit-0008",
+        "unit-0009",
+        "unit-0010",
+        "unit-0011",
+        "unit-0012",
+        "unit-0013",
+        "unit-0014"
+      ],
+      "min_confidence": 0.45,
+      "note": "24h idempotency guard expired (previously claimed c143 session, expires_at matched carry-over ~2026-08-07T15:13Z); this cycle's task_claim returned claimed:true/stolen:true, confirming guard lapse. Live re-verify via get_bctc_refined(report_id) on this cycle re-read all 15 units: 7 units (unit-0008..unit-0014, pages 26-45, footnote/related-party/subsidiary-list sections) remain at confidence=0.45 < 0.50 bar, refined_at unchanged since 2026-05-31T11:19:09 (no new refine run occurred between guard expiry and this re-check) — same underlying finding as the original c143 escalation, re-dispatched per 24h TTL re-arm design, not a new defect."
+    },
+    "all_esc_fired": [
+      "ESC-5"
+    ]
+  },
+  "_processed": {
+    "fingerprint": "7b057ea7c6b37717dbe562b418ce85d1c41627e71432b3730eb7787c933b2c32",
+    "processedAt": "2026-08-07T18:21:38Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

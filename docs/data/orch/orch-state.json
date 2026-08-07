@@ -3397,7 +3397,7 @@
         "summary": "team-tool-recheck writer dead since 06-23 — replace-vs-retire decision needed",
         "severity": "LOW",
         "status": "RETRACTED",
-        "payload_ref": "docs/signals/janitor-health-recheck-writer-retired-2026-08-07.json",
+        "payload_ref": "docs/signals/processed/janitor-health-recheck-writer-retired-2026-08-07.json",
         "triaged_at": "2026-08-07T13:09:54Z",
         "triaged_by": "po/triage-agentfather-20260807T1303Z",
         "disposition": "RETRACTED — premise disproven at source, per triage-signals.md system-issue rule 'Verify the premise before acting'. Signal claims the docs/agent-memory/health/team-tool-recheck-*.md writer has been silent since 2026-06-23 and asks PO to decide replace-vs-retire. The writer is ALIVE: three files exist from the last 48h — team-tool-recheck-2026-08-06-0739.md, -2026-08-06-1318.md, and -2026-08-07-1258.md (the last written today, committed df641de4c). The replace-vs-retire decision is therefore MOOT: the recheck was already migrated off the dead cloud RemoteTrigger trig_019Q8D5xttjZn6iytx2Ld9dW to a LOCAL agent-driven step — agent-father's own keep flow runs team-tool-recheck.md as Step 5b unconditionally every sweep. That is exactly the migration the no-RemoteTrigger directive (feedback_no_remote_trigger_all_local) prescribes, so the directive is satisfied, not violated. The 30d memory-prune rule is harmless against a writer producing daily output. NO board row minted. code-janitor's detector should key on the newest file's mtime, not on a hardcoded 2026-06-23 last-known date."

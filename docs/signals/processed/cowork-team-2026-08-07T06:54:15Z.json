@@ -1,0 +1,55 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-08-07T06:54:15Z",
+    "matched_slots": [
+      "alert-commander-market"
+    ],
+    "won_slots": [
+      "alert-commander-market"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/alert-commander/flow/main.md"
+    ],
+    "silent": false,
+    "drift_min": 6,
+    "errors": [],
+    "pressure_mode": "legacy",
+    "calendar_status": "unknown",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "chef_mutex_applied": false,
+    "due_reasons": {
+      "alert-commander-market": "cron"
+    },
+    "cadence_minutes": {
+      "alert-commander-market": null
+    },
+    "last_fired_timestamp": "2026-08-07T06:54:05Z",
+    "last_fired_slots": [
+      "alert-commander-market"
+    ],
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "06:45",
+    "leader_lock": "acquired",
+    "dev_head": "idle",
+    "devq": 66,
+    "signal_backlog": 1,
+    "note": "pressure-state.json stale (~32min > 20min threshold) -> legacy fallback; single non-guaranteed slot fired; tick-snapshot pre-step skipped (documented fallback)"
+  },
+  "priority": "low",
+  "createdAt": "2026-08-07T06:54:15Z",
+  "_processed": {
+    "fingerprint": "c1a6441988e403c1e62803c0ab1b2d8fe55685a5274acf16617f125ac8248f23",
+    "processedAt": "2026-08-07T18:21:38Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

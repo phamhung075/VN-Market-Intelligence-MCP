@@ -4,33 +4,41 @@
   "quarter": "Q1-2026",
   "mode": "routine",
   "beat_miss": null,
-  "product": "Residential real estate development — mid-market condominiums, township projects (Southern Vietnam)",
-  "customer": "Middle-income homebuyers, real-estate investors; end-demand exposed to mortgage-rate/liquidity cycle",
-  "ops": "get_bctc_full returns 'Chưa có dữ liệu' — no income-statement data this cycle (6th+ consecutive cycle absence despite Q1/Q2-2026 PDFs on file since 2026-06-13/2026-08-01). get_cash_flow Q1-2026 operating_cf returns an implausible ~4.2e18 VND value (OCR/scale corruption); ocf_ni_ratio suppressed.",
-  "mgmt": "Sector-comparison-only ROE 1.9% vs sector median 7.3% — below peers. Q2-2026 filing overdue. Persistent-absence data-quality signal already open with dev-team (guard bctc-dataquality:DXG:persistent-absence reconfirmed HELD this cycle).",
-  "ey_spread": {
-    "value_pp": -3.5,
-    "verdict": "AVOID",
-    "pe": 66.5,
-    "max_deposit_rate_pct": 5
+  "product": "Real estate development — residential projects and land-bank monetization (Dat Xanh Group)",
+  "customer": "Homebuyers/investors in HCMC and satellite provinces; project joint-venture partners",
+  "ops": "UNAVAILABLE this cycle — get_bctc_full(DXG) returns \"Chua co du lieu BCTC\" (no data), 8th+ consecutive cycle (c141-c148) despite DXG_2026_Q1.pdf (filed 2026-06-13) and DXG_2026_Q2.pdf (filed 2026-08-01) both present on the VPS. Extraction-pipeline gap, not a market event.",
+  "mgmt": "UNAVAILABLE this cycle — same data gap",
+  "data_quality": {
+    "status": "PERSISTENT-ABSENCE",
+    "consecutive_cycles": "8+",
+    "dev_team_signal": "open, guard bctc-dataquality:DXG:persistent-absence held this cycle (no re-emit, guard valid to ~2026-08-14)",
+    "root_task": "extraction pipeline has not parsed DXG_2026_Q1.pdf / DXG_2026_Q2.pdf into financial_reports DB despite both files being present"
   },
+  "ey_spread": null,
   "esc_gate": {
-    "esc1": "unevaluable (no Bash tool)",
-    "esc2": "unevaluable (no balance-sheet data)",
-    "esc3": "unevaluable (net_profit_total unknown; cash-flow OCF value implausible/corrupt)",
-    "esc4": "unevaluable (no P&L data)",
-    "esc5": "FALSE (report_id null, existing_refine_status=PENDING)"
+    "esc1_accounting_manipulation": "UNEVALUABLE (no data)",
+    "esc2_balance_sheet": "UNEVALUABLE (no data)",
+    "esc3_ocf_vs_np": "UNEVALUABLE (no data)",
+    "esc4_nonop_share": "UNEVALUABLE (no data)",
+    "esc5_refine_confidence": {
+      "result": false,
+      "report_id": null,
+      "existing_refine_status": "PENDING"
+    }
   },
   "kd_reading": {
-    "hexagram": "Bi (22)",
-    "verdict": "TRUNG TINH",
-    "confidence_pct": 38,
-    "alignment": "neutral, no conflict with AVOID"
+    "hexagram": "Tap Kham (29)",
+    "trend": "BAT LOI",
+    "recommendation": "BAN",
+    "confidence_pct": 100,
+    "note": "no conflict with data-gap status — directionally consistent with prior AVOID valuation verdict (last live PE=66.5 vs sector 16.1, ROE 1.9%, stale)"
   },
-  "data_quality_note": "6th+ consecutive cycle of BCTC absence (c141-c146). Guard reconfirmed HELD, no re-emit this cycle. See prior signal docs/signals/bctc-analyst-20260806T181200Z.json.",
+  "insider": "no significant insider activity",
+  "legal_risk": "none",
+  "as_of": "2026-08-07T18:00:00Z",
   "_processed": {
-    "fingerprint": "b4e4073179ebc78c048ee2758ec3101555d951978c7a712866aef1d61803b05a",
-    "processedAt": "2026-08-07T00:31:40Z",
+    "fingerprint": "54a189fc76f25bb89884ff1b433af24da86015e76e4ea89a093f44719eaf077e",
+    "processedAt": "2026-08-07T18:21:38Z",
     "processedBy": "dev-team",
     "result": "routed-to-po"
   }

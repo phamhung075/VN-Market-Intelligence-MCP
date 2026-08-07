@@ -1,0 +1,61 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-08-07T07:25:36Z",
+    "matched_slots": [
+      "chef-intraday",
+      "alert-commander-market"
+    ],
+    "won_slots": [
+      "chef-intraday",
+      "alert-commander-market"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/unified-agent/flow/chef.md",
+      "docs/agents/alert-commander/flow/main.md"
+    ],
+    "silent": false,
+    "drift_min": 6,
+    "errors": [],
+    "pressure_mode": "adaptive",
+    "calendar_status": "unknown",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "chef_mutex_applied": false,
+    "due_reasons": {
+      "chef-intraday": "cadence",
+      "alert-commander-market": "cron"
+    },
+    "cadence_minutes": {
+      "chef-intraday": 120,
+      "alert-commander-market": null
+    },
+    "last_fired_timestamp": "2026-08-07T07:25:30Z",
+    "last_fired_slots": [
+      "chef-intraday",
+      "alert-commander-market"
+    ],
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "07:15",
+    "leader_lock": "acquired",
+    "dev_head": "idle",
+    "devq": 441,
+    "signal_backlog": 1,
+    "note": "adaptive mode, drift_min=6, MAX_PARALLEL=4 (not degraded, headroom=3334MB load=2/12cores), 2 slots single batch, CHEF mutex no-op (1 non-guaranteed CHEF slot only)"
+  },
+  "priority": "low",
+  "createdAt": "2026-08-07T07:25:36Z",
+  "_processed": {
+    "fingerprint": "39975309c909614da33f2aab9f566036f6db268625d12f2591de630c1de90e6c",
+    "processedAt": "2026-08-07T18:21:38Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

@@ -1,0 +1,55 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-08-07T09:23:05Z",
+    "matched_slots": [
+      "fb-daily"
+    ],
+    "won_slots": [
+      "fb-daily"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/fb-market-poster/flow/main.md"
+    ],
+    "silent": false,
+    "drift_min": 6,
+    "errors": [],
+    "pressure_mode": "adaptive",
+    "calendar_status": "unknown",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "chef_mutex_applied": false,
+    "due_reasons": {
+      "fb-daily": "cron"
+    },
+    "cadence_minutes": {
+      "fb-daily": null
+    },
+    "last_fired_timestamp": "2026-08-07T09:23:01Z",
+    "last_fired_slots": [
+      "fb-daily"
+    ],
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "09:15",
+    "leader_lock": "acquired",
+    "dev_head": "idle",
+    "devq": 442,
+    "signal_backlog": 27,
+    "note": "1-slot batch (fb-daily, guaranteed weekday-editorial cron); single fan-out batch (headroom 2316MB, load 1.62/24 not degraded); no CHEF slots present, mutex no-op; signal_queue NEW rows (3) all addressed to dev-team, no-op drain, now 4+ consecutive ticks unread"
+  },
+  "priority": "low",
+  "createdAt": "2026-08-07T09:23:05Z",
+  "_processed": {
+    "fingerprint": "1c0a83111938c944eabc72a07678a72d2fb9b7750de783cf488385637c03dc87",
+    "processedAt": "2026-08-07T18:21:38Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

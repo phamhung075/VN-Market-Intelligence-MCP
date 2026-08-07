@@ -1,0 +1,55 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-08-07T07:55:19Z",
+    "matched_slots": [
+      "alert-commander-market"
+    ],
+    "won_slots": [
+      "alert-commander-market"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/alert-commander/flow/main.md"
+    ],
+    "silent": false,
+    "drift_min": 6,
+    "errors": [],
+    "pressure_mode": "adaptive",
+    "calendar_status": "unknown",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "chef_mutex_applied": false,
+    "due_reasons": {
+      "alert-commander-market": "cron"
+    },
+    "cadence_minutes": {
+      "alert-commander-market": null
+    },
+    "last_fired_timestamp": "2026-08-07T07:55:10Z",
+    "last_fired_slots": [
+      "alert-commander-market"
+    ],
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "07:45",
+    "leader_lock": "acquired",
+    "dev_head": "idle",
+    "devq": 441,
+    "signal_backlog": 24,
+    "note": "tick 07:45Z — 1 slot matched (alert-commander-market, cron-due), no calendar/cadence suppression, non-degraded fan-out (MAX_PARALLEL=4)"
+  },
+  "priority": "low",
+  "createdAt": "2026-08-07T07:55:19Z",
+  "_processed": {
+    "fingerprint": "ea95713be2fdc7352a02bab520a4ed289935df9d4a113f8da67b3c519ad317a5",
+    "processedAt": "2026-08-07T18:21:38Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
