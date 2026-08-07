@@ -1,5 +1,92 @@
 # PM — Notebook
 
+## c333 FIX-COWORK-SIGNAL-FILENAME-CYCLEID-KEYING · Phase-1 Decomposition + PO Amendments · 2026-08-07T06:00Z
+
+**MANDATE:** Decompose architect brief (7 FR/NFR, 3 EC) into atomic dev tasks, incorporating 3 binding PO amendments:
+  - **Amendment 1 (FR-4 DESCOPE):** tran-ngoc-bau write-serialization descoped (folded onto GUARD-NOTEBOOK-CONCURRENT-EDIT-COLLISION-DATA-LOSS)
+  - **Amendment 2 (EC-2 FOLLOWON):** chef-intraday UTC-hour migration descoped as separate row (FIX-CHEF-INTRADAY-MARKER-KEY-UTC-HOUR-BASIS-MIGRATION, BLOCKED, minted by PO this tick)
+  - **Amendment 3 (FR-1 CORRECTION):** WINDOW_KEY fallback branch 2 corrected — select nearest CRON_HOUR:00Z to live_mcp_fetched_at (not today's UTC date + cron hour), 2 new unit test cases mandated
+
+**PRE-CONDITIONS VERIFIED:**
+- Architect design READY_FOR_PM: docs/architecture-briefs/2026-08-07-cowork-signal-filename-cycleid-keying.md (10 sections, verified live source refs)
+- BA spec READY_FOR_PM: docs/handoffs/FIX-COWORK-SIGNAL-FILENAME-CYCLEID-KEYING-BA-spec.md (po_goahead 2026-08-07T04:41:31Z)
+- PO amendments BINDING: po_architect_signoff_20260807T0545 field in parent row (3 amendments, all acceptance-bearing)
+- Parent row status: in_progress[next_agent=pm, plan_only=true, supervised=true]
+
+**DECOMPOSITION APPLIED (4 atomic tasks):**
+
+1. **TASK-COWORK-SIGNAL-DERIVE-WINDOWKEY** (Size S, ~1.5h)
+   - Shared pure function `derive_window_key(prompt_text, slot_id, cowork_schedule_json, live_mcp_fetched_at)`
+   - 3 branches: scheduled_utc (Phase 2), slot→cron fallback (ACTIVE day 1, Amendment 3 corrected), ad-hoc
+   - **Amendment 3 binding:** Branch 2 implements nearest-CRON_HOUR:00Z logic; 4 unit test cases per spec
+   - No Bash dependencies (NFR-2), single-derivation per cycle (NFR-3)
+   - Blocked_by: none; Blocks: TASK-002, TASK-003
+
+2. **TASK-COWORK-SIGNAL-BCTC-REKEY** (Size M, ~2h)
+   - Files: cycle.md (Step 0c), stage-analyze.md (line 114 + FR-7), stage-consolidate.md (line 64), stage-log-notify.md (§5d-1)
+   - Rekey filename `{YYYYMMDD}` → `{WINDOW_KEY}` (FR-2)
+   - Pin WINDOW_KEY at Step 0c before signal write (FR-2 sequencing)
+   - Add explicit routine-mode emit line (FR-7, doc-debt)
+   - Correct cross-reference in stage-consolidate.md (doc-debt)
+   - Blocked_by: TASK-001; Blocks: TASK-004
+
+3. **TASK-COWORK-SIGNAL-CHEF-INTRADAY** (Size S, ~1h)
+   - Files: chef-dish.md (Step 7.6), chef.md (Step 0.5 cross-ref only)
+   - Intraday filename extension: add `-{VN_HOUR}` (FR-3, Phase 1 only; single-fire slots untouched)
+   - HOUR_COMPONENT sourced from existing VN_HOUR (NFR-3 invariant with mutex key)
+   - Explicit non-promotion of cycle_id (binding caution, PO 2026-07-22)
+   - EC-2 timezone-basis hazard documented (Phase 2 follow-on, depends_on FIX-CHEF-MARKER-KEY-WINDOW-ANCHOR)
+   - Blocked_by: TASK-001; Blocks: TASK-004
+
+4. **TASK-COWORK-SIGNAL-NAMING-CONTRACT** (Size XS, ~30 min)
+   - Files: mcp-tools.md (Naming Contract subsection, FR-5), drain-signals.md (one-liner, FR-6)
+   - New subsection documenting ticker-keyed (bctc_signal_*) and dish-keyed (unified-agent-synthesis-*) families
+   - Content verbatim from architect brief §6 (NFR-3 and NFR-5 guidance included)
+   - drain-signals.js: no code change (NFR-4 closure by construction)
+   - Blocked_by: TASK-002, TASK-003; Blocks: none
+
+**BOARD MUTATIONS APPLIED:**
+1. Updated parent row FIX-COWORK-SIGNAL-FILENAME-CYCLEID-KEYING: status=in_progress→BLOCKED, next_agent=pm→po, added decomposed_tasks array and decomposition_note
+2. Added 4 new tasks to backlog (TASK-COWORK-SIGNAL-DERIVE-WINDOWKEY..NAMING-CONTRACT), all:
+   - status=BACKLOG (correct lane for these decomposed subtasks)
+   - plan_only=true, supervised=true (inherit parent's flags; no code ships without PO re-adjudication)
+   - priority=P1, sprint=COWORK-RELIABILITY
+   - owner=unassigned, next_agent=developer (routed by PM/PO before dispatch)
+   - ba_handoff fields populated with docs/handoffs/TASK-*.md paths
+
+**HANDOFF FILES CREATED (4 total):**
+- docs/handoffs/TASK-COWORK-SIGNAL-DERIVE-WINDOWKEY.md (detailed AC, 4 unit test cases per Amendment 3, NFR compliance notes)
+- docs/handoffs/TASK-COWORK-SIGNAL-BCTC-REKEY.md (6 AC, 4 files, test strategy, dependency notes)
+- docs/handoffs/TASK-COWORK-SIGNAL-CHEF-INTRADAY.md (5 AC, cycle_id non-promotion, EC-2 hazard doc)
+- docs/handoffs/TASK-COWORK-SIGNAL-NAMING-CONTRACT.md (4 AC, FR-5/FR-6, no-code-change verification)
+
+**AMENDMENT INCORPORATION VERIFICATION:**
+- **Amendment 1 (FR-4 DESCOPE):** Zero tnb files touched across all 4 tasks; FR-4 mechanism owned by separate rows (GUARD-NOTEBOOK-*, FIX-NOTEBOOK-WRITE-*, FIX-NOTEBOOK-WRITE-AC7-SKILL). ✓
+- **Amendment 2 (EC-2 FOLLOWON):** Phase 1 ships VN_HOUR verbatim (no UTC basis migration in TASK-003); EC-2 hazard documented for Phase 2 follow-on (separate row FIX-CHEF-INTRADAY-MARKER-KEY-UTC-HOUR-BASIS-MIGRATION already minted, status=BLOCKED, depends_on=FIX-CHEF-MARKER-KEY-WINDOW-ANCHOR). ✓
+- **Amendment 3 (FR-1 CORRECTION):** TASK-001 implements nearest-CRON_HOUR:00Z selection logic; 4 mandatory unit test cases added (slot-4 early fire D 23:57Z→(D+1)T0000Z, slot-3 late fire (D+1) 08:00Z→(D)T2100Z, ad-hoc, same-hour exact). ✓
+
+**VERIFICATION:**
+- orch-apply.sh: Stage 0+1 PASS, conservation check PASSED (task_total: 769→773, signal_total: 218 stable), atomic rename applied ✓
+- Post-apply jq confirms: parent row status=BLOCKED/next_agent=po, 4 child tasks added to backlog with correct status/sprint/flags ✓
+- Handoff files staged in docs/handoffs/ (4 files copied and verified) ✓
+
+**BOARD STATE AFTER:**
+- in_progress: parent FIX-COWORK-SIGNAL-FILENAME-CYCLEID-KEYING now BLOCKED (was IN_PROGRESS), next_agent=po (awaiting re-adjudication)
+- backlog: +4 new tasks (TASK-COWORK-SIGNAL-*), all status=BACKLOG, plan_only/supervised inherited
+- WIP usage: unchanged (parent is now BLOCKED, not in-progress; no new active work queued)
+
+**NEXT STEPS:**
+1. **PO review cycle (mandatory):** Verify amendment incorporation, approve decomposition plan, clear plan_only/supervised flags (or deny and route back to architect)
+2. **Developer dispatch (conditional on PO approval):** Router routes TASK-001 first (no dependencies), then TASK-002/TASK-003 in parallel (both depend on TASK-001), then TASK-004 (depends on 002+003)
+3. **Expected duration (serial critical path if single developer):** ~4-5h total (~1.5h + 2h + 0.5h, with TASK-003 in parallel)
+
+**DECISION JOURNAL:**
+- Amendment 1 rationale: FR-4 mechanism (write-serialization on tnb notebook) is already owned by 3 separate rows (GUARD-NOTEBOOK-*, FIX-NOTEBOOK-WRITE-*); commissioning it here would duplicate design + create coordination overhead. Correct disposition: fold, don't re-design.
+- Amendment 2 rationale: EC-2 (UTC-hour migration) reopens scope that FIX-CHEF-MARKER-KEY-WINDOW-ANCHOR explicitly excluded; Phase 2 follow-on is the structurally correct place (once scheduled_utc_time reaches live-match path). Blocking producer was the missing link (PO minted it this tick).
+- Amendment 3 rationale (FR-1 correction): Architect brief's fallback branch 2 had a latent defect (today's UTC date + cron hour unconditionally). Nearest-window selection is the deterministic rule that works for both early-fire (bctc slot-4 cron=00:00Z at 23:57Z prev day) and late-fire (slot-3 cron=21:00Z at 08:00Z next day) cases.
+
+---
+
 ## ERROR-CORRECTION · FIX-SYSTEM-AUDITOR-CYCLE-FINDINGS-NOT-SELF-PERSISTED · review-triage · 2026-08-06T15:35Z
 
 **INCIDENT:** PM review-triage for FIX-SYSTEM-AUDITOR-CYCLE-FINDINGS-NOT-SELF-PERSISTED (parent task, plan_only decomposed into 4 child tasks) detected what appeared to be a missing child task (FIX-AUDITOR-DURABILITY-STEP0B-DETECTION) from task_board and added a fresh backlog[] entry.
@@ -11,123 +98,6 @@
 **REMEDIATION:** (1) Removed the backlog[] duplicate immediately (orch-apply.sh applied, 2026-08-06T15:35:15Z). (2) Verified in_progress[] copy remains intact, peer session unaffected. (3) Recording this error here for future decompose cycles.
 
 **LESSON:** Board-existence verification MUST scan ALL task_board lanes (backlog, ready, in_progress, qa, review, done) before concluding "missing" and minting a fresh entry. A single-lane scan is insufficient and risks collision with actively in-flight work from peer sessions. Recommend: future PM decompose cycles should use a full-board search (`jq '.task_board | to_entries[] | .value[]? | select(.id == "<id>")'`) to verify non-existence across all lanes before adding.
-
----
-
-## c332 COWORK-GUARANTEED-SLOT-CATCHUP · Decomposition + Board Setup · 2026-07-22T22:12Z
-
-**MANDATE:** Decompose architect brief (10 FR) into atomic dev tasks. Sequence 5 consolidated board rows. True up row types. Set up developer handoff.
-
-**PRE-CONDITIONS VERIFIED:**
-- Architect design READY_FOR_PM: `docs/architecture-briefs/2026-07-22-cowork-guaranteed-slot-catchup-design.md` — 10 FR broken into single shared-module zone `cross-service/`, sequential cascade (not parallel-dispatch).
-- 5 consolidated rows pre-identified by architect (§10): all reassigned owner:developer/next_agent:pm, zone:cross-service/ (except zone:multi on one row, will auto-correct).
-- Board row types flagged for upgrade (SPIKE-S/FIX-? → SPRINT-M/L given 10-FR/5-row scope).
-
-**DECOMPOSITION APPLIED:**
-- Architect's 7 files-to-create, 8 files-to-modify mapped to 10 atomic dev tasks:
-  1. **TASK-COWORK-CATCHUP-1** (M): Domain module + config skeleton (FR-1, FR-2)
-  2. **TASK-COWORK-CATCHUP-2** (S): Extend matcher CLI (FR-9a)
-  3. **TASK-COWORK-CATCHUP-3** (M): Dispatcher sub-flow + main.md wiring (FR-9b, FR-3, FR-5)
-  4. **TASK-COWORK-CATCHUP-4** (M): tick-preflight.sh Step 6.5 (FR-9c)
-  5. **TASK-COWORK-CATCHUP-5** (M): firer.sh MCP + catch-up wiring (FR-9d)
-  6. **TASK-COWORK-CATCHUP-6** (M): last-fired.md reconciliation (FR-7)
-  7. **TASK-COWORK-CATCHUP-7** (S): Timeout config tuning (FR-8)
-  8. **TASK-COWORK-CATCHUP-8** (M): Test suite extension (AC-1..AC-12)
-  9. **TASK-COWORK-CATCHUP-9** (S): Documentation (FR-10 partial)
-  10. **TASK-COWORK-CATCHUP-10** (S): Cron runbook doc → agent-father (FR-10 partial, routed)
-
-**BOARD MUTATIONS APPLIED:**
-1. Added 10 new tasks to backlog (TASK-COWORK-CATCHUP-1..10), all sprint=COWORK-GUARANTEED-SLOT-CATCHUP, status=BACKLOG, with explicit depends_on chains (Tier 1→2→3→4→5)
-2. Updated 5 consolidated rows: type=SPIKE-S/FIX-?→SPRINT-M, added sequencing notes mapping FR coverage
-3. True-up: 5 rows now type=SPRINT-M (matching 10-FR/5-row scope, not SPRINT-S)
-4. **WIP DECISION:** Current in_progress=0, ready=0, WIP limit=2 → promoted TASK-COWORK-CATCHUP-1 to ready lane (1 of 2 slots used)
-
-**HANDOFF FILES CREATED:**
-- docs/handoffs/TASK-COWORK-CATCHUP-{1..10}.md (9 for developer sequential flow, 1 routed to agent-father)
-- Each handoff: clear AC per test strategy (§8 brief), file modifications listed, dependencies explicit
-
-**VERIFICATION:**
-- orch-apply.sh: Stage 0+1 PASS, conservation check PASSED (task_total: 618→628, signal_total: 104 stable), atomic rename applied ✓
-- Post-apply jq confirms: all 10 new rows status=BACKLOG, 5 consolidated rows type=SPRINT-M + notes added ✓
-- TASK-COWORK-CATCHUP-1 promoted to ready[] (first dependency-free task, no blockers, sequential first-to-run) ✓
-
-**BOARD STATE AFTER:**
-- in_progress: 0 → 0 (no change, TASK-1 moved to ready, not in_progress)
-- ready: 0 → 1 (TASK-COWORK-CATCHUP-1 promoted)
-- backlog: 443 → 452 (added 10 new tasks, 5 consolidated rows updated in place)
-- WIP usage: 1 of 2 slots (one slot free for parallel/urgent work if needed)
-- Consolidated rows: all sequenced into dev plan with FR mapping notes
-
-**NEXT:** Developer picks up TASK-COWORK-CATCHUP-1 from ready lane. Sequential tier advancement as each tier completes. Router routes next; agent-father awaits TASK-10 coordination signal after dev completes TASK-9.
-
----
-
-## c331 FLOW-PRICE-ALPHA-LOOP · Wave-1 Readiness Gate + Dev Handoff · 2026-07-13T04:42Z
-
-**MANDATE:** Complete PM wave-1 readiness gate: validate architect design, move 3 wave-1 rows backlog→ready, set up dev-mcp-server handoff.
-
-**PRE-CONDITIONS VERIFIED:**
-- Architect design READY_FOR_PM: `docs/handoffs/ALPHA-S1-architect-design.md` — 3 rows confirmed single-zone `apps/mcp-server/`, no further TASK_2xxx fan-out needed (S-size/atomic).
-- Field corrections already applied (2026-07-13T04:34Z): zone=apps/mcp-server/, depends for STARTUP-CANDLE-GUARD=[ALPHA-S1-CANDLE-RECOVER] (shares recoverMissingOhlcvSession).
-- All 3 rows supervised:false (USER-authorized via dev-team dispatcher coordination_session 69b0312e, commit 4e4210e0e).
-
-**BOARD MUTATIONS APPLIED:**
-1. Moved ALPHA-S1-CANDLE-RECOVER from backlog→ready (status=BACKLOG→READY, all fields preserved)
-2. Moved ALPHA-S1-STARTUP-CANDLE-GUARD from backlog→ready (status=BACKLOG→READY, depends=[ALPHA-S1-CANDLE-RECOVER] intact)
-3. Moved ALPHA-S1-OHLCV-BACKFILL-DONE-BUG from backlog→ready (status=BACKLOG→READY, all fields preserved)
-4. Updated .head: status=in_progress, active_task_id=ALPHA-S1-CANDLE-RECOVER, **next_agent=dev-mcp-server**, next_action="wave-1 readied; dev-mcp-server executes CANDLE-RECOVER first (VPS-relay, deadline Mon 02:15Z), then STARTUP-CANDLE-GUARD, then OHLCV-BACKFILL-DONE-BUG"
-5. Added decision_journal entry documenting wave-1 readiness gate complete, architect design verified, dev handoff.
-
-**VERIFICATION:**
-- orch-apply.sh: Stage 0+1 PASS, conservation check PASSED (task_total=504 preserved), atomic rename applied ✓
-- Post-apply jq confirms: all 3 rows status=READY, supervised=false, zone=apps/mcp-server/, depends intact, note fields (USER-GO annotations) preserved ✓
-- .head next_agent=dev-mcp-server for dispatcher-driven dev handoff ✓
-
-**NEXT:** dev-team dispatcher spawns dev-mcp-server for ALPHA-S1-CANDLE-RECOVER (P0, VPS-relay recovery, deadline Mon 02:15Z open). After dev completion, gates will auto-advance STARTUP-CANDLE-GUARD (P1, dep on CANDLE-RECOVER done_verified), then OHLCV-BACKFILL-DONE-BUG (P1, parallel-safe).
-
----
-
-## c330 FLOW-PRICE-ALPHA-LOOP · Architect Corrections · Wave-1 Release · 2026-07-12T19:45Z
-
-**MANDATE:** Apply architect-verified zone/supervision corrections to the 3 ALPHA-S1 wave-1 rows (ALPHA-S1-CANDLE-RECOVER, ALPHA-S1-STARTUP-CANDLE-GUARD, ALPHA-S1-OHLCV-BACKFILL-DONE-BUG) and release them into the live BOUNDED-1 dev loop. Handoff: `docs/handoffs/ALPHA-S1-architect-design.md` (READY_FOR_PM commit c8a73aa42).
-
-**PRE-CONDITIONS VERIFIED:**
-- Architect design ready: all 3 rows pre-verified single-zone (`apps/mcp-server/`), disjoint file sets, parallel-safe via `isolation:"worktree"`.
-- No further decomposition needed: each row already S-size/atomic, no TASK_2xxx fan-out.
-- Design decision journal: `docs/agent-memory/decisions/sprint-FLOW-PRICE-ALPHA-LOOP-architect.md` (STEP architect-S1/S2/S3).
-
-**BOARD CORRECTIONS APPLIED:**
-1. **Zone correction** (all 3 rows): `zone: "multi"` → `zone: "apps/mcp-server/"` (verified single-zone, route → dev-mcp-server BOUNDED-1 dispatcher).
-2. **Supervision clear** (all 3 rows): `supervised: true` → `supervised: false` (supervision gate's purpose "zone=multi → architect splits" satisfied; rows now eligible for dev-team auto-drain).
-3. **Dependency add** (ALPHA-S1-STARTUP-CANDLE-GUARD): `depends: []` → `depends: ["ALPHA-S1-CANDLE-RECOVER"]` (shares new recovery function per §2 design; CANDLE-RECOVER picks P0-first so low sequencing cost).
-
-**VERIFICATION:**
-- orch-apply.sh: Stage 0+1 PASS, conservation check PASSED (task_total=503 stable), atomic rename applied.
-- Post-apply jq query confirms all 3 rows: zone="apps/mcp-server/", supervised=false, STARTUP row depends on CANDLE-RECOVER.
-
-**BOARD MUTATIONS:** Backlog state updated, 3 rows now unsupervised + correct zone, ready for BOUNDED-1 auto-dispatch on next ~30-min tick.
-
-**NEXT:** dev-mcp-server BOUNDED-1 dispatcher picks up eligible rows. Router routes next.
-
----
-
-## c329 MONEY-RADAR-P0 · Idle-Slot Fill · Task Pull · 2026-07-11T10:40Z
-
-**MANDATE:** Router-initiated idle-slot fill for WIP=1/2 (OPS-BCTC-REFINE-REPASS-NONBANK-5T peer-owned, untouchable). PO pre-verified two unblocked mission-aligned candidates: CONTAM-11-REMEDIATE (primary) and WATCHLIST-DB-SYSMAP-DRIFT-FIX (alternate). Task: pull the valid candidate into ready[], verify pre-conditions, create handoff doc.
-
-**PRE-VERIFY FINDINGS:**
-- **CONTAM-11-REMEDIATE (primary):** STALE-PICK HAZARD — live daily_ohlcv contamination (sub-1000 close) = 4 rows (BMP/HGM/KSV/MCH × 1 each), NOT 3023 claimed in task description. Evidence: pre-verified via `sqlite3 data/market.db` query on 9 target tickers (BMP/MCH/HGM/PMC/KSV/TOS/AGX/TBD/STS); 5 tickers have 0 rows. Conclusion: contamination already 99.9% fixed (prior agent or abandoned midway). Stale-pick rule applied → SKIP.
-- **WATCHLIST-DB-SYSMAP-DRIFT-FIX (alternate):** LIVE DRIFT CONFIRMED — live SQLite watchlist=52 rows vs SSOT system-map.json=34 items. Delta: 18 rows (VEA inactive present, VNH mis-seeded, 17+ active missing). Pre-verify: PASSED ✓
-
-**OUTPUT:**
-1. CONTAM-11-REMEDIATE: SKIPPED (stale-pick, task remains BACKLOG for root-cause triage by dev-team/ops)
-2. WATCHLIST-DB-SYSMAP-DRIFT-FIX: PULLED into ready[] lane, status BACKLOG→READY
-3. Handoff doc: docs/handoffs/TASK_WATCHLIST-DB-SYSMAP-DRIFT-FIX.md (acceptance criteria, known hazards, execution steps)
-4. Decision journal: docs/agent-memory/decisions/sprint-MONEY-RADAR-P0-pm.md § STEP pm-S1
-
-**BOARD MUTATIONS:** task_board.backlog→ready move (backlog=315→314, ready=0→1, in_progress=1 stable). Task conservation check PASSED (task_total=458 maintained). Terminal-lane bloat noted (done[]=22 > 10 threshold HSC-3); deferred to next PM cycle.
-
-**NEXT:** dev-cross-service to pick up WATCHLIST-DB-SYSMAP-DRIFT-FIX from ready[]. Router routes next.
 
 ---
 
