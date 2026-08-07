@@ -1,5 +1,24 @@
 
 
+
+## c75 · 2026-08-07T03:30Z
+### Audit Run Tier-1 (03:27–03:34 UTC 2026-08-07)
+- Tier: 1 | Services: 12 host_runtime_set | Health: 5 probed
+- Anomalies: 0 | Status: HEALTHY (all checks PASS)
+- Verdict: ALL_GREEN — all containers UP, health endpoints OK, A-30 FOLD (benign reclamation).
+- Container status [A-01–A-11]: All 12 UP ✓
+- Health endpoints [A-12–A-20]: All 5 OK (HTTP 200) ✓
+- A-20 pdf-extractor multi-probe: 3/3 PASS ✓
+- A-21 restart count: 0, no crashes in 4h window ✓
+- A-30 memory reclamation: mcp-server 50.57% (< 85% gate), verify-a30 FOLD verdict (stable 50–52% range, 1 reclamation dip detected, VmHWM >> VmRSS proves prior reclamation), no escalation ✓
+- A-32 disk: 56% < 85% ✓
+- A-33 hook liveness: All load-bearing hooks OK ✓
+
+### Notes:
+- Spawn verdict: ALL_GREEN (no pre-gate failures)
+- Prior cycle (c74 03:06Z): A-30 floor-breach for rag-service (99.60%, 4MiB free) — dedup-suppressed. This cycle's rag-service is healthy (15h uptime, UP status per docker ps).
+- User instruction: verify accelerating memory decline pattern via verify-a30-mcp-memory-reclamation.sh — FOLD verdict confirms safe recovery, no ops escalation needed.
+- OUTPUT-CONTRACT: signals_posted=0, telegram_sent=0, signal_queue_rows_written=0, dashboard_rows=0 ✓
 ## c74 · 2026-08-07T03:06:29Z
 ### Audit Run Tier-3 (02:00–03:07 UTC 2026-08-07)
 - Tier: 3 | Runtime/DB checks completed
