@@ -4,6 +4,18 @@ Zone: `apps/rag-service/` | Stack: Python/FastAPI | DB: rag_service.db (write)
 
 ## Working Memory
 
+### 2026-08-07 — FIX-CI-SIZELINT-RAG-APP-FACTORY-BASELINE (P1, CI-RED, XS)
+
+**Task:** `app_factory.py` grew 121L→168L (baseline-tolerance-exceeded, upper=133L) via commit 0308514f5 (`_idle_unload_loop()` added to `build_lifespan()` for FIX-RAG-EMBEDDER-IDLE-UNLOAD-PATH) with no size-justification header. Same fix pattern as sibling FIX-CI-SIZELINT-RAG-EMBEDDER-NEW-OFFENDER (`infrastructure/embedder.py`).
+
+**Fix:** added a `# size-justification: 177L — ...` comment header (9L, above the module docstring) — cohesion argument: `build_lifespan()` (lifespan wiring + idle-unload loop), `add_cors_middleware()`, `build_real_adapters()` are all the SAME extracted-from-main.py composition-root scope; comment-only, zero behavior change. Did NOT touch `docs/data/size-lint-baseline.json` (no `--update` — would launder unrelated offenders per AC2 precedent).
+
+**Verified:** `bash scripts/audits/size-lint-justification.sh --check` no longer lists `app_factory.py` (scoped override RC=0; full-repo run still shows 3 unrelated offenders — 2 mcp-server sibling tasks + `embedder.py` cleared on main per commit 8b415f6a2). pytest 175/175 green (this worktree's baseline, unchanged).
+
+**DJ:** `docs/agent-memory/decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-dev-rag-service.md` S3.
+
+---
+
 ### 2026-08-07 — FIX-CI-SIZELINT-RAG-EMBEDDER-NEW-OFFENDER (dev-team dispatch, size XS)
 
 **Task:** size-lint RED, new-offender: `embedder.py` 167L > 120L cap, no baseline entry, no justification header. Trigger: commit `0308514f5` (FIX-RAG-EMBEDDER-IDLE-UNLOAD-PATH, previous cycle above) added `_maybe_unload_idle()`/`_idle_unload_loop()`/`_last_used_monotonic` to the lazy-load singleton, pushing it past 120L with zero grandfather.

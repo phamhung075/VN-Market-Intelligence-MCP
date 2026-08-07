@@ -25,3 +25,16 @@
 - Scoped env-override verification vs waiting for sibling baseline tasks to land for a true full-repo RC=0 — chose scoped verification now; documented remaining 3 offenders belong to sibling tasks (BCTCREFINED-PROJECTION-BASELINE, RAG-APP-FACTORY-BASELINE, schema.ts) sequenced separately per task NOTE.
 **why-decision:** Task's own NOTE states this task's work is independent of the baseline-touching siblings — full-repo green is a batch-level outcome, not provable from this single-file commit alone.
 **why-change:** No change — AC3/AC4 full-repo green depends on sibling tasks landing; this entry records honest scoped verification only.
+
+---
+
+### STEP dev-rag-service-S3 · dev-rag-service · 2026-08-07T02:00:00Z
+**task-id:** FIX-CI-SIZELINT-RAG-APP-FACTORY-BASELINE
+**what-done:** Added a `# size-justification: 177L — ...` comment header (9 lines, before the module docstring) to `apps/rag-service/app_factory.py`, no code/behavior change.
+**what-considered:**
+- Split `_idle_unload_loop()`/`build_lifespan()` into their own module (status_note's stated preference) — rejected: they share embedder-duck-typing + asyncio.Task lifecycle wiring with `add_cors_middleware()`/`build_real_adapters()`, all extracted-from-main.py composition-root scope; a split fragments one cohesive root for no token benefit.
+- Header-only justification (router-directed, matches sibling embedder.py fix pattern on FIX-CI-SIZELINT-RAG-EMBEDDER-NEW-OFFENDER) — chosen.
+**why-decision:** Same cohesion argument as the embedder.py precedent: one file IS the composition root's app-construction helpers, not a bag of unrelated concerns; comment-only fix is honest and zero-risk.
+**why-change:** Board status_note offered a split as "preferred" — overridden by explicit router task instruction (header-only, comment-only, zero behavior change) which takes precedence.
+
+**Merge Gate renumbering note:** authored in its own worktree as a fresh S1 (that worktree branched before the sibling embedder-task journal file existed on main); renumbered to S3 when reapplied, appending after agent aa79e0a60034da7fc's S1/S2 which landed first in this Merge Gate's sequential order.
