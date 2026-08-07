@@ -1,0 +1,83 @@
+{
+  "metadata": {
+    "cycle_id": "morning-2026-08-07T05:23:00Z",
+    "dish_type": "morning",
+    "date_vn": "2026-08-07",
+    "timestamp_utc": "2026-08-07T05:23:00Z",
+    "quality_verdict": "degraded",
+    "layers_walked_summary": "1-6 (partial) — [gap:L4_partial_pillar_coverage] [gap:business_context_thin] [gap:CPI_unavailable] [gap:VIRA_unavailable] [gap:US_macro_incomplete]"
+  },
+
+  "tnb_synthesis": {
+    "clock_phase": "expansion",
+    "regime_state": "macro-micro bifurcation",
+    "regime_confidence": "MEDIUM",
+    "us_macro_layer": "Geopolitical signal active: Hormuz oil concerns (chain_catalyst impact=8). Global risk sentiment showing oil tailwind for commodity exporters. Carry regime unavailable (is_estimate=true). Fed stance unknown this cycle.",
+    "vn_macro_layer": "USD/VND 26,234 (above 25500 threshold, VND depreciation active). Equity yield 8.2% >> deposit rate 4.7% (spread 3.5pp, CHEAP regime). CPI/VIRA data unavailable. Gold 4325 USD signals safe-haven demand contradicting equity rally (macro-micro contradiction flagged).",
+    "valuation_layer": "VNM agriculture (yield support + news positive, 3/4 pillars expansion). BSR/PLX energy sector (macro-dependent, 2-3/4 pillars, volatility elevated 77.8pctl caps conviction). Sector phases: agriculture expansion, energy slowdown, real-estate pressure (sector bifurcation)."
+  },
+
+  "conviction_calls": [
+    {
+      "ticker": "VNM",
+      "conviction_level": "MEDIUM",
+      "direction": "BUY",
+      "pillars_aligned_count": 3,
+      "rationale_one_liner": "State-owned dividend story + cheap equity yield (3.5pp spread) + positive news flow support growth; but business context thin and CPI/macro-regime incomplete."
+    },
+    {
+      "ticker": "BSR",
+      "conviction_level": "MEDIUM",
+      "direction": "HOLD",
+      "pillars_aligned_count": 2,
+      "rationale_one_liner": "Oil macro tailwind (Hormuz) + sector +4.94% support, but only 2/4 pillars aligned, macro-dependent, and volatility elevated—cap at MEDIUM pending macro clarity."
+    },
+    {
+      "ticker": "PLX",
+      "conviction_level": "MEDIUM",
+      "direction": "BUY",
+      "pillars_aligned_count": 3,
+      "rationale_one_liner": "Strong price action (+6.38%) + oil sector consensus + Kinh Dịch buy signal, but macro incomplete and gold regime-drift contradiction flag downgrades from HIGH to MEDIUM."
+    }
+  ],
+
+  "sector_phases": [
+    {
+      "sector_vn": "nông nghiệp",
+      "investment_phase": "expansion",
+      "pyramid_tier": "equity",
+      "direction_this_cycle": "positive"
+    },
+    {
+      "sector_vn": "dầu khí",
+      "investment_phase": "slowdown",
+      "pyramid_tier": "fixed_income",
+      "direction_this_cycle": "positive"
+    },
+    {
+      "sector_vn": "bất động sản",
+      "investment_phase": "contraction",
+      "pyramid_tier": "defensive",
+      "direction_this_cycle": "negative"
+    }
+  ],
+
+  "known_gaps": [
+    "[gap:US_macro_incomplete] — EFFR-IORB unavailable, carry regime suppressed",
+    "[gap:CPI_unavailable] — Inflation trend data estimate-sourced",
+    "[gap:VIRA_unavailable] — FX reserves data upstream outage",
+    "[gap:business_context_thin] — BCTC/fundamental signal data sparse this cycle (bctc-analyst tier1 extraction quality sprint tracking)",
+    "[L6-gap:gold_4325_regime_drift] — Safe-haven demand contradicts equity rally; regime-drift flag until gold <4300 or EFFR-IORB confirms tightening",
+    "[L6-gap:single_pillar_BSR_2_4] — BSR 2/4 pillars aligned; add missing pillars or state insufficient data"
+  ],
+
+  "causal_chains": [
+    "Middle East Hormuz oil tensions (chain_catalyst, geopolitical risk-on) → Oil sector +4.94%, commodity tailwind → Vietnamese SOE dividend + energy complex (VNM, BSR, PLX) rally on yield-floor + carry opportunity → BUT gold 4325 USD surge signals institutional flight-to-safety, contradicting macro-micro bifurcation (flag in Layer 6)."
+  ],
+
+  "clusters_summary": {
+    "qualified": 3,
+    "tickers_covered": ["VNM", "BSR", "PLX"],
+    "sectors_covered": ["agriculture", "oil_gas"]
+  }
+}

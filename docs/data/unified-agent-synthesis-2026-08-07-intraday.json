@@ -1,86 +1,51 @@
 {
   "metadata": {
-    "cycle_id": "intraday-2026-08-07T03:15:00Z",
+    "cycle_id": "intraday-2026-08-07T04:35Z",
     "dish_type": "intraday",
     "date_vn": "2026-08-07",
-    "timestamp_utc": "2026-08-07T03:15:00Z",
+    "timestamp_utc": "2026-08-07T04:35:00Z",
     "quality_verdict": "degraded",
-    "layers_walked_summary": "1-6 (partial) — [gap:business_context_unavailable] [L6-gap: gold >$4,300 active — regime-drift risk]"
+    "layers_walked_summary": "1-6 (degraded) — L2 US macro partial (geopolitical proxy); L3 VN macro incomplete; business context unavailable; pillars <3 aligned most tickers"
   },
-
   "tnb_synthesis": {
-    "clock_phase": "transition",
-    "regime_state": "macro-uncertainty + FII reallocation",
+    "clock_phase": "expansion",
+    "regime_state": "risk-on_equity_with_risk_off_safe_haven_divergence",
     "regime_confidence": "MEDIUM",
-    "us_macro_layer": "Gold surge +4.64σ ($4,313) + EFFR-IORB spread tight → safe-haven demand, risk-off positioning",
-    "vn_macro_layer": "USD/VND 26,050 (near resistance 26,500) + FII scrutiny on real-estate sector + liquidity tight on construction credit",
-    "valuation_layer": "Sector divergence: construction (credit-sensitive, down) | real-estate (FII-rotated, down) | agriculture (commodity-rally, up)"
+    "us_macro_layer": "Geopolitical active: Middle East tensions (Hormuz reopening risk). Brent +0.76% signals energy hedging demand. Concurrent gold spike (4,321 USD/oz) indicates flight-to-safety, contradicting pure risk-on equity narrative.",
+    "vn_macro_layer": "USD/VND 26,050 neutral carry posture. CPI trend unavailable. FX reserves unavailable. Safe-haven pressure (gold 4,321) contradicts equity rally thesis."
   },
-
   "conviction_calls": [
-    {
-      "ticker": "HUT",
-      "conviction_level": "LOW",
-      "direction": "SELL",
-      "pillars_aligned_count": 1,
-      "rationale_one_liner": "Extreme oversold (RSI 8.5) driven by macro fear, not fundamental deterioration; Kinh Dịch bearish reversal signal"
-    },
-    {
-      "ticker": "VHM",
-      "conviction_level": "MEDIUM",
-      "direction": "HOLD",
-      "pillars_aligned_count": 2,
-      "rationale_one_liner": "Real-estate sector under FII pressure (BB breakdown), but Kinh Dịch Sư confirms accumulation setup; conflicted signal"
-    },
-    {
-      "ticker": "VNM",
-      "conviction_level": "MEDIUM",
-      "direction": "BUY",
-      "pillars_aligned_count": 3,
-      "rationale_one_liner": "Agricultural momentum sustained (+6.61%), Bollinger breakup + Kinh Dịch MUA alignment; commodity-driven thesis"
-    }
+    {"ticker": "PLX", "conviction_level": "HIGH", "direction": "BUY", "pillars_aligned_count": 3, "rationale_one_liner": "Oil rally (Brent +0.76%) + geopolitical catalyst (Hormuz) + EPS bullish + carry stable = expansion tier"},
+    {"ticker": "VNM", "conviction_level": "MEDIUM", "direction": "BUY", "pillars_aligned_count": 2, "rationale_one_liner": "SOE inflow narrative + EPS bullish + COC neutral + carry steady; business context missing"},
+    {"ticker": "BSR", "conviction_level": "MEDIUM", "direction": "HOLD", "pillars_aligned_count": 2, "rationale_one_liner": "Oil sector tailwind (EPS bullish) contradicted by Kinh Dich Kien (39) bearish signal; mixed conviction"},
+    {"ticker": "VHM", "conviction_level": "LOW", "direction": "SELL", "pillars_aligned_count": 1, "rationale_one_liner": "Real-estate weakness (-0.35% sector) + RSI 21.8 oversold + Su (7) structured-decline hexagram; distribution"}
   ],
-
   "sector_phases": [
-    {
-      "sector_vn": "xây dựng (construction)",
-      "investment_phase": "contraction",
-      "pyramid_tier": "cash",
-      "direction_this_cycle": "negative"
-    },
-    {
-      "sector_vn": "bất động sản (real_estate)",
-      "investment_phase": "transition",
-      "pyramid_tier": "fixed_income",
-      "direction_this_cycle": "negative"
-    },
-    {
-      "sector_vn": "nông nghiệp (agriculture)",
-      "investment_phase": "expansion",
-      "pyramid_tier": "equity",
-      "direction_this_cycle": "positive"
-    }
+    {"sector_vn": "dau_khi", "investment_phase": "expansion", "pyramid_tier": "equity", "direction_this_cycle": "positive"},
+    {"sector_vn": "nong_nghiep", "investment_phase": "expansion", "pyramid_tier": "equity", "direction_this_cycle": "positive"},
+    {"sector_vn": "bat_dong_san", "investment_phase": "slowdown", "pyramid_tier": "defensive", "direction_this_cycle": "negative"},
+    {"sector_vn": "chung_khoan", "investment_phase": "slowdown", "pyramid_tier": "fixed_income", "direction_this_cycle": "negative"}
   ],
-
   "known_gaps": [
-    "[gap:business_context_unavailable]",
-    "[L6-gap: gold >$4,300 active — regime-drift risk: gold-driven phase override may lag actual risk-off reversal; flag as regime-drift until gold retraces below $4,300 or EFFR-IORB confirms liquidity tightening]"
+    "[L6-gap: gold >4,300 active — regime-drift risk until gold <4,300 or EFFR-IORB confirms liquidity tightening]",
+    "[gap:L2_US_macro_partial — geopolitical proxy (Hormuz) substitutes; no PMI or EFFR-IORB fetched]",
+    "[gap:L3_CPI_unavailable]",
+    "[gap:L3_VIRA_unavailable]",
+    "[gap:business_context_unavailable — no bctc_signal_* or fundamental_* files read]",
+    "[L6-gap: single-pillar thesis — VNM 2/4 pillars aligned; insufficient for high conviction]",
+    "[L6-gap: single-pillar thesis — BSR 2/4 pillars aligned; Kinh Dich contradict]",
+    "[L6-gap: single-pillar thesis — VHM <2/4 pillars aligned; TA-only insufficient]"
   ],
-
   "causal_chains": [
-    "Gold toàn cầu +4.64σ ($4,313, cực cao) → FII reallocation từ tín dụng VN → HUT quá bán kỷ lục (RSI 8.5 < 15) trái chiều ngành +0.52%",
-    "Real-estate sector dưới áp lực FII giải chuyển → VHM phá BB dưới + RSI 21.8 → Kinh Dịch Sư MUA 100% nhưng giá action mâu thuẫn",
-    "Nông sản tích lũy mạnh (Brent +0.20% macro tailwind) → VNM +6.61% + BB breakup → Kinh Dịch Tỉnh MUA xác nhận momentum"
+    "Middle East tensions (Hormuz) → Brent +0.76% → Oil_gas outperformance (PLX +6.4%, BSR +5.4%) → Expansion-tier equity inflow",
+    "Gold spike to 4,321 USD/oz → Investor flight-to-safety → Bond/defensive bid → Regime divergence with equity rally",
+    "SOE inflow narrative + VNM +5.9% + carry neutral (26,050) → Tactical accumulation MEDIUM conviction (business context missing)",
+    "VHM -3.76% + RSI 21.8 oversold + Su (7) BAN → Distribution phase; caution on bounce until recovery >75,000"
   ],
-
   "clusters_summary": {
-    "qualified": 3,
-    "tickers_covered": ["HUT", "VHM", "VNM"],
-    "sectors_covered": ["construction", "real_estate", "agriculture"],
-    "convergence_rules_fired": [
-      "Extreme individual signal (HUT RSI < 15)",
-      "Ticker convergence (VHM: 2 signal types)",
-      "Ticker convergence (VNM: 2 signal types)"
-    ]
+    "qualified": 4,
+    "tickers_covered": ["PLX", "VNM", "BSR", "VHM"],
+    "sectors_covered": ["dau_khi", "nong_nghiep", "bat_dong_san"],
+    "signal_ids_consumed": [10418, 10422, 10423, 10424, 10425, 10426, 10427, 10428, 10429, 10431, 10432, 10434, 10438, 10439, 10440]
   }
 }
