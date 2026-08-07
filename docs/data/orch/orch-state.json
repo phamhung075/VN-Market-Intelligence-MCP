@@ -14411,34 +14411,6 @@
         "po_actuator_row_ref": "FIX-BCTC-SSC-DOC-SELECTION-QUARTER-BLIND-ALWAYS-LATEST (minted 2026-08-01T02:58:55Z) now owns the acquisition-side root cause this row has been accumulating evidence for across 4 ticks. Stop adding acquisition evidence HERE; add it there. This row is now scoped to its own detector ACs only and is qa-signoff-ready on those.",
         "verified_at": "2026-08-06T21:54:06Z",
         "verified_by": "qa"
-      },
-      {
-        "id": "OPS-MCPSERVER-REBUILD-STALE-IMAGE-PREDATES-MEMLEAK-FIX",
-        "title": "mcp-server running image predates the FIX-MCP-MEMORY-CODE-LEAK fix commit 609f62800 by 5 days -- container never rebuilt, so the shipped fix has never executed; OOM-restart 20->21 on 2026-08-05T19:24:20Z",
-        "owner": "po",
-        "status": "DONE_VERIFIED",
-        "type": "INFRA",
-        "priority": "P1",
-        "zone": "ops/infra",
-        "next_agent": "pm",
-        "created_at": "2026-08-06T08:24:43Z",
-        "created_by": "po (dev-team Step 1 triage, cron:dev-team:2026-08-06T08:07Z, session 24817246-8a3f-4511-95f7-1b4385797bee)",
-        "origin_signal_id": "telegram-report-4472",
-        "po_deploy_authorization_20260806T0824": "PO AUTHORISES THIS REBUILD NOW -- no user gate, no router gate, no further approval step. Basis: PERMANENT user directive 2026-08-01 (feedback_po_deploy_rebuild_full_autonomy_no_user_gate, verbatim: 'PO can demande ops rebuild container if need, no need ask or wait user, full autonome and permission for PO'). Any agent reading this row must NOT re-raise 'user-gated' / 'needs PO approval' -- that language is retired fleet-wide. HARD PEER-SAFETY CONSTRAINT (feedback_preserve_multi_container_microservice_architecture): SINGLE-SERVICE ONLY -- `docker compose build mcp-server && docker compose up -d --no-deps mcp-server`. NEVER down/stop/kill/rm/--force-recreate, never a bare `docker compose up -d`. Killing peers to fix one container has already destroyed this fleet once.",
-        "status_note": "REBUILD COMPLETE & VERIFIED (2026-08-06T10:46Z)\n\nAC-1: Image built after commit 609f62800 (2026-08-05 20:26:47 +02:00) ✓\n  Image hash: sha256:20f1e0a2c87... created 2026-08-06T08:41:16Z\n  docker inspect confirms: Image built AFTER fix commit\n\nAC-2: RestartCount recorded at rebuild time = 0 ✓\n\nAC-3: FIX-MCP-MEMORY-CODE-LEAK verification unblocked ✓\n  Code now deployed, 12-hour observation window ready for QA\n  Do NOT fold into OPS-MCP-RESTART-CHURN row (separate pattern vs. deploy action)\n\nNext: QA to verify AC on FIX-MCP-MEMORY-CODE-LEAK (memory does not climb to 87% in 12h from 5% cold start).",
-        "files": [],
-        "reference_only_files": [
-          "docker-compose.yml"
-        ],
-        "related_rows": [
-          "FIX-MCP-MEMORY-CODE-LEAK",
-          "OPS-MCP-RESTART-CHURN-UNCLEAN-SHUTDOWN"
-        ],
-        "updated_at": "2026-08-07T06:05:54Z",
-        "updated_by": "po/triage-a30-20260807T0600Z",
-        "closed_at": "2026-08-07T06:05:54Z",
-        "closed_by": "po",
-        "po_closeout_20260807": "CLOSED BY PO 2026-08-07T06:0xZ — stale-status correction + AC discharge. This row sat status=BLOCKED in backlog[] since 2026-08-06T08:47:49Z while its own status_note read \"REBUILD COMPLETE & VERIFIED (2026-08-06T10:46Z)\" — a status-flip-without-lane-move contradiction surfaced by router RAW-verify during the A-30 CRITICAL triage. Adjudicated: the rebuild ACs ARE discharged, so the correct resolution is to close the row, not to re-dispatch it.\n\nAC-1 (image post-dates fix commit 609f62800): SATISFIED, and now satisfied twice over. The note cites sha256:20f1e0a2c87 Created 2026-08-06T08:41:16Z. That image is STALE as of this triage — it was superseded by 8c06969b5a3f (ops deploy 2026-08-06T06:37:52Z, recorded on FIX-MCP-MEMORY-CODE-LEAK ops_deploy_verification_note) and then by the CURRENT running image sha256:115700a86e65 (Created 2026-08-06T23:21:36Z, rebuilt for TASK_603). Do not treat the 20f1e0a2c87 hash in the note above as live; it is retained for audit only. Every one of those images post-dates 609f62800, so the ACs premise holds regardless of which is running.\nAC-2 (RestartCount at rebuild = 0): SATISFIED as recorded.\nAC-3 (unblocks FIX-MCP-MEMORY-CODE-LEAK verification): SATISFIED — the fix-signature probe now runs green on the live image (backfillOCFForWatchlist = 1 since boot vs 41689 pre-fix), verified by po this tick and folded onto that row.\n\nThe notes \"Next: QA to verify AC on FIX-MCP-MEMORY-CODE-LEAK\" hand-off is NOT lost by closing this row: FIX-MCP-MEMORY-CODE-LEAK is independently live in review[] with next_agent=qa and carries the corrected QA guidance as of this tick. This row was only ever the deploy-action row; the deploy happened and is evidenced. Peer-safety constraint on this row was honoured throughout — all rebuilds were single-service, and QA cycle-557 independently confirmed all 11 peer containers retained unchanged multi-day/week Created timestamps (no fleet down/up, no --force-recreate)."
       }
     ],
     "head": {
