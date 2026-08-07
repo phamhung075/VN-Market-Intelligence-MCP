@@ -140,3 +140,12 @@ mid-entry CAP-REACHED breach on -3.md).
 **why-decision:** matches architect's ratified file-level design (BA spec §"File-level design (FR-1/FR-2)") verbatim — two-statement UPDATE not CTE, ladder gated on the row's own null column not a caller flag.
 **why-change:** no change from PM decomposition Task 1 scope (this task's 3 subtasks only — FR-2's coordinationTools.ts Zod exposure is the separate, dependent Task 2).
 **verify:** new `coordinationStore.test.ts` 13/13 GREEN, confirmed RED beforehand (7/13 failing pre-implementation). `bun tsc --noEmit` 0 errors, `eslint` clean. Targeted merge-gate suite (18 files touching coordinationStore/lock mechanics) 307/307 pass, 0 regressions. Repo-wide `bun test` 45 fail/1 error of 15281 matches the standing `FIX-MCP-SUITE-HEALTH-BASELINE` (dev-standards.md:1364), not attributable to this change. Commits `d6c4e6006` (code+test), `c4b7b2060` (docs).
+
+### STEP developer-S79 · developer · 2026-08-07T19:28:00Z
+**task-id:** FIX-ORPHAN-FR1-FR3-FR6-SKILL-DISPATCH-CLAIM
+**what-done:** dispatch-claim/SKILL.md: rewrote payload_patch prose (FR-1), added FR-3 board-state guard before N_MAX branch (both lane shapes), added owner_agent to escalation heartbeat (FR-6).
+**what-considered:**
+- FR-1: write prose per subtask's literal "now available" wording vs write prose per verified live Zod schema state (no payload_patch param exists) — verified live schema first per dispatch instruction.
+**why-decision:** live schema check showed Task 2 (interface exposure) still READY/unclaimed — "now available" would recreate the exact doc-vs-surface contradiction this ticket exists to close (NFR-3). Accurate-but-not-yet-live prose still satisfies the row's own acceptance line.
+**why-change:** deviated from subtask 1's literal "available" framing for the reason above; subtasks 2+3 implemented as specified.
+**verify:** doc-only (flow-docs/), bun test/tsc N/A. Fence-balance + size-justification tolerance hand-verified. Commit `234902038`.
