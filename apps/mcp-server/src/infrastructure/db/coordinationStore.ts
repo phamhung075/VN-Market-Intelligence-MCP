@@ -721,37 +721,131 @@ export function claimTask(input: ClaimInput): ClaimResult {
 }
 
 /**
+ * Parse a JSON string into a plain object.
+ * Returns {} for null/undefined input, invalid JSON, or a parsed non-object value
+ * (EC-6: never throws — matches this module's established "never throw to the MCP tool
+ * layer" error contract).
+ */
+function parseJsonObject(raw: string | null | undefined): Record<string, unknown> {
+  if (!raw) return {};
+  try {
+    const parsed: unknown = JSON.parse(raw);
+    return parsed && typeof parsed === "object" && !Array.isArray(parsed)
+      ? (parsed as Record<string, unknown>)
+      : {};
+  } catch {
+    return {};
+  }
+}
+
+/** FR-1/FR-2 optional params for {@link heartbeatTask}. All additive — omitting every field reproduces pre-FR-1/FR-2 behavior exactly (NFR-2). */
+export interface HeartbeatOptions {
+  /** FR-1: new TTL to persist (clamped 60-691200s, same bounds as task_claim). Omit to reuse the row's existing ttl_seconds column. */
+  ttl_seconds?: number;
+  /** FR-1: JSON string shallow-merged into the existing payload JSON (EC-6: malformed/absent existing payload is handled non-fatally). */
+  payload_patch?: string;
+  /** FR-2 null-session ladder — supply together with original_owner_client_session. Only ever matches orphan-signal rows whose OWN owner_client_session column is NULL (NFR-1). */
+  owner_agent?: string;
+  /** FR-2 null-session ladder — echoes payload.original_owner_client_session (read via the read-only task_list_held probe). */
+  original_owner_client_session?: string;
+}
+
+/**
  * Renew a held lock's TTL (brief §4 heartbeat protocol).
  *
- * P1-FINAL (TASK_1980): sole matching key is owner_client_session (per-CLAUDE_CODE_SESSION_ID UUID).
- * Fallback rungs (owner_agent, owner_session) removed — wrong session cannot renew another's lock.
+ * P1-FINAL (TASK_1980): default (Rung A) matching key is owner_client_session
+ * (per-CLAUDE_CODE_SESSION_ID UUID). Fallback rungs (owner_agent, owner_session) removed from
+ * that rung — wrong session cannot renew another's lock via owner_client_session alone.
+ *
+ * FR-2 (FIX-ORPHAN-FR1-FR2-INFRA-HEARTBEAT-LADDER): an ADDITIVE Rung B null-session ladder is
+ * attempted ONLY when Rung A did not match AND the row itself carries task_kind='orphan-signal'
+ * with owner_client_session IS NULL — gated on the ROW's own column, never a caller-supplied
+ * flag, so NFR-1's anti-theft invariant cannot be bypassed by a caller lying about task_kind or
+ * supplying a coincidentally-matching owner_agent/echo against a live-session row. Ladder match:
+ * caller-supplied owner_agent === row.owner_agent AND caller-supplied
+ * original_owner_client_session === JSON.parse(row.payload).original_owner_client_session.
+ *
+ * FR-1: two-statement UPDATE pattern (not a CTE) — statement 1 renews heartbeat_at/expires_at
+ * (+ ttl_seconds if supplied, clamped to the same 60-691200 bounds as task_claim); statement 2
+ * (only run when payload_patch is supplied) shallow-merges payload_patch into the existing
+ * payload JSON and re-serializes. Both statements reuse whichever rung matched in statement 1,
+ * so unpatched fields always survive untouched.
  *
  * Returns {ok:false, expires_at:0} when:
- *   - owner_client_session does not match the row (anti-theft)
+ *   - neither Rung A (owner_client_session) nor Rung B (the null-session ladder) matches (anti-theft)
  *   - lock has expired (let caller TTL-recover)
  *   - DB unavailable
  */
 export function heartbeatTask(
   task_id: string,
-  owner_client_session: string,  // REQUIRED — P1-FINAL (TASK_1980); sole ownership key
+  owner_client_session: string,  // REQUIRED — P1-FINAL (TASK_1980); default (Rung A) ownership key
+  options?: HeartbeatOptions,
 ): HeartbeatResult {
   const db = getCoordinationDb();
   if (!db) return { ok: false, expires_at: 0 };
 
   try {
-    const result = db.prepare(`
-      UPDATE task_locks
-      SET
-        heartbeat_at  = unixepoch('now'),
-        expires_at    = unixepoch('now') + ttl_seconds
-      WHERE
-        task_id              = ?
-        AND owner_client_session = ?
-        AND expires_at >= unixepoch('now')
-    `).run(task_id, owner_client_session);
+    // FR-1: clamp ttl_seconds to the same bounds as task_claim.
+    const ttl = options?.ttl_seconds !== undefined
+      ? Math.min(Math.max(options.ttl_seconds, 60), 691200)
+      : undefined;
 
-    if (result.changes === 0) {
+    // Applies statement 1 (renew heartbeat_at/expires_at, + ttl_seconds if supplied) against
+    // whichever WHERE predicate the caller passes — reused verbatim for statement 2 below so
+    // both statements always target the exact same, already-authorized row.
+    const applyRenew = (whereSql: string, whereArgs: (string | number)[]): number => {
+      const sql = ttl !== undefined
+        ? `UPDATE task_locks SET ttl_seconds = ?, heartbeat_at = unixepoch('now'), expires_at = unixepoch('now') + ? WHERE ${whereSql}`
+        : `UPDATE task_locks SET heartbeat_at = unixepoch('now'), expires_at = unixepoch('now') + ttl_seconds WHERE ${whereSql}`;
+      const args = ttl !== undefined ? [ttl, ttl, ...whereArgs] : [...whereArgs];
+      return db.prepare(sql).run(...args).changes;
+    };
+
+    const LIVE_WHERE = "task_id = ? AND owner_client_session = ? AND expires_at >= unixepoch('now')";
+    let matchedWhere = LIVE_WHERE;
+    let matchedArgs: (string | number)[] = [task_id, owner_client_session];
+
+    // ---- Statement 1, Rung A: live-session sole-key match (P1-FINAL default). ----
+    let changed = applyRenew(matchedWhere, matchedArgs) === 1;
+
+    // ---- Statement 1, Rung B (FR-2): null-session ladder — orphan-signal rows only. ----
+    if (!changed && options?.owner_agent !== undefined && options?.original_owner_client_session !== undefined) {
+      const row = db.prepare(`
+        SELECT owner_agent, payload
+        FROM task_locks
+        WHERE task_id = ? AND task_kind = 'orphan-signal' AND owner_client_session IS NULL
+          AND expires_at >= unixepoch('now')
+      `).get(task_id) as { owner_agent: string; payload: string | null } | null;
+
+      if (
+        row &&
+        row.owner_agent === options.owner_agent &&
+        parseJsonObject(row.payload)["original_owner_client_session"] === options.original_owner_client_session
+      ) {
+        const ladderWhere = "task_id = ? AND task_kind = 'orphan-signal' AND owner_client_session IS NULL AND owner_agent = ?";
+        const ladderArgs: (string | number)[] = [task_id, options.owner_agent];
+        changed = applyRenew(ladderWhere, ladderArgs) === 1;
+        if (changed) {
+          matchedWhere = ladderWhere;
+          matchedArgs = ladderArgs;
+        }
+      }
+    }
+
+    if (!changed) {
       return { ok: false, expires_at: 0 };
+    }
+
+    // ---- Statement 2 (FR-1): payload_patch shallow-merge — only if supplied. ----
+    if (options?.payload_patch !== undefined) {
+      const existingRow = db.prepare(`SELECT payload FROM task_locks WHERE task_id = ?`)
+        .get(task_id) as { payload: string | null } | null;
+      const merged = {
+        ...parseJsonObject(existingRow?.payload), // EC-6: malformed/absent existing payload → {}
+        ...parseJsonObject(options.payload_patch), // malformed patch → {} (non-fatal no-op)
+      };
+      db.prepare(`UPDATE task_locks SET payload = ? WHERE ${matchedWhere}`)
+        .run(JSON.stringify(merged), ...matchedArgs);
     }
 
     // Read the new expires_at
@@ -765,33 +859,75 @@ export function heartbeatTask(
   }
 }
 
+/** FR-2 optional params for {@link releaseTask}. Additive — omitting both fields reproduces pre-FR-2 behavior exactly (NFR-2). */
+export interface ReleaseOptions {
+  /** FR-2 null-session ladder — supply together with original_owner_client_session. Only ever matches orphan-signal rows whose OWN owner_client_session column is NULL (NFR-1). */
+  owner_agent?: string;
+  /** FR-2 null-session ladder — echoes payload.original_owner_client_session (read via the read-only task_list_held probe). */
+  original_owner_client_session?: string;
+}
+
 /**
  * Release a held lock (brief §5 release protocol).
  *
- * P1-FINAL (TASK_1980): sole matching key is owner_client_session (per-CLAUDE_CODE_SESSION_ID UUID).
- * Fallback rungs (owner_agent, owner_session) removed — wrong session cannot release another's lock.
+ * P1-FINAL (TASK_1980): default (Rung A) matching key is owner_client_session
+ * (per-CLAUDE_CODE_SESSION_ID UUID). Fallback rungs (owner_agent, owner_session) removed from
+ * that rung — wrong session cannot release another's lock via owner_client_session alone.
+ *
+ * FR-2: an ADDITIVE Rung B null-session ladder is attempted ONLY when Rung A did not match AND
+ * the row itself carries task_kind='orphan-signal' with owner_client_session IS NULL — gated on
+ * the ROW's own column, never a caller-supplied flag (NFR-1: cannot be bypassed against a
+ * live-session lock). Ladder match: caller-supplied owner_agent === row.owner_agent AND
+ * caller-supplied original_owner_client_session === JSON.parse(row.payload).original_owner_client_session.
  *
  * Return shape:
- *   {ok:true, released:1}  — row was deleted (lock released by correct owner).
+ *   {ok:true, released:1}  — row was deleted (lock released by correct owner, either rung).
  *   {ok:true, released:0}  — no-op: wrong owner, non-existent task, or expired+GC'd (NOT an error).
  *   {ok:false, error}      — DB failure only (fail-loud).
  */
 export function releaseTask(
   task_id: string,
-  owner_client_session: string,  // REQUIRED — P1-FINAL (TASK_1980); sole ownership key
+  owner_client_session: string,  // REQUIRED — P1-FINAL (TASK_1980); default (Rung A) ownership key
+  options?: ReleaseOptions,
 ): ReleaseResult {
   const db = getCoordinationDb();
   if (!db) return { ok: false, error: "db_unavailable" };
 
   try {
-    const result = db.prepare(`
+    // ---- Rung A: live-session sole-key match (P1-FINAL default; unchanged when options omitted). ----
+    const liveResult = db.prepare(`
       DELETE FROM task_locks
       WHERE task_id              = ?
         AND owner_client_session = ?
     `).run(task_id, owner_client_session);
 
-    // changes()=0 is a clean no-op (wrong owner, non-existent, or GC'd) — NOT an error.
-    return { ok: true, released: result.changes === 1 ? 1 : 0 };
+    if (liveResult.changes === 1) {
+      return { ok: true, released: 1 };
+    }
+
+    // ---- Rung B (FR-2): null-session ladder — orphan-signal rows only. ----
+    if (options?.owner_agent !== undefined && options?.original_owner_client_session !== undefined) {
+      const row = db.prepare(`
+        SELECT owner_agent, payload
+        FROM task_locks
+        WHERE task_id = ? AND task_kind = 'orphan-signal' AND owner_client_session IS NULL
+      `).get(task_id) as { owner_agent: string; payload: string | null } | null;
+
+      if (
+        row &&
+        row.owner_agent === options.owner_agent &&
+        parseJsonObject(row.payload)["original_owner_client_session"] === options.original_owner_client_session
+      ) {
+        const ladderResult = db.prepare(`
+          DELETE FROM task_locks
+          WHERE task_id = ? AND task_kind = 'orphan-signal' AND owner_client_session IS NULL AND owner_agent = ?
+        `).run(task_id, options.owner_agent);
+        return { ok: true, released: ladderResult.changes === 1 ? 1 : 0 };
+      }
+    }
+
+    // Neither rung matched — clean no-op (wrong owner, non-existent, or GC'd) — NOT an error.
+    return { ok: true, released: 0 };
   } catch (err) {
     console.error("[coordinationStore] releaseTask error", err);
     return { ok: false, error: "db_error" };
