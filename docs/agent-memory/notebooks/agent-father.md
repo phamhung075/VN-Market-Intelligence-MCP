@@ -1,5 +1,60 @@
 # Agent Father — Notebook
 
+## Keep (maintenance) 12:58 — router-spawned, no explicit intent → defaulted to keep.md
+- Trigger: manual (router spawn gave no `trigger`/`intent`; per main.md dispatch-table default,
+  routed to `keep.md`). Pre-Check gate: `git diff --name-only HEAD~3..HEAD` touched zero
+  `.claude/agents/*.md` / `docs/agents/*/flow/*.md` files → Steps 1-2 (scan-orphans) SKIPPED per
+  spec, went straight to Steps 3-5.
+- Agents scanned: 42 (`.claude/agents/*.md`), Top-5 checks (`sweep-fixes.md` Step 3).
+- **Root-cause finding, fixed:** Checks 1/3/5 as literally written ("Grep '<pattern>' <agent>.md")
+  target the thin `.claude/agents/<id>.md` stub — but the real Employee Card YAML (`always_load`,
+  `boundary_rules`, `version:`) lives in `docs/agents/<id>/init.md` since the `dc430566c`
+  consolidation. Ran literally first: 42/42 "FAIL" on checks 1 and 3 — a 100% fail rate that was
+  itself the tell (cf. `feedback_fleetwide_gate_validated_on_one_file_optout_allowlist` — wrong
+  target, not wrong agents). Did NOT auto-fix 42 files on a false signal. Re-ran against the
+  correct target (`init.md`): only `semble-search` genuinely lacks fail-loud-protocol/
+  boundary_rules/version (it's a deliberate minimal tool-wrapper doc, no `agent:` YAML block at
+  all — self-declares "Tool-style agent... no multi-step flow" in its own `flow/main.md`).
+  Auto-fix applied (1): edited `docs/agents/agent-father/flow/sweep-fixes.md` Step 3 table to
+  point checks 1/3/5 at `docs/agents/<agent-id>/init.md` explicitly, with a note — prevents this
+  exact false-positive class recurring on every future keep cycle. Zero agent files touched.
+- **Escalation 1 (real, corroborated):** Check 2 (Error Boundary) — re-ran case-insensitive
+  (`grep -i "error boundary"`; literal-case grep also false-positived, live text uses "Error
+  boundary" lowercase-b in ~half the files). 8 microservice dev-* agents (dev-alert-engine,
+  dev-api-gateway, dev-kinh-dich, dev-macro-indicators, dev-pdf-extractor, dev-rag-service,
+  dev-stock-price, dev-technical-analysis) all route through the shared
+  `docs/agents/developer/flow/microservice-main.md` (165L) — grepped it directly, zero "error"/
+  "boundary" hits anywhere in the file. No documented error-handling protocol for a shared TDD/
+  branch/commit flow used by 8 live agents. One-file fix would remediate all 8. NOT auto-fixed
+  (Check 2's own table: manual authoring only). Not my zone to author (developer/architect's
+  flow) — surfaced to PO handoff below, not silently dropped.
+- **Escalation 2 (low severity, guide-taxonomy gap):** semble-search's Employee-Card gap above —
+  recommend PO/agent-father backlog decide whether `AGENT_CREATION_GUIDE.md` needs a lighter
+  "Tool Agent" template class (haiku, 2-tool read-only wrapper, no channels/constraints/lifecycle)
+  so future audits stop re-flagging a deliberate design choice as a violation.
+- Step 5 stale notebooks (>30d, informational only): idea-forge (96d), market-analyst (96d),
+  qa-responder (71d), semble-search (96d).
+- Side-observation (NOT scored — Steps 1-2 gated off this cycle): 46 notebook files under
+  `docs/agent-memory/notebooks/` vs 42 registered `.claude/agents/*.md` — a 4-file gap. Left for
+  the next cycle where the Pre-Check gate actually opens (or an explicit PO-requested scan-
+  orphans run) rather than hand-rolling Steps 1-2's methodology out of turn.
+- Step 5b (`team-tool-recheck.md`) re-run unconditionally per spec: wrote
+  `docs/agent-memory/health/team-tool-recheck-2026-08-07-1258.md`. Positive control held —
+  alert-commander CRITICAL found (Bash + unqualified "no other writes" claim, origin `610110e16`
+  2026-07-31), same as market-watcher/news-scout. All 3 unchanged from the 2026-08-06T13:18Z run
+  (day+1, still unresolved) — RESOLVED THIS CYCLE = N/A. Mechanical-enforcement status unchanged:
+  PROSE-ONLY (0 `write_boundary` keys in system-map.json; `.claude/settings.json`'s sole
+  `PreToolUse` matcher is `Glob|Grep` for graphify, not `Write|Edit`).
+- No `mcp__gateway__call_tool` MCP binding in this session either (recurring structural gap for
+  this agent identity, same class already logged S23/S28/S30 in earlier entries this notebook
+  cycled out) — used keep.md's documented gateway-less direct-pathspec-commit fallback for all
+  writes this cycle, no task_claim/commit-mutex wrapper attempted.
+- PO handoff (Step 7, findings only — no nested `Agent` spawn grant, same structural gap as
+  `feedback_devteam_flow_needs_nested_agent_spawn_subagent_cannot`): Escalation 1 (shared
+  microservice-main.md Error Boundary gap, 8 agents) is new-backlog-candidate severity MEDIUM;
+  Escalation 2 (semble-search guide-taxonomy) severity LOW; the 3 CRITICAL tool-boundary findings
+  are carried-forward (already PO-known from the prior two `team-tool-recheck` runs, not new).
+
 ## Verify+flip (dev-team S2 dispatcher-wrap) 2026-08-07T02:03Z FIX-REFINE-SUBFLOW-OPTIONC-CONTRACT-DRIFT — AC-1..AC-6 confirmed complete, REVIEW
 - Dispatch scoped to the row's BROADER AC-1..AC-5 deliverable (AC-6 already done, AC-7/
   `po_action_item_1` explicitly out of scope — both handled by prior dispatches). Read all 6
@@ -72,64 +127,3 @@
   `docs/agents/system-auditor/handlers.md`, `docs/agents/system-auditor/audit-dimensions.md`. No
   `register.md`/`register-job-*.md` edits needed — none of the `CronCreate` call bodies changed,
   only the guard match logic that decides when to run them.
-
-## Verify (dev-team S2 resume, P0) 2026-08-06T23:01Z FIX-REFINE-SUBFLOW-OPTIONC-CONTRACT-DRIFT — AC-7 recheck #2, still open
-- Resumed own prior in-flight task after original lock TTL lapsed w/o release. Router had
-  already re-claimed `task:FIX-REFINE-SUBFLOW-OPTIONC-CONTRACT-DRIFT` under my session
-  (`f298ccf7...`, `claimed_at=2026-08-06T22:55:43Z`) before spawn. No `mcp__gateway__call_tool`
-  binding in this session either (same gap as the 19:12Z instance) — heartbeat-extended via
-  `docker exec`+`bun:sqlite` direct `UPDATE` on live `/app/data/coordination.db` matching
-  `heartbeatTask()`'s exact SQL verbatim (not a business-logic bypass — same statement the MCP
-  tool runs); `expires_at` now `2026-08-07T00:00:17Z`.
-- RAW re-verified against live `/app/data/market.db` (same method, independent re-run, not
-  trusted from the 19:12Z snapshot): report `a3a41225` (VHM_2026_Q1) unchanged —
-  `refine_status='PENDING'`, `bctc_refined_units` count **0**. AC-7 still NOT met.
-- Queue position unchanged: replicated `get_bctc_pending_refine`'s exact Branch-3 SQL live — KBC
-  (`76129128`) and HSG (`ae1f30bf...`) still both strictly ahead of VHM in
-  `ORDER BY parsed_at ASC`. KBC now has 24 units (13 DONE + 11 FAILED, all terminal
-  `window_status`) but `refine_status` is still `PENDING` (not PARTIAL/DONE) — KBC's PDF is 56
-  pages, more windows likely remain unpushed, so it has not cleared head-of-line. HSG still 0
-  units pushed. No cron slot fired between the 19:25Z snapshot and now — only `refine-bctc-
-  slot-4` is `enabled:true` (cron `30 16 * * *`), `last_fired` unchanged at
-  `2026-08-06T16:36:27Z`; its next fire isn't due until `2026-08-07T16:30Z`.
-- Did NOT re-enable slots 1-3, did NOT force/fabricate a drain event — same call as the prior
-  cycle. Zero code diff. Left task `IN_PROGRESS`, heartbeat-only this cycle. Next real checkpoint:
-  slot-4's `2026-08-07T16:30Z` fire, or a future report_id-targeted force-fire.
-- Housekeeping flag (out of this task's scope, noted not fixed): `sprint-COWORK-GUARANTEED-
-  SLOT-CATCHUP-agent-father.md` decision journal was already at 604L (>600L cap) before this
-  cycle, silently breached by the 19:12Z entry with no `CAP-REACHED` marker. Per skill's own
-  protocol, appended the marker + rolled this cycle's STEP to `-2.md` rather than repeat the
-  breach; a `bug`-channel telegram alert is owed but not sent (no telegram binding this session).
-
-## TE-T05 (router-direct dispatch, P1) 2026-08-06T19:25Z — end-0-cowork composite shipped
-- Built `.claude/skills/end-0-cowork/SKILL.md` (87L, target ~110L) mirroring `step-0-cowork`'s
-  shape: Step 0 decision-journal pointer, Step 1 notebook-write pointer carrying a new NO-OP
-  rule (notebook write + session summary = ONE write; skip if already settled this cycle —
-  absorbs the deleted `session-log-cowork`), Step 2 condensed doc-self-heal, Step 3
-  self-critique TRIGGER-CHECK-only (T1-T5 + SC-0 pilot-scope gate inline, full 118L flow
-  lazy-loads only on fire). `decision-journal`/`notebook-write`/`doc-self-heal`/`self-critique`
-  verified byte-identical after (`git diff --stat` clean) — pointer-only, no forked copies
-  (NFR-1: this is the exact SSOT-drift class AC-2a exists to prevent).
-- Repointed all 29 live flow-file consumers (re-grepped live, matches ba's 29 not the brief's
-  stale 30) from `cowork-end-cycle/SKILL.md` to the composite. Deleted `session-log-cowork/
-  SKILL.md` (0 direct refs, ba-reconfirmed) AND `cowork-end-cycle/SKILL.md` itself (0 consumers
-  left post-repoint — this row's own title says "6-file chain into ONE composite", not 5+1
-  orphan; only remaining ref was the already-DEPRECATED `append-session-record` redirect,
-  left untouched, out of scope per FR-7/UC-MDH-P2). Deleted the 3 ratified skip-parentheticals
-  (news-scout + bctc-analyst `stage-log-notify.md`, unified-agent `chef-dish.md`) — content-grep
-  located them (line numbers had drifted from the 07-12 brief, exactly as ba's spec flagged).
-  Gave fb-market-poster net-new end-0-cowork parity (doc-self-heal + self-critique) across its
-  3 posting sub-flows — 0 prior invocations confirmed live, matching ba's finding.
-- Fixed 2 stale cross-refs my own repoint would otherwise have left stranded:
-  `developer/flow/main.md`'s "(chains session-log...)" annotation and `cycle-bootstrap/
-  SKILL.md`'s informational End-of-Cycle pointer (outside the 29-file flow-dir grep scope,
-  found by a repo-wide follow-up grep before declaring done).
-- B2 (cowork-boundary vs cowork-error-boundary dedup, ~20k tok/day, unrelated file pair) —
-  SPLIT, not bundled: filed `docs/signals/po-20260806T191500Z.json` as a new-backlog-candidate
-  (needs its own consumer-audit; bundling would muddy this row's higher-risk notebook-write
-  pointer diff). Same signal also flags `scripts/audits/notebook-class-fence.sh:35`'s SCAN_SET
-  grep (`"cowork-end-cycle\|notebook-write"`) as now under-scanning post-repoint — out-of-zone
-  (scripts/), routed to developer/dev-team, non-blocking.
-- Commit(s): see RETURN. Board is QA-GATED per the row's own `note` — did not self-close;
-  lane-move `in_progress[]→review[]`/`next_agent:qa` left to router/PO per `commit_zone.excluded`
-  (orch-state.json not this agent's commit surface), same as every prior TE-T## agent-father row.
