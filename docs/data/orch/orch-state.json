@@ -93,11 +93,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "active_task_id": null,
-    "next_agent": "router",
-    "updated_at": "2026-08-07T02:04:39Z",
-    "updated_by": "agent-father (FIX-REFINE-SUBFLOW-OPTIONC-CONTRACT-DRIFT AC1-6 verified complete, flipped to REVIEW)"
+    "status": "in_progress",
+    "active_task_id": "FIX-COWORK-SIGNAL-FILENAME-CYCLEID-KEYING",
+    "next_agent": "ba",
+    "next_action": "Supervised-Lane Sweep claim of FIX-COWORK-SIGNAL-FILENAME-CYCLEID-KEYING — spawn ba DIRECTLY (no zone-detect indirection; lane already resolved at promote time). supervised/plan_only preserved — do not clear.",
+    "updated_at": "2026-08-07T04:14:52Z",
+    "updated_by": "dev-team (supervised-lane sweep)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -3287,6 +3288,20 @@
         "payload_ref": null,
         "provenance": "detector",
         "audit_cycle_tag": "cron:auditor-t1:2026-08-07T04:00Z"
+      },
+      {
+        "id": "router-20260807T042500Z-analysisonly6th",
+        "ts": "2026-08-07T04:25:00Z",
+        "from": "router",
+        "to": "po",
+        "type": "recurring-bug-corroboration",
+        "severity": "WARN",
+        "summary": "6th defective occurrence (8th total spawn) of leaf-agent analysis-only-exit, FIRST cross-agent-type instance (news-scout, not system-auditor/refine_bctc_md) and a PARTIAL variant: news-scout-offhours (abfdeb71a996e0892, 04:00Z cowork tick) self-reported 4 signals posted (10431/10432/10433/10434) + log_agent_work id=1797. Signals independently corroborated as real via alert-commander-critical c66 notebook (commit 79eaf43e5) consuming those exact 4 IDs from the bus. But news-scout own notebook cycle-log write never happened: grep on news-scout.md shows newest section still c236 (2026-08-06T20:07:30Z), last commit 417573d71 predates this cycle, git status clean (not even an uncommitted draft). Agent completed the signal-post half of its 2-step action loop for real then silently skipped the notebook-write half - same systemic write-loop-skip root cause as occurrences 1-5, just partial (1-of-2) instead of zero-of-N, and a new agent type. See feedback_leaf_agent_analysis_only_exit_recurring_pattern_20260806.md 6th-occurrence entry for full detail (now 6 defective / 2 clean across 8 spawns).",
+        "status": "triaged",
+        "payload_ref": null,
+        "provenance": "router-raw-verify",
+        "audit_cycle_tag": "cron:cowork:2026-08-07T04:00Z",
+        "disposition_hint": "No new board row warranted - FIX-LEAF-AGENT-ANALYSIS-ONLY-EXIT-NARRATES-INSTEAD-OF-EXECUTING (backlog[]/P1/agent-father) remains the correct owning fix, now with evidence its scope should explicitly cover partial (not just zero-of-N) loop completion and agent types beyond system-auditor/refine_bctc_md. The 4 real signals were not lost (persisted to bus, already consumed downstream) - only news-scout own audit-trail/cycle-log record is missing."
       }
     ],
     "last_triaged_at": "2026-07-29T06:25:00Z",
@@ -8804,28 +8819,6 @@
         "created_at": "2026-07-17T01:23:19Z",
         "created_by": "po-scoped-triage-20260717",
         "verify_note": "PLAN-ONLY, minted by scoped PO report-triage 2026-07-17T01:23Z after router RAW-verified the no-op resurrection cycle (commit 9dae10376). Immediate re-recurrence for THIS instance already neutralized by annotating SPIKE-BCTC-EXTRACTION-DORMANT-MASS-ENRICHFAIL-FLOOD.ac3_followup as resolved-to-archive same tick; this row hardens the CLASS so other archived tasks with sibling FKs are not falsely resurrected. Detector-FP fix (high-value per project norms)."
-      },
-      {
-        "id": "FIX-INFRA-CRITICAL-VOLUME-PRESENCE-HEALTHCHECK",
-        "title": "Post-rebuild critical-volume PRESENCE healthcheck: fail-loud (and where safe auto-reseed) when a producer-critical named/model-cache volume is empty, so a VM-rebuild cannot silently re-empty pek_model_cache (or any manifest volume) without alerting — the 2026-07-15 rebuild wiped TWO volumes (market_data + pek_model_cache) and only market_data was caught",
-        "owner": "ops",
-        "status": "BACKLOG",
-        "zone": "infra",
-        "priority": "high",
-        "type": "FIX",
-        "depends": [],
-        "note": "Filed from SPIKE-BCTC-EXTRACTION-DORMANT-MASS-ENRICHFAIL-FLOOD (AC-1+AC-2, 2026-07-17). ROOT GAP: the 2026-07-15 hypervisor VM crash/rebuild destroyed TWO named volumes — market_data AND pek_model_cache. market_data was CAUGHT and recovered same day (commit 5ba622eca: July-1 host backup restored + all 9 services switched to ./data/live bind-mount). pek_model_cache was NOT caught: left EMPTY (du 12K, only stray yolo/settings.yaml; doclayout_yolo_ft.pt gone) and stayed empty ~2 days, silently crashing EVERY /pek-extract call (FileNotFoundError) => PEK-layout producer dormant. Nothing alerted on the empty volume; the gap only surfaced ~2 days later via a downstream 76+ RECONCILE-EXHAUSTED report FLOOD when bctcExtractReconcileJob mass-terminalized the watchlist backlog it could not enrich. Presence must assert CONTENT (the specific required weights), not merely that the mount exists / du>0. AC (proposed, ops/architect to refine): (1) a durable session-independent (launchd-class, mirror com.vn-market.cowork-guaranteed-slot-firer.plist) healthcheck asserts every producer-critical volume/model-cache contains its REQUIRED artifacts — for pek_model_cache: doclayout_yolo_ft.pt (+ PaddleOCR weights) present and loadable, not just non-empty; (2) the critical-volume manifest (volume -> required files -> re-seed script) is enumerated from an SSOT (docs/data/system-map.json or a dedicated manifest), NEVER hardcoded per NO-HARDCODE standing; (3) on missing/empty, emit ONE fail-loud bug-channel alert that NAMES the committed idempotent recovery (scripts/pek-fetch-weights.sh, commit e418d606d, brief docs/architecture-briefs/2026-05-27-pek-weights-provisioning.md) and, where safe+idempotent, auto-invokes it (populate-empty-volume is low-risk, NOT a destructive swap); (4) fire on boot/post-rebuild AND on a periodic cadence so a future silent wipe is caught in minutes not days; (5) RAW-verify by emptying a scratch volume and confirming the alert (and optional auto-reseed) fires. Scope guard: this is the DURABLE cross-cutting infra guard; it does NOT replace the in-flight ops one-shot PEK re-seed (restores current prod) nor the refine-producer durable fix FIX-BCTC-REFINE-DURABLE-TRIGGER-BACKSTOP (a different producer). PLAN-ONLY: do NOT dispatch — schedule after ops confirms /pek-extract resumes.",
-        "created_at": "2026-07-17T03:04:26Z",
-        "created_by": "po-scoped-triage-20260717",
-        "source": "docs/spikes/SPIKE-BCTC-EXTRACTION-DORMANT-MASS-ENRICHFAIL-FLOOD.md",
-        "related": [
-          "SPIKE-BCTC-EXTRACTION-DORMANT-MASS-ENRICHFAIL-FLOOD",
-          "FIX-BCTC-REFINE-DURABLE-TRIGGER-BACKSTOP"
-        ],
-        "supervised": true,
-        "supervised_by": "po-scoped-triage-20260717",
-        "supervised_note": "PLAN-ONLY / anomaly->BACKLOG. ops-owned infra FIX, null next_agent, no backlog-detail entry -> removed from BOUNDED-1 idle auto-pickup (code non-dev-owner gate is detail-blind, would mis-route to a developer placeholder). Do NOT dispatch; groom+schedule after ops confirms PEK re-seed.",
-        "plan_only": true
       },
       {
         "id": "FIX-REFINE-PAGECOUNT-ZERO-COVERLETTER-MASK",
@@ -15529,43 +15522,6 @@
         "architect_crossref_20260806": "Design for this row's AC1-3/AC5 (window-anchor propagation, live+catchup key agreement) landed as Component A inside sibling row FIX-CHEF-PUBLISHED-MARKER-RELEASE's brief (docs/architecture-briefs/2026-08-06-cowork-marker-lifecycle-anchor-and-release.md S2), per PO's own \"one lifecycle, one design\" ruling covering both rows. NOT flipping this row's own status/next_agent/priority here -- this cycle's router assignment named FIX-CHEF-PUBLISHED-MARKER-RELEASE + 2 others, not this row; leaving the lane-move decision to PO/router so scope stays bounded. Flagging so whoever implements either row reads the SAME brief rather than re-deriving the scheduled_utc_time propagation mechanism twice."
       },
       {
-        "id": "FIX-COWORK-SIGNAL-FILENAME-CYCLEID-KEYING",
-        "type": "FIX",
-        "size": "M",
-        "priority": "P1",
-        "status": "READY",
-        "zone": "cross-service/",
-        "owner": "po",
-        "next_agent": "ba",
-        "plan_only": true,
-        "sprint": "COWORK-RELIABILITY",
-        "created_at": "2026-07-15T21:59:35Z",
-        "created_by": "po (triage-signals cow-20260715T212838)",
-        "origin_signal_id": "cow-20260715T212838",
-        "detail_ref": "docs/handoffs/2026-07-15-bctc-analyst-self-edit-correct-and-signal-filename-clobber.md",
-        "title": "COWORK SIGNAL/SYNTHESIS filenames are date-keyed (bctc: ticker+date+mode; chef synthesis: date_vn+dish_type; tnb notebook) not cycle_id -> intra-day cycles collide on ONE path; a between-drains write silently destroys the prior cycle's UNROUTED signal = a dropped escalation with no error anywhere. 3rd instance of one root class same day; CONFIRMED clobber today: processed/bctc_signal_FPT_20260715_routine.json signal 9240 overwritten by 8120.",
-        "note": "MINTED 2026-07-15 by po from signal cow-20260715T212838 (data-integrity, MED). ROOT CAUSE: signal/synthesis filenames carry ticker+date+mode (or date_vn+dish_type) with NO cycle discriminator; bctc-analyst runs 4x/day (cron 0 15,18,21,0 UTC) so all 4 cycles collide on the same path (39 such filenames in processed/). HARM (the real one, not the lost artifact): the drain READS these files to route signals; if cycle N writes the same filename as cycle N-1 between drains, N silently destroys N-1's UNROUTED signal and it is never triaged. Today the hourly drain interleaved so nothing was lost -- luck, not a guard; a late/missed drain loses a signal silently. 3 INSTANCES SAME CLASS SAME DAY: (1) chef synthesis date_vn+dish_type -> run2 clobbered run1 (Write, silent); (2) tnb notebook same collision, caught ONLY by the Edit tool stale-read check; (3) bctc signals ticker+date+mode -> 9240 overwritten by 8120. feedback_recurring_bug_escalation (2+ -> block) qualifies. SAME ONE-LINE FIX EACH TIME: key the filename by cycle_id (bctc already carries one; chef's is already in metadata). SCOPE (ba/architect own HOW): the docs/signals/*.json writers (bctc-analyst, chef/unified-agent, tnb) + docs/data/unified-agent-synthesis-<DATE>-<SLOT>.json + the Signal Bus naming contract docs/standards/mcp-tools.md (Naming Contract) + the drain reader that consumes filenames. DISTINCT-FROM (checked, none cover this): FU-CTG-DISCOVERY-FILENAME-FILTER (VPS HNX discovery CV_CBTT filename detection), FU-BACKFILL-REAL-FILENAMES (backfill real-filename heuristic), FIX-COWORK-SCHEDULE-STALE-BASE-CLOBBER. OBSERVATION folded (mechanism UNPROVEN -- do NOT diagnose, NOT a blocker): signal_id regressed 9240->8120 over 20h same file/tool/sequence; parsimonious candidate = SQLite INTEGER PRIMARY KEY WITHOUT AUTOINCREMENT reuses max(rowid)+1 after the drain prunes highest rows; NOT probed because the LIVE DB is a named volume, not docs/signals/signals.db (feedback_live_db_is_named_volume_not_host_data); cheap check for the implementer = does the SERVING schema use AUTOINCREMENT. If ids ARE reused, any cross-time signal_id reference can silently re-bind to an unrelated later signal (worse than an orphan FK -- looks resolved). AC: (1) two same-day cycles for the same ticker/mode never share a signal/synthesis path; (2) a between-drains double-write of the same ticker+date+mode cannot silently destroy an unrouted signal; (3) the drain-reader change (if any) preserves routing of both cycles' signals.\n\n[po 2026-07-19T20:31:00Z c114 corroboration -- priority/owner UNCHANGED, no re-mint] 4th instance of this class on the chef-synthesis leg, plus a NEW harm mode this row should absorb: date-keyed filenames defeat AUDIT, not just retention, because the notebook 'Synthesis: <path>' line is NOT a reliable persistence receipt. RAW-verified: unified-agent.md's 2026-07-17 intraday 14:13Z entry cites docs/data/unified-agent-synthesis-2026-07-17-intraday.json, but that file's metadata.cycle_id is intraday-2026-07-17T04:13:00Z with mtime 04:21Z -- the 14:13Z run cited a path it did NOT write (its write was either refused or silently aimed at the 04:13 run's artifact). SECOND defect on the same leg: Step 7.6 specifies CYCLE_DATE = VN date, but the convention is applied INCONSISTENTLY -- the 07-17 evening run wrote -2026-07-17-evening (UTC date) while the 07-18 run wrote -2026-07-19-evening (VN date), and the 07-14 19:50Z run left BOTH -07-14-evening and -07-15-evening 25s apart. Consequence: no auditor can deterministically compute the expected filename for a given cycle, which is precisely why tran-ngoc-bau has now TWICE mis-framed an ABSENT-file defect as a STALE-file defect. The VN-vs-UTC half overlaps FIX-CHEF-EVENING-DUP-DATE-MISLABEL-INVESTIGATE (P2); the cycle_id-keying fix stays here as the structural remedy.",
-        "supervised": true,
-        "supervised_at": "2026-07-16T17:02:01Z",
-        "supervised_by": "po (autolaunch_safety_hold adjudication, dev-team 16:37Z)",
-        "supervised_note": "BOUNDED-1 stopgap: plan_only design/spec ask with a non-dev board next_agent that leaks past the detail-only promote gates (inline plan_only + no backlog-detail entry). Held from idle auto-pickup so BOUNDED-1 reaches genuinely dev-routable rows. Deliberate router/ba/architect dispatch is UNAFFECTED. Durable structural fix: FIX-DEVTEAM-BOUNDED1-EFFECTIVE-DISPOSITION-BOARD-FALLBACK-GATE (once shipped this stamp is belt-and-suspenders).",
-        "tnb_intraday_symptom": {
-          "at": "2026-07-17T20:57:55Z",
-          "by": "po-tnb-c112-triage",
-          "datum": "F-INTRADAY-SYNTHESIS-STALE-MULTIFIRE (MED) — tnb c112, 2026-07-17: NEW symptom variant of THIS root (synthesis file docs/data/unified-agent-synthesis-<DATE>-<SLOT>.json not cycle_id-keyed). unified-agent-synthesis-2026-07-17-intraday.json on disk reflects ONLY the FIRST same-day intraday cycle (cycle_id intraday-2026-07-17T04:13:00Z); the later 14:13Z cycle (VNM/HCM/VNH/BID, 4 clusters) that the notebook cites writing to the SAME filename NEVER LANDED — FIRST-WRITE-WINS, the INVERSE of this row's documented last-write-clobber (chef synthesis run2 clobbered run1). Confirms the same-path collision yields UNDEFINED/inconsistent write semantics across dish types (chef-evening overwrites correctly across its 2-pass day; intraday appears first-write-wins). Creates an audit blind spot for the latest same-day intraday content on any file-proxy audit.",
-          "ac_refinement": "The cycle_id-keying fix MUST guarantee BOTH same-day intraday cycles land on their own path + stay independently queryable REGARDLESS of write-order semantics. Append AC: any day with 2+ non-silent intraday fires surfaces every non-silent cycle's synthesis on disk (no first-write-wins drop, no last-write-clobber).",
-          "disposition": "FOLD not re-mint — subsumed by this row's cycle_id-keying fix (scope already lists unified-agent-synthesis-<DATE>-<SLOT>.json + the chef/unified-agent writer).",
-          "source": "docs/handoffs/tnb-audit-latest.md#F-INTRADAY-SYNTHESIS-STALE-MULTIFIRE"
-        },
-        "cycle_id_window_anchor_caution_20260722": "[po 2026-07-22T20:10Z, advisory annotation only — scope/priority/owner UNCHANGED] CAUTION before implementing: cycle_id AS CURRENTLY EMITTED IS NOT A SAFE DEDUP/COLLISION KEY. The 2026-07-22 chef-evening double-publish produced cycle_id evening-2026-07-22T19:56:00Z and evening-2026-07-22T20:00:37Z for the SAME scheduled window — i.e. cycle_id is keyed to RUN-START, so two peers in one window get two different cycle_ids and re-keying filenames on it would re-ship the collision this row exists to close (it would stop intra-day OVERWRITES but silently permit duplicate co-existing artifacts, which is what happened tonight: two synthesis files for one window). Adopt the same window anchor mandated by FIX-CHEF-MARKER-KEY-WINDOW-ANCHOR (scheduled cron fire-window in UTC, never a leaf-side `date`/run-start read) so the filename key and the mutex key agree by construction.",
-        "updated_at": "2026-08-06T07:33:38Z",
-        "po_measurement_20260730T2148": "MEASURED CORROBORATION + a second, worse symptom than filename collision. (A) FREQUENCY: the identical 8-file set bctc_signal_{BID,FPT,FRT,GEX,HPG,MWG,VCB,VIX}_20260730_routine.json was drained and routed-to-po FOUR times on 2026-07-30 alone - commits c0cbb756f, 236310900 (18:07Z), 23aeea6ed (21:07Z), 072541471 (21:37Z) - i.e. 32 PO-triage routing events for 8 distinct facts, plus a 5th earlier drain (4737c562d 01:17Z) on a different ticker set. Date-only keying is the mechanism: the filename carries no time/cycle component, so every cycle rewrites the same path. (B) THE WORSE SYMPTOM, not previously on this row: the re-written files are NOT byte-identical re-emissions - they are DIFFERENT ANALYSES WITH A DIFFERENT FIELD SCHEMA overwriting each other at the same path. `git diff 236310900 23aeea6ed -- docs/signals/processed/bctc_signal_HPG_20260730_routine.json` shows the 18:07Z revision carrying esc3_guard_held/esc4_result/esc5_result/e3_cache/trick_summary/trick_confidence/kd_reading/cycle_id/generated_at and the 21:07Z revision carrying NONE of them (different prose, different keys, only esc3_status survives); the BID pair shows the same instability (quarantine/kd_durability replaced by roe_pct/pe/valuation_verdict/kinhdich{}/report_overdue/cycle_tick_utc/slot). Any downstream consumer parsing these fields breaks non-deterministically depending on which cycle last wrote the file, and the prior cycle's analysis survives only in git. Fix scope should therefore cover the emitter's field CONTRACT (a stable schema) alongside the filename keying - cycle-id keying alone preserves every revision but leaves consumers unable to parse them. next_agent=ba is still right.",
-        "promoted_at": "2026-08-06T07:33:37Z",
-        "promoted_by": "dev-team (supervised-lane sweep)",
-        "promotion_note": "Supervised-Lane Sweep — assigned dispatch_lane='ba' (priority_rank=1); supervised/plan_only flags preserved, gate NOT disabled — see FIX-BOUNDED1-SUPERVISED-LANE-NO-SWEEPER",
-        "dispatch_lane": "ba"
-      },
-      {
         "id": "FIX-CHEF-PUBLISHED-MARKER-RELEASE",
         "type": "FIX",
         "size": "S",
@@ -15869,6 +15825,33 @@
         "verification_gate": "Fixture replay of the live po.md shape resolves to -7 (AC-5) AND a re-measure of docs/agent-memory/decisions/ shows no journal gaining STEP entries after its own CAP-REACHED marker on a subsequent session.",
         "po_note_20260806T2331": "Found while PO was writing its OWN journal entry for this tick and checked its cap state first — i.e. found by doing the thing the skill governs, not by an audit sweep. PO wrote this tick's entry to a fresh -7.md rather than appending to the 660L base, which is the manual workaround this row exists to make unnecessary.",
         "updated_at": "2026-08-06T23:35:45Z"
+      },
+      {
+        "id": "FIX-INFRA-CRITICAL-VOLUME-PRESENCE-HEALTHCHECK",
+        "title": "Post-rebuild critical-volume PRESENCE healthcheck: fail-loud (and where safe auto-reseed) when a producer-critical named/model-cache volume is empty, so a VM-rebuild cannot silently re-empty pek_model_cache (or any manifest volume) without alerting — the 2026-07-15 rebuild wiped TWO volumes (market_data + pek_model_cache) and only market_data was caught",
+        "owner": "ops",
+        "status": "READY",
+        "zone": "infra",
+        "priority": "high",
+        "type": "FIX",
+        "depends": [],
+        "note": "Filed from SPIKE-BCTC-EXTRACTION-DORMANT-MASS-ENRICHFAIL-FLOOD (AC-1+AC-2, 2026-07-17). ROOT GAP: the 2026-07-15 hypervisor VM crash/rebuild destroyed TWO named volumes — market_data AND pek_model_cache. market_data was CAUGHT and recovered same day (commit 5ba622eca: July-1 host backup restored + all 9 services switched to ./data/live bind-mount). pek_model_cache was NOT caught: left EMPTY (du 12K, only stray yolo/settings.yaml; doclayout_yolo_ft.pt gone) and stayed empty ~2 days, silently crashing EVERY /pek-extract call (FileNotFoundError) => PEK-layout producer dormant. Nothing alerted on the empty volume; the gap only surfaced ~2 days later via a downstream 76+ RECONCILE-EXHAUSTED report FLOOD when bctcExtractReconcileJob mass-terminalized the watchlist backlog it could not enrich. Presence must assert CONTENT (the specific required weights), not merely that the mount exists / du>0. AC (proposed, ops/architect to refine): (1) a durable session-independent (launchd-class, mirror com.vn-market.cowork-guaranteed-slot-firer.plist) healthcheck asserts every producer-critical volume/model-cache contains its REQUIRED artifacts — for pek_model_cache: doclayout_yolo_ft.pt (+ PaddleOCR weights) present and loadable, not just non-empty; (2) the critical-volume manifest (volume -> required files -> re-seed script) is enumerated from an SSOT (docs/data/system-map.json or a dedicated manifest), NEVER hardcoded per NO-HARDCODE standing; (3) on missing/empty, emit ONE fail-loud bug-channel alert that NAMES the committed idempotent recovery (scripts/pek-fetch-weights.sh, commit e418d606d, brief docs/architecture-briefs/2026-05-27-pek-weights-provisioning.md) and, where safe+idempotent, auto-invokes it (populate-empty-volume is low-risk, NOT a destructive swap); (4) fire on boot/post-rebuild AND on a periodic cadence so a future silent wipe is caught in minutes not days; (5) RAW-verify by emptying a scratch volume and confirming the alert (and optional auto-reseed) fires. Scope guard: this is the DURABLE cross-cutting infra guard; it does NOT replace the in-flight ops one-shot PEK re-seed (restores current prod) nor the refine-producer durable fix FIX-BCTC-REFINE-DURABLE-TRIGGER-BACKSTOP (a different producer). PLAN-ONLY: do NOT dispatch — schedule after ops confirms /pek-extract resumes.",
+        "created_at": "2026-07-17T03:04:26Z",
+        "created_by": "po-scoped-triage-20260717",
+        "source": "docs/spikes/SPIKE-BCTC-EXTRACTION-DORMANT-MASS-ENRICHFAIL-FLOOD.md",
+        "related": [
+          "SPIKE-BCTC-EXTRACTION-DORMANT-MASS-ENRICHFAIL-FLOOD",
+          "FIX-BCTC-REFINE-DURABLE-TRIGGER-BACKSTOP"
+        ],
+        "supervised": true,
+        "supervised_by": "po-scoped-triage-20260717",
+        "supervised_note": "PLAN-ONLY / anomaly->BACKLOG. ops-owned infra FIX, null next_agent, no backlog-detail entry -> removed from BOUNDED-1 idle auto-pickup (code non-dev-owner gate is detail-blind, would mis-route to a developer placeholder). Do NOT dispatch; groom+schedule after ops confirms PEK re-seed.",
+        "plan_only": true,
+        "promoted_at": "2026-08-07T04:14:43Z",
+        "promoted_by": "dev-team (supervised-lane sweep)",
+        "promotion_note": "Supervised-Lane Sweep — assigned dispatch_lane='ops' (priority_rank=1); supervised/plan_only flags preserved, gate NOT disabled — see FIX-BOUNDED1-SUPERVISED-LANE-NO-SWEEPER",
+        "dispatch_lane": "ops",
+        "updated_at": "2026-08-07T04:14:44Z"
       }
     ],
     "review": [
@@ -21945,8 +21928,8 @@
         }
       ]
     },
-    "last_triaged_at": "2026-08-07T03:23:07Z",
-    "last_triaged_by": "po (dev-team Step 1, 3rd same-day tick, dispatcher f298ccf7)",
+    "last_triaged_at": "2026-08-07T04:14:43Z",
+    "last_triaged_by": "dev-team (supervised-lane sweep)",
     "in_progress": [
       {
         "id": "GUARD-NOTEBOOK-CONCURRENT-EDIT-COLLISION-DATA-LOSS",
@@ -21984,6 +21967,48 @@
           "status": "idle",
           "decomposed_at": "2026-08-07T03:30:00Z"
         }
+      },
+      {
+        "id": "FIX-COWORK-SIGNAL-FILENAME-CYCLEID-KEYING",
+        "type": "FIX",
+        "size": "M",
+        "priority": "P1",
+        "status": "IN_PROGRESS",
+        "zone": "cross-service/",
+        "owner": "po",
+        "next_agent": "architect",
+        "plan_only": true,
+        "sprint": "COWORK-RELIABILITY",
+        "created_at": "2026-07-15T21:59:35Z",
+        "created_by": "po (triage-signals cow-20260715T212838)",
+        "origin_signal_id": "cow-20260715T212838",
+        "detail_ref": "docs/handoffs/2026-07-15-bctc-analyst-self-edit-correct-and-signal-filename-clobber.md",
+        "title": "COWORK SIGNAL/SYNTHESIS filenames are date-keyed (bctc: ticker+date+mode; chef synthesis: date_vn+dish_type; tnb notebook) not cycle_id -> intra-day cycles collide on ONE path; a between-drains write silently destroys the prior cycle's UNROUTED signal = a dropped escalation with no error anywhere. 3rd instance of one root class same day; CONFIRMED clobber today: processed/bctc_signal_FPT_20260715_routine.json signal 9240 overwritten by 8120.",
+        "note": "MINTED 2026-07-15 by po from signal cow-20260715T212838 (data-integrity, MED). ROOT CAUSE: signal/synthesis filenames carry ticker+date+mode (or date_vn+dish_type) with NO cycle discriminator; bctc-analyst runs 4x/day (cron 0 15,18,21,0 UTC) so all 4 cycles collide on the same path (39 such filenames in processed/). HARM (the real one, not the lost artifact): the drain READS these files to route signals; if cycle N writes the same filename as cycle N-1 between drains, N silently destroys N-1's UNROUTED signal and it is never triaged. Today the hourly drain interleaved so nothing was lost -- luck, not a guard; a late/missed drain loses a signal silently. 3 INSTANCES SAME CLASS SAME DAY: (1) chef synthesis date_vn+dish_type -> run2 clobbered run1 (Write, silent); (2) tnb notebook same collision, caught ONLY by the Edit tool stale-read check; (3) bctc signals ticker+date+mode -> 9240 overwritten by 8120. feedback_recurring_bug_escalation (2+ -> block) qualifies. SAME ONE-LINE FIX EACH TIME: key the filename by cycle_id (bctc already carries one; chef's is already in metadata). SCOPE (ba/architect own HOW): the docs/signals/*.json writers (bctc-analyst, chef/unified-agent, tnb) + docs/data/unified-agent-synthesis-<DATE>-<SLOT>.json + the Signal Bus naming contract docs/standards/mcp-tools.md (Naming Contract) + the drain reader that consumes filenames. DISTINCT-FROM (checked, none cover this): FU-CTG-DISCOVERY-FILENAME-FILTER (VPS HNX discovery CV_CBTT filename detection), FU-BACKFILL-REAL-FILENAMES (backfill real-filename heuristic), FIX-COWORK-SCHEDULE-STALE-BASE-CLOBBER. OBSERVATION folded (mechanism UNPROVEN -- do NOT diagnose, NOT a blocker): signal_id regressed 9240->8120 over 20h same file/tool/sequence; parsimonious candidate = SQLite INTEGER PRIMARY KEY WITHOUT AUTOINCREMENT reuses max(rowid)+1 after the drain prunes highest rows; NOT probed because the LIVE DB is a named volume, not docs/signals/signals.db (feedback_live_db_is_named_volume_not_host_data); cheap check for the implementer = does the SERVING schema use AUTOINCREMENT. If ids ARE reused, any cross-time signal_id reference can silently re-bind to an unrelated later signal (worse than an orphan FK -- looks resolved). AC: (1) two same-day cycles for the same ticker/mode never share a signal/synthesis path; (2) a between-drains double-write of the same ticker+date+mode cannot silently destroy an unrouted signal; (3) the drain-reader change (if any) preserves routing of both cycles' signals.\n\n[po 2026-07-19T20:31:00Z c114 corroboration -- priority/owner UNCHANGED, no re-mint] 4th instance of this class on the chef-synthesis leg, plus a NEW harm mode this row should absorb: date-keyed filenames defeat AUDIT, not just retention, because the notebook 'Synthesis: <path>' line is NOT a reliable persistence receipt. RAW-verified: unified-agent.md's 2026-07-17 intraday 14:13Z entry cites docs/data/unified-agent-synthesis-2026-07-17-intraday.json, but that file's metadata.cycle_id is intraday-2026-07-17T04:13:00Z with mtime 04:21Z -- the 14:13Z run cited a path it did NOT write (its write was either refused or silently aimed at the 04:13 run's artifact). SECOND defect on the same leg: Step 7.6 specifies CYCLE_DATE = VN date, but the convention is applied INCONSISTENTLY -- the 07-17 evening run wrote -2026-07-17-evening (UTC date) while the 07-18 run wrote -2026-07-19-evening (VN date), and the 07-14 19:50Z run left BOTH -07-14-evening and -07-15-evening 25s apart. Consequence: no auditor can deterministically compute the expected filename for a given cycle, which is precisely why tran-ngoc-bau has now TWICE mis-framed an ABSENT-file defect as a STALE-file defect. The VN-vs-UTC half overlaps FIX-CHEF-EVENING-DUP-DATE-MISLABEL-INVESTIGATE (P2); the cycle_id-keying fix stays here as the structural remedy.",
+        "supervised": true,
+        "supervised_at": "2026-07-16T17:02:01Z",
+        "supervised_by": "po (autolaunch_safety_hold adjudication, dev-team 16:37Z)",
+        "supervised_note": "BOUNDED-1 stopgap: plan_only design/spec ask with a non-dev board next_agent that leaks past the detail-only promote gates (inline plan_only + no backlog-detail entry). Held from idle auto-pickup so BOUNDED-1 reaches genuinely dev-routable rows. Deliberate router/ba/architect dispatch is UNAFFECTED. Durable structural fix: FIX-DEVTEAM-BOUNDED1-EFFECTIVE-DISPOSITION-BOARD-FALLBACK-GATE (once shipped this stamp is belt-and-suspenders).",
+        "tnb_intraday_symptom": {
+          "at": "2026-07-17T20:57:55Z",
+          "by": "po-tnb-c112-triage",
+          "datum": "F-INTRADAY-SYNTHESIS-STALE-MULTIFIRE (MED) — tnb c112, 2026-07-17: NEW symptom variant of THIS root (synthesis file docs/data/unified-agent-synthesis-<DATE>-<SLOT>.json not cycle_id-keyed). unified-agent-synthesis-2026-07-17-intraday.json on disk reflects ONLY the FIRST same-day intraday cycle (cycle_id intraday-2026-07-17T04:13:00Z); the later 14:13Z cycle (VNM/HCM/VNH/BID, 4 clusters) that the notebook cites writing to the SAME filename NEVER LANDED — FIRST-WRITE-WINS, the INVERSE of this row's documented last-write-clobber (chef synthesis run2 clobbered run1). Confirms the same-path collision yields UNDEFINED/inconsistent write semantics across dish types (chef-evening overwrites correctly across its 2-pass day; intraday appears first-write-wins). Creates an audit blind spot for the latest same-day intraday content on any file-proxy audit.",
+          "ac_refinement": "The cycle_id-keying fix MUST guarantee BOTH same-day intraday cycles land on their own path + stay independently queryable REGARDLESS of write-order semantics. Append AC: any day with 2+ non-silent intraday fires surfaces every non-silent cycle's synthesis on disk (no first-write-wins drop, no last-write-clobber).",
+          "disposition": "FOLD not re-mint — subsumed by this row's cycle_id-keying fix (scope already lists unified-agent-synthesis-<DATE>-<SLOT>.json + the chef/unified-agent writer).",
+          "source": "docs/handoffs/tnb-audit-latest.md#F-INTRADAY-SYNTHESIS-STALE-MULTIFIRE"
+        },
+        "cycle_id_window_anchor_caution_20260722": "[po 2026-07-22T20:10Z, advisory annotation only — scope/priority/owner UNCHANGED] CAUTION before implementing: cycle_id AS CURRENTLY EMITTED IS NOT A SAFE DEDUP/COLLISION KEY. The 2026-07-22 chef-evening double-publish produced cycle_id evening-2026-07-22T19:56:00Z and evening-2026-07-22T20:00:37Z for the SAME scheduled window — i.e. cycle_id is keyed to RUN-START, so two peers in one window get two different cycle_ids and re-keying filenames on it would re-ship the collision this row exists to close (it would stop intra-day OVERWRITES but silently permit duplicate co-existing artifacts, which is what happened tonight: two synthesis files for one window). Adopt the same window anchor mandated by FIX-CHEF-MARKER-KEY-WINDOW-ANCHOR (scheduled cron fire-window in UTC, never a leaf-side `date`/run-start read) so the filename key and the mutex key agree by construction.",
+        "updated_at": "2026-08-07T04:31:02Z",
+        "po_measurement_20260730T2148": "MEASURED CORROBORATION + a second, worse symptom than filename collision. (A) FREQUENCY: the identical 8-file set bctc_signal_{BID,FPT,FRT,GEX,HPG,MWG,VCB,VIX}_20260730_routine.json was drained and routed-to-po FOUR times on 2026-07-30 alone - commits c0cbb756f, 236310900 (18:07Z), 23aeea6ed (21:07Z), 072541471 (21:37Z) - i.e. 32 PO-triage routing events for 8 distinct facts, plus a 5th earlier drain (4737c562d 01:17Z) on a different ticker set. Date-only keying is the mechanism: the filename carries no time/cycle component, so every cycle rewrites the same path. (B) THE WORSE SYMPTOM, not previously on this row: the re-written files are NOT byte-identical re-emissions - they are DIFFERENT ANALYSES WITH A DIFFERENT FIELD SCHEMA overwriting each other at the same path. `git diff 236310900 23aeea6ed -- docs/signals/processed/bctc_signal_HPG_20260730_routine.json` shows the 18:07Z revision carrying esc3_guard_held/esc4_result/esc5_result/e3_cache/trick_summary/trick_confidence/kd_reading/cycle_id/generated_at and the 21:07Z revision carrying NONE of them (different prose, different keys, only esc3_status survives); the BID pair shows the same instability (quarantine/kd_durability replaced by roe_pct/pe/valuation_verdict/kinhdich{}/report_overdue/cycle_tick_utc/slot). Any downstream consumer parsing these fields breaks non-deterministically depending on which cycle last wrote the file, and the prior cycle's analysis survives only in git. Fix scope should therefore cover the emitter's field CONTRACT (a stable schema) alongside the filename keying - cycle-id keying alone preserves every revision but leaves consumers unable to parse them. next_agent=ba is still right.",
+        "promoted_at": "2026-08-06T07:33:37Z",
+        "promoted_by": "dev-team (supervised-lane sweep)",
+        "promotion_note": "Supervised-Lane Sweep — assigned dispatch_lane='ba' (priority_rank=1); supervised/plan_only flags preserved, gate NOT disabled — see FIX-BOUNDED1-SUPERVISED-LANE-NO-SWEEPER",
+        "dispatch_lane": "ba",
+        "claimed_at": "2026-08-07T04:14:51Z",
+        "claimed_by": "dev-team (supervised-lane sweep)",
+        "ba_spec_complete": true,
+        "ba_handoff": "docs/handoffs/FIX-COWORK-SIGNAL-FILENAME-CYCLEID-KEYING-BA-spec.md",
+        "ba_completed_at": "2026-08-07T04:30:56Z"
       }
     ]
   },
