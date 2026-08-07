@@ -3354,6 +3354,19 @@
         "triaged_at": "2026-08-07T05:45:00Z",
         "triaged_by": "po",
         "disposition": "DUPLICATE of sys-20260807T044935-3bf0 (same rag-service loss-of-reclamation WARN, 32 min earlier, same detector, triaged by po at 2026-08-07T05:04:44Z) — no new mint, no re-triage. That prior disposition stands verbatim and is re-confirmed live this tick: the WARN is FOLDED onto FIX-RAG-EMBEDDER-IDLE-UNLOAD-PATH (review[], next_agent=qa) and the unblocking action is OPS-RAG-SERVICE-REBUILD-STALE-IMAGE-PREDATES-IDLE-UNLOAD-FIX (backlog[], next_agent=ops), which is STILL OPEN — the running rag-service image predates its own fix commit by ~24h, so the A-30 detector is measuring the PRE-FIX binary and will keep re-firing on every Tier-1 cycle until that rebuild lands. Re-fires of this WARN are therefore EXPECTED, not new information, and must not be minted per occurrence. The same event also arrived on the Telegram plane as report id=4486 (message_id=4884, identical 05:21:17Z timestamp and text) — one event, two delivery channels; resolved there as duplicate, not triaged as a separate incident."
+      },
+      {
+        "id": "sys-20260807T054825-771b",
+        "ts": "2026-08-07T05:48:25Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "signal_feedback",
+        "summary": "A-30 CRITICAL: mcp-server memory — peak 98.75% sustained, loss of reclamation",
+        "severity": "CRITICAL",
+        "status": "NEW",
+        "payload_ref": null,
+        "provenance": "detector",
+        "audit_cycle_tag": "cron:auditor-t1:2026-08-07T05:30Z"
       }
     ],
     "last_triaged_at": "2026-07-29T06:25:00Z",
@@ -13188,13 +13201,13 @@
         "sprint": "COWORK-RELIABILITY",
         "created_at": "2026-08-07T05:45:00Z",
         "created_by": "po (architect-brief adjudication, FIX-COWORK-SIGNAL-FILENAME-CYCLEID-KEYING amendment 2)",
-        "depends": [
-          "FIX-CHEF-MARKER-KEY-WINDOW-ANCHOR"
-        ],
         "title": "EC-2 Phase 2: migrate chef-intraday's multi-fire MARKER_KEY AND its new filename hour component off VN_HOUR onto a UTC hour derived from scheduled_utc_time, in ONE change, so NFR-3 (filename and mutex key share one anchor) keeps holding on a basis with no day-boundary blind spot",
         "status_note": "BLOCKED on FIX-CHEF-MARKER-KEY-WINDOW-ANCHOR Component A landing scheduled_utc_time on chef's LIVE-MATCH path (today it is shipped only for the catch-up path, per that row's own Component A gap-finding). Do NOT dispatch before that lands — the migration has no correct target basis until then. AC: (1) chef-intraday's multi-fire MARKER_KEY and the unified-agent-synthesis-*-intraday-{HH}.json hour component both derive from the SAME scheduled_utc_time-derived UTC hour, changed in one commit, never independently re-derived (NFR-3); (2) a cron widening that spans 17:00 UTC (VN midnight) provably cannot alias two different UTC windows onto one (CYCLE_DATE, HOUR) pair — regression test with a synthetic widened cron; (3) no double-publish and no suppressed publish across the migration window (the mutex key basis changes under a live publisher — the cutover cycle must be shown safe).",
         "note": "MINTED 2026-08-07 by po from architecture brief docs/architecture-briefs/2026-08-07-cowork-signal-filename-cycleid-keying.md section 4.2 + section 10 item 2. The architect correctly refused to fold this into FIX-COWORK-SIGNAL-FILENAME-CYCLEID-KEYING's Phase 1 (it reopens scope the sibling ANCHOR row deliberately excluded from its own AC, and a live publish-mutex basis change carries double-publish risk that needs its own AC). PO CONFIRMS the split and OVERRIDES the timing: the brief asked PO to mint this 'once Component A ships', which is a consumer with no producer — nobody watches for that landing, the exact defect class that idled FIX-WF2-SUPERVISED-HOLD-NO-PO-SIDE-GOAHEAD-PRODUCER and left FIX-BOUNDED1-SUPERVISED-LANE-NO-SWEEPER's P0 dormant 6+ days. Minted NOW as BLOCKED with an explicit depends[] so the board's own dependency machinery carries it instead of a brief's prose. HAZARD BEING TRACKED (real, latent, schedule-shape-contingent — NOT a false alarm): Phase 1 ships docs/data/unified-agent-synthesis-{CYCLE_DATE_UTC}-intraday-{VN_HOUR}.json, i.e. a VN-local hour appended to a UTC calendar date. Bounded safe today ONLY because chef-intraday's cron is '13 2-8 * * 1-5' — UTC hours 2-8 map 1:1 monotonically to VN hours 9-15, entirely inside one VN day, nowhere near VN midnight (17:00 UTC). Widen that cron across 17:00 UTC and the daily-straddle defect the ANCHOR row exists to close reproduces at hourly grain. TRIPWIRE: any change to chef-intraday's cron in docs/data/cowork-schedule.json must unblock and dispatch this row first.",
-        "updated_at": "2026-08-07T05:44:11Z"
+        "updated_at": "2026-08-07T05:49:53Z",
+        "depends_on": [
+          "FIX-CHEF-MARKER-KEY-WINDOW-ANCHOR"
+        ]
       },
       {
         "id": "FIX-CI-SIZELINT-CHECKFOREIGNFLOWGAP-NEW-OFFENDER-181L",
