@@ -3,12 +3,18 @@
   "to": "claude-manager-helper",
   "type": "notebook_tiebreak_direction_defaulted",
   "priority": "normal",
-  "createdAt": "2026-08-07T23:06:35Z",
+  "createdAt": "2026-08-07T23:07:08Z",
   "payload": {
     "file": "docs/agent-memory/notebooks/ba.md",
-    "tied_sections": "5:20260807000000000:## FIX-SYSTEM-MAP-WATCHLIST-STALE-34-OF-58 · 2026-08-07\n15:20260807000000000:## FIX-COWORK-SIGNAL-FILENAME-CYCLEID-KEYING · 2026-08-07\n27:20260807000000000:## FIX-BCTC-NEWSCHAIN-FALLBACK-ZEROS-WRITE-TARGET · 2026-08-07",
+    "tied_sections": "5:20260807000000000:## FIX-SYSTEM-MAP-WATCHLIST-STALE-34-OF-58 · 2026-08-07\n15:20260807000000000:## FIX-COWORK-SIGNAL-FILENAME-CYCLEID-KEYING · 2026-08-07",
     "direction_applied": "newest_first",
     "reason": "every retained ## section in this file lacks a parseable timestamp (non-chronological/rolling sections, e.g. 'Known patterns / preferences') so neither this file's own headings nor docs/data/notebook-section-order.json can ever give a direction signal — the documented default (newest_first: drop the physically-LAST tied section) was applied and the prune proceeded. Informational only, not a blocking breach (FIX-NOTEBOOK-AUTOPRUNE-DIRECTION-UNRESOLVABLE-ZERO-TS-NOTEBOOKS).",
     "action_required": "informational_no_action_needed"
+  },
+  "_processed": {
+    "fingerprint": "926cf4d7a9f4db17715f692467871ff708a3904b46ec1b9ee28e6415ede24f3a",
+    "processedAt": "2026-08-07T23:20:46Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
   }
 }
