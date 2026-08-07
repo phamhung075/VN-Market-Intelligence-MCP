@@ -4,10 +4,10 @@
   "type": "audit-handoff",
   "payload": "docs/handoffs/tnb-audit-latest.md",
   "priority": "high",
-  "createdAt": "2026-07-31T20:23:00Z",
+  "createdAt": "2026-08-07T20:26:00Z",
   "_processed": {
-    "fingerprint": "9f7b801267242a1a404ae740dd2c21deadb869989b3817923006101d368ad957",
-    "processedAt": "2026-07-31T20:46:02Z",
+    "fingerprint": "81c3e938dc255331eed8e966224e7c0ac64d5339228a586beeae2f683d4a9249",
+    "processedAt": "2026-08-07T20:50:48Z",
     "processedBy": "dev-team",
     "result": "routed-to-po"
   }

@@ -3,7 +3,7 @@
   "to": "dev-team",
   "type": "cowork-fire",
   "payload": {
-    "fire_time": "2026-07-31T20:21:25.000Z",
+    "fire_time": "2026-08-07T20:23:52Z",
     "matched_slots": [
       "tnb-audit"
     ],
@@ -16,7 +16,7 @@
       "docs/agents/tran-ngoc-bau/flow/main.md"
     ],
     "silent": false,
-    "drift_min": 5,
+    "drift_min": 6,
     "errors": [],
     "pressure_mode": "adaptive",
     "calendar_status": "unknown",
@@ -30,7 +30,7 @@
     "cadence_minutes": {
       "tnb-audit": null
     },
-    "last_fired_timestamp": "2026-07-31T20:21:19Z",
+    "last_fired_timestamp": "2026-08-07T20:23:47Z",
     "last_fired_slots": [
       "tnb-audit"
     ],
@@ -41,14 +41,14 @@
     "leader_lock": "acquired",
     "dev_head": "unknown",
     "devq": 5,
-    "signal_backlog": 17,
-    "note": "guaranteed daily tnb-audit cron slot (13 20 * * *), audits chef-evening's dish. 4 po-addressed NEW signal_queue rows left untouched (corrected Step 0a practice)."
+    "signal_backlog": 25,
+    "note": "single guaranteed cron slot tnb-audit; 3-slot offhours batch from prior tick (20:00Z) completed clean"
   },
   "priority": "low",
-  "createdAt": "2026-07-31T20:21:25.000Z",
+  "createdAt": "2026-08-07T20:23:52Z",
   "_processed": {
-    "fingerprint": "d2421132237e8730e9f9b2dd7e6f8317225ae10ce455264e7f349faf91538989",
-    "processedAt": "2026-07-31T20:46:02Z",
+    "fingerprint": "ecccf2316fc2510e996e49822cca36ceeea83b6c5a91274f500794f712ba5004",
+    "processedAt": "2026-08-07T20:50:48Z",
     "processedBy": "dev-team",
     "result": "routed-to-po"
   }
