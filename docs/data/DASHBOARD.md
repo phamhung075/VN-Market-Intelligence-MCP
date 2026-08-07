@@ -766,3 +766,15 @@
 **Mitigation:** No immediate action beyond signal routing.
 
 ---
+
+## Anomaly: A-30-RAG-SERVICE-ESCALATE · rag-service memory loss-of-reclamation
+**Severity:** CRITICAL | **Date:** 2026-08-07 | **Status:** OPEN
+**Location:** rag-service container
+**Details:** verify-a30 probe: all 12 samples 99.62-99.81%, zero reclamation dips, loss of GC
+**Impact:** rag-service at critical memory pressure, risk of OOMKill
+**Root cause:** sustained memory allocation without effective garbage collection recovery
+**Zone owner:** ops
+**Last reported:** 2026-08-07T04:04:16Z (signal sys-20260807T040402-69e8, system-auditor -> po, dedup_key=mem_pressure:rag-service:A-30-loss-of-reclamation, CRITICAL Telegram sent)
+**Mitigation:** No immediate action beyond signal routing.
+
+---
