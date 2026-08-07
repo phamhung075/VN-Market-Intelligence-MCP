@@ -21,6 +21,8 @@ If `get_macro_snapshot` not in bootstrap context → call it once now.
 
 **Schema-drift note (alert-commander, 2026-07-03):** live `get_macro_snapshot` responses observed with `.text` containing a JSON object (`signals.carry.regime`, `signals.oil.impact`, `signals.gold.direction`, `signals.usdvnd.direction`, `signals.yield`, `signals["investment-clock"]`) instead of the plain-text "Global Liquidity: X" / "US 10Y Yield" / "DXY" lines this skill parses. When the JSON shape is returned: read `CARRY_REGIME` directly from `signals.carry.regime` (already one of `HOT_MONEY_INFLOW|NEUTRAL|FII_OUTFLOW_RISK`-equivalent — `NEUTRAL` when `carrySpread` is small). No direct `REGIME` (TIGHTENING/EASING/NEUTRAL) field exists in this shape yet — until one is added, fall back to `NEUTRAL` + log `[WARN] regime fallback: NEUTRAL (macro_snapshot JSON shape has no REGIME field)`. This is a known gap, not an agent error — flag to dev-team/architect if seen repeatedly.
 
+**4th carry value — `UNKNOWN` (alert-commander, recurring 2026-08-06/08-07 c60/c61):** `signals.carry.regime` can also return the literal string `"UNKNOWN"` (with `carrySpread: null`) when carry inputs are estimated from fixture fallback and the regime computation is suppressed per `DSI-INV-1` — a 4th value beyond the three enumerated above, not "small spread → NEUTRAL". Treat `UNKNOWN` the same as the missing-REGIME-field case: `CARRY_REGIME = NEUTRAL` (fallback) + log `[WARN] CARRY_REGIME fallback: NEUTRAL (signals.carry.regime=UNKNOWN, carrySpread unavailable, DSI-INV-1 suppressed)`.
+
 ### PMI extension (T-16 — EXTEND 07-06)
 
 When a flow declares `Variables` that includes `PMI_TREND`:
