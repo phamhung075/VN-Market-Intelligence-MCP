@@ -93,12 +93,12 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "FIX-CI-SIZELINT-COORDINATIONSTORE-BASELINE-1388L",
-    "next_agent": "dev-mcp-server",
-    "next_action": "Ready-Lane Consumer claim of FIX-CI-SIZELINT-COORDINATIONSTORE-BASELINE-1388L — spawn dev-mcp-server DIRECTLY (no zone-detect indirection; row already carried a resolved next_agent/owner).",
-    "updated_at": "2026-08-08T20:24:29Z",
-    "updated_by": "dev-team (ready-lane consumer)"
+    "status": "idle",
+    "active_task_id": null,
+    "next_agent": null,
+    "next_action": "idle — no active sprint-task",
+    "updated_at": "2026-08-08T20:58:02Z",
+    "updated_by": "dev-team (router: dev-mcp-server completion notification processed, row confirmed in review[])"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
