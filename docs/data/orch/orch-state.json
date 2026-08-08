@@ -5,8 +5,8 @@
     "last_linecount": 246,
     "po": {
       "section_name": "po",
-      "last_mtime": "2026-08-08T16:22:49Z",
-      "last_linecount": 243
+      "last_mtime": 1786220525,
+      "last_linecount": 34
     }
   },
   "decision_journal": [
@@ -134,7 +134,7 @@
     "does_not_consume_wip": true
   },
   "signal_queue": {
-    "_updated_at": "2026-08-08T19:51:44Z",
+    "_updated_at": "2026-08-08T20:21:51Z",
     "_updated_by": "dev-team",
     "archive": [],
     "rows": [
@@ -600,7 +600,7 @@
         "type": "process_gap",
         "summary": "FIX-MCP-SSE-SESSION-MANAGER-PERCONN-LEAK-NO-REAPER soak-verification clock reset a 3rd time by an unrelated ops rebuild sharing the same dev-mcp-server container (this time: FIX-AGENT-SIGNALS-IDENTICAL-DUP-EMISSION, commit 550fda673). qa content-verified the fix survives each rebuild (no functional regression) but container StartedAt keeps invalidating the >=4h max-age-reaper uptime evidence. Recheck now pinned 2026-08-08T23:06:00Z. Consider a process fix so unrelated dev-mcp-server rebuilds during an active soak-verification window either wait or the verification method decouples from container StartedAt (e.g. reaper-firing log evidence since fix deploy commit, not process uptime).",
         "severity": "MED",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": null,
         "provenance": "router",
         "audit_cycle_tag": "dev-team-tick:2026-08-08T19:37Z",
@@ -614,7 +614,7 @@
         "type": "microservice_degraded",
         "summary": "rag-service A-30 WARN: sustained >93% memory (97.50%) — loss of reclamation",
         "severity": "WARN",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": null,
         "provenance": "detector",
         "audit_cycle_tag": "cron:auditor-t1:2026-08-08T20:00Z",
@@ -19124,7 +19124,7 @@
         "last_served_tick": "2026-08-08T15:54:20Z"
       }
     },
-    "_updated_at": "2026-08-08T19:51:44Z",
+    "_updated_at": "2026-08-08T20:21:51Z",
     "_updated_by": "dev-team",
     "pending_triage_inbox": [
       {
@@ -20701,6 +20701,195 @@
         "payload": "A-30 FAIL: vn-market-intelligence-mcp-rag-service-1 — memory loss of reclamation (97.41% sustained, 0 dips)",
         "createdAt": "2026-08-08T19:36:30Z",
         "drained_at": "2026-08-08T19:51:44Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "978153add3cdafb900f50f2e216a848f3f857e202d64a20a1ffdae1a20bd56d6",
+        "source": "file",
+        "from": "ci-health-probe",
+        "to": "po",
+        "type": "ci_red",
+        "priority": "high",
+        "payload": {
+          "check_id": "CI-RED-eab33b94",
+          "head_sha": "eab33b943e7aebcc086311a37640efca1bfc29af",
+          "run_id": 31274414089,
+          "run_url": "https://github.com/phamhung075/VN-Market-Intelligence-MCP/actions/runs/31274414089",
+          "conclusion": "failure",
+          "failing_jobs": [
+            {
+              "name": "bun test",
+              "conclusion": "failure",
+              "jobId": 93145575041
+            },
+            {
+              "name": "size-lint",
+              "conclusion": "failure",
+              "jobId": 93145575129
+            }
+          ],
+          "fingerprint": "147dff12631f63b7b86815f324941d7c6ccd50579d7b290ab88ab30ca7b92564",
+          "zone_owner": "dev-team (CI fix)",
+          "summary": "CI RED on main HEAD eab33b943e7aebcc086311a37640efca1bfc29af: bun test,size-lint",
+          "suggested_sprint_class": "FIX",
+          "verification_gate": "ci_green_on_subsequent_push"
+        },
+        "createdAt": "2026-08-08T19:53:37Z",
+        "drained_at": "2026-08-08T20:21:03Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "09208b8e75a473414077e52d83f867a24067d783ae8c8d415a2da566cbd39813",
+        "source": "file",
+        "from": "commit-sweep-guard",
+        "to": "po",
+        "type": "bug-escalation",
+        "priority": "high",
+        "payload": "[sweep-guard] BARE commit about to absorb 1 staged file(s) not necessarily this actor's own: docs/agent-memory/notebooks/market-watcher.md. actor=0454e9d8-b475-4230-95c9-8b7d943aa8b3 mode=warn escalated=true prior_warns=10 threshold=3. Fix: git commit -m \"<msg>\" -- <own-files-only>.",
+        "createdAt": "2026-08-08T20:12:00Z",
+        "drained_at": "2026-08-08T20:21:03Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "5b9d9ee07ce4cbaf47d97ab7171cf837fcc1a8cb844060f5ee66598f5721b40d",
+        "source": "file",
+        "from": "cowork-team",
+        "to": "dev-team",
+        "type": "cowork-fire",
+        "priority": "low",
+        "payload": {
+          "fire_time": "2026-08-08T19:55:20Z",
+          "matched_slots": [
+            "chef-evening"
+          ],
+          "won_slots": [
+            "chef-evening"
+          ],
+          "held_by_other": [],
+          "all_held": false,
+          "spawned": [
+            "docs/agents/unified-agent/flow/chef.md"
+          ],
+          "silent": false,
+          "drift_min": 6,
+          "errors": [],
+          "pressure_mode": "adaptive",
+          "calendar_status": "unknown",
+          "suppressed_calendar": [],
+          "suppressed_cadence": [],
+          "downgraded": [],
+          "chef_mutex_applied": false,
+          "due_reasons": {
+            "chef-evening": "cron"
+          },
+          "cadence_minutes": {
+            "chef-evening": null
+          },
+          "last_fired_timestamp": "2026-08-08T19:54:58Z",
+          "last_fired_slots": [
+            "chef-evening"
+          ],
+          "last_fired_write_errors": null,
+          "classification": "FIRE",
+          "reason": "spawned",
+          "nominal_tick": "19:45",
+          "leader_lock": "acquired",
+          "dev_head": "unknown",
+          "devq": 5,
+          "signal_backlog": 25,
+          "note": "WORK-verdict tick (script exit=1 by design); single guaranteed slot chef-evening spawned via § WORK continuation"
+        },
+        "createdAt": "2026-08-08T19:55:20Z",
+        "drained_at": "2026-08-08T20:21:03Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "d3fc4f9e161903d7da1f80bb14e5fb2e459e10df377454cc45fad29dec0e2ec5",
+        "source": "file",
+        "from": "cowork-team",
+        "to": "dev-team",
+        "type": "cowork-fire",
+        "priority": "low",
+        "payload": {
+          "fire_time": "2026-08-08T20:10:20Z",
+          "matched_slots": [
+            "news-scout-offhours",
+            "market-watcher-offhours",
+            "alert-commander-critical"
+          ],
+          "won_slots": [
+            "news-scout-offhours",
+            "market-watcher-offhours",
+            "alert-commander-critical"
+          ],
+          "held_by_other": [],
+          "all_held": false,
+          "spawned": [
+            "docs/agents/news-scout/flow/main.md",
+            "docs/agents/market-watcher/flow/main.md",
+            "docs/agents/alert-commander/flow/main.md"
+          ],
+          "silent": false,
+          "drift_min": 6,
+          "errors": [],
+          "pressure_mode": "adaptive",
+          "calendar_status": "unknown",
+          "suppressed_calendar": [],
+          "suppressed_cadence": [],
+          "downgraded": [],
+          "chef_mutex_applied": false,
+          "due_reasons": {
+            "news-scout-offhours": "cadence",
+            "market-watcher-offhours": "cadence",
+            "alert-commander-critical": "cron"
+          },
+          "cadence_minutes": {
+            "news-scout-offhours": 240,
+            "market-watcher-offhours": 240,
+            "alert-commander-critical": null
+          },
+          "last_fired_timestamp": "2026-08-08T20:09:57Z",
+          "last_fired_slots": [
+            "news-scout-offhours",
+            "market-watcher-offhours",
+            "alert-commander-critical"
+          ],
+          "last_fired_write_errors": null,
+          "classification": "FIRE",
+          "reason": "spawned",
+          "nominal_tick": "20:00",
+          "leader_lock": "acquired",
+          "dev_head": "unknown",
+          "devq": 5,
+          "signal_backlog": 25,
+          "note": "WORK-verdict tick (script exit=1 by design); 3 non-guaranteed offhours/cron slots spawned in one batch (MAX_PARALLEL=4, headroom=3928MB, load 5.05/12cores — not degraded) via § WORK continuation"
+        },
+        "createdAt": "2026-08-08T20:10:20Z",
+        "drained_at": "2026-08-08T20:21:03Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "a80b7ae129d5ce463a582ea6e828a2731bd2af058bf94037b8fc9caa88bb7e29",
+        "source": "dashboard",
+        "from": "router",
+        "to": "po",
+        "type": "process_gap",
+        "priority": "MED",
+        "payload": "FIX-MCP-SSE-SESSION-MANAGER-PERCONN-LEAK-NO-REAPER soak-verification clock reset a 3rd time by an unrelated ops rebuild sharing the same dev-mcp-server container (this time: FIX-AGENT-SIGNALS-IDENTICAL-DUP-EMISSION, commit 550fda673). qa content-verified the fix survives each rebuild (no functional regression) but container StartedAt keeps invalidating the >=4h max-age-reaper uptime evidence. Recheck now pinned 2026-08-08T23:06:00Z. Consider a process fix so unrelated dev-mcp-server rebuilds during an active soak-verification window either wait or the verification method decouples from container StartedAt (e.g. reaper-firing log evidence since fix deploy commit, not process uptime).",
+        "createdAt": "2026-08-08T20:09:19Z",
+        "drained_at": "2026-08-08T20:21:44Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "b45daa3bb32c5dd5fc0d13ceed80236b52d19721970cc14fce2631f4fa0a105a",
+        "source": "dashboard",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "microservice_degraded",
+        "priority": "WARN",
+        "payload": "rag-service A-30 WARN: sustained >93% memory (97.50%) — loss of reclamation",
+        "createdAt": "2026-08-08T20:12:16Z",
+        "drained_at": "2026-08-08T20:21:44Z",
         "routed_to": "PO Step 0-SIG"
       }
     ]
