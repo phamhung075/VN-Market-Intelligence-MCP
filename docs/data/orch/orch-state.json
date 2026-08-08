@@ -591,6 +591,20 @@
         "provenance": "detector",
         "audit_cycle_tag": "cron:auditor-t1:2026-08-08T19:30Z",
         "dedup_key": "microservice_degraded:vn-market-intelligence-mcp-rag-service-1:A-30"
+      },
+      {
+        "id": "sys-20260808T200919-a7c2",
+        "ts": "2026-08-08T20:09:19Z",
+        "from": "router",
+        "to": "po",
+        "type": "process_gap",
+        "summary": "FIX-MCP-SSE-SESSION-MANAGER-PERCONN-LEAK-NO-REAPER soak-verification clock reset a 3rd time by an unrelated ops rebuild sharing the same dev-mcp-server container (this time: FIX-AGENT-SIGNALS-IDENTICAL-DUP-EMISSION, commit 550fda673). qa content-verified the fix survives each rebuild (no functional regression) but container StartedAt keeps invalidating the >=4h max-age-reaper uptime evidence. Recheck now pinned 2026-08-08T23:06:00Z. Consider a process fix so unrelated dev-mcp-server rebuilds during an active soak-verification window either wait or the verification method decouples from container StartedAt (e.g. reaper-firing log evidence since fix deploy commit, not process uptime).",
+        "severity": "MED",
+        "status": "NEW",
+        "payload_ref": null,
+        "provenance": "router",
+        "audit_cycle_tag": "dev-team-tick:2026-08-08T19:37Z",
+        "dedup_key": "process_gap:FIX-MCP-SSE-SESSION-MANAGER-PERCONN-LEAK-NO-REAPER:soak-clock-reset-shared-container"
       }
     ],
     "last_triaged_at": "2026-07-29T06:25:00Z",
