@@ -93,12 +93,11 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "FIX-ORPHAN-FR1-FR2-INFRA-HEARTBEAT-LADDER",
-    "next_agent": "qa",
-    "next_action": "Review-Lane QA-Drain claim of 7 row(s), highest-ranked FIX-ORPHAN-FR1-FR2-INFRA-HEARTBEAT-LADDER — spawn qa in verify-committed mode (branch:null direct-commit row, no task branch/handoff — see docs/agents/qa/flow/main.md § Direct-Commit Verify; do NOT use the normal pipeline JUMP-TO, it requires a branch this row does not have). Batch of 7 row(s) share this claimed_at stamp in .task_board.qa[] — correlate by claimed_at to dispatch the rest.",
-    "updated_at": "2026-08-08T08:55:17Z",
-    "updated_by": "dev-team (review-lane qa-drain)"
+    "status": "idle",
+    "active_task_id": null,
+    "next_agent": "router",
+    "updated_at": "2026-08-08T09:00:30Z",
+    "updated_by": "qa"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -14147,6 +14146,48 @@
         "claimed_at": "2026-08-08T08:55:16Z",
         "claimed_by": "dev-team (review-lane qa-drain)",
         "verified_at": "2026-08-08T08:59:27Z"
+      },
+      {
+        "id": "FIX-ORPHAN-FR1-FR2-INFRA-HEARTBEAT-LADDER",
+        "type": "FEATURE",
+        "title": "Implement FR-1/FR-2: extend task_heartbeat with ttl_seconds/payload_patch + null-session ladder for task_release",
+        "status": "DONE_VERIFIED",
+        "priority": "P0",
+        "size": "M",
+        "zone": "apps/mcp-server/",
+        "owner": "developer",
+        "next_agent": "pm",
+        "depends": [],
+        "supervised": false,
+        "created_at": "2026-07-22T01:15:30Z",
+        "created_by": "pm/decomposition-20260722T0115",
+        "updated_at": "2026-08-08T09:00:30Z",
+        "updated_by": "qa",
+        "origin_task": "FIX-ORPHAN-ADOPTION-BOARD-STATE-GUARD",
+        "parent_fix_spec": "fix_spec(a)+(c)/AC1+AC3",
+        "subtasks": [
+          {
+            "seq": 1,
+            "title": "Add ttl_seconds + payload_patch optional params to heartbeatTask()",
+            "acceptance": "heartbeatTask accepts optional ttl_seconds (60-691200), updates row.ttl_seconds when supplied; payload_patch shallow-merges into payload JSON when supplied"
+          },
+          {
+            "seq": 2,
+            "title": "Add null-session ladder to heartbeatTask/releaseTask for orphan-signal rows",
+            "acceptance": "orphan-signal:* rows with owner_client_session=NULL match on (owner_agent + original_owner_client_session echo); live-session rows (owner_client_session IS NOT NULL) never match via new params"
+          },
+          {
+            "seq": 3,
+            "title": "Implement two-statement UPDATE pattern (not CTE) per FR-1 file-level design",
+            "acceptance": "First UPDATE: ttl_seconds if supplied. Second UPDATE: payload_patch merge. Both preserve unpatched fields."
+          }
+        ],
+        "po_corroboration_20260806": "LIVE 10x corroboration for the FR-2 null-session release ladder, RAW-verified by po 2026-08-06T11:07Z tick (signal dev-orphangap-20260806T111713Z, finding_2). task_release(task_id='orphan-signal:'+id, owner_client_session=$SESSION) returned {ok:true, released:0} on all 10 attempts — the orphan-signal lock's owner_client_session is null (server-reaper owned), so NO client session can ever match it. Both call sites in docs/agents/dev-team/flow/orphan-adoption.md (happy-path ~L94-98 and git_sha-invalid dead-end ~L69-74) are therefore unreachable no-ops as written. Note the ok:true/released:0 shape: the call reports success while releasing nothing — the exact 'ok+released=wrong' false-green class. Practical blast radius is bounded by the 7200s TTL self-clear, but during that window a re-probe can still attempt duplicate adoption if FR-4's terminal guard is not also live. Same 15-day READY stall as its FR-4 sibling.",
+        "claimed_at": "2026-08-08T08:55:16Z",
+        "claimed_by": "dev-team (review-lane qa-drain)",
+        "dispatch_lane": "developer",
+        "dev_note": "FR-1/FR-2 implemented in coordinationStore.ts (heartbeatTask/releaseTask): ttl_seconds/payload_patch two-statement UPDATE + null-session ladder for orphan-signal rows (NFR-1 regression-tested). coordinationStore.test.ts new, 13/13 GREEN. Scope: coordinationStore.ts only — coordinationTools.ts Zod exposure is Task 2 (FIX-ORPHAN-FR2-FR6-FR7-INTERFACE-COORDINATION-TOOLS), still READY. Commits d6c4e6006/c4b7b2060.",
+        "status_note": "[QA] Review Record (direct-commit verify) 2026-08-08T09:00:19Z: commits d6c4e6006 (feat: heartbeatTask/releaseTask +options: ttl_seconds/payload_patch two-statement UPDATE, FR-2 null-session ladder gated on row own owner_client_session IS NULL + task_kind=orphan-signal, NFR-1 anti-theft intact) + c4b7b2060 (handoff+WORK.md) — both confirmed on main ancestry. Re-ran bun test src/infrastructure/__tests__/coordinationStore.test.ts myself: 13/13 pass/27 expect, exact match to dev claim. bun tsc --noEmit: 0 errors. Broader targeted regression (20 lock/coordination test files, superset of devs claimed 18): 332 pass/0 fail/991 expect, zero regressions. mock-guard.sh --files coordinationStore.ts: PASS. DDD/security greps clean. NFR-2 backward-compat confirmed at both live call sites (coordinationTools.ts:174/208, bctcRefineJob.ts:532) unchanged 2-arg calls. Scope boundary (coordinationTools.ts Zod exposure = separate Task 2, still READY) confirmed genuine, not a gap. Repo-wide bun test not re-run per pinned CANONICAL reading (dev-standards.md:1435) — targeted suite governs. APPROVED, DONE_VERIFIED."
       }
     ],
     "head": {
@@ -22736,47 +22777,6 @@
         "depends": [
           "FIX-MARKETDB-WAL-SEQUENCE-STEPS-2-4-NO-OWNER"
         ]
-      },
-      {
-        "id": "FIX-ORPHAN-FR1-FR2-INFRA-HEARTBEAT-LADDER",
-        "type": "FEATURE",
-        "title": "Implement FR-1/FR-2: extend task_heartbeat with ttl_seconds/payload_patch + null-session ladder for task_release",
-        "status": "QA",
-        "priority": "P0",
-        "size": "M",
-        "zone": "apps/mcp-server/",
-        "owner": "developer",
-        "next_agent": "qa",
-        "depends": [],
-        "supervised": false,
-        "created_at": "2026-07-22T01:15:30Z",
-        "created_by": "pm/decomposition-20260722T0115",
-        "updated_at": "2026-08-08T08:55:17Z",
-        "updated_by": "developer",
-        "origin_task": "FIX-ORPHAN-ADOPTION-BOARD-STATE-GUARD",
-        "parent_fix_spec": "fix_spec(a)+(c)/AC1+AC3",
-        "subtasks": [
-          {
-            "seq": 1,
-            "title": "Add ttl_seconds + payload_patch optional params to heartbeatTask()",
-            "acceptance": "heartbeatTask accepts optional ttl_seconds (60-691200), updates row.ttl_seconds when supplied; payload_patch shallow-merges into payload JSON when supplied"
-          },
-          {
-            "seq": 2,
-            "title": "Add null-session ladder to heartbeatTask/releaseTask for orphan-signal rows",
-            "acceptance": "orphan-signal:* rows with owner_client_session=NULL match on (owner_agent + original_owner_client_session echo); live-session rows (owner_client_session IS NOT NULL) never match via new params"
-          },
-          {
-            "seq": 3,
-            "title": "Implement two-statement UPDATE pattern (not CTE) per FR-1 file-level design",
-            "acceptance": "First UPDATE: ttl_seconds if supplied. Second UPDATE: payload_patch merge. Both preserve unpatched fields."
-          }
-        ],
-        "po_corroboration_20260806": "LIVE 10x corroboration for the FR-2 null-session release ladder, RAW-verified by po 2026-08-06T11:07Z tick (signal dev-orphangap-20260806T111713Z, finding_2). task_release(task_id='orphan-signal:'+id, owner_client_session=$SESSION) returned {ok:true, released:0} on all 10 attempts — the orphan-signal lock's owner_client_session is null (server-reaper owned), so NO client session can ever match it. Both call sites in docs/agents/dev-team/flow/orphan-adoption.md (happy-path ~L94-98 and git_sha-invalid dead-end ~L69-74) are therefore unreachable no-ops as written. Note the ok:true/released:0 shape: the call reports success while releasing nothing — the exact 'ok+released=wrong' false-green class. Practical blast radius is bounded by the 7200s TTL self-clear, but during that window a re-probe can still attempt duplicate adoption if FR-4's terminal guard is not also live. Same 15-day READY stall as its FR-4 sibling.",
-        "claimed_at": "2026-08-08T08:55:16Z",
-        "claimed_by": "dev-team (review-lane qa-drain)",
-        "dispatch_lane": "developer",
-        "dev_note": "FR-1/FR-2 implemented in coordinationStore.ts (heartbeatTask/releaseTask): ttl_seconds/payload_patch two-statement UPDATE + null-session ladder for orphan-signal rows (NFR-1 regression-tested). coordinationStore.test.ts new, 13/13 GREEN. Scope: coordinationStore.ts only — coordinationTools.ts Zod exposure is Task 2 (FIX-ORPHAN-FR2-FR6-FR7-INTERFACE-COORDINATION-TOOLS), still READY. Commits d6c4e6006/c4b7b2060."
       },
       {
         "id": "FIX-ORPHAN-FR1-FR3-FR6-SKILL-DISPATCH-CLAIM",
