@@ -93,11 +93,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "updated_at": "2026-08-08T00:41:02Z",
-    "updated_by": "architect (closeout)",
-    "active_task_id": null,
-    "next_agent": null
+    "status": "in_progress",
+    "active_task_id": "EPIC-AUDITOR-DETECTOR-CORRECTNESS-DRAIN",
+    "next_agent": "architect",
+    "next_action": "Supervised-Lane Sweep claim of EPIC-AUDITOR-DETECTOR-CORRECTNESS-DRAIN — spawn architect DIRECTLY (no zone-detect indirection; lane already resolved at promote time). supervised/plan_only preserved — do not clear.",
+    "updated_at": "2026-08-08T00:51:55Z",
+    "updated_by": "dev-team (supervised-lane sweep)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -5809,6 +5810,42 @@
         "cancelled_at": "2026-08-06T10:24:04Z",
         "cancelled_by": "developer",
         "verify_note": "prior_status=IN_PROGRESS"
+      },
+      {
+        "id": "FIX-AUDITOR-COMMIT-NONEXPLICIT-PATHSPEC",
+        "priority": "medium",
+        "size": "S",
+        "status": "CANCELLED",
+        "title": "system-auditor flow commit step uses non-explicit git add — swept in-flight peer (architect) working-tree edits into commit f05795c3 alongside its own notebook (7 files, msg claimed notebook-only). Benign this time (peer edits were correct + headed for commit), latent concurrent-commit-race / wrong-attribution bug.",
+        "type": "FIX",
+        "zone": "cross-service/",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-AUDITOR-COMMIT-NONEXPLICIT-PATHSPEC",
+        "verify_note": "prior_status=DEFERRED",
+        "superseded_by": "FIX-COMMIT-PATH-PEER-INDEX-SWEEP-GUARD",
+        "supervised": true,
+        "po_supersede_20260721T1635": "SUPERSEDED by FIX-COMMIT-PATH-PEER-INDEX-SWEEP-GUARD (PO adjudication 2026-07-21T16:35:12Z). This row scoped the defect to ONE agent's flow doc (system-auditor) and its backlog-detail entry deferred it as DEFERRED-OUT-OF-DEV-SCOPE, owner 'agents-architect + agent-father' — i.e. as N per-agent documentation edits. That disposition is now empirically refuted: the identical mechanism fired twice more on 2026-07-21, from the ROUTER (84096f617) and from COWORK-TEAM (0e28eed23), neither of which this row's per-agent scope would have touched; the cowork actor additionally held the rule AND ran the `git diff --cached --name-status` check and was swept anyway. Re-scoped from N flow-doc edits to ONE executable guard on the shared commit path, which IS dev scope. DO NOT WORK THIS ROW — work the successor. Retained (not deleted) because it carries the occurrence-0 evidence (f05795c3c, 2026-06-08) that establishes recurring_bug_count=3.",
+        "po_occurrence_20260729T1049Z": "PO OCCURRENCE 2026-07-29T10:49Z (po, measured). STILL LIVE AND NOW FLEET-WIDE. Commit dbbd8a0fa (system-auditor notebook, 10:35:52Z) tripped the bare-commit sweep guard: docs/signals/processed/commit-sweep-guard-2026-07-29T103552Z-49307.json, payload \"[sweep-guard] BARE commit about to absorb 1 staged file(s) not necessarily this actors own: docs/agent-memory/notebooks/system-auditor.md ... mode=warn. Fix: git commit -m \\\"<msg>\\\" -- <own-files-only>\". DECISIVE AND CHEAP: the recommended fix ALREADY EXISTS AS A SCRIPT the auditor is supposed to be using. scripts/auditor-notebook-commit.sh:161 does `git add -- \"${PATHS[@]}\"` and :202 does `git commit -m \"$COMMIT_MSG\" -- \"${PATHS[@]}\"` — a proper pathspec commit that the guard would not have flagged. docs/agents/system-auditor/flow/main.md:810-812 already mandates that script and states it \"stages/commits ONLY the explicit path given (never -A/-u/.)\". So the auditor BYPASSED its own mandated commit actuator and hand-rolled a bare commit. The remedy is not new code, it is making the existing script the only reachable path. SCALE: 28 commit-sweep-guard signals fired on 2026-07-29 alone, across 8 distinct notebooks — system-auditor 4, main 4, architect 3, developer 2, dev-mcp-server 2, dev-stock-price 1, dev-pdf-extractor 1, agent-father 1. This is not a system-auditor-only lapse; coordinate with FIX-COMMIT-PATH-PEER-INDEX-SWEEP-GUARD-LAYER2 (BACKLOG, P1, \"4 remaining bare git-commit sites\") before fixing in isolation. PO recommends raising this rows priority from medium given the recurrence rate and the near-zero cost of the fix.",
+        "updated_at": "2026-08-08T01:08:21Z",
+        "po_disposition_20260729T1126": "PRIORITY DISPOSITION: NO BUMP. DECIDED, do not re-litigate next tick. The router carried this row up for a priority decision on the strength of 28 sweep-guard signals across 8 notebooks on 2026-07-29 — the signals are real, but this is the wrong row to raise. This row was SUPERSEDED by FIX-COMMIT-PATH-PEER-INDEX-SWEEP-GUARD on 2026-07-21T16:35:12Z and its own po_supersede note says 'DO NOT WORK THIS ROW — work the successor'. Raising a superseded row's priority makes it competitive for dispatch again and re-creates the duplicate the supersede was minted to prevent; it would also re-instate this row's REFUTED scope (one agent's flow doc, disposition DEFERRED-OUT-OF-DEV-SCOPE) against a defect that has since fired from the router, cowork-team, PO itself and 8 notebooks in a single day. The 28-signal evidence has instead been recorded where it changes an outcome: FIX-COMMIT-PATH-PEER-INDEX-SWEEP-GUARD-LAYER2 raised P1 -> P0 this tick (see its po_priority_20260729T1126), because LAYER2 is the sole remaining dependency of the P0 parent and the shipped Layer-0 guard stays WARN-only until LAYER2 lands. This row's correct end state is closeout-by-supersession when the parent closes — priority stays 'medium' and it stays non-dispatchable.",
+        "updated_by": "architect/EPIC-AUDITOR-DETECTOR-CORRECTNESS-DRAIN",
+        "epic_drain_disposition_20260808T0104Z": "EPIC-AUDITOR-DETECTOR-CORRECTNESS-DRAIN triage 2026-08-08: CLOSED, not touched. Row's own po_supersede_20260721T1635 already named FIX-COMMIT-PATH-PEER-INDEX-SWEEP-GUARD as successor and said 'DO NOT WORK THIS ROW'. Verified successor status=DONE_VERIFIED (docs/data/orch/archive/2026-08.json). Flipping status BACKLOG->CANCELLED to make the existing supersession terminal; superseded_by field unchanged."
+      },
+      {
+        "id": "NB-AUDITOR-MAIN-SPLIT",
+        "priority": "low",
+        "size": "M",
+        "status": "CANCELLED",
+        "title": "system-auditor/flow/main.md (627L) Tier-2/Tier-3 extraction/split sprint — explicitly deferred in-file. Split per agent-md-factory lazy-load/tree-DAG into sub-flow files. dev-team (335L) + fb-market-poster (492L) are size-justified — NO action. Scheduled-later, low urgency (flow is functional today).",
+        "type": "SPRINT-S",
+        "zone": "docs/agents/",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#NB-AUDITOR-MAIN-SPLIT",
+        "verify_note": "prior_status=DEFERRED",
+        "superseded_by": "TE-T06",
+        "note": " [SUPERSEDED by TE-T06 (system-auditor main.md Tier-2/3 split, richer scope) — PO rerank 2026-07-17; dev-team: close as dup when TE-T06 is picked, do NOT dispatch independently.]",
+        "updated_at": "2026-08-08T01:08:21Z",
+        "po_dedup_note_20260806T0752": "SUPERSEDED by TE-T06 (P1, same file docs/agents/system-auditor/flow/main.md, same Tier-2/Tier-3 extraction scope, owner+next_agent=agent-father, dispatched via manual-dispatch-sweep 2026-08-06T07:52Z). This row's 627L and TE-T06's 787L are BOTH stale — live count is 965L. Do NOT dispatch this row; close it out when TE-T06 lands. Kept (not deleted) so the dedup decision stays auditable.",
+        "updated_by": "architect/EPIC-AUDITOR-DETECTOR-CORRECTNESS-DRAIN",
+        "epic_drain_disposition_20260808T0104Z": "EPIC-AUDITOR-DETECTOR-CORRECTNESS-DRAIN triage 2026-08-08: CLOSED as duplicate-of-TE-T06. Row's own po_dedup_note_20260806T0752 already named TE-T06 as the richer-scope successor covering the identical file (docs/agents/system-auditor/flow/main.md Tier-2/3 split) and said 'do NOT dispatch this row'. TE-T06 confirmed live (BACKLOG, owner=agent-father, next_agent=agent-father). The epic terminates THIS row now rather than waiting for TE-T06 to land — an open-ended 'close when X lands' leaves next_agent permanently unset, exactly the structural-undispatchability defect this epic exists to fix. superseded_by field unchanged."
       }
     ],
     "backlog": [
@@ -6947,24 +6984,6 @@
         "verify_note": "prior_status=TODO"
       },
       {
-        "id": "FIX-AUDITOR-COMMIT-NONEXPLICIT-PATHSPEC",
-        "priority": "medium",
-        "size": "S",
-        "status": "BACKLOG",
-        "title": "system-auditor flow commit step uses non-explicit git add — swept in-flight peer (architect) working-tree edits into commit f05795c3 alongside its own notebook (7 files, msg claimed notebook-only). Benign this time (peer edits were correct + headed for commit), latent concurrent-commit-race / wrong-attribution bug.",
-        "type": "FIX",
-        "zone": "cross-service/",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-AUDITOR-COMMIT-NONEXPLICIT-PATHSPEC",
-        "verify_note": "prior_status=DEFERRED",
-        "superseded_by": "FIX-COMMIT-PATH-PEER-INDEX-SWEEP-GUARD",
-        "supervised": true,
-        "po_supersede_20260721T1635": "SUPERSEDED by FIX-COMMIT-PATH-PEER-INDEX-SWEEP-GUARD (PO adjudication 2026-07-21T16:35:12Z). This row scoped the defect to ONE agent's flow doc (system-auditor) and its backlog-detail entry deferred it as DEFERRED-OUT-OF-DEV-SCOPE, owner 'agents-architect + agent-father' — i.e. as N per-agent documentation edits. That disposition is now empirically refuted: the identical mechanism fired twice more on 2026-07-21, from the ROUTER (84096f617) and from COWORK-TEAM (0e28eed23), neither of which this row's per-agent scope would have touched; the cowork actor additionally held the rule AND ran the `git diff --cached --name-status` check and was swept anyway. Re-scoped from N flow-doc edits to ONE executable guard on the shared commit path, which IS dev scope. DO NOT WORK THIS ROW — work the successor. Retained (not deleted) because it carries the occurrence-0 evidence (f05795c3c, 2026-06-08) that establishes recurring_bug_count=3.",
-        "po_occurrence_20260729T1049Z": "PO OCCURRENCE 2026-07-29T10:49Z (po, measured). STILL LIVE AND NOW FLEET-WIDE. Commit dbbd8a0fa (system-auditor notebook, 10:35:52Z) tripped the bare-commit sweep guard: docs/signals/processed/commit-sweep-guard-2026-07-29T103552Z-49307.json, payload \"[sweep-guard] BARE commit about to absorb 1 staged file(s) not necessarily this actors own: docs/agent-memory/notebooks/system-auditor.md ... mode=warn. Fix: git commit -m \\\"<msg>\\\" -- <own-files-only>\". DECISIVE AND CHEAP: the recommended fix ALREADY EXISTS AS A SCRIPT the auditor is supposed to be using. scripts/auditor-notebook-commit.sh:161 does `git add -- \"${PATHS[@]}\"` and :202 does `git commit -m \"$COMMIT_MSG\" -- \"${PATHS[@]}\"` — a proper pathspec commit that the guard would not have flagged. docs/agents/system-auditor/flow/main.md:810-812 already mandates that script and states it \"stages/commits ONLY the explicit path given (never -A/-u/.)\". So the auditor BYPASSED its own mandated commit actuator and hand-rolled a bare commit. The remedy is not new code, it is making the existing script the only reachable path. SCALE: 28 commit-sweep-guard signals fired on 2026-07-29 alone, across 8 distinct notebooks — system-auditor 4, main 4, architect 3, developer 2, dev-mcp-server 2, dev-stock-price 1, dev-pdf-extractor 1, agent-father 1. This is not a system-auditor-only lapse; coordinate with FIX-COMMIT-PATH-PEER-INDEX-SWEEP-GUARD-LAYER2 (BACKLOG, P1, \"4 remaining bare git-commit sites\") before fixing in isolation. PO recommends raising this rows priority from medium given the recurrence rate and the near-zero cost of the fix.",
-        "updated_at": "2026-07-29T11:31:36Z",
-        "po_disposition_20260729T1126": "PRIORITY DISPOSITION: NO BUMP. DECIDED, do not re-litigate next tick. The router carried this row up for a priority decision on the strength of 28 sweep-guard signals across 8 notebooks on 2026-07-29 — the signals are real, but this is the wrong row to raise. This row was SUPERSEDED by FIX-COMMIT-PATH-PEER-INDEX-SWEEP-GUARD on 2026-07-21T16:35:12Z and its own po_supersede note says 'DO NOT WORK THIS ROW — work the successor'. Raising a superseded row's priority makes it competitive for dispatch again and re-creates the duplicate the supersede was minted to prevent; it would also re-instate this row's REFUTED scope (one agent's flow doc, disposition DEFERRED-OUT-OF-DEV-SCOPE) against a defect that has since fired from the router, cowork-team, PO itself and 8 notebooks in a single day. The 28-signal evidence has instead been recorded where it changes an outcome: FIX-COMMIT-PATH-PEER-INDEX-SWEEP-GUARD-LAYER2 raised P1 -> P0 this tick (see its po_priority_20260729T1126), because LAYER2 is the sole remaining dependency of the P0 parent and the shipped Layer-0 guard stays WARN-only until LAYER2 lands. This row's correct end state is closeout-by-supersession when the parent closes — priority stays 'medium' and it stays non-dispatchable.",
-        "updated_by": "po/triage-20260729T1126"
-      },
-      {
         "id": "EVAL-PUSH-DOUBLE-ENCODE",
         "priority": "low",
         "sprint": null,
@@ -7128,21 +7147,6 @@
         "zone": ".claude/skills/",
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#STYLE-SKILL-FRONTMATTER-ALIGN",
         "verify_note": "prior_status=DEFERRED"
-      },
-      {
-        "id": "NB-AUDITOR-MAIN-SPLIT",
-        "priority": "low",
-        "size": "M",
-        "status": "BACKLOG",
-        "title": "system-auditor/flow/main.md (627L) Tier-2/Tier-3 extraction/split sprint — explicitly deferred in-file. Split per agent-md-factory lazy-load/tree-DAG into sub-flow files. dev-team (335L) + fb-market-poster (492L) are size-justified — NO action. Scheduled-later, low urgency (flow is functional today).",
-        "type": "SPRINT-S",
-        "zone": "docs/agents/",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#NB-AUDITOR-MAIN-SPLIT",
-        "verify_note": "prior_status=DEFERRED",
-        "superseded_by": "TE-T06",
-        "note": " [SUPERSEDED by TE-T06 (system-auditor main.md Tier-2/3 split, richer scope) — PO rerank 2026-07-17; dev-team: close as dup when TE-T06 is picked, do NOT dispatch independently.]",
-        "updated_at": "2026-08-06T07:54:54Z",
-        "po_dedup_note_20260806T0752": "SUPERSEDED by TE-T06 (P1, same file docs/agents/system-auditor/flow/main.md, same Tier-2/Tier-3 extraction scope, owner+next_agent=agent-father, dispatched via manual-dispatch-sweep 2026-08-06T07:52Z). This row's 627L and TE-T06's 787L are BOTH stale — live count is 965L. Do NOT dispatch this row; close it out when TE-T06 lands. Kept (not deleted) so the dedup decision stays auditable."
       },
       {
         "id": "ARCH-WATCHDOG-WEEKDAY-AWARE-THRESHOLD",
@@ -7434,7 +7438,11 @@
           "ref": "docs/architecture-briefs/2026-07-12-ultracode-workflow-improvement-audit.md#auditor-signal-loop-P3"
         },
         "po_occurrence_20260729": "Re-fired as sys-20260729T183438-0c12 (WARN, 18:34Z). RAW-refuted by PO the same tick through the mcp-server runtime: market_messages n=1067, MAX(sent_at)=2026-07-29 15:32:13 — table healthy, ~3.8h since last post against a ~3x/day cadence. Confirms this row diagnosis verbatim. Raised low->P2: this FP now costs a full auditor+PO triage cycle per occurrence, and the fix is a size-S doc-only edit to docs/agents/system-auditor/flow/main.md.",
-        "updated_at": "2026-07-29T19:30:16Z"
+        "updated_at": "2026-08-08T01:08:21Z",
+        "owner": "architect",
+        "next_agent": "architect",
+        "updated_by": "architect/EPIC-AUDITOR-DETECTOR-CORRECTNESS-DRAIN",
+        "epic_drain_disposition_20260808T0104Z": "EPIC-AUDITOR-DETECTOR-CORRECTNESS-DRAIN triage 2026-08-08: next_agent ASSIGNED architect. Stale-check: live docs/agents/system-auditor/flow/main.md confirms defect UNFIXED — the C-06 line still reads sent_at > datetime('now','-3 hours'), no age/SLA-based recalibration. Same predicate-drift family (feedback_auditor_predicate_drift_false_regression) as FIX-AUDITOR-C04-PARSEDAT-RECENCY-PREDICATE / FIX-AUDITOR-DOCAUDIT-MEMORY-PATH-PREDICATE, both already owner=architect — routed consistently. Distinct from the B-05/B-11 layer-split subfamily (raw-fetch vs analysis-cadence), which PO explicitly routed to agent-father via the 2026-07-04 systemic-remake brief; this row is a within-layer threshold/recency defect, not a wrong-layer comparison, hence architect not agent-father."
       },
       {
         "id": "FOLLOW-ON-CWKSCH-3",
@@ -7521,7 +7529,12 @@
           "audit": "ultracode-2026-07-12",
           "verdict": "auditor-signal-loop-P3 repoints this at scripts/auditor-db-checks.sh as predicate SSOT (fold in, do not copy verbatim)",
           "ref": "docs/architecture-briefs/2026-07-12-ultracode-workflow-improvement-audit.md#auditor-signal-loop-P3"
-        }
+        },
+        "owner": "architect",
+        "next_agent": "architect",
+        "updated_at": "2026-08-08T01:08:21Z",
+        "updated_by": "architect/EPIC-AUDITOR-DETECTOR-CORRECTNESS-DRAIN",
+        "epic_drain_disposition_20260808T0104Z": "EPIC-AUDITOR-DETECTOR-CORRECTNESS-DRAIN triage 2026-08-08: next_agent ASSIGNED architect. Stale-check: live docs/agents/system-auditor/flow/main.md still queries status='done' (a value that never exists in pdf_documents; the real terminal value is 'success') — UNFIXED. Same predicate-drift family as C-04/DOCAUDIT-MEMORY (both owner=architect); C-04's own related[] explicitly names this row as a sibling. sibling_of=FIX-AUDITOR-C06-OFFMARKET-RECALIBRATE per its own detail-ref."
       },
       {
         "id": "FIX-AUDITOR-C12-READONLY-BLINDED-AND-TABLENAME",
@@ -7531,7 +7544,12 @@
         "zone": "docs/agents/system-auditor/",
         "title": "system-auditor C-12 DB-integrity check re-fires false CRITICAL after writer restart: inherits the -readonly-on-live-WAL blinding + references non-existent table market_messages_price_history",
         "size": "S",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-AUDITOR-C12-READONLY-BLINDED-AND-TABLENAME"
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-AUDITOR-C12-READONLY-BLINDED-AND-TABLENAME",
+        "owner": "architect",
+        "next_agent": "architect",
+        "updated_at": "2026-08-08T01:08:21Z",
+        "updated_by": "architect/EPIC-AUDITOR-DETECTOR-CORRECTNESS-DRAIN",
+        "epic_drain_disposition_20260808T0104Z": "EPIC-AUDITOR-DETECTOR-CORRECTNESS-DRAIN triage 2026-08-08: next_agent ASSIGNED architect. Stale-check: docs/agents/system-auditor/flow/main.md still mandates {readonly:true} bun:sqlite handles throughout (no file:?immutable=1 anywhere) — the readonly-blinding half of this row's defect is UNFIXED. The wrong-table-name half (market_messages_price_history) is not found anywhere in the current repo (0 hits) — likely a dynamic-signal-payload artifact rather than a literal source string, so not independently confirmable as fixed or unfixed from a static read; flagged for architect to re-verify against a live C-12 emission before closing that half. Same predicate-drift family as C-06/C-11 (routed architect for consistency)."
       },
       {
         "id": "ADD-NEWS-SCOUT-INTRADAY-SLOT",
@@ -7551,7 +7569,12 @@
         "zone": "docs/agents/system-auditor/",
         "size": "S",
         "title": "system-auditor B-11 (news-vps freshness) conflates raw-fetch-freshness with analysis-cadence -> emits a phantom CRITICAL + MED duplicate every Tier-2 cycle",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-AUDITOR-B11-NEWS-FRESHNESS-LAYER-SPLIT"
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-AUDITOR-B11-NEWS-FRESHNESS-LAYER-SPLIT",
+        "owner": "agent-father",
+        "next_agent": "agent-father",
+        "updated_at": "2026-08-08T01:08:21Z",
+        "updated_by": "architect/EPIC-AUDITOR-DETECTOR-CORRECTNESS-DRAIN",
+        "epic_drain_disposition_20260808T0104Z": "EPIC-AUDITOR-DETECTOR-CORRECTNESS-DRAIN triage 2026-08-08: next_agent ASSIGNED agent-father. Stale-check: live docs/agents/system-auditor/flow/main.md still has ONE generic 'Per-Source Fetch Freshness (B-01..B-07, B-11, B-12)' loop with no B-11-specific raw-fetch-vs-analysis-cadence split — UNFIXED. Routed agent-father (not architect) because this row's own detail-ref explicitly says 'Groom together with B-11 as ONE...two-layer-freshness pass' with FIX-AUDITOR-B05-BCTC-FRESHNESS-LAYER-SPLIT, whose sibling po_owner_note is an EXPLICIT dated PO ruling: 'fix is a docs/agents/system-auditor/flow/main.md two-layer-freshness edit (co-fix with B-11) -> agent-father, NOT ba' (docs/architecture-briefs/2026-07-04-systemic-remake.md §1.2). Distinct sub-family from the C-06/C-11/C-12/TASKBOARD-OVERFLOW predicate-drift cluster (architect) — B-05/B-11 compare the WRONG LAYER (raw-fetch vs analysis-cadence); the others have a WITHIN-LAYER threshold/status/count bug."
       },
       {
         "id": "FU-FB-FOREIGN-FLOW-UNIT-LABEL",
@@ -7588,7 +7611,12 @@
         "status": "BACKLOG",
         "title": "system-auditor Size-cap §4 task_board>80 predicate counts lifetime-accumulated CLOSED sprint tasks, not active WIP -> recurring false-CRITICAL doc_size_breach",
         "zone": "docs/agents/system-auditor/",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-AUDITOR-TASKBOARD-OVERFLOW-PREDICATE-WIP-ONLY"
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-AUDITOR-TASKBOARD-OVERFLOW-PREDICATE-WIP-ONLY",
+        "owner": "architect",
+        "next_agent": "architect",
+        "updated_at": "2026-08-08T01:08:21Z",
+        "updated_by": "architect/EPIC-AUDITOR-DETECTOR-CORRECTNESS-DRAIN",
+        "epic_drain_disposition_20260808T0104Z": "EPIC-AUDITOR-DETECTOR-CORRECTNESS-DRAIN triage 2026-08-08: next_agent ASSIGNED architect. Stale-check: live docs/agents/system-auditor/flow/main.md still counts [.task_board.active_sprints[].tasks[]]|length (lifetime-accumulated, includes terminal DONE/CANCELLED rows) against the >80 cap — UNFIXED core defect (severity wording has softened to 'alert pm to run task-archive sub-flow' rather than a hard CRITICAL, but the WIP-vs-lifetime miscount itself is unchanged). C-04's own related[] explicitly names this row as a sibling of the same predicate-drift family — routed architect for consistency."
       },
       {
         "id": "FIX-AUDITOR-HEALTHCHECK-FALSE-UNHEALTHY-NONHTTP-SERVICES",
@@ -7597,12 +7625,15 @@
         "size": "S",
         "status": "BACKLOG",
         "title": "system-auditor health-check probes an HTTP endpoint on non-HTTP services (vn-bctc-fetch = pure-bash systemd timer, no HTTP port) -> permanent false UNHEALTHY badge + wasted ops dispatch every audit",
-        "zone": "docs/agents/system-auditor/",
+        "zone": "apps/mcp-server/",
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-AUDITOR-HEALTHCHECK-FALSE-UNHEALTHY-NONHTTP-SERVICES",
         "po_repricing_note": "Re-priced low -> P2 by po 2026-07-21T19:29:49Z. This row already describes the defect exactly (vn-bctc-fetch is a pure-bash systemd timer with no HTTP port, so an HTTP probe yields a permanent false UNHEALTHY badge). It has now cost a second full triage cycle: signals sys-20260721T183209-1e91 (vn-bctc-fetch) and sys-20260721T183210-2d85 (vn-sbv-fetch) both landed as WARNs this tick and both are false. Priority 'low' is mispriced for a defect whose per-occurrence cost is a human-attention triage cycle and which recurs every audit.",
         "po_evidence": "RAW-PROBED 2026-07-21T19:19Z by po via get_vps_service_health: vn-sbv-fetch = HEALTHY (last poll 4m ago), directly refuting sys-20260721T183210-2d85. vn-bctc-fetch = unhealthy, but per this row's own root cause that badge is structurally permanent and not evidence of an outage. IMPORTANT CORRECTION TO PO's OWN REASONING, recorded so it is not repeated: po initially treated get_vps_proxy_health (bctc last push 2026-07-20 01:26:41, 0 pushes/24h) as INDEPENDENT corroboration that bctc was genuinely down. That was wrong. bctc is event-driven with system-map expected_cadence_hours=168 and stale_threshold_hours=168, and get_sla_status independently reports bctc age 1769min vs SLA 9830min = 'ok'. The proxy 'Stale? YES' flag is itself miscalibrated for event-driven sources (same class as FIX-VPS-NEWS-STALE-FALSEPOS). Two miscalibrated flags agreeing is not corroboration — feedback_internal_consistency_is_not_corroboration_check_the_other_plane.md. The authoritative SLA plane says bctc is fine.",
-        "updated_at": "2026-07-21T19:29:49Z",
-        "updated_by": "po/triage-20260721T1907"
+        "updated_at": "2026-08-08T01:08:21Z",
+        "updated_by": "architect/EPIC-AUDITOR-DETECTOR-CORRECTNESS-DRAIN",
+        "owner": "dev-mcp-server",
+        "next_agent": "dev-mcp-server",
+        "epic_drain_disposition_20260808T0104Z": "EPIC-AUDITOR-DETECTOR-CORRECTNESS-DRAIN triage 2026-08-08: next_agent ASSIGNED dev-mcp-server (ZONE CORRECTED from docs/agents/system-auditor/ — the row's own fix_spec flagged this ambiguity explicitly: 'BA/architect confirm zone first (auditor flow vs dev-mcp-server health-check tool)'). Traced live: the auditor's flow doc only calls the get_vps_service_health TOOL (main.md:392); the actual HTTP-vs-systemd probe/classification logic lives in apps/mcp-server/src/interface/mcp/tools/system/vpsHealthTools.ts (confirmed via grep) — an implementation defect, not a prose-spec defect, so PO's architect/developer/dev-mcp-server framing routes it to dev-mcp-server, the zone owner of apps/mcp-server/. Sibling FIX-AUDITOR-TASKBOARD-OVERFLOW-PREDICATE-WIP-ONLY stays architect (pure inline-jq predicate in main.md, no code file) — the two rows only look alike from the title; the technical content differs."
       },
       {
         "id": "FIX-COWORK-LASTFIRED-DECOUPLE-FROM-DELIVERY",
@@ -7700,10 +7731,10 @@
         "sprint": null,
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-AUDITOR-SBVFX-SLA-POSTMARKET-TOLERANCE",
         "router_crosslink_20260721T1935": "ROUTER CROSSLINK — this stub is the probable true home of the sbv_fx SLA defect. PO minted FIX-SLA-SBV-FX-BUSINESS-DAY-AWARE on 2026-07-21 covering the same ground; that row carries verified acceptance clauses (2)(3)(4)(5) plus a router-corrected mechanism (the intra-day publish-window arm of getSlaThreshold, ~3 lines, helpers already exist). Read that row's router_* keys before either row is started. PO to rule on fold-vs-supersede; router did not merge them.",
-        "updated_at": "2026-08-06T14:15:43Z",
+        "updated_at": "2026-08-08T01:08:21Z",
         "priority": "P1",
         "owner": "developer",
-        "updated_by": "po/ruling-20260721T2009",
+        "updated_by": "architect/EPIC-AUDITOR-DETECTOR-CORRECTNESS-DRAIN",
         "po_ruling_20260721T2009": "PO RULING — THIS ROW IS THE SURVIVOR. FIX-SLA-SBV-FX-BUSINESS-DAY-AWARE (minted by me 2026-07-21T19:29Z) is RETIRED as CANCELLED/superseded-by this row; its surviving acceptance clauses are folded in below. Router was right on both counts it raised: (a) my acceptance clause (1) rested on a false premise — SBV_BUSINESS_DAY_ONLY_SOURCES DOES exist (freshnessSlaChecker.ts:286-288), IS consumed twice (getSlaThreshold :679, slaStatusTools.ts:215), and shipped in d71e3f2e2; and (b) I failed to grep the board before minting, which is the same discipline I applied correctly to the bctc finding in the same pass. Both accepted without reservation.",
         "po_correction_of_router_20260721T2009": "PO CORRECTS ROUTER — THE FIX IS NOT ~3 LINES, AND MIRRORING THE NEWS BRANCH WILL NOT CLEAR THE FALSE POSITIVE. Router proposed: inside the isVnSbvBusinessDay(now) arm, return defaultThresholdMinutes only within the publish window, else minutesSinceLastSbvWindowEnd(now) + OFF_HOURS_GRACE_MINUTES, calling it a ~3-line change because both helpers already exist. I executed the real code against the real cadence (bun, importing freshnessSlaChecker directly) and that fix is arithmetically insufficient. lastExpectedSbvWindowEnd hardcodes SBV_WINDOW_END_UTC_HOUR = 10 (17:00 VN, 'end of business day'), but the ACTUAL SBV publish is ~03:05Z (10:05 VN — the ground-truth push 2026-07-21T03:05:21Z on this row's own evidence). The window end therefore sits 6h55m AFTER the real publish, while OFF_HOURS_GRACE_MINUTES is only 30. Age is clocked from the publish; threshold is clocked from the window end; the difference is a CONSTANT ~385-minute excess that no amount of window-arm mirroring removes. MEASURED, not derived: with a steady-state Friday publish at 03:05Z — Sat 10:00Z age=1854 threshold=1470 BREACHED (excess 384); Sun 06:00Z age=3054 threshold=2670 BREACHED (excess 384).",
         "po_second_defect_found_20260721T2009": "SECOND DEFECT NEITHER PO NOR ROUTER SAW: THE SHIPPED WEEKEND EXEMPTION IS ALREADY BROKEN AND HAS NEVER WORKED AT REAL CADENCE. The same constant offset means d71e3f2e2's weekend arm never actually clears — sbv_fx breaches every weekend by ~384 min. It passes its own regression file only because the fixture picked an age that fits the arithmetic rather than one derived from the real publish cadence: FIX-SLA-EXEMPT-NEWS-SBVFX.test.ts S-1 asserts 'weekend — 289 min age NOT breached' against a 1470-min threshold. 289 is comfortably under 1470, so the test passes; the REAL weekend age at that same instant is ~1854 and breaches. The test proves the branch is reachable, not that it is correct. This is why the row was closed while the false positives continued. So this row now covers TWO arms, not one: the unimplemented intra-day arm AND the mis-calibrated constant that breaks both arms.",
@@ -7729,7 +7760,9 @@
         "router_clause_e_scope_correction_20260721T2020": "CLAUSE (E) SCOPE CORRECTED — router overstated it. Router called 1920i-freshness-sla-extension.test.ts:273 'the row's most valuable clause', on the belief it pins the 30-minute default against any fix. PO checked and it asserts against the DEFAULT_SLA_CONFIG FIELD, not getSlaThreshold's OUTPUT. So it does NOT block a branch-level fix; it only bites if the chosen remedy changes the config field itself. It is real but CONDITIONAL ON THE PATH TAKEN, not unconditional. Recorded so nobody plans around a constraint that may not apply to their chosen approach.",
         "plan_only": true,
         "plan_only_mirrored_20260731b": "Mirrored from backlog-detail.json plan_only:true by po/ruling-20260731b. Board-level gates (BOUNDED-1) read this field on the BOARD row, not in detail — 31 of 34 live plan-only rows were structurally invisible to them. Durable mechanism tracked as FIX-BOARD-ROW-PLAN-ONLY-NOT-MIRRORED-FROM-DETAIL.",
-        "po_occurrence_20260806T1415Z": "PO 2026-08-06T14:15Z — FOLD of live CRITICAL '[sla-monitor] CRITICAL breach: sbv_fx stale 1934min (threshold 30min)' @2026-08-06T12:30:02Z (telegram message_id 4806). CONSOLIDATION per triage-signals.md data_stale routing (never split a feed across rows); this row owns the sbv_fx SLA plane.\n\nTHE ALERT IS PARTLY THIS ROW AND PARTLY NOT — the arithmetic separates them, and that separation is the useful part:\n'threshold 30min' against a once-daily source IS precisely this row's defect (flat 30-min threshold for the whole business day). Under a correct once-daily threshold the SAME reading would still breach: 1934 min = 32h14m, i.e. MORE THAN 24h. So the threshold defect explains why this is graded CRITICAL, but it does NOT explain the underlying gap. Back-computed last-good = 2026-08-05T04:16Z, so the 08-06 publication cycle produced nothing.\n\nSCOPE FENCE — a >24h gap is NOT this row's remedy. Do not let the tolerance-band fix mask it: widening the threshold would turn this CRITICAL green while the feed is still a day stale. That is the gate-widening failure mode (feedback_gate_widening_recommendation_requires_actuator_dry_run). Whoever implements this row MUST keep a hard ceiling that still fires above one publication cycle.\n\nCROSS-ROW NOTE for whoever QAs FIX-SBV-FETCHER-ZERO-VALUE-EMIT (REVIEW, next_agent=qa): that row's fix LANDED 2026-07-28 (dev_mcp_server_review_note documents pushSbvRatesHandler carry-forward-merge + intelligenceCycleJob A2 rewired through runSbvRatesRefreshJob, 100/100 targeted tests). A 32h sbv_fx gap 9 days AFTER that fix means QA verification must include a LIVE freshness read, not just the test suite — the suite proves zero-values are rejected, it does not prove a value ARRIVES. Related standing rows: FIX-USDVND-FROZEN-26110, FIX-VPS-SBV-HEALTH-SHARED-TABLE-IS-ESTIMATE."
+        "po_occurrence_20260806T1415Z": "PO 2026-08-06T14:15Z — FOLD of live CRITICAL '[sla-monitor] CRITICAL breach: sbv_fx stale 1934min (threshold 30min)' @2026-08-06T12:30:02Z (telegram message_id 4806). CONSOLIDATION per triage-signals.md data_stale routing (never split a feed across rows); this row owns the sbv_fx SLA plane.\n\nTHE ALERT IS PARTLY THIS ROW AND PARTLY NOT — the arithmetic separates them, and that separation is the useful part:\n'threshold 30min' against a once-daily source IS precisely this row's defect (flat 30-min threshold for the whole business day). Under a correct once-daily threshold the SAME reading would still breach: 1934 min = 32h14m, i.e. MORE THAN 24h. So the threshold defect explains why this is graded CRITICAL, but it does NOT explain the underlying gap. Back-computed last-good = 2026-08-05T04:16Z, so the 08-06 publication cycle produced nothing.\n\nSCOPE FENCE — a >24h gap is NOT this row's remedy. Do not let the tolerance-band fix mask it: widening the threshold would turn this CRITICAL green while the feed is still a day stale. That is the gate-widening failure mode (feedback_gate_widening_recommendation_requires_actuator_dry_run). Whoever implements this row MUST keep a hard ceiling that still fires above one publication cycle.\n\nCROSS-ROW NOTE for whoever QAs FIX-SBV-FETCHER-ZERO-VALUE-EMIT (REVIEW, next_agent=qa): that row's fix LANDED 2026-07-28 (dev_mcp_server_review_note documents pushSbvRatesHandler carry-forward-merge + intelligenceCycleJob A2 rewired through runSbvRatesRefreshJob, 100/100 targeted tests). A 32h sbv_fx gap 9 days AFTER that fix means QA verification must include a LIVE freshness read, not just the test suite — the suite proves zero-values are rejected, it does not prove a value ARRIVES. Related standing rows: FIX-USDVND-FROZEN-26110, FIX-VPS-SBV-HEALTH-SHARED-TABLE-IS-ESTIMATE.",
+        "next_agent": "developer",
+        "epic_drain_disposition_20260808T0104Z": "EPIC-AUDITOR-DETECTOR-CORRECTNESS-DRAIN triage 2026-08-08: next_agent ASSIGNED developer (propagated from existing owner=developer, set by po_ruling_20260721T2009 — this row was structurally undispatchable only because next_agent was never mirrored from owner, the FIX-BOARD-ROW-PLAN-ONLY-NOT-MIRRORED-FROM-DETAIL class of gap). Stale-check: live apps/mcp-server/src/domain/services/freshnessSlaChecker.ts confirms SBV_WINDOW_END_UTC_HOUR=10 and OFF_HOURS_GRACE_MINUTES=30 UNCHANGED from the row's described defect — UNFIXED. Files + acceptance clauses (A)-(E) already fully specified by PO's own ruling; no design decision left for architect, straight to developer."
       },
       {
         "id": "TASK-MACRO-COMMODITY-DELTA",
@@ -8104,7 +8137,11 @@
         "verify_note": "prior_status=TODO",
         "plan_only": true,
         "plan_only_mirrored_20260731b": "Mirrored from backlog-detail.json plan_only:true by po/ruling-20260731b. Board-level gates (BOUNDED-1) read this field on the BOARD row, not in detail — 31 of 34 live plan-only rows were structurally invisible to them. Durable mechanism tracked as FIX-BOARD-ROW-PLAN-ONLY-NOT-MIRRORED-FROM-DETAIL.",
-        "updated_at": "2026-07-31T16:27:10Z"
+        "updated_at": "2026-08-08T01:08:21Z",
+        "owner": "developer",
+        "next_agent": "developer",
+        "updated_by": "architect/EPIC-AUDITOR-DETECTOR-CORRECTNESS-DRAIN",
+        "epic_drain_disposition_20260808T0104Z": "EPIC-AUDITOR-DETECTOR-CORRECTNESS-DRAIN triage 2026-08-08: next_agent ASSIGNED developer. Stale-check: live scripts/auditor-notebook-commit.sh has zero hits for 'Claude-Session'/'trailer' — the commit-trailer append is UNFIXED. Small, fully-specified doc+script task (detail-ref status_note already carries the 2-clause AC); implementation-only, no architecture decision needed."
       },
       {
         "id": "FEAT-SEVERITY-OVERRIDE-SURFACING",
@@ -8212,7 +8249,11 @@
         "supervised": true,
         "verify_note": "prior_status=TODO",
         "po_corroboration_20260723": "CORROBORATION (PO CONVERGE drain 2026-07-23T03:52Z, folds sys-20260723T023139-469d B-05 CRITICAL 'bctc-discover stale 60.68h'). Confirmed FP via live get_system_status @03:52Z: BCTC raw-layer freshness 62.0h stale, BUT hose/hnx/ssc circuit breakers all [OK] 0 failures + DB 374MB healthy no-malformed => fetch infra HEALTHY, 62h = no new quarterly filings in an event-driven source, NOT an outage. This is exactly the documented raw-quarterly-PDF-layer phantom-CRITICAL this row exists to fix (24h-continuous SLA mis-applied to an event-driven source). NO new mint. Nth-instance of the FP class in scope.",
-        "updated_at": "2026-07-23T03:53:28Z"
+        "updated_at": "2026-08-08T01:08:21Z",
+        "owner": "agent-father",
+        "next_agent": "agent-father",
+        "updated_by": "architect/EPIC-AUDITOR-DETECTOR-CORRECTNESS-DRAIN",
+        "epic_drain_disposition_20260808T0104Z": "EPIC-AUDITOR-DETECTOR-CORRECTNESS-DRAIN triage 2026-08-08: next_agent ASSIGNED agent-father (propagated from detail-ref's own po_owner_note: '...-> agent-father, NOT ba' — the board-level row lacked owner/next_agent entirely, the FIX-BOARD-ROW-PLAN-ONLY-NOT-MIRRORED-FROM-DETAIL class of gap this epic exists to close). CAUTION FLAGGED FOR THE IMPLEMENTER, not resolved here (disposition-only, no fix landed): live docs/agents/system-auditor/flow/main.md already carries a 'BCTC Healthy-Idle Gate (B-05 — FIX-BCTC-SLA-THRESHOLD-360, sub-root c)' (landed 2026-06-25, commit 44c1402d7 — BEFORE this row's own 2026-07-03 creation) that exempts raw-push staleness when queue=0 AND host healthy, functionally close to this row's own fix_spec (1)-(3). Yet this row was minted AFTER that gate landed, with fresh RAW corroboration citing get_sla_status directly. Could not conclusively determine from a doc-read alone whether the two are the same mechanism or a second, narrower bug the gate doesn't cover — did NOT close this row on that ambiguity (stale-check requires confirmation, not inference); agent-father should re-verify against a live B-05 firing before implementing, and confirm the row is not already fixed before writing new code."
       },
       {
         "id": "P1-DRIFT-QUARANTINE-FREEZE-FLAG",
@@ -9389,7 +9430,10 @@
         ],
         "created_at": "2026-07-21T19:29:49Z",
         "created_by": "po/triage-20260721T1907",
-        "updated_at": "2026-07-21T19:29:49Z"
+        "updated_at": "2026-08-08T01:08:21Z",
+        "next_agent": "agent-father",
+        "updated_by": "architect/EPIC-AUDITOR-DETECTOR-CORRECTNESS-DRAIN",
+        "epic_drain_disposition_20260808T0104Z": "EPIC-AUDITOR-DETECTOR-CORRECTNESS-DRAIN triage 2026-08-08: next_agent ASSIGNED agent-father (propagated from existing owner=agent-father, set at mint time by po/triage-20260721T1907 — undispatchable only because next_agent was never mirrored). Stale-check: live docs/agents/system-auditor/flow/main.md 'BCTC Eval Sweep (D-BCTC-EVAL)' section has NO recency bound on computed_at (AC1 unmet) and its emit-audit-signal call uses --e3-only, which explicitly skips the E-2 7-day-dedup lane (AC2 unmet) — both halves of this row's defect confirmed still live."
       },
       {
         "id": "FIX-NOTEBOOK-PRUNE-HEADING-LEVEL-MISMATCH",
@@ -10953,28 +10997,6 @@
         "recommended_action": "Add the deferred T4 dedup guard to runMonthlySignalQualityJob() (idempotency check against the target audit month before sending the Telegram report — e.g. skip if a report for that month/year was already sent, so recoverMissedExecutions can be safely flipped to true without risking a duplicate Telegram report on a scheduler restart/replay), THEN flip schedulerJobTable.ts:229 recoverMissedExecutions:false -> true. Given the intrinsic idempotency of \"prior month\" resolution (any fire within a calendar month resolves to the SAME prior-month target, so a same-day backfill is safe even without the guard), also consider a low-risk immediate backfill of the missed June audit specifically if this row is picked up before 2026-08-01 (after which the natural cadence moves on to auditing July and the June gap becomes unrecoverable without a manual historical query).",
         "not_blocking": "P3, observability/completeness gap only, no data loss (signal_rejections source table is untouched, a backfill remains possible for the July report specifically until it ages out of relevance) — same class as feedback_passive_health_masks_dead_data but lower severity than the P2 SLA-breach row that surfaced it.",
         "origin_task": "FIX-SLA-SIGNALQUALITYAUDIT-MONTHLY-CADENCE-MISCLASSIFIED-48H"
-      },
-      {
-        "id": "FIX-SPRINT-REGISTRY-DANGLING-IDS-BREAK-SIGNOFF-AND-JOURNAL-ARCHIVE",
-        "status": "BACKLOG",
-        "type": "FIX",
-        "priority": "P1",
-        "size": "M",
-        "zone": "cross-service/",
-        "next_agent": "architect",
-        "owner": "po",
-        "supervised": true,
-        "plan_only": true,
-        "title": "34 of 40 sprint ids referenced by task rows / sprint_goal have NO active_sprints[] or closed_sprints[] object — PO sign-off, cold-eviction and decision-journal archival are all structurally unreachable for them",
-        "desc": "MEASURED LIVE 2026-07-30T09:3xZ on docs/data/orch/orch-state.json, not inferred. Every `.task_board.<lane>[].sprint` value and every `.sprint_goal.entries[].sprint_id` was resolved against the union of `.task_board.active_sprints[].id` (8 ids) and `.task_board.closed_sprints[].id` (19 ids) plus the cold-archive closed-id universe (`docs/data/orch/archive/*.json`: .closed_sprints[].id, .closed_sprint_goals sprint ids, [.done_tasks[].sprint]). Result: 40 distinct referenced sprint ids, of which 34 resolve to NOTHING. Top offenders by reference count: TOKEN-ECONOMY-AUDIT (28 refs), ULTRACODE-AUDIT-FIXALL (24), COWORK-GUARANTEED-SLOT-CATCHUP (11), FLOW-PRICE-ALPHA-LOOP (9). Only 6 ids resolve (MARKET-INDICATOR-DEPTH-P0, COWORK-RELIABILITY, BCTC-ANALYTICS-LAYER, FLEET-HOST-SAFETY, OHLCV-UNIT-CONTAM-WHOLEROW-LT1000, VN-MACRO-TOOLING).\n\nTHREE CONSEQUENCES, each verified against the executable and not the prose:\n(1) PO SIGN-OFF IS IMPOSSIBLE for those 34. `docs/agents/po/flow/main.md:126` makes the Approve path MUST-set `active_sprints[sprint_id].status = \"DONE\"`. There is no such key to set, so the canonical sign-off write cannot be performed at all — the failure mode is not a wrong token (the documented hazard) but a missing object.\n(2) DECISION-JOURNAL ARCHIVAL IS UNREACHABLE. `scripts/agents-flow/decision-journal-archive.sh` selects STATUS-based (header :9 'Selection is STATUS-based (closed sprint id vs still-active), NOT mtime-based'), building a closed-id universe (:120-127) and an active-id set (:116) and longest-prefix-matching each `sprint-<id>[-<agent>].md`. An id in NEITHER set is a THIRD, unhandled state: it is silently skipped forever, on both stdin and --all backfill paths. Live cost: `docs/agent-memory/decisions/` holds 513 sprint-*.md journals / 5.5MB, and the largest over-cap files all belong to dangling ids — sprint-CI-RED-RECONCILE-po.md 331592B (9.2x the 36000B cap), sprint-SYSTEMIC-REMAKE-P1-qa.md 225553B, sprint-COWORK-GUARANTEED-SLOT-CATCHUP-developer.md 128381B.\n(3) THE BREACH DETECTOR THEREFORE NEVER CONVERGES. context-bloat-backstop re-emits on whichever journal a live agent happens to write: 138 context-bloat signals sit in docs/signals/processed/, ~34 of them for the 3 COWORK-GUARANTEED-SLOT-CATCHUP journals alone over 07-25..07-30, every one marked processed with the condition untouched. Same never-converging-detector family as FIX-NOTEBOOK-PRUNER-LINE-ONLY-SETPOINT-BYTE-CAP-NEVER-CONVERGES.\n\nORIGIN: triaged from the 2026-07-30T09:07Z drain's context_bloat_breach on sprint-COWORK-GUARANTEED-SLOT-CATCHUP-architect.md (46429B vs 36000B cap, 191L/600L — byte-axis only). That signal was DEFERRED as a prune (live sprint, file uncommitted-modified at triage time, content is load-bearing design rationale) — but the standard 'defer until the sprint closes' disposition is a FALSE PREMISE here: COWORK-GUARANTEED-SLOT-CATCHUP exists only as `.sprint_goal.entries[15].sprint_id` plus 11 task-row refs (TASK-COWORK-CATCHUP-2 DONE, -3/-4/-5/-10 READY, -6..-9 BACKLOG), so it can never close and the deferral can never expire.\n\nSUPERVISED + PLAN_ONLY ON PURPOSE — the naive fix bricks the board, and this was measured, not guessed. The obvious fix is a referential-integrity rule in `scripts/orch-validate.mjs` (Stage 1 already does dangling-ref checks and is the validator every `scripts/orch-apply.sh` write must pass). Arming it fail-loud TODAY rejects EVERY subsequent board write, because 34 ids are already dangling. Sequencing is therefore mandatory, and is the design question for architect:\nAC-1 RECONCILE FIRST: decide per dangling id whether it is genuinely live (register an `active_sprints[]` object), genuinely finished (register in `closed_sprints[]` so the journal archiver can sweep it), or never was a sprint (rename/strip the `.sprint` field). 'BACKLOG' appearing as a 5-ref sprint id is evidence the field is also being used as a non-sprint sentinel — classify that separately.\nAC-2 THEN arm the guard, WARN-first with an env-var escalation to reject, mirroring the notebook-immutability gate disposition (`.claude/skills/notebook-write/SKILL.md` AC-2a: GIT_NOTEBOOK_IMMUTABILITY_MODE defaults to warn). Do not arm reject until a corpus replay reads 0.\nAC-3 the guard must cover BOTH reference planes (`task_board.*[].sprint` and `sprint_goal.entries[].sprint_id`) — a check on one plane leaves the other silently broken.\nAC-4 give `decision-journal-archive.sh` an explicit third-state branch: an id in neither set must FAIL LOUD (or emit one deduped signal), never be silently skipped. Today's silent skip is what made a 5.5MB/513-file accumulation invisible.\nAC-5 verification gate is timestamped and measured, not prose: re-run the resolver and show `dangling == 0`, and show `decision-journal-archive.sh --all` moving a previously-unreachable journal, with a before/after byte count.\nAC-6 do NOT fix this by prune/split of any live journal — that is the deferred, separate action and it races live editors (feedback_ctxbloat_breach_on_live_sprint_file_defer).",
-        "created_at": "2026-07-30T09:39:29Z",
-        "created_by": "po-triage-20260730T0932Z (drain-tick-0907Z signal 1 of 7: context_bloat_breach)",
-        "related": [
-          "FIX-DECISION-JOURNAL-BYTECAP-NO-ACTUATOR",
-          "FU-ORCH-HOT-SUB150-SPRINT-LIFECYCLE",
-          "FIX-NOTEBOOK-PRUNER-LINE-ONLY-SETPOINT-BYTE-CAP-NEVER-CONVERGES"
-        ],
-        "updated_at": "2026-07-30T09:40:54Z"
       },
       {
         "id": "FIX-DECISION-JOURNAL-BYTECAP-NO-ACTUATOR",
@@ -15822,33 +15844,6 @@
         "design_brief": "docs/architecture-briefs/2026-08-07-fix-mcp-sse-session-manager-reaper.md"
       },
       {
-        "id": "EPIC-AUDITOR-DETECTOR-CORRECTNESS-DRAIN",
-        "type": "CLEAN",
-        "status": "READY",
-        "priority": "P1",
-        "size": "M",
-        "zone": "cross-service/",
-        "owner": "architect",
-        "next_agent": "architect",
-        "supervised": true,
-        "plan_only": true,
-        "depends": [],
-        "created_at": "2026-07-29T02:22:16Z",
-        "created_by": "po/triage-20260729T0214-auditor-backlog-saturation",
-        "source": "router-flagged-churn-without-convergence:2026-07-29T02:00Z + po-board-census:2026-07-29T02:21Z",
-        "baseline_pass": true,
-        "title": "Drain the 18-row auditor detector-correctness backlog to a decision each - 12 of the 18 carry no next_agent and are therefore structurally undispatchable, so the lane cannot drain no matter how many cycles run over it",
-        "root_cause": "PO board census 2026-07-29T02:21Z: 18 auditor rows sit in BACKLOG. 12 have next_agent unset and cannot be picked up by any dispatcher: FIX-AUDITOR-COMMIT-NONEXPLICIT-PATHSPEC, NB-AUDITOR-MAIN-SPLIT, FIX-AUDITOR-C06-OFFMARKET-RECALIBRATE, FIX-AUDITOR-C11-PDFX-STATUS-PREDICATE, FIX-AUDITOR-C12-READONLY-BLINDED-AND-TABLENAME, FIX-AUDITOR-B11-NEWS-FRESHNESS-LAYER-SPLIT, FIX-AUDITOR-TASKBOARD-OVERFLOW-PREDICATE-WIP-ONLY, FIX-AUDITOR-HEALTHCHECK-FALSE-UNHEALTHY-NONHTTP-SERVICES, FIX-AUDITOR-SBVFX-SLA-POSTMARKET-TOLERANCE, FIX-AUDITOR-NOTEBOOK-COMMIT-TRAILER-DOC, FIX-AUDITOR-B05-BCTC-FRESHNESS-LAYER-SPLIT, FIX-AUDITOR-EVAL-DELTA-RECENCY-BOUND. The remaining 6 already carry owners: DOCAUDIT-MEMORY-PATH-PREDICATE=architect, D4-WHITELIST-DATA-QUALITY-ANOMALY-PREFIX=dev-mcp-server, C04-PARSEDAT-RECENCY-PREDICATE=architect, A30-VMHWM-VETO-TAUTOLOGY-FALSE-NEGATIVE=architect, EMIT-SEVERITY-LABEL-FLAT-ESCALATION-BYPASS-NEVER-FIRES=developer, T1-PREGATE-MEMCREEP-SINGLE-POINT-SAMPLE=developer. The lane is not slow, it is stalled by construction: an unowned row is invisible to pickup, so backlog depth grows monotonically with every audit cycle that mints rather than drains.",
-        "po_ruling": "The router asked whether to batch these into one consolidated epic or continue minting individual rows, flagging possible churn-without-convergence. Ruling: NEITHER a 19th loose row NOR a merge of 18 distinct defects into one undifferentiated blob. The 18 rows describe genuinely different detectors and merging their content would destroy the diagnostic work already in them. What is actually broken is not their granularity, it is that 12 have no owner. So this epic is a TRIAGE PASS, not a container: its deliverable is a disposition per row, and it deliberately does NOT absorb their scope. Bounded on purpose - it mints NO new rows, so it cannot itself become the churn it exists to stop. Assigned to architect rather than PO doing the assignment inline: choosing an owner requires reading each row's technical content to judge whether it is a spec defect (architect), an implementation defect (developer/dev-mcp-server), or already obsolete - and PO assigning 12 owners without that read would reproduce the mint-without-understanding failure this epic exists to correct. FIX-AUDITOR-A29-UNEXECUTABLE-SPEC-SILENT-JOIN-DROP is explicitly EXCLUDED from this epic and routed independently at P1: it has demonstrated live detector blindness and must not queue behind a housekeeping sweep.",
-        "acceptance": "(1) Each of the 18 listed rows ends this epic in exactly one of two terminal states: next_agent set to a real agent that can act on it, or status CLOSED with a one-line reason (superseded-by-<id>, obsolete, or duplicate-of-<id>). No row may remain with next_agent unset. (2) Any row closed as duplicate/superseded names the surviving row id. (3) This epic mints NO new task rows - if triage uncovers genuinely new work, it is recorded in the epic note for PO to mint separately, never self-minted, so the epic cannot grow the lane it is draining. (4) A stale-check is run first per the known stale-backlog hazard: for each row, git log --since=<its created_at> over the file it names, to catch rows already fixed by later unrelated commits before spending any triage effort on them. (5) Final state reported as a count: N assigned, M closed, N+M=18.",
-        "note": "Deliberately scoped to disposition-only. Do not fix any detector inside this epic - the point is to make the lane drainable, not to drain it in one pass.",
-        "updated_at": "2026-08-07T22:21:38Z",
-        "promoted_at": "2026-08-07T22:21:37Z",
-        "promoted_by": "dev-team (supervised-lane sweep)",
-        "promotion_note": "Supervised-Lane Sweep — assigned dispatch_lane='architect' (priority_rank=1); supervised/plan_only flags preserved, gate NOT disabled — see FIX-BOUNDED1-SUPERVISED-LANE-NO-SWEEPER",
-        "dispatch_lane": "architect"
-      },
-      {
         "id": "FIX-AUDITOR-B12-DOUBLE-INVOKE-EMIT-MARKER-LOSS",
         "type": "FIX",
         "status": "READY",
@@ -15941,6 +15936,32 @@
         "promoted_by": "dev-team (supervised-lane sweep)",
         "promotion_note": "Supervised-Lane Sweep — assigned dispatch_lane='developer' (priority_rank=1); supervised/plan_only flags preserved, gate NOT disabled — see FIX-BOUNDED1-SUPERVISED-LANE-NO-SWEEPER",
         "dispatch_lane": "developer"
+      },
+      {
+        "id": "FIX-SPRINT-REGISTRY-DANGLING-IDS-BREAK-SIGNOFF-AND-JOURNAL-ARCHIVE",
+        "status": "READY",
+        "type": "FIX",
+        "priority": "P1",
+        "size": "M",
+        "zone": "cross-service/",
+        "next_agent": "architect",
+        "owner": "po",
+        "supervised": true,
+        "plan_only": true,
+        "title": "34 of 40 sprint ids referenced by task rows / sprint_goal have NO active_sprints[] or closed_sprints[] object — PO sign-off, cold-eviction and decision-journal archival are all structurally unreachable for them",
+        "desc": "MEASURED LIVE 2026-07-30T09:3xZ on docs/data/orch/orch-state.json, not inferred. Every `.task_board.<lane>[].sprint` value and every `.sprint_goal.entries[].sprint_id` was resolved against the union of `.task_board.active_sprints[].id` (8 ids) and `.task_board.closed_sprints[].id` (19 ids) plus the cold-archive closed-id universe (`docs/data/orch/archive/*.json`: .closed_sprints[].id, .closed_sprint_goals sprint ids, [.done_tasks[].sprint]). Result: 40 distinct referenced sprint ids, of which 34 resolve to NOTHING. Top offenders by reference count: TOKEN-ECONOMY-AUDIT (28 refs), ULTRACODE-AUDIT-FIXALL (24), COWORK-GUARANTEED-SLOT-CATCHUP (11), FLOW-PRICE-ALPHA-LOOP (9). Only 6 ids resolve (MARKET-INDICATOR-DEPTH-P0, COWORK-RELIABILITY, BCTC-ANALYTICS-LAYER, FLEET-HOST-SAFETY, OHLCV-UNIT-CONTAM-WHOLEROW-LT1000, VN-MACRO-TOOLING).\n\nTHREE CONSEQUENCES, each verified against the executable and not the prose:\n(1) PO SIGN-OFF IS IMPOSSIBLE for those 34. `docs/agents/po/flow/main.md:126` makes the Approve path MUST-set `active_sprints[sprint_id].status = \"DONE\"`. There is no such key to set, so the canonical sign-off write cannot be performed at all — the failure mode is not a wrong token (the documented hazard) but a missing object.\n(2) DECISION-JOURNAL ARCHIVAL IS UNREACHABLE. `scripts/agents-flow/decision-journal-archive.sh` selects STATUS-based (header :9 'Selection is STATUS-based (closed sprint id vs still-active), NOT mtime-based'), building a closed-id universe (:120-127) and an active-id set (:116) and longest-prefix-matching each `sprint-<id>[-<agent>].md`. An id in NEITHER set is a THIRD, unhandled state: it is silently skipped forever, on both stdin and --all backfill paths. Live cost: `docs/agent-memory/decisions/` holds 513 sprint-*.md journals / 5.5MB, and the largest over-cap files all belong to dangling ids — sprint-CI-RED-RECONCILE-po.md 331592B (9.2x the 36000B cap), sprint-SYSTEMIC-REMAKE-P1-qa.md 225553B, sprint-COWORK-GUARANTEED-SLOT-CATCHUP-developer.md 128381B.\n(3) THE BREACH DETECTOR THEREFORE NEVER CONVERGES. context-bloat-backstop re-emits on whichever journal a live agent happens to write: 138 context-bloat signals sit in docs/signals/processed/, ~34 of them for the 3 COWORK-GUARANTEED-SLOT-CATCHUP journals alone over 07-25..07-30, every one marked processed with the condition untouched. Same never-converging-detector family as FIX-NOTEBOOK-PRUNER-LINE-ONLY-SETPOINT-BYTE-CAP-NEVER-CONVERGES.\n\nORIGIN: triaged from the 2026-07-30T09:07Z drain's context_bloat_breach on sprint-COWORK-GUARANTEED-SLOT-CATCHUP-architect.md (46429B vs 36000B cap, 191L/600L — byte-axis only). That signal was DEFERRED as a prune (live sprint, file uncommitted-modified at triage time, content is load-bearing design rationale) — but the standard 'defer until the sprint closes' disposition is a FALSE PREMISE here: COWORK-GUARANTEED-SLOT-CATCHUP exists only as `.sprint_goal.entries[15].sprint_id` plus 11 task-row refs (TASK-COWORK-CATCHUP-2 DONE, -3/-4/-5/-10 READY, -6..-9 BACKLOG), so it can never close and the deferral can never expire.\n\nSUPERVISED + PLAN_ONLY ON PURPOSE — the naive fix bricks the board, and this was measured, not guessed. The obvious fix is a referential-integrity rule in `scripts/orch-validate.mjs` (Stage 1 already does dangling-ref checks and is the validator every `scripts/orch-apply.sh` write must pass). Arming it fail-loud TODAY rejects EVERY subsequent board write, because 34 ids are already dangling. Sequencing is therefore mandatory, and is the design question for architect:\nAC-1 RECONCILE FIRST: decide per dangling id whether it is genuinely live (register an `active_sprints[]` object), genuinely finished (register in `closed_sprints[]` so the journal archiver can sweep it), or never was a sprint (rename/strip the `.sprint` field). 'BACKLOG' appearing as a 5-ref sprint id is evidence the field is also being used as a non-sprint sentinel — classify that separately.\nAC-2 THEN arm the guard, WARN-first with an env-var escalation to reject, mirroring the notebook-immutability gate disposition (`.claude/skills/notebook-write/SKILL.md` AC-2a: GIT_NOTEBOOK_IMMUTABILITY_MODE defaults to warn). Do not arm reject until a corpus replay reads 0.\nAC-3 the guard must cover BOTH reference planes (`task_board.*[].sprint` and `sprint_goal.entries[].sprint_id`) — a check on one plane leaves the other silently broken.\nAC-4 give `decision-journal-archive.sh` an explicit third-state branch: an id in neither set must FAIL LOUD (or emit one deduped signal), never be silently skipped. Today's silent skip is what made a 5.5MB/513-file accumulation invisible.\nAC-5 verification gate is timestamped and measured, not prose: re-run the resolver and show `dangling == 0`, and show `decision-journal-archive.sh --all` moving a previously-unreachable journal, with a before/after byte count.\nAC-6 do NOT fix this by prune/split of any live journal — that is the deferred, separate action and it races live editors (feedback_ctxbloat_breach_on_live_sprint_file_defer).",
+        "created_at": "2026-07-30T09:39:29Z",
+        "created_by": "po-triage-20260730T0932Z (drain-tick-0907Z signal 1 of 7: context_bloat_breach)",
+        "related": [
+          "FIX-DECISION-JOURNAL-BYTECAP-NO-ACTUATOR",
+          "FU-ORCH-HOT-SUB150-SPRINT-LIFECYCLE",
+          "FIX-NOTEBOOK-PRUNER-LINE-ONLY-SETPOINT-BYTE-CAP-NEVER-CONVERGES"
+        ],
+        "updated_at": "2026-08-08T00:51:50Z",
+        "promoted_at": "2026-08-08T00:51:49Z",
+        "promoted_by": "dev-team (supervised-lane sweep)",
+        "promotion_note": "Supervised-Lane Sweep — assigned dispatch_lane='architect' (priority_rank=1); supervised/plan_only flags preserved, gate NOT disabled — see FIX-BOUNDED1-SUPERVISED-LANE-NO-SWEEPER",
+        "dispatch_lane": "architect"
       }
     ],
     "review": [
@@ -22541,7 +22562,7 @@
         }
       ]
     },
-    "last_triaged_at": "2026-08-08T00:21:54Z",
+    "last_triaged_at": "2026-08-08T00:51:49Z",
     "last_triaged_by": "dev-team (supervised-lane sweep)",
     "in_progress": [
       {
@@ -22645,6 +22666,35 @@
           "TASK-COWORK-SIGNAL-NAMING-CONTRACT"
         ],
         "decomposition_note": "Phase 1 decomposed into 4 atomic tasks per PO amendments (3 binding, 1 correction to FR-1 WINDOWKEY logic per Amendment 3). All inherit plan_only/supervised flags. No developer dispatch until PO adjudication."
+      },
+      {
+        "id": "EPIC-AUDITOR-DETECTOR-CORRECTNESS-DRAIN",
+        "type": "CLEAN",
+        "status": "IN_PROGRESS",
+        "priority": "P1",
+        "size": "M",
+        "zone": "cross-service/",
+        "owner": "architect",
+        "next_agent": "architect",
+        "supervised": true,
+        "plan_only": true,
+        "depends": [],
+        "created_at": "2026-07-29T02:22:16Z",
+        "created_by": "po/triage-20260729T0214-auditor-backlog-saturation",
+        "source": "router-flagged-churn-without-convergence:2026-07-29T02:00Z + po-board-census:2026-07-29T02:21Z",
+        "baseline_pass": true,
+        "title": "Drain the 18-row auditor detector-correctness backlog to a decision each - 12 of the 18 carry no next_agent and are therefore structurally undispatchable, so the lane cannot drain no matter how many cycles run over it",
+        "root_cause": "PO board census 2026-07-29T02:21Z: 18 auditor rows sit in BACKLOG. 12 have next_agent unset and cannot be picked up by any dispatcher: FIX-AUDITOR-COMMIT-NONEXPLICIT-PATHSPEC, NB-AUDITOR-MAIN-SPLIT, FIX-AUDITOR-C06-OFFMARKET-RECALIBRATE, FIX-AUDITOR-C11-PDFX-STATUS-PREDICATE, FIX-AUDITOR-C12-READONLY-BLINDED-AND-TABLENAME, FIX-AUDITOR-B11-NEWS-FRESHNESS-LAYER-SPLIT, FIX-AUDITOR-TASKBOARD-OVERFLOW-PREDICATE-WIP-ONLY, FIX-AUDITOR-HEALTHCHECK-FALSE-UNHEALTHY-NONHTTP-SERVICES, FIX-AUDITOR-SBVFX-SLA-POSTMARKET-TOLERANCE, FIX-AUDITOR-NOTEBOOK-COMMIT-TRAILER-DOC, FIX-AUDITOR-B05-BCTC-FRESHNESS-LAYER-SPLIT, FIX-AUDITOR-EVAL-DELTA-RECENCY-BOUND. The remaining 6 already carry owners: DOCAUDIT-MEMORY-PATH-PREDICATE=architect, D4-WHITELIST-DATA-QUALITY-ANOMALY-PREFIX=dev-mcp-server, C04-PARSEDAT-RECENCY-PREDICATE=architect, A30-VMHWM-VETO-TAUTOLOGY-FALSE-NEGATIVE=architect, EMIT-SEVERITY-LABEL-FLAT-ESCALATION-BYPASS-NEVER-FIRES=developer, T1-PREGATE-MEMCREEP-SINGLE-POINT-SAMPLE=developer. The lane is not slow, it is stalled by construction: an unowned row is invisible to pickup, so backlog depth grows monotonically with every audit cycle that mints rather than drains.",
+        "po_ruling": "The router asked whether to batch these into one consolidated epic or continue minting individual rows, flagging possible churn-without-convergence. Ruling: NEITHER a 19th loose row NOR a merge of 18 distinct defects into one undifferentiated blob. The 18 rows describe genuinely different detectors and merging their content would destroy the diagnostic work already in them. What is actually broken is not their granularity, it is that 12 have no owner. So this epic is a TRIAGE PASS, not a container: its deliverable is a disposition per row, and it deliberately does NOT absorb their scope. Bounded on purpose - it mints NO new rows, so it cannot itself become the churn it exists to stop. Assigned to architect rather than PO doing the assignment inline: choosing an owner requires reading each row's technical content to judge whether it is a spec defect (architect), an implementation defect (developer/dev-mcp-server), or already obsolete - and PO assigning 12 owners without that read would reproduce the mint-without-understanding failure this epic exists to correct. FIX-AUDITOR-A29-UNEXECUTABLE-SPEC-SILENT-JOIN-DROP is explicitly EXCLUDED from this epic and routed independently at P1: it has demonstrated live detector blindness and must not queue behind a housekeeping sweep.",
+        "acceptance": "(1) Each of the 18 listed rows ends this epic in exactly one of two terminal states: next_agent set to a real agent that can act on it, or status CLOSED with a one-line reason (superseded-by-<id>, obsolete, or duplicate-of-<id>). No row may remain with next_agent unset. (2) Any row closed as duplicate/superseded names the surviving row id. (3) This epic mints NO new task rows - if triage uncovers genuinely new work, it is recorded in the epic note for PO to mint separately, never self-minted, so the epic cannot grow the lane it is draining. (4) A stale-check is run first per the known stale-backlog hazard: for each row, git log --since=<its created_at> over the file it names, to catch rows already fixed by later unrelated commits before spending any triage effort on them. (5) Final state reported as a count: N assigned, M closed, N+M=18.",
+        "note": "Deliberately scoped to disposition-only. Do not fix any detector inside this epic - the point is to make the lane drainable, not to drain it in one pass.",
+        "updated_at": "2026-08-08T00:51:55Z",
+        "promoted_at": "2026-08-07T22:21:37Z",
+        "promoted_by": "dev-team (supervised-lane sweep)",
+        "promotion_note": "Supervised-Lane Sweep — assigned dispatch_lane='architect' (priority_rank=1); supervised/plan_only flags preserved, gate NOT disabled — see FIX-BOUNDED1-SUPERVISED-LANE-NO-SWEEPER",
+        "dispatch_lane": "architect",
+        "claimed_at": "2026-08-08T00:51:54Z",
+        "claimed_by": "dev-team (supervised-lane sweep)"
       }
     ]
   },
