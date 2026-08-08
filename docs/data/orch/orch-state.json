@@ -14459,6 +14459,30 @@
         "qa_verified_at": "2026-08-08T11:01:11Z",
         "qa_verified_by": "qa",
         "qa_review_note": "[QA] Review Record (direct-commit verify) 2026-08-08T11:01:11Z: APPROVED, DONE_VERIFIED. Commit fe7640267 confirmed real + on main ancestry (git merge-base --is-ancestor). git show --stat matches all 3 claimed source files (sbv.ts, pushSbvRatesHandler.ts, intelligenceCycleJob.ts) + new FIX-SBV-FETCHER-ZERO-VALUE-EMIT.test.ts. Read the live code myself, not the review_note prose: getLatestSbvRatesRow() (sbv.ts:384) carries forward every OMITTED optional field from the prior sbv_rates row; explicit values (incl. 0) still pass through unmerged into storeSbvSnapshot own SENTINEL_ZERO_COLUMNS guard, which is untouched. pushSbvRatesHandler.ts:87-98 does the merge; on storeResult.skipped it now returns an honest {ok:false,skipped:true,zeroColumns} instead of the old false-positive stored 200. intelligenceCycleJob.ts:269-273 step A2 now calls runSbvRatesRefreshJob() (same pre-flight sentinel guard as sbvRatesJob.ts) and checks zeroRateSkipped. Re-ran the targeted suite live: 9 sbv/*.test.ts files, 101 pass/0 fail (review_note claimed 100/100 across 9 files -- close match, one extra pre-existing file included in my run). bun tsc --noEmit clean. mock-guard.sh --files on all 3 touched production files -> PASS. PO evidence-bar (po_title_hygiene_20260806T1415Z) satisfied: live host-bind read of sbv_rates (file:...?immutable=1, no -wal pending) shows current row fetched_at=2026-08-08T10:37:58Z (~20min stale at read time, healthy), usd_vnd_official genuinely varies over the last 11 days (26030..26200 range, not a frozen/static value) -- confirms real live data is landing, not just that rejects are suppressed. vps_push_log service=sbv: ZERO status=error rows since the fix commit (2026-07-28T22:51Z) through now (11 days, vs the verification_gate own 2-cycle bar) -- post-fix a genuine reject IS logged as status=error (unlike the pre-fix false-positive-ok bug), so this zero-count is a real negative, not silence. One 32.5h data gap found in sbv_rates_history (2026-08-05T04:00->2026-08-06T12:30) -- cross-checked: not a rejected-zero event (no error row logged during the gap either, VPS was simply not pushing), matches PO own cited staleness figure, and is explicitly tracked by a separate live BACKLOG row (FIX-AUDITOR-SBVFX-SLA-POSTMARKET-TOLERANCE) per this row own note -- out of scope here. No gap >2h since 2026-08-06T12:30. Decision journal: sprint-COWORK-GUARANTEED-SLOT-CATCHUP-qa-11.md STEP qa-S23."
+      },
+      {
+        "id": "IVC-ARCH-BLUEPRINT",
+        "title": "Architect blueprint: uniform input-validation coverage across A/B/C agent write-surfaces — resolve the class-C enforcement mechanism + standardize the per-field descriptive-error contract + strict-completeness rule",
+        "owner": "architect",
+        "type": "SPIKE",
+        "status": "DONE_VERIFIED",
+        "zone": "multi",
+        "priority": "high",
+        "sprint": "INPUT-VALIDATION-COVERAGE",
+        "created_at": "2026-07-25T07:28:58Z",
+        "note": "USER DEMAND: agent must not persist incomplete/malformed data anywhere; rejected write must throw a descriptive error naming the missing field. PRIOR ART (reuse, do NOT rebuild): agentSignalTools.ts GOLD msg + audit-log; signalTypes.ts strict Zod; foreignFlowValidator.ts per-field errors; signalBuilders.ts; orch-validate.mjs+orch-apply.sh (class-B template). DECIDE class-C mechanism: fail-closed PreToolUse Write|Edit hook + per-path schema registry vs per-store apply-wrappers vs shared validate-before-write helper — MUST be fail-closed. FOLD in-scope existing rows, do NOT duplicate: UC-CRITIC-HOOKS-ENFORCEMENT (fail-open 2>/dev/null||true fix), FIX-PREDCLAIM-CREATIONPRICE-UNGATE-ZOD-CONTRACT, FIX-BCTC-VALIDATION-GATE-NONBANK-ZERO-SCALE, SYSREMAKE-P2-T2. Deliver inventory of class-A write-tools lacking strict Zod. Write to docs/architecture-briefs/ then hand BA->PM->dev-* per roster (dev-* own their zone validators; shared/script gate = dev-mcp-server/PO). | ARCHITECT DONE: brief=docs/architecture-briefs/2026-07-25-input-validation-coverage-blueprint.md",
+        "updated_at": "2026-08-08T11:03:19Z",
+        "next_agent": "pm",
+        "updated_by": "ba (review-lane secondary-drain sign-off)",
+        "secondary_claimed_at": "2026-08-08T10:54:17Z",
+        "secondary_claimed_by": "dev-team (review-lane secondary-drain)",
+        "secondary_dispatch_target": "ba",
+        "reviewed_at": "2026-08-08T11:03:14Z",
+        "reviewed_by": "ba",
+        "ba_spec_complete": true,
+        "ba_handoff": "docs/handoffs/IVC-ARCH-BLUEPRINT-BA-spec.md",
+        "ba_completed_at": "2026-08-08T11:03:14Z",
+        "status_note": " || [ba SIGN-OFF] Brief COMPLETE and SOUND -- DONE_VERIFIED. SSOT-reconciled the 4 FOLD-in-scope rows live: UC-CRITIC-HOOKS-ENFORCEMENT already DONE_VERIFIED via a SEPARATE narrower mechanism (hook-guard.sh crash-discriminator, commit f4d35b5df) -- the brief's own \"closed-by-reference once IVC-C1 ships\" line (section 5 table) is now stale, corrected in ba_handoff section 0, IVC-C1 no longer gates that row's closure. FIX-PREDCLAIM-CREATIONPRICE-UNGATE-ZOD-CONTRACT also DONE_VERIFIED (commit 6feec3ab1), a 2nd live precedent for section 2's contract shape. FIX-BCTC-VALIDATION-GATE-NONBANK-ZERO-SCALE (BACKLOG) + SYSREMAKE-P2-T2-SCHEMA-ADDITIONS (READY) both unrelated/untouched, no conflict. Formalized 10 atomic FR/AC task specs (IVC-C1..C6, IVC-A1, IVC-A2, IVC-A3+ count deferred to IVC-A1 output) reusing the brief's own IDs verbatim. Class-A tool-file count spot-checked live: 167 (brief said 162, 14 days ago) -- confirms IVC-A1 script necessity. New board row IVC-PM-DECOMPOSE carries this handoff to PM for minting. Full spec: docs/handoffs/IVC-ARCH-BLUEPRINT-BA-spec.md"
       }
     ],
     "head": {
@@ -16158,6 +16182,23 @@
         "build_standard": "not-applicable",
         "design_brief": "docs/architecture-briefs/2026-08-07-fix-mcp-sse-session-manager-reaper.md",
         "po_corroboration_c80_20260808T0116Z": "Fresh A-30 datapoint, 2026-08-08T01:05:33-01:06:54Z (system-auditor c80 Tier-1, RAW JSON in notebook commit 569f79108): mcp-server 6-probe window 97.16 / 97.20 / 97.39 / 97.16 / 97.58 / 97.59 %, min 97.16 max 97.59, reclamation_dips=0, discriminator verdict=ESCALATE, OOMKilled=false, RestartCount=2, VmHWM=3058144KB vs VmRSS=3023460KB. This is 19h AFTER the container OOM'd at ~05:57Z on 2026-08-07 (the death that confirmed sys-20260807T054825-771b as a true positive) - memory is back at the same pre-death ceiling with zero reclamation, i.e. the leak refills the 3GiB cap within a day of every restart. Logged here rather than as a new signal_queue row because c80's own E-3 append never fired (see FIX-ANALYSIS-ONLY-EXIT-DETECTOR-OR-VERDICT-BLIND-TO-PARTIAL-WRITE-CYCLE) and because the finding is already routed to this row - no duplicate minted. Dispatch fields deliberately untouched."
+      },
+      {
+        "id": "IVC-PM-DECOMPOSE",
+        "title": "PM: mint IVC-C1..C6 + IVC-A1 + IVC-A2 task rows (input-validation-coverage, class A+C) from BA spec -- IVC-A3+ gap-fix rows deferred until IVC-A1 lands its scan output, do not guess count",
+        "owner": "pm",
+        "status": "READY",
+        "type": "SPRINT-M",
+        "zone": "multi",
+        "priority": "high",
+        "sprint": "INPUT-VALIDATION-COVERAGE",
+        "created_at": "2026-08-08T11:03:14Z",
+        "created_by": "ba",
+        "next_agent": "pm",
+        "depends": [],
+        "note": "USER DEMAND: agents must not persist incomplete/malformed data anywhere; rejected write throws a descriptive per-field error. Architect blueprint (docs/architecture-briefs/2026-07-25-input-validation-coverage-blueprint.md) + BA formalization (docs/handoffs/IVC-ARCH-BLUEPRINT-BA-spec.md) both DONE_VERIFIED/complete -- no PO blocker, ready to mint. Owner-chain per PO routing note: dev-mcp-server owns all rows (shared hook/registry mechanism + MCP tool surface both live under apps/mcp-server/). Mint 8 rows now (IVC-C1..C6, IVC-A1, IVC-A2) per spec section 1 table (id/owner/depends/DDD-layer/AC given); IVC-A3+ (per-tool gap-fix wiring) is scan-dependent -- mint ONLY after IVC-A1 ships its class-a-validation-coverage.json output, per the blueprint's own explicit caution against fabricating that count ahead of time.",
+        "verification_gate": "See BA spec section 6 (Verification Gate Mapping) -- 8 rows exist on the board with owner=dev-mcp-server and AC matching the spec table; IVC-A3+ placeholder note present, not a guessed row count.",
+        "updated_at": "2026-08-08T11:03:19Z"
       }
     ],
     "review": [
@@ -17773,24 +17814,6 @@
         "rebuild_required": false,
         "branch": null,
         "review_note": "developer: FIX(1) Check-C SELLOFF_AFFIRM_LINES negation-strip (line 617) was missing Vietnamese \"chua\" (not yet/not) -- an explicitly-negated panic statement (\"luc ban chua hoang loan\", \"chua phai ban thao\") survived the strip, was miscounted AFFIRMATIVE, and FALSE-BLOCKED a correct orderly-pullback post on a mild day (lesson L4, 2026-06-25, happened twice). Added generic `chua( phai| tung)?` alternation -- not a 2-phrase literal. FIX(2) line 636 `chi \\d ma san` -> `chi [0-9] ma san` (BSD-grep portability) -- audited all 25 `\\d` occurrences in the script: this was the sole real bash grep -ciE context, the other 24 confirmed inside python3 heredoc `re` raw strings (untouched, correct as-is). New scripts/test-fb-gate-checkc-negation.sh regression harness (3 assertions). RED->GREEN proven via pathspec-limited `git stash push/pop -- scripts/fb-data-integrity-gate.sh`: pre-fix false-blocked the negated fixture (4/6 pass); fixed script passes 6/6. No-regression contrast fixture confirms genuine affirmative panic language still BLOCKs. FIX(2)'s BSD-grep-\\d-literal bug did not reproduce on this sandbox's /usr/bin/grep (accepts \\d as extension) -- documented transparently, [0-9] applied regardless as the only universally-portable form. bash -n clean both files; shellcheck -S style before/after diff on the gate script = empty (0 new warnings). Live sanity: gate run against real docs/social/fb-post-2026-07-24.md with the live MCP server -> 0 violations, no crash. Commits 31e39793a (fix) + ab38d4689 (journal+notebook), pushed origin/main."
-      },
-      {
-        "id": "IVC-ARCH-BLUEPRINT",
-        "title": "Architect blueprint: uniform input-validation coverage across A/B/C agent write-surfaces — resolve the class-C enforcement mechanism + standardize the per-field descriptive-error contract + strict-completeness rule",
-        "owner": "architect",
-        "type": "SPIKE",
-        "status": "REVIEW",
-        "zone": "multi",
-        "priority": "high",
-        "sprint": "INPUT-VALIDATION-COVERAGE",
-        "created_at": "2026-07-25T07:28:58Z",
-        "note": "USER DEMAND: agent must not persist incomplete/malformed data anywhere; rejected write must throw a descriptive error naming the missing field. PRIOR ART (reuse, do NOT rebuild): agentSignalTools.ts GOLD msg + audit-log; signalTypes.ts strict Zod; foreignFlowValidator.ts per-field errors; signalBuilders.ts; orch-validate.mjs+orch-apply.sh (class-B template). DECIDE class-C mechanism: fail-closed PreToolUse Write|Edit hook + per-path schema registry vs per-store apply-wrappers vs shared validate-before-write helper — MUST be fail-closed. FOLD in-scope existing rows, do NOT duplicate: UC-CRITIC-HOOKS-ENFORCEMENT (fail-open 2>/dev/null||true fix), FIX-PREDCLAIM-CREATIONPRICE-UNGATE-ZOD-CONTRACT, FIX-BCTC-VALIDATION-GATE-NONBANK-ZERO-SCALE, SYSREMAKE-P2-T2. Deliver inventory of class-A write-tools lacking strict Zod. Write to docs/architecture-briefs/ then hand BA->PM->dev-* per roster (dev-* own their zone validators; shared/script gate = dev-mcp-server/PO). | ARCHITECT DONE: brief=docs/architecture-briefs/2026-07-25-input-validation-coverage-blueprint.md",
-        "updated_at": "2026-08-08T10:54:17Z",
-        "next_agent": "ba",
-        "updated_by": "architect",
-        "secondary_claimed_at": "2026-08-08T10:54:17Z",
-        "secondary_claimed_by": "dev-team (review-lane secondary-drain)",
-        "secondary_dispatch_target": "ba"
       },
       {
         "id": "FIX-COLDEVICT-DONE-LANE-TRIGGER-ACTION-AXIS-NOOP",
@@ -22479,6 +22502,37 @@
         "reviewed_by": "architect",
         "spec_doc": "docs/handoffs/FIX-BCTC-REFINE-WINDOWTRUNCATION-COLUMNLAYOUT-CROSSWINDOW-spec.md",
         "architect_review_note": "PLAN-ONLY (supervised+plan_only — apps/mcp-server source and refine_bctc_md flow docs NOT edited). Re-verified every SPIKE-BCTC-REFINE-MAXWINDOW-TRUNCATION line-anchor live, zero drift. DECISION among the 3 non-exclusive candidates: adopted (2) FULL — thread a ColumnLayout value cross-window in refinedMarkdownParser.ts/finalizeBctcRefine.ts, an exact structural mirror of the already-shipped statement_section threading (initialSection/finalSection/carrySection) — deterministically correct for any table length or maxWindowPages value, zero new tool calls, zero new wire fields on the correctness-critical path. Adopted (3) FLAG-ONLY — make the already-claimed-but-nonexistent truncated_continuation field real on Window/RefineWindow (windowPartitioner.ts + getBctcPendingRefineTool.ts pass-through), closing a live comment≠code drift at windowPartitioner.ts:50; explicitly did NOT build (3)s on-demand head-window-header-fetch half (new leaf-worker tool-call machinery (2) makes unnecessary). REJECTED (1) raise/adapt maxWindowPages outright — does not fix the defect CLASS (any finite cap still eventually truncates a sufficiently long table, and real bank Mau B02a/TCTDHN tables are exactly the ones that run long per spike Finding 3), and costs real Haiku-model leaf-worker token/image budget with zero correctness benefit once (2) lands. NEW finding beyond the spike: the original design brief (docs/architecture-briefs/2026-05-30-bctc-agentic-refine.md:78-80) intended a LOSSY truncation (\"drop excess pages, flag low trust\") plus a \"never split across two subagents\" invariant that the SHIPPED implementation already silently violates (splits, but per spike Finding 1 never drops data) — reverting to the brief literal design was explicitly rejected, it would regress a verified-good no-data-loss property to fix a property (2) already fixes losslessly; corrected both stale docstrings (windowPartitioner.ts:11-13 and :50) to describe actual behavior instead. WARN-wording acceptance clause: traced its full lifecycle — the RemoteTrigger writer that produced the intelligence-cycle misattribution died 2026-06-22, its output file (team-tool-recheck-2026-06-21-1605.md) is pruned from disk (git-history only, confirmed via git log --all), and the 2026-08-06 replacement flow (agent-father/team-tool-recheck.md) explicitly excludes this WARN class as out-of-scope (handed off separately) — zero live docs carry the wrong attribution today, nothing left to correct there; the one still-live inaccuracy (the truncated_continuation docstring claim) is corrected in this same spec instead. Corroborating finding: the single-page \"last tail window\" edge case (misclassified page_type=table/prose instead of continuation) already self-detects and FAILS LOUD in table-page.md/prose-page.md (continuation-marker-in-wrong-subflow guard) rather than silently corrupting — confirms the correctness hazard is fully confined to the page_type=continuation dispatch path this fix targets, no changes needed to those 2 docs. Full verbatim diffs for windowPartitioner.ts / refinedMarkdownParser.ts / finalizeBctcRefine.ts / getBctcPendingRefineTool.ts (added beyond the tasks own files list — necessary wire pass-through, flagged explicitly) + doc diffs for continuation-stitch.md/main.md + a complete hand-traced regression test file (windowPartitioner cap-hit shape proving exactly 2 windows with only the tail flagged; label-first bank tail-window thread-vs-no-thread contrast proving the swap and its fix; code-first corporate negative control asserting byte-identical rows with/without inheritance; full finalize_bctc_refine DB-integration test) in spec_doc — every assertion hand-traced against post-fix logic including a check that DT-2/DT-3 BLOCK predicates in bctcMagnitudeValidator.ts cannot false-trip the fixture (no total_liabilities/equity_total-labeled rows exist in it, no income_statement rows exist), not asserted on faith; caught and fixed my own negative-control bug (a statement_section carry mismatch unrelated to the parameter under test) before finalizing. Full details: docs/handoffs/FIX-BCTC-REFINE-WINDOWTRUNCATION-COLUMNLAYOUT-CROSSWINDOW-spec.md"
+      },
+      {
+        "id": "FIX-MARKETWATCHER-EODMD-STALE-NOBASH-CAVEAT-SKIPS-COMMIT-LOSES-NOTEBOOK",
+        "type": "FIX",
+        "title": "eod.md:78 still carries the pre-2026-07-31 no-Bash caveat that cycle.md already fixed -- market-watcher-eod skips its notebook commit every fire, loses the EOD cycle entry to the next same-agent overwrite, and strands news-scouts L-7-deferred commit",
+        "desc": "VERIFIED live 2026-08-05T16:00Z EOD fire (agent a0df2bd1afc971ce7). Chain: (1) .claude/agents/market-watcher.md granted Bash 2026-07-31 commit 610110e16b. (2) cycle.md carried an identical no-Bash transport-gap caveat and was fixed 2026-08-01 (FIX-COWORK-FLOWDOC-STALE-TRANSPORT-GAP-CAVEAT, see cycle.md own header comment) -- caveat demoted to a genuine invocation-error fallback only. (3) eod.md:78 was never touched by that fix -- still reads verbatim this agent holds no Bash and cannot run git add/git_commit_retry directly ... SKIP this step entirely. (4) Todays EOD fire followed eod.md literally: wrote all 4 ledger entries (analysis-briefs DGC/DPM/DBC/VNM) + docs/signals/price_anomaly_20260805T1605.json correctly (Steps A/B unaffected per the docs own text) but skipped Step D (notebook write/commit), citing the docs own stale line as its reason -- not a fabrication, a propagated stale doc. (5) DISPROOF same day, same batch: market-watcher-offhours fired 2 min later (a1f7356854a55a25f) and committed cleanly with Bash (09beb0997) -- direct proof the grant is live and eod.md is simply wrong. (6) Net effect: market-watcher.md notebook has NO Cycle (EOD) section anywhere post-16:06Z -- the EOD narrative was never durably captured, either never written or clobbered when the offhours slot did its own full-overwrite write+commit right after. (7) news-scout.md c233 entry was left dangling uncommitted -- its own flow (docs/agents/news-scout/flow/stage-log-notify.md:14, L-7) explicitly defers its git commit to market-watchers EOD batch commit at market close; that EOD-side half of the contract never fires while eod.md:78 stands. Router committed the stranded news-scout.md manually this cycle as a workaround; the underlying skip will repeat every weekday 16:00 UTC fire until eod.md is fixed.",
+        "ac": "1. Update docs/agents/market-watcher/flow/eod.md:78 to match cycle.mds already-fixed prose (Bash grant live since 2026-07-31 commit 610110e16b -- demote to a genuine invocation-error fallback, not an unconditional skip). 2. Separately decide and fix the lost-update exposure: the per-cycle full-overwrite notebook model has no protection when EOD and a same-agent sibling slot (e.g. offhours) both match in the same cowork-tick batch and fire minutes apart -- either preserve/merge the EOD section across the next overwrite, or serialize same-agent multi-slot fires so one cannot clobber the others uncommitted work. 3. Confirm news-scouts L-7 dependency (stage-log-notify.md:14) resumes working end-to-end on the next weekday EOD fire (its notebook commits without router intervention).",
+        "priority": "P1",
+        "size": "S",
+        "zone": "cross-service/",
+        "next_agent": "developer",
+        "status": "REVIEW",
+        "created_at": "2026-08-05T16:10:00Z",
+        "created_by": "router",
+        "updated_at": "2026-08-08T11:03:31Z",
+        "updated_by": "qa (RAW-verify vc-changes — AC-1/AC-2 confirmed live via git evidence, AC-3 falsified by live evidence)",
+        "related": [
+          "FIX-COWORK-BATCH-COVERAGESTATE-CONTENTION-CORRELATES-WITH-MISSED-NOTEBOOK-COMMIT"
+        ],
+        "not_duplicate_of": "FIX-COWORK-BATCH-COVERAGESTATE-CONTENTION-CORRELATES-WITH-MISSED-NOTEBOOK-COMMIT -- that row is a contention HYPOTHESIS on coverage-state:main mutex; this row is a DIRECTLY VERIFIED stale-doc root cause, distinct mechanism, same symptom family.",
+        "promoted_at": "2026-08-06T12:27:24Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
+        "claimed_at": "2026-08-08T10:54:42Z",
+        "claimed_by": "dev-team (review-lane qa-drain)",
+        "commit_sha": "a71cc0df1",
+        "review_note": "RAW-verified developer completion for a71cc0df1: commit confirmed ancestor of HEAD, diff read in full — eod.md:78 caveat replaced with cycle.mds already-fixed genuine-invocation-error prose (verbatim mirror, not invented); market-watcher-notebook:main task_claim mutex added to BOTH eod.md Step D and a new explicit offhours self-commit block in cycle.md, correctly closing the same-16:00Z-tick clobber race (AC-2); AC-3 confirmed as a real no-op — news-scout git add line was already present, L-7 resumes automatically. cycle.md size-justification header updated 309L->332L, exact match to new line count. Decision journal entry (sprint-COWORK-GUARANTEED-SLOT-CATCHUP-developer-3.md STEP developer-S65) present and substantive (what-considered includes 2 rejected alternatives with reasons, why-decision, why-change, verify). mock-guard.sh PASS noted (doc-only). Board lane-move + head-sync had been skipped by the agent itself -- performed here by the RAW-verifying router session, consistent with prior sessions self-closeout convention for this exact gap shape.",
+        "status_note": "QA RAW-verify (vc-changes): AC-1/AC-2 CONFIRMED live. eod.md:92 stale no-Bash caveat replaced with cycle.md-mirror fallback prose (verbatim pattern, both cite grant commit 610110e16); market-watcher-notebook:main task_claim mutex added eod.md:70-82 + cycle.md:286-308. Empirically proven on 2 real weekday EOD fires since commit a71cc0df1 (2026-08-06T13:35:58Z): 2026-08-06 16:0xZ EOD a3ee7a268 + offhours 10aa0da9c both landed clean no-clobber; 2026-08-07 16:0xZ EOD 4d159330f + offhours 049488693 same; market-watcher.md working tree == HEAD (zero gap), genuine EOD Cycle sections present both days (git show a3ee7a268/4d159330f). AC-3 FAILS — contradicts developer decision-journal STEP developer-S65 and prior review_note claim of \"confirmed... real no-op\". docs/agents/news-scout/flow/stage-log-notify.md:14 asserts off-hours cycles \"retain their own per-cycle commit\" but NO git add/commit instruction exists anywhere in news-scouts flow tree (grep -rn \"git add\" docs/agents/news-scout/ = 0 hits across all 6 flow files, incl. cycle.md/stage-log-notify.md). Live evidence: docs/agent-memory/notebooks/news-scout.md has 7 UNCOMMITTED cycles (c238-c244) as of 2026-08-08T11:02Z; last commit 417573d71 @2026-08-07T00:54:26Z; c238+c239 ALREADY PERMANENTLY LOST -- absent from both git history (git log -p --all) AND current working tree, pruned by the ~200L OVERWRITE-cap rewrite before ever being committed. Neither live EOD commit (a3ee7a268, 4d159330f) touched news-scout.md (git show --stat both = market-watcher.md only) -- eod.md:85s git add for news-scout.md is not catching pending news-scout content. Same data-loss symptom class this task was filed to close, now recurring WORSE (2 lost cycles vs original 1) and actively ongoing. Needed: add a real git add/git_commit_retry block to news-scouts own off-hours self-commit path (stage-log-notify.md, mirror market-watcher cycle.md:286-308 pattern) OR make eod.md batch genuinely catch news-scouts pending state. Redispatch to developer.",
+        "redispatch_count": 1,
+        "resume_note": "AC-3 unmet: news-scout off-hours self-commit path has no executable git instruction anywhere in its flow docs; c238+c239 already permanently lost, 7 cycles currently uncommitted (c238-c244)",
+        "owner": "developer"
       }
     ],
     "qa": [
@@ -22643,33 +22697,6 @@
         "dev_followup_ci_verification": "Post-push real-CI verification (AC-5, authoritative environment -- supersedes the local-repro caveat in this row's own `note`): pinned SHA edf05e701 (this fix, pushed 2026-08-06T10:34Z, GH Actions run 31093800492), the \"bun test\" job was rerun 5 CONSECUTIVE times on the real isolated GitHub-hosted ubuntu-latest runner via `gh run rerun <run-id> --job <databaseId>` (job ids 92590820753/92591696010/92592467574/92593218004/92593983661) -- result: 15024 pass / 40 skip / 0 fail on EVERY single run, zero variance. This is the same job that PO measured red on 5 of the prior 6 pushes (rotating files). Did not reach the literal \"20 consecutive\" count in AC-5's text (CI-minutes budget) but 5/5 clean on the authoritative real runner, up from an ~83% red rate pre-fix, is strong convergent evidence the structural fix (vCPU-bound parallelism) removed the oversubscription amplifier. The one job that DID fail on the immediately-prior push (ba821dbdd, run 31092836638) was FIX-AGENTBOOTSTRAP-EAGER-EXECSYNC-COLDSTART.test.ts -- yet another rotating file, corroborating this row's own thesis, NOT touched here (separate row, separate agent's work). Unrelated `task-claim-owner-session-lint` job failure present on both the pre-fix and post-fix runs (docs/agents/unified-agent/flow/chef.md:108 missing owner_client_session) -- pre-existing, out of this row's scope. Recommend QA additionally rerun a few more times before closing AC-5/AC-6 if a harder numeric bar is wanted; AC-6 (re-evaluate the 4 DEFLAKE-*/transient rows) still open for QA/PO follow-up."
       },
       {
-        "id": "FIX-MARKETWATCHER-EODMD-STALE-NOBASH-CAVEAT-SKIPS-COMMIT-LOSES-NOTEBOOK",
-        "type": "FIX",
-        "title": "eod.md:78 still carries the pre-2026-07-31 no-Bash caveat that cycle.md already fixed -- market-watcher-eod skips its notebook commit every fire, loses the EOD cycle entry to the next same-agent overwrite, and strands news-scouts L-7-deferred commit",
-        "desc": "VERIFIED live 2026-08-05T16:00Z EOD fire (agent a0df2bd1afc971ce7). Chain: (1) .claude/agents/market-watcher.md granted Bash 2026-07-31 commit 610110e16b. (2) cycle.md carried an identical no-Bash transport-gap caveat and was fixed 2026-08-01 (FIX-COWORK-FLOWDOC-STALE-TRANSPORT-GAP-CAVEAT, see cycle.md own header comment) -- caveat demoted to a genuine invocation-error fallback only. (3) eod.md:78 was never touched by that fix -- still reads verbatim this agent holds no Bash and cannot run git add/git_commit_retry directly ... SKIP this step entirely. (4) Todays EOD fire followed eod.md literally: wrote all 4 ledger entries (analysis-briefs DGC/DPM/DBC/VNM) + docs/signals/price_anomaly_20260805T1605.json correctly (Steps A/B unaffected per the docs own text) but skipped Step D (notebook write/commit), citing the docs own stale line as its reason -- not a fabrication, a propagated stale doc. (5) DISPROOF same day, same batch: market-watcher-offhours fired 2 min later (a1f7356854a55a25f) and committed cleanly with Bash (09beb0997) -- direct proof the grant is live and eod.md is simply wrong. (6) Net effect: market-watcher.md notebook has NO Cycle (EOD) section anywhere post-16:06Z -- the EOD narrative was never durably captured, either never written or clobbered when the offhours slot did its own full-overwrite write+commit right after. (7) news-scout.md c233 entry was left dangling uncommitted -- its own flow (docs/agents/news-scout/flow/stage-log-notify.md:14, L-7) explicitly defers its git commit to market-watchers EOD batch commit at market close; that EOD-side half of the contract never fires while eod.md:78 stands. Router committed the stranded news-scout.md manually this cycle as a workaround; the underlying skip will repeat every weekday 16:00 UTC fire until eod.md is fixed.",
-        "ac": "1. Update docs/agents/market-watcher/flow/eod.md:78 to match cycle.mds already-fixed prose (Bash grant live since 2026-07-31 commit 610110e16b -- demote to a genuine invocation-error fallback, not an unconditional skip). 2. Separately decide and fix the lost-update exposure: the per-cycle full-overwrite notebook model has no protection when EOD and a same-agent sibling slot (e.g. offhours) both match in the same cowork-tick batch and fire minutes apart -- either preserve/merge the EOD section across the next overwrite, or serialize same-agent multi-slot fires so one cannot clobber the others uncommitted work. 3. Confirm news-scouts L-7 dependency (stage-log-notify.md:14) resumes working end-to-end on the next weekday EOD fire (its notebook commits without router intervention).",
-        "priority": "P1",
-        "size": "S",
-        "zone": "cross-service/",
-        "next_agent": "qa",
-        "status": "QA",
-        "created_at": "2026-08-05T16:10:00Z",
-        "created_by": "router",
-        "updated_at": "2026-08-08T10:54:42Z",
-        "updated_by": "router (RAW-verify closeout — developer completed+committed real work, decision journal STEP developer-S65 written, but self-report never performed the CANONICAL:SSOT-STATUSFLIP-LANEMOVE lane-move; closing out in-line per established convention)",
-        "related": [
-          "FIX-COWORK-BATCH-COVERAGESTATE-CONTENTION-CORRELATES-WITH-MISSED-NOTEBOOK-COMMIT"
-        ],
-        "not_duplicate_of": "FIX-COWORK-BATCH-COVERAGESTATE-CONTENTION-CORRELATES-WITH-MISSED-NOTEBOOK-COMMIT -- that row is a contention HYPOTHESIS on coverage-state:main mutex; this row is a DIRECTLY VERIFIED stale-doc root cause, distinct mechanism, same symptom family.",
-        "promoted_at": "2026-08-06T12:27:24Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
-        "claimed_at": "2026-08-08T10:54:42Z",
-        "claimed_by": "dev-team (review-lane qa-drain)",
-        "commit_sha": "a71cc0df1",
-        "review_note": "RAW-verified developer completion for a71cc0df1: commit confirmed ancestor of HEAD, diff read in full — eod.md:78 caveat replaced with cycle.mds already-fixed genuine-invocation-error prose (verbatim mirror, not invented); market-watcher-notebook:main task_claim mutex added to BOTH eod.md Step D and a new explicit offhours self-commit block in cycle.md, correctly closing the same-16:00Z-tick clobber race (AC-2); AC-3 confirmed as a real no-op — news-scout git add line was already present, L-7 resumes automatically. cycle.md size-justification header updated 309L->332L, exact match to new line count. Decision journal entry (sprint-COWORK-GUARANTEED-SLOT-CATCHUP-developer-3.md STEP developer-S65) present and substantive (what-considered includes 2 rejected alternatives with reasons, why-decision, why-change, verify). mock-guard.sh PASS noted (doc-only). Board lane-move + head-sync had been skipped by the agent itself -- performed here by the RAW-verifying router session, consistent with prior sessions self-closeout convention for this exact gap shape."
-      },
-      {
         "id": "FIX-NOTEBOOK-COMPOSE-REWRITES-RETAINED-PRIOR-SECTIONS",
         "type": "FIX",
         "status": "QA",
@@ -22780,8 +22807,8 @@
         }
       ]
     },
-    "last_triaged_at": "2026-08-08T10:59:05Z",
-    "last_triaged_by": "po (ci_red CI-RED-e0b0fe7b out-of-band triage)",
+    "last_triaged_at": "2026-08-08T11:03:14Z",
+    "last_triaged_by": "ba (IVC-ARCH-BLUEPRINT sign-off)",
     "in_progress": [
       {
         "id": "GUARD-NOTEBOOK-CONCURRENT-EDIT-COLLISION-DATA-LOSS",
