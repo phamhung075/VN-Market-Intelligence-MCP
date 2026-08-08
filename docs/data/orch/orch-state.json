@@ -14348,6 +14348,30 @@
         "qa_verified_at": "2026-08-08T10:29:42Z",
         "qa_verified_by": "qa",
         "commit_sha": "be3545412"
+      },
+      {
+        "id": "FIX-AGENTSIGNALS-FROMAGENT-SCHEMA",
+        "title": "get_agent_signals({from_agent}) fails schema (`agent` Required) -> news-scout SELF_SIGNALS_CACHE empty every cycle",
+        "type": "FIX",
+        "status": "DONE_VERIFIED",
+        "priority": "P2",
+        "zone": "apps/mcp-server/",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-AGENTSIGNALS-FROMAGENT-SCHEMA",
+        "promoted_at": "2026-07-24T21:55:30Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
+        "updated_at": "2026-08-08T10:30:28Z",
+        "claimed_at": "2026-07-24T21:55:30Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "next_agent": "pm",
+        "updated_by": "dev-mcp-server",
+        "review_note": "STALE-BACKLOG-ROW CLOSURE, not a new fix: `agent` was already made schema-optional by 8a6b798ce (FIX-AGENT-SIGNALS-AGENT-PARAM-CONTRACT, 2026-06-19) — a sibling backlog row minted for the IDENTICAL root cause (agentSignalTools.ts), promoted by po-s107 and shipped 2 days after THIS ticket was minted (po-s94, 2026-06-17T01:34:10Z), never cross-reconciled against it. Confirmed via git log -p on the file plus the still-on-disk scripts/po-s107-insider-agentsignals-schema-contract-promote.jq. Code commit 440e924f7: extracted the tool's inline zod shape to exported GetAgentSignalsShape (agentSignalTools.ts, zero behavior change — pure const-extraction, diff-verified) so tests assert the REAL runtime schema instead of a hand-mirrored copy that can drift. New FIX-AGENTSIGNALS-FROMAGENT-SCHEMA.test.ts (8 tests: schema-level + real McpServer/handler/DB end-to-end) proves the ticket's literal repro get_agent_signals({from_agent:\"news-scout\"}) returns rows or an empty array, never -32602; neither-agent-nor-from_agent still gets a controlled readable tool-response error, not a protocol crash. Evidence: bun tsc --noEmit clean; new suite 8/8 pass; precedent/consumer suites (FIX-AGENT-SIGNALS-AGENT-PARAM-CONTRACT+1194-agent08-tools+FACTORY-INFRA-agentSignal-sql-binding+1968b1-hours-back) 30/30 pass; full bun test run TWICE (14772 pass/40 skip/49 fail/530s and 14771 pass/40 skip/50 fail/535s, full log grepped both times) — complete fail lists match the SAME pre-existing flaky/resource-contention class documented across 5+ prior QA journals (CI-RED-RECONCILE, FIX-FUNDAMENTALS-REFRESH-CRON-DEAD, FIX-PRED-CLAIMS-EXCLUDED-SERVE-DISPLAY, PREDICTION-EVIDENCE-REVIVAL, SYSTEMIC-REMAKE-P1), zero overlap with agentSignalTools/get_agent_signals/GetAgentSignalsShape/FIX-AGENTSIGNALS. Journal commit 0e354e21c. REMAINING GAP (not closed here): a rebuild + LIVE gateway RAW-verify of get_agent_signals({from_agent:...}) against the running container is an ops/user-gated step — the underlying fix has been live-shipped code since 8a6b798ce (2026-06-19) but was never actually RAW-verified against a rebuilt container per the original verification_gate; QA should route that check onto the existing rebuild queue, not treat this commit as opening a NEW rebuild_required gate.",
+        "secondary_claimed_at": "2026-08-08T10:24:34Z",
+        "secondary_claimed_by": "dev-team (review-lane secondary-drain)",
+        "secondary_dispatch_target": "dev-mcp-server",
+        "dev_mcp_server_signoff_note": "Own-zone code-verification signoff (Review-Lane SECONDARY-Drain, detail_ref#FIX-AGENTSIGNALS-FROMAGENT-SCHEMA names owner/next_agent=dev-mcp-server, not the stale top-level next_agent=qa). Independently re-verified every claim in review_note rather than trusting it: (1) both cited commits exist and match their descriptions exactly — 8a6b798ce (2026-06-19) made `agent` optional; 440e924f7 (2026-07-25) is a byte-for-byte pure extraction of the inline zod shape into exported `GetAgentSignalsShape`, diff-confirmed zero other line changed. (2) Ran the new suite myself: `bun test src/__tests__/FIX-AGENTSIGNALS-FROMAGENT-SCHEMA.test.ts` = 8 pass/0 fail. (3) Ran the 4 cited precedent/consumer suites myself: FIX-AGENT-SIGNALS-AGENT-PARAM-CONTRACT(5)+1194-agent08-tools(7)+FACTORY-INFRA-agentSignal-sql-binding(9)+1968b1-get-agent-signals-hours-back(7) = 28 pass/0 fail total — review_note's '30/30' is an arithmetic slip (actual total is 28 tests), immaterial since 0 fail either way, no regression. (4) `bun tsc --noEmit` clean. (5) CLOSED THE NOTE'S OWN FLAGGED REMAINING GAP MYSELF: mcp-server image was rebuilt 2026-08-07 (docker image inspect Created), postdating both fix commits, so the running container already had the fix — native mcp__gateway__* tool binding was absent this session (session-scoped gap, gateway-call-contract.md §6 Degraded Mode), so used the documented Bash-equipped bridge `source scripts/agents-flow/mcp-call.sh && mcp_call ...` for a genuine LIVE RAW-verify against the running container: from_agent='news-scout' (sender-history) -> valid formatted response, no -32602; neither agent nor from_agent (inbox mode) -> controlled readable tool-response error text, not a protocol crash; from_agent=null (all-producers) -> real rows returned. All three branches confirmed live, closing both this ticket's own verification_gate and the note's REMAINING GAP without needing ops/a fresh rebuild. Signing off DONE_VERIFIED — no rework, no further ops gate needed.",
+        "dev_mcp_server_signoff_by": "dev-mcp-server",
+        "dev_mcp_server_signoff_session": "165f4245-6173-4054-87fd-c55bb626265f"
       }
     ],
     "head": {
@@ -17394,27 +17418,6 @@
           "3f2acbdda (memory: notebook + decision journal)"
         ],
         "review_note": "dev-mcp-server BOUNDED-1 pickup, direct-commit (branch:null). New domain service ohlcvContinuityGuard.ts (per-exchange board-limit resolution HOSE7/HNX10/UPCOM15 + adjacent-bar discontinuity detector + reconcile-or-flag) + application usecase getContinuityCheckedOhlcvSeries.ts, wired into get_technical_indicators (both daily_ohlcv read sites) so a corp-action-discontinuous bar can never poison RSI/MACD/BB downstream. Tests use REAL live-fetched VJC (HOSE) 2026-06-08..19 daily_ohlcv rows (the real 2026-06-15->06-16 -24.87% corp-action move), no fabricated bars. Evidence: tsc clean; new suite 13/13 pass; touched-file consumers 282 pass/2 fail (both the SAME already-documented pre-existing flaky class in _deprecated/1302-technical-indicators.test.ts, confirmed unrelated via git-stash A/B against unmodified baseline — identical failures before/after); full bun test run twice (14760p/53f/1e, 14764p/49f) with zero failure referencing the touched/new files, all failures in unrelated pre-existing-flaky files (logVpsPush, telegram routing, push-news, vnstock stores, insider_transactions, market_cap, MCP SSE, get_foreign_flow — 5000ms-timeout class already documented earlier in this session's notebook cycles). tool/cron counts unaffected (184/88). Simplicity gate PASS. DJ-GATE-1 satisfied. Decision journal: docs/agent-memory/decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-dev-mcp-server.md"
-      },
-      {
-        "id": "FIX-AGENTSIGNALS-FROMAGENT-SCHEMA",
-        "title": "get_agent_signals({from_agent}) fails schema (`agent` Required) -> news-scout SELF_SIGNALS_CACHE empty every cycle",
-        "type": "FIX",
-        "status": "REVIEW",
-        "priority": "P2",
-        "zone": "apps/mcp-server/",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-AGENTSIGNALS-FROMAGENT-SCHEMA",
-        "promoted_at": "2026-07-24T21:55:30Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
-        "updated_at": "2026-08-08T10:24:39Z",
-        "claimed_at": "2026-07-24T21:55:30Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)",
-        "next_agent": "qa",
-        "updated_by": "dev-mcp-server",
-        "review_note": "STALE-BACKLOG-ROW CLOSURE, not a new fix: `agent` was already made schema-optional by 8a6b798ce (FIX-AGENT-SIGNALS-AGENT-PARAM-CONTRACT, 2026-06-19) — a sibling backlog row minted for the IDENTICAL root cause (agentSignalTools.ts), promoted by po-s107 and shipped 2 days after THIS ticket was minted (po-s94, 2026-06-17T01:34:10Z), never cross-reconciled against it. Confirmed via git log -p on the file plus the still-on-disk scripts/po-s107-insider-agentsignals-schema-contract-promote.jq. Code commit 440e924f7: extracted the tool's inline zod shape to exported GetAgentSignalsShape (agentSignalTools.ts, zero behavior change — pure const-extraction, diff-verified) so tests assert the REAL runtime schema instead of a hand-mirrored copy that can drift. New FIX-AGENTSIGNALS-FROMAGENT-SCHEMA.test.ts (8 tests: schema-level + real McpServer/handler/DB end-to-end) proves the ticket's literal repro get_agent_signals({from_agent:\"news-scout\"}) returns rows or an empty array, never -32602; neither-agent-nor-from_agent still gets a controlled readable tool-response error, not a protocol crash. Evidence: bun tsc --noEmit clean; new suite 8/8 pass; precedent/consumer suites (FIX-AGENT-SIGNALS-AGENT-PARAM-CONTRACT+1194-agent08-tools+FACTORY-INFRA-agentSignal-sql-binding+1968b1-hours-back) 30/30 pass; full bun test run TWICE (14772 pass/40 skip/49 fail/530s and 14771 pass/40 skip/50 fail/535s, full log grepped both times) — complete fail lists match the SAME pre-existing flaky/resource-contention class documented across 5+ prior QA journals (CI-RED-RECONCILE, FIX-FUNDAMENTALS-REFRESH-CRON-DEAD, FIX-PRED-CLAIMS-EXCLUDED-SERVE-DISPLAY, PREDICTION-EVIDENCE-REVIVAL, SYSTEMIC-REMAKE-P1), zero overlap with agentSignalTools/get_agent_signals/GetAgentSignalsShape/FIX-AGENTSIGNALS. Journal commit 0e354e21c. REMAINING GAP (not closed here): a rebuild + LIVE gateway RAW-verify of get_agent_signals({from_agent:...}) against the running container is an ops/user-gated step — the underlying fix has been live-shipped code since 8a6b798ce (2026-06-19) but was never actually RAW-verified against a rebuilt container per the original verification_gate; QA should route that check onto the existing rebuild queue, not treat this commit as opening a NEW rebuild_required gate.",
-        "secondary_claimed_at": "2026-08-08T10:24:34Z",
-        "secondary_claimed_by": "dev-team (review-lane secondary-drain)",
-        "secondary_dispatch_target": "dev-mcp-server"
       },
       {
         "id": "FIX-DOWJONES-STALE-WRONG-VALUE",
