@@ -236,5 +236,48 @@ developer, zone: scripts/) is the right disposition — same shape as the router
 verified rather than assumed.
 **why-change:** No change from plan — router asked me to decide DONE_VERIFIED-as-scoped vs.
 stay-open per my own flow's judgment; RAW verification supported DONE_VERIFIED-as-scoped, and
-I minted the follow-up row myself (task_board write is within QA's own remit) rather than
+I minted the follow-up row myself (task_board work is within QA's own remit) rather than
 leaving that as an open action item for another agent.
+
+### STEP qa-S10 · qa · 2026-08-08T09:01:50Z
+**task-id:** TE-T16
+**what-done:** Direct-commit verify (dev-team Review-Lane QA-Drain, `qa[]` row, `branch:null`)
+of agent-father's chef.md 893L→206L / chef-dish.md 731L split at the intraday silent-exit gate.
+Located real commit `ff1745e5a` (row itself carried no `commit`/`files[]`, derived via `git log
+--all -- docs/agents/unified-agent/flow/chef.md docs/agents/unified-agent/flow/chef-dish.md`,
+date 2026-08-06 matches row's `agent_father_completed_at`), confirmed `git merge-base
+--is-ancestor` on main, `git show --stat` touches exactly the 4 claimed files.
+**what-considered:**
+- Trust "pure relocation, no logic changed" from the row's own note — rejected, RAW-diffed
+  instead: extracted Step 0.5/0/1 (before-file lines 1-197) vs new `chef.md`, diff shows ONLY
+  frontmatter/title/explanatory-para changes (all documentation) + the "Knowledge (lazy-load
+  before Step 0)" 5-doc block deliberately REMOVED from chef.md (intentional — that's the
+  optimization itself, not a defect).
+- Trust "TNB knowledge moved with the body" — rejected, grep-confirmed the same 5
+  `tnb-methodology*`/`kinh-dich-layer` paths now open chef-dish.md's own knowledge block
+  (relabelled "moved here from chef.md per TE-T16"), zero duplication, zero drop.
+- Trust "Steps 1.5-8 relocated verbatim" — rejected, extracted before-file lines 198-893 (696L,
+  Step 1.5 through Step 8 + RETURN) and chef-dish.md's own body from its own Step 1.5 heading
+  onward: `diff` empty AND independent `md5` identical (`20693c838f2ec8c82f976ccde3c11c0a`) on
+  both sides — byte-exact, zero logic drift.
+- Trust "3 init.md Step-7.6 refs repointed" — rejected, read the commit's own init.md diff: 3
+  single-line hunks, each `chef.md Step 7.6` → `chef-dish.md Step 7.6` (2 capability/
+  responsibility-list lines + 1 `synthesis_write` comment, which also correctly disambiguates
+  `DATE_VN pinned once in chef.md Step 0.5` since Step 0.5 stayed put) — live-grepped current
+  init.md: all 3 refs present, and both anchors they point at (`chef-dish.md ## Step 7.6`,
+  `chef.md ## Step 0.5`) genuinely exist at those files today. No blind find-replace, no dangling
+  ref.
+- `bun test`/`tsc` N/A — `git show --name-only ff1745e5a` confirms zero `.ts`/`.go` files (4
+  files, all `.md`). `mock-guard.sh --files ""` → "No production source files to scan. PASS."
+- Noted non-blocking: row's own title cites a stale "699L" pre-split estimate (from the 07-12
+  architecture-brief audit) vs the actual 893L at execution time — chef.md grew via 5+
+  intervening feature commits between brief-authoring and this split; agent-father correctly
+  split against LIVE content, not the stale spec number. Also noted `main.md:34` ("chef.md owns
+  all 8 recipe steps") and a handful of pre-existing handoff/BA-analysis docs citing old
+  `chef.md Step 6/7/7.6` line anchors are now stale — out of this row's scope (not live-executed
+  flow refs, no init.md/flow-catalog entry points to them), flagged as optional follow-up only.
+**why-decision:** Byte-identical relocation confirmed independently (diff + md5, not developer
+self-report) for the entire 696L moved body, knowledge-load correctly deferred past the gate
+(the actual point of the optimization), and all 3 downstream refs resolve to real anchors —
+genuinely zero behavior change. APPROVED, DONE_VERIFIED.
+**why-change:** No change from plan.
