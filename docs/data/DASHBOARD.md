@@ -982,3 +982,15 @@
 **Mitigation:** No immediate action beyond signal routing.
 
 ---
+
+## Anomaly: B-06 · bctc-discover VPS stale 101h30m
+**Severity:** WARN | **Date:** 2026-08-08 | **Status:** OPEN
+**Location:** vps/bctc-discover
+**Details:** BCTC VPS last push 2026-08-04T08:34:40Z — 101h30m stale
+**Impact:** BCTC earnings reports delayed beyond seasonal quota window
+**Root cause:** VPS connection down or batch processing halted (not yet diagnosed)
+**Zone owner:** dev-mcp-server
+**Last reported:** 2026-08-08T14:21:25Z (signal sys-20260808T142113-654c, system-auditor -> po, dedup_key=vps_proxy_stale:bctc-discover:B-06, WARN Telegram sent)
+**Mitigation:** No immediate action beyond signal routing.
+
+---
