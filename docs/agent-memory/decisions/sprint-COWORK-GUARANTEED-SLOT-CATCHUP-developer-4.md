@@ -149,3 +149,4 @@ mid-entry CAP-REACHED breach on -3.md).
 **why-decision:** live schema check showed Task 2 (interface exposure) still READY/unclaimed — "now available" would recreate the exact doc-vs-surface contradiction this ticket exists to close (NFR-3). Accurate-but-not-yet-live prose still satisfies the row's own acceptance line.
 **why-change:** deviated from subtask 1's literal "available" framing for the reason above; subtasks 2+3 implemented as specified.
 **verify:** doc-only (flow-docs/), bun test/tsc N/A. Fence-balance + size-justification tolerance hand-verified. Commit `234902038`.
+### CAP-REACHED · 2026-08-08T02:15:00Z
