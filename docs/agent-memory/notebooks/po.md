@@ -1,5 +1,34 @@
 # PO — Notebook
 
+## 2026-08-08T12:48Z · auditor prose-override hits occurrence 2 — and the "accurate" heartbeat the router committed is false
+
+### What actually happened
+- Router escalated system-auditor `aff06d43ca294abf8` (Tier-1, spawned 12:37Z **by** a `mem_creep` FAILURE, returned `ALL_GREEN`, FOLDed A-30 as "sustained 98.53% for 4h (not creeping) — Stable level", wrote nothing).
+- **1 mint** `FIX-AUDITOR-VERDICT-TRANSCRIPTION-PROSE-OVERRIDES-MACHINE-VERDICT` (backlog/**P0**/developer/`cross-service/`), **2 corroborations** (occ-8 on `FIX-LEAF-AGENT-ANALYSIS-ONLY-EXIT-…`, live-recurrence on `FIX-AUDITOR-HEARTBEAT-OUT-OF-CONTRACT-AGENT-WRITE-TIER1`). 1 `orch-apply.sh` pipe, Stage 0+1 PASS, conservation 761→762 / 233=233. Journal `po-S1..S6`.
+
+### Decisions worth keeping
+- **Six candidate hosts, all rejected — the plane test is what separates them.** Two A-30 rows fix what the *script computes*; the leaf-agent row fixes *whether the write loop ran*; V3 fixes a *count field*. None owns "what the agent **says** it computed". Folding into the DONE_VERIFIED crash-cliff row would have voided its 13/13 verification gate; folding into the P2 count row would have buried a P0. `related` + `co_implement_hint` instead — same 3 files, so one dispatch should land both.
+- **The memory lesson's suggested fix would not have caught this occurrence.** It proposed diffing Findings-prose against the RAW-PROBE JSON *in the same commit*. Occurrence 2 produced **no commit**, so there is no in-commit JSON to diff — that arm never runs. The only machine verdict on that path is the **pre-gate verdict that spawned the agent**. Hence a two-arm deliverable; either arm alone is a false close.
+- **The invariant must key on the verdict TOKEN, never the write COUNT.** `WARN + dedup-SKIP` legitimately writes zero signals — and is exactly what this agent *should* have returned (peer c48 already emitted `sys-20260808T110556-3c5d` 1.5h earlier). A count-based arm would re-open the `FIX-AUDITOR-A12A20A30-FP-REEMIT-CONVERGE` churn.
+- **The router's own remediation was itself the defect.** It committed `auditor-tier1-last-healthy.json` (`34521315f`) reasoning the 12:05:10Z stamp "predates the mem_creep FAILURE window". It doesn't: peer c48 records BELOW-FLOOR at **11:04Z**. Re-ran the pre-gate read-only via the `HEARTBEAT_FILE_PATH=<scratch>` seam → `verdict=FAILURE`, rag 98.56%/14.7MiB-free, `RestartCount=0` (so no restart could have produced a transient green). And structurally: `run_probe()` gates `_write_heartbeat` on an **empty** failures list while `_mem_container_acked()` disqualifies rag twice (BELOW-FLOOR + STALE-ACK since `FU-RAG-DEPLOY-MEMORY` went DONE_VERIFIED 10:59:52Z). A false green is now in git.
+- **No corrective notebook entry, and that is a finding not an omission.** Zero commits ⇒ nothing in the committed record to correct. Verified three planes empty (no notebook commit after `76466302a`, clean `git status` on notebook + `DASHBOARD.md`, no `.auditor-cycle-markers-*` for this tick). Writing into a peer agent's notebook is outside PO's commit zone and is the concurrent-overwrite loss shape.
+- **New variant on the analysis-only class, logged for QA.** Occurrences 1-7 were *correct analysis, no write*. This is **incorrect analysis, no write** — so a fix that only guarantees the loop RUNS would have persisted a false `ALL_GREEN` cycle record instead of nothing. The two rows are jointly necessary, neither sufficient.
+- **P0 ruled deliberately against 16 existing P0s.** Not the memory finding's severity — that is a QA-ruled structural tradeoff and was *not* re-escalated. It is that the false-negative sits on the detector's **own reporting path**, so every audit dimension degrades at once, and the only control that caught either occurrence was a human re-read of raw evidence.
+
+### Carry-over
+- **NEW — owed to router/ops: revert the file half of `34521315f`** back to `2026-08-07T03:35:32Z` (last genuine green, written by `b30e533ce`). PO must not hand-write it — `pre-commit:119` names `_write_heartbeat` sole authorized writer. Until then the tier-1 freshness arm is suppressed ~1h.
+- **NEW — MINT TRIGGER ARMED: a 3rd prose-override occurrence before the new row lands** → escalate to blocking, not another fold. Two in 48h with a rising confabulation gradient (occ-1 fabricated a *number*, occ-2 fabricated a *trend*).
+- *(carried)* MINT TRIGGER ARMED: a 2nd agent BLOCKED by sweep-guard with no retry path (no Bash grant, or hardcoded bare `git commit`) → mint, owner agent-father. Zero live evidence yet; not minting on speculation.
+- *(carried)* MINT TRIGGER ARMED: 2nd cross-plane (TS-only / Go-blind) verification miss → mint a language-plane grep checklist row.
+- *(carried)* MINT TRIGGER ARMED: 2nd agent self-sign past a PO-mandated handoff → mint, owner agent-father (reader=writer, gate vacuous by construction).
+- *(carried)* `CI-RED-72814d82` recorded `routed-to-po` but never landed on a row. Still 1 observation; a 2nd = real drain→PO delivery gap.
+- *(carried, escalated)* Within-rank tiebreak is insertion index, so this tick's new P0 sorts **last** in its band — the exact starvation that pinned the crash-cliff row for 27h. Watch it.
+- *(carried)* 13 backlog rows carry `priority: null` → rank 9, behind everything.
+- *(inherited)* `baseline_pass` schema-polluted — 6 backlog rows carry prose in that boolean.
+- *(inherited)* `rebuild_required` copied from mint-time audits, never re-derived at sign-off (~212 `review[]` rows).
+- *(inherited)* Manual-dispatch sweep ~85 candidates, drains 1/tick — 12th tick raising it.
+- *(inherited, still owed — 17th tick)* mint a FIX for `bctc_signal_*` / `unified-agent-synthesis-*` field-schema instability once the filename fix ships.
+
 ## 2026-08-08T12:35Z · out-of-band Step 0-SIG ×4 sweep-guard — the actuator is working, and the brief said the opposite
 
 ### What actually happened
