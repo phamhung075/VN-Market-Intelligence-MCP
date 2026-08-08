@@ -140,9 +140,12 @@ echo ""
 # evidence for A-30 (root cause of the 07-23T03:42Z false CRITICAL: a bare
 # 2-point, 30-minute-apart MemPerc delta with no multi-probe window, no
 # OOMKilled check, no VmHWM/VmRSS check). When the fast baseline snapshot
-# above is ≥85%, engage the existing, unmodified multi-probe discriminator
+# above is ≥85%, engage the existing multi-probe discriminator
 # (scripts/audits/verify-a30-mcp-memory-reclamation.sh — 6 probes/13s spacing,
-# OOMKilled + VmHWM/VmRSS + reclamation-dip detection) as a subprocess. The
+# state re-read before+after the window, OOMKilled/ExitCode+FinishedAt death
+# signatures, discontinuity vs jitter-dip classification, VmHWM-vs-cgroup-cap
+# — see FIX-AUDITOR-A30-DISCRIMINATOR-CRASH-CLIFF-SCORED-AS-RECLAMATION-DIP,
+# 2026-08-08, for the revised escalation logic) as a subprocess. The
 # verdict/reason JSON it prints is this cycle's SELF-CONTAINED evidence bundle
 # — tier1-probe.md's A-30 override section interprets it; this script never
 # compares across cycles.

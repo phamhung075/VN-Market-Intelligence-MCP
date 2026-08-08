@@ -88,11 +88,18 @@ CALENDAR_ALLOWED = MATCHES.filter(s => !SUPPRESS_CALENDAR.has(s.slot_id))
 
 For `CALENDAR_STATUS` values `"open"`, `"half_day"`, `"unknown"`: no suppression (conservative — AC-P1-4-2).
 
-<!-- SIGNAL-TRIAGE HELPER (added 2026-07-21): when a signal_queue A-30 "mcp-server memory pressure"
-     WARN row arrives during a tick, discriminate benign GC-sawtooth from genuine loss-of-reclamation
-     with `scripts/audits/verify-a30-mcp-memory-reclamation.sh [PROBES] [INTERVAL_SEC]` (default 12/25s
-     = ~5min window). Verdict FOLD|ESCALATE in its JSON. Escalate to ops ONLY on OOMKilled, or all
-     samples >93% with no dip, or peak >97% sustained. Otherwise FOLD to FIX-MCP-MEMORY-CODE-LEAK.
-     Ref memory feedback_auditor_mcpserver_a21_a30_memory_fp_reemit_churn. The script pins LC_ALL=C —
-     it MUST, or a comma-decimal locale corrupts the float math into invalid JSON. -->
+<!-- SIGNAL-TRIAGE HELPER (added 2026-07-21, escalate-path list updated 2026-08-08 per
+     FIX-AUDITOR-A30-DISCRIMINATOR-CRASH-CLIFF-SCORED-AS-RECLAMATION-DIP): when a
+     signal_queue A-30 "mcp-server memory pressure" WARN row arrives during a tick,
+     discriminate benign GC-sawtooth from genuine loss-of-reclamation with
+     `scripts/audits/verify-a30-mcp-memory-reclamation.sh [PROBES] [INTERVAL_SEC]` (default
+     12/25s = ~5min window). Verdict FOLD|ESCALATE in its JSON. Escalate to ops on ANY of:
+     RestartCount/StartedAt changed during the window (container died/restarted mid-probe),
+     OOMKilled, ExitCode=0 with a FinishedAt delta (this fleet's OOMKilled-less death
+     signature), a >40pp single-step discontinuity (crash cliff), VmHWM advancing to a new
+     peak while pinned at/near the cgroup cap, all samples >93% sustained (a lone <=0.5pp
+     jitter dip no longer vetoes this), or the window median >97%. Otherwise FOLD to
+     FIX-MCP-MEMORY-CODE-LEAK. Ref memory feedback_auditor_mcpserver_a21_a30_memory_fp_reemit_churn
+     + feedback_a30_discriminator_crash_cliff_misscored_as_reclamation_dip. The script pins
+     LC_ALL=C — it MUST, or a comma-decimal locale corrupts the float math into invalid JSON. -->
 

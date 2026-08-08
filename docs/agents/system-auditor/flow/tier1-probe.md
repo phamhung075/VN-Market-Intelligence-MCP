@@ -1,4 +1,4 @@
-<!-- lazy-loaded by main.md §Tier-1. cap: 120L (flow-file). size-justification: ~217L — FIX-AUDITOR-A20-MULTIPROBE 2026-06-08 adds A-20 multi-probe discriminator section (~28L); TOKEN-ECONOMY-TICK-PREFLIGHT WU-3 2026-07-02 adds this SSOT header note (~10L); FIX-AUDITOR-A12A20A30-FP-REEMIT-CONVERGE 2026-07-23 adds the A-30 multi-probe reclamation override section (~28L, closes the false-CRITICAL root cause: a bare cross-cycle MemPerc delta with no OOMKilled/VmHWM check) + re-models A-21 as a windowed crash-only inline query (~30L, replaces the cumulative-RestartCount rule that could only ever grow); exceeds 120L cap by design. FIX-AUDITOR-DASHBOARD-APPEND-NO-ACTUATOR-CONTRACT-COUNT-NARRATED 2026-07-29: both emit sites (A-20 override + general A-xx) now also call `scripts/emit-dashboard-row.sh` (new actuator, replaces prose-only DASHBOARD.md append) and log to `$MARKERS_FILE` (+4L). FIX-AUDITOR-A12-PROBE-TIMEOUT-EXITCODE-DEBOUNCE 2026-07-30 (+3L here): Health Endpoints bullets now name the 5 classified transport-failure reasons (replacing the old bare `CURL_ERR` bullet) + an "Emit per failure" wording reminder; the N-consecutive debounce mechanism itself (the bulk of this task's new content, ~55L) is the FIRST addition to actually trigger this file's own previously-documented ~220L extraction fallback — it now lives in the new child `docs/agents/system-auditor/flow/tier1-overrides.md`, lazy-loaded only on a transport-classified A-12 FAIL, not duplicated here. FIX-AUDIT-OUTPUT-CONTRACT-SIGNALQUEUE-ROWS-WRITTEN-SELFREPORT-MISMATCH 2026-08-05 (+2L): both `emit-audit-signal.sh` call sites (A-20 override + general A-xx) now pass `--cycle-tag "$FIRE_TASK_ID"` — see `main.md`'s own size-justification note for the full rationale. -->
+<!-- lazy-loaded by main.md §Tier-1. cap: 120L (flow-file). size-justification: ~217L — FIX-AUDITOR-A20-MULTIPROBE 2026-06-08 adds A-20 multi-probe discriminator section (~28L); TOKEN-ECONOMY-TICK-PREFLIGHT WU-3 2026-07-02 adds this SSOT header note (~10L); FIX-AUDITOR-A12A20A30-FP-REEMIT-CONVERGE 2026-07-23 adds the A-30 multi-probe reclamation override section (~28L, closes the false-CRITICAL root cause: a bare cross-cycle MemPerc delta with no OOMKilled/VmHWM check) + re-models A-21 as a windowed crash-only inline query (~30L, replaces the cumulative-RestartCount rule that could only ever grow); exceeds 120L cap by design. FIX-AUDITOR-DASHBOARD-APPEND-NO-ACTUATOR-CONTRACT-COUNT-NARRATED 2026-07-29: both emit sites (A-20 override + general A-xx) now also call `scripts/emit-dashboard-row.sh` (new actuator, replaces prose-only DASHBOARD.md append) and log to `$MARKERS_FILE` (+4L). FIX-AUDITOR-A12-PROBE-TIMEOUT-EXITCODE-DEBOUNCE 2026-07-30 (+3L here): Health Endpoints bullets now name the 5 classified transport-failure reasons (replacing the old bare `CURL_ERR` bullet) + an "Emit per failure" wording reminder; the N-consecutive debounce mechanism itself (the bulk of this task's new content, ~55L) is the FIRST addition to actually trigger this file's own previously-documented ~220L extraction fallback — it now lives in the new child `docs/agents/system-auditor/flow/tier1-overrides.md`, lazy-loaded only on a transport-classified A-12 FAIL, not duplicated here. FIX-AUDIT-OUTPUT-CONTRACT-SIGNALQUEUE-ROWS-WRITTEN-SELFREPORT-MISMATCH 2026-08-05 (+2L): both `emit-audit-signal.sh` call sites (A-20 override + general A-xx) now pass `--cycle-tag "$FIRE_TASK_ID"` — see `main.md`'s own size-justification note for the full rationale. FIX-AUDITOR-A30-DISCRIMINATOR-CRASH-CLIFF-SCORED-AS-RECLAMATION-DIP 2026-08-08 (+~5L net): A-30 override clause 3's parsed-field list widened to the script's new before/after state + vm fields, dropped the stale "FIX-AUDITOR-A30-VMHWM-VETO-TAUTOLOGY-FALSE-NEGATIVE commit 2/2" citation (that id was never minted — folded into this task instead) and corrected the "not consumed by any verdict/severity mapping" claim (VmHWM-pinned-at-cap IS now a verdict signal, just never compared against VmRSS); clause 4's reason-substring table widened from 3 to 6 mapped phrases (the 3 new escalate paths: state-changed, death-signature, discontinuity, vmhwm-pinned all map CRITICAL) and the >93%-floor case's matched substring corrected from the now-inaccurate "no reclamation dip" to "loss of reclamation" (a dip can legitimately be present now, fix (b)). -->
 <!-- TOKEN-ECONOMY-TICK-PREFLIGHT WU-3 (2026-07-02, R9/R10): this subagent is
      now only spawned by a shell-first pre-gate, scripts/agents-flow/
      auditor-tier1-probe.sh (invoked by cron-detect-loop/SKILL.md Job 2) —
@@ -170,21 +170,28 @@ check).
    failed to complete, per its own header contract that a non-zero exit means the probe
    failed, not that memory is unhealthy).
 3. Otherwise parse the verbatim JSON block emitted by `verify-a30-mcp-memory-reclamation.sh`:
-   `verdict`, `reason`, `analysis.{min_pct,max_pct,reclamation_dips}`, `state.oom_killed`,
-   `vm.{vmhwm_kb,vmrss_kb}` (DIAGNOSTIC-ONLY — informational context for a human reading a
-   WARN notebook entry; not consumed by any verdict/severity mapping below — see
-   FIX-AUDITOR-A30-VMHWM-VETO-TAUTOLOGY-FALSE-NEGATIVE commit 2/2: VmHWM-vs-VmRSS was
-   removed as an automated discriminator because VmHWM is a monotone high-water mark with
-   no window membership — `vmhwm_kb > vmrss_kb` is true for almost any process not sitting
-   exactly at its lifetime peak, so it carried ~zero information and silently downgraded
-   real ESCALATE findings to PASS, including a fatal miss on 2026-07-29).
-4. Verdict/reason mapping:
+   `verdict`, `reason`, `analysis.{min_pct,max_pct,median_pct,reclamation_dips,discontinuities}`,
+   `state.{oom_killed_before,oom_killed_after,restart_count_before,restart_count_after,
+   state_changed_during_window}`, `vm.{vmhwm_kb_before,vmhwm_kb_after,
+   vmhwm_advancing_in_window,vmhwm_pinned_at_cap}`. `vm.*` IS now consumed by the script's
+   own `verdict` (FIX-AUDITOR-A30-DISCRIMINATOR-CRASH-CLIFF-SCORED-AS-RECLAMATION-DIP,
+   2026-08-08, absorbed the never-minted FIX-AUDITOR-A30-VMHWM-VETO-TAUTOLOGY-FALSE-NEGATIVE):
+   the OLD vmhwm-vs-vmrss comparison was a tautology (VmHWM is a monotone high-water mark,
+   so `vmhwm_kb >= vmrss_kb` is true by definition at all times, proving nothing) and was
+   correctly never wired into the verdict — but `vmhwm_pinned_at_cap && vmhwm_advancing_in_window`
+   (a NEW peak set near the cgroup memory limit during THIS window) is a real, distinct
+   signal the script's own if-chain now escalates on directly; clause 4 below never needs
+   to independently re-derive it from the raw kB fields.
+4. Verdict/reason mapping (the script's own `verdict` field already resolves every signal —
+   this table exists only to pick WARN vs CRITICAL from the `reason` text):
    - `verdict=="FOLD"` → PASS, no emit.
-   - `verdict=="ESCALATE"`, reason contains `"OOMKilled=true"` → CRITICAL.
-   - `verdict=="ESCALATE"`, reason contains `"peak >97%"` → CRITICAL.
-   - `verdict=="ESCALATE"`, reason contains `"no reclamation dip"` (>93% baseline case) →
-     WARN. May cite `vm.{vmhwm_kb,vmrss_kb}` from clause 3 as informational context in the
-     emitted notebook entry — it must never change this verdict.
+   - `verdict=="ESCALATE"`, reason contains any of `"died/restarted during window"`
+     (state_changed, fix a), `"OOMKilled=true"`, `"FinishedAt delta"` (death signature,
+     fix d), `"discontinuity"` (crash cliff >40pp, fix c), `"VmHWM advancing"` (fix e), or
+     `"peak >97%"` (median-sustained peak, fix b) → CRITICAL (confirmed/severe death or
+     crash-cliff evidence).
+   - `verdict=="ESCALATE"`, reason contains `"loss of reclamation"` (the >93%-sustained-
+     floor case, fix b — no longer vetoed by a lone jitter dip) → WARN.
 5. This is a SINGLE self-contained per-cycle evidence bundle. NEVER compare this cycle's
    verdict against a prior cycle's notebook entry or MemPerc reading to decide escalation —
    that comparison is exactly what produced the false 03:42Z CRITICAL. Each cycle proves
