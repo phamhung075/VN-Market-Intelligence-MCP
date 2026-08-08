@@ -96,9 +96,9 @@
     "status": "idle",
     "active_task_id": null,
     "next_agent": null,
-    "next_action": "FIX-AUDITOR-D4-WHITELIST-DATA-QUALITY-ANOMALY-PREFIX spec delivered (docs/handoffs/FIX-AUDITOR-D4-WHITELIST-DATA-QUALITY-ANOMALY-PREFIX-spec.md), row moved backlog/in_progress -> review, next_agent=po for adjudication (supervised+plan_only, no code shipped this cycle). .head reset to idle so a genuinely in_progress task can claim the pointer next.",
-    "updated_at": "2026-08-08T06:04:50Z",
-    "updated_by": "dev-mcp-server (FIX-AUDITOR-D4-WHITELIST-DATA-QUALITY-ANOMALY-PREFIX closeout)"
+    "next_action": "FIX-AUDITOR-C04-PARSEDAT-RECENCY-PREDICATE moved in_progress -> review (architect spec-only closeout, next_agent=po) — see spec_doc pointer on the row.",
+    "updated_at": "2026-08-08T06:34:20Z",
+    "updated_by": "architect"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -3467,6 +3467,20 @@
         "summary": "7th occurrence (9th spawn) of analysis-only-exit (see feedback_leaf_agent_analysis_only_exit_recurring_pattern_20260806.md), first time on AUDIT_TIER=2 specifically: system-auditor spawn af6ecdcd0479fa160 produced a detailed correct plan for the full tier-2 checklist (rag-service dedup disposition + B/C checks) but returned zero-of-N writes -- no notebook entry, no signal_queue rows, no commits, RAW-verified via git log + notebook tail + jq. Owning fix FIX-LEAF-AGENT-ANALYSIS-ONLY-EXIT-NARRATES-INSTEAD-OF-EXECUTING already REVIEW/next_agent=qa (developer shipped 2026-08-08T01:19Z) -- not re-escalated, this is a pre-fix-verification data point. Router re-spawned tier-2 once with explicit execute-not-narrate reminder per the 5th/6th-spawn mitigation precedent (2/2 clean when included) rather than leaving the tick unaudited.",
         "payload_ref": null,
         "provenance": "router-raw-verification"
+      },
+      {
+        "id": "sys-20260808T062503-66c2",
+        "ts": "2026-08-08T06:25:03Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "db_freshness_breach",
+        "summary": "market_messages stale (0 in 3h, market hours)",
+        "severity": "WARN",
+        "status": "NEW",
+        "payload_ref": null,
+        "provenance": "detector",
+        "audit_cycle_tag": "cron:auditor-t2:2026-08-08T04:00Z",
+        "dedup_key": "db_freshness_breach:market_messages:C-06"
       }
     ],
     "last_triaged_at": "2026-07-29T06:25:00Z",
@@ -9054,25 +9068,6 @@
         "created_at": "2026-07-17T12:28:34Z",
         "created_by": "po",
         "note": "RECURRING 2 ticks (2026-07-17 09:00Z slot refine-bctc-slot-1 + 11:00Z slot refine-bctc-slot-3), same poison head MBB_2026_Q1. RAW @11:07Z: get_bctc_pending_refine(limit:25) = 25/25 rows page_count=0 + windows=[] with text_status=COMPLETE (real multi-page filings: VIC/VHM/VRE/MWG/VPB/MBB/SSI/HCM/VCI/DPM/REE/POW/PPC/NKG/HSG/TCH/KBC/NVL). Cover-letter skip rule page_count<=4 then skips EVERY real filing as a CL -> backlog drains zero, each cron reports a clean skip (silent). PO ROOT-CAUSE CORRECTION (dispatcher raster-stage hypothesis FALSIFIED): page_count & windows are query-DERIVED in apps/mcp-server getBctcPendingRefineTool.ts (page_count=MAX(page_number) FROM pdf_extracted_text WHERE filename=basename(pdf_path) @L227-238; windows via fetchAllPageTexts @L242-287). page_count=0 WITH text_status=COMPLETE => pdf_extracted_text has 0 per-page rows under basename(pdf_path) = WRITE-KEY/JOIN-KEY mismatch, NOT a raster stage that never ran. FIRST PROBE: SELECT DISTINCT filename FROM pdf_extracted_text for these report_ids -> are rows stored under a different filename than basename(pdf_path)? DEFECT#2 (masking, silent-stall): page_count<=4 CL-skip treats 0=missing identically to 1..4=genuine short CL; fix must treat page_count==0 as MISSING -> fail-loud/route-to-source, NEVER classify as cover-letter (cf feedback_passive_health_masks_dead_data). NOTE: literal page_count<=4 skip NOT found in TS/PY nor grepped flow docs -> architect must localize (likely refine subagent flow / fleet-cron refine path). ZONE=multi: architect split across (a) mcp-server derivation-query keying, (b) pdf_extracted_text write-key source (pdf-extractor push / route handler), (c) refine-flow CL skip heuristic. AC: (1) get_bctc_pending_refine head for a real filing (VIC/VHM/MWG) returns page_count>4 + non-empty windows; (2) a genuinely-missing-page-data row is classified MISSING/fail-loud, page_count==0 NEVER skipped as cover-letter; (3) refine head advances / backlog drains across 2 consecutive refine ticks (no re-skip of same head)."
-      },
-      {
-        "id": "FIX-CHEF-USDVND-THRESHOLD-NUMERIC-DRIFT-GATE",
-        "title": "chef dish USD/VND threshold citation drifts across dishes (25,000 / 25,500 / 26,110-vs-25000) — deterministic numeric-literal assertion/gate, not more prose",
-        "type": "FIX",
-        "priority": "P3",
-        "status": "BACKLOG",
-        "plan_only": true,
-        "zone": "cross-service/",
-        "owner": "po",
-        "next_agent": "ba",
-        "supervised": true,
-        "created_at": "2026-07-17T20:57:55Z",
-        "created_by": "po-tnb-c112-triage",
-        "origin": "docs/handoffs/tnb-audit-latest.md#F-USDVND-THRESHOLD-VALUE-INCONSISTENT",
-        "note": "PLAN-ONLY (anomaly->BACKLOG bridge, project_anomaly_task_bridge). ROOT CAUSE (tnb c112, root-cause depth): LLM NARRATIVE DRIFT toward a historically-familiar round number ('25,000' = VND's 2023 'vượt mốc 25,000' media milestone), NOT a text-instruction defect — chef.md Step 2/3 instructions are ALREADY textually correct (25,500 / 26,500) and NO hardcoded '25000' constant exists in macro-health-read/SKILL.md (FX is direction-only) or apps/mcp-server/src, so a prose-only fix is REDUNDANT. RECURRING: the '25,000' variant recurs across >=5 dish instances over 3 days (07-13, 07-15, 07-17 x2), not just today — crosses feedback_recurring_bug_escalation (2+). USER-FACING: the wrong FX threshold ships to MARKET output. PREREQUISITE (do this FIRST): reconcile the CANONICAL FX threshold value — the reference docs THEMSELVES disagree (docs/agents/tran-ngoc-bau/... main.md audit table cites 26,500; tnb-methodology-layers.md cites 25,500) — before any gate can assert against it. FIX (per tnb rec): a deterministic numeric-literal assertion/gate on the FX-threshold citation in chef dish output (validate the cited USD/VND threshold == the reconciled SSOT value; flag/correct drift), NOT more prose. OWNER CHAIN: ba spec (resolve canonical value + gate contract) -> architect/agent-father for gate placement (co-candidate: claim-truth-gate-style check in the publish path, or a post-generation output lint). supervised:true — do NOT let BOUNDED-1 idle-auto-launch (needs the reconciliation+spec first). AC: (1) the canonical FX threshold value is reconciled to ONE SSOT across main.md audit table + tnb-methodology-layers.md + chef.md Step 2/3; (2) a deterministic check rejects/flags any dish citing an FX threshold that diverges from that SSOT value; (3) the '25,000' narrative-drift variant no longer publishes to MARKET (RAW-verified on a subsequent dish).",
-        "verification_gate": "A subsequent chef dish cites the reconciled canonical FX threshold value verbatim AND the deterministic gate flags/corrects an injected off-canon value; done_verified requires the '25,000' drift variant absent from MARKET output across a full audit cycle.",
-        "status_note": "TNB c118 07-24 + PO RAW-verify of unified-agent-synthesis-2026-07-24-eod.json: (a) vn_macro_layer states 'USD/VND 26,130 exceeds 26,500 carry threshold' — numerically FALSE (26,130<26,500), a stated threshold-crossing that did not happen. (b) GOLD threshold self-inconsistent within the SAME doc: us_macro_layer cites 'breach above $2,200' while known_gaps[0] cites '$4,300 threshold' for the same $4,052.50 print. BROADEN this gate beyond USD/VND to ALL narrative macro-threshold citations (USD/VND, gold, oil) — a deterministic numeric-literal assertion over the persisted synthesis JSON is metric-agnostic. SSOT value-choice tracked separately in FIX-USDVND-THRESHOLD-SSOT.",
-        "updated_at": "2026-07-24T21:28:43Z"
       },
       {
         "id": "FIX-CI-GOLANGCI-CONFIG-VERIFY-NETWORK-FLAKE",
@@ -15711,37 +15706,6 @@
         "po_corroboration_c80_20260808T0116Z": "Fresh A-30 datapoint, 2026-08-08T01:05:33-01:06:54Z (system-auditor c80 Tier-1, RAW JSON in notebook commit 569f79108): mcp-server 6-probe window 97.16 / 97.20 / 97.39 / 97.16 / 97.58 / 97.59 %, min 97.16 max 97.59, reclamation_dips=0, discriminator verdict=ESCALATE, OOMKilled=false, RestartCount=2, VmHWM=3058144KB vs VmRSS=3023460KB. This is 19h AFTER the container OOM'd at ~05:57Z on 2026-08-07 (the death that confirmed sys-20260807T054825-771b as a true positive) - memory is back at the same pre-death ceiling with zero reclamation, i.e. the leak refills the 3GiB cap within a day of every restart. Logged here rather than as a new signal_queue row because c80's own E-3 append never fired (see FIX-ANALYSIS-ONLY-EXIT-DETECTOR-OR-VERDICT-BLIND-TO-PARTIAL-WRITE-CYCLE) and because the finding is already routed to this row - no duplicate minted. Dispatch fields deliberately untouched."
       },
       {
-        "id": "FIX-AUDITOR-C04-PARSEDAT-RECENCY-PREDICATE",
-        "title": "system-auditor predicate errors — mutation-timestamp + window class, 3 checks. (C-04) counts bulk-reparse re-stamps as new low-confidence extractions (parsed_at is a mutation timestamp, not arrival) AND counts never-extracted rows (conf=0, status=pending) as low-confidence -> recurring WARN false-positive. (C-01/C-02 — added 2026-07-31 by PO, verified live) their window is `date >= date(\"now\",\"-1 day\")` = TWO calendar dates: at 2026-07-31T09:12Z C-01 returned 947 and C-02 returned 1070 while date=2026-07-31 held only 129 distinct codes. The checks cannot measure same-day coverage at ANY threshold — the window is the defect, not the >=25 / >0 bar. Also write down the invariant that cost a router a full session on a phantom \"86% coverage collapse\": daily_ohlcv same-day coverage is ~130 BY DESIGN (live intraday tick universe = 117-119 codes EVERY session per intraday_ohlcv_5m 07-20..07-31 and market_prices_history); the full ~940-code universe lands ONLY via the nightly history backfill 00:00-02:20Z, which UPSERTs ~750k rows (97% of the 774k-row table, dates 2014-2026) and thereby CLOBBERS daily_ohlcv.updated_at — the exact same \"mutation timestamp is not arrival\" root cause as C-04. Every historical date shows 0-2 same-day writes vs 900-1000 next-day writes. Do NOT add a same-day-coverage-vs-trailing-median alarm: it would fire every single day.",
-        "status": "READY",
-        "type": "FIX",
-        "priority": "P2",
-        "size": "S",
-        "zone": "docs/agents/system-auditor/flow/",
-        "owner": "architect",
-        "next_agent": "architect",
-        "plan_only": true,
-        "supervised": true,
-        "created_at": "2026-07-25T06:59:44Z",
-        "created_by": "po/triage-20260725T0645",
-        "origin_signal_id": "sys-20260725T003340-1ce9",
-        "root_cause": "C-04 (docs/agents/system-auditor/flow/main.md:572) = SELECT count(*) FROM financial_reports WHERE parsed_at > datetime('now','-7 days') AND extraction_confidence < 0.2, threshold <=5. TWO independent predicate defects, both RAW-probed by PO against live market.db in the mcp-server runtime. D1 RECENCY: parsed_at is a MUTATION timestamp bumped by any reparse, not an arrival timestamp. All 11 flagged rows have parsed_at in {2026-07-19, 2026-07-20} and NONE since; that 2-day window parsed 182 rows total against a historical baseline of 1-23 rows/WEEK — i.e. a bulk historical reparse batch re-stamped a legacy cohort into the 7-day window. Periods flagged are 2024-Q1..2025-Q4, not current filings. The 11 are 6.0% of the 182-row batch — a HEALTHY rate, not an extractor regression. D2 POPULATION: extraction_confidence < 0.2 sweeps in rows that were never extracted at all — 5 of the 11 (HUT 2024-Q1, HUT 2024-Q3, HUT 2025-Q3, BSR 2024-Q3, HUT 2025-Q4) — leaving only 6 rows that are genuinely low_confidence — carry conf=0.0 with validation_status in {pending, pending_extraction}. 'Not yet extracted' is not 'low-confidence extraction'; 45% of the alert population is mislabelled. An absolute count threshold (<=5) with no volume normalisation guarantees re-fire on every future bulk reparse.",
-        "deliverable": "Re-specify C-04: (a) normalise to a RATE with a minimum-volume floor (e.g. lowconf/total > 15% AND total >= 20) instead of an absolute count, so healthy large batches do not trip it; (b) restrict the population to rows that actually completed extraction — exclude validation_status in ('pending','pending_extraction') and/or require extraction_confidence IS NOT NULL AND > 0; (c) decide whether recency should key off an immutable arrival column (published_at) rather than parsed_at, or whether the reparse path should stop re-stamping parsed_at. Fold into scripts/auditor-db-checks.sh as predicate SSOT per UC-ASL-P3 rather than leaving raw SQL in the flow doc.",
-        "acceptance": "Replaying the live 2026-07-19/20 reparse batch through the new predicate emits ZERO C-04 signal. Negative control: a synthetic cohort where >15% of a >=20-row genuinely-extracted batch lands under 0.2 confidence STILL trips C-04. No never-extracted (pending*) row appears in the counted population.",
-        "related": [
-          "FIX-AUDITOR-C11-PDFX-STATUS-PREDICATE",
-          "FIX-AUDITOR-DOCAUDIT-MEMORY-PATH-PREDICATE",
-          "FIX-AUDITOR-TASKBOARD-OVERFLOW-PREDICATE-WIP-ONLY",
-          "UC-ASL-P3"
-        ],
-        "note": "Auditor-FP family (feedback_auditor_predicate_drift_false_regression), 4th sibling of the same species. The CURRENT alert is a FALSE POSITIVE and self-clears 2026-07-27 when the 7-day window rolls past 2026-07-20 — no data remediation needed, this row fixes the DETECTOR only. Per reference_low_confidence_handling.md low_confidence is a by-design flag (deliberate insert + WORK alert + filtered out of RAG/alerts/briefings), not corruption, so severity WARN db_integrity_breach was the wrong framing. Distinct from FIX-BCTC-BANK-SUMMARY-MAPPING (bank scalar-column data defect) and REVIEW-PPC-Q4-LOW-CONFIDENCE (per-ticker human review) — those remediate DATA, this fixes the CHECK. Only 1 of the 11 rows is a bank (MBB 2025-Q4) and it is a different period from REFLOW-MBB-Q1-2026.",
-        "updated_at": "2026-08-08T04:22:19Z",
-        "promoted_at": "2026-08-08T04:22:18Z",
-        "promoted_by": "dev-team (supervised-lane sweep)",
-        "promotion_note": "Supervised-Lane Sweep — assigned dispatch_lane='architect' (priority_rank=2); supervised/plan_only flags preserved, gate NOT disabled — see FIX-BOUNDED1-SUPERVISED-LANE-NO-SWEEPER",
-        "dispatch_lane": "architect"
-      },
-      {
         "id": "FIX-AUDITOR-NOTEBOOK-APPEND-GATE-BYPASSED-ALL-GREEN-WRITE",
         "type": "FIX",
         "status": "READY",
@@ -15835,6 +15799,29 @@
         "promoted_by": "dev-team (supervised-lane sweep)",
         "promotion_note": "Supervised-Lane Sweep — assigned dispatch_lane='architect' (priority_rank=2); supervised/plan_only flags preserved, gate NOT disabled — see FIX-BOUNDED1-SUPERVISED-LANE-NO-SWEEPER",
         "dispatch_lane": "architect"
+      },
+      {
+        "id": "FIX-CHEF-USDVND-THRESHOLD-NUMERIC-DRIFT-GATE",
+        "title": "chef dish USD/VND threshold citation drifts across dishes (25,000 / 25,500 / 26,110-vs-25000) — deterministic numeric-literal assertion/gate, not more prose",
+        "type": "FIX",
+        "priority": "P3",
+        "status": "READY",
+        "plan_only": true,
+        "zone": "cross-service/",
+        "owner": "po",
+        "next_agent": "ba",
+        "supervised": true,
+        "created_at": "2026-07-17T20:57:55Z",
+        "created_by": "po-tnb-c112-triage",
+        "origin": "docs/handoffs/tnb-audit-latest.md#F-USDVND-THRESHOLD-VALUE-INCONSISTENT",
+        "note": "PLAN-ONLY (anomaly->BACKLOG bridge, project_anomaly_task_bridge). ROOT CAUSE (tnb c112, root-cause depth): LLM NARRATIVE DRIFT toward a historically-familiar round number ('25,000' = VND's 2023 'vượt mốc 25,000' media milestone), NOT a text-instruction defect — chef.md Step 2/3 instructions are ALREADY textually correct (25,500 / 26,500) and NO hardcoded '25000' constant exists in macro-health-read/SKILL.md (FX is direction-only) or apps/mcp-server/src, so a prose-only fix is REDUNDANT. RECURRING: the '25,000' variant recurs across >=5 dish instances over 3 days (07-13, 07-15, 07-17 x2), not just today — crosses feedback_recurring_bug_escalation (2+). USER-FACING: the wrong FX threshold ships to MARKET output. PREREQUISITE (do this FIRST): reconcile the CANONICAL FX threshold value — the reference docs THEMSELVES disagree (docs/agents/tran-ngoc-bau/... main.md audit table cites 26,500; tnb-methodology-layers.md cites 25,500) — before any gate can assert against it. FIX (per tnb rec): a deterministic numeric-literal assertion/gate on the FX-threshold citation in chef dish output (validate the cited USD/VND threshold == the reconciled SSOT value; flag/correct drift), NOT more prose. OWNER CHAIN: ba spec (resolve canonical value + gate contract) -> architect/agent-father for gate placement (co-candidate: claim-truth-gate-style check in the publish path, or a post-generation output lint). supervised:true — do NOT let BOUNDED-1 idle-auto-launch (needs the reconciliation+spec first). AC: (1) the canonical FX threshold value is reconciled to ONE SSOT across main.md audit table + tnb-methodology-layers.md + chef.md Step 2/3; (2) a deterministic check rejects/flags any dish citing an FX threshold that diverges from that SSOT value; (3) the '25,000' narrative-drift variant no longer publishes to MARKET (RAW-verified on a subsequent dish).",
+        "verification_gate": "A subsequent chef dish cites the reconciled canonical FX threshold value verbatim AND the deterministic gate flags/corrects an injected off-canon value; done_verified requires the '25,000' drift variant absent from MARKET output across a full audit cycle.",
+        "status_note": "TNB c118 07-24 + PO RAW-verify of unified-agent-synthesis-2026-07-24-eod.json: (a) vn_macro_layer states 'USD/VND 26,130 exceeds 26,500 carry threshold' — numerically FALSE (26,130<26,500), a stated threshold-crossing that did not happen. (b) GOLD threshold self-inconsistent within the SAME doc: us_macro_layer cites 'breach above $2,200' while known_gaps[0] cites '$4,300 threshold' for the same $4,052.50 print. BROADEN this gate beyond USD/VND to ALL narrative macro-threshold citations (USD/VND, gold, oil) — a deterministic numeric-literal assertion over the persisted synthesis JSON is metric-agnostic. SSOT value-choice tracked separately in FIX-USDVND-THRESHOLD-SSOT.",
+        "updated_at": "2026-08-08T06:24:16Z",
+        "promoted_at": "2026-08-08T06:24:15Z",
+        "promoted_by": "dev-team (supervised-lane sweep)",
+        "promotion_note": "Supervised-Lane Sweep — assigned dispatch_lane='ba' (priority_rank=3); supervised/plan_only flags preserved, gate NOT disabled — see FIX-BOUNDED1-SUPERVISED-LANE-NO-SWEEPER",
+        "dispatch_lane": "ba"
       }
     ],
     "review": [
@@ -22708,6 +22695,41 @@
         "claimed_by": "dev-team (supervised-lane sweep)",
         "spec_doc": "docs/handoffs/FIX-AUDITOR-D4-WHITELIST-DATA-QUALITY-ANOMALY-PREFIX-spec.md",
         "dev_mcp_server_review_note": "PLAN-ONLY (supervised+plan_only — tasksMdJanitorJob.ts/handlers.md/audit-dimensions.md/system-map.json NOT edited). Re-verified live: the row cited lock data-quality-anomaly:DGC:Q1-2026 has TTL-EXPIRED (2026-07-30) and is no longer held — but bctc-analyst has since renamed this escalation lock-kind to bctc-dataquality:* (3 locks held today), which is ALREADY producing first-occurrence D4 candidates in TODAY 2026-08-08T03:00Z notebook cycle and will emit a fresh FP batch at the next cycle if unaddressed — fix must cover BOTH prefixes, not just the row literal. po_second_facet_20260728 pipeline_mismatch category-error claim REFUTED against live code: git blame shows R-2 per-lock mismatch loop has scoped to survivingLocks (post R-1b filter), not heldLocks, since the SAME commit (e109f49f81, 2026-07-08) that ported R-1b — one whitelist entry already silences BOTH not_found and pipeline_mismatch emissions, no separate consultation needed. handlers.md:19/audit-dimensions.md:88-90 stale-doc-gap claims confirmed FALSE (code shipped same-day, e109f49f8) — correction included. DESIGN DECISION: promoted KNOWN_LEGIT_PREFIXES to docs/data/system-map.json .project.coordination.known_legit_lock_prefixes (option 2b) over a structural <kind>:<TICKER>:<PERIOD> pattern-match (option 2a) — live bctc-dataquality:vnindex-crosstool-mismatch lock is NOT ticker/period-shaped, so a shape-regex would have missed this real currently-forming FP; mirrors this codebase own proven loadWatchlistSeedFromSystemMap() precedent (seedWatchlist.ts) with a non-empty fail-open FALLBACK_KNOWN_LEGIT_PREFIXES (never suppress LESS on SSOT-read failure). Verbatim before/after diffs for all 4 files + test-table extension (negative control: bogus-escalation:XYZ:Q1-2026:ESC-1 must still trip D4) in spec_doc. Full details: docs/handoffs/FIX-AUDITOR-D4-WHITELIST-DATA-QUALITY-ANOMALY-PREFIX-spec.md"
+      },
+      {
+        "id": "FIX-AUDITOR-C04-PARSEDAT-RECENCY-PREDICATE",
+        "title": "system-auditor predicate errors — mutation-timestamp + window class, 3 checks. (C-04) counts bulk-reparse re-stamps as new low-confidence extractions (parsed_at is a mutation timestamp, not arrival) AND counts never-extracted rows (conf=0, status=pending) as low-confidence -> recurring WARN false-positive. (C-01/C-02 — added 2026-07-31 by PO, verified live) their window is `date >= date(\"now\",\"-1 day\")` = TWO calendar dates: at 2026-07-31T09:12Z C-01 returned 947 and C-02 returned 1070 while date=2026-07-31 held only 129 distinct codes. The checks cannot measure same-day coverage at ANY threshold — the window is the defect, not the >=25 / >0 bar. Also write down the invariant that cost a router a full session on a phantom \"86% coverage collapse\": daily_ohlcv same-day coverage is ~130 BY DESIGN (live intraday tick universe = 117-119 codes EVERY session per intraday_ohlcv_5m 07-20..07-31 and market_prices_history); the full ~940-code universe lands ONLY via the nightly history backfill 00:00-02:20Z, which UPSERTs ~750k rows (97% of the 774k-row table, dates 2014-2026) and thereby CLOBBERS daily_ohlcv.updated_at — the exact same \"mutation timestamp is not arrival\" root cause as C-04. Every historical date shows 0-2 same-day writes vs 900-1000 next-day writes. Do NOT add a same-day-coverage-vs-trailing-median alarm: it would fire every single day.",
+        "status": "REVIEW",
+        "type": "FIX",
+        "priority": "P2",
+        "size": "S",
+        "zone": "docs/agents/system-auditor/flow/",
+        "owner": "po",
+        "next_agent": "po",
+        "plan_only": true,
+        "supervised": true,
+        "created_at": "2026-07-25T06:59:44Z",
+        "created_by": "po/triage-20260725T0645",
+        "origin_signal_id": "sys-20260725T003340-1ce9",
+        "root_cause": "C-04 (docs/agents/system-auditor/flow/main.md:572) = SELECT count(*) FROM financial_reports WHERE parsed_at > datetime('now','-7 days') AND extraction_confidence < 0.2, threshold <=5. TWO independent predicate defects, both RAW-probed by PO against live market.db in the mcp-server runtime. D1 RECENCY: parsed_at is a MUTATION timestamp bumped by any reparse, not an arrival timestamp. All 11 flagged rows have parsed_at in {2026-07-19, 2026-07-20} and NONE since; that 2-day window parsed 182 rows total against a historical baseline of 1-23 rows/WEEK — i.e. a bulk historical reparse batch re-stamped a legacy cohort into the 7-day window. Periods flagged are 2024-Q1..2025-Q4, not current filings. The 11 are 6.0% of the 182-row batch — a HEALTHY rate, not an extractor regression. D2 POPULATION: extraction_confidence < 0.2 sweeps in rows that were never extracted at all — 5 of the 11 (HUT 2024-Q1, HUT 2024-Q3, HUT 2025-Q3, BSR 2024-Q3, HUT 2025-Q4) — leaving only 6 rows that are genuinely low_confidence — carry conf=0.0 with validation_status in {pending, pending_extraction}. 'Not yet extracted' is not 'low-confidence extraction'; 45% of the alert population is mislabelled. An absolute count threshold (<=5) with no volume normalisation guarantees re-fire on every future bulk reparse.",
+        "deliverable": "Re-specify C-04: (a) normalise to a RATE with a minimum-volume floor (e.g. lowconf/total > 15% AND total >= 20) instead of an absolute count, so healthy large batches do not trip it; (b) restrict the population to rows that actually completed extraction — exclude validation_status in ('pending','pending_extraction') and/or require extraction_confidence IS NOT NULL AND > 0; (c) decide whether recency should key off an immutable arrival column (published_at) rather than parsed_at, or whether the reparse path should stop re-stamping parsed_at. Fold into scripts/auditor-db-checks.sh as predicate SSOT per UC-ASL-P3 rather than leaving raw SQL in the flow doc.",
+        "acceptance": "Replaying the live 2026-07-19/20 reparse batch through the new predicate emits ZERO C-04 signal. Negative control: a synthetic cohort where >15% of a >=20-row genuinely-extracted batch lands under 0.2 confidence STILL trips C-04. No never-extracted (pending*) row appears in the counted population.",
+        "related": [
+          "FIX-AUDITOR-C11-PDFX-STATUS-PREDICATE",
+          "FIX-AUDITOR-DOCAUDIT-MEMORY-PATH-PREDICATE",
+          "FIX-AUDITOR-TASKBOARD-OVERFLOW-PREDICATE-WIP-ONLY",
+          "UC-ASL-P3"
+        ],
+        "note": "Auditor-FP family (feedback_auditor_predicate_drift_false_regression), 4th sibling of the same species. The CURRENT alert is a FALSE POSITIVE and self-clears 2026-07-27 when the 7-day window rolls past 2026-07-20 — no data remediation needed, this row fixes the DETECTOR only. Per reference_low_confidence_handling.md low_confidence is a by-design flag (deliberate insert + WORK alert + filtered out of RAG/alerts/briefings), not corruption, so severity WARN db_integrity_breach was the wrong framing. Distinct from FIX-BCTC-BANK-SUMMARY-MAPPING (bank scalar-column data defect) and REVIEW-PPC-Q4-LOW-CONFIDENCE (per-ticker human review) — those remediate DATA, this fixes the CHECK. Only 1 of the 11 rows is a bank (MBB 2025-Q4) and it is a different period from REFLOW-MBB-Q1-2026.",
+        "updated_at": "2026-08-08T06:34:20Z",
+        "promoted_at": "2026-08-08T04:22:18Z",
+        "promoted_by": "dev-team (supervised-lane sweep)",
+        "promotion_note": "Supervised-Lane Sweep — assigned dispatch_lane='architect' (priority_rank=2); supervised/plan_only flags preserved, gate NOT disabled — see FIX-BOUNDED1-SUPERVISED-LANE-NO-SWEEPER",
+        "dispatch_lane": "architect",
+        "claimed_at": "2026-08-08T06:24:15Z",
+        "claimed_by": "dev-team (supervised-lane sweep)",
+        "spec_doc": "docs/handoffs/FIX-AUDITOR-C04-PARSEDAT-RECENCY-PREDICATE-spec.md",
+        "architect_review_note": "PLAN-ONLY (supervised+plan_only — main.md and scripts/auditor-db-checks.sh NOT edited). Re-verified live 2026-08-08: main.md C-04 row is at :862 (row cited :572, stale). Re-derived BOTH defects directly against data/live/market.db: D2 (population) is firing RIGHT NOW under a brand-new 12-row cohort (SAB/SHB/SSI/VCB/VCI/VHM/VIC/VIX/VJC/VND/VNM/VRE, 2026-Q2, all validation_status=pending_extraction, conf=0.0 shell rows from ensureFinancialReportShellRow.ts) -- 100% population defect, unrelated tickers to the rows original 07-19/20 citation, proving the defect class recurs on every new bulk filing-discovery batch, not just historical reparses. The row own cited 07-19/20 batch has self-cleared out of the 7-day window as its own note predicted; replayed directly by parsed_at stamps (94 total / 89 extracted / 6 genuinely low-confidence = 6.74% rate) -- confirms population-filter ALONE is NOT sufficient to satisfy zero-signal replay (6 > current abs threshold 5); only rate+floor closes it. D1 (recency) confirmed structurally via parseBctcReport.ts ON CONFLICT clause: parsed_at is stamped on every write, published_at is DELIBERATELY excluded from the UPDATE SET (FIX-BCTC-REPARSE-BATCH-CORRUPTION-NGAYNOP-FLIP) so it survives reparses untouched -- 18 live rows today sit in exactly the parsed_at-recent/published_at-stale drift class (0 currently low-confidence, so dormant not firing, but mechanically proven). DECISION: recency anchor = COALESCE(published_at, parsed_at) (mirrors the app own parseBctcReport.ts fallback `callerPublishedAt ?? parsedAt` -- not an invented convention), 7-day window unchanged; population filter = validation_status NOT IN (pending, pending_extraction) -- deliberately NOT the deliverable literal confidence>0 suggestion, since a live POW 2026-Q1 row (status=failed, conf=0.0) proves a genuine failed-extraction can legitimately carry 0 confidence and must not be excluded by a value-based cutoff; threshold = rate>15% AND volume floor>=20 (baseline all-time rate is 4.07%, historical incident rate 6.74%, both comfortably clear 15% with margin). New script scripts/auditor-db-checks.sh (does not exist yet -- UC-ASL-P3 BACKLOG umbrella, this is the first predicate ported) designed to extend db-integrity-counts.sh discipline verbatim (host-bind sqlite-wal-guard read, NOT docker exec -- deliberate divergence from main.md own C-01..C-16 docker-exec convention, justified by UC-ASL-P3 own title + db-integrity-counts.sh retiring docker for exactly this DB access class + unit-testability via MARKET_DB_HOST_PATH fixture override). Negative control requires a synthetic fixture (no live >=20-row-window cohort exists today to reuse -- current live extracted_total_window=0, correctly PASS) -- fixture procedure + 3 companion no-blanket-suppression checks specified in spec_doc S5. Full verbatim script + main.md diff + acceptance-verification plan + rejected-alternative rationale in spec_doc."
       }
     ],
     "qa": [
@@ -22855,7 +22877,7 @@
         }
       ]
     },
-    "last_triaged_at": "2026-08-08T05:51:18Z",
+    "last_triaged_at": "2026-08-08T06:24:15Z",
     "last_triaged_by": "dev-team (supervised-lane sweep)",
     "in_progress": [
       {
