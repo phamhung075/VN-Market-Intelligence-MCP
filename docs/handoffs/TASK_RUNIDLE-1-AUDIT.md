@@ -46,3 +46,45 @@ The dev-team idle-tick guard requires 4 predicates to be true to emit RUN-IDLE. 
 - FIX-RUNIDLE-PREDICATE-D-ACTIVE-SPRINTS-PERMANENT-FLOOR (parent task, backlog)
 - SPIKE-SATURATED-COUNT-THRESHOLD-GATES-SWEEP (instance 9 — related dead-gate class)
 - FIX-SPRINT-REGISTRY-DANGLING-IDS-BREAK-SIGNOFF-AND-JOURNAL-ARCHIVE (related dangling-sprint issue)
+
+## [QA] Review Record — 2026-08-09T00:00:00Z — CHANGES_REQUESTED
+
+Verified against LIVE `docs/data/orch/orch-state.json` (not trusted from the brief's prose). Most of
+the audit holds byte-exact: `closed_sprints[]`=20 (all 4 cited commits real, subjects match); all 8
+`active_sprints[]` rows' status/task-status-breakdown/dispatchable-counts/key-counts(7-17)/malformed
+`...14ZZ` timestamp (§4 table, `docs/architecture-briefs/2026-08-09-active-sprints-accumulator-gap.md:127-136`)
+independently reproduced exactly; GAP-1 framing (§5.1), the latent predicate-drift bug (§3.3), and the
+SPIKE/dangling-ids dedup reasoning (§6) all check out against live board state.
+
+**Blocking issue — GAP-2 "dangling subtasks" claim is factually wrong for both named sprints:**
+
+- `docs/architecture-briefs/2026-08-09-active-sprints-accumulator-gap.md:136` — table row for
+  `SYSREMAKE-P2-STRUCTURAL-REMAKE-ROUTE` marks `tasks[]` column "**absent** (no `subtasks` either —
+  bare pointer row)", `dispatchable` **0**, `childless` **yes**. Live: `.task_board.active_sprints[]`
+  select id==SYSREMAKE-P2-STRUCTURAL-REMAKE-ROUTE` DOES carry `subtasks: [...]` with 9 entries
+  (T1-T9), and ALL 9 exist as real board rows: `T1`/`T2` = `done_verified[]` (T1 closed
+  2026-08-08T18:43:08Z, commit `ad6e422e9`, one day before this brief's claimed audit date), `T3`-`T9`
+  (7 rows) = `ready[]` status READY — dispatchable right now.
+- `docs/architecture-briefs/2026-08-09-active-sprints-accumulator-gap.md:145-150` — "Dangling
+  subtasks confirmed: all 8 of SPRINT-CCATO-TRUTHGATE-MCP-NATIVE's named `subtasks[]` IDs ... zero
+  matches anywhere on the board." False: 5 of 8 (`CCATO-MCP-T3/T5/T6/T7/T8`) exist as real `ready[]`
+  READY rows (only `T1/T2/T4` are actually not-found/dangling). This is a pre-existing, already
+  board-documented fact — `docs/data/orch/orch-state.json:9178` (po's 2026-08-06T11:29Z malformed-
+  timestamp finding) already names all 5 as live `ready[]`/P0/`next_agent=dev-mcp-server` rows, 3
+  days before this brief's "measured 2026-08-09" audit date.
+- Consequence: §5.2 (`:171-181`)'s causal claim ("zero tasks tracked... no event will ever cause PM
+  to re-examine... work with no board-visible existence at all") and §7-8's recommendations built on
+  "GAP-2's two childless sprints have zero dispatchable nested tasks" (`:224-227`) and "both currently-
+  stale sprints qualify today" (`:237`) materially overstate GAP-2's severity — SYSREMAKE-P2 in
+  particular has 7 live dispatchable tasks and active work landing as recently as yesterday, so it is
+  not "childless" and its own reactive closeout may in fact progress via its flat-lane rows even
+  without a redesign (the real gap is narrower: PM's `active_sprints[].tasks[]` reactive scan doesn't
+  resolve `subtasks[]` pointers into the flat lanes, not "the work was never minted").
+
+**Fix requested:** re-measure §4's `tasks[]`/`dispatchable`/`childless` columns and §4 Notes'
+"dangling subtasks confirmed" claim for both GAP-2 sprints against live `ready[]`/`done_verified[]`
+(resolving each `subtasks[]` id to its actual board lane, not asserting non-existence), and correct
+§5.2/§7/§8's downstream narrative and recommendations accordingly before TASK_RUNIDLE-2/3 dispatch.
+
+verdict: CHANGES_REQUESTED
+round: 1
