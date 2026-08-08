@@ -93,12 +93,11 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "FIX-DEVTEAM-IDLE-CHAIN-MAIN-COMPLETION",
-    "next_agent": "developer",
-    "next_action": "BOUNDED-1 auto-pickup claim of FIX-DEVTEAM-IDLE-CHAIN-MAIN-COMPLETION — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
-    "updated_at": "2026-08-08T22:53:42Z",
-    "updated_by": "dev-team (bounded-1 auto-pickup)"
+    "status": "idle",
+    "active_task_id": null,
+    "next_agent": "router",
+    "updated_at": "2026-08-08T23:07:51Z",
+    "updated_by": "developer"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -134,7 +133,7 @@
     "does_not_consume_wip": true
   },
   "signal_queue": {
-    "_updated_at": "2026-08-08T22:51:19Z",
+    "_updated_at": "2026-08-08T23:06:19Z",
     "_updated_by": "cowork-team",
     "archive": [],
     "rows": [
@@ -775,6 +774,20 @@
         "provenance": "detector",
         "audit_cycle_tag": "cron:auditor-t1:2026-08-08T22:40:00Z",
         "dedup_key": "microservice_degraded:rag-service:A-30"
+      },
+      {
+        "id": "sys-20260808T230606-5539",
+        "ts": "2026-08-08T23:06:06Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "signal_feedback",
+        "summary": "A-30 WARN: rag-service-1 memory pressure — 93.85% sustained (loss of reclamation)",
+        "severity": "WARN",
+        "status": "READ",
+        "payload_ref": null,
+        "provenance": "detector",
+        "audit_cycle_tag": "cron:auditor-t1:2026-08-08T23:00Z",
+        "dedup_key": "microservice_degraded:vn-market-intelligence-mcp-rag-service-1:A-30"
       }
     ],
     "last_triaged_at": "2026-07-29T06:25:00Z",
@@ -959,8 +972,8 @@
     ]
   },
   "task_board": {
-    "_updated_at": "2026-08-08T22:20:55Z",
-    "_updated_by": "po/remint-rc-idle-loops",
+    "_updated_at": "2026-08-08T23:07:51Z",
+    "_updated_by": "developer",
     "active_sprints": [
       {
         "evidence": "Router raw-verified (get_bctc_full live, post-rebuild) after BEQ-9/10 refine. Core extraction incident RESOLVED, but populating real scalars exposed a SEPARATE pre-existing analytics/serving layer with 4 defect clusters: (a) RATIO-COMPUTE — VNM ROE=0/ROA=0/EPS=12VND/NetDebt-EBITDA=-7.5e13x; DHG ROA=7,891,932.0% (analyst falsely claimed fixed). Ratios emit 0 or astronomically wrong. (b) BANK-B02-TCTD-SERVING — SHB + EIB get_bctc_full returns 'balance sheet has no decomposition — forced-zero pass suspected'; banks UNSERVABLE despite DONE + committed scalars. (c) PERIOD-SEMANTICS — FPT 2025-Q4 rev=70112.8/NP=11225.5 are FULL-YEAR cumulative labeled 'Q4'; buildComparisonSection then compares cumulative-FY vs next-quarter -> false -82.2% mislabeled 'YoY'. (d) ENTITY-SCOPE — HPG 2025-Q4 is parent-only B01a (rev=0, conf44%) served as the canonical/headline HPG vs consolidated ~140k rev; misleading. PUBLISH-INTEGRITY GAP: NO semantic-sanity publish guard exists in orch-state (the triage-referenced 'Task #13' is NOT present). The BEQ-9/10 reports are now DONE -> flow into chef docs/agents/unified-agent/flow/market-analysis.md + market-analyst -> ROA 7.8M% / false YoY -82% / parent-only-headline CAN reach MARKET unattended. recurring-bug-escalation: BCTC area has >2 fix cycles -> architect root-cause SPIKE, not point-patch. | [dev-team 2026-06-03T11:44Z observation feeding BAL-0/BAL-1] After LF-SERVE-REFLOW recovered FPT Q1 absolute scalars (op_profit/ebitda/cash live-correct), get_bctc_full(FPT) STILL serves garbage DERIVED ratios: current_ratio=41527873060120x (denominator ~0), operating_margin_pct=0.0% (not recomputed from now-correct operating_profit). Confirms the analytics/serving derived-ratio layer is a distinct defect from scalar extraction. BAL-0 publish semantic-sanity gate MUST block current_ratio out-of-range before MARKET/FB; BAL-1 spike should pin the ratio recompute module. Repro: get_bctc_full(code=FPT).",
@@ -19101,6 +19114,41 @@
         "updated_at": "2026-08-08T23:04:20Z",
         "updated_by": "developer/round-1-fix",
         "deliverable": "docs/architecture-briefs/2026-08-09-active-sprints-accumulator-gap.md"
+      },
+      {
+        "id": "FIX-DEVTEAM-IDLE-CHAIN-MAIN-COMPLETION",
+        "type": "FIX",
+        "title": "main.md Step 1 durable inbox consumption + stamp integration: §3.2 read/clear + §2.3 stamp call site",
+        "status": "REVIEW",
+        "priority": "P0",
+        "size": "M",
+        "zone": "docs/agents/dev-team/flow/",
+        "owner": "developer",
+        "next_agent": "qa",
+        "created_at": "2026-07-29T13:50:04Z",
+        "created_by": "pm",
+        "depends": [],
+        "blocks": [
+          "FIX-DEVTEAM-IDLE-CHAIN-TEST-FAIRNESS",
+          "FIX-DEVTEAM-IDLE-CHAIN-TEST-DURABLE"
+        ],
+        "files": [
+          "docs/agents/dev-team/flow/main.md"
+        ],
+        "updated_at": "2026-08-08T23:07:51Z",
+        "depends_on": [
+          "FIX-DEVTEAM-IDLE-CHAIN-P1A-MAIN-ROTATION",
+          "FIX-DEVTEAM-IDLE-CHAIN-P2A-DURABLE-DRAIN"
+        ],
+        "dangling_deps_fix_20260801T0209": "cleared stale legacy .depends entry FIX-DEVTEAM-IDLE-CHAIN-P1B-STAMP (deleted by pm 2833b71bf, never removed from .depends); effective_depends_on now equals .depends_on=[P1A-MAIN-ROTATION, P2A-DURABLE-DRAIN] as pm originally intended. Net effect: these 5 P0 rows move from PERMANENTLY unsatisfiable (deleted ids resolve MISSING forever) to NORMALLY gated (will become eligible once TASK-1 -> P1A/P2A complete in sequence) -- not immediately eligible today, since TASK-1 is still REVIEW not DONE_VERIFIED.",
+        "po_dispatch_20260808T1600Z": "FOLDED INTO PO's BATCH THIS TICK — both `depends_on` cleared 20 minutes ago and the row's absence now has a measured, growing cost.\n\nDEPENDENCY GATE IS SATISFIED (re-derived live, not assumed): depends_on = [FIX-DEVTEAM-IDLE-CHAIN-P1A-MAIN-ROTATION, FIX-DEVTEAM-IDLE-CHAIN-P2A-DURABLE-DRAIN]. Board state now: P2A = DONE_VERIFIED @2026-08-08T15:33:13Z, P1A = DONE_VERIFIED @2026-08-08T15:37:34Z. The `dangling_deps_fix_20260801T0209` note on this row predicted exactly this transition ('will become eligible once TASK-1 -> P1A/P2A complete in sequence'); that sequence completed this tick.\n\nMEASURED COST OF THE MISSING CONSUMER: P2A shipped the PRODUCER (durable append to .dev_team_idle_chain.pending_triage_inbox) and this row is the only planned CONSUMER (§3.2 read/clear). Until it lands the inbox is WRITE-ONLY. Live count at 2026-08-08T16:00Z: 24 envelopes, oldest 2026-08-08T13:08:59Z, ZERO consumed. Contents include 2 unrouted ci_red (both folded to FIX-CI-SIZELINT-COORDINATIONSTORE-BASELINE-1388L this tick — they had been sitting 2.5h), 2 CRITICAL microservice_degraded (mcp-server A-30, rag-service A-30 BELOW-FLOOR), 1 vps_proxy_stale (bctc-discover 101h30m), 1 cron_fire_gap (bctcReparseJob 57.1% success), 4 bctc_signal, 2 cowork-fire, and 8 sweep-guard/notebook-immutability bug-escalations. Those reached PO this tick ONLY because PO read the array by hand — no flow step does.\n\nNOTE ON DIRECTION: this is the inverse of the 'documented consumer, no documented producer' family (supervised-goahead.md, manual-dispatch-sweep.md, FIX-BOUNDED1-SUPERVISED-LANE-NO-SWEEPER) — here the producer shipped first and the consumer is the missing half. Same net effect: work accumulates in a durable structure nobody drains. PO deliberately did NOT hand-write a `consumed_at`/clear field this tick — inventing a consume contract ahead of §3.2 would fork the very schema this row exists to define.\n\nUNCHANGED: no re-authoring. BATCH entry built verbatim from this row's own type/id/title/size/files/zone per manual-dispatch-sweep.md Step 3 conventions.",
+        "promoted_at": "2026-08-08T22:53:36Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=0)",
+        "claimed_at": "2026-08-08T22:53:41Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "updated_by": "developer",
+        "review_note": "Step 1 durable-inbox read/clear (brief §3.2) + §2.3 stamp cross-reference implemented per architect brief docs/architecture-briefs/2026-07-25-devteam-idle-chain-rotation-durable-inbox.md. pendingSignals[] now reads .dev_team_idle_chain.pending_triage_inbox directly (was tick-local in-memory array); no-op short-circuit before S3 claim when inbox+reports+unresolved all empty; orch-apply.sh-gated clear after successful PO spawn subtracts consumed envelope_id (never blind =[]). Stamp §2.3 confirmed already wired by P1A-MAIN-ROTATION (before-dispatch write) -- documented cross-ref only, no duplicate write. Flagged NOT fixed (out of declared file scope): Session Gate own pendingSignals var still informational-sourced; po/flow/main.md line 20 stale phrasing; scripts/orch-conservation-check.mjs pending_triage_inbox gap (brief §3.4). Commits: 4696a721a (main.md), 3fd7e454f + b0e423f9e (memory). Decision journal: sprint-COWORK-GUARANTEED-SLOT-CATCHUP-developer-5.md STEP developer-S88. task_claim lock task:FIX-DEVTEAM-IDLE-CHAIN-MAIN-COMPLETION NOT released by this session -- no mcp__gateway__call_tool in this specialist tool surface (INV-GATEWAY-1, .claude/skills/task-lock/SKILL.md); outer dispatcher (router session) must release."
       }
     ],
     "qa": [
@@ -19404,39 +19452,6 @@
           "TASK-COWORK-SIGNAL-NAMING-CONTRACT"
         ],
         "decomposition_note": "Phase 1 decomposed into 4 atomic tasks per PO amendments (3 binding, 1 correction to FR-1 WINDOWKEY logic per Amendment 3). All inherit plan_only/supervised flags. No developer dispatch until PO adjudication."
-      },
-      {
-        "id": "FIX-DEVTEAM-IDLE-CHAIN-MAIN-COMPLETION",
-        "type": "FIX",
-        "title": "main.md Step 1 durable inbox consumption + stamp integration: §3.2 read/clear + §2.3 stamp call site",
-        "status": "IN_PROGRESS",
-        "priority": "P0",
-        "size": "M",
-        "zone": "docs/agents/dev-team/flow/",
-        "owner": "developer",
-        "next_agent": "developer",
-        "created_at": "2026-07-29T13:50:04Z",
-        "created_by": "pm",
-        "depends": [],
-        "blocks": [
-          "FIX-DEVTEAM-IDLE-CHAIN-TEST-FAIRNESS",
-          "FIX-DEVTEAM-IDLE-CHAIN-TEST-DURABLE"
-        ],
-        "files": [
-          "docs/agents/dev-team/flow/main.md"
-        ],
-        "updated_at": "2026-08-08T22:53:42Z",
-        "depends_on": [
-          "FIX-DEVTEAM-IDLE-CHAIN-P1A-MAIN-ROTATION",
-          "FIX-DEVTEAM-IDLE-CHAIN-P2A-DURABLE-DRAIN"
-        ],
-        "dangling_deps_fix_20260801T0209": "cleared stale legacy .depends entry FIX-DEVTEAM-IDLE-CHAIN-P1B-STAMP (deleted by pm 2833b71bf, never removed from .depends); effective_depends_on now equals .depends_on=[P1A-MAIN-ROTATION, P2A-DURABLE-DRAIN] as pm originally intended. Net effect: these 5 P0 rows move from PERMANENTLY unsatisfiable (deleted ids resolve MISSING forever) to NORMALLY gated (will become eligible once TASK-1 -> P1A/P2A complete in sequence) -- not immediately eligible today, since TASK-1 is still REVIEW not DONE_VERIFIED.",
-        "po_dispatch_20260808T1600Z": "FOLDED INTO PO's BATCH THIS TICK — both `depends_on` cleared 20 minutes ago and the row's absence now has a measured, growing cost.\n\nDEPENDENCY GATE IS SATISFIED (re-derived live, not assumed): depends_on = [FIX-DEVTEAM-IDLE-CHAIN-P1A-MAIN-ROTATION, FIX-DEVTEAM-IDLE-CHAIN-P2A-DURABLE-DRAIN]. Board state now: P2A = DONE_VERIFIED @2026-08-08T15:33:13Z, P1A = DONE_VERIFIED @2026-08-08T15:37:34Z. The `dangling_deps_fix_20260801T0209` note on this row predicted exactly this transition ('will become eligible once TASK-1 -> P1A/P2A complete in sequence'); that sequence completed this tick.\n\nMEASURED COST OF THE MISSING CONSUMER: P2A shipped the PRODUCER (durable append to .dev_team_idle_chain.pending_triage_inbox) and this row is the only planned CONSUMER (§3.2 read/clear). Until it lands the inbox is WRITE-ONLY. Live count at 2026-08-08T16:00Z: 24 envelopes, oldest 2026-08-08T13:08:59Z, ZERO consumed. Contents include 2 unrouted ci_red (both folded to FIX-CI-SIZELINT-COORDINATIONSTORE-BASELINE-1388L this tick — they had been sitting 2.5h), 2 CRITICAL microservice_degraded (mcp-server A-30, rag-service A-30 BELOW-FLOOR), 1 vps_proxy_stale (bctc-discover 101h30m), 1 cron_fire_gap (bctcReparseJob 57.1% success), 4 bctc_signal, 2 cowork-fire, and 8 sweep-guard/notebook-immutability bug-escalations. Those reached PO this tick ONLY because PO read the array by hand — no flow step does.\n\nNOTE ON DIRECTION: this is the inverse of the 'documented consumer, no documented producer' family (supervised-goahead.md, manual-dispatch-sweep.md, FIX-BOUNDED1-SUPERVISED-LANE-NO-SWEEPER) — here the producer shipped first and the consumer is the missing half. Same net effect: work accumulates in a durable structure nobody drains. PO deliberately did NOT hand-write a `consumed_at`/clear field this tick — inventing a consume contract ahead of §3.2 would fork the very schema this row exists to define.\n\nUNCHANGED: no re-authoring. BATCH entry built verbatim from this row's own type/id/title/size/files/zone per manual-dispatch-sweep.md Step 3 conventions.",
-        "promoted_at": "2026-08-08T22:53:36Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=0)",
-        "claimed_at": "2026-08-08T22:53:41Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)"
       }
     ]
   },
