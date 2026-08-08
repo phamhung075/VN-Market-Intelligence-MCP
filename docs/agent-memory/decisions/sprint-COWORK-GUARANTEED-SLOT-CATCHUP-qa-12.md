@@ -150,3 +150,13 @@
 - Cross-checked sibling `TASK-DEVTEAM-IDLE-CHAIN-2-MAIN-FLOW` (duplicate-candidate per PO ruling) stayed `BACKLOG`/untouched — no double-landing.
 **why-decision:** APPROVED, DONE_VERIFIED — every claim in the row's own review_note independently re-derived (diff read, jq re-run against live data, sibling-task scope traced), plus live post-deploy evidence found beyond what the row itself cited.
 **why-change:** none — verified exactly what the row scoped (Part 1 — rotation only; Part 2/durability correctly deferred to dependent rows).
+
+### STEP qa-S14 · qa · 2026-08-08T15:39:04Z
+**task-id:** FIX-BCTC-REFINE-PAGE-IMAGE-UNAVAILABLE-CAPS-CONFIDENCE
+**what-done:** Direct-commit verify. Row's own `commit:73e65eafc` FAILED `git merge-base --is-ancestor` — `git fsck --unreachable` confirms it's a dangling object, not stale board data pointing to missing work.
+**what-considered:**
+- Did not stop at the failed check: traced `files[]` via `git log` to real landing commit `19e43fa14` (same subject/author/timestamp/Task: trailer). `git diff 73e65eafc 19e43fa14 -- <3 files>` empty + `git patch-id` match + each commit isolated vs its OWN parent (495 ins/3 files) → clean rebase-hash artifact, not missing/altered work.
+- Corrected board `commit` field to `19e43fa14` as part of the lane-move (data-integrity, not a functional rework request).
+- Re-ran RAW: new test 18/18 pass, `tsc --noEmit` clean, `mock-guard` PASS, 4 related suites (idempotency/lock-ttl/sanity-gate/sanity-validator) 46/46 pass. Read diff: exactly `files[]`, no scope creep. AC1 (fetch-plane untouched) and AC2 (INSERT-before-COUNT ordering, rising-edge `===2` threshold, try/catch non-blocking) independently confirmed correct in the actual code, not trusted from review prose.
+**why-decision:** APPROVED, DONE_VERIFIED — work is genuinely on main under the correct hash; the board's stale commit pointer was a rebase-to-push artifact, not evidence of missing work (verify RAW not badges, but also don't pattern-match a failed check into a false rework loop without tracing why it failed).
+**why-change:** commit field corrected 73e65eafc→19e43fa14 in the same write; no code rework requested.
