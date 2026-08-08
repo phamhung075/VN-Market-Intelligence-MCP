@@ -15,8 +15,10 @@
 #     3. Validation via bun scripts/orch-validate.mjs (Zod schema + dup-key
 #        + coherence + ref integrity). NEVER duplicated here — single SSOT.
 #     4. Conservation circuit-breaker via bun scripts/orch-conservation-check.mjs
-#        (whole-board task_total/signal_total magnitude-ratio guard). NEVER
-#        duplicated here — single SSOT. Closes the empirically live-exploitable
+#        (whole-board task_total/signal_total magnitude-ratio guard PLUS an
+#        independent, never-bypassable signal_queue.rows[] row-identity guard
+#        — FIX-ORCHSTATE-SIGNALQUEUE-UNCOMMITTED-ROWS-LOST-TO-PEER-FULLDOC-WRITE).
+#        NEVER duplicated here — single SSOT. Closes the empirically live-exploitable
 #        full-doc-collapse class (commit de595a44) — see
 #        docs/architecture-briefs/2026-07-10-auditor-orchstate-conservation-guard.md
 #     5. Diff-based updated_at stamping via bun scripts/orch-stamp-updated-at.mjs

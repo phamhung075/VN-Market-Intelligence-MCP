@@ -28,6 +28,34 @@
  *                     + Σ closed_sprints[].tasks[].length
  *   signal_total(doc) = length(signal_queue.rows)
  *
+ * ROW-IDENTITY DIMENSION (FIX-ORCHSTATE-SIGNALQUEUE-UNCOMMITTED-ROWS-LOST-TO-
+ *   PEER-FULLDOC-WRITE, 2026-08-08): the magnitude-ratio metric above is
+ *   BLIND to a small, targeted row loss — a candidate that drops 2 of 133
+ *   signal_queue.rows[] (131/133 = 98.5%) sails through FLOOR_RATIO=0.5
+ *   trivially, by design (it is a whole-board circuit-breaker, not a
+ *   per-row guard — see brief §4.2). This is a SEPARATE, INDEPENDENT check:
+ *   any `.signal_queue.rows[]` id present in LIVE and absent from CANDIDATE
+ *   must be accounted for, either (a) present in candidate's
+ *   `.signal_queue.archive[]` (kept for defense-in-depth even though every
+ *   current writer always empties that inline lane to `[]` post-HSC-7 —
+ *   see orch-cold-evict.sh's own "RC-1 root cause" comment), or (b) named
+ *   in the caller-declared `ORCH_APPLY_DECLARED_SIGNAL_EVICTIONS` env var
+ *   (see below). An id dropped WITHOUT either form of accounting is a HARD
+ *   REJECT — unlike the magnitude check, this is NEVER honored by
+ *   ORCH_APPLY_ALLOW_SHRINK: that bypass says "the TOTAL is allowed to
+ *   shrink a lot" (legitimate bulk eviction), it does NOT say "any
+ *   individual row may vanish unaccounted for" — those are orthogonal
+ *   claims. This closes the class where a candidate is built from a stale
+ *   pre-read snapshot (predates a peer's concurrent append) and silently
+ *   clobbers that peer's row on rename — the CAS-mtime guard in
+ *   orch-apply.sh only proves "no writer intervened during MY OWN process
+ *   lifetime," it has zero visibility into whether the candidate it
+ *   received was already stale relative to live BEFORE its own process
+ *   even started (see docs/policies/dev-standards.md § Orch-state row-
+ *   identity signal conservation for the full incident writeup + the
+ *   verified-innocent finding for the specific incident that motivated
+ *   this task).
+ *
  * INVOCATION:
  *   bun scripts/orch-conservation-check.mjs <liveFilePath> <candidateFilePath>
  *
@@ -38,25 +66,46 @@
  *                              live total is below this size (no false alarms
  *                              on legitimately-small/early/test boards).
  *   ORCH_APPLY_ALLOW_SHRINK   if set to a non-empty string — bypass: logs
- *                              SHRINK-ALLOWED and exits 0 even on violation.
- *                              NARROW NAMED BYPASS — mirrors the existing
- *                              ORCH_APPLY_LIVE_FILE_OVERRIDE test-only
- *                              precedent (scripts/orch-apply.sh). Wired ONLY
- *                              into the 2 legitimate bulk-eviction writers:
- *                              scripts/orch-cold-evict.sh and
+ *                              SHRINK-ALLOWED and exits 0 even on a
+ *                              MAGNITUDE violation. Does NOT bypass a
+ *                              row-identity violation (see above — orthogonal
+ *                              axis, never bypassable). NARROW NAMED BYPASS —
+ *                              mirrors the existing ORCH_APPLY_LIVE_FILE_OVERRIDE
+ *                              test-only precedent (scripts/orch-apply.sh).
+ *                              Wired ONLY into the 2 legitimate bulk-eviction
+ *                              writers: scripts/orch-cold-evict.sh and
  *                              docs/agents/pm/flow/task-archive.md. NEVER set
  *                              this anywhere else (in particular, never from
  *                              system-auditor / signal-dashboard WRITE).
+ *   ORCH_APPLY_DECLARED_SIGNAL_EVICTIONS  comma-separated list of
+ *                              `signal_queue.rows[].id` values the CALLER
+ *                              explicitly declares it is intentionally
+ *                              removing this write (e.g. a genuine cold-evict
+ *                              pass moving rows to docs/data/orch/archive/
+ *                              YYYY-MM.json). Wired ONLY into
+ *                              scripts/orch-cold-evict.sh (the sole writer
+ *                              that legitimately removes signal_queue.rows[]
+ *                              entries — pm/task-archive.md delegates its own
+ *                              signal-row eviction to the same script, see
+ *                              that flow doc §Step 4). Any id NOT in this set
+ *                              (and not in candidate's `.signal_queue.archive[]`)
+ *                              that disappears between live and candidate is
+ *                              an undeclared drop → hard reject.
  *
  * EXIT CODES:
  *   0 = conservation OK (within floor, below MIN_BASELINE, or bypass honored)
+ *       AND zero undeclared row-identity drops.
  *   1 = conservation violated (task_total or signal_total dropped below the
- *       floor ratio) and no bypass set — reuses the caller's existing
- *       "validation failed, live file untouched" exit class.
+ *       floor ratio, no bypass set) OR at least one signal_queue.rows[] id
+ *       vanished between live and candidate without being declared/archived
+ *       (row-identity violation — never bypassable) — reuses the caller's
+ *       existing "validation failed, live file untouched" exit class.
  *   3 = usage error (missing args, file not found / unreadable / unparseable)
  *
  * HARD CONSTRAINTS:
  *   - Whole-board MAGNITUDE-RATIO design, NOT naive per-lane never-decrease.
+ *     The row-identity dimension is ADDITIVE alongside it, not a replacement —
+ *     do not fold the two into one predicate.
  *   - Shared by scripts/orch-apply.sh (Stage 2 gate) AND
  *     scripts/agents-flow/orch-state-hook-prewrite.mjs (PreToolUse parity) —
  *     do NOT duplicate this logic in either caller.
@@ -106,6 +155,59 @@ function signalTotal(doc) {
   const sq = /** @type {Record<string, unknown>} */ (doc && typeof doc === 'object' ? doc.signal_queue : undefined);
   const rows = sq ? sq.rows : undefined;
   return Array.isArray(rows) ? rows.length : 0;
+}
+
+/**
+ * Extract the set of `.id` strings from a signal_queue sub-array
+ * (`rows` or `archive`). Non-string / missing ids are skipped — this is an
+ * identity-tracking helper, not a schema validator (orch-validate.mjs owns
+ * schema enforcement upstream of this script).
+ * @param {unknown} doc
+ * @param {'rows'|'archive'} field
+ * @returns {Set<string>}
+ */
+function signalIdSet(doc, field) {
+  const sq = /** @type {Record<string, unknown>} */ (doc && typeof doc === 'object' ? doc.signal_queue : undefined);
+  const arr = sq ? sq[field] : undefined;
+  const out = new Set();
+  if (Array.isArray(arr)) {
+    for (const row of arr) {
+      const id = row && typeof row === 'object' ? row.id : undefined;
+      if (typeof id === 'string' && id.length > 0) out.add(id);
+    }
+  }
+  return out;
+}
+
+/**
+ * Row-identity conservation dimension (FIX-ORCHSTATE-SIGNALQUEUE-UNCOMMITTED-
+ * ROWS-LOST-TO-PEER-FULLDOC-WRITE) — see file header for full rationale.
+ * Returns the list of live `.signal_queue.rows[]` ids that vanished in the
+ * candidate WITHOUT being accounted for (present in candidate's
+ * `.signal_queue.archive[]`, or named in the declared-eviction env var).
+ * @param {unknown} liveDoc
+ * @param {unknown} candidateDoc
+ * @returns {string[]}
+ */
+function undeclaredSignalRowDrops(liveDoc, candidateDoc) {
+  const liveRowIds = signalIdSet(liveDoc, 'rows');
+  const candidateRowIds = signalIdSet(candidateDoc, 'rows');
+  const candidateArchiveIds = signalIdSet(candidateDoc, 'archive');
+  const declared = new Set(
+    (process.env.ORCH_APPLY_DECLARED_SIGNAL_EVICTIONS ?? '')
+      .split(',')
+      .map((s) => s.trim())
+      .filter((s) => s.length > 0)
+  );
+
+  const dropped = [];
+  for (const id of liveRowIds) {
+    if (candidateRowIds.has(id)) continue; // still present — not a drop
+    if (candidateArchiveIds.has(id)) continue; // accounted for — moved to inline archive
+    if (declared.has(id)) continue; // accounted for — caller declared this eviction
+    dropped.push(id);
+  }
+  return dropped;
 }
 
 /**
@@ -160,13 +262,39 @@ const metrics = [
 
 const violations = metrics.filter((m) => m.live >= MIN_BASELINE && m.candidate < m.live * FLOOR_RATIO);
 
-if (violations.length === 0) {
+// Row-identity dimension — INDEPENDENT of the magnitude check above, and
+// NEVER bypassable by ORCH_APPLY_ALLOW_SHRINK (see file header).
+const droppedIds = undeclaredSignalRowDrops(liveDoc, candidateDoc);
+
+if (violations.length === 0 && droppedIds.length === 0) {
   process.stdout.write(
     `[orch-conservation-check] OK — ` +
       metrics.map((m) => `${m.name} live=${m.live} candidate=${m.candidate}`).join(', ') +
-      `\n`
+      `, signal_row_identity=clean\n`
   );
   process.exit(0);
+}
+
+// Row-identity violations are reported and enforced FIRST, unconditionally —
+// no bypass exists for this dimension regardless of ORCH_APPLY_ALLOW_SHRINK.
+if (droppedIds.length > 0) {
+  process.stderr.write(
+    `\n[orch-conservation-check] ABORTED — row-identity violation: ${droppedIds.length} ` +
+      `signal_queue.rows[] id(s) present in live but absent from candidate WITHOUT being ` +
+      `accounted for (not in candidate .signal_queue.archive[], not in ` +
+      `ORCH_APPLY_DECLARED_SIGNAL_EVICTIONS):\n`
+  );
+  for (const id of droppedIds) {
+    process.stderr.write(`  ${id}\n`);
+  }
+  process.stderr.write(
+    `  fix: if this is a genuine eviction, route it through scripts/orch-cold-evict.sh (the sole ` +
+      `writer that sets ORCH_APPLY_DECLARED_SIGNAL_EVICTIONS for its own removals) — do NOT set ` +
+      `ORCH_APPLY_ALLOW_SHRINK to work around this, it does not bypass row-identity checks. If this ` +
+      `is unintentional, the candidate was built from a stale read — re-read the live file and ` +
+      `re-apply your filter.\n`
+  );
+  process.exit(1);
 }
 
 const bypassReason = (process.env.ORCH_APPLY_ALLOW_SHRINK ?? '').trim();

@@ -1019,11 +1019,24 @@ while [[ ${ATTEMPT} -lt ${MTIME_CAS_RETRIES} ]]; do
   # ORCH_APPLY_LIVE_FILE_OVERRIDE test-only precedent). This is one of only 2
   # call sites in the repo permitted to set ORCH_APPLY_ALLOW_SHRINK — do not
   # copy this pattern elsewhere without architect sign-off.
+  #
+  # ROW-IDENTITY DECLARATION (FIX-ORCHSTATE-SIGNALQUEUE-UNCOMMITTED-ROWS-LOST-
+  # TO-PEER-FULLDOC-WRITE): ORCH_APPLY_ALLOW_SHRINK above only covers the
+  # whole-board MAGNITUDE guard — it does NOT bypass the separate, non-
+  # bypassable row-identity check in orch-conservation-check.mjs. This script
+  # is the sole legitimate remover of signal_queue.rows[] entries (pm/task-
+  # archive.md delegates its own signal-row eviction to this same script —
+  # see that flow doc §Step 4), so it declares exactly which ids THIS pass
+  # removed, sourced from the SAME rm_sig_rows map already computed above
+  # (not re-derived) — keeps the declaration and the actual removal
+  # mechanically in lockstep, never hand-maintained.
+  SIGNAL_EVICTION_IDS=$(echo "${MAPS}" | jq -r '.rm_sig_rows | keys | join(",")')
   log "Writing hot file (via orch-apply.sh gated write): ${ORCH_STATE}"
   set +e
   cat "${HOT_TEMP}" \
     | ORCH_APPLY_LIVE_FILE_OVERRIDE="${ORCH_STATE}" \
       ORCH_APPLY_ALLOW_SHRINK="orch-cold-evict.sh:scheduled-eviction" \
+      ORCH_APPLY_DECLARED_SIGNAL_EVICTIONS="${SIGNAL_EVICTION_IDS}" \
       bash "${REPO_ROOT}/scripts/orch-apply.sh"
   apply_exit=${PIPESTATUS[1]}
   set -e

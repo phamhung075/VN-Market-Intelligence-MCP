@@ -273,10 +273,12 @@ placeholder (never a fabricated agent name) ONLY when a changed head omits it. N
 ```bash
 # Standalone invocation (usually called internally by orch-apply.sh Stage 2 — rarely called directly):
 bun scripts/orch-conservation-check.mjs <liveFilePath> <candidateFilePath>
-# Exit 0 = OK (within floor, live total below MIN_BASELINE, or bypass honored).
+# Exit 0 = OK (within floor, live total below MIN_BASELINE, or bypass honored) AND zero
+#   undeclared signal_queue.rows[] identity drops (see row-identity dimension below).
 # Exit 1 = conservation violated — candidate's task_total/signal_total dropped below
 #   CONSERVATION_FLOOR_RATIO (default 0.5) of the live value, live total >= CONSERVATION_MIN_BASELINE
-#   (default 10), and no bypass set.
+#   (default 10), and no bypass set — OR a signal_queue.rows[] id vanished between live and
+#   candidate without being accounted for (row-identity violation, never bypassable — see below).
 # Exit 3 = usage error (missing args / file not found / unparseable).
 ```
 Whole-board magnitude-ratio design (NOT naive per-lane never-decrease — a normal single-task lane
@@ -295,6 +297,40 @@ Owning brief: `docs/architecture-briefs/2026-07-10-auditor-orchstate-conservatio
 Test coverage: `bash scripts/test/orch-apply-wrapper-tests.sh` (COLLAPSE / APPEND-HAPPY /
 SHRINK-ALLOWED cases) + `bun test scripts/agents-flow/orch-state-hook.test.mjs` (hook parity +
 fail-open infra path).
+
+**Extension — row-identity dimension (FIX-ORCHSTATE-SIGNALQUEUE-UNCOMMITTED-ROWS-LOST-TO-PEER-FULLDOC-WRITE, 2026-08-08):**
+the magnitude-ratio guard above is a whole-board circuit-breaker by design (§4.2) — it is BLIND to a
+small, targeted `signal_queue.rows[]` drop (e.g. 2 of 133 rows = 98.5% retained, nowhere near the 0.5
+floor). Added a SEPARATE, INDEPENDENT dimension alongside it (not a replacement): any live
+`.signal_queue.rows[]` id absent from the candidate must be accounted for — present in candidate
+`.signal_queue.archive[]` (defense-in-depth; every current writer always empties that deprecated
+inline lane to `[]` post-HSC-7, so this path is currently dormant but cheap to keep), OR named in
+`ORCH_APPLY_DECLARED_SIGNAL_EVICTIONS=<comma-separated-ids>` — else HARD REJECT (exit 1, live
+untouched). **Never bypassable by `ORCH_APPLY_ALLOW_SHRINK`** — that bypass says "the total may
+shrink a lot" (legitimate bulk eviction), not "any specific row may vanish unaccounted for"; these
+are orthogonal claims, proven by the `ROW-DROP-ALLOW-SHRINK-NO-BYPASS` test case. Wired ONLY into
+`scripts/orch-cold-evict.sh` (the sole legitimate remover of `signal_queue.rows[]` entries —
+`docs/agents/pm/flow/task-archive.md` delegates its own signal-row eviction to this same script,
+see that flow doc §Step 4) — it declares exactly the ids its own `rm_sig_rows` map (already computed
+for the eviction itself) removed each pass, so the declaration and the actual removal stay
+mechanically in lockstep, never hand-maintained.
+Root-cause note: the specific incident that motivated this task (2 `sys-*` sbv_fx WARN rows,
+2026-07-29T10:33:37Z/38Z, commit `3e257beba`) was investigated and found to be **verified-innocent,
+not a loss** — both rows are present today in `docs/data/orch/archive/2026-07.json` `.signal_rows[]`
+(status `READ`), correctly cold-evicted via the (at-the-time) no-age-gate immediate-eviction path
+already closed by `SIGNAL_MAX_AGE_HOURS` (`FIX-COLDEVICT-SIGNALQUEUE-NO-AGE-GATE-ORPHANS-READ-ROWS`,
+shipped 2026-08-01). The original PO evidence checked the deprecated always-empty
+`.signal_queue.archive[]` inline lane, not the real cold-storage file, and concluded "destroyed"
+in error. This row-identity guard is still shipped as legitimate defense-in-depth for the
+theoretically-real class it describes (a candidate built from a stale pre-read snapshot that
+predates a peer's concurrent append — `scripts/orch-apply.sh`'s CAS-mtime guard only proves "no
+writer intervened during MY OWN process lifetime," it has no visibility into whether the candidate
+it received was already stale relative to live before its own process started), not because the
+named incident was a real loss.
+Test coverage: `bash scripts/test/orch-apply-wrapper-tests.sh` (`ROW-DROP-REJECTED` /
+`ROW-DROP-ALLOW-SHRINK-NO-BYPASS` / `ROW-DROP-DECLARED-ALLOWED` / `ROW-DROP-ARCHIVE-ACCOUNTED` /
+`ROW-APPEND-HAPPY` cases) + `bash scripts/test/orch-cold-evict-tests.sh` T9/T10 (real end-to-end
+signal_queue eviction through the newly-wired declaration, unaffected).
 
 **CANONICAL: Orch-state Claude hook gate (SSOT-INTEGRITY-PERIMETER SSOT-W1-HOOK-ENFORCE)**
 ```bash

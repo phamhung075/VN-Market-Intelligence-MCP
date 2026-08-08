@@ -835,6 +835,213 @@ fi
 assert_real_live_unchanged "HEAD-STAMP-IDEMPOTENT"
 
 # =============================================================================
+# ROW-IDENTITY CONSERVATION TESTS (FIX-ORCHSTATE-SIGNALQUEUE-UNCOMMITTED-
+# ROWS-LOST-TO-PEER-FULLDOC-WRITE)
+# =============================================================================
+# scripts/orch-conservation-check.mjs's magnitude-ratio floor is blind to a
+# small, targeted signal_queue.rows[] drop (e.g. 2 of 133 = 98.5% retained,
+# nowhere near the 0.5 floor). This is a SEPARATE, INDEPENDENT dimension: any
+# live .signal_queue.rows[] id absent from candidate must be accounted for
+# (candidate .signal_queue.archive[] OR ORCH_APPLY_DECLARED_SIGNAL_EVICTIONS),
+# else REJECTED — and, unlike the magnitude guard, NEVER bypassable by
+# ORCH_APPLY_ALLOW_SHRINK (orthogonal claim: "total may shrink a lot" is not
+# "any specific row may vanish unaccounted for").
+#
+# ROW-DROP-REJECTED         — undeclared drop of 1 of 2 live rows -> exit 1,
+#                              live UNCHANGED (this is the exact incident shape:
+#                              small drop, sails through the magnitude floor).
+# ROW-DROP-ALLOW-SHRINK-NO-BYPASS — same undeclared drop WITH
+#                              ORCH_APPLY_ALLOW_SHRINK set -> STILL exit 1,
+#                              proving orthogonality from the magnitude bypass.
+# ROW-DROP-DECLARED-ALLOWED — same drop, WITH the dropped id named in
+#                              ORCH_APPLY_DECLARED_SIGNAL_EVICTIONS -> exit 0.
+# ROW-DROP-ARCHIVE-ACCOUNTED — same drop, but candidate's own
+#                              .signal_queue.archive[] carries the dropped id
+#                              -> exit 0 (defense-in-depth path).
+# ROW-APPEND-HAPPY           — regression guard: adding a new signal row
+#                              (zero drops) must not be affected at all.
+# =============================================================================
+ROWID_LIVE="$FIXTURE_DIR/rowid-live.json"
+
+jq -n '{
+  "_meta": {"schema":"v4","ssot":true,"updated_at":"2026-06-01T00:00:00Z","updated_by":"fixture"},
+  "head": {"status":"idle","active_task_id":null,"next_agent":null},
+  "task_board": {"backlog": [{"id":"ROWID-BACKLOG","status":"BACKLOG"}], "active_sprints": []},
+  "signal_queue": {
+    "_updated_at":"2026-06-01T00:00:00Z","_updated_by":"fixture",
+    "rows": [
+      {"id":"ROWID-SIG-A","summary":"row A","severity":"WARN","status":"NEW"},
+      {"id":"ROWID-SIG-B","summary":"row B","severity":"WARN","status":"NEW"}
+    ]
+  }
+}' > "$ROWID_LIVE"
+
+ROWID_HASH_BEFORE=$(file_hash "$ROWID_LIVE")
+
+# ─────────────────────────────────────────────────────────────────────────
+# ROW-DROP-REJECTED — candidate silently drops ROWID-SIG-B (not in candidate
+# .rows[], not in candidate .archive[], no declaration). task_total/signal_total
+# ratio (1/2 = 50%, live=2 < MIN_BASELINE=10) never even reaches the magnitude
+# guard — this drop is caught ONLY by the row-identity dimension.
+# ─────────────────────────────────────────────────────────────────────────
+ROWID_DROP_CANDIDATE=$(jq --arg now "2026-06-01T00:01:00Z" \
+  '.signal_queue.rows = [.signal_queue.rows[] | select(.id != "ROWID-SIG-B")] | ._meta.updated_at = $now' \
+  "$ROWID_LIVE")
+
+EXIT_ROWID_DROP=0
+printf '%s' "$ROWID_DROP_CANDIDATE" \
+  | ORCH_APPLY_LIVE_FILE_OVERRIDE="$ROWID_LIVE" bash "$APPLY_SH" 2>/tmp/rowid-drop-stderr.$$ \
+  || EXIT_ROWID_DROP=$?
+
+if [ "$EXIT_ROWID_DROP" -eq 1 ]; then
+  pass "ROW-DROP-REJECTED — undeclared signal row drop rejected — exit 1"
+else
+  fail "ROW-DROP-REJECTED — expected exit 1, got $EXIT_ROWID_DROP"
+fi
+
+if grep -q "ROWID-SIG-B" /tmp/rowid-drop-stderr.$$ 2>/dev/null; then
+  pass "ROW-DROP-REJECTED — stderr names the dropped id (ROWID-SIG-B)"
+else
+  fail "ROW-DROP-REJECTED — stderr did not name the dropped id"
+fi
+rm -f /tmp/rowid-drop-stderr.$$
+
+ROWID_HASH_AFTER_DROP=$(file_hash "$ROWID_LIVE")
+if [ "$ROWID_HASH_BEFORE" = "$ROWID_HASH_AFTER_DROP" ]; then
+  pass "ROW-DROP-REJECTED — fixture UNCHANGED (no rename occurred)"
+else
+  fail "ROW-DROP-REJECTED — fixture CHANGED (CRITICAL — undeclared row drop was applied)"
+fi
+assert_real_live_unchanged "ROW-DROP-REJECTED"
+
+# ─────────────────────────────────────────────────────────────────────────
+# ROW-DROP-ALLOW-SHRINK-NO-BYPASS — same undeclared drop, but WITH
+# ORCH_APPLY_ALLOW_SHRINK set. Must STILL be exit 1 — proves the magnitude
+# bypass does NOT cover the row-identity dimension (orthogonal axis).
+# ─────────────────────────────────────────────────────────────────────────
+EXIT_ROWID_DROP_SHRINK=0
+printf '%s' "$ROWID_DROP_CANDIDATE" \
+  | ORCH_APPLY_LIVE_FILE_OVERRIDE="$ROWID_LIVE" ORCH_APPLY_ALLOW_SHRINK="test-attempted-bypass" bash "$APPLY_SH" 2>/dev/null \
+  || EXIT_ROWID_DROP_SHRINK=$?
+
+if [ "$EXIT_ROWID_DROP_SHRINK" -eq 1 ]; then
+  pass "ROW-DROP-ALLOW-SHRINK-NO-BYPASS — ORCH_APPLY_ALLOW_SHRINK does NOT bypass row-identity — exit 1"
+else
+  fail "ROW-DROP-ALLOW-SHRINK-NO-BYPASS — expected exit 1 (bypass must not apply), got $EXIT_ROWID_DROP_SHRINK"
+fi
+
+ROWID_HASH_AFTER_SHRINK_ATTEMPT=$(file_hash "$ROWID_LIVE")
+if [ "$ROWID_HASH_BEFORE" = "$ROWID_HASH_AFTER_SHRINK_ATTEMPT" ]; then
+  pass "ROW-DROP-ALLOW-SHRINK-NO-BYPASS — fixture UNCHANGED"
+else
+  fail "ROW-DROP-ALLOW-SHRINK-NO-BYPASS — fixture CHANGED (CRITICAL — bypass leaked into row-identity gate)"
+fi
+assert_real_live_unchanged "ROW-DROP-ALLOW-SHRINK-NO-BYPASS"
+
+# ─────────────────────────────────────────────────────────────────────────
+# ROW-DROP-DECLARED-ALLOWED — same drop, but the dropped id is named in
+# ORCH_APPLY_DECLARED_SIGNAL_EVICTIONS (exactly how orch-cold-evict.sh wires
+# it) -> exit 0, rename applies.
+# ─────────────────────────────────────────────────────────────────────────
+EXIT_ROWID_DECLARED=0
+printf '%s' "$ROWID_DROP_CANDIDATE" \
+  | ORCH_APPLY_LIVE_FILE_OVERRIDE="$ROWID_LIVE" ORCH_APPLY_DECLARED_SIGNAL_EVICTIONS="ROWID-SIG-B" bash "$APPLY_SH" 2>/dev/null \
+  || EXIT_ROWID_DECLARED=$?
+
+if [ "$EXIT_ROWID_DECLARED" -eq 0 ]; then
+  pass "ROW-DROP-DECLARED-ALLOWED — declared eviction accepted — exit 0"
+else
+  fail "ROW-DROP-DECLARED-ALLOWED — expected exit 0, got $EXIT_ROWID_DECLARED"
+fi
+
+ROWID_POST_DECLARED_N=$(jq '.signal_queue.rows | length' "$ROWID_LIVE" 2>/dev/null || echo -1)
+if [ "$ROWID_POST_DECLARED_N" = "1" ]; then
+  pass "ROW-DROP-DECLARED-ALLOWED — fixture rows[] now length 1 (rename applied)"
+else
+  fail "ROW-DROP-DECLARED-ALLOWED — expected rows[] length 1, got $ROWID_POST_DECLARED_N"
+fi
+assert_real_live_unchanged "ROW-DROP-DECLARED-ALLOWED"
+
+# Reset fixture for the remaining row-identity sub-tests (declared-allowed above mutated it)
+jq -n '{
+  "_meta": {"schema":"v4","ssot":true,"updated_at":"2026-06-01T00:00:00Z","updated_by":"fixture"},
+  "head": {"status":"idle","active_task_id":null,"next_agent":null},
+  "task_board": {"backlog": [{"id":"ROWID-BACKLOG","status":"BACKLOG"}], "active_sprints": []},
+  "signal_queue": {
+    "_updated_at":"2026-06-01T00:00:00Z","_updated_by":"fixture",
+    "rows": [
+      {"id":"ROWID-SIG-A","summary":"row A","severity":"WARN","status":"NEW"},
+      {"id":"ROWID-SIG-B","summary":"row B","severity":"WARN","status":"NEW"}
+    ]
+  }
+}' > "$ROWID_LIVE"
+
+# ─────────────────────────────────────────────────────────────────────────
+# ROW-DROP-ARCHIVE-ACCOUNTED — same drop from rows[], but the candidate's own
+# .signal_queue.archive[] carries the dropped id (defense-in-depth path,
+# independent of the env-var declaration) -> exit 0.
+# ─────────────────────────────────────────────────────────────────────────
+ROWID_ARCHIVE_CANDIDATE=$(jq --arg now "2026-06-01T00:02:00Z" \
+  '.signal_queue.archive = [(.signal_queue.rows[] | select(.id == "ROWID-SIG-B"))]
+   | .signal_queue.rows = [.signal_queue.rows[] | select(.id != "ROWID-SIG-B")]
+   | ._meta.updated_at = $now' \
+  "$ROWID_LIVE")
+
+EXIT_ROWID_ARCHIVE=0
+printf '%s' "$ROWID_ARCHIVE_CANDIDATE" \
+  | ORCH_APPLY_LIVE_FILE_OVERRIDE="$ROWID_LIVE" bash "$APPLY_SH" 2>/dev/null \
+  || EXIT_ROWID_ARCHIVE=$?
+
+if [ "$EXIT_ROWID_ARCHIVE" -eq 0 ]; then
+  pass "ROW-DROP-ARCHIVE-ACCOUNTED — id present in candidate .archive[] accepted — exit 0"
+else
+  fail "ROW-DROP-ARCHIVE-ACCOUNTED — expected exit 0, got $EXIT_ROWID_ARCHIVE"
+fi
+assert_real_live_unchanged "ROW-DROP-ARCHIVE-ACCOUNTED"
+
+# Reset fixture again for the append regression test
+jq -n '{
+  "_meta": {"schema":"v4","ssot":true,"updated_at":"2026-06-01T00:00:00Z","updated_by":"fixture"},
+  "head": {"status":"idle","active_task_id":null,"next_agent":null},
+  "task_board": {"backlog": [{"id":"ROWID-BACKLOG","status":"BACKLOG"}], "active_sprints": []},
+  "signal_queue": {
+    "_updated_at":"2026-06-01T00:00:00Z","_updated_by":"fixture",
+    "rows": [
+      {"id":"ROWID-SIG-A","summary":"row A","severity":"WARN","status":"NEW"},
+      {"id":"ROWID-SIG-B","summary":"row B","severity":"WARN","status":"NEW"}
+    ]
+  }
+}' > "$ROWID_LIVE"
+
+# ─────────────────────────────────────────────────────────────────────────
+# ROW-APPEND-HAPPY — regression guard: adding a new signal row (zero drops)
+# must be entirely unaffected by the row-identity dimension.
+# ─────────────────────────────────────────────────────────────────────────
+ROWID_APPEND_CANDIDATE=$(jq --arg now "2026-06-01T00:03:00Z" \
+  '.signal_queue.rows += [{"id":"ROWID-SIG-C","summary":"row C","severity":"WARN","status":"NEW"}]
+   | ._meta.updated_at = $now' \
+  "$ROWID_LIVE")
+
+EXIT_ROWID_APPEND=0
+printf '%s' "$ROWID_APPEND_CANDIDATE" \
+  | ORCH_APPLY_LIVE_FILE_OVERRIDE="$ROWID_LIVE" bash "$APPLY_SH" 2>/dev/null \
+  || EXIT_ROWID_APPEND=$?
+
+if [ "$EXIT_ROWID_APPEND" -eq 0 ]; then
+  pass "ROW-APPEND-HAPPY — new signal row (zero drops) accepted — exit 0"
+else
+  fail "ROW-APPEND-HAPPY — expected exit 0, got $EXIT_ROWID_APPEND"
+fi
+
+ROWID_POST_APPEND_N=$(jq '.signal_queue.rows | length' "$ROWID_LIVE" 2>/dev/null || echo -1)
+if [ "$ROWID_POST_APPEND_N" = "3" ]; then
+  pass "ROW-APPEND-HAPPY — fixture rows[] now length 3 (rename applied)"
+else
+  fail "ROW-APPEND-HAPPY — expected rows[] length 3, got $ROWID_POST_APPEND_N"
+fi
+assert_real_live_unchanged "ROW-APPEND-HAPPY"
+
+# =============================================================================
 # Summary
 # =============================================================================
 TOTAL=$((PASS+FAIL))
