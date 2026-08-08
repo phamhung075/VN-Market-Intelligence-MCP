@@ -167,3 +167,13 @@
 - Docker Close Gate: live `docker inspect` confirms running image sha256:12a7bc89... created 2026-08-08T08:10:53Z (postdates fix commit + both size-lint follow-ups), RestartCount=0 — code genuinely running in production, already independently re-verified by the OPS row's own QA pass; no second rebuild needed (PO's hard constraint).
 **why-decision:** APPROVED, DONE_VERIFIED. Row's scope was "idle-unload timer... warm→cold flip without 503" (test coverage, not live-reclamation-magnitude) — dev's own 12 tests + live log-line evidence on the OPS row satisfy that scope exactly; the unreclaimed-memory finding is correctly owned by the new allocator row per Branch B, not a defect returned here.
 **why-change:** none — verified exactly what the row scoped; did not reopen the allocator-pages question (out of this row's AC per po_qa_hold_20260808T0820Z).
+
+### STEP qa-S13 · qa · 2026-08-08T18:33:00Z
+**task-id:** FIX-MCP-SSE-SESSION-MANAGER-PERCONN-LEAK-NO-REAPER
+**what-done:** PO Step 5 (sessionCount-vs-MemPerc correlation ≥4h, RestartCount stable 0, toolCount/cronJobCount unchanged) — took live checkpoint #1, NOT a sign-off. Container StartedAt 16:59:50Z, checkpoint at 18:29-18:32Z = ~1h33m elapsed of the required ≥4h window.
+**what-considered:**
+- Live data: /health toolCount=183 sessions 23→15 in 3m30s; docker stats MemPerc 16.92%→14.67%; /proc VmHWM(662168kB)>VmRSS(394732kB) = reclamation active, not pinned. `bash scripts/gen-project-stats.ts` re-run live: cronJobCount=88, matches baseline.
+- `docker logs | grep SseSessionManager evict`: 208 idle_timeout evictions since boot, 0 max_age (structurally impossible before container age 4h — not a defect).
+- Gate math: (a) ≥4h correlation NOT MET (23% elapsed); (b) RestartCount=0 so far but window incomplete, cannot certify "stable across 4h"; (c) toolCount/cronJobCount MET; (d) ≥1 max_age eviction NOT MET (0 observed, expected).
+**why-decision:** Held REVIEW/next_agent=qa unchanged — did not sign off on a 1h33m sample against an explicit ≥4h PO mandate (avoids feedback_single_observation_degenerate_case_read_as_broken_mechanism). Wrote checkpoint field `qa_step5_checkpoint_1_20260808T1832Z` on the board row (jq+orch-apply.sh, diff-verified single-field add) so the next qa dispatch continues from real data, not blind. Recommended recheck window ≥2026-08-08T21:00Z (4h mark), preferred 21:15-21:30Z for post-threshold reaper sweeps.
+**why-change:** Deviates from "sign off Step 5 now" only because the router's next_action pointer understated elapsed time (container had been up ~1h33m, not ≥4h) — verified via `docker inspect` StartedAt, not assumed.
