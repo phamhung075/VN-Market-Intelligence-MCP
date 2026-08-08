@@ -1,46 +1,5 @@
 # Agent Father — Notebook
 
-## Plan-only spec (dev-team SLS dispatch) 2026-08-08T07:09Z FIX-AUDITOR-NOTEBOOK-APPEND-GATE-BYPASSED-ALL-GREEN-WRITE — IN_PROGRESS→REVIEW
-- `plan_only:true`+`supervised:true` row, zone `docs/agents/system-auditor/`. Did NOT edit
-  `scripts/git-hooks/pre-commit` — produced a spec doc only, per the router's explicit "do not
-  auto-merge a hard-reject hook" instruction and this row's own plan_only convention (matches
-  the `architect_review_note`/`dev_mcp_server_review_note` precedent pattern seen fleet-wide on
-  `FIX-AUDITOR-DOCAUDIT-MEMORY-PATH-PREDICATE`/`FIX-AUDITOR-D4-WHITELIST-...`/`FIX-AUDITOR-C04-
-  PARSEDAT-RECENCY-PREDICATE`, all `docs/handoffs/*-spec.md`).
-- **Zone deviation, deliberate:** placed the spec at `docs/agents/system-auditor/FIX-AUDITOR-
-  NOTEBOOK-APPEND-GATE-BYPASSED-ALL-GREEN-WRITE-spec.md`, NOT `docs/handoffs/` (the precedent
-  location) — `docs/handoffs/` is absent from this agent's own declared `commit_zone` (`init.md`
-  + `commit-boundary/SKILL.md` zone table: `docs/agents/` · `docs/agent-memory/` · `.claude/
-  skills/` · `.claude/agents/` only). Router's dispatch prompt cannot widen a permission
-  boundary; `docs/agents/system-auditor/` is within zone AND matches this row's own `zone` field.
-- Root cause (acceptance 1): re-verified live, gate relocated to main.md:963-969 (row cited stale
-  :684-690). Git-archaeology on the defect commit `f26526d0e` + its 4 same-day siblings shows the
-  gate spec was already correct/live at the time, only ONE commit touched the file in the 05:00-
-  05:15Z window — narrows toward an isolated single-spawn prose-skip over a two-writer race, but
-  stays formally UNCONFIRMED per the row's own explicit allowance.
-- Acceptance 2: designed (not merged) `_check_notebook_append_gate_bypass`, independent of
-  `_check_notebook_immutability` (acceptance 4) and of the DIFFERENT AC-4 arithmetic backstop
-  that shipped in `auditor-notebook-commit.sh` TODAY (validates OUTPUT-CONTRACT self-consistency,
-  not whether a write should have happened — does not supersede this row). Counters (a)/(b)
-  artifact-derived per the MATERIAL `po_acceptance_amend_20260729T0848`: `.signal_queue.rows[]`
-  windowed on the same-tier retained heading's own ts (reused from condition (c)'s own lookup,
-  since the 2026-08-06 reorder means emit calls now run BEFORE the new heading is stamped) +
-  `docs/data/auditor-dedup-ledger.json` cross-reference to separate genuinely-new from
-  dedup-skipped rows — two independent artifact planes, never the agent's own narration. Live
-  notebook-format survey found the acceptance text's literal 4-line-shape assumption does not
-  hold (Status sometimes inline with Anomalies) — detector uses whole-body tolerant regexes.
-- Acceptance 3: WARN-only, `GIT_AUDITOR_APPEND_GATE_MODE=reject` explicitly NOT flipped — gated
-  on a second confirmed occurrence, per router instruction and the row's own text.
-- Task-board closeout: applied (not committed) via `jq | scripts/orch-apply.sh` — lane-move
-  `in_progress[]`→`review[]`, `status:REVIEW`, `next_agent:po`, `spec_doc` pointer,
-  `agent_father_review_note`, `.head` reset to idle (was this row's `active_task_id`). Left
-  `docs/data/orch/orch-state.json` UNCOMMITTED — outside this agent's `commit_zone`
-  (`FU-AGENT-FATHER-ORCH-SCOPE`), matches the established precedent in this same notebook (TE-T16/
-  TE-T26 closeouts) of applying-not-committing that file. `task_release` NOT attempted — no
-  `mcp__gateway__call_tool` binding this session (recurring gap, S23/S28/S30 + this cycle). Router
-  must commit `orch-state.json` and release `task:FIX-AUDITOR-NOTEBOOK-APPEND-GATE-BYPASSED-ALL-
-  GREEN-WRITE` (`owner_client_session=165f4245-6173-4054-87fd-c55bb626265f`).
-
 ## Keep (maintenance) 12:58 — router-spawned, no explicit intent → defaulted to keep.md
 - Trigger: manual (router spawn gave no `trigger`/`intent`; per main.md dispatch-table default,
   routed to `keep.md`). Pre-Check gate: `git diff --name-only HEAD~3..HEAD` touched zero
@@ -95,3 +54,60 @@
   microservice-main.md Error Boundary gap, 8 agents) is new-backlog-candidate severity MEDIUM;
   Escalation 2 (semble-search guide-taxonomy) severity LOW; the 3 CRITICAL tool-boundary findings
   are carried-forward (already PO-known from the prior two `team-tool-recheck` runs, not new).
+
+## Edit (BOUNDED-1 auto-pickup, router-corrected next_agent) 2026-08-08T13:55Z FIX-DEVTEAM-IDLE-CHAIN-P1A-MAIN-ROTATION — IN_PROGRESS→REVIEW
+- Router self-healed `next_agent: developer → agent-father` before dispatch per the row's own
+  routing-contradiction note (TE-T03/TE-T06 artifact-class ruling — 100% flow-doc prose,
+  `zone: docs/agents/dev-team/flow/`). Read `docs/architecture-briefs/2026-07-25-devteam-idle-
+  chain-rotation-durable-inbox.md` (design source, PO-ratified) + the sibling depends_on row
+  `TASK-DEVTEAM-IDLE-CHAIN-1-SCHEMA-UTILITIES` (DONE_VERIFIED — shipped `rotation_selected($doc)`
+  + `devteam-idle-chain-stamp.jq` + `dev_team_idle_chain` schema) + the blocked completion row
+  `FIX-DEVTEAM-IDLE-CHAIN-MAIN-COMPLETION`'s own title/note to establish the Part-1/Part-2
+  boundary BEFORE writing anything — Part 1 (this row) = brief §2 (selection + stamp + session
+  gate); Part 2 (completion row, depends on this + P2A-DURABLE-DRAIN) = brief §3 (durable
+  `pending_triage_inbox[]`, Step 1's read/clear).
+- **Read the CURRENT 1054-line main.md in full before designing** (not from memory/brief-only) —
+  found the brief (2026-07-25, 5 candidates: bounded1/sls/rlc/qa_drain/step1_triage) predates
+  Design-Router Sweep, added to the live fixed chain 2026-07-30. Router's own task text named the
+  CURRENT 6-stage chain (…→DRS→…). Cross-zone constraint: `scripts/lib/devteam-eligibility.jq`
+  (`rotation_selected`) + `scripts/devteam-idle-chain-stamp.jq` both hardcode the stale 5-id set
+  and sit in `scripts/`, outside this agent's `commit_zone`. Resolved by INLINING a 6-candidate
+  version of both (selection jq + stamp jq) directly in main.md, explicitly flagged in 2 places
+  (new section + Reusable Scripts bullet) as a documented, fast-follow-flagged divergence — did
+  NOT silently drop DRS from fairness, did NOT silently edit an out-of-zone file.
+  Simulated fairness locally (`jq`, scratch data only, never live orch-state.json): 6-tick
+  rotation selects each of bounded1/sls/rlc/drs/qa_drain/step1_triage exactly once, tick 7 wraps.
+- **Found + fixed a self-introduced ordering bug before committing:** first draft placed the
+  stamp-write's PROSE as "immediately after whichever section ran" while the code itself sat
+  physically BEFORE all 6 lane sections (at the rotation-selection entry point) — would have
+  executed before, not after, contradicting its own prose. Since the stamp write is unconditional
+  and targets an independent key (`.dev_team_idle_chain.*`, never `.task_board.*`/`.head`), fixed
+  by keeping the code where it was (before dispatch — simpler, avoids duplicating the write across
+  5 `JUMP TO end` exit points) and correcting the PROSE to document + justify "before, not after"
+  explicitly, rather than silently leaving the mismatch or moving the code somewhere riskier.
+- Step 1 PO Triage: added a gate (`$SELECTED != "step1_triage"` → skip) at its EXISTING physical
+  location — did NOT relocate it to the rotation-selection point (would have skipped Review-Lane
+  SECONDARY-Drain/QA-Drain-Head-Decoupled on any tick step1_triage wins and dispatches, both
+  UNCONDITIONAL-every-tick sections added after the brief). Busy-tick Step 0b bypass paths (stale-
+  crash reset, S2 peer-collision) never set `$SELECTED` — Step 1 gate treats unset identically to
+  `step1_triage` (unaffected by rotation), preserving today's reachability there exactly.
+- WF-1/WF-1b/WF-1c/WF-2 (safety-critical, task's explicit "do not weaken" list) — zero edits;
+  rotation-selection inserted strictly AFTER Step 0b's final idle fall-through bullet.
+- `TASK-DEVTEAM-IDLE-CHAIN-2-MAIN-FLOW` (duplicate-candidate sibling, same file/deliverable) —
+  confirmed still untouched `BACKLOG` post-edit; did not implement it, per PO's
+  2026-08-06T22:07Z priority ruling already cited on this row.
+- Closeout: `jq | scripts/orch-apply.sh` (Stage0+1 PASS, conservation OK) — lane-move
+  `in_progress[]→review[]`, `status:REVIEW`, `next_agent:qa`, `branch:null` (direct-to-main,
+  verify-committed mode required, same HARD PREREQUISITE as every other review[] row in this
+  lane), `.head` reset idle (was this row's `active_task_id`) — SAME write, per CANONICAL:SSOT-
+  STATUSFLIP-LANEMOVE. Left `docs/data/orch/orch-state.json` UNCOMMITTED (`FU-AGENT-FATHER-ORCH-
+  SCOPE`, precedent this same notebook). No `mcp__gateway__call_tool` in this session's actual
+  tool surface (Read/Edit/Write/Bash only, verified by inspection not assumption) — no
+  `task_claim`/`task_release`/`send_telegram` attempted; router owns committing `orch-state.json`
+  and any Telegram narration. Commit `9897b599f` (pathspec-scoped, RULE 1-3 incl 2.5, single file)
+  pushed clean first attempt.
+- **Flagged, not self-actioned (scope discipline):** fast-follow to extend `rotation_selected()`
+  + `devteam-idle-chain-stamp.jq`'s `$known_ids` to the current 6-id set (drop main.md's inline
+  duplicate) is a `scripts/` change — developer/dev-mcp-server zone, not minted as its own board
+  row here; flagged in-file (2 places) for whoever picks up `FIX-DEVTEAM-IDLE-CHAIN-MAIN-
+  COMPLETION` or a future audit to notice and file.
