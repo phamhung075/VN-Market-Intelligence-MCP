@@ -41,6 +41,105 @@ _classify_curl_exit() {
   esac
 }
 
+# ── A-30 investigate-gate: PER-CONTAINER decision (FIX-AUDITOR-TIER1-A30-
+# MEM-SINGLE-CONTAINER-SCOPE, po_redispatch_ruling_20260808T1445Z) ──────────
+# ROOT CAUSE this closes: the OLD gate below computed ONE baseline (mcp-
+# server's own MemPerc) and let it decide, for the WHOLE fleet, whether the
+# A-30 deep-probe ran this cycle — rag-service was never independently
+# sampled regardless of its own condition. DEMONSTRATED live, same-day
+# matched pair 29min apart: c51 14:04:04Z mcp-server 89.69% (>=85) -> gate
+# ENGAGED -> rag-service named, 96.91% BELOW-FLOOR, DEGRADED; c53 14:33:16Z
+# mcp-server 84.75% (<85) -> gate SKIPPED -> rag-service line ABSENT
+# entirely, ALL_GREEN, despite rag independently sitting at 92.81-98.78% the
+# whole time. The ONLY variable that changed was mcp-server's own percentage
+# crossing 85. Fixed by evaluating the gate PER CONTAINER: every RUNNING,
+# memory-capped container gets its OWN baseline sample and its OWN
+# ENGAGE/SKIP decision, entirely independent of every other container's.
+#
+# Defined OUTSIDE the standalone-execution guard below (same reason
+# _classify_curl_exit is) so a test harness can source this file and call
+# these functions directly against a stubbed `docker`, replaying the c51/c53
+# matched pair and proving per-container independence, without spawning a
+# real deep-probe subprocess — see docs/agents/system-auditor/probe.test.sh.
+
+# Pure decision, no docker/subprocess calls — testable in isolation.
+_a30_gate_decision() {
+  local pct="$1"
+  if awk -v p="${pct:-0}" 'BEGIN{exit !(p>=85)}'; then
+    echo "ENGAGE"
+  else
+    echo "SKIP"
+  fi
+}
+
+# Every RUNNING container that declares a memory cap, resolved LIVE from the
+# daemon (never a hardcoded name list, never docker-compose.yml — config-
+# truth drifts from runtime-truth, see this row's own root_cause). Uncapped
+# containers (HostConfig.Memory==0, e.g. mcp-gateway) are skipped: their
+# MemPerc is against total HOST memory, not a per-container headroom signal,
+# and is not comparable against the 85% gate. Same live resolution PLANE A's
+# _check_mem_creep() already uses (scripts/agents-flow/auditor-tier1-
+# probe.sh) — kept independent here (not sourced) since this loop has no
+# other dependency on that file and probe.sh already owns its own REPO_ROOT
+# seam.
+_a30_resolve_capped_containers() {
+  local ids inspect_out name cap
+  ids=$(docker ps -q 2>/dev/null)
+  [ -z "$ids" ] && return 1
+  # shellcheck disable=SC2086
+  inspect_out=$(docker inspect -f '{{.Name}} {{.HostConfig.Memory}}' $ids 2>/dev/null)
+  [ -z "$inspect_out" ] && return 1
+  while read -r name cap; do
+    [ -z "$name" ] && continue
+    name="${name#/}"
+    case "$cap" in ''|*[!0-9]*) continue ;; esac
+    [ "$cap" -eq 0 ] && continue
+    printf '%s\n' "$name"
+  done <<< "$inspect_out"
+}
+
+# Invokes the deep-probe subprocess for one container. A30_DEEP_PROBE_CMD is
+# a TEST-ONLY override seam (default: real subprocess call) — production
+# callers never set it. probe.test.sh sets it to a stub function so a
+# fixture can assert WHICH containers engaged without spawning a real
+# docker/bash subprocess (verify-a30-mcp-memory-reclamation.sh has its own,
+# separately-verified test suite — this loop's job is only the per-container
+# ENGAGE/SKIP decision, not re-testing that script's own verdict logic).
+_a30_invoke_deep_probe() {
+  local ctr="$1"
+  if [ -n "${A30_DEEP_PROBE_CMD:-}" ]; then
+    "$A30_DEEP_PROBE_CMD" "$ctr"
+    return $?
+  fi
+  CONTAINER="$ctr" bash "$REPO_ROOT/scripts/audits/verify-a30-mcp-memory-reclamation.sh" 6 13
+}
+
+# Full gate: every capped, running container samples its OWN baseline and is
+# ENGAGE/SKIP'd independently. Prints one line per SKIPped container, or the
+# deep-probe subprocess's own JSON block per ENGAGEd one — tier1-probe.md's
+# A-30 section parses however many JSON blocks appear (zero, one, or many),
+# never assuming exactly zero or one the way the old single-container gate
+# implicitly did.
+_a30_run_investigate_gate() {
+  local ctr pct decision
+  while IFS= read -r ctr; do
+    [ -z "$ctr" ] && continue
+    pct=$(docker stats --no-stream --format '{{.Name}}\t{{.MemPerc}}' 2>/dev/null \
+          | awk -v c="$ctr" -F'\t' '$1==c {gsub(/%/,"",$2); print $2}')
+    if [ -z "$pct" ]; then
+      echo "[A-30] ${ctr}: baseline probe FAILED — stats unavailable"
+      continue
+    fi
+    decision=$(_a30_gate_decision "$pct")
+    if [ "$decision" = "ENGAGE" ]; then
+      echo "[A-30] ${ctr}: baseline ${pct}% >= 85% investigate-gate — ENGAGE deep-probe"
+      _a30_invoke_deep_probe "$ctr" || echo "[A-30] ${ctr}: deep-probe subprocess FAILED: $?"
+    else
+      echo "[A-30] SKIP deep-probe — ${ctr} baseline ${pct}% < 85% investigate-gate"
+    fi
+  done < <(_a30_resolve_capped_containers)
+}
+
 # ── Standalone execution guard ────────────────────────────────────────────────
 # Same pattern already used by scripts/emit-audit-signal.sh and
 # scripts/agents-flow/auditor-tier1-probe.sh: the real evidence-collector body
@@ -139,27 +238,24 @@ echo ""
 # FP-REEMIT-CONVERGE) — a single/2-point MemPerc snapshot is NEVER sufficient
 # evidence for A-30 (root cause of the 07-23T03:42Z false CRITICAL: a bare
 # 2-point, 30-minute-apart MemPerc delta with no multi-probe window, no
-# OOMKilled check, no VmHWM/VmRSS check). When the fast baseline snapshot
-# above is ≥85%, engage the existing multi-probe discriminator
-# (scripts/audits/verify-a30-mcp-memory-reclamation.sh — 6 probes/13s spacing,
-# state re-read before+after the window, OOMKilled/ExitCode+FinishedAt death
-# signatures, discontinuity vs jitter-dip classification, VmHWM-vs-cgroup-cap
-# — see FIX-AUDITOR-A30-DISCRIMINATOR-CRASH-CLIFF-SCORED-AS-RECLAMATION-DIP,
-# 2026-08-08, for the revised escalation logic) as a subprocess. The
-# verdict/reason JSON it prints is this cycle's SELF-CONTAINED evidence bundle
-# — tier1-probe.md's A-30 override section interprets it; this script never
-# compares across cycles.
+# OOMKilled check, no VmHWM/VmRSS check). For EVERY running, memory-capped
+# container whose own baseline sample is ≥85% (FIX-AUDITOR-TIER1-A30-MEM-
+# SINGLE-CONTAINER-SCOPE, po_redispatch_ruling_20260808T1445Z: the gate is
+# now evaluated PER CONTAINER — see _a30_run_investigate_gate() above for the
+# c51/c53 matched-pair evidence this closes), engage the existing multi-probe
+# discriminator (scripts/audits/verify-a30-mcp-memory-reclamation.sh — 6
+# probes/13s spacing, state re-read before+after the window, OOMKilled/
+# ExitCode+FinishedAt death signatures, discontinuity vs jitter-dip
+# classification, VmHWM-vs-cgroup-cap gated behind its own host-side headroom
+# pre-check — see FIX-AUDITOR-A30-DISCRIMINATOR-CRASH-CLIFF-SCORED-AS-
+# RECLAMATION-DIP + this row's Amendments A/B) as a subprocess, once per
+# breaching container. Each subprocess's verdict/reason JSON is that
+# container's own SELF-CONTAINED evidence bundle — tier1-probe.md's A-30
+# override section parses however many JSON blocks appear this cycle (zero,
+# one, or many); this script never compares across cycles or across
+# containers.
 echo "--- memory pressure multi-probe reclamation (A-30) ---"
-BASELINE_PCT=$(docker stats --no-stream --format '{{.MemPerc}}' "${MCP_CONTAINER}" 2>/dev/null | tr -d '%') || { echo "[A-30] baseline probe FAILED (container=${MCP_CONTAINER}): $?"; BASELINE_PCT="0"; }
-if awk -v p="${BASELINE_PCT:-0}" 'BEGIN{exit !(p>=85)}'; then
-  # Tier-1 budget: 6 probes / 13s spacing = 65s span — the exact cadence already
-  # validated live 07-19 ("6 probes/65s caught GC dips", per this row's own text).
-  # CONTAINER override closes probe.sh's own dynamic-name-vs-hardcoded-default gap
-  # (verify-a30's own default is a literal compose name; MCP_CONTAINER is derived).
-  CONTAINER="$MCP_CONTAINER" bash "$REPO_ROOT/scripts/audits/verify-a30-mcp-memory-reclamation.sh" 6 13 || echo "[A-30] deep-probe subprocess FAILED (container=${MCP_CONTAINER}): $?"
-else
-  echo "[A-30] SKIP deep-probe — baseline ${BASELINE_PCT}% < 85% investigate-gate"
-fi
+_a30_run_investigate_gate
 echo ""
 
 # ── Disk space ───────────────────────────────────────────────────────────────

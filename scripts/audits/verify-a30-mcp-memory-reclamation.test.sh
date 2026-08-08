@@ -40,6 +40,13 @@
 # false-positive generator; T4/T5/T6/T7/T10 are positive controls exercising
 # each of fix (a)-(e) independently, not just in combination via T1.
 #
+# T13/T14 (po_redispatch_ruling_20260808T1445Z, Amendments A+B, AC8/AC9):
+# T13 proves the host-side headroom pre-check actually SKIPS the VmHWM exec
+# below MEM_FLOOR_MIB (AC8); T14 proves escalation still fires correctly via
+# the exec-free MINP fallback when VmHWM is UNAVAILABLE (AC9) — see the
+# `stats)` dispatch in the docker() stub below for how the headroom-check's
+# distinct call shape is distinguished from the sample loop's.
+#
 # Run: bash scripts/audits/verify-a30-mcp-memory-reclamation.test.sh
 # Exit 0 = all pass. Exit 1 = >=1 failure.
 set -uo pipefail
@@ -113,12 +120,27 @@ docker() {
     exec)
       case "$*" in
         *VmHWM*) _before_after vmhwm "${STUB_VMHWM_BEFORE:-3170004}" "${STUB_VMHWM_AFTER:-3170004}" ;;
-        *VmRSS*) printf '%s' "${STUB_VMRSS_VAL:-3100000}" ;;
       esac
       return 0
       ;;
     stats)
-      printf '%s\t%s%%\n' "$CONTAINER" "$(_next stats "$SERIES")"
+      # Amendment B (po_redispatch_ruling_20260808T1445Z) _a30_headroom_ok()
+      # calls `docker stats --no-stream --format '{{.MemPerc}}' "$CONTAINER"`
+      # — a DISTINCT invocation shape from the sample loop's fleet-wide
+      # `docker stats --no-stream --format '{{.Name}}\t{{.MemPerc}}'` (no
+      # container positional arg). Distinguish on the trailing positional
+      # arg (last arg == $CONTAINER only for the headroom-check call) so
+      # this dedicated knob does NOT advance the shared sample-loop counter
+      # ("$@" is empty after `local sub="$1"; shift`'s shift already ran in
+      # the caller, so "$@" here is exactly what followed `stats`).
+      # shellcheck disable=SC2198  # single-element "${@: -1}" IS valid as a
+      # plain string operand here (only one positional selected) — verified
+      # empirically, not the multi-element array pitfall SC2198 warns about.
+      if [ "$#" -gt 0 ] && [ "${@: -1}" = "$CONTAINER" ]; then
+        printf '%s%%\n' "${STUB_HEADROOM_PCT:-50}"
+      else
+        printf '%s\t%s%%\n' "$CONTAINER" "$(_next stats "$SERIES")"
+      fi
       return 0
       ;;
   esac
@@ -139,7 +161,11 @@ run_case() {
   STUB_FINISHED_BEFORE="0001-01-01T00:00:00Z"; STUB_FINISHED_AFTER="0001-01-01T00:00:00Z"
   STUB_MEMLIMIT_BYTES="3221225472"   # 3GiB
   STUB_VMHWM_BEFORE="3170004"; STUB_VMHWM_AFTER="3170004"
-  STUB_VMRSS_VAL="3100000"
+  # Amendment B headroom-check knob — 50% of the 3GiB default cap leaves
+  # ~1536 MiB headroom, comfortably above MEM_FLOOR_MIB=40, so every
+  # pre-existing T1-T12 case below is UNAFFECTED (exec still fires normally)
+  # unless a case explicitly overrides this (T13/T14 below).
+  STUB_HEADROOM_PCT="50"
 }
 
 verdict_of() { printf '%s' "$1" | grep -o '"verdict": "[A-Z]*"' | head -1; }
@@ -347,6 +373,60 @@ if [ "$RC12" -eq 2 ] && printf '%s' "$OUT12" | grep -q '"error"'; then
   ok "T12-container-not-found-error-rc2 (rc=$RC12)"
 else
   bad "T12-container-not-found-error-rc2 (rc=$RC12)" "$OUT12"
+fi
+
+# ---------------------------------------------------------------------------
+# T13 (AC8, po_redispatch_ruling_20260808T1445Z Amendment B): headroom BELOW
+# MEM_FLOOR_MIB (40) at the moment of the call -> ZERO docker exec fires for
+# VmHWM, both before/after fields read "UNAVAILABLE" (proof the exec was
+# actually skipped, not merely that it failed: STUB_VMHWM_BEFORE/AFTER are
+# set to distinctive values that would appear verbatim in the JSON if exec
+# had fired — they must NOT appear). 1GiB cap @ 97% usage = ~30.7 MiB free,
+# below the 40 MiB floor (mirrors rag-service's real 1GiB cap, see the row's
+# own "cap is now 1GiB, 768m is stale" correction).
+# ---------------------------------------------------------------------------
+run_case
+SERIES="$STEADY_MID"
+STUB_MEMLIMIT_BYTES="1073741824"   # 1GiB
+STUB_HEADROOM_PCT="97.00"          # -> ~30.7 MiB free, below MEM_FLOOR_MIB=40
+STUB_VMHWM_BEFORE="850000"; STUB_VMHWM_AFTER="900000"   # would-be values IF exec fired
+OUT13="$(run_a30_reclamation_check)"; RC13=$?
+if [ "$RC13" -eq 0 ] \
+   && printf '%s' "$OUT13" | grep -q '"vmhwm_kb_before": "UNAVAILABLE"' \
+   && printf '%s' "$OUT13" | grep -q '"vmhwm_kb_after": "UNAVAILABLE"' \
+   && ! printf '%s' "$OUT13" | grep -q '850000' \
+   && ! printf '%s' "$OUT13" | grep -q '900000'; then
+  ok "T13-below-floor-headroom-skips-vmhwm-exec-both-fields-unavailable (rc=$RC13)"
+else
+  bad "T13-below-floor-headroom-skips-vmhwm-exec-both-fields-unavailable (rc=$RC13)" "$OUT13"
+fi
+
+# ---------------------------------------------------------------------------
+# T14 (AC9): with VmHWM UNAVAILABLE (exec correctly skipped, same below-floor
+# condition as T13), a sustained-high series must STILL escalate via the
+# exec-free MINP>93 fallback — the escalation logic must not silently
+# degrade to a false-negative just because VmHWM evidence is missing.
+# Representative reconstruction of the row's own measured rag-service range
+# (92.81%-98.78%, po_redispatch_ruling_20260808T1445Z) — no raw 12-sample
+# capture exists anywhere in this repo to replay byte-for-byte (only the
+# aggregate min/max ever got recorded), so this stays within that documented
+# band with every sample >93% (min=94.20%) to deterministically exercise the
+# MINP branch, per the ruling's own text ("min>93 and/or median>97 fire on
+# their own").
+# ---------------------------------------------------------------------------
+run_case
+SERIES="98.78,94.20,97.50,96.20,98.10,95.40,97.90,96.80,98.30,95.90,97.20,96.50"
+STUB_MEMLIMIT_BYTES="1073741824"   # 1GiB (rag-service's real cap)
+STUB_HEADROOM_PCT="97.00"          # below MEM_FLOOR_MIB=40 -> VmHWM UNAVAILABLE
+STUB_VMHWM_BEFORE="850000"; STUB_VMHWM_AFTER="900000"
+OUT14="$(run_a30_reclamation_check)"; RC14=$?
+V14="$(verdict_of "$OUT14")"
+if [ "$RC14" -eq 0 ] && [ "$V14" = '"verdict": "ESCALATE"' ] \
+   && printf '%s' "$OUT14" | grep -q 'sustained high' \
+   && printf '%s' "$OUT14" | grep -q '"vmhwm_kb_before": "UNAVAILABLE"'; then
+  ok "T14-escalates-via-minpct-fallback-when-vmhwm-unavailable ($V14)"
+else
+  bad "T14-escalates-via-minpct-fallback-when-vmhwm-unavailable ($V14)" "$OUT14"
 fi
 
 # ── Summary ──────────────────────────────────────────────────────────────────

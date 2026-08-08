@@ -57,6 +57,40 @@
 # vmhwm-advancing-but-not-pinned cases so the fix does not itself become a new
 # false-positive generator): scripts/audits/verify-a30-mcp-memory-reclamation.test.sh
 #
+# AMENDMENTS A+B (FIX-AUDITOR-TIER1-A30-MEM-SINGLE-CONTAINER-SCOPE,
+# po_redispatch_ruling_20260808T1445Z, 2026-08-08) — this row's PLANE B port
+# (docs/agents/system-auditor/probe.sh) now loops this script over EVERY
+# capped container, not just mcp-server, including rag-service at ~1GiB-cap
+# headroom as thin as single-digit MiB. Two safety amendments landed with it:
+#   A — DELETED the VmRSS exec/field entirely (VMRSS_KB, its UNAVAILABLE
+#       default, the "vmrss_kb" JSON key). Grep-verified dead: the only
+#       functional consumer anywhere in the repo was the OLD `vmhwm_kb >
+#       vmrss_kb` tautology veto (removed by this same task's predecessor,
+#       see ROOT-CAUSE FIX above) — nothing reads vmrss_kb post-removal.
+#       VmHWM (:before/:after) is KEPT — it feeds the live ESCALATE branch
+#       at "VmHWM advancing ... pinned at cap" below.
+#   B — the two surviving VmHWM `docker exec` calls are now gated behind a
+#       HOST-SIDE headroom pre-check (`_a30_headroom_ok()` below, reusing
+#       `_mem_headroom_mib()` + `MEM_FLOOR_MIB=40` already shipped on PLANE A,
+#       scripts/agents-flow/auditor-tier1-probe.sh — sourced, not
+#       reimplemented, and PLANE A itself is untouched by this task). Below
+#       MEM_FLOOR_MIB of headroom AT THE MOMENT OF EACH CALL (recomputed
+#       independently before the before-loop AND the after-loop exec — a
+#       container's headroom can swing tens of MiB in minutes, see the
+#       row's own rag-service evidence), the exec is skipped and the field
+#       reads "UNAVAILABLE" — exactly the same value/shape this script
+#       already used for a docker-exec that failed for any other reason, so
+#       no new code path is needed downstream. This is a HOST-side check
+#       (docker stats + docker inspect only) — it allocates nothing inside
+#       the target container's own cgroup, so it does not reproduce the
+#       exec-into-a-low-headroom-container risk it exists to prevent
+#       (architect_exec_safety_note_20260729T1343Z item (2), which forbids
+#       an exec-IMPLEMENTED guard, not a host-side one). Losing VmHWM on a
+#       thin container costs zero detection: VMHWM_ADVANCING/
+#       VMHWM_PINNED_AT_CAP default to "false" below and the verdict falls
+#       through cleanly to the exec-free MINP>93 / MEDIANP>97 branches,
+#       which already handle 5 of 6 escalate paths.
+#
 # Owning flow doc: docs/agents/cowork-team/flow/main.md (Step 4.2 signal triage)
 # Memory: feedback_auditor_mcpserver_a21_a30_memory_fp_reemit_churn,
 #         feedback_a30_discriminator_crash_cliff_misscored_as_reclamation_dip
@@ -101,6 +135,41 @@ VMHWM_CAP_PIN_PCT=90
 
 _is_uint() { case "$1" in ''|*[!0-9]*) return 1 ;; *) return 0 ;; esac; }
 
+# ── Amendment B (po_redispatch_ruling_20260808T1445Z) — reuse, not
+# reimplement, PLANE A's already-shipped _mem_headroom_mib() + MEM_FLOOR_MIB.
+# `source`-only: scripts/agents-flow/auditor-tier1-probe.sh has its own
+# standalone-execution guard at its tail (same idiom this file's own TEST
+# SEAM comment documents above), so sourcing it here only pulls in function/
+# constant definitions — nothing executes, and PLANE A is not edited by this
+# task (qa's 2026-07-28 CHANGES_REQUESTED: "do NOT re-open or re-fix it").
+_VERIFY_A30_SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+_A30_MEM_LIB="$_VERIFY_A30_SCRIPT_DIR/../agents-flow/auditor-tier1-probe.sh"
+if [ -r "$_A30_MEM_LIB" ]; then
+  # shellcheck disable=SC1090,SC1091
+  source "$_A30_MEM_LIB"
+fi
+MEM_FLOOR_MIB="${MEM_FLOOR_MIB:-40}"   # defensive fallback if the source above failed
+
+# Host-side (no exec) headroom check for $CONTAINER AT THE MOMENT OF THE
+# CALL — cap from `docker inspect -f '{{.HostConfig.Memory}}'`, current usage
+# from `docker stats` MemPerc, same arithmetic PLANE A's _mem_headroom_mib()
+# already performs. Returns 0 (safe to exec) only when the lib sourced AND a
+# real cap was resolved AND headroom >= MEM_FLOOR_MIB; unsafe-by-default
+# (rc=1) on ANY missing/unparseable input — never assume safety on a read
+# failure (po_redispatch_ruling_20260808T1445Z: "treat headroom as
+# unsafe-by-default").
+_a30_headroom_ok() {
+  command -v _mem_headroom_mib >/dev/null 2>&1 || return 1
+  local cap pct hrm
+  cap=$(docker inspect -f '{{.HostConfig.Memory}}' "$CONTAINER" 2>/dev/null)
+  _is_uint "$cap" || return 1
+  [ "$cap" -eq 0 ] && return 1   # uncapped -- no comparable headroom signal, treat unsafe
+  pct=$(docker stats --no-stream --format '{{.MemPerc}}' "$CONTAINER" 2>/dev/null | tr -d '%')
+  case "${pct:-}" in ''|*[!0-9.]*) return 1 ;; esac
+  hrm=$(_mem_headroom_mib "$cap" "$pct")
+  awk -v h="${hrm:-0}" -v f="${MEM_FLOOR_MIB:-40}" 'BEGIN{exit !(h >= f)}'
+}
+
 run_a30_reclamation_check() {
   command -v docker >/dev/null 2>&1 || { echo '{"error":"docker not on PATH"}'; return 2; }
 
@@ -118,13 +187,19 @@ run_a30_reclamation_check() {
   MEMLIMIT_BYTES=$(docker inspect -f '{{.HostConfig.Memory}}' "$CONTAINER" 2>/dev/null || echo "unknown")
 
   # fix (e): VmHWM read BEFORE the loop too, so it can be compared to its own
-  # prior value across the window — never against VmRSS (that comparison is a
-  # tautology: VmHWM >= VmRSS by definition, always).
-  local VMHWM_BEFORE_KB VMRSS_KB
-  VMHWM_BEFORE_KB=$(docker exec "$CONTAINER" sh -c 'grep VmHWM /proc/1/status 2>/dev/null | awk "{print \$2}"' 2>/dev/null || true)
-  VMRSS_KB=$(docker exec "$CONTAINER" sh -c 'grep VmRSS /proc/1/status 2>/dev/null | awk "{print \$2}"' 2>/dev/null || true)
+  # prior value across the window — never against VmRSS (that comparison was
+  # a tautology: VmHWM >= VmRSS by definition, always — VmRSS itself was
+  # deleted entirely, Amendment A, po_redispatch_ruling_20260808T1445Z: dead,
+  # zero consumers repo-wide once the tautology veto was removed).
+  # Amendment B: gated behind a host-side headroom pre-check — never exec
+  # into a container below MEM_FLOOR_MIB headroom at the moment of the call.
+  local VMHWM_BEFORE_KB
+  if _a30_headroom_ok; then
+    VMHWM_BEFORE_KB=$(docker exec "$CONTAINER" sh -c 'grep VmHWM /proc/1/status 2>/dev/null | awk "{print \$2}"' 2>/dev/null || true)
+  else
+    VMHWM_BEFORE_KB=""
+  fi
   [ -z "${VMHWM_BEFORE_KB:-}" ] && VMHWM_BEFORE_KB="UNAVAILABLE"
-  [ -z "${VMRSS_KB:-}" ] && VMRSS_KB="UNAVAILABLE"
 
   local SAMPLES=() i PCT TS
   for i in $(seq 1 "$PROBES"); do
@@ -148,7 +223,14 @@ run_a30_reclamation_check() {
   STARTED_AFTER=$(docker inspect -f '{{.State.StartedAt}}' "$CONTAINER" 2>/dev/null || echo "unknown")
   EXITCODE_AFTER=$(docker inspect -f '{{.State.ExitCode}}' "$CONTAINER" 2>/dev/null || echo "unknown")
   FINISHED_AFTER=$(docker inspect -f '{{.State.FinishedAt}}' "$CONTAINER" 2>/dev/null || echo "unknown")
-  VMHWM_AFTER_KB=$(docker exec "$CONTAINER" sh -c 'grep VmHWM /proc/1/status 2>/dev/null | awk "{print \$2}"' 2>/dev/null || true)
+  # Amendment B: independently re-checked here (not reused from the
+  # before-loop call) — headroom can swing tens of MiB across the probe
+  # window (row evidence: ~60MiB in 8min on rag-service).
+  if _a30_headroom_ok; then
+    VMHWM_AFTER_KB=$(docker exec "$CONTAINER" sh -c 'grep VmHWM /proc/1/status 2>/dev/null | awk "{print \$2}"' 2>/dev/null || true)
+  else
+    VMHWM_AFTER_KB=""
+  fi
   [ -z "${VMHWM_AFTER_KB:-}" ] && VMHWM_AFTER_KB="UNAVAILABLE"
 
   local STATE_CHANGED="false"
@@ -263,9 +345,9 @@ EOF
     "state_changed_during_window": $STATE_CHANGED
   },
   "vm": {"vmhwm_kb_before": "$VMHWM_BEFORE_KB", "vmhwm_kb_after": "$VMHWM_AFTER_KB",
-         "vmrss_kb": "$VMRSS_KB", "mem_limit_kb": "$MEMLIMIT_KB",
+         "mem_limit_kb": "$MEMLIMIT_KB",
          "vmhwm_advancing_in_window": $VMHWM_ADVANCING, "vmhwm_pinned_at_cap": $VMHWM_PINNED_AT_CAP,
-         "note": "VmHWM is a monotonic non-decreasing high-water mark, so VmHWM >= VmRSS is true BY DEFINITION at all times -- it is NOT evidence reclamation occurred (this WAS the FIX-AUDITOR-A30-DISCRIMINATOR-CRASH-CLIFF-SCORED-AS-RECLAMATION-DIP narrative false-negative). Evidence instead: VmHWM advancing to a new peak DURING this window while pinned at/near the cgroup memory limit -- never a comparison against VmRSS. UNAVAILABLE means this evidence is missing, not that it is absent."},
+         "note": "VmHWM is a monotonic non-decreasing high-water mark, so a direct VmHWM-vs-VmRSS comparison is true BY DEFINITION at all times and is NOT evidence reclamation occurred (this WAS the FIX-AUDITOR-A30-DISCRIMINATOR-CRASH-CLIFF-SCORED-AS-RECLAMATION-DIP narrative false-negative; vmrss_kb was deleted entirely, Amendment A po_redispatch_ruling_20260808T1445Z -- dead, zero consumers repo-wide once that comparison was removed). Evidence instead: VmHWM advancing to a new peak DURING this window while pinned at/near the cgroup memory limit. UNAVAILABLE means this evidence is missing, not that it is absent -- either a real docker-exec failure, OR (Amendment B) the host-side headroom pre-check found this container below MEM_FLOOR_MIB at the moment of the call and skipped the exec entirely; either way, MINP/MEDIANP below remain exec-free and unaffected."},
   "samples": [$JOINED],
   "analysis": {"min_pct": $MINP, "max_pct": $MAXP, "median_pct": $MEDIANP,
                "reclamation_dips": $DIPS, "dip_detail": "$DIPDETAIL",

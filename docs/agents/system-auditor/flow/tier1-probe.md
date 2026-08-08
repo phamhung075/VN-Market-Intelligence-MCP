@@ -1,4 +1,4 @@
-<!-- lazy-loaded by main.md §Tier-1. cap: 120L (flow-file). size-justification: ~217L — FIX-AUDITOR-A20-MULTIPROBE 2026-06-08 adds A-20 multi-probe discriminator section (~28L); TOKEN-ECONOMY-TICK-PREFLIGHT WU-3 2026-07-02 adds this SSOT header note (~10L); FIX-AUDITOR-A12A20A30-FP-REEMIT-CONVERGE 2026-07-23 adds the A-30 multi-probe reclamation override section (~28L, closes the false-CRITICAL root cause: a bare cross-cycle MemPerc delta with no OOMKilled/VmHWM check) + re-models A-21 as a windowed crash-only inline query (~30L, replaces the cumulative-RestartCount rule that could only ever grow); exceeds 120L cap by design. FIX-AUDITOR-DASHBOARD-APPEND-NO-ACTUATOR-CONTRACT-COUNT-NARRATED 2026-07-29: both emit sites (A-20 override + general A-xx) now also call `scripts/emit-dashboard-row.sh` (new actuator, replaces prose-only DASHBOARD.md append) and log to `$MARKERS_FILE` (+4L). FIX-AUDITOR-A12-PROBE-TIMEOUT-EXITCODE-DEBOUNCE 2026-07-30 (+3L here): Health Endpoints bullets now name the 5 classified transport-failure reasons (replacing the old bare `CURL_ERR` bullet) + an "Emit per failure" wording reminder; the N-consecutive debounce mechanism itself (the bulk of this task's new content, ~55L) is the FIRST addition to actually trigger this file's own previously-documented ~220L extraction fallback — it now lives in the new child `docs/agents/system-auditor/flow/tier1-overrides.md`, lazy-loaded only on a transport-classified A-12 FAIL, not duplicated here. FIX-AUDIT-OUTPUT-CONTRACT-SIGNALQUEUE-ROWS-WRITTEN-SELFREPORT-MISMATCH 2026-08-05 (+2L): both `emit-audit-signal.sh` call sites (A-20 override + general A-xx) now pass `--cycle-tag "$FIRE_TASK_ID"` — see `main.md`'s own size-justification note for the full rationale. FIX-AUDITOR-A30-DISCRIMINATOR-CRASH-CLIFF-SCORED-AS-RECLAMATION-DIP 2026-08-08 (+~5L net): A-30 override clause 3's parsed-field list widened to the script's new before/after state + vm fields, dropped the stale "FIX-AUDITOR-A30-VMHWM-VETO-TAUTOLOGY-FALSE-NEGATIVE commit 2/2" citation (that id was never minted — folded into this task instead) and corrected the "not consumed by any verdict/severity mapping" claim (VmHWM-pinned-at-cap IS now a verdict signal, just never compared against VmRSS); clause 4's reason-substring table widened from 3 to 6 mapped phrases (the 3 new escalate paths: state-changed, death-signature, discontinuity, vmhwm-pinned all map CRITICAL) and the >93%-floor case's matched substring corrected from the now-inaccurate "no reclamation dip" to "loss of reclamation" (a dip can legitimately be present now, fix (b)). -->
+<!-- lazy-loaded by main.md §Tier-1. cap: 120L (flow-file). size-justification: ~217L — FIX-AUDITOR-A20-MULTIPROBE 2026-06-08 adds A-20 multi-probe discriminator section (~28L); TOKEN-ECONOMY-TICK-PREFLIGHT WU-3 2026-07-02 adds this SSOT header note (~10L); FIX-AUDITOR-A12A20A30-FP-REEMIT-CONVERGE 2026-07-23 adds the A-30 multi-probe reclamation override section (~28L, closes the false-CRITICAL root cause: a bare cross-cycle MemPerc delta with no OOMKilled/VmHWM check) + re-models A-21 as a windowed crash-only inline query (~30L, replaces the cumulative-RestartCount rule that could only ever grow); exceeds 120L cap by design. FIX-AUDITOR-DASHBOARD-APPEND-NO-ACTUATOR-CONTRACT-COUNT-NARRATED 2026-07-29: both emit sites (A-20 override + general A-xx) now also call `scripts/emit-dashboard-row.sh` (new actuator, replaces prose-only DASHBOARD.md append) and log to `$MARKERS_FILE` (+4L). FIX-AUDITOR-A12-PROBE-TIMEOUT-EXITCODE-DEBOUNCE 2026-07-30 (+3L here): Health Endpoints bullets now name the 5 classified transport-failure reasons (replacing the old bare `CURL_ERR` bullet) + an "Emit per failure" wording reminder; the N-consecutive debounce mechanism itself (the bulk of this task's new content, ~55L) is the FIRST addition to actually trigger this file's own previously-documented ~220L extraction fallback — it now lives in the new child `docs/agents/system-auditor/flow/tier1-overrides.md`, lazy-loaded only on a transport-classified A-12 FAIL, not duplicated here. FIX-AUDIT-OUTPUT-CONTRACT-SIGNALQUEUE-ROWS-WRITTEN-SELFREPORT-MISMATCH 2026-08-05 (+2L): both `emit-audit-signal.sh` call sites (A-20 override + general A-xx) now pass `--cycle-tag "$FIRE_TASK_ID"` — see `main.md`'s own size-justification note for the full rationale. FIX-AUDITOR-A30-DISCRIMINATOR-CRASH-CLIFF-SCORED-AS-RECLAMATION-DIP 2026-08-08 (+~5L net): A-30 override clause 3's parsed-field list widened to the script's new before/after state + vm fields, dropped the stale "FIX-AUDITOR-A30-VMHWM-VETO-TAUTOLOGY-FALSE-NEGATIVE commit 2/2" citation (that id was never minted — folded into this task instead) and corrected the "not consumed by any verdict/severity mapping" claim (VmHWM-pinned-at-cap IS now a verdict signal, just never compared against VmRSS); clause 4's reason-substring table widened from 3 to 6 mapped phrases (the 3 new escalate paths: state-changed, death-signature, discontinuity, vmhwm-pinned all map CRITICAL) and the >93%-floor case's matched substring corrected from the now-inaccurate "no reclamation dip" to "loss of reclamation" (a dip can legitimately be present now, fix (b)). FIX-AUDITOR-TIER1-A30-MEM-SINGLE-CONTAINER-SCOPE (po_redispatch_ruling_20260808T1445Z) 2026-08-08 (+~33L): PLANE B port — `probe.sh`'s A-30 investigate-gate is now evaluated PER CONTAINER (was mcp-server-only, demonstrated false-negative via the c51/c53 matched pair: mcp-server crossing its own 85% gate alone decided whether rag-service was sampled at all). Added a new "PER-CONTAINER GATE" preamble paragraph (~9L) plus widened clauses 1/2/3/4/5/6 (~24L net) to read/parse/emit against however many SKIP lines and JSON blocks appear per cycle (zero, one, or many) instead of assuming exactly one; clause 3 also documents the new `vmhwm_kb_before`/`_after` "UNAVAILABLE" cause (Amendment B host-side headroom pre-check skip, not a tool failure) and clause 6 now mandates the container name inside `dedup_key` so distinct containers never collide in the shared dedup ledger. -->
 <!-- TOKEN-ECONOMY-TICK-PREFLIGHT WU-3 (2026-07-02, R9/R10): this subagent is
      now only spawned by a shell-first pre-gate, scripts/agents-flow/
      auditor-tier1-probe.sh (invoked by cron-detect-loop/SKILL.md Job 2) —
@@ -163,14 +163,33 @@ for A-30 — this is what produced the false 2026-07-23T03:42Z CRITICAL (a bare 
 30-minute-apart MemPerc delta, no multi-probe window, no OOMKilled check, no VmHWM/VmRSS
 check).
 
-1. `[A-30] SKIP deep-probe` present in `PROBE_OUT` → A-30 PASS, no emit (baseline was
-   below the 85% investigate-gate — nothing to interpret).
-2. `[A-30] deep-probe subprocess FAILED` present in `PROBE_OUT` → A-30 PASS-equivalent,
-   log `[A-30] TOOL-UNAVAILABLE — skip` (NOT an infra finding — the probe script itself
-   failed to complete, per its own header contract that a non-zero exit means the probe
-   failed, not that memory is unhealthy).
-3. Otherwise parse the verbatim JSON block emitted by `verify-a30-mcp-memory-reclamation.sh`:
-   `verdict`, `reason`, `analysis.{min_pct,max_pct,median_pct,reclamation_dips,discontinuities}`,
+**PER-CONTAINER GATE (FIX-AUDITOR-TIER1-A30-MEM-SINGLE-CONTAINER-SCOPE,
+po_redispatch_ruling_20260808T1445Z):** `probe.sh`'s `≥85% investigate-gate` is evaluated
+independently for EVERY running, memory-capped container (`_a30_run_investigate_gate()` in
+`probe.sh`), never once against mcp-server alone. This closes a demonstrated same-day
+matched-pair false-negative: mcp-server crossing its own 85% gate previously decided,
+fleet-wide, whether rag-service's condition was even sampled (c51 mcp-server 89.69%→gate
+ENGAGED→rag-service 96.91% BELOW-FLOOR named, DEGRADED; c53 29min later mcp-server
+84.75%→gate SKIPPED→rag-service line ABSENT entirely despite sitting at 92.81-98.78% the
+whole time, ALL_GREEN). Consequence for this section: `PROBE_OUT`'s
+`--- memory pressure multi-probe reclamation (A-30) ---` block may now contain MULTIPLE
+lines/JSON blocks in one cycle — zero, one, or many, one triplet (SKIP line, or ENGAGE line
++ its own JSON) PER capped container. Read every line in that block; never assume exactly
+zero or one.
+
+1. For each container: `[A-30] SKIP deep-probe — <container> baseline X% < 85%
+   investigate-gate` present → that container is PASS, no emit (baseline was below the gate
+   — nothing to interpret for it). A cycle can have some containers SKIP and others ENGAGE
+   simultaneously — evaluate each independently.
+2. For each ENGAGEd container: `[A-30] <container>: deep-probe subprocess FAILED` present →
+   that container is PASS-equivalent, log `[A-30] <container> TOOL-UNAVAILABLE — skip` (NOT
+   an infra finding — the probe script itself failed to complete for that one container, per
+   its own header contract that a non-zero exit means the probe failed, not that memory is
+   unhealthy).
+3. Otherwise parse EVERY verbatim JSON block emitted by `verify-a30-mcp-memory-
+   reclamation.sh` this cycle (one per ENGAGEd container — its own `container` field
+   self-identifies which): `verdict`, `reason`,
+   `analysis.{min_pct,max_pct,median_pct,reclamation_dips,discontinuities}`,
    `state.{oom_killed_before,oom_killed_after,restart_count_before,restart_count_after,
    state_changed_during_window}`, `vm.{vmhwm_kb_before,vmhwm_kb_after,
    vmhwm_advancing_in_window,vmhwm_pinned_at_cap}`. `vm.*` IS now consumed by the script's
@@ -181,10 +200,18 @@ check).
    correctly never wired into the verdict — but `vmhwm_pinned_at_cap && vmhwm_advancing_in_window`
    (a NEW peak set near the cgroup memory limit during THIS window) is a real, distinct
    signal the script's own if-chain now escalates on directly; clause 4 below never needs
-   to independently re-derive it from the raw kB fields.
-4. Verdict/reason mapping (the script's own `verdict` field already resolves every signal —
-   this table exists only to pick WARN vs CRITICAL from the `reason` text):
-   - `verdict=="FOLD"` → PASS, no emit.
+   to independently re-derive it from the raw kB fields. `vmhwm_kb_before`/`_after` may read
+   `"UNAVAILABLE"` for a reason that is NOT a tool failure: `verify-a30-mcp-memory-
+   reclamation.sh` Amendment B (same task) gates its two `docker exec` calls behind a
+   host-side headroom pre-check and skips the exec entirely below `MEM_FLOOR_MIB=40` — this
+   is a deliberate safety skip, not a probe defect, and costs zero detection: with VmHWM
+   absent the verdict falls through cleanly to the exec-free `min_pct>93`/`median_pct>97`
+   branches in clause 4 below.
+4. Verdict/reason mapping, PER JSON BLOCK (the script's own `verdict` field already resolves
+   every signal for that container — this table exists only to pick WARN vs CRITICAL from
+   the `reason` text; always cite the block's own `container` field in the emitted
+   summary/detail, never assume it is mcp-server):
+   - `verdict=="FOLD"` → that container PASS, no emit.
    - `verdict=="ESCALATE"`, reason contains any of `"died/restarted during window"`
      (state_changed, fix a), `"OOMKilled=true"`, `"FinishedAt delta"` (death signature,
      fix d), `"discontinuity"` (crash cliff >40pp, fix c), `"VmHWM advancing"` (fix e), or
@@ -192,13 +219,19 @@ check).
      crash-cliff evidence).
    - `verdict=="ESCALATE"`, reason contains `"loss of reclamation"` (the >93%-sustained-
      floor case, fix b — no longer vetoed by a lone jitter dip) → WARN.
-5. This is a SINGLE self-contained per-cycle evidence bundle. NEVER compare this cycle's
-   verdict against a prior cycle's notebook entry or MemPerc reading to decide escalation —
-   that comparison is exactly what produced the false 03:42Z CRITICAL. Each cycle proves
-   its own tripwire or it doesn't.
-6. Emit WARN/CRITICAL via the unchanged general `emit-audit-signal.sh` template, citing the
-   RAW JSON block (same anti-carry rule as the existing RAW-PROBE discipline — verdict
-   lines MUST cite this cycle's JSON, never a previous cycle's).
+5. Each JSON block is a SINGLE self-contained per-cycle, per-container evidence bundle.
+   NEVER compare one container's verdict this cycle against a DIFFERENT container's prior
+   reading, and NEVER compare this cycle's verdict against a prior cycle's notebook entry or
+   MemPerc reading to decide escalation — that comparison is exactly what produced the false
+   03:42Z CRITICAL. Each container, each cycle, proves its own tripwire or it doesn't.
+6. Emit WARN/CRITICAL PER BREACHING CONTAINER via the unchanged general `emit-audit-
+   signal.sh` template, citing that container's own RAW JSON block (same anti-carry rule as
+   the existing RAW-PROBE discipline — verdict lines MUST cite this cycle's JSON for THAT
+   container, never a previous cycle's or a different container's). `dedup_key` MUST include
+   the container name (e.g. `"microservice_degraded:<container>:A-30"`, same template the
+   general Emit per failure section already uses) so distinct containers never collide in
+   the 7-day dedup ledger — a suppressed mcp-server repeat must never also suppress a fresh
+   rag-service breach, or vice versa.
 
 ## Disk (A-32)
 

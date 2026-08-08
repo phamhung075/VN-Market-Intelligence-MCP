@@ -86,6 +86,93 @@ case "$SOURCE_OUTPUT" in
     ;;
 esac
 
+# ── T8-T13: A-30 per-container investigate-gate (FIX-AUDITOR-TIER1-A30-MEM-
+# SINGLE-CONTAINER-SCOPE, po_redispatch_ruling_20260808T1445Z, AC7) ─────────
+# _a30_gate_decision() / _a30_resolve_capped_containers() / _a30_invoke_deep_
+# probe() / _a30_run_investigate_gate() are all defined outside the
+# standalone-execution guard (same reason _classify_curl_exit is) — sourcing
+# above already pulled them in. NO real docker/subprocess calls: `docker` is
+# stubbed as a shell function and A30_DEEP_PROBE_CMD overrides the real
+# verify-a30-mcp-memory-reclamation.sh subprocess with a marker-only stub
+# (that script has its own, separately-verified test suite — this file only
+# proves the per-container ENGAGE/SKIP decision, never re-tests verdict
+# logic that belongs to the other script).
+
+# T8: pure decision function in isolation — no docker involved.
+check "T8 gate_decision 84.75% -> SKIP"  "SKIP"   "$(_a30_gate_decision 84.75)"
+check "T9 gate_decision 85.00% -> ENGAGE" "ENGAGE" "$(_a30_gate_decision 85.00)"
+check "T9b gate_decision 92.81% -> ENGAGE" "ENGAGE" "$(_a30_gate_decision 92.81)"
+
+# T10: _a30_resolve_capped_containers() skips the uncapped container
+# (HostConfig.Memory==0) and lists only the two capped ones.
+docker() {
+  local sub="$1"; shift
+  case "$sub" in
+    ps)
+      [ "${1:-}" = "-q" ] && { printf 'id-mcp\nid-rag\nid-gw\n'; return 0; }
+      return 0
+      ;;
+    inspect)
+      printf '/vn-market-intelligence-mcp-mcp-server-1 3221225472\n'
+      printf '/vn-market-intelligence-mcp-rag-service-1 1073741824\n'
+      printf '/vn-market-intelligence-mcp-mcp-gateway-1 0\n'
+      return 0
+      ;;
+    *) return 1 ;;
+  esac
+}
+RESOLVED="$(_a30_resolve_capped_containers)"
+check "T10 resolve_capped_containers names mcp-server" "true" \
+  "$([[ "$RESOLVED" == *"vn-market-intelligence-mcp-mcp-server-1"* ]] && echo true || echo false)"
+check "T10 resolve_capped_containers names rag-service" "true" \
+  "$([[ "$RESOLVED" == *"vn-market-intelligence-mcp-rag-service-1"* ]] && echo true || echo false)"
+check "T10 resolve_capped_containers SKIPS uncapped mcp-gateway (cap=0)" "true" \
+  "$([[ "$RESOLVED" != *"mcp-gateway"* ]] && echo true || echo false)"
+
+# ── T11-T13 (AC7, DECISIVE): replay the exact c51/c53 matched-pair condition
+# — mcp-server BELOW its own 85% gate, rag-service INDEPENDENTLY at/above it
+# — and prove the widened per-container gate engages for rag-service and
+# names it, where the OLD single-container gate (mcp-server-only baseline)
+# would have skipped the whole fleet and left rag-service invisible. ──────
+docker() {
+  local sub="$1"; shift
+  case "$sub" in
+    ps)
+      [ "${1:-}" = "-q" ] && { printf 'id-mcp\nid-rag\n'; return 0; }
+      return 0
+      ;;
+    inspect)
+      printf '/vn-market-intelligence-mcp-mcp-server-1 3221225472\n'
+      printf '/vn-market-intelligence-mcp-rag-service-1 1073741824\n'
+      return 0
+      ;;
+    stats)
+      # NOTE: docker stats' own {{.Name}} field has NO leading slash (unlike
+      # docker inspect's {{.Name}}, which does — _a30_resolve_capped_
+      # containers strips it, matching real docker's own inconsistency here).
+      printf 'vn-market-intelligence-mcp-mcp-server-1\t84.75%%\n'
+      printf 'vn-market-intelligence-mcp-rag-service-1\t92.81%%\n'
+      return 0
+      ;;
+    *) return 1 ;;
+  esac
+}
+# _stub_deep_probe echoes its own marker to STDOUT rather than mutating a
+# variable — _a30_run_investigate_gate is captured via $(...) below, which
+# always forks a subshell, so a variable mutated inside would be silently
+# discarded on return (same class of pitfall documented in verify-a30-mcp-
+# memory-reclamation.test.sh's own header re: its file-based call counter).
+_stub_deep_probe() { echo "ENGAGED:$1"; }
+A30_DEEP_PROBE_CMD="_stub_deep_probe"
+GATE_OUT="$(_a30_run_investigate_gate)"
+
+check "T11 c51/c53 replay: mcp-server (84.75%% < 85%%) -> SKIP line present" "true" \
+  "$([[ "$GATE_OUT" == *"SKIP deep-probe — vn-market-intelligence-mcp-mcp-server-1 baseline 84.75%"* ]] && echo true || echo false)"
+check "T12 c51/c53 replay: rag-service (92.81%% >= 85%%) -> ENGAGE line present, names rag-service" "true" \
+  "$([[ "$GATE_OUT" == *"vn-market-intelligence-mcp-rag-service-1: baseline 92.81% >= 85% investigate-gate — ENGAGE deep-probe"* ]] && echo true || echo false)"
+check "T13 c51/c53 replay: deep-probe subprocess actually invoked for rag-service, NOT mcp-server" "true" \
+  "$([[ "$GATE_OUT" == *"ENGAGED:vn-market-intelligence-mcp-rag-service-1"* ]] && [[ "$GATE_OUT" != *"ENGAGED:vn-market-intelligence-mcp-mcp-server-1"* ]] && echo true || echo false)"
+
 echo ""
 echo "probe.test.sh: ${PASS} pass / ${FAIL} fail"
 [ "$FAIL" -eq 0 ]
