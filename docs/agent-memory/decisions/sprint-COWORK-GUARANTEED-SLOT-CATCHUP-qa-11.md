@@ -85,3 +85,16 @@
 - Fresh full suite myself (not trusting either of dev's 2 cited numbers): 15188 pass/40 skip/46 fail/1 error/48161 expect, 15274 tests/1268 files, 490.72s. Grepped all 46 fail names + the 1 unhandled error (`pollNews.ts` closed-DB race) — zero macro/vnIndex/plausibility/GATE overlap. Fail count (46) is below dev's cited 52-60 band, not above — directly observed live 5000ms order-dependent timeouts + a port-13081 conflict + a DB-lifecycle race during the run, consistent with pre-existing flakiness fluctuating commit-to-commit, not a new regression.
 **why-decision:** APPROVED, DONE_VERIFIED. Every claim in `dev_implementation_note` independently reproduced from source, not trusted from prose; the specific incident-defining property (both channels gap-token) directly verified via the live wiring + the architect-designed reproduction test. Moved `task_board.qa[]`→`task_board.done_verified[]` via `jq`+`orch-apply.sh`.
 **why-change:** none from plan.
+
+### STEP qa-S18 · qa · 2026-08-08T10:35:00Z
+**task-id:** FIX-CI-TASKCLAIM-CHEF-MD-OWNER-SESSION-PAYDOWN
+**what-done:** Direct-commit verify (Review-Lane QA-Drain, `qa[]` row, `branch:null`) of `be3545412`, on main ancestry, diff touches exactly the 2 claimed files (chef.md, baseline.json).
+**what-considered:**
+- chef.md:108-113 `PUBLISH_CLAIM` now carries `owner_client_session` with the substitution-instruction pattern, byte-diffed against `pm/flow/main.md:127` — matches (AC4 held, no literal `$CLAUDE_CODE_SESSION_ID`).
+- baseline.json: chef.md entry dropped (20→19, confirmed via jq — zero entries remain for this file); re-ran `task-claim-owner-session-lint.sh --check` myself → RC=0, 0 offenders, 19 grandfathered (AC1/AC2 held, not dev's prose).
+- Ran `task-claim-owner-session-lint.test.sh` → 9/9 PASS.
+- AC3: `gh run view 31252190892` (headSha `72814d82`, descendant of `be3545412`, is > 246eb859) → job `task-claim-owner-session-lint` conclusion=`success`. Overall workflow=failure but sole failing job is `size-lint` (unrelated class).
+- Dup-check: `size-lint` (job) runs `size-lint-justification.sh` (file-size/header ratchet) vs `task-claim-owner-session-lint` (job) runs `task-claim-owner-session-lint.sh` (owner_client_session field ratchet) — confirmed distinct CI jobs in ci.yml. All `FIX-CI-SIZELINT-*` rows found are archived DONE_VERIFIED, none live — no duplicate.
+- AC5 explicitly deferred by dev (scope-limited to [chef.md, baseline.json]); accepted — mirrors sibling row's standing ruling (gate-widening needs actuator dry-run, out of scope here).
+**why-decision:** APPROVED, DONE_VERIFIED. AC1/AC2/AC3/AC4 independently reproduced from source + live CI job-level check, not trusted from row prose; AC5 deferral matches documented precedent.
+**why-change:** none from plan.
