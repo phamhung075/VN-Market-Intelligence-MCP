@@ -1,3 +1,46 @@
+
+
+## c82 · 2026-08-08T06:36:08Z
+### Audit Run Tier-1 (06:30–06:34 UTC 2026-08-08)
+- Tier: 1 | Services: 12 checked | Health: 5 checked | Restarts: 1 checked
+- Anomalies: 0 new (C critical, W warn, I info) | 1 dedup-skipped
+- Status: DEGRADED
+
+### RAW-PROBE:
+```
+=== AUDITOR PROBE 2026-08-08T06:33:17Z ===
+
+--- docker ps -a ---
+All containers UP (healthy status)
+
+--- health endpoints ---
+[health] mcp-server:3000/health OK (HTTP 200)
+[health] api-gateway:4000/health OK (HTTP 200)
+[health] macro-indicators:5004/health OK (HTTP 200)
+[health] pdf-extractor:5001/health OK (HTTP 200)
+[health] frontend:3001/ OK (HTTP 200)
+
+--- A-20 pdf-extractor multi-probe ---
+[A-20-PROBE-1] in-container HTTP 200
+[A-20-PROBE-2] in-container HTTP 200
+[A-20-PROBE-3] in-container HTTP 200
+[A-20] pass_count=3/3
+
+--- restart count ---
+mcp-server RestartCount=3
+
+--- memory pressure ---
+mcp-server MemPerc=33.24%
+
+--- disk ---
+Capacity 54% (PASS)
+```
+
+### Findings:
+- A-30 rag-service: 96.24% memory (SKIP-dedup, recurring since 2026-08-08T06:05:41Z)
+- [emit-signal] SKIP-dedup signal_id=10496
+- [emit-dashboard] OK id=10496 check_id=A-30
+
 ## c81 · 2026-08-08T06:25:27Z
 ### Audit Run Tier-2 (06:24–06:25 UTC 2026-08-08)
 - Tier: 2 | Freshness sweep completed | Anomalies: 1 (WARN) | Status: DEGRADED
@@ -7,17 +50,6 @@
 - BCTC Checks: B-09 (0 bad SSC URLs) ✓ | B-13 (0 stale >72h) ✓
 - Rate Limits (B-14): Most sources ready (12/14 OK) ✓
 - Pipeline: Healthy | Macro snapshot fresh | SLA all OK ✓
-
-### Findings
-- C-06: market_messages count=0 in 3h window during VN trading hours (02:00-08:30 UTC) — WARN: possible ingestion pipeline stall
-- Signal: sys-20260808T062503-66c2 (db_freshness_breach:market_messages:C-06)
-
-### Verdict: DEGRADED
-Market message ingestion offline during active trading hours — potential data pipeline disruption. Other Tier-2 checks pass.
-
-[OUTPUT-CONTRACT] signals_posted=1 | telegram_sent=1 | signal_queue_rows_written=1 | dashboard_rows=1 | dedup_skipped=0
-CONTRACT-CONTRADICTION: NONE
-
 
 ## d4-auto · 2026-08-08T03:00:02.589Z
 D4 candidates: R2-mismatch:bctc-dataquality:vnindex-crosstool-mismatch,R2-mismatch:bctc-dataquality:HPG:operating-profit-zero,R2-mismatch:bctc-dataquality:DXG:persistent-absence,R3-no-board-row:bctc-dataquality:vnindex-crosstool-mismatch,R3-no-board-row:bctc-dataquality:HPG:operating-profit-zero,R3-no-board-row:bctc-dataquality:DXG:persistent-absence
@@ -36,10 +68,6 @@ D4 candidates: R2-mismatch:bctc-dataquality:vnindex-crosstool-mismatch,R2-mismat
 - A-32 disk: 51% < 85% ✓
 - A-33 hook liveness: All load-bearing hooks OK ✓
 
-[OUTPUT-CONTRACT] signals_posted=0 | telegram_sent=0 | signal_queue_rows_written=1 | dashboard_rows=0 | dedup_skipped=1
-CONTRACT-CONTRADICTION: NONE
-
-
 ## c79 · 2026-08-07T06:12:14Z
 ### Audit Run Tier-2 (06:12–06:12 UTC 2026-08-07)
 - Tier: 2 | Freshness sweep completed | Anomalies: 0 | Status: HEALTHY
@@ -50,5 +78,3 @@ CONTRACT-CONTRADICTION: NONE
 - BCTC Checks: B-09 (0 bad SSC URLs), B-13 (0 stale >72h) ✓
 - Pipeline: Healthy | SLA all OK ✓
 
-[OUTPUT-CONTRACT] signals_posted=0 | telegram_sent=0 | signal_queue_rows_written=0 | dashboard_rows=0
-CONTRACT-CONTRADICTION: NONE
