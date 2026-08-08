@@ -95,9 +95,9 @@
   "head": {
     "status": "idle",
     "active_task_id": null,
-    "next_agent": "router",
-    "updated_at": "2026-08-08T21:40:43Z",
-    "updated_by": "architect"
+    "next_agent": null,
+    "updated_at": "2026-08-08T22:01:45Z",
+    "updated_by": "dev-team"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -14252,130 +14252,6 @@
         "agent_father_disposition_20260805T1658": "agent-father-triage 2026-08-05T16:58Z (relayed by router -- agent-father has no gateway tool grant, could not write this itself). DISPOSITION: DO NOT sign off DONE yet; do not rework code. T6 code verified correct at source (docs/agents/market-watcher/flow/main.md Step 2: slot=market-watcher-eod -> eod.md always, slot=market-watcher-offhours -> cycle.md mode=offhours always, empty/unrecognized -> unchanged wall-clock fallback), matches design brief docs/architecture-briefs/2026-07-21-cowork-fanout-producer-consumer-ordering.md section 5 verbatim, landed commit bdf22186d 2026-07-22. BLOCKER IS REAL BUT NARROWER THAN IT LOOKS: DESIGN-COWORK-FANOUT-T8-QA-TEST-STRATEGY depends on T1-T6 ALL SIX, not T6 alone -- T1/T2/T3/T4/T5 are all still TODO/unimplemented in ready[], three of the five (T1/T2/T4) owned by agent-father itself and untouched. Per brief section 9 (T6 has no dependency on T1-T5, can ship separately) the two test cases that actually validate T6 (brief section 7, T-7/T-8 flow-fixture walkthroughs on slot-routing only) need zero input from T1-T5. RECOMMENDATION: route a narrow qa execution of just brief-section-7 T-7/T-8 to qa now, decoupled from the 6-way T8 board row, rather than leave this row in limbo behind 5 unstarted siblings owned partly by the same triager. CROSS-REFERENCE (confirmed mechanically independent, correctly filed separately): FIX-MARKETWATCHER-EODMD-STALE-NOBASH-CAVEAT-SKIPS-COMMIT-LOSES-NOTEBOOK (eod.md:78 stale caveat, 'what happens once inside eod.md') is NOT caused by and does NOT require touching T6/main.md ('which sub-flow file gets entered'). One genuine connective thread for whoever fixes that row's AC-2 (same-agent multi-slot notebook clobber): it is the direct fallout of THIS brief's own section 5/6 decision to WARN-not-BLOCK legitimate same-tick EOD+offhours collisions on DDD grounds -- the brief solved the collision at the signal/routing layer and never addressed the notebook-storage-layer side effect; the AC-2 fix belongs purely in the notebook-write layer, do not re-litigate the already-rejected block-at-dispatch-layer option."
       },
       {
-        "id": "TE-T33",
-        "title": "T-33 Archival policy for docs/handoffs (11MB/974 files), decisions/ (3.8MB), sessions/ — rotate >30d via janitor cron [~1-3k tok/day + caps growth]",
-        "owner": "developer",
-        "status": "REVIEW",
-        "type": "CLEAN",
-        "size": "S",
-        "priority": "P2",
-        "wave": 4,
-        "est_saving": "~1-3k tok/day + caps unbounded growth curve",
-        "zone": "cross-service/",
-        "sprint": "TOKEN-ECONOMY-AUDIT",
-        "depends": [],
-        "detail_ref": "docs/architecture-briefs/2026-07-12-token-economy-lazyload-audit.md#T-33",
-        "note": "3 write-heavy dirs grow unboundedly (707/974 handoffs >30d). Add monthly cold-archive sweep to code-janitor 6h cron (guard: 1st of month): mv >30d + no open task_board ref -> archive/YYYY-MM/. Rotate po-decisions.md at 200L. Update DJ-GATE-1 grep to exclude archive/. Mirrors existing orch archive/ precedent.",
-        "audit_ref": {
-          "audit": "ultracode-2026-07-12",
-          "verdict": "memory-docs-hygiene-P4 coordination",
-          "note": "TE-T33 decisions/ leg is SUPERSEDED by UC-MDH-P4 (decision-journal-archive.sh, longest-match closed-only). mtime>30d rotation must NOT be applied to decisions/ (would move open-sprint journals).",
-          "ref": "docs/architecture-briefs/2026-07-12-ultracode-workflow-improvement-audit.md#memory-docs-hygiene-P4"
-        },
-        "promoted_at": "2026-07-23T14:17:32Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
-        "updated_at": "2026-07-23T14:38:24Z",
-        "claimed_at": "2026-07-23T14:17:32Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)",
-        "next_agent": "qa",
-        "branch": null,
-        "commit": "82a69523807289a00fc6c8edae6769201a914b78",
-        "files": [
-          "scripts/agents-flow/cold-archive-sweep.sh",
-          "scripts/agents-flow/cold-archive-sweep.test.sh",
-          "scripts/agents-flow/notebook-auto-prune.sh",
-          "docs/agents/code-janitor/flow/main.md",
-          "docs/agents/dev-team/flow/main.md",
-          "docs/policies/dev-standards.md",
-          "docs/WORK.md"
-        ],
-        "completed_at": "2026-07-23T14:37:14Z",
-        "completed_by": "developer",
-        "status_note": "TE-T33: new scripts/agents-flow/cold-archive-sweep.sh (monthly-guarded 1st-of-month, COLD_ARCHIVE_FORCE=1 override), idempotent. Handoffs leg: docs/handoffs/*.md >30d AND not referenced anywhere in the 5 OPEN task_board lanes (jq recursive scan, computed live) -> archive/YYYY-MM/ (live dry-check: 839 candidates, 27 referenced, 2 correctly held back). Sessions leg: non-.md files >30d -> archive/YYYY-MM/ (the .md leg is already owned by memory-prune-sweep.sh at 14d flat-archive -- verified live before coding, no overlap). po-decisions.md 200L rotation reuses notebook-auto-prune.sh drop-oldest-## algorithm via new opt-in NOTEBOOK_PRUNE_EXTRA_GOVERNED_PATH env guard (default empty = zero hot-path behavior change) -- no new prune scheme. Decisions/ archival leg dropped entirely: decision-journal-archive.sh (UC-MDH-P4, shipped same day) already supersedes it (status-based not mtime-based; board row audit_ref note + that script header both name TE-T33) -- confirmed not ambiguous before skipping. Fixed dev-team/main.md 2 unscoped DJ-GATE-1 grep comments (sprint-*-*.md -> sprint-${SPRINT_ID}-*.md, matching qa/pm already-correct canonical pattern -- verified those needed no change). Wired into code-janitor 6h cron flow. CANONICAL pointer added to dev-standards.md. cold-archive-sweep.test.sh 14/14 PASS incl. idempotent re-run + git-diff-quiet proof live po-decisions.md untouched; 3 sibling suites re-run after shared-hook edit, zero regression (7/7, 12/12, 26/26). Journal: sprint-TOKEN-ECONOMY-AUDIT-developer.md STEP developer-S13."
-      },
-      {
-        "id": "MD-FUNC-01-FIX",
-        "title": "Fix MD-FUNC-01: Does get_market_snapshot return VN-Index with price, change_pct, and direction fields",
-        "owner": "dev-mcp-server",
-        "status": "REVIEW",
-        "type": "fix",
-        "size": "S",
-        "priority": "normal",
-        "zone": "dev-mcp-server",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#MD-FUNC-01-FIX",
-        "promoted_at": "2026-07-23T14:49:01Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
-        "updated_at": "2026-07-23T15:04:41Z",
-        "claimed_at": "2026-07-23T14:49:01Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)",
-        "next_agent": "qa",
-        "branch": null,
-        "commit": "2fb65b5bc1c75a2ac12bd2f11e4382799e021786",
-        "files": [
-          "docs/agent-memory/notebooks/dev-mcp-server.md",
-          "docs/agent-memory/decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-dev-mcp-server.md"
-        ],
-        "completed_at": "2026-07-23T15:03:44Z",
-        "completed_by": "dev-mcp-server",
-        "status_note": "MD-FUNC-01-FIX: verification-only, no code change needed. get_market_snapshot vn_index{price,change_pct,direction} struct already shipped 815ccaedd/ddc36452e (2026-06-16), predates running mcp-server image (built 2026-07-22) -- live in production. Root-cause check: price/change_pct read from fetchVnIndex(\"VNINDEX\") real VNDirect vnmarket_prices fetch; direction dynamically derived from changePct sign (not hardcoded). Live gateway verification (mcp-call.sh get_market_snapshot {}): vn_index:{price:1699.38, change_pct:1.85, direction:\"up\"} -- all 3 fields non-null, plausible vs same-payload breadth block (189 adv/122 dec). Targeted test 1982-quality-burndown-CHIJ.test.ts MD-FUNC-01 section 18/18 pass; market-tool-adjacent files 83/84 pass (1 pre-existing skip). bun tsc --noEmit clean. Full suite 14679 pass/40 skip/42 fail/1 error (1214 files) -- fail count matches documented 41-42 pre-existing baseline (_deprecated/logVpsPush/timeout classes), zero source files touched this task. Tool count 184 / cronJobCount 88 unaffected."
-      },
-      {
-        "id": "ALT-FUNC-02-FIX",
-        "title": "Fix ALT-FUNC-02: Does get_alert_accuracy return an accuracy rate between 0 and 1",
-        "owner": "dev-mcp-server",
-        "status": "REVIEW",
-        "type": "fix",
-        "size": "S",
-        "priority": "normal",
-        "zone": "dev-mcp-server",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#ALT-FUNC-02-FIX",
-        "promoted_at": "2026-07-23T15:27:04Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
-        "updated_at": "2026-07-23T15:32:54Z",
-        "claimed_at": "2026-07-23T15:27:04Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)",
-        "next_agent": "qa",
-        "branch": null,
-        "commit": "6fed9dc8bcd21752729363d0fbcd97060592535a",
-        "files": [
-          "docs/agent-memory/notebooks/dev-mcp-server.md",
-          "docs/agent-memory/decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-dev-mcp-server.md"
-        ],
-        "completed_at": "2026-07-23T15:32:54Z",
-        "completed_by": "dev-mcp-server",
-        "status_note": "ALT-FUNC-02-FIX: verification-only, no code change needed. get_alert_accuracy top-level accuracy_rate:number|null already shipped 815ccaedd (2026-06-10T17:24Z, comment ALT-FUNC-02 FIX); null only when hits+misses===0 (insufficientSample data-gap case), tested (1982-quality-burndown-CHIJ.test.ts FIX-3, 3 cases). Backlog row created 2026-06-10T09:27Z -- ~8h BEFORE the fix landed -- a stale pre-fix snapshot BOUNDED-1 auto-picked 6 weeks later; docs/data/quality-checklist.json ALT-FUNC-02 already status=PASS since 2026-06-10T18:00Z citing the same commit. Live gateway verification (mcp-call.sh get_alert_accuracy {}): accuracy_rate:1, insufficientSample:false, scored_pct:19, total:628, hits:110, misses:0, unknowns:518 -- genuine 0..1 rate, AC satisfied live. Targeted tests 46/46 pass (1982-quality-burndown-CHIJ FIX-3 + 183-alert-accuracy + 1847d-D-alert-tools). bun tsc --noEmit clean. Tool count 184 / cronJobCount 88 unaffected (gen-project-stats probe). git status apps/mcp-server/ clean -- zero source files touched."
-      },
-      {
-        "id": "BCT-OBS-01-FIX",
-        "title": "Fix BCT-OBS-01: Does dataAuditDaily produce a data integrity report sent to WORK channel",
-        "owner": "dev-mcp-server",
-        "status": "REVIEW",
-        "type": "fix",
-        "size": "S",
-        "priority": "normal",
-        "zone": "dev-mcp-server",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#BCT-OBS-01-FIX",
-        "promoted_at": "2026-07-23T15:45:46Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
-        "updated_at": "2026-07-23T15:57:33Z",
-        "claimed_at": "2026-07-23T15:45:46Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)",
-        "next_agent": "qa",
-        "branch": null,
-        "commit": "ccddb9ae6a299733bddb5280e44a4ef79b0d86bd",
-        "files": [
-          "docs/agent-memory/notebooks/dev-mcp-server.md",
-          "docs/agent-memory/decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-dev-mcp-server.md"
-        ],
-        "completed_at": "2026-07-23T15:57:00Z",
-        "completed_by": "dev-mcp-server",
-        "status_note": "BCT-OBS-01-FIX: verification-only, no code change needed. dataAuditDaily (runDailyAudit, apps/mcp-server/src/scheduler/news-analysis/dataAuditJob.ts) unconditionally writes system_logs(data-auditor)+audit_state, then maybeSendTelegram gates sendTelegramWork on hasIssues (any auto_cleaned>0 or flagged/escalated finding). Live-probed via direct container DB read (not self-report/checklist alone): cron_job_runs shows 4 consecutive real fires 07-19..07-22 (16:00 UTC = 23:00 GMT+7, matches CRONS.dataAuditDaily), all status=success; each wrote a system_logs row with nonzero cleaned+warnings (07-22: 6763/63; 07-21: 18516/63; 07-20: 3931/149; 07-19: 199747/227) -- hasIssues=true every run, so the WORK-channel send-gate fires daily. Live gateway call get_system_status (fresh this session, via scripts/agents-flow/mcp-call.sh) confirms TELEGRAM_BOT_TOKEN/TELEGRAM_INFO_WORK_CHANNEL_ID SET and TELEGRAM_ENABLED=true in the running container -- the exact preconditions sendTelegramWork/coreSend require. Source-read of infrastructure/notifiers/telegram.ts confirms sendTelegramWork has ZERO DB persistence by design (only sendTelegramBug->insertReport persists to telegram_reports; sendTelegramMarket->market_messages) -- so the checklist rows documented recheck_how (read_telegram_reports channel:work) can never observe a WORK send: independently confirms the checklist rows own \"original FAIL was wrong recheck_how\" annotation is correct, not stale. quality-checklist.json BCT-OBS-01 already status=PASS since 2026-06-10T18:00Z citing WORK-channel msg IDs 2743-2766 (a genuine historical live-Telegram observation, not DB-derivable). Unit coverage 157-data-audit-job.test.ts AC-6 (silent on clean DB) + AC-7 (sends when issues exist): 18/18 pass -- contract matches live DB evidence. bun tsc --noEmit clean. Tool count 184 / cronJobCount 88 unaffected (gen-project-stats probe). git status apps/mcp-server/ clean -- zero source files touched."
-      },
-      {
         "id": "BCT-OBS-02-FIX",
         "priority": "normal",
         "size": "S",
@@ -18979,7 +18855,7 @@
         "status_note": "AC: gh run view <databaseId with headSha AFTER a20cbf56c115b970f9366eea55de2ce340857b12> --json jobs -q '.jobs[]|select(.name==\"size-lint\")|.conclusion' == success (verification_gate=ci_green_on_subsequent_push). Priority: high. Failing job: size-lint. Failing file: apps/mcp-server/src/infrastructure/db/coordinationStore.ts. Remedy is a SPLIT (extract a cohesive module) or a size-justification header — do NOT raise the 1241 number at docs/data/size-lint-baseline.json:263, that launders the regression rather than fixing it. NOTE: size-lint reports TWO offenders on this run; the size-lint job only goes green when BOTH close — sibling row FIX-CI-SIZELINT-CHECKFOREIGNFLOWGAP-NEW-OFFENDER-181L must land too. || OCCURRENCE 3 (po triage 2026-08-08T07:57:40Z, dev-team tick 2026-08-08T07:37Z): re-reported by ci_red CI-RED-d063c8f7 on head_sha d063c8f718d36f864ae0e3c89cfd7c4c599e11ac, CI run 31245617059 (run_url https://github.com/phamhung075/VN-Market-Intelligence-MCP/actions/runs/31245617059), job size-lint. FILE-SCOPED DEDUP HIT on this row's own dedup_key — no new row minted, per triage-signals.md ci_red. MANDATORY PRE-DEDUP FAILING-FILE READ performed: gh run view 31245617059 --log-failed emitted NO FAILEDFILE block (size-lint is not the bun-test per-file isolation runner), so FAILING_FILES was taken verbatim from the failing step's own error lines — '[size-lint] FAIL — 2 offending file(s) (scanned 1368)': apps/mcp-server/src/infrastructure/db/coordinationStore.ts (baseline-tolerance-exceeded, baseline=1241L actual=1388L upper=1365L) AND apps/mcp-server/src/scheduler/news-analysis/audit-checks/checkForeignFlowGap.ts (new-offender, 181L > 120L). Both offenders UNCHANGED across all 3 observed SHAs (83bb4359 → a20cbf56 → d063c8f7) — same 2 files, same 2 reasons, no drift. ESCALATION: 3rd consecutive fire, CI size-lint continuously RED on main since ~2026-08-07T12:14Z (>19h). Detection is working every tick; what never happens is dispatch — this row has sat in BACKLOG across all 3 fires. Escalated into this tick's PO BATCH as a dispatchable FIX (recurring-bug priority, ahead of new work) rather than folded silently a third time.|| OCCURRENCE 4 (po triage 2026-08-08T10:00:29Z, OUT-OF-BAND router hand-off — ci-health-probe fired at dev-team Step 0a.5 this tick but the Supervised-Lane Sweep short-circuited the tick before Step 1 PO triage, and drain-signals.js had already fingerprinted+moved the signal to processed/, so it could never be re-drained; routed directly instead of being silently lost): re-reported by ci_red CI-RED-f350dda9 on head_sha f350dda999561772cb07663dd185c32f8fc6ae77, CI run 31251009645 (https://github.com/phamhung075/VN-Market-Intelligence-MCP/actions/runs/31251009645), job size-lint. FILE-SCOPED DEDUP HIT on this row's own dedup_key — no new row minted, per triage-signals.md ci_red layer (c). MANDATORY PRE-DEDUP FAILING-FILE READ performed live: `gh run view 31251009645 --log-failed` emitted NO FAILEDFILE block (size-lint is not the bun-test per-file isolation runner), so FAILING_FILES taken verbatim from the failing step's own error lines — '[size-lint] FAIL — 2 offending file(s) (scanned 1368)': apps/mcp-server/src/infrastructure/db/coordinationStore.ts (baseline-tolerance-exceeded, baseline=1241L actual=1388L upper=1365L) AND apps/mcp-server/src/scheduler/news-analysis/audit-checks/checkForeignFlowGap.ts (new-offender, 181L > 120L, no baseline entry, no justification header). Identical to occurrences 2 and 3 — 4 observed SHAs (83bb4359 -> a20cbf56 -> d063c8f7 -> f350dda9), same 2 files, same 2 reasons, zero drift. FOLD-CANDIDATE CHECKED AND REJECTED: FACTORY-GUARD-CI-size-lint-justification (review[], next_agent=qa, zone cross-service/) is the CI-GUARDRAIL DESIGN row that BUILT the size-lint gate (brief docs/architecture-briefs/2026-07-24-factory-guard-ci-size-lint-justification.md; its own review_note describes verdicting brief adequacy, 'no code to test'). Its scope is the gate's EXISTENCE, not any file's compliance with it — closing it leaves both offenders over budget and size-lint still RED. Distinct defect; this file-scoped row is the correct dedup target. PRIORITY ESCALATED high -> P0 by po this tick: (i) 4th consecutive fire with zero dispatch; (ii) at rank 1 the row sits behind ~350 backlog rows, so BOUNDED-1's [priority_rank, index] ordering structurally never reaches it (measured: live WIP=2, top-of-queue is 3 rank-0 rows) — this is a reachability defect, not a staleness one; (iii) size-lint has been RED on origin/main continuously >21h, which makes verification_gate=ci_green_on_subsequent_push UNSATISFIABLE for the 5 sibling FIX-CI-SIZELINT-* rows parked in review[] — these 2 offenders are a cross-cutting verification blocker for the whole CI plane, not one file's tidiness. occurrence_count corrected to 4 (previously drifted one behind the narrated ordinal). || OCCURRENCES 5 + 6 (po triage 2026-08-08T10:59Z, OUT-OF-BAND router hand-off — dev-team tick 2026-08-08T10:37Z; the mid-tick ci-health-probe signal was drained AFTER the main drain pass and would have been stranded by the same-tick short-circuit, so it was routed directly). OCC 5 = ci_red CI-RED-72814d82, head_sha 72814d82464c8c596c0eb1f2324bd10941e2b915, run 31252190892, drained 2026-08-08T10:23:58Z with _processed.result=\"routed-to-po\" — but it NEVER landed on this row (row was last written 10:00:29Z at occ 4, occurrence_count stayed 4): a routed-but-unrecorded signal, recovered and back-filled here, not a new defect class. OCC 6 = ci_red CI-RED-e0b0fe7b, head_sha e0b0fe7b407d11216d60a2013689afba92a94c22, run 31253225542 (https://github.com/phamhung075/VN-Market-Intelligence-MCP/actions/runs/31253225542), createdAt 2026-08-08T10:52:25Z; `git rev-parse origin/main` == e0b0fe7b40 at triage time, so this is the CURRENT head, not a stale run. FILE-SCOPED DEDUP HIT on this row's own dedup_key for both — no new row minted, per triage-signals.md ci_red layer (c). MANDATORY PRE-DEDUP FAILING-FILE READ performed live on run 31253225542: `gh run view 31253225542 --log-failed` emitted NO FAILEDFILE block (size-lint is not the bun-test per-file isolation runner), so FAILING_FILES taken verbatim from the failing step's own error lines — '[size-lint] FAIL - 2 offending file(s) (scanned 1368)': apps/mcp-server/src/infrastructure/db/coordinationStore.ts (baseline-tolerance-exceeded, baseline=1241L actual=1388L upper=1365L) AND apps/mcp-server/src/scheduler/news-analysis/audit-checks/checkForeignFlowGap.ts (new-offender, 181L > 120L, no baseline entry, no justification header). 6 observed SHAs (83bb4359 -> a20cbf56 -> d063c8f7 -> f350dda9 -> 72814d82 -> e0b0fe7b), same 2 files, same 2 reasons, zero drift; live `wc -l` re-read at triage time confirms 1388 / 181, both still over budget. FOLD-CANDIDATE RE-CHECKED AND RE-REJECTED: FACTORY-GUARD-CI-size-lint-justification (review[], P2, next_agent=qa, zone cross-service/) is the CI-GUARDRAIL DESIGN row that BUILT the size-lint gate; its own review_note says \"verdict brief adequacy + child scoping (no code to test)\". Its scope is the gate's EXISTENCE, not any file's compliance with it — closing it leaves both offenders over budget and size-lint still RED. Not the same failure class; this file-scoped row remains the correct dedup target. ESCALATION — PRIORITY LEVER IS EXHAUSTED, REACHABILITY LEVER USED INSTEAD: occ 4 already raised priority high -> P0 and that produced ZERO dispatch over 2 further fires, because (i) P0 is not scarce on this board (20 P0/critical rows in backlog[]) and (ii) BOUNDED-1/RLC order candidates by sort_by([priority_rank, ARRAY INDEX]) — at backlog index 343/347 of 356 this row sat behind 18 older P0 rows, and BOUNDED-1's gate is the STRICTER WIP<1 while live wip_in_progress==2, so BOUNDED-1 did not run at all. MEASURED, NOT ASSUMED: dry-ran `scripts/devteam-backlog-claim-ready-lane-consumer.jq` against the live board — it claims FIX-ORPHAN-FR2-FR6-FR7-INTERFACE-COORDINATION-TOOLS and never reaches this row from backlog[]. ACTION TAKEN THIS TICK: promoted backlog[] -> ready[] at index 0/1 by po (ready[] explicitly admits PO-triage-sourced rows per dev-team main.md § Ready-Lane Consumer). Effect: reachable gate widens from BOUNDED-1's WIP<1 to RLC's WIP<2, and because RLC sorts sort_by([.rank,.idx]) with idx = ready[] array position (scripts/devteam-backlog-claim-ready-lane-consumer.jq:135), this row becomes RLC's NEXT pick the moment wip_in_progress drops below 2. STANDING WIP OBSERVATION (surfaced, not actioned — not PO's lane to reap): in_progress[] holds GUARD-NOTEBOOK-CONCURRENT-EDIT-COLLISION-DATA-LOSS at status IN_PROGRESS since 2026-08-07T05:44:11Z (~29h, claimed_by=null, supervised=true, updated_by \"pm (decomposition)\") — one of the two occupied concurrency slots is held by a row that nothing ever claimed, which is why WIP has not dropped below 2. occurrence_count 4 -> 6.\n\n\n[po/triage-20260808T1737Z] CI-RED OBSERVED AGAIN, folded here (no new mint): run 31267224323 head 384ce899 (2026-08-08T16:56:34Z) and run 31268871450 head c5d6ab5e (2026-08-08T17:24:58Z), both job=size-lint. Mandatory pre-dedup failing-file read performed on both: this file reported baseline=1241L actual=1388L upper=1365L in each, an EXACT file-scoped dedup_key match on this row (ci_job:size-lint|file:apps/mcp-server/src/infrastructure/db/coordinationStore.ts) — duplicate, skipped. Note the 17:24Z run gained a SECOND offender, apps/mcp-server/src/interface/mcp/transport.ts, which is NOT this rows file and was minted as its own sibling row FIX-CI-SIZELINT-TRANSPORT-TS-SSE-REAPER-237L per the one-row-per-distinct-file rule. This row is READY/P0/dev-mcp-server and is the sole live holder of the coordinationStore.ts size-lint obligation; CI cannot go green until BOTH files are discharged.\\n\\n[po/triage-20260808T1926Z] ADDITIONAL OBSERVED SHA: still RED at head ebb065b8a2db409f6012baffaf7eade23c365c87 (check_id CI-RED-ebb065b8, run 31272399149, 2026-08-08T18:51:05Z). File-scoped dedup hit on this rows own dedup_key — signal folded here, NOT re-minted. Same run also produced one genuinely new failing file (bun test / src/__tests__/1862c-transport-session-eviction.test.ts) which was minted separately as FIX-CI-BUNTEST-1862C-TRANSPORT-SESSION-EVICTION.",
         "note": "FAILING FILE READ AT SOURCE before dedup, per triage-signals.md ci_red MANDATORY PRE-DEDUP step — `gh run view 31225993397 --log-failed` emitted verbatim: '[size-lint] FAIL — 2 offending file(s) (scanned 1368): apps/mcp-server/src/infrastructure/db/coordinationStore.ts — baseline-tolerance-exceeded (baseline=1241L actual=1388L upper=1365L)' plus a second line for checkForeignFlowGap.ts. Not relayed, not inferred from the job name. FILE-SCOPED DEDUP: no row on any non-terminal lane carries this dedup_key or names coordinationStore.ts as a size offender — the 6 sibling FIX-CI-SIZELINT-* rows are file-scoped to OTHER paths (checkForeignFlowGap.ts, getBctcRefinedTool.ts, embedder.py, app_factory.py, schema.ts, pushBctcRefinedUnitTool.ts). Mint required. PROVENANCE CORRECTION — VERIFIED, NOT ASSUMED: the incoming signal's head_sha a20cbf56c is 'chore(signals): drain + prune 2026-08-07T2250Z', a docs/signals-only commit that did NOT introduce this offender. Real cause is d6c4e6006 'feat(mcp-server): FR-1/FR-2 task_heartbeat ttl_seconds/payload_patch + null-session ladder' (2026-08-07T18:43:30Z, ancestor of origin/main), which grew the file to 1388L, +147L over its 1241L baseline. Corroborated on two independent CI runs rather than one: run 31196442451 (8b71ca518, 16:12Z, BEFORE d6c4e6006) reported exactly 1 offender (checkForeignFlowGap.ts alone); run 31214251115 (191ebf36c, 20:04Z, AFTER) reported 2, with coordinationStore.ts newly present. NOT MOOT AT MINT TIME (re-checked, the dispatching tick suggested it might be): origin/main is STILL a20cbf56c — local commits 7f244cca3/7c8846e8f/68a53f926 are unpushed and touch neither file — and live `wc -l` reads 1388 / 181, both still over. size-lint has been continuously RED on main since at least 12:14Z (runs 5221d0f0b, b2bd14aef, 30f9b71f7, 8b71ca518, 191ebf36c, a20cbf56c). RELATED, does NOT dedup this row: FIX-ORPHAN-FR1-FR2-INFRA-HEARTBEAT-LADDER (review[]) is the feature row whose implementation caused the growth — closing it does not make the file compliant.",
         "created_at": "2026-08-08T00:01:15Z",
-        "updated_at": "2026-08-08T20:51:32Z",
+        "updated_at": "2026-08-08T22:01:45Z",
         "updated_by": "dev-mcp-server",
         "occurrence_count": 7,
         "promoted_at": "2026-08-08T10:59:05Z",
@@ -18987,12 +18863,126 @@
         "promotion_note": "PO reachability escalation (ci_red occurrence 6, 2026-08-08T10:59Z): promoted from backlog[] index 343/347-of-356 to ready[] index 0/1. NOT a priority change (already P0 since occ 4, which produced no dispatch across 2 further fires) — a LANE change, because BOUNDED-1 (backlog consumer) gates at wip_in_progress<1 while live WIP==2, whereas RLC (ready consumer) gates at <2 and orders by sort_by([rank, array-index]). Justification for jumping the ready[] queue: size-lint RED on origin/main makes verification_gate=ci_green_on_subsequent_push structurally UNSATISFIABLE for every sibling FIX-CI-SIZELINT-* row parked in review[], so these 2 offenders are a cross-cutting verification blocker for the whole CI plane, not one file's tidiness. Both must land for the size-lint job to go green.\n",
         "po_occurrence_7_20260808T1133": "OCCURRENCE 7 — ci_red signal ci-red-76466302-20260808112646, head_sha 76466302af4fb632baa5a862b137eb042b6c1412, run 31254366775, job size-lint. MANDATORY PRE-DEDUP FAILING-FILE READ PERFORMED LIVE on run 31254366775: no FAILEDFILE block (size-lint is not the per-file isolation runner), FAILING_FILES taken verbatim from the failing step's error lines — coordinationStore.ts (baseline-tolerance-exceeded, baseline=1241L actual=1388L upper=1365L) AND checkForeignFlowGap.ts (new-offender 181L > 120L). FILE-SCOPED DEDUP HIT on this row's own dedup_key — no new row minted. 7 observed SHAs with zero drift; live `wc -l` confirms 1388. origin/main == 76466302af at triage time (current head). REACHABILITY: unchanged and still shut — live `wip_in_progress` re-measured via the real scripts/lib/devteam-eligibility.jq returns 2 against RLC's <2 gate, so the occ-6 promote to ready[] index 1 still has not fired. Full analysis of the single blocking zombie row (GUARD-NOTEBOOK-CONCURRENT-EDIT-COLLISION-DATA-LOSS, IN_PROGRESS/claimed_by=null/~29.8h/no decomposition children) is recorded on the sibling row FIX-CI-SIZELINT-CHECKFOREIGNFLOWGAP-NEW-OFFENDER-181L po_occurrence_7 — not duplicated here. Reminder from this row's own mint note: the size-lint job only goes GREEN when BOTH offenders close, so neither row can satisfy verification_gate=ci_green_on_subsequent_push alone.",
         "po_cired_fold_20260808T1600Z": "TWO further ci_red signals folded onto this row — file-scoped dedup hit on this row's own dedup_key `ci_job:size-lint|file:apps/mcp-server/src/infrastructure/db/coordinationStore.ts`. Both were sitting UNROUTED in .dev_team_idle_chain.pending_triage_inbox (see FIX-DEVTEAM-IDLE-CHAIN-MAIN-COMPLETION) and are triaged here for the first time.\n\nMANDATORY PRE-DEDUP FAILING-FILE READ performed for both (triage-signals.md ci_red row — job name alone carries zero discriminating information):\n  - CI-RED-efaae0d4, head efaae0d4478789965dabec8da6f9df8d9796800d, run 31258403592, createdAt 2026-08-08T13:23:33Z. `gh run view 31258403592 --log-failed` => 'apps/mcp-server/src/infrastructure/db/coordinationStore.ts - baseline-tolerance-exceeded (baseline=1241L actual=1388L upper=1365L)'.\n  - CI-RED-6cbc7836, head 6cbc7836fb9bb9715ccefebb0e508ba9713d58c7, run 31262924171, createdAt 2026-08-08T14:55:49Z. `gh run view 31262924171 --log-failed` => IDENTICAL file and identical figures (baseline=1241L actual=1388L upper=1365L).\n\nSo both are the same unfixed offender re-firing on advancing SHAs — the exact reason triage-signals.md mandates FILE-scoped dedup and forbids deduping on check_id/head_sha (both SHA-derived, never match across advancing SHAs). Observed SHAs appended for traceability; no second/third row minted.\n\nSTATUS PRESSURE: this row is READY/P0/next_agent=dev-mcp-server since 2026-08-08T11:35:33Z and has now re-fired CI RED twice more in the ~3.5h since. actual=1388L vs upper=1365L is a 23-line overage — small, and every further commit to main keeps CI red until it lands.",
-        "claimed_at": "2026-08-08T20:24:29Z",
-        "claimed_by": "dev-mcp-server",
         "dispatch_lane": "dev-mcp-server",
         "commit_sha": "763ef682252d3cd694579742259aeb63b4b41549",
         "dev_implementation_note": "Split, not header: coordinationStore.ts was 1388L (baseline=1241L, upper=1365L, 23L overage). The file's own ST-3 comment block already flagged the scheduled_tasks helpers as a self-contained internal-helper section — every one of its 10 functions (claimDueScheduledTasks, completeScheduledTask, expireScheduledTask, failScheduledTask, cancelScheduledTaskById, getScheduledTaskByDedupKey, getScheduledTaskById, insertScheduledTask, listScheduledTasksDb + ScheduledTaskRow type) takes an already-open Database handle as a parameter and never touches this module's private task_locks singleton (_coordDb/_coordDbUnavailable) — a cohesive, structurally independent module, just historically co-located. Extracted verbatim into new apps/mcp-server/src/infrastructure/db/scheduledTaskStore.ts (259L, own size-justification header). coordinationStore.ts now re-exports via `export * from \"./scheduledTaskStore.js\"` so all 3 existing call sites (scheduledTaskTools.ts, scheduledTasks.test.ts, coordinationStore.test.ts) needed zero edits — confirmed by tsc clean + all 3 files' own test suites passing unmodified. Table DDL (CREATE TABLE scheduled_tasks) stayed in coordinationStore.ts's ensureCoordinationTable() — one shared startup migration pass for both tables in coordination.db. getCoordinationDbForScheduler() also stayed (needs the private singleton). Result: coordinationStore.ts 1388L -> 1173L, well under baseline=1241L/upper=1365L — the docs/data/size-lint-baseline.json:263 entry (1241) was NOT touched/raised, per the row's own explicit mandate not to launder the regression. Verified LIVE in CI on the pushed SHA (763ef682252d3cd694579742259aeb63b4b41549, run 31277793877): `gh api .../jobs/93154116153/logs` shows size-lint now reports exactly 1 offending file — apps/mcp-server/src/interface/mcp/transport.ts (baseline=126L actual=237L upper=138L) — coordinationStore.ts and scheduledTaskStore.ts are BOTH absent from the failing-file list. transport.ts is a separate, later-minted sibling row (FIX-CI-SIZELINT-TRANSPORT-TS-SSE-REAPER-237L, not this row's scope) — same job-scoped-multi-offender situation as the earlier checkForeignFlowGap.ts precedent (see that row's own archived QA verdict). Locally: bash scripts/audits/size-lint-justification.sh --check confirms the same (coordinationStore.ts/scheduledTaskStore.ts absent, only transport.ts listed). bun tsc --noEmit clean. Focused suite (14 files directly covering task_locks + scheduled_tasks logic: coordinationStore.test.ts, scheduledTasks.test.ts, task-lock-coordination-store.test.ts, task-lock-coordination-tools.test.ts, task-kind-intent-migration.test.ts, 1980-p1-final-required-flip.test.ts, 1981-p1-failure-mode-matrix.test.ts, P1-MCP-1-owner-client-session-migration.test.ts, FU-LOCKSTORE-EXPIRED-GC.test.ts, task-lock-reaper-timer.test.ts, FIX-D4-HELD-LOCK-NO-BOARD-ROW-RECONCILE.test.ts, DWF-coordination-phase2.test.ts, commit-mutex-coordination.test.ts, FIX-REFINE-LOCK-TTL-RECLAIM.test.ts) = 246/246 pass, 0 fail. Full repo bun test (1268 files/15306 tests, run twice): 44 fail both times, IDENTICAL failing-test set both runs (Task-235/1844a/FIX-2/Task-1146/TSU-DEV-U5/1875c/1892a/Task-1858c/FIX-B-2/Task-251/Task-1193/VPS-Proxy-Health/Task-1518/VPT-1) — zero overlap with coordinationStore/scheduledTaskStore/task-lock/scheduled-task tests, and this exact 44-count/test-set matches the SAME-DAY, SAME-ZONE documented pre-existing full-suite-scale flakiness baseline from the FIX-MCP-SSE-SESSION-MANAGER-PERCONN-LEAK-NO-REAPER notebook entry (per dev-standards.md Push Policy CANONICAL reading: full-suite red is a tracked baseline, not a per-push litigation target — verify zero NET NEW failures instead, which this is). Server boot probe on PORT=3099: /health 200, toolCount=183. gen-project-stats.ts --dry-run: toolCount=183, cronJobCount=88 — both match docs/data/project-stats.json pre-task baseline exactly. Did NOT touch the FACTORY-GUARD-CI-size-lint-justification design row/brief or the separate FIX-CI-SIZELINT-TRANSPORT-TS-SSE-REAPER-237L row, per task scope.",
         "qa_verification_hint": "bash scripts/audits/size-lint-justification.sh --check must no longer list coordinationStore.ts or scheduledTaskStore.ts (both confirmed absent, locally and live on CI run 31277793877 job 93154116153). gh run view <databaseId with headSha AFTER 763ef682252d3cd694579742259aeb63b4b41549> --json jobs -q '.jobs[]|select(.name==\"size-lint\")|.conclusion' == success once the separate sibling row FIX-CI-SIZELINT-TRANSPORT-TS-SSE-REAPER-237L also lands (verification_gate=ci_green_on_subsequent_push is job-scoped, needs both files clear — this row's own file-scoped compliance is independently confirmed live in CI, out of scope for the transport.ts sibling)."
+      },
+      {
+        "id": "TE-T33",
+        "title": "T-33 Archival policy for docs/handoffs (11MB/974 files), decisions/ (3.8MB), sessions/ — rotate >30d via janitor cron [~1-3k tok/day + caps growth]",
+        "owner": "developer",
+        "status": "REVIEW",
+        "type": "CLEAN",
+        "size": "S",
+        "priority": "P2",
+        "wave": 4,
+        "est_saving": "~1-3k tok/day + caps unbounded growth curve",
+        "zone": "cross-service/",
+        "sprint": "TOKEN-ECONOMY-AUDIT",
+        "depends": [],
+        "detail_ref": "docs/architecture-briefs/2026-07-12-token-economy-lazyload-audit.md#T-33",
+        "note": "3 write-heavy dirs grow unboundedly (707/974 handoffs >30d). Add monthly cold-archive sweep to code-janitor 6h cron (guard: 1st of month): mv >30d + no open task_board ref -> archive/YYYY-MM/. Rotate po-decisions.md at 200L. Update DJ-GATE-1 grep to exclude archive/. Mirrors existing orch archive/ precedent.",
+        "audit_ref": {
+          "audit": "ultracode-2026-07-12",
+          "verdict": "memory-docs-hygiene-P4 coordination",
+          "note": "TE-T33 decisions/ leg is SUPERSEDED by UC-MDH-P4 (decision-journal-archive.sh, longest-match closed-only). mtime>30d rotation must NOT be applied to decisions/ (would move open-sprint journals).",
+          "ref": "docs/architecture-briefs/2026-07-12-ultracode-workflow-improvement-audit.md#memory-docs-hygiene-P4"
+        },
+        "promoted_at": "2026-07-23T14:17:32Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
+        "updated_at": "2026-08-08T22:01:45Z",
+        "next_agent": "qa",
+        "branch": null,
+        "commit": "82a69523807289a00fc6c8edae6769201a914b78",
+        "files": [
+          "scripts/agents-flow/cold-archive-sweep.sh",
+          "scripts/agents-flow/cold-archive-sweep.test.sh",
+          "scripts/agents-flow/notebook-auto-prune.sh",
+          "docs/agents/code-janitor/flow/main.md",
+          "docs/agents/dev-team/flow/main.md",
+          "docs/policies/dev-standards.md",
+          "docs/WORK.md"
+        ],
+        "completed_at": "2026-07-23T14:37:14Z",
+        "completed_by": "developer",
+        "status_note": "TE-T33: new scripts/agents-flow/cold-archive-sweep.sh (monthly-guarded 1st-of-month, COLD_ARCHIVE_FORCE=1 override), idempotent. Handoffs leg: docs/handoffs/*.md >30d AND not referenced anywhere in the 5 OPEN task_board lanes (jq recursive scan, computed live) -> archive/YYYY-MM/ (live dry-check: 839 candidates, 27 referenced, 2 correctly held back). Sessions leg: non-.md files >30d -> archive/YYYY-MM/ (the .md leg is already owned by memory-prune-sweep.sh at 14d flat-archive -- verified live before coding, no overlap). po-decisions.md 200L rotation reuses notebook-auto-prune.sh drop-oldest-## algorithm via new opt-in NOTEBOOK_PRUNE_EXTRA_GOVERNED_PATH env guard (default empty = zero hot-path behavior change) -- no new prune scheme. Decisions/ archival leg dropped entirely: decision-journal-archive.sh (UC-MDH-P4, shipped same day) already supersedes it (status-based not mtime-based; board row audit_ref note + that script header both name TE-T33) -- confirmed not ambiguous before skipping. Fixed dev-team/main.md 2 unscoped DJ-GATE-1 grep comments (sprint-*-*.md -> sprint-${SPRINT_ID}-*.md, matching qa/pm already-correct canonical pattern -- verified those needed no change). Wired into code-janitor 6h cron flow. CANONICAL pointer added to dev-standards.md. cold-archive-sweep.test.sh 14/14 PASS incl. idempotent re-run + git-diff-quiet proof live po-decisions.md untouched; 3 sibling suites re-run after shared-hook edit, zero regression (7/7, 12/12, 26/26). Journal: sprint-TOKEN-ECONOMY-AUDIT-developer.md STEP developer-S13."
+      },
+      {
+        "id": "MD-FUNC-01-FIX",
+        "title": "Fix MD-FUNC-01: Does get_market_snapshot return VN-Index with price, change_pct, and direction fields",
+        "owner": "dev-mcp-server",
+        "status": "REVIEW",
+        "type": "fix",
+        "size": "S",
+        "priority": "normal",
+        "zone": "dev-mcp-server",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#MD-FUNC-01-FIX",
+        "promoted_at": "2026-07-23T14:49:01Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
+        "updated_at": "2026-08-08T22:01:45Z",
+        "next_agent": "qa",
+        "branch": null,
+        "commit": "2fb65b5bc1c75a2ac12bd2f11e4382799e021786",
+        "files": [
+          "docs/agent-memory/notebooks/dev-mcp-server.md",
+          "docs/agent-memory/decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-dev-mcp-server.md"
+        ],
+        "completed_at": "2026-07-23T15:03:44Z",
+        "completed_by": "dev-mcp-server",
+        "status_note": "MD-FUNC-01-FIX: verification-only, no code change needed. get_market_snapshot vn_index{price,change_pct,direction} struct already shipped 815ccaedd/ddc36452e (2026-06-16), predates running mcp-server image (built 2026-07-22) -- live in production. Root-cause check: price/change_pct read from fetchVnIndex(\"VNINDEX\") real VNDirect vnmarket_prices fetch; direction dynamically derived from changePct sign (not hardcoded). Live gateway verification (mcp-call.sh get_market_snapshot {}): vn_index:{price:1699.38, change_pct:1.85, direction:\"up\"} -- all 3 fields non-null, plausible vs same-payload breadth block (189 adv/122 dec). Targeted test 1982-quality-burndown-CHIJ.test.ts MD-FUNC-01 section 18/18 pass; market-tool-adjacent files 83/84 pass (1 pre-existing skip). bun tsc --noEmit clean. Full suite 14679 pass/40 skip/42 fail/1 error (1214 files) -- fail count matches documented 41-42 pre-existing baseline (_deprecated/logVpsPush/timeout classes), zero source files touched this task. Tool count 184 / cronJobCount 88 unaffected."
+      },
+      {
+        "id": "ALT-FUNC-02-FIX",
+        "title": "Fix ALT-FUNC-02: Does get_alert_accuracy return an accuracy rate between 0 and 1",
+        "owner": "dev-mcp-server",
+        "status": "REVIEW",
+        "type": "fix",
+        "size": "S",
+        "priority": "normal",
+        "zone": "dev-mcp-server",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#ALT-FUNC-02-FIX",
+        "promoted_at": "2026-07-23T15:27:04Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
+        "updated_at": "2026-08-08T22:01:45Z",
+        "next_agent": "qa",
+        "branch": null,
+        "commit": "6fed9dc8bcd21752729363d0fbcd97060592535a",
+        "files": [
+          "docs/agent-memory/notebooks/dev-mcp-server.md",
+          "docs/agent-memory/decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-dev-mcp-server.md"
+        ],
+        "completed_at": "2026-07-23T15:32:54Z",
+        "completed_by": "dev-mcp-server",
+        "status_note": "ALT-FUNC-02-FIX: verification-only, no code change needed. get_alert_accuracy top-level accuracy_rate:number|null already shipped 815ccaedd (2026-06-10T17:24Z, comment ALT-FUNC-02 FIX); null only when hits+misses===0 (insufficientSample data-gap case), tested (1982-quality-burndown-CHIJ.test.ts FIX-3, 3 cases). Backlog row created 2026-06-10T09:27Z -- ~8h BEFORE the fix landed -- a stale pre-fix snapshot BOUNDED-1 auto-picked 6 weeks later; docs/data/quality-checklist.json ALT-FUNC-02 already status=PASS since 2026-06-10T18:00Z citing the same commit. Live gateway verification (mcp-call.sh get_alert_accuracy {}): accuracy_rate:1, insufficientSample:false, scored_pct:19, total:628, hits:110, misses:0, unknowns:518 -- genuine 0..1 rate, AC satisfied live. Targeted tests 46/46 pass (1982-quality-burndown-CHIJ FIX-3 + 183-alert-accuracy + 1847d-D-alert-tools). bun tsc --noEmit clean. Tool count 184 / cronJobCount 88 unaffected (gen-project-stats probe). git status apps/mcp-server/ clean -- zero source files touched."
+      },
+      {
+        "id": "BCT-OBS-01-FIX",
+        "title": "Fix BCT-OBS-01: Does dataAuditDaily produce a data integrity report sent to WORK channel",
+        "owner": "dev-mcp-server",
+        "status": "REVIEW",
+        "type": "fix",
+        "size": "S",
+        "priority": "normal",
+        "zone": "dev-mcp-server",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#BCT-OBS-01-FIX",
+        "promoted_at": "2026-07-23T15:45:46Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
+        "updated_at": "2026-08-08T22:01:45Z",
+        "next_agent": "qa",
+        "branch": null,
+        "commit": "ccddb9ae6a299733bddb5280e44a4ef79b0d86bd",
+        "files": [
+          "docs/agent-memory/notebooks/dev-mcp-server.md",
+          "docs/agent-memory/decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-dev-mcp-server.md"
+        ],
+        "completed_at": "2026-07-23T15:57:00Z",
+        "completed_by": "dev-mcp-server",
+        "status_note": "BCT-OBS-01-FIX: verification-only, no code change needed. dataAuditDaily (runDailyAudit, apps/mcp-server/src/scheduler/news-analysis/dataAuditJob.ts) unconditionally writes system_logs(data-auditor)+audit_state, then maybeSendTelegram gates sendTelegramWork on hasIssues (any auto_cleaned>0 or flagged/escalated finding). Live-probed via direct container DB read (not self-report/checklist alone): cron_job_runs shows 4 consecutive real fires 07-19..07-22 (16:00 UTC = 23:00 GMT+7, matches CRONS.dataAuditDaily), all status=success; each wrote a system_logs row with nonzero cleaned+warnings (07-22: 6763/63; 07-21: 18516/63; 07-20: 3931/149; 07-19: 199747/227) -- hasIssues=true every run, so the WORK-channel send-gate fires daily. Live gateway call get_system_status (fresh this session, via scripts/agents-flow/mcp-call.sh) confirms TELEGRAM_BOT_TOKEN/TELEGRAM_INFO_WORK_CHANNEL_ID SET and TELEGRAM_ENABLED=true in the running container -- the exact preconditions sendTelegramWork/coreSend require. Source-read of infrastructure/notifiers/telegram.ts confirms sendTelegramWork has ZERO DB persistence by design (only sendTelegramBug->insertReport persists to telegram_reports; sendTelegramMarket->market_messages) -- so the checklist rows documented recheck_how (read_telegram_reports channel:work) can never observe a WORK send: independently confirms the checklist rows own \"original FAIL was wrong recheck_how\" annotation is correct, not stale. quality-checklist.json BCT-OBS-01 already status=PASS since 2026-06-10T18:00Z citing WORK-channel msg IDs 2743-2766 (a genuine historical live-Telegram observation, not DB-derivable). Unit coverage 157-data-audit-job.test.ts AC-6 (silent on clean DB) + AC-7 (sends when issues exist): 18/18 pass -- contract matches live DB evidence. bun tsc --noEmit clean. Tool count 184 / cronJobCount 88 unaffected (gen-project-stats probe). git status apps/mcp-server/ clean -- zero source files touched."
       }
     ],
     "qa": [
@@ -19323,13 +19313,13 @@
         "last_served_tick": "2026-08-08T21:22:23Z"
       },
       "qa_drain": {
-        "last_served_tick": "2026-08-08T15:28:29Z"
+        "last_served_tick": "2026-08-08T21:58:51Z"
       },
       "step1_triage": {
         "last_served_tick": "2026-08-08T15:54:20Z"
       }
     },
-    "_updated_at": "2026-08-08T21:53:30Z",
+    "_updated_at": "2026-08-08T21:58:51Z",
     "_updated_by": "dev-team",
     "pending_triage_inbox": [
       {
