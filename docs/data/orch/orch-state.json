@@ -134,8 +134,8 @@
     "does_not_consume_wip": true
   },
   "signal_queue": {
-    "_updated_at": "2026-08-08T23:22:07Z",
-    "_updated_by": "dev-team",
+    "_updated_at": "2026-08-08T23:36:16Z",
+    "_updated_by": "cowork-team",
     "archive": [],
     "rows": [
       {
@@ -788,6 +788,20 @@
         "payload_ref": null,
         "provenance": "detector",
         "audit_cycle_tag": "cron:auditor-t1:2026-08-08T23:00Z",
+        "dedup_key": "microservice_degraded:vn-market-intelligence-mcp-rag-service-1:A-30"
+      },
+      {
+        "id": "sys-20260808T233548-3486",
+        "ts": "2026-08-08T23:35:48Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "signal_feedback",
+        "summary": "A-30 WARN: vn-market-intelligence-mcp-rag-service-1 — memory sustained 93.85% (loss of reclamation)",
+        "severity": "WARN",
+        "status": "READ",
+        "payload_ref": null,
+        "provenance": "detector",
+        "audit_cycle_tag": "cron:auditor-t1:2026-08-08T23:30Z",
         "dedup_key": "microservice_degraded:vn-market-intelligence-mcp-rag-service-1:A-30"
       }
     ],
