@@ -95,10 +95,10 @@
   "head": {
     "status": "in_progress",
     "active_task_id": "UC-CCA-P3",
-    "next_agent": "ba",
-    "next_action": "Design-Router Sweep claim of UC-CCA-P3 — spawn ba DIRECTLY (no zone-detect indirection; lane already resolved at promote time). supervised/plan_only (if either was set) preserved — do not clear.",
-    "updated_at": "2026-08-08T14:26:20Z",
-    "updated_by": "dev-team (design-router sweep)"
+    "next_agent": "pm",
+    "next_action": "PM decomposing UC-CCA-P3 per architect brief docs/architecture-briefs/2026-08-08-uc-cca-p3-published-marker-gate-skill.md; B1 (single-wave vs deferred-sibling for FR-5) is PO-only, pm instructed to spawn po itself if needed rather than stall",
+    "updated_at": "2026-08-08T14:59:26Z",
+    "updated_by": "dev-team"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
