@@ -133,7 +133,7 @@
     "does_not_consume_wip": true
   },
   "signal_queue": {
-    "_updated_at": "2026-08-08T22:21:19Z",
+    "_updated_at": "2026-08-08T22:36:43Z",
     "_updated_by": "cowork-team",
     "archive": [],
     "rows": [
@@ -748,6 +748,45 @@
         "payload_ref": null,
         "provenance": "detector",
         "audit_cycle_tag": "cron:auditor-t1:2026-08-08T22:00Z",
+        "dedup_key": "microservice_degraded:rag-service:A-30"
+      },
+      {
+        "id": "cj-20260808T223309",
+        "ts": "2026-08-08T22:33:09Z",
+        "from": "code-janitor",
+        "to": "po",
+        "type": "system-issue",
+        "summary": "Doublon sweep: 0 escalations → 0 backlog tasks. Memory prune wrote 1 signal (team-tool-recheck writer dead since 06-23).",
+        "severity": "LOW",
+        "status": "READ",
+        "payload_ref": "docs/signals/janitor-health-recheck-writer-retired-2026-08-08.json"
+      },
+      {
+        "id": "sys-20260808T223434-2c1e",
+        "ts": "2026-08-08T22:34:34Z",
+        "from": "system-auditor",
+        "to": "dev-team",
+        "type": "db_integrity_breach",
+        "summary": "deep_fetch_stats: 0 rows. Schema exists (domain, date, fetch_count). Writer-provenance class=a (production writer: deepF",
+        "severity": "WARN",
+        "status": "NEW",
+        "payload_ref": "docs/data/db-integrity-history.json",
+        "provenance": "detector",
+        "audit_cycle_tag": null,
+        "dedup_key": null
+      },
+      {
+        "id": "sys-20260808T224058-0a62",
+        "ts": "2026-08-08T22:40:58Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "microservice_degraded",
+        "summary": "A-30 WARN: rag-service sustained high memory 93.82% — loss of reclamation",
+        "severity": "WARN",
+        "status": "NEW",
+        "payload_ref": null,
+        "provenance": "detector",
+        "audit_cycle_tag": "cron:auditor-t1:2026-08-08T22:40:00Z",
         "dedup_key": "microservice_degraded:rag-service:A-30"
       }
     ],
@@ -3180,26 +3219,6 @@
       }
     ],
     "backlog": [
-      {
-        "id": "TASK_RUNIDLE-1-AUDIT",
-        "type": "AUDIT",
-        "title": "Audit active_sprints accumulation: document missing closeout producer",
-        "status": "BACKLOG",
-        "priority": "high",
-        "size": "S",
-        "zone": "cross-service/dev-flow/",
-        "owner": "developer",
-        "next_agent": "developer",
-        "created_at": "2026-08-09T00:00:00Z",
-        "created_by": "pm/decompose-runidle-predicate-d-20260809T0000Z",
-        "depends_on": [],
-        "blocks": [
-          "TASK_RUNIDLE-2-REDESIGN",
-          "TASK_RUNIDLE-3-STALENESS"
-        ],
-        "supervised": false,
-        "updated_at": "2026-08-08T22:30:21Z"
-      },
       {
         "id": "TASK_RUNIDLE-2-REDESIGN",
         "type": "FIX",
@@ -19180,6 +19199,28 @@
         "completed_at": "2026-07-23T15:57:00Z",
         "completed_by": "dev-mcp-server",
         "status_note": "BCT-OBS-01-FIX: verification-only, no code change needed. dataAuditDaily (runDailyAudit, apps/mcp-server/src/scheduler/news-analysis/dataAuditJob.ts) unconditionally writes system_logs(data-auditor)+audit_state, then maybeSendTelegram gates sendTelegramWork on hasIssues (any auto_cleaned>0 or flagged/escalated finding). Live-probed via direct container DB read (not self-report/checklist alone): cron_job_runs shows 4 consecutive real fires 07-19..07-22 (16:00 UTC = 23:00 GMT+7, matches CRONS.dataAuditDaily), all status=success; each wrote a system_logs row with nonzero cleaned+warnings (07-22: 6763/63; 07-21: 18516/63; 07-20: 3931/149; 07-19: 199747/227) -- hasIssues=true every run, so the WORK-channel send-gate fires daily. Live gateway call get_system_status (fresh this session, via scripts/agents-flow/mcp-call.sh) confirms TELEGRAM_BOT_TOKEN/TELEGRAM_INFO_WORK_CHANNEL_ID SET and TELEGRAM_ENABLED=true in the running container -- the exact preconditions sendTelegramWork/coreSend require. Source-read of infrastructure/notifiers/telegram.ts confirms sendTelegramWork has ZERO DB persistence by design (only sendTelegramBug->insertReport persists to telegram_reports; sendTelegramMarket->market_messages) -- so the checklist rows documented recheck_how (read_telegram_reports channel:work) can never observe a WORK send: independently confirms the checklist rows own \"original FAIL was wrong recheck_how\" annotation is correct, not stale. quality-checklist.json BCT-OBS-01 already status=PASS since 2026-06-10T18:00Z citing WORK-channel msg IDs 2743-2766 (a genuine historical live-Telegram observation, not DB-derivable). Unit coverage 157-data-audit-job.test.ts AC-6 (silent on clean DB) + AC-7 (sends when issues exist): 18/18 pass -- contract matches live DB evidence. bun tsc --noEmit clean. Tool count 184 / cronJobCount 88 unaffected (gen-project-stats probe). git status apps/mcp-server/ clean -- zero source files touched."
+      },
+      {
+        "id": "TASK_RUNIDLE-1-AUDIT",
+        "type": "AUDIT",
+        "title": "Audit active_sprints accumulation: document missing closeout producer",
+        "status": "REVIEW",
+        "priority": "high",
+        "size": "S",
+        "zone": "cross-service/dev-flow/",
+        "owner": "developer",
+        "next_agent": "qa",
+        "created_at": "2026-08-09T00:00:00Z",
+        "created_by": "pm/decompose-runidle-predicate-d-20260809T0000Z",
+        "depends_on": [],
+        "blocks": [
+          "TASK_RUNIDLE-2-REDESIGN",
+          "TASK_RUNIDLE-3-STALENESS"
+        ],
+        "supervised": false,
+        "updated_at": "2026-08-08T22:43:42Z",
+        "updated_by": "developer",
+        "deliverable": "docs/architecture-briefs/2026-08-09-active-sprints-accumulator-gap.md"
       }
     ],
     "qa": [
