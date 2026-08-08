@@ -5883,6 +5883,37 @@
       "status_note": "[QA] Review Record (direct-commit verify, dev-team Review-Lane QA-Drain) 2026-08-08T17:35:26Z — commit 0308514f5 confirmed real main ancestor (merge-base --is-ancestor); git show --stat matches embedder.py/app_factory.py/config.py exactly. depends_on OPS-RAG-SERVICE-REBUILD-STALE-IMAGE-PREDATES-IDLE-UNLOAD-FIX independently re-confirmed DONE_VERIFIED (Branch B per po_ac3_adjudication_20260808T0820Z: unload log line present in production, no meaningful reclamation dip -- allocator page-return is a SEPARATE new backlog row FIX-RAG-EMBEDDER-IDLE-UNLOAD-ALLOCATOR-PAGES-NOT-RETURNED-TO-OS, confirmed already minted -- this row is ruled code-correct under Branch B, only Branch D would fail it). RAW-read all 3 prod diffs myself: _maybe_unload_idle() reuses the SAME _load_lock double-check pattern as _ensure_model_loaded(); _raw_embed() stamps _last_used_monotonic; _idle_unload_loop() duck-types (permanent no-op for sandbox fakes, zero determinism impact); Config.embedder_idle_unload_minutes reads EMBEDDER_IDLE_UNLOAD_MINUTES env, default 15, never hardcoded. Re-ran RAW: test_embedder_idle_unload.py 12/12 pass; full rag-service pytest suite 175/175 pass (matches dev claim exactly). mypy on the 3 changed files: 20 errors, cross-checked via isolated git worktree at parent commit (not a stash on shared main) -- byte-identical error set/classes, only line-shifted, 0 new errors introduced. mock-guard.sh PASS; DDD/secret greps clean. sandbox primitive 16/16 + module 2/2 both exit 0. CI size-lint debt this commit created (po_triage_note point B) already independently resolved by 2 separate DONE_VERIFIED rows (99ed7c8b0/b85b524f1, comment-only headers, landed 2026-08-07) -- confirmed rag-service absent from current size-lint-justification.sh --check offender list. Docker Close Gate: live docker inspect confirms running image sha256:12a7bc89... created 2026-08-08T08:10:53Z (postdates fix commit + both size-lint follow-ups), RestartCount=0 -- code genuinely running in production; no second rebuild performed (PO hard constraint honored). VERDICT: APPROVED, DONE_VERIFIED. Row scope (idle-unload timer, warm->cold flip without 503, transparent reload) fully independently verified; live-reclamation-magnitude question correctly routed to the new allocator row per Branch B, not returned here as a defect.",
       "qa_verified_at": "2026-08-08T17:35:26Z",
       "qa_verified_by": "qa"
+    },
+    {
+      "id": "FIX-COLDEVICT-TERMINAL-SIGNAL-STATUSES-OMITS-TRIAGED-RETRACTED",
+      "type": "FIX",
+      "size": "XS",
+      "status": "DONE_VERIFIED",
+      "priority": "P1",
+      "zone": "scripts/",
+      "next_agent": "qa",
+      "owner": "developer",
+      "supervised": false,
+      "plan_only": false,
+      "depends": [],
+      "title": "orch-cold-evict.sh TERMINAL_SIGNAL_STATUSES omits triaged/TRIAGED/RETRACTED -> 226 of 247 signal_queue rows stuck forever, 200-row cap BREACHED live",
+      "note": "PRE-DIAGNOSED, zero design cost. .claude/skills/signal-dashboard/SKILL.md L83 already states this verbatim as a KNOWN GAP needing 'a follow-up code fix (developer, scripts/orch-cold-evict.sh)'. MEASURED 2026-08-08T18:0xZ: 247 rows in .signal_queue.rows[] vs the skill's own documented 200-row cap (L105) = invariant BREACHED. Status histogram: triaged 219, READ 20, RETRACTED 4, TRIAGED 3, NEW 1. Default at scripts/orch-cold-evict.sh:132 is READ,RESOLVED,SUPERSEDED,ACUTE-RESOLVED-ROOT-TRACKED. AC-1: add triaged, TRIAGED, RETRACTED to the default (matching is EXACT-string, no case fold - see L495 - so BOTH cases are required, the skill's own note only names the lowercase one). AC-2: sync the PRUNE criteria line in .claude/skills/signal-dashboard/SKILL.md L91 (still says READ/RESOLVED/SUPERSEDED only). AC-3: 24h SIGNAL_MAX_AGE_HOURS age gate stays untouched - it is the FIX-COLDEVICT-SIGNALQUEUE-NO-AGE-GATE guard. AC-4: dry-run first, confirm eviction count, rows go to cold archive not deletion. SAFETY: 'triaged' is a PO-terminal disposition per docs/agents/po/flow/main.md, so this evicts dispositioned rows only, never an unread po escalation.",
+      "created_at": "2026-08-08T18:08:16Z",
+      "created_by": "po (SYSREMAKE-8RC-RECHECK triage)",
+      "origin_signal_id": "orc-20260808T175614",
+      "updated_at": "2026-08-08T18:34:30Z",
+      "updated_by": "qa",
+      "commit_sha": "42e7c6048",
+      "review_note": "AC-1: TERMINAL_SIGNAL_STATUSES default now admits triaged/TRIAGED/RETRACTED (literal entries, exact-string match preserved, no case-fold). AC-2: signal-dashboard SKILL.md PRUNE criteria synced (also picked up the pre-existing missing ACUTE-RESOLVED-ROOT-TRACKED entry) + KNOWN GAP note closed. AC-3: SIGNAL_MAX_AGE_HOURS age gate untouched. AC-4: dry-run run first (217 rows would evict), then verified via new T11 (orch-cold-evict-tests.sh, RED via git-stash then GREEN) -- 59/59 total, orch-apply-wrapper-tests.sh 75/75 no regression, shellcheck -x clean. Live board not yet evicted by this task (script fix only, no live cold-evict run performed as part of this dev task -- eviction happens via its normal scheduled/manual invocation).",
+      "status_note": "[QA] Review Record (direct-commit verify) 2026-08-08T18:34:22Z — [QA] Review Record (direct-commit verify): APPROVED. Independently re-ran orch-cold-evict-tests.sh 59/59 (incl new T11). orch-apply-wrapper-tests.sh showed 3 unrelated pre-existing failures (CONSERVATION setup + APPEND-HAPPY x2) traced to an in-flight UNCOMMITTED peer WIP schema change in apps/mcp-server/src/infrastructure/orchStateSchema.ts (new RC-VERIF raw_probe gate) -- confirmed via git show HEAD:orchStateSchema.ts has 0 raw_probe refs (committed schema untouched by this task, dirty working copy has 10) -- unrelated to this diff, not a regression. shellcheck -x clean on scripts/orch-cold-evict.sh + orch-cold-evict-tests.sh. AC-1 age gate SIGNAL_MAX_AGE_HOURS confirmed genuinely untouched (still ANDed with status predicate, orch-cold-evict.sh:534-535); live-verified all 10 remaining triaged rows <24h old (oldest ts=2026-08-07T22:34:08Z), correctly held back. AC-1 match confirmed exact-string no case-fold (no ascii_downcase/gsub near predicate). AC-2 skill-doc PRUNE criteria line confirmed byte-identical to script default, no new drift. Live production evidence independently confirmed: signal_queue.rows now 31 (21 READ+10 triaged), matches dev claim exactly; eviction commit d1ba52d18 confirmed sequenced after 42e7c6048 and is a separate scheduled/peer commit (no Task: trailer), not part of this dev task chain, consistent with review_note claim. DDD/security N/A (bash-only, no domain/infra layer, no process.env/secrets). mock-guard N/A (no TS production files touched). Journal entry confirmed present (DJ-GATE-1 satisfied, sprint-COWORK-GUARANTEED-SLOT-CATCHUP-developer-5.md).",
+      "verification": {
+        "raw_probe": {
+          "tool": "jq",
+          "args": ".signal_queue.rows | length, ([.[]|.status] | group_by(.) | map({k:.[0],n:length})) applied to docs/data/orch/orch-state.json (live, post-eviction-commit d1ba52d18)",
+          "live_value_observed": "31 rows total = 21 READ + 10 triaged; all 10 remaining triaged rows ts <24h old (oldest 2026-08-07T22:34:08Z vs now 2026-08-08T18:29Z) -- correctly held back by unmodified SIGNAL_MAX_AGE_HOURS=24 age gate; 220 triaged/4 RETRACTED/3 TRIAGED rows present pre-fix (248 total) confirmed evicted",
+          "observed_at": "2026-08-08T18:34:22Z"
+        }
+      }
     }
   ],
   "closed_sprints": [],
