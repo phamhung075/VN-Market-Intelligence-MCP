@@ -605,6 +605,20 @@
         "provenance": "router",
         "audit_cycle_tag": "dev-team-tick:2026-08-08T19:37Z",
         "dedup_key": "process_gap:FIX-MCP-SSE-SESSION-MANAGER-PERCONN-LEAK-NO-REAPER:soak-clock-reset-shared-container"
+      },
+      {
+        "id": "sys-20260808T201216-7780",
+        "ts": "2026-08-08T20:12:16Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "microservice_degraded",
+        "summary": "rag-service A-30 WARN: sustained >93% memory (97.50%) — loss of reclamation",
+        "severity": "WARN",
+        "status": "NEW",
+        "payload_ref": null,
+        "provenance": "detector",
+        "audit_cycle_tag": "cron:auditor-t1:2026-08-08T20:00Z",
+        "dedup_key": "microservice_degraded:vn-market-intelligence-mcp-rag-service-1:A-30"
       }
     ],
     "last_triaged_at": "2026-07-29T06:25:00Z",

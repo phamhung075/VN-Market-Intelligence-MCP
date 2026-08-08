@@ -2,6 +2,22 @@
 
 Tier-1/2/3 audit runs; newest-first; max 200L total, max 60L per section.
 
+## c381 · 2026-08-08T20:12Z
+
+### Audit Run Tier-1 (20:08–20:12 UTC 2026-08-08)
+- Tier: 1 | Services: 13 host_runtime_set checked | Health: 5 probed
+- Anomalies: 1 SKIP-dedup (A-30 rag-service-1 SUSTAINED — pattern now 3+ hours) | Status: DEGRADED
+- **rag-service-1 A-30 Memory Pressure (SUSTAINED SUSTAINED — CHRONIC ESCALATION REQUIRED):**
+  - Baseline: 97.50% ≥ 85% investigate-gate → ENGAGE deep-probe
+  - Deep-probe 6 samples over 65s: ALL exactly 97.50% (min 97.50%, median 97.50%, max 97.50%) — FLAT-LINE
+  - Verdict: ESCALATE "loss of reclamation" (0 dips, 0 discontinuities, all 100% sustained)
+  - State: OOMKilled=false, restarts=0, state_changed=false, VmHWM=UNAVAILABLE (host-floor-check skip)
+  - Emission: [emit-signal] SKIP-dedup sys-20260808T201216-7780 (WARN, last reported @17:38:48Z)
+  - [emit-dashboard] OK id=sys-20260808T201216-7780 check_id=A-30 (DASHBOARD row appended despite dedup)
+  - CRITICAL CONTEXT: Container has been at 97.50% for entire probe window (65s span) — ZERO recovery opportunity observed. Previous probe c380 @19:33:39Z showed 97.41% (same pattern, 40min prior). Memory floor breach confirmed (@18:05:32Z c378: 2.9MiB vs 40MiB floor). This is NOT transient GC jitter; this is sustained pressure with architectural implications. FU-RAG-DEPLOY-MEMORY fix marked DONE_VERIFIED @10:59:52Z but pattern persists and worsens. RECOMMEND: (a) immediate ops investigation into rag-service load/leaks, (b) escalate to PO as PRIORITY if no fix in flight, (c) consider temporary memory cap increase as emergency mitigation pending root-cause fix.
+- **mcp-server-1 A-30:** Baseline 12.51% < 85% gate → SKIP
+- A-20 pdf-extractor: 3/3 PASS | A-21 crashes: 0 PASS | Disk: 47% PASS
+- [OUTPUT-CONTRACT] signals_posted=1 | telegram_sent=0 | signal_queue_rows_written=1 | dashboard_rows=1 | dedup_skipped=1
 ## c380 · 2026-08-08T19:33:39Z
 
 ### Audit Run Tier-1 (19:30–19:35 UTC 2026-08-08)
