@@ -130,3 +130,38 @@ task's own deliverable doc).
   this correction work (same PO guardrail 1 as round 0).
 - **Board:** `TASK_RUNIDLE-1-AUDIT` moved back to `review[]`, `next_agent=qa` via `orch-apply.sh` —
   not self-approved past QA.
+
+## [QA] Review Record — 2026-08-09T00:30:00Z — APPROVED (round-1 re-review)
+
+Did not trust developer's self-report. Re-resolved all 17 GAP-2 `subtasks[]` ids independently via
+fresh `jq` against LIVE `docs/data/orch/orch-state.json` this cycle: `SPRINT-CCATO-TRUTHGATE-MCP-NATIVE`
+— `T1`/`T2`/`T4` = not found on any flat lane (`backlog/ready/in_progress/review/qa/done/done_verified/
+blocked`, also checked `docs/data/orch/archive/*.json` and `closed_sprints[]` — no board-row hits,
+only unrelated prose mentions of the bare id string), `T3`/`T5`/`T6`/`T7`/`T8` = live `ready[]`
+status READY, `next_agent=dev-mcp-server` (5 dispatchable, matches claim exactly).
+`SYSREMAKE-P2-STRUCTURAL-REMAKE-ROUTE` — `T1`/`T2` = `done_verified[]` with `updated_at`
+`2026-08-08T18:43:08Z`/`2026-08-08T19:01:23Z` and `commit_sha: ad6e422e9` on both (byte-exact match
+to the brief's cited dates/sha), `T3`-`T9` = live `ready[]` status READY (7 dispatchable, matches
+claim exactly).
+
+Byte-diffed §2/§3/§5.1/§6 between commit `7e253e0f0` (round-0) and `541282b0f` (round-1) via
+anchor-scoped extraction (`awk '/^## N\./{f=1} .../{f=0} f'` + `diff`) — all four confirmed
+byte-identical, zero drift. Only §1's exec-summary GAP-2 bullet, §4's two GAP-2 table rows +
+Notes bullets, §5.2, §7, and §8 were touched — matches developer's claimed edit scope exactly;
+§4's 6 non-GAP-2 table rows unchanged in diff context (verified via `git diff`). New §4/§5.2
+content spot-checked against my own live jq re-derivation — numbers, dates, and commit shas match.
+
+Board-row diff (`git diff 7e253e0f0 541282b0f -- docs/data/orch/orch-state.json`) confirms a clean
+move: `TASK_RUNIDLE-1-AUDIT` left `backlog[]` (was `status:BACKLOG`, `next_agent:developer`) and now
+sits in `review[]` (`status:REVIEW`, `next_agent:qa`, `updated_by:developer/round-1-fix`) — no
+unrelated board mutation beyond ordinary concurrent peer churn (`.head`, `signal_queue`, idle-chain
+rotation timestamps — all unrelated to this row). No new `active_sprints[]`/`sprint_goal.entries[]`
+entry minted, confirmed via full-doc diff scan (only the churn listed above plus this row's own
+lane-move appear).
+
+**Verdict: no residual factual error found.** Round-1 correction is accurate on independent
+re-verification. Moving `TASK_RUNIDLE-1-AUDIT` → `done[]`, unblocking `TASK_RUNIDLE-2-REDESIGN` /
+`TASK_RUNIDLE-3-STALENESS` (both `depends_on` this row).
+
+verdict: APPROVED
+round: 1
