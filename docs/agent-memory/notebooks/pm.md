@@ -1,89 +1,96 @@
 # PM — Notebook
 
-## c333 FIX-COWORK-SIGNAL-FILENAME-CYCLEID-KEYING · Phase-1 Decomposition + PO Amendments · 2026-08-07T06:00Z
+## c335 FIX-RUNIDLE-PREDICATE-D-ACTIVE-SPRINTS-PERMANENT-FLOOR · Root-Cause Confirmed, Decomposed to 5 Atomic Tasks · 2026-08-09T00:00Z
 
-**MANDATE:** Decompose architect brief (7 FR/NFR, 3 EC) into atomic dev tasks, incorporating 3 binding PO amendments:
-  - **Amendment 1 (FR-4 DESCOPE):** tran-ngoc-bau write-serialization descoped (folded onto GUARD-NOTEBOOK-CONCURRENT-EDIT-COLLISION-DATA-LOSS)
-  - **Amendment 2 (EC-2 FOLLOWON):** chef-intraday UTC-hour migration descoped as separate row (FIX-CHEF-INTRADAY-MARKER-KEY-UTC-HOUR-BASIS-MIGRATION, BLOCKED, minted by PO this tick)
-  - **Amendment 3 (FR-1 CORRECTION):** WINDOW_KEY fallback branch 2 corrected — select nearest CRON_HOUR:00Z to live_mcp_fetched_at (not today's UTC date + cron hour), 2 new unit test cases mandated
+**MANDATE (from po, session bc8e264c):** Decompose and dispatch the task FIX-RUNIDLE-PREDICATE-D-ACTIVE-SPRINTS-PERMANENT-FLOOR. Root cause already confirmed by po via live hand-run of predicates. Task exists because RC-IDLE-LOOPS shipped (5/5 tasks DONE_VERIFIED) but its AC-3 empirical criterion was never re-measured — the idle guard is dead on arrival due to structural unreachability of predicate (d).
 
-**PRE-CONDITIONS VERIFIED:**
-- Architect design READY_FOR_PM: docs/architecture-briefs/2026-08-07-cowork-signal-filename-cycleid-keying.md (10 sections, verified live source refs)
-- BA spec READY_FOR_PM: docs/handoffs/FIX-COWORK-SIGNAL-FILENAME-CYCLEID-KEYING-BA-spec.md (po_goahead 2026-08-07T04:41:31Z)
-- PO amendments BINDING: po_architect_signoff_20260807T0545 field in parent row (3 amendments, all acceptance-bearing)
-- Parent row status: in_progress[next_agent=pm, plan_only=true, supervised=true]
+**ROOT CAUSE (verified live 2026-08-08T22:15Z):**
+- RC-IDLE-LOOPS shipped with predicate (d): "active_sprints == 0"
+- active_sprints[] is an accumulator with NO closeout producer
+- Live state: 8 entries, all status=ACTIVE, 2 stale (2026-07-17, >3 weeks)
+- Predicate (d) has never been true, so RUN-IDLE has never fired
+- Consequence: drain-signal commits rose from 18-49/day (mid-July) to 25-65/day (this week), unmitigated
 
-**DECOMPOSITION APPLIED (4 atomic tasks):**
+**PO GUIDANCE (binding constraints):**
+1. Do NOT create a new active_sprints[] entry to track this task's work (guardrail 1) → tasks placed in backlog, not sprint
+2. Run SPIKE-SATURATED-COUNT-THRESHOLD-GATES-SWEEP first to contextualize this as instance of that class → task notes this dependency
 
-1. **TASK-COWORK-SIGNAL-DERIVE-WINDOWKEY** (Size S, ~1.5h)
-   - Shared pure function `derive_window_key(prompt_text, slot_id, cowork_schedule_json, live_mcp_fetched_at)`
-   - 3 branches: scheduled_utc (Phase 2), slot→cron fallback (ACTIVE day 1, Amendment 3 corrected), ad-hoc
-   - **Amendment 3 binding:** Branch 2 implements nearest-CRON_HOUR:00Z logic; 4 unit test cases per spec
-   - No Bash dependencies (NFR-2), single-derivation per cycle (NFR-3)
-   - Blocked_by: none; Blocks: TASK-002, TASK-003
+**DECOMPOSITION APPLIED (5 atomic tasks, all backlog-tracked):**
 
-2. **TASK-COWORK-SIGNAL-BCTC-REKEY** (Size M, ~2h)
-   - Files: cycle.md (Step 0c), stage-analyze.md (line 114 + FR-7), stage-consolidate.md (line 64), stage-log-notify.md (§5d-1)
-   - Rekey filename `{YYYYMMDD}` → `{WINDOW_KEY}` (FR-2)
-   - Pin WINDOW_KEY at Step 0c before signal write (FR-2 sequencing)
-   - Add explicit routine-mode emit line (FR-7, doc-debt)
-   - Correct cross-reference in stage-consolidate.md (doc-debt)
-   - Blocked_by: TASK-001; Blocks: TASK-004
+1. **TASK_RUNIDLE-1-AUDIT** (Zone: cross-service/dev-flow/, Size S, ~1.5h)
+   - Map all writers to active_sprints[]
+   - Document where sprints SHOULD close (po/sprint-signoff.md flow)
+   - Audit current state: list all 8 sprints with id/status/updated_at/age/task_count
+   - Identify structural gap: what close-producer is missing
+   - Deliverable: docs/architecture-briefs/2026-08-09-active-sprints-accumulator-gap.md
+   - Blocks: TASK_RUNIDLE-2, TASK_RUNIDLE-3
 
-3. **TASK-COWORK-SIGNAL-CHEF-INTRADAY** (Size S, ~1h)
-   - Files: chef-dish.md (Step 7.6), chef.md (Step 0.5 cross-ref only)
-   - Intraday filename extension: add `-{VN_HOUR}` (FR-3, Phase 1 only; single-fire slots untouched)
-   - HOUR_COMPONENT sourced from existing VN_HOUR (NFR-3 invariant with mutex key)
-   - Explicit non-promotion of cycle_id (binding caution, PO 2026-07-22)
-   - EC-2 timezone-basis hazard documented (Phase 2 follow-on, depends_on FIX-CHEF-MARKER-KEY-WINDOW-ANCHOR)
-   - Blocked_by: TASK-001; Blocks: TASK-004
+2. **TASK_RUNIDLE-2-REDESIGN** (Zone: cross-service/dev-flow-scripts/, Size M, ~2h)
+   - Refactor _step5_idle_check() predicate (d) in scripts/agents-flow/dev-team-tick-preflight.sh (L338-392)
+   - New logic: return true if ALL active_sprints have zero READY/IN_PROGRESS tasks
+   - Add helper: identify "dispatchable work" in a sprint
+   - Test: verify script works on mixed boards (active+idle sprints)
+   - Depends: TASK_RUNIDLE-1
+   - Blocks: TASK_RUNIDLE-4
 
-4. **TASK-COWORK-SIGNAL-NAMING-CONTRACT** (Size XS, ~30 min)
-   - Files: mcp-tools.md (Naming Contract subsection, FR-5), drain-signals.md (one-liner, FR-6)
-   - New subsection documenting ticker-keyed (bctc_signal_*) and dish-keyed (unified-agent-synthesis-*) families
-   - Content verbatim from architect brief §6 (NFR-3 and NFR-5 guidance included)
-   - drain-signals.js: no code change (NFR-4 closure by construction)
-   - Blocked_by: TASK-002, TASK-003; Blocks: none
+3. **TASK_RUNIDLE-3-STALENESS** (Zone: cross-service/dev-flow-scripts/, Size M, ~2h)
+   - Implement staleness filter: sprint with updated_at > 7 days old AND zero dispatchable children
+   - Create helper: skip_stale_childless_sprints()
+   - Handle malformed timestamps gracefully (e.g., '2026-07-17T04:53:14ZZ' double-Z)
+   - Integrate into predicate (d) so stale/childless sprints don't block idle
+   - Depends: TASK_RUNIDLE-1
+   - Blocks: TASK_RUNIDLE-4
+
+4. **TASK_RUNIDLE-4-TEST** (Zone: cross-service/dev-flow-tests/, Size S, ~1.5h)
+   - Write regression test case: "active_sprints non-empty but every member stale/childless → RUN-IDLE fires"
+   - Fulfills AC-2 from RC-IDLE-LOOPS (that was never written)
+   - Mock board: 8 sprints, all stale/childless, all other predicates true
+   - Assert: _step5_idle_check() returns RUN-IDLE verdict
+   - Assert: consecutive_run_idle counter increments
+   - Depends: TASK_RUNIDLE-2, TASK_RUNIDLE-3
+
+5. **TASK_RUNIDLE-5-VERIFY** (Zone: cross-service/observability/, Size S, ~1h)
+   - After tasks 2-4 land: wait for next quiet dev-team tick
+   - Observe docs/data/dev-team-idle-widen-state.json, verify consecutive_run_idle > 0 (was always 0)
+   - Schedule 7-day review: measure git log --grep='chore(signals): drain' daily count
+   - Verify count drops below 25-65/day band (pre-fix baseline 08-05..08-08)
+   - Fulfills AC-3 from RC-IDLE-LOOPS (that was never re-measured)
+   - Depends: TASK_RUNIDLE-2, TASK_RUNIDLE-3, TASK_RUNIDLE-4
 
 **BOARD MUTATIONS APPLIED:**
-1. Updated parent row FIX-COWORK-SIGNAL-FILENAME-CYCLEID-KEYING: status=in_progress→BLOCKED, next_agent=pm→po, added decomposed_tasks array and decomposition_note
-2. Added 4 new tasks to backlog (TASK-COWORK-SIGNAL-DERIVE-WINDOWKEY..NAMING-CONTRACT), all:
-   - status=BACKLOG (correct lane for these decomposed subtasks)
-   - plan_only=true, supervised=true (inherit parent's flags; no code ships without PO re-adjudication)
-   - priority=P1, sprint=COWORK-RELIABILITY
-   - owner=unassigned, next_agent=developer (routed by PM/PO before dispatch)
-   - ba_handoff fields populated with docs/handoffs/TASK-*.md paths
+1. Parent row FIX-RUNIDLE-PREDICATE-D-ACTIVE-SPRINTS-PERMANENT-FLOOR: status=BACKLOG (unchanged), added decomposed_tasks array with all 5 task ids
+2. Added 5 new tasks to backlog (TASK_RUNIDLE-1..5):
+   - all status=BACKLOG
+   - priority=high (inherited from parent)
+   - owner=developer, next_agent=developer (routed by zone specialists)
+   - depends_on/blocks chains set per decomposition
+   - created_by=pm/decompose-runidle-predicate-d-20260809T0000Z
 
-**HANDOFF FILES CREATED (4 total):**
-- docs/handoffs/TASK-COWORK-SIGNAL-DERIVE-WINDOWKEY.md (detailed AC, 4 unit test cases per Amendment 3, NFR compliance notes)
-- docs/handoffs/TASK-COWORK-SIGNAL-BCTC-REKEY.md (6 AC, 4 files, test strategy, dependency notes)
-- docs/handoffs/TASK-COWORK-SIGNAL-CHEF-INTRADAY.md (5 AC, cycle_id non-promotion, EC-2 hazard doc)
-- docs/handoffs/TASK-COWORK-SIGNAL-NAMING-CONTRACT.md (4 AC, FR-5/FR-6, no-code-change verification)
-
-**AMENDMENT INCORPORATION VERIFICATION:**
-- **Amendment 1 (FR-4 DESCOPE):** Zero tnb files touched across all 4 tasks; FR-4 mechanism owned by separate rows (GUARD-NOTEBOOK-*, FIX-NOTEBOOK-WRITE-*, FIX-NOTEBOOK-WRITE-AC7-SKILL). ✓
-- **Amendment 2 (EC-2 FOLLOWON):** Phase 1 ships VN_HOUR verbatim (no UTC basis migration in TASK-003); EC-2 hazard documented for Phase 2 follow-on (separate row FIX-CHEF-INTRADAY-MARKER-KEY-UTC-HOUR-BASIS-MIGRATION already minted, status=BLOCKED, depends_on=FIX-CHEF-MARKER-KEY-WINDOW-ANCHOR). ✓
-- **Amendment 3 (FR-1 CORRECTION):** TASK-001 implements nearest-CRON_HOUR:00Z selection logic; 4 mandatory unit test cases added (slot-4 early fire D 23:57Z→(D+1)T0000Z, slot-3 late fire (D+1) 08:00Z→(D)T2100Z, ad-hoc, same-hour exact). ✓
+**HANDOFF FILES CREATED (5 total):**
+- docs/handoffs/TASK_RUNIDLE-1-AUDIT.md (audit scope, mapping, findings template)
+- docs/handoffs/TASK_RUNIDLE-2-REDESIGN.md (predicate logic, test strategy, helper design)
+- docs/handoffs/TASK_RUNIDLE-3-STALENESS.md (staleness thresholds, childlessness definition, filter integration)
+- docs/handoffs/TASK_RUNIDLE-4-TEST.md (test scaffold, AC assertions, discovery pattern)
+- docs/handoffs/TASK_RUNIDLE-5-VERIFY.md (verification measurement plan, success criteria, post-landing schedule)
 
 **VERIFICATION:**
-- orch-apply.sh: Stage 0+1 PASS, conservation check PASSED (task_total: 769→773, signal_total: 218 stable), atomic rename applied ✓
-- Post-apply jq confirms: parent row status=BLOCKED/next_agent=po, 4 child tasks added to backlog with correct status/sprint/flags ✓
-- Handoff files staged in docs/handoffs/ (4 files copied and verified) ✓
-
-**BOARD STATE AFTER:**
-- in_progress: parent FIX-COWORK-SIGNAL-FILENAME-CYCLEID-KEYING now BLOCKED (was IN_PROGRESS), next_agent=po (awaiting re-adjudication)
-- backlog: +4 new tasks (TASK-COWORK-SIGNAL-*), all status=BACKLOG, plan_only/supervised inherited
-- WIP usage: unchanged (parent is now BLOCKED, not in-progress; no new active work queued)
-
-**NEXT STEPS:**
-1. **PO review cycle (mandatory):** Verify amendment incorporation, approve decomposition plan, clear plan_only/supervised flags (or deny and route back to architect)
-2. **Developer dispatch (conditional on PO approval):** Router routes TASK-001 first (no dependencies), then TASK-002/TASK-003 in parallel (both depend on TASK-001), then TASK-004 (depends on 002+003)
-3. **Expected duration (serial critical path if single developer):** ~4-5h total (~1.5h + 2h + 0.5h, with TASK-003 in parallel)
+- orch-apply.sh: Stage 0+1 PASS, conservation check PASSED (task_total: 755→760, signal_total: 38 stable), atomic rename applied ✓
+- Post-apply jq confirms: all 5 tasks added to backlog with correct status/priority/zone/depends_on ✓
+- Handoff files staged in docs/handoffs/ (5 files created and committed) ✓
+- git commit: chore(pm/RUNIDLE-DECOMP) — 6 files changed, 408 insertions ✓
 
 **DECISION JOURNAL:**
-- Amendment 1 rationale: FR-4 mechanism (write-serialization on tnb notebook) is already owned by 3 separate rows (GUARD-NOTEBOOK-*, FIX-NOTEBOOK-WRITE-*); commissioning it here would duplicate design + create coordination overhead. Correct disposition: fold, don't re-design.
-- Amendment 2 rationale: EC-2 (UTC-hour migration) reopens scope that FIX-CHEF-MARKER-KEY-WINDOW-ANCHOR explicitly excluded; Phase 2 follow-on is the structurally correct place (once scheduled_utc_time reaches live-match path). Blocking producer was the missing link (PO minted it this tick).
-- Amendment 3 rationale (FR-1 correction): Architect brief's fallback branch 2 had a latent defect (today's UTC date + cron hour unconditionally). Nearest-window selection is the deterministic rule that works for both early-fire (bctc slot-4 cron=00:00Z at 23:57Z prev day) and late-fire (slot-3 cron=21:00Z at 08:00Z next day) cases.
+- **Task decomposition rationale:** Root cause is structural (predicate (d) is unreachable due to no closeout producer). Fix has two parts: (1) redesign predicate logic to be meaningful (check dispatchable work not array length), (2) filter out stale sprints so predicate doesn't wait forever for a missing closeout. Task 1 (audit) unblocks tasks 2-3 in parallel because they both need to understand the current state. Tasks 2-3 are independent and can run in parallel; both feed into task 4 (test). Task 5 is post-landing verification, can start after 2-3-4 ship.
+- **Guardrail 1 compliance:** No new active_sprints[] row created. All 5 tasks backlog-tracked, will be dispatch-routed to dev-* zone specialists or developer by router/dev-team per normal flow.
+- **SPIKE contextualization:** SPIKE-SATURATED-COUNT-THRESHOLD-GATES-SWEEP (READY, P1, M) is the parent survey that found this instance (instance 9, dead gate class). Handoff notes cite the SPIKE so developer understands this is one data point in a broader pattern.
+- **Verification gate ownership:** Task 5 owns the re-measurement of AC-3 (consecutive_run_idle > 0 + 7-day drain-commit count). This is a VERIFICATION-only task, not a code change; it documents whether the fix actually worked empirically.
+
+**NEXT STEPS:**
+1. **Router dispatch (conditional on SPIKE running first):** Router may defer these tasks until SPIKE-SATURATED-COUNT-THRESHOLD-GATES-SWEEP has run, so developer context includes the class findings.
+2. **Tier 1 (Task 1):** Developer runs audit, produces findings doc (blocking tasks 2-3).
+3. **Tier 2 (Tasks 2-3 parallel):** Developer implements predicate redesign and staleness filter independently.
+4. **Tier 3 (Task 4):** Developer writes test case after 2-3 land.
+5. **Tier 4 (Task 5, post-landing):** After all 4 ship, observe and measure for 7 days.
 
 ---
 
@@ -108,20 +115,6 @@
 - backlog: +1 row (GUARD-NOTEBOOK row, status=BLOCKED), conservation verified
 
 **NEXT STEP:** Dispatch the 2 freed P0 CI rows to dev-mcp-server per normal PM flow (both in same zone, parallel-dispatchable).
-
----
-
-## ERROR-CORRECTION · FIX-SYSTEM-AUDITOR-CYCLE-FINDINGS-NOT-SELF-PERSISTED · review-triage · 2026-08-06T15:35Z
-
-**INCIDENT:** PM review-triage for FIX-SYSTEM-AUDITOR-CYCLE-FINDINGS-NOT-SELF-PERSISTED (parent task, plan_only decomposed into 4 child tasks) detected what appeared to be a missing child task (FIX-AUDITOR-DURABILITY-STEP0B-DETECTION) from task_board and added a fresh backlog[] entry.
-
-**ROOT CAUSE OF ERROR:** Board-existence check only scanned backlog[], ready[], and todo[] lanes — did NOT scan in_progress[]. The task was actually already resident in in_progress[] (status=IN_PROGRESS, owner=developer), actively claimed+resumed by a peer dev-team session (session 24817246-8a3f-4511-95f7-1b4385797bee, resume lock, claimed ~15:11Z). 
-
-**CONSEQUENCE:** Created a genuine duplicate key: FIX-AUDITOR-DURABILITY-STEP0B-DETECTION now existed in BOTH backlog[] (fresh, status=BACKLOG) AND in_progress[] (pre-existing, status=IN_PROGRESS, live, peer-owned). Double-dispatch risk: BOUNDED-1 auto-pickup on next tick could scan backlog[] and spawn a second developer onto already-in-flight work.
-
-**REMEDIATION:** (1) Removed the backlog[] duplicate immediately (orch-apply.sh applied, 2026-08-06T15:35:15Z). (2) Verified in_progress[] copy remains intact, peer session unaffected. (3) Recording this error here for future decompose cycles.
-
-**LESSON:** Board-existence verification MUST scan ALL task_board lanes (backlog, ready, in_progress, qa, review, done) before concluding "missing" and minting a fresh entry. A single-lane scan is insufficient and risks collision with actively in-flight work from peer sessions. Recommend: future PM decompose cycles should use a full-board search (`jq '.task_board | to_entries[] | .value[]? | select(.id == "<id>")'`) to verify non-existence across all lanes before adding.
 
 ---
 
