@@ -22518,6 +22518,41 @@
         "claimed_by": null,
         "qa_occurrence_20260808T1104Z": "QA OCCURRENCE 2026-08-08T11:04Z (qa, verify-committed, dev-team Review-Lane QA-Drain, mode=verify-committed). VERDICT: CHANGES_REQUESTED — do NOT flip to DONE_VERIFIED on current evidence.\n\nRAW-VERIFY performed (no prose trust): (1) git merge-base --is-ancestor confirms a502b82ad, e80bc123a, 9b27e9723, 5bed759a0 are all real HEAD ancestors. (2) Read .claude/skills/notebook-write/SKILL.md live: AC-2a immutability invariant text, AC-2/AC-3 Step-1c reconciled converging WHILE-loop, and the trim-own-section-FIRST ladder ARE present as documented — the SPEC-LEVEL acceptance criteria (1)-(3) are genuinely landed in prose. (3) Read scripts/git-hooks/pre-commit `_check_notebook_immutability`/`_is_dated_heading`: confirmed default `GIT_NOTEBOOK_IMMUTABILITY_MODE=warn` (line ~364) — never blocks a commit; matches agent_father_impl_note's disarm claim, no unauthorized re-arm found (grepped repo-wide for GIT_NOTEBOOK_IMMUTABILITY_MODE, no reject-mode override anywhere).\n\nBLOCKING FINDING — the underlying behavioral defect is STILL LIVE, TODAY, hours before this dispatch: commit 18158ad9a (docs/agent-memory/notebooks/system-auditor.md, chore(memory/system-auditor): notebook 2026-08-08 tier-1, authored 2026-08-08T06:36:26Z) rewrote THREE retained sections in one write with ZERO cap pressure (pre-write file 54L, new c82 section 41L, 54+41=95L << 200L cap; section count 4->5, well within the 3-section+headroom budget — the trim-own-section-first / drop-oldest ladder was never even needed). Measured via `git show 18158ad9a^:<path>` vs `git show 18158ad9a:<path>`: c81's `### Findings` + `### Verdict: DEGRADED` blocks and its `[OUTPUT-CONTRACT]...CONTRACT-CONTRADICTION: NONE` footer were deleted in place (heading retained, body shrunk); c80's `[OUTPUT-CONTRACT]...CONTRACT-CONTRADICTION: NONE` footer deleted in place; c79's `[OUTPUT-CONTRACT]...CONTRACT-CONTRADICTION: NONE` footer deleted in place. This is a byte-for-byte match to the exact \"shrink a retained section's body in place\" pattern AC-2a forbids by name, with the cap-pressure excuse structurally absent — same shape as the 2026-07-29 (dbbd8a0fa) and 2026-08-05 (423596abe) prior confirmed true-positives already on this row. The gate itself DID fire correctly: `docs/signals/processed/commit-sweep-guard-2026-08-08T063626Z-23794.json` shows three WARN lines naming c81/c80/c79 — but WARN-only means the commit landed unblocked, exactly the outcome AC(4) exists to prevent.\n\nRE-RAN the cited regression test live: `bash scripts/audits/verify-notebook-immutability-gate.sh` (full run, 289 commit-diffs, 49 non-OVERWRITE files, last 8 commits/file) → DATED-HEADING-SCOPED: 34 reject(s) across 15 file(s) (down from the 2026-07-29 follow-up's reported 42/18, so real but partial progress) — NOT 0. Per this row's own agent_father_impl_note item (iii) fence (\"do NOT re-arm GIT_NOTEBOOK_IMMUTABILITY_MODE=reject fleet-wide until this reads 0, or every remaining reject is manually confirmed a true positive\"), the corpus is not clean and no per-reject triage evidence is attached to this row — e.g. docs/agent-memory/notebooks/dev-frontend.md rejects on 8/8 of its last 8 commits, docs/agent-memory/notebooks/qa-responder.md on 7/8, neither adjudicated true/false positive anywhere in this row's occurrence history.\n\nDISPOSITION: acceptance criteria (1)-(3) (spec text: invariant statement, AC-2/AC-3 reconciliation, ladder ordering) are satisfied at the documentation layer. Acceptance criterion (4) — \"A MECHANICAL check ... that fails if any surviving section changed\" — is NOT satisfied: the shipped implementation only warns, per this row's own text the load-bearing AC, and the live corpus + today's fresh triple-section true-positive both show the underlying agent-side compose behavior has not converged even after 4+ confirmed prior recurrences (07-29, 07-30, 08-05 x2, 08-06, 08-08). Routing back to owner (agent-father, no task branch exists for a fixer) rather than DONE_VERIFIED. Do not re-attempt the same \"disarm to warn and call it done\" closeout without either (a) closing the residual false-positive classes so the corpus reads 0 and reject-mode can actually block, or (b) fixing the ROOT CAUSE — the agent-side compose step (docs/agents/system-auditor/flow/main.md's local copy, and by extension the shared skill) that is still not deterministically executing its own documented Step 1c/1d ladder, since spec-conformance in prose has not translated into spec-conformant live commits.",
         "redispatch_count": 1
+      },
+      {
+        "id": "FIX-AUDITOR-DURABILITY-STEP0B-DETECTION",
+        "type": "FIX",
+        "title": "system-auditor Step 0b: Detection and reordering durability fixes",
+        "desc": "Enhance Step 0b with schedule-based missing-cycle detection + stale-marker orphan sweep (3a). Reorder Notebook Write to run after tier checks (3b.1). Addresses po_occurrence_7 correction: detector must catch both [won election then died] and [died before election].",
+        "status": "REVIEW",
+        "priority": "P1",
+        "size": "M",
+        "sprint": "BACKLOG",
+        "zone": "cross-service/",
+        "owner": "developer",
+        "next_agent": "developer",
+        "depends_on": [],
+        "blocks": [
+          "FIX-AUDITOR-DURABILITY-SKILL-DRAFT-PERSIST",
+          "FIX-AUDITOR-DURABILITY-FLOW-DRAFT-HEAL"
+        ],
+        "files": [
+          "docs/agents/system-auditor/flow/main.md"
+        ],
+        "created_at": "2026-08-06T10:41:17.873278Z",
+        "created_by": "pm",
+        "updated_at": "2026-08-08T11:43:20Z",
+        "updated_by": "qa",
+        "promoted_at": "2026-08-06T13:43:47Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
+        "claimed_at": "2026-08-08T11:30:32Z",
+        "claimed_by": "dev-team (review-lane qa-drain)",
+        "reviewed_at": "2026-08-06T15:45:28Z",
+        "reviewed_by": "developer",
+        "review_note": "po_occurrence_7 correction to architecture-briefs/2026-08-06-fix-system-auditor-cycle-notebook-persistence-lifecycle.md §3a's stale-marker sweep (only caught won-election-then-died-mid-run). docs/agents/system-auditor/flow/main.md Step 0b gains 0b.1 (stale marker sweep, reuses emit-audit-signal.sh's 7-day dedup ledger), 0b.2 (schedule-based missing-cycle detection: reliable tier-2/3 heartbeat staleness + conservative wide-window tier-1 check with documented residual gap on isolated single-tick losses), 0b.3 (structure-only stub for the not-yet-existent draft-file sweep, actuator lands in FIX-AUDITOR-DURABILITY-FLOW-DRAFT-HEAL). Relocated Notebook Write/Commit block to run immediately after tier checks conclude (§3b.1), ahead of Anomaly Reporting/OUTPUT-CONTRACT; Notebook Append Gate condition (b) rewired to read $MARKERS_FILE directly (unavoidable consequence of the reorder). Live-verified: Step 0b.1 sweep found all 6 real pre-existing orphaned marker files in the repo; jq fromdateiso8601 epoch-threshold logic verified against fresh/stale/missing fixtures; new grep regex verified against all 5 non-ABORT emit-signal marker forms audit-output-contract.sh itself counts. No companion .test.sh exists for this flow-spec .md file (confirmed via repo grep) — baseline established via live bash instead. Did NOT touch audit-dimensions.md (own hard 200L cap, PM handoff scoped Files to create: None) — flagged, not actioned. No apps/ TS/Go touched (zone cross-service/, pure .md) — bun test/tsc structurally N/A. Commits 92ef5b3a2 (main.md + WORK.md), af9ad098c (memory). Blocks FIX-AUDITOR-DURABILITY-SKILL-DRAFT-PERSIST and FIX-AUDITOR-DURABILITY-FLOW-DRAFT-HEAL.",
+        "status_note": "[QA] Direct-commit verify — CHANGES_REQUESTED (redispatch 1). Commit 92ef5b3a2 (+af9ad098c memory) confirmed real, on main ancestry, diff matches claimed file (docs/agents/system-auditor/flow/main.md) exactly. Step 0b.1/0b.2/0b.3 bash logic (main.md:51-118) + Notebook Write reorder + Notebook Append Gate condition-(b) rewire are well-designed and independently re-verified against review_note's fixture-based claims (grep regex line matches audit-output-contract.sh's 5 non-ABORT marker forms exactly; jq fromdateiso8601 threshold logic correct; dependent tasks FIX-AUDITOR-DURABILITY-SKILL-DRAFT-PERSIST/FLOW-DRAFT-HEAL correctly depends_on this row).\n\nBLOCKING — production evidence contradicts the \"durable\"/live-verified claim. Zero confirmed live execution of the new Step 0b.1/0b.2 detection in the ~44h since deploy despite continuously-satisfied trigger conditions:\n(1) Two FRESH orphaned markers created by REAL post-deploy Tier-1 cycles remain unswept right now: docs/agent-memory/.auditor-cycle-markers-2026-08-06T21:09:00Z.tmp (contains a real \"[emit-signal] SKIP-dedup ...\" line — won fire-election, died mid-run, exactly the shape Step 0b.1 (main.md:51-66) exists to catch) and .../.auditor-cycle-markers-2026-08-07T00:00Z.tmp (\"[cycle-init] markers file created\" only). Both are >20min-stale for 30h+; dozens of subsequent Tier-1 cycles ran since (live notebook entries through today, e.g. c86 2026-08-08T10:33:53Z), yet neither was swept. Zero \"D-CYCLE-1\" rows exist anywhere in .signal_queue (live or archive) or docs/data/auditor-dedup-ledger.json.\n(2) Step 0b.2's own tier-3 predicate (main.md:79-90) is TRUE right now, unfired: docs/data/auditor-tier3-last-healthy.json .last_healthy_at=2026-08-06T07:03:45Z = 52h35m gap as of this review, exceeding the step's own 48h (2x24h cadence) WARN bar by ~4.5h. Zero \"D-CYCLE-2\" ever emitted (tier-2 is within its own 8h bar — 5h07m stale — so this is tier-3-specific, possibly compounded by a separate cron-arming gap, flagged not diagnosed, out of QA's infra-diagnosis remit).\n(3) Secondary but relevant: 6/8 marker files got accidentally git-TRACKED by an unrelated commit (2ddbe5321, pm, \"chore(pm): decompose FIX-CRON-...\", 2026-08-07T00:30+02:00) — this breaks Step 0b.1's \"rm -f is a safe reclaim\" design premise (explicitly stated as untracked in the source architecture-brief, docs/architecture-briefs/2026-08-06-fix-system-auditor-cycle-notebook-persistence-lifecycle.md:29-30) since scripts/auditor-notebook-commit.sh only ever stages its own explicit notebook path, never these marker files — a future rm -f on a tracked copy leaves a permanent uncommitted deletion. .gitignore has no entry for docs/agent-memory/.auditor-cycle-markers-*.tmp, unlike the sibling scratch pattern docs/data/cycle-snapshot-*.json.tmp which IS gitignored.\n\nASK for next commit: (a) confirm+fix why Step 0b.1/0b.2 are not firing on live Tier-1/2/3 cycles — same narrates-vs-executes risk class as the sibling FIX-LEAF-AGENT-ANALYSIS-ONLY-EXIT-NARRATES-INSTEAD-OF-EXECUTING fix landed one day earlier in this SAME file (main.md, per its own header), which covers the OUTPUT-CONTRACT/RETURN area only, NOT this Step 0b section; (b) demonstrate one live fire that sweeps the 2 confirmed post-deploy orphans + emits the now-overdue tier-3 D-CYCLE-2; (c) add the .gitignore entry + git rm --cached the 6 already-tracked marker copies to restore the \"safe to reclaim\" invariant. Recommend holding FIX-AUDITOR-DURABILITY-SKILL-DRAFT-PERSIST/FLOW-DRAFT-HEAL unblocked-but-not-started until this mechanism is proven live (both already correctly depends_on this row — no board change needed there).",
+        "redispatch_count": 1
       }
     ],
     "qa": [
@@ -22647,39 +22682,6 @@
         "depends": [
           "FIX-MARKETDB-WAL-SEQUENCE-STEPS-2-4-NO-OWNER"
         ]
-      },
-      {
-        "id": "FIX-AUDITOR-DURABILITY-STEP0B-DETECTION",
-        "type": "FIX",
-        "title": "system-auditor Step 0b: Detection and reordering durability fixes",
-        "desc": "Enhance Step 0b with schedule-based missing-cycle detection + stale-marker orphan sweep (3a). Reorder Notebook Write to run after tier checks (3b.1). Addresses po_occurrence_7 correction: detector must catch both [won election then died] and [died before election].",
-        "status": "QA",
-        "priority": "P1",
-        "size": "M",
-        "sprint": "BACKLOG",
-        "zone": "cross-service/",
-        "owner": "developer",
-        "next_agent": "qa",
-        "depends_on": [],
-        "blocks": [
-          "FIX-AUDITOR-DURABILITY-SKILL-DRAFT-PERSIST",
-          "FIX-AUDITOR-DURABILITY-FLOW-DRAFT-HEAL"
-        ],
-        "files": [
-          "docs/agents/system-auditor/flow/main.md"
-        ],
-        "created_at": "2026-08-06T10:41:17.873278Z",
-        "created_by": "pm",
-        "updated_at": "2026-08-08T11:30:33Z",
-        "updated_by": "pm",
-        "promoted_at": "2026-08-06T13:43:47Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
-        "claimed_at": "2026-08-08T11:30:32Z",
-        "claimed_by": "dev-team (review-lane qa-drain)",
-        "reviewed_at": "2026-08-06T15:45:28Z",
-        "reviewed_by": "developer",
-        "review_note": "po_occurrence_7 correction to architecture-briefs/2026-08-06-fix-system-auditor-cycle-notebook-persistence-lifecycle.md §3a's stale-marker sweep (only caught won-election-then-died-mid-run). docs/agents/system-auditor/flow/main.md Step 0b gains 0b.1 (stale marker sweep, reuses emit-audit-signal.sh's 7-day dedup ledger), 0b.2 (schedule-based missing-cycle detection: reliable tier-2/3 heartbeat staleness + conservative wide-window tier-1 check with documented residual gap on isolated single-tick losses), 0b.3 (structure-only stub for the not-yet-existent draft-file sweep, actuator lands in FIX-AUDITOR-DURABILITY-FLOW-DRAFT-HEAL). Relocated Notebook Write/Commit block to run immediately after tier checks conclude (§3b.1), ahead of Anomaly Reporting/OUTPUT-CONTRACT; Notebook Append Gate condition (b) rewired to read $MARKERS_FILE directly (unavoidable consequence of the reorder). Live-verified: Step 0b.1 sweep found all 6 real pre-existing orphaned marker files in the repo; jq fromdateiso8601 epoch-threshold logic verified against fresh/stale/missing fixtures; new grep regex verified against all 5 non-ABORT emit-signal marker forms audit-output-contract.sh itself counts. No companion .test.sh exists for this flow-spec .md file (confirmed via repo grep) — baseline established via live bash instead. Did NOT touch audit-dimensions.md (own hard 200L cap, PM handoff scoped Files to create: None) — flagged, not actioned. No apps/ TS/Go touched (zone cross-service/, pure .md) — bun test/tsc structurally N/A. Commits 92ef5b3a2 (main.md + WORK.md), af9ad098c (memory). Blocks FIX-AUDITOR-DURABILITY-SKILL-DRAFT-PERSIST and FIX-AUDITOR-DURABILITY-FLOW-DRAFT-HEAL."
       }
     ],
     "_closed_signals_20260614": {
