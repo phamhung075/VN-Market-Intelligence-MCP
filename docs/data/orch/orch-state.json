@@ -5,8 +5,8 @@
     "last_linecount": 205,
     "po": {
       "section_name": "po",
-      "last_mtime": 1786204372,
-      "last_linecount": 241
+      "last_mtime": "2026-08-08T16:22:49Z",
+      "last_linecount": 243
     }
   },
   "decision_journal": [
@@ -133,7 +133,7 @@
     "does_not_consume_wip": true
   },
   "signal_queue": {
-    "_updated_at": "2026-08-08T15:52:25Z",
+    "_updated_at": "2026-08-08T16:22:26Z",
     "_updated_by": "dev-team",
     "archive": [],
     "rows": [
@@ -3732,7 +3732,7 @@
         "type": "signal_feedback",
         "summary": "A-30 CRITICAL: mcp-server-1 — VmHWM advancing, pinned at memory cap (3GiB), sustained 96-97%",
         "severity": "CRITICAL",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": null,
         "provenance": "detector",
         "audit_cycle_tag": "cron:auditor-t1:2026-08-08T16:00Z",
@@ -22832,7 +22832,7 @@
         "last_served_tick": "2026-08-08T15:54:20Z"
       }
     },
-    "_updated_at": "2026-08-08T15:54:20Z",
+    "_updated_at": "2026-08-08T16:22:26Z",
     "_updated_by": "dev-team",
     "pending_triage_inbox": [
       {
@@ -23383,6 +23383,95 @@
         "payload": "A-30 WARN: mcp-server-1 memory sustained >93% (94.36-94.93%), loss of reclamation",
         "createdAt": "2026-08-08T15:38:59Z",
         "drained_at": "2026-08-08T15:52:25Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "ccae3882d63fda7e8c0e97374e8db0e869477b249696d1e06714efb7a3967483",
+        "source": "file",
+        "from": "commit-sweep-guard",
+        "to": "po",
+        "type": "bug-escalation",
+        "priority": "high",
+        "payload": "[sweep-guard] BARE commit about to absorb 1 staged file(s) not necessarily this actor's own: docs/agent-memory/notebooks/market-watcher.md. actor=0454e9d8-b475-4230-95c9-8b7d943aa8b3 mode=warn escalated=true prior_warns=9 threshold=3. Fix: git commit -m \"<msg>\" -- <own-files-only>.",
+        "createdAt": "2026-08-08T16:10:54Z",
+        "drained_at": "2026-08-08T16:21:15Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "bdffdbc2d8ff38a2c71b9cfecf4c233875e01995caa2b9e4af30f6e86637d533",
+        "source": "file",
+        "from": "cowork-team",
+        "to": "dev-team",
+        "type": "cowork-fire",
+        "priority": "low",
+        "payload": {
+          "fire_time": "20260808T160911Z",
+          "matched_slots": [
+            "news-scout-offhours",
+            "market-watcher-offhours",
+            "alert-commander-critical"
+          ],
+          "won_slots": [
+            "news-scout-offhours",
+            "market-watcher-offhours",
+            "alert-commander-critical"
+          ],
+          "held_by_other": [],
+          "all_held": false,
+          "spawned": [
+            "docs/agents/news-scout/flow/main.md",
+            "docs/agents/market-watcher/flow/main.md",
+            "docs/agents/alert-commander/flow/main.md"
+          ],
+          "silent": false,
+          "drift_min": 6,
+          "errors": [],
+          "pressure_mode": "adaptive",
+          "calendar_status": "unknown",
+          "suppressed_calendar": [],
+          "suppressed_cadence": [],
+          "downgraded": [],
+          "chef_mutex_applied": false,
+          "due_reasons": {
+            "news-scout-offhours": "cadence",
+            "market-watcher-offhours": "cadence",
+            "alert-commander-critical": "cron"
+          },
+          "cadence_minutes": {
+            "news-scout-offhours": 240,
+            "market-watcher-offhours": 240,
+            "alert-commander-critical": null
+          },
+          "last_fired_timestamp": "2026-08-08T16:08:42Z",
+          "last_fired_slots": [
+            "news-scout-offhours",
+            "market-watcher-offhours",
+            "alert-commander-critical"
+          ],
+          "last_fired_write_errors": null,
+          "classification": "FIRE",
+          "reason": "spawned",
+          "nominal_tick": "16:00",
+          "leader_lock": "acquired",
+          "dev_head": "unknown",
+          "devq": 5,
+          "signal_backlog": 24,
+          "note": "16:00Z tick — 3 offhours/critical slots fired (news-scout-offhours, market-watcher-offhours, alert-commander-critical), 1 self-filed NEW signal drained to READ (cow-20260808T155644, own prior-tick escalation, no cowork-slot match), 0 one-shots this tick."
+        },
+        "createdAt": "20260808T160911Z",
+        "drained_at": "2026-08-08T16:21:15Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "d461f3226e55eac99e6efcdd0461d4641ff7d1c88880ed4d411342a2368d2768",
+        "source": "dashboard",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "signal_feedback",
+        "priority": "CRITICAL",
+        "payload": "A-30 CRITICAL: mcp-server-1 — VmHWM advancing, pinned at memory cap (3GiB), sustained 96-97%",
+        "createdAt": "2026-08-08T16:08:24Z",
+        "drained_at": "2026-08-08T16:22:26Z",
         "routed_to": "PO Step 0-SIG"
       }
     ]

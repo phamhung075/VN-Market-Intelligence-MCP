@@ -3,7 +3,7 @@
   "to": "dev-team",
   "type": "cowork-fire",
   "payload": {
-    "fire_time": "2026-08-01T16:00Z",
+    "fire_time": "20260808T160911Z",
     "matched_slots": [
       "news-scout-offhours",
       "market-watcher-offhours",
@@ -22,10 +22,10 @@
       "docs/agents/alert-commander/flow/main.md"
     ],
     "silent": false,
-    "drift_min": 5,
+    "drift_min": 6,
     "errors": [],
     "pressure_mode": "adaptive",
-    "calendar_status": "closed",
+    "calendar_status": "unknown",
     "suppressed_calendar": [],
     "suppressed_cadence": [],
     "downgraded": [],
@@ -33,26 +33,34 @@
     "due_reasons": {
       "news-scout-offhours": "cadence",
       "market-watcher-offhours": "cadence",
-      "alert-commander-critical": "cadence"
+      "alert-commander-critical": "cron"
     },
     "cadence_minutes": {
       "news-scout-offhours": 240,
       "market-watcher-offhours": 240,
-      "alert-commander-critical": 240
+      "alert-commander-critical": null
     },
-    "last_fired_timestamp": "2026-08-01T16:07:03Z",
+    "last_fired_timestamp": "2026-08-08T16:08:42Z",
     "last_fired_slots": [
       "news-scout-offhours",
       "market-watcher-offhours",
       "alert-commander-critical"
     ],
-    "last_fired_write_errors": null
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "16:00",
+    "leader_lock": "acquired",
+    "dev_head": "unknown",
+    "devq": 5,
+    "signal_backlog": 24,
+    "note": "16:00Z tick — 3 offhours/critical slots fired (news-scout-offhours, market-watcher-offhours, alert-commander-critical), 1 self-filed NEW signal drained to READ (cow-20260808T155644, own prior-tick escalation, no cowork-slot match), 0 one-shots this tick."
   },
   "priority": "low",
-  "createdAt": "2026-08-01T16:07:15Z",
+  "createdAt": "20260808T160911Z",
   "_processed": {
-    "fingerprint": "99159fd9db2ca81e1cff42d63c7cf2e3a3121081e3431a3ac639472957d01c02",
-    "processedAt": "2026-08-01T16:16:29Z",
+    "fingerprint": "bdffdbc2d8ff38a2c71b9cfecf4c233875e01995caa2b9e4af30f6e86637d533",
+    "processedAt": "2026-08-08T16:21:15Z",
     "processedBy": "dev-team",
     "result": "routed-to-po"
   }
