@@ -898,3 +898,15 @@
 **Mitigation:** Converging to existing task OPS-RAG-SERVICE-REBUILD-STALE-IMAGE-PREDATES-IDLE-UNLOAD-FIX (REVIEW, next_agent=qa). AC-3 (measured reclamation) remains open; methodology gap tracked separately (FIX-RECLAMATION-AC-VERIFIED-IN-COLDSTART-WINDOW-BEFORE-WORKLOAD-LOADS, BACKLOG).
 
 ---
+
+## Anomaly: A-30 · rag-service-1 memory 97.01% sustained (below 40MiB floor)
+**Severity:** WARN | **Date:** 2026-08-08 | **Status:** OPEN
+**Location:** rag-service-1/memory
+**Details:** rag-service-1 memory at 97.01% of 1GiB cap (usage: 993.4MiB) — absolute headroom 6.6 MiB BELOW 40 MiB floor. Sustained high-memory ceiling, recurring issue (4th+ occurrence).
+**Impact:** Imminent OOM kill risk. Service near out-of-memory threshold with no reclamation headroom.
+**Root cause:** Code memory leak or inefficient memory usage in rag-service-1. Recurring ceiling despite fix attempts.
+**Zone owner:** po
+**Last reported:** 2026-08-08T09:35:51Z (signal sys-20260808T093529-7c80, system-auditor -> po, dedup_key=mem_pressure:rag-service:A-30-recurring-ceiling, WARN Telegram sent)
+**Mitigation:** Monitor for OOM kill; escalate to developer/architect for code-level memory audit and fix.
+
+---
