@@ -4,6 +4,17 @@
 task's own board-row status flip (backlog→review). Feeds `TASK_RUNIDLE-2-REDESIGN` (predicate
 redesign) and `TASK_RUNIDLE-3-STALENESS` (staleness guard), both `depends_on` this row.
 
+**Round-1 correction (2026-08-09, post QA CHANGES_REQUESTED):** §4's GAP-2 table columns, §4
+Notes' "dangling subtasks confirmed" claim, §5.2's causal narrative, and §7/§8's recommendations
+were re-measured — every `subtasks[]` id for both GAP-2 sprints was individually resolved against
+live `ready[]`/`done_verified[]` rather than asserted absent. `SYSREMAKE-P2-STRUCTURAL-REMAKE-ROUTE`
+carries a real 9-entry `subtasks[]` (all 9 resolve: T1/T2 `done_verified[]`, T3-T9 `ready[]`
+dispatchable) — it is not "childless." `SPRINT-CCATO-TRUTHGATE-MCP-NATIVE`'s 8 `subtasks[]` are
+5/8 dispatchable `ready[]` rows and only 3/8 (`T1`/`T2`/`T4`) genuinely dangling — not "8/8
+dangling." Everything else in this brief (§2, §3, §5.1, §6, and §4's non-GAP-2 rows) was
+independently reproduced byte-exact by QA and is unchanged. See sections below marked
+**(round-1 correction)**.
+
 **What this fixes:** unblocks the root-cause line behind
 `FIX-RUNIDLE-PREDICATE-D-ACTIVE-SPRINTS-PERMANENT-FLOOR` — `_step5_idle_check()`'s predicate (d)
 (`scripts/agents-flow/dev-team-tick-preflight.sh:380-382`) checks raw
@@ -27,9 +38,12 @@ mechanism:
   in flight" — under normal operating tempo, that is nearly always true by construction.
 - **GAP-2 (orphaned SPRINT-S shape):** 2 of the 8 live sprints use an alternate schema
   (`subtasks: [id,...]` string array, no nested `tasks[]` at all) whose closeout trigger — a
-  reactive check inside PM's QA-Done handling — can structurally never fire for them, because
-  there is no task inside them to complete. They have sat `ACTIVE` for 23 days and will stay that
-  way indefinitely regardless of whether their real work ever gets dispatched.
+  reactive check inside PM's QA-Done handling — can structurally never fire for them, because it
+  only reads `.tasks[]`. Their own container `.updated_at` has sat frozen for 23 days and will
+  stay that way indefinitely regardless of whether their real work ever gets dispatched or
+  finished — but **(corrected round-1, §5.2/§4)** the work itself is largely NOT childless: 7 of
+  9 SYSREMAKE-P2 subtasks and 5 of 8 CCATO subtasks already exist as real, dispatchable
+  `ready[]`/`done_verified[]` board rows. The defect is closeout blindness, not absent work.
 
 A third finding (§3.3) is a **live but not-yet-triggered latent bug**: the two documented eviction
 predicates disagree with each other, and the doc-only one is vacuously true for GAP-2's shape —
@@ -122,7 +136,7 @@ empty rather than complete. This has not fired live (both sprints are still pres
 
 ---
 
-## 4. Live audit — all 8 `active_sprints[]`, measured 2026-08-09
+## 4. Live audit — all 8 `active_sprints[]`, measured 2026-08-09 (GAP-2 rows corrected round-1)
 
 | id | status | updated_at (or opened_at) | age | tasks[] | task statuses | dispatchable | stale (>7d) | childless |
 |---|---|---|---|---|---|---|---|---|
@@ -132,8 +146,8 @@ empty rather than complete. This has not fired live (both sprints are still pres
 | SSOT-INTEGRITY-PERIMETER | ACTIVE | opened_at 2026-06-27T16:50Z (no `updated_at` field) | 43d since open | 6 | 2 DONE, 3 DONE_VERIFIED, 1 TODO | 1 | n/a | no |
 | BCTC-REFINE-STALL-RETRIGGER | ACTIVE | opened_at 2026-06-27 (no `updated_at` field) | 43d since open | 9 | 4 DONE, 3 CANCELLED, 1 DEFERRED, 1 BACKLOG | 1 | n/a | no |
 | OHLCV-UNIT-CONTAM-WHOLEROW-LT1000 | ACTIVE | opened_at 2026-06-30T20:20Z (no `updated_at` field) | 40d since open | 3 | 1 DONE_VERIFIED, 2 TODO | 2 | n/a | no |
-| SPRINT-CCATO-TRUTHGATE-MCP-NATIVE | ACTIVE | `updated_at: "2026-07-17T04:53:14ZZ"` (malformed — double `Z`) | **23d** | **absent** (uses `subtasks: [8 ids]` instead) | none tracked | **0** | **yes** | **yes** |
-| SYSREMAKE-P2-STRUCTURAL-REMAKE-ROUTE | ACTIVE | `updated_at: "2026-07-17T12:00:00Z"` | **23d** | **absent** (no `subtasks` either — bare pointer row) | none tracked | **0** | **yes** | **yes** |
+| SPRINT-CCATO-TRUTHGATE-MCP-NATIVE | ACTIVE | `updated_at: "2026-07-17T04:53:14ZZ"` (malformed — double `Z`) | **23d** | no `tasks[]` key; `subtasks: [8 ids]` — **5 resolve to real `ready[]` rows, 3 dangling** (round-1 correction, was "0/8") | 5 `ready[]` READY (`T3`/`T5`/`T6`/`T7`/`T8`, P0, `next_agent=dev-mcp-server`), 3 not found on any lane (`T1`/`T2`/`T4`) | **5** (was `0`) | **yes** | **no — 5 live dispatchable subtasks** (was `yes`) |
+| SYSREMAKE-P2-STRUCTURAL-REMAKE-ROUTE | ACTIVE | `updated_at: "2026-07-17T12:00:00Z"` (container field — not updated by child-task activity, see Notes) | **23d** (container field only) | no `tasks[]` key; `subtasks: [9 ids]` — **all 9 resolve to real board rows** (round-1 correction, was "absent/0") | 2 `done_verified[]` (T1 closed 2026-08-08T18:43:08Z, commit `ad6e422e9`; T2 closed 2026-08-08T19:01:23Z), 7 `ready[]` READY (T3-T9) | **7** (was `0`) | **yes (by container field only — see Notes)** | **no — 7 live dispatchable subtasks** (was `yes`) |
 
 Notes:
 - **Schema drift confirmed live:** each row has a distinct key set (7-17 keys); only 2 of 8 carry
@@ -142,12 +156,28 @@ Notes:
   `feedback_hand_typed_iso_timestamps_drift_into_the_future`). Any staleness computation (Task 3)
   that does raw date parsing without defensively stripping trailing non-digit characters will
   throw or silently misparse on this field.
-- **Dangling subtasks confirmed:** all 8 of `SPRINT-CCATO-TRUTHGATE-MCP-NATIVE`'s named
-  `subtasks[]` IDs (`CCATO-MCP-T1-DOMAIN-ENGINE` … `T8-DOD-HARNESS`) were searched across every
-  flat lane (`backlog/ready/in_progress/review/qa/done/done_verified/blocked`) — **zero matches
-  anywhere on the board.** The sprint's real work has never been minted as dispatchable rows; it
-  exists only as a string-array pointer inside a stale sprint object. This is the direct cause of
-  GAP-2 (§5.2) — not merely "unstarted work," but work with no board-visible existence at all.
+- **Subtask resolution corrected, round-1 (QA CHANGES_REQUESTED, 2026-08-09) — every `subtasks[]`
+  id individually re-checked against live `ready[]`/`done_verified[]`, not asserted absent:**
+  - `SYSREMAKE-P2-STRUCTURAL-REMAKE-ROUTE`'s 9 named `subtasks[]` IDs (`T1`-`T9`) are **not**
+    dangling — every one resolves to a real board row: `T1`/`T2` = `done_verified[]` (T1 closed
+    2026-08-08T18:43:08Z, commit `ad6e422e9`; T2 closed 2026-08-08T19:01:23Z — one day before this
+    brief's own audit date), `T3`-`T9` (7 rows) = `ready[]` status READY, dispatchable right now.
+    The prior claim in this section ("absent, no subtasks either — bare pointer row") was simply
+    never checked against the field.
+  - `SPRINT-CCATO-TRUTHGATE-MCP-NATIVE`'s 8 named `subtasks[]` IDs are **partially** dangling, not
+    "all 8": `T3`/`T5`/`T6`/`T7`/`T8` (5 of 8) resolve to real `ready[]` READY rows (P0,
+    `next_agent=dev-mcp-server`) — already board-documented 3 days before this brief's audit date
+    by po's 2026-08-06T11:29Z malformed-timestamp finding (`docs/data/orch/orch-state.json:9137`,
+    `:13119`), which independently names all 5 by ID. Only `T1`/`T2`/`T4` (3 of 8) are genuinely
+    not-found on any flat lane.
+  - Net correction: the underlying closeout-blindness defect (§5.2) is real for both sprints, but
+    "the work was never minted as dispatchable rows" is false for SYSREMAKE-P2 (9/9 minted) and
+    overstated 8/8→3/8 for CCATO.
+- **Container `updated_at` is decoupled from child-task activity (SPRINT-S shape):**
+  SYSREMAKE-P2's own `updated_at` (`2026-07-17T12:00:00Z`) was not touched when T1/T2 closed on
+  2026-08-08 — no writer propagates a `subtasks[]`-resolved row's completion back to its parent
+  sprint container's own fields. The "23d stale" figure in this table reflects only the container's
+  own field, not the freshest activity across its resolved subtasks (relevant to §8).
 - **VN-MACRO-TOOLING is a 3rd near-miss "childless" case,** distinct from the other two: it has 0
   dispatchable tasks (13 DONE + 6 DONE_VERIFIED + 1 BLOCKED), but it isn't stale by the >7-day
   test because it has no `updated_at` at all — its `opened_at` is 56 days old. Whether a `BLOCKED`
@@ -168,17 +198,34 @@ the array populated. None of the 6 real-task sprints audited above are within on
 closing except SSOT-INTEGRITY-PERIMETER (5/6 done) and OHLCV (1/3 done) — the array's true
 floor under this operating tempo is well above zero, not "eventually zero given enough time."
 
-### 5.2 GAP-2 — orphaned SPRINT-S shape gap (the 2 stale sprints specifically)
+### 5.2 GAP-2 — orphaned SPRINT-S shape gap (the 2 stale sprints specifically) — corrected round-1
+
+**Round-1 correction:** the original version of this section claimed both sprints' `subtasks[]`
+IDs "were never minted as real board rows at all." Re-checked individually against live
+`ready[]`/`done_verified[]` (§4 Notes): that is false. `SYSREMAKE-P2-STRUCTURAL-REMAKE-ROUTE`'s 9
+subtasks are 100% minted and 7 are dispatchable right now; `SPRINT-CCATO-TRUTHGATE-MCP-NATIVE`'s 8
+subtasks are 5/8 minted and dispatchable, and only 3/8 (`T1`/`T2`/`T4`) genuinely dangling. GAP-2
+is not "work with no board-visible existence at all" — most of the work already has a
+board-visible, dispatchable presence.
 
 `SPRINT-CCATO-TRUTHGATE-MCP-NATIVE` and `SYSREMAKE-P2-STRUCTURAL-REMAKE-ROUTE` are "supervised
 design-first" (`SPRINT-S`) rows that track work via a flat `subtasks: [id,...]` array instead of
-nested `tasks[]` objects — and (§4) those subtask IDs were never minted as real board rows at all.
-Consequence: the ONLY closeout trigger that exists (§3.1, PM's reactive QA-Done-coupled check)
-requires a task inside `active_sprints[].tasks[]` to reach DONE. These two sprints have zero
-tasks tracked in that array, so **no event in the system will ever cause PM to re-examine their
-closeout eligibility** — not "closure is slow," closure is structurally unreachable for this
-shape via the documented mechanism. They will stay `ACTIVE` indefinitely regardless of whether
-CCATO-MCP-T1..T8 or the SYSREMAKE-P2 route work ever gets dispatched or finished.
+nested `tasks[]` objects. Consequence: the ONLY closeout trigger that exists (§3.1, PM's reactive
+QA-Done-coupled check) requires a task inside `active_sprints[].tasks[]` to reach DONE — and it has
+no code path that resolves `subtasks[]` string-array pointers into their flat-lane status at all.
+These two sprints have zero entries in `.tasks[]` (the array the check actually reads), so **no
+event in the system will ever cause PM to re-examine their closeout eligibility via this
+mechanism** — that part of the original claim still holds: closure IS structurally unreachable via
+the documented reactive path, regardless of shape. What the correction changes is *why* that
+matters in practice: SYSREMAKE-P2 has active, recently-landed work (T1/T2 closed 2026-08-08, one
+day before this audit) progressing through its `subtasks[]`-resolved `ready[]`/`done_verified[]`
+rows entirely outside PM's visibility — it is not idle, it is *invisibly* active, and even full
+completion of all 9 subtasks will never flip the container to DONE without a fix, because nothing
+watches `subtasks[]`. CCATO is a hybrid: 5 of 8 subtasks are similarly invisibly-live (P0,
+`ready[]`, `next_agent=dev-mcp-server`, per po's 2026-08-06T11:29Z finding at
+`docs/data/orch/orch-state.json:9137`/`:13119`), while 3 of 8 (`T1`/`T2`/`T4`) genuinely have no
+board-visible existence at all — that narrower slice is the only part of the original "never
+minted" claim that still holds, and only for CCATO.
 
 ---
 
@@ -217,31 +264,65 @@ hint (i) already on the parent row):
 > `BLOCKED` counts as dispatchable or not; VN-MACRO-TOOLING §4 is the concrete test case for that
 > decision) rather than raw `length`.
 
-This directly resolves both gaps without needing to also land the removal-mechanism fixes first:
+This directly resolves GAP-1 without needing to also land the removal-mechanism fixes first:
 - GAP-1 sprints with genuine live work (SSOT-INTEGRITY-PERIMETER's 1 TODO, etc.) correctly keep
   blocking idle; sprints that are fully terminal but not yet evicted (a real possible future
   state) correctly stop blocking.
-- GAP-2's two childless sprints have zero dispatchable nested tasks today — they would
-  immediately stop blocking idle under this redefinition, without requiring their deeper
-  subtask-registration defect (§5.2) to be fixed first (that remains a separate, real defect for
-  whoever owns SPRINT-S kickoff design — out of this line's scope, flagging only).
+
+**GAP-2 — corrected round-1 (the original bullet here was wrong):** the original recommendation
+claimed "GAP-2's two childless sprints have zero dispatchable nested tasks today — they would
+immediately stop blocking idle under this redefinition." Re-measured (§4/§5.2, corrected):
+neither sprint is childless — SYSREMAKE-P2 has 7 dispatchable `subtasks[]`-resolved rows in
+`ready[]`, CCATO has 5. This has a direct, material consequence for Task 2's **implementation**,
+not just its prose: if the "at least one task dispatchable" check is implemented against
+`.tasks[]` literally (the field these two `SPRINT-S` containers never populate), it will read `0`
+for both regardless of the corrected count — reproducing, in the new predicate, the same
+false-negative already flagged in §3.3 for the archival predicate (both sprints reading as
+vacuously "childless"). **Task 2 must resolve `subtasks[]` string-array pointers to their live
+flat-lane status as part of the "dispatchable" computation, not read `.tasks[]` alone**, or the
+redesigned predicate will mis-score every `SPRINT-S`-shaped sprint the same way predicate (d)
+always has. Once that resolution is implemented correctly, GAP-2's two sprints will (correctly)
+continue to block idle today, same as any other sprint with live dispatchable work — they do
+**not** immediately stop blocking under a *correct* implementation of this redefinition. The
+narrower, still-real defect from §5.2 (PM's reactive closeout trigger structurally cannot see
+`subtasks[]`-resolved terminal state even once T3-T9/T3,T5-T8 finish) remains a separate, real
+defect for whoever owns `SPRINT-S` kickoff design — out of this line's scope, flagging only.
 
 A new `dev-team-tick-preflight.test.sh` case should assert exactly the scenario PO already named:
-*"active_sprints non-empty but every member stale/childless → still RUN-IDLE."*
+*"active_sprints non-empty but every member stale/childless → still RUN-IDLE"* — and a second case
+should assert `SPRINT-S`-shaped sprints with `subtasks[]`-resolved dispatchable rows are correctly
+scored as non-childless (regression guard for the false-negative above).
 
 ## 8. Recommendations for Task 3 (staleness guard)
 
 - Add a periodic sweep (not reactive) flagging `active_sprints[]` entries with age
   (`now - updated_at`, falling back to `opened_at` when `updated_at` is absent — 6 of 8 live rows
   need that fallback) `> 7 days` **and** zero dispatchable tasks, for PO/PM review (close or
-  re-engage). Both currently-stale sprints (§4) qualify today.
+  re-engage). **The dispatchable-tasks count must resolve `subtasks[]` pointers to their live
+  flat-lane status, not just count `.tasks[]`** (same fix required in §7) — an implementation that
+  only checks `.tasks[]` would flag both GAP-2 sprints as "stale AND zero dispatchable" and
+  surface them for closure/re-engage review, which would be a false alarm.
+  **Corrected round-1 (the original bullet here was wrong): neither of the two stale sprints
+  qualifies for this sweep today** once dispatchable counting is correct — re-measured (§4),
+  SYSREMAKE-P2 has 7 live dispatchable subtasks (2 closed as recently as 2026-08-08, one day
+  before this audit), CCATO has 5. The original claim ("both currently-stale sprints qualify
+  today") was downstream of the same GAP-2 miscount QA caught (§5.2).
+- **Container `updated_at` does not track child-task activity for `SPRINT-S`-shaped sprints**
+  (§4 Notes): SYSREMAKE-P2's own `updated_at` stayed frozen at `2026-07-17T12:00:00Z` even as
+  T1/T2 closed on 2026-08-08 — no writer propagates a `subtasks[]`-resolved row's completion back
+  to the parent container. A staleness sweep that reads only the container's own `updated_at`
+  will keep reporting these sprints as N-days-idle on days real subtask work actually lands. For
+  `SPRINT-S` shape, Task 3 should compute age from the freshest of `{container updated_at, max
+  updated_at across resolved subtasks[] rows}`, not the container field alone.
 - Fix the malformed `"2026-07-17T04:53:14ZZ"` timestamp as a small standalone data-hygiene item
   (or make the age computation defensively strip trailing non-digit characters before parsing) —
   otherwise the staleness guard itself will misbehave on the exact row it exists to catch.
 - Consider whether a periodic sweep should also directly evaluate PM's §3.1 closeout condition
-  (not just wait for a reactive QA-Done trigger) — GAP-2's root fix (making subtasks real,
-  dispatchable board rows) is out of scope here, but a periodic sweep would at least surface these
-  two sprints for human/PO attention instead of leaving them silently `ACTIVE` forever.
+  (not just wait for a reactive QA-Done trigger) — GAP-2's root fix (resolving `subtasks[]` into
+  PM's closeout visibility, and separately, minting real board rows for CCATO's remaining 3
+  genuinely-dangling ids `T1`/`T2`/`T4`) is out of scope here, but a periodic sweep would at least
+  surface these two sprints for human/PO attention once their real work does finish, instead of
+  leaving them silently `ACTIVE` forever.
 
 ---
 

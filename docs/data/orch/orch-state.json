@@ -19098,8 +19098,8 @@
           "TASK_RUNIDLE-3-STALENESS"
         ],
         "supervised": false,
-        "updated_at": "2026-08-08T22:43:42Z",
-        "updated_by": "developer",
+        "updated_at": "2026-08-08T23:04:20Z",
+        "updated_by": "developer/round-1-fix",
         "deliverable": "docs/architecture-briefs/2026-08-09-active-sprints-accumulator-gap.md"
       }
     ],

@@ -88,3 +88,45 @@ SPIKE/dangling-ids dedup reasoning (§6) all check out against live board state.
 
 verdict: CHANGES_REQUESTED
 round: 1
+
+## [Developer] Round-1 Fix Record — 2026-08-09T00:00:00Z
+
+Direct-commit correction per router instruction (own row, not a fixer handoff — round < 2 stays
+with the row's own developer, no separate fixer spawn needed since the fix is confined to this
+task's own deliverable doc).
+
+- **Issue fixed:** `docs/architecture-briefs/2026-08-09-active-sprints-accumulator-gap.md`'s GAP-2
+  "dangling subtasks confirmed" claim (§4 Notes, `:145-150` in the reviewed revision) — re-resolved
+  all 17 `subtasks[]` ids (9 `SYSREMAKE-P2-STRUCTURAL-REMAKE-ROUTE` + 8
+  `SPRINT-CCATO-TRUTHGATE-MCP-NATIVE`) individually against live `docs/data/orch/orch-state.json`
+  `ready[]`/`done_verified[]`, per QA's explicit instruction not to re-assert "zero matches"
+  without checking each one.
+- **Findings (matches QA's own re-check exactly):** SYSREMAKE-P2's 9/9 subtasks resolve to real
+  board rows (T1/T2 `done_verified[]`, closed 2026-08-08T18:43:08Z/19:01:23Z, commit `ad6e422e9`;
+  T3-T9 `ready[]` status READY, dispatchable) — 7 dispatchable, not childless. CCATO's subtasks are
+  5/8 dispatchable `ready[]` rows (T3/T5/T6/T7/T8, P0, `next_agent=dev-mcp-server` — already
+  board-documented by po's 2026-08-06T11:29Z finding, `docs/data/orch/orch-state.json:9137`/
+  `:13119`), only T1/T2/T4 (3/8) genuinely not found on any lane.
+- **Sections corrected:** §1 (exec summary GAP-2 bullet — added corrected-count pointer), §4
+  (table `tasks[]`/`dispatchable`/`childless` columns for both GAP-2 rows; replaced "dangling
+  subtasks confirmed" Notes bullet with per-id resolution; added a new Notes bullet on container
+  `updated_at` being decoupled from child-task activity for SPRINT-S shape), §5.2 (GAP-2 causal
+  narrative — closeout-blindness via PM's reactive `.tasks[]`-only check remains real, but "no
+  board-visible existence at all" was false for the majority of both sprints' work), §7 (Task 2
+  predicate redesign — added the requirement that `subtasks[]` must resolve to flat-lane status
+  or the new predicate reproduces the exact §3.3 false-negative on these two sprints; corrected
+  "GAP-2's two childless sprints ... would immediately stop blocking idle" to "will correctly
+  continue to block idle under a correct implementation"), §8 (Task 3 staleness guard — corrected
+  "both currently-stale sprints qualify today" to "neither qualifies once dispatchable counting is
+  correct"; added a recommendation that age computation for SPRINT-S shape should also consider the
+  freshest resolved-subtask `updated_at`, not the container field alone).
+- **Sections NOT touched (QA-confirmed accurate, not re-litigated):** §2 (ADD side), §3 (REMOVE
+  side + §3.3 latent bug), §5.1 (GAP-1), §6 (related-rows dedup), and §4's 6 non-GAP-2 table rows.
+- **Verification:** re-ran the per-id jq resolution live against `docs/data/orch/orch-state.json`
+  this cycle for all 17 ids — output matches QA's cited findings exactly (same lanes, same
+  statuses, same dates, same commit shas). Doc-only correction; no `apps/` code touched, `bun
+  test`/`tsc` structurally N/A.
+- **Guardrails re-confirmed:** no new `active_sprints[]`/`sprint_goal.entries[]` entry minted for
+  this correction work (same PO guardrail 1 as round 0).
+- **Board:** `TASK_RUNIDLE-1-AUDIT` moved back to `review[]`, `next_agent=qa` via `orch-apply.sh` —
+  not self-approved past QA.
