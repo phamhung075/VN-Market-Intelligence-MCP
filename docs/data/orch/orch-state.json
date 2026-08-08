@@ -95,9 +95,10 @@
   "head": {
     "status": "idle",
     "active_task_id": null,
-    "next_agent": "router",
-    "updated_at": "2026-08-08T09:00:30Z",
-    "updated_by": "qa"
+    "next_agent": null,
+    "next_action": "FIX-BCTC-REFINE-WINDOWTRUNCATION-COLUMNLAYOUT-CROSSWINDOW moved in_progress -> review (architect spec-only closeout, next_agent=po) — see spec_doc pointer on the row.",
+    "updated_at": "2026-08-08T09:42:07Z",
+    "updated_by": "architect"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -3526,6 +3527,20 @@
         "provenance": "detector",
         "audit_cycle_tag": "cron:auditor-t1:2026-08-08T08:30Z",
         "dedup_key": "memory_pressure:rag-service:A-30-post-fix-monitoring"
+      },
+      {
+        "id": "sys-20260808T093529-7c80",
+        "ts": "2026-08-08T09:35:29Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "signal_feedback",
+        "summary": "A-30 WARN: rag-service-1 memory 97.01% sustained (below 40MiB floor, 6.6MiB free)",
+        "severity": "WARN",
+        "status": "READ",
+        "payload_ref": null,
+        "provenance": "detector",
+        "audit_cycle_tag": "cron:auditor-t1:2026-08-08T09:30Z",
+        "dedup_key": "mem_pressure:rag-service:A-30-recurring-ceiling"
       }
     ],
     "last_triaged_at": "2026-07-29T06:25:00Z",
@@ -15879,41 +15894,6 @@
         "po_corroboration_c80_20260808T0116Z": "Fresh A-30 datapoint, 2026-08-08T01:05:33-01:06:54Z (system-auditor c80 Tier-1, RAW JSON in notebook commit 569f79108): mcp-server 6-probe window 97.16 / 97.20 / 97.39 / 97.16 / 97.58 / 97.59 %, min 97.16 max 97.59, reclamation_dips=0, discriminator verdict=ESCALATE, OOMKilled=false, RestartCount=2, VmHWM=3058144KB vs VmRSS=3023460KB. This is 19h AFTER the container OOM'd at ~05:57Z on 2026-08-07 (the death that confirmed sys-20260807T054825-771b as a true positive) - memory is back at the same pre-death ceiling with zero reclamation, i.e. the leak refills the 3GiB cap within a day of every restart. Logged here rather than as a new signal_queue row because c80's own E-3 append never fired (see FIX-ANALYSIS-ONLY-EXIT-DETECTOR-OR-VERDICT-BLIND-TO-PARTIAL-WRITE-CYCLE) and because the finding is already routed to this row - no duplicate minted. Dispatch fields deliberately untouched."
       },
       {
-        "id": "FIX-BCTC-REFINE-WINDOWTRUNCATION-COLUMNLAYOUT-CROSSWINDOW",
-        "title": "windowPartitioner maxWindowPages truncation creates a headless tail window that continuation-stitch.md's contract never anticipated -- resolveColumnLayout() defaults to code-first, silently swapping code/label on label-first (bank) continuation tables split by the cap",
-        "status": "READY",
-        "type": "FIX",
-        "priority": "P2",
-        "size": "M",
-        "zone": "apps/mcp-server/",
-        "owner": "dev-mcp-server",
-        "next_agent": "architect",
-        "supervised": true,
-        "plan_only": true,
-        "created_at": "2026-08-01T05:28:09Z",
-        "created_by": "dev-mcp-server/spike-SPIKE-BCTC-REFINE-MAXWINDOW-TRUNCATION",
-        "updated_at": "2026-08-08T05:51:19Z",
-        "source": "SPIKE-BCTC-REFINE-MAXWINDOW-TRUNCATION findings, docs/spikes/SPIKE-BCTC-REFINE-MAXWINDOW-TRUNCATION.md",
-        "root_cause": "windowPartitioner.ts's maxWindowPages cap (windowPartitioner.ts:92-101) does NOT fold an over-cap continuation table into its current window -- it starts a brand-new window (i=j) at the very next page, which is itself a mid-table continuation page with no header of its own (that's why it matched CONTINUATION_MARKER in the first place). This 'tail window' gets page_type='continuation' (getBctcPendingRefineTool.ts:319-335) and is dispatched to the SAME sub-flow as a genuine first-page window (docs/agents/refine_bctc_md/flow/continuation-stitch.md), whose contract (Steps 2-3) unconditionally treats the window's first page as carrying the table's real header -- a rule that was never updated to anticipate a truncation-created headless tail. Downstream, refinedMarkdownParser.ts::resolveColumnLayout() (refinedMarkdownParser.ts:386-393) decides code-first vs label-first column order by reading the CAPTURED header row's own cell text, but headerCells is a per-call local re-initialized to null on every parseRefinedMarkdown invocation (refinedMarkdownParser.ts:439) -- unlike statement_section, which IS explicitly threaded window-to-window via initialSection/finalSection (refinedMarkdownParser.ts:404-419, finalizeBctcRefine.ts:162,174-175). A tail window with no header of its own (the expected shape) falls back to the DEFAULT code-first layout (refinedMarkdownParser.ts:387,391), silently swapping code<->label for every 4-column row of a label-first (bank Meu B02a/TCTDHN) continuation table whose true header only existed in the truncated head window. This corrupts (not drops) code/label text; value_current/value_prior are read from the same cell indices in both layouts so numeric values are unaffected. bctcScalarAggregator.ts resolves headline scalars (total_assets, equity_total, net_revenue, ...) via LABEL-CANONICAL matching preferred over code (bctcScalarAggregator.ts:20-21,396-399) and also uses row code/label shape for isBankFormFromRows bank-vs-corporate detection -- a swap can silently degrade or null the headline figures this pipeline exists to produce, with no error and no gate that catches it (checkSectionCompleteness/BEQ-7 only checks statement_section PRESENCE, never code/label correctness -- bctcSectionCompleteness.ts:27-60). Same root mechanism as the already-shipped FIX-BCTC-BANK-BS-COLUMN-ORDER (single-window, no-captured-header case) -- that fix added within-window header capture but never cross-window threading, so the maxWindowPages truncation path re-opens the identical hazard through a side door the original fix did not anticipate. Live-confirmed trigger frequency: 5 truncation WARNs within the same second of a single run (docs/agent-memory/health/team-tool-recheck-2026-06-21-1605.md:195-196) -- not a theoretical edge case. NOT independently reproduced within the spike's 120-min timebox: an actual corrupted bctc_table_rows row instance from a live truncation-tail window (would need pulling a real bctc_refined_units row past a report's first truncated unit_id and diffing against a known label-first bank filing).",
-        "deliverable": "Architect decision (not a blind copy-paste) among 3 non-exclusive candidate mitigations, then implement the chosen combination: (1) raise maxWindowPages default / make it PDF-adaptive so real long bank continuation tables stop splitting; (2) thread a headerCells/column-layout hint forward across windows in parseDoneUnitsToRows the same way carrySection/statement_section already is, so a headless tail window inherits the correct layout from its head window; (3) have windowPartitioner mark truncation-tail windows explicitly (make the already-claimed but nonexistent truncated_continuation flag real -- windowPartitioner.ts:50 docstring vs 0 grep hits) so continuation-stitch.md's live agent-flow contract can fetch the head window's page-N header context on demand instead of silently assuming it is absent. Whichever combination is chosen, add a regression fixture that exercises the actual >maxWindowPages split-across-two-windows path end to end (partition -> refine markdown -> finalize) with a label-first (bank-form) 4+-column continuation table -- no existing test does this (grep -rn maxWindowPages apps/mcp-server/src/__tests__ only covers inputs that never exceed the cap: AR-refined-units-idempotency.test.ts:346,369; FIX-REFINE-WINDOW-DB-PAGELIST.test.ts:128 tests a different bug -- DB-driven page-list construction, not the continuation cap).",
-        "acceptance": "A synthetic label-first (bank Meu B02a/TCTDHN-shaped) continuation table spanning > maxWindowPages pages, run through partitionIntoWindows -> parseRefinedMarkdown (per-window, threading whatever new cross-window state the chosen fix adds) -> finalizeBctcRefine's parseDoneUnitsToRows, produces rows in the tail window with code/label in the CORRECT (non-swapped) order -- not just non-empty. Negative control: an existing code-first (corporate) continuation table fixture is unaffected (0-diff). The health-recheck WARN's severity/wording is corrected in the SAME change (or a follow-up doc-only PR) to stop attributing it to intelligence-cycle/news signal-drop -- see SPIKE-BCTC-REFINE-MAXWINDOW-TRUNCATION Finding 0.",
-        "files": [
-          "apps/mcp-server/src/application/utils/windowPartitioner.ts",
-          "apps/mcp-server/src/application/utils/refinedMarkdownParser.ts",
-          "apps/mcp-server/src/application/usecases/finalizeBctcRefine/finalizeBctcRefine.ts",
-          "docs/agents/refine_bctc_md/flow/continuation-stitch.md",
-          "docs/agents/refine_bctc_md/flow/main.md"
-        ],
-        "related": [
-          "SPIKE-BCTC-REFINE-MAXWINDOW-TRUNCATION",
-          "FIX-BCTC-BANK-BS-COLUMN-ORDER"
-        ],
-        "promoted_at": "2026-08-08T05:51:18Z",
-        "promoted_by": "dev-team (supervised-lane sweep)",
-        "promotion_note": "Supervised-Lane Sweep — assigned dispatch_lane='architect' (priority_rank=2); supervised/plan_only flags preserved, gate NOT disabled — see FIX-BOUNDED1-SUPERVISED-LANE-NO-SWEEPER",
-        "dispatch_lane": "architect"
-      },
-      {
         "id": "FIX-CHEF-USDVND-THRESHOLD-NUMERIC-DRIFT-GATE",
         "title": "chef dish USD/VND threshold citation drifts across dishes (25,000 / 25,500 / 26,110-vs-25000) — deterministic numeric-literal assertion/gate, not more prose",
         "type": "FIX",
@@ -22699,6 +22679,46 @@
         "po_goahead_20260808T075740": "RATIFIED-WITH-CORRECTION by po 2026-08-08T07:57:40Z, independently verified at source (not on the relayed review_note). Spec docs/handoffs/FIX-AUDITOR-VPS-ROUTE-COUNT-HARDCODE-UNSATISFIABLE-spec.md confirmed present (25273 bytes, 405L, commit 220c5158a real). Re-derived every load-bearing claim myself: (a) main.md:407 literal 'all 7 routes' CONFIRMED (row cited :211; developer's line-drift correction to :407 is accurate); (b) system-map routes[] length=8 CONFIRMED; (c) vpsPushLogStore.ts:97 hardcodes services=[prices,news,sbv,bctc] and :13 VpsService union includes foreign-flow but never queries it — dead-branch claim CONFIRMED at source; (d) OH-3.2 dim-oh3-auditor-blindspot.md:24-31 operands CONFIRMED to be grep-over-vps-setup-docs + geo_blocked data_sources + get_vps_proxy_health, none of which counts routes[] — redesign rationale sound; (e) the spec's own proposed cycle jq '.project.infrastructure.vps.routes[].source_id' RUN VERBATIM LIVE: rc=0, returns exactly the 8 source_ids the spec lists — the fix is implementable as written, not just plausible in prose. All 5 acceptance criteria addressed. CORRECTION (materially load-bearing, not pedantic): spec §7.1 flags ONE adjacent hardcode site (audit-dimensions.md:26, exact) but the census is THREE — docs/agents/system-auditor/init.md:17 carries the identical '7 geo-blocked routes' string and the spec never names it. This matters because §7.1's own argument for same-commit bundling is 'so the new OH-3.2 Leg-2 guard will not flag it after landing'; leaving init.md:17 unbundled reproduces exactly the residual-noise condition the bundle exists to prevent. IMPLEMENTER MUST bundle all THREE sites (main.md:407 + audit-dimensions.md:26 + init.md:17) in the landing commit, plus dim-oh3-auditor-blindspot.md:24-31. Verified by regex 'all [0-9]+ routes|([0-9]+ geo-blocked routes)' over docs/agents/ → exactly those 3 hits, no others fleetwide.",
         "commit_sha": "d89392752",
         "developer_implementation_note_20260808": "Implemented per po_goahead_20260808T075740 ratification (commit d89392752). Bundled all 4 sites: main.md:407 (jq-derived route set + route<->tool-plane coverage table + per-route verdict + cross-plane PASS gate replacing \"all 7 routes\"), audit-dimensions.md:26 + init.md:17 (trivial 1-line hardcode-class swap; init.md:17 is the 3rd site POs regex sweep found that the spec never named), dim-oh3-auditor-blindspot.md OH-3.2 (redesigned to 2-leg SSOT-vs-doc-hardcode regression guard, widened Leg-2 sweep to cover init.md too, beyond the spec own 2-file list). Verified: grep -rnoE all [0-9]+ routes|([0-9]+ geo-blocked routes) docs/agents/ -> 0 hits post-landing (3 pre-landing, matching POs own count). Acceptance (1)-(4) satisfied by the landed diff; acceptance (5) cross-reference was already appended to FIX-AUDITOR-B12-DOUBLE-INVOKE-EMIT-MARKER-LOSS during the plan-only pass (field sbv_fx_b12_rootcause_crossref_20260808), confirmed still present, no further action needed. Read-only against live services throughout (docs/flow-file change only, no docker exec/POST/restart)."
+      },
+      {
+        "id": "FIX-BCTC-REFINE-WINDOWTRUNCATION-COLUMNLAYOUT-CROSSWINDOW",
+        "title": "windowPartitioner maxWindowPages truncation creates a headless tail window that continuation-stitch.md's contract never anticipated -- resolveColumnLayout() defaults to code-first, silently swapping code/label on label-first (bank) continuation tables split by the cap",
+        "status": "REVIEW",
+        "type": "FIX",
+        "priority": "P2",
+        "size": "M",
+        "zone": "apps/mcp-server/",
+        "owner": "po",
+        "next_agent": "po",
+        "supervised": true,
+        "plan_only": true,
+        "created_at": "2026-08-01T05:28:09Z",
+        "created_by": "dev-mcp-server/spike-SPIKE-BCTC-REFINE-MAXWINDOW-TRUNCATION",
+        "updated_at": "2026-08-08T09:42:07Z",
+        "source": "SPIKE-BCTC-REFINE-MAXWINDOW-TRUNCATION findings, docs/spikes/SPIKE-BCTC-REFINE-MAXWINDOW-TRUNCATION.md",
+        "root_cause": "windowPartitioner.ts's maxWindowPages cap (windowPartitioner.ts:92-101) does NOT fold an over-cap continuation table into its current window -- it starts a brand-new window (i=j) at the very next page, which is itself a mid-table continuation page with no header of its own (that's why it matched CONTINUATION_MARKER in the first place). This 'tail window' gets page_type='continuation' (getBctcPendingRefineTool.ts:319-335) and is dispatched to the SAME sub-flow as a genuine first-page window (docs/agents/refine_bctc_md/flow/continuation-stitch.md), whose contract (Steps 2-3) unconditionally treats the window's first page as carrying the table's real header -- a rule that was never updated to anticipate a truncation-created headless tail. Downstream, refinedMarkdownParser.ts::resolveColumnLayout() (refinedMarkdownParser.ts:386-393) decides code-first vs label-first column order by reading the CAPTURED header row's own cell text, but headerCells is a per-call local re-initialized to null on every parseRefinedMarkdown invocation (refinedMarkdownParser.ts:439) -- unlike statement_section, which IS explicitly threaded window-to-window via initialSection/finalSection (refinedMarkdownParser.ts:404-419, finalizeBctcRefine.ts:162,174-175). A tail window with no header of its own (the expected shape) falls back to the DEFAULT code-first layout (refinedMarkdownParser.ts:387,391), silently swapping code<->label for every 4-column row of a label-first (bank Meu B02a/TCTDHN) continuation table whose true header only existed in the truncated head window. This corrupts (not drops) code/label text; value_current/value_prior are read from the same cell indices in both layouts so numeric values are unaffected. bctcScalarAggregator.ts resolves headline scalars (total_assets, equity_total, net_revenue, ...) via LABEL-CANONICAL matching preferred over code (bctcScalarAggregator.ts:20-21,396-399) and also uses row code/label shape for isBankFormFromRows bank-vs-corporate detection -- a swap can silently degrade or null the headline figures this pipeline exists to produce, with no error and no gate that catches it (checkSectionCompleteness/BEQ-7 only checks statement_section PRESENCE, never code/label correctness -- bctcSectionCompleteness.ts:27-60). Same root mechanism as the already-shipped FIX-BCTC-BANK-BS-COLUMN-ORDER (single-window, no-captured-header case) -- that fix added within-window header capture but never cross-window threading, so the maxWindowPages truncation path re-opens the identical hazard through a side door the original fix did not anticipate. Live-confirmed trigger frequency: 5 truncation WARNs within the same second of a single run (docs/agent-memory/health/team-tool-recheck-2026-06-21-1605.md:195-196) -- not a theoretical edge case. NOT independently reproduced within the spike's 120-min timebox: an actual corrupted bctc_table_rows row instance from a live truncation-tail window (would need pulling a real bctc_refined_units row past a report's first truncated unit_id and diffing against a known label-first bank filing).",
+        "deliverable": "Architect decision (not a blind copy-paste) among 3 non-exclusive candidate mitigations, then implement the chosen combination: (1) raise maxWindowPages default / make it PDF-adaptive so real long bank continuation tables stop splitting; (2) thread a headerCells/column-layout hint forward across windows in parseDoneUnitsToRows the same way carrySection/statement_section already is, so a headless tail window inherits the correct layout from its head window; (3) have windowPartitioner mark truncation-tail windows explicitly (make the already-claimed but nonexistent truncated_continuation flag real -- windowPartitioner.ts:50 docstring vs 0 grep hits) so continuation-stitch.md's live agent-flow contract can fetch the head window's page-N header context on demand instead of silently assuming it is absent. Whichever combination is chosen, add a regression fixture that exercises the actual >maxWindowPages split-across-two-windows path end to end (partition -> refine markdown -> finalize) with a label-first (bank-form) 4+-column continuation table -- no existing test does this (grep -rn maxWindowPages apps/mcp-server/src/__tests__ only covers inputs that never exceed the cap: AR-refined-units-idempotency.test.ts:346,369; FIX-REFINE-WINDOW-DB-PAGELIST.test.ts:128 tests a different bug -- DB-driven page-list construction, not the continuation cap).",
+        "acceptance": "A synthetic label-first (bank Meu B02a/TCTDHN-shaped) continuation table spanning > maxWindowPages pages, run through partitionIntoWindows -> parseRefinedMarkdown (per-window, threading whatever new cross-window state the chosen fix adds) -> finalizeBctcRefine's parseDoneUnitsToRows, produces rows in the tail window with code/label in the CORRECT (non-swapped) order -- not just non-empty. Negative control: an existing code-first (corporate) continuation table fixture is unaffected (0-diff). The health-recheck WARN's severity/wording is corrected in the SAME change (or a follow-up doc-only PR) to stop attributing it to intelligence-cycle/news signal-drop -- see SPIKE-BCTC-REFINE-MAXWINDOW-TRUNCATION Finding 0.",
+        "files": [
+          "apps/mcp-server/src/application/utils/windowPartitioner.ts",
+          "apps/mcp-server/src/application/utils/refinedMarkdownParser.ts",
+          "apps/mcp-server/src/application/usecases/finalizeBctcRefine/finalizeBctcRefine.ts",
+          "docs/agents/refine_bctc_md/flow/continuation-stitch.md",
+          "docs/agents/refine_bctc_md/flow/main.md"
+        ],
+        "related": [
+          "SPIKE-BCTC-REFINE-MAXWINDOW-TRUNCATION",
+          "FIX-BCTC-BANK-BS-COLUMN-ORDER"
+        ],
+        "promoted_at": "2026-08-08T05:51:18Z",
+        "promoted_by": "dev-team (supervised-lane sweep)",
+        "promotion_note": "Supervised-Lane Sweep — assigned dispatch_lane='architect' (priority_rank=2); supervised/plan_only flags preserved, gate NOT disabled — see FIX-BOUNDED1-SUPERVISED-LANE-NO-SWEEPER",
+        "dispatch_lane": "architect",
+        "claimed_at": "2026-08-08T09:22:38Z",
+        "claimed_by": "dev-team (supervised-lane sweep)",
+        "reviewed_by": "architect",
+        "spec_doc": "docs/handoffs/FIX-BCTC-REFINE-WINDOWTRUNCATION-COLUMNLAYOUT-CROSSWINDOW-spec.md",
+        "architect_review_note": "PLAN-ONLY (supervised+plan_only — apps/mcp-server source and refine_bctc_md flow docs NOT edited). Re-verified every SPIKE-BCTC-REFINE-MAXWINDOW-TRUNCATION line-anchor live, zero drift. DECISION among the 3 non-exclusive candidates: adopted (2) FULL — thread a ColumnLayout value cross-window in refinedMarkdownParser.ts/finalizeBctcRefine.ts, an exact structural mirror of the already-shipped statement_section threading (initialSection/finalSection/carrySection) — deterministically correct for any table length or maxWindowPages value, zero new tool calls, zero new wire fields on the correctness-critical path. Adopted (3) FLAG-ONLY — make the already-claimed-but-nonexistent truncated_continuation field real on Window/RefineWindow (windowPartitioner.ts + getBctcPendingRefineTool.ts pass-through), closing a live comment≠code drift at windowPartitioner.ts:50; explicitly did NOT build (3)s on-demand head-window-header-fetch half (new leaf-worker tool-call machinery (2) makes unnecessary). REJECTED (1) raise/adapt maxWindowPages outright — does not fix the defect CLASS (any finite cap still eventually truncates a sufficiently long table, and real bank Mau B02a/TCTDHN tables are exactly the ones that run long per spike Finding 3), and costs real Haiku-model leaf-worker token/image budget with zero correctness benefit once (2) lands. NEW finding beyond the spike: the original design brief (docs/architecture-briefs/2026-05-30-bctc-agentic-refine.md:78-80) intended a LOSSY truncation (\"drop excess pages, flag low trust\") plus a \"never split across two subagents\" invariant that the SHIPPED implementation already silently violates (splits, but per spike Finding 1 never drops data) — reverting to the brief literal design was explicitly rejected, it would regress a verified-good no-data-loss property to fix a property (2) already fixes losslessly; corrected both stale docstrings (windowPartitioner.ts:11-13 and :50) to describe actual behavior instead. WARN-wording acceptance clause: traced its full lifecycle — the RemoteTrigger writer that produced the intelligence-cycle misattribution died 2026-06-22, its output file (team-tool-recheck-2026-06-21-1605.md) is pruned from disk (git-history only, confirmed via git log --all), and the 2026-08-06 replacement flow (agent-father/team-tool-recheck.md) explicitly excludes this WARN class as out-of-scope (handed off separately) — zero live docs carry the wrong attribution today, nothing left to correct there; the one still-live inaccuracy (the truncated_continuation docstring claim) is corrected in this same spec instead. Corroborating finding: the single-page \"last tail window\" edge case (misclassified page_type=table/prose instead of continuation) already self-detects and FAILS LOUD in table-page.md/prose-page.md (continuation-marker-in-wrong-subflow guard) rather than silently corrupting — confirms the correctness hazard is fully confined to the page_type=continuation dispatch path this fix targets, no changes needed to those 2 docs. Full verbatim diffs for windowPartitioner.ts / refinedMarkdownParser.ts / finalizeBctcRefine.ts / getBctcPendingRefineTool.ts (added beyond the tasks own files list — necessary wire pass-through, flagged explicitly) + doc diffs for continuation-stitch.md/main.md + a complete hand-traced regression test file (windowPartitioner cap-hit shape proving exactly 2 windows with only the tail flagged; label-first bank tail-window thread-vs-no-thread contrast proving the swap and its fix; code-first corporate negative control asserting byte-identical rows with/without inheritance; full finalize_bctc_refine DB-integration test) in spec_doc — every assertion hand-traced against post-fix logic including a check that DT-2/DT-3 BLOCK predicates in bctcMagnitudeValidator.ts cannot false-trip the fixture (no total_liabilities/equity_total-labeled rows exist in it, no income_statement rows exist), not asserted on faith; caught and fixed my own negative-control bug (a statement_section carry mismatch unrelated to the parameter under test) before finalizing. Full details: docs/handoffs/FIX-BCTC-REFINE-WINDOWTRUNCATION-COLUMNLAYOUT-CROSSWINDOW-spec.md"
       }
     ],
     "qa": [
