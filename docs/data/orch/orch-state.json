@@ -3687,6 +3687,20 @@
         "provenance": "detector",
         "audit_cycle_tag": "cron:auditor-t1:2026-08-08T15:30Z",
         "dedup_key": "microservice_degraded:rag-service-1:A-30"
+      },
+      {
+        "id": "sys-20260808T153859-7b4c",
+        "ts": "2026-08-08T15:38:59Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "signal_feedback",
+        "summary": "A-30 WARN: mcp-server-1 memory sustained >93% (94.36-94.93%), loss of reclamation",
+        "severity": "WARN",
+        "status": "NEW",
+        "payload_ref": null,
+        "provenance": "detector",
+        "audit_cycle_tag": "cron:auditor-t1:2026-08-08T15:30Z",
+        "dedup_key": "microservice_degraded:mcp-server-1:A-30"
       }
     ],
     "last_triaged_at": "2026-07-29T06:25:00Z",
@@ -14752,6 +14766,41 @@
         "status_note": "[QA] Review Record (direct-commit verify): commit 9897b599f verified on main ancestry, touches exactly files[]=[docs/agents/dev-team/flow/main.md]. Read full diff — each of the 5 existing lane sections gets exactly 1 changed line (gating sentence only), byte-unchanged bodies confirmed independently, not trusted from review_note. Both inlined jq snippets (selection + stamp) re-run by QA against LIVE orch-state.json read-only: selection correctly resolves step1_triage (never-served); 7-tick scratch-fixture simulation confirms bounded1->sls->rlc->drs->qa_drain->step1_triage->bounded1 wrap. Live post-deploy evidence found beyond the row own claim: commit 85f68b287 (2026-08-08T15:01:44+0200) shows rotation already fired for real on the 12:37Z tick, dispatched FIX-DEVTEAM-IDLE-CHAIN-P2A-DURABLE-DRAIN. DRS-gap/6-candidate claim verified against scripts/lib/devteam-eligibility.jq + scripts/devteam-idle-chain-stamp.jq (both still hardcode 5-id set). AC-1/AC-4 fairness-test-extension scope-boundary verified: correctly deferred to sibling FIX-DEVTEAM-IDLE-CHAIN-TEST-FAIRNESS via MAIN-COMPLETION (this row blocks:[] matches), not this row job. bun tsc --noEmit clean (0 errors); mock-guard/bun test N/A (doc-only change, zero prod TS/test files touched); size-lint-justification --check confirms main.md not in the 2 pre-existing offenders. Sibling TASK-DEVTEAM-IDLE-CHAIN-2-MAIN-FLOW confirmed still BACKLOG (no double-landing). VERDICT: APPROVED, DONE_VERIFIED. DJ: sprint-COWORK-GUARANTEED-SLOT-CATCHUP-qa-12.md STEP qa-S13.",
         "verified_at": "2026-08-08T15:37:34Z",
         "verified_by": "qa"
+      },
+      {
+        "id": "FIX-BCTC-REFINE-PAGE-IMAGE-UNAVAILABLE-CAPS-CONFIDENCE",
+        "type": "FIX",
+        "title": "get_bctc_page_image failed on 3/3 successful refine windows in the 2026-08-06T16:37Z batch — every DONE unit capped at confidence 0.55 (text-only), vs zero image failures in the 14:07Z batch on the same report",
+        "status": "DONE_VERIFIED",
+        "priority": "P1",
+        "size": "S",
+        "owner": "po",
+        "zone": "apps/mcp-server/",
+        "next_agent": "qa",
+        "supervised": false,
+        "plan_only": false,
+        "created_at": "2026-08-07T01:11:28Z",
+        "created_by": "po/triage-20260807T0104Z (own source verification during WF-2 ratification)",
+        "baseline_pass": true,
+        "rebuild_required": false,
+        "files": [
+          "apps/mcp-server/src/interface/mcp/tools/financial-reports/pushBctcRefinedUnitTool.ts",
+          "apps/mcp-server/src/infrastructure/signals/bctcImageFetchDegradedSignalWriter.ts",
+          "apps/mcp-server/src/__tests__/FIX-BCTC-REFINE-PAGE-IMAGE-UNAVAILABLE-CAPS-CONFIDENCE.test.ts"
+        ],
+        "related": [
+          "FIX-REFINE-SUBFLOW-OPTIONC-CONTRACT-DRIFT"
+        ],
+        "verification_gate": "next_refine_batch_has_zero_image_unavailable_flags",
+        "root_cause": "AC1 (investigation, not assumption): pdf-extractor was healthy throughout the 16:37Z batch — zero ERROR/WARN log lines, /health 200 OK, all requests that reached it served correctly. mcp-server own data/logs/tool-get_bctc_page_image.log shows unit-0014/page28 rasterize succeeded cleanly (PNG confirmed on the shared bctc-page-images volume, no WARN) yet the pushed unit still carries image_unavailable; units 0015/0019 (pages 29/37) show ZERO tool-log entry — get_bctc_page_image was never invoked for them at all. Neither a pdf-extractor outage NOR a bug in the named files (getBctcPageImageTool.ts/pdfExtractorClient.ts — every traced call that executed completed cleanly) reproduces the symptom. Root cause sits in the untraceable gap between a successful server response and the calling refine_bctc_md subagent under the Option-C shared-execution-context architecture (large base64 image payloads accumulating in one continuous agent turn) — agent-flow/architecture territory outside apps/mcp-server, not a TS defect. 0.55/<=0.6 cap verified spec-compliant and untouched.",
+        "status_note": "[QA] Review Record (direct-commit verify, mode=verify-committed, dev-team Review-Lane QA-Drain). Row commit field was stale: 73e65eafc is a DANGLING commit (git fsck --unreachable confirms; NOT an ancestor of main, git merge-base --is-ancestor fails) — its parent (dae6905a) predates ~415 later main commits, i.e. it was made against a stale main tip before a rebase-to-push. Independently traced the real landing commit: git log on all 3 files[] resolves to 19e43fa14 (same author/timestamp, same subject line \"surface image-fetch-plane degradation via signal_queue (AC2)\", Task: trailer matches this id). Confirmed byte-identical: git diff 73e65eafc 19e43fa14 -- <the 3 files> is empty, git patch-id matches exactly, and each commit vs ITS OWN parent is an isolated 3-file/495-insertion patch — this is a clean rebase-hash-change artifact (routine under this repo concurrent multi-agent commit cadence), not missing/altered work. Corrected commit field to 19e43fa14 (the real, main-ancestry hash) as part of this lane-move. Re-verified RAW, not the self-report: new test file 18/18 pass (ran myself); bun tsc --noEmit clean (0 errors); mock-guard.sh --files on both touched production files PASS; regression sweep on the other 4 suites that reference push_bctc_refined_unit/pushBctcRefinedUnitTool (AR-refined-units-idempotency, FIX-REFINE-LOCK-TTL-RECLAIM, TRUST-RED-sanity-gate, bctcSanityValidator) 46/46 pass, zero regressions. Read the actual diff: commit touches exactly files[] (3 files, 495 insertions, 0 deletions elsewhere) — no scope creep. Confirmed AC1 claim (0.55/<=0.6 cap untouched): bctcSanityValidator.ts/getBctcPageImageTool.ts/pdfExtractorClient.ts are NOT in this commit diff, matches \"not a code bug\" root-cause claim. Confirmed AC2 wiring is correct, not just present: INSERT OR REPLACE for the current push happens BEFORE the COUNT(*) query (pushBctcRefinedUnitTool.ts), so occurrenceCount correctly includes the current push; shouldSignalImageFetchDegradation uses strict === threshold (rising-edge, fires once at count=2, never again at 3+); signal write wrapped in try/catch so a signal-write failure cannot block the primary upsert response. AC3 correctly NOT claimed (no fetch-plane file touched, nothing to re-verify) — verification_gate remains open pending a live batch, exactly as the row states. AC4 (pages 30-41 ocr_corruption tail) correctly deferred, not silently dropped. Minor non-blocking note: pushBctcRefinedUnitTool.ts:4 size-justification header now references the stale hash \"landed via 73e65eafc\" — cosmetic docstring only (no functional effect), left for the file's own next touch per QA not-my-job (no production code edits). VERDICT: APPROVED, DONE_VERIFIED. DJ: sprint-COWORK-GUARANTEED-SLOT-CATCHUP-qa-12.md STEP qa-S14.",
+        "commit": "19e43fa14",
+        "updated_at": "2026-08-08T15:39:45Z",
+        "claimed_at": "2026-08-08T15:28:44Z",
+        "claimed_by": "dev-team (review-lane qa-drain)",
+        "updated_by": "qa",
+        "verified_at": "2026-08-08T15:39:04Z",
+        "verified_by": "qa"
       }
     ],
     "head": {
@@ -22750,38 +22799,6 @@
         "depends": [
           "FIX-MARKETDB-WAL-SEQUENCE-STEPS-2-4-NO-OWNER"
         ]
-      },
-      {
-        "id": "FIX-BCTC-REFINE-PAGE-IMAGE-UNAVAILABLE-CAPS-CONFIDENCE",
-        "type": "FIX",
-        "title": "get_bctc_page_image failed on 3/3 successful refine windows in the 2026-08-06T16:37Z batch — every DONE unit capped at confidence 0.55 (text-only), vs zero image failures in the 14:07Z batch on the same report",
-        "status": "QA",
-        "priority": "P1",
-        "size": "S",
-        "owner": "po",
-        "zone": "apps/mcp-server/",
-        "next_agent": "qa",
-        "supervised": false,
-        "plan_only": false,
-        "created_at": "2026-08-07T01:11:28Z",
-        "created_by": "po/triage-20260807T0104Z (own source verification during WF-2 ratification)",
-        "baseline_pass": true,
-        "rebuild_required": false,
-        "files": [
-          "apps/mcp-server/src/interface/mcp/tools/financial-reports/pushBctcRefinedUnitTool.ts",
-          "apps/mcp-server/src/infrastructure/signals/bctcImageFetchDegradedSignalWriter.ts",
-          "apps/mcp-server/src/__tests__/FIX-BCTC-REFINE-PAGE-IMAGE-UNAVAILABLE-CAPS-CONFIDENCE.test.ts"
-        ],
-        "related": [
-          "FIX-REFINE-SUBFLOW-OPTIONC-CONTRACT-DRIFT"
-        ],
-        "verification_gate": "next_refine_batch_has_zero_image_unavailable_flags",
-        "root_cause": "AC1 (investigation, not assumption): pdf-extractor was healthy throughout the 16:37Z batch — zero ERROR/WARN log lines, /health 200 OK, all requests that reached it served correctly. mcp-server own data/logs/tool-get_bctc_page_image.log shows unit-0014/page28 rasterize succeeded cleanly (PNG confirmed on the shared bctc-page-images volume, no WARN) yet the pushed unit still carries image_unavailable; units 0015/0019 (pages 29/37) show ZERO tool-log entry — get_bctc_page_image was never invoked for them at all. Neither a pdf-extractor outage NOR a bug in the named files (getBctcPageImageTool.ts/pdfExtractorClient.ts — every traced call that executed completed cleanly) reproduces the symptom. Root cause sits in the untraceable gap between a successful server response and the calling refine_bctc_md subagent under the Option-C shared-execution-context architecture (large base64 image payloads accumulating in one continuous agent turn) — agent-flow/architecture territory outside apps/mcp-server, not a TS defect. 0.55/<=0.6 cap verified spec-compliant and untouched.",
-        "status_note": "AC1 CLOSED: root cause = agent/transport-layer gap, NOT pdf-extractor outage, NOT a code bug in the 2 named files (see root_cause field) — do not re-route to ops, and do not re-open a code-fix attempt on getBctcPageImageTool.ts/pdfExtractorClient.ts without new evidence. AC2 CLOSED: bctcImageFetchDegradedSignalWriter.ts + pushBctcRefinedUnitTool.ts wiring ships a HIGH-severity signal_queue row on the 2nd image_unavailable-flagged push per report (rising-edge, never re-fires) — 18/18 new tests pass, tsc clean, zero regressions in existing bctc push/finalize/signal-writer suites, full local suite 15174 pass/45 fail/1 error (within this repo documented flaky floor, zero bctc-named failures). AC3 NOT CLAIMED: no fetch-plane code changed, so there is nothing to re-run/re-verify — gate next_refine_batch_has_zero_image_unavailable_flags cannot be proven by this commit alone; whoever owns the next live refine batch on this report should confirm organically. AC4 (page 30-41 contiguous ocr_corruption tail) intentionally NOT investigated — recommend PO split to its own row per the task brief own suggestion.",
-        "commit": "73e65eafc",
-        "updated_at": "2026-08-08T15:28:44Z",
-        "claimed_at": "2026-08-08T15:28:44Z",
-        "claimed_by": "dev-team (review-lane qa-drain)"
       }
     ],
     "_closed_signals_20260614": {
