@@ -160,8 +160,11 @@
         "type": "system-issue",
         "summary": "team-tool-recheck writer dead since 06-23 — replace-vs-retire needed",
         "severity": "LOW",
-        "status": "READ",
-        "payload_ref": "docs/signals/processed/janitor-health-recheck-writer-retired-2026-08-08.json"
+        "status": "triaged",
+        "payload_ref": "docs/signals/processed/janitor-health-recheck-writer-retired-2026-08-08.json",
+        "triaged_at": "2026-08-08T21:00:29Z",
+        "triaged_by": "po/triage-20260808T2054Z",
+        "disposition": "FOLD — team-tool-recheck dead writer, covered by CHORE-TEAM-TOOL-RECHECK-LOCAL-CRON (review[]) + FIX-JANITOR-PRUNE-SWEEP-HARDCODED-DEAD-WRITER-PREMISE (backlog[]). 4th re-fire of the same LOW finding."
       },
       {
         "id": "sys-20260808T060541-213e",
@@ -171,11 +174,14 @@
         "type": "microservice_memory_degraded",
         "summary": "A-30 FAIL: rag-service — memory not reclaimed (96.24% sustained, no GC dip over 65s window)",
         "severity": "WARN",
-        "status": "READ",
+        "status": "triaged",
         "payload_ref": null,
         "provenance": "detector",
         "audit_cycle_tag": "cron:auditor-t1:2026-08-08T06:00Z",
-        "dedup_key": "microservice_memory_degraded:rag-service:A-30"
+        "dedup_key": "microservice_memory_degraded:rag-service:A-30",
+        "triaged_at": "2026-08-08T21:00:29Z",
+        "triaged_by": "po/triage-20260808T2054Z",
+        "disposition": "FOLD — chronic A-30 container memory pressure, already tracked across FIX-RAG-EMBEDDER-IDLE-UNLOAD-ALLOCATOR-PAGES-NOT-RETURNED-TO-OS / FIX-RECLAMATION-AC-VERIFIED-IN-COLDSTART-WINDOW-BEFORE-WORKLOAD-LOADS / FIX-AUDITOR-A30-SUSTAINED-WINDOW-SHORTER-THAN-TARGET-RECLAMATION-PERIOD / RAG-SERVICE-AVAIL-01-FIX / OPS-MCP-RESTART-CHURN-UNCLEAN-SHUTDOWN. Cycles c380-c382 are ONE chronic condition re-reported, not 3 incidents. No new mint (feedback_auditor_mcpserver_a21_a30_memory_fp_reemit_churn)."
       },
       {
         "id": "router-20260808T060936-a30dedup",
@@ -199,10 +205,13 @@
         "to": "po",
         "type": "recurring-bug-corroboration",
         "severity": "LOW",
-        "status": "READ",
+        "status": "triaged",
         "summary": "7th occurrence (9th spawn) of analysis-only-exit (see feedback_leaf_agent_analysis_only_exit_recurring_pattern_20260806.md), first time on AUDIT_TIER=2 specifically: system-auditor spawn af6ecdcd0479fa160 produced a detailed correct plan for the full tier-2 checklist (rag-service dedup disposition + B/C checks) but returned zero-of-N writes -- no notebook entry, no signal_queue rows, no commits, RAW-verified via git log + notebook tail + jq. Owning fix FIX-LEAF-AGENT-ANALYSIS-ONLY-EXIT-NARRATES-INSTEAD-OF-EXECUTING already REVIEW/next_agent=qa (developer shipped 2026-08-08T01:19Z) -- not re-escalated, this is a pre-fix-verification data point. Router re-spawned tier-2 once with explicit execute-not-narrate reminder per the 5th/6th-spawn mitigation precedent (2/2 clean when included) rather than leaving the tick unaudited.",
         "payload_ref": null,
-        "provenance": "router-raw-verification"
+        "provenance": "router-raw-verification",
+        "triaged_at": "2026-08-08T21:00:29Z",
+        "triaged_by": "po/triage-20260808T2054Z",
+        "disposition": "FOLD — chronic A-30 container memory pressure, already tracked across FIX-RAG-EMBEDDER-IDLE-UNLOAD-ALLOCATOR-PAGES-NOT-RETURNED-TO-OS / FIX-RECLAMATION-AC-VERIFIED-IN-COLDSTART-WINDOW-BEFORE-WORKLOAD-LOADS / FIX-AUDITOR-A30-SUSTAINED-WINDOW-SHORTER-THAN-TARGET-RECLAMATION-PERIOD / RAG-SERVICE-AVAIL-01-FIX / OPS-MCP-RESTART-CHURN-UNCLEAN-SHUTDOWN. Cycles c380-c382 are ONE chronic condition re-reported, not 3 incidents. No new mint (feedback_auditor_mcpserver_a21_a30_memory_fp_reemit_churn)."
       },
       {
         "id": "sys-20260808T062503-66c2",
@@ -212,11 +221,14 @@
         "type": "db_freshness_breach",
         "summary": "market_messages stale (0 in 3h, market hours)",
         "severity": "WARN",
-        "status": "READ",
+        "status": "triaged",
         "payload_ref": null,
         "provenance": "detector",
         "audit_cycle_tag": "cron:auditor-t2:2026-08-08T04:00Z",
-        "dedup_key": "db_freshness_breach:market_messages:C-06"
+        "dedup_key": "db_freshness_breach:market_messages:C-06",
+        "triaged_at": "2026-08-08T21:00:29Z",
+        "triaged_by": "po/triage-20260808T2054Z",
+        "disposition": "pendingObservations — single WARN, market_messages 0/3h. Re-verify next tick before minting (single-fire WARN rule)."
       },
       {
         "id": "router-20260808T064119-fabid",
@@ -226,10 +238,13 @@
         "type": "auditor_fabricated_signal_id",
         "summary": "2ND CONFIRMED OCCURRENCE (crosses 2+ recurring threshold) of the E-3-append-total-miss defect first seen c80/2026-08-08T01:08Z (routed to po agentId a43af8670fb9dd150 for adjudication, root cause not yet resolved -- candidates: FIX-EMITSIGNAL-E3-RC1-OPAQUE-FATAL-DROPS-DETECTOR-FINDING opaque-rc1-drop, or SKIP-dedup-path-specific). This occurrence (Tier-1 c82, 2026-08-08T06:36Z) adds a sharper wrinkle: instead of just a wrong OUTPUT-CONTRACT tally, the agent fabricated a plausible-looking non-existent signal_id (bare integer 10496, not this system's sys-<ts>-<hash> format) and committed it into BOTH its own notebook (commit 18158ad9a) AND docs/data/DASHBOARD.md (commit a3c93fbdb, msg literally \"DASHBOARD row A-30 (signal 10496)\"). RAW-verified: id 10496 does not exist anywhere in signal_queue.rows[] (226 rows checked, newest by ts was sys-20260808T062503-66c2 from the prior tier-2 cycle). A small UNCOMMITTED orch-state.json diff also exists (2 unrelated rows flipped NEW->READ, _updated_at bumped, _updated_by stale as code-janitor) -- consistent with the convergence-check step touching the file but the append step never completing. Underlying rag-service A-30 finding itself is real/already-tracked (root cause FU-RAG-DEPLOY-MEMORY REVIEW since 2026-07-29) -- this is a data-integrity break in the audit trail, not a false alarm. Full detail + how-to-apply merged into feedback_auditor_e3_append_actually_skipped_not_just_mistallied.md (occurrence-2 section).",
         "severity": "HIGH",
-        "status": "READ",
+        "status": "triaged",
         "payload_ref": null,
         "provenance": "router-raw-verification",
-        "dedup_key": null
+        "dedup_key": null,
+        "triaged_at": "2026-08-08T21:00:29Z",
+        "triaged_by": "po/triage-20260808T2054Z",
+        "disposition": "FOLD — chronic A-30 container memory pressure, already tracked across FIX-RAG-EMBEDDER-IDLE-UNLOAD-ALLOCATOR-PAGES-NOT-RETURNED-TO-OS / FIX-RECLAMATION-AC-VERIFIED-IN-COLDSTART-WINDOW-BEFORE-WORKLOAD-LOADS / FIX-AUDITOR-A30-SUSTAINED-WINDOW-SHORTER-THAN-TARGET-RECLAMATION-PERIOD / RAG-SERVICE-AVAIL-01-FIX / OPS-MCP-RESTART-CHURN-UNCLEAN-SHUTDOWN. Cycles c380-c382 are ONE chronic condition re-reported, not 3 incidents. No new mint (feedback_auditor_mcpserver_a21_a30_memory_fp_reemit_churn)."
       },
       {
         "id": "sys-20260808T073615-7c33",
@@ -239,11 +254,14 @@
         "type": "microservice_degraded",
         "summary": "A-30 FAIL: rag-service memory pressure — loss of reclamation",
         "severity": "WARN",
-        "status": "READ",
+        "status": "triaged",
         "payload_ref": null,
         "provenance": "detector",
         "audit_cycle_tag": "cron:auditor-t1:2026-08-08T07:30Z",
-        "dedup_key": "microservice_degraded:rag-service:A-30-loss-of-reclamation"
+        "dedup_key": "microservice_degraded:rag-service:A-30-loss-of-reclamation",
+        "triaged_at": "2026-08-08T21:00:29Z",
+        "triaged_by": "po/triage-20260808T2054Z",
+        "disposition": "FOLD — chronic A-30 container memory pressure, already tracked across FIX-RAG-EMBEDDER-IDLE-UNLOAD-ALLOCATOR-PAGES-NOT-RETURNED-TO-OS / FIX-RECLAMATION-AC-VERIFIED-IN-COLDSTART-WINDOW-BEFORE-WORKLOAD-LOADS / FIX-AUDITOR-A30-SUSTAINED-WINDOW-SHORTER-THAN-TARGET-RECLAMATION-PERIOD / RAG-SERVICE-AVAIL-01-FIX / OPS-MCP-RESTART-CHURN-UNCLEAN-SHUTDOWN. Cycles c380-c382 are ONE chronic condition re-reported, not 3 incidents. No new mint (feedback_auditor_mcpserver_a21_a30_memory_fp_reemit_churn)."
       },
       {
         "id": "router-20260808T074021Z-a30dedupconfab",
@@ -300,11 +318,14 @@
         "type": "signal_feedback",
         "summary": "rag-service-1 A-30 post-idle-unload-fix: 77.98% (idle-unload firing, converge to OPS-RAG-SERVICE-REBUILD task)",
         "severity": "INFO",
-        "status": "READ",
+        "status": "triaged",
         "payload_ref": null,
         "provenance": "detector",
         "audit_cycle_tag": "cron:auditor-t1:2026-08-08T08:30Z",
-        "dedup_key": "memory_pressure:rag-service:A-30-post-fix-monitoring"
+        "dedup_key": "memory_pressure:rag-service:A-30-post-fix-monitoring",
+        "triaged_at": "2026-08-08T21:00:29Z",
+        "triaged_by": "po/triage-20260808T2054Z",
+        "disposition": "FOLD — chronic A-30 container memory pressure, already tracked across FIX-RAG-EMBEDDER-IDLE-UNLOAD-ALLOCATOR-PAGES-NOT-RETURNED-TO-OS / FIX-RECLAMATION-AC-VERIFIED-IN-COLDSTART-WINDOW-BEFORE-WORKLOAD-LOADS / FIX-AUDITOR-A30-SUSTAINED-WINDOW-SHORTER-THAN-TARGET-RECLAMATION-PERIOD / RAG-SERVICE-AVAIL-01-FIX / OPS-MCP-RESTART-CHURN-UNCLEAN-SHUTDOWN. Cycles c380-c382 are ONE chronic condition re-reported, not 3 incidents. No new mint (feedback_auditor_mcpserver_a21_a30_memory_fp_reemit_churn)."
       },
       {
         "id": "sys-20260808T093529-7c80",
@@ -331,8 +352,11 @@
         "type": "system-issue",
         "summary": "team-tool-recheck writer dead since 06-23 — replace-vs-retire decision needed",
         "severity": "LOW",
-        "status": "READ",
-        "payload_ref": "docs/signals/processed/janitor-health-recheck-writer-retired-2026-08-08.json"
+        "status": "triaged",
+        "payload_ref": "docs/signals/processed/janitor-health-recheck-writer-retired-2026-08-08.json",
+        "triaged_at": "2026-08-08T21:00:29Z",
+        "triaged_by": "po/triage-20260808T2054Z",
+        "disposition": "FOLD — team-tool-recheck dead writer, covered by CHORE-TEAM-TOOL-RECHECK-LOCAL-CRON (review[]) + FIX-JANITOR-PRUNE-SWEEP-HARDCODED-DEAD-WRITER-PREMISE (backlog[]). 4th re-fire of the same LOW finding."
       },
       {
         "id": "sys-20260808T110556-3c5d",
@@ -342,11 +366,14 @@
         "type": "signal_feedback",
         "summary": "A-30 FAIL: rag-service memory pressure 98.53% (1009MiB/1GiB) — BELOW-FLOOR headroom 15MiB < 40MiB threshold",
         "severity": "WARN",
-        "status": "READ",
+        "status": "triaged",
         "payload_ref": null,
         "provenance": "detector",
         "audit_cycle_tag": "cron:auditor-t1:2026-08-08T11:00Z",
-        "dedup_key": "microservice_degraded:rag-service:A-30:BELOW-FLOOR"
+        "dedup_key": "microservice_degraded:rag-service:A-30:BELOW-FLOOR",
+        "triaged_at": "2026-08-08T21:00:29Z",
+        "triaged_by": "po/triage-20260808T2054Z",
+        "disposition": "FOLD — chronic A-30 container memory pressure, already tracked across FIX-RAG-EMBEDDER-IDLE-UNLOAD-ALLOCATOR-PAGES-NOT-RETURNED-TO-OS / FIX-RECLAMATION-AC-VERIFIED-IN-COLDSTART-WINDOW-BEFORE-WORKLOAD-LOADS / FIX-AUDITOR-A30-SUSTAINED-WINDOW-SHORTER-THAN-TARGET-RECLAMATION-PERIOD / RAG-SERVICE-AVAIL-01-FIX / OPS-MCP-RESTART-CHURN-UNCLEAN-SHUTDOWN. Cycles c380-c382 are ONE chronic condition re-reported, not 3 incidents. No new mint (feedback_auditor_mcpserver_a21_a30_memory_fp_reemit_churn)."
       },
       {
         "id": "sys-20260808T110605-1ad6",
@@ -356,11 +383,14 @@
         "type": "signal_feedback",
         "summary": "A-30 FAIL: pdf-extractor memory pressure 86.36% (2159MiB/2.5GiB) — WARN threshold breach",
         "severity": "WARN",
-        "status": "READ",
+        "status": "triaged",
         "payload_ref": null,
         "provenance": "detector",
         "audit_cycle_tag": "cron:auditor-t1:2026-08-08T11:00Z",
-        "dedup_key": "microservice_degraded:pdf-extractor:A-30:WARN-THRESHOLD"
+        "dedup_key": "microservice_degraded:pdf-extractor:A-30:WARN-THRESHOLD",
+        "triaged_at": "2026-08-08T21:00:29Z",
+        "triaged_by": "po/triage-20260808T2054Z",
+        "disposition": "FOLD — chronic A-30 container memory pressure, already tracked across FIX-RAG-EMBEDDER-IDLE-UNLOAD-ALLOCATOR-PAGES-NOT-RETURNED-TO-OS / FIX-RECLAMATION-AC-VERIFIED-IN-COLDSTART-WINDOW-BEFORE-WORKLOAD-LOADS / FIX-AUDITOR-A30-SUSTAINED-WINDOW-SHORTER-THAN-TARGET-RECLAMATION-PERIOD / RAG-SERVICE-AVAIL-01-FIX / OPS-MCP-RESTART-CHURN-UNCLEAN-SHUTDOWN. Cycles c380-c382 are ONE chronic condition re-reported, not 3 incidents. No new mint (feedback_auditor_mcpserver_a21_a30_memory_fp_reemit_churn)."
       },
       {
         "id": "sys-20260808T130859-7527",
@@ -370,11 +400,14 @@
         "type": "signal_feedback",
         "summary": "A-30 WARN: rag-service — memory 98.71% (1011/1024 MiB)",
         "severity": "WARN",
-        "status": "READ",
+        "status": "triaged",
         "payload_ref": null,
         "provenance": "detector",
         "audit_cycle_tag": "cron:auditor-t1:2026-08-08T13:00Z",
-        "dedup_key": "microservice_degraded:rag-service:A-30"
+        "dedup_key": "microservice_degraded:rag-service:A-30",
+        "triaged_at": "2026-08-08T21:00:29Z",
+        "triaged_by": "po/triage-20260808T2054Z",
+        "disposition": "FOLD — chronic A-30 container memory pressure, already tracked across FIX-RAG-EMBEDDER-IDLE-UNLOAD-ALLOCATOR-PAGES-NOT-RETURNED-TO-OS / FIX-RECLAMATION-AC-VERIFIED-IN-COLDSTART-WINDOW-BEFORE-WORKLOAD-LOADS / FIX-AUDITOR-A30-SUSTAINED-WINDOW-SHORTER-THAN-TARGET-RECLAMATION-PERIOD / RAG-SERVICE-AVAIL-01-FIX / OPS-MCP-RESTART-CHURN-UNCLEAN-SHUTDOWN. Cycles c380-c382 are ONE chronic condition re-reported, not 3 incidents. No new mint (feedback_auditor_mcpserver_a21_a30_memory_fp_reemit_churn)."
       },
       {
         "id": "sys-20260808T133635-432b",
@@ -384,11 +417,14 @@
         "type": "microservice_degraded",
         "summary": "rag-service memory pressure 98.68% (1010MiB/1GiB) — critically low headroom",
         "severity": "WARN",
-        "status": "READ",
+        "status": "triaged",
         "payload_ref": null,
         "provenance": "detector",
         "audit_cycle_tag": "cron:auditor-t1:2026-08-08T13:30Z",
-        "dedup_key": "microservice_degraded:rag-service:A-30"
+        "dedup_key": "microservice_degraded:rag-service:A-30",
+        "triaged_at": "2026-08-08T21:00:29Z",
+        "triaged_by": "po/triage-20260808T2054Z",
+        "disposition": "FOLD — chronic A-30 container memory pressure, already tracked across FIX-RAG-EMBEDDER-IDLE-UNLOAD-ALLOCATOR-PAGES-NOT-RETURNED-TO-OS / FIX-RECLAMATION-AC-VERIFIED-IN-COLDSTART-WINDOW-BEFORE-WORKLOAD-LOADS / FIX-AUDITOR-A30-SUSTAINED-WINDOW-SHORTER-THAN-TARGET-RECLAMATION-PERIOD / RAG-SERVICE-AVAIL-01-FIX / OPS-MCP-RESTART-CHURN-UNCLEAN-SHUTDOWN. Cycles c380-c382 are ONE chronic condition re-reported, not 3 incidents. No new mint (feedback_auditor_mcpserver_a21_a30_memory_fp_reemit_churn)."
       },
       {
         "id": "sys-20260808T140623-62a6",
@@ -398,11 +434,14 @@
         "type": "microservice_degraded",
         "summary": "mcp-server A-30 memory reclamation loss — VmHWM advancing pinned at cap",
         "severity": "CRITICAL",
-        "status": "READ",
+        "status": "triaged",
         "payload_ref": null,
         "provenance": "detector",
         "audit_cycle_tag": "cron:auditor-t1:2026-08-08T14:00Z",
-        "dedup_key": "microservice_degraded:mcp-server:A-30"
+        "dedup_key": "microservice_degraded:mcp-server:A-30",
+        "triaged_at": "2026-08-08T21:00:29Z",
+        "triaged_by": "po/triage-20260808T2054Z",
+        "disposition": "FOLD — chronic A-30 container memory pressure, already tracked across FIX-RAG-EMBEDDER-IDLE-UNLOAD-ALLOCATOR-PAGES-NOT-RETURNED-TO-OS / FIX-RECLAMATION-AC-VERIFIED-IN-COLDSTART-WINDOW-BEFORE-WORKLOAD-LOADS / FIX-AUDITOR-A30-SUSTAINED-WINDOW-SHORTER-THAN-TARGET-RECLAMATION-PERIOD / RAG-SERVICE-AVAIL-01-FIX / OPS-MCP-RESTART-CHURN-UNCLEAN-SHUTDOWN. Cycles c380-c382 are ONE chronic condition re-reported, not 3 incidents. No new mint (feedback_auditor_mcpserver_a21_a30_memory_fp_reemit_churn)."
       },
       {
         "id": "sys-20260808T140625-7343",
@@ -412,11 +451,14 @@
         "type": "microservice_degraded",
         "summary": "rag-service A-30 memory ceiling breach — BELOW-FLOOR",
         "severity": "CRITICAL",
-        "status": "READ",
+        "status": "triaged",
         "payload_ref": null,
         "provenance": "detector",
         "audit_cycle_tag": "cron:auditor-t1:2026-08-08T14:00Z",
-        "dedup_key": "microservice_degraded:rag-service:A-30"
+        "dedup_key": "microservice_degraded:rag-service:A-30",
+        "triaged_at": "2026-08-08T21:00:29Z",
+        "triaged_by": "po/triage-20260808T2054Z",
+        "disposition": "FOLD — chronic A-30 container memory pressure, already tracked across FIX-RAG-EMBEDDER-IDLE-UNLOAD-ALLOCATOR-PAGES-NOT-RETURNED-TO-OS / FIX-RECLAMATION-AC-VERIFIED-IN-COLDSTART-WINDOW-BEFORE-WORKLOAD-LOADS / FIX-AUDITOR-A30-SUSTAINED-WINDOW-SHORTER-THAN-TARGET-RECLAMATION-PERIOD / RAG-SERVICE-AVAIL-01-FIX / OPS-MCP-RESTART-CHURN-UNCLEAN-SHUTDOWN. Cycles c380-c382 are ONE chronic condition re-reported, not 3 incidents. No new mint (feedback_auditor_mcpserver_a21_a30_memory_fp_reemit_churn)."
       },
       {
         "id": "sys-20260808T142113-654c",
@@ -426,11 +468,14 @@
         "type": "vps_proxy_stale",
         "summary": "bctc-discover VPS stale 101h30m (check B-06)",
         "severity": "WARN",
-        "status": "READ",
+        "status": "triaged",
         "payload_ref": null,
         "provenance": "detector",
         "audit_cycle_tag": "cron:auditor-t2:2026-08-08T12:00Z",
-        "dedup_key": "vps_proxy_stale:bctc-discover:B-06"
+        "dedup_key": "vps_proxy_stale:bctc-discover:B-06",
+        "triaged_at": "2026-08-08T21:00:29Z",
+        "triaged_by": "po/triage-20260808T2054Z",
+        "disposition": "pendingObservations — B-06 bctc-discover 101h30m. VPS-FRESH-02-FIX (backlog, ops) is the standing freshness row; single WARN, re-verify next tick."
       },
       {
         "id": "sys-20260808T142115-1b11",
@@ -440,11 +485,14 @@
         "type": "cron_fire_gap",
         "summary": "bctcReparseJob stale: 57.1% success rate (3/7 failures, check A-29)",
         "severity": "WARN",
-        "status": "READ",
+        "status": "triaged",
         "payload_ref": null,
         "provenance": "detector",
         "audit_cycle_tag": "cron:auditor-t2:2026-08-08T12:00Z",
-        "dedup_key": "cron_fire_gap:bctcReparseJob:A-29"
+        "dedup_key": "cron_fire_gap:bctcReparseJob:A-29",
+        "triaged_at": "2026-08-08T21:00:29Z",
+        "triaged_by": "po/triage-20260808T2054Z",
+        "disposition": "pendingObservations — A-29 bctcReparseJob 57.1%. The A-29 check itself has a known defect row FIX-AUDITOR-A29-UNEXECUTABLE-SPEC-SILENT-JOIN-DROP (review[]); verify the checker before trusting the rate."
       },
       {
         "id": "sys-20260808T153848-7fac",
@@ -505,11 +553,14 @@
         "type": "signal_feedback",
         "summary": "A-30 CRITICAL: mcp-server-1 — VmHWM advancing, pinned at memory cap (3GiB), sustained 96-97%",
         "severity": "CRITICAL",
-        "status": "READ",
+        "status": "triaged",
         "payload_ref": null,
         "provenance": "detector",
         "audit_cycle_tag": "cron:auditor-t1:2026-08-08T16:00Z",
-        "dedup_key": "microservice_degraded:vn-market-intelligence-mcp-mcp-server-1:A-30"
+        "dedup_key": "microservice_degraded:vn-market-intelligence-mcp-mcp-server-1:A-30",
+        "triaged_at": "2026-08-08T21:00:29Z",
+        "triaged_by": "po/triage-20260808T2054Z",
+        "disposition": "FOLD — chronic A-30 container memory pressure, already tracked across FIX-RAG-EMBEDDER-IDLE-UNLOAD-ALLOCATOR-PAGES-NOT-RETURNED-TO-OS / FIX-RECLAMATION-AC-VERIFIED-IN-COLDSTART-WINDOW-BEFORE-WORKLOAD-LOADS / FIX-AUDITOR-A30-SUSTAINED-WINDOW-SHORTER-THAN-TARGET-RECLAMATION-PERIOD / RAG-SERVICE-AVAIL-01-FIX / OPS-MCP-RESTART-CHURN-UNCLEAN-SHUTDOWN. Cycles c380-c382 are ONE chronic condition re-reported, not 3 incidents. No new mint (feedback_auditor_mcpserver_a21_a30_memory_fp_reemit_churn)."
       },
       {
         "id": "cj-20260808T163142",
@@ -519,8 +570,11 @@
         "type": "system-issue",
         "summary": "team-tool-recheck writer dead since 06-23 — replace-vs-retire decision needed",
         "severity": "LOW",
-        "status": "READ",
-        "payload_ref": "docs/signals/processed/janitor-health-recheck-writer-retired-2026-08-08.json"
+        "status": "triaged",
+        "payload_ref": "docs/signals/processed/janitor-health-recheck-writer-retired-2026-08-08.json",
+        "triaged_at": "2026-08-08T21:00:29Z",
+        "triaged_by": "po/triage-20260808T2054Z",
+        "disposition": "FOLD — team-tool-recheck dead writer, covered by CHORE-TEAM-TOOL-RECHECK-LOCAL-CRON (review[]) + FIX-JANITOR-PRUNE-SWEEP-HARDCODED-DEAD-WRITER-PREMISE (backlog[]). 4th re-fire of the same LOW finding."
       },
       {
         "id": "sys-20260808T163956-006d",
@@ -530,11 +584,14 @@
         "type": "signal_feedback",
         "summary": "A-30 FAIL: mcp-server-1 — loss of reclamation pattern",
         "severity": "WARN",
-        "status": "READ",
+        "status": "triaged",
         "payload_ref": null,
         "provenance": "detector",
         "audit_cycle_tag": "cron:auditor-t1:2026-08-08T16:30Z",
-        "dedup_key": "microservice_degraded:vn-market-intelligence-mcp-mcp-server-1:A-30"
+        "dedup_key": "microservice_degraded:vn-market-intelligence-mcp-mcp-server-1:A-30",
+        "triaged_at": "2026-08-08T21:00:29Z",
+        "triaged_by": "po/triage-20260808T2054Z",
+        "disposition": "FOLD — chronic A-30 container memory pressure, already tracked across FIX-RAG-EMBEDDER-IDLE-UNLOAD-ALLOCATOR-PAGES-NOT-RETURNED-TO-OS / FIX-RECLAMATION-AC-VERIFIED-IN-COLDSTART-WINDOW-BEFORE-WORKLOAD-LOADS / FIX-AUDITOR-A30-SUSTAINED-WINDOW-SHORTER-THAN-TARGET-RECLAMATION-PERIOD / RAG-SERVICE-AVAIL-01-FIX / OPS-MCP-RESTART-CHURN-UNCLEAN-SHUTDOWN. Cycles c380-c382 are ONE chronic condition re-reported, not 3 incidents. No new mint (feedback_auditor_mcpserver_a21_a30_memory_fp_reemit_churn)."
       },
       {
         "id": "sys-20260808T173849-2d4b",
@@ -544,11 +601,14 @@
         "type": "microservice_degraded",
         "summary": "rag-service-1 A-30 memory degradation: 99.66% sustained high — loss of reclamation (CHRONIC PATTERN 11 signals over 4 da",
         "severity": "WARN",
-        "status": "READ",
+        "status": "triaged",
         "payload_ref": null,
         "provenance": "detector",
         "audit_cycle_tag": "cron:auditor-t1:2026-08-08T17:30Z",
-        "dedup_key": "microservice_degraded:vn-market-intelligence-mcp-rag-service-1:A-30"
+        "dedup_key": "microservice_degraded:vn-market-intelligence-mcp-rag-service-1:A-30",
+        "triaged_at": "2026-08-08T21:00:29Z",
+        "triaged_by": "po/triage-20260808T2054Z",
+        "disposition": "FOLD — chronic A-30 container memory pressure, already tracked across FIX-RAG-EMBEDDER-IDLE-UNLOAD-ALLOCATOR-PAGES-NOT-RETURNED-TO-OS / FIX-RECLAMATION-AC-VERIFIED-IN-COLDSTART-WINDOW-BEFORE-WORKLOAD-LOADS / FIX-AUDITOR-A30-SUSTAINED-WINDOW-SHORTER-THAN-TARGET-RECLAMATION-PERIOD / RAG-SERVICE-AVAIL-01-FIX / OPS-MCP-RESTART-CHURN-UNCLEAN-SHUTDOWN. Cycles c380-c382 are ONE chronic condition re-reported, not 3 incidents. No new mint (feedback_auditor_mcpserver_a21_a30_memory_fp_reemit_churn)."
       },
       {
         "id": "orc-20260808T175614",
@@ -572,11 +632,14 @@
         "type": "microservice_degraded",
         "summary": "rag-service-1 A-30 BELOW-FLOOR: 99.72% memory, 2.9MiB free (floor=40MiB) — loss of reclamation sustained",
         "severity": "WARN",
-        "status": "READ",
+        "status": "triaged",
         "payload_ref": null,
         "provenance": "detector",
         "audit_cycle_tag": "2026-08-08T18:00Z",
-        "dedup_key": "microservice_degraded:vn-market-intelligence-mcp-rag-service-1:A-30:BELOW-FLOOR"
+        "dedup_key": "microservice_degraded:vn-market-intelligence-mcp-rag-service-1:A-30:BELOW-FLOOR",
+        "triaged_at": "2026-08-08T21:00:29Z",
+        "triaged_by": "po/triage-20260808T2054Z",
+        "disposition": "FOLD — chronic A-30 container memory pressure, already tracked across FIX-RAG-EMBEDDER-IDLE-UNLOAD-ALLOCATOR-PAGES-NOT-RETURNED-TO-OS / FIX-RECLAMATION-AC-VERIFIED-IN-COLDSTART-WINDOW-BEFORE-WORKLOAD-LOADS / FIX-AUDITOR-A30-SUSTAINED-WINDOW-SHORTER-THAN-TARGET-RECLAMATION-PERIOD / RAG-SERVICE-AVAIL-01-FIX / OPS-MCP-RESTART-CHURN-UNCLEAN-SHUTDOWN. Cycles c380-c382 are ONE chronic condition re-reported, not 3 incidents. No new mint (feedback_auditor_mcpserver_a21_a30_memory_fp_reemit_churn)."
       },
       {
         "id": "sys-20260808T193630-348e",
@@ -586,11 +649,14 @@
         "type": "microservice_degraded",
         "summary": "A-30 FAIL: vn-market-intelligence-mcp-rag-service-1 — memory loss of reclamation (97.41% sustained, 0 dips)",
         "severity": "WARN",
-        "status": "READ",
+        "status": "triaged",
         "payload_ref": null,
         "provenance": "detector",
         "audit_cycle_tag": "cron:auditor-t1:2026-08-08T19:30Z",
-        "dedup_key": "microservice_degraded:vn-market-intelligence-mcp-rag-service-1:A-30"
+        "dedup_key": "microservice_degraded:vn-market-intelligence-mcp-rag-service-1:A-30",
+        "triaged_at": "2026-08-08T21:00:29Z",
+        "triaged_by": "po/triage-20260808T2054Z",
+        "disposition": "FOLD — chronic A-30 container memory pressure, already tracked across FIX-RAG-EMBEDDER-IDLE-UNLOAD-ALLOCATOR-PAGES-NOT-RETURNED-TO-OS / FIX-RECLAMATION-AC-VERIFIED-IN-COLDSTART-WINDOW-BEFORE-WORKLOAD-LOADS / FIX-AUDITOR-A30-SUSTAINED-WINDOW-SHORTER-THAN-TARGET-RECLAMATION-PERIOD / RAG-SERVICE-AVAIL-01-FIX / OPS-MCP-RESTART-CHURN-UNCLEAN-SHUTDOWN. Cycles c380-c382 are ONE chronic condition re-reported, not 3 incidents. No new mint (feedback_auditor_mcpserver_a21_a30_memory_fp_reemit_churn)."
       },
       {
         "id": "sys-20260808T200919-a7c2",
@@ -600,11 +666,14 @@
         "type": "process_gap",
         "summary": "FIX-MCP-SSE-SESSION-MANAGER-PERCONN-LEAK-NO-REAPER soak-verification clock reset a 3rd time by an unrelated ops rebuild sharing the same dev-mcp-server container (this time: FIX-AGENT-SIGNALS-IDENTICAL-DUP-EMISSION, commit 550fda673). qa content-verified the fix survives each rebuild (no functional regression) but container StartedAt keeps invalidating the >=4h max-age-reaper uptime evidence. Recheck now pinned 2026-08-08T23:06:00Z. Consider a process fix so unrelated dev-mcp-server rebuilds during an active soak-verification window either wait or the verification method decouples from container StartedAt (e.g. reaper-firing log evidence since fix deploy commit, not process uptime).",
         "severity": "MED",
-        "status": "READ",
+        "status": "triaged",
         "payload_ref": null,
         "provenance": "router",
         "audit_cycle_tag": "dev-team-tick:2026-08-08T19:37Z",
-        "dedup_key": "process_gap:FIX-MCP-SSE-SESSION-MANAGER-PERCONN-LEAK-NO-REAPER:soak-clock-reset-shared-container"
+        "dedup_key": "process_gap:FIX-MCP-SSE-SESSION-MANAGER-PERCONN-LEAK-NO-REAPER:soak-clock-reset-shared-container",
+        "triaged_at": "2026-08-08T21:00:29Z",
+        "triaged_by": "po/triage-20260808T2054Z",
+        "disposition": "ACK — known/tracked SSE soak-clock reset. next_recheck_not_before=2026-08-08T23:06:00Z honoured; FIX-MCP-SSE-SESSION-MANAGER-PERCONN-LEAK-NO-REAPER (qa[]) deliberately NOT resumed this tick."
       },
       {
         "id": "sys-20260808T201216-7780",
@@ -614,11 +683,14 @@
         "type": "microservice_degraded",
         "summary": "rag-service A-30 WARN: sustained >93% memory (97.50%) — loss of reclamation",
         "severity": "WARN",
-        "status": "READ",
+        "status": "triaged",
         "payload_ref": null,
         "provenance": "detector",
         "audit_cycle_tag": "cron:auditor-t1:2026-08-08T20:00Z",
-        "dedup_key": "microservice_degraded:vn-market-intelligence-mcp-rag-service-1:A-30"
+        "dedup_key": "microservice_degraded:vn-market-intelligence-mcp-rag-service-1:A-30",
+        "triaged_at": "2026-08-08T21:00:29Z",
+        "triaged_by": "po/triage-20260808T2054Z",
+        "disposition": "FOLD — chronic A-30 container memory pressure, already tracked across FIX-RAG-EMBEDDER-IDLE-UNLOAD-ALLOCATOR-PAGES-NOT-RETURNED-TO-OS / FIX-RECLAMATION-AC-VERIFIED-IN-COLDSTART-WINDOW-BEFORE-WORKLOAD-LOADS / FIX-AUDITOR-A30-SUSTAINED-WINDOW-SHORTER-THAN-TARGET-RECLAMATION-PERIOD / RAG-SERVICE-AVAIL-01-FIX / OPS-MCP-RESTART-CHURN-UNCLEAN-SHUTDOWN. Cycles c380-c382 are ONE chronic condition re-reported, not 3 incidents. No new mint (feedback_auditor_mcpserver_a21_a30_memory_fp_reemit_churn)."
       },
       {
         "id": "sys-20260808T203549-0289",
@@ -628,11 +700,14 @@
         "type": "signal_feedback",
         "summary": "A-30 WARN: vn-market-intelligence-mcp-rag-service-1 sustained loss of reclamation 97.34% across 6 probes",
         "severity": "WARN",
-        "status": "READ",
+        "status": "triaged",
         "payload_ref": null,
         "provenance": "detector",
         "audit_cycle_tag": "cron:auditor-t1:2026-08-08T20:30Z",
-        "dedup_key": "microservice_degraded:vn-market-intelligence-mcp-rag-service-1:A-30"
+        "dedup_key": "microservice_degraded:vn-market-intelligence-mcp-rag-service-1:A-30",
+        "triaged_at": "2026-08-08T21:00:29Z",
+        "triaged_by": "po/triage-20260808T2054Z",
+        "disposition": "FOLD — chronic A-30 container memory pressure, already tracked across FIX-RAG-EMBEDDER-IDLE-UNLOAD-ALLOCATOR-PAGES-NOT-RETURNED-TO-OS / FIX-RECLAMATION-AC-VERIFIED-IN-COLDSTART-WINDOW-BEFORE-WORKLOAD-LOADS / FIX-AUDITOR-A30-SUSTAINED-WINDOW-SHORTER-THAN-TARGET-RECLAMATION-PERIOD / RAG-SERVICE-AVAIL-01-FIX / OPS-MCP-RESTART-CHURN-UNCLEAN-SHUTDOWN. Cycles c380-c382 are ONE chronic condition re-reported, not 3 incidents. No new mint (feedback_auditor_mcpserver_a21_a30_memory_fp_reemit_churn)."
       }
     ],
     "last_triaged_at": "2026-07-29T06:25:00Z",
@@ -8020,10 +8095,14 @@
         "created_at": "2026-07-30T18:27:28Z",
         "created_by": "pm",
         "note": "Atomic implementation of Step 2.4 collision probe.",
-        "updated_at": "2026-08-08T16:06:57Z",
+        "updated_at": "2026-08-08T21:00:07Z",
         "po_prior_art_suspect_20260808T1600Z": "SKIPPED as this tick's manual-dispatch-sweep selection despite being the top-ranked candidate (P0, BACKLOG-XOR-GAP, unflagged) — PRIOR ART APPEARS ALREADY SHIPPED, so folding it into a BATCH would have burned a dev slot re-implementing live code (feedback_file_prior_art_check_before_minting_row).\n\nThe row's deliverable is 'Implement Cowork-Slot Collision Probe Core (dispatch-claim/SKILL.md + CLAUDE.md)'. Both named targets already carry a collision path: CLAUDE.md:14 has the 'Peer collision' outcome row ('claimed:false + current_holder.owner_client_session != $CLAUDE_CODE_SESSION_ID -> log PRE-CLAIM collision -> send_telegram(work) -> EXIT'); .claude/skills/dispatch-claim/CARD.md:35 carries the same branch; .claude/skills/dispatch-claim/SKILL.md:194 (session-presence collision), :288 (PRE-CLAIM collision) and :563 ('Cross-session collision detection - same agent_id in multiple live sessions'). SKILL.md is 31,235B and was last written 2026-08-07, well after this row's 2026-07-30 mint.\n\nDELIBERATELY NOT CLOSED BY PO: the match is on file+behaviour, not on this row's acceptance criteria (the row carries no `files` and no AC beyond 'Atomic implementation of Step 2.4 collision probe'), and it has two live siblings (TASK-COWORK-MUTEX-002/003) whose scope PO did not examine. Closing a P0 on a partial match would be the mirror of the mistake being avoided. REQUIRED NEXT ACTION (whoever picks this up first): diff Step 2.4 of the originating decomposition against the live SKILL.md/CARD.md/CLAUDE.md and either close 001 as already-shipped or state precisely which sub-behaviour is still missing — do NOT re-implement from the title.",
         "po_manual_dispatch_skipped_at": "2026-08-08T16:06:57Z",
-        "po_manual_dispatch_skipped_reason": "prior-art-suspect: deliverable appears live in CLAUDE.md + .claude/skills/dispatch-claim/{CARD,SKILL}.md; needs AC-level verify, not dispatch"
+        "po_manual_dispatch_skipped_reason": "prior-art-suspect: deliverable appears live in CLAUDE.md + .claude/skills/dispatch-claim/{CARD,SKILL}.md; needs AC-level verify, not dispatch",
+        "po_manual_dispatch_flagged_at": "2026-08-08T21:00:06Z",
+        "po_manual_dispatch_flagged_by": "po (manual-dispatch-sweep)",
+        "po_manual_dispatch_class": "BACKLOG-XOR-GAP",
+        "po_manual_dispatch_note": "po (manual-dispatch-sweep) surfaced BACKLOG-XOR-GAP candidate — folded into 2026-08-08T20:54Z BATCH as a SPIKE (AC-level prior-art diff), NOT as a dev implementation task, honouring the 16:06Z skip rationale. Also writing flagged_at (not just skipped_at) so flag_reentrant actually suppresses re-selection — see FIX-PO-MANUAL-DISPATCH-SKIP-STAMP-FIELD-MISMATCH-STARVES-SWEEP."
       },
       {
         "id": "TASK-COWORK-MUTEX-002",
@@ -8683,7 +8762,7 @@
         "type": "FIX",
         "title": "PO triage-signals routing tables have no row for agent_flow_defect, db_anomaly_illiquid_ohlcv (Pipeline B) or cowork-fire (Pipeline A) — all live types; the doc's own coverage guard FAILS against the live board",
         "zone": "cross-service/",
-        "priority": "P1",
+        "priority": "high",
         "status": "BACKLOG",
         "size": "S",
         "next_agent": "agent-father",
@@ -8707,9 +8786,9 @@
           "AC-5 Sweep for further drift while in there: diff the live distinct to=po type set against the union of both tables and report any other gaps found.",
           "AC-6 Add db_anomaly_illiquid_ohlcv as well (2nd unrouted type, observed 2026-08-06T07:21:27Z mid-triage). Route: dedup-check then FOLD onto the OHLCV integrity family (CLEAN-OHLCV-INTEGRITY-RESIDUE-REPAIR) — a WARN whose count is stable against the prior day is residue, not a regression; do not mint per fire."
         ],
-        "updated_at": "2026-08-08T00:10:53Z",
+        "updated_at": "2026-08-08T21:01:09Z",
         "po_corroboration_20260806T0721": "SECOND unrouted type observed 14 minutes into the very tick that minted this row: sys-20260806T072127-34b3, type=db_anomaly_illiquid_ohlcv, from=system-auditor, to=po, WARN. Also absent from all three routing tables AND from the guard $routed array. This upgrades the finding from a single missing row to demonstrated ONGOING drift at ~2 new types/hour during an active audit sweep, and is the strongest available argument for AC-4 (wire the guard to a caller that actually runs) over merely adding the missing rows by hand.",
-        "status_note": "Re-run of guard_signal_type_coverage at 2026-08-06T10:00:33Z returns FAIL with TWO unrouted to=po types, not one: [\"agent_flow_defect\",\"db_anomaly_illiquid_ohlcv\"]. THIRD gap found this tick on the OTHER pipeline: `cowork-fire` (from cowork-team) has no row in the Pipeline-A table either — it is addressed to=dev-team so it is correctly routed at source, but the Step 0a drain hands every signal to PO regardless, so it lands on the `any unknown type` catch-all EVERY tick (recurring triage friction, benign content: FIRE/spawned/no errors). FIX SCOPE: add all three rows to the two tables in docs/agents/po/flow/triage-signals.md AND add the two Pipeline-B types to the guard's own $routed array (the doc already warns that array is the single point of drift the guard exists to catch — it drifted). db_anomaly_illiquid_ohlcv CONTENT needs no new work: the one live row (sys-20260806T072127-34b3, WARN, `daily_ohlcv: 336 rows with incomplete H/L/V data (illiquid tickers)`) is already status=triaged and the substance is covered by the existing OHLCV family (CLEAN-OHLCV-INTEGRITY-RESIDUE-REPAIR et al) — this row is about TABLE COVERAGE only. || SCOPE WIDENED (po triage 2026-08-08T00:02:01Z): two MORE live to=po signal types reached PO this tick with no row in either triage-signals.md table — 'gate-design-gap' (docs/signals/processed/dev-team-sls-no-prose-donotdispatch-gate-20260807T182501Z.json, from dev-team) and 'recurring-bug' (docs/signals/processed/dev-team-20260807T215454Z-sls-dispatch-lane-stale-on-multihop-supervised-row.json, from dev-team). Both were drained to processed/ and then sat untriaged — telegram report 4509 records that the first went unprocessed across all 3 of its occurrences, which is precisely the failure mode this row exists to close. Both are also NOT in the guard_signal_type_coverage $routed allowlist, so that regression verifier would NOT have caught them either: the guard only scans .signal_queue.rows[] (Pipeline B) and these arrived as Pipeline-A drain files, so the guard is structurally blind to this whole class. Add both types to the Pipeline-A table AND extend the guard to cover drained signal files, not just hot rows. || COMPLETE LIVE-MEASURED SET (po triage 2026-08-08T00:1xZ) — fix the whole set, not the two types named above, or the next unrouted signal re-opens this row. Ran this row's own guard_signal_type_coverage (docs/agents/po/flow/triage-signals.md § Regression verifier) against the live board: FAIL, rc=1, 9 unrouted to=po types in .signal_queue.rows[] — agent_flow_defect, bug-escalation, db_anomaly_illiquid_ohlcv, decision-needed, dispatch-race-observation, mem_pressure, notebook_concurrency_gap, recurring-bug-corroboration, recurring_defect_unfixed. Plus 2 MORE that the guard is structurally incapable of seeing because they arrive as Pipeline-A drain files rather than hot rows: gate-design-gap and recurring-bug (both from dev-team, both landed this tick). Total 11 types needing a routing row. TWO SEPARATE DEFECTS, do not conflate them. (a) ROUTING GAP, 10 types: every type above except bug-escalation has no row in either triage-signals.md table nor in triage-signals-longtail.md. (b) GUARD FALSE POSITIVE, 1 type: bug-escalation IS routed — it has a full row in the Pipeline-A table — but the guard's own $routed allowlist mirrors only the Pipeline-B tables while its jq scans EVERY .to==\"po\" row regardless of pipeline, so any Pipeline-A-only type reads as unrouted. Fixing (a) alone leaves the guard red forever and trains readers to ignore it. AC (added): the guard's $routed literal must be the UNION of both pipelines' type columns, and the guard must ALSO scan drained signal files (docs/signals/ + docs/signals/processed/) rather than only .signal_queue.rows[] — otherwise the entire Pipeline-A namespace stays invisible to it, which is exactly how gate-design-gap and recurring-bug reached PO untriaged across 3 occurrences (telegram report 4509). Note the guard's documented 2026-08-01 verification (\"PASS, all 16 live types routed\") is no longer reproducible: 9 types have accumulated since, so this is measured drift, not a stale claim.",
+        "status_note": "Re-run of guard_signal_type_coverage at 2026-08-06T10:00:33Z returns FAIL with TWO unrouted to=po types, not one: [\"agent_flow_defect\",\"db_anomaly_illiquid_ohlcv\"]. THIRD gap found this tick on the OTHER pipeline: `cowork-fire` (from cowork-team) has no row in the Pipeline-A table either — it is addressed to=dev-team so it is correctly routed at source, but the Step 0a drain hands every signal to PO regardless, so it lands on the `any unknown type` catch-all EVERY tick (recurring triage friction, benign content: FIRE/spawned/no errors). FIX SCOPE: add all three rows to the two tables in docs/agents/po/flow/triage-signals.md AND add the two Pipeline-B types to the guard's own $routed array (the doc already warns that array is the single point of drift the guard exists to catch — it drifted). db_anomaly_illiquid_ohlcv CONTENT needs no new work: the one live row (sys-20260806T072127-34b3, WARN, `daily_ohlcv: 336 rows with incomplete H/L/V data (illiquid tickers)`) is already status=triaged and the substance is covered by the existing OHLCV family (CLEAN-OHLCV-INTEGRITY-RESIDUE-REPAIR et al) — this row is about TABLE COVERAGE only. || SCOPE WIDENED (po triage 2026-08-08T00:02:01Z): two MORE live to=po signal types reached PO this tick with no row in either triage-signals.md table — 'gate-design-gap' (docs/signals/processed/dev-team-sls-no-prose-donotdispatch-gate-20260807T182501Z.json, from dev-team) and 'recurring-bug' (docs/signals/processed/dev-team-20260807T215454Z-sls-dispatch-lane-stale-on-multihop-supervised-row.json, from dev-team). Both were drained to processed/ and then sat untriaged — telegram report 4509 records that the first went unprocessed across all 3 of its occurrences, which is precisely the failure mode this row exists to close. Both are also NOT in the guard_signal_type_coverage $routed allowlist, so that regression verifier would NOT have caught them either: the guard only scans .signal_queue.rows[] (Pipeline B) and these arrived as Pipeline-A drain files, so the guard is structurally blind to this whole class. Add both types to the Pipeline-A table AND extend the guard to cover drained signal files, not just hot rows. || COMPLETE LIVE-MEASURED SET (po triage 2026-08-08T00:1xZ) — fix the whole set, not the two types named above, or the next unrouted signal re-opens this row. Ran this row's own guard_signal_type_coverage (docs/agents/po/flow/triage-signals.md § Regression verifier) against the live board: FAIL, rc=1, 9 unrouted to=po types in .signal_queue.rows[] — agent_flow_defect, bug-escalation, db_anomaly_illiquid_ohlcv, decision-needed, dispatch-race-observation, mem_pressure, notebook_concurrency_gap, recurring-bug-corroboration, recurring_defect_unfixed. Plus 2 MORE that the guard is structurally incapable of seeing because they arrive as Pipeline-A drain files rather than hot rows: gate-design-gap and recurring-bug (both from dev-team, both landed this tick). Total 11 types needing a routing row. TWO SEPARATE DEFECTS, do not conflate them. (a) ROUTING GAP, 10 types: every type above except bug-escalation has no row in either triage-signals.md table nor in triage-signals-longtail.md. (b) GUARD FALSE POSITIVE, 1 type: bug-escalation IS routed — it has a full row in the Pipeline-A table — but the guard's own $routed allowlist mirrors only the Pipeline-B tables while its jq scans EVERY .to==\"po\" row regardless of pipeline, so any Pipeline-A-only type reads as unrouted. Fixing (a) alone leaves the guard red forever and trains readers to ignore it. AC (added): the guard's $routed literal must be the UNION of both pipelines' type columns, and the guard must ALSO scan drained signal files (docs/signals/ + docs/signals/processed/) rather than only .signal_queue.rows[] — otherwise the entire Pipeline-A namespace stays invisible to it, which is exactly how gate-design-gap and recurring-bug reached PO untriaged across 3 occurrences (telegram report 4509). Note the guard's documented 2026-08-01 verification (\"PASS, all 16 live types routed\") is no longer reproducible: 9 types have accumulated since, so this is measured drift, not a stale claim.\n\n[po/triage-20260808T2054Z] GAP HAS TRIPLED, NOT HELD. guard_signal_type_coverage re-run live at 2026-08-08T21:00Z now returns TEN unrouted to=po types, up from the 2 recorded on 08-06: auditor_convergence_dedup_gap, auditor_fabricated_signal_id, bug-escalation, cron_fire_gap, db_freshness_breach, false_ac_verification, microservice_memory_degraded, process_gap, recurring-bug-corroboration, vps_proxy_stale. NOTE the two original types (agent_flow_defect, db_anomaly_illiquid_ohlcv) are no longer in the FAIL set only because their rows aged out of the hot queue — they were never routed either. `bug-escalation` and `process_gap` are the highest-volume of the new set and both carry genuinely actionable content. `microservice_memory_degraded` is a near-miss alias of the routed `microservice_degraded` (underscore-vs-hyphen family drift, same class the doc §35 already documents for system_issue/system-issue) — worth an alias-normalisation rather than a 10th table row. PO triaged all 10 by hand this tick (35/35 to=po rows now status=triaged with dispositions) — but hand-triage is exactly what this row exists to make unnecessary, and the drift rate (2 -> 10 in 48h) means the guard is now FAILING on every tick. Priority raised P1 -> high. Row is 2 days old, still BACKLOG, next_agent=agent-father is OFF the DRS allowlist so no automated lane ever picks it up (it is simultaneously a DRS-STRANDED-OFF-ALLOWLIST manual-dispatch candidate). PROMOTED INTO PO BATCH 2026-08-08T20:54Z.",
         "po_scope_widened_20260806T0935": "covers db_anomaly_illiquid_ohlcv in addition to agent_flow_defect",
         "updated_by": "po (triage 2026-08-06T18:21Z)",
         "po_corroboration_20260806": "Still open and still FAILING. po re-ran this doc's OWN regression verifier (guard_signal_type_coverage, docs/agents/po/flow/triage-signals.md § Regression verifier) against the live board at 2026-08-06T11:37Z: rc=1, unrouted to=po types = [\"agent_flow_defect\",\"db_anomaly_illiquid_ohlcv\"] — both named verbatim in this row's own title, so the row's premise is confirmed live, not stale. Volume since: 5 agent_flow_defect rows landed on 2026-08-06 alone (from cowork-team x2, router, dev-team x2) plus 1 db_anomaly_illiquid_ohlcv; all 6 reached a disposition only because a PO hand-triaged them off-table. The third type in this row's title, cowork-fire (Pipeline A), also fired this tick (docs/signals/processed/cowork-team-2026-08-06T11:06:18Z.json) and again had no table row — po disposed of it under the 'any unknown type' catch-all. NOTE for whoever takes this: fixing the two tables is only half — the guard's own $routed array is a hardcoded literal inside the verifier and must be updated in the same commit, or the guard will keep failing on types that ARE routed.",
@@ -10226,8 +10305,8 @@
         ],
         "created_at": "2026-08-08T18:05:00Z",
         "created_by": "po/triage-20260808T1737Z",
-        "status_note": "AC: gh run view <databaseId with headSha AFTER c5d6ab5e> --json jobs -q \".jobs[]|select(.name==\\\"size-lint\\\")|.conclusion\" == success (verification_gate=ci_green_on_subsequent_push). Failing job: size-lint. Failing file: apps/mcp-server/src/interface/mcp/transport.ts — baseline-tolerance-exceeded (baseline=126L actual=237L upper=138L, +99L over tolerance). MANDATORY pre-dedup failing-file read PERFORMED by po (gh run view 31268871450 --log-failed): 2 offenders that run — coordinationStore.ts (folded onto its own existing row FIX-CI-SIZELINT-COORDINATIONSTORE-BASELINE-1388L) and this file. Non-terminal-lane dedup scan (backlog+ready+in_progress+review+qa) found NO existing row for this file — genuinely new, minted. ATTRIBUTION, stated plainly: this regression is caused by commit b746c112b, the SSE session-reaper fix on FIX-MCP-SSE-SESSION-MANAGER-PERCONN-LEAK-NO-REAPER, which po ratified in this same tick. transport.ts was 126L; the reaper fix collapsed 2 parallel Maps into a SessionRecord map with a single evictSession(), added reapStaleSessions() with idle+max-age branches, and added the DELETE closeSession path — 237L. The functional fix is correct and is verified live in the running container; this is its size debt, tracked separately so neither blocks the other. Size-lint is a hygiene gate with ZERO runtime semantics and does NOT gate the reaper deploy. JUDGEMENT FOR THE IMPLEMENTER (repo precedent, FIX-CI-SIZELINT-MACROTOOLS-HUMANIZE-618L): extraction is normally preferred over a --update baseline bump (which grandfathers the regression) or a size-justification header (a substitute for real debt reduction, appropriate only when no genuine extraction seam exists). Judge honestly here — this growth is a deliberate consolidation that REMOVED duplication rather than adding sprawl, so a size-justification header may genuinely be the correct call for once. Do NOT reflexively extract and re-fragment the single-eviction-path design that the fix exists to establish. First observed run 31268871450 head c5d6ab5e (2026-08-08T17:24:58Z).\\n\\n[po/triage-20260808T1926Z] ADDITIONAL OBSERVED SHA: still RED at head ebb065b8a2db409f6012baffaf7eade23c365c87 (check_id CI-RED-ebb065b8, run 31272399149, 2026-08-08T18:51:05Z). File-scoped dedup hit on this rows own dedup_key — signal folded here, NOT re-minted. Same run also produced one genuinely new failing file (bun test / src/__tests__/1862c-transport-session-eviction.test.ts) which was minted separately as FIX-CI-BUNTEST-1862C-TRANSPORT-SESSION-EVICTION.",
-        "updated_at": "2026-08-08T19:33:36Z"
+        "status_note": "AC: gh run view <databaseId with headSha AFTER c5d6ab5e> --json jobs -q \".jobs[]|select(.name==\\\"size-lint\\\")|.conclusion\" == success (verification_gate=ci_green_on_subsequent_push). Failing job: size-lint. Failing file: apps/mcp-server/src/interface/mcp/transport.ts — baseline-tolerance-exceeded (baseline=126L actual=237L upper=138L, +99L over tolerance). MANDATORY pre-dedup failing-file read PERFORMED by po (gh run view 31268871450 --log-failed): 2 offenders that run — coordinationStore.ts (folded onto its own existing row FIX-CI-SIZELINT-COORDINATIONSTORE-BASELINE-1388L) and this file. Non-terminal-lane dedup scan (backlog+ready+in_progress+review+qa) found NO existing row for this file — genuinely new, minted. ATTRIBUTION, stated plainly: this regression is caused by commit b746c112b, the SSE session-reaper fix on FIX-MCP-SSE-SESSION-MANAGER-PERCONN-LEAK-NO-REAPER, which po ratified in this same tick. transport.ts was 126L; the reaper fix collapsed 2 parallel Maps into a SessionRecord map with a single evictSession(), added reapStaleSessions() with idle+max-age branches, and added the DELETE closeSession path — 237L. The functional fix is correct and is verified live in the running container; this is its size debt, tracked separately so neither blocks the other. Size-lint is a hygiene gate with ZERO runtime semantics and does NOT gate the reaper deploy. JUDGEMENT FOR THE IMPLEMENTER (repo precedent, FIX-CI-SIZELINT-MACROTOOLS-HUMANIZE-618L): extraction is normally preferred over a --update baseline bump (which grandfathers the regression) or a size-justification header (a substitute for real debt reduction, appropriate only when no genuine extraction seam exists). Judge honestly here — this growth is a deliberate consolidation that REMOVED duplication rather than adding sprawl, so a size-justification header may genuinely be the correct call for once. Do NOT reflexively extract and re-fragment the single-eviction-path design that the fix exists to establish. First observed run 31268871450 head c5d6ab5e (2026-08-08T17:24:58Z).\\n\\n[po/triage-20260808T1926Z] ADDITIONAL OBSERVED SHA: still RED at head ebb065b8a2db409f6012baffaf7eade23c365c87 (check_id CI-RED-ebb065b8, run 31272399149, 2026-08-08T18:51:05Z). File-scoped dedup hit on this rows own dedup_key — signal folded here, NOT re-minted. Same run also produced one genuinely new failing file (bun test / src/__tests__/1862c-transport-session-eviction.test.ts) which was minted separately as FIX-CI-BUNTEST-1862C-TRANSPORT-SESSION-EVICTION.\n\n[po/triage-20260808T2054Z] ADDITIONAL OBSERVED SHAs — file-scoped dedup hit on this row own dedup_key, folded here NOT re-minted: 7ea4dc281 (run 31273588222, 19:22:44Z), eab33b943 (run 31274414089, 19:53:37Z), cab2d0d2e (run 31276334362, 20:23:41Z), 763ef6822 (run 31277793877, 20:48:39Z), ebcdc1225 (run 31277932133, 20:52:00Z). MANDATORY pre-dedup failing-file read PERFORMED (gh run view 31277932133 --log-failed): size-lint FAIL, 1 offending file of 1370 scanned — apps/mcp-server/src/interface/mcp/transport.ts baseline-tolerance-exceeded (baseline=126L actual=237L upper=138L). coordinationStore.ts is NO LONGER an offender (763ef6822 fixed it; FIX-CI-SIZELINT-COORDINATIONSTORE-BASELINE-1388L correctly in review[]). CORRECTION TO A RELAYED PREMISE: dev-team relayed that 763ef6822 likely resolved the 20:23:41Z ci_red. It did not — CI is RED on both commits AFTER it. This row is now the SOLE remaining size-lint offender and has kept the main-branch CI plane RED continuously since ~13:23Z (7h30m, 10 ci_red signals). Minted 18:05Z, never dispatched — mint-without-dispatch, not a detection gap. PROMOTED INTO PO BATCH 2026-08-08T20:54Z for direct dev-mcp-server dispatch.",
+        "updated_at": "2026-08-08T21:00:07Z"
       },
       {
         "id": "FIX-CI-BUNTEST-1255-ALERT-OFF-HOURS-SEND",
@@ -10338,8 +10417,8 @@
         ],
         "created_at": "2026-08-08T19:26:00Z",
         "created_by": "po/triage-20260808T1926Z",
-        "status_note": "AC: gh run view <databaseId with headSha AFTER ebb065b8a2db409f6012baffaf7eade23c365c87> --json jobs -q '.jobs[]|select(.name==\"bun test\")|.conclusion' == success (verification_gate=ci_green_on_subsequent_push). Priority: high. Failing job: bun test. Failing file: src/__tests__/1862c-transport-session-eviction.test.ts.\\n\\nMANDATORY pre-dedup failing-file read PERFORMED by po (gh run view 31272399149 --log-failed): run reports '15080 pass / 40 skip / 1 fail', '=== FAILED FILES (1) ===', 'FAILEDFILE: src/__tests__/1862c-transport-session-eviction.test.ts'. The same run's size-lint job named 2 offenders, BOTH already-open rows (coordinationStore.ts -> FIX-CI-SIZELINT-COORDINATIONSTORE-BASELINE-1388L in ready[]; transport.ts -> FIX-CI-SIZELINT-TRANSPORT-TS-SSE-REAPER-237L in backlog[]); ebb065b8 folded onto both as an additional observed SHA, no re-mint. This bun-test file is the ONLY genuinely new failing file in the signal.\\n\\nDEDUP: file-scoped non-terminal-lane scan (backlog+ready+in_progress+review+qa) on dedup_key 'ci_job:bun test|file:src/__tests__/1862c-transport-session-eviction.test.ts' found NO match. The sibling bun-test row FIX-CI-BUNTEST-1255-ALERT-OFF-HOURS-SEND is a DIFFERENT file (1255-alert-off-hours-send.test.ts) and must not absorb this one — one row per distinct failing file.\\n\\nWHY THIS MATTERS MORE THAN A NORMAL CI ROW — read before triaging it as routine: git log on this test file is 'b746c112b fix(mcp-server): SseSessionManager evicts every session's McpServer (perconn leak) + idle/max-age reaper + DELETE route'. It is the eviction test belonging to FIX-MCP-SSE-SESSION-MANAGER-PERCONN-LEAK-NO-REAPER, which is RIGHT NOW resident in qa[] at priority=critical, supervised, awaiting a >=4h soak checkpoint #2 at ~21:00Z before po sign-off. Its own test is RED in CI. Resolve this BEFORE that sign-off: a green soak plus a red unit test is not a sign-off-able state.\\n\\nDISCRIMINATOR ALREADY ESTABLISHED — do not re-litigate it: CI runs scripts/ci-per-file-isolation.sh (one bun process per test file), so a failure here is INTRINSIC to this file and is NOT cross-file mock/ESM contamination. That matters because this exact file has a contamination history (5fa2822d1 'FIX-CI-MCP-SDK-MOCK-CONTAM — add full MockMcpServer stubs to stop ESM leak', 8fd9bde1d 'B1-MOCK-MODULE-EXPERIMENT — add afterAll(mock.restore) to 1862c'), and reflexively reaching for that explanation would be wrong under isolation. Reproduce locally with the same one-file-per-process invocation, not a full-suite run.\\n\\nOPEN QUESTION FOR THE IMPLEMENTER (answer it explicitly in the fix): is the assertion wrong (test written against the pre-consolidation 2-Map design) or is the eviction path wrong (product bug)? If the latter, escalate onto the SSE row immediately — po ratified that fix at 17:37Z on live-container evidence (96.7% reap rate, VmHWM>VmRSS), and a genuine eviction bug would contradict that ratification and must be surfaced, not quietly patched into green.\\n\\nORIGIN: docs/signals/processed/ci-red-ebb065b8-20260808185105.json (ci_red, from ci-health-probe, priority high, createdAt 2026-08-08T18:51:05Z, run 31272399149). ANTI-AMNESTY: CI plane last-known-green baseline is 0 fail, so this is always actionable; it was NOT deduped into FIX-MCP-SUITE-HEALTH-BASELINE or any other local-full-suite row.",
-        "updated_at": "2026-08-08T19:33:36Z"
+        "status_note": "AC: gh run view <databaseId with headSha AFTER ebb065b8a2db409f6012baffaf7eade23c365c87> --json jobs -q '.jobs[]|select(.name==\"bun test\")|.conclusion' == success (verification_gate=ci_green_on_subsequent_push). Priority: high. Failing job: bun test. Failing file: src/__tests__/1862c-transport-session-eviction.test.ts.\\n\\nMANDATORY pre-dedup failing-file read PERFORMED by po (gh run view 31272399149 --log-failed): run reports '15080 pass / 40 skip / 1 fail', '=== FAILED FILES (1) ===', 'FAILEDFILE: src/__tests__/1862c-transport-session-eviction.test.ts'. The same run's size-lint job named 2 offenders, BOTH already-open rows (coordinationStore.ts -> FIX-CI-SIZELINT-COORDINATIONSTORE-BASELINE-1388L in ready[]; transport.ts -> FIX-CI-SIZELINT-TRANSPORT-TS-SSE-REAPER-237L in backlog[]); ebb065b8 folded onto both as an additional observed SHA, no re-mint. This bun-test file is the ONLY genuinely new failing file in the signal.\\n\\nDEDUP: file-scoped non-terminal-lane scan (backlog+ready+in_progress+review+qa) on dedup_key 'ci_job:bun test|file:src/__tests__/1862c-transport-session-eviction.test.ts' found NO match. The sibling bun-test row FIX-CI-BUNTEST-1255-ALERT-OFF-HOURS-SEND is a DIFFERENT file (1255-alert-off-hours-send.test.ts) and must not absorb this one — one row per distinct failing file.\\n\\nWHY THIS MATTERS MORE THAN A NORMAL CI ROW — read before triaging it as routine: git log on this test file is 'b746c112b fix(mcp-server): SseSessionManager evicts every session's McpServer (perconn leak) + idle/max-age reaper + DELETE route'. It is the eviction test belonging to FIX-MCP-SSE-SESSION-MANAGER-PERCONN-LEAK-NO-REAPER, which is RIGHT NOW resident in qa[] at priority=critical, supervised, awaiting a >=4h soak checkpoint #2 at ~21:00Z before po sign-off. Its own test is RED in CI. Resolve this BEFORE that sign-off: a green soak plus a red unit test is not a sign-off-able state.\\n\\nDISCRIMINATOR ALREADY ESTABLISHED — do not re-litigate it: CI runs scripts/ci-per-file-isolation.sh (one bun process per test file), so a failure here is INTRINSIC to this file and is NOT cross-file mock/ESM contamination. That matters because this exact file has a contamination history (5fa2822d1 'FIX-CI-MCP-SDK-MOCK-CONTAM — add full MockMcpServer stubs to stop ESM leak', 8fd9bde1d 'B1-MOCK-MODULE-EXPERIMENT — add afterAll(mock.restore) to 1862c'), and reflexively reaching for that explanation would be wrong under isolation. Reproduce locally with the same one-file-per-process invocation, not a full-suite run.\\n\\nOPEN QUESTION FOR THE IMPLEMENTER (answer it explicitly in the fix): is the assertion wrong (test written against the pre-consolidation 2-Map design) or is the eviction path wrong (product bug)? If the latter, escalate onto the SSE row immediately — po ratified that fix at 17:37Z on live-container evidence (96.7% reap rate, VmHWM>VmRSS), and a genuine eviction bug would contradict that ratification and must be surfaced, not quietly patched into green.\\n\\nORIGIN: docs/signals/processed/ci-red-ebb065b8-20260808185105.json (ci_red, from ci-health-probe, priority high, createdAt 2026-08-08T18:51:05Z, run 31272399149). ANTI-AMNESTY: CI plane last-known-green baseline is 0 fail, so this is always actionable; it was NOT deduped into FIX-MCP-SUITE-HEALTH-BASELINE or any other local-full-suite row.\n\n[po/triage-20260808T2054Z] ADDITIONAL OBSERVED SHA — file-scoped dedup hit, folded NOT re-minted: ebcdc1225 (run 31277932133, 20:52:00Z). Failing-file read: `15080 pass / 40 skip / 1 fail`, === FAILED FILES (1) === FAILEDFILE: src/__tests__/1862c-transport-session-eviction.test.ts. Still the only bun-test offender, unchanged since 18:51Z. Sibling of FIX-CI-SIZELINT-TRANSPORT-TS-SSE-REAPER-237L (same SSE-reaper commit b746c112b); both keep main CI RED. PROMOTED INTO PO BATCH 2026-08-08T20:54Z for direct dev-mcp-server dispatch.",
+        "updated_at": "2026-08-08T21:00:07Z"
       },
       {
         "id": "FIX-QADRAIN-NO-TASKID-LEVEL-CLAIM-DUPLICATE-QA-SPAWN",
@@ -10396,6 +10475,34 @@
         "created_by": "po/triage-20260808T1926Z",
         "status_note": "AC: a head-referenced row carrying next_recheck_not_before with a FUTURE ISO-8601 timestamp causes WF-2 to hold (fall through to Step 1, .head left UNCHANGED — identical behaviour to the existing supervised hold, NOT a BLOCKED-style idle reset), and to resume automatically on the first tick after that timestamp passes, with no PO/router action required at either edge. Regression proof required: one fixture with not_before in the future (assert no dispatch) and the SAME fixture with not_before in the past (assert normal dispatch) — a one-sided test passes vacuously by never dispatching.\\n\\nPREMISE VERIFIED AT SOURCE by po before minting: docs/agents/dev-team/flow/main.md WF-2 should_hold (currently L374-385) computes exactly two terms — $supervised (effective_supervised over a 6-lane row lookup) and $goahead (any key matching ^po_goahead on the row or .head) — and returns ($supervised and ($goahead|not)). Confirmed: there is no third term, and no timestamp is read anywhere in the predicate.\\n\\nLIVE INSTANCE (still open as this row is minted): FIX-MCP-SSE-SESSION-MANAGER-PERCONN-LEAK-NO-REAPER, resident in qa[], .head.active_task_id, status in_progress/next_agent=qa. Its qa_step5_checkpoint_1_20260808T1832Z field states 'RECOMMEND: re-dispatch qa for Step 5 checkpoint #2 no earlier than 2026-08-08T21:00Z (4h mark)' because po's own sign-off gate needs a >=4h sessionCount-vs-MemPerc correlation window and only ~1h33m had elapsed. WF-1/1b/1c do not fire (row is not BLOCKED, not terminal, not ready[]-resident) and should_hold is FALSE (supervised=true BUT po_goahead_20260808T175954 is already stamped on the row), so the mechanical S2 dispatcher-wrap re-spawns qa every tick. The router has now DECLINED that re-spawn by hand three times (18:5x, 19:23Z, and this 19:26Z tick). At ~30min cadence a 4h gate costs ~7 wasted ~9min/130K-token qa runs, each structurally able to report only 'insufficient elapsed time'.\\n\\nWHY THE EXISTING GATE CANNOT BE REUSED — po considered and REJECTED this, do not re-propose it: un-stamping po_goahead_* to re-arm the supervised hold would (a) destroy a durable ratification audit record that docs/agents/po/flow/supervised-goahead.md Step 3 exists to create, and (b) self-defeat, because that same file's Step 1-3 producer runs MANDATORY on every PO tick and would simply re-stamp the row. 'supervised' answers WHO must approve; this gap is WHEN it is worth re-running. Different axis, needs its own term.\\n\\nDESIGN GUIDANCE (reporter's, po concurs): standardize on ONE agent-agnostic field, next_recheck_not_before (ISO-8601 UTC), settable by ANY specialist. Do NOT pattern-match agent-specific checkpoint field names (^qa_step\\\\d+_checkpoint_\\\\d+_ etc.) — that is a per-agent convention the gate would silently outgrow the first time a non-qa specialist needs a time-gated re-check. A LIVE FIXTURE ALREADY EXISTS: po stamped next_recheck_not_before=2026-08-08T21:00:00Z on the SSE row in this same tick, so the implementation can be validated against real board data rather than only a synthetic fixture.\\n\\nMIRROR DISCIPLINE (hard requirement, this is how the last WF-2 change broke): the should_hold jq filter text is duplicated verbatim in docs/agents/po/flow/supervised-goahead.md Step 1 and is asserted byte-identical there. Any change to the predicate MUST land in BOTH files in the SAME commit. FIX-WF2-PREDICATE-MIRROR-NO-DRIFT-VERIFIER (open, backlog, same next_agent) exists precisely because nothing mechanically enforces this — consider landing the two rows together.\\n\\nOCCURRENCE: first observed instance, not yet 2+ recurring, minted anyway because recurrence is structurally GUARANTEED on this exact row every ~30min until 21:00Z and the only thing currently preventing the waste is a human/router noticing each time. ORIGIN: docs/signals/processed/router-s2-checkpoint-timestamp-hold-gap-20260808T185124Z.json.",
         "updated_at": "2026-08-08T19:33:36Z"
+      },
+      {
+        "id": "FIX-PO-MANUAL-DISPATCH-SKIP-STAMP-FIELD-MISMATCH-STARVES-SWEEP",
+        "type": "FIX",
+        "title": "manual-dispatch-sweep: deliberate SKIP writes po_manual_dispatch_skipped_at but flag_reentrant only reads po_manual_dispatch_flagged_at — skipped row re-ranks #1 every tick and starves the sweep single-selection slot",
+        "owner": "po",
+        "status": "BACKLOG",
+        "priority": "high",
+        "size": "S",
+        "zone": "cross-service/",
+        "next_agent": "developer",
+        "files": [
+          "docs/agents/po/flow/manual-dispatch-sweep.md",
+          "scripts/lib/po-manual-dispatch-eligibility.jq",
+          "scripts/audits/po-manual-dispatch-sweep-verify.sh"
+        ],
+        "baseline_pass": true,
+        "created_at": "2026-08-08T20:59:42Z",
+        "created_by": "po/triage-20260808T2054Z",
+        "dedup_key": "po-manual-dispatch:skip-stamp-field-mismatch-starves-sweep",
+        "verification_gate": "sweep_step1_top_candidate_changes_after_a_skip",
+        "status_note": "LIVE-MEASURED THIS TICK. manual-dispatch-sweep.md Step 1 excludes a candidate only via `flag_reentrant`, which reads exactly one field: `po_manual_dispatch_flagged_at`. But a PO that DELIBERATELY SKIPS a top candidate (correct behaviour — prior-art-suspect, needs AC-level verify not dispatch) writes `po_manual_dispatch_skipped_at` + `po_manual_dispatch_skipped_reason` instead. Those two fields are read by NOTHING. Consequence: the skipped row stays permanently unflagged and re-ranks #1 on every subsequent tick, monopolising Step 2 (which selects exactly ONE row per invocation) forever. PROOF: TASK-COWORK-MUTEX-001 (P0, rank 0, BACKLOG-XOR-GAP) was skipped at 2026-08-08T16:06:57Z with a full documented reason; re-running Step 1 verbatim at 2026-08-08T20:56Z — 4h50m later, past the 14400s staleness window — still returns it as candidate[0] with reflag:false. Live field census: 1 row carries skipped_at, 5 carry flagged_at; the 1 skipped row is the P0 that outranks all 5. So the sweep has produced ZERO new selections since 16:06Z. AC: after a PO records a skip, the NEXT tick Step 1 run must return a DIFFERENT top candidate. Candidate fixes: (a) widen flag_reentrant to `(.po_manual_dispatch_flagged_at // .po_manual_dispatch_skipped_at // \"\")`, or (b) make the documented skip path write flagged_at too. Prefer (a) — keeps the audit distinction between skipped and dispatched while making both suppress re-selection. Same `documented consumer, no documented producer` family as this sub-flows own origin row FIX-PO-NO-PRODUCER-FOR-MANUAL-DISPATCH-ESCAPE-HATCH (REVIEW), one layer down: here the producer writes a field no consumer reads.",
+        "related": [
+          "FIX-PO-NO-PRODUCER-FOR-MANUAL-DISPATCH-ESCAPE-HATCH",
+          "FIX-PO-MANUAL-DISPATCH-SWEEP-FLAG-WITHOUT-DISPATCH-STRANDS-ROW",
+          "TASK-COWORK-MUTEX-001"
+        ],
+        "updated_at": "2026-08-08T20:59:43Z"
       }
     ],
     "closed_sprints": [

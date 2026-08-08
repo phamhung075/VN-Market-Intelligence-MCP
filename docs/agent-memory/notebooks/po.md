@@ -1,5 +1,28 @@
 # PO — Notebook
 
+## 2026-08-08T20:54Z · CI red 7h30m with perfect detection: the gap was dispatch, not detection
+
+### What actually happened
+- dev-team Step 1 triage. Inbox was **70 entries, not the 10 relayed**. 0 mints from signals, 1 mint from a mechanism I found while running my own pre-check, 4 folds, 35/35 `to=po` queue rows closed `triaged`. `.head` untouched (peer reset it to idle mid-tick).
+- Journal: `docs/agent-memory/decisions/triage-20260808T2054Z-po.md`. TNB c125 ACKed, 8/8 findings dispositioned, 0 tasks created.
+
+### Decisions worth keeping
+- **★ THE RELAY WAS HALF-RIGHT, WHICH IS THE DANGEROUS SHAPE.** dev-team said `763ef6822` "very likely resolves" the size-lint red. Checked live: CI is RED on **both commits after it**. The fix did clear its own file (`coordinationStore.ts` is gone from the offender set) — so a second offender, `transport.ts` (126L→237L), reads exactly like "CI is recovering" if you never open the log. Mandatory failing-file read is not ceremony; it is the only thing that separates *one of two fixed* from *fixed*.
+- **★ DETECTION WORKED PERFECTLY AND BOUGHT NOTHING.** Ten `ci_red` signals, 13:23Z→20:23Z. Every one correctly detected, deduped, folded onto the right FILE-scoped row. Main CI has still been RED **7h30m** — because both rows were minted into `backlog[]` and **never dispatched**. An 11th mint would have been pure churn. **When every signal in a 7-hour storm deduped cleanly, the bug is downstream of triage — stop minting and start promoting.** Both rows folded into BATCH for direct dispatch.
+- **★ THE SWEEP HAS BEEN DEAD SINCE 16:06Z AND THE TELL WAS A REPEAT #1.** `TASK-COWORK-MUTEX-001` was skipped at 16:06Z with excellent reasoning — and re-ranked `candidate[0]`, `reflag:false`, when I re-ran Step 1 at 20:56Z, 4h50m later, past the 4h staleness window. Cause: `flag_reentrant` reads **only** `po_manual_dispatch_flagged_at`; the documented skip path writes `po_manual_dispatch_skipped_at`, which **nothing reads**. Step 2 selects exactly ONE row per tick, so one skipped P0 starves the entire mechanism. Census: 1 row `skipped_at`, 5 `flagged_at`, and the 1 outranks all 5. Minted `FIX-PO-MANUAL-DISPATCH-SKIP-STAMP-FIELD-MISMATCH-STARVES-SWEEP`. **A correct decision recorded in a field no consumer reads is not a decision.**
+- **★ REFUSED TO RE-LITIGATE THE PRIOR PO'S SKIP.** Easy move was to fold `TASK-COWORK-MUTEX-001` as its own row type says (TASK/M/dev) — that burns a slot re-implementing live code, exactly what the 16:06Z note warned. Also refused to close it: the match is file+behaviour, not AC. Folded as a **SPIKE** doing the AC-level diff its own `REQUIRED NEXT ACTION` demands, and stamped `flagged_at` so the sweep unblocks now instead of waiting for the fix to land.
+- **Three rag-service A-30 entries are ONE chronic condition (c380→c382), not three incidents** — auditor's own ledger already suppressed c382; folded across 5 open rows. Same for 4/4 `repair_task_request` (all matched by check_id) and the sweep-guard `escalated=true`. Zero mints from the signal inbox was the correct answer.
+- **Coverage guard is RED with 10 unrouted `to=po` types, up from 2 on 08-06 — still folded, not minted.** `FIX-PO-TRIAGE-SIGNALS-AGENT-FLOW-DEFECT-TYPE-UNROUTED` already scopes exactly this. Raised P1→high, and wrote on the row that `microservice_memory_degraded` is an underscore alias of the routed `microservice_degraded` — wants normalisation, not a 10th table row.
+
+### NEXT
+- Both CI rows are debt from the **same** SSE reaper commit `b746c112b`. Their outcome is evidence for the 23:06Z sign-off on `FIX-MCP-SSE-SESSION-MANAGER-PERCONN-LEAK-NO-REAPER` — do not sign off before then, and do not sign off on soak evidence alone.
+- If the sweep's top candidate is unchanged next tick, the skip-stamp fix did not land — check that before re-deriving.
+
+### Carry-over
+- **Never trust a relayed count.** Inbox was relayed as 10, measured 70. Read the durable structure yourself; the relay is a hint, never the input.
+- Standing rule (held, applied again): after every `orch-apply.sh`, re-read the specific row/field on disk before claiming it.
+- Notebook written section-prepend+prune, never full-overwrite (`feedback_qa_notebook_fulloverwrite_drops_concurrent_peer_entries_20260806`, confirmed on this file 18:08Z). 19:26Z bytes preserved verbatim.
+
 ## 2026-08-08T19:26Z · Five signals, one precondition: two live sessions on the hot board
 
 ### What actually happened
@@ -22,28 +45,3 @@
 - Standing rule (held, applied again): after every `orch-apply.sh`, re-read the specific row/field on disk — all 3 mints + 3 folds + 1 fixture verified before claiming.
 - Pruned the 17:37Z section (in git). Its one still-live lesson: **AC-3 self-verification can return a FALSE GREEN** by matching a *peer's* commit that swept my board changes — assert the commit is **mine** (compare the SHA I just created). Tracked as `FIX-PO-AC3-SELFVERIFY-FALSE-FAILLOUD-WHEN-PEER-SWEEPS-ORCHSTATE` (backlog).
 - Notebook written section-append+prune, never full-overwrite (`feedback_qa_notebook_fulloverwrite_drops_concurrent_peer_entries_20260806`, confirmed on this file 18:08Z).
-
-## 2026-08-08T18:08Z · SYSREMAKE-P2 idle 3 weeks: the producer existed, the rows were starved
-
-### What actually happened
-- Scoped triage tick (router-directed, audit already done). No re-audit, no re-design.
-- Confirmed `SYSREMAKE-P2-T1..T9` still correctly scoped: **zero of 9 partially landed** (verified at source, not from the brief).
-- Dispatched 2 of 2 WIP slots. Minted 3 rows. Closed 1 signal. `.head` untouched (peer PO live on it).
-- Journal: `docs/agent-memory/decisions/triage-20260808T1808Z-po.md`.
-
-### Decisions worth keeping
-- **★ THE 3-WEEK IDLE WAS NOT "NOBODY NOTICED" — IT WAS HEAD-OF-LINE STARVATION, AND THE CONSUMER NAMES THESE ROWS BY ID.** `scripts/devteam-backlog-claim-ready-lane-consumer.jq`'s own header lists `SYSREMAKE-P2-T1..T9` as its target class. It picks **one** row per turn, `[priority_rank, idx]`-sorted, and `ready[]` holds **29 P0 rows** (≥26 eligible) ahead of these P1s — plus, since 2026-08-08, RLC only wins ~1 turn in 6 under the idle-tick rotation. BOUNDED-1/SLS can never see them at all (both claim only their own `promoted_by` stamp). **Standing rule: before concluding a backlog row was forgotten, check whether a producer exists and is merely losing a sort.** Priority inflation is the wrong fix — 9 more P0s into a saturated P0 queue *is* the churn pattern.
-- **★ A `depends` CHAIN IS ONLY AS LIVE AS ITS DEP TOKEN.** `deps_satisfied()` requires the exact string `DONE_VERIFIED`, and `FIX-DONELANE-NO-DONEVERIFIED-PRODUCER-DEP-STARVATION` (P0, architect, open since 07-30) says nothing systematically produces it. So T1 closing as `DONE` would **not** have unblocked T2 — the leg would have re-idled after one task and looked like the same mystery again. Dispatched T1+T2 as ONE engagement, which T1's own note already independently required. Intra-chain hops must not route through `deps_satisfied()` until that P0 lands.
-- **★ REFUSED THE ORCH-APPLY 600KB CEILING AS SPECIFIED — IT WOULD BRICK THE FILE ON THE NEXT WRITE.** The 07-17 brief §7 proposed ~600KB when the file was 844KB. It is **3.73MB** now, so a hard gate rejects 100% of writes. That is structurally the *same* naive-gate brick the *same brief* rejected in §2.5 for RC-VERIF. Re-scoped to WARN/telemetry only (no rejection path, cannot deadlock the fleet); hard gate deferred until the file is actually under ceiling. **A ceiling authored against a measurement is a bug once the measurement moves 4.4×.**
-- **★ THE BLOAT IS INLINE PROSE ON LIVE ROWS, NOT TERMINAL DRIFT — SO BOTH EXISTING EVICTION ROWS WOULD EVICT ~0 BYTES.** `task_board` = 3.13MB of 3.73MB (84%); `review[]` 1.19MB/186 rows, `backlog[]` 1.04MB/354. **Terminal-status rows in those lanes: zero** (331 BACKLOG + 23 BLOCKED; 186 REVIEW + 4 BLOCKED; 67 READY + 8 TODO). Mean `review[]` row 6.3KB, top rows 49/41/39/31KB. `TE-T15` and `FIX-BACKLOG-TERMINAL-ROW-DRIFT-EVICT-BLIND` both rest on an assumption the live data contradicts. Minted `FIX-ORCHSTATE-HOTFILE-BLOAT-INLINE-PROSE-NOT-TERMINAL-DRIFT` (architect, supervised+plan_only) — `detail_ref` exists for this and is largely unused.
-- **The cold-evict fix was already written down 7 days ago and nobody read it.** `signal-dashboard/SKILL.md:83` states the gap verbatim, names the file, names the agent. Its stated trigger has since fired: documented cap 200, live rows **247**, with **226/247 (91.5%)** unevictable. Two corrections folded into the ACs — matching is exact-string (`orch-cold-evict.sh:495`), so uppercase `TRIAGED` needs its own entry (the note only names lowercase); and SKILL.md:91's PRUNE criteria still says READ/RESOLVED/SUPERSEDED and will re-seed the drift if not synced.
-- **Kept my own notes short on purpose.** Minting 3 verbose rows into a file whose diagnosis is "rows are too verbose" would have been self-refuting.
-
-### NEXT
-- `SYSREMAKE-P2-T6` is dep-free and independent of T1-T5 — designated next pickup, deliberately held out to stay inside WIP≤2.
-- After T1/T2 close: stamp `DONE_VERIFIED` by hand at each hop, or T3/T4/T5/T7 re-starve. Not a workaround — the documented P0 remedy is `FIX-DONELANE-...`.
-- Once the cold-evict fix lands, run it **dry-run first**: ~226 rows move in one pass.
-
-### Carry-over
-- Standing rule from 15:13Z (held, applied again): after every `orch-apply.sh`, re-read the specific row/field on disk — verified all 3 mints + 2 stamps + 1 signal close before claiming them.
-- `review[]`=186 vs `qa[]`=4 — unchanged shape from prior cycles, and it is now also the single largest byte consumer in the hot file.
