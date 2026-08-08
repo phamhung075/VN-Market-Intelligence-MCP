@@ -3786,8 +3786,11 @@
         "type": "orch-health-finding",
         "summary": "SYSREMAKE-8RC-RECHECK-20260808: 8-RC recheck of 07-04 churn diagnosis: 2/8 P0 legs (VERIF+CONVERGE) NEVER-SHIPPED (9 READY tasks idle 3wk); GITSTATE (dominant driver) NEVER-SHIPPED; ORCHMONO SHIPPED-REGRESSED (862KB->3.86MB); IDLE-LOOPS+DETECTOR SHIPPED-HOLDING; DRIFT+CEREMONY PARTIAL. 1052/1239=84.9% chore/7d, worse than 07-04 baseline. Full table in orch-sentinel notebook 2026-08-08T18:00:00Z + relayed direct to router.",
         "severity": "HIGH",
-        "status": "READ",
-        "payload_ref": "docs/agent-memory/notebooks/orch-sentinel.md"
+        "status": "triaged",
+        "payload_ref": "docs/agent-memory/notebooks/orch-sentinel.md",
+        "disposition": "ROUTED. SYSREMAKE-P2 T1..T9 confirmed correctly scoped + still relevant (verified at source: none of the 9 has partially landed). T1+T2 dispatched to developer via the manual WIP<=2 budget; starvation root cause recorded on T1. RC-GITSTATE/RC-ORCHMONO gaps minted as FIX-COLDEVICT-TERMINAL-SIGNAL-STATUSES-OMITS-TRIAGED-RETRACTED (dispatched), FIX-ORCHAPPLY-NO-HOTFILE-SIZE-TELEMETRY-WARN, FIX-ORCHSTATE-HOTFILE-BLOAT-INLINE-PROSE-NOT-TERMINAL-DRIFT. The recheck's own 862KB->3.86MB ORCHMONO regression re-measured at 3.73MB and re-attributed: inline prose on live rows, not terminal drift.",
+        "triaged_at": "2026-08-08T18:08:16Z",
+        "triaged_by": "po"
       },
       {
         "id": "sys-20260808T180600-2ee6",
@@ -13443,6 +13446,42 @@
         "created_by": "po/triage-20260808T1737Z",
         "status_note": "AC: a commit attempt by an actor already past its per-session sweep-guard threshold is either (a) hard-blocked, or (b) converts into a durable, dedup-keyed board row on first escalation — not a 6th consecutive silently-ignored WARN. Regression proof required: replay the 6 payloads below against the fixed hook and assert the actuator fires.\\n\\nEVIDENCE (po triage 2026-08-08T17:37Z tick, read from .dev_team_idle_chain.pending_triage_inbox, 6 fires of payload class \"[sweep-guard] BARE commit about to absorb\", ALL carrying escalated=true):\\n  13:37:32Z actor=165f4245 prior_warns=9  threshold=3  (30 staged files)\\n  14:08:32Z actor=165f4245 prior_warns=10 threshold=3\\n  15:05:52Z actor=165f4245 prior_warns=11 threshold=3\\n  15:39:52Z actor=165f4245 prior_warns=12 threshold=3\\n  16:10:54Z actor=0454e9d8 prior_warns=9  threshold=3\\n  17:39:31Z actor=165f4245 prior_warns=13 threshold=3\\nOne actor (165f4245, the live router session) went 9 -> 13 strikes in 4h02m against a threshold of 3, and every single attempt proceeded.\\n\\nTRUE POSITIVE BY CONSTRUCTION, per docs/agents/po/flow/triage-signals.md: pre-commit:453-454 exit 0s silently on mode=SCOPED BEFORE either the log write or write_signal is reached, so the existence of these signals IS the mechanism proof that a BARE (pathspec-less) git commit line was used. Deliberately NOT dispositioned off git show --stat (outcome evidence, a different claim from mechanism) — that is a documented-invalid disposition.\\n\\nDEDUP: non-terminal-lane scan (backlog+ready+in_progress+review+qa) across the FIX-COMMIT-SWEEP-*/FIX-SWEEPGUARD-* family found exactly one open row, FIX-COMMIT-SWEEP-VICTIM-SELF-DETECT, which is the VICTIM-side detector (am I being swept) — a different concern from OFFENDER-side enforcement. No open row owns repeat-offender-after-block. Genuinely new, minted.\\n\\nWHY THIS IS NOT ALREADY FIXED: FIX-SWEEPGUARD-ESCALATION-RETROACTIVE-COUNTER-AND-SESSION-SCOPED-ACTOR went DONE_VERIFIED earlier today (daeaf8e1a) and is what makes these per-session counts trustworthy — it fixed the MEASUREMENT. The residual gap is the ACTUATOR: escalated=true is computed correctly, emitted correctly, and then has no consequence, because the hook is mode=warn and nothing downstream converts an escalation into a block or a task. A counter that is accurate and ignored is not an improvement over a counter that is wrong.\\n\\nSCOPE NOTE FOR THE IMPLEMENTER: hard-blocking is NOT automatically the right answer — a blocked commit in a shared-main fleet can strand a workers staged index (feedback_coldevict_bare_commit_sweeps_worker_staged_index). Option (b), auto-minting one dedup-keyed row per actor per session on FIRST escalation, may be the safer actuator. Judge both; do not default to the blunt one. Priority high (recurring-bug-escalation, PO priority order rule 1).",
         "updated_at": "2026-08-08T18:06:19Z"
+      },
+      {
+        "id": "FIX-ORCHAPPLY-NO-HOTFILE-SIZE-TELEMETRY-WARN",
+        "type": "FIX",
+        "size": "XS",
+        "status": "BACKLOG",
+        "priority": "P2",
+        "zone": "scripts/",
+        "next_agent": "developer",
+        "supervised": false,
+        "plan_only": false,
+        "depends": [],
+        "title": "orch-apply.sh has no hot-file size telemetry or ceiling WARN - orch-state.json 862KB (07-04) -> 844KB (07-17) -> 3.73MB today with zero write-path signal",
+        "note": "SCOPED DELIBERATELY NARROW BY PO. The 2026-07-17 brief (docs/architecture-briefs/2026-07-17-sysremake-p2-rcverif-rcconverge.md S7) assigns RC-ORCHMONO a ~600KB hot ceiling on this script. Implementing that as a HARD gate today would reject EVERY write on a 3.73MB file - structurally identical to the naive-gate brick that same brief's S2.5 explicitly rejected. So this row is WARN/telemetry ONLY: emit candidate + live byte size on every apply, and a non-fatal WARN above ORCH_HOT_CEILING_BYTES (default 614400, env-tunable). NO rejection path, no exit-code change. The hard gate is deliberately deferred until the file is actually under ceiling - see sibling row FIX-ORCHSTATE-HOTFILE-BLOAT-INLINE-PROSE-NOT-TERMINAL-DRIFT, which owns getting it there.",
+        "created_at": "2026-08-08T18:08:16Z",
+        "created_by": "po (SYSREMAKE-8RC-RECHECK triage)",
+        "updated_at": "2026-08-08T18:08:20Z",
+        "updated_by": "po"
+      },
+      {
+        "id": "FIX-ORCHSTATE-HOTFILE-BLOAT-INLINE-PROSE-NOT-TERMINAL-DRIFT",
+        "type": "FIX",
+        "size": "M",
+        "status": "BACKLOG",
+        "priority": "P1",
+        "zone": "cross-service/",
+        "next_agent": "architect",
+        "supervised": true,
+        "plan_only": true,
+        "depends": [],
+        "title": "orch-state.json 3.73MB: driver is multi-KB INLINE PROSE on live rows, NOT terminal-status drift - so TE-T15/FIX-BACKLOG-TERMINAL-ROW-DRIFT as scoped would evict ~0 bytes",
+        "note": "MEASURED 2026-08-08T18:0xZ, contradicts the assumption both existing eviction rows rest on. Section bytes: task_board 3.13MB of 3.73MB total (84%), signal_queue 270KB. Lane bytes: review[] 1.19MB / 186 rows, backlog[] 1.04MB / 354 rows, ready[] 386KB / 75 rows. TERMINAL-STATUS ROWS IN THOSE LANES: ZERO (backlog = 331 BACKLOG + 23 BLOCKED; review = 186 REVIEW + 4 BLOCKED; ready = 67 READY + 8 TODO). So there is nothing for a terminal-status eviction pass to find. The bytes are legitimately-live rows carrying inline note/po_*/amendment prose: mean review row 6.3KB, top rows 49KB / 41KB / 39KB / 31KB. The schema's own detail_ref pointer field is the intended remedy and is largely unused on these rows. ARCHITECT OWNS: whether the fix is (a) enforce a per-row inline-byte ceiling at the orch-apply write gate with overflow forced to detail_ref, (b) a one-time prose->detail_ref migration of the top-N rows, or (c) both. supervised+plan_only: design first, no code, hot-file surgery on 517 live rows is not an autonomous-pickup class. Sequencing note for pm: this row must land BEFORE the hard ceiling half of FIX-ORCHAPPLY-NO-HOTFILE-SIZE-TELEMETRY-WARN.",
+        "created_at": "2026-08-08T18:08:16Z",
+        "created_by": "po (SYSREMAKE-8RC-RECHECK triage)",
+        "updated_at": "2026-08-08T18:08:20Z",
+        "updated_by": "po"
       }
     ],
     "closed_sprints": [
@@ -15022,8 +15061,9 @@
         "next_agent": "developer",
         "supervised": false,
         "note": "Must run immediately before T2, not days later — the set can grow between brief-authoring and implementation.",
-        "updated_at": "2026-07-17T12:00:00Z",
-        "updated_by": "pm (decompose SYSREMAKE-P2 Leg-1, session e417ef1f)"
+        "updated_at": "2026-08-08T18:08:20Z",
+        "updated_by": "po",
+        "po_dispatch_20260808": "DISPATCHED by po this tick via the router/PO WIP<=2 manual budget, NOT via any auto-lane. ROOT CAUSE of the 3-week idle (measured, not assumed): these 9 rows were minted straight into ready[] by pm decomposition, so BOUNDED-1 and the Supervised-Lane Sweep can never claim them (both claim only rows carrying their OWN promoted_by stamp). The one lane that CAN claim them - the Ready-Lane Consumer, scripts/devteam-backlog-claim-ready-lane-consumer.jq, whose header names SYSREMAKE-P2-T1..T9 by id as its target class - picks exactly ONE row per turn, top-priority-first, and ready[] holds 29 P0 rows (26 of them RLC-eligible) ahead of these P1s. Since 2026-08-08 RLC additionally only gets ~1 turn in 6 under the new idle-tick rotation. Net: P1 head-of-line starvation in a single-pick lane. Priority inflation is NOT the remedy (it would add 9 rows to a saturated P0 queue) - deliberate dispatch is. SECOND blocker, flagged for whoever runs the chain: T2..T9 use `depends`, and deps_satisfied() requires the exact token DONE_VERIFIED; per backlog row FIX-DONELANE-NO-DONEVERIFIED-PRODUCER-DEP-STARVATION (P0, architect, open since 07-30) nothing systematically produces that token. So T1 closing as DONE will NOT unblock T2 automatically. Run T1 and T2 in ONE developer engagement - which this row's own `note` already independently requires ('immediately before T2, not days later') - and have po/qa stamp DONE_VERIFIED at each hop."
       },
       {
         "id": "SYSREMAKE-P2-T2-SCHEMA-ADDITIONS",
@@ -15039,8 +15079,9 @@
         "next_agent": "developer",
         "supervised": false,
         "note": "Core schema change — embed frozen grandfather-id set from T1.",
-        "updated_at": "2026-07-17T12:00:00Z",
-        "updated_by": "pm (decompose SYSREMAKE-P2 Leg-1, session e417ef1f)"
+        "updated_at": "2026-08-08T18:08:20Z",
+        "updated_by": "po",
+        "po_dispatch_20260808": "Dispatched TOGETHER with SYSREMAKE-P2-T1 in one developer engagement - see T1's po_dispatch_20260808 for the starvation root cause and the DONE_VERIFIED dep-token blocker. Scope re-confirmed live this tick, still fully relevant, nothing stale: orchStateSchema.ts has NO RawProbeSchema, NO VerificationSchema, NO DEGRADED in StatusEnum, NO bug_class; orchStateSchema.test.ts does not exist; scripts/bug-class-recurrence-check.sh does not exist. Zero of the 9 tasks has partially landed, so no re-decomposition is needed."
       },
       {
         "id": "SYSREMAKE-P2-T3-UNIT-TESTS",
@@ -16670,6 +16711,26 @@
         "build_standard": "not-applicable",
         "architect_review_note": "DESIGN COMPLETE (architect, brownfield, no BA/PM relay — direct PO-mint FIX row). Zone: cross-service/ (scripts/) confirmed via docs/data/system-map.json .project.zones[id=cross-service].specialist=developer + zone-detect Tier-2 (\"root/scripts/ -> developer\"). BUILD-STANDARD: not-applicable (bug-fix/refactor, no new primitives, no new service/feature).\n\nROOT CAUSE (source-verified, scripts/orch-apply.sh read in full): Stage 0/1 (orch-validate.mjs, schema+coherence) and Stage 2 (orch-conservation-check.mjs, whole-board magnitude + signal-row-identity) both legitimately PASS on a byte-identical-for-the-target-row candidate — neither stage's job is to know what any individual caller INTENDED to change. CAS-mtime cannot fire either: this incident's staleness predates orch-apply.sh's own process lifetime (jq read the ALREADY-current live file after pm's commit landed, so select() legitimately matched 0 rows within in_progress[] — no write raced DURING the pipe's run). Distinct root cause from the CAS-mtime class, same shape already named in dev-standards.md's row-identity guard writeup (\"stale relative to live BEFORE its own process started\").\n\nKEY BROWNFIELD FINDING: scripts/orch-stamp-updated-at.mjs (Stage 1.5) ALREADY computes, per row id, `changed = !liveRow || !deepEqual(omit(candidateRow,'updated_at'), omit(liveRow,'updated_at'))` for every row in the candidate (source: flattenRows()/deepEqual()/omitField(), lines ~150-257) — exactly the primitive needed to detect \"selector missed its target.\" Nothing currently consumes that per-id result beyond the stamp-or-not decision. Fix reuses this machinery instead of duplicating it (HARD CONSTRAINT in orch-apply.sh's own header: never duplicate validation logic).\n\nFIX SHAPE — chosen: (a) opt-in per-id companion assertion, env-var-plumbed exactly like the existing ORCH_APPLY_ALLOW_SHRINK / ORCH_APPLY_DECLARED_SIGNAL_EVICTIONS precedent (inherited via subprocess env, zero new orch-apply.sh plumbing). REJECTED alternatives, both named in the board row's own note, both source-checked before rejecting:\n  - (b) escalate \"stamped 0 row(s)\" to a loud warning — REJECTED: dev-standards.md's own \"Routed writers\" list (signal-dashboard WRITE/PRUNE, fail-loud-protocol.md head-reset, any head-only write) shows MANY legitimate call sites touch zero task_board rows every single cycle — that IS their normal successful outcome. Blind escalation manufactures a false-positive storm on the majority of routine writes, not a targeted fix.\n  - (c) jq-transform-string parsing — REJECTED: fragile against arbitrary jq syntax (nested selects, alternate predicates, first()/limit()), reverse-engineers intent from source text instead of trusting a structural caller-supplied fact. Opt-in declarative env var matches the file's own existing idiom.\n\nMECHANISM (scripts/orch-stamp-updated-at.mjs, extend the existing stamping loop — do not add a new script/stage):\n1. New env var `ORCH_APPLY_EXPECT_MUTATED_IDS=<comma-separated task ids>` — optional, read directly from process.env (no CLI-arg change, mirrors ORCH_APPLY_ALLOW_SHRINK's \"no special plumbing\" note).\n2. In the existing `for (const [id, candidateRow] of candidateRows)` loop, additionally push `id` into a `changedIds` Set whenever `changed` is true (already computed — one extra Set.add per iteration).\n3. After both stamping passes (rows + head), BEFORE `writeFileSync`: if the env var is non-empty, for each declared id check `changedIds.has(id)`. This single predicate unifies all 3 failure shapes with zero extra branching: (i) id present in both live+candidate with identical content [[exact PO incident — row relocated to another lane, content byte-identical]]; (ii) id present in live only [row removed from candidate entirely]; (iii) id present in neither [typo / already-evicted] — none of these ever enter changedIds, since the loop only adds ids where `changed===true`.\n4. Any unsatisfied id -> print every failing id to stderr, `process.exit(4)` BEFORE the write (TMP stays at its pre-stamp, already-schema-valid state; orch-apply.sh's cleanup trap removes it since the rename never happens — live file untouched, per the file's own \"Live file is SACRED\" hard constraint).\n5. scripts/orch-apply.sh Stage 1.5 error-handling: one new branch — `stamp_exit -eq 4` -> propagate a NEW distinct exit code 4 (documented in the top-of-file EXIT CODES comment + new ORCH_APPLY_EXPECT_MUTATED_IDS env-var doc block, styled like the existing ORCH_APPLY_ALLOW_SHRINK block) instead of collapsing into the current generic `exit 1`. Rationale for a distinct code: remediation is \"re-read live file, recompute filter, retry\" — identical to exit 2's CAS-mtime remediation, NOT exit 1's \"malformed candidate, retry fails the same way.\" Lets any retry-wrapper safely auto-retry on {2,4} but never blindly retry on 1.\nREGRESSION SAFETY: exit 4 only fires when the new opt-in var is set. None of the ~290 existing orch-apply.sh call sites set it today -> zero behavior change for all of them, verified by design (additive-only code path).\n\nCOMPANION FIX — docs/agents/po/flow/main.md AC-3 (explicitly required by the board row): current AC-3 only checks file-PRESENCE in HEAD (`git show --stat $SHA | grep -q orch-state.json`) — provably insufficient, it passed on this exact incident because OTHER rows changed in the same commit. Two-layer rewrite: (1) PRIMARY — mandate that any po-authored orch-apply.sh pipe targeting a specific row/id (not a full-lane rebuild, not head-only) MUST set `ORCH_APPLY_EXPECT_MUTATED_IDS=<id[,id...]>`, catching the failure BEFORE any commit exists. (2) belt-and-suspenders — extend AC-3's post-commit self-verification to re-read the SPECIFIC target row from the just-committed HEAD (`git show $SHA:docs/data/orch/orch-state.json | jq --arg id \"$TARGET_ID\" '.. | objects | select(.id?==$id)'`) and assert the intended field(s) are actually present, not merely that the file is in HEAD. This generalizes the rule already adopted fleet-wide in docs/protocols/fail-loud-protocol.md's Analysis-Only Exit Guard (\"re-read the persistence layer before claiming it — never trust the write call's own exit code\") from file-level to row-level.\n\nTEST COVERAGE (extend scripts/test/orch-apply-wrapper-tests.sh, new \"EXPECT-MUTATED-IDS TESTS (FIX-ORCHAPPLY-SELECTOR-MISS-SILENT-NOOP)\" section after the existing UPDATED_AT STAMPING TESTS section, same pass/fail/assert_real_live_unchanged harness + fixture idiom as STAMP-*/ROW-DROP-*):\n  - EXPECT-MUTATED-SATISFIED: declared id's row content genuinely changed -> exit 0.\n  - EXPECT-MUTATED-UNSATISFIED-SELECTOR-MISS: fixture reproduces the LIVE incident shape verbatim (candidate's select() targets a lane the row has already left in the live file) -> exit 4, assert_real_live_unchanged. This case IS the board row's own AC (\"replay this exact race on a fixture... prove the wrapper fails loud instead of returning OK\").\n  - EXPECT-MUTATED-ROW-ABSENT: declared id in neither live nor candidate -> exit 4.\n  - EXPECT-MUTATED-UNSET-NOOP: env var NOT set, genuine no-op candidate -> exit 0 unchanged (regression proof for the ~290 default callers).\n  - EXPECT-MUTATED-MULTI-PARTIAL: 2 declared ids, only 1 satisfied -> exit 4, message names exactly the unsatisfied one.\n\nRISK FLAGS: (1) Opt-in-only — callers who never set the var get zero new protection; residual adoption gap, mitigated by making it MANDATORY in po/flow/main.md (the flow that hit this) and documented as the standard idiom in dev-standards.md for any future row-targeted mutation, but NOT retrofitted across all ~290 existing ad-hoc jq callers in this task (separate, larger hardening effort — flagging as a natural follow-up, same spirit as the already-planned scripts/audits/po-mint-orchapply-actuator-verify.sh named on this same AC-3 block: a lint pass could grep for `select(.id==` row-targeted filters missing a sibling ORCH_APPLY_EXPECT_MUTATED_IDS= at the same call site). (2) New exit-code-4 contract surface — verified additive/zero-regression per above. (3) No DDD/domain-layer risk — pure infra wrapper-script change, no apps/*/src touched.\n\nFILES (implementer scope):\n  - scripts/orch-stamp-updated-at.mjs — changedIds Set + EXPECT_MUTATED_IDS check + exit(4) pre-write; header docstring update.\n  - scripts/orch-apply.sh — Stage 1.5 exit-4 branch; top-of-file EXIT CODES + new env-var doc block.\n  - scripts/test/orch-apply-wrapper-tests.sh — new EXPECT-MUTATED-IDS TESTS section (5 cases above).\n  - docs/agents/po/flow/main.md — AC-3 two-layer rewrite (mandate + row-level re-read).\n  - docs/policies/dev-standards.md — extend \"CANONICAL: Orch-state gated write wrapper\" + \"CANONICAL: Orch-state diff-based updated_at stamping\" blocks with the new exit-4/EXPECT_MUTATED_IDS mechanism (same pattern every prior orch-apply extension used).\n\nNEXT_AGENT: developer (generic — zone=cross-service/scripts, Tier-2 zone-detect rule; not a dev-<service> specialist, no apps/ code touched). No ba/pm relay per FIX-type direct-dispatch routing already reflected in this row (next_agent was pre-set to architect by po's mint).\n",
         "architect_completed_at": "2026-08-08T15:27:43Z"
+      },
+      {
+        "id": "FIX-COLDEVICT-TERMINAL-SIGNAL-STATUSES-OMITS-TRIAGED-RETRACTED",
+        "type": "FIX",
+        "size": "XS",
+        "status": "READY",
+        "priority": "P1",
+        "zone": "scripts/",
+        "next_agent": "developer",
+        "owner": "developer",
+        "supervised": false,
+        "plan_only": false,
+        "depends": [],
+        "title": "orch-cold-evict.sh TERMINAL_SIGNAL_STATUSES omits triaged/TRIAGED/RETRACTED -> 226 of 247 signal_queue rows stuck forever, 200-row cap BREACHED live",
+        "note": "PRE-DIAGNOSED, zero design cost. .claude/skills/signal-dashboard/SKILL.md L83 already states this verbatim as a KNOWN GAP needing 'a follow-up code fix (developer, scripts/orch-cold-evict.sh)'. MEASURED 2026-08-08T18:0xZ: 247 rows in .signal_queue.rows[] vs the skill's own documented 200-row cap (L105) = invariant BREACHED. Status histogram: triaged 219, READ 20, RETRACTED 4, TRIAGED 3, NEW 1. Default at scripts/orch-cold-evict.sh:132 is READ,RESOLVED,SUPERSEDED,ACUTE-RESOLVED-ROOT-TRACKED. AC-1: add triaged, TRIAGED, RETRACTED to the default (matching is EXACT-string, no case fold - see L495 - so BOTH cases are required, the skill's own note only names the lowercase one). AC-2: sync the PRUNE criteria line in .claude/skills/signal-dashboard/SKILL.md L91 (still says READ/RESOLVED/SUPERSEDED only). AC-3: 24h SIGNAL_MAX_AGE_HOURS age gate stays untouched - it is the FIX-COLDEVICT-SIGNALQUEUE-NO-AGE-GATE guard. AC-4: dry-run first, confirm eviction count, rows go to cold archive not deletion. SAFETY: 'triaged' is a PO-terminal disposition per docs/agents/po/flow/main.md, so this evicts dispositioned rows only, never an unread po escalation.",
+        "created_at": "2026-08-08T18:08:16Z",
+        "created_by": "po (SYSREMAKE-8RC-RECHECK triage)",
+        "origin_signal_id": "orc-20260808T175614",
+        "updated_at": "2026-08-08T18:08:20Z",
+        "updated_by": "po"
       }
     ],
     "review": [
@@ -22262,8 +22323,8 @@
     "ssot": true
   },
   "last_tick": "20260622T2215Z",
-  "_updated_at": "2026-08-08T16:28:44Z",
-  "_updated_by": "qa",
+  "_updated_at": "2026-08-08T18:08:16Z",
+  "_updated_by": "po",
   "dev_team_idle_chain": {
     "rotation": {
       "bounded1": {
