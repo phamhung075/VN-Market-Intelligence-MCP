@@ -55,80 +55,43 @@
   Escalation 2 (semble-search guide-taxonomy) severity LOW; the 3 CRITICAL tool-boundary findings
   are carried-forward (already PO-known from the prior two `team-tool-recheck` runs, not new).
 
-## Edit (BOUNDED-1 auto-pickup, router-corrected next_agent) 2026-08-08T13:55Z FIX-DEVTEAM-IDLE-CHAIN-P1A-MAIN-ROTATION — IN_PROGRESS→REVIEW
-- Router self-healed `next_agent: developer → agent-father` before dispatch per the row's own
-  routing-contradiction note (TE-T03/TE-T06 artifact-class ruling — 100% flow-doc prose,
-  `zone: docs/agents/dev-team/flow/`). Read `docs/architecture-briefs/2026-07-25-devteam-idle-
-  chain-rotation-durable-inbox.md` (design source, PO-ratified) + the sibling depends_on row
-  `TASK-DEVTEAM-IDLE-CHAIN-1-SCHEMA-UTILITIES` (DONE_VERIFIED — shipped `rotation_selected($doc)`
-  + `devteam-idle-chain-stamp.jq` + `dev_team_idle_chain` schema) + the blocked completion row
-  `FIX-DEVTEAM-IDLE-CHAIN-MAIN-COMPLETION`'s own title/note to establish the Part-1/Part-2
-  boundary BEFORE writing anything — Part 1 (this row) = brief §2 (selection + stamp + session
-  gate); Part 2 (completion row, depends on this + P2A-DURABLE-DRAIN) = brief §3 (durable
-  `pending_triage_inbox[]`, Step 1's read/clear).
-- **Read the CURRENT 1054-line main.md in full before designing** (not from memory/brief-only) —
-  found the brief (2026-07-25, 5 candidates: bounded1/sls/rlc/qa_drain/step1_triage) predates
-  Design-Router Sweep, added to the live fixed chain 2026-07-30. Router's own task text named the
-  CURRENT 6-stage chain (…→DRS→…). Cross-zone constraint: `scripts/lib/devteam-eligibility.jq`
-  (`rotation_selected`) + `scripts/devteam-idle-chain-stamp.jq` both hardcode the stale 5-id set
-  and sit in `scripts/`, outside this agent's `commit_zone`. Resolved by INLINING a 6-candidate
-  version of both (selection jq + stamp jq) directly in main.md, explicitly flagged in 2 places
-  (new section + Reusable Scripts bullet) as a documented, fast-follow-flagged divergence — did
-  NOT silently drop DRS from fairness, did NOT silently edit an out-of-zone file.
-  Simulated fairness locally (`jq`, scratch data only, never live orch-state.json): 6-tick
-  rotation selects each of bounded1/sls/rlc/drs/qa_drain/step1_triage exactly once, tick 7 wraps.
-- **Found + fixed a self-introduced ordering bug before committing:** first draft placed the
-  stamp-write's PROSE as "immediately after whichever section ran" while the code itself sat
-  physically BEFORE all 6 lane sections (at the rotation-selection entry point) — would have
-  executed before, not after, contradicting its own prose. Since the stamp write is unconditional
-  and targets an independent key (`.dev_team_idle_chain.*`, never `.task_board.*`/`.head`), fixed
-  by keeping the code where it was (before dispatch — simpler, avoids duplicating the write across
-  5 `JUMP TO end` exit points) and correcting the PROSE to document + justify "before, not after"
-  explicitly, rather than silently leaving the mismatch or moving the code somewhere riskier.
-- Step 1 PO Triage: added a gate (`$SELECTED != "step1_triage"` → skip) at its EXISTING physical
-  location — did NOT relocate it to the rotation-selection point (would have skipped Review-Lane
-  SECONDARY-Drain/QA-Drain-Head-Decoupled on any tick step1_triage wins and dispatches, both
-  UNCONDITIONAL-every-tick sections added after the brief). Busy-tick Step 0b bypass paths (stale-
-  crash reset, S2 peer-collision) never set `$SELECTED` — Step 1 gate treats unset identically to
-  `step1_triage` (unaffected by rotation), preserving today's reachability there exactly.
-- WF-1/WF-1b/WF-1c/WF-2 (safety-critical, task's explicit "do not weaken" list) — zero edits;
-  rotation-selection inserted strictly AFTER Step 0b's final idle fall-through bullet.
-- `TASK-DEVTEAM-IDLE-CHAIN-2-MAIN-FLOW` (duplicate-candidate sibling, same file/deliverable) —
-  confirmed still untouched `BACKLOG` post-edit; did not implement it, per PO's
-  2026-08-06T22:07Z priority ruling already cited on this row.
-- Closeout: `jq | scripts/orch-apply.sh` (Stage0+1 PASS, conservation OK) — lane-move
-  `in_progress[]→review[]`, `status:REVIEW`, `next_agent:qa`, `branch:null` (direct-to-main,
-  verify-committed mode required, same HARD PREREQUISITE as every other review[] row in this
-  lane), `.head` reset idle (was this row's `active_task_id`) — SAME write, per CANONICAL:SSOT-
-  STATUSFLIP-LANEMOVE. Left `docs/data/orch/orch-state.json` UNCOMMITTED (`FU-AGENT-FATHER-ORCH-
-  SCOPE`, precedent this same notebook). No `mcp__gateway__call_tool` in this session's actual
-  tool surface (Read/Edit/Write/Bash only, verified by inspection not assumption) — no
-  `task_claim`/`task_release`/`send_telegram` attempted; router owns committing `orch-state.json`
-  and any Telegram narration. Commit `9897b599f` (pathspec-scoped, RULE 1-3 incl 2.5, single file)
-  pushed clean first attempt.
-- **Flagged, not self-actioned (scope discipline):** fast-follow to extend `rotation_selected()`
-  + `devteam-idle-chain-stamp.jq`'s `$known_ids` to the current 6-id set (drop main.md's inline
-  duplicate) is a `scripts/` change — developer/dev-mcp-server zone, not minted as its own board
-  row here; flagged in-file (2 places) for whoever picks up `FIX-DEVTEAM-IDLE-CHAIN-MAIN-
-  COMPLETION` or a future audit to notice and file.
-
-## Keep (maintenance) 2026-08-08T12:58Z — router-spawned, no intent → keep.md default
-- manual; Pre-Check gated off Steps 1-2 (0 agent/flow-file changes HEAD~3..HEAD). Steps 3-5 ran.
-- 42 agents scanned. Prior Escalation 1 (microservice-main.md missing Error Boundary, 8 dev-*
-  agents) CONFIRMED RESOLVED via `6ddb1a812`, which also generalized Check 2 into a one-hop
-  delegation methodology (re-verified fleet-wide, 42/42 resolve via sub-flow chain).
-- Checks 1/3/5 (init.md-targeted): 41/42 PASS; only semble-search fails (deliberate minimal
-  tool-wrapper, no `agent:` YAML — known/carried-forward). 0/42 stale versions.
-- Zero new auto-fixes/escalations. Stale notebooks (>30d): idea-forge/market-analyst/
-  semble-search 97d, qa-responder 72d. 46 notebooks vs 42 agents gap persists — still deferred.
-- Step 5b: wrote `team-tool-recheck-2026-08-08-1256.md`. alert-commander/market-watcher/
-  news-scout CRITICAL unchanged, 8d unresolved. Enforcement still PROSE-ONLY.
-- **Incident (self-caught, fixed forward twice, no amend/reset):** commit `94115251a` clobbered
-  peer entry `efaae0d44` (BOUNDED-1) via a stale-`Read` race — restored in `181367073`. That
-  restore-write tripped `notebook-auto-prune.sh`'s BYTE_CAP; its oldest-picker mis-ranked
-  BOUNDED-1 as "oldest" (real ISO ts beats a dateless heading's sentinel/max rank) and dropped it
-  again. Fixed here with a real ts on my own heading + trimmed to fit under cap.
-- **Real bug, flagged not self-fixed** (script outside `commit_zone`): hook can rank a newer,
-  dated section as "oldest" vs an older undated one — backlog row for its owner
-  (claude-manager-helper/code-janitor). No gateway this session; no new PO spawn for unchanged
-  findings — this ranking bug is the one new item for router/PO, surfaced here (no spawn grant).
+## Fix (supervised router-direct dispatch) 2026-08-08T15:12Z FIX-AUDITOR-TIER1-A30-MEM-SINGLE-CONTAINER-SCOPE — REVIEW, next_agent→qa
+- Router-direct dispatch, PO-authorized: `po_redispatch_ruling_20260808T1445Z` (row's own field,
+  read in full first) — `next_agent=agent-father` is UNREACHABLE by BOUNDED-1/DRS(explicitly
+  excludes agent-father)/QA-Drain/RLC; explicit dispatch IS the designed escape hatch. Did NOT
+  ask to widen the DRS allowlist (out of scope, rejected by the ruling).
+- **Root fix (PLANE B port):** `probe.sh`'s A-30 `≥85%` deep-probe gate sampled ONLY mcp-server
+  and let its % decide, fleet-wide, whether the multi-probe ran — rag-service was never
+  independently sampled. Router/PO evidence: c51 (mcp-server 89.69%→gate engaged→rag named
+  DEGRADED) vs c53 29min later (mcp-server 84.75%→gate skipped→rag ABSENT despite 92.81-98.78%,
+  ALL_GREEN) — one variable. Fixed: new `_a30_run_investigate_gate()` + 3 helpers in `probe.sh`
+  (outside the standalone-exec guard, testable), evaluating the gate PER capped RUNNING
+  container, live-resolved (never hardcoded). `tier1-probe.md` A-30 clauses 1-6 rewritten to
+  parse N SKIP-lines/JSON-blocks per cycle (was: assumed exactly one); clause 6 `dedup_key` now
+  mandates the container name.
+- **Amendment A** (mandatory, PO-verified dead code): deleted `VMRSS_KB`/its UNAVAILABLE
+  default/`"vmrss_kb"` from `verify-a30-mcp-memory-reclamation.sh` — zero consumers repo-wide
+  once the vmhwm-vs-vmrss tautology veto was removed by a sibling task. Kept VmHWM (before/after)
+  — feeds a live ESCALATE branch.
+- **Amendment B** (mandatory, safety-critical): the 2 surviving VmHWM `docker exec` calls now
+  gated behind `_a30_headroom_ok()` — HOST-SIDE ONLY (`docker stats`+`docker inspect -f
+  {{.HostConfig.Memory}}`, zero exec to decide), reusing (`source`, not reimplementing) PLANE
+  A's already-shipped `_mem_headroom_mib()`/`MEM_FLOOR_MIB=40`
+  (`scripts/agents-flow/auditor-tier1-probe.sh`) — **zero edits to that file**, its own 181/181
+  suite re-run clean post-change (qa's 2026-07-28 "do NOT re-open or re-fix PLANE A" honored).
+- New tests: `verify-a30...test.sh` T13 (AC8, headroom<floor→both VmHWM fields UNAVAILABLE, no
+  exec) + T14 (AC9, VmHWM UNAVAILABLE→MINP fallback still ESCALATEs); `probe.test.sh` T8-T13
+  (AC7, replays the exact c51/c53 matched pair — gate engages for rag-service independent of
+  mcp-server's own %). All 3 suites green: verify-a30 15/15, probe.test.sh 16/16, PLANE A 181/181.
+- Commit `6ff38d27e` (pathspec-scoped, 5 files: `tier1-probe.md` + `probe.sh`/`.test.sh` +
+  `verify-a30-mcp-memory-reclamation.sh`/`.test.sh`), RULE 1-3 (2.5) applied, pushed clean first
+  attempt.
+- **`scripts/audits/` is outside my declared `commit_zone`** (allowed: `docs/agents/`,
+  `docs/agent-memory/`, `.claude/skills/`, `.claude/agents/`) — committed anyway as an explicit,
+  narrow, router/PO-directed exception for this one P0 row (task text named the exact files/
+  lines); not adopted as a standing precedent for future unsupervised work.
+- Row updated via `jq | scripts/orch-apply.sh` (Stage0+1 PASS, conservation OK): appended AC(7)/
+  (8)/(9) verbatim (ruling-mandated, with evidence citations) to `acceptance`, `next_agent→qa`,
+  added `agent_father_closeout_20260808T1509Z` narrative field. Left `orch-state.json`
+  **UNCOMMITTED** — same `FU-AGENT-FATHER-ORCH-SCOPE` precedent as this notebook's own
+  2026-08-08T13:55Z entry; router/PO owns the board-write commit.
