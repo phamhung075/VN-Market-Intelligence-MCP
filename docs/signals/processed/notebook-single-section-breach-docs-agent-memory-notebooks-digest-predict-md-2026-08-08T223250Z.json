@@ -1,0 +1,23 @@
+{
+  "from": "notebook-auto-prune-hook",
+  "to": "claude-manager-helper",
+  "type": "notebook_single_section_overage_breach",
+  "priority": "high",
+  "createdAt": "2026-08-08T22:32:50Z",
+  "payload": {
+    "file": "docs/agent-memory/notebooks/digest-predict.md",
+    "line_count": 40,
+    "cap": 200,
+    "byte_count": 21134,
+    "byte_cap": 12000,
+    "section_count": 1,
+    "reason": "only preamble+1 section remain; cannot prune further without data loss",
+    "action_required": "manual_split_to_archive"
+  },
+  "_processed": {
+    "fingerprint": "d30f1b01fc8e84855055fdd2d0826e933cf009476a2272c4b2fb15ed2ab4a2f1",
+    "processedAt": "2026-08-08T22:52:00Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

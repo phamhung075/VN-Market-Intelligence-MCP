@@ -5,8 +5,8 @@
     "last_linecount": 246,
     "po": {
       "section_name": "po",
-      "last_mtime": 1786220525,
-      "last_linecount": 34
+      "last_mtime": 1786231342,
+      "last_linecount": 41
     }
   },
   "decision_journal": [
@@ -133,8 +133,8 @@
     "does_not_consume_wip": true
   },
   "signal_queue": {
-    "_updated_at": "2026-08-08T23:06:19Z",
-    "_updated_by": "cowork-team",
+    "_updated_at": "2026-08-08T23:22:07Z",
+    "_updated_by": "dev-team",
     "archive": [],
     "rows": [
       {
@@ -755,7 +755,7 @@
         "type": "db_integrity_breach",
         "summary": "deep_fetch_stats: 0 rows. Schema exists (domain, date, fetch_count). Writer-provenance class=a (production writer: deepF",
         "severity": "WARN",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": "docs/data/db-integrity-history.json",
         "provenance": "detector",
         "audit_cycle_tag": null,
@@ -19462,7 +19462,7 @@
         "last_served_tick": "2026-08-08T22:26:10Z"
       }
     },
-    "_updated_at": "2026-08-08T22:53:26Z",
+    "_updated_at": "2026-08-08T23:22:07Z",
     "_updated_by": "dev-team",
     "pending_triage_inbox": [
       {
@@ -21761,6 +21761,42 @@
         },
         "createdAt": "2026-08-08T22:32:50Z",
         "drained_at": "2026-08-08T22:52:00Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "51970d0b2e6753a1cd98697793dc2f184f1a1546f94747ea5df9132db0e8c45c",
+        "source": "file",
+        "from": "commit-sweep-guard",
+        "to": "po",
+        "type": "bug-escalation",
+        "priority": "high",
+        "payload": "[notebook-uuid-provenance-guard] WARN: docs/agent-memory/notebooks/developer.md — added heading line embeds a full session/coordination UUID: '## Session 2026-08-08T23:01:55Z — FIX-DEVTEAM-IDLE-CHAIN-MAIN-COMPLETION (docs/agents/dev-team/flow/, router-dispatched, session 165f4245-6173-4054-87fd-c55bb626265f)'. Per .claude/skills/notebook-write/SKILL.md AC-1 and feedback_agent_commits_session_uuid_into_notebook, a session id is a per-invocation coordination PARAMETER ONLY, never authored into a committed file — use a c<NNN> counter or a fixed source label instead. mode=warn (default warn; set GIT_NOTEBOOK_UUID_PROVENANCE_MODE=reject to hard-enforce once re-validated via scripts/audits/verify-notebook-uuid-provenance-gate.sh). Escape hatch: add 'notebook-uuid-lint-allow: <reason>' on this line if intentional.\n",
+        "createdAt": "2026-08-08T23:04:04Z",
+        "drained_at": "2026-08-08T23:21:07Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "79733f524cdeb8c2da31c7173dca91ae8f9a6064da523d17951279d4e11c34da",
+        "source": "file",
+        "from": "commit-sweep-guard",
+        "to": "po",
+        "type": "bug-escalation",
+        "priority": "high",
+        "payload": "[heartbeat-guard] REJECT: docs/data/auditor-tier1-last-healthy.json staged content does not match the sole-writer shape (last_healthy_at + checks{6 keys, all PASS}). Only scripts/agents-flow/auditor-tier1-probe.sh's _write_heartbeat() on its ALL_GREEN branch is authorized to write this file — see docs/policies/dev-standards.md CANONICAL:SSOT-AUDITOR-HEARTBEAT-SOLE-WRITER. Commit BLOCKED — re-run the probe script for a genuine heartbeat instead of hand-writing this file.",
+        "createdAt": "2026-08-08T23:09:16Z",
+        "drained_at": "2026-08-08T23:21:07Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "c3lzLTIwMjYwODA4VDIyMzQzNC0yYzFl",
+        "source": "dashboard",
+        "from": "system-auditor",
+        "to": "dev-team",
+        "type": "db_integrity_breach",
+        "priority": "WARN",
+        "payload": "deep_fetch_stats: 0 rows. Schema exists (domain, date, fetch_count). Writer-provenance class=a (production writer: deepF [truncated; full history at docs/data/db-integrity-history.json, 160 entries, 740KB — not inlined, stable non-pruned file]",
+        "createdAt": "2026-08-08T22:34:34Z",
+        "drained_at": "2026-08-08T23:22:07Z",
         "routed_to": "PO Step 0-SIG"
       }
     ]

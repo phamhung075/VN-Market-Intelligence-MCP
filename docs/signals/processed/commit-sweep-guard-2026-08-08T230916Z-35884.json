@@ -1,0 +1,14 @@
+{
+  "from": "commit-sweep-guard",
+  "to": "po",
+  "type": "bug-escalation",
+  "priority": "high",
+  "createdAt": "2026-08-08T23:09:16Z",
+  "payload": "[heartbeat-guard] REJECT: docs/data/auditor-tier1-last-healthy.json staged content does not match the sole-writer shape (last_healthy_at + checks{6 keys, all PASS}). Only scripts/agents-flow/auditor-tier1-probe.sh's _write_heartbeat() on its ALL_GREEN branch is authorized to write this file — see docs/policies/dev-standards.md CANONICAL:SSOT-AUDITOR-HEARTBEAT-SOLE-WRITER. Commit BLOCKED — re-run the probe script for a genuine heartbeat instead of hand-writing this file.",
+  "_processed": {
+    "fingerprint": "79733f524cdeb8c2da31c7173dca91ae8f9a6064da523d17951279d4e11c34da",
+    "processedAt": "2026-08-08T23:21:07Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
