@@ -1,0 +1,20 @@
+{
+  "from": "notebook-auto-prune-hook",
+  "to": "claude-manager-helper",
+  "type": "notebook_tiebreak_direction_defaulted",
+  "priority": "normal",
+  "createdAt": "2026-08-08T10:31:16Z",
+  "payload": {
+    "file": "docs/agent-memory/notebooks/code-janitor.md",
+    "tied_sections": "7:99999999999999999:## 2026-08 Sessions\n113:99999999999999999:## 2026-07 Sessions",
+    "direction_applied": "newest_first",
+    "reason": "every retained ## section in this file lacks a parseable timestamp (non-chronological/rolling sections, e.g. 'Known patterns / preferences') so neither this file's own headings nor docs/data/notebook-section-order.json can ever give a direction signal — the documented default (newest_first: drop the physically-LAST tied section) was applied and the prune proceeded. Informational only, not a blocking breach (FIX-NOTEBOOK-AUTOPRUNE-DIRECTION-UNRESOLVABLE-ZERO-TS-NOTEBOOKS).",
+    "action_required": "informational_no_action_needed"
+  },
+  "_processed": {
+    "fingerprint": "cd0941afb2bb2d7e6d34d8111821758ed5dfd679854678c6731f58db91c64f96",
+    "processedAt": "2026-08-08T10:51:22Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
