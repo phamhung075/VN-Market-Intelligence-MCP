@@ -98,3 +98,47 @@
 - AC5 explicitly deferred by dev (scope-limited to [chef.md, baseline.json]); accepted — mirrors sibling row's standing ruling (gate-widening needs actuator dry-run, out of scope here).
 **why-decision:** APPROVED, DONE_VERIFIED. AC1/AC2/AC3/AC4 independently reproduced from source + live CI job-level check, not trusted from row prose; AC5 deferral matches documented precedent.
 **why-change:** none from plan.
+
+### STEP qa-S19 · qa · 2026-08-08T10:32:41Z
+**task-id:** FIX-DEVTEAM-QADRAIN-INVOCATION-HEAD-DECOUPLED
+**what-done:** Direct-commit verify of `92ff5fb43`(+memory `f1fddde0d`), both on main ancestry; `git show --stat` matches claimed file (`main.md`). Head-decoupled section live at `main.md:803-866` — this very dispatch is live proof of reachability.
+**what-considered:**
+- Ran `scripts/audits/devteam-dispatch-gate-satisfiability.sh` live: `AC-QADRAIN-HEAD-GUARD` negative+positive + `AC-QADRAIN-PRIORITY-ORDER`/`TAKE-BUDGET` all PASS. 6 unrelated Zod-schema-valid FAILs traced to the harness's own `in_progress[0:1]` truncation racing the LIVE `.head` pointer — pre-existing/unrelated (`92ff5fb43` touched only `main.md`, not the harness).
+- Part 1 (`FIX-DEVTEAM-QADRAIN-HEAD-WRITE-CONDITIONAL`) code-verified: `$head_free` conditional guard live in `devteam-review-claim-qa-drain.jq:179-203` (commit `9fe706fa2`, on main ancestry). Its own board row is unresolvable in hot board or cold archive (`orch-validate.mjs` Stage1g flags this exact dep MISSING, non-fatal) — DONE_VERIFIED corroborated via code+passing regression, not a recoverable board artifact.
+- AC-1 (byte overlap) vacuously satisfied: dependent P1A-MAIN-ROTATION row still BACKLOG, never touched `main.md`. AC-2 (idle-tick ordering) confirmed structurally: new section sits strictly after BOUNDED-1/SLS/RLC/DRS/idle-QA-Drain (428-747), before Step1 (867).
+**why-decision:** APPROVED, DONE_VERIFIED.
+**why-change:** none from plan.
+
+### STEP qa-S19 · qa · 2026-08-08T10:32:47Z
+**task-id:** FIX-AUDITOR-A30-DISCRIMINATOR-CRASH-CLIFF-SCORED-AS-RECLAMATION-DIP
+**what-done:** Direct-commit verify (Review-Lane QA-Drain, `qa[]` row) of `a69a79b3d`+`ad719252a`+`7d2ad1ebb`, all real and on main ancestry.
+**what-considered:**
+- `git show --stat` a69a79b3d matches row's files[] + 3 claimed doc-sync files (tier1-probe.md/pressure-read.md/probe.sh); no apps/ TS/Go, bun/tsc N/A confirmed, mock-guard N/A.
+- Read the actual diff (not review_note prose): all 5 fixes independently confirmed present — (a) state re-read AFTER loop, STATE_CHANGED highest-priority elif; (b) dips==0 gate removed from min>93, raw max>97 replaced with awk MEDIANP>97; (c) discthresh(40)/dipthresh(0.5) split, discontinuities never added to reclamation_dips; (d) DEATH_SIGNATURE requires ExitCode==0 AND actual FinishedAt delta; (e) VMHWM_ADVANCING+VMHWM_PINNED_AT_CAP vs cgroup limit, old VmHWM-vs-VmRSS tautology text gone.
+- Ran regression suite myself: 13/13 PASS (PATH bash == /bin/bash on this machine, same GNU bash 3.2.57 binary, no separate Homebrew bash). T1 replays exact board verification_gate series + RestartCount 0->1 -> ESCALATE, confirmed.
+- Did not trust T1's self-consistency: independently hand-replayed the OLD dips==0-gated verdict logic against the identical series outside the script — DIPS=5 (not 0) on this series, so old logic verdict=FOLD, matching the live incident. Confirms T1 genuinely discriminates pre/post fix.
+- Doc-consumer sync spot-checked against the script's actual new REASON string literals (not prose) — tier1-probe.md's reason->severity table matches exactly.
+**why-decision:** APPROVED, DONE_VERIFIED. Every claim independently reproduced from source/live test run, not trusted from prose. Moved `task_board.qa[]`->`task_board.done_verified[]` via `jq`+`orch-apply.sh` (conservation OK, task_total 775->775).
+**why-change:** none from plan.
+
+### STEP qa-S20 · qa · 2026-08-08T10:32:47Z
+**task-id:** FIX-DEVTEAM-RESUME-GATES-OMIT-READY-LANE
+**what-done:** Direct-commit verify (Review-Lane QA-Drain, `qa[]` row) of `6a697974f`, confirmed real + ancestor of live HEAD. Cross-referenced against a live observation this same session had already made independently (WF-1c READY-LANE check present in `docs/agents/dev-team/flow/main.md` lines ~338-353) — re-read the live file myself and confirmed it matches the commit diff exactly, no later revert/drift.
+**what-considered:**
+- Independently replayed the WF-1/WF-1c `task_status` jq lookup against 2 synthetic fixtures (own scratch files, zero live-file I/O): head-pinned `ready[]`-resident row resolves `task_status=READY` (would fire the WF-1c short-circuit before S2); negative control (row genuinely in `in_progress[]`) resolves `task_status=IN_PROGRESS` (normal resume unaffected). Proves the mechanism actually works, not just that the prose exists.
+- Byte-compared the WF-2 `should_hold` jq filter text in `main.md:375-383` against `supervised-goahead.md:19-27` — literally identical (only the per-file `--arg tid` bash variable name differs, as the doc itself discloses) — AC-3 re-sync claim confirmed true. `po/flow/main.md:72` pointer confirmed de-hardcoded to a named-section pointer.
+- Re-ran both PRE-EXISTING regression verifiers live: `devteam-pipeline-resume-terminal-lane-verify.sh` PASS (4/4), `po-goahead-producer-verify.sh` PASS (4/4) — no regression.
+- GAP FOUND in the self-report: completion_note claims AC-4/AC-5 were both "flagged via signal_queue + main.md Reusable Scripts PENDING bullet, not minted". Checked at source — AC-5 (WF-2 predicate drift guard) DOES have a real, already-minted companion row (`FIX-WF2-PREDICATE-MIRROR-NO-DRIFT-VERIFIER`, `backlog[]`, `next_agent=developer`, `origin_signal_id=age-20260806T101656`) — legitimate TE-T02/TE-T02c-precedent split, verified present on the live board. AC-4 (the row's OWN `verification_gate` literal text — positive control proving S2 dispatch is never reached) had NO board row anywhere, only an in-file prose "PENDING" bullet (`main.md:1022`) with no id/owner/next_agent, invisible to every dispatch mechanism — same class as `feedback_po_notebook_mint_never_reaches_orchstate_board`.
+**why-decision:** APPROVED, DONE_VERIFIED-as-scoped (TE-T02 precedent: a legitimately out-of-zone companion is deferred via a real minted follow-up row, not a silent drop). Moved `task_board.qa[]`->`task_board.done_verified[]`. Minted the missing AC-4 companion in the same write: `FIX-DEVTEAM-READYLANE-DISPATCH-GUARD-NO-REGRESSION-TEST` (`backlog[]`, P2, `next_agent=developer`, `zone=scripts/`) — closes the "flagged in prose, never reached the board" gap that AC-5's own companion did NOT have. `jq`+`orch-apply.sh` (conservation OK, task_total 775->776).
+**why-change:** did not hold the real, working, independently-reproduced doc-fix hostage to a companion-script gap that mirrors an already-accepted split pattern (AC-5) — instead closed the one half of that split (AC-4) that had silently fallen through to prose-only, per standing "mint≠board≠dispatchable" lesson.
+
+### STEP qa-S21 · qa · 2026-08-08T10:34:17Z
+**task-id:** FIX-AGENTBOOTSTRAP-EAGER-EXECSYNC-COLDSTART
+**what-done:** Direct-commit verify (Review-Lane QA-Drain) of `7a3db0616`, real + main ancestry; `git show --stat` matches both claimed files.
+**what-considered:**
+- Diff: eager top-level `const toolNameMap = buildToolNameMap()` replaced with module-scope `let _toolNameMap` + memoized `getToolNameMap()`, called only inside `resolveToolNames()` — import no longer runs the probe. Zero execSync/spawnSync in agentBootstrap.ts code (grep, doc-comments only); projectRoot.ts independently confirmed already execSync-free (fs walk-up, predates this row per 2026-07-13 fix).
+- New guard test re-run myself: 5/5 pass — AC-4 measures cold-start import <500ms, AC-2/AC-3 structurally block reintroducing eager top-level call. 1299b re-run: 9/9 pass.
+- Independently derived (not trusted from prose) the row's blast-radius importer set — identical 39 files; ran it myself: 329 pass/0 fail, exact match to implementer's claim.
+- tsc clean, DDD-clean (no domain/infra imports), mock-guard PASS, no process.env/secrets in touched files, `gen-project-stats.ts --dry-run` re-run: tools=183/cron=88 unchanged.
+**why-decision:** APPROVED, DONE_VERIFIED. AC text (structural eager-probe fix + cold-start non-regression guard) fully met by evidence reproduced myself. Row's own status_note already flags the causal CI-red-transient hypothesis unconfirmed — evaluated against AC text per that note's own instruction.
+**why-change:** none from plan.
