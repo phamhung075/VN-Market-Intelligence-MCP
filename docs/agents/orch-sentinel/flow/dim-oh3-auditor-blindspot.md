@@ -21,14 +21,32 @@ grep -n "^| [A-C]-[0-9]" docs/agents/system-auditor/flow/main.md docs/agents/sys
 Diff the system-map.json entity set against the grep-parsed probe/check-table references.
 **Flag:** `HIGH` per structural entity present in system-map.json with ZERO matching probe reference.
 
-## OH-3.2 — VPS Route Count Drift (3-way compare)
+## OH-3.2 — VPS Route Count Drift (SSOT-internal hardcode regression guard)
 
 ```bash
-grep -c "geo.block\|route" docs/references/vps-setup*.md
-jq '[.project.data_sources[] | select(.geo_blocked == true)] | length' docs/data/system-map.json
-call_tool(server="vn-market", tool="get_vps_proxy_health", arguments={})
+# Leg 1 — SSOT authoritative count (never hardcode elsewhere; this line IS the source of truth):
+ROUTE_COUNT=$(jq '.project.infrastructure.vps.routes | length' docs/data/system-map.json)
+
+# Leg 2 — sweep system-auditor's OWN docs for a literal hardcoded route-count phrase that could
+# silently drift from Leg 1 (the exact defect class of FIX-AUDITOR-VPS-ROUTE-COUNT-HARDCODE-
+# UNSATISFIABLE — main.md previously hardcoded a stale count against an 8-entry SSOT array):
+grep -noE '[Aa]ll [0-9]+ routes|[0-9]+ (geo-blocked )?routes' \
+  docs/agents/system-auditor/flow/main.md docs/agents/system-auditor/audit-dimensions.md docs/agents/system-auditor/init.md
 ```
-**Flag:** `MED` on any mismatch across the 3 counts (doc-declared vs system-map vs live).
+**Flag:** `MED` if any Leg-2 hit's captured integer != `$ROUTE_COUNT`.
+
+**Retired, do not reintroduce:**
+- `data_sources[] | select(.geo_blocked==true)` — numerically coincides with `routes[]` length today
+  (both currently the same count) but is a DIFFERENT SSOT set (asks "is this source geo-blocked", not
+  "does this source have a VPS route") with no structural invariant tying the two together; it could
+  silently diverge (a geo-blocked source added with no route, or vice versa) without ever being
+  caught by comparing itself to itself under a different filter. Count `routes[]` directly (Leg 1)
+  instead — this is acceptance criterion (4) of FIX-AUDITOR-VPS-ROUTE-COUNT-HARDCODE-UNSATISFIABLE.
+- a `get_vps_proxy_health` live-tool leg — that tool returns push-service aggregates, not routes, and
+  is structurally incapable of ever equaling `routes[]` length (would either permanently false-flag
+  or duplicate main.md's own B-06/B-07 per-route coverage table here; that table is the correct owner
+  of live per-route health — this check stays a cheap doc/SSOT hardcode sweep, not a coverage
+  re-implementation). Full 3-plane analysis: `docs/handoffs/FIX-AUDITOR-VPS-ROUTE-COUNT-HARDCODE-UNSATISFIABLE-spec.md` §1.
 
 ## OH-3.3 — Tier-4/D-FLEET Self-Promotion Guard
 
