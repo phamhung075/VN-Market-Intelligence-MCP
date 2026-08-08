@@ -826,3 +826,15 @@
 **Mitigation:** No immediate action beyond signal routing.
 
 ---
+
+## Anomaly: A-30 · rag-service memory not reclaimed (96.24%, no GC dip)
+**Severity:** WARN | **Date:** 2026-08-08 | **Status:** OPEN
+**Location:** rag-service
+**Details:** Multi-probe discriminator over 65s window: all 6 samples at 96.24% with zero reclamation dips. Memory pressure sustained, not released.
+**Impact:** rag-service cannot reclaim memory under load. Risk of OOMKilled if trend continues.
+**Root cause:** Possible application memory leak or inefficient GC tuning for rag-service container.
+**Zone owner:** developer
+**Last reported:** 2026-08-08T06:06:01Z (signal sys-20260808T060541-213e, system-auditor -> po, dedup_key=microservice_memory_degraded:rag-service:A-30, WARN Telegram sent)
+**Mitigation:** No immediate action beyond signal routing.
+
+---
