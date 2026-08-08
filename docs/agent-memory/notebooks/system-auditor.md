@@ -3,6 +3,21 @@
 Tier-1/2/3 audit runs; newest-first; max 200L total, max 60L per section.
 
 
+## c377 · 2026-08-08T17:35:39Z
+
+### Audit Run Tier-1 (17:35–17:38 UTC 2026-08-08)
+- Tier: 1 | Services: 13 host_runtime_set checked | Health: 5 probed
+- Anomalies: 1 WARN (A-30 rag-service-1 chronic pattern) | Status: DEGRADED
+- **rag-service-1 A-30 Memory Escalation (CHRONIC RECURRING 11 signals over 4d):**
+  - Baseline: 99.66% ≥ 85% investigate-gate → ENGAGE
+  - Deep-probe 6 samples over 65s: min 99.49%, median 99.49%, max 99.69%
+  - Verdict: ESCALATE "loss of reclamation" (0 dips, 0 discontinuities, all >93% sustained)
+  - State: OOMKilled=false, restarts=0, state_changed=false, VmHWM=UNAVAILABLE (host-floor-check skip)
+  - Emission: [emit-signal] OK sys-20260808T173849-2d4b (WARN) — dedup_key microservice_degraded:vn-market-intelligence-mcp-rag-service-1:A-30
+  - ESCALATION NOTE: Chronic pattern 11+ dedup signals since 2026-08-05, no durable fix in flight (task_board empty for FIX-RAG-*), recurring threshold MET — recommend PO/ops investigation
+- **mcp-server-1 A-30:** Baseline 9.16% < 85% gate → SKIP
+- A-20 pdf-extractor: 3/3 PASS | A-21 crashes: 0 PASS | Disk: 43% PASS
+
 ## c376 · 2026-08-08T17:15:58Z
 
 ### Audit Run Tier-1 (17:10–17:13 UTC 2026-08-08)
