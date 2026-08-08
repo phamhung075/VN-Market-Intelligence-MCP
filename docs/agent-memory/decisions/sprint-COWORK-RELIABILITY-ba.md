@@ -36,3 +36,13 @@
 - Gate placement: JSON-only post-generation lint vs pre-publish — CHOSE pre-publish (chef-dish.md Step 6.7, new Rule AF-4) as primary: Step 7's `send_telegram` fires BEFORE Step 7.5/7.6, so a JSON-only check runs structurally too late to block the stated harm; kept JSON validation as secondary/defense-in-depth.
 **why-decision:** All 3 rows of the live `unified-agent-synthesis-2026-07-24-eod.json` (26,130-exceeds-26,500 false claim; gold $2,200-vs-canonical-$4,300 drift; gold $4,300 correct citation as negative control) were used to validate both sub-checks are independently necessary before finalizing the design.
 **why-change:** No change from the dispatch instruction's own framing — confirms and operationalizes it with source-level evidence.
+
+### STEP ba-S4 · ba · 2026-08-08T11:01:58Z
+**task-id:** IVC-ARCH-BLUEPRINT
+**what-done:** Signed off architect's blueprint DONE_VERIFIED (review[]→done_verified[]); wrote `docs/handoffs/IVC-ARCH-BLUEPRINT-BA-spec.md` (10 atomic FR/AC task specs, reusing brief's own IDs); minted `IVC-PM-DECOMPOSE` (ready[], owner=pm) as the live handoff artifact.
+**what-considered:**
+- Trust the brief's §5 decomposition table verbatim vs re-verify its 4 folded rows' live board state first.
+- Mint all 8 IVC-C/A rows myself vs write the FR/AC spec + one PM-facing decompose row (task breakdown is PM's job per `not_my_job`).
+**why-decision:** Live recheck found `UC-CRITIC-HOOKS-ENFORCEMENT` already `DONE_VERIFIED` via a narrower `hook-guard.sh` fix, NOT gated behind IVC-C1 as the brief assumed — corrected in the handoff so PM doesn't inherit a stale dependency claim. `FIX-PREDCLAIM-CREATIONPRICE-UNGATE-ZOD-CONTRACT` also closed, giving §2's contract a 2nd live precedent. Live tool-file recount (167 vs brief's 162) further evidenced why `IVC-A1` must be scripted, not hand-counted.
+**why-change:** None from the brief's own mechanism decision (fail-closed registry hook, §1) — only its 07-25-era row-status assumptions needed updating. `IVC-A3+` deliberately NOT minted (count is `IVC-A1`-scan-dependent, brief's own caution).
+---
