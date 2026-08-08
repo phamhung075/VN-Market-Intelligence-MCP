@@ -72,3 +72,35 @@
 - AC-5 "moot": legitimate closure, not a dodge — the original AC-5 presupposed destruction; independent re-verification confirms the rows are live in archive, so no reconstruction is owed. AC-1's mechanism (pre-2026-08-01 no-age-gate immediate eviction) is corroborated by `git log --grep FIX-COLDEVICT-SIGNALQUEUE-NO-AGE-GATE` showing that fix genuinely shipped 2026-08-01/06.
 **why-decision:** APPROVED, DONE_VERIFIED — the developer's re-investigation is itself independently corroborated (not just trusted), and the new row-identity guard is real, wired, and test-covered.
 **why-change:** populated row's `commit_sha` field (was null) with `941883d76`; no other change from plan.
+
+### STEP qa-S7 · qa · 2026-08-08T17:07:55Z
+**task-id:** FIX-CI-SIZELINT-PUSHBCTCREFINEDUNITTOOL-283L
+**what-done:** Direct-commit verify (`qa[]` row, `branch:null`). Row's own `commit_sha:bb1ac4cd1` FAILED `git merge-base --is-ancestor` (dangling, `git fsck --unreachable` confirmed); dispatcher-flagged real landing commit `61acf40aa` passed ancestor check on both local main and origin/main, identical `git patch-id` to the dangling object (Merge Gate reapply artifact, same class as qa-S1/S3/S4 this sprint). Corrected row's `commit_sha` to `61acf40aa`.
+**what-considered:**
+- Diff at `61acf40aa` is comment-only: +9L header, zero deletions/logic touched; AC1 header `size-justification: 292L` present in first-10-line window, `wc -l`=292 exact match.
+- AC2: baseline.json still carries a stale 227L entry but `is_justified_now()` short-circuits on the header before consulting baseline — inert, no `--update` laundering; scoped check → PASS 0 offenders.
+- AC3/AC4: live CI (`gh run view 31267224323`, headSha=384ce899, ancestor of HEAD) size-lint log shows 1 offender only, `coordinationStore.ts` (separate READY row) — this file absent; local full-tree's 2nd apparent offender `transport.ts` traced to a different in-flight QA-lane row's post-CI change, out of scope.
+- Re-ran RAW, not dev's self-report: `tsc --noEmit` 0 errors; `mock-guard.sh` PASS; targeted 4-file suite 46/46 pass, 159 expect() — exact match to dev claim.
+**why-decision:** APPROVED, DONE_VERIFIED — file genuinely under threshold, live CI ground truth confirms this file is not the size-lint offender, diff is a pure header addition with zero functional regression.
+**why-change:** corrected row's `commit_sha` field from dangling `bb1ac4cd1` to the real landing commit `61acf40aa`; no other change from plan.
+
+### STEP qa-S7 · qa · 2026-08-08T17:07:33Z
+**task-id:** FIX-ANALYSIS-ONLY-EXIT-DETECTOR-OR-VERDICT-BLIND-TO-PARTIAL-WRITE-CYCLE
+**what-done:** Direct-commit verify (`qa[]` row, `branch:null`, owner architect implemented directly). `commit_sha` field was null on the row — row's own `architect_review_note` names `4cb364020` explicitly; RAW-confirmed ancestor of main myself (`merge-base --is-ancestor`, independent of dispatcher's prior check), 6 files touched matching diff --stat exactly.
+**what-considered:**
+- Ran `detect-analysis-only-exit.test.sh` RAW myself: 12/12 pass, matches claim exactly (T1-T7 unchanged, T8-T12 new).
+- Live re-check RAW: `detect-analysis-only-exit.sh --agent-id system-auditor --since-ts 2026-08-08T01:00:00Z` → `DETECTED ... contract=arithmetic-violation`, rc=1 (was PASS/rc=0 pre-fix) — confirmed live, not from prose.
+- Read the actual diff (not just commit message): AC-1/AC-2 wired as an independent `contract_status` check that forces `detected=1` regardless of `all_zero` — genuinely can fire with every plane non-zero (c80's actual shape). Shared lib `output-contract-invariant.sh`'s arithmetic (`signals_posted>=sqr` AND `>=dedup_skipped`) matches the row's own mechanism_proof.
+- AC-4 backstop flagged by architect as untested (no `.test.sh` exists for `auditor-notebook-commit.sh`, confirmed — none in repo). Did NOT take the architect's own manual-smoke claim on faith: built an independent scratch-repo smoke test myself (real script+lib copied verbatim, only `mcp_call` stubbed) — RED (c80-shape line) → ABORT, HEAD unchanged, file unstaged; GREEN (c79-shape line) → commits normally. Both directions confirmed independently.
+- Scope-bleed check: all 3 `do_not_misread` siblings confirmed distinct — sibling1 (E3-RC1) already DONE_VERIFIED at a different commit (`bbf3d907f`, my own qa-S2/cycle-583 verify), siblings 2/3 still REVIEW/next=qa, untouched by this commit's diff (`audit-output-contract.sh`/`emit-audit-signal.sh` absent from `git show --stat`). Row's own `files[]` lists `audit-output-contract.sh` but commit doesn't touch it — architect's note explains why (peer-dirty at commit time, left untouched); matches the established `files[]`=in-scope-if-needed convention (same as qa-S4/cycle-584 precedent), not a real ISSUE.
+**why-decision:** APPROVED, DONE_VERIFIED — AC-1 through AC-5 all independently re-verified against live code/live re-run, not the architect's self-report; AC-4's missing persisted test is a real gap but the mechanism itself is now independently smoke-tested by QA (not just architect), and it is a defense-in-depth backstop, not the primary detection mechanism (which IS fully covered). Judgment: gap noted, non-blocking.
+**why-change:** populated row's `commit_sha` field (was null) with `4cb364020`; no other change from plan.
+
+### STEP qa-S7 · qa · 2026-08-08T19:15:00Z
+**task-id:** FIX-MCP-SSE-SESSION-MANAGER-PERCONN-LEAK-NO-REAPER
+**what-done:** Direct-commit verify (`qa[]` row, `branch:null`, PRIORITY/CRITICAL — primary A-30 mcp-server memory root cause). RAW-read all 4 claimed commits' diffs, not the message: `SessionRecord` map + `evictSession()` confirmed called from all 5 claimed triggers (close/heartbeat-fail/idle-reap/max-age-reap/DELETE); new DELETE route + `stopReaper()` wiring confirmed in server.ts; doc section matches the code.
+**what-considered:**
+- Re-ran tests myself: `1862c-*` 12/12 pass (36 expect, T9 genuine negative control, T10 proves max-age fires independent of a live idle clock, T12 proves idempotent double-eviction); `081-*` 10/10 pass (26 expect, live `client_delete` log observed). tsc 0 errors, mock-guard PASS, DDD/security greps all pre-existing (confirmed via parent-commit diff).
+- Docker Close Gate check: `apps/mcp-server/src/` is baked via `Dockerfile:62 COPY` (not volume-mounted) — rebuild-required gate applies, same as sibling `FIX-SCHEDULER-DOUBLE-REGISTRATION` in the SAME board commit `d24ddf6b6`, which correctly held REVIEW/next_agent=ops but this row did not.
+**why-decision:** Code-correctness APPROVED. Board routing corrected: moved `qa[]`→`review[]`, status REVIEW, next_agent=ops, rebuild_required=true (NOT done_verified) — gate gap closed, matches sibling precedent, `.head` synced.
+**why-change:** row's own dispatch skipped the Docker Close Gate hold its sibling correctly applied in the identical commit; corrected during this verify pass.
