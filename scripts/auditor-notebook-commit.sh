@@ -61,6 +61,7 @@
 #        no staged changes    -> "[auditor-commit] SKIP no-staged-changes paths=<n>"
 #        mutex claim failed   -> "[auditor-commit] SKIP mutex-claim-failed <reason> — retry next tick"
 #        foreign-path abort   -> "[auditor-commit] ABORT foreign-path-after-restore <paths>"
+#        contract violation   -> "[auditor-commit] ABORT contract-arithmetic-violation path=<p> line=\"<line>\"" (AC-4)
 #        git commit failed    -> "[auditor-commit] ABORT git-commit-failed rc=<n>"
 #        bad usage / no paths -> "[auditor-commit] ERROR no paths given — refusing to run"
 #        no session id        -> "[auditor-commit] ERROR CLAUDE_CODE_SESSION_ID not set — refusing to run"
@@ -75,6 +76,22 @@
 # (paths, commit message, session id) is ever interpolated into a shell
 # string or the JSON body as raw text.
 #
+# AC-4 PRE-COMMIT CONTRACT BACKSTOP (FIX-ANALYSIS-ONLY-EXIT-DETECTOR-OR-
+# VERDICT-BLIND-TO-PARTIAL-WRITE-CYCLE): before the "nothing to commit"
+# check, any staged path matching docs/agent-memory/notebooks/*.md is
+# scanned for a newly-ADDED `[OUTPUT-CONTRACT] ...` line (git diff --cached,
+# shared extraction/arithmetic with scripts/audits/detect-analysis-only-
+# exit.sh's own AC-1/AC-2 check — scripts/lib/output-contract-invariant.sh,
+# ONE implementation). If found and it violates the structural invariant
+# (`signals_posted >= signal_queue_rows_written` AND `signals_posted >=
+# dedup_skipped` — provable from scripts/audit-output-contract.sh's own
+# parser, see that lib's header), the ENTIRE staged set for this call is
+# unstaged and the commit refused (exit 1) — a hand-composed/fabricated
+# contract line never reaches git HEAD in the first place, rather than only
+# being caught after the fact by a downstream detector. No-op for every
+# other caller (non-notebook paths, or a notebook path with no
+# `[OUTPUT-CONTRACT]` line at all — e.g. non-auditor notebook commits).
+#
 # Owning flow: docs/agents/system-auditor/flow/main.md (notebook commit step).
 #
 # Shell: bash 3.2+ (macOS system /bin/bash) — NO mapfile, NO associative
@@ -86,6 +103,9 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 # shellcheck source=./agents-flow/mcp-call.sh
 source "$SCRIPT_DIR/agents-flow/mcp-call.sh"
+
+# shellcheck source=./lib/output-contract-invariant.sh
+source "$SCRIPT_DIR/lib/output-contract-invariant.sh"
 
 MUTEX_TASK_ID="commit-mutex:main"
 MUTEX_HELD=false
@@ -191,6 +211,36 @@ if [ ${#foreign[@]} -gt 0 ]; then
     exit 1
   fi
 fi
+
+# ── 2a. AC-4 pre-commit contract backstop — see header comment ──────────────
+# Only evaluates paths that LOOK like a governed agent notebook AND actually
+# carry ≥1 newly-staged [OUTPUT-CONTRACT] line; no-op for every other call
+# site (e.g. orch-sentinel's scorecard commit, DASHBOARD.md-only commits).
+# Checks EVERY added line, not just one — a single staged diff can bundle
+# more than one cycle's own section (e.g. a prior cycle's write that never
+# got its own commit, folded into this one alongside the current cycle's —
+# confirmed live, commit 569f79108) — see scripts/lib/output-contract-
+# invariant.sh header for the full rationale.
+for _p in "${PATHS[@]}"; do
+  case "$_p" in
+    docs/agent-memory/notebooks/*.md)
+      _claim_lines=$(git diff --cached -- "$_p" | oc_extract_all_added_contract_lines_from_text)
+      if [ -n "$_claim_lines" ]; then
+        while IFS= read -r _claim_line; do
+          [ -z "$_claim_line" ] && continue
+          _sp=$(oc_parse_counter "$_claim_line" "signals_posted")
+          _sqr=$(oc_parse_counter "$_claim_line" "signal_queue_rows_written")
+          _ds=$(oc_parse_counter "$_claim_line" "dedup_skipped")
+          if ! oc_check_arithmetic_invariant "$_sp" "$_sqr" "$_ds"; then
+            git restore --staged -- "${PATHS[@]}"
+            echo "[auditor-commit] ABORT contract-arithmetic-violation path=${_p} line=\"${_claim_line}\""
+            exit 1
+          fi
+        done <<< "$_claim_lines"
+      fi
+      ;;
+  esac
+done
 
 # Nothing to commit for the named paths → skip cleanly (not an error).
 if git diff --cached --quiet -- "${PATHS[@]}"; then

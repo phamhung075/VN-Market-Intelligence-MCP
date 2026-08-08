@@ -2,7 +2,9 @@
 # scripts/audits/detect-analysis-only-exit.test.sh
 #
 # Regression fixture for scripts/audits/detect-analysis-only-exit.sh
-# (FIX-LEAF-AGENT-ANALYSIS-ONLY-EXIT-NARRATES-INSTEAD-OF-EXECUTING, AC-5).
+# (FIX-LEAF-AGENT-ANALYSIS-ONLY-EXIT-NARRATES-INSTEAD-OF-EXECUTING, AC-5;
+# widened by FIX-ANALYSIS-ONLY-EXIT-DETECTOR-OR-VERDICT-BLIND-TO-PARTIAL-
+# WRITE-CYCLE, T8-T11, per that row's own baseline_pass requirement).
 #
 # AC-5 requires BOTH:
 #   POSITIVE control — a spawn that genuinely wrote nothing -> detector fires
@@ -14,6 +16,29 @@
 # the per-plane isolation cases (notebook-only write, commit-only write,
 # signal_queue-only write, ledger-only write, extra-artifact-only write)
 # and the --cycle-tag exact-match mode.
+#
+# T8-T11 (PARTIAL-WRITE CONTRACT CHECK, AC-1/AC-2/AC-3 of the widening row):
+#   T8  RED  — system-auditor c80's REAL published [OUTPUT-CONTRACT] line,
+#              verbatim, inside a cycle with notebook+commit planes BOTH
+#              non-zero (the original zero-diff-only OR verdict's blind
+#              spot) -> must still DETECTED (AC-2 arithmetic gate).
+#   T9  GREEN — system-auditor c79's REAL published line (a genuinely quiet
+#              cycle) -> must stay PASS (AC-3, no false-positive regression).
+#   T10 AC-1 isolation — an arithmetically-sound claim line whose
+#              signal_queue_rows_written>0 has zero corroboration on the
+#              real Plane-3 re-read -> DETECTED via claim-vs-plane
+#              reconciliation alone, proving AC-1 is a distinct gate from
+#              AC-2, not redundant with it.
+#   T11 — no [OUTPUT-CONTRACT] line published at all (most non-auditor leaf
+#              agents) -> contract check no-ops, falls back to the original
+#              zero-diff OR verdict, never manufactures a false DETECTED.
+#   T12 — real-shape regression found DURING this fix's OWN validation: a
+#              single commit bundling TWO cycles' lines (replicates live
+#              commit 569f79108, which bundles c80's fabricated line with a
+#              legit-but-previously-uncommitted c79 line) — an early version
+#              of this fix picked only the LAST added line in the diff and
+#              was fooled by ordering; this fixture pins "check every claim
+#              line, never guess which is newest" as the actual contract.
 #
 # Every fixture lives in its own disposable scratch git repo under mktemp —
 # NEVER the live repo (no real commit/notebook/orch-state.json is ever
@@ -171,6 +196,163 @@ if [ "$RC7" -eq 2 ] && printf '%s' "$OUT7" | grep -q 'ABORT missing-required-arg
   ok "T7-missing-since-ts-aborts-rc2"
 else
   bad "T7-missing-since-ts-aborts-rc2 (rc=$RC7): $OUT7"
+fi
+
+# ── T8 (RED, AC-2/AC-5 fixture) — FIX-ANALYSIS-ONLY-EXIT-DETECTOR-OR-VERDICT-
+# BLIND-TO-PARTIAL-WRITE-CYCLE: system-auditor c80's REAL published line
+# (2026-08-08T01:08:04Z, notebook commit 569f79108), verbatim, committed
+# inside a notebook write ALONGSIDE a real commit (Plane 1/2 both non-zero —
+# the exact partial-write shape the old zero-diff-only OR verdict missed).
+# signal_queue_rows_written=1 is arithmetically impossible given
+# signals_posted=0 (scripts/audit-output-contract.sh:156-200+250 proof) ->
+# must still DETECTED via the AC-2 arithmetic gate, independent of any plane.
+R8="$TMPROOT/t8"
+_new_fixture "$R8"
+cat >> "$R8/docs/agent-memory/notebooks/test-agent.md" <<'EOF'
+
+## c80 · 2026-08-08T01:08:04Z
+### Audit Run Tier-1
+[OUTPUT-CONTRACT] signals_posted=0 | telegram_sent=0 | signal_queue_rows_written=1 | dashboard_rows=0 | dedup_skipped=1
+CONTRACT-CONTRADICTION: NONE
+EOF
+git -C "$R8" add -- docs/agent-memory/notebooks/test-agent.md >/dev/null
+GIT_AUTHOR_DATE="2026-08-06T15:10:00Z" GIT_COMMITTER_DATE="2026-08-06T15:10:00Z" \
+  git -C "$R8" commit -q -m "chore(memory/test-agent): cycle c80 partial-write" -- docs/agent-memory/notebooks/test-agent.md
+OUT8=$(bash "$DETECTOR" --agent-id test-agent --since-ts "$SINCE" --until-ts "$UNTIL" \
+  --orch-state-file "$R8/docs/data/orch-state.json" --dedup-ledger-file "" \
+  --repo-root "$R8")
+RC8=$?
+if [ "$RC8" -eq 1 ] && printf '%s' "$OUT8" | grep -q '^\[detect-analysis-only-exit\] DETECTED' \
+   && printf '%s' "$OUT8" | grep -q 'notebook=1' && printf '%s' "$OUT8" | grep -q 'commit=1' \
+   && printf '%s' "$OUT8" | grep -q 'signal_queue=0' && printf '%s' "$OUT8" | grep -q 'contract=arithmetic-violation'; then
+  ok "T8-RED-c80-partial-write-contract-violation-still-detected (rc=$RC8)"
+else
+  bad "T8-RED-c80-partial-write-contract-violation-still-detected (rc=$RC8): $OUT8"
+fi
+
+# ── T9 (GREEN, AC-3 fixture) — system-auditor c79's REAL published line
+# (2026-08-07T06:12:14Z, a genuinely quiet Tier-2 cycle, 0 anomalies), only
+# the notebook plane written. Must stay PASS — proves the new contract check
+# does not regress into a false-positive machine on a legitimately clean
+# cycle. ─────────────────────────────────────────────────────────────────
+R9="$TMPROOT/t9"
+_new_fixture "$R9"
+cat >> "$R9/docs/agent-memory/notebooks/test-agent.md" <<'EOF'
+
+## c79 · 2026-08-07T06:12:14Z
+### Audit Run Tier-2
+[OUTPUT-CONTRACT] signals_posted=0 | telegram_sent=0 | signal_queue_rows_written=0 | dashboard_rows=0
+CONTRACT-CONTRADICTION: NONE
+EOF
+git -C "$R9" add -- docs/agent-memory/notebooks/test-agent.md >/dev/null
+GIT_AUTHOR_DATE="2026-08-06T15:10:00Z" GIT_COMMITTER_DATE="2026-08-06T15:10:00Z" \
+  git -C "$R9" commit -q -m "chore(memory/test-agent): cycle c79 clean" -- docs/agent-memory/notebooks/test-agent.md
+OUT9=$(bash "$DETECTOR" --agent-id test-agent --since-ts "$SINCE" --until-ts "$UNTIL" \
+  --orch-state-file "$R9/docs/data/orch-state.json" --dedup-ledger-file "" \
+  --repo-root "$R9")
+RC9=$?
+if [ "$RC9" -eq 0 ] && printf '%s' "$OUT9" | grep -q '^\[detect-analysis-only-exit\] PASS' \
+   && printf '%s' "$OUT9" | grep -q 'contract=ok'; then
+  ok "T9-GREEN-c79-clean-cycle-passes-no-false-positive (rc=$RC9)"
+else
+  bad "T9-GREEN-c79-clean-cycle-passes-no-false-positive (rc=$RC9): $OUT9"
+fi
+
+# ── T10 (AC-1 isolation) — claim's OWN arithmetic is internally sound
+# (signals_posted=2 >= signal_queue_rows_written=1) but the claim asserts a
+# signal_queue write that the independent Plane-3 re-read shows never
+# landed (orch-state.json has 0 rows for this agent/window). Proves AC-1's
+# claim-vs-plane reconciliation is a REAL, distinct gate — not redundant
+# with AC-2's arithmetic check alone. ───────────────────────────────────────
+R10="$TMPROOT/t10"
+_new_fixture "$R10"
+cat >> "$R10/docs/agent-memory/notebooks/test-agent.md" <<'EOF'
+
+## c-synthetic-plane-mismatch · 2026-08-06T15:10Z
+[OUTPUT-CONTRACT] signals_posted=2 | telegram_sent=0 | signal_queue_rows_written=1 | dashboard_rows=0 | dedup_skipped=0
+CONTRACT-CONTRADICTION: NONE
+EOF
+git -C "$R10" add -- docs/agent-memory/notebooks/test-agent.md >/dev/null
+GIT_AUTHOR_DATE="2026-08-06T15:10:00Z" GIT_COMMITTER_DATE="2026-08-06T15:10:00Z" \
+  git -C "$R10" commit -q -m "chore(memory/test-agent): cycle synthetic plane-mismatch" -- docs/agent-memory/notebooks/test-agent.md
+OUT10=$(bash "$DETECTOR" --agent-id test-agent --since-ts "$SINCE" --until-ts "$UNTIL" \
+  --orch-state-file "$R10/docs/data/orch-state.json" --dedup-ledger-file "" \
+  --repo-root "$R10")
+RC10=$?
+if [ "$RC10" -eq 1 ] && printf '%s' "$OUT10" | grep -q '^\[detect-analysis-only-exit\] DETECTED' \
+   && printf '%s' "$OUT10" | grep -q 'contract=plane-mismatch'; then
+  ok "T10-AC1-claim-vs-plane-mismatch-detected-independent-of-arithmetic (rc=$RC10)"
+else
+  bad "T10-AC1-claim-vs-plane-mismatch-detected-independent-of-arithmetic (rc=$RC10): $OUT10"
+fi
+
+# ── T11 — no [OUTPUT-CONTRACT] line at all in-window (most non-auditor leaf
+# agents) -> contract=absent, never manufactures a false DETECTED; verdict
+# falls back to the original zero-diff OR alone (notebook=1 -> PASS, same
+# shape as T3). ─────────────────────────────────────────────────────────────
+R11="$TMPROOT/t11"
+_new_fixture "$R11"
+{ echo ""; echo "## c2 · 2026-08-06T15:10Z"; echo "real cycle entry, no contract line published"; } >> "$R11/docs/agent-memory/notebooks/test-agent.md"
+git -C "$R11" add -- docs/agent-memory/notebooks/test-agent.md >/dev/null
+GIT_AUTHOR_DATE="2026-08-06T15:10:00Z" GIT_COMMITTER_DATE="2026-08-06T15:10:00Z" \
+  git -C "$R11" commit -q -m "chore(memory/test-agent): cycle c2 no-contract-line" -- docs/agent-memory/notebooks/test-agent.md
+OUT11=$(bash "$DETECTOR" --agent-id test-agent --since-ts "$SINCE" --until-ts "$UNTIL" \
+  --orch-state-file "$R11/docs/data/orch-state.json" --dedup-ledger-file "" \
+  --repo-root "$R11")
+RC11=$?
+if [ "$RC11" -eq 0 ] && printf '%s' "$OUT11" | grep -q '^\[detect-analysis-only-exit\] PASS' \
+   && printf '%s' "$OUT11" | grep -q 'contract=absent'; then
+  ok "T11-no-contract-line-published-does-not-manufacture-false-detect (rc=$RC11)"
+else
+  bad "T11-no-contract-line-published-does-not-manufacture-false-detect (rc=$RC11): $OUT11"
+fi
+
+# ── T12 (real-shape regression, found DURING this fix's own validation) —
+# a SINGLE commit bundling TWO cycles' [OUTPUT-CONTRACT] lines, replicating
+# the EXACT live shape of commit 569f79108: c80's fabricated line lands
+# PHYSICALLY FIRST in the file/diff (newest_first notebook, freshly inserted
+# at the top), c79's legit-but-stale line (a prior cycle whose own write
+# never got committed separately — folded in here) lands physically SECOND.
+# An earlier version of this fix picked only the LAST added
+# [OUTPUT-CONTRACT] line in the diff (assuming "last write wins") and was
+# fooled into reading c79's legit line instead of c80's fabricated one —
+# this fixture is what caught that bug: checking EVERY claim line in-window
+# (scripts/lib/output-contract-invariant.sh) is what actually fixes it. ────
+R12="$TMPROOT/t12"
+_new_fixture "$R12"
+cat > "$R12/docs/agent-memory/notebooks/test-agent.md" <<'EOF'
+## c77 · 2026-08-01T00:00Z
+baseline entry, before the window under test
+EOF
+git -C "$R12" add -A >/dev/null
+GIT_AUTHOR_DATE="2026-08-01T00:00:00Z" GIT_COMMITTER_DATE="2026-08-01T00:00:00Z" \
+  git -C "$R12" commit -q -m "chore(memory/test-agent): baseline" -- docs/agent-memory/notebooks/test-agent.md
+cat > "$R12/docs/agent-memory/notebooks/test-agent.md" <<'EOF'
+## c80 · 2026-08-06T15:20Z
+### fabricated cycle (physically FIRST — newest_first insert)
+[OUTPUT-CONTRACT] signals_posted=0 | telegram_sent=0 | signal_queue_rows_written=1 | dashboard_rows=0 | dedup_skipped=1
+CONTRACT-CONTRADICTION: NONE
+
+## c79 · 2026-08-06T15:15Z
+### legit stale cycle, never separately committed, folded in here
+[OUTPUT-CONTRACT] signals_posted=0 | telegram_sent=0 | signal_queue_rows_written=0 | dashboard_rows=0
+CONTRACT-CONTRADICTION: NONE
+
+## c77 · 2026-08-01T00:00Z
+baseline entry, before the window under test
+EOF
+git -C "$R12" add -- docs/agent-memory/notebooks/test-agent.md >/dev/null
+GIT_AUTHOR_DATE="2026-08-06T15:20:00Z" GIT_COMMITTER_DATE="2026-08-06T15:20:00Z" \
+  git -C "$R12" commit -q -m "chore(memory/test-agent): cycle c80 bundled-with-stale-c79" -- docs/agent-memory/notebooks/test-agent.md
+OUT12=$(bash "$DETECTOR" --agent-id test-agent --since-ts "$SINCE" --until-ts "$UNTIL" \
+  --orch-state-file "$R12/docs/data/orch-state.json" --dedup-ledger-file "" \
+  --repo-root "$R12")
+RC12=$?
+if [ "$RC12" -eq 1 ] && printf '%s' "$OUT12" | grep -q '^\[detect-analysis-only-exit\] DETECTED' \
+   && printf '%s' "$OUT12" | grep -q 'contract=arithmetic-violation'; then
+  ok "T12-bundled-commit-fabricated-line-not-masked-by-later-legit-line (rc=$RC12)"
+else
+  bad "T12-bundled-commit-fabricated-line-not-masked-by-later-legit-line (rc=$RC12): $OUT12"
 fi
 
 echo ""

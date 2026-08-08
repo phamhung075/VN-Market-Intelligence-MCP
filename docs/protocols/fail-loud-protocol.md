@@ -102,16 +102,26 @@ agent's own claim):** `scripts/audits/detect-analysis-only-exit.sh` is
 the generic, agent-agnostic mechanization of the rule above. It takes no
 "did you write it" flag from the caller — it independently re-reads the
 notebook file's git history, the repo's commit log, `.signal_queue.rows[]`,
-the dedup-ledger, and any caller-named extra artifact, and reports a
-zero-diff verdict only when every checked plane shows nothing changed.
-Any agent, wrapper, or peer reviewer can run it against a spawn's own
-`--agent-id` and `--since-ts` (the spawn/cron tick time) to verify a cycle
-actually landed something, independent of what that cycle's RETURN says:
+the dedup-ledger, and any caller-named extra artifact, and DETECTs on a
+zero-diff verdict when every checked plane shows nothing changed. It ALSO
+DETECTs on a genuine PARTIAL write (some planes non-zero) whose notebook
+commit carries the agent's own published `[OUTPUT-CONTRACT] ...` claim and
+that claim is either arithmetically unsound or asserts a `.signal_queue`
+write the independent re-read shows never landed
+(`FIX-ANALYSIS-ONLY-EXIT-DETECTOR-OR-VERDICT-BLIND-TO-PARTIAL-WRITE-CYCLE`,
+2026-08-08 — confirmed live on system-auditor c80, which wrote its notebook
+and committed but never invoked the E-3 emit actuator while its own
+contract line claimed it had). Any agent, wrapper, or peer reviewer can run
+it against a spawn's own `--agent-id` and `--since-ts` (the spawn/cron tick
+time) to verify a cycle actually landed something, independent of what that
+cycle's RETURN says:
 ```bash
 bash scripts/audits/detect-analysis-only-exit.sh \
   --agent-id <agent-id> --since-ts <cycle-start-ISO8601>
-# exit 0 = PASS (something real changed). exit 1 = DETECTED (zero-diff —
-# treat the cycle's RETURN as unverified narration, not completion).
+# exit 0 = PASS. exit 1 = DETECTED — either a zero-diff (nothing changed on
+# any checked plane) or a partial-write contract violation (see `contract=`
+# in the stdout line) — treat the cycle's RETURN as unverified narration,
+# not completion, either way.
 ```
 Regression fixture (positive + negative controls, never against the live
 repo): `scripts/audits/detect-analysis-only-exit.test.sh`.

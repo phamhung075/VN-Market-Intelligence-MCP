@@ -52,7 +52,39 @@
 # optional: ledger/extra, only when supplied) reads exactly 0 -> DETECTED
 # (analysis-only exit, the 5-plane — or fewer, if some are legitimately
 # skipped — zero-diff signature). Any checked plane > 0 -> PASS (the agent
-# wrote SOMETHING real this window; a partial write is not this defect).
+# wrote SOMETHING real this window; a partial write is not this defect)
+# UNLESS the PARTIAL-WRITE CONTRACT CHECK below fires (added
+# FIX-ANALYSIS-ONLY-EXIT-DETECTOR-OR-VERDICT-BLIND-TO-PARTIAL-WRITE-CYCLE —
+# confirmed live on system-auditor c80, 2026-08-08T01:08:04Z: notebook=1
+# commit=1 signal_queue=0 ledger=0, i.e. a genuine partial write, while the
+# agent's OWN `[OUTPUT-CONTRACT]` line inside that same notebook commit
+# claimed `signal_queue_rows_written=1`. The zero-diff-only OR verdict is
+# blind to a cycle that writes SOME real planes and fabricates the rest of
+# its own contract line — this fixes that without narrowing the original
+# zero-diff signature it still catches unchanged).
+#
+# PARTIAL-WRITE CONTRACT CHECK (AC-1 + AC-2 of the owning row): independent
+# of the zero-diff OR-verdict above, this script now also extracts the
+# `[OUTPUT-CONTRACT] ...` line the agent itself published inside the
+# notebook commit(s) landed in [since,until] (scripts/lib/output-contract-
+# invariant.sh, shared with scripts/auditor-notebook-commit.sh's AC-4
+# pre-commit backstop — one extraction/arithmetic implementation, not two)
+# and runs TWO checks against it, either of which forces DETECTED
+# regardless of how many planes are non-zero:
+#   AC-2 structural arithmetic invariant (zero-false-positive, no plane
+#     lookup needed): `signals_posted >= signal_queue_rows_written` AND
+#     `signals_posted >= dedup_skipped` are invariants of
+#     scripts/audit-output-contract.sh's own parser (proof: that script's
+#     header + scripts/lib/output-contract-invariant.sh). A published line
+#     violating either is provably not that script's own output.
+#   AC-1 claim-vs-plane reconciliation: published `signal_queue_rows_written
+#     > 0` while the independently re-read Plane 3 (signal_queue) count for
+#     this exact window is 0 — the claim asserts a write that provably never
+#     landed, regardless of Plane 1/Plane 2 (notebook/commit) being non-zero.
+# No `[OUTPUT-CONTRACT]` line found in the window (most non-auditor leaf
+# agents never publish one) -> both checks are skipped (never manufacture a
+# false DETECTED on an agent that doesn't carry this contract at all) and
+# the original zero-diff OR-verdict is the sole discriminator, unchanged.
 #
 # CONTRACT (named args, mirrors scripts/emit-audit-signal.sh discipline):
 #   scripts/audits/detect-analysis-only-exit.sh \
@@ -89,16 +121,30 @@
 #     [--repo-root <path>                 default: git -C $SCRIPT_DIR rev-parse --show-toplevel]
 #
 # STDOUT (mechanically parseable, grep-friendly):
-#   [detect-analysis-only-exit] PASS agent=<id> since=<ts> notebook=<n> commit=<n> signal_queue=<n> ledger=<n|skip> extra=<n|skip>
-#   [detect-analysis-only-exit] DETECTED agent=<id> since=<ts> notebook=0 commit=0 signal_queue=0 ledger=<0|skip> extra=<0|skip>
+#   [detect-analysis-only-exit] PASS agent=<id> since=<ts> notebook=<n> commit=<n> signal_queue=<n> ledger=<n|skip> extra=<n|skip> contract=<ok|absent>
+#   [detect-analysis-only-exit] DETECTED agent=<id> since=<ts> notebook=<n> commit=<n> signal_queue=<n> ledger=<n|skip> extra=<n|skip> contract=<ok|absent|arithmetic-violation|plane-mismatch>
+# `contract=` (trailing field, added by this fix): `absent` = no
+# `[OUTPUT-CONTRACT]` line found in-window (partial-write contract check not
+# applicable, verdict is the zero-diff OR alone); `ok` = a claim line was
+# found and passed both checks; `arithmetic-violation` / `plane-mismatch` =
+# the specific PARTIAL-WRITE CONTRACT CHECK that forced DETECTED (see above)
+# — DETECTED can fire with every one of notebook/commit/signal_queue > 0
+# when `contract` is one of these two, which is exactly the case the
+# original zero-diff-only OR verdict missed on c80.
 #
-# EXIT CODE: 0 = PASS. 1 = DETECTED (analysis-only exit). 2 = usage error.
+# EXIT CODE: 0 = PASS. 1 = DETECTED (analysis-only exit, incl. the
+# partial-write contract-violation variant). 2 = usage error.
 #
 # Regression fixture (AC-5): scripts/audits/detect-analysis-only-exit.test.sh
 # — POSITIVE control (synthetic spawn that wrote nothing -> DETECTED, exit 1)
 # and NEGATIVE control (synthetic spawn that wrote one real signal_queue row
 # -> PASS, exit 0), both against a disposable scratch git repo, never the
-# live repo.
+# live repo. Also carries the FIX-ANALYSIS-ONLY-EXIT-DETECTOR-OR-VERDICT-
+# BLIND-TO-PARTIAL-WRITE-CYCLE fixtures: the RED case replays c80's real
+# published line verbatim (arithmetic-violation, still DETECTED despite
+# notebook=1/commit=1) and the GREEN case replays c79's real published line
+# verbatim (a legitimately quiet cycle, must stay PASS) — see that suite's
+# T8-T11.
 #
 # Shell: bash 3.2+ (macOS system /bin/bash) — NO mapfile, NO associative
 # arrays. Only plain indexed arrays / case statements / jq.
@@ -113,6 +159,9 @@ set -uo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 DEFAULT_REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
+
+# shellcheck source=../lib/output-contract-invariant.sh
+source "$SCRIPT_DIR/../lib/output-contract-invariant.sh"
 
 # =============================================================================
 # INFRASTRUCTURE — shared jq date idiom (ported verbatim from
@@ -247,6 +296,28 @@ _plane_extra() {
   echo "$total"
 }
 
+# CLAIMS — every [OUTPUT-CONTRACT] line the agent itself published,
+# extracted from whatever the notebook commit(s) in [since,until] actually
+# ADDED (git-diff '+' lines, not the file's current full content — a stale
+# line already present before this window must never be misread as this
+# window's claim). Zero or more lines. Empty when no notebook commit landed
+# in-window (Plane 1 == 0, the ordinary zero-diff case) or when the agent's
+# notebook convention doesn't publish this line at all (most non-auditor
+# leaf agents). See scripts/lib/output-contract-invariant.sh header for why
+# ALL matches are returned rather than picking "the newest" one.
+_plane_output_contract_claims() {
+  local repo_root="$1" notebook_path="$2" since_ts="$3" until_ts="$4"
+  if [ ! -f "$repo_root/$notebook_path" ]; then
+    echo ""
+    return 0
+  fi
+  if [ -n "$until_ts" ]; then
+    git -C "$repo_root" log --since="$since_ts" --until="$until_ts" -p -- "$notebook_path" 2>/dev/null | oc_extract_all_added_contract_lines_from_text
+  else
+    git -C "$repo_root" log --since="$since_ts" -p -- "$notebook_path" 2>/dev/null | oc_extract_all_added_contract_lines_from_text
+  fi
+}
+
 # =============================================================================
 # INTERFACE — CLI / library entrypoint
 # =============================================================================
@@ -312,11 +383,51 @@ run_detect_analysis_only_exit() {
   if [ "$n_ledger" != "skip" ] && [ "${n_ledger:-0}" -ne 0 ] 2>/dev/null; then all_zero=0; fi
   if [ "$n_extra" != "skip" ] && [ "${n_extra:-0}" -ne 0 ] 2>/dev/null; then all_zero=0; fi
 
-  if [ "$all_zero" -eq 1 ]; then
-    echo "[detect-analysis-only-exit] DETECTED agent=${agent_id} since=${since_ts} notebook=${n_notebook} commit=${n_commit} signal_queue=${n_sq} ledger=${n_ledger} extra=${n_extra}"
+  # PARTIAL-WRITE CONTRACT CHECK (AC-1 + AC-2, FIX-ANALYSIS-ONLY-EXIT-
+  # DETECTOR-OR-VERDICT-BLIND-TO-PARTIAL-WRITE-CYCLE) — independent of the
+  # zero-diff OR-verdict above; can force DETECTED even when every plane
+  # above is non-zero (c80's actual shape). See scripts/lib/output-contract-
+  # invariant.sh for the shared extraction/arithmetic this reuses verbatim
+  # with scripts/auditor-notebook-commit.sh's AC-4 pre-commit backstop.
+  # Checks EVERY claim line found in-window (a single commit can bundle
+  # more than one cycle's own section — see that lib's header) rather than
+  # guessing which one is "the newest": ANY individual line failing the
+  # AC-2 arithmetic invariant, or the SUM of all claimed
+  # signal_queue_rows_written being >0 while the real Plane-3 re-read is 0,
+  # forces DETECTED.
+  local claims contract_status="absent"
+  claims=$(_plane_output_contract_claims "$repo_root" "$notebook_path" "$since_ts" "$until_ts")
+  if [ -n "$claims" ]; then
+    contract_status="ok"
+    local claim_sqr_sum=0 _line _c_sp _c_sqr _c_ds
+    while IFS= read -r _line; do
+      [ -z "$_line" ] && continue
+      _c_sp=$(oc_parse_counter "$_line" "signals_posted")
+      _c_sqr=$(oc_parse_counter "$_line" "signal_queue_rows_written")
+      _c_ds=$(oc_parse_counter "$_line" "dedup_skipped")
+      if ! oc_check_arithmetic_invariant "$_c_sp" "$_c_sqr" "$_c_ds"; then
+        # AC-2 — zero-false-positive structural gate, needs no plane lookup.
+        contract_status="arithmetic-violation"
+      fi
+      claim_sqr_sum=$((claim_sqr_sum + _c_sqr))
+    done <<< "$claims"
+    if [ "$contract_status" != "arithmetic-violation" ] \
+       && [ "${claim_sqr_sum:-0}" -gt 0 ] 2>/dev/null && [ "${n_sq:-0}" -eq 0 ] 2>/dev/null; then
+      # AC-1 — aggregate claim vs Plane 3 ground-truth reconciliation.
+      contract_status="plane-mismatch"
+    fi
+  fi
+
+  local detected=0
+  [ "$all_zero" -eq 1 ] && detected=1
+  [ "$contract_status" = "arithmetic-violation" ] && detected=1
+  [ "$contract_status" = "plane-mismatch" ] && detected=1
+
+  if [ "$detected" -eq 1 ]; then
+    echo "[detect-analysis-only-exit] DETECTED agent=${agent_id} since=${since_ts} notebook=${n_notebook} commit=${n_commit} signal_queue=${n_sq} ledger=${n_ledger} extra=${n_extra} contract=${contract_status}"
     return 1
   else
-    echo "[detect-analysis-only-exit] PASS agent=${agent_id} since=${since_ts} notebook=${n_notebook} commit=${n_commit} signal_queue=${n_sq} ledger=${n_ledger} extra=${n_extra}"
+    echo "[detect-analysis-only-exit] PASS agent=${agent_id} since=${since_ts} notebook=${n_notebook} commit=${n_commit} signal_queue=${n_sq} ledger=${n_ledger} extra=${n_extra} contract=${contract_status}"
     return 0
   fi
 }
