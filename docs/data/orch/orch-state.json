@@ -19462,7 +19462,7 @@
         "last_served_tick": "2026-08-08T22:26:10Z"
       }
     },
-    "_updated_at": "2026-08-08T23:22:07Z",
+    "_updated_at": "2026-08-08T23:23:07Z",
     "_updated_by": "dev-team",
     "pending_triage_inbox": [
       {
@@ -21797,6 +21797,41 @@
         "payload": "deep_fetch_stats: 0 rows. Schema exists (domain, date, fetch_count). Writer-provenance class=a (production writer: deepF [truncated; full history at docs/data/db-integrity-history.json, 160 entries, 740KB — not inlined, stable non-pruned file]",
         "createdAt": "2026-08-08T22:34:34Z",
         "drained_at": "2026-08-08T23:22:07Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "9a036a3b783fe0cc978cef60ce6df7e1b0f11bc7490080d80054476ffea34427",
+        "source": "file",
+        "from": "ci-health-probe",
+        "to": "po",
+        "type": "ci_red",
+        "priority": "high",
+        "payload": {
+          "check_id": "CI-RED-d8fccd79",
+          "head_sha": "d8fccd7957aca4e0937649ea1ff411f7e9cb8a5e",
+          "run_id": 31283471308,
+          "run_url": "https://github.com/phamhung075/VN-Market-Intelligence-MCP/actions/runs/31283471308",
+          "conclusion": "failure",
+          "failing_jobs": [
+            {
+              "name": "size-lint",
+              "conclusion": "failure",
+              "jobId": 93168392339
+            },
+            {
+              "name": "bun test",
+              "conclusion": "failure",
+              "jobId": 93168392375
+            }
+          ],
+          "fingerprint": "fdabc24d709c1ab310cd8117f3eb79cc89bc6bbb06ac83ec864ec38aad891ce9",
+          "zone_owner": "dev-team (CI fix)",
+          "summary": "CI RED on main HEAD d8fccd7957aca4e0937649ea1ff411f7e9cb8a5e: bun test,size-lint",
+          "suggested_sprint_class": "FIX",
+          "verification_gate": "ci_green_on_subsequent_push"
+        },
+        "createdAt": "2026-08-08T23:22:52Z",
+        "drained_at": "2026-08-08T23:23:07Z",
         "routed_to": "PO Step 0-SIG"
       }
     ]
