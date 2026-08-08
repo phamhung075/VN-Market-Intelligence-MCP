@@ -24,3 +24,28 @@
 ### Carry-over
 - Standing rule from 15:13Z (held, applied again): after every `orch-apply.sh`, re-read the specific row/field on disk — verified all 3 mints + 2 stamps + 1 signal close before claiming them.
 - `review[]`=186 vs `qa[]`=4 — unchanged shape from prior cycles, and it is now also the single largest byte consumer in the hot file.
+
+## 2026-08-08T17:37Z · The CRITICAL was already fixed — the board just didn't know it
+
+### What actually happened
+- CRITICAL mcp-server chain (4 reports + dashboard signal) + WF-2 hold on the fix row. Ratified at source instead of on QA's verdict → **found the rebuild had already landed**. Stamped `po_goahead_20260808T175954`, released the hold, forwarded ops→qa.
+- Minted 3, folded 3, closed all 9 Telegram reports with dispositions. Journal: `docs/agent-memory/decisions/triage-20260808T1737Z-po.md`.
+
+### Decisions worth keeping
+- **★ "RATIFY AT SOURCE" PAID FOR ITSELF IN ONE COMMAND.** QA said `next_agent=ops, rebuild_required=true`. `docker inspect` said image Created **16:59:29Z**, fix commit **16:57:46Z** — the rebuild was already done. Had I stamped and let ops run, ops would have rebuilt **again**, resetting the only clean observation window this row has ever had (its history records 2 prior windows destroyed exactly that way). **A supervised gate that trusts the relay is not a gate.**
+- **★ REPO ≠ RUNNING IMAGE — and for `apps/mcp-server/src/` it never is.** Baked at build (Dockerfile:62 COPY, not volume-mounted). Grepped the fix *inside* the container (`SessionRecord`:48, `reapStaleSessions`:120, `stopReaper`:234, 8× `evictSession`). Image identity established **by content**, not inferred from timestamp ordering. For a baked service, `git merge-base --is-ancestor` proves nothing about what is serving.
+- **★ A MEMORY DROP NEEDS A RATE CONTROL OR IT'S JUST A TRAFFIC LULL.** 96-99% pinned → **11.26%** only means something beside: 661 McpServer constructions / 22 resident = **96.7% reaped** vs pre-fix 4018/873 = 78.3% (residual 21.7% *never* reaped), at unchanged rate (686/h vs 616/h). VmHWM 662168kB **>** VmRSS 348028kB = reclamation restored, the literal inverse of the alert's signature.
+- **★ FLIPPED `rebuild_required` true→false RATHER THAN WRITING "DO NOT REBUILD" BESIDE IT.** A structured field contradicting adjacent prose is `feedback_a30_prose_overrides_embedded_escalate_verdict`. Remove the trigger, don't annotate it.
+- **★ A ROW CAN BE STUCK ON AN AC IT STRUCTURALLY CANNOT SATISFY.** `FIX-MCP-MEMORY-CODE-LEAK` sat in REVIEW 3 days against "no 87% in 12h" — an AC belonging to the *other* leak. Its own 08-07 note said so and it still sat, because the note was never applied to the ACs. **Recommending a re-scope in prose is not re-scoping.** Transferred the AC + gate (c) to the SSE row; its real AC (backfill sweep = 1 vs ~52/10min) measured **PASS**.
+- **★ "ZERO RECLAMATION DIPS" WAS THE WRONG PLANE AGAIN.** rag-service cgroup 99.79% (cap 1GiB, verified) but VmHWM 1568064kB vs VmRSS 894036kB — **674MB below its own high-water**. cgroup counts reclaimable page cache; VmRSS doesn't. Same two-plane discriminator as 16:00Z, opposite verdict per container. Held P2, no escalation, no restart — 4 days at cap, **zero** OOM.
+- **sweep-guard: the counter got fixed today, the consequence never existed.** One actor (the router session) went **9→13 strikes vs threshold=3** in 4h02m; every BARE commit proceeded. Told the implementer **not** to default to hard-blocking — that strands worker indexes on shared main.
+- **Minted a CI row against the fix I'd just ratified, and said so.** b746c112b grew `transport.ts` 126→237L. Flagged that extraction (repo default) may be *wrong* here: the growth removed duplication, and re-fragmenting the single-eviction-path design is what let `mcpServer.close()` go missing from both cleanup paths originally.
+
+### NEXT
+- qa owes SSE Step 5: sessionCount vs MemPerc **≥4h** (must cross the 4h max-age reaper, not just the 15min idle one already seen firing), RestartCount stable 0 → then po Step 6 sign-off.
+- CI stays RED until **both** `coordinationStore.ts` (P0) and `transport.ts` land. Two files, one gate.
+- Rebuild landed with **no board attribution / no runbook ledger entry**. Single occurrence, not minted. If it recurs, mint it.
+
+### Carry-over
+- **This section was written once, clobbered by a peer PO full-overwrite at 18:08Z, and re-appended.** The peer's write also dropped the 16:00Z section (recoverable from git, not reconstructed here to avoid a second race). `feedback_qa_notebook_fulloverwrite_drops_concurrent_peer_entries_20260806` now confirmed on `po.md` too — notebook-write is section-append+prune, never full-overwrite.
+- **My AC-3 self-verification returned a FALSE GREEN and I nearly shipped it.** My commit aborted on an untracked-journal pathspec, but `git show --stat HEAD | grep orch-state.json` still passed — against a *peer's* commit that had swept my board changes in. AC-3 must assert the commit is **mine** (compare the SHA I just created), not merely that HEAD contains the path.
