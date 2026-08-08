@@ -173,3 +173,16 @@
 - Zero production TS/JS/py/go touched (pure `.md` flow-doc) → `bun test`/`tsc`/`mock-guard` correctly N/A.
 **why-decision:** APPROVED, DONE_VERIFIED — despite the row carrying none of the usual implementation breadcrumbs (no `dev_implementation_note`, no `commit_sha`), the fix is genuinely present on `main` (commit `7eaa83e0c`), both local lint and live CI confirm green, and the substitution-instruction pattern was checked in the actual committed text against the known literal-token hazard, not assumed from the commit subject alone.
 **why-change:** none — verified exactly what the row scoped; stamped `commit:7eaa83e0c` onto the row as part of the lane-move since it was absent.
+
+### STEP qa-S16 · qa · 2026-08-08T16:32:31Z
+**task-id:** FIX-CI-SIZELINT-RAG-APP-FACTORY-BASELINE
+**what-done:** Direct-commit verify (`qa[]` row, `branch:null`, no `commit`/`dev_implementation_note` — router flagged possibly-unimplemented). Derived fix commit `99ed7c8b0` via `git log -- apps/rag-service/app_factory.py`; `Task:`/`AC:` trailers match exactly, on main ancestry.
+**what-considered:**
+- Did not trust absence of metadata as proof of non-work: `git show --stat` confirms the commit touches exactly `app_factory.py` (+9L comment-only header); `docs/data/size-lint-baseline.json` deliberately NOT touched, matching AC2's explicit "do NOT `--update`" — the files[] list includes baseline.json as in-scope-if-needed, not as required-touched.
+- AC1 (header OR split, split "preferred" but OR is inclusive): header chosen, mirrors sibling `embedder.py` justification already on main — valid.
+- Re-ran RAW myself (Python/pytest zone, not bun): `python -m pytest` 175/175 pass (matches claim). `mock-guard.sh --files app_factory.py` PASS. Comment-only diff → DDD/security greps trivially clean.
+- Local `size-lint --check` shows 2 offenders, but working tree had an UNRELATED peer's uncommitted dirty `transport.ts` (`FIX-MCP-SSE-SESSION-MANAGER-PERCONN-LEAK-NO-REAPER`, same pollution as qa-S12/S14) — confirmed via live CI (`gh run view 31266835487`, headSha=`b744d509e`=HEAD) size-lint fails on exactly 1 file: `coordinationStore.ts` (separate READY row `FIX-CI-SIZELINT-COORDINATIONSTORE-BASELINE-1388L`). `app_factory.py` absent from both local-clean-tree and live-CI failing lists.
+**why-decision:** APPROVED, DONE_VERIFIED — this row's own file genuinely cleared (AC1-AC3 met); the still-red shared size-lint job is scoped to the separate coordinationStore.ts row, not this one (same precedent as qa-S12 checkForeignFlowGap.ts verify).
+**why-change:** none — stamped `commit:99ed7c8b0` onto the row as part of the lane-move since it was absent.
+
+### CAP-REACHED · 2026-08-08T16:32:31Z
