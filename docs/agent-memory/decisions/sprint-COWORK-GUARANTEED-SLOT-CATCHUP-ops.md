@@ -82,3 +82,13 @@ Weights are present (39M `doclayout_yolo_ft.pt`, dated 2026-07-17 03:01Z). Dorma
 - **Confidence:** High (root cause clearly identified in logs; defect class distinct from original 07-17)
 - **Recovery Path:** Clear (network reachability probe + OCR gateway debug + re-test)
 
+
+### STEP ops-S22 · ops · 2026-08-08T08:12:00Z
+**task-id:** OPS-RAG-SERVICE-REBUILD-STALE-IMAGE-PREDATES-IDLE-UNLOAD-FIX
+**what-done:** Rebuilt rag-service container from post-fix source; verified new image created after fix commit (2026-08-08T08:10:53Z > 2026-08-06T16:33:53Z fix date); memory reclamation observed (96.43% → 3.82% post-rebuild).
+**what-considered:**
+- Restart container with existing stale image (REJECTED: would not engage fix)
+- Full docker compose down/up (REJECTED: forbidden by policy, kills peer containers/state)
+- Only: single-service rebuild with docker compose build + up -d --no-deps
+**why-decision:** Fix code exists in source but stale Docker image predates it by ~24h; strict single-service rebuild isolates the reclamation code path and limits blast radius per standing policy.
+**why-change:** No change from plan; task specification mandated AC-1/AC-2/AC-3 verification and all three passed; idle-unload is now active in production.
