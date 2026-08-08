@@ -6,6 +6,23 @@
 
 ## 2026-08 Sessions
 
+### Session 37 (2026-08-08 10:30Z — 6-hourly scheduled sweep cycle)
+
+**Scope:** Scheduled 6-hourly maintenance sweep. No source code changes in last 3 commits (pre-check gate active).
+
+**Checks:** DRY scan skipped (zero `src/` or `apps/*/src/` changes). Three unconditional sweeps executed:
+- Memory Prune Sweep: 0 sessions archived, 0 old health checks deleted, 1 signal written (janitor-health-recheck-writer-retired-2026-08-08)
+- Notebook Line-Cap Sweep: 46 notebooks checked; 1 over-cap (digest-predict.md 39L, 18.6KB bytes over cap), 0 pruned (safe-fail: no sections)
+- Cold Archive Sweep: Skipped (not 1st of month)
+
+**Escalations:** SIGNAL-WRITTEN for team-tool-recheck writer dead since 06-23 (recurrent) → new row appended to signal queue (cj-20260808T103036).
+
+**Backlog:** Unchanged at 9 items (JANITOR-034, JANITOR-028 to JANITOR-032, JANITOR-011, -013, -017, -020, -027).
+
+**Quality:** Full. All sweeps executed nominally. Signal queue successfully updated via orch-apply.sh. No knowledge load failures.
+
+---
+
 ### Session 36 (2026-08-08 04:45Z — 6-hourly scheduled sweep cycle)
 
 **Scope:** Scheduled 6-hourly maintenance sweep. No source code changes in last 3 commits (pre-check gate active).
@@ -86,110 +103,6 @@
 - Cold Archive Sweep: Skipped (not 1st of month)
 
 **Escalations:** SIGNAL-WRITTEN for team-tool-recheck writer dead since 06-23 (recurrent) → new row appended to signal queue (cj-20260807T064400).
-
-**Backlog:** Unchanged at 9 items (JANITOR-034, JANITOR-028 to JANITOR-032, JANITOR-011, -013, -017, -020, -027).
-
-**Quality:** Full. All sweeps executed nominally. No knowledge load failures.
-
----
-
-## 2026-07 Sessions
-
-### Session 31 (2026-08-06 22:32Z — 6-hourly scheduled sweep cycle)
-
-**Scope:** Scheduled 6-hourly maintenance sweep. No source code changes in last 3 commits (pre-check gate active).
-
-**Checks:** DRY scan skipped (zero `src/` or `apps/*/src/` changes). Three unconditional sweeps executed:
-- Memory Prune Sweep: 0 sessions archived, 0 old health checks deleted, 0 new signals (existing janitor-health-recheck-writer-retired-2026-08-06 found, SIGNAL-SKIP)
-- Notebook Line-Cap Sweep: 46 notebooks checked; 4 over-cap, 2 pruned (ops.md 258→183L, developer.md 35→27L); 2 safe-fail skips (code-janitor.md 224L single section, digest-predict.md 38L no sections)
-- Cold Archive Sweep: Skipped (not 1st of month)
-
-**Escalations:** None (signal already routed in prior cycle).
-
-**Backlog:** Unchanged at 9 items (JANITOR-034, JANITOR-028 to JANITOR-032, JANITOR-011, -013, -017, -020, -027).
-
-**Quality:** Full. All sweeps executed nominally. No knowledge load failures.
-
----
-
-### Session 30 (2026-08-06 16:31Z — 6-hourly scheduled sweep cycle)
-
-**Scope:** Scheduled 6-hourly maintenance sweep. No source code changes in last 3 commits (pre-check gate active).
-
-**Checks:** DRY scan skipped (zero `src/` or `apps/*/src/` changes). Three unconditional sweeps executed:
-- Memory Prune Sweep: 0 sessions archived, 0 old health checks deleted, 1 signal written (janitor-health-recheck-writer-retired-2026-08-06)
-- Notebook Line-Cap Sweep: 46 notebooks checked; 3 over-cap, 1 pruned (ops.md 192→166L); 2 safe-fail skips (code-janitor.md 207L single section, digest-predict.md 37L no sections)
-- Cold Archive Sweep: Skipped (not 1st of month)
-
-**Escalations:** SIGNAL-WRITTEN for team-tool-recheck writer dead since 06-23 (recurrent) → new row appended to signal queue (cj-20260806T163127).
-
-**Backlog:** Unchanged at 9 items (JANITOR-034, JANITOR-028 to JANITOR-032, JANITOR-011, -013, -017, -020, -027).
-
-**Quality:** Full. All sweeps executed nominally. No knowledge load failures.
-
----
-
-### Session 29 (2026-08-06 10:31Z — 6-hourly scheduled sweep cycle)
-
-**Scope:** Scheduled 6-hourly maintenance sweep. No source code changes in last 3 commits (pre-check gate active).
-
-**Checks:** DRY scan skipped (zero `src/` or `apps/*/src/` changes). Three unconditional sweeps executed:
-- Memory Prune Sweep: 0 sessions archived, 0 old health checks deleted, 1 signal written (janitor-health-recheck-writer-retired-2026-08-06)
-- Notebook Line-Cap Sweep: 46 notebooks checked; 4 over-cap, 3 pruned (system-auditor.md 289→153L, qa.md 65→33L, fb-market-poster.md 51→34L); 1 safe-fail skip (digest-predict.md 37L no sections)
-- Cold Archive Sweep: Skipped (not 1st of month)
-
-**Escalations:** SIGNAL-WRITTEN for team-tool-recheck writer dead since 06-23 (recurrent) → new row appended to signal queue (cj-20260806T103108).
-
-**Backlog:** Unchanged at 9 items (JANITOR-034, JANITOR-028 to JANITOR-032, JANITOR-011, -013, -017, -020, -027).
-
-**Quality:** Full. All sweeps executed nominally. No knowledge load failures.
-
----
-
-### Session 28 (2026-08-06 08:55Z — 6-hourly scheduled sweep cycle)
-
-**Scope:** Scheduled 6-hourly maintenance sweep. No source code changes in last 3 commits (pre-check gate active).
-
-**Checks:** DRY scan skipped (zero `src/` or `apps/*/src/` changes). Three unconditional sweeps executed:
-- Memory Prune Sweep: 0 sessions archived, 0 old health checks deleted, 1 signal written (janitor-health-recheck-writer-retired)
-- Notebook Line-Cap Sweep: 46 notebooks checked; 1 pruned (ops.md 133L→104L); 1 safe-fail skip (digest-predict.md 37L no sections)
-- Cold Archive Sweep: Skipped (not 1st of month)
-
-**Escalations:** SIGNAL-WRITTEN for team-tool-recheck writer dead since 06-23 (recurrent) → new row appended to signal queue.
-
-**Backlog:** Unchanged at 9 items (JANITOR-034, JANITOR-028 to JANITOR-032, JANITOR-011, -013, -017, -020, -027).
-
-**Quality:** Full. All sweeps executed nominally. No knowledge load failures.
-
----
-
-### Session 27 (2026-08-05 04:30Z — 6-hourly scheduled sweep cycle)
-
-**Scope:** Scheduled 6-hourly maintenance sweep. No source code changes in last 3 commits (pre-check gate active).
-
-**Checks:** DRY scan skipped (zero `src/` or `apps/*/src/` changes). Three unconditional sweeps executed:
-- Memory Prune Sweep: 0 sessions archived, 0 old health checks deleted, 1 signal written (janitor-health-recheck-writer-retired)
-- Notebook Line-Cap Sweep: 46 notebooks checked; 0 over cap (all under 200L)
-- Cold Archive Sweep: Skipped (not 1st of month)
-
-**Escalations:** SIGNAL-WRITTEN for team-tool-recheck writer dead since 06-23 (recurrent from prior cycle) → existing row in signal queue.
-
-**Backlog:** Unchanged at 9 items (JANITOR-034, JANITOR-028 to JANITOR-032, JANITOR-011, -013, -017, -020, -027).
-
-**Quality:** Full. All sweeps executed nominally. No knowledge load failures.
-
----
-
-### Session 26 (2026-08-05 — Memory+State sweep cycle)
-
-**Scope:** Scheduled 6-hourly maintenance sweep. No source code changes in last 3 commits (pre-check gate active).
-
-**Checks:** DRY scan skipped (zero `src/` or `apps/*/src/` changes). Three unconditional sweeps executed:
-- Memory Prune Sweep: 1 session archived, 76 old health checks deleted, 1 signal written
-- Notebook Line-Cap Sweep: 2 notebooks checked; 1 pruned (fb-market-poster.md 84L→34L)
-- Cold Archive Sweep: Skipped (not 1st of month)
-
-**Escalations:** SIGNAL-WRITTEN for team-tool-recheck writer dead since 06-23 → routed to PO (replace-vs-retire decision).
 
 **Backlog:** Unchanged at 9 items (JANITOR-034, JANITOR-028 to JANITOR-032, JANITOR-011, -013, -017, -020, -027).
 
