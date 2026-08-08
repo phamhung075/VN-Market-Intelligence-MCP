@@ -1,0 +1,14 @@
+{
+  "from": "commit-sweep-guard",
+  "to": "po",
+  "type": "bug-escalation",
+  "priority": "high",
+  "createdAt": "2026-08-08T17:34:43Z",
+  "payload": "[sweep-guard] SAME-FILE DIVERGENCE (non-blocking, AC-3 detector): 'docs/agent-memory/notebooks/qa.md' is being committed via a pathspec-SCOPED commit line, which takes its WORKING TREE content (git's --only semantics) — NOT the subset already staged in the shared index for this exact path. The shared index's staged blob for 'docs/agent-memory/notebooks/qa.md' (00c9b1a5a6b146a96e827cdb900c8c3e33acd743) differs from what is about to land in this commit (1828885d06a301366494e782840351013a5ea669) — a peer's differently-staged hunk (or your own further, unreviewed edit) in this SAME file may be about to be swept in. Documented NON-GOAL of the pathspec-commit mandate, see docs/architecture-briefs/2026-07-21-commit-path-peer-index-sweep-guard.md §2.7 — detector only, never blocked. Inspect before trusting this commit's scope: git diff 00c9b1a5a6b146a96e827cdb900c8c3e33acd743 1828885d06a301366494e782840351013a5ea669 -- docs/agent-memory/notebooks/qa.md",
+  "_processed": {
+    "fingerprint": "a8fc817143a2a899b30e349d79e9fa869c365327a5305e3d7dd35ed09a089668",
+    "processedAt": "2026-08-08T17:51:50Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

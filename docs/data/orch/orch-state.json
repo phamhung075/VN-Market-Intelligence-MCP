@@ -1,8 +1,8 @@
 {
   "dashboard_section_cache": {
     "section_name": "po",
-    "last_mtime": 1786208008,
-    "last_linecount": 245,
+    "last_mtime": 1786211557,
+    "last_linecount": 246,
     "po": {
       "section_name": "po",
       "last_mtime": "2026-08-08T16:22:49Z",
@@ -134,7 +134,7 @@
     "does_not_consume_wip": true
   },
   "signal_queue": {
-    "_updated_at": "2026-08-08T16:22:26Z",
+    "_updated_at": "2026-08-08T17:52:36Z",
     "_updated_by": "dev-team",
     "archive": [],
     "rows": [
@@ -3772,7 +3772,7 @@
         "type": "microservice_degraded",
         "summary": "rag-service-1 A-30 memory degradation: 99.66% sustained high — loss of reclamation (CHRONIC PATTERN 11 signals over 4 da",
         "severity": "WARN",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": null,
         "provenance": "detector",
         "audit_cycle_tag": "cron:auditor-t1:2026-08-08T17:30Z",
@@ -22178,7 +22178,7 @@
         "last_served_tick": "2026-08-08T15:54:20Z"
       }
     },
-    "_updated_at": "2026-08-08T17:21:25Z",
+    "_updated_at": "2026-08-08T17:52:36Z",
     "_updated_by": "dev-team",
     "pending_triage_inbox": [
       {
@@ -22980,6 +22980,189 @@
         },
         "createdAt": "2026-08-08T16:56:34Z",
         "drained_at": "2026-08-08T17:21:24Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "9fff978e4ef5af73d0ea353403048c039a3bedd24b14cfb0f8028362f8066f5c",
+        "source": "file",
+        "from": "ci-health-probe",
+        "to": "po",
+        "type": "ci_red",
+        "priority": "high",
+        "payload": {
+          "check_id": "CI-RED-c5d6ab5e",
+          "head_sha": "c5d6ab5e5b2c10c0ca79e2e145c892c77a20c614",
+          "run_id": 31268871450,
+          "run_url": "https://github.com/phamhung075/VN-Market-Intelligence-MCP/actions/runs/31268871450",
+          "conclusion": "failure",
+          "failing_jobs": [
+            {
+              "name": "size-lint",
+              "conclusion": "failure",
+              "jobId": 93131367825
+            }
+          ],
+          "fingerprint": "5824c2231278da7583d07df879c4bf86a53c0fccf3821966c3772c9b40295550",
+          "zone_owner": "dev-team (CI fix)",
+          "summary": "CI RED on main HEAD c5d6ab5e5b2c10c0ca79e2e145c892c77a20c614: size-lint",
+          "suggested_sprint_class": "FIX",
+          "verification_gate": "ci_green_on_subsequent_push"
+        },
+        "createdAt": "2026-08-08T17:24:58Z",
+        "drained_at": "2026-08-08T17:51:50Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "a8fc817143a2a899b30e349d79e9fa869c365327a5305e3d7dd35ed09a089668",
+        "source": "file",
+        "from": "commit-sweep-guard",
+        "to": "po",
+        "type": "bug-escalation",
+        "priority": "high",
+        "payload": "[sweep-guard] SAME-FILE DIVERGENCE (non-blocking, AC-3 detector): 'docs/agent-memory/notebooks/qa.md' is being committed via a pathspec-SCOPED commit line, which takes its WORKING TREE content (git's --only semantics) — NOT the subset already staged in the shared index for this exact path. The shared index's staged blob for 'docs/agent-memory/notebooks/qa.md' (00c9b1a5a6b146a96e827cdb900c8c3e33acd743) differs from what is about to land in this commit (1828885d06a301366494e782840351013a5ea669) — a peer's differently-staged hunk (or your own further, unreviewed edit) in this SAME file may be about to be swept in. Documented NON-GOAL of the pathspec-commit mandate, see docs/architecture-briefs/2026-07-21-commit-path-peer-index-sweep-guard.md §2.7 — detector only, never blocked. Inspect before trusting this commit's scope: git diff 00c9b1a5a6b146a96e827cdb900c8c3e33acd743 1828885d06a301366494e782840351013a5ea669 -- docs/agent-memory/notebooks/qa.md",
+        "createdAt": "2026-08-08T17:34:43Z",
+        "drained_at": "2026-08-08T17:51:50Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "1322b12d2ca0d9cf009e606e2821243326c19a49aeb521f15ec9c69037f457a3",
+        "source": "file",
+        "from": "commit-sweep-guard",
+        "to": "po",
+        "type": "bug-escalation",
+        "priority": "high",
+        "payload": "[sweep-guard] BARE commit about to absorb 2 staged file(s) not necessarily this actor's own: docs/agent-memory/notebooks/system-auditor.md docs/data/auditor-dedup-ledger.json. actor=165f4245-6173-4054-87fd-c55bb626265f mode=warn escalated=true prior_warns=13 threshold=3. Fix: git commit -m \"<msg>\" -- <own-files-only>.",
+        "createdAt": "2026-08-08T17:39:31Z",
+        "drained_at": "2026-08-08T17:51:50Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "058c3f526af9d47022fa66d880a7ea48e1fceef46afcf099fefae1ea7ffc6053",
+        "source": "file",
+        "from": "context-bloat-backstop-hook",
+        "to": "claude-manager-helper",
+        "type": "context_bloat_breach",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/notebooks/digest-predict.md",
+          "line_count": 39,
+          "cap": 200,
+          "byte_count": 18628,
+          "byte_cap": 12000,
+          "class": "agent-notebook",
+          "reason": "byte-cap",
+          "overage": 0,
+          "byte_overage": 6628,
+          "action_required": "prune_or_split"
+        },
+        "createdAt": "2026-08-08T17:43:01Z",
+        "drained_at": "2026-08-08T17:51:50Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "671ae6583d95d3bba5c002b5e796311dabb1cc992f3ac009127db0681a6f463a",
+        "source": "file",
+        "from": "cowork-team",
+        "to": "po",
+        "type": "telemetry",
+        "priority": "low",
+        "payload": {
+          "matched_slots": [
+            "digest-daily"
+          ],
+          "won_slots": [
+            "digest-daily"
+          ],
+          "held_by_other": [],
+          "all_held": false,
+          "spawned": [
+            "docs/agents/digest-predict/flow/main.md"
+          ],
+          "silent": false,
+          "drift_min": 6,
+          "errors": [],
+          "pressure_mode": "adaptive",
+          "calendar_status": "unknown",
+          "suppressed_calendar": [],
+          "suppressed_cadence": [],
+          "downgraded": [],
+          "chef_mutex_applied": false,
+          "due_reasons": {
+            "digest-daily": "cron"
+          },
+          "cadence_minutes": {
+            "digest-daily": null
+          },
+          "last_fired_timestamp": "2026-08-08T17:38:08Z",
+          "last_fired_slots": [
+            "digest-daily"
+          ],
+          "last_fired_write_errors": null,
+          "classification": "FIRE",
+          "reason": "spawned",
+          "nominal_tick": "17:30",
+          "leader_lock": "acquired",
+          "dev_head": "in_progress",
+          "devq": 5,
+          "signal_backlog": 26,
+          "note": "digest-daily guaranteed slot fired on schedule (cron). No new signal_queue rows this tick. digest-predict spawned in background for daily digest+calibration report."
+        },
+        "createdAt": "2026-08-08T17:38:27Z",
+        "drained_at": "2026-08-08T17:51:50Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "5ec5683c3464ab065dec9ba2b6ac9717554f085cf7cc8bf1af3a10b1d11c7ebb",
+        "source": "file",
+        "from": "notebook-auto-prune-hook",
+        "to": "claude-manager-helper",
+        "type": "notebook_single_section_overage_breach",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/notebooks/digest-predict.md",
+          "line_count": 39,
+          "cap": 200,
+          "byte_count": 18628,
+          "byte_cap": 12000,
+          "section_count": 1,
+          "reason": "only preamble+1 section remain; cannot prune further without data loss",
+          "action_required": "manual_split_to_archive"
+        },
+        "createdAt": "2026-08-08T17:42:59Z",
+        "drained_at": "2026-08-08T17:51:50Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "8c50f6c52e8975959dcf466eb5ee7abcc45fdc630b5862c4d0de722ae9463749",
+        "source": "file",
+        "from": "notebook-auto-prune-hook",
+        "to": "claude-manager-helper",
+        "type": "notebook_single_section_overage_breach",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/notebooks/digest-predict.md",
+          "line_count": 40,
+          "cap": 200,
+          "byte_count": 21134,
+          "byte_cap": 12000,
+          "section_count": 1,
+          "reason": "only preamble+1 section remain; cannot prune further without data loss",
+          "action_required": "manual_split_to_archive"
+        },
+        "createdAt": "2026-08-08T17:43:38Z",
+        "drained_at": "2026-08-08T17:51:50Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "2a5f92af0373ec74ef0407e17cb74694a795d7eb66a7198cb741666959ccaed1",
+        "source": "dashboard",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "microservice_degraded",
+        "priority": "WARN",
+        "payload": "rag-service-1 A-30 memory degradation: 99.66% sustained high — loss of reclamation (CHRONIC PATTERN 11 signals over 4 da",
+        "createdAt": "2026-08-08T17:38:49Z",
+        "drained_at": "2026-08-08T17:52:14Z",
         "routed_to": "PO Step 0-SIG"
       }
     ]
