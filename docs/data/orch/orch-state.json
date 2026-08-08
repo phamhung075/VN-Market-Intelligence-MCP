@@ -19484,7 +19484,7 @@
         "last_served_tick": "2026-08-08T22:26:10Z"
       }
     },
-    "_updated_at": "2026-08-08T23:23:31Z",
+    "_updated_at": "2026-08-08T23:42:58Z",
     "_updated_by": "dev-team",
     "pending_triage_inbox": [
       {
@@ -21854,6 +21854,41 @@
         },
         "createdAt": "2026-08-08T23:22:52Z",
         "drained_at": "2026-08-08T23:23:07Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "f19dac588cd8cfaa37b74966b5985114e8aa8c84576647702725bf57e3506e6b",
+        "source": "file",
+        "from": "commit-sweep-guard",
+        "to": "po",
+        "type": "bug-escalation",
+        "priority": "high",
+        "payload": "[notebook-immutability-guard] WARN: docs/agent-memory/notebooks/system-auditor.md — retained section '## c383 · 2026-08-08T21:30Z' has different content staged than at HEAD. Per .claude/skills/notebook-write/SKILL.md AC-2a, a retained '## ' section must be byte-identical across a cycle; the only authorized mutations are dropping a whole oldest section, the AC-2b sub-block intra-prune, or trimming the CURRENT cycle's own new section. If cap pressure forced a shrink, DROP the whole section (archive verbatim if it must be kept) and add a NEW marker section instead — see docs/agent-memory/notebooks/architect.md for the reference-correct pattern. mode=warn (default warn — never blocks; set GIT_NOTEBOOK_IMMUTABILITY_MODE=reject to hard-enforce once re-validated, see scripts/audits/verify-notebook-immutability-gate.sh).\n",
+        "createdAt": "2026-08-08T23:37:28Z",
+        "drained_at": "2026-08-08T23:42:58Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "43ae43d811446cb5f3cdb04eb860a94871267ccddcf903f518e7693e8e877763",
+        "source": "file",
+        "from": "context-bloat-backstop-hook",
+        "to": "claude-manager-helper",
+        "type": "context_bloat_breach",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-architect-4.md",
+          "line_count": 150,
+          "cap": 600,
+          "byte_count": 37334,
+          "byte_cap": 36000,
+          "class": "sprint-decision-journal",
+          "reason": "byte-cap",
+          "overage": 0,
+          "byte_overage": 1334,
+          "action_required": "prune_or_split"
+        },
+        "createdAt": "2026-08-08T23:37:31Z",
+        "drained_at": "2026-08-08T23:42:58Z",
         "routed_to": "PO Step 0-SIG"
       }
     ]
