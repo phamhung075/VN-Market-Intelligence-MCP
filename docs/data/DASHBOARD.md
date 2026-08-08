@@ -886,3 +886,15 @@
 **Mitigation:** No immediate action beyond signal routing.
 
 ---
+
+## Anomaly: A-30 · rag-service-1 post-idle-unload-fix: 77.98% memory (idle-unload firing)
+**Severity:** INFO | **Date:** 2026-08-08 | **Status:** OPEN
+**Location:** rag-service container
+**Details:** rag-service-1 memory at 77.98% (798.5MiB / 1GiB cap) after restart 2026-08-08T08:11:45Z. Container logs confirm idle-unload mechanism is active: 'Embedding model unloaded after 910s idle (threshold=900s)'.
+**Impact:** Container memory below investigate-gate (85%); idle-unload fix is deployed and functioning. No immediate escalation needed.
+**Root cause:** Post-deployment monitoring: idle-unload fix (commit 0308514f5) is active and working as designed. Lower reading reflects fresh restart post-fix deployment.
+**Zone owner:** dev-rag-service
+**Last reported:** 2026-08-08T08:35:03Z (signal sys-20260808T083446-4705, system-auditor -> po, dedup_key=memory_pressure:rag-service:A-30-post-fix-monitoring, INFO Telegram sent)
+**Mitigation:** Converging to existing task OPS-RAG-SERVICE-REBUILD-STALE-IMAGE-PREDATES-IDLE-UNLOAD-FIX (REVIEW, next_agent=qa). AC-3 (measured reclamation) remains open; methodology gap tracked separately (FIX-RECLAMATION-AC-VERIFIED-IN-COLDSTART-WINDOW-BEFORE-WORKLOAD-LOADS, BACKLOG).
+
+---
