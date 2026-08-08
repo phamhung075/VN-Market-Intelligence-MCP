@@ -68,9 +68,13 @@ This zone is HIGHEST-RISK / RUN-SOLO. Before staging any files:
 cd apps/mcp-server && bun tsc --noEmit
 
 # Gate 2b: Server startup (no import errors)
-cd apps/mcp-server && bun run src/index.ts &
+# Port 3000 is usually occupied by the live Docker container on a dev host —
+# EADDRINUSE there proves nothing about YOUR build. Use PORT=<alt> to boot
+# your locally-built code in isolation (2026-08-08, FIX-MCP-SSE-SESSION-
+# MANAGER-PERCONN-LEAK-NO-REAPER):
+cd apps/mcp-server && PORT=3099 bun run src/index.ts &
 sleep 5
-curl -s http://localhost:3000/health
+curl -s http://localhost:3099/health
 kill %1
 
 # Gate 2c: Tool count probe — count must match pre-task baseline (no tool silenced)
