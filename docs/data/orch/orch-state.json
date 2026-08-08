@@ -134,8 +134,8 @@
     "does_not_consume_wip": true
   },
   "signal_queue": {
-    "_updated_at": "2026-08-08T06:21:18Z",
-    "_updated_by": "code-janitor",
+    "_updated_at": "2026-08-08T06:41:19Z",
+    "_updated_by": "router",
     "archive": [],
     "rows": [
       {
@@ -3463,7 +3463,7 @@
         "to": "po",
         "type": "recurring-bug-corroboration",
         "severity": "LOW",
-        "status": "NEW",
+        "status": "READ",
         "summary": "7th occurrence (9th spawn) of analysis-only-exit (see feedback_leaf_agent_analysis_only_exit_recurring_pattern_20260806.md), first time on AUDIT_TIER=2 specifically: system-auditor spawn af6ecdcd0479fa160 produced a detailed correct plan for the full tier-2 checklist (rag-service dedup disposition + B/C checks) but returned zero-of-N writes -- no notebook entry, no signal_queue rows, no commits, RAW-verified via git log + notebook tail + jq. Owning fix FIX-LEAF-AGENT-ANALYSIS-ONLY-EXIT-NARRATES-INSTEAD-OF-EXECUTING already REVIEW/next_agent=qa (developer shipped 2026-08-08T01:19Z) -- not re-escalated, this is a pre-fix-verification data point. Router re-spawned tier-2 once with explicit execute-not-narrate reminder per the 5th/6th-spawn mitigation precedent (2/2 clean when included) rather than leaving the tick unaudited.",
         "payload_ref": null,
         "provenance": "router-raw-verification"
@@ -3476,11 +3476,24 @@
         "type": "db_freshness_breach",
         "summary": "market_messages stale (0 in 3h, market hours)",
         "severity": "WARN",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": null,
         "provenance": "detector",
         "audit_cycle_tag": "cron:auditor-t2:2026-08-08T04:00Z",
         "dedup_key": "db_freshness_breach:market_messages:C-06"
+      },
+      {
+        "id": "router-20260808T064119-fabid",
+        "ts": "2026-08-08T06:41:19Z",
+        "from": "router",
+        "to": "po",
+        "type": "auditor_fabricated_signal_id",
+        "summary": "system-auditor Tier-1 c82 (2026-08-08T06:36Z) committed a non-existent signal_id (bare integer 10496, not this system's sys-<ts>-<hash> format) into BOTH its own notebook (commit 18158ad9a) AND docs/data/DASHBOARD.md (commit a3c93fbdb, msg literally 'DASHBOARD row A-30 (signal 10496)'). RAW-verified: no row with id 10496 or matching ts exists anywhere in orch-state.json .signal_queue.rows[] (226 rows checked, newest by ts is sys-20260808T062503-66c2 from the PRIOR tier-2 cycle). The real E-3 append (contractually always-fires per feedback_auditor_signalqueue_append_always_telegram_only_dedup, regardless of Telegram dedup) never happened this cycle -- instead a leftover UNCOMMITTED orch-state.json working-tree diff exists that only flips 2 pre-existing unrelated rows NEW->READ (no new row), _updated_at bumped to 06:36:20Z but _updated_by still stale as 'code-janitor'. Net effect: DASHBOARD.md now permanently (git history) cites an unverifiable/fake signal reference for a real, recurring, already-tracked finding (rag-service A-30, 96.24%, root cause FU-RAG-DEPLOY-MEMORY REVIEW since 2026-07-29) -- not a false alarm about the underlying condition, but a data-integrity break in the audit trail itself. New memory: feedback_auditor_tier1_fabricated_signal_id_committed_to_dashboard.md",
+        "severity": "HIGH",
+        "status": "NEW",
+        "payload_ref": null,
+        "provenance": "router-raw-verification",
+        "dedup_key": null
       }
     ],
     "last_triaged_at": "2026-07-29T06:25:00Z",
