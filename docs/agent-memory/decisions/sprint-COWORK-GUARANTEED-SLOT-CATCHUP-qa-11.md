@@ -206,3 +206,5 @@
 - Re-ran 3 sibling suites: `dedup-check` 13/13, `history-append` 28/28, `emit-audit-signal` 123/123 (both latter two grew past their 2026-08-06-cited counts — unrelated intervening work, not a regression). Found ONE discrepancy: `db-integrity-mount-drift-check.test.sh` 11/12 (not claimed 12/12) — root-caused to a pre-existing, untouched-by-either-commit, Docker-Desktop-for-Mac `/host_mnt/` path-virtualization quirk in T5's live-replay (script correctly emits SKIP, test only accepts PASS/FAIL) — unrelated to WAL/`immutable=1` correctness, not part of AC-5/6/7, non-blocking.
 **why-decision:** vc-approved, DONE_VERIFIED. The WAL-staleness defect (harder, QA-blocking half) is genuinely closed — every specific claim (guard logic, wiring, comment deletion, journal_mode restriction, test pass counts w/ genuine non-empty-WAL reproduction) independently re-verified true, not trusted from prose.
 **why-change:** none from plan — flagged the mount-drift-check discrepancy in `qa_review_note` for the record; does not block this row (out of scope, pre-existing, unrelated mechanism).
+
+### CAP-REACHED · 2026-08-08T11:34:25Z
