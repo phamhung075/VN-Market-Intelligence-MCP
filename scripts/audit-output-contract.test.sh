@@ -44,6 +44,10 @@ trap cleanup EXIT
 
 CALL_LOG="$TMPDIR_TEST/mcp-calls.log"
 
+# Isolated scratch violations sidecar — NEVER the live
+# docs/data/auditor-output-contract-violations.json.
+export AUDIT_OUTPUT_CONTRACT_VIOLATIONS_FILE="$TMPDIR_TEST/auditor-output-contract-violations.json"
+
 # shellcheck source=./audit-output-contract.sh
 source "$CONTRACT_SH"
 
@@ -133,6 +137,23 @@ OUT5=$(run_audit_output_contract --markers-file "$MF5")
 RC5=$?
 check "T5 abort-only exit=0 (nothing posted, nothing to violate)" "$([ "$RC5" -eq 0 ] && echo true || echo false)"
 check "T5 abort-only all zero" "$(printf '%s' "$OUT5" | grep -q 'signals_posted=0 | telegram_sent=0 | signal_queue_rows_written=0 | dashboard_rows=0 | dedup_skipped=0' && echo true || echo false)"
+
+# ── T5b: FIX-AUDITOR-B12-DOUBLE-INVOKE-EMIT-MARKER-LOSS — a SKIP-duplicate-
+# invocation marker (emit-audit-signal.sh's own same-cycle idempotency
+# PRE-check no-op) counts toward NOTHING, same treatment as ABORT. ─────────
+reset_log
+MF5B=$(markers_file <<'EOF'
+[emit-signal] OK dedup_key=data_stale:sbv_fx:B-12 id=sys-20260808T000000-aaaa
+[emit-signal] SKIP-duplicate-invocation dedup_key=data_stale:sbv_fx:B-12 cycle_tag=cron:auditor-t2:2026-08-08T00:00Z id=sys-20260808T000000-aaaa
+[emit-dashboard] OK id=sys-20260808T000000-aaaa check_id=B-12
+EOF
+)
+OUT5B=$(run_audit_output_contract --markers-file "$MF5B")
+RC5B=$?
+check "T5b skip-duplicate-invocation exit=0 (no violation)" "$([ "$RC5B" -eq 0 ] && echo true || echo false)"
+check "T5b skip-duplicate-invocation: signals_posted=1 (the SKIP-duplicate line adds nothing)" "$(printf '%s' "$OUT5B" | grep -q 'signals_posted=1' && echo true || echo false)"
+check "T5b skip-duplicate-invocation: signal_queue_rows_written=1 (NOT double-counted)" "$(printf '%s' "$OUT5B" | grep -q 'signal_queue_rows_written=1' && echo true || echo false)"
+check "T5b skip-duplicate-invocation: telegram_sent=1 (NOT double-counted)" "$(printf '%s' "$OUT5B" | grep -q 'telegram_sent=1' && echo true || echo false)"
 
 # ── T6: OK-escalation-bypass counts telegram_sent, e3-only/no-telegram do not ──
 reset_log
@@ -276,6 +297,77 @@ RC13=$?
 check "T13 cycle-tag-scoped exit=0 (no violation — peer row excluded)" "$([ "$RC13" -eq 0 ] && echo true || echo false)"
 check "T13 cycle-tag-scoped no V1 violation" "$(! printf '%s' "$OUT13" | grep -q 'VIOLATION' && echo true || echo false)"
 check "T13 cycle-tag-scoped signal_queue_rows_written=1 (peer row not counted)" "$(printf '%s' "$OUT13" | grep -q 'signal_queue_rows_written=1' && echo true || echo false)"
+
+# ── T14-T17: FIX-AUDITOR-B12-DOUBLE-INVOKE-EMIT-MARKER-LOSS (acceptance 4) —
+# every VIOLATION line is ALSO durably recorded to
+# AUDIT_OUTPUT_CONTRACT_VIOLATIONS_FILE, synchronously, INDEPENDENT of
+# whether the calling agent ever pastes it anywhere. This is the real
+# "impossible to omit" enforcement — a script-owned write, not a narrated
+# instruction. ────────────────────────────────────────────────────────────
+
+# T14: clean cycle (T2's shape, no violation) — violations file untouched.
+reset_log
+rm -f "$AUDIT_OUTPUT_CONTRACT_VIOLATIONS_FILE"
+MF14=$(markers_file <<'EOF'
+[emit-signal] OK dedup_key=data_stale:x:B-05 id=sys-20260729T100000-aaaa
+[emit-dashboard] OK id=sys-20260729T100000-aaaa check_id=B-05
+EOF
+)
+run_audit_output_contract --markers-file "$MF14" >/dev/null
+check "T14 clean-cycle: no violations file written (nothing to record)" "$([ ! -f "$AUDIT_OUTPUT_CONTRACT_VIOLATIONS_FILE" ] && echo true || echo false)"
+
+# T15: V2 violation (T7's shape — bare post-agent-signal, no signal_queue
+# row) — durable record MUST exist and MUST carry the violation detail,
+# even though this test never "pastes" anything into any notebook.
+reset_log
+rm -f "$AUDIT_OUTPUT_CONTRACT_VIOLATIONS_FILE"
+MF15=$(markers_file <<'EOF'
+[post-agent-signal] OK telegram=no
+EOF
+)
+OUT15=$(run_audit_output_contract --markers-file "$MF15" --cycle-tag "cron:auditor-t3:2026-08-08T02:00Z")
+RC15=$?
+check "T15 V2-violation exit=1" "$([ "$RC15" -ne 0 ] && echo true || echo false)"
+check "T15 V2-violation durable file created" "$([ -f "$AUDIT_OUTPUT_CONTRACT_VIOLATIONS_FILE" ] && echo true || echo false)"
+check "T15 V2-violation durable file is valid JSON array" "$(jq -e 'type=="array"' "$AUDIT_OUTPUT_CONTRACT_VIOLATIONS_FILE" >/dev/null 2>&1 && echo true || echo false)"
+check "T15 V2-violation durable record carries the V2 detail text" "$(jq -e '[.[] | select(.detail | startswith("V2"))] | length >= 1' "$AUDIT_OUTPUT_CONTRACT_VIOLATIONS_FILE" >/dev/null 2>&1 && echo true || echo false)"
+check "T15 V2-violation durable record carries cycle_tag verbatim" "$(jq -e '[.[] | select(.detail | startswith("V2"))][0].cycle_tag == "cron:auditor-t3:2026-08-08T02:00Z"' "$AUDIT_OUTPUT_CONTRACT_VIOLATIONS_FILE" >/dev/null 2>&1 && echo true || echo false)"
+check "T15 V2-violation side-by-side: printed VIOLATION line and durable record agree" "$(printf '%s' "$OUT15" | grep -q 'VIOLATION: signals emitted but no signal_queue rows written' && jq -e '[.[] | select(.detail | contains("signals emitted but no signal_queue rows written"))] | length >= 1' "$AUDIT_OUTPUT_CONTRACT_VIOLATIONS_FILE" >/dev/null 2>&1 && echo true || echo false)"
+
+# T16: multiple violations in ONE run (T8's shape — V4+V5 both fire) — BOTH
+# get durably recorded, not just the first.
+reset_log
+rm -f "$AUDIT_OUTPUT_CONTRACT_VIOLATIONS_FILE"
+MF16=$(markers_file <<'EOF'
+[emit-signal] OK dedup_key=microservice_degraded:api-gateway:A-12 id=sys-20260729T100500-ffff
+[emit-dashboard] OK id=sys-20260729T100500-ffff check_id=A-12
+EOF
+)
+run_audit_output_contract --markers-file "$MF16" --anomalies-count 0 --next-token clean >/dev/null
+check "T16 multi-violation: BOTH V4 and V5 durably recorded" "$([ "$(jq '[.[] | select(.detail | startswith("V4") or startswith("V5"))] | length' "$AUDIT_OUTPUT_CONTRACT_VIOLATIONS_FILE")" -eq 2 ] && echo true || echo false)"
+
+# T17: durable record survives/accumulates ACROSS separate script
+# invocations (the exact shape a notebook that already committed cannot
+# offer — this file is append-only across runs, not per-run scratch).
+# Fixture triggers exactly ONE violation (V4 alone — signal_queue_rows_
+# written and dashboard_rows both satisfied, only the RETURN headline
+# anomalies-count is inconsistent) so the per-run delta is unambiguous.
+reset_log
+rm -f "$AUDIT_OUTPUT_CONTRACT_VIOLATIONS_FILE"
+MF17A=$(markers_file <<'EOF'
+[emit-signal] OK dedup_key=x:y:T17A id=sys-t17a
+[emit-dashboard] OK id=sys-t17a check_id=T17A
+EOF
+)
+run_audit_output_contract --markers-file "$MF17A" --anomalies-count 0 >/dev/null
+check "T17 first run: exactly 1 violation recorded" "$([ "$(jq 'length' "$AUDIT_OUTPUT_CONTRACT_VIOLATIONS_FILE")" -eq 1 ] && echo true || echo false)"
+MF17B=$(markers_file <<'EOF'
+[emit-signal] OK dedup_key=x:y:T17B id=sys-t17b
+[emit-dashboard] OK id=sys-t17b check_id=T17B
+EOF
+)
+run_audit_output_contract --markers-file "$MF17B" --anomalies-count 0 >/dev/null
+check "T17 durable record accumulates across runs (2 entries from 2 separate invocations)" "$([ "$(jq 'length' "$AUDIT_OUTPUT_CONTRACT_VIOLATIONS_FILE")" -eq 2 ] && echo true || echo false)"
 
 # ── Summary ──────────────────────────────────────────────────────────────────
 echo ""

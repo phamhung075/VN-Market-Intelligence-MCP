@@ -70,6 +70,11 @@
 #                    _send_orphan_bug_telegram()
 #
 # MARKERS (RAW-verifiable, grep for "[emit-signal]"):
+#   same (dedup_key, cycle_tag) already    -> "[emit-signal] SKIP-duplicate-invocation dedup_key=<k>
+#     written earlier THIS cycle (FIX-         cycle_tag=<t> id=<id-of-the-earlier-row>"
+#     AUDITOR-B12-DOUBLE-INVOKE-EMIT-          (PRE-check, runs before E-1 — ZERO new agent_signals
+#     MARKER-LOSS) — E-1/E-3 never run          rows, ZERO new signal_queue rows on this invocation;
+#     for this call at all                      counts toward NOTHING in audit-output-contract.sh)
 #   success, fresh key / window-expired    -> "[emit-signal] OK dedup_key=<k> id=<id>"
 #   success, dedup-skip (Telegram gated)   -> "[emit-signal] SKIP-dedup dedup_key=<k> last_sent=<ts> id=<id>"
 #   success, severity-escalation bypass    -> "[emit-signal] OK-escalation-bypass dedup_key=<k> prev_sev=<n> new_sev=<n> id=<id>"
@@ -95,10 +100,19 @@
 #   E-3 POST-WRITE read-back failure       -> "[emit-signal] ABORT e3-readback-failed <id>"
 #   bad usage / malformed args             -> "[emit-signal] ABORT <reason>" (exit 2)
 #
-# DEDUP SCOPE (Hard Constraint 5 / FR-4): dedup gates E-2 (send_telegram)
-# ONLY. E-1 (post_agent_signal) and E-3 (signal-row write + read-back) ALWAYS
-# fire regardless of dedup state (except when --e3-only skips E-1/E-2 by
-# explicit caller choice, not by dedup decision).
+# DEDUP SCOPE (Hard Constraint 5 / FR-4): the 7-day LEDGER below gates E-2
+# (send_telegram) ONLY, ACROSS cycles. E-1 (post_agent_signal) and E-3
+# (signal-row write + read-back) ALWAYS fire regardless of ledger state
+# (except when --e3-only skips E-1/E-2 by explicit caller choice, not by
+# dedup decision) — this is unchanged and deliberate: a persisting finding
+# must keep landing a fresh row every cycle even while its Telegram stays
+# muted. This is a SEPARATE contract from the SAME-CYCLE idempotency
+# PRE-check (FIX-AUDITOR-B12-DOUBLE-INVOKE-EMIT-MARKER-LOSS, see
+# _e3_already_emitted_this_cycle() below): that check runs BEFORE E-1 is
+# ever attempted and short-circuits the ENTIRE run (E-1 AND E-3, not just
+# E-2) when this exact (dedup_key, --cycle-tag) pair was already written
+# earlier in THIS SAME cycle — it never looks at the 7-day ledger and never
+# suppresses a legitimate cross-cycle re-fire.
 #
 # LEDGER (FR-3, docs/data/auditor-dedup-ledger.json — separate sidecar, NOT
 # part of orch-state.json, NOT routed through orch-apply.sh):
@@ -546,7 +560,55 @@ _build_row_json() {
     --arg severity "$SEVERITY" \
     --arg cycle_tag "$CYCLE_TAG" \
     --arg payload_ref "$PAYLOAD_REF" \
-    '{id:$id, ts:$ts, from:$from, to:$to, type:$type, summary:$summary, severity:$severity, status:"NEW", payload_ref: (if $payload_ref == "" then null else $payload_ref end), provenance:"detector", audit_cycle_tag: (if $cycle_tag == "" then null else $cycle_tag end)}'
+    --arg dedup_key "$DEDUP_KEY" \
+    '{id:$id, ts:$ts, from:$from, to:$to, type:$type, summary:$summary, severity:$severity, status:"NEW", payload_ref: (if $payload_ref == "" then null else $payload_ref end), provenance:"detector", audit_cycle_tag: (if $cycle_tag == "" then null else $cycle_tag end), dedup_key: (if $dedup_key == "" then null else $dedup_key end)}'
+}
+
+# FIX-AUDITOR-B12-DOUBLE-INVOKE-EMIT-MARKER-LOSS: cycle-scoped idempotency
+# PRE-check, a sibling seam to _build_row_json() above — NOT a change to
+# _e3_write_row()/the CAS-retry loop (evidence positively excluded that
+# function: two genuinely distinct invocations produce two DISTINCT row ids,
+# which a CAS retry cannot do, since a retry re-applies the SAME row_json).
+#
+# Root cause this closes: E-1 (post_agent_signal) and E-3 (signal_queue
+# write) are DELIBERATELY dedup-blind by design (FR-4/Hard Constraint 5 —
+# the 7-day ledger gates E-2/Telegram ONLY). That is correct across CYCLES
+# (a persisting finding must keep landing a fresh row every cycle even while
+# its Telegram stays muted) but gives ZERO protection WITHIN one cycle: if
+# the caller (main.md, an LLM-narrated flow — this script cannot control how
+# many times it gets invoked) calls this script twice for the textually
+# IDENTICAL dedup_key inside the SAME cycle (confirmed live 2026-07-29,
+# 10:33:36Z + 10:33:38Z, agent_signals #9885/#9886, signal_queue
+# sys-20260729T103337-13e5 / sys-20260729T103338-7f95), both invocations
+# produce a full, independent E-1+E-3 write — two agent_signals rows, two
+# signal_queue rows, from one real finding.
+#
+# This function makes a genuine same-cycle repeat a structural no-op: BEFORE
+# E-1 is ever called, it re-reads $ORCH_STATE_FILE for an existing
+# signal_queue row sharing BOTH this exact --cycle-tag (audit_cycle_tag) AND
+# this exact dedup_key (a field _build_row_json() above now always writes,
+# additive/passthrough, zero schema migration — mirrors the audit_cycle_tag/
+# payload_ref precedent). Only engages when BOTH are non-empty — every
+# production Tier-2/3 B-xx/C-xx call site in docs/agents/system-auditor/
+# flow/main.md already passes --cycle-tag "$FIRE_TASK_ID" (FIX-AUDIT-OUTPUT-
+# CONTRACT-SIGNALQUEUE-ROWS-WRITTEN-SELFREPORT-MISMATCH, 2026-08-05); a
+# caller that omits --cycle-tag (or is in --e3-only mode, where dedup_key is
+# optional) gets NO short-circuit here — same conservative "skip the check,
+# never invent a signal" posture V1's own crosscheck already uses when its
+# own inputs don't resolve.
+_e3_already_emitted_this_cycle() {
+  local dedup_key="$1" cycle_tag="$2" existing_id
+  [ -z "$cycle_tag" ] && return 1
+  [ -z "$dedup_key" ] && return 1
+  [ -f "$ORCH_STATE_FILE" ] || return 1
+  existing_id=$(jq -r --arg tag "$cycle_tag" --arg dk "$dedup_key" \
+    '[.signal_queue.rows[] | select(.audit_cycle_tag == $tag and .dedup_key == $dk)] | .[0].id // empty' \
+    "$ORCH_STATE_FILE" 2>/dev/null)
+  if [ -n "$existing_id" ]; then
+    DUPLICATE_EXISTING_ID="$existing_id"
+    return 0
+  fi
+  return 1
 }
 
 # Reads the live orch-state file and builds this attempt's CAS-retry
@@ -737,6 +799,18 @@ run_emit_signal() {
   DEDUP_DETAIL=""
 
   _parse_args "$@" || return 2
+
+  # FIX-AUDITOR-B12-DOUBLE-INVOKE-EMIT-MARKER-LOSS: cycle-scoped idempotency
+  # short-circuit — see _e3_already_emitted_this_cycle() above. Runs BEFORE
+  # E-1 is ever attempted, so a genuine same-cycle repeat produces ZERO new
+  # agent_signals rows and ZERO new signal_queue rows, never just a muted
+  # Telegram. Not gated on E3_ONLY's dedup_key requirement — --e3-only calls
+  # with no dedup_key simply never match (function returns 1 immediately).
+  DUPLICATE_EXISTING_ID=""
+  if _e3_already_emitted_this_cycle "$DEDUP_KEY" "$CYCLE_TAG"; then
+    echo "[emit-signal] SKIP-duplicate-invocation dedup_key=$DEDUP_KEY cycle_tag=$CYCLE_TAG id=$DUPLICATE_EXISTING_ID"
+    return 0
+  fi
 
   if [ "$E3_ONLY" != "true" ]; then
     _run_e1 || return 1

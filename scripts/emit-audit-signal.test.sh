@@ -685,6 +685,74 @@ row_origin_ok() {
 check "T30 origin discriminator present on E-2 sink message (T27's file)" "$(row_origin_ok "$SINK_FILE_T27" && echo true || echo false)"
 check "T31 origin discriminator present on E-3 orphan sink message (T28's file), sink value is the redirected path not literal 'live'" "$(grep -q "sink=${SINK_FILE_T28}" "$SINK_FILE_T28" && echo true || echo false)"
 
+# ── T34-T37: FIX-AUDITOR-B12-DOUBLE-INVOKE-EMIT-MARKER-LOSS — cycle-scoped
+# idempotency PRE-check. Reproduces the live 2026-07-29T10:33:36Z/38Z shape
+# (two invocations, same dedup_key, 2s apart, same cycle) and proves the
+# fix: exactly ONE agent_signals call (E-1) and ONE signal_queue row (E-3)
+# for the finding, no matter how many times the caller invokes the script
+# for the identical (dedup_key, cycle_tag) pair this cycle. ─────────────────
+
+# T34: two invocations, same dedup_key + same --cycle-tag (the exact B-12/
+# sbv_fx incident shape) — 2nd call is a structural no-op BEFORE E-1.
+reset_case
+OUT34A=$(run_emit_signal --check-id B-12 --category-type data_stale --severity WARN \
+  --summary "sbv_fx stale 32min" \
+  --detail-json '{"dedup_key":"data_stale:sbv_fx:B-12"}' \
+  --cycle-tag "cron:auditor-t2:2026-07-29T10:30Z")
+RC34A=$?
+ROW_ID34A=$(printf '%s' "$OUT34A" | grep -o 'id=[^ ]*$' | cut -d= -f2)
+OUT34B=$(run_emit_signal --check-id B-12 --category-type data_stale --severity WARN \
+  --summary "sbv_fx stale 32min" \
+  --detail-json '{"dedup_key":"data_stale:sbv_fx:B-12"}' \
+  --cycle-tag "cron:auditor-t2:2026-07-29T10:30Z")
+RC34B=$?
+check "T34 first invocation exit=0" "$([ "$RC34A" -eq 0 ] && echo true || echo false)"
+check "T34 first invocation marker OK (real write)" "$(printf '%s' "$OUT34A" | grep -q '^\[emit-signal\] OK dedup_key=' && echo true || echo false)"
+check "T34 second invocation exit=0 (no-op, not an error)" "$([ "$RC34B" -eq 0 ] && echo true || echo false)"
+check "T34 second invocation marker SKIP-duplicate-invocation" "$(printf '%s' "$OUT34B" | grep -q '^\[emit-signal\] SKIP-duplicate-invocation dedup_key=data_stale:sbv_fx:B-12 cycle_tag=cron:auditor-t2:2026-07-29T10:30Z ' && echo true || echo false)"
+check "T34 second invocation references the FIRST call's row id" "$(printf '%s' "$OUT34B" | grep -q "id=${ROW_ID34A}\$" && echo true || echo false)"
+check "T34 post_agent_signal called EXACTLY ONCE across both invocations (single agent_signals row)" "$([ "$(call_count_for post_agent_signal)" -eq 1 ] && echo true || echo false)"
+check "T34 signal_queue has EXACTLY ONE row for this dedup_key+cycle_tag" "$([ "$(jq --arg dk "data_stale:sbv_fx:B-12" --arg tag "cron:auditor-t2:2026-07-29T10:30Z" '[.signal_queue.rows[] | select(.dedup_key==$dk and .audit_cycle_tag==$tag)] | length' "$SCRATCH_ORCH")" -eq 1 ] && echo true || echo false)"
+check "T34 second invocation send_telegram NOT called again" "$([ "$(call_count_for send_telegram)" -eq 1 ] && echo true || echo false)"
+
+# T35: same dedup_key, DIFFERENT --cycle-tag — legitimate cross-cycle re-fire
+# is UNCHANGED (this is not the 7-day ledger's job, it's per-cycle scoping).
+reset_case
+OUT35A=$(run_emit_signal --check-id B-12 --category-type data_stale --severity WARN \
+  --summary "sbv_fx stale (cycle 1)" --detail-json '{"dedup_key":"data_stale:sbv_fx:B-12"}' \
+  --cycle-tag "cron:auditor-t2:2026-07-29T10:30Z")
+OUT35B=$(run_emit_signal --check-id B-12 --category-type data_stale --severity WARN \
+  --summary "sbv_fx stale (cycle 2)" --detail-json '{"dedup_key":"data_stale:sbv_fx:B-12"}' \
+  --cycle-tag "cron:auditor-t2:2026-07-29T14:30Z")
+check "T35 different-cycle-tag: 2nd call is a REAL emit, not SKIP-duplicate" "$(printf '%s' "$OUT35B" | grep -qE '^\[emit-signal\] (OK|SKIP-dedup) dedup_key=' && echo true || echo false)"
+check "T35 different-cycle-tag: post_agent_signal called twice (E-1 never cross-cycle-gated by this check)" "$([ "$(call_count_for post_agent_signal)" -eq 2 ] && echo true || echo false)"
+check "T35 different-cycle-tag: TWO signal_queue rows (both cycles' writes preserved)" "$([ "$(jq --arg dk "data_stale:sbv_fx:B-12" '[.signal_queue.rows[] | select(.dedup_key==$dk)] | length' "$SCRATCH_ORCH")" -eq 2 ] && echo true || echo false)"
+
+# T36: no --cycle-tag supplied on either call — guard does not engage
+# (conservative: only short-circuits when it can scope to an exact cycle).
+reset_case
+run_emit_signal --check-id B-12 --category-type data_stale --severity WARN \
+  --summary "no cycle-tag case" --detail-json '{"dedup_key":"data_stale:notag:B-12"}' >/dev/null
+OUT36B=$(run_emit_signal --check-id B-12 --category-type data_stale --severity WARN \
+  --summary "no cycle-tag case" --detail-json '{"dedup_key":"data_stale:notag:B-12"}')
+check "T36 no-cycle-tag: 2nd call still a real emit (SKIP-dedup, not SKIP-duplicate-invocation — guard did not engage)" "$(printf '%s' "$OUT36B" | grep -q '^\[emit-signal\] SKIP-dedup dedup_key=' && echo true || echo false)"
+check "T36 no-cycle-tag: E-1 still fires both times (row STILL appended per existing FR-4 contract)" "$([ "$(call_count_for post_agent_signal)" -eq 2 ] && echo true || echo false)"
+
+# T37: additive field check — every row now carries its dedup_key verbatim
+# (SignalRowSchema.passthrough(), same precedent as audit_cycle_tag/
+# payload_ref, T21-T24 above); empty/absent dedup_key (--e3-only path) -> null.
+reset_case
+row_dedup_key() { jq -r --arg id "$1" '[.signal_queue.rows[] | select(.id==$id)][0].dedup_key' "$SCRATCH_ORCH"; }
+OUT37=$(run_emit_signal --check-id B-12 --category-type data_stale --severity WARN \
+  --summary "dedup_key field probe" --detail-json '{"dedup_key":"data_stale:T37:B-12"}' \
+  --cycle-tag "cron:auditor-t2:2026-08-08T00:00Z")
+ROW_ID37=$(printf '%s' "$OUT37" | grep -o 'id=[^ ]*$' | cut -d= -f2)
+check "T37 row carries dedup_key verbatim" "$([ "$(row_dedup_key "$ROW_ID37")" = "data_stale:T37:B-12" ] && echo true || echo false)"
+OUT37B=$(run_emit_signal --check-id IMP-1 --category-type improvement_proposal --severity INFO \
+  --summary "e3-only dedup_key null probe" --detail-json '{}' --e3-only)
+ROW_ID37B=$(printf '%s' "$OUT37B" | grep -o 'id=[^ ]*' | head -1 | cut -d= -f2)
+check "T37 e3-only row dedup_key is null (no --detail-json.dedup_key supplied)" "$([ "$(row_dedup_key "$ROW_ID37B")" = "null" ] && echo true || echo false)"
+
 # ── Summary ──────────────────────────────────────────────────────────────────
 echo ""
 echo "Results: $PASS passed, $FAIL failed"
