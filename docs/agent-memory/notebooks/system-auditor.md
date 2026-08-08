@@ -3,6 +3,22 @@
 Tier-1/2/3 audit runs; newest-first; max 200L total, max 60L per section.
 
 
+## c378 · 2026-08-08T18:05:32Z
+
+### Audit Run Tier-1 (18:03–18:05 UTC 2026-08-08)
+- Tier: 1 | Services: 13 host_runtime_set checked | Health: 5 probed
+- Anomalies: 1 WARN (A-30 rag-service-1 NEW BELOW-FLOOR escalation) | Status: DEGRADED
+- **rag-service-1 A-30 BELOW-FLOOR Escalation (NEW dedup_key):**
+  - Baseline: 99.72% ≥ 85% investigate-gate → ENGAGE deep-probe
+  - Deep-probe 6 samples over 65s: all at 99.72% (min 99.72%, median 99.72%, max 99.72%)
+  - Verdict: ESCALATE "loss of reclamation" (0 dips, 0 discontinuities, all 100% sustained)
+  - Memory free: 2.9MiB (BELOW 40MiB floor threshold) — NEW severity escalation trigger
+  - State: OOMKilled=false, restarts=0, state_changed=false, VmHWM=UNAVAILABLE (host-floor-check skip)
+  - Emission: [emit-signal] OK sys-20260808T180600-2ee6 (WARN) — NEW dedup_key microservice_degraded:vn-market-intelligence-mcp-rag-service-1:A-30:BELOW-FLOOR
+  - ESCALATION NOTE: Previous WARN filed @17:38:48Z on sustained A-30 ceiling. NOW crosses BELOW-FLOOR threshold (2.9MiB vs 40MiB floor). Chronic pattern 12+ distinct dedup entries since 2026-08-05, zero reclamation opportunity. Recommend immediate memory analysis / load spike investigation.
+- **mcp-server-1 A-30:** Baseline 10.34% < 85% gate → SKIP
+- A-20 pdf-extractor: 3/3 PASS | A-21 crashes: 0 PASS | Disk: 44% PASS
+
 ## c377 · 2026-08-08T17:35:39Z
 
 ### Audit Run Tier-1 (17:35–17:38 UTC 2026-08-08)

@@ -138,5 +138,9 @@
   "microservice_degraded:vn-market-intelligence-mcp-rag-service-1:A-30": {
     "ts": "2026-08-08T17:38:48Z",
     "sev": 2
+  },
+  "microservice_degraded:vn-market-intelligence-mcp-rag-service-1:A-30:BELOW-FLOOR": {
+    "ts": "2026-08-08T18:05:32Z",
+    "sev": 2
   }
 }
