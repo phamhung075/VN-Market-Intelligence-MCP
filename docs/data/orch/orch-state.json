@@ -3673,6 +3673,20 @@
         "provenance": "detector",
         "audit_cycle_tag": "cron:auditor-t2:2026-08-08T12:00Z",
         "dedup_key": "cron_fire_gap:bctcReparseJob:A-29"
+      },
+      {
+        "id": "sys-20260808T153848-7fac",
+        "ts": "2026-08-08T15:38:48Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "signal_feedback",
+        "summary": "A-30 WARN: rag-service-1 memory sustained >93% (94.69-94.71%), loss of reclamation",
+        "severity": "WARN",
+        "status": "NEW",
+        "payload_ref": null,
+        "provenance": "detector",
+        "audit_cycle_tag": "cron:auditor-t1:2026-08-08T15:30Z",
+        "dedup_key": "microservice_degraded:rag-service-1:A-30"
       }
     ],
     "last_triaged_at": "2026-07-29T06:25:00Z",
