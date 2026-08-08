@@ -93,12 +93,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "active_task_id": null,
-    "next_agent": null,
-    "next_action": "idle — no active sprint-task",
-    "updated_at": "2026-08-08T20:58:02Z",
-    "updated_by": "dev-team (router: dev-mcp-server completion notification processed, row confirmed in review[])"
+    "status": "in_progress",
+    "active_task_id": "FIX-DONELANE-NO-DONEVERIFIED-PRODUCER-DEP-STARVATION",
+    "next_agent": "architect",
+    "next_action": "Design-Router Sweep claim of FIX-DONELANE-NO-DONEVERIFIED-PRODUCER-DEP-STARVATION — spawn architect DIRECTLY (no zone-detect indirection; lane already resolved at promote time). supervised/plan_only (if either was set) preserved — do not clear.",
+    "updated_at": "2026-08-08T21:22:42Z",
+    "updated_by": "dev-team (design-router sweep)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -8201,35 +8201,6 @@
         "zone_corrected_at": "2026-07-30T21:52:04Z",
         "note": "SECOND occurrence of this exact SBV-zone-mislabel class — see FIX-SBV-FETCHER-ZERO-VALUE-EMIT (zone-corrected 2026-07-28 by dev-macro-indicators, same root cause: SBV write path is 100% apps/mcp-server/ + vps-scripts/, macro-indicators only reads). Flagging for PO: consider auditing remaining SBV-titled backlog rows tagged zone:apps/macro-indicators/ for the same mislabel before a 3rd BOUNDED-1 misroute.",
         "decision_journal": "docs/agent-memory/decisions/sprint-DATA-SERVE-INTEGRITY-dev-macro-indicators.md STEP dev-macro-indicators-S1"
-      },
-      {
-        "id": "FIX-DONELANE-NO-DONEVERIFIED-PRODUCER-DEP-STARVATION",
-        "type": "FIX",
-        "size": "M",
-        "priority": "P0",
-        "status": "BACKLOG",
-        "zone": "cross-service/",
-        "owner": "po",
-        "next_agent": "architect",
-        "created_at": "2026-07-30T21:48:55Z",
-        "created_by": "po/triage-20260730T2148",
-        "updated_at": "2026-07-30T21:58:26Z",
-        "title": "task_board.done[] has ZERO consumers and nothing systematically produces the DONE_VERIFIED token, so deps_satisfied() (which requires the exact string DONE_VERIFIED and rejects plain DONE) permanently starves every successor of a finished-but-unverified row - 8 rows measured starved right now, 4 of them P0",
-        "desc": "THIRD instance of this repo's documented-consumer-with-no-documented-producer class (siblings: FIX-BOUNDED1-SUPERVISED-LANE-NO-SWEEPER, which idled a P0 6+ days; FIX-WF2-SUPERVISED-HOLD-NO-PO-SIDE-GOAHEAD-PRODUCER, review). MECHANISM, all three legs RAW-verified 2026-07-30T21:48Z: (leg 1) scripts/lib/devteam-eligibility.jq deps_satisfied() is satisfied only when EVERY dep resolves to the exact string DONE_VERIFIED - its own comment says verbatim 'plain DONE is NOT sufficient'. (leg 2) NOTHING sweeps task_board.done[]. `grep -rn 'task_board.done'` across scripts/devteam-*.jq, scripts/agents-flow/*.sh and docs/agents/dev-team/flow/*.md returns ZERO hits excluding done_verified - all four/five dev-team pickers (BOUNDED-1, SLS, RLC, Review QA-Drain, DRS) read backlog[]/ready[]/review[], never done[]. (leg 3) consequently DONE_VERIFIED is only ever written by hand-minted one-off jq files (scripts/po-*.jq, scripts/router-*.jq, scripts/qa-*.jq - 25+ distinct such scripts exist), i.e. it is produced only when a human-driven actor happens to remember. NET EFFECT: done[] is a terminal-LOOKING lane that is actually a dead-letter queue. 11 rows sit in it, 10 at status DONE; 4 of those carry a next_agent (qa/architect/developer/agent-father) that no sweeper ever reads, so the address is dead mail.",
-        "evidence_raw_verified_20260730T2148": [
-          "MEASURED STARVATION SET (predicate RE-RUN, not eyeballed - is_bounded1_eligible from scripts/lib/devteam-eligibility.jq with --slurpfile detail backlog-detail.json --slurpfile archive <(bash scripts/lib/archive-glob-cat.sh)): 8 backlog/ready rows are BOUNDED-1-ineligible with deps_satisfied=false as the SOLE failing gate AND every dep already terminal. P0 FIX-COMMIT-SWEEP-GUARD-SCRIPT-ACTUATOR-AND-NOTEBOOK-LONGTAIL (dep LAYER2=DONE); P0 TASK-COWORK-CATCHUP-3, -4, -5 (dep TASK-COWORK-CATCHUP-2=DONE); P1 FACTORY-APP-split-assembleEveningSummary (dep FACTORY-APP-split-assembleBriefing=DONE); P2 FIX-COMMIT-SWEEP-VICTIM-SELF-DETECT (dep ..-SKILLS=DONE); P3 FU-FPT-2025Q4-STAGE4-DUP (dep FIX-BCTC-TABLE-COLUMN-FPT-OVERFIT=DONE); medium FIX-CYCLEJOB-1294-FOLLOWUP-SWEEP-UNMOCKED-LIVE-FETCH (dep ..-MACRO-TEST-UNMOCKED-LIVE-FETCH=DONE).",
-          "done[] LANE DUMP (11 rows, 10 at DONE): SPIKE-COWORK-DRAIN-BODY-NOT-EXECUTING-ON-WORK-TICKS next=developer since 07-21; FIX-COMMIT-PATH-PEER-INDEX-SWEEP-GUARD-SKILLS next=MISSING since 07-21; TRACK-CRON-AUDIT-VPS-PLANE / TRACK-CRON-AUDIT-SERVER-PLANE next=MISSING since 07-22; FIX-AUDITOR-A12A20A30-FP-REEMIT-CONVERGE next=MISSING; UNBLOCK-AGENT-MODELS-SWITCH-COMMIT-DISPOSITION next=agent-father; TASK-COWORK-CATCHUP-2 next=qa since 07-28; FACTORY-APP-split-assembleBriefing next=qa since 07-28; SPIKE-DASHBOARD-TIER-HEALTH-CURL-ERR-FLAP next=architect. TASK-COWORK-CATCHUP-2 and FACTORY-APP-split-assembleBriefing have been addressed to qa for 2 days with no lane that reads them.",
-          "GREP (leg 2): `grep -rn 'task_board\\.done\\b' scripts/devteam-*.jq scripts/agents-flow/*.sh docs/agents/dev-team/flow/*.md | grep -v done_verified` -> 0 hits. The only two done-lane mentions anywhere in dev-team flow are post-cycle.md:69 and :107, both about cold-EVICTION, not verification promotion.",
-          "LIVE HARM, this tick: the P0 chain FIX-COMMIT-PATH-PEER-INDEX-SWEEP-GUARD (recurring_bug_count=4, occurrence 5 fired 21:30:47Z as commit-sweep-guard signal ...T213047Z-59042.json against commit 43e0d7ddc) -> unblock condition FIX-COMMIT-SWEEP-GUARD-SCRIPT-ACTUATOR-AND-NOTEBOOK-LONGTAIL (P0) -> starved solely because LAYER2 said DONE not DONE_VERIFIED. A P0 was blocked on a P0 that was blocked on a STRING, for 12h, while the defect it prevents fired again."
-        ],
-        "po_scope_calls_NOT_design": [
-          "RULED OUT - loosening deps_satisfied() to accept plain DONE. That deletes the distinction the strict token exists to enforce (landed != verified) and would silently auto-dispatch successors of genuinely unverified work. Do not re-scope the gate as the fix (feedback_gate_widening_recommendation_requires_actuator_dry_run) - the gate is correct; the PRODUCER is missing.",
-          "RULED OUT as a SOLE fix - another flow-doc line telling agents to remember to write DONE_VERIFIED. 25+ hand-minted one-off jq scripts already prove that vigilance-shaped control does not hold, and this is the same disposition that failed 3x on the commit-pathspec class.",
-          "IN SCOPE for architect - WHICH mechanism produces the token, and its failure-safety. Candidates the architect chooses between, not a pre-made decision: (a) a done[]-lane sweeper on the dev-team idle chain, symmetric with the existing Review QA-Drain, that routes a DONE row to its next_agent (qa where set) and lets QA promote the token; (b) making DONE a lane-illegal terminal state so a row must land as DONE_VERIFIED, CANCELLED etc. and any DONE row is loud; (c) both. Whichever is chosen must NOT auto-promote DONE -> DONE_VERIFIED without a verifier - that would make the token vacuous and is strictly worse than the current starvation (feedback_reader_writes_its_own_trigger_field_check_is_vacuous)."
-        ],
-        "acceptance": "(1) A named, executable producer for the DONE_VERIFIED token exists and is wired into a lane that actually runs (the dev-team idle chain rotation, or an equivalent the architect justifies), so a finished row reaching done[] cannot sit there indefinitely. (2) A DONE row carrying next_agent is REACHED by that producer - demonstrate on the two live 2-day-old cases (TASK-COWORK-CATCHUP-2, FACTORY-APP-split-assembleBriefing, both next=qa). (3) The producer NEVER promotes DONE -> DONE_VERIFIED on its own authority; promotion requires the verifier the token denotes. A row it cannot verify must become LOUDER (surfaced), not silently promoted. (4) A row that lands in done[] with NO next_agent is not silently invisible - it is surfaced to PO/router rather than defaulting to permanent residence. (5) The 8 currently-starved rows are re-measured with the ACTUAL predicate after the fix; the count must drop, and any row still starved must have a named reason. (6) Regression instrument: a script that re-runs is_bounded1_eligible over backlog[]+ready[] and reports the sole-deps_satisfied-failure set, so this class is detectable next time instead of being re-derived by hand.",
-        "verification_gate": "Re-run the exact measurement in evidence_raw_verified_20260730T2148 leg 1 (is_bounded1_eligible with deps_satisfied isolated as the sole failing gate, threaded through the REAL scripts/lib/devteam-eligibility.jq, not a reimplementation) against the live board AFTER the fix, and show the starved-set count with each remaining member's named reason. PLUS: show a done[] row transitioning to DONE_VERIFIED through the new producer with real command output - not asserted from flow-doc prose (feedback_fix_landed_in_the_pregate_not_the_probe_the_agent_actually_runs).",
-        "note": "Do NOT hand-flip the remaining DONE rows to clear the measurement. PO deliberately flipped exactly ONE (FIX-COMMIT-PATH-PEER-INDEX-SWEEP-GUARD-LAYER2) because that row's own po_closure_20260730 field already carried a file:line-precise PO RAW-verification from 09:05:59Z - the token was the only thing missing. TASK-COWORK-CATCHUP-2 and FACTORY-APP-split-assembleBriefing carry next_agent=qa and have NOT been verified by anyone; flipping them would be PO ratifying work it never checked, which is the exact vacuous-gate failure this row exists to prevent. They stay DONE as live evidence."
       },
       {
         "id": "FIX-SIGNAL-OUTCOMES-LIVENESS-BLIND-TO-ZERO-PRODUCTION",
@@ -19182,8 +19153,8 @@
         }
       ]
     },
-    "last_triaged_at": "2026-08-08T16:06:57Z",
-    "last_triaged_by": "po/triage-20260808T1600Z",
+    "last_triaged_at": "2026-08-08T21:22:38Z",
+    "last_triaged_by": "dev-team (design-router sweep)",
     "in_progress": [
       {
         "id": "FIX-COWORK-SIGNAL-FILENAME-CYCLEID-KEYING",
@@ -19247,6 +19218,41 @@
           "TASK-COWORK-SIGNAL-NAMING-CONTRACT"
         ],
         "decomposition_note": "Phase 1 decomposed into 4 atomic tasks per PO amendments (3 binding, 1 correction to FR-1 WINDOWKEY logic per Amendment 3). All inherit plan_only/supervised flags. No developer dispatch until PO adjudication."
+      },
+      {
+        "id": "FIX-DONELANE-NO-DONEVERIFIED-PRODUCER-DEP-STARVATION",
+        "type": "FIX",
+        "size": "M",
+        "priority": "P0",
+        "status": "IN_PROGRESS",
+        "zone": "cross-service/",
+        "owner": "po",
+        "next_agent": "architect",
+        "created_at": "2026-07-30T21:48:55Z",
+        "created_by": "po/triage-20260730T2148",
+        "updated_at": "2026-08-08T21:22:42Z",
+        "title": "task_board.done[] has ZERO consumers and nothing systematically produces the DONE_VERIFIED token, so deps_satisfied() (which requires the exact string DONE_VERIFIED and rejects plain DONE) permanently starves every successor of a finished-but-unverified row - 8 rows measured starved right now, 4 of them P0",
+        "desc": "THIRD instance of this repo's documented-consumer-with-no-documented-producer class (siblings: FIX-BOUNDED1-SUPERVISED-LANE-NO-SWEEPER, which idled a P0 6+ days; FIX-WF2-SUPERVISED-HOLD-NO-PO-SIDE-GOAHEAD-PRODUCER, review). MECHANISM, all three legs RAW-verified 2026-07-30T21:48Z: (leg 1) scripts/lib/devteam-eligibility.jq deps_satisfied() is satisfied only when EVERY dep resolves to the exact string DONE_VERIFIED - its own comment says verbatim 'plain DONE is NOT sufficient'. (leg 2) NOTHING sweeps task_board.done[]. `grep -rn 'task_board.done'` across scripts/devteam-*.jq, scripts/agents-flow/*.sh and docs/agents/dev-team/flow/*.md returns ZERO hits excluding done_verified - all four/five dev-team pickers (BOUNDED-1, SLS, RLC, Review QA-Drain, DRS) read backlog[]/ready[]/review[], never done[]. (leg 3) consequently DONE_VERIFIED is only ever written by hand-minted one-off jq files (scripts/po-*.jq, scripts/router-*.jq, scripts/qa-*.jq - 25+ distinct such scripts exist), i.e. it is produced only when a human-driven actor happens to remember. NET EFFECT: done[] is a terminal-LOOKING lane that is actually a dead-letter queue. 11 rows sit in it, 10 at status DONE; 4 of those carry a next_agent (qa/architect/developer/agent-father) that no sweeper ever reads, so the address is dead mail.",
+        "evidence_raw_verified_20260730T2148": [
+          "MEASURED STARVATION SET (predicate RE-RUN, not eyeballed - is_bounded1_eligible from scripts/lib/devteam-eligibility.jq with --slurpfile detail backlog-detail.json --slurpfile archive <(bash scripts/lib/archive-glob-cat.sh)): 8 backlog/ready rows are BOUNDED-1-ineligible with deps_satisfied=false as the SOLE failing gate AND every dep already terminal. P0 FIX-COMMIT-SWEEP-GUARD-SCRIPT-ACTUATOR-AND-NOTEBOOK-LONGTAIL (dep LAYER2=DONE); P0 TASK-COWORK-CATCHUP-3, -4, -5 (dep TASK-COWORK-CATCHUP-2=DONE); P1 FACTORY-APP-split-assembleEveningSummary (dep FACTORY-APP-split-assembleBriefing=DONE); P2 FIX-COMMIT-SWEEP-VICTIM-SELF-DETECT (dep ..-SKILLS=DONE); P3 FU-FPT-2025Q4-STAGE4-DUP (dep FIX-BCTC-TABLE-COLUMN-FPT-OVERFIT=DONE); medium FIX-CYCLEJOB-1294-FOLLOWUP-SWEEP-UNMOCKED-LIVE-FETCH (dep ..-MACRO-TEST-UNMOCKED-LIVE-FETCH=DONE).",
+          "done[] LANE DUMP (11 rows, 10 at DONE): SPIKE-COWORK-DRAIN-BODY-NOT-EXECUTING-ON-WORK-TICKS next=developer since 07-21; FIX-COMMIT-PATH-PEER-INDEX-SWEEP-GUARD-SKILLS next=MISSING since 07-21; TRACK-CRON-AUDIT-VPS-PLANE / TRACK-CRON-AUDIT-SERVER-PLANE next=MISSING since 07-22; FIX-AUDITOR-A12A20A30-FP-REEMIT-CONVERGE next=MISSING; UNBLOCK-AGENT-MODELS-SWITCH-COMMIT-DISPOSITION next=agent-father; TASK-COWORK-CATCHUP-2 next=qa since 07-28; FACTORY-APP-split-assembleBriefing next=qa since 07-28; SPIKE-DASHBOARD-TIER-HEALTH-CURL-ERR-FLAP next=architect. TASK-COWORK-CATCHUP-2 and FACTORY-APP-split-assembleBriefing have been addressed to qa for 2 days with no lane that reads them.",
+          "GREP (leg 2): `grep -rn 'task_board\\.done\\b' scripts/devteam-*.jq scripts/agents-flow/*.sh docs/agents/dev-team/flow/*.md | grep -v done_verified` -> 0 hits. The only two done-lane mentions anywhere in dev-team flow are post-cycle.md:69 and :107, both about cold-EVICTION, not verification promotion.",
+          "LIVE HARM, this tick: the P0 chain FIX-COMMIT-PATH-PEER-INDEX-SWEEP-GUARD (recurring_bug_count=4, occurrence 5 fired 21:30:47Z as commit-sweep-guard signal ...T213047Z-59042.json against commit 43e0d7ddc) -> unblock condition FIX-COMMIT-SWEEP-GUARD-SCRIPT-ACTUATOR-AND-NOTEBOOK-LONGTAIL (P0) -> starved solely because LAYER2 said DONE not DONE_VERIFIED. A P0 was blocked on a P0 that was blocked on a STRING, for 12h, while the defect it prevents fired again."
+        ],
+        "po_scope_calls_NOT_design": [
+          "RULED OUT - loosening deps_satisfied() to accept plain DONE. That deletes the distinction the strict token exists to enforce (landed != verified) and would silently auto-dispatch successors of genuinely unverified work. Do not re-scope the gate as the fix (feedback_gate_widening_recommendation_requires_actuator_dry_run) - the gate is correct; the PRODUCER is missing.",
+          "RULED OUT as a SOLE fix - another flow-doc line telling agents to remember to write DONE_VERIFIED. 25+ hand-minted one-off jq scripts already prove that vigilance-shaped control does not hold, and this is the same disposition that failed 3x on the commit-pathspec class.",
+          "IN SCOPE for architect - WHICH mechanism produces the token, and its failure-safety. Candidates the architect chooses between, not a pre-made decision: (a) a done[]-lane sweeper on the dev-team idle chain, symmetric with the existing Review QA-Drain, that routes a DONE row to its next_agent (qa where set) and lets QA promote the token; (b) making DONE a lane-illegal terminal state so a row must land as DONE_VERIFIED, CANCELLED etc. and any DONE row is loud; (c) both. Whichever is chosen must NOT auto-promote DONE -> DONE_VERIFIED without a verifier - that would make the token vacuous and is strictly worse than the current starvation (feedback_reader_writes_its_own_trigger_field_check_is_vacuous)."
+        ],
+        "acceptance": "(1) A named, executable producer for the DONE_VERIFIED token exists and is wired into a lane that actually runs (the dev-team idle chain rotation, or an equivalent the architect justifies), so a finished row reaching done[] cannot sit there indefinitely. (2) A DONE row carrying next_agent is REACHED by that producer - demonstrate on the two live 2-day-old cases (TASK-COWORK-CATCHUP-2, FACTORY-APP-split-assembleBriefing, both next=qa). (3) The producer NEVER promotes DONE -> DONE_VERIFIED on its own authority; promotion requires the verifier the token denotes. A row it cannot verify must become LOUDER (surfaced), not silently promoted. (4) A row that lands in done[] with NO next_agent is not silently invisible - it is surfaced to PO/router rather than defaulting to permanent residence. (5) The 8 currently-starved rows are re-measured with the ACTUAL predicate after the fix; the count must drop, and any row still starved must have a named reason. (6) Regression instrument: a script that re-runs is_bounded1_eligible over backlog[]+ready[] and reports the sole-deps_satisfied-failure set, so this class is detectable next time instead of being re-derived by hand.",
+        "verification_gate": "Re-run the exact measurement in evidence_raw_verified_20260730T2148 leg 1 (is_bounded1_eligible with deps_satisfied isolated as the sole failing gate, threaded through the REAL scripts/lib/devteam-eligibility.jq, not a reimplementation) against the live board AFTER the fix, and show the starved-set count with each remaining member's named reason. PLUS: show a done[] row transitioning to DONE_VERIFIED through the new producer with real command output - not asserted from flow-doc prose (feedback_fix_landed_in_the_pregate_not_the_probe_the_agent_actually_runs).",
+        "note": "Do NOT hand-flip the remaining DONE rows to clear the measurement. PO deliberately flipped exactly ONE (FIX-COMMIT-PATH-PEER-INDEX-SWEEP-GUARD-LAYER2) because that row's own po_closure_20260730 field already carried a file:line-precise PO RAW-verification from 09:05:59Z - the token was the only thing missing. TASK-COWORK-CATCHUP-2 and FACTORY-APP-split-assembleBriefing carry next_agent=qa and have NOT been verified by anyone; flipping them would be PO ratifying work it never checked, which is the exact vacuous-gate failure this row exists to prevent. They stay DONE as live evidence.",
+        "promoted_at": "2026-08-08T21:22:38Z",
+        "promoted_by": "dev-team (design-router sweep)",
+        "promotion_note": "Design-Router Sweep — assigned dispatch_lane='architect' (priority_rank=0); ratified agent-identity allowlist, non-dev next_agent class distinct from SLS's supervised+plan_only quarantine — see FIX-BOUNDED1-NONDEV-NEXTAGENT-RESIDUAL-NO-DISPATCH-LANE",
+        "dispatch_lane": "architect",
+        "claimed_at": "2026-08-08T21:22:42Z",
+        "claimed_by": "dev-team (design-router sweep)"
       }
     ]
   },
@@ -19271,7 +19277,7 @@
         "last_served_tick": "2026-08-08T20:24:14Z"
       },
       "drs": {
-        "last_served_tick": "2026-08-08T14:25:57Z"
+        "last_served_tick": "2026-08-08T21:22:23Z"
       },
       "qa_drain": {
         "last_served_tick": "2026-08-08T15:28:29Z"
@@ -19280,7 +19286,7 @@
         "last_served_tick": "2026-08-08T15:54:20Z"
       }
     },
-    "_updated_at": "2026-08-08T21:20:49Z",
+    "_updated_at": "2026-08-08T21:22:23Z",
     "_updated_by": "dev-team",
     "pending_triage_inbox": [
       {
