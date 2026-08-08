@@ -96,8 +96,9 @@
     "status": "idle",
     "active_task_id": null,
     "next_agent": null,
-    "updated_at": "2026-08-08T05:30:25Z",
-    "updated_by": "architect (FIX-AUDITOR-DOCAUDIT-MEMORY-PATH-PREDICATE plan-only closeout)"
+    "next_action": "FIX-AUDITOR-D4-WHITELIST-DATA-QUALITY-ANOMALY-PREFIX spec delivered (docs/handoffs/FIX-AUDITOR-D4-WHITELIST-DATA-QUALITY-ANOMALY-PREFIX-spec.md), row moved backlog/in_progress -> review, next_agent=po for adjudication (supervised+plan_only, no code shipped this cycle). .head reset to idle so a genuinely in_progress task can claim the pointer next.",
+    "updated_at": "2026-08-08T06:04:50Z",
+    "updated_by": "dev-mcp-server (FIX-AUDITOR-D4-WHITELIST-DATA-QUALITY-ANOMALY-PREFIX closeout)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -11377,37 +11378,6 @@
         "updated_at": "2026-08-01T04:38:38Z"
       },
       {
-        "id": "FIX-BCTC-REFINE-WINDOWTRUNCATION-COLUMNLAYOUT-CROSSWINDOW",
-        "title": "windowPartitioner maxWindowPages truncation creates a headless tail window that continuation-stitch.md's contract never anticipated -- resolveColumnLayout() defaults to code-first, silently swapping code/label on label-first (bank) continuation tables split by the cap",
-        "status": "BACKLOG",
-        "type": "FIX",
-        "priority": "P2",
-        "size": "M",
-        "zone": "apps/mcp-server/",
-        "owner": "dev-mcp-server",
-        "next_agent": "architect",
-        "supervised": true,
-        "plan_only": true,
-        "created_at": "2026-08-01T05:28:09Z",
-        "created_by": "dev-mcp-server/spike-SPIKE-BCTC-REFINE-MAXWINDOW-TRUNCATION",
-        "updated_at": "2026-08-01T05:31:00Z",
-        "source": "SPIKE-BCTC-REFINE-MAXWINDOW-TRUNCATION findings, docs/spikes/SPIKE-BCTC-REFINE-MAXWINDOW-TRUNCATION.md",
-        "root_cause": "windowPartitioner.ts's maxWindowPages cap (windowPartitioner.ts:92-101) does NOT fold an over-cap continuation table into its current window -- it starts a brand-new window (i=j) at the very next page, which is itself a mid-table continuation page with no header of its own (that's why it matched CONTINUATION_MARKER in the first place). This 'tail window' gets page_type='continuation' (getBctcPendingRefineTool.ts:319-335) and is dispatched to the SAME sub-flow as a genuine first-page window (docs/agents/refine_bctc_md/flow/continuation-stitch.md), whose contract (Steps 2-3) unconditionally treats the window's first page as carrying the table's real header -- a rule that was never updated to anticipate a truncation-created headless tail. Downstream, refinedMarkdownParser.ts::resolveColumnLayout() (refinedMarkdownParser.ts:386-393) decides code-first vs label-first column order by reading the CAPTURED header row's own cell text, but headerCells is a per-call local re-initialized to null on every parseRefinedMarkdown invocation (refinedMarkdownParser.ts:439) -- unlike statement_section, which IS explicitly threaded window-to-window via initialSection/finalSection (refinedMarkdownParser.ts:404-419, finalizeBctcRefine.ts:162,174-175). A tail window with no header of its own (the expected shape) falls back to the DEFAULT code-first layout (refinedMarkdownParser.ts:387,391), silently swapping code<->label for every 4-column row of a label-first (bank Meu B02a/TCTDHN) continuation table whose true header only existed in the truncated head window. This corrupts (not drops) code/label text; value_current/value_prior are read from the same cell indices in both layouts so numeric values are unaffected. bctcScalarAggregator.ts resolves headline scalars (total_assets, equity_total, net_revenue, ...) via LABEL-CANONICAL matching preferred over code (bctcScalarAggregator.ts:20-21,396-399) and also uses row code/label shape for isBankFormFromRows bank-vs-corporate detection -- a swap can silently degrade or null the headline figures this pipeline exists to produce, with no error and no gate that catches it (checkSectionCompleteness/BEQ-7 only checks statement_section PRESENCE, never code/label correctness -- bctcSectionCompleteness.ts:27-60). Same root mechanism as the already-shipped FIX-BCTC-BANK-BS-COLUMN-ORDER (single-window, no-captured-header case) -- that fix added within-window header capture but never cross-window threading, so the maxWindowPages truncation path re-opens the identical hazard through a side door the original fix did not anticipate. Live-confirmed trigger frequency: 5 truncation WARNs within the same second of a single run (docs/agent-memory/health/team-tool-recheck-2026-06-21-1605.md:195-196) -- not a theoretical edge case. NOT independently reproduced within the spike's 120-min timebox: an actual corrupted bctc_table_rows row instance from a live truncation-tail window (would need pulling a real bctc_refined_units row past a report's first truncated unit_id and diffing against a known label-first bank filing).",
-        "deliverable": "Architect decision (not a blind copy-paste) among 3 non-exclusive candidate mitigations, then implement the chosen combination: (1) raise maxWindowPages default / make it PDF-adaptive so real long bank continuation tables stop splitting; (2) thread a headerCells/column-layout hint forward across windows in parseDoneUnitsToRows the same way carrySection/statement_section already is, so a headless tail window inherits the correct layout from its head window; (3) have windowPartitioner mark truncation-tail windows explicitly (make the already-claimed but nonexistent truncated_continuation flag real -- windowPartitioner.ts:50 docstring vs 0 grep hits) so continuation-stitch.md's live agent-flow contract can fetch the head window's page-N header context on demand instead of silently assuming it is absent. Whichever combination is chosen, add a regression fixture that exercises the actual >maxWindowPages split-across-two-windows path end to end (partition -> refine markdown -> finalize) with a label-first (bank-form) 4+-column continuation table -- no existing test does this (grep -rn maxWindowPages apps/mcp-server/src/__tests__ only covers inputs that never exceed the cap: AR-refined-units-idempotency.test.ts:346,369; FIX-REFINE-WINDOW-DB-PAGELIST.test.ts:128 tests a different bug -- DB-driven page-list construction, not the continuation cap).",
-        "acceptance": "A synthetic label-first (bank Meu B02a/TCTDHN-shaped) continuation table spanning > maxWindowPages pages, run through partitionIntoWindows -> parseRefinedMarkdown (per-window, threading whatever new cross-window state the chosen fix adds) -> finalizeBctcRefine's parseDoneUnitsToRows, produces rows in the tail window with code/label in the CORRECT (non-swapped) order -- not just non-empty. Negative control: an existing code-first (corporate) continuation table fixture is unaffected (0-diff). The health-recheck WARN's severity/wording is corrected in the SAME change (or a follow-up doc-only PR) to stop attributing it to intelligence-cycle/news signal-drop -- see SPIKE-BCTC-REFINE-MAXWINDOW-TRUNCATION Finding 0.",
-        "files": [
-          "apps/mcp-server/src/application/utils/windowPartitioner.ts",
-          "apps/mcp-server/src/application/utils/refinedMarkdownParser.ts",
-          "apps/mcp-server/src/application/usecases/finalizeBctcRefine/finalizeBctcRefine.ts",
-          "docs/agents/refine_bctc_md/flow/continuation-stitch.md",
-          "docs/agents/refine_bctc_md/flow/main.md"
-        ],
-        "related": [
-          "SPIKE-BCTC-REFINE-MAXWINDOW-TRUNCATION",
-          "FIX-BCTC-BANK-BS-COLUMN-ORDER"
-        ]
-      },
-      {
         "id": "FIX-MACRO-INDICATORS-EMPTY-COLUMNS",
         "title": "macro_indicators latest row (id=675, vietnam) populates ONLY cpi/gdp_growth/interest_rate; unemployment_rate/inflation_rate/trade_balance/current_account/government_debt/budget_deficit/manufacturing_pmi/consumer_confidence/retail_sales are ALL EMPTY -> /dashboard/macro mostly blank. Residual data-completeness gap NOT covered by macro-fetch-cluster (FRED/PMI) nor TASK-MACRO-COMMODITY-DELTA.",
         "type": "FIX",
@@ -15703,37 +15673,6 @@
         "po_corroboration_c80_20260808T0116Z": "Fresh A-30 datapoint, 2026-08-08T01:05:33-01:06:54Z (system-auditor c80 Tier-1, RAW JSON in notebook commit 569f79108): mcp-server 6-probe window 97.16 / 97.20 / 97.39 / 97.16 / 97.58 / 97.59 %, min 97.16 max 97.59, reclamation_dips=0, discriminator verdict=ESCALATE, OOMKilled=false, RestartCount=2, VmHWM=3058144KB vs VmRSS=3023460KB. This is 19h AFTER the container OOM'd at ~05:57Z on 2026-08-07 (the death that confirmed sys-20260807T054825-771b as a true positive) - memory is back at the same pre-death ceiling with zero reclamation, i.e. the leak refills the 3GiB cap within a day of every restart. Logged here rather than as a new signal_queue row because c80's own E-3 append never fired (see FIX-ANALYSIS-ONLY-EXIT-DETECTOR-OR-VERDICT-BLIND-TO-PARTIAL-WRITE-CYCLE) and because the finding is already routed to this row - no duplicate minted. Dispatch fields deliberately untouched."
       },
       {
-        "id": "FIX-AUDITOR-D4-WHITELIST-DATA-QUALITY-ANOMALY-PREFIX",
-        "title": "D4 held-lock detector re-fires on data-quality-anomaly:* — KNOWN_LEGIT_PREFIXES (authored 2026-07-08) never learned the lock kind bctc-analyst introduced 2026-07-19; whitelist is a static list that lags every new escalation-lock kind",
-        "status": "READY",
-        "type": "FIX",
-        "priority": "P2",
-        "size": "S",
-        "zone": "apps/mcp-server/",
-        "owner": "dev-mcp-server",
-        "next_agent": "dev-mcp-server",
-        "plan_only": true,
-        "supervised": true,
-        "created_at": "2026-07-25T06:59:44Z",
-        "created_by": "po/triage-20260725T0645",
-        "origin_signal_id": "sau-d4-data-quality-anomaly-dgc-q1-2026-not_found-20260725",
-        "root_cause": "apps/mcp-server/src/scheduler/system/tasksMdJanitorJob.ts:197-205 KNOWN_LEGIT_PREFIXES omits 'data-quality-anomaly:'. PO RAW-verified the filter IS live (applyR1bFilter called at :602 inside runTasksMdJanitor) and that the TS job IS the emitter (signal id matches the sau-d4-{entityId}-{checkId}-{YYYYMMDD} contract at :440-470) — so this is NOT a regression of FIX-D4-HELD-LOCK-NO-BOARD-ROW-RECONCILE (e109f49f8, DONE_VERIFIED), it is a whitelist coverage gap. Second guard cannot save it: isLiveConcurrentSession requires the owner session in the live presence roster, and owner f33d0102 (bctc-analyst) is absent. TIMELINE = the real defect: whitelist authored 2026-07-08; the data-quality-anomaly escalation lock was introduced 2026-07-19 by the bctc-analyst reprocess-vs-new-filing guard (docs/agents/bctc-analyst/flow/cycle.md:75). A static prefix list cannot track lock kinds that agents mint later.",
-        "deliverable": "1) Stop the false positive: cover 'data-quality-anomaly:' in the R-1b exclusion. 2) DECIDE EXPLICITLY, do not silently add a 4th one-off prefix (CLAUDE.md: fix root cause definitif not recurrent symptom): all 5 held sprint-task locks today are ticker-scoped bctc-analyst escalations (esc-datacov:*, esc-deepdive:*, data-quality-anomaly:*) sharing the shape <kind>:<TICKER>:<PERIOD>[:ESC-N] — either generalise to that shape, or promote the list to docs/data/system-map.json per the CLAUDE.md 'System Data - Never Hardcode' rule so code + agent spec read ONE source. 3) Sync the spec plane in the SAME change or it re-drops on the next port: the whitelist is duplicated verbatim in docs/agents/system-auditor/handlers.md:49 and docs/agents/system-auditor/audit-dimensions.md:55, both also missing the prefix. 4) Clear stale doc drift: handlers.md:19 and audit-dimensions.md:90 still assert 'the live code has NOT been updated to implement it yet' — false since e109f49f8.",
-        "acceptance": "One live tasksMdJanitor cycle with data-quality-anomaly:DGC:Q1-2026 still held emits ZERO D4 signal_queue rows for it and logs 'D4 SKIP: data-quality-anomaly:DGC:Q1-2026 - known-legit-pattern'. Negative control: a genuinely orphaned non-whitelisted sprint-task lock STILL trips D4 (do not blanket-suppress). Unit tests extend apps/mcp-server/src/__tests__/FIX-D4-HELD-LOCK-NO-BOARD-ROW-RECONCILE.test.ts:120-147 table. Code whitelist and both doc lists are byte-identical in content.",
-        "related": [
-          "FIX-AUDITOR-C04-PARSEDAT-RECENCY-PREDICATE",
-          "UC-ASL-P3"
-        ],
-        "note": "DO NOT RELEASE the lock. PO RAW-probed task_list_held: data-quality-anomaly:DGC:Q1-2026 is LIVE (sprint-task, bctc-analyst, claimed 2026-07-23T15:15:40Z, ttl 604800s, expires 2026-07-30T15:15:40Z, ~5.3d remaining) — legit board-row-less escalation per feedback_esc3_held_lock_no_board_row_is_legit. Signal is a FALSE POSITIVE; releasing would drop an in-flight 7-day data-quality escalation. Prior art checked: no existing row covers the prefix gap; git log on tasksMdJanitorJob.ts since 2026-07-20 empty and worktree clean, so no in-flight peer fix.",
-        "updated_at": "2026-08-08T03:50:56Z",
-        "po_second_facet_20260728": "SECOND FACET FOLDED IN (converge, no new row — the detector is one root cause with two emissions). The row as written covers the `not_found` emission (held lock has no board row). The SAME detector also emits a `pipeline_mismatch` row for the same lock: 'orch-state/lock mismatch: active=<head.active_task_id> held=data-quality-anomaly:DGC:Q1-2026'. That comparison is a CATEGORY ERROR, not a stale whitelist: it compares .head.active_task_id (the dev-team dispatch head, a dev task) against a long-TTL sprint-task escalation lock owned by a DIFFERENT agent (bctc-analyst) in a DIFFERENT plane. Those two are never required to be equal, so the predicate mismatches on every tick for the entire 7-day TTL regardless of system state — a whitelist entry alone will NOT silence it unless the pipeline_mismatch path consults the same exclusion. Both emissions must be fixed together or the FP count only halves. EVIDENCE: the identical pair fired on 2026-07-27 AND 2026-07-28 with nothing changing in between (4 signal_queue rows, ids sau-d4-data-quality-anomaly-dgc-q1-2026-{not_found,pipeline_mismatch}-2026072{7,8}), on top of the 2026-07-25 pair that minted this row. PRIORITY P3 -> P2: not damage, but a confirmed 2-per-day recurring false positive into PO's inbox that has now survived 3 consecutive days and 6 signal rows; at P3 it sits behind 42 rows and keeps emitting. The lock itself is LIVE and LEGIT (expires 2026-07-30T15:15:40Z) — the standing DO NOT RELEASE instruction in .note is unchanged.",
-        "updated_by": "po/triage-20260728T13",
-        "promoted_at": "2026-08-08T03:50:55Z",
-        "promoted_by": "dev-team (supervised-lane sweep)",
-        "promotion_note": "Supervised-Lane Sweep — assigned dispatch_lane='dev-mcp-server' (priority_rank=2); supervised/plan_only flags preserved, gate NOT disabled — see FIX-BOUNDED1-SUPERVISED-LANE-NO-SWEEPER",
-        "dispatch_lane": "dev-mcp-server"
-      },
-      {
         "id": "FIX-AUDITOR-C04-PARSEDAT-RECENCY-PREDICATE",
         "title": "system-auditor predicate errors — mutation-timestamp + window class, 3 checks. (C-04) counts bulk-reparse re-stamps as new low-confidence extractions (parsed_at is a mutation timestamp, not arrival) AND counts never-extracted rows (conf=0, status=pending) as low-confidence -> recurring WARN false-positive. (C-01/C-02 — added 2026-07-31 by PO, verified live) their window is `date >= date(\"now\",\"-1 day\")` = TWO calendar dates: at 2026-07-31T09:12Z C-01 returned 947 and C-02 returned 1070 while date=2026-07-31 held only 129 distinct codes. The checks cannot measure same-day coverage at ANY threshold — the window is the defect, not the >=25 / >0 bar. Also write down the invariant that cost a router a full session on a phantom \"86% coverage collapse\": daily_ohlcv same-day coverage is ~130 BY DESIGN (live intraday tick universe = 117-119 codes EVERY session per intraday_ohlcv_5m 07-20..07-31 and market_prices_history); the full ~940-code universe lands ONLY via the nightly history backfill 00:00-02:20Z, which UPSERTs ~750k rows (97% of the 774k-row table, dates 2014-2026) and thereby CLOBBERS daily_ohlcv.updated_at — the exact same \"mutation timestamp is not arrival\" root cause as C-04. Every historical date shows 0-2 same-day writes vs 900-1000 next-day writes. Do NOT add a same-day-coverage-vs-trailing-median alarm: it would fire every single day.",
         "status": "READY",
@@ -15823,6 +15762,41 @@
         "promoted_by": "dev-team (supervised-lane sweep)",
         "promotion_note": "Supervised-Lane Sweep — assigned dispatch_lane='developer' (priority_rank=2); supervised/plan_only flags preserved, gate NOT disabled — see FIX-BOUNDED1-SUPERVISED-LANE-NO-SWEEPER",
         "dispatch_lane": "developer"
+      },
+      {
+        "id": "FIX-BCTC-REFINE-WINDOWTRUNCATION-COLUMNLAYOUT-CROSSWINDOW",
+        "title": "windowPartitioner maxWindowPages truncation creates a headless tail window that continuation-stitch.md's contract never anticipated -- resolveColumnLayout() defaults to code-first, silently swapping code/label on label-first (bank) continuation tables split by the cap",
+        "status": "READY",
+        "type": "FIX",
+        "priority": "P2",
+        "size": "M",
+        "zone": "apps/mcp-server/",
+        "owner": "dev-mcp-server",
+        "next_agent": "architect",
+        "supervised": true,
+        "plan_only": true,
+        "created_at": "2026-08-01T05:28:09Z",
+        "created_by": "dev-mcp-server/spike-SPIKE-BCTC-REFINE-MAXWINDOW-TRUNCATION",
+        "updated_at": "2026-08-08T05:51:19Z",
+        "source": "SPIKE-BCTC-REFINE-MAXWINDOW-TRUNCATION findings, docs/spikes/SPIKE-BCTC-REFINE-MAXWINDOW-TRUNCATION.md",
+        "root_cause": "windowPartitioner.ts's maxWindowPages cap (windowPartitioner.ts:92-101) does NOT fold an over-cap continuation table into its current window -- it starts a brand-new window (i=j) at the very next page, which is itself a mid-table continuation page with no header of its own (that's why it matched CONTINUATION_MARKER in the first place). This 'tail window' gets page_type='continuation' (getBctcPendingRefineTool.ts:319-335) and is dispatched to the SAME sub-flow as a genuine first-page window (docs/agents/refine_bctc_md/flow/continuation-stitch.md), whose contract (Steps 2-3) unconditionally treats the window's first page as carrying the table's real header -- a rule that was never updated to anticipate a truncation-created headless tail. Downstream, refinedMarkdownParser.ts::resolveColumnLayout() (refinedMarkdownParser.ts:386-393) decides code-first vs label-first column order by reading the CAPTURED header row's own cell text, but headerCells is a per-call local re-initialized to null on every parseRefinedMarkdown invocation (refinedMarkdownParser.ts:439) -- unlike statement_section, which IS explicitly threaded window-to-window via initialSection/finalSection (refinedMarkdownParser.ts:404-419, finalizeBctcRefine.ts:162,174-175). A tail window with no header of its own (the expected shape) falls back to the DEFAULT code-first layout (refinedMarkdownParser.ts:387,391), silently swapping code<->label for every 4-column row of a label-first (bank Meu B02a/TCTDHN) continuation table whose true header only existed in the truncated head window. This corrupts (not drops) code/label text; value_current/value_prior are read from the same cell indices in both layouts so numeric values are unaffected. bctcScalarAggregator.ts resolves headline scalars (total_assets, equity_total, net_revenue, ...) via LABEL-CANONICAL matching preferred over code (bctcScalarAggregator.ts:20-21,396-399) and also uses row code/label shape for isBankFormFromRows bank-vs-corporate detection -- a swap can silently degrade or null the headline figures this pipeline exists to produce, with no error and no gate that catches it (checkSectionCompleteness/BEQ-7 only checks statement_section PRESENCE, never code/label correctness -- bctcSectionCompleteness.ts:27-60). Same root mechanism as the already-shipped FIX-BCTC-BANK-BS-COLUMN-ORDER (single-window, no-captured-header case) -- that fix added within-window header capture but never cross-window threading, so the maxWindowPages truncation path re-opens the identical hazard through a side door the original fix did not anticipate. Live-confirmed trigger frequency: 5 truncation WARNs within the same second of a single run (docs/agent-memory/health/team-tool-recheck-2026-06-21-1605.md:195-196) -- not a theoretical edge case. NOT independently reproduced within the spike's 120-min timebox: an actual corrupted bctc_table_rows row instance from a live truncation-tail window (would need pulling a real bctc_refined_units row past a report's first truncated unit_id and diffing against a known label-first bank filing).",
+        "deliverable": "Architect decision (not a blind copy-paste) among 3 non-exclusive candidate mitigations, then implement the chosen combination: (1) raise maxWindowPages default / make it PDF-adaptive so real long bank continuation tables stop splitting; (2) thread a headerCells/column-layout hint forward across windows in parseDoneUnitsToRows the same way carrySection/statement_section already is, so a headless tail window inherits the correct layout from its head window; (3) have windowPartitioner mark truncation-tail windows explicitly (make the already-claimed but nonexistent truncated_continuation flag real -- windowPartitioner.ts:50 docstring vs 0 grep hits) so continuation-stitch.md's live agent-flow contract can fetch the head window's page-N header context on demand instead of silently assuming it is absent. Whichever combination is chosen, add a regression fixture that exercises the actual >maxWindowPages split-across-two-windows path end to end (partition -> refine markdown -> finalize) with a label-first (bank-form) 4+-column continuation table -- no existing test does this (grep -rn maxWindowPages apps/mcp-server/src/__tests__ only covers inputs that never exceed the cap: AR-refined-units-idempotency.test.ts:346,369; FIX-REFINE-WINDOW-DB-PAGELIST.test.ts:128 tests a different bug -- DB-driven page-list construction, not the continuation cap).",
+        "acceptance": "A synthetic label-first (bank Meu B02a/TCTDHN-shaped) continuation table spanning > maxWindowPages pages, run through partitionIntoWindows -> parseRefinedMarkdown (per-window, threading whatever new cross-window state the chosen fix adds) -> finalizeBctcRefine's parseDoneUnitsToRows, produces rows in the tail window with code/label in the CORRECT (non-swapped) order -- not just non-empty. Negative control: an existing code-first (corporate) continuation table fixture is unaffected (0-diff). The health-recheck WARN's severity/wording is corrected in the SAME change (or a follow-up doc-only PR) to stop attributing it to intelligence-cycle/news signal-drop -- see SPIKE-BCTC-REFINE-MAXWINDOW-TRUNCATION Finding 0.",
+        "files": [
+          "apps/mcp-server/src/application/utils/windowPartitioner.ts",
+          "apps/mcp-server/src/application/utils/refinedMarkdownParser.ts",
+          "apps/mcp-server/src/application/usecases/finalizeBctcRefine/finalizeBctcRefine.ts",
+          "docs/agents/refine_bctc_md/flow/continuation-stitch.md",
+          "docs/agents/refine_bctc_md/flow/main.md"
+        ],
+        "related": [
+          "SPIKE-BCTC-REFINE-MAXWINDOW-TRUNCATION",
+          "FIX-BCTC-BANK-BS-COLUMN-ORDER"
+        ],
+        "promoted_at": "2026-08-08T05:51:18Z",
+        "promoted_by": "dev-team (supervised-lane sweep)",
+        "promotion_note": "Supervised-Lane Sweep — assigned dispatch_lane='architect' (priority_rank=2); supervised/plan_only flags preserved, gate NOT disabled — see FIX-BOUNDED1-SUPERVISED-LANE-NO-SWEEPER",
+        "dispatch_lane": "architect"
       }
     ],
     "review": [
@@ -22661,6 +22635,41 @@
         "spec_doc": "docs/handoffs/FIX-AUDITOR-DOCAUDIT-MEMORY-PATH-PREDICATE-spec.md",
         "architect_review_note": "PLAN-ONLY (supervised+plan_only — main.md NOT edited). Re-verified stale main.md:445 citation live — real section is :720-722. Verbatim diff proposed (spec §1): repoint §1 Memory integrity from phantom `memory/MEMORY.md` (never existed, confirmed git diff-filter=D empty) at `docs/agent-memory/INDEX.md` (real repo-tracked memory index) ONLY — explicitly do NOT attempt to validate Claude Code's external per-session auto-memory file (no canonical repo-relative path, platform-managed, would require hardcoding a host-specific absolute path in violation of this repo's own no-hardcode convention). Sibling sweep of DOC-AUDIT items 2-6 (spec §2): zero other phantom paths found — all referenced docs/policies|protocols|standards|references dirs, tool-registry/cron-registry/stock-classification.json, .claude/agents/*.md, CLAUDE.md, project-stats.json + generator all confirmed present; DB-health container paths are runtime-resolved via docker exec, not static, so out of this defect class. ADJACENT FINDING flagged not fixed: docs/agent-memory/INDEX.md itself (the fix's new target) already has all 5 of its own listed session pointers dead (stale since commit ace28b78d, 2026-04-27) — this is a real, pre-existing doc-hygiene gap the phantom-path bug has been masking; serves as spec §3's natural negative control (first post-fix cycle should emit zero phantom-MISSING AND one new real INDEX.md broken-pointer WARN in the same cycle) but its cleanup is out of THIS task's scope — PO to decide on a follow-up row. Full verbatim diff + negative-control design + implementation notes in spec_doc.",
         "updated_at": "2026-08-08T05:30:25Z"
+      },
+      {
+        "id": "FIX-AUDITOR-D4-WHITELIST-DATA-QUALITY-ANOMALY-PREFIX",
+        "title": "D4 held-lock detector re-fires on data-quality-anomaly:* — KNOWN_LEGIT_PREFIXES (authored 2026-07-08) never learned the lock kind bctc-analyst introduced 2026-07-19; whitelist is a static list that lags every new escalation-lock kind",
+        "status": "REVIEW",
+        "type": "FIX",
+        "priority": "P2",
+        "size": "S",
+        "zone": "apps/mcp-server/",
+        "owner": "po",
+        "next_agent": "po",
+        "plan_only": true,
+        "supervised": true,
+        "created_at": "2026-07-25T06:59:44Z",
+        "created_by": "po/triage-20260725T0645",
+        "origin_signal_id": "sau-d4-data-quality-anomaly-dgc-q1-2026-not_found-20260725",
+        "root_cause": "apps/mcp-server/src/scheduler/system/tasksMdJanitorJob.ts:197-205 KNOWN_LEGIT_PREFIXES omits 'data-quality-anomaly:'. PO RAW-verified the filter IS live (applyR1bFilter called at :602 inside runTasksMdJanitor) and that the TS job IS the emitter (signal id matches the sau-d4-{entityId}-{checkId}-{YYYYMMDD} contract at :440-470) — so this is NOT a regression of FIX-D4-HELD-LOCK-NO-BOARD-ROW-RECONCILE (e109f49f8, DONE_VERIFIED), it is a whitelist coverage gap. Second guard cannot save it: isLiveConcurrentSession requires the owner session in the live presence roster, and owner f33d0102 (bctc-analyst) is absent. TIMELINE = the real defect: whitelist authored 2026-07-08; the data-quality-anomaly escalation lock was introduced 2026-07-19 by the bctc-analyst reprocess-vs-new-filing guard (docs/agents/bctc-analyst/flow/cycle.md:75). A static prefix list cannot track lock kinds that agents mint later.",
+        "deliverable": "1) Stop the false positive: cover 'data-quality-anomaly:' in the R-1b exclusion. 2) DECIDE EXPLICITLY, do not silently add a 4th one-off prefix (CLAUDE.md: fix root cause definitif not recurrent symptom): all 5 held sprint-task locks today are ticker-scoped bctc-analyst escalations (esc-datacov:*, esc-deepdive:*, data-quality-anomaly:*) sharing the shape <kind>:<TICKER>:<PERIOD>[:ESC-N] — either generalise to that shape, or promote the list to docs/data/system-map.json per the CLAUDE.md 'System Data - Never Hardcode' rule so code + agent spec read ONE source. 3) Sync the spec plane in the SAME change or it re-drops on the next port: the whitelist is duplicated verbatim in docs/agents/system-auditor/handlers.md:49 and docs/agents/system-auditor/audit-dimensions.md:55, both also missing the prefix. 4) Clear stale doc drift: handlers.md:19 and audit-dimensions.md:90 still assert 'the live code has NOT been updated to implement it yet' — false since e109f49f8.",
+        "acceptance": "One live tasksMdJanitor cycle with data-quality-anomaly:DGC:Q1-2026 still held emits ZERO D4 signal_queue rows for it and logs 'D4 SKIP: data-quality-anomaly:DGC:Q1-2026 - known-legit-pattern'. Negative control: a genuinely orphaned non-whitelisted sprint-task lock STILL trips D4 (do not blanket-suppress). Unit tests extend apps/mcp-server/src/__tests__/FIX-D4-HELD-LOCK-NO-BOARD-ROW-RECONCILE.test.ts:120-147 table. Code whitelist and both doc lists are byte-identical in content.",
+        "related": [
+          "FIX-AUDITOR-C04-PARSEDAT-RECENCY-PREDICATE",
+          "UC-ASL-P3"
+        ],
+        "note": "DO NOT RELEASE the lock. PO RAW-probed task_list_held: data-quality-anomaly:DGC:Q1-2026 is LIVE (sprint-task, bctc-analyst, claimed 2026-07-23T15:15:40Z, ttl 604800s, expires 2026-07-30T15:15:40Z, ~5.3d remaining) — legit board-row-less escalation per feedback_esc3_held_lock_no_board_row_is_legit. Signal is a FALSE POSITIVE; releasing would drop an in-flight 7-day data-quality escalation. Prior art checked: no existing row covers the prefix gap; git log on tasksMdJanitorJob.ts since 2026-07-20 empty and worktree clean, so no in-flight peer fix.",
+        "updated_at": "2026-08-08T06:04:50Z",
+        "po_second_facet_20260728": "SECOND FACET FOLDED IN (converge, no new row — the detector is one root cause with two emissions). The row as written covers the `not_found` emission (held lock has no board row). The SAME detector also emits a `pipeline_mismatch` row for the same lock: 'orch-state/lock mismatch: active=<head.active_task_id> held=data-quality-anomaly:DGC:Q1-2026'. That comparison is a CATEGORY ERROR, not a stale whitelist: it compares .head.active_task_id (the dev-team dispatch head, a dev task) against a long-TTL sprint-task escalation lock owned by a DIFFERENT agent (bctc-analyst) in a DIFFERENT plane. Those two are never required to be equal, so the predicate mismatches on every tick for the entire 7-day TTL regardless of system state — a whitelist entry alone will NOT silence it unless the pipeline_mismatch path consults the same exclusion. Both emissions must be fixed together or the FP count only halves. EVIDENCE: the identical pair fired on 2026-07-27 AND 2026-07-28 with nothing changing in between (4 signal_queue rows, ids sau-d4-data-quality-anomaly-dgc-q1-2026-{not_found,pipeline_mismatch}-2026072{7,8}), on top of the 2026-07-25 pair that minted this row. PRIORITY P3 -> P2: not damage, but a confirmed 2-per-day recurring false positive into PO's inbox that has now survived 3 consecutive days and 6 signal rows; at P3 it sits behind 42 rows and keeps emitting. The lock itself is LIVE and LEGIT (expires 2026-07-30T15:15:40Z) — the standing DO NOT RELEASE instruction in .note is unchanged.",
+        "updated_by": "dev-mcp-server",
+        "promoted_at": "2026-08-08T03:50:55Z",
+        "promoted_by": "dev-team (supervised-lane sweep)",
+        "promotion_note": "Supervised-Lane Sweep — assigned dispatch_lane='dev-mcp-server' (priority_rank=2); supervised/plan_only flags preserved, gate NOT disabled — see FIX-BOUNDED1-SUPERVISED-LANE-NO-SWEEPER",
+        "dispatch_lane": "dev-mcp-server",
+        "claimed_at": "2026-08-08T05:51:27Z",
+        "claimed_by": "dev-team (supervised-lane sweep)",
+        "spec_doc": "docs/handoffs/FIX-AUDITOR-D4-WHITELIST-DATA-QUALITY-ANOMALY-PREFIX-spec.md",
+        "dev_mcp_server_review_note": "PLAN-ONLY (supervised+plan_only — tasksMdJanitorJob.ts/handlers.md/audit-dimensions.md/system-map.json NOT edited). Re-verified live: the row cited lock data-quality-anomaly:DGC:Q1-2026 has TTL-EXPIRED (2026-07-30) and is no longer held — but bctc-analyst has since renamed this escalation lock-kind to bctc-dataquality:* (3 locks held today), which is ALREADY producing first-occurrence D4 candidates in TODAY 2026-08-08T03:00Z notebook cycle and will emit a fresh FP batch at the next cycle if unaddressed — fix must cover BOTH prefixes, not just the row literal. po_second_facet_20260728 pipeline_mismatch category-error claim REFUTED against live code: git blame shows R-2 per-lock mismatch loop has scoped to survivingLocks (post R-1b filter), not heldLocks, since the SAME commit (e109f49f81, 2026-07-08) that ported R-1b — one whitelist entry already silences BOTH not_found and pipeline_mismatch emissions, no separate consultation needed. handlers.md:19/audit-dimensions.md:88-90 stale-doc-gap claims confirmed FALSE (code shipped same-day, e109f49f8) — correction included. DESIGN DECISION: promoted KNOWN_LEGIT_PREFIXES to docs/data/system-map.json .project.coordination.known_legit_lock_prefixes (option 2b) over a structural <kind>:<TICKER>:<PERIOD> pattern-match (option 2a) — live bctc-dataquality:vnindex-crosstool-mismatch lock is NOT ticker/period-shaped, so a shape-regex would have missed this real currently-forming FP; mirrors this codebase own proven loadWatchlistSeedFromSystemMap() precedent (seedWatchlist.ts) with a non-empty fail-open FALLBACK_KNOWN_LEGIT_PREFIXES (never suppress LESS on SSOT-read failure). Verbatim before/after diffs for all 4 files + test-table extension (negative control: bogus-escalation:XYZ:Q1-2026:ESC-1 must still trip D4) in spec_doc. Full details: docs/handoffs/FIX-AUDITOR-D4-WHITELIST-DATA-QUALITY-ANOMALY-PREFIX-spec.md"
       }
     ],
     "qa": [
@@ -22808,7 +22817,7 @@
         }
       ]
     },
-    "last_triaged_at": "2026-08-08T05:22:37Z",
+    "last_triaged_at": "2026-08-08T05:51:18Z",
     "last_triaged_by": "dev-team (supervised-lane sweep)",
     "in_progress": [
       {
