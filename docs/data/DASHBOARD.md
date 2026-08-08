@@ -958,3 +958,15 @@
 **Mitigation:** No immediate action beyond signal routing.
 
 ---
+
+## Anomaly: A-30 · mcp-server memory reclamation loss — VmHWM at cap
+**Severity:** CRITICAL | **Date:** 2026-08-08 | **Status:** OPEN
+**Location:** mcp-server container
+**Details:** Memory 89.69% (2.691GiB/3GiB), VmHWM advancing and pinned at cgroup limit; no genuine reclamation dips during probe window
+**Impact:** Process approaching OOMKilled boundary; cap exhaustion possible if workload sustains
+**Root cause:** FIX-MCP-MEMORY-CODE-LEAK — recurring memory leak, accumulates ~87% in 12h
+**Zone owner:** dev-mcp-server
+**Last reported:** 2026-08-08T14:06:36Z (signal sys-20260808T140623-62a6, system-auditor -> po, dedup_key=microservice_degraded:mcp-server:A-30, CRITICAL Telegram sent)
+**Mitigation:** No immediate action beyond signal routing.
+
+---
