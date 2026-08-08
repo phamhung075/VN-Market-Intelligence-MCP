@@ -93,12 +93,12 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "FIX-MCP-SSE-SESSION-MANAGER-PERCONN-LEAK-NO-REAPER",
-    "next_agent": "qa",
-    "next_action": "FIX-MCP-SSE-SESSION-MANAGER-PERCONN-LEAK-NO-REAPER: po ratified + WF-2 hold released (po_goahead_20260808T175954). Rebuild ALREADY LANDED and po-verified by in-container source read (image Created 2026-08-08T16:59:29Z > fix commit 16:57:46Z); rebuild_required flipped to false — DO NOT REBUILD AGAIN. qa owes Step 5: sessionCount-vs-MemPerc correlation >=4h (crosses the 4h max-age reaper), RestartCount stable 0, toolCount=183/cronJobCount=88, then po Step 6 sign-off.",
-    "updated_at": "2026-08-08T18:03:05Z",
-    "updated_by": "po"
+    "status": "idle",
+    "active_task_id": null,
+    "next_agent": null,
+    "next_action": "FIX-MCP-SSE-SESSION-MANAGER-PERCONN-LEAK-NO-REAPER: qa Step 5 checkpoint#2 (20260808T2005Z) — soak clock reset a 3rd time by an UNRELATED ops rebuild (FIX-AGENT-SIGNALS-IDENTICAL-DUP-EMISSION, commit 550fda673) sharing the same container; content-verified fix still intact in new image, no functional regression, only elapsed-time loss. Real uptime ~59min not the assumed ~2h38m. CI regression (1862c-transport-session-eviction) triaged as test-harness timing-margin flake under CPU contention, present since fix origin, NOT a new regression — non-blocking per qa. next_recheck_not_before=2026-08-08T23:06:00Z (real 4h mark). Row stays qa[]/QA/next_agent=qa. DO NOT resume/redispatch qa before 23:06Z.",
+    "updated_at": "2026-08-08T20:09:19Z",
+    "updated_by": "router"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
