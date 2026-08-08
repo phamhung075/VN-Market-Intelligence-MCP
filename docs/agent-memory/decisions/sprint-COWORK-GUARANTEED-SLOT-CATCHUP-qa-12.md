@@ -48,3 +48,25 @@
 - Confirmed AC-4's header-comment correction landed (lines now document the FALSE invariant and the fix, not the old unsound assumption).
 **why-decision:** APPROVED, DONE_VERIFIED — the fix under review is correct and independently proven on isolated, deterministic fixtures; the 6 observed FAILs are a pre-existing, unrelated audit-harness fragility (fixture truncation vs `.head` position) triggered by unrelated live-board churn since commit time, not a defect in this task's diff. Flagged non-blocking in status_note; minted a separate backlog row for the harness fragility itself (dedup-checked, no existing row) rather than silently absorbing or ignoring it.
 **why-change:** Scope stayed on this task's own diff; did not fold the harness-fragility fix into this task (different file section, different root cause, would have widened scope past this row's own ACs).
+
+### STEP qa-S5 · qa · 2026-08-08T11:37:57Z
+**task-id:** FIX-EMITSIGNAL-BUGTELEGRAM-NO-TEST-SINK-GATE
+**what-done:** Direct-commit verify (`qa[]` row, `branch:null`) of `f055226cf`, on main ancestry.
+**what-considered:**
+- `files[]` names `db-integrity-history-append.sh` but commit doesn't touch it — verified benign: `EMIT_SIGNAL_TELEGRAM_SINK` is exported at top-level in the test file, inherited by the subprocess `bash "$EMIT_SH"` call; no code change needed in that script.
+- Ran both suites myself (not the self-report): `emit-audit-signal.test.sh` 123/123 incl. new T27-T31; `db-integrity-history-append.test.sh` 28/28 incl. new T4 sink assertions. Read `_telegram_send()`: single `mcp_call send_telegram` site, gated behind `[ -n "$TELEGRAM_SINK" ]`, both send fns route through it — no bypass left.
+- AC-4 N/A claim re-verified: `db-integrity-dedup-check.test.sh` has zero real emit-audit-signal/mcp_call/send_telegram hits (1 comment only). AC-5 correctly deferred — `FIX-TELEGRAM-REPORT-ACK-STATUS-STOP-RESURFACE` confirmed live BACKLOG.
+- shellcheck: 3 new SC2329/SC2034 notes in the test file, diffed vs pre-commit — same false-positive class as 8 pre-existing (sourced-script fn-redefinition pattern), no new class; production file gained zero new warnings.
+**why-decision:** APPROVED, DONE_VERIFIED — AC-1/2/3 code-verified not prose-trusted.
+**why-change:** none.
+
+### STEP qa-S6 · qa · 2026-08-08T11:38:19Z
+**task-id:** FIX-EMITSIGNAL-E3-RC3-FATAL-NORETRY-DROPS-DETECTOR-FINDING
+**what-done:** Direct-commit verify (`qa[]` row, `branch:null`) of `7cc052083`, on main ancestry (`git merge-base --is-ancestor` confirmed).
+**what-considered:**
+- `files[]` names `scripts/orch-apply.sh` but commit doesn't touch it — checked, not waved through: row's own `scope`/`note` name this as approach-a ("no orch-apply.sh contract change"); `git log -- scripts/orch-apply.sh` shows no commit near this date, confirming genuinely untouched, not a missed file.
+- Read the diff directly: new `_e3_read_candidate()` seam called BEFORE `_orch_apply_invoke`; empty result sets rc=2+continue (same retry lane as CAS mismatch); a genuine rc=3 can only surface from a real invoke on a non-empty candidate, unchanged (still fatal, zero retry).
+- Ran tests myself, not self-report: `bash scripts/emit-audit-signal.test.sh` 123/123 incl. T25 (empty-then-recovers, retries, row lands) and T26 (genuine rc=3, no retry, ABORT, BUG telegram) both green. Sibling sweep reproduced: db-integrity-history-append 28/28, db-integrity-dedup-check 13/13, mcp-call 9/9. `tsc --noEmit` clean; `mock-guard.sh` correctly N/A (.sh out of its .ts/.py/.go scope). shellcheck: pre-existing SC1091 only, diffed vs parent commit, no new warnings.
+- Cross-checked orch-apply.sh line numbers cited in the new comment against live file (rc=3 contract L50, empty-stdin guard L120-122 vs comment's cited 118-121) — cosmetic ~2L drift, non-blocking.
+**why-decision:** APPROVED, DONE_VERIFIED — both retry/no-retry branches independently reproduced green, fix matches the row's own scoped alternative (assert-non-empty-before-invoke), no orch-apply.sh contract drift.
+**why-change:** none.
