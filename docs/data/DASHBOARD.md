@@ -994,3 +994,15 @@
 **Mitigation:** No immediate action beyond signal routing.
 
 ---
+
+## Anomaly: A-29 · bctcReparseJob stale: 57.1% success rate
+**Severity:** WARN | **Date:** 2026-08-08 | **Status:** OPEN
+**Location:** cron/bctcReparseJob
+**Details:** bctcReparseJob success rate 57.1% (3 failures out of 7 runs)
+**Impact:** Slow BCTC PDF reparse pipeline, potential backlog in enrichment
+**Root cause:** Job process instability or resource contention (not yet diagnosed)
+**Zone owner:** dev-mcp-server
+**Last reported:** 2026-08-08T14:21:26Z (signal sys-20260808T142115-1b11, system-auditor -> po, dedup_key=cron_fire_gap:bctcReparseJob:A-29, WARN Telegram sent)
+**Mitigation:** No immediate action beyond signal routing.
+
+---
