@@ -3353,19 +3353,6 @@
         "disposition": "FOLD onto OPS-RAG-SERVICE-REBUILD-STALE-IMAGE-PREDATES-IDLE-UNLOAD-FIX (escalated BACKLOG/P0, owner=ops) — the sustained >93%-with-zero-dips signature is the predicted observable of a running image that predates its own idle-unload fix 0308514f5 by ~24h; code fix already tracked by FIX-RAG-EMBEDDER-IDLE-UNLOAD-PATH (review[]), only open action is the single-service rebuild+recreate. No new mint. Folded into PO BATCH triage-20260808T0001Z-po."
       },
       {
-        "id": "sys-20260807T072347-5358",
-        "ts": "2026-08-07T07:23:47Z",
-        "from": "system-auditor",
-        "to": "dev-team",
-        "type": "db_integrity_breach",
-        "summary": "deep_fetch_queue: 4 rows stuck in vps-failed status: 2026-08-05T04:23:19-20Z (4 URLs from news sites nhandan.vn, vnbusin",
-        "severity": "WARN",
-        "status": "READ",
-        "payload_ref": "docs/data/db-integrity-history.json",
-        "provenance": "detector",
-        "audit_cycle_tag": null
-      },
-      {
         "id": "sys-20260807T082310-6ac3",
         "ts": "2026-08-07T08:23:10Z",
         "from": "system-auditor",
