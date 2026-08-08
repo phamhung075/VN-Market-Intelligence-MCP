@@ -1,0 +1,47 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-08-08T21:07:40Z",
+    "matched_slots": [
+      "bctc-analyst-slot-3"
+    ],
+    "won_slots": [
+      "bctc-analyst-slot-3"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/bctc-analyst/flow/main.md"
+    ],
+    "silent": false,
+    "errors": [],
+    "pressure_mode": "adaptive",
+    "calendar_status": "unknown",
+    "chef_mutex_applied": false,
+    "due_reasons": {
+      "bctc-analyst-slot-3": "cron"
+    },
+    "cadence_minutes": {
+      "bctc-analyst-slot-3": null
+    },
+    "last_fired_timestamp": "2026-08-08T21:07:29Z",
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "21:00",
+    "leader_lock": "acquired",
+    "dev_head": "unknown",
+    "devq": 5,
+    "signal_backlog": 24,
+    "note": "WORK verdict via preflight script (exit 1 is documented convention, not error). 0 new signal_queue rows this tick. Single off-market bctc-offmarket slot, calendar_status=unknown so no suppression applied."
+  },
+  "priority": "normal",
+  "createdAt": "2026-08-08T21:07:40Z",
+  "_processed": {
+    "fingerprint": "2f2338a5db430e8093fdffa8ba0878798f1aba74846c2acc36742bdc496121a4",
+    "processedAt": "2026-08-08T21:20:49Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
