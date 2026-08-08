@@ -2,6 +2,22 @@
 
 Tier-1/2/3 audit runs; newest-first; max 200L total, max 60L per section.
 
+## c382 · 2026-08-08T20:30Z
+
+### Audit Run Tier-1 (20:33–20:35 UTC 2026-08-08)
+- Tier: 1 | Services: 13 host_runtime_set checked | Health: 5 probed
+- Anomalies: 1 SKIP-dedup (A-30 rag-service-1 SUSTAINED) | Status: DEGRADED
+- **rag-service-1 A-30 Memory Pressure (SUSTAINED CHRONIC PATTERN):**
+  - Baseline: 97.34% ≥ 85% investigate-gate → ENGAGE deep-probe
+  - Deep-probe 6 samples over 65s: ALL exactly 97.34% (min 97.34%, median 97.34%, max 97.34%) — FLAT-LINE
+  - Verdict: ESCALATE "loss of reclamation" (0 dips, 0 discontinuities, all 100% sustained)
+  - State: OOMKilled=false, restarts=0, state_changed=false, VmHWM=UNAVAILABLE (Amendment B host-floor-check skip)
+  - Emission: [emit-signal] SKIP-dedup sys-20260808T203549-0289 (WARN, last reported @17:38:48Z)
+  - Analysis: Fresh A-30 discriminator confirms GENUINE SUSTAINED PRESSURE (not crash-cliff). Chronic pattern c376→FOLD; c377–c381→ESCALATE "loss of reclamation" (5+ hours, 2+ cycles @97%+). Memory floor breach persists (2.9MiB vs 40MiB floor @18:05 c378). FU-RAG-DEPLOY-MEMORY marked DONE_VERIFIED @10:59:52Z but pattern persisted and worsened. CRITICAL: This is chronic architectural pressure, not transient GC. Recommend: (a) escalate to PO as PRIORITY if fix not in-flight, (b) immediate ops investigation into rag-service load profile.
+- **mcp-server-1 A-30:** Baseline 13.03% < 85% gate → SKIP
+- A-20 pdf-extractor: 3/3 PASS | A-21 crashes: 0 PASS | Disk: 48% PASS
+- [OUTPUT-CONTRACT] signals_posted=0 (dedup) | telegram_sent=0 | signal_queue_rows_written=0 | dashboard_rows=0 | dedup_skipped=1
+
 ## c381 · 2026-08-08T20:12Z
 
 ### Audit Run Tier-1 (20:08–20:12 UTC 2026-08-08)
