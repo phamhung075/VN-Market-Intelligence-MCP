@@ -3550,6 +3550,17 @@
         "triaged_at": "2026-08-08T09:44:30Z",
         "triaged_by": "po",
         "disposition": "ACTIONED 2026-08-08T09:44Z — the recurring A-30 dedup_key drift these three rows report is now tracked by FIX-EMITSIGNAL-DEDUPKEY-GRAMMAR-UNVALIDATED-CALLER-FREETEXT-DEFEATS-7D-WINDOW (backlog, P1, next_agent=developer). Root cause re-derived from source and re-targeted away from the escalation proposal: the canonical grammar already exists literally at flow/tier1-probe.md:300, so nothing needs standardising — the gap is that scripts/emit-audit-signal.sh:338-341 validates dedup_key for non-emptiness ONLY, which lets each drifted key open a fresh 7-day ledger window. The proposed DASHBOARD.md substring-fold half is REJECTED: main.md:1161/1181 mandate one DASHBOARD row per non-ABORT observation including SKIP-dedup, so those rows are correct append-only output, not duplicates. Substantive rag-service memory finding needs no new row — already tracked by FIX-AUDITOR-TIER1-A30-MEM-SINGLE-CONTAINER-SCOPE (review, P0), whose sole blocker FIX-AUDITOR-A30-DISCRIMINATOR-CRASH-CLIFF-SCORED-AS-RECLAMATION-DIP was raised high->P0 this tick to clear a rank inversion."
+      },
+      {
+        "id": "cj-20260808T103036",
+        "ts": "2026-08-08T10:30:36Z",
+        "from": "code-janitor",
+        "to": "po",
+        "type": "system-issue",
+        "summary": "team-tool-recheck writer dead since 06-23 — replace-vs-retire decision needed",
+        "severity": "LOW",
+        "status": "NEW",
+        "payload_ref": "docs/signals/janitor-health-recheck-writer-retired-2026-08-08.json"
       }
     ],
     "last_triaged_at": "2026-07-29T06:25:00Z",
