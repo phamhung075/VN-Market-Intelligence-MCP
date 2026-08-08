@@ -93,12 +93,11 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "FIX-DEVTEAM-IDLE-CHAIN-P1A-MAIN-ROTATION",
-    "next_agent": "agent-father",
-    "next_action": "BOUNDED-1 auto-pickup routing correction (dev-team self-heal, router-level): row's own note flags a routing contradiction -- next_agent was \"developer\" but deliverable is 100% flow-doc prose (files=[docs/agents/dev-team/flow/main.md]), zone=docs/agents/dev-team/flow/. Per established PO artifact-class routing ruling (TE-T03/TE-T06, cited verbatim on this row): instruction-prose an agent loads and executes, docs/agents/** included, routes to agent-father, never zone-detect's generic developer fallback (zone-detect has no path to non-dev-* specialists). Duplicate-pair checked clean: TASK-DEVTEAM-IDLE-CHAIN-2-MAIN-FLOW (the sibling candidate) is still BACKLOG, untouched, no conflict. Task: rewrite docs/agents/dev-team/flow/main.md's dispatcher chain from fixed-priority BOUNDED-1->SLS->RLC->QA-Drain->Step1 to aged round-robin selection (Part 1 -- rotation only). depends_on=[TASK-DEVTEAM-IDLE-CHAIN-1-SCHEMA-UTILITIES] (DONE_VERIFIED, satisfied). blocks=[FIX-DEVTEAM-IDLE-CHAIN-MAIN-COMPLETION].",
-    "updated_at": "2026-08-08T12:28:47Z",
-    "updated_by": "dev-team (bounded-1 routing self-heal: next_agent was stale/wrong developer, row zone is docs/agents/dev-team/flow/, PO artifact-class ruling routes to agent-father)"
+    "status": "idle",
+    "updated_at": "2026-08-08T12:54:45Z",
+    "updated_by": "agent-father",
+    "active_task_id": null,
+    "next_agent": null
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -22419,6 +22418,42 @@
           "FIX-CHEF-L6-GOLD-FALSE-PREDICATE"
         ],
         "po_review_20260808T1220Z": "REWORK/BLOCKED — REVIEW NOT SIGNED OFF. Verified architect's 3 flagged items independently: 2 confirmed, 1 falsified — plus a blocking defect the whole chain (BA + my own prior ratification + architect) missed.\n(1) SEQUENCING — CONFIRMED, and MORE SEVERE than described. Blueprint Design 1 AF-4 invokes .claude/skills/macro-threshold-gate/SKILL.md and its exit-2 path is send_telegram(bug)+EXIT, sited at Step 6.7 which PRECEDES Step 7's send_telegram. Wiring before the script lands does not merely \"hit a missing-file exit-2\" — it halts the entire CHEF dish cycle, so MARKET publication STOPS. Sequencing claim upheld in full; not actioned this cycle only because of (4)/(5).\n(2) DEAD-CODE CORRECTION — ACCEPTED, and stronger than architect stated. currencySignal/oilSignal/goldSignal/policySignal are declared `function` with NO `export` in macroTools.ts, so callers could only exist in-file; grep returns exactly one line each (its own definition). The policyTools.ts:110/116/120 hits are `policySignals`, a DIFFERENT identifier (array of PolicySignal), not calls. Provably dead. My po_goahead_20260808T113305 sub-claim \"whose text ships into MARKET narrative\" was WRONG — hereby RETRACTED. Replacement provenance independently re-verified, not taken on architect's word: cascadeEngine.ts:140 imports ./cascade/macroAdjustments.js, which carries 8 usdVndMarket>25500 rules.\n(3) OIL ADJACENT FINDING — PREMISE FALSIFIED, DELIBERATELY NOT MINTED. Architect claims macroTools.ts(dead, >90/<70) vs macroAdjustments.ts(live, >100) is a USD/VND-shaped reconciliation gap. Raw read of the LIVE file shows it contains ALL THREE: >90 at L46-61, <70 at L65-74, >100 at L151-172/209 — with its own comments \"// Brent crude > 90\" and \"// Brent crude > 100 -> severe oil crisis\". These are deliberate SEVERITY TIERS inside one live file, and the dead code's >90/<70 MATCHES the live >90/<70 tier exactly. No contradiction therefore no reconciliation gap. Minting on this premise would create a false-premise task. Recorded here so it is not re-minted.\n(4) BLOCKING — THE SSOT IS NOT SETTLED; THE ENTIRE EVIDENCE CHAIN WAS TS-ONLY. Every grep in this chain (BA §1a, my own po_goahead, architect's \"independent verification\" #2) used --include='*.ts'. The Go plane was NEVER searched. Raw: apps/macro-indicators/pkg/primitive/macro_usdvnd_direction_classifier/macro_usdvnd_direction_classifier.go:34 `BearishThreshold = 25000.0` — a named PRODUCTION constant, compared at :85, and INTERPOLATED INTO NARRATIVE TEXT at :91: \"USDVND at %.0f exceeds %.0f threshold — VND depreciation creates import cost pressure (BEARISH)\", i.e. it literally emits the string \"exceeds 25000 threshold\". Live-wired, not dead: macro_signals.go:25 imports it and :144 calls uvnd.Classify(); usecases.go:46/194/295 wire it into the production usecase. So \"25,500 is the only candidate with real production-code backing anywhere in the repo\" is FALSE — an artifact of a TS-scoped grep (feedback_internal_consistency_is_not_corroboration_check_the_other_plane).\nROOT-CAUSE INVERSION: this row's founding note blames \"LLM NARRATIVE DRIFT toward a historically-familiar round number (25,000 = VND's 2023 'vuot moc 25,000' media milestone), NOT a text-instruction defect\". That diagnosis is now falsified. 25,000 is the literal output of the LIVE Go macro-indicators classifier feeding CHEF (architect's own note confirms registerMacroTools() calls the Go microservice on :5004). CHEF citing \"25,000\" was most likely FAITHFULLY RELAYING its upstream tool, not free-associating. The gate as designed would strip the very numeral CHEF's own data source produced and enforce 25500 against it — inverting this task's purpose and shipping a user-facing false-positive on genuinely tool-sourced content.\n(5) BLOCKING — gold_usd:4300 has ZERO code provenance and its only source doc is ALREADY an open defect row. grep 4300 across *.ts and *.go finds no threshold constant (only unrelated fixtures: 43000000000000 equity, 24300 usd_vnd_buy, 74300 OHLCV highs). The registry's own source field admits it: \"chef-dish.md Step 6, AUTO-CURE c98\" — a doc, not code. Prior-art check (feedback_file_prior_art_check_before_minting_row) surfaced backlog row FIX-CHEF-L6-GOLD-FALSE-PREDICATE (priority high) ruling on that exact block: \"'4300' appears in NO file except chef.md\", \"The tool's own gold threshold is $2200\", \"the cure shipped a false-claim generator\", AC = \"source or delete the $4,300 constant\". Enshrining 4300 as canonical SSOT reintroduces the EXACT 26,500 defect shape (doc-only value, zero code backing) inside this task's own fix, and Design 4 test cases (c)/(d) bake the wrong polarity into the harness. Live cascade gold tiers are >2000/>3000/>4000.\n(6) DESIGN — single-value-per-metric registry vs multi-tier live code = FALSE-POSITIVE STRIPS OF CORRECT CONTENT. The live cascade is tiered for every metric: usd_vnd >25500 (8 rules) AND <24500 (L141,L147); gold >2000/>3000/>4000; oil <70/>90/>100. Registry Design 3 gives each metric ONE scalar value+comparator. A dish correctly citing the live 24,500 lower band fails the SSOT-citation sub-check (24500 != 25500) and, under po_ruling_q1's deliberately unconditional strip, is silently destroyed. The registry needs per-metric tier SETS, not a scalar. (Note: architect's own item-3 error — reading a tiered ladder as a contradiction — is the same mistake this schema makes.)\nDISPOSITION: status REVIEW->BLOCKED. NOT dispatching developer or agent-father. Building the script/skill/test now would bake 25500/4300 into the test harness and force a rebuild once the SSOT rules. What SURVIVES intact: the gate MECHANISM (alias location, bounded-window parse, comparator arithmetic, historical-context guard, per-metric number_format), the AF-4/Step-7.6 placement, the exit-code contract, and po_ruling_q1's sentence-scoped-strip. What is blocked: the registry VALUES and its schema arity.\nUNBLOCK PATH: (a) FIX-USDVND-THRESHOLD-SSOT promoted BACKLOG->READY/next_agent=architect — it owns \"pick one SSOT\" across all three planes; NOTE the semantic question must be answered BEFORE any value is picked: Go's 25000 is a DIRECTION-band threshold (BEARISH/NEUTRAL/BULLISH, band 23000-25000) while TS's 25500 is a CASCADE-IMPACT trigger — these may be two legitimately different concepts, not one drifted constant, and collapsing them blindly would repeat the exact tier-vs-contradiction error caught in (3). (b) gold must settle via FIX-CHEF-L6-GOLD-FALSE-PREDICATE before gold enters the registry. When both land, this row resumes at architect for registry re-spec (tier sets + code-anchored provenance only), after which the developer-before-agent-father sequencing in (1) applies unchanged."
+      },
+      {
+        "id": "FIX-DEVTEAM-IDLE-CHAIN-P1A-MAIN-ROTATION",
+        "type": "FIX",
+        "title": "main.md dispatcher chain rewrite: replace fixed-priority BOUNDED-1→SLS→RLC→QA-Drain→Step1 with aged round-robin selection (Part 1 — rotation)",
+        "status": "REVIEW",
+        "priority": "P0",
+        "size": "L",
+        "zone": "docs/agents/dev-team/flow/",
+        "owner": "developer",
+        "next_agent": "qa",
+        "created_at": "2026-07-29T13:50:01Z",
+        "created_by": "pm",
+        "depends": [],
+        "blocks": [
+          "FIX-DEVTEAM-IDLE-CHAIN-MAIN-COMPLETION"
+        ],
+        "files": [
+          "docs/agents/dev-team/flow/main.md"
+        ],
+        "updated_at": "2026-08-08T12:54:45Z",
+        "depends_on": [
+          "TASK-DEVTEAM-IDLE-CHAIN-1-SCHEMA-UTILITIES"
+        ],
+        "dangling_deps_fix_20260801T0209": "cleared stale legacy .depends=[FIX-DEVTEAM-IDLE-CHAIN-S1-SCHEMA-SELECTION] (deleted by pm 2833b71bf, never removed from .depends); effective_depends_on now equals .depends_on=[TASK-DEVTEAM-IDLE-CHAIN-1-SCHEMA-UTILITIES] as pm originally intended",
+        "po_dispatch_20260806T2230": "FOLDED INTO PO BATCH as item 1, tick 2026-08-06T22:07Z. THIS ROW IS STARVED BY THE EXACT DEFECT IT FIXES - a self-referential deadlock, which is why eight days of unattended automation never touched it. Measured live this tick, not asserted: it ranks #1 of 39 BOUNDED-1-eligible backlog rows under BOUNDED-1's own [priority_rank, index] ordering (P0; deps satisfied because TASK-DEVTEAM-IDLE-CHAIN-1-SCHEMA-UTILITIES is DONE_VERIFIED) - i.e. it is the very next row BOUNDED-1 would promote if it ran. But BOUNDED-1 gates on .head.status=='idle' AND wip_in_progress==0 (main.md:436), and that pair has not co-occurred since this row was created 2026-07-29T13:50:01Z. DOWNSTREAM COST, measured not asserted: the fixed BOUNDED-1->SLS->RLC->DRS->QA-Drain fall-through this row replaces is what starves the Ready-Lane Consumer, and that is why all six FIX-ORPHAN-FR* children - three of them P0 - have sat in ready[] since 2026-07-22, fifteen days, while the RLC claim script itself is provably healthy (dry-run against a scratch copy of the live board claims FIX-ORPHAN-FR1-FR2-INFRA-HEARTBEAT-LADDER on the first try). One row landing drains that whole queue. ROUTING CONTRADICTION - router must resolve it explicitly, do not silently pick a side: this row carries next_agent=developer but zone docs/agents/dev-team/flow/, and PO's 2026-07-21 artifact-class routing ruling (quoted verbatim on TE-T03/TE-T06) sends instruction-prose that an agent loads and executes - docs/agents/** included - to agent-father, not to a zone-detect-routed developer. The deliverable here is 100 percent flow-doc prose (files=[docs/agents/dev-team/flow/main.md]), so the ruling points at agent-father. Identical contradiction already annotated on FIX-ORPHAN-FR4-FR5. The BATCH entry emits zone cross-service/ because docs/agents/dev-team/flow/ is not a member of the three-value enum docs/agents/po/flow/main.md:30 declares and a missing/invalid zone gets the batch rejected back to PO; the zone-enum drift itself is owned by FIX-ZONE-ENUM-SSOT-CONTRADICTED-BY-259-OF-659-OPEN-ROWS (259 of 659 open rows), NOT by this row - implementer must not 'correct' the zone field unilaterally. DUPLICATE PAIR: see .po_duplicate_flag_20260806T2230 on TASK-DEVTEAM-IDLE-CHAIN-2-MAIN-FLOW before starting.",
+        "promoted_at": "2026-08-08T12:27:08Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=0)",
+        "claimed_at": "2026-08-08T12:27:14Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "routing_correction_20260808T1227": "next_agent developer -> agent-father, per row own artifact-class routing contradiction note + PO TE-T03/TE-T06 ruling. dev-team self-heal, router-level, before dispatch.",
+        "branch": null,
+        "reviewed_at": "2026-08-08T12:54:44Z",
+        "reviewed_by": "agent-father",
+        "review_note": "Aged round-robin rotation shipped for docs/agents/dev-team/flow/main.md (Part 1). New \"Idle-Tick Rotation Selection\" section inserted at the exact point the old fixed BOUNDED-1->SLS->RLC->DRS->QA-Drain->Step1 fall-through began; each of the 6 candidate sections gated on $SELECTED == \"<id>\" (total mutual exclusion, byte-unchanged promote/claim bodies, .head-collision-freedom stronger-than-before/provable by inspection), stamp write inlined (before dispatch, not after -- documented rationale), Step 1 PO Triage gated at its unchanged physical location (still reachable from busy-tick bypass paths), Session Gate clarified (no logic change). 6 candidates not 5: DRS (added to the chain 2026-07-30, after the 2026-07-25 rotation brief/schema shipped) folded in via a documented, flagged inline duplicate of rotation_selected()/devteam-idle-chain-stamp.jq (both live in scripts/, outside agent-father commit_zone) -- fast-follow to reconcile the shared library flagged in-file and in Reusable Scripts, not yet minted as its own tracked row. Part 2 (durable pending_triage_inbox[], Step1 read/clear) deliberately untouched -- belongs to FIX-DEVTEAM-IDLE-CHAIN-MAIN-COMPLETION (depends on this row + P2A-DURABLE-DRAIN); interim window flagged where a non-step1_triage tick still destructively drains signals into the in-memory-only pendingSignals[] until those two land. TASK-DEVTEAM-IDLE-CHAIN-2-MAIN-FLOW (duplicate-candidate sibling) left untouched per PO 2026-08-06T22:07Z priority ruling favoring this row -- not implemented a second time. Committed direct-to-main (branch:null) -- QA verify-committed mode required, same as every other review[] row in this lane. Live 6-tick rotation-fairness simulated locally (jq, never against live orch-state.json): bounded1/sls/rlc/drs/qa_drain/step1_triage each selected exactly once across ticks 1-6, tick 7 wraps to bounded1 -- confirms the fairness bound by construction."
       }
     ],
     "qa": [
@@ -22631,38 +22666,6 @@
           "TASK-COWORK-SIGNAL-NAMING-CONTRACT"
         ],
         "decomposition_note": "Phase 1 decomposed into 4 atomic tasks per PO amendments (3 binding, 1 correction to FR-1 WINDOWKEY logic per Amendment 3). All inherit plan_only/supervised flags. No developer dispatch until PO adjudication."
-      },
-      {
-        "id": "FIX-DEVTEAM-IDLE-CHAIN-P1A-MAIN-ROTATION",
-        "type": "FIX",
-        "title": "main.md dispatcher chain rewrite: replace fixed-priority BOUNDED-1→SLS→RLC→QA-Drain→Step1 with aged round-robin selection (Part 1 — rotation)",
-        "status": "IN_PROGRESS",
-        "priority": "P0",
-        "size": "L",
-        "zone": "docs/agents/dev-team/flow/",
-        "owner": "developer",
-        "next_agent": "agent-father",
-        "created_at": "2026-07-29T13:50:01Z",
-        "created_by": "pm",
-        "depends": [],
-        "blocks": [
-          "FIX-DEVTEAM-IDLE-CHAIN-MAIN-COMPLETION"
-        ],
-        "files": [
-          "docs/agents/dev-team/flow/main.md"
-        ],
-        "updated_at": "2026-08-08T12:28:47Z",
-        "depends_on": [
-          "TASK-DEVTEAM-IDLE-CHAIN-1-SCHEMA-UTILITIES"
-        ],
-        "dangling_deps_fix_20260801T0209": "cleared stale legacy .depends=[FIX-DEVTEAM-IDLE-CHAIN-S1-SCHEMA-SELECTION] (deleted by pm 2833b71bf, never removed from .depends); effective_depends_on now equals .depends_on=[TASK-DEVTEAM-IDLE-CHAIN-1-SCHEMA-UTILITIES] as pm originally intended",
-        "po_dispatch_20260806T2230": "FOLDED INTO PO BATCH as item 1, tick 2026-08-06T22:07Z. THIS ROW IS STARVED BY THE EXACT DEFECT IT FIXES - a self-referential deadlock, which is why eight days of unattended automation never touched it. Measured live this tick, not asserted: it ranks #1 of 39 BOUNDED-1-eligible backlog rows under BOUNDED-1's own [priority_rank, index] ordering (P0; deps satisfied because TASK-DEVTEAM-IDLE-CHAIN-1-SCHEMA-UTILITIES is DONE_VERIFIED) - i.e. it is the very next row BOUNDED-1 would promote if it ran. But BOUNDED-1 gates on .head.status=='idle' AND wip_in_progress==0 (main.md:436), and that pair has not co-occurred since this row was created 2026-07-29T13:50:01Z. DOWNSTREAM COST, measured not asserted: the fixed BOUNDED-1->SLS->RLC->DRS->QA-Drain fall-through this row replaces is what starves the Ready-Lane Consumer, and that is why all six FIX-ORPHAN-FR* children - three of them P0 - have sat in ready[] since 2026-07-22, fifteen days, while the RLC claim script itself is provably healthy (dry-run against a scratch copy of the live board claims FIX-ORPHAN-FR1-FR2-INFRA-HEARTBEAT-LADDER on the first try). One row landing drains that whole queue. ROUTING CONTRADICTION - router must resolve it explicitly, do not silently pick a side: this row carries next_agent=developer but zone docs/agents/dev-team/flow/, and PO's 2026-07-21 artifact-class routing ruling (quoted verbatim on TE-T03/TE-T06) sends instruction-prose that an agent loads and executes - docs/agents/** included - to agent-father, not to a zone-detect-routed developer. The deliverable here is 100 percent flow-doc prose (files=[docs/agents/dev-team/flow/main.md]), so the ruling points at agent-father. Identical contradiction already annotated on FIX-ORPHAN-FR4-FR5. The BATCH entry emits zone cross-service/ because docs/agents/dev-team/flow/ is not a member of the three-value enum docs/agents/po/flow/main.md:30 declares and a missing/invalid zone gets the batch rejected back to PO; the zone-enum drift itself is owned by FIX-ZONE-ENUM-SSOT-CONTRADICTED-BY-259-OF-659-OPEN-ROWS (259 of 659 open rows), NOT by this row - implementer must not 'correct' the zone field unilaterally. DUPLICATE PAIR: see .po_duplicate_flag_20260806T2230 on TASK-DEVTEAM-IDLE-CHAIN-2-MAIN-FLOW before starting.",
-        "promoted_at": "2026-08-08T12:27:08Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=0)",
-        "claimed_at": "2026-08-08T12:27:14Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)",
-        "routing_correction_20260808T1227": "next_agent developer -> agent-father, per row own artifact-class routing contradiction note + PO TE-T03/TE-T06 ruling. dev-team self-heal, router-level, before dispatch."
       }
     ]
   },
