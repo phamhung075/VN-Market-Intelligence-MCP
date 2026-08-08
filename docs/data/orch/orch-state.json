@@ -10503,6 +10503,21 @@
           "TASK-COWORK-MUTEX-001"
         ],
         "updated_at": "2026-08-08T20:59:43Z"
+      },
+      {
+        "id": "SPIKE-COWORK-MUTEX-001-PRIOR-ART-AC-DIFF",
+        "type": "SPIKE",
+        "status": "BACKLOG",
+        "next_agent": "ba",
+        "zone": "cross-service/",
+        "mode": "spike",
+        "question": "Does live CLAUDE.md + .claude/skills/dispatch-claim/{CARD,SKILL}.md already satisfy Step 2.4 of the cowork-mutex decomposition? Close TASK-COWORK-MUTEX-001 as shipped, or name precisely which sub-behaviour is missing. Check siblings 002/003 too. Do NOT re-implement from the title.",
+        "timebox": 60,
+        "size": "S",
+        "created_by": "po (triage-signals, dev-team tick 2026-08-08T20:37Z)",
+        "created_at": "2026-08-08T21:04:00Z",
+        "note": "PO returned this SPIKE in its triage BATCH but did not board-mint it (main.md:951 routes SPIKE to direct Step-3 dispatch, which requires SF-1 — SF-1 was already released before this notification landed, per feedback_sf1_released_before_backgrounded_po_triage_return_blocks_step3, so router did not self-spawn). Board-minted here as plain bookkeeping so it is not lost; full PO reasoning in docs/agent-memory/decisions/triage-20260808T2054Z-po.md. Will surface via normal ba-lane pickup.",
+        "updated_at": "2026-08-08T21:07:13Z"
       }
     ],
     "closed_sprints": [
