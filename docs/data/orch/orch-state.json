@@ -134,7 +134,7 @@
     "does_not_consume_wip": true
   },
   "signal_queue": {
-    "_updated_at": "2026-08-08T04:37:53Z",
+    "_updated_at": "2026-08-08T06:06:22Z",
     "_updated_by": "code-janitor",
     "archive": [],
     "rows": [
@@ -3429,6 +3429,32 @@
         "severity": "LOW",
         "status": "READ",
         "payload_ref": "docs/signals/processed/janitor-health-recheck-writer-retired-2026-08-08.json"
+      },
+      {
+        "id": "sys-20260808T060541-213e",
+        "ts": "2026-08-08T06:05:41Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "microservice_memory_degraded",
+        "summary": "A-30 FAIL: rag-service — memory not reclaimed (96.24% sustained, no GC dip over 65s window)",
+        "severity": "WARN",
+        "status": "READ",
+        "payload_ref": null,
+        "provenance": "detector",
+        "audit_cycle_tag": "cron:auditor-t1:2026-08-08T06:00Z",
+        "dedup_key": "microservice_memory_degraded:rag-service:A-30"
+      },
+      {
+        "id": "router-20260808T060936-a30dedup",
+        "ts": "2026-08-08T06:09:36Z",
+        "from": "router",
+        "to": "po",
+        "type": "auditor_convergence_dedup_gap",
+        "severity": "LOW",
+        "status": "NEW",
+        "summary": "system-auditor AUDIT_TIER=1 cycle 2026-08-08T06:05Z self-reported \"no existing rag-service memory rows found\" and minted sys-20260808T060541-213e under a NEW dedup_key (microservice_memory_degraded:rag-service:A-30). Router RAW-verification found 2 prior same-issue rows already exist from 2026-08-07 (sys-20260807T052117-0aa8 WARN, sys-20260807T060932-6536 CRITICAL) under dedup_key memory_pressure:rag-service:A-30-loss-of-reclamation, both visible in DASHBOARD.md, and the underlying root cause (rag-service embedder singleton, 768MiB cap, no release path) is already tracked in FU-RAG-DEPLOY-MEMORY (status=REVIEW, po_measured_input_20260729). No incorrect remediation occurred this cycle (WARN severity, correctly routed to po, no duplicate FIX task minted) but this is the 3rd occurrence of the identical symptom in ~25h under 2 DIFFERENT dedup_key formats/types (memory_pressure:* vs microservice_memory_degraded:*) -- the auditors own convergence-search step is not checking DASHBOARD.md (only live signal_queue, which correctly age-evicts) before minting, and its dedup_key naming for A-30 mem-reclamation findings is not stable across cycles. Will keep fragmenting DASHBOARD/signal tracking unless the dedup_key format is standardized (pick one: memory_pressure:<svc>:A-30-loss-of-reclamation OR microservice_memory_degraded:<svc>:A-30, not both) and the pre-mint search step also greps DASHBOARD.md OPEN anomaly rows, not just live signal_queue.",
+        "payload_ref": null,
+        "provenance": "router-raw-verification"
       }
     ],
     "last_triaged_at": "2026-07-29T06:25:00Z",
