@@ -218,10 +218,56 @@ design does not silently pick an answer)
 
 ---
 
+## [Architect] Brownfield Findings
+
+- **Zone:** multi — `docs/agents/unified-agent/flow/` (chef.md, chef-dish.md, chef-telemetry.md),
+  `docs/agents/alert-commander/flow/`, `docs/agents/bctc-analyst/flow/`,
+  `docs/agents/fb-market-poster/flow/`, `docs/agents/digest-predict/flow/`,
+  `docs/agents/tran-ngoc-bau/flow/`, `docs/agents/cowork-team/flow/spawn-fanout.md`,
+  `.claude/skills/` (new skill) — plus `apps/mcp-server/` conditionally on B1 (see full brief §9).
+  PM must split the flow-doc track from the `apps/mcp-server/` track (different specialists).
+- **Full technical design:** `docs/architecture-briefs/2026-08-08-uc-cca-p3-published-marker-gate-skill.md`
+  (this cycle) — re-verified all 6 gates live (exact file:line for claim + send/publish-action in
+  each), designed the new `.claude/skills/published-marker-gate/SKILL.md` two-phase contract (FR-1/FR-2),
+  produced the FR-3 6-gate wiring table, defined FR-4's consumption contract (mechanics unchanged,
+  already designed on the sibling ANCHOR row), specified FR-5's exact code diff
+  (`coordinationStore.ts` + new `domain/services/publishedMarkerImmunity.ts`), resolved all 4
+  architect-owned open questions (Q-send-fail/Q-gate-overlap/Q-skill-siting/Q-no-bash/Q-taskkind —
+  see brief §7), reconciled both sibling architecture briefs (§8), and documented B1's two paths
+  without deciding it (§9, PO-only per BA spec).
+- **New findings beyond the BA spec:** fb-market-poster has NO MARKET `send_telegram` call anywhere
+  — its actual publish action is a STEP 5 file `Write`, so FR-1's "immediately before send_telegram"
+  language needed generalizing for that one gate; `chef-dish.md:19-20` currently documents the
+  published-marker claim as already-complete inherited session state from chef.md — moving Phase 2
+  into chef-dish.md is a NEW cross-file threading requirement, not a same-file relocation (flagged as
+  risk R1 in the brief); `task_list_held` has no `task_id` filter (Phase-1 probe must scan
+  client-side); `digest-predict/flow/monthly.md` has a live `send_telegram(market)` call but
+  `digest-monthly` is not a registered cowork slot — dead code, out of scope, flagged for
+  code-janitor.
+- **Reuse patterns:** all 6 gates already call `task_claim`/`task_list_held` via native
+  `call_tool(...)` prose today (2/6 already late-claim) — the new skill is a straight extraction of
+  an already-proven, already-Bash-free pattern (Q-no-bash resolved by construction), not a new
+  capability.
+- **Design decisions:** two-phase gate skill lives at `.claude/skills/published-marker-gate/SKILL.md`
+  (agent-side, confirmed genuinely — Q-skill-siting); `spawn-fanout.md`'s FR-P2-7 block (the original
+  copy-paste source of the 4 EARLY-claim defects) trimmed to a 1-line pointer; FR-5 verdict = adopt
+  (unconditional `^published:` prefix guard, infrastructure layer, task_id-prefix not a new
+  task_kind); Q-send-fail resolved to "never release, no exception" (the only answer internally
+  consistent with FR-5 as specified); Component B (2026-08-06 brief) scoped down from "a release
+  path" to diagnostic/escalation documentation once FR-5 ships.
+- **Scan clean:** true ✓ — all 6 gate files, `coordinationTools.ts`/`coordinationStore.ts`, and both
+  sibling architecture briefs re-read in full this cycle, not inherited from the BA spec's prose.
+
+**Standard Detection:** `BUG-FIX / REFACTOR (in-zone, no new primitives)` → `BUILD-STANDARD:
+not-applicable`.
+
 ## RETURN
-DONE: BA spec written, requirements + DDD mapping + ACs + blockers/open-questions produced.
-NEXT: architect | design FR-1..FR-5 against this spec + the two already-existing architect briefs
-(2026-08-06 anchor-and-release, 2026-08-07 midflow-bail) — B1 (definition-of-done scope) flagged for
-PO/router at review time, does not block design start.
-HANDOFF: docs/handoffs/UC-CCA-P3-BA-spec.md
+DONE: Technical design complete. Full brief:
+docs/architecture-briefs/2026-08-08-uc-cca-p3-published-marker-gate-skill.md — FR-1/FR-2/FR-3/FR-5
+fully specified, FR-4 consumption contract defined, all 4 architect-owned open questions resolved,
+both sibling briefs reconciled, B1 presented as both paths (not decided — PO-only).
+ZONE: multi (docs/agents/ + .claude/skills/ + apps/mcp-server/ conditional on B1 Path A/B)
+NEXT: pm | decompose FR-1/FR-2/FR-3 (flow-doc track) + FR-5 (code track, gated on PO's B1 ruling)
+HANDOFF: docs/architecture-briefs/2026-08-08-uc-cca-p3-published-marker-gate-skill.md +
+docs/handoffs/UC-CCA-P3-BA-spec.md
 PIPELINE: continue
