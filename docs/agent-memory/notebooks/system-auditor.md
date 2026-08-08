@@ -2,6 +2,35 @@
 
 Tier-1/2/3 audit runs; newest-first; max 200L total, max 60L per section.
 
+
+## c376 · 2026-08-08T17:15:58Z
+
+### Audit Run Tier-1 (17:10–17:13 UTC 2026-08-08)
+- Tier: 1 | Services: 12 host_runtime_set checked | Health: 5 probed
+- Anomalies: 0 new | Status: HEALTHY
+- **rag-service-1 A-30:** Baseline 91.71% ≥ 85% gate → ENGAGE, median 91.72%, verdict FOLD (benign), no emit
+- **mcp-server-1 A-30:** Baseline 7.07% < 85% gate → SKIP
+- A-20 pdf-extractor: 3/3 PASS | A-21: 0 crashes PASS
+- Health endpoints: OK (HTTP 200) | Disk: 44% PASS
+- Heartbeat: last_healthy_at=2026-08-08T17:13:14Z
+
+## c375 · 2026-08-08T16:38Z
+
+### Audit Run Tier-1 (16:35–16:38 UTC 2026-08-08)
+- Tier: 1 | Services: 12 host_runtime_set checked | Health: 5 probed
+- Anomalies: 0 new (already in 7d dedup) | Status: DEGRADED
+- **mcp-server-1 A-30 Memory Pressure (per-container deep-probe):**
+  - Baseline: 97.04% ≥ 85% investigate-gate → ENGAGE
+  - 6-sample median: 97.91% (min 94.09%, max 98.82%)
+  - Verdict: ESCALATE "loss of reclamation" — all samples >93% sustained high, 2 reclamation dips ≤40pp, 0 discontinuities
+  - VmHWM: pinned at 3GB cap, NOT advancing | state_changed=false, OOMKilled=false
+  - Emission: [emit-signal] SKIP-dedup sys-20260808T163956-006d (reported 16:08Z, 7d window)
+  - Note: in-flight fix FIX-MCP-SSE-SESSION-MANAGER-PERCONN-LEAK; do NOT restart/rebuild per PO
+- **rag-service-1 A-30:** Baseline 92.11%, median 92.31% → FOLD (benign), PASS
+- A-12 api-gateway: CLIENT_TIMEOUT (1/3 debounce) → DEBOUNCED
+- A-20 pdf-extractor: 3/3 PASS | A-21 crashes: 0 PASS | Disk: 69% PASS
+
+
 ## c374 · 2026-08-08T16:08Z
 
 ### Audit Run Tier-1 (16:03–16:07 UTC 2026-08-08)
@@ -26,37 +55,3 @@ Tier-1/2/3 audit runs; newest-first; max 200L total, max 60L per section.
 - All health endpoints: OK (HTTP 200)
 - Disk: 65% used < 85% PASS
 
-
-## c373 · 2026-08-08T15:39Z
-
-### Audit Run Tier-1 (15:34–15:39 UTC 2026-08-08)
-- Tier: 1 | Services: 13 host_runtime_set checked | Health: 5 probed
-- Anomalies: 2 new (C 0, W 2, I 0) | Status: DEGRADED
-- A-30 Memory Pressure (per-container deep-probe):
-  - rag-service-1: 94.69% baseline ≥ 85% gate → ENGAGE deep-probe
-    - verdict: ESCALATE (loss of reclamation)
-    - 6-sample median: 94.71% (min 94.69%, max 94.71%)
-    - VmHWM: pinned at cap (1.5GiB), NOT advancing in window
-    - No OOMKilled, no state_changes, no discontinuities
-    - Emission: [emit-signal] OK sys-20260808T153848-7fac (WARN)
-    - Known disposition (STALE-ACK): FU-RAG-DEPLOY-MEMORY status=DONE_VERIFIED
-    - Verification needed: escalation vs benign within established bounds
-  - mcp-server-1: 95.29% baseline ≥ 85% gate → ENGAGE deep-probe
-    - verdict: ESCALATE (loss of reclamation)
-    - 6-sample median: 94.50% (min 94.36%, max 94.93%)
-    - VmHWM: pinned at cap (3.0GiB), NOT advancing in window
-    - No OOMKilled, no state_changes, no discontinuities
-    - Emission: [emit-signal] OK sys-20260808T153859-7b4c (WARN)
-    - Fresh finding — distinct from rag-service (per FIX-AUDITOR-TIER1-A30-MEM-SINGLE-CONTAINER-SCOPE)
-- All other memory checks: PASS (pdf-extractor 70.92%, all others < 10%)
-- A-20 pdf-extractor multi-probe: 3/3 PASS
-- All health endpoints: OK (HTTP 200)
-- Disk: 68% used < 85% PASS
-- Restart count: mcp-server RestartCount=3, windowed=0 PASS
-
-## c372 · 2026-08-06T22:33:04Z
-### Audit Run Tier-1 (22:31–22:33 UTC 2026-08-06)
-- Tier: 1 | Services: 12 host_runtime_set | Health: 5 probed
-- Anomalies: 0 | Status: HEALTHY
-- All container checks PASS: [mcp-server, api-gateway, frontend, macro-indicators, mcp-gateway, pdf-extractor, stock-price, technical-analysis, kinh-dich-service, alert-engine, rag-service, news-fetch] — all Up, healthy status.
-- Health endpoints PASS [mcp-server:3000, api-gateway:4000, macro-indicators:5004, pdf-extractor:5001, frontend:3001].
