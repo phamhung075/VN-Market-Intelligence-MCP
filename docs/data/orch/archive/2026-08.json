@@ -4231,6 +4231,19 @@
       "status": "READ",
       "payload_ref": null,
       "provenance": "agent-father"
+    },
+    {
+      "id": "sys-20260807T062620-237e",
+      "ts": "2026-08-07T06:26:20Z",
+      "from": "system-auditor",
+      "to": "dev-team",
+      "type": "db_integrity_breach",
+      "summary": "low_confidence_financial_reports: 45 reports with extraction_confidence < 0.2 (exceeds C-04 threshold of ≤5); minimum co",
+      "severity": "HIGH",
+      "status": "READ",
+      "payload_ref": "docs/data/db-integrity-history.json",
+      "provenance": "detector",
+      "audit_cycle_tag": null
     }
   ],
   "backlog_detail": [],

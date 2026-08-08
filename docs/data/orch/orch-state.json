@@ -3353,19 +3353,6 @@
         "disposition": "FOLD onto OPS-RAG-SERVICE-REBUILD-STALE-IMAGE-PREDATES-IDLE-UNLOAD-FIX (escalated BACKLOG/P0, owner=ops) — the sustained >93%-with-zero-dips signature is the predicted observable of a running image that predates its own idle-unload fix 0308514f5 by ~24h; code fix already tracked by FIX-RAG-EMBEDDER-IDLE-UNLOAD-PATH (review[]), only open action is the single-service rebuild+recreate. No new mint. Folded into PO BATCH triage-20260808T0001Z-po."
       },
       {
-        "id": "sys-20260807T062620-237e",
-        "ts": "2026-08-07T06:26:20Z",
-        "from": "system-auditor",
-        "to": "dev-team",
-        "type": "db_integrity_breach",
-        "summary": "low_confidence_financial_reports: 45 reports with extraction_confidence < 0.2 (exceeds C-04 threshold of ≤5); minimum co",
-        "severity": "HIGH",
-        "status": "READ",
-        "payload_ref": "docs/data/db-integrity-history.json",
-        "provenance": "detector",
-        "audit_cycle_tag": null
-      },
-      {
         "id": "sys-20260807T072347-5358",
         "ts": "2026-08-07T07:23:47Z",
         "from": "system-auditor",
