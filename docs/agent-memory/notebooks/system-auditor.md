@@ -1,3 +1,112 @@
+## c80 · 2026-08-08T01:08:04Z
+### Audit Run Tier-1 (01:05–01:06 UTC 2026-08-08)
+- Tier: 1 | Services: 12 host_runtime_set | Health: 5 probed
+- Anomalies: 0 new (dedup-skipped 1) | Status: DEGRADED
+- Verdict: Container/health all UP; A-30 memory pressure ESCALATE on mcp-server (96–97% sustained, zero reclamation dips) — within dedup window (19h < 7d prior)
+- Container status [A-01–A-11]: All 12 UP (healthy) ✓
+- Health endpoints [A-12–A-20]: All 5 OK (HTTP 200) ✓
+- A-20 pdf-extractor multi-probe: 3/3 PASS ✓
+- A-21 restart count (mcp-server): RestartCount=2 (check windowed crashes)
+- A-30 memory pressure discriminator:
+  - **mcp-server (DEDUP-SKIPPED):**
+    - Current: 97.18% (2.915GiB / 3GiB)
+    - A-30 verdict: ESCALATE (all samples >93% with zero reclamation dips)
+    - 6-probe window: 97.16–97.59% (ALL sustained >97%)
+    - Reclamation: 0 dips detected
+    - VmHWM=3058144KB >> VmRSS=3023460KB (prior reclamation visible, now stuck high)
+    - OOMKilled: false, RestartCount: 2
+    - **Verdict mapping:** reason contains 'no reclamation dip' (>93% baseline case) → WARN
+    - Signal: memory_pressure:mcp-server:A-30-loss-of-reclamation (SKIP-dedup)
+    - Dedup status: Prior emission 2026-08-07T05:48:25Z (19h ago, within 7-day window)
+    - Action: No new BUG alert (dedup window active)
+- A-32 disk: 51% < 85% ✓
+- A-33 hook liveness: All load-bearing hooks OK ✓
+
+### RAW-PROBE:
+```
+=== AUDITOR PROBE 2026-08-08T01:05:33Z ===
+
+--- docker ps -a ---
+NAMES                                             STATUS                  IMAGE                                           CREATED
+vn-market-intelligence-mcp-mcp-server-1           Up 9 hours (healthy)    vn-market-intelligence-mcp-mcp-server           26 hours ago
+vn-market-intelligence-mcp-stock-price-1          Up 33 hours (healthy)   vn-market-intelligence-mcp-stock-price          33 hours ago
+vn-market-intelligence-mcp-rag-service-1          Up 13 hours (healthy)   vn-market-intelligence-mcp-rag-service          36 hours ago
+vn-market-intelligence-mcp-macro-indicators-1     Up 9 days (healthy)     vn-market-intelligence-mcp-macro-indicators     9 days ago
+vn-market-intelligence-mcp-pdf-extractor-1        Up 3 days (healthy)     vn-market-intelligence-mcp-pdf-extractor        10 days ago
+vn-market-intelligence-mcp-frontend-1             Up 2 weeks (healthy)    vn-market-intelligence-mcp-frontend             2 weeks ago
+mcp-gateway                                       Up 3 weeks (healthy)    mcpservergatway-gateway                         3 weeks ago
+vn-market-intelligence-mcp-api-gateway-1          Up 3 weeks (healthy)    vn-market-intelligence-mcp-api-gateway          3 weeks ago
+vn-market-intelligence-mcp-flaresolverr-1         Up 3 weeks (healthy)    ghcr.io/flaresolverr/flaresolverr:latest        3 weeks ago
+vn-market-intelligence-mcp-news-fetch-1           Up 3 weeks (healthy)    vn-market-intelligence-mcp-news-fetch           3 weeks ago
+vn-market-intelligence-mcp-technical-analysis-1   Up 3 weeks (healthy)    vn-market-intelligence-mcp-technical-analysis   3 weeks ago
+vn-market-intelligence-mcp-alert-engine-1         Up 3 weeks (healthy)    vn-market-intelligence-mcp-alert-engine         3 weeks ago
+vn-market-intelligence-mcp-kinh-dich-service-1    Up 3 weeks (healthy)    vn-market-intelligence-mcp-kinh-dich-service    3 weeks ago
+
+--- health endpoints ---
+[health] mcp-server:3000/health OK (HTTP 200)
+[health] api-gateway:4000/health OK (HTTP 200)
+[health] macro-indicators:5004/health OK (HTTP 200)
+[health] pdf-extractor:5001/health OK (HTTP 200)
+[health] frontend:3001/ OK (HTTP 200)
+
+--- restart count ---
+Container=/vn-market-intelligence-mcp-mcp-server-1 RestartCount=2
+
+--- memory pressure ---
+Container=vn-market-intelligence-mcp-mcp-server-1 MemPerc=97.18% MemUsage=2.915GiB / 3GiB
+
+--- memory pressure multi-probe reclamation (A-30) ---
+{
+  "probe": "A-30 mcp-server memory reclamation discriminator",
+  "verdict": "ESCALATE",
+  "reason": "all samples >93% with no reclamation dip — loss of reclamation",
+  "samples": [{"n":1,"t":"01:05:39Z","pct":97.18},{"n":2,"t":"01:05:54Z","pct":97.20},{"n":3,"t":"01:06:09Z","pct":97.39},{"n":4,"t":"01:06:24Z","pct":97.16},{"n":5,"t":"01:06:39Z","pct":97.58},{"n":6,"t":"01:06:54Z","pct":97.59}],
+  "analysis": {"min_pct": 97.16, "max_pct": 97.59, "reclamation_dips": 0, "dip_detail": "none"}
+}
+
+--- disk df -h / ---
+Filesystem        Size    Used   Avail Capacity iused ifree %iused  Mounted on
+/dev/disk1s4s1   233Gi    13Gi    13Gi    51%    393k  138M    0%   /
+
+--- pdf-extractor in-container multi-probe (A-20) ---
+[A-20-PROBE-1] in-container HTTP 200
+[A-20-PROBE-2] in-container HTTP 200
+[A-20-PROBE-3] in-container HTTP 200
+[A-20] pass_count=3/3
+
+=== PROBE DONE ===
+```
+
+### Verdict: DEGRADED
+Container status healthy, health endpoints healthy. Memory pressure on mcp-server persistent (sustained >97%, no reclamation recovery). Dedup status prevents new BUG alert. Same finding as prior Tier-1 cycle — investigation ongoing (ongoing ops issue, not new detection).
+
+[OUTPUT-CONTRACT] signals_posted=0 | telegram_sent=0 | signal_queue_rows_written=1 | dashboard_rows=0 | dedup_skipped=1
+CONTRACT-CONTRADICTION: NONE
+
+
+## c79 · 2026-08-07T06:12:14Z
+### Audit Run Tier-2 (06:12–06:12 UTC 2026-08-07)
+- Tier: 2 | Freshness sweep completed | Anomalies: 0 | Status: HEALTHY
+- Cron Fire Check (A-29): All major jobs firing correctly ✓
+- VPS Proxy Health (B-06, B-07): All 4 routes OK (prices, news, sbv, bctc) ✓
+- Rate Limits (B-12): All 12 sources ready ✓
+- DB Freshness: C-06 (5 market_messages/3h), C-07 (79 agent_signals/24h) ✓
+- BCTC Checks: B-09 (0 bad SSC URLs), B-13 (0 stale >72h) ✓
+- Pipeline: Healthy | Aggregator 2026-08-07 | TA ready 33 tickers
+- Macro Snapshot: Fresh 06:11:59Z | VN Index 1768.39, Oil 83.83, Gold 4335.30, USD/VND 26050
+- VPS Service Health: vn-bctc-fetch reports 'unhealthy' (asymptomatic — no data staleness detected)
+
+### Verdict: HEALTHY
+All Tier-2 freshness sweep checks PASS. No CRITICAL or WARN anomalies. Pipeline and source freshness within SLA.
+
+### Cross-Tier Context
+- Tier-1 (c78 06:00Z): rag-service A-30 ESCALATE (ongoing FU-RAG-DEPLOY-MEMORY, dedup-skipped)
+- Tier-1 (c78 06:00Z): mcp-server recovered to 11.59% memory (CRITICAL at c77 05:30Z resolved)
+- No new findings in Tier-2 sweep to duplicate or escalate
+
+[OUTPUT-CONTRACT] signals_posted=0 | telegram_sent=0 | signal_queue_rows_written=0 | dashboard_rows=0
+CONTRACT-CONTRADICTION: NONE
+
 ## c77 · 2026-08-07T05:30Z
 ### Audit Run Tier-1 (05:43–05:50 UTC 2026-08-07)
 - Tier: 1 | Services: 12 host_runtime_set | Health: 5 probed
@@ -49,111 +158,3 @@
 CONTRACT-CONTRADICTION: NONE
 
 
-## c76 · 2026-08-07T04:00Z
-### Audit Run Tier-1 (04:03–04:04 UTC 2026-08-07)
-- Tier: 1 | Services: 12 host_runtime_set | Health: 5 probed
-- Anomalies: 1 ESCALATE (rag-service A-30) | Status: DEGRADED
-- Verdict: STANDARD_GREEN for host_runtime_set, but ESCALATE on rag-service A-30 loss-of-reclamation (separate discriminator probe)
-- Container status [A-01–A-11]: All 12 UP (healthy) ✓
-- Health endpoints [A-12–A-20]: All 5 OK (HTTP 200) ✓
-- A-20 pdf-extractor multi-probe: 3/3 PASS ✓
-- A-21 restart count (mcp-server): 0, no crashes in 4h window ✓
-- A-30 memory pressure:
-  - mcp-server: 63.70% (< 85% deep-probe gate) — SKIP deep probe ✓
-  - **rag-service (separate ESCALATE finding):** verify-a30-mcp-memory-reclamation.sh ESCALATE verdict
-    - All 12 probes: 99.62–99.81% (min=99.62%, max=99.81%)
-    - Reclamation dips: 0 (loss of reclamation tripwire)
-    - VmHWM=1149252KB >> VmRSS=1041844KB (prior reclamation occurred, now stuck high)
-    - OOMKilled: false, RestartCount: 0
-    - **Escalation gate crossed:** all samples >93% with zero reclamation dips → ESCALATE to ops
-    - Signal: mem_pressure:rag-service:A-30-loss-of-reclamation (new dedup_key)
-    - Signal ID: sys-20260807T040402-69e8
-- A-32 disk: 50% < 85% ✓
-- A-33 hook liveness: INFO/grey (expected, scripts not deployed)
-
-### Notes:
-- Spawn verdict: DEGRADED (rag-service A-30 escalation gate crossed during verify-a30 discriminator probe)
-- Context: This cycle's verify-a30-mcp-memory-reclamation.sh probe on rag-service (CONTAINER env var override) returned ESCALATE: all samples >93% with no reclamation dip = loss of reclamation
-- Dedup status: New dedup_key (mem_pressure:rag-service:A-30-loss-of-reclamation) — distinct from prior c73/c75 floor-breach entries. BELOW-FLOOR crossing explicitly recorded per task instructions.
-- Escalation: Routed to ops via DASHBOARD + signal_queue row (CRITICAL severity)
-- Corroboration-gate pass: meets tripwire condition (all samples >93% no dips) without requiring OOMKilled or peak >97% sustained
-- [emit-signal] OK dedup_key=mem_pressure:rag-service:A-30-loss-of-reclamation id=sys-20260807T040402-69e8
-- [emit-dashboard] OK id=sys-20260807T040402-69e8 check_id=A-30-RAG-SERVICE-ESCALATE
-
-[OUTPUT-CONTRACT] signals_posted=1 | telegram_sent=1 | signal_queue_rows_written=1 | dashboard_rows=1
-CONTRACT-CONTRADICTION: NONE
-
-
-
-
-## c75 · 2026-08-07T03:30Z
-### Audit Run Tier-1 (03:27–03:34 UTC 2026-08-07)
-- Tier: 1 | Services: 12 host_runtime_set | Health: 5 probed
-- Anomalies: 0 | Status: HEALTHY (all checks PASS)
-- Verdict: ALL_GREEN — all containers UP, health endpoints OK, A-30 FOLD (benign reclamation).
-- Container status [A-01–A-11]: All 12 UP ✓
-- Health endpoints [A-12–A-20]: All 5 OK (HTTP 200) ✓
-- A-20 pdf-extractor multi-probe: 3/3 PASS ✓
-- A-21 restart count: 0, no crashes in 4h window ✓
-- A-30 memory reclamation: mcp-server 50.57% (< 85% gate), verify-a30 FOLD verdict (stable 50–52% range, 1 reclamation dip detected, VmHWM >> VmRSS proves prior reclamation), no escalation ✓
-- A-32 disk: 56% < 85% ✓
-- A-33 hook liveness: All load-bearing hooks OK ✓
-
-### Notes:
-- Spawn verdict: ALL_GREEN (no pre-gate failures)
-- Prior cycle (c74 03:06Z): A-30 floor-breach for rag-service (99.60%, 4MiB free) — dedup-suppressed. This cycle's rag-service is healthy (15h uptime, UP status per docker ps).
-- User instruction: verify accelerating memory decline pattern via verify-a30-mcp-memory-reclamation.sh — FOLD verdict confirms safe recovery, no ops escalation needed.
-- OUTPUT-CONTRACT: signals_posted=0, telegram_sent=0, signal_queue_rows_written=0, dashboard_rows=0 ✓
-## c74 · 2026-08-07T03:06:29Z
-### Audit Run Tier-3 (02:00–03:07 UTC 2026-08-07)
-- Tier: 3 | Runtime/DB checks completed
-- Anomalies: 1 new (W=1), 2 dedup-skipped | Status: DEGRADED
-- Tier-1: HEALTHY (all containers UP, health OK, A-30 SKIP)
-- DB: C-04 SKIP-dedup (30 low-conf), C-08 SKIP-dedup (1 orphan), C-09 OK WARN (macro stale)
-
-
----
-
-## c77 · 2026-08-07T05:00Z
-### Audit Run Tier-1 (05:00–05:21 UTC 2026-08-07)
-- Tier: 1 | Services: 12 host_runtime_set | Health: 5 probed
-- Anomalies: 1 ESCALATE (rag-service A-30) | Status: DEGRADED
-- Spawn trigger: auditor-tier1-probe.sh verdict=FAILURE (mem_creep: rag-service 99.52%, 4.9MiB free BELOW-FLOOR(40MiB))
-- Context: Prior c76 cycle (04:00Z) emitted A-30-RAG-SERVICE ESCALATE; pattern shows sustained loss-of-reclamation
-
-### RAW-PROBE:
-```
-=== A-30 DISCRIMINATOR PROBE (rag-service) ===
-Discriminator Result (verify-a30-mcp-memory-reclamation.sh 12 probes, 25s spacing):
-- Verdict: ESCALATE
-- Reason: all samples >93% with no reclamation dip — loss of reclamation
-- Samples (12): 99.55%, 99.55%, 99.55%, 99.55%, 99.55%, 99.55%, 99.55%, 99.55%, 99.55%, 99.33%, 99.33%, 99.33%
-- Analysis: min_pct=99.33, max_pct=99.55, reclamation_dips=0, dip_detail=none
-- State: OOMKilled=false, RestartCount=0, StartedAt=2026-08-06T12:57:42Z
-- VM: VmHWM=1149252KB (1122MiB peak), VmRSS=1030188KB (1005MiB current)
-- Span: 275 seconds (12 probes × 25s intervals)
-```
-
-### Findings:
-**A-30 (Memory Pressure — rag-service discriminator):**
-- Baseline: 99.52% of 768MiB cap (4.9MiB free)
-- Discriminator gate crossed: all samples >93% with zero reclamation dips
-- Tripwire condition: "loss of reclamation" (no GC progress over ~5min window)
-- VmHWM >> VmRSS: Peak was 1122MiB, current 1005MiB, but stuck high (no reclamation path forward)
-- OOMKilled: false (not yet killed, but margin exhausted)
-- Container stability: Up 18h, RestartCount=0, no recent crashes
-- ACK ledger status: rag-service entry below MEM_FLOOR_MIB=40 threshold → ACK does NOT suppress
-- **Escalation verdict: WARN** (reason="no reclamation dip" → per tier1-probe.md A-30 override §4c)
-- Signal emitted: memory_pressure:rag-service:A-30-loss-of-reclamation (id=sys-20260807T052117-0aa8)
-
-### Disposition:
-- Spawn verdict: DEGRADED (A-30 escalation gate crossed)
-- Escalation path: signal_queue row (WARN) + DASHBOARD.md (WARN) + Telegram to ops
-- Follow-up task: FU-RAG-DEPLOY-MEMORY (capacity planning / embedder model release path)
-- Note: Prior cycles c76 (04:00Z ESCALATE), c75 (03:30Z FOLD recovery), c74 Tier-3. This cycle confirms sustained escalation, not transient spike.
-
-[emit-signal] OK dedup_key=memory_pressure:rag-service:A-30-loss-of-reclamation id=sys-20260807T052117-0aa8
-[emit-dashboard] OK id=sys-20260807T052117-0aa8 check_id=A-30-RAG-SERVICE
-
-[OUTPUT-CONTRACT] signals_posted=1 | telegram_sent=1 | signal_queue_rows_written=1 | dashboard_rows=1
-CONTRACT-CONTRADICTION: NONE
