@@ -1066,3 +1066,15 @@
 **Mitigation:** No immediate action beyond signal routing.
 
 ---
+
+## Anomaly: A-30 · rag-service: sustained high memory 93.82% — loss of reclamation
+**Severity:** WARN | **Date:** 2026-08-08 | **Status:** OPEN
+**Location:** vn-market-intelligence-mcp-rag-service-1
+**Details:** Memory usage steady at 93.82% across 6 probes (65s window), sustained high threshold exceeded
+**Impact:** Container at memory limit; risk of OOM kill if workload spikes
+**Root cause:** RAG service persistent high memory demand; insufficient headroom for reclamation
+**Zone owner:** infrastructure
+**Last reported:** 2026-08-08T22:41:07Z (signal sys-20260808T224058-0a62, system-auditor -> po, dedup_key=microservice_degraded:rag-service:A-30, WARN Telegram sent)
+**Mitigation:** No immediate action beyond signal routing.
+
+---
