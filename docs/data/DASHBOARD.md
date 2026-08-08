@@ -862,3 +862,15 @@
 **Mitigation:** No immediate action beyond signal routing.
 
 ---
+
+## Anomaly: A-30 · rag-service memory pressure
+**Severity:** WARN | **Date:** 2026-08-08 | **Status:** OPEN
+**Location:** docker-host/rag-service
+**Details:** Memory sustained at 96.32% with no reclamation dip
+**Impact:** Service may face OOM if memory pressure increases
+**Root cause:** (not yet determined)
+**Zone owner:** ops
+**Last reported:** 2026-08-08T07:36:31Z (signal sys-20260808T073615-7c33, system-auditor -> po, WARN Telegram sent)
+**Mitigation:** No immediate action beyond signal routing.
+
+---
