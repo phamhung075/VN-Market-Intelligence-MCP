@@ -94,10 +94,10 @@
   ],
   "head": {
     "status": "idle",
-    "updated_at": "2026-08-08T04:56:44Z",
-    "updated_by": "developer",
     "active_task_id": null,
-    "next_agent": null
+    "next_agent": null,
+    "updated_at": "2026-08-08T05:30:25Z",
+    "updated_by": "architect (FIX-AUDITOR-DOCAUDIT-MEMORY-PATH-PREDICATE plan-only closeout)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -10678,32 +10678,6 @@
         "po_UNCOUPLE_disk_from_memory_20260729T1148": "SCOPE UN-COUPLING — corrects po_evidence_and_priority_20260729T1140 on this row. That note justified the P3->P2 raise partly on the claim that 786 MiB of on-disk LanceDB exceeding a 768 MiB memory cap means no read workload can have its working set resident, so fragment count drives cgroup pressure. THE MEMORY HALF OF THAT ARGUMENT IS RETRACTED. The cgroup anon/file split measured at the 10:12Z restart reads ~726 MiB anon against at most ~40 MiB file-backed, so the corpus is NOT resident in this cgroup and fragment fan-out is NOT what pins it at 98%. That is the model singleton, owned by FIX-RAG-SERVICE-CLEAN-EXIT-RESTART-LOOP and FU-RAG-DEPLOY-MEMORY. THE DISK FACTS ARE UNAFFECTED AND STILL CARRY THE RAISE ON THEIR OWN: du -sm data/live/lancedb = 786 MiB for a corpus of ~11243 rows; rag_entries.lance/data holds 3137 fragment files / 596 MiB (roughly one fragment per 3-4 rows, each POST /index landing a fresh ~6.7-6.9 KiB fragment); _versions 3091 manifests / 32 MiB and _transactions 3091 files / 12 MiB, so version metadata alone is 44 MiB and grows one pair per write; _indices 145 MiB / 745 files. Unbounded fragment and version accumulation is a real defect with real disk and real query-planning cost, and this repo has an ENOSPC incident on record. P2 STANDS. WHAT DOES NOT STAND is the causal link to the memory ceiling, and a future reader must not inherit it: fixing compaction will reclaim DISK and reduce fragment fan-out, and should NOT be expected to move the 98% memory figure. The still-true coupling to the sibling row is narrower and worth keeping: the compaction failure-path counter defect is WHY 3137 fragments accumulated, so that row is upstream of this one on cause. It is not upstream on the memory symptom."
       },
       {
-        "id": "FIX-AUDITOR-VPS-ROUTE-COUNT-HARDCODE-UNSATISFIABLE",
-        "type": "FIX",
-        "status": "BACKLOG",
-        "priority": "P2",
-        "size": "S",
-        "zone": "cross-service/",
-        "supervised": true,
-        "plan_only": true,
-        "created_at": "2026-07-29T10:49:19Z",
-        "created_by": "po",
-        "updated_at": "2026-07-29T10:52:11Z",
-        "title": "docs/agents/system-auditor/flow/main.md:211 hardcodes 'VPS proxy: all 7 routes must return status: ok (B-06, B-07)' — but the SSOT lists 8 routes and the tool the same block calls returns 4 push-services, so the check is UNSATISFIABLE AS WRITTEN and every cycle must under-report or fabricate; the B-06/B-07 PASS was also declared from the freshness plane alone while the service plane reported 2 unhealthy",
-        "root_cause": "THREE NUMBERS, NO TWO OF WHICH AGREE — PO-verified by live read-only tool calls at 2026-07-29T10:44Z. (a) FLOW DOC: main.md:211 hardcodes the literal 'all 7 routes'. (b) SSOT: docs/data/system-map.json routes[] contains EIGHT entries — /proxy/ssc-iboard, /proxy/bctc-discover/:ticker, /proxy/muasamcong, /bctc-files/, /proxy/foreign-flow, /proxy/sbv, /proxy/news, /proxy/agm-plan. (c) LIVE TOOL: get_vps_proxy_health — the tool main.md:195 tells the agent to call for this very check — returns FOUR rows (prices, news, sbv, bctc), which are push-service aggregates, not routes, and cannot be placed in 1:1 correspondence with either 7 or 8. The literal '7' has no referent anywhere in the system. This also violates the project-wide invariant in CLAUDE.md — 'All structural data (services, agents, zones, channels, sources, watchlist) lives in docs/data/system-map.json. Query with jq — never hardcode values.' SECOND ARM, independently serious: the cycle declared B-06/B-07 PASS from get_vps_proxy_health (a push-freshness plane, where all 4 rows read status=ok) without consulting get_vps_service_health, which main.md:196 also lists and which at 10:44Z reported '1 healthy, 2 idle (market closed), 2 unhealthy' with vn-sbv-fetch UNHEALTHY (VPS uptime 44m, i.e. recently restarted) and vn-bctc-fetch UNHEALTHY. An unhealthy vn-sbv-fetch is the most plausible cause of the very sbv_fx staleness this same cycle emitted as B-12 — so the PASS masked the likely root cause of the cycle's own WARN.",
-        "evidence": "PO-MEASURED 2026-07-29T10:44Z via gateway call_tool, read-only, no POST/exec/restart. get_vps_proxy_health -> 4 rows, all status=ok, bctc Stale?=YES (last push 2026-07-28 08:23:22). get_vps_service_health -> 5 services, vn-sbv-fetch unhealthy / vn-bctc-fetch unhealthy. jq over docs/data/system-map.json routes[] -> length 8. docs/agents/system-auditor/flow/main.md:211 -> the literal '7'. Reported outcome that triggered this row: 'VPS proxy status ok for 3/4 routes' with B-06/B-07 marked PASS; the notebook records it as 'VPS proxy: prices/news/sbv ok', silently dropping the 4th (bctc). Third consecutive cycle with this gap.",
-        "why_the_obvious_fixes_are_wrong": "(1) DO NOT fix this by reminding the agent to check 7 routes. That has now been tried at brief level for three consecutive cycles and cannot work, because no tool the flow doc offers returns 7 route statuses — the instruction is unsatisfiable, and an agent that 'complied' would have to fabricate three route results. The defect is in the DOC and its tool wiring, not in agent diligence. (2) DO NOT simply change '7' to '8' to match system-map. That re-hardcodes the same class of value one number later and still leaves the agent with a 4-row tool for an 8-route assertion; derive the expected set from system-map routes[] with jq, and state explicitly which tool can actually report per-route status (it may need to be get_vps_service_health, a new tool, or the check may need re-scoping to what is genuinely observable). (3) DO NOT fold this into FIX-VPS-HEALTH-OFFHOURS-MASK-FALSE-GREEN — that row is zone apps/mcp-server/, TypeScript, about an off-hours grace double-spent inside vpsProxyTools.ts; this row is a flow-doc/SSOT drift. Same family, different artifact and zone. (4) RECONCILE WITH, DO NOT DUPLICATE, orch-sentinel OH-3.2 'VPS Route Count Drift (3-way compare)' at docs/agents/orch-sentinel/flow/dim-oh3-auditor-blindspot.md:24-31. OH-3.2 already claims a 3-way route-count compare, but its needles are a grep -c over vps-setup docs and a count of system-map data_sources where geo_blocked==true — neither of which counts routes[], so it would NOT have caught this drift. Fix OH-3.2's operands as part of this row rather than inventing a fourth way to count routes.",
-        "scope": "Two artifacts. (1) docs/agents/system-auditor/flow/main.md:211 — replace the hardcoded route count with a jq read of system-map.json routes[], and name the tool that can actually return per-route status; if none can, re-scope B-06/B-07 to what is observable and say so in the doc rather than leaving an unsatisfiable assertion. (2) Require the B-06/B-07 verdict to consult BOTH planes already listed at main.md:195-196 (get_vps_proxy_health AND get_vps_service_health) and to fail-loud rather than PASS when they disagree — the 10:33Z cycle is the worked example. Reconcile OH-3.2's operands in the same change.",
-        "acceptance": "(1) No literal route count remains in main.md; show the jq expression and its live output. (2) A route present in system-map routes[] but absent from the health tool's response produces a FLAGGED result, never a silent PASS — demonstrate by running the check as written. (3) A cycle where get_vps_service_health reports any unhealthy service cannot return B-06/B-07 PASS; demonstrate against the live 2026-07-29 state (vn-sbv-fetch/vn-bctc-fetch unhealthy) or a fixture reproducing it. (4) OH-3.2 counts routes[] rather than geo_blocked data_sources, or state explicitly why it should not. (5) Report whether vn-sbv-fetch being unhealthy at 10:44Z is in fact the cause of the sbv_fx B-12 staleness — if it is, say so on FIX-AUDITOR-B12-DOUBLE-INVOKE-EMIT-MARKER-LOSS as well.",
-        "related": [
-          "FIX-AUDITOR-B12-DOUBLE-INVOKE-EMIT-MARKER-LOSS",
-          "FIX-VPS-HEALTH-OFFHOURS-MASK-FALSE-GREEN",
-          "FIX-VPS-SBV-HEALTH-SHARED-TABLE-IS-ESTIMATE",
-          "TRACK-CRON-AUDIT-VPS-PLANE"
-        ],
-        "constraint": "Read-only against live services: no docker exec into rag-service, no POST to any endpoint, no restarts. Both tool calls used to establish this row are read-only and were run at 2026-07-29T10:44Z."
-      },
-      {
         "id": "FIX-BCTC-REFINE-DIACRITIC-COLLAPSE-A-BREVE-ACUTE",
         "type": "FIX",
         "status": "BACKLOG",
@@ -15729,34 +15703,6 @@
         "po_corroboration_c80_20260808T0116Z": "Fresh A-30 datapoint, 2026-08-08T01:05:33-01:06:54Z (system-auditor c80 Tier-1, RAW JSON in notebook commit 569f79108): mcp-server 6-probe window 97.16 / 97.20 / 97.39 / 97.16 / 97.58 / 97.59 %, min 97.16 max 97.59, reclamation_dips=0, discriminator verdict=ESCALATE, OOMKilled=false, RestartCount=2, VmHWM=3058144KB vs VmRSS=3023460KB. This is 19h AFTER the container OOM'd at ~05:57Z on 2026-08-07 (the death that confirmed sys-20260807T054825-771b as a true positive) - memory is back at the same pre-death ceiling with zero reclamation, i.e. the leak refills the 3GiB cap within a day of every restart. Logged here rather than as a new signal_queue row because c80's own E-3 append never fired (see FIX-ANALYSIS-ONLY-EXIT-DETECTOR-OR-VERDICT-BLIND-TO-PARTIAL-WRITE-CYCLE) and because the finding is already routed to this row - no duplicate minted. Dispatch fields deliberately untouched."
       },
       {
-        "id": "FIX-AUDITOR-DOCAUDIT-MEMORY-PATH-PREDICATE",
-        "title": "FIX: system-auditor DOC-AUDIT memory-integrity check emits 'docs/agent-memory/MEMORY.md is MISSING' — that path NEVER existed (git diff-filter=D empty; project memory index is docs/agent-memory/INDEX.md, and the auditor spec main.md:445 names memory/MEMORY.md = the Claude auto-memory which is present+healthy). Recurring WARN false-positive from a drifted path predicate.",
-        "status": "READY",
-        "type": "FIX",
-        "priority": "P2",
-        "size": "S",
-        "zone": "docs/agents/system-auditor/flow/",
-        "owner": "architect",
-        "next_agent": "architect",
-        "plan_only": true,
-        "supervised": true,
-        "created_at": "2026-07-22T00:49:21Z",
-        "created_by": "po/triage-20260722T0049",
-        "origin_signal_id": "sys-20260722T003235-52bb",
-        "root_cause": "DOC-AUDIT section (docs/agents/system-auditor/flow/main.md § 1 Memory integrity, :445) references memory/MEMORY.md; the implementation resolves this to docs/agent-memory/MEMORY.md, never a canonical project artifact (docs/agent-memory uses INDEX.md/README.md/AGENT_STARTUP.md + notebooks/). Missing-file check on a phantom path => WARN FP re-emitted each auditor tier cycle.",
-        "deliverable": "Point the DOC-AUDIT memory-integrity predicate at the REAL memory index (docs/agent-memory/INDEX.md) OR remove the phantom docs/agent-memory/MEMORY.md existence check; align main.md:445 wording so the checked artifact is unambiguous. Verify no other DOC-AUDIT sub-check hardcodes a non-existent canonical path.",
-        "acceptance": "One live DOC-AUDIT cycle emits ZERO 'MEMORY.md MISSING' signal against the current tree, and a deliberately-broken memory index still trips a real WARN (negative control).",
-        "related": [
-          "FIX-AUDITOR-A12A20A30-FP-REEMIT-CONVERGE"
-        ],
-        "note": "Auditor-FP family (feedback_auditor_predicate_drift_false_regression). Distinct from the A12/A20/A30 health-probe converge row (runtime health predicates vs this doc-integrity path predicate). PO source-verified path absence (ls + git log --diff-filter=D empty) before minting.",
-        "updated_at": "2026-08-08T03:21:28Z",
-        "promoted_at": "2026-08-08T03:21:27Z",
-        "promoted_by": "dev-team (supervised-lane sweep)",
-        "promotion_note": "Supervised-Lane Sweep — assigned dispatch_lane='architect' (priority_rank=2); supervised/plan_only flags preserved, gate NOT disabled — see FIX-BOUNDED1-SUPERVISED-LANE-NO-SWEEPER",
-        "dispatch_lane": "architect"
-      },
-      {
         "id": "FIX-AUDITOR-D4-WHITELIST-DATA-QUALITY-ANOMALY-PREFIX",
         "title": "D4 held-lock detector re-fires on data-quality-anomaly:* — KNOWN_LEGIT_PREFIXES (authored 2026-07-08) never learned the lock kind bctc-analyst introduced 2026-07-19; whitelist is a static list that lags every new escalation-lock kind",
         "status": "READY",
@@ -15847,6 +15793,36 @@
         "promoted_by": "dev-team (supervised-lane sweep)",
         "promotion_note": "Supervised-Lane Sweep — assigned dispatch_lane='agent-father' (priority_rank=2); supervised/plan_only flags preserved, gate NOT disabled — see FIX-BOUNDED1-SUPERVISED-LANE-NO-SWEEPER",
         "dispatch_lane": "agent-father"
+      },
+      {
+        "id": "FIX-AUDITOR-VPS-ROUTE-COUNT-HARDCODE-UNSATISFIABLE",
+        "type": "FIX",
+        "status": "READY",
+        "priority": "P2",
+        "size": "S",
+        "zone": "cross-service/",
+        "supervised": true,
+        "plan_only": true,
+        "created_at": "2026-07-29T10:49:19Z",
+        "created_by": "po",
+        "updated_at": "2026-08-08T05:22:38Z",
+        "title": "docs/agents/system-auditor/flow/main.md:211 hardcodes 'VPS proxy: all 7 routes must return status: ok (B-06, B-07)' — but the SSOT lists 8 routes and the tool the same block calls returns 4 push-services, so the check is UNSATISFIABLE AS WRITTEN and every cycle must under-report or fabricate; the B-06/B-07 PASS was also declared from the freshness plane alone while the service plane reported 2 unhealthy",
+        "root_cause": "THREE NUMBERS, NO TWO OF WHICH AGREE — PO-verified by live read-only tool calls at 2026-07-29T10:44Z. (a) FLOW DOC: main.md:211 hardcodes the literal 'all 7 routes'. (b) SSOT: docs/data/system-map.json routes[] contains EIGHT entries — /proxy/ssc-iboard, /proxy/bctc-discover/:ticker, /proxy/muasamcong, /bctc-files/, /proxy/foreign-flow, /proxy/sbv, /proxy/news, /proxy/agm-plan. (c) LIVE TOOL: get_vps_proxy_health — the tool main.md:195 tells the agent to call for this very check — returns FOUR rows (prices, news, sbv, bctc), which are push-service aggregates, not routes, and cannot be placed in 1:1 correspondence with either 7 or 8. The literal '7' has no referent anywhere in the system. This also violates the project-wide invariant in CLAUDE.md — 'All structural data (services, agents, zones, channels, sources, watchlist) lives in docs/data/system-map.json. Query with jq — never hardcode values.' SECOND ARM, independently serious: the cycle declared B-06/B-07 PASS from get_vps_proxy_health (a push-freshness plane, where all 4 rows read status=ok) without consulting get_vps_service_health, which main.md:196 also lists and which at 10:44Z reported '1 healthy, 2 idle (market closed), 2 unhealthy' with vn-sbv-fetch UNHEALTHY (VPS uptime 44m, i.e. recently restarted) and vn-bctc-fetch UNHEALTHY. An unhealthy vn-sbv-fetch is the most plausible cause of the very sbv_fx staleness this same cycle emitted as B-12 — so the PASS masked the likely root cause of the cycle's own WARN.",
+        "evidence": "PO-MEASURED 2026-07-29T10:44Z via gateway call_tool, read-only, no POST/exec/restart. get_vps_proxy_health -> 4 rows, all status=ok, bctc Stale?=YES (last push 2026-07-28 08:23:22). get_vps_service_health -> 5 services, vn-sbv-fetch unhealthy / vn-bctc-fetch unhealthy. jq over docs/data/system-map.json routes[] -> length 8. docs/agents/system-auditor/flow/main.md:211 -> the literal '7'. Reported outcome that triggered this row: 'VPS proxy status ok for 3/4 routes' with B-06/B-07 marked PASS; the notebook records it as 'VPS proxy: prices/news/sbv ok', silently dropping the 4th (bctc). Third consecutive cycle with this gap.",
+        "why_the_obvious_fixes_are_wrong": "(1) DO NOT fix this by reminding the agent to check 7 routes. That has now been tried at brief level for three consecutive cycles and cannot work, because no tool the flow doc offers returns 7 route statuses — the instruction is unsatisfiable, and an agent that 'complied' would have to fabricate three route results. The defect is in the DOC and its tool wiring, not in agent diligence. (2) DO NOT simply change '7' to '8' to match system-map. That re-hardcodes the same class of value one number later and still leaves the agent with a 4-row tool for an 8-route assertion; derive the expected set from system-map routes[] with jq, and state explicitly which tool can actually report per-route status (it may need to be get_vps_service_health, a new tool, or the check may need re-scoping to what is genuinely observable). (3) DO NOT fold this into FIX-VPS-HEALTH-OFFHOURS-MASK-FALSE-GREEN — that row is zone apps/mcp-server/, TypeScript, about an off-hours grace double-spent inside vpsProxyTools.ts; this row is a flow-doc/SSOT drift. Same family, different artifact and zone. (4) RECONCILE WITH, DO NOT DUPLICATE, orch-sentinel OH-3.2 'VPS Route Count Drift (3-way compare)' at docs/agents/orch-sentinel/flow/dim-oh3-auditor-blindspot.md:24-31. OH-3.2 already claims a 3-way route-count compare, but its needles are a grep -c over vps-setup docs and a count of system-map data_sources where geo_blocked==true — neither of which counts routes[], so it would NOT have caught this drift. Fix OH-3.2's operands as part of this row rather than inventing a fourth way to count routes.",
+        "scope": "Two artifacts. (1) docs/agents/system-auditor/flow/main.md:211 — replace the hardcoded route count with a jq read of system-map.json routes[], and name the tool that can actually return per-route status; if none can, re-scope B-06/B-07 to what is observable and say so in the doc rather than leaving an unsatisfiable assertion. (2) Require the B-06/B-07 verdict to consult BOTH planes already listed at main.md:195-196 (get_vps_proxy_health AND get_vps_service_health) and to fail-loud rather than PASS when they disagree — the 10:33Z cycle is the worked example. Reconcile OH-3.2's operands in the same change.",
+        "acceptance": "(1) No literal route count remains in main.md; show the jq expression and its live output. (2) A route present in system-map routes[] but absent from the health tool's response produces a FLAGGED result, never a silent PASS — demonstrate by running the check as written. (3) A cycle where get_vps_service_health reports any unhealthy service cannot return B-06/B-07 PASS; demonstrate against the live 2026-07-29 state (vn-sbv-fetch/vn-bctc-fetch unhealthy) or a fixture reproducing it. (4) OH-3.2 counts routes[] rather than geo_blocked data_sources, or state explicitly why it should not. (5) Report whether vn-sbv-fetch being unhealthy at 10:44Z is in fact the cause of the sbv_fx B-12 staleness — if it is, say so on FIX-AUDITOR-B12-DOUBLE-INVOKE-EMIT-MARKER-LOSS as well.",
+        "related": [
+          "FIX-AUDITOR-B12-DOUBLE-INVOKE-EMIT-MARKER-LOSS",
+          "FIX-VPS-HEALTH-OFFHOURS-MASK-FALSE-GREEN",
+          "FIX-VPS-SBV-HEALTH-SHARED-TABLE-IS-ESTIMATE",
+          "TRACK-CRON-AUDIT-VPS-PLANE"
+        ],
+        "constraint": "Read-only against live services: no docker exec into rag-service, no POST to any endpoint, no restarts. Both tool calls used to establish this row are read-only and were run at 2026-07-29T10:44Z.",
+        "promoted_at": "2026-08-08T05:22:37Z",
+        "promoted_by": "dev-team (supervised-lane sweep)",
+        "promotion_note": "Supervised-Lane Sweep — assigned dispatch_lane='developer' (priority_rank=2); supervised/plan_only flags preserved, gate NOT disabled — see FIX-BOUNDED1-SUPERVISED-LANE-NO-SWEEPER",
+        "dispatch_lane": "developer"
       }
     ],
     "review": [
@@ -22653,6 +22629,38 @@
         "developer_review_note": "AC-3 (drain-reader change, if any, preserves routing): satisfied by confirmed NO-OP. Live-verified this cycle, not paraphrased from the brief: (1) mcp-tools.md Signal Bus Naming Contract section spans lines 148-166, currently documenting ONLY the generic docs/signals/{from}-{ISO-timestamp}.json pattern -- neither bctc_signal_{TICKER}_* nor unified-agent-synthesis-* is acknowledged; brief cited lines 148-164 for the existing block, confirmed accurate, zero drift found. New subsection text (verbatim from brief SS6, documenting the two file families + the WINDOW_KEY invariant that the SAME value backs both the filename component and the writer published-marker mutex key) specified for insertion immediately after line 164, before the closing --- at line 166. (2) drain-signals.js fingerprint formula independently re-derived at the actual crypto.createHash call site (lines 173-174): sha256(from+type+JSON.stringify(payload)+createdAt) -- traced from/type/payload/createdAt to their JSON-field origins (lines 167-172) and confirmed no filename-bearing variable (base/dest/fp_path) ever reaches the hash. Confirms brief SS7 exactly -- a WINDOW_KEY filename rekey (tasks 1-3 work) is fingerprint-neutral by construction, zero drain-signals.js code change required. One-line addition (verbatim from brief) specified for insertion after drain-signals.md line 93 (the fingerprint formula line itself), before the existing match/no-match sub-bullets at lines 94-97. AC-3 closes on documentation alone. Dangling ba_handoff pointer (docs/handoffs/TASK-COWORK-SIGNAL-NAMING-CONTRACT.md, confirmed absent) noted, non-blocking, same precedent as tasks 2/3. Scope boundaries respected: zero edits to mcp-tools.md or drain-signals.md, zero edits to drain-signals.js, zero touch to bctc-analyst/chef/unified-agent/tran-ngoc-bau flow dirs (tasks 1/2/3, FR-4 descoped), derive_window_key() not implemented -- cited by reference only for the WINDOW_KEY format worked example, no further agent spawned. This is the 4th and final child of the FIX-COWORK-SIGNAL-FILENAME-CYCLEID-KEYING Phase-1 decomposition -- all 4 children now in review[]; epic-wrapper closeout explicitly deferred to PO's own Step 4.4 Epic-Wrapper Autoclose Sweep, not attempted here.",
         "moved_to_review_at": "2026-08-08T04:56:44Z",
         "moved_by": "developer"
+      },
+      {
+        "id": "FIX-AUDITOR-DOCAUDIT-MEMORY-PATH-PREDICATE",
+        "title": "FIX: system-auditor DOC-AUDIT memory-integrity check emits 'docs/agent-memory/MEMORY.md is MISSING' — that path NEVER existed (git diff-filter=D empty; project memory index is docs/agent-memory/INDEX.md, and the auditor spec main.md:445 names memory/MEMORY.md = the Claude auto-memory which is present+healthy). Recurring WARN false-positive from a drifted path predicate.",
+        "status": "REVIEW",
+        "type": "FIX",
+        "priority": "P2",
+        "size": "S",
+        "zone": "docs/agents/system-auditor/flow/",
+        "owner": "po",
+        "next_agent": "po",
+        "plan_only": true,
+        "supervised": true,
+        "created_at": "2026-07-22T00:49:21Z",
+        "created_by": "po/triage-20260722T0049",
+        "origin_signal_id": "sys-20260722T003235-52bb",
+        "root_cause": "DOC-AUDIT section (docs/agents/system-auditor/flow/main.md § 1 Memory integrity, :445) references memory/MEMORY.md; the implementation resolves this to docs/agent-memory/MEMORY.md, never a canonical project artifact (docs/agent-memory uses INDEX.md/README.md/AGENT_STARTUP.md + notebooks/). Missing-file check on a phantom path => WARN FP re-emitted each auditor tier cycle.",
+        "deliverable": "Point the DOC-AUDIT memory-integrity predicate at the REAL memory index (docs/agent-memory/INDEX.md) OR remove the phantom docs/agent-memory/MEMORY.md existence check; align main.md:445 wording so the checked artifact is unambiguous. Verify no other DOC-AUDIT sub-check hardcodes a non-existent canonical path.",
+        "acceptance": "One live DOC-AUDIT cycle emits ZERO 'MEMORY.md MISSING' signal against the current tree, and a deliberately-broken memory index still trips a real WARN (negative control).",
+        "related": [
+          "FIX-AUDITOR-A12A20A30-FP-REEMIT-CONVERGE"
+        ],
+        "note": "Auditor-FP family (feedback_auditor_predicate_drift_false_regression). Distinct from the A12/A20/A30 health-probe converge row (runtime health predicates vs this doc-integrity path predicate). PO source-verified path absence (ls + git log --diff-filter=D empty) before minting.",
+        "promoted_at": "2026-08-08T03:21:27Z",
+        "promoted_by": "dev-team (supervised-lane sweep)",
+        "promotion_note": "Supervised-Lane Sweep — assigned dispatch_lane='architect' (priority_rank=2); supervised/plan_only flags preserved, gate NOT disabled — see FIX-BOUNDED1-SUPERVISED-LANE-NO-SWEEPER",
+        "dispatch_lane": "architect",
+        "claimed_at": "2026-08-08T05:22:44Z",
+        "claimed_by": "dev-team (supervised-lane sweep)",
+        "spec_doc": "docs/handoffs/FIX-AUDITOR-DOCAUDIT-MEMORY-PATH-PREDICATE-spec.md",
+        "architect_review_note": "PLAN-ONLY (supervised+plan_only — main.md NOT edited). Re-verified stale main.md:445 citation live — real section is :720-722. Verbatim diff proposed (spec §1): repoint §1 Memory integrity from phantom `memory/MEMORY.md` (never existed, confirmed git diff-filter=D empty) at `docs/agent-memory/INDEX.md` (real repo-tracked memory index) ONLY — explicitly do NOT attempt to validate Claude Code's external per-session auto-memory file (no canonical repo-relative path, platform-managed, would require hardcoding a host-specific absolute path in violation of this repo's own no-hardcode convention). Sibling sweep of DOC-AUDIT items 2-6 (spec §2): zero other phantom paths found — all referenced docs/policies|protocols|standards|references dirs, tool-registry/cron-registry/stock-classification.json, .claude/agents/*.md, CLAUDE.md, project-stats.json + generator all confirmed present; DB-health container paths are runtime-resolved via docker exec, not static, so out of this defect class. ADJACENT FINDING flagged not fixed: docs/agent-memory/INDEX.md itself (the fix's new target) already has all 5 of its own listed session pointers dead (stale since commit ace28b78d, 2026-04-27) — this is a real, pre-existing doc-hygiene gap the phantom-path bug has been masking; serves as spec §3's natural negative control (first post-fix cycle should emit zero phantom-MISSING AND one new real INDEX.md broken-pointer WARN in the same cycle) but its cleanup is out of THIS task's scope — PO to decide on a follow-up row. Full verbatim diff + negative-control design + implementation notes in spec_doc.",
+        "updated_at": "2026-08-08T05:30:25Z"
       }
     ],
     "qa": [
@@ -22800,7 +22808,7 @@
         }
       ]
     },
-    "last_triaged_at": "2026-08-08T04:51:52Z",
+    "last_triaged_at": "2026-08-08T05:22:37Z",
     "last_triaged_by": "dev-team (supervised-lane sweep)",
     "in_progress": [
       {
