@@ -125,3 +125,14 @@
 - Went past local checks to LIVE CI: `gh run view` on run `31264475396` (head `0a07b3ed6`, a confirmed descendant of `638df5da0`, pushed to `origin/main`) shows `size-lint` job failing on exactly 1 file — `coordinationStore.ts` (the separate, already-known sibling row) — `checkForeignFlowGap.ts` is genuinely absent from the live CI failing-file list, matching the row's own `qa_verification_hint` caveat exactly.
 **why-decision:** APPROVED, DONE_VERIFIED — clean split, zero behavior change, all local+live-CI evidence independently reproduced; the still-red size-lint job is scoped to the separate coordinationStore.ts row, not this one.
 **why-change:** none — verified exactly what the row scoped.
+
+### STEP qa-S12 · qa · 2026-08-08T15:35:00Z
+**task-id:** FIX-BCTC-SERVING-GATE-VPSSTALE-IGNORES-DEMAND-QUEUE-DEPTH
+**what-done:** Direct-commit verify (`qa[]` row, `branch:null`) of `8c108491b`, on main ancestry. `files[]` cross-check: `bctcFullTools.ts` diff matches exactly; `vpsPushLogStore.ts`+`vpsProxyStaleness.ts` correctly untouched, verified benign not waved through (helper already re-exported from `vpsDemandQueue.ts` by a prior shipped sibling; `vpsProxyStaleness.ts` is the distinct HEALTH-plane file the spec explicitly leaves alone).
+**what-considered:**
+- Read the shipped diff, not review prose: gate = `bctcVpsStaleSince!==null && !bctcQueueIdleNoWork` where idle = `getDemandQueueDepth(db,"bctc")===0`; depth 0→honest-absence, depth>0→still fires, depth===null→fails open. Matches fix_spec/root_cause verbatim.
+- Ran tests myself: new test 3/3 (positive/negative-control/fail-open). Targeted bctc+vps zone sweep 146 files, 1550 pass/8 skip/0 fail incl. the DJ-cited pre-existing `1982-quality-burndown-CHIJ.test.ts` vps_stale-shape test (still green). `tsc --noEmit` clean, `mock-guard` PASS, DDD/secret greps clean (interface-layer file, infra imports expected).
+- Live-probed the actual running container (image built 2026-08-06T23:21:36Z, confirmed AFTER the fix commit via `docker inspect`) via `mcp_call()` bridge: `get_vps_proxy_health` shows bctc last push now fresh (<1h, the 57.8h latch self-cleared), `get_bctc_full` returns honest-absence, no vps_stale — consistent though the live stale-path condition itself is no longer reproducible today (exhaustively covered by the unit test instead).
+- DJ-GATE-1: `sprint-COWORK-GUARANTEED-SLOT-CATCHUP-dev-mcp-server-4.md` STEP dev-mcp-server-S72 contains `task-id: FIX-BCTC-SERVING-GATE-VPSSTALE-IGNORES-DEMAND-QUEUE-DEPTH` — present, gate passes.
+**why-decision:** APPROVED, DONE_VERIFIED — logic independently traced (not trusted from prose), both AC directions covered by tests I ran myself, zero regression across the full bctc+vps zone.
+**why-change:** none — verified exactly what the row scoped.
