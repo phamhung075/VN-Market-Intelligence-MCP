@@ -95,3 +95,36 @@
   added `agent_father_closeout_20260808T1509Z` narrative field. Left `orch-state.json`
   **UNCOMMITTED** — same `FU-AGENT-FATHER-ORCH-SCOPE` precedent as this notebook's own
   2026-08-08T13:55Z entry; router/PO owns the board-write commit.
+
+## Triage — SECONDARY-Drain sign-off request 2026-08-08 FIX-COWORK-SPAWN-IDENTITY-PREAMBLE-OFFFLOW — NO ACTION (row already correct)
+- dev-team's Review-Lane SECONDARY-Drain (`secondary_dispatch_target=agent-father`,
+  `secondary_claimed_at=2026-08-08T17:26:17Z`) asked me to sign off/triage this `review[]` row.
+  RAW-read `task_board.review[]` row: `status=REVIEW`, `next_agent=qa` (already correct —
+  I (agent-father) implemented + flipped it to REVIEW/next_agent=qa myself, per its own
+  `review_note`), `updated_by=agent-father`.
+- **Judgment: no board change.** NOT `DONE_VERIFIED` — `review_note` states the verification gate
+  is BEHAVIORAL (next live off-flow-displacement incident, or a QA dry-run injecting a synthetic
+  off-flow-shaped string into the new Step 5.3 matcher) and explicitly "cannot be confirmed in
+  this dispatch; QA to verify" — self-certifying my own implementation would violate
+  verification-independence (`feedback_trust_verification_is_system_job`). NOT rework (nothing
+  flagged wrong — plan+implementation+tests(9/9) all landed, journal filed). NOT reassign
+  `next_agent` (board already says `qa`, correctly). NOT BLOCKED (legitimately parked awaiting a
+  different agent, not stuck).
+- **Root cause of the mis-route (found, NOT fixed — out of my write zone):** SECONDARY-Drain's
+  `effective_next_agent()` (`scripts/lib/devteam-eligibility.jq`) is DETAIL-FIRST/board-fallback —
+  it read `docs/data/orch/archive/backlog-detail.json#FIX-COWORK-SPAWN-IDENTITY-PREAMBLE-OFFFLOW`
+  `.next_agent="agent-father"` (stale, BACKLOG-mint-era field, pre-dating my later board flip to
+  `next_agent=qa`) instead of the board row's own now-correct value. Per
+  `devteam-review-claim-secondary-drain.jq`'s own documented residual ("re-picking the SAME oldest
+  row every tick... is EXPECTED... until its next_agent/status changes"), this row will keep
+  getting re-claimed+re-dispatched to me every tick until that detail_ref field is synced to `qa`
+  (or removed). `docs/data/orch/archive/` is outside my declared `commit_zone`
+  (`docs/agents/`·`docs/agent-memory/`·`.claude/skills/`·`.claude/agents/`) — cannot self-fix.
+  **Recommend:** PO/dev-team patch `backlog-detail.json` `.items[id=FIX-COWORK-SPAWN-IDENTITY-
+  PREAMBLE-OFFFLOW].next_agent` → `"qa"` to stop the repeat false-positive SECONDARY-Drain pickup.
+- No `mcp__gateway__call_tool` binding this session (confirmed SSOT:
+  `.claude/skills/commit-boundary/SKILL.md` "agents-architect + agent-father (no gateway binding —
+  mutex physically unreachable)") — cannot `task_release` the outer `task:FIX-COWORK-SPAWN-
+  IDENTITY-PREAMBLE-OFFFLOW` sprint-lock myself; dispatching session releases on my behalf per its
+  own contract. `head.status=in_progress` (1 row) — solo-commit path (no contention signal-queue
+  write needed) applied for this notebook write.
