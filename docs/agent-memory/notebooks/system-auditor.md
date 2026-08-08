@@ -1,5 +1,21 @@
 
 
+## c54 · 2026-08-08T15:30Z
+
+### Audit Run Tier-1 (15:11–15:14 UTC 2026-08-08)
+- Tier: 1 | Services: 7 checked | Containers: All UP (healthy)
+- Anomalies: 0 new | Status: HEALTHY
+- A-30 deep-probe mcp-server-1: FOLD (benign GC), no escalation
+  - Baseline: 86.74% (consistent with 86.45% trigger report)
+  - 6-sample window: 86.80%–91.16%, median 89.83%
+  - VmHWM pinned at cap (96%) but NOT advancing in window
+  - No OOMKilled, no state changes, no discontinuities
+  - Distinct from rag-service-1 (81.73%, below gate)
+- A-20 pdf-extractor multi-probe: 3/3 PASS
+- All health endpoints: OK
+- Disk: 65% (PASS)
+- Result: ALL_GREEN, no findings
+
 ## c53 · 2026-08-08T14:34Z
 ### Audit Run Tier-1 (14:33–14:34 UTC 2026-08-08)
 - Tier: 1 | Services: 13 checked | Health checks: 5 + A-20/A-21/A-30 | Disk: checked
