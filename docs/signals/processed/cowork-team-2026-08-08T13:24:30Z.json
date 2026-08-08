@@ -3,7 +3,7 @@
   "to": "dev-team",
   "type": "cowork-fire",
   "payload": {
-    "fire_time": "2026-08-01T13:15Z",
+    "fire_time": "2026-08-08T13:24:30Z",
     "matched_slots": [
       "fb-weekend"
     ],
@@ -16,10 +16,10 @@
       "docs/agents/fb-market-poster/flow/main.md"
     ],
     "silent": false,
-    "drift_min": 5,
+    "drift_min": 6,
     "errors": [],
     "pressure_mode": "adaptive",
-    "calendar_status": "closed",
+    "calendar_status": "unknown",
     "suppressed_calendar": [],
     "suppressed_cadence": [],
     "downgraded": [],
@@ -30,17 +30,25 @@
     "cadence_minutes": {
       "fb-weekend": null
     },
-    "last_fired_timestamp": "2026-08-01T13:21:28Z",
+    "last_fired_timestamp": "2026-08-08T13:24:06Z",
     "last_fired_slots": [
       "fb-weekend"
     ],
-    "last_fired_write_errors": null
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "13:15",
+    "leader_lock": "acquired",
+    "dev_head": "unknown",
+    "devq": 5,
+    "signal_backlog": 24,
+    "note": "guaranteed weekend fb-market-poster slot; 1 signal_queue row drained (A-30 rag-service WARN, addressed to po, no cowork route, marked READ)"
   },
   "priority": "low",
-  "createdAt": "2026-08-01T13:21:45Z",
+  "createdAt": "2026-08-08T13:24:30Z",
   "_processed": {
-    "fingerprint": "8c604ae671ca428247630df725d99c1f4232d4a760cd974b533cec080846a11f",
-    "processedAt": "2026-08-01T13:47:27Z",
+    "fingerprint": "a38fee98976399f22f07ca57e128c389c352f034a45d2b7fbea67467534613dd",
+    "processedAt": "2026-08-08T13:51:43Z",
     "processedBy": "dev-team",
     "result": "routed-to-po"
   }

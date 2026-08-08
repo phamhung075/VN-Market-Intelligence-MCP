@@ -1,0 +1,17 @@
+{
+  "ts": "2026-08-08T09:08:09Z",
+  "tick_id": "2026-08-08T09:00:00Z",
+  "silent": false,
+  "pressure_mode": "adaptive",
+  "calendar_status": "unknown",
+  "matched_slots": ["refine-bctc-slot-1"],
+  "won_slots": ["refine-bctc-slot-1"],
+  "spawned": ["refine-bctc-slot-1"],
+  "errors": [],
+  "due_reasons": {"refine-bctc-slot-1": "cron"},
+  "cadence_minutes": {"refine-bctc-slot-1": null},
+  "last_fired_timestamp": "2026-08-08T09:08:03Z",
+  "classification": "FIRE",
+  "reason": "spawned",
+  "note": "single-slot batch (MAX_PARALLEL=4, headroom=2804MB not degraded, load1m=4/cores=12) — no inter-batch wait needed"
+}
