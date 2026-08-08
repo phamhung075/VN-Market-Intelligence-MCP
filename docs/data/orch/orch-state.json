@@ -19410,7 +19410,7 @@
         "last_served_tick": "2026-08-08T15:54:20Z"
       }
     },
-    "_updated_at": "2026-08-08T22:23:22Z",
+    "_updated_at": "2026-08-08T22:24:58Z",
     "_updated_by": "dev-team",
     "pending_triage_inbox": [
       {
@@ -21634,6 +21634,18 @@
         "payload": "[notebook-immutability-guard] WARN: docs/agent-memory/notebooks/system-auditor.md — retained section '## c384 · 2026-08-08T22:04Z' has different content staged than at HEAD. Per .claude/skills/notebook-write/SKILL.md AC-2a, a retained '## ' section must be byte-identical across a cycle; the only authorized mutations are dropping a whole oldest section, the AC-2b sub-block intra-prune, or trimming the CURRENT cycle's own new section. If cap pressure forced a shrink, DROP the whole section (archive verbatim if it must be kept) and add a NEW marker section instead — see docs/agent-memory/notebooks/architect.md for the reference-correct pattern. mode=warn (default warn — never blocks; set GIT_NOTEBOOK_IMMUTABILITY_MODE=reject to hard-enforce once re-validated, see scripts/audits/verify-notebook-immutability-gate.sh).\n[notebook-immutability-guard] WARN: docs/agent-memory/notebooks/system-auditor.md — retained section '## c383 · 2026-08-08T21:30Z' has different content staged than at HEAD. Per .claude/skills/notebook-write/SKILL.md AC-2a, a retained '## ' section must be byte-identical across a cycle; the only authorized mutations are dropping a whole oldest section, the AC-2b sub-block intra-prune, or trimming the CURRENT cycle's own new section. If cap pressure forced a shrink, DROP the whole section (archive verbatim if it must be kept) and add a NEW marker section instead — see docs/agent-memory/notebooks/architect.md for the reference-correct pattern. mode=warn (default warn — never blocks; set GIT_NOTEBOOK_IMMUTABILITY_MODE=reject to hard-enforce once re-validated, see scripts/audits/verify-notebook-immutability-gate.sh).\n",
         "createdAt": "2026-08-08T22:22:30Z",
         "drained_at": "2026-08-08T22:23:22Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "645ae20722475a66665e13de2e859ad26dc640adfb24fd96ae95761d04b03eeb",
+        "source": "file",
+        "from": "commit-sweep-guard",
+        "to": "po",
+        "type": "bug-escalation",
+        "priority": "high",
+        "payload": "[sweep-guard] SAME-FILE DIVERGENCE (non-blocking, AC-3 detector): 'docs/data/orch/orch-state.json' is being committed via a pathspec-SCOPED commit line, which takes its WORKING TREE content (git's --only semantics) — NOT the subset already staged in the shared index for this exact path. The shared index's staged blob for 'docs/data/orch/orch-state.json' (ad56d87d099a327b35c8ea3f5286b1f3ddf761de) differs from what is about to land in this commit (c17f8a4cf93fd8427b7869b2a0ea6221c3072968) — a peer's differently-staged hunk (or your own further, unreviewed edit) in this SAME file may be about to be swept in. Documented NON-GOAL of the pathspec-commit mandate, see docs/architecture-briefs/2026-07-21-commit-path-peer-index-sweep-guard.md §2.7 — detector only, never blocked. Inspect before trusting this commit's scope: git diff ad56d87d099a327b35c8ea3f5286b1f3ddf761de c17f8a4cf93fd8427b7869b2a0ea6221c3072968 -- docs/data/orch/orch-state.json",
+        "createdAt": "2026-08-08T22:23:34Z",
+        "drained_at": "2026-08-08T22:24:58Z",
         "routed_to": "PO Step 0-SIG"
       }
     ]
