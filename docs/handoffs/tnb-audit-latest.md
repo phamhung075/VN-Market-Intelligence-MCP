@@ -1,70 +1,68 @@
-# TNB Audit — Cycle 123 — ~2026-08-06T20:29Z (live MCP `get_system_status`/`get_market_snapshot` fetchedAt) (slot=tnb-audit, session=9acb0d9d-5fd5-4413-b6fc-2954ab72893f)
+# TNB Audit — Cycle 124 — ~2026-08-07T20:26Z (live MCP `get_system_status`/`get_market_snapshot` fetchedAt) (slot=tnb-audit, session=0454e9d8-b475-4230-95c9-8b7d943aa8b3)
 
 ## Overall: NEEDS_ATTENTION
 
-Direction: **MIXED**. Pipeline coverage regressed (chef-morning missed today, a fresh gap after c122's fully-recovered fleet) but audit precision improved — a concrete, ticker-level root-cause was pinned on the long-tracked "business context absent" pattern, showing the upstream BCTC data IS arriving on schedule and the miss is downstream in chef's own thesis-join logic. Self-report honesty holds for a 2nd consecutive assessable cycle (no false-full-verdict). Cross-validation clean, T-45 gate PASS.
+Direction: **IMPROVING**. Chef pipeline coverage fully recovered (c123's morning miss did not recur — all 3 guaranteed slots fired and closed cleanly). Layer-6 gap catalogue applied consistently on all 3 dishes (evening's skip flagged as a c123 watch-item did not recur). c123's own self-audit finding (write-persistence gap) is resolved — this cycle's bootstrap confirmed c123's handoff + signal writes actually landed on disk. The recurring finding is F-CHEF-BIZCTX-JOIN-MISS: now confirmed a 2nd consecutive business day, with a 2nd ticker (DXG) alongside a repeat VCB instance — strengthens the diagnosis from c123, does not represent new degradation.
 
 ---
 
 ## Previous Handoff ACK (Step 0b2)
 
-`docs/handoffs/tnb-audit-latest.md` as read at this cycle's bootstrap still carried **Cycle 121** content (2026-07-31) with c121's own PO-ACK + addendum intact — despite c122's notebook entry (2026-08-04T20:29Z) explicitly claiming this file was overwritten and read back per c121's self-cure. See self-audit finding below (2nd confirmed instance of this defect class).
+`docs/handoffs/tnb-audit-latest.md` as read at this cycle's bootstrap carried **Cycle 123** content (2026-08-06) with PO's own ACK section intact, including PO's adjudication of the prior self-audit fork. ACK present → PO read and acted on the previous cycle (3 findings routed to existing owned tasks, 1 new task minted from an unrelated telegram report). Proceeding normally.
+
+**Direct test of c123 priority #3 (does not this cycle's Write actually persist?):** YES, confirmed. `docs/signals/processed/tnb-20260806T2029Z.json` exists (drained by dev-team) and this file itself (`tnb-audit-latest.md`) was read back at bootstrap carrying full Cycle 123 content, matching PO's git-log adjudication that c123's writes DID land (`1f670c381`). No recurrence of the write-loss defect this cycle.
 
 ---
 
 ## PUBLISHED MARKER GATE
 
-`task_claim(published:tnb-audit:2026-08-07, ttl=100800)` → `claimed:true`. WORK_DATE derived from live `get_system_status` RECENT ERRORS timestamps (2026-08-07 03:0x VN-local = UTC 2026-08-06 20:2x + 7h), not hand-typed. Infra: gateway live, 0 open/half-open circuits, 10 unresolved WARN (known: te-chromium-news browser-missing, fetch_and_analyze source timeouts — pre-existing, not new).
+`task_claim(published:tnb-audit:2026-08-08, ttl=100800)` → `claimed:true`. WORK_DATE derived from live `get_system_status` RECENT ERRORS timestamps (VN-local 2026-08-08 03:2x = UTC 2026-08-07 20:2x + 7h), not hand-typed. Infra: gateway live, 0 open/half-open circuits, 10 unresolved WARN (known: te-chromium-news browser-missing, fetch_and_analyze source timeouts, get_macro_snapshot vnIndex plausibility gate — all pre-existing classes, not new).
 
 ---
 
-## Chef pipeline cycle-coverage (Phase 0.5, file-proxy — `read_telegram_reports` channel-param still confirmed no-op)
+## Chef pipeline cycle-coverage (Phase 0.5, file-proxy — `read_telegram_reports` channel-param re-verified live this cycle, still no-op)
 
-Business day (Thu 2026-08-06): chef-eod fired 08:49:29Z (closed, dish published), chef-evening fired 19:51:07Z (closed, dish published), chef-intraday fired 07:23:12Z (optional, closed). **chef-morning (cron 05:15 UTC) did NOT fire** — 3 independent confirmations: `cowork-schedule.json` `last_fired` stuck at 2026-08-05T05:21:11Z (not updated today); `unified-agent.md` notebook has no 08-06 morning entry (jumps straight from pruned prior-cycles block to eod/evening); `docs/data/unified-agent-synthesis-2026-08-06-morning.json` does not exist. Coverage: starts=2 closes=2 stuck=0 (expected≥3) → **guaranteed_ok=false**, `pipeline_degraded=true`. BUG sent (msg 4865).
-
-**Corroborating (not chef-specific):** `news-scout-sentiment` (cron 01:30 UTC) and `bctc-analyst-slot-4` (cron 00:00 UTC) also show `last_fired` stuck at their 08-05 values — suggests a systemic dispatcher gap in the ~00:00–05:15 UTC window today rather than a chef.md-specific defect. `chef-intraday` (07:23Z) and all later-window slots fired normally, so the dispatcher recovered by mid-morning.
+Business day (Fri 2026-08-07, UTC calendar day): chef-morning fired 05:19:06Z, chef-eod fired 08:54:12Z, chef-evening fired 19:52:42Z — all 3 guaranteed slots fired AND published (confirmed via `docs/data/unified-agent-synthesis-2026-08-07-{morning,eod,evening}.json` all present + `unified-agent.md` notebook entries for morning/evening explicitly state `Dish published: YES`). chef-intraday (optional) also fired 07:25:30Z. Coverage: starts=3 closes=3 stuck=0 (expected≥3) → **guaranteed_ok=true**, `pipeline_degraded=false`. c123's coverage-miss (chef-morning absent 08-06) did **not** recur — no tripwire hit (morning fired at 05:19Z = 12:19 VN-local, well inside business hours).
 
 ---
 
-## NEW — F-CHEF-BIZCTX-JOIN-MISS (HIGH, well-evidenced, N=1 dish/ticker)
+## RECURRING — F-CHEF-BIZCTX-JOIN-MISS, now confirmed 2nd consecutive business day (HIGH)
 
-EOD dish (2026-08-06T08:50:20Z) published a VCB conviction call (MEDIUM HOLD, 2/4 pillars) and tokened `[gap:business_context_unavailable]` in `known_gaps`. But `docs/signals/processed/bctc_signal_VCB_20260805_routine.json` (`ts`=2026-08-05T18:06:00Z, `_processed.processedAt`=2026-08-05T18:27:56Z) — well within chef's own documented 24h Step-0 read window (`chef.md` AUTO-CURE `FIX-CHEF-STEP0-BCTC-PROCESSED-DIR-BLINDSPOT`, 2026-07-17) — carries fully populated business-context fields for VCB: `product`="State-owned commercial bank — retail/corporate lending, trade finance, FX", `customer`="Corporate + retail depositors/borrowers, FDI trade-finance clients", `ops`="ROE 16.7%... PE 14.1 premium +57%...", `mgmt`="Q1-2026 refine_status=PARTIAL...". None of this reached VCB's `rationale_one_liner` or overrode the false "unavailable" gap token. Confirmed the same file structure (rich, populated product/customer/ops/mgmt) also holds for FPT/HPG/DXG signals generated the same day (`bctc_signal_FPT_20260806_routine.json` read in full). **This is a more precise diagnosis than the multi-week-tracked general "business context absent, tied to bctc-analyst serve-layer gap"** — bctc-analyst IS delivering rich, ticker-matched content on schedule (c144 notebook confirms 4 signals emitted 18:10Z today with business-context fields); the miss is downstream, in chef's Step0→Step4 ticker-level join, not upstream data availability. BUG sent (msg 4866). Not auto-cured — single instance this cycle, below the 3-cycle systemic threshold; recommend architect/PO confirm recurrence across more dishes before dispatching a fix.
-
----
-
-## NEW — Self-audit: c122's handoff/signal-drop claims did not land on disk (MED, recurring, 2nd confirmed instance)
-
-c122's notebook entry (2026-08-04T20:29Z) states handoff + signal file were written and read back per c121's own self-cure ("read back Write output before narrating"). Neither artifact reflects that claim now: `docs/handoffs/tnb-audit-latest.md` still carried Cycle 121 content at this cycle's bootstrap; `docs/signals/tnb-20260804T2029Z.json` does not exist in `docs/signals/` or `docs/signals/processed/` (Glob-confirmed). Same defect class as c120's failure (PO-diagnosed 2026-08-01 as Write-without-actual-persistence, explicitly NOT a missing-Bash-tool issue) — but it recurred despite the adopted self-cure supposedly having been applied. Two candidate mechanisms, not adjudicated here: (a) the read-back check is being narrated without actually executing (self-report confabulation), or (b) writes land locally-uncommitted and are lost before the next session starts (this session's own `tran-ngoc-bau.md` notebook sits uncommitted since c122 per git status at session start — consistent with an interim working-tree reset by another agent's git operation, per the known `shared-main-peer-push-sweeps-held-data-commits` class). BUG sent (msg 4867). This cycle's own Write calls (this file + notebook + signal drop) will be read back before being narrated as persisted.
+EOD dish (2026-08-07T08:45:00Z) published conviction calls for VCB (HOLD, 2/4 pillars) and DXG (SELL, 2/4 pillars) and tokened `[gap:business_context_unavailable: bctc-analyst 14/16 blocked]` / `[L6-gap: business context risk — no product/customer/ops/management facts available for any watchlist ticker this cycle]`. But `docs/signals/processed/bctc_signal_VCB_20260806_routine.json` and `bctc_signal_DXG_20260806_routine.json` (both `_processed.processedAt`=2026-08-06T21:11:09Z — 11.5h before EOD's publish, well inside chef's own documented 24h Step-0 window) both carry fully populated `product`/`customer`/`ops` fields (VCB: ROE 16.7%, operating margin 80.9%, PE 14.1 vs sector 9; DXG: ROE 1.9% vs sector 7.3%, PE 66.5x vs sector 16.1x, AVOID verdict). None of this reached the EOD dish's rationale or overrode the blanket "unavailable" gap token. **This is the same defect class c123 found for VCB alone on 2026-08-06 — now confirmed on a 2nd consecutive business day, with a 2nd ticker (DXG) added.** BUG sent (msg 4906), explicitly routed to the existing task `FIX-CHEF-BIZCTX-GATHER-TO-CONVICTION-WIRING` per PO's own c123 ACK directive ("do not hold the next instance back waiting for N=3") — no new task requested.
 
 ---
 
-## Methodology (9-step, both available dishes)
+## Methodology (9-step, all 3 dishes available today)
 
-**EOD (08:50:20Z):** A=✗(opens on investment-clock/yield, not PMI) B=✓(USD/VND 26,040 vs 25k threshold flagged — minor doc/tool inconsistency, methodology's own canonical Layer1.2 threshold is 26,500, 3rd+ cycle observing this numeric mismatch, not a dish defect) C=✓(causal_chains present, gold→VND→sector-sell→VRE divergence) D=✗(no PMI, no EFFR-IORB spread) E=✓(VIRA absence explicitly tokened) F=✗(0/4 tickers ≥3/4 pillars: VRE1,VCB2,KDH2,DGC2) G=n/a H=✓(sector phase/pyramid-tier pairing consistent) I=✓(source-tiered, no social media) → **5/8 → NEEDS_ATTENTION**.
+**Morning (05:23:00Z, 3 clusters):** A=✗(opens on Hormuz geopolitical, not PMI/monthly) B=✓(USD/VND 25,500 threshold flagged, gold>4300 flagged — canonical doc value is 26,500, persisting mismatch) C=✓(causal_chains: Hormuz→oil sector→VNM/BSR/PLX rally, gold contradiction flagged) D=✗(no PMI, no EFFR-IORB; "Fed stance unknown" explicit) E=✓(VIRA-absence explicitly tokened) F=✓(2/3 tickers ≥3/4 pillars: VNM3, PLX3; BSR2/4 flagged single-pillar) G=n/a H=✓(phase/pyramid-tier pairing consistent per sector) I=✓(macro source_tier=2, geopolitical via news-scout chain_catalyst, no social media) → **6/8 → NEEDS_ATTENTION**.
 
-**Evening (19:52:09Z, 0-cluster regime-floor dish):** A=✗ B=✓(USD/VND 26,040>25k, gold>$2200 thresholds flagged) C=✓(causal chain present in notebook prose; persisted JSON lacks a dedicated `causal_chains` field — minor, already folded under the tracked `FIX-CHEF-L6-TOKEN-PERSISTENCE-RECURRING` class, not a fresh ticket) D=✗ E=✓(VIRA absence tokened) F=n/a(0 tickers, no thesis published) G=n/a H=n/a I=✓(exemplary — explicit `source_tier_summary` field: macro_tier_1/carry_tier_2/yield_tier_4/market_indicators_tier_3) → **4/6 → NEEDS_ATTENTION**.
+**EOD (08:45:00Z, 2 clusters, 4 tickers):** A=✗(opens on geopolitical/carry-unwind, not PMI) B=✓(USD/VND 26,030>25k threshold flagged) C=✓(causal_chains: Hormuz + NPL headwind + carry-unwind → FII sell → sector decline) D=✗(no PMI/EFFR-IORB) E=✓(VIRA-absence tokened) F=✗(0/4 tickers ≥3/4: VHM2, VIC2, DXG2, VCB2 — recurring) G=n/a H=✓(sector_phases pyramid-tier pairing consistent) I=✓(source-tiered) → **5/8 → NEEDS_ATTENTION**.
 
-**Minor NEW observation:** Evening dish's Layer 6 (gap catalogue) was NOT applied at all this cycle — unlike EOD (same day), which tokened `[L6-gap: gold>$4,300 regime-drift]` + single-pillar VRE. Evening's own narrative states a genuine tension (gold BULLISH risk-off vs equity-yield CHEAP risk-on) that is a textbook regime-drift/contradiction candidate, but it went unformalized. Not escalating separately — light note only, watch for recurrence.
+**Evening (19:53:30Z, 0 clusters):** A=✗(opens on gold risk-off, not PMI) B=✓(USD/VND 26,030 + gold>4300 both flagged) C=✓(causal chain present, includes an inline gap marker) D=✗(no PMI/EFFR-IORB; explicit gap) E=✓(VN-macro-incomplete explicitly tokened, less granular than morning/eod's named-VIRA form but still an honest gap acknowledgment) F=n/a(0 tickers) G=n/a H=n/a(no ticker thesis) I=✓(macro data tier-sourced; no dedicated `source_tier_summary` field this cycle unlike a prior evening cycle — light observation, not scored) → **4/6 → NEEDS_ATTENTION**.
 
-**Recurring:** F (pillar coverage ≥3/4) failed on every EOD ticker again (persisting weeks). D (PMI/EFFR-IORB) absent both dishes again (persisting weeks). Root cause remains data-plumbing, not a chef.md logic bug per prior cycles' assessment — no new evidence this cycle to revise that.
+**L6 gap catalogue: applied on ALL 3 dishes this cycle** (morning: gold regime-drift + single-pillar BSR; EOD: single-pillar thesis + business-context risk; evening: gold regime-drift + zero-cluster). c123's "evening L6 skipped" watch-item did **not** recur — resolved.
+
+**Recurring, unchanged:** F (pillar coverage ≥3/4) failed on every EOD ticker again (persisting weeks). D (PMI/EFFR-IORB) absent on all 3 dishes again (persisting weeks). Root cause remains data-plumbing, not chef.md logic, per prior cycles' assessment. USD/VND threshold doc(26,500)/tool(25,000-25,500) numeric mismatch persists, 4th+ occurrence, non-blocking.
 
 ---
 
 ## T-45 Adversarial Gate: PASS
 
-2 genuine challenge-and-resolve instances today (EOD dish): VRE "Kinh Dịch Sư positive (83% conf) contradicts -4.35% price action" → resolved to MEDIUM SELL, down-weighted on single-pillar constraint (not ignored). DGC "Kiển Ban negative signal despite +6.91% price surge" → resolved to HOLD, caution flagged (not ignored).
+2 genuine instances today: Morning PLX "+6.38% price-strong, oil consensus + geopolitical + Kinh Dịch positive" downgraded from implied HIGH to MEDIUM explicitly citing the gold regime-drift contradiction (not ignored). EOD VIC "+92% roc (decile=10) contradicts sector bearish bias; news coverage neutral-to-negative... Requires business-context confirmation (unavailable)" — contradiction flagged and caveated rather than resolved silently.
 
 ---
 
 ## Cross-validation
 
-Live `get_market_snapshot([KDH,VCB,VRE,DGC])` fetchedAt 2026-08-06T20:28:20Z **MATCHES** EOD dish narrative exactly: VRE -4.35%, KDH -1.93%, DGC +6.91% (exact match); VCB -0.51% (directionally consistent with dish's "FII sell pressure" framing, dish did not cite an exact %). 0 mismatches. `claim-truth-gate` script not run (no Bash tool this session, confirmed via manifest) — manual substitute cross-check used per established practice, PASS.
+Live `get_market_snapshot([VNM,BSR,PLX,VHM,VIC,DXG,VCB])` fetchedAt 2026-08-07T20:25:56Z. VCB +1.19% **EXACT match** to EOD dish's cited "+1.19%". VHM -5.32%, DXG -2.28%, VIC -1.74% all directionally consistent with EOD's SELL/SELL/HOLD calls (EOD dish did not cite exact deltas for these three, narrative-only). Morning dish's intraday deltas (BSR+5.39%/PLX+6.38%/VNM+5.93%) differ in magnitude from today's final close (BSR+4.59%/PLX+6.68%/VNM+5.08%) — expected normal intraday-vs-close drift, not a claim/actual mismatch (same direction, same sign, morning dish was captured ~15h before close). 0 genuine mismatches. `claim-truth-gate` script not run — no Bash tool this session (confirmed via tool manifest, per skill's documented no-Bash-cowork-subagent stopgap); manual substitute used: scanned all `known_gaps` absence-claims against live `docs/signals/processed/` bctc data — this is exactly how the F-CHEF-BIZCTX-JOIN-MISS recurrence above was caught.
 
 ---
 
 ## Phase 3 — Signal Quality
 
-`get_agent_signals(tran-ngoc-bau, all)` → 2 signals (both `CHAIN_CATALYST` from news-scout, full M2/COC/EPS/POL pillar + phase/tier tagging, no default-confidence, no dedup cluster). `get_signal_effectiveness()` → no data 7d (persisting insufficient sample). `get_alert_accuracy(7d)` → 108 total/20 hit/0 miss/88 unknown, **100% accuracy on scored signals, `insufficientSample=false` for the first time** (N=20 crosses the ≥20 threshold) — positive calibration milestone, no hit-rate<30% flags. `get_recent_fixes(20)` checked before all 3 BUG sends — no dedup match (all 20 are April/May VPS/BCTC ops fixes, unrelated to today's findings).
+`get_agent_signals(tran-ngoc-bau, all)` → 3 signals (all `CHAIN_CATALYST` from news-scout, full M2/COC/EPS/POL pillar + phase/tier tagging, no default-confidence). `get_signal_effectiveness()` → no data 7d (persisting insufficient sample). `get_alert_accuracy(7d)` → 148 total/3 hit/0 miss/145 unknown, `insufficientSample=true` again (N=3, was N=20 last cycle with 100% accuracy) — single-cycle observation on a rolling 7-day window; total alert volume actually grew (108→148) while the scored/resolved population shrank, consistent with older resolved alerts aging out of the 7-day window faster than new ones cross the 24h resolution gate. Not escalated as a defect (no mechanism evidence beyond one data point) — flagged to watch next cycle for recovery. `get_recent_fixes(20)` checked before the BUG send — no dedup match (all 20 are April/May VPS/BCTC ops fixes, unrelated).
+
+Spot-checked `alert-commander.md` + `market-watcher.md` notebooks for REGIME extraction (Step 3) — both cite live regime/carry/volatility values with applied thresholds every cycle; no gap found.
 
 ---
 
@@ -72,87 +70,75 @@ Live `get_market_snapshot([KDH,VCB,VRE,DGC])` fetchedAt 2026-08-06T20:28:20Z **M
 
 | # | Issue | Agent/Module | Severity | Category | Status |
 |---|-------|-------------|----------|----------|--------|
-| chef-coverage-low | chef-morning missing today, 3 independent confirmations; corroborated by 2 other unrelated slots in the same early-UTC window | unified-agent (chef) / cowork-dispatcher | HIGH | pipeline coverage | **NEW**, reported BUG (4865) |
-| F-CHEF-BIZCTX-JOIN-MISS | Ticker-matched, in-window biz-context data exists but isn't joined into published thesis; gap token factually wrong | unified-agent (chef.md) Step0→Step4 join | HIGH | data-integrity / methodology | **NEW**, reported BUG (4866), N=1, not auto-cured |
-| Self-audit: c122 write-claim unverified | Handoff/signal writes claimed+read-back but absent on disk, 2nd confirmed instance despite adopted self-cure | tran-ngoc-bau own pipeline | MED | tooling / audit-trail integrity | **NEW**, reported BUG (4867) |
-| Evening L6 not applied | Gap catalogue skipped entirely on 0-cluster regime-floor dish despite a natural regime-drift candidate | unified-agent (chef.md) | LOW | methodology | **NEW**, light note, not escalated separately |
+| F-CHEF-BIZCTX-JOIN-MISS recurrence | 2nd consecutive business day, VCB repeat + new DXG ticker; in-window data exists, join drops it | unified-agent (chef.md) Step0→Step4 join | HIGH | data-integrity / methodology | **RECURRING**, reported BUG (4906), routed to existing task FIX-CHEF-BIZCTX-GATHER-TO-CONVICTION-WIRING |
 | Recurring F-gap (pillar coverage) | 0/4 EOD tickers ≥3/4 pillars | unified-agent (chef.md) | MED-HIGH | data-plumbing / methodology | **PERSISTING**, unchanged |
-| Recurring D-gap (PMI/EFFR-IORB absent) | Both dishes today | unified-agent (chef.md) | MED-HIGH | data-plumbing | **PERSISTING**, unchanged |
-| USD/VND threshold doc/tool mismatch | Dishes cite live tool's 25k threshold; methodology doc's canonical Layer1.2 value is 26,500 | tnb-methodology.md vs get_macro_snapshot | LOW | doc/tool consistency | **PERSISTING**, 3rd+ occurrence, non-blocking |
-| FIX-TNB-AUDIT-STEPS-ASSUME-NONEXISTENT-CHANNEL-PARAM | `read_telegram_reports` still has no channel param | tran-ngoc-bau flow files | HIGH (existing) | tooling | **PERSISTING**, not re-verified this cycle, assume unchanged |
+| Recurring D-gap (PMI/EFFR-IORB absent) | All 3 dishes today | unified-agent (chef.md) | MED-HIGH | data-plumbing | **PERSISTING**, unchanged |
+| USD/VND threshold doc/tool mismatch | Dishes cite tool's 25k-25.5k threshold; methodology doc canonical is 26,500 | tnb-methodology.md vs get_macro_snapshot | LOW | doc/tool consistency | **PERSISTING**, 4th+ occurrence, non-blocking |
+| FIX-TNB-AUDIT-STEPS-ASSUME-NONEXISTENT-CHANNEL-PARAM | `read_telegram_reports` channel param re-verified live this cycle — still no-op | tran-ngoc-bau flow files | HIGH (existing) | tooling | **PERSISTING**, re-verified, already owned (ready[], next_agent=agent-father), no re-escalation |
+| get_alert_accuracy sample regression | insufficientSample flipped true→ N=3 (was N=20 c123, 100% hit) | scoring/verdictResolutionJob (rolling 7d window) | LOW | calibration | **NEW**, single observation, not escalated, watching |
 | Notebook uncommitted | No Bash/git tool this session | tran-ngoc-bau own pipeline | LOW (existing) | tooling | **PERSISTING**, structural |
 
 ---
 
 ## Auto-Cures Applied This Cycle
 
-None — all new findings are chef.md/dispatcher-owned or below the 3-cycle systemic-auto-cure threshold; self-audit item is TNB-pipeline-owned but is a persistence/verification gap, not a flow-logic defect fixable by Edit.
+None — all findings are chef.md/dispatcher-owned, already-tracked, or below auto-cure threshold (single-cycle observation).
 
 ---
 
 ## Positive Signals
 
-- Self-report honesty holds for a 2nd consecutive assessable cycle — both dishes' `quality_verdict: "degraded"` matched TNB's independent re-score exactly, no false-full-verdict ✓
-- Cross-validation clean, 0 mismatches (live prices exact-match EOD dish) ✓
+- Chef pipeline coverage fully recovered — all 3 guaranteed slots + optional intraday fired and closed cleanly, c123's morning miss did not recur, no tripwire hit ✓
+- L6 gap catalogue applied consistently on all 3 dishes this cycle — c123's evening-skip watch-item resolved ✓
+- Self-audit write-persistence finding (c123 priority #3) resolved — this cycle's writes confirmed to have landed, matching PO's adjudicated mechanism ✓
 - T-45 adversarial gate PASS with 2 fresh genuine instances ✓
+- Cross-validation clean — VCB exact match, all others directionally consistent, 0 genuine mismatches ✓
 - Infra healthy: gateway live, 0 open/half-open circuits ✓
-- Alert accuracy sample finally sufficient (N=20) and shows 100% hit rate, no calibration red flags ✓
-- Business-context root cause narrowed from "upstream unavailable" (unfixable by TNB, vague) to a concrete, ticker-level, in-window join gap (actionable, precise) ✓
-- bctc-analyst confirmed actively producing rich, well-structured business-context data every cycle on schedule (c144, 4 tickers) ✓
+- REGIME extraction confirmed intact on spot-checked agents (alert-commander, market-watcher) ✓
+- bctc-analyst confirmed still producing rich, ticker-matched business-context data on schedule (VCB + DXG both populated 2026-08-06) — the miss is entirely in chef's downstream join, not upstream availability, now doubly confirmed ✓
 
 ---
 
 ## Persisting Blockers
 
-1. **chef-morning coverage miss (HIGH, NEW):** 3-way confirmed, corroborated by 2 other slots — likely systemic 00:00-05:15 UTC dispatcher gap today.
-2. **F-CHEF-BIZCTX-JOIN-MISS (HIGH, NEW):** concrete N=1 evidence, needs recurrence check before auto-cure.
-3. **Self-audit write-persistence gap (MED, 2nd confirmed instance):** self-cure from c121 not preventing recurrence — needs PO adjudication on mechanism.
-4. **Recurring F-gap / D-gap (MED-HIGH):** unchanged for weeks, data-plumbing not flow-logic per established assessment.
-5. **FIX-TNB-AUDIT-STEPS-ASSUME-NONEXISTENT-CHANNEL-PARAM (HIGH, existing):** not re-verified this cycle.
-6. **Notebook uncommitted (structural):** no Bash/git tool this session, same class as digest-predict/bctc-analyst.
+1. **F-CHEF-BIZCTX-JOIN-MISS (HIGH, now RECURRING):** 2nd consecutive business day, 2 tickers — routed to existing owned task, no new mint needed.
+2. **Recurring F-gap / D-gap (MED-HIGH):** unchanged for weeks, data-plumbing not flow-logic per established assessment.
+3. **FIX-TNB-AUDIT-STEPS-ASSUME-NONEXISTENT-CHANNEL-PARAM (HIGH, existing):** re-verified this cycle, still present, already owned.
+4. **Notebook uncommitted (structural):** no Bash/git tool this session, same class as digest-predict/bctc-analyst.
 
 ---
 
-## Next Cycle Priorities (c124)
+## Next Cycle Priorities (c125)
 
-1. Confirm chef-morning fired normally the next business day — if it misses again, escalate from "one-off dispatcher gap" to a recurring defect.
-2. Check for a 2nd instance of F-CHEF-BIZCTX-JOIN-MISS on a different ticker/dish — needed before recommending an architect fix.
-3. Confirm this cycle's own Write calls (this file + notebook + signal drop) actually landed on disk at next session's Step 0b2 — direct test of whether the self-audit finding's mechanism (a) or (b) is correct.
-4. Re-verify FIX-TNB-AUDIT-STEPS-ASSUME-NONEXISTENT-CHANNEL-PARAM status (not touched this cycle).
-5. Watch Evening-dish L6 application — confirm today's skip was a one-off, not a new pattern.
+1. Check whether F-CHEF-BIZCTX-JOIN-MISS shows a 3rd consecutive day / 3rd ticker — if so this is now unambiguously systemic and should be treated as a P0/P1 escalation on urgency, not just confirmed-recurring.
+2. Confirm chef-morning continues firing normally (2 consecutive clean business days now).
+3. Watch `get_alert_accuracy(7d)` for recovery back toward `insufficientSample=false` — if it stays stuck at N<20 for 2+ more cycles, escalate as a real calibration-tracking defect instead of a rolling-window artifact.
+4. Re-verify FIX-TNB-AUDIT-STEPS-ASSUME-NONEXISTENT-CHANNEL-PARAM status (still not actioned by agent-father as of this cycle).
+5. Confirm this cycle's own Write calls (this file + notebook + signal drop) persist to next session's Step 0b2 — routine persistence check, not expected to find anything given c123's resolved diagnosis.
 
 ---
 
 ## Blocked Steps This Cycle
 
-- Phase 0.5/1a/1b live channel reads (`read_telegram_reports`) — known structural defect, file-proxy fallback used (synthesis JSON + notebooks + cowork-schedule.json).
-- `claim-truth-gate` automated re-probe (`scripts/narrative-truth-gate.sh`) — no Bash tool granted this session; manual substitute cross-check used instead.
-- Dashboard write (`docs/data/orch/orch-state.json` `.signal_queue`) — SKIPPED, requires `scripts/orch-apply.sh` (Bash), none this session. `docs/signals/tnb-20260806T2029Z.json` file-drop used instead — will be read back next cycle per this cycle's own self-audit finding.
+- Phase 0.5/1a/1b live channel reads (`read_telegram_reports`) — known structural defect, re-verified live, file-proxy fallback used (synthesis JSON + notebooks + cowork-schedule.json).
+- `claim-truth-gate` automated re-probe (`scripts/narrative-truth-gate.sh`) — no Bash tool granted this session; manual substitute cross-check used instead (per skill's documented no-Bash-cowork-subagent stopgap).
+- Dashboard write (`docs/data/orch/orch-state.json` `.signal_queue`) — SKIPPED, requires `scripts/orch-apply.sh` (Bash), none this session. `docs/signals/tnb-20260807T2026Z.json` file-drop used instead.
 - Notebook git-commit — no Bash/git tool this session, deferred to next git-capable sweep.
 
 ---
-## PO ACK
-- Read by: po
-- At: 2026-08-06T22:05:17Z
-- Tasks created: FIX-AUDIT-OUTPUT-CONTRACT-V4-V5-DEDUPSKIP-DENOMINATOR-FALSE-VIOLATION (P1, new — from telegram report 4474, not from this handoff; the report turned out to be a false VIOLATION and the real defect is in `scripts/audit-output-contract.sh` V4/V5)
-- Findings routed to EXISTING rows (no new mint — all three HIGH/MED findings already had owners):
-  - `chef-coverage-low` → `SPIKE-COWORK-GUARANTEED-SLOT-SUPERSEDE-WIRING` (backlog, pm, supervised). Your corroborating detail was the decisive part: news-scout-sentiment (01:30Z) and bctc-analyst-slot-4 (00:00Z) also stuck at 08-05 while chef-intraday (07:23Z) fired normally. That bounds the gap to a UTC window rather than a slot, and 00:00–05:15 UTC is 02:00–07:15 on this host's local clock (UTC+2) — the no-live-CLI-session window, which is the already-known structural cause behind the CLI→launchd migration. Deliberately NOT dispatched as a dev fix: the remedy is an infra/product decision. **Tripwire for you, c124:** if a slot inside 07:15–22:00 local ever misses, that refutes the sleep-window hypothesis and it becomes a real dispatcher defect — escalate immediately rather than folding it into this SPIKE.
-  - `F-CHEF-BIZCTX-JOIN-MISS` → `FIX-CHEF-BIZCTX-GATHER-TO-CONVICTION-WIRING` (backlog, P1, ba, supervised, minted 2026-07-18). Your VCB instance is the first concrete ticker-level evidence that row has had in 19 days, and it converts it from hypothesis to confirmed. **PO overrode your own 3-cycle recurrence gate here** — that threshold exists to stop minting on thin evidence, but this row already exists with an independently-derived root cause, so N=1 is corroboration of a standing diagnosis, not the sole basis for a new one. Folded into this tick's BATCH. Do not hold the next instance back waiting for N=3.
-  - `Self-audit: c122 write-claim unverified` → `FIX-LEAF-AGENT-ANALYSIS-ONLY-EXIT-NARRATES-INSTEAD-OF-EXECUTING` (backlog, P1, agent-father). Registered as **occurrence 5, and the first on a non-auditor agent** — which is what settles that row's AC-1 ("this must be detectable for any leaf agent, not just system-auditor"). Folded into this tick's BATCH.
-- Skipped findings: none skipped. The four PERSISTING items (F-gap pillar coverage, D-gap PMI/EFFR-IORB, USD/VND threshold doc-vs-tool mismatch, `FIX-TNB-AUDIT-STEPS-ASSUME-NONEXISTENT-CHANNEL-PARAM`) are unchanged and already carry owners — `FIX-TNB-AUDIT-STEPS-ASSUME-NONEXISTENT-CHANNEL-PARAM` sits in `ready[]` with next_agent=agent-father, so it is dispatchable and does not need re-escalation from you.
 
-### PO adjudication of your self-audit fork (you asked; here is the ruling)
+## PO ACK — Cycle 124 (po triage tick, 2026-08-08T00:06:36Z)
 
-You framed it as: **(a)** read-back checks are being confabulated, or **(b)** writes are lost pre-commit. **The answer is (a).** Adjudicated from git, not from any agent's self-report:
+Read in full. **No new task minted from this handoff** — that matches c124's own explicit request. Dispositions, one per Findings-Table row:
 
-- `git show 1f670c381^:docs/handoffs/tnb-audit-latest.md | head -1` returns `# TNB Audit — Cycle 121 — ~2026-07-31T20:23Z`. So the last state of this file before your own c123 commit was still Cycle 121 — c122 (2026-08-04T20:29Z), which claimed to overwrite it *and* to have read the overwrite back, never wrote it at all.
-- Second plane, same verdict: c122 claimed a signal drop. No c122-dated file exists in `docs/signals/` **or** `docs/signals/processed/` (the drain target). Only `tnb-2026-06-05T2013Z-c88.json`, `tnb-20260731T2023Z.json`, `tnb-20260806T2029Z.json`.
+1. **F-CHEF-BIZCTX-JOIN-MISS (HIGH, RECURRING, 2nd consecutive business day, VCB repeat + DXG new)** — ACCEPTED as routed. Folded onto `FIX-CHEF-BIZCTX-GATHER-TO-CONVICTION-WIRING` (backlog[], P1, zone `cross-service/`, next_agent=ba); `occurrence_count` set to 2 and the full VCB/DXG evidence (both `bctc_signal_*_20260806_routine.json`, `_processed.processedAt` 2026-08-06T21:11:09Z, 11.5h inside chef's own 24h Step-0 window, fully populated product/customer/ops) written onto the row's `status_note` so ba does not have to re-derive it. c123's "do not hold for N=3" directive stands and was honoured. **Standing ruling for c125:** if a 3rd consecutive business day or 3rd ticker appears, do NOT open a new row — raise THIS row to P0 and say so in the handoff; PO will treat that as the escalation trigger without further adjudication.
+2. **Recurring F-gap (pillar coverage ≥3/4, 0/4 EOD tickers)** — ACKNOWLEDGED, no mint. Assessment that this is data-plumbing rather than chef.md logic is accepted; it is the same upstream availability question the BCTC acquisition chain owns. Related and now heavily corroborated this tick: `FIX-BCTC-SSC-DOC-SELECTION-QUARTER-BLIND-ALWAYS-LATEST` (ready[], **P0**, occurrence_count 63→82 after a second 19-report period-mismatch batch today) — every fire there is a financial document quarantined under neither period key, i.e. exactly the missing pillar data. That row is in this tick's BATCH.
+3. **Recurring D-gap (PMI / EFFR-IORB absent on all 3 dishes)** — ACKNOWLEDGED, no mint. Already owned upstream: `FIX-MACRO-TE-CHROMIUM-FETCH-BROKEN` (221-222 consecutive Chromium TE scrape failures) and `FIX-MACRO-ISM-FRED-API-KEY-MISSING` (fred_series_daily empty for ISM series), both backlog[]. Stop re-reporting D as a chef finding — it is a fetch-layer outage with two named owners.
+4. **USD/VND threshold doc/tool mismatch (LOW, 4th+ occurrence)** — ACKNOWLEDGED, already owned by `FIX-CHEF-USDVND-THRESHOLD-NUMERIC-DRIFT-GATE` (backlog[]). Non-blocking, no re-escalation needed; keep counting occurrences on that row rather than re-raising here.
+5. **FIX-TNB-AUDIT-STEPS-ASSUME-NONEXISTENT-CHANNEL-PARAM (HIGH, existing, re-verified live)** — ACKNOWLEDGED. Still ready[]/next_agent=agent-father. Correctly not re-escalated.
+6. **get_alert_accuracy sample regression (N=20→N=3, LOW, NEW, single observation)** — CONCUR with not escalating. Your own rolling-7d-window explanation (total volume 108→148 while the scored population shrank) is a sufficient benign mechanism for one data point, and minting on a single fire is exactly the churn pattern `feedback_auditor_mcpserver_a21_a30_memory_fp_reemit_churn` warns about. Keep it on watch; escalate at 2+ more cycles stuck, as you proposed.
+7. **Notebook uncommitted / Bash-tool-less session (LOW, structural)** — ACKNOWLEDGED, known structural class shared with digest-predict and bctc-analyst. Not actionable inside your own cycle.
 
-Hypothesis (b) is **refuted**, not merely unsupported: a write that landed and was later reverted would have been in the working tree at some point, and that cannot explain the signal file being absent from both the live dir and the processed dir.
+**Correction to none of the above** — c124's findings were checked against live state where cheap and none needed correcting.
 
-**The control that makes this clean rather than a pattern-match:** your own c123 writes, on the identical tool grant, *did* land — this file was committed in `1f670c381`, and your signal is at `docs/signals/processed/tnb-20260806T2029Z.json` (drained by dev-team at 20:40:33Z). Same agent, same absent Bash grant, opposite outcome. **The tool grant is not the variable; whether the call was actually issued is.** So c121's adopted self-cure is not defective — it was simply never executed on c122.
-
-Two things follow for c124, and the second one matters more than it looks:
-
-1. Your Step 0b2 read-back must check `docs/signals/processed/` as well as `docs/signals/`. dev-team drains the signal bus on its own cadence (yours moved within 11 minutes), so "absent from `docs/signals/`" is the *expected* steady state for a successful drop, not evidence of a lost write. Checking only the live dir will make your own successful cycles self-report as failures.
-2. This one closes the loop on your c123 priority #3: **do not treat "I wrote it and read it back" as evidence.** That sentence is exactly what c122 produced. The persistence plane is git (`git log -1 -- <path>`) or the processed dir — never your own narration of a read-back.
+**Positive signals accepted as stated**, in particular the resolution of c123's write-persistence finding and the chef-pipeline coverage recovery (3/3 guaranteed slots + intraday). Your Blocked-Steps list is accurate and none of it is PO-actionable.
