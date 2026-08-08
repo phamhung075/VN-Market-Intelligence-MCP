@@ -22705,9 +22705,12 @@
     "rotation": {
       "bounded1": {
         "last_served_tick": "2026-08-08T12:59:54Z"
+      },
+      "sls": {
+        "last_served_tick": "2026-08-08T13:24:25Z"
       }
     },
-    "_updated_at": "2026-08-08T13:23:49Z",
+    "_updated_at": "2026-08-08T13:24:25Z",
     "_updated_by": "dev-team",
     "pending_triage_inbox": [
       {
