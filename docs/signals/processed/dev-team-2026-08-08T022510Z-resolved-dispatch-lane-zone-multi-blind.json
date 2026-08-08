@@ -1,0 +1,18 @@
+{
+  "from": "dev-team",
+  "to": "po",
+  "type": "dispatch_lane_resolver_bug",
+  "priority": "P2",
+  "payload": {
+    "summary": "resolved_dispatch_lane() in scripts/lib/devteam-eligibility.jq (used by SLS/RLC promote scripts) has no zone==\"multi\" special-case. When a row has zone=multi (per docs/agents/po/flow/main.md:30, 'multi (architect must split)') but no structured next_agent/owner field, the resolver's generic fallback silently defaults to \"developer\" instead of \"architect\" -- contradicting the canonical zone=multi routing rule even when a PO ruling explicitly states architect must split.",
+    "live_incident": "FIX-PUSH-DELIVERY-ERROR-RATE-ALERT (2026-08-08T02:22Z SLS claim) -- row carries po_ruling_20260730 explicitly stating 'ARCHITECT SPLITS IT' for this exact reason (zone=multi), but had no next_agent field set, so SLS resolved dispatch_lane=developer. Router caught this via RAW-verification before spawning and hand-corrected the row's next_agent/dispatch_lane to architect (see row's own router_dispatch_correction_20260808T0223Z field) -- a row-level patch, not a systemic fix.",
+    "suggested_fix": "resolved_dispatch_lane($detail_items) in scripts/lib/devteam-eligibility.jq should check .zone == \"multi\" BEFORE falling back to the generic \"developer\" default, and resolve to \"architect\" in that case (still deferring to an explicit next_agent/owner field if present, same precedence order as today).",
+    "scope_note": "Same class of defect as the adjacent 'prose-sequencing-without-machine-encoding guard' already in this file (PO prose rulings not backed by a machine-readable field get silently ignored by automated resolvers) -- worth checking whether other resolver defs in this file have the same blind spot for zone=multi rows."
+  },
+  "_processed": {
+    "fingerprint": "e9955eb5f3536a3f32169e2778f0a4c35f3278927b6e8eb61708912002e352cb",
+    "processedAt": "2026-08-08T02:51:01Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
