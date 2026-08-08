@@ -14227,11 +14227,14 @@
         },
         "po_triage_note_reverify": "PO TRIAGE 2026-07-15T17:28:38Z (dev-team tick 17:07Z, sig dev-team-20260715T160042Z-rag-corpus-repopulation-scale-reverify): corpus RE-POPULATION CONFIRMED CLIMBING — live GET :5002/embed/health index_size=297 rows now vs 116 @ qa 16:01Z verify (+181 in ~1.5h). Re-embed pipeline ALIVE => NOT stuck-at-116, so NO new bug for dev-rag-service. BUT 297 << ~56k representative scale => AC#1 (no-OOM at ~56k) re-run stays UN-testable now: this row STAYS review, done_verified WITHHELD, blocked_on=rag-corpus-repopulation-to-representative-scale UNCHANGED (TIME-GATED on wall-clock, NOT a dispatch — do NOT force a rebuild against a 116/297-row corpus). GATE to lift WITHHELD (= signal action 2): once corpus ~= representative scale, re-run AC#1 (POST /admin/rebuild-fts under 768m cgroup, docker stats peak-mem, 2x), record real peak-mem => then unblock ALPHA-S2 deadline retune + BM25 round-trip. Heads-up carried: rag-service idle mem ~92% of 768m with ZERO FTS activity (tight margin — ALPHA-S2 retune input). Tech-debt spin-off (signal 2, hybrid max_distance no-op) minted separately as SPIKE-RAG-HYBRID-MAXDISTANCE-NOOP (backlog, P3, non-blocking).",
         "po_triage_note_reverify_2": "PO RAW re-check 2026-07-28T19:00Z: rag-service GET :5002/embed/health index_size=10183 rows now (vs 297 @ 2026-07-15T17:28Z, vs ~56254-row failure-scale target). Corpus still climbing, still << representative scale (~18%) — stays legitimately TIME-GATED, no action taken, blocked_on unchanged.",
-        "updated_at": "2026-07-29T11:31:36Z",
+        "updated_at": "2026-08-08T22:26:26Z",
         "po_timegate_projection_20260729": "PO RAW re-check 2026-07-29T05:20Z: rag-service GET :5002/embed/health index_size=11243 rows (was 10183 @ 2026-07-28T19:00Z, 297 @ 2026-07-15T17:28Z). MEASURED GROWTH ~103 rows/h over the last 10.3h. AC-1's representative failure scale is ~56254 rows, so ~45000 rows remain => ~438h => the corpus is ~18 DAYS from testable, i.e. on/after ~2026-08-16 at the current rate. DISPOSITION UNCHANGED: legitimately TIME-GATED, blocked_on=rag-corpus-repopulation-to-representative-scale, done_verified stays WITHHELD, do NOT force a rebuild against an 11k-row corpus (a green there is the exact false-green this row already produced once at 116 rows). STOP RE-DERIVING THIS EVERY TICK: next meaningful re-check is ~2026-08-12, not next tick — 3 separate PO ticks have now hand-re-measured this for zero decision change. If the growth rate collapses to ~0 before then, that IS a new defect (re-embed pipeline stalled) and needs its own row; only that would justify an early look.",
         "po_timegate_next_recheck_after": "2026-08-12",
         "po_ack_scope_correction_20260729T1126": "ACK-LEDGER SCOPE CORRECTION — this row is NO LONGER the tracked_by for the rag-service memory ACK. It never should have been, and the falsification was already sitting inside this row. FINDING (router-raised 2026-07-29T11:08Z, PO-confirmed 11:20-11:26Z): docs/data/auditor-launchd-ack.json .acked_memory[0] named THIS row as what 'root-causes' rag-service's 94-98% steady-state, and Tier-1 has been suppressing the breach on that basis since 2026-07-25T15:48:56Z. This row bounds _build_fts_index(); the live memory is the embedder's lazy model singleton — cold RSS 50.7 MiB -> 749.9 MiB after ONE embed, with ZERO FTS activity (PO measurement 2026-07-29T10:20-10:28Z, recorded on FIX-RAG-SERVICE-CLEAN-EXIT-RESTART-LOOP). Shipping this row would not move the number. THE FALSIFICATION PREDATES THE ACK BY TEN DAYS: this row's own qa_result.idle_baseline_flag, written 2026-07-15T16:01:23Z, reads 'rag-service idle mem already ~92% of 768m bound with ZERO FTS activity (tight margin, pre-existing)'. The ledger was seeded 2026-07-25 asserting the opposite, against a row that already contained the disproof. SECOND AND SHARPER PROBLEM — SELF-EXPIRY WAS UNREACHABLE: the ACK's safety argument is its STALENESS RULE ('remove once tracked_by reaches DONE_VERIFIED'). This row is blocked_on rag-corpus-repopulation-to-representative-scale with po_timegate_next_recheck_after 2026-08-12 and a PO-projected testable date ~2026-08-16. Binding the ACK here guaranteed >=18 days of suppression BY CONSTRUCTION on the fleet's only memory detector for this container. ACTION TAKEN: ledger tracked_by re-pointed to FU-RAG-DEPLOY-MEMORY (the row that actually owns the resident-set/cap trade and whose DONE_VERIFIED would genuinely mean rag-service no longer sits at 97% of its cap), with FIX-RAG-SERVICE-CLEAN-EXIT-RESTART-LOOP recorded as the secondary. THIS ROW'S OWN DISPOSITION IS UNCHANGED — still REVIEW, still legitimately TIME-GATED, done_verified still WITHHELD, next re-check still ~2026-08-12. Nothing here reopens it.",
-        "updated_by": "po/triage-20260729T1126"
+        "updated_by": "po/triage-20260729T1126",
+        "secondary_claimed_at": "2026-08-08T22:26:25Z",
+        "secondary_claimed_by": "dev-team (review-lane secondary-drain)",
+        "secondary_dispatch_target": "po"
       },
       {
         "id": "FIX-OHLCV-DEPTH-ALERT-HONEST-GAP-SUPPRESS",
@@ -19407,10 +19410,10 @@
         "last_served_tick": "2026-08-08T21:58:51Z"
       },
       "step1_triage": {
-        "last_served_tick": "2026-08-08T15:54:20Z"
+        "last_served_tick": "2026-08-08T22:26:10Z"
       }
     },
-    "_updated_at": "2026-08-08T22:24:58Z",
+    "_updated_at": "2026-08-08T22:26:10Z",
     "_updated_by": "dev-team",
     "pending_triage_inbox": [
       {
