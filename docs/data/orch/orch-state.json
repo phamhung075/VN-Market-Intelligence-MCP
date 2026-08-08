@@ -23012,21 +23012,24 @@
         "plan_only": true,
         "zone": "cross-service/",
         "owner": "po",
-        "next_agent": "ba",
+        "next_agent": "architect",
         "supervised": true,
         "created_at": "2026-07-17T20:57:55Z",
         "created_by": "po-tnb-c112-triage",
         "origin": "docs/handoffs/tnb-audit-latest.md#F-USDVND-THRESHOLD-VALUE-INCONSISTENT",
         "note": "PLAN-ONLY (anomaly->BACKLOG bridge, project_anomaly_task_bridge). ROOT CAUSE (tnb c112, root-cause depth): LLM NARRATIVE DRIFT toward a historically-familiar round number ('25,000' = VND's 2023 'vượt mốc 25,000' media milestone), NOT a text-instruction defect — chef.md Step 2/3 instructions are ALREADY textually correct (25,500 / 26,500) and NO hardcoded '25000' constant exists in macro-health-read/SKILL.md (FX is direction-only) or apps/mcp-server/src, so a prose-only fix is REDUNDANT. RECURRING: the '25,000' variant recurs across >=5 dish instances over 3 days (07-13, 07-15, 07-17 x2), not just today — crosses feedback_recurring_bug_escalation (2+). USER-FACING: the wrong FX threshold ships to MARKET output. PREREQUISITE (do this FIRST): reconcile the CANONICAL FX threshold value — the reference docs THEMSELVES disagree (docs/agents/tran-ngoc-bau/... main.md audit table cites 26,500; tnb-methodology-layers.md cites 25,500) — before any gate can assert against it. FIX (per tnb rec): a deterministic numeric-literal assertion/gate on the FX-threshold citation in chef dish output (validate the cited USD/VND threshold == the reconciled SSOT value; flag/correct drift), NOT more prose. OWNER CHAIN: ba spec (resolve canonical value + gate contract) -> architect/agent-father for gate placement (co-candidate: claim-truth-gate-style check in the publish path, or a post-generation output lint). supervised:true — do NOT let BOUNDED-1 idle-auto-launch (needs the reconciliation+spec first). AC: (1) the canonical FX threshold value is reconciled to ONE SSOT across main.md audit table + tnb-methodology-layers.md + chef.md Step 2/3; (2) a deterministic check rejects/flags any dish citing an FX threshold that diverges from that SSOT value; (3) the '25,000' narrative-drift variant no longer publishes to MARKET (RAW-verified on a subsequent dish).",
         "verification_gate": "A subsequent chef dish cites the reconciled canonical FX threshold value verbatim AND the deterministic gate flags/corrects an injected off-canon value; done_verified requires the '25,000' drift variant absent from MARKET output across a full audit cycle.",
-        "status_note": "TNB c118 07-24 + PO RAW-verify of unified-agent-synthesis-2026-07-24-eod.json: (a) vn_macro_layer states 'USD/VND 26,130 exceeds 26,500 carry threshold' — numerically FALSE (26,130<26,500), a stated threshold-crossing that did not happen. (b) GOLD threshold self-inconsistent within the SAME doc: us_macro_layer cites 'breach above $2,200' while known_gaps[0] cites '$4,300 threshold' for the same $4,052.50 print. BROADEN this gate beyond USD/VND to ALL narrative macro-threshold citations (USD/VND, gold, oil) — a deterministic numeric-literal assertion over the persisted synthesis JSON is metric-agnostic. SSOT value-choice tracked separately in FIX-USDVND-THRESHOLD-SSOT.",
-        "updated_at": "2026-08-08T09:55:29Z",
+        "status_note": "TNB c118 07-24 + PO RAW-verify of unified-agent-synthesis-2026-07-24-eod.json: (a) vn_macro_layer states 'USD/VND 26,130 exceeds 26,500 carry threshold' — numerically FALSE (26,130<26,500), a stated threshold-crossing that did not happen. (b) GOLD threshold self-inconsistent within the SAME doc: us_macro_layer cites 'breach above $2,200' while known_gaps[0] cites '$4,300 threshold' for the same $4,052.50 print. BROADEN this gate beyond USD/VND to ALL narrative macro-threshold citations (USD/VND, gold, oil) — a deterministic numeric-literal assertion over the persisted synthesis JSON is metric-agnostic. SSOT value-choice tracked separately in FIX-USDVND-THRESHOLD-SSOT. | BA c1 2026-08-08: SSOT reconciled to 25,500 (code-anchored: macroTools.ts:118 + macroAdjustments.ts 8 cascade rules; 26,500 has zero code source anywhere). 7 doc edits specced (tnb-methodology-layers.md/main.md/audit-methodology.md/chef-dish.md) — routed to agent-father (flow/knowledge-file edit authority, not BA). Two-sub-check deterministic gate designed (SSOT-value-citation + comparator-arithmetic), validated against all 3 rows of the live 07-24 synthesis JSON incl. the gold $2,200-vs-$4,300 negative/positive controls. Placement: primary=pre-publish chef-dish.md Step 6.7 new Rule AF-4 (styled after claim-truth-gate), secondary=Step 7.6 JSON post-write — primary is structurally required since Step 7 send_telegram fires before Step 7.5/7.6. Full spec: docs/handoffs/FIX-CHEF-USDVND-THRESHOLD-NUMERIC-DRIFT-GATE-BA-spec.md. Blocker Q1 (PO): publish-block policy on persistent 2nd-pass FAIL — BA recommends reusing CHEF's existing claim-truth-gate no-override contract.",
+        "updated_at": "2026-08-08T10:06:38Z",
         "promoted_at": "2026-08-08T06:24:15Z",
         "promoted_by": "dev-team (supervised-lane sweep)",
         "promotion_note": "Supervised-Lane Sweep — assigned dispatch_lane='ba' (priority_rank=3); supervised/plan_only flags preserved, gate NOT disabled — see FIX-BOUNDED1-SUPERVISED-LANE-NO-SWEEPER",
         "dispatch_lane": "ba",
         "claimed_at": "2026-08-08T09:55:29Z",
-        "claimed_by": "dev-team (supervised-lane sweep)"
+        "claimed_by": "dev-team (supervised-lane sweep)",
+        "ba_spec_complete": true,
+        "ba_handoff": "docs/handoffs/FIX-CHEF-USDVND-THRESHOLD-NUMERIC-DRIFT-GATE-BA-spec.md",
+        "ba_completed_at": "2026-08-08T10:06:37Z"
       }
     ]
   },
