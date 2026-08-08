@@ -2,7 +2,7 @@
   "from": "code-janitor",
   "to": "po",
   "type": "system-issue",
-  "createdAt": "2026-08-08T10:30:36Z",
+  "createdAt": "2026-08-08T16:30:53Z",
   "payload": {
     "finding": "docs/agent-memory/health/team-tool-recheck-*.md writer has been silent since 2026-06-23; memory-prune-sweep.sh now deletes files in this family older than 30d as routine hygiene",
     "known_cause": "writer = cloud RemoteTrigger trig_019Q8D5xttjZn6iytx2Ld9dW, killed by the 2026-06-22 standing no-RemoteTrigger directive (feedback_no_remote_trigger_all_local.md)",
@@ -11,8 +11,8 @@
     "idempotency_note": "written once — re-runs of memory-prune-sweep.sh skip this write once any janitor-health-recheck-writer-retired-*.json exists in docs/signals/"
   },
   "_processed": {
-    "fingerprint": "ff35269f980c19dd5eea9022888aed6b211106f19e171ba35f4b347615a57ddf",
-    "processedAt": "2026-08-08T10:51:22Z",
+    "fingerprint": "c88d21ffcc87d55dfd54fc0eab9dd66c8196c660428bf1078326537df7faf168",
+    "processedAt": "2026-08-08T16:52:21Z",
     "processedBy": "dev-team",
     "result": "routed-to-po"
   }
