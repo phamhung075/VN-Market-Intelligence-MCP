@@ -93,12 +93,12 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "FIX-CI-SIZELINT-BCTCREFINED-PROJECTION-BASELINE",
-    "next_agent": "qa",
-    "next_action": "Review-Lane QA-Drain claim of 7 row(s), highest-ranked FIX-CI-SIZELINT-BCTCREFINED-PROJECTION-BASELINE — spawn qa in verify-committed mode (branch:null direct-commit row, no task branch/handoff — see docs/agents/qa/flow/main.md § Direct-Commit Verify; do NOT use the normal pipeline JUMP-TO, it requires a branch this row does not have). Batch of 7 row(s) share this claimed_at stamp in .task_board.qa[] — correlate by claimed_at to dispatch the rest.",
-    "updated_at": "2026-08-08T16:25:30Z",
-    "updated_by": "dev-team (review-lane qa-drain)"
+    "status": "idle",
+    "active_task_id": null,
+    "next_agent": null,
+    "next_action": "Review-Lane QA-Drain batch (7 rows, claimed_at 2026-08-08T16:25:30Z) fully closed — all rows independently RAW-verified DONE_VERIFIED this session (commits 8f1494fe3/d7f7525cc/b85b524f1/ed0df780d/bbf3d907f/6ca2a0c65). head was never reset after the batch drained, blocking scripts/orch-cold-evict.sh (Stage validation: active_task_id must resolve to a task_board lane) for 2 consecutive ticks. Reset to idle so a genuinely in_progress task can claim the pointer next.",
+    "updated_at": "2026-08-08T16:53:12Z",
+    "updated_by": "dev-team (gcc-preflight board-hygiene stale-head reset, cf. 025dd696b same shape)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -3748,7 +3748,7 @@
         "summary": "team-tool-recheck writer dead since 06-23 — replace-vs-retire decision needed",
         "severity": "LOW",
         "status": "READ",
-        "payload_ref": "docs/signals/janitor-health-recheck-writer-retired-2026-08-08.json"
+        "payload_ref": "docs/signals/processed/janitor-health-recheck-writer-retired-2026-08-08.json"
       },
       {
         "id": "sys-20260808T163956-006d",
@@ -3758,7 +3758,7 @@
         "type": "signal_feedback",
         "summary": "A-30 FAIL: mcp-server-1 — loss of reclamation pattern",
         "severity": "WARN",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": null,
         "provenance": "detector",
         "audit_cycle_tag": "cron:auditor-t1:2026-08-08T16:30Z",
@@ -22899,7 +22899,7 @@
         "last_served_tick": "2026-08-08T15:54:20Z"
       }
     },
-    "_updated_at": "2026-08-08T16:24:06Z",
+    "_updated_at": "2026-08-08T16:52:21Z",
     "_updated_by": "dev-team",
     "pending_triage_inbox": [
       {
@@ -23539,6 +23539,133 @@
         "payload": "A-30 CRITICAL: mcp-server-1 — VmHWM advancing, pinned at memory cap (3GiB), sustained 96-97%",
         "createdAt": "2026-08-08T16:08:24Z",
         "drained_at": "2026-08-08T16:22:26Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "a2d41aaa5fb3ac6215dd9f7b8acc324c9beb57e013736a9f2b094e1d071c4698",
+        "source": "file",
+        "from": "commit-sweep-guard",
+        "to": "po",
+        "type": "bug-escalation",
+        "priority": "high",
+        "payload": "[notebook-immutability-guard] WARN: docs/agent-memory/notebooks/qa.md — retained section '## cycle-582 · 2026-08-08 · FIX-CI-SIZELINT-RAG-EMBEDDER-NEW-OFFENDER — APPROVED, DONE_VERIFIED (direct-commit verify, `qa[]` row, `branch:null`, commit `b85b524f1` — corrected from stale/dangling `8b415f6a2`)' has different content staged than at HEAD. Per .claude/skills/notebook-write/SKILL.md AC-2a, a retained '## ' section must be byte-identical across a cycle; the only authorized mutations are dropping a whole oldest section, the AC-2b sub-block intra-prune, or trimming the CURRENT cycle's own new section. If cap pressure forced a shrink, DROP the whole section (archive verbatim if it must be kept) and add a NEW marker section instead — see docs/agent-memory/notebooks/architect.md for the reference-correct pattern. mode=warn (default warn — never blocks; set GIT_NOTEBOOK_IMMUTABILITY_MODE=reject to hard-enforce once re-validated, see scripts/audits/verify-notebook-immutability-gate.sh).\n",
+        "createdAt": "2026-08-08T16:36:55Z",
+        "drained_at": "2026-08-08T16:52:21Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "31cc9d5b326c7fda981fbeff64efca809d2030fd34fb69e582d0c372e9a615e2",
+        "source": "file",
+        "from": "context-bloat-backstop-hook",
+        "to": "claude-manager-helper",
+        "type": "context_bloat_breach",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-qa-12.md",
+          "line_count": 186,
+          "cap": 600,
+          "byte_count": 36599,
+          "byte_cap": 36000,
+          "class": "sprint-decision-journal",
+          "reason": "byte-cap",
+          "overage": 0,
+          "byte_overage": 599,
+          "action_required": "prune_or_split"
+        },
+        "createdAt": "2026-08-08T16:32:54Z",
+        "drained_at": "2026-08-08T16:52:21Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "b1ffb6e1b3cb2cfab55fb4f9bc68439c0e67761211d71c68150ed11fb50b1b8e",
+        "source": "file",
+        "from": "cowork-team",
+        "to": "dev-team",
+        "type": "cowork-fire",
+        "priority": "low",
+        "payload": {
+          "fire_time": "2026-08-08T16:40:05Z",
+          "matched_slots": [
+            "refine-bctc-slot-4"
+          ],
+          "won_slots": [
+            "refine-bctc-slot-4"
+          ],
+          "held_by_other": [],
+          "all_held": false,
+          "spawned": [
+            "docs/agents/refine_bctc_md/flow/main.md"
+          ],
+          "silent": false,
+          "drift_min": 6,
+          "errors": [],
+          "pressure_mode": "adaptive",
+          "calendar_status": "unknown",
+          "suppressed_calendar": [],
+          "suppressed_cadence": [],
+          "downgraded": [],
+          "chef_mutex_applied": false,
+          "due_reasons": {
+            "refine-bctc-slot-4": "cron"
+          },
+          "cadence_minutes": {
+            "refine-bctc-slot-4": null
+          },
+          "last_fired_timestamp": "2026-08-08T16:39:54Z",
+          "last_fired_slots": [
+            "refine-bctc-slot-4"
+          ],
+          "last_fired_write_errors": null,
+          "classification": "FIRE",
+          "reason": "spawned",
+          "nominal_tick": "16:30",
+          "leader_lock": "acquired",
+          "dev_head": "in_progress",
+          "devq": 5,
+          "signal_backlog": 28,
+          "note": "1 slot due (refine-bctc-slot-4, bctc-offmarket cron fallback, calendar_status=unknown) + 1 new signal drained (cj-20260808T163142, code-janitor->po replace-vs-retire decision, logged READ). Fan-out headroom-degraded (container_vm_headroom_mb=1315 < 1500 floor) but single-slot batch unaffected."
+        },
+        "createdAt": "2026-08-08T16:40:05Z",
+        "drained_at": "2026-08-08T16:52:21Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "c88d21ffcc87d55dfd54fc0eab9dd66c8196c660428bf1078326537df7faf168",
+        "source": "file",
+        "from": "code-janitor",
+        "to": "po",
+        "type": "system-issue",
+        "priority": "low",
+        "payload": {
+          "finding": "docs/agent-memory/health/team-tool-recheck-*.md writer has been silent since 2026-06-23; memory-prune-sweep.sh now deletes files in this family older than 30d as routine hygiene",
+          "known_cause": "writer = cloud RemoteTrigger trig_019Q8D5xttjZn6iytx2Ld9dW, killed by the 2026-06-22 standing no-RemoteTrigger directive (feedback_no_remote_trigger_all_local.md)",
+          "decision_needed": "replace the recheck job with a local cron per that directive's migration rule, OR retire the team-tool-recheck permanently and let this sweep's 30d rule drain the directory to empty",
+          "detail_ref": "docs/architecture-briefs/2026-07-12-ultracode-workflow-improvement-audit.md#memory-docs-hygiene-P3",
+          "idempotency_note": "written once — re-runs of memory-prune-sweep.sh skip this write once any janitor-health-recheck-writer-retired-*.json exists in docs/signals/"
+        },
+        "createdAt": "2026-08-08T16:30:53Z",
+        "drained_at": "2026-08-08T16:52:21Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "4d3959af189848b795f7d2ef1a6e14ec6d93211f3a61bba2d259fc749200b51d",
+        "source": "file",
+        "from": "notebook-auto-prune-hook",
+        "to": "claude-manager-helper",
+        "type": "notebook_single_section_overage_breach",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/notebooks/digest-predict.md",
+          "line_count": 39,
+          "cap": 200,
+          "byte_count": 18628,
+          "byte_cap": 12000,
+          "section_count": 1,
+          "reason": "only preamble+1 section remain; cannot prune further without data loss",
+          "action_required": "manual_split_to_archive"
+        },
+        "createdAt": "2026-08-08T16:30:58Z",
+        "drained_at": "2026-08-08T16:52:21Z",
         "routed_to": "PO Step 0-SIG"
       }
     ]
