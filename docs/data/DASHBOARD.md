@@ -838,3 +838,15 @@
 **Mitigation:** No immediate action beyond signal routing.
 
 ---
+
+## Anomaly: C-06 · market_messages stale (0 in 3h)
+**Severity:** WARN | **Date:** 2026-08-08 | **Status:** OPEN
+**Location:** market.db/market_messages
+**Details:** No messages recorded in 3-hour window during VN trading hours
+**Impact:** Missing intraday market data feed
+**Root cause:** Message ingestion/collection pipeline offline or blocked
+**Zone owner:** dev-mcp-server
+**Last reported:** 2026-08-08T06:25:09Z (signal sys-20260808T062503-66c2, system-auditor -> po, dedup_key=db_freshness_breach:market_messages:C-06, WARN Telegram sent)
+**Mitigation:** No immediate action beyond signal routing.
+
+---
