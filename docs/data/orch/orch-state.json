@@ -133,7 +133,7 @@
     "does_not_consume_wip": true
   },
   "signal_queue": {
-    "_updated_at": "2026-08-08T21:51:16Z",
+    "_updated_at": "2026-08-08T22:21:19Z",
     "_updated_by": "cowork-team",
     "archive": [],
     "rows": [
@@ -735,6 +735,20 @@
         "provenance": "detector",
         "audit_cycle_tag": "cron:auditor-t1:2026-08-08T21:30Z",
         "dedup_key": "microservice_degraded:vn-market-intelligence-mcp-rag-service-1:A-30"
+      },
+      {
+        "id": "sys-20260808T220615-02a8",
+        "ts": "2026-08-08T22:06:15Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "microservice_degraded",
+        "summary": "rag-service A-30 sustained high memory >93% (93.82%), no reclamation detected",
+        "severity": "WARN",
+        "status": "READ",
+        "payload_ref": null,
+        "provenance": "detector",
+        "audit_cycle_tag": "cron:auditor-t1:2026-08-08T22:00Z",
+        "dedup_key": "microservice_degraded:rag-service:A-30"
       }
     ],
     "last_triaged_at": "2026-07-29T06:25:00Z",
@@ -919,8 +933,8 @@
     ]
   },
   "task_board": {
-    "_updated_at": "2026-08-08T17:43:07Z",
-    "_updated_by": "po",
+    "_updated_at": "2026-08-08T22:20:55Z",
+    "_updated_by": "po/remint-rc-idle-loops",
     "active_sprints": [
       {
         "evidence": "Router raw-verified (get_bctc_full live, post-rebuild) after BEQ-9/10 refine. Core extraction incident RESOLVED, but populating real scalars exposed a SEPARATE pre-existing analytics/serving layer with 4 defect clusters: (a) RATIO-COMPUTE — VNM ROE=0/ROA=0/EPS=12VND/NetDebt-EBITDA=-7.5e13x; DHG ROA=7,891,932.0% (analyst falsely claimed fixed). Ratios emit 0 or astronomically wrong. (b) BANK-B02-TCTD-SERVING — SHB + EIB get_bctc_full returns 'balance sheet has no decomposition — forced-zero pass suspected'; banks UNSERVABLE despite DONE + committed scalars. (c) PERIOD-SEMANTICS — FPT 2025-Q4 rev=70112.8/NP=11225.5 are FULL-YEAR cumulative labeled 'Q4'; buildComparisonSection then compares cumulative-FY vs next-quarter -> false -82.2% mislabeled 'YoY'. (d) ENTITY-SCOPE — HPG 2025-Q4 is parent-only B01a (rev=0, conf44%) served as the canonical/headline HPG vs consolidated ~140k rev; misleading. PUBLISH-INTEGRITY GAP: NO semantic-sanity publish guard exists in orch-state (the triage-referenced 'Task #13' is NOT present). The BEQ-9/10 reports are now DONE -> flow into chef docs/agents/unified-agent/flow/market-analysis.md + market-analyst -> ROA 7.8M% / false YoY -82% / parent-only-headline CAN reach MARKET unattended. recurring-bug-escalation: BCTC area has >2 fix cycles -> architect root-cause SPIKE, not point-patch. | [dev-team 2026-06-03T11:44Z observation feeding BAL-0/BAL-1] After LF-SERVE-REFLOW recovered FPT Q1 absolute scalars (op_profit/ebitda/cash live-correct), get_bctc_full(FPT) STILL serves garbage DERIVED ratios: current_ratio=41527873060120x (denominator ~0), operating_margin_pct=0.0% (not recomputed from now-correct operating_profit). Confirms the analytics/serving derived-ratio layer is a distinct defect from scalar extraction. BAL-0 publish semantic-sanity gate MUST block current_ratio out-of-range before MARKET/FB; BAL-1 spike should pin the ratio recompute module. Repro: get_bctc_full(code=FPT).",
@@ -5505,17 +5519,6 @@
         "updated_at": "2026-07-31T16:27:10Z"
       },
       {
-        "id": "P1-DETECTOR-CLOSURE-TASK-ARCHIVE",
-        "title": "RC-DETECTOR §1.2: pm/flow/task-archive.md — on DONE_VERIFIED w/ origin_signal_id, flip signal_queue row READ->RESOLVED",
-        "status": "BACKLOG",
-        "type": "FIX",
-        "priority": "high",
-        "size": "S",
-        "zone": "docs/agents/pm/",
-        "sprint": "SYSTEMIC-REMAKE-P1",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#P1-DETECTOR-CLOSURE-TASK-ARCHIVE"
-      },
-      {
         "id": "FIX-SIGNALQUEUE-DUP-ID-GUARD",
         "title": "FIX-SIGNALQUEUE-DUP-ID-GUARD (cross-service/) — orch-apply.sh id-uniqueness guard for signal_queue.rows[]/archive[] + normalize auditor ts to full ISO8601",
         "status": "BACKLOG",
@@ -5526,7 +5529,10 @@
         "supervised": true,
         "verify_note": "prior_status=TODO",
         "scope_extension_20260721": "SCOPE FOLD — improvement_proposal home (PO converge-drain po-s147 2026-07-21T14:23:45Z): route the auditor signal_queue COLLAPSE-to-single-upserted/last-seen-bumped row (for persistent findings, instead of N append-always NEW→po rows) + the auditor [OUTPUT-CONTRACT] rows_written SELF-TALLY-FIX (non-deterministic 0-when-actually-2 — feedback_auditor_signalqueue_append_always_telegram_only_dedup) into this row's scope. NON-URGENT: data is correct; the append-always E-3 ledger contract is PRESERVED (never skip row-minting) — only persistent-finding rows collapse/upsert for queue readability + PO triage load, and the self-report count is made honest. Route as improvement_proposal to agents-architect at implementation.",
-        "scope_extension_20260721b": "SCOPE FOLD (PO po-signalqueue-triage-20260721, dispositioning cow-20260721T145500 CAPACITY): cold-eviction cannot relieve signal_queue because the dominant live terminal status 'triaged' (144/152) is absent from TERMINAL_SIGNAL_STATUSES (scripts/orch-cold-evict.sh:87) AND from the signal-dashboard SKILL PRUNE criteria. DURABLE FIX (architect/ba pick one): (a) stop writing the non-canonical 'triaged' status at PO-triage write time - write RESOLVED (canonical + evictable) per NEW->READ->RESOLVED, OR (b) add 'triaged' to TERMINAL_SIGNAL_STATUSES + SKILL PRUNE criteria. SECOND DEFECT: orch-cold-evict.sh signal-row predicate is STATUS-ONLY - it ignores the '24h older' age gate SKILL.md:90 documents, so it prematurely evicts fresh READ rows (breaks origin_signal_id auto-RESOLVE, P1-DETECTOR-CLOSURE-TASK-ARCHIVE); reconcile doc-vs-code by adding the age gate. CONTEXT: the 200-cap is SOFT - appendSignalQueueRow + SignalQueueSchema.rows enforce NO hard cap (SKILL.md:104 doc-only), so no imminent append failure, only hot-file bloat. Complements this row's existing collapse-to-single-row (growth-side) fold. IMMEDIATE RELIEF already applied 2026-07-21: aged(>24h) triaged rows normalized -> RESOLVED for the routine cold-evict hook."
+        "scope_extension_20260721b": "SCOPE FOLD (PO po-signalqueue-triage-20260721, dispositioning cow-20260721T145500 CAPACITY): cold-eviction cannot relieve signal_queue because the dominant live terminal status 'triaged' (144/152) is absent from TERMINAL_SIGNAL_STATUSES (scripts/orch-cold-evict.sh:87) AND from the signal-dashboard SKILL PRUNE criteria. DURABLE FIX (architect/ba pick one): (a) stop writing the non-canonical 'triaged' status at PO-triage write time - write RESOLVED (canonical + evictable) per NEW->READ->RESOLVED, OR (b) add 'triaged' to TERMINAL_SIGNAL_STATUSES + SKILL PRUNE criteria. SECOND DEFECT: orch-cold-evict.sh signal-row predicate is STATUS-ONLY - it ignores the '24h older' age gate SKILL.md:90 documents, so it prematurely evicts fresh READ rows (breaks origin_signal_id auto-RESOLVE, P1-DETECTOR-CLOSURE-TASK-ARCHIVE); reconcile doc-vs-code by adding the age gate. CONTEXT: the 200-cap is SOFT - appendSignalQueueRow + SignalQueueSchema.rows enforce NO hard cap (SKILL.md:104 doc-only), so no imminent append failure, only hot-file bloat. Complements this row's existing collapse-to-single-row (growth-side) fold. IMMEDIATE RELIEF already applied 2026-07-21: aged(>24h) triaged rows normalized -> RESOLVED for the routine cold-evict hook.",
+        "next_agent": "developer",
+        "unstranded_by": "po/remint-rc-idle-loops 2026-08-08T22:20:55Z: next_agent was null so no lane could ever pick this up. Brief 2026-07-04-systemic-remake.md 1.2 assigns the signal_queue.rows[]+archive[] id-uniqueness guard (orchStateSchema.ts + orch-validate.mjs) to developer. Live-verified STILL OPEN this tick: grep for a signal_queue id-uniqueness check in scripts/orch-validate.mjs returns only a payload_ref existence check (L417/L754-761), no id-dup guard.",
+        "updated_at": "2026-08-08T22:21:00Z"
       },
       {
         "id": "FIX-AUDITOR-B05-BCTC-FRESHNESS-LAYER-SPLIT",
@@ -5545,29 +5551,6 @@
         "next_agent": "agent-father",
         "updated_by": "architect/EPIC-AUDITOR-DETECTOR-CORRECTNESS-DRAIN",
         "epic_drain_disposition_20260808T0104Z": "EPIC-AUDITOR-DETECTOR-CORRECTNESS-DRAIN triage 2026-08-08: next_agent ASSIGNED agent-father (propagated from detail-ref's own po_owner_note: '...-> agent-father, NOT ba' — the board-level row lacked owner/next_agent entirely, the FIX-BOARD-ROW-PLAN-ONLY-NOT-MIRRORED-FROM-DETAIL class of gap this epic exists to close). CAUTION FLAGGED FOR THE IMPLEMENTER, not resolved here (disposition-only, no fix landed): live docs/agents/system-auditor/flow/main.md already carries a 'BCTC Healthy-Idle Gate (B-05 — FIX-BCTC-SLA-THRESHOLD-360, sub-root c)' (landed 2026-06-25, commit 44c1402d7 — BEFORE this row's own 2026-07-03 creation) that exempts raw-push staleness when queue=0 AND host healthy, functionally close to this row's own fix_spec (1)-(3). Yet this row was minted AFTER that gate landed, with fresh RAW corroboration citing get_sla_status directly. Could not conclusively determine from a doc-read alone whether the two are the same mechanism or a second, narrower bug the gate doesn't cover — did NOT close this row on that ambiguity (stale-check requires confirmation, not inference); agent-father should re-verify against a live B-05 firing before implementing, and confirm the row is not already fixed before writing new code."
-      },
-      {
-        "id": "P1-DRIFT-QUARANTINE-FREEZE-FLAG",
-        "title": "RC-DRIFT §1.3: project-stats.json — quarantine zero-reader recurringBugEscalationFlag/escalationReason",
-        "status": "BACKLOG",
-        "type": "FIX",
-        "priority": "med",
-        "size": "XS",
-        "zone": "docs/data/",
-        "sprint": "SYSTEMIC-REMAKE-P1",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#P1-DRIFT-QUARANTINE-FREEZE-FLAG",
-        "verify_note": "prior_status=TODO"
-      },
-      {
-        "id": "P1-DETECTOR-CLOSURE-TRIAGE-SIGNALS",
-        "title": "Wire origin_signal_id field in PO triage-signals flow",
-        "status": "BACKLOG",
-        "type": "feature",
-        "zone": "docs/agents/po/",
-        "priority": "P1",
-        "size": "S",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#P1-DETECTOR-CLOSURE-TRIAGE-SIGNALS",
-        "verify_note": "prior_status=TODO"
       },
       {
         "id": "FIX-COWORK-FLOWS-GATEWAY-BLIND-BRIDGE-FALLBACK",
@@ -10516,6 +10499,35 @@
         "created_at": "2026-08-08T21:04:00Z",
         "note": "PO returned this SPIKE in its triage BATCH but did not board-mint it (main.md:951 routes SPIKE to direct Step-3 dispatch, which requires SF-1 — SF-1 was already released before this notification landed, per feedback_sf1_released_before_backgrounded_po_triage_return_blocks_step3, so router did not self-spawn). Board-minted here as plain bookkeeping so it is not lost; full PO reasoning in docs/agent-memory/decisions/triage-20260808T2054Z-po.md. Will surface via normal ba-lane pickup.",
         "updated_at": "2026-08-08T21:07:13Z"
+      },
+      {
+        "id": "FIX-RUNIDLE-PREDICATE-D-ACTIVE-SPRINTS-PERMANENT-FLOOR",
+        "type": "FIX",
+        "title": "RC-IDLE-LOOPS shipped 5/5 but its AC-3 empirical criterion is UNMET: dev-team RUN-IDLE predicate (d) active_sprints==0 has a permanent non-zero floor, so RUN-IDLE has never fired",
+        "status": "BACKLOG",
+        "next_agent": "pm",
+        "priority": "high",
+        "size": "M",
+        "zone": "cross-service/",
+        "baseline_pass": true,
+        "created_at": "2026-08-08T22:19:15Z",
+        "created_by": "po/remint-rc-idle-loops-20260808T2219Z",
+        "dedup_key": "rc-idle-loops:ac3-active-sprints-predicate-permanent-floor",
+        "verification_gate": "consecutive_run_idle > 0 observed in docs/data/dev-team-idle-widen-state.json on a genuinely quiet tick",
+        "files": [
+          "scripts/agents-flow/dev-team-tick-preflight.sh",
+          "docs/agents/dev-team/flow/main.md",
+          "docs/agents/po/flow/sprint-signoff.md",
+          "docs/data/orch/orch-state.json"
+        ],
+        "related": [
+          "P1-IDLE-DEVTEAM-PREFLIGHT-SCRIPT",
+          "P1-IDLE-DEVTEAM-FLOW-BRANCH",
+          "SPIKE-SATURATED-COUNT-THRESHOLD-GATES-SWEEP",
+          "FIX-SPRINT-REGISTRY-DANGLING-IDS-BREAK-SIGNOFF-AND-JOURNAL-ARCHIVE"
+        ],
+        "status_note": "SPEC (self-contained - pm does NOT need to re-read the 206L brief). SOURCE: docs/architecture-briefs/2026-07-04-systemic-remake.md 1.1 RC-IDLE-LOOPS + its AC-3. ALL FIVE RC-IDLE-LOOPS tasks are DONE_VERIFIED (P1-IDLE-DEVTEAM-PREFLIGHT-SCRIPT, P1-IDLE-DEVTEAM-FLOW-BRANCH, P1-IDLE-AUDITOR-TIER23-SCRIPT, P1-IDLE-AUDITOR-CRON-WIRING, P1-IDLE-AUDITOR-NOTEBOOK-GATE - archive/2026-07.json). The code is real: dev-team-tick-preflight.sh _step5_idle_check() exists (L338-392), main.md L102 has the RUN-IDLE verdict branch, auditor-tier1-probe.sh has --tier=1|2|3. THE FIX SHIPPED AND THE OUTCOME DID NOT MOVE. MEASURED 2026-08-08T22:15Z: (1) docs/data/dev-team-idle-widen-state.json consecutive_run_idle = 0, so RUN-IDLE has fired zero consecutive times; (2) AC-3's own metric git log --grep 'chore(signals): drain|chore(memory/system-auditor)' per day is FLAT-TO-UP, not down - 07-19..07-25 ranged 18-49/day, 08-05..08-08 ranged 25-65/day (08-06 = 65, the series max); (3) total commits/day 188-497 in the same window. ROOT CAUSE (live-evaluated, all four _step5_idle_check predicates run by hand this tick): (a) drainable signals = 1, (b) signals.db fresh, (c) signal_queue NEW = 1, (d) task_board.active_sprints = 8. Predicate (d) is the structural blocker: it requires ZERO active sprints, but active_sprints[] is an accumulator with no working closeout producer - all 8 are status ACTIVE and the two carrying timestamps are stale 3 weeks (SPRINT-CCATO-TRUTHGATE-MCP-NATIVE updated_at '2026-07-17T04:53:14ZZ' (note the malformed double-Z), SYSREMAKE-P2-STRUCTURAL-REMAKE-ROUTE 2026-07-17T12:00:00Z). Also live: 2 backlog rows point at sprint 'SYSTEMIC-REMAKE-P1' which has NO active_sprints[] or closed_sprints[] object at all (the dangling-sprint-registry defect already filed as FIX-SPRINT-REGISTRY-DANGLING-IDS-BREAK-SIGNOFF-AND-JOURNAL-ARCHIVE, REVIEW, plan_only). So the RUN-IDLE gate is dead on arrival by construction, and the 89%-chore commit ratio the 07-04 review diagnosed is unchanged. THIS IS THE 'count-threshold gate whose input has a permanent floor above the threshold' class already SPIKEd as SPIKE-SATURATED-COUNT-THRESHOLD-GATES-SWEEP (READY) - that spike should be run against this instance first, do not redesign blind. DECOMPOSITION HINTS for pm (do not treat as final): (i) decide whether predicate (d) should read 'active_sprints with work actually dispatchable this tick' rather than raw array length - a stale ACTIVE sprint with zero READY/IN_PROGRESS child rows must not block idle; (ii) an active_sprints staleness/closeout producer is missing - PO sprint-signoff.md sets status DONE per main.md but nothing sweeps sprints that no agent has touched in N days; (iii) predicate (c) signal_queue NEW == 0 is a second candidate floor - re-measure after (d) is fixed before touching it; (iv) do NOT create a new active sprint to hold this task - doing so would itself increment the very counter this task is about. ACCEPTANCE (machine-checkable, inherits brief AC-3): (A1) on a tick with no drainable signals and no NEW signal_queue rows, dev-team-tick-preflight.sh emits verdict RUN-IDLE and consecutive_run_idle increments in docs/data/dev-team-idle-widen-state.json; (A2) a new dev-team-tick-preflight.test.sh case covers 'active_sprints non-empty but every member stale/childless -> still RUN-IDLE'; (A3) 7 days after landing, git log --since='7 days ago' --grep='chore(signals): drain' daily count is strictly below the 08-05..08-08 band of 25-65/day. WHY THIS ROW EXISTS: a router audit on 2026-08-08 searched the board for the literal string 'RC-IDLE-LOOPS' and found nothing, concluding Phase 1 had never been minted. It HAD been - under the id prefix P1-IDLE-*. The real defect was never 'unminted work', it was 'shipped work whose acceptance criterion was never re-measured'. Do not re-mint RC-IDLE-LOOPS; measure it.",
+        "updated_at": "2026-08-08T22:21:00Z"
       }
     ],
     "closed_sprints": [
@@ -12036,6 +12048,85 @@
         },
         "verified_at": "2026-08-08T19:01:14Z",
         "verified_by": "qa"
+      },
+      {
+        "id": "P1-DETECTOR-CLOSURE-TASK-ARCHIVE",
+        "title": "RC-DETECTOR §1.2: pm/flow/task-archive.md — on DONE_VERIFIED w/ origin_signal_id, flip signal_queue row READ->RESOLVED",
+        "status": "DONE_VERIFIED",
+        "type": "FIX",
+        "priority": "high",
+        "size": "S",
+        "zone": "docs/agents/pm/",
+        "sprint": "SYSTEMIC-REMAKE-P1",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#P1-DETECTOR-CLOSURE-TASK-ARCHIVE",
+        "verification": {
+          "raw_probe": {
+            "tool": "grep -n origin_signal_id docs/agents/pm/flow/task-archive.md",
+            "args": "live working-tree file, HEAD 13715ee87",
+            "live_value_observed": "4 hits. L118-123 is an EXECUTABLE step, not prose: '3. Signal closure back-reference (additive - runs BEFORE the eviction script moves done_verified[] off the hot file...)' followed by a live jq: SIGNAL_IDS=$(jq -r '[.task_board.done_verified[]? | select(.origin_signal_id != null) | .origin_signal_id] | unique | .[]'). L13 states the READ->RESOLVED same-commit invariant.",
+            "observed_at": "2026-08-08T22:19:15Z",
+            "evidence_commit": "13715ee87",
+            "verdict": "SHIPPED - board row was stranded at BACKLOG while the fix was already live in source"
+          }
+        },
+        "verified_at": "2026-08-08T22:20:55Z",
+        "verified_by": "po/remint-rc-idle-loops",
+        "updated_by": "po",
+        "closed_reason": "Already shipped in source; board row was stranded at BACKLOG. Closed on live source raw-probe (see .verification.raw_probe), not on self-report.",
+        "updated_at": "2026-08-08T22:21:00Z"
+      },
+      {
+        "id": "P1-DRIFT-QUARANTINE-FREEZE-FLAG",
+        "title": "RC-DRIFT §1.3: project-stats.json — quarantine zero-reader recurringBugEscalationFlag/escalationReason",
+        "status": "DONE_VERIFIED",
+        "type": "FIX",
+        "priority": "med",
+        "size": "XS",
+        "zone": "docs/data/",
+        "sprint": "SYSTEMIC-REMAKE-P1",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#P1-DRIFT-QUARANTINE-FREEZE-FLAG",
+        "verify_note": "prior_status=TODO",
+        "verification": {
+          "raw_probe": {
+            "tool": "jq -r 'keys|join(\",\")' docs/data/project-stats.json",
+            "args": "live working-tree file, HEAD 13715ee87",
+            "live_value_observed": "recurringBugEscalationFlag and escalationReason are BOTH ABSENT from the live key set (deleted outright - strictly stronger than the specced _maintained_by quarantine comment). lastSuccessfulCycle also absent. _maintained_by is present and reads 'generator (do not hand-edit toolCount or cronJobCount)'. Residual: currentSprint still present (tracked by RC-DRIFT sibling, not this row).",
+            "observed_at": "2026-08-08T22:19:15Z",
+            "evidence_commit": "13715ee87",
+            "verdict": "SATISFIED BY DELETION - intent of the quarantine (nothing new starts trusting a zero-reader field) is met; field cannot be read because it no longer exists"
+          }
+        },
+        "verified_at": "2026-08-08T22:20:55Z",
+        "verified_by": "po/remint-rc-idle-loops",
+        "updated_by": "po",
+        "closed_reason": "Already shipped in source; board row was stranded at BACKLOG. Closed on live source raw-probe (see .verification.raw_probe), not on self-report.",
+        "updated_at": "2026-08-08T22:21:00Z"
+      },
+      {
+        "id": "P1-DETECTOR-CLOSURE-TRIAGE-SIGNALS",
+        "title": "Wire origin_signal_id field in PO triage-signals flow",
+        "status": "DONE_VERIFIED",
+        "type": "feature",
+        "zone": "docs/agents/po/",
+        "priority": "P1",
+        "size": "S",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#P1-DETECTOR-CLOSURE-TRIAGE-SIGNALS",
+        "verify_note": "prior_status=TODO",
+        "verification": {
+          "raw_probe": {
+            "tool": "grep -n origin_signal_id docs/agents/po/flow/triage-signals.md",
+            "args": "live working-tree file, HEAD 13715ee87",
+            "live_value_observed": "3 hits. L27 is the mandated additive spec block: '`origin_signal_id` (additive - generalizes across signal-born task rows): any row above that mints a new .task_board entry directly from an incoming signal (repair_task_request, zone_missing_tier3, ci_red)...' - i.e. the RC-DETECTOR 1.2 wiring is present in the live flow doc, not merely planned.",
+            "observed_at": "2026-08-08T22:19:15Z",
+            "evidence_commit": "13715ee87",
+            "verdict": "SHIPPED - board row was stranded at BACKLOG while the fix was already live in source"
+          }
+        },
+        "verified_at": "2026-08-08T22:20:55Z",
+        "verified_by": "po/remint-rc-idle-loops",
+        "updated_by": "po",
+        "closed_reason": "Already shipped in source; board row was stranded at BACKLOG. Closed on live source raw-probe (see .verification.raw_probe), not on self-report.",
+        "updated_at": "2026-08-08T22:21:00Z"
       }
     ],
     "head": {
@@ -19296,8 +19387,8 @@
     "ssot": true
   },
   "last_tick": "20260622T2215Z",
-  "_updated_at": "2026-08-08T19:33:36Z",
-  "_updated_by": "po/triage-20260808T1926Z",
+  "_updated_at": "2026-08-08T22:20:55Z",
+  "_updated_by": "po/remint-rc-idle-loops",
   "dev_team_idle_chain": {
     "rotation": {
       "bounded1": {
@@ -19319,7 +19410,7 @@
         "last_served_tick": "2026-08-08T15:54:20Z"
       }
     },
-    "_updated_at": "2026-08-08T21:58:51Z",
+    "_updated_at": "2026-08-08T22:23:22Z",
     "_updated_by": "dev-team",
     "pending_triage_inbox": [
       {
@@ -21507,6 +21598,42 @@
         },
         "createdAt": "2026-08-08T21:22:00Z",
         "drained_at": "2026-08-08T21:53:30Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "e3a9f7c55f8c7f526e98de550829166c175b2feee8d6f7bdd88c858ce935b74a",
+        "source": "file",
+        "from": "commit-sweep-guard",
+        "to": "po",
+        "type": "bug-escalation",
+        "priority": "high",
+        "payload": "[sweep-guard] BARE commit about to absorb 1 staged file(s) not necessarily this actor's own: docs/agent-memory/notebooks/system-auditor.md. actor=165f4245-6173-4054-87fd-c55bb626265f mode=warn escalated=true prior_warns=16 threshold=3. Fix: git commit -m \"<msg>\" -- <own-files-only>.",
+        "createdAt": "2026-08-08T22:06:58Z",
+        "drained_at": "2026-08-08T22:22:06Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "0b172375fcb33fee5c38b1950d1c2e2f71b0c8c7c3ba89d56ff3e16c37949958",
+        "source": "file",
+        "from": "commit-sweep-guard",
+        "to": "po",
+        "type": "bug-escalation",
+        "priority": "high",
+        "payload": "[sweep-guard] BARE commit about to absorb 1 staged file(s) not necessarily this actor's own: docs/agent-memory/notebooks/system-auditor.md. actor=165f4245-6173-4054-87fd-c55bb626265f mode=warn escalated=true prior_warns=17 threshold=3. Fix: git commit -m \"<msg>\" -- <own-files-only>.",
+        "createdAt": "2026-08-08T22:22:25Z",
+        "drained_at": "2026-08-08T22:23:22Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "d4cd6afd732f556b1711c2e049331e915b17c05212ac2fef2011bcdfa047995a",
+        "source": "file",
+        "from": "commit-sweep-guard",
+        "to": "po",
+        "type": "bug-escalation",
+        "priority": "high",
+        "payload": "[notebook-immutability-guard] WARN: docs/agent-memory/notebooks/system-auditor.md — retained section '## c384 · 2026-08-08T22:04Z' has different content staged than at HEAD. Per .claude/skills/notebook-write/SKILL.md AC-2a, a retained '## ' section must be byte-identical across a cycle; the only authorized mutations are dropping a whole oldest section, the AC-2b sub-block intra-prune, or trimming the CURRENT cycle's own new section. If cap pressure forced a shrink, DROP the whole section (archive verbatim if it must be kept) and add a NEW marker section instead — see docs/agent-memory/notebooks/architect.md for the reference-correct pattern. mode=warn (default warn — never blocks; set GIT_NOTEBOOK_IMMUTABILITY_MODE=reject to hard-enforce once re-validated, see scripts/audits/verify-notebook-immutability-gate.sh).\n[notebook-immutability-guard] WARN: docs/agent-memory/notebooks/system-auditor.md — retained section '## c383 · 2026-08-08T21:30Z' has different content staged than at HEAD. Per .claude/skills/notebook-write/SKILL.md AC-2a, a retained '## ' section must be byte-identical across a cycle; the only authorized mutations are dropping a whole oldest section, the AC-2b sub-block intra-prune, or trimming the CURRENT cycle's own new section. If cap pressure forced a shrink, DROP the whole section (archive verbatim if it must be kept) and add a NEW marker section instead — see docs/agent-memory/notebooks/architect.md for the reference-correct pattern. mode=warn (default warn — never blocks; set GIT_NOTEBOOK_IMMUTABILITY_MODE=reject to hard-enforce once re-validated, see scripts/audits/verify-notebook-immutability-gate.sh).\n",
+        "createdAt": "2026-08-08T22:22:30Z",
+        "drained_at": "2026-08-08T22:23:22Z",
         "routed_to": "PO Step 0-SIG"
       }
     ]

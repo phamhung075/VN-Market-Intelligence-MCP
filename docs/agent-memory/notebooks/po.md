@@ -1,5 +1,30 @@
 # PO — Notebook
 
+## 2026-08-08T22:19Z · The work was never missing — its acceptance criterion was never re-measured
+
+### What actually happened
+- Router directed a re-mint of RC-IDLE-LOOPS on the premise it had never reached the board. **It had** — as `P1-IDLE-*`, 5/5 `DONE_VERIFIED` since July. Minted the *unmet AC-3* instead, closed 3 stranded rows on source raw-probe, unstranded 1.
+- Journal: `docs/agent-memory/decisions/triage-20260808T2219Z-po.md`. All 5 row writes re-read on disk before claiming.
+
+### Decisions worth keeping
+- **★ "ZERO MATCHES" MEANT ZERO MATCHES FOR THE ROUTER'S SEARCH KEY, NOT ZERO WORK.** The router searched board + cold archive for the literal brief-section labels (`RC-IDLE-LOOPS`, `RC-DETECTOR`, `RC-DRIFT`) and found nothing, correctly, because the board never used those as ids — the decomposition used `P1-IDLE-*` / `P1-DETECTOR-*` / `P1-DRIFT-*`. One `grep -rhoE "P1-(IDLE|DETECTOR|DRIFT)-[A-Z0-9-]+"` returned **10 ids, 484 references**. **Before accepting a "never minted" premise, search by implementation target (script/flow paths), not by the label the spec used** — decomposition renames things, that is its job.
+- **★ THE SYMPTOM WAS REAL EVEN THOUGH THE DIAGNOSIS WAS WRONG — DO NOT DISCARD BOTH.** Easy exit was "already shipped, nothing to do". But the 89%-chore ratio really is unchanged, so I re-ran RC-IDLE-LOOPS' *own* AC-3: drain/auditor commits/day 07-19..07-25 = 18-49, 08-05..08-08 = 25-65 (08-06 = 65, series max). Flat-to-up. `consecutive_run_idle = 0`. **The gate shipped, was verified, and has never once fired.**
+- **★ FOUR PREDICATES, ONE PERMANENT FLOOR — NAMED IT SO PM DOESN'T RE-DERIVE IT.** Hand-ran `_step5_idle_check()`: (a) drainable=1, (b) db fresh, (c) `signal_queue` NEW=1, (d) `active_sprints`=**8**. (d) demands **zero**, but `active_sprints[]` is an accumulator with no closeout producer — 2 of the 8 stamped `2026-07-17`, three weeks stale, one with a malformed `...ZZ` timestamp. Not "rarely reached": **structurally unreachable**. Same class as the open `SPIKE-SATURATED-COUNT-THRESHOLD-GATES-SWEEP`; wrote "run that spike against this instance first" onto the row.
+- **★ REFUSED TO GIVE THE ROW A SPRINT.** Registering `SYSTEMIC-REMAKE-P1` (2 rows already dangle onto it) would have incremented the exact counter the task exists to unblock. Left `sprint: null` and wrote the constraint onto the row as hint (iv). **A fix that worsens its own precondition while being filed is not a fix.**
+- **★ VERIFIED BEFORE PROMOTING AND IT SAVED THREE NO-OP DISPATCHES.** Brief §1.2/§1.3 told PO to promote 3 rows BACKLOG→READY. Live source: `origin_signal_id` is executable jq in `pm/flow/task-archive.md` L118-123 and a real spec block in `po/flow/triage-signals.md` L27; `recurringBugEscalationFlag`/`escalationReason` are **deleted** from `project-stats.json`, stronger than the specced quarantine. Closed all three `DONE_VERIFIED` on raw-probe. **A 5-week-old instruction is a hypothesis about the source, not a fact about it.**
+- **`FIX-SIGNALQUEUE-DUP-ID-GUARD` had `next_agent: null`** — unreachable by any lane. Verified still genuinely open (`orch-validate.mjs` checks only `payload_ref` existence, L417/L754-761, no id-dup guard), set `developer`. Left `supervised:true` alone — a prior PO's call, not mine to reverse.
+- **Lane coherence forced the shape:** `LANE_ALLOWED_STATUSES.backlog = {BACKLOG,BLOCKED}`, so closing meant *moving* `backlog[]`→`done_verified[]`, not editing status in place.
+
+### NEXT
+- pm decomposes `FIX-RUNIDLE-PREDICATE-D-ACTIVE-SPRINTS-PERMANENT-FLOOR`. If it comes back proposing a new sprint to hold it, reject — hint (iv) exists for that reason.
+- The 8 `active_sprints[]` members need a staleness sweep; that is a PO closeout gap, not only a pm one. If nothing closes them, this fix cannot pass its own AC.
+- Phase 1 is now genuinely 10/10 shipped + 1 measured-failure row. Phase 2 (`SYSREMAKE-P2-T3..T9`, all `READY`) is the next unblocked front — T1/T2 already `DONE_VERIFIED`.
+
+### Carry-over
+- **★ A DONE_VERIFIED TASK IS NOT A DELIVERED OUTCOME.** Every RC-IDLE-LOOPS row passed verification; the metric never moved. **Re-measure the brief's own acceptance criterion, not the task statuses that claim to satisfy it.**
+- Standing rules (held, applied again): after every `orch-apply.sh` re-read the specific row/field on disk before claiming it; AC-3 self-verify can false-green off a *peer's* sweeping commit, so assert the SHA is the one I just created.
+- Notebook written section-prepend+prune, never full-overwrite (`feedback_qa_notebook_fulloverwrite_drops_concurrent_peer_entries_20260806`). Pruned the 19:26Z section (in git); its live lesson is the peer-SHA one above.
+
 ## 2026-08-08T20:54Z · CI red 7h30m with perfect detection: the gap was dispatch, not detection
 
 ### What actually happened
@@ -23,25 +48,3 @@
 - Standing rule (held, applied again): after every `orch-apply.sh`, re-read the specific row/field on disk before claiming it.
 - Notebook written section-prepend+prune, never full-overwrite (`feedback_qa_notebook_fulloverwrite_drops_concurrent_peer_entries_20260806`, confirmed on this file 18:08Z). 19:26Z bytes preserved verbatim.
 
-## 2026-08-08T19:26Z · Five signals, one precondition: two live sessions on the hot board
-
-### What actually happened
-- dev-team Step 1 triage. 5 drained signals → **3 mints, 3 folds, 1 live fixture, 0 new rows for the loudest signal**. `.head` untouched.
-- Journal: `docs/agent-memory/decisions/triage-20260808T1926Z-po.md`. All 7 row writes re-read on disk before claiming.
-
-### Decisions worth keeping
-- **★ THREE OF THE FIVE SIGNALS ARE ONE PRECONDITION, AND SAYING SO IS THE WHOLE VALUE OF THIS TICK.** Sweep-guard strike 14, the SAME-FILE DIVERGENCE, and the QA-drain double-spawn all land on `orch-state.json` within 15 minutes and all require ≥2 live sessions writing the hot board. Split by mechanism, not by symptom: dispatch-side → new `FIX-QADRAIN-NO-TASKID-LEVEL-CLAIM-DUPLICATE-QA-SPAWN`; commit-side → folded onto the existing sweep-guard row with the causal link written **onto** the row. Three separate rows would have looked like three unrelated warnings to whoever picks one up.
-- **★ THE SAME-FILE DIVERGENCE CHANGED CLASS AND I ALMOST DEDUP-BUMPED IT.** Its known-FP root-cause row is **DONE_VERIFIED/cold-archived** — not in any non-terminal lane — so the FP branch structurally does not apply and the §2.7 genuine branch does. Verified the blobs: `d7f3fd97` vs `e32a147c` differ by **exactly 2 rows moved `qa[]`→`done_verified[]`**, everything else byte-identical. Genuine peer content. **Still refused to mint:** additive, nothing lost, nothing clobbered — an *attribution* defect, not data loss, on a detector that is a permanent documented NON-GOAL. Minting would turn a correctly-behaving informational detector into recurring board noise. **A signal changing from false-positive to genuine does not automatically make it actionable.**
-- **★ THE CI ROW'S REAL FINDING WASN'T THE CI ROW.** Mandatory pre-dedup log read gave 3 failing files: 2 folded onto open rows, 1 new. That one is `1862c-transport-session-eviction.test.ts` — **the eviction test of the SSE reaper fix I ratified at 17:37Z, which is sitting in `qa[]` at priority=critical awaiting my 21:00Z sign-off.** Green soak + red unit test is not a sign-off-able state; gated the sign-off on it. Pre-file-isolation means it is intrinsic — the mock-contamination story this exact file has history for is structurally unavailable, and I wrote that on the row so nobody burns a cycle on it.
-- **★ REFUSED THE SHORTCUT THAT WOULD HAVE WORKED TODAY.** For the WF-2 time-hold gap I could have un-stamped `po_goahead_*` to re-arm the supervised hold on the SSE row. It destroys a durable ratification record, and self-defeats — my own MANDATORY producer re-stamps it next tick. Deeper: `supervised` answers **who** approves; this gap is **when** it's worth re-running. Bending an existing gate to a shape it wasn't designed for is how the next false-green gets built. Minted the generic fix + stamped `next_recheck_not_before=21:00Z` on the SSE row as a **live fixture**, labelled plainly as not-yet-read-by-any-consumer.
-- **Verified every premise at source before minting, and it mattered twice:** the QA-drain script really has zero `task_claim` (only post-decision board CAS); WF-2's `should_hold` really computes only `$supervised`/`$goahead`. Neither mint rests on the reporter's prose.
-- **59-entry inbox: applied my own 18:08Z rule instead of minting.** `FIX-DEVTEAM-IDLE-CHAIN-MAIN-COMPLETION` is P0, `depends: []`, **dispatchable — just losing a sort** in a 359-row backlog. No mint; folded into the BATCH, the only action that changes anything.
-
-### NEXT
-- Do **not** sign off the SSE row at 21:00Z on soak evidence alone — the new bun-test row is now a gate on it.
-- If the 1862c failure turns out to be an eviction-path bug rather than a stale assertion, it contradicts my 17:37Z ratification and must be surfaced, not patched to green.
-
-### Carry-over
-- Standing rule (held, applied again): after every `orch-apply.sh`, re-read the specific row/field on disk — all 3 mints + 3 folds + 1 fixture verified before claiming.
-- Pruned the 17:37Z section (in git). Its one still-live lesson: **AC-3 self-verification can return a FALSE GREEN** by matching a *peer's* commit that swept my board changes — assert the commit is **mine** (compare the SHA I just created). Tracked as `FIX-PO-AC3-SELFVERIFY-FALSE-FAILLOUD-WHEN-PEER-SWEEPS-ORCHSTATE` (backlog).
-- Notebook written section-append+prune, never full-overwrite (`feedback_qa_notebook_fulloverwrite_drops_concurrent_peer_entries_20260806`, confirmed on this file 18:08Z).
