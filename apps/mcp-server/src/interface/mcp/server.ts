@@ -482,6 +482,25 @@ export async function createBunServer(
       return;
     }
 
+    // ── DELETE /sse|/messages — explicit client-initiated session teardown ──
+    // FIX-MCP-SSE-SESSION-MANAGER-PERCONN-LEAK-NO-REAPER: defense-in-depth, not
+    // the primary fix (see transport.ts header) — the idle/max-age reaper is
+    // what actually bounds the leak. CORS already declared DELETE as an
+    // allowed method (Access-Control-Allow-Methods above) with no route
+    // implementing it until now.
+    if (method === "DELETE" && (pathname === "/sse" || pathname === "/messages")) {
+      const sessionId = url.searchParams.get("sessionId");
+      if (!sessionId) {
+        res.writeHead(400, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ error: "Missing sessionId query param" }));
+        return;
+      }
+      const closed = await sessions.closeSession(sessionId);
+      res.writeHead(closed ? 200 : 404, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ closed, sessionId }));
+      return;
+    }
+
     // ── GET /health ───────────────────────────────────────────────────────
     if (method === "GET" && pathname === "/health") {
       res.writeHead(200, { "Content-Type": "application/json" });
@@ -1361,6 +1380,9 @@ export async function createBunServer(
       // fire after the server shuts down (prevents timer-leak in tests and
       // prevents DB access after the server lifetime ends).
       clearInterval(reaperIntervalId);
+      // FIX-MCP-SSE-SESSION-MANAGER-PERCONN-LEAK-NO-REAPER: also stop the SSE
+      // session idle/max-age reaper so no stray sweep fires after shutdown.
+      sessions.stopReaper();
       return new Promise<void>((resolve, reject) => {
         httpServer.close((err) => {
           if (err) {

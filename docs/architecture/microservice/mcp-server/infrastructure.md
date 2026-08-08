@@ -662,6 +662,59 @@ parameter. `telegramCommands.ts` and everything it imports now has zero
 - **Module:** `apps/mcp-server/src/infrastructure/cache/sessionToolCache.ts`
 - **Status:** Populated only when SSE sessionId is available; never fires in gateway mode. Retained for non-gateway deployments.
 
+## SSE Session Manager (`interface/mcp/transport.ts` — `SseSessionManager`)
+
+Manages every `GET /sse` connection: one `SSEServerTransport` + one dedicated
+`McpServer` per session (MCP SDK limitation — one transport per server),
+routed by `sessionId` for `POST /messages` dispatch.
+
+**REAPER FIX (FIX-MCP-SSE-SESSION-MANAGER-PERCONN-LEAK-NO-REAPER, 2026-08-08):**
+Before this fix, each session's `McpServer` was a bare local, never stored
+and never `.close()`d by either pre-existing eviction path (`res.on("close")`,
+heartbeat-write-failure) — `Node`'s `res.write()` on a broken pipe does not
+throw synchronously, so the heartbeat branch rarely fired for the dominant
+traffic shape (the `gateway` MCP server dials a new `/sse` connection
+per-call and drops it — no clean FIN). Live measurement showed ~22% of
+sessions never reaped, leaking the full 183-tool registration graph per
+session and killing the container in <7h (see
+`docs/architecture-briefs/2026-08-07-fix-mcp-sse-session-manager-reaper.md`
+for the full source-verified mechanism + measurement).
+
+**Design — one `SessionRecord` map, one `evictSession()`:**
+- One `Map<string, SessionRecord>` replaces the prior two parallel `Map`s
+  (`sessions`, `heartbeatIntervals`). `SessionRecord` = `{transport,
+  mcpServer, heartbeatInterval, createdAt, lastActivityAt}`.
+- `private evictSession(sessionId, reason)` is the single eviction path —
+  every trigger (`res.on("close")`, heartbeat-write-failure, idle-reap,
+  max-age-reap, explicit `DELETE`) calls it. Idempotent (a second trigger for
+  an already-evicted id is a no-op). Calls `mcpServer.close()`, which
+  cascades to `transport.close()` (confirmed via installed SDK source,
+  `shared/protocol.js:500-502`) — no separate `transport.close()` call
+  needed.
+- **Idle/max-age reaper:** a background `setInterval` (`.unref()`d, default
+  60s cadence) sweeps all sessions; `lastActivityAt` is bumped on every
+  `handleMessage()` call (idle-timeout basis), `createdAt` is fixed at
+  connection time (max-age basis, independent of activity). Defaults:
+  `IDLE_TIMEOUT=15min`, `MAX_AGE=4h` — informed-not-derived, same
+  constructor-override idiom as the pre-existing `_heartbeatIntervalMs`
+  (`_idleTimeoutMs`/`_maxAgeMs`/`_reaperIntervalMs` params). Recommended
+  follow-up: re-run the `/health sessionCount` vs container `MemPerc`
+  correlation post-deploy to tune empirically.
+- **`DELETE /sse|/messages?sessionId=<id>`** — explicit client-initiated
+  teardown (`server.ts`), defense-in-depth only. The dominant caller
+  (gateway MCP server, out-of-repo) cannot be made to send this; the
+  idle/max-age reaper is what actually bounds the leak regardless of caller
+  behavior. Returns `{closed: true/false, sessionId}` — 200 if a session
+  existed, 404 if not; 400 if `sessionId` query param is missing.
+- `stopReaper()` — clears the reaper timer; called from `server.ts`'s
+  `BunServerInstance.close()` alongside the pre-existing periodic-lock-reaper
+  `clearInterval`, and from test `afterAll` hooks.
+- `SSEServerTransport` itself is `@deprecated` upstream (SDK 1.29.0) in favor
+  of `StreamableHTTPServerTransport` (already used by `/mcp`) — not migrated
+  as part of this fix (materially larger change, gateway-side coordination
+  outside this repo's control); flagged as a future BACKLOG candidate if
+  `/sse` is ever retired outright.
+
 ## Environment Variables
 ```
 PORT, DB_PATH, VINAHOST_IP, VPS_PUSH_API_KEY,
