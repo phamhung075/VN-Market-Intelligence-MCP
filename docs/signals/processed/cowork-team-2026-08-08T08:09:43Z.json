@@ -3,7 +3,7 @@
   "to": "dev-team",
   "type": "cowork-fire",
   "payload": {
-    "fire_time": "2026-08-01T08:08:09Z",
+    "fire_time": "2026-08-08T08:09:43Z",
     "matched_slots": [
       "news-scout-offhours",
       "market-watcher-offhours",
@@ -22,10 +22,10 @@
       "docs/agents/alert-commander/flow/main.md"
     ],
     "silent": false,
-    "drift_min": 5,
+    "drift_min": 6,
     "errors": [],
     "pressure_mode": "adaptive",
-    "calendar_status": "closed",
+    "calendar_status": "unknown",
     "suppressed_calendar": [],
     "suppressed_cadence": [],
     "downgraded": [],
@@ -33,14 +33,14 @@
     "due_reasons": {
       "news-scout-offhours": "cadence",
       "market-watcher-offhours": "cadence",
-      "alert-commander-critical": "cadence"
+      "alert-commander-critical": "cron"
     },
     "cadence_minutes": {
       "news-scout-offhours": 240,
       "market-watcher-offhours": 240,
-      "alert-commander-critical": 240
+      "alert-commander-critical": null
     },
-    "last_fired_timestamp": "2026-08-01T08:07:03Z",
+    "last_fired_timestamp": "2026-08-08T08:09:43Z",
     "last_fired_slots": [
       "news-scout-offhours",
       "market-watcher-offhours",
@@ -53,14 +53,14 @@
     "leader_lock": "acquired",
     "dev_head": "unknown",
     "devq": 5,
-    "signal_backlog": 17,
-    "note": "2-batch degraded fan-out (MAX_PARALLEL=2, headroom 1323MB<1500MB floor); batch1=[news-scout,market-watcher] batch2=[alert-commander]; inter-batch wait broke immediately (load 4.11/12cores well under threshold); Step 5.3 off-flow check pending async notifications for all 3"
+    "signal_backlog": 24,
+    "note": "3 background spawns (news-scout-offhours, market-watcher-offhours, alert-commander-critical) — all guaranteed:false, batch 1/1, no headroom degradation (headroom_mb=3278, load1m=4, cores=12)"
   },
   "priority": "low",
-  "createdAt": "2026-08-01T08:08:09Z",
+  "createdAt": "2026-08-08T08:09:43Z",
   "_processed": {
-    "fingerprint": "6fe85f3ee60eb51d6810125c1b05e10d08a3495bb019e2af4c991dce6867c7ff",
-    "processedAt": "2026-08-01T08:16:12Z",
+    "fingerprint": "540fd9d7ea09953b482a9b711495d629bba6c21781110a7b3acd0c7ae52219f4",
+    "processedAt": "2026-08-08T08:21:38Z",
     "processedBy": "dev-team",
     "result": "routed-to-po"
   }
