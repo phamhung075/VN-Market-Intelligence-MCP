@@ -55,59 +55,45 @@
   Escalation 2 (semble-search guide-taxonomy) severity LOW; the 3 CRITICAL tool-boundary findings
   are carried-forward (already PO-known from the prior two `team-tool-recheck` runs, not new).
 
-## Edit (BOUNDED-1 auto-pickup, router-corrected next_agent) 2026-08-08T13:55Z FIX-DEVTEAM-IDLE-CHAIN-P1A-MAIN-ROTATION — IN_PROGRESS→REVIEW
-- Router self-healed `next_agent: developer → agent-father` before dispatch per the row's own
-  routing-contradiction note (TE-T03/TE-T06 artifact-class ruling — 100% flow-doc prose,
-  `zone: docs/agents/dev-team/flow/`). Read `docs/architecture-briefs/2026-07-25-devteam-idle-
-  chain-rotation-durable-inbox.md` (design source, PO-ratified) + the sibling depends_on row
-  `TASK-DEVTEAM-IDLE-CHAIN-1-SCHEMA-UTILITIES` (DONE_VERIFIED — shipped `rotation_selected($doc)`
-  + `devteam-idle-chain-stamp.jq` + `dev_team_idle_chain` schema) + the blocked completion row
-  `FIX-DEVTEAM-IDLE-CHAIN-MAIN-COMPLETION`'s own title/note to establish the Part-1/Part-2
-  boundary BEFORE writing anything — Part 1 (this row) = brief §2 (selection + stamp + session
-  gate); Part 2 (completion row, depends on this + P2A-DURABLE-DRAIN) = brief §3 (durable
-  `pending_triage_inbox[]`, Step 1's read/clear).
-- **Read the CURRENT 1054-line main.md in full before designing** (not from memory/brief-only) —
-  found the brief (2026-07-25, 5 candidates: bounded1/sls/rlc/qa_drain/step1_triage) predates
-  Design-Router Sweep, added to the live fixed chain 2026-07-30. Router's own task text named the
-  CURRENT 6-stage chain (…→DRS→…). Cross-zone constraint: `scripts/lib/devteam-eligibility.jq`
-  (`rotation_selected`) + `scripts/devteam-idle-chain-stamp.jq` both hardcode the stale 5-id set
-  and sit in `scripts/`, outside this agent's `commit_zone`. Resolved by INLINING a 6-candidate
-  version of both (selection jq + stamp jq) directly in main.md, explicitly flagged in 2 places
-  (new section + Reusable Scripts bullet) as a documented, fast-follow-flagged divergence — did
-  NOT silently drop DRS from fairness, did NOT silently edit an out-of-zone file.
-  Simulated fairness locally (`jq`, scratch data only, never live orch-state.json): 6-tick
-  rotation selects each of bounded1/sls/rlc/drs/qa_drain/step1_triage exactly once, tick 7 wraps.
-- **Found + fixed a self-introduced ordering bug before committing:** first draft placed the
-  stamp-write's PROSE as "immediately after whichever section ran" while the code itself sat
-  physically BEFORE all 6 lane sections (at the rotation-selection entry point) — would have
-  executed before, not after, contradicting its own prose. Since the stamp write is unconditional
-  and targets an independent key (`.dev_team_idle_chain.*`, never `.task_board.*`/`.head`), fixed
-  by keeping the code where it was (before dispatch — simpler, avoids duplicating the write across
-  5 `JUMP TO end` exit points) and correcting the PROSE to document + justify "before, not after"
-  explicitly, rather than silently leaving the mismatch or moving the code somewhere riskier.
-- Step 1 PO Triage: added a gate (`$SELECTED != "step1_triage"` → skip) at its EXISTING physical
-  location — did NOT relocate it to the rotation-selection point (would have skipped Review-Lane
-  SECONDARY-Drain/QA-Drain-Head-Decoupled on any tick step1_triage wins and dispatches, both
-  UNCONDITIONAL-every-tick sections added after the brief). Busy-tick Step 0b bypass paths (stale-
-  crash reset, S2 peer-collision) never set `$SELECTED` — Step 1 gate treats unset identically to
-  `step1_triage` (unaffected by rotation), preserving today's reachability there exactly.
-- WF-1/WF-1b/WF-1c/WF-2 (safety-critical, task's explicit "do not weaken" list) — zero edits;
-  rotation-selection inserted strictly AFTER Step 0b's final idle fall-through bullet.
-- `TASK-DEVTEAM-IDLE-CHAIN-2-MAIN-FLOW` (duplicate-candidate sibling, same file/deliverable) —
-  confirmed still untouched `BACKLOG` post-edit; did not implement it, per PO's
-  2026-08-06T22:07Z priority ruling already cited on this row.
-- Closeout: `jq | scripts/orch-apply.sh` (Stage0+1 PASS, conservation OK) — lane-move
-  `in_progress[]→review[]`, `status:REVIEW`, `next_agent:qa`, `branch:null` (direct-to-main,
-  verify-committed mode required, same HARD PREREQUISITE as every other review[] row in this
-  lane), `.head` reset idle (was this row's `active_task_id`) — SAME write, per CANONICAL:SSOT-
-  STATUSFLIP-LANEMOVE. Left `docs/data/orch/orch-state.json` UNCOMMITTED (`FU-AGENT-FATHER-ORCH-
-  SCOPE`, precedent this same notebook). No `mcp__gateway__call_tool` in this session's actual
-  tool surface (Read/Edit/Write/Bash only, verified by inspection not assumption) — no
-  `task_claim`/`task_release`/`send_telegram` attempted; router owns committing `orch-state.json`
-  and any Telegram narration. Commit `9897b599f` (pathspec-scoped, RULE 1-3 incl 2.5, single file)
-  pushed clean first attempt.
-- **Flagged, not self-actioned (scope discipline):** fast-follow to extend `rotation_selected()`
-  + `devteam-idle-chain-stamp.jq`'s `$known_ids` to the current 6-id set (drop main.md's inline
-  duplicate) is a `scripts/` change — developer/dev-mcp-server zone, not minted as its own board
-  row here; flagged in-file (2 places) for whoever picks up `FIX-DEVTEAM-IDLE-CHAIN-MAIN-
-  COMPLETION` or a future audit to notice and file.
+## Keep (maintenance) 12:57 — router-spawned, no explicit intent → defaulted to keep.md
+- Trigger: manual. Pre-Check gate: `git diff --name-only HEAD~3..HEAD` touched zero
+  `.claude/agents/*.md` / `docs/agents/*/flow/*.md` (last 3 commits were all orch-state/PO-triage
+  files) → Steps 1-2 (scan-orphans) SKIPPED per spec, went straight to Steps 3-5.
+- Agents scanned: 42 (`.claude/agents/*.md`, unchanged count from last cycle).
+- **Prior Escalation 1 CONFIRMED RESOLVED:** re-ran Check 2 fleet-wide (42/42, one/two-hop
+  delegation resolved through each dispatcher's actual sub-flow file, not just the thin
+  `flow/main.md`). `docs/agents/developer/flow/microservice-main.md` now carries the Error
+  Boundary block (verified live, line 16: points to `fail-loud-protocol.md` § "Error Boundary —
+  Blocked Flow = EXIT") — landed by a prior session's commit `6ddb1a812` (2026-08-07,
+  "fix(agent-father): author dev-pipeline Error Boundary SSOT, fix false-green check"), which also
+  generalized `sweep-fixes.md` Check 2 into the one-hop delegation-pointer methodology I used this
+  cycle. All 8 dev-* zone agents + the other 8 thin single/multi-window dispatchers
+  (agent-father, alert-commander, bctc-analyst, digest-predict, market-watcher, news-scout,
+  qa-responder, unified-agent) resolve cleanly through their sub-flow chain.
+- Checks 1/3/5 (init.md-targeted, per the prior cycle's fix): 41/42 PASS. Only `semble-search`
+  fails 1/3 (no `flow.default`, Check 4 N/A too) — re-confirmed unchanged: deliberate minimal
+  tool-wrapper doc (1-line description + usage block), no `agent:` YAML at all. Same as
+  Escalation 2 last cycle — carried-forward, not new. Check 5 (version staleness, >90d): 0/42,
+  none stale.
+- Zero NEW auto-fixes needed — nothing this cycle diverged from the prior cycle's already-fixed
+  baseline.
+- Step 5 stale notebooks (>30d, informational only, +1d each from last cycle as expected):
+  idea-forge (97d), market-analyst (97d), qa-responder (72d), semble-search (97d). Side-observation
+  (still NOT scored — Steps 1-2 gated off again this cycle): 46 notebook files vs 42 registered
+  agents persists (`cowork-refactory-expert-2026-07-11-fr1-atomic`, `dev-news-fetch`, `dev-team`,
+  `main`, `pm-alpha-s2-rag-fts-rebuild-cron` — one-off/legacy files, not obviously phantom agents;
+  `dev-news-fetch` matches the known `news-fetch=developer` precedent, not a real gap). Deferred
+  again to the next cycle where the Pre-Check gate actually opens.
+- Step 5b (`team-tool-recheck.md`) re-run unconditionally: wrote
+  `docs/agent-memory/health/team-tool-recheck-2026-08-08-1256.md`. Positive control held —
+  alert-commander/market-watcher/news-scout CRITICAL (Bash + unqualified "no other writes" claim,
+  origin `610110e16` 2026-07-31) unchanged, now 8 days unresolved. Mechanical-enforcement status
+  unchanged: PROSE-ONLY (0 `write_boundary` keys, no `Write|Edit` `PreToolUse` matcher).
+- No `mcp__gateway__call_tool` binding this session (recurring structural gap, same class logged
+  S23/S28/S30 + prior cycles) — used keep.md's gateway-less direct-pathspec-commit fallback.
+- PO handoff (Step 7): **zero NEW escalations this cycle** — Escalation 1 confirmed resolved (see
+  above, not carried forward anymore); the only remaining item (semble-search guide-taxonomy, LOW)
+  and the 3 CRITICAL tool-boundary findings are unchanged carried-forward items already PO-known
+  from prior cycles. Per `feedback_router_skip_po_respawn_identical_inputs` — NOT re-surfacing as
+  a fresh PO spawn trigger; router already has these tracked. No `Agent` grant this session either
+  way (same structural gap as prior cycles).
