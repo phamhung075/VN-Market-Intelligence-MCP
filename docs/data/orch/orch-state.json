@@ -94,10 +94,9 @@
   ],
   "head": {
     "status": "idle",
-    "updated_at": "2026-08-08T02:16:33Z",
-    "updated_by": "developer (closeout)",
-    "active_task_id": null,
-    "next_agent": null
+    "updated_by": "architect (closeout)",
+    "updated_at": "2026-08-08T02:33:37Z",
+    "note": "FIX-PUSH-DELIVERY-ERROR-RATE-ALERT split into 2 children (FIX-PUSH-DELIVERY-METRICS-MCP-SERVER, FIX-PUSH-DELIVERY-ALERT-ENGINE-POLLER), parent moved to review[] with next_agent=po for split confirmation."
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -12884,29 +12883,6 @@
         "updated_at": "2026-08-07T05:44:11Z"
       },
       {
-        "id": "TASK-COWORK-SIGNAL-CHEF-INTRADAY",
-        "type": "TASK",
-        "size": "S",
-        "priority": "P1",
-        "status": "BACKLOG",
-        "zone": "cross-service/unified-agent",
-        "owner": "unassigned",
-        "next_agent": "developer",
-        "plan_only": true,
-        "sprint": "COWORK-RELIABILITY",
-        "created_at": "2026-08-07T06:00:00Z",
-        "created_by": "pm (decomposition of FIX-COWORK-SIGNAL-FILENAME-CYCLEID-KEYING)",
-        "parent_task_id": "FIX-COWORK-SIGNAL-FILENAME-CYCLEID-KEYING",
-        "title": "chef/unified-agent Intraday Filename Extension (FR-3)",
-        "ba_handoff": "docs/handoffs/TASK-COWORK-SIGNAL-CHEF-INTRADAY.md",
-        "description": "Decomposed subtask from FIX-COWORK-SIGNAL-FILENAME-CYCLEID-KEYING Phase 1 delivery",
-        "supervised": true,
-        "supervised_at": "2026-08-07T06:00:00Z",
-        "supervised_by": "pm (plan_only decomposition)",
-        "supervised_note": "Child task of plan_only parent; no code ships without parent re-adjudication by PO",
-        "updated_at": "2026-08-07T05:58:40Z"
-      },
-      {
         "id": "TASK-COWORK-SIGNAL-NAMING-CONTRACT",
         "type": "TASK",
         "size": "XS",
@@ -13078,6 +13054,76 @@
         "created_at": "2026-08-08T00:01:15Z",
         "updated_at": "2026-08-08T00:07:50Z",
         "occurrence_count": 4
+      },
+      {
+        "id": "FIX-PUSH-DELIVERY-METRICS-MCP-SERVER",
+        "type": "FIX",
+        "status": "BACKLOG",
+        "priority": "P1",
+        "size": "S",
+        "zone": "apps/mcp-server/",
+        "owner": "dev-mcp-server",
+        "next_agent": "dev-mcp-server",
+        "supervised": null,
+        "plan_only": null,
+        "title": "Expose push-delivery health metric (staleness + 5xx-ratio) for alert-engine to poll — half 1 of FIX-PUSH-DELIVERY-ERROR-RATE-ALERT split",
+        "split_from": "FIX-PUSH-DELIVERY-ERROR-RATE-ALERT",
+        "blocks": [
+          "FIX-PUSH-DELIVERY-ALERT-ENGINE-POLLER"
+        ],
+        "created_at": "2026-08-08T02:30:50Z",
+        "created_by": "architect (SLS split of FIX-PUSH-DELIVERY-ERROR-RATE-ALERT)",
+        "updated_at": "2026-08-08T02:33:37Z",
+        "updated_by": "architect (SLS split)",
+        "source": "docs/incidents/2026-07-04-cloudflare-tunnel-push-delivery-outage-rca.md § 2 Hardening/Detection Recommendation",
+        "desc": "BROWNFIELD (verified 2026-08-08): mcp-server has NO `/metrics` route today (grepped every `pathname ===` case in apps/mcp-server/src/interface/mcp/server.ts — 90+ routes, zero `/metrics`; zero `prom-client`/Counter/Histogram usage anywhere in the service). The RCA's literal instrumentation spec ('add push_delivery_errors/push_delivery_total counters inside each /api/push-* handler', apps/mcp-server/src/interface/metrics.ts) is a NEW-FROM-SCRATCH path AND has a structural blind spot: the actual 2026-07-04 outage was Cloudflare-tunnel-layer (CF 1033/530, 'origin unreachable') — those requests NEVER reach the mcp-server handler process at all, so an in-handler 5xx counter can never see them (it would only catch mcp-server-internal validation/parse errors, which already exist: pushNewsHandler.ts etc. call safeLogVpsPush(status:'error') into vps_push_log on JSON-parse/validation failures — that plane is orthogonal to a tunnel outage). REUSE FOUND (extend-not-duplicate): apps/mcp-server/src/infrastructure/db/vpsPushLogStore.ts already logs every push (ok+error) into vps_push_log and getVpsProxyHealth() already computes per-service lastPushAt/errors24h/pushes24h; apps/mcp-server/src/interface/mcp/routes/vpsProxyHealthHandler.ts already exposes this as GET /api/vps-proxy-health (unauthenticated, JSON, no dup logic) with calendar-aware computeStale() (market-hours/news-quiet-hours/SBV-business-day grace windows) — tested at apps/mcp-server/src/__tests__/1113-vps-proxy-health.test.ts and VPT-1-vps-proxy-health-endpoint.test.ts. GAP: that endpoint's tracked service set is hardcoded to ['prices','news','sbv','bctc'] (vpsPushLogStore.ts services array + vpsProxyHealthHandler.ts EXPECTED_INTERVALS) — 'foreign-flow' is a real push route (POST /api/push-foreign-flow, pushForeignFlowHandler.ts, VpsService type already includes 'foreign-flow') but is silently EXCLUDED from getVpsProxyHealth()'s loop and from the health endpoint's services array, even though the RCA's own scope list explicitly names /api/push-foreign-flow as in-scope.",
+        "deliverable": "Extend the EXISTING /api/vps-proxy-health endpoint (do not invent a parallel /metrics Prometheus endpoint — no prom-client dependency exists in this service and none is needed; a second parallel health surface would duplicate vps_push_log query logic). Two changes: (1) add 'foreign-flow' to the tracked VpsService loop in vpsPushLogStore.ts getVpsProxyHealth() + the EXPECTED_INTERVALS/MARKET_HOURS_ONLY_SERVICES sets in vpsProxyHealthHandler.ts (it already appears in MARKET_HOURS_ONLY_SERVICES conceptually — verify/wire); (2) add a rolling-5-minute error-ratio field per service — query vps_push_log WHERE pushed_at >= now-5min, ratio = error rows / total rows (0 total = null, not 0, to distinguish 'no traffic' from 'no errors') — alongside the EXISTING staleness (`stale`, `last_push` age) fields, which are the primary/robust signal for a CF-tunnel-class outage (staleness is agnostic to WHERE in the path a request died, including never-arrived). Do not remove or weaken the existing 24h stats.",
+        "ac": "1. GET /api/vps-proxy-health response includes a 'foreign-flow' entry in `services[]` with the same shape as the other 4. 2. Each services[] entry gains `error_ratio_5m: number|null` (null when zero pushes in the trailing 5 min window, never a divide-by-zero 0). 3. Existing `stale`/`last_push`/`errors_24h` fields unchanged (no regression — extend the response shape, do not rename/remove fields; existing tests 1113-vps-proxy-health.test.ts + VPT-1-vps-proxy-health-endpoint.test.ts must still pass, plus new tests for foreign-flow inclusion + error_ratio_5m). 4. No new HTTP route added — same GET /api/vps-proxy-health path, unauthenticated (matches existing contract, read-only, no sensitive data). 5. jsdoc/comment at top of vpsProxyHealthHandler.ts updated to document the new response fields (mirrors existing response-shape comment block).",
+        "files": [
+          "apps/mcp-server/src/infrastructure/db/vpsPushLogStore.ts",
+          "apps/mcp-server/src/interface/mcp/routes/vpsProxyHealthHandler.ts",
+          "apps/mcp-server/src/__tests__/1113-vps-proxy-health.test.ts",
+          "apps/mcp-server/src/__tests__/VPT-1-vps-proxy-health-endpoint.test.ts"
+        ],
+        "not_in_scope": "No alert-engine call, no Telegram send, no scheduler/cron — pure metrics-exposure. Consumer side is FIX-PUSH-DELIVERY-ALERT-ENGINE-POLLER (depends_on this task)."
+      },
+      {
+        "id": "FIX-PUSH-DELIVERY-ALERT-ENGINE-POLLER",
+        "type": "FIX",
+        "status": "BACKLOG",
+        "priority": "P1",
+        "size": "M",
+        "zone": "apps/alert-engine/",
+        "owner": "dev-alert-engine",
+        "next_agent": "dev-alert-engine",
+        "supervised": null,
+        "plan_only": null,
+        "title": "alert-engine: poll mcp-server push-delivery metric, sustained-breach detect, fire WORK-channel Telegram — half 2 of FIX-PUSH-DELIVERY-ERROR-RATE-ALERT split",
+        "split_from": "FIX-PUSH-DELIVERY-ERROR-RATE-ALERT",
+        "depends_on": [
+          "FIX-PUSH-DELIVERY-METRICS-MCP-SERVER"
+        ],
+        "created_at": "2026-08-08T02:30:50Z",
+        "created_by": "architect (SLS split of FIX-PUSH-DELIVERY-ERROR-RATE-ALERT)",
+        "updated_at": "2026-08-08T02:33:37Z",
+        "updated_by": "architect (SLS split)",
+        "source": "docs/incidents/2026-07-04-cloudflare-tunnel-push-delivery-outage-rca.md § 2 Hardening/Detection Recommendation",
+        "desc": "BROWNFIELD (verified 2026-08-08): apps/alert-engine is a PURELY REACTIVE HTTP service today — cmd/server/main.go registers exactly 2 routes (GET /health, POST /evaluate, pkg/interface/http/router.go) and starts an http.Server; there is no time.Ticker/scheduler/cron/goroutine anywhere in apps/alert-engine that proactively polls anything (grepped Ticker/cron/Scheduler across pkg+cmd — zero hits). 'alert-engine consuming mcp-server /metrics' (this row's own title) is therefore a NEW capability, not a wiring change. Config already half-exists but is DEAD: pkg/infrastructure/config.go declares `ServiceConfig.DBPath` ('market.db, readonly reads') defaulting to './data/market.db' — same shared host path mcp-server writes to (docker-compose.yml: both services bind-mount ./data/live to /app/data) — but cmd/server/main.go NEVER opens it; only cfg.OwnDBPath (alert_engine.db) is ever opened. No MCP_SERVER_URL/base-URL config field exists yet (do not confuse with the unrelated `MCP_SERVER_BASE_URL` env var, which belongs to the `frontend` service in docker-compose.yml, not alert-engine). REUSE FOUND: pkg/module/alert_pipeline/pipeline.go's Pipeline.Run() already implements the full dedup (fingerprint+window) -> cooldown-gate -> mute -> StoreAlert -> Telegram-send story end-to-end and is directly callable in-process from main.go (no need to self-HTTP-call POST /evaluate — that would be a pointless network hop back into the same binary). CHANNEL-ROUTING DEFECT TO AVOID: pkg/primitive/signal-classifier/classifier.go's Classify() maps severity high|critical -> ChannelMarket, medium|low -> ChannelWork. Routing a synthetic infra/push-delivery alert through Classify() at severity=high/critical would send it to the MARKET Telegram channel, which docs/policies/alert-policy.md 'Alert Commander Exclusivity' reserves for stock alerts only (alert-commander.md owns channel=market; this is not a stock alert). docs/data/system-map.json's 3 channels are market/work/bug; the two existing mcp-server precedents for this exact alert CLASS (staleness/degraded-infra, not stock) both use WORK: apps/mcp-server/src/scheduler/vpsProxyWatchdogJob.ts (VPS price-push staleness, sendTelegramWork, hand-rolled in-module cooldown) and apps/mcp-server/src/scheduler/alerts/cronHealthAlertJob.ts (cron success-rate degradation, sendTelegramWork). Route this alert the same way.",
+        "deliverable": "1. Add `MCPServerURL string` to ServiceConfig (pkg/infrastructure/config.go), env var `MCP_SERVER_URL` (default `http://mcp-server:3000`, matching docker-compose network alias), and wire `MCP_SERVER_URL` into the alert-engine service block of docker-compose.yml + docker-compose.dev.yml. 2. New poller: a time.Ticker goroutine (interval ~60s — well under the RCA's ~10min detection SLA) that GETs mcp-server's push-delivery metric (the fields FIX-PUSH-DELIVERY-METRICS-MCP-SERVER adds to GET /api/vps-proxy-health: `stale`/`error_ratio_5m` per service). Respect the existing Fence architecture (see fence comments in pkg/module/alert_pipeline/ports.go and cmd/server/main.go): the HTTP-polling client is an infrastructure concern -> new file under pkg/infrastructure/ (e.g. mcpMetricsPoller.go), composed only from cmd/server/main.go (Fence-C composition root) alongside the existing alertRepo/muteRepo/telegram/pipeline wiring — never imported from pkg/module or pkg/primitive. 3. Sustained-breach state: track, per push-delivery service, the first-observed-breach timestamp in-process (mirrors the lastAlertAt/lastWasStale module-level pattern in mcp-server's vpsProxyWatchdogJob.ts, ported to Go) and only fire once breach has held for >= 5 consecutive minutes (RCA threshold) -- do not fire on a single poll's transient reading. 4. On sustained breach, call pipeline.Run() in-process (not a self-HTTP POST /evaluate) with a synthetic domain.AlertRequest{Stock: \"SYSTEM-PUSH-DELIVERY\", SignalTypes: []string{\"push-delivery-degraded\"}, Message: \"<service> push-delivery degraded: <stale|error_ratio_5m detail>\", SendTelegram: true} -- reuse dedup/cooldown/mute/StoreAlert exactly as-is (no forked pipeline). 5. Bypass signal-classifier.Classify() for this specific synthetic request (or extend it with an explicit non-stock carve-out) so it resolves to ChannelWork, never ChannelMarket -- hardcode the channel for this alert type rather than deriving it from severity, since severity=high/critical would otherwise silently route to market per the existing classify table.",
+        "ac": "1. New unit tests (pure logic, no real HTTP/DB) cover the sustained-breach state machine: single transient breach does NOT fire; breach held >=5min DOES fire; recovery resets the timer. 2. Integration/sandbox test (cmd/sandbox pattern already exists — see discovery.go/exec_module.go/exec_primitive.go) exercises the poller against a fake mcp-server metrics response. 3. Fired alert lands in ChannelWork (assert never ChannelMarket for this SignalTypes value) -- add an explicit regression test asserting this. 4. Existing Fence-A/B/C boundaries unchanged (pkg/primitive and pkg/module/alert_pipeline gain zero new imports; only pkg/infrastructure + cmd/server/main.go touched). 5. go build / go vet / golangci-lint / go test all green (matches existing alert-engine CI gate). 6. MCP_SERVER_URL env var documented in docs/architecture/microservice/alert-engine/infrastructure.md (dev-alert-engine is sole committer of that doc per docs/references/agent-roster.md doc_owner column).",
+        "related": [
+          "FIX-PUSH-DELIVERY-METRICS-MCP-SERVER"
+        ],
+        "files": [
+          "apps/alert-engine/pkg/infrastructure/config.go",
+          "apps/alert-engine/cmd/server/main.go",
+          "apps/alert-engine/pkg/infrastructure/mcpMetricsPoller.go",
+          "apps/alert-engine/pkg/primitive/signal-classifier/classifier.go",
+          "docker-compose.yml",
+          "docker-compose.dev.yml",
+          "docs/architecture/microservice/alert-engine/infrastructure.md"
+        ],
+        "not_in_scope": "Does NOT modify apps/mcp-server (consumes the metric contract FIX-PUSH-DELIVERY-METRICS-MCP-SERVER defines). Does not add auto-mint of INFRA-PUSH-DELIVERY-OUTAGE-DETECTED task rows (RCA lists this as optional; out of scope for this pass -- file as a follow-up FU- row later if PO wants it)."
       }
     ],
     "closed_sprints": [
@@ -15798,26 +15844,6 @@
         "po_corroboration_c80_20260808T0116Z": "Fresh A-30 datapoint, 2026-08-08T01:05:33-01:06:54Z (system-auditor c80 Tier-1, RAW JSON in notebook commit 569f79108): mcp-server 6-probe window 97.16 / 97.20 / 97.39 / 97.16 / 97.58 / 97.59 %, min 97.16 max 97.59, reclamation_dips=0, discriminator verdict=ESCALATE, OOMKilled=false, RestartCount=2, VmHWM=3058144KB vs VmRSS=3023460KB. This is 19h AFTER the container OOM'd at ~05:57Z on 2026-08-07 (the death that confirmed sys-20260807T054825-771b as a true positive) - memory is back at the same pre-death ceiling with zero reclamation, i.e. the leak refills the 3GiB cap within a day of every restart. Logged here rather than as a new signal_queue row because c80's own E-3 append never fired (see FIX-ANALYSIS-ONLY-EXIT-DETECTOR-OR-VERDICT-BLIND-TO-PARTIAL-WRITE-CYCLE) and because the finding is already routed to this row - no duplicate minted. Dispatch fields deliberately untouched."
       },
       {
-        "id": "FIX-PUSH-DELIVERY-ERROR-RATE-ALERT",
-        "type": "FIX",
-        "status": "READY",
-        "size": "M",
-        "zone": "multi",
-        "priority": "P1",
-        "title": "Push-delivery 5xx error-rate alert (alert-engine consuming mcp-server /metrics) — detect a CF-tunnel push outage in ~10min not 69h; from INFRA-CLOUDFLARE RCA (docs/incidents/2026-07-04-cloudflare-tunnel-push-delivery-outage-rca.md)",
-        "updated_at": "2026-08-08T00:21:55Z",
-        "dev_team_note_stall_20260729T1448": "BOUNDED-1 has now offered this row 3 CONSECUTIVE ticks (13:37Z, 14:07Z, 14:37Z) — declined each time, same reason: title still carries unresolved own-prose \"PO confirm priority + single-FIX vs ba->architect split\", no PO decision stamp added across any of the 3 ticks. Not auto-claiming an ambiguous-scope row. Surfacing explicitly for PO Step 1 triage this tick (pendingSignals non-empty regardless) rather than silently re-declining a 4th time.",
-        "dev_team_note_collision_20260729T1519": "BOUNDED-1 claim script (scripts/devteam-backlog-claim-bounded1.jq) matched THIS row's stale promoted_by marker (from the 14:48Z decline) instead of the tick's genuinely newly-promoted candidate (SPIKE-BCTC-REPARSE-CADENCE-GUARD-ROOTCAUSE-VERIFY), because the claim script's own precondition (\"ready[] was already empty\" before promote) does not hold when a previously-promoted-but-declined row is left sitting in ready[] across ticks. Same class as the 14:07Z/14:37Z SLS collisions, now confirmed on the BOUNDED-1 lane too. Undone: moved back to backlog[] (out of ready[] entirely, not just marker-stripped) so it stops being scannable by either claim script until PO resolves the underlying ambiguity — this is the 4th consecutive decline.",
-        "supervised": true,
-        "plan_only": true,
-        "updated_by": "po/triage-20260730T0853",
-        "po_ruling_20260730": "AMBIGUITY RESOLVED — this row has now been offered to BOUNDED-1 and declined 5 CONSECUTIVE times for the same reason, so the decision is made here and the prose is removed from the title (it was the literal blocker). (a) single-FIX vs ba->architect SPLIT: the row already contained its own answer and nobody read it — zone is already `multi`, and docs/agents/po/flow/main.md states that `multi` MEANS 'architect must split'. So: ARCHITECT SPLITS IT. No new judgement was ever required; this was 5 wasted dispatcher cycles on a question the zone field had already answered. (b) PRIORITY P2 -> P1: the CF-tunnel push path is a live, repeatedly-fragile dependency, not a hypothetical — the 2026-07-04 RCA is a 69h-undetected outage, and it recurred on 2026-07-15 (see RAG-FTS-BUILD-MEMORY-BOUND.gateway_infra: zenmidi.com/gateway origin aggregator down, CF-dashboard-managed tunnel, needed a USER Zero-Trust action because no detector fired). Two outages, zero detection, 26 days open. (c) DISPATCHABILITY: supervised+plan_only BOTH set to true, deliberately, so the Supervised-Lane Sweep (which requires BOTH — scripts/devteam-backlog-promote-supervised-lane-sweep.jq:108-109) routes it to architect for the split. It was previously supervised=null/plan_only=null with next_agent=null, which is why only BOUNDED-1 ever saw it and only ever to decline it. DO NOT re-add any scoping question to this title.",
-        "promoted_at": "2026-08-08T00:21:54Z",
-        "promoted_by": "dev-team (supervised-lane sweep)",
-        "promotion_note": "Supervised-Lane Sweep — assigned dispatch_lane='developer' (priority_rank=1); supervised/plan_only flags preserved, gate NOT disabled — see FIX-BOUNDED1-SUPERVISED-LANE-NO-SWEEPER",
-        "dispatch_lane": "developer"
-      },
-      {
         "id": "FIX-SPRINT-REGISTRY-DANGLING-IDS-BREAK-SIGNOFF-AND-JOURNAL-ARCHIVE",
         "status": "READY",
         "type": "FIX",
@@ -15893,6 +15919,33 @@
         "supervised_note": "Child task of plan_only parent; no code ships without parent re-adjudication by PO",
         "updated_at": "2026-08-08T01:54:36Z",
         "promoted_at": "2026-08-08T01:54:35Z",
+        "promoted_by": "dev-team (supervised-lane sweep)",
+        "promotion_note": "Supervised-Lane Sweep — assigned dispatch_lane='developer' (priority_rank=1); supervised/plan_only flags preserved, gate NOT disabled — see FIX-BOUNDED1-SUPERVISED-LANE-NO-SWEEPER",
+        "dispatch_lane": "developer"
+      },
+      {
+        "id": "TASK-COWORK-SIGNAL-CHEF-INTRADAY",
+        "type": "TASK",
+        "size": "S",
+        "priority": "P1",
+        "status": "READY",
+        "zone": "cross-service/unified-agent",
+        "owner": "unassigned",
+        "next_agent": "developer",
+        "plan_only": true,
+        "sprint": "COWORK-RELIABILITY",
+        "created_at": "2026-08-07T06:00:00Z",
+        "created_by": "pm (decomposition of FIX-COWORK-SIGNAL-FILENAME-CYCLEID-KEYING)",
+        "parent_task_id": "FIX-COWORK-SIGNAL-FILENAME-CYCLEID-KEYING",
+        "title": "chef/unified-agent Intraday Filename Extension (FR-3)",
+        "ba_handoff": "docs/handoffs/TASK-COWORK-SIGNAL-CHEF-INTRADAY.md",
+        "description": "Decomposed subtask from FIX-COWORK-SIGNAL-FILENAME-CYCLEID-KEYING Phase 1 delivery",
+        "supervised": true,
+        "supervised_at": "2026-08-07T06:00:00Z",
+        "supervised_by": "pm (plan_only decomposition)",
+        "supervised_note": "Child task of plan_only parent; no code ships without parent re-adjudication by PO",
+        "updated_at": "2026-08-08T02:22:22Z",
+        "promoted_at": "2026-08-08T02:22:21Z",
         "promoted_by": "dev-team (supervised-lane sweep)",
         "promotion_note": "Supervised-Lane Sweep — assigned dispatch_lane='developer' (priority_rank=1); supervised/plan_only flags preserved, gate NOT disabled — see FIX-BOUNDED1-SUPERVISED-LANE-NO-SWEEPER",
         "dispatch_lane": "developer"
@@ -22511,6 +22564,31 @@
         "developer_review_note": "AC-1 (write path named, evidence): scripts/orch-cold-evict.sh (invoked from docs/agents/dev-team/flow/drain-signals.md Sec0a-D-PRUNE), correctly routed through orch-apply.sh -- commit 3e257beba is confirmed authored by this path. THE 2 sys-* ROWS ARE VERIFIED PRESENT TODAY (re-checked live, not from memory) in docs/data/orch/archive/2026-07.json .signal_rows[] (status READ) -- they were NOT destroyed. Mechanism: the (at-the-time, pre-2026-08-01) no-age-gate immediate-eviction of a just-flipped-READ signal_queue row -- the same class already diagnosed+closed by SIGNAL_MAX_AGE_HOURS (FIX-COLDEVICT-SIGNALQUEUE-NO-AGE-GATE-ORPHANS-READ-ROWS, shipped 2026-08-01, one week before this task was dispatched). This rows own po_datapoint_premature_evict_20260729T1152 field already shows PO verified a DIFFERENT pair (dev-20260729T104938/cow-20260729T111055Z) landed correctly in archive/2026-07.json via that same check -- the identical verification was not applied to the original sys-* pair, which is the actual gap: root_cause/evidence fields above checked only the deprecated always-empty inline .signal_queue.archive[] lane (unconditionally wiped to [] every cold-evict run, RC-1/HSC-7), not the real cold file -- \"absent from archive[]\" was checking a field that is ALWAYS empty by design and can never distinguish destroyed from correctly-evicted. AC-2 (undeclared drop rejected): scripts/orch-conservation-check.mjs now enforces a row-identity dimension independent of the 0.5 magnitude floor -- any live .signal_queue.rows[] id absent from candidate must be in candidate .signal_queue.archive[] OR named in new env ORCH_APPLY_DECLARED_SIGNAL_EVICTIONS, else hard-reject exit 1 live-untouched, NEVER bypassable by ORCH_APPLY_ALLOW_SHRINK. Demonstrated live: jq drop of 1 of 2 signal rows | ORCH_APPLY_LIVE_FILE_OVERRIDE=<fixture> bash scripts/orch-apply.sh -> exit 1, stderr names the id, live file byte-unchanged. Test: ROW-DROP-REJECTED + ROW-DROP-ALLOW-SHRINK-NO-BYPASS in orch-apply-wrapper-tests.sh. AC-3 (legit drain/cold-evict still passes): wired ORCH_APPLY_DECLARED_SIGNAL_EVICTIONS into orch-cold-evict.sh from its own already-computed rm_sig_rows map (mechanically in lockstep, never hand-maintained) -- pm/task-archive.md delegates its own signal-row eviction to this same script, no 2nd wiring site needed. orch-cold-evict-tests.sh T9/T10 (real end-to-end signal_queue eviction through orch-apply.sh) 53/53 GREEN unaffected. AC-4 (magnitude guard unchanged): zero changes to taskTotal/signalTotal/FLOOR_RATIO logic; COLLAPSE test still fires (320->0 rejected exit 1); re-demonstrated standalone (20 backlog->0, no bypass) -> exit 1. AC-5 (reconstruction): moot -- the 2 rows were never destroyed, they are live in docs/data/orch/archive/2026-07.json today; no resurrection attempted or needed, per this rows own constraint. Full test run: orch-apply-wrapper-tests.sh 75/75 (60 pre-existing + 15 new), orch-cold-evict-tests.sh 53/53. Commits: 941883d76 (code+test), 441e9ee0e + 2834187a7 (memory).",
         "moved_to_review_at": "2026-08-08T02:16:21Z",
         "moved_by": "developer"
+      },
+      {
+        "id": "FIX-PUSH-DELIVERY-ERROR-RATE-ALERT",
+        "type": "FIX",
+        "status": "REVIEW",
+        "size": "M",
+        "zone": "multi",
+        "priority": "P1",
+        "title": "Push-delivery 5xx error-rate alert (alert-engine consuming mcp-server /metrics) — detect a CF-tunnel push outage in ~10min not 69h; from INFRA-CLOUDFLARE RCA (docs/incidents/2026-07-04-cloudflare-tunnel-push-delivery-outage-rca.md)",
+        "updated_at": "2026-08-08T02:33:37Z",
+        "dev_team_note_stall_20260729T1448": "BOUNDED-1 has now offered this row 3 CONSECUTIVE ticks (13:37Z, 14:07Z, 14:37Z) — declined each time, same reason: title still carries unresolved own-prose \"PO confirm priority + single-FIX vs ba->architect split\", no PO decision stamp added across any of the 3 ticks. Not auto-claiming an ambiguous-scope row. Surfacing explicitly for PO Step 1 triage this tick (pendingSignals non-empty regardless) rather than silently re-declining a 4th time.",
+        "dev_team_note_collision_20260729T1519": "BOUNDED-1 claim script (scripts/devteam-backlog-claim-bounded1.jq) matched THIS row's stale promoted_by marker (from the 14:48Z decline) instead of the tick's genuinely newly-promoted candidate (SPIKE-BCTC-REPARSE-CADENCE-GUARD-ROOTCAUSE-VERIFY), because the claim script's own precondition (\"ready[] was already empty\" before promote) does not hold when a previously-promoted-but-declined row is left sitting in ready[] across ticks. Same class as the 14:07Z/14:37Z SLS collisions, now confirmed on the BOUNDED-1 lane too. Undone: moved back to backlog[] (out of ready[] entirely, not just marker-stripped) so it stops being scannable by either claim script until PO resolves the underlying ambiguity — this is the 4th consecutive decline.",
+        "supervised": true,
+        "plan_only": true,
+        "updated_by": "architect (SLS split closeout)",
+        "po_ruling_20260730": "AMBIGUITY RESOLVED — this row has now been offered to BOUNDED-1 and declined 5 CONSECUTIVE times for the same reason, so the decision is made here and the prose is removed from the title (it was the literal blocker). (a) single-FIX vs ba->architect SPLIT: the row already contained its own answer and nobody read it — zone is already `multi`, and docs/agents/po/flow/main.md states that `multi` MEANS 'architect must split'. So: ARCHITECT SPLITS IT. No new judgement was ever required; this was 5 wasted dispatcher cycles on a question the zone field had already answered. (b) PRIORITY P2 -> P1: the CF-tunnel push path is a live, repeatedly-fragile dependency, not a hypothetical — the 2026-07-04 RCA is a 69h-undetected outage, and it recurred on 2026-07-15 (see RAG-FTS-BUILD-MEMORY-BOUND.gateway_infra: zenmidi.com/gateway origin aggregator down, CF-dashboard-managed tunnel, needed a USER Zero-Trust action because no detector fired). Two outages, zero detection, 26 days open. (c) DISPATCHABILITY: supervised+plan_only BOTH set to true, deliberately, so the Supervised-Lane Sweep (which requires BOTH — scripts/devteam-backlog-promote-supervised-lane-sweep.jq:108-109) routes it to architect for the split. It was previously supervised=null/plan_only=null with next_agent=null, which is why only BOUNDED-1 ever saw it and only ever to decline it. DO NOT re-add any scoping question to this title.",
+        "promoted_at": "2026-08-08T00:21:54Z",
+        "promoted_by": "dev-team (supervised-lane sweep)",
+        "promotion_note": "Supervised-Lane Sweep — assigned dispatch_lane='developer' (priority_rank=1); supervised/plan_only flags preserved, gate NOT disabled — see FIX-BOUNDED1-SUPERVISED-LANE-NO-SWEEPER",
+        "dispatch_lane": "architect",
+        "claimed_at": "2026-08-08T02:22:28Z",
+        "claimed_by": "dev-team (supervised-lane sweep)",
+        "next_agent": "po",
+        "router_dispatch_correction_20260808T0223Z": "SLS resolved_dispatch_lane (scripts/lib/devteam-eligibility.jq) defaulted this row to developer via its generic fallback (no structured next_agent/owner field present), despite zone=multi AND this row own po_ruling_20260730 explicitly stating ARCHITECT SPLITS IT (docs/agents/po/flow/main.md:30 confirms: multi -> architect must split; cross-service/ -> developer). Router caught this before spawn and corrected next_agent/dispatch_lane to architect. Underlying resolver bug (no zone==multi special-case in resolved_dispatch_lane) flagged separately for a root-cause fix — this is a row-level patch, not a systemic one.",
+        "architect_split_note": "Split into 2 single-zone children per zone=multi convention + po_ruling_20260730 (architect splits it). BROWNFIELD: (1) mcp-server has NO /metrics route and zero prom-client usage; nearest reusable analog is the existing GET /api/vps-proxy-health (vpsPushLogStore.getVpsProxyHealth(), calendar-aware staleness) which already does 3/4 of the RCA-scoped services (missing foreign-flow). (2) RCA's literal in-handler 5xx-counter spec is structurally blind to the actual outage class (CF-tunnel origin-unreachable requests never reach the mcp-server process) -- staleness (already computed) is the robust signal, error-ratio is secondary. (3) alert-engine is a purely reactive HTTP service today (GET /health, POST /evaluate only) with ZERO scheduler/poller of its own -- 'alert-engine consuming mcp-server /metrics' requires a NEW poller capability, not just wiring (cfg.DBPath to market.db is loaded but dead -- never opened in main.go). (4) Existing signal-classifier.Classify() routes severity high/critical to ChannelMarket, which alert-policy.md reserves for stock alerts (alert-commander exclusivity) -- this synthetic infra alert must be hardcoded to ChannelWork instead, matching the 2 existing in-repo precedents for this exact alert class (vpsProxyWatchdogJob.ts, cronHealthAlertJob.ts, both sendTelegramWork). CHILDREN MINTED: FIX-PUSH-DELIVERY-METRICS-MCP-SERVER (zone apps/mcp-server/, P1/S, owner dev-mcp-server -- extends /api/vps-proxy-health with foreign-flow coverage + error_ratio_5m field) and FIX-PUSH-DELIVERY-ALERT-ENGINE-POLLER (zone apps/alert-engine/, P1/M, owner dev-alert-engine, depends_on the mcp-server child -- new Ticker poller + sustained-breach state machine + reuses existing alertpipeline.Pipeline.Run() in-process + hardcoded WORK channel). Both children minted with supervised=null/plan_only=null (NOT copied from this parent) -- a supervised:true row with a dev-role next_agent is a documented zero-picker trap (BOUNDED-1 excludes supervised:true; DRS excludes dev-role next_agent by construction; SLS requires supervised AND plan_only both true, which does not fit a normal single-zone dev implementation task) -- see live precedent BCTC-ENRICHER-OLD-QUARTERS (next_agent=dev-mcp-server, supervised=null, plan_only=null) and the fleet's own open FIX-DEVTEAM-NONDEV-NEXTAGENT-RESIDUAL-NO-DISPATCH-DESTINATION row describing this exact trap class. supervised:true/plan_only:true preserved unchanged on THIS parent row per architect flow's plan-only mode."
       }
     ],
     "qa": [
@@ -22658,7 +22736,7 @@
         }
       ]
     },
-    "last_triaged_at": "2026-08-08T01:54:35Z",
+    "last_triaged_at": "2026-08-08T02:22:21Z",
     "last_triaged_by": "dev-team (supervised-lane sweep)",
     "in_progress": [
       {
