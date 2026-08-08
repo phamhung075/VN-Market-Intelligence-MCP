@@ -3220,48 +3220,6 @@
     ],
     "backlog": [
       {
-        "id": "TASK_RUNIDLE-2-REDESIGN",
-        "type": "FIX",
-        "title": "Redesign predicate (d): replace 'active_sprints empty' with 'dispatchable work empty'",
-        "status": "BACKLOG",
-        "priority": "high",
-        "size": "M",
-        "zone": "cross-service/dev-flow-scripts/",
-        "owner": "developer",
-        "next_agent": "developer",
-        "created_at": "2026-08-09T00:00:00Z",
-        "created_by": "pm/decompose-runidle-predicate-d-20260809T0000Z",
-        "depends_on": [
-          "TASK_RUNIDLE-1-AUDIT"
-        ],
-        "blocks": [
-          "TASK_RUNIDLE-4-TEST"
-        ],
-        "supervised": false,
-        "updated_at": "2026-08-08T22:30:21Z"
-      },
-      {
-        "id": "TASK_RUNIDLE-3-STALENESS",
-        "type": "FIX",
-        "title": "Implement staleness guard: skip stale/childless sprints from idle-check",
-        "status": "BACKLOG",
-        "priority": "high",
-        "size": "M",
-        "zone": "cross-service/dev-flow-scripts/",
-        "owner": "developer",
-        "next_agent": "developer",
-        "created_at": "2026-08-09T00:00:00Z",
-        "created_by": "pm/decompose-runidle-predicate-d-20260809T0000Z",
-        "depends_on": [
-          "TASK_RUNIDLE-1-AUDIT"
-        ],
-        "blocks": [
-          "TASK_RUNIDLE-4-TEST"
-        ],
-        "supervised": false,
-        "updated_at": "2026-08-08T22:30:21Z"
-      },
-      {
         "id": "TASK_RUNIDLE-4-TEST",
         "type": "TEST",
         "title": "Write test: stale/childless sprints don't block RUN-IDLE",
@@ -13995,6 +13953,50 @@
         "verification_gate": "Diff review against docs/architecture-briefs/2026-08-08-donelane-doneverified-producer.md SS2 Components 1/2/6 + SS3 -- every prose claim added must match the ACTUAL widened script behavior (developer's row), never restate intent as if already true. qa sign-off.",
         "depends_on": [],
         "note": "No hard ordering dependency on FIX-DONELANE-NO-DONEVERIFIED-PRODUCER-DEP-STARVATION -- may land before, after, or in parallel. Should land in the same rough window to keep prose from drifting stale against the shipped mechanism."
+      },
+      {
+        "id": "TASK_RUNIDLE-2-REDESIGN",
+        "type": "FIX",
+        "title": "Redesign predicate (d): replace 'active_sprints empty' with 'dispatchable work empty'",
+        "status": "TODO",
+        "priority": "high",
+        "size": "M",
+        "zone": "cross-service/dev-flow-scripts/",
+        "owner": "developer",
+        "next_agent": "developer",
+        "created_at": "2026-08-09T00:00:00Z",
+        "created_by": "pm/decompose-runidle-predicate-d-20260809T0000Z",
+        "depends_on": [
+          "TASK_RUNIDLE-1-AUDIT"
+        ],
+        "blocks": [
+          "TASK_RUNIDLE-4-TEST"
+        ],
+        "supervised": false,
+        "updated_at": "2026-08-08T23:16:29Z",
+        "updated_by": "pm/manual-dispatch-runidle-unblock"
+      },
+      {
+        "id": "TASK_RUNIDLE-3-STALENESS",
+        "type": "FIX",
+        "title": "Implement staleness guard: skip stale/childless sprints from idle-check",
+        "status": "TODO",
+        "priority": "high",
+        "size": "M",
+        "zone": "cross-service/dev-flow-scripts/",
+        "owner": "developer",
+        "next_agent": "developer",
+        "created_at": "2026-08-09T00:00:00Z",
+        "created_by": "pm/decompose-runidle-predicate-d-20260809T0000Z",
+        "depends_on": [
+          "TASK_RUNIDLE-1-AUDIT"
+        ],
+        "blocks": [
+          "TASK_RUNIDLE-4-TEST"
+        ],
+        "supervised": false,
+        "updated_at": "2026-08-08T23:16:29Z",
+        "updated_by": "pm/manual-dispatch-runidle-unblock"
       }
     ],
     "review": [
