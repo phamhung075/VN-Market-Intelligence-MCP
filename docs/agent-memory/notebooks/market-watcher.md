@@ -1,22 +1,21 @@
 # Market Watcher — Notebook
-**Last updated:** 2026-08-08 12:12 UTC | **Sprint:** main
+**Last updated:** 2026-08-08 16:09 UTC | **Sprint:** 2026-08
 
 ## Carry-over
-Previous offhours cycle (08:11 UTC): DBC, DPM, KDC sweep; coverage_state update pending
+(none; offhours cycles reset)
 
-## Cycle (12:10–12:12 UTC Offhours)
-- Market CLOSED (prices stale from 2026-08-07 08:59 UTC) | Maintenance sweep: MSN, SAB | Anomalies: 0
-- Regime: NEUTRAL | DXY: USD STRENGTHENING | US10Y: RISK-ON | No FX/PE risk
-- Volatility: ELEVATED (prev 78th pct) | Coverage sweep: MSN,SAB (rotation, last covered 2026-07-25)
+## Cycle (16:00–16:09 UTC)
+- Stocks: 34 | Anomalies: 0 | Volume spikes: 0 | Chain confirms: 0
+- Market CLOSED (prices stale from 2026-08-07 08:59 UTC) | Coverage sweep: all 34 active tickers (all stale >48h)
+- Regime: NEUTRAL | DXY: N/A | US10Y: N/A | fx_pressure: none | pe_risk: none
 
-## Metrics (2026-08-08 12:12 UTC)
+## Metrics (cycle 2026-08-08 16:09 UTC)
 | Field | Value |
 |---|---|
-| cycles_run | 2 |
-| items_fetched | 2 |
+| cycles_run | 1 |
+| items_fetched | 34 |
 | signals_emitted | 0 |
 | signals_suppressed | 0 |
-| sweep_tickers_forced | 2 |
-| evidence_fragments_recorded | 2 |
-| coverage_state_updated | pending |
+| sweep_tickers_forced | 34 |
+| coverage_state_updated | yes |
 | exit_status | complete |
