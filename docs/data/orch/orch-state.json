@@ -93,11 +93,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "active_task_id": null,
-    "next_agent": null,
-    "updated_at": "2026-08-08T22:01:45Z",
-    "updated_by": "dev-team"
+    "status": "in_progress",
+    "active_task_id": "FIX-DEVTEAM-IDLE-CHAIN-MAIN-COMPLETION",
+    "next_agent": "developer",
+    "next_action": "BOUNDED-1 auto-pickup claim of FIX-DEVTEAM-IDLE-CHAIN-MAIN-COMPLETION — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
+    "updated_at": "2026-08-08T22:53:42Z",
+    "updated_by": "dev-team (bounded-1 auto-pickup)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -133,7 +134,7 @@
     "does_not_consume_wip": true
   },
   "signal_queue": {
-    "_updated_at": "2026-08-08T22:36:43Z",
+    "_updated_at": "2026-08-08T22:51:19Z",
     "_updated_by": "cowork-team",
     "archive": [],
     "rows": [
@@ -745,7 +746,7 @@
         "summary": "Doublon sweep: 0 escalations → 0 backlog tasks. Memory prune wrote 1 signal (team-tool-recheck writer dead since 06-23).",
         "severity": "LOW",
         "status": "READ",
-        "payload_ref": "docs/signals/janitor-health-recheck-writer-retired-2026-08-08.json"
+        "payload_ref": "docs/signals/processed/janitor-health-recheck-writer-retired-2026-08-08.json"
       },
       {
         "id": "sys-20260808T223434-2c1e",
@@ -769,7 +770,7 @@
         "type": "microservice_degraded",
         "summary": "A-30 WARN: rag-service sustained high memory 93.82% — loss of reclamation",
         "severity": "WARN",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": null,
         "provenance": "detector",
         "audit_cycle_tag": "cron:auditor-t1:2026-08-08T22:40:00Z",
@@ -8087,34 +8088,6 @@
         "claimed_at": "2026-07-29T13:19:09Z",
         "claimed_by": "dev-team (bounded-1 auto-pickup)",
         "next_agent": "architect"
-      },
-      {
-        "id": "FIX-DEVTEAM-IDLE-CHAIN-MAIN-COMPLETION",
-        "type": "FIX",
-        "title": "main.md Step 1 durable inbox consumption + stamp integration: §3.2 read/clear + §2.3 stamp call site",
-        "status": "BACKLOG",
-        "priority": "P0",
-        "size": "M",
-        "zone": "docs/agents/dev-team/flow/",
-        "owner": "developer",
-        "next_agent": "developer",
-        "created_at": "2026-07-29T13:50:04Z",
-        "created_by": "pm",
-        "depends": [],
-        "blocks": [
-          "FIX-DEVTEAM-IDLE-CHAIN-TEST-FAIRNESS",
-          "FIX-DEVTEAM-IDLE-CHAIN-TEST-DURABLE"
-        ],
-        "files": [
-          "docs/agents/dev-team/flow/main.md"
-        ],
-        "updated_at": "2026-08-08T16:06:57Z",
-        "depends_on": [
-          "FIX-DEVTEAM-IDLE-CHAIN-P1A-MAIN-ROTATION",
-          "FIX-DEVTEAM-IDLE-CHAIN-P2A-DURABLE-DRAIN"
-        ],
-        "dangling_deps_fix_20260801T0209": "cleared stale legacy .depends entry FIX-DEVTEAM-IDLE-CHAIN-P1B-STAMP (deleted by pm 2833b71bf, never removed from .depends); effective_depends_on now equals .depends_on=[P1A-MAIN-ROTATION, P2A-DURABLE-DRAIN] as pm originally intended. Net effect: these 5 P0 rows move from PERMANENTLY unsatisfiable (deleted ids resolve MISSING forever) to NORMALLY gated (will become eligible once TASK-1 -> P1A/P2A complete in sequence) -- not immediately eligible today, since TASK-1 is still REVIEW not DONE_VERIFIED.",
-        "po_dispatch_20260808T1600Z": "FOLDED INTO PO's BATCH THIS TICK — both `depends_on` cleared 20 minutes ago and the row's absence now has a measured, growing cost.\n\nDEPENDENCY GATE IS SATISFIED (re-derived live, not assumed): depends_on = [FIX-DEVTEAM-IDLE-CHAIN-P1A-MAIN-ROTATION, FIX-DEVTEAM-IDLE-CHAIN-P2A-DURABLE-DRAIN]. Board state now: P2A = DONE_VERIFIED @2026-08-08T15:33:13Z, P1A = DONE_VERIFIED @2026-08-08T15:37:34Z. The `dangling_deps_fix_20260801T0209` note on this row predicted exactly this transition ('will become eligible once TASK-1 -> P1A/P2A complete in sequence'); that sequence completed this tick.\n\nMEASURED COST OF THE MISSING CONSUMER: P2A shipped the PRODUCER (durable append to .dev_team_idle_chain.pending_triage_inbox) and this row is the only planned CONSUMER (§3.2 read/clear). Until it lands the inbox is WRITE-ONLY. Live count at 2026-08-08T16:00Z: 24 envelopes, oldest 2026-08-08T13:08:59Z, ZERO consumed. Contents include 2 unrouted ci_red (both folded to FIX-CI-SIZELINT-COORDINATIONSTORE-BASELINE-1388L this tick — they had been sitting 2.5h), 2 CRITICAL microservice_degraded (mcp-server A-30, rag-service A-30 BELOW-FLOOR), 1 vps_proxy_stale (bctc-discover 101h30m), 1 cron_fire_gap (bctcReparseJob 57.1% success), 4 bctc_signal, 2 cowork-fire, and 8 sweep-guard/notebook-immutability bug-escalations. Those reached PO this tick ONLY because PO read the array by hand — no flow step does.\n\nNOTE ON DIRECTION: this is the inverse of the 'documented consumer, no documented producer' family (supervised-goahead.md, manual-dispatch-sweep.md, FIX-BOUNDED1-SUPERVISED-LANE-NO-SWEEPER) — here the producer shipped first and the consumer is the missing half. Same net effect: work accumulates in a durable structure nobody drains. PO deliberately did NOT hand-write a `consumed_at`/clear field this tick — inventing a consume contract ahead of §3.2 would fork the very schema this row exists to define.\n\nUNCHANGED: no re-authoring. BATCH entry built verbatim from this row's own type/id/title/size/files/zone per manual-dispatch-sweep.md Step 3 conventions."
       },
       {
         "id": "FIX-DEVTEAM-IDLE-CHAIN-TEST-FAIRNESS",
@@ -19366,8 +19339,8 @@
         }
       ]
     },
-    "last_triaged_at": "2026-08-08T21:22:38Z",
-    "last_triaged_by": "dev-team (design-router sweep)",
+    "last_triaged_at": "2026-08-08T22:53:36Z",
+    "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
     "in_progress": [
       {
         "id": "FIX-COWORK-SIGNAL-FILENAME-CYCLEID-KEYING",
@@ -19431,6 +19404,39 @@
           "TASK-COWORK-SIGNAL-NAMING-CONTRACT"
         ],
         "decomposition_note": "Phase 1 decomposed into 4 atomic tasks per PO amendments (3 binding, 1 correction to FR-1 WINDOWKEY logic per Amendment 3). All inherit plan_only/supervised flags. No developer dispatch until PO adjudication."
+      },
+      {
+        "id": "FIX-DEVTEAM-IDLE-CHAIN-MAIN-COMPLETION",
+        "type": "FIX",
+        "title": "main.md Step 1 durable inbox consumption + stamp integration: §3.2 read/clear + §2.3 stamp call site",
+        "status": "IN_PROGRESS",
+        "priority": "P0",
+        "size": "M",
+        "zone": "docs/agents/dev-team/flow/",
+        "owner": "developer",
+        "next_agent": "developer",
+        "created_at": "2026-07-29T13:50:04Z",
+        "created_by": "pm",
+        "depends": [],
+        "blocks": [
+          "FIX-DEVTEAM-IDLE-CHAIN-TEST-FAIRNESS",
+          "FIX-DEVTEAM-IDLE-CHAIN-TEST-DURABLE"
+        ],
+        "files": [
+          "docs/agents/dev-team/flow/main.md"
+        ],
+        "updated_at": "2026-08-08T22:53:42Z",
+        "depends_on": [
+          "FIX-DEVTEAM-IDLE-CHAIN-P1A-MAIN-ROTATION",
+          "FIX-DEVTEAM-IDLE-CHAIN-P2A-DURABLE-DRAIN"
+        ],
+        "dangling_deps_fix_20260801T0209": "cleared stale legacy .depends entry FIX-DEVTEAM-IDLE-CHAIN-P1B-STAMP (deleted by pm 2833b71bf, never removed from .depends); effective_depends_on now equals .depends_on=[P1A-MAIN-ROTATION, P2A-DURABLE-DRAIN] as pm originally intended. Net effect: these 5 P0 rows move from PERMANENTLY unsatisfiable (deleted ids resolve MISSING forever) to NORMALLY gated (will become eligible once TASK-1 -> P1A/P2A complete in sequence) -- not immediately eligible today, since TASK-1 is still REVIEW not DONE_VERIFIED.",
+        "po_dispatch_20260808T1600Z": "FOLDED INTO PO's BATCH THIS TICK — both `depends_on` cleared 20 minutes ago and the row's absence now has a measured, growing cost.\n\nDEPENDENCY GATE IS SATISFIED (re-derived live, not assumed): depends_on = [FIX-DEVTEAM-IDLE-CHAIN-P1A-MAIN-ROTATION, FIX-DEVTEAM-IDLE-CHAIN-P2A-DURABLE-DRAIN]. Board state now: P2A = DONE_VERIFIED @2026-08-08T15:33:13Z, P1A = DONE_VERIFIED @2026-08-08T15:37:34Z. The `dangling_deps_fix_20260801T0209` note on this row predicted exactly this transition ('will become eligible once TASK-1 -> P1A/P2A complete in sequence'); that sequence completed this tick.\n\nMEASURED COST OF THE MISSING CONSUMER: P2A shipped the PRODUCER (durable append to .dev_team_idle_chain.pending_triage_inbox) and this row is the only planned CONSUMER (§3.2 read/clear). Until it lands the inbox is WRITE-ONLY. Live count at 2026-08-08T16:00Z: 24 envelopes, oldest 2026-08-08T13:08:59Z, ZERO consumed. Contents include 2 unrouted ci_red (both folded to FIX-CI-SIZELINT-COORDINATIONSTORE-BASELINE-1388L this tick — they had been sitting 2.5h), 2 CRITICAL microservice_degraded (mcp-server A-30, rag-service A-30 BELOW-FLOOR), 1 vps_proxy_stale (bctc-discover 101h30m), 1 cron_fire_gap (bctcReparseJob 57.1% success), 4 bctc_signal, 2 cowork-fire, and 8 sweep-guard/notebook-immutability bug-escalations. Those reached PO this tick ONLY because PO read the array by hand — no flow step does.\n\nNOTE ON DIRECTION: this is the inverse of the 'documented consumer, no documented producer' family (supervised-goahead.md, manual-dispatch-sweep.md, FIX-BOUNDED1-SUPERVISED-LANE-NO-SWEEPER) — here the producer shipped first and the consumer is the missing half. Same net effect: work accumulates in a durable structure nobody drains. PO deliberately did NOT hand-write a `consumed_at`/clear field this tick — inventing a consume contract ahead of §3.2 would fork the very schema this row exists to define.\n\nUNCHANGED: no re-authoring. BATCH entry built verbatim from this row's own type/id/title/size/files/zone per manual-dispatch-sweep.md Step 3 conventions.",
+        "promoted_at": "2026-08-08T22:53:36Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=0)",
+        "claimed_at": "2026-08-08T22:53:41Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)"
       }
     ]
   },
@@ -19446,7 +19452,7 @@
   "dev_team_idle_chain": {
     "rotation": {
       "bounded1": {
-        "last_served_tick": "2026-08-08T16:24:06Z"
+        "last_served_tick": "2026-08-08T22:53:26Z"
       },
       "sls": {
         "last_served_tick": "2026-08-08T16:57:10Z"
@@ -19464,7 +19470,7 @@
         "last_served_tick": "2026-08-08T22:26:10Z"
       }
     },
-    "_updated_at": "2026-08-08T22:26:10Z",
+    "_updated_at": "2026-08-08T22:53:26Z",
     "_updated_by": "dev-team",
     "pending_triage_inbox": [
       {
@@ -21700,6 +21706,69 @@
         "payload": "[sweep-guard] SAME-FILE DIVERGENCE (non-blocking, AC-3 detector): 'docs/data/orch/orch-state.json' is being committed via a pathspec-SCOPED commit line, which takes its WORKING TREE content (git's --only semantics) — NOT the subset already staged in the shared index for this exact path. The shared index's staged blob for 'docs/data/orch/orch-state.json' (ad56d87d099a327b35c8ea3f5286b1f3ddf761de) differs from what is about to land in this commit (c17f8a4cf93fd8427b7869b2a0ea6221c3072968) — a peer's differently-staged hunk (or your own further, unreviewed edit) in this SAME file may be about to be swept in. Documented NON-GOAL of the pathspec-commit mandate, see docs/architecture-briefs/2026-07-21-commit-path-peer-index-sweep-guard.md §2.7 — detector only, never blocked. Inspect before trusting this commit's scope: git diff ad56d87d099a327b35c8ea3f5286b1f3ddf761de c17f8a4cf93fd8427b7869b2a0ea6221c3072968 -- docs/data/orch/orch-state.json",
         "createdAt": "2026-08-08T22:23:34Z",
         "drained_at": "2026-08-08T22:24:58Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "23cd5c3fbcf741ed7fc4845f94cc48fbbc545848abc66a011349dcee97413955",
+        "source": "file",
+        "from": "commit-sweep-guard",
+        "to": "po",
+        "type": "bug-escalation",
+        "priority": "high",
+        "payload": "[sweep-guard] BARE commit about to absorb 6 staged file(s) not necessarily this actor's own: docs/data/orch/orch-state.json docs/handoffs/TASK_RUNIDLE-1-AUDIT.md docs/handoffs/TASK_RUNIDLE-2-REDESIGN.md docs/handoffs/TASK_RUNIDLE-3-STALENESS.md docs/handoffs/TASK_RUNIDLE-4-TEST.md docs/handoffs/TASK_RUNIDLE-5-VERIFY.md. actor=bc8e264c-1f19-45f7-be0f-594b3bbdb624 mode=warn escalated=false prior_warns=1 threshold=3. Fix: git commit -m \"<msg>\" -- <own-files-only>.",
+        "createdAt": "2026-08-08T22:30:33Z",
+        "drained_at": "2026-08-08T22:52:00Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "26eeddb0553ea132eb673ca2df6ca9fd013e9ecc93d591093deed6946bf8c507",
+        "source": "file",
+        "from": "commit-sweep-guard",
+        "to": "po",
+        "type": "bug-escalation",
+        "priority": "high",
+        "payload": "[sweep-guard] BARE commit about to absorb 1 staged file(s) not necessarily this actor's own: docs/agent-memory/notebooks/pm.md. actor=bc8e264c-1f19-45f7-be0f-594b3bbdb624 mode=warn escalated=false prior_warns=2 threshold=3. Fix: git commit -m \"<msg>\" -- <own-files-only>.",
+        "createdAt": "2026-08-08T22:31:28Z",
+        "drained_at": "2026-08-08T22:52:00Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "13c73a975aa5974190310aac6914d208576889a8a8b35820b97c3b8447d85e45",
+        "source": "file",
+        "from": "code-janitor",
+        "to": "po",
+        "type": "system-issue",
+        "priority": "low",
+        "payload": {
+          "finding": "docs/agent-memory/health/team-tool-recheck-*.md writer has been silent since 2026-06-23; memory-prune-sweep.sh now deletes files in this family older than 30d as routine hygiene",
+          "known_cause": "writer = cloud RemoteTrigger trig_019Q8D5xttjZn6iytx2Ld9dW, killed by the 2026-06-22 standing no-RemoteTrigger directive (feedback_no_remote_trigger_all_local.md)",
+          "decision_needed": "replace the recheck job with a local cron per that directive's migration rule, OR retire the team-tool-recheck permanently and let this sweep's 30d rule drain the directory to empty",
+          "detail_ref": "docs/architecture-briefs/2026-07-12-ultracode-workflow-improvement-audit.md#memory-docs-hygiene-P3",
+          "idempotency_note": "written once — re-runs of memory-prune-sweep.sh skip this write once any janitor-health-recheck-writer-retired-*.json exists in docs/signals/"
+        },
+        "createdAt": "2026-08-08T22:32:48Z",
+        "drained_at": "2026-08-08T22:52:00Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "d30f1b01fc8e84855055fdd2d0826e933cf009476a2272c4b2fb15ed2ab4a2f1",
+        "source": "file",
+        "from": "notebook-auto-prune-hook",
+        "to": "claude-manager-helper",
+        "type": "notebook_single_section_overage_breach",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/notebooks/digest-predict.md",
+          "line_count": 40,
+          "cap": 200,
+          "byte_count": 21134,
+          "byte_cap": 12000,
+          "section_count": 1,
+          "reason": "only preamble+1 section remain; cannot prune further without data loss",
+          "action_required": "manual_split_to_archive"
+        },
+        "createdAt": "2026-08-08T22:32:50Z",
+        "drained_at": "2026-08-08T22:52:00Z",
         "routed_to": "PO Step 0-SIG"
       }
     ]
