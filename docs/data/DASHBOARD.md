@@ -850,3 +850,15 @@
 **Mitigation:** No immediate action beyond signal routing.
 
 ---
+
+## Anomaly: A-30 · rag-service memory pressure 96.24%
+**Severity:** WARN | **Date:** 2026-08-08 | **Status:** OPEN
+**Location:** rag-service
+**Details:** Memory usage 985.5MiB / 1GiB (96.24% of cap)
+**Impact:** High memory pressure may cause performance degradation
+**Root cause:** rag-service embedder singleton, 768MiB cap, no release path (FU-RAG-DEPLOY-MEMORY)
+**Zone owner:** apps/rag-service
+**Last reported:** 2026-08-08T06:35:49Z (signal 10496, system-auditor -> po, dedup_key=microservice_memory_degraded:rag-service:A-30, WARN Telegram sent)
+**Mitigation:** No immediate action beyond signal routing.
+
+---
