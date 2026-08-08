@@ -193,6 +193,155 @@ Board `verification_gate`: *"A subsequent chef dish cites the reconciled canonic
 
 ---
 
+---
+
+## [Architect] Gate Placement Blueprint
+
+**Zone:** `docs/agents/unified-agent/flow/` (agent-father — flow/knowledge-file edit authority) + `cross-service/` = `scripts/`, `.claude/skills/`, `docs/data/*.json` (developer, per `zone-detect` SKILL.md `scripts/` → `developer`). Multi-zone — PM to split into 2 subtasks.
+
+**BUILD-STANDARD: not-applicable** — bug-fix-shaped deterministic-gate addition mirroring an already-shipped in-repo pattern (AF-1/AF-2/AF-3 in this same file, claim-truth-gate/narrative-truth-gate.sh engine); no new service, no new feature domain.
+
+### Independent verification (router asked me not to trust the relay)
+
+1. `macroTools.ts:125` = `if (usdVnd > 25500)` inside `currencySignal()`; `:118` = `if (refi < 4)` inside `policySignal()` (refinancing-rate, unrelated to FX). **Confirmed — PO's line-anchor correction is right.**
+2. `grep -rn "26500|26_500" apps/ --include=*.ts"` → 0 hits. Same-shape control `25500|25_500` → 32 hits. **Confirmed exactly as PO stated.**
+3. **New finding, not in the relay — corrects a load-bearing sub-claim in the ratification.** `macroTools.ts`'s `currencySignal()`/`oilSignal()`/`goldSignal()`/`policySignal()` (L97-129) are **dead code** — each name greps to exactly one line in the file (its own definition), never called. The file's own header (L4-17) confirms why: `get_macro_snapshot`'s handler now routes through `buildMacroSnapshotText()` (`macroSnapshotText.ts`), a fully generic key/value renderer over the raw macro-indicators HTTP response with **zero threshold logic of its own** — plus `registerMacroTools()` calling the Go microservice directly (port 5004). So `currencySignal()`'s "usdVnd > 25500" text does **not** ship into MARKET narrative — PO's ratification overstated this half. It doesn't change the SSOT **value** decision: `macroAdjustments.ts`'s 8 cascade rules (L111-134, L209-238) ARE live — `cascadeEngine.ts` imports them, and `usdVndMarket` is genuinely populated at runtime (`pollNews.ts:1171`, `runImpactChain.ts:152`, both `commodity.value?.usdVndRate`). 25,500 remains the only candidate with real production-code backing anywhere in the repo; only the *why* needed correcting. Also traced: chef-dish.md Step 1.5's actual live source, `MACRO_HEALTH.fx` (`.claude/skills/macro-health-read/SKILL.md` Step 5), is **direction-only** (`APPRECIATING|STABLE|DEPRECIATING`, no absolute level) — confirms the row's own root-cause note ("FX is direction-only... no hardcoded constant exists") and confirms the real drift mechanism is exactly tnb c112's diagnosis: CHEF narrates a number from the *flow-doc's own instruction text* (Step 2/3, fixed by §1c) or free-associates one, not from any live tool computation. This is why a text-vs-registry citation gate (not a tool-reprobe gate like claim-truth-gate) is the right mechanism — confirms BA's design choice.
+4. **Adjacent finding (not this task's scope, flag only):** the repo's own `oil` thresholds already disagree with each other — `macroTools.ts` `oilSignal()` (dead) uses >90/<70 (Brent, CAO/THẤP), `macroAdjustments.ts` (live) uses >100 ("severe oil crisis"). Same reconciliation-gap shape as USD/VND before this fix. Recommend NOT adding `oil` to the registry this pass (agrees with BA §2c) and flag as a candidate follow-up row for PO — do not silently fold into this fix's scope.
+
+### Design 1 — Rule AF-4 (primary, `chef-dish.md` Step 6.7)
+
+Insert immediately after L339 (`**Signal:** Script fires \`narrative_contradiction\`...`), before the `---` at L341 — same file, one more numbered rule beside AF-1/AF-2/AF-3, exact mirror of AF-3's structure/exit-code shape:
+
+```markdown
+### Rule AF-4 — Macro-Threshold Numeric-Literal Gate (SSOT-citation + comparator-arithmetic — run before send_telegram)
+
+→ skill: `.claude/skills/macro-threshold-gate/SKILL.md`
+
+Before constructing EITHER Block A or Block B `send_telegram` call, invoke the macro-threshold-gate
+on the composed narrative to detect numeric-literal drift on any macro-threshold citation (USD/VND,
+gold — metric-agnostic, registry-driven; `oil` deferred, see registry `_meta.oil_deferred`).
+
+Invoke (choose Block A or Block B text accordingly):
+```
+GATE_EXIT = skill `.claude/skills/macro-threshold-gate/SKILL.md`
+  post_body = <composed Block A or Block B text>
+  agent_id  = "unified-agent"
+```
+
+**Exit-code handling:**
+- `0` = PASS → proceed to `send_telegram` call(s). (A `[NOTE] metric_not_in_registry ...` line, if printed, is not a FAIL — copy it into the Block B WORK message per EC-2, do not silently drop it.)
+- `1` = FAIL — cited threshold or comparator-arithmetic diverges from `docs/data/macro-threshold-registry.json`; signal emitted to `po`. Self-correct (no external tool call needed — this is a static registry lookup, unlike AF-3's live re-probe):
+  1. Read stdout: `[FAIL] metric=... cited=... canonical=... claim="..."`
+  2. Rewrite the offending sentence using the registry's canonical value (or correct comparator direction).
+  3. Re-run this skill with corrected text.
+  4. Second-pass PASS → proceed to `send_telegram`.
+  5. Second-pass FAIL (`po_ruling_q1_20260808T113305`) — SENTENCE-SCOPED STRIP, not a dish-scoped block: (a) remove the offending numeral/threshold citation from the composed text entirely, (b) restate the same point in qualitative direction-only form (no numeral), (c) append `[AF-GATE: stripped unreconciled macro-threshold numeral — metric=<metric>]` to the Block B WORK message, (d) proceed to `send_telegram`. NEVER publish the un-reconciled numeral. NEVER suppress the whole dish — AF-4's offending span is always a single deletable numeral/clause (unlike AF-3's), so AF-3's "leave it in with an honest-gap note" half does NOT apply here.
+- `2` = config-error (registry unreadable/misconfigured) → fail-loud: `send_telegram(channel="bug", message="[unified-agent] macro-threshold-gate CONFIG ERROR")` and EXIT.
+
+**Signal:** Script fires `macro_threshold_drift` on FAIL (same `.signal_queue.rows[]` delivery mechanism `narrative_contradiction` already uses via `scripts/orch-apply.sh`, `to:"po"` — do not build a second signal path). Do NOT suppress it.
+```
+
+### Design 2 — Step 7.6 secondary check (defense-in-depth)
+
+Insert after L653 (`- \`quality_verdict\` and \`layers_walked_summary\`...`), before `**Write tool call (single atomic write):**` at L655/656 — runs on the composed-in-memory JSON, before the single `Write` call (mirrors this file's own AC-3 "compose in memory, one write" discipline, no second write):
+
+```markdown
+**Macro-Threshold Secondary Validation (defense-in-depth, FIX-CHEF-USDVND-THRESHOLD-NUMERIC-DRIFT-GATE)**
+
+Before the Write call below, run the SAME gate used in Step 6.7 Rule AF-4 against the composed-in-memory
+JSON's narrative fields — not a substitute for AF-4 (already ran pre-publish); exists because Step 7.6's
+`tnb_synthesis.*` is an independently-composed excerpt, not guaranteed byte-identical to Block A/B, and
+feeds frontend/downstream consumers per this step's own purpose statement.
+
+```
+GATE_EXIT = skill `.claude/skills/macro-threshold-gate/SKILL.md`
+  post_body = tnb_synthesis.us_macro_layer + "\n" + tnb_synthesis.vn_macro_layer + "\n" + join(known_gaps, "\n")
+  agent_id  = "unified-agent"
+```
+
+- `0` PASS → `metadata.macro_threshold_gate = "pass"`, proceed to Write unchanged.
+- `1` FAIL → apply the SAME sentence-scoped strip as Step 6.7 Rule AF-4 directly to the in-memory JSON
+  field(s) before Write. Do NOT re-run Step 7's `send_telegram` (already published) — this only corrects
+  the persisted record. `metadata.macro_threshold_gate = "corrected"`. The `macro_threshold_drift` signal
+  already fires from the script — no second signal path.
+- `2` config-error → `send_telegram(channel="bug", message="[unified-agent] macro-threshold-gate CONFIG ERROR (Step 7.6)")`. Do NOT abort the dish cycle here — Step 8's notebook/commit is mandatory (AC-3 settled-write invariant) and the dish already published; write the JSON with `metadata.macro_threshold_gate = "config_error"` and continue to Step 8.
+```
+Add `"macro_threshold_gate": "pass|corrected|config_error"` to the `metadata` object in the Step 7.6 JSON schema (after `layers_walked_summary`, L585).
+
+### Design 3 — `docs/data/macro-threshold-registry.json` (final, replaces BA §2c's illustrative shape)
+
+Refines BA's shape with 3 architect-level additions the script needs: (a) `aliases` per metric (BA's shape had no way to *locate* a metric mention in free text), (b) `historical_context_markers` (closes BA's open EC-1 risk — a temporal-context guard, same lexicon-in-data pattern as the comparator lists, not resolved by BA), (c) `number_format` per metric — **VND thresholds use BOTH `.` and `,` as thousands separators with no decimal (NFR-5)**, but **USD thresholds use `,` thousands + `.` decimal** (the gold example is literally `$4,052.50`) — a single universal separator-strip rule would mis-parse one of the two; this field disambiguates per-metric at parse time.
+
+```json
+{
+  "version": "1",
+  "_meta": {
+    "purpose": "SSOT for the macro-threshold numeric-literal gate (FIX-CHEF-USDVND-THRESHOLD-NUMERIC-DRIFT-GATE). scripts/macro-threshold-gate.sh reads ALL metrics/thresholds/comparators/lexicon/separator-conventions from THIS file at runtime — mirrors docs/data/claim-tool-map.json's SSOT-data-file pattern. ZERO metric/threshold/comparator literals in the shell script.",
+    "coupled_task": "FIX-USDVND-THRESHOLD-SSOT (backlog, still undecided) — if that row changes the production usd_vnd constant or its shape, this entry must be updated in the SAME change.",
+    "po_ratification": "po_goahead_20260808T113305 / po_ruling_q1_20260808T113305 on FIX-CHEF-USDVND-THRESHOLD-NUMERIC-DRIFT-GATE. usd_vnd.source corrected by architect (2026-08-08): macroTools.ts:125 anchor is right, but currencySignal() there is dead code, never called — the genuinely live evidence is macroAdjustments.ts's 8 cascade rules (cascadeEngine.ts-imported, fed live usdVndMarket from pollNews.ts/runImpactChain.ts). Value 25500 unchanged by this correction.",
+    "oil_deferred": "oil intentionally NOT added this pass — the repo's own oil thresholds already disagree (macroTools.ts oilSignal(): >90/<70, dead code; macroAdjustments.ts: >100, live) — same reconciliation-gap shape as usd_vnd/gold pre-fix. Flag as a candidate follow-up row; do not silently resolve here."
+  },
+  "crossing_comparators": { "en": ["exceeds", "above", "breach above", "crossed", "broke above"], "vi": ["vượt", "vượt mốc", "phá vỡ", "trên"] },
+  "neutral_comparators":  { "en": ["vs", "near", "level"], "vi": ["so với", "gần", "mức"] },
+  "historical_context_markers": { "en": ["back in", "historically", "previously reached"], "vi": ["hồi", "đã có lúc", "từng chạm", "năm ngoái", "trước đây"] },
+  "metrics": {
+    "usd_vnd": {
+      "unit": "VND",
+      "number_format": "thousands_only",
+      "value": 25500,
+      "comparator": "gt",
+      "aliases": ["USD/VND", "USD-VND", "tỷ giá", "tỷ giá USD/VND", "tỷ giá USDVND"],
+      "source": "apps/mcp-server/src/domain/services/cascade/macroAdjustments.ts:111-134,209-238 (8 live cascade rules, cascadeEngine.ts-imported, fed live usdVndMarket) — NOT macroTools.ts:125 currencySignal(), confirmed dead code, see _meta.po_ratification"
+    },
+    "gold_usd": {
+      "unit": "USD/oz",
+      "number_format": "comma_thousands_dot_decimal",
+      "value": 4300,
+      "comparator": "gt",
+      "aliases": ["gold", "vàng", "XAU"],
+      "source": "docs/agents/unified-agent/flow/chef-dish.md Step 6, AUTO-CURE c98"
+    }
+  }
+}
+```
+
+### Design 4 — `scripts/macro-threshold-gate.sh` contract (architect designs, developer implements — NOT authored here)
+
+Mirrors `scripts/narrative-truth-gate.sh`'s exit-code + signal-emission conventions, but **simpler**: pure text/arithmetic, no MCP gateway re-probe (no network dependency, no "No-Bash cowork subagent" gateway-availability caveat — Bash-availability caveat from `claim-truth-gate/SKILL.md` still applies, mirror its probe-don't-inherit note verbatim).
+
+- **CLI:** `bash scripts/macro-threshold-gate.sh <text-file|-> <agent_id>` — 2 required args, no cache arg (nothing to cache; static registry lookup).
+- **Algorithm (per metric in registry, per alias match in text):** locate each `aliases[]` occurrence → scan a bounded window (~80 chars) around it for (1) a `historical_context_markers` hit → skip this occurrence entirely (informational only, EC-1); (2) a comparator word from `crossing_comparators`/`neutral_comparators`; (3) 1-2 numeric tokens, parsed per that metric's `number_format` (thousands_only: strip both `.`/`,`; comma_thousands_dot_decimal: strip `,` only, keep `.` as decimal). Two numbers found near a crossing comparator → (observed, threshold) pair, run BOTH sub-checks. One number found → SSOT-citation check only (nothing to arithmetic-check against). Neutral comparator → SSOT-citation check only, never arithmetic (NFR-3/EC-4).
+- **EC-2 unregistered metric:** a numeric-threshold-shaped citation whose keyword matches no registry alias → print `[NOTE] metric_not_in_registry metric="<matched text>" claim="..."`, exit 0 contribution (not a FAIL — nothing to check against — but never silently absorbed either; AF-4 instructs the calling flow to log it).
+- **Exit codes:** `0` PASS (or nothing to check) · `1` FAIL — `[FAIL] metric=... cited=... canonical=... claim="..."` per BA §2e · `2` config-error (missing args, missing/malformed `macro-threshold-registry.json`, unreadable input file).
+- **Signal emit on FAIL:** append `macro_threshold_drift` row to `.signal_queue.rows[]` via `scripts/orch-apply.sh`, `to:"po"` — same jq-merge block shape as `narrative-truth-gate.sh` L397-452 (reuse verbatim, swap payload fields to `{agent_id, metric, cited, canonical, comparator, claim_text}`). `NTG`-style env escape hatch for tests: `MTG_SKIP_SIGNAL_EMIT=1`.
+- **Test file:** `scripts/test-macro-threshold-gate.sh`, mirrors `scripts/test-narrative-truth-gate.sh`'s DoD-harness shape. Minimum cases: (a) "USD/VND 26,130 exceeds 26,500" → FAIL (SSOT-citation, cited≠25500); (b) "USD/VND 24,800 exceeds 25,500" → FAIL (comparator-arithmetic, correct cited value but false claim — proves the 2 sub-checks are independent); (c) gold "breach above $2,200" (SSOT-citation, cited≠4300) → FAIL; (d) gold "near $4,300" → PASS (negative control, neutral comparator, NFR-3); (e) "tỷ giá đã có lúc chạm mốc 25,000 hồi 2023" → PASS (EC-1 historical guard); (f) `26.500` (VN dot-thousands) and `26,500` parse identically for `usd_vnd` (NFR-5); (g) oil citation with a number → `[NOTE] metric_not_in_registry`, exit 0 (EC-2); (h) determinism — identical input → identical verdict across repeated runs.
+
+### Design 5 — `.claude/skills/macro-threshold-gate/SKILL.md` (architect designs, developer implements)
+
+Mirrors `claim-truth-gate/SKILL.md`'s invocation-contract shape (Purpose / Engine-SSOT-pointer / Invocation contract table `post_body`+`agent_id` / exit-code table / self-correct protocol / smoke-test pointer / "Not this skill's job" pointer table routing lexicon-edits to the registry and engine-edits to the script). Key divergences from claim-truth-gate to carry over explicitly: (1) no `cache` input (nothing to cache), (2) no "Time-sensitivity override" section — CHEF is non-real-time and has no override, per `po_ruling_q1_20260808T113305`; the SENTENCE-SCOPED STRIP *is* this gate's only persistent-FAIL path, document it in place of that section, (3) self-correct step 1 is "rewrite from the registry value" not "re-call a tool" (no MCP call in this engine at all).
+
+### File-by-file fan-out (for PM)
+
+**agent-father** (flow/knowledge-file edit authority, one combined pass on `chef-dish.md` per BA's own note):
+- `docs/agents/unified-agent/flow/chef-dish.md:52,69,371,467-469` (BA §1c textual reconciliation, verbatim before/after already specified there)
+- `docs/agents/unified-agent/flow/chef-dish.md` new Rule AF-4 (Design 1 above) + Step 7.6 secondary-check insert (Design 2 above)
+- `docs/standards/tnb-methodology-layers.md:21`, `docs/agents/tran-ngoc-bau/flow/main.md:87`, `docs/agents/tran-ngoc-bau/flow/audit-methodology.md:12` (BA §1c, unchanged)
+
+**developer** (cross-service specialist per `zone-detect`; precedent: `claim-truth-gate/SKILL.md` + `narrative-truth-gate.sh` + `claim-tool-map.json` were built as one engineering unit, CCATO-T1→T2, not split across agent types — same precedent applied here):
+- `docs/data/macro-threshold-registry.json` (new, Design 3 content above, verbatim)
+- `scripts/macro-threshold-gate.sh` (new, Design 4 contract above)
+- `scripts/test-macro-threshold-gate.sh` (new, Design 4 test cases above)
+- `.claude/skills/macro-threshold-gate/SKILL.md` (new, Design 5 outline above)
+
+**Sequencing:** developer's artifacts (registry+script+skill) must land BEFORE agent-father wires Rule AF-4 into `chef-dish.md` — the flow-doc edit references a skill/script that must exist first, or the next CHEF cycle fails on a missing-file `2`-exit. PM should sequence the two subtasks with that dependency, not parallelize them.
+
+### Risk flags
+
+- **Dead-code cleanup, out of scope:** `macroTools.ts` L97-129 (`oilSignal`/`goldSignal`/`policySignal`/`currencySignal`) is fully unreferenced. Not actioned here (not this task's file/scope) — candidate for `code-janitor`.
+- **oil reconciliation gap** — flagged above (Independent verification #4), candidate follow-up PO row, same shape as `FIX-USDVND-THRESHOLD-SSOT`.
+- **Sequencing dependency** (above) — a real footgun if PM parallelizes the two subtasks instead of sequencing them.
+- **No DDD violation:** all 3 new artifacts are cross-service infra (script+data+skill), zero `apps/*` domain-layer touch; the only `apps/mcp-server` files this cycle *read* (not modified) are `macroTools.ts`/`macroAdjustments.ts`, explicitly read-only per BA §6 — confirmed, no edit proposed to either.
+
 ## Decision Journal
 See `docs/agent-memory/decisions/sprint-COWORK-RELIABILITY-ba.md`, task_id `FIX-CHEF-USDVND-THRESHOLD-NUMERIC-DRIFT-GATE`.
 
