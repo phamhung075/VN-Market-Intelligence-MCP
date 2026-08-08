@@ -874,3 +874,15 @@
 **Mitigation:** No immediate action beyond signal routing.
 
 ---
+
+## Anomaly: A-30 · rag-service memory 96.43% sustained (no reclamation dip)
+**Severity:** WARN | **Date:** 2026-08-08 | **Status:** OPEN
+**Location:** rag-service container
+**Details:** Memory sustained at 96.43% (987.4MiB / 1GiB) with no reclamation dip over 65-second probe window. Free memory 36.6 MiB, below 40 MiB floor threshold.
+**Impact:** Service at critical memory margin; risk of OOM kill if usage spikes. Loss of reclamation capability indicates memory leak or inefficient usage.
+**Root cause:** RAG service embedding model loads with no release path; sentence-transformers model singleton retention
+**Zone owner:** dev-rag-service
+**Last reported:** 2026-08-08T08:08:32Z (signal sys-20260808T080747-14bb, system-auditor -> po, dedup_key=microservice_memory_degraded:rag-service:A-30, WARN Telegram sent)
+**Mitigation:** No immediate action beyond signal routing.
+
+---
