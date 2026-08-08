@@ -1,8 +1,8 @@
 # Developer — Notebook
 
-**Last updated:** 2026-08-08T23:01:55Z | **Cycle:** FIX-DEVTEAM-IDLE-CHAIN-MAIN-COMPLETION (docs/agents/dev-team/flow/, router-dispatched, session 165f4245-6173-4054-87fd-c55bb626265f) — Step 1 durable-inbox read/clear + §2.3 stamp cross-ref landed, ready for REVIEW.
+**Last updated:** 2026-08-08T23:01:55Z | **Cycle:** FIX-DEVTEAM-IDLE-CHAIN-MAIN-COMPLETION (docs/agents/dev-team/flow/, router-dispatched) — Step 1 durable-inbox read/clear + §2.3 stamp cross-ref landed, ready for REVIEW.
 
-## Session 2026-08-08T23:01:55Z — FIX-DEVTEAM-IDLE-CHAIN-MAIN-COMPLETION (docs/agents/dev-team/flow/, router-dispatched, session 165f4245-6173-4054-87fd-c55bb626265f)
+## Session 2026-08-08T23:01:55Z — FIX-DEVTEAM-IDLE-CHAIN-MAIN-COMPLETION (docs/agents/dev-team/flow/, router-dispatched)
 
 **Task:** Companion CONSUMER half to `FIX-DEVTEAM-IDLE-CHAIN-P2A-DURABLE-DRAIN` (producer, DONE_VERIFIED) and `FIX-DEVTEAM-IDLE-CHAIN-P1A-MAIN-ROTATION` (rotation, DONE_VERIFIED): `.dev_team_idle_chain.pending_triage_inbox` was write-only — nothing in `main.md`'s own Step 1 (PO Triage) ever read, drained, or cleared it (24+ unconsumed envelopes, some CRITICAL, sat there). Brief `docs/architecture-briefs/2026-07-25-devteam-idle-chain-rotation-durable-inbox.md` §3.2 is the SSOT for the consume-contract.
 
