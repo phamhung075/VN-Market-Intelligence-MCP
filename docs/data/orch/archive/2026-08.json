@@ -6141,6 +6141,85 @@
           "observed_at": "2026-08-08T19:19:07Z"
         }
       }
+    },
+    {
+      "id": "P1-DETECTOR-CLOSURE-TASK-ARCHIVE",
+      "title": "RC-DETECTOR §1.2: pm/flow/task-archive.md — on DONE_VERIFIED w/ origin_signal_id, flip signal_queue row READ->RESOLVED",
+      "status": "DONE_VERIFIED",
+      "type": "FIX",
+      "priority": "high",
+      "size": "S",
+      "zone": "docs/agents/pm/",
+      "sprint": "SYSTEMIC-REMAKE-P1",
+      "detail_ref": "docs/data/orch/archive/backlog-detail.json#P1-DETECTOR-CLOSURE-TASK-ARCHIVE",
+      "verification": {
+        "raw_probe": {
+          "tool": "grep -n origin_signal_id docs/agents/pm/flow/task-archive.md",
+          "args": "live working-tree file, HEAD 13715ee87",
+          "live_value_observed": "4 hits. L118-123 is an EXECUTABLE step, not prose: '3. Signal closure back-reference (additive - runs BEFORE the eviction script moves done_verified[] off the hot file...)' followed by a live jq: SIGNAL_IDS=$(jq -r '[.task_board.done_verified[]? | select(.origin_signal_id != null) | .origin_signal_id] | unique | .[]'). L13 states the READ->RESOLVED same-commit invariant.",
+          "observed_at": "2026-08-08T22:19:15Z",
+          "evidence_commit": "13715ee87",
+          "verdict": "SHIPPED - board row was stranded at BACKLOG while the fix was already live in source"
+        }
+      },
+      "verified_at": "2026-08-08T22:20:55Z",
+      "verified_by": "po/remint-rc-idle-loops",
+      "updated_by": "po",
+      "closed_reason": "Already shipped in source; board row was stranded at BACKLOG. Closed on live source raw-probe (see .verification.raw_probe), not on self-report.",
+      "updated_at": "2026-08-08T22:21:00Z"
+    },
+    {
+      "id": "P1-DRIFT-QUARANTINE-FREEZE-FLAG",
+      "title": "RC-DRIFT §1.3: project-stats.json — quarantine zero-reader recurringBugEscalationFlag/escalationReason",
+      "status": "DONE_VERIFIED",
+      "type": "FIX",
+      "priority": "med",
+      "size": "XS",
+      "zone": "docs/data/",
+      "sprint": "SYSTEMIC-REMAKE-P1",
+      "detail_ref": "docs/data/orch/archive/backlog-detail.json#P1-DRIFT-QUARANTINE-FREEZE-FLAG",
+      "verify_note": "prior_status=TODO",
+      "verification": {
+        "raw_probe": {
+          "tool": "jq -r 'keys|join(\",\")' docs/data/project-stats.json",
+          "args": "live working-tree file, HEAD 13715ee87",
+          "live_value_observed": "recurringBugEscalationFlag and escalationReason are BOTH ABSENT from the live key set (deleted outright - strictly stronger than the specced _maintained_by quarantine comment). lastSuccessfulCycle also absent. _maintained_by is present and reads 'generator (do not hand-edit toolCount or cronJobCount)'. Residual: currentSprint still present (tracked by RC-DRIFT sibling, not this row).",
+          "observed_at": "2026-08-08T22:19:15Z",
+          "evidence_commit": "13715ee87",
+          "verdict": "SATISFIED BY DELETION - intent of the quarantine (nothing new starts trusting a zero-reader field) is met; field cannot be read because it no longer exists"
+        }
+      },
+      "verified_at": "2026-08-08T22:20:55Z",
+      "verified_by": "po/remint-rc-idle-loops",
+      "updated_by": "po",
+      "closed_reason": "Already shipped in source; board row was stranded at BACKLOG. Closed on live source raw-probe (see .verification.raw_probe), not on self-report.",
+      "updated_at": "2026-08-08T22:21:00Z"
+    },
+    {
+      "id": "P1-DETECTOR-CLOSURE-TRIAGE-SIGNALS",
+      "title": "Wire origin_signal_id field in PO triage-signals flow",
+      "status": "DONE_VERIFIED",
+      "type": "feature",
+      "zone": "docs/agents/po/",
+      "priority": "P1",
+      "size": "S",
+      "detail_ref": "docs/data/orch/archive/backlog-detail.json#P1-DETECTOR-CLOSURE-TRIAGE-SIGNALS",
+      "verify_note": "prior_status=TODO",
+      "verification": {
+        "raw_probe": {
+          "tool": "grep -n origin_signal_id docs/agents/po/flow/triage-signals.md",
+          "args": "live working-tree file, HEAD 13715ee87",
+          "live_value_observed": "3 hits. L27 is the mandated additive spec block: '`origin_signal_id` (additive - generalizes across signal-born task rows): any row above that mints a new .task_board entry directly from an incoming signal (repair_task_request, zone_missing_tier3, ci_red)...' - i.e. the RC-DETECTOR 1.2 wiring is present in the live flow doc, not merely planned.",
+          "observed_at": "2026-08-08T22:19:15Z",
+          "evidence_commit": "13715ee87",
+          "verdict": "SHIPPED - board row was stranded at BACKLOG while the fix was already live in source"
+        }
+      },
+      "verified_at": "2026-08-08T22:20:55Z",
+      "verified_by": "po/remint-rc-idle-loops",
+      "updated_by": "po",
+      "closed_reason": "Already shipped in source; board row was stranded at BACKLOG. Closed on live source raw-probe (see .verification.raw_probe), not on self-report.",
+      "updated_at": "2026-08-08T22:21:00Z"
     }
   ],
   "closed_sprints": [],
@@ -9642,6 +9721,20 @@
       "triaged_at": "2026-08-07T13:09:54Z",
       "triaged_by": "po/triage-agentfather-20260807T1303Z",
       "disposition": "RETRACTED — premise disproven at source, per triage-signals.md system-issue rule 'Verify the premise before acting'. Signal claims the docs/agent-memory/health/team-tool-recheck-*.md writer has been silent since 2026-06-23 and asks PO to decide replace-vs-retire. The writer is ALIVE: three files exist from the last 48h — team-tool-recheck-2026-08-06-0739.md, -2026-08-06-1318.md, and -2026-08-07-1258.md (the last written today, committed df641de4c). The replace-vs-retire decision is therefore MOOT: the recheck was already migrated off the dead cloud RemoteTrigger trig_019Q8D5xttjZn6iytx2Ld9dW to a LOCAL agent-driven step — agent-father's own keep flow runs team-tool-recheck.md as Step 5b unconditionally every sweep. That is exactly the migration the no-RemoteTrigger directive (feedback_no_remote_trigger_all_local) prescribes, so the directive is satisfied, not violated. The 30d memory-prune rule is harmless against a writer producing daily output. NO board row minted. code-janitor's detector should key on the newest file's mtime, not on a hardcoded 2026-06-23 last-known date."
+    },
+    {
+      "id": "cj-20260807T223408Z",
+      "ts": "2026-08-07T22:34:08Z",
+      "from": "code-janitor",
+      "to": "po",
+      "type": "system-issue",
+      "summary": "team-tool-recheck writer dead since 06-23 — replace-vs-retire decision needed",
+      "severity": "LOW",
+      "status": "triaged",
+      "payload_ref": "docs/signals/processed/janitor-health-recheck-writer-retired-2026-08-07.json",
+      "triaged_at": "2026-08-08T00:02:36Z",
+      "triaged_by": "po",
+      "disposition": "ACK-WITH-CORRECTION — premise falsified at source. The requested replace-vs-retire decision needs no answer: the local-cron replacement already shipped 2026-08-06 (commit 9e0f73bb8, CHORE-TEAM-TOOL-RECHECK-LOCAL-CRON) and the writer produced 3 reports since, the last committed df641de4c ~10h BEFORE this signal fired. Valid residual actioned instead: scripts/agents-flow/memory-prune-sweep.sh has no liveness predicate at all and hardcodes the dead-writer claim at line 122 — minted FIX-JANITOR-PRUNE-SWEEP-HARDCODED-DEAD-WRITER-PREMISE (backlog, P2, cross-service/, next_agent=developer). The 30d retention delete itself is correct and stays."
     }
   ],
   "backlog_detail": [],
