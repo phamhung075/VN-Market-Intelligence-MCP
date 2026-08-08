@@ -1,45 +1,42 @@
 {
   "ticker": "DXG",
   "signal_type": "bctc_signal",
-  "quarter": "unavailable — get_bctc_full returns \"Chưa có dữ liệu BCTC\" (10th+ consecutive cycle)",
+  "quarter": "unavailable (get_bctc_full returns \"Chưa có dữ liệu BCTC\" — 11th+ consecutive cycle)",
   "mode": "routine",
   "beat_miss": null,
-  "product": "Residential real-estate development and property brokerage (Dat Xanh Group).",
-  "customer": "Retail homebuyers and institutional JV partners in HCMC/southern Vietnam residential projects.",
-  "ops": "ROE 1.9% (sector-comparison, annualized) vs sector median 7.3%; PE 66.5 at +312% premium to sector median — EY_SPREAD -3.50pp -> AVOID valuation, confirmed 2nd consecutive cycle (not a one-off); foreign flow net -347K shares (weaker than sector).",
-  "mgmt": "Q2-2026 filing overdue (deadline 30/07/2026 passed); get_bctc_full has returned no data for 10+ consecutive cycles — persistent extraction gap flagged, not fabricated. Valuation reading sourced independently from get_sector_comparison, unaffected by the BCTC-extraction gap.",
-  "as_of": "2026-08-08T00:00:00Z",
-  "cycle_id": "20260808-0000",
-  "ey_spread": {
+  "net_profit_delta_pct": null,
+  "product": "Real-estate developer — residential projects, land-bank development (BĐS)",
+  "customer": "Homebuyers/investors in DXG-developed residential projects, primarily southern Vietnam urban markets",
+  "ops": "get_bctc_full returns no data (11th+ consecutive cycle, extraction pipeline gap despite DXG_2026_Q1.pdf, DXG_2026_Q2.pdf and multiple prior-year PDFs on file). Valuation instead sourced from get_sector_comparison (independent data path): PE 66.5 vs sector median 16.1 (+312% premium), ROE 1.9% vs sector median 7.3% (below median)",
+  "mgmt": "Q2-2026 filing tracked QUÁ HẠN (deadline 30/07/2026 passed); track record on BCTC data completeness has been poor for 11+ consecutive cycles regardless of filing status",
+  "valuation": {
     "pe": 66.5,
-    "earning_yield_pct": 1.5,
-    "max_deposit_rate_pct": 5,
-    "spread_pp": -3.5,
+    "pb": 1.2,
+    "roe_pct": 1.9,
+    "ey_pct": 1.504,
+    "ey_spread_pp": -3.496,
     "verdict": "AVOID"
   },
+  "kinhdich": {
+    "que": "Tap Kham (29)",
+    "xu_huong": "BAT LOI",
+    "tin_hieu": "BAN",
+    "do_tin_cay_pct": 100
+  },
   "esc_gate": {
-    "esc1_accounting_manipulation": "unevaluable (no BCTC data)",
-    "esc2_balance_check": "unevaluable (no BCTC data)",
-    "esc3_ocf_ni_divergence": "unevaluable — get_cash_flow returns implausible OCR-corrupted values (~4.2e18 VND-mn Q1-2026 operating_cf); discarded, not used in any calc",
-    "esc4_nonop_related_party": "unevaluable (no BCTC data)",
-    "esc5_refine_confidence": "report_id=null (refine_status=PENDING) → FALSE/skip",
-    "escalation_status": "NONE"
+    "esc1": "unevaluable (no Bash/Glob grant, and no BCTC data available)",
+    "esc2": "unevaluable — no balance-sheet data from get_bctc_full",
+    "esc3": "unevaluable — get_cash_flow Q1-2026 operating_cf returns an implausible ~4.23e18 VND figure (3rd consecutive cycle of this OCR/extraction corruption), discarded from any calc",
+    "esc4": "unevaluable — no P&L breakdown available",
+    "esc5": "unevaluable — no report_id resolvable (get_bctc_full shows no BCTC data)"
   },
-  "kd_reading": {
-    "hexagram": "29 Tap Kham",
-    "trend": "BAT LOI",
-    "signal": "BAN",
-    "confidence_pct": 100
-  },
-  "roe_pct_annualized": 1.9,
-  "sector_pe_median": 16.1,
-  "insider": "no significant insider activity",
-  "legal_risk": "none",
-  "data_quality_note": "get_bctc_full(DXG) = 'Chưa có dữ liệu BCTC' for 10+ consecutive cycles despite DXG_2026_Q2.pdf, DXG_2025_Q*.pdf on file since 2026-06/08 — standing extraction gap, not re-litigated each cycle. Valuation figures sourced from get_sector_comparison (independent data source).",
-  "source_agent": "bctc-analyst",
+  "kd_note": "KD reading corroborates the AVOID valuation verdict (both BAT LOI/BAN at 100% confidence) — 3rd consecutive cycle of agreement between the two independent signal paths",
+  "insider": "Không có tín hiệu giao dịch nội bộ đáng kể",
+  "data_gap_note": "get_bctc_full returns 'Chưa có dữ liệu BCTC' despite DXG_2026_Q1.pdf (stored 2026-06-13) and DXG_2026_Q2.pdf (stored 2026-08-01) both present in list_stored_pdfs — flagging for dev-team if this persists past 15 cycles without resolution",
+  "as_of": "2026-08-08T15:09:22Z",
   "_processed": {
-    "fingerprint": "a13d34a3b2e43f7a7853668aaf559f6ae844a174c95687d6c4ef9682599c1544",
-    "processedAt": "2026-08-08T00:20:58Z",
+    "fingerprint": "e9d10062f3bcf025aab4e5d5f2312b633333f955a2e3224dcdccd69c221926da",
+    "processedAt": "2026-08-08T15:26:06Z",
     "processedBy": "dev-team",
     "result": "routed-to-po"
   }

@@ -4,42 +4,39 @@
   "quarter": "Q1-2026",
   "mode": "routine",
   "beat_miss": null,
-  "product": "Integrated steel production (construction steel, HRC, steel pipe) plus agriculture/livestock feed segment.",
-  "customer": "Domestic construction contractors/distributors and export HRC buyers.",
-  "ops": "Q1-2026 gross margin 15.8%; ROE 12.7% (sector-comparison, annualized) vs sector median 2.9% (steel sector broadly weak); operating_profit line extracted as 0 (corrupt) — excluded from ESC-4, not used in verdict.",
-  "mgmt": "Q2-2026 filing overdue (deadline 30/07/2026 passed); operating_profit=0 extraction anomaly persists 7th+ cycle without dev-team fix — flagged, honestly discarded, not fabricated.",
-  "as_of": "2026-08-08T00:00:00Z",
-  "cycle_id": "20260808-0000",
-  "ey_spread": {
+  "net_profit_delta_pct": null,
+  "product": "Steel manufacturing (construction steel, HRC/CRC coil, steel pipe), agriculture (feed, livestock) as diversification arm",
+  "customer": "Domestic construction/infrastructure contractors, export steel buyers (HRC), agri-food distributors",
+  "ops": "Gross margin 15.8%; annualized ROE 12.7% (sector-comparison) vs sector median 2.9% — well above steel peers; PE 14.2 at 57% discount to sector median 32.6. Reported operating_profit=0 and EBITDA=0 in raw extraction — known corrupted/unpopulated field (9th+ consecutive cycle), net_profit and gross_profit figures are unaffected and used for all ratios",
+  "mgmt": "Q2-2026 filing tracked QUÁ HẠN (deadline 30/07/2026 passed); HPG_2026_Q2.pdf on file since 2026-08-01, not yet extracted",
+  "valuation": {
     "pe": 14.2,
-    "earning_yield_pct": 7.04,
-    "max_deposit_rate_pct": 5,
-    "spread_pp": 2.04,
+    "pb": 1.7,
+    "roe_pct": 12.7,
+    "ey_pct": 7.042,
+    "ey_spread_pp": 2.042,
     "verdict": "FAIR"
   },
+  "kinhdich": {
+    "que": "Mong (4)",
+    "xu_huong": "TRUNG TINH",
+    "tin_hieu": "GIU",
+    "do_tin_cay_pct": 38
+  },
   "esc_gate": {
-    "esc1_accounting_manipulation": "unevaluable (E1 6-pass trick detection scope-reduced — no Bash/Glob to enumerate cache dir, standing gap)",
-    "esc2_balance_check": "FALSE (imbalance=0.00%)",
-    "esc3_ocf_ni_divergence": "DATA-COVERAGE-LIMITED (3/4 quarters returned by get_cash_flow) — guard held, no re-emit",
-    "esc4_nonop_related_party": "DISCARDED — operating_profit=0 extraction corruption (7th+ cycle), no valid non_operating_share computable",
-    "esc5_refine_confidence": "refine_status=PARTIAL → report_id null → FALSE/skip",
-    "escalation_status": "NONE"
+    "esc1": "unevaluable (no Bash/Glob grant)",
+    "esc2": "FALSE (imbalance=0.00% — assets exactly equal liab+equity)",
+    "esc3": "DATA-COVERAGE-LIMITED (3/4 quarters returned by get_cash_flow)",
+    "esc4": "discarded — operating_profit=0 is a known corrupted field (9th+ cycle), formula would falsely show ~100% non_operating_share; not a genuine finding",
+    "esc5": "FALSE — refine_status=PARTIAL (report_id=null), refine not complete, skip"
   },
-  "kd_reading": {
-    "hexagram": "4 Mong",
-    "trend": "TRUNG TINH",
-    "signal": "GIU",
-    "confidence_pct": 37
-  },
-  "roe_pct_annualized": 12.7,
-  "sector_pe_median": 32.6,
-  "insider": "no significant insider activity",
-  "legal_risk": "none",
-  "data_quality_note": "BCTC data last-known-good since VPS push 2026-08-04T08:34:40Z (~88h stale, SLA 48h breached); Q2-2026 PDF on file since 2026-08-01 but not yet extracted server-side.",
-  "source_agent": "bctc-analyst",
+  "sentiment_30d": "ỔN ĐỊNH, slope +0.00, 4/8 tin bullish 2 bearish",
+  "insider": "Không có tín hiệu giao dịch nội bộ đáng kể",
+  "data_gap_note": "get_bctc_full/get_cash_flow anchored on Q1-2026 (fetchedAt 2026-06-07T11:12:22Z); Q2-2026 PDF stored but not yet extracted",
+  "as_of": "2026-08-08T15:09:22Z",
   "_processed": {
-    "fingerprint": "07df35371702f3eacb2dd5c1fa8f28e80a9fcada0d8a2b2a71761af76009544e",
-    "processedAt": "2026-08-08T00:20:58Z",
+    "fingerprint": "9602cef9b3784db8f4fc27a4db39bef6751c4c7a8129677b79783296526a25cf",
+    "processedAt": "2026-08-08T15:26:06Z",
     "processedBy": "dev-team",
     "result": "routed-to-po"
   }

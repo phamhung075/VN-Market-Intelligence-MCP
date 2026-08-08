@@ -22903,7 +22903,7 @@
         "last_served_tick": "2026-08-08T14:25:57Z"
       }
     },
-    "_updated_at": "2026-08-08T14:54:55Z",
+    "_updated_at": "2026-08-08T15:26:06Z",
     "_updated_by": "dev-team",
     "pending_triage_inbox": [
       {
@@ -23119,6 +23119,305 @@
         "payload": "[notebook-immutability-guard] WARN: docs/agent-memory/notebooks/system-auditor.md — retained section '## c50 · 2026-08-08T13:30Z' has different content staged than at HEAD. Per .claude/skills/notebook-write/SKILL.md AC-2a, a retained '## ' section must be byte-identical across a cycle; the only authorized mutations are dropping a whole oldest section, the AC-2b sub-block intra-prune, or trimming the CURRENT cycle's own new section. If cap pressure forced a shrink, DROP the whole section (archive verbatim if it must be kept) and add a NEW marker section instead — see docs/agent-memory/notebooks/architect.md for the reference-correct pattern. mode=warn (default warn — never blocks; set GIT_NOTEBOOK_IMMUTABILITY_MODE=reject to hard-enforce once re-validated, see scripts/audits/verify-notebook-immutability-gate.sh).\n",
         "createdAt": "2026-08-08T14:34:58Z",
         "drained_at": "2026-08-08T14:54:55Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "e9d10062f3bcf025aab4e5d5f2312b633333f955a2e3224dcdccd69c221926da",
+        "source": "file",
+        "from": "unknown",
+        "to": "po",
+        "type": "bctc_signal",
+        "priority": "low",
+        "payload": {
+          "ticker": "DXG",
+          "signal_type": "bctc_signal",
+          "quarter": "unavailable (get_bctc_full returns \"Chưa có dữ liệu BCTC\" — 11th+ consecutive cycle)",
+          "mode": "routine",
+          "beat_miss": null,
+          "net_profit_delta_pct": null,
+          "product": "Real-estate developer — residential projects, land-bank development (BĐS)",
+          "customer": "Homebuyers/investors in DXG-developed residential projects, primarily southern Vietnam urban markets",
+          "ops": "get_bctc_full returns no data (11th+ consecutive cycle, extraction pipeline gap despite DXG_2026_Q1.pdf, DXG_2026_Q2.pdf and multiple prior-year PDFs on file). Valuation instead sourced from get_sector_comparison (independent data path): PE 66.5 vs sector median 16.1 (+312% premium), ROE 1.9% vs sector median 7.3% (below median)",
+          "mgmt": "Q2-2026 filing tracked QUÁ HẠN (deadline 30/07/2026 passed); track record on BCTC data completeness has been poor for 11+ consecutive cycles regardless of filing status",
+          "valuation": {
+            "pe": 66.5,
+            "pb": 1.2,
+            "roe_pct": 1.9,
+            "ey_pct": 1.504,
+            "ey_spread_pp": -3.496,
+            "verdict": "AVOID"
+          },
+          "kinhdich": {
+            "que": "Tap Kham (29)",
+            "xu_huong": "BAT LOI",
+            "tin_hieu": "BAN",
+            "do_tin_cay_pct": 100
+          },
+          "esc_gate": {
+            "esc1": "unevaluable (no Bash/Glob grant, and no BCTC data available)",
+            "esc2": "unevaluable — no balance-sheet data from get_bctc_full",
+            "esc3": "unevaluable — get_cash_flow Q1-2026 operating_cf returns an implausible ~4.23e18 VND figure (3rd consecutive cycle of this OCR/extraction corruption), discarded from any calc",
+            "esc4": "unevaluable — no P&L breakdown available",
+            "esc5": "unevaluable — no report_id resolvable (get_bctc_full shows no BCTC data)"
+          },
+          "kd_note": "KD reading corroborates the AVOID valuation verdict (both BAT LOI/BAN at 100% confidence) — 3rd consecutive cycle of agreement between the two independent signal paths",
+          "insider": "Không có tín hiệu giao dịch nội bộ đáng kể",
+          "data_gap_note": "get_bctc_full returns 'Chưa có dữ liệu BCTC' despite DXG_2026_Q1.pdf (stored 2026-06-13) and DXG_2026_Q2.pdf (stored 2026-08-01) both present in list_stored_pdfs — flagging for dev-team if this persists past 15 cycles without resolution",
+          "as_of": "2026-08-08T15:09:22Z"
+        },
+        "createdAt": "",
+        "drained_at": "2026-08-08T15:26:06Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "d71794c90dfb9cedcc65b27a9931271962fecdbe60df909cb322eee1262a405b",
+        "source": "file",
+        "from": "unknown",
+        "to": "po",
+        "type": "bctc_signal",
+        "priority": "low",
+        "payload": {
+          "ticker": "FPT",
+          "signal_type": "bctc_signal",
+          "quarter": "Q1-2026",
+          "mode": "routine",
+          "beat_miss": null,
+          "net_profit_delta_pct": null,
+          "product": "IT services, offshore software exports (Japan/US/APAC), telecom infrastructure (FPT Telecom broadband), education (FPT Edu)",
+          "customer": "Enterprise IT buyers globally (offshore development contracts), domestic SME/retail broadband and telecom subscribers",
+          "ops": "Gross margin 34.0%, operating margin 22.0%, net margin 19.8%; annualized ROE 28.3% (sector-comparison) vs sector median 10.6% — well above tech peers; PE 13.8 trades at 20% discount to sector median 17.3",
+          "mgmt": "Q2-2026 filing tracked QUÁ HẠN (deadline 30/07/2026 passed, not yet ĐÃ NỘP); FPT_2026_Q2.pdf has been on file since 2026-08-01 but get_bctc_full still serves stale Q1-2026 as latest extracted period — extraction-pipeline lag, not a filing failure",
+          "valuation": {
+            "pe": 13.8,
+            "pb": 3.6,
+            "roe_pct": 28.3,
+            "ey_pct": 7.246,
+            "ey_spread_pp": 2.246,
+            "verdict": "FAIR"
+          },
+          "kinhdich": {
+            "que": "Tap Kham (29)",
+            "xu_huong": "BAT LOI",
+            "tin_hieu": "BAN",
+            "do_tin_cay_pct": 100
+          },
+          "esc_gate": {
+            "esc1": "unevaluable (no Bash/Glob grant, E1 6-pass trick detection scope-reduced)",
+            "esc2": "FALSE (imbalance=0.00% — assets exactly equal liab+equity)",
+            "esc3": "DATA-COVERAGE-LIMITED (3/4 quarters returned by get_cash_flow)",
+            "esc4": "FALSE (non_operating_share=2.0%, AC-1 pre-tax formula)",
+            "esc5": "PENDING — guard esc-deepdive:FPT:Q1-2026:ESC-5 still held by this agent's session (86400s TTL, expires 2026-08-08T15:12:52Z), no re-dispatch this cycle"
+          },
+          "sentiment_30d": "GIẢM (tiêu cực), slope -2.50, 8/9 tin bullish nhưng xu hướng điểm giảm",
+          "insider": "Không có tín hiệu giao dịch nội bộ đáng kể",
+          "data_gap_note": "get_bctc_full/get_cash_flow still anchored on Q1-2026 (fetchedAt 2026-05-24T06:55:35Z); Q2-2026 PDF stored but not yet OCR-extracted server-side",
+          "as_of": "2026-08-08T15:09:22Z"
+        },
+        "createdAt": "",
+        "drained_at": "2026-08-08T15:26:06Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "9602cef9b3784db8f4fc27a4db39bef6751c4c7a8129677b79783296526a25cf",
+        "source": "file",
+        "from": "unknown",
+        "to": "po",
+        "type": "bctc_signal",
+        "priority": "low",
+        "payload": {
+          "ticker": "HPG",
+          "signal_type": "bctc_signal",
+          "quarter": "Q1-2026",
+          "mode": "routine",
+          "beat_miss": null,
+          "net_profit_delta_pct": null,
+          "product": "Steel manufacturing (construction steel, HRC/CRC coil, steel pipe), agriculture (feed, livestock) as diversification arm",
+          "customer": "Domestic construction/infrastructure contractors, export steel buyers (HRC), agri-food distributors",
+          "ops": "Gross margin 15.8%; annualized ROE 12.7% (sector-comparison) vs sector median 2.9% — well above steel peers; PE 14.2 at 57% discount to sector median 32.6. Reported operating_profit=0 and EBITDA=0 in raw extraction — known corrupted/unpopulated field (9th+ consecutive cycle), net_profit and gross_profit figures are unaffected and used for all ratios",
+          "mgmt": "Q2-2026 filing tracked QUÁ HẠN (deadline 30/07/2026 passed); HPG_2026_Q2.pdf on file since 2026-08-01, not yet extracted",
+          "valuation": {
+            "pe": 14.2,
+            "pb": 1.7,
+            "roe_pct": 12.7,
+            "ey_pct": 7.042,
+            "ey_spread_pp": 2.042,
+            "verdict": "FAIR"
+          },
+          "kinhdich": {
+            "que": "Mong (4)",
+            "xu_huong": "TRUNG TINH",
+            "tin_hieu": "GIU",
+            "do_tin_cay_pct": 38
+          },
+          "esc_gate": {
+            "esc1": "unevaluable (no Bash/Glob grant)",
+            "esc2": "FALSE (imbalance=0.00% — assets exactly equal liab+equity)",
+            "esc3": "DATA-COVERAGE-LIMITED (3/4 quarters returned by get_cash_flow)",
+            "esc4": "discarded — operating_profit=0 is a known corrupted field (9th+ cycle), formula would falsely show ~100% non_operating_share; not a genuine finding",
+            "esc5": "FALSE — refine_status=PARTIAL (report_id=null), refine not complete, skip"
+          },
+          "sentiment_30d": "ỔN ĐỊNH, slope +0.00, 4/8 tin bullish 2 bearish",
+          "insider": "Không có tín hiệu giao dịch nội bộ đáng kể",
+          "data_gap_note": "get_bctc_full/get_cash_flow anchored on Q1-2026 (fetchedAt 2026-06-07T11:12:22Z); Q2-2026 PDF stored but not yet extracted",
+          "as_of": "2026-08-08T15:09:22Z"
+        },
+        "createdAt": "",
+        "drained_at": "2026-08-08T15:26:06Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "24492d39ade9cfe2c9572faf226ca09c72555d52a4a650a697c8812898ff023c",
+        "source": "file",
+        "from": "unknown",
+        "to": "po",
+        "type": "bctc_signal",
+        "priority": "low",
+        "payload": {
+          "ticker": "VCB",
+          "signal_type": "bctc_signal",
+          "quarter": "Q1-2026",
+          "mode": "routine",
+          "beat_miss": null,
+          "net_profit_delta_pct": null,
+          "product": "Retail and corporate banking, trade finance, treasury/FX, bancassurance cross-sell",
+          "customer": "Large corporates and SOEs, retail depositors/borrowers, import-export trade-finance clients",
+          "ops": "Operating profit margin 80.9% (bank-specific, pre-provision); net margin 54.3%; annualized ROE 16.7% (sector-comparison) vs sector median 17.6% — slightly below bank peers; PE 14.1 at 57% premium to sector median 9.0",
+          "mgmt": "Q1-2026 ĐÃ NỘP on time (2026-07-19) — not overdue; no Q2-2026 tracking row yet in calendar for this ticker (consistent with EIB/SHB, all 3 banks that already submitted Q1)",
+          "valuation": {
+            "pe": 14.1,
+            "pb": 2.2,
+            "roe_pct": 16.7,
+            "ey_pct": 7.092,
+            "ey_spread_pp": 2.092,
+            "verdict": "FAIR"
+          },
+          "kinhdich": {
+            "que": "Ton (41)",
+            "xu_huong": "TRUNG TINH",
+            "tin_hieu": "GIU",
+            "do_tin_cay_pct": 0
+          },
+          "esc_gate": {
+            "esc1": "unevaluable (no Bash/Glob grant)",
+            "esc2": "FALSE (imbalance=0.37%, below 0.5% threshold)",
+            "esc3": "FALSE — 4/4 quarters returned, divergence_ratio=|12,944,932/9,462,095-1|=0.368 < 0.40",
+            "esc4": "N/A — bank P&L structure (pre-provision operating profit exceeds PBT), pre-tax-consistent formula does not apply cleanly to banks",
+            "esc5": "FALSE — refine_status=PARTIAL (report_id=null), refine not complete, skip"
+          },
+          "sentiment_30d": "GIẢM (tiêu cực), slope -0.40, 0/6 tin bullish 2 bearish",
+          "insider": "Không có tín hiệu giao dịch nội bộ đáng kể",
+          "data_gap_note": "get_bctc_full/get_cash_flow anchored on Q1-2026 (fetchedAt 2026-07-19T12:43:43Z); VCB_2026_Q2.pdf stored since 2026-08-01, not yet extracted",
+          "as_of": "2026-08-08T15:09:22Z"
+        },
+        "createdAt": "",
+        "drained_at": "2026-08-08T15:26:06Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "a49b623ebdf7b457f03f77ab79a1073530a5dfe13d73564afa38507695b75123",
+        "source": "file",
+        "from": "ci-health-probe",
+        "to": "po",
+        "type": "ci_red",
+        "priority": "high",
+        "payload": {
+          "check_id": "CI-RED-6cbc7836",
+          "head_sha": "6cbc7836fb9bb9715ccefebb0e508ba9713d58c7",
+          "run_id": 31262924171,
+          "run_url": "https://github.com/phamhung075/VN-Market-Intelligence-MCP/actions/runs/31262924171",
+          "conclusion": "failure",
+          "failing_jobs": [
+            {
+              "name": "size-lint",
+              "conclusion": "failure",
+              "jobId": 93116405088
+            }
+          ],
+          "fingerprint": "5b03d59a8d609b9bcfaae522c5837844f4dd7b840b7b425e749f2b643e0fdd84",
+          "zone_owner": "dev-team (CI fix)",
+          "summary": "CI RED on main HEAD 6cbc7836fb9bb9715ccefebb0e508ba9713d58c7: size-lint",
+          "suggested_sprint_class": "FIX",
+          "verification_gate": "ci_green_on_subsequent_push"
+        },
+        "createdAt": "2026-08-08T14:55:49Z",
+        "drained_at": "2026-08-08T15:26:06Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "e1b54727b8cc15d2c05c1510b3d05f0dcdcf55286eebb804ac516553311fb099",
+        "source": "file",
+        "from": "commit-sweep-guard",
+        "to": "po",
+        "type": "bug-escalation",
+        "priority": "high",
+        "payload": "[sweep-guard] BARE commit about to absorb 9 staged file(s) not necessarily this actor's own: docs/data/orch/orch-state.json docs/handoffs/UC-CCA-P3-FR1-FR2-SKILL.md docs/handoffs/UC-CCA-P3-FR3-ALERT-COMMANDER.md docs/handoffs/UC-CCA-P3-FR3-BCTC-ANALYST.md docs/handoffs/UC-CCA-P3-FR3-CHEF.md docs/handoffs/UC-CCA-P3-FR3-DIGEST-PREDICT.md docs/handoffs/UC-CCA-P3-FR3-FB-MARKET-POSTER.md docs/handoffs/UC-CCA-P3-FR3-SPAWN-FANOUT-CLEANUP.md docs/handoffs/UC-CCA-P3-FR3-TRAN-NGOC-BAU.md. actor=165f4245-6173-4054-87fd-c55bb626265f mode=warn escalated=true prior_warns=11 threshold=3. Fix: git commit -m \"<msg>\" -- <own-files-only>.",
+        "createdAt": "2026-08-08T15:05:52Z",
+        "drained_at": "2026-08-08T15:26:06Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "94aa87f3180a3cfaf4fe2d0ad6602e524b2a3cc702f718e7ecae608e57b31140",
+        "source": "file",
+        "from": "commit-sweep-guard",
+        "to": "po",
+        "type": "bug-escalation",
+        "priority": "high",
+        "payload": "[notebook-immutability-guard] WARN: docs/agent-memory/notebooks/system-auditor.md — retained section '## c50 · 2026-08-08T13:30Z' has different content staged than at HEAD. Per .claude/skills/notebook-write/SKILL.md AC-2a, a retained '## ' section must be byte-identical across a cycle; the only authorized mutations are dropping a whole oldest section, the AC-2b sub-block intra-prune, or trimming the CURRENT cycle's own new section. If cap pressure forced a shrink, DROP the whole section (archive verbatim if it must be kept) and add a NEW marker section instead — see docs/agent-memory/notebooks/architect.md for the reference-correct pattern. mode=warn (default warn — never blocks; set GIT_NOTEBOOK_IMMUTABILITY_MODE=reject to hard-enforce once re-validated, see scripts/audits/verify-notebook-immutability-gate.sh).\n",
+        "createdAt": "2026-08-08T15:14:43Z",
+        "drained_at": "2026-08-08T15:26:06Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "d121edd50e8d1370a2c16877cf91e69245997ae201dcdbcbcb647742823f0d9e",
+        "source": "file",
+        "from": "cowork-team",
+        "to": "dev-team",
+        "type": "cowork-fire",
+        "priority": "low",
+        "payload": {
+          "fire_time": "2026-08-08T15:08:41Z",
+          "matched_slots": [
+            "bctc-analyst-slot-1"
+          ],
+          "won_slots": [
+            "bctc-analyst-slot-1"
+          ],
+          "held_by_other": [],
+          "all_held": false,
+          "spawned": [
+            "docs/agents/bctc-analyst/flow/main.md"
+          ],
+          "silent": false,
+          "drift_min": 6,
+          "errors": [],
+          "pressure_mode": "adaptive",
+          "calendar_status": "unknown",
+          "suppressed_calendar": [],
+          "suppressed_cadence": [],
+          "downgraded": [],
+          "chef_mutex_applied": false,
+          "due_reasons": {
+            "bctc-analyst-slot-1": "cron"
+          },
+          "cadence_minutes": {
+            "bctc-analyst-slot-1": null
+          },
+          "last_fired_timestamp": "2026-08-08T15:08:32Z",
+          "last_fired_slots": [
+            "bctc-analyst-slot-1"
+          ],
+          "last_fired_write_errors": null,
+          "classification": "FIRE",
+          "reason": "spawned",
+          "nominal_tick": "15:00",
+          "leader_lock": "acquired",
+          "dev_head": "unknown",
+          "devq": 5,
+          "signal_backlog": 26,
+          "note": "off-market bctc-offmarket cron slot, calendar_status unknown -> cron-fallback path, no cadence downgrade"
+        },
+        "createdAt": "2026-08-08T15:08:41Z",
+        "drained_at": "2026-08-08T15:26:06Z",
         "routed_to": "PO Step 0-SIG"
       }
     ]

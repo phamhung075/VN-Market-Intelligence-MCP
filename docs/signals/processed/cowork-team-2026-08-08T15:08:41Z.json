@@ -3,7 +3,7 @@
   "to": "dev-team",
   "type": "cowork-fire",
   "payload": {
-    "fire_time": "2026-08-01T15:09:58Z",
+    "fire_time": "2026-08-08T15:08:41Z",
     "matched_slots": [
       "bctc-analyst-slot-1"
     ],
@@ -16,21 +16,21 @@
       "docs/agents/bctc-analyst/flow/main.md"
     ],
     "silent": false,
-    "drift_min": 7,
+    "drift_min": 6,
     "errors": [],
     "pressure_mode": "adaptive",
-    "calendar_status": "closed",
+    "calendar_status": "unknown",
     "suppressed_calendar": [],
     "suppressed_cadence": [],
     "downgraded": [],
     "chef_mutex_applied": false,
     "due_reasons": {
-      "bctc-analyst-slot-1": "cadence"
+      "bctc-analyst-slot-1": "cron"
     },
     "cadence_minutes": {
-      "bctc-analyst-slot-1": 240
+      "bctc-analyst-slot-1": null
     },
-    "last_fired_timestamp": "2026-08-01T15:09:45Z",
+    "last_fired_timestamp": "2026-08-08T15:08:32Z",
     "last_fired_slots": [
       "bctc-analyst-slot-1"
     ],
@@ -41,14 +41,14 @@
     "leader_lock": "acquired",
     "dev_head": "unknown",
     "devq": 5,
-    "signal_backlog": 17,
-    "note": "bctc-offmarket cadence, closed calendar unmatched -> 240min fallback; single-slot batch, MAX_PARALLEL=4 headroom OK"
+    "signal_backlog": 26,
+    "note": "off-market bctc-offmarket cron slot, calendar_status unknown -> cron-fallback path, no cadence downgrade"
   },
   "priority": "low",
-  "createdAt": "2026-08-01T15:09:58Z",
+  "createdAt": "2026-08-08T15:08:41Z",
   "_processed": {
-    "fingerprint": "682e0f30b134c17f06f3d72f2a336d2244abc4ed1afa914c8e8f16d87cb60f96",
-    "processedAt": "2026-08-01T15:17:03Z",
+    "fingerprint": "d121edd50e8d1370a2c16877cf91e69245997ae201dcdbcbcb647742823f0d9e",
+    "processedAt": "2026-08-08T15:26:06Z",
     "processedBy": "dev-team",
     "result": "routed-to-po"
   }
