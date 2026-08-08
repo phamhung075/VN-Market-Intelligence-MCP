@@ -3181,6 +3181,109 @@
     ],
     "backlog": [
       {
+        "id": "TASK_RUNIDLE-1-AUDIT",
+        "type": "AUDIT",
+        "title": "Audit active_sprints accumulation: document missing closeout producer",
+        "status": "BACKLOG",
+        "priority": "high",
+        "size": "S",
+        "zone": "cross-service/dev-flow/",
+        "owner": "developer",
+        "next_agent": "developer",
+        "created_at": "2026-08-09T00:00:00Z",
+        "created_by": "pm/decompose-runidle-predicate-d-20260809T0000Z",
+        "depends_on": [],
+        "blocks": [
+          "TASK_RUNIDLE-2-REDESIGN",
+          "TASK_RUNIDLE-3-STALENESS"
+        ],
+        "supervised": false,
+        "updated_at": "2026-08-08T22:30:21Z"
+      },
+      {
+        "id": "TASK_RUNIDLE-2-REDESIGN",
+        "type": "FIX",
+        "title": "Redesign predicate (d): replace 'active_sprints empty' with 'dispatchable work empty'",
+        "status": "BACKLOG",
+        "priority": "high",
+        "size": "M",
+        "zone": "cross-service/dev-flow-scripts/",
+        "owner": "developer",
+        "next_agent": "developer",
+        "created_at": "2026-08-09T00:00:00Z",
+        "created_by": "pm/decompose-runidle-predicate-d-20260809T0000Z",
+        "depends_on": [
+          "TASK_RUNIDLE-1-AUDIT"
+        ],
+        "blocks": [
+          "TASK_RUNIDLE-4-TEST"
+        ],
+        "supervised": false,
+        "updated_at": "2026-08-08T22:30:21Z"
+      },
+      {
+        "id": "TASK_RUNIDLE-3-STALENESS",
+        "type": "FIX",
+        "title": "Implement staleness guard: skip stale/childless sprints from idle-check",
+        "status": "BACKLOG",
+        "priority": "high",
+        "size": "M",
+        "zone": "cross-service/dev-flow-scripts/",
+        "owner": "developer",
+        "next_agent": "developer",
+        "created_at": "2026-08-09T00:00:00Z",
+        "created_by": "pm/decompose-runidle-predicate-d-20260809T0000Z",
+        "depends_on": [
+          "TASK_RUNIDLE-1-AUDIT"
+        ],
+        "blocks": [
+          "TASK_RUNIDLE-4-TEST"
+        ],
+        "supervised": false,
+        "updated_at": "2026-08-08T22:30:21Z"
+      },
+      {
+        "id": "TASK_RUNIDLE-4-TEST",
+        "type": "TEST",
+        "title": "Write test: stale/childless sprints don't block RUN-IDLE",
+        "status": "BACKLOG",
+        "priority": "high",
+        "size": "S",
+        "zone": "cross-service/dev-flow-tests/",
+        "owner": "developer",
+        "next_agent": "developer",
+        "created_at": "2026-08-09T00:00:00Z",
+        "created_by": "pm/decompose-runidle-predicate-d-20260809T0000Z",
+        "depends_on": [
+          "TASK_RUNIDLE-2-REDESIGN",
+          "TASK_RUNIDLE-3-STALENESS"
+        ],
+        "blocks": [],
+        "supervised": false,
+        "updated_at": "2026-08-08T22:30:21Z"
+      },
+      {
+        "id": "TASK_RUNIDLE-5-VERIFY",
+        "type": "VERIFY",
+        "title": "Establish and measure verification gate: consecutive_run_idle > 0 post-landing",
+        "status": "BACKLOG",
+        "priority": "high",
+        "size": "S",
+        "zone": "cross-service/observability/",
+        "owner": "developer",
+        "next_agent": "developer",
+        "created_at": "2026-08-09T00:00:00Z",
+        "created_by": "pm/decompose-runidle-predicate-d-20260809T0000Z",
+        "depends_on": [
+          "TASK_RUNIDLE-2-REDESIGN",
+          "TASK_RUNIDLE-3-STALENESS",
+          "TASK_RUNIDLE-4-TEST"
+        ],
+        "blocks": [],
+        "supervised": false,
+        "updated_at": "2026-08-08T22:30:21Z"
+      },
+      {
         "id": "CLEAN-NOTEBOOK-AC2A-CYCLE-BOUNDARY-DEFINITION",
         "type": "CLEAN",
         "title": "AC-2a never defines 'cycle'; its only enforcement defines it as the git-commit boundary -- 5 WARNs today across 3 notebooks",
