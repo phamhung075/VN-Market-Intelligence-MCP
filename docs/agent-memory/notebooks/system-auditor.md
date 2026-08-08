@@ -2,6 +2,37 @@
 
 Tier-1/2/3 audit runs; newest-first; max 200L total, max 60L per section.
 
+## c380 · 2026-08-08T19:33:39Z
+
+### Audit Run Tier-1 (19:30–19:35 UTC 2026-08-08)
+- Tier: 1 | Services: 13 host_runtime_set checked | Health: 5 probed  
+- Anomalies: 1 SKIP-dedup (A-30 rag-service-1 recurring) | Status: DEGRADED
+- **rag-service-1 A-30 Memory Pressure (RECURRENCE SUSTAINED — NO IMPROVEMENT):**
+  - Baseline: 97.41% ≥ 85% investigate-gate → ENGAGE deep-probe
+  - Deep-probe 6 samples over 65s: all exactly at 97.41% (min 97.41%, median 97.41%, max 97.41%)
+  - Verdict: ESCALATE "loss of reclamation" (0 dips, 0 discontinuities, all >93% sustained)
+  - State: OOMKilled=false, restarts=0, state_changed=false, VmHWM=UNAVAILABLE (host-floor-check skip)
+  - Emission: [emit-signal] SKIP-dedup sys-20260808T193630-348e (WARN dedup_key: microservice_degraded:vn-market-intelligence-mcp-rag-service-1:A-30 — last reported @17:38:48Z in c377)
+  - [emit-dashboard] OK id=sys-20260808T193630-348e check_id=A-30 (DASHBOARD row appended despite dedup-skip)
+  - ANALYSIS: Discriminator confirms NOT a crash-cliff (no state changes, no OOMKilled, no discontinuities, no VmHWM pinning). This is genuine "loss of reclamation" — container stuck at 97.41% with zero recovery capacity. 4th occurrence in 2+ hours (19:06, 18:03, 17:35, 19:33 UTC) with stable pattern. Previous FU-RAG-DEPLOY-MEMORY deemed DONE_VERIFIED but issue persists — requires escalation.
+- **mcp-server-1 A-30:** Baseline 7.83% < 85% gate → SKIP
+- A-20 pdf-extractor: 3/3 PASS | A-21 crashes: 0 PASS | Disk: 44% PASS
+- [OUTPUT-CONTRACT] signals_posted=1 | telegram_sent=0 | signal_queue_rows_written=1 | dashboard_rows=1 | dedup_skipped=1
+
+## c379 · 2026-08-08T19:09:44Z
+
+### Audit Run Tier-1 (19:06–19:10 UTC 2026-08-08)
+- Tier: 1 | Services: 13 host_runtime_set checked | Health: 5 probed
+- Anomalies: 1 SKIP-dedup (A-30 rag-service-1 recurring) | Status: DEGRADED
+- **rag-service-1 A-30 Memory Pressure (RECURRENCE CONFIRMED — FIX-STALE-ACK-ANALYSIS):**
+  - Baseline: 97.38% ≥ 85% investigate-gate → ENGAGE deep-probe
+  - Deep-probe 6 samples over 65s: all exactly at 97.38% (min 97.38%, median 97.38%, max 97.38%)
+  - Verdict: ESCALATE "loss of reclamation" (0 dips, 0 discontinuities, all >93% sustained)
+  - State: OOMKilled=false, restarts=0, state_changed=false, VmHWM=UNAVAILABLE (host-floor-check skip)
+  - Emission: [emit-signal] SKIP-dedup sys-20260808T180600-2ee6 (WARN dedup_key: microservice_degraded:vn-market-intelligence-mcp-rag-service-1:A-30 — flagged @17:38:48Z in c377)
+  - **STALE-ACK VERIFICATION:** FU-RAG-DEPLOY-MEMORY marked DONE_VERIFIED@2026-08-08T10:59:52Z per decision log. A-30 discriminator confirms GENUINE RECURRENCE (not a stale marker to be pruned): sustained >93% across window, zero reclamation opportunity, chronic pattern now 12+ signals over ~4 days. Fix did NOT resolve underlying issue or was incomplete. Recommend immediate escalation to PO/developer for root-cause re-analysis.
+- **mcp-server-1 A-30:** Baseline 12.49% < 85% gate → SKIP
+- A-20 pdf-extractor: 3/3 PASS | A-21 crashes: 0 PASS | Disk: 49% PASS
 
 ## c378 · 2026-08-08T18:05:32Z
 
