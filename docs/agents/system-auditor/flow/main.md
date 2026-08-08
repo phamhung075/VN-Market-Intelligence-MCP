@@ -405,7 +405,19 @@ For each source in system-map.json data_sources:
   (ambiguity, never false-green). Origin: FFLOW-STALE-0723 (Vinahost VPS suspended-for-non-
   payment). Registry: `docs/policies/dev-standards.md` § Script Persistence.
 - VPS proxy: all 7 routes must return `status: ok` (B-06, B-07)
-- Rate limits: no source at 100% (B-12)
+- Rate limits: no source at 100% (**B-14** — FIX-AUDITOR-B12-DOUBLE-INVOKE-EMIT-MARKER-LOSS: this
+  check previously reused `B-12`, the SAME id the per-source staleness pool above (B-01 through
+  B-07, B-11, B-12) can independently assign to `sbv_fx` — a likely enabler of the confirmed
+  2026-07-29T10:33:36Z/38Z double-emit (two distinct `emit-audit-signal.sh` invocations, two
+  `agent_signals` rows #9885/#9886, two `signal_queue` rows, both titled identically
+  `data_stale: sbv_fx (B-12)`). `B-12` stays reserved for the generic staleness pool ONLY, never
+  again for this check. If this check emits, it is ALWAYS its own distinct finding — use
+  `--check-id "B-14"` and `dedup_key` prefix `rate_limit_saturated:<source_id>:B-14`
+  (NEVER `data_stale:...`, even when the same source is independently ALSO stale) — a source that
+  is both stale and rate-limited is two legitimately separate findings, never one call reused for
+  both. Emit via the SAME `scripts/emit-audit-signal.sh` template at §Emit per stale source below,
+  substituting `<B-xx>` = `B-14` and the title/summary text with `rate_limit_saturated: <source_id>`
+  (not `data_stale: ...`).
 
 #### SLA Resolver — per-source effective threshold (SSOT: system-map.json .project.data_sources[].sla)
 
@@ -525,9 +537,21 @@ bash scripts/emit-audit-signal.sh \
   --severity "<CRITICAL|WARN|INFO>" \
   --summary "<source_id> stale <elapsed_hours>h (check <B-xx>)" \
   --detail-json '{"title":"data_stale: <source_id> (<B-xx>)","detail":"<source_id> stale <elapsed_hours>h (expected cadence <expected_cadence_hours>h, last fetch <last_fetch_ts>)","source_id":"<id>","category":"<category>","last_fetch_ts":"<ISO-8601>","expected_cadence_hours":"<from system-map>","elapsed_hours":"<computed>","zone_owner":"dev-mcp-server","dedup_key":"data_stale:<source_id>:<B-xx>"}' \
-  --cycle-tag "$FIRE_TASK_ID"
+  --cycle-tag "$FIRE_TASK_ID" | tee -a "$MARKERS_FILE"
 ```
-Paste the verbatim `[emit-signal] OK|SKIP-dedup|OK-escalation-bypass|ABORT ...` marker line into the notebook AND append it to `$MARKERS_FILE` — this IS the E-1 (`post_agent_signal`) + E-2 (`send_telegram`, 7d dedup, severity-rank escalation bypass) + E-3 (signal-row append + POST-WRITE read-back, CAS-retry ×3) sequence; the script performs all three internally, including the ANTI-SKIP BUG-channel Telegram on any E-3 write/read-back failure. `ABORT ...` → do NOT count this source toward `signals_posted` in the OUTPUT-CONTRACT line (the parser in `scripts/audit-output-contract.sh` already enforces this — it never reads `signals_posted` from prose).
+`$MARKERS_FILE` capture is NON-OPTIONAL and automatic — the `| tee -a "$MARKERS_FILE"` above is part of
+the command itself, not a separate step that can be forgotten (FIX-AUDITOR-B12-DOUBLE-INVOKE-EMIT-MARKER-LOSS:
+the 2026-07-29T10:33:36Z invocation's `OK` marker never reaching `$MARKERS_FILE` — while the identical
+finding's 2nd invocation `SKIP-dedup` marker two seconds later DID — is exactly the loss this closes).
+ALSO paste the same verbatim line into the notebook narrative (best-effort, human-readability only — the
+mechanical count no longer depends on this). This IS the E-1 (`post_agent_signal`) + E-2 (`send_telegram`,
+7d dedup, severity-rank escalation bypass) + E-3 (signal-row append + POST-WRITE read-back, CAS-retry ×3)
+sequence; the script performs all three internally, including the ANTI-SKIP BUG-channel Telegram on any
+E-3 write/read-back failure. Marker grammar: `OK|SKIP-dedup|OK-escalation-bypass|SKIP-duplicate-invocation|ABORT ...`
+— `SKIP-duplicate-invocation` (FIX-AUDITOR-B12-DOUBLE-INVOKE-EMIT-MARKER-LOSS) means the script itself
+detected and no-op'd a same-cycle repeat of this exact `dedup_key` — do not re-emit, do not treat as an
+error. `ABORT ...` → do NOT count this source toward `signals_posted` in the OUTPUT-CONTRACT line (the
+parser in `scripts/audit-output-contract.sh` already enforces this — it never reads `signals_posted` from prose).
 
 **DASHBOARD append (on any non-ABORT marker — always, even `SKIP-dedup`, per §Anomaly Reporting below):**
 ```bash
@@ -536,9 +560,10 @@ bash scripts/emit-dashboard-row.sh \
   --location "<source/service>" --details "<what the check found>" --impact "<why it matters>" \
   --root-cause "<best-known cause>" --zone-owner "dev-mcp-server" \
   --signal-id "<the id= value parsed from this call's own [emit-signal] marker above>" \
-  --dedup-key "data_stale:<source_id>:<B-xx>"
+  --dedup-key "data_stale:<source_id>:<B-xx>" | tee -a "$MARKERS_FILE"
 ```
-Paste the verbatim `[emit-dashboard] OK|ABORT|WARN ...` marker into the notebook AND `$MARKERS_FILE` too.
+`$MARKERS_FILE` capture is automatic (`tee -a` above) — not a separate paste step. ALSO paste the same
+verbatim `[emit-dashboard] OK|ABORT|WARN ...` line into the notebook narrative.
 
 ---
 
@@ -563,9 +588,14 @@ bash scripts/emit-audit-signal.sh \
   --summary "<ticker> <period>: stage <N> <stage_name> <old_status>→<new_status>" \
   --detail-json '{}' \
   --e3-only \
-  --cycle-tag "$FIRE_TASK_ID"
+  --cycle-tag "$FIRE_TASK_ID" | tee -a "$MARKERS_FILE"
 ```
-Paste the verbatim `[emit-signal] OK e3-only ...` (or `ABORT ...`) marker line into the notebook AND append it to `$MARKERS_FILE` — this IS the signal-row append + POST-WRITE read-back (same anti-false-green check as all E-3 blocks, now enforced inside the script). No DASHBOARD.md row for this site — BCTC-EVAL deltas are HIGH|MED severity, not the CRITICAL/WARN AUD-ND-1 bucket §Anomaly Reporting's DASHBOARD Append governs; this is unchanged scope, not an oversight.
+`$MARKERS_FILE` capture is automatic (`tee -a` above) — not a separate paste step. ALSO paste the same
+verbatim `[emit-signal] OK e3-only ...` (or `ABORT ...`) line into the notebook narrative. This IS the
+signal-row append + POST-WRITE read-back (same anti-false-green check as all E-3 blocks, now enforced
+inside the script). No DASHBOARD.md row for this site — BCTC-EVAL deltas are HIGH|MED severity, not the
+CRITICAL/WARN AUD-ND-1 bucket §Anomaly Reporting's DASHBOARD Append governs; this is unchanged scope, not
+an oversight.
 
 After sweep, **hold the snapshot in memory** (compact: `{report_id, ticker, period, overall_status, stage_statuses, computed_at}` per entry) — it will be written as the `BCTC-EVAL-SNAPSHOT:` block inside the end-of-cycle settled notebook write (AC-3). Do NOT write the notebook here. If endpoint returns non-200 → log `[D-BCTC-EVAL] endpoint unavailable — skipping sweep`, set snapshot=nil, continue (non-fatal).
 
@@ -644,9 +674,16 @@ Also inspect the Tier-2 stale-source findings emitted above: any source with `se
        --summary "{summary ≤120 chars}" \
        --detail-json '{}' \
        --e3-only \
-       --cycle-tag "$FIRE_TASK_ID"
+       --cycle-tag "$FIRE_TASK_ID" | tee -a "$MARKERS_FILE"
      ```
-     Paste the verbatim `[emit-signal] OK e3-only ...` (or `ABORT ...`) marker line into the notebook AND append it to `$MARKERS_FILE` — this IS the signal-row append + POST-WRITE read-back (same anti-false-green check as all E-3 blocks, now enforced inside the script). NOTE: the script's generic row shape sets `payload_ref: null` (proposal traceability lives in the `docs/improvement-proposals/IMP-{id}.md` doc itself, filed at step c above, not in the dashboard row) and auto-derives the row `id` from `--from-agent` — it no longer literally equals `{id}`. No DASHBOARD.md row for this site — INFO-severity improvement proposals are not the CRITICAL/WARN AUD-ND-1 bucket.
+     `$MARKERS_FILE` capture is automatic (`tee -a` above) — not a separate paste step. ALSO paste the
+     same verbatim `[emit-signal] OK e3-only ...` (or `ABORT ...`) line into the notebook narrative. This
+     IS the signal-row append + POST-WRITE read-back (same anti-false-green check as all E-3 blocks, now
+     enforced inside the script). NOTE: the script's generic row shape sets `payload_ref: null` (proposal
+     traceability lives in the `docs/improvement-proposals/IMP-{id}.md` doc itself, filed at step c above,
+     not in the dashboard row) and auto-derives the row `id` from `--from-agent` — it no longer literally
+     equals `{id}`. No DASHBOARD.md row for this site — INFO-severity improvement proposals are not the
+     CRITICAL/WARN AUD-ND-1 bucket.
      **Commit (mutex-guarded):** → skill: `.claude/skills/commit-mutex/SKILL.md`
      own_paths: [`docs/improvement-proposals/IMP-{YYYYMMDD}-{slug}.md`, `docs/data/orch/orch-state.json`]
      intent: `"chore(improve): D-IMPROVE emit {id}"`
@@ -853,9 +890,16 @@ bash scripts/emit-audit-signal.sh \
   --severity "<CRITICAL|WARN>" \
   --summary "<table> check <C-xx> failed (actual=<actual_value>)" \
   --detail-json '{"title":"db_integrity_breach: <table> (<C-xx>)","detail":"<description> — actual=<n>, expected=<n>","db_id":"<db from system-map>","table":"<table>","actual_value":"<n>","expected_value":"<n>","zone_owner":"<specialist from zones>","dedup_key":"db_integrity_breach:<table>:<C-xx>"}' \
-  --cycle-tag "$FIRE_TASK_ID"
+  --cycle-tag "$FIRE_TASK_ID" | tee -a "$MARKERS_FILE"
 ```
-Paste the verbatim `[emit-signal] OK|SKIP-dedup|OK-escalation-bypass|ABORT ...` marker line into the notebook AND append it to `$MARKERS_FILE` — this IS the E-1 + E-2 + E-3 sequence; the script performs all three internally, including the ANTI-SKIP BUG-channel Telegram on any E-3 write/read-back failure. `ABORT ...` → do NOT count this check toward `signals_posted` in the OUTPUT-CONTRACT line.
+`$MARKERS_FILE` capture is NON-OPTIONAL and automatic (`tee -a` above — part of the command, not a
+separate step that can be forgotten; FIX-AUDITOR-B12-DOUBLE-INVOKE-EMIT-MARKER-LOSS). ALSO paste the same
+verbatim line into the notebook narrative (best-effort, human-readability only). This IS the E-1 + E-2 +
+E-3 sequence; the script performs all three internally, including the ANTI-SKIP BUG-channel Telegram on
+any E-3 write/read-back failure. Marker grammar: `OK|SKIP-dedup|OK-escalation-bypass|SKIP-duplicate-invocation|ABORT ...`
+— `SKIP-duplicate-invocation` means the script detected and no-op'd a same-cycle repeat of this exact
+`dedup_key`; do not re-emit. `ABORT ...` → do NOT count this check toward `signals_posted` in the
+OUTPUT-CONTRACT line.
 
 **DASHBOARD append (on any non-ABORT marker — always, even `SKIP-dedup`, per §Anomaly Reporting below):**
 ```bash
@@ -864,9 +908,10 @@ bash scripts/emit-dashboard-row.sh \
   --location "<db>/<table>" --details "<description> — actual=<n>, expected=<n>" --impact "<why it matters>" \
   --root-cause "<best-known cause>" --zone-owner "<specialist from zones>" \
   --signal-id "<the id= value parsed from this call's own [emit-signal] marker above>" \
-  --dedup-key "db_integrity_breach:<table>:<C-xx>"
+  --dedup-key "db_integrity_breach:<table>:<C-xx>" | tee -a "$MARKERS_FILE"
 ```
-Paste the verbatim `[emit-dashboard] OK|ABORT|WARN ...` marker into the notebook AND `$MARKERS_FILE` too.
+`$MARKERS_FILE` capture is automatic (`tee -a` above) — not a separate paste step. ALSO paste the same
+verbatim `[emit-dashboard] OK|ABORT|WARN ...` line into the notebook narrative.
 
 ### Tier-3 Roll-Up Signal
 ```
@@ -1088,7 +1133,34 @@ bash scripts/audit-output-contract.sh \
   --anomalies-count "<N you are about to write into the RETURN headline>" \
   --next-token "<the literal NEXT: token you are about to write, e.g. clean|po|ops|user>"
 ```
-Paste the script's `[OUTPUT-CONTRACT] ...` line **verbatim** into both the notebook and the RETURN block — this is the MANDATORY line, and it is no longer something the agent composes by hand. Any `[OUTPUT-CONTRACT] VIOLATION: ...` line(s) the script prints are ALSO pasted verbatim into the notebook; the script has already sent the BUG-channel Telegram for each — do not send a second one, and do NOT let a violation abort the cycle (this is a self-diagnostic on the auditor's own counters, not a reason to skip finishing the audit). After this call, `rm -f "$MARKERS_FILE"` (scratch only, never itself an artifact).
+Paste the script's `[OUTPUT-CONTRACT] ...` line **verbatim** into the RETURN block — this is the
+MANDATORY line, and it is no longer something the agent composes by hand.
+
+**VIOLATION lines — enforcement, not a paste instruction (FIX-AUDITOR-B12-DOUBLE-INVOKE-EMIT-MARKER-LOSS,
+acceptance 4):** the OLD instruction here said "paste it into the notebook", but — as of the 2026-08-06
+`FIX-AUDITOR-DURABILITY-STEP0B-DETECTION` §3b.1 reorder — `## Notebook Write — Durable Checkpoint` above
+now runs and COMMITS this cycle's notebook entry BEFORE this `### OUTPUT-CONTRACT` step ever executes. By
+the time a `[OUTPUT-CONTRACT] VIOLATION: ...` line exists, this cycle's notebook write already happened;
+"paste it into the notebook" describes a step that is no longer live-orderable, which is exactly how the
+2026-07-29T08:38:34Z VIOLATION line was lost even though the script printed it (confirmed: it never
+reached `docs/agent-memory/notebooks/system-auditor.md`). Re-ordering the whole Notebook Write section
+again to chase this was rejected as disproportionate (high blast radius on the unrelated §3b.1 durability
+fix for a one-line self-diagnostic). Instead, `scripts/audit-output-contract.sh` now durably records every
+VIOLATION **itself**, synchronously, before returning — `docs/data/auditor-output-contract-violations.json`
+(tmp+mv atomic write, same idiom as `docs/data/auditor-dedup-ledger.json`) — independent of whether this
+agent's own notebook/RETURN narration ever mentions it. This is the real "impossible to omit" guarantee:
+a script write, not an LLM remembering to paste something. On top of that durable backstop:
+- The RETURN block (§RETURN below) has a MANDATORY, non-skippable `[OUTPUT-CONTRACT-VIOLATIONS]` line —
+  print `NONE` on a clean cycle (script exit 0), or every VIOLATION line verbatim (script exit 1) — same
+  "print NONE, never omit the line" discipline this file already uses for `CONTRACT-CONTRADICTION`.
+- IF the Notebook Append Gate above is STILL writing this cycle for other reasons (a genuinely rare
+  timing coincidence, not something to engineer for), also paste the VIOLATION line(s) into that section
+  — best-effort only; the durable file above is the SSOT, not this.
+- Do NOT send a second BUG-channel Telegram — the script already sent one per VIOLATION. Do NOT let a
+  violation abort the cycle (this is a self-diagnostic on the auditor's own counters, not a reason to
+  skip finishing the audit).
+
+After the OUTPUT-CONTRACT call above, `rm -f "$MARKERS_FILE"` (scratch only, never itself an artifact).
 
 The previous form of this check (`signal_queue_rows_written = 0 AND signals_posted > 0` → violation) was vacuous by construction: both operands were narrated by the same agent from the same marker set, so a single misreading produced 0 and 0 and the check passed on a cycle where a row WAS written (confirmed occurrence, 2026-07-29T08:38:34Z). The script above keeps that check (now on marker-parsed, trustworthy operands) AND adds an independent cross-check against `.signal_queue.rows[]` itself when `--cycle-start-ts`/`--orch-state-file` resolve, AND extends the same symmetric-violation treatment to `dashboard_rows` and to the RETURN headline/`NEXT` token — see the script's own header comment for the full V1–V5 list.
 
@@ -1148,8 +1220,21 @@ NEXT: po (via orch-state.json .signal_queue row) | user (if clean) | ops (if CRI
 PIPELINE: complete
 QUALITY: full | partial (if early exit triggered on doc/memory pass)
 [OUTPUT-CONTRACT] signals_posted=N | telegram_sent=N | signal_queue_rows_written=N | dashboard_rows=N | dedup_skipped=N
+[OUTPUT-CONTRACT-VIOLATIONS]: NONE
 CONTRACT-CONTRADICTION: NONE
 ```
-The `[OUTPUT-CONTRACT]` line is MANDATORY and MUST be the verbatim output of `scripts/audit-output-contract.sh` (§Anomaly Reporting → OUTPUT-CONTRACT) — never hand-composed. Omitting it = contract violation (dispatcher will backfill and log recurring-bug pattern). `CONTRACT-CONTRADICTION` is MANDATORY every cycle, same discipline as `[OUTPUT-CONTRACT]` — print `NONE` on a clean cycle, never omit the line (see §CALLER-INSTRUCTION PRECEDENCE (AUD-CP-1) above for the triggered-form syntax).
+The `[OUTPUT-CONTRACT]` line is MANDATORY and MUST be the verbatim output of `scripts/audit-output-contract.sh` (§Anomaly Reporting → OUTPUT-CONTRACT) — never hand-composed. Omitting it = contract violation (dispatcher will backfill and log recurring-bug pattern).
+
+`[OUTPUT-CONTRACT-VIOLATIONS]` is MANDATORY every cycle (FIX-AUDITOR-B12-DOUBLE-INVOKE-EMIT-MARKER-LOSS,
+acceptance 4) — same "print NONE, never omit the line" discipline as `CONTRACT-CONTRADICTION` below. If
+`scripts/audit-output-contract.sh` exited 0 (no violation), print `[OUTPUT-CONTRACT-VIOLATIONS]: NONE`. If
+it exited non-zero, replace `NONE` with every `[OUTPUT-CONTRACT] VIOLATION: ...` line it printed, verbatim,
+one per line. This is a best-effort RETURN-channel echo, not the enforcement itself — the real guarantee is
+that `scripts/audit-output-contract.sh` already durably recorded every VIOLATION to
+`docs/data/auditor-output-contract-violations.json` before this RETURN block is even written (see
+§OUTPUT-CONTRACT above), so omitting this RETURN line loses nothing load-bearing, only the at-a-glance
+visibility.
+
+`CONTRACT-CONTRADICTION` is MANDATORY every cycle, same discipline as `[OUTPUT-CONTRACT]` — print `NONE` on a clean cycle, never omit the line (see §CALLER-INSTRUCTION PRECEDENCE (AUD-CP-1) above for the triggered-form syntax).
 
 **Headline consistency (in scope — same defect, RETURN-channel arm):** `N`/`C`/`W`/`I`/`M dedup-skipped` above and the `NEXT:` token are cross-checked, not independently re-derived, by the same script call: pass the `N` you are about to write as `--anomalies-count` and the `NEXT:` token you are about to write as `--next-token`. If either is inconsistent with a non-zero `signals_posted` (e.g. `anomalies=0`/`NEXT: clean` while the script's marker-derived `signals_posted>0`), the script prints a `VIOLATION` line and BUG-Telegrams it — paste that line into the RETURN block too, and correct the headline/NEXT token before finishing this cycle's RETURN rather than shipping a self-contradictory return (confirmed occurrence: a 2026-07-29T08:38:34Z cycle returned `0 anomalies ... NEXT: clean` while its own body reported `4/5 OK (api-gateway FAIL)`). `M dedup-skipped` is available directly from the script's own `dedup_skipped` field in the `[OUTPUT-CONTRACT]` line — reuse it verbatim, do not tally it separately.
