@@ -94,9 +94,10 @@
   ],
   "head": {
     "status": "idle",
-    "updated_by": "architect (closeout)",
-    "updated_at": "2026-08-08T02:33:37Z",
-    "note": "FIX-PUSH-DELIVERY-ERROR-RATE-ALERT split into 2 children (FIX-PUSH-DELIVERY-METRICS-MCP-SERVER, FIX-PUSH-DELIVERY-ALERT-ENGINE-POLLER), parent moved to review[] with next_agent=po for split confirmation."
+    "active_task_id": null,
+    "next_agent": null,
+    "updated_at": "2026-08-08T03:06:20Z",
+    "updated_by": "architect"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -12883,29 +12884,6 @@
         "updated_at": "2026-08-07T05:44:11Z"
       },
       {
-        "id": "TASK-COWORK-SIGNAL-NAMING-CONTRACT",
-        "type": "TASK",
-        "size": "XS",
-        "priority": "P1",
-        "status": "BACKLOG",
-        "zone": "cross-service/standards",
-        "owner": "unassigned",
-        "next_agent": "developer",
-        "plan_only": true,
-        "sprint": "COWORK-RELIABILITY",
-        "created_at": "2026-08-07T06:00:00Z",
-        "created_by": "pm (decomposition of FIX-COWORK-SIGNAL-FILENAME-CYCLEID-KEYING)",
-        "parent_task_id": "FIX-COWORK-SIGNAL-FILENAME-CYCLEID-KEYING",
-        "title": "Naming Contract & Documentation (FR-5, FR-6)",
-        "ba_handoff": "docs/handoffs/TASK-COWORK-SIGNAL-NAMING-CONTRACT.md",
-        "description": "Decomposed subtask from FIX-COWORK-SIGNAL-FILENAME-CYCLEID-KEYING Phase 1 delivery",
-        "supervised": true,
-        "supervised_at": "2026-08-07T06:00:00Z",
-        "supervised_by": "pm (plan_only decomposition)",
-        "supervised_note": "Child task of plan_only parent; no code ships without parent re-adjudication by PO",
-        "updated_at": "2026-08-07T05:58:40Z"
-      },
-      {
         "id": "FIX-AUDITOR-A30-DISCRIMINATOR-CRASH-CLIFF-SCORED-AS-RECLAMATION-DIP",
         "type": "FIX",
         "title": "verify-a30-mcp-memory-reclamation.sh cannot escalate a real memory death on this fleet — every escalation path is closed (DIPS==0 gate + OOMKilled-only dip-immune branch + tautological VmHWM note)",
@@ -15844,32 +15822,6 @@
         "po_corroboration_c80_20260808T0116Z": "Fresh A-30 datapoint, 2026-08-08T01:05:33-01:06:54Z (system-auditor c80 Tier-1, RAW JSON in notebook commit 569f79108): mcp-server 6-probe window 97.16 / 97.20 / 97.39 / 97.16 / 97.58 / 97.59 %, min 97.16 max 97.59, reclamation_dips=0, discriminator verdict=ESCALATE, OOMKilled=false, RestartCount=2, VmHWM=3058144KB vs VmRSS=3023460KB. This is 19h AFTER the container OOM'd at ~05:57Z on 2026-08-07 (the death that confirmed sys-20260807T054825-771b as a true positive) - memory is back at the same pre-death ceiling with zero reclamation, i.e. the leak refills the 3GiB cap within a day of every restart. Logged here rather than as a new signal_queue row because c80's own E-3 append never fired (see FIX-ANALYSIS-ONLY-EXIT-DETECTOR-OR-VERDICT-BLIND-TO-PARTIAL-WRITE-CYCLE) and because the finding is already routed to this row - no duplicate minted. Dispatch fields deliberately untouched."
       },
       {
-        "id": "FIX-SPRINT-REGISTRY-DANGLING-IDS-BREAK-SIGNOFF-AND-JOURNAL-ARCHIVE",
-        "status": "READY",
-        "type": "FIX",
-        "priority": "P1",
-        "size": "M",
-        "zone": "cross-service/",
-        "next_agent": "architect",
-        "owner": "po",
-        "supervised": true,
-        "plan_only": true,
-        "title": "34 of 40 sprint ids referenced by task rows / sprint_goal have NO active_sprints[] or closed_sprints[] object — PO sign-off, cold-eviction and decision-journal archival are all structurally unreachable for them",
-        "desc": "MEASURED LIVE 2026-07-30T09:3xZ on docs/data/orch/orch-state.json, not inferred. Every `.task_board.<lane>[].sprint` value and every `.sprint_goal.entries[].sprint_id` was resolved against the union of `.task_board.active_sprints[].id` (8 ids) and `.task_board.closed_sprints[].id` (19 ids) plus the cold-archive closed-id universe (`docs/data/orch/archive/*.json`: .closed_sprints[].id, .closed_sprint_goals sprint ids, [.done_tasks[].sprint]). Result: 40 distinct referenced sprint ids, of which 34 resolve to NOTHING. Top offenders by reference count: TOKEN-ECONOMY-AUDIT (28 refs), ULTRACODE-AUDIT-FIXALL (24), COWORK-GUARANTEED-SLOT-CATCHUP (11), FLOW-PRICE-ALPHA-LOOP (9). Only 6 ids resolve (MARKET-INDICATOR-DEPTH-P0, COWORK-RELIABILITY, BCTC-ANALYTICS-LAYER, FLEET-HOST-SAFETY, OHLCV-UNIT-CONTAM-WHOLEROW-LT1000, VN-MACRO-TOOLING).\n\nTHREE CONSEQUENCES, each verified against the executable and not the prose:\n(1) PO SIGN-OFF IS IMPOSSIBLE for those 34. `docs/agents/po/flow/main.md:126` makes the Approve path MUST-set `active_sprints[sprint_id].status = \"DONE\"`. There is no such key to set, so the canonical sign-off write cannot be performed at all — the failure mode is not a wrong token (the documented hazard) but a missing object.\n(2) DECISION-JOURNAL ARCHIVAL IS UNREACHABLE. `scripts/agents-flow/decision-journal-archive.sh` selects STATUS-based (header :9 'Selection is STATUS-based (closed sprint id vs still-active), NOT mtime-based'), building a closed-id universe (:120-127) and an active-id set (:116) and longest-prefix-matching each `sprint-<id>[-<agent>].md`. An id in NEITHER set is a THIRD, unhandled state: it is silently skipped forever, on both stdin and --all backfill paths. Live cost: `docs/agent-memory/decisions/` holds 513 sprint-*.md journals / 5.5MB, and the largest over-cap files all belong to dangling ids — sprint-CI-RED-RECONCILE-po.md 331592B (9.2x the 36000B cap), sprint-SYSTEMIC-REMAKE-P1-qa.md 225553B, sprint-COWORK-GUARANTEED-SLOT-CATCHUP-developer.md 128381B.\n(3) THE BREACH DETECTOR THEREFORE NEVER CONVERGES. context-bloat-backstop re-emits on whichever journal a live agent happens to write: 138 context-bloat signals sit in docs/signals/processed/, ~34 of them for the 3 COWORK-GUARANTEED-SLOT-CATCHUP journals alone over 07-25..07-30, every one marked processed with the condition untouched. Same never-converging-detector family as FIX-NOTEBOOK-PRUNER-LINE-ONLY-SETPOINT-BYTE-CAP-NEVER-CONVERGES.\n\nORIGIN: triaged from the 2026-07-30T09:07Z drain's context_bloat_breach on sprint-COWORK-GUARANTEED-SLOT-CATCHUP-architect.md (46429B vs 36000B cap, 191L/600L — byte-axis only). That signal was DEFERRED as a prune (live sprint, file uncommitted-modified at triage time, content is load-bearing design rationale) — but the standard 'defer until the sprint closes' disposition is a FALSE PREMISE here: COWORK-GUARANTEED-SLOT-CATCHUP exists only as `.sprint_goal.entries[15].sprint_id` plus 11 task-row refs (TASK-COWORK-CATCHUP-2 DONE, -3/-4/-5/-10 READY, -6..-9 BACKLOG), so it can never close and the deferral can never expire.\n\nSUPERVISED + PLAN_ONLY ON PURPOSE — the naive fix bricks the board, and this was measured, not guessed. The obvious fix is a referential-integrity rule in `scripts/orch-validate.mjs` (Stage 1 already does dangling-ref checks and is the validator every `scripts/orch-apply.sh` write must pass). Arming it fail-loud TODAY rejects EVERY subsequent board write, because 34 ids are already dangling. Sequencing is therefore mandatory, and is the design question for architect:\nAC-1 RECONCILE FIRST: decide per dangling id whether it is genuinely live (register an `active_sprints[]` object), genuinely finished (register in `closed_sprints[]` so the journal archiver can sweep it), or never was a sprint (rename/strip the `.sprint` field). 'BACKLOG' appearing as a 5-ref sprint id is evidence the field is also being used as a non-sprint sentinel — classify that separately.\nAC-2 THEN arm the guard, WARN-first with an env-var escalation to reject, mirroring the notebook-immutability gate disposition (`.claude/skills/notebook-write/SKILL.md` AC-2a: GIT_NOTEBOOK_IMMUTABILITY_MODE defaults to warn). Do not arm reject until a corpus replay reads 0.\nAC-3 the guard must cover BOTH reference planes (`task_board.*[].sprint` and `sprint_goal.entries[].sprint_id`) — a check on one plane leaves the other silently broken.\nAC-4 give `decision-journal-archive.sh` an explicit third-state branch: an id in neither set must FAIL LOUD (or emit one deduped signal), never be silently skipped. Today's silent skip is what made a 5.5MB/513-file accumulation invisible.\nAC-5 verification gate is timestamped and measured, not prose: re-run the resolver and show `dangling == 0`, and show `decision-journal-archive.sh --all` moving a previously-unreachable journal, with a before/after byte count.\nAC-6 do NOT fix this by prune/split of any live journal — that is the deferred, separate action and it races live editors (feedback_ctxbloat_breach_on_live_sprint_file_defer).",
-        "created_at": "2026-07-30T09:39:29Z",
-        "created_by": "po-triage-20260730T0932Z (drain-tick-0907Z signal 1 of 7: context_bloat_breach)",
-        "related": [
-          "FIX-DECISION-JOURNAL-BYTECAP-NO-ACTUATOR",
-          "FU-ORCH-HOT-SUB150-SPRINT-LIFECYCLE",
-          "FIX-NOTEBOOK-PRUNER-LINE-ONLY-SETPOINT-BYTE-CAP-NEVER-CONVERGES"
-        ],
-        "updated_at": "2026-08-08T00:51:50Z",
-        "promoted_at": "2026-08-08T00:51:49Z",
-        "promoted_by": "dev-team (supervised-lane sweep)",
-        "promotion_note": "Supervised-Lane Sweep — assigned dispatch_lane='architect' (priority_rank=1); supervised/plan_only flags preserved, gate NOT disabled — see FIX-BOUNDED1-SUPERVISED-LANE-NO-SWEEPER",
-        "dispatch_lane": "architect"
-      },
-      {
         "id": "TASK-COWORK-SIGNAL-DERIVE-WINDOWKEY",
         "type": "TASK",
         "size": "S",
@@ -15946,6 +15898,33 @@
         "supervised_note": "Child task of plan_only parent; no code ships without parent re-adjudication by PO",
         "updated_at": "2026-08-08T02:22:22Z",
         "promoted_at": "2026-08-08T02:22:21Z",
+        "promoted_by": "dev-team (supervised-lane sweep)",
+        "promotion_note": "Supervised-Lane Sweep — assigned dispatch_lane='developer' (priority_rank=1); supervised/plan_only flags preserved, gate NOT disabled — see FIX-BOUNDED1-SUPERVISED-LANE-NO-SWEEPER",
+        "dispatch_lane": "developer"
+      },
+      {
+        "id": "TASK-COWORK-SIGNAL-NAMING-CONTRACT",
+        "type": "TASK",
+        "size": "XS",
+        "priority": "P1",
+        "status": "READY",
+        "zone": "cross-service/standards",
+        "owner": "unassigned",
+        "next_agent": "developer",
+        "plan_only": true,
+        "sprint": "COWORK-RELIABILITY",
+        "created_at": "2026-08-07T06:00:00Z",
+        "created_by": "pm (decomposition of FIX-COWORK-SIGNAL-FILENAME-CYCLEID-KEYING)",
+        "parent_task_id": "FIX-COWORK-SIGNAL-FILENAME-CYCLEID-KEYING",
+        "title": "Naming Contract & Documentation (FR-5, FR-6)",
+        "ba_handoff": "docs/handoffs/TASK-COWORK-SIGNAL-NAMING-CONTRACT.md",
+        "description": "Decomposed subtask from FIX-COWORK-SIGNAL-FILENAME-CYCLEID-KEYING Phase 1 delivery",
+        "supervised": true,
+        "supervised_at": "2026-08-07T06:00:00Z",
+        "supervised_by": "pm (plan_only decomposition)",
+        "supervised_note": "Child task of plan_only parent; no code ships without parent re-adjudication by PO",
+        "updated_at": "2026-08-08T02:53:33Z",
+        "promoted_at": "2026-08-08T02:53:32Z",
         "promoted_by": "dev-team (supervised-lane sweep)",
         "promotion_note": "Supervised-Lane Sweep — assigned dispatch_lane='developer' (priority_rank=1); supervised/plan_only flags preserved, gate NOT disabled — see FIX-BOUNDED1-SUPERVISED-LANE-NO-SWEEPER",
         "dispatch_lane": "developer"
@@ -22589,6 +22568,37 @@
         "next_agent": "po",
         "router_dispatch_correction_20260808T0223Z": "SLS resolved_dispatch_lane (scripts/lib/devteam-eligibility.jq) defaulted this row to developer via its generic fallback (no structured next_agent/owner field present), despite zone=multi AND this row own po_ruling_20260730 explicitly stating ARCHITECT SPLITS IT (docs/agents/po/flow/main.md:30 confirms: multi -> architect must split; cross-service/ -> developer). Router caught this before spawn and corrected next_agent/dispatch_lane to architect. Underlying resolver bug (no zone==multi special-case in resolved_dispatch_lane) flagged separately for a root-cause fix — this is a row-level patch, not a systemic one.",
         "architect_split_note": "Split into 2 single-zone children per zone=multi convention + po_ruling_20260730 (architect splits it). BROWNFIELD: (1) mcp-server has NO /metrics route and zero prom-client usage; nearest reusable analog is the existing GET /api/vps-proxy-health (vpsPushLogStore.getVpsProxyHealth(), calendar-aware staleness) which already does 3/4 of the RCA-scoped services (missing foreign-flow). (2) RCA's literal in-handler 5xx-counter spec is structurally blind to the actual outage class (CF-tunnel origin-unreachable requests never reach the mcp-server process) -- staleness (already computed) is the robust signal, error-ratio is secondary. (3) alert-engine is a purely reactive HTTP service today (GET /health, POST /evaluate only) with ZERO scheduler/poller of its own -- 'alert-engine consuming mcp-server /metrics' requires a NEW poller capability, not just wiring (cfg.DBPath to market.db is loaded but dead -- never opened in main.go). (4) Existing signal-classifier.Classify() routes severity high/critical to ChannelMarket, which alert-policy.md reserves for stock alerts (alert-commander exclusivity) -- this synthetic infra alert must be hardcoded to ChannelWork instead, matching the 2 existing in-repo precedents for this exact alert class (vpsProxyWatchdogJob.ts, cronHealthAlertJob.ts, both sendTelegramWork). CHILDREN MINTED: FIX-PUSH-DELIVERY-METRICS-MCP-SERVER (zone apps/mcp-server/, P1/S, owner dev-mcp-server -- extends /api/vps-proxy-health with foreign-flow coverage + error_ratio_5m field) and FIX-PUSH-DELIVERY-ALERT-ENGINE-POLLER (zone apps/alert-engine/, P1/M, owner dev-alert-engine, depends_on the mcp-server child -- new Ticker poller + sustained-breach state machine + reuses existing alertpipeline.Pipeline.Run() in-process + hardcoded WORK channel). Both children minted with supervised=null/plan_only=null (NOT copied from this parent) -- a supervised:true row with a dev-role next_agent is a documented zero-picker trap (BOUNDED-1 excludes supervised:true; DRS excludes dev-role next_agent by construction; SLS requires supervised AND plan_only both true, which does not fit a normal single-zone dev implementation task) -- see live precedent BCTC-ENRICHER-OLD-QUARTERS (next_agent=dev-mcp-server, supervised=null, plan_only=null) and the fleet's own open FIX-DEVTEAM-NONDEV-NEXTAGENT-RESIDUAL-NO-DISPATCH-DESTINATION row describing this exact trap class. supervised:true/plan_only:true preserved unchanged on THIS parent row per architect flow's plan-only mode."
+      },
+      {
+        "id": "FIX-SPRINT-REGISTRY-DANGLING-IDS-BREAK-SIGNOFF-AND-JOURNAL-ARCHIVE",
+        "status": "REVIEW",
+        "type": "FIX",
+        "priority": "P1",
+        "size": "M",
+        "zone": "cross-service/",
+        "next_agent": "po",
+        "owner": "po",
+        "supervised": true,
+        "plan_only": true,
+        "title": "34 of 40 sprint ids referenced by task rows / sprint_goal have NO active_sprints[] or closed_sprints[] object — PO sign-off, cold-eviction and decision-journal archival are all structurally unreachable for them",
+        "desc": "MEASURED LIVE 2026-07-30T09:3xZ on docs/data/orch/orch-state.json, not inferred. Every `.task_board.<lane>[].sprint` value and every `.sprint_goal.entries[].sprint_id` was resolved against the union of `.task_board.active_sprints[].id` (8 ids) and `.task_board.closed_sprints[].id` (19 ids) plus the cold-archive closed-id universe (`docs/data/orch/archive/*.json`: .closed_sprints[].id, .closed_sprint_goals sprint ids, [.done_tasks[].sprint]). Result: 40 distinct referenced sprint ids, of which 34 resolve to NOTHING. Top offenders by reference count: TOKEN-ECONOMY-AUDIT (28 refs), ULTRACODE-AUDIT-FIXALL (24), COWORK-GUARANTEED-SLOT-CATCHUP (11), FLOW-PRICE-ALPHA-LOOP (9). Only 6 ids resolve (MARKET-INDICATOR-DEPTH-P0, COWORK-RELIABILITY, BCTC-ANALYTICS-LAYER, FLEET-HOST-SAFETY, OHLCV-UNIT-CONTAM-WHOLEROW-LT1000, VN-MACRO-TOOLING).\n\nTHREE CONSEQUENCES, each verified against the executable and not the prose:\n(1) PO SIGN-OFF IS IMPOSSIBLE for those 34. `docs/agents/po/flow/main.md:126` makes the Approve path MUST-set `active_sprints[sprint_id].status = \"DONE\"`. There is no such key to set, so the canonical sign-off write cannot be performed at all — the failure mode is not a wrong token (the documented hazard) but a missing object.\n(2) DECISION-JOURNAL ARCHIVAL IS UNREACHABLE. `scripts/agents-flow/decision-journal-archive.sh` selects STATUS-based (header :9 'Selection is STATUS-based (closed sprint id vs still-active), NOT mtime-based'), building a closed-id universe (:120-127) and an active-id set (:116) and longest-prefix-matching each `sprint-<id>[-<agent>].md`. An id in NEITHER set is a THIRD, unhandled state: it is silently skipped forever, on both stdin and --all backfill paths. Live cost: `docs/agent-memory/decisions/` holds 513 sprint-*.md journals / 5.5MB, and the largest over-cap files all belong to dangling ids — sprint-CI-RED-RECONCILE-po.md 331592B (9.2x the 36000B cap), sprint-SYSTEMIC-REMAKE-P1-qa.md 225553B, sprint-COWORK-GUARANTEED-SLOT-CATCHUP-developer.md 128381B.\n(3) THE BREACH DETECTOR THEREFORE NEVER CONVERGES. context-bloat-backstop re-emits on whichever journal a live agent happens to write: 138 context-bloat signals sit in docs/signals/processed/, ~34 of them for the 3 COWORK-GUARANTEED-SLOT-CATCHUP journals alone over 07-25..07-30, every one marked processed with the condition untouched. Same never-converging-detector family as FIX-NOTEBOOK-PRUNER-LINE-ONLY-SETPOINT-BYTE-CAP-NEVER-CONVERGES.\n\nORIGIN: triaged from the 2026-07-30T09:07Z drain's context_bloat_breach on sprint-COWORK-GUARANTEED-SLOT-CATCHUP-architect.md (46429B vs 36000B cap, 191L/600L — byte-axis only). That signal was DEFERRED as a prune (live sprint, file uncommitted-modified at triage time, content is load-bearing design rationale) — but the standard 'defer until the sprint closes' disposition is a FALSE PREMISE here: COWORK-GUARANTEED-SLOT-CATCHUP exists only as `.sprint_goal.entries[15].sprint_id` plus 11 task-row refs (TASK-COWORK-CATCHUP-2 DONE, -3/-4/-5/-10 READY, -6..-9 BACKLOG), so it can never close and the deferral can never expire.\n\nSUPERVISED + PLAN_ONLY ON PURPOSE — the naive fix bricks the board, and this was measured, not guessed. The obvious fix is a referential-integrity rule in `scripts/orch-validate.mjs` (Stage 1 already does dangling-ref checks and is the validator every `scripts/orch-apply.sh` write must pass). Arming it fail-loud TODAY rejects EVERY subsequent board write, because 34 ids are already dangling. Sequencing is therefore mandatory, and is the design question for architect:\nAC-1 RECONCILE FIRST: decide per dangling id whether it is genuinely live (register an `active_sprints[]` object), genuinely finished (register in `closed_sprints[]` so the journal archiver can sweep it), or never was a sprint (rename/strip the `.sprint` field). 'BACKLOG' appearing as a 5-ref sprint id is evidence the field is also being used as a non-sprint sentinel — classify that separately.\nAC-2 THEN arm the guard, WARN-first with an env-var escalation to reject, mirroring the notebook-immutability gate disposition (`.claude/skills/notebook-write/SKILL.md` AC-2a: GIT_NOTEBOOK_IMMUTABILITY_MODE defaults to warn). Do not arm reject until a corpus replay reads 0.\nAC-3 the guard must cover BOTH reference planes (`task_board.*[].sprint` and `sprint_goal.entries[].sprint_id`) — a check on one plane leaves the other silently broken.\nAC-4 give `decision-journal-archive.sh` an explicit third-state branch: an id in neither set must FAIL LOUD (or emit one deduped signal), never be silently skipped. Today's silent skip is what made a 5.5MB/513-file accumulation invisible.\nAC-5 verification gate is timestamped and measured, not prose: re-run the resolver and show `dangling == 0`, and show `decision-journal-archive.sh --all` moving a previously-unreachable journal, with a before/after byte count.\nAC-6 do NOT fix this by prune/split of any live journal — that is the deferred, separate action and it races live editors (feedback_ctxbloat_breach_on_live_sprint_file_defer).",
+        "created_at": "2026-07-30T09:39:29Z",
+        "created_by": "po-triage-20260730T0932Z (drain-tick-0907Z signal 1 of 7: context_bloat_breach)",
+        "related": [
+          "FIX-DECISION-JOURNAL-BYTECAP-NO-ACTUATOR",
+          "FU-ORCH-HOT-SUB150-SPRINT-LIFECYCLE",
+          "FIX-NOTEBOOK-PRUNER-LINE-ONLY-SETPOINT-BYTE-CAP-NEVER-CONVERGES"
+        ],
+        "updated_at": "2026-08-08T03:06:20Z",
+        "promoted_at": "2026-08-08T00:51:49Z",
+        "promoted_by": "dev-team (supervised-lane sweep)",
+        "promotion_note": "Supervised-Lane Sweep — assigned dispatch_lane='architect' (priority_rank=1); supervised/plan_only flags preserved, gate NOT disabled — see FIX-BOUNDED1-SUPERVISED-LANE-NO-SWEEPER",
+        "dispatch_lane": "architect",
+        "claimed_at": "2026-08-08T02:53:32Z",
+        "claimed_by": "dev-team (supervised-lane sweep)",
+        "reviewed_by": "architect",
+        "architect_review_note": "ARCHITECT DESIGN COMPLETE (plan_only — no code/board reconciliation shipped, no journals moved) — brief: docs/architecture-briefs/2026-08-08-fix-sprint-registry-dangling-ids-reconciliation-design.md. Re-baselined live 2026-08-08 (34→14 dangling; structural defect unchanged, count moved via organic cold-eviction). AC-1: 2-axis reconciliation rule (sprint_goal live-status OR any non-backlog referencing row => LIVE/active_sprints[]; all-terminal => FINISHED/closed_sprints[]; backlog-only+no-goal-entry => pre-sprint label, exempt; id-shape-not-a-topic-slug or lane-name-as-sentinel => strip). Full per-id table + PO call needed on BA-IND-P1-MOMENTUM-FRONTEND (relabel into MARKET-INDICATOR-DEPTH-P0 vs register its own closed sprint). CRITICAL NEW FINDING (measured via --all --dry-run 2026-08-08T02:58:41Z, flagged not fixed): decision-journal-archive.sh's own closed-id derivation is over-inclusive — TOKEN-ECONOMY-AUDIT/ULTRACODE-AUDIT-FIXALL/COWORK-GUARANTEED-SLOT-CATCHUP/FLOW-PRICE-ALPHA-LOOP all resolve into its closed-set today via the weak `.done_tasks[].sprint` per-task signal despite 9-23 open task rows each (2 of them sprint_goal-status \"active\"); running --all for real today would git-mv their journals out from under live work. AC-2: new Stage 1h in orch-validate.mjs / checkSprintRegistryReferentialIntegrity() in orchStateSchema.ts, ORCH_SPRINT_REGISTRY_MODE default warn (mirrors GIT_NOTEBOOK_IMMUTABILITY_MODE), backlog-only ids exempted, reject only after new corpus-replay script reads 0. AC-3: dual-plane walk (8 flat lanes + 2 nested task-array locations + sprint_goal.entries[].sprint_id) verified against live data (nested-only refs exist: BA-IND-P1-MOMENTUM-FRONTEND, OHLCV-UNIT-CONTAM). AC-4: explicit third-state branch (aggregated signal + distinct exit 2) — MUST ship after the closed-id-derivation correction, not before, else it fails loud on the safe case while staying blind to the dangerous one. AC-5: exact re-run commands specified (resolver violations==0, --all before/after byte count, orch-validate clean exit). AC-6: reaffirmed — zero journal content edits anywhere in this design, only whole-file git mv (already the archiver's existing mechanism). Full 10-section sequencing (§8) for the eventual developer implementer. 3 open questions left for PO ratification (§10).",
+        "design_brief": "docs/architecture-briefs/2026-08-08-fix-sprint-registry-dangling-ids-reconciliation-design.md"
       }
     ],
     "qa": [
@@ -22736,7 +22746,7 @@
         }
       ]
     },
-    "last_triaged_at": "2026-08-08T02:22:21Z",
+    "last_triaged_at": "2026-08-08T02:53:32Z",
     "last_triaged_by": "dev-team (supervised-lane sweep)",
     "in_progress": [
       {
