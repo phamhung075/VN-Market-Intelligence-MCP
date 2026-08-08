@@ -50,3 +50,25 @@
 - Re-ran RAW: `bun test FIX-GET-BCTC-REFINED-NO-PROJECTION-PARAM.test.ts` 7/7 pass, 50 expect() (exact match to dev claim); `bun tsc --noEmit` 0 errors; `mock-guard.sh --files getBctcRefinedTool.ts` PASS; diff is comment-only (8 insertions, 0 deletions) → DDD/security greps trivially clean, zero behavior change.
 **why-decision:** APPROVED, DONE_VERIFIED — this row's own file genuinely cleared (AC1/AC2 fully met, AC3/AC4 met at the row's correct per-file scope); the still-red shared size-lint CI job is attributable entirely to the separate, already-tracked `FIX-CI-SIZELINT-COORDINATIONSTORE-BASELINE-1388L` row (same precedent as qa-S1/qa-S3 this sprint).
 **why-change:** corrected row's `commit` field from dangling `36fe87c31` to the real landing commit `ed0df780d`; no other change from plan.
+
+### STEP qa-S5 · qa · 2026-08-08T17:05:03Z
+**task-id:** FIX-RAWVERIFY-ATTEST-ERE-HYPHENATED-PAST-TENSE-FALSE-BLOCK
+**what-done:** Direct-commit verify (`qa[]` row, `branch:null`). Row's own `commit_sha:1e49d0820` FAILED `git merge-base --is-ancestor` (dangling, `cat-file -t`=commit but not reachable from main); router-flagged real landing commit `654181692` passed ancestor check on both local main and origin/main. `git show` diff byte-identical across 3 files (script/test/dev-standards.md) between the dangling and landed commit, only the trailing message differs (landed = "reapply ... journal renumbered S76->S77"). Corrected row's `commit_sha` to `654181692`.
+**what-considered:**
+- Read the actual regex change: `ATTEST_ERE='raw-verify|raw verified|realdata'` → `'raw[- ]verif(y|ied)|realdata'` (collapsed separator+tense axes, not a 4th literal).
+- Independently (bash nocasematch, own strings) tested old vs new: old MISSES "RAW-verified via wc -l" and "raw-verified" (the exact hyphenated-past-tense bug class); new MATCHES both; negative control bare "verify"/"verified" (no raw/realdata qualifier) stays NO-MATCH on both — no over-widening.
+- Live-incident replay, self-run not trusted from commit prose: extracted the PRE-fix script from `1e49d0820^`, ran it against `d0fcd06e6..447d1a670` → rc=1 FAIL (7 un-attested triggers, real false-block reproduced); ran current HEAD script same range → rc=0 PASS via pre-existing commit `b00f53f63`'s "RAW-verified via wc -l" text alone.
+- Ran the dedicated suite `rebuild-raw-verify-check.test.sh`: 12/12 pass (incl. new regression case + AC2 corpus-derived test against real 400-commit history, 3 distinct phrasings all matched). `bash -n` + `shellcheck` clean both files. `mock-guard.sh --files` → PASS (no TS production source; bash zone, N/A). `bun test`/`tsc` structurally N/A (bash-only change, same as qa-S2 precedent).
+**why-decision:** APPROVED, DONE_VERIFIED — genuine regex defect, genuine fix, genuine end-to-end closure proven two independent ways (own regex test + real historical-range replay), not just trusting the commit message's own claims.
+**why-change:** corrected row's `commit_sha` field from dangling `1e49d0820` to the real landing commit `654181692`; no other change from plan.
+
+### STEP qa-S6 · qa · 2026-08-08T19:10:00Z
+**task-id:** FIX-ORCHSTATE-SIGNALQUEUE-UNCOMMITTED-ROWS-LOST-TO-PEER-FULLDOC-WRITE
+**what-done:** Direct-commit verify (`qa[]` row, `branch:null`). Independently re-checked (not trusted from note) the corrected premise: `jq` query on `docs/data/orch/archive/2026-07.json .signal_rows[]` found BOTH `sys-20260729T103337-13e5`/`sys-20260729T103338-7f95` present, status READ, all fields byte-matching the row's own original evidence text — the 2 rows were never destroyed.
+**what-considered:**
+- Confirmed `.signal_queue.rows[]` id-drop guard is real in `scripts/orch-conservation-check.mjs` (`undeclaredSignalRowDrops()`, unconditional exit 1 before the `ORCH_APPLY_ALLOW_SHRINK` bypass check — genuinely non-bypassable) and genuinely wired: `orch-cold-evict.sh:1033` derives `ORCH_APPLY_DECLARED_SIGNAL_EVICTIONS` from the SAME `rm_sig_rows` map already used for the actual removal (lockstep, not hand-maintained).
+- Ran both suites live myself: `orch-apply-wrapper-tests.sh` 75/75 (ROW-DROP-REJECTED + ROW-DROP-ALLOW-SHRINK-NO-BYPASS present and PASS), `orch-cold-evict-tests.sh` 53/53 (T9/T10 unaffected, matches diff showing that file untouched).
+- All 3 cited commits (941883d76, 441e9ee0e, 2834187a7) confirmed ancestors of HEAD via `git merge-base --is-ancestor`; `git show --stat 941883d76` matches the code+test description exactly.
+- AC-5 "moot": legitimate closure, not a dodge — the original AC-5 presupposed destruction; independent re-verification confirms the rows are live in archive, so no reconstruction is owed. AC-1's mechanism (pre-2026-08-01 no-age-gate immediate eviction) is corroborated by `git log --grep FIX-COLDEVICT-SIGNALQUEUE-NO-AGE-GATE` showing that fix genuinely shipped 2026-08-01/06.
+**why-decision:** APPROVED, DONE_VERIFIED — the developer's re-investigation is itself independently corroborated (not just trusted), and the new row-identity guard is real, wired, and test-covered.
+**why-change:** populated row's `commit_sha` field (was null) with `941883d76`; no other change from plan.
