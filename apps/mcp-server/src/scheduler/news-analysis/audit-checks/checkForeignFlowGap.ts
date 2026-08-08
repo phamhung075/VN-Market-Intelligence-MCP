@@ -31,27 +31,23 @@
  * Unlike conviction_history (FIX-CONVICTION-HISTORY-EOD-BACKFILL, the
  * reconciliation shape this file reuses), daily_foreign_flow has NO
  * alternate in-DB reconstruction source and its sole upstream
- * (bgapidatafeed.vps.com.vn/getliststockdata) is LIVE-SNAPSHOT-ONLY — no
- * date/range parameter (RAW-confirmed live 2026-08-07, same conclusion the
- * 2026-07-22 precedent already established for this identical endpoint).
- * A past trading day that ends with zero rows can therefore NEVER be
- * backfilled by this or any future automated check — see
- * scripts/migrations/verify-foreign-flow-gap-unrecoverable-2026-08-06.ts
- * for the live re-verification harness (AC-2). This check's ONLY action is
+ * (bgapidatafeed.vps.com.vn/getliststockdata) is LIVE-SNAPSHOT-ONLY, no
+ * date/range parameter (RAW-confirmed live 2026-08-07, matching the
+ * 2026-07-22 precedent for this same endpoint) — a past trading day
+ * that ends with zero rows can NEVER be backfilled by this or any
+ * future automated check (see scripts/migrations/verify-foreign-flow-
+ * gap-unrecoverable-2026-08-06.ts, AC-2). This check's ONLY action is
  * to ESCALATE (agent_feedback + Telegram via dataAuditJob's existing
  * "flagged"/"escalated" send-gate), so a zero-row trading day is never
  * silently self-cleared again the way the intraday freshnessSlaMonitorJob
  * was on 2026-08-06 (it only escalates INSIDE VN market hours and had
- * nothing to compare against once the whole session had zero rows and
- * closed — see sibling FIX-SLA-MONITOR-MARKET-OPEN-BOUNDARY-DETERMINISTIC-
- * DAILY-BREACH, which depends on this task and must not remove or weaken
- * this detector).
+ * nothing to compare once the whole session had zero rows and closed —
+ * see sibling FIX-SLA-MONITOR-MARKET-OPEN-BOUNDARY-DETERMINISTIC-DAILY-
+ * BREACH, which depends on this task and must not remove/weaken it).
  *
- * Uses the canonical VN trading-calendar module (vnTradingCalendar.ts,
- * holiday-aware) rather than a naive weekday check — matches
- * scripts/check-foreign-flow-freshness.sh's own LCTS convention and avoids
- * the weekend/holiday-blind false-positive class documented in
- * ALPHA-S1-STARTUP-CANDLE-GUARD.
+ * Gap-day math (MAX_LOOKBACK_DAYS/MAX_GAP_DAYS_PER_RUN, calendar-aware)
+ * lives in foreignFlowGapDetection.ts — split out (FIX-CI-SIZELINT-
+ * CHECKFOREIGNFLOWGAP-NEW-OFFENDER-181L, keeps both files <120L); re-exported below.
  *
  * Layer: infrastructure/scheduler
  * DDD rules: may import from infrastructure/ and domain/; must not import
@@ -59,67 +55,10 @@
  */
 
 import { Database } from "bun:sqlite";
-import { getTodayVnDate, isVnTradingDay, shiftDateDays } from "../../../domain/services/vnTradingCalendar.js";
+import { getTodayVnDate } from "../../../domain/services/vnTradingCalendar.js";
 import { AuditFinding, insertFeedbackIfNew } from "../dataAuditShared.js";
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Safety caps
-// ─────────────────────────────────────────────────────────────────────────────
-
-/** Never scan further back than this even if daily_foreign_flow has old history. */
-const MAX_LOOKBACK_DAYS = 60;
-/** Process at most this many gap days per invocation (oldest-first) — mirrors
- *  checkConvictionHistoryGap's MAX_GAP_DAYS_PER_RUN convention. */
-const MAX_GAP_DAYS_PER_RUN = 15;
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Gap detection
-// ─────────────────────────────────────────────────────────────────────────────
-
-/**
- * Finds VN trading days (per the canonical calendar — weekends AND holidays
- * excluded, half-days included) in [lowerBound, vnToday) with ZERO
- * daily_foreign_flow rows. `vnToday` itself is always excluded — a same-day
- * partial/still-open session must never be flagged as a gap (mirrors
- * findConvictionHistoryGapDays's AC-5 convention).
- *
- * lowerBound derives from MIN(daily_foreign_flow.date) — dates before the
- * table's own history began are legitimately absent, not a gap. An empty/
- * missing table returns [] (first-run honesty guard — nothing to reconcile
- * yet, never invents a lower bound out of thin air).
- */
-export function findForeignFlowGapDays(db: Database, vnToday: string): string[] {
-  let earliest: string | null = null;
-  try {
-    earliest =
-      db.query<{ mn: string | null }, []>("SELECT MIN(date) as mn FROM daily_foreign_flow").get()?.mn ?? null;
-  } catch {
-    /* daily_foreign_flow may not exist yet in a minimal test DB */
-  }
-  if (!earliest) return [];
-
-  const hardLower = shiftDateDays(vnToday, -MAX_LOOKBACK_DAYS);
-  const lowerBound = earliest < hardLower ? hardLower : earliest;
-
-  const gaps: string[] = [];
-  let cursor = lowerBound;
-  while (cursor < vnToday && gaps.length < MAX_GAP_DAYS_PER_RUN) {
-    if (isVnTradingDay(cursor).is_trading_day) {
-      let n = 0;
-      try {
-        n =
-          db
-            .query<{ n: number }, [string]>("SELECT COUNT(*) as n FROM daily_foreign_flow WHERE date = ?")
-            .get(cursor)?.n ?? 0;
-      } catch {
-        n = 0;
-      }
-      if (n === 0) gaps.push(cursor);
-    }
-    cursor = shiftDateDays(cursor, 1);
-  }
-  return gaps;
-}
+import { findForeignFlowGapDays } from "./foreignFlowGapDetection.js";
+export { findForeignFlowGapDays };
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Public audit-check entry point
