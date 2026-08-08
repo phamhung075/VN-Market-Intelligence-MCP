@@ -1054,3 +1054,15 @@
 **Mitigation:** No immediate action beyond signal routing.
 
 ---
+
+## Anomaly: A-30 · rag-service memory pressure — sustained >93%
+**Severity:** WARN | **Date:** 2026-08-08 | **Status:** OPEN
+**Location:** rag-service container
+**Details:** Memory usage sustained at 97.50% (6 consecutive samples), below 40MiB floor threshold
+**Impact:** Container approaching memory limit; OOM risk if usage continues; may trigger eviction or restart
+**Root cause:** Possible memory leak or unbounded buffer growth in rag-service
+**Zone owner:** infrastructure
+**Last reported:** 2026-08-08T20:12:37Z (signal sys-20260808T201216-7780, system-auditor -> po, dedup_key=microservice_degraded:vn-market-intelligence-mcp-rag-service-1:A-30, WARN Telegram sent)
+**Mitigation:** No immediate action beyond signal routing.
+
+---
