@@ -87,6 +87,30 @@
 
 ---
 
+## c334 GUARD-NOTEBOOK-CONCURRENT-EDIT-COLLISION-DATA-LOSS · WIP Slot Freeing (Out-of-Band PO Triage) · 2026-08-08T00:00Z
+
+**MANDATE:** Out-of-band escalation from po's triage (agent a99c6a355831656ef): Parent row GUARD-NOTEBOOK-CONCURRENT-EDIT-COLLISION-DATA-LOSS was occupying 1 of 2 WIP slots despite already being decomposed (head.status=idle, 2026-08-07T03:30Z). WIP cap blocked 2 P0 CI-sizelint rows from dispatch; CI-RED-83bb4359 and CI-RED-a20cbf56 stalled for >23h.
+
+**VERIFICATION (independent):**
+- Row in_progress[0]: id=GUARD-NOTEBOOK-CONCURRENT-EDIT-COLLISION-DATA-LOSS, status=IN_PROGRESS, claimed_by=null
+- Children verified: 3 live on board (FIX-NOTEBOOK-WRITE-TASK-KIND-ENUM-EXTENSION, FIX-NOTEBOOK-AUTO-PRUNE-STALENESS-GUARD, FIX-NOTEBOOK-WRITE-AC7-SKILL, all in backlog/blocked states)
+- Note: po's claim of "zero children" was factually incorrect; row has 3 children. Core issue remains valid: parent decomposition complete but still occupying WIP slot.
+- WIP usage before: 2/2 (GUARD row + FIX-CHEF-USDVND row), blocking ready[] dispatch
+
+**ACTION TAKEN:**
+- Relocated GUARD row from task_board.in_progress[] to task_board.backlog[]
+- Status IN_PROGRESS → BLOCKED, added blocked_reason: "Parent decomposition task completed: 3 children decomposed as of 2026-08-07T03:30Z (head.status=idle). Row occupied WIP unnecessarily. Reactivate after children complete."
+- orch-apply.sh: Stage 0+1 PASS, conservation check OK (task_total: 767→767, stable)
+
+**BOARD STATE AFTER:**
+- in_progress: 1 actual IN_PROGRESS (FIX-CHEF-USDVND row, claimed by dev-team), WIP capacity freed (1/2)
+- ready[0:1]: 2 P0 CI-sizelint rows now dispatchable (FIX-CI-SIZELINT-CHECKFOREIGNFLOWGAP-*, FIX-CI-SIZELINT-COORDINATIONSTORE-*)
+- backlog: +1 row (GUARD-NOTEBOOK row, status=BLOCKED), conservation verified
+
+**NEXT STEP:** Dispatch the 2 freed P0 CI rows to dev-mcp-server per normal PM flow (both in same zone, parallel-dispatchable).
+
+---
+
 ## ERROR-CORRECTION · FIX-SYSTEM-AUDITOR-CYCLE-FINDINGS-NOT-SELF-PERSISTED · review-triage · 2026-08-06T15:35Z
 
 **INCIDENT:** PM review-triage for FIX-SYSTEM-AUDITOR-CYCLE-FINDINGS-NOT-SELF-PERSISTED (parent task, plan_only decomposed into 4 child tasks) detected what appeared to be a missing child task (FIX-AUDITOR-DURABILITY-STEP0B-DETECTION) from task_board and added a fresh backlog[] entry.
