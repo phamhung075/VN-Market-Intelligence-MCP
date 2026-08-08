@@ -1030,3 +1030,15 @@
 **Mitigation:** No immediate action beyond signal routing.
 
 ---
+
+## Anomaly: A-30 · vn-market-intelligence-mcp-rag-service-1: 99.72% memory, BELOW-FLOOR
+**Severity:** WARN | **Date:** 2026-08-08 | **Status:** OPEN
+**Location:** vn-market-intelligence-mcp-rag-service-1
+**Details:** Container memory usage at 99.72% sustained (99.72% for 65 seconds across 6 probes). Free memory 2.9MiB falls below 40MiB floor threshold. Zero reclamation dips observed.
+**Impact:** Service approaching OOM event. Chronic pattern since 2026-08-05 with 11+ distinct ledger entries. Risk of unexpected termination or performance degradation.
+**Root cause:** Unknown — memory pressure persists despite no crashes or OOMKilled events. Possible memory leak or accumulating cache.
+**Zone owner:** dev-team
+**Last reported:** 2026-08-08T18:06:17Z (signal sys-20260808T180600-2ee6, system-auditor -> po, dedup_key=microservice_degraded:vn-market-intelligence-mcp-rag-service-1:A-30:BELOW-FLOOR, WARN Telegram sent)
+**Mitigation:** No immediate action beyond signal routing.
+
+---
