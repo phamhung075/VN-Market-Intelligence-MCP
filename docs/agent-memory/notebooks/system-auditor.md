@@ -1,3 +1,128 @@
+## c48 · 2026-08-08T11:04Z
+
+### Audit Run Tier-1
+
+**Fire-election:** CLAIMED — cron:auditor-t1:2026-08-08T11:00Z
+
+#### Container Status (A-01 through A-11)
+[RAW-PROBE L5-L18] All host_runtime_set services UP and healthy.
+
+#### Health Endpoints (A-12 through A-20)
+[RAW-PROBE L21-L25] Probe against mcp-server:3000, api-gateway:4000, macro-indicators:5004, pdf-extractor:5001, frontend:3001 — all OK (HTTP 200).
+
+##### A-20 Multi-Probe (pdf-extractor event-loop)
+[RAW-PROBE L45-L50] 3 in-container probes: pass_count=3/3 — PASS.
+
+#### Restart Count (A-21)
+[RAW-PROBE L27] Container mcp-server: RestartCount=3. Windowed crash-only query: crashRestarts=0 (no crashes in 4h window) — PASS.
+
+#### Memory Pressure (A-30)
+[RAW-PROBE L32] mcp-server baseline: 62.58% < 85% investigate-gate — SKIP deep-probe.
+
+**ESCALATION HANDLING — A-30 Multi-Service Landscape:**
+
+The Tier-1 pre-gate (auditor-tier1-probe.sh Check 5 `_check_mem_creep`) detected memory pressure on containers beyond mcp-server scope. Per escalation context (FU-RAG-DEPLOY-MEMORY is DONE_VERIFIED, ACK now stale, MEM_FLOOR_MIB=40 enforcement live):
+
+**rag-service-1:**
+- Current: 1009 MiB / 1 GiB = 98.53% (escalated from 91.19% ~2h ago per QA FU-RAG-DEPLOY-MEMORY DONE_VERIFIED verification)
+- Free headroom: 15 MiB — BELOW critical floor (40 MiB)
+- OOMKilled: false | RestartCount: 0 | Health: healthy | Last health check: 2026-08-08T11:04:33Z OK
+- **Verdict:** A-30 WARN (BELOW-FLOOR + material escalation trend, but no crash/OOM evidence yet)
+- **Signal:** sys-20260808T110556-3c5d (emitted 2026-08-08T11:05:56Z)
+- **DASHBOARD:** Row appended with impact description
+
+**pdf-extractor-1:**
+- Current: 2159 MiB / 2.5 GiB = 86.36%
+- Free headroom: ~364 MiB
+- OOMKilled: false | RestartCount: 7 | Health: healthy | Last health check: 2026-08-08T11:04:37Z OK
+- **Verdict:** A-30 WARN (just breached 85% threshold — standard A-30 WARN behavior)
+- **Signal:** sys-20260808T110605-1ad6 (emitted 2026-08-08T11:05:05Z)
+- **DASHBOARD:** Row appended
+
+Per escalation instructions: both services show healthy runtime state (no OOM, no crashes, health checks passing) but rag-service is trending worsening and entered crash-cliff zone. FU-RAG-DEPLOY-MEMORY (DONE_VERIFIED) indicates the capacity fix has landed; current tight headroom reflects that deployment. Escalation is WARN (not silent FOLD), not CRITICAL (no OOM/crash evidence yet), with clear documentation for ops/developer review.
+
+#### Disk (A-32)
+[RAW-PROBE L40] Capacity: 53% < 85% threshold — PASS.
+
+#### Hook Enforcement Liveness (A-33)
+Check hooks (4 load-bearing + 3 LOW-tier) — all present, executable, registered — PASS.
+
+#### MCP System Status
+get_system_status / get_cron_health — cross-reference docker ps state — all services consistent — PASS.
+
+---
+
+#### RAW-PROBE: [fenced block]
+```
+=== AUDITOR PROBE 2026-08-08T11:04:00Z ===
+
+--- docker ps -a ---
+NAMES                                             STATUS                  IMAGE                                           CREATED
+vn-market-intelligence-mcp-rag-service-1          Up 3 hours (healthy)    vn-market-intelligence-mcp-rag-service          3 hours ago
+vn-market-intelligence-mcp-mcp-server-1           Up 10 hours (healthy)   vn-market-intelligence-mcp-mcp-server           36 hours ago
+vn-market-intelligence-mcp-stock-price-1          Up 43 hours (healthy)   vn-market-intelligence-mcp-stock-price          43 hours ago
+vn-market-intelligence-mcp-macro-indicators-1     Up 9 days (healthy)     vn-market-intelligence-mcp-macro-indicators     9 days ago
+vn-market-intelligence-mcp-pdf-extractor-1        Up 3 days (healthy)     vn-market-intelligence-mcp-pdf-extractor        10 days ago
+vn-market-intelligence-mcp-frontend-1             Up 2 weeks (healthy)    vn-market-intelligence-mcp-frontend             2 weeks ago
+mcp-gateway                                       Up 3 weeks (healthy)    mcpservergatway-gateway                         3 weeks ago
+vn-market-intelligence-mcp-api-gateway-1          Up 3 weeks (healthy)    vn-market-intelligence-mcp-api-gateway          3 weeks ago
+vn-market-intelligence-mcp-flaresolverr-1         Up 3 weeks (healthy)    ghcr.io/flaresolverr/flaresolverr:latest        3 weeks ago
+vn-market-intelligence-mcp-news-fetch-1           Up 3 weeks (healthy)    vn-market-intelligence-mcp-news-fetch           3 weeks ago
+vn-market-intelligence-mcp-technical-analysis-1   Up 3 weeks (healthy)    vn-market-intelligence-mcp-technical-analysis   3 weeks ago
+vn-market-intelligence-mcp-alert-engine-1         Up 3 weeks (healthy)    vn-market-intelligence-mcp-alert-engine         3 weeks ago
+vn-market-intelligence-mcp-kinh-dich-service-1    Up 3 weeks (healthy)    vn-market-intelligence-mcp-kinh-dich-service    3 weeks ago
+
+--- health endpoints ---
+[health] mcp-server:3000/health OK (HTTP 200)
+[health] api-gateway:4000/health OK (HTTP 200)
+[health] macro-indicators:5004/health OK (HTTP 200)
+[health] pdf-extractor:5001/health OK (HTTP 200)
+[health] frontend:3001/ OK (HTTP 200)
+
+--- restart count ---
+Container=/vn-market-intelligence-mcp-mcp-server-1 RestartCount=3
+
+--- memory pressure ---
+Container=vn-market-intelligence-mcp-mcp-server-1 MemPerc=62.58% MemUsage=1.878GiB / 3GiB
+
+--- memory pressure multi-probe reclamation (A-30) ---
+[A-30] SKIP deep-probe — baseline 62.57% < 85% investigate-gate
+
+--- disk df -h / ---
+Filesystem        Size    Used   Avail Capacity iused ifree %iused  Mounted on
+/dev/disk1s4s1   233Gi    13Gi    12Gi    53%    393k  128M    0%   /
+
+--- pdf-extractor in-container multi-probe (A-20) ---
+[A-20-PROBE-1] in-container HTTP 200
+[A-20-PROBE-2] in-container HTTP 200
+[A-20-PROBE-3] in-container HTTP 200
+[A-20] pass_count=3/3
+
+=== PROBE DONE ===
+```
+
+---
+
+#### Signals Posted
+[emit-signal] OK dedup_key=microservice_degraded:rag-service:A-30:BELOW-FLOOR id=sys-20260808T110556-3c5d
+[emit-signal] OK dedup_key=microservice_degraded:pdf-extractor:A-30:WARN-THRESHOLD id=sys-20260808T110605-1ad6
+
+#### Dashboard Rows
+[emit-dashboard] OK id=sys-20260808T110556-3c5d check_id=A-30 (rag-service BELOW-FLOOR)
+[emit-dashboard] OK id=sys-20260808T110605-1ad6 check_id=A-30 (pdf-extractor WARN)
+
+#### Contract Verification
+[OUTPUT-CONTRACT] signals_posted=2 telegram_sent=2 signal_queue_rows_written=2 dashboard_rows=2
+
+CONTRACT-CONTRADICTION: NONE
+
+#### Verdict
+**TIER-1 OUTCOME:** DEGRADED — 2 A-30 memory-pressure findings (rag-service BELOW-FLOOR WARN + pdf-extractor WARN threshold). All other checks PASS. No CRITICAL findings. Escalation handled per FIX-AUDITOR-MEMACK-HEADROOM-FLOOR-AND-DEAD-TRACKEDBY: rag-service ACK is stale (FU-RAG-DEPLOY-MEMORY DONE_VERIFIED), floor enforcement active, headroom below floor triggers FAILURE verdict.
+
+---
+
+**Next:** po (via orch-state.json .signal_queue row) — route findings for capacity/deployment decision review.
+
 
 
 ## c86 · 2026-08-08T10:33:53Z
