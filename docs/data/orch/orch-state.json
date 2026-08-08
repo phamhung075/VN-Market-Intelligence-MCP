@@ -13483,26 +13483,6 @@
         "build_standard": "not-applicable",
         "architect_review_note": "DESIGN COMPLETE (architect, brownfield, no BA/PM relay — direct PO-mint FIX row). Zone: cross-service/ (scripts/) confirmed via docs/data/system-map.json .project.zones[id=cross-service].specialist=developer + zone-detect Tier-2 (\"root/scripts/ -> developer\"). BUILD-STANDARD: not-applicable (bug-fix/refactor, no new primitives, no new service/feature).\n\nROOT CAUSE (source-verified, scripts/orch-apply.sh read in full): Stage 0/1 (orch-validate.mjs, schema+coherence) and Stage 2 (orch-conservation-check.mjs, whole-board magnitude + signal-row-identity) both legitimately PASS on a byte-identical-for-the-target-row candidate — neither stage's job is to know what any individual caller INTENDED to change. CAS-mtime cannot fire either: this incident's staleness predates orch-apply.sh's own process lifetime (jq read the ALREADY-current live file after pm's commit landed, so select() legitimately matched 0 rows within in_progress[] — no write raced DURING the pipe's run). Distinct root cause from the CAS-mtime class, same shape already named in dev-standards.md's row-identity guard writeup (\"stale relative to live BEFORE its own process started\").\n\nKEY BROWNFIELD FINDING: scripts/orch-stamp-updated-at.mjs (Stage 1.5) ALREADY computes, per row id, `changed = !liveRow || !deepEqual(omit(candidateRow,'updated_at'), omit(liveRow,'updated_at'))` for every row in the candidate (source: flattenRows()/deepEqual()/omitField(), lines ~150-257) — exactly the primitive needed to detect \"selector missed its target.\" Nothing currently consumes that per-id result beyond the stamp-or-not decision. Fix reuses this machinery instead of duplicating it (HARD CONSTRAINT in orch-apply.sh's own header: never duplicate validation logic).\n\nFIX SHAPE — chosen: (a) opt-in per-id companion assertion, env-var-plumbed exactly like the existing ORCH_APPLY_ALLOW_SHRINK / ORCH_APPLY_DECLARED_SIGNAL_EVICTIONS precedent (inherited via subprocess env, zero new orch-apply.sh plumbing). REJECTED alternatives, both named in the board row's own note, both source-checked before rejecting:\n  - (b) escalate \"stamped 0 row(s)\" to a loud warning — REJECTED: dev-standards.md's own \"Routed writers\" list (signal-dashboard WRITE/PRUNE, fail-loud-protocol.md head-reset, any head-only write) shows MANY legitimate call sites touch zero task_board rows every single cycle — that IS their normal successful outcome. Blind escalation manufactures a false-positive storm on the majority of routine writes, not a targeted fix.\n  - (c) jq-transform-string parsing — REJECTED: fragile against arbitrary jq syntax (nested selects, alternate predicates, first()/limit()), reverse-engineers intent from source text instead of trusting a structural caller-supplied fact. Opt-in declarative env var matches the file's own existing idiom.\n\nMECHANISM (scripts/orch-stamp-updated-at.mjs, extend the existing stamping loop — do not add a new script/stage):\n1. New env var `ORCH_APPLY_EXPECT_MUTATED_IDS=<comma-separated task ids>` — optional, read directly from process.env (no CLI-arg change, mirrors ORCH_APPLY_ALLOW_SHRINK's \"no special plumbing\" note).\n2. In the existing `for (const [id, candidateRow] of candidateRows)` loop, additionally push `id` into a `changedIds` Set whenever `changed` is true (already computed — one extra Set.add per iteration).\n3. After both stamping passes (rows + head), BEFORE `writeFileSync`: if the env var is non-empty, for each declared id check `changedIds.has(id)`. This single predicate unifies all 3 failure shapes with zero extra branching: (i) id present in both live+candidate with identical content [[exact PO incident — row relocated to another lane, content byte-identical]]; (ii) id present in live only [row removed from candidate entirely]; (iii) id present in neither [typo / already-evicted] — none of these ever enter changedIds, since the loop only adds ids where `changed===true`.\n4. Any unsatisfied id -> print every failing id to stderr, `process.exit(4)` BEFORE the write (TMP stays at its pre-stamp, already-schema-valid state; orch-apply.sh's cleanup trap removes it since the rename never happens — live file untouched, per the file's own \"Live file is SACRED\" hard constraint).\n5. scripts/orch-apply.sh Stage 1.5 error-handling: one new branch — `stamp_exit -eq 4` -> propagate a NEW distinct exit code 4 (documented in the top-of-file EXIT CODES comment + new ORCH_APPLY_EXPECT_MUTATED_IDS env-var doc block, styled like the existing ORCH_APPLY_ALLOW_SHRINK block) instead of collapsing into the current generic `exit 1`. Rationale for a distinct code: remediation is \"re-read live file, recompute filter, retry\" — identical to exit 2's CAS-mtime remediation, NOT exit 1's \"malformed candidate, retry fails the same way.\" Lets any retry-wrapper safely auto-retry on {2,4} but never blindly retry on 1.\nREGRESSION SAFETY: exit 4 only fires when the new opt-in var is set. None of the ~290 existing orch-apply.sh call sites set it today -> zero behavior change for all of them, verified by design (additive-only code path).\n\nCOMPANION FIX — docs/agents/po/flow/main.md AC-3 (explicitly required by the board row): current AC-3 only checks file-PRESENCE in HEAD (`git show --stat $SHA | grep -q orch-state.json`) — provably insufficient, it passed on this exact incident because OTHER rows changed in the same commit. Two-layer rewrite: (1) PRIMARY — mandate that any po-authored orch-apply.sh pipe targeting a specific row/id (not a full-lane rebuild, not head-only) MUST set `ORCH_APPLY_EXPECT_MUTATED_IDS=<id[,id...]>`, catching the failure BEFORE any commit exists. (2) belt-and-suspenders — extend AC-3's post-commit self-verification to re-read the SPECIFIC target row from the just-committed HEAD (`git show $SHA:docs/data/orch/orch-state.json | jq --arg id \"$TARGET_ID\" '.. | objects | select(.id?==$id)'`) and assert the intended field(s) are actually present, not merely that the file is in HEAD. This generalizes the rule already adopted fleet-wide in docs/protocols/fail-loud-protocol.md's Analysis-Only Exit Guard (\"re-read the persistence layer before claiming it — never trust the write call's own exit code\") from file-level to row-level.\n\nTEST COVERAGE (extend scripts/test/orch-apply-wrapper-tests.sh, new \"EXPECT-MUTATED-IDS TESTS (FIX-ORCHAPPLY-SELECTOR-MISS-SILENT-NOOP)\" section after the existing UPDATED_AT STAMPING TESTS section, same pass/fail/assert_real_live_unchanged harness + fixture idiom as STAMP-*/ROW-DROP-*):\n  - EXPECT-MUTATED-SATISFIED: declared id's row content genuinely changed -> exit 0.\n  - EXPECT-MUTATED-UNSATISFIED-SELECTOR-MISS: fixture reproduces the LIVE incident shape verbatim (candidate's select() targets a lane the row has already left in the live file) -> exit 4, assert_real_live_unchanged. This case IS the board row's own AC (\"replay this exact race on a fixture... prove the wrapper fails loud instead of returning OK\").\n  - EXPECT-MUTATED-ROW-ABSENT: declared id in neither live nor candidate -> exit 4.\n  - EXPECT-MUTATED-UNSET-NOOP: env var NOT set, genuine no-op candidate -> exit 0 unchanged (regression proof for the ~290 default callers).\n  - EXPECT-MUTATED-MULTI-PARTIAL: 2 declared ids, only 1 satisfied -> exit 4, message names exactly the unsatisfied one.\n\nRISK FLAGS: (1) Opt-in-only — callers who never set the var get zero new protection; residual adoption gap, mitigated by making it MANDATORY in po/flow/main.md (the flow that hit this) and documented as the standard idiom in dev-standards.md for any future row-targeted mutation, but NOT retrofitted across all ~290 existing ad-hoc jq callers in this task (separate, larger hardening effort — flagging as a natural follow-up, same spirit as the already-planned scripts/audits/po-mint-orchapply-actuator-verify.sh named on this same AC-3 block: a lint pass could grep for `select(.id==` row-targeted filters missing a sibling ORCH_APPLY_EXPECT_MUTATED_IDS= at the same call site). (2) New exit-code-4 contract surface — verified additive/zero-regression per above. (3) No DDD/domain-layer risk — pure infra wrapper-script change, no apps/*/src touched.\n\nFILES (implementer scope):\n  - scripts/orch-stamp-updated-at.mjs — changedIds Set + EXPECT_MUTATED_IDS check + exit(4) pre-write; header docstring update.\n  - scripts/orch-apply.sh — Stage 1.5 exit-4 branch; top-of-file EXIT CODES + new env-var doc block.\n  - scripts/test/orch-apply-wrapper-tests.sh — new EXPECT-MUTATED-IDS TESTS section (5 cases above).\n  - docs/agents/po/flow/main.md — AC-3 two-layer rewrite (mandate + row-level re-read).\n  - docs/policies/dev-standards.md — extend \"CANONICAL: Orch-state gated write wrapper\" + \"CANONICAL: Orch-state diff-based updated_at stamping\" blocks with the new exit-4/EXPECT_MUTATED_IDS mechanism (same pattern every prior orch-apply extension used).\n\nNEXT_AGENT: developer (generic — zone=cross-service/scripts, Tier-2 zone-detect rule; not a dev-<service> specialist, no apps/ code touched). No ba/pm relay per FIX-type direct-dispatch routing already reflected in this row (next_agent was pre-set to architect by po's mint).\n",
         "architect_completed_at": "2026-08-08T15:27:43Z"
-      },
-      {
-        "id": "FIX-COLDEVICT-TERMINAL-SIGNAL-STATUSES-OMITS-TRIAGED-RETRACTED",
-        "type": "FIX",
-        "size": "XS",
-        "status": "READY",
-        "priority": "P1",
-        "zone": "scripts/",
-        "next_agent": "developer",
-        "owner": "developer",
-        "supervised": false,
-        "plan_only": false,
-        "depends": [],
-        "title": "orch-cold-evict.sh TERMINAL_SIGNAL_STATUSES omits triaged/TRIAGED/RETRACTED -> 226 of 247 signal_queue rows stuck forever, 200-row cap BREACHED live",
-        "note": "PRE-DIAGNOSED, zero design cost. .claude/skills/signal-dashboard/SKILL.md L83 already states this verbatim as a KNOWN GAP needing 'a follow-up code fix (developer, scripts/orch-cold-evict.sh)'. MEASURED 2026-08-08T18:0xZ: 247 rows in .signal_queue.rows[] vs the skill's own documented 200-row cap (L105) = invariant BREACHED. Status histogram: triaged 219, READ 20, RETRACTED 4, TRIAGED 3, NEW 1. Default at scripts/orch-cold-evict.sh:132 is READ,RESOLVED,SUPERSEDED,ACUTE-RESOLVED-ROOT-TRACKED. AC-1: add triaged, TRIAGED, RETRACTED to the default (matching is EXACT-string, no case fold - see L495 - so BOTH cases are required, the skill's own note only names the lowercase one). AC-2: sync the PRUNE criteria line in .claude/skills/signal-dashboard/SKILL.md L91 (still says READ/RESOLVED/SUPERSEDED only). AC-3: 24h SIGNAL_MAX_AGE_HOURS age gate stays untouched - it is the FIX-COLDEVICT-SIGNALQUEUE-NO-AGE-GATE guard. AC-4: dry-run first, confirm eviction count, rows go to cold archive not deletion. SAFETY: 'triaged' is a PO-terminal disposition per docs/agents/po/flow/main.md, so this evicts dispositioned rows only, never an unread po escalation.",
-        "created_at": "2026-08-08T18:08:16Z",
-        "created_by": "po (SYSREMAKE-8RC-RECHECK triage)",
-        "origin_signal_id": "orc-20260808T175614",
-        "updated_at": "2026-08-08T18:08:20Z",
-        "updated_by": "po"
       }
     ],
     "review": [
@@ -18848,6 +18828,28 @@
         "po_deploy_gate_discharge_20260808T1759Z": "PO DEPLOY-GATE DISCHARGE + BINDING DO-NOT-REBUILD RULING (po triage 2026-08-08T17:59Z, router dev-team tick 17:37Z).\n\nDOCKER MICROSERVICE CODE-CHANGE CLOSE GATE: THE OPS LEGS (runbook Steps 1-4b) ARE ALREADY SATISFIED — THE REBUILD HAS ALREADY LANDED. Raw evidence measured by po this tick, not relayed:\n- Running image sha256:630fa5d262755bf9, Created=2026-08-08T16:59:29Z, which POST-DATES fix commit b746c112b (2026-08-08T16:57:46Z).\n- Container vn-market-intelligence-mcp-mcp-server-1 recreated StartedAt=2026-08-08T16:59:50Z, RestartCount=0, OOMKilled=false, HostConfig.Memory=3221225472 (3GiB cap verified real).\n- SHA-gate deliberately strengthened BEYOND an image-timestamp comparison: the fix SOURCE was read INSIDE the container (baked at build per apps/mcp-server/Dockerfile:62 `COPY apps/mcp-server/src/ ./src/`, not volume-mounted) and contains SessionRecord/evictSession/reapStaleSessions/stopReaper/closeSession. Image identity is therefore established BY CONTENT, not inferred from a timestamp ordering.\n- SINGLE-SERVICE SCOPE CONFIRMED (feedback_rebuild_recreate_destroys_peers): all 12 peer containers untouched — rag-service up since 2026-08-08T08:11:45Z, pdf-extractor 11:40:07Z, stock-price 2026-08-06T15:59:05Z, macro-indicators 2026-07-29T23:58:26Z, frontend 2026-07-24T18:02:39Z, mcp-gateway 2026-07-15T18:13:12Z, api-gateway/flaresolverr/news-fetch/technical-analysis/alert-engine/kinh-dich-service all 2026-07-15T15:16:48Z. No destructive `down && up` occurred.\n\nFIX-SIGNATURE PROBE — THE LEAK IS BOUNDED, AND IT IS MEASURED AGAINST A TRAFFIC-RATE CONTROL:\n- /health at 17:58Z: toolCount=183 (unchanged, gate (d) re-confirmed), sessions=22, uptime=3465s (57.8 min).\n- 661 McpServer constructions since boot (\"Sequential Market Analysis tool registered\"), 22 still resident => 96.7% reaped. PRE-FIX CONTROL, from this row's own po_rawverify_20260807T0600Z: 4018 constructions / 873 resident at 6h31m => 78.3% reaped, and the residual 21.7% NEVER got reaped at all. Construction RATE is essentially unchanged (686/h now vs 616/h pre-fix), so the collapse in residency is the reaper working and NOT a traffic lull. That control is deliberate: without it this would be a degenerate-sample reading (feedback_single_observation_degenerate_case_read_as_broken_mechanism).\n- MEMORY PLANE REVERSED: MemPerc 11.26% (345.8MiB / 3GiB) at 57.8 min uptime, against a pre-fix container that was pinned at 96-99% with VmHWM still ADVANCING at the cap. /proc/1/status now reads VmHWM=662168 kB > VmRSS=348028 kB — high-water ABOVE current RSS = reclamation is happening again. That is the exact honest inverse of the \"loss of reclamation / VmRSS at its own all-time high-water\" signature that generated this row's entire A-30 CRITICAL chain (Telegram reports 4552/4553/4554).\n\nBINDING RULING — DO NOT REBUILD OR RESTART mcp-server AGAIN FOR THIS ROW. `rebuild_required` is flipped true->false at the FIELD level deliberately, so the structured field can never contradict this prose: a stale `rebuild_required: true` sitting beside prose that says \"do not rebuild\" is precisely the contradiction class recorded in feedback_a30_prose_overrides_embedded_escalate_verdict. A second rebuild would reset the 57-minute post-fix trajectory that QA Step 5 now needs, and this row's own history already records TWO prior observation windows destroyed by unrelated rebuilds (2026-08-06T23:21:41Z for TASK_603, and the 08-05 image churn).\n\nROUTING: next_agent ops -> qa. QA's own 2026-08-08T17:08Z routing note specified \"ops may proceed per docker-deployment-runbook.md Steps 1-4b, then forward to qa (Step 5 live /health + sessionCount verification) before po Step 6 sign-off\". Steps 1-4b are discharged above by direct in-container evidence, so this forwards to exactly the qa leg QA itself named — it does not skip a gate, it records one already met.\n\nQA STEP 5 OWES: sessionCount vs MemPerc correlation sustained over >=4h (long enough to cross the 4h max-age reaper backstop at least once, not merely the 15min idle reaper already observed firing), RestartCount stable at 0 across that window, toolCount=183 and cronJobCount=88 unchanged, then hand to po for Step 6 sign-off.\n\nPROCESS GAP NOTED, DELIBERATELY NOT MINTED THIS TICK: the rebuild landed with NO board attribution and no runbook ledger entry — no commit in the 16:30-18:00Z window records an ops deploy. The deploy is verified-good by content, so this is a record-keeping gap and not a safety one. qa should record the actor if determinable. Logged to pendingObservations rather than minted, per single-occurrence discipline.\n",
         "rebuild_completed_at": "2026-08-08T16:59:29Z",
         "rebuild_verified_by": "po (in-container baked-source read + live idle_timeout eviction logs + peer-preservation scan)"
+      },
+      {
+        "id": "FIX-COLDEVICT-TERMINAL-SIGNAL-STATUSES-OMITS-TRIAGED-RETRACTED",
+        "type": "FIX",
+        "size": "XS",
+        "status": "REVIEW",
+        "priority": "P1",
+        "zone": "scripts/",
+        "next_agent": "qa",
+        "owner": "developer",
+        "supervised": false,
+        "plan_only": false,
+        "depends": [],
+        "title": "orch-cold-evict.sh TERMINAL_SIGNAL_STATUSES omits triaged/TRIAGED/RETRACTED -> 226 of 247 signal_queue rows stuck forever, 200-row cap BREACHED live",
+        "note": "PRE-DIAGNOSED, zero design cost. .claude/skills/signal-dashboard/SKILL.md L83 already states this verbatim as a KNOWN GAP needing 'a follow-up code fix (developer, scripts/orch-cold-evict.sh)'. MEASURED 2026-08-08T18:0xZ: 247 rows in .signal_queue.rows[] vs the skill's own documented 200-row cap (L105) = invariant BREACHED. Status histogram: triaged 219, READ 20, RETRACTED 4, TRIAGED 3, NEW 1. Default at scripts/orch-cold-evict.sh:132 is READ,RESOLVED,SUPERSEDED,ACUTE-RESOLVED-ROOT-TRACKED. AC-1: add triaged, TRIAGED, RETRACTED to the default (matching is EXACT-string, no case fold - see L495 - so BOTH cases are required, the skill's own note only names the lowercase one). AC-2: sync the PRUNE criteria line in .claude/skills/signal-dashboard/SKILL.md L91 (still says READ/RESOLVED/SUPERSEDED only). AC-3: 24h SIGNAL_MAX_AGE_HOURS age gate stays untouched - it is the FIX-COLDEVICT-SIGNALQUEUE-NO-AGE-GATE guard. AC-4: dry-run first, confirm eviction count, rows go to cold archive not deletion. SAFETY: 'triaged' is a PO-terminal disposition per docs/agents/po/flow/main.md, so this evicts dispositioned rows only, never an unread po escalation.",
+        "created_at": "2026-08-08T18:08:16Z",
+        "created_by": "po (SYSREMAKE-8RC-RECHECK triage)",
+        "origin_signal_id": "orc-20260808T175614",
+        "updated_at": "2026-08-08T18:23:30Z",
+        "updated_by": "developer",
+        "commit_sha": "42e7c6048",
+        "review_note": "AC-1: TERMINAL_SIGNAL_STATUSES default now admits triaged/TRIAGED/RETRACTED (literal entries, exact-string match preserved, no case-fold). AC-2: signal-dashboard SKILL.md PRUNE criteria synced (also picked up the pre-existing missing ACUTE-RESOLVED-ROOT-TRACKED entry) + KNOWN GAP note closed. AC-3: SIGNAL_MAX_AGE_HOURS age gate untouched. AC-4: dry-run run first (217 rows would evict), then verified via new T11 (orch-cold-evict-tests.sh, RED via git-stash then GREEN) -- 59/59 total, orch-apply-wrapper-tests.sh 75/75 no regression, shellcheck -x clean. Live board not yet evicted by this task (script fix only, no live cold-evict run performed as part of this dev task -- eviction happens via its normal scheduled/manual invocation)."
       }
     ],
     "qa": [
@@ -19118,7 +19120,7 @@
         "last_served_tick": "2026-08-08T15:54:20Z"
       }
     },
-    "_updated_at": "2026-08-08T17:52:36Z",
+    "_updated_at": "2026-08-08T18:23:03Z",
     "_updated_by": "dev-team",
     "pending_triage_inbox": [
       {
@@ -20103,6 +20105,388 @@
         "payload": "rag-service-1 A-30 memory degradation: 99.66% sustained high — loss of reclamation (CHRONIC PATTERN 11 signals over 4 da",
         "createdAt": "2026-08-08T17:38:49Z",
         "drained_at": "2026-08-08T17:52:14Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "3433a6ff442f6bc987c400240ff12109d2c22e82ce08fb754d59186e182518e4",
+        "source": "file",
+        "from": "bctc-analyst",
+        "to": "dev-team",
+        "type": "esc-deep-dive-request",
+        "priority": "HIGH",
+        "payload": {
+          "trigger_id": "ESC-5",
+          "ticker": "FPT",
+          "quarter": "Q1-2026",
+          "report_id": "e8ea3df5-3f32-413d-a3eb-c71634c0438d",
+          "guard_key": "esc-deepdive:FPT:Q1-2026:ESC-5",
+          "context": {
+            "low_confidence_unit_ids": [
+              "unit-0008",
+              "unit-0009",
+              "unit-0010",
+              "unit-0011",
+              "unit-0012",
+              "unit-0013",
+              "unit-0014"
+            ],
+            "min_confidence": 0.45
+          },
+          "all_esc_fired": [
+            "ESC-5"
+          ]
+        },
+        "createdAt": "2026-08-08T18:10:00Z",
+        "drained_at": "2026-08-08T18:23:03Z",
+        "routed_to": "ESC-DISPATCH"
+      },
+      {
+        "envelope_id": "de5e4d0baf8d4ea24db917c95de1996006b8e9cf830def2489d1db76df966645",
+        "source": "file",
+        "from": "bctc-analyst",
+        "to": "po",
+        "type": "bug-escalation",
+        "priority": "medium",
+        "payload": "[bctc-analyst] docs/signals/bctc_signal_{TICKER}_20260808_routine.json (FPT/HPG/VCB/DXG) Write-verified-absent again this cycle (18:00Z slot) via pre-write Read check — this is the 4th consecutive cycle today observing this pattern (c150 00:11Z wrote+found-absent-next-cycle, c151 15:09Z wrote+found-absent-next-cycle, now 18:xxZ found-absent-again before this cycle's own write). Every prior cycle's Write tool call returned 'File created' (not overwritten), so the write itself succeeds each time, but the file is gone by the next 3h cron slot. Root cause unconfirmed by bctc-analyst (no Bash/Glob grant to inspect docs/signals/ directly) — may be normal drain-and-prune consumption (by chef/unified-agent or a scheduled prune job) rather than a genuine data-loss bug, but has not been confirmed either way across 3 prior cycles of passive observation (c149/c150/c151 notebook entries). Escalating per c151 carry-over directive ('if seen a 4th time'). Requests dev-team/architect confirm whether same-day bctc_signal_*_routine.json files are expected to be drained/pruned between 3h cron slots (by design) or whether this is an unintended persistence gap.",
+        "createdAt": "2026-08-08T18:15:00Z",
+        "drained_at": "2026-08-08T18:23:03Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "5657edfa78144082714cec353a0a86623b111580f95c01fc85f6c18c98e4135f",
+        "source": "file",
+        "from": "unknown",
+        "to": "po",
+        "type": "bctc_signal",
+        "priority": "low",
+        "payload": {
+          "ticker": "DXG",
+          "signal_type": "bctc_signal",
+          "quarter": "Q1-2026",
+          "mode": "routine",
+          "beat_miss": null,
+          "product": "Real estate development — residential projects and land bank",
+          "customer": "Homebuyers, institutional/JV real-estate co-investors",
+          "ops": "No BCTC extraction available (\"Chưa có dữ liệu BCTC\") despite DXG_2026_Q1.pdf + DXG_2026_Q2.pdf both on file since 2026-08-01/08-03 — extraction-pipeline gap, 12th+ consecutive cycle observed; sector-comparison only: P/E 66.5 vs sector median 16.1 (premium +312%), ROE 1.9% vs sector 7.3% (below median), P/B roughly in line with sector (1.2 vs 1.3)",
+          "mgmt": "Q2-2026 filing overdue (deadline 30/07/2026 passed); get_cash_flow Q1-2026 operating_cf implausible (~4.23e18 VND, magnitude-corrupt) — discarded from any forensic calc, not treated as a real divergence signal",
+          "valuation_verdict": "AVOID",
+          "ey_spread_pp": -3.5,
+          "kinh_dich": {
+            "que": "Tap Kham (29)",
+            "xu_huong": "BAT LOI",
+            "tin_hieu": "BAN",
+            "confidence_pct": 100
+          },
+          "insider_signal": "none significant",
+          "esc_gate": {
+            "esc1": "unevaluable (no Bash/Glob)",
+            "esc2": "unevaluable (no get_bctc_full balance-sheet data)",
+            "esc3": "unevaluable (operating_cf corrupt/implausible, discarded)",
+            "esc4": "unevaluable (no P&L breakdown)",
+            "esc5": "unevaluable (no report_id — extraction never completed)"
+          },
+          "data_gap": "core BCTC extraction pipeline not producing output for DXG despite source PDFs present — 12th+ consecutive cycle, standing gap (not re-raised each cycle per prior notebook precedent)",
+          "sentiment_trend_30d": "not available (no BCTC data)",
+          "fetched_at": "2026-08-08T18:10:00Z"
+        },
+        "createdAt": "",
+        "drained_at": "2026-08-08T18:23:03Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "9840f58cd0efb15092a99ba038d7be882f0f87ace9173bf260cf729318fec17e",
+        "source": "file",
+        "from": "unknown",
+        "to": "po",
+        "type": "bctc_signal",
+        "priority": "low",
+        "payload": {
+          "ticker": "FPT",
+          "signal_type": "bctc_signal",
+          "quarter": "Q1-2026",
+          "mode": "routine",
+          "beat_miss": null,
+          "product": "IT services, software exports/offshore development, telecom (FPT Telecom), education (FPT Edu)",
+          "customer": "Enterprise IT buyers (VN + offshore, esp. Japan/APAC), SME telecom subscribers, students",
+          "ops": "Operating margin 22.0%, gross margin 34.0% (Q1-2026); ROE 6.2% raw / 28.3% sector-annualized vs sector median 10.6%; Net Debt/EBITDA 2.57x; P/E 13.8 vs sector 17.3 (discount -20%)",
+          "mgmt": "Q2-2026 filing overdue (deadline 30/07/2026 passed, still unfiled 2026-08-08); FTEL consolidation-method change (full→equity, from 2026-01-01) restated FY2025 comparatives",
+          "valuation_verdict": "FAIR",
+          "ey_spread_pp": 2.25,
+          "kinh_dich": {
+            "que": "Tap Kham (29)",
+            "xu_huong": "BAT LOI",
+            "tin_hieu": "BAN",
+            "confidence_pct": 100
+          },
+          "insider_signal": "none significant",
+          "esc_gate": {
+            "esc1": "unevaluable (no Bash/Glob)",
+            "esc2": {
+              "result": false,
+              "imbalance_pct": 0
+            },
+            "esc3": {
+              "result": "DATA-COVERAGE-LIMITED",
+              "quarters_returned": 3,
+              "guard_status": "COVERAGE-GUARD-HELD (peer)"
+            },
+            "esc4": {
+              "result": false,
+              "non_operating_share_pct": 2
+            },
+            "esc5": {
+              "result": true,
+              "min_confidence": 0.45,
+              "low_confidence_unit_ids": [
+                "unit-0008",
+                "unit-0009",
+                "unit-0010",
+                "unit-0011",
+                "unit-0012",
+                "unit-0013",
+                "unit-0014"
+              ],
+              "dispatch_status": "PENDING",
+              "guard_key": "esc-deepdive:FPT:Q1-2026:ESC-5"
+            }
+          },
+          "sentiment_trend_30d": "GIẢM (tiêu cực, slope -2.50)",
+          "fetched_at": "2026-08-08T18:10:00Z"
+        },
+        "createdAt": "",
+        "drained_at": "2026-08-08T18:23:03Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "2cd18611921cd2eedbf4e4681df6bee8c816fc3bec7047191f528f4cd72a6096",
+        "source": "file",
+        "from": "unknown",
+        "to": "po",
+        "type": "bctc_signal",
+        "priority": "low",
+        "payload": {
+          "ticker": "HPG",
+          "signal_type": "bctc_signal",
+          "quarter": "Q1-2026",
+          "mode": "routine",
+          "beat_miss": null,
+          "product": "Steel production (construction/long steel, flat steel, steel pipe), agriculture (feed/livestock)",
+          "customer": "Construction/infrastructure contractors, steel distributors, export markets",
+          "ops": "Gross margin 15.8%; operating profit line extracted as 0 (data-quality defect, 9th+ consecutive cycle observed) — validation warning: net profit (9,055.9bn) exceeds gross profit (8,365.1bn), implies non-operating income captured or extraction error; ROE 6.5% raw / 12.7% sector-annualized vs sector median 2.9%; P/E 14.2 vs sector 32.6 (discount -57%)",
+          "mgmt": "Q2-2026 filing overdue (deadline 30/07/2026 passed, still unfiled 2026-08-08)",
+          "valuation_verdict": "FAIR",
+          "ey_spread_pp": 2.04,
+          "kinh_dich": {
+            "que": "Mong (4)",
+            "xu_huong": "TRUNG TINH",
+            "tin_hieu": "GIU",
+            "confidence_pct": 38
+          },
+          "insider_signal": "none significant",
+          "esc_gate": {
+            "esc1": "unevaluable (no Bash/Glob)",
+            "esc2": {
+              "result": false,
+              "imbalance_pct": 0
+            },
+            "esc3": {
+              "result": "DATA-COVERAGE-LIMITED",
+              "quarters_returned": 3,
+              "guard_status": "COVERAGE-GUARD-HELD (peer)"
+            },
+            "esc4": {
+              "result": false,
+              "note": "operating_profit=0 corrupt in extraction — non_operating_share formula unreliable, discarded rather than escalated"
+            },
+            "esc5": {
+              "result": false,
+              "report_id": null,
+              "existing_refine_status": "PARTIAL"
+            }
+          },
+          "sentiment_trend_30d": "GIẢM (tiêu cực, slope -0.06)",
+          "fetched_at": "2026-08-08T18:10:00Z"
+        },
+        "createdAt": "",
+        "drained_at": "2026-08-08T18:23:03Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "dbd1f83c4b2c3edeff239b91f8cbdbf803a7b070369af283cec466055bb39efb",
+        "source": "file",
+        "from": "unknown",
+        "to": "po",
+        "type": "bctc_signal",
+        "priority": "low",
+        "payload": {
+          "ticker": "VCB",
+          "signal_type": "bctc_signal",
+          "quarter": "Q1-2026",
+          "mode": "routine",
+          "beat_miss": null,
+          "product": "Retail and corporate banking, trade finance, bancassurance cross-sell",
+          "customer": "Retail depositors/borrowers, SOEs, corporate clients, FX/trade-finance clients",
+          "ops": "Net interest income 17,421bn VND; operating margin 80.9%; ROE 4.2% raw / 16.7% sector-annualized vs sector median 17.6% (below median); OCF/NI ratio 1.37x (Q1-2026, no forensic divergence); P/E 14.1 vs sector 9.0 (premium +57%)",
+          "mgmt": "Q1-2026 filed on-time (2026-07-19); Q2-2026 not yet tracked for banks in earnings-calendar",
+          "valuation_verdict": "FAIR",
+          "ey_spread_pp": 2.09,
+          "kinh_dich": {
+            "que": "Ton (41)",
+            "xu_huong": "TRUNG TINH",
+            "tin_hieu": "GIU",
+            "confidence_pct": 0
+          },
+          "insider_signal": "none significant",
+          "esc_gate": {
+            "esc1": "unevaluable (no Bash/Glob)",
+            "esc2": {
+              "result": false,
+              "imbalance_pct": 0.37
+            },
+            "esc3": {
+              "result": false,
+              "quarters_returned": 4,
+              "divergence_ratio": 0.368
+            },
+            "esc4": "N/A (bank — non-operating-share formula not applicable to bank P&L structure)",
+            "esc5": {
+              "result": false,
+              "report_id": null,
+              "existing_refine_status": "PARTIAL"
+            }
+          },
+          "sentiment_trend_30d": "GIẢM (tiêu cực, slope -0.40)",
+          "fetched_at": "2026-08-08T18:10:00Z"
+        },
+        "createdAt": "",
+        "drained_at": "2026-08-08T18:23:03Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "7e5155d3bd2f1d3bfef9b27328d60ac7ab90cc4d1e7929d724494ff1c6b860da",
+        "source": "file",
+        "from": "ci-health-probe",
+        "to": "po",
+        "type": "ci_red",
+        "priority": "high",
+        "payload": {
+          "check_id": "CI-RED-3d21d41d",
+          "head_sha": "3d21d41d468d5bbf493d2cb2ef1ced571e91b3dc",
+          "run_id": 31269675475,
+          "run_url": "https://github.com/phamhung075/VN-Market-Intelligence-MCP/actions/runs/31269675475",
+          "conclusion": "failure",
+          "failing_jobs": [
+            {
+              "name": "size-lint",
+              "conclusion": "failure",
+              "jobId": 93133413041
+            }
+          ],
+          "fingerprint": "1fc96b017936d5dbfd0055d0d4d7a68cf8b82033cdd5c5fe5501b25aceb2be26",
+          "zone_owner": "dev-team (CI fix)",
+          "summary": "CI RED on main HEAD 3d21d41d468d5bbf493d2cb2ef1ced571e91b3dc: size-lint",
+          "suggested_sprint_class": "FIX",
+          "verification_gate": "ci_green_on_subsequent_push"
+        },
+        "createdAt": "2026-08-08T17:53:47Z",
+        "drained_at": "2026-08-08T18:23:03Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "4c87f8df6777d40b6d1b5ab59a723ead4f37979f38ea02182d800a237c6ea6ac",
+        "source": "file",
+        "from": "cowork-team",
+        "to": "dev-team",
+        "type": "cowork-fire",
+        "priority": "low",
+        "payload": {
+          "fire_time": "2026-08-08T18:09:01Z",
+          "matched_slots": [
+            "bctc-analyst-slot-2"
+          ],
+          "won_slots": [
+            "bctc-analyst-slot-2"
+          ],
+          "held_by_other": [],
+          "all_held": false,
+          "spawned": [
+            "docs/agents/bctc-analyst/flow/main.md"
+          ],
+          "silent": false,
+          "drift_min": 6,
+          "errors": [],
+          "pressure_mode": "adaptive",
+          "calendar_status": "unknown",
+          "suppressed_calendar": [],
+          "suppressed_cadence": [],
+          "downgraded": [],
+          "chef_mutex_applied": false,
+          "due_reasons": {
+            "bctc-analyst-slot-2": "cron"
+          },
+          "cadence_minutes": {
+            "bctc-analyst-slot-2": null
+          },
+          "last_fired_timestamp": "2026-08-08T18:08:51Z",
+          "last_fired_slots": [
+            "bctc-analyst-slot-2"
+          ],
+          "last_fired_write_errors": null,
+          "classification": "FIRE",
+          "reason": "spawned",
+          "nominal_tick": "18:00",
+          "leader_lock": "acquired",
+          "dev_head": "unknown",
+          "devq": 77,
+          "signal_backlog": 25,
+          "note": "bctc-offmarket cron slot; 2 signal_queue rows drained (orch-health-finding + rag-service A-30 BELOW-FLOOR chronic re-emit, both logged for PO)"
+        },
+        "createdAt": "2026-08-08T18:09:01Z",
+        "drained_at": "2026-08-08T18:23:03Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "24c99f48dc4856e6af444eb31a3d55d7515ac35b5c97a201ca3eb8af01895db5",
+        "source": "file",
+        "from": "router",
+        "to": "po",
+        "type": "repair_task_request",
+        "priority": "low",
+        "payload": {
+          "check_id": "notebook-fulloverwrite-concurrent-collision-fleetwide",
+          "issue": "The full-overwrite-per-cycle write pattern used by agent notebooks under docs/agent-memory/notebooks/*.md (read current file, append own entry, write whole file back, no lock) loses concurrent peer writers' entries under a classic lost-update race. Previously confirmed twice on docs/agent-memory/notebooks/qa.md and a qa-13.md decision-journal continuation file (see memory feedback_qa_notebook_fulloverwrite_drops_concurrent_peer_entries_20260806). This is now a 3rd occurrence, and the FIRST on a non-qa notebook: docs/agent-memory/notebooks/po.md.",
+          "evidence": {
+            "instance_3": "2026-08-08T18:08Z: a peer PO triage sub-session full-overwrote docs/agent-memory/notebooks/po.md, dropping BOTH the reporting sub-session's own just-written entry AND a prior 16:00Z entry. The reporting sub-session recovered by re-appending its own section below the peer's without touching the peer's bytes -- no net data loss this time, but confirms the exposure is not qa-specific.",
+            "concurrency_confirmed": "the reporting PO sub-session explicitly noted a peer PO session was running concurrently with it in the same 2026-08-08T17:37Z dev-team tick window -- i.e. two independent po triage dispatches were live at once, not just two qa-drain workers."
+          },
+          "impact": "Crosses the 2+ recurring-bug escalation threshold (per feedback_recurring_bug_escalation.md) -- this is now confirmed to be a structural gap in the fleet's notebook-write mechanism generally, not an isolated qa-notebook issue, and it will keep recurring on every notebook file any time 2+ notebook-owning agent sub-sessions run concurrently (QA-drain batches, and now apparently PO triage dispatches too).",
+          "requested_action": "Weigh the candidate durable fix already on record (feedback_qa_notebook_fulloverwrite_drops_concurrent_peer_entries_20260806's 'How to apply' section): a commit-mutex:notebook-writes (or per-file) task_claim/task_release wrap around each notebook read-modify-write, OR a small serializing append script analogous to scripts/orch-apply.sh, applied fleet-wide across all agent-owned notebooks rather than qa-only. Route the actual mechanism decision to po (which notebooks need the lock, latency tradeoff) with implementation handed to agent-father (owns notebook-write conventions in agent flow docs) once decided.",
+          "occurrence_note": "3rd occurrence overall, 1st on po.md specifically. The original 2026-08-06 signal for this pattern was deliberately NOT re-signaled on the 2nd (qa-13.md) occurrence per that memory's own note ('would re-litigate an already-surfaced decision'). Re-signaling now because occurrence 3 is new information: it demonstrates the gap is fleet-wide (any notebook, any concurrent agent-type pair), not qa-specific -- a materially different scope than what was originally surfaced."
+        },
+        "createdAt": "2026-08-08T18:13:47Z",
+        "drained_at": "2026-08-08T18:23:03Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "5601f932084abd1cdbe0d7b441ff37bf71593b2c55ba1c08a996a99981954049",
+        "source": "file",
+        "from": "router",
+        "to": "po",
+        "type": "repair_task_request",
+        "priority": "low",
+        "payload": {
+          "check_id": "po-flow-ac3-selfverify-false-green",
+          "issue": "docs/agents/po/flow/main.md lines 161-168 (AC-3 self-verification step) checks that `git show --stat HEAD | grep orch-state.json` passes to confirm a PO commit landed — but this only checks that HEAD *contains* the path, not that the HEAD commit is the caller's own. If a peer session's commit lands on HEAD in the window between the caller's own commit attempt (which can itself abort, e.g. on an untracked-journal pathspec conflict) and this check running, AC-3 reads a false green against a peer's commit that happened to also touch orch-state.json.",
+          "evidence": {
+            "live_incident": "2026-08-08T17:37Z dev-team tick, PO triage sub-session (task:po-triage-20260808): first commit attempt aborted on an untracked-journal pathspec conflict. AC-3's `git show --stat HEAD | grep orch-state.json` still passed -- against a PEER PO session's commit that had, in the same window, swept the caller's board changes in. The sub-session self-caught this only because it independently noticed the mismatch, corrected the check to compare against the pre-commit SHA instead of a bare HEAD-contains-path test, and recommitted properly (commit c1e0c45df).",
+            "root_cause": "AC-3 as written has no reference point (expected pre-commit SHA) to compare HEAD against -- it treats 'HEAD contains the path' as sufficient proof of 'my commit landed', which is only true in the absence of concurrent peer writers. A concurrent peer PO session was confirmed running in the same tick window (see companion memory on the po.md notebook full-overwrite from the same incident)."
+          },
+          "impact": "AC-3 is PO's own self-verification gate for its own board writes -- a false green here means a PO session can believe its board mutation landed when it did not, silently dropping its own triage output on the floor while reporting success. This is the same failure shape the fleet's RAW-verification discipline exists to prevent (badges/self-report vs raw commit-plane truth), except here it is PO's own flow doc, not a downstream QA/auditor check.",
+          "requested_action": "Fix docs/agents/po/flow/main.md AC-3 (lines ~161-168): capture the pre-commit SHA (`git rev-parse HEAD`) before attempting the commit, then after the commit attempt verify (a) the commit succeeded (non-empty new SHA, no error) AND (b) the new HEAD's own commit (not just tree-contains-path) is the one just made -- e.g. `git rev-parse HEAD` differs from the pre-commit SHA AND `git show --stat HEAD` is authored by this attempt (matches the intended commit message/diff), not merely 'grep finds the path somewhere in the tree at HEAD'. Route to whichever agent owns docs/agents/po/flow/main.md edits (agent-father, per commit_zone convention) rather than po editing its own flow doc.",
+          "occurrence_note": "First observed instance of this specific AC-3 gap (not yet 2+ recurring) -- self-caught and worked around in the same cycle it occurred, no actual data loss this time, but the flow-doc defect persists for the next PO session to hit the same race. Reported by the PO sub-session itself in its 2026-08-08T17:37Z tick completion report as 'a real defect... worth a row', not yet minted as a backlog row -- this signal closes that gap."
+        },
+        "createdAt": "2026-08-08T18:13:47Z",
+        "drained_at": "2026-08-08T18:23:03Z",
         "routed_to": "PO Step 0-SIG"
       }
     ]
