@@ -5,8 +5,8 @@
     "last_linecount": 205,
     "po": {
       "section_name": "po",
-      "last_mtime": 1786129242,
-      "last_linecount": 220
+      "last_mtime": 1786204372,
+      "last_linecount": 241
     }
   },
   "decision_journal": [
@@ -134,7 +134,7 @@
     "does_not_consume_wip": true
   },
   "signal_queue": {
-    "_updated_at": "2026-08-08T14:22:32Z",
+    "_updated_at": "2026-08-08T15:52:25Z",
     "_updated_by": "dev-team",
     "archive": [],
     "rows": [
@@ -3682,7 +3682,7 @@
         "type": "signal_feedback",
         "summary": "A-30 WARN: rag-service-1 memory sustained >93% (94.69-94.71%), loss of reclamation",
         "severity": "WARN",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": null,
         "provenance": "detector",
         "audit_cycle_tag": "cron:auditor-t1:2026-08-08T15:30Z",
@@ -3696,7 +3696,7 @@
         "type": "signal_feedback",
         "summary": "A-30 WARN: mcp-server-1 memory sustained >93% (94.36-94.93%), loss of reclamation",
         "severity": "WARN",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": null,
         "provenance": "detector",
         "audit_cycle_tag": "cron:auditor-t1:2026-08-08T15:30Z",
@@ -22751,7 +22751,7 @@
         "last_served_tick": "2026-08-08T15:28:29Z"
       }
     },
-    "_updated_at": "2026-08-08T15:28:29Z",
+    "_updated_at": "2026-08-08T15:52:25Z",
     "_updated_by": "dev-team",
     "pending_triage_inbox": [
       {
@@ -23266,6 +23266,42 @@
         },
         "createdAt": "2026-08-08T15:08:41Z",
         "drained_at": "2026-08-08T15:26:06Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "854280c352876f29a48276679ba605a76ec9de6e24a44c3fb769e288e82be154",
+        "source": "file",
+        "from": "commit-sweep-guard",
+        "to": "po",
+        "type": "bug-escalation",
+        "priority": "high",
+        "payload": "[sweep-guard] BARE commit about to absorb 2 staged file(s) not necessarily this actor's own: docs/agent-memory/notebooks/qa.md docs/agent-memory/notebooks/system-auditor.md. actor=165f4245-6173-4054-87fd-c55bb626265f mode=warn escalated=true prior_warns=12 threshold=3. Fix: git commit -m \"<msg>\" -- <own-files-only>.",
+        "createdAt": "2026-08-08T15:39:52Z",
+        "drained_at": "2026-08-08T15:51:42Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "34eb3f3758b4f1609edb09a4583775e093625b91ded7644ada829a24c4b56bc7",
+        "source": "dashboard",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "signal_feedback",
+        "priority": "WARN",
+        "payload": "A-30 WARN: rag-service-1 memory sustained >93% (94.69-94.71%), loss of reclamation",
+        "createdAt": "2026-08-08T15:38:48Z",
+        "drained_at": "2026-08-08T15:52:25Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "203a68ea50e4ab843732e74635536bef28d8d47c71635d61e0e6ae499e9186ab",
+        "source": "dashboard",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "signal_feedback",
+        "priority": "WARN",
+        "payload": "A-30 WARN: mcp-server-1 memory sustained >93% (94.36-94.93%), loss of reclamation",
+        "createdAt": "2026-08-08T15:38:59Z",
+        "drained_at": "2026-08-08T15:52:25Z",
         "routed_to": "PO Step 0-SIG"
       }
     ]
