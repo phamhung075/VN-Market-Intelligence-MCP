@@ -91,9 +91,26 @@
   unchanged: PROSE-ONLY (0 `write_boundary` keys, no `Write|Edit` `PreToolUse` matcher).
 - No `mcp__gateway__call_tool` binding this session (recurring structural gap, same class logged
   S23/S28/S30 + prior cycles) — used keep.md's gateway-less direct-pathspec-commit fallback.
-- PO handoff (Step 7): **zero NEW escalations this cycle** — Escalation 1 confirmed resolved (see
-  above, not carried forward anymore); the only remaining item (semble-search guide-taxonomy, LOW)
-  and the 3 CRITICAL tool-boundary findings are unchanged carried-forward items already PO-known
-  from prior cycles. Per `feedback_router_skip_po_respawn_identical_inputs` — NOT re-surfacing as
-  a fresh PO spawn trigger; router already has these tracked. No `Agent` grant this session either
-  way (same structural gap as prior cycles).
+- **Self-caught concurrent-write incident (this cycle):** first commit attempt for this entry
+  (`94115251a`) was built on a stale `Read` taken BEFORE a peer agent-father session's own commit
+  (`efaae0d44`, "Edit BOUNDED-1... FIX-DEVTEAM-IDLE-CHAIN-P1A-MAIN-ROTATION") landed on `main` —
+  the `git commit -- <file>` captured my stale working-tree copy and silently deleted the peer's
+  already-pushed entry (`origin/main` was already at `efaae0d44` when I committed). Caught via the
+  PostToolUse hook's stale-file warning + a `git show <parent>` diff read, not assumed clean.
+  Fixed forward (did NOT rewrite/reset the shared `efaae0d44` commit) with a follow-up commit that
+  restores the peer's full entry verbatim and re-appends mine after it. Root cause: this flow's
+  gateway-less commit fallback has no read-immediately-before-write / merge-check step for a
+  shared, un-branched, no-lock notebook file — matches the existing memory lesson class
+  `feedback_concurrent_commit_race` / `feedback_qa_notebook_fulloverwrite_drops_concurrent_peer_
+  entries_20260806` but had not previously been hit by agent-father's own gateway-less path.
+- PO handoff (Step 7): **zero NEW agent-lifecycle escalations this cycle** — Escalation 1
+  confirmed resolved (see above); the only remaining item (semble-search guide-taxonomy, LOW) and
+  the 3 CRITICAL tool-boundary findings are unchanged carried-forward items already PO-known from
+  prior cycles — not re-surfaced as a fresh PO spawn trigger per
+  `feedback_router_skip_po_respawn_identical_inputs`. **New finding surfaced instead:** the
+  concurrent-write incident above — no mechanical guard prevents a gateway-less agent from
+  clobbering a peer's concurrent notebook write on this shared, branchless `main`; worth a
+  backlog row (severity MEDIUM — self-caught and self-corrected this time, but not guaranteed
+  next time) to either (a) give agent-father a real commit-mutex path, or (b) add a
+  read-before-final-write diff-check step to `keep.md`'s gateway-less commit fallback. No `Agent`
+  grant this session to spawn `po` directly — router owns that dispatch.
