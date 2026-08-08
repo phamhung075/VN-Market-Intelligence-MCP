@@ -70,3 +70,13 @@
 - Cross-checked orch-apply.sh line numbers cited in the new comment against live file (rc=3 contract L50, empty-stdin guard L120-122 vs comment's cited 118-121) — cosmetic ~2L drift, non-blocking.
 **why-decision:** APPROVED, DONE_VERIFIED — both retry/no-retry branches independently reproduced green, fix matches the row's own scoped alternative (assert-non-empty-before-invoke), no orch-apply.sh contract drift.
 **why-change:** none.
+
+### STEP qa-S7 · qa · 2026-08-08T11:43:32Z
+**task-id:** FIX-AUDITOR-DURABILITY-STEP0B-DETECTION
+**what-done:** Direct-commit verify (`qa[]` row, `branch:null`) of `92ef5b3a2` (+`af9ad098c` memory), on main ancestry, diff matches the claimed file exactly.
+**what-considered:**
+- Read the full diff: Step 0b.1/0b.2/0b.3 bash + reorder + Notebook-Append-Gate rewire all correctly match review_note's fixture-based claims (grep regex = exactly the 5 non-ABORT marker forms `audit-output-contract.sh` counts; `jq fromdateiso8601` threshold logic correct) — independently verified, not trusted.
+- Went past text-correctness to LIVE production evidence (~44h since deploy): 2 genuinely fresh orphaned markers created by real post-deploy Tier-1 cycles (`...2026-08-06T21:09:00Z.tmp` real `[emit-signal]` line; `...2026-08-07T00:00Z.tmp` cycle-init only) remain unswept despite dozens of subsequent Tier-1 cycles (live notebook entries through today); zero `D-CYCLE-1`/`D-CYCLE-2` rows ever in `.signal_queue` or the dedup ledger.
+- Tier-3 heartbeat currently 52h35m stale — exceeds Step 0b.2's own 48h WARN bar right now, unfired. Also found 6/8 marker files accidentally git-tracked by an unrelated commit (`2ddbe5321`, pm), breaking the "`rm -f` is safe reclaim" premise (`.gitignore` has no entry for this pattern, unlike the sibling scratch pattern).
+**why-decision:** CHANGES_REQUESTED — logic is well-designed but shows zero confirmed live execution despite continuously-satisfied trigger conditions; the 2 dependent tasks should not build on an unproven mechanism yet.
+**why-change:** Beyond the scope of dev's own fixture-based verification — production evidence contradicts the "durable"/live-verified claim.
