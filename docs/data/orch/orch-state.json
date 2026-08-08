@@ -94,7 +94,7 @@
   ],
   "head": {
     "status": "idle",
-    "updated_at": "2026-08-08T03:56:15Z",
+    "updated_at": "2026-08-08T04:29:27Z",
     "updated_by": "developer (closeout)",
     "active_task_id": null,
     "next_agent": null
@@ -10087,33 +10087,6 @@
         "updated_at": "2026-07-23T18:08:33Z"
       },
       {
-        "id": "FIX-AUDITOR-C04-PARSEDAT-RECENCY-PREDICATE",
-        "title": "system-auditor predicate errors — mutation-timestamp + window class, 3 checks. (C-04) counts bulk-reparse re-stamps as new low-confidence extractions (parsed_at is a mutation timestamp, not arrival) AND counts never-extracted rows (conf=0, status=pending) as low-confidence -> recurring WARN false-positive. (C-01/C-02 — added 2026-07-31 by PO, verified live) their window is `date >= date(\"now\",\"-1 day\")` = TWO calendar dates: at 2026-07-31T09:12Z C-01 returned 947 and C-02 returned 1070 while date=2026-07-31 held only 129 distinct codes. The checks cannot measure same-day coverage at ANY threshold — the window is the defect, not the >=25 / >0 bar. Also write down the invariant that cost a router a full session on a phantom \"86% coverage collapse\": daily_ohlcv same-day coverage is ~130 BY DESIGN (live intraday tick universe = 117-119 codes EVERY session per intraday_ohlcv_5m 07-20..07-31 and market_prices_history); the full ~940-code universe lands ONLY via the nightly history backfill 00:00-02:20Z, which UPSERTs ~750k rows (97% of the 774k-row table, dates 2014-2026) and thereby CLOBBERS daily_ohlcv.updated_at — the exact same \"mutation timestamp is not arrival\" root cause as C-04. Every historical date shows 0-2 same-day writes vs 900-1000 next-day writes. Do NOT add a same-day-coverage-vs-trailing-median alarm: it would fire every single day.",
-        "status": "BACKLOG",
-        "type": "FIX",
-        "priority": "P2",
-        "size": "S",
-        "zone": "docs/agents/system-auditor/flow/",
-        "owner": "architect",
-        "next_agent": "architect",
-        "plan_only": true,
-        "supervised": true,
-        "created_at": "2026-07-25T06:59:44Z",
-        "created_by": "po/triage-20260725T0645",
-        "origin_signal_id": "sys-20260725T003340-1ce9",
-        "root_cause": "C-04 (docs/agents/system-auditor/flow/main.md:572) = SELECT count(*) FROM financial_reports WHERE parsed_at > datetime('now','-7 days') AND extraction_confidence < 0.2, threshold <=5. TWO independent predicate defects, both RAW-probed by PO against live market.db in the mcp-server runtime. D1 RECENCY: parsed_at is a MUTATION timestamp bumped by any reparse, not an arrival timestamp. All 11 flagged rows have parsed_at in {2026-07-19, 2026-07-20} and NONE since; that 2-day window parsed 182 rows total against a historical baseline of 1-23 rows/WEEK — i.e. a bulk historical reparse batch re-stamped a legacy cohort into the 7-day window. Periods flagged are 2024-Q1..2025-Q4, not current filings. The 11 are 6.0% of the 182-row batch — a HEALTHY rate, not an extractor regression. D2 POPULATION: extraction_confidence < 0.2 sweeps in rows that were never extracted at all — 5 of the 11 (HUT 2024-Q1, HUT 2024-Q3, HUT 2025-Q3, BSR 2024-Q3, HUT 2025-Q4) — leaving only 6 rows that are genuinely low_confidence — carry conf=0.0 with validation_status in {pending, pending_extraction}. 'Not yet extracted' is not 'low-confidence extraction'; 45% of the alert population is mislabelled. An absolute count threshold (<=5) with no volume normalisation guarantees re-fire on every future bulk reparse.",
-        "deliverable": "Re-specify C-04: (a) normalise to a RATE with a minimum-volume floor (e.g. lowconf/total > 15% AND total >= 20) instead of an absolute count, so healthy large batches do not trip it; (b) restrict the population to rows that actually completed extraction — exclude validation_status in ('pending','pending_extraction') and/or require extraction_confidence IS NOT NULL AND > 0; (c) decide whether recency should key off an immutable arrival column (published_at) rather than parsed_at, or whether the reparse path should stop re-stamping parsed_at. Fold into scripts/auditor-db-checks.sh as predicate SSOT per UC-ASL-P3 rather than leaving raw SQL in the flow doc.",
-        "acceptance": "Replaying the live 2026-07-19/20 reparse batch through the new predicate emits ZERO C-04 signal. Negative control: a synthetic cohort where >15% of a >=20-row genuinely-extracted batch lands under 0.2 confidence STILL trips C-04. No never-extracted (pending*) row appears in the counted population.",
-        "related": [
-          "FIX-AUDITOR-C11-PDFX-STATUS-PREDICATE",
-          "FIX-AUDITOR-DOCAUDIT-MEMORY-PATH-PREDICATE",
-          "FIX-AUDITOR-TASKBOARD-OVERFLOW-PREDICATE-WIP-ONLY",
-          "UC-ASL-P3"
-        ],
-        "note": "Auditor-FP family (feedback_auditor_predicate_drift_false_regression), 4th sibling of the same species. The CURRENT alert is a FALSE POSITIVE and self-clears 2026-07-27 when the 7-day window rolls past 2026-07-20 — no data remediation needed, this row fixes the DETECTOR only. Per reference_low_confidence_handling.md low_confidence is a by-design flag (deliberate insert + WORK alert + filtered out of RAG/alerts/briefings), not corruption, so severity WARN db_integrity_breach was the wrong framing. Distinct from FIX-BCTC-BANK-SUMMARY-MAPPING (bank scalar-column data defect) and REVIEW-PPC-Q4-LOW-CONFIDENCE (per-ticker human review) — those remediate DATA, this fixes the CHECK. Only 1 of the 11 rows is a bank (MBB 2025-Q4) and it is a different period from REFLOW-MBB-Q1-2026.",
-        "updated_at": "2026-07-31T09:19:16Z"
-      },
-      {
         "id": "FEAT-PREDCLAIM-UPDATED-AT",
         "title": "Add a real updated_at audit column to prediction_claims, maintained on every write, surfaced per-row on the Du bao AI page so a reader can tell at a glance whether a prediction was actually refreshed",
         "status": "BACKLOG",
@@ -15771,33 +15744,6 @@
         "po_corroboration_c80_20260808T0116Z": "Fresh A-30 datapoint, 2026-08-08T01:05:33-01:06:54Z (system-auditor c80 Tier-1, RAW JSON in notebook commit 569f79108): mcp-server 6-probe window 97.16 / 97.20 / 97.39 / 97.16 / 97.58 / 97.59 %, min 97.16 max 97.59, reclamation_dips=0, discriminator verdict=ESCALATE, OOMKilled=false, RestartCount=2, VmHWM=3058144KB vs VmRSS=3023460KB. This is 19h AFTER the container OOM'd at ~05:57Z on 2026-08-07 (the death that confirmed sys-20260807T054825-771b as a true positive) - memory is back at the same pre-death ceiling with zero reclamation, i.e. the leak refills the 3GiB cap within a day of every restart. Logged here rather than as a new signal_queue row because c80's own E-3 append never fired (see FIX-ANALYSIS-ONLY-EXIT-DETECTOR-OR-VERDICT-BLIND-TO-PARTIAL-WRITE-CYCLE) and because the finding is already routed to this row - no duplicate minted. Dispatch fields deliberately untouched."
       },
       {
-        "id": "TASK-COWORK-SIGNAL-CHEF-INTRADAY",
-        "type": "TASK",
-        "size": "S",
-        "priority": "P1",
-        "status": "READY",
-        "zone": "cross-service/unified-agent",
-        "owner": "unassigned",
-        "next_agent": "developer",
-        "plan_only": true,
-        "sprint": "COWORK-RELIABILITY",
-        "created_at": "2026-08-07T06:00:00Z",
-        "created_by": "pm (decomposition of FIX-COWORK-SIGNAL-FILENAME-CYCLEID-KEYING)",
-        "parent_task_id": "FIX-COWORK-SIGNAL-FILENAME-CYCLEID-KEYING",
-        "title": "chef/unified-agent Intraday Filename Extension (FR-3)",
-        "ba_handoff": "docs/handoffs/TASK-COWORK-SIGNAL-CHEF-INTRADAY.md",
-        "description": "Decomposed subtask from FIX-COWORK-SIGNAL-FILENAME-CYCLEID-KEYING Phase 1 delivery",
-        "supervised": true,
-        "supervised_at": "2026-08-07T06:00:00Z",
-        "supervised_by": "pm (plan_only decomposition)",
-        "supervised_note": "Child task of plan_only parent; no code ships without parent re-adjudication by PO",
-        "updated_at": "2026-08-08T02:22:22Z",
-        "promoted_at": "2026-08-08T02:22:21Z",
-        "promoted_by": "dev-team (supervised-lane sweep)",
-        "promotion_note": "Supervised-Lane Sweep — assigned dispatch_lane='developer' (priority_rank=1); supervised/plan_only flags preserved, gate NOT disabled — see FIX-BOUNDED1-SUPERVISED-LANE-NO-SWEEPER",
-        "dispatch_lane": "developer"
-      },
-      {
         "id": "TASK-COWORK-SIGNAL-NAMING-CONTRACT",
         "type": "TASK",
         "size": "XS",
@@ -15882,6 +15828,37 @@
         "promoted_by": "dev-team (supervised-lane sweep)",
         "promotion_note": "Supervised-Lane Sweep — assigned dispatch_lane='dev-mcp-server' (priority_rank=2); supervised/plan_only flags preserved, gate NOT disabled — see FIX-BOUNDED1-SUPERVISED-LANE-NO-SWEEPER",
         "dispatch_lane": "dev-mcp-server"
+      },
+      {
+        "id": "FIX-AUDITOR-C04-PARSEDAT-RECENCY-PREDICATE",
+        "title": "system-auditor predicate errors — mutation-timestamp + window class, 3 checks. (C-04) counts bulk-reparse re-stamps as new low-confidence extractions (parsed_at is a mutation timestamp, not arrival) AND counts never-extracted rows (conf=0, status=pending) as low-confidence -> recurring WARN false-positive. (C-01/C-02 — added 2026-07-31 by PO, verified live) their window is `date >= date(\"now\",\"-1 day\")` = TWO calendar dates: at 2026-07-31T09:12Z C-01 returned 947 and C-02 returned 1070 while date=2026-07-31 held only 129 distinct codes. The checks cannot measure same-day coverage at ANY threshold — the window is the defect, not the >=25 / >0 bar. Also write down the invariant that cost a router a full session on a phantom \"86% coverage collapse\": daily_ohlcv same-day coverage is ~130 BY DESIGN (live intraday tick universe = 117-119 codes EVERY session per intraday_ohlcv_5m 07-20..07-31 and market_prices_history); the full ~940-code universe lands ONLY via the nightly history backfill 00:00-02:20Z, which UPSERTs ~750k rows (97% of the 774k-row table, dates 2014-2026) and thereby CLOBBERS daily_ohlcv.updated_at — the exact same \"mutation timestamp is not arrival\" root cause as C-04. Every historical date shows 0-2 same-day writes vs 900-1000 next-day writes. Do NOT add a same-day-coverage-vs-trailing-median alarm: it would fire every single day.",
+        "status": "READY",
+        "type": "FIX",
+        "priority": "P2",
+        "size": "S",
+        "zone": "docs/agents/system-auditor/flow/",
+        "owner": "architect",
+        "next_agent": "architect",
+        "plan_only": true,
+        "supervised": true,
+        "created_at": "2026-07-25T06:59:44Z",
+        "created_by": "po/triage-20260725T0645",
+        "origin_signal_id": "sys-20260725T003340-1ce9",
+        "root_cause": "C-04 (docs/agents/system-auditor/flow/main.md:572) = SELECT count(*) FROM financial_reports WHERE parsed_at > datetime('now','-7 days') AND extraction_confidence < 0.2, threshold <=5. TWO independent predicate defects, both RAW-probed by PO against live market.db in the mcp-server runtime. D1 RECENCY: parsed_at is a MUTATION timestamp bumped by any reparse, not an arrival timestamp. All 11 flagged rows have parsed_at in {2026-07-19, 2026-07-20} and NONE since; that 2-day window parsed 182 rows total against a historical baseline of 1-23 rows/WEEK — i.e. a bulk historical reparse batch re-stamped a legacy cohort into the 7-day window. Periods flagged are 2024-Q1..2025-Q4, not current filings. The 11 are 6.0% of the 182-row batch — a HEALTHY rate, not an extractor regression. D2 POPULATION: extraction_confidence < 0.2 sweeps in rows that were never extracted at all — 5 of the 11 (HUT 2024-Q1, HUT 2024-Q3, HUT 2025-Q3, BSR 2024-Q3, HUT 2025-Q4) — leaving only 6 rows that are genuinely low_confidence — carry conf=0.0 with validation_status in {pending, pending_extraction}. 'Not yet extracted' is not 'low-confidence extraction'; 45% of the alert population is mislabelled. An absolute count threshold (<=5) with no volume normalisation guarantees re-fire on every future bulk reparse.",
+        "deliverable": "Re-specify C-04: (a) normalise to a RATE with a minimum-volume floor (e.g. lowconf/total > 15% AND total >= 20) instead of an absolute count, so healthy large batches do not trip it; (b) restrict the population to rows that actually completed extraction — exclude validation_status in ('pending','pending_extraction') and/or require extraction_confidence IS NOT NULL AND > 0; (c) decide whether recency should key off an immutable arrival column (published_at) rather than parsed_at, or whether the reparse path should stop re-stamping parsed_at. Fold into scripts/auditor-db-checks.sh as predicate SSOT per UC-ASL-P3 rather than leaving raw SQL in the flow doc.",
+        "acceptance": "Replaying the live 2026-07-19/20 reparse batch through the new predicate emits ZERO C-04 signal. Negative control: a synthetic cohort where >15% of a >=20-row genuinely-extracted batch lands under 0.2 confidence STILL trips C-04. No never-extracted (pending*) row appears in the counted population.",
+        "related": [
+          "FIX-AUDITOR-C11-PDFX-STATUS-PREDICATE",
+          "FIX-AUDITOR-DOCAUDIT-MEMORY-PATH-PREDICATE",
+          "FIX-AUDITOR-TASKBOARD-OVERFLOW-PREDICATE-WIP-ONLY",
+          "UC-ASL-P3"
+        ],
+        "note": "Auditor-FP family (feedback_auditor_predicate_drift_false_regression), 4th sibling of the same species. The CURRENT alert is a FALSE POSITIVE and self-clears 2026-07-27 when the 7-day window rolls past 2026-07-20 — no data remediation needed, this row fixes the DETECTOR only. Per reference_low_confidence_handling.md low_confidence is a by-design flag (deliberate insert + WORK alert + filtered out of RAG/alerts/briefings), not corruption, so severity WARN db_integrity_breach was the wrong framing. Distinct from FIX-BCTC-BANK-SUMMARY-MAPPING (bank scalar-column data defect) and REVIEW-PPC-Q4-LOW-CONFIDENCE (per-ticker human review) — those remediate DATA, this fixes the CHECK. Only 1 of the 11 rows is a bank (MBB 2025-Q4) and it is a different period from REFLOW-MBB-Q1-2026.",
+        "updated_at": "2026-08-08T04:22:19Z",
+        "promoted_at": "2026-08-08T04:22:18Z",
+        "promoted_by": "dev-team (supervised-lane sweep)",
+        "promotion_note": "Supervised-Lane Sweep — assigned dispatch_lane='architect' (priority_rank=2); supervised/plan_only flags preserved, gate NOT disabled — see FIX-BOUNDED1-SUPERVISED-LANE-NO-SWEEPER",
+        "dispatch_lane": "architect"
       }
     ],
     "review": [
@@ -22621,6 +22598,40 @@
         "developer_review_note": "FR-2 (filename rekey) + FR-7 (routine-mode explicit emit line) + sequencing fix (WINDOW_KEY pinned once at cycle.md Step 0c, reused unchanged at stage-analyze.md release/routine emit lines and stage-log-notify.md §5d-1 mutex key -- no second computation) specified against 4 live-verified files: cycle.md (Step 0c derivation line), stage-analyze.md (line-114 {YYYYMMDD}->{WINDOW_KEY} substitution for release + new FR-7 \"Emit signal file\" line at end of Step 4c for routine, confirmed no routine-mode emit instruction existed before this spec), stage-consolidate.md (Output section stale cross-reference to stage-log-notify.md Stage 5 corrected -- that file has no bctc_signal write instruction; real emit lives in stage-analyze.md R4/Step-4c), stage-log-notify.md (§5d-1 cycle_tick_ISO token renamed to WINDOW_KEY, guard claim/skip logic unchanged). derive_window_key() cited verbatim from task 1s already-delivered spec (docs/handoffs/TASK-COWORK-SIGNAL-DERIVE-WINDOWKEY-spec.md) -- signature/format/NFR-3 single-derivation contract, not redefined. Worked example bctc_signal_HPG_20260807T2100Z_routine.json cited from the brief, matches task 1 spec Test Case 2 independently. Test strategy specified: unit (deferred to task 1 spec, not re-specified), integration AC-1 (two same-day slots -> two distinct paths), regression NFR-4 (drain-signals.test.js fingerprint-neutrality unmodified -- confirmed NO-OP at source: sha256(from+type+payload+createdAt), basename never in hash). AC-1/AC-2 mapping cited from brief SS9. Dangling ba_handoff pointer (docs/handoffs/TASK-COWORK-SIGNAL-BCTC-REKEY.md, confirmed absent) noted per same precedent as task 1. Scope boundaries respected: zero edits to any of the 4 named flow files, zero touch to unified-agent/ or tran-ngoc-bau/ flow dirs (tasks 3/4), zero attempt at derive_window_key() re-derivation, no further agent spawned.",
         "moved_to_review_at": "2026-08-08T03:56:10Z",
         "moved_by": "developer"
+      },
+      {
+        "id": "TASK-COWORK-SIGNAL-CHEF-INTRADAY",
+        "type": "TASK",
+        "size": "S",
+        "priority": "P1",
+        "status": "REVIEW",
+        "zone": "cross-service/unified-agent",
+        "owner": "po",
+        "next_agent": "po",
+        "plan_only": true,
+        "sprint": "COWORK-RELIABILITY",
+        "created_at": "2026-08-07T06:00:00Z",
+        "created_by": "pm (decomposition of FIX-COWORK-SIGNAL-FILENAME-CYCLEID-KEYING)",
+        "parent_task_id": "FIX-COWORK-SIGNAL-FILENAME-CYCLEID-KEYING",
+        "title": "chef/unified-agent Intraday Filename Extension (FR-3)",
+        "ba_handoff": "docs/handoffs/TASK-COWORK-SIGNAL-CHEF-INTRADAY.md",
+        "description": "Decomposed subtask from FIX-COWORK-SIGNAL-FILENAME-CYCLEID-KEYING Phase 1 delivery",
+        "supervised": true,
+        "supervised_at": "2026-08-07T06:00:00Z",
+        "supervised_by": "pm (plan_only decomposition)",
+        "supervised_note": "Child task of plan_only parent; no code ships without parent re-adjudication by PO",
+        "updated_at": "2026-08-08T04:29:27Z",
+        "promoted_at": "2026-08-08T02:22:21Z",
+        "promoted_by": "dev-team (supervised-lane sweep)",
+        "promotion_note": "Supervised-Lane Sweep — assigned dispatch_lane='developer' (priority_rank=1); supervised/plan_only flags preserved, gate NOT disabled — see FIX-BOUNDED1-SUPERVISED-LANE-NO-SWEEPER",
+        "dispatch_lane": "developer",
+        "claimed_at": "2026-08-08T04:22:24Z",
+        "claimed_by": "dev-team (supervised-lane sweep)",
+        "reviewed_by": "developer",
+        "spec_doc": "docs/handoffs/TASK-COWORK-SIGNAL-CHEF-INTRADAY-spec.md",
+        "developer_review_note": "FR-3 (intraday-only filename extension) + EC-2 (timezone-basis residual-risk) specified against 2 live-verified files: chef-dish.md Step 7.6 (lines 567-574) FILEPATH gains an -{VN_HOUR} suffix gated on IS_MULTI_FIRE -- chose Step 0.5's own already-computed generic cron-shape flag over a hardcoded \"intraday\" string match, since it is the established CLAUDE.md-compliant convention (\"no slot name is hardcoded\", chef.md line 44-48) and functionally identical for today's live schedule (only chef-intraday is multi-fire); flagged this as a design refinement over the brief's literal prose, reviewable/overridable. Also corrected a stale sentence in chef-dish.md's own GAP-CHEF-SYNTHESIS-A-FLOW-PERSIST changelog comment (lines 555-558) which incorrectly claimed the structural follow-on is \"cycle_id-keying the filename entirely\" -- the ratified design uses a per-writer VN_HOUR discriminator, not raw cycle_id, so the comment would have misled a future reader. chef.md Step 0.5 (lines 78, 91): cross-reference-only comment additions confirming VN_HOUR/IS_MULTI_FIRE are shared verbatim with chef-dish.md Step 7.6's new FILEPATH branch -- zero derivation/logic change, per dispatch instruction. EC-2 residual-risk comment embedded verbatim (bounded-not-closed: chef-intraday's live cron 13 2-8 * * 1-5 maps UTC hours 2-8 monotonically to VN hours 9-15, never crossing 17:00 UTC VN-midnight; hazard reproduces at hourly grain only if the cron is ever widened) -- cites the ALREADY-MINTED Phase-2 follow-on backlog row FIX-CHEF-INTRADAY-MARKER-KEY-UTC-HOUR-BASIS-MIGRATION (status=BLOCKED, depends_on=FIX-CHEF-MARKER-KEY-WINDOW-ANCHOR) rather than a \"PO should mint one\" placeholder, since PO's own amendment_2 on the parent row already minted it. metadata.cycle_id non-promotion comment embedded verbatim (2026-07-22 CAUTION restated: cycle_id is run-start-keyed, re-keying on it would silently permit duplicate co-existing artifacts for one window -- confirmed live instance cited). Worked example docs/data/unified-agent-synthesis-2026-08-07-intraday-09.json cited from the brief. derive_window_key() NOT cited or implemented -- FR-3's mechanism (VN_HOUR) is unrelated to tasks 1/2's WINDOW_KEY contract; explicitly flagged in the spec's own opening paragraph to prevent conflation. Test strategy specified: integration AC-1/AC-4 (two same-day different-VN_HOUR intraday fires -> two distinct paths, neither overwritten, silent-exit non-interference), single-fire regression guard (morning/eod/evening FILEPATH unchanged), EC-2 boundary explicitly deferred to the Phase-2 row's own AC-2, not duplicated here. AC-1/AC-2/AC-4 mapping cited from brief SS9, with AC-2's drain-inheritance claim corrected to note unified-agent-synthesis-*.json lives under docs/data/ and is never touched by drain-signals.js at all (unlike the bctc-analyst family). Dangling ba_handoff pointer (docs/handoffs/TASK-COWORK-SIGNAL-CHEF-INTRADAY.md, confirmed absent) noted per same precedent as tasks 1/2. Scope boundaries respected: zero edits to chef.md/chef-dish.md, zero touch to bctc-analyst/ or tran-ngoc-bau/ flow dirs (tasks 1/2/4), zero attempt at derive_window_key(), no further agent spawned.",
+        "moved_to_review_at": "2026-08-08T04:28:47Z",
+        "moved_by": "developer"
       }
     ],
     "qa": [
@@ -22768,7 +22779,7 @@
         }
       ]
     },
-    "last_triaged_at": "2026-08-08T03:50:55Z",
+    "last_triaged_at": "2026-08-08T04:22:18Z",
     "last_triaged_by": "dev-team (supervised-lane sweep)",
     "in_progress": [
       {
