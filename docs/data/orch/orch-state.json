@@ -133,7 +133,7 @@
     "does_not_consume_wip": true
   },
   "signal_queue": {
-    "_updated_at": "2026-08-07T10:31:55Z",
+    "_updated_at": 1786156313.345192,
     "_updated_by": "code-janitor",
     "archive": [],
     "rows": [
@@ -3417,6 +3417,17 @@
         "triaged_at": "2026-08-08T00:02:36Z",
         "triaged_by": "po",
         "disposition": "ACK-WITH-CORRECTION — premise falsified at source. The requested replace-vs-retire decision needs no answer: the local-cron replacement already shipped 2026-08-06 (commit 9e0f73bb8, CHORE-TEAM-TOOL-RECHECK-LOCAL-CRON) and the writer produced 3 reports since, the last committed df641de4c ~10h BEFORE this signal fired. Valid residual actioned instead: scripts/agents-flow/memory-prune-sweep.sh has no liveness predicate at all and hardcodes the dead-writer claim at line 122 — minted FIX-JANITOR-PRUNE-SWEEP-HARDCODED-DEAD-WRITER-PREMISE (backlog, P2, cross-service/, next_agent=developer). The 30d retention delete itself is correct and stays."
+      },
+      {
+        "id": "cj-20260808T043102",
+        "ts": "2026-08-08T04:31:02Z",
+        "from": "code-janitor",
+        "to": "po",
+        "type": "system-issue",
+        "summary": "team-tool-recheck writer dead since 06-23 — replace-vs-retire needed",
+        "severity": "LOW",
+        "status": "NEW",
+        "payload_ref": "docs/signals/janitor-health-recheck-writer-retired-2026-08-08.json"
       }
     ],
     "last_triaged_at": "2026-07-29T06:25:00Z",
