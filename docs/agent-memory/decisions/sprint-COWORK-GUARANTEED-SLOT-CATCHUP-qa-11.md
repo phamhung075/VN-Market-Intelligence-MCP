@@ -142,3 +142,36 @@
 - tsc clean, DDD-clean (no domain/infra imports), mock-guard PASS, no process.env/secrets in touched files, `gen-project-stats.ts --dry-run` re-run: tools=183/cron=88 unchanged.
 **why-decision:** APPROVED, DONE_VERIFIED. AC text (structural eager-probe fix + cold-start non-regression guard) fully met by evidence reproduced myself. Row's own status_note already flags the causal CI-red-transient hypothesis unconfirmed — evaluated against AC text per that note's own instruction.
 **why-change:** none from plan.
+
+### STEP qa-S22 · qa · 2026-08-08T10:59:30Z
+**task-id:** FU-RAG-DEPLOY-MEMORY
+**what-done:** Direct-commit verify of `2f835ec63` (docker-compose.yml only), on main ancestry, diff matches AC trailer exactly. RAW-verified live, not from prose: `docker inspect` HostConfig.Memory=1073741824(1g)/MemoryReservation=536870912(512m) — edit is applied to the running container, not just committed. OOMKilled=false/ExitCode=0/RestartCount=0 continuously since 2026-08-06T13:00:35Z. `docker compose ps`: 12 siblings healthy, untouched — `--no-deps` peer-safety confirmed.
+**what-considered:**
+- "Decide resident set" was checked against being left open: architect brief 2026-08-06T09:03Z explicitly chose option (a) raise-cap (delivered here) and deferred option (b) idle-unload to a separately tracked row (`FIX-RAG-EMBEDDER-IDLE-UNLOAD-PATH`) — decided and documented, not open.
+- Cross-checked dispatcher's "auditor flags 95-97% as benign FOLD" premise: not contradicted — that framing describes the POST-raise residual, correctly folded onto the idle-unload row by every disposition since 14:20Z; this row's own scope was the PRE-raise CONFIRMED OOM (exit137 08:17:28Z), which has not recurred since the raise.
+- Honored PO's own `po_signoff_caution`/`po_BRANCH_RESOLVED` scope limit: approved ONLY the deploy codification, explicitly did not claim "memory resolved" (current live 933.8MiB/1GiB=91.19% recorded as informational, not closure).
+- bun test/tsc/mock-guard N/A — zero application source touched, pure deploy-config edit.
+**why-decision:** APPROVED, DONE_VERIFIED. All 4 AC-trailer items (limits 768m->1g, reservations 256m->512m, single-service recreate/peers untouched, no immediate OOM/healthy) independently reproduced from live docker state, not trusted from review_note. Moved `task_board.qa[]`→`task_board.done_verified[]`, `status_note` appended (row had none before), `next_agent: pm` via `jq`+`orch-apply.sh` (conservation OK, task_total 770→770).
+**why-change:** none from plan — verified exactly the row's own narrow AC scope, did not extend sign-off to the separately-owned resident-set residual.
+
+### STEP qa-S22 · qa · 2026-08-08T10:59:09Z
+**task-id:** FIX-AUDITOR-C08-UNSATISFIABLE-TTL-WINDOW-AND-ISO8601-STRCMP
+**what-done:** Direct-commit verify (Review-Lane QA-Drain) of `8f6f30f41` (+`28d4512aa` peer-commit for the DASHBOARD.md retraction), both real + main ancestry; content of all 5 claimed files confirmed live on HEAD.
+**what-considered:**
+- C-08 flow-doc row (main.md:925) now `datetime(a.triggered_at) > datetime('now','-2 hours')` — matches AC-1 (window rebound to the 2h co-write TTL, `alertStore.ts:223` `datetime(?, '+2 hours')` literal confirmed by direct read) and AC-2 (both-sides wrap). checkOrphanAgentSignalsAlertId.ts doc-comment carries the AC-6 coverage-split rationale verbatim as claimed.
+- AC-3 fleet-replay: live-queried every named column myself via docker exec against the running mcp-server/pdf-extractor containers (not trusting the row's own %). financial_reports.parsed_at 257/257=100%T, alerts.triggered_at 159/159=100%T, agent_signals.created_at 5/133=3.8%T (mixed), market_messages.sent_at 0/1138=0%T, macro_indicators.fetched_at 0/1=0%T, bctc_vps_queue.created_at 0/614=0%T, pdf_documents.extracted_at 92/92=100%T (status never 'done', confirming the noted C-11 structural false-negative) — every number matches the claimed AFFECTED/NOT-affected verdict and which checks got wrapped (C-04/C-07/C-08/C-10/C-11) vs left alone (C-06/C-09/C-16).
+- AC-4 regression test re-run live: 5/5 pass, 9 expect — exact match. Adjacent zone tests (FIX-AGENT-SIGNALS-ORPHAN-ALERT-ID, FACTORY-SCHEDULER-split-dataAuditJob) re-run: 17/17 pass, no regression. tsc clean, mock-guard PASS, DDD/secret greps clean.
+- AC-5: `28d4512aa` diff read directly — both DASHBOARD.md C-08 entries (2026-07-30, 2026-08-05) correctly retracted with the real GC-timing root cause, wrong-table-name corrected; landed bundled inside an unrelated peer commit (subject line only mentions A-30) but content verified present and correct on HEAD.
+**why-decision:** APPROVED, DONE_VERIFIED. All 6 ACs independently re-derived against live DB queries and live test runs, not the row's own review_note prose.
+**why-change:** none — verified exactly what the row scoped.
+
+### STEP qa-S23 · qa · 2026-08-08T10:59:43Z
+**task-id:** FIX-SBV-FETCHER-ZERO-VALUE-EMIT
+**what-done:** Direct-commit verify (Review-Lane QA-Drain) of `fe7640267`, real + main ancestry (`git merge-base --is-ancestor`); `git show --stat` matches all 3 claimed source files + new test file.
+**what-considered:**
+- Read live code, not prose: `sbv.ts` exports `getLatestSbvRatesRow()` (carry-forward source), `pushSbvRatesHandler.ts:87-98` merges each OMITTED optional field from prior row (explicit values incl. 0 pass through unmerged, per PO's untouched-guard mandate); `storeResult.skipped` now branches to honest `{ok:false,skipped:true}` 200, not a false-positive stored log. `intelligenceCycleJob.ts:269-273` step A2 now calls `runSbvRatesRefreshJob()` (same pre-flight guard as `sbvRatesJob.ts`), checks `zeroRateSkipped`.
+- Re-ran targeted suite live (not trusted from review_note): 9 sbv/*.test.ts files, 101 pass/0 fail. `bun tsc --noEmit` clean. `mock-guard.sh` PASS on all 3 touched production files.
+- PO's added evidence bar (LIVE freshness, not suite-only) satisfied via direct host-bind read (`file:...?immutable=1`, no -wal present): current `sbv_rates` row fetched_at=10:37:58Z (~20min stale at read time), `usd_vnd_official` genuinely varies day-to-day (26030→26200 range over 11d, not frozen). `vps_push_log` service=sbv: ZERO `status='error'` rows since the fix commit (2026-07-28T22:51Z) through now — post-fix, a reject IS logged as status='error' (unlike the pre-fix false-positive-ok bug), so this is a real negative-count, not silence-as-absence.
+- Found one 32.5h gap in `sbv_rates_history` (2026-08-05T04:00→2026-08-06T12:30) — cross-checked: NOT a rejected-zero event (no error row logged during the gap either — VPS simply wasn't pushing), matches PO's own cited staleness figure, and is explicitly out-of-scope per this row's own note (tracked separately: `FIX-AUDITOR-SBVFX-SLA-POSTMARKET-TOLERANCE`, confirmed live BACKLOG). No gap >2h since 2026-08-06T12:30.
+**why-decision:** APPROVED, DONE_VERIFIED. verification_gate ("writes REAL non-zero SBV-FX data OR cleanly skips with honest gap+log — ZERO rejected-zero events") met: 0 reject events across 11 days post-fix (gate only demanded 2 cycles), values non-static/live, code path matches claimed diff exactly.
+**why-change:** none from plan — added the live-DB freshness check PO's own row annotation mandated, on top of the standard verify-committed checklist.
