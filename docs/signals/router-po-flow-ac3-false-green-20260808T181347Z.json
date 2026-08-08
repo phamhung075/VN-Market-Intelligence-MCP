@@ -1,0 +1,17 @@
+{
+  "from": "router",
+  "to": "po",
+  "type": "repair_task_request",
+  "createdAt": "2026-08-08T18:13:47Z",
+  "payload": {
+    "check_id": "po-flow-ac3-selfverify-false-green",
+    "issue": "docs/agents/po/flow/main.md lines 161-168 (AC-3 self-verification step) checks that `git show --stat HEAD | grep orch-state.json` passes to confirm a PO commit landed — but this only checks that HEAD *contains* the path, not that the HEAD commit is the caller's own. If a peer session's commit lands on HEAD in the window between the caller's own commit attempt (which can itself abort, e.g. on an untracked-journal pathspec conflict) and this check running, AC-3 reads a false green against a peer's commit that happened to also touch orch-state.json.",
+    "evidence": {
+      "live_incident": "2026-08-08T17:37Z dev-team tick, PO triage sub-session (task:po-triage-20260808): first commit attempt aborted on an untracked-journal pathspec conflict. AC-3's `git show --stat HEAD | grep orch-state.json` still passed -- against a PEER PO session's commit that had, in the same window, swept the caller's board changes in. The sub-session self-caught this only because it independently noticed the mismatch, corrected the check to compare against the pre-commit SHA instead of a bare HEAD-contains-path test, and recommitted properly (commit c1e0c45df).",
+      "root_cause": "AC-3 as written has no reference point (expected pre-commit SHA) to compare HEAD against -- it treats 'HEAD contains the path' as sufficient proof of 'my commit landed', which is only true in the absence of concurrent peer writers. A concurrent peer PO session was confirmed running in the same tick window (see companion memory on the po.md notebook full-overwrite from the same incident)."
+    },
+    "impact": "AC-3 is PO's own self-verification gate for its own board writes -- a false green here means a PO session can believe its board mutation landed when it did not, silently dropping its own triage output on the floor while reporting success. This is the same failure shape the fleet's RAW-verification discipline exists to prevent (badges/self-report vs raw commit-plane truth), except here it is PO's own flow doc, not a downstream QA/auditor check.",
+    "requested_action": "Fix docs/agents/po/flow/main.md AC-3 (lines ~161-168): capture the pre-commit SHA (`git rev-parse HEAD`) before attempting the commit, then after the commit attempt verify (a) the commit succeeded (non-empty new SHA, no error) AND (b) the new HEAD's own commit (not just tree-contains-path) is the one just made -- e.g. `git rev-parse HEAD` differs from the pre-commit SHA AND `git show --stat HEAD` is authored by this attempt (matches the intended commit message/diff), not merely 'grep finds the path somewhere in the tree at HEAD'. Route to whichever agent owns docs/agents/po/flow/main.md edits (agent-father, per commit_zone convention) rather than po editing its own flow doc.",
+    "occurrence_note": "First observed instance of this specific AC-3 gap (not yet 2+ recurring) -- self-caught and worked around in the same cycle it occurred, no actual data loss this time, but the flow-doc defect persists for the next PO session to hit the same race. Reported by the PO sub-session itself in its 2026-08-08T17:37Z tick completion report as 'a real defect... worth a row', not yet minted as a backlog row -- this signal closes that gap."
+  }
+}
