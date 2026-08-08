@@ -934,3 +934,15 @@
 **Mitigation:** No immediate action beyond signal routing.
 
 ---
+
+## Anomaly: A-30 · rag-service memory pressure — 98.71%
+**Severity:** WARN | **Date:** 2026-08-08 | **Status:** OPEN
+**Location:** rag-service
+**Details:** Memory usage 1011 MiB / 1 GiB (98.71%) — sustained incident since 2026-08-07T03:35:32Z. Free headroom ~13 MiB, below critical floor.
+**Impact:** Container approaching OOM limit. Risk of service degradation or forced restart.
+**Root cause:** FU-RAG-DEPLOY-MEMORY memory cap enforcement in place. Current tight headroom reflects deployment state.
+**Zone owner:** developer
+**Last reported:** 2026-08-08T13:09:17Z (signal sys-20260808T130859-7527, system-auditor -> po, WARN Telegram sent)
+**Mitigation:** No immediate action beyond signal routing.
+
+---
