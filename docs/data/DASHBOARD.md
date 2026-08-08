@@ -910,3 +910,15 @@
 **Mitigation:** Monitor for OOM kill; escalate to developer/architect for code-level memory audit and fix.
 
 ---
+
+## Anomaly: A-30 · Memory pressure escalation — rag-service BELOW-FLOOR
+**Severity:** WARN | **Date:** 2026-08-08 | **Status:** OPEN
+**Location:** rag-service
+**Details:** rag-service-1 at 98.53% (1009MiB/1GiB), free headroom 15MiB below critical floor of 40MiB
+**Impact:** Approaching OOM risk; tight headroom may not sustain GC cycles
+**Root cause:** Embedder model singleton holds ~700MiB baseline per FU-RAG-DEPLOY-MEMORY
+**Zone owner:** developer
+**Last reported:** 2026-08-08T11:06:15Z (signal sys-20260808T110556-3c5d, system-auditor -> po, dedup_key=microservice_degraded:rag-service:A-30:BELOW-FLOOR, WARN Telegram sent)
+**Mitigation:** No immediate action beyond signal routing.
+
+---
