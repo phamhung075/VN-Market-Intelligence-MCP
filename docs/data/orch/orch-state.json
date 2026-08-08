@@ -22726,9 +22726,12 @@
       },
       "sls": {
         "last_served_tick": "2026-08-08T13:24:25Z"
+      },
+      "rlc": {
+        "last_served_tick": "2026-08-08T13:55:03Z"
       }
     },
-    "_updated_at": "2026-08-08T13:51:44Z",
+    "_updated_at": "2026-08-08T13:55:03Z",
     "_updated_by": "dev-team",
     "pending_triage_inbox": [
       {
