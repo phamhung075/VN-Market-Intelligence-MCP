@@ -1006,3 +1006,15 @@
 **Mitigation:** No immediate action beyond signal routing.
 
 ---
+
+## Anomaly: A-30 · mcp-server-1 memory sustained high (96.84%) with VmHWM advancing
+**Severity:** CRITICAL | **Date:** 2026-08-08 | **Status:** OPEN
+**Location:** mcp-server-1/memory
+**Details:** Sustained 96.84% memory usage (2.905GiB / 3GiB) over 65s probe window with VmHWM advancing from 3052552kB to 3056472kB, pinned at 97.8% of cgroup limit. Median 96.75%, peak 97.43%.
+**Impact:** Memory approaching OOM threshold; service may crash or experience severe performance degradation; possible memory leak indicated by VmHWM climbing toward cap
+**Root cause:** Possible code memory leak in mcp-server or sustained high-load workload; known issue FU-RAG-DEPLOY-MEMORY tracked status as of 2026-07-29
+**Zone owner:** dev-mcp-server
+**Last reported:** 2026-08-08T16:08:32Z (signal sys-20260808T160824-23c9, system-auditor -> po, dedup_key=microservice_degraded:vn-market-intelligence-mcp-mcp-server-1:A-30, CRITICAL Telegram sent)
+**Mitigation:** No immediate action beyond signal routing.
+
+---
