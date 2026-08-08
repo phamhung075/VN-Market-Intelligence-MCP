@@ -129,7 +129,25 @@ TERMINAL_SPRINT_STATUSES="${TERMINAL_SPRINT_STATUSES:-DONE,DONE_VERIFIED,CANCELL
 # Terminal signal statuses: comma-separated list.
 # Rows whose status field matches any of these are evicted from signal_queue.rows[].
 # signal_queue.archive[] is always fully evicted (inline archive = RC-1 root cause).
-TERMINAL_SIGNAL_STATUSES="${TERMINAL_SIGNAL_STATUSES:-READ,RESOLVED,SUPERSEDED,ACUTE-RESOLVED-ROOT-TRACKED}"
+# FIX-COLDEVICT-TERMINAL-SIGNAL-STATUSES-OMITS-TRIAGED-RETRACTED (2026-08-08): the
+# matching predicate below (compute_id_maps, `.status | IN($tsig_arr[])`) is EXACT-
+# STRING, no case fold — so the po-terminal disposition "triaged" (lowercase, the
+# live-written form per .claude/skills/signal-dashboard/SKILL.md § ACK/CLOSE
+# "Extended statuses") required its own literal entry; the pre-existing uppercase
+# "TRIAGED" alone (added 2026-08-01 for a different, ad-hoc-cased writer) never
+# matched it. "RETRACTED" (verified false positive, same doc section) was omitted
+# entirely. Live measured 2026-08-08: 226/248 signal_queue.rows[] (91%) were
+# unevictable by construction — triaged=220, READ=21, RETRACTED=4, TRIAGED=3 — against
+# the 200-row cap (SKILL.md § PRUNE). Both "triaged"/"TRIAGED" are added (not a
+# case-fold of the comparison) to keep this fix minimal and match every other
+# existing entry's exact-string convention; a case-fold would also silently admit
+# any future accidentally-cased status this list has not explicitly ratified.
+# SIGNAL_MAX_AGE_HOURS below is UNCHANGED by this fix (still gates all of these) —
+# "triaged" is a PO-terminal disposition, not an unread escalation, so this only
+# widens WHICH terminal statuses are eligible, never bypasses the age gate itself
+# (see FIX-COLDEVICT-SIGNALQUEUE-NO-AGE-GATE-ORPHANS-READ-ROWS above for why that
+# gate must never be removed).
+TERMINAL_SIGNAL_STATUSES="${TERMINAL_SIGNAL_STATUSES:-READ,RESOLVED,SUPERSEDED,ACUTE-RESOLVED-ROOT-TRACKED,triaged,TRIAGED,RETRACTED}"
 
 # FIX-COLDEVICT-SIGNALQUEUE-NO-AGE-GATE-ORPHANS-READ-ROWS (2026-08-01): the
 # signal_queue.rows[] eviction pass below previously selected on TERMINAL_SIGNAL_STATUSES

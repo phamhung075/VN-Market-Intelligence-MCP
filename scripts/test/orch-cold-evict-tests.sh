@@ -704,6 +704,89 @@ fi
 assert_real_live_unchanged "T10"
 
 # =============================================================================
+# TEST 11 — FIX-COLDEVICT-TERMINAL-SIGNAL-STATUSES-OMITS-TRIAGED-RETRACTED: the
+#   default TERMINAL_SIGNAL_STATUSES omitted the lowercase "triaged" disposition
+#   (only the ad-hoc-cased "TRIAGED" was present) and omitted "RETRACTED"
+#   entirely, despite both being documented PO-terminal statuses (SKILL.md §
+#   ACK/CLOSE "Extended statuses"). Matching (`.status | IN($tsig_arr[])`) is
+#   EXACT-STRING with no case fold, so both case variants of "triaged" must be
+#   present as separate literal entries — proven here by asserting BOTH survive
+#   or evict identically (no asymmetric case handling). Covers: aged lowercase
+#   "triaged" evicts, aged uppercase "TRIAGED" evicts, aged "RETRACTED" evicts,
+#   a FRESH "triaged" row (within the 24h age gate) is NOT evicted (AC-3: the
+#   age gate must still bind on these newly-admitted statuses, not be
+#   bypassed), and a status=NEW row is never evicted regardless of age
+#   (pre-existing rule, must not regress alongside this widening).
+# =============================================================================
+T11_NOW=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+T11_H73=$(date -u -v-73H +%Y-%m-%dT%H:%M:%SZ 2>/dev/null || date -u -d '73 hours ago' +%Y-%m-%dT%H:%M:%SZ)
+
+TRIAGED_FIXTURE=$(jq -n --arg now "$T11_NOW" --arg h73 "$T11_H73" '{
+  "_meta": {"schema":"v4","ssot":true,"updated_at":"2026-06-01T00:00:00Z","updated_by":"fixture"},
+  "head": {"status":"idle","active_task_id":null,"next_agent":null},
+  "task_board": {
+    "backlog": [], "review": [], "qa": [], "in_progress": [], "ready": [],
+    "done": [], "done_verified": [], "active_sprints": []
+  },
+  "signal_queue": {
+    "_updated_at":"2026-06-01T00:00:00Z","_updated_by":"fixture",
+    "rows": [
+      {"id":"SIG-STALE-TRIAGED-LOWER","ts":$h73,"from":"test","to":"po","type":"system-issue","summary":"73h-old lowercase triaged — MUST evict","severity":"LOW","status":"triaged","payload_ref":null},
+      {"id":"SIG-STALE-TRIAGED-UPPER","ts":$h73,"from":"test","to":"po","type":"system-issue","summary":"73h-old uppercase TRIAGED — MUST evict","severity":"LOW","status":"TRIAGED","payload_ref":null},
+      {"id":"SIG-STALE-RETRACTED","ts":$h73,"from":"test","to":"po","type":"system-issue","summary":"73h-old RETRACTED — MUST evict","severity":"LOW","status":"RETRACTED","payload_ref":null},
+      {"id":"SIG-FRESH-TRIAGED-LOWER","ts":$now,"from":"test","to":"po","type":"system-issue","summary":"fresh lowercase triaged — must NOT evict (age gate still binds)","severity":"LOW","status":"triaged","payload_ref":null},
+      {"id":"SIG-STALE-NEW","ts":$h73,"from":"test","to":"po","type":"system-issue","summary":"73h-old NEW — must NEVER evict (not a terminal status)","severity":"LOW","status":"NEW","payload_ref":null}
+    ]
+  },
+  "sprint_goal": {"entries": []}
+}')
+new_fixture "t11-triaged-retracted" "$TRIAGED_FIXTURE"
+
+EXIT_T11=0
+run_cold_evict || EXIT_T11=$?
+if [ "$EXIT_T11" -eq 0 ]; then
+  pass "T11 — triaged/RETRACTED eviction live run exits 0"
+else
+  fail "T11 — expected exit 0, got $EXIT_T11 ($(cat "$FIXTURE_ROOT/.last-stderr" | tail -5))"
+fi
+
+T11_HOT_SIG_IDS=$(jq -c '[.signal_queue.rows[].id] | sort' "$HOT_PATH" 2>/dev/null)
+if [ "$T11_HOT_SIG_IDS" = '["SIG-FRESH-TRIAGED-LOWER","SIG-STALE-NEW"]' ]; then
+  pass "T11 — hot signal_queue.rows[] keeps ONLY the fresh triaged row + aged NEW row"
+else
+  fail "T11 — hot signal_queue.rows[] unexpected: $T11_HOT_SIG_IDS"
+fi
+
+COLD_FILE_T11="$ARCHIVE_PATH/$MONTH.json"
+T11_COLD_SIG_IDS=$(jq -c '[(.signal_rows // [])[].id] | sort' "$COLD_FILE_T11" 2>/dev/null)
+if [ "$T11_COLD_SIG_IDS" = '["SIG-STALE-RETRACTED","SIG-STALE-TRIAGED-LOWER","SIG-STALE-TRIAGED-UPPER"]' ]; then
+  pass "T11 — cold .signal_rows[] contains exactly the 3 aged triaged/TRIAGED/RETRACTED rows"
+else
+  fail "T11 — cold .signal_rows[] unexpected: $T11_COLD_SIG_IDS"
+fi
+
+# Idempotent re-run: nothing left to evict (2 hot rows survive by rule/age) —
+# second run must be a byte-identical no-op.
+HASH_HOT_T11_1=$(file_hash "$HOT_PATH")
+HASH_COLD_T11_1=$(file_hash "$COLD_FILE_T11")
+EXIT_T11B=0
+run_cold_evict || EXIT_T11B=$?
+if [ "$EXIT_T11B" -eq 0 ]; then
+  pass "T11 — second (idempotent) run exits 0"
+else
+  fail "T11 — expected exit 0 on re-run, got $EXIT_T11B"
+fi
+HASH_HOT_T11_2=$(file_hash "$HOT_PATH")
+HASH_COLD_T11_2=$(file_hash "$COLD_FILE_T11")
+if [ "$HASH_HOT_T11_1" = "$HASH_HOT_T11_2" ] && [ "$HASH_COLD_T11_1" = "$HASH_COLD_T11_2" ]; then
+  pass "T11 — hot + cold byte-identical after idempotent re-run"
+else
+  fail "T11 — hot or cold CHANGED on triaged/RETRACTED re-run (not idempotent)"
+fi
+
+assert_real_live_unchanged "T11"
+
+# =============================================================================
 # Summary
 # =============================================================================
 TOTAL=$((PASS+FAIL))
