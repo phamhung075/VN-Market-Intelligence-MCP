@@ -45,7 +45,7 @@ Individual tool signatures: `docs/agents/tools/list/<tool>.md`
 
 ### Table: `scheduled_tasks` (coordination.db — Migration 4)
 
-Same `coordination.db` as `task_locks`. Added as Migration 4 in `coordinationStore.ts`.
+Same `coordination.db` as `task_locks`. DDL (`CREATE TABLE scheduled_tasks`) added as Migration 4 in `coordinationStore.ts`; the query/mutation functions (`claimDueScheduledTasks`, `completeScheduledTask`, etc.) live in `scheduledTaskStore.ts`, re-exported from `coordinationStore.ts` for backward compatibility (split 2026-08-08, FIX-CI-SIZELINT-COORDINATIONSTORE-BASELINE-1388L).
 
 **All time columns are INTEGER epoch-seconds UTC** (AC-1 scar: NEVER ISO8601 strings).
 **`dedup_key TEXT UNIQUE` declared in `CREATE TABLE`** (AC-2 scar: NEVER `ALTER TABLE ADD COLUMN ... UNIQUE` — SQLite silently drops the UNIQUE constraint).
