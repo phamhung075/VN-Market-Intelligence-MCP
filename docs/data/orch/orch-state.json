@@ -18993,7 +18993,7 @@
         "last_served_tick": "2026-08-08T15:54:20Z"
       }
     },
-    "_updated_at": "2026-08-08T18:50:45Z",
+    "_updated_at": "2026-08-08T19:21:12Z",
     "_updated_by": "dev-team",
     "pending_triage_inbox": [
       {
@@ -20425,6 +20425,109 @@
         },
         "createdAt": "2026-08-08T18:35:41Z",
         "drained_at": "2026-08-08T18:50:45Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "c77e37aaa2865c1ffd964c0970b86700212a4b4320c4aeb09d747afe31a87c46",
+        "source": "file",
+        "from": "ci-health-probe",
+        "to": "po",
+        "type": "ci_red",
+        "priority": "high",
+        "payload": {
+          "check_id": "CI-RED-ebb065b8",
+          "head_sha": "ebb065b8a2db409f6012baffaf7eade23c365c87",
+          "run_id": 31272399149,
+          "run_url": "https://github.com/phamhung075/VN-Market-Intelligence-MCP/actions/runs/31272399149",
+          "conclusion": "failure",
+          "failing_jobs": [
+            {
+              "name": "bun test",
+              "conclusion": "failure",
+              "jobId": 93140451335
+            },
+            {
+              "name": "size-lint",
+              "conclusion": "failure",
+              "jobId": 93140451390
+            }
+          ],
+          "fingerprint": "0db3045c912ea2ed14f5b8cbd213c1ec1a971f2f14a230a9dd99191339722cd2",
+          "zone_owner": "dev-team (CI fix)",
+          "summary": "CI RED on main HEAD ebb065b8a2db409f6012baffaf7eade23c365c87: bun test,size-lint",
+          "suggested_sprint_class": "FIX",
+          "verification_gate": "ci_green_on_subsequent_push"
+        },
+        "createdAt": "2026-08-08T18:51:05Z",
+        "drained_at": "2026-08-08T19:21:12Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "cc636bf4fce2b86a4a9553389c718c3dd2f7355d763c4becc8de68008acf21d8",
+        "source": "file",
+        "from": "commit-sweep-guard",
+        "to": "po",
+        "type": "bug-escalation",
+        "priority": "high",
+        "payload": "[sweep-guard] SAME-FILE DIVERGENCE (non-blocking, AC-3 detector): 'docs/data/orch/orch-state.json' is being committed via a pathspec-SCOPED commit line, which takes its WORKING TREE content (git's --only semantics) — NOT the subset already staged in the shared index for this exact path. The shared index's staged blob for 'docs/data/orch/orch-state.json' (d7f3fd97603f20df8e63982d5dd1b6fc78eb70d0) differs from what is about to land in this commit (e32a147c0855e2ae106a0388d03ed174e27c2c75) — a peer's differently-staged hunk (or your own further, unreviewed edit) in this SAME file may be about to be swept in. Documented NON-GOAL of the pathspec-commit mandate, see docs/architecture-briefs/2026-07-21-commit-path-peer-index-sweep-guard.md §2.7 — detector only, never blocked. Inspect before trusting this commit's scope: git diff d7f3fd97603f20df8e63982d5dd1b6fc78eb70d0 e32a147c0855e2ae106a0388d03ed174e27c2c75 -- docs/data/orch/orch-state.json",
+        "createdAt": "2026-08-08T18:59:05Z",
+        "drained_at": "2026-08-08T19:21:12Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "0f70ab223a5910483f5e2fc8a7a25153b07abb9e99cf0e896d65a2163cf3d51f",
+        "source": "file",
+        "from": "commit-sweep-guard",
+        "to": "po",
+        "type": "bug-escalation",
+        "priority": "high",
+        "payload": "[sweep-guard] BARE commit about to absorb 1 staged file(s) not necessarily this actor's own: docs/data/orch/orch-state.json. actor=165f4245-6173-4054-87fd-c55bb626265f mode=warn escalated=true prior_warns=14 threshold=3. Fix: git commit -m \"<msg>\" -- <own-files-only>.",
+        "createdAt": "2026-08-08T19:08:18Z",
+        "drained_at": "2026-08-08T19:21:12Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "0d2b7dbf777e2e73d137bc2a0c9ebff7cda84ab133fbe8eb4a5c64174b1c9b06",
+        "source": "file",
+        "from": "dev-team",
+        "to": "po",
+        "type": "repair_task_request",
+        "priority": "high",
+        "payload": {
+          "check_id": "qadrain-taskid-level-race-two-live-devteam-sessions",
+          "issue": "Two independent live dev-team dispatcher sessions each independently claimed and dispatched a QA verify-committed sub-agent for the SAME task_id (SYSREMAKE-P2-T2-SCHEMA-ADDITIONS) within seconds of each other. Both QA sub-agents ran a full independent verify-committed cycle to completion (re-running the full test matrix, re-deriving the grandfather jq query, etc.) before either discovered the collision -- the second-to-finish only found out when it tried to apply its own board write and saw orch-state.json had already moved under it.",
+          "evidence": {
+            "live_incident": "This session's own Review-Lane QA-Drain Head-Decoupled batch (TAKE_BUDGET=6, claimed via scripts/devteam-review-claim-qa-drain.jq at 2026-08-08T18:53:13Z) included SYSREMAKE-P2-T2-SCHEMA-ADDITIONS and dispatched a qa agent for it. That agent (task a9c4a76f9d3dc845a) completed a full independent APPROVED/DONE_VERIFIED review (120/120 + 8/8 + 14/14 + 29/29 + 75/75 test re-runs, grandfather-set re-derivation, mock-guard, tsc) -- then discovered on write-attempt that a DIFFERENT peer QA session had already committed the identical close-out chain (commit 9c6feb8f2 board move + 8c9a1d24a notebook/journal) moments earlier, for the same task_id and the same commit under review. The agent made zero writes itself (correctly deferred to the already-landed peer result after verifying it was sound) but the duplicate cycle itself burned 184,693 tokens / 78 tool calls / ~10.5 minutes for zero net new information -- pure waste.",
+            "root_cause": "The Review-Lane QA-Drain claim script (scripts/devteam-review-claim-qa-drain.jq) has no task_id-level claim/lock -- it only relies on the coarse dev-team dispatch-wrapper's own outer PRE-CLAIM key (intent:dev-team:<intent>) plus the per-tick fire-election lock (cron:dev-team:<TICK>). Neither of those prevents TWO DIFFERENT live dev-team dispatcher sessions (confirmed to exist concurrently -- see project_peer_cowork_dispatcher_session_collision_20260801 for the sibling cowork-dispatcher-session finding, same root shape: a second live loop instance of the same autonomous session type) from each independently reading review[] pre-claim state, both selecting the same eligible row (status==REVIEW, next_agent=='qa', no claimed_at yet), and both dispatching a qa agent for it before either session's own orch-apply.sh CAS write against the row lands and becomes visible to the other."
+          },
+          "impact": "Every Review-Lane QA-Drain batch dispatched while a second live dev-team session is running concurrently has a live per-row race window between read-eligibility and claim-write-land. Confirmed materialized once this tick (not just a theoretical residual risk as flagged in project_peer_cowork_dispatcher_session_collision_20260801's 'how to apply' section for cowork slots) -- burns a full duplicate specialist QA cycle (~10min/185K tokens observed) per collision, scales with concurrent live-session count and QA-drain batch size.",
+          "requested_action": "Add a task_id-level claim inside scripts/devteam-review-claim-qa-drain.jq's own selection+claim step (task_claim(task_id=\"task:<id>\", ttl_seconds=<qa agent's typical runtime ceiling>) per candidate row, BEFORE stamping claimed_at/claimed_by on the board) so a second session's concurrent run of the same script sees the row already locked and skips it, rather than relying solely on the board-field CAS to serialize after the fact. Mirrors the per-slot published:<slot>:<date> dedup gate pattern that already protects cowork's guaranteed daily slots from the sibling collision shape.",
+          "occurrence_note": "First observed instance of this exact task_id-level QA-Drain race. Escalated immediately (not waiting for a 2nd occurrence) per the explicit standing guidance in memory project_peer_cowork_dispatcher_session_collision_20260801's how-to-apply section: 'if seen, escalate immediately as a HIGH signal_queue row to po ... given the corruption/waste potential' -- this incident is that predicted residual-risk shape materializing in a new subsystem (dev-team QA-Drain, not cowork dispatch)."
+        },
+        "createdAt": "2026-08-08T19:09:00Z",
+        "drained_at": "2026-08-08T19:21:12Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "c814750b318da63f92957590122a67c505a9f91bcdb12314e40addb8319288ce",
+        "source": "file",
+        "from": "dev-team",
+        "to": "po",
+        "type": "repair_task_request",
+        "priority": "low",
+        "payload": {
+          "check_id": "s2-dispatcher-wrap-no-checkpoint-timestamp-hold",
+          "issue": "docs/agents/dev-team/flow/main.md's Step 0b WF-2 SUPERVISED-HOLD check only recognizes two hold conditions on a resumed head.active_task_id row: effective_supervised (board/detail supervised flag) and the absence of a po_goahead_* stamp. It has no concept of a data-driven 'do not re-check before <timestamp>' hold that a specialist itself records mid-verification (e.g. a QA checkpoint that explicitly states the next re-check should not happen before a future time, because the verification window itself hasn't elapsed yet).",
+          "evidence": {
+            "live_incident": "FIX-MCP-SSE-SESSION-MANAGER-PERCONN-LEAK-NO-REAPER: qa's Step-5 checkpoint (field qa_step5_checkpoint_1_20260808T1832Z on the review[] row) explicitly recommended 're-dispatch qa for checkpoint #2 no earlier than 2026-08-08T21:00Z' because PO's own gate requires a >=4h sessionCount-vs-MemPerc correlation window that had only ~1h33m elapsed at write time. head.status stayed in_progress/next_agent=qa (correctly -- qa genuinely is the next real action, just not yet). On the very next dev-team tick (2026-08-08T18:37Z fire-election tick, ~19min later), WF-1/1b/1c all resolve task_status=empty (row lives in review[], outside their lookup array) and WF-2's should_hold evaluates false (no supervised flag, no po_goahead gate applies here) -- the mechanical S2 dispatcher-wrap would have re-claimed and re-spawned qa immediately, producing a checkpoint #2 that could only report the identical 'insufficient elapsed time' finding as checkpoint #1, wasting a full ~9min/130K-token qa agent run for zero new information. Declined to re-spawn this tick by manual judgment instead -- not a mechanized gate.",
+            "root_cause": "WF-2's should_hold predicate (main.md ~L374-385) checks effective_supervised($detail_items) and a po_goahead_* key match -- it has no branch for a specialist-authored checkpoint field carrying its own recommended-not-before timestamp. Every tick between now and 21:00Z would hit this same wasteful re-spawn unless a human/router manually recognizes and skips it each time."
+          },
+          "impact": "Any long-running, time-gated verification (a multi-hour correlation window, a soak test, a rate-limited external check) that a specialist checkpoints mid-flight with an explicit re-check-not-before recommendation will be blindly re-dispatched on every subsequent dev-team tick until the window closes, unless a human/router catches it manually each time (as done here). At dev-team's ~30min tick cadence, a 4h gate like this one would otherwise trigger ~7 wasted re-spawns before the window legitimately closes.",
+          "requested_action": "Extend WF-2's should_hold (or add a WF-2b sibling check) to also recognize a generic checkpoint-timestamp hold: if the resumed row carries any field matching a documented convention (e.g. ^qa_step\\d+_checkpoint_\\d+_ or a dedicated next_recheck_not_before ISO field) whose declared not-before timestamp is still in the future, hold (fall through to Step 1, head left unchanged, mirroring WF-2's existing supervised-hold behavior) rather than re-dispatching. Suggest standardizing on an explicit next_recheck_not_before field (any specialist can set it) rather than parsing agent-specific checkpoint-field-name conventions, so the gate stays agent-agnostic.",
+          "occurrence_note": "First observed instance of this gap. Not yet 2+ recurring, but structurally guaranteed to recur on this exact task (FIX-MCP-SSE-SESSION-MANAGER-PERCONN-LEAK-NO-REAPER) roughly every ~30min tick until 2026-08-08T21:00Z unless caught manually each time -- worth fixing before the next long-window verification task hits the same gap without a router present to catch it."
+        },
+        "createdAt": "2026-08-08T18:51:24Z",
+        "drained_at": "2026-08-08T19:21:12Z",
         "routed_to": "PO Step 0-SIG"
       }
     ]

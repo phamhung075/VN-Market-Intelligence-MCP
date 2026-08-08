@@ -13,5 +13,11 @@
     "impact": "Crosses the 2+ recurring-bug escalation threshold (per feedback_recurring_bug_escalation.md) -- this is now confirmed to be a structural gap in the fleet's notebook-write mechanism generally, not an isolated qa-notebook issue, and it will keep recurring on every notebook file any time 2+ notebook-owning agent sub-sessions run concurrently (QA-drain batches, and now apparently PO triage dispatches too).",
     "requested_action": "Weigh the candidate durable fix already on record (feedback_qa_notebook_fulloverwrite_drops_concurrent_peer_entries_20260806's 'How to apply' section): a commit-mutex:notebook-writes (or per-file) task_claim/task_release wrap around each notebook read-modify-write, OR a small serializing append script analogous to scripts/orch-apply.sh, applied fleet-wide across all agent-owned notebooks rather than qa-only. Route the actual mechanism decision to po (which notebooks need the lock, latency tradeoff) with implementation handed to agent-father (owns notebook-write conventions in agent flow docs) once decided.",
     "occurrence_note": "3rd occurrence overall, 1st on po.md specifically. The original 2026-08-06 signal for this pattern was deliberately NOT re-signaled on the 2nd (qa-13.md) occurrence per that memory's own note ('would re-litigate an already-surfaced decision'). Re-signaling now because occurrence 3 is new information: it demonstrates the gap is fleet-wide (any notebook, any concurrent agent-type pair), not qa-specific -- a materially different scope than what was originally surfaced."
+  },
+  "_processed": {
+    "fingerprint": "24c99f48dc4856e6af444eb31a3d55d7515ac35b5c97a201ca3eb8af01895db5",
+    "processedAt": "2026-08-08T18:23:03Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
   }
 }

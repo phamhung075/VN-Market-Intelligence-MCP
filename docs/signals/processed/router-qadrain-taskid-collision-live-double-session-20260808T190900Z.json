@@ -14,5 +14,11 @@
     "impact": "Every Review-Lane QA-Drain batch dispatched while a second live dev-team session is running concurrently has a live per-row race window between read-eligibility and claim-write-land. Confirmed materialized once this tick (not just a theoretical residual risk as flagged in project_peer_cowork_dispatcher_session_collision_20260801's 'how to apply' section for cowork slots) -- burns a full duplicate specialist QA cycle (~10min/185K tokens observed) per collision, scales with concurrent live-session count and QA-drain batch size.",
     "requested_action": "Add a task_id-level claim inside scripts/devteam-review-claim-qa-drain.jq's own selection+claim step (task_claim(task_id=\"task:<id>\", ttl_seconds=<qa agent's typical runtime ceiling>) per candidate row, BEFORE stamping claimed_at/claimed_by on the board) so a second session's concurrent run of the same script sees the row already locked and skips it, rather than relying solely on the board-field CAS to serialize after the fact. Mirrors the per-slot published:<slot>:<date> dedup gate pattern that already protects cowork's guaranteed daily slots from the sibling collision shape.",
     "occurrence_note": "First observed instance of this exact task_id-level QA-Drain race. Escalated immediately (not waiting for a 2nd occurrence) per the explicit standing guidance in memory project_peer_cowork_dispatcher_session_collision_20260801's how-to-apply section: 'if seen, escalate immediately as a HIGH signal_queue row to po ... given the corruption/waste potential' -- this incident is that predicted residual-risk shape materializing in a new subsystem (dev-team QA-Drain, not cowork dispatch)."
+  },
+  "_processed": {
+    "fingerprint": "0d2b7dbf777e2e73d137bc2a0c9ebff7cda84ab133fbe8eb4a5c64174b1c9b06",
+    "processedAt": "2026-08-08T19:21:12Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
   }
 }

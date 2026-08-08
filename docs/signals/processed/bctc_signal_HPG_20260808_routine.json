@@ -4,39 +4,45 @@
   "quarter": "Q1-2026",
   "mode": "routine",
   "beat_miss": null,
-  "net_profit_delta_pct": null,
-  "product": "Steel manufacturing (construction steel, HRC/CRC coil, steel pipe), agriculture (feed, livestock) as diversification arm",
-  "customer": "Domestic construction/infrastructure contractors, export steel buyers (HRC), agri-food distributors",
-  "ops": "Gross margin 15.8%; annualized ROE 12.7% (sector-comparison) vs sector median 2.9% — well above steel peers; PE 14.2 at 57% discount to sector median 32.6. Reported operating_profit=0 and EBITDA=0 in raw extraction — known corrupted/unpopulated field (9th+ consecutive cycle), net_profit and gross_profit figures are unaffected and used for all ratios",
-  "mgmt": "Q2-2026 filing tracked QUÁ HẠN (deadline 30/07/2026 passed); HPG_2026_Q2.pdf on file since 2026-08-01, not yet extracted",
-  "valuation": {
-    "pe": 14.2,
-    "pb": 1.7,
-    "roe_pct": 12.7,
-    "ey_pct": 7.042,
-    "ey_spread_pp": 2.042,
-    "verdict": "FAIR"
-  },
-  "kinhdich": {
+  "product": "Steel production (construction/long steel, flat steel, steel pipe), agriculture (feed/livestock)",
+  "customer": "Construction/infrastructure contractors, steel distributors, export markets",
+  "ops": "Gross margin 15.8%; operating profit line extracted as 0 (data-quality defect, 9th+ consecutive cycle observed) — validation warning: net profit (9,055.9bn) exceeds gross profit (8,365.1bn), implies non-operating income captured or extraction error; ROE 6.5% raw / 12.7% sector-annualized vs sector median 2.9%; P/E 14.2 vs sector 32.6 (discount -57%)",
+  "mgmt": "Q2-2026 filing overdue (deadline 30/07/2026 passed, still unfiled 2026-08-08)",
+  "valuation_verdict": "FAIR",
+  "ey_spread_pp": 2.04,
+  "kinh_dich": {
     "que": "Mong (4)",
     "xu_huong": "TRUNG TINH",
     "tin_hieu": "GIU",
-    "do_tin_cay_pct": 38
+    "confidence_pct": 38
   },
+  "insider_signal": "none significant",
   "esc_gate": {
-    "esc1": "unevaluable (no Bash/Glob grant)",
-    "esc2": "FALSE (imbalance=0.00% — assets exactly equal liab+equity)",
-    "esc3": "DATA-COVERAGE-LIMITED (3/4 quarters returned by get_cash_flow)",
-    "esc4": "discarded — operating_profit=0 is a known corrupted field (9th+ cycle), formula would falsely show ~100% non_operating_share; not a genuine finding",
-    "esc5": "FALSE — refine_status=PARTIAL (report_id=null), refine not complete, skip"
+    "esc1": "unevaluable (no Bash/Glob)",
+    "esc2": {
+      "result": false,
+      "imbalance_pct": 0
+    },
+    "esc3": {
+      "result": "DATA-COVERAGE-LIMITED",
+      "quarters_returned": 3,
+      "guard_status": "COVERAGE-GUARD-HELD (peer)"
+    },
+    "esc4": {
+      "result": false,
+      "note": "operating_profit=0 corrupt in extraction — non_operating_share formula unreliable, discarded rather than escalated"
+    },
+    "esc5": {
+      "result": false,
+      "report_id": null,
+      "existing_refine_status": "PARTIAL"
+    }
   },
-  "sentiment_30d": "ỔN ĐỊNH, slope +0.00, 4/8 tin bullish 2 bearish",
-  "insider": "Không có tín hiệu giao dịch nội bộ đáng kể",
-  "data_gap_note": "get_bctc_full/get_cash_flow anchored on Q1-2026 (fetchedAt 2026-06-07T11:12:22Z); Q2-2026 PDF stored but not yet extracted",
-  "as_of": "2026-08-08T15:09:22Z",
+  "sentiment_trend_30d": "GIẢM (tiêu cực, slope -0.06)",
+  "fetched_at": "2026-08-08T18:10:00Z",
   "_processed": {
-    "fingerprint": "9602cef9b3784db8f4fc27a4db39bef6751c4c7a8129677b79783296526a25cf",
-    "processedAt": "2026-08-08T15:26:06Z",
+    "fingerprint": "2cd18611921cd2eedbf4e4681df6bee8c816fc3bec7047191f528f4cd72a6096",
+    "processedAt": "2026-08-08T18:23:03Z",
     "processedBy": "dev-team",
     "result": "routed-to-po"
   }

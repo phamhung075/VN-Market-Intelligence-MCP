@@ -13,5 +13,11 @@
     "impact": "AC-3 is PO's own self-verification gate for its own board writes -- a false green here means a PO session can believe its board mutation landed when it did not, silently dropping its own triage output on the floor while reporting success. This is the same failure shape the fleet's RAW-verification discipline exists to prevent (badges/self-report vs raw commit-plane truth), except here it is PO's own flow doc, not a downstream QA/auditor check.",
     "requested_action": "Fix docs/agents/po/flow/main.md AC-3 (lines ~161-168): capture the pre-commit SHA (`git rev-parse HEAD`) before attempting the commit, then after the commit attempt verify (a) the commit succeeded (non-empty new SHA, no error) AND (b) the new HEAD's own commit (not just tree-contains-path) is the one just made -- e.g. `git rev-parse HEAD` differs from the pre-commit SHA AND `git show --stat HEAD` is authored by this attempt (matches the intended commit message/diff), not merely 'grep finds the path somewhere in the tree at HEAD'. Route to whichever agent owns docs/agents/po/flow/main.md edits (agent-father, per commit_zone convention) rather than po editing its own flow doc.",
     "occurrence_note": "First observed instance of this specific AC-3 gap (not yet 2+ recurring) -- self-caught and worked around in the same cycle it occurred, no actual data loss this time, but the flow-doc defect persists for the next PO session to hit the same race. Reported by the PO sub-session itself in its 2026-08-08T17:37Z tick completion report as 'a real defect... worth a row', not yet minted as a backlog row -- this signal closes that gap."
+  },
+  "_processed": {
+    "fingerprint": "5601f932084abd1cdbe0d7b441ff37bf71593b2c55ba1c08a996a99981954049",
+    "processedAt": "2026-08-08T18:23:03Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
   }
 }

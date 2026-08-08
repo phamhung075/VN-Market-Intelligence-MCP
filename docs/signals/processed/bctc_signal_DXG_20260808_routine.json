@@ -1,42 +1,35 @@
 {
   "ticker": "DXG",
   "signal_type": "bctc_signal",
-  "quarter": "unavailable (get_bctc_full returns \"Chưa có dữ liệu BCTC\" — 11th+ consecutive cycle)",
+  "quarter": "Q1-2026",
   "mode": "routine",
   "beat_miss": null,
-  "net_profit_delta_pct": null,
-  "product": "Real-estate developer — residential projects, land-bank development (BĐS)",
-  "customer": "Homebuyers/investors in DXG-developed residential projects, primarily southern Vietnam urban markets",
-  "ops": "get_bctc_full returns no data (11th+ consecutive cycle, extraction pipeline gap despite DXG_2026_Q1.pdf, DXG_2026_Q2.pdf and multiple prior-year PDFs on file). Valuation instead sourced from get_sector_comparison (independent data path): PE 66.5 vs sector median 16.1 (+312% premium), ROE 1.9% vs sector median 7.3% (below median)",
-  "mgmt": "Q2-2026 filing tracked QUÁ HẠN (deadline 30/07/2026 passed); track record on BCTC data completeness has been poor for 11+ consecutive cycles regardless of filing status",
-  "valuation": {
-    "pe": 66.5,
-    "pb": 1.2,
-    "roe_pct": 1.9,
-    "ey_pct": 1.504,
-    "ey_spread_pp": -3.496,
-    "verdict": "AVOID"
-  },
-  "kinhdich": {
+  "product": "Real estate development — residential projects and land bank",
+  "customer": "Homebuyers, institutional/JV real-estate co-investors",
+  "ops": "No BCTC extraction available (\"Chưa có dữ liệu BCTC\") despite DXG_2026_Q1.pdf + DXG_2026_Q2.pdf both on file since 2026-08-01/08-03 — extraction-pipeline gap, 12th+ consecutive cycle observed; sector-comparison only: P/E 66.5 vs sector median 16.1 (premium +312%), ROE 1.9% vs sector 7.3% (below median), P/B roughly in line with sector (1.2 vs 1.3)",
+  "mgmt": "Q2-2026 filing overdue (deadline 30/07/2026 passed); get_cash_flow Q1-2026 operating_cf implausible (~4.23e18 VND, magnitude-corrupt) — discarded from any forensic calc, not treated as a real divergence signal",
+  "valuation_verdict": "AVOID",
+  "ey_spread_pp": -3.5,
+  "kinh_dich": {
     "que": "Tap Kham (29)",
     "xu_huong": "BAT LOI",
     "tin_hieu": "BAN",
-    "do_tin_cay_pct": 100
+    "confidence_pct": 100
   },
+  "insider_signal": "none significant",
   "esc_gate": {
-    "esc1": "unevaluable (no Bash/Glob grant, and no BCTC data available)",
-    "esc2": "unevaluable — no balance-sheet data from get_bctc_full",
-    "esc3": "unevaluable — get_cash_flow Q1-2026 operating_cf returns an implausible ~4.23e18 VND figure (3rd consecutive cycle of this OCR/extraction corruption), discarded from any calc",
-    "esc4": "unevaluable — no P&L breakdown available",
-    "esc5": "unevaluable — no report_id resolvable (get_bctc_full shows no BCTC data)"
+    "esc1": "unevaluable (no Bash/Glob)",
+    "esc2": "unevaluable (no get_bctc_full balance-sheet data)",
+    "esc3": "unevaluable (operating_cf corrupt/implausible, discarded)",
+    "esc4": "unevaluable (no P&L breakdown)",
+    "esc5": "unevaluable (no report_id — extraction never completed)"
   },
-  "kd_note": "KD reading corroborates the AVOID valuation verdict (both BAT LOI/BAN at 100% confidence) — 3rd consecutive cycle of agreement between the two independent signal paths",
-  "insider": "Không có tín hiệu giao dịch nội bộ đáng kể",
-  "data_gap_note": "get_bctc_full returns 'Chưa có dữ liệu BCTC' despite DXG_2026_Q1.pdf (stored 2026-06-13) and DXG_2026_Q2.pdf (stored 2026-08-01) both present in list_stored_pdfs — flagging for dev-team if this persists past 15 cycles without resolution",
-  "as_of": "2026-08-08T15:09:22Z",
+  "data_gap": "core BCTC extraction pipeline not producing output for DXG despite source PDFs present — 12th+ consecutive cycle, standing gap (not re-raised each cycle per prior notebook precedent)",
+  "sentiment_trend_30d": "not available (no BCTC data)",
+  "fetched_at": "2026-08-08T18:10:00Z",
   "_processed": {
-    "fingerprint": "e9d10062f3bcf025aab4e5d5f2312b633333f955a2e3224dcdccd69c221926da",
-    "processedAt": "2026-08-08T15:26:06Z",
+    "fingerprint": "5657edfa78144082714cec353a0a86623b111580f95c01fc85f6c18c98e4135f",
+    "processedAt": "2026-08-08T18:23:03Z",
     "processedBy": "dev-team",
     "result": "routed-to-po"
   }

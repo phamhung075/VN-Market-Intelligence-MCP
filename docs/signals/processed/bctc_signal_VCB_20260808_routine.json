@@ -4,39 +4,42 @@
   "quarter": "Q1-2026",
   "mode": "routine",
   "beat_miss": null,
-  "net_profit_delta_pct": null,
-  "product": "Retail and corporate banking, trade finance, treasury/FX, bancassurance cross-sell",
-  "customer": "Large corporates and SOEs, retail depositors/borrowers, import-export trade-finance clients",
-  "ops": "Operating profit margin 80.9% (bank-specific, pre-provision); net margin 54.3%; annualized ROE 16.7% (sector-comparison) vs sector median 17.6% — slightly below bank peers; PE 14.1 at 57% premium to sector median 9.0",
-  "mgmt": "Q1-2026 ĐÃ NỘP on time (2026-07-19) — not overdue; no Q2-2026 tracking row yet in calendar for this ticker (consistent with EIB/SHB, all 3 banks that already submitted Q1)",
-  "valuation": {
-    "pe": 14.1,
-    "pb": 2.2,
-    "roe_pct": 16.7,
-    "ey_pct": 7.092,
-    "ey_spread_pp": 2.092,
-    "verdict": "FAIR"
-  },
-  "kinhdich": {
+  "product": "Retail and corporate banking, trade finance, bancassurance cross-sell",
+  "customer": "Retail depositors/borrowers, SOEs, corporate clients, FX/trade-finance clients",
+  "ops": "Net interest income 17,421bn VND; operating margin 80.9%; ROE 4.2% raw / 16.7% sector-annualized vs sector median 17.6% (below median); OCF/NI ratio 1.37x (Q1-2026, no forensic divergence); P/E 14.1 vs sector 9.0 (premium +57%)",
+  "mgmt": "Q1-2026 filed on-time (2026-07-19); Q2-2026 not yet tracked for banks in earnings-calendar",
+  "valuation_verdict": "FAIR",
+  "ey_spread_pp": 2.09,
+  "kinh_dich": {
     "que": "Ton (41)",
     "xu_huong": "TRUNG TINH",
     "tin_hieu": "GIU",
-    "do_tin_cay_pct": 0
+    "confidence_pct": 0
   },
+  "insider_signal": "none significant",
   "esc_gate": {
-    "esc1": "unevaluable (no Bash/Glob grant)",
-    "esc2": "FALSE (imbalance=0.37%, below 0.5% threshold)",
-    "esc3": "FALSE — 4/4 quarters returned, divergence_ratio=|12,944,932/9,462,095-1|=0.368 < 0.40",
-    "esc4": "N/A — bank P&L structure (pre-provision operating profit exceeds PBT), pre-tax-consistent formula does not apply cleanly to banks",
-    "esc5": "FALSE — refine_status=PARTIAL (report_id=null), refine not complete, skip"
+    "esc1": "unevaluable (no Bash/Glob)",
+    "esc2": {
+      "result": false,
+      "imbalance_pct": 0.37
+    },
+    "esc3": {
+      "result": false,
+      "quarters_returned": 4,
+      "divergence_ratio": 0.368
+    },
+    "esc4": "N/A (bank — non-operating-share formula not applicable to bank P&L structure)",
+    "esc5": {
+      "result": false,
+      "report_id": null,
+      "existing_refine_status": "PARTIAL"
+    }
   },
-  "sentiment_30d": "GIẢM (tiêu cực), slope -0.40, 0/6 tin bullish 2 bearish",
-  "insider": "Không có tín hiệu giao dịch nội bộ đáng kể",
-  "data_gap_note": "get_bctc_full/get_cash_flow anchored on Q1-2026 (fetchedAt 2026-07-19T12:43:43Z); VCB_2026_Q2.pdf stored since 2026-08-01, not yet extracted",
-  "as_of": "2026-08-08T15:09:22Z",
+  "sentiment_trend_30d": "GIẢM (tiêu cực, slope -0.40)",
+  "fetched_at": "2026-08-08T18:10:00Z",
   "_processed": {
-    "fingerprint": "24492d39ade9cfe2c9572faf226ca09c72555d52a4a650a697c8812898ff023c",
-    "processedAt": "2026-08-08T15:26:06Z",
+    "fingerprint": "dbd1f83c4b2c3edeff239b91f8cbdbf803a7b070369af283cec466055bb39efb",
+    "processedAt": "2026-08-08T18:23:03Z",
     "processedBy": "dev-team",
     "result": "routed-to-po"
   }

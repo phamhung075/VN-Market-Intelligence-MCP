@@ -1,0 +1,14 @@
+{
+  "from": "commit-sweep-guard",
+  "to": "po",
+  "type": "bug-escalation",
+  "priority": "high",
+  "createdAt": "2026-08-08T18:35:29Z",
+  "payload": "[notebook-immutability-guard] WARN: docs/agent-memory/notebooks/qa.md — retained section '## cycle-597 · 2026-08-08 · FIX-MCP-SSE-SESSION-MANAGER-PERCONN-LEAK-NO-REAPER — Step 5 CHECKPOINT #1, NOT sign-off (custom PO-mandated ≥4h live-correlation gate, row stays REVIEW/qa)' has different content staged than at HEAD. Per .claude/skills/notebook-write/SKILL.md AC-2a, a retained '## ' section must be byte-identical across a cycle; the only authorized mutations are dropping a whole oldest section, the AC-2b sub-block intra-prune, or trimming the CURRENT cycle's own new section. If cap pressure forced a shrink, DROP the whole section (archive verbatim if it must be kept) and add a NEW marker section instead — see docs/agent-memory/notebooks/architect.md for the reference-correct pattern. mode=warn (default warn — never blocks; set GIT_NOTEBOOK_IMMUTABILITY_MODE=reject to hard-enforce once re-validated, see scripts/audits/verify-notebook-immutability-gate.sh).\n",
+  "_processed": {
+    "fingerprint": "777f7e6cb9b706335da16373e53ac6e255fe97a8c7d6ea3499aa3753564ced57",
+    "processedAt": "2026-08-08T18:50:45Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
