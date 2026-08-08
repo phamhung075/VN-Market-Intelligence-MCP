@@ -94,8 +94,8 @@
   ],
   "head": {
     "status": "idle",
-    "updated_at": "2026-08-08T04:29:27Z",
-    "updated_by": "developer (closeout)",
+    "updated_at": "2026-08-08T04:56:44Z",
+    "updated_by": "developer",
     "active_task_id": null,
     "next_agent": null
   },
@@ -10618,32 +10618,6 @@
         "evidence_refresh_20260801": "po/triage-auditor-findings-20260801 — docker-exec transport keeps A-21 blind during the restart storms it must detect; host immutable=1 read verified as an alternative."
       },
       {
-        "id": "FIX-AUDITOR-NOTEBOOK-APPEND-GATE-BYPASSED-ALL-GREEN-WRITE",
-        "type": "FIX",
-        "status": "BACKLOG",
-        "priority": "P2",
-        "size": "S",
-        "zone": "docs/agents/system-auditor/",
-        "owner": "agent-father",
-        "next_agent": "agent-father",
-        "supervised": true,
-        "plan_only": true,
-        "supervised_reason": "flow-doc + pre-commit-hook edit on a live cron-driven agent's write-gate -- same class as the sibling FIX-NOTEBOOK-COMPOSE-REWRITES-RETAINED-PRIOR-SECTIONS row, dispatch deliberately on-demand, not autonomous BOUNDED-1 pickup.",
-        "created_at": "2026-07-29T08:41:00Z",
-        "created_by": "agent-father/router-dispatch-20260729-notebook-write-path",
-        "source": "RAW-verified during FIX-NOTEBOOK-COMPOSE-REWRITES-RETAINED-PRIOR-SECTIONS implementation, commit f26526d0ee1d2b32ca82db049c9445a513227303 (2026-07-29T07:11:48+02:00, message 'chore(auditor): Tier-1 cycle 2026-07-29T05:08:58Z -- all checks PASS'). This commit's own body proves it was a genuine ALL_GREEN cycle: 'Anomalies: 0 new (0 critical, 0 warn, 0 info)', OUTPUT-CONTRACT line reads signals_posted=0 | telegram_sent=0 | signal_queue_rows_written=0 | dashboard_rows=0, and Status=HEALTHY matches the immediately-preceding Tier-1 entry's Status=HEALTHY (commit 7a500484e7d170d7426a318a3ff2ef635f8930bb, 02:43:08Z same day) -- i.e. all three Notebook Append Gate conditions at system-auditor/flow/main.md:684-690 ((a) new-finding>0, (b) new-signal>0, (c) state-change) were false, so the gate's own written spec required SKIP (zero notebook diff, zero commit). The write happened anyway, and the commit message itself is a SECOND tell: it does not match the mandated 'chore(memory/system-auditor): notebook YYYY-MM-DD tier-N' convention produced by scripts/auditor-notebook-commit.sh -- every surrounding commit that day used that exact format. This is evidence the write/commit did not go through the normal gated path for that cycle.",
-        "defect": "Single confirmed occurrence (NOT yet the repo's own 2+ recurrence bar for escalation to a hard mechanical gate -- see memory feedback_recurring_bug_escalation). Detection/authorization logic at main.md:684-690 is itself correct and has since held clean on multiple consecutive cycles (git diff --stat HEAD on system-auditor.md empty across several no-op ticks) -- this is a ONE-TIME bypass of that gate, cause unconfirmed (could be a stale/cached cycle narrative, a race between two concurrent auditor invocations, or a genuine prose-skip). Distinct from, and NOT to be conflated with, the retained-section-rewrite defect (that row is the in-memory compose step, AC-3 Step 1; this row is the earlier decision of whether to call Write() at all).",
-        "acceptance": "(1) Determine root cause: re-run the auditor probe artifacts from that tick if still available, or wait for a second live occurrence, before concluding whether this is a flow-doc prose gap or a race. (2) A MECHANICAL detector (not a hard reject on day 1, given single-occurrence status): a pre-commit hook check scoped to docs/agent-memory/notebooks/system-auditor.md only, that inspects a newly-added (present-in-staged, absent-in-HEAD) top '## ' section's own self-declared 'Anomalies: N new' and 'signal_queue_rows_written=N' (from its OUTPUT-CONTRACT line) plus its 'Audit Run Tier-N' + '- Status: X' line, compares Status against the same-tier entry immediately below it in the retained sections, and WARNS (write_signal + stderr, non-blocking, per the sweep-guard's own WARN-by-default-day-1 precedent -- NOT a hard reject, since this is unproven-recurring and prose-parsing over free-form audit narrative is inherently more fragile than a byte hash) if N==0 AND signal_queue_rows_written==0 AND Status is unchanged. (3) Escalate WARN to REJECT only after a second confirmed occurrence, per the 2+ bar. (4) Do NOT bundle this into _check_notebook_immutability (scripts/git-hooks/pre-commit) -- that function is a different, already-implemented, already-validated invariant (retained-section byte-identity) and mixing concerns risks destabilizing a working hard-reject gate with a new, unproven, fuzzier one.",
-        "related": [
-          "FIX-NOTEBOOK-COMPOSE-REWRITES-RETAINED-PRIOR-SECTIONS",
-          "FIX-AUDITOR-COMMIT-NONEXPLICIT-PATHSPEC"
-        ],
-        "title": "system-auditor notebook Append Gate (main.md:684-690) was bypassed for a genuine ALL_GREEN cycle -- commit f26526d0e wrote+committed a Tier-1 entry with 0 new anomalies/0 signals/unchanged Status, and used a non-standard commit message not matching auditor-notebook-commit.sh's convention",
-        "updated_at": "2026-07-29T08:50:34Z",
-        "po_acceptance_amend_20260729T0848": "ACCEPTANCE AMEND + OWNERSHIP RULING (PO triage 2026-07-29T08:48Z, cycle sys-20260729T083834-4dd9). Folded here, NOT re-minted — this row already owns the Append Gate at flow/main.md:684-690.\n\nSECOND, DISTINCT FAILURE MODE OF THE SAME GATE — record it, do not conflate it with this row's original one. Original defect: the gate was BYPASSED (wrote when all three counters said SKIP). New defect: the gate EVALUATED CORRECTLY BUT ON A FALSE INPUT. On the 08:38:34Z Tier-1 cycle, counter (b) `signal_queue_rows_written > 0` was evaluated as 0 when its true value was 1 — signal_queue row sys-20260729T083834-4dd9 had in fact been written and is present in .signal_queue.rows[]. The gate resolved SKIP and the notebook IS byte-identical to HEAD (PO verified: `git diff --stat HEAD` and `git status --porcelain` both empty for docs/agent-memory/notebooks/system-auditor.md). So the OUTCOME was right and no remediation of the artifact is needed. But it was right BY ACCIDENT: with (a) and (c) also false, a true (b)=1 should have produced PROCEED, not SKIP. The gate did not observe the thing it exists to observe.\n\nWHY (b) WAS FALSE — upstream, already tracked, do not re-diagnose here: scripts/emit-audit-signal.sh took its SKIP-dedup branch (ledger key `microservice_degraded:api-gateway:A-12` present at 2026-07-28T21:40:03Z, equal severity rank), which gates the E-2 Telegram ONLY while E-3 append-always still writes the row. The agent read SKIP-dedup as \"nothing emitted\" and reported all four OUTPUT-CONTRACT counters as 0. Full mechanism + the fix for the counters themselves is recorded on FIX-AUDITOR-DASHBOARD-APPEND-NO-ACTUATOR-CONTRACT-COUNT-NARRATED (READY, next_agent=developer, occurrence #3) under po_scope_amend_20260729T0848.\n\nOWNERSHIP RULING (the split, explicitly): the CORRECTNESS OF THE NUMBER belongs to the emit path / OUTPUT-CONTRACT derivation, i.e. the developer row above — that is the upstream half and must land first. The CHOICE OF PREDICATE SOURCE belongs HERE, in the auditor flow, because it is a property of the gate regardless of whether the counters are ever fixed: a gate that reads a value the same agent computed in the same cycle, from prose it also authored, is structurally incapable of catching that agent's own misreading. This is memory feedback_reader_writes_its_own_trigger_field_check_is_vacuous. Fixing only the upstream number leaves the gate one bug away from the same silence.\n\nAMENDMENT TO acceptance (2) — MATERIAL, READ BEFORE IMPLEMENTING. The detector this row currently prescribes inspects the staged notebook section's OWN self-declared `Anomalies: N new` and `signal_queue_rows_written=N` parsed out of its OUTPUT-CONTRACT line. That detector INHERITS the exact defect described above: on this cycle it would have read signal_queue_rows_written=0 / Anomalies 0 / Status unchanged and concluded \"correctly skipped\", which is the right verdict reached from a wrong premise — and on the mirror-image cycle (row written, agent narrates 0, notebook legitimately written for another reason) it would WARN on a correct write. A detector built on the agent's prose cannot adjudicate the agent's prose.\nREQUIRED CHANGE: counter (b), and the hook's reconstruction of it, MUST be derived from the ARTIFACT, not the narration —\n  jq '[.signal_queue.rows[] | select(.from==\"system-auditor\" and .ts >= \"<cycle_start_utc>\")] | length' docs/data/orch/orch-state.json\nThat is an independent observation plane: the row is written by scripts/emit-audit-signal.sh's E-3 (which carries its own POST-WRITE read-back assert), and read back by a different actor than the one that narrated the count. Same treatment for (a) where feasible. Keep (c) as-is — Status is genuinely a notebook-local property and comparing it against the retained same-tier section below is already artifact-derived.\nEverything else on this row stands unchanged: WARN-not-REJECT on day 1 per acceptance (2)'s own precedent, escalate to REJECT only after the 2+ bar per acceptance (3), and DO NOT bundle into _check_notebook_immutability per acceptance (4).\n\nRECURRENCE BOOKKEEPING — deliberately NOT bumped. This row's `defect` field records \"single confirmed occurrence\" of the BYPASS mode. Today is a FIRST occurrence of the FALSE-INPUT mode, not a second occurrence of the bypass mode. They are different failures of the same gate and must not be summed to fake the 2+ escalation bar (memory feedback_recurring_bug_escalation exists to stop under-reaction, not to license miscounting). Status stays BACKLOG, plan_only:true and supervised:true retained exactly as agent-father set them at 08:41Z, next_agent unchanged: agent-father, zone unchanged: docs/agents/system-auditor/.\n\nSEQUENCING: depends on FIX-AUDITOR-DASHBOARD-APPEND-NO-ACTUATOR-CONTRACT-COUNT-NARRATED landing first. If this row is implemented alone against still-narrated counters, the artifact-derived (b) will begin DISAGREEING with the OUTPUT-CONTRACT line on every dedup-suppressed cycle — which is informative, but it will surface as hook noise rather than as the upstream fix it actually indicates.\n",
-        "updated_by": "po/triage-20260729T0848-a12-curlerr-rootcause"
-      },
-      {
         "id": "FIX-APIGW-HEALTH-CAPABILITY-PROBE-GATE-PARALLEL-SINGLEFLIGHT",
         "type": "FIX",
         "status": "BACKLOG",
@@ -15755,33 +15729,6 @@
         "po_corroboration_c80_20260808T0116Z": "Fresh A-30 datapoint, 2026-08-08T01:05:33-01:06:54Z (system-auditor c80 Tier-1, RAW JSON in notebook commit 569f79108): mcp-server 6-probe window 97.16 / 97.20 / 97.39 / 97.16 / 97.58 / 97.59 %, min 97.16 max 97.59, reclamation_dips=0, discriminator verdict=ESCALATE, OOMKilled=false, RestartCount=2, VmHWM=3058144KB vs VmRSS=3023460KB. This is 19h AFTER the container OOM'd at ~05:57Z on 2026-08-07 (the death that confirmed sys-20260807T054825-771b as a true positive) - memory is back at the same pre-death ceiling with zero reclamation, i.e. the leak refills the 3GiB cap within a day of every restart. Logged here rather than as a new signal_queue row because c80's own E-3 append never fired (see FIX-ANALYSIS-ONLY-EXIT-DETECTOR-OR-VERDICT-BLIND-TO-PARTIAL-WRITE-CYCLE) and because the finding is already routed to this row - no duplicate minted. Dispatch fields deliberately untouched."
       },
       {
-        "id": "TASK-COWORK-SIGNAL-NAMING-CONTRACT",
-        "type": "TASK",
-        "size": "XS",
-        "priority": "P1",
-        "status": "READY",
-        "zone": "cross-service/standards",
-        "owner": "unassigned",
-        "next_agent": "developer",
-        "plan_only": true,
-        "sprint": "COWORK-RELIABILITY",
-        "created_at": "2026-08-07T06:00:00Z",
-        "created_by": "pm (decomposition of FIX-COWORK-SIGNAL-FILENAME-CYCLEID-KEYING)",
-        "parent_task_id": "FIX-COWORK-SIGNAL-FILENAME-CYCLEID-KEYING",
-        "title": "Naming Contract & Documentation (FR-5, FR-6)",
-        "ba_handoff": "docs/handoffs/TASK-COWORK-SIGNAL-NAMING-CONTRACT.md",
-        "description": "Decomposed subtask from FIX-COWORK-SIGNAL-FILENAME-CYCLEID-KEYING Phase 1 delivery",
-        "supervised": true,
-        "supervised_at": "2026-08-07T06:00:00Z",
-        "supervised_by": "pm (plan_only decomposition)",
-        "supervised_note": "Child task of plan_only parent; no code ships without parent re-adjudication by PO",
-        "updated_at": "2026-08-08T02:53:33Z",
-        "promoted_at": "2026-08-08T02:53:32Z",
-        "promoted_by": "dev-team (supervised-lane sweep)",
-        "promotion_note": "Supervised-Lane Sweep — assigned dispatch_lane='developer' (priority_rank=1); supervised/plan_only flags preserved, gate NOT disabled — see FIX-BOUNDED1-SUPERVISED-LANE-NO-SWEEPER",
-        "dispatch_lane": "developer"
-      },
-      {
         "id": "FIX-AUDITOR-DOCAUDIT-MEMORY-PATH-PREDICATE",
         "title": "FIX: system-auditor DOC-AUDIT memory-integrity check emits 'docs/agent-memory/MEMORY.md is MISSING' — that path NEVER existed (git diff-filter=D empty; project memory index is docs/agent-memory/INDEX.md, and the auditor spec main.md:445 names memory/MEMORY.md = the Claude auto-memory which is present+healthy). Recurring WARN false-positive from a drifted path predicate.",
         "status": "READY",
@@ -15870,6 +15817,36 @@
         "promoted_by": "dev-team (supervised-lane sweep)",
         "promotion_note": "Supervised-Lane Sweep — assigned dispatch_lane='architect' (priority_rank=2); supervised/plan_only flags preserved, gate NOT disabled — see FIX-BOUNDED1-SUPERVISED-LANE-NO-SWEEPER",
         "dispatch_lane": "architect"
+      },
+      {
+        "id": "FIX-AUDITOR-NOTEBOOK-APPEND-GATE-BYPASSED-ALL-GREEN-WRITE",
+        "type": "FIX",
+        "status": "READY",
+        "priority": "P2",
+        "size": "S",
+        "zone": "docs/agents/system-auditor/",
+        "owner": "agent-father",
+        "next_agent": "agent-father",
+        "supervised": true,
+        "plan_only": true,
+        "supervised_reason": "flow-doc + pre-commit-hook edit on a live cron-driven agent's write-gate -- same class as the sibling FIX-NOTEBOOK-COMPOSE-REWRITES-RETAINED-PRIOR-SECTIONS row, dispatch deliberately on-demand, not autonomous BOUNDED-1 pickup.",
+        "created_at": "2026-07-29T08:41:00Z",
+        "created_by": "agent-father/router-dispatch-20260729-notebook-write-path",
+        "source": "RAW-verified during FIX-NOTEBOOK-COMPOSE-REWRITES-RETAINED-PRIOR-SECTIONS implementation, commit f26526d0ee1d2b32ca82db049c9445a513227303 (2026-07-29T07:11:48+02:00, message 'chore(auditor): Tier-1 cycle 2026-07-29T05:08:58Z -- all checks PASS'). This commit's own body proves it was a genuine ALL_GREEN cycle: 'Anomalies: 0 new (0 critical, 0 warn, 0 info)', OUTPUT-CONTRACT line reads signals_posted=0 | telegram_sent=0 | signal_queue_rows_written=0 | dashboard_rows=0, and Status=HEALTHY matches the immediately-preceding Tier-1 entry's Status=HEALTHY (commit 7a500484e7d170d7426a318a3ff2ef635f8930bb, 02:43:08Z same day) -- i.e. all three Notebook Append Gate conditions at system-auditor/flow/main.md:684-690 ((a) new-finding>0, (b) new-signal>0, (c) state-change) were false, so the gate's own written spec required SKIP (zero notebook diff, zero commit). The write happened anyway, and the commit message itself is a SECOND tell: it does not match the mandated 'chore(memory/system-auditor): notebook YYYY-MM-DD tier-N' convention produced by scripts/auditor-notebook-commit.sh -- every surrounding commit that day used that exact format. This is evidence the write/commit did not go through the normal gated path for that cycle.",
+        "defect": "Single confirmed occurrence (NOT yet the repo's own 2+ recurrence bar for escalation to a hard mechanical gate -- see memory feedback_recurring_bug_escalation). Detection/authorization logic at main.md:684-690 is itself correct and has since held clean on multiple consecutive cycles (git diff --stat HEAD on system-auditor.md empty across several no-op ticks) -- this is a ONE-TIME bypass of that gate, cause unconfirmed (could be a stale/cached cycle narrative, a race between two concurrent auditor invocations, or a genuine prose-skip). Distinct from, and NOT to be conflated with, the retained-section-rewrite defect (that row is the in-memory compose step, AC-3 Step 1; this row is the earlier decision of whether to call Write() at all).",
+        "acceptance": "(1) Determine root cause: re-run the auditor probe artifacts from that tick if still available, or wait for a second live occurrence, before concluding whether this is a flow-doc prose gap or a race. (2) A MECHANICAL detector (not a hard reject on day 1, given single-occurrence status): a pre-commit hook check scoped to docs/agent-memory/notebooks/system-auditor.md only, that inspects a newly-added (present-in-staged, absent-in-HEAD) top '## ' section's own self-declared 'Anomalies: N new' and 'signal_queue_rows_written=N' (from its OUTPUT-CONTRACT line) plus its 'Audit Run Tier-N' + '- Status: X' line, compares Status against the same-tier entry immediately below it in the retained sections, and WARNS (write_signal + stderr, non-blocking, per the sweep-guard's own WARN-by-default-day-1 precedent -- NOT a hard reject, since this is unproven-recurring and prose-parsing over free-form audit narrative is inherently more fragile than a byte hash) if N==0 AND signal_queue_rows_written==0 AND Status is unchanged. (3) Escalate WARN to REJECT only after a second confirmed occurrence, per the 2+ bar. (4) Do NOT bundle this into _check_notebook_immutability (scripts/git-hooks/pre-commit) -- that function is a different, already-implemented, already-validated invariant (retained-section byte-identity) and mixing concerns risks destabilizing a working hard-reject gate with a new, unproven, fuzzier one.",
+        "related": [
+          "FIX-NOTEBOOK-COMPOSE-REWRITES-RETAINED-PRIOR-SECTIONS",
+          "FIX-AUDITOR-COMMIT-NONEXPLICIT-PATHSPEC"
+        ],
+        "title": "system-auditor notebook Append Gate (main.md:684-690) was bypassed for a genuine ALL_GREEN cycle -- commit f26526d0e wrote+committed a Tier-1 entry with 0 new anomalies/0 signals/unchanged Status, and used a non-standard commit message not matching auditor-notebook-commit.sh's convention",
+        "updated_at": "2026-08-08T04:51:52Z",
+        "po_acceptance_amend_20260729T0848": "ACCEPTANCE AMEND + OWNERSHIP RULING (PO triage 2026-07-29T08:48Z, cycle sys-20260729T083834-4dd9). Folded here, NOT re-minted — this row already owns the Append Gate at flow/main.md:684-690.\n\nSECOND, DISTINCT FAILURE MODE OF THE SAME GATE — record it, do not conflate it with this row's original one. Original defect: the gate was BYPASSED (wrote when all three counters said SKIP). New defect: the gate EVALUATED CORRECTLY BUT ON A FALSE INPUT. On the 08:38:34Z Tier-1 cycle, counter (b) `signal_queue_rows_written > 0` was evaluated as 0 when its true value was 1 — signal_queue row sys-20260729T083834-4dd9 had in fact been written and is present in .signal_queue.rows[]. The gate resolved SKIP and the notebook IS byte-identical to HEAD (PO verified: `git diff --stat HEAD` and `git status --porcelain` both empty for docs/agent-memory/notebooks/system-auditor.md). So the OUTCOME was right and no remediation of the artifact is needed. But it was right BY ACCIDENT: with (a) and (c) also false, a true (b)=1 should have produced PROCEED, not SKIP. The gate did not observe the thing it exists to observe.\n\nWHY (b) WAS FALSE — upstream, already tracked, do not re-diagnose here: scripts/emit-audit-signal.sh took its SKIP-dedup branch (ledger key `microservice_degraded:api-gateway:A-12` present at 2026-07-28T21:40:03Z, equal severity rank), which gates the E-2 Telegram ONLY while E-3 append-always still writes the row. The agent read SKIP-dedup as \"nothing emitted\" and reported all four OUTPUT-CONTRACT counters as 0. Full mechanism + the fix for the counters themselves is recorded on FIX-AUDITOR-DASHBOARD-APPEND-NO-ACTUATOR-CONTRACT-COUNT-NARRATED (READY, next_agent=developer, occurrence #3) under po_scope_amend_20260729T0848.\n\nOWNERSHIP RULING (the split, explicitly): the CORRECTNESS OF THE NUMBER belongs to the emit path / OUTPUT-CONTRACT derivation, i.e. the developer row above — that is the upstream half and must land first. The CHOICE OF PREDICATE SOURCE belongs HERE, in the auditor flow, because it is a property of the gate regardless of whether the counters are ever fixed: a gate that reads a value the same agent computed in the same cycle, from prose it also authored, is structurally incapable of catching that agent's own misreading. This is memory feedback_reader_writes_its_own_trigger_field_check_is_vacuous. Fixing only the upstream number leaves the gate one bug away from the same silence.\n\nAMENDMENT TO acceptance (2) — MATERIAL, READ BEFORE IMPLEMENTING. The detector this row currently prescribes inspects the staged notebook section's OWN self-declared `Anomalies: N new` and `signal_queue_rows_written=N` parsed out of its OUTPUT-CONTRACT line. That detector INHERITS the exact defect described above: on this cycle it would have read signal_queue_rows_written=0 / Anomalies 0 / Status unchanged and concluded \"correctly skipped\", which is the right verdict reached from a wrong premise — and on the mirror-image cycle (row written, agent narrates 0, notebook legitimately written for another reason) it would WARN on a correct write. A detector built on the agent's prose cannot adjudicate the agent's prose.\nREQUIRED CHANGE: counter (b), and the hook's reconstruction of it, MUST be derived from the ARTIFACT, not the narration —\n  jq '[.signal_queue.rows[] | select(.from==\"system-auditor\" and .ts >= \"<cycle_start_utc>\")] | length' docs/data/orch/orch-state.json\nThat is an independent observation plane: the row is written by scripts/emit-audit-signal.sh's E-3 (which carries its own POST-WRITE read-back assert), and read back by a different actor than the one that narrated the count. Same treatment for (a) where feasible. Keep (c) as-is — Status is genuinely a notebook-local property and comparing it against the retained same-tier section below is already artifact-derived.\nEverything else on this row stands unchanged: WARN-not-REJECT on day 1 per acceptance (2)'s own precedent, escalate to REJECT only after the 2+ bar per acceptance (3), and DO NOT bundle into _check_notebook_immutability per acceptance (4).\n\nRECURRENCE BOOKKEEPING — deliberately NOT bumped. This row's `defect` field records \"single confirmed occurrence\" of the BYPASS mode. Today is a FIRST occurrence of the FALSE-INPUT mode, not a second occurrence of the bypass mode. They are different failures of the same gate and must not be summed to fake the 2+ escalation bar (memory feedback_recurring_bug_escalation exists to stop under-reaction, not to license miscounting). Status stays BACKLOG, plan_only:true and supervised:true retained exactly as agent-father set them at 08:41Z, next_agent unchanged: agent-father, zone unchanged: docs/agents/system-auditor/.\n\nSEQUENCING: depends on FIX-AUDITOR-DASHBOARD-APPEND-NO-ACTUATOR-CONTRACT-COUNT-NARRATED landing first. If this row is implemented alone against still-narrated counters, the artifact-derived (b) will begin DISAGREEING with the OUTPUT-CONTRACT line on every dedup-suppressed cycle — which is informative, but it will surface as hook noise rather than as the upstream fix it actually indicates.\n",
+        "updated_by": "po/triage-20260729T0848-a12-curlerr-rootcause",
+        "promoted_at": "2026-08-08T04:51:52Z",
+        "promoted_by": "dev-team (supervised-lane sweep)",
+        "promotion_note": "Supervised-Lane Sweep — assigned dispatch_lane='agent-father' (priority_rank=2); supervised/plan_only flags preserved, gate NOT disabled — see FIX-BOUNDED1-SUPERVISED-LANE-NO-SWEEPER",
+        "dispatch_lane": "agent-father"
       }
     ],
     "review": [
@@ -22643,6 +22620,39 @@
         "developer_review_note": "FR-3 (intraday-only filename extension) + EC-2 (timezone-basis residual-risk) specified against 2 live-verified files: chef-dish.md Step 7.6 (lines 567-574) FILEPATH gains an -{VN_HOUR} suffix gated on IS_MULTI_FIRE -- chose Step 0.5's own already-computed generic cron-shape flag over a hardcoded \"intraday\" string match, since it is the established CLAUDE.md-compliant convention (\"no slot name is hardcoded\", chef.md line 44-48) and functionally identical for today's live schedule (only chef-intraday is multi-fire); flagged this as a design refinement over the brief's literal prose, reviewable/overridable. Also corrected a stale sentence in chef-dish.md's own GAP-CHEF-SYNTHESIS-A-FLOW-PERSIST changelog comment (lines 555-558) which incorrectly claimed the structural follow-on is \"cycle_id-keying the filename entirely\" -- the ratified design uses a per-writer VN_HOUR discriminator, not raw cycle_id, so the comment would have misled a future reader. chef.md Step 0.5 (lines 78, 91): cross-reference-only comment additions confirming VN_HOUR/IS_MULTI_FIRE are shared verbatim with chef-dish.md Step 7.6's new FILEPATH branch -- zero derivation/logic change, per dispatch instruction. EC-2 residual-risk comment embedded verbatim (bounded-not-closed: chef-intraday's live cron 13 2-8 * * 1-5 maps UTC hours 2-8 monotonically to VN hours 9-15, never crossing 17:00 UTC VN-midnight; hazard reproduces at hourly grain only if the cron is ever widened) -- cites the ALREADY-MINTED Phase-2 follow-on backlog row FIX-CHEF-INTRADAY-MARKER-KEY-UTC-HOUR-BASIS-MIGRATION (status=BLOCKED, depends_on=FIX-CHEF-MARKER-KEY-WINDOW-ANCHOR) rather than a \"PO should mint one\" placeholder, since PO's own amendment_2 on the parent row already minted it. metadata.cycle_id non-promotion comment embedded verbatim (2026-07-22 CAUTION restated: cycle_id is run-start-keyed, re-keying on it would silently permit duplicate co-existing artifacts for one window -- confirmed live instance cited). Worked example docs/data/unified-agent-synthesis-2026-08-07-intraday-09.json cited from the brief. derive_window_key() NOT cited or implemented -- FR-3's mechanism (VN_HOUR) is unrelated to tasks 1/2's WINDOW_KEY contract; explicitly flagged in the spec's own opening paragraph to prevent conflation. Test strategy specified: integration AC-1/AC-4 (two same-day different-VN_HOUR intraday fires -> two distinct paths, neither overwritten, silent-exit non-interference), single-fire regression guard (morning/eod/evening FILEPATH unchanged), EC-2 boundary explicitly deferred to the Phase-2 row's own AC-2, not duplicated here. AC-1/AC-2/AC-4 mapping cited from brief SS9, with AC-2's drain-inheritance claim corrected to note unified-agent-synthesis-*.json lives under docs/data/ and is never touched by drain-signals.js at all (unlike the bctc-analyst family). Dangling ba_handoff pointer (docs/handoffs/TASK-COWORK-SIGNAL-CHEF-INTRADAY.md, confirmed absent) noted per same precedent as tasks 1/2. Scope boundaries respected: zero edits to chef.md/chef-dish.md, zero touch to bctc-analyst/ or tran-ngoc-bau/ flow dirs (tasks 1/2/4), zero attempt at derive_window_key(), no further agent spawned.",
         "moved_to_review_at": "2026-08-08T04:28:47Z",
         "moved_by": "developer"
+      },
+      {
+        "id": "TASK-COWORK-SIGNAL-NAMING-CONTRACT",
+        "type": "TASK",
+        "size": "XS",
+        "priority": "P1",
+        "status": "REVIEW",
+        "zone": "cross-service/standards",
+        "owner": "po",
+        "next_agent": "po",
+        "plan_only": true,
+        "sprint": "COWORK-RELIABILITY",
+        "created_at": "2026-08-07T06:00:00Z",
+        "created_by": "pm (decomposition of FIX-COWORK-SIGNAL-FILENAME-CYCLEID-KEYING)",
+        "parent_task_id": "FIX-COWORK-SIGNAL-FILENAME-CYCLEID-KEYING",
+        "title": "Naming Contract & Documentation (FR-5, FR-6)",
+        "ba_handoff": "docs/handoffs/TASK-COWORK-SIGNAL-NAMING-CONTRACT.md",
+        "description": "Decomposed subtask from FIX-COWORK-SIGNAL-FILENAME-CYCLEID-KEYING Phase 1 delivery",
+        "supervised": true,
+        "supervised_at": "2026-08-07T06:00:00Z",
+        "supervised_by": "pm (plan_only decomposition)",
+        "supervised_note": "Child task of plan_only parent; no code ships without parent re-adjudication by PO",
+        "updated_at": "2026-08-08T04:56:44Z",
+        "promoted_at": "2026-08-08T02:53:32Z",
+        "promoted_by": "dev-team (supervised-lane sweep)",
+        "promotion_note": "Supervised-Lane Sweep — assigned dispatch_lane='developer' (priority_rank=1); supervised/plan_only flags preserved, gate NOT disabled — see FIX-BOUNDED1-SUPERVISED-LANE-NO-SWEEPER",
+        "dispatch_lane": "developer",
+        "claimed_at": "2026-08-08T04:51:57Z",
+        "claimed_by": "dev-team (supervised-lane sweep)",
+        "spec_doc": "docs/handoffs/TASK-COWORK-SIGNAL-NAMING-CONTRACT-spec.md",
+        "developer_review_note": "AC-3 (drain-reader change, if any, preserves routing): satisfied by confirmed NO-OP. Live-verified this cycle, not paraphrased from the brief: (1) mcp-tools.md Signal Bus Naming Contract section spans lines 148-166, currently documenting ONLY the generic docs/signals/{from}-{ISO-timestamp}.json pattern -- neither bctc_signal_{TICKER}_* nor unified-agent-synthesis-* is acknowledged; brief cited lines 148-164 for the existing block, confirmed accurate, zero drift found. New subsection text (verbatim from brief SS6, documenting the two file families + the WINDOW_KEY invariant that the SAME value backs both the filename component and the writer published-marker mutex key) specified for insertion immediately after line 164, before the closing --- at line 166. (2) drain-signals.js fingerprint formula independently re-derived at the actual crypto.createHash call site (lines 173-174): sha256(from+type+JSON.stringify(payload)+createdAt) -- traced from/type/payload/createdAt to their JSON-field origins (lines 167-172) and confirmed no filename-bearing variable (base/dest/fp_path) ever reaches the hash. Confirms brief SS7 exactly -- a WINDOW_KEY filename rekey (tasks 1-3 work) is fingerprint-neutral by construction, zero drain-signals.js code change required. One-line addition (verbatim from brief) specified for insertion after drain-signals.md line 93 (the fingerprint formula line itself), before the existing match/no-match sub-bullets at lines 94-97. AC-3 closes on documentation alone. Dangling ba_handoff pointer (docs/handoffs/TASK-COWORK-SIGNAL-NAMING-CONTRACT.md, confirmed absent) noted, non-blocking, same precedent as tasks 2/3. Scope boundaries respected: zero edits to mcp-tools.md or drain-signals.md, zero edits to drain-signals.js, zero touch to bctc-analyst/chef/unified-agent/tran-ngoc-bau flow dirs (tasks 1/2/3, FR-4 descoped), derive_window_key() not implemented -- cited by reference only for the WINDOW_KEY format worked example, no further agent spawned. This is the 4th and final child of the FIX-COWORK-SIGNAL-FILENAME-CYCLEID-KEYING Phase-1 decomposition -- all 4 children now in review[]; epic-wrapper closeout explicitly deferred to PO's own Step 4.4 Epic-Wrapper Autoclose Sweep, not attempted here.",
+        "moved_to_review_at": "2026-08-08T04:56:44Z",
+        "moved_by": "developer"
       }
     ],
     "qa": [
@@ -22790,7 +22800,7 @@
         }
       ]
     },
-    "last_triaged_at": "2026-08-08T04:22:18Z",
+    "last_triaged_at": "2026-08-08T04:51:52Z",
     "last_triaged_by": "dev-team (supervised-lane sweep)",
     "in_progress": [
       {
