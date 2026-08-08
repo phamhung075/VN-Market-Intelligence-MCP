@@ -970,3 +970,15 @@
 **Mitigation:** No immediate action beyond signal routing.
 
 ---
+
+## Anomaly: A-30 · rag-service memory ceiling breach — 96.91% utilization
+**Severity:** CRITICAL | **Date:** 2026-08-08 | **Status:** OPEN
+**Location:** rag-service container
+**Details:** Memory 992.4MiB/1GiB (96.91%) — BELOW floor (floor=40MiB-free, actual ~7MiB)
+**Impact:** Embedder singleton at capacity; vulnerability to OOM on workload spike
+**Root cause:** Known recurring: FU-RAG-DEPLOY-MEMORY — embedder singleton, 768MiB cap, no release path
+**Zone owner:** dev-rag-service
+**Last reported:** 2026-08-08T14:06:37Z (signal sys-20260808T140625-7343, system-auditor -> po, dedup_key=microservice_degraded:rag-service:A-30, CRITICAL Telegram sent)
+**Mitigation:** No immediate action beyond signal routing.
+
+---
