@@ -922,3 +922,15 @@
 **Mitigation:** No immediate action beyond signal routing.
 
 ---
+
+## Anomaly: A-30 · Memory pressure — pdf-extractor WARN threshold
+**Severity:** WARN | **Date:** 2026-08-08 | **Status:** OPEN
+**Location:** pdf-extractor
+**Details:** pdf-extractor-1 at 86.36% (2159MiB/2.5GiB), just breached WARN threshold
+**Impact:** Elevated memory pressure; monitor for further escalation
+**Root cause:** OCR workload (Tesseract) with transient peaks during PDF processing
+**Zone owner:** developer
+**Last reported:** 2026-08-08T11:06:19Z (signal sys-20260808T110605-1ad6, system-auditor -> po, dedup_key=microservice_degraded:pdf-extractor:A-30:WARN-THRESHOLD, WARN Telegram sent)
+**Mitigation:** No immediate action beyond signal routing.
+
+---
