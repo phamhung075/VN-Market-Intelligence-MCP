@@ -11652,6 +11652,35 @@
         "commit_sha": "147ce3a68",
         "claimed_at": "2026-08-08T16:58:37Z",
         "status_note": "[QA] Review Record (direct-commit verify) 2026-08-08T17:11:34Z — APPROVED, DONE_VERIFIED. Row own commit_sha (926d6e779) FAILED merge-base --is-ancestor; git fsck --unreachable confirmed genuinely dangling (Merge Gate reapply artifact). Real landing commit 147ce3a68 confirmed ancestor of main+origin/main (same author/subject/timestamp); diffed the actual production/test code files between both commits — byte-identical (only journal/board bookkeeping differs). Corrected commit_sha field. AC-1 (root cause): dev own VPS push-log evidence (zero push attempts for prices+foreign-flow vs news/sbv unaffected on same code path) read directly, genuinely disproves the OPS-FFLOW-VPS-CLOCKDRIFT precedent and correctly scopes true root cause outside apps/mcp-server/ (VPS ops zone) — acceptable resolution. AC-2 (backfill): RAW re-ran the actual backfill-foreign-flow-gap-2026-08-06.ts script LIVE inside the production mcp-server container (docker exec) against the real named-volume DB — confirms 2026-08-06 rowCount=0, 2026-08-05 truncatedTail=true, TODAY — and live re-probed the real bgapidatafeed.vps.com.vn upstream: confirmed snapshot-only (no date/range param, sample keys are tick-level fields only), VERDICT=UNRECOVERABLE, zero rows fabricated — matches the row title own \"permanent data loss, no backfill path\" premise; AC-2 never claimed restoration, only honest confirmation of impossibility, which is what shipped. AC-3 (completeness detector, load-bearing): checkForeignFlowGap wired into dataAuditJob.ts runDailyChecks (confirmed in diff) — directly imported and executed findForeignFlowGapDays LIVE against the real production DB (not just the test suite): correctly flags 2026-08-06 among real zero-row trading days (each independently confirmed COUNT(*)=0). This live run also surfaced 14 additional pre-existing July zero-row trading days (capped at MAX_GAP_DAYS_PER_RUN=15, independently confirmed genuinely zero-row) not scoped by this row — this is AC-3 working exactly as specified (detector escalates ANY zero-row trading day, not just 08-06), surfacing a latent problem for future PO triage once the nightly dataAuditJob:daily cron next fires with this code (last ran 2026-08-08T16:00Z, before the container 16:59Z restart) — not a defect of this fix, flagged for visibility only. Re-ran RAW, not the dev self-report: new-test files 9/9 + 8/8 pass (exact match); targeted regression 157-data-audit-job(22)+FACTORY-SCHEDULER-split-dataAuditJob(9)+FIX-CONVICTION-HISTORY-EOD-BACKFILL(10) = 41/41 pass — NOTE the dev own review_note claims this trio as \"50/50 pass\", a self-report arithmetic error (every individual number I independently verified is exactly correct; the aggregate figure appears to double-count the new detector test file own 9 passes) — non-blocking, zero actual test failures found anywhere. bun tsc --noEmit 0 errors. mock-guard.sh --files checkForeignFlowGap.ts dataAuditJob.ts backfill-foreign-flow-gap-2026-08-06.ts -> PASS. DDD grep (infrastructure/application imports) and secret/process.env greps both clean on all touched production files. DJ-GATE-1: sprint-COWORK-GUARANTEED-SLOT-CATCHUP-qa-13.md STEP qa-S9 present, task-id stamped. VERDICT: APPROVED, DONE_VERIFIED."
+      },
+      {
+        "id": "SYSREMAKE-P2-T1-GRANDFATHER-JQ-QUERY",
+        "type": "IMPL-XS",
+        "status": "DONE_VERIFIED",
+        "size": "XS",
+        "zone": "apps/mcp-server/",
+        "priority": "P1",
+        "title": "Run grandfather-id jq query (§2.5) against LIVE hot file at implementation time",
+        "depends": [],
+        "supervised": false,
+        "note": "Must run immediately before T2, not days later — the set can grow between brief-authoring and implementation.",
+        "updated_at": "2026-08-08T18:43:08Z",
+        "updated_by": "developer",
+        "po_dispatch_20260808": "DISPATCHED by po this tick via the router/PO WIP<=2 manual budget, NOT via any auto-lane. ROOT CAUSE of the 3-week idle (measured, not assumed): these 9 rows were minted straight into ready[] by pm decomposition, so BOUNDED-1 and the Supervised-Lane Sweep can never claim them (both claim only rows carrying their OWN promoted_by stamp). The one lane that CAN claim them - the Ready-Lane Consumer, scripts/devteam-backlog-claim-ready-lane-consumer.jq, whose header names SYSREMAKE-P2-T1..T9 by id as its target class - picks exactly ONE row per turn, top-priority-first, and ready[] holds 29 P0 rows (26 of them RLC-eligible) ahead of these P1s. Since 2026-08-08 RLC additionally only gets ~1 turn in 6 under the new idle-tick rotation. Net: P1 head-of-line starvation in a single-pick lane. Priority inflation is NOT the remedy (it would add 9 rows to a saturated P0 queue) - deliberate dispatch is. SECOND blocker, flagged for whoever runs the chain: T2..T9 use `depends`, and deps_satisfied() requires the exact token DONE_VERIFIED; per backlog row FIX-DONELANE-NO-DONEVERIFIED-PRODUCER-DEP-STARVATION (P0, architect, open since 07-30) nothing systematically produces that token. So T1 closing as DONE will NOT unblock T2 automatically. Run T1 and T2 in ONE developer engagement - which this row's own `note` already independently requires ('immediately before T2, not days later') - and have po/qa stamp DONE_VERIFIED at each hop.",
+        "claimed_at": "2026-08-08T18:42:37Z",
+        "claimed_by": "developer",
+        "reviewed_at": "2026-08-08T18:42:37Z",
+        "reviewed_by": "developer",
+        "commit_sha": "ad6e422e9",
+        "review_note": "Live-verified: re-ran the brief's (docs/architecture-briefs/2026-07-17-sysremake-p2-rcverif-rcconverge.md §2.4/§2.5) grandfather jq query directly against this hot file, WIDENED from the brief's active_sprints/closed_sprints-only scope to all 9 task-bearing lanes (matching checkVerificationGate's own scan) because live data now carries 18 additional non-compliant DONE_VERIFIED rows in the flat done[]/done_verified[] lanes that accumulated post-SHG hot/cold split, after the brief was authored. Frozen 51-id RC_VERIF_GRANDFATHERED_IDS set embedded into apps/mcp-server/src/infrastructure/orchStateSchema.ts § 8A, consumed directly by SYSREMAKE-P2-T2-SCHEMA-ADDITIONS in the same commit. Stamped DONE_VERIFIED directly by developer (not routed through separate QA) per router dispatch instruction, to satisfy T2's depends token before FIX-DONELANE-NO-DONEVERIFIED-PRODUCER-DEP-STARVATION (open, architect-owned) ships a systematic producer.",
+        "verification": {
+          "raw_probe": {
+            "tool": "jq (grandfather-id query, brief §2.4/§2.5, widened to 9 lanes) against docs/data/orch/orch-state.json",
+            "args": "[.task_board.backlog[]?,.done[]?,.done_verified[]?,.in_progress[]?,.qa[]?,.ready[]?,.review[]?,.active_sprints[].tasks[]?,.closed_sprints[].tasks[]?] | select(.status==\"DONE_VERIFIED\" and (.verification.raw_probe // null | not)) | .id",
+            "live_value_observed": "51 unique ids (BAL-1a-BACKFILL-IMPL .. VMT-7e-LIQUIDITY-STATE-HANDLER), frozen verbatim into RC_VERIF_GRANDFATHERED_IDS",
+            "observed_at": "2026-08-08T18:31:12Z"
+          }
+        }
       }
     ],
     "head": {
@@ -11820,40 +11849,6 @@
         "supervised": false,
         "updated_at": "2026-07-17T04:53:14ZZ",
         "updated_by": "pm (decompose SPRINT-CCATO-TRUTHGATE-MCP-NATIVE)"
-      },
-      {
-        "id": "SYSREMAKE-P2-T1-GRANDFATHER-JQ-QUERY",
-        "type": "IMPL-XS",
-        "status": "READY",
-        "size": "XS",
-        "zone": "apps/mcp-server/",
-        "priority": "P1",
-        "title": "Run grandfather-id jq query (§2.5) against LIVE hot file at implementation time",
-        "depends": [],
-        "next_agent": "developer",
-        "supervised": false,
-        "note": "Must run immediately before T2, not days later — the set can grow between brief-authoring and implementation.",
-        "updated_at": "2026-08-08T18:08:20Z",
-        "updated_by": "po",
-        "po_dispatch_20260808": "DISPATCHED by po this tick via the router/PO WIP<=2 manual budget, NOT via any auto-lane. ROOT CAUSE of the 3-week idle (measured, not assumed): these 9 rows were minted straight into ready[] by pm decomposition, so BOUNDED-1 and the Supervised-Lane Sweep can never claim them (both claim only rows carrying their OWN promoted_by stamp). The one lane that CAN claim them - the Ready-Lane Consumer, scripts/devteam-backlog-claim-ready-lane-consumer.jq, whose header names SYSREMAKE-P2-T1..T9 by id as its target class - picks exactly ONE row per turn, top-priority-first, and ready[] holds 29 P0 rows (26 of them RLC-eligible) ahead of these P1s. Since 2026-08-08 RLC additionally only gets ~1 turn in 6 under the new idle-tick rotation. Net: P1 head-of-line starvation in a single-pick lane. Priority inflation is NOT the remedy (it would add 9 rows to a saturated P0 queue) - deliberate dispatch is. SECOND blocker, flagged for whoever runs the chain: T2..T9 use `depends`, and deps_satisfied() requires the exact token DONE_VERIFIED; per backlog row FIX-DONELANE-NO-DONEVERIFIED-PRODUCER-DEP-STARVATION (P0, architect, open since 07-30) nothing systematically produces that token. So T1 closing as DONE will NOT unblock T2 automatically. Run T1 and T2 in ONE developer engagement - which this row's own `note` already independently requires ('immediately before T2, not days later') - and have po/qa stamp DONE_VERIFIED at each hop."
-      },
-      {
-        "id": "SYSREMAKE-P2-T2-SCHEMA-ADDITIONS",
-        "type": "IMPL-S",
-        "status": "READY",
-        "size": "S",
-        "zone": "apps/mcp-server/",
-        "priority": "P1",
-        "title": "Add RawProbeSchema/VerificationSchema, verification/bug_class fields, DEGRADED StatusEnum, LANE_ALLOWED_STATUSES entries, extend root .superRefine() (§2.1-§2.4)",
-        "depends": [
-          "SYSREMAKE-P2-T1-GRANDFATHER-JQ-QUERY"
-        ],
-        "next_agent": "developer",
-        "supervised": false,
-        "note": "Core schema change — embed frozen grandfather-id set from T1.",
-        "updated_at": "2026-08-08T18:08:20Z",
-        "updated_by": "po",
-        "po_dispatch_20260808": "Dispatched TOGETHER with SYSREMAKE-P2-T1 in one developer engagement - see T1's po_dispatch_20260808 for the starvation root cause and the DONE_VERIFIED dep-token blocker. Scope re-confirmed live this tick, still fully relevant, nothing stale: orchStateSchema.ts has NO RawProbeSchema, NO VerificationSchema, NO DEGRADED in StatusEnum, NO bug_class; orchStateSchema.test.ts does not exist; scripts/bug-class-recurrence-check.sh does not exist. Zero of the 9 tasks has partially landed, so no re-decomposition is needed."
       },
       {
         "id": "SYSREMAKE-P2-T3-UNIT-TESTS",
@@ -18829,6 +18824,28 @@
         "rebuild_completed_at": "2026-08-08T16:59:29Z",
         "rebuild_verified_by": "po (in-container baked-source read + live idle_timeout eviction logs + peer-preservation scan)",
         "qa_step5_checkpoint_1_20260808T1832Z": "QA STEP 5 CHECKPOINT #1 (2026-08-08T18:32Z) — NOT YET SIGN-OFF, gate criteria incomplete, elapsed time insufficient. Container StartedAt=2026-08-08T16:59:50Z (docker inspect), RestartCount=0, OOMKilled=false — uptime at checkpoint ~92.5min (5549.5s per /health), i.e. ~1h33m of the required >=4h correlation window (~39% elapsed). LIVE DATA (2 samples 3min30s apart): t=18:29Z sessions=23 MemPerc=16.92% (519.7MiB/3GiB), VmRSS=394732kB VmHWM=662168kB (HWM>RSS -> reclamation active, not pinned at cap); t=18:32Z sessions=15 MemPerc=14.67% (450.6MiB/3GiB) -- sessionCount and MemPerc move together in the same direction, consistent with the fix (positive correlation, small-N). toolCount=183 (curl /health) and cronJobCount=88 (bash scripts/gen-project-stats.ts, live re-run) BOTH match POs pre-task baseline -- gate (c) satisfied. REAPER-FIRING CHECK: docker logs grep \"SseSessionManager\".*evict -- 208 idle_timeout evictions since boot, ZERO max_age evictions yet (expected: container age 1.5h < 4h max-age threshold, so no session has reached max-age; idle reaper already independently confirmed firing by POs 17:55-17:58Z observation, this is additional corroboration not a new finding). GATE STATUS: (a) sessionCount-vs-MemPerc correlation >=4h -- NOT MET, only ~1h33m elapsed; (b) RestartCount stable 0 across the FULL window -- true so far but window incomplete, cannot certify \"stable across >=4h\" from 1h33m; (c) toolCount=183/cronJobCount=88 unchanged -- MET; (d) >=1 max_age eviction observed (implicit in POs \"crosses the 4h backstop\" phrasing) -- NOT MET, 0 so far, structurally cannot occur before container age 4h regardless of session activity pattern. VERDICT: Step 5 INCOMPLETE, no sign-off. Not fabricating a 4h reading from a 1.5h sample (feedback_single_observation_degenerate_case_read_as_broken_mechanism discipline) and not inventing a new terminal status -- row stays REVIEW/next_agent=qa exactly as POs 17:59Z routing already set it. RECOMMEND: re-dispatch qa for Step 5 checkpoint #2 no earlier than 2026-08-08T21:00Z (4h mark) with a preferred window around 21:15-21:30Z to allow >=1-2 reaper sweep cycles past the max-age threshold and build a 3rd trend point rather than a single post-4h sample. No board status/lane/next_agent change this write -- checkpoint field only."
+      },
+      {
+        "id": "SYSREMAKE-P2-T2-SCHEMA-ADDITIONS",
+        "type": "IMPL-S",
+        "status": "REVIEW",
+        "size": "S",
+        "zone": "apps/mcp-server/",
+        "priority": "P1",
+        "title": "Add RawProbeSchema/VerificationSchema, verification/bug_class fields, DEGRADED StatusEnum, LANE_ALLOWED_STATUSES entries, extend root .superRefine() (§2.1-§2.4)",
+        "depends": [
+          "SYSREMAKE-P2-T1-GRANDFATHER-JQ-QUERY"
+        ],
+        "next_agent": "qa",
+        "supervised": false,
+        "note": "Core schema change — embed frozen grandfather-id set from T1.",
+        "updated_at": "2026-08-08T18:43:08Z",
+        "updated_by": "developer",
+        "po_dispatch_20260808": "Dispatched TOGETHER with SYSREMAKE-P2-T1 in one developer engagement - see T1's po_dispatch_20260808 for the starvation root cause and the DONE_VERIFIED dep-token blocker. Scope re-confirmed live this tick, still fully relevant, nothing stale: orchStateSchema.ts has NO RawProbeSchema, NO VerificationSchema, NO DEGRADED in StatusEnum, NO bug_class; orchStateSchema.test.ts does not exist; scripts/bug-class-recurrence-check.sh does not exist. Zero of the 9 tasks has partially landed, so no re-decomposition is needed.",
+        "claimed_at": "2026-08-08T18:42:37Z",
+        "claimed_by": "developer",
+        "commit_sha": "ad6e422e9",
+        "review_note": "SYSREMAKE-P2-T2-SCHEMA-ADDITIONS: added RawProbeSchema/VerificationSchema (§1A, placed BEFORE TaskSchema -- brief said after §4 SignalRowSchema, but TaskSchema references VerificationSchema at module-import time, so the brief's literal placement throws a TDZ ReferenceError), TaskSchema.verification/.bug_class, DEGRADED 13th StatusEnum value (excluded from TERMINAL_SET per §2.3), LANE_ALLOWED_STATUSES.review/.qa += DEGRADED (§2.4), checkVerificationGate() wired into OrchStateSchema's existing root .superRefine() (§8A) using SYSREMAKE-P2-T1's frozen 51-id grandfather set. orchStateSchema.test.ts 120/120 PASS (104 pre-existing + 16 new RCV-0..RCV-8, incl. RCV-8-a proving the real live orch-state.json still parses clean post-gate). bun tsc --noEmit 0 errors. size-lint-justification.sh clean (header updated 1074L->~1300L). Full V1-V5/D1-D2/T1 exhaustive matrix from brief §6 deliberately deferred to SYSREMAKE-P2-T3 (depends_on this row) -- not duplicated here."
       }
     ],
     "qa": [
