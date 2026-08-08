@@ -35,7 +35,7 @@
 **why-decision:** APPROVED, DONE_VERIFIED. AC1/AC2 are the row's own stated whole-defect coverage and both pass against a genuinely re-executed, real-failure-injected test, not prose. AC5 (insert still succeeds on compaction failure) covered by both the new AC1 test and the pre-existing `test_compact_failure_is_nonfatal`, both green.
 **why-change:** No change from PO's own scoping note — judged this row on AC1/AC2/AC5 code-correctness only, did not re-litigate AC3/AC4/AC6 (host-side observation / explicitly-disclaimed-scope) already adjudicated by PO/router across 6 prior notes on this row.
 
-### STEP qa-S18 · qa · 2026-08-08T18:59:52Z
+### STEP qa-S19 · qa · 2026-08-08T18:59:52Z
 **task-id:** SYSREMAKE-P2-T2-SCHEMA-ADDITIONS
 **what-done:** Direct-commit verify (`qa[]` row, `branch:null`, commit `ad6e422e9`, router-dispatched) of RC-VERIF schema gate vs brief §2.1-§2.5.
 **what-considered:**
@@ -45,3 +45,14 @@
 - Confirmed SYSREMAKE-P2-T3 (full V1-V5/D1-D2/T1 matrix) is a pre-existing PM row (2026-07-17) depends_on this task — deferral is legitimate scope-split, not a hidden gap.
 **why-decision:** APPROVED, DONE_VERIFIED. All claims independently reproduced; deviation technically forced and correct; grandfather list proven complete against live data; T1's embedded set matches.
 **why-change:** No plan change. Noted non-blocking: `orch-cold-evict-tests.sh` showed 7/59 transient "REAL live file CHANGED" fails — traced to a concurrent peer's uncommitted working-tree write (TE-T31 REVIEW→DONE_VERIFIED) mid-run, unrelated to this commit (never touches that script; committed snapshot independently re-validated clean).
+
+### STEP qa-S19 · qa · 2026-08-08T18:57:41Z
+**task-id:** TE-T31
+**what-done:** Direct-commit verify (`qa[]` row, `branch:null`, dev-team Review-Lane QA-Drain). `commit_sha` e3a3a68bb8e36cfe529acb511b1053cc01982e57 confirmed real `main` ancestor; `git show --stat` matches all 4 claimed files (gen-tools-index.sh, INDEX.md, dev-standards.md, WORK.md) exactly; Task/AC trailers match TE-T31 verbatim.
+**what-considered:**
+- Re-ran `bash scripts/gen-tools-index.sh --check` LIVE against the CURRENT registry (183 tools, drifted from 184 at commit time) → NOOP, 0 drift — proves idempotency against a changed registry, not just the shipped snapshot.
+- `comm`/`diff` set-equality: registry tools (183) vs INDEX-linked tools (183) = 0/0 both directions, 0 missing `list/<tool>.md` stubs.
+- `dev-standards.md` CANONICAL pointer confirmed present; `shellcheck -x` clean; `mock-guard.sh` PASS; secrets/env greps clean; zero `.ts` touched (shell+3 docs only) — `bun test`/`tsc` N/A.
+- Independently confirmed the generator PROVEN in real subsequent production use: commit `8766bedc9` (2026-07-31, unrelated Polymarket-retirement task) regenerated INDEX.md via this exact script, correctly dropping 184→183 when the registry changed — end-to-end live evidence, not just ship-time claim.
+**why-decision:** APPROVED, DONE_VERIFIED. All 5 AC clauses independently re-verified live, not trusted from prose; DJ-GATE-1 satisfied (developer journal `sprint-TOKEN-ECONOMY-AUDIT-developer.md` STEP developer-S12, task-id TE-T31 present).
+**why-change:** No change from plan. Noted non-blocking: a concurrent peer session's writes to this same `qa-14.md` journal + `orch-state.json` interleaved with mine (multiple simultaneous verify-committed rows draining in parallel) — appended via `>>`, did not read-then-overwrite, to avoid dropping peer entries.
