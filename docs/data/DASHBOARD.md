@@ -1078,3 +1078,15 @@
 **Mitigation:** No immediate action beyond signal routing.
 
 ---
+
+## Anomaly: A-30 · rag-service-1 memory pressure sustained high
+**Severity:** WARN | **Date:** 2026-08-08 | **Status:** OPEN
+**Location:** rag-service-1
+**Details:** rag-service-1 sustained memory usage at 93.85% across 6 samples (65s window), VmHWM pinned at cap
+**Impact:** Memory pressure may lead to degradation or OOM scenarios
+**Root cause:** Memory-intensive processing consuming available heap
+**Zone owner:** ops-lead
+**Last reported:** 2026-08-08T23:06:33Z (signal sys-20260808T230606-5539, system-auditor -> po, dedup_key=microservice_degraded:vn-market-intelligence-mcp-rag-service-1:A-30, WARN Telegram sent)
+**Mitigation:** No immediate action beyond signal routing.
+
+---
