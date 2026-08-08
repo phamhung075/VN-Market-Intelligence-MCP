@@ -1,5 +1,28 @@
 # PO — Notebook
 
+## 2026-08-08T19:26Z · Five signals, one precondition: two live sessions on the hot board
+
+### What actually happened
+- dev-team Step 1 triage. 5 drained signals → **3 mints, 3 folds, 1 live fixture, 0 new rows for the loudest signal**. `.head` untouched.
+- Journal: `docs/agent-memory/decisions/triage-20260808T1926Z-po.md`. All 7 row writes re-read on disk before claiming.
+
+### Decisions worth keeping
+- **★ THREE OF THE FIVE SIGNALS ARE ONE PRECONDITION, AND SAYING SO IS THE WHOLE VALUE OF THIS TICK.** Sweep-guard strike 14, the SAME-FILE DIVERGENCE, and the QA-drain double-spawn all land on `orch-state.json` within 15 minutes and all require ≥2 live sessions writing the hot board. Split by mechanism, not by symptom: dispatch-side → new `FIX-QADRAIN-NO-TASKID-LEVEL-CLAIM-DUPLICATE-QA-SPAWN`; commit-side → folded onto the existing sweep-guard row with the causal link written **onto** the row. Three separate rows would have looked like three unrelated warnings to whoever picks one up.
+- **★ THE SAME-FILE DIVERGENCE CHANGED CLASS AND I ALMOST DEDUP-BUMPED IT.** Its known-FP root-cause row is **DONE_VERIFIED/cold-archived** — not in any non-terminal lane — so the FP branch structurally does not apply and the §2.7 genuine branch does. Verified the blobs: `d7f3fd97` vs `e32a147c` differ by **exactly 2 rows moved `qa[]`→`done_verified[]`**, everything else byte-identical. Genuine peer content. **Still refused to mint:** additive, nothing lost, nothing clobbered — an *attribution* defect, not data loss, on a detector that is a permanent documented NON-GOAL. Minting would turn a correctly-behaving informational detector into recurring board noise. **A signal changing from false-positive to genuine does not automatically make it actionable.**
+- **★ THE CI ROW'S REAL FINDING WASN'T THE CI ROW.** Mandatory pre-dedup log read gave 3 failing files: 2 folded onto open rows, 1 new. That one is `1862c-transport-session-eviction.test.ts` — **the eviction test of the SSE reaper fix I ratified at 17:37Z, which is sitting in `qa[]` at priority=critical awaiting my 21:00Z sign-off.** Green soak + red unit test is not a sign-off-able state; gated the sign-off on it. Pre-file-isolation means it is intrinsic — the mock-contamination story this exact file has history for is structurally unavailable, and I wrote that on the row so nobody burns a cycle on it.
+- **★ REFUSED THE SHORTCUT THAT WOULD HAVE WORKED TODAY.** For the WF-2 time-hold gap I could have un-stamped `po_goahead_*` to re-arm the supervised hold on the SSE row. It destroys a durable ratification record, and self-defeats — my own MANDATORY producer re-stamps it next tick. Deeper: `supervised` answers **who** approves; this gap is **when** it's worth re-running. Bending an existing gate to a shape it wasn't designed for is how the next false-green gets built. Minted the generic fix + stamped `next_recheck_not_before=21:00Z` on the SSE row as a **live fixture**, labelled plainly as not-yet-read-by-any-consumer.
+- **Verified every premise at source before minting, and it mattered twice:** the QA-drain script really has zero `task_claim` (only post-decision board CAS); WF-2's `should_hold` really computes only `$supervised`/`$goahead`. Neither mint rests on the reporter's prose.
+- **59-entry inbox: applied my own 18:08Z rule instead of minting.** `FIX-DEVTEAM-IDLE-CHAIN-MAIN-COMPLETION` is P0, `depends: []`, **dispatchable — just losing a sort** in a 359-row backlog. No mint; folded into the BATCH, the only action that changes anything.
+
+### NEXT
+- Do **not** sign off the SSE row at 21:00Z on soak evidence alone — the new bun-test row is now a gate on it.
+- If the 1862c failure turns out to be an eviction-path bug rather than a stale assertion, it contradicts my 17:37Z ratification and must be surfaced, not patched to green.
+
+### Carry-over
+- Standing rule (held, applied again): after every `orch-apply.sh`, re-read the specific row/field on disk — all 3 mints + 3 folds + 1 fixture verified before claiming.
+- Pruned the 17:37Z section (in git). Its one still-live lesson: **AC-3 self-verification can return a FALSE GREEN** by matching a *peer's* commit that swept my board changes — assert the commit is **mine** (compare the SHA I just created). Tracked as `FIX-PO-AC3-SELFVERIFY-FALSE-FAILLOUD-WHEN-PEER-SWEEPS-ORCHSTATE` (backlog).
+- Notebook written section-append+prune, never full-overwrite (`feedback_qa_notebook_fulloverwrite_drops_concurrent_peer_entries_20260806`, confirmed on this file 18:08Z).
+
 ## 2026-08-08T18:08Z · SYSREMAKE-P2 idle 3 weeks: the producer existed, the rows were starved
 
 ### What actually happened
@@ -24,28 +47,3 @@
 ### Carry-over
 - Standing rule from 15:13Z (held, applied again): after every `orch-apply.sh`, re-read the specific row/field on disk — verified all 3 mints + 2 stamps + 1 signal close before claiming them.
 - `review[]`=186 vs `qa[]`=4 — unchanged shape from prior cycles, and it is now also the single largest byte consumer in the hot file.
-
-## 2026-08-08T17:37Z · The CRITICAL was already fixed — the board just didn't know it
-
-### What actually happened
-- CRITICAL mcp-server chain (4 reports + dashboard signal) + WF-2 hold on the fix row. Ratified at source instead of on QA's verdict → **found the rebuild had already landed**. Stamped `po_goahead_20260808T175954`, released the hold, forwarded ops→qa.
-- Minted 3, folded 3, closed all 9 Telegram reports with dispositions. Journal: `docs/agent-memory/decisions/triage-20260808T1737Z-po.md`.
-
-### Decisions worth keeping
-- **★ "RATIFY AT SOURCE" PAID FOR ITSELF IN ONE COMMAND.** QA said `next_agent=ops, rebuild_required=true`. `docker inspect` said image Created **16:59:29Z**, fix commit **16:57:46Z** — the rebuild was already done. Had I stamped and let ops run, ops would have rebuilt **again**, resetting the only clean observation window this row has ever had (its history records 2 prior windows destroyed exactly that way). **A supervised gate that trusts the relay is not a gate.**
-- **★ REPO ≠ RUNNING IMAGE — and for `apps/mcp-server/src/` it never is.** Baked at build (Dockerfile:62 COPY, not volume-mounted). Grepped the fix *inside* the container (`SessionRecord`:48, `reapStaleSessions`:120, `stopReaper`:234, 8× `evictSession`). Image identity established **by content**, not inferred from timestamp ordering. For a baked service, `git merge-base --is-ancestor` proves nothing about what is serving.
-- **★ A MEMORY DROP NEEDS A RATE CONTROL OR IT'S JUST A TRAFFIC LULL.** 96-99% pinned → **11.26%** only means something beside: 661 McpServer constructions / 22 resident = **96.7% reaped** vs pre-fix 4018/873 = 78.3% (residual 21.7% *never* reaped), at unchanged rate (686/h vs 616/h). VmHWM 662168kB **>** VmRSS 348028kB = reclamation restored, the literal inverse of the alert's signature.
-- **★ FLIPPED `rebuild_required` true→false RATHER THAN WRITING "DO NOT REBUILD" BESIDE IT.** A structured field contradicting adjacent prose is `feedback_a30_prose_overrides_embedded_escalate_verdict`. Remove the trigger, don't annotate it.
-- **★ A ROW CAN BE STUCK ON AN AC IT STRUCTURALLY CANNOT SATISFY.** `FIX-MCP-MEMORY-CODE-LEAK` sat in REVIEW 3 days against "no 87% in 12h" — an AC belonging to the *other* leak. Its own 08-07 note said so and it still sat, because the note was never applied to the ACs. **Recommending a re-scope in prose is not re-scoping.** Transferred the AC + gate (c) to the SSE row; its real AC (backfill sweep = 1 vs ~52/10min) measured **PASS**.
-- **★ "ZERO RECLAMATION DIPS" WAS THE WRONG PLANE AGAIN.** rag-service cgroup 99.79% (cap 1GiB, verified) but VmHWM 1568064kB vs VmRSS 894036kB — **674MB below its own high-water**. cgroup counts reclaimable page cache; VmRSS doesn't. Same two-plane discriminator as 16:00Z, opposite verdict per container. Held P2, no escalation, no restart — 4 days at cap, **zero** OOM.
-- **sweep-guard: the counter got fixed today, the consequence never existed.** One actor (the router session) went **9→13 strikes vs threshold=3** in 4h02m; every BARE commit proceeded. Told the implementer **not** to default to hard-blocking — that strands worker indexes on shared main.
-- **Minted a CI row against the fix I'd just ratified, and said so.** b746c112b grew `transport.ts` 126→237L. Flagged that extraction (repo default) may be *wrong* here: the growth removed duplication, and re-fragmenting the single-eviction-path design is what let `mcpServer.close()` go missing from both cleanup paths originally.
-
-### NEXT
-- qa owes SSE Step 5: sessionCount vs MemPerc **≥4h** (must cross the 4h max-age reaper, not just the 15min idle one already seen firing), RestartCount stable 0 → then po Step 6 sign-off.
-- CI stays RED until **both** `coordinationStore.ts` (P0) and `transport.ts` land. Two files, one gate.
-- Rebuild landed with **no board attribution / no runbook ledger entry**. Single occurrence, not minted. If it recurs, mint it.
-
-### Carry-over
-- **This section was written once, clobbered by a peer PO full-overwrite at 18:08Z, and re-appended.** The peer's write also dropped the 16:00Z section (recoverable from git, not reconstructed here to avoid a second race). `feedback_qa_notebook_fulloverwrite_drops_concurrent_peer_entries_20260806` now confirmed on `po.md` too — notebook-write is section-append+prune, never full-overwrite.
-- **My AC-3 self-verification returned a FALSE GREEN and I nearly shipped it.** My commit aborted on an untracked-journal pathspec, but `git show --stat HEAD | grep orch-state.json` still passed — against a *peer's* commit that had swept my board changes in. AC-3 must assert the commit is **mine** (compare the SHA I just created), not merely that HEAD contains the path.
