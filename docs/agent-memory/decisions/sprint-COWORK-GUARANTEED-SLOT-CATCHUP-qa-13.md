@@ -189,3 +189,5 @@
 - Live evidence: independently confirmed peer/scheduled cold-evict commit `d1ba52d18` (no `Task:` trailer, separate from this task's chain) landed after `42e7c6048`, dropped `signal_queue.rows` 248→31 (21 READ+10 triaged) — jq-verified exact match to dev's claim.
 **why-decision:** APPROVED, DONE_VERIFIED. All 4 AC independently re-verified against code + live data, not trusted from dev/router prose; the one test-count mismatch traced to a proven-unrelated concurrent peer artifact, not this task's own diff.
 **why-change:** Board write hit the same uncommitted peer `raw_probe` gate (rejected DONE_VERIFIED without it) — attached a genuinely-performed `verification.raw_probe` (tool=jq, live signal_queue count/histogram, observed_at stamped) rather than downgrading to plain `DONE`, since this IS a real independent live re-probe I ran, not fabricated; validated clean, applied via `orch-apply.sh`, conservation OK (task_total 754→754, signal_total 31→31).
+
+### CAP-REACHED · 2026-08-08T18:56:36Z
