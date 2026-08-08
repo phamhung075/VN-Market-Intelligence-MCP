@@ -1042,3 +1042,15 @@
 **Mitigation:** No immediate action beyond signal routing.
 
 ---
+
+## Anomaly: A-30 · rag-service memory loss of reclamation
+**Severity:** WARN | **Date:** 2026-08-08 | **Status:** OPEN
+**Location:** vn-market-intelligence-mcp-rag-service-1
+**Details:** Deep-probe ESCALATE verdict: 97.41% sustained (all 6 samples identical), 0 reclamation dips, 0 discontinuities, no state changes, no OOMKilled. Container has lost ability to reclaim memory.
+**Impact:** Container memory usage is stuck at 97.41% of its 768 MiB limit (26.7 MiB free, BELOW 40 MiB floor). Sustained pressure may lead to future OOM events or performance degradation.
+**Root cause:** Loss of reclamation (dip-jitter no longer vetoes this evidence). Stable sustained-high memory, not a crash-cliff (no crash-cliff discriminators present: state_changed=false, oom_killed=false, no discontinuities, vmhwm not advancing).
+**Zone owner:** infrastructure
+**Last reported:** 2026-08-08T19:36:49Z (signal sys-20260808T193630-348e, system-auditor -> po, dedup_key=microservice_degraded:vn-market-intelligence-mcp-rag-service-1:A-30, WARN Telegram sent)
+**Mitigation:** No immediate action beyond signal routing.
+
+---
