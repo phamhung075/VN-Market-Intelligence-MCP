@@ -333,3 +333,68 @@ dependency I found myself does not undermine the core savings claim. APPROVED, D
 **why-change:** No change from plan — router asked for verify-committed; RAW verification
 supported DONE_VERIFIED. Surfaced one self-found risk (weekly-flow cross-refs into daily.md)
 and closed it out myself rather than leaving it as an open question.
+
+### STEP qa-S12 · qa · 2026-08-08T19:30:00Z
+**task-id:** TE-T28
+**what-done:** Direct-commit verify (dev-team Review-Lane QA-Drain, `qa[]` row, `branch:null`)
+of 26 generated `tools/list/*.md` stubs + anti-hallucination SSOT fix + new
+`scripts/gen-tool-list-stubs.py`. Commit `3e4fd2747` present with `commit`/`files[]` already
+on the row (post-drain shape, no derivation needed). Flipped QA→DONE_VERIFIED, moved
+`task_board.qa[]`→`task_board.done_verified[]` via `jq`+`scripts/orch-apply.sh`.
+**what-considered:**
+- Trust the row's own `commit` field — rejected, ran `git cat-file -t` (real commit) + `git
+  merge-base --is-ancestor 3e4fd2747660... main` (true) myself before reading anything else.
+- Trust "26 stubs generated, 0 flagged registry-only" — rejected, ran `git show --stat` myself:
+  all 29 claimed `files[]` entries present in the diff, none extra/missing.
+- Trust "post-gen diff = 0 missing / 0 extra" — rejected, independently recomputed via a
+  one-off Python diff of `docs/data/tool-registry.json` (`.groups[].tools[]`, 183 names)
+  against `docs/agents/tools/list/*.md` basenames on live disk: 0 missing, 1 "extra"
+  (`INDEX.md`, a non-tool directory index, not fabricated litter) — claim confirmed.
+- Trust "idempotency re-proven (clean no-op re-run)" — rejected, ran `python3
+  scripts/gen-tool-list-stubs.py --dry-run` myself: `missing=0`, "nothing to do" — genuinely
+  idempotent, not just claimed.
+- Spot-checked 2 generated stubs (`get_market_hexagram.md`, `schedule_task.md`) for fabricated
+  params — both match the `get_price_history.md` reference shape, `schedule_task.md`'s 10
+  params correspond to a real live schema (no invented fields), no-params tools correctly show
+  "No parameters" rather than a guessed row.
+- `bun tsc --noEmit` (apps/mcp-server) → 0 errors. `bun test` full-suite reading: pinned to
+  `BLOCK-PUSH-CRON-AUDIT-BATCH-NO-QA` CANONICAL (dev-standards.md) — targeted/touched-surface
+  suite, not repo-wide (standing tracked full-suite red, `FIX-MCP-SUITE-HEALTH-BASELINE`); zero
+  `.ts`/`.go` production files touched by this commit (grep-confirmed via `git show --stat`),
+  so no targeted TS suite applies — N/A, not skipped.
+- `mock-guard.sh --files "scripts/gen-tool-list-stubs.py"` → PASS (no fabricated-data patterns).
+- Grepped fleet-wide for any test/flow asserting the OLD anti-hallucination SSOT wording (`docs/
+  agents/tools/list/` = sole SSOT) — zero hits; no downstream breakage from the SKILL.md L55
+  rewrite.
+**why-decision:** All checks RAW-true: commit real + on main ancestry, all claimed files
+present in the diff, tool-registry↔list-dir diff independently recomputed at 0/0, idempotency
+re-run confirmed live (not trusted from prose), 2 spot-checked stubs are genuinely
+schema-sourced (no fabrication), tsc clean, mock-guard PASS, no orphaned SSOT reference
+fleet-wide. No `ISSUE` set at any verify step.
+**why-change:** No change from plan — router asked for verify-committed; RAW verification
+supported DONE_VERIFIED.
+
+### STEP qa-S12 · qa · 2026-08-08T17:29:56Z
+**task-id:** TE-T24
+**what-done:** Direct-commit verify of commit `1fe592c0066` (byte-cap predicate,
+mega-line evasion guard) — read all 3 real diffs, ran extended test suite live.
+**what-considered:**
+- Trust row's own `status_note` claim of "All 4 backstop tests GREEN" vs re-run raw.
+- Cross-check against brief's own AC trailer (6 items) vs brief's looser prose
+  ("update token-economy SKILL waterfall" / `Files: po/flow/main.md`) — no such
+  table exists in that SKILL; treated commit's own Task:/AC: trailer as authoritative
+  per fleet convention, not the brief's pre-implementation prose guess.
+**why-decision:** `git merge-base --is-ancestor` confirmed real ancestor of main;
+`git show --stat` files exactly match row's `files[]` (backstop.sh, .test.sh,
+dev-standards.md); read full diff not message — byte predicate genuinely independent
+of line predicate (own `BYTE_OVER`/`LINE_OVER` vars, own settle-re-read), justification
+comment confirmed to NEVER suppress byte-cap (only gates `LINE_JUSTIFIED`). Ran
+`context-bloat-backstop.test.sh` live myself: 5/5 pass incl. new T3 (mega-line
+5L/~12.5KB → byte-cap, evasion caught) + T4 (150L normal → 0 signals, no
+false-positive) — exact match to commit's own AC trailer, not asserted on trust.
+Zero `apps/` files touched (confirmed via `git show --stat`) → bun test/tsc
+genuinely N/A, not skipped on trust. mock-guard PASS ("no production source files
+to scan" — correct, bash/md out of TS DDD scope). DDD/secret greps clean (only
+doc-example/word-match hits, no real violations). VERDICT: APPROVED, DONE_VERIFIED.
+**why-change:** No change from plan — dev-team Review-Lane QA-Drain dispatched
+verify-committed mode; RAW verification supported DONE_VERIFIED.
