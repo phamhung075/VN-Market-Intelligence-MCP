@@ -1,34 +1,25 @@
 # PO — Notebook
 
-## 2026-08-08T15:13Z · UC-CCA-P3 B1 ruling + WF-2 ratification (dev-team Step 1 triage)
+## 2026-08-08T16:00Z · A-30 memory triage: one FP, one TP, same probe, same tick
 
 ### What actually happened
-- WF-2 `should_hold=true` on `.head` row **UC-CCA-P3** — ratified the architect brief (`e834b8209`, 508L) **at source**, not on the relay: `releaseTask():888`, `releaseOrphanTask():1000`, `ReleaseResult:391-393`, `coordinationTools.ts:208/:320` all confirmed; brief's "`OrphanReleaseResult.reason` already exists, zero type change" is **correct**.
-- **B1 ruled → Path A + hard sequencing dep.** Minted 9th child `UC-CCA-P3-FR5-CODE-GATE` (P0, dev-mcp-server, `depends_on: FIX-CI-SIZELINT-COORDINATIONSTORE-BASELINE-1388L`). pm need not re-decompose.
-- Manual-dispatch sweep: 1 stamped+BATCHed. 33 Telegram cleared to 0. TNB c124 already ACKed.
+- 3 signals + 1 that landed mid-triage + a **24-envelope unconsumed durable inbox** nobody reads.
+- Minted 1 (`FIX-AUDITOR-A30-SUSTAINED-WINDOW-SHORTER-THAN-TARGET-RECLAMATION-PERIOD`, P1, developer). Folded 6. Zero duplicate rows.
+- BATCH=3. Journal: `docs/agent-memory/decisions/triage-20260808T1600Z-po.md`.
 
 ### Decisions worth keeping
-- **★ MY OWN WRITE SILENTLY NO-OPPED AND EVERY GUARD PASSED.** I composed the B1 ruling against `.task_board.in_progress[] | select(.id=="UC-CCA-P3")`; pm's decomposition (`92ed07727`, 15:05:42Z) moved the row to `ready[]` between my read and my write. jq `|=` over a zero-match `select()` is a legal **identity** transform → `orch-apply.sh` printed `OK`, `stamped 0 row(s)`, conservation clean. A P0 ruling evaporated and looked like success. **`main.md` AC-3 would have PASSED** — it greps that orch-state.json is in HEAD, and it was (via other rows). File-presence ≠ row-mutation. Minted `FIX-ORCHAPPLY-SELECTOR-MISS-SILENT-NOOP` (P1, architect). **Standing rule for me: after every `orch-apply.sh`, re-read the specific row/field, never trust the wrapper's exit line.** Caught it only by re-reading.
-- **The B1 answer came from a fact neither BA nor architect had.** FR-5's landing site `coordinationStore.ts` is 1388L vs size-lint upper 1365L and is the **sole** live CI-RED offender — verified by *running* `size-lint-justification.sh --check`, not by reading the stale CI telegram. Risk axis and sequencing axis were independent, so Path A kept the hard guarantee *and* the dependency removed the collision. Cost ~0: the 8 flow-doc children don't touch that file.
-- **Sequencing was decisive for implementability, not just tidiness:** the size-lint fix needs −23L and will split the file, invalidating brief §6's exact line anchors. FR-5 first = guaranteed rework.
-- **The `[notebook-immutability-guard]` WARN is INCONCLUSIVE, never "benign"** — index state at fire time is unreconstructable. But I found a live checkable mechanism: `system-auditor.md` carries **two byte-identical `## c50 · 2026-08-08T13:30Z` sections**. A duplicated heading key makes any section-scoped HEAD-vs-index compare ambiguous *by construction*. Folded onto `FIX-AUDITOR-NOTEBOOK-APPEND-GATE-BYPASSED-ALL-GREEN-WRITE` (occ→2) with a de-dup AC. No mint (single fire, high FP base rate).
-- **Cleared 2 carry-overs by measurement:** GUARD-NOTEBOOK is `backlog`/`BLOCKED`; `wip_in_progress=1` via the real `devteam-eligibility.jq` → RLC gate (wip<2) is **OPEN**, so the P0 CI rows are awaiting rotation, not blocked. My own 11:02Z escalation (tg 4520) is stale: `checkForeignFlowGap.ts` already fixed (`638df5da0`), 1 offender left, not 2.
-- 19 BCTC period-mismatch fires folded onto `FIX-BCTC-SSC-...-ALWAYS-LATEST` (occ 82→**101**). The 2 write-BLOCKED refusals are the guard working — resolved `wontfix`, not defects.
+- **★ THE BRIEF'S TWO LOAD-BEARING FACTS WERE BOTH FALSE — and checking took two commands.** Brief said rag-service "VmHWM pinned at cap (1.5GiB/1.5GiB)". `docker inspect ... {{.HostConfig.Memory}}` = **1073741824 = 1.0GiB**; 1.5GiB is VmHWM's *own* value (1568064kB). The cap slot was filled with VmHWM, so "pinned at cap" is **VmHWM == VmHWM** — true by construction. Brief said "zero reclamation dips"; `docker stats` 19 min later = **82.00% (839.7MiB/1GiB)**, i.e. ~130MiB reclaimed *inside* the window declared reclamation-free. **Standing rule: when a signal hands me a percentage, read the denominator off the live cgroup before I reason about the numerator.** (`feedback_auditor_memory_pct_denominator_falsespike`)
+- **★ ONE PROBE, ONE TICK, ONE FP + ONE TP — the pair is the finding, not either half.** mcp-server-1 is a *genuine* positive: 96.37% live (above its whole sampled band), VmRSS 3015024kB ≈ VmHWM 3034944kB, cap 3.0GiB **correct**. So the `MINP>93` predicate is fine and the 93/97 constants must NOT move. The defect is that the window (`PROBES=12 × INTERVAL=25s` = 5 min, `verify-a30-*.sh:124-125`) is **3× shorter** than rag-service's only reclaimer (embedder idle-unload, **15 min**, `app_factory.py:87`). A window shorter than the event period makes the predicate unfalsifiable *for that container only*. Fix must be per-container calibration; the TP arm is now the regression fixture (AC-4 forbids threshold changes).
+- **★ A SHIPPED PRODUCER WITH NO CONSUMER LOOKS EXACTLY LIKE HEALTH.** P2A (durable-drain producer) + P1A both went DONE_VERIFIED 20 min before I ran. Their consumer `FIX-DEVTEAM-IDLE-CHAIN-MAIN-COMPLETION` (P0) is still BACKLOG — so `.dev_team_idle_chain.pending_triage_inbox` is **write-only**: 24 envelopes, oldest 13:08:59Z, 0 consumed, holding 2 unrouted `ci_red` (sat 2.5h), 2 CRITICAL `microservice_degraded`, a 101h VPS staleness. Nothing was red. I found it only by reading the array by hand. **Inverse of the "documented consumer, no producer" family — same net effect.** Refused to stamp `consumed_at` myself: inventing a consume contract ahead of §3.2 forks the schema that row exists to define. Dispatched the consumer instead.
+- **Skipped the top-ranked P0 in the manual-dispatch sweep on prior art.** `TASK-COWORK-MUTEX-001`'s deliverable already appears live (`CLAUDE.md:14`, `CARD.md:35`, `SKILL.md:194/:288/:563`; SKILL.md written 2026-08-07 vs the row's 2026-07-30 mint). Did **not** close it either — the match is behavioural, the row carries no ACs, and 2 siblings are unexamined. Closing a P0 on a partial match mirrors the mistake being avoided. Flagged for AC-level verify; selected #6 instead (highest-ranked candidate that is unflagged AND dev-routed AND single-zone AND not deploy-gated).
+- **sweep-guard occ 28-31 folded, ruling held — but the n=30 fire broke the converge-on-retry pattern.** Occ 24-27 were 4/4 scoped retries in 3-15s. The 13:37:32Z **n=30** attempt (6 agents' notebooks + 6 briefs + 4 ledgers + orch-state.json) was blocked correctly and **nobody retried it** — those 30 paths are still uncommitted with an empty index. Block is right; the gap is that a multi-agent artifact set has no scoped committer.
+- **2 ci_red → 1 file → 0 new rows.** Both `gh run view --log-failed` to the same `coordinationStore.ts baseline=1241 actual=1388 upper=1365`. File-scoped dedup hit; check_id/head_sha would have minted 2 duplicates.
+
+### NEXT
+- Watch `FIX-DEVTEAM-IDLE-CHAIN-MAIN-COMPLETION` — until it lands I must hand-read `pending_triage_inbox` every tick or signals silently rot in it.
+- `FIX-CI-SIZELINT-COORDINATIONSTORE-BASELINE-1388L`: READY/P0 since 11:35Z, re-fired CI RED twice since; 23-line overage keeps main red.
+- mcp-server at 96.37% with RSS at its own peak — if it OOMs before the SSE reaper lands, that is evidence for the row, **not** a reason to restart it.
 
 ### Carry-over
-- **NEW — WATCH:** a 2nd concurrent-peer lane-move defeating a PO write → escalate `FIX-ORCHAPPLY-SELECTOR-MISS-SILENT-NOOP` to P0; 1 observation.
-- **NEW — OWED:** B-06 `bctc-discover` VPS stale **101h30m** has no precisely-named owner row. Single WARN fire → observation per anti-churn rule; **mint next tick if it fires again**.
-- **NEW:** 40 rows now sit `next_agent=po` (22 in `review[]`); this tick drained the head-blocking one only. `EPIC-AUDITOR-DETECTOR-CORRECTNESS-DRAIN` (P1) is the right lever — raise it next idle tick.
-- *(carried)* MINT TRIGGER ARMED: 2nd row whose unblocking event falsifies its own safety premise.
-- *(carried)* MINT TRIGGER ARMED: 2nd Bash-less agent BLOCKED by sweep-guard with no retry path → owner agent-father.
-- *(carried)* MINT TRIGGER ARMED: 2nd cross-plane (TS-only / Go-blind) verification miss.
-- *(carried)* MINT TRIGGER ARMED: 2nd agent self-signs past a PO-mandated handoff.
-- *(carried)* `CI-RED-72814d82` recorded `routed-to-po`, never landed on a row. 1 obs; a 2nd = real drain→PO delivery gap.
-- *(carried, escalated)* Within-rank tiebreak is insertion index → newly-minted urgent FIXes sort last. Lane promotion still unmeasured.
-- *(carried)* 13 backlog rows carry `priority: null` → rank 9, behind everything.
-- *(carried)* built-but-never-deployed is a 3-service pattern on `FIX-DEVTEAM-REBUILD-REQUIRED-MARKER-NO-CONSUMER`. A 4th = dispatch priority.
-- *(inherited)* `baseline_pass` schema-polluted — 6 backlog rows carry prose in that boolean.
-- *(inherited)* `rebuild_required` copied from mint-time audits, never re-derived at sign-off (~212 `review[]` rows).
-- *(inherited)* VPS-route-hardcode implementer must bundle all **three** sites (`main.md:407` + `audit-dimensions.md:26` + `init.md:17`).
-- *(inherited)* Manual-dispatch sweep ~85 candidates, drains 1/tick — 13th tick raising it.
-- *(inherited, still owed — 18th tick)* mint a FIX for `bctc_signal_*` / `unified-agent-synthesis-*` field-schema instability once the filename fix ships.
+- Standing rule from 15:13Z (applied this cycle, held): after every `orch-apply.sh`, re-read the specific row/field on disk — `jq |=` over a zero-match `select()` is a legal identity transform that prints `OK` and stamps 0 rows. `FIX-ORCHAPPLY-SELECTOR-MISS-SILENT-NOOP` is `ready[]`/developer.
+- review[]=210 vs qa[]=3. `FIX-SWEEPGUARD-ESCALATION-...` has been REVIEW/qa for 8 days; the signals it regenerates every tick are a review-drain problem, not an unowned defect.
