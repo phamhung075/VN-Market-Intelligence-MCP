@@ -1,0 +1,46 @@
+{
+  "ticker": "VCB",
+  "signal_type": "bctc_signal",
+  "quarter": "Q1-2026",
+  "mode": "routine",
+  "beat_miss": null,
+  "product": "State-owned commercial bank — corporate/retail lending, trade finance, bancassurance.",
+  "customer": "Corporates, SOEs, retail depositors/borrowers nationwide — largest state bank by market cap.",
+  "ops": "Q1-2026 ROE 16.7% (sector-comparison, annualized) below sector median 17.6%; PE 14.1 trades at 57% premium to sector median; OCF/NI ratio 1.368 (divergence 0.368, within normal <0.40 band).",
+  "mgmt": "Q1-2026 filed on time (2026-07-19, ĐÃ NỘP) — not overdue; balance sheet check clean (imbalance 0.37%, within 0.5% tolerance).",
+  "as_of": "2026-08-08T00:00:00Z",
+  "cycle_id": "20260808-0000",
+  "ey_spread": {
+    "pe": 14.1,
+    "earning_yield_pct": 7.09,
+    "max_deposit_rate_pct": 5,
+    "spread_pp": 2.09,
+    "verdict": "FAIR"
+  },
+  "esc_gate": {
+    "esc1_accounting_manipulation": "unevaluable (E1 6-pass trick detection scope-reduced — no Bash/Glob to enumerate cache dir, standing gap)",
+    "esc2_balance_check": "FALSE (imbalance=0.37%)",
+    "esc3_ocf_ni_divergence": "FALSE (4/4 quarters returned, divergence_ratio=0.368 < 0.40)",
+    "esc4_nonop_related_party": "N/A (bank — non-operating-share concept not applicable)",
+    "esc5_refine_confidence": "refine_status=PARTIAL → report_id null → FALSE/skip",
+    "escalation_status": "NONE"
+  },
+  "kd_reading": {
+    "hexagram": "41 Ton",
+    "trend": "TRUNG TINH",
+    "signal": "GIU",
+    "confidence_pct": 0
+  },
+  "roe_pct_annualized": 16.7,
+  "sector_pe_median": 9,
+  "insider": "no significant insider activity",
+  "legal_risk": "none",
+  "data_quality_note": "BCTC data last-known-good since VPS push 2026-08-04T08:34:40Z (~88h stale, SLA 48h breached); Q2-2026 PDF on file since 2026-08-01 but not yet extracted server-side.",
+  "source_agent": "bctc-analyst",
+  "_processed": {
+    "fingerprint": "4cb70e2dd769531920c71f76ab592b089c37945bf4df1e168ac9c036be43e7f2",
+    "processedAt": "2026-08-08T00:20:58Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

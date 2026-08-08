@@ -1,0 +1,46 @@
+{
+  "ticker": "FPT",
+  "signal_type": "bctc_signal",
+  "quarter": "Q1-2026",
+  "mode": "routine",
+  "beat_miss": null,
+  "product": "IT services & software outsourcing (global export), telecom (FPT Telecom broadband/pay-TV), education (FPT Edu).",
+  "customer": "Enterprise IT buyers in Japan/US/APAC export markets plus domestic broadband/telecom subscribers and students.",
+  "ops": "Q1-2026 operating margin 22.0%, net margin 19.8%; ROE 28.3% (sector-comparison, annualized) vs sector median 10.6%; balance sheet check clean (assets=liab+equity, imbalance 0.00%).",
+  "mgmt": "Consistent premium-ROE delivery vs tech peers; Q2-2026 filing overdue (deadline 30/07/2026 passed, not yet ĐÃ NỘP); BCTC data still last-known-good Q1-2026, ~88h past 48h SLA.",
+  "as_of": "2026-08-08T00:00:00Z",
+  "cycle_id": "20260808-0000",
+  "ey_spread": {
+    "pe": 13.8,
+    "earning_yield_pct": 7.25,
+    "max_deposit_rate_pct": 5,
+    "spread_pp": 2.25,
+    "verdict": "FAIR"
+  },
+  "esc_gate": {
+    "esc1_accounting_manipulation": "unevaluable (E1 6-pass trick detection scope-reduced — no Bash/Glob to enumerate cache dir, standing gap)",
+    "esc2_balance_check": "FALSE (imbalance=0.00%)",
+    "esc3_ocf_ni_divergence": "DATA-COVERAGE-LIMITED (3/4 quarters returned by get_cash_flow) — guard held, no re-emit",
+    "esc4_nonop_related_party": "FALSE (non_operating_share=2.0%, AC-1 pre-tax formula)",
+    "esc5_refine_confidence": "guard-held (dispatched c147 15:20Z, valid until ~2026-08-08T15:20Z, refine_status=DONE) — no re-verify this cycle",
+    "escalation_status": "NONE"
+  },
+  "kd_reading": {
+    "hexagram": "29 Tap Kham",
+    "trend": "BAT LOI",
+    "signal": "BAN",
+    "confidence_pct": 100
+  },
+  "roe_pct_annualized": 28.3,
+  "sector_pe_median": 17.3,
+  "insider": "no significant insider activity",
+  "legal_risk": "none",
+  "data_quality_note": "BCTC data last-known-good since VPS push 2026-08-04T08:34:40Z (~88h stale, SLA 48h breached); Q2-2026 PDF on file since 2026-08-01 but not yet extracted server-side.",
+  "source_agent": "bctc-analyst",
+  "_processed": {
+    "fingerprint": "8ed8d372873b65f2527ac429e2dd1da52fd7978f4d74097246e01fb20b1883aa",
+    "processedAt": "2026-08-08T00:20:58Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
