@@ -171,7 +171,15 @@ function cleanup(dir) {
 
 // ---------------------------------------------------------------------------
 // AC7 — drain-mode regression guard: no-arg invocation on a fixture inbox is untouched
-// by the new subcommand (golden stdout; new CLI branch is skipped since argv[2] is undefined).
+// by the new subcommand (new CLI branch is skipped since argv[2] is undefined).
+//
+// FIX-DEVTEAM-IDLE-CHAIN-P2A-DURABLE-DRAIN (2026-08-08): `makeHarness()` never seeds an
+// orch-state.json fixture — this now legitimately exercises the durable-append FAILURE path
+// (orch-state.json not found → appendDurableBatch() returns false → destructive drain is
+// SKIPPED this tick, the file is retained). This is a real behavior change from pre-fix
+// (which always moved the file unconditionally) — the golden-stdout success case moved below
+// to a harness that seeds a schema-valid orch-state.json, matching production reality where
+// the live file always exists.
 // ---------------------------------------------------------------------------
 {
   const h = makeHarness();
@@ -184,10 +192,54 @@ function cleanup(dir) {
     createdAt: '2026-07-04T00:00:00Z',
   };
   fs.writeFileSync(path.join(sigDir, 'sig-a.json'), JSON.stringify(fixture1));
+  const run = spawnSync('node', [scriptPath], { encoding: 'utf8' });
+  assert('AC7/durable-append-failure: no orch-state.json → durable append fails, file is RETAINED (not moved)', fs.existsSync(path.join(sigDir, 'sig-a.json')), true);
+  assert('AC7/durable-append-failure: file NOT moved to processed/ when the durable append failed', fs.existsSync(path.join(sigDir, 'processed/sig-a.json')), false);
+  assert('AC7/durable-append-failure: stdout reports RETAINED, not routed-to-po', /sig-a\.json → RETAINED/.test(run.stdout), true);
+  assert('AC7/durable-append-failure: stdout reports zero DB inserts', /inserted=0/.test(run.stdout), true);
+  assert('AC7/durable-append-failure: stderr carries the durable-inbox append WARN', /WARN: durable-inbox append failed/.test(run.stderr), true);
+  cleanup(h);
+}
+
+// ---------------------------------------------------------------------------
+// FIX-DEVTEAM-IDLE-CHAIN-P2A-DURABLE-DRAIN — durable-append SUCCESS path (golden-stdout
+// regression, relocated from the old AC7 scenario above + new durable-inbox assertions).
+// Uses the orch-ref harness (real orch-apply.sh/orch-validate.mjs/orchStateSchema.ts chain,
+// isolated copy) with a seeded schema-valid orch-state.json so appendDurableBatch() succeeds
+// and the destructive mv/fingerprint/DB-INSERT step actually runs — matching production
+// reality where orch-state.json always exists.
+// ---------------------------------------------------------------------------
+{
+  const h = makeOrchRefHarness();
+  const sigDir = path.join(h, 'docs/signals');
+  const orchStatePath = path.join(h, 'docs/data/orch/orch-state.json');
+  const scriptPath = path.join(h, 'scripts/agents-flow/drain-signals.js');
+  const fixture1 = {
+    from: 'bctc-analyst', to: 'dev-team', type: 'esc-deep-dive-request',
+    summary: 'ESC deep-dive: TEST Q1-2026 ESC-2', severity: 'HIGH', status: 'NEW', payload_ref: null,
+    payload: { trigger_id: 'ESC-2', ticker: 'TEST', quarter: 'Q1-2026', report_id: 'r1', guard_key: 'esc-deepdive:TEST:Q1-2026:ESC-2', context: { a: 1 }, all_esc_fired: ['ESC-2'] },
+    createdAt: '2026-07-04T00:00:00Z',
+  };
+  fs.writeFileSync(path.join(sigDir, 'sig-a.json'), JSON.stringify(fixture1));
+  fs.writeFileSync(orchStatePath, JSON.stringify({
+    head: { status: 'idle', active_task_id: null, next_agent: null },
+    task_board: { backlog: [], active_sprints: [] },
+    signal_queue: { _updated_at: '2026-07-04T00:00:00Z', _updated_by: 'test-harness', rows: [] },
+  }, null, 2));
+
   const out = execFileSync('node', [scriptPath], { encoding: 'utf8' });
   const expected = 'sig-a.json → routed-to-po\ninserted=1 pruned_files=0\ndb_count=1\n';
-  assert('AC7 drain-mode (no args) golden stdout on fixture inbox', out, expected);
-  assert('AC7 new CLI branch never fires on no-arg invocation (argv[2] undefined)', fs.existsSync(path.join(sigDir, 'processed/sig-a.json')), true);
+  assert('durable-append-success: golden stdout on fixture inbox (unchanged post-fix)', out, expected);
+  assert('durable-append-success: file moved to processed/', fs.existsSync(path.join(sigDir, 'processed/sig-a.json')), true);
+
+  const finalOrch = JSON.parse(fs.readFileSync(orchStatePath, 'utf8'));
+  const inbox = finalOrch.dev_team_idle_chain?.pending_triage_inbox ?? [];
+  assert('durable-append-success: pending_triage_inbox has exactly 1 entry', inbox.length, 1);
+  const entry = inbox[0] || {};
+  assert('durable-append-success: envelope source="file"', entry.source, 'file');
+  assert('durable-append-success: envelope from/type carried through', `${entry.from}|${entry.type}`, 'bctc-analyst|esc-deep-dive-request');
+  assert('durable-append-success: envelope routed_to resolved via §0a-3 table (esc-deep-dive-request+bctc-analyst → ESC-DISPATCH)', entry.routed_to, 'ESC-DISPATCH');
+  assert('durable-append-success: envelope payload inlined (deep-equal, not a pointer)', JSON.stringify(entry.payload), JSON.stringify(fixture1.payload));
   cleanup(h);
 }
 

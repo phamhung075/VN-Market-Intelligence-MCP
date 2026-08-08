@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 // Canonical drain helper for docs/agents/dev-team/flow/drain-signals.md §0a-1 + §0a-2.
-// Drains docs/signals/*.json → fingerprint dedup vs signals.db → processed/ + DB INSERT → 7-day prune.
+// Drains docs/signals/*.json → fingerprint dedup vs signals.db → durable-inbox append (gate) →
+// processed/ + DB INSERT → 7-day prune.
 // DRAIN-INJECTION-SAFE: payload fields never touch a shell command line (sqlite3 fed via stdin, SQL built with '' escaping).
 // Scope: file drain + signal_queue.rows[].payload_ref repoint (FIX-DRAIN-PAYLOADREF-DANGLE-ON-MOVE,
 //   2026-07-21 — see below). Queue-row READ-marking (§0a-D) and the flow's own commit stay in the flow
@@ -26,6 +27,20 @@
 // from ORCH_STATE (mirrors Stage 1c's own checkRefIntegrity() walk) and SKIP the delete if referenced.
 // Test: scripts/agents-flow/drain-signals.test.js "FIX-DRAINPRUNE-SKIP-LIVE-REFERENCED-PROCESSED-FILES"
 // scenario (isolated harness, never touches the live orch-state.json).
+//
+// FIX-DEVTEAM-IDLE-CHAIN-P2A-DURABLE-DRAIN (2026-08-08): destructive-before-delivery bug —
+// this script used to classify+move+fingerprint+INSERT every file in the SAME pass that decided
+// routing, with zero durable record surviving anywhere if the calling dev-team tick short-circuited
+// before Step 1 PO Triage ran (rotation picks a different lane that tick) — the file was already
+// gone from docs/signals/ the instant mv() ran, recoverable only by hand-reading processed/ before
+// the 7-day prune. Fix (architect brief docs/architecture-briefs/2026-07-25-devteam-idle-chain-
+// rotation-durable-inbox.md §3.1): split into two passes — pass 1 classifies every file
+// (non-destructive), builds ONE batch of full-payload envelopes for the tick's newly-routable
+// signals, and durably appends the WHOLE batch to `.dev_team_idle_chain.pending_triage_inbox` via
+// appendDurableBatch() (below) BEFORE pass 2 runs. Pass 2 (mv/fingerprint/DB-INSERT) executes ONLY
+// if the append succeeded; on failure every file is retained untouched, re-evaluated next tick.
+// Test: scripts/agents-flow/drain-signals.test.js "FIX-DEVTEAM-IDLE-CHAIN-P2A-DURABLE-DRAIN"
+// scenario (isolated harness, never touches the live orch-state.json).
 const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
@@ -47,6 +62,16 @@ const PROCESSED_BY = process.env.DRAIN_PROCESSED_BY || 'dev-team';
 // this script and orch-apply.sh independently default to the identical canonical live path.
 const ORCH_STATE = process.env.ORCH_APPLY_LIVE_FILE_OVERRIDE || path.join(ROOT, 'docs/data/orch/orch-state.json');
 const ORCH_APPLY_SH = path.join(ROOT, 'scripts', 'orch-apply.sh');
+// FIX-DRAIN-PAYLOADREF-DANGLE-ON-MOVE / ENOBUFS (2026-07-21): hoisted to module scope so
+// appendDurableBatch() (FIX-DEVTEAM-IDLE-CHAIN-P2A-DURABLE-DRAIN, 2026-08-08) can reuse the
+// same headroom — its jq filter also emits the whole orch-state document. execFileSync's
+// default maxBuffer (measured 1,048,576 bytes on this machine) is smaller than that output
+// the moment the live doc crosses ~1MB (measured docs/data/orch/orch-state.json =
+// 1,109,434 bytes on 2026-07-21, and the doc only grows) — execFileSync then throws ENOBUFS
+// on every future run, permanently. 64MB gives multi-decade headroom over the doc's current
+// growth rate; this is cheap (bounded by one process's stdout buffer) so there is no reason
+// to be stingy.
+const JQ_MAX_BUFFER = 64 * 1024 * 1024;
 
 // Shared drainable-shape predicate (FIX-DRAIN-PERSIST-GUARD-COUNT-DRAINABLE-ONLY, 2026-07-23):
 // a routable signal must carry at least one of from/source OR type/signal_type; a top-level
@@ -136,6 +161,32 @@ const report = [];
 // .payload_ref in sync with the move, in the same operation.
 const movedRefs = {};
 
+// FIX-DEVTEAM-IDLE-CHAIN-P2A-DURABLE-DRAIN (2026-08-08) — signal routing table mirror
+// (docs/agents/dev-team/flow/drain-signals.md §0a-3): (type, from) match wins; unmatched
+// pairs fall through to "any other -> PO Step 0-SIG", the spec table's own last row. This is
+// a literal, hand-kept mirror (not generated) of the small 8-row prose-annotated spec table —
+// the spec stays authoritative (drain-signals.md § "Edit the spec first, then the script"); a
+// change to the spec table MUST be reflected here in the same commit.
+const ROUTING_TABLE = [
+  { type: 'audit-handoff', from: 'tran-ngoc-bau', route: 'PO Step 0-TNB' },
+  { type: 'brief_complete', from: 'agents-architect', route: 'PO Step 0-SIG' },
+  { type: 'zone_missing_tier3', from: 'dev-team', route: 'PO Step 0-SIG' },
+  { type: 'improvement_proposal_lane_b', from: 'po', route: 'PO Step 0-SIG' },
+  { type: 'repair_task_request', from: 'system-auditor', route: 'PO Step 0-SIG' },
+  { type: 'ci_red', from: 'ci-health-probe', route: 'PO Step 0-SIG' },
+  { type: 'esc-deep-dive-request', from: 'bctc-analyst', route: 'ESC-DISPATCH' },
+  { type: 'bug-escalation', from: 'commit-sweep-guard', route: 'PO Step 0-SIG' },
+];
+function computeRoutedTo(type, from) {
+  const hit = ROUTING_TABLE.find((r) => r.type === type && r.from === from);
+  return hit ? hit.route : 'PO Step 0-SIG'; // "any other" default — drain-signals.md §0a-3 last row
+}
+
+// Pass 1 — CLASSIFICATION ONLY (non-destructive), drain-signals.md §0a-1 steps 1-2: parse every
+// file, compute fingerprint + dedup class. No file is moved, no DB row is written, no
+// orch-state write happens in this pass — the durable-append gate below decides whether the
+// destructive pass 2 runs at all.
+const candidates = [];
 for (const base of files) {
   const fp_path = path.join(SIG, base);
   const raw = fs.readFileSync(fp_path, 'utf8');
@@ -169,7 +220,8 @@ for (const base of files) {
   const type = j.type ?? j.signal_type ?? 'unknown';
   const priority = j.priority ?? j.severity ?? 'low';
   const createdAt = j.createdAt ?? j.ts ?? j.emitted_at ?? '';
-  const payload = JSON.stringify(j.payload ?? j);
+  const payloadObj = j.payload ?? j;
+  const payload = JSON.stringify(payloadObj);
   const fingerprint = crypto.createHash('sha256')
     .update(String(from) + String(type) + payload + String(createdAt)).digest('hex');
 
@@ -180,22 +232,67 @@ for (const base of files) {
   } else {
     result = 'routed-to-po';
     dest = path.join(PROC, base);
-    known.add(fingerprint); // dedup within this batch too
-    newFingerprints.push(fingerprint);
-    stmts.push(
-      `INSERT OR IGNORE INTO signals_processed (fingerprint, from_agent, to_agent, type, priority, payload, created_at, processed_at, processed_by, result, source_filename) VALUES ('${fingerprint}','${sqlEsc(from)}','${sqlEsc(to)}','${sqlEsc(type)}','${sqlEsc(priority)}','${sqlEsc(payload)}','${sqlEsc(createdAt)}','${NOW}','${sqlEsc(PROCESSED_BY)}','${result}','${sqlEsc(base)}');`
-    );
+    known.add(fingerprint); // dedup within this batch too (classification-time, still non-destructive)
   }
 
-  // Record the move for the payload_ref repoint pass below (both branches move the file away
-  // from its original inbox path — replay dupes still dangle any ref pointing at the original).
-  movedRefs[`docs/signals/${base}`] = `docs/signals/${path.relative(SIG, dest).split(path.sep).join('/')}`;
+  candidates.push({ base, fp_path, dest, raw: j, result, fingerprint, from, to, type, priority, payload, payloadObj, createdAt });
+}
 
-  // Dual-record write: filesystem move is SSOT; DB INSERT is non-fatal (spec §0a-1)
-  j._processed = { fingerprint, processedAt: NOW, processedBy: PROCESSED_BY, result };
-  fs.writeFileSync(dest, JSON.stringify(j, null, 2) + '\n');
-  fs.unlinkSync(fp_path);
-  report.push(`${base} → ${result}`);
+// FIX-DEVTEAM-IDLE-CHAIN-P2A-DURABLE-DRAIN — build this tick's durable batch. Only the
+// genuinely NEW (routed-to-po) entries need durable delivery: a skipped-duplicate-replay was
+// already durably routed (fingerprint already in signals_processed) on a prior tick, so
+// re-appending it would just be a redundant PO re-triage. Payload inlined, never a pointer —
+// same dangling-ref-avoidance rationale as FIX-DRAIN-PAYLOADREF-DANGLE-ON-MOVE below.
+const batch = candidates
+  .filter((c) => c.result === 'routed-to-po')
+  .map((c) => ({
+    envelope_id: c.fingerprint,
+    source: 'file',
+    from: c.from,
+    to: c.to,
+    type: c.type,
+    priority: c.priority,
+    payload: c.payloadObj,
+    createdAt: c.createdAt,
+    drained_at: NOW,
+    routed_to: computeRoutedTo(c.type, c.from),
+  }));
+
+let destructiveAllowed = true;
+if (batch.length > 0) {
+  destructiveAllowed = appendDurableBatch(batch);
+  if (!destructiveAllowed) {
+    console.error(`[drain-signals] WARN: durable-inbox append failed — retaining ${batch.length} signal(s) in inbox for retry, skipping destructive drain this tick`);
+  }
+}
+
+// Pass 2 — DESTRUCTIVE ACTION, gated on the durable append above (drain-signals.md §0a-1 step
+// 3). Reached for EVERY classified file this tick (both routed-to-po AND
+// skipped-duplicate-replay) — one atomic all-or-nothing decision per tick (architect brief
+// §3.1 "all-or-nothing failure semantics for the tick"), not a per-file gate.
+if (destructiveAllowed) {
+  for (const c of candidates) {
+    if (c.result === 'routed-to-po') {
+      newFingerprints.push(c.fingerprint);
+      stmts.push(
+        `INSERT OR IGNORE INTO signals_processed (fingerprint, from_agent, to_agent, type, priority, payload, created_at, processed_at, processed_by, result, source_filename) VALUES ('${c.fingerprint}','${sqlEsc(c.from)}','${sqlEsc(c.to)}','${sqlEsc(c.type)}','${sqlEsc(c.priority)}','${sqlEsc(c.payload)}','${sqlEsc(c.createdAt)}','${NOW}','${sqlEsc(PROCESSED_BY)}','${c.result}','${sqlEsc(c.base)}');`
+      );
+    }
+
+    // Record the move for the payload_ref repoint pass below (both branches move the file away
+    // from its original inbox path — replay dupes still dangle any ref pointing at the original).
+    movedRefs[`docs/signals/${c.base}`] = `docs/signals/${path.relative(SIG, c.dest).split(path.sep).join('/')}`;
+
+    // Dual-record write: filesystem move is SSOT; DB INSERT is non-fatal (spec §0a-1)
+    c.raw._processed = { fingerprint: c.fingerprint, processedAt: NOW, processedBy: PROCESSED_BY, result: c.result };
+    fs.writeFileSync(c.dest, JSON.stringify(c.raw, null, 2) + '\n');
+    fs.unlinkSync(c.fp_path);
+    report.push(`${c.base} → ${c.result}`);
+  }
+} else {
+  for (const c of candidates) {
+    report.push(`${c.base} → RETAINED (durable append failed, will retry next tick)`);
+  }
 }
 
 if (stmts.length) {
@@ -350,15 +447,8 @@ function repointPayloadRefs(map) {
     | {doc: $newDoc, changed: $changed}
   `;
 
-  // FIX-DRAIN-PAYLOADREF-DANGLE-ON-MOVE / ENOBUFS (2026-07-21): the jq filter emits
-  // {doc: $newDoc, changed: $changed} — essentially the WHOLE orch-state document plus
-  // a small wrapper. execFileSync's default maxBuffer (measured 1,048,576 bytes on this
-  // machine) is smaller than that output the moment the live doc crosses ~1MB (measured
-  // docs/data/orch/orch-state.json = 1,109,434 bytes this same day, and the doc only
-  // grows) — execFileSync then throws ENOBUFS on every future run, permanently. 64MB
-  // gives multi-decade headroom over the doc's current growth rate; this is cheap
-  // (bounded by one process's stdout buffer) so there is no reason to be stingy.
-  const JQ_MAX_BUFFER = 64 * 1024 * 1024;
+  // JQ_MAX_BUFFER (ENOBUFS headroom) is now a module-level const — see its definition near
+  // ORCH_APPLY_SH above for the full FIX-DRAIN-PAYLOADREF-DANGLE-ON-MOVE / ENOBUFS rationale.
 
   const computeCandidate = () => {
     const out = execFileSync('jq', ['--argjson', 'map', JSON.stringify(map), filter, ORCH_STATE], { encoding: 'utf8', maxBuffer: JQ_MAX_BUFFER });
@@ -409,4 +499,67 @@ function repointPayloadRefs(map) {
   }
   console.error(`[drain-signals] FAIL-LOUD: payload_ref repoint CAS retry limit (${MAX_CAS_RETRIES}) exceeded — concurrent orch-state writer; orch-state.json untouched, refs still dangling`);
   process.exit(1);
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// FIX-DEVTEAM-IDLE-CHAIN-P2A-DURABLE-DRAIN (2026-08-08) — durable-append-before-destructive
+// ─────────────────────────────────────────────────────────────────────────────
+// docs/agents/dev-team/flow/drain-signals.md §0a-1 / architect brief
+// docs/architecture-briefs/2026-07-25-devteam-idle-chain-rotation-durable-inbox.md §3.1.
+// Appends the WHOLE tick's newly-routable-signal batch to
+// `.dev_team_idle_chain.pending_triage_inbox` in ONE `orch-apply.sh`-gated write BEFORE the
+// caller performs any destructive filesystem/DB action. Returns true on success (destructive
+// pass 2 may proceed), false on ANY failure (missing/unreadable orch-state.json, jq
+// computation error, orch-apply.sh CAS/Zod/conservation rejection, CAS retry exhaustion) —
+// the caller must treat false as "retain everything, retry next tick", never partially apply
+// the destructive step. All diagnostics go to stderr only (console.error) — never stdout — so
+// this never pollutes the golden-report regression guard (AC7) or any other stdout consumer.
+function appendDurableBatch(batch) {
+  if (!fs.existsSync(ORCH_STATE)) {
+    console.error(`[drain-signals] durable-inbox append FAILED: orch-state.json not found at ${ORCH_STATE} — retaining batch for retry`);
+    return false;
+  }
+
+  const filter = `
+    .dev_team_idle_chain.pending_triage_inbox = ((.dev_team_idle_chain.pending_triage_inbox // []) + $batch)
+    | .dev_team_idle_chain._updated_at = $now
+    | .dev_team_idle_chain._updated_by = "dev-team"
+  `;
+
+  const MAX_CAS_RETRIES = 3;
+  for (let attempt = 1; attempt <= MAX_CAS_RETRIES; attempt++) {
+    const nowTs = new Date().toISOString().replace(/\.\d+Z$/, 'Z');
+    let candidate;
+    try {
+      candidate = execFileSync('jq', ['--argjson', 'batch', JSON.stringify(batch), '--arg', 'now', nowTs, filter, ORCH_STATE], { encoding: 'utf8', maxBuffer: JQ_MAX_BUFFER });
+    } catch (e) {
+      // Computation failure (ENOBUFS, jq crash, malformed ORCH_STATE) — the append NEVER RAN.
+      // Same FAIL-LOUD-to-caller treatment as repointPayloadRefs()'s identical branch above,
+      // except here the caller (not this function) decides the fail-loud action: retain the
+      // batch and skip destructive drain this tick (never process.exit — a missing/malformed
+      // orch-state.json must not crash the whole drain, it must just retain-and-retry).
+      console.error(`[drain-signals] durable-inbox append FAILED: jq computation error (orch-state.json untouched): ${e.message}`);
+      return false;
+    }
+    try {
+      // ORCH_APPLY_LIVE_FILE_OVERRIDE forwarded explicitly — required whenever ORCH_STATE is
+      // itself an override (test isolation); a no-op in production (both default identically).
+      execFileSync('bash', [ORCH_APPLY_SH], {
+        input: candidate,
+        encoding: 'utf8',
+        env: { ...process.env, ORCH_APPLY_LIVE_FILE_OVERRIDE: ORCH_STATE },
+      });
+      console.error(`[drain-signals] durable-inbox append: ${batch.length} signal(s) appended -> ${ORCH_STATE}`);
+      return true;
+    } catch (e) {
+      if (e.status === 2 && attempt < MAX_CAS_RETRIES) {
+        console.error(`[drain-signals] durable-inbox append: orch-apply.sh CAS mismatch (attempt ${attempt}/${MAX_CAS_RETRIES}) - retrying`);
+        continue;
+      }
+      console.error(`[drain-signals] durable-inbox append FAILED: orch-apply.sh exit ${e.status} (live orch-state.json untouched)\n${e.stdout || ''}${e.stderr || ''}`);
+      return false;
+    }
+  }
+  console.error(`[drain-signals] durable-inbox append FAILED: CAS retry limit (${MAX_CAS_RETRIES}) exceeded — concurrent orch-state writer`);
+  return false;
 }
