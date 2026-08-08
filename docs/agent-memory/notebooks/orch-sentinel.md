@@ -1,24 +1,28 @@
 # Orch Sentinel — Notebook
-**Last updated:** 2026-07-22T00:17:57Z | **Mode:** LITE
+**Last updated:** 2026-08-08T18:00:00Z | **Mode:** SPECIAL (router one-off, substituted regular LITE OH-1 scan)
 
-**OVERWRITE class** (per `.claude/skills/notebook-write/SKILL.md` AC-6, same class as `po`/`market-watcher`) — full-file replace each cycle, ≤80L cap, preamble + this-cycle-only section. Trend/delta data lives in `docs/data/orch-sentinel-scorecard.md`'s `<!-- OH-STATE: {json} -->` block, not here.
+**OVERWRITE class** (per `.claude/skills/notebook-write/SKILL.md` AC-6) — full-file replace each cycle, ≤80L cap, preamble + this-cycle-only section.
 
-## Cycle 2026-07-22T00:17:57Z — FIRST LIVE RUN
+## Cycle 2026-08-08T18:00:00Z — 8-RC SYSREMAKE recheck (not an OH-1..4 dimension run)
 
-- Mode: LITE | Dimensions run: OH-1 only
-- Findings: 6 (0 high-CRITICAL, 1 HIGH, 1 MED, 1 LOW, 3 INFO) | 0 dedup-skipped | 0 RESOLVED-OBSERVED (first run, no prior data)
-- Fire-election: claimed (clean win) | Tick: 2026-07-22T01:45Z
-- Scorecard: `docs/data/orch-sentinel-scorecard.md` (regenerated, real OH-1 data; OH-2/3/4 pending first FULL)
-
-**Notable:**
-- OH-1.1: task_board schema has NO `origin_signal_id` field anywhere (0/77 tasks) — mint-rate cannot
-  be structurally traced despite 76 signals triaged in 7d. Baseline only, 2-run gate not yet met.
-- OH-1.4 HIGH (54/55 signals non-routable, guard breached) — corroborated as already-tracked, already
-  in REVIEW: `CLEAN-COWORK-DISPATCHER-TELEMETRY-DRAIN-DIR`. No new action, informational.
-- OH-1.5 LOW (77/80 rows non-canonical `triaged`/`RETRACTED` status, un-prunable; 40% of 200 cap) —
-  root cause tracked, unstarted: `FIX-SIGNALQUEUE-DUP-ID-GUARD`.
-- OH-1.6 MED (unified-agent NEW-row max age 42.79h) — single stuck HIGH-severity methodology-flag row
-  (`po-20260720T052606`, re: fabricated gold price) undelivered since 2026-07-20. Root cause tracked,
-  unstarted: `FIX-SIGNALQUEUE-RECEIVER-DELIVERY-CONTRACT` (unified-agent has no inbox READ step).
-- OH-1.3: only 1 sample point available (system-auditor NEW-row age) — degenerate case, cannot confirm
-  "pre-empted by design" pattern confidently either way. Re-check next cycle for larger sample.
+- Fire-election: claimed (clean win) | Tick: 2026-08-08T01:45Z
+- Trigger: user asked whether fleet chore-churn (1052/1239=84.9% chore/7d, orch-state.json 470
+  rewrites/7d) is genuine coordination cost or unaddressed regression. Independently re-verified all
+  8 RC-* remedies from `docs/incidents/2026-07-04-systemic-review-churn-without-convergence.md` +
+  `docs/architecture-briefs/2026-07-04-systemic-remake.md` against LIVE code/data (not self-report).
+- Per-RC verdict: IDLE-LOOPS=SHIPPED-HOLDING (RUN-IDLE verdict live in dev-team-tick-preflight.sh +
+  main.md L102; auditor --tier=2/3 pre-gate wired into cron-detect-loop) | VERIF=NEVER-SHIPPED (9
+  PM-decomposed READY tasks SYSREMAKE-P2-T1..T9 idle since 2026-07-17, zero DEGRADED/raw_probe in
+  orchStateSchema.ts) | DETECTOR=SHIPPED-HOLDING (closure ~11%→~67% measured, id-collision fixed via
+  emit-audit-signal.sh _gen_row_id) | CONVERGE=NEVER-SHIPPED (bug-class ledger absent, fixer 2-file
+  scope-lock unchanged) | DRIFT=PARTIAL (toolCount 183 now consistent+pointer-doc'd; currentSprint/
+  recurringBugEscalationFlag still May-2026 content, now 81d stale, lastUpdated stamped fresh over it)
+  | ORCHMONO=SHIPPED-REGRESSED (862KB@07-04 -> 3.86MB today, no hot-ceiling gate ever added) |
+  GITSTATE=NEVER-SHIPPED (dominant driver; orch-state.json explicitly out-of-scope by the brief's own
+  §4; tool-usage-stats.json/coverage-state.json still git-tracked, gitignore migration never done) |
+  CEREMONY=PARTIAL (SF-1 re-entrancy fixed, shared tick-preflight-lib.sh never extracted)
+- Overall: genuine unaddressed regression, not an accepted coordination cost — both P0 legs
+  (RC-VERIF+RC-CONVERGE) are fully designed+decomposed+READY, never dispatched in 3 weeks.
+- 1 signal_queue row written to po (HIGH, id-prefixed `orc-`) — full 8-RC table + evidence relayed to
+  router directly per its explicit request (not scorecard-persisted; this is not an OH-1..4 cycle).
+- Scorecard: NOT regenerated this cycle (no OH-1..4 dimension checks ran — would be fabricated data).
