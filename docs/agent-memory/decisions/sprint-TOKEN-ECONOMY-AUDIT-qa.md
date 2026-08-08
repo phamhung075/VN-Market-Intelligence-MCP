@@ -281,3 +281,55 @@ self-report) for the entire 696L moved body, knowledge-load correctly deferred p
 (the actual point of the optimization), and all 3 downstream refs resolve to real anchors —
 genuinely zero behavior change. APPROVED, DONE_VERIFIED.
 **why-change:** No change from plan.
+
+### STEP qa-S11 · qa · 2026-08-08T10:41:00Z
+**task-id:** TE-T26
+**what-done:** Direct-commit verify (dev-team Review-Lane QA-Drain, `qa[]` row, `branch:null`,
+no `commit`/`files[]` on the row) of fb-market-poster main.md MODE-ROUTER split. Located real
+commit `8d165e8d6` via `git log --all -- docs/agents/fb-market-poster/` (date 2026-08-06 12:27
+matches `agent_father_completed_at`), confirmed `git merge-base --is-ancestor` on main, `git show
+--stat` touches exactly the 9 files the commit message claims.
+**what-considered:**
+- Trust "main.md 88L, weekend fires never touch daily.md" from the row's own note — rejected,
+  read live `main.md` myself: MODE ROUTER (L48-63) is a pure JUMP table (VN_DOW 0/6 → weekly-
+  recap.md/weekly-prediction.md) with zero reference to `daily.md` anywhere in main.md's own
+  body; the only `daily.md` mention is the trailing "## Reference" pointer line, which is never
+  reached on a weekend JUMP. Confirmed short-circuit is real, not just claimed.
+- Trust "902L / byte-diff verified" pure relocation — rejected, extracted the pre-split STEP
+  0-8 body from `8d165e8d6~1` (main-pre.md lines 69-994, 926L) and diffed against live
+  `daily.md` myself: zero diff outside (a) the new SELF-IDENTITY/PRIVACY/Input/Output header
+  block daily.md needed as its own standalone entry file, (b) the jargon table (29L) → 1-line
+  `scripts/fb-jargon-gate.sh` pointer, (c) hashtag composition prose (~26L) → SSOT pointer at
+  main.md — exactly the 2 brief-authorized deletions, nothing else moved/changed.
+- Real concern I chased down myself (not in the dispatch prompt): weekly-recap.md/weekly-
+  prediction.md carry ~7 "same as daily.md STEP X" cross-refs (STEP 0/1b/4a/4b/4c/4d/5/6) —
+  does resolving these force-load daily.md's 902L on a weekend fire and defeat the whole "skip
+  880L" claim? Read every one: STEP 0/1b notes and STEP 4a/4b/4d gates are ALL self-contained
+  (either cite an external skill file directly with inline params, or inline the actual rule
+  text/protocol right after the pointer) — no daily.md open required to execute them. Only
+  STEP 4 (file-format + feedback-sink) is a genuine, un-inlined dependency on daily.md STEP 5/6
+  — but those two sections are themselves tiny (~30L combined), and this exact cross-ref shape
+  (weekly→main.md STEP X) already existed pre-split (`git show 8d165e8d6 -- weekly-recap.md`
+  confirms it was `main.md STEP 4a` etc. before, just repointed to the new file location) — not
+  a regression this task introduced. The dominant savings driver (main.md's unconditional
+  946/994L entry-point read on EVERY invocation, day or weekend) is genuinely eliminated.
+  Verdict: claim holds; flagged the residual STEP-4 dependency as a non-blocking observation
+  only, not a defect.
+- Cross-checked no other live-loaded doc still points at the old (pre-split) main.md STEP
+  numbers — grepped fleet-wide: only stale hits are in historical architecture-briefs/decision-
+  journals (point-in-time, never re-loaded at runtime), zero live flow/skill dangling refs.
+  `fb-jargon-gate/SKILL.md`'s own invocation comment correctly repointed to all 3 new call
+  sites; `init.md` document_registry + Extensions table correctly register `daily.md` + the 2
+  pre-existing unregistered weekly siblings.
+- Title's "946L" pre-split figure vs. the commit's actual 994L — same stale-brief-estimate class
+  as qa-S6/qa-S10 precedent (file grew via intervening commits between 07-12 brief-authoring and
+  08-06 execution); non-blocking, agent-father correctly split against LIVE content.
+- `bun test`/`tsc`/DDD/security/mock-guard: N/A — `git show --name-only 8d165e8d6` confirms all
+  9 touched files are `.md` (docs/skills only), zero application source.
+**why-decision:** Commit real and on main, MODE-ROUTER short-circuit RAW-verified (not just
+read as claimed), extracted-file line counts match disk exactly (88L/902L), relocation is
+byte-clean outside the 2 authorized deletions, and the one genuine residual cross-file
+dependency I found myself does not undermine the core savings claim. APPROVED, DONE_VERIFIED.
+**why-change:** No change from plan — router asked for verify-committed; RAW verification
+supported DONE_VERIFIED. Surfaced one self-found risk (weekly-flow cross-refs into daily.md)
+and closed it out myself rather than leaving it as an open question.
