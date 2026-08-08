@@ -94,7 +94,7 @@
   ],
   "head": {
     "status": "idle",
-    "updated_at": "2026-08-08T03:28:26Z",
+    "updated_at": "2026-08-08T03:56:15Z",
     "updated_by": "developer (closeout)",
     "active_task_id": null,
     "next_agent": null
@@ -10087,33 +10087,6 @@
         "updated_at": "2026-07-23T18:08:33Z"
       },
       {
-        "id": "FIX-AUDITOR-D4-WHITELIST-DATA-QUALITY-ANOMALY-PREFIX",
-        "title": "D4 held-lock detector re-fires on data-quality-anomaly:* — KNOWN_LEGIT_PREFIXES (authored 2026-07-08) never learned the lock kind bctc-analyst introduced 2026-07-19; whitelist is a static list that lags every new escalation-lock kind",
-        "status": "BACKLOG",
-        "type": "FIX",
-        "priority": "P2",
-        "size": "S",
-        "zone": "apps/mcp-server/",
-        "owner": "dev-mcp-server",
-        "next_agent": "dev-mcp-server",
-        "plan_only": true,
-        "supervised": true,
-        "created_at": "2026-07-25T06:59:44Z",
-        "created_by": "po/triage-20260725T0645",
-        "origin_signal_id": "sau-d4-data-quality-anomaly-dgc-q1-2026-not_found-20260725",
-        "root_cause": "apps/mcp-server/src/scheduler/system/tasksMdJanitorJob.ts:197-205 KNOWN_LEGIT_PREFIXES omits 'data-quality-anomaly:'. PO RAW-verified the filter IS live (applyR1bFilter called at :602 inside runTasksMdJanitor) and that the TS job IS the emitter (signal id matches the sau-d4-{entityId}-{checkId}-{YYYYMMDD} contract at :440-470) — so this is NOT a regression of FIX-D4-HELD-LOCK-NO-BOARD-ROW-RECONCILE (e109f49f8, DONE_VERIFIED), it is a whitelist coverage gap. Second guard cannot save it: isLiveConcurrentSession requires the owner session in the live presence roster, and owner f33d0102 (bctc-analyst) is absent. TIMELINE = the real defect: whitelist authored 2026-07-08; the data-quality-anomaly escalation lock was introduced 2026-07-19 by the bctc-analyst reprocess-vs-new-filing guard (docs/agents/bctc-analyst/flow/cycle.md:75). A static prefix list cannot track lock kinds that agents mint later.",
-        "deliverable": "1) Stop the false positive: cover 'data-quality-anomaly:' in the R-1b exclusion. 2) DECIDE EXPLICITLY, do not silently add a 4th one-off prefix (CLAUDE.md: fix root cause definitif not recurrent symptom): all 5 held sprint-task locks today are ticker-scoped bctc-analyst escalations (esc-datacov:*, esc-deepdive:*, data-quality-anomaly:*) sharing the shape <kind>:<TICKER>:<PERIOD>[:ESC-N] — either generalise to that shape, or promote the list to docs/data/system-map.json per the CLAUDE.md 'System Data - Never Hardcode' rule so code + agent spec read ONE source. 3) Sync the spec plane in the SAME change or it re-drops on the next port: the whitelist is duplicated verbatim in docs/agents/system-auditor/handlers.md:49 and docs/agents/system-auditor/audit-dimensions.md:55, both also missing the prefix. 4) Clear stale doc drift: handlers.md:19 and audit-dimensions.md:90 still assert 'the live code has NOT been updated to implement it yet' — false since e109f49f8.",
-        "acceptance": "One live tasksMdJanitor cycle with data-quality-anomaly:DGC:Q1-2026 still held emits ZERO D4 signal_queue rows for it and logs 'D4 SKIP: data-quality-anomaly:DGC:Q1-2026 - known-legit-pattern'. Negative control: a genuinely orphaned non-whitelisted sprint-task lock STILL trips D4 (do not blanket-suppress). Unit tests extend apps/mcp-server/src/__tests__/FIX-D4-HELD-LOCK-NO-BOARD-ROW-RECONCILE.test.ts:120-147 table. Code whitelist and both doc lists are byte-identical in content.",
-        "related": [
-          "FIX-AUDITOR-C04-PARSEDAT-RECENCY-PREDICATE",
-          "UC-ASL-P3"
-        ],
-        "note": "DO NOT RELEASE the lock. PO RAW-probed task_list_held: data-quality-anomaly:DGC:Q1-2026 is LIVE (sprint-task, bctc-analyst, claimed 2026-07-23T15:15:40Z, ttl 604800s, expires 2026-07-30T15:15:40Z, ~5.3d remaining) — legit board-row-less escalation per feedback_esc3_held_lock_no_board_row_is_legit. Signal is a FALSE POSITIVE; releasing would drop an in-flight 7-day data-quality escalation. Prior art checked: no existing row covers the prefix gap; git log on tasksMdJanitorJob.ts since 2026-07-20 empty and worktree clean, so no in-flight peer fix.",
-        "updated_at": "2026-07-28T13:24:57Z",
-        "po_second_facet_20260728": "SECOND FACET FOLDED IN (converge, no new row — the detector is one root cause with two emissions). The row as written covers the `not_found` emission (held lock has no board row). The SAME detector also emits a `pipeline_mismatch` row for the same lock: 'orch-state/lock mismatch: active=<head.active_task_id> held=data-quality-anomaly:DGC:Q1-2026'. That comparison is a CATEGORY ERROR, not a stale whitelist: it compares .head.active_task_id (the dev-team dispatch head, a dev task) against a long-TTL sprint-task escalation lock owned by a DIFFERENT agent (bctc-analyst) in a DIFFERENT plane. Those two are never required to be equal, so the predicate mismatches on every tick for the entire 7-day TTL regardless of system state — a whitelist entry alone will NOT silence it unless the pipeline_mismatch path consults the same exclusion. Both emissions must be fixed together or the FP count only halves. EVIDENCE: the identical pair fired on 2026-07-27 AND 2026-07-28 with nothing changing in between (4 signal_queue rows, ids sau-d4-data-quality-anomaly-dgc-q1-2026-{not_found,pipeline_mismatch}-2026072{7,8}), on top of the 2026-07-25 pair that minted this row. PRIORITY P3 -> P2: not damage, but a confirmed 2-per-day recurring false positive into PO's inbox that has now survived 3 consecutive days and 6 signal rows; at P3 it sits behind 42 rows and keeps emitting. The lock itself is LIVE and LEGIT (expires 2026-07-30T15:15:40Z) — the standing DO NOT RELEASE instruction in .note is unchanged.",
-        "updated_by": "po/triage-20260728T13"
-      },
-      {
         "id": "FIX-AUDITOR-C04-PARSEDAT-RECENCY-PREDICATE",
         "title": "system-auditor predicate errors — mutation-timestamp + window class, 3 checks. (C-04) counts bulk-reparse re-stamps as new low-confidence extractions (parsed_at is a mutation timestamp, not arrival) AND counts never-extracted rows (conf=0, status=pending) as low-confidence -> recurring WARN false-positive. (C-01/C-02 — added 2026-07-31 by PO, verified live) their window is `date >= date(\"now\",\"-1 day\")` = TWO calendar dates: at 2026-07-31T09:12Z C-01 returned 947 and C-02 returned 1070 while date=2026-07-31 held only 129 distinct codes. The checks cannot measure same-day coverage at ANY threshold — the window is the defect, not the >=25 / >0 bar. Also write down the invariant that cost a router a full session on a phantom \"86% coverage collapse\": daily_ohlcv same-day coverage is ~130 BY DESIGN (live intraday tick universe = 117-119 codes EVERY session per intraday_ohlcv_5m 07-20..07-31 and market_prices_history); the full ~940-code universe lands ONLY via the nightly history backfill 00:00-02:20Z, which UPSERTs ~750k rows (97% of the 774k-row table, dates 2014-2026) and thereby CLOBBERS daily_ohlcv.updated_at — the exact same \"mutation timestamp is not arrival\" root cause as C-04. Every historical date shows 0-2 same-day writes vs 900-1000 next-day writes. Do NOT add a same-day-coverage-vs-trailing-median alarm: it would fire every single day.",
         "status": "BACKLOG",
@@ -15798,33 +15771,6 @@
         "po_corroboration_c80_20260808T0116Z": "Fresh A-30 datapoint, 2026-08-08T01:05:33-01:06:54Z (system-auditor c80 Tier-1, RAW JSON in notebook commit 569f79108): mcp-server 6-probe window 97.16 / 97.20 / 97.39 / 97.16 / 97.58 / 97.59 %, min 97.16 max 97.59, reclamation_dips=0, discriminator verdict=ESCALATE, OOMKilled=false, RestartCount=2, VmHWM=3058144KB vs VmRSS=3023460KB. This is 19h AFTER the container OOM'd at ~05:57Z on 2026-08-07 (the death that confirmed sys-20260807T054825-771b as a true positive) - memory is back at the same pre-death ceiling with zero reclamation, i.e. the leak refills the 3GiB cap within a day of every restart. Logged here rather than as a new signal_queue row because c80's own E-3 append never fired (see FIX-ANALYSIS-ONLY-EXIT-DETECTOR-OR-VERDICT-BLIND-TO-PARTIAL-WRITE-CYCLE) and because the finding is already routed to this row - no duplicate minted. Dispatch fields deliberately untouched."
       },
       {
-        "id": "TASK-COWORK-SIGNAL-BCTC-REKEY",
-        "type": "TASK",
-        "size": "M",
-        "priority": "P1",
-        "status": "READY",
-        "zone": "cross-service/bctc-analyst",
-        "owner": "unassigned",
-        "next_agent": "developer",
-        "plan_only": true,
-        "sprint": "COWORK-RELIABILITY",
-        "created_at": "2026-08-07T06:00:00Z",
-        "created_by": "pm (decomposition of FIX-COWORK-SIGNAL-FILENAME-CYCLEID-KEYING)",
-        "parent_task_id": "FIX-COWORK-SIGNAL-FILENAME-CYCLEID-KEYING",
-        "title": "bctc-analyst Filename Rekey & Sequencing (FR-2, FR-7)",
-        "ba_handoff": "docs/handoffs/TASK-COWORK-SIGNAL-BCTC-REKEY.md",
-        "description": "Decomposed subtask from FIX-COWORK-SIGNAL-FILENAME-CYCLEID-KEYING Phase 1 delivery",
-        "supervised": true,
-        "supervised_at": "2026-08-07T06:00:00Z",
-        "supervised_by": "pm (plan_only decomposition)",
-        "supervised_note": "Child task of plan_only parent; no code ships without parent re-adjudication by PO",
-        "updated_at": "2026-08-08T01:54:36Z",
-        "promoted_at": "2026-08-08T01:54:35Z",
-        "promoted_by": "dev-team (supervised-lane sweep)",
-        "promotion_note": "Supervised-Lane Sweep — assigned dispatch_lane='developer' (priority_rank=1); supervised/plan_only flags preserved, gate NOT disabled — see FIX-BOUNDED1-SUPERVISED-LANE-NO-SWEEPER",
-        "dispatch_lane": "developer"
-      },
-      {
         "id": "TASK-COWORK-SIGNAL-CHEF-INTRADAY",
         "type": "TASK",
         "size": "S",
@@ -15905,6 +15851,37 @@
         "promoted_by": "dev-team (supervised-lane sweep)",
         "promotion_note": "Supervised-Lane Sweep — assigned dispatch_lane='architect' (priority_rank=2); supervised/plan_only flags preserved, gate NOT disabled — see FIX-BOUNDED1-SUPERVISED-LANE-NO-SWEEPER",
         "dispatch_lane": "architect"
+      },
+      {
+        "id": "FIX-AUDITOR-D4-WHITELIST-DATA-QUALITY-ANOMALY-PREFIX",
+        "title": "D4 held-lock detector re-fires on data-quality-anomaly:* — KNOWN_LEGIT_PREFIXES (authored 2026-07-08) never learned the lock kind bctc-analyst introduced 2026-07-19; whitelist is a static list that lags every new escalation-lock kind",
+        "status": "READY",
+        "type": "FIX",
+        "priority": "P2",
+        "size": "S",
+        "zone": "apps/mcp-server/",
+        "owner": "dev-mcp-server",
+        "next_agent": "dev-mcp-server",
+        "plan_only": true,
+        "supervised": true,
+        "created_at": "2026-07-25T06:59:44Z",
+        "created_by": "po/triage-20260725T0645",
+        "origin_signal_id": "sau-d4-data-quality-anomaly-dgc-q1-2026-not_found-20260725",
+        "root_cause": "apps/mcp-server/src/scheduler/system/tasksMdJanitorJob.ts:197-205 KNOWN_LEGIT_PREFIXES omits 'data-quality-anomaly:'. PO RAW-verified the filter IS live (applyR1bFilter called at :602 inside runTasksMdJanitor) and that the TS job IS the emitter (signal id matches the sau-d4-{entityId}-{checkId}-{YYYYMMDD} contract at :440-470) — so this is NOT a regression of FIX-D4-HELD-LOCK-NO-BOARD-ROW-RECONCILE (e109f49f8, DONE_VERIFIED), it is a whitelist coverage gap. Second guard cannot save it: isLiveConcurrentSession requires the owner session in the live presence roster, and owner f33d0102 (bctc-analyst) is absent. TIMELINE = the real defect: whitelist authored 2026-07-08; the data-quality-anomaly escalation lock was introduced 2026-07-19 by the bctc-analyst reprocess-vs-new-filing guard (docs/agents/bctc-analyst/flow/cycle.md:75). A static prefix list cannot track lock kinds that agents mint later.",
+        "deliverable": "1) Stop the false positive: cover 'data-quality-anomaly:' in the R-1b exclusion. 2) DECIDE EXPLICITLY, do not silently add a 4th one-off prefix (CLAUDE.md: fix root cause definitif not recurrent symptom): all 5 held sprint-task locks today are ticker-scoped bctc-analyst escalations (esc-datacov:*, esc-deepdive:*, data-quality-anomaly:*) sharing the shape <kind>:<TICKER>:<PERIOD>[:ESC-N] — either generalise to that shape, or promote the list to docs/data/system-map.json per the CLAUDE.md 'System Data - Never Hardcode' rule so code + agent spec read ONE source. 3) Sync the spec plane in the SAME change or it re-drops on the next port: the whitelist is duplicated verbatim in docs/agents/system-auditor/handlers.md:49 and docs/agents/system-auditor/audit-dimensions.md:55, both also missing the prefix. 4) Clear stale doc drift: handlers.md:19 and audit-dimensions.md:90 still assert 'the live code has NOT been updated to implement it yet' — false since e109f49f8.",
+        "acceptance": "One live tasksMdJanitor cycle with data-quality-anomaly:DGC:Q1-2026 still held emits ZERO D4 signal_queue rows for it and logs 'D4 SKIP: data-quality-anomaly:DGC:Q1-2026 - known-legit-pattern'. Negative control: a genuinely orphaned non-whitelisted sprint-task lock STILL trips D4 (do not blanket-suppress). Unit tests extend apps/mcp-server/src/__tests__/FIX-D4-HELD-LOCK-NO-BOARD-ROW-RECONCILE.test.ts:120-147 table. Code whitelist and both doc lists are byte-identical in content.",
+        "related": [
+          "FIX-AUDITOR-C04-PARSEDAT-RECENCY-PREDICATE",
+          "UC-ASL-P3"
+        ],
+        "note": "DO NOT RELEASE the lock. PO RAW-probed task_list_held: data-quality-anomaly:DGC:Q1-2026 is LIVE (sprint-task, bctc-analyst, claimed 2026-07-23T15:15:40Z, ttl 604800s, expires 2026-07-30T15:15:40Z, ~5.3d remaining) — legit board-row-less escalation per feedback_esc3_held_lock_no_board_row_is_legit. Signal is a FALSE POSITIVE; releasing would drop an in-flight 7-day data-quality escalation. Prior art checked: no existing row covers the prefix gap; git log on tasksMdJanitorJob.ts since 2026-07-20 empty and worktree clean, so no in-flight peer fix.",
+        "updated_at": "2026-08-08T03:50:56Z",
+        "po_second_facet_20260728": "SECOND FACET FOLDED IN (converge, no new row — the detector is one root cause with two emissions). The row as written covers the `not_found` emission (held lock has no board row). The SAME detector also emits a `pipeline_mismatch` row for the same lock: 'orch-state/lock mismatch: active=<head.active_task_id> held=data-quality-anomaly:DGC:Q1-2026'. That comparison is a CATEGORY ERROR, not a stale whitelist: it compares .head.active_task_id (the dev-team dispatch head, a dev task) against a long-TTL sprint-task escalation lock owned by a DIFFERENT agent (bctc-analyst) in a DIFFERENT plane. Those two are never required to be equal, so the predicate mismatches on every tick for the entire 7-day TTL regardless of system state — a whitelist entry alone will NOT silence it unless the pipeline_mismatch path consults the same exclusion. Both emissions must be fixed together or the FP count only halves. EVIDENCE: the identical pair fired on 2026-07-27 AND 2026-07-28 with nothing changing in between (4 signal_queue rows, ids sau-d4-data-quality-anomaly-dgc-q1-2026-{not_found,pipeline_mismatch}-2026072{7,8}), on top of the 2026-07-25 pair that minted this row. PRIORITY P3 -> P2: not damage, but a confirmed 2-per-day recurring false positive into PO's inbox that has now survived 3 consecutive days and 6 signal rows; at P3 it sits behind 42 rows and keeps emitting. The lock itself is LIVE and LEGIT (expires 2026-07-30T15:15:40Z) — the standing DO NOT RELEASE instruction in .note is unchanged.",
+        "updated_by": "po/triage-20260728T13",
+        "promoted_at": "2026-08-08T03:50:55Z",
+        "promoted_by": "dev-team (supervised-lane sweep)",
+        "promotion_note": "Supervised-Lane Sweep — assigned dispatch_lane='dev-mcp-server' (priority_rank=2); supervised/plan_only flags preserved, gate NOT disabled — see FIX-BOUNDED1-SUPERVISED-LANE-NO-SWEEPER",
+        "dispatch_lane": "dev-mcp-server"
       }
     ],
     "review": [
@@ -22610,6 +22587,40 @@
         "spec_doc": "docs/handoffs/TASK-COWORK-SIGNAL-DERIVE-WINDOWKEY-spec.md",
         "moved_to_review_at": "2026-08-08T03:28:25Z",
         "moved_by": "developer"
+      },
+      {
+        "id": "TASK-COWORK-SIGNAL-BCTC-REKEY",
+        "type": "TASK",
+        "size": "M",
+        "priority": "P1",
+        "status": "REVIEW",
+        "zone": "cross-service/bctc-analyst",
+        "owner": "po",
+        "next_agent": "po",
+        "plan_only": true,
+        "sprint": "COWORK-RELIABILITY",
+        "created_at": "2026-08-07T06:00:00Z",
+        "created_by": "pm (decomposition of FIX-COWORK-SIGNAL-FILENAME-CYCLEID-KEYING)",
+        "parent_task_id": "FIX-COWORK-SIGNAL-FILENAME-CYCLEID-KEYING",
+        "title": "bctc-analyst Filename Rekey & Sequencing (FR-2, FR-7)",
+        "ba_handoff": "docs/handoffs/TASK-COWORK-SIGNAL-BCTC-REKEY.md",
+        "description": "Decomposed subtask from FIX-COWORK-SIGNAL-FILENAME-CYCLEID-KEYING Phase 1 delivery",
+        "supervised": true,
+        "supervised_at": "2026-08-07T06:00:00Z",
+        "supervised_by": "pm (plan_only decomposition)",
+        "supervised_note": "Child task of plan_only parent; no code ships without parent re-adjudication by PO",
+        "updated_at": "2026-08-08T03:56:15Z",
+        "promoted_at": "2026-08-08T01:54:35Z",
+        "promoted_by": "dev-team (supervised-lane sweep)",
+        "promotion_note": "Supervised-Lane Sweep — assigned dispatch_lane='developer' (priority_rank=1); supervised/plan_only flags preserved, gate NOT disabled — see FIX-BOUNDED1-SUPERVISED-LANE-NO-SWEEPER",
+        "dispatch_lane": "developer",
+        "claimed_at": "2026-08-08T03:51:01Z",
+        "claimed_by": "dev-team (supervised-lane sweep)",
+        "reviewed_by": "developer",
+        "spec_doc": "docs/handoffs/TASK-COWORK-SIGNAL-BCTC-REKEY-spec.md",
+        "developer_review_note": "FR-2 (filename rekey) + FR-7 (routine-mode explicit emit line) + sequencing fix (WINDOW_KEY pinned once at cycle.md Step 0c, reused unchanged at stage-analyze.md release/routine emit lines and stage-log-notify.md §5d-1 mutex key -- no second computation) specified against 4 live-verified files: cycle.md (Step 0c derivation line), stage-analyze.md (line-114 {YYYYMMDD}->{WINDOW_KEY} substitution for release + new FR-7 \"Emit signal file\" line at end of Step 4c for routine, confirmed no routine-mode emit instruction existed before this spec), stage-consolidate.md (Output section stale cross-reference to stage-log-notify.md Stage 5 corrected -- that file has no bctc_signal write instruction; real emit lives in stage-analyze.md R4/Step-4c), stage-log-notify.md (§5d-1 cycle_tick_ISO token renamed to WINDOW_KEY, guard claim/skip logic unchanged). derive_window_key() cited verbatim from task 1s already-delivered spec (docs/handoffs/TASK-COWORK-SIGNAL-DERIVE-WINDOWKEY-spec.md) -- signature/format/NFR-3 single-derivation contract, not redefined. Worked example bctc_signal_HPG_20260807T2100Z_routine.json cited from the brief, matches task 1 spec Test Case 2 independently. Test strategy specified: unit (deferred to task 1 spec, not re-specified), integration AC-1 (two same-day slots -> two distinct paths), regression NFR-4 (drain-signals.test.js fingerprint-neutrality unmodified -- confirmed NO-OP at source: sha256(from+type+payload+createdAt), basename never in hash). AC-1/AC-2 mapping cited from brief SS9. Dangling ba_handoff pointer (docs/handoffs/TASK-COWORK-SIGNAL-BCTC-REKEY.md, confirmed absent) noted per same precedent as task 1. Scope boundaries respected: zero edits to any of the 4 named flow files, zero touch to unified-agent/ or tran-ngoc-bau/ flow dirs (tasks 3/4), zero attempt at derive_window_key() re-derivation, no further agent spawned.",
+        "moved_to_review_at": "2026-08-08T03:56:10Z",
+        "moved_by": "developer"
       }
     ],
     "qa": [
@@ -22757,7 +22768,7 @@
         }
       ]
     },
-    "last_triaged_at": "2026-08-08T03:21:27Z",
+    "last_triaged_at": "2026-08-08T03:50:55Z",
     "last_triaged_by": "dev-team (supervised-lane sweep)",
     "in_progress": [
       {
