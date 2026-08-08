@@ -236,7 +236,11 @@ describe("writeOrchStateAtomic — §2.3 validate-before-rename sentinel", () =>
           { id: "A4", status: "QA" },
           { id: "A5", status: "BLOCKED" },
           { id: "A6", status: "DONE" },
-          { id: "A7", status: "DONE_VERIFIED" },
+          // RC-VERIF (SYSREMAKE-P2-T2): DONE_VERIFIED requires verification.raw_probe (or
+          // grandfathering) — "A7" is a synthetic test id, not a live grandfathered row.
+          { id: "A7", status: "DONE_VERIFIED", verification: { raw_probe: {
+            tool: "test", args: "n/a", live_value_observed: "n/a", observed_at: "2026-06-30T00:00:00Z",
+          } } },
           { id: "A8", status: "CANCELLED" },
           { id: "A9", status: "DEFERRED" },
           { id: "A10", status: "SKIPPED" },

@@ -312,7 +312,8 @@ build_conservation_fixture() {
       "head": {"status":"idle","active_task_id":null,"next_agent":null},
       "task_board": {
         "backlog": [range($n_backlog) | {id: ("POP-BACKLOG-" + (. | tostring)), status: "BACKLOG"}],
-        "done_verified": [range($n_dv) | {id: ("POP-DV-" + (. | tostring)), status: "DONE_VERIFIED"}],
+        "done_verified": [range($n_dv) | {id: ("POP-DV-" + (. | tostring)), status: "DONE_VERIFIED",
+          "verification": {"raw_probe": {"tool": "test", "args": "n/a", "live_value_observed": "n/a", "observed_at": "2026-06-01T00:00:00Z"}}}],
         "active_sprints": []
       },
       "signal_queue": {

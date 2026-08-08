@@ -39,6 +39,8 @@ import {
   checkRefIntegrity,
   LANE_ALLOWED_STATUSES,
   TERMINAL_SET,
+  RawProbeSchema,
+  VerificationSchema,
 } from "../orchStateSchema.js";
 import type {
   OrchState,
@@ -54,6 +56,8 @@ import type {
   LaneCoherenceIssue,
   RefIntegrityIssue,
   FileResolver,
+  RawProbe,
+  Verification,
 } from "../orchStateSchema.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -404,7 +408,12 @@ describe("M3 — Invalid status enum rejected", () => {
       task_board: {
         backlog:       [{ id: "A", status: "BACKLOG" }],
         done:          [{ id: "B", status: "DONE" }],
-        done_verified: [{ id: "C", status: "DONE_VERIFIED" }],
+        // RC-VERIF (SYSREMAKE-P2-T2): DONE_VERIFIED now requires verification.raw_probe
+        // unless grandfathered — "C" is a synthetic test id, not a live grandfathered
+        // row, so it must carry a valid raw_probe to keep passing this enum-only check.
+        done_verified: [{ id: "C", status: "DONE_VERIFIED", verification: { raw_probe: {
+          tool: "test", args: "n/a", live_value_observed: "n/a", observed_at: "2026-01-01T00:00:00Z",
+        } } }],
         in_progress:   [{ id: "D", status: "IN_PROGRESS" }],
         qa:            [{ id: "E", status: "QA" }],
         ready:         [{ id: "F", status: "READY" }],
@@ -588,7 +597,11 @@ describe("C2 — checkLaneCoherence: wrong-lane task is flagged", () => {
       signal_queue: { _updated_at: "2026-01-01T00:00:00Z", _updated_by: "t", rows: [], archive: [] },
       task_board: {
         backlog: [],
-        done: [{ id: "T-DV", status: "DONE_VERIFIED" }], // DONE_VERIFIED is allowed in done[]
+        // RC-VERIF (SYSREMAKE-P2-T2): DONE_VERIFIED requires verification.raw_probe (or grandfathering);
+        // "T-DV" is a synthetic id, so it must carry a valid raw_probe or OrchStateSchema.parse() throws.
+        done: [{ id: "T-DV", status: "DONE_VERIFIED", verification: { raw_probe: {
+          tool: "test", args: "n/a", live_value_observed: "n/a", observed_at: "2026-01-01T00:00:00Z",
+        } } }], // DONE_VERIFIED is allowed in done[]
         done_verified: [{ id: "T-IN-DV", status: "DONE" }], // DONE is NOT allowed in done_verified[]
         active_sprints: [],
       },
@@ -884,7 +897,10 @@ describe("QA-1 — All-lane status enum injection (9 of 9 lanes)", () => {
       task_board: {
         backlog:       [{ id: "A", status: "BACKLOG" }],       // lane 1
         done:          [{ id: "B", status: "DONE" }],          // lane 2
-        done_verified: [{ id: "C", status: "DONE_VERIFIED" }], // lane 3
+        // RC-VERIF (SYSREMAKE-P2-T2): DONE_VERIFIED requires verification.raw_probe (or grandfathering).
+        done_verified: [{ id: "C", status: "DONE_VERIFIED", verification: { raw_probe: {
+          tool: "test", args: "n/a", live_value_observed: "n/a", observed_at: "2026-01-01T00:00:00Z",
+        } } }], // lane 3
         in_progress:   [{ id: "D", status: "IN_PROGRESS" }],  // lane 4
         qa:            [{ id: "E", status: "QA" }],            // lane 5
         ready:         [{ id: "F", status: "READY" }],         // lane 6
@@ -896,6 +912,187 @@ describe("QA-1 — All-lane status enum injection (9 of 9 lanes)", () => {
     const result = OrchStateSchema.safeParse(state);
     if (!result.success) {
       console.error("[test] QA-1-all-9 FAIL:", JSON.stringify(result.error.issues, null, 2));
+    }
+    expect(result.success).toBe(true);
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// RCV-0..RCV-8 — RC-VERIF completion gate (SYSREMAKE-P2-T2-SCHEMA-ADDITIONS)
+//
+// Minimal TDD coverage proving § 1A schema shapes + § 8A checkVerificationGate()
+// wiring. This is deliberately NOT the full V1-V5/D1-D2/T1 exhaustive matrix
+// from docs/architecture-briefs/2026-07-17-sysremake-p2-rcverif-rcconverge.md §6
+// (9-lane injection, CLI AC-5, server-path parity) — that comprehensive suite is
+// the separately-tracked SYSREMAKE-P2-T3 board row (depends_on this task).
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** Valid 4-field raw_probe fixture (RawProbeSchema shape). */
+function makeValidRawProbe(): Record<string, unknown> {
+  return {
+    tool: "sqlite3 orch-state.json",
+    args: { query: "select 1" },
+    live_value_observed: "1",
+    observed_at: "2026-08-08T18:00:00Z",
+  };
+}
+
+describe("RCV-0 — RawProbeSchema / VerificationSchema shape", () => {
+  it("RCV-0-a: valid raw_probe (all 4 fields) parses", () => {
+    const result = RawProbeSchema.safeParse(makeValidRawProbe());
+    expect(result.success).toBe(true);
+  });
+
+  it("RCV-0-b: raw_probe missing observed_at fails", () => {
+    const bad = makeValidRawProbe();
+    delete bad["observed_at"];
+    const result = RawProbeSchema.safeParse(bad);
+    expect(result.success).toBe(false);
+  });
+
+  it("RCV-0-c: VerificationSchema accepts honest_gap_reason alone (no raw_probe)", () => {
+    const result = VerificationSchema.safeParse({ honest_gap_reason: "network outage during probe window" });
+    expect(result.success).toBe(true);
+  });
+});
+
+describe("RCV-1 — checkVerificationGate: fabricated DONE_VERIFIED rejected", () => {
+  it("RCV-1-a: non-grandfathered id, DONE_VERIFIED, no verification field → rejected", () => {
+    const state = makeNullHeadState({
+      backlog: [],
+      done_verified: [{ id: "RCV-FABRICATED-001", status: "DONE_VERIFIED", title: "no proof" }],
+    });
+    const result = OrchStateSchema.safeParse(state);
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      const issue = result.error.issues.find(
+        i => i.code === "custom" && i.path.join(".") === "task_board.done_verified.0.verification.raw_probe",
+      );
+      expect(issue).toBeDefined();
+      expect(issue?.message).toContain("RCV-FABRICATED-001");
+    }
+  });
+
+  it("RCV-1-b: non-grandfathered id, DONE_VERIFIED, verification present but raw_probe missing observed_at → rejected", () => {
+    const state = makeNullHeadState({
+      backlog: [],
+      done_verified: [{
+        id: "RCV-MALFORMED-002", status: "DONE_VERIFIED",
+        verification: { raw_probe: { tool: "t", args: "a", live_value_observed: "v" } }, // no observed_at
+      }],
+    });
+    const result = OrchStateSchema.safeParse(state);
+    expect(result.success).toBe(false);
+  });
+});
+
+describe("RCV-2 — checkVerificationGate: valid raw_probe accepted", () => {
+  it("RCV-2-a: non-grandfathered id, all 4 raw_probe fields present → accepted", () => {
+    const state = makeNullHeadState({
+      backlog: [],
+      done_verified: [{ id: "RCV-VERIFIED-003", status: "DONE_VERIFIED", verification: { raw_probe: makeValidRawProbe() } }],
+    });
+    const result = OrchStateSchema.safeParse(state);
+    if (!result.success) console.error("[test] RCV-2-a FAIL:", JSON.stringify(result.error.issues, null, 2));
+    expect(result.success).toBe(true);
+  });
+});
+
+describe("RCV-3 — checkVerificationGate: grandfathered id exempted (regression guard)", () => {
+  it("RCV-3-a: known-live grandfathered id, DONE_VERIFIED, no verification field → still accepted", () => {
+    // "HSC-1" is one of the 51 ids frozen into RC_VERIF_GRANDFATHERED_IDS (§ 8A) —
+    // proves pre-existing live rows keep parsing without retroactive fabrication.
+    const state = makeNullHeadState({
+      backlog: [],
+      done_verified: [{ id: "HSC-1", status: "DONE_VERIFIED", title: "pre-RC-VERIF completion" }],
+    });
+    const result = OrchStateSchema.safeParse(state);
+    if (!result.success) console.error("[test] RCV-3-a FAIL:", JSON.stringify(result.error.issues, null, 2));
+    expect(result.success).toBe(true);
+  });
+});
+
+describe("RCV-4 — checkVerificationGate: DEGRADED requires honest_gap_reason", () => {
+  it("RCV-4-a: DEGRADED without honest_gap_reason → rejected", () => {
+    const state = makeNullHeadState({
+      backlog: [],
+      review: [{ id: "RCV-DEGRADED-004", status: "DEGRADED", title: "partial" }],
+    });
+    const result = OrchStateSchema.safeParse(state);
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      const issue = result.error.issues.find(
+        i => i.code === "custom" && i.path.join(".") === "task_board.review.0.verification.honest_gap_reason",
+      );
+      expect(issue).toBeDefined();
+    }
+  });
+
+  it("RCV-4-b: DEGRADED with honest_gap_reason in review[] → accepted", () => {
+    const state = makeNullHeadState({
+      backlog: [],
+      review: [{ id: "RCV-DEGRADED-005", status: "DEGRADED", verification: { honest_gap_reason: "source API down during verification window" } }],
+    });
+    const result = OrchStateSchema.safeParse(state);
+    if (!result.success) console.error("[test] RCV-4-b FAIL:", JSON.stringify(result.error.issues, null, 2));
+    expect(result.success).toBe(true);
+  });
+});
+
+describe("RCV-5 — DEGRADED lane coherence (LANE_ALLOWED_STATUSES §2.4)", () => {
+  it("RCV-5-a: LANE_ALLOWED_STATUSES.review contains DEGRADED", () => {
+    expect(LANE_ALLOWED_STATUSES["review"]?.has("DEGRADED")).toBe(true);
+  });
+
+  it("RCV-5-b: LANE_ALLOWED_STATUSES.qa contains DEGRADED", () => {
+    expect(LANE_ALLOWED_STATUSES["qa"]?.has("DEGRADED")).toBe(true);
+  });
+
+  it("RCV-5-c: LANE_ALLOWED_STATUSES.backlog / .in_progress / .done do NOT contain DEGRADED", () => {
+    expect(LANE_ALLOWED_STATUSES["backlog"]?.has("DEGRADED")).toBe(false);
+    expect(LANE_ALLOWED_STATUSES["in_progress"]?.has("DEGRADED")).toBe(false);
+    expect(LANE_ALLOWED_STATUSES["done"]?.has("DEGRADED")).toBe(false);
+  });
+
+  it("RCV-5-d: checkLaneCoherence flags a DEGRADED task placed in backlog[] (wrong lane)", () => {
+    const state = OrchStateSchema.parse(makeNullHeadState({
+      backlog: [{ id: "RCV-WRONGLANE-006", status: "DEGRADED", verification: { honest_gap_reason: "n/a" } }],
+    }));
+    const issues = checkLaneCoherence(state);
+    const found = issues.find(i => i.taskId === "RCV-WRONGLANE-006" && i.lane === "backlog");
+    expect(found).toBeDefined();
+  });
+});
+
+describe("RCV-6 — TERMINAL_SET regression: DEGRADED excluded (§2.3)", () => {
+  it("RCV-6-a: TERMINAL_SET does not contain DEGRADED, size stays 5", () => {
+    expect(TERMINAL_SET.has("DEGRADED" as Status)).toBe(false);
+    expect(TERMINAL_SET.size).toBe(5);
+  });
+});
+
+describe("RCV-7 — StatusEnum: DEGRADED accepted as 13th value", () => {
+  it("RCV-7-a: StatusEnum.parse(\"DEGRADED\") succeeds", () => {
+    expect(() => StatusEnum.parse("DEGRADED")).not.toThrow();
+  });
+});
+
+describe("RCV-8 — Live file regression: RC-VERIF gate does not brick the hot file", () => {
+  it("RCV-8-a: current docs/data/orch/orch-state.json still parses clean post-gate (grandfather list complete)", () => {
+    const raw = loadLiveOrchState();
+    if (!raw) {
+      console.log("[test] orch-state.json not found — skipping live RCV-8 check");
+      return;
+    }
+    const result = OrchStateSchema.safeParse(raw);
+    if (!result.success) {
+      const verificationIssues = result.error.issues.filter(i => i.path.includes("verification"));
+      console.error(
+        "[test] RCV-8-a: live parse failed —",
+        verificationIssues.length,
+        "RC-VERIF issue(s):",
+        JSON.stringify(verificationIssues, null, 2),
+      );
     }
     expect(result.success).toBe(true);
   });

@@ -88,7 +88,11 @@ function makeBase() {
       // 7 flat lanes — all populated with one valid task each
       backlog:       [{ id: 'AC-T1', status: 'BACKLOG' }],
       done:          [{ id: 'AC-T2', status: 'DONE' }],
-      done_verified: [{ id: 'AC-T3', status: 'DONE_VERIFIED' }],
+      // RC-VERIF (SYSREMAKE-P2-T2): DONE_VERIFIED requires verification.raw_probe (or
+      // grandfathering) — 'AC-T3' is a synthetic fixture id, not a live grandfathered row.
+      done_verified: [{ id: 'AC-T3', status: 'DONE_VERIFIED', verification: { raw_probe: {
+        tool: 'test', args: 'n/a', live_value_observed: 'n/a', observed_at: '2026-06-27T00:00:00Z',
+      } } }],
       in_progress:   [{ id: 'AC-T4', status: 'IN_PROGRESS' }],
       qa:            [{ id: 'AC-T5', status: 'QA' }],
       ready:         [{ id: 'AC-T6', status: 'READY' }],

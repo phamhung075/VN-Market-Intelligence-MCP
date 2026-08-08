@@ -1,6 +1,6 @@
 /**
  * orchStateSchema.ts — Nested Zod SSOT schema for docs/data/orch/orch-state.json
- * size-justification: 1074L — one Zod SSOT (§1-8: StatusEnum/Task/Sprint/
+ * size-justification: ~1300L — one Zod SSOT (§1-8: StatusEnum/Task/Sprint/
  *   SignalQueue/Head/Meta/TaskBoard/OrchState) plus 6 co-located write-time
  *   validation guards (§9-14) that scripts/orch-validate.mjs imports BY NAME
  *   from this exact file path. A physical split (even via re-export barrel)
@@ -23,6 +23,14 @@
  *   cold-archive-resolves-MISSING class) — same one-file-per-guard
  *   co-location precedent as §9-12, same reason a split still cannot land
  *   yet (+235L).
+ *   SYSREMAKE-P2-T2-SCHEMA-ADDITIONS 2026-08-08: added §1A
+ *   (RawProbeSchema/VerificationSchema — must precede §2 TaskSchema, which
+ *   references them at module-eval time, not §4/§5 as the source brief's
+ *   prose literally said) + §8A (checkVerificationGate() write-time gate +
+ *   the frozen 51-id RC_VERIF_GRANDFATHERED_IDS allowlist, re-derived live
+ *   at implementation time, wider than the brief's own snapshot — see §8A
+ *   header) — same one-file-per-guard co-location precedent, same physical-
+ *   split blocker as §9-14 above (+217L).
  *
  * Sprint: SSOT-INTEGRITY-PERIMETER  Task: SSOT-W1-ZOD-SCHEMA-MODEL
  *
@@ -50,14 +58,19 @@
 import { z } from "zod";
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// § 1. STATUS ENUM — SINGLE SSOT (frozen 12-value set)
+// § 1. STATUS ENUM — SINGLE SSOT (frozen 13-value set)
 //
 // Source: docs/architecture-briefs/2026-06-27-orch-state-schema-hardening.md §1.1
 // ADD-1 READY-bootstrap: PO ratified option-a 2026-06-27T08:35:40Z
 //   → READY added as 12th value (a ready[] lane exists, so READY is lane-coherent)
+// ADD-2 RC-VERIF: docs/architecture-briefs/2026-07-17-sysremake-p2-rcverif-rcconverge.md §2.1
+//   → DEGRADED added as 13th value (honest partial-verification state — a task whose
+//     work is done but could not be independently re-verified; see § 8A gate below)
 //
 // TERMINAL_SET (used by sprint eviction predicate §2.1 of hardening brief):
 //   DONE | DONE_VERIFIED | CANCELLED | DEFERRED | SKIPPED
+//   DEGRADED is deliberately EXCLUDED (brief §2.3) — it needs a human/PO decision,
+//   not silent cold-eviction.
 // ═══════════════════════════════════════════════════════════════════════════════
 
 export const StatusEnum = z.enum([
@@ -73,11 +86,15 @@ export const StatusEnum = z.enum([
   "CANCELLED",
   "SKIPPED",
   "READY",       // ADD-1: 12th value — PO ratified option-a 2026-06-27
+  "DEGRADED",    // ADD-2: 13th value — RC-VERIF honest partial-verification state, 2026-07-17
 ]);
 
 export type Status = z.infer<typeof StatusEnum>;
 
-/** Terminal statuses used by sprint eviction predicate (§2.1 of hardening brief). */
+/**
+ * Terminal statuses used by sprint eviction predicate (§2.1 of hardening brief).
+ * DEGRADED is deliberately NOT a member (§2.3 of RC-VERIF brief) — see § 1A/§ 8A.
+ */
 export const TERMINAL_SET: ReadonlySet<Status> = new Set([
   "DONE",
   "DONE_VERIFIED",
@@ -85,6 +102,41 @@ export const TERMINAL_SET: ReadonlySet<Status> = new Set([
   "DEFERRED",
   "SKIPPED",
 ]);
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// § 1A. RAW-PROBE / VERIFICATION (RC-VERIF)
+//
+// Task: SYSREMAKE-P2-T2-SCHEMA-ADDITIONS
+// Source: docs/architecture-briefs/2026-07-17-sysremake-p2-rcverif-rcconverge.md §2.1
+//
+// Shape is the literal 4-field contract PO already applies by hand-convention
+// (docs/agent-memory/notebooks/po.md 2026-07-17 VERIFY-FIX-DAILY-FF-VIEW-JOIN-
+// ANCHOR-REALDATA close: `.verification.raw_probe{tool,args,live_value_observed,
+// observed_at}`) — this schema formalizes an already-live convention, not a new
+// invention. MUST be defined before § 2 TaskSchema (below) references it — module
+// top-level `const`/`z.object()` evaluation is sequential, not hoisted like a
+// `function` declaration, so a forward reference here would throw a TDZ
+// ReferenceError at import time.
+// ═══════════════════════════════════════════════════════════════════════════════
+
+export const RawProbeSchema = z
+  .object({
+    tool: z.string().min(1),                 // e.g. "get_price_history", "sqlite3 <query>"
+    args: z.union([z.string(), z.record(z.unknown())]),
+    live_value_observed: z.union([z.string(), z.number(), z.boolean(), z.record(z.unknown())]),
+    observed_at: z.string().min(1),           // ISO-8601 UTC
+  })
+  .passthrough(); // extra evidentiary fields (evidence_commit, verdict, ...) already seen live
+
+export const VerificationSchema = z
+  .object({
+    raw_probe: RawProbeSchema.optional(),
+    honest_gap_reason: z.string().min(1).optional(), // required conditionally for DEGRADED, see § 8A
+  })
+  .passthrough();
+
+export type RawProbe = z.infer<typeof RawProbeSchema>;
+export type Verification = z.infer<typeof VerificationSchema>;
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // § 2. TASK SCHEMA
@@ -127,6 +179,9 @@ export const TaskSchema = z
     note: z.string().optional(),
     notes: z.string().optional(),
     status_note: z.string().optional(),
+    // ── RC-VERIF / RC-CONVERGE (§ 1A above) ──────────────────────────────────
+    verification: VerificationSchema.optional(),  // RC-VERIF — required shape for DONE_VERIFIED/DEGRADED, see § 8A gate
+    bug_class: z.string().optional(),             // RC-CONVERGE — recurrence-tracking slug (sidecar ledger, out of this task's scope)
   })
   // .passthrough() → .strict() PROMOTION TRIGGER (post-SHG-5, SSOT-W1-SERVER-ENFORCE
   // rank-4): once all active-sprint tasks are migrated to hot-field stubs and
@@ -315,6 +370,11 @@ export type TaskBoard = z.infer<typeof TaskBoardSchema>;
 // .strict() — all 10 known root keys enumerated.
 // superRefine — head.active_task_id referential integrity:
 //   if non-null, the ID must resolve to a task in task_board.
+// superRefine — RC-VERIF completion gate (§ 8A below): DONE_VERIFIED requires
+//   verification.raw_probe (unless grandfathered), DEGRADED requires
+//   verification.honest_gap_reason. Extends this SAME superRefine (not a new
+//   standalone export) so every one of the 4 live validation paths that import
+//   OrchStateSchema inherits it automatically — see § 8A header for why.
 // ═══════════════════════════════════════════════════════════════════════════════
 
 /** Collect all task IDs (id + legacy task_id) across all lanes. */
@@ -396,9 +456,169 @@ export const OrchStateSchema = z
         });
       }
     }
+
+    // ── NEW: RC-VERIF completion gate (§ 8A) ─────────────────────────────────
+    checkVerificationGate(data.task_board, ctx);
   });
 
 export type OrchState = z.infer<typeof OrchStateSchema>;
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// § 8A. RC-VERIF COMPLETION GATE (write-time, hard fail — extends § 8's superRefine)
+// Task: SYSREMAKE-P2-T2-SCHEMA-ADDITIONS
+// Source: docs/architecture-briefs/2026-07-17-sysremake-p2-rcverif-rcconverge.md §2.2/§2.5
+//
+// Placed AFTER OrchStateSchema (not before) is safe: `checkVerificationGate` is a
+// `function` declaration (hoisted across the whole module) and is only ever
+// INVOKED later, inside the superRefine callback, by which time module
+// evaluation has already run top-to-bottom and RC_VERIF_GRANDFATHERED_IDS below
+// is initialized — no TDZ risk (unlike § 1A's RawProbeSchema/VerificationSchema,
+// which TaskSchema's `z.object()` call evaluates IMMEDIATELY at import time and
+// therefore had to be defined earlier in the file, before § 2).
+//
+// GATE: any row with status DONE_VERIFIED must carry a valid
+// verification.raw_probe{tool,args,live_value_observed,observed_at} — UNLESS its
+// id is in the frozen RC_VERIF_GRANDFATHERED_IDS allowlist below (pre-existing
+// rows that predate this gate; backfilling raw_probe on already-completed work
+// would itself be fabrication — see brief §2.5). Any row with status DEGRADED
+// must carry verification.honest_gap_reason.
+//
+// RC_VERIF_GRANDFATHERED_IDS is FROZEN and CLOSED — it must NEVER grow. Derived
+// ONCE, live, immediately before this implementation (SYSREMAKE-P2-T1-GRANDFATHER-
+// JQ-QUERY, 2026-08-08T18:xx Z), by re-running the brief's §2.4 jq query — WIDENED
+// beyond the brief's original active_sprints/closed_sprints-only scope to all 9
+// task-bearing lanes (matching checkVerificationGate's own scan below), because
+// live data confirmed 18 additional non-compliant DONE_VERIFIED rows had
+// accumulated in the flat done[]/done_verified[] lanes since the brief was
+// authored (2026-07-17) — the post-SHG hot/cold split moved rows there that the
+// brief's snapshot never saw. Using the brief's narrower query verbatim would
+// have bricked the live hot file on the very next write (the exact must-fix risk
+// the brief itself names in §2.5) — re-derived per T1's own mandate ("re-derive,
+// do not trust this brief's snapshot count"), not the brief's literal query text:
+//   jq -r '([.task_board.backlog[]?, .task_board.done[]?, .task_board.done_verified[]?,
+//     .task_board.in_progress[]?, .task_board.qa[]?, .task_board.ready[]?, .task_board.review[]?,
+//     .task_board.active_sprints[].tasks[]?, .task_board.closed_sprints[].tasks[]?]
+//     | .[] | select(.status=="DONE_VERIFIED" and (.verification.raw_probe // null | not)) | .id)'
+//     docs/data/orch/orch-state.json | sort -u
+// New rows can NEVER enter this set — the gate applies unconditionally to any id
+// not already listed. As grandfathered rows get cold-evicted, they leave this
+// schema's purview entirely and the list becomes silently inert (§2.5).
+// ═══════════════════════════════════════════════════════════════════════════════
+
+const RC_VERIF_GRANDFATHERED_IDS: ReadonlySet<string> = new Set([
+  "BAL-1a-BACKFILL-IMPL",
+  "BAL-1a-DEV",
+  "BAL-1a-QA",
+  "BAL-1b-DEV",
+  "BAL-1d-DEV",
+  "BAL-1f",
+  "BCTC-HIST-SEED",
+  "CONTAM-10-WRITER-H",
+  "FACTORY-STOCK-vndirect-mapper-tests",
+  "FACTORY-TECHANALYSIS-dedup-calculator",
+  "FIX-BCTC-INGEST-PERIOD-IDENTITY-UNVALIDATED-VS-CONTENT",
+  "FIX-CI-SIZELINT-MACROTOOLS-HUMANIZE-618L",
+  "FIX-COMMIT-PATH-PEER-INDEX-SWEEP-GUARD-LAYER2",
+  "FIX-COWORK-BASH-GRANT-COVERAGE-STAMP-TRANSPORT",
+  "FIX-DE-3",
+  "FIX-DEVTEAM-IDLE-CHAIN-P1A-MAIN-ROTATION",
+  "FIX-DEVTEAM-IDLE-CHAIN-P2A-DURABLE-DRAIN",
+  "FIX-DEVTEAM-QADRAIN-INVOCATION-HEAD-DECOUPLED",
+  "FIX-DEVTEAM-QADRAIN-THROUGHPUT-CAP",
+  "FIX-FB-GATE-SECTOR-NAME-VALIDATOR",
+  "FIX-FOREIGN-FLOW-MISSING-TRADING-DAY-2026-08-06-NO-BACKFILL",
+  "FIX-ORPHAN-FR1-FR2-INFRA-HEARTBEAT-LADDER",
+  "FIX-ORPHAN-FR1-FR3-FR6-SKILL-DISPATCH-CLAIM",
+  "FU-BACKFILL-DE-SYNC",
+  "FU-BCTC-TOOL-PARAMS",
+  "FU-DE-321-VAY-GUARD",
+  "FU-DE-SERVE-HONEST",
+  "FU-RAG-DEPLOY-MEMORY",
+  "HSC-1",
+  "HSC-2",
+  "HSC-3",
+  "HSC-4",
+  "HSC-5",
+  "HSC-6",
+  "HSC-7",
+  "OPS-REBUILD-MCP-SERVER-OPENSSH",
+  "RLI-FORENSICS-CLEANUP",
+  "SSOT-W1-HOOK-ENFORCE",
+  "SSOT-W1-ORCH-APPLY-WRAPPER",
+  "SSOT-W1-SERVER-ENFORCE",
+  "TASK-501-MOMENTUM-API-HANDLER",
+  "TASK-502-MOMENTUM-FRONTEND",
+  "TASK-DEVTEAM-IDLE-CHAIN-1-SCHEMA-UTILITIES",
+  "TE-T11",
+  "TE-T12",
+  "VMT-7-REGISTER",
+  "VMT-7a-TRADE-BALANCE-HANDLER",
+  "VMT-7b-BOP-HANDLER",
+  "VMT-7c-MACRO-INDICATORS-HANDLER",
+  "VMT-7d-CPI-COMPONENTS-HANDLER",
+  "VMT-7e-LIQUIDITY-STATE-HANDLER",
+]);
+
+function hasValidRawProbe(v: unknown): boolean {
+  const parsed = VerificationSchema.safeParse(v);
+  if (!parsed.success || !parsed.data.raw_probe) return false;
+  const p = parsed.data.raw_probe;
+  return Boolean(p.tool) && p.args !== undefined && p.live_value_observed !== undefined && Boolean(p.observed_at);
+}
+
+function hasHonestGapReason(v: unknown): boolean {
+  const parsed = VerificationSchema.safeParse(v);
+  return parsed.success && Boolean(parsed.data.honest_gap_reason);
+}
+
+/**
+ * Iterates ALL 9 task-bearing lanes ("by construction", same lane set as
+ * collectAllTaskIds) — DONE_VERIFIED/DEGRADED can appear in any of them per
+ * LANE_ALLOWED_STATUSES, so limiting the check to backlog[] alone would leave
+ * lanes unguarded.
+ */
+function checkVerificationGate(tb: z.infer<typeof TaskBoardSchema>, ctx: z.RefinementCtx): void {
+  const flatLanes = ["backlog", "done", "done_verified", "in_progress", "qa", "ready", "review"] as const;
+
+  const checkOne = (row: Record<string, unknown>, path: (string | number)[]) => {
+    const id = String(row["id"] ?? row["task_id"] ?? "(no-id)");
+    if (row["status"] === "DONE_VERIFIED" && !RC_VERIF_GRANDFATHERED_IDS.has(id)) {
+      if (!hasValidRawProbe(row["verification"])) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: [...path, "verification", "raw_probe"],
+          message:
+            `task "${id}" set to DONE_VERIFIED without verification.raw_probe{tool,args,` +
+            `live_value_observed,observed_at}. fix: attach a live independent re-probe, ` +
+            `or set status to DONE pending verification.`,
+        });
+      }
+    }
+    if (row["status"] === "DEGRADED" && !hasHonestGapReason(row["verification"])) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: [...path, "verification", "honest_gap_reason"],
+        message:
+          `task "${id}" set to DEGRADED without verification.honest_gap_reason. ` +
+          `fix: state why the live artifact could not be independently verified.`,
+      });
+    }
+  };
+
+  for (const lane of flatLanes) {
+    const tasks = (tb as Record<string, unknown>)[lane];
+    if (!Array.isArray(tasks)) continue;
+    tasks.forEach((t, i) => checkOne(t as Record<string, unknown>, ["task_board", lane, i]));
+  }
+  [tb.active_sprints, tb.closed_sprints ?? []].forEach((sprintArr, si0) => {
+    const sprintKey = si0 === 0 ? "active_sprints" : "closed_sprints";
+    sprintArr.forEach((sprint, si) => {
+      (sprint.tasks ?? []).forEach((t, i) =>
+        checkOne(t as Record<string, unknown>, ["task_board", sprintKey, si, "tasks", i]),
+      );
+    });
+  });
+}
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // § 9. LANE-STATUS COHERENCE (ADD-2)
@@ -424,11 +644,17 @@ export interface LaneCoherenceIssue {
   fix: string;
 }
 
-/** ADD-2 lane → allowed status set mapping. */
+/**
+ * ADD-2 lane → allowed status set mapping.
+ * RC-VERIF (2026-07-17 brief §2.4): DEGRADED added to exactly review/qa — a
+ * post-work state ("attempted, tests may be green, but not independently
+ * re-verified"), structurally closer to REVIEW/QA than backlog/in_progress
+ * (which would let an agent declare it before even attempting the fix).
+ */
 export const LANE_ALLOWED_STATUSES: Readonly<Record<string, ReadonlySet<string>>> = {
   backlog:       new Set(["BACKLOG", "BLOCKED"]),
-  review:        new Set(["REVIEW", "BLOCKED"]),
-  qa:            new Set(["QA"]),
+  review:        new Set(["REVIEW", "BLOCKED", "DEGRADED"]),
+  qa:            new Set(["QA", "DEGRADED"]),
   done:          new Set(["DONE", "DONE_VERIFIED"]),
   done_verified: new Set(["DONE_VERIFIED"]),
   ready:         new Set(["READY", "TODO"]),

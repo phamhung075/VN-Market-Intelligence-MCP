@@ -182,7 +182,11 @@ describe("collectHotDepStatusLaneIds — mirrors dep_status_map()'s own 7-lane s
         qa: [{ id: "Q1", status: "QA" }],
         review: [{ id: "RV1", status: "REVIEW" }],
         done: [{ id: "D1", status: "DONE" }],
-        done_verified: [{ id: "DV1", status: "DONE_VERIFIED" }],
+        // RC-VERIF (SYSREMAKE-P2-T2): DONE_VERIFIED requires verification.raw_probe (or
+        // grandfathering) — "DV1" is a synthetic test id, not a live grandfathered row.
+        done_verified: [{ id: "DV1", status: "DONE_VERIFIED", verification: { raw_probe: {
+          tool: "test", args: "n/a", live_value_observed: "n/a", observed_at: "2026-01-01T00:00:00Z",
+        } } }],
         active_sprints: [],
       },
     });
