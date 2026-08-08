@@ -1018,3 +1018,15 @@
 **Mitigation:** No immediate action beyond signal routing.
 
 ---
+
+## Anomaly: A-30 · rag-service-1 sustained memory pressure
+**Severity:** WARN | **Date:** 2026-08-08 | **Status:** OPEN
+**Location:** vn-market-intelligence-mcp-rag-service-1
+**Details:** Memory usage 99.66% sustained high over 65s window (6 probes). Zero reclamation dips. Verdict: ESCALATE (loss of reclamation).
+**Impact:** Container memory pressure sustained; no immediate OOMKill or restart, but reclamation mechanism absent.
+**Root cause:** Chronic pattern spanning 4 days (11 signals), no durable fix in flight. Likely memory leak or sustained load.
+**Zone owner:** infra
+**Last reported:** 2026-08-08T17:39:06Z (signal sys-20260808T173849-2d4b, system-auditor -> po, dedup_key=microservice_degraded:vn-market-intelligence-mcp-rag-service-1:A-30, WARN Telegram sent)
+**Mitigation:** No immediate action beyond signal routing.
+
+---
