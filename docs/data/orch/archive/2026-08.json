@@ -4286,6 +4286,19 @@
       "payload_ref": "docs/data/db-integrity-history.json",
       "provenance": "detector",
       "audit_cycle_tag": null
+    },
+    {
+      "id": "sys-20260807T082310-6ac3",
+      "ts": "2026-08-07T08:23:10Z",
+      "from": "system-auditor",
+      "to": "dev-team",
+      "type": "db_integrity_breach",
+      "summary": "ohlcv_violations: 336 OHLC violations found (O/H/L/C constraints violated). Span 20 distinct dates. Last 2 days = 0 fres",
+      "severity": "MED",
+      "status": "READ",
+      "payload_ref": "docs/data/db-integrity-history.json",
+      "provenance": "detector",
+      "audit_cycle_tag": null
     }
   ],
   "backlog_detail": [],

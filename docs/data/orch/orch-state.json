@@ -133,7 +133,7 @@
     "does_not_consume_wip": true
   },
   "signal_queue": {
-    "_updated_at": "2026-08-08T08:21:30Z",
+    "_updated_at": "2026-08-08T08:36:15Z",
     "_updated_by": "router",
     "archive": [],
     "rows": [
@@ -3352,19 +3352,6 @@
         "disposition": "FOLD onto OPS-RAG-SERVICE-REBUILD-STALE-IMAGE-PREDATES-IDLE-UNLOAD-FIX (escalated BACKLOG/P0, owner=ops) — the sustained >93%-with-zero-dips signature is the predicted observable of a running image that predates its own idle-unload fix 0308514f5 by ~24h; code fix already tracked by FIX-RAG-EMBEDDER-IDLE-UNLOAD-PATH (review[]), only open action is the single-service rebuild+recreate. No new mint. Folded into PO BATCH triage-20260808T0001Z-po."
       },
       {
-        "id": "sys-20260807T082310-6ac3",
-        "ts": "2026-08-07T08:23:10Z",
-        "from": "system-auditor",
-        "to": "dev-team",
-        "type": "db_integrity_breach",
-        "summary": "ohlcv_violations: 336 OHLC violations found (O/H/L/C constraints violated). Span 20 distinct dates. Last 2 days = 0 fres",
-        "severity": "MED",
-        "status": "READ",
-        "payload_ref": "docs/data/db-integrity-history.json",
-        "provenance": "detector",
-        "audit_cycle_tag": null
-      },
-      {
         "id": "cja-20260807T103120",
         "ts": "2026-08-07T10:31:20Z",
         "from": "code-janitor",
@@ -3525,6 +3512,20 @@
         "dedup_key": "false_ac_verification:OPS-RAG-SERVICE-REBUILD-STALE-IMAGE-PREDATES-IDLE-UNLOAD-FIX:AC-3",
         "po_disposition": "UPHELD ON FINDING, CORRECTED ON INFERENCE. Finding upheld: AC-3 was falsely claimed and the DONE flip is reverted — OPS-RAG-SERVICE-REBUILD-STALE-IMAGE-PREDATES-IDLE-UNLOAD-FIX moved done[]->review[], status DONE->REVIEW, next_agent=qa, so the depends_on edge gating QA on FIX-RAG-EMBEDDER-IDLE-UNLOAD-PATH is re-blocked and the false-premise QA pass is prevented. Inference corrected: the signal concludes the flat ~98% line proves idle-unload does not work and that the finding returns to FIX-RAG-EMBEDDER-IDLE-UNLOAD-PATH as a real AC failure. It does not follow at t+2m44s against a 15-minute threshold — the mechanism was not yet due. That code row is UNMEASURED, not FAILED, and has NOT been sent back to developer. Corrected AC-3 protocol with four named branches recorded on the OPS row. Class row minted: FIX-RECLAMATION-AC-VERIFIED-IN-COLDSTART-WINDOW-BEFORE-WORKLOAD-LOADS (backlog, P1, next_agent=architect).",
         "po_disposition_at": "2026-08-08T08:22:40Z"
+      },
+      {
+        "id": "sys-20260808T083446-4705",
+        "ts": "2026-08-08T08:34:46Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "signal_feedback",
+        "summary": "rag-service-1 A-30 post-idle-unload-fix: 77.98% (idle-unload firing, converge to OPS-RAG-SERVICE-REBUILD task)",
+        "severity": "INFO",
+        "status": "READ",
+        "payload_ref": null,
+        "provenance": "detector",
+        "audit_cycle_tag": "cron:auditor-t1:2026-08-08T08:30Z",
+        "dedup_key": "memory_pressure:rag-service:A-30-post-fix-monitoring"
       }
     ],
     "last_triaged_at": "2026-07-29T06:25:00Z",
