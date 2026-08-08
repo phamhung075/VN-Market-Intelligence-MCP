@@ -3589,6 +3589,20 @@
         "provenance": "detector",
         "audit_cycle_tag": "cron:auditor-t1:2026-08-08T11:00Z",
         "dedup_key": "microservice_degraded:pdf-extractor:A-30:WARN-THRESHOLD"
+      },
+      {
+        "id": "sys-20260808T130859-7527",
+        "ts": "2026-08-08T13:08:59Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "signal_feedback",
+        "summary": "A-30 WARN: rag-service — memory 98.71% (1011/1024 MiB)",
+        "severity": "WARN",
+        "status": "NEW",
+        "payload_ref": null,
+        "provenance": "detector",
+        "audit_cycle_tag": "cron:auditor-t1:2026-08-08T13:00Z",
+        "dedup_key": "microservice_degraded:rag-service:A-30"
       }
     ],
     "last_triaged_at": "2026-07-29T06:25:00Z",
@@ -22429,6 +22443,41 @@
         "reviewed_at": "2026-08-08T12:54:44Z",
         "reviewed_by": "agent-father",
         "review_note": "Aged round-robin rotation shipped for docs/agents/dev-team/flow/main.md (Part 1). New \"Idle-Tick Rotation Selection\" section inserted at the exact point the old fixed BOUNDED-1->SLS->RLC->DRS->QA-Drain->Step1 fall-through began; each of the 6 candidate sections gated on $SELECTED == \"<id>\" (total mutual exclusion, byte-unchanged promote/claim bodies, .head-collision-freedom stronger-than-before/provable by inspection), stamp write inlined (before dispatch, not after -- documented rationale), Step 1 PO Triage gated at its unchanged physical location (still reachable from busy-tick bypass paths), Session Gate clarified (no logic change). 6 candidates not 5: DRS (added to the chain 2026-07-30, after the 2026-07-25 rotation brief/schema shipped) folded in via a documented, flagged inline duplicate of rotation_selected()/devteam-idle-chain-stamp.jq (both live in scripts/, outside agent-father commit_zone) -- fast-follow to reconcile the shared library flagged in-file and in Reusable Scripts, not yet minted as its own tracked row. Part 2 (durable pending_triage_inbox[], Step1 read/clear) deliberately untouched -- belongs to FIX-DEVTEAM-IDLE-CHAIN-MAIN-COMPLETION (depends on this row + P2A-DURABLE-DRAIN); interim window flagged where a non-step1_triage tick still destructively drains signals into the in-memory-only pendingSignals[] until those two land. TASK-DEVTEAM-IDLE-CHAIN-2-MAIN-FLOW (duplicate-candidate sibling) left untouched per PO 2026-08-06T22:07Z priority ruling favoring this row -- not implemented a second time. Committed direct-to-main (branch:null) -- QA verify-committed mode required, same as every other review[] row in this lane. Live 6-tick rotation-fairness simulated locally (jq, never against live orch-state.json): bounded1/sls/rlc/drs/qa_drain/step1_triage each selected exactly once across ticks 1-6, tick 7 wraps to bounded1 -- confirms the fairness bound by construction."
+      },
+      {
+        "id": "FIX-DEVTEAM-IDLE-CHAIN-P2A-DURABLE-DRAIN",
+        "type": "FIX",
+        "title": "drain-signals.md + drain-signals.js: durable inbox ordering — append-before-destructive for both §0a-1 and §0a-D (Part 2 — durability)",
+        "status": "REVIEW",
+        "priority": "P0",
+        "size": "M",
+        "zone": "docs/agents/dev-team/flow/",
+        "owner": "developer",
+        "next_agent": "qa",
+        "created_at": "2026-07-29T13:50:02Z",
+        "created_by": "pm",
+        "depends": [],
+        "blocks": [
+          "FIX-DEVTEAM-IDLE-CHAIN-MAIN-COMPLETION"
+        ],
+        "files": [
+          "docs/agents/dev-team/flow/drain-signals.md",
+          "scripts/agents-flow/drain-signals.js"
+        ],
+        "updated_at": "2026-08-08T13:19:39Z",
+        "depends_on": [
+          "TASK-DEVTEAM-IDLE-CHAIN-1-SCHEMA-UTILITIES"
+        ],
+        "dangling_deps_fix_20260801T0209": "cleared stale legacy .depends=[FIX-DEVTEAM-IDLE-CHAIN-S1-SCHEMA-SELECTION] (deleted by pm 2833b71bf, never removed from .depends); effective_depends_on now equals .depends_on=[TASK-DEVTEAM-IDLE-CHAIN-1-SCHEMA-UTILITIES] as pm originally intended",
+        "promoted_at": "2026-08-08T13:00:04Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=0)",
+        "claimed_at": "2026-08-08T13:00:09Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "reviewed_at": "2026-08-08T13:19:38Z",
+        "reviewed_by": "developer",
+        "commit_sha": "5ad4a3f92",
+        "review_note": "Part 2 (durability) of docs/architecture-briefs/2026-07-25-devteam-idle-chain-rotation-durable-inbox.md. Reordered both §0a-1 (file) and §0a-D (dashboard signal_queue) channels to durable-append-before-destructive: classify (non-destructive) -> batch envelopes -> ONE orch-apply.sh-gated append to .dev_team_idle_chain.pending_triage_inbox -> destructive mv/fingerprint/DB-INSERT or NEW->READ flip (0a-D flip combined atomically into the SAME write as its append) only on append success; failure retains everything untouched for retry. Spec (drain-signals.md) edited first per its own SSOT rule, then drain-signals.js to match: new appendDurableBatch() (CAS-retry, mirrors repointPayloadRefs()) + computeRoutedTo() (mirrors §0a-3 table). scripts/agents-flow/drain-signals.test.js 46/46 pass (36 pre-existing unmodified + 10 new/modified, incl. splitting the old golden-stdout AC7 scenario into explicit append-FAILURE and append-SUCCESS cases). bun tsc --noEmit 0 errors. Live orch-state.json confirmed untouched by any test (isolated mkdtemp harnesses only). Blocks FIX-DEVTEAM-IDLE-CHAIN-MAIN-COMPLETION (Step 1 consumption) — separate downstream row, not implemented here."
       }
     ],
     "qa": [
@@ -22641,37 +22690,6 @@
           "TASK-COWORK-SIGNAL-NAMING-CONTRACT"
         ],
         "decomposition_note": "Phase 1 decomposed into 4 atomic tasks per PO amendments (3 binding, 1 correction to FR-1 WINDOWKEY logic per Amendment 3). All inherit plan_only/supervised flags. No developer dispatch until PO adjudication."
-      },
-      {
-        "id": "FIX-DEVTEAM-IDLE-CHAIN-P2A-DURABLE-DRAIN",
-        "type": "FIX",
-        "title": "drain-signals.md + drain-signals.js: durable inbox ordering — append-before-destructive for both §0a-1 and §0a-D (Part 2 — durability)",
-        "status": "IN_PROGRESS",
-        "priority": "P0",
-        "size": "M",
-        "zone": "docs/agents/dev-team/flow/",
-        "owner": "developer",
-        "next_agent": "developer",
-        "created_at": "2026-07-29T13:50:02Z",
-        "created_by": "pm",
-        "depends": [],
-        "blocks": [
-          "FIX-DEVTEAM-IDLE-CHAIN-MAIN-COMPLETION"
-        ],
-        "files": [
-          "docs/agents/dev-team/flow/drain-signals.md",
-          "scripts/agents-flow/drain-signals.js"
-        ],
-        "updated_at": "2026-08-08T13:00:10Z",
-        "depends_on": [
-          "TASK-DEVTEAM-IDLE-CHAIN-1-SCHEMA-UTILITIES"
-        ],
-        "dangling_deps_fix_20260801T0209": "cleared stale legacy .depends=[FIX-DEVTEAM-IDLE-CHAIN-S1-SCHEMA-SELECTION] (deleted by pm 2833b71bf, never removed from .depends); effective_depends_on now equals .depends_on=[TASK-DEVTEAM-IDLE-CHAIN-1-SCHEMA-UTILITIES] as pm originally intended",
-        "promoted_at": "2026-08-08T13:00:04Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=0)",
-        "claimed_at": "2026-08-08T13:00:09Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)"
       }
     ]
   },
