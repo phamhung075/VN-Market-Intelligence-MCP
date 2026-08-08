@@ -133,7 +133,7 @@
     "does_not_consume_wip": true
   },
   "signal_queue": {
-    "_updated_at": 1786156313.345192,
+    "_updated_at": "2026-08-08T04:37:53Z",
     "_updated_by": "code-janitor",
     "archive": [],
     "rows": [
@@ -3426,8 +3426,8 @@
         "type": "system-issue",
         "summary": "team-tool-recheck writer dead since 06-23 — replace-vs-retire needed",
         "severity": "LOW",
-        "status": "NEW",
-        "payload_ref": "docs/signals/janitor-health-recheck-writer-retired-2026-08-08.json"
+        "status": "READ",
+        "payload_ref": "docs/signals/processed/janitor-health-recheck-writer-retired-2026-08-08.json"
       }
     ],
     "last_triaged_at": "2026-07-29T06:25:00Z",
