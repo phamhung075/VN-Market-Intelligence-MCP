@@ -215,3 +215,13 @@
 - Re-ran fresh, not trusted from prose: new `FIX-BASE-RATE-COMPUTATION-CRON-DEAD.test.ts` 11/11 pass (matches claim). `bun tsc --noEmit` 0 errors. `mock-guard.sh` PASS on both touched prod files. DDD grep: only pre-existing scheduler-layer `infrastructure/` imports (confirmed via diff — zero NEW infra import added by this commit). `process.env`/secret greps clean. Confirmed via `git log` on both touched files that 4 later commits (51b5fa14a/cf862f920/0a73c5b04/6775752af) touch the same files but none reverts this fix — both changes still live at HEAD.
 **why-decision:** APPROVED, DONE_VERIFIED — both claimed fixes (double-`recordJobRun` removed, startup-catchup probe added) independently confirmed present at HEAD, not reverted by later siblings.
 **why-change:** none — verified exactly what the row scoped.
+
+### STEP qa-S33 · qa · 2026-08-09T05:00:33Z
+**task-id:** FACTORY-RAG-confidence-impact-or-00-mask
+**what-done:** Direct-commit verify (`qa[]` row, `branch:null`, dev-team Review-Lane QA-Drain) of `b470f3142` — explicit `is not None` guard replacing `or 0.0` truthiness mask on `confidence`/`impact_score` in `LanceDBVectorStore._dedup_and_trim` (Python, rag-service).
+**what-considered:**
+- Commit real, `main`-ancestor; `git show --stat` matches all 3 files (repositories.py, test_domain_services.py, decision journal). Diff confirms both `float(row.get(k) or 0.0)` masks replaced with an explicit None-guard, verbatim-matching the sibling FDA-9 `_distance` pattern already in the same function.
+- Re-ran fresh (not trusted from prose): `python -m pytest` full suite 175/175 pass (0 fail); targeted `TestConfidenceImpactScoreNoneGuard` 5/5 pass, matches all 5 claimed cases (explicit-zero preserved ×2, missing-key default, explicit-None default, dedup/ordering unaffected). `mock-guard.sh` PASS on repositories.py.
+- `mypy`: file carries pre-existing debt (14 errors post-commit, cache-cleared, confirmed same file-wide errors exist pre-commit too, none within the touched `_dedup_and_trim` confidence/impact block) — the `list[dict]` type-arg error at line 352 is the unchanged pre-existing function signature (same at pre-commit line 315). No new mypy error introduced by this diff. `process.env`/secret greps clean.
+**why-decision:** APPROVED, DONE_VERIFIED — diff matches claim exactly, all re-run checks green, no regression, decision journal present and task-id stamped.
+**why-change:** none — verified exactly what the row scoped.
