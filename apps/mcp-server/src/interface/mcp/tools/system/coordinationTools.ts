@@ -155,8 +155,10 @@ export function registerCoordinationTools(server: McpServer): void {
       "A missed heartbeat after ttl_seconds allows the next claimer to steal the lock. " +
       "Returns ok=false if the lock was not found, already expired, or was stolen by another session (crash recovery). " +
       "If ok=false mid-task: commit safe partial state, send BUG telegram, EXIT — do not fight the steal. " +
-      "P1-FINAL (TASK_1980): match is SOLELY on owner_client_session (per-session UUID). " +
-      "Fallback rungs removed — wrong session cannot renew another session's lock.",
+      "P1-FINAL (TASK_1980): default (Rung A) match is SOLELY on owner_client_session (per-session UUID). " +
+      "Fallback rungs removed from Rung A — wrong session cannot renew another session's lock via owner_client_session alone. " +
+      "FR-2 (FIX-ORPHAN-FR1-FR2-INFRA-HEARTBEAT-LADDER): an ADDITIVE Rung B null-session ladder exists for " +
+      "orphan-signal rows only — see owner_agent/original_owner_client_session below.",
     {
       task_id: z
         .string()
@@ -169,9 +171,52 @@ export function registerCoordinationTools(server: McpServer): void {
             "Must match the value passed to task_claim. " +
             "Wrong session returns ok=false (anti-theft).",
         ),
+      ttl_seconds: z
+        .number()
+        .int()
+        .min(60)
+        .max(691200)
+        .optional()
+        .describe(
+          "FR-1 (FIX-ORPHAN-FR1-FR2-INFRA-HEARTBEAT-LADDER): optional new TTL to persist on this " +
+            "renewal, same bounds as task_claim (min 60, max 691200). Omit to reuse the lock's existing " +
+            "ttl_seconds column unchanged — fully backward compatible.",
+        ),
+      payload_patch: z
+        .string()
+        .optional()
+        .describe(
+          "FR-1: optional JSON string shallow-merged into the lock's existing payload JSON on this " +
+            "renewal (unpatched fields survive). Malformed or absent existing payload is handled " +
+            "non-fatally (patch alone becomes the new payload). Omit for no payload change.",
+        ),
+      owner_agent: z
+        .string()
+        .optional()
+        .describe(
+          "FR-2 null-session orphan-signal ladder ONLY — do NOT set for normal live-session heartbeats. " +
+            "Live-session locks (owner_client_session NOT NULL) always renew via owner_client_session " +
+            "alone and never consult this field. Supply together with original_owner_client_session to " +
+            "renew an orphan-signal:* row (owner_client_session column is NULL on those rows by design, " +
+            "server-reaper-owned) — must equal the row's own owner_agent.",
+        ),
+      original_owner_client_session: z
+        .string()
+        .optional()
+        .describe(
+          "FR-2 null-session orphan-signal ladder ONLY — do NOT set for normal live-session heartbeats. " +
+            "Supply together with owner_agent; must echo payload.original_owner_client_session recorded " +
+            "on the orphan-signal row (read via the read-only task_list_held probe). Ignored for any row " +
+            "whose own owner_client_session column is NOT NULL — cannot be used to bypass Rung A anti-theft.",
+        ),
     },
-    async ({ task_id, owner_client_session }) => {
-      const result = heartbeatTask(task_id, owner_client_session);
+    async ({ task_id, owner_client_session, ttl_seconds, payload_patch, owner_agent, original_owner_client_session }) => {
+      const result = heartbeatTask(task_id, owner_client_session, {
+        ...(ttl_seconds !== undefined ? { ttl_seconds } : {}),
+        ...(payload_patch !== undefined ? { payload_patch } : {}),
+        ...(owner_agent !== undefined ? { owner_agent } : {}),
+        ...(original_owner_client_session !== undefined ? { original_owner_client_session } : {}),
+      });
       return {
         content: [
           {
@@ -187,10 +232,12 @@ export function registerCoordinationTools(server: McpServer): void {
   server.tool(
     "task_release",
     "Release a coordination lock on task completion. " +
-      "Scoped solely to owner_client_session — cannot release another session's lock. " +
+      "Default (Rung A) scoped solely to owner_client_session — cannot release another session's lock. " +
       "P1-FINAL (TASK_1980): returns {ok:true, released:1} on success; {ok:true, released:0} when the lock " +
       "was not found, wrong owner, or already expired/stolen (clean no-op, NOT an error — " +
-      "TTL expiry is the fallback recovery). {ok:false} only on DB error. Safe to call in finally blocks.",
+      "TTL expiry is the fallback recovery). {ok:false} only on DB error. Safe to call in finally blocks. " +
+      "FR-2 (FIX-ORPHAN-FR1-FR2-INFRA-HEARTBEAT-LADDER): an ADDITIVE Rung B null-session ladder exists for " +
+      "orphan-signal rows only — see owner_agent/original_owner_client_session below.",
     {
       task_id: z
         .string()
@@ -203,9 +250,31 @@ export function registerCoordinationTools(server: McpServer): void {
             "Must match the value passed to task_claim. " +
             "Wrong session returns {ok:true, released:0} (no-op, anti-theft).",
         ),
+      owner_agent: z
+        .string()
+        .optional()
+        .describe(
+          "FR-2 null-session orphan-signal ladder ONLY — do NOT set for normal live-session releases. " +
+            "Live-session locks (owner_client_session NOT NULL) always release via owner_client_session " +
+            "alone and never consult this field. Supply together with original_owner_client_session to " +
+            "release an orphan-signal:* row (owner_client_session column is NULL on those rows by design, " +
+            "server-reaper-owned) — must equal the row's own owner_agent.",
+        ),
+      original_owner_client_session: z
+        .string()
+        .optional()
+        .describe(
+          "FR-2 null-session orphan-signal ladder ONLY — do NOT set for normal live-session releases. " +
+            "Supply together with owner_agent; must echo payload.original_owner_client_session recorded " +
+            "on the orphan-signal row (read via the read-only task_list_held probe). Ignored for any row " +
+            "whose own owner_client_session column is NOT NULL — cannot be used to bypass Rung A anti-theft.",
+        ),
     },
-    async ({ task_id, owner_client_session }) => {
-      const result = releaseTask(task_id, owner_client_session);
+    async ({ task_id, owner_client_session, owner_agent, original_owner_client_session }) => {
+      const result = releaseTask(task_id, owner_client_session, {
+        ...(owner_agent !== undefined ? { owner_agent } : {}),
+        ...(original_owner_client_session !== undefined ? { original_owner_client_session } : {}),
+      });
       return {
         content: [
           {
