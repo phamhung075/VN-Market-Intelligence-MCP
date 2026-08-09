@@ -672,7 +672,24 @@ _detect_samefile_pathspec_only_divergence() {
     head_blob="$(git rev-parse "HEAD:$f" 2>/dev/null)" || head_blob=""
     [ "$real_blob" = "$head_blob" ] && continue   # shared index entry is merely the HEAD blob — nothing genuinely staged
     if [ "$real_blob" != "$scratch_blob" ]; then
-      msg="[sweep-guard] SAME-FILE DIVERGENCE (non-blocking, AC-3 detector): '${f}' is being committed via a pathspec-SCOPED commit line, which takes its WORKING TREE content (git's --only semantics) — NOT the subset already staged in the shared index for this exact path. The shared index's staged blob for '${f}' (${real_blob}) differs from what is about to land in this commit (${scratch_blob}) — a peer's differently-staged hunk (or your own further, unreviewed edit) in this SAME file may be about to be swept in. Documented NON-GOAL of the pathspec-commit mandate, see docs/architecture-briefs/2026-07-21-commit-path-peer-index-sweep-guard.md §2.7 — detector only, never blocked. Inspect before trusting this commit's scope: git diff ${real_blob} ${scratch_blob} -- ${f}"
+      # FIX-SWEEPGUARD-SAMEFILE-INSPECT-CMD-GIT-USAGE-ERROR-MANUFACTURES-FALSE-BENIGN:
+      # `git diff <blobA> <blobB>` is git's two-blob form (git-diff(1) SYNOPSIS: `git
+      # diff [<options>] <blob> <blob>`) — it does NOT accept a trailing pathspec.
+      # Appending `-- <path>` to it is a hard USAGE ERROR (git prints its own usage
+      # banner, 0 diff lines, exit 129) — it does not "scope" the diff to that path,
+      # it breaks the command outright. Proven live 2026-08-09T01:35:08Z: the SAME
+      # blob pair WITH `-- <path>` -> usage error/0 lines; WITHOUT it -> 93 real diff
+      # lines. Emit the plain two-blob form (no pathspec) so the printed command is
+      # actually copy-pasteable and correct — the path is already implied by which
+      # blob pair is being compared.
+      # NOTE (AC-3 of the same fix row): the prior root-cause row
+      # FIX-SWEEPGUARD-SAMEFILE-DETECTOR-UNSTAGED-PATH-FALSE-POSITIVE (DONE_VERIFIED
+      # 2026-08-07T02:10Z) reached its "10/10 live fires confirmed false positives"
+      # conclusion using this exact broken command — that verdict is UNSUPPORTED, not
+      # disproven, and needs re-adjudication with the corrected command above. Not
+      # re-run here (out of this row's size:S single-fix scope) — see this row's
+      # decision-journal entry.
+      msg="[sweep-guard] SAME-FILE DIVERGENCE (non-blocking, AC-3 detector): '${f}' is being committed via a pathspec-SCOPED commit line, which takes its WORKING TREE content (git's --only semantics) — NOT the subset already staged in the shared index for this exact path. The shared index's staged blob for '${f}' (${real_blob}) differs from what is about to land in this commit (${scratch_blob}) — a peer's differently-staged hunk (or your own further, unreviewed edit) in this SAME file may be about to be swept in. Documented NON-GOAL of the pathspec-commit mandate, see docs/architecture-briefs/2026-07-21-commit-path-peer-index-sweep-guard.md §2.7 — detector only, never blocked. Inspect before trusting this commit's scope (two-blob form takes NO pathspec — do not append '-- ${f}', that is a git usage error): git diff ${real_blob} ${scratch_blob}"
       echo "$msg" >&2
       write_signal "$msg"
     fi

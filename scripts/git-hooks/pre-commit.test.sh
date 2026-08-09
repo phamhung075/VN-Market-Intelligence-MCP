@@ -77,6 +77,20 @@
 #       does NOT cover this: its own header comment scopes it to the `git add`
 #       idiom only, so the unstaged path was never exercised and the false-
 #       positive class shipped silently past 12/12 green.
+#   T14 FIX-SWEEPGUARD-SAMEFILE-INSPECT-CMD-GIT-USAGE-ERROR-MANUFACTURES-FALSE-
+#       BENIGN AC-4 — the SAME-FILE DIVERGENCE detector's printed "inspect before
+#       trusting this commit's scope" command must actually be EXECUTABLE. Prior
+#       to this fix, the emitted command was `git diff <blobA> <blobB> -- <path>`
+#       — the two-blob `git diff` form (git-diff(1) SYNOPSIS) does NOT accept a
+#       pathspec, so appending `-- <path>` is a hard git USAGE ERROR (usage
+#       banner, 0 diff lines, exit 129), not a scope filter, silently
+#       manufacturing a false "nothing to see here" for anyone who ran it.
+#       Reproduces T11's own divergent-blob-pair scenario, extracts the exact
+#       command string the detector prints to stderr, and asserts: (a) the
+#       CURRENT (fixed) command exits 0 with non-empty stdout — a real diff; (b)
+#       the SAME command with a `-- <path>` limiter re-appended (the pre-fix
+#       shape) exits non-zero with empty stdout — pins the exact regression this
+#       row fixed so a future edit re-adding a pathspec here is caught.
 #
 # Run:
 #   bash scripts/git-hooks/pre-commit.test.sh
@@ -488,6 +502,59 @@ else
   FAIL=$((FAIL + 1))
 fi
 rm -rf "$D13"
+
+# ── T14: FIX-SWEEPGUARD-SAMEFILE-INSPECT-CMD-GIT-USAGE-ERROR-MANUFACTURES-FALSE- ──
+# BENIGN AC-4 — the printed "inspect before trusting this commit's scope" command
+# must actually be EXECUTABLE (non-empty stdout, rc=0) against a synthetic
+# divergent blob pair. Also pins the pre-fix regression: the same command with a
+# `-- <path>` pathspec re-appended must fail (usage error), proving this test
+# would have caught the original bug.
+D14="$(new_repo)"
+(
+  cd "$D14" || exit 1
+  printf 'line1\nline2\nline3\nline4\nline5\n' > f14.txt
+  git add f14.txt
+  git commit -qm "seed f14" -- f14.txt
+
+  # Actor's own isolated hunk, staged only (real_blob).
+  cat > mine14.patch <<'PATCH'
+--- a/f14.txt
++++ b/f14.txt
+@@ -1,4 +1,4 @@
+-line1
++line1-MINE
+ line2
+ line3
+ line4
+PATCH
+  git apply --cached mine14.patch
+  git apply mine14.patch
+
+  # Peer's unstaged, disjoint-hunk edit — forces real_blob != scratch_blob so the
+  # detector fires and prints its inspect command.
+  sed -i.bak '5s/.*/line5-PEER-WIP/' f14.txt && rm -f f14.txt.bak
+
+  git commit -qm "actor commits only own hunk (pathspec-scoped)" -- f14.txt 2>stderr14.log
+  echo $? > exit14.log
+)
+stderr14="$(cat "$D14/stderr14.log" 2>/dev/null)"
+# Extract the exact printed command: "git diff <sha1> <sha2>" at end of the message.
+cmd14="$(printf '%s' "$stderr14" | grep -o 'git diff [0-9a-f]\{7,40\} [0-9a-f]\{7,40\}$')"
+fixed_out14=""; fixed_rc14=1
+broken_out14=""; broken_rc14=0
+if [ -n "$cmd14" ]; then
+  fixed_out14="$(cd "$D14" && eval "$cmd14" 2>/dev/null)"; fixed_rc14=$?
+  broken_out14="$(cd "$D14" && eval "$cmd14 -- f14.txt" 2>/dev/null)"; broken_rc14=$?
+fi
+if [[ -n "$cmd14" && "$fixed_rc14" -eq 0 && -n "$fixed_out14" \
+      && "$broken_rc14" -ne 0 && -z "$broken_out14" ]]; then
+  echo "PASS T14: emitted inspect command [$cmd14] is executable (rc=0, non-empty stdout); re-appending '-- <path>' (the pre-fix shape) reproduces the usage error (rc=$broken_rc14, empty stdout) — confirms both the fix and the regression it closes"
+  PASS=$((PASS + 1))
+else
+  echo "FAIL T14: cmd=[$cmd14] fixed_rc=$fixed_rc14 fixed_out_empty=$([ -z "$fixed_out14" ] && echo yes || echo no) broken_rc=$broken_rc14 broken_out_empty=$([ -z "$broken_out14" ] && echo yes || echo no) stderr=[$stderr14]"
+  FAIL=$((FAIL + 1))
+fi
+rm -rf "$D14"
 
 # ── Summary ───────────────────────────────────────────────────────────────────
 echo ""
