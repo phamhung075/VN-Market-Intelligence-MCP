@@ -152,3 +152,6 @@
 **why-decision:** A clean split along an already-documented seam ("ST-3: Internal helpers" comment) beats a header when free (zero behavior change, zero call-site edits via re-export) — same precedent as checkForeignFlowGap.ts.
 **why-change:** none — split chosen on its merits from the row's own split-OR-header remedy.
 **verification:** pushed `763ef6822`; live-verified on CI run `31277793877` — `size-lint` job now reports exactly 1 offender (`transport.ts`, sibling row FIX-CI-SIZELINT-TRANSPORT-TS-SSE-REAPER-237L, not mine); my 2 files absent from the failing list. Same run's `bun test` job (CI's real per-file isolation runner) shows ONE unrelated `FAILEDFILE` (`167-prediction-market-job.test.ts`) — zero relation. `tsc --noEmit` clean. Focused 14-file suite 246/246 pass. `gen-project-stats.ts`: toolCount=183, cronJobCount=88, match baseline. Board → `review[]` via `orch-apply.sh` (`ebcdc1225`), `status:REVIEW`, `next_agent:qa`.
+
+### CAP-REACHED · 2026-08-09T02:10:00Z
+Byte cap breached pre-write (file at 35824/36000 bytes, 176B headroom, LINE_CAP=600/BYTE_CAP=36000 dual-axis check) discovered by dev-mcp-server-S83 pre-write cap check — a new STEP entry would not fit. Rolling further writes to `sprint-COWORK-GUARANTEED-SLOT-CATCHUP-dev-mcp-server-5.md`.
