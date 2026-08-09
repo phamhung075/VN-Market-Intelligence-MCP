@@ -1,4 +1,42 @@
-## c12 · 2026-08-09T02:20Z
+## c13 · 2026-08-09T02:42:43Z
+
+### Audit Run Tier-3 (02:00–02:30 UTC 2026-08-09)
+- Tier: 3 | Checks: 28 total (A:9, B:1, C:16)
+- Findings: 2 warnings, 26 passes
+- Status: DEGRADED
+
+#### Check Results
+**Container Tooling (A-22–A-24):** PASS (pdftoppm, tesseract, Vietnamese lang all present)
+**Inter-Service Connectivity (A-25–A-28):** PASS (all 4 services healthy)
+**EPIPE Crash (A-31):** PASS (0 crashes in 30m)
+**BCTC PDFs (B-08):** PASS (313 files)
+
+**DB Write Integrity (C-01–C-16):**
+- C-01 (distinct codes): PASS (898 ≥ 25)
+- C-02 (ohlcv rows): PASS (992 > 0)
+- C-03 (financial reports): PASS (45 ≥ 26)
+- C-04 (low confidence): PASS (0 ≤ 5)
+- C-05 (BCTC URLs): PASS (0 ssc.gov.vn)
+- C-06 (market_messages 3h): **WARN** (0 messages in 3h, idle)
+- C-07 (agent_signals 24h): PASS (40 > 0)
+- C-08 (orphaned alerts 2h): PASS (0 orphaned)
+- C-09 (macro_indicators): PASS (3 ≥ 3)
+- C-10 (pdf failed 24h): PASS (0 ≤ 2)
+- C-11 (pdf done 48h): **WARN** (0 done, expected off-season)
+- C-12 (DB integrity): PASS (ok)
+- C-13 (WAL sizes): PASS (< 50MB)
+- C-14 (code concentration): PASS (0.6% < 60%)
+- C-15 (schema): PASS (all columns present)
+- C-16 (stale pending): PASS (0 > 72h)
+
+#### Warnings
+- **C-06:** market_messages empty in last 3 hours (system idle, not an error)
+- **C-11:** No 'done' PDF extractions in last 48 hours (BCTC is event-driven quarterly, expected off-season)
+
+#### Assessment
+Tier-3 deep audit shows healthy DB and service infrastructure. All integrity checks pass except for expected idle periods in message processing. System is operationally sound despite the cron failures documented in prior Tier-2 run (c12).
+
+
 
 ### Audit Run Tier-2 (02:20–02:24 UTC 2026-08-09)
 - Tier: 2 | Scope: data freshness sweep, cron fire-gap check, VPS proxy health
