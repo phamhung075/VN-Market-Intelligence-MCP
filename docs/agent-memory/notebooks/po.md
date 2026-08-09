@@ -1,5 +1,30 @@
 # PO — Notebook
 
+## 2026-08-09T01:35Z · The verification command was a usage error, so every fire looked benign
+
+### What actually happened
+- dev-team Step-1 triage, 106 inbox envelopes + 1 telegram report. **4 mints, 1 manual-dispatch fold, ~95 folds.** `orch-apply.sh`: backlog 360→364, task_total 752→756, conservation OK. Report 4560 resolved `duplicate`.
+- Journal: `docs/agent-memory/decisions/triage-20260809T0135Z-po.md`.
+
+### Decisions worth keeping
+- **★ THE §2.7 VERIFY COMMAND CANNOT RETURN EVIDENCE — AND FAILS IN THE BENIGN DIRECTION.** 4 `SAME-FILE DIVERGENCE` fires; my own flow says verify with `git diff <staged-blob> <landing-blob> -- <path>`. All 4 → **0 lines**. Before writing "false positive" I asked whether the command *could* print anything: `git diff <blob> <blob>` takes **no pathspec**, so `-- <path>` is a hard usage error. Same pairs without it → **93 lines**. The prior row's "10/10 confirmed FP" verdict came through this command — **unsupported, not disproven**. When a check always says PASS, test that it can say FAIL.
+- **★ I ALMOST OVER-CLAIMED THE FINDING, AND CHECKED.** The `qa.md` pair showed a whole `cycle-591` QA record present in the index and gone from the commit — textbook peer data loss. `git log -S` found it landed at `c59a741e2`, pruned at `914e813c4`: retention working, **nothing lost**. Wrote that into the row. A real mechanism defect does not need an inflated instance.
+- **★ ONE PATH SEGMENT DECIDED A MINT.** `coordinationTools.ts` (457L) vs the DONE_VERIFIED `coordinationStore.ts` — title-substring dedup swallows it, file-scoped `dedup_key` does not. CI independently confirmed the Store fix (gone from the offender list) while the Tools file was never tracked. 13 `ci_red` → 4 dedup hits, 1 mint.
+- **★ THE TOP SWEEP-GUARD OFFENDER IS THE DISPATCHER ITSELF.** `prior_warns` 9→**22** against `threshold=3` in 12h, actor `165f4245…` = the live router/dev-team session; every BARE commit still proceeded. Folded (occ 8→25), raised **high→P0**. A guard whose worst offender is the fleet's own dispatcher protects nothing.
+- **★ AN UNVERIFIABLE AC IS A DEFECT IN THE AC.** SSE reaper soak clock reset a 3rd time; its evidence is the *shared* container's `StartedAt`, which 8+ peers legitimately reset. Row sits in `qa[]` with an **empty `status_note`** after three resets. Minted the AC replacement — refused to waive the soak or just bump priority.
+- **★ FOUR CYCLES OF ESCALATION ANSWERED BY ONE `ls`.** bctc-analyst's "signals vanish" is the drain moving them to `processed/`; it has no Bash/Glob grant so it can never see that. AC explicitly **forbids** closing this by granting Bash — the bug is the verify premise.
+- **Deferred 2 WARNs (`deep_fetch_stats` 0 rows, `bctc-discover` 101h) with a named re-verify.** Their "already tracked" evidence came from the dedup script `FIX-DEDUPCHECK-MATCHEDTASKID-UNANCHORED-SUBSTRING-MISLABEL` is open against — untrustworthy both ways. At 360 backlog rows, minting on one unreplicated WARN is how a board stops being readable.
+
+### NEXT
+- `FIX-PO-TRIAGE-SIGNALS-AGENT-FLOW-DEFECT-TYPE-UNROUTED` now scopes 8 unrouted types + 2 unhandled `bug-escalation` payload tags — **3rd** recurrence of "guard ships, triage table not updated in lockstep". Its new AC (register the tag in the same commit, else fail loud) is the only part that stops recurrence #4.
+- Re-verify `deep_fetch_stats` and `bctc-discover` next tick; if either repeats, mint without further deferral.
+- 4 CI-red rows now sit in `backlog[]` undispatched. Last tick's lesson stands: when every signal dedups cleanly, the bug is downstream of triage.
+
+### Carry-over
+- **★ VERIFY THAT A VERIFIER CAN FAIL.** Empty output from a check is not evidence of absence until you have proven the check can produce output at all.
+- Standing rules (held): after every `orch-apply.sh` re-read the row on disk; AC-3 self-verify can false-green off a peer's sweeping commit, so assert the SHA is the one I just created.
+- Notebook written section-prepend+prune, never full-overwrite (`feedback_qa_notebook_fulloverwrite_drops_concurrent_peer_entries_20260806`). Pruned the 20:54Z section (in git); its live lessons are carried above.
+
 ## 2026-08-08T22:19Z · The work was never missing — its acceptance criterion was never re-measured
 
 ### What actually happened
@@ -24,27 +49,3 @@
 - **★ A DONE_VERIFIED TASK IS NOT A DELIVERED OUTCOME.** Every RC-IDLE-LOOPS row passed verification; the metric never moved. **Re-measure the brief's own acceptance criterion, not the task statuses that claim to satisfy it.**
 - Standing rules (held, applied again): after every `orch-apply.sh` re-read the specific row/field on disk before claiming it; AC-3 self-verify can false-green off a *peer's* sweeping commit, so assert the SHA is the one I just created.
 - Notebook written section-prepend+prune, never full-overwrite (`feedback_qa_notebook_fulloverwrite_drops_concurrent_peer_entries_20260806`). Pruned the 19:26Z section (in git); its live lesson is the peer-SHA one above.
-
-## 2026-08-08T20:54Z · CI red 7h30m with perfect detection: the gap was dispatch, not detection
-
-### What actually happened
-- dev-team Step 1 triage. Inbox was **70 entries, not the 10 relayed**. 0 mints from signals, 1 mint from a mechanism I found while running my own pre-check, 4 folds, 35/35 `to=po` queue rows closed `triaged`. `.head` untouched (peer reset it to idle mid-tick).
-- Journal: `docs/agent-memory/decisions/triage-20260808T2054Z-po.md`. TNB c125 ACKed, 8/8 findings dispositioned, 0 tasks created.
-
-### Decisions worth keeping
-- **★ THE RELAY WAS HALF-RIGHT, WHICH IS THE DANGEROUS SHAPE.** dev-team said `763ef6822` "very likely resolves" the size-lint red. Checked live: CI is RED on **both commits after it**. The fix did clear its own file (`coordinationStore.ts` is gone from the offender set) — so a second offender, `transport.ts` (126L→237L), reads exactly like "CI is recovering" if you never open the log. Mandatory failing-file read is not ceremony; it is the only thing that separates *one of two fixed* from *fixed*.
-- **★ DETECTION WORKED PERFECTLY AND BOUGHT NOTHING.** Ten `ci_red` signals, 13:23Z→20:23Z. Every one correctly detected, deduped, folded onto the right FILE-scoped row. Main CI has still been RED **7h30m** — because both rows were minted into `backlog[]` and **never dispatched**. An 11th mint would have been pure churn. **When every signal in a 7-hour storm deduped cleanly, the bug is downstream of triage — stop minting and start promoting.** Both rows folded into BATCH for direct dispatch.
-- **★ THE SWEEP HAS BEEN DEAD SINCE 16:06Z AND THE TELL WAS A REPEAT #1.** `TASK-COWORK-MUTEX-001` was skipped at 16:06Z with excellent reasoning — and re-ranked `candidate[0]`, `reflag:false`, when I re-ran Step 1 at 20:56Z, 4h50m later, past the 4h staleness window. Cause: `flag_reentrant` reads **only** `po_manual_dispatch_flagged_at`; the documented skip path writes `po_manual_dispatch_skipped_at`, which **nothing reads**. Step 2 selects exactly ONE row per tick, so one skipped P0 starves the entire mechanism. Census: 1 row `skipped_at`, 5 `flagged_at`, and the 1 outranks all 5. Minted `FIX-PO-MANUAL-DISPATCH-SKIP-STAMP-FIELD-MISMATCH-STARVES-SWEEP`. **A correct decision recorded in a field no consumer reads is not a decision.**
-- **★ REFUSED TO RE-LITIGATE THE PRIOR PO'S SKIP.** Easy move was to fold `TASK-COWORK-MUTEX-001` as its own row type says (TASK/M/dev) — that burns a slot re-implementing live code, exactly what the 16:06Z note warned. Also refused to close it: the match is file+behaviour, not AC. Folded as a **SPIKE** doing the AC-level diff its own `REQUIRED NEXT ACTION` demands, and stamped `flagged_at` so the sweep unblocks now instead of waiting for the fix to land.
-- **Three rag-service A-30 entries are ONE chronic condition (c380→c382), not three incidents** — auditor's own ledger already suppressed c382; folded across 5 open rows. Same for 4/4 `repair_task_request` (all matched by check_id) and the sweep-guard `escalated=true`. Zero mints from the signal inbox was the correct answer.
-- **Coverage guard is RED with 10 unrouted `to=po` types, up from 2 on 08-06 — still folded, not minted.** `FIX-PO-TRIAGE-SIGNALS-AGENT-FLOW-DEFECT-TYPE-UNROUTED` already scopes exactly this. Raised P1→high, and wrote on the row that `microservice_memory_degraded` is an underscore alias of the routed `microservice_degraded` — wants normalisation, not a 10th table row.
-
-### NEXT
-- Both CI rows are debt from the **same** SSE reaper commit `b746c112b`. Their outcome is evidence for the 23:06Z sign-off on `FIX-MCP-SSE-SESSION-MANAGER-PERCONN-LEAK-NO-REAPER` — do not sign off before then, and do not sign off on soak evidence alone.
-- If the sweep's top candidate is unchanged next tick, the skip-stamp fix did not land — check that before re-deriving.
-
-### Carry-over
-- **Never trust a relayed count.** Inbox was relayed as 10, measured 70. Read the durable structure yourself; the relay is a hint, never the input.
-- Standing rule (held, applied again): after every `orch-apply.sh`, re-read the specific row/field on disk before claiming it.
-- Notebook written section-prepend+prune, never full-overwrite (`feedback_qa_notebook_fulloverwrite_drops_concurrent_peer_entries_20260806`, confirmed on this file 18:08Z). 19:26Z bytes preserved verbatim.
-
