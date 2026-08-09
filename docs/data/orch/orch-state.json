@@ -93,11 +93,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "updated_at": "2026-08-08T23:40:00Z",
-    "updated_by": "architect",
-    "active_task_id": null,
-    "next_agent": null
+    "status": "in_progress",
+    "active_task_id": "FIX-ORPHAN-FR2-FR6-FR7-INTERFACE-COORDINATION-TOOLS",
+    "next_agent": "developer",
+    "next_action": "Ready-Lane Consumer claim of FIX-ORPHAN-FR2-FR6-FR7-INTERFACE-COORDINATION-TOOLS — spawn developer DIRECTLY (no zone-detect indirection; row already carried a resolved next_agent/owner).",
+    "updated_at": "2026-08-08T23:52:09Z",
+    "updated_by": "dev-team (ready-lane consumer)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -801,6 +802,20 @@
         "payload_ref": null,
         "provenance": "detector",
         "audit_cycle_tag": "cron:auditor-t1:2026-08-08T23:30Z",
+        "dedup_key": "microservice_degraded:vn-market-intelligence-mcp-rag-service-1:A-30"
+      },
+      {
+        "id": "sys-20260809T000759-1bd3",
+        "ts": "2026-08-09T00:07:59Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "signal_feedback",
+        "summary": "A-30 FAIL: vn-market-intelligence-mcp-rag-service-1 — sustained >93% memory pressure",
+        "severity": "WARN",
+        "status": "NEW",
+        "payload_ref": null,
+        "provenance": "detector",
+        "audit_cycle_tag": "cron:auditor-t1:2026-08-09T00:00Z",
         "dedup_key": "microservice_degraded:vn-market-intelligence-mcp-rag-service-1:A-30"
       }
     ],
@@ -12669,44 +12684,6 @@
         "po_recurrence_20260801T0125": "3rd live-confirmed occurrence, fresh RAW evidence from TNB audit cycle 121 (docs/handoffs/tnb-audit-latest.md, ~2026-07-31T20:23Z) — the 07-31 morning dish. unified-agent notebook self-reports Layers walked: 1-6 (full) and QUALITY: full, while the persisted docs/data/unified-agent-synthesis-2026-07-31-morning.json for the SAME cycle carries quality_verdict: degraded plus four explicit gap tokens ([gap:L2_US_macro_carry_only], [gap:L3_VN_macro_incomplete], [gap:L4_partial_pillar_coverage], [gap:business_context_absent]). TNB independently re-scored the dish at 5/8 = NEEDS_ATTENTION on its own 9-step methodology, corroborating the JSON and not the notebook prose. occurrence_count raised 1 -> 3 (was stale at 1 since 2026-07-21; c118 had already measured 2). Row remains READY/next_agent=agent-father, unshipped for 10 days. NOT dispatched this tick — it was the runner-up manual-dispatch candidate behind FIX-DEVTEAM-REVIEW-LANE-QA-DRAIN, which was picked because it unblocks the lane this row is also waiting on. Carry to next tick as the leading candidate if the drain row is in flight."
       },
       {
-        "id": "FIX-ORPHAN-FR2-FR6-FR7-INTERFACE-COORDINATION-TOOLS",
-        "type": "FEATURE",
-        "title": "Add Zod schemas for FR-1/FR-2 optional params; update task_heartbeat/task_release registration per FR-6/FR-7",
-        "status": "READY",
-        "priority": "P0",
-        "size": "M",
-        "zone": "apps/mcp-server/",
-        "owner": "pm",
-        "next_agent": "developer",
-        "depends": [
-          "FIX-ORPHAN-FR1-FR2-INFRA-HEARTBEAT-LADDER"
-        ],
-        "supervised": false,
-        "created_at": "2026-07-22T01:15:30Z",
-        "created_by": "pm/decomposition-20260722T0115",
-        "updated_at": "2026-07-22T01:21:08Z",
-        "updated_by": "pm/decomposition-20260722T0115",
-        "origin_task": "FIX-ORPHAN-ADOPTION-BOARD-STATE-GUARD",
-        "parent_fix_spec": "fix_spec(a)+(c)/AC1+AC3",
-        "subtasks": [
-          {
-            "seq": 1,
-            "title": "Add optional ttl_seconds to task_heartbeat Zod schema (min:60, max:691200)",
-            "acceptance": "Schema allows omitted ttl_seconds (backward compatible); .describe() prose updated"
-          },
-          {
-            "seq": 2,
-            "title": "Add optional payload_patch to task_heartbeat Zod schema",
-            "acceptance": "Schema allows omitted payload_patch; .describe() prose updated"
-          },
-          {
-            "seq": 3,
-            "title": "Add optional owner_agent + original_owner_client_session to task_heartbeat/task_release schemas",
-            "acceptance": "Both params optional, both schemas document use for null-session orphan-signal ladder only"
-          }
-        ]
-      },
-      {
         "id": "FIX-ORPHAN-FR4-FR5-FLOW-DEVTEAM-ADOPTION-GUARD",
         "type": "FEATURE",
         "title": "Create resolve-task-lane-by-id.jq; implement FR-4 read-guard + FR-5 board-flip write in dev-team/flow/main.md Step 0a-B",
@@ -19148,6 +19125,48 @@
         "claimed_by": "dev-team (supervised-lane sweep)",
         "build_standard": "not-applicable",
         "architect_review_note": "DESIGN COMPLETE (architect, brownfield, direct PO-mint FIX row, no BA/PM relay). Full brief: docs/architecture-briefs/2026-08-09-fix-orchstate-hotfile-inline-prose-ceiling.md. DECISION: (c) both (a)+(b), sequenced behind a prerequisite bug-fix not in the original mint note. RE-MEASURED LIVE (not the mint snapshot): 623 rows across backlog[]/ready[]/review[] (not 517), zero terminal-status rows in any of the 3 lanes (confirms TE-T15/FIX-BACKLOG-TERMINAL-ROW-DRIFT would evict nothing here). 3 brownfield findings beyond the mint: (F-1) the intended remedy scripts/orch-backlog-stub.sh (HSC-4) only fires once, on NEW backlog[] item creation, has no ready[]/review[] equivalent, never re-fires on lane promotion -- 95% of ready[] rows and 44% of review[] rows never got a detail_ref at all. (F-2) even where detail_ref IS present (105/186 review[] rows), fresh prose keeps re-accreting under newly-invented field names because TaskSchema is still .passthrough() (SSOT-W1-SERVER-ENFORCE .strict() promotion is pending, gated on zero live unknown-key warnings -- this design is the missing precondition for it, not a competing convention). (F-3, changes the fix shape) orch-backlog-stub.sh cold-merge is DATA-DESTRUCTIVE on re-run -- reproduced in an isolated scratch fixture: any hot-side prose added since a rows last stub is silently discarded (shallow $new_items + .items merge, existing-cold-wins-wholesale). FIX SHAPE: (1) prerequisite -- fix the cold-merge to a per-field deep merge (.items * $new_items, jq recursive merge, verified in isolation); (2) generalize orch-backlog-stub.sh additively (LANES config var, default unchanged=backlog, zero call-site churn for ~10 existing callers), run once live under commit-mutex across backlog+ready+review -- executes (b); (3) new sibling script scripts/orch-row-prose-ceiling-check.mjs mirroring orch-conservation-check.mjs live-vs-candidate CLI contract (deliberately NOT extending orch-stamp-updated-at.mjs, which is mid-extension for the unrelated in-flight FIX-ORCHAPPLY-SELECTOR-MISS-SILENT-NOOP fix), wired as orch-apply.sh Stage 2.5 -- growth-only: pre-existing over-ceiling rows that are not growing get a non-blocking WARN, only NET NEW inline growth past a data-driven 12KB default ceiling (env-tunable, ORCH_ROW_PROSE_CEILING_BYTES, approx p90 across all 3 lanes today) hard-rejects, pointing the caller at detail_ref -- executes (a) without the whole-file brick-risk class POs own D-4 ruling already flagged for the sibling FIX-ORCHAPPLY-NO-HOTFILE-SIZE-TELEMETRY-WARN task. SEQUENCING: this row is the named prerequisite for that tasks deferred hard-ceiling half. Zone confirmed cross-service/ (scripts/) via system-map.json + zone-detect Tier-2 (root/scripts/, no apps/ code touched). BUILD-STANDARD: not-applicable (bug-fix/refactor + new script in an existing zone, no new service/primitive). Task decomposition (5 steps, files+ACs) in brief SS5; step 3 (live migration run) inherits supervised:true. NEXT_AGENT: developer (single coherent engagement, no ba/pm relay, matches this sessions FIX-ORCHAPPLY-SELECTOR-MISS-SILENT-NOOP / FIX-DONELANE-... precedent for this row class)."
+      },
+      {
+        "id": "FIX-ORPHAN-FR2-FR6-FR7-INTERFACE-COORDINATION-TOOLS",
+        "type": "FEATURE",
+        "title": "Add Zod schemas for FR-1/FR-2 optional params; update task_heartbeat/task_release registration per FR-6/FR-7",
+        "status": "REVIEW",
+        "priority": "P0",
+        "size": "M",
+        "zone": "apps/mcp-server/",
+        "owner": "pm",
+        "next_agent": "developer",
+        "depends": [
+          "FIX-ORPHAN-FR1-FR2-INFRA-HEARTBEAT-LADDER"
+        ],
+        "supervised": false,
+        "created_at": "2026-07-22T01:15:30Z",
+        "created_by": "pm/decomposition-20260722T0115",
+        "updated_at": "2026-08-09T00:13:41Z",
+        "updated_by": "developer",
+        "origin_task": "FIX-ORPHAN-ADOPTION-BOARD-STATE-GUARD",
+        "parent_fix_spec": "fix_spec(a)+(c)/AC1+AC3",
+        "subtasks": [
+          {
+            "seq": 1,
+            "title": "Add optional ttl_seconds to task_heartbeat Zod schema (min:60, max:691200)",
+            "acceptance": "Schema allows omitted ttl_seconds (backward compatible); .describe() prose updated"
+          },
+          {
+            "seq": 2,
+            "title": "Add optional payload_patch to task_heartbeat Zod schema",
+            "acceptance": "Schema allows omitted payload_patch; .describe() prose updated"
+          },
+          {
+            "seq": 3,
+            "title": "Add optional owner_agent + original_owner_client_session to task_heartbeat/task_release schemas",
+            "acceptance": "Both params optional, both schemas document use for null-session orphan-signal ladder only"
+          }
+        ],
+        "claimed_at": "2026-08-08T23:52:08Z",
+        "claimed_by": "dev-team (ready-lane consumer)",
+        "dispatch_lane": "developer",
+        "dev_note": "Zod schemas (ttl_seconds/payload_patch/owner_agent/original_owner_client_session) added to task_heartbeat+task_release in coordinationTools.ts per FR-7; handler pass-through fix required (both handlers previously dropped every param beyond task_id/owner_client_session) to satisfy the row own AC. New FIX-ORPHAN-FR2-FR6-FR7-INTERFACE-COORDINATION-TOOLS.test.ts 13/13 GREEN (RED-confirmed first). Combined targeted coordination suite 132/132 pass, 0 regressions. bun tsc --noEmit clean. Zone-dispatch deviation documented (no Agent tool grant, cannot nest-spawn dev-mcp-server — see feedback_devteam_flow_needs_nested_agent_spawn_subagent_cannot.md). NOT yet live in the running container (NFR-3 rebuild gate, separate step). Commits fb5207746 (code+test)/98259e871 (handoff+WORK.md)/80bda1800 (notebook+journal)."
       }
     ],
     "qa": [
@@ -19472,7 +19491,7 @@
         "last_served_tick": "2026-08-08T23:23:31Z"
       },
       "rlc": {
-        "last_served_tick": "2026-08-08T20:24:14Z"
+        "last_served_tick": "2026-08-08T23:51:54Z"
       },
       "drs": {
         "last_served_tick": "2026-08-08T21:22:23Z"
@@ -19484,7 +19503,7 @@
         "last_served_tick": "2026-08-08T22:26:10Z"
       }
     },
-    "_updated_at": "2026-08-08T23:42:58Z",
+    "_updated_at": "2026-08-08T23:51:54Z",
     "_updated_by": "dev-team",
     "pending_triage_inbox": [
       {
