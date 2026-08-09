@@ -8108,22 +8108,26 @@
       },
       {
         "id": "FIX-MONTHLYSIGNALQUALITYAUDITJOB-MISSED-JULY-RECOVER-GUARD",
-        "title": "monthlySignalQualityAuditJob (cron 0 0 1 * *) confirmed MISSED its 2026-07-01 fire — recoverMissedExecutions:false (schedulerJobTable.ts:229) means it silently skipped a month with zero recovery and zero alert",
+        "title": "monthlySignalQualityAuditJob (cron 0 0 1 * *) has now missed TWO consecutive fires — 2026-07-01 and 2026-08-01 — with zero recovery and zero alert; recoverMissedExecutions:false (schedulerJobTable.ts:229) is the opt-out, but flipping it alone is a PROVEN no-op",
         "type": "FIX",
-        "priority": "P3",
+        "priority": "P2",
         "status": "BACKLOG",
         "zone": "apps/mcp-server/",
         "owner": "dev-mcp-server",
         "next_agent": "dev-mcp-server",
         "created_by": "dev-mcp-server",
         "created_at": "2026-07-30T06:05:12Z",
-        "updated_at": "2026-07-30T06:05:12Z",
+        "updated_at": "2026-08-09T02:49:57Z",
         "root_cause": "schedulerJobTable.ts:227-233 registers monthlySignalQualityAuditJob with options:{timezone:\"UTC\", recoverMissedExecutions:false} — an explicit opt-out documented in the adjacent code comment as deferred pending a T4 dedup guard (\"recovery is opt-out here until a T4 dedup guard is added to runMonthlySignalQualityJob() in a future sprint\"). If the mcp-server process is down/restarting at exactly the 1st-of-month 00:00 UTC fire instant, that month's audit is permanently skipped with no backfill and no distinguishing signal from a normal quiet month.",
         "evidence": "CONFIRMED AT SOURCE 2026-07-30 (task FIX-SLA-SIGNALQUALITYAUDIT-MONTHLY-CADENCE-MISCLASSIFIED-48H investigation, AC-2/AC-3): queried the live named-volume market.db cron_job_runs table via an EXACT job_name match against idx_cron_job_runs_job_started (working around this DB's known page-corruption on full-table-scan queries — see FIX-SQLITE-DOCKER-VIRT-CORRUPTION-RECUR-20260730, same root DB, unrelated defect). Result: exactly 2 rows total for monthlySignalQualityAuditJob, started_at=2026-05-01T00:00:00 (status=success) and 2026-06-01T00:00:00 (status=success) — NO row for 2026-07-01. The July fire genuinely did not happen; recoverMissedExecutions:false meant no backfill occurred and nothing alerted on the gap.",
         "not_the_signal_quality_audit_defect": "IMPORTANT — this missed cron run is NOT the cause of the separate signal_quality_audit SLA-breach defect fixed by FIX-SLA-SIGNALQUALITYAUDIT-MONTHLY-CADENCE-MISCLASSIFIED-48H. Traced at source: runMonthlySignalQualityJob() (scheduler/audits/monthlySignalQualityJob.ts) only queries signal_rejections and sends a Telegram WORK report — it never writes to the signal_quality_audit table. That table's only writer is insertSignalQualityAudit() called from post_agent_signal (price_confirmation/urgent_news + confidence field only), an entirely separate event-driven path. Do not conflate the two when scoping this fix.",
         "recommended_action": "Add the deferred T4 dedup guard to runMonthlySignalQualityJob() (idempotency check against the target audit month before sending the Telegram report — e.g. skip if a report for that month/year was already sent, so recoverMissedExecutions can be safely flipped to true without risking a duplicate Telegram report on a scheduler restart/replay), THEN flip schedulerJobTable.ts:229 recoverMissedExecutions:false -> true. Given the intrinsic idempotency of \"prior month\" resolution (any fire within a calendar month resolves to the SAME prior-month target, so a same-day backfill is safe even without the guard), also consider a low-risk immediate backfill of the missed June audit specifically if this row is picked up before 2026-08-01 (after which the natural cadence moves on to auditing July and the June gap becomes unrecoverable without a manual historical query).",
         "not_blocking": "P3, observability/completeness gap only, no data loss (signal_rejections source table is untouched, a backfill remains possible for the July report specifically until it ages out of relevance) — same class as feedback_passive_health_masks_dead_data but lower severity than the P2 SLA-breach row that surfaced it.",
-        "origin_task": "FIX-SLA-SIGNALQUALITYAUDIT-MONTHLY-CADENCE-MISCLASSIFIED-48H"
+        "origin_task": "FIX-SLA-SIGNALQUALITYAUDIT-MONTHLY-CADENCE-MISCLASSIFIED-48H",
+        "escalation_20260809": "SECOND CONSECUTIVE MISS VERIFIED LIVE 2026-08-09T02:45Z via GET /api/cron-status: monthlySignalQualityAudit cron_expr='0 0 1 * *', expected_last_fire=2026-08-01T00:00:00Z, last_fire=2026-06-01 00:00:00, status=MISSED — delta -5,270,400s (61 days). The row previously recorded only the 2026-07-01 miss; August is now also gone. This is the ONLY genuine cron gap among the 24 non-healthy rows in that snapshot (the other 23 are detector false positives — see FIX-CRON-STATUS-LAYERA-SCHEDULE-BLIND-FALSE-CRITICAL). Repriced P3 -> P2 on recurrence, not on blast radius: a monthly audit that silently skips two months running is no longer a one-off completeness gap.",
+        "mechanism_correction": "The row's recommended_action (add a T4 dedup guard, then flip recoverMissedExecutions:false -> true) is NECESSARY BUT NOT SUFFICIENT and must not be shipped alone. Confirmed at source in node-cron@3.0.3 src/scheduler.js: Scheduler.start() sets lastExecution = timeMatcher.apply(new Date()) and lastCheck = process.hrtime() at start time, and the recovery loop only walks back Math.floor(elapsedMs/1000) seconds since the previous in-process 1s tick. Therefore recoverMissedExecutions:true recovers ONLY event-loop stalls inside a living process — it can NEVER replay a fire that fell during a process restart or downtime window. Any restart spanning 1st-of-month 00:00 UTC still loses the audit with the flag set to true. Real fix must be a startup catch-up: apps/mcp-server/src/scheduler/startupHelpers.ts already ships shouldRunCatchup() (task 1430) with a DB-backed 'already ran today' guard, weekdayOnly / requiredUtcDay / utcHour window gating, and fail-safe-on-DB-error semantics. Scope this row as: generalise that helper's dedup window from per-day to per-cadence-period (per-month for this job), enrol monthlySignalQualityAuditJob in it, THEN flip the flag as defence-in-depth.",
+        "stale_action_note": "recommended_action's June-backfill escape hatch has EXPIRED — it was conditioned on pickup before 2026-08-01. Both the July and August target months are now unrecoverable through natural cadence; if the two reports are wanted they need an explicit one-shot historical query over signal_rejections, which should be an AC on this row rather than an implicit assumption.",
+        "escalation_source": "PO escalation triage 2026-08-09 (router session 165f4245). Note for whoever picks this up: the 'Aug-7 23-cron simultaneous stop' incident that escalated this row is NOT corroborating evidence for it — that incident was refuted (no container crash; 23/23 of those jobs fired exactly on their own schedules). Do not widen this row's scope on the strength of it."
       },
       {
         "id": "FIX-DECISION-JOURNAL-BYTECAP-NO-ACTUATOR",
@@ -10564,6 +10568,30 @@
         ],
         "status_note": "SPEC (self-contained - pm does NOT need to re-read the 206L brief). SOURCE: docs/architecture-briefs/2026-07-04-systemic-remake.md 1.1 RC-IDLE-LOOPS + its AC-3. ALL FIVE RC-IDLE-LOOPS tasks are DONE_VERIFIED (P1-IDLE-DEVTEAM-PREFLIGHT-SCRIPT, P1-IDLE-DEVTEAM-FLOW-BRANCH, P1-IDLE-AUDITOR-TIER23-SCRIPT, P1-IDLE-AUDITOR-CRON-WIRING, P1-IDLE-AUDITOR-NOTEBOOK-GATE - archive/2026-07.json). The code is real: dev-team-tick-preflight.sh _step5_idle_check() exists (L338-392), main.md L102 has the RUN-IDLE verdict branch, auditor-tier1-probe.sh has --tier=1|2|3. THE FIX SHIPPED AND THE OUTCOME DID NOT MOVE. MEASURED 2026-08-08T22:15Z: (1) docs/data/dev-team-idle-widen-state.json consecutive_run_idle = 0, so RUN-IDLE has fired zero consecutive times; (2) AC-3's own metric git log --grep 'chore(signals): drain|chore(memory/system-auditor)' per day is FLAT-TO-UP, not down - 07-19..07-25 ranged 18-49/day, 08-05..08-08 ranged 25-65/day (08-06 = 65, the series max); (3) total commits/day 188-497 in the same window. ROOT CAUSE (live-evaluated, all four _step5_idle_check predicates run by hand this tick): (a) drainable signals = 1, (b) signals.db fresh, (c) signal_queue NEW = 1, (d) task_board.active_sprints = 8. Predicate (d) is the structural blocker: it requires ZERO active sprints, but active_sprints[] is an accumulator with no working closeout producer - all 8 are status ACTIVE and the two carrying timestamps are stale 3 weeks (SPRINT-CCATO-TRUTHGATE-MCP-NATIVE updated_at '2026-07-17T04:53:14ZZ' (note the malformed double-Z), SYSREMAKE-P2-STRUCTURAL-REMAKE-ROUTE 2026-07-17T12:00:00Z). Also live: 2 backlog rows point at sprint 'SYSTEMIC-REMAKE-P1' which has NO active_sprints[] or closed_sprints[] object at all (the dangling-sprint-registry defect already filed as FIX-SPRINT-REGISTRY-DANGLING-IDS-BREAK-SIGNOFF-AND-JOURNAL-ARCHIVE, REVIEW, plan_only). So the RUN-IDLE gate is dead on arrival by construction, and the 89%-chore commit ratio the 07-04 review diagnosed is unchanged. THIS IS THE 'count-threshold gate whose input has a permanent floor above the threshold' class already SPIKEd as SPIKE-SATURATED-COUNT-THRESHOLD-GATES-SWEEP (READY) - that spike should be run against this instance first, do not redesign blind. DECOMPOSITION HINTS for pm (do not treat as final): (i) decide whether predicate (d) should read 'active_sprints with work actually dispatchable this tick' rather than raw array length - a stale ACTIVE sprint with zero READY/IN_PROGRESS child rows must not block idle; (ii) an active_sprints staleness/closeout producer is missing - PO sprint-signoff.md sets status DONE per main.md but nothing sweeps sprints that no agent has touched in N days; (iii) predicate (c) signal_queue NEW == 0 is a second candidate floor - re-measure after (d) is fixed before touching it; (iv) do NOT create a new active sprint to hold this task - doing so would itself increment the very counter this task is about. ACCEPTANCE (machine-checkable, inherits brief AC-3): (A1) on a tick with no drainable signals and no NEW signal_queue rows, dev-team-tick-preflight.sh emits verdict RUN-IDLE and consecutive_run_idle increments in docs/data/dev-team-idle-widen-state.json; (A2) a new dev-team-tick-preflight.test.sh case covers 'active_sprints non-empty but every member stale/childless -> still RUN-IDLE'; (A3) 7 days after landing, git log --since='7 days ago' --grep='chore(signals): drain' daily count is strictly below the 08-05..08-08 band of 25-65/day. WHY THIS ROW EXISTS: a router audit on 2026-08-08 searched the board for the literal string 'RC-IDLE-LOOPS' and found nothing, concluding Phase 1 had never been minted. It HAD been - under the id prefix P1-IDLE-*. The real defect was never 'unminted work', it was 'shipped work whose acceptance criterion was never re-measured'. Do not re-mint RC-IDLE-LOOPS; measure it.",
         "updated_at": "2026-08-08T22:21:00Z"
+      },
+      {
+        "id": "FIX-CRON-STATUS-LAYERA-SCHEDULE-BLIND-FALSE-CRITICAL",
+        "title": "GET /api/cron-status Layer-A misreports 23 healthy crons as MISSED/STALE every weekend: classifyCronLiveness() ignores the expected_last_fire it already computes and ladders on raw age vs cadence; Layer-A also enumerates the CRONS config table instead of the registered scheduler table",
+        "type": "FIX",
+        "priority": "P2",
+        "status": "BACKLOG",
+        "zone": "apps/mcp-server/",
+        "size": "M",
+        "owner": "dev-mcp-server",
+        "next_agent": "dev-mcp-server",
+        "created_by": "po",
+        "created_at": "2026-08-09T02:48:45Z",
+        "updated_at": "2026-08-09T02:49:57Z",
+        "supervised": false,
+        "depends_on": null,
+        "blocks": null,
+        "root_cause": "apps/mcp-server/src/domain/cron/cronLivenessClassifier.ts classifyCronLiveness(nowMs, lastFireMs, cadenceMs, thresholdMultiplier) is a pure age ladder (ON_TIME<=cadence, LATE<=cadence*mult, MISSED<=cadence*3, else STALE) — FR-1.6 verbatim. cronStatusCompute.ts computes expected_last_fire / expected_next_fire per row via cron-parser and ships them in the payload, but NEVER feeds them to the classifier (line ~339 passes only cadenceMs+thresholdMultiplier). For any job whose cron restricts day-of-week or hour-of-day, real inter-fire gap != cadenceMs: '*/10 2-8 * * 1-5' has cadenceMs=10min but a Fri-08:50 -> Mon-02:00 gap of 65h, so every such job is GUARANTEED to classify STALE/MISSED every single weekend. Four further defects compound it: (b) expected_last_fire/expected_next_fire are computed in UTC ignoring each job's options.timezone, so all Asia/Ho_Chi_Minh jobs are skewed exactly 7h (morningBriefing/alertDigest/eveningSummary all show delta -25198..-25199s); (c) cron-parser applies POSIX dom/dow OR semantics while node-cron@3.0.3 TimeMatcher.match() ANDs all six fields, so brokerSanctionsSweep '0 8 25-31 * 5' gets expected_last_fire=2026-08-07 (a Friday not in 25-31) instead of its real 2026-07-31 fire; (d) Layer-A enumerates cronConfig.ts CRONS keys and name-joins <key>Job, so config keys with no registration are reported dead forever (taAlertScan/bbAlertScan last_fire 2026-04-24 — they were merged into the registered alertScanParallelJob at schedulerJobTable.ts:447-458, which itself never appears in Layer-A because it has no CRONS key of its own), and env-gated-off registrations are reported dead (ragFtsRebuildCron, CRON_RAG_FTS_REBUILD_ENABLED default-false, schedulerJobTable.ts:132-140,673-681, deliberate per ALPHA-S2-RAG-FTS-CRON-SAFETY-GATE).",
+        "evidence": "LIVE-VERIFIED 2026-08-09T02:45Z against http://localhost:3000/api/cron-status (layer_a_count=90; 57 ON_TIME, 12 MISSED, 8 STALE, 4 LATE, 9 NEVER_FIRED). Per-row delta (last_fire minus the endpoint's OWN expected_last_fire) for all 24 non-ON_TIME/non-NEVER_FIRED rows: 15 rows delta in [0s,+2s] — i.e. the job fired EXACTLY on its own computed schedule and was still labelled MISSED or STALE (vpsProxyWatchdog 0s STALE, foreignFlowAlert 0s MISSED, franceSummary +2s MISSED, taAlertNotifier +1s STALE, signalOutcomeJob +1s MISSED, ohlcvDailyAggregator 0s LATE, ohlcvStalenessCheck 0s MISSED, priceUpdateWatchdog +1s STALE, vnIndexRefresh +1s STALE, marketEarningYield +1s MISSED, alertOutcomeJob +1s MISSED, vnstockTradingStatsRefresh +1s MISSED, breadthHistoryPersister 0s MISSED, ohlcvSanityCheck 0s LATE, ohlcvSanityCheckEarly +2s MISSED); 3 rows delta exactly -7h = timezone skew, fired on time in Asia/Ho_Chi_Minh (morningBriefing, alertDigest, eveningSummary); 1 row dom/dow-semantics skew (brokerSanctionsSweep, real last fire 2026-07-31 08:00:01, real next fire 2026-08-28 not the reported 2026-08-14); 2 rows merged-job name-join (taAlertScan/bbAlertScan); 1 row deliberate env-gate (ragFtsRebuildCron); 1 benign sub-cadence jitter (intelligenceCycle -898s LATE); leaving exactly ONE genuine gap in the whole set (monthlySignalQualityAudit, already tracked by FIX-MONTHLYSIGNALQUALITYAUDITJOB-MISSED-JULY-RECOVER-GUARD).",
+        "refuted_premise": "This row REPLACES, not corroborates, the escalated container-crash narrative. system-auditor Tier-2 reported 23/90 crons 'stopped firing simultaneously at 2026-08-07T08:50:00Z, 41.6h overdue'; ops (docs/agent-memory/notebooks/ops.md, commit 02b456b4d) concluded HIGH CONFIDENCE that the mcp-server container died at that exact instant and that node-cron cannot replay across a restart. The node-cron claim is TRUE at source (node-cron@3.0.3 src/scheduler.js re-seeds lastExecution=timeMatcher.apply(new Date()) inside start(), so recovery only ever walks back the in-process event-loop stall since the last 1s tick — never anything before process start), but it is IRRELEVANT here because no crash occurred. Refutation from the same cron_job_runs data ops read: marketEarningYield fired 2026-08-07 09:30:01 (40 min AFTER the alleged death), alertDigest 14:00:01, ohlcvDailyAggregator 15:03:00, ohlcvSanityCheck 15:05:00, eveningSummary 15:30:01 — the process was alive and firing all Friday. 08:50 is simply the last slot of the '*/10 2-8 * * 1-5' market-hours window on a Friday; ops's own notebook states 'next scheduled fires would have been 09:00+ UTC (outside market-hours window for these jobs), so wouldn't fire anyway' and 'weekday-only jobs correctly did NOT fire on Sat/Sun', which already contradicts the crash conclusion in the same paragraph. Docker corroborates: the running container has RestartCount=0, FinishedAt=0001-01-01 (never exited), StartedAt=2026-08-08T19:06:16Z — a deliberate ops rebuild/recreate for the separate scheduler double-registration fix, not a crash-restart.",
+        "acceptance_criteria": "AC-1: classification is schedule-derived — a job whose last_fire >= its own expected_last_fire (minus a documented grace, e.g. 120s) classifies ON_TIME regardless of wall-clock age; the age ladder survives ONLY as the fallback when the cron expression is unparseable, and that fallback must be labelled as such in .reason. AC-2: expected_last_fire/expected_next_fire honour each job's registered options.timezone — regression asserts morningBriefing/alertDigest/eveningSummary expected fires land at 01:00/14:00/15:30 UTC, not 08:00/21:00/22:30 UTC. AC-3: dom/dow matching mirrors node-cron TimeMatcher AND-semantics, not cron-parser POSIX OR — regression asserts brokerSanctionsSweep next fire = 2026-08-28. AC-4: Layer-A is enumerated from the REGISTERED job table (buildJobTable + registerBespokeJobs), not from CRONS keys — alertScanParallelJob appears, taAlertScan/bbAlertScan do not appear as separate dead rows, and env-gated-off registrations (ragFtsRebuildCron) report a distinct DISARMED status, never STALE. AC-5: replay the 2026-08-09T02:45Z snapshot through the fixed classifier — exactly one row (monthlySignalQualityAudit) may remain non-ON_TIME; any of the other 23 still flagged is a fail. AC-6: a weekend-clock regression test pins now=Sunday and asserts zero MISSED/STALE among the weekday-windowed jobs.",
+        "consumer_impact": "system-auditor A-29 (docs/agents/system-auditor/flow/main.md:342) consumes this endpoint's .status and .reason VERBATIM and emits CRITICAL/WARN signals from them — so this defect manufactures a recurring weekend CRITICAL storm (~23 rows) that then costs a full ops investigation cycle and buries the one real gap in the noise (same shape as feedback_composite_score_masks_dead_detector_pruned_table). No auditor-side change is needed once the endpoint is correct; do NOT patch A-29 to compensate.",
+        "not_blocking": "P2 not P1 — pure observability/detector defect, zero production data loss: every job it maligns is in fact firing on schedule. Severity is the false-alarm cost and the masking of real gaps.",
+        "origin": "PO escalation triage 2026-08-09 (router session 165f4245), from system-auditor Tier-2 A-29 CRITICAL + ops investigation commit 02b456b4d"
       }
     ],
     "closed_sprints": [
@@ -19506,7 +19534,7 @@
         "last_served_tick": "2026-08-09T01:55:05Z"
       },
       "sls": {
-        "last_served_tick": "2026-08-08T23:23:31Z"
+        "last_served_tick": "2026-08-09T02:25:24Z"
       },
       "rlc": {
         "last_served_tick": "2026-08-08T23:51:54Z"
@@ -19521,7 +19549,7 @@
         "last_served_tick": "2026-08-09T01:23:42Z"
       }
     },
-    "_updated_at": "2026-08-09T02:21:35Z",
+    "_updated_at": "2026-08-09T02:51:10Z",
     "_updated_by": "dev-team",
     "pending_triage_inbox": [
       {
@@ -19569,6 +19597,42 @@
         "payload": "A-30 WARN: rag-service memory escalation — 96.32% sustained high (loss of reclamation)",
         "createdAt": "2026-08-09T02:07:22Z",
         "drained_at": "2026-08-09T02:21:35Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "38447407748f046f3c16ac6dedde5e989fee51a6eb248f3503591db67e33720d",
+        "source": "file",
+        "from": "commit-sweep-guard",
+        "to": "po",
+        "type": "bug-escalation",
+        "priority": "high",
+        "payload": "[sweep-guard] BARE commit about to absorb 3 staged file(s) not necessarily this actor's own: docs/agent-memory/notebooks/system-auditor.md docs/data/auditor-dedup-ledger.json docs/data/auditor-tier2-last-healthy.json. actor=165f4245-6173-4054-87fd-c55bb626265f mode=warn escalated=true prior_warns=23 threshold=3. Fix: git commit -m \"<msg>\" -- <own-files-only>.",
+        "createdAt": "2026-08-09T02:30:23Z",
+        "drained_at": "2026-08-09T02:51:10Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "b8baa20d1dd7c05fadf40b9d7c5b1f1d2c2c78d35fc0d03965748b073bfa3b74",
+        "source": "file",
+        "from": "commit-sweep-guard",
+        "to": "po",
+        "type": "bug-escalation",
+        "priority": "high",
+        "payload": "[sweep-guard] BARE commit about to absorb 1 staged file(s) not necessarily this actor's own: docs/agent-memory/notebooks/system-auditor.md. actor=165f4245-6173-4054-87fd-c55bb626265f mode=warn escalated=true prior_warns=24 threshold=3. Fix: git commit -m \"<msg>\" -- <own-files-only>.",
+        "createdAt": "2026-08-09T02:46:51Z",
+        "drained_at": "2026-08-09T02:51:10Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "91f80057854a5c33b1208d0cb7dd599baf3bd52f9c5a014c5a998f61185c38e0",
+        "source": "file",
+        "from": "agents-architect",
+        "to": "agent-father",
+        "type": "architecture_brief",
+        "priority": "high",
+        "payload": "docs/architecture-briefs/2026-08-09-fix-system-auditor-cycle-closeout-actuator-and-signal-path.md",
+        "createdAt": "2026-08-09T02:43:33Z",
+        "drained_at": "2026-08-09T02:51:10Z",
         "routed_to": "PO Step 0-SIG"
       }
     ]

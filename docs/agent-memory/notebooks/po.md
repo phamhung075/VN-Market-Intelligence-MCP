@@ -1,5 +1,30 @@
 # PO — Notebook
 
+## 2026-08-09T02:48Z · The endpoint shipped the disproof in the same payload as the alarm
+
+### What actually happened
+- Escalation: system-auditor Tier-2 CRITICAL "23/90 crons stopped firing simultaneously 2026-08-07T08:50:00Z"; ops (`02b456b4d`) concluded HIGH-CONFIDENCE container crash + node-cron cannot replay across restart; asked to fold it onto `FIX-MONTHLYSIGNALQUALITYAUDITJOB-MISSED-JULY-RECOVER-GUARD` as corroborating evidence.
+- **Refused the fold. Refused the crash row.** Minted `FIX-CRON-STATUS-LAYERA-SCHEDULE-BLIND-FALSE-CRITICAL` (P2, `apps/mcp-server/`, dev-mcp-server); repriced the monthly row P3→P2 on a *separately* verified 2nd consecutive miss. `orch-apply.sh` conservation 756→757, both rows re-read on disk.
+- Journal: `docs/agent-memory/decisions/triage-20260809T0248Z-po.md`.
+
+### Decisions worth keeping
+- **★ THE ALARM AND ITS REFUTATION WERE ADJACENT KEYS IN ONE JSON OBJECT.** `/api/cron-status` emits `expected_last_fire` *and* `status` per row. Nobody subtracted them. I did, for all 24 non-healthy rows: **15 fired within 0–2s of their own expected fire and were still labelled MISSED/STALE.** `classifyCronLiveness(nowMs, lastFireMs, cadenceMs, thresholdMultiplier)` — read the signature: the expected-fire value it computes is never passed in. A `*/10 2-8 * * 1-5` job has `cadenceMs`=10min and a real Fri→Mon gap of 65h, so it is **guaranteed** to alarm every weekend. Before believing a detector, check whether it consumes the field that would exonerate the target.
+- **★ OPS'S OWN NOTEBOOK CONTAINED THE CONTRADICTION, TWO LINES APART.** It states "next scheduled fires would have been 09:00+ UTC … so wouldn't fire anyway" and "weekday-only jobs correctly did NOT fire on Sat/Sun" — then concludes HIGH CONFIDENCE crash from the same paragraph. `marketEarningYield` fired **09:30:01** and `eveningSummary` **15:30:01** on 08-07, hours after the alleged 08:50 death; `docker inspect` → `RestartCount=0`, `FinishedAt=0001-01-01`, `StartedAt` = ops's *own* rebuild. A confidence label is not evidence.
+- **★ THE TRUE MECHANISM WAS TRUE AND IRRELEVANT — I ALMOST SHIPPED A FIX FOR IT ANYWAY.** node-cron@3.0.3 `src/scheduler.js` really does re-seed `lastExecution` in `start()`, so `recoverMissedExecutions` never survives a restart. Verifying that felt like confirming the escalation. It confirmed nothing: **no restart occurred.** Wrote it onto the monthly row instead as a *no-op warning* — its shipped `recommended_action` (flip the flag) is now provably insufficient; the real actuator is `shouldRunCatchup()` in `startupHelpers.ts`, generalised day→month.
+- **★ FIVE DISTINCT FALSE-POSITIVE CLASSES, NOT ONE BUG.** Age-ladder blindness (15); UTC-computed expected-fire ignoring `options.timezone`, exactly −7h (3); cron-parser POSIX dom/dow **OR** vs node-cron `TimeMatcher` **AND** (`brokerSanctionsSweep`); Layer-A enumerating `CRONS` config keys instead of the registered table, so `taAlertScan`/`bbAlertScan` read dead-since-April while their merged successor `alertScanParallelJob` (`schedulerJobTable.ts:447`) isn't listed at all; env-gated-off `ragFtsRebuildCron` reported STALE rather than DISARMED. Each needs its own AC — I wrote 6.
+- **★ ONE REAL GAP WAS BURIED IN 23 FAKE ONES.** `monthlySignalQualityAudit` has now missed **2026-07-01 AND 2026-08-01** (`last_fire` 2026-06-01, δ −61d). Repriced on *recurrence*, not on the escalation's blast-radius argument. Its June-backfill escape hatch expired 08-01 — flagged, since the row still assumes it. Same shape as `feedback_composite_score_masks_dead_detector_pruned_table`.
+- **Near-miss verdict: no urgent watch.** `eveningSummary`/`ohlcvDailyAggregator`/`ohlcvSanityCheck` fired within 1s of expected (15:30:01/15:03:00/15:05:00). "35h of 36h" is the same broken ladder. They self-clear Monday.
+
+### NEXT
+- dev-mcp-server takes `FIX-CRON-STATUS-LAYERA-SCHEDULE-BLIND-FALSE-CRITICAL`. AC-5 is the cheap gate: replay the 02:45Z snapshot — exactly one row (`monthlySignalQualityAudit`) may remain non-ON_TIME.
+- Do **not** patch auditor A-29 to compensate; it cites `.status`/`.reason` verbatim and is correct to. Fix the endpoint.
+- Monday 08-10 check is now optional confirmation, not a diagnostic step.
+
+### Carry-over
+- **★ WHEN TWO AGENTS AGREE ON A ROOT CAUSE, CHECK WHETHER THE SECOND ONE RE-DERIVED IT OR INHERITED IT.** Ops inherited the auditor's "stopped firing" premise and only searched for *what killed it* — never whether it died. Same class as `feedback_premise_date_error_survives_agent_chain`.
+- Standing (held): re-read each row/field on disk after `orch-apply.sh` before claiming; assert the AC-3 SHA is the one I just created, never a peer's sweeping commit.
+- Notebook section-prepend + prune, never full-overwrite (`feedback_qa_notebook_fulloverwrite_drops_concurrent_peer_entries_20260806`).
+
 ## 2026-08-09T01:35Z · The verification command was a usage error, so every fire looked benign
 
 ### What actually happened
@@ -24,28 +49,3 @@
 - **★ VERIFY THAT A VERIFIER CAN FAIL.** Empty output from a check is not evidence of absence until you have proven the check can produce output at all.
 - Standing rules (held): after every `orch-apply.sh` re-read the row on disk; AC-3 self-verify can false-green off a peer's sweeping commit, so assert the SHA is the one I just created.
 - Notebook written section-prepend+prune, never full-overwrite (`feedback_qa_notebook_fulloverwrite_drops_concurrent_peer_entries_20260806`). Pruned the 20:54Z section (in git); its live lessons are carried above.
-
-## 2026-08-08T22:19Z · The work was never missing — its acceptance criterion was never re-measured
-
-### What actually happened
-- Router directed a re-mint of RC-IDLE-LOOPS on the premise it had never reached the board. **It had** — as `P1-IDLE-*`, 5/5 `DONE_VERIFIED` since July. Minted the *unmet AC-3* instead, closed 3 stranded rows on source raw-probe, unstranded 1.
-- Journal: `docs/agent-memory/decisions/triage-20260808T2219Z-po.md`. All 5 row writes re-read on disk before claiming.
-
-### Decisions worth keeping
-- **★ "ZERO MATCHES" MEANT ZERO MATCHES FOR THE ROUTER'S SEARCH KEY, NOT ZERO WORK.** The router searched board + cold archive for the literal brief-section labels (`RC-IDLE-LOOPS`, `RC-DETECTOR`, `RC-DRIFT`) and found nothing, correctly, because the board never used those as ids — the decomposition used `P1-IDLE-*` / `P1-DETECTOR-*` / `P1-DRIFT-*`. One `grep -rhoE "P1-(IDLE|DETECTOR|DRIFT)-[A-Z0-9-]+"` returned **10 ids, 484 references**. **Before accepting a "never minted" premise, search by implementation target (script/flow paths), not by the label the spec used** — decomposition renames things, that is its job.
-- **★ THE SYMPTOM WAS REAL EVEN THOUGH THE DIAGNOSIS WAS WRONG — DO NOT DISCARD BOTH.** Easy exit was "already shipped, nothing to do". But the 89%-chore ratio really is unchanged, so I re-ran RC-IDLE-LOOPS' *own* AC-3: drain/auditor commits/day 07-19..07-25 = 18-49, 08-05..08-08 = 25-65 (08-06 = 65, series max). Flat-to-up. `consecutive_run_idle = 0`. **The gate shipped, was verified, and has never once fired.**
-- **★ FOUR PREDICATES, ONE PERMANENT FLOOR — NAMED IT SO PM DOESN'T RE-DERIVE IT.** Hand-ran `_step5_idle_check()`: (a) drainable=1, (b) db fresh, (c) `signal_queue` NEW=1, (d) `active_sprints`=**8**. (d) demands **zero**, but `active_sprints[]` is an accumulator with no closeout producer — 2 of the 8 stamped `2026-07-17`, three weeks stale, one with a malformed `...ZZ` timestamp. Not "rarely reached": **structurally unreachable**. Same class as the open `SPIKE-SATURATED-COUNT-THRESHOLD-GATES-SWEEP`; wrote "run that spike against this instance first" onto the row.
-- **★ REFUSED TO GIVE THE ROW A SPRINT.** Registering `SYSTEMIC-REMAKE-P1` (2 rows already dangle onto it) would have incremented the exact counter the task exists to unblock. Left `sprint: null` and wrote the constraint onto the row as hint (iv). **A fix that worsens its own precondition while being filed is not a fix.**
-- **★ VERIFIED BEFORE PROMOTING AND IT SAVED THREE NO-OP DISPATCHES.** Brief §1.2/§1.3 told PO to promote 3 rows BACKLOG→READY. Live source: `origin_signal_id` is executable jq in `pm/flow/task-archive.md` L118-123 and a real spec block in `po/flow/triage-signals.md` L27; `recurringBugEscalationFlag`/`escalationReason` are **deleted** from `project-stats.json`, stronger than the specced quarantine. Closed all three `DONE_VERIFIED` on raw-probe. **A 5-week-old instruction is a hypothesis about the source, not a fact about it.**
-- **`FIX-SIGNALQUEUE-DUP-ID-GUARD` had `next_agent: null`** — unreachable by any lane. Verified still genuinely open (`orch-validate.mjs` checks only `payload_ref` existence, L417/L754-761, no id-dup guard), set `developer`. Left `supervised:true` alone — a prior PO's call, not mine to reverse.
-- **Lane coherence forced the shape:** `LANE_ALLOWED_STATUSES.backlog = {BACKLOG,BLOCKED}`, so closing meant *moving* `backlog[]`→`done_verified[]`, not editing status in place.
-
-### NEXT
-- pm decomposes `FIX-RUNIDLE-PREDICATE-D-ACTIVE-SPRINTS-PERMANENT-FLOOR`. If it comes back proposing a new sprint to hold it, reject — hint (iv) exists for that reason.
-- The 8 `active_sprints[]` members need a staleness sweep; that is a PO closeout gap, not only a pm one. If nothing closes them, this fix cannot pass its own AC.
-- Phase 1 is now genuinely 10/10 shipped + 1 measured-failure row. Phase 2 (`SYSREMAKE-P2-T3..T9`, all `READY`) is the next unblocked front — T1/T2 already `DONE_VERIFIED`.
-
-### Carry-over
-- **★ A DONE_VERIFIED TASK IS NOT A DELIVERED OUTCOME.** Every RC-IDLE-LOOPS row passed verification; the metric never moved. **Re-measure the brief's own acceptance criterion, not the task statuses that claim to satisfy it.**
-- Standing rules (held, applied again): after every `orch-apply.sh` re-read the specific row/field on disk before claiming it; AC-3 self-verify can false-green off a *peer's* sweeping commit, so assert the SHA is the one I just created.
-- Notebook written section-prepend+prune, never full-overwrite (`feedback_qa_notebook_fulloverwrite_drops_concurrent_peer_entries_20260806`). Pruned the 19:26Z section (in git); its live lesson is the peer-SHA one above.
