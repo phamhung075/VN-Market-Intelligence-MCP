@@ -146,3 +146,41 @@
 - RC-VERIF gate: id NOT in `RC_VERIF_GRANDFATHERED_IDS` — hand-built compliant `verification.raw_probe{tool,args,live_value_observed,observed_at}` from the real evidence collected above (brief `2026-08-08-donelane-doneverified-producer.md` §3's documented workaround #2) before the `orch-apply.sh` write; Stage0+1 PASS, conservation OK (task_total 757→757, signal_total 44→44).
 **why-decision:** APPROVED, DONE_VERIFIED. Flagged-not-fixed items (Session Gate ref, po/flow/main.md line, orch-conservation-check.mjs gap) independently confirmed still present and correctly disclosed as out-of-scope, not silently dropped.
 **why-change:** none — verified exactly what the row + handoff scoped.
+
+### STEP qa-S28 · qa · 2026-08-09T04:30:00Z
+**task-id:** FIX-SWEEPGUARD-SAMEFILE-INSPECT-CMD-GIT-USAGE-ERROR-MANUFACTURES-FALSE-BENIGN
+**what-done:** Direct-commit verify (dev-team Review-Lane QA-Drain spawn; row's `branch` field held a raw commit SHA, not `task/NNN-*` — matched `verify-committed`, not `pipeline`) of `2cb279b5d7f9e3c7a7420dc4441918dede9874b7` — fixes the unexecutable `git diff <A> <B> -- <path>` sweep-guard inspect command (two-blob form takes no pathspec, hard usage error) at both call sites.
+**what-considered:**
+- Commit real + on `main` ancestry (`git merge-base --is-ancestor`); `git show --stat` matches every file the review_note describes (`scripts/git-hooks/pre-commit`, `docs/agents/po/flow/triage-signals.md`, new T14 in `pre-commit.test.sh`, decision-journal + developer-notebook entries).
+- Re-ran `bash scripts/git-hooks/pre-commit.test.sh` fresh, not trusted from prose: 14/14 PASS incl. new T14, which extracts the detector's actual printed command and independently proves (a) fixed form rc=0 non-empty stdout, (b) re-appending `-- <path>` reproduces rc=129 empty stdout — pins the exact regression.
+- AC-1/AC-2 both call sites confirmed fixed on the live diff. AC-3 confirmed: in-code comment + developer's own journal entry (sprint-...-developer-5.md STEP developer-S90) flag the prior FP row's verdict UNSUPPORTED, correctly left out-of-scope (size:S). `bun tsc --noEmit`/DDD: N/A, zero apps/ TS touched. `mock-guard.sh`: PASS (bash script outside scanned extensions).
+**why-decision:** APPROVED, DONE_VERIFIED — all 4 verify-committed checks pass on independent re-run, files[] match, AC-1..4 all genuinely satisfied.
+**why-change:** none — verified exactly what the row scoped.
+
+### STEP qa-S28 · qa · 2026-08-09T04:26:09Z
+**task-id:** FIX-ORPHAN-FR8-TEST-COORDINATION-STORE
+**what-done:** Direct-commit verify (branch:null, RLC drain row); re-ran targeted + merge-gate suites myself, not trusted from prose.
+**what-considered:**
+- Only path: verify both cited commits real+on-main, files match, re-run 16-test file + exact 7-file merge-gate suite (dev's own file list), tsc
+**why-decision:** 8af71e8c2 (test-only, +52L coordinationStore.test.ts) + 75ac06a90 (docs) both ancestors of main, diffs match claimed files exactly; 16/16 targeted + 143/143 merge-gate (matched dev's exact 7-file list, not my own guess — first attempt substituted a wrong file and mismatched at 145) + tsc clean = APPROVED
+**why-change:** no change from plan; test-only commit correctly Smart-Skips DDD/security/mock-guard (zero production source touched)
+
+### STEP qa-S29 · qa · 2026-08-09T04:26:55Z
+**task-id:** FIX-SSE-SOAK-VERIFY-DEPENDS-ON-SHARED-CONTAINER-UPTIME-3RD-RESET
+**what-done:** Direct-commit verify (dev-team Review-Lane QA-Drain, `qa[]` row, `branch:null`) of `a3d7ff35f` — this row IS the structural fix its own history called for: an injectable `_now` clock on `SseSessionManager` decouples the sibling reaper row's >=4h max-age soak proof from the shared `dev-mcp-server` container's `StartedAt` (reset 3x by unrelated peer rebuilds).
+**what-considered:**
+- Commit real + on `main` ancestry; `git show --stat` matches all 3 claimed `files[]` exactly. Read the live diff directly, not trusted from prose: `_now` (8th ctor param, default `Date.now`) threaded through all 3 `Date.now()` call sites — matches claim byte-for-byte.
+- Re-ran `1862c-transport-session-eviction.test.ts` fresh, 3x: 14/14 pass, 45 expect() each run. New T13/T14 construct the manager with heartbeat/idle/max-age left `undefined` (REAL 4h default, not shrunk) + fake clock — correctly proves the shipped branch, not a test-only shortcut. `bun tsc --noEmit`(mcp-server): 0 errors. `mock-guard.sh --files transport.ts`: PASS. DDD grep flagged one `infrastructure/` import — pre-existing `Logger` type import, interface-layer file (not domain), unchanged by this commit, not a violation.
+- Confirmed non-test call site (`server.ts:401`) uses 3 positional args — new `_now` default is safe, no breakage. Confirmed row's own dev-note claim that this write does NOT itself flip the sibling `FIX-MCP-SSE-SESSION-MANAGER-PERCONN-LEAK-NO-REAPER` row is true — only this row's own status was moved.
+**why-decision:** APPROVED, DONE_VERIFIED. Root-cause fix (evidence source decoupled from a shared mutable runtime property), not a 4th plain retry — dispatcher's own framing anticipated this correctly. RC-VERIF: id not grandfathered — hand-built `verification.raw_probe` from the evidence above before the `orch-apply.sh` write (Stage0+1 PASS, conservation OK, task_total 765→765, signal_total 47→47).
+**why-change:** none — verified exactly what the row scoped.
+
+### STEP qa-S30 · qa · 2026-08-09T04:28:41Z
+**task-id:** FIX-CI-SIZELINT-COORDINATIONTOOLS-TS-457L
+**what-done:** Direct-commit verify (dev-team Review-Lane QA-Drain, `qa[]` row, `branch:null`) of `1653cea0a` — 457L coordinationTools.ts split verbatim into 6 per-tool files under `coordination/`.
+**what-considered:**
+- Commit real + on `main` ancestry; `git show --stat` matches all 8 claimed `files[]`. Read the diff directly, not trusted from prose: coordinationTools.ts is now a 54L thin re-export (`registerTaskClaimTool` etc.), each extracted file 72-119L, zero logic change confirmed by reading each function body inline vs original.
+- Re-ran `size-lint-justification.sh --check` fresh: coordinationTools.ts + new files absent from offender list; sole remaining offender is `transport.ts`, a separate tracked BACKLOG row (`FIX-CI-SIZELINT-TRANSPORT-TS-SSE-REAPER-237L`), same job-scoped-multi-offender pattern already accepted on sibling `FIX-CI-SIZELINT-COORDINATIONSTORE-BASELINE-1388L`. Cross-checked live CI log for this exact commit's own run (31289369140/size-lint) — identical single offender.
+- Targeted 5-file suite (dev's own list) re-run fresh: 96/96 pass, matches claim exactly. `bun tsc --noEmit`: 0 errors. `mock-guard.sh --files <7 touched prod files>`: PASS. process.env/secret greps clean; interface→infrastructure imports pre-existing (unchanged by split, not a new DDD violation). `size-lint-baseline.json` count 666→665, stale entry pruned honestly (not rebaselined-around).
+**why-decision:** APPROVED, DONE_VERIFIED — all re-run checks green, files[] match, verbatim-split claim independently confirmed, out-of-scope transport.ts correctly excluded (has its own live row).
+**why-change:** none — verified exactly what the row scoped.
