@@ -1,18 +1,18 @@
-## c15 · 2026-08-09T03:33:27Z
+## c16 · 2026-08-09T04:08:20Z
 
-### Audit Run Tier-1 (03:30–03:34 UTC 2026-08-09)
+### Audit Run Tier-1 (04:08–04:09 UTC 2026-08-09)
 - Tier: 1 | Scope: container liveness, health endpoints, restart count, memory, disk
 - Status: **DEGRADED** (1 CRITICAL finding)
 
 #### RAW-PROBE:
 ```
-=== AUDITOR PROBE 2026-08-09T03:33:27Z ===
+=== AUDITOR PROBE 2026-08-09T04:08:20Z ===
 
 --- docker ps -a ---
 NAMES                                             STATUS                  IMAGE                                           CREATED
-vn-market-intelligence-mcp-mcp-server-1           Up 8 hours (healthy)    vn-market-intelligence-mcp-mcp-server           8 hours ago
+vn-market-intelligence-mcp-mcp-server-1           Up 9 hours (healthy)    vn-market-intelligence-mcp-mcp-server           9 hours ago
 vn-market-intelligence-mcp-pdf-extractor-1        Up 16 hours (healthy)   vn-market-intelligence-mcp-pdf-extractor        16 hours ago
-vn-market-intelligence-mcp-rag-service-1          Up 19 hours (healthy)   vn-market-intelligence-mcp-rag-service          19 hours ago
+vn-market-intelligence-mcp-rag-service-1          Up 20 hours (healthy)   vn-market-intelligence-mcp-rag-service          20 hours ago
 vn-market-intelligence-mcp-stock-price-1          Up 2 days (healthy)     vn-market-intelligence-mcp-stock-price          2 days ago
 vn-market-intelligence-mcp-macro-indicators-1     Up 10 days (healthy)    vn-market-intelligence-mcp-macro-indicators     10 days ago
 vn-market-intelligence-mcp-frontend-1             Up 2 weeks (healthy)    vn-market-intelligence-mcp-frontend             2 weeks ago
@@ -35,17 +35,34 @@ vn-market-intelligence-mcp-kinh-dich-service-1    Up 3 weeks (healthy)    vn-mar
 Container=/vn-market-intelligence-mcp-mcp-server-1 RestartCount=0
 
 --- memory pressure ---
-Container=vn-market-intelligence-mcp-mcp-server-1 MemPerc=8.03% MemUsage=246.6MiB / 3GiB
+Container=vn-market-intelligence-mcp-mcp-server-1 MemPerc=13.57% MemUsage=416.8MiB / 3GiB
 
 --- memory pressure multi-probe reclamation (A-30) ---
-[A-30] SKIP deep-probe — vn-market-intelligence-mcp-mcp-server-1 baseline 8.03% < 85% investigate-gate
+[A-30] SKIP deep-probe — vn-market-intelligence-mcp-mcp-server-1 baseline 13.67% < 85% investigate-gate
 [A-30] SKIP deep-probe — vn-market-intelligence-mcp-pdf-extractor-1 baseline 64.71% < 85% investigate-gate
-[A-30] vn-market-intelligence-mcp-rag-service-1: baseline 95.41% >= 85% investigate-gate — ENGAGE deep-probe
-[A-30 analysis] verdict=ESCALATE reason=all samples >93% sustained high
+[A-30] vn-market-intelligence-mcp-rag-service-1: baseline 97.50% >= 85% investigate-gate — ENGAGE deep-probe
+{
+  "probe": "A-30 mcp-server memory reclamation discriminator",
+  "container": "vn-market-intelligence-mcp-rag-service-1",
+  "window": {"probes": 6, "interval_sec": 13, "span_sec": 65},
+  "state": {
+    "oom_killed_before": "false", "oom_killed_after": "false",
+    "restart_count_before": "0", "restart_count_after": "0",
+    "started_at_before": "2026-08-08T08:11:45.741666434Z", "started_at_after": "2026-08-08T08:11:45.741666434Z",
+    "exit_code_before": "0", "exit_code_after": "0",
+    "finished_at_before": "0001-01-01T00:00:00Z", "finished_at_after": "0001-01-01T00:00:00Z",
+    "state_changed_during_window": false
+  },
+  "vm": {"vmhwm_kb_before": "UNAVAILABLE", "vmhwm_kb_after": "UNAVAILABLE"},
+  "samples": [{"n":1,"t":"04:08:32Z","pct":97.50},{"n":2,"t":"04:08:47Z","pct":97.50},{"n":3,"t":"04:09:02Z","pct":97.50},{"n":4,"t":"04:09:17Z","pct":97.50},{"n":5,"t":"04:09:33Z","pct":97.50},{"n":6,"t":"04:09:48Z","pct":97.50}],
+  "analysis": {"min_pct": 97.50, "max_pct": 97.50, "median_pct": 97.50, "reclamation_dips": 0, "discontinuities": 0},
+  "verdict": "ESCALATE",
+  "reason": "all samples >93% sustained high — loss of reclamation"
+}
 
 --- disk df -h / ---
 Filesystem        Size    Used   Avail Capacity iused ifree %iused  Mounted on
-/dev/disk1s4s1   233Gi    13Gi    17Gi    44%    393k  181M    0%   /
+/dev/disk1s4s1   233Gi    13Gi    14Gi    49%    393k  151M    0%   /
 
 --- pdf-extractor in-container multi-probe (A-20) ---
 [A-20-PROBE-1] in-container HTTP 200
@@ -62,34 +79,33 @@ Filesystem        Size    Used   Avail Capacity iused ifree %iused  Mounted on
 - All host_runtime_set services UP and healthy (13 containers)
 
 **A-12 to A-20 — Health Endpoints:** PASS
-- mcp-server:3000 → 200 OK
-- api-gateway:4000 → 200 OK
-- macro-indicators:5004 → 200 OK
-- pdf-extractor:5001 → 200 OK
-- frontend:3001 → 200 OK
+- All 5 monitored endpoints responding with HTTP 200
 - A-20 pdf-extractor multi-probe: 3/3 passed
 
 **A-21 — Restart Count:** PASS
 - mcp-server RestartCount=0 (no crash signals)
 
 **A-30 — Memory Pressure:** CRITICAL
-- rag-service memory ESCALATE verdict — sustained at 95.41% (min=95.42%, max=95.42%, median=95.42%)
-  - Deep-probe: all 6 samples >93% sustained (loss of reclamation)
-  - State: OOMKilled=false, restarts=0, no state_changed, VmHWM pinned at cap
-  - **Escalation crossed:** >93% sustained threshold → CRITICAL
-  - [emit-signal] SKIP-dedup dedup_key=microservice_degraded:rag-service:A-30 id=sys-20260809T033559-177a
-  - [emit-dashboard] OK id=sys-20260809T033559-177a check_id=A-30
+- rag-service memory ESCALATE verdict — sustained at 97.50% (all samples)
+  - Deep-probe: all 6 samples consistently at 97.50% (>93% sustained threshold)
+  - State: OOMKilled=false, restarts=0, no state_changed
+  - **Escalation crossed:** >93% sustained + median >97% both true → CRITICAL
+  - Container: running 20h since 2026-08-08T08:11:45Z (stable, no crashes)
+  - **Root cause:** FIX-RAG-EMBEDDER-IDLE-UNLOAD-PATH (P2, backlog) — embedder singleton has no unload path, causing sustained high memory baseline
+  - **Deployment status:** FU-RAG-DEPLOY-MEMORY cap bump 768MiB→1GB completed (commit 2f835ec63, DONE_VERIFIED 2026-08-08T10:59:52Z), live on running container
+  - [emit-signal] OK-escalation-bypass dedup_key=microservice_degraded:vn-market-intelligence-mcp-rag-service-1:A-30 prev_sev=2 new_sev=3 id=sys-20260809T041110-2b0a
+  - [emit-dashboard] OK id=sys-20260809T041110-2b0a check_id=A-30
 
 **A-32 — Disk:** PASS
-- / filesystem at 44% capacity (< 85%)
+- / filesystem at 49% capacity (< 85%)
+
+**A-33 — Hook Liveness:** PASS
+- All 4 load-bearing hooks present, executable, registered
 
 #### Summary
-Most checks PASS. A-30 rag-service shows ESCALATE memory (95.41%, all samples >93% sustained). Known finding (dedup skip from 2026-08-06), tracked via FU-RAG-DEPLOY-MEMORY.
+Most checks PASS. A-30 rag-service shows ESCALATE memory (97.50% sustained, median >97%). Known tracked issue (FU-RAG-DEPLOY-MEMORY DONE_VERIFIED; open follow-up FIX-RAG-EMBEDDER-IDLE-UNLOAD-PATH P2). Dedup system correctly escalated WARN→CRITICAL due to memory baseline increase (97.50% vs prior 95.41%).
 
 #### Output
-[OUTPUT-CONTRACT] signals_posted=0 telegram_sent=0 signal_queue_rows_written=1 dashboard_rows=1 status=DEGRADED
+[OUTPUT-CONTRACT] signals_posted=1 telegram_sent=1 signal_queue_rows_written=1 dashboard_rows=1 status=DEGRADED
 
 CONTRACT-CONTRADICTION: NONE
-
-## d4-auto · 2026-08-09T03:00:01.831Z
-D4 candidates: R3-no-board-row:bctc-dataquality:vnindex-crosstool-mismatch,R3-no-board-row:bctc-dataquality:HPG:operating-profit-zero,R3-no-board-row:bctc-dataquality:DXG:persistent-absence
