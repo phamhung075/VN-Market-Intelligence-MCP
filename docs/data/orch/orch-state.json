@@ -873,6 +873,17 @@
         "provenance": "detector",
         "audit_cycle_tag": "cron:auditor-t1:2026-08-09T04:00Z",
         "dedup_key": "microservice_degraded:vn-market-intelligence-mcp-rag-service-1:A-30"
+      },
+      {
+        "id": "cj-20260809T063000",
+        "ts": "2026-08-09T06:30:00Z",
+        "from": "code-janitor",
+        "to": "po",
+        "type": "system-issue",
+        "summary": "team-tool-recheck writer dead since 06-23 — replace-vs-retire decision needed",
+        "severity": "LOW",
+        "status": "NEW",
+        "payload_ref": "docs/signals/janitor-health-recheck-writer-retired-2026-08-09.json"
       }
     ],
     "last_triaged_at": "2026-07-29T06:25:00Z",
@@ -12490,6 +12501,93 @@
             "observed_at": "2026-08-09T04:27:17Z"
           }
         }
+      },
+      {
+        "id": "FIX-DEVTEAM-IDLE-CHAIN-TEST-FAIRNESS",
+        "type": "FIX",
+        "title": "AC-1/AC-4: extend devteam-dispatch-gate-satisfiability.sh — rotation fairness bounds + gate-firing proof (not just resolution)",
+        "status": "DONE_VERIFIED",
+        "priority": "P0",
+        "size": "M",
+        "zone": "docs/agents/dev-team/flow/",
+        "owner": "developer",
+        "next_agent": "pm",
+        "created_at": "2026-07-29T13:50:05Z",
+        "created_by": "pm",
+        "depends": [
+          "FIX-DEVTEAM-IDLE-CHAIN-MAIN-COMPLETION"
+        ],
+        "blocks": [],
+        "files": [
+          "scripts/audits/devteam-dispatch-gate-satisfiability.sh"
+        ],
+        "updated_at": "2026-08-09T04:29:47Z",
+        "promoted_at": "2026-08-09T01:55:14Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=0)",
+        "claimed_at": "2026-08-09T04:23:13Z",
+        "claimed_by": "dev-team (review-lane qa-drain)",
+        "commit_sha": "104aa6c10",
+        "status_note": "AC-1/AC-4 both covered by single instrument per PM instruction. Script extended 958→1251L: byte-verbatim replica of main.md live inline 6-candidate jq (bounded1/sls/rlc/drs/qa_drain/step1_triage), NOT the stale shared devteam-eligibility.jq (5-id, DRS-blind — flagged stale by main.md itself). Simulates 12 idle-fallthrough ticks (2×6-tick windows): AC-1 exactly-once coverage per window + deterministic tie-break; AC-4 per-tick real board mutation + isolated no-same-tick-cascade proof. Dry-run baseline 57P/12F (12 pre-existing unrelated live-board-drift fails, byte-identical error set before/after) -> post-extension 91P/12F, 34/34 new assertions pass, 0 regressions. bash -n clean. Commits: 104aa6c10 (code+docs), 8d684979f (notebook+journal). 12 pre-existing FAILs flagged out-of-scope for PO/router to route separately.\n\n[QA] Review Record (direct-commit verify) 2026-08-09T04:32:00Z: Verified commit `104aa6c10` (ancestor-of-main confirmed via `git merge-base --is-ancestor`) — `git show --stat` matches the row's claimed file `scripts/audits/devteam-dispatch-gate-satisfiability.sh` (+293L) plus ancillary `docs/policies/dev-standards.md` (+CANONICAL pointer) and `docs/WORK.md` (+summary line), both accurately described. `git diff 104aa6c10^ 104aa6c10` confirmed purely additive (0 deletions) — the new § ROTATION FAIRNESS BOUND + $SELECTED-DRIVEN GATE-FIRING PROOF section only. Re-ran the extended script myself, not trusted from `status_note` prose: post-fix 97 PASS / 5 FAIL (live-board-drift-dependent count, differs from the row's own 91/12 snapshot taken ~15min earlier — expected, board keeps moving). To isolate the fix's own effect, ALSO temp-swapped in the exact parent-commit (`104aa6c10^`) version of the script at the real path, ran it, restored: 63 PASS / 5 FAIL, byte-identical FAIL set (BOUNDED-1 no-op / SLS gate / AC-DRS-HEAD-GUARD / AC-EVICT-1 / AC-EVICT-3, all pre-existing and untouched by this diff) — confirms exactly 34 new assertions, all PASS, 0 regressions, independent of live-board-drift noise. All 12 new rotation-fairness ticks (2×6-tick windows) + no-same-tick-cascade proof individually verified PASS in the transcript. `bash -n` clean, 1251L (958→1251 matches claim). No apps/ TS/Go touched — `bun test`/`tsc` structurally N/A (confirmed: diff touches only .sh + 2 .md files). `mock-guard.sh --files scripts/audits/devteam-dispatch-gate-satisfiability.sh`: PASS (no production source). `process.env`/secret greps: clean. VERDICT: APPROVED, DONE_VERIFIED.",
+        "updated_by": "qa",
+        "qa_verified_by": "qa",
+        "verification": {
+          "raw_probe": {
+            "tool": "bash scripts/audits/devteam-dispatch-gate-satisfiability.sh",
+            "args": "post-fix live run + parent-commit (104aa6c10^) temp-swap-and-restore comparison run",
+            "live_value_observed": "post-fix (live) 97 pass / 5 fail; pre-fix (parent 104aa6c10^, temp-swapped in-place then restored) 63 pass / 5 fail, byte-identical FAIL set (BOUNDED-1/SLS/AC-DRS-HEAD-GUARD/AC-EVICT-1/AC-EVICT-3, all pre-existing, untouched by diff) — 34 new AC-1/AC-4 assertions, all PASS, 0 regressions; git diff 104aa6c10^..104aa6c10 purely additive (0 deletions); bash -n clean, 1251L",
+            "observed_at": "2026-08-09T04:32:00Z"
+          }
+        }
+      },
+      {
+        "id": "FIX-CI-SIZELINT-COORDINATIONTOOLS-TS-457L",
+        "title": "CI RED: size-lint — apps/mcp-server/src/interface/mcp/tools/system/coordinationTools.ts baseline-tolerance-exceeded (baseline=388L actual=457L upper=426L)",
+        "type": "FIX",
+        "owner": "po",
+        "status": "DONE_VERIFIED",
+        "priority": "P1",
+        "zone": "apps/mcp-server/",
+        "size": "S",
+        "created_at": "2026-08-09T01:35:08Z",
+        "created_by": "po",
+        "updated_at": "2026-08-09T04:29:48Z",
+        "supervised": false,
+        "plan_only": false,
+        "depends_on": [],
+        "blocks": [],
+        "check_id": "CI-RED-39e1e161",
+        "dedup_key": "ci_job:size-lint|file:apps/mcp-server/src/interface/mcp/tools/system/coordinationTools.ts",
+        "verification_gate": "ci_green_on_subsequent_push",
+        "status_note": "AC: `gh run view <databaseId with headSha AFTER 39e1e161bcb7900a40f84aec37d067b2e3afe6f6> --json jobs -q '.jobs[]|select(.name==\"size-lint\")|.conclusion' == success (verification_gate=ci_green_on_subsequent_push). Failing job: size-lint. Failing file: apps/mcp-server/src/interface/mcp/tools/system/coordinationTools.ts (live wc -l = 457 confirmed 2026-08-09T01:35Z). Observed SHAs: 39e1e161 (run 31285673936, 00:23Z). Split or write an honest <!-- size-justification --> header per docs/policies/dev-standards.md; do NOT rebaseline silently. NOT a duplicate of FIX-CI-SIZELINT-COORDINATIONSTORE-BASELINE-1388L (DONE_VERIFIED) — that row is coordinationSTORE.ts (infrastructure/db/), a different file, and CI confirms it is now green (absent from run 31285673936's offender list). ANTI-AMNESTY: CI plane baseline is 0 fail; no file-scoped open row matched this path.\n[QA] Review Record (direct-commit verify) 2026-08-09T04:28:41Z: APPROVED. Verified commit 1653cea0aa56e43b4a84463a3dc2772bbde15705 is a real ancestor of main (git merge-base --is-ancestor). git show --stat matches all 8 claimed files[] — coordinationTools.ts (445 removed) plus the 6 new coordination/*.ts files (72-119L each) plus docs/data/size-lint-baseline.json.\n\nRead the diff directly (not trusted from prose): coordinationTools.ts is now a 54L thin entry point re-exporting registerCoordinationTools(server), which calls registerTaskClaimTool/registerTaskHeartbeatTool/registerTaskReleaseTool/registerTaskListHeldTool/registerTaskForceReleaseOrphanTool/registerWeekPeriodTool — each extracted body matches the original inline implementation verbatim (zero logic change). registry.ts and coordination/index.ts barrel both still import from the unchanged `./coordinationTools.js` path — zero edits needed there, confirmed by grep.\n\nIndependently re-ran bash scripts/audits/size-lint-justification.sh --check: coordinationTools.ts and all 6 new coordination/*.ts files are absent from the offender list. Sole remaining offender is apps/mcp-server/src/interface/mcp/transport.ts (baseline=126L actual=265L upper=138L) — NOT this row's file; confirmed it is a separate, already-tracked BACKLOG row (FIX-CI-SIZELINT-TRANSPORT-TS-SSE-REAPER-237L), same job-scoped-multi-offender pattern already accepted on sibling FIX-CI-SIZELINT-COORDINATIONSTORE-BASELINE-1388L. Cross-checked live on GitHub Actions: this commit's own CI run (31289369140, job size-lint) log shows the identical single offender (transport.ts, 237L at that point in time) — coordinationTools.ts absent, matching my local result exactly.\n\nRe-ran the dev's own targeted 5-file suite fresh: task-lock-coordination-tools.test.ts + 1980-p1-final-required-flip.test.ts + FIX-ORPHAN-FR2-FR6-FR7-INTERFACE-COORDINATION-TOOLS.test.ts + FIX-DIGEST-PREDICT-ISO-WEEK-DEDUP.test.ts + 1982-quality-burndown-CHIJ.test.ts = 96/96 pass, 0 fail, 247 expect() calls — matches claim exactly. bun tsc --noEmit (apps/mcp-server): 0 errors. bash scripts/audits/mock-guard.sh --files \"coordinationTools.ts taskClaimTool.ts taskHeartbeatTool.ts taskReleaseTool.ts taskListHeldTool.ts taskForceReleaseOrphanTool.ts weekPeriodTool.ts\": PASS. process.env / secret-literal greps clean. interface→infrastructure imports present in 5/6 new tool files (coordinationStore.js) — pre-existing pattern unchanged by the split (interface-layer MCP adapters legitimately call infrastructure directly; not a DDD domain-layer violation, not new).\n\ndocs/data/size-lint-baseline.json: count 666→665, stale coordinationTools.ts:388 entry removed cleanly — confirmed NOT rebaselined-around (the file is genuinely 54L now, well under any threshold).\n\nDJ: sprint-COWORK-GUARANTEED-SLOT-CATCHUP-qa-14.md STEP qa-S30. VERDICT: APPROVED, DONE_VERIFIED. No merge/branch-delete needed — work already on main.",
+        "origin_signal_id": "ci_red:CI-RED-39e1e161",
+        "next_agent": "qa",
+        "updated_by": "qa",
+        "claimed_at": "2026-08-09T04:23:13Z",
+        "claimed_by": "dev-team (review-lane qa-drain)",
+        "dispatch_lane": "dev-mcp-server",
+        "commit_sha": "1653cea0aa56e43b4a84463a3dc2772bbde15705",
+        "files": [
+          "apps/mcp-server/src/interface/mcp/tools/system/coordinationTools.ts",
+          "apps/mcp-server/src/interface/mcp/tools/system/coordination/taskClaimTool.ts",
+          "apps/mcp-server/src/interface/mcp/tools/system/coordination/taskHeartbeatTool.ts",
+          "apps/mcp-server/src/interface/mcp/tools/system/coordination/taskReleaseTool.ts",
+          "apps/mcp-server/src/interface/mcp/tools/system/coordination/taskListHeldTool.ts",
+          "apps/mcp-server/src/interface/mcp/tools/system/coordination/taskForceReleaseOrphanTool.ts",
+          "apps/mcp-server/src/interface/mcp/tools/system/coordination/weekPeriodTool.ts",
+          "docs/data/size-lint-baseline.json"
+        ],
+        "dev_implementation_note": "Split, not header: coordinationTools.ts was 457L (baseline=388L, upper=426L, 31L overage). Extracted each of the 6 registered tools (task_claim, task_heartbeat, task_release, task_list_held, task_force_release_orphan, get_week_period) verbatim into its own file under interface/mcp/tools/system/coordination/ (54-119L each, all under the 120L size-lint threshold — none needs a justification header). coordinationTools.ts is now a 54L thin entry point re-exporting registerCoordinationTools(server) unchanged, so registry.ts, the coordination/index.ts barrel, and all 4 direct-importer tests needed zero edits. Also dropped the dead buildWeeklyPublishMarkerKey import (unused in the file body) and pruned the now-stale 388L docs/data/size-lint-baseline.json entry (did NOT raise/rebaseline it — file is 54L, genuinely no longer an offender). Verified LOCALLY: bash scripts/audits/size-lint-justification.sh --check no longer lists coordinationTools.ts (sole remaining offender is pre-existing, out-of-scope apps/mcp-server/src/interface/mcp/transport.ts, baseline=126L actual=265L — untouched, not this rows file). bun tsc --noEmit clean. npx eslint (fence config) clean on all 7 touched/new files. Targeted suite: task-lock-coordination-tools.test.ts + 1980-p1-final-required-flip.test.ts + FIX-ORPHAN-FR2-FR6-FR7-INTERFACE-COORDINATION-TOOLS.test.ts + FIX-DIGEST-PREDICT-ISO-WEEK-DEDUP.test.ts + 1982-quality-burndown-CHIJ.test.ts = 96/96 pass, 0 fail. Pushed commit 1653cea0aa56e43b4a84463a3dc2772bbde15705, pre-push hook (pnpm --filter vn-market check / tsc) green, no --no-verify.",
+        "qa_verification_hint": "gh run view <databaseId with headSha AFTER 1653cea0aa56e43b4a84463a3dc2772bbde15705> --json jobs -q \".jobs[]|select(.name==\\\"size-lint\\\")|.conclusion\" == success (verification_gate=ci_green_on_subsequent_push). Do NOT confuse with the separate pre-existing transport.ts size-lint offender (untouched by this row, different file/row) if it is still open on the same run — this rows own AC is scoped to coordinationTools.ts only.",
+        "qa_verified_by": "qa",
+        "verification": {
+          "raw_probe": {
+            "tool": "size-lint-justification.sh --check + bun test (5 files) + bun tsc --noEmit + mock-guard.sh + gh api (live CI corroboration)",
+            "args": "coordinationTools.ts + 6 new coordination/*.ts touched-file grep; targeted 5-file suite re-run; run 31289369140/job size-lint log check",
+            "live_value_observed": "size-lint offender list: coordinationTools.ts and all 6 new files absent (only transport.ts, out of scope, remains); 96/96 tests pass; tsc 0 errors; mock-guard PASS; live CI log confirms same",
+            "observed_at": "2026-08-09T04:29:48Z"
+          }
+        }
       }
     ],
     "head": {
@@ -19640,74 +19738,6 @@
         "next_recheck_reason": "qa Step-5 checkpoint #2 (qa_step5_checkpoint_2_20260808T2005Z): container clock RESET by unrelated rebuild 550fda673 (new StartedAt 2026-08-08T19:06:16Z) — old 21:00Z mark was computed against a container that no longer exists. Revised >=4h mark against the CURRENT container is 2026-08-08T23:06:00Z.",
         "qa_step5_checkpoint_2_20260808T2005Z": "QA STEP 5 CHECKPOINT #2 (2026-08-08T20:05Z) — STILL NOT SIGN-OFF-ABLE. Reason changed since checkpoint #1: the >=4h soak-window clock was RESET by an UNRELATED rebuild.\n\nCLOCK-RESET FINDING (important, was NOT reflected in checkpoint #1 or the router dispatch note that pointed to this row): commit 550fda673 (2026-08-08T19:08:23Z, ops(FIX-AGENT-SIGNALS-IDENTICAL-DUP-EMISSION): rebuild+swap mcp-server) rebuilt+recreated the SAME mcp-server container for a DIFFERENT, unrelated task. Verified live: container Id 83847b9f6b85 (was a different Id under the prior 16:59:50Z start), StartedAt=2026-08-08T19:06:16.053Z, Image sha256:8966b3b867fa (was sha256:630fa5d262755bf9), RestartCount=0 (fresh container, not a crash). Actual elapsed uptime at this checkpoint is ~59min, NOT the ~3h the router dispatch context assumed (which was computed off the now-superseded 16:59:50Z start). next_recheck_not_before=21:00:00Z in this row is therefore STALE — it was set relative to the container that no longer exists; the real earliest >=4h mark against the CURRENT container is ~2026-08-08T23:06Z.\n\nContent-verified this is NOT a regression of the SSE fix: docker exec grep of the new image confirms interface SessionRecord / reapStaleSessions / stopReaper / 8x evictSession sites in transport.ts and the DELETE closeSession route in server.ts are all still present and correct (new image was built from a commit descending from b746c112b, not reverting it). This is a process/coordination gap (an unrelated ops-lane rebuild touching a container this row has a standing PO do-not-rebuild ruling on, po_deploy_gate_discharge_20260808T1759Z), not a code defect — logging here, not minting a new row (single-occurrence, no repeat pattern yet).\n\nGATE STATUS on the NEW container (StartedAt 19:06:16Z): (a) sessionCount-vs-MemPerc >=4h — NOT MET, ~59min elapsed (~25%). 3 live samples 20s apart (20:03:48Z sessions=44 MemPerc=12.67%; 20:04:09Z sessions=44 MemPerc=12.67%; 20:04:31Z sessions=42 MemPerc=12.65%) plus /proc/1/status VmHWM=507404kB > VmRSS=440864kB (HWM>RSS, reclamation active, not pinned) — directionally healthy, too short to certify. (b) RestartCount stable 0 — true so far, window incomplete. (c) toolCount=183 (live /health) / cronJobCount=88 (bun scripts/gen-project-stats.ts, live re-run) — MET, both match baseline. (d) >=1 max_age eviction — NOT MET (0 so far; structurally cannot occur before container age 4h). Reaper independently reconfirmed firing: 43 idle_timeout evictions, 0 max_age, in docker logs since 19:06Z.\n\nCI REGRESSION TRIAGE (requested by router dispatch note, re: FIX-CI-BUNTEST-1862C-TRANSPORT-SESSION-EVICTION, owner dev-mcp-server, not duplicated here): investigated first-hand, did not trust the CI summary line. Local single-run: 12/12 pass, 10/10 repeat runs clean on a quiet machine. Reproduced the CI failure under manufactured CPU contention (48x `yes` on a 12-core box, matching the SPIKE_CI-PERFILE-ISOLATION-FLAKE.md methodology): 16/20 runs failed, ALL 16 on the SAME assertion — T9 (negative control) `expect(manager.sessionCount).toBe(1)` receives 0. Root cause: T9s own activity-bump helper (`setInterval(fn, 5)`) races the test-compressed 15ms idle-timeout / 5ms reaper-sweep; under CPU contention the bump callback itself can be delayed past 15ms, so the idle reaper evicts before the next bump lands. Confirmed via `git log b746c112b..HEAD -- transport.ts server.ts 1862c-transport-session-eviction.test.ts` = empty — NO commit has touched any of these 3 files since the fix landed, so this is NOT a later regression, it was present in b746c112b itself from the start. VERDICT: (b) CI-environment timing flake in the TEST HARNESS margin (ms-scale time compression used to make the suite fast), NOT a genuine product regression in reapStaleSessions/evictSession — production idle-timeout is 15 MINUTES not 15ms, i.e. ~180000x more scheduler-jitter margin than the test uses, so this failure mode cannot occur in the running service. Does not, by itself, indicate the shipped reaper logic is wrong. Recommend dev-mcp-server (already the assigned owner) widen T9s bump interval/idle-timeout ratio or fake-timer it; not blocking on code-correctness grounds, but IS a real reproducible CI-red (not pure noise) and PO is right that a red unit test for this fixs own coverage should be green before Step 6, per POs own framing.\n\nRECOMMENDATION for PO Step 6: do NOT sign off yet — genuinely insufficient soak elapsed time (~59min of required >=4h) after the clock-reset above, independent of the CI question. Re-dispatch qa for checkpoint #3 no earlier than 2026-08-08T23:06:00Z (revised >=4h mark against the CURRENT 19:06:16Z container start). CI regression is triaged as a test-harness artifact, not a code defect, but leave FIX-CI-BUNTEST-1862C-TRANSPORT-SESSION-EVICTION open on its own track (dev-mcp-server) — getting it green is still a reasonable Step-6 precondition per POs own framing, independent of this rows soak measurement. No board status/lane/next_agent change this write — row stays QA/next_agent=qa exactly as checkpoint #1 left it; only next_recheck fields + checkpoint note updated.",
         "status_note": "[dev-mcp-server 2026-08-09T02:05Z] 3-RESET INCIDENT HISTORY STAMPED (FIX-SSE-SOAK-VERIFY-DEPENDS-ON-SHARED-CONTAINER-UPTIME-3RD-RESET AC-2) — this status_note field did not exist on this row through all 3 resets; no durable record survived on the row itself, only in ephemeral next_recheck_reason overwrites (each replaced by the next) and a signal_queue entry. Stamping now.\n\nThis row's QA Step 5 >=4h soak-verification AC was gated on the shared dev-mcp-server container's StartedAt (>=4h uninterrupted uptime) — a property ANY of the 8+ peers legitimately rebuilding this SAME shared container resets, unrelated to this row's own content. Reset 3x: (1) checkpoint #1 (qa_step5_checkpoint_1_20260808T1832Z) measured against StartedAt=2026-08-08T16:59:50Z (this fix's own deploy, image sha256:630fa5d262755bf9), next_recheck pinned ~2026-08-08T21:00:00Z — reset before that mark was reached. (2) checkpoint #2 (qa_step5_checkpoint_2_20260808T2005Z) found StartedAt reset to 2026-08-08T19:06:16Z by commit 550fda673 (unrelated ops rebuild+swap for FIX-AGENT-SIGNALS-IDENTICAL-DUP-EMISSION, image sha256:8966b3b867fa) — content-verified NOT a regression of this fix (SessionRecord/evictSession/reapStaleSessions/stopReaper/8x evictSession sites all still present in the new image); next_recheck recomputed to 2026-08-08T23:06:00Z. (3) process_gap signal sys-20260808T200919-a7c2 (2026-08-08T20:09:19Z, from router, MED, dedup_key process_gap:FIX-MCP-SSE-SESSION-MANAGER-PERCONN-LEAK-NO-REAPER:soak-clock-reset-shared-container, po-triaged 2026-08-08T21:00:29Z ACK) independently confirms this as the 3RD reset and recommends the verification method decouple from container StartedAt (e.g. reaper-firing log evidence, not process uptime).\n\nRESOLUTION (fixed forward, not retroactive to this row's own live soak measurement): FIX-SSE-SOAK-VERIFY-DEPENDS-ON-SHARED-CONTAINER-UPTIME-3RD-RESET (dev-mcp-server, commit a3d7ff35f) added an injectable `_now` clock to SseSessionManager (apps/mcp-server/src/interface/mcp/transport.ts) plus T13/T14 unit tests (1862c-transport-session-eviction.test.ts) that prove the REAL shipped >=4h max-age branch fires deterministically in milliseconds — decoupled from any container's uptime and from real wall-clock elapsed time. This does NOT itself discharge THIS row's own live QA Step 5/6 sign-off — qa/po still decide whether the new unit-test evidence supersedes the container-soak requirement for closing this specific row. Lane/status intentionally left UNCHANGED by this stamp (per FIX-SSE-SOAK-VERIFY AC-2's own scope: stamp incident history only, do not move this row's lane).\n\nGeneric lesson (apply elsewhere per the fix row's own instruction): an acceptance criterion whose evidence source is a SHARED mutable runtime property is unsatisfiable under a multi-writer fleet. Memory: project_sse_soak_clock_reset_shared_container_20260808 (3x), feedback_rebuild_recreate_destroys_peers."
-      },
-      {
-        "id": "FIX-DEVTEAM-IDLE-CHAIN-TEST-FAIRNESS",
-        "type": "FIX",
-        "title": "AC-1/AC-4: extend devteam-dispatch-gate-satisfiability.sh — rotation fairness bounds + gate-firing proof (not just resolution)",
-        "status": "QA",
-        "priority": "P0",
-        "size": "M",
-        "zone": "docs/agents/dev-team/flow/",
-        "owner": "developer",
-        "next_agent": "qa",
-        "created_at": "2026-07-29T13:50:05Z",
-        "created_by": "pm",
-        "depends": [
-          "FIX-DEVTEAM-IDLE-CHAIN-MAIN-COMPLETION"
-        ],
-        "blocks": [],
-        "files": [
-          "scripts/audits/devteam-dispatch-gate-satisfiability.sh"
-        ],
-        "updated_at": "2026-08-09T04:23:13Z",
-        "promoted_at": "2026-08-09T01:55:14Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=0)",
-        "claimed_at": "2026-08-09T04:23:13Z",
-        "claimed_by": "dev-team (review-lane qa-drain)",
-        "commit_sha": "104aa6c10",
-        "status_note": "AC-1/AC-4 both covered by single instrument per PM instruction. Script extended 958→1251L: byte-verbatim replica of main.md live inline 6-candidate jq (bounded1/sls/rlc/drs/qa_drain/step1_triage), NOT the stale shared devteam-eligibility.jq (5-id, DRS-blind — flagged stale by main.md itself). Simulates 12 idle-fallthrough ticks (2×6-tick windows): AC-1 exactly-once coverage per window + deterministic tie-break; AC-4 per-tick real board mutation + isolated no-same-tick-cascade proof. Dry-run baseline 57P/12F (12 pre-existing unrelated live-board-drift fails, byte-identical error set before/after) -> post-extension 91P/12F, 34/34 new assertions pass, 0 regressions. bash -n clean. Commits: 104aa6c10 (code+docs), 8d684979f (notebook+journal). 12 pre-existing FAILs flagged out-of-scope for PO/router to route separately."
-      },
-      {
-        "id": "FIX-CI-SIZELINT-COORDINATIONTOOLS-TS-457L",
-        "title": "CI RED: size-lint — apps/mcp-server/src/interface/mcp/tools/system/coordinationTools.ts baseline-tolerance-exceeded (baseline=388L actual=457L upper=426L)",
-        "type": "FIX",
-        "owner": "po",
-        "status": "QA",
-        "priority": "P1",
-        "zone": "apps/mcp-server/",
-        "size": "S",
-        "created_at": "2026-08-09T01:35:08Z",
-        "created_by": "po",
-        "updated_at": "2026-08-09T04:23:13Z",
-        "supervised": false,
-        "plan_only": false,
-        "depends_on": [],
-        "blocks": [],
-        "check_id": "CI-RED-39e1e161",
-        "dedup_key": "ci_job:size-lint|file:apps/mcp-server/src/interface/mcp/tools/system/coordinationTools.ts",
-        "verification_gate": "ci_green_on_subsequent_push",
-        "status_note": "AC: `gh run view <databaseId with headSha AFTER 39e1e161bcb7900a40f84aec37d067b2e3afe6f6> --json jobs -q '.jobs[]|select(.name==\"size-lint\")|.conclusion' == success (verification_gate=ci_green_on_subsequent_push). Failing job: size-lint. Failing file: apps/mcp-server/src/interface/mcp/tools/system/coordinationTools.ts (live wc -l = 457 confirmed 2026-08-09T01:35Z). Observed SHAs: 39e1e161 (run 31285673936, 00:23Z). Split or write an honest <!-- size-justification --> header per docs/policies/dev-standards.md; do NOT rebaseline silently. NOT a duplicate of FIX-CI-SIZELINT-COORDINATIONSTORE-BASELINE-1388L (DONE_VERIFIED) — that row is coordinationSTORE.ts (infrastructure/db/), a different file, and CI confirms it is now green (absent from run 31285673936's offender list). ANTI-AMNESTY: CI plane baseline is 0 fail; no file-scoped open row matched this path.",
-        "origin_signal_id": "ci_red:CI-RED-39e1e161",
-        "next_agent": "qa",
-        "updated_by": "dev-mcp-server",
-        "claimed_at": "2026-08-09T04:23:13Z",
-        "claimed_by": "dev-team (review-lane qa-drain)",
-        "dispatch_lane": "dev-mcp-server",
-        "commit_sha": "1653cea0aa56e43b4a84463a3dc2772bbde15705",
-        "files": [
-          "apps/mcp-server/src/interface/mcp/tools/system/coordinationTools.ts",
-          "apps/mcp-server/src/interface/mcp/tools/system/coordination/taskClaimTool.ts",
-          "apps/mcp-server/src/interface/mcp/tools/system/coordination/taskHeartbeatTool.ts",
-          "apps/mcp-server/src/interface/mcp/tools/system/coordination/taskReleaseTool.ts",
-          "apps/mcp-server/src/interface/mcp/tools/system/coordination/taskListHeldTool.ts",
-          "apps/mcp-server/src/interface/mcp/tools/system/coordination/taskForceReleaseOrphanTool.ts",
-          "apps/mcp-server/src/interface/mcp/tools/system/coordination/weekPeriodTool.ts",
-          "docs/data/size-lint-baseline.json"
-        ],
-        "dev_implementation_note": "Split, not header: coordinationTools.ts was 457L (baseline=388L, upper=426L, 31L overage). Extracted each of the 6 registered tools (task_claim, task_heartbeat, task_release, task_list_held, task_force_release_orphan, get_week_period) verbatim into its own file under interface/mcp/tools/system/coordination/ (54-119L each, all under the 120L size-lint threshold — none needs a justification header). coordinationTools.ts is now a 54L thin entry point re-exporting registerCoordinationTools(server) unchanged, so registry.ts, the coordination/index.ts barrel, and all 4 direct-importer tests needed zero edits. Also dropped the dead buildWeeklyPublishMarkerKey import (unused in the file body) and pruned the now-stale 388L docs/data/size-lint-baseline.json entry (did NOT raise/rebaseline it — file is 54L, genuinely no longer an offender). Verified LOCALLY: bash scripts/audits/size-lint-justification.sh --check no longer lists coordinationTools.ts (sole remaining offender is pre-existing, out-of-scope apps/mcp-server/src/interface/mcp/transport.ts, baseline=126L actual=265L — untouched, not this rows file). bun tsc --noEmit clean. npx eslint (fence config) clean on all 7 touched/new files. Targeted suite: task-lock-coordination-tools.test.ts + 1980-p1-final-required-flip.test.ts + FIX-ORPHAN-FR2-FR6-FR7-INTERFACE-COORDINATION-TOOLS.test.ts + FIX-DIGEST-PREDICT-ISO-WEEK-DEDUP.test.ts + 1982-quality-burndown-CHIJ.test.ts = 96/96 pass, 0 fail. Pushed commit 1653cea0aa56e43b4a84463a3dc2772bbde15705, pre-push hook (pnpm --filter vn-market check / tsc) green, no --no-verify.",
-        "qa_verification_hint": "gh run view <databaseId with headSha AFTER 1653cea0aa56e43b4a84463a3dc2772bbde15705> --json jobs -q \".jobs[]|select(.name==\\\"size-lint\\\")|.conclusion\" == success (verification_gate=ci_green_on_subsequent_push). Do NOT confuse with the separate pre-existing transport.ts size-lint offender (untouched by this row, different file/row) if it is still open on the same run — this rows own AC is scoped to coordinationTools.ts only."
       }
     ],
     "_closed_signals_20260614": {

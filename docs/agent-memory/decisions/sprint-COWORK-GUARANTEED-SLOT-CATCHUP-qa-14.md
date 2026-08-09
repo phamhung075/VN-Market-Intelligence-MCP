@@ -184,3 +184,13 @@
 - Targeted 5-file suite (dev's own list) re-run fresh: 96/96 pass, matches claim exactly. `bun tsc --noEmit`: 0 errors. `mock-guard.sh --files <7 touched prod files>`: PASS. process.env/secret greps clean; interface→infrastructure imports pre-existing (unchanged by split, not a new DDD violation). `size-lint-baseline.json` count 666→665, stale entry pruned honestly (not rebaselined-around).
 **why-decision:** APPROVED, DONE_VERIFIED — all re-run checks green, files[] match, verbatim-split claim independently confirmed, out-of-scope transport.ts correctly excluded (has its own live row).
 **why-change:** none — verified exactly what the row scoped.
+
+### STEP qa-S29 · qa · 2026-08-09T04:32:00Z
+**task-id:** FIX-DEVTEAM-IDLE-CHAIN-TEST-FAIRNESS
+**what-done:** Direct-commit verify (`qa[]` row, `branch:null`, dev-team Review-Lane QA-Drain). Verified commit `104aa6c10` (AC-1/AC-4 rotation-fairness + gate-firing extension to `devteam-dispatch-gate-satisfiability.sh`).
+**what-considered:**
+- `git show --stat` matches claimed file + accurately-described ancillary docs; `git diff parent..104aa6c10` confirmed purely additive (0 deletions) — isolates the new section cleanly.
+- Re-ran script myself: 97P/5F live (board-drift shifts raw counts vs the row's own 91/12 snapshot). To neutralize drift, temp-swapped the exact parent-commit script version into the real path, ran, restored: 63P/5F, byte-identical FAIL set to post-fix — proves exactly 34 new assertions, all PASS, 0 regressions.
+- No apps/ TS/Go touched (bun test/tsc N/A, confirmed via diff file list); mock-guard PASS (no production source); process.env/secret greps clean; bash -n clean.
+**why-decision:** APPROVED, DONE_VERIFIED. RC-VERIF gate: id not grandfathered — hand-built `verification.raw_probe` from the parent-swap comparison evidence above.
+**why-change:** none — verified exactly what the row scoped; parent-swap comparison added beyond the row's own dry-run method to make the "0 regressions" claim drift-proof.
