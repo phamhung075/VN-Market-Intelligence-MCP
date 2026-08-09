@@ -1126,3 +1126,15 @@
 **Mitigation:** No immediate action beyond signal routing.
 
 ---
+
+## Anomaly: A-30 · rag-service memory pressure 96.92% sustained
+**Severity:** WARN | **Date:** 2026-08-09 | **Status:** OPEN
+**Location:** vn-market-intelligence-mcp-rag-service-1
+**Details:** Memory sustained at 96.92% (>93% threshold) with no reclamation dips observed
+**Impact:** Service memory pressure may affect performance; watch for OOM events
+**Root cause:** Embedder singleton has no unload path (FIX-RAG-EMBEDDER-IDLE-UNLOAD-PATH P2)
+**Zone owner:** dev-mcp-server
+**Last reported:** 2026-08-09T05:06:16Z (signal sys-20260809T050602-15df, system-auditor -> po, WARN Telegram sent)
+**Mitigation:** No immediate action beyond signal routing.
+
+---
