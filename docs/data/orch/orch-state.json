@@ -93,12 +93,12 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "FIX-DEVTEAM-IDLE-CHAIN-TEST-FAIRNESS",
-    "next_agent": "qa",
-    "next_action": "Review-Lane QA-Drain claim of 5 row(s), highest-ranked FIX-DEVTEAM-IDLE-CHAIN-TEST-FAIRNESS — spawn qa in verify-committed mode (branch:null direct-commit row, no task branch/handoff — see docs/agents/qa/flow/main.md § Direct-Commit Verify; do NOT use the normal pipeline JUMP-TO, it requires a branch this row does not have). Batch of 5 row(s) share this claimed_at stamp in .task_board.qa[] — correlate by claimed_at to dispatch the rest.",
-    "updated_at": "2026-08-09T04:23:13Z",
-    "updated_by": "dev-team (review-lane qa-drain)"
+    "status": "idle",
+    "active_task_id": null,
+    "next_agent": null,
+    "next_action": "none — idle, awaiting next dispatch",
+    "updated_at": "2026-08-09T04:51:20Z",
+    "updated_by": "router (stale .head reset — FIX-DEVTEAM-IDLE-CHAIN-TEST-FAIRNESS already DONE_VERIFIED, blocked orch-cold-evict)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -134,7 +134,7 @@
     "does_not_consume_wip": true
   },
   "signal_queue": {
-    "_updated_at": "2026-08-09T04:21:16Z",
+    "_updated_at": "2026-08-09T04:36:25Z",
     "_updated_by": "cowork-team",
     "archive": [],
     "rows": [
@@ -882,7 +882,7 @@
         "type": "system-issue",
         "summary": "team-tool-recheck writer dead since 06-23 — replace-vs-retire decision needed",
         "severity": "LOW",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": "docs/signals/janitor-health-recheck-writer-retired-2026-08-09.json"
       }
     ],
