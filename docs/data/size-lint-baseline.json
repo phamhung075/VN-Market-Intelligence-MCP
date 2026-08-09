@@ -2,7 +2,7 @@
   "_generated_by": "scripts/audits/size-lint-justification.sh --update",
   "_note": "Per-file grandfather baseline for scripts/audits/size-lint-justification.sh --check. Snapshots every currently-over-cap-without-justification apps/**|packages/** source file at --update time. Entries drop automatically on the next --update once a file shrinks under threshold or gains a current size-justification header. Regenerated wholesale each --update (not merged) — see docs/architecture-briefs/2026-07-24-factory-guard-ci-size-lint-justification.md.",
   "_ssot": "docs/data/size-lint-baseline.json",
-  "count": 666,
+  "count": 665,
   "entries": {
     "apps/alert-engine/cmd/sandbox/exec_module.go": 200,
     "apps/alert-engine/pkg/infrastructure/sqlite.go": 337,
@@ -499,7 +499,6 @@
     "apps/mcp-server/src/interface/mcp/tools/system/agentMemoryUpdateTools.ts": 401,
     "apps/mcp-server/src/interface/mcp/tools/system/agentWorkLogTools.ts": 230,
     "apps/mcp-server/src/interface/mcp/tools/system/askQueueTools.ts": 165,
-    "apps/mcp-server/src/interface/mcp/tools/system/coordinationTools.ts": 388,
     "apps/mcp-server/src/interface/mcp/tools/system/dataFreshnessTools.ts": 178,
     "apps/mcp-server/src/interface/mcp/tools/system/emitPressureStateTool.ts": 542,
     "apps/mcp-server/src/interface/mcp/tools/system/feedbackTools.ts": 177,
