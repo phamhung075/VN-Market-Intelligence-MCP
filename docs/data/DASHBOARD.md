@@ -1138,3 +1138,15 @@
 **Mitigation:** No immediate action beyond signal routing.
 
 ---
+
+## Anomaly: A-30 · rag-service sustained high memory
+**Severity:** WARN | **Date:** 2026-08-09 | **Status:** OPEN
+**Location:** rag-service container
+**Details:** All 6 samples sustained at 94.13% (>93% threshold), 0 reclamation dips, 0 discontinuities
+**Impact:** Container operating near OOM boundary, reduced headroom for temporary spikes
+**Root cause:** FIX-RAG-EMBEDDER-IDLE-UNLOAD-PATH (P2, backlog) — embedder singleton has no unload path
+**Zone owner:** ops
+**Last reported:** 2026-08-09T05:36:35Z (signal sys-20260809T053619-38ad, system-auditor -> po, dedup_key=microservice_degraded:vn-market-intelligence-mcp-rag-service-1:A-30, WARN Telegram sent)
+**Mitigation:** No immediate action beyond signal routing.
+
+---
