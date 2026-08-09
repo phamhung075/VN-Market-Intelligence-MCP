@@ -856,6 +856,20 @@
         "provenance": "detector",
         "audit_cycle_tag": "cron:auditor-t1:2026-08-09T03:30Z",
         "dedup_key": "microservice_degraded:rag-service:A-30"
+      },
+      {
+        "id": "sys-20260809T041110-2b0a",
+        "ts": "2026-08-09T04:11:10Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "signal_feedback",
+        "summary": "rag-service A-30 memory ESCALATE — 97.50% sustained high (loss of reclamation)",
+        "severity": "CRITICAL",
+        "status": "NEW",
+        "payload_ref": null,
+        "provenance": "detector",
+        "audit_cycle_tag": "cron:auditor-t1:2026-08-09T04:00Z",
+        "dedup_key": "microservice_degraded:vn-market-intelligence-mcp-rag-service-1:A-30"
       }
     ],
     "last_triaged_at": "2026-07-29T06:25:00Z",
