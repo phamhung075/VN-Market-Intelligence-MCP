@@ -883,7 +883,7 @@
         "summary": "team-tool-recheck writer dead since 06-23 — replace-vs-retire decision needed",
         "severity": "LOW",
         "status": "READ",
-        "payload_ref": "docs/signals/janitor-health-recheck-writer-retired-2026-08-09.json"
+        "payload_ref": "docs/signals/processed/janitor-health-recheck-writer-retired-2026-08-09.json"
       }
     ],
     "last_triaged_at": "2026-07-29T06:25:00Z",
@@ -19854,7 +19854,7 @@
         "last_served_tick": "2026-08-09T01:23:42Z"
       }
     },
-    "_updated_at": "2026-08-09T04:22:58Z",
+    "_updated_at": "2026-08-09T04:53:12Z",
     "_updated_by": "dev-team",
     "pending_triage_inbox": [
       {
@@ -20110,6 +20110,92 @@
         },
         "createdAt": "2026-08-09T04:06:18Z",
         "drained_at": "2026-08-09T04:21:07Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "90d1ec4ad437ee053d82447957d270eaf8f5bf4727b140c30ffd72c9e1b6dbbf",
+        "source": "file",
+        "from": "ci-health-probe",
+        "to": "po",
+        "type": "ci_red",
+        "priority": "high",
+        "payload": {
+          "check_id": "CI-RED-8c091e21",
+          "head_sha": "8c091e21834aa267ab750498340e5cec6c8b65e2",
+          "run_id": 31293956930,
+          "run_url": "https://github.com/phamhung075/VN-Market-Intelligence-MCP/actions/runs/31293956930",
+          "conclusion": "failure",
+          "failing_jobs": [
+            {
+              "name": "bun test",
+              "conclusion": "failure",
+              "jobId": 93195862786
+            },
+            {
+              "name": "size-lint",
+              "conclusion": "failure",
+              "jobId": 93195862801
+            }
+          ],
+          "fingerprint": "428b230cbf7a9fb6072f12709c434ab6d9990554c52672d1116a9073be0e67d3",
+          "zone_owner": "dev-team (CI fix)",
+          "summary": "CI RED on main HEAD 8c091e21834aa267ab750498340e5cec6c8b65e2: bun test,size-lint",
+          "suggested_sprint_class": "FIX",
+          "verification_gate": "ci_green_on_subsequent_push"
+        },
+        "createdAt": "2026-08-09T04:22:29Z",
+        "drained_at": "2026-08-09T04:53:11Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "970d586b61533bf2bbdbe602a08838b71a66c6ecba0261e7e97fb110ddd09fb2",
+        "source": "file",
+        "from": "commit-sweep-guard",
+        "to": "po",
+        "type": "bug-escalation",
+        "priority": "high",
+        "payload": "[notebook-immutability-guard] WARN: docs/agent-memory/notebooks/system-auditor.md — retained section '## c16 · 2026-08-09T04:08:20Z' has different content staged than at HEAD. Per .claude/skills/notebook-write/SKILL.md AC-2a, a retained '## ' section must be byte-identical across a cycle; the only authorized mutations are dropping a whole oldest section, the AC-2b sub-block intra-prune, or trimming the CURRENT cycle's own new section. If cap pressure forced a shrink, DROP the whole section (archive verbatim if it must be kept) and add a NEW marker section instead — see docs/agent-memory/notebooks/architect.md for the reference-correct pattern. mode=warn (default warn — never blocks; set GIT_NOTEBOOK_IMMUTABILITY_MODE=reject to hard-enforce once re-validated, see scripts/audits/verify-notebook-immutability-gate.sh).\n",
+        "createdAt": "2026-08-09T04:38:24Z",
+        "drained_at": "2026-08-09T04:53:11Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "0cd48474e635ded25c50c68b13171ecff3f9243a8ec1e844f87117c0e9ef89ca",
+        "source": "file",
+        "from": "code-janitor",
+        "to": "po",
+        "type": "system-issue",
+        "priority": "low",
+        "payload": {
+          "finding": "docs/agent-memory/health/team-tool-recheck-*.md writer has been silent since 2026-06-23; memory-prune-sweep.sh now deletes files in this family older than 30d as routine hygiene",
+          "known_cause": "writer = cloud RemoteTrigger trig_019Q8D5xttjZn6iytx2Ld9dW, killed by the 2026-06-22 standing no-RemoteTrigger directive (feedback_no_remote_trigger_all_local.md)",
+          "decision_needed": "replace the recheck job with a local cron per that directive's migration rule, OR retire the team-tool-recheck permanently and let this sweep's 30d rule drain the directory to empty",
+          "detail_ref": "docs/architecture-briefs/2026-07-12-ultracode-workflow-improvement-audit.md#memory-docs-hygiene-P3",
+          "idempotency_note": "written once — re-runs of memory-prune-sweep.sh skip this write once any janitor-health-recheck-writer-retired-*.json exists in docs/signals/"
+        },
+        "createdAt": "2026-08-09T04:30:45Z",
+        "drained_at": "2026-08-09T04:53:11Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "f081dd6e482933f516b87359e0195ed842f4e257e4510acd8ebabd38841a7284",
+        "source": "file",
+        "from": "notebook-auto-prune-hook",
+        "to": "claude-manager-helper",
+        "type": "notebook_single_section_overage_breach",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/notebooks/digest-predict.md",
+          "line_count": 40,
+          "cap": 200,
+          "byte_count": 21134,
+          "byte_cap": 12000,
+          "section_count": 1,
+          "reason": "only preamble+1 section remain; cannot prune further without data loss",
+          "action_required": "manual_split_to_archive"
+        },
+        "createdAt": "2026-08-09T04:30:47Z",
+        "drained_at": "2026-08-09T04:53:11Z",
         "routed_to": "PO Step 0-SIG"
       }
     ]
