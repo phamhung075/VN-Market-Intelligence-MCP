@@ -93,12 +93,11 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "FIX-DEVTEAM-IDLE-CHAIN-TEST-DURABLE",
-    "next_agent": "developer",
-    "next_action": "BOUNDED-1 auto-pickup claim of FIX-DEVTEAM-IDLE-CHAIN-TEST-DURABLE — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
-    "updated_at": "2026-08-09T05:25:06Z",
-    "updated_by": "dev-team (bounded-1 auto-pickup)"
+    "status": "idle",
+    "active_task_id": null,
+    "next_agent": "router",
+    "updated_at": "2026-08-09T05:47:09Z",
+    "updated_by": "developer"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -19187,6 +19186,36 @@
         "origin_signal_id": "bug-escalation:bctc-analyst:signals-absent-4th-cycle",
         "updated_by": "developer",
         "dev_note": "Fixed: added read-first SIGNAL-FILE WRITE VERIFICATION guard to docs/agents/bctc-analyst/flow/main.md — Write tool's own return is now the ONLY write-verification signal (per-cycle), agent must never Read a docs/signals/*.json path it wrote in a prior cycle to re-confirm presence. AC-2: no Bash/Glob grant added, tool grant stays narrow. AC-3 regression traced (not replayed) in decision journal. Commit c23d19da4 (pushed to origin/main). Journal: docs/agent-memory/decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-developer-5.md STEP developer-S91."
+      },
+      {
+        "id": "FIX-DEVTEAM-IDLE-CHAIN-TEST-DURABLE",
+        "type": "FIX",
+        "title": "AC-2 + conservation guard + docs: drain-signals-durable.test.js new harness (AC-2 negative control) + conservation-check.mjs §3.4 extension + dev-standards.md Script Persistence pointers",
+        "status": "REVIEW",
+        "priority": "P0",
+        "size": "M",
+        "zone": "docs/agents/dev-team/flow/",
+        "owner": "developer",
+        "next_agent": "qa",
+        "created_at": "2026-07-29T13:50:06Z",
+        "created_by": "pm",
+        "depends": [
+          "FIX-DEVTEAM-IDLE-CHAIN-MAIN-COMPLETION"
+        ],
+        "blocks": [],
+        "files": [
+          "scripts/agents-flow/drain-signals-durable.test.js",
+          "scripts/orch-conservation-check.mjs",
+          "docs/policies/dev-standards.md"
+        ],
+        "updated_at": "2026-08-09T05:47:09Z",
+        "promoted_at": "2026-08-09T05:25:01Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=0)",
+        "claimed_at": "2026-08-09T05:25:06Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "commit_sha": "cc7e86829",
+        "status_note": "AC-2 negative-control harness (46 assertions, 4 scenarios+3b+backward-compat) landed in scripts/agents-flow/drain-signals-durable.test.js. Conservation guard extended (scripts/orch-conservation-check.mjs signalTotal() now sums dev_team_idle_chain.pending_triage_inbox alongside signal_queue.rows — TDD RED-then-GREEN, closes brief §3.4's flagged gap). dev-standards.md gained 2 Script Persistence pointers. Regression: drain-signals.test.js 51/51, orch-apply-wrapper-tests.sh 75/75, orch-state-hook.test.mjs 21/21 unaffected. Commits: cc7e86829 (code+docs+handoff), a3b695415 (notebook+journal)."
       }
     ],
     "qa": [
@@ -19491,34 +19520,6 @@
           "TASK-COWORK-SIGNAL-NAMING-CONTRACT"
         ],
         "decomposition_note": "Phase 1 decomposed into 4 atomic tasks per PO amendments (3 binding, 1 correction to FR-1 WINDOWKEY logic per Amendment 3). All inherit plan_only/supervised flags. No developer dispatch until PO adjudication."
-      },
-      {
-        "id": "FIX-DEVTEAM-IDLE-CHAIN-TEST-DURABLE",
-        "type": "FIX",
-        "title": "AC-2 + conservation guard + docs: drain-signals-durable.test.js new harness (AC-2 negative control) + conservation-check.mjs §3.4 extension + dev-standards.md Script Persistence pointers",
-        "status": "IN_PROGRESS",
-        "priority": "P0",
-        "size": "M",
-        "zone": "docs/agents/dev-team/flow/",
-        "owner": "developer",
-        "next_agent": "developer",
-        "created_at": "2026-07-29T13:50:06Z",
-        "created_by": "pm",
-        "depends": [
-          "FIX-DEVTEAM-IDLE-CHAIN-MAIN-COMPLETION"
-        ],
-        "blocks": [],
-        "files": [
-          "scripts/agents-flow/drain-signals-durable.test.js",
-          "scripts/orch-conservation-check.mjs",
-          "docs/policies/dev-standards.md"
-        ],
-        "updated_at": "2026-08-09T05:25:06Z",
-        "promoted_at": "2026-08-09T05:25:01Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=0)",
-        "claimed_at": "2026-08-09T05:25:06Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)"
       }
     ]
   },
