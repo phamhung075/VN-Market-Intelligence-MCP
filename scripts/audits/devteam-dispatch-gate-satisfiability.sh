@@ -79,6 +79,27 @@
 # — that the REAL SLS claim script actually fires under the effective-wip=1
 # shape (not just an arithmetic assertion).
 #
+# EXTENDED 2026-08-09 (FIX-DEVTEAM-IDLE-CHAIN-TEST-FAIRNESS, AC-1/AC-4): every
+# assertion above this point proves a lane's promote/claim scripts fire IN
+# ISOLATION (a fixture shaped for that one lane). It does not prove the aged
+# round-robin selection mechanism (docs/agents/dev-team/flow/main.md § Idle-
+# Tick Rotation Selection, FIX-DEVTEAM-IDLE-CHAIN-P1A-MAIN-ROTATION) actually
+# gives every lane a turn, or that gate-firing is DRIVEN by $SELECTED end to
+# end. New § ROTATION FAIRNESS BOUND + $SELECTED-DRIVEN GATE-FIRING PROOF
+# simulates 12 consecutive idle-fallthrough ticks (2 independent 6-tick
+# windows) against a fixture carrying one dedicated row per board-touching
+# lane, computing $SELECTED each tick via a byte-verbatim copy of main.md's
+# own inline 6-candidate selection/stamp jq (deliberately NOT the stale 5-id
+# rotation_selected($doc)/devteam-idle-chain-stamp.jq — DRS-blind, not what
+# main.md actually calls — see the new section's own header for the full
+# rationale) and dispatching to that lane's REAL promote/claim script(s),
+# asserting the dedicated row actually moves. Proves: AC-1 fairness (both
+# windows cover all 6 ids exactly once, deterministic bootstrap tie-break
+# order) and AC-4 gate-firing (each $SELECTED tick's real script mutates
+# board state, not merely resolves an id) in one instrument, plus a dedicated
+# isolated-fixture no-same-tick-cascade proof (a genuinely empty turn still
+# advances the stamp, so rotation does not retry the same lane next tick).
+#
 # Usage: bash scripts/audits/devteam-dispatch-gate-satisfiability.sh
 # Exit 0 = every assertion below passes. Exit 1 = at least one fails
 # (details printed). Never writes to the live orch-state.json.
@@ -948,6 +969,278 @@ assert "AC-EVICT-2 (guard REFUSAL proven): still-referenced row GATESAT-REFGUARD
   "$([ "$REFERENCED_STILL_HOT" -eq 1 ] && echo true || echo false)"
 assert "AC-EVICT-3 (positive control — guard does not over-hold): unreferenced row GATESAT-REFGUARD-DEP-UNREFERENCED WAS evicted normally" \
   "$([ "$UNREFERENCED_STILL_HOT" -eq 0 ] && echo true || echo false)"
+
+# =============================================================================
+# ---- ROTATION FAIRNESS BOUND + $SELECTED-DRIVEN GATE-FIRING PROOF (AC-1/
+# AC-4, FIX-DEVTEAM-IDLE-CHAIN-TEST-FAIRNESS) ----
+#
+# WHY THIS SECTION EXISTS (extends this SAME instrument, per PM's explicit
+# AC-4 instruction — not forked): every gate-firing assertion above proves a
+# lane's OWN promote/claim scripts fire IN ISOLATION, given a fixture shaped
+# for that lane alone. It does NOT prove what AC-1/AC-4 actually require:
+# that the aged-round-robin selection mechanism (docs/agents/dev-team/flow/
+# main.md § Idle-Tick Rotation Selection, FIX-DEVTEAM-IDLE-CHAIN-P1A-MAIN-
+# ROTATION) (a) gives every one of the 6 lanes a turn within any 6
+# consecutive idle-fallthrough ticks — not just that BOUNDED-1 (or whichever
+# lane sits first) can starve the rest forever, the EXACT defect this
+# rotation replaced (measured: 6 FIX-ORPHAN-FR* children sat in ready[]
+# 2026-07-22->2026-08-08 because the old fixed chain never reached RLC) —
+# and (b) that gate-firing is actually DRIVEN by $SELECTED end to end
+# (select -> dispatch -> real script -> board mutation), not merely that a
+# lane's gate CAN be satisfied when invoked directly in isolation
+# (scripts/audits/bounded1-supervised-lane-report.sh's own false-GREEN
+# lesson, see this file's own header).
+#
+# 6 candidates, not 5: main.md's own rotation section computes $SELECTED
+# over ["bounded1","sls","rlc","drs","qa_drain","step1_triage"] (6 ids).
+# Design-Router Sweep (DRS) was added to the dispatch chain 2026-07-30, five
+# days after the original 2026-07-25 brief/schema shipped the 5-id
+# rotation_selected($doc) (scripts/lib/devteam-eligibility.jq:466) and
+# devteam-idle-chain-stamp.jq's $known_ids guard — main.md's own "6
+# candidates, not 5" note (§ Idle-Tick Rotation Selection) flags that BOTH
+# of those shared-lib functions are STALE (still hardcode the original 5,
+# DRS-blind) and are NOT what main.md actually calls: main.md INLINES its
+# own 6-id selection + stamp jq instead (flagged fast-follow, not yet
+# landed, not this task's scope: extending those 2 shared files to 6 ids).
+# This section therefore deliberately does NOT call rotation_selected($doc)
+# — doing so would test a DIFFERENT (stale, DRS-blind, only-5-tick-fair)
+# algorithm than the one actually live in production. The two jq snippets
+# below are byte-verbatim copies of main.md's own "Runs ONCE..." selection
+# block and "Stamp update" block (§ Idle-Tick Rotation Selection, both
+# outside this task's/agent-father's commit_zone.allowed for main.md itself
+# — this script cannot `include` it directly) — if main.md's inline
+# algorithm ever changes, this section must be updated in lockstep; verbatim
+# duplication + this comment is the deliberate, documented tradeoff, same
+# class as main.md's own note about duplicating scripts/lib/devteam-
+# eligibility.jq's def.
+# =============================================================================
+echo ""
+echo "=== ROTATION FAIRNESS (AC-1) + \$SELECTED-DRIVEN GATE-FIRING (AC-4) ==="
+
+ROT_IDS='["bounded1","sls","rlc","drs","qa_drain","step1_triage"]'
+
+# main.md § Idle-Tick Rotation Selection — selection jq, byte-verbatim.
+rot_selected() {
+  jq -r \
+    '(.dev_team_idle_chain.rotation // {}) as $r
+     | ["bounded1","sls","rlc","drs","qa_drain","step1_triage"]
+     | map({id: ., stamp: ($r[.].last_served_tick // "1970-01-01T00:00:00Z")})
+     | sort_by(.stamp)
+     | .[0].id' \
+    "$1"
+}
+
+# main.md § Idle-Tick Rotation Selection — stamp-write jq, byte-verbatim
+# (only the orch-apply.sh sink is swapped for a plain scratch-file
+# overwrite — this script never writes the live orch-state.json, see file
+# header).
+rot_stamp() {
+  local file="$1" now="$2" c="$3"
+  jq --arg now "$now" --arg c "$c" \
+    '(["bounded1","sls","rlc","drs","qa_drain","step1_triage"]) as $known
+     | if ($known | index($c)) == null then .
+       else .dev_team_idle_chain.rotation[$c].last_served_tick = $now
+          | .dev_team_idle_chain._updated_at = $now
+          | .dev_team_idle_chain._updated_by = "dev-team"
+       end' \
+    "$file" > "$file.tmp" && mv "$file.tmp" "$file"
+}
+
+# Adds ONE fresh dedicated row per board-touching lane (5 of the 6 —
+# step1_triage has no promote/claim body of its own at this rotation
+# position, main.md's own documented contract: "this stamp write is ALL
+# that happens for it HERE" — so it gets no dedicated board row; its own
+# proof is the stamp-write assertion in the dispatch loop below). The
+# next_agent split (dev role for BOUNDED-1's row, allowlisted non-dev role
+# for DRS's row) mirrors the real is_bounded1_eligible / is_design_router_
+# eligible mutual exclusion (scripts/lib/devteam-eligibility.jq
+# is_non_dev_next_agent_unrouted) so both rows coexist safely in the SAME
+# backlog[] without cross-picking when only ONE lane's script is invoked a
+# given tick.
+rot_inject_rows() {
+  local file="$1" suffix="$2" now="$3"
+  jq --arg now "$now" --arg suf "$suffix" '
+    .task_board.backlog += [
+      { id: ("GATESAT-ROTATE-BOUNDED1-" + $suf), status: "BACKLOG", priority: "P1",
+        type: "FIX", zone: "cross-service/", next_agent: "developer", created_at: $now },
+      { id: ("GATESAT-ROTATE-DRS-" + $suf), status: "BACKLOG", priority: "P1",
+        type: "FIX", zone: "cross-service/", next_agent: "ba", created_at: $now }
+    ]
+    | .task_board.ready += [
+      { id: ("GATESAT-ROTATE-SLS-" + $suf), status: "READY", priority: "P0",
+        type: "FIX", zone: "cross-service/", next_agent: "pm",
+        supervised: true, plan_only: true, promoted_by: null, created_at: $now },
+      { id: ("GATESAT-ROTATE-RLC-" + $suf), status: "READY", priority: "P1",
+        type: "FIX", zone: "cross-service/", next_agent: "developer", created_at: $now }
+    ]
+    | .task_board.review += [
+      { id: ("GATESAT-ROTATE-QADRAIN-" + $suf), status: "REVIEW", priority: "P1",
+        type: "FIX", zone: "cross-service/", next_agent: "qa", created_at: $now }
+    ]
+  ' "$file" > "$file.tmp" && mv "$file.tmp" "$file"
+}
+
+ROTATE_FIXTURE="$WORK/rotate.json"
+jq -n '{ task_board: { backlog: [], ready: [], in_progress: [], qa: [], review: [], done: [], done_verified: [] } }' > "$ROTATE_FIXTURE"
+rot_inject_rows "$ROTATE_FIXTURE" "W1" "2026-01-01T00:00:00Z"
+
+assert "AC-1 fixture is saturated (backlog>0, ready>0, review>0, all rows carry a resolved next_agent) before any tick runs" \
+  "$([ "$(jq '.task_board.backlog|length' "$ROTATE_FIXTURE")" -gt 0 ] && [ "$(jq '.task_board.ready|length' "$ROTATE_FIXTURE")" -gt 0 ] && [ "$(jq '.task_board.review|length' "$ROTATE_FIXTURE")" -gt 0 ] && echo true || echo false)"
+
+ROT_HISTORY=()
+for GLOBAL_TICK in $(seq 1 12); do
+  WINDOW=$(( (GLOBAL_TICK - 1) / 6 + 1 ))
+  TICK_IN_WINDOW=$(( (GLOBAL_TICK - 1) % 6 + 1 ))
+  # Synthetic, monotonically increasing, sort_by-comparable ISO8601 — NOT a
+  # real wall-clock write (this is a scratch fixture only, never routed
+  # through orch-apply.sh / the live orch-state.json).
+  TICK_STAMP=$(printf "2026-01-01T00:%02d:00Z" "$GLOBAL_TICK")
+
+  # Window 2 bootstrap: inject a FRESH row per lane — window 1's rows are
+  # each consumed exactly once by design (round-robin guarantees no repeat
+  # within a window) — so "fairness sustained, not just bootstrap" (PM Test
+  # Design) is provable on a second, independent 6-tick pass.
+  if [ "$TICK_IN_WINDOW" -eq 1 ] && [ "$WINDOW" -eq 2 ]; then
+    rot_inject_rows "$ROTATE_FIXTURE" "W2" "$TICK_STAMP"
+  fi
+
+  SELECTED=$(rot_selected "$ROTATE_FIXTURE")
+  SELECTED_VALID=$(echo "$ROT_IDS" | jq --arg s "$SELECTED" 'index($s) != null')
+  assert "tick $GLOBAL_TICK (window $WINDOW, position $TICK_IN_WINDOW): \$SELECTED='${SELECTED:-<empty>}' is one of the 6 known rotation ids" \
+    "$([ "$SELECTED_VALID" = "true" ] && echo true || echo false)"
+  ROT_HISTORY+=("$SELECTED")
+
+  case "$SELECTED" in
+    bounded1)
+      ROW_ID="GATESAT-ROTATE-BOUNDED1-W${WINDOW}"
+      jq --arg now "$TICK_STAMP" --slurpfile detail "$DETAIL" --slurpfile archive "$ARCHIVE" -f scripts/devteam-backlog-promote-bounded1.jq "$ROTATE_FIXTURE" > "$WORK/rot-b.json"
+      jq --arg now "$TICK_STAMP" -f scripts/devteam-backlog-claim-bounded1.jq "$WORK/rot-b.json" > "$WORK/rot-c.json"
+      FIRED=$([ "$(jq --arg id "$ROW_ID" '[.task_board.in_progress[]|select(.id==$id)]|length' "$WORK/rot-c.json")" -eq 1 ] && echo true || echo false)
+      ;;
+    sls)
+      ROW_ID="GATESAT-ROTATE-SLS-W${WINDOW}"
+      jq --arg now "$TICK_STAMP" --slurpfile detail "$DETAIL" --slurpfile archive "$ARCHIVE" -f scripts/devteam-backlog-promote-supervised-lane-sweep.jq "$ROTATE_FIXTURE" > "$WORK/rot-b.json"
+      jq --arg now "$TICK_STAMP" --slurpfile detail "$DETAIL" --slurpfile archive "$ARCHIVE" -f scripts/devteam-backlog-claim-supervised-lane-sweep.jq "$WORK/rot-b.json" > "$WORK/rot-c.json"
+      FIRED=$([ "$(jq --arg id "$ROW_ID" '[.task_board.in_progress[]|select(.id==$id)]|length' "$WORK/rot-c.json")" -eq 1 ] && echo true || echo false)
+      ;;
+    rlc)
+      ROW_ID="GATESAT-ROTATE-RLC-W${WINDOW}"
+      jq --arg now "$TICK_STAMP" --slurpfile detail "$DETAIL" --slurpfile archive "$ARCHIVE" -f scripts/devteam-backlog-claim-ready-lane-consumer.jq "$ROTATE_FIXTURE" > "$WORK/rot-c.json"
+      FIRED=$([ "$(jq --arg id "$ROW_ID" '[.task_board.in_progress[]|select(.id==$id)]|length' "$WORK/rot-c.json")" -eq 1 ] && echo true || echo false)
+      ;;
+    drs)
+      ROW_ID="GATESAT-ROTATE-DRS-W${WINDOW}"
+      jq --arg now "$TICK_STAMP" --argjson allowlist "$DRS_ALLOWLIST" --slurpfile detail "$DETAIL" --slurpfile archive "$ARCHIVE" -f scripts/devteam-backlog-promote-design-router-sweep.jq "$ROTATE_FIXTURE" > "$WORK/rot-b.json"
+      jq --arg now "$TICK_STAMP" -f scripts/devteam-backlog-claim-design-router-sweep.jq "$WORK/rot-b.json" > "$WORK/rot-c.json"
+      FIRED=$([ "$(jq --arg id "$ROW_ID" '[.task_board.in_progress[]|select(.id==$id)]|length' "$WORK/rot-c.json")" -eq 1 ] && echo true || echo false)
+      ;;
+    qa_drain)
+      ROW_ID="GATESAT-ROTATE-QADRAIN-W${WINDOW}"
+      jq --arg now "$TICK_STAMP" --slurpfile detail "$DETAIL" -f scripts/devteam-review-claim-qa-drain.jq "$ROTATE_FIXTURE" > "$WORK/rot-c.json"
+      FIRED=$([ "$(jq --arg id "$ROW_ID" '[.task_board.qa[]|select(.id==$id)]|length' "$WORK/rot-c.json")" -eq 1 ] && echo true || echo false)
+      ;;
+    step1_triage)
+      ROW_ID="(none by design — no board mutation at this rotation position)"
+      cp "$ROTATE_FIXTURE" "$WORK/rot-c.json"
+      FIRED=true
+      ;;
+    *)
+      ROW_ID="(unrecognized \$SELECTED)"
+      cp "$ROTATE_FIXTURE" "$WORK/rot-c.json"
+      FIRED=false
+      ;;
+  esac
+  assert "tick $GLOBAL_TICK: \$SELECTED='$SELECTED' own real promote/claim (row=$ROW_ID) FIRES — a real board mutation, not merely a resolved id" "$FIRED"
+
+  if [ "$SELECTED" = "step1_triage" ]; then
+    BOARD_UNCHANGED=$([ "$(jq -c '.task_board' "$ROTATE_FIXTURE")" = "$(jq -c '.task_board' "$WORK/rot-c.json")" ] && echo true || echo false)
+    assert "tick $GLOBAL_TICK: step1_triage selected -> .task_board byte-identical (its own promote/claim dispatch happens at the SEPARATE ## Step 1 -- PO Triage physical location, not this rotation position, per main.md's own cross-reference)" \
+      "$BOARD_UNCHANGED"
+  fi
+
+  # Decouples WIP-budget behavior (already covered by the dedicated NEGATIVE
+  # CONTROL / WIP EFFECTIVE COUNT sections above) from rotation-fairness
+  # testing here: reset in_progress[] to empty after recording this tick's
+  # firing assertion, simulating the claimed row being progressed/handed off
+  # by its assigned specialist before the next idle-fallthrough tick, so
+  # every lane's OWN WIP gate stays satisfiable on its turn regardless of
+  # tick order within the window.
+  jq '.task_board.in_progress = []' "$WORK/rot-c.json" > "$ROTATE_FIXTURE.tmp"
+  mv "$ROTATE_FIXTURE.tmp" "$ROTATE_FIXTURE"
+
+  # main.md's stamp write — unconditional, functionally equivalent
+  # placement to main.md's own "Before, not after" note (never reads the
+  # lane's own outcome, independent top-level key).
+  rot_stamp "$ROTATE_FIXTURE" "$TICK_STAMP" "$SELECTED"
+
+  if [ "$TICK_IN_WINDOW" -eq 6 ]; then
+    WINDOW_SLICE=("${ROT_HISTORY[@]: -6}")
+    WINDOW_UNIQUE_N=$(printf '%s\n' "${WINDOW_SLICE[@]}" | sort -u | wc -l | tr -d ' ')
+    WINDOW_SORTED=$(printf '%s\n' "${WINDOW_SLICE[@]}" | sort | tr '\n' ',')
+    EXPECTED_SORTED=$(echo "$ROT_IDS" | jq -r '.[]' | sort | tr '\n' ',')
+    assert "window $WINDOW (ticks $((GLOBAL_TICK-5))-$GLOBAL_TICK): all 6 rotation ids selected exactly once (AC-1 fairness bound) — got [${WINDOW_SLICE[*]}]" \
+      "$([ "$WINDOW_UNIQUE_N" -eq 6 ] && [ "$WINDOW_SORTED" = "$EXPECTED_SORTED" ] && echo true || echo false)"
+  fi
+done
+
+assert "AC-1 (sustained fairness): 12 total ticks produced 12 total selections across 2 independent, non-overlapping 6-tick round-robin cycles" \
+  "$([ "${#ROT_HISTORY[@]}" -eq 12 ] && echo true || echo false)"
+
+assert "AC-1 (bootstrap tie-break, deterministic): window 1's order matches main.md's fixed declared candidate order exactly (all 6 stamps tied/missing at tick 1) — bounded1,sls,rlc,drs,qa_drain,step1_triage (got: ${ROT_HISTORY[0]},${ROT_HISTORY[1]},${ROT_HISTORY[2]},${ROT_HISTORY[3]},${ROT_HISTORY[4]},${ROT_HISTORY[5]})" \
+  "$([ "${ROT_HISTORY[0]}" = "bounded1" ] && [ "${ROT_HISTORY[1]}" = "sls" ] && [ "${ROT_HISTORY[2]}" = "rlc" ] && [ "${ROT_HISTORY[3]}" = "drs" ] && [ "${ROT_HISTORY[4]}" = "qa_drain" ] && [ "${ROT_HISTORY[5]}" = "step1_triage" ] && echo true || echo false)"
+
+# ---- No same-tick cascade (main.md § Idle-Tick Rotation Selection, "No
+# same-tick cascade" note) — a selected lane that genuinely finds nothing
+# does NOT get retried the very next tick; the tick is simply spent and the
+# stamp still advances, so rotation moves on to the next-oldest candidate.
+# Isolated fixture (own discipline as every other AC block in this file) —
+# deliberately NOT reachable from the main 12-tick loop above, where every
+# selected lane always has exactly one dedicated row waiting (so it always
+# fires) — this is the complementary "genuinely empty turn" case.
+echo ""
+echo "=== NO SAME-TICK CASCADE: a selected lane with nothing eligible is NOT re-tried the very next tick ==="
+
+NOC_T0="2026-01-01T00:00:00Z"
+NOC_T1="2026-01-01T00:01:00Z"
+NOCASCADE_FIXTURE="$WORK/rotate-nocascade.json"
+jq -n --arg t0 "$NOC_T0" '
+  { task_board: { backlog: [], ready: [], in_progress: [], qa: [], review: [], done: [], done_verified: [] },
+    dev_team_idle_chain: { rotation: {
+        bounded1:     { last_served_tick: $t0 },
+        rlc:          { last_served_tick: $t0 },
+        drs:          { last_served_tick: $t0 },
+        qa_drain:     { last_served_tick: $t0 },
+        step1_triage: { last_served_tick: $t0 }
+      } }
+  }
+' > "$NOCASCADE_FIXTURE"
+# "sls" deliberately OMITTED from the rotation map above -> defaults to the
+# 1970 epoch fallback in the selection jq, guaranteeing it is this tick's
+# oldest-stamped (hence $SELECTED) candidate, while the other 5 are tied at
+# a later-but-still-synthetic $NOC_T0.
+
+NOCASCADE_TICK1=$(rot_selected "$NOCASCADE_FIXTURE")
+assert "no-cascade fixture: bootstrap \$SELECTED='${NOCASCADE_TICK1:-<empty>}' resolves to 'sls' (the only id with no stamp, defaults to epoch-oldest)" \
+  "$([ "$NOCASCADE_TICK1" = "sls" ] && echo true || echo false)"
+
+# SLS's real promote+claim against a genuinely empty backlog[]/ready[] — no
+# eligible row anywhere for it this tick.
+jq --arg now "$NOC_T1" --slurpfile detail "$DETAIL" --slurpfile archive "$ARCHIVE" -f scripts/devteam-backlog-promote-supervised-lane-sweep.jq "$NOCASCADE_FIXTURE" > "$WORK/noc-b.json"
+jq --arg now "$NOC_T1" --slurpfile detail "$DETAIL" --slurpfile archive "$ARCHIVE" -f scripts/devteam-backlog-claim-supervised-lane-sweep.jq "$WORK/noc-b.json" > "$WORK/noc-c.json"
+NOCASCADE_NOOP=$([ "$(jq '.task_board.in_progress|length' "$WORK/noc-c.json")" -eq 0 ] && echo true || echo false)
+assert "no-cascade: SLS's real promote+claim against a genuinely empty backlog[]/ready[] is a true no-op (0 rows claimed) — sets up the cascade condition" \
+  "$NOCASCADE_NOOP"
+
+# Stamp still advances even on a genuine no-op turn (main.md's own explicit
+# design: "the tick is simply spent on that lane's (empty) turn"). Advances
+# sls's stamp PAST the other 5 (tied at the earlier $NOC_T0), so it becomes
+# deterministically the NEWEST, not the oldest.
+cp "$WORK/noc-c.json" "$NOCASCADE_FIXTURE"
+rot_stamp "$NOCASCADE_FIXTURE" "$NOC_T1" "sls"
+
+NOCASCADE_TICK2=$(rot_selected "$NOCASCADE_FIXTURE")
+assert "AC no-cascade: next tick's \$SELECTED='${NOCASCADE_TICK2:-<empty>}' is 'bounded1' (the next-oldest of the remaining 5, deterministic — NOT 'sls' again) — the stamp write ran even on sls's no-op turn, so rotation moves on rather than retrying the same lane every tick" \
+  "$([ "$NOCASCADE_TICK2" = "bounded1" ] && echo true || echo false)"
 
 echo ""
 if [ "$FAIL" -eq 1 ]; then
