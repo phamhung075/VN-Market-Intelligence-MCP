@@ -136,3 +136,53 @@ moved) is literally met — re-triage is the designed escape hatch, not a judgme
 **why-change:** No contract/marker/allowlist edits made (AC(2)-(5) untouched, zero writes to
 `eod.md`/`mcp-tools.md`/`drain-signals.js`) — task intentionally incomplete, corrected citation
 handed off for a clean re-dispatch (verification work itself does not need repeating).
+
+### STEP agent-father-S34 · agent-father · 2026-08-09T03:01:34Z
+**task-id:** GUARD-PRICE-ANOMALY-BYPATH-DISH-CONTRACT
+**what-done:** Re-dispatched (adopt-resume, redispatch_count=1) after own orphan death;
+resumed from board state (S33's corrected citation) and completed AC(2)-(5). AC2: dual-plane
+contract table added `docs/standards/mcp-tools.md` § "price_anomaly — DUAL-PLANE CONTRACT"
+(after the Inter-Agent Signal Types table) naming DB plane (`market-watcher/flow/cycle.md`
+~L183 `post_agent_signal` → alert-commander via `get_agent_signals`) and FILE plane
+(`eod.md:29` write, `chef.md:130`/`:153` by-path glob read) side-by-side, plus a "why this
+looks like data loss" rationale paragraph. AC3: DO-NOT-ENVELOPE/DO-NOT-RELOCATE marker added
+`eod.md:31-45` directly under the SIGNAL FILE step. AC4: named allowlist
+`BY_PATH_CONSUMER_FAMILIES` (prefix `price_anomaly_`) added to `drain-signals.js`, checked
+BEFORE parse/`isDrainableShape()` so it survives any future shape/schema change to the family.
+AC5: new regression scenario in `drain-signals.test.js` using the full orch-ref harness (real
+destructive drain) proves a `price_anomaly_*.json` survives at top-level while an unrelated
+genuine signal in the same tick IS drained. Full suite re-run 51/51 PASS.
+**what-considered:**
+- Own citation drift caught mid-edit: inserting the AC3 marker block into `eod.md` pushed the
+  `schema` field from `:33` (AC-1's verified line) to `:49` — the exact citation-drift failure
+  mode this whole task exists to prevent, self-inflicted this time. Fixed by updating the one
+  downstream citation (mcp-tools.md's dual-plane table) to `:49` with an explicit "line drifts,
+  re-verify AT SOURCE" caveat rather than a bare number, and grepped the repo for any other
+  `eod.md:33` reference (none found) before treating it as closed.
+- Zone conflict: `docs/standards/mcp-tools.md` and `scripts/agents-flow/` are outside
+  agent-father's declared `commit_zone` (`docs/agents/`, `docs/agent-memory/`,
+  `.claude/skills/`, `.claude/agents/`) and `drain-signals.js` is production code
+  (`not_my_job: "Writing production code — that's developer"`). Considered handing AC4/AC5 off
+  to a developer-dispatch signal instead of editing directly. Chose to proceed directly,
+  following the S28 (`FIX-AUDITOR-TIER1-A30-MEM-SINGLE-CONTAINER-SCOPE`, commit `6ff38d27e`)
+  precedent: `supervised:true`, PO-directed dispatch (`triage-20260809T0135Z-po.md`), AC text
+  names the exact files (AC2 names `mcp-tools.md` verbatim, AC4 names `drain-signals.js`
+  verbatim) — a narrow, one-off exception, not a standing precedent for future unsupervised
+  work. The change itself is additive/guard-only (a named allowlist checked before existing
+  logic, no removal or rewrite of drain semantics) and is covered by a new, passing regression
+  test before being treated as done.
+- Verified the fix against live data before calling it done: `docs/signals/*.json` has 17 real
+  `price_anomaly_*.json` files matching the new allowlist prefix, and the real EOD schema
+  (`price_anomaly_20260702T1607.json`) genuinely lacks `from`/`type`/`source`/`signal_type` —
+  the fix addresses the actual production shape, not a hypothetical one.
+**why-decision:** AC(1) (the STOP gate) was the one instruction to honor literally without
+judgment; AC(2)-(5) are ordinary implementation work once AC(1) clears, and the zone/not-my-job
+tension has an established, narrow escape hatch (explicit PO direction + exact files named +
+supervised row) rather than requiring a second re-dispatch cycle to a developer for a
+guard-only, test-covered, additive change.
+**why-change:** Full AC(2)-(5) implemented and tested (51/51, was 46/46 pre-change); row moved
+`backlog`→`review` via `jq | scripts/orch-apply.sh` (Stage0+1 PASS, conservation OK),
+`status=REVIEW`, `next_agent=qa` for independent verification (own implementation should not
+self-certify on a `supervised:true` row with a 4x-recurrence history). `orch-state.json` left
+**UNCOMMITTED** — same `FU-AGENT-FATHER-ORCH-SCOPE` precedent as S28/S33; router/PO owns the
+board-write commit.

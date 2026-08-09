@@ -172,7 +172,7 @@ Historical spec (1 line) → `docs/protocols/agent-chaining-protocol.md` § Cros
 | Signal | From | To | When |
 |--------|------|----|------|
 | `urgent_news` | News Scout | Market Watcher | Impact >= 8 |
-| `price_anomaly` | Market Watcher | Alert Commander | >2sigma move |
+| `price_anomaly` † | Market Watcher | Alert Commander | >2sigma move |
 | `cross_validate` | Financial Analyst | Alert Commander | CRITICAL BCTC finding |
 | `suppress` | Alert Commander | All | False positive |
 | `legal_risk` | News Scout | Alert Commander | Prosecution/tax penalty |
@@ -182,3 +182,30 @@ Historical spec (1 line) → `docs/protocols/agent-chaining-protocol.md` § Cros
 | `price_confirmation` | Market Watcher | All | Price confirms catalyst |
 | `verified_chain` | Server | Alert Commander | 2+ agent confirmations synthesized |
 | `verified_decision` | Alert Commander | All | Chain de-dup ack after alert-commander fires or suppresses |
+
+† `price_anomaly` — DUAL-PLANE CONTRACT (GUARD-PRICE-ANOMALY-BYPATH-DISH-CONTRACT, 2026-08-09,
+supersedes FIX-PRICE-ANOMALY-DISH-SIGNAL-ENVELOPE). The row above documents ONE of TWO
+independent transports for this signal type. Root cause of 4 successive mis-diagnoses
+(cow-20260721T153000, `docs/signals/processed/2026-07-21T162233Z-drain-predicate-price-anomaly-
+family.json`, `docs/signals/processed/2026-07-21T170500Z-inbox-floor-54-stuck-cancelled-on-false-
+premise.json`, `docs/signals/dev-team-20260721T181610Z-signals-inbox-undeliverable-floor.json`):
+`docs/signals/` is simultaneously (a) `dev-team`'s envelope-policed drain inbox and (b) a
+by-path dish-input directory for Chef. Two owners, one directory, contradictory contracts —
+"no consumer found" was a claim about a search, not the system; the file-plane consumer was
+never checked before four straight recommendations to envelope/relocate it.
+
+| Plane | Writer | Mechanism | Reader | Cadence | Drained? |
+|---|---|---|---|---|---|
+| **DB** (table row above) | Market Watcher `market-watcher/flow/cycle.md` `post_agent_signal(signal_type="price_anomaly", ...)` (~L183, after the claim-truth-gate) | `signal_queue` / DB row, no file | Alert Commander via `get_agent_signals` | intraday, per-anomaly | N/A — DB row, not a file |
+| **FILE** (NOT covered by the table row above) | Market Watcher `market-watcher/flow/eod.md:29` writes `docs/signals/price_anomaly_<YYYYMMDDTHHMM>.json` (schema `price_anomaly_v1` declared `eod.md:49` as of the DO-NOT-ENVELOPE marker landing 2026-08-09 — line drifts, re-verify AT SOURCE, don't copy this number; output declared `eod.md:13`) | Top-level `docs/signals/*.json`, read **by path** (glob) — never enveloped with `from`/`type`/`signal_type`, by design (see the DO-NOT-ENVELOPE marker directly below `eod.md:29`) | Chef (`unified-agent/flow/chef.md`) Step 0 GATHER — glob-read `chef.md:130`, `price_anomaly_*` family bullet `chef.md:153` | EOD dish, 08:37 UTC (24min settle window after the 16:00 UTC write) | **NO — must never be drained.** Protected by an explicit named allowlist (`BY_PATH_CONSUMER_FAMILIES`) in `scripts/agents-flow/drain-signals.js`. |
+
+**Why the FILE plane looks like data loss if you only read the table above:** `price_anomaly_*.json`
+files carry no `from`/`type`/`source`/`signal_type` field, so `drain-signals.js`'s
+`isDrainableShape()` predicate is false for them — they are skipped by the drain and remain at
+top-level `docs/signals/` indefinitely (part of the ~54-file floor). Someone who only knows the
+DB-plane row above, then finds dozens of undrained `price_anomaly_*.json` files sitting at
+top-level, will reasonably but wrongly conclude they are stuck/lost inbox litter. They are not —
+they are Chef's by-path dish input, working exactly as designed. **Before proposing to envelope,
+relocate, or "fix" this family: read this section, then re-verify chef.md's current glob-read
+line still matches (citations drift as unrelated content is added above Step 0 — verify AT
+SOURCE, don't copy a stale line number).**

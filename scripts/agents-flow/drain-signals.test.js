@@ -244,6 +244,61 @@ function cleanup(dir) {
 }
 
 // ---------------------------------------------------------------------------
+// GUARD-PRICE-ANOMALY-BYPATH-DISH-CONTRACT (2026-08-09) — AC5 regression assertion: a
+// price_anomaly_*.json file written to top-level docs/signals/ (Chef's by-path dish input —
+// docs/standards/mcp-tools.md § "price_anomaly — DUAL-PLANE CONTRACT" / eod.md:29 DO-NOT-
+// ENVELOPE marker) MUST still be present at top-level docs/signals/ (NOT moved to processed/)
+// after a FULL drain run — even when the drain successfully durably-appends and destructively
+// processes an unrelated genuine signal in the SAME tick (orch-state.json present, real
+// destructive pass 2 runs). Uses the orch-ref harness (not the degraded no-orch-state harness)
+// so this exercises the healthy end-to-end drain path, not just "nothing ran" retention.
+// ---------------------------------------------------------------------------
+{
+  const h = makeOrchRefHarness();
+  const sigDir = path.join(h, 'docs/signals');
+  const orchStatePath = path.join(h, 'docs/data/orch/orch-state.json');
+  const scriptPath = path.join(h, 'scripts/agents-flow/drain-signals.js');
+
+  // Realistic EOD by-path shape (docs/agents/market-watcher/flow/eod.md:29-54) — deliberately
+  // NOT enveloped (no from/type/source/signal_type), the real production shape.
+  const priceAnomalyFile = {
+    schema: 'price_anomaly_v1',
+    generated_at: '2026-08-09T16:00:00Z',
+    dish_window: 'eod',
+    tickers: [{ code: 'VNM', price: 65000, daily_change_pct: 2.5, anomaly: true, anomaly_reason: 'volume spike' }],
+  };
+  fs.writeFileSync(path.join(sigDir, 'price_anomaly_20260809T1600.json'), JSON.stringify(priceAnomalyFile));
+
+  // Genuine unrelated signal in the SAME tick — proves the allowlist is scoped to this one
+  // family, not a blanket "drain does nothing" regression.
+  const genuineSignal = {
+    from: 'bctc-analyst', to: 'dev-team', type: 'esc-deep-dive-request',
+    payload: { trigger_id: 'ESC-9', ticker: 'GUARDTEST', quarter: 'Q1-2026', report_id: 'r1', guard_key: 'esc-deepdive:GUARDTEST:Q1-2026:ESC-9', context: { a: 1 }, all_esc_fired: ['ESC-9'] },
+    createdAt: '2026-08-09T16:00:00Z',
+  };
+  fs.writeFileSync(path.join(sigDir, 'genuine-guard-signal.json'), JSON.stringify(genuineSignal));
+
+  fs.writeFileSync(orchStatePath, JSON.stringify({
+    head: { status: 'idle', active_task_id: null, next_agent: null },
+    task_board: { backlog: [], active_sprints: [] },
+    signal_queue: { _updated_at: '2026-08-09T16:00:00Z', _updated_by: 'test-harness', rows: [] },
+  }, null, 2));
+
+  const run = spawnSync('node', [scriptPath], { encoding: 'utf8' });
+  assert('GUARD-PRICE-ANOMALY-BYPATH: full drain run exits 0', run.status, 0);
+  assert('GUARD-PRICE-ANOMALY-BYPATH: price_anomaly_*.json still present at TOP-LEVEL docs/signals/ after a full drain',
+    fs.existsSync(path.join(sigDir, 'price_anomaly_20260809T1600.json')), true);
+  assert('GUARD-PRICE-ANOMALY-BYPATH: price_anomaly_*.json NOT moved to processed/',
+    fs.existsSync(path.join(sigDir, 'processed/price_anomaly_20260809T1600.json')), false);
+  assert('GUARD-PRICE-ANOMALY-BYPATH: stdout logs the allowlist skip as intentional (not incidental)',
+    /SKIP by-path consumer family \(allowlisted, intentional[^)]*\): price_anomaly_20260809T1600\.json/.test(run.stdout), true);
+  assert('GUARD-PRICE-ANOMALY-BYPATH: unrelated genuine signal in the same tick IS still drained (allowlist is scoped, not blanket)',
+    fs.existsSync(path.join(sigDir, 'processed/genuine-guard-signal.json')), true);
+
+  cleanup(h);
+}
+
+// ---------------------------------------------------------------------------
 // UC-SDF-P4 (FIX-DRAIN-SIGNALS-LEGACY-PRUNE-HOLE) — legacy/unstamped processed/ files
 // fall back to file mtime for pruning. Before this fix, a file with no
 // _processed.processedAt (and no top-level processedAt) was NEVER pruned regardless of

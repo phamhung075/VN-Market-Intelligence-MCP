@@ -55,47 +55,6 @@
   Escalation 2 (semble-search guide-taxonomy) severity LOW; the 3 CRITICAL tool-boundary findings
   are carried-forward (already PO-known from the prior two `team-tool-recheck` runs, not new).
 
-## Fix (supervised router-direct dispatch) 2026-08-08T15:12Z FIX-AUDITOR-TIER1-A30-MEM-SINGLE-CONTAINER-SCOPE — REVIEW, next_agent→qa
-- Router-direct dispatch, PO-authorized: `po_redispatch_ruling_20260808T1445Z` (row's own field,
-  read in full first) — `next_agent=agent-father` is UNREACHABLE by BOUNDED-1/DRS(explicitly
-  excludes agent-father)/QA-Drain/RLC; explicit dispatch IS the designed escape hatch. Did NOT
-  ask to widen the DRS allowlist (out of scope, rejected by the ruling).
-- **Root fix (PLANE B port):** `probe.sh`'s A-30 `≥85%` deep-probe gate sampled ONLY mcp-server
-  and let its % decide, fleet-wide, whether the multi-probe ran — rag-service was never
-  independently sampled. Router/PO evidence: c51 (mcp-server 89.69%→gate engaged→rag named
-  DEGRADED) vs c53 29min later (mcp-server 84.75%→gate skipped→rag ABSENT despite 92.81-98.78%,
-  ALL_GREEN) — one variable. Fixed: new `_a30_run_investigate_gate()` + 3 helpers in `probe.sh`
-  (outside the standalone-exec guard, testable), evaluating the gate PER capped RUNNING
-  container, live-resolved (never hardcoded). `tier1-probe.md` A-30 clauses 1-6 rewritten to
-  parse N SKIP-lines/JSON-blocks per cycle (was: assumed exactly one); clause 6 `dedup_key` now
-  mandates the container name.
-- **Amendment A** (mandatory, PO-verified dead code): deleted `VMRSS_KB`/its UNAVAILABLE
-  default/`"vmrss_kb"` from `verify-a30-mcp-memory-reclamation.sh` — zero consumers repo-wide
-  once the vmhwm-vs-vmrss tautology veto was removed by a sibling task. Kept VmHWM (before/after)
-  — feeds a live ESCALATE branch.
-- **Amendment B** (mandatory, safety-critical): the 2 surviving VmHWM `docker exec` calls now
-  gated behind `_a30_headroom_ok()` — HOST-SIDE ONLY (`docker stats`+`docker inspect -f
-  {{.HostConfig.Memory}}`, zero exec to decide), reusing (`source`, not reimplementing) PLANE
-  A's already-shipped `_mem_headroom_mib()`/`MEM_FLOOR_MIB=40`
-  (`scripts/agents-flow/auditor-tier1-probe.sh`) — **zero edits to that file**, its own 181/181
-  suite re-run clean post-change (qa's 2026-07-28 "do NOT re-open or re-fix PLANE A" honored).
-- New tests: `verify-a30...test.sh` T13 (AC8, headroom<floor→both VmHWM fields UNAVAILABLE, no
-  exec) + T14 (AC9, VmHWM UNAVAILABLE→MINP fallback still ESCALATEs); `probe.test.sh` T8-T13
-  (AC7, replays the exact c51/c53 matched pair — gate engages for rag-service independent of
-  mcp-server's own %). All 3 suites green: verify-a30 15/15, probe.test.sh 16/16, PLANE A 181/181.
-- Commit `6ff38d27e` (pathspec-scoped, 5 files: `tier1-probe.md` + `probe.sh`/`.test.sh` +
-  `verify-a30-mcp-memory-reclamation.sh`/`.test.sh`), RULE 1-3 (2.5) applied, pushed clean first
-  attempt.
-- **`scripts/audits/` is outside my declared `commit_zone`** (allowed: `docs/agents/`,
-  `docs/agent-memory/`, `.claude/skills/`, `.claude/agents/`) — committed anyway as an explicit,
-  narrow, router/PO-directed exception for this one P0 row (task text named the exact files/
-  lines); not adopted as a standing precedent for future unsupervised work.
-- Row updated via `jq | scripts/orch-apply.sh` (Stage0+1 PASS, conservation OK): appended AC(7)/
-  (8)/(9) verbatim (ruling-mandated, with evidence citations) to `acceptance`, `next_agent→qa`,
-  added `agent_father_closeout_20260808T1509Z` narrative field. Left `orch-state.json`
-  **UNCOMMITTED** — same `FU-AGENT-FATHER-ORCH-SCOPE` precedent as this notebook's own
-  2026-08-08T13:55Z entry; router/PO owns the board-write commit.
-
 ## GUARD-PRICE-ANOMALY-BYPATH-DISH-CONTRACT 2026-08-09 — STOPPED at AC-1 gate, citation drift confirmed
 - Dispatched via dev-team S4-UNBLOCK (PO manual-dispatch-sweep, triage-20260809T0135Z-po.md §po-S6).
   AC-1 mandates re-confirming writer/consumer file:line citations AT SOURCE before writing the
@@ -128,3 +87,32 @@
   Left `orch-state.json` **UNCOMMITTED** — same `FU-AGENT-FATHER-ORCH-SCOPE` precedent as prior
   entries; router/PO owns the board-write commit. Decision journal: `sprint-COWORK-GUARANTEED-
   SLOT-CATCHUP-agent-father-2.md` STEP agent-father-S33.
+
+## GUARD-PRICE-ANOMALY-BYPATH-DISH-CONTRACT 2026-08-09T03:15Z (cont'd) — AC(2)-(5) DONE → review/qa
+- Resumed from S33's corrected citation. AC2: dual-plane contract table added
+  `docs/standards/mcp-tools.md` § "price_anomaly — DUAL-PLANE CONTRACT" (DB plane cycle.md
+  ~L183 vs FILE plane eod.md:29→chef.md:130/:153, by path, never drained). AC3: DO-NOT-ENVELOPE
+  marker `eod.md:31-45`. AC4: named allowlist `BY_PATH_CONSUMER_FAMILIES` (prefix
+  `price_anomaly_`) in `drain-signals.js`, checked BEFORE parse/`isDrainableShape()` — survives
+  future shape changes. AC5: new `drain-signals.test.js` scenario (real orch-ref drain harness)
+  proves `price_anomaly_*.json` survives top-level while an unrelated genuine signal in the same
+  tick IS drained. Suite 51/51 PASS. Self-caught citation drift: my own AC3 marker pushed eod.md
+  schema field `:33`→`:49` — fixed the one downstream cite (mcp-tools.md) with a
+  re-verify-AT-SOURCE caveat. Zone: `mcp-tools.md`/`drain-signals.js` outside declared
+  commit_zone — edited as narrow PO-directed exception (task names exact files, `supervised:true`,
+  same precedent as A-30 `6ff38d27e`), additive/guard-only, test-covered. Row `backlog`→`review`,
+  `status=REVIEW`, `next_agent=qa` via `jq | orch-apply.sh` (PASS); `orch-state.json` left
+  UNCOMMITTED (FU-AGENT-FATHER-ORCH-SCOPE). Decision journal: `sprint-COWORK-GUARANTEED-SLOT-
+  CATCHUP-agent-father-2.md` STEP agent-father-S34.
+- **Notebook-prune incident (self-caught):** this Edit's first attempt appended a longer
+  dateless-suffix `2026-08-09` heading — `notebook-auto-prune.sh`'s PostToolUse hook fired
+  (file went over the 200L/12000B cap), dropped the oldest real-ISO section
+  (`FIX-AUDITOR-TIER1-A30-MEM...` 2026-08-08T15:12Z, 41L — already fully preserved in its own
+  commit `6ff38d27e`, not re-restored here to control size) AND then, on a same-day tie between
+  two `2026-08-09`-dated headings, dropped MY entire new section as "oldest" under a
+  `newest_first` direction vote that misjudges THIS file's true oldest-first/append convention
+  (matches the known class in commit `f5baf3acf`'s message — same-day-tie direction voting, not
+  the earlier ISO-vs-sentinel bug that commit fixed). Workaround (same as `f5baf3acf`): this
+  entry's heading now carries a real HH:MM timestamp so it no longer ties with the STOPPED
+  section's date-only heading. Not investigating/fixing `notebook-auto-prune.sh` itself — outside
+  this task's scope; flagged here for whoever next touches that script's tie-break voting.

@@ -87,6 +87,25 @@ function isDrainableShape(j) {
   return true;
 }
 
+// By-path consumer families — GUARD-PRICE-ANOMALY-BYPATH-DISH-CONTRACT (2026-08-09): files in
+// docs/signals/ matching one of these filename prefixes are NEVER drained/enveloped — they are
+// consumed BY PATH (glob-read, never via signal_queue/DB) by a specific downstream consumer, not
+// incidentally skipped because they happen to lack from/type today. This directory is
+// simultaneously (a) this script's envelope-policed drain inbox and (b) a by-path dish-input
+// directory for other consumers — see docs/standards/mcp-tools.md § "price_anomaly — DUAL-PLANE
+// CONTRACT" for the full writer/reader citation. This list is checked BEFORE isDrainableShape()
+// and independently of it, so the protection survives any future schema change to the family
+// (e.g. if it ever gained a `type` field and started matching isDrainableShape() too). Before
+// removing an entry here or "fixing" the resulting undrained-file floor: read that section first
+// — this exact family has been misdiagnosed as stuck/lost inbox litter 4 times already. Writer-
+// side twin of this list: docs/agents/market-watcher/flow/eod.md:29 DO-NOT-ENVELOPE marker.
+const BY_PATH_CONSUMER_FAMILIES = [
+  { prefix: 'price_anomaly_', consumer: 'chef (unified-agent/flow/chef.md Step 0 GATHER, L130 glob-read / L153 family bullet)' },
+];
+function isByPathConsumerFile(base) {
+  return BY_PATH_CONSUMER_FAMILIES.some((f) => base.startsWith(f.prefix));
+}
+
 // --count-drainable subcommand (FIX-DRAIN-PERSIST-GUARD-COUNT-DRAINABLE-ONLY, 2026-07-23).
 // Read-only count of docs/signals/*.json (top-level inbox, excludes processed/) that pass
 // isDrainableShape() above. No DB open, no file mutation, no orch-state touch — zero side
@@ -188,6 +207,13 @@ function computeRoutedTo(type, from) {
 // destructive pass 2 runs at all.
 const candidates = [];
 for (const base of files) {
+  // By-path consumer family guard — checked FIRST, before parse/shape logic, so the skip is
+  // unconditional and independent of the file's JSON shape (see BY_PATH_CONSUMER_FAMILIES above).
+  if (isByPathConsumerFile(base)) {
+    console.log(`[drain-signals] SKIP by-path consumer family (allowlisted, intentional — NOT incidental): ${base} — see docs/standards/mcp-tools.md § "price_anomaly — DUAL-PLANE CONTRACT"`);
+    continue;
+  }
+
   const fp_path = path.join(SIG, base);
   const raw = fs.readFileSync(fp_path, 'utf8');
   let j;

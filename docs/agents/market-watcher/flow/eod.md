@@ -28,6 +28,22 @@ Write fails → `send_telegram(channel="bug", message="[market-watcher] EOD ledg
 
 **B. SIGNAL FILE** — write `docs/signals/price_anomaly_<YYYYMMDDTHHMM>.json`:
 
+> **DO-NOT-ENVELOPE / DO-NOT-RELOCATE** (GUARD-PRICE-ANOMALY-BYPATH-DISH-CONTRACT, 2026-08-09):
+> This file is consumed BY PATH — Chef (`unified-agent/flow/chef.md` Step 0 GATHER) glob-reads
+> top-level `docs/signals/*.json` (`chef.md:130`) and explicitly names the `price_anomaly_*`
+> family (`chef.md:153`), NOT via `post_agent_signal`/`get_agent_signals` (that is the SEPARATE
+> intraday DB-plane transport — `cycle.md` `post_agent_signal(signal_type="price_anomaly")` →
+> alert-commander; this EOD file is a second, independent transport for the same signal type).
+> Do **NOT** add `from`/`type`/`signal_type` envelope fields to this file's schema and do **NOT**
+> move/rename its write location: `dev-team`'s drain (`scripts/agents-flow/drain-signals.js`)
+> treats `docs/signals/` as its own envelope-policed inbox — adding an envelope shape would make
+> this family match `isDrainableShape()` and get silently swept into `processed/` before Chef's
+> next scheduled dish (08:37 UTC) ever reads it, permanently breaking the by-path contract. The
+> drain already carries an explicit named allowlist (`BY_PATH_CONSUMER_FAMILIES` in
+> `drain-signals.js`) protecting this family regardless of shape — do not rely on that alone;
+> this marker is the writer-side twin so the intent survives a schema edit here too. Full
+> dual-plane contract → `docs/standards/mcp-tools.md` § "price_anomaly — DUAL-PLANE CONTRACT".
+
 ```json
 {
   "schema": "price_anomaly_v1",
