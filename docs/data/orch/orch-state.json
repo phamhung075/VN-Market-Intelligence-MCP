@@ -134,8 +134,8 @@
     "does_not_consume_wip": true
   },
   "signal_queue": {
-    "_updated_at": "2026-08-09T02:21:35Z",
-    "_updated_by": "dev-team",
+    "_updated_at": "2026-08-09T03:36:14Z",
+    "_updated_by": "cowork-team",
     "archive": [],
     "rows": [
       {
@@ -844,6 +844,20 @@
         "payload_ref": null,
         "provenance": "detector",
         "audit_cycle_tag": "cron:auditor-t1:2026-08-09T02:00Z",
+        "dedup_key": "microservice_degraded:rag-service:A-30"
+      },
+      {
+        "id": "sys-20260809T033559-177a",
+        "ts": "2026-08-09T03:35:59Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "microservice_degraded",
+        "summary": "rag-service A-30 memory pressure ESCALATE (95.41%, sustained >93% floor)",
+        "severity": "CRITICAL",
+        "status": "READ",
+        "payload_ref": null,
+        "provenance": "detector",
+        "audit_cycle_tag": "cron:auditor-t1:2026-08-09T03:30Z",
         "dedup_key": "microservice_degraded:rag-service:A-30"
       }
     ],
@@ -19168,6 +19182,59 @@
         "adopted_at": "2026-08-09T02:53:42Z",
         "tree_hygiene_note": "tree-hygiene: reverted 0 file(s) (docs/agents/ clean); resumed from board state, no git_sha checkpoint; orphan-signal was own dead background dispatch",
         "agent_father_closeout_20260809T0301Z": "AC(2)-(5) implemented per corrected citation (consumer=chef.md Step 0 GATHER L130 glob-read/L153 price_anomaly_* bullet, unchanged since re-verify). AC2: dual-plane contract written docs/standards/mcp-tools.md sec \"price_anomaly -- DUAL-PLANE CONTRACT\" (new subsection after Inter-Agent Signal Types table, L186-211) naming DB plane (market-watcher cycle.md ~L183 post_agent_signal -> alert-commander via get_agent_signals) and FILE plane (eod.md:29 write, schema eod.md:49 [drifted from :33 by this same edit inserting the AC3 marker at :31-45 -- re-verify AT SOURCE], chef.md:130/:153 by-path glob read) side by side in a table, with a rationale paragraph on why the FILE plane looks like data loss if only the DB-plane table row is read. AC3: DO-NOT-ENVELOPE/DO-NOT-RELOCATE blockquote marker added eod.md:31-45 directly under the SIGNAL FILE step (eod.md:29), citing both transports and cross-linking the mcp-tools.md contract section. AC4: named allowlist BY_PATH_CONSUMER_FAMILIES (prefix price_anomaly_) added to scripts/agents-flow/drain-signals.js, checked in the Pass-1 classification loop BEFORE JSON.parse/isDrainableShape (unconditional, independent of file shape -- survives any future schema change to the family), with an explicit SKIP log line distinct from the old incidental \"SKIP non-signal shape\" path. AC5: new regression scenario in drain-signals.test.js (GUARD-PRICE-ANOMALY-BYPATH-DISH-CONTRACT block) using the full orch-ref harness (real destructive drain, not a degraded/no-op run) asserts a price_anomaly_*.json file survives at top-level docs/signals/ (not moved to processed/) while an unrelated genuine signal in the SAME tick IS drained -- proves the allowlist is scoped, not a blanket drain-disable. Full suite re-run: 51/51 PASS. Verified against live docs/signals/: 17 real price_anomaly_*.json files match the allowlist prefix and the real eod.md schema (checked price_anomaly_20260702T1607.json) genuinely lacks from/type/source/signal_type, confirming BY_PATH_CONSUMER_FAMILIES is not a hypothetical fix. Zone note: docs/standards/mcp-tools.md and scripts/agents-flow/ are outside agent-father declared commit_zone (docs/agents/, docs/agent-memory/, .claude/skills/, .claude/agents/) -- edited anyway as an explicit, narrow, PO-directed exception (task text names the exact files in AC2/AC4; supervised:true; same precedent as FIX-AUDITOR-TIER1-A30-MEM-SINGLE-CONTAINER-SCOPE commit 6ff38d27e), not adopted as standing precedent. Decision journal: docs/agent-memory/decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-agent-father-2.md STEP agent-father-S34."
+      },
+      {
+        "id": "FIX-ORPHAN-FR8-TEST-COORDINATION-STORE",
+        "type": "FEATURE",
+        "title": "Write tests for coordinationStore.test.ts covering FR-1/FR-2/NFR-1 regression gate",
+        "status": "REVIEW",
+        "priority": "P0",
+        "size": "M",
+        "zone": "apps/mcp-server/",
+        "owner": "pm",
+        "next_agent": "qa",
+        "depends": [
+          "FIX-ORPHAN-FR1-FR2-INFRA-HEARTBEAT-LADDER"
+        ],
+        "supervised": false,
+        "created_at": "2026-07-22T01:15:30Z",
+        "created_by": "pm/decomposition-20260722T0115",
+        "updated_at": "2026-08-09T03:40:23Z",
+        "updated_by": "developer",
+        "origin_task": "FIX-ORPHAN-ADOPTION-BOARD-STATE-GUARD",
+        "parent_fix_spec": "fix_spec(a)+(c)/AC1+AC3",
+        "subtasks": [
+          {
+            "seq": 1,
+            "title": "Test heartbeatTask with ttl_seconds: persists new TTL value, unpatched fields survive",
+            "acceptance": "Test covers both current and new behavior"
+          },
+          {
+            "seq": 2,
+            "title": "Test heartbeatTask with payload_patch: shallow-merges into existing payload",
+            "acceptance": "Test covers merge, null/malformed payload handling"
+          },
+          {
+            "seq": 3,
+            "title": "Test null-session ladder: succeeds on correct params; fails on wrong params",
+            "acceptance": "Test covers successful match and all failure branches"
+          },
+          {
+            "seq": 4,
+            "title": "Regression test NFR-1: null-session ladder NEVER matches live-session rows",
+            "acceptance": "Live-session rows cannot be released/heartbeated via new params"
+          },
+          {
+            "seq": 5,
+            "title": "Test-before-ship gate: live integration round-trip against running container",
+            "acceptance": "Must pass before FR-3/FR-4/FR-6 prose ships as available"
+          }
+        ],
+        "claimed_at": "2026-08-09T03:24:47Z",
+        "claimed_by": "developer (session 165f4245)",
+        "dispatch_lane": "developer",
+        "dev_note": "Subtasks 1-4 (FR-1/FR-2/NFR-1 regression gate) implemented+passing — coordinationStore.test.ts 16/16 (13 pre-existing from depends_on Task 1 + H6/H7 ttl_seconds clamp-floor/ceiling + R3 release-side wrong-owner_agent, closing the two real residual gaps). Targeted merge-gate suite (7 coordination/lock files) 143/143 pass, 0 regressions. tsc clean. Commits: 8af71e8c2 (tests), 75ac06a90 (handoff Implementation Record + WORK.md).",
+        "status_note": "Subtask 5 (test-before-ship live integration round-trip against a running container) NOT executed this cycle — documented as blocked, not fabricated: Task 2 (FIX-ORPHAN-FR2-FR6-FR7-INTERFACE-COORDINATION-TOOLS, the Zod-schema exposure this needs) is REVIEW not DONE_VERIFIED; the live mcp-server container (started 2026-08-08T19:06:16Z) predates Task 2 commit fb5207746 (2026-08-09T00:09:43Z UTC) so the schema is not deployed; this session also carries no gateway/MCP tool grant to place a live call regardless. FR-3/FR-4/FR-6 prose must NOT ship as \"available\" until that round-trip is later run (post Task 2 DONE_VERIFIED + container rebuild) and passes. Full detail: [Developer] Implementation Record under Task 5, docs/handoffs/FIX-ORPHAN-ADOPTION-BOARD-STATE-GUARD-PM-decomposition-20260722.md. Also flagged: this row own depends[] omits Task 2 even though the same handoff § Ordering Guidance states Task 5 needs Task 1+Task 2 — board/prose mismatch for PM/PO, not corrected here (out of this task file scope)."
       }
     ],
     "qa": [
@@ -19472,57 +19539,6 @@
           "TASK-COWORK-SIGNAL-NAMING-CONTRACT"
         ],
         "decomposition_note": "Phase 1 decomposed into 4 atomic tasks per PO amendments (3 binding, 1 correction to FR-1 WINDOWKEY logic per Amendment 3). All inherit plan_only/supervised flags. No developer dispatch until PO adjudication."
-      },
-      {
-        "id": "FIX-ORPHAN-FR8-TEST-COORDINATION-STORE",
-        "type": "FEATURE",
-        "title": "Write tests for coordinationStore.test.ts covering FR-1/FR-2/NFR-1 regression gate",
-        "status": "IN_PROGRESS",
-        "priority": "P0",
-        "size": "M",
-        "zone": "apps/mcp-server/",
-        "owner": "pm",
-        "next_agent": "developer",
-        "depends": [
-          "FIX-ORPHAN-FR1-FR2-INFRA-HEARTBEAT-LADDER"
-        ],
-        "supervised": false,
-        "created_at": "2026-07-22T01:15:30Z",
-        "created_by": "pm/decomposition-20260722T0115",
-        "updated_at": "2026-08-09T03:24:47Z",
-        "updated_by": "pm/decomposition-20260722T0115",
-        "origin_task": "FIX-ORPHAN-ADOPTION-BOARD-STATE-GUARD",
-        "parent_fix_spec": "fix_spec(a)+(c)/AC1+AC3",
-        "subtasks": [
-          {
-            "seq": 1,
-            "title": "Test heartbeatTask with ttl_seconds: persists new TTL value, unpatched fields survive",
-            "acceptance": "Test covers both current and new behavior"
-          },
-          {
-            "seq": 2,
-            "title": "Test heartbeatTask with payload_patch: shallow-merges into existing payload",
-            "acceptance": "Test covers merge, null/malformed payload handling"
-          },
-          {
-            "seq": 3,
-            "title": "Test null-session ladder: succeeds on correct params; fails on wrong params",
-            "acceptance": "Test covers successful match and all failure branches"
-          },
-          {
-            "seq": 4,
-            "title": "Regression test NFR-1: null-session ladder NEVER matches live-session rows",
-            "acceptance": "Live-session rows cannot be released/heartbeated via new params"
-          },
-          {
-            "seq": 5,
-            "title": "Test-before-ship gate: live integration round-trip against running container",
-            "acceptance": "Must pass before FR-3/FR-4/FR-6 prose ships as available"
-          }
-        ],
-        "claimed_at": "2026-08-09T03:24:47Z",
-        "claimed_by": "dev-team (ready-lane consumer)",
-        "dispatch_lane": "developer"
       }
     ]
   },
