@@ -1,8 +1,8 @@
 {
   "dashboard_section_cache": {
     "section_name": "po",
-    "last_mtime": 1786211557,
-    "last_linecount": 246,
+    "last_mtime": 1786242126,
+    "last_linecount": 45,
     "po": {
       "section_name": "po",
       "last_mtime": 1786231342,
@@ -134,8 +134,8 @@
     "does_not_consume_wip": true
   },
   "signal_queue": {
-    "_updated_at": "2026-08-09T00:51:39Z",
-    "_updated_by": "cowork-team",
+    "_updated_at": "2026-08-09T02:21:35Z",
+    "_updated_by": "dev-team",
     "archive": [],
     "rows": [
       {
@@ -840,7 +840,7 @@
         "type": "signal_feedback",
         "summary": "A-30 WARN: rag-service memory escalation — 96.32% sustained high (loss of reclamation)",
         "severity": "WARN",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": null,
         "provenance": "detector",
         "audit_cycle_tag": "cron:auditor-t1:2026-08-09T02:00Z",
@@ -19522,7 +19522,7 @@
         "last_served_tick": "2026-08-09T01:23:42Z"
       }
     },
-    "_updated_at": "2026-08-09T01:55:05Z",
+    "_updated_at": "2026-08-09T02:21:35Z",
     "_updated_by": "dev-team",
     "pending_triage_inbox": [
       {
@@ -19535,6 +19535,41 @@
         "payload": "[notebook-immutability-guard] WARN: docs/agent-memory/notebooks/system-auditor.md — retained section '## c9 · 2026-08-09T01:07Z' has different content staged than at HEAD. Per .claude/skills/notebook-write/SKILL.md AC-2a, a retained '## ' section must be byte-identical across a cycle; the only authorized mutations are dropping a whole oldest section, the AC-2b sub-block intra-prune, or trimming the CURRENT cycle's own new section. If cap pressure forced a shrink, DROP the whole section (archive verbatim if it must be kept) and add a NEW marker section instead — see docs/agent-memory/notebooks/architect.md for the reference-correct pattern. mode=warn (default warn — never blocks; set GIT_NOTEBOOK_IMMUTABILITY_MODE=reject to hard-enforce once re-validated, see scripts/audits/verify-notebook-immutability-gate.sh).\n",
         "createdAt": "2026-08-09T01:38:35Z",
         "drained_at": "2026-08-09T01:52:38Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "b08cc268153ff4d7362fbda2331e52c97ac42248de5e2b6965499eb5a6dc965a",
+        "source": "file",
+        "from": "context-bloat-backstop-hook",
+        "to": "claude-manager-helper",
+        "type": "context_bloat_breach",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-dev-mcp-server-4.md",
+          "line_count": 157,
+          "cap": 600,
+          "byte_count": 36157,
+          "byte_cap": 36000,
+          "class": "sprint-decision-journal",
+          "reason": "byte-cap",
+          "overage": 0,
+          "byte_overage": 157,
+          "action_required": "prune_or_split"
+        },
+        "createdAt": "2026-08-09T02:00:41Z",
+        "drained_at": "2026-08-09T02:21:12Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "a56af043cc6e52a897d0eda2396c5d84389f3fedcf611936c22caadf84bd1636",
+        "source": "dashboard",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "signal_feedback",
+        "priority": "WARN",
+        "payload": "A-30 WARN: rag-service memory escalation — 96.32% sustained high (loss of reclamation)",
+        "createdAt": "2026-08-09T02:07:22Z",
+        "drained_at": "2026-08-09T02:21:35Z",
         "routed_to": "PO Step 0-SIG"
       }
     ]
