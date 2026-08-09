@@ -1090,3 +1090,15 @@
 **Mitigation:** No immediate action beyond signal routing.
 
 ---
+
+## Anomaly: A-30 · rag-service memory pressure escalation
+**Severity:** WARN | **Date:** 2026-08-09 | **Status:** OPEN
+**Location:** vn-market-intelligence-mcp-rag-service-1
+**Details:** All 6 memory samples sustained >93% (min 99.10%, median 99.10%) over 65-second window. No reclamation dips or discontinuities detected.
+**Impact:** rag-service container is under severe sustained memory pressure, at or beyond practical limits for stable operation.
+**Root cause:** Embedder model allocations not fully reclaimed after inference cycles (structural load pattern).
+**Zone owner:** system-owner
+**Last reported:** 2026-08-09T00:08:15Z (signal sys-20260809T000759-1bd3, system-auditor -> po, WARN Telegram sent)
+**Mitigation:** No immediate action beyond signal routing.
+
+---
