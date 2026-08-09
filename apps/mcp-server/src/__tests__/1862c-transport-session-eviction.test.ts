@@ -14,9 +14,30 @@
  * path, which is this row's root cause. T9 is a negative control proving
  * handleMessage()'s lastActivityAt bump actually resets the idle clock.
  *
+ * T13-T14 (FIX-SSE-SOAK-VERIFY-DEPENDS-ON-SHARED-CONTAINER-UPTIME-3RD-RESET,
+ * 2026-08-09): T10 already proved the max-age *branch* fires, but only with a
+ * shrunk threshold (_maxAgeMs=20) driven by real timers — it never proved the
+ * REAL shipped 4h default, and the row's actual "soak" acceptance criterion
+ * was instead pointed at the shared `dev-mcp-server` container's `StartedAt`
+ * (>=4h uninterrupted uptime) — a property ANY peer's unrelated rebuild
+ * resets (8+ peers legitimately rebuild this container; reset 3x in ~24h,
+ * see the board row's `qa_step5_checkpoint_*` notes). T13/T14 close that gap:
+ * they construct the manager with every real default threshold intact
+ * (heartbeat/idle/max-age all `undefined` => shipped values, in particular
+ * the real `4 * 60 * 60_000` max-age) and only inject a fake `_now` clock +
+ * a small `_reaperIntervalMs` (sweep cadence only, not the threshold under
+ * test). Advancing the fake clock proves the exact shipped 4h branch fires
+ * with zero real elapsed wall-clock time and zero dependency on any
+ * container's uptime — the reaper's correctness can now be re-verified in
+ * milliseconds, on any machine, regardless of what any peer does to the
+ * shared container.
+ *
  * Mock strategy: mock.module() (bun:test) for SSEServerTransport.
  * Timer strategy: pass small _heartbeatIntervalMs/_idleTimeoutMs/_maxAgeMs/
  * _reaperIntervalMs so real timers fire fast; await a short delay to let them tick.
+ * T13/T14 instead inject a fake `_now` clock (Bun's test runner has no
+ * built-in fake-timer/setSystemTime support as of 1.3.13) and leave the
+ * threshold params at their real shipped defaults.
  */
 
 import { describe, it, expect, mock, afterAll, beforeEach } from "bun:test";
@@ -409,5 +430,90 @@ describe("1862c-F: SseSessionManager — structured 404 + heartbeat eviction", (
     const existed = await manager.closeSession("test-session-001");
     expect(existed).toBe(false);
     expect(instances[0]!.close).toHaveBeenCalledTimes(1); // still exactly once
+  });
+
+  // T13 ─────────────────────────────────────────────────────────────────────
+  it("T13 (FIX-SSE-SOAK-VERIFY-DEPENDS-ON-SHARED-CONTAINER-UPTIME-3RD-RESET, AC-1): max-age reaper fires at the REAL shipped >=4h threshold via an injected fake clock — independent of the idle clock, and requiring zero real elapsed wall-clock time or container uptime", async () => {
+    const { factory, instances } = makeFactory();
+    let fakeNow = 1_700_000_000_000; // arbitrary fixed epoch — irrelevant, only deltas matter
+    const clock = () => fakeNow;
+
+    // heartbeat/idle/max-age left at their REAL shipped defaults (undefined) —
+    // only the reaper SWEEP CADENCE is shrunk (test speed only, not the
+    // threshold under test) and the clock is injected.
+    const manager = new SseSessionManager(
+      factory as any,
+      makeLogger() as any,
+      "",
+      undefined,
+      undefined,
+      undefined,
+      5,
+      clock,
+    );
+
+    try {
+      await manager.handleSse(makeReq(), makeRes({ value: "" }));
+      expect(manager.sessionCount).toBe(1);
+
+      // Advance the fake clock in <4h steps, bumping activity at every step —
+      // proves eviction tracks createdAt age, not the (repeatedly-reset) idle
+      // clock, without racing any real timer (mirrors T10's real-timer
+      // version of this same proof, but immune to the CPU-contention flake
+      // class documented on this row's sibling FIX-CI-BUNTEST-1862C-*).
+      for (let i = 0; i < 3; i++) {
+        fakeNow += 60 * 60_000; // +1h per step — still under the 4h mark
+        await manager.handleMessage(makeReq(), makeRes({ value: "" }), "test-session-001");
+        await waitForReaper(10);
+        expect(manager.sessionCount).toBe(1);
+      }
+
+      // Cross the REAL shipped 4h threshold (elapsed so far = 3h; this step
+      // pushes total elapsed to 4h + 1ms). Bump activity right up to this
+      // instant too — a fresh idleFor=0 at eviction time proves this is the
+      // max_age path, not the idle path.
+      fakeNow += 60 * 60_000 + 1;
+      await manager.handleMessage(makeReq(), makeRes({ value: "" }), "test-session-001");
+      await waitForReaper(10);
+
+      expect(manager.sessionCount).toBe(0);
+      expect(instances[0]!.close).toHaveBeenCalledTimes(1);
+    } finally {
+      manager.stopReaper();
+    }
+  });
+
+  // T14 ─────────────────────────────────────────────────────────────────────
+  it("T14 (negative control, pairs with T13): a session just under the REAL shipped 4h threshold survives — boundary is genuinely >4h, not off-by-one", async () => {
+    const { factory, instances } = makeFactory();
+    let fakeNow = 1_700_000_000_000;
+    const clock = () => fakeNow;
+
+    const manager = new SseSessionManager(
+      factory as any,
+      makeLogger() as any,
+      "",
+      undefined,
+      undefined,
+      undefined,
+      5,
+      clock,
+    );
+
+    try {
+      await manager.handleSse(makeReq(), makeRes({ value: "" }));
+      expect(manager.sessionCount).toBe(1);
+
+      // Advance to just under the 4h mark and bump activity at that instant
+      // (idleFor ~= 0 at sweep time — isolates the max-age check).
+      fakeNow += 4 * 60 * 60_000 - 1_000; // 4h minus 1s
+      await manager.handleMessage(makeReq(), makeRes({ value: "" }), "test-session-001");
+      await waitForReaper(20);
+
+      expect(manager.sessionCount).toBe(1);
+      expect(instances[0]!.close).not.toHaveBeenCalled();
+    } finally {
+      manager.stopReaper();
+    }
   });
 });

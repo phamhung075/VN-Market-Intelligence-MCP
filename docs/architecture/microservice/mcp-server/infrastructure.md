@@ -700,6 +700,19 @@ for the full source-verified mechanism + measurement).
   (`_idleTimeoutMs`/`_maxAgeMs`/`_reaperIntervalMs` params). Recommended
   follow-up: re-run the `/health sessionCount` vs container `MemPerc`
   correlation post-deploy to tune empirically.
+- **Injectable clock (`_now`, FIX-SSE-SOAK-VERIFY-DEPENDS-ON-SHARED-CONTAINER-UPTIME-3RD-RESET,
+  2026-08-09):** the max-age branch's original "soak" acceptance criterion
+  was evidenced solely via the shared `dev-mcp-server` container's
+  `StartedAt` (>=4h uninterrupted uptime) — a property ANY peer's unrelated
+  rebuild resets (8+ peers legitimately rebuild this container; reset 3x in
+  ~24h). `_now: () => number = Date.now` (8th constructor param, same
+  override idiom) is threaded through every age computation (`handleSse`
+  createdAt/lastActivityAt, `handleMessage` lastActivityAt bump,
+  `reapStaleSessions` now). Tests inject a fake clock and advance it past
+  the REAL shipped 4h default instantly — see T13/T14 in
+  `1862c-transport-session-eviction.test.ts` — so the max-age branch's
+  correctness is re-provable in milliseconds, on any machine, independent
+  of both real wall-clock elapsed time and any shared container's uptime.
 - **`DELETE /sse|/messages?sessionId=<id>`** — explicit client-initiated
   teardown (`server.ts`), defense-in-depth only. The dominant caller
   (gateway MCP server, out-of-repo) cannot be made to send this; the

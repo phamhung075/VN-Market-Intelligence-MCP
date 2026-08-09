@@ -11,6 +11,26 @@
  * HEARTBEAT FIX (2026-05-05): Added keep-alive heartbeat messages every 30s
  * to prevent connection timeouts through proxies/Cloudflare.
  *
+ * SOAK-VERIFY FIX (FIX-SSE-SOAK-VERIFY-DEPENDS-ON-SHARED-CONTAINER-UPTIME-3RD-RESET,
+ * 2026-08-09): the reaper fix below shipped with its >=4h max-age branch
+ * "soak-verified" solely via the shared `dev-mcp-server` container's
+ * `StartedAt` timestamp — a property ANY peer's unrelated `docker compose up`/
+ * rebuild resets (8+ peers legitimately rebuild this container). That AC was
+ * unverifiable by construction and was reset 3 times in ~24h (see
+ * `FIX-MCP-SSE-SESSION-MANAGER-PERCONN-LEAK-NO-REAPER`'s `qa_step5_checkpoint_*`
+ * notes and the `FIX-SSE-SOAK-VERIFY-...` board row). Fix: `_now` is now an
+ * injectable clock (defaults to `Date.now`, same override idiom already used
+ * by `_heartbeatIntervalMs`/`_idleTimeoutMs`/`_maxAgeMs`/`_reaperIntervalMs`),
+ * threaded through every age computation (`handleSse` createdAt/
+ * lastActivityAt, `handleMessage` lastActivityAt bump, `reapStaleSessions`
+ * now). Tests can now advance a fake clock past the REAL shipped 4h
+ * threshold instantly and assert the max-age branch fires — see T13/T14 in
+ * `1862c-transport-session-eviction.test.ts` — decoupling the reaper's
+ * correctness proof from both real wall-clock elapsed time and from any
+ * shared container's uptime. Generic lesson: an acceptance criterion whose
+ * evidence source is a SHARED mutable runtime property is unsatisfiable
+ * under a multi-writer fleet.
+ *
  * REAPER FIX (FIX-MCP-SSE-SESSION-MANAGER-PERCONN-LEAK-NO-REAPER, 2026-08-08):
  * Prior to this fix, each session's `McpServer` (one per connection — MCP SDK
  * limitation, one transport per server) was a bare local, never stored and
@@ -71,6 +91,7 @@ export class SseSessionManager {
   private readonly HEARTBEAT_INTERVAL: number;
   private readonly IDLE_TIMEOUT: number;
   private readonly MAX_AGE: number;
+  private readonly now: () => number;
 
   constructor(
     private readonly createServer: McpServerFactory,
@@ -82,10 +103,17 @@ export class SseSessionManager {
     _idleTimeoutMs: number = 15 * 60_000, // 15 min — generous headroom above plausible human think-time
     _maxAgeMs: number = 4 * 60 * 60_000, // 4h — hard backstop independent of activity
     _reaperIntervalMs: number = 60_000, // Reaper sweep cadence
+    // Injectable clock (FIX-SSE-SOAK-VERIFY-DEPENDS-ON-SHARED-CONTAINER-UPTIME-3RD-RESET,
+    // 2026-08-09): defaults to the real wall clock; tests override with a
+    // fake, test-controlled clock so the >=4h max-age branch can be proven
+    // by advancing time instantly instead of requiring >=4h of real
+    // wall-clock/container uptime. Same override idiom as the params above.
+    _now: () => number = Date.now,
   ) {
     this.HEARTBEAT_INTERVAL = _heartbeatIntervalMs;
     this.IDLE_TIMEOUT = _idleTimeoutMs;
     this.MAX_AGE = _maxAgeMs;
+    this.now = _now;
     this.reaperInterval = setInterval(() => this.reapStaleSessions(), _reaperIntervalMs);
     // Don't hold the event loop open on the reaper alone (mirrors the
     // periodic-reaper pattern already used by startPeriodicReaper()).
@@ -118,7 +146,7 @@ export class SseSessionManager {
 
   /** Sweeps all sessions for idle-timeout or max-age expiry. Runs on `reaperInterval`. */
   private reapStaleSessions(): void {
-    const now = Date.now();
+    const now = this.now();
     for (const [sessionId, record] of this.sessions) {
       const ageFor = now - record.createdAt;
       const idleFor = now - record.lastActivityAt;
@@ -144,7 +172,7 @@ export class SseSessionManager {
     const endpoint = `${this.pathPrefix}/messages`;
     const transport = new SSEServerTransport(endpoint, res);
     const sessionId = transport.sessionId;
-    const now = Date.now();
+    const now = this.now();
 
     // Start heartbeat to keep connection alive through proxies
     this.log.info("[SseSessionManager] Setting up heartbeat", {
@@ -206,7 +234,7 @@ export class SseSessionManager {
       return;
     }
 
-    record.lastActivityAt = Date.now();
+    record.lastActivityAt = this.now();
     await record.transport.handlePostMessage(req, res);
   }
 
