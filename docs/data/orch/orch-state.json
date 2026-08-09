@@ -93,11 +93,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "updated_at": "2026-08-09T01:23:20Z",
-    "updated_by": "dev-team",
-    "active_task_id": null,
-    "next_agent": null
+    "status": "in_progress",
+    "active_task_id": "FIX-DEVTEAM-IDLE-CHAIN-TEST-FAIRNESS",
+    "next_agent": "developer",
+    "next_action": "BOUNDED-1 auto-pickup claim of FIX-DEVTEAM-IDLE-CHAIN-TEST-FAIRNESS — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
+    "updated_at": "2026-08-09T01:55:29Z",
+    "updated_by": "dev-team (bounded-1 auto-pickup)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -8070,27 +8071,6 @@
         "next_agent": "architect"
       },
       {
-        "id": "FIX-DEVTEAM-IDLE-CHAIN-TEST-FAIRNESS",
-        "type": "FIX",
-        "title": "AC-1/AC-4: extend devteam-dispatch-gate-satisfiability.sh — rotation fairness bounds + gate-firing proof (not just resolution)",
-        "status": "BACKLOG",
-        "priority": "P0",
-        "size": "M",
-        "zone": "docs/agents/dev-team/flow/",
-        "owner": "developer",
-        "next_agent": "developer",
-        "created_at": "2026-07-29T13:50:05Z",
-        "created_by": "pm",
-        "depends": [
-          "FIX-DEVTEAM-IDLE-CHAIN-MAIN-COMPLETION"
-        ],
-        "blocks": [],
-        "files": [
-          "scripts/audits/devteam-dispatch-gate-satisfiability.sh"
-        ],
-        "updated_at": "2026-07-29T13:54:37Z"
-      },
-      {
         "id": "FIX-DEVTEAM-IDLE-CHAIN-TEST-DURABLE",
         "type": "FIX",
         "title": "AC-2 + conservation guard + docs: drain-signals-durable.test.js new harness (AC-2 negative control) + conservation-check.mjs §3.4 extension + dev-standards.md Script Persistence pointers",
@@ -10573,26 +10553,6 @@
         "updated_at": "2026-08-08T22:21:00Z"
       },
       {
-        "id": "FIX-SWEEPGUARD-SAMEFILE-INSPECT-CMD-GIT-USAGE-ERROR-MANUFACTURES-FALSE-BENIGN",
-        "title": "sweep-guard SAME-FILE DIVERGENCE payload emits an UNEXECUTABLE inspect command (git diff <blobA> <blobB> -- <path> = usage error, empty stdout) so every fire is auto-adjudicated benign",
-        "type": "FIX",
-        "owner": "po",
-        "status": "BACKLOG",
-        "priority": "P1",
-        "zone": "cross-service/",
-        "size": "S",
-        "created_at": "2026-08-09T01:35:08Z",
-        "created_by": "po",
-        "updated_at": "2026-08-09T01:37:13Z",
-        "supervised": false,
-        "plan_only": false,
-        "depends_on": [],
-        "blocks": [],
-        "dedup_key": "sweepguard:samefile-divergence|defect:inspect-cmd-usage-error",
-        "status_note": "AC-1 the payload emitted by _detect_samefile_pathspec_only_divergence must print an EXECUTABLE inspect command. PROVEN LIVE 2026-08-09T01:35:08Z: `git diff 68f4c798a119272b1c75584ca4d958f57f4b0bc0 1ba849ee5dc2e936bbe3e6a5e2c102b12b7f727e -- docs/data/orch/orch-state.json` (the exact string the guard prints) exits with git USAGE ERROR and 0 lines of stdout; the SAME blob pair WITHOUT the `-- <path>` limiter prints 93 lines of real diff. `git diff <blob> <blob>` is a distinct git form that does not accept a pathspec — adding one is a hard usage error, not a filter. AC-2 docs/agents/po/flow/triage-signals.md bug-escalation row repeats the identical broken command as its MANDATED §2.7 disposition path ('verify per §2.7 (git diff <staged-blob> <landing-blob> -- <path>)') — fix both call sites in lockstep. AC-3 re-open the disposition record on FIX-SWEEPGUARD-SAMEFILE-DETECTOR-UNSTAGED-PATH-FALSE-POSITIVE (DONE_VERIFIED 2026-08-07T02:10Z, occurrence_count=11, archive/2026-08.json): its '10/10 live fires confirmed false positives' conclusion was reached through a command that structurally cannot emit evidence — the FP claim is UNSUPPORTED, not disproven. AC-4 regression proof: assert non-empty stdout + rc=0 for the emitted command against a synthetic divergent blob pair. EVIDENCE this tick — 4 post-fix fires, all re-run with the CORRECT command: 13:39:45Z orch-state.json 3 hunks (head block in_progress->idle + 29L insert + 34L delete); 17:34:43Z qa.md full section swap (staged [591,592,593-LEAF] vs landing [592,593-AUDITOR,593-LEAF] — cycle-591 dropped; independently confirmed NOT permanent loss, it is in history at c59a741e2, so this one fire is genuine-divergence-but-benign-outcome); 18:59:05Z + 22:23:34Z orch-state.json, unadjudicated. Class: feedback_flow_doc_veto_manufactures_pass / FIX-AUDITOR-A29-UNEXECUTABLE-SPEC-SILENT-JOIN-DROP (unexecutable-spec family).",
-        "origin_signal_id": "bug-escalation:sweep-guard:SAME-FILE-DIVERGENCE:2026-08-08"
-      },
-      {
         "id": "FIX-CI-SIZELINT-COORDINATIONTOOLS-TS-457L",
         "title": "CI RED: size-lint — apps/mcp-server/src/interface/mcp/tools/system/coordinationTools.ts baseline-tolerance-exceeded (baseline=388L actual=457L upper=426L)",
         "type": "FIX",
@@ -10633,26 +10593,6 @@
         "dedup_key": "process_gap:soak-verification|dep:shared-container-uptime",
         "status_note": "AC-1 replace the container-uptime-dependent soak AC on FIX-MCP-SSE-SESSION-MANAGER-PERCONN-LEAK-NO-REAPER with a verification method that survives an unrelated peer rebuild (e.g. fake-timer / injectable clock unit proof of the >=4h max-age reaper branch, or a persisted session-age ledger that outlives process restart) — the reaper's correctness must not be gated on 4h of uninterrupted uptime of a container 8+ peers legitimately rebuild. AC-2 the row is currently in task_board.qa[] with an EMPTY status_note — the 3 prior resets left no durable record on the row itself; stamp the incident history there. EVIDENCE: process_gap signal 2026-08-08T20:09:19Z (from router, MED): 3rd reset, this time by FIX-AGENT-SIGNALS-IDENTICAL-DUP-EMISSION commit 550fda673; qa content-verified the fix survives each rebuild (no functional regression) but StartedAt keeps invalidating the uptime evidence. Memory: project_sse_soak_clock_reset_shared_container_20260808 (3x), feedback_rebuild_recreate_destroys_peers. Generic class: any acceptance criterion whose evidence source is a SHARED mutable runtime property is unsatisfiable under a multi-writer fleet.",
         "origin_signal_id": "process_gap:sse-soak-clock-reset-3rd"
-      },
-      {
-        "id": "FIX-BCTC-ANALYST-READS-DRAIN-MOVE-AS-SIGNAL-WRITE-LOSS-4-CYCLES",
-        "title": "bctc-analyst escalates a BY-DESIGN drain move as data loss: it Read-verifies docs/signals/bctc_signal_*_routine.json absent after every 3h slot, but drain-signals.js moved them to docs/signals/processed/ — 4 consecutive cycles of false escalation, agent has no Bash/Glob grant to see the truth",
-        "type": "FIX",
-        "owner": "po",
-        "status": "BACKLOG",
-        "priority": "P2",
-        "zone": "cross-service/",
-        "size": "S",
-        "created_at": "2026-08-09T01:35:08Z",
-        "created_by": "po",
-        "updated_at": "2026-08-09T01:37:13Z",
-        "supervised": false,
-        "plan_only": false,
-        "depends_on": [],
-        "blocks": [],
-        "dedup_key": "bctc-analyst:signal-write-verify|defect:absent-after-drain-is-by-design",
-        "status_note": "ANSWERED (ACK-WITH-CORRECTION, PO 2026-08-09T01:35Z): the files are NOT lost. `ls docs/signals/processed/ | grep bctc_signal` = 24 files, including bctc_signal_{FPT,HPG,VCB,DXG}_20260809_routine.json and the 20260808 set. dev-team Step 0a drain (docs/agents/dev-team/flow/drain-signals.md §0a-1, canonical script scripts/agents-flow/drain-signals.js) moves every drainable docs/signals/*.json to docs/signals/processed/ on each tick, by design. bctc-analyst's Read-only post-write verify at the ORIGINAL path therefore reports 'absent' on every subsequent cycle — a by-design move misread as a persistence gap, unresolvable by the agent because it has no Bash/Glob grant to inspect processed/. AC-1 amend docs/agents/bctc-analyst/flow/*.md write-verify step: absence at docs/signals/<name>.json is EXPECTED post-drain; verify at docs/signals/processed/<name>.json (or drop the cross-cycle re-verify entirely and verify only the Write tool's own result). AC-2 do NOT close by granting Bash — the correct fix is a correct verification premise, not a wider tool surface. AC-3 regression: replay a full write->drain->next-slot cycle and assert zero escalation. EVIDENCE: bug-escalation 2026-08-08T18:15:00Z from bctc-analyst, self-described 4th consecutive cycle (c149/c150/c151 + 18:00Z slot), explicitly requesting dev-team/architect confirm design intent. Memory class: feedback_agent_reported_limitation_may_be_structural_check_the_tool_grant, project_bctc_analyst_no_bash_grant_perpetual_dirty_artifacts.",
-        "origin_signal_id": "bug-escalation:bctc-analyst:signals-absent-4th-cycle"
       }
     ],
     "closed_sprints": [
@@ -19129,6 +19069,53 @@
         "claimed_by": "dev-team (ready-lane consumer)",
         "dispatch_lane": "developer",
         "dev_note": "Zod schemas (ttl_seconds/payload_patch/owner_agent/original_owner_client_session) added to task_heartbeat+task_release in coordinationTools.ts per FR-7; handler pass-through fix required (both handlers previously dropped every param beyond task_id/owner_client_session) to satisfy the row own AC. New FIX-ORPHAN-FR2-FR6-FR7-INTERFACE-COORDINATION-TOOLS.test.ts 13/13 GREEN (RED-confirmed first). Combined targeted coordination suite 132/132 pass, 0 regressions. bun tsc --noEmit clean. Zone-dispatch deviation documented (no Agent tool grant, cannot nest-spawn dev-mcp-server — see feedback_devteam_flow_needs_nested_agent_spawn_subagent_cannot.md). NOT yet live in the running container (NFR-3 rebuild gate, separate step). Commits fb5207746 (code+test)/98259e871 (handoff+WORK.md)/80bda1800 (notebook+journal)."
+      },
+      {
+        "id": "FIX-SWEEPGUARD-SAMEFILE-INSPECT-CMD-GIT-USAGE-ERROR-MANUFACTURES-FALSE-BENIGN",
+        "title": "sweep-guard SAME-FILE DIVERGENCE payload emits an UNEXECUTABLE inspect command (git diff <blobA> <blobB> -- <path> = usage error, empty stdout) so every fire is auto-adjudicated benign",
+        "type": "FIX",
+        "owner": "po",
+        "status": "REVIEW",
+        "priority": "P1",
+        "zone": "cross-service/",
+        "size": "S",
+        "created_at": "2026-08-09T01:35:08Z",
+        "created_by": "po",
+        "updated_at": "2026-08-09T01:55:41Z",
+        "supervised": false,
+        "plan_only": false,
+        "depends_on": [],
+        "blocks": [],
+        "dedup_key": "sweepguard:samefile-divergence|defect:inspect-cmd-usage-error",
+        "status_note": "AC-1 the payload emitted by _detect_samefile_pathspec_only_divergence must print an EXECUTABLE inspect command. PROVEN LIVE 2026-08-09T01:35:08Z: `git diff 68f4c798a119272b1c75584ca4d958f57f4b0bc0 1ba849ee5dc2e936bbe3e6a5e2c102b12b7f727e -- docs/data/orch/orch-state.json` (the exact string the guard prints) exits with git USAGE ERROR and 0 lines of stdout; the SAME blob pair WITHOUT the `-- <path>` limiter prints 93 lines of real diff. `git diff <blob> <blob>` is a distinct git form that does not accept a pathspec — adding one is a hard usage error, not a filter. AC-2 docs/agents/po/flow/triage-signals.md bug-escalation row repeats the identical broken command as its MANDATED §2.7 disposition path ('verify per §2.7 (git diff <staged-blob> <landing-blob> -- <path>)') — fix both call sites in lockstep. AC-3 re-open the disposition record on FIX-SWEEPGUARD-SAMEFILE-DETECTOR-UNSTAGED-PATH-FALSE-POSITIVE (DONE_VERIFIED 2026-08-07T02:10Z, occurrence_count=11, archive/2026-08.json): its '10/10 live fires confirmed false positives' conclusion was reached through a command that structurally cannot emit evidence — the FP claim is UNSUPPORTED, not disproven. AC-4 regression proof: assert non-empty stdout + rc=0 for the emitted command against a synthetic divergent blob pair. EVIDENCE this tick — 4 post-fix fires, all re-run with the CORRECT command: 13:39:45Z orch-state.json 3 hunks (head block in_progress->idle + 29L insert + 34L delete); 17:34:43Z qa.md full section swap (staged [591,592,593-LEAF] vs landing [592,593-AUDITOR,593-LEAF] — cycle-591 dropped; independently confirmed NOT permanent loss, it is in history at c59a741e2, so this one fire is genuine-divergence-but-benign-outcome); 18:59:05Z + 22:23:34Z orch-state.json, unadjudicated. Class: feedback_flow_doc_veto_manufactures_pass / FIX-AUDITOR-A29-UNEXECUTABLE-SPEC-SILENT-JOIN-DROP (unexecutable-spec family).",
+        "origin_signal_id": "bug-escalation:sweep-guard:SAME-FILE-DIVERGENCE:2026-08-08",
+        "updated_by": "developer",
+        "next_agent": "qa",
+        "branch": "2cb279b5d7f9e3c7a7420dc4441918dede9874b7",
+        "commit_sha": "2cb279b5d7f9e3c7a7420dc4441918dede9874b7",
+        "review_note": "AC-1/AC-2 fixed: both call sites of the two-blob git diff <A> <B> -- <path> usage-error inspect command (scripts/git-hooks/pre-commit _detect_samefile_pathspec_only_divergence + docs/agents/po/flow/triage-signals.md sec2.7) now emit the plain two-blob form (no pathspec) - live-verified 93-line diff vs prior 0-line usage error (exit 129). AC-3: prior row FIX-SWEEPGUARD-SAMEFILE-DETECTOR-UNSTAGED-PATH-FALSE-POSITIVE (DONE_VERIFIED 2026-08-07T02:10Z, archive/2026-08.json) reached its 10/10-FP conclusion using this exact broken command - flagged UNSUPPORTED (not disproven) in-code and in decision journal sprint-COWORK-GUARANTEED-SLOT-CATCHUP-developer-5.md STEP developer-S90; re-adjudication is a separate future FP sweep, out of this row size:S scope. AC-4: new T14 in scripts/git-hooks/pre-commit.test.sh executes the emitted inspect command against a synthetic divergent blob pair (rc=0, non-empty stdout) and pins the pre-fix regression (re-appending -- <path> -> rc=129, empty stdout). Full suite 14/14 PASS. Commit 2cb279b5d7f9e3c7a7420dc4441918dede9874b7. No MCP/gateway grant this session (Read/Edit/Write/Bash only) - committed directly (pathspec-scoped, no commit-mutex) and self-flipped this board row via orch-apply.sh; coordinating dev-team session must release task lock + send Telegram on this agent behalf."
+      },
+      {
+        "id": "FIX-BCTC-ANALYST-READS-DRAIN-MOVE-AS-SIGNAL-WRITE-LOSS-4-CYCLES",
+        "title": "bctc-analyst escalates a BY-DESIGN drain move as data loss: it Read-verifies docs/signals/bctc_signal_*_routine.json absent after every 3h slot, but drain-signals.js moved them to docs/signals/processed/ — 4 consecutive cycles of false escalation, agent has no Bash/Glob grant to see the truth",
+        "type": "FIX",
+        "owner": "po",
+        "status": "REVIEW",
+        "priority": "P2",
+        "zone": "cross-service/",
+        "size": "S",
+        "created_at": "2026-08-09T01:35:08Z",
+        "created_by": "po",
+        "updated_at": "2026-08-09T01:57:26Z",
+        "supervised": false,
+        "plan_only": false,
+        "depends_on": [],
+        "blocks": [],
+        "dedup_key": "bctc-analyst:signal-write-verify|defect:absent-after-drain-is-by-design",
+        "status_note": "ANSWERED (ACK-WITH-CORRECTION, PO 2026-08-09T01:35Z): the files are NOT lost. `ls docs/signals/processed/ | grep bctc_signal` = 24 files, including bctc_signal_{FPT,HPG,VCB,DXG}_20260809_routine.json and the 20260808 set. dev-team Step 0a drain (docs/agents/dev-team/flow/drain-signals.md §0a-1, canonical script scripts/agents-flow/drain-signals.js) moves every drainable docs/signals/*.json to docs/signals/processed/ on each tick, by design. bctc-analyst's Read-only post-write verify at the ORIGINAL path therefore reports 'absent' on every subsequent cycle — a by-design move misread as a persistence gap, unresolvable by the agent because it has no Bash/Glob grant to inspect processed/. AC-1 amend docs/agents/bctc-analyst/flow/*.md write-verify step: absence at docs/signals/<name>.json is EXPECTED post-drain; verify at docs/signals/processed/<name>.json (or drop the cross-cycle re-verify entirely and verify only the Write tool's own result). AC-2 do NOT close by granting Bash — the correct fix is a correct verification premise, not a wider tool surface. AC-3 regression: replay a full write->drain->next-slot cycle and assert zero escalation. EVIDENCE: bug-escalation 2026-08-08T18:15:00Z from bctc-analyst, self-described 4th consecutive cycle (c149/c150/c151 + 18:00Z slot), explicitly requesting dev-team/architect confirm design intent. Memory class: feedback_agent_reported_limitation_may_be_structural_check_the_tool_grant, project_bctc_analyst_no_bash_grant_perpetual_dirty_artifacts.",
+        "origin_signal_id": "bug-escalation:bctc-analyst:signals-absent-4th-cycle",
+        "updated_by": "developer",
+        "dev_note": "Fixed: added read-first SIGNAL-FILE WRITE VERIFICATION guard to docs/agents/bctc-analyst/flow/main.md — Write tool's own return is now the ONLY write-verification signal (per-cycle), agent must never Read a docs/signals/*.json path it wrote in a prior cycle to re-confirm presence. AC-2: no Bash/Glob grant added, tool grant stays narrow. AC-3 regression traced (not replayed) in decision journal. Commit c23d19da4 (pushed to origin/main). Journal: docs/agent-memory/decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-developer-5.md STEP developer-S91."
       }
     ],
     "qa": [
@@ -19367,8 +19354,8 @@
         }
       ]
     },
-    "last_triaged_at": "2026-08-09T00:25:20Z",
-    "last_triaged_by": "dev-team (design-router sweep)",
+    "last_triaged_at": "2026-08-09T01:55:14Z",
+    "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
     "in_progress": [
       {
         "id": "FIX-COWORK-SIGNAL-FILENAME-CYCLEID-KEYING",
@@ -19432,6 +19419,32 @@
           "TASK-COWORK-SIGNAL-NAMING-CONTRACT"
         ],
         "decomposition_note": "Phase 1 decomposed into 4 atomic tasks per PO amendments (3 binding, 1 correction to FR-1 WINDOWKEY logic per Amendment 3). All inherit plan_only/supervised flags. No developer dispatch until PO adjudication."
+      },
+      {
+        "id": "FIX-DEVTEAM-IDLE-CHAIN-TEST-FAIRNESS",
+        "type": "FIX",
+        "title": "AC-1/AC-4: extend devteam-dispatch-gate-satisfiability.sh — rotation fairness bounds + gate-firing proof (not just resolution)",
+        "status": "IN_PROGRESS",
+        "priority": "P0",
+        "size": "M",
+        "zone": "docs/agents/dev-team/flow/",
+        "owner": "developer",
+        "next_agent": "developer",
+        "created_at": "2026-07-29T13:50:05Z",
+        "created_by": "pm",
+        "depends": [
+          "FIX-DEVTEAM-IDLE-CHAIN-MAIN-COMPLETION"
+        ],
+        "blocks": [],
+        "files": [
+          "scripts/audits/devteam-dispatch-gate-satisfiability.sh"
+        ],
+        "updated_at": "2026-08-09T01:55:29Z",
+        "promoted_at": "2026-08-09T01:55:14Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=0)",
+        "claimed_at": "2026-08-09T01:55:28Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)"
       }
     ]
   },
@@ -19447,7 +19460,7 @@
   "dev_team_idle_chain": {
     "rotation": {
       "bounded1": {
-        "last_served_tick": "2026-08-08T22:53:26Z"
+        "last_served_tick": "2026-08-09T01:55:05Z"
       },
       "sls": {
         "last_served_tick": "2026-08-08T23:23:31Z"
@@ -19465,7 +19478,7 @@
         "last_served_tick": "2026-08-09T01:23:42Z"
       }
     },
-    "_updated_at": "2026-08-09T01:52:38Z",
+    "_updated_at": "2026-08-09T01:55:05Z",
     "_updated_by": "dev-team",
     "pending_triage_inbox": [
       {
