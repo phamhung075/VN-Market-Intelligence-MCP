@@ -93,11 +93,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "updated_at": "2026-08-09T02:24:21Z",
-    "updated_by": "dev-team",
-    "active_task_id": null,
-    "next_agent": null
+    "status": "in_progress",
+    "active_task_id": "FIX-ORPHAN-FR8-TEST-COORDINATION-STORE",
+    "next_agent": "developer",
+    "next_action": "Ready-Lane Consumer claim of FIX-ORPHAN-FR8-TEST-COORDINATION-STORE — spawn developer DIRECTLY (no zone-detect indirection; row already carried a resolved next_agent/owner).",
+    "updated_at": "2026-08-09T03:24:47Z",
+    "updated_by": "dev-team (ready-lane consumer)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -12722,54 +12723,6 @@
         "po_corroboration_20260808": "SECOND IDENTICAL 10/10 CORROBORATION, 2026-08-08T11:07Z dev-team tick — reported by the router out-of-band. task_list_held(kind=orphan-signal, owner_agent=dev-team) again surfaced 10 orphan-signal rows and AGAIN 10/10 were stale: 8x DONE_VERIFIED (FIX-AUDITOR-A30-DISCRIMINATOR-CRASH-CLIFF-SCORED-AS-RECLAMATION-DIP, OPS-RAG-SERVICE-REBUILD-STALE-IMAGE-PREDATES-IDLE-UNLOAD-FIX, FIX-ORPHAN-FR1-FR2-INFRA-HEARTBEAT-LADDER, FIX-ORPHAN-FR1-FR3-FR6-SKILL-DISPATCH-CLAIM, FIX-BCTC-FPT-BT5-BALANCE-GATE, FIX-DEVTEAM-PIPELINE-RESUME-TERMINAL-LANE-BLIND, FIX-VNINDEX-CROSS-PLANE-PLAUSIBILITY-GATE, TE-T16 — last 4 in cold archive/2026-08.json), 1x IN_PROGRESS+supervised (FIX-CHEF-USDVND-THRESHOLD-NUMERIC-DRIFT-GATE), 1x REVIEW+supervised (FIX-AUDITOR-VPS-ROUTE-COUNT-HARDCODE-UNSATISFIABLE). This is the EXACT event this row's po_corroboration_20260806 already recorded on 2026-08-06T11:07Z — same probe, same 10/10 ratio, 2 days apart. Recurrence 2x on an unchanged defect; the row is now 17 days in ready[] undispatched. NO DAMAGE EITHER TIME, but only because the router hand-mitigated: it board-rechecked each of the 10 BEFORE task_claim (claimed+immediately released only #1 before finding it DONE_VERIFIED) so no tree-hygiene git-checkout and no resume-spawn ran. Following docs/agents/dev-team/flow/orphan-adoption.md literally would have run all three destructive steps on 10 finished tasks. SCOPE ADDITION — subtask 2's acceptance is INSUFFICIENT AS WRITTEN and must be widened before implementation: it currently says only 'Guard runs before redispatch_count >= N_MAX branch'. Two further conditions are required, both evidenced by this batch. (i) TERMINAL SKIP: after task_claim succeeds, re-read the LIVE board row for original_task_id and skip (release both claims, continue to next signal, run NEITHER tree-hygiene NOR board-flip NOR resume-spawn) when status is DONE or DONE_VERIFIED — the read must span the cold archive too, since 4 of the 8 terminal rows this batch resolved only in docs/data/orch/archive/2026-08.json and a hot-lane-only lookup would have returned not-found and fallen through to adopt. (ii) SUPERVISED SKIP: also skip when the live row has supervised==true — such rows have their own re-check path (WF-2 SUPERVISED-HOLD + the Supervised-Lane Sweep) and a generic orphan-resume would bypass the po_goahead ratification gate entirely. Both of this batch's 2 non-terminal rows were supervised==true, so without (ii) the guard would still have wrongly adopted 2 of 10. URGENCY: none added — the router measured the batch's claimed_at/expires_at spread and these stale orphan-signal rows expire on their own 7200s TTL and are not regenerated, i.e. a one-time mass-reap, not per-tick regen. The defect is nonetheless permanent: a future batch containing even one GENUINE live orphan still hits the gap for that row. NO NEW ROW MINTED — this row is the fix (fix_spec(a)+(c)/AC1+AC3 of parent FIX-ORPHAN-ADOPTION-BOARD-STATE-GUARD); minting a second would be the searched-the-symptom-not-the-owner duplicate this row's own 22:30Z correction warns about."
       },
       {
-        "id": "FIX-ORPHAN-FR8-TEST-COORDINATION-STORE",
-        "type": "FEATURE",
-        "title": "Write tests for coordinationStore.test.ts covering FR-1/FR-2/NFR-1 regression gate",
-        "status": "READY",
-        "priority": "P0",
-        "size": "M",
-        "zone": "apps/mcp-server/",
-        "owner": "pm",
-        "next_agent": "developer",
-        "depends": [
-          "FIX-ORPHAN-FR1-FR2-INFRA-HEARTBEAT-LADDER"
-        ],
-        "supervised": false,
-        "created_at": "2026-07-22T01:15:30Z",
-        "created_by": "pm/decomposition-20260722T0115",
-        "updated_at": "2026-07-22T01:21:08Z",
-        "updated_by": "pm/decomposition-20260722T0115",
-        "origin_task": "FIX-ORPHAN-ADOPTION-BOARD-STATE-GUARD",
-        "parent_fix_spec": "fix_spec(a)+(c)/AC1+AC3",
-        "subtasks": [
-          {
-            "seq": 1,
-            "title": "Test heartbeatTask with ttl_seconds: persists new TTL value, unpatched fields survive",
-            "acceptance": "Test covers both current and new behavior"
-          },
-          {
-            "seq": 2,
-            "title": "Test heartbeatTask with payload_patch: shallow-merges into existing payload",
-            "acceptance": "Test covers merge, null/malformed payload handling"
-          },
-          {
-            "seq": 3,
-            "title": "Test null-session ladder: succeeds on correct params; fails on wrong params",
-            "acceptance": "Test covers successful match and all failure branches"
-          },
-          {
-            "seq": 4,
-            "title": "Regression test NFR-1: null-session ladder NEVER matches live-session rows",
-            "acceptance": "Live-session rows cannot be released/heartbeated via new params"
-          },
-          {
-            "seq": 5,
-            "title": "Test-before-ship gate: live integration round-trip against running container",
-            "acceptance": "Must pass before FR-3/FR-4/FR-6 prose ships as available"
-          }
-        ]
-      },
-      {
         "id": "FIX-ORPHAN-FR7-VERIFY-TOOL-REGISTRY",
         "type": "FEATURE",
         "title": "Verify docs/data/tool-registry.json references for FR-1/FR-2 params per FR-7 SSOT sync",
@@ -19519,6 +19472,57 @@
           "TASK-COWORK-SIGNAL-NAMING-CONTRACT"
         ],
         "decomposition_note": "Phase 1 decomposed into 4 atomic tasks per PO amendments (3 binding, 1 correction to FR-1 WINDOWKEY logic per Amendment 3). All inherit plan_only/supervised flags. No developer dispatch until PO adjudication."
+      },
+      {
+        "id": "FIX-ORPHAN-FR8-TEST-COORDINATION-STORE",
+        "type": "FEATURE",
+        "title": "Write tests for coordinationStore.test.ts covering FR-1/FR-2/NFR-1 regression gate",
+        "status": "IN_PROGRESS",
+        "priority": "P0",
+        "size": "M",
+        "zone": "apps/mcp-server/",
+        "owner": "pm",
+        "next_agent": "developer",
+        "depends": [
+          "FIX-ORPHAN-FR1-FR2-INFRA-HEARTBEAT-LADDER"
+        ],
+        "supervised": false,
+        "created_at": "2026-07-22T01:15:30Z",
+        "created_by": "pm/decomposition-20260722T0115",
+        "updated_at": "2026-08-09T03:24:47Z",
+        "updated_by": "pm/decomposition-20260722T0115",
+        "origin_task": "FIX-ORPHAN-ADOPTION-BOARD-STATE-GUARD",
+        "parent_fix_spec": "fix_spec(a)+(c)/AC1+AC3",
+        "subtasks": [
+          {
+            "seq": 1,
+            "title": "Test heartbeatTask with ttl_seconds: persists new TTL value, unpatched fields survive",
+            "acceptance": "Test covers both current and new behavior"
+          },
+          {
+            "seq": 2,
+            "title": "Test heartbeatTask with payload_patch: shallow-merges into existing payload",
+            "acceptance": "Test covers merge, null/malformed payload handling"
+          },
+          {
+            "seq": 3,
+            "title": "Test null-session ladder: succeeds on correct params; fails on wrong params",
+            "acceptance": "Test covers successful match and all failure branches"
+          },
+          {
+            "seq": 4,
+            "title": "Regression test NFR-1: null-session ladder NEVER matches live-session rows",
+            "acceptance": "Live-session rows cannot be released/heartbeated via new params"
+          },
+          {
+            "seq": 5,
+            "title": "Test-before-ship gate: live integration round-trip against running container",
+            "acceptance": "Must pass before FR-3/FR-4/FR-6 prose ships as available"
+          }
+        ],
+        "claimed_at": "2026-08-09T03:24:47Z",
+        "claimed_by": "dev-team (ready-lane consumer)",
+        "dispatch_lane": "developer"
       }
     ]
   },
@@ -19540,7 +19544,7 @@
         "last_served_tick": "2026-08-09T02:25:24Z"
       },
       "rlc": {
-        "last_served_tick": "2026-08-08T23:51:54Z"
+        "last_served_tick": "2026-08-09T03:24:28Z"
       },
       "drs": {
         "last_served_tick": "2026-08-09T00:25:04Z"
@@ -19552,7 +19556,7 @@
         "last_served_tick": "2026-08-09T01:23:42Z"
       }
     },
-    "_updated_at": "2026-08-09T03:21:22Z",
+    "_updated_at": "2026-08-09T03:24:28Z",
     "_updated_by": "dev-team",
     "pending_triage_inbox": [
       {
