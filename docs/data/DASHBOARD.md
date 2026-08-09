@@ -1102,3 +1102,15 @@
 **Mitigation:** No immediate action beyond signal routing.
 
 ---
+
+## Anomaly: A-30 · rag-service A-30 memory pressure ESCALATE
+**Severity:** CRITICAL | **Date:** 2026-08-09 | **Status:** OPEN
+**Location:** rag-service
+**Details:** Memory sustained at 95.41% (min=95.42% max=95.42% median=95.42%) — loss of reclamation observed
+**Impact:** Container approaching OOM, potential service degradation or restart
+**Root cause:** Process memory growth or memory leak in rag-service
+**Zone owner:** dev-rag-service
+**Last reported:** 2026-08-09T03:36:07Z (signal sys-20260809T033559-177a, system-auditor -> po, dedup_key=microservice_degraded:rag-service:A-30, CRITICAL Telegram sent)
+**Mitigation:** No immediate action beyond signal routing.
+
+---
