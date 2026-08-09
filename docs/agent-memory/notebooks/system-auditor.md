@@ -1,3 +1,116 @@
+## c18 · 2026-08-09T05:03:31Z
+
+### Audit Run Tier-1 (05:03–05:04 UTC 2026-08-09)
+- Tier: 1 | Scope: container liveness, health endpoints, restart count, memory, disk
+- Status: **DEGRADED** (1 WARN finding)
+
+#### RAW-PROBE:
+```
+=== AUDITOR PROBE 2026-08-09T05:03:31Z ===
+
+--- docker ps -a ---
+NAMES                                             STATUS                  IMAGE                                           CREATED
+vn-market-intelligence-mcp-mcp-server-1           Up 10 hours (healthy)   vn-market-intelligence-mcp-mcp-server           10 hours ago
+vn-market-intelligence-mcp-pdf-extractor-1        Up 17 hours (healthy)   vn-market-intelligence-mcp-pdf-extractor        17 hours ago
+vn-market-intelligence-mcp-rag-service-1          Up 21 hours (healthy)   vn-market-intelligence-mcp-rag-service          21 hours ago
+vn-market-intelligence-mcp-stock-price-1          Up 2 days (healthy)     vn-market-intelligence-mcp-stock-price          2 days ago
+vn-market-intelligence-mcp-macro-indicators-1     Up 10 days (healthy)    vn-market-intelligence-mcp-macro-indicators     10 days ago
+vn-market-intelligence-mcp-frontend-1             Up 2 weeks (healthy)    vn-market-intelligence-mcp-frontend             2 weeks ago
+mcp-gateway                                       Up 3 weeks (healthy)    mcpservergatway-gateway                         3 weeks ago
+vn-market-intelligence-mcp-api-gateway-1          Up 3 weeks (healthy)    vn-market-intelligence-mcp-api-gateway          3 weeks ago
+vn-market-intelligence-mcp-flaresolverr-1         Up 3 weeks (healthy)    ghcr.io/flaresolverr/flaresolverr:latest        3 weeks ago
+vn-market-intelligence-mcp-news-fetch-1           Up 3 weeks (healthy)    vn-market-intelligence-mcp-news-fetch           3 weeks ago
+vn-market-intelligence-mcp-technical-analysis-1   Up 3 weeks (healthy)    vn-market-intelligence-mcp-technical-analysis   3 weeks ago
+vn-market-intelligence-mcp-alert-engine-1         Up 3 weeks (healthy)    vn-market-intelligence-mcp-alert-engine         3 weeks ago
+vn-market-intelligence-mcp-kinh-dich-service-1    Up 3 weeks (healthy)    vn-market-intelligence-mcp-kinh-dich-service    3 weeks ago
+
+--- health endpoints ---
+[health] mcp-server:3000/health OK (HTTP 200)
+[health] api-gateway:4000/health OK (HTTP 200)
+[health] macro-indicators:5004/health OK (HTTP 200)
+[health] pdf-extractor:5001/health OK (HTTP 200)
+[health] frontend:3001/ OK (HTTP 200)
+
+--- restart count ---
+Container=/vn-market-intelligence-mcp-mcp-server-1 RestartCount=0
+
+--- memory pressure ---
+Container=vn-market-intelligence-mcp-mcp-server-1 MemPerc=9.59% MemUsage=294.6MiB / 3GiB
+
+--- memory pressure multi-probe reclamation (A-30) ---
+[A-30] SKIP deep-probe — vn-market-intelligence-mcp-mcp-server-1 baseline 9.58% < 85% investigate-gate
+[A-30] SKIP deep-probe — vn-market-intelligence-mcp-pdf-extractor-1 baseline 64.71% < 85% investigate-gate
+[A-30] vn-market-intelligence-mcp-rag-service-1: baseline 96.92% >= 85% investigate-gate — ENGAGE deep-probe
+{
+  "probe": "A-30 mcp-server memory reclamation discriminator",
+  "container": "vn-market-intelligence-mcp-rag-service-1",
+  "window": {"probes": 6, "interval_sec": 13, "span_sec": 65},
+  "state": {
+    "oom_killed_before": "false", "oom_killed_after": "false",
+    "restart_count_before": "0", "restart_count_after": "0",
+    "state_changed_during_window": false
+  },
+  "vm": {"vmhwm_kb_before": "UNAVAILABLE", "vmhwm_kb_after": "UNAVAILABLE"},
+  "samples": [{"n":1,"t":"05:03:42Z","pct":96.92},{"n":2,"t":"05:03:58Z","pct":96.94},{"n":3,"t":"05:04:13Z","pct":96.96},{"n":4,"t":"05:04:28Z","pct":97.02},{"n":5,"t":"05:04:43Z","pct":97.02},{"n":6,"t":"05:04:58Z","pct":97.49}],
+  "analysis": {"min_pct": 96.92, "max_pct": 97.49, "median_pct": 96.99, "reclamation_dips": 0, "discontinuities": 0},
+  "verdict": "ESCALATE",
+  "reason": "all samples >93% sustained high — loss of reclamation (dip-jitter no longer vetoes this evidence; 0 dip(s) <=40pp observed, 0 discontinuity(ies) observed)"
+}
+[A-30] SKIP deep-probe — vn-market-intelligence-mcp-stock-price-1 baseline 2.13% < 85% investigate-gate
+[A-30] SKIP deep-probe — vn-market-intelligence-mcp-macro-indicators-1 baseline 2.06% < 85% investigate-gate
+[A-30] SKIP deep-probe — vn-market-intelligence-mcp-frontend-1 baseline 8.60% < 85% investigate-gate
+[A-30] SKIP deep-probe — vn-market-intelligence-mcp-api-gateway-1 baseline 2.80% < 85% investigate-gate
+[A-30] SKIP deep-probe — vn-market-intelligence-mcp-flaresolverr-1 baseline 3.45% < 85% investigate-gate
+[A-30] SKIP deep-probe — vn-market-intelligence-mcp-news-fetch-1 baseline 8.82% < 85% investigate-gate
+[A-30] SKIP deep-probe — vn-market-intelligence-mcp-technical-analysis-1 baseline 3.38% < 85% investigate-gate
+[A-30] SKIP deep-probe — vn-market-intelligence-mcp-alert-engine-1 baseline 2.02% < 85% investigate-gate
+[A-30] SKIP deep-probe — vn-market-intelligence-mcp-kinh-dich-service-1 baseline 3.09% < 85% investigate-gate
+
+--- disk df -h / ---
+Filesystem        Size    Used   Avail Capacity iused ifree %iused  Mounted on
+/dev/disk1s4s1   233Gi    13Gi    14Gi    49%    393k  150M    0%   /
+
+--- pdf-extractor in-container multi-probe (A-20) ---
+[A-20-PROBE-1] in-container HTTP 200
+[A-20-PROBE-2] in-container HTTP 200
+[A-20-PROBE-3] in-container HTTP 200
+[A-20] pass_count=3/3
+
+=== PROBE DONE ===
+```
+
+#### Check Results
+
+**A-01 to A-11 — Container Status:** PASS
+- All host_runtime_set services UP (13 containers)
+
+**A-12 to A-20 — Health Endpoints:** PASS
+- All 5 endpoints responding HTTP 200
+- A-20 pdf-extractor multi-probe: 3/3 passed
+
+**A-21 — Restart Count:** PASS
+- mcp-server RestartCount=0
+
+**A-30 — Memory Pressure:** WARN
+- rag-service memory ESCALATE verdict — sustained at 96.92%-97.49% (range)
+  - Deep-probe: 6 samples over 65s window, median 96.99% (>93% sustained)
+  - State: OOMKilled=false, restarts=0, no state changes
+  - Verdict: ESCALATE on "loss of reclamation" (>93% sustained, no dip-jitter veto)
+  - Emission: SKIP-dedup (same dedup_key emitted within last 7 days at 2026-08-09T04:11:10Z)
+  - Dashboard row: appended with signal_id=sys-20260809T050602-15df
+  - [emit-signal] SKIP-dedup dedup_key=microservice_degraded:vn-market-intelligence-mcp-rag-service-1:A-30 last_sent=2026-08-09T04:11:10Z id=sys-20260809T050602-15df
+  - [emit-dashboard] OK id=sys-20260809T050602-15df check_id=A-30
+
+**A-32 — Disk:** PASS
+- / filesystem at 49% capacity
+
+#### Summary
+Most checks PASS. A-30 rag-service shows ESCALATE memory (96.92-97.49%, median 96.99%). Known tracked issue (FU-RAG-DEPLOY-MEMORY DONE_VERIFIED; open follow-up FIX-RAG-EMBEDDER-IDLE-UNLOAD-PATH P2). Dedup system correctly suppressed duplicate emission within 7-day window.
+
+#### Output
+[OUTPUT-CONTRACT] signals_posted=1 | telegram_sent=0 | signal_queue_rows_written=1 | dashboard_rows=1 | dedup_skipped=1 | status=DEGRADED
+
+
 ## c17 · 2026-08-09T04:37Z
 
 ### Audit Run Tier-1 (04:30–04:37 UTC 2026-08-09)
