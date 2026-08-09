@@ -19571,7 +19571,7 @@
         "last_served_tick": "2026-08-09T01:23:42Z"
       }
     },
-    "_updated_at": "2026-08-09T03:24:28Z",
+    "_updated_at": "2026-08-09T03:51:13Z",
     "_updated_by": "dev-team",
     "pending_triage_inbox": [
       {
@@ -19673,6 +19673,59 @@
         },
         "createdAt": "2026-08-09T03:03:10Z",
         "drained_at": "2026-08-09T03:21:22Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "3ec30b8f0881d45eb625998f11ccf171279f0c1722716e46c55bb57f1a7b43e7",
+        "source": "file",
+        "from": "ci-health-probe",
+        "to": "po",
+        "type": "ci_red",
+        "priority": "high",
+        "payload": {
+          "check_id": "CI-RED-897d1811",
+          "head_sha": "897d1811acd4d2f16123732d2ad818c48d3e3b88",
+          "run_id": 31291780838,
+          "run_url": "https://github.com/phamhung075/VN-Market-Intelligence-MCP/actions/runs/31291780838",
+          "conclusion": "failure",
+          "failing_jobs": [
+            {
+              "name": "size-lint",
+              "conclusion": "failure",
+              "jobId": 93190109423
+            }
+          ],
+          "fingerprint": "1f7a2856613e586891a514ae0f25ef937800e0b9ee936d67dc6965ff90cce8c1",
+          "zone_owner": "dev-team (CI fix)",
+          "summary": "CI RED on main HEAD 897d1811acd4d2f16123732d2ad818c48d3e3b88: size-lint",
+          "suggested_sprint_class": "FIX",
+          "verification_gate": "ci_green_on_subsequent_push"
+        },
+        "createdAt": "2026-08-09T03:23:23Z",
+        "drained_at": "2026-08-09T03:51:13Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "4334107aadae89acb73eebd2ed33e297ba497990edc0bc4cd3a3a5c9817c48a0",
+        "source": "file",
+        "from": "context-bloat-backstop-hook",
+        "to": "claude-manager-helper",
+        "type": "context_bloat_breach",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-developer-5.md",
+          "line_count": 153,
+          "cap": 600,
+          "byte_count": 37871,
+          "byte_cap": 36000,
+          "class": "sprint-decision-journal",
+          "reason": "byte-cap",
+          "overage": 0,
+          "byte_overage": 1871,
+          "action_required": "prune_or_split"
+        },
+        "createdAt": "2026-08-09T03:33:03Z",
+        "drained_at": "2026-08-09T03:51:13Z",
         "routed_to": "PO Step 0-SIG"
       }
     ]
