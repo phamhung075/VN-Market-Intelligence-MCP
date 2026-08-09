@@ -95,3 +95,54 @@
 - Board row: `review[]`→ now the row I'm processing, `next_agent:qa`, `updated_by: developer/round-1-fix` — orch-state diff confirms clean move out of `backlog[]` into `review[]` with no unrelated board mutation beyond normal peer churn (`.head`, signal_queue, idle-chain rotation — all unrelated concurrent activity).
 **why-decision:** APPROVED. Round-1 correction is factually accurate on independent re-verification — no residual error found. Moving `TASK_RUNIDLE-1-AUDIT` → `done[]`, unblocking `TASK_RUNIDLE-2-REDESIGN`/`TASK_RUNIDLE-3-STALENESS` (`depends_on` this row).
 **why-change:** No change from round-0's blocking finding scope — developer fixed exactly the flagged claim, nothing new surfaced.
+
+### STEP qa-S24 · qa · 2026-08-09T01:00:00Z
+**task-id:** BCT-OBS-02-FIX
+**what-done:** Direct-commit verify (dev-team Review-Lane QA-Drain, `qa[]` row, `branch:null`) of `a5809fab0`, on main ancestry, `git show --stat` matches all 6 claimed files exactly. Re-ran everything myself rather than trusting the row's own `status_note` prose.
+**what-considered:**
+- New `FIX-BCT-OBS-02-SSCCHECK-WORK-ALERT.test.ts` re-run fresh: 5/5 pass (skip/full-run/concurrency-silence/send-failure-non-fatal/T4-dedup-silence), matches claim exactly. 5 adjacent sibling suites (104-job-ssc-check, 1352c-freshness-sla-sscchecker-guard, 316/1358a-bctc-overdue-check, 1346a-no-simulated-in-prod-scheduler) = 37/37 pass, no regression from the new `sendWorkAlertFn` DI seam.
+- `bun tsc --noEmit` clean. `mock-guard.sh --files sscCheckerJob.ts` PASS (exit 0). DDD: no `domain/` import (scheduler layer stays interface-only, calls application usecase + infra only, per file's own docstring). Secret/`process.env` greps on the touched file: both clean.
+- Read the actual diff, not just the commit message: `sendWorkAlert` defaults to real `sendTelegramWork` (confirmed exported at `infrastructure/notifiers/telegram.ts:294`), summary posted exactly once per executed cycle (skip/complete/error), concurrency-guard + T4 dedup early-returns correctly stay silent (no message when nothing new happened). Doc updates (`cron-jobs.md`, `news-analysis.md`) accurately describe the new behavior, no overclaim.
+**why-decision:** APPROVED, DONE_VERIFIED. All 4 verify-committed checks pass on independent re-run; root-cause claim (zero telegram calls in either file's full history) is consistent with the fix being additive-only (new WORK-post path, no removed logic).
+**why-change:** none — verified exactly what the row scoped.
+
+### STEP qa-S25 · qa · 2026-08-09T00:56:05Z
+**task-id:** DS-OBS-01-FIX
+**what-done:** Direct-commit verify (dev-team Review-Lane QA-Drain, `qa[]` row, `branch:null`) of `2c44564a3`, sibling to BCT-OBS-02-FIX. Commit is a real ancestor of `main`; `git show --stat` matches all 5 claimed files exactly. Re-ran everything myself rather than trusting the row's own `status_note` prose.
+**what-considered:**
+- New `DS-OBS-01-FIX-sla-breach-work-bug-alert.test.ts` re-run fresh: 6/6 pass (26 expect calls), matches claim exactly. 4 adjacent sibling suites (1352c/1354b/1407b/1920i freshness-SLA) = 51/51 pass, no regression from the new `sendBugFn` DI seam (SQLite "no such table" warnings in the log are a pre-existing non-fatal coverage-map fallback path, not new failures).
+- `bun tsc --noEmit` clean. `mock-guard.sh --files freshnessSlaMonitorJob.ts` PASS (exit 0). Read the actual diff, not just the commit message: `sendBugFn` defaults to real `sendTelegramBug` (imported from `infrastructure/notifiers/telegram.js`), CRITICAL→BUG / HIGH→WORK routing matches the file's own pre-existing `severity: "HIGH"|"CRITICAL"` type and `classifySeverity` threshold (age>1.5x), gated by the same 60-min cooldown as `escalateToCommander`, wrapped in its own try/catch (non-fatal, independent of escalation bookkeeping) — matches the status_note's description exactly, no overclaim.
+- Root-cause claim (signal-bus `escalateToCommander` write is suppressed by alert-commander's documented noise-filter, never reaches a human channel) cross-checked against `docs/agents/alert-commander/flow/stage-signals.md`'s cited 2026-07-12 finding — consistent, not re-litigated (same precedent already independently verified for sibling BCT-OBS-02-FIX/FR-OBS-01-FIX this sprint).
+**why-decision:** APPROVED, DONE_VERIFIED. All 4 verify-committed checks pass on independent re-run; fix is additive-only (new BUG-post path alongside the pre-existing WORK-post path), consistent with the two shipped sibling precedents.
+**why-change:** none — verified exactly what the row scoped.
+
+### STEP qa-S25 · qa · 2026-08-09T00:56:00Z
+**task-id:** DS-DEGRADE-01-FIX
+**what-done:** Direct-commit verify (Review-Lane QA-Drain, `branch:null`) of commit `b1d2f0582969f6a5345244b318100e3f591cd268` — registers missing `public_contracts` table in `schema-macro.ts::initMacroTables()`.
+**what-considered:**
+- Trust the row's own `status_note` prose (developer self-report of 5/5 + 56/56 pass) — rejected per NO-FABRICATION GUARD; re-ran independently instead.
+- Verified commit is real + on `main` ancestry, all 4 claimed `files[]` appear in `git show --stat`, commit date (2026-07-23T20:04:59Z) matches row's `completed_at` (20:05:04Z).
+- Re-ran `DS-DEGRADE-01-FIX-muasamcong-table-missing.test.ts` fresh: 5/5 pass. Re-ran the 4 named regression targets (248-muasamcong, taskB-public-contracts-job, 1982-quality-burndown-CHIJ, 250-signal-integration): 56/56 pass. `bun tsc --noEmit`: 0 errors. `mock-guard.sh` on `schema-macro.ts`: PASS. Cross-checked `publicContractsStore.ts`'s INSERT column list against the new table def — byte-exact match, no drift. Confirmed single `CREATE TABLE public_contracts` site (no duplicate/conflicting definition elsewhere) and `initMacroTables` wired into `initDatabase()`.
+**why-decision:** All independent re-verification matches the row's claims exactly — genuine root-cause fix (dead-code table gap), not a masked symptom. APPROVED.
+**why-change:** none — no change from row's own claimed shape.
+
+### STEP qa-S26 · qa · 2026-08-09T00:56:56Z
+**task-id:** FIX-CI-SIZELINT-COORDINATIONSTORE-BASELINE-1388L
+**what-done:** Direct-commit verify (Review-Lane QA-Drain, `qa[]` row, `branch:null`) of `763ef682252d3cd694579742259aeb63b4b41549` — extracts `scheduled_tasks` CRUD surface (10 fns) out of `coordinationStore.ts` into new `scheduledTaskStore.ts`, re-exported for zero call-site edits.
+**what-considered:**
+- Commit real + on `main` ancestry. `files[]` on the row lists 2 entries: `coordinationStore.ts` (touched, confirmed) and `docs/data/size-lint-baseline.json` (NOT touched) — judged non-blocking: baseline file was listed as the WRONG-remedy location in the row's own mint note ("do NOT raise the 1241 number... launders the regression"), and the dev note + diff confirm the 1241L baseline entry is genuinely untouched. Flagging its absence as an ISSUE would penalize the correct fix.
+- Independently re-ran `size-lint-justification.sh --check`: coordinationStore.ts (1173L) + scheduledTaskStore.ts (259L, own header) both absent from the offender list; only unrelated files (coordinationTools.ts, transport.ts) remain, neither in this row's scope. Cross-checked live on GitHub via `gh api` job 93154116153 (run 31277793877) — same result, transport.ts is the sole failing file.
+- 19 test files referencing coordinationStore/scheduledTaskStore re-run fresh: 320/320 pass. `bun tsc --noEmit` (mcp-server): clean. `mock-guard.sh --files coordinationStore.ts scheduledTaskStore.ts`: PASS. DDD/process.env/secret greps on both files: clean. Commit also updated `docs/architecture/microservice/mcp-server/system.md` to describe the split — verified consistent with the actual code.
+**why-decision:** APPROVED, DONE_VERIFIED. All 4 verify-committed checks pass on independent re-run; the one files[] mismatch is explained by the row's own explicit anti-laundering mandate, not a scope gap.
+**why-change:** none — verified exactly what the row scoped.
+
+### STEP qa-S27 · qa · 2026-08-09T00:57:19Z
+**task-id:** FIX-DEVTEAM-IDLE-CHAIN-MAIN-COMPLETION
+**what-done:** Direct-commit verify (dev-team Review-Lane QA-Drain, `qa[]` row, `branch:null`) of `4696a721a` — Step 1's `pendingSignals[]` switched from in-memory drain build to durable `.dev_team_idle_chain.pending_triage_inbox` read + envelope_id-subtractive clear (brief §3.2, Part 2 of the P1A-MAIN-ROTATION/P2A-DURABLE-DRAIN companion pair, both DONE_VERIFIED already).
+**what-considered:**
+- Commit real + on `main` ancestry (`git merge-base --is-ancestor`), touches the row's own `files[]` (main.md). Unusually this row also has a real handoff file (`TASK_FIX-DEVTEAM-IDLE-CHAIN-MAIN-COMPLETION.md`) with a 7-item AC list — checked the diff against all 7, byte-exact match including the exact jq subtractive-filter pattern the handoff specified.
+- Independently re-derived the "no duplicate stamp write" claim rather than trusting prose: confirmed live in main.md that the Idle-Tick Rotation Selection block already writes `rotation.step1_triage.last_served_tick` unconditionally before dispatch (P1A-MAIN-ROTATION, shipped earlier) — Step 1's own section correctly adds zero stamp logic.
+- `bun tsc --noEmit`: 0 errors. No dedicated test file exists for this docs-only orchestration change (TEST-FAIRNESS/TEST-DURABLE, both still BACKLOG, own that scope) — ran the nearest live idle-chain regression file (`FIX-DEVTEAM-IDLE-CHAIN-DANGLING-DEPS-STRAND-5-P0-ROWS.test.ts`, 14/14 pass) as targeted zone suite. `mock-guard.sh`: N/A, zero production source touched.
+- RC-VERIF gate: id NOT in `RC_VERIF_GRANDFATHERED_IDS` — hand-built compliant `verification.raw_probe{tool,args,live_value_observed,observed_at}` from the real evidence collected above (brief `2026-08-08-donelane-doneverified-producer.md` §3's documented workaround #2) before the `orch-apply.sh` write; Stage0+1 PASS, conservation OK (task_total 757→757, signal_total 44→44).
+**why-decision:** APPROVED, DONE_VERIFIED. Flagged-not-fixed items (Session Gate ref, po/flow/main.md line, orch-conservation-check.mjs gap) independently confirmed still present and correctly disclosed as out-of-scope, not silently dropped.
+**why-change:** none — verified exactly what the row + handoff scoped.
