@@ -6721,7 +6721,7 @@
         "title": "Write down the price_anomaly_v1 dual-transport contract (EOD file -> Chef by-path; intraday post_agent_signal -> alert-commander) and make the drain's skip of the file family intentional + protected, so the by-path consumer stops being mistaken for data loss",
         "priority": "P1",
         "size": "S",
-        "status": "BACKLOG",
+        "status": "BLOCKED",
         "zone": "docs/agents/",
         "owner": "agent-father",
         "next_agent": "agent-father",
@@ -6735,8 +6735,9 @@
         "supersedes": [
           "FIX-PRICE-ANOMALY-DISH-SIGNAL-ENVELOPE"
         ],
-        "updated_at": "2026-08-09T01:37:13Z",
-        "po_manual_dispatch_flagged_at": "2026-08-09T01:35:08Z"
+        "updated_at": "2026-08-09T01:54:05Z",
+        "po_manual_dispatch_flagged_at": "2026-08-09T01:35:08Z",
+        "status_note": "agent-father AC-1 gate (2026-08-09): writer eod.md:13/29/33 exact match. Consumer chef.md:116 (PO-verified 07-21) DRIFTED to :153 -- git show 47c703fca:chef.md (exact 07-21 commit) confirms :116 was correct then; git diff 47c703fca HEAD -- chef.md shows the \"Collect file groups:\" block byte-identical, only pushed down 37L by unrelated Step-0.5/TE-T16-split growth (07-29->08-06). Mechanism unchanged (still unenveloped top-level docs/signals/*.json glob, price_anomaly_* named explicitly from market-watcher) -- citation stale, not the architecture. Per AC-1: \"if either has moved, record the new location and STOP for re-triage before changing anything\" -- STOPPED before AC(2)-(5), zero edits made to eod.md/mcp-tools.md/drain-signals.js. RE-DISPATCH with corrected citation: consumer = chef.md Step 0 GATHER (glob-read L130, price_anomaly_* family bullet L153, was L116). Decision journal: docs/agent-memory/decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-agent-father-2.md STEP agent-father-S33."
       },
       {
         "id": "FIX-AUDITOR-EVAL-DELTA-RECENCY-BOUND",
@@ -19464,8 +19465,21 @@
         "last_served_tick": "2026-08-09T01:23:42Z"
       }
     },
-    "_updated_at": "2026-08-09T01:43:34Z",
+    "_updated_at": "2026-08-09T01:52:38Z",
     "_updated_by": "dev-team",
-    "pending_triage_inbox": []
+    "pending_triage_inbox": [
+      {
+        "envelope_id": "50b9aa078600602e049cee185e20e79781ae783715a0d900974bbbbce83e9b85",
+        "source": "file",
+        "from": "commit-sweep-guard",
+        "to": "po",
+        "type": "bug-escalation",
+        "priority": "high",
+        "payload": "[notebook-immutability-guard] WARN: docs/agent-memory/notebooks/system-auditor.md — retained section '## c9 · 2026-08-09T01:07Z' has different content staged than at HEAD. Per .claude/skills/notebook-write/SKILL.md AC-2a, a retained '## ' section must be byte-identical across a cycle; the only authorized mutations are dropping a whole oldest section, the AC-2b sub-block intra-prune, or trimming the CURRENT cycle's own new section. If cap pressure forced a shrink, DROP the whole section (archive verbatim if it must be kept) and add a NEW marker section instead — see docs/agent-memory/notebooks/architect.md for the reference-correct pattern. mode=warn (default warn — never blocks; set GIT_NOTEBOOK_IMMUTABILITY_MODE=reject to hard-enforce once re-validated, see scripts/audits/verify-notebook-immutability-gate.sh).\n",
+        "createdAt": "2026-08-09T01:38:35Z",
+        "drained_at": "2026-08-09T01:52:38Z",
+        "routed_to": "PO Step 0-SIG"
+      }
+    ]
   }
 }
