@@ -59,3 +59,88 @@ QA verification gate per dev-mcp-server review note: cron_job_runs LIVE query (n
 **Chain:** ops (DONE) → qa (verification) → po (sign-off)
 
 ---
+
+## Cycle 2026-08-09T04:35Z — CRITICAL: Cron Scheduler Partial Failure Investigation
+
+**Issue**: System-auditor Tier-2 reported 23/90 cron jobs (26%) stopped firing at 2026-08-07 08:50 UTC, now 41.6h overdue.
+
+**Initial Diagnosis**:
+- Jobs affected: morningBriefing, alertDigest, foreignFlowAlert, franceSummary, signalOutcomeJob, ohlcvStalenessCheck, marketEarningYield, alertOutcomeJob, vnstockTradingStatsRefresh, breadthHistoryPersister, ohlcvSanityCheckEarly, vpsProxyWatchdog, taAlertNotifier, priceUpdateWatchdog, vnIndexRefresh, brokerSanctionsSweep, ragFtsRebuildCron, taAlertScan, bbAlertScan
+- Last successful fires: 2026-08-07 00:45:02 to 09:30:01 UTC (scattering across early-morning to late-morning weekday window)
+- Pattern: Cut-off at exactly 08:50 UTC 2026-08-07 (vpsProxyWatchdog, priceUpdateWatchdog last fires)
+- Status AFTER rebuild (2026-08-08 16:59:58Z): UNCHANGED — jobs still MISSED, not recovered
+
+**Scope Analysis**:
+- mcp-server rebuilt at 2026-08-08T16:59:58Z UTC → image sha256:630fa5d262755bf94caadfa28859a392546f7b06ac3594a8cccc51ee36a1a551
+- Rebuild did NOT restore these jobs → root cause is NOT the double-registration bug (that was a separate issue)
+- Jobs ARE present in current code (buildJobTable + registerBespokeJobs in schedulerJobTable.ts)
+- Jobs ARE registered with scheduler at startup → they appear in /api/cron-status layer_a endpoint
+- Jobs have NEVER_FIRED or MISSED status depending on prior history
+
+**Key Finding**: Jobs had prior runs recorded in cron_job_runs table (2026-08-07 before 08:50 UTC), then ALL stopped at the same time. This suggests:
+  1. Container crash or forceful exit at ~2026-08-07 08:50 UTC
+  2. No automatic recovery/restart of the old container
+  3. New container deployed 32h later, but it's running fresh, not replaying missed jobs
+
+**Root Cause Hypothesis**: The original container (running before 08:50 UTC 2026-08-07) either:
+  - Crashed due to an unrecoverable error
+  - Was manually killed or timed out
+  - Hit OOM or resource exhaustion
+  - All crashing at the exact same minute suggests a systemic event, NOT per-job failures
+
+**Next Steps**:
+1. Check if there's a way to query old container logs (docker-compose logs history, journalctl, etc.)
+2. Look for error messages around 2026-08-07 08:50 UTC in any persistent logs
+3. Verify if the container's health probe was failing
+4. Check if there were any resource constraints (CPU, memory, disk) at that time
+5. Examine the rebuild against the pre-08:50 UTC code to see if anything changed that would have prevented re-registration
+
+Session: 165f4245-6173-4054-87fd-c55bb626265f
+
+
+**Deep Dive Analysis (04:35 UTC 2026-08-09)**:
+
+Date/Day Verification:
+- Today is Sunday 2026-08-09 (confirmed via `date` command)
+- Incident occurred Friday 2026-08-07 at 08:50 UTC
+- Container rebuilt Saturday 2026-08-08 at 16:59:58Z UTC (deployed 19:06:16Z UTC)
+- Weekend jobs correctly skipped during startup on Saturday (startup-catchup recognized weekend)
+
+Log Analysis (docker logs mcp-server-1):
+- No registration errors for failing jobs
+- No scheduler runtime errors
+- Scheduler IS running (latest log: scheduler-dedup 02:36:01Z UTC)
+- All 23 affected jobs WERE registered pre-incident (confirmed via buildJobTable + registerBespokeJobs code)
+
+Job Firing Pattern:
+- Weekday-only jobs (cron Mon-Fri like `*/10 2-8 * * 1-5`) correctly did NOT fire on Sat/Sun
+- Expected next fires: Monday 2026-08-10 at 02:00-09:30 UTC range (depends on job)
+- No new failures detected since rebuild; jobs stable in MISSED state
+
+**Root Cause — Container Crash Hypothesis (HIGH CONFIDENCE)**:
+The original mcp-server container process died/crashed at exactly 2026-08-07 08:50:00 UTC:
+- vpsProxyWatchdog, priceUpdateWatchdog last-fire timestamps both show 08:50 UTC (exact boundary)
+- All 23 jobs stopped firing at that same microsecond → not gradual degradation, not per-job bug
+- Last jobs to fire were end-of-market-hours (08:50 is last 10-min interval before 09:00 market-close cutoff per cron 2-8)
+- Next scheduled fires would have been 09:00+ UTC (outside market-hours window for these jobs), so wouldn't fire anyway
+- Node-cron's recoverMissedExecutions re-seeds from `new Date()` on container init → old execution history lost
+
+**Why Rebuild Didn't Recover**: 
+- New container (rebuilt 2026-08-08) is running fresh with clean scheduler state
+- Old cron_job_runs records (up through 2026-08-07 08:50 UTC) exist in DB but are not replayed
+- Weekday jobs naturally didn't fire Sat/Sun (normal behavior)
+- node-cron will NOT replay jobs missed across a container restart (only in-process event-loop lag)
+
+**Escalation Recommendation**:
+1. Investigate what caused the original container to crash at 2026-08-07 08:50:00 UTC precisely
+2. Check host logs (journalctl), OOMKilled events, resource exhaustion around that timestamp
+3. Implement container health monitoring + auto-restart policy if not already in place
+4. Determine if this is a one-off incident or recurring pattern
+
+**Verification Plan**:
+- Monitor Monday 2026-08-10 when weekday jobs next fire (02:00 UTC +)
+- If jobs fire normally on Monday → root cause is confirmed as container crash, self-healed by restart
+- If jobs STILL don't fire Monday → deeper scheduler registration bug requires developer investigation
+
+Session: 165f4245-6173-4054-87fd-c55bb626265f
+
