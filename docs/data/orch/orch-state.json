@@ -93,12 +93,11 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "FIX-ORPHAN-FR8-TEST-COORDINATION-STORE",
-    "next_agent": "developer",
-    "next_action": "Ready-Lane Consumer claim of FIX-ORPHAN-FR8-TEST-COORDINATION-STORE — spawn developer DIRECTLY (no zone-detect indirection; row already carried a resolved next_agent/owner).",
-    "updated_at": "2026-08-09T03:24:47Z",
-    "updated_by": "dev-team (ready-lane consumer)"
+    "status": "idle",
+    "updated_at": "2026-08-09T03:42:45Z",
+    "updated_by": "dev-team",
+    "active_task_id": null,
+    "next_agent": null
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
