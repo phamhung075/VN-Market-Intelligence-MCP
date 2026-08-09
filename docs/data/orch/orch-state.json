@@ -93,11 +93,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "active_task_id": null,
-    "next_agent": "router",
-    "updated_at": "2026-08-09T05:47:09Z",
-    "updated_by": "developer"
+    "status": "in_progress",
+    "active_task_id": "FIX-DEVTEAM-IDLE-CHAIN-TEST-DURABLE",
+    "next_agent": "qa",
+    "next_action": "Review-Lane QA-Drain claim of 5 row(s), highest-ranked FIX-DEVTEAM-IDLE-CHAIN-TEST-DURABLE — spawn qa in verify-committed mode (branch:null direct-commit row, no task branch/handoff — see docs/agents/qa/flow/main.md § Direct-Commit Verify; do NOT use the normal pipeline JUMP-TO, it requires a branch this row does not have). Batch of 5 row(s) share this claimed_at stamp in .task_board.qa[] — correlate by claimed_at to dispatch the rest.",
+    "updated_at": "2026-08-09T05:58:07Z",
+    "updated_by": "dev-team (review-lane qa-drain)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -1081,7 +1082,7 @@
     ]
   },
   "task_board": {
-    "_updated_at": "2026-08-08T23:07:51Z",
+    "_updated_at": "2026-08-09T06:03:21Z",
     "_updated_by": "developer",
     "active_sprints": [
       {
@@ -10775,6 +10776,30 @@
         ],
         "blocks": [],
         "updated_at": "2026-08-09T04:01:01Z"
+      },
+      {
+        "id": "FIX-FLEET-PUSH-LOG-NO-ROTATION-UNPROVEN-ROOTCAUSE",
+        "type": "FIX",
+        "status": "BACKLOG",
+        "priority": "medium",
+        "size": "S",
+        "zone": "cross-service/",
+        "owner": "ops",
+        "next_agent": "ops",
+        "supervised": false,
+        "plan_only": false,
+        "title": "fleet-push launchd log has no rotation and its EX_CONFIG root cause was never proven — the 19-day silent-death condition can regrow",
+        "created_at": "2026-08-09T06:03:21Z",
+        "created_by": "po/review-lane-secondary-drain-signoff-FIX-FLEET-PUSH-LAUNCHD-EXCONFIG-SILENT-DEAD",
+        "files": [
+          "scripts/fleet-worktree-push.sh",
+          "docs/agent-memory/sessions/fleet-push.log"
+        ],
+        "depends_on": [],
+        "blocks": [],
+        "why_this_matters": "The parent row FIX-FLEET-PUSH-LAUNCHD-EXCONFIG-SILENT-DEAD is signed off on met acceptance, but its root cause is NOT definitif. The ops decision journal records only `old log files had corrupted state preventing launchd from opening them for writing during exec setup` — established by delete-and-retry, never by identifying the mechanism. Two facts keep the door open: (a) the pre-death fleet-push.log.bak is 507845 bytes with last write 2026-07-03, which is exactly when the 19-day dark window began; (b) the live log is already 42013 bytes after 9.4 days (~4.5 KB/day) with NO rotation anywhere in scripts/fleet-worktree-push.sh or the plist, so it re-enters the same size band in roughly 3-4 months. If size is the driver this recurs on a timer; if it is not, we still do not know what is. Severity is medium, not high, ONLY because FIX-LAUNCHD-PROBE-PRESENCE-ONLY-FALSE-GREEN now makes a recurrence loud instead of silent.",
+        "acceptance": "Either (a) prove the EX_CONFIG mechanism (reproduce a launchd StandardOutPath open() failure against a controlled log file and name the actual trigger — size, xattr, quarantine, fd state), or (b) if it cannot be proven, install a bounded log-rotation guard so the condition cannot regrow: fleet-worktree-push.sh truncates/rotates fleet-push.log and fleet-push-error.log above a documented byte cap as its FIRST action, with the cap as a named tunable next to PUSH_THRESHOLD in the header block. Either way a regression test must cover it. Also sweep the sibling repo-tracked LaunchAgents for the same unrotated-stdout shape rather than fixing this one job in isolation.",
+        "updated_at": "2026-08-09T06:03:23Z"
       }
     ],
     "closed_sprints": [
@@ -12412,6 +12437,174 @@
             "args": "src/infrastructure/__tests__/coordinationStore.test.ts; src/__tests__/task-lock-coordination-store.test.ts src/__tests__/task-lock-reaper-timer.test.ts src/__tests__/task-lock-coordination-tools.test.ts src/__tests__/FIX-ORPHAN-FR2-FR6-FR7-INTERFACE-COORDINATION-TOOLS.test.ts src/__tests__/commit-mutex-coordination.test.ts src/__tests__/DWF-coordination-phase2.test.ts src/infrastructure/__tests__/coordinationStore.test.ts; commits 8af71e8c2+75ac06a90",
             "live_value_observed": "coordinationStore.test.ts alone: 16 pass/0 fail/33 expect(); 7-file merge-gate suite: 143 pass/0 fail/404 expect(); tsc --noEmit: 0 errors; both commits confirmed ancestors of main",
             "observed_at": "2026-08-09T04:27:17Z"
+          }
+        }
+      },
+      {
+        "title": "Resolve dead SaveQuote / Tier-3 write-back: delete the unused writer path",
+        "priority": "P2",
+        "zone": "stock-price",
+        "type": "FACTORY",
+        "status": "DONE_VERIFIED",
+        "id": "FACTORY-STOCK-resolve-dead-writeback",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-STOCK-resolve-dead-writeback",
+        "promoted_at": "2026-07-23T23:44:32Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
+        "updated_at": "2026-08-09T06:03:00Z",
+        "claimed_at": "2026-08-09T05:58:06Z",
+        "claimed_by": "dev-team (review-lane qa-drain)",
+        "next_agent": "qa",
+        "reviewed_at": "2026-07-23T23:52:02Z",
+        "reviewed_by": "dev-stock-price",
+        "qa_verified_at": "2026-08-09T06:03:00Z",
+        "qa_verified_by": "qa",
+        "status_note": "[QA] Review Record (direct-commit verify): APPROVED, DONE_VERIFIED. Row carried no .commit/.files[]/.owner (predates drain fields) -- derived commit c0f6bae5842fa99ba36384b77299d081aad432d9 via `git log --all -- <detail_ref files[]>`; commit date 2026-07-24T01:51:19+02:00 (UTC 2026-07-23T23:51:19Z) is 43s before reviewed_at (2026-07-23T23:52:02Z) -- high-confidence match, confirmed `git merge-base --is-ancestor` on main. `git show --stat` matches 2 of 3 detail_ref files[] (fetchers.go, ports.go) exactly; the 3rd (_deprecated/services_v1.go) was the dead CALLER cited only as deadness evidence in the approach note, not itself edited by this task -- it was later deleted entirely by an unrelated commit 448b41b0a (2026-07-30, cross-service dead-code-CI-gate sweep), independently corroborating zero live importers ever existed. Diff read line-by-line (not trusted from commit prose): SaveQuote removed from PriceHistoryPort interface (ports.go) and SQLitePriceHistoryRepository (fetchers.go); ownDBPath field + `CREATE TABLE market_prices_cache` + INSERT DDL all dropped; main.go's STOCK_PRICE_DB_PATH env wiring removed -- matches detail_ref's mandated DELETE-path approach exactly (no wire-it / no new hot-path write introduced). Re-verified against live main HEAD myself, not the commit's own claims: `go build ./...` clean; `go test -count=1 ./...` 9/9 packages pass fresh (uncached); `grep -rn \"SaveQuote\\|market_prices_cache\" apps/stock-price/` = 0 matches repo-wide, confirming complete removal persists at HEAD, not just at the historical commit; `mock-guard.sh --files fetchers.go,ports.go,main.go` PASS. DoD fully met: SaveQuote removed from repo+port, cache DDL/INSERT dropped, no live caller broken (only the now-also-deleted _deprecated file ever called it), build+tests green, live price-serving path unchanged (no new write side effect introduced). DJ: sprint-COWORK-GUARANTEED-SLOT-CATCHUP-qa-15.md STEP qa-S34.",
+        "verification": {
+          "raw_probe": {
+            "tool": "go build ./... && go test -count=1 ./... && grep -rn SaveQuote|market_prices_cache apps/stock-price/",
+            "args": {
+              "cwd": "apps/stock-price",
+              "commit_verified": "c0f6bae5842fa99ba36384b77299d081aad432d9"
+            },
+            "live_value_observed": "go build ./... clean; go test -count=1 ./... 9/9 packages pass fresh; grep -rn SaveQuote/market_prices_cache apps/stock-price/ = 0 matches; mock-guard.sh PASS",
+            "observed_at": "2026-08-09T06:03:00Z"
+          }
+        }
+      },
+      {
+        "title": "Remove 2 committed .bak dead-code files from the interface zone (+ repo-root .bak)",
+        "priority": "P2",
+        "zone": "mcp-server-interface",
+        "type": "FACTORY",
+        "status": "DONE_VERIFIED",
+        "id": "FACTORY-INTERFACE-delete-bak-files",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-INTERFACE-delete-bak-files",
+        "promoted_at": "2026-07-23T23:14:58Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
+        "updated_at": "2026-08-09T06:03:13Z",
+        "claimed_at": "2026-08-09T05:58:06Z",
+        "claimed_by": "dev-team (review-lane qa-drain)",
+        "next_agent": "pm",
+        "entered_review_at": "2026-07-23T23:20:06Z",
+        "review_note": "dev-mcp-server self-closeout: 4 tracked .bak files git rm (2 mcp-server-interface + docker-compose.yml.bak + docs/TASKS.md.bak per canonical ticket text found in 2026-06-15 audit + 2026-07-04 brief + backlog-detail.json archive), *.bak added to .gitignore, tsc clean, commit 2a146ecdd. Zero-reference grep confirmed clean pre-deletion. Journal: docs/agent-memory/decisions/sprint-FACTORY-INTERFACE-delete-bak-files-dev-mcp-server.md | [QA] Review Record (direct-commit verify) — 2026-08-09T06:03:30Z. APPROVED, DONE_VERIFIED. Commit 2a146ecdd confirmed real and on main ancestry (git merge-base --is-ancestor). git show --stat matches the review_note claim exactly: 4 deletions (server.ts.bak 1569L, telegramReportTools.ts.bak 330L — both backlog-detail.json canonical files[] — plus repo-root strays docker-compose.yml.bak 280L and docs/TASKS.md.bak 115L) + 3-line .gitignore add (*.bak), zero other changes. Cross-checked the wider-than-canonical-files[] scope against dev-mcp-server own journal (sprint-FACTORY-INTERFACE-delete-bak-files-dev-mcp-server.md) which documents the evidence-based rationale (canonical ticket text found via mandated safety grep naming all 4 files, not fabricated) — accepted as legitimate. Independently re-verified, not trusted from prose: all 4 .bak paths absent from disk AND from git ls-files; .gitignore:73 has *.bak; repo-wide grep for the 4 filenames returns only doc/journal prose referencing this same ticket, zero code references. bun tsc --noEmit (apps/mcp-server) re-run fresh: 0 errors. Ran 087-server-wiring.test.ts + 081-bun-mcp-server.test.ts (most directly tied to server.ts, the surviving non-.bak sibling): 20/20 pass. mock-guard.sh N/A — pure deletion + .gitignore line, no production source added/modified. docker-compose.yml (non-.bak) and repo state confirmed intact/unaffected. DJ-GATE-1: sprint-FACTORY-INTERFACE-delete-bak-files-dev-mcp-server.md has task-id: trailer present — gate satisfied. DJ: sprint-COWORK-GUARANTEED-SLOT-CATCHUP-qa-15.md STEP qa-S34 (this verify).",
+        "qa_verified_at": "2026-08-09T06:03:30Z",
+        "qa_verified_by": "qa",
+        "updated_by": "qa",
+        "verification": {
+          "raw_probe": {
+            "tool": "git merge-base --is-ancestor + git show --stat + bun tsc --noEmit + bun test + git ls-files/grep",
+            "args": "commit 2a146ecdd; git show --stat 2a146ecdd; apps/mcp-server bun tsc --noEmit; bun test src/__tests__/087-server-wiring.test.ts src/__tests__/081-bun-mcp-server.test.ts; git ls-files | grep .bak; grep -rn for the 4 deleted filenames repo-wide",
+            "live_value_observed": "commit is main ancestor; stat shows exactly the claimed 4 deletions (server.ts.bak 1569L, telegramReportTools.ts.bak 330L, docker-compose.yml.bak 280L, docs/TASKS.md.bak 115L) + .gitignore +3L; tsc 0 errors; 20/20 tests pass; git ls-files shows 0 .bak tracked; grep shows only doc/journal prose references, zero code references",
+            "observed_at": "2026-08-09T06:03:30Z"
+          }
+        }
+      },
+      {
+        "id": "FIX-FLEET-PUSH-LAUNCHD-EXCONFIG-SILENT-DEAD",
+        "type": "FIX",
+        "title": "com.vn-market.fleet-push has not executed its script in ~19 days: launchd reports EX_CONFIG (78) across 522 runs and the script body never starts — the push backstop is 100% dark and 100% silent",
+        "status": "DONE_VERIFIED",
+        "priority": "high",
+        "zone": "cross-service/",
+        "owner": "ops",
+        "created_at": "2026-07-22T16:02:26Z",
+        "created_by": "po/cron-audit-sequencing-20260722",
+        "status_note": "ops root-caused + fixed 2026-07-30T21:5xZ, RAW-verified by dev-team: launchctl now last exit=0 (was 78), fleet-push.log shows a genuine fresh launchd-initiated push (4b2ae4446..bd6a27013, target SHA independently confirmed = dev-team own same-tick commit), git rev-list origin/main...HEAD = 0 behind after fetch. Fix: deleted stale docs/agent-memory/sessions/fleet-push.log + fleet-push-error.log -- launchd exec-layer open() on those files was failing before the script body could even start; fresh files let it spawn cleanly. Decision journal: docs/agent-memory/decisions/sprint-2026-07-30-ops.md. Companion detector FIX-LAUNCHD-PROBE-PRESENCE-ONLY-FALSE-GREEN still sits REVIEW/next_agent=qa (PO sequence rank 1, was meant to land first but did not block this) -- worth nudging QA on separately.",
+        "po_ruling_no_reconcile_needed": "NO MANUAL RECONCILE IS REQUIRED — the divergence does not exist today. Verified 2026-07-22T15:52Z: `git rev-list --left-right --count origin/main...HEAD` = 0 behind / 1 ahead, so the behind-set is EMPTY. `git cat-file -e` confirms apps/mcp-server/src/__tests__/CONTAM-7-ohlcv-unit-contam-integration.test.ts is present in BOTH HEAD and origin/main — the cited abort trigger is resolved, as is the later 8-file behind-set (alertStore.ts, orchStateSchema.ts, improvementSignalWriter.ts, 5 tests). The merge-conflict aborts (docs/agent-memory/notebooks/tran-ngoc-bau.md, docs/handoffs/tnb-audit-latest.md) require a merge, and with 0 behind there is no merge. Those log lines are HISTORY, not current behavior: fleet-push-error.log last write 2026-06-27, fleet-push.log last write 2026-07-03.",
+        "real_defect_verified_by_po": "`launchctl print gui/501/com.vn-market.fleet-push` -> state=not running, runs=522, last exit code = 78: EX_CONFIG, run interval 1800s. ZERO bytes written to either log since 2026-07-03. scripts/fleet-worktree-push.sh echoes '[fleet-push] ahead=N threshold=20' as its FIRST statement after setup, so an empty log proves the body never runs. PO ran the identical command by hand: `/bin/bash scripts/fleet-worktree-push.sh` -> printed both lines, RC=0 (below-threshold no-op path, line 187). The script is healthy; the failure is at the launchd spawn/exec layer.",
+        "ruled_out_by_po": "NOT TCC/Full-Disk-Access on ~/Documents — com.vn-market.cowork-guaranteed-slot-firer writes to the SAME docs/agent-memory/sessions/ directory with 815 runs and exit 0. NOT bash-3.2 incompatibility — `/bin/bash -n` is clean and the script uses zero bash-4 constructs despite its header claiming 'bash 4+ required'. NOT a malformed plist — `plutil -lint` returns OK. NOT any script exit path — the script's only exit codes are 0 and 1; it never returns 78.",
+        "why_this_matters": "The abort path was at least LOUD: it echoed to stderr, called send_tg bug, and called emit_abort_signal. The current failure emits NOTHING anywhere, because all three of those live INSIDE the script that never runs. A backstop that fails silently is worse than one that aborts loudly. Blast radius is currently bounded only because something else (the router/PO push path) has been keeping the repo at 1 commit ahead.",
+        "acceptance": "launchctl print shows last exit code 0 AND fleet-push.log receives a fresh dated '[fleet-push] ahead=N threshold=20' line from a launchd-initiated run (not a hand run). Plus: the failure mode must become detectable — see FIX-LAUNCHD-PROBE-PRESENCE-ONLY-FALSE-GREEN, which should land FIRST.",
+        "updated_at": "2026-08-09T06:03:23Z",
+        "next_agent": "pm",
+        "po_unblock_dispatch_at": "2026-07-23T18:03:58Z",
+        "po_unblock_dispatch_note": "PO 2026-07-23 signal-triage: set next_agent=ops (was null -> null-next_agent stall, could not be picked up). Prioritized per TIER1-PROBE-LAUNCHD-EXITSTATUS-CHURN escalation ask(2) + repeated auditor microservice_degraded signals. exit-78 EX_CONFIG launchd config repair is operational (ops).",
+        "secondary_claimed_at": "2026-08-09T05:57:37Z",
+        "secondary_claimed_by": "dev-team (review-lane secondary-drain)",
+        "secondary_dispatch_target": "po",
+        "updated_by": "po (review-lane secondary-drain sign-off)",
+        "po_signed_off_at": "2026-08-09T06:03:21Z",
+        "verification": {
+          "raw_probe": {
+            "tool": "launchctl print gui/501/com.vn-market.fleet-push + stat/grep on docs/agent-memory/sessions/fleet-push.log — run live on the host by PO at sign-off, NOT read back from status_note",
+            "args": "launchctl print gui/501/com.vn-market.fleet-push  |  stat -f '%Sm' -t '%Y-%m-%dT%H:%M:%S%z' docs/agent-memory/sessions/fleet-push.log  |  grep -c '^\\[fleet-push\\] ahead=' docs/agent-memory/sessions/fleet-push.log  |  grep -n '_check_launchd_agents' scripts/agents-flow/auditor-tier1-probe.sh",
+            "live_value_observed": "last exit code = 0; runs = 354; run interval = 1800 seconds; state = not running (idle between interval fires). fleet-push.log mtime = 2026-08-09T05:38:02Z — 20m36s before the probe, inside the 1800s interval. 356 '[fleet-push] ahead=N threshold=20' lines vs runs=354 (~1:1 over 9.4 days); 13 'push succeeded'; 341 below-threshold 'nothing to do'; fleet-push-error.log = 0 bytes since 2026-07-30. Launchd-initiated by construction: that file IS the plist StandardOutPath, a terminal hand-run writes to the tty and never to it. Detector live on HEAD: scripts/agents-flow/auditor-tier1-probe.sh:587 _check_launchd_agents() requires launchctl field-2 Status == '0' after an exact field-3 LABEL match.",
+            "observed_at": "2026-08-09T05:58:33Z"
+          }
+        },
+        "po_review_record": "APPROVED — DONE_VERIFIED. All 3 acceptance clauses RAW-verified live by PO at 2026-08-09T06:03:21Z, not trusted from status_note. (AC-1) `launchctl print gui/501/com.vn-market.fleet-push` -> `last exit code = 0`, runs=354 (counter reset from the pre-fix 522 = job re-bootstrapped at the 2026-07-30 fix). (AC-2) docs/agent-memory/sessions/fleet-push.log mtime 2026-08-09T05:38:02Z = 20m36s before the check, inside the 1800s run interval; 356 `[fleet-push] ahead=N threshold=20` lines vs launchctl runs=354 (~1:1 correlation over 9.4 days); 13 `push succeeded` + 341 below-threshold no-ops = BOTH code paths exercised. Launchd-initiated by construction, not a hand run: that file IS the plist StandardOutPath, a terminal `bash scripts/fleet-worktree-push.sh` writes to the tty and never to this file. fleet-push-error.log = 0 bytes since 2026-07-30 -> zero stderr in 9.4 days. (AC-3, the compound `must become detectable` clause) FIX-LAUNCHD-PROBE-PRESENCE-ONLY-FALSE-GREEN is DONE_VERIFIED (QA 2026-08-06T15:54Z, 181/181 probe tests, T33/T34/T35 green), cold-evicted to docs/data/orch/archive/2026-08.json; detector live on HEAD at scripts/agents-flow/auditor-tier1-probe.sh:587 _check_launchd_agents() — exact field-3 LABEL match then field-2 Status must == \"0\", failure names <label>(exit-status:<code>). CORRECTION to this row's own status_note: its claim that the companion detector `still sits REVIEW/next_agent=qa` is STALE — that note was written 2026-07-30, the detector landed 2026-08-06, 7 days later. The dev-team dispatch note propagated the stale claim verbatim (feedback_premise_date_error_survives_agent_chain class). RESIDUAL RISK accepted, not a blocker -> follow-up minted as FIX-FLEET-PUSH-LOG-NO-ROTATION-UNPROVEN-ROOTCAUSE: the ops decision journal (docs/agent-memory/decisions/sprint-2026-07-30-ops.md) records the root cause as `log files had corrupted state` — empirically derived by delete-and-retry, mechanism never identified — and there is still NO log rotation in scripts/fleet-worktree-push.sh nor in the plist. Signed off anyway because the detector now makes any recurrence LOUD, which is precisely what this row's own why_this_matters demanded (`a backstop that fails silently is worse than one that aborts loudly`).",
+        "follow_up": [
+          "FIX-FLEET-PUSH-LOG-NO-ROTATION-UNPROVEN-ROOTCAUSE"
+        ]
+      },
+      {
+        "id": "FIX-DEVTEAM-IDLE-CHAIN-TEST-DURABLE",
+        "type": "FIX",
+        "title": "AC-2 + conservation guard + docs: drain-signals-durable.test.js new harness (AC-2 negative control) + conservation-check.mjs §3.4 extension + dev-standards.md Script Persistence pointers",
+        "status": "DONE_VERIFIED",
+        "priority": "P0",
+        "size": "M",
+        "zone": "docs/agents/dev-team/flow/",
+        "owner": "developer",
+        "next_agent": "qa",
+        "created_at": "2026-07-29T13:50:06Z",
+        "created_by": "pm",
+        "depends": [
+          "FIX-DEVTEAM-IDLE-CHAIN-MAIN-COMPLETION"
+        ],
+        "blocks": [],
+        "files": [
+          "scripts/agents-flow/drain-signals-durable.test.js",
+          "scripts/orch-conservation-check.mjs",
+          "docs/policies/dev-standards.md"
+        ],
+        "updated_at": "2026-08-09T06:03:39Z",
+        "promoted_at": "2026-08-09T05:25:01Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=0)",
+        "claimed_at": "2026-08-09T05:58:06Z",
+        "claimed_by": "dev-team (review-lane qa-drain)",
+        "commit_sha": "cc7e86829",
+        "status_note": "AC-2 negative-control harness (46 assertions, 4 scenarios+3b+backward-compat) landed in scripts/agents-flow/drain-signals-durable.test.js. Conservation guard extended (scripts/orch-conservation-check.mjs signalTotal() now sums dev_team_idle_chain.pending_triage_inbox alongside signal_queue.rows — TDD RED-then-GREEN, closes brief §3.4's flagged gap). dev-standards.md gained 2 Script Persistence pointers. Regression: drain-signals.test.js 51/51, orch-apply-wrapper-tests.sh 75/75, orch-state-hook.test.mjs 21/21 unaffected. Commits: cc7e86829 (code+docs+handoff), a3b695415 (notebook+journal).\n\n[QA] Review Record (direct-commit verify) 2026-08-09T06:03:37Z: APPROVED. Verified both cited commits are real ancestors of main (git merge-base --is-ancestor): cc7e86829 (test(devteam/idle-chain): AC-2 durable pending-triage-inbox negative control + conservation guard section 3.4 extension) and a3b695415 (chore(memory/developer): notebook+journal). git show --stat matches exactly the claimed files[]: scripts/agents-flow/drain-signals-durable.test.js (NEW), scripts/orch-conservation-check.mjs, docs/policies/dev-standards.md — no scope drift.\\n\\nRe-ran everything myself, not trusted from status_note prose: bun test scripts/agents-flow/drain-signals-durable.test.js = 46/46 pass (46 assertions, matches claim exactly: Scenario 1 append/populate, Scenario 2 bounded1 short-circuit via REAL promote/claim jq, Scenario 3/3b triage clear + concurrent-append survives, Scenario 4 append-fails/retry-recovery, plus backward-compat + conservation-ext coverage). signalTotal() diff confirmed to genuinely sum dev_team_idle_chain.pending_triage_inbox.length alongside signal_queue.rows.length -- closes architect brief section 3.4's flagged gap (TDD RED-then-GREEN independently plausible: conservation-ext negative-control case asserts silent 10-to-0 inbox wipe with rows unchanged is REJECTED, exit 1). dev-standards.md diff confirms exactly 2 new Script Persistence pointers (Extension paragraph on the existing conservation CANONICAL block + a new CANONICAL block for the test harness itself).\\n\\nRegression re-run live (not accepted from claim): bun test scripts/agents-flow/drain-signals.test.js = 51/51 pass. bash scripts/test/orch-apply-wrapper-tests.sh = 75/75 pass. bun test scripts/agents-flow/orch-state-hook.test.mjs = 21/21 pass. All three match the row's claimed counts exactly. bun tsc --noEmit (apps/mcp-server) = 0 errors (no .ts touched this task, consistent with claim). mock-guard.sh --files scripts/orch-conservation-check.mjs = PASS (no production TS/JS source in scope, script/test/doc files only).\\n\\nDependency FIX-DEVTEAM-IDLE-CHAIN-MAIN-COMPLETION independently confirmed status=done_verified -- this row is not jumping ahead of a blocked dependency. DJ-GATE-1: docs/agent-memory/decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-developer-6.md carries task-id: FIX-DEVTEAM-IDLE-CHAIN-TEST-DURABLE -- journal-before-DONE gate satisfied. Spot-checked test file quality directly (not just pass count): real assert(label, actual, expected) JSON-deepequal harness, isolated mkdtemp fixtures per scenario, Scenario 2 runs the REAL scripts/devteam-backlog-{promote,claim}-bounded1.jq scripts (not a stub) -- genuine coverage, not a rigged always-pass suite.\\n\\nDJ: sprint-COWORK-GUARANTEED-SLOT-CATCHUP-qa-15.md STEP qa-S36. VERDICT: APPROVED, DONE_VERIFIED. No merge/branch-delete needed -- work already on main.",
+        "updated_by": "qa",
+        "qa_verified_by": "qa",
+        "verification": {
+          "raw_probe": {
+            "tool": "bun test (46/46 drain-signals-durable.test.js) + bun test (51/51 drain-signals.test.js) + bash orch-apply-wrapper-tests.sh (75/75) + bun test (21/21 orch-state-hook.test.mjs) + bun tsc --noEmit + git merge-base --is-ancestor + git show --stat",
+            "args": "scripts/agents-flow/drain-signals-durable.test.js; scripts/agents-flow/drain-signals.test.js; scripts/test/orch-apply-wrapper-tests.sh; scripts/agents-flow/orch-state-hook.test.mjs; commits cc7e86829+a3b695415",
+            "live_value_observed": "drain-signals-durable.test.js: 46 pass/0 fail; drain-signals.test.js: 51 pass/0 fail; orch-apply-wrapper-tests.sh: 75/75; orch-state-hook.test.mjs: 21 pass/0 fail/45 expect(); tsc --noEmit: 0 errors; both commits confirmed ancestors of main",
+            "observed_at": "2026-08-09T06:03:37Z"
+          }
+        }
+      },
+      {
+        "title": "Delete the phantom packages/primitives/technical-analysis package",
+        "priority": "P2",
+        "zone": "packages-shared",
+        "type": "FACTORY",
+        "status": "DONE_VERIFIED",
+        "id": "FACTORY-SHARED-prune-phantom-primitives",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-SHARED-prune-phantom-primitives",
+        "promoted_at": "2026-07-24T00:44:29Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
+        "updated_at": "2026-08-09T06:04:11Z",
+        "claimed_at": "2026-08-09T05:58:06Z",
+        "claimed_by": "dev-team (review-lane qa-drain)",
+        "next_agent": "pm",
+        "entered_review_at": "2026-07-24T00:49:22Z",
+        "review_note": "dev-technical-analysis: confirmed dead at source — packages/primitives/technical-analysis was git-UNTRACKED residue (bun.lock + node_modules only, no package.json, no source), never a pnpm workspace member (pnpm requires package.json to register), zero repo-wide code/manifest importers (Go service has its own pkg/primitive/* impl at apps/technical-analysis, no packages/ import path exists). Root-caused via docs/handoffs/TASK_pivot-B-revert.md: leftover bun-install artifact from the reverted TS-pilot RSI commit 6248f3da. Deleted packages/primitives/ (29M, rm -rf, untracked so no git rm needed) + removed dangling .gitignore:33 rule. go build/vet/test all green (12/12 packages), G12 sandbox dashboard 35/35 + headless render PASS. Journal: docs/agent-memory/decisions/sprint-FACTORY-SHARED-prune-phantom-primitives-dev-technical-analysis.md. Commit df6c1dc7d. | [QA] Review Record (direct-commit verify) — 2026-08-09T06:03:19Z. APPROVED, DONE_VERIFIED. Commit df6c1dc7d confirmed real and on main ancestry (git merge-base --is-ancestor). git show --stat: .gitignore (-1L, packages/primitives/ rule removed) + new journal doc only — the directory deletion itself is invisible to git diff because packages/primitives/technical-analysis was git-UNTRACKED (bun.lock+node_modules only, never a pnpm workspace member since no package.json ever existed), consistent with review_note claim. Independently re-verified, not trusted from prose: packages/primitives/ absent from disk (ENOENT); .gitignore no longer references the path; repo-wide grep for packages/primitives returns ONLY doc/prose hits (architecture briefs discussing the already-pruned path by name), zero .go/.ts/manifest/Dockerfile/compose references. Re-ran fresh (apps/technical-analysis): go build ./cmd/... exit 0, go vet ./... exit 0, go test -count=1 ./... 12/12 packages ok — exact match. G12 sandbox: bash dashboard/build.sh -> 35/35 scenarios passed/0 failed — exact match. Headless render check initially failed in this QA sandbox (chromium_headless_shell-1234 binary missing from local Playwright cache, rev 1223 only) — root-caused as a local-environment gap unrelated to this diff, installed the missing browser (npx playwright install chromium-headless-shell), re-ran verify-render.mjs -> PASS, 33 dot-green (L1:25+L2:5+L3:3), 0 dot-red, 0 dot-pending, 0 JS errors — exact match to review_note claim. Build artifacts confirmed gitignored, no dirty state introduced. DJ: sprint-COWORK-GUARANTEED-SLOT-CATCHUP-qa-15.md STEP qa-S35 (this verify).",
+        "updated_by": "qa",
+        "qa_verified_at": "2026-08-09T06:03:19Z",
+        "qa_verified_by": "qa",
+        "verification": {
+          "raw_probe": {
+            "tool": "git merge-base --is-ancestor + git show --stat + go build/vet/test + dashboard/build.sh + verify-render.mjs",
+            "args": "commit df6c1dc7d33bfdc468b7a2e82fbb0179df2787d3; git show --stat df6c1dc7d33bfdc468b7a2e82fbb0179df2787d3; apps/technical-analysis: go build ./cmd/...; go vet ./...; go test -count=1 ./...; bash dashboard/build.sh; node dashboard/verify-render.mjs",
+            "live_value_observed": "commit is main ancestor; packages/primitives/ absent from disk; .gitignore no longer has the rule; go build/vet exit 0; go test 12/12 packages ok; sandbox 35/35 passed; headless render PASS 33 dot-green/0 dot-red/0 dot-pending/0 JS errors",
+            "observed_at": "2026-08-09T06:03:19Z"
           }
         }
       }
@@ -14619,78 +14812,6 @@
         "agent_father_disposition_20260805T1658": "agent-father-triage 2026-08-05T16:58Z (relayed by router -- agent-father has no gateway tool grant, could not write this itself). DISPOSITION: DO NOT sign off DONE yet; do not rework code. T6 code verified correct at source (docs/agents/market-watcher/flow/main.md Step 2: slot=market-watcher-eod -> eod.md always, slot=market-watcher-offhours -> cycle.md mode=offhours always, empty/unrecognized -> unchanged wall-clock fallback), matches design brief docs/architecture-briefs/2026-07-21-cowork-fanout-producer-consumer-ordering.md section 5 verbatim, landed commit bdf22186d 2026-07-22. BLOCKER IS REAL BUT NARROWER THAN IT LOOKS: DESIGN-COWORK-FANOUT-T8-QA-TEST-STRATEGY depends on T1-T6 ALL SIX, not T6 alone -- T1/T2/T3/T4/T5 are all still TODO/unimplemented in ready[], three of the five (T1/T2/T4) owned by agent-father itself and untouched. Per brief section 9 (T6 has no dependency on T1-T5, can ship separately) the two test cases that actually validate T6 (brief section 7, T-7/T-8 flow-fixture walkthroughs on slot-routing only) need zero input from T1-T5. RECOMMENDATION: route a narrow qa execution of just brief-section-7 T-7/T-8 to qa now, decoupled from the 6-way T8 board row, rather than leave this row in limbo behind 5 unstarted siblings owned partly by the same triager. CROSS-REFERENCE (confirmed mechanically independent, correctly filed separately): FIX-MARKETWATCHER-EODMD-STALE-NOBASH-CAVEAT-SKIPS-COMMIT-LOSES-NOTEBOOK (eod.md:78 stale caveat, 'what happens once inside eod.md') is NOT caused by and does NOT require touching T6/main.md ('which sub-flow file gets entered'). One genuine connective thread for whoever fixes that row's AC-2 (same-agent multi-slot notebook clobber): it is the direct fallout of THIS brief's own section 5/6 decision to WARN-not-BLOCK legitimate same-tick EOD+offhours collisions on DDD grounds -- the brief solved the collision at the signal/routing layer and never addressed the notebook-storage-layer side effect; the AC-2 fix belongs purely in the notebook-write layer, do not re-litigate the already-rejected block-at-dispatch-layer option."
       },
       {
-        "title": "Remove 2 committed .bak dead-code files from the interface zone (+ repo-root .bak)",
-        "priority": "P2",
-        "zone": "mcp-server-interface",
-        "type": "FACTORY",
-        "status": "REVIEW",
-        "id": "FACTORY-INTERFACE-delete-bak-files",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-INTERFACE-delete-bak-files",
-        "promoted_at": "2026-07-23T23:14:58Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
-        "updated_at": "2026-07-23T23:20:06Z",
-        "claimed_at": "2026-07-23T23:14:58Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)",
-        "next_agent": "qa",
-        "entered_review_at": "2026-07-23T23:20:06Z",
-        "review_note": "dev-mcp-server self-closeout: 4 tracked .bak files git rm (2 mcp-server-interface + docker-compose.yml.bak + docs/TASKS.md.bak per canonical ticket text found in 2026-06-15 audit + 2026-07-04 brief + backlog-detail.json archive), *.bak added to .gitignore, tsc clean, commit 2a146ecdd. Zero-reference grep confirmed clean pre-deletion. Journal: docs/agent-memory/decisions/sprint-FACTORY-INTERFACE-delete-bak-files-dev-mcp-server.md"
-      },
-      {
-        "title": "Resolve dead SaveQuote / Tier-3 write-back: delete the unused writer path",
-        "priority": "P2",
-        "zone": "stock-price",
-        "type": "FACTORY",
-        "status": "REVIEW",
-        "id": "FACTORY-STOCK-resolve-dead-writeback",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-STOCK-resolve-dead-writeback",
-        "promoted_at": "2026-07-23T23:44:32Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
-        "updated_at": "2026-07-23T23:52:03Z",
-        "claimed_at": "2026-07-23T23:44:32Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)",
-        "next_agent": "qa",
-        "reviewed_at": "2026-07-23T23:52:02Z",
-        "reviewed_by": "dev-stock-price"
-      },
-      {
-        "title": "Delete dead SQLiteAnalysisRepository and phantom AnalysisRepositoryPort",
-        "priority": "P2",
-        "zone": "rag-service",
-        "type": "FACTORY",
-        "status": "REVIEW",
-        "id": "FACTORY-RAG-delete-dead-sqlite-repo",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-RAG-delete-dead-sqlite-repo",
-        "promoted_at": "2026-07-24T00:14:29Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
-        "updated_at": "2026-07-24T00:22:47Z",
-        "claimed_at": "2026-07-24T00:14:29Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)",
-        "next_agent": "qa",
-        "entered_review_at": "2026-07-24T00:22:37Z",
-        "review_note": "dev-rag-service: confirmed dead at source (SQLiteAnalysisRepository constructed only in test_rag_integration.py fixture, never by app_factory.build_real_adapters or main.py; AnalysisRepositoryPort had no live implementer/consumer beyond it) — deleted class + _row_to_entry helper + sqlite3 import (infrastructure/repositories.py), AnalysisRepositoryPort ABC (domain/repositories.py), the test that exercised only them, fixed phantom analysis_repo docstring (usecases.py), trimmed matching arch-doc sections. pytest 165->161 (exactly the 4 deleted tests), mypy 259->253 (strict decrease, no new), sandbox 16/16+2/2 GREEN, env audit empty. Journal: docs/agent-memory/decisions/sprint-FACTORY-RAG-delete-dead-sqlite-repo-dev-rag-service.md. Commit 768bee954."
-      },
-      {
-        "title": "Delete the phantom packages/primitives/technical-analysis package",
-        "priority": "P2",
-        "zone": "packages-shared",
-        "type": "FACTORY",
-        "status": "REVIEW",
-        "id": "FACTORY-SHARED-prune-phantom-primitives",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-SHARED-prune-phantom-primitives",
-        "promoted_at": "2026-07-24T00:44:29Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
-        "updated_at": "2026-07-24T00:49:30Z",
-        "claimed_at": "2026-07-24T00:44:29Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)",
-        "next_agent": "qa",
-        "entered_review_at": "2026-07-24T00:49:22Z",
-        "review_note": "dev-technical-analysis: confirmed dead at source — packages/primitives/technical-analysis was git-UNTRACKED residue (bun.lock + node_modules only, no package.json, no source), never a pnpm workspace member (pnpm requires package.json to register), zero repo-wide code/manifest importers (Go service has its own pkg/primitive/* impl at apps/technical-analysis, no packages/ import path exists). Root-caused via docs/handoffs/TASK_pivot-B-revert.md: leftover bun-install artifact from the reverted TS-pilot RSI commit 6248f3da. Deleted packages/primitives/ (29M, rm -rf, untracked so no git rm needed) + removed dangling .gitignore:33 rule. go build/vet/test all green (12/12 packages), G12 sandbox dashboard 35/35 + headless render PASS. Journal: docs/agent-memory/decisions/sprint-FACTORY-SHARED-prune-phantom-primitives-dev-technical-analysis.md. Commit df6c1dc7d."
-      },
-      {
         "title": "Delete dead _deprecated domain package (298L duplicate of primitives)",
         "priority": "P2",
         "zone": "alert-engine",
@@ -16560,27 +16681,6 @@
         "claimed_at": "2026-07-30T17:46:45Z",
         "claimed_by": "dev-team (supervised-lane sweep)",
         "disposition_note": "Recurring dormancy diagnosed; new root cause identified. FIX minted. Close_predicate unverified. Flip REVIEW->DONE_VERIFIED once FIX resolves dormancy."
-      },
-      {
-        "id": "FIX-FLEET-PUSH-LAUNCHD-EXCONFIG-SILENT-DEAD",
-        "type": "FIX",
-        "title": "com.vn-market.fleet-push has not executed its script in ~19 days: launchd reports EX_CONFIG (78) across 522 runs and the script body never starts — the push backstop is 100% dark and 100% silent",
-        "status": "REVIEW",
-        "priority": "high",
-        "zone": "cross-service/",
-        "owner": "ops",
-        "created_at": "2026-07-22T16:02:26Z",
-        "created_by": "po/cron-audit-sequencing-20260722",
-        "status_note": "ops root-caused + fixed 2026-07-30T21:5xZ, RAW-verified by dev-team: launchctl now last exit=0 (was 78), fleet-push.log shows a genuine fresh launchd-initiated push (4b2ae4446..bd6a27013, target SHA independently confirmed = dev-team own same-tick commit), git rev-list origin/main...HEAD = 0 behind after fetch. Fix: deleted stale docs/agent-memory/sessions/fleet-push.log + fleet-push-error.log -- launchd exec-layer open() on those files was failing before the script body could even start; fresh files let it spawn cleanly. Decision journal: docs/agent-memory/decisions/sprint-2026-07-30-ops.md. Companion detector FIX-LAUNCHD-PROBE-PRESENCE-ONLY-FALSE-GREEN still sits REVIEW/next_agent=qa (PO sequence rank 1, was meant to land first but did not block this) -- worth nudging QA on separately.",
-        "po_ruling_no_reconcile_needed": "NO MANUAL RECONCILE IS REQUIRED — the divergence does not exist today. Verified 2026-07-22T15:52Z: `git rev-list --left-right --count origin/main...HEAD` = 0 behind / 1 ahead, so the behind-set is EMPTY. `git cat-file -e` confirms apps/mcp-server/src/__tests__/CONTAM-7-ohlcv-unit-contam-integration.test.ts is present in BOTH HEAD and origin/main — the cited abort trigger is resolved, as is the later 8-file behind-set (alertStore.ts, orchStateSchema.ts, improvementSignalWriter.ts, 5 tests). The merge-conflict aborts (docs/agent-memory/notebooks/tran-ngoc-bau.md, docs/handoffs/tnb-audit-latest.md) require a merge, and with 0 behind there is no merge. Those log lines are HISTORY, not current behavior: fleet-push-error.log last write 2026-06-27, fleet-push.log last write 2026-07-03.",
-        "real_defect_verified_by_po": "`launchctl print gui/501/com.vn-market.fleet-push` -> state=not running, runs=522, last exit code = 78: EX_CONFIG, run interval 1800s. ZERO bytes written to either log since 2026-07-03. scripts/fleet-worktree-push.sh echoes '[fleet-push] ahead=N threshold=20' as its FIRST statement after setup, so an empty log proves the body never runs. PO ran the identical command by hand: `/bin/bash scripts/fleet-worktree-push.sh` -> printed both lines, RC=0 (below-threshold no-op path, line 187). The script is healthy; the failure is at the launchd spawn/exec layer.",
-        "ruled_out_by_po": "NOT TCC/Full-Disk-Access on ~/Documents — com.vn-market.cowork-guaranteed-slot-firer writes to the SAME docs/agent-memory/sessions/ directory with 815 runs and exit 0. NOT bash-3.2 incompatibility — `/bin/bash -n` is clean and the script uses zero bash-4 constructs despite its header claiming 'bash 4+ required'. NOT a malformed plist — `plutil -lint` returns OK. NOT any script exit path — the script's only exit codes are 0 and 1; it never returns 78.",
-        "why_this_matters": "The abort path was at least LOUD: it echoed to stderr, called send_tg bug, and called emit_abort_signal. The current failure emits NOTHING anywhere, because all three of those live INSIDE the script that never runs. A backstop that fails silently is worse than one that aborts loudly. Blast radius is currently bounded only because something else (the router/PO push path) has been keeping the repo at 1 commit ahead.",
-        "acceptance": "launchctl print shows last exit code 0 AND fleet-push.log receives a fresh dated '[fleet-push] ahead=N threshold=20' line from a launchd-initiated run (not a hand run). Plus: the failure mode must become detectable — see FIX-LAUNCHD-PROBE-PRESENCE-ONLY-FALSE-GREEN, which should land FIRST.",
-        "updated_at": "2026-07-30T19:54:50Z",
-        "next_agent": "po",
-        "po_unblock_dispatch_at": "2026-07-23T18:03:58Z",
-        "po_unblock_dispatch_note": "PO 2026-07-23 signal-triage: set next_agent=ops (was null -> null-next_agent stall, could not be picked up). Prioritized per TIER1-PROBE-LAUNCHD-EXITSTATUS-CHURN escalation ask(2) + repeated auditor microservice_degraded signals. exit-78 EX_CONFIG launchd config repair is operational (ops)."
       },
       {
         "id": "FIX-BCTC-LAYOUT-PUSH-FAILURE-NETWORK-DEADLOCK",
@@ -19186,36 +19286,6 @@
         "origin_signal_id": "bug-escalation:bctc-analyst:signals-absent-4th-cycle",
         "updated_by": "developer",
         "dev_note": "Fixed: added read-first SIGNAL-FILE WRITE VERIFICATION guard to docs/agents/bctc-analyst/flow/main.md — Write tool's own return is now the ONLY write-verification signal (per-cycle), agent must never Read a docs/signals/*.json path it wrote in a prior cycle to re-confirm presence. AC-2: no Bash/Glob grant added, tool grant stays narrow. AC-3 regression traced (not replayed) in decision journal. Commit c23d19da4 (pushed to origin/main). Journal: docs/agent-memory/decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-developer-5.md STEP developer-S91."
-      },
-      {
-        "id": "FIX-DEVTEAM-IDLE-CHAIN-TEST-DURABLE",
-        "type": "FIX",
-        "title": "AC-2 + conservation guard + docs: drain-signals-durable.test.js new harness (AC-2 negative control) + conservation-check.mjs §3.4 extension + dev-standards.md Script Persistence pointers",
-        "status": "REVIEW",
-        "priority": "P0",
-        "size": "M",
-        "zone": "docs/agents/dev-team/flow/",
-        "owner": "developer",
-        "next_agent": "qa",
-        "created_at": "2026-07-29T13:50:06Z",
-        "created_by": "pm",
-        "depends": [
-          "FIX-DEVTEAM-IDLE-CHAIN-MAIN-COMPLETION"
-        ],
-        "blocks": [],
-        "files": [
-          "scripts/agents-flow/drain-signals-durable.test.js",
-          "scripts/orch-conservation-check.mjs",
-          "docs/policies/dev-standards.md"
-        ],
-        "updated_at": "2026-08-09T05:47:09Z",
-        "promoted_at": "2026-08-09T05:25:01Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=0)",
-        "claimed_at": "2026-08-09T05:25:06Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)",
-        "commit_sha": "cc7e86829",
-        "status_note": "AC-2 negative-control harness (46 assertions, 4 scenarios+3b+backward-compat) landed in scripts/agents-flow/drain-signals-durable.test.js. Conservation guard extended (scripts/orch-conservation-check.mjs signalTotal() now sums dev_team_idle_chain.pending_triage_inbox alongside signal_queue.rows — TDD RED-then-GREEN, closes brief §3.4's flagged gap). dev-standards.md gained 2 Script Persistence pointers. Regression: drain-signals.test.js 51/51, orch-apply-wrapper-tests.sh 75/75, orch-state-hook.test.mjs 21/21 unaffected. Commits: cc7e86829 (code+docs+handoff), a3b695415 (notebook+journal)."
       }
     ],
     "qa": [
@@ -19437,6 +19507,24 @@
         "next_recheck_reason": "qa Step-5 checkpoint #2 (qa_step5_checkpoint_2_20260808T2005Z): container clock RESET by unrelated rebuild 550fda673 (new StartedAt 2026-08-08T19:06:16Z) — old 21:00Z mark was computed against a container that no longer exists. Revised >=4h mark against the CURRENT container is 2026-08-08T23:06:00Z.",
         "qa_step5_checkpoint_2_20260808T2005Z": "QA STEP 5 CHECKPOINT #2 (2026-08-08T20:05Z) — STILL NOT SIGN-OFF-ABLE. Reason changed since checkpoint #1: the >=4h soak-window clock was RESET by an UNRELATED rebuild.\n\nCLOCK-RESET FINDING (important, was NOT reflected in checkpoint #1 or the router dispatch note that pointed to this row): commit 550fda673 (2026-08-08T19:08:23Z, ops(FIX-AGENT-SIGNALS-IDENTICAL-DUP-EMISSION): rebuild+swap mcp-server) rebuilt+recreated the SAME mcp-server container for a DIFFERENT, unrelated task. Verified live: container Id 83847b9f6b85 (was a different Id under the prior 16:59:50Z start), StartedAt=2026-08-08T19:06:16.053Z, Image sha256:8966b3b867fa (was sha256:630fa5d262755bf9), RestartCount=0 (fresh container, not a crash). Actual elapsed uptime at this checkpoint is ~59min, NOT the ~3h the router dispatch context assumed (which was computed off the now-superseded 16:59:50Z start). next_recheck_not_before=21:00:00Z in this row is therefore STALE — it was set relative to the container that no longer exists; the real earliest >=4h mark against the CURRENT container is ~2026-08-08T23:06Z.\n\nContent-verified this is NOT a regression of the SSE fix: docker exec grep of the new image confirms interface SessionRecord / reapStaleSessions / stopReaper / 8x evictSession sites in transport.ts and the DELETE closeSession route in server.ts are all still present and correct (new image was built from a commit descending from b746c112b, not reverting it). This is a process/coordination gap (an unrelated ops-lane rebuild touching a container this row has a standing PO do-not-rebuild ruling on, po_deploy_gate_discharge_20260808T1759Z), not a code defect — logging here, not minting a new row (single-occurrence, no repeat pattern yet).\n\nGATE STATUS on the NEW container (StartedAt 19:06:16Z): (a) sessionCount-vs-MemPerc >=4h — NOT MET, ~59min elapsed (~25%). 3 live samples 20s apart (20:03:48Z sessions=44 MemPerc=12.67%; 20:04:09Z sessions=44 MemPerc=12.67%; 20:04:31Z sessions=42 MemPerc=12.65%) plus /proc/1/status VmHWM=507404kB > VmRSS=440864kB (HWM>RSS, reclamation active, not pinned) — directionally healthy, too short to certify. (b) RestartCount stable 0 — true so far, window incomplete. (c) toolCount=183 (live /health) / cronJobCount=88 (bun scripts/gen-project-stats.ts, live re-run) — MET, both match baseline. (d) >=1 max_age eviction — NOT MET (0 so far; structurally cannot occur before container age 4h). Reaper independently reconfirmed firing: 43 idle_timeout evictions, 0 max_age, in docker logs since 19:06Z.\n\nCI REGRESSION TRIAGE (requested by router dispatch note, re: FIX-CI-BUNTEST-1862C-TRANSPORT-SESSION-EVICTION, owner dev-mcp-server, not duplicated here): investigated first-hand, did not trust the CI summary line. Local single-run: 12/12 pass, 10/10 repeat runs clean on a quiet machine. Reproduced the CI failure under manufactured CPU contention (48x `yes` on a 12-core box, matching the SPIKE_CI-PERFILE-ISOLATION-FLAKE.md methodology): 16/20 runs failed, ALL 16 on the SAME assertion — T9 (negative control) `expect(manager.sessionCount).toBe(1)` receives 0. Root cause: T9s own activity-bump helper (`setInterval(fn, 5)`) races the test-compressed 15ms idle-timeout / 5ms reaper-sweep; under CPU contention the bump callback itself can be delayed past 15ms, so the idle reaper evicts before the next bump lands. Confirmed via `git log b746c112b..HEAD -- transport.ts server.ts 1862c-transport-session-eviction.test.ts` = empty — NO commit has touched any of these 3 files since the fix landed, so this is NOT a later regression, it was present in b746c112b itself from the start. VERDICT: (b) CI-environment timing flake in the TEST HARNESS margin (ms-scale time compression used to make the suite fast), NOT a genuine product regression in reapStaleSessions/evictSession — production idle-timeout is 15 MINUTES not 15ms, i.e. ~180000x more scheduler-jitter margin than the test uses, so this failure mode cannot occur in the running service. Does not, by itself, indicate the shipped reaper logic is wrong. Recommend dev-mcp-server (already the assigned owner) widen T9s bump interval/idle-timeout ratio or fake-timer it; not blocking on code-correctness grounds, but IS a real reproducible CI-red (not pure noise) and PO is right that a red unit test for this fixs own coverage should be green before Step 6, per POs own framing.\n\nRECOMMENDATION for PO Step 6: do NOT sign off yet — genuinely insufficient soak elapsed time (~59min of required >=4h) after the clock-reset above, independent of the CI question. Re-dispatch qa for checkpoint #3 no earlier than 2026-08-08T23:06:00Z (revised >=4h mark against the CURRENT 19:06:16Z container start). CI regression is triaged as a test-harness artifact, not a code defect, but leave FIX-CI-BUNTEST-1862C-TRANSPORT-SESSION-EVICTION open on its own track (dev-mcp-server) — getting it green is still a reasonable Step-6 precondition per POs own framing, independent of this rows soak measurement. No board status/lane/next_agent change this write — row stays QA/next_agent=qa exactly as checkpoint #1 left it; only next_recheck fields + checkpoint note updated.",
         "status_note": "[dev-mcp-server 2026-08-09T02:05Z] 3-RESET INCIDENT HISTORY STAMPED (FIX-SSE-SOAK-VERIFY-DEPENDS-ON-SHARED-CONTAINER-UPTIME-3RD-RESET AC-2) — this status_note field did not exist on this row through all 3 resets; no durable record survived on the row itself, only in ephemeral next_recheck_reason overwrites (each replaced by the next) and a signal_queue entry. Stamping now.\n\nThis row's QA Step 5 >=4h soak-verification AC was gated on the shared dev-mcp-server container's StartedAt (>=4h uninterrupted uptime) — a property ANY of the 8+ peers legitimately rebuilding this SAME shared container resets, unrelated to this row's own content. Reset 3x: (1) checkpoint #1 (qa_step5_checkpoint_1_20260808T1832Z) measured against StartedAt=2026-08-08T16:59:50Z (this fix's own deploy, image sha256:630fa5d262755bf9), next_recheck pinned ~2026-08-08T21:00:00Z — reset before that mark was reached. (2) checkpoint #2 (qa_step5_checkpoint_2_20260808T2005Z) found StartedAt reset to 2026-08-08T19:06:16Z by commit 550fda673 (unrelated ops rebuild+swap for FIX-AGENT-SIGNALS-IDENTICAL-DUP-EMISSION, image sha256:8966b3b867fa) — content-verified NOT a regression of this fix (SessionRecord/evictSession/reapStaleSessions/stopReaper/8x evictSession sites all still present in the new image); next_recheck recomputed to 2026-08-08T23:06:00Z. (3) process_gap signal sys-20260808T200919-a7c2 (2026-08-08T20:09:19Z, from router, MED, dedup_key process_gap:FIX-MCP-SSE-SESSION-MANAGER-PERCONN-LEAK-NO-REAPER:soak-clock-reset-shared-container, po-triaged 2026-08-08T21:00:29Z ACK) independently confirms this as the 3RD reset and recommends the verification method decouple from container StartedAt (e.g. reaper-firing log evidence, not process uptime).\n\nRESOLUTION (fixed forward, not retroactive to this row's own live soak measurement): FIX-SSE-SOAK-VERIFY-DEPENDS-ON-SHARED-CONTAINER-UPTIME-3RD-RESET (dev-mcp-server, commit a3d7ff35f) added an injectable `_now` clock to SseSessionManager (apps/mcp-server/src/interface/mcp/transport.ts) plus T13/T14 unit tests (1862c-transport-session-eviction.test.ts) that prove the REAL shipped >=4h max-age branch fires deterministically in milliseconds — decoupled from any container's uptime and from real wall-clock elapsed time. This does NOT itself discharge THIS row's own live QA Step 5/6 sign-off — qa/po still decide whether the new unit-test evidence supersedes the container-soak requirement for closing this specific row. Lane/status intentionally left UNCHANGED by this stamp (per FIX-SSE-SOAK-VERIFY AC-2's own scope: stamp incident history only, do not move this row's lane).\n\nGeneric lesson (apply elsewhere per the fix row's own instruction): an acceptance criterion whose evidence source is a SHARED mutable runtime property is unsatisfiable under a multi-writer fleet. Memory: project_sse_soak_clock_reset_shared_container_20260808 (3x), feedback_rebuild_recreate_destroys_peers."
+      },
+      {
+        "title": "Delete dead SQLiteAnalysisRepository and phantom AnalysisRepositoryPort",
+        "priority": "P2",
+        "zone": "rag-service",
+        "type": "FACTORY",
+        "status": "QA",
+        "id": "FACTORY-RAG-delete-dead-sqlite-repo",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-RAG-delete-dead-sqlite-repo",
+        "promoted_at": "2026-07-24T00:14:29Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
+        "updated_at": "2026-08-09T05:58:07Z",
+        "claimed_at": "2026-08-09T05:58:06Z",
+        "claimed_by": "dev-team (review-lane qa-drain)",
+        "next_agent": "qa",
+        "entered_review_at": "2026-07-24T00:22:37Z",
+        "review_note": "dev-rag-service: confirmed dead at source (SQLiteAnalysisRepository constructed only in test_rag_integration.py fixture, never by app_factory.build_real_adapters or main.py; AnalysisRepositoryPort had no live implementer/consumer beyond it) — deleted class + _row_to_entry helper + sqlite3 import (infrastructure/repositories.py), AnalysisRepositoryPort ABC (domain/repositories.py), the test that exercised only them, fixed phantom analysis_repo docstring (usecases.py), trimmed matching arch-doc sections. pytest 165->161 (exactly the 4 deleted tests), mypy 259->253 (strict decrease, no new), sandbox 16/16+2/2 GREEN, env audit empty. Journal: docs/agent-memory/decisions/sprint-FACTORY-RAG-delete-dead-sqlite-repo-dev-rag-service.md. Commit 768bee954."
       }
     ],
     "_closed_signals_20260614": {
@@ -19530,15 +19618,15 @@
     "ssot": true
   },
   "last_tick": "20260622T2215Z",
-  "_updated_at": "2026-08-08T22:20:55Z",
-  "_updated_by": "po/remint-rc-idle-loops",
+  "_updated_at": "2026-08-09T06:03:21Z",
+  "_updated_by": "po",
   "dev_team_idle_chain": {
     "rotation": {
       "bounded1": {
         "last_served_tick": "2026-08-09T05:24:54Z"
       },
       "sls": {
-        "last_served_tick": "2026-08-09T02:25:24Z"
+        "last_served_tick": "2026-08-09T05:56:45Z"
       },
       "rlc": {
         "last_served_tick": "2026-08-09T03:24:28Z"
@@ -19553,7 +19641,7 @@
         "last_served_tick": "2026-08-09T04:53:51Z"
       }
     },
-    "_updated_at": "2026-08-09T05:55:28Z",
+    "_updated_at": "2026-08-09T05:56:45Z",
     "_updated_by": "dev-team",
     "pending_triage_inbox": [
       {
