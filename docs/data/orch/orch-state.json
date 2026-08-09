@@ -93,12 +93,12 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "GUARD-PRICE-ANOMALY-BYPATH-DISH-CONTRACT",
-    "next_agent": "qa",
-    "next_action": "Review-Lane QA-Drain claim of 5 row(s), highest-ranked GUARD-PRICE-ANOMALY-BYPATH-DISH-CONTRACT — spawn qa in verify-committed mode (branch:null direct-commit row, no task branch/handoff — see docs/agents/qa/flow/main.md § Direct-Commit Verify; do NOT use the normal pipeline JUMP-TO, it requires a branch this row does not have). Batch of 5 row(s) share this claimed_at stamp in .task_board.qa[] — correlate by claimed_at to dispatch the rest.",
-    "updated_at": "2026-08-09T04:55:15Z",
-    "updated_by": "dev-team (review-lane qa-drain)"
+    "status": "idle",
+    "active_task_id": null,
+    "next_agent": null,
+    "next_action": "GUARD-PRICE-ANOMALY-BYPATH-DISH-CONTRACT resolved to DONE_VERIFIED (QA-drain closeout) but .head was left pointing at it — orch-cold-evict.sh validation caught the dangling reference (active_task_id must resolve to a live board lane, not done_verified). Reset to idle so a genuinely in_progress task can claim the pointer next.",
+    "updated_at": "2026-08-09T05:21:20Z",
+    "updated_by": "router (dev-team-tick-preflight board-hygiene validation failure, stale .head)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
