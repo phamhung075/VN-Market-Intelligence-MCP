@@ -21,12 +21,32 @@
  * METRICS (brief §4.1 formula, EXTENDED FIX-ORCHSTATE-CONSERVATION-GUARD-QA-LANE-BLIND
  *   to include the 'qa' lane — see that task for why the original brief's lane
  *   set went stale: 'qa' is now actively populated by the Review-Lane QA-Drain
- *   mechanism, so a qa[] collapse must be counted or the guard is blind to it):
+ *   mechanism, so a qa[] collapse must be counted or the guard is blind to it;
+ *   FURTHER EXTENDED FIX-DEVTEAM-IDLE-CHAIN-TEST-DURABLE 2026-08-09, §3.4 of
+ *   docs/architecture-briefs/2026-07-25-devteam-idle-chain-rotation-durable-inbox.md
+ *   — see the dedicated paragraph below signal_total(doc) for why):
  *   task_total(doc)   = length(backlog) + length(ready) + length(in_progress)
  *                     + length(review) + length(qa) + length(done) + length(done_verified)
  *                     + Σ active_sprints[].tasks[].length
  *                     + Σ closed_sprints[].tasks[].length
  *   signal_total(doc) = length(signal_queue.rows)
+ *                     + length(dev_team_idle_chain.pending_triage_inbox)
+ *
+ * DURABLE PENDING-TRIAGE-INBOX DIMENSION (FIX-DEVTEAM-IDLE-CHAIN-TEST-DURABLE, 2026-08-09):
+ *   `.dev_team_idle_chain.pending_triage_inbox[]` (FIX-DEVTEAM-IDLE-CHAIN-P2A-DURABLE-DRAIN,
+ *   2026-08-08) is a SECOND durable holding area for not-yet-triaged signals, structurally
+ *   identical in kind to `signal_queue.rows[]` (both hold un-consumed signal envelopes awaiting
+ *   PO/Step-1 action) but was invisible to the pre-2026-08-09 formula above — a bug in the
+ *   inbox's own append/clear logic (main.md § Step 1 — PO Triage "Durable-inbox CLEAR", or
+ *   drain-signals.js's appendDurableBatch()) that silently wiped the whole array (e.g. a
+ *   mis-scoped `= []` instead of the mandated subtractive-by-envelope_id filter) would sail
+ *   through this circuit-breaker undetected as long as `signal_queue.rows[]` itself stayed
+ *   intact — the EXACT same blind spot the original FIX-ORCHSTATE-CONSERVATION-GUARD-CIRCUIT-
+ *   BREAKER task closed for `signal_queue.rows[]` collapse, now closed for its durable-inbox
+ *   sibling too. Summed into ONE `signal_total` (not a third independent metric) because both
+ *   arrays are the same conceptual "signals not yet delivered/consumed" quantity — a signal
+ *   moving from `signal_queue.rows[]` accounting into the inbox (or vice versa) must not itself
+ *   look like a collapse.
  *
  * ROW-IDENTITY DIMENSION (FIX-ORCHSTATE-SIGNALQUEUE-UNCOMMITTED-ROWS-LOST-TO-
  *   PEER-FULLDOC-WRITE, 2026-08-08): the magnitude-ratio metric above is
@@ -147,14 +167,21 @@ function taskTotal(doc) {
 }
 
 /**
- * signal_total(doc) = length(signal_queue.rows)
+ * signal_total(doc) = length(signal_queue.rows) + length(dev_team_idle_chain.pending_triage_inbox)
+ * FIX-DEVTEAM-IDLE-CHAIN-TEST-DURABLE (2026-08-09): the durable pending-triage inbox is a
+ * second not-yet-triaged-signal holding area, structurally identical in kind to
+ * signal_queue.rows[] — see the file-header "DURABLE PENDING-TRIAGE-INBOX DIMENSION" paragraph
+ * for the full rationale (circuit-breaker guard against a silent whole-inbox wipe bug).
  * @param {unknown} doc
  * @returns {number}
  */
 function signalTotal(doc) {
-  const sq = /** @type {Record<string, unknown>} */ (doc && typeof doc === 'object' ? doc.signal_queue : undefined);
+  const d = /** @type {Record<string, unknown>} */ (doc && typeof doc === 'object' ? doc : {});
+  const sq = /** @type {Record<string, unknown>} */ (d.signal_queue);
   const rows = sq ? sq.rows : undefined;
-  return Array.isArray(rows) ? rows.length : 0;
+  const idleChain = /** @type {Record<string, unknown>} */ (d.dev_team_idle_chain);
+  const inbox = idleChain ? idleChain.pending_triage_inbox : undefined;
+  return (Array.isArray(rows) ? rows.length : 0) + (Array.isArray(inbox) ? inbox.length : 0);
 }
 
 /**
