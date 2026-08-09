@@ -19525,7 +19525,7 @@
         "last_served_tick": "2026-08-08T22:26:10Z"
       }
     },
-    "_updated_at": "2026-08-09T00:25:04Z",
+    "_updated_at": "2026-08-09T00:51:14Z",
     "_updated_by": "dev-team",
     "pending_triage_inbox": [
       {
@@ -22183,6 +22183,60 @@
         },
         "createdAt": "2026-08-09T00:09:24Z",
         "drained_at": "2026-08-09T00:22:01Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "63edb5b40f489f6e85fecc80bbb94b60c30226d5c157cd11905bf0f4d76aacbc",
+        "source": "file",
+        "from": "ci-health-probe",
+        "to": "po",
+        "type": "ci_red",
+        "priority": "high",
+        "payload": {
+          "check_id": "CI-RED-39e1e161",
+          "head_sha": "39e1e161bcb7900a40f84aec37d067b2e3afe6f6",
+          "run_id": 31285673936,
+          "run_url": "https://github.com/phamhung075/VN-Market-Intelligence-MCP/actions/runs/31285673936",
+          "conclusion": "failure",
+          "failing_jobs": [
+            {
+              "name": "size-lint",
+              "conclusion": "failure",
+              "jobId": 93173908322
+            }
+          ],
+          "fingerprint": "9d6791f2ee45f13e194f9a8a1d288ef58a08e10428455418d0f0cf2b024f2eba",
+          "zone_owner": "dev-team (CI fix)",
+          "summary": "CI RED on main HEAD 39e1e161bcb7900a40f84aec37d067b2e3afe6f6: size-lint",
+          "suggested_sprint_class": "FIX",
+          "verification_gate": "ci_green_on_subsequent_push"
+        },
+        "createdAt": "2026-08-09T00:23:11Z",
+        "drained_at": "2026-08-09T00:51:14Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "49e158b54fc59f7bb73fd49e22f1c406a1080ecf2dcb4f3b308d32544f06ec1f",
+        "source": "file",
+        "from": "commit-sweep-guard",
+        "to": "po",
+        "type": "bug-escalation",
+        "priority": "high",
+        "payload": "[sweep-guard] BARE commit about to absorb 1 staged file(s) not necessarily this actor's own: docs/data/orch/orch-state.json. actor=165f4245-6173-4054-87fd-c55bb626265f mode=warn escalated=true prior_warns=19 threshold=3. Fix: git commit -m \"<msg>\" -- <own-files-only>.",
+        "createdAt": "2026-08-09T00:24:51Z",
+        "drained_at": "2026-08-09T00:51:14Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "2d5e8c846c88cd0309ef231c89f5a69a7354cbc17b983d4d8ab4d1f4303e792d",
+        "source": "file",
+        "from": "commit-sweep-guard",
+        "to": "po",
+        "type": "bug-escalation",
+        "priority": "high",
+        "payload": "[sweep-guard] BARE commit about to absorb 1 staged file(s) not necessarily this actor's own: docs/agent-memory/notebooks/system-auditor.md. actor=165f4245-6173-4054-87fd-c55bb626265f mode=warn escalated=true prior_warns=20 threshold=3. Fix: git commit -m \"<msg>\" -- <own-files-only>.",
+        "createdAt": "2026-08-09T00:38:09Z",
+        "drained_at": "2026-08-09T00:51:14Z",
         "routed_to": "PO Step 0-SIG"
       }
     ]
