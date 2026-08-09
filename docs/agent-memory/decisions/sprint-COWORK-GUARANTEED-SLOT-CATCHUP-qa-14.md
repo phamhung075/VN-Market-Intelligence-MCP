@@ -194,3 +194,24 @@
 - No apps/ TS/Go touched (bun test/tsc N/A, confirmed via diff file list); mock-guard PASS (no production source); process.env/secret greps clean; bash -n clean.
 **why-decision:** APPROVED, DONE_VERIFIED. RC-VERIF gate: id not grandfathered — hand-built `verification.raw_probe` from the parent-swap comparison evidence above.
 **why-change:** none — verified exactly what the row scoped; parent-swap comparison added beyond the row's own dry-run method to make the "0 regressions" claim drift-proof.
+
+### STEP qa-S31 · qa · 2026-08-09T04:58:46Z
+**task-id:** FIX-COMMODITY-WTI-DELTA-CORRUPT
+**what-done:** Direct-commit verify (`qa[]` row, `branch:null`, dev-team Review-Lane QA-Drain) of `3192360c3`+`413f1b8fd` — I10 stale-exclusion guard on `computeMacroScore` + `assembleBriefing`/`morningBriefingJob` `[STALE]` marker.
+**what-considered:**
+- Both commits real, `main`-ancestor; `git show --stat` matches all `files[]`. `computeMacroScore` since moved out of `kinhDichTools.ts` into `application/services/kinhDich/kinhDichScoring.ts` by an unrelated later DDD refactor — confirmed `TRACKED_INDICATOR_STALE_MS` guard (line 283) and `isStale` threading survived the move intact, not dropped.
+- Live docker+bun:sqlite probe of named-volume `market.db`: `wti_crude_usd` 79 rows, all 95.5, latest `extracted_at` 2026-04-12 — matches row's raw-verify claim exactly (now 119d+ stale, even worse than the 102d cited at commit time).
+- Re-ran `298-macro-score-fix.test.ts` + `DSI-MACRO-PHANTOM-STALE-GUARD.test.ts` fresh: 23/23 pass (matches claimed 13+10). `tsc --noEmit`: clean. `mock-guard.sh --files` (post-refactor paths): PASS. I4/I8 no-change claims cross-checked: `FIX-BDI-SHIPPING-STALE-404-GUARD` row exists live in `orch-state.json`; zero `apps/macro-indicators` Go files in commit diff.
+**why-decision:** APPROVED, DONE_VERIFIED — all re-run checks green, DB raw-evidence matches claim, fix logic present and correct on current `main` despite intervening refactor.
+**why-change:** none — verified exactly what the row scoped.
+
+### CAP-REACHED · 2026-08-09T04:59:30Z
+
+### STEP qa-S32 · qa · 2026-08-09T04:59:09Z
+**task-id:** FIX-BASE-RATE-COMPUTATION-CRON-DEAD
+**what-done:** Direct-commit verify (`qa[]` row, `branch:null`, dev-team Review-Lane QA-Drain) of `a22a91a3a` — removes `runBaseRateComputationWithDb`'s double-`recordJobRun` wrap + adds a 6th startup-catchup probe for `baseRateComputationJob`.
+**what-considered:**
+- Commit real + `main` ancestor; `git show --stat` matches 3/5 claimed `files[]` (test + both prod files); the other 2 (decision journal, dev-mcp-server notebook) landed in a separate memory commit `d66507a6e`, also `main`-ancestor — standard journal/notebook split, not a scope gap.
+- Re-ran fresh, not trusted from prose: new `FIX-BASE-RATE-COMPUTATION-CRON-DEAD.test.ts` 11/11 pass (matches claim). `bun tsc --noEmit` 0 errors. `mock-guard.sh` PASS on both touched prod files. DDD grep: only pre-existing scheduler-layer `infrastructure/` imports (confirmed via diff — zero NEW infra import added by this commit). `process.env`/secret greps clean. Confirmed via `git log` on both touched files that 4 later commits (51b5fa14a/cf862f920/0a73c5b04/6775752af) touch the same files but none reverts this fix — both changes still live at HEAD.
+**why-decision:** APPROVED, DONE_VERIFIED — both claimed fixes (double-`recordJobRun` removed, startup-catchup probe added) independently confirmed present at HEAD, not reverted by later siblings.
+**why-change:** none — verified exactly what the row scoped.

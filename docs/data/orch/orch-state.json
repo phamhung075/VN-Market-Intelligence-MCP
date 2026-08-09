@@ -12588,6 +12588,115 @@
             "observed_at": "2026-08-09T04:29:48Z"
           }
         }
+      },
+      {
+        "id": "FIX-COMMODITY-WTI-DELTA-CORRUPT",
+        "priority": "P2",
+        "status": "DONE_VERIFIED",
+        "title": "FIX-COMMODITY-WTI-DELTA-CORRUPT — commodityTracker gaps: I10 wti_crude_usd stuck $95.5 vs live Brent $87.33 (WTI>Brent physically impossible, corrupts oil regime); I8 get_macro_snapshot oil/gold/usdVnd deltas null; I4 BDI stale 67+ days (not in commodityTrackerRefreshJob scope).",
+        "type": "FIX",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-COMMODITY-WTI-DELTA-CORRUPT",
+        "verify_note": "prior_status=TODO",
+        "zone": "apps/mcp-server/",
+        "note": " [PO 2026-07-20] zone was missing (batch-reject risk) -> apps/mcp-server/. SCOPE EXTENSION: usdVnd is frozen byte-identical at 26110 from 2026-07-17 evening through 2026-07-20T05:22Z (~57h, 10+ chef cycles) while gold and oil move in the same snapshots — same frozen-value class as I10 wti_crude_usd stuck $95.5. The I8 'oil/gold/usdVnd deltas null' item is confirmed still live (prevFetchedAt:null at 05:22Z). See FIX-USDVND-FROZEN-26110 for the FX-specific fetcher probe.",
+        "promoted_at": "2026-07-23T21:14:31Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
+        "updated_at": "2026-08-09T05:00:18Z",
+        "claimed_at": "2026-08-09T04:55:14Z",
+        "claimed_by": "dev-team (review-lane qa-drain)",
+        "next_agent": "qa",
+        "updated_by": "qa",
+        "commit": "3192360c3",
+        "files": [
+          "apps/mcp-server/src/interface/mcp/tools/kinhdich/kinhDichTools.ts",
+          "apps/mcp-server/src/application/usecases/assembleBriefing.ts",
+          "apps/mcp-server/src/scheduler/briefings/morningBriefingJob.ts",
+          "apps/mcp-server/src/__tests__/298-macro-score-fix.test.ts",
+          "apps/mcp-server/src/__tests__/DSI-MACRO-PHANTOM-STALE-GUARD.test.ts",
+          "docs/agent-memory/decisions/sprint-FIX-COMMODITY-WTI-DELTA-CORRUPT-dev-mcp-server.md",
+          "docs/agent-memory/notebooks/dev-mcp-server.md"
+        ],
+        "review_note": "FIX-COMMODITY-WTI-DELTA-CORRUPT: I10 REAL fix shipped, I8 NO_CHANGE_NEEDED (already fixed elsewhere), I4 confirmed out-of-scope. RAW-verified live named-volume market.db: wti_crude_usd has 79 rows all value=95.5, latest extracted_at=2026-04-12 (102d+ stale) -- no live fetcher exists (commodityTracker.ts news-regex only). Two consumers read it with zero staleness gate: kinhDichTools.computeMacroScore() (Hao 6 oil-regime z-score) and assembleBriefing.ts step 9 -> morning Telegram briefing. DSI-MACRO-PHANTOM-STALE-GUARD.test.ts header comment already promised assembleBriefing step 9 wiring that was never actually delivered at the call site -- this fix closes that gap. I8: live HTTP probe of apps/macro-indicators (Go service, separate zone) showed real signed oilUsdDelta=3.55/goldUsdDelta=-75.1 (commit e55805aa3, deployed 2026-07-15); usdVndDelta=null is the documented Q2 SBV-override same-source-only honesty suppression, not a bug -- zero Go edits made. I4: live BDI last row 2026-04-07 (107d stale, ^BDI Yahoo still 404) -- already tracked as its own backlog row FIX-BDI-SHIPPING-STALE-404-GUARD (owner dev-mcp-server, status BACKLOG); flagged, not fixed here. Fix: computeMacroScore() now excludes any indicator whose latest row is >=4h stale from the composite z-score (reuses existing TRACKED_INDICATOR_STALE_MS guard, no new threshold invented); assembleBriefing.ts step 9 switched listTrackedIndicators() -> listTrackedIndicatorsFromDb() threading isStale into trackedCommodities[]; morningBriefingJob.ts formatCommoditiesSection appends \"[STALE]\" (reuses buildWatchlistSection convention) instead of presenting a frozen price as current. New/extended tests through the REAL getDb()/initDatabase() path: 298-macro-score-fix.test.ts +2 (stale-exclusion + fresh-control), DSI-MACRO-PHANTOM-STALE-GUARD.test.ts +4 (GUARD-7/7b assembleBriefing wiring, GUARD-8/8b formatter) -- 13/13 and 10/10 green respectively. Full touched-module regression (43 files): 438/438 pass, 0 fail. bun tsc --noEmit clean. Full bun test 14705 pass/41 fail -- git-stash A/B on all 5 changed files confirms identical 1-fail pre-existing cron-expression test-order flake before/after, unrelated to this scope. Server boot probe clean (toolCount=184, 88 cron keys, both dashboards 200). Tool/cron counts unaffected (job-internals-only change). Commits: 3192360c3 (fix+test), 413f1b8fd (notebook+journal). Journal: docs/agent-memory/decisions/sprint-FIX-COMMODITY-WTI-DELTA-CORRUPT-dev-mcp-server.md.",
+        "status_note": "[QA] Review Record (direct-commit verify) 2026-08-09T04:58:46Z: APPROVED. Both commits real, main-ancestor (git merge-base --is-ancestor 3192360c3 main; 413f1b8fd main): OK. git show --stat 3192360c3 matches all 5 code/test files[]; 413f1b8fd covers the journal+notebook files[]. computeMacroScore() has since been moved out of kinhDichTools.ts into apps/mcp-server/src/application/services/kinhDich/kinhDichScoring.ts by an unrelated later DDD refactor — read the CURRENT file, not the diff alone: TRACKED_INDICATOR_STALE_MS guard (latestAgeMs >= TRACKED_INDICATOR_STALE_MS -> continue) and isStale threading through assembleBriefing.ts (trackedCommodities[].isStale) and morningBriefingJob.ts (\"[STALE]\" suffix) are both still intact post-refactor, not clobbered.\n\nLive docker exec + bun:sqlite raw probe against the named-volume market.db (not trusted from prose): wti_crude_usd = 79 rows, ALL value=95.5, latest extracted_at=2026-04-12T23:30:03Z — matches the row's own raw-verify claim exactly (now 119d+ stale as of today, worse than the 102d cited at commit time, confirming the underlying corruption is real and still live, and the fix's staleness-exclusion approach — not a live fetcher — is the correct scoped remedy since no live WTI fetcher exists).\n\nRe-ran (not trusted from claim): bun test src/__tests__/298-macro-score-fix.test.ts src/__tests__/DSI-MACRO-PHANTOM-STALE-GUARD.test.ts = 23/23 pass, 0 fail (matches claimed 13+10). bun tsc --noEmit: 0 errors. bash scripts/audits/mock-guard.sh --files (post-refactor paths: kinhDichScoring.ts, assembleBriefing.ts, morningBriefingJob.ts): PASS. TRACKED_INDICATOR_STALE_MS confirmed = 4*60*60*1000 (4h), matches claim.\n\nI8 (NO_CHANGE_NEEDED) and I4 (out-of-scope, tracked separately) cross-checked: zero apps/macro-indicators Go files in either commit's diff (consistent with \"zero Go edits made\"); FIX-BDI-SHIPPING-STALE-404-GUARD confirmed to exist live in orch-state.json (real row, not fabricated).\n\nDecision journal: docs/agent-memory/decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-qa-14.md STEP qa-S31. VERDICT: APPROVED, DONE_VERIFIED. No merge/branch-delete needed — work already on main.",
+        "qa_verified_by": "qa",
+        "qa_verified_at": "2026-08-09T05:00:18Z",
+        "verification": {
+          "raw_probe": {
+            "tool": "docker exec (bun:sqlite) + bun test + bun tsc --noEmit + mock-guard.sh",
+            "args": "SELECT COUNT(*),MAX(extracted_at),MIN(value),MAX(value) FROM tracked_indicators WHERE indicator=wti_crude_usd against live named-volume market.db; bun test src/__tests__/298-macro-score-fix.test.ts src/__tests__/DSI-MACRO-PHANTOM-STALE-GUARD.test.ts; bun tsc --noEmit; mock-guard.sh --files kinhDichScoring.ts assembleBriefing.ts morningBriefingJob.ts",
+            "live_value_observed": "wti_crude_usd: 79 rows, all value=95.5, latest extracted_at=2026-04-12T23:30:03Z (119d+ stale) — matches row claim; tests 23/23 pass 0 fail; tsc 0 errors; mock-guard PASS",
+            "observed_at": "2026-08-09T05:00:18Z"
+          }
+        }
+      },
+      {
+        "id": "FIX-PREDICTION-SIGNALS-EMPTY",
+        "priority": "medium",
+        "status": "DONE_VERIFIED",
+        "title": "prediction_signals poll green-but-empty: table frozen 2026-04-27 (45d, 6 rows) while predictionMarketPollJob ran 2026-06-11 17:30 status=success (predictionMarketPollJob + predictionResolutionJob both running). Poll executes, zero signals land 45d.",
+        "type": "FIX",
+        "zone": "apps/mcp-server/",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-PREDICTION-SIGNALS-EMPTY",
+        "verify_note": "prior_status=TODO",
+        "promoted_at": "2026-07-23T20:18:17Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
+        "updated_at": "2026-08-09T05:00:33Z",
+        "claimed_at": "2026-08-09T04:55:14Z",
+        "claimed_by": "dev-team (review-lane qa-drain)",
+        "next_agent": "qa",
+        "updated_by": "qa",
+        "review_note": "FIX-PREDICTION-SIGNALS-EMPTY: RAW-verified live root cause (gamma-api.polymarket.com TLS-blocked to unrelated *.anj.fr cert; CLOB already 403 geo-blocked; fetchPolymarkets() never throws, resolves []) — reordered runPredictionMarketPoll() staleness guard (Step 5b) to run before the empty-markets early return so the existing degradation/Telegram-alert path is reachable again. Ruled out DS-DEGRADE-01-class table-gap and read/write mismatch explicitly. New test FIX-PREDICTION-SIGNALS-EMPTY-staleness-guard-unreachable.test.ts (3 TCs, real initDatabase()/getDb() path) green. Full prediction-suite 83/83 pass. Full bun test 14698 pass/42 pre-existing fail (git-stash A/B confirmed unrelated). tsc clean. Commits: e6378d65a (fix+test), a15d75e6f (notebook+journal). Journal: docs/agent-memory/decisions/sprint-FIX-PREDICTION-SIGNALS-EMPTY-dev-mcp-server.md. | [QA] Review Record (direct-commit verify): APPROVED, DONE_VERIFIED. Verified commits e6378d65a (fix+test) and a15d75e6f (notebook+journal) on main ancestry -- git merge-base --is-ancestor confirmed both. git show --stat: e6378d65a touches apps/mcp-server/src/scheduler/macro/predictionMarketJob.ts + new FIX-PREDICTION-SIGNALS-EMPTY-staleness-guard-unreachable.test.ts (matches claim exactly -- diff confirms staleness guard (old Step 5b) now runs BEFORE the currentMarkets.length===0 early return, restoring the Telegram degradation-alert path); a15d75e6f touches the claimed journal + notebook files. Independently re-ran: new test file 3/3 pass; full targeted prediction-market suite (19 files, 293 tests) 293/293 pass; bun tsc --noEmit 0 errors; mock-guard.sh PASS on predictionMarketJob.ts; DDD grep clean (file header self-declares interface/scheduler layer, infrastructure imports are architecturally permitted for this layer); no process.env/secret literals. DJ-GATE-1: docs/agent-memory/decisions/sprint-FIX-PREDICTION-SIGNALS-EMPTY-dev-mcp-server.md task-id trailer present.",
+        "qa_verified_at": "2026-08-09T05:00:30Z",
+        "qa_verified_by": "qa",
+        "verification": {
+          "raw_probe": {
+            "tool": "git merge-base --is-ancestor + git show --stat + bun test (targeted, 20 files) + bun tsc --noEmit + mock-guard.sh",
+            "args": "commits e6378d65a a15d75e6f vs main; apps/mcp-server/src/__tests__/FIX-PREDICTION-SIGNALS-EMPTY-staleness-guard-unreachable.test.ts + full 19-file prediction-market suite; mock-guard.sh --files apps/mcp-server/src/scheduler/macro/predictionMarketJob.ts",
+            "live_value_observed": "both commits confirmed main ancestors; diff content matches claim (staleness guard reordered before empty-markets early return); new test 3/3 pass; 293/293 pass across 19-file targeted prediction suite; tsc 0 errors; mock-guard PASS; DDD/secret greps clean",
+            "observed_at": "2026-08-09T05:00:30Z"
+          }
+        }
+      },
+      {
+        "id": "FIX-BASE-RATE-COMPUTATION-CRON-DEAD",
+        "type": "FIX",
+        "status": "DONE_VERIFIED",
+        "size": "S",
+        "priority": "P2",
+        "zone": "apps/mcp-server/",
+        "title": "baseRateComputationJob ~20 days stale — genuinely broken weekly job (CORRECT watchdog alert from T3 LIVE run, now actionable)",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-BASE-RATE-COMPUTATION-CRON-DEAD",
+        "verify_note": "prior_status=TODO",
+        "promoted_at": "2026-07-23T21:45:43Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
+        "updated_at": "2026-08-09T05:00:52Z",
+        "claimed_at": "2026-08-09T04:55:14Z",
+        "claimed_by": "dev-team (review-lane qa-drain)",
+        "next_agent": "pm",
+        "updated_by": "qa/verify-committed",
+        "entered_review_at": "2026-07-23T22:34:18Z",
+        "status_note": "[dev-mcp-server 2026-07-23] PARTIAL + dependency flag. RAW-verified live (docker exec, production market.db): baseRateComputationJob IS correctly registered (daily 7 19 * * * since the 07-01 TASK-EVIDENCE-HOP1-MCP cadence fix), fires daily, 100% success (18/18 in 30d) -- NO_CHANGE_NEEDED on registration/execution. But evidence_likelihood_ratios (its sole output) has not received a real content update since 2026-06-28 (25d) because triplesUpserted=0 every run since -- HONEST zero: its sole input evidence_fragments shows a real success on 06-28 then ZERO rows of any kind until 07-19 (~21d gap), matching the documented ~19-day container restart-storm already called out in startScheduler.ts (mcpServerStartup recorded 28 boots across 06-28..07-19). evidence_fragments has since recovered (239 rows, earliest 07-19) but is not yet 5d old, so 0-output today is still correct -- DEPENDENCY FLAGGED, tracked under still-open FIX-EVIDENCE-PIPELINE-STARVED, not chased (out of this S-task scope). Found+fixed 2 genuine reachable bugs: (1) runBaseRateComputationWithDb double-wrapped recordJobRun via the self-recording runBaseRateComputationJob() (same class already fixed for runEvidenceAccumulatorWithDb) -- RAW-confirmed 2-3 cron_job_runs rows per tick live every day sampled; fixed by calling the core runBaseRateComputation(db) directly + replicating the T4 shouldSkipRecoveryReplay dedup guard into the wrapper itself. (2) baseRateComputationJob had no startup-catchup probe unlike its 5 hardened siblings -- added a 6th probe in startScheduler.ts using the same shouldRunCatchup() mechanism, directly closing the restart-timing class that produced the historical dead window. New FIX-BASE-RATE-COMPUTATION-CRON-DEAD.test.ts (11 cases) proves both fixes through the real default code paths; also worked around a discovered unrestored mock.module() in FACTORY-SCHEDULER-job-table-registry.test.ts using the established ?isolate= dynamic-import precedent (034-telegram-notifier.test.ts) rather than editing that other tasks test file. bun test: 14715 pass/40 skip/42 fail -- git-stash A/B on both touched files confirms all 42 pre-existing (vps_push_log schema-drift + 5000ms MCP-client-timeout class, zero overlap). tsc clean. Server boot probe clean (toolCount=184, health 200, both dashboards 200). Tool count 184 / cronJobCount 88 unaffected. Decision journal: docs/agent-memory/decisions/sprint-FIX-BASE-RATE-COMPUTATION-CRON-DEAD-dev-mcp-server.md. | [QA] Review Record (direct-commit verify) -- qa[dev-team-drain 2026-08-09T05:00Z]: APPROVED, DONE_VERIFIED. Commit a22a91a3a confirmed real + main ancestry (git merge-base --is-ancestor). git show --stat matches 3/5 claimed files[] (FIX-BASE-RATE-COMPUTATION-CRON-DEAD.test.ts, startScheduler.ts, startupHelpers.ts); the other 2 (decision journal, dev-mcp-server notebook) landed in a separate memory commit d66507a6e, also main-ancestor -- standard journal/notebook split, not a scope gap. Re-ran independently, not trusted from prose: FIX-BASE-RATE-COMPUTATION-CRON-DEAD.test.ts 11/11 pass (matches claimed 11 cases); bun tsc --noEmit 0 errors; mock-guard.sh --files startupHelpers.ts+startScheduler.ts PASS exit 0; DDD grep shows only pre-existing scheduler-layer infrastructure/ imports, zero NEW infra import introduced by this diff (git show a22a91a3a confirms the only added import is the sibling ./macro/baseRateComputationJob.js module, not infrastructure/application); process.env/secret greps on both files clean. Confirmed both claimed fixes still present + unreverted at HEAD: (1) runBaseRateComputationWithDb now calls runBaseRateComputation(db) directly (single recordJobRun, T4 shouldSkipRecoveryReplay guard replicated) -- verified via grep at startupHelpers.ts:479; (2) 6th startup-catchup probe added in startScheduler.ts using shouldRunCatchup('baseRateComputationJob', 19, 7, ...) -- verified at startScheduler.ts:364. 4 later commits (51b5fa14a/cf862f920/0a73c5b04/6775752af) touch the same 2 files but none reverts either change. Decision journal present with matching task-id: docs/agent-memory/decisions/sprint-FIX-BASE-RATE-COMPUTATION-CRON-DEAD-dev-mcp-server.md (commit d66507a6e). RC-VERIF gate: id NOT in RC_VERIF_GRANDFATHERED_IDS -- hand-built compliant verification.raw_probe from the live bun test re-run just performed. QA decision journal: sprint-COWORK-GUARANTEED-SLOT-CATCHUP-qa-14.md STEP qa-S32.",
+        "commit": "a22a91a3a",
+        "files": [
+          "apps/mcp-server/src/scheduler/startupHelpers.ts",
+          "apps/mcp-server/src/scheduler/startScheduler.ts",
+          "apps/mcp-server/src/__tests__/FIX-BASE-RATE-COMPUTATION-CRON-DEAD.test.ts",
+          "docs/agent-memory/decisions/sprint-FIX-BASE-RATE-COMPUTATION-CRON-DEAD-dev-mcp-server.md",
+          "docs/agent-memory/notebooks/dev-mcp-server.md"
+        ],
+        "qa_verified_at": "2026-08-09T05:00:14Z",
+        "qa_verified_by": "qa",
+        "verification": {
+          "raw_probe": {
+            "tool": "bun test",
+            "args": "apps/mcp-server/src/__tests__/FIX-BASE-RATE-COMPUTATION-CRON-DEAD.test.ts",
+            "live_value_observed": "11 pass / 0 fail (19 expect() calls); commit a22a91a3a confirmed main ancestor via git merge-base --is-ancestor; git show --stat matches 3/5 claimed files; tsc 0 errors; mock-guard PASS",
+            "observed_at": "2026-08-09T04:56:52Z"
+          }
+        }
       }
     ],
     "head": {
@@ -19647,84 +19756,6 @@
         "agent_father_closeout_20260809T0301Z": "AC(2)-(5) implemented per corrected citation (consumer=chef.md Step 0 GATHER L130 glob-read/L153 price_anomaly_* bullet, unchanged since re-verify). AC2: dual-plane contract written docs/standards/mcp-tools.md sec \"price_anomaly -- DUAL-PLANE CONTRACT\" (new subsection after Inter-Agent Signal Types table, L186-211) naming DB plane (market-watcher cycle.md ~L183 post_agent_signal -> alert-commander via get_agent_signals) and FILE plane (eod.md:29 write, schema eod.md:49 [drifted from :33 by this same edit inserting the AC3 marker at :31-45 -- re-verify AT SOURCE], chef.md:130/:153 by-path glob read) side by side in a table, with a rationale paragraph on why the FILE plane looks like data loss if only the DB-plane table row is read. AC3: DO-NOT-ENVELOPE/DO-NOT-RELOCATE blockquote marker added eod.md:31-45 directly under the SIGNAL FILE step (eod.md:29), citing both transports and cross-linking the mcp-tools.md contract section. AC4: named allowlist BY_PATH_CONSUMER_FAMILIES (prefix price_anomaly_) added to scripts/agents-flow/drain-signals.js, checked in the Pass-1 classification loop BEFORE JSON.parse/isDrainableShape (unconditional, independent of file shape -- survives any future schema change to the family), with an explicit SKIP log line distinct from the old incidental \"SKIP non-signal shape\" path. AC5: new regression scenario in drain-signals.test.js (GUARD-PRICE-ANOMALY-BYPATH-DISH-CONTRACT block) using the full orch-ref harness (real destructive drain, not a degraded/no-op run) asserts a price_anomaly_*.json file survives at top-level docs/signals/ (not moved to processed/) while an unrelated genuine signal in the SAME tick IS drained -- proves the allowlist is scoped, not a blanket drain-disable. Full suite re-run: 51/51 PASS. Verified against live docs/signals/: 17 real price_anomaly_*.json files match the allowlist prefix and the real eod.md schema (checked price_anomaly_20260702T1607.json) genuinely lacks from/type/source/signal_type, confirming BY_PATH_CONSUMER_FAMILIES is not a hypothetical fix. Zone note: docs/standards/mcp-tools.md and scripts/agents-flow/ are outside agent-father declared commit_zone (docs/agents/, docs/agent-memory/, .claude/skills/, .claude/agents/) -- edited anyway as an explicit, narrow, PO-directed exception (task text names the exact files in AC2/AC4; supervised:true; same precedent as FIX-AUDITOR-TIER1-A30-MEM-SINGLE-CONTAINER-SCOPE commit 6ff38d27e), not adopted as standing precedent. Decision journal: docs/agent-memory/decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-agent-father-2.md STEP agent-father-S34.",
         "claimed_at": "2026-08-09T04:55:14Z",
         "claimed_by": "dev-team (review-lane qa-drain)"
-      },
-      {
-        "id": "FIX-PREDICTION-SIGNALS-EMPTY",
-        "priority": "medium",
-        "status": "QA",
-        "title": "prediction_signals poll green-but-empty: table frozen 2026-04-27 (45d, 6 rows) while predictionMarketPollJob ran 2026-06-11 17:30 status=success (predictionMarketPollJob + predictionResolutionJob both running). Poll executes, zero signals land 45d.",
-        "type": "FIX",
-        "zone": "apps/mcp-server/",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-PREDICTION-SIGNALS-EMPTY",
-        "verify_note": "prior_status=TODO",
-        "promoted_at": "2026-07-23T20:18:17Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
-        "updated_at": "2026-08-09T04:55:15Z",
-        "claimed_at": "2026-08-09T04:55:14Z",
-        "claimed_by": "dev-team (review-lane qa-drain)",
-        "next_agent": "qa",
-        "updated_by": "dev-mcp-server",
-        "review_note": "FIX-PREDICTION-SIGNALS-EMPTY: RAW-verified live root cause (gamma-api.polymarket.com TLS-blocked to unrelated *.anj.fr cert; CLOB already 403 geo-blocked; fetchPolymarkets() never throws, resolves []) — reordered runPredictionMarketPoll() staleness guard (Step 5b) to run before the empty-markets early return so the existing degradation/Telegram-alert path is reachable again. Ruled out DS-DEGRADE-01-class table-gap and read/write mismatch explicitly. New test FIX-PREDICTION-SIGNALS-EMPTY-staleness-guard-unreachable.test.ts (3 TCs, real initDatabase()/getDb() path) green. Full prediction-suite 83/83 pass. Full bun test 14698 pass/42 pre-existing fail (git-stash A/B confirmed unrelated). tsc clean. Commits: e6378d65a (fix+test), a15d75e6f (notebook+journal). Journal: docs/agent-memory/decisions/sprint-FIX-PREDICTION-SIGNALS-EMPTY-dev-mcp-server.md."
-      },
-      {
-        "id": "FIX-COMMODITY-WTI-DELTA-CORRUPT",
-        "priority": "P2",
-        "status": "QA",
-        "title": "FIX-COMMODITY-WTI-DELTA-CORRUPT — commodityTracker gaps: I10 wti_crude_usd stuck $95.5 vs live Brent $87.33 (WTI>Brent physically impossible, corrupts oil regime); I8 get_macro_snapshot oil/gold/usdVnd deltas null; I4 BDI stale 67+ days (not in commodityTrackerRefreshJob scope).",
-        "type": "FIX",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-COMMODITY-WTI-DELTA-CORRUPT",
-        "verify_note": "prior_status=TODO",
-        "zone": "apps/mcp-server/",
-        "note": " [PO 2026-07-20] zone was missing (batch-reject risk) -> apps/mcp-server/. SCOPE EXTENSION: usdVnd is frozen byte-identical at 26110 from 2026-07-17 evening through 2026-07-20T05:22Z (~57h, 10+ chef cycles) while gold and oil move in the same snapshots — same frozen-value class as I10 wti_crude_usd stuck $95.5. The I8 'oil/gold/usdVnd deltas null' item is confirmed still live (prevFetchedAt:null at 05:22Z). See FIX-USDVND-FROZEN-26110 for the FX-specific fetcher probe.",
-        "promoted_at": "2026-07-23T21:14:31Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
-        "updated_at": "2026-08-09T04:55:15Z",
-        "claimed_at": "2026-08-09T04:55:14Z",
-        "claimed_by": "dev-team (review-lane qa-drain)",
-        "next_agent": "qa",
-        "updated_by": "dev-mcp-server",
-        "commit": "3192360c3",
-        "files": [
-          "apps/mcp-server/src/interface/mcp/tools/kinhdich/kinhDichTools.ts",
-          "apps/mcp-server/src/application/usecases/assembleBriefing.ts",
-          "apps/mcp-server/src/scheduler/briefings/morningBriefingJob.ts",
-          "apps/mcp-server/src/__tests__/298-macro-score-fix.test.ts",
-          "apps/mcp-server/src/__tests__/DSI-MACRO-PHANTOM-STALE-GUARD.test.ts",
-          "docs/agent-memory/decisions/sprint-FIX-COMMODITY-WTI-DELTA-CORRUPT-dev-mcp-server.md",
-          "docs/agent-memory/notebooks/dev-mcp-server.md"
-        ],
-        "review_note": "FIX-COMMODITY-WTI-DELTA-CORRUPT: I10 REAL fix shipped, I8 NO_CHANGE_NEEDED (already fixed elsewhere), I4 confirmed out-of-scope. RAW-verified live named-volume market.db: wti_crude_usd has 79 rows all value=95.5, latest extracted_at=2026-04-12 (102d+ stale) -- no live fetcher exists (commodityTracker.ts news-regex only). Two consumers read it with zero staleness gate: kinhDichTools.computeMacroScore() (Hao 6 oil-regime z-score) and assembleBriefing.ts step 9 -> morning Telegram briefing. DSI-MACRO-PHANTOM-STALE-GUARD.test.ts header comment already promised assembleBriefing step 9 wiring that was never actually delivered at the call site -- this fix closes that gap. I8: live HTTP probe of apps/macro-indicators (Go service, separate zone) showed real signed oilUsdDelta=3.55/goldUsdDelta=-75.1 (commit e55805aa3, deployed 2026-07-15); usdVndDelta=null is the documented Q2 SBV-override same-source-only honesty suppression, not a bug -- zero Go edits made. I4: live BDI last row 2026-04-07 (107d stale, ^BDI Yahoo still 404) -- already tracked as its own backlog row FIX-BDI-SHIPPING-STALE-404-GUARD (owner dev-mcp-server, status BACKLOG); flagged, not fixed here. Fix: computeMacroScore() now excludes any indicator whose latest row is >=4h stale from the composite z-score (reuses existing TRACKED_INDICATOR_STALE_MS guard, no new threshold invented); assembleBriefing.ts step 9 switched listTrackedIndicators() -> listTrackedIndicatorsFromDb() threading isStale into trackedCommodities[]; morningBriefingJob.ts formatCommoditiesSection appends \"[STALE]\" (reuses buildWatchlistSection convention) instead of presenting a frozen price as current. New/extended tests through the REAL getDb()/initDatabase() path: 298-macro-score-fix.test.ts +2 (stale-exclusion + fresh-control), DSI-MACRO-PHANTOM-STALE-GUARD.test.ts +4 (GUARD-7/7b assembleBriefing wiring, GUARD-8/8b formatter) -- 13/13 and 10/10 green respectively. Full touched-module regression (43 files): 438/438 pass, 0 fail. bun tsc --noEmit clean. Full bun test 14705 pass/41 fail -- git-stash A/B on all 5 changed files confirms identical 1-fail pre-existing cron-expression test-order flake before/after, unrelated to this scope. Server boot probe clean (toolCount=184, 88 cron keys, both dashboards 200). Tool/cron counts unaffected (job-internals-only change). Commits: 3192360c3 (fix+test), 413f1b8fd (notebook+journal). Journal: docs/agent-memory/decisions/sprint-FIX-COMMODITY-WTI-DELTA-CORRUPT-dev-mcp-server.md."
-      },
-      {
-        "id": "FIX-BASE-RATE-COMPUTATION-CRON-DEAD",
-        "type": "FIX",
-        "status": "QA",
-        "size": "S",
-        "priority": "P2",
-        "zone": "apps/mcp-server/",
-        "title": "baseRateComputationJob ~20 days stale — genuinely broken weekly job (CORRECT watchdog alert from T3 LIVE run, now actionable)",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-BASE-RATE-COMPUTATION-CRON-DEAD",
-        "verify_note": "prior_status=TODO",
-        "promoted_at": "2026-07-23T21:45:43Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
-        "updated_at": "2026-08-09T04:55:15Z",
-        "claimed_at": "2026-08-09T04:55:14Z",
-        "claimed_by": "dev-team (review-lane qa-drain)",
-        "next_agent": "qa",
-        "updated_by": "dev-mcp-server",
-        "entered_review_at": "2026-07-23T22:34:18Z",
-        "status_note": "[dev-mcp-server 2026-07-23] PARTIAL + dependency flag. RAW-verified live (docker exec, production market.db): baseRateComputationJob IS correctly registered (daily 7 19 * * * since the 07-01 TASK-EVIDENCE-HOP1-MCP cadence fix), fires daily, 100% success (18/18 in 30d) -- NO_CHANGE_NEEDED on registration/execution. But evidence_likelihood_ratios (its sole output) has not received a real content update since 2026-06-28 (25d) because triplesUpserted=0 every run since -- HONEST zero: its sole input evidence_fragments shows a real success on 06-28 then ZERO rows of any kind until 07-19 (~21d gap), matching the documented ~19-day container restart-storm already called out in startScheduler.ts (mcpServerStartup recorded 28 boots across 06-28..07-19). evidence_fragments has since recovered (239 rows, earliest 07-19) but is not yet 5d old, so 0-output today is still correct -- DEPENDENCY FLAGGED, tracked under still-open FIX-EVIDENCE-PIPELINE-STARVED, not chased (out of this S-task scope). Found+fixed 2 genuine reachable bugs: (1) runBaseRateComputationWithDb double-wrapped recordJobRun via the self-recording runBaseRateComputationJob() (same class already fixed for runEvidenceAccumulatorWithDb) -- RAW-confirmed 2-3 cron_job_runs rows per tick live every day sampled; fixed by calling the core runBaseRateComputation(db) directly + replicating the T4 shouldSkipRecoveryReplay dedup guard into the wrapper itself. (2) baseRateComputationJob had no startup-catchup probe unlike its 5 hardened siblings -- added a 6th probe in startScheduler.ts using the same shouldRunCatchup() mechanism, directly closing the restart-timing class that produced the historical dead window. New FIX-BASE-RATE-COMPUTATION-CRON-DEAD.test.ts (11 cases) proves both fixes through the real default code paths; also worked around a discovered unrestored mock.module() in FACTORY-SCHEDULER-job-table-registry.test.ts using the established ?isolate= dynamic-import precedent (034-telegram-notifier.test.ts) rather than editing that other tasks test file. bun test: 14715 pass/40 skip/42 fail -- git-stash A/B on both touched files confirms all 42 pre-existing (vps_push_log schema-drift + 5000ms MCP-client-timeout class, zero overlap). tsc clean. Server boot probe clean (toolCount=184, health 200, both dashboards 200). Tool count 184 / cronJobCount 88 unaffected. Decision journal: docs/agent-memory/decisions/sprint-FIX-BASE-RATE-COMPUTATION-CRON-DEAD-dev-mcp-server.md.",
-        "commit": "a22a91a3a",
-        "files": [
-          "apps/mcp-server/src/scheduler/startupHelpers.ts",
-          "apps/mcp-server/src/scheduler/startScheduler.ts",
-          "apps/mcp-server/src/__tests__/FIX-BASE-RATE-COMPUTATION-CRON-DEAD.test.ts",
-          "docs/agent-memory/decisions/sprint-FIX-BASE-RATE-COMPUTATION-CRON-DEAD-dev-mcp-server.md",
-          "docs/agent-memory/notebooks/dev-mcp-server.md"
-        ]
       },
       {
         "title": "Fix `or 0.0` truthiness mask on confidence/impact_score in rag _dedup_and_trim",
