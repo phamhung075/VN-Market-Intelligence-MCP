@@ -19157,6 +19157,34 @@
         ],
         "updated_by": "dev-mcp-server",
         "dev_implementation_note": "dev-mcp-server (2026-08-09T02:05Z): AC-1 implemented — SseSessionManager (apps/mcp-server/src/interface/mcp/transport.ts) gained an injectable `_now: () => number = Date.now` 8th constructor param (same override idiom as _heartbeatIntervalMs/_idleTimeoutMs/_maxAgeMs/_reaperIntervalMs), threaded through all 3 Date.now() call sites (handleSse createdAt/lastActivityAt, handleMessage lastActivityAt bump, reapStaleSessions now). New T13/T14 unit tests in 1862c-transport-session-eviction.test.ts construct the manager with every real shipped default intact (heartbeat/idle/max-age all left undefined => the REAL 4h max-age, not a shrunk override) and inject a fake clock: T13 advances it in <4h steps (bumping activity at each step, proving max-age fires independent of the repeatedly-reset idle clock) then crosses the real 4h threshold and asserts eviction with mcpServer.close() called; T14 is a boundary negative control (4h-1s survives). This decouples the reaper's max-age-branch correctness proof from both real wall-clock elapsed time AND any shared container's uptime — the exact defect class that reset this row's own soak AC 3x (see FIX-MCP-SSE-SESSION-MANAGER-PERCONN-LEAK-NO-REAPER qa[] row, status_note stamped separately per AC-2 same write).\n\nVERIFICATION: 1862c-transport-session-eviction.test.ts 14/14 pass (45 expect), 5 consecutive clean reruns. Under manufactured CPU contention (48x `yes` background, matching the SPIKE_CI-PERFILE-ISOLATION-FLAKE.md methodology already used on this file): T13/T14 clean 8/8 runs — the ONLY failures observed (5/8 runs, 1 each) were the PRE-EXISTING T9 real-timer race already triaged as a test-harness artifact on the sibling row (qa_step5_checkpoint_2_20260808T2005Z CI REGRESSION TRIAGE), tracked separately (FIX-CI-BUNTEST-1862C-TRANSPORT-SESSION-EVICTION, dev-mcp-server) — NOT touched here, out of this row's scope. tsc --noEmit clean. Full suite: 15230 pass / 40 skip / 51 fail / 48042 expect across 1269 files [481s] — consistent with the pre-existing flaky-churn baseline already documented on the sibling row's own dev_implementation_note (~44-46 pre-existing failures, shifting identity per rerun, none in this zone); scoped reruns of every file this commit touches are 100% green. Gate 2: PORT=3099 clean boot, /health {toolCount:183, sessions:0}; bun scripts/gen-project-stats.ts --dry-run: toolCount=183, cronJobCount=88 — both match pre-task baseline (no tool/scheduler silenced). Doc: docs/architecture/microservice/mcp-server/infrastructure.md SSE Session Manager section gained an Injectable clock bullet.\n\nAC-2 companion (same orch-apply.sh write): stamped the incident history onto FIX-MCP-SSE-SESSION-MANAGER-PERCONN-LEAK-NO-REAPER's qa[] row status_note (was empty through all 3 resets). That row's own lane/status is left UNCHANGED by this write — this fix replaces the verification METHOD going forward; it does not itself discharge that row's live QA Step 5/6 sign-off, which remains qa's/po's call.\n\nCommit: a3d7ff35f (fix(mcp-server/fix-sse-soak-verify): injectable clock decouples 4h max-age reaper proof from shared container uptime). Files: apps/mcp-server/src/interface/mcp/transport.ts, apps/mcp-server/src/__tests__/1862c-transport-session-eviction.test.ts, docs/architecture/microservice/mcp-server/infrastructure.md. Decision journal: sprint-2026-08-09-dev-mcp-server.md STEP dev-mcp-server-S1."
+      },
+      {
+        "id": "FIX-DEVTEAM-IDLE-CHAIN-TEST-FAIRNESS",
+        "type": "FIX",
+        "title": "AC-1/AC-4: extend devteam-dispatch-gate-satisfiability.sh — rotation fairness bounds + gate-firing proof (not just resolution)",
+        "status": "REVIEW",
+        "priority": "P0",
+        "size": "M",
+        "zone": "docs/agents/dev-team/flow/",
+        "owner": "developer",
+        "next_agent": "qa",
+        "created_at": "2026-07-29T13:50:05Z",
+        "created_by": "pm",
+        "depends": [
+          "FIX-DEVTEAM-IDLE-CHAIN-MAIN-COMPLETION"
+        ],
+        "blocks": [],
+        "files": [
+          "scripts/audits/devteam-dispatch-gate-satisfiability.sh"
+        ],
+        "updated_at": "2026-08-09T02:17:14Z",
+        "promoted_at": "2026-08-09T01:55:14Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=0)",
+        "claimed_at": "2026-08-09T01:55:28Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "commit_sha": "104aa6c10",
+        "status_note": "AC-1/AC-4 both covered by single instrument per PM instruction. Script extended 958→1251L: byte-verbatim replica of main.md live inline 6-candidate jq (bounded1/sls/rlc/drs/qa_drain/step1_triage), NOT the stale shared devteam-eligibility.jq (5-id, DRS-blind — flagged stale by main.md itself). Simulates 12 idle-fallthrough ticks (2×6-tick windows): AC-1 exactly-once coverage per window + deterministic tie-break; AC-4 per-tick real board mutation + isolated no-same-tick-cascade proof. Dry-run baseline 57P/12F (12 pre-existing unrelated live-board-drift fails, byte-identical error set before/after) -> post-extension 91P/12F, 34/34 new assertions pass, 0 regressions. bash -n clean. Commits: 104aa6c10 (code+docs), 8d684979f (notebook+journal). 12 pre-existing FAILs flagged out-of-scope for PO/router to route separately."
       }
     ],
     "qa": [
@@ -19461,32 +19489,6 @@
           "TASK-COWORK-SIGNAL-NAMING-CONTRACT"
         ],
         "decomposition_note": "Phase 1 decomposed into 4 atomic tasks per PO amendments (3 binding, 1 correction to FR-1 WINDOWKEY logic per Amendment 3). All inherit plan_only/supervised flags. No developer dispatch until PO adjudication."
-      },
-      {
-        "id": "FIX-DEVTEAM-IDLE-CHAIN-TEST-FAIRNESS",
-        "type": "FIX",
-        "title": "AC-1/AC-4: extend devteam-dispatch-gate-satisfiability.sh — rotation fairness bounds + gate-firing proof (not just resolution)",
-        "status": "IN_PROGRESS",
-        "priority": "P0",
-        "size": "M",
-        "zone": "docs/agents/dev-team/flow/",
-        "owner": "developer",
-        "next_agent": "developer",
-        "created_at": "2026-07-29T13:50:05Z",
-        "created_by": "pm",
-        "depends": [
-          "FIX-DEVTEAM-IDLE-CHAIN-MAIN-COMPLETION"
-        ],
-        "blocks": [],
-        "files": [
-          "scripts/audits/devteam-dispatch-gate-satisfiability.sh"
-        ],
-        "updated_at": "2026-08-09T01:55:29Z",
-        "promoted_at": "2026-08-09T01:55:14Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=0)",
-        "claimed_at": "2026-08-09T01:55:28Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)"
       }
     ]
   },
