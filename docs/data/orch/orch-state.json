@@ -134,7 +134,7 @@
     "does_not_consume_wip": true
   },
   "signal_queue": {
-    "_updated_at": "2026-08-08T23:36:16Z",
+    "_updated_at": "2026-08-09T00:21:24Z",
     "_updated_by": "cowork-team",
     "archive": [],
     "rows": [
@@ -812,7 +812,7 @@
         "type": "signal_feedback",
         "summary": "A-30 FAIL: vn-market-intelligence-mcp-rag-service-1 — sustained >93% memory pressure",
         "severity": "WARN",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": null,
         "provenance": "detector",
         "audit_cycle_tag": "cron:auditor-t1:2026-08-09T00:00Z",
@@ -19503,7 +19503,7 @@
         "last_served_tick": "2026-08-08T22:26:10Z"
       }
     },
-    "_updated_at": "2026-08-08T23:51:54Z",
+    "_updated_at": "2026-08-09T00:22:01Z",
     "_updated_by": "dev-team",
     "pending_triage_inbox": [
       {
@@ -21908,6 +21908,259 @@
         },
         "createdAt": "2026-08-08T23:37:31Z",
         "drained_at": "2026-08-08T23:42:58Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "d636e1059e17458d03a43792b24922525a40d138892d2cdcca789fcbdd276628",
+        "source": "file",
+        "from": "bctc-analyst",
+        "to": "ops",
+        "type": "data-coverage-gap",
+        "priority": "LOW",
+        "payload": {
+          "trigger_id": "ESC-3",
+          "ticker": "FPT",
+          "quarter": "Q1-2026",
+          "quarters_returned": 3,
+          "quarters_required": 4,
+          "root_task": "BCTC-HIST-VPS-BACKFILL",
+          "note": "Multi-period accrual decomposition blocked by data coverage, not tool bug. No Opus deep-dive warranted. Re-check when quarters_returned >= 4. Prior 8-day coverage guard (held by peer session a2161c5c...) fully expired between c153 (2026-08-08T21:08Z) and this cycle (2026-08-09T00:09Z) — re-armed fresh 8-day guard, this is the resulting re-emit.",
+          "guard_key": "esc-datacov:FPT:Q1-2026:ESC-3",
+          "guard_ttl_days": 8
+        },
+        "createdAt": "2026-08-09T00:12:00Z",
+        "drained_at": "2026-08-09T00:22:01Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "85b9c0d66251fc55e4ca5fe4239b9b4dc3440ea52e72ca7044b633b8626b079a",
+        "source": "file",
+        "from": "bctc-analyst",
+        "to": "ops",
+        "type": "data-coverage-gap",
+        "priority": "LOW",
+        "payload": {
+          "trigger_id": "ESC-3",
+          "ticker": "HPG",
+          "quarter": "Q1-2026",
+          "quarters_returned": 3,
+          "quarters_required": 4,
+          "root_task": "BCTC-HIST-VPS-BACKFILL",
+          "note": "Multi-period accrual decomposition blocked by data coverage, not tool bug. No Opus deep-dive warranted. Re-check when quarters_returned >= 4. Prior 8-day coverage guard (held by peer session a2161c5c...) fully expired between c153 (2026-08-08T21:08Z) and this cycle (2026-08-09T00:09Z) — re-armed fresh 8-day guard, this is the resulting re-emit.",
+          "guard_key": "esc-datacov:HPG:Q1-2026:ESC-3",
+          "guard_ttl_days": 8
+        },
+        "createdAt": "2026-08-09T00:12:01Z",
+        "drained_at": "2026-08-09T00:22:01Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "07ad25d44f40389b397d9441e50f3fb647b89da9130193b078667e9f52f735b2",
+        "source": "file",
+        "from": "unknown",
+        "to": "po",
+        "type": "bctc_signal",
+        "priority": "low",
+        "payload": {
+          "ticker": "DXG",
+          "signal_type": "bctc_signal",
+          "quarter": "N/A",
+          "mode": "routine",
+          "beat_miss": null,
+          "product": "Bất động sản: phát triển dự án nhà ở, phân phối/môi giới BĐS (Đất Xanh Services)",
+          "customer": "Người mua nhà ở đô thị, nhà đầu tư thứ cấp qua kênh môi giới F1",
+          "ops": "Không có dữ liệu BCTC trích xuất (\"Chưa có dữ liệu BCTC\") — 14+ chu kỳ liên tiếp; sector comparison vẫn hiển thị ROE 1.9% dưới trung vị ngành 7.3%, PE 66.5 premium +312%",
+          "mgmt": "EY_SPREAD AVOID -3.50pp (PE66.5/ROE1.9%) từ dữ liệu sector-comparison còn hiệu lực; KD Tap Kham(29) BAT LOI 100% tín hiệu bán tiêu cực; Q2-2026 QUÁ HẠN nộp báo cáo (hạn 30/07/2026)",
+          "data_gap": "get_bctc_full(DXG) trả về 'Chưa có dữ liệu BCTC' — 14th+ chu kỳ liên tiếp, không có report_id để đánh giá ESC-5",
+          "report_overdue": true,
+          "cycle_id": "20260809-0000",
+          "slot": "bctc-analyst-slot-4"
+        },
+        "createdAt": "",
+        "drained_at": "2026-08-09T00:22:01Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "72fff07da5e57256128b84c78a91fbfebb0f1f309cc73e66abbad1f02821ccc7",
+        "source": "file",
+        "from": "unknown",
+        "to": "po",
+        "type": "bctc_signal",
+        "priority": "low",
+        "payload": {
+          "ticker": "FPT",
+          "signal_type": "bctc_signal",
+          "quarter": "Q1-2026",
+          "mode": "routine",
+          "beat_miss": null,
+          "product": "CNTT: xuất khẩu phần mềm, tích hợp hệ thống, viễn thông (FPT Telecom), giáo dục (FPT Edu)",
+          "customer": "Doanh nghiệp CNTT trong/ngoài nước (offshore), thuê bao viễn thông SME/hộ gia đình",
+          "ops": "Biên gộp 34.0%, biên hoạt động 22.0%; ROE (sector) 28.3% so trung vị ngành 10.6%; OCF Q1 âm -2.848 tỷ VND (vốn lưu động); PE 13.8 chiết khấu -20% so trung vị ngành",
+          "mgmt": "EY_SPREAD FAIR +2.25pp (PE13.8/ROE28.3%); KD Tap Kham(29) BAT LOI 100% tín hiệu tiêu cực; ESC-5 deep-dive vẫn PENDING dev-team pickup (7/15 refine units <0.50 confidence — chi tiết PP&E/nợ vay/related-party, guard re-armed đến 2026-08-09T18:11:43Z)",
+          "esc2_result": "FALSE (imbalance=0.00%)",
+          "esc3_status": "DATA-COVERAGE-LIMITED",
+          "esc3_quarters_returned": 3,
+          "esc4_result": "FALSE (non_operating_share=2.0%)",
+          "escalation_status": "PENDING",
+          "guard_key": "esc-deepdive:FPT:Q1-2026:ESC-5",
+          "report_overdue": true,
+          "cycle_id": "20260809-0000",
+          "slot": "bctc-analyst-slot-4"
+        },
+        "createdAt": "",
+        "drained_at": "2026-08-09T00:22:01Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "a8dff38a616adf5d07f74d5f16555fc8a1cfd0f1953dc1cea21412dfbe5e54db",
+        "source": "file",
+        "from": "unknown",
+        "to": "po",
+        "type": "bctc_signal",
+        "priority": "low",
+        "payload": {
+          "ticker": "HPG",
+          "signal_type": "bctc_signal",
+          "quarter": "Q1-2026",
+          "mode": "routine",
+          "beat_miss": null,
+          "product": "Thép xây dựng, thép cuộn cán nóng (HRC), ống thép, tôn mạ; nông nghiệp (thức ăn chăn nuôi, trứng gà)",
+          "customer": "Nhà thầu xây dựng, đại lý phân phối thép nội địa, khách hàng xuất khẩu HRC",
+          "ops": "Biên gộp 15.8%; ROE (sector) 12.7% trên trung vị ngành 2.9%; PE 14.2 chiết khấu -57% so trung vị ngành; operating_profit=0 trong dữ liệu trích xuất (nghi vấn dữ liệu, 10+ chu kỳ liên tiếp, chưa được dev-team khắc phục)",
+          "mgmt": "EY_SPREAD FAIR +2.04pp (PE14.2/ROE12.7%); KD Mong(4) TRUNG TINH 38% tín hiệu giữ trung tính; ESC-3 OCF-vs-NI unevaluable (chỉ 3/4 quý dữ liệu — DATA-COVERAGE-LIMITED, không phải lỗi công cụ)",
+          "esc2_result": "FALSE (imbalance=0.00%)",
+          "esc3_status": "DATA-COVERAGE-LIMITED",
+          "esc3_quarters_returned": 3,
+          "esc4_result": "UNEVALUABLE (operating_profit=0, dữ liệu hỏng, 10+ chu kỳ)",
+          "report_overdue": true,
+          "cycle_id": "20260809-0000",
+          "slot": "bctc-analyst-slot-4"
+        },
+        "createdAt": "",
+        "drained_at": "2026-08-09T00:22:01Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "fdce56d35652b9f0f5e8815835c2899bd45b7400af3ee064dfe3510e5bce39a4",
+        "source": "file",
+        "from": "unknown",
+        "to": "po",
+        "type": "bctc_signal",
+        "priority": "low",
+        "payload": {
+          "ticker": "VCB",
+          "signal_type": "bctc_signal",
+          "quarter": "Q1-2026",
+          "mode": "routine",
+          "beat_miss": null,
+          "product": "Ngân hàng thương mại: tín dụng doanh nghiệp/bán lẻ, thanh toán quốc tế, kinh doanh ngoại hối",
+          "customer": "Doanh nghiệp lớn/FDI, khách hàng bán lẻ đô thị, đối tác thương mại xuất nhập khẩu",
+          "ops": "Biên hoạt động 80.9%; ROE (sector) 16.7% dưới trung vị ngành 17.6%; PE 14.1 premium +57% so trung vị ngành (định giá cao hơn nhóm ngân hàng)",
+          "mgmt": "EY_SPREAD FAIR +2.09pp (PE14.1/ROE16.7%); KD Ton(41) TRUNG TINH 0% tín hiệu giữ (độ tin cậy thấp); ESC-3 OCF/NI divergence=36.8% (<40% ngưỡng) → FALSE, đủ 4/4 quý dữ liệu",
+          "esc2_result": "FALSE (imbalance=0.37%)",
+          "esc3_result": "FALSE (divergence_ratio=0.368, quarters_returned=4)",
+          "esc4_result": "N/A (ngân hàng — không áp dụng non_operating_share)",
+          "report_overdue": false,
+          "cycle_id": "20260809-0000",
+          "slot": "bctc-analyst-slot-4"
+        },
+        "createdAt": "",
+        "drained_at": "2026-08-09T00:22:01Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "98982dc9a36228689cacf931c4577aaa802979521c094d4f59bacd258e20b338",
+        "source": "file",
+        "from": "commit-sweep-guard",
+        "to": "po",
+        "type": "bug-escalation",
+        "priority": "high",
+        "payload": "[sweep-guard] BARE commit about to absorb 1 staged file(s) not necessarily this actor's own: docs/agent-memory/notebooks/market-watcher.md. actor=0454e9d8-b475-4230-95c9-8b7d943aa8b3 mode=warn escalated=true prior_warns=11 threshold=3. Fix: git commit -m \"<msg>\" -- <own-files-only>.",
+        "createdAt": "2026-08-09T00:11:17Z",
+        "drained_at": "2026-08-09T00:22:01Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "af9990871d1de87eeb3c3e75b5bf077406716cd7967d56db4c375adc51550f76",
+        "source": "file",
+        "from": "commit-sweep-guard",
+        "to": "po",
+        "type": "bug-escalation",
+        "priority": "high",
+        "payload": "[sweep-guard] BARE commit about to absorb 1 staged file(s) not necessarily this actor's own: docs/agent-memory/notebooks/system-auditor.md. actor=165f4245-6173-4054-87fd-c55bb626265f mode=warn escalated=true prior_warns=18 threshold=3. Fix: git commit -m \"<msg>\" -- <own-files-only>.",
+        "createdAt": "2026-08-09T00:11:25Z",
+        "drained_at": "2026-08-09T00:22:01Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "5f392b95153235a351c991d4841216867d3f59423d59c4a51ac542a50aefc132",
+        "source": "file",
+        "from": "cowork-team",
+        "to": "dev-team",
+        "type": "cowork-fire",
+        "priority": "low",
+        "payload": {
+          "fire_time": "2026-08-09T00:09:24Z",
+          "matched_slots": [
+            "bctc-analyst-slot-4",
+            "news-scout-offhours",
+            "market-watcher-offhours",
+            "alert-commander-critical"
+          ],
+          "won_slots": [
+            "bctc-analyst-slot-4",
+            "news-scout-offhours",
+            "market-watcher-offhours",
+            "alert-commander-critical"
+          ],
+          "held_by_other": [],
+          "all_held": false,
+          "spawned": [
+            "docs/agents/bctc-analyst/flow/main.md",
+            "docs/agents/news-scout/flow/main.md",
+            "docs/agents/market-watcher/flow/main.md",
+            "docs/agents/alert-commander/flow/main.md"
+          ],
+          "silent": false,
+          "drift_min": 9,
+          "errors": [],
+          "pressure_mode": "adaptive",
+          "calendar_status": "unknown",
+          "suppressed_calendar": [],
+          "suppressed_cadence": [],
+          "downgraded": [],
+          "chef_mutex_applied": false,
+          "due_reasons": {
+            "bctc-analyst-slot-4": "cron",
+            "news-scout-offhours": "cadence",
+            "market-watcher-offhours": "cadence",
+            "alert-commander-critical": "cron"
+          },
+          "cadence_minutes": {
+            "bctc-analyst-slot-4": null,
+            "news-scout-offhours": 240,
+            "market-watcher-offhours": 240,
+            "alert-commander-critical": null
+          },
+          "last_fired_timestamp": "2026-08-09T00:09:24Z",
+          "last_fired_slots": [
+            "bctc-analyst-slot-4",
+            "news-scout-offhours",
+            "market-watcher-offhours",
+            "alert-commander-critical"
+          ],
+          "last_fired_write_errors": null,
+          "classification": "FIRE",
+          "reason": "spawned",
+          "nominal_tick": "00:00",
+          "leader_lock": "acquired",
+          "dev_head": "unknown",
+          "devq": null,
+          "signal_backlog": 0,
+          "note": "4-slot batch fan-out, single batch (MAX_PARALLEL=4, headroom 4041MB, load 3/12 cores)"
+        },
+        "createdAt": "2026-08-09T00:09:24Z",
+        "drained_at": "2026-08-09T00:22:01Z",
         "routed_to": "PO Step 0-SIG"
       }
     ]

@@ -1,0 +1,21 @@
+{
+  "ticker": "DXG",
+  "signal_type": "bctc_signal",
+  "quarter": "N/A",
+  "mode": "routine",
+  "beat_miss": null,
+  "product": "Bất động sản: phát triển dự án nhà ở, phân phối/môi giới BĐS (Đất Xanh Services)",
+  "customer": "Người mua nhà ở đô thị, nhà đầu tư thứ cấp qua kênh môi giới F1",
+  "ops": "Không có dữ liệu BCTC trích xuất (\"Chưa có dữ liệu BCTC\") — 14+ chu kỳ liên tiếp; sector comparison vẫn hiển thị ROE 1.9% dưới trung vị ngành 7.3%, PE 66.5 premium +312%",
+  "mgmt": "EY_SPREAD AVOID -3.50pp (PE66.5/ROE1.9%) từ dữ liệu sector-comparison còn hiệu lực; KD Tap Kham(29) BAT LOI 100% tín hiệu bán tiêu cực; Q2-2026 QUÁ HẠN nộp báo cáo (hạn 30/07/2026)",
+  "data_gap": "get_bctc_full(DXG) trả về 'Chưa có dữ liệu BCTC' — 14th+ chu kỳ liên tiếp, không có report_id để đánh giá ESC-5",
+  "report_overdue": true,
+  "cycle_id": "20260809-0000",
+  "slot": "bctc-analyst-slot-4",
+  "_processed": {
+    "fingerprint": "07ad25d44f40389b397d9441e50f3fb647b89da9130193b078667e9f52f735b2",
+    "processedAt": "2026-08-09T00:22:01Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
