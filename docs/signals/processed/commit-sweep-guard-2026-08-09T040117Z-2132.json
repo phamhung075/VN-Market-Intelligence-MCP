@@ -1,0 +1,14 @@
+{
+  "from": "commit-sweep-guard",
+  "to": "po",
+  "type": "bug-escalation",
+  "priority": "high",
+  "createdAt": "2026-08-09T04:01:17Z",
+  "payload": "[sweep-guard] BARE commit about to absorb 9 staged file(s) not necessarily this actor's own: docs/data/orch/orch-state.json docs/handoffs/FIX-DRS-SWEEP-001-EFFECTIVE-FILES.md docs/handoffs/FIX-DRS-SWEEP-002-CLASSIFIER.md docs/handoffs/FIX-DRS-SWEEP-003-BOARD-DRAIN.md docs/handoffs/FIX-DRS-SWEEP-004-INIT-COMMIT-ZONE.md docs/handoffs/FIX-DRS-SWEEP-005-MANUAL-DISPATCH-SWEEP.md docs/handoffs/FIX-DRS-SWEEP-006-BOUNDED1-REGRESSION.md docs/handoffs/FIX-DRS-SWEEP-007-CLASSIFY-VERIFY.md docs/handoffs/FIX-DRS-SWEEP-008-DEV-STANDARDS.md. actor=165f4245-6173-4054-87fd-c55bb626265f mode=warn escalated=true prior_warns=25 threshold=3. Fix: git commit -m \"<msg>\" -- <own-files-only>.",
+  "_processed": {
+    "fingerprint": "f025c83e875c9833cba7c7f74148d677de4007bf39a6990da08bb220b782db42",
+    "processedAt": "2026-08-09T04:21:07Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

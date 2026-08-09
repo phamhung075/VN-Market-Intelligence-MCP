@@ -131,7 +131,7 @@
     "does_not_consume_wip": true
   },
   "signal_queue": {
-    "_updated_at": "2026-08-09T03:36:14Z",
+    "_updated_at": "2026-08-09T04:21:16Z",
     "_updated_by": "cowork-team",
     "archive": [],
     "rows": [
@@ -865,7 +865,7 @@
         "type": "signal_feedback",
         "summary": "rag-service A-30 memory ESCALATE — 97.50% sustained high (loss of reclamation)",
         "severity": "CRITICAL",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": null,
         "provenance": "detector",
         "audit_cycle_tag": "cron:auditor-t1:2026-08-09T04:00Z",
@@ -19790,7 +19790,7 @@
         "last_served_tick": "2026-08-09T01:23:42Z"
       }
     },
-    "_updated_at": "2026-08-09T03:54:21Z",
+    "_updated_at": "2026-08-09T04:21:07Z",
     "_updated_by": "dev-team",
     "pending_triage_inbox": [
       {
@@ -19945,6 +19945,107 @@
         },
         "createdAt": "2026-08-09T03:33:03Z",
         "drained_at": "2026-08-09T03:51:13Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "f025c83e875c9833cba7c7f74148d677de4007bf39a6990da08bb220b782db42",
+        "source": "file",
+        "from": "commit-sweep-guard",
+        "to": "po",
+        "type": "bug-escalation",
+        "priority": "high",
+        "payload": "[sweep-guard] BARE commit about to absorb 9 staged file(s) not necessarily this actor's own: docs/data/orch/orch-state.json docs/handoffs/FIX-DRS-SWEEP-001-EFFECTIVE-FILES.md docs/handoffs/FIX-DRS-SWEEP-002-CLASSIFIER.md docs/handoffs/FIX-DRS-SWEEP-003-BOARD-DRAIN.md docs/handoffs/FIX-DRS-SWEEP-004-INIT-COMMIT-ZONE.md docs/handoffs/FIX-DRS-SWEEP-005-MANUAL-DISPATCH-SWEEP.md docs/handoffs/FIX-DRS-SWEEP-006-BOUNDED1-REGRESSION.md docs/handoffs/FIX-DRS-SWEEP-007-CLASSIFY-VERIFY.md docs/handoffs/FIX-DRS-SWEEP-008-DEV-STANDARDS.md. actor=165f4245-6173-4054-87fd-c55bb626265f mode=warn escalated=true prior_warns=25 threshold=3. Fix: git commit -m \"<msg>\" -- <own-files-only>.",
+        "createdAt": "2026-08-09T04:01:17Z",
+        "drained_at": "2026-08-09T04:21:07Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "78988c100e25439046df37bf044c67a8923a1ebb0a97a859912a5634e1bf3b25",
+        "source": "file",
+        "from": "commit-sweep-guard",
+        "to": "po",
+        "type": "bug-escalation",
+        "priority": "high",
+        "payload": "[sweep-guard] BARE commit about to absorb 1 staged file(s) not necessarily this actor's own: docs/agent-memory/notebooks/market-watcher.md. actor=0454e9d8-b475-4230-95c9-8b7d943aa8b3 mode=warn escalated=true prior_warns=12 threshold=3. Fix: git commit -m \"<msg>\" -- <own-files-only>.",
+        "createdAt": "2026-08-09T04:07:16Z",
+        "drained_at": "2026-08-09T04:21:07Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "f4b9f539514c6c8e77b9ca183270a7b1e31bfbedaa838f00515749958cdf24f2",
+        "source": "file",
+        "from": "commit-sweep-guard",
+        "to": "po",
+        "type": "bug-escalation",
+        "priority": "high",
+        "payload": "[sweep-guard] BARE commit about to absorb 1 staged file(s) not necessarily this actor's own: docs/agent-memory/notebooks/system-auditor.md. actor=165f4245-6173-4054-87fd-c55bb626265f mode=warn escalated=true prior_warns=26 threshold=3. Fix: git commit -m \"<msg>\" -- <own-files-only>.",
+        "createdAt": "2026-08-09T04:13:05Z",
+        "drained_at": "2026-08-09T04:21:07Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "20b9a4dba5f64f5ef2fdbefa11a1c35a630135b995ae50a0bde1e2965a29e86b",
+        "source": "file",
+        "from": "cowork-team",
+        "to": "dev-team",
+        "type": "cowork-fire",
+        "priority": "low",
+        "payload": {
+          "fire_time": "2026-08-09T04:06:18Z",
+          "matched_slots": [
+            "news-scout-offhours",
+            "market-watcher-offhours",
+            "alert-commander-critical"
+          ],
+          "won_slots": [
+            "news-scout-offhours",
+            "market-watcher-offhours",
+            "alert-commander-critical"
+          ],
+          "held_by_other": [],
+          "all_held": false,
+          "spawned": [
+            "docs/agents/news-scout/flow/main.md",
+            "docs/agents/market-watcher/flow/main.md",
+            "docs/agents/alert-commander/flow/main.md"
+          ],
+          "silent": false,
+          "drift_min": 6,
+          "errors": [],
+          "pressure_mode": "adaptive",
+          "calendar_status": "unknown",
+          "suppressed_calendar": [],
+          "suppressed_cadence": [],
+          "downgraded": [],
+          "chef_mutex_applied": false,
+          "due_reasons": {
+            "news-scout-offhours": "cadence",
+            "market-watcher-offhours": "cadence",
+            "alert-commander-critical": "cron"
+          },
+          "cadence_minutes": {
+            "news-scout-offhours": 240,
+            "market-watcher-offhours": 240,
+            "alert-commander-critical": null
+          },
+          "last_fired_timestamp": "2026-08-09T04:06:18Z",
+          "last_fired_slots": [
+            "news-scout-offhours",
+            "market-watcher-offhours",
+            "alert-commander-critical"
+          ],
+          "last_fired_write_errors": null,
+          "classification": "FIRE",
+          "reason": "spawned",
+          "nominal_tick": "04:00",
+          "leader_lock": "acquired",
+          "dev_head": "unknown",
+          "devq": 5,
+          "signal_backlog": 25,
+          "note": "offhours full-fanout tick — 3 slots (news-scout, market-watcher, alert-commander), all spawned run_in_background=true"
+        },
+        "createdAt": "2026-08-09T04:06:18Z",
+        "drained_at": "2026-08-09T04:21:07Z",
         "routed_to": "PO Step 0-SIG"
       }
     ]
