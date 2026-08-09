@@ -1114,3 +1114,15 @@
 **Mitigation:** No immediate action beyond signal routing.
 
 ---
+
+## Anomaly: A-30 · rag-service sustained high memory 97.50%
+**Severity:** CRITICAL | **Date:** 2026-08-09 | **Status:** OPEN
+**Location:** vn-market-intelligence-mcp-rag-service-1
+**Details:** Memory at 97.50% of 1GB cgroup limit, all samples sustained >93% (median 97.50%), loss of reclamation
+**Impact:** Container under sustained memory pressure; risk of OOM if usage increases further
+**Root cause:** FU-RAG-DEPLOY-MEMORY tracked deployment completed (cap 768m→1g); open structural issue is FIX-RAG-EMBEDDER-IDLE-UNLOAD-PATH (embedder singleton has no unload path)
+**Zone owner:** developer-team
+**Last reported:** 2026-08-09T04:11:23Z (signal sys-20260809T041110-2b0a, system-auditor -> po, CRITICAL Telegram sent)
+**Mitigation:** No immediate action beyond signal routing.
+
+---
