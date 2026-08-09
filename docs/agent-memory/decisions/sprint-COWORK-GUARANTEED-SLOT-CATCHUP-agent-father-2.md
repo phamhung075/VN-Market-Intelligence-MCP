@@ -112,3 +112,27 @@ re-ran Check#2 over all 14 `dev-*/` dirs — 10/10 pipeline agents now PASS the 
 **why-decision:** Board row `files[]`/`acceptance[]` are the authoritative task scope, not the
 router's paraphrase; `out_of_scope` explicitly fenced off the INV-GATEWAY-1 item — left untouched.
 **why-change:** No change from board plan.
+
+### STEP agent-father-S33 · agent-father · 2026-08-09T01:53:38Z
+**task-id:** GUARD-PRICE-ANOMALY-BYPATH-DISH-CONTRACT
+**what-done:** Executed AC-1's own gate (re-confirm citations AT SOURCE before writing the
+contract). Writer `eod.md:13/29/33` — exact match. Consumer `chef.md:116` (PO-verified 07-21) —
+DRIFTED to `:153`: `git show 47c703fca:chef.md` (the exact 07-21 commit) confirms `:116` was
+correct then; `git diff 47c703fca HEAD -- chef.md` shows the `Collect file groups:` block
+byte-identical, just pushed down 37L by unrelated Step-0.5/TE-T16-split growth (2026-07-29→08-06).
+Mechanism unchanged (still an unenveloped top-level `docs/signals/*.json` glob, `price_anomaly_*`
+named explicitly), citation stale. STOPPED before AC(2)-(5) per the literal "if either has moved,
+STOP for re-triage before changing anything" clause; flipped row `BACKLOG`→`BLOCKED` with the
+corrected citation recorded on the row for re-dispatch.
+**what-considered:**
+- Silently correct the citation inline and proceed to write AC(2)-(5) vs honor the literal
+  STOP-if-moved clause — chose STOP: the instruction is stated twice (row AC-1 + dispatch prompt),
+  and "this drift looks benign" is exactly the interpretive judgment call that produced this row's
+  4 prior mis-diagnoses; not mine to unilaterally override on a `supervised:true` row.
+- Diffed the full file across the exact PO-verify commit before calling it "moved" — ruled out a
+  silent semantic change (not just a line-shift) before reporting anything.
+**why-decision:** Both AC-1 and the dispatcher's message are unambiguous; the condition (citation
+moved) is literally met — re-triage is the designed escape hatch, not a judgment call for me.
+**why-change:** No contract/marker/allowlist edits made (AC(2)-(5) untouched, zero writes to
+`eod.md`/`mcp-tools.md`/`drain-signals.js`) — task intentionally incomplete, corrected citation
+handed off for a clean re-dispatch (verification work itself does not need repeating).

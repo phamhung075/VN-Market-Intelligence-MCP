@@ -96,35 +96,35 @@
   **UNCOMMITTED** — same `FU-AGENT-FATHER-ORCH-SCOPE` precedent as this notebook's own
   2026-08-08T13:55Z entry; router/PO owns the board-write commit.
 
-## Triage — SECONDARY-Drain sign-off request 2026-08-08 FIX-COWORK-SPAWN-IDENTITY-PREAMBLE-OFFFLOW — NO ACTION (row already correct)
-- dev-team's Review-Lane SECONDARY-Drain (`secondary_dispatch_target=agent-father`,
-  `secondary_claimed_at=2026-08-08T17:26:17Z`) asked me to sign off/triage this `review[]` row.
-  RAW-read `task_board.review[]` row: `status=REVIEW`, `next_agent=qa` (already correct —
-  I (agent-father) implemented + flipped it to REVIEW/next_agent=qa myself, per its own
-  `review_note`), `updated_by=agent-father`.
-- **Judgment: no board change.** NOT `DONE_VERIFIED` — `review_note` states the verification gate
-  is BEHAVIORAL (next live off-flow-displacement incident, or a QA dry-run injecting a synthetic
-  off-flow-shaped string into the new Step 5.3 matcher) and explicitly "cannot be confirmed in
-  this dispatch; QA to verify" — self-certifying my own implementation would violate
-  verification-independence (`feedback_trust_verification_is_system_job`). NOT rework (nothing
-  flagged wrong — plan+implementation+tests(9/9) all landed, journal filed). NOT reassign
-  `next_agent` (board already says `qa`, correctly). NOT BLOCKED (legitimately parked awaiting a
-  different agent, not stuck).
-- **Root cause of the mis-route (found, NOT fixed — out of my write zone):** SECONDARY-Drain's
-  `effective_next_agent()` (`scripts/lib/devteam-eligibility.jq`) is DETAIL-FIRST/board-fallback —
-  it read `docs/data/orch/archive/backlog-detail.json#FIX-COWORK-SPAWN-IDENTITY-PREAMBLE-OFFFLOW`
-  `.next_agent="agent-father"` (stale, BACKLOG-mint-era field, pre-dating my later board flip to
-  `next_agent=qa`) instead of the board row's own now-correct value. Per
-  `devteam-review-claim-secondary-drain.jq`'s own documented residual ("re-picking the SAME oldest
-  row every tick... is EXPECTED... until its next_agent/status changes"), this row will keep
-  getting re-claimed+re-dispatched to me every tick until that detail_ref field is synced to `qa`
-  (or removed). `docs/data/orch/archive/` is outside my declared `commit_zone`
-  (`docs/agents/`·`docs/agent-memory/`·`.claude/skills/`·`.claude/agents/`) — cannot self-fix.
-  **Recommend:** PO/dev-team patch `backlog-detail.json` `.items[id=FIX-COWORK-SPAWN-IDENTITY-
-  PREAMBLE-OFFFLOW].next_agent` → `"qa"` to stop the repeat false-positive SECONDARY-Drain pickup.
-- No `mcp__gateway__call_tool` binding this session (confirmed SSOT:
-  `.claude/skills/commit-boundary/SKILL.md` "agents-architect + agent-father (no gateway binding —
-  mutex physically unreachable)") — cannot `task_release` the outer `task:FIX-COWORK-SPAWN-
-  IDENTITY-PREAMBLE-OFFFLOW` sprint-lock myself; dispatching session releases on my behalf per its
-  own contract. `head.status=in_progress` (1 row) — solo-commit path (no contention signal-queue
-  write needed) applied for this notebook write.
+## GUARD-PRICE-ANOMALY-BYPATH-DISH-CONTRACT 2026-08-09 — STOPPED at AC-1 gate, citation drift confirmed
+- Dispatched via dev-team S4-UNBLOCK (PO manual-dispatch-sweep, triage-20260809T0135Z-po.md §po-S6).
+  AC-1 mandates re-confirming writer/consumer file:line citations AT SOURCE before writing the
+  dual-plane contract, with an explicit "if either has moved, record the new location and STOP for
+  re-triage before changing anything" gate — restated verbatim in the dispatch prompt.
+- **Writer** `docs/agents/market-watcher/flow/eod.md` — `:13`/`:29`/`:33` all exact match, unchanged
+  since PO's 2026-07-21 verify.
+- **Consumer** `docs/agents/unified-agent/flow/chef.md:116` — DRIFTED. `git show
+  47c703fca:docs/agents/unified-agent/flow/chef.md` (the exact commit live at the 07-21 PO-verify
+  timestamp) confirms `:116` was `- \`price_anomaly_*\` — from market-watcher` at that time — the
+  citation was correct when minted. Current HEAD: same line now at `:153`. `git diff 47c703fca HEAD
+  -- chef.md` shows the entire `Read all docs/signals/*.json...` / `Collect file groups:` block
+  BYTE-IDENTICAL — the 37-line shift is entirely unrelated growth (TE-T16 split 2026-08-06 +7L
+  header, plus Step 0.5's FIX-CHEF-EVENING-DUP-DATE-MISLABEL-INVESTIGATE/FIX-CHEF-INTRADAY-MARKER-
+  CADENCE comment blocks added 07-29→08-06, both physically ABOVE Step 0 in the file). The by-path
+  consumer mechanism itself (unenveloped top-level glob, `price_anomaly_*` named explicitly) is
+  confirmed unchanged and still resident in `chef.md` (TE-T16's own header states it relocated ONLY
+  Steps 1.5-8 to `chef-dish.md`, explicitly keeping Step 0.5/Step 0/Step 1 in this file).
+- **Judgment: honored the literal STOP gate rather than self-correct-and-proceed.** The drift IS
+  real (citation moved, condition literally met) even though the underlying fact-pattern verified
+  true. Chose not to exercise judgment to override an explicit, twice-stated instruction on a
+  `supervised:true` row whose whole premise is "four prior mis-diagnoses came from someone not
+  checking this" — deciding "this particular drift is benign" is exactly that same interpretive
+  leap, just made by me instead of a predecessor. Zero edits made to `eod.md`, `mcp-tools.md`, or
+  `drain-signals.js` — AC(2)-(5) untouched.
+- Row flipped `BACKLOG`→`BLOCKED` (lane-coherent per `LANE_ALLOWED_STATUSES.backlog`) via `jq |
+  scripts/orch-apply.sh` (Stage0+1 PASS, conservation OK, `updated_at` stamped) — `status_note`
+  carries the full corrected citation (consumer = chef.md Step 0 GATHER, glob-read `:130`,
+  `price_anomaly_*` family bullet `:153`) so a re-dispatch can skip re-deriving this verification.
+  Left `orch-state.json` **UNCOMMITTED** — same `FU-AGENT-FATHER-ORCH-SCOPE` precedent as prior
+  entries; router/PO owns the board-write commit. Decision journal: `sprint-COWORK-GUARANTEED-
+  SLOT-CATCHUP-agent-father-2.md` STEP agent-father-S33.
