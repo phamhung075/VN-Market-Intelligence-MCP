@@ -19382,7 +19382,7 @@
         "last_served_tick": "2026-08-08T22:26:10Z"
       }
     },
-    "_updated_at": "2026-08-09T00:52:13Z",
+    "_updated_at": "2026-08-09T01:21:22Z",
     "_updated_by": "dev-team",
     "pending_triage_inbox": [
       {
@@ -22094,6 +22094,30 @@
         "payload": "[sweep-guard] BARE commit about to absorb 1 staged file(s) not necessarily this actor's own: docs/agent-memory/notebooks/system-auditor.md. actor=165f4245-6173-4054-87fd-c55bb626265f mode=warn escalated=true prior_warns=20 threshold=3. Fix: git commit -m \"<msg>\" -- <own-files-only>.",
         "createdAt": "2026-08-09T00:38:09Z",
         "drained_at": "2026-08-09T00:51:14Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "8837ea6bb4852d33bdf1894a407786683d781ab228632df4f65a0415154294b5",
+        "source": "file",
+        "from": "commit-sweep-guard",
+        "to": "po",
+        "type": "bug-escalation",
+        "priority": "high",
+        "payload": "[sweep-guard] BARE commit about to absorb 1 staged file(s) not necessarily this actor's own: docs/data/orch/orch-state.json. actor=165f4245-6173-4054-87fd-c55bb626265f mode=warn escalated=true prior_warns=21 threshold=3. Fix: git commit -m \"<msg>\" -- <own-files-only>.",
+        "createdAt": "2026-08-09T01:02:37Z",
+        "drained_at": "2026-08-09T01:21:22Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "d780810424265269e009965a6f38bfeab00fbf6f2b69adecdf2984044e9062e4",
+        "source": "file",
+        "from": "commit-sweep-guard",
+        "to": "po",
+        "type": "bug-escalation",
+        "priority": "high",
+        "payload": "[sweep-guard] BARE commit about to absorb 2 staged file(s) not necessarily this actor's own: docs/agent-memory/notebooks/system-auditor.md docs/data/auditor-tier1-last-healthy.json. actor=165f4245-6173-4054-87fd-c55bb626265f mode=warn escalated=true prior_warns=22 threshold=3. Fix: git commit -m \"<msg>\" -- <own-files-only>.",
+        "createdAt": "2026-08-09T01:11:33Z",
+        "drained_at": "2026-08-09T01:21:22Z",
         "routed_to": "PO Step 0-SIG"
       }
     ]
