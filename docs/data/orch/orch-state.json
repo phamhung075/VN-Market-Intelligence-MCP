@@ -93,9 +93,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "updated_at": "2026-08-09T04:03:34Z",
-    "updated_by": "router (pm closeout verified)"
+    "status": "in_progress",
+    "active_task_id": "FIX-DEVTEAM-IDLE-CHAIN-TEST-FAIRNESS",
+    "next_agent": "qa",
+    "next_action": "Review-Lane QA-Drain claim of 5 row(s), highest-ranked FIX-DEVTEAM-IDLE-CHAIN-TEST-FAIRNESS — spawn qa in verify-committed mode (branch:null direct-commit row, no task branch/handoff — see docs/agents/qa/flow/main.md § Direct-Commit Verify; do NOT use the normal pipeline JUMP-TO, it requires a branch this row does not have). Batch of 5 row(s) share this claimed_at stamp in .task_board.qa[] — correlate by claimed_at to dispatch the rest.",
+    "updated_at": "2026-08-09T04:23:13Z",
+    "updated_by": "dev-team (review-lane qa-drain)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -12349,6 +12352,144 @@
             "observed_at": "2026-08-09T00:58:27Z"
           }
         }
+      },
+      {
+        "id": "FIX-SWEEPGUARD-SAMEFILE-INSPECT-CMD-GIT-USAGE-ERROR-MANUFACTURES-FALSE-BENIGN",
+        "title": "sweep-guard SAME-FILE DIVERGENCE payload emits an UNEXECUTABLE inspect command (git diff <blobA> <blobB> -- <path> = usage error, empty stdout) so every fire is auto-adjudicated benign",
+        "type": "FIX",
+        "owner": "po",
+        "status": "DONE_VERIFIED",
+        "priority": "P1",
+        "zone": "cross-service/",
+        "size": "S",
+        "created_at": "2026-08-09T01:35:08Z",
+        "created_by": "po",
+        "updated_at": "2026-08-09T04:27:16Z",
+        "supervised": false,
+        "plan_only": false,
+        "depends_on": [],
+        "blocks": [],
+        "dedup_key": "sweepguard:samefile-divergence|defect:inspect-cmd-usage-error",
+        "status_note": "AC-1 the payload emitted by _detect_samefile_pathspec_only_divergence must print an EXECUTABLE inspect command. PROVEN LIVE 2026-08-09T01:35:08Z: `git diff 68f4c798a119272b1c75584ca4d958f57f4b0bc0 1ba849ee5dc2e936bbe3e6a5e2c102b12b7f727e -- docs/data/orch/orch-state.json` (the exact string the guard prints) exits with git USAGE ERROR and 0 lines of stdout; the SAME blob pair WITHOUT the `-- <path>` limiter prints 93 lines of real diff. `git diff <blob> <blob>` is a distinct git form that does not accept a pathspec — adding one is a hard usage error, not a filter. AC-2 docs/agents/po/flow/triage-signals.md bug-escalation row repeats the identical broken command as its MANDATED §2.7 disposition path ('verify per §2.7 (git diff <staged-blob> <landing-blob> -- <path>)') — fix both call sites in lockstep. AC-3 re-open the disposition record on FIX-SWEEPGUARD-SAMEFILE-DETECTOR-UNSTAGED-PATH-FALSE-POSITIVE (DONE_VERIFIED 2026-08-07T02:10Z, occurrence_count=11, archive/2026-08.json): its '10/10 live fires confirmed false positives' conclusion was reached through a command that structurally cannot emit evidence — the FP claim is UNSUPPORTED, not disproven. AC-4 regression proof: assert non-empty stdout + rc=0 for the emitted command against a synthetic divergent blob pair. EVIDENCE this tick — 4 post-fix fires, all re-run with the CORRECT command: 13:39:45Z orch-state.json 3 hunks (head block in_progress->idle + 29L insert + 34L delete); 17:34:43Z qa.md full section swap (staged [591,592,593-LEAF] vs landing [592,593-AUDITOR,593-LEAF] — cycle-591 dropped; independently confirmed NOT permanent loss, it is in history at c59a741e2, so this one fire is genuine-divergence-but-benign-outcome); 18:59:05Z + 22:23:34Z orch-state.json, unadjudicated. Class: feedback_flow_doc_veto_manufactures_pass / FIX-AUDITOR-A29-UNEXECUTABLE-SPEC-SILENT-JOIN-DROP (unexecutable-spec family).\n[QA] Review Record (direct-commit verify) 2026-08-09T04:30:00Z: APPROVED. Verified commit 2cb279b5d7f9e3c7a7420dc4441918dede9874b7 is a real ancestor of main (git merge-base --is-ancestor). git show --stat matches the row's own described files exactly: docs/agents/po/flow/triage-signals.md (§2.7 disposition text), scripts/git-hooks/pre-commit (_detect_samefile_pathspec_only_divergence), scripts/git-hooks/pre-commit.test.sh (new T14), plus the decision-journal + developer-notebook entries.\n\nRe-ran bash scripts/git-hooks/pre-commit.test.sh fresh (not trusted from review_note prose alone): 14/14 PASS including new T14, which independently re-derives the exact printed inspect command from the detector's own stderr and asserts (a) the plain two-blob form exits 0 with non-empty stdout (93-line real diff class), and (b) re-appending `-- <path>` (the pre-fix shape) reproduces the exact usage error (rc=129, empty stdout) — pins the regression this row fixes, confirmed T14 genuinely fails against a temporarily-restored pre-fix hook copy (not a vacuous pass).\n\nRead the live diffs directly: both AC-1 (pre-commit) and AC-2 (triage-signals.md §2.7) call sites now emit the plain two-blob `git diff <A> <B>` form (dropped the `-- <path>` limiter that was a hard git usage error). AC-3 confirmed: an in-code comment on pre-commit plus a decision-journal entry (sprint-COWORK-GUARANTEED-SLOT-CATCHUP-developer-5.md STEP developer-S90) both flag FIX-SWEEPGUARD-SAMEFILE-DETECTOR-UNSTAGED-PATH-FALSE-POSITIVE's prior \"10/10 confirmed false positives\" verdict as UNSUPPORTED (not disproven, not re-adjudicated here) — correctly disclosed as out of this row's size:S scope, not silently dropped.\n\n`bun tsc --noEmit`: N/A — zero apps/ TypeScript files touched (zone cross-service/, pure bash+md diff, root has no bare `tsc` script — pnpm monorepo). `mock-guard.sh --files scripts/git-hooks/pre-commit`: PASS (\"No production source files to scan\" — bash script, outside mock-guard's scanned extensions, same N/A pattern as prior bash/md-only direct-commit rows). DDD/process.env/secret greps on the diff: clean (bash+md content only).\n\nVERDICT: APPROVED, DONE_VERIFIED. No merge/branch-delete needed — work already on main. DJ: sprint-COWORK-GUARANTEED-SLOT-CATCHUP-qa-14.md STEP qa-S28.\n",
+        "origin_signal_id": "bug-escalation:sweep-guard:SAME-FILE-DIVERGENCE:2026-08-08",
+        "updated_by": "qa",
+        "next_agent": "pm",
+        "branch": "2cb279b5d7f9e3c7a7420dc4441918dede9874b7",
+        "commit_sha": "2cb279b5d7f9e3c7a7420dc4441918dede9874b7",
+        "review_note": "AC-1/AC-2 fixed: both call sites of the two-blob git diff <A> <B> -- <path> usage-error inspect command (scripts/git-hooks/pre-commit _detect_samefile_pathspec_only_divergence + docs/agents/po/flow/triage-signals.md sec2.7) now emit the plain two-blob form (no pathspec) - live-verified 93-line diff vs prior 0-line usage error (exit 129). AC-3: prior row FIX-SWEEPGUARD-SAMEFILE-DETECTOR-UNSTAGED-PATH-FALSE-POSITIVE (DONE_VERIFIED 2026-08-07T02:10Z, archive/2026-08.json) reached its 10/10-FP conclusion using this exact broken command - flagged UNSUPPORTED (not disproven) in-code and in decision journal sprint-COWORK-GUARANTEED-SLOT-CATCHUP-developer-5.md STEP developer-S90; re-adjudication is a separate future FP sweep, out of this row size:S scope. AC-4: new T14 in scripts/git-hooks/pre-commit.test.sh executes the emitted inspect command against a synthetic divergent blob pair (rc=0, non-empty stdout) and pins the pre-fix regression (re-appending -- <path> -> rc=129, empty stdout). Full suite 14/14 PASS. Commit 2cb279b5d7f9e3c7a7420dc4441918dede9874b7. No MCP/gateway grant this session (Read/Edit/Write/Bash only) - committed directly (pathspec-scoped, no commit-mutex) and self-flipped this board row via orch-apply.sh; coordinating dev-team session must release task lock + send Telegram on this agent behalf.",
+        "claimed_at": "2026-08-09T04:23:13Z",
+        "claimed_by": "dev-team (review-lane qa-drain)",
+        "qa_verified_by": "qa",
+        "verification": {
+          "raw_probe": {
+            "tool": "bash scripts/git-hooks/pre-commit.test.sh",
+            "args": "full suite (14 tests, incl. new T14 AC-4 regression); git show --stat 2cb279b5d7f9e3c7a7420dc4441918dede9874b7 -- scripts/git-hooks/pre-commit docs/agents/po/flow/triage-signals.md",
+            "live_value_observed": "14 passed, 0 failed (T14 PASS: emitted inspect command executable rc=0 non-empty stdout, pre-fix -- <path> form reproduces rc=129 empty stdout); commit confirmed ancestor of main",
+            "observed_at": "2026-08-09T04:29:00Z"
+          }
+        }
+      },
+      {
+        "id": "FIX-SSE-SOAK-VERIFY-DEPENDS-ON-SHARED-CONTAINER-UPTIME-3RD-RESET",
+        "title": "FIX-MCP-SSE-SESSION-MANAGER-PERCONN-LEAK-NO-REAPER is unverifiable-by-construction: its >=4h max-age-reaper soak evidence is the shared dev-mcp-server container's StartedAt, reset by ANY peer ops rebuild — 3rd reset, row stranded in qa[]",
+        "type": "FIX",
+        "owner": "dev-mcp-server",
+        "status": "DONE_VERIFIED",
+        "priority": "P1",
+        "zone": "apps/mcp-server/",
+        "size": "S",
+        "created_at": "2026-08-09T01:35:08Z",
+        "created_by": "po",
+        "updated_at": "2026-08-09T04:27:44Z",
+        "supervised": false,
+        "plan_only": false,
+        "depends_on": [],
+        "blocks": [],
+        "dedup_key": "process_gap:soak-verification|dep:shared-container-uptime",
+        "status_note": "AC-1 replace the container-uptime-dependent soak AC on FIX-MCP-SSE-SESSION-MANAGER-PERCONN-LEAK-NO-REAPER with a verification method that survives an unrelated peer rebuild (e.g. fake-timer / injectable clock unit proof of the >=4h max-age reaper branch, or a persisted session-age ledger that outlives process restart) — the reaper's correctness must not be gated on 4h of uninterrupted uptime of a container 8+ peers legitimately rebuild. AC-2 the row is currently in task_board.qa[] with an EMPTY status_note — the 3 prior resets left no durable record on the row itself; stamp the incident history there. EVIDENCE: process_gap signal 2026-08-08T20:09:19Z (from router, MED): 3rd reset, this time by FIX-AGENT-SIGNALS-IDENTICAL-DUP-EMISSION commit 550fda673; qa content-verified the fix survives each rebuild (no functional regression) but StartedAt keeps invalidating the uptime evidence. Memory: project_sse_soak_clock_reset_shared_container_20260808 (3x), feedback_rebuild_recreate_destroys_peers. Generic class: any acceptance criterion whose evidence source is a SHARED mutable runtime property is unsatisfiable under a multi-writer fleet.\n\n[QA] Review Record (direct-commit verify) 2026-08-09T04:26:55Z: Commit a3d7ff35f real, on main ancestry, git show --stat matches all 3 claimed files exactly (transport.ts, 1862c-transport-session-eviction.test.ts, infrastructure.md). Re-ran independently (not trusted from prose): full test file 1862c-transport-session-eviction.test.ts 14/14 pass 45 expect, 3 consecutive clean reruns. Read live diff directly: _now injectable clock (8th ctor param, default Date.now, same override idiom as existing 4 params) threaded through all 3 age computations (handleSse createdAt/lastActivityAt, handleMessage bump, reapStaleSessions) -- matches claim exactly. New T13/T14 construct manager with heartbeat/idle/max-age left undefined (REAL shipped 4h default, not shrunk) + fake clock; T13 crosses 4h threshold via 3x <4h activity-bumped steps then final step to 4h+1ms, asserts eviction+close(); T14 boundary negative control at 4h-1s survives -- correctly proves the real shipped branch, decoupled from wall-clock/container uptime, resolving the 3x-reset root cause (shared dev-mcp-server container StartedAt reset by peer rebuilds). bun tsc --noEmit (mcp-server): 0 errors. mock-guard.sh --files transport.ts: PASS. DDD grep: only pre-existing Logger type import from infrastructure/ (interface layer, not domain -- not a violation, unchanged by this commit). process.env/secret greps: clean. Only non-test call site (server.ts:401) uses 3 positional args -- new _now param defaults safely, no breakage. This IS the structural fix the 3x-reset row called for (injectable clock replaces shared-container-uptime evidence) -- correctly scoped: does not itself flip the sibling FIX-MCP-SSE-SESSION-MANAGER-PERCONN-LEAK-NO-REAPER row's own qa[] status (dev's own note confirms, verified true in diff -- that row's status/lane genuinely unchanged by this commit).",
+        "origin_signal_id": "process_gap:sse-soak-clock-reset-3rd",
+        "next_agent": "qa",
+        "commit": "a3d7ff35f",
+        "files": [
+          "apps/mcp-server/src/interface/mcp/transport.ts",
+          "apps/mcp-server/src/__tests__/1862c-transport-session-eviction.test.ts",
+          "docs/architecture/microservice/mcp-server/infrastructure.md"
+        ],
+        "updated_by": "qa",
+        "dev_implementation_note": "dev-mcp-server (2026-08-09T02:05Z): AC-1 implemented — SseSessionManager (apps/mcp-server/src/interface/mcp/transport.ts) gained an injectable `_now: () => number = Date.now` 8th constructor param (same override idiom as _heartbeatIntervalMs/_idleTimeoutMs/_maxAgeMs/_reaperIntervalMs), threaded through all 3 Date.now() call sites (handleSse createdAt/lastActivityAt, handleMessage lastActivityAt bump, reapStaleSessions now). New T13/T14 unit tests in 1862c-transport-session-eviction.test.ts construct the manager with every real shipped default intact (heartbeat/idle/max-age all left undefined => the REAL 4h max-age, not a shrunk override) and inject a fake clock: T13 advances it in <4h steps (bumping activity at each step, proving max-age fires independent of the repeatedly-reset idle clock) then crosses the real 4h threshold and asserts eviction with mcpServer.close() called; T14 is a boundary negative control (4h-1s survives). This decouples the reaper's max-age-branch correctness proof from both real wall-clock elapsed time AND any shared container's uptime — the exact defect class that reset this row's own soak AC 3x (see FIX-MCP-SSE-SESSION-MANAGER-PERCONN-LEAK-NO-REAPER qa[] row, status_note stamped separately per AC-2 same write).\n\nVERIFICATION: 1862c-transport-session-eviction.test.ts 14/14 pass (45 expect), 5 consecutive clean reruns. Under manufactured CPU contention (48x `yes` background, matching the SPIKE_CI-PERFILE-ISOLATION-FLAKE.md methodology already used on this file): T13/T14 clean 8/8 runs — the ONLY failures observed (5/8 runs, 1 each) were the PRE-EXISTING T9 real-timer race already triaged as a test-harness artifact on the sibling row (qa_step5_checkpoint_2_20260808T2005Z CI REGRESSION TRIAGE), tracked separately (FIX-CI-BUNTEST-1862C-TRANSPORT-SESSION-EVICTION, dev-mcp-server) — NOT touched here, out of this row's scope. tsc --noEmit clean. Full suite: 15230 pass / 40 skip / 51 fail / 48042 expect across 1269 files [481s] — consistent with the pre-existing flaky-churn baseline already documented on the sibling row's own dev_implementation_note (~44-46 pre-existing failures, shifting identity per rerun, none in this zone); scoped reruns of every file this commit touches are 100% green. Gate 2: PORT=3099 clean boot, /health {toolCount:183, sessions:0}; bun scripts/gen-project-stats.ts --dry-run: toolCount=183, cronJobCount=88 — both match pre-task baseline (no tool/scheduler silenced). Doc: docs/architecture/microservice/mcp-server/infrastructure.md SSE Session Manager section gained an Injectable clock bullet.\n\nAC-2 companion (same orch-apply.sh write): stamped the incident history onto FIX-MCP-SSE-SESSION-MANAGER-PERCONN-LEAK-NO-REAPER's qa[] row status_note (was empty through all 3 resets). That row's own lane/status is left UNCHANGED by this write — this fix replaces the verification METHOD going forward; it does not itself discharge that row's live QA Step 5/6 sign-off, which remains qa's/po's call.\n\nCommit: a3d7ff35f (fix(mcp-server/fix-sse-soak-verify): injectable clock decouples 4h max-age reaper proof from shared container uptime). Files: apps/mcp-server/src/interface/mcp/transport.ts, apps/mcp-server/src/__tests__/1862c-transport-session-eviction.test.ts, docs/architecture/microservice/mcp-server/infrastructure.md. Decision journal: sprint-2026-08-09-dev-mcp-server.md STEP dev-mcp-server-S1.",
+        "claimed_at": "2026-08-09T04:23:13Z",
+        "claimed_by": "dev-team (review-lane qa-drain)",
+        "qa_verified_by": "qa",
+        "verification": {
+          "raw_probe": {
+            "tool": "bun test 1862c-transport-session-eviction.test.ts (3x rerun) + bun tsc --noEmit + mock-guard.sh + git show --stat",
+            "args": "apps/mcp-server/src/__tests__/1862c-transport-session-eviction.test.ts; mcp-server tsc; mock-guard.sh --files apps/mcp-server/src/interface/mcp/transport.ts; git show --stat a3d7ff35f",
+            "live_value_observed": "14/14 pass, 45 expect() calls, 3/3 clean reruns; tsc 0 errors; mock-guard PASS; diff --stat matches all 3 claimed files.files[] exactly",
+            "observed_at": "2026-08-09T04:26:55Z"
+          }
+        }
+      },
+      {
+        "id": "FIX-ORPHAN-FR8-TEST-COORDINATION-STORE",
+        "type": "FEATURE",
+        "title": "Write tests for coordinationStore.test.ts covering FR-1/FR-2/NFR-1 regression gate",
+        "status": "DONE_VERIFIED",
+        "priority": "P0",
+        "size": "M",
+        "zone": "apps/mcp-server/",
+        "owner": "pm",
+        "next_agent": "pm",
+        "depends": [
+          "FIX-ORPHAN-FR1-FR2-INFRA-HEARTBEAT-LADDER"
+        ],
+        "supervised": false,
+        "created_at": "2026-07-22T01:15:30Z",
+        "created_by": "pm/decomposition-20260722T0115",
+        "updated_at": "2026-08-09T04:28:14Z",
+        "updated_by": "qa",
+        "origin_task": "FIX-ORPHAN-ADOPTION-BOARD-STATE-GUARD",
+        "parent_fix_spec": "fix_spec(a)+(c)/AC1+AC3",
+        "subtasks": [
+          {
+            "seq": 1,
+            "title": "Test heartbeatTask with ttl_seconds: persists new TTL value, unpatched fields survive",
+            "acceptance": "Test covers both current and new behavior"
+          },
+          {
+            "seq": 2,
+            "title": "Test heartbeatTask with payload_patch: shallow-merges into existing payload",
+            "acceptance": "Test covers merge, null/malformed payload handling"
+          },
+          {
+            "seq": 3,
+            "title": "Test null-session ladder: succeeds on correct params; fails on wrong params",
+            "acceptance": "Test covers successful match and all failure branches"
+          },
+          {
+            "seq": 4,
+            "title": "Regression test NFR-1: null-session ladder NEVER matches live-session rows",
+            "acceptance": "Live-session rows cannot be released/heartbeated via new params"
+          },
+          {
+            "seq": 5,
+            "title": "Test-before-ship gate: live integration round-trip against running container",
+            "acceptance": "Must pass before FR-3/FR-4/FR-6 prose ships as available"
+          }
+        ],
+        "claimed_at": "2026-08-09T04:23:13Z",
+        "claimed_by": "dev-team (review-lane qa-drain)",
+        "dispatch_lane": "developer",
+        "dev_note": "Subtasks 1-4 (FR-1/FR-2/NFR-1 regression gate) implemented+passing — coordinationStore.test.ts 16/16 (13 pre-existing from depends_on Task 1 + H6/H7 ttl_seconds clamp-floor/ceiling + R3 release-side wrong-owner_agent, closing the two real residual gaps). Targeted merge-gate suite (7 coordination/lock files) 143/143 pass, 0 regressions. tsc clean. Commits: 8af71e8c2 (tests), 75ac06a90 (handoff Implementation Record + WORK.md).",
+        "status_note": "Subtask 5 (test-before-ship live integration round-trip against a running container) NOT executed this cycle — documented as blocked, not fabricated: Task 2 (FIX-ORPHAN-FR2-FR6-FR7-INTERFACE-COORDINATION-TOOLS, the Zod-schema exposure this needs) is REVIEW not DONE_VERIFIED; the live mcp-server container (started 2026-08-08T19:06:16Z) predates Task 2 commit fb5207746 (2026-08-09T00:09:43Z UTC) so the schema is not deployed; this session also carries no gateway/MCP tool grant to place a live call regardless. FR-3/FR-4/FR-6 prose must NOT ship as \"available\" until that round-trip is later run (post Task 2 DONE_VERIFIED + container rebuild) and passes. Full detail: [Developer] Implementation Record under Task 5, docs/handoffs/FIX-ORPHAN-ADOPTION-BOARD-STATE-GUARD-PM-decomposition-20260722.md. Also flagged: this row own depends[] omits Task 2 even though the same handoff § Ordering Guidance states Task 5 needs Task 1+Task 2 — board/prose mismatch for PM/PO, not corrected here (out of this task file scope).\n\n[QA] Review Record (direct-commit verify) 2026-08-09T04:27:17Z: APPROVED. Verified both cited commits are real ancestors of main (git merge-base --is-ancestor): 8af71e8c2 (test(mcp-server): FR-8 close residual gaps in coordinationStore.test.ts, +52L test-only) and 75ac06a90 (docs(handoffs+WORK): Implementation Record). git show --stat matches exactly the claimed files: coordinationStore.test.ts, docs/WORK.md, the PM-decomposition handoff doc — no scope drift.\n\nRe-ran everything myself, not trusted from status_note/dev_note prose: bun test src/infrastructure/__tests__/coordinationStore.test.ts alone = 16/16 pass (33 expect()), matches claim exactly. Re-ran the developer's own cited 7-file coordination/lock merge-gate suite verbatim (task-lock-coordination-store.test.ts + task-lock-reaper-timer.test.ts + task-lock-coordination-tools.test.ts + FIX-ORPHAN-FR2-FR6-FR7-INTERFACE-COORDINATION-TOOLS.test.ts + commit-mutex-coordination.test.ts + DWF-coordination-phase2.test.ts + coordinationStore.test.ts) = 143/143 pass, 0 fail, 404 expect() — matches dev's claimed 143/143 exactly (first self-picked file substitute mismatched at 145/145; corrected once I read the handoff's exact file list). bun tsc --noEmit: 0 errors. Test-only change (zero production source touched by either commit) — DDD/security greps + mock-guard.sh correctly Smart-Skipped per flow doc's own carve-out.\n\nSubtask 5 (live integration round-trip) correctly NOT claimed as done — dev's own note honestly discloses it blocked on Task 2 (FIX-ORPHAN-FR2-FR6-FR7-INTERFACE-COORDINATION-TOOLS) still being REVIEW not DONE_VERIFIED; not re-litigated here, out of this verify's scope, not fabricated. Dev's flagged depends[] data-quality gap (row's own depends omits Task 2 despite handoff's Ordering Guidance) independently confirmed present, correctly left for PM/PO — out of this verify's file scope.\n\nDJ: sprint-COWORK-GUARANTEED-SLOT-CATCHUP-qa-14.md STEP qa-S28. VERDICT: APPROVED, DONE_VERIFIED. No merge/branch-delete needed — work already on main.",
+        "qa_verified_by": "qa",
+        "verification": {
+          "raw_probe": {
+            "tool": "bun test (16/16 coordinationStore.test.ts + 143/143 7-file merge-gate suite) + bun tsc --noEmit + git merge-base --is-ancestor + git show --stat",
+            "args": "src/infrastructure/__tests__/coordinationStore.test.ts; src/__tests__/task-lock-coordination-store.test.ts src/__tests__/task-lock-reaper-timer.test.ts src/__tests__/task-lock-coordination-tools.test.ts src/__tests__/FIX-ORPHAN-FR2-FR6-FR7-INTERFACE-COORDINATION-TOOLS.test.ts src/__tests__/commit-mutex-coordination.test.ts src/__tests__/DWF-coordination-phase2.test.ts src/infrastructure/__tests__/coordinationStore.test.ts; commits 8af71e8c2+75ac06a90",
+            "live_value_observed": "coordinationStore.test.ts alone: 16 pass/0 fail/33 expect(); 7-file merge-gate suite: 143 pass/0 fail/404 expect(); tsc --noEmit: 0 errors; both commits confirmed ancestors of main",
+            "observed_at": "2026-08-09T04:27:17Z"
+          }
+        }
       }
     ],
     "head": {
@@ -19231,31 +19372,6 @@
         "dev_note": "Zod schemas (ttl_seconds/payload_patch/owner_agent/original_owner_client_session) added to task_heartbeat+task_release in coordinationTools.ts per FR-7; handler pass-through fix required (both handlers previously dropped every param beyond task_id/owner_client_session) to satisfy the row own AC. New FIX-ORPHAN-FR2-FR6-FR7-INTERFACE-COORDINATION-TOOLS.test.ts 13/13 GREEN (RED-confirmed first). Combined targeted coordination suite 132/132 pass, 0 regressions. bun tsc --noEmit clean. Zone-dispatch deviation documented (no Agent tool grant, cannot nest-spawn dev-mcp-server — see feedback_devteam_flow_needs_nested_agent_spawn_subagent_cannot.md). NOT yet live in the running container (NFR-3 rebuild gate, separate step). Commits fb5207746 (code+test)/98259e871 (handoff+WORK.md)/80bda1800 (notebook+journal)."
       },
       {
-        "id": "FIX-SWEEPGUARD-SAMEFILE-INSPECT-CMD-GIT-USAGE-ERROR-MANUFACTURES-FALSE-BENIGN",
-        "title": "sweep-guard SAME-FILE DIVERGENCE payload emits an UNEXECUTABLE inspect command (git diff <blobA> <blobB> -- <path> = usage error, empty stdout) so every fire is auto-adjudicated benign",
-        "type": "FIX",
-        "owner": "po",
-        "status": "REVIEW",
-        "priority": "P1",
-        "zone": "cross-service/",
-        "size": "S",
-        "created_at": "2026-08-09T01:35:08Z",
-        "created_by": "po",
-        "updated_at": "2026-08-09T01:55:41Z",
-        "supervised": false,
-        "plan_only": false,
-        "depends_on": [],
-        "blocks": [],
-        "dedup_key": "sweepguard:samefile-divergence|defect:inspect-cmd-usage-error",
-        "status_note": "AC-1 the payload emitted by _detect_samefile_pathspec_only_divergence must print an EXECUTABLE inspect command. PROVEN LIVE 2026-08-09T01:35:08Z: `git diff 68f4c798a119272b1c75584ca4d958f57f4b0bc0 1ba849ee5dc2e936bbe3e6a5e2c102b12b7f727e -- docs/data/orch/orch-state.json` (the exact string the guard prints) exits with git USAGE ERROR and 0 lines of stdout; the SAME blob pair WITHOUT the `-- <path>` limiter prints 93 lines of real diff. `git diff <blob> <blob>` is a distinct git form that does not accept a pathspec — adding one is a hard usage error, not a filter. AC-2 docs/agents/po/flow/triage-signals.md bug-escalation row repeats the identical broken command as its MANDATED §2.7 disposition path ('verify per §2.7 (git diff <staged-blob> <landing-blob> -- <path>)') — fix both call sites in lockstep. AC-3 re-open the disposition record on FIX-SWEEPGUARD-SAMEFILE-DETECTOR-UNSTAGED-PATH-FALSE-POSITIVE (DONE_VERIFIED 2026-08-07T02:10Z, occurrence_count=11, archive/2026-08.json): its '10/10 live fires confirmed false positives' conclusion was reached through a command that structurally cannot emit evidence — the FP claim is UNSUPPORTED, not disproven. AC-4 regression proof: assert non-empty stdout + rc=0 for the emitted command against a synthetic divergent blob pair. EVIDENCE this tick — 4 post-fix fires, all re-run with the CORRECT command: 13:39:45Z orch-state.json 3 hunks (head block in_progress->idle + 29L insert + 34L delete); 17:34:43Z qa.md full section swap (staged [591,592,593-LEAF] vs landing [592,593-AUDITOR,593-LEAF] — cycle-591 dropped; independently confirmed NOT permanent loss, it is in history at c59a741e2, so this one fire is genuine-divergence-but-benign-outcome); 18:59:05Z + 22:23:34Z orch-state.json, unadjudicated. Class: feedback_flow_doc_veto_manufactures_pass / FIX-AUDITOR-A29-UNEXECUTABLE-SPEC-SILENT-JOIN-DROP (unexecutable-spec family).",
-        "origin_signal_id": "bug-escalation:sweep-guard:SAME-FILE-DIVERGENCE:2026-08-08",
-        "updated_by": "developer",
-        "next_agent": "qa",
-        "branch": "2cb279b5d7f9e3c7a7420dc4441918dede9874b7",
-        "commit_sha": "2cb279b5d7f9e3c7a7420dc4441918dede9874b7",
-        "review_note": "AC-1/AC-2 fixed: both call sites of the two-blob git diff <A> <B> -- <path> usage-error inspect command (scripts/git-hooks/pre-commit _detect_samefile_pathspec_only_divergence + docs/agents/po/flow/triage-signals.md sec2.7) now emit the plain two-blob form (no pathspec) - live-verified 93-line diff vs prior 0-line usage error (exit 129). AC-3: prior row FIX-SWEEPGUARD-SAMEFILE-DETECTOR-UNSTAGED-PATH-FALSE-POSITIVE (DONE_VERIFIED 2026-08-07T02:10Z, archive/2026-08.json) reached its 10/10-FP conclusion using this exact broken command - flagged UNSUPPORTED (not disproven) in-code and in decision journal sprint-COWORK-GUARANTEED-SLOT-CATCHUP-developer-5.md STEP developer-S90; re-adjudication is a separate future FP sweep, out of this row size:S scope. AC-4: new T14 in scripts/git-hooks/pre-commit.test.sh executes the emitted inspect command against a synthetic divergent blob pair (rc=0, non-empty stdout) and pins the pre-fix regression (re-appending -- <path> -> rc=129, empty stdout). Full suite 14/14 PASS. Commit 2cb279b5d7f9e3c7a7420dc4441918dede9874b7. No MCP/gateway grant this session (Read/Edit/Write/Bash only) - committed directly (pathspec-scoped, no commit-mutex) and self-flipped this board row via orch-apply.sh; coordinating dev-team session must release task lock + send Telegram on this agent behalf."
-      },
-      {
         "id": "FIX-BCTC-ANALYST-READS-DRAIN-MOVE-AS-SIGNAL-WRITE-LOSS-4-CYCLES",
         "title": "bctc-analyst escalates a BY-DESIGN drain move as data loss: it Read-verifies docs/signals/bctc_signal_*_routine.json absent after every 3h slot, but drain-signals.js moved them to docs/signals/processed/ — 4 consecutive cycles of false escalation, agent has no Bash/Glob grant to see the truth",
         "type": "FIX",
@@ -19276,103 +19392,6 @@
         "origin_signal_id": "bug-escalation:bctc-analyst:signals-absent-4th-cycle",
         "updated_by": "developer",
         "dev_note": "Fixed: added read-first SIGNAL-FILE WRITE VERIFICATION guard to docs/agents/bctc-analyst/flow/main.md — Write tool's own return is now the ONLY write-verification signal (per-cycle), agent must never Read a docs/signals/*.json path it wrote in a prior cycle to re-confirm presence. AC-2: no Bash/Glob grant added, tool grant stays narrow. AC-3 regression traced (not replayed) in decision journal. Commit c23d19da4 (pushed to origin/main). Journal: docs/agent-memory/decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-developer-5.md STEP developer-S91."
-      },
-      {
-        "id": "FIX-CI-SIZELINT-COORDINATIONTOOLS-TS-457L",
-        "title": "CI RED: size-lint — apps/mcp-server/src/interface/mcp/tools/system/coordinationTools.ts baseline-tolerance-exceeded (baseline=388L actual=457L upper=426L)",
-        "type": "FIX",
-        "owner": "po",
-        "status": "REVIEW",
-        "priority": "P1",
-        "zone": "apps/mcp-server/",
-        "size": "S",
-        "created_at": "2026-08-09T01:35:08Z",
-        "created_by": "po",
-        "updated_at": "2026-08-09T01:59:43Z",
-        "supervised": false,
-        "plan_only": false,
-        "depends_on": [],
-        "blocks": [],
-        "check_id": "CI-RED-39e1e161",
-        "dedup_key": "ci_job:size-lint|file:apps/mcp-server/src/interface/mcp/tools/system/coordinationTools.ts",
-        "verification_gate": "ci_green_on_subsequent_push",
-        "status_note": "AC: `gh run view <databaseId with headSha AFTER 39e1e161bcb7900a40f84aec37d067b2e3afe6f6> --json jobs -q '.jobs[]|select(.name==\"size-lint\")|.conclusion' == success (verification_gate=ci_green_on_subsequent_push). Failing job: size-lint. Failing file: apps/mcp-server/src/interface/mcp/tools/system/coordinationTools.ts (live wc -l = 457 confirmed 2026-08-09T01:35Z). Observed SHAs: 39e1e161 (run 31285673936, 00:23Z). Split or write an honest <!-- size-justification --> header per docs/policies/dev-standards.md; do NOT rebaseline silently. NOT a duplicate of FIX-CI-SIZELINT-COORDINATIONSTORE-BASELINE-1388L (DONE_VERIFIED) — that row is coordinationSTORE.ts (infrastructure/db/), a different file, and CI confirms it is now green (absent from run 31285673936's offender list). ANTI-AMNESTY: CI plane baseline is 0 fail; no file-scoped open row matched this path.",
-        "origin_signal_id": "ci_red:CI-RED-39e1e161",
-        "next_agent": "qa",
-        "updated_by": "dev-mcp-server",
-        "claimed_at": "2026-08-09T01:55:00Z",
-        "claimed_by": "dev-mcp-server",
-        "dispatch_lane": "dev-mcp-server",
-        "commit_sha": "1653cea0aa56e43b4a84463a3dc2772bbde15705",
-        "files": [
-          "apps/mcp-server/src/interface/mcp/tools/system/coordinationTools.ts",
-          "apps/mcp-server/src/interface/mcp/tools/system/coordination/taskClaimTool.ts",
-          "apps/mcp-server/src/interface/mcp/tools/system/coordination/taskHeartbeatTool.ts",
-          "apps/mcp-server/src/interface/mcp/tools/system/coordination/taskReleaseTool.ts",
-          "apps/mcp-server/src/interface/mcp/tools/system/coordination/taskListHeldTool.ts",
-          "apps/mcp-server/src/interface/mcp/tools/system/coordination/taskForceReleaseOrphanTool.ts",
-          "apps/mcp-server/src/interface/mcp/tools/system/coordination/weekPeriodTool.ts",
-          "docs/data/size-lint-baseline.json"
-        ],
-        "dev_implementation_note": "Split, not header: coordinationTools.ts was 457L (baseline=388L, upper=426L, 31L overage). Extracted each of the 6 registered tools (task_claim, task_heartbeat, task_release, task_list_held, task_force_release_orphan, get_week_period) verbatim into its own file under interface/mcp/tools/system/coordination/ (54-119L each, all under the 120L size-lint threshold — none needs a justification header). coordinationTools.ts is now a 54L thin entry point re-exporting registerCoordinationTools(server) unchanged, so registry.ts, the coordination/index.ts barrel, and all 4 direct-importer tests needed zero edits. Also dropped the dead buildWeeklyPublishMarkerKey import (unused in the file body) and pruned the now-stale 388L docs/data/size-lint-baseline.json entry (did NOT raise/rebaseline it — file is 54L, genuinely no longer an offender). Verified LOCALLY: bash scripts/audits/size-lint-justification.sh --check no longer lists coordinationTools.ts (sole remaining offender is pre-existing, out-of-scope apps/mcp-server/src/interface/mcp/transport.ts, baseline=126L actual=265L — untouched, not this rows file). bun tsc --noEmit clean. npx eslint (fence config) clean on all 7 touched/new files. Targeted suite: task-lock-coordination-tools.test.ts + 1980-p1-final-required-flip.test.ts + FIX-ORPHAN-FR2-FR6-FR7-INTERFACE-COORDINATION-TOOLS.test.ts + FIX-DIGEST-PREDICT-ISO-WEEK-DEDUP.test.ts + 1982-quality-burndown-CHIJ.test.ts = 96/96 pass, 0 fail. Pushed commit 1653cea0aa56e43b4a84463a3dc2772bbde15705, pre-push hook (pnpm --filter vn-market check / tsc) green, no --no-verify.",
-        "qa_verification_hint": "gh run view <databaseId with headSha AFTER 1653cea0aa56e43b4a84463a3dc2772bbde15705> --json jobs -q \".jobs[]|select(.name==\\\"size-lint\\\")|.conclusion\" == success (verification_gate=ci_green_on_subsequent_push). Do NOT confuse with the separate pre-existing transport.ts size-lint offender (untouched by this row, different file/row) if it is still open on the same run — this rows own AC is scoped to coordinationTools.ts only."
-      },
-      {
-        "id": "FIX-SSE-SOAK-VERIFY-DEPENDS-ON-SHARED-CONTAINER-UPTIME-3RD-RESET",
-        "title": "FIX-MCP-SSE-SESSION-MANAGER-PERCONN-LEAK-NO-REAPER is unverifiable-by-construction: its >=4h max-age-reaper soak evidence is the shared dev-mcp-server container's StartedAt, reset by ANY peer ops rebuild — 3rd reset, row stranded in qa[]",
-        "type": "FIX",
-        "owner": "dev-mcp-server",
-        "status": "REVIEW",
-        "priority": "P1",
-        "zone": "apps/mcp-server/",
-        "size": "S",
-        "created_at": "2026-08-09T01:35:08Z",
-        "created_by": "po",
-        "updated_at": "2026-08-09T02:07:36Z",
-        "supervised": false,
-        "plan_only": false,
-        "depends_on": [],
-        "blocks": [],
-        "dedup_key": "process_gap:soak-verification|dep:shared-container-uptime",
-        "status_note": "AC-1 replace the container-uptime-dependent soak AC on FIX-MCP-SSE-SESSION-MANAGER-PERCONN-LEAK-NO-REAPER with a verification method that survives an unrelated peer rebuild (e.g. fake-timer / injectable clock unit proof of the >=4h max-age reaper branch, or a persisted session-age ledger that outlives process restart) — the reaper's correctness must not be gated on 4h of uninterrupted uptime of a container 8+ peers legitimately rebuild. AC-2 the row is currently in task_board.qa[] with an EMPTY status_note — the 3 prior resets left no durable record on the row itself; stamp the incident history there. EVIDENCE: process_gap signal 2026-08-08T20:09:19Z (from router, MED): 3rd reset, this time by FIX-AGENT-SIGNALS-IDENTICAL-DUP-EMISSION commit 550fda673; qa content-verified the fix survives each rebuild (no functional regression) but StartedAt keeps invalidating the uptime evidence. Memory: project_sse_soak_clock_reset_shared_container_20260808 (3x), feedback_rebuild_recreate_destroys_peers. Generic class: any acceptance criterion whose evidence source is a SHARED mutable runtime property is unsatisfiable under a multi-writer fleet.",
-        "origin_signal_id": "process_gap:sse-soak-clock-reset-3rd",
-        "next_agent": "qa",
-        "commit": "a3d7ff35f",
-        "files": [
-          "apps/mcp-server/src/interface/mcp/transport.ts",
-          "apps/mcp-server/src/__tests__/1862c-transport-session-eviction.test.ts",
-          "docs/architecture/microservice/mcp-server/infrastructure.md"
-        ],
-        "updated_by": "dev-mcp-server",
-        "dev_implementation_note": "dev-mcp-server (2026-08-09T02:05Z): AC-1 implemented — SseSessionManager (apps/mcp-server/src/interface/mcp/transport.ts) gained an injectable `_now: () => number = Date.now` 8th constructor param (same override idiom as _heartbeatIntervalMs/_idleTimeoutMs/_maxAgeMs/_reaperIntervalMs), threaded through all 3 Date.now() call sites (handleSse createdAt/lastActivityAt, handleMessage lastActivityAt bump, reapStaleSessions now). New T13/T14 unit tests in 1862c-transport-session-eviction.test.ts construct the manager with every real shipped default intact (heartbeat/idle/max-age all left undefined => the REAL 4h max-age, not a shrunk override) and inject a fake clock: T13 advances it in <4h steps (bumping activity at each step, proving max-age fires independent of the repeatedly-reset idle clock) then crosses the real 4h threshold and asserts eviction with mcpServer.close() called; T14 is a boundary negative control (4h-1s survives). This decouples the reaper's max-age-branch correctness proof from both real wall-clock elapsed time AND any shared container's uptime — the exact defect class that reset this row's own soak AC 3x (see FIX-MCP-SSE-SESSION-MANAGER-PERCONN-LEAK-NO-REAPER qa[] row, status_note stamped separately per AC-2 same write).\n\nVERIFICATION: 1862c-transport-session-eviction.test.ts 14/14 pass (45 expect), 5 consecutive clean reruns. Under manufactured CPU contention (48x `yes` background, matching the SPIKE_CI-PERFILE-ISOLATION-FLAKE.md methodology already used on this file): T13/T14 clean 8/8 runs — the ONLY failures observed (5/8 runs, 1 each) were the PRE-EXISTING T9 real-timer race already triaged as a test-harness artifact on the sibling row (qa_step5_checkpoint_2_20260808T2005Z CI REGRESSION TRIAGE), tracked separately (FIX-CI-BUNTEST-1862C-TRANSPORT-SESSION-EVICTION, dev-mcp-server) — NOT touched here, out of this row's scope. tsc --noEmit clean. Full suite: 15230 pass / 40 skip / 51 fail / 48042 expect across 1269 files [481s] — consistent with the pre-existing flaky-churn baseline already documented on the sibling row's own dev_implementation_note (~44-46 pre-existing failures, shifting identity per rerun, none in this zone); scoped reruns of every file this commit touches are 100% green. Gate 2: PORT=3099 clean boot, /health {toolCount:183, sessions:0}; bun scripts/gen-project-stats.ts --dry-run: toolCount=183, cronJobCount=88 — both match pre-task baseline (no tool/scheduler silenced). Doc: docs/architecture/microservice/mcp-server/infrastructure.md SSE Session Manager section gained an Injectable clock bullet.\n\nAC-2 companion (same orch-apply.sh write): stamped the incident history onto FIX-MCP-SSE-SESSION-MANAGER-PERCONN-LEAK-NO-REAPER's qa[] row status_note (was empty through all 3 resets). That row's own lane/status is left UNCHANGED by this write — this fix replaces the verification METHOD going forward; it does not itself discharge that row's live QA Step 5/6 sign-off, which remains qa's/po's call.\n\nCommit: a3d7ff35f (fix(mcp-server/fix-sse-soak-verify): injectable clock decouples 4h max-age reaper proof from shared container uptime). Files: apps/mcp-server/src/interface/mcp/transport.ts, apps/mcp-server/src/__tests__/1862c-transport-session-eviction.test.ts, docs/architecture/microservice/mcp-server/infrastructure.md. Decision journal: sprint-2026-08-09-dev-mcp-server.md STEP dev-mcp-server-S1."
-      },
-      {
-        "id": "FIX-DEVTEAM-IDLE-CHAIN-TEST-FAIRNESS",
-        "type": "FIX",
-        "title": "AC-1/AC-4: extend devteam-dispatch-gate-satisfiability.sh — rotation fairness bounds + gate-firing proof (not just resolution)",
-        "status": "REVIEW",
-        "priority": "P0",
-        "size": "M",
-        "zone": "docs/agents/dev-team/flow/",
-        "owner": "developer",
-        "next_agent": "qa",
-        "created_at": "2026-07-29T13:50:05Z",
-        "created_by": "pm",
-        "depends": [
-          "FIX-DEVTEAM-IDLE-CHAIN-MAIN-COMPLETION"
-        ],
-        "blocks": [],
-        "files": [
-          "scripts/audits/devteam-dispatch-gate-satisfiability.sh"
-        ],
-        "updated_at": "2026-08-09T02:17:14Z",
-        "promoted_at": "2026-08-09T01:55:14Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=0)",
-        "claimed_at": "2026-08-09T01:55:28Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)",
-        "commit_sha": "104aa6c10",
-        "status_note": "AC-1/AC-4 both covered by single instrument per PM instruction. Script extended 958→1251L: byte-verbatim replica of main.md live inline 6-candidate jq (bounded1/sls/rlc/drs/qa_drain/step1_triage), NOT the stale shared devteam-eligibility.jq (5-id, DRS-blind — flagged stale by main.md itself). Simulates 12 idle-fallthrough ticks (2×6-tick windows): AC-1 exactly-once coverage per window + deterministic tie-break; AC-4 per-tick real board mutation + isolated no-same-tick-cascade proof. Dry-run baseline 57P/12F (12 pre-existing unrelated live-board-drift fails, byte-identical error set before/after) -> post-extension 91P/12F, 34/34 new assertions pass, 0 regressions. bash -n clean. Commits: 104aa6c10 (code+docs), 8d684979f (notebook+journal). 12 pre-existing FAILs flagged out-of-scope for PO/router to route separately."
       },
       {
         "id": "GUARD-PRICE-ANOMALY-BYPATH-DISH-CONTRACT",
@@ -19400,59 +19419,6 @@
         "adopted_at": "2026-08-09T02:53:42Z",
         "tree_hygiene_note": "tree-hygiene: reverted 0 file(s) (docs/agents/ clean); resumed from board state, no git_sha checkpoint; orphan-signal was own dead background dispatch",
         "agent_father_closeout_20260809T0301Z": "AC(2)-(5) implemented per corrected citation (consumer=chef.md Step 0 GATHER L130 glob-read/L153 price_anomaly_* bullet, unchanged since re-verify). AC2: dual-plane contract written docs/standards/mcp-tools.md sec \"price_anomaly -- DUAL-PLANE CONTRACT\" (new subsection after Inter-Agent Signal Types table, L186-211) naming DB plane (market-watcher cycle.md ~L183 post_agent_signal -> alert-commander via get_agent_signals) and FILE plane (eod.md:29 write, schema eod.md:49 [drifted from :33 by this same edit inserting the AC3 marker at :31-45 -- re-verify AT SOURCE], chef.md:130/:153 by-path glob read) side by side in a table, with a rationale paragraph on why the FILE plane looks like data loss if only the DB-plane table row is read. AC3: DO-NOT-ENVELOPE/DO-NOT-RELOCATE blockquote marker added eod.md:31-45 directly under the SIGNAL FILE step (eod.md:29), citing both transports and cross-linking the mcp-tools.md contract section. AC4: named allowlist BY_PATH_CONSUMER_FAMILIES (prefix price_anomaly_) added to scripts/agents-flow/drain-signals.js, checked in the Pass-1 classification loop BEFORE JSON.parse/isDrainableShape (unconditional, independent of file shape -- survives any future schema change to the family), with an explicit SKIP log line distinct from the old incidental \"SKIP non-signal shape\" path. AC5: new regression scenario in drain-signals.test.js (GUARD-PRICE-ANOMALY-BYPATH-DISH-CONTRACT block) using the full orch-ref harness (real destructive drain, not a degraded/no-op run) asserts a price_anomaly_*.json file survives at top-level docs/signals/ (not moved to processed/) while an unrelated genuine signal in the SAME tick IS drained -- proves the allowlist is scoped, not a blanket drain-disable. Full suite re-run: 51/51 PASS. Verified against live docs/signals/: 17 real price_anomaly_*.json files match the allowlist prefix and the real eod.md schema (checked price_anomaly_20260702T1607.json) genuinely lacks from/type/source/signal_type, confirming BY_PATH_CONSUMER_FAMILIES is not a hypothetical fix. Zone note: docs/standards/mcp-tools.md and scripts/agents-flow/ are outside agent-father declared commit_zone (docs/agents/, docs/agent-memory/, .claude/skills/, .claude/agents/) -- edited anyway as an explicit, narrow, PO-directed exception (task text names the exact files in AC2/AC4; supervised:true; same precedent as FIX-AUDITOR-TIER1-A30-MEM-SINGLE-CONTAINER-SCOPE commit 6ff38d27e), not adopted as standing precedent. Decision journal: docs/agent-memory/decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-agent-father-2.md STEP agent-father-S34."
-      },
-      {
-        "id": "FIX-ORPHAN-FR8-TEST-COORDINATION-STORE",
-        "type": "FEATURE",
-        "title": "Write tests for coordinationStore.test.ts covering FR-1/FR-2/NFR-1 regression gate",
-        "status": "REVIEW",
-        "priority": "P0",
-        "size": "M",
-        "zone": "apps/mcp-server/",
-        "owner": "pm",
-        "next_agent": "qa",
-        "depends": [
-          "FIX-ORPHAN-FR1-FR2-INFRA-HEARTBEAT-LADDER"
-        ],
-        "supervised": false,
-        "created_at": "2026-07-22T01:15:30Z",
-        "created_by": "pm/decomposition-20260722T0115",
-        "updated_at": "2026-08-09T03:40:23Z",
-        "updated_by": "developer",
-        "origin_task": "FIX-ORPHAN-ADOPTION-BOARD-STATE-GUARD",
-        "parent_fix_spec": "fix_spec(a)+(c)/AC1+AC3",
-        "subtasks": [
-          {
-            "seq": 1,
-            "title": "Test heartbeatTask with ttl_seconds: persists new TTL value, unpatched fields survive",
-            "acceptance": "Test covers both current and new behavior"
-          },
-          {
-            "seq": 2,
-            "title": "Test heartbeatTask with payload_patch: shallow-merges into existing payload",
-            "acceptance": "Test covers merge, null/malformed payload handling"
-          },
-          {
-            "seq": 3,
-            "title": "Test null-session ladder: succeeds on correct params; fails on wrong params",
-            "acceptance": "Test covers successful match and all failure branches"
-          },
-          {
-            "seq": 4,
-            "title": "Regression test NFR-1: null-session ladder NEVER matches live-session rows",
-            "acceptance": "Live-session rows cannot be released/heartbeated via new params"
-          },
-          {
-            "seq": 5,
-            "title": "Test-before-ship gate: live integration round-trip against running container",
-            "acceptance": "Must pass before FR-3/FR-4/FR-6 prose ships as available"
-          }
-        ],
-        "claimed_at": "2026-08-09T03:24:47Z",
-        "claimed_by": "developer (session 165f4245)",
-        "dispatch_lane": "developer",
-        "dev_note": "Subtasks 1-4 (FR-1/FR-2/NFR-1 regression gate) implemented+passing — coordinationStore.test.ts 16/16 (13 pre-existing from depends_on Task 1 + H6/H7 ttl_seconds clamp-floor/ceiling + R3 release-side wrong-owner_agent, closing the two real residual gaps). Targeted merge-gate suite (7 coordination/lock files) 143/143 pass, 0 regressions. tsc clean. Commits: 8af71e8c2 (tests), 75ac06a90 (handoff Implementation Record + WORK.md).",
-        "status_note": "Subtask 5 (test-before-ship live integration round-trip against a running container) NOT executed this cycle — documented as blocked, not fabricated: Task 2 (FIX-ORPHAN-FR2-FR6-FR7-INTERFACE-COORDINATION-TOOLS, the Zod-schema exposure this needs) is REVIEW not DONE_VERIFIED; the live mcp-server container (started 2026-08-08T19:06:16Z) predates Task 2 commit fb5207746 (2026-08-09T00:09:43Z UTC) so the schema is not deployed; this session also carries no gateway/MCP tool grant to place a live call regardless. FR-3/FR-4/FR-6 prose must NOT ship as \"available\" until that round-trip is later run (post Task 2 DONE_VERIFIED + container rebuild) and passes. Full detail: [Developer] Implementation Record under Task 5, docs/handoffs/FIX-ORPHAN-ADOPTION-BOARD-STATE-GUARD-PM-decomposition-20260722.md. Also flagged: this row own depends[] omits Task 2 even though the same handoff § Ordering Guidance states Task 5 needs Task 1+Task 2 — board/prose mismatch for PM/PO, not corrected here (out of this task file scope)."
       }
     ],
     "qa": [
@@ -19674,6 +19640,74 @@
         "next_recheck_reason": "qa Step-5 checkpoint #2 (qa_step5_checkpoint_2_20260808T2005Z): container clock RESET by unrelated rebuild 550fda673 (new StartedAt 2026-08-08T19:06:16Z) — old 21:00Z mark was computed against a container that no longer exists. Revised >=4h mark against the CURRENT container is 2026-08-08T23:06:00Z.",
         "qa_step5_checkpoint_2_20260808T2005Z": "QA STEP 5 CHECKPOINT #2 (2026-08-08T20:05Z) — STILL NOT SIGN-OFF-ABLE. Reason changed since checkpoint #1: the >=4h soak-window clock was RESET by an UNRELATED rebuild.\n\nCLOCK-RESET FINDING (important, was NOT reflected in checkpoint #1 or the router dispatch note that pointed to this row): commit 550fda673 (2026-08-08T19:08:23Z, ops(FIX-AGENT-SIGNALS-IDENTICAL-DUP-EMISSION): rebuild+swap mcp-server) rebuilt+recreated the SAME mcp-server container for a DIFFERENT, unrelated task. Verified live: container Id 83847b9f6b85 (was a different Id under the prior 16:59:50Z start), StartedAt=2026-08-08T19:06:16.053Z, Image sha256:8966b3b867fa (was sha256:630fa5d262755bf9), RestartCount=0 (fresh container, not a crash). Actual elapsed uptime at this checkpoint is ~59min, NOT the ~3h the router dispatch context assumed (which was computed off the now-superseded 16:59:50Z start). next_recheck_not_before=21:00:00Z in this row is therefore STALE — it was set relative to the container that no longer exists; the real earliest >=4h mark against the CURRENT container is ~2026-08-08T23:06Z.\n\nContent-verified this is NOT a regression of the SSE fix: docker exec grep of the new image confirms interface SessionRecord / reapStaleSessions / stopReaper / 8x evictSession sites in transport.ts and the DELETE closeSession route in server.ts are all still present and correct (new image was built from a commit descending from b746c112b, not reverting it). This is a process/coordination gap (an unrelated ops-lane rebuild touching a container this row has a standing PO do-not-rebuild ruling on, po_deploy_gate_discharge_20260808T1759Z), not a code defect — logging here, not minting a new row (single-occurrence, no repeat pattern yet).\n\nGATE STATUS on the NEW container (StartedAt 19:06:16Z): (a) sessionCount-vs-MemPerc >=4h — NOT MET, ~59min elapsed (~25%). 3 live samples 20s apart (20:03:48Z sessions=44 MemPerc=12.67%; 20:04:09Z sessions=44 MemPerc=12.67%; 20:04:31Z sessions=42 MemPerc=12.65%) plus /proc/1/status VmHWM=507404kB > VmRSS=440864kB (HWM>RSS, reclamation active, not pinned) — directionally healthy, too short to certify. (b) RestartCount stable 0 — true so far, window incomplete. (c) toolCount=183 (live /health) / cronJobCount=88 (bun scripts/gen-project-stats.ts, live re-run) — MET, both match baseline. (d) >=1 max_age eviction — NOT MET (0 so far; structurally cannot occur before container age 4h). Reaper independently reconfirmed firing: 43 idle_timeout evictions, 0 max_age, in docker logs since 19:06Z.\n\nCI REGRESSION TRIAGE (requested by router dispatch note, re: FIX-CI-BUNTEST-1862C-TRANSPORT-SESSION-EVICTION, owner dev-mcp-server, not duplicated here): investigated first-hand, did not trust the CI summary line. Local single-run: 12/12 pass, 10/10 repeat runs clean on a quiet machine. Reproduced the CI failure under manufactured CPU contention (48x `yes` on a 12-core box, matching the SPIKE_CI-PERFILE-ISOLATION-FLAKE.md methodology): 16/20 runs failed, ALL 16 on the SAME assertion — T9 (negative control) `expect(manager.sessionCount).toBe(1)` receives 0. Root cause: T9s own activity-bump helper (`setInterval(fn, 5)`) races the test-compressed 15ms idle-timeout / 5ms reaper-sweep; under CPU contention the bump callback itself can be delayed past 15ms, so the idle reaper evicts before the next bump lands. Confirmed via `git log b746c112b..HEAD -- transport.ts server.ts 1862c-transport-session-eviction.test.ts` = empty — NO commit has touched any of these 3 files since the fix landed, so this is NOT a later regression, it was present in b746c112b itself from the start. VERDICT: (b) CI-environment timing flake in the TEST HARNESS margin (ms-scale time compression used to make the suite fast), NOT a genuine product regression in reapStaleSessions/evictSession — production idle-timeout is 15 MINUTES not 15ms, i.e. ~180000x more scheduler-jitter margin than the test uses, so this failure mode cannot occur in the running service. Does not, by itself, indicate the shipped reaper logic is wrong. Recommend dev-mcp-server (already the assigned owner) widen T9s bump interval/idle-timeout ratio or fake-timer it; not blocking on code-correctness grounds, but IS a real reproducible CI-red (not pure noise) and PO is right that a red unit test for this fixs own coverage should be green before Step 6, per POs own framing.\n\nRECOMMENDATION for PO Step 6: do NOT sign off yet — genuinely insufficient soak elapsed time (~59min of required >=4h) after the clock-reset above, independent of the CI question. Re-dispatch qa for checkpoint #3 no earlier than 2026-08-08T23:06:00Z (revised >=4h mark against the CURRENT 19:06:16Z container start). CI regression is triaged as a test-harness artifact, not a code defect, but leave FIX-CI-BUNTEST-1862C-TRANSPORT-SESSION-EVICTION open on its own track (dev-mcp-server) — getting it green is still a reasonable Step-6 precondition per POs own framing, independent of this rows soak measurement. No board status/lane/next_agent change this write — row stays QA/next_agent=qa exactly as checkpoint #1 left it; only next_recheck fields + checkpoint note updated.",
         "status_note": "[dev-mcp-server 2026-08-09T02:05Z] 3-RESET INCIDENT HISTORY STAMPED (FIX-SSE-SOAK-VERIFY-DEPENDS-ON-SHARED-CONTAINER-UPTIME-3RD-RESET AC-2) — this status_note field did not exist on this row through all 3 resets; no durable record survived on the row itself, only in ephemeral next_recheck_reason overwrites (each replaced by the next) and a signal_queue entry. Stamping now.\n\nThis row's QA Step 5 >=4h soak-verification AC was gated on the shared dev-mcp-server container's StartedAt (>=4h uninterrupted uptime) — a property ANY of the 8+ peers legitimately rebuilding this SAME shared container resets, unrelated to this row's own content. Reset 3x: (1) checkpoint #1 (qa_step5_checkpoint_1_20260808T1832Z) measured against StartedAt=2026-08-08T16:59:50Z (this fix's own deploy, image sha256:630fa5d262755bf9), next_recheck pinned ~2026-08-08T21:00:00Z — reset before that mark was reached. (2) checkpoint #2 (qa_step5_checkpoint_2_20260808T2005Z) found StartedAt reset to 2026-08-08T19:06:16Z by commit 550fda673 (unrelated ops rebuild+swap for FIX-AGENT-SIGNALS-IDENTICAL-DUP-EMISSION, image sha256:8966b3b867fa) — content-verified NOT a regression of this fix (SessionRecord/evictSession/reapStaleSessions/stopReaper/8x evictSession sites all still present in the new image); next_recheck recomputed to 2026-08-08T23:06:00Z. (3) process_gap signal sys-20260808T200919-a7c2 (2026-08-08T20:09:19Z, from router, MED, dedup_key process_gap:FIX-MCP-SSE-SESSION-MANAGER-PERCONN-LEAK-NO-REAPER:soak-clock-reset-shared-container, po-triaged 2026-08-08T21:00:29Z ACK) independently confirms this as the 3RD reset and recommends the verification method decouple from container StartedAt (e.g. reaper-firing log evidence, not process uptime).\n\nRESOLUTION (fixed forward, not retroactive to this row's own live soak measurement): FIX-SSE-SOAK-VERIFY-DEPENDS-ON-SHARED-CONTAINER-UPTIME-3RD-RESET (dev-mcp-server, commit a3d7ff35f) added an injectable `_now` clock to SseSessionManager (apps/mcp-server/src/interface/mcp/transport.ts) plus T13/T14 unit tests (1862c-transport-session-eviction.test.ts) that prove the REAL shipped >=4h max-age branch fires deterministically in milliseconds — decoupled from any container's uptime and from real wall-clock elapsed time. This does NOT itself discharge THIS row's own live QA Step 5/6 sign-off — qa/po still decide whether the new unit-test evidence supersedes the container-soak requirement for closing this specific row. Lane/status intentionally left UNCHANGED by this stamp (per FIX-SSE-SOAK-VERIFY AC-2's own scope: stamp incident history only, do not move this row's lane).\n\nGeneric lesson (apply elsewhere per the fix row's own instruction): an acceptance criterion whose evidence source is a SHARED mutable runtime property is unsatisfiable under a multi-writer fleet. Memory: project_sse_soak_clock_reset_shared_container_20260808 (3x), feedback_rebuild_recreate_destroys_peers."
+      },
+      {
+        "id": "FIX-DEVTEAM-IDLE-CHAIN-TEST-FAIRNESS",
+        "type": "FIX",
+        "title": "AC-1/AC-4: extend devteam-dispatch-gate-satisfiability.sh — rotation fairness bounds + gate-firing proof (not just resolution)",
+        "status": "QA",
+        "priority": "P0",
+        "size": "M",
+        "zone": "docs/agents/dev-team/flow/",
+        "owner": "developer",
+        "next_agent": "qa",
+        "created_at": "2026-07-29T13:50:05Z",
+        "created_by": "pm",
+        "depends": [
+          "FIX-DEVTEAM-IDLE-CHAIN-MAIN-COMPLETION"
+        ],
+        "blocks": [],
+        "files": [
+          "scripts/audits/devteam-dispatch-gate-satisfiability.sh"
+        ],
+        "updated_at": "2026-08-09T04:23:13Z",
+        "promoted_at": "2026-08-09T01:55:14Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=0)",
+        "claimed_at": "2026-08-09T04:23:13Z",
+        "claimed_by": "dev-team (review-lane qa-drain)",
+        "commit_sha": "104aa6c10",
+        "status_note": "AC-1/AC-4 both covered by single instrument per PM instruction. Script extended 958→1251L: byte-verbatim replica of main.md live inline 6-candidate jq (bounded1/sls/rlc/drs/qa_drain/step1_triage), NOT the stale shared devteam-eligibility.jq (5-id, DRS-blind — flagged stale by main.md itself). Simulates 12 idle-fallthrough ticks (2×6-tick windows): AC-1 exactly-once coverage per window + deterministic tie-break; AC-4 per-tick real board mutation + isolated no-same-tick-cascade proof. Dry-run baseline 57P/12F (12 pre-existing unrelated live-board-drift fails, byte-identical error set before/after) -> post-extension 91P/12F, 34/34 new assertions pass, 0 regressions. bash -n clean. Commits: 104aa6c10 (code+docs), 8d684979f (notebook+journal). 12 pre-existing FAILs flagged out-of-scope for PO/router to route separately."
+      },
+      {
+        "id": "FIX-CI-SIZELINT-COORDINATIONTOOLS-TS-457L",
+        "title": "CI RED: size-lint — apps/mcp-server/src/interface/mcp/tools/system/coordinationTools.ts baseline-tolerance-exceeded (baseline=388L actual=457L upper=426L)",
+        "type": "FIX",
+        "owner": "po",
+        "status": "QA",
+        "priority": "P1",
+        "zone": "apps/mcp-server/",
+        "size": "S",
+        "created_at": "2026-08-09T01:35:08Z",
+        "created_by": "po",
+        "updated_at": "2026-08-09T04:23:13Z",
+        "supervised": false,
+        "plan_only": false,
+        "depends_on": [],
+        "blocks": [],
+        "check_id": "CI-RED-39e1e161",
+        "dedup_key": "ci_job:size-lint|file:apps/mcp-server/src/interface/mcp/tools/system/coordinationTools.ts",
+        "verification_gate": "ci_green_on_subsequent_push",
+        "status_note": "AC: `gh run view <databaseId with headSha AFTER 39e1e161bcb7900a40f84aec37d067b2e3afe6f6> --json jobs -q '.jobs[]|select(.name==\"size-lint\")|.conclusion' == success (verification_gate=ci_green_on_subsequent_push). Failing job: size-lint. Failing file: apps/mcp-server/src/interface/mcp/tools/system/coordinationTools.ts (live wc -l = 457 confirmed 2026-08-09T01:35Z). Observed SHAs: 39e1e161 (run 31285673936, 00:23Z). Split or write an honest <!-- size-justification --> header per docs/policies/dev-standards.md; do NOT rebaseline silently. NOT a duplicate of FIX-CI-SIZELINT-COORDINATIONSTORE-BASELINE-1388L (DONE_VERIFIED) — that row is coordinationSTORE.ts (infrastructure/db/), a different file, and CI confirms it is now green (absent from run 31285673936's offender list). ANTI-AMNESTY: CI plane baseline is 0 fail; no file-scoped open row matched this path.",
+        "origin_signal_id": "ci_red:CI-RED-39e1e161",
+        "next_agent": "qa",
+        "updated_by": "dev-mcp-server",
+        "claimed_at": "2026-08-09T04:23:13Z",
+        "claimed_by": "dev-team (review-lane qa-drain)",
+        "dispatch_lane": "dev-mcp-server",
+        "commit_sha": "1653cea0aa56e43b4a84463a3dc2772bbde15705",
+        "files": [
+          "apps/mcp-server/src/interface/mcp/tools/system/coordinationTools.ts",
+          "apps/mcp-server/src/interface/mcp/tools/system/coordination/taskClaimTool.ts",
+          "apps/mcp-server/src/interface/mcp/tools/system/coordination/taskHeartbeatTool.ts",
+          "apps/mcp-server/src/interface/mcp/tools/system/coordination/taskReleaseTool.ts",
+          "apps/mcp-server/src/interface/mcp/tools/system/coordination/taskListHeldTool.ts",
+          "apps/mcp-server/src/interface/mcp/tools/system/coordination/taskForceReleaseOrphanTool.ts",
+          "apps/mcp-server/src/interface/mcp/tools/system/coordination/weekPeriodTool.ts",
+          "docs/data/size-lint-baseline.json"
+        ],
+        "dev_implementation_note": "Split, not header: coordinationTools.ts was 457L (baseline=388L, upper=426L, 31L overage). Extracted each of the 6 registered tools (task_claim, task_heartbeat, task_release, task_list_held, task_force_release_orphan, get_week_period) verbatim into its own file under interface/mcp/tools/system/coordination/ (54-119L each, all under the 120L size-lint threshold — none needs a justification header). coordinationTools.ts is now a 54L thin entry point re-exporting registerCoordinationTools(server) unchanged, so registry.ts, the coordination/index.ts barrel, and all 4 direct-importer tests needed zero edits. Also dropped the dead buildWeeklyPublishMarkerKey import (unused in the file body) and pruned the now-stale 388L docs/data/size-lint-baseline.json entry (did NOT raise/rebaseline it — file is 54L, genuinely no longer an offender). Verified LOCALLY: bash scripts/audits/size-lint-justification.sh --check no longer lists coordinationTools.ts (sole remaining offender is pre-existing, out-of-scope apps/mcp-server/src/interface/mcp/transport.ts, baseline=126L actual=265L — untouched, not this rows file). bun tsc --noEmit clean. npx eslint (fence config) clean on all 7 touched/new files. Targeted suite: task-lock-coordination-tools.test.ts + 1980-p1-final-required-flip.test.ts + FIX-ORPHAN-FR2-FR6-FR7-INTERFACE-COORDINATION-TOOLS.test.ts + FIX-DIGEST-PREDICT-ISO-WEEK-DEDUP.test.ts + 1982-quality-burndown-CHIJ.test.ts = 96/96 pass, 0 fail. Pushed commit 1653cea0aa56e43b4a84463a3dc2772bbde15705, pre-push hook (pnpm --filter vn-market check / tsc) green, no --no-verify.",
+        "qa_verification_hint": "gh run view <databaseId with headSha AFTER 1653cea0aa56e43b4a84463a3dc2772bbde15705> --json jobs -q \".jobs[]|select(.name==\\\"size-lint\\\")|.conclusion\" == success (verification_gate=ci_green_on_subsequent_push). Do NOT confuse with the separate pre-existing transport.ts size-lint offender (untouched by this row, different file/row) if it is still open on the same run — this rows own AC is scoped to coordinationTools.ts only."
       }
     ],
     "_closed_signals_20260614": {
@@ -19784,13 +19818,13 @@
         "last_served_tick": "2026-08-09T03:54:21Z"
       },
       "qa_drain": {
-        "last_served_tick": "2026-08-09T00:52:13Z"
+        "last_served_tick": "2026-08-09T04:22:58Z"
       },
       "step1_triage": {
         "last_served_tick": "2026-08-09T01:23:42Z"
       }
     },
-    "_updated_at": "2026-08-09T04:21:07Z",
+    "_updated_at": "2026-08-09T04:22:58Z",
     "_updated_by": "dev-team",
     "pending_triage_inbox": [
       {
