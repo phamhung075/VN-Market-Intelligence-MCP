@@ -1,3 +1,29 @@
+## c17 · 2026-08-09T04:37Z
+
+### Audit Run Tier-1 (04:30–04:37 UTC 2026-08-09)
+- Tier: 1 | Scope: container liveness, health endpoints, restart count, memory, disk
+- Status: **HEALTHY**
+
+#### Check Results
+
+**A-01 to A-11 — Container Status:** PASS
+- All host_runtime_set services UP (13 containers)
+
+**A-12 to A-20 — Health Endpoints:** PASS
+- All 5 endpoints responding HTTP 200
+- A-20 pdf-extractor: 3/3 probes passed
+
+**A-21 — Restart Count:** PASS
+- mcp-server RestartCount=0
+
+**A-30 — Memory Pressure:** PASS
+- rag-service A-30 deep-probe: verdict=FOLD
+  - Reason: benign GC sawtooth, median=91.99% (< 93% threshold)
+  - No reclamation dips, no discontinuities, no state changes
+  - Confirmed: STALE-ACK FU-RAG-DEPLOY-MEMORY correctly marked DONE_VERIFIED
+
+**A-32 — Disk:** PASS
+
 ## c16 · 2026-08-09T04:08:20Z
 
 ### Audit Run Tier-1 (04:08–04:09 UTC 2026-08-09)
@@ -108,4 +134,3 @@ Most checks PASS. A-30 rag-service shows ESCALATE memory (97.50% sustained, medi
 #### Output
 [OUTPUT-CONTRACT] signals_posted=1 telegram_sent=1 signal_queue_rows_written=1 dashboard_rows=1 status=DEGRADED
 
-CONTRACT-CONTRADICTION: NONE
