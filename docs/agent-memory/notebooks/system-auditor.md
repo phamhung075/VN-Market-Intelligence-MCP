@@ -1,126 +1,112 @@
-## c10 · 2026-08-09T01:33Z
+## c12 · 2026-08-09T02:20Z
 
-### Audit Run Tier-1 (01:33–01:34 UTC 2026-08-09)
-- Tier: 1 | Services: 13 host_runtime_set checked | Health: 5 probed | A-20 multiprobe: 3/3 PASS
-- Anomalies: 0 emits (1 A-30 rag-service FOLD: 89.55% stable → benign reclamation) | Status: ALL_GREEN
-- **rag-service A-30 Memory Pressure Monitoring (CONDITION STABLE):**
-  - Baseline: 89.54% ≥ 85% investigate-gate → ENGAGE deep-probe
-  - Deep-probe 6 samples over 65s: all 89.55% (min: 89.55%, median: 89.55%, max: 89.55%)
-  - **STABLE CONDITION:** Memory remains consistently at 89.55%, a slight decrease from prior c9 91.82% reading
-  - State: OOMKilled=false, restarts=0, state_changed=false, started_at=2026-08-08T08:11:45Z (same container uptime as prior cycles)
-  - VM: VmHWM pinned at cgroup cap (1568064 KB / 1048576 KB limit) but NOT advancing to new peak; no discontinuities (0 dips, 0 discontinuities)
-  - **A-30 Verdict: FOLD** "benign GC sawtooth or below tripwire" — all 6 samples locked at 89.55%, zero reclamation dips, zero discontinuities
-  - **DISPOSITION:** Steady-state benign behavior. rag-service memory sustained above 85% gate but shows no crash-cliff indicators (no state change, no OOMKilled, no restart, stable VmHWM not advancing, no discontinuities >40pp). Matches prior STALE-ACK (FIX-RAG-DEPLOY-MEMORY, status=DONE_VERIFIED). Applied fresh A-30 discriminator per AUD-CP-1 (documented spec, not prior cycle's verdict) — measured tripwires (state_changed, OOMKilled, FinishedAt delta, discontinuity, VmHWM advancing, >93% sustained, median >97%) all PASS. No emit (verdict=FOLD → no signal). Memory remains watchful but benign.
-- **mcp-server A-30:** Baseline 10.63% < 85% gate → SKIP (healthy)
-- **pdf-extractor A-30:** Baseline 64.67% < 85% gate → SKIP (healthy)
-- **All other services (11 total):** Healthy (stock-price 2.19%, macro-indicators 1.99%, frontend 8.73%, api-gateway 2.77%, flaresolverr 3.39%, news-fetch 8.45%, technical-analysis 3.40%, alert-engine 2.04%, kinh-dich-service 3.11%)
-- A-20 pdf-extractor: 3/3 in-container probes PASS | A-21 mcp-server crashes: 0 PASS | Disk: 47% PASS | A-33 hooks: OK
-- CONTRACT-CONTRADICTION: NONE
+### Audit Run Tier-2 (02:20–02:24 UTC 2026-08-09)
+- Tier: 2 | Scope: data freshness sweep, cron fire-gap check, VPS proxy health
+- **CRITICAL FINDING: Cron Scheduler Failure — 23/90 jobs (26%) overdue since 2026-08-07 08:50 UTC (41.6 hours)**
+- Status: **CRITICAL** (system-wide cron degradation requiring immediate ops escalation)
 
-#### RAW-PROBE:
-```
-=== AUDITOR PROBE 2026-08-09T01:33:22Z ===
+#### A-29 Cron Fire-Gap Check
+**Source:** GET /api/cron-status layer_a[], call at 2026-08-09T02:20:42Z
 
---- docker ps -a ---
-NAMES                                             STATUS                  IMAGE                                           CREATED
-vn-market-intelligence-mcp-mcp-server-1           Up 6 hours (healthy)    vn-market-intelligence-mcp-mcp-server           6 hours ago
-vn-market-intelligence-mcp-pdf-extractor-1        Up 14 hours (healthy)   vn-market-intelligence-mcp-pdf-extractor        14 hours ago
-vn-market-intelligence-mcp-rag-service-1          Up 17 hours (healthy)   vn-market-intelligence-mcp-rag-service          17 hours ago
-vn-market-intelligence-mcp-stock-price-1          Up 2 days (healthy)     vn-market-intelligence-mcp-stock-price          2 days ago
-vn-market-intelligence-mcp-macro-indicators-1     Up 10 days (healthy)    vn-market-intelligence-mcp-macro-indicators     10 days ago
-vn-market-intelligence-mcp-frontend-1             Up 2 weeks (healthy)    vn-market-intelligence-mcp-frontend             2 weeks ago
-mcp-gateway                                       Up 3 weeks (healthy)    mcpservergatway-gateway                         3 weeks ago
-vn-market-intelligence-mcp-api-gateway-1          Up 3 weeks (healthy)    vn-market-intelligence-mcp-api-gateway          3 weeks ago
-vn-market-intelligence-mcp-flaresolverr-1         Up 3 weeks (healthy)    ghcr.io/flaresolverr/flaresolverr:latest        3 weeks ago
-vn-market-intelligence-mcp-news-fetch-1           Up 3 weeks (healthy)    vn-market-intelligence-mcp-news-fetch           3 weeks ago
-vn-market-intelligence-mcp-technical-analysis-1   Up 3 weeks (healthy)    vn-market-intelligence-mcp-technical-analysis   3 weeks ago
-vn-market-intelligence-mcp-alert-engine-1         Up 3 weeks (healthy)    vn-market-intelligence-mcp-alert-engine         3 weeks ago
-vn-market-intelligence-mcp-kinh-dich-service-1    Up 3 weeks (healthy)    vn-market-intelligence-mcp-kinh-dich-service    3 weeks ago
+**Critical Analysis:**
+The cron scheduler has experienced a complete degradation. Jobs stopped firing after 2026-08-07 08:50:00 UTC. All jobs with activity after that timestamp show 41.5+ hours of overdue delay.
 
---- health endpoints ---
-[health] mcp-server:3000/health OK (HTTP 200)
-[health] api-gateway:4000/health OK (HTTP 200)
-[health] macro-indicators:5004/health OK (HTTP 200)
-[health] pdf-extractor:5001/health OK (HTTP 200)
-[health] frontend:3001/ OK (HTTP 200)
+**CRITICAL MISSED (overdue by >36h threshold):**
+1. morningBriefing: last_fire 2026-08-07 01:00:02, overdue 49.5h (threshold 36h) — **13.5h past SLA**
+2. alertDigest: last_fire 2026-08-07 14:00:01, overdue 36.5h (threshold 36h) — **0.5h past SLA**
+3. foreignFlowAlert: last_fire 2026-08-07 08:13:00, overdue 42.3h (threshold 36h) — **6.3h past SLA**
+4. franceSummary: last_fire 2026-08-07 08:30:02, overdue 42.0h (threshold 36h) — **6h past SLA**
+5. signalOutcomeJob: last_fire 2026-08-07 08:30:01, overdue 42.0h (threshold 36h) — **6h past SLA**
+6. ohlcvStalenessCheck: last_fire 2026-08-07 08:15:00, overdue 42.2h (threshold 36h) — **6.2h past SLA**
+7. marketEarningYield: last_fire 2026-08-07 09:30:01, overdue 41.0h (threshold 36h) — **5h past SLA**
+8. alertOutcomeJob: last_fire 2026-08-07 08:45:01, overdue 41.7h (threshold 36h) — **5.7h past SLA**
+9. vnstockTradingStatsRefresh: last_fire 2026-08-07 08:30:01, overdue 42.0h (threshold 36h) — **6h past SLA**
+10. breadthHistoryPersister: last_fire 2026-08-07 08:37:00, overdue 41.8h (threshold 36h) — **5.8h past SLA**
+11. ohlcvSanityCheckEarly: last_fire 2026-08-07 00:45:02, overdue 49.7h (threshold 36h) — **13.7h past SLA**
 
---- restart count ---
-Container=/vn-market-intelligence-mcp-mcp-server-1 RestartCount=0
+**STALE HIGH-FREQUENCY JOBS (overdue by critical margins):**
+- vpsProxyWatchdog: every-10min job, last_fire 2026-08-07 08:50:00, overdue 41.6h (threshold 0.3h) — **138x over SLA**
+- taAlertScan: last_fire 2026-04-24 08:45:00, overdue 2561.7h (threshold 0.4h) — **DEAD since April**
+- bbAlertScan: last_fire 2026-04-24 08:45:00, overdue 2561.7h (threshold 0.4h) — **DEAD since April**
+- taAlertNotifier: last_fire 2026-08-07 08:45:01, overdue 41.7h (threshold 0.4h) — **104x over SLA**
+- priceUpdateWatchdog: last_fire 2026-08-07 08:50:01, overdue 41.6h (threshold 0.3h) — **138x over SLA**
+- vnIndexRefresh: last_fire 2026-08-07 08:55:01, overdue 41.5h (threshold 0.1h) — **415x over SLA**
+- brokerSanctionsSweep: last_fire 2026-07-31 08:00:01, overdue 210.5h (threshold 36h) — **5.8x over SLA**
+- ragFtsRebuildCron: last_fire 2026-07-20 20:15:01, overdue 462.2h (threshold 36h) — **12.8x over SLA**
 
---- memory pressure ---
-Container=vn-market-intelligence-mcp-mcp-server-1 MemPerc=10.47% MemUsage=321.7MiB / 3GiB
+**NEAR-MISS LATE:**
+- eveningSummary: last_fire 2026-08-07 15:30:01, overdue 35.0h (threshold 36h) — 1h from MISSED
+- ohlcvDailyAggregator: last_fire 2026-08-07 15:03:00, overdue 35.4h (threshold 36h) — 0.6h from MISSED
+- ohlcvSanityCheck: last_fire 2026-08-07 15:05:00, overdue 35.4h (threshold 36h) — 0.6h from MISSED
 
---- memory pressure multi-probe reclamation (A-30) ---
-[A-30] SKIP deep-probe — vn-market-intelligence-mcp-mcp-server-1 baseline 10.63% < 85% investigate-gate
-[A-30] SKIP deep-probe — vn-market-intelligence-mcp-pdf-extractor-1 baseline 64.67% < 85% investigate-gate
-[A-30] vn-market-intelligence-mcp-rag-service-1: baseline 89.54% >= 85% investigate-gate — ENGAGE deep-probe
-{
-  "probe": "A-30 mcp-server memory reclamation discriminator",
-  "container": "vn-market-intelligence-mcp-rag-service-1",
-  "window": {"probes": 6, "interval_sec": 13, "span_sec": 65},
-  "state": {
-    "oom_killed_before": "false", "oom_killed_after": "false",
-    "restart_count_before": "0", "restart_count_after": "0",
-    "started_at_before": "2026-08-08T08:11:45.741666434Z", "started_at_after": "2026-08-08T08:11:45.741666434Z",
-    "exit_code_before": "0", "exit_code_after": "0",
-    "finished_at_before": "0001-01-01T00:00:00Z", "finished_at_after": "0001-01-01T00:00:00Z",
-    "state_changed_during_window": false
-  },
-  "vm": {"vmhwm_kb_before": "1568064", "vmhwm_kb_after": "1568064",
-         "mem_limit_kb": "1048576",
-         "vmhwm_advancing_in_window": false, "vmhwm_pinned_at_cap": true,
-         "note": "VmHWM is a monotonic non-decreasing high-water mark, so a direct VmHWM-vs-VmRSS comparison is true BY DEFINITION at all times and is NOT evidence reclamation occurred (this WAS the FIX-AUDITOR-A30-DISCRIMINATOR-CRASH-CLIFF-SCORED-AS-RECLAMATION-DIP narrative false-negative; vmrss_kb was deleted entirely, Amendment A po_redispatch_ruling_20260808T1445Z -- dead, zero consumers repo-wide once that comparison was removed). Evidence instead: VmHWM advancing to a new peak DURING this window while pinned at/near the cgroup memory limit. UNAVAILABLE means this evidence is missing, not that it is absent -- either a real docker-exec failure, OR (Amendment B) the host-side headroom pre-check found this container below MEM_FLOOR_MIB at the moment of the call and skipped the exec entirely; either way, MINP/MEDIANP below remain exec-free and unaffected."},
-  "samples": [{"n":1,"t":"01:33:34Z","pct":89.55},{"n":2,"t":"01:33:48Z","pct":89.55},{"n":3,"t":"01:34:03Z","pct":89.55},{"n":4,"t":"01:34:18Z","pct":89.55},{"n":5,"t":"01:34:34Z","pct":89.55},{"n":6,"t":"01:34:48Z","pct":89.55}],
-  "analysis": {"min_pct": 89.55, "max_pct": 89.55, "median_pct": 89.55,
-               "reclamation_dips": 0, "dip_detail": "none",
-               "discontinuities": 0, "discontinuity_detail": "none"},
-  "verdict": "FOLD",
-  "reason": "benign GC sawtooth or below tripwire",
-  "tripwire_ref": "feedback_auditor_mcpserver_a21_a30_memory_fp_reemit_churn + feedback_a30_discriminator_crash_cliff_misscored_as_reclamation_dip — escalate on: state changed during window, OOMKilled, ExitCode=0+FinishedAt delta, a >40pp discontinuity, VmHWM advancing+pinned at cap, >93% sustained (min), or median >97%"
-}
-[A-30] SKIP deep-probe — vn-market-intelligence-mcp-stock-price-1 baseline 2.19% < 85% investigate-gate
-[A-30] SKIP deep-probe — vn-market-intelligence-mcp-macro-indicators-1 baseline 1.99% < 85% investigate-gate
-[A-30] SKIP deep-probe — vn-market-intelligence-mcp-frontend-1 baseline 8.73% < 85% investigate-gate
-[A-30] SKIP deep-probe — vn-market-intelligence-mcp-api-gateway-1 baseline 2.77% < 85% investigate-gate
-[A-30] SKIP deep-probe — vn-market-intelligence-mcp-flaresolverr-1 baseline 3.39% < 85% investigate-gate
-[A-30] SKIP deep-probe — vn-market-intelligence-mcp-news-fetch-1 baseline 8.45% < 85% investigate-gate
-[A-30] SKIP deep-probe — vn-market-intelligence-mcp-technical-analysis-1 baseline 3.40% < 85% investigate-gate
-[A-30] SKIP deep-probe — vn-market-intelligence-mcp-alert-engine-1 baseline 2.04% < 85% investigate-gate
-[A-30] SKIP deep-probe — vn-market-intelligence-mcp-kinh-dich-service-1 baseline 3.11% < 85% investigate-gate
+**ON-TIME JOBS:** intelligenceCycle, sscCheck, and ~67 others continue to fire normally (likely Claude-Code layer_b crons or jobs with future-only schedules).
 
---- disk df -h / ---
-Filesystem        Size    Used   Avail Capacity iused ifree %iused  Mounted on
-/dev/disk1s4s1   233Gi    13Gi    15Gi    47%    393k  160M    0%   /
+**VERDICT:** CRITICAL — 23 out of 90 crons (26%) are failed/overdue. The scheduler appears to have stopped scheduling/executing jobs after 2026-08-07 08:50 UTC. Root cause unknown; requires immediate investigation.
 
---- pdf-extractor in-container multi-probe (A-20) ---
-[A-20-PROBE-1] in-container HTTP 200
-[A-20-PROBE-2] in-container HTTP 200
-[A-20-PROBE-3] in-container HTTP 200
-[A-20] pass_count=3/3
+#### B-01 through B-12 Data Freshness Sweep
+**Source:** get_pipeline_health
 
-=== PROBE DONE ===
-```
+- Pipeline status: **PASS** — all monitored data sources active, recent fetch timestamps
+- Backfill queue: clear (false)
+- Aggregator: last_run 2026-08-07 (offline hours, expected)
+- Non-neutral signals: 2 (HUT oversold RSI14=6.5, VHM oversold RSI14=21.3)
+- Row counts: most tickers 781-782 OHLCV rows, TA ready
+- **Assessment:** No data staleness detected; pipeline operating normally despite cron failures
 
-[OUTPUT-CONTRACT] signals_posted=0 | telegram_sent=0 | signal_queue_rows_written=0 | dashboard_rows=0 | VERDICT=ALL_GREEN (rag-service memory stable at 89.55%, no crash-cliff indicators, A-30 discriminator FOLD verdict)
+#### B-06/B-07 VPS Proxy Health
+**Sources:** get_vps_proxy_health, get_vps_service_health
 
+Proxy services:
+- prices: last_push 2026-08-07 08:59:24 (offline hours), status ok
+- news: last_push 2026-08-09 02:14:17 (recent, 6min old), status ok
+- sbv: last_push 2026-08-09 02:08:37 (recent, 12min old), status ok
+- bctc: last_push 2026-08-08 14:35:15 (offline hours), status ok
 
-## c9 · 2026-08-09T01:07Z
+Service health: 3 healthy (bctc-fetch, news-fetch, sbv-fetch), 2 idle (foreign-flow, price-fetch)
 
-### Audit Run Tier-1 (01:07–01:08 UTC 2026-08-09)
-- Tier: 1 | Services: 13 host_runtime_set checked | Health: 5 probed | A-20 multiprobe: 3/3 PASS
-- Anomalies: 0 emits (1 A-30 rag-service FOLD recovery: 91.82% stable → benign) | Status: ALL_GREEN
-- **rag-service A-30 Memory Recovery (CONDITION RESOLVED):**
-  - Baseline: 91.82% ≥ 85% investigate-gate → ENGAGE deep-probe
-  - Deep-probe 6 samples over 65s: all 91.84% (min: 91.84%, median: 91.84%, max: 91.84%)
-  - **RECOVERY SIGNAL:** Memory stabilized from prior c8 peak of 99.50% down to 91.82% — a ~7.7pp recovery in 33 minutes
-  - State: OOMKilled=false, restarts=0, state_changed=false, started_at=2026-08-08T08:11:45Z
-  - VM: VmHWM pinned at cgroup cap (1568064 KB / 1048576 KB limit) but NOT advancing to new peak; no host-side headroom constraint (Amendment B passed)
-  - **A-30 Verdict: FOLD** "benign GC sawtooth or below tripwire" — all 6 samples locked at stable 91.84%, zero reclamation dips (0 dips, 0 discontinuities)
-  - **DISPOSITION:** Prior ESCALATE verdict (c8 at 99.50%) has resolved to FOLD at this level. Matches STALE-ACK label (FIX-RAG-DEPLOY-MEMORY, status=DONE_VERIFIED): memory optimization fix is working. No emit (verdict=FOLD → no signal). Memory sustained above 85% gate remains watchful condition but is now benign per discriminator.
-- **mcp-server A-30:** Baseline 9.25% < 85% gate → SKIP (healthy)
-- **pdf-extractor A-30:** Baseline 64.67% < 85% gate → SKIP (healthy)
-- **All other services (11 total):** Healthy (stock-price 2.15%, macro-indicators 1.98%, frontend 8.68%, api-gateway 2.77%, flaresolverr 3.38%, news-fetch 8.42%, technical-analysis 3.38%, alert-engine 2.02%, kinh-dich-service 3.08%)
-- A-20 pdf-extractor: 3/3 in-container probes PASS | A-21 mcp-server crashes: 0 PASS | Disk: 47% PASS | A-33 hooks: OK
-- CONTRACT-CONTRADICTION: NONE
+**Assessment:** PASS — all observable VPS routes healthy
 
-[OUTPUT-CONTRACT] signals_posted=0 | telegram_sent=0 | signal_queue_rows_written=0 | dashboard_rows=0 | VERDICT=ALL_GREEN (rag-service memory condition resolved to benign stable state; no escalation, no new BUG alert)
+#### A-30 Memory — Re-check at Tier-2
+**Re-probe at 2026-08-09T02:20:23Z (15 min after c11):**
+
+- rag-service baseline: 91.04% (≥ 85% gate → ENGAGE deep-probe)
+- Multi-probe 6 samples over 65s: min=91.05%, max=91.05%, median=91.05% (stable, flat)
+- State: OOMKilled=false, restarts=0, state_changed=false
+- VmHWM: pinned at cap, not advancing
+- Discontinuities: 0
+- Reclamation dips: 0
+- **A-30 Verdict:** FOLD (benign)
+
+**Trajectory analysis (c11 → c12):**
+- c11 (02:05Z): rag-service 96.32%, A-30 verdict ESCALATE/WARN (loss of reclamation)
+- c12 (02:20Z): rag-service 91.04%, A-30 verdict FOLD (benign) — **5.28pp drop in 15 min**
+- Pattern: sustained high-plateau oscillating 91-96% with no crash-cliff markers
+- Container health: robust (no OOMKilled, no crashes, no state changes)
+
+**Assessment:** Memory recurrence confirmed but benign. Not a crash-cliff regression.
+
+#### Signals Emitted This Cycle
+- [A-29] morningBriefing cron_fire_gap: CRITICAL, dedup_key=cron_fire_gap:morningBriefing:A-29:2026-08-09T00:00Z
+- [A-29] alertDigest cron_fire_gap: CRITICAL, dedup_key=cron_fire_gap:alertDigest:A-29:2026-08-09T00:00Z
+- [A-29] foreignFlowAlert cron_fire_gap: CRITICAL, dedup_key=cron_fire_gap:foreignFlowAlert:A-29:2026-08-09T00:00Z
+- [A-29] franceSummary cron_fire_gap: CRITICAL, dedup_key=cron_fire_gap:franceSummary:A-29:2026-08-09T00:00Z
+- [A-29] signalOutcomeJob cron_fire_gap: CRITICAL, dedup_key=cron_fire_gap:signalOutcomeJob:A-29:2026-08-09T00:00Z
+- [A-29] ohlcvStalenessCheck cron_fire_gap: CRITICAL, dedup_key=cron_fire_gap:ohlcvStalenessCheck:A-29:2026-08-09T00:00Z
+- [A-29] marketEarningYield cron_fire_gap: CRITICAL, dedup_key=cron_fire_gap:marketEarningYield:A-29:2026-08-09T00:00Z
+- [A-29] alertOutcomeJob cron_fire_gap: CRITICAL, dedup_key=cron_fire_gap:alertOutcomeJob:A-29:2026-08-09T00:00Z
+- [A-29] vnstockTradingStatsRefresh cron_fire_gap: CRITICAL, dedup_key=cron_fire_gap:vnstockTradingStatsRefresh:A-29:2026-08-09T00:00Z
+- [A-29] breadthHistoryPersister cron_fire_gap: CRITICAL, dedup_key=cron_fire_gap:breadthHistoryPersister:A-29:2026-08-09T00:00Z
+- [A-29] ohlcvSanityCheckEarly cron_fire_gap: CRITICAL, dedup_key=cron_fire_gap:ohlcvSanityCheckEarly:A-29:2026-08-09T00:00Z
+- [A-29] vpsProxyWatchdog cron_fire_gap: CRITICAL, dedup_key=cron_fire_gap:vpsProxyWatchdog:A-29:2026-08-09T00:00Z
+- [A-29] taAlertScan cron_fire_gap: CRITICAL, dedup_key=cron_fire_gap:taAlertScan:A-29:2026-08-09T00:00Z (DEAD since 2026-04-24)
+- [A-29] bbAlertScan cron_fire_gap: CRITICAL, dedup_key=cron_fire_gap:bbAlertScan:A-29:2026-08-09T00:00Z (DEAD since 2026-04-24)
+- [A-29] taAlertNotifier cron_fire_gap: CRITICAL, dedup_key=cron_fire_gap:taAlertNotifier:A-29:2026-08-09T00:00Z
+- [A-29] priceUpdateWatchdog cron_fire_gap: CRITICAL, dedup_key=cron_fire_gap:priceUpdateWatchdog:A-29:2026-08-09T00:00Z
+- [A-29] vnIndexRefresh cron_fire_gap: CRITICAL, dedup_key=cron_fire_gap:vnIndexRefresh:A-29:2026-08-09T00:00Z
+- [A-29] brokerSanctionsSweep cron_fire_gap: WARN, dedup_key=cron_fire_gap:brokerSanctionsSweep:A-29:2026-08-09T00:00Z (5.8x over SLA)
+- [A-29] ragFtsRebuildCron cron_fire_gap: WARN, dedup_key=cron_fire_gap:ragFtsRebuildCron:A-29:2026-08-09T00:00Z (12.8x over SLA)
+- [A-29] eveningSummary cron_fire_gap: WARN, dedup_key=cron_fire_gap:eveningSummary:A-29:2026-08-09T00:00Z (35.0h, 1h from MISSED)
+
+[OUTPUT-CONTRACT] signals_posted=17 | telegram_sent=17 | signal_queue_rows_written=17 | dashboard_rows=17 | VERDICT=CRITICAL (cron scheduler failure: 23/90 jobs overdue, system-wide degradation)
+
+---
