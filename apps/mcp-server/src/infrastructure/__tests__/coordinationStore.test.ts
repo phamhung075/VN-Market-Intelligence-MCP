@@ -23,9 +23,29 @@
  *   L2 — null-session ladder (heartbeat): wrong owner_agent fails
  *   L3 — null-session ladder (heartbeat): wrong original_owner_client_session echo fails
  *   N1 — NFR-1 regression (heartbeat): ladder NEVER matches a live-session row even if owner_agent/echo happen to match
+ *   H6 — heartbeatTask + ttl_seconds below floor (EC): clamps to 60 (same bounds as task_claim)
+ *   H7 — heartbeatTask + ttl_seconds above ceiling (EC): clamps to 691200 (same bounds as task_claim)
  *   R1 — null-session ladder (release): succeeds on correct params
  *   R2 — null-session ladder (release): wrong echo fails (clean no-op, not an error)
+ *   R3 — null-session ladder (release): wrong owner_agent fails (clean no-op, not an error)
  *   N2 — NFR-1 regression (release): ladder NEVER matches a live-session row even if owner_agent/echo happen to match
+ *
+ * FIX-ORPHAN-FR8-TEST-COORDINATION-STORE (Task 5, this task) subtasks 1-4 close-out:
+ * H6/H7/R3 above fill the two residual gaps left after Task 1's own TDD-driven suite (H1-H5,
+ * L1-L3, N1, R1-R2, N2, combined) — release-side "wrong owner_agent" (subtask 3 called for
+ * BOTH heartbeat AND release failure branches; only the echo-mismatch branch had a release-side
+ * test) and ttl_seconds clamp-boundary behavior (subtask 1's own "ttl_seconds" behavior, clamped
+ * in coordinationStore.ts itself — see heartbeatTask()'s `Math.min(Math.max(...))` — not just
+ * Zod-layer validation in the separate Task 2 interface file).
+ *
+ * Subtask 5 (test-before-ship gate: live integration round-trip against a running container) is
+ * NOT executed by this file or this task cycle — see the [Developer] Implementation Record under
+ * Task 5 in docs/handoffs/FIX-ORPHAN-ADOPTION-BOARD-STATE-GUARD-PM-decomposition-20260722.md for
+ * the full, evidence-based reason (Task 2's Zod-schema exposure is still REVIEW/unmerged-to-image,
+ * the live mcp-server container predates that commit, and this session carries no gateway/MCP
+ * tool grant to place live task_heartbeat/task_release calls even against an up-to-date image).
+ * FR-3/FR-4/FR-6 prose MUST NOT be described as "available" until that round-trip is later run and
+ * passes — this file does not claim otherwise.
  */
 
 Bun.env["DB_PATH"] = ":memory:";
@@ -177,6 +197,26 @@ describe("heartbeatTask — FR-1 ttl_seconds/payload_patch", () => {
     expect(parsed.status).toBe("ESCALATED");
     expect(parsed.original_owner_client_session).toBe("dead-sess"); // unpatched field survives merge
   });
+
+  it("H6: ttl_seconds below floor (10) — clamps to 60 (same bounds as task_claim)", () => {
+    insertLiveRow({ task_id: "task:H6", owner_client_session: "sess-1", ttl_seconds: 3600 });
+
+    const result = heartbeatTask("task:H6", "sess-1", { ttl_seconds: 10 });
+
+    expect(result.ok).toBe(true);
+    const row = readRow("task:H6");
+    expect(row?.ttl_seconds).toBe(60);
+  });
+
+  it("H7: ttl_seconds above ceiling (999999) — clamps to 691200 (same bounds as task_claim)", () => {
+    insertLiveRow({ task_id: "task:H7", owner_client_session: "sess-1", ttl_seconds: 3600 });
+
+    const result = heartbeatTask("task:H7", "sess-1", { ttl_seconds: 999999 });
+
+    expect(result.ok).toBe(true);
+    const row = readRow("task:H7");
+    expect(row?.ttl_seconds).toBe(691200);
+  });
 });
 
 describe("heartbeatTask — FR-2 null-session ladder (orphan-signal only)", () => {
@@ -255,6 +295,18 @@ describe("releaseTask — FR-2 null-session ladder (orphan-signal only)", () => 
 
     expect(result).toEqual({ ok: true, released: 0 });
     expect(readRow("orphan-signal:task:R2")).not.toBeNull(); // row survives
+  });
+
+  it("R3: wrong owner_agent — clean no-op, not an error", () => {
+    insertOrphanSignalRow({ task_id: "orphan-signal:task:R3", owner_agent: "dev-team", original_owner_client_session: "dead-sess-1" });
+
+    const result = releaseTask("orphan-signal:task:R3", "caller-sess", {
+      owner_agent: "wrong-agent",
+      original_owner_client_session: "dead-sess-1",
+    });
+
+    expect(result).toEqual({ ok: true, released: 0 });
+    expect(readRow("orphan-signal:task:R3")).not.toBeNull(); // row survives
   });
 
   it("N2 (NFR-1 regression): ladder NEVER releases a live-session row, even with matching owner_agent/echo", () => {
