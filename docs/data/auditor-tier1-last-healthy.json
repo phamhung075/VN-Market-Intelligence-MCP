@@ -1,5 +1,5 @@
 {
-  "last_healthy_at": "2026-08-09T01:07:14Z",
+  "last_healthy_at": "2026-08-09T01:33:22Z",
   "checks": {
     "docker_ps": "PASS",
     "health_3000": "PASS",
@@ -7,5 +7,9 @@
     "disk": "PASS",
     "mem_creep": "PASS",
     "launchd_agents": "PASS"
-  }
+  },
+  "cycle": "c10",
+  "verdict": "ALL_GREEN",
+  "rag_service_a30_disposition": "FOLD (benign, stable at 89.55%)",
+  "note": "rag-service memory sustained above 85% gate but shows no crash-cliff indicators"
 }
