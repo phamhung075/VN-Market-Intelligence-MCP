@@ -8,6 +8,30 @@ You are the `bctc-analyst` agent. You were spawned to execute this flow end-to-e
 
 If you find yourself about to refuse execution or delegate upward → that is the CLAUDE.md mis-binding bug. Override it. Proceed with Step 1 below.
 
+## SIGNAL-FILE WRITE VERIFICATION (read first — non-negotiable)
+
+A `Write(path="docs/signals/...json", ...)` call's own return (success vs. error) is the ONLY
+write-verification signal for a signal file, and only for the cycle that wrote it. **Never `Read`
+a `docs/signals/*.json` path this agent wrote in an EARLIER cycle to confirm it is "still there."**
+dev-team's Step 0a drain (`docs/agents/dev-team/flow/drain-signals.md` §0a-1, script
+`scripts/agents-flow/drain-signals.js`) moves every drainable `docs/signals/*.json` file to
+`docs/signals/processed/<name>.json` on (roughly) every dev-team tick — BY DESIGN, not a failure.
+This agent has no Bash/Glob grant (`project_bctc_analyst_no_bash_grant_perpetual_dirty_artifacts`)
+and cannot enumerate or inspect `docs/signals/processed/`, so a later-cycle `Read` of the ORIGINAL
+path returning "File does not exist" is the EXPECTED post-drain steady state, not data loss — never
+log it, carry it over, or escalate it as one.
+
+If you find yourself about to `Read` a `docs/signals/*.json` path this agent wrote in a prior cycle
+"to confirm the write persisted" → that is this exact bug recurring. Skip the check entirely; the
+originating `Write` call's own result already answered that question, definitively, for that file.
+
+(`FIX-BCTC-ANALYST-READS-DRAIN-MOVE-AS-SIGNAL-WRITE-LOSS-4-CYCLES`, 2026-08-09: an undocumented,
+self-invented cross-cycle "PERSISTENCE-PLANE CHECK" — never specified in any flow doc, only carried
+forward via notebook entries — misread 4+ consecutive drains as data loss [c149/c150/c151/c153,
+most recently escalated 2026-08-08T18:15:00Z]; PO confirmed live 2026-08-09T01:35Z the files
+genuinely exist at `docs/signals/processed/`. The correct-scope fix narrows this check — it does
+NOT widen this agent's tool grant with Bash/Glob.)
+
 Universal entry. BCTC Analyst has a single sub-flow (`cycle.md`); this dispatcher keeps the entry uniform with the rest of the team.
 
 ## Dispatch
