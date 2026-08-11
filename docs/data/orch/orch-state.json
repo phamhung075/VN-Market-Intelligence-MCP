@@ -88,11 +88,11 @@
     }
   ],
   "head": {
-    "status": "in_progress",
+    "status": "idle",
     "active_task_id": "FIX-BCTC-FALLBACK-SHELL-REPORTS-STRUCTURALLY-UNEXTRACTABLE",
     "next_agent": "pm",
     "next_action": "Ready-Lane Consumer claim of FIX-BCTC-FALLBACK-SHELL-REPORTS-STRUCTURALLY-UNEXTRACTABLE — spawn pm DIRECTLY (no zone-detect indirection; row already carried a resolved next_agent/owner).",
-    "updated_at": "2026-08-11T19:23:19Z",
+    "updated_at": "2026-08-11T19:27:37Z",
     "updated_by": "dev-team (ready-lane consumer)"
   },
   "narrative": {
