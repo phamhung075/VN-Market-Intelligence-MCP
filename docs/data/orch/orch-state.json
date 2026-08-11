@@ -477,6 +477,20 @@
         "provenance": "detector",
         "audit_cycle_tag": "cron:auditor-t1:2026-08-11T16:00Z",
         "dedup_key": "microservice_degraded:vn-market-intelligence-mcp-rag-service-1:A-30"
+      },
+      {
+        "id": "sys-20260811T163752-1792",
+        "ts": "2026-08-11T16:37:52Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "signal_feedback",
+        "summary": "A-30 WARN: pdf-extractor sustained high memory (96.96-97.41%) — loss of reclamation capacity",
+        "severity": "WARN",
+        "status": "NEW",
+        "payload_ref": null,
+        "provenance": "detector",
+        "audit_cycle_tag": "cron:auditor-t1:2026-08-11T16:30Z",
+        "dedup_key": "microservice_degraded:pdf-extractor:A-30"
       }
     ],
     "last_triaged_at": "2026-07-29T06:25:00Z",
