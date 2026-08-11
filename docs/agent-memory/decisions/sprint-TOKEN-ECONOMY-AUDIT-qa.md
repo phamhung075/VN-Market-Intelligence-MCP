@@ -398,3 +398,25 @@ to scan" — correct, bash/md out of TS DDD scope). DDD/secret greps clean (only
 doc-example/word-match hits, no real violations). VERDICT: APPROVED, DONE_VERIFIED.
 **why-change:** No change from plan — dev-team Review-Lane QA-Drain dispatched
 verify-committed mode; RAW verification supported DONE_VERIFIED.
+
+### STEP qa-S13 · qa · 2026-08-11T18:20:00Z
+**task-id:** TE-T03
+**what-done:** Direct-commit verify of commit `416330d39` — cowork-team main.md
+fallback/WORK-continuation split into work-tick.md + preflight-error-fallback.md.
+**what-considered:**
+- Row carried no `commit`/`files[]` field — derived via `git log --oneline -- main.md`
+  (top hit, date matches `agent_father_completed_at` 2026-08-11T17:32:15Z).
+- Trust status_note's line-count/structure claims vs re-read every file raw.
+**why-decision:** `git merge-base --is-ancestor 416330d39 main` confirmed real +
+on-main; `git show --stat` matches exactly 5 files (main.md, work-tick.md,
+preflight-error-fallback.md, cron-cowork-team/SKILL.md, agent-father.md notebook).
+Read all 3 flow files raw: line counts exact (106/118/136L, matches claim);
+main.md JUMP-TO table + § WORK continuation cross-references work-tick.md
+correctly; preflight-error-fallback.md Steps 0a/0b.3 correctly delegate to
+work-tick.md (no duplication); SKILL.md ERROR clause repointed to
+preflight-error-fallback.md (verified). Fleet grep for other
+`cowork-team/flow/main.md` refs found none step-number-specific — no dangling
+refs. Zero .ts/.js touched (`git show --name-only` grep empty) → bun
+test/tsc/mock-guard correctly N/A, same class as TE-T16/TE-T26 precedent.
+**why-change:** No change from plan — dev-team Review-Lane QA-Drain dispatched
+verify-committed mode; RAW verification supported DONE_VERIFIED.

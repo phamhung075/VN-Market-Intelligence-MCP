@@ -767,8 +767,8 @@
     ]
   },
   "task_board": {
-    "_updated_at": "2026-08-11T13:03:09Z",
-    "_updated_by": "po (triage: agent-father keep-cycle 2026-08-11T12:53Z findings)",
+    "_updated_at": "2026-08-11T18:22:00Z",
+    "_updated_by": "qa",
     "active_sprints": [
       {
         "evidence": "Router raw-verified (get_bctc_full live, post-rebuild) after BEQ-9/10 refine. Core extraction incident RESOLVED, but populating real scalars exposed a SEPARATE pre-existing analytics/serving layer with 4 defect clusters: (a) RATIO-COMPUTE — VNM ROE=0/ROA=0/EPS=12VND/NetDebt-EBITDA=-7.5e13x; DHG ROA=7,891,932.0% (analyst falsely claimed fixed). Ratios emit 0 or astronomically wrong. (b) BANK-B02-TCTD-SERVING — SHB + EIB get_bctc_full returns 'balance sheet has no decomposition — forced-zero pass suspected'; banks UNSERVABLE despite DONE + committed scalars. (c) PERIOD-SEMANTICS — FPT 2025-Q4 rev=70112.8/NP=11225.5 are FULL-YEAR cumulative labeled 'Q4'; buildComparisonSection then compares cumulative-FY vs next-quarter -> false -82.2% mislabeled 'YoY'. (d) ENTITY-SCOPE — HPG 2025-Q4 is parent-only B01a (rev=0, conf44%) served as the canonical/headline HPG vs consolidated ~140k rev; misleading. PUBLISH-INTEGRITY GAP: NO semantic-sanity publish guard exists in orch-state (the triage-referenced 'Task #13' is NOT present). The BEQ-9/10 reports are now DONE -> flow into chef docs/agents/unified-agent/flow/market-analysis.md + market-analyst -> ROA 7.8M% / false YoY -82% / parent-only-headline CAN reach MARKET unattended. recurring-bug-escalation: BCTC area has >2 fix cycles -> architect root-cause SPIKE, not point-patch. | [dev-team 2026-06-03T11:44Z observation feeding BAL-0/BAL-1] After LF-SERVE-REFLOW recovered FPT Q1 absolute scalars (op_profit/ebitda/cash live-correct), get_bctc_full(FPT) STILL serves garbage DERIVED ratios: current_ratio=41527873060120x (denominator ~0), operating_margin_pct=0.0% (not recomputed from now-correct operating_profit). Confirms the analytics/serving derived-ratio layer is a distinct defect from scalar extraction. BAL-0 publish semantic-sanity gate MUST block current_ratio out-of-range before MARKET/FB; BAL-1 spike should pin the ratio recompute module. Repro: get_bctc_full(code=FPT).",
@@ -12588,6 +12588,96 @@
             "observed_at": "2026-08-11T17:36:00Z"
           }
         }
+      },
+      {
+        "id": "FIX-PO-NO-PRODUCER-FOR-MANUAL-DISPATCH-ESCAPE-HATCH",
+        "type": "FIX",
+        "title": "P0: 49 backlog rows (23 P1) + 3 ready[] rows are reachable ONLY by 'manual/PO dispatch' -- and no PO flow doc contains any step that produces it",
+        "status": "DONE_VERIFIED",
+        "priority": "P0",
+        "size": "S",
+        "zone": "cross-service/",
+        "owner": "po",
+        "supervised": false,
+        "plan_only": false,
+        "created_at": "2026-07-30T22:37:30Z",
+        "created_by": "dev-team/po-batch-20260730T2227Z",
+        "updated_at": "2026-08-11T18:05:22Z",
+        "source": "po triage 2026-07-30T22:27Z tick (5th pass today)",
+        "desc": "dev-team/flow/main.md:645 and scripts/audits/bounded1-supervised-lane-report.sh:373 both state DRS-STRANDED-OFF-ALLOWLIST rows remain 'reachable only by manual/PO dispatch'. Grep-verified by po AND independently re-verified by dev-team this tick: every `.task_board.backlog|.task_board.ready` reference in docs/agents/po/flow/ is an APPEND site (mint a new row) or a one-off id-targeted script -- never a generic priority-ordered SWEEP of the existing backlog/ready lanes. The named destination does not exist. Measured live by po: 49 backlog rows zero-picker-by-policy (agent-father 37, ops 4, qa 3, bctc-analyst 2, ops-mainserver-fetch 2, ops-vps-fetch 1; 23 at P1) plus 3 ready[] rows in the sup-XOR-plan_only gap. FOURTH instance of documented-consumer-with-no-producer; the remedy shape is already proven and shipped for the WF-2 sibling: a MANDATORY per-tick PO pre-check sub-flow (docs/agents/po/flow/supervised-goahead.md + a lazy-load pointer in po/flow/main.md + a read-only regression verifier under scripts/audits/). Zero code, zero gate change, zero blast radius -- it only surfaces and dispatches rows the policy already assigns to PO.",
+        "files": [
+          "docs/agents/po/flow/main.md",
+          "docs/agents/po/flow/*.md",
+          "scripts/audits/"
+        ],
+        "deliverable": "AC: (1) new po/flow sub-flow that runs the two live predicates (49-backlog zero-picker set, 3-ready sup-XOR-plan_only gap) and emits a priority-ordered candidate list; (2) mandatory pointer in po/flow/main.md pre-check chain; (3) regression verifier that replays dev-team's OWN predicates (scripts/lib/devteam-eligibility.jq) byte-identical, never a reimplementation.",
+        "out_of_scope": "Widening the DRS allowlist to admit agent-father -- that exclusion is a ratified blast-radius control, not this row's fix.",
+        "baseline_pass": "9408",
+        "related": [
+          "FIX-DEVTEAM-QADRAIN-HEAD-WRITE-CONDITIONAL",
+          "FIX-BOUNDED1-NONDEV-NEXTAGENT-RESIDUAL-NO-DISPATCH-LANE"
+        ],
+        "branch": null,
+        "architect_review_note": "Design+implementation shipped this cycle (S-size, non-supervised, direct-execute per Step 3 routing): new po/flow/manual-dispatch-sweep.md sub-flow (mirrors supervised-goahead.md) + scripts/lib/po-manual-dispatch-eligibility.jq (include-s devteam-eligibility.jq, zero new predicate logic) + mandatory pointer in po/flow/main.md + scripts/audits/po-manual-dispatch-sweep-verify.sh (12/12 assertions pass) + retrofit of bounded1-supervised-lane-report.sh DRS/READY-XOR sections onto the same shared defs (live-diffed byte-identical against a pinned snapshot). Live-verified counts at design time: 43 DRS-STRANDED-OFF-ALLOWLIST + 3 READY-XOR = 46 (drift from POs stale 49 explained by a genuine concurrent board edit, observed mid-session). Did NOT widen the DRS allowlist (explicit out-of-scope). Did NOT write .head/in_progress[] from this new sub-flow (design-note in the sub-flow file explains why). PO next tick is the first live exercise of the new pre-check.",
+        "po_ratified_at": "2026-07-30T22:59:59Z",
+        "po_ratified_by": "po",
+        "po_review_note": "PO RATIFIED 2026-07-30T22:59:59Z, independently at source (not on a relayed verdict): ran scripts/audits/po-manual-dispatch-sweep-verify.sh -> PASS, 15 assertions = 12 predicate branches + 3 existence checks (dev-team's '12/12' counts the branches only; an earlier draft of this note said '13/13' and was wrong -- corrected 2026-07-30T23:04:45Z). Load-bearing negatives confirmed: D-SLS-TERRITORY + J-SLS-CLAIM-TERRITORY (supervised&&plan_only excluded, so this producer does not poach SLS's lane) and G-ALREADY-FLAGGED (idempotency guard is real code, not prose). Live-exercised Step 1 against the real board: 46 unflagged candidates (43 DRS-stranded backlog, 3 ready-XOR); Step 2 stamp applied cleanly via orch-apply (conservation 730/730). GATE CLEARED 2026-07-30T23:04:45Z: the artifacts were untracked at ratification time, but commit e27f6f0a5 landed all 3 (docs/agents/po/flow/manual-dispatch-sweep.md, scripts/lib/po-manual-dispatch-eligibility.jq, scripts/audits/po-manual-dispatch-sweep-verify.sh) plus the main.md pointer, and origin/main now contains them. No PO objection to done_verified.",
+        "po_blocking_gate": "cleared",
+        "po_gate_cleared_at": "2026-07-30T23:04:45Z",
+        "po_gate_cleared_by_commit": "e27f6f0a5",
+        "secondary_claimed_at": "2026-08-11T18:00:59Z",
+        "secondary_claimed_by": "dev-team (review-lane secondary-drain)",
+        "secondary_dispatch_target": "po",
+        "verified_at": "2026-08-11T18:04:12Z",
+        "verified_by": "po",
+        "verified_note": "PO DONE_VERIFIED sign-off 2026-08-11T18:04:12Z, independently re-verified at source (not on the relayed 2026-07-30 gate note), dispatched via dev-team Review-Lane SECONDARY-Drain. AC(1) producer sub-flow: docs/agents/po/flow/manual-dispatch-sweep.md present on origin/main (115L, real mutation point piping through scripts/orch-apply.sh at line 94, not prose-only). AC(2) mandatory pointer: docs/agents/po/flow/main.md:74 \"Pre-check - Manual-dispatch sweep\", marked MANDATORY every tick, sits inside the live pre-check chain alongside its WF-2 sibling supervised-goahead.md. AC(3) shared-predicate verifier: scripts/audits/po-manual-dispatch-sweep-verify.sh re-run live -> exit 0, 25/25 [OK] assertions (grown from the 15 counted at ratification, via the 2026-08-07 BACKLOG-XOR-GAP class extension in commit 96baa1dd4); scripts/lib/po-manual-dispatch-eligibility.jq line 50 `include \"scripts/lib/devteam-eligibility\"` confirmed - it declares only the 4 composite predicates (is_design_router_candidate/is_drs_stranded_off_allowlist/is_backlog_xor_gap/is_ready_xor_gap) and reuses dev-team's 31 base defs rather than reimplementing them, satisfying the never-a-reimplementation clause. Gate commit e27f6f0a5 confirmed ancestor of BOTH HEAD and origin/main; all 3 artifacts confirmed present in origin/main via git cat-file -e, not just in the working tree. Retrofit intact: scripts/audits/bounded1-supervised-lane-report.sh:188-189 still includes both shared libs, so the report and the sweep cannot drift apart. PRODUCER IS DEMONSTRABLY LIVE, not merely documented - the failure mode this row was minted against (documented-consumer-with-no-producer, 4th instance) is closed at the behavioural level: 18 live board rows carry po_manual_dispatch_* stamps, most recent 2026-08-11T16:03:45Z (this same day, UC-ASL-P5, 83-candidate priority-ordered list), and the bounded flag_reentrant re-admission guard is observably firing in the wild (TE-T06 RE-ADMISSION #2, TASK-COWORK-MUTEX-001 re-admitted at 64h against the 4h window). RESIDUALS NOT BLOCKING THIS SIGN-OFF, all already tracked by existing rows - no duplicate minted: (a) rows folded into BATCH not always reaching a dev slot is downstream of this AC and is FIX-PO-BATCH-MINT-NO-WRITE-ACTUATOR (review[]); (b) the skip-stamp field mismatch (po_manual_dispatch_skipped_at written but flag_reentrant reads only po_manual_dispatch_flagged_at) is FIX-PO-MANUAL-DISPATCH-SKIP-STAMP-FIELD-MISMATCH-STARVES-SWEEP (backlog[]); (c) ops-class coverage is FIX-DRS-SWEEP-005-MANUAL-DISPATCH-SWEEP (backlog[]). Out-of-scope clause honoured: DRS allowlist was not widened. .head deliberately NOT touched - it points at FIX-SWEEPGUARD-ESCALATION-HAS-NO-ACTUATOR-REPEAT-OFFENDER-13-STRIKES under dev-team's concurrent qa-drain, not at this row.",
+        "verification": {
+          "raw_probe": {
+            "tool": "bash scripts/audits/po-manual-dispatch-sweep-verify.sh + git cat-file -e origin/main:<path> (x3) + git merge-base --is-ancestor e27f6f0a5 HEAD/origin/main + grep on main.md pointer + grep '^def ' on both eligibility libs + jq scan of live board for po_manual_dispatch_* stamps",
+            "args": "artifacts: docs/agents/po/flow/manual-dispatch-sweep.md, scripts/lib/po-manual-dispatch-eligibility.jq, scripts/audits/po-manual-dispatch-sweep-verify.sh; pointer: docs/agents/po/flow/main.md:74; gate commit e27f6f0a5; post-ship hardening commits 96baa1dd4, 05e5823d0",
+            "live_value_observed": "verifier exit 0 with 25/25 [OK]; all 3 artifacts resolve on origin/main; e27f6f0a5 is ancestor of HEAD (c9d073cc7) and origin/main (416330d39); main.md:74 pointer present and marked MANDATORY every tick; po lib declares 4 composite defs and includes devteam-eligibility (31 base defs) rather than copying them; bounded1-supervised-lane-report.sh:188-189 includes both libs; 18 live rows carry po_manual_dispatch_* stamps, newest 2026-08-11T16:03:45Z",
+            "observed_at": "2026-08-11T18:04:12Z"
+          }
+        }
+      },
+      {
+        "id": "TE-T03",
+        "title": "T-03 cowork-team main.md: extract fallback/WORK-continuation body (2/3 of file) to sub-flows [~200k gross; ~40-60k marginal after T-01]",
+        "owner": "agent-father",
+        "status": "DONE_VERIFIED",
+        "type": "SPRINT-M",
+        "size": "M",
+        "priority": "P1",
+        "wave": 3,
+        "est_saving": "~200k gross / ~40-60k marginal after TE-T01",
+        "zone": "docs/agents/",
+        "sprint": "TOKEN-ECONOMY-AUDIT",
+        "detail_ref": "docs/architecture-briefs/2026-07-12-token-economy-lazyload-audit.md#T-03",
+        "note": "SEQUENCING: depends on TE-T01 (prompt gating lands first; this thins only the residual WORK/ERROR ticks — do NOT double-count the SILENT-tick savings already captured by T-01). QA-GATED. Split L97-307 into work-tick.md (Step 0a drain + 0b.3 routing) + preflight-error-fallback.md (full ERROR chain). main.md -> ~95L. DONE by agent-father 2026-08-11: extracted fallback/WORK-continuation body from main.md (322L pre-edit) into work-tick.md (118L, Step 0a drain + Step 0b.3 one-shot routing, shared by WORK-continuation direct calls AND the ERROR-path re-entry) and preflight-error-fallback.md (136L, full original Steps 0a-6 ERROR-verdict chain, unchanged, never deleted). main.md -> 106L (team boundary, Step 0 preflight, verdict JUMP-TO, WORK continuation, ERROR Fallback pointer). Pure relocation, zero logic changed -- mirrors TE-T16/TE-T26 precedent. Line-1 size-justification marker rewritten to match real size (was stale ~195L vs actual 307L pre-edit, flagged as a TE-T13 follow-up -- closed as a side effect). Also updated the LIVE CronCreate prompt (.claude/skills/cron-cowork-team/SKILL.md ERROR clause) to point at preflight-error-fallback.md instead of the now-removed inline main.md Step 0a -- required, else the already-armed cron misdirects on the next ERROR verdict; router should run /cron-cowork-team re-arm after DONE_VERIFIED. Awaiting QA.",
+        "depends_on": [
+          "TE-T01"
+        ],
+        "next_agent": "qa",
+        "po_routing_ruling_20260721": "PO ARTIFACT-CLASS ROUTING RULING 2026-07-21T18:42Z. Rule: routing follows ARTIFACT CLASS, not directory. Any row whose deliverable is instruction-prose that an agent LOADS AND EXECUTES — .claude/agents/**, docs/agents/** (init/flow/knowledge/tools-package), .claude/skills/**/SKILL.md — routes to agent-father. Executable code (apps/**, scripts/**), codegen-from-registry, and data/root-config (docs/data/**, CLAUDE.md) route to zone-matched dev-* or developer. Rationale: for this system a flow doc IS the executable source; agent-father is already sole owner of agent-file lifecycle (dispatch/SKILL.md:48) and of NEW cron skill files (:50), and board precedent has 5/5 pre-existing docs/agents/ rows routed to agent-father/agents-architect/po and 0 to developer. Precedent for SKILL.md specifically: docs/signals/processed/dev-team-20260716T102429Z-autolaunch-safety-hold-uc-asl-p6.json already routed a signal-dashboard SKILL.md edit to agent-father as 'the factory rule'. ROOT CAUSE this closes: .claude/skills/zone-detect/SKILL.md resolves ONLY dev-<service> (Tier-1/2, needs apps/<service>/-shaped zone) or generic developer (Tier-3 fallback) — it has NO path to agent-father, so any docs/agents/ or .claude/skills/ row reaching execute-tier with next_agent unset gets the 'developer' placeholder and mis-routes. EXPECTED SIDE EFFECT (do NOT 'fix' this): next_agent=agent-father does not match the dev-role pattern ^dev(-|$)|^developer$, so the BOUNDED-1 NON-DEV-NEXT_AGENT gate (dev-team/flow/main.md:518) now WITHHOLDS these rows from unattended idle auto-pickup. That is the intended outcome — they require deliberate router dispatch to agent-father, not silent promotion to a generic developer.",
+        "updated_at": "2026-08-11T18:05:01Z",
+        "po_manual_dispatch_flagged_at": "2026-08-11T17:06:13Z",
+        "po_manual_dispatch_flagged_by": "po (manual-dispatch-sweep)",
+        "po_manual_dispatch_class": "DRS-STRANDED-OFF-ALLOWLIST",
+        "po_manual_dispatch_note": "po (manual-dispatch-sweep) re-admitted stale-flagged DRS-STRANDED-OFF-ALLOWLIST candidate (prior stamp 2026-08-07T05:04:44Z, ~4d stale, well past the 4h window) — folding into this tick's BATCH. Top of 82 eligible candidates by [priority_rank, idx]. Dependency TE-T01 verified DONE_VERIFIED in docs/data/orch/archive/2026-07.json before selection.",
+        "agent_father_completed_at": "2026-08-11T17:32:15Z",
+        "claimed_at": "2026-08-11T18:01:30Z",
+        "claimed_by": "dev-team (review-lane qa-drain)",
+        "status_note": "\n\n[QA] Review Record (direct-commit verify) 2026-08-11T18:20:00Z: APPROVED, DONE_VERIFIED. Row carried no commit/files[] fields -- derived real commit via `git log --oneline -- docs/agents/cowork-team/flow/main.md` -> 416330d39, date matches agent_father_completed_at (2026-08-11T17:32:15Z). `git merge-base --is-ancestor 416330d39 main` confirmed on main ancestry. `git show --stat` matches exactly 5 files: main.md, work-tick.md, preflight-error-fallback.md, .claude/skills/cron-cowork-team/SKILL.md, docs/agent-memory/notebooks/agent-father.md. RAW-verified (not trusted from status_note prose): main.md=106L, work-tick.md=118L, preflight-error-fallback.md=136L on disk -- exact match to claim. main.md JUMP-TO table + Step 0 preflight + WORK continuation + ERROR Fallback pointer all present and consistent; preflight-error-fallback.md Steps 0a/0b.3 correctly delegate to work-tick.md (no duplication, TWO-REACHABLE-PATHS comment present); cron-cowork-team/SKILL.md ERROR clause repointed to preflight-error-fallback.md (grep-confirmed). Fleet grep for other docs/agents+.claude/skills refs to cowork-team/flow/main.md found none step-number-specific (refine_bctc_md/init.md, agent-chaining-protocol.md, cowork-master-cron-runbook.md all use generic file pointers, unaffected) -- no dangling refs from the split. bun test/tsc/mock-guard N/A -- `git show --name-only 416330d39` confirms zero .ts/.js/production-source touched (all 5 files .md/.json), same class as TE-T16/TE-T26 precedent (archived 2026-08.json). DJ: sprint-TOKEN-ECONOMY-AUDIT-qa.md STEP qa-S13. VERDICT: APPROVED, DONE_VERIFIED. No merge/branch-delete needed -- work already on main.",
+        "qa_verified_at": "2026-08-11T18:22:00Z",
+        "qa_verified_by": "qa",
+        "verification": {
+          "raw_probe": {
+            "tool": "git (merge-base --is-ancestor / show --stat / show --name-only / log --oneline) + wc -l + grep -rln (cross-doc dangling-ref sweep)",
+            "args": "git merge-base --is-ancestor 416330d39 main; git show --stat 416330d39; git show --name-only 416330d39 | grep -E '\\.ts$|\\.js$|src/'; wc -l docs/agents/cowork-team/flow/{main,work-tick,preflight-error-fallback}.md; grep -n preflight-error-fallback|work-tick .claude/skills/cron-cowork-team/SKILL.md; grep -rln cowork-team/flow/main.md .claude/skills docs/agents docs/protocols docs/policies",
+            "live_value_observed": "ancestor=yes; git show --stat lists exactly 5 files (main.md/work-tick.md/preflight-error-fallback.md/.claude/skills/cron-cowork-team/SKILL.md/docs/agent-memory/notebooks/agent-father.md); ts/js grep = 0 matches (docs-only commit); wc -l = 106/118/136 (matches claimed line counts); SKILL.md L128 confirms repointed to preflight-error-fallback.md; cross-doc grep found only generic (non-step-numbered) main.md pointers in refine_bctc_md/init.md, agent-chaining-protocol.md, cowork-master-cron-runbook.md -- none dangling",
+            "observed_at": "2026-08-11T18:22:00Z"
+          }
+        }
       }
     ],
     "head": {
@@ -16600,47 +16690,6 @@
         }
       },
       {
-        "id": "FIX-PO-NO-PRODUCER-FOR-MANUAL-DISPATCH-ESCAPE-HATCH",
-        "type": "FIX",
-        "title": "P0: 49 backlog rows (23 P1) + 3 ready[] rows are reachable ONLY by 'manual/PO dispatch' -- and no PO flow doc contains any step that produces it",
-        "status": "REVIEW",
-        "priority": "P0",
-        "size": "S",
-        "zone": "cross-service/",
-        "owner": "po",
-        "next_agent": "po",
-        "supervised": false,
-        "plan_only": false,
-        "created_at": "2026-07-30T22:37:30Z",
-        "created_by": "dev-team/po-batch-20260730T2227Z",
-        "updated_at": "2026-08-11T18:01:00Z",
-        "source": "po triage 2026-07-30T22:27Z tick (5th pass today)",
-        "desc": "dev-team/flow/main.md:645 and scripts/audits/bounded1-supervised-lane-report.sh:373 both state DRS-STRANDED-OFF-ALLOWLIST rows remain 'reachable only by manual/PO dispatch'. Grep-verified by po AND independently re-verified by dev-team this tick: every `.task_board.backlog|.task_board.ready` reference in docs/agents/po/flow/ is an APPEND site (mint a new row) or a one-off id-targeted script -- never a generic priority-ordered SWEEP of the existing backlog/ready lanes. The named destination does not exist. Measured live by po: 49 backlog rows zero-picker-by-policy (agent-father 37, ops 4, qa 3, bctc-analyst 2, ops-mainserver-fetch 2, ops-vps-fetch 1; 23 at P1) plus 3 ready[] rows in the sup-XOR-plan_only gap. FOURTH instance of documented-consumer-with-no-producer; the remedy shape is already proven and shipped for the WF-2 sibling: a MANDATORY per-tick PO pre-check sub-flow (docs/agents/po/flow/supervised-goahead.md + a lazy-load pointer in po/flow/main.md + a read-only regression verifier under scripts/audits/). Zero code, zero gate change, zero blast radius -- it only surfaces and dispatches rows the policy already assigns to PO.",
-        "files": [
-          "docs/agents/po/flow/main.md",
-          "docs/agents/po/flow/*.md",
-          "scripts/audits/"
-        ],
-        "deliverable": "AC: (1) new po/flow sub-flow that runs the two live predicates (49-backlog zero-picker set, 3-ready sup-XOR-plan_only gap) and emits a priority-ordered candidate list; (2) mandatory pointer in po/flow/main.md pre-check chain; (3) regression verifier that replays dev-team's OWN predicates (scripts/lib/devteam-eligibility.jq) byte-identical, never a reimplementation.",
-        "out_of_scope": "Widening the DRS allowlist to admit agent-father -- that exclusion is a ratified blast-radius control, not this row's fix.",
-        "baseline_pass": "9408",
-        "related": [
-          "FIX-DEVTEAM-QADRAIN-HEAD-WRITE-CONDITIONAL",
-          "FIX-BOUNDED1-NONDEV-NEXTAGENT-RESIDUAL-NO-DISPATCH-LANE"
-        ],
-        "branch": null,
-        "architect_review_note": "Design+implementation shipped this cycle (S-size, non-supervised, direct-execute per Step 3 routing): new po/flow/manual-dispatch-sweep.md sub-flow (mirrors supervised-goahead.md) + scripts/lib/po-manual-dispatch-eligibility.jq (include-s devteam-eligibility.jq, zero new predicate logic) + mandatory pointer in po/flow/main.md + scripts/audits/po-manual-dispatch-sweep-verify.sh (12/12 assertions pass) + retrofit of bounded1-supervised-lane-report.sh DRS/READY-XOR sections onto the same shared defs (live-diffed byte-identical against a pinned snapshot). Live-verified counts at design time: 43 DRS-STRANDED-OFF-ALLOWLIST + 3 READY-XOR = 46 (drift from POs stale 49 explained by a genuine concurrent board edit, observed mid-session). Did NOT widen the DRS allowlist (explicit out-of-scope). Did NOT write .head/in_progress[] from this new sub-flow (design-note in the sub-flow file explains why). PO next tick is the first live exercise of the new pre-check.",
-        "po_ratified_at": "2026-07-30T22:59:59Z",
-        "po_ratified_by": "po",
-        "po_review_note": "PO RATIFIED 2026-07-30T22:59:59Z, independently at source (not on a relayed verdict): ran scripts/audits/po-manual-dispatch-sweep-verify.sh -> PASS, 15 assertions = 12 predicate branches + 3 existence checks (dev-team's '12/12' counts the branches only; an earlier draft of this note said '13/13' and was wrong -- corrected 2026-07-30T23:04:45Z). Load-bearing negatives confirmed: D-SLS-TERRITORY + J-SLS-CLAIM-TERRITORY (supervised&&plan_only excluded, so this producer does not poach SLS's lane) and G-ALREADY-FLAGGED (idempotency guard is real code, not prose). Live-exercised Step 1 against the real board: 46 unflagged candidates (43 DRS-stranded backlog, 3 ready-XOR); Step 2 stamp applied cleanly via orch-apply (conservation 730/730). GATE CLEARED 2026-07-30T23:04:45Z: the artifacts were untracked at ratification time, but commit e27f6f0a5 landed all 3 (docs/agents/po/flow/manual-dispatch-sweep.md, scripts/lib/po-manual-dispatch-eligibility.jq, scripts/audits/po-manual-dispatch-sweep-verify.sh) plus the main.md pointer, and origin/main now contains them. No PO objection to done_verified.",
-        "po_blocking_gate": "cleared",
-        "po_gate_cleared_at": "2026-07-30T23:04:45Z",
-        "po_gate_cleared_by_commit": "e27f6f0a5",
-        "secondary_claimed_at": "2026-08-11T18:00:59Z",
-        "secondary_claimed_by": "dev-team (review-lane secondary-drain)",
-        "secondary_dispatch_target": "po"
-      },
-      {
         "id": "FU-MACRO-SNAPSHOT-TIER-WORSTOF",
         "priority": "P3",
         "size": "XS",
@@ -19446,34 +19495,6 @@
         "po_premise_status": "REFUTED-AT-SOURCE — actuator live since eac71308e 2026-07-31T02:11:14Z, verified empirically 2026-08-11T13:38Z (exit 1, commit did not land, index untouched)",
         "po_fold_20260811T1437Z": "FOLD + FIRST LIVE BLOCK CONFIRMATION IN THE REAL REPO (po triage 2026-08-11T14:37Z). 2 further [sweep-guard] BARE payloads, both escalated=true, both actor=165f4245-6173-4054-87fd-c55bb626265f: 14:41:06Z prior_warns=29 (docs/agent-memory/notebooks/system-auditor.md), 14:43:46Z prior_warns=30 (docs/data/auditor-dedup-ledger.json). Threshold=3. occurrence_count 26 -> 28. NO per-occurrence mint, per triage-signals.md bug-escalation dedup rule.\n\nTHIS TICK CLOSES THE LAST OPEN QUESTION ON po_correction_20260811T1340Z, AND IT CLOSES IT THE WAY THE CORRECTION PREDICTED. The prior tick proved the block empirically only in a THROWAWAY repo. This tick observed it in the LIVE repo: a bare `git commit -m` was ESCALATED REJECTed, and the SAME commit retried with an explicit trailing pathspec succeeded. Both files landed correctly seconds later - 01cfb57ce (notebook-only, pathspec-scoped) and 5595bcfc9 (dedup-ledger). ZERO data loss from either fire. The actuator works in production, not just in a fixture.\n\nCONSEQUENCE FOR ITEM (b) - now the ONLY remaining work on this row, and it is now measurable rather than argued: strikes 29 and 30 are BLOCKED ATTEMPTS THAT THEN SUCCEEDED. The signal payload is byte-identical to the payload a genuine sweep would emit. A triager reading these two envelopes has no field that distinguishes \"mechanism worked, actor retried correctly, nothing was swept\" from \"mechanism failed, peer content absorbed\". That is why this row accumulated 28 occurrences of what is, in every verified case, a WORKING guard reporting its own success. Fix as specified in (b): emit outcome=blocked vs outcome=proceeded on the payload, or stop emitting on the blocked path entirely.\n\nDO NOT RE-LITIGATE THE PREMISE. Two ticks (12:37Z, 13:22Z) asserted the hook never blocks; 13:40Z refuted that at source; this tick confirms it live. The escalated=true prose in docs/agents/po/flow/triage-signals.md is CORRECT and MUST NOT be \"fixed\".\n\nSUPPLY SIDE SPLIT OUT THIS TICK (this row does not own it): the reason the counter reaches 30 at all is that the fleet is INSTRUCTED to issue bare commits - docs/policies/commit-convention.md:38 calls `git commit -m` (index-only) ONLY \"non-negotiable\", and its own :106-108 notebook template is bare. Minted separately as FIX-COMMITCONVENTION-MANDATES-BARE-COMMIT-CONTRADICTS-LIVE-SWEEPGUARD-HARDBLOCK. That row is the SUPPLY of blocked attempts; this row remains the SIGNAL-NOISE side. Neither fixes the other.",
         "dev_implementation_note_20260811T1726Z": "Implemented per po_correction_20260811T1340Z's own scoped remainder (do NOT build a new actuator -- eac71308e already blocks, verified live). Fixed items (b)+(c): (b) scripts/git-hooks/pre-commit signal_msg now carries outcome=blocked|proceeded (computed from the already-resolved escalate_effective, before the reject/exit branch) so triage can distinguish a blocked-attempt retry from an actual sweep -- new T15 in pre-commit.test.sh (RED before fix: 4/4 signals unlabeled; GREEN after: 3x outcome=proceeded + 1x outcome=blocked), 15/15 suite PASS, verify-commit-sweep-discriminator.sh re-run PASS (unrelated, untouched). (c) files[] corrected: .claude/hooks/pre-commit does not exist -> scripts/git-hooks/pre-commit + pre-commit.test.sh. Did NOT touch triage-signals.md prose (po_correction explicitly: it is correct, do not fix) or GIT_SWEEP_GUARD_MODE default (out of scope -- SPIKE-SATURATED-COUNT-THRESHOLD-GATES-SWEEP / FIX-COMMITCONVENTION-MANDATES-BARE-COMMIT-CONTRADICTS-LIVE-SWEEPGUARD-HARDBLOCK own the counter-decay/supply-side questions).",
-        "claimed_at": "2026-08-11T18:01:30Z",
-        "claimed_by": "dev-team (review-lane qa-drain)"
-      },
-      {
-        "id": "TE-T03",
-        "title": "T-03 cowork-team main.md: extract fallback/WORK-continuation body (2/3 of file) to sub-flows [~200k gross; ~40-60k marginal after T-01]",
-        "owner": "agent-father",
-        "status": "QA",
-        "type": "SPRINT-M",
-        "size": "M",
-        "priority": "P1",
-        "wave": 3,
-        "est_saving": "~200k gross / ~40-60k marginal after TE-T01",
-        "zone": "docs/agents/",
-        "sprint": "TOKEN-ECONOMY-AUDIT",
-        "detail_ref": "docs/architecture-briefs/2026-07-12-token-economy-lazyload-audit.md#T-03",
-        "note": "SEQUENCING: depends on TE-T01 (prompt gating lands first; this thins only the residual WORK/ERROR ticks — do NOT double-count the SILENT-tick savings already captured by T-01). QA-GATED. Split L97-307 into work-tick.md (Step 0a drain + 0b.3 routing) + preflight-error-fallback.md (full ERROR chain). main.md -> ~95L. DONE by agent-father 2026-08-11: extracted fallback/WORK-continuation body from main.md (322L pre-edit) into work-tick.md (118L, Step 0a drain + Step 0b.3 one-shot routing, shared by WORK-continuation direct calls AND the ERROR-path re-entry) and preflight-error-fallback.md (136L, full original Steps 0a-6 ERROR-verdict chain, unchanged, never deleted). main.md -> 106L (team boundary, Step 0 preflight, verdict JUMP-TO, WORK continuation, ERROR Fallback pointer). Pure relocation, zero logic changed -- mirrors TE-T16/TE-T26 precedent. Line-1 size-justification marker rewritten to match real size (was stale ~195L vs actual 307L pre-edit, flagged as a TE-T13 follow-up -- closed as a side effect). Also updated the LIVE CronCreate prompt (.claude/skills/cron-cowork-team/SKILL.md ERROR clause) to point at preflight-error-fallback.md instead of the now-removed inline main.md Step 0a -- required, else the already-armed cron misdirects on the next ERROR verdict; router should run /cron-cowork-team re-arm after DONE_VERIFIED. Awaiting QA.",
-        "depends_on": [
-          "TE-T01"
-        ],
-        "next_agent": "qa",
-        "po_routing_ruling_20260721": "PO ARTIFACT-CLASS ROUTING RULING 2026-07-21T18:42Z. Rule: routing follows ARTIFACT CLASS, not directory. Any row whose deliverable is instruction-prose that an agent LOADS AND EXECUTES — .claude/agents/**, docs/agents/** (init/flow/knowledge/tools-package), .claude/skills/**/SKILL.md — routes to agent-father. Executable code (apps/**, scripts/**), codegen-from-registry, and data/root-config (docs/data/**, CLAUDE.md) route to zone-matched dev-* or developer. Rationale: for this system a flow doc IS the executable source; agent-father is already sole owner of agent-file lifecycle (dispatch/SKILL.md:48) and of NEW cron skill files (:50), and board precedent has 5/5 pre-existing docs/agents/ rows routed to agent-father/agents-architect/po and 0 to developer. Precedent for SKILL.md specifically: docs/signals/processed/dev-team-20260716T102429Z-autolaunch-safety-hold-uc-asl-p6.json already routed a signal-dashboard SKILL.md edit to agent-father as 'the factory rule'. ROOT CAUSE this closes: .claude/skills/zone-detect/SKILL.md resolves ONLY dev-<service> (Tier-1/2, needs apps/<service>/-shaped zone) or generic developer (Tier-3 fallback) — it has NO path to agent-father, so any docs/agents/ or .claude/skills/ row reaching execute-tier with next_agent unset gets the 'developer' placeholder and mis-routes. EXPECTED SIDE EFFECT (do NOT 'fix' this): next_agent=agent-father does not match the dev-role pattern ^dev(-|$)|^developer$, so the BOUNDED-1 NON-DEV-NEXT_AGENT gate (dev-team/flow/main.md:518) now WITHHOLDS these rows from unattended idle auto-pickup. That is the intended outcome — they require deliberate router dispatch to agent-father, not silent promotion to a generic developer.",
-        "updated_at": "2026-08-11T18:01:30Z",
-        "po_manual_dispatch_flagged_at": "2026-08-11T17:06:13Z",
-        "po_manual_dispatch_flagged_by": "po (manual-dispatch-sweep)",
-        "po_manual_dispatch_class": "DRS-STRANDED-OFF-ALLOWLIST",
-        "po_manual_dispatch_note": "po (manual-dispatch-sweep) re-admitted stale-flagged DRS-STRANDED-OFF-ALLOWLIST candidate (prior stamp 2026-08-07T05:04:44Z, ~4d stale, well past the 4h window) — folding into this tick's BATCH. Top of 82 eligible candidates by [priority_rank, idx]. Dependency TE-T01 verified DONE_VERIFIED in docs/data/orch/archive/2026-07.json before selection.",
-        "agent_father_completed_at": "2026-08-11T17:32:15Z",
         "claimed_at": "2026-08-11T18:01:30Z",
         "claimed_by": "dev-team (review-lane qa-drain)"
       },
