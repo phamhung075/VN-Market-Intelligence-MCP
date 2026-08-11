@@ -1198,3 +1198,15 @@
 **Mitigation:** No immediate action beyond signal routing.
 
 ---
+
+## Anomaly: A-29 · bctcReparseJob cron LATE
+**Severity:** WARN | **Date:** 2026-08-11 | **Status:** OPEN
+**Location:** cron scheduler
+**Details:** bctcReparseJob status=LATE per /api/cron-status endpoint
+**Impact:** BCTC data reparse cycle may be delayed or missed
+**Root cause:** Requires manual investigation — check mcp-server logs and reschedule if needed
+**Zone owner:** dev-mcp-server
+**Last reported:** 2026-08-11T14:30:02Z (signal sys-20260811T142947-1be1, system-auditor -> po, dedup_key=auditor-a29-fire-gap:bctcReparseJob, WARN Telegram sent)
+**Mitigation:** No immediate action beyond signal routing.
+
+---
