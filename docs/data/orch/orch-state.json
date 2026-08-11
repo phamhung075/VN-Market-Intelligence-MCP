@@ -10747,30 +10747,6 @@
         "created_by": "po/triage-20260811T1431Z",
         "updated_at": "2026-08-11T14:33:37Z",
         "updated_by": "po/triage-20260811T1431Z"
-      },
-      {
-        "id": "FIX-CRON-CODEJANITOR-NO-PRESPAWN-GATE-BOOTS-FULL-SESSION-4X-DAILY",
-        "type": "FIX",
-        "title": "code-janitor cron has NO pre-spawn gate — its CronCreate prompt boots a full subagent session 4x/day unconditionally while its only git-diff gate lives post-boot and covers just the DRY scan (10/10 last cycles suppressed)",
-        "owner": "po",
-        "status": "BACKLOG",
-        "priority": "P2",
-        "size": "S",
-        "sprint": "BACKLOG",
-        "zone": "cross-service/",
-        "next_agent": "developer",
-        "files": [
-          ".claude/skills/cron-standalone-team/register-job-code-janitor.md",
-          ".claude/commands/crons/cron-code-janitor.md",
-          "scripts/agents-flow/code-janitor-tick-preflight.sh"
-        ],
-        "baseline_pass": "9408",
-        "dedup_key": "cron:code-janitor-no-prespawn-gate",
-        "created_at": "2026-08-11T15:06:00Z",
-        "created_by": "po/triage-20260811T1437Z",
-        "origin_signal_id": "03e7d0af51adf4b52400e6627069ecfd79bd355698e11f196e32f94301f4a098",
-        "status_note": "AC-1: the code-janitor CronCreate prompt runs the SAME `git diff --name-only HEAD~3..HEAD` check (scope src/** , apps/*/src/**) BEFORE spawning any subagent, mirroring register-job-market-db-journal-guard.md's existing pattern. AC-2: diff non-empty -> spawn as today, main.md flow unchanged; diff empty -> run the 3 deterministic sweeps directly from the prompt, spawn ONLY if a sweep emits a SIGNAL-WRITTEN line / safe-fail needing review / non-trivial Cold-Archive monthly result. AC-3 (AUDITABILITY, do NOT drop): the pre-gate writes a structured one-line verdict {\"verdict\":\"SKIP-SPAWN\"|\"SPAWN\",\"sweeps\":{...},\"checked_at\":...} to a durable state file via atomic tmp+mv, same shape as db-integrity-probe.sh / auditor-tier1-probe.sh, so a SKIP-SPAWN tick stays inspectable even though no notebook entry exists for it. AC-4: .claude/skills/cron-standalone-team/register-job-code-janitor.md and .claude/commands/crons/cron-code-janitor.md stay in sync per that skill's own divergence-discipline note.\\n\\nORIGIN: architecture brief docs/architecture-briefs/2026-08-11-cron-heartbeat-prespawn-gating.md (agents-architect, 2026-08-11T13:59:53Z, 20132 bytes). Brief §6 routes explicitly to po for task-board entry, NOT to agents-architect or agent-father, because the change is mixed-zone (scripts/ + .claude/skills/ + .claude/commands/) and is an improve-an-existing-mechanism implementation, not an agent-file lifecycle change.\\n\\nPO RATIFICATION AT SOURCE (per supervised-goahead.md Step 2 discipline — verified by reading the code, NOT by accepting the brief's prose):\\n  CLAIM 1 'code-janitor's CronCreate prompt has no pre-boot gate' -> CONFIRMED. .claude/skills/cron-standalone-team/register-job-code-janitor.md:9 is verbatim: prompt : \"Launch subagent (subagent_type=code-janitor). Read and execute docs/agents/code-janitor/flow/main.md\\\\nMCP: https://zenmidi.com/vn-market/mcp\". No shell, no gate, unconditional spawn.\\n  CLAIM 2 'the git-diff gate is post-boot and covers only the DRY scan' -> CONFIRMED. docs/agents/code-janitor/flow/main.md:19 heading is verbatim '## Pre-Check (gates ONLY the Decision-Tree DRY scan below — CADRAT-3)', and :26 states verbatim 'The 3 every-scan sweeps (Memory Prune / Notebook Line-Cap / Cold Archive) stay UNCONDITIONAL on this gate'.\\n  CLAIM 3 'market-db-journal-guard is the existing exemplar' -> CONFIRMED, .claude/skills/cron-standalone-team/register-job-market-db-journal-guard.md exists.\\n\\nUSER-CONFIRMATION HOLD RESOLVED BY PO, NOT ESCALATED. The signal envelope carried pipeline=hold-for-user-confirmation and the brief says 'once the user confirms'. Per CLAUDE.md ('Never ask user — spawn po for decisions, continue') and feedback_po_deploy_rebuild_full_autonomy_no_user_gate, PO is the decision authority for this class. RATIFIED. Reasoning: the change is additive, reversible, mirrors a pattern already live on 8/11 outer heartbeats, and its explicit auditability AC prevents the one real risk (losing the per-tick trace).\\n\\nSCOPE FENCE — DO NOT WIDEN. The brief assessed and explicitly REJECTED introducing any LLM/local-model pre-gate anywhere in these 3 cron families (no fuzzy pre-spawn judgment case exists; every gate examined reduces to a binary/countable predicate already well served by shell+jq; 3 documented live instances of safe-looking gates silently disabling their own mechanism). Rows 1-8 are already gated and rows 9-10 (agent-father, claude-manager-helper) need no change on the evidence — explicitly out of scope, not silently omitted. Implement row 11 ONLY.\\n\\nPRIORITY BASIS: P2, not higher. This is a host-load/token-efficiency win (4x/day full session boots where 10/10 last recorded cycles had the DRY branch suppressed, ~4.3 days of evidence), not a correctness or data-loss defect. Nothing is currently broken by the missing gate.\\n\\nDEDUP: non-terminal lanes scanned on JANITOR|PRE-?SPAWN|PRESPAWN|HEARTBEAT-GATE. Open janitor rows are FIX-JANITOR-PRUNE-SWEEP-HARDCODED-DEAD-WRITER-PREMISE (sweep-script premise bug), FIX-JANITOR-HEALTHRECHECK-IDEMPOTENCY-GUARD-MISSES-PROCESSED-DIR (idempotency guard), CLEAN-NB-SINGLE-SECTION-UNPRUNABLE-CODEJANITOR-DIGESTPREDICT (notebook split). None touches cron registration or pre-spawn gating. Genuinely new.",
-        "updated_at": "2026-08-11T15:31:14Z"
       }
     ],
     "closed_sprints": [
@@ -12498,6 +12474,34 @@
             "args": "bun test src/__tests__/{121-bctc-edge-cases,1303h-extractor-guards,042-bctc-balance-sheet,291-bctc-smoke-vnm,FIX-DE-4-balance-sheet-extractor-debt-codes,FIX-DE-2-debt-block1-wire,hotfix-vcb-parser,162-market-wide-broadcast,062-cascade-engine,1345d-vnindex-cascade-broadcast,1256-gold-broadcast-exclusion,1268-govt-support-cascade-fix,1004-vn-policy-cascade-rules,1334b-ceo-broadcast}.test.ts (apps/mcp-server); tsc --noEmit; mock-guard.sh --files lineScan.ts cascadeEngine.ts runImpactChain.ts pollNews.ts; git merge-base --is-ancestor 6b0141a5a main; git show --stat 6b0141a5a",
             "live_value_observed": "85 pass/3 skip/0 fail (BCTC/lineScan, 7 files, 289 expect) + 74 pass/0 fail (cascade/broadcast, 7 files, 172 expect); tsc 0 errors; mock-guard PASS; 6b0141a5a confirmed ancestor of main; diff matches all 4 claimed files, values byte-identical (10/990/10/6)",
             "observed_at": "2026-08-11T15:31:03Z"
+          }
+        }
+      },
+      {
+        "title": "Split newsNormalizer types/helpers/tables out of the 979L file",
+        "priority": "P2",
+        "zone": "mcp-server-domain",
+        "type": "FACTORY",
+        "status": "DONE_VERIFIED",
+        "id": "FACTORY-DOMAIN-split-newsNormalizer",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-DOMAIN-split-newsNormalizer",
+        "promoted_at": "2026-07-24T03:45:16Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
+        "updated_at": "2026-08-11T15:32:36Z",
+        "claimed_at": "2026-08-11T15:25:14Z",
+        "claimed_by": "dev-team (review-lane qa-drain)",
+        "next_agent": "qa",
+        "entered_review_at": "2026-07-24T03:58:41Z",
+        "review_note": "dev-mcp-server self-closeout: pure structural split, behavior-preserving. Split newsNormalizer.ts (1086L) into sibling newsNormalizerTypes.ts (4 type aliases + AnalysisEntry), newsNormalizerTables.ts (8 keyword/lookup data tables), newsNormalizerHelpers.ts (14 pure helper functions + derived ALL_CATALOG_CODES cache) -- mirrors the FACTORY-DOMAIN-extract-sentiment-lexicons sibling-file convention (domain/services/*.ts, not a data/ subfolder). Main file (1086L->236L) keeps ONLY normalizeNews() orchestration, re-exporting the pre-split public surface (types + decodeHtmlEntities/truncateAt120/buildDecisionResume/DOMAIN_VN_LABEL) so all ~50 existing import call sites are unaffected. Byte-diffed every moved unit old-vs-new (8 tables, AnalysisEntry + 4 type aliases, all 14 helper function bodies, normalizeNews() itself): zero drift. bun tsc --noEmit clean. Ran the 50-file newsNormalizer-touching test set before AND after the split: identical 575 pass / 0 fail / 1166 expect() calls both times. gen-project-stats.ts --dry-run unaffected (toolCount 184, cronJobCount 88). No full-server-boot probe per task brief (pure code split; host resource conservation given concurrent mcp-server memory pressure this session). Commit 9cfeefc16 (code) + 25cc5d7d6 (memory). Journal: docs/agent-memory/decisions/sprint-FACTORY-DOMAIN-split-newsNormalizer-dev-mcp-server.md | [QA] Review Record (direct-commit verify): APPROVED, DONE_VERIFIED. Verified commit 9cfeefc16 on main ancestry -- git show --stat matches the claimed file (newsNormalizer.ts) plus the 3 new sibling files (newsNormalizerTypes.ts/newsNormalizerTables.ts/newsNormalizerHelpers.ts). Independently re-ran: the 50-file newsNormalizer-touching regression set 576 pass/0 fail/1167 expect (0 fail both then-and-now; +1 test/expect is unrelated drift from other work landed on main since); bun tsc --noEmit 0 errors; mock-guard.sh PASS on all 4 touched files; DDD grep clean (only doc-comment hits, zero real domain->infrastructure/application import violations -- all real imports resolve to models/shared-types.js, stockAliases.js, textUtils.js, newsNormalizerTypes.js, bctc-schema.js); process.env/secret greps clean. size-lint (scripts/audits/size-lint-justification.sh --check): newsNormalizerTables.ts (503L)/newsNormalizerHelpers.ts (387L) lack in-file size-justification headers but are already captured in docs/data/size-lint-baseline.json at these exact post-split sizes -- baseline/ratchet gate, not a live violation; sole current offender is unrelated pre-existing transport.ts. Working tree clean on all 4 files. DJ-GATE-1: sprint-COWORK-GUARANTEED-SLOT-CATCHUP-qa-15.md STEP qa-S44.",
+        "qa_verified_at": "2026-08-11T15:32:36Z",
+        "qa_verified_by": "qa",
+        "verification": {
+          "raw_probe": {
+            "tool": "git merge-base --is-ancestor + git show --stat + bun test (50-file newsNormalizer-touching set) + bun tsc --noEmit + mock-guard.sh + size-lint-justification.sh --check",
+            "args": "commit 9cfeefc16; files apps/mcp-server/src/domain/services/{newsNormalizer,newsNormalizerTypes,newsNormalizerTables,newsNormalizerHelpers}.ts; 50 test files matching grep -rl newsNormalizer src --include=*.test.ts",
+            "live_value_observed": "576 pass/0 fail/1167 expect (0 fail; +1 vs review's 575/1166 = unrelated main drift since 07-24); tsc 0 errors; mock-guard PASS; DDD/secret greps clean (only doc-comment hits); size-lint offender list: newsNormalizerTables.ts/Helpers.ts absent (already baselined at 503L/387L in size-lint-baseline.json), only pre-existing unrelated transport.ts remains",
+            "observed_at": "2026-08-11T15:32:36Z"
           }
         }
       }
@@ -19113,6 +19117,33 @@
         "claimed_by": "dev-team (review-lane qa-drain)",
         "redispatch_count": 1,
         "resume_note": "QA CHANGES_REQUESTED 2026-08-11T15:30:54Z -- AC-3 fleet-wide grep (never actually run by agent-father) found docs/protocols/docker-deployment-runbook.md:148 still instructs a bare git commit -m with no trailing pathspec, same contradiction this task exists to fix. Owner must add -- <paths> there + provide the AC-3 regression proof."
+      },
+      {
+        "id": "FIX-CRON-CODEJANITOR-NO-PRESPAWN-GATE-BOOTS-FULL-SESSION-4X-DAILY",
+        "type": "FIX",
+        "title": "code-janitor cron has NO pre-spawn gate — its CronCreate prompt boots a full subagent session 4x/day unconditionally while its only git-diff gate lives post-boot and covers just the DRY scan (10/10 last cycles suppressed)",
+        "owner": "po",
+        "status": "REVIEW",
+        "priority": "P2",
+        "size": "S",
+        "sprint": "BACKLOG",
+        "zone": "cross-service/",
+        "next_agent": "qa",
+        "files": [
+          ".claude/skills/cron-standalone-team/register-job-code-janitor.md",
+          ".claude/commands/crons/cron-code-janitor.md",
+          "scripts/agents-flow/code-janitor-tick-preflight.sh"
+        ],
+        "baseline_pass": "9408",
+        "dedup_key": "cron:code-janitor-no-prespawn-gate",
+        "created_at": "2026-08-11T15:06:00Z",
+        "created_by": "po/triage-20260811T1437Z",
+        "origin_signal_id": "03e7d0af51adf4b52400e6627069ecfd79bd355698e11f196e32f94301f4a098",
+        "status_note": "AC-1: the code-janitor CronCreate prompt runs the SAME `git diff --name-only HEAD~3..HEAD` check (scope src/** , apps/*/src/**) BEFORE spawning any subagent, mirroring register-job-market-db-journal-guard.md's existing pattern. AC-2: diff non-empty -> spawn as today, main.md flow unchanged; diff empty -> run the 3 deterministic sweeps directly from the prompt, spawn ONLY if a sweep emits a SIGNAL-WRITTEN line / safe-fail needing review / non-trivial Cold-Archive monthly result. AC-3 (AUDITABILITY, do NOT drop): the pre-gate writes a structured one-line verdict {\"verdict\":\"SKIP-SPAWN\"|\"SPAWN\",\"sweeps\":{...},\"checked_at\":...} to a durable state file via atomic tmp+mv, same shape as db-integrity-probe.sh / auditor-tier1-probe.sh, so a SKIP-SPAWN tick stays inspectable even though no notebook entry exists for it. AC-4: .claude/skills/cron-standalone-team/register-job-code-janitor.md and .claude/commands/crons/cron-code-janitor.md stay in sync per that skill's own divergence-discipline note.\\n\\nORIGIN: architecture brief docs/architecture-briefs/2026-08-11-cron-heartbeat-prespawn-gating.md (agents-architect, 2026-08-11T13:59:53Z, 20132 bytes). Brief §6 routes explicitly to po for task-board entry, NOT to agents-architect or agent-father, because the change is mixed-zone (scripts/ + .claude/skills/ + .claude/commands/) and is an improve-an-existing-mechanism implementation, not an agent-file lifecycle change.\\n\\nPO RATIFICATION AT SOURCE (per supervised-goahead.md Step 2 discipline — verified by reading the code, NOT by accepting the brief's prose):\\n  CLAIM 1 'code-janitor's CronCreate prompt has no pre-boot gate' -> CONFIRMED. .claude/skills/cron-standalone-team/register-job-code-janitor.md:9 is verbatim: prompt : \"Launch subagent (subagent_type=code-janitor). Read and execute docs/agents/code-janitor/flow/main.md\\\\nMCP: https://zenmidi.com/vn-market/mcp\". No shell, no gate, unconditional spawn.\\n  CLAIM 2 'the git-diff gate is post-boot and covers only the DRY scan' -> CONFIRMED. docs/agents/code-janitor/flow/main.md:19 heading is verbatim '## Pre-Check (gates ONLY the Decision-Tree DRY scan below — CADRAT-3)', and :26 states verbatim 'The 3 every-scan sweeps (Memory Prune / Notebook Line-Cap / Cold Archive) stay UNCONDITIONAL on this gate'.\\n  CLAIM 3 'market-db-journal-guard is the existing exemplar' -> CONFIRMED, .claude/skills/cron-standalone-team/register-job-market-db-journal-guard.md exists.\\n\\nUSER-CONFIRMATION HOLD RESOLVED BY PO, NOT ESCALATED. The signal envelope carried pipeline=hold-for-user-confirmation and the brief says 'once the user confirms'. Per CLAUDE.md ('Never ask user — spawn po for decisions, continue') and feedback_po_deploy_rebuild_full_autonomy_no_user_gate, PO is the decision authority for this class. RATIFIED. Reasoning: the change is additive, reversible, mirrors a pattern already live on 8/11 outer heartbeats, and its explicit auditability AC prevents the one real risk (losing the per-tick trace).\\n\\nSCOPE FENCE — DO NOT WIDEN. The brief assessed and explicitly REJECTED introducing any LLM/local-model pre-gate anywhere in these 3 cron families (no fuzzy pre-spawn judgment case exists; every gate examined reduces to a binary/countable predicate already well served by shell+jq; 3 documented live instances of safe-looking gates silently disabling their own mechanism). Rows 1-8 are already gated and rows 9-10 (agent-father, claude-manager-helper) need no change on the evidence — explicitly out of scope, not silently omitted. Implement row 11 ONLY.\\n\\nPRIORITY BASIS: P2, not higher. This is a host-load/token-efficiency win (4x/day full session boots where 10/10 last recorded cycles had the DRY branch suppressed, ~4.3 days of evidence), not a correctness or data-loss defect. Nothing is currently broken by the missing gate.\\n\\nDEDUP: non-terminal lanes scanned on JANITOR|PRE-?SPAWN|PRESPAWN|HEARTBEAT-GATE. Open janitor rows are FIX-JANITOR-PRUNE-SWEEP-HARDCODED-DEAD-WRITER-PREMISE (sweep-script premise bug), FIX-JANITOR-HEALTHRECHECK-IDEMPOTENCY-GUARD-MISSES-PROCESSED-DIR (idempotency guard), CLEAN-NB-SINGLE-SECTION-UNPRUNABLE-CODEJANITOR-DIGESTPREDICT (notebook split). None touches cron registration or pre-spawn gating. Genuinely new.",
+        "updated_at": "2026-08-11T15:32:46Z",
+        "updated_by": "developer",
+        "commit_sha": "1d5e55d75",
+        "note": "AC-1/AC-2/AC-3 implemented: scripts/agents-flow/code-janitor-tick-preflight.sh (new, 27/27 tests, shellcheck clean) mirrors db-integrity-probe.sh SKIP-SPAWN/SPAWN verdict shape. Branch A (src diff non-empty, same scope as main.md CADRAT-3 Pre-Check) spawns unchanged. Branch B (diff empty) runs the 3 deterministic sweeps directly, commits DELTA-scoped moved paths (explicit pathspec, never bare/broad add), spawns only on SIGNAL-WRITTEN/safe-fail/non-trivial Cold Archive (verdict JSON atomic tmp+mv to docs/data/code-janitor-tick-preflight-last-verdict.json). AC-4: cron-code-janitor.md + register-job-code-janitor.md kept in sync (prompt ported verbatim). Correctness gap beyond the brief literal text found+closed: gate consuming the sweep first-run would make a later subagent re-run see SIGNAL-SKIP and silently drop a genuinely-new payload signal row per main.md existing text -- closed via a PRE-GATE CONTEXT instruction in the CronCreate prompt itself, not a main.md edit (out of this task file list). Decision journal: sprint-COWORK-GUARANTEED-SLOT-CATCHUP-developer-6.md STEP developer-S97."
       }
     ],
     "qa": [
@@ -19352,24 +19383,6 @@
         "next_agent": "qa",
         "entered_review_at": "2026-07-24T00:22:37Z",
         "review_note": "dev-rag-service: confirmed dead at source (SQLiteAnalysisRepository constructed only in test_rag_integration.py fixture, never by app_factory.build_real_adapters or main.py; AnalysisRepositoryPort had no live implementer/consumer beyond it) — deleted class + _row_to_entry helper + sqlite3 import (infrastructure/repositories.py), AnalysisRepositoryPort ABC (domain/repositories.py), the test that exercised only them, fixed phantom analysis_repo docstring (usecases.py), trimmed matching arch-doc sections. pytest 165->161 (exactly the 4 deleted tests), mypy 259->253 (strict decrease, no new), sandbox 16/16+2/2 GREEN, env audit empty. Journal: docs/agent-memory/decisions/sprint-FACTORY-RAG-delete-dead-sqlite-repo-dev-rag-service.md. Commit 768bee954."
-      },
-      {
-        "title": "Split newsNormalizer types/helpers/tables out of the 979L file",
-        "priority": "P2",
-        "zone": "mcp-server-domain",
-        "type": "FACTORY",
-        "status": "QA",
-        "id": "FACTORY-DOMAIN-split-newsNormalizer",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-DOMAIN-split-newsNormalizer",
-        "promoted_at": "2026-07-24T03:45:16Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
-        "updated_at": "2026-08-11T15:25:14Z",
-        "claimed_at": "2026-08-11T15:25:14Z",
-        "claimed_by": "dev-team (review-lane qa-drain)",
-        "next_agent": "qa",
-        "entered_review_at": "2026-07-24T03:58:41Z",
-        "review_note": "dev-mcp-server self-closeout: pure structural split, behavior-preserving. Split newsNormalizer.ts (1086L) into sibling newsNormalizerTypes.ts (4 type aliases + AnalysisEntry), newsNormalizerTables.ts (8 keyword/lookup data tables), newsNormalizerHelpers.ts (14 pure helper functions + derived ALL_CATALOG_CODES cache) -- mirrors the FACTORY-DOMAIN-extract-sentiment-lexicons sibling-file convention (domain/services/*.ts, not a data/ subfolder). Main file (1086L->236L) keeps ONLY normalizeNews() orchestration, re-exporting the pre-split public surface (types + decodeHtmlEntities/truncateAt120/buildDecisionResume/DOMAIN_VN_LABEL) so all ~50 existing import call sites are unaffected. Byte-diffed every moved unit old-vs-new (8 tables, AnalysisEntry + 4 type aliases, all 14 helper function bodies, normalizeNews() itself): zero drift. bun tsc --noEmit clean. Ran the 50-file newsNormalizer-touching test set before AND after the split: identical 575 pass / 0 fail / 1166 expect() calls both times. gen-project-stats.ts --dry-run unaffected (toolCount 184, cronJobCount 88). No full-server-boot probe per task brief (pure code split; host resource conservation given concurrent mcp-server memory pressure this session). Commit 9cfeefc16 (code) + 25cc5d7d6 (memory). Journal: docs/agent-memory/decisions/sprint-FACTORY-DOMAIN-split-newsNormalizer-dev-mcp-server.md"
       }
     ],
     "_closed_signals_20260614": {
