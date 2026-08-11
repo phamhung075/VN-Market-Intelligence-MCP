@@ -57,3 +57,15 @@
 **verify:** `scripts/agents-flow/code-janitor-tick-preflight.test.sh` 27/27 pass (stubs `_git_diff_src_files`/`_git_status_scoped`/`_run_*_sweep`/`_commit_paths` wholesale, never touches real git or the real sweep scripts — 2 real subshell-isolation bugs found+fixed live during TDD: a mutable call-counter and a `_commit_paths` state var both invisible across the `$(...)` command-substitution boundary, fixed via an explicit phase-arg and a file-backed log respectively). `shellcheck` clean on both new files. BSD-sed portability bug found+fixed live (`\+` unsupported without `-E` on this macOS host's `/bin/sed` — switched to `[0-9][0-9]*`). Commit `1d5e55d75`, pathspec-scoped (4 files: the 2 cron docs + the 2 new scripts), no `-a`/`-A`.
 
 ---
+
+### STEP developer-S98 · developer · 2026-08-11T16:38:00Z
+**task-id:** SPIKE-COWORK-GUARANTEED-SLOT-DIAGNOSTIC-FIRER
+**what-done:** Read-only diagnostic ($0 cost, no code change) — checked `launchctl list`/`print` for `com.vn-market.cowork-guaranteed-slot-firer` and tailed its stdout/stderr logs + `cowork-schedule.json` `.last_fired` + 3 downstream notebook mtimes; wrote findings doc `docs/data/cowork-guaranteed-slot-findings-firer-status-20260811.md`.
+**what-considered:**
+- launchd unloaded/plist-broken vs. invoked-but-failing — evidence settled it decisively: `runs=2457`, `run interval=900s`, log entries continuous through `2026-08-11T09:21:47Z` (past the `2026-08-08T20:23:36Z` cutoff) rules out "invocation stopped".
+- Whether to stop at the bare diagnosis or dig into WHY invocations fail — dug one level deeper (not required by the AC, but $0/cheap and directly actionable): every failing invocation prints the identical `claude` CLI string `"You've hit your weekly limit · resets 2pm (Europe/Paris)"`, and the same signature recurred twice before (`resets Jul 28`/`resets Aug 4`) self-resolving each time post-reset — this is an external account-quota pattern, not a code regression, and I flagged it explicitly so Task 2 doesn't waste time inside `cowork-match-slots.js`.
+**why-decision:** the handoff's own decision tree only needed invoked-vs-not, but the log already contained the exact failure string for free — omitting it would force Task 2 (architect) to re-derive the same tail read.
+**why-change:** no change from plan — followed the handoff's 7-step checklist verbatim; only addition is the pre-loaded root-cause lead in the findings doc's §5 Next Step.
+**verify:** launchd state (loaded, scheduled), firer stdout/stderr logs (2005/8 lines), `cowork-schedule.json` 8 guaranteed-slot `last_fired` fields, 3 downstream notebooks (unified-agent/fb-market-poster/digest-predict, all mtime 2026-08-08) all cross-corroborate the same last-success timestamp cluster (`2026-08-08T19:50–20:31Z`) and zero successes since. Commit `43111707f`, pathspec-scoped (findings doc + `orch-state.json` board row `backlog[]→review[]`/`next_agent=qa`), no `-a`/`-A`.
+
+---
